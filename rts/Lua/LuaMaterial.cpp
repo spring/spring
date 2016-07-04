@@ -10,12 +10,12 @@
 #include "Game/GlobalUnsynced.h" // randVector
 #include "Rendering/GlobalRendering.h" // drawFrame
 #include "Rendering/ShadowHandler.h"
+#include "Rendering/UnitDrawerState.hpp"
 #include "Rendering/Env/ISky.h"
+#include "Sim/Objects/SolidObject.h"
 #include "Sim/Misc/GlobalSynced.h" // simFrame
 #include "System/Log/ILog.h"
 #include "System/Util.h"
-
-#include <unordered_map>
 
 
 LuaMatHandler LuaMatHandler::handler;
@@ -25,51 +25,25 @@ LuaMatHandler& luaMatHandler = LuaMatHandler::handler;
 /******************************************************************************/
 /******************************************************************************/
 //
-//  LuaObjectUniforms
+//  Helper
 //
 
-void LuaObjectUniforms::SetLocs(const LuaMatShader* s)
+static const char* GlUniformTypeToString(const GLenum uType)
 {
-	// FIXME: <s> can be forward or deferred, do not know which here
-	if (false && setUniforms)
-		return;
-
-	// speedUniform.loc = glGetUniformLocation(s->openglID, "speed");
-	// healthUniform.loc = glGetUniformLocation(s->openglID, "health");
-	tcolorUniform.loc = glGetUniformLocation(s->openglID, "teamColor");
-
-	setUniforms = true;
-	haveUniforms = false;
-	// haveUniforms |= (speedUniform.loc != -1);
-	// haveUniforms |= (healthUniform.loc != -1);
-	haveUniforms |= (tcolorUniform.loc != -1);
-}
-
-void LuaObjectUniforms::SetData(unsigned int type, const void* data)
-{
-	switch (type) {
-		// case UNIFORM_SPEED: {} break;
-		// case UNIFORM_HEALTH: {} break;
-
-		case UNIFORM_TCOLOR: {
-			const float* vals = reinterpret_cast<const float*>(data);
-
-			tcolorUniform.val[0] = vals[0];
-			tcolorUniform.val[1] = vals[1];
-			tcolorUniform.val[2] = vals[2];
-			tcolorUniform.val[3] = vals[3];
-		} break;
+	switch (uType) {
+		case      GL_FLOAT: return "float";
+		case GL_FLOAT_VEC2: return "vec2";
+		case GL_FLOAT_VEC3: return "vec3";
+		case GL_FLOAT_VEC4: return "vec4";
+		case        GL_INT: return "sampler/int/bool";
+		case   GL_INT_VEC2: return "ivec2/bvec2";
+		case   GL_INT_VEC3: return "ivec3/bvec3";
+		case   GL_INT_VEC4: return "ivec4/bvec4";
+		case GL_FLOAT_MAT2: return "mat2";
+		case GL_FLOAT_MAT3: return "mat3";
+		case GL_FLOAT_MAT4: return "mat4";
 	}
-}
-
-void LuaObjectUniforms::Execute() const
-{
-	if (!haveUniforms)
-		return;
-
-	// if (speedUniform.loc >= 0) { glUniform3fv(speedUniform.loc, 1, &speedUniform.val[0]); }
-	// if (healthUniform.loc >= 0) { glUniform1f(healthUniform.loc, healthUniform.val[0]); }
-	if (tcolorUniform.loc >= 0) { glUniform4fv(tcolorUniform.loc, 1, &tcolorUniform.val[0]); }
+	return "unknown";
 }
 
 
@@ -185,25 +159,7 @@ void LuaMatShader::Print(const string& indent, bool isDeferred) const
 	LOG("%s  glID=%u", indent.c_str(), openglID);
 }
 
-void LuaMatUniforms::Print(const string& indent, bool isDeferred) const
-{
-	LOG("%s[uniforms][%s]", indent.c_str(), (isDeferred? "deferred": "standard"));
-	LOG("%s  viewMatrixLoc    = %i", indent.c_str(), viewMatrix.loc);
-	LOG("%s  projMatrixLoc    = %i", indent.c_str(), projMatrix.loc);
-	LOG("%s  viewMatrixInvLoc = %i", indent.c_str(), viewMatrixInv.loc);
-	LOG("%s  projMatrixInvLoc = %i", indent.c_str(), projMatrixInv.loc);
 
-	LOG("%s  shadowMatrixLoc  = %i", indent.c_str(), shadowMatrix.loc);
-	LOG("%s  shadowParamsLoc  = %i", indent.c_str(), shadowParams.loc);
-
-	LOG("%s  camPosLoc        = %i", indent.c_str(), camPos.loc);
-	LOG("%s  camDirLoc        = %i", indent.c_str(), camDir.loc);
-	LOG("%s  sunDirLoc        = %i", indent.c_str(), sunDir.loc);
-	LOG("%s  rndVecLoc        = %i", indent.c_str(), rndVec.loc);
-
-	LOG("%s  simFrameLoc      = %i", indent.c_str(), simFrame.loc);
-	LOG("%s  visFrameLoc      = %i", indent.c_str(), visFrame.loc);
-}
 
 
 /******************************************************************************/
@@ -225,7 +181,7 @@ void LuaMaterial::Parse(
 		if (!lua_israwstring(L, -2))
 			continue;
 
-		const string key = StringToLower(lua_tostring(L, -2));
+		const std::string key = StringToLower(lua_tostring(L, -2));
 
 		// uniforms
 		if (key.find("uniforms") != std::string::npos) {
@@ -329,10 +285,14 @@ void LuaMaterial::Parse(
 	}
 }
 
+
 void LuaMaterial::Finalize()
 {
-	shaders[LuaMatShader::LUASHADER_PASS_FWD].Finalize();
-	shaders[LuaMatShader::LUASHADER_PASS_DFR].Finalize();
+	for (int i: {LuaMatShader::LUASHADER_PASS_FWD, LuaMatShader::LUASHADER_PASS_DFR}) {
+		shaders[i].Finalize();
+		uniforms[i].AutoLink(&shaders[i]);
+		uniforms[i].Validate(&shaders[i]);
+	}
 
 	for (int t = 0; t < LuaMatTexture::maxTexUnits; t++) {
 		textures[t].Finalize();
@@ -352,11 +312,9 @@ void LuaMaterial::Execute(const LuaMaterial& prev, bool deferredPass) const
 		glCallList(preList);
 
 	shaders[deferredPass].Execute(prev.shaders[deferredPass], deferredPass);
-	uniforms[deferredPass].Execute(prev.uniforms[deferredPass]);
+	uniforms[deferredPass].Execute();
 
-	const int maxTex = std::max(texCount, prev.texCount);
-
-	for (int t = maxTex - 1; t >= 0; t--) {
+	for (int t = texCount - 1; t >= 0; t--) {
 		glActiveTexture(GL_TEXTURE0 + t);
 		prev.textures[t].Unbind();
 		textures[t].Bind();
@@ -379,6 +337,11 @@ void LuaMaterial::Execute(const LuaMaterial& prev, bool deferredPass) const
 			glDisable(GL_CULL_FACE);
 		}
 	}
+}
+
+void LuaMaterial::ExecuteInstance(bool deferredPass, const CSolidObject* o, const float2 alpha) const
+{
+	uniforms[deferredPass].ExecuteInstance(o, alpha);
 }
 
 
@@ -411,72 +374,6 @@ int LuaMaterial::Compare(const LuaMaterial& a, const LuaMaterial& b)
 		return ((a.cullingMode > b.cullingMode) * 2 - 1);
 
 	return 0;
-}
-
-
-void LuaMatUniforms::Parse(lua_State* L, const int tableIdx)
-{
-	const std::unordered_map<std::string, GLint*> uniformLocs = {
-		{"cameraloc",        &viewMatrix.loc},
-		{"viewmatrixloc",    &viewMatrix.loc},
-		{"projmatrixloc",    &projMatrix.loc},
-		{"viprmatrixloc",    &viprMatrix.loc},
-		{"camerainvloc",     &viewMatrixInv.loc},
-		{"viewmatrixinvloc", &viewMatrixInv.loc},
-		{"projmatrixinvloc", &projMatrixInv.loc},
-		{"viprmatrixinvloc", &viprMatrixInv.loc},
-
-		{"shadowloc",        &shadowMatrix.loc},
-		{"shadowmatrixloc",  &shadowMatrix.loc},
-		{"shadowparamsloc",  &shadowParams.loc},
-
-		{"cameraposloc",     &camPos.loc},
-		{"cameradirloc",     &camDir.loc},
-		{"sunposloc",        &sunDir.loc},
-		{"sundirloc",        &sunDir.loc},
-		{"rndvecloc",        &rndVec.loc},
-
-		{"simframeloc",      &simFrame.loc},
-		{"visframeloc",      &visFrame.loc},
-	};
-
-	for (lua_pushnil(L); lua_next(L, tableIdx) != 0; lua_pop(L, 1)) {
-		if (!lua_israwstring(L, -2))
-			continue;
-
-		const string uniformLocStr = StringToLower(lua_tostring(L, -2));
-		const auto uniformLocIt = uniformLocs.find(uniformLocStr);
-
-		if (uniformLocIt == uniformLocs.end())
-			continue;
-
-		if (!lua_isnumber(L, -1))
-			continue;
-
-		*(uniformLocIt->second) = static_cast<GLint>(lua_tonumber(L, -1));
-	}
-}
-
-void LuaMatUniforms::Execute(const LuaMatUniforms& prev) const
-{
-	viewMatrix.Execute(camera->GetViewMatrix());
-	projMatrix.Execute(camera->GetProjectionMatrix());
-	viprMatrix.Execute(camera->GetViewProjectionMatrix());
-
-	viewMatrixInv.Execute(camera->GetViewMatrixInverse());
-	projMatrixInv.Execute(camera->GetProjectionMatrixInverse());
-	viprMatrixInv.Execute(camera->GetViewProjectionMatrixInverse());
-
-	shadowMatrix.Execute(shadowHandler->GetShadowMatrix());
-	shadowParams.Execute(shadowHandler->GetShadowParams());
-
-	camPos.Execute(camera->GetPos());
-	camDir.Execute(camera->GetDir());
-	sunDir.Execute(sky->GetLight()->GetLightDir());
-	rndVec.Execute(gu->RandVector());
-
-	simFrame.Execute(gs->frameNum);
-	visFrame.Execute(globalRendering->drawFrame);
 }
 
 
@@ -527,6 +424,219 @@ void LuaMaterial::Print(const string& indent) const
 	LOG("%suseCamera   = %s", indent.c_str(), (useCamera ? "true" : "false"));
 	LOG("%scullingMode = %s", indent.c_str(), CULL_TO_STR(cullingMode));
 }
+
+
+
+
+
+/******************************************************************************/
+/******************************************************************************/
+//
+//  LuaMatUniforms
+//
+
+std::unordered_map<LuaMatUniforms::IUniform*, std::string> LuaMatUniforms::GetUniformsAndStandardName()
+{
+	return {
+		{&viewMatrix,    "ViewMatrix"},
+		{&projMatrix,    "ProjectionMatrix"},
+		{&viprMatrix,    "ViewProjectionMatrix"},
+		{&viewMatrixInv, "ViewMatrixInverse"},
+		{&projMatrixInv, "ProjectionMatrixInverse"},
+		{&viprMatrixInv, "ViewProjectionMatrixInverse"},
+		{&shadowMatrix,  "ShadowMatrix"},
+		{&shadowParams,  "ShadowParams"},
+		{&camPos,        "CameraPos"},
+		{&camDir,        "CameraDir"},
+		{&sunDir,        "SunDir"},
+		{&rndVec,        "RndVec"},
+		{&simFrame,      "SimFrame"},
+		{&visFrame,      "VisFrame"},
+		{&teamColor,     "TeamColor"},
+	};
+}
+
+
+std::unordered_map<std::string, LuaMatUniforms::IUniform*> LuaMatUniforms::GetUniformsAndPossibleNames()
+{
+	return {
+		{"Camera",                  &viewMatrix},
+		{"ViewMatrix",              &viewMatrix},
+		{"ProjMatrix",              &projMatrix},
+		{"ProjectionMatrix",        &projMatrix},
+		{"ViPrMatrix",              &viprMatrix},
+		{"ViewProjMatrix",          &viprMatrix},
+		{"ViewProjectionMatrix",    &viprMatrix},
+		{"CameraInv",               &viewMatrixInv},
+		{"ViewMatrixInv",           &viewMatrixInv},
+		{"ProjMatrixInv",           &projMatrixInv},
+		{"ProjectionMatrixInv",     &projMatrixInv},
+		{"ViPrMatrixInv",           &viprMatrixInv},
+		{"ViewProjectionMatrixInv", &viprMatrixInv},
+
+		{"Shadow",        &shadowMatrix},
+		{"ShadowMatrix",  &shadowMatrix},
+		{"ShadowParams",  &shadowParams},
+
+		{"CameraPos",     &camPos},
+		{"CameraDir",     &camDir},
+		{"SunPos",        &sunDir},
+		{"SunDir",        &sunDir},
+		{"RndVec",        &rndVec},
+
+		{"SimFrame",      &simFrame},
+		{"VisFrame",      &visFrame},
+		{"DrawFrame",     &visFrame},
+
+		//{"speed", },
+		//{"health", },
+		{"TeamColor", &teamColor},
+	};
+}
+
+
+void LuaMatUniforms::AutoLink(LuaMatShader* shader)
+{
+	if (!shader->IsCustomType())
+		return;
+
+	for (const auto& p: GetUniformsAndPossibleNames()) {
+		if (p.second->IsValid())
+			continue;
+
+		// try CamelCase
+		p.second->loc = glGetUniformLocation(shader->openglID, p.first.c_str());
+		if (p.second->IsValid()) continue;
+
+		// try camelCase
+		std::string s = p.first; s[0] = tolower(s[0]);
+		p.second->loc = glGetUniformLocation(shader->openglID, s.c_str());
+		if (p.second->IsValid()) continue;
+
+		// try lowercase
+		StringToLowerInPlace(s);
+		p.second->loc = glGetUniformLocation(shader->openglID, s.c_str());
+	}
+}
+
+
+void LuaMatUniforms::Validate(LuaMatShader* s)
+{
+	if (!s->IsCustomType()) {
+		// print warning when uniforms are given for engine shaders
+		for (const auto& p: GetUniformsAndStandardName()) {
+			if (!p.first->IsValid())
+				continue;
+
+			LOG_L(L_WARNING, "LuaMaterial: engine shaders prohibit the usage of uniform \"%s\"", p.second.c_str());
+		}
+		return;
+	}
+
+	// print warning when teamcolor is not bound
+	if (!teamColor.IsValid()) {
+		LOG_L(L_WARNING, "LuaMaterial: missing TeamColor uniform");
+	}
+
+	// check uniform types
+	for (const auto& p: GetUniformsAndStandardName()) {
+		if (!p.first->IsValid())
+			continue;
+
+		GLint size = 0;
+		GLenum uniformType = 0;
+		glGetActiveUniform(s->openglID, p.first->loc, 0, nullptr, &size, &uniformType, nullptr);
+
+		if (p.first->GetType() == uniformType)
+			continue;
+
+		LOG_L(L_WARNING, "LuaMaterial: incorrect uniform type for \"%s\", got: %s expected: %s", p.second.c_str(), GlUniformTypeToString(uniformType), GlUniformTypeToString(p.first->GetType()));
+	}
+}
+
+
+void LuaMatUniforms::Parse(lua_State* L, const int tableIdx)
+{
+	auto uniformAndNames = GetUniformsAndPossibleNames();
+	decltype(uniformAndNames) uniformAndNamesLower;
+	for (auto& p: uniformAndNames) {
+		uniformAndNamesLower[StringToLower(p.first)] = p.second;
+	}
+
+	for (lua_pushnil(L); lua_next(L, tableIdx) != 0; lua_pop(L, 1)) {
+		if (!lua_israwstring(L, -2) || !lua_isnumber(L, -1))
+			continue;
+
+		// get the lua table key
+		// and remove the "loc" at the end (cameraPosLoc -> camerapos)
+		std::string uniformLocStr = luaL_tosstring(L, -2);
+		StringToLowerInPlace(uniformLocStr);
+		if (StringEndsWith(uniformLocStr, "loc")) {
+			uniformLocStr.resize(uniformLocStr.size() - 3);
+		}
+
+		const auto uniformLocIt = uniformAndNamesLower.find(uniformLocStr);
+		if (uniformLocIt == uniformAndNamesLower.end()) {
+			LOG_L(L_WARNING, "LuaMaterial: unknown uniform \"%s\"", lua_tostring(L, -2));
+			continue;
+		}
+
+		uniformLocIt->second->loc = static_cast<GLint>(lua_tonumber(L, -1));
+	}
+}
+
+void LuaMatUniforms::Execute() const
+{
+	viewMatrix.Execute(camera->GetViewMatrix());
+	projMatrix.Execute(camera->GetProjectionMatrix());
+	viprMatrix.Execute(camera->GetViewProjectionMatrix());
+
+	viewMatrixInv.Execute(camera->GetViewMatrixInverse());
+	projMatrixInv.Execute(camera->GetProjectionMatrixInverse());
+	viprMatrixInv.Execute(camera->GetViewProjectionMatrixInverse());
+
+	shadowMatrix.Execute(shadowHandler->GetShadowMatrix());
+	shadowParams.Execute(shadowHandler->GetShadowParams());
+
+	camPos.Execute(camera->GetPos());
+	camDir.Execute(camera->GetDir());
+	sunDir.Execute(sky->GetLight()->GetLightDir());
+	rndVec.Execute(gu->RandVector());
+
+	simFrame.Execute(gs->frameNum);
+	visFrame.Execute(globalRendering->drawFrame);
+}
+
+void LuaMatUniforms::ExecuteInstance(const CSolidObject* o, const float2 alpha) const
+{
+	teamColor.Execute(IUnitDrawerState::GetTeamColor(o->team, alpha.x));
+	//{"speed", },
+	//{"health", },
+}
+
+void LuaMatUniforms::Print(const string& indent, bool isDeferred) const
+{
+	LOG("%s[uniforms][%s]", indent.c_str(), (isDeferred? "deferred": "standard"));
+	LOG("%s  viewMatrixLoc    = %i", indent.c_str(), viewMatrix.loc);
+	LOG("%s  projMatrixLoc    = %i", indent.c_str(), projMatrix.loc);
+	LOG("%s  viewMatrixInvLoc = %i", indent.c_str(), viewMatrixInv.loc);
+	LOG("%s  projMatrixInvLoc = %i", indent.c_str(), projMatrixInv.loc);
+
+	LOG("%s  shadowMatrixLoc  = %i", indent.c_str(), shadowMatrix.loc);
+	LOG("%s  shadowParamsLoc  = %i", indent.c_str(), shadowParams.loc);
+
+	LOG("%s  camPosLoc        = %i", indent.c_str(), camPos.loc);
+	LOG("%s  camDirLoc        = %i", indent.c_str(), camDir.loc);
+	LOG("%s  sunDirLoc        = %i", indent.c_str(), sunDir.loc);
+	LOG("%s  rndVecLoc        = %i", indent.c_str(), rndVec.loc);
+
+	LOG("%s  simFrameLoc      = %i", indent.c_str(), simFrame.loc);
+	LOG("%s  visFrameLoc      = %i", indent.c_str(), visFrame.loc);
+}
+
+
+
+
 
 
 /******************************************************************************/
@@ -592,6 +702,7 @@ void LuaMatRef::AddFeature(CSolidObject* o)
 		bin->AddFeature(o);
 	}
 }
+
 
 
 /******************************************************************************/

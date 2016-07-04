@@ -71,9 +71,9 @@ public:
 
 private:
 	static void DrawMaterialBins(LuaObjType objType, LuaMatType matType, bool deferredPass);
-	static const LuaMaterial* DrawMaterialBin(
+	static void DrawMaterialBin(
 		const LuaMatBin* currBin,
-		const LuaMaterial* currMat,
+		const LuaMaterial* prevMat,
 		LuaObjType objType,
 		LuaMatType matType,
 		bool deferredPass,
@@ -84,7 +84,8 @@ private:
 		const CSolidObject* obj,
 		LuaObjType objType,
 		const LuaObjectLODMaterial* lodMat,
-		const LuaMatShader* shader,
+		const LuaMaterial* luaMat,
+		bool deferredPass,
 		bool alphaMatBin,
 		bool applyTrans,
 		bool noLuaCall

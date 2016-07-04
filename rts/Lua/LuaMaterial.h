@@ -6,21 +6,41 @@
 #include <string>
 #include <vector>
 #include <set>
+#include <unordered_map>
 
-using std::string;
-using std::set;
+/*
+LuaMaterial
+	LuaMatShader
+	LuaMatUniforms
+	LuaMatTex
+LuaMatBin : public LuaMaterial
+	array of units & features that use the Material
+	refCounter
+
+class LuaMatHandler
+	LuaMatBin* []
+
+LuaMatRef
+	LuaMatBin*
+
+LuaObjectLODMaterial rename
+	LuaMatRef
+	pre + post DL
+
+LuaObjectMaterial (set of LODs) //FIXME merge with LuaObjectLODMaterial?
+	LuaObjectLODMaterial []
+
+LuaObjectMaterialData (helper to choose the current LOD) //FIXME rename
+	LuaObjectMaterial []
+*/
+
 
 #include "LuaOpenGLUtils.h"
 #include "LuaObjectMaterial.h" // for LuaMatRef
-
 #include "Rendering/GL/myGL.h"
 
+
 class CSolidObject;
-
-
-class LuaMatTexSetRef;
-class LuaMatUnifSetRef;
-
 
 /******************************************************************************/
 /******************************************************************************/
@@ -47,7 +67,7 @@ class LuaMatShader {
 
 		void Finalize();
 		void Execute(const LuaMatShader& prev, bool deferredPass) const;
-		void Print(const string& indent, bool isDeferred) const;
+		void Print(const std::string& indent, bool isDeferred) const;
 
 		void SetTypeFromID(unsigned int id) {
 			if ((openglID = id) == 0) {
@@ -56,7 +76,7 @@ class LuaMatShader {
 				type = LuaMatShader::LUASHADER_GL;
 			}
 		}
-		void SetTypeFromKey(const string& key) {
+		void SetTypeFromKey(const std::string& key) {
 			if (key == "3do") { type = LUASHADER_3DO; return; }
 			if (key == "s3o") { type = LUASHADER_S3O; return; }
 			if (key == "obj") { type = LUASHADER_OBJ; return; }
@@ -85,50 +105,69 @@ class LuaMatShader {
 
 struct LuaMatUniforms {
 public:
-	void Print(const string& indent, bool isDeferred) const;
+	void Print(const std::string& indent, bool isDeferred) const;
 	void Parse(lua_State* L, const int tableIdx);
-	void Execute(const LuaMatUniforms& prev) const;
+	void AutoLink(LuaMatShader* s);
+	void Validate(LuaMatShader* s);
 
+	void Execute() const;
+	void ExecuteInstance(const CSolidObject* o, const float2 alpha) const;
 
-private:
-	template<typename Type> struct UniformMat {
-	public:
-		UniformMat(): loc(-1) {}
-		bool CanExec() const { return (loc != -1); }
-		bool Execute(const Type& val) const { return (CanExec() && RawExec(val)); }
-		bool RawExec(const Type& val) const { glUniformMatrix4fv(loc, 1, GL_FALSE, val); return true; }
+public:
+	struct IUniform {
+		static_assert(GL_INVALID_INDEX == -1, "glGetUniformLocation is defined to return -1 (GL_INVALID_INDEX) for invalid names");
+		IUniform(): loc(GL_INVALID_INDEX) {}
+		virtual bool CanExec() const = 0;
+		virtual GLenum GetType() const = 0;
+		bool IsValid() const { return (loc != GL_INVALID_INDEX); }
 	public:
 		GLint loc;
 	};
 
-	template<typename Type, size_t Size = sizeof(Type) / sizeof(float)> struct UniformVec {
+private:
+	template<typename Type> struct UniformMat : public IUniform {
 	public:
-		UniformVec(): loc(-1) {}
-		bool CanExec() const { return (loc != -1); }
-		bool Execute(const Type& val) const { return (CanExec() && RawExec(val)); }
-		bool RawExec(const Type& val) const {
+		bool CanExec() const { return (loc != GL_INVALID_INDEX); }
+		bool Execute(const Type val) const { return (CanExec() && RawExec(val)); }
+		bool RawExec(const Type val) const { glUniformMatrix4fv(loc, 1, GL_FALSE, val); return true; }
+		GLenum GetType() const { return GL_FLOAT_MAT4; }
+	};
+
+	template<typename Type, size_t Size = sizeof(Type) / sizeof(float)> struct UniformVec : public IUniform {
+	public:
+		bool CanExec() const { return (loc != GL_INVALID_INDEX); }
+		bool Execute(const Type val) const { return (CanExec() && RawExec(val)); }
+		bool RawExec(const Type val) const {
 			switch (Size) {
 				case 3: { glUniform3fv(loc, 1, &val.x); return true; } break;
 				case 4: { glUniform4fv(loc, 1, &val.x); return true; } break;
 				default: { return false; } break;
 			}
 		}
-	public:
-		GLint loc;
+		GLenum GetType() const {
+			switch (Size) {
+				case 3: return GL_FLOAT_VEC3;
+				case 4: return GL_FLOAT_VEC4;
+				default: return 0;
+			}
+		}
 	};
 
-	template<typename Type> struct UniformInt {
+	template<typename Type> struct UniformInt : public IUniform { //FIXME why typed?? all are mapped to signed ints!
 	public:
-		UniformInt(): loc(-1), cur(Type(0)), prv(Type(0)) {}
-		bool CanExec() const { return (loc != -1 && cur != prv); }
+		UniformInt(): cur(Type(0)), prv(Type(0)) {}
+		bool CanExec() const { return (loc != -1 && cur != prv); } //FIXME a shader might be bound to multiple materials in that case we cannot rely on this!
 		bool Execute(const Type val) { cur = val; return (CanExec() && RawExec(val)); }
 		bool RawExec(const Type val) { glUniform1i(loc, prv = val); return true; }
+		GLenum GetType() const { return GL_INT; }
 	public:
-		GLint loc;
-
 		Type cur;
 		Type prv;
 	};
+
+private:
+	std::unordered_map<IUniform*, std::string> GetUniformsAndStandardName();
+	std::unordered_map<std::string, IUniform*> GetUniformsAndPossibleNames();
 
 public:
 	UniformMat<CMatrix44f> viewMatrix;
@@ -148,6 +187,9 @@ public:
 
 	mutable UniformInt<         int> simFrame;
 	mutable UniformInt<unsigned int> visFrame;
+
+public:
+	UniformVec<float4> teamColor;
 };
 
 
@@ -174,7 +216,8 @@ class LuaMaterial {
 		);
 		void Finalize();
 		void Execute(const LuaMaterial& prev, bool deferredPass) const;
-		void Print(const string& indent) const;
+		void ExecuteInstance(bool deferredPass, const CSolidObject* o, const float2 alpha) const;
+		void Print(const std::string& indent) const;
 
 		static int Compare(const LuaMaterial& a, const LuaMaterial& b);
 
@@ -244,7 +287,7 @@ class LuaMatBin : public LuaMaterial {
 			}
 		}
 
-		void Print(const string& indent) const;
+		void Print(const std::string& indent) const;
 
 	private:
 		LuaMatBin(const LuaMaterial& _mat) : LuaMaterial(_mat), refCount(0) {}
@@ -269,7 +312,7 @@ struct LuaMatBinPtrLessThan {
 	}
 };
 
-typedef set<LuaMatBin*, LuaMatBinPtrLessThan> LuaMatBinSet;
+typedef std::set<LuaMatBin*, LuaMatBinPtrLessThan> LuaMatBinSet;
 
 
 /******************************************************************************/
@@ -287,8 +330,8 @@ class LuaMatHandler {
 
 		void FreeBin(LuaMatBin* bin);
 
-		void PrintBins(const string& indent, LuaMatType type) const;
-		void PrintAllBins(const string& indent) const;
+		void PrintBins(const std::string& indent, LuaMatType type) const;
+		void PrintAllBins(const std::string& indent) const;
 
 	public:
 		typedef void (*SetupDrawStateFunc)(unsigned int, bool); // std::function<void(unsigned int, bool)>
