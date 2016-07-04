@@ -34,6 +34,10 @@
 	#define IS_GL_FUNCTION_AVAILABLE(functionName) (functionName != NULL)
 #endif // defined(HEADLESS)
 
+#ifndef GL_INVALID_INDEX
+	#define GL_INVALID_INDEX -1
+#endif
+
 
 static inline void glVertexf3(const float3& v)    { glVertex3f(v.r, v.g, v.b); }
 static inline void glColorf3(const float3& v)     { glColor3f(v.r, v.g, v.b); }

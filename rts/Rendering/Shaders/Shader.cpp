@@ -19,9 +19,6 @@
 #ifdef DEBUG
 	#include <string.h> // strncmp
 #endif
-#ifndef GL_INVALID_INDEX
-	#define GL_INVALID_INDEX -1
-#endif
 
 
 /*****************************************************************/
