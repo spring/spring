@@ -490,36 +490,6 @@ int LuaObjectRenderingImpl::SetMaterialDisplayLists(lua_State* L)
 }
 
 
-int LuaObjectRenderingImpl::SetObjectUniform(lua_State* L)
-{
-	/*
-	// args=<objID, matName, lodLevel [, ...]>
-	CSolidObject* obj = ParseSolidObject(L, __FUNCTION__, 1, GetObjectType());
-
-	if (obj == nullptr)
-		return 0;
-
-	LuaObjectMaterial* objMat = GetObjectMaterial(obj, luaL_checkstring(L, 2));
-
-	if (objMat == nullptr)
-		return 0;
-
-	LuaObjectLODMaterial* lodMat = objMat->GetMaterial(luaL_checknumber(L, 3) - 1);
-
-	if (lodMat == nullptr)
-		return 0;
-
-	const int args = lua_gettop(L) - 3;
-	const int lastArg = std::min(args, lodMat->uniforms.customCount + 3);
-
-	for (int i = 3; i <= lastArg; i++) {
-		// FIXME: Set all lods at once?
-	}
-	*/
-
-	return 0;
-}
-
 /******************************************************************************/
 /******************************************************************************/
 

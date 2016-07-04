@@ -40,9 +40,6 @@ private:
 	static int SetMaterialLastLOD(lua_State* L);
 	static int SetMaterialDisplayLists(lua_State* L);
 
-	// not implemented yet
-	static int SetObjectUniform(lua_State* L);
-
 	static int SetUnitLuaDraw(lua_State* L);
 	static int SetFeatureLuaDraw(lua_State* L);
 
@@ -75,7 +72,6 @@ public:
 		PUSH_FUNCTION(SetMaterialDisplayLists);
 
 		PUSH_FUNCTION(SetPieceList);
-		PUSH_FUNCTION(SetObjectUniform);
 
 		PUSH_FUNCTION(SetUnitLuaDraw);
 		PUSH_FUNCTION(SetFeatureLuaDraw);
@@ -143,13 +139,6 @@ private:
 	static int SetMaterialDisplayLists(lua_State* L) {
 		LuaObjectRenderingImpl::PushObjectType(T);
 		const int ret = LuaObjectRenderingImpl::SetMaterialDisplayLists(L);
-		LuaObjectRenderingImpl::PopObjectType();
-		return ret;
-	}
-
-	static int SetObjectUniform(lua_State* L) {
-		LuaObjectRenderingImpl::PushObjectType(T);
-		const int ret = LuaObjectRenderingImpl::SetObjectUniform(L);
 		LuaObjectRenderingImpl::PopObjectType();
 		return ret;
 	}
