@@ -66,9 +66,9 @@ class LuaMatShader {
 
 		static int Compare(const LuaMatShader& a, const LuaMatShader& b);
 
-		bool operator <(const LuaMatShader& mt) const { return (Compare(*this, mt)  < 0); }
-		bool operator==(const LuaMatShader& mt) const { return (Compare(*this, mt) == 0); }
-		bool operator!=(const LuaMatShader& mt) const { return (Compare(*this, mt) != 0); }
+		bool operator<(const LuaMatShader& mt) const { return (Compare(*this, mt)  < 0); }
+		bool operator==(const LuaMatShader& mt) const = delete;
+		bool operator!=(const LuaMatShader& mt) const = delete;
 
 		bool ValidForPass(Pass pass) const { return (pass != LUASHADER_PASS_DFR || type != LUASHADER_NONE); }
 
@@ -192,9 +192,9 @@ class LuaMaterial {
 
 		static int Compare(const LuaMaterial& a, const LuaMaterial& b);
 
-		bool operator <(const LuaMaterial& m) const { return (Compare(*this, m)  < 0); }
-		bool operator==(const LuaMaterial& m) const { return (Compare(*this, m) == 0); }
-		bool operator!=(const LuaMaterial& m) const { return (Compare(*this, m) != 0); }
+		bool operator<(const LuaMaterial& m) const { return (Compare(*this, m) < 0); }
+		bool operator==(const LuaMaterial& m) const = delete;
+		bool operator!=(const LuaMaterial& m) const = delete;
 
 	public:
 		LuaMatType type;
@@ -261,7 +261,7 @@ class LuaMatBin : public LuaMaterial {
 	private:
 		LuaMatBin(const LuaMaterial& _mat) : LuaMaterial(_mat), refCount(0) {}
 		LuaMatBin(const LuaMatBin&);
-		LuaMatBin& operator=(const LuaMatBin&);
+		LuaMatBin& operator=(const LuaMatBin&) = delete;
 
 	private:
 		int refCount;

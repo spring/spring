@@ -114,13 +114,10 @@ int LuaMatShader::Compare(const LuaMatShader& a, const LuaMatShader& b)
 	if (a.type != b.type)
 		return ((a.type > b.type) * 2 - 1);
 
-	if (a.type == LUASHADER_GL) {
-		if (a.openglID != b.openglID) {
-			return ((a.openglID > b.openglID) * 2 - 1);
-		}
+	if (a.openglID != b.openglID) {
+		return ((a.openglID > b.openglID) * 2 - 1);
 	}
 
-	// LUASHADER_NONE and LUASHADER_SHADOWMAP ignore openglID
 	return 0;
 }
 
@@ -387,7 +384,7 @@ void LuaMaterial::Execute(const LuaMaterial& prev, bool deferredPass) const
 
 int LuaMaterial::Compare(const LuaMaterial& a, const LuaMaterial& b)
 {
-	// NOTE: the order of the comparisons is important
+	// NOTE: the order of the comparisons is important (it's sorted by the GL perf cost of switching those states)
 	int cmp = 0;
 
 	if (a.type != b.type)
@@ -401,30 +398,17 @@ int LuaMaterial::Compare(const LuaMaterial& a, const LuaMaterial& b)
 	if ((cmp = LuaMatShader::Compare(a.shaders[LuaMatShader::LUASHADER_PASS_DFR], b.shaders[LuaMatShader::LUASHADER_PASS_DFR])) != 0)
 		return cmp;
 
-
-	const int maxTex = std::min(a.texCount, b.texCount);
-
-	for (int t = 0; t < maxTex; t++) {
+	for (int t = 0; t < LuaMatTexture::maxTexUnits; t++) {
 		if ((cmp = LuaMatTexture::Compare(a.textures[t], b.textures[t])) != 0) {
 			return cmp;
 		}
 	}
-
-
-	if (a.texCount != b.texCount)
-		return ((a.texCount > b.texCount) * 2 - 1);
-
-	if (a.preList != b.preList)
-		return ((a.preList > b.preList) * 2 - 1);
-	if (a.postList != b.postList)
-		return ((a.postList > b.postList) * 2 - 1);
 
 	if (a.useCamera != b.useCamera)
 		return ((!a.useCamera) * 2 - 1);
 
 	if (a.cullingMode != b.cullingMode)
 		return ((a.cullingMode > b.cullingMode) * 2 - 1);
-
 
 	return 0;
 }
@@ -579,11 +563,9 @@ void LuaMatRef::Reset()
 
 LuaMatRef& LuaMatRef::operator=(const LuaMatRef& mr)
 {
-	if (bin != mr.bin) {
-		if (bin != NULL) { bin->UnRef(); }
-		bin = mr.bin;
-		if (bin != NULL) { bin->Ref(); }
-	}
+	if (mr.bin != NULL) { mr.bin->Ref();   }
+	if (   bin != NULL) {    bin->UnRef(); }
+	bin = mr.bin;
 	return *this;
 }
 
