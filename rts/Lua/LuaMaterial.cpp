@@ -636,8 +636,6 @@ LuaMatHandler::LuaMatHandler()
 		setupDrawStateFuncs[i] = nullptr;
 		resetDrawStateFuncs[i] = nullptr;
 	}
-
-	prevMat = NULL;
 }
 
 
@@ -707,9 +705,6 @@ void LuaMatHandler::FreeBin(LuaMatBin* bin)
 	LuaMatBinSet& binSet = binTypes[bin->type];
 	LuaMatBinSet::iterator it = binSet.find(bin);
 	if (it != binSet.end()) {
-		if (*it != bin) {
-			LOG_L(L_WARNING, "LuaMatHandler::FreeBin pointer mismatch");
-		}
 		delete bin;
 		binSet.erase(it);
 	}

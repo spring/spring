@@ -80,20 +80,6 @@ class LuaMatShader {
 		GLuint openglID;
 };
 
-/******************************************************************************/
-
-class LuaMatTexSet {
-	public:
-		static const int maxTexUnits = 16;
-
-	public:
-		LuaMatTexSet() : texCount(0) {}
-
-	public:
-		int texCount;
-		LuaMatTexture textures[LuaMatTexture::maxTexUnits];
-};
-
 
 /******************************************************************************/
 
@@ -197,15 +183,17 @@ class LuaMaterial {
 		bool operator!=(const LuaMaterial& m) const = delete;
 
 	public:
+		static const int MAX_TEX_UNITS = 16;
+
 		LuaMatType type;
 
 		int order; // for manually adjusting rendering order
 		int texCount;
 
 		// [0] := standard, [1] := deferred
-		LuaMatShader shaders[LuaMatShader::LUASHADER_PASS_CNT];
+		LuaMatShader   shaders[LuaMatShader::LUASHADER_PASS_CNT];
 		LuaMatUniforms uniforms[LuaMatShader::LUASHADER_PASS_CNT];
-		LuaMatTexture textures[LuaMatTexture::maxTexUnits];
+		LuaMatTexture  textures[MAX_TEX_UNITS];
 
 		GLenum cullingMode;
 
@@ -318,7 +306,6 @@ class LuaMatHandler {
 
 	private:
 		LuaMatBinSet binTypes[LUAMAT_TYPE_COUNT];
-		LuaMaterial* prevMat;
 
 	public:
 		static LuaMatHandler handler;
