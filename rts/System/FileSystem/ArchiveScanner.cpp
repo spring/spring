@@ -355,21 +355,7 @@ CArchiveScanner::CArchiveScanner()
 		ReadCacheData(cacheFolder + "ArchiveCache.lua");
 	}
 
-	const std::vector<std::string>& datadirs = dataDirLocater.GetDataDirPaths();
-	std::vector<std::string> scanDirs;
-	for (auto d = datadirs.rbegin(); d != datadirs.rend(); ++d) {
-		scanDirs.push_back(*d + "maps");
-		scanDirs.push_back(*d + "base");
-		scanDirs.push_back(*d + "games");
-		scanDirs.push_back(*d + "packages");
-	}
-
-	// ArchiveCache has been parsed at this point --> archiveInfos is populated
-#if !defined(DEDICATED) && !defined(UNITSYNC)
-	ScopedOnceTimer foo("CArchiveScanner");
-#endif
-	ScanDirs(scanDirs, !configHandler->GetBool("FastArchiveScan"));
-	WriteCacheData(GetFilepath());
+	ScanAllDirs();
 }
 
 
@@ -384,6 +370,24 @@ CArchiveScanner::~CArchiveScanner()
 const std::string& CArchiveScanner::GetFilepath() const
 {
 	return cachefile;
+}
+
+void CArchiveScanner::ScanAllDirs()
+{
+	const std::vector<std::string>& datadirs = dataDirLocater.GetDataDirPaths();
+	std::vector<std::string> scanDirs;
+	for (auto d = datadirs.rbegin(); d != datadirs.rend(); ++d) {
+		scanDirs.push_back(*d + "maps");
+		scanDirs.push_back(*d + "base");
+		scanDirs.push_back(*d + "games");
+		scanDirs.push_back(*d + "packages");
+	}
+	// ArchiveCache has been parsed at this point --> archiveInfos is populated
+#if !defined(DEDICATED) && !defined(UNITSYNC)
+	ScopedOnceTimer foo("CArchiveScanner");
+#endif
+	ScanDirs(scanDirs, !configHandler->GetBool("FastArchiveScan"));
+	WriteCacheData(GetFilepath());
 }
 
 

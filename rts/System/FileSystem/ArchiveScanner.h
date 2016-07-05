@@ -118,6 +118,7 @@ public:
 	/// like GetArchiveCompleteChecksum, throws exception if mismatch
 	void CheckArchive(const std::string& name, unsigned checksum);
 	void ScanArchive(const std::string& fullName, bool checksum = false);
+	void ScanAllDirs();
 
 	std::string ArchiveFromName(const std::string& s) const;
 	std::string NameFromArchive(const std::string& s) const;
