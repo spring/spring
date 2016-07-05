@@ -314,7 +314,7 @@ void LuaMaterial::Execute(const LuaMaterial& prev, bool deferredPass) const
 	shaders[deferredPass].Execute(prev.shaders[deferredPass], deferredPass);
 	uniforms[deferredPass].Execute();
 
-	for (int t = texCount - 1; t >= 0; t--) {
+	for (int t = std::max(texCount, prev.texCount) - 1; t >= 0; t--) {
 		glActiveTexture(GL_TEXTURE0 + t);
 		prev.textures[t].Unbind();
 		textures[t].Bind();
