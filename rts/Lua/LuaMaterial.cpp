@@ -314,11 +314,14 @@ void LuaMaterial::Execute(const LuaMaterial& prev, bool deferredPass) const
 	shaders[deferredPass].Execute(prev.shaders[deferredPass], deferredPass);
 	uniforms[deferredPass].Execute();
 
-	for (int t = std::max(texCount, prev.texCount) - 1; t >= 0; t--) {
-		glActiveTexture(GL_TEXTURE0 + t);
-		prev.textures[t].Unbind();
-		textures[t].Bind();
+	for (int t = 0; t < std::max(texCount, prev.texCount); ++t) {
+		if (prev.textures[t] != textures[t]) {
+			glActiveTexture(GL_TEXTURE0 + t);
+			prev.textures[t].Unbind();
+			textures[t].Bind();
+		}
 	}
+	glActiveTexture(GL_TEXTURE0);
 
 	if (useCamera != prev.useCamera) {
 		if (useCamera) {
@@ -810,10 +813,8 @@ LuaMatHandler::LuaMatHandler()
 LuaMatHandler::~LuaMatHandler()
 {
 	for (int m = 0; m < LUAMAT_TYPE_COUNT; m++) {
-		LuaMatBinSet& binSet = binTypes[LuaMatType(m)];
-		LuaMatBinSet::iterator it;
-		for (it = binSet.begin(); it != binSet.end(); ++it) {
-			delete *it;
+		for (LuaMatBin* bin: binTypes[LuaMatType(m)]) {
+			delete bin;
 		}
 	}
 }
@@ -847,12 +848,7 @@ void LuaMatHandler::ClearBins(LuaObjType objType, LuaMatType matType)
 	if ((matType < 0) || (matType >= LUAMAT_TYPE_COUNT))
 		return;
 
-	LuaMatBinSet& binSet = binTypes[matType];
-	LuaMatBinSet::iterator it;
-
-	for (it = binSet.begin(); it != binSet.end(); ++it) {
-		LuaMatBin* bin = *it;
-
+	for (LuaMatBin* bin: binTypes[matType]) {
 		switch (objType) {
 			case LUAOBJ_UNIT   : { bin->ClearUnits   (); } break;
 			case LUAOBJ_FEATURE: { bin->ClearFeatures(); } break;
@@ -886,12 +882,9 @@ void LuaMatHandler::PrintBins(const string& indent, LuaMatType type) const
 	if ((type < 0) || (type >= LUAMAT_TYPE_COUNT)) {
 		return;
 	}
-	const LuaMatBinSet& binSet = binTypes[type];
-	LuaMatBinSet::const_iterator it;
 	int num = 0;
-	LOG("%sBINCOUNT = " _STPF_, indent.c_str(), binSet.size());
-	for (it = binSet.begin(); it != binSet.end(); ++it) {
-		LuaMatBin* bin = *it;
+	LOG("%sBINCOUNT = " _STPF_, indent.c_str(), binTypes[type].size());
+	for (LuaMatBin* bin: binTypes[type]) {
 		LOG("%sBIN %i:", indent.c_str(), num);
 		bin->Print(indent + "    ");
 		num++;
@@ -902,7 +895,7 @@ void LuaMatHandler::PrintBins(const string& indent, LuaMatType type) const
 void LuaMatHandler::PrintAllBins(const string& indent) const
 {
 	for (int m = 0; m < LUAMAT_TYPE_COUNT; m++) {
-		string newIndent = indent + GetMatTypeName(LuaMatType(m));
+		std::string newIndent = indent + GetMatTypeName(LuaMatType(m));
 		newIndent += "  ";
 		PrintBins(newIndent, LuaMatType(m));
 	}

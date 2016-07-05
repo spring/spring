@@ -54,8 +54,6 @@ class LuaMatRef {
 		void AddUnit(CSolidObject*);
 		void AddFeature(CSolidObject*);
 
-		void Execute() const;
-
 		inline bool IsActive() const { return (bin != nullptr); }
 
 		inline const LuaMatBin* GetBin() const { return bin; }
@@ -81,8 +79,6 @@ class LuaObjectLODMaterial {
 
 		inline void AddUnit(CSolidObject* o) { matref.AddUnit(o); }
 		inline void AddFeature(CSolidObject* o) { matref.AddFeature(o); }
-
-		inline void ExecuteMaterial() const { matref.Execute(); }
 
 	public:
 		GLuint preDisplayList;
