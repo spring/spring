@@ -113,6 +113,8 @@ public:
 	void Execute() const;
 	void ExecuteInstance(const CSolidObject* o, const float2 alpha) const;
 
+	static int Compare(const LuaMatUniforms& a, const LuaMatUniforms& b);
+
 public:
 	struct IUniform {
 		static_assert(GL_INVALID_INDEX == -1, "glGetUniformLocation is defined to return -1 (GL_INVALID_INDEX) for invalid names");
