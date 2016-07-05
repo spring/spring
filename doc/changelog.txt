@@ -30,7 +30,8 @@ Lua:
  - Add an optional weaponNum argument to SetUnitTarget.
  - Update shader errorlog even if compilation was successful
  - Remove updateMatrix argument in Spring.UnitScript.{Move,Turn} as matrices will be automatically updated if necessary.
- - Add new Spring.Start callout for launching a new Spring instance without terminating the existing one.
+ - Add new Spring.Start callout for launching a new Spring instance without terminating the existing one. See Spring.Restart for parameters.
+ - Add new VFS.GetAvailableAIs([gameName] [, mapName])->{ai1, ai2, ...} callout for getting a list of all Spring AIs. The optional gameName and mapName parameters can be used to include game/map specific LuaAIs in the list.
 
 Save/Load:
  ! remove UseCREGSaveLoad and add /LuaSave which generates .slsf files
