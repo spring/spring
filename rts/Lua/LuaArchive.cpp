@@ -3,12 +3,13 @@
 #include "LuaArchive.h"
 
 #include "LuaInclude.h"
-#include "LuaHandle.h"
 #include "LuaHashString.h"
 #include "LuaUtils.h"
 
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/Util.h"
+
+#include <string>
 
 
 /******************************************************************************/

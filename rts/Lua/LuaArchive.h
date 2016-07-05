@@ -3,8 +3,6 @@
 #ifndef LUA_ARCHIVE_H
 #define LUA_ARCHIVE_H
 
-#include <string>
-
 struct lua_State;
 
 
