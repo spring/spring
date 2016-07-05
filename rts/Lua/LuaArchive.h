@@ -23,6 +23,8 @@ class LuaArchive {
 		static int GetArchiveReplaces(lua_State* L);
 
 		static int GetArchiveChecksum(lua_State* L);
+
+		static int GetAvailableAIs(lua_State* L);
 };
 
 

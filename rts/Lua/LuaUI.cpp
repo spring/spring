@@ -6,7 +6,6 @@
 
 #include "LuaUnsyncedCtrl.h"
 #include "LuaArchive.h"
-#include "LuaAI.h"
 #include "LuaCallInCheck.h"
 #include "LuaConstGL.h"
 #include "LuaConstCMD.h"
@@ -176,7 +175,6 @@ CLuaUI::CLuaUI()
 	    !AddEntriesToTable(L, "VFS",       LuaZipFileReader::PushUnsynced) ||
 	    !AddEntriesToTable(L, "VFS",       LuaZipFileWriter::PushUnsynced) ||
 	    !AddEntriesToTable(L, "VFS",         LuaArchive::PushEntries)      ||
-	    !AddEntriesToTable(L, "VFS",         LuaAI::PushEntries)           ||
 	    !AddEntriesToTable(L, "UnitDefs",    LuaUnitDefs::PushEntries)     ||
 	    !AddEntriesToTable(L, "WeaponDefs",  LuaWeaponDefs::PushEntries)   ||
 	    !AddEntriesToTable(L, "FeatureDefs", LuaFeatureDefs::PushEntries)  ||
