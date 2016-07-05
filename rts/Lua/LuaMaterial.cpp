@@ -373,10 +373,21 @@ int LuaMaterial::Compare(const LuaMaterial& a, const LuaMaterial& b)
 	if (a.cullingMode != b.cullingMode)
 		return ((a.cullingMode > b.cullingMode) * 2 - 1);
 
+
+	if (a.preList != b.preList)
+		return ((a.preList > b.preList) * 2 - 1);
+	if (a.postList != b.postList)
+		return ((a.postList > b.postList) * 2 - 1);
+
+	// have no influence on the performance cost
+	// still LuaMaterial/LuaMatBin are used in a std::set (:=LuaMatBinSet)
+	// and there there < operator is also used to detect equality (a == b iff !(a<b) && !(b<a))
+	// that's why need to check _all_ properties
 	if ((cmp = LuaMatUniforms::Compare(a.uniforms[LuaMatShader::LUASHADER_PASS_FWD], b.uniforms[LuaMatShader::LUASHADER_PASS_FWD])) != 0)
 		return cmp;
 	if ((cmp = LuaMatUniforms::Compare(a.uniforms[LuaMatShader::LUASHADER_PASS_DFR], b.uniforms[LuaMatShader::LUASHADER_PASS_DFR])) != 0)
 		return cmp;
+
 	return 0;
 }
 
@@ -416,6 +427,9 @@ int LuaMatUniforms::Compare(const LuaMatUniforms& a, const LuaMatUniforms& b)
 		return ((a.simFrame.loc > b.simFrame.loc) * 2 - 1);
 	if (a.visFrame.loc != b.visFrame.loc)
 		return ((a.visFrame.loc > b.visFrame.loc) * 2 - 1);
+
+	if (a.teamColor.loc != b.teamColor.loc)
+		return ((a.teamColor.loc > b.teamColor.loc) * 2 - 1);
 
 	return 0;
 }
@@ -817,8 +831,10 @@ LuaMatRef LuaMatHandler::GetRef(const LuaMaterial& mat)
 	LuaMatBinSet& binSet = binTypes[mat.type];
 	LuaMatBinSet::iterator it = binSet.find(fakeBin);
 
-	if (it != binSet.end())
+	if (it != binSet.end()) {
+		assert(*fakeBin == **it);
 		return LuaMatRef(*it);
+	}
 
 	LuaMatBin* bin = new LuaMatBin(mat);
 	binSet.insert(bin);

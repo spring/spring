@@ -224,8 +224,7 @@ class LuaMaterial {
 		static int Compare(const LuaMaterial& a, const LuaMaterial& b);
 
 		bool operator<(const LuaMaterial& m) const { return (Compare(*this, m) < 0); }
-		bool operator==(const LuaMaterial& m) const = delete;
-		bool operator!=(const LuaMaterial& m) const = delete;
+		bool operator==(const LuaMaterial& m) const { return (Compare(*this, m) == 0); }
 
 	public:
 		static const int MAX_TEX_UNITS = 16;

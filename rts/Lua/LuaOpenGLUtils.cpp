@@ -931,6 +931,9 @@ int LuaMatTexture::Compare(const LuaMatTexture& a, const LuaMatTexture& b)
 	if (a.enable != b.enable)
 		return a.enable ? -1 : +1;
 
+	if (a.enableTexParams != b.enableTexParams)
+		return a.enableTexParams ? -1 : +1;
+
 	return 0;
 }
 
