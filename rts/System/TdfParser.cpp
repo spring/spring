@@ -80,7 +80,7 @@ bool TdfParser::TdfSection::remove(const std::string& key, bool caseSensitive)
 		const std::string lowerKey = StringToLower(key);
 		for (valueMap_t::iterator it = values.begin(); it != values.end(); ) {
 			if (StringToLower(it->first) == lowerKey) {
-				it = set_erase(values, it);
+				it = values.erase(it);
 				ret = true;
 			} else {
 				++it;

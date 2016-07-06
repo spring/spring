@@ -70,4 +70,6 @@ void ClientSetup::LoadFromStartScript(const std::string& setup)
 	if (file.SGetValue(autohostport, "GAME\\AutohostPort")) {
 		configHandler->SetString("AutohostPort", autohostport, true);
 	}
+
+	file.GetDef(saveFile, "", "GAME\\SaveFile");
 }

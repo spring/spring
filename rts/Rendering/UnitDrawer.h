@@ -3,11 +3,13 @@
 #ifndef UNIT_DRAWER_H
 #define UNIT_DRAWER_H
 
+#include <array>
 #include <vector>
-#include <string>
-#include <map>
+#include <unordered_map>
 
 #include "Rendering/GL/LightHandler.h"
+#include "Rendering/Models/3DModel.h"
+#include "Rendering/UnitDrawerState.hpp"
 #include "System/EventClient.h"
 #include "System/type2.h"
 
@@ -22,7 +24,7 @@ class CVertexArray;
 
 struct Command;
 struct BuildInfo;
-struct GhostSolidObject;
+struct SolidObjectGroundDecal;
 struct IUnitDrawerState;
 
 namespace icon {
@@ -31,6 +33,21 @@ namespace icon {
 namespace GL {
 	struct GeometryBuffer;
 }
+
+
+struct GhostSolidObject {
+	SolidObjectGroundDecal* decal; //FIXME defined in legacy decal handler with a lot legacy stuff
+	S3DModel* model;
+
+	float3 pos;
+	float3 dir;
+
+	int facing; //FIXME replaced with dir-vector just legacy decal drawer uses this
+	int team;
+};
+
+
+
 
 class CUnitDrawer: public CEventClient
 {
@@ -42,8 +59,7 @@ public:
 			eventName == "UnitCloaked"            || eventName == "UnitDecloaked"        ||
 			eventName == "UnitEnteredRadar"       || eventName == "UnitEnteredLos"       ||
 			eventName == "UnitLeftRadar"          || eventName == "UnitLeftLos"          ||
-			eventName == "PlayerChanged"          || eventName == "SunChanged"           ||
-			eventName == "SunLightingChanged";
+			eventName == "PlayerChanged"          || eventName == "SunChanged";
 	}
 	bool GetFullRead() const { return true; }
 	int GetReadAllyTeam() const { return AllAccessTeam; }
@@ -60,8 +76,7 @@ public:
 	void UnitDecloaked(const CUnit* unit);
 
 	void PlayerChanged(int playerNum);
-	void SunChanged(const float3& sunDir);
-	void SunLightingChanged();
+	void SunChanged();
 
 public:
 	CUnitDrawer();
@@ -77,10 +92,10 @@ public:
 	void SetDrawForwardPass(bool b) { drawForward = b; }
 	void SetDrawDeferredPass(bool b) { drawDeferred = b; }
 
+	static void DrawUnitModel(const CUnit* unit, bool noLuaCall);
+	static void DrawUnitModelBeingBuiltShadow(const CUnit* unit, bool noLuaCall);
+	static void DrawUnitModelBeingBuiltOpaque(const CUnit* unit, bool noLuaCall);
 	// note: make these static?
-	void DrawUnitModel(const CUnit* unit, bool noLuaCall);
-	void DrawUnitModelBeingBuilt(const CUnit* unit, bool noLuaCall);
-
 	void DrawUnitNoTrans(const CUnit* unit, unsigned int preList, unsigned int postList, bool lodCall, bool noLuaCall);
 	void DrawUnit(const CUnit* unit, unsigned int preList, unsigned int postList, bool lodCall, bool noLuaCall);
 
@@ -101,9 +116,9 @@ public:
 
 
 	void SetupOpaqueDrawing(bool deferredPass);
-	void ResetOpaqueDrawing(bool deferredPass) const;
+	void ResetOpaqueDrawing(bool deferredPass);
 	void SetupAlphaDrawing(bool deferredPass);
-	void ResetAlphaDrawing(bool deferredPass) const;
+	void ResetAlphaDrawing(bool deferredPass);
 
 
 	void SetUnitDrawDist(float dist);
@@ -112,12 +127,8 @@ public:
 	bool ShowUnitBuildSquare(const BuildInfo& buildInfo);
 	bool ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vector<Command>& commands);
 
-	void CreateSpecularFace(unsigned int glType, int size, float3 baseDir, float3 xDif, float3 yDif, float3 sunDir, float exponent, float3 sunColor);
-
-	static void DrawIndividualDefOpaque(const SolidObjectDef* objectDef, int teamID, bool rawState, bool toScreen = false);
-	static void DrawIndividualDefAlpha(const SolidObjectDef* objectDef, int teamID, bool rawState, bool toScreen = false);
-
 	void DrawUnitMiniMapIcons() const;
+
 
 	const std::vector<CUnit*>& GetUnsortedUnits() const { return unsortedUnits; }
 
@@ -131,7 +142,7 @@ public:
 	      GL::GeometryBuffer* GetGeometryBuffer()       { return geomBuffer; }
 
 	const IUnitDrawerState* GetWantedDrawerState(bool alphaPass) const;
-
+	      IUnitDrawerState* GetDrawerState(unsigned int idx) { return unitDrawerStates[idx]; }
 
 	bool DrawForward() const { return drawForward; }
 	bool DrawDeferred() const { return drawDeferred; }
@@ -180,10 +191,10 @@ private:
 
 	void DrawGhostedBuildings(int modelType);
 
-
-	void DrawUnitIcons(bool drawReflection);
+public:
+	void DrawUnitIcons();
 	void DrawUnitMiniMapIcon(const CUnit* unit, CVertexArray* va) const;
-
+private:
 	void UpdateUnitMiniMapIcon(const CUnit* unit, bool forced, bool killed);
 	void UpdateUnitIconState(CUnit* unit);
 
@@ -205,6 +216,9 @@ public:
 	static void PushModelRenderState(const CSolidObject* o);
 	static void PopModelRenderState(const CSolidObject* o);
 
+	static void DrawIndividualDefOpaque(const SolidObjectDef* objectDef, int teamID, bool rawState, bool toScreen = false);
+	static void DrawIndividualDefAlpha(const SolidObjectDef* objectDef, int teamID, bool rawState, bool toScreen = false);
+
 	// needed by FFP drawer-state
 	static void SetupBasicS3OTexture0();
 	static void SetupBasicS3OTexture1();
@@ -219,8 +233,7 @@ public:
 	float unitDrawDistSqr;
 	float unitIconDist;
 	float iconLength;
-
-	float3 camNorm; ///< used to draw far-textures
+	float sqCamDistToGroundForIcons;
 
 	// .x := regular unit alpha
 	// .y := ghosted unit alpha (out of radar)
@@ -234,36 +247,38 @@ private:
 
 	bool advShading;
 
+	bool drawBeingBuiltModels;
 	bool useDistToGroundForIcons;
-	float sqCamDistToGroundForIcons;
 
 private:
-	std::vector<IModelRenderContainer*> opaqueModelRenderers;
-	std::vector<IModelRenderContainer*> alphaModelRenderers;
+	typedef void (*DrawModelFunc)(const CUnit*, bool);
+
+	std::array<IModelRenderContainer*, MODELTYPE_OTHER> opaqueModelRenderers;
+	std::array<IModelRenderContainer*, MODELTYPE_OTHER> alphaModelRenderers;
 
 	/// units being rendered (note that this is a completely
 	/// unsorted set of 3DO, S3O, opaque, and cloaked models!)
 	std::vector<CUnit*> unsortedUnits;
 
 	/// AI unit ghosts
-	std::vector< std::vector<TempDrawUnit> > tempOpaqueUnits;
-	std::vector< std::vector<TempDrawUnit> > tempAlphaUnits;
+	std::array< std::vector<TempDrawUnit>, MODELTYPE_OTHER> tempOpaqueUnits;
+	std::array< std::vector<TempDrawUnit>, MODELTYPE_OTHER> tempAlphaUnits;
 
 	/// buildings that were in LOS_PREVLOS when they died and not in LOS since
-	std::vector<std::vector<GhostSolidObject*> > deadGhostBuildings;
+	std::array<std::vector<GhostSolidObject*>, MODELTYPE_OTHER> deadGhostBuildings;
 	/// buildings that left LOS but are still alive
-	std::vector<std::vector<CUnit*> > liveGhostBuildings;
+	std::array<std::vector<CUnit*>, MODELTYPE_OTHER> liveGhostBuildings;
 
 	/// units that are only rendered as icons this frame
 	std::vector<CUnit*> iconUnits;
 
-	std::vector<std::vector<CUnit*> > unitRadarIcons;
-	std::map<icon::CIconData*, std::vector<const CUnit*> > unitsByIcon;
+	std::unordered_map<icon::CIconData*, std::vector<const CUnit*> > unitsByIcon;
 
 	// [0] := fallback shader-less rendering path
 	// [1] := default shader-driven rendering path
 	// [2] := currently selected state
-	std::vector<IUnitDrawerState*> unitDrawerStates;
+	std::array<IUnitDrawerState*, DRAWER_STATE_CNT> unitDrawerStates;
+	std::array<DrawModelFunc, 3> drawModelFuncs;
 
 private:
 	GL::LightHandler lightHandler;

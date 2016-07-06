@@ -62,7 +62,10 @@ CR_REG_METADATA(DynDamageArray, (
 	CR_MEMBER(damageAreaOfEffect),
 	CR_MEMBER(edgeEffectiveness),
 	CR_MEMBER(explosionSpeed),
-	CR_MEMBER(refCount)
+	CR_MEMBER(refCount),
+	CR_MEMBER(fromDef),
+
+	CR_POSTLOAD(PostLoad)
 ))
 
 DynDamageArray::DynDamageArray(float damage)
@@ -76,11 +79,26 @@ DynDamageArray::DynDamageArray(float damage)
 	, edgeEffectiveness(0.0f)
 	, explosionSpeed(1.0f) // always overwritten
 	, refCount(1)
+	, fromDef(false)
 { }
 
 DynDamageArray::~DynDamageArray()
 {
 	assert(refCount == 1);
+}
+
+void DynDamageArray::PostLoad()
+{
+	// weapondefs aren't serialized but if their damages tables are in use
+	// these pointers will be serialized.
+	// so during loading, a duplicate of the damages table is created
+	// with a wrong refCount (it still counts the ref in the weaponDef).
+	// that's why we need to decrement it and mark that we aren't a def table
+	if (fromDef) {
+		--refCount;
+		fromDef = false;
+	}
+	assert(refCount > 0);
 }
 
 DamageArray DynDamageArray::GetDynamicDamages(const float3& startPos, const float3& curPos) const
@@ -141,12 +159,14 @@ void DynDamageArray::DecRef(const DynDamageArray* dda)
 
 DynDamageArray* DynDamageArray::GetMutable(const DynDamageArray*& dda)
 {
-	if (dda->refCount == 1)
-		return const_cast<DynDamageArray*>(dda);
+	if (dda != nullptr) {
+		if (dda->refCount == 1)
+			return const_cast<DynDamageArray*>(dda);
 
-	//We're still in use by someone, so copy and replace
-	//pointer
-	DecRef(dda);
+		//We're still in use by someone, so copy and replace
+		//pointer
+		DecRef(dda);
+	}
 
 	DynDamageArray* newDDA = new DynDamageArray(*dda);
 	dda = newDDA;

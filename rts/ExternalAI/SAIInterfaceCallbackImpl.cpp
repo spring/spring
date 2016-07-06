@@ -283,7 +283,7 @@ EXPORT(bool) aiInterfaceCallback_DataDirs_locatePath(int interfaceId, char* path
 
 	interfaceRelPath += (ps + interfaceShortName);
 	interfaceRelPath += (ps + interfaceVersion);
-	interfaceRelPath += (ps + relPath);
+	interfaceRelPath += (ps + std::string(relPath));
 
 	return aiInterfaceCallback_DataDirs_Roots_locatePath(interfaceId, path, pathMaxSize, interfaceRelPath.c_str(), writeable, create, dir);
 }

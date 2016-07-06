@@ -6,18 +6,10 @@
 extern "C" {
 #endif
 
-// We need this because newer versions of GL/gl.h
-// undefine GLAPI in the end
-#ifndef GLAPI
-# ifdef _WIN32
-#  define GLAPI __stdcall
-# else
-#  define GLAPI
-# endif
-# define __DEFINED_GLAPI
+#ifdef GLAPI
+# undef GLAPI
 #endif
-
-//#include <stdio.h>
+#define GLAPI
 
 // from gl.h & glext.h
 GLAPI void APIENTRY glClientActiveTextureARB(GLenum texture) {}
@@ -457,7 +449,7 @@ GLAPI void APIENTRY glShadeModel(GLenum mode) {}
 GLAPI void APIENTRY glHint(GLenum target, GLenum mode) {}
 GLAPI void APIENTRY glTexEnvf(GLenum target, GLenum pname, GLfloat param) {}
 
-GLAPI const APIENTRY GLubyte * glGetString(GLenum name) {
+GLAPI const GLubyte * APIENTRY glGetString(GLenum name) {
    return (const GLubyte*) "";
 }
 

@@ -48,7 +48,7 @@ std::string CreateMinimalSetup(const std::string& game, const std::string& map)
 
 	std::ostringstream str;
 	setup.print(str);
-	printf("%s\n", str.str().c_str());
+	LOG_L(L_DEBUG, "%s", str.str().c_str());
 	return str.str();
 }
 

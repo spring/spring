@@ -11,6 +11,7 @@
 #include "Map/ReadMap.h"
 #include "System/myMath.h"
 #include "Sim/Features/Feature.h"
+#include "Sim/Features/FeatureDef.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/ModInfo.h"
@@ -55,8 +56,7 @@ CR_REG_METADATA(CBuilder, (
 	CR_MEMBER(terraformCenter),
 	CR_MEMBER(terraformRadius),
 	CR_MEMBER(terraformType),
-	CR_MEMBER(nanoPieceCache),
-	CR_POSTLOAD(PostLoad)
+	CR_MEMBER(nanoPieceCache)
 ))
 
 
@@ -96,16 +96,6 @@ CBuilder::CBuilder():
 
 CBuilder::~CBuilder()
 {
-}
-
-void CBuilder::PostLoad()
-{
-	if (curResurrect)  ScriptStartBuilding(curResurrect->pos, false);
-	if (curBuild)      ScriptStartBuilding(curBuild->pos, false);
-	if (curCapture)    ScriptStartBuilding(curCapture->pos, false);
-	if (curReclaim)    ScriptStartBuilding(curReclaim->pos, false);
-	if (terraforming)  ScriptStartBuilding(terraformCenter, false);
-	if (helpTerraform) ScriptStartBuilding(helpTerraform->terraformCenter, false);
 }
 
 

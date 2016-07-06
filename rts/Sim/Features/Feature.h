@@ -14,6 +14,7 @@
 
 #define TREE_RADIUS 20
 
+struct SolidObjectDef;
 struct FeatureDef;
 struct FeatureLoadParams;
 class CUnit;
@@ -41,7 +42,8 @@ public:
 			 impulseMask = OnesVector;
 		}
 
-		void SetMoveMask(const float3& moveMask) { movementMask = moveMask; }
+		void SetMovementMask(const float3& movMask) { movementMask = movMask; }
+		void SetVelocityMask(const float3& velMask) { velocityMask = velMask; }
 
 	public:
 		// if true, feature will not apply any unwanted position
@@ -59,11 +61,22 @@ public:
 		float3 accVector;
 	};
 
+	enum {
+		FD_NODRAW_FLAG = 0, // must be 0
+		FD_OPAQUE_FLAG = 1,
+		FD_ALPHAF_FLAG = 2,
+		FD_SHADOW_FLAG = 3,
+		FD_FARTEX_FLAG = 4,
+	};
+
+
 	/**
 	 * Pos of quad must not change after this.
 	 * This will add this to the FeatureHandler.
 	 */
 	void Initialize(const FeatureLoadParams& params);
+
+	const SolidObjectDef* GetDef() const { return ((const SolidObjectDef*) def); }
 
 	int GetBlockingMapID() const;
 
@@ -80,7 +93,9 @@ public:
 	bool Update();
 	bool UpdatePosition();
 	bool UpdateVelocity(const float3& dragAccel, const float3& gravAccel, const float3& movMask, const float3& velMask);
-	void UpdateTransform() { transMatrix = CMatrix44f(pos, -rightdir, updir, frontdir); }
+
+	void SetTransform(const CMatrix44f& m, bool synced) { transMatrix[synced] = m; }
+	void UpdateTransform(const float3& p, bool synced) { transMatrix[synced] = std::move(CMatrix44f(p, -rightdir, updir, frontdir)); }
 	void UpdateTransformAndPhysState();
 	void UpdateQuadFieldPosition(const float3& moveVec);
 
@@ -95,15 +110,13 @@ public:
 	// NOTE:
 	//   unlike CUnit which recalculates the matrix on each call
 	//   (and uses the synced and error args) CFeature caches it
-	//   this matrix is identical in synced and unsynced context!
-	CMatrix44f GetTransformMatrix(const bool synced = false) const final {  return transMatrix; }
-	const CMatrix44f& GetTransformMatrixRef() const { return transMatrix; }
-	void SetTransform(const CMatrix44f& m) { transMatrix = m; }
+	CMatrix44f GetTransformMatrix(const bool synced = false) const final { return transMatrix[synced]; }
+	const CMatrix44f& GetTransformMatrixRef(const bool synced = false) const { return transMatrix[synced]; }
+
 private:
 	static int ChunkNumber(float f);
 
 public:
-	int defID;
 
 	/**
 	 * This flag is used to stop a potential exploit involving tripping
@@ -123,6 +136,7 @@ public:
 
 	/// which drawQuad we are part of
 	int drawQuad;
+	/// one of FD_*_FLAG
 	int drawFlag;
 
 	float drawAlpha;
@@ -145,7 +159,8 @@ public:
 private:
 	void PostLoad();
 
-	CMatrix44f transMatrix;
+	// [0] := unsynced, [1] := synced
+	CMatrix44f transMatrix[2];
 };
 
 #endif // _FEATURE_H

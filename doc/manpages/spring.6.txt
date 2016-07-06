@@ -296,7 +296,7 @@ ifndef::DEDICATED[spring-dedicated(6)]
 Homepage
 --------
 More information about Spring can be found at
-link: http://springrts.com
+link: https://springrts.com
 
 Author
 ------

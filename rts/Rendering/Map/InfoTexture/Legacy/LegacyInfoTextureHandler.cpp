@@ -368,6 +368,8 @@ bool CLegacyInfoTextureHandler::UpdateExtraTexture(BaseGroundDrawMode texDrawMod
 				const int pwr2mapx = mapDims.pwr2mapx >> (-lowRes);
 				const int losMipLevel = losHandler->los.mipLevel + lowRes;
 				const int airMipLevel = losHandler->airLos.mipLevel + lowRes;
+				const int radarMipLevel = losHandler->radar.mipLevel + lowRes;
+				const int jammerMipLevel = losHandler->jammer.mipLevel + lowRes;
 
 				for (int y = starty; y < endy; ++y) {
 					for (int x = 0; x < endx; ++x) {
@@ -380,8 +382,8 @@ bool CLegacyInfoTextureHandler::UpdateExtraTexture(BaseGroundDrawMode texDrawMod
 							totalLos = inLos + inAir;
 						}
 
-						const int inRadar = InterpolateLos(myRadar, losHandler->radar.size, 3 + lowRes, 255, pos);
-						const int inJam   = (totalLos == 255) ? InterpolateLos(myJammer, losHandler->jammer.size, 3 + lowRes, 255, pos) : 0;
+						const int inRadar = InterpolateLos(myRadar, losHandler->radar.size, radarMipLevel, 255, pos);
+						const int inJam   = (totalLos == 255) ? InterpolateLos(myJammer, losHandler->jammer.size, jammerMipLevel, 255, pos) : 0;
 
 						const int a = ((y * pwr2mapx) + x) * 4 - offset;
 

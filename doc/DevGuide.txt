@@ -1,2 +1,2 @@
 For a guide Howto start in Spring Development, see
-http://springrts.com/wiki/Development:Getting_Started
+https://springrts.com/wiki/Development:Getting_Started

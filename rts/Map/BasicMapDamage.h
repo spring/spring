@@ -14,7 +14,6 @@ class CBasicMapDamage : public IMapDamage
 {
 public:
 	CBasicMapDamage();
-	~CBasicMapDamage();
 
 	void Explosion(const float3& pos, float strength, float radius);
 	void RecalcArea(int x1, int x2, int y1, int y2);
@@ -34,17 +33,21 @@ private:
 
 	struct Explo {
 		float3 pos;
+
 		float strength;
 		float radius;
-		std::vector<float> squares;
-		std::vector<ExploBuilding> buildings;
+
 		int ttl;
 		int x1, x2, y1, y2;
+
+		std::vector<float> squares;
+		std::vector<ExploBuilding> buildings;
 	};
 
-	std::deque<Explo*> explosions;
+	std::deque<Explo> explosions;
 
 	static const unsigned int CRATER_TABLE_SIZE = 200;
+	static const unsigned int EXPLOSION_LIFETIME = 10;
 
 	float craterTable[CRATER_TABLE_SIZE + 1];
 	float invHardness[/*CMapInfo::NUM_TERRAIN_TYPES*/ 256];

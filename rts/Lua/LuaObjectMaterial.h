@@ -27,7 +27,7 @@ enum LuaObjType {
 	LUAOBJ_LAST    = 2,
 };
 
-enum LuaMatType {
+enum LuaMatType { //FIXME move deferred here
 	LUAMAT_ALPHA          = 0,
 	LUAMAT_OPAQUE         = 1,
 	LUAMAT_ALPHA_REFLECT  = 2,
@@ -54,8 +54,6 @@ class LuaMatRef {
 		void AddUnit(CSolidObject*);
 		void AddFeature(CSolidObject*);
 
-		void Execute() const;
-
 		inline bool IsActive() const { return (bin != nullptr); }
 
 		inline const LuaMatBin* GetBin() const { return bin; }
@@ -65,37 +63,6 @@ class LuaMatRef {
 		
 	private:
 		LuaMatBin* bin; // can be NULL
-};
-
-
-/******************************************************************************/
-/******************************************************************************/
-
-class LuaMatShader;
-class LuaObjectUniforms {
-	public:
-		LuaObjectUniforms(): setUniforms(false), haveUniforms(false) {}
-
-		void SetLocs(const LuaMatShader* s);
-		void SetData(unsigned int type, const void* data);
-		void Execute() const;
-
-		enum {
-			UNIFORM_SPEED,
-			UNIFORM_HEALTH,
-			UNIFORM_TCOLOR,
-		};
-		template<typename type, unsigned int size> struct Uniform {
-			GLint loc; type val[size];
-		};
-
-	public:
-		bool setUniforms;
-		bool haveUniforms;
-
-		// Uniform<float, 4> speedUniform;
-		// Uniform<float, 1> healthUniform;
-		Uniform<float, 4> tcolorUniform;
 };
 
 
@@ -113,18 +80,11 @@ class LuaObjectLODMaterial {
 		inline void AddUnit(CSolidObject* o) { matref.AddUnit(o); }
 		inline void AddFeature(CSolidObject* o) { matref.AddFeature(o); }
 
-		inline void SetUniformLocs(const LuaMatShader* s) { uniforms.SetLocs(s); }
-		inline void SetUniformData(unsigned int type, const void* data) { uniforms.SetData(type, data); }
-
-		inline void ExecuteMaterial() const { matref.Execute(); }
-		inline void ExecuteUniforms() const { uniforms.Execute(); }
-
 	public:
-		GLuint          preDisplayList;
-		GLuint          postDisplayList;
+		GLuint preDisplayList;
+		GLuint postDisplayList;
 
-		LuaMatRef         matref;
-		LuaObjectUniforms uniforms;
+		LuaMatRef matref;
 };
 
 

@@ -32,7 +32,7 @@ public:
 	const SOBJTriangle& GetTriangle(int idx) const { return triangles[idx]; }
 
 	unsigned int GetTriangleCount() const { return (triangles.size()); }
-	unsigned int GetVertexDrawIndexCount() const override { return triangles.size() * 3; }
+	unsigned int GetVertexDrawIndexCount() const override { return indices.size(); }
 	unsigned int GetVertexCount() const override { return vertices.size(); }
 	const std::vector<unsigned>& GetVertexIndices() const override { return indices; }
 
@@ -74,6 +74,7 @@ private:
 	std::vector<unsigned int> indices;
 };
 
+
 class LuaTable;
 class COBJParser: public IModelParser {
 public:
@@ -83,22 +84,25 @@ private:
 	typedef std::map<std::string, SOBJPiece*> PieceMap;
 
 	bool ParseModelData(
-			S3DModel* model,
-			const std::string& modelData,
-			const LuaTable& metaData);
+		S3DModel* model,
+		const std::string& modelData,
+		const LuaTable& metaData
+	);
 	bool BuildModelPieceTree(
-			S3DModel* model,
-			const PieceMap& pieceMap,
-			const LuaTable& piecesTable,
-			bool globalVertexOffsets,
-			bool localPieceOffsets);
+		S3DModel* model,
+		const PieceMap& pieceMap,
+		const LuaTable& piecesTable,
+		bool globalVertexOffsets,
+		bool localPieceOffsets
+	);
 	void BuildModelPieceTreeRec(
-			S3DModel* model,
-			SOBJPiece* piece,
-			const PieceMap& pieceMap,
-			const LuaTable& pieceTable,
-			bool globalVertexOffsets,
-			bool localPieceOffsets);
+		S3DModel* model,
+		SOBJPiece* piece,
+		const PieceMap& pieceMap,
+		const LuaTable& pieceTable,
+		bool globalVertexOffsets,
+		bool localPieceOffsets
+	);
 };
 
 #endif // OBJ_PARSER_H

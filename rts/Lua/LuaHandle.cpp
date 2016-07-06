@@ -83,7 +83,6 @@ static int handlepanic(lua_State* L)
 CLuaHandle::CLuaHandle(const string& _name, int _order, bool _userMode, bool _synced)
 	: CEventClient(_name, _order, _synced)
 	, userMode(_userMode)
-	, reloadMe(false)
 	, killMe(false)
 	, callinErrors(0)
 {
@@ -1469,12 +1468,15 @@ bool CLuaHandle::Explosion(int weaponDefID, int projectileID, const float3& pos,
 	lua_pushnumber(L, pos.x);
 	lua_pushnumber(L, pos.y);
 	lua_pushnumber(L, pos.z);
-	if (owner != NULL) {
+	if (owner != nullptr) {
 		lua_pushnumber(L, owner->id);
+	} else {
+		lua_pushnil(L); // for backward compatibility
 	}
+	lua_pushnumber(L, projectileID);
 
 	// call the routine
-	if (!RunCallIn(L, cmdStr, (owner == NULL) ? 4 : 5, 1))
+	if (!RunCallIn(L, cmdStr, 6, 1))
 		return false;
 
 	// get the results
@@ -2680,10 +2682,8 @@ int CLuaHandle::CallOutIsEngineMinVersion(lua_State* L)
 
 	if (StringToInt(SpringVersion::GetMajor()) == minMajorVer) {
 		if (StringToInt(SpringVersion::GetMinor()) < minMinorVer) {
-			if (GetHandleSynced(L)) { // minor is only allowed to contain unsynced changes!
-				lua_pushboolean(L, false);
-				return 1;
-			}
+			lua_pushboolean(L, false);
+			return 1;
 		}
 
 		if (StringToInt(SpringVersion::GetCommits()) < minCommits) {

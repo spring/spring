@@ -15,7 +15,7 @@
 #include "LuaHandle.h"
 #include "LuaUtils.h"
 #include "Sim/Features/FeatureDef.h"
-#include "Sim/Features/FeatureHandler.h"
+#include "Sim/Features/FeatureDefHandler.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "System/Log/ILog.h"
@@ -50,7 +50,7 @@ bool LuaFeatureDefs::PushEntries(lua_State* L)
 	typedef int (*IndxFuncType)(lua_State*);
 	typedef int (*IterFuncType)(lua_State*);
 
-	const auto& defsMap = featureHandler->GetFeatureDefs();
+	const auto& defsMap = featureDefHandler->GetFeatureDefs();
 
 	const std::array<const LuaHashString, 3> indxOpers = {{
 		LuaHashString("__index"),
@@ -66,7 +66,7 @@ bool LuaFeatureDefs::PushEntries(lua_State* L)
 	const std::array<const IterFuncType, 2> iterFuncs = {Pairs, Next};
 
 	for (auto it = defsMap.cbegin(); it != defsMap.cend(); ++it) {
-		const auto def = featureHandler->GetFeatureDefByID(it->second); // ObjectDefMapType::mapped_type
+		const auto def = featureDefHandler->GetFeatureDefByID(it->second); // ObjectDefMapType::mapped_type
 
 		if (def == NULL)
 			continue;

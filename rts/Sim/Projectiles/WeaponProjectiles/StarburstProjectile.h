@@ -15,6 +15,7 @@ class CStarburstProjectile : public CWeaponProjectile
 	CR_DECLARE_SUB(TracerPart)
 
 public:
+	CStarburstProjectile() { }
 	CStarburstProjectile(const ProjectileParams& params);
 
 	void Collision(CUnit* unit) override;

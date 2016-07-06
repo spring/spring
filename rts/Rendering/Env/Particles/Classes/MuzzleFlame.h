@@ -10,6 +10,7 @@ class CMuzzleFlame : public CProjectile
 	CR_DECLARE_DERIVED(CMuzzleFlame)
 
 public:
+	CMuzzleFlame() { }
 	CMuzzleFlame(const float3& pos, const float3& speed, const float3& dir, float size);
 	~CMuzzleFlame();
 

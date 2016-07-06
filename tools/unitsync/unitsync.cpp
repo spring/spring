@@ -414,6 +414,7 @@ EXPORT(void) UnInit()
 		_Cleanup();
 		FileSystemInitializer::Cleanup();
 		ConfigHandler::Deallocate();
+		DataDirLocater::FreeInstance();
 	}
 	UNITSYNC_CATCH_BLOCKS;
 }
@@ -2682,7 +2683,7 @@ EXPORT(const char*) GetInfoValue(int infoIndex) {
 
 	try {
 		const InfoItem* infoItem = GetInfoItem(infoIndex);
-		value = GetStr(info_getValueAsString(infoItem));
+		value = GetStr(infoItem->GetValueAsString());
 	}
 	UNITSYNC_CATCH_BLOCKS;
 

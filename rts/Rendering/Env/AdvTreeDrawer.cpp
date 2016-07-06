@@ -208,7 +208,7 @@ void CAdvTreeDrawer::Update()
 		FallingTree* fti = &fallingTrees[n];
 
 		fti->fallPos += (fti->speed * 0.1f);
-		fti->speed += (math::sin(fti->fallPos) * 0.04f);
+		fti->speed += (std::sin(fti->fallPos) * 0.04f);
 
 		if (fti->fallPos > 1.0f) {
 			// remove the tree
@@ -464,19 +464,18 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 	const int activeFarTex = treeGen->farTex[cam->GetDir().z >= 0.0f];
 	const bool drawDetailed = ((treeDistance >= 4.0f) || drawReflection);
 
+	glPushAttrib(GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 	glEnable(GL_ALPHA_TEST);
 	glEnable(GL_TEXTURE_2D);
+	glDepthMask(GL_TRUE);
 
 	sky->SetupFog();
 
 	if (shadowHandler->ShadowsLoaded()) {
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, activeFarTex);
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, shadowHandler->shadowTexture);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC_ARB, GL_LEQUAL);
-		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_ALPHA);
+
+		shadowHandler->SetupShadowTexSampler(GL_TEXTURE0);
 
 		treeShader = treeShaders[TREE_PROGRAM_DIST_SHADOW];
 		treeShader->Enable();
@@ -654,7 +653,7 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 
 			const float ang = fti->fallPos * PI;
 
-			const float3 yvec(fti->dir.x * math::sin(ang), math::cos(ang), fti->dir.z * math::sin(ang));
+			const float3 yvec(fti->dir.x * std::sin(ang), std::cos(ang), fti->dir.z * std::sin(ang));
 			const float3 zvec((yvec.cross(-RgtVector)).ANormalize());
 			const float3 xvec(yvec.cross(zvec));
 
@@ -728,9 +727,7 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
 	}
 
-	glDisable(GL_TEXTURE_2D);
-	glDisable(GL_FOG);
-	glDisable(GL_ALPHA_TEST);
+	glPopAttrib();
 
 
 
@@ -1055,7 +1052,7 @@ void CAdvTreeDrawer::DrawShadowPass()
 
 			const float ang = fti->fallPos * PI;
 
-			const float3 yvec(fti->dir.x * math::sin(ang), math::cos(ang), fti->dir.z * math::sin(ang));
+			const float3 yvec(fti->dir.x * std::sin(ang), std::cos(ang), fti->dir.z * std::sin(ang));
 			const float3 zvec((yvec.cross(RgtVector)).ANormalize());
 			const float3 xvec(zvec.cross(yvec));
 

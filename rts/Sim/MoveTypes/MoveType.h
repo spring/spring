@@ -30,6 +30,7 @@ public:
 	virtual bool SetMemberValue(unsigned int memberHash, void* memberValue);
 
 	virtual void SetGoal(const float3& pos, float distance = 0.0f) { goalPos = pos; }
+	virtual bool IsMovingTowards(const float3& pos, float, bool) const { return (goalPos == pos && progressState == Active); }
 
 	// NOTE:
 	//     SetMaxSpeed is ONLY called by LuaSyncedMoveCtrl now
@@ -58,7 +59,7 @@ public:
 	// The distance the unit will move before stopping,
 	// starting from given speed and applying maximum
 	// brake rate.
-	float BrakingDistance(float speed, float rate) const {
+	virtual float BrakingDistance(float speed, float rate) const {
 		const float time = speed / std::max(rate, 0.001f);
 		const float dist = 0.5f * rate * time * time;
 		return dist;

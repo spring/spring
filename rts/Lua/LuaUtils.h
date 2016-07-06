@@ -25,6 +25,7 @@ using std::vector;
 #endif
 
 struct SolidObjectDef;
+struct SCommandDescription;
 
 class LuaUtils {
 	public:
@@ -136,7 +137,7 @@ class LuaUtils {
 
 		static void PushStringVector(lua_State* L, const vector<string>& vec);
 
-		static void PushCommandDesc(lua_State* L, const CommandDescription& cd);
+		static void PushCommandDesc(lua_State* L, const SCommandDescription& cd);
 };
 
 

@@ -57,7 +57,7 @@ struct InfoItem {
 		value.typeBool = _value;
 	}
 
-
+public:
 	std::string key;
 	std::string desc;
 	InfoValueType valueType;
@@ -68,9 +68,10 @@ struct InfoItem {
 	} value;
 	/** It is not possible to use a type with destructor in a union */
 	std::string valueTypeString;
-};
 
-std::string info_getValueAsString(const InfoItem* infoItem);
+public:
+	std::string GetValueAsString(const bool convBooltoInt = true) const;
+};
 
 void info_convertToStringValue(InfoItem* infoItem);
 

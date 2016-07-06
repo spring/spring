@@ -10,7 +10,7 @@
 	// no hardware cursor support for mac's and headless build
 	// FIXME: duno how to create cursors at runtime on macs
 #elif defined(WIN32)
-	#include "windows.h"
+	#include <windows.h>
 	#include "System/Input/MouseInput.h"
 	typedef unsigned char byte;
 #else

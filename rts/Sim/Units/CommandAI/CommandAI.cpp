@@ -2,6 +2,7 @@
 
 
 #include "CommandAI.h"
+
 #include "BuilderCAI.h"
 #include "FactoryCAI.h"
 #include "ExternalAI/EngineOutHandler.h"
@@ -12,6 +13,7 @@
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
 #include "Sim/Features/Feature.h"
+#include "Sim/Features/FeatureDef.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/TeamHandler.h"
@@ -42,6 +44,9 @@
 static const int TARGET_LOST_TIMER = 4;
 static const float COMMAND_CANCEL_DIST = 17.0f;
 
+void CCommandAI::InitCommandDescriptionCache() { commandDescriptionCache = new CCommandDescriptionCache(); }
+void CCommandAI::KillCommandDescriptionCache() { SafeDelete(commandDescriptionCache); }
+
 CR_BIND(CCommandQueue, )
 CR_REG_METADATA(CCommandQueue, (
 	CR_MEMBER(queue),
@@ -69,9 +74,7 @@ CR_REG_METADATA(CCommandAI, (
 	CR_MEMBER(lastSelectedCommandPage),
 	CR_MEMBER(unimportantMove),
 	CR_MEMBER(commandDeathDependences),
-	CR_MEMBER(targetLostTimer),
-
-	CR_POSTLOAD(PostLoad)
+	CR_MEMBER(targetLostTimer)
 ))
 
 CCommandAI::CCommandAI():
@@ -106,8 +109,7 @@ CCommandAI::CCommandAI(CUnit* owner):
 	owner->commandAI = this;
 
 	{
-		possibleCommands.emplace_back();
-		CommandDescription& c = possibleCommands.back();
+		SCommandDescription c;
 
 		c.id   = CMD_STOP;
 		c.type = CMDTYPE_ICON;
@@ -116,11 +118,11 @@ CCommandAI::CCommandAI(CUnit* owner):
 		c.name      = "Stop";
 		c.tooltip   = c.name + ": Cancel the units current actions";
 		c.mouseicon = c.name;
+		possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
 	}
 
 	if (IsAttackCapable()) {
-		possibleCommands.emplace_back();
-		CommandDescription& c = possibleCommands.back();
+		SCommandDescription c;
 
 		c.id   = CMD_ATTACK;
 		c.type = CMDTYPE_ICON_UNIT_OR_MAP;
@@ -129,11 +131,11 @@ CCommandAI::CCommandAI(CUnit* owner):
 		c.name      = "Attack";
 		c.tooltip   = c.name + ": Attacks a unit or a position on the ground";
 		c.mouseicon = c.name;
+		possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
 	}
 
 	if (owner->unitDef->canManualFire) {
-		possibleCommands.emplace_back();
-		CommandDescription& c = possibleCommands.back();
+		SCommandDescription c;
 
 		c.id   = CMD_MANUALFIRE;
 		c.type = CMDTYPE_ICON_MAP;
@@ -142,11 +144,11 @@ CCommandAI::CCommandAI(CUnit* owner):
 		c.name      = "ManualFire";
 		c.tooltip   = c.name + ": Attacks with manually-fired weapon";
 		c.mouseicon = c.name;
+		possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
 	}
 
 	{
-		possibleCommands.emplace_back();
-		CommandDescription& c = possibleCommands.back();
+		SCommandDescription c;
 
 		c.id   = CMD_WAIT;
 		c.type = CMDTYPE_ICON;
@@ -155,11 +157,11 @@ CCommandAI::CCommandAI(CUnit* owner):
 		c.name      = "Wait";
 		c.tooltip   = c.name + ": Tells the unit to wait processing its command-queue";
 		c.mouseicon = c.name;
+		possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
 	}
 
 	{
-		possibleCommands.emplace_back();
-		CommandDescription& c = possibleCommands.back();
+		SCommandDescription c;
 
 		c.id   = CMD_TIMEWAIT;
 		c.type = CMDTYPE_NUMBER;
@@ -173,11 +175,11 @@ CCommandAI::CCommandAI(CUnit* owner):
 		c.params.push_back("60"); // max
 
 		c.hidden = true;
+		possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
 	}
 
 	{
-		possibleCommands.emplace_back();
-		CommandDescription& c = possibleCommands.back();
+		SCommandDescription c;
 
 		// only for games with 2 ally teams  --  checked later
 		c.id   = CMD_DEATHWAIT;
@@ -189,11 +191,11 @@ CCommandAI::CCommandAI(CUnit* owner):
 		c.mouseicon = c.name;
 
 		c.hidden = true;
+		possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
 	}
 
 	{
-		possibleCommands.emplace_back();
-		CommandDescription& c = possibleCommands.back();
+		SCommandDescription c;
 
 		c.id   = CMD_SQUADWAIT;
 		c.type = CMDTYPE_NUMBER;
@@ -207,11 +209,11 @@ CCommandAI::CCommandAI(CUnit* owner):
 		c.params.push_back("100"); // max
 
 		c.hidden = true;
+		possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
 	}
 
 	{
-		possibleCommands.emplace_back();
-		CommandDescription& c = possibleCommands.back();
+		SCommandDescription c;
 
 		c.id   = CMD_GATHERWAIT;
 		c.type = CMDTYPE_ICON;
@@ -222,11 +224,11 @@ CCommandAI::CCommandAI(CUnit* owner):
 		c.mouseicon = c.name;
 
 		c.hidden = true;
+		possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
 	}
 
 	if (owner->unitDef->canSelfD) {
-		possibleCommands.emplace_back();
-		CommandDescription& c = possibleCommands.back();
+		SCommandDescription c;
 
 		c.id   = CMD_SELFD;
 		c.type = CMDTYPE_ICON;
@@ -237,11 +239,11 @@ CCommandAI::CCommandAI(CUnit* owner):
 		c.mouseicon = c.name;
 
 		c.hidden = true;
+		possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
 	}
 
 	if (CanChangeFireState()) {
-		possibleCommands.emplace_back();
-		CommandDescription& c = possibleCommands.back();
+		SCommandDescription c;
 
 		c.id   = CMD_FIRE_STATE;
 		c.type = CMDTYPE_ICON_MODE;
@@ -258,11 +260,11 @@ CCommandAI::CCommandAI(CUnit* owner):
 
 		c.hidden   = false;
 		c.queueing = false;
+		possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
 	}
 
 	if (owner->unitDef->canmove || owner->unitDef->builder) {
-		possibleCommands.emplace_back();
-		CommandDescription& c = possibleCommands.back();
+		SCommandDescription c;
 
 		c.id   = CMD_MOVE_STATE;
 		c.type = CMDTYPE_ICON_MODE;
@@ -279,13 +281,13 @@ CCommandAI::CCommandAI(CUnit* owner):
 
 		c.hidden   = false;
 		c.queueing = false;
+		possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
 	} else {
 		owner->moveState = MOVESTATE_HOLDPOS;
 	}
 
 	if (owner->unitDef->canRepeat) {
-		possibleCommands.emplace_back();
-		CommandDescription& c = possibleCommands.back();
+		SCommandDescription c;
 
 		c.id   = CMD_REPEAT;
 		c.type = CMDTYPE_ICON_MODE;
@@ -301,11 +303,11 @@ CCommandAI::CCommandAI(CUnit* owner):
 
 		c.hidden   = false;
 		c.queueing = false;
+		possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
 	}
 
 	if (owner->unitDef->highTrajectoryType > 1) {
-		possibleCommands.emplace_back();
-		CommandDescription& c = possibleCommands.back();
+		SCommandDescription c;
 
 		c.id   = CMD_TRAJECTORY;
 		c.type = CMDTYPE_ICON_MODE;
@@ -321,11 +323,11 @@ CCommandAI::CCommandAI(CUnit* owner):
 
 		c.hidden   = false;
 		c.queueing = false;
+		possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
 	}
 
 	if (owner->unitDef->onoffable) {
-		possibleCommands.emplace_back();
-		CommandDescription& c = possibleCommands.back();
+		SCommandDescription c;
 
 		c.id   = CMD_ONOFF;
 		c.type = CMDTYPE_ICON_MODE;
@@ -341,11 +343,11 @@ CCommandAI::CCommandAI(CUnit* owner):
 
 		c.hidden   = false;
 		c.queueing = false;
+		possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
 	}
 
 	if (owner->unitDef->canCloak) {
-		possibleCommands.emplace_back();
-		CommandDescription& c = possibleCommands.back();
+		SCommandDescription c;
 
 		c.id   = CMD_CLOAK;
 		c.type = CMDTYPE_ICON_MODE;
@@ -361,6 +363,7 @@ CCommandAI::CCommandAI(CUnit* owner):
 
 		c.hidden   = false;
 		c.queueing = false;
+		possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
 	}
 
 	UpdateNonQueueingCommands();
@@ -370,36 +373,46 @@ CCommandAI::~CCommandAI()
 {
 	SetOrderTarget(NULL);
 	ClearCommandDependencies();
+	commandDescriptionCache->DecRef(possibleCommands);
 }
 
 
-void CCommandAI::UpdateCommandDescription(unsigned int cmdDescIdx, const CommandDescription& modCmdDesc) {
-	CommandDescription& curCmdDesc = possibleCommands[cmdDescIdx];
+void CCommandAI::UpdateCommandDescription(unsigned int cmdDescIdx, const Command& cmd) {
+	SCommandDescription cd = *possibleCommands[cmdDescIdx];
+	cd.params[0] = IntToString(int(cmd.GetParam(0)), "%d");
+	commandDescriptionCache->DecRef(*possibleCommands[cmdDescIdx]);
+	possibleCommands[cmdDescIdx] = commandDescriptionCache->GetPtr(cd);
+}
+
+void CCommandAI::UpdateCommandDescription(unsigned int cmdDescIdx, const SCommandDescription& modCmdDesc) {
+	const SCommandDescription* curCmdDesc = possibleCommands[cmdDescIdx];
 
 	// modCmdDesc should be a modified copy of curCmdDesc
-	assert(&modCmdDesc != &curCmdDesc);
+	assert(&modCmdDesc != curCmdDesc);
 
 	// erase in case we do not want it to be non-queueing anymore
-	if (!curCmdDesc.queueing)
-		nonQueingCommands.erase(curCmdDesc.id);
+	if (!curCmdDesc->queueing)
+		nonQueingCommands.erase(curCmdDesc->id);
 
 	// re-insert otherwise (possibly with a different cmdID!)
 	if (!modCmdDesc.queueing)
 		nonQueingCommands.insert(modCmdDesc.id);
+	commandDescriptionCache->DecRef(*curCmdDesc);
 
 	// update
-	curCmdDesc = std::move(modCmdDesc);
+	possibleCommands[cmdDescIdx] = commandDescriptionCache->GetPtr(modCmdDesc);
 
 	selectedUnitsHandler.PossibleCommandChange(owner);
 }
 
-void CCommandAI::InsertCommandDescription(unsigned int cmdDescIdx, const CommandDescription& cmdDesc)
+void CCommandAI::InsertCommandDescription(unsigned int cmdDescIdx, const SCommandDescription& cmdDesc)
 {
+	const SCommandDescription* cmdDescPtr = commandDescriptionCache->GetPtr(cmdDesc);
 	if (cmdDescIdx >= possibleCommands.size()) {
-		possibleCommands.push_back(cmdDesc);
+		possibleCommands.push_back(cmdDescPtr);
 	} else {
 		// preserve order
-		possibleCommands.insert(possibleCommands.begin() + cmdDescIdx, cmdDesc);
+		possibleCommands.insert(possibleCommands.begin() + cmdDescIdx, cmdDescPtr);
 	}
 
 	if (!cmdDesc.queueing)
@@ -413,9 +426,10 @@ bool CCommandAI::RemoveCommandDescription(unsigned int cmdDescIdx)
 	if (cmdDescIdx >= possibleCommands.size())
 		return false;
 
-	if (!possibleCommands[cmdDescIdx].queueing)
-		nonQueingCommands.erase(possibleCommands[cmdDescIdx].id);
+	if (!possibleCommands[cmdDescIdx]->queueing)
+		nonQueingCommands.erase(possibleCommands[cmdDescIdx]->id);
 
+	commandDescriptionCache->DecRef(*possibleCommands[cmdDescIdx]);
 	// preserve order
 	possibleCommands.erase(possibleCommands.begin() + cmdDescIdx);
 	selectedUnitsHandler.PossibleCommandChange(owner);
@@ -427,9 +441,9 @@ void CCommandAI::UpdateNonQueueingCommands()
 {
 	nonQueingCommands.clear();
 
-	for (const CommandDescription& cmdDesc: possibleCommands) {
-		if (!cmdDesc.queueing) {
-			nonQueingCommands.insert(cmdDesc.id);
+	for (const SCommandDescription* cmdDesc: possibleCommands) {
+		if (!cmdDesc->queueing) {
+			nonQueingCommands.insert(cmdDesc->id);
 		}
 	}
 }
@@ -740,10 +754,10 @@ void CCommandAI::GiveCommandReal(const Command& c, bool fromSynced)
 inline void CCommandAI::SetCommandDescParam0(const Command& c)
 {
 	for (unsigned int n = 0; n < possibleCommands.size(); n++) {
-		if (possibleCommands[n].id != c.GetID())
+		if (possibleCommands[n]->id != c.GetID())
 			continue;
 
-		possibleCommands[n].params[0] = IntToString(int(c.params[0]), "%d");
+		UpdateCommandDescription(n, c);
 		break;
 	}
 }
@@ -1041,7 +1055,7 @@ void CCommandAI::ExecuteInsert(const Command& c, bool fromSynced)
 	if (facCAI) {
 		if (c.options & CONTROL_KEY) {
 			// check the build order
-			const map<int, CFactoryCAI::BuildOption>& bOpts = facCAI->buildOptions;
+			const auto& bOpts = facCAI->buildOptions;
 			if ((newCmd.GetID() != CMD_STOP) && (newCmd.GetID() != CMD_WAIT) &&
 			    ((newCmd.GetID() >= 0) || (bOpts.find(newCmd.GetID()) == bOpts.end()))) {
 				return;
@@ -1592,8 +1606,7 @@ void CCommandAI::AddStockpileWeapon(CWeapon* weapon)
 {
 	stockpileWeapon = weapon;
 
-	possibleCommands.emplace_back();
-	CommandDescription& c = possibleCommands.back();
+	SCommandDescription c;
 
 	c.id   = CMD_STOCKPILE;
 	c.type = CMDTYPE_ICON;
@@ -1602,6 +1615,8 @@ void CCommandAI::AddStockpileWeapon(CWeapon* weapon)
 	c.name     = "0/0";
 	c.tooltip  = c.action + ": Queue up ammunition for later use";
 	c.iconname = "bitmaps/armsilo1.bmp";
+
+	possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
 }
 
 void CCommandAI::StockpileChanged(CWeapon* weapon)
@@ -1612,12 +1627,13 @@ void CCommandAI::StockpileChanged(CWeapon* weapon)
 void CCommandAI::UpdateStockpileIcon()
 {
 	for (unsigned int n = 0; n < possibleCommands.size(); n++) {
-		if (possibleCommands[n].id != CMD_STOCKPILE)
+		if (possibleCommands[n]->id != CMD_STOCKPILE)
 			continue;
-
-		possibleCommands[n].name =
+		SCommandDescription c = *possibleCommands[n];
+		c.name =
 			IntToString(stockpileWeapon->numStockpiled                                    ) + "/" +
 			IntToString(stockpileWeapon->numStockpiled + stockpileWeapon->numStockpileQued);
+		possibleCommands[n] = commandDescriptionCache->GetPtr(c);
 
 		selectedUnitsHandler.PossibleCommandChange(owner);
 		break;
@@ -1698,47 +1714,19 @@ bool CCommandAI::HasCommand(int cmdID) const {
 	return ((commandQue.front()).GetID() == cmdID);
 }
 
-bool CCommandAI::HasMoreMoveCommands() const
+bool CCommandAI::HasMoreMoveCommands(bool skipFirstCmd) const
 {
-	if (commandQue.size() <= 1)
+	if (commandQue.empty())
 		return false;
 
-	// skip the first command
-	for (CCommandQueue::const_iterator i = ++commandQue.begin(); i != commandQue.end(); ++i) {
-		switch (i->GetID()) {
-			case CMD_AREA_ATTACK:
-			case CMD_ATTACK:
-			case CMD_CAPTURE:
-			case CMD_FIGHT:
-			case CMD_GUARD:
-			case CMD_LOAD_UNITS:
-			case CMD_MANUALFIRE:
-			case CMD_MOVE:
-			case CMD_PATROL:
-			case CMD_RECLAIM:
-			case CMD_REPAIR:
-			case CMD_RESTORE:
-			case CMD_RESURRECT:
-			case CMD_UNLOAD_UNIT:
-			case CMD_UNLOAD_UNITS:
-				return true;
+	auto i = commandQue.begin();
 
-			case CMD_DEATHWAIT:
-			case CMD_GATHERWAIT:
-			case CMD_SELFD:
-			case CMD_SQUADWAIT:
-			case CMD_STOP:
-			case CMD_TIMEWAIT:
-			case CMD_WAIT:
-				return false;
+	if (skipFirstCmd)
+		++i;
 
-			default:
-				// build commands are no different from reclaim or repair commands
-				// in that they can require a unit to move, so return true when we
-				// have one
-				if (i->IsBuildCommand())
-					return true;
-		}
+	for (; i != commandQue.end(); ++i) {
+		if (i->IsMoveCommand())
+			return true;
 	}
 
 	return false;
@@ -1748,17 +1736,18 @@ bool CCommandAI::HasMoreMoveCommands() const
 bool CCommandAI::SkipParalyzeTarget(const CUnit* target)
 {
 	// check to see if we are about to paralyze a unit that is already paralyzed
-	if ((target == NULL) || (owner->weapons.empty())) {
+	if ((target == NULL) || (owner->weapons.empty()))
 		return false;
-	}
+
 	const CWeapon* w = owner->weapons.front();
-	if (!w->weaponDef->paralyzer) {
+
+	if (!w->weaponDef->paralyzer)
 		return false;
-	}
+
 	// visible and stunned?
-	if ((target->losStatus[owner->allyteam] & LOS_INLOS) && target->IsStunned() && HasMoreMoveCommands()) {
+	if ((target->losStatus[owner->allyteam] & LOS_INLOS) && target->IsStunned() && HasMoreMoveCommands())
 		return true;
-	}
+
 	return false;
 }
 

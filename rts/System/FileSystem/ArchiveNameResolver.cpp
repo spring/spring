@@ -3,6 +3,7 @@
 #include "ArchiveNameResolver.h"
 
 #include "Game/GlobalUnsynced.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/RapidHandler.h"
 #include "System/UriParser.h"
@@ -192,7 +193,7 @@ namespace ArchiveNameResolver {
 	{
 		if (!ParseRapidUri(lazyName, tag))
 			return false;
-		tag = GetRapidName(tag);
+		tag = GetRapidPackageFromTag(tag);
 		return !tag.empty();
 	}
 
@@ -208,6 +209,7 @@ std::string GetGame(const std::string& lazyName)
 	if (GetGameByShortName(lazyName, &applicableName)) return applicableName;
 	if (GetGameByRapidTag(lazyName, applicableName))   return applicableName;
 	if (GetRandomGame(lazyName, &applicableName))      return applicableName;
+	if (lazyName == "last")                            return configHandler->GetString("LastSelectedMod");
 
 	return lazyName;
 }
@@ -218,6 +220,7 @@ std::string GetMap(const std::string& lazyName)
 	if (GetMapByExactName(lazyName, &applicableName)) return applicableName;
 	if (GetMapBySubString(lazyName, &applicableName)) return applicableName;
 	if (GetRandomMap(lazyName, &applicableName))      return applicableName;
+	if (lazyName == "last")	                          return configHandler->GetString("LastSelectedMap");
 	//TODO add a string similarity search?
 
 	return lazyName;

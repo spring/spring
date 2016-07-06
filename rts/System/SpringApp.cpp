@@ -174,9 +174,6 @@ SpringApp::SpringApp(int argc, char** argv): cmdline(new CmdLineParams(argc, arg
 SpringApp::~SpringApp()
 {
 	spring_clock::PopTickRate();
-#ifdef USING_CREG
-	creg::System::FreeClasses();
-#endif
 }
 
 /**
@@ -234,10 +231,7 @@ bool SpringApp::Initialize()
 	CrashHandler::Install();
 	good_fpu_control_registers(__FUNCTION__);
 
-	// CREG & GlobalConfig
-#ifdef USING_CREG
-	creg::System::InitializeClasses();
-#endif
+	// GlobalConfig
 	GlobalConfig::Instantiate();
 
 
@@ -778,9 +772,27 @@ void SpringApp::ParseCmdLine(const std::string& binaryName)
 }
 
 
+CGameController* SpringApp::LoadSaveFile(const std::string& saveFile)
+{
+	const std::string ext = FileSystem::GetExtension(saveFile);
+
+	if (ext != "ssf" && ext != "slsf")
+		throw content_error(std::string("Unknown save extension: ") + ext);
+
+	clientSetup->isHost = true;
+
+	pregame = new CPreGame(clientSetup);
+	pregame->LoadSavefile(saveFile, ext == "ssf");
+	return pregame;
+}
+
+
 CGameController* SpringApp::RunScript(const std::string& buf)
 {
 	clientSetup->LoadFromStartScript(buf);
+
+	if (!clientSetup->saveFile.empty())
+		return LoadSaveFile(clientSetup->saveFile);
 
 	// LoadFromStartScript overrides all values so reset cmdline defined ones
 	if (cmdline->IsSet("server")) {
@@ -792,9 +804,8 @@ CGameController* SpringApp::RunScript(const std::string& buf)
 
 	pregame = new CPreGame(clientSetup);
 
-	if (clientSetup->isHost) {
+	if (clientSetup->isHost)
 		pregame->LoadSetupscript(buf);
-	}
 
 	return pregame;
 }
@@ -883,12 +894,8 @@ void SpringApp::Startup()
 
 		pregame = new CPreGame(clientSetup);
 		pregame->LoadDemo(inputFile);
-	} else if (extension == "ssf") {
-		// savegame.ssf
-		clientSetup->isHost = true;
-
-		pregame = new CPreGame(clientSetup);
-		pregame->LoadSavefile(inputFile);
+	} else if (extension == "slsf" || extension == "ssf") {
+		LoadSaveFile(inputFile);
 	} else {
 		StartScript(inputFile);
 	}
@@ -1085,6 +1092,7 @@ void SpringApp::ShutDown()
 	SafeDelete(luaSocketRestrictions);
 
 	FileSystemInitializer::Cleanup();
+	DataDirLocater::FreeInstance();
 
 	LOG("[SpringApp::%s][8]", __FUNCTION__);
 	Watchdog::DeregisterThread(WDT_MAIN);

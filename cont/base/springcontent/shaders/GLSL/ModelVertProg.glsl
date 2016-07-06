@@ -1,3 +1,5 @@
+#version 120
+
 // note: gl_ModelViewMatrix actually only contains the
 // model matrix, view matrix is on the projection stack
 //

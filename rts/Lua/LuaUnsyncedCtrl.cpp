@@ -37,8 +37,11 @@
 #include "Map/BaseGroundDrawer.h"
 #include "Map/BaseGroundTextures.h"
 #include "Net/Protocol/NetProtocol.h"
+#include "Net/GameServer.h"
 #include "Rendering/Env/ISky.h"
 #include "Rendering/Env/SunLighting.h"
+#include "Rendering/Env/IGroundDecalDrawer.h"
+#include "Rendering/Env/Decals/DecalsDrawerGL4.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/CommandDrawer.h"
 #include "Rendering/IconHandler.h"
@@ -48,6 +51,8 @@
 #include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/Textures/NamedTextures.h"
+#include "Sim/Features/FeatureDef.h"
+#include "Sim/Features/FeatureDefHandler.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Projectiles/Projectile.h"
@@ -216,6 +221,7 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(Reload);
 	REGISTER_LUA_CFUNC(Restart);
+	REGISTER_LUA_CFUNC(Start);
 
 	REGISTER_LUA_CFUNC(SetWMIcon);
 	REGISTER_LUA_CFUNC(SetWMCaption);
@@ -253,6 +259,14 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(PreloadUnitDefModel);
 	REGISTER_LUA_CFUNC(PreloadFeatureDefModel);
+
+	REGISTER_LUA_CFUNC(CreateDecal);
+	REGISTER_LUA_CFUNC(DestroyDecal);
+	REGISTER_LUA_CFUNC(SetDecalPos);
+	REGISTER_LUA_CFUNC(SetDecalSize);
+	REGISTER_LUA_CFUNC(SetDecalRotation);
+	REGISTER_LUA_CFUNC(SetDecalTexture);
+	REGISTER_LUA_CFUNC(SetDecalAlpha);
 
 	return true;
 }
@@ -776,6 +790,28 @@ int LuaUnsyncedCtrl::DrawUnitCommands(lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 
+static CCameraController::StateMap ParseCamStateMap(lua_State* L, int tableIdx)
+{
+	CCameraController::StateMap camState;
+
+	for (lua_pushnil(L); lua_next(L, tableIdx) != 0; lua_pop(L, 1)) {
+		if (!lua_israwstring(L, -2))
+			continue;
+
+		const string key = lua_tostring(L, -2);
+
+		if (lua_isnumber(L, -1)) {
+			camState[key] = lua_tofloat(L, -1);
+		}
+		else if (lua_isboolean(L, -1)) {
+			camState[key] = lua_toboolean(L, -1) ? +1.0f : -1.0f;
+		}
+	}
+
+	return camState;
+}
+
+
 int LuaUnsyncedCtrl::SetCameraTarget(lua_State* L)
 {
 	if (mouse == nullptr)
@@ -785,14 +821,10 @@ int LuaUnsyncedCtrl::SetCameraTarget(lua_State* L)
 	                 luaL_checkfloat(L, 2),
 	                 luaL_checkfloat(L, 3));
 
-	const float transTime = luaL_optfloat(L, 4, 0.5f);
-
-	camHandler->CameraTransition(transTime);
+	camHandler->CameraTransition(luaL_optfloat(L, 4, 0.5f));
 	camHandler->GetCurrentController().SetPos(pos);
-
 	return 0;
 }
-
 
 int LuaUnsyncedCtrl::SetCameraState(lua_State* L)
 {
@@ -801,33 +833,16 @@ int LuaUnsyncedCtrl::SetCameraState(lua_State* L)
 		return 0;
 
 	if (!lua_istable(L, 1))
-		luaL_error(L, "Incorrect arguments to SetCameraState(table, camTime)");
+		luaL_error(L, "Incorrect arguments to SetCameraState(table[, camTime])");
 
-	// TODO: add separate callout for smooth mode transitions?
-	// const float camTime = luaL_checkfloat(L, 2);
+	camHandler->CameraTransition(luaL_optfloat(L, 2, 0.0f));
 
-	CCameraController::StateMap camState;
+	const bool retval = camHandler->SetState(ParseCamStateMap(L, 1));
+	const bool synced = CLuaHandle::GetHandleSynced(L);
 
-	const int table = 1;
-	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-		if (lua_israwstring(L, -2)) {
-			const string key = lua_tostring(L, -2);
-			if (lua_isnumber(L, -1)) {
-				camState[key] = lua_tofloat(L, -1);
-			}
-			else if (lua_isboolean(L, -1)) {
-				camState[key] = lua_toboolean(L, -1) ? +1.0f : -1.0f;
-			}
-		}
-	}
-
-	if (!CLuaHandle::GetHandleSynced(L)) {
-		lua_pushboolean(L, camHandler->SetState(camState));
-		return 1;
-	}
-
-	camHandler->SetState(camState);
-	return 0;
+	// always push false in synced
+	lua_pushboolean(L, retval && !synced);
+	return 1;
 }
 
 
@@ -2118,8 +2133,8 @@ int LuaUnsyncedCtrl::CreateDir(lua_State* L)
 
 /******************************************************************************/
 
-static int ReloadOrRestart(const std::string& springArgs, const std::string& scriptText) {
-	if (springArgs.empty()) {
+static int ReloadOrRestart(const std::string& springArgs, const std::string& scriptText, bool isStart=false) {
+	if (springArgs.empty() && !isStart) {
 		// signal SpringApp
 		gameSetup->setupText = scriptText;
 		gu->globalReload = true;
@@ -2132,7 +2147,9 @@ static int ReloadOrRestart(const std::string& springArgs, const std::string& scr
 		std::vector<std::string> processArgs;
 
 		// arguments to Spring binary given by Lua code, if any
-		processArgs.push_back(springArgs);
+		if (!springArgs.empty()) {
+			processArgs.push_back(springArgs);
+		}
 
 		if (!scriptText.empty()) {
 			// create file 'script.txt' with contents given by Lua code
@@ -2143,14 +2160,17 @@ static int ReloadOrRestart(const std::string& springArgs, const std::string& scr
 
 			processArgs.push_back(scriptFullName);
 		}
-
-	#ifdef _WIN32
-		// else OpenAL crashes when using execvp
-		ISound::Shutdown();
-	#endif
+		if (!isStart) {
+			#ifdef _WIN32
+				// else OpenAL crashes when using execvp
+				ISound::Shutdown();
+			#endif
+			// close local socket to avoid "bind: Address already in use"
+			SafeDelete(gameServer);
+		}
 
 		LOG("[%s] Spring \"%s\" should be restarting", __FUNCTION__, springFullName.c_str());
-		Platform::ExecuteProcess(springFullName, processArgs);
+		Platform::ExecuteProcess(springFullName, processArgs, isStart);
 
 		// only reached on failure
 		return 1;
@@ -2168,6 +2188,16 @@ int LuaUnsyncedCtrl::Reload(lua_State* L)
 int LuaUnsyncedCtrl::Restart(lua_State* L)
 {
 	if (ReloadOrRestart(luaL_checkstring(L, 1), luaL_checkstring(L, 2)) != 0) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
+
+	return 0;
+}
+
+int LuaUnsyncedCtrl::Start(lua_State* L)
+{
+	if (ReloadOrRestart(luaL_checkstring(L, 1), luaL_checkstring(L, 2), true) != 0) {
 		lua_pushboolean(L, false);
 		return 1;
 	}
@@ -3027,7 +3057,7 @@ int LuaUnsyncedCtrl::PreloadUnitDefModel(lua_State* L) {
 }
 
 int LuaUnsyncedCtrl::PreloadFeatureDefModel(lua_State* L) {
-	const FeatureDef* fd = featureHandler->GetFeatureDefByID(luaL_checkint(L, 1));
+	const FeatureDef* fd = featureDefHandler->GetFeatureDefByID(luaL_checkint(L, 1));
 
 	if (fd == nullptr)
 		return 0;
@@ -3035,4 +3065,105 @@ int LuaUnsyncedCtrl::PreloadFeatureDefModel(lua_State* L) {
 	fd->PreloadModel();
 	return 0;
 }
+
+/******************************************************************************/
+/******************************************************************************/
+
+int LuaUnsyncedCtrl::CreateDecal(lua_State* L)
+{
+	auto decalsGl4 = dynamic_cast<CDecalsDrawerGL4*>(groundDecals);
+	if (decalsGl4 == nullptr)
+		return 0;
+
+	const int idx = decalsGl4->CreateLuaDecal();
+	if (idx > 0) {
+		lua_pushnumber(L, idx);
+		return 1;
+	}
+	return 0;
+}
+
+
+int LuaUnsyncedCtrl::DestroyDecal(lua_State* L)
+{
+	auto decalsGl4 = dynamic_cast<CDecalsDrawerGL4*>(groundDecals);
+	if (decalsGl4 == nullptr)
+		return 0;
+
+	auto decal = decalsGl4->GetDecalByIdx(luaL_checkint(L, 1));
+	decal.Free();
+	return 0;
+}
+
+
+int LuaUnsyncedCtrl::SetDecalPos(lua_State* L)
+{
+	auto decalsGl4 = dynamic_cast<CDecalsDrawerGL4*>(groundDecals);
+	if (decalsGl4 == nullptr)
+		return 0;
+
+	const float3 newPos(luaL_checkfloat(L, 2),
+	luaL_checkfloat(L, 3),
+	luaL_checkfloat(L, 4));
+
+	auto decal = decalsGl4->GetDecalByIdx(luaL_checkint(L, 1));
+	decal.pos = newPos;
+	lua_pushboolean(L, decal.InvalidateExtents());
+	return 1;
+}
+
+
+int LuaUnsyncedCtrl::SetDecalSize(lua_State* L)
+{
+	auto decalsGl4 = dynamic_cast<CDecalsDrawerGL4*>(groundDecals);
+	if (decalsGl4 == nullptr)
+		return 0;
+
+	const float2 newSize(luaL_checkfloat(L, 2), luaL_checkfloat(L, 3));
+
+	auto decal = decalsGl4->GetDecalByIdx(luaL_checkint(L, 1));
+	decal.size = newSize;
+	lua_pushboolean(L, decal.InvalidateExtents());
+	return 1;
+}
+
+
+int LuaUnsyncedCtrl::SetDecalRotation(lua_State* L)
+{
+	auto decalsGl4 = dynamic_cast<CDecalsDrawerGL4*>(groundDecals);
+	if (decalsGl4 == nullptr)
+		return 0;
+
+	auto decal = decalsGl4->GetDecalByIdx(luaL_checkint(L, 1));
+	decal.rot = luaL_checkfloat(L, 2);
+	lua_pushboolean(L, decal.InvalidateExtents());
+	return 1;
+}
+
+
+int LuaUnsyncedCtrl::SetDecalTexture(lua_State* L)
+{
+	auto decalsGl4 = dynamic_cast<CDecalsDrawerGL4*>(groundDecals);
+	if (decalsGl4 == nullptr)
+		return 0;
+
+	auto decal = decalsGl4->GetDecalByIdx(luaL_checkint(L, 1));
+	decal.SetTexture(luaL_checksstring(L, 2));
+	decal.Invalidate();
+	return 0;
+}
+
+
+int LuaUnsyncedCtrl::SetDecalAlpha(lua_State* L)
+{
+	auto decalsGl4 = dynamic_cast<CDecalsDrawerGL4*>(groundDecals);
+	if (decalsGl4 == nullptr)
+		return 0;
+
+	auto decal = decalsGl4->GetDecalByIdx(luaL_checkint(L, 1));
+	decal.rot = luaL_checkfloat(L, 2);
+	decal.Invalidate();
+	return 0;
+}
+
 

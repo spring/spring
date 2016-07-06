@@ -35,7 +35,7 @@ local infos = {
 	},
 	{
 		key    = 'url',
-		value  = 'http://springrts.com/wiki/AI:CppTestAI',
+		value  = 'https://springrts.com/wiki/AI:CppTestAI',
 		desc   = 'URL with more detailed info about the AI',
 	},
 	{

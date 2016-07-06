@@ -424,7 +424,7 @@ bool IsRunningInGDB() {
 
 	return (strstr(buf, "gdb") != NULL);
 	#else
-	return false;
+	return IsDebuggerPresent();
 	#endif
 }
 
@@ -443,7 +443,7 @@ std::string GetShortFileName(const std::string& file) {
 	return file;
 }
 
-std::string ExecuteProcess(const std::string& file, std::vector<std::string> args)
+std::string ExecuteProcess(const std::string& file, std::vector<std::string> args, bool asSubprocess)
 {
 	// "The first argument, by convention, should point to
 	// the filename associated with the file being executed."
@@ -453,11 +453,48 @@ std::string ExecuteProcess(const std::string& file, std::vector<std::string> arg
 	//   to a short path there
 	args.insert(args.begin(), GetShortFileName(file));
 
+	std::string execError;
+
+	if (asSubprocess) {
+		#ifdef WIN32
+		    STARTUPINFO si;
+			PROCESS_INFORMATION pi;
+
+			ZeroMemory( &si, sizeof(si) );
+			si.cb = sizeof(si);
+			ZeroMemory( &pi, sizeof(pi) );
+
+			std::string argsStr;
+			for (size_t a = 0; a < args.size(); ++a) {
+				argsStr += args[a] + ' ';
+			}
+			char *argsCStr = new char[argsStr.size() + 1];
+			std::copy(argsStr.begin(), argsStr.end(), argsCStr);
+			argsCStr[argsStr.size()] = '\0';
+
+			LOG("[%s] Windows start process arguments: %s", __FUNCTION__, argsCStr);
+			if (!CreateProcess(NULL, argsCStr, NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi)) {
+				delete[] argsCStr;
+				LOG("[%s] Error creating subprocess (%lu)", __FUNCTION__, GetLastError());
+				return execError;
+			}
+			delete[] argsCStr;
+
+			return execError;
+		#else
+			int pid;
+			if ((pid = fork()) < 0) {
+				LOG("[%s] Error forking process", __FUNCTION__);
+			} else if (pid != 0) {
+				// TODO: Maybe useful to return the subprocess ID (pid)?
+				return execError;
+			}
+		#endif
+	}
+
 	// "The array of pointers must be terminated by a NULL pointer."
 	// --> include one extra argument string and leave it NULL
 	std::vector<char*> processArgs(args.size() + 1, NULL);
-	std::string execError;
-
 	for (size_t a = 0; a < args.size(); ++a) {
 		const std::string& arg = args[a];
 		const size_t argSize = arg.length() + 1;
@@ -465,11 +502,11 @@ std::string ExecuteProcess(const std::string& file, std::vector<std::string> arg
 		STRCPY_T(processArgs[a] = new char[argSize], argSize, arg.c_str());
 	}
 
-#ifdef WIN32
-	#define EXECVP _execvp
-#else
-	#define EXECVP execvp
-#endif
+	#ifdef WIN32
+		#define EXECVP _execvp
+	#else
+		#define EXECVP execvp
+	#endif
 	if (EXECVP(args[0].c_str(), &processArgs[0]) == -1) {
 		LOG("[%s] error: \"%s\" %s (%d)", __FUNCTION__, args[0].c_str(), (execError = strerror(errno)).c_str(), errno);
 	}

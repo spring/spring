@@ -72,17 +72,23 @@ CUnitHandler::CUnitHandler()
 
 CUnitHandler::~CUnitHandler()
 {
-	// Predelete scripts since they sometimes call models
-	// which are already gone by now.
-	for (CUnit* u: activeUnits)
-		u->DeleteScript();
-
 	for (CUnit* u: activeUnits) {
 		// ~CUnit dereferences featureHandler which is destroyed already
 		u->delayedWreckLevel = -1;
 		delete u;
 	}
 }
+
+
+void CUnitHandler::DeleteScripts()
+{
+	// Predelete scripts since they sometimes call models
+	// which are already gone by KillSimulation.
+	for (CUnit* u: activeUnits) {
+		u->DeleteScript();
+	}
+}
+
 
 void CUnitHandler::InsertActiveUnit(CUnit* unit)
 {
@@ -237,14 +243,11 @@ void CUnitHandler::Update()
 	}
 
 	{
-		SCOPED_TIMER("Unit::UpdateLocalModel");
+		SCOPED_TIMER("Unit::UpdateLosStatus");
 		for (CUnit* unit: activeUnits) {
-			// UnitScript only applies piece-space transforms so
-			// we apply the forward kinematics update separately
-			// (only if we have any dirty pieces)
-			// add ID as offset so the bounding-box update does
-			// not run at the same time for every model
-			unit->localModel.Update(gs->frameNum + unit->id);
+			for (int at = 0; at < teamHandler->ActiveAllyTeams(); ++at) {
+				unit->UpdateLosStatus(at);
+			}
 		}
 	}
 
@@ -265,6 +268,7 @@ void CUnitHandler::Update()
 			UNIT_SANITY_CHECK(unit);
 			unit->SlowUpdate();
 			unit->SlowUpdateWeapons();
+			unit->localModel.UpdateBoundingVolume();
 			UNIT_SANITY_CHECK(unit);
 
 			n--;

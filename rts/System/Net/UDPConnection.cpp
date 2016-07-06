@@ -75,7 +75,7 @@ inline void EMULATE_PACKET_CORRUPTION(boost::uint8_t& crc) {}
 		spring_time curtime = spring_gettime(); \
 		if (curtime > di->first && (curtime - di->first) > spring_msecs(0)) { \
 			mySocket->send_to(buffer(di->second), addr, flags, err); \
-			di = set_erase(delayed, di); \
+			di = delayed.erase(di); \
 		} else { ++di; } \
 	} \
 	if (cond) \
@@ -885,7 +885,7 @@ void UDPConnection::SendIfNecessary(bool flushed)
 				if (resend && canResend) {
 					if (netLossFactor == MIN_LOSS_FACTOR) {
 						buf.chunks.push_back(resIter->second);
-						resIter = set_erase(resendRequested, resIter);
+						resIter = resendRequested.erase(resIter);
 					} else {
 						// on a lossy connection, just keep resending until it is acked
 						switch(rev) {

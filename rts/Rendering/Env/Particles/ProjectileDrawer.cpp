@@ -232,8 +232,6 @@ CProjectileDrawer::CProjectileDrawer(): CEventClient("[CProjectileDrawer]", 1234
 	}
 
 
-	modelRenderers.resize(MODELTYPE_OTHER, NULL);
-
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 		modelRenderers[modelType] = IModelRenderContainer::GetInstance(modelType);
 	}
@@ -250,7 +248,6 @@ CProjectileDrawer::~CProjectileDrawer() {
 		delete modelRenderers[modelType];
 	}
 
-	modelRenderers.clear();
 	renderProjectiles.clear();
 }
 
@@ -310,9 +307,7 @@ void CProjectileDrawer::ParseAtlasTextures(
 void CProjectileDrawer::LoadWeaponTextures() {
 	// post-process the synced weapon-defs to set unsynced fields
 	// (this requires CWeaponDefHandler to have been initialized)
-	for (int wid = 0; wid < weaponDefHandler->weaponDefs.size(); wid++) {
-		WeaponDef& wd = weaponDefHandler->weaponDefs[wid];
-
+	for (WeaponDef& wd: weaponDefHandler->weaponDefs) {
 		wd.visuals.texture1 = NULL;
 		wd.visuals.texture2 = NULL;
 		wd.visuals.texture3 = NULL;
@@ -327,11 +322,11 @@ void CProjectileDrawer::LoadWeaponTextures() {
 		} else if (wd.type == "Flame") {
 			wd.visuals.texture1 = flametex;
 
-			if (wd.visuals.colorMap == 0) {
-				wd.visuals.colorMap = CColorMap::Load12f(
-					1.000f, 1.000f, 1.000f, 0.100f,
-					0.025f, 0.025f, 0.025f, 0.100f,
-					0.000f, 0.000f, 0.000f, 0.000f
+			if (wd.visuals.colorMap == nullptr) {
+				wd.visuals.colorMap = CColorMap::LoadFromDefString(
+					"1.0 1.0 1.0 0.1 "
+					"0.025 0.025 0.025 0.10 "
+					"0.0 0.0 0.0 0.0"
 				);
 			}
 		} else if (wd.type == "MissileLauncher") {
@@ -391,6 +386,8 @@ void CProjectileDrawer::LoadWeaponTextures() {
 
 void CProjectileDrawer::DrawProjectiles(int modelType, bool drawReflection, bool drawRefraction)
 {
+	SCOPED_GMARKER("CProjectileDrawer::DrawProjectiles");
+
 	auto& projectileBin = modelRenderers[modelType]->GetProjectileBinMutable();
 
 	for (auto binIt = projectileBin.cbegin(); binIt != projectileBin.cend(); ++binIt) {
@@ -408,39 +405,32 @@ void CProjectileDrawer::DrawProjectilesSet(const std::vector<CProjectile*>& proj
 	}
 }
 
+bool CProjectileDrawer::CanDrawProjectile(const CProjectile* pro, const CSolidObject* owner)
+{
+	auto& th = teamHandler;
+	auto& lh = losHandler;
+	return (gu->spectatingFullView || (owner != nullptr && th->Ally(owner->allyteam, gu->myAllyTeam)) || lh->InLos(pro, gu->myAllyTeam));
+}
+
 void CProjectileDrawer::DrawProjectileNow(CProjectile* pro, bool drawReflection, bool drawRefraction)
 {
-	const CUnit* owner = pro->owner();
-
 	pro->drawPos = pro->GetDrawPos(globalRendering->timeOffset);
 
-	const bool visible = (gu->spectatingFullView || losHandler->InLos(pro, gu->myAllyTeam) || (owner && teamHandler->Ally(owner->allyteam, gu->myAllyTeam)));
-
-	if (!visible)
+	if (!CanDrawProjectile(pro, pro->owner()))
 		return;
 
-	if (drawReflection) {
-		if (pro->pos.y < -pro->GetDrawRadius()) {
-			return;
-		}
-
-		const float dif = pro->pos.y - camera->GetPos().y;
-		const float3 zeroPos = camera->GetPos() * (pro->pos.y / dif) + pro->pos * (-camera->GetPos().y / dif);
-
-		if (CGround::GetApproximateHeight(zeroPos.x, zeroPos.z, false) > 3 + 0.5f * pro->GetDrawRadius()) {
-			return;
-		}
-	} else if (drawRefraction && pro->pos.y > pro->GetDrawRadius()) {
+	if (drawRefraction && (pro->drawPos.y > pro->GetDrawRadius()) /*!pro->IsInWater()*/)
 		return;
-	}
+	if (drawReflection && !CUnitDrawer::ObjectVisibleReflection(pro->drawPos, camera->GetPos(), pro->GetDrawRadius()))
+		return;
 
-	if (!camera->InView(pro->pos, pro->GetDrawRadius()))
+	if (!camera->InView(pro->drawPos, pro->GetDrawRadius()))
 		return;
 
 	DrawProjectileModel(pro);
 
 	if (pro->drawSorted) {
-		pro->SetSortDist(pro->pos.dot(camera->GetDir()));
+		pro->SetSortDist(camera->ProjectedDistance(pro->pos));
 		zSortedProjectiles.insert(pro);
 	} else {
 		unsortedProjectiles.push_back(pro);
@@ -469,11 +459,7 @@ void CProjectileDrawer::DrawProjectilesSetShadow(const std::vector<CProjectile*>
 
 void CProjectileDrawer::DrawProjectileShadow(CProjectile* p)
 {
-	const CUnit* owner = p->owner();
-
-	if ((gu->spectatingFullView || losHandler->InLos(p, gu->myAllyTeam) ||
-		(owner && teamHandler->Ally(owner->allyteam, gu->myAllyTeam)))) {
-
+	if (CanDrawProjectile(p, p->owner())) {
 		// if this returns false, then projectile is
 		// neither weapon nor piece, or has no model
 		if (DrawProjectileModel(p))
@@ -510,11 +496,7 @@ void CProjectileDrawer::DrawProjectilesMiniMap()
 			points->EnlargeArrays(projectileSet.size(), 0, VA_SIZE_C);
 
 			for (CProjectile* p: projectileSet) {
-				const CUnit* owner = p->owner();
-				const bool inLos = (owner && (owner->allyteam == gu->myAllyTeam)) ||
-					gu->spectatingFullView || losHandler->InLos(p, gu->myAllyTeam);
-
-				if (!inLos)
+				if (!CanDrawProjectile(p, p->owner()))
 					continue;
 
 				p->DrawOnMinimap(*lines, *points);
@@ -532,11 +514,7 @@ void CProjectileDrawer::DrawProjectilesMiniMap()
 		points->EnlargeArrays(renderProjectiles.size(), 0, VA_SIZE_C);
 
 		for (CProjectile* p: renderProjectiles) {
-			const CUnit* owner = p->owner();
-			const bool inLos = (owner && (owner->allyteam == gu->myAllyTeam)) ||
-				gu->spectatingFullView || losHandler->InLos(p, gu->myAllyTeam);
-
-			if (!inLos)
+			if (!CanDrawProjectile(p, p->owner()))
 				continue;
 
 			p->DrawOnMinimap(*lines, *points);
@@ -549,6 +527,8 @@ void CProjectileDrawer::DrawProjectilesMiniMap()
 
 void CProjectileDrawer::DrawFlyingPieces(int modelType)
 {
+	SCOPED_GMARKER("CProjectileDrawer::DrawFlyingPieces");
+
 	const FlyingPieceContainer& container = projectileHandler->flyingPieces[modelType];
 
 	if (container.empty())
@@ -581,6 +561,7 @@ void CProjectileDrawer::DrawFlyingPieces(int modelType)
 
 
 void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
+	glPushAttrib(GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_CURRENT_BIT);
 	glDisable(GL_BLEND);
 	glEnable(GL_TEXTURE_2D);
 	glDepthMask(GL_TRUE);
@@ -636,10 +617,7 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 		CProjectile::DrawArray();
 	}
 
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glDisable(GL_ALPHA_TEST);
-	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-	glDepthMask(GL_TRUE);
+	glPopAttrib();
 }
 
 void CProjectileDrawer::DrawShadowPass()

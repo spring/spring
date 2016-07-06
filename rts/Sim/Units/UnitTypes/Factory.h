@@ -19,8 +19,6 @@ public:
 
 	CFactory();
 
-	void PostLoad();
-
 	void StartBuild(const UnitDef* buildeeDef);
 	void UpdateBuild(CUnit* buildee);
 	void FinishBuild(CUnit* buildee);
@@ -50,7 +48,6 @@ private:
 public:
 	float buildSpeed;
 
-	const UnitDef* curBuildDef;
 	CUnit* curBuild;
 
 	enum {
@@ -60,7 +57,7 @@ public:
 	};
 
 private:
-	int nextBuildUnitDefID;
+	const UnitDef* curBuildDef;
 	int lastBuildUpdateFrame;
 
 	Command finishedBuildCommand;

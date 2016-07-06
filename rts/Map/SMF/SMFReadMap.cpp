@@ -53,8 +53,6 @@ CSMFReadMap::CSMFReadMap(std::string mapname)
 	haveSplatNormalDistribTexture &= !mapInfo->smf.splatDistrTexName.empty();
 	haveDetailNormalDiffuseAlpha   =  mapInfo->smf.splatDetailNormalDiffuseAlpha;
 
-	minimapOverride = !(mapInfo->smf.minimapTexName.empty());
-
 	ParseHeader();
 	LoadHeightMap();
 	CReadMap::Initialize();
@@ -439,6 +437,8 @@ void CSMFReadMap::UpdateFaceNormalsUnsynced(const SRectangle& update)
 		  float3* ufn = &faceNormalsUnsynced[0];
 	const float3* scn = &centerNormalsSynced[0];
 		  float3* ucn = &centerNormalsUnsynced[0];
+	const float3* scn2d = &centerNormals2DSynced[0];
+		  float3* ucn2d = &centerNormals2DUnsynced[0];
 
 	// a heightmap update over (x1, y1) - (x2, y2) implies the
 	// normals change over (x1 - 1, y1 - 1) - (x2 + 1, y2 + 1)
@@ -456,6 +456,7 @@ void CSMFReadMap::UpdateFaceNormalsUnsynced(const SRectangle& update)
 		idx0  = (z * mapDims.mapx + minx);
 		idx1  = (z * mapDims.mapx + maxx);
 		memcpy(&ucn[idx0], &scn[idx0], (idx1 - idx0 + 1) * sizeof(float3));
+		memcpy(&ucn2d[idx0], &scn2d[idx0], (idx1 - idx0 + 1) * sizeof(float3));
 	}
 	#endif
 }
@@ -635,26 +636,16 @@ float3 CSMFReadMap::GetLightValue(const int x, const int y) const
 	return light;
 }
 
-void CSMFReadMap::SunChanged(const float3& sunDir)
+void CSMFReadMap::SunChanged()
 {
 	if (shadingTexUpdateProgress < 0) {
 		shadingTexUpdateProgress = 0;
 	} else {
 		shadingTexUpdateNeeded = true;
 	}
-	groundDrawer->SunChanged(sunDir);
-}
 
-void CSMFReadMap::SunLightingChanged()
-{
-	if (shadingTexUpdateProgress < 0) {
-		shadingTexUpdateProgress = 0;
-	} else {
-		shadingTexUpdateNeeded = true;
-	}
-	groundDrawer->SunLightingChanged();
+	groundDrawer->SunChanged();
 }
-
 
 
 void CSMFReadMap::UpdateShadingTexture()

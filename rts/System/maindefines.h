@@ -94,7 +94,7 @@
 	#define STRCASECMP strcasecmp
 #endif /* _MSC_VER */
 
-#define FREE(x) free(x); x = NULL;
+#define FREE(x) do { free(x); x = NULL; } while(false);
 
 /* define a platform independent path separator C-string and char */
 #ifndef sPS

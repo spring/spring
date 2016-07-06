@@ -72,7 +72,7 @@ void CLightningCannon::FireImpl(const bool scriptCall)
 	}
 
 	const DamageArray& damageArray = damages->GetDynamicDamages(weaponMuzzlePos, currentTargetPos);
-	const CGameHelper::ExplosionParams params = {
+	const CExplosionParams params = {
 		curPos + curDir * boltLength,                     // hitPos (same as hitColQuery.GetHitPos() if no water or shield in way)
 		curDir,
 		damageArray,

@@ -150,7 +150,7 @@ void CommandDrawer::DrawAirCAICommands(const CAirCAI* cai) const
 	const CUnit* owner = cai->owner;
 	const CCommandQueue& commandQue = cai->commandQue;
 
-	lineDrawer.StartPath(owner->drawMidPos, cmdColors.start);
+	lineDrawer.StartPath(owner->GetObjDrawMidPos(), cmdColors.start);
 
 	if (owner->selfDCountdown != 0) {
 		lineDrawer.DrawIconAtLastPos(CMD_SELFD);
@@ -234,7 +234,7 @@ void CommandDrawer::DrawBuilderCAICommands(const CBuilderCAI* cai) const
 	const CUnit* owner = cai->owner;
 	const CCommandQueue& commandQue = cai->commandQue;
 
-	lineDrawer.StartPath(owner->drawMidPos, cmdColors.start);
+	lineDrawer.StartPath(owner->GetObjDrawMidPos(), cmdColors.start);
 
 	if (owner->selfDCountdown != 0) {
 		lineDrawer.DrawIconAtLastPos(CMD_SELFD);
@@ -244,10 +244,7 @@ void CommandDrawer::DrawBuilderCAICommands(const CBuilderCAI* cai) const
 		const int cmdID = ci->GetID();
 
 		if (cmdID < 0) {
-			const std::map<int, std::string>& buildOptions = cai->buildOptions;
-			const std::map<int, std::string>::const_iterator boi = buildOptions.find(cmdID);
-
-			if (boi != buildOptions.end()) {
+			if (cai->buildOptions.find(cmdID) != cai->buildOptions.end()) {
 				BuildInfo bi;
 				bi.def = unitDefHandler->GetUnitDefByID(-(cmdID));
 
@@ -344,7 +341,7 @@ void CommandDrawer::DrawBuilderCAICommands(const CBuilderCAI* cai) const
 						const CFeature* feature = featureHandler->GetFeature(id - unitHandler->MaxUnits());
 
 						if (feature != nullptr) {
-							lineDrawer.DrawLineAndIcon(cmdID, feature->drawMidPos, color);
+							lineDrawer.DrawLineAndIcon(cmdID, feature->GetObjDrawMidPos(), color);
 						}
 					} else {
 						const CUnit* unit = GetTrackableUnit(owner, unitHandler->GetUnit(ci->params[0]));
@@ -409,7 +406,7 @@ void CommandDrawer::DrawFactoryCAICommands(const CFactoryCAI* cai) const
 	const CCommandQueue& commandQue = cai->commandQue;
 	const CCommandQueue& newUnitCommands = cai->newUnitCommands;
 
-	lineDrawer.StartPath(owner->drawMidPos, cmdColors.start);
+	lineDrawer.StartPath(owner->GetObjDrawMidPos(), cmdColors.start);
 
 	if (owner->selfDCountdown != 0) {
 		lineDrawer.DrawIconAtLastPos(CMD_SELFD);
@@ -509,7 +506,7 @@ void CommandDrawer::DrawMobileCAICommands(const CMobileCAI* cai) const
 	const CUnit* owner = cai->owner;
 	const CCommandQueue& commandQue = cai->commandQue;
 
-	lineDrawer.StartPath(owner->drawMidPos, cmdColors.start);
+	lineDrawer.StartPath(owner->GetObjDrawMidPos(), cmdColors.start);
 
 	if (owner->selfDCountdown != 0) {
 		lineDrawer.DrawIconAtLastPos(CMD_SELFD);

@@ -2,6 +2,8 @@
 
 
 #include "Feature.h"
+#include "FeatureDef.h"
+#include "FeatureDefHandler.h"
 #include "FeatureHandler.h"
 #include "Game/GlobalUnsynced.h"
 #include "Map/Ground.h"
@@ -17,16 +19,18 @@
 #include "Rendering/Env/Particles/Classes/GeoThermSmokeProjectile.h"
 #include "Rendering/Env/Particles/Classes/SmokeProjectile.h"
 #include "Sim/Units/UnitDef.h"
+#include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/UnitHandler.h"
 #include "System/EventHandler.h"
-#include "System/Log/ILog.h"
 #include "System/myMath.h"
+#include "System/creg/DefTypes.h"
+#include "System/Log/ILog.h"
 #include <assert.h>
+
 
 CR_BIND_DERIVED(CFeature, CSolidObject, )
 
 CR_REG_METADATA(CFeature, (
-	CR_MEMBER(defID),
 	CR_MEMBER(isRepairingBeforeResurrect),
 	CR_MEMBER(inUpdateQue),
 	CR_MEMBER(deleteMe),
@@ -40,8 +44,7 @@ CR_REG_METADATA(CFeature, (
 	CR_MEMBER(alphaFade),
 	CR_MEMBER(fireTime),
 	CR_MEMBER(smokeTime),
-	CR_MEMBER(fireTime),
-	CR_IGNORED(def), //reconstructed in PostLoad
+	CR_MEMBER(def),
 	CR_MEMBER(udef),
 	CR_MEMBER(moveCtrl),
 	CR_MEMBER(myFire),
@@ -66,7 +69,6 @@ CR_REG_METADATA_SUB(CFeature,MoveCtrl,(
 
 CFeature::CFeature()
 : CSolidObject()
-, defID(-1)
 , isRepairingBeforeResurrect(false)
 , inUpdateQue(false)
 , deleteMe(false)
@@ -111,31 +113,6 @@ CFeature::~CFeature()
 
 void CFeature::PostLoad()
 {
-	def = featureHandler->GetFeatureDefByID(defID);
-	objectDef = def;
-
-	// FIXME is this really needed (aren't all those tags saved via creg?)
-	switch (def->drawType) {
-		case DRAWTYPE_NONE: {
-		} break;
-
-		case DRAWTYPE_MODEL: {
-			if ((model = def->LoadModel()) != nullptr) {
-				SetMidAndAimPos(model->relMidPos, model->relMidPos, true);
-				SetRadiusAndHeight(model);
-
-				localModel.SetModel(model);
-			}
-		} break;
-
-		default: {
-			// always >= DRAWTYPE_TREE here
-			SetMidAndAimPos(UpVector * TREE_RADIUS, UpVector * TREE_RADIUS, true);
-			SetRadiusAndHeight(TREE_RADIUS, TREE_RADIUS * 2.0f);
-		} break;
-	}
-
-	UpdateMidAndAimPos();
 	eventHandler.RenderFeatureCreated(this);
 }
 
@@ -157,21 +134,21 @@ void CFeature::ChangeTeam(int newTeam)
 
 bool CFeature::IsInLosForAllyTeam(int argAllyTeam) const
 {
-	if (alwaysVisible)
+	if (alwaysVisible || argAllyTeam == -1)
 		return true;
 
-	const bool inLOS = (argAllyTeam == -1 || losHandler->InLos(this->pos, argAllyTeam));
+	const bool isGaia = allyteam == std::max(0, teamHandler->GaiaAllyTeamID());
 
 	switch (modInfo.featureVisibility) {
 		case CModInfo::FEATURELOS_NONE:
 		default:
-			return inLOS;
+			return losHandler->InLos(pos, argAllyTeam);
 
 		// these next two only make sense when Gaia is enabled
 		case CModInfo::FEATURELOS_GAIAONLY:
-			return (this->allyteam == std::max(0, teamHandler->GaiaAllyTeamID()) || inLOS);
+			return (isGaia || losHandler->InLos(pos, argAllyTeam));
 		case CModInfo::FEATURELOS_GAIAALLIED:
-			return (this->allyteam == std::max(0, teamHandler->GaiaAllyTeamID()) || this->allyteam == argAllyTeam || inLOS);
+			return (isGaia || allyteam == argAllyTeam || losHandler->InLos(pos, argAllyTeam));
 
 		case CModInfo::FEATURELOS_ALL:
 			return true;
@@ -181,12 +158,10 @@ bool CFeature::IsInLosForAllyTeam(int argAllyTeam) const
 
 void CFeature::Initialize(const FeatureLoadParams& params)
 {
-	id = params.featureID;
-	defID = (params.featureDef)->id;
-
 	def = params.featureDef;
 	udef = params.unitDef;
-	objectDef = params.featureDef;
+
+	id = params.featureID;
 
 	team = params.teamID;
 	allyteam = params.allyTeamID;
@@ -210,11 +185,13 @@ void CFeature::Initialize(const FeatureLoadParams& params)
 
 	// by default, any feature that is a dead unit can move
 	// in all dimensions; all others (trees, rocks, ...) can
-	// only move vertically
+	// only move vertically and also do not allow velocity to
+	// build in XZ
 	// (movementMask exists mostly for trees, which depend on
 	// speed for falling animations but should never actually
-	// *move* in XZ)
-	moveCtrl.SetMoveMask(mix(OnesVector, UpVector, udef == nullptr));
+	// *move* in XZ, so their velocityMask *does* include XZ)
+	moveCtrl.SetMovementMask(mix(OnesVector, UpVector, udef == nullptr                                 ));
+	moveCtrl.SetVelocityMask(mix(OnesVector, UpVector, udef == nullptr && def->drawType < DRAWTYPE_TREE));
 
 	// set position before mid-position
 	Move((params.pos).cClampInMap(), false);
@@ -245,6 +222,8 @@ void CFeature::Initialize(const FeatureLoadParams& params)
 			// LoadFeaturesFromMap() doesn't set a scale for trees
 			SetMidAndAimPos(UpVector * TREE_RADIUS, UpVector * TREE_RADIUS, true);
 			SetRadiusAndHeight(TREE_RADIUS, TREE_RADIUS * 2.0f);
+			drawPos = pos;
+			drawMidPos = midPos;
 		} break;
 	}
 
@@ -273,7 +252,6 @@ void CFeature::Initialize(const FeatureLoadParams& params)
 	eventHandler.FeatureCreated(this);
 	eventHandler.RenderFeatureCreated(this);
 }
-
 
 
 bool CFeature::AddBuildPower(CUnit* builder, float amount)
@@ -446,7 +424,7 @@ void CFeature::DoDamage(
 	eventHandler.FeatureDamaged(this, attacker, baseDamage, weaponDefID, projectileID);
 
 	if (health <= 0.0f && def->destructable) {
-		FeatureLoadParams params = {featureHandler->GetFeatureDefByID(def->deathFeatureDefID), NULL, pos, speed, -1, team, -1, heading, buildFacing, 0};
+		FeatureLoadParams params = {featureDefHandler->GetFeatureDefByID(def->deathFeatureDefID), NULL, pos, speed, -1, team, -1, heading, buildFacing, 0};
 		CFeature* deathFeature = featureHandler->CreateWreckage(params, 0, false);
 
 		if (deathFeature != NULL) {
@@ -512,14 +490,14 @@ void CFeature::ForcedSpin(const float3& newDir)
 {
 	// update local direction-vectors
 	CSolidObject::ForcedSpin(newDir);
-	UpdateTransform();
+	UpdateTransform(pos, true);
 }
 
 
 void CFeature::UpdateTransformAndPhysState()
 {
 	UpdateDirVectors(!def->upright);
-	UpdateTransform();
+	UpdateTransform(pos, true);
 
 	UpdatePhysicalStateBit(CSolidObject::PSTATE_BIT_MOVING, (SetSpeed(speed) != 0.0f));
 	UpdatePhysicalState(0.1f);
@@ -592,6 +570,8 @@ bool CFeature::UpdatePosition()
 
 		// vertical movement
 		Move((speed * UpVector) * moveCtrl.movementMask, true);
+		// adjusting vertical speed won't help if the ground moved and buried us
+		Move(UpVector * (std::max(CGround::GetHeightReal(pos.x, pos.z), pos.y) - pos.y), true);
 
 		// clamp final position
 		if (!pos.IsInBounds()) {
@@ -606,7 +586,7 @@ bool CFeature::UpdatePosition()
 	Block(); // does the check if wanted itself
 
 	// use an exact comparison for the y-component (gravity is small)
-	if (!pos.equals(oldPos, float3(float3::CMP_EPS, 0.0f, float3::CMP_EPS))) {
+	if (!pos.equals(oldPos, float3(float3::cmp_eps(), 0.0f, float3::cmp_eps()))) {
 		eventHandler.FeatureMoved(this, oldPos);
 		return true;
 	}

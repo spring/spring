@@ -21,7 +21,7 @@
 
 #define SMOKE_TIME 40
 
-CR_BIND_DERIVED(CPieceProjectile, CProjectile, (NULL, NULL, ZeroVector, ZeroVector, 0, 0))
+CR_BIND_DERIVED(CPieceProjectile, CProjectile, )
 CR_REG_METADATA(CPieceProjectile,(
 	CR_SETFLAG(CF_Synced),
 
@@ -73,6 +73,7 @@ CPieceProjectile::CPieceProjectile(
 	// this class are themselves synced and have
 	// LuaSynced{Ctrl, Read} exposure we treat
 	// them that way for consistency
+	spinAngle = 0.0f;
 	spinVec = gs->randVector().Normalize();
 	spinSpeed = gs->randFloat() * 20;
 
@@ -130,7 +131,7 @@ void CPieceProjectile::Collision(CUnit* unit, CFeature* feature)
 
 	if ((explFlags & PF_Explode) && (unit || feature)) {
 		const DamageArray damageArray(50.0f);
-		const CGameHelper::ExplosionParams params = {
+		const CExplosionParams params = {
 			pos,
 			ZeroVector,
 			damageArray,
@@ -253,9 +254,6 @@ void CPieceProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
 
 void CPieceProjectile::Draw()
 {
-	if ((explFlags & PF_NoCEGTrail) == 0)
-		return;
-
 	if (explFlags & PF_Fire) {
 		inArray = true;
 		va->EnlargeArrays(NUM_TRAIL_PARTS * 4, 0, VA_SIZE_TC);

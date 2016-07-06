@@ -60,7 +60,6 @@
 		RmDir /r "$INSTDIR"
 		RmDir /r "$DOCUMENTS\My Games\Spring"
 		Delete "$LOCALAPPDATA\springsettings.cfg"
-		Delete "$APPDATA\springlobby.conf"
 	skip_purge:
 
 !endif

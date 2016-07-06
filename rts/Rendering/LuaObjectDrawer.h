@@ -48,6 +48,8 @@ public:
 	static void ReadLODScales(LuaObjType objType);
 	static void SetDrawPassGlobalLODFactor(LuaObjType objType);
 
+	static int GetBinObjTeam() { return binObjTeam; }
+
 	static float GetLODScale          (int objType) { return (LODScale[objType]                              ); }
 	static float GetLODScaleShadow    (int objType) { return (LODScale[objType] * LODScaleShadow    [objType]); }
 	static float GetLODScaleReflection(int objType) { return (LODScale[objType] * LODScaleReflection[objType]); }
@@ -69,9 +71,9 @@ public:
 
 private:
 	static void DrawMaterialBins(LuaObjType objType, LuaMatType matType, bool deferredPass);
-	static const LuaMaterial* DrawMaterialBin(
+	static void DrawMaterialBin(
 		const LuaMatBin* currBin,
-		const LuaMaterial* currMat,
+		const LuaMaterial* prevMat,
 		LuaObjType objType,
 		LuaMatType matType,
 		bool deferredPass,
@@ -82,7 +84,8 @@ private:
 		const CSolidObject* obj,
 		LuaObjType objType,
 		const LuaObjectLODMaterial* lodMat,
-		const LuaMatShader* shader,
+		const LuaMaterial* luaMat,
+		bool deferredPass,
 		bool alphaMatBin,
 		bool applyTrans,
 		bool noLuaCall
@@ -103,6 +106,11 @@ private:
 
 	// whether the deferred feature pass clears the GB
 	static bool bufferClearAllowed;
+
+	// team of last object visited in DrawMaterialBin
+	// (needed because bins are not sorted by team and
+	// Lua shaders do not have any uniform caching yet)
+	static int binObjTeam;
 
 	static float LODScale[LUAOBJ_LAST];
 	static float LODScaleShadow[LUAOBJ_LAST];

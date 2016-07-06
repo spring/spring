@@ -10,7 +10,7 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
 
-CR_BIND_DERIVED(CWakeProjectile, CProjectile, (NULL, ZeroVector, ZeroVector, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f))
+CR_BIND_DERIVED(CWakeProjectile, CProjectile, )
 
 CR_REG_METADATA(CWakeProjectile,(
 	CR_MEMBER(alpha),
@@ -23,9 +23,6 @@ CR_REG_METADATA(CWakeProjectile,(
 	CR_MEMBER(rotSpeed)
 ))
 
-//////////////////////////////////////////////////////////////////////
-// Construction/Destruction
-//////////////////////////////////////////////////////////////////////
 
 CWakeProjectile::CWakeProjectile(
 	CUnit* owner,
@@ -86,7 +83,7 @@ void CWakeProjectile::Draw()
 	float interSize = size + sizeExpansion * globalRendering->timeOffset;
 	float interRot = rotation + rotSpeed * globalRendering->timeOffset;
 
-	const float3 dir1 = float3(math::cos(interRot), 0, math::sin(interRot)) * interSize;
+	const float3 dir1 = float3(std::cos(interRot), 0, std::sin(interRot)) * interSize;
 	const float3 dir2 = dir1.cross(UpVector);
 
 	#define wt projectileDrawer->waketex

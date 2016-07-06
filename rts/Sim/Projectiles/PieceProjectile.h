@@ -25,6 +25,7 @@ class CPieceProjectile: public CProjectile
 	CR_DECLARE_DERIVED(CPieceProjectile)
 
 public:
+	CPieceProjectile() { }
 	CPieceProjectile(
 		CUnit* owner,
 		LocalModelPiece* piece,

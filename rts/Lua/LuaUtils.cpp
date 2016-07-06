@@ -14,6 +14,7 @@
 #include "Sim/Features/FeatureDef.h"
 #include "Sim/Objects/SolidObjectDef.h"
 #include "Sim/Units/UnitDef.h"
+#include "Sim/Units/CommandAI/CommandDescription.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/Log/ILog.h"
 #include "System/Util.h"
@@ -743,14 +744,14 @@ int LuaUtils::PushFeatureModelDrawType(lua_State* L, const FeatureDef* def)
 int LuaUtils::PushModelName(lua_State* L, const SolidObjectDef* def)
 {
 	// redundant with model.path
-	// lua_pushsstring(L, modelParser->FindModelPath(def->modelName));
+	// lua_pushsstring(L, modelLoader.FindModelPath(def->modelName));
 	lua_pushsstring(L, "deprecated! use def.model.path instead!");
 	return 1;
 }
 
 
 int LuaUtils::PushModelTable(lua_State* L, const SolidObjectDef* def) {
-	const std::string& modelPath = modelParser->FindModelPath(def->modelName);
+	const std::string& modelPath = modelLoader.FindModelPath(def->modelName);
 	const std::string& modelType = StringToLower(FileSystem::GetExtension(modelPath));
 
 	const S3DModel* model = def->LoadModel();
@@ -789,8 +790,8 @@ int LuaUtils::PushModelTable(lua_State* L, const SolidObjectDef* def) {
 	lua_newtable(L);
 
 	if (model != nullptr) {
-		LuaPushNamedString(L, "tex1", model->tex1);
-		LuaPushNamedString(L, "tex2", model->tex2);
+		LuaPushNamedString(L, "tex1", model->texs[0]);
+		LuaPushNamedString(L, "tex2", model->texs[1]);
 	} else {
 		// just leave these nil
 	}
@@ -1320,7 +1321,7 @@ void LuaUtils::PushStringVector(lua_State* L, const vector<string>& vec)
 /******************************************************************************/
 /******************************************************************************/
 
-void LuaUtils::PushCommandDesc(lua_State* L, const CommandDescription& cd)
+void LuaUtils::PushCommandDesc(lua_State* L, const SCommandDescription& cd)
 {
 	const int numParams = cd.params.size();
 	const int numTblKeys = 12;

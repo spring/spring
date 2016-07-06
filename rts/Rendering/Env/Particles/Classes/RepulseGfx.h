@@ -11,6 +11,7 @@ class CRepulseGfx : public CProjectile
 {
 	CR_DECLARE_DERIVED(CRepulseGfx)
 public:
+	CRepulseGfx() { }
 	CRepulseGfx(
 		CUnit* owner,
 		CProjectile* repulsed,

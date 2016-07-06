@@ -47,7 +47,9 @@ CRoamMeshDrawer::CRoamMeshDrawer(CSMFReadMap* rm, CSMFGroundDrawer* gd)
 
 	// set ROAM upload mode (VA,DL,VBO)
 	Patch::SwitchRenderMode(configHandler->GetInt("ROAM"));
-	CTriNodePool::InitPools();
+	for (unsigned int i = MESH_NORMAL; i <= MESH_SHADOW; i++) {
+		CTriNodePool::InitPools(i);
+	}
 
 	numPatchesX = mapDims.mapx / PATCH_SIZE;
 	numPatchesY = mapDims.mapy / PATCH_SIZE;
@@ -55,7 +57,9 @@ CRoamMeshDrawer::CRoamMeshDrawer(CSMFReadMap* rm, CSMFGroundDrawer* gd)
 
 	for (unsigned int i = MESH_NORMAL; i <= MESH_SHADOW; i++) {
 		patchMeshGrid[i].resize(numPatchesX * numPatchesY);
-		borderPatches[i].resize(4 + (numPatchesY - 2) * 2 + (numPatchesX - 2) * 2, nullptr);
+		const int borderSizeX = 1 + (numPatchesX > 1);
+		const int borderSizeY = 1 + (numPatchesY > 1);
+		borderPatches[i].resize(borderSizeX * borderSizeY + (numPatchesY - borderSizeY) * borderSizeX + (numPatchesX - borderSizeX) * borderSizeY, nullptr);
 		patchVisFlags[i].resize(numPatchesX * numPatchesY, 0);
 	}
 
@@ -80,9 +84,15 @@ CRoamMeshDrawer::CRoamMeshDrawer(CSMFReadMap* rm, CSMFGroundDrawer* gd)
 
 		// gather corner patches
 		borderPatches[i][patchIdx++] = &patches[                                  (              0)];
-		borderPatches[i][patchIdx++] = &patches[                                  (numPatchesX - 1)];
-		borderPatches[i][patchIdx++] = &patches[(numPatchesY - 1) * numPatchesX + (              0)];
-		borderPatches[i][patchIdx++] = &patches[(numPatchesY - 1) * numPatchesX + (numPatchesX - 1)];
+
+		if (numPatchesX > 1)
+			borderPatches[i][patchIdx++] = &patches[                                  (numPatchesX - 1)];
+
+		if (numPatchesY > 1)
+			borderPatches[i][patchIdx++] = &patches[(numPatchesY - 1) * numPatchesX + (              0)];
+
+		if (numPatchesX > 1 && numPatchesY > 1)
+			borderPatches[i][patchIdx++] = &patches[(numPatchesY - 1) * numPatchesX + (numPatchesX - 1)];
 
 		// gather x-border patches
 		for (int py = 1; py < (numPatchesY - 1); ++py) {
@@ -102,7 +112,9 @@ CRoamMeshDrawer::~CRoamMeshDrawer()
 {
 	configHandler->Set("ROAM", (int)Patch::renderMode);
 
-	CTriNodePool::FreePools();
+	for (unsigned int i = MESH_NORMAL; i <= MESH_SHADOW; i++) {
+		CTriNodePool::FreePools(i);
+	}
 }
 
 
@@ -171,8 +183,8 @@ void CRoamMeshDrawer::Update()
 	{
 		SCOPED_TIMER("ROAM::Tessellate");
 
-		Reset(patchMeshGrid[shadowPass]);
-		forceTessellate[shadowPass] = Tessellate(patchMeshGrid[shadowPass], cam, smfGroundDrawer->GetGroundDetail());
+		Reset(shadowPass);
+		forceTessellate[shadowPass] = Tessellate(patchMeshGrid[shadowPass], cam, smfGroundDrawer->GetGroundDetail(), shadowPass);
 	}
 
 	{
@@ -278,10 +290,12 @@ void CRoamMeshDrawer::DrawInMiniMap()
 
 
 
-void CRoamMeshDrawer::Reset(std::vector<Patch>& patches)
+void CRoamMeshDrawer::Reset(bool shadowPass)
 {
+	std::vector<Patch>& patches = patchMeshGrid[shadowPass];
+
 	// set the next free triangle pointer back to the beginning
-	CTriNodePool::ResetAll();
+	CTriNodePool::ResetAll(shadowPass);
 
 	// perform patch resets, compute variances, and link
 	for (int y = 0; y < numPatchesY; ++y) {
@@ -305,7 +319,7 @@ void CRoamMeshDrawer::Reset(std::vector<Patch>& patches)
 
 
 
-bool CRoamMeshDrawer::Tessellate(std::vector<Patch>& patches, const CCamera* cam, int viewRadius)
+bool CRoamMeshDrawer::Tessellate(std::vector<Patch>& patches, const CCamera* cam, int viewRadius, bool shadowPass)
 {
 	// create an approximate tessellated mesh of the landscape
 	// hint: threading just helps a little with huge cpu usage in retessellation, still better than nothing
@@ -336,7 +350,7 @@ bool CRoamMeshDrawer::Tessellate(std::vector<Patch>& patches, const CCamera* cam
 			if (!p->IsVisible(cam))
 				return;
 
-			forceTess |= (!p->Tessellate(cam->GetPos(), viewRadius));
+			forceTess |= (!p->Tessellate(cam->GetPos(), viewRadius, shadowPass));
 		});
 
 		if (forceTess)

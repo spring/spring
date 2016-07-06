@@ -3,17 +3,11 @@
 
 #include "AdvWater.h"
 #include "ISky.h"
-#include "Game/Game.h"
 #include "Game/Camera.h"
-#include "Map/BaseGroundDrawer.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/VertexArray.h"
-#include "Rendering/FeatureDrawer.h"
-#include "Rendering/Env/Particles/ProjectileDrawer.h"
-#include "Rendering/UnitDrawer.h"
-#include "System/EventHandler.h"
 #include "System/Exceptions.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -22,32 +16,31 @@
 
 CAdvWater::CAdvWater(bool loadShader)
 {
-	if (!FBO::IsSupported()) {
+	if (!FBO::IsSupported())
 		throw content_error("Water Error: missing FBO support");
-	}
+
+	std::vector<unsigned char> scrap(512 * 512 * 4);
 
 	glGenTextures(1, &reflectTexture);
-	unsigned char* scrap = new unsigned char[512 * 512 * 4];
-
 	glBindTexture(GL_TEXTURE_2D, reflectTexture);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,     GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,     GL_CLAMP_TO_EDGE);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 512, 512, 0, GL_RGBA, GL_UNSIGNED_BYTE, scrap);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 512, 512, 0, GL_RGBA, GL_UNSIGNED_BYTE, &scrap[0]);
 
 	glGenTextures(1, &bumpTexture);
 	glBindTexture(GL_TEXTURE_2D, bumpTexture);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 128, 128, 0, GL_RGBA, GL_UNSIGNED_BYTE, scrap);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 128, 128, 0, GL_RGBA, GL_UNSIGNED_BYTE, &scrap[0]);
 
 	glGenTextures(4, rawBumpTexture);
 
 	for (int y = 0; y < 64; ++y) {
 		for (int x = 0; x < 64; ++x) {
 			scrap[(y*64 + x)*4 + 0] = 128;
-			scrap[(y*64 + x)*4 + 1] = (unsigned char)(math::sin(y*PI*2.0f/64.0f)*128 + 128);
+			scrap[(y*64 + x)*4 + 1] = (unsigned char)(std::sin(y*PI*2.0f/64.0f)*128 + 128);
 			scrap[(y*64 + x)*4 + 2] = 0;
 			scrap[(y*64 + x)*4 + 3] = 255;
 		}
@@ -55,35 +48,33 @@ CAdvWater::CAdvWater(bool loadShader)
 	glBindTexture(GL_TEXTURE_2D, rawBumpTexture[0]);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 64, 64, 0, GL_RGBA, GL_UNSIGNED_BYTE, scrap);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 64, 64, 0, GL_RGBA, GL_UNSIGNED_BYTE, &scrap[0]);
 
 	for (int y = 0; y < 64; ++y) {
 		for (int x = 0; x < 64; ++x) {
 			const float ang = 26.5f*PI/180.0f;
 			const float pos = y*2+x;
-			scrap[(y*64 + x)*4 + 0] = (unsigned char)((math::sin(pos*PI*2.0f/64.0f))*128*math::sin(ang)) + 128;
-			scrap[(y*64 + x)*4 + 1] = (unsigned char)((math::sin(pos*PI*2.0f/64.0f))*128*math::cos(ang)) + 128;
+			scrap[(y*64 + x)*4 + 0] = (unsigned char)((std::sin(pos*PI*2.0f/64.0f))*128*std::sin(ang)) + 128;
+			scrap[(y*64 + x)*4 + 1] = (unsigned char)((std::sin(pos*PI*2.0f/64.0f))*128*std::cos(ang)) + 128;
 		}
 	}
 	glBindTexture(GL_TEXTURE_2D, rawBumpTexture[1]);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 64, 64, 0, GL_RGBA, GL_UNSIGNED_BYTE, scrap);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 64, 64, 0, GL_RGBA, GL_UNSIGNED_BYTE, &scrap[0]);
 
 	for (int y = 0; y < 64; ++y) {
 		for (int x = 0; x < 64; ++x) {
 			const float ang = -19*PI/180.0f;
 			const float pos = 3*y - x;
-			scrap[(y*64 + x)*4 + 0] = (unsigned char)((math::sin(pos*PI*2.0f/64.0f))*128*math::sin(ang)) + 128;
-			scrap[(y*64 + x)*4 + 1] = (unsigned char)((math::sin(pos*PI*2.0f/64.0f))*128*math::cos(ang)) + 128;
+			scrap[(y*64 + x)*4 + 0] = (unsigned char)((std::sin(pos*PI*2.0f/64.0f))*128*std::sin(ang)) + 128;
+			scrap[(y*64 + x)*4 + 1] = (unsigned char)((std::sin(pos*PI*2.0f/64.0f))*128*std::cos(ang)) + 128;
 		}
 	}
 	glBindTexture(GL_TEXTURE_2D, rawBumpTexture[2]);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 64, 64, 0, GL_RGBA, GL_UNSIGNED_BYTE, scrap);
-
-	delete[] scrap;
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 64, 64, 0, GL_RGBA, GL_UNSIGNED_BYTE, &scrap[0]);
 
 	if (loadShader) {
 		// NOTE: needs a VP with OPTION ARB_position_invariant for clipping if !haveGLSL
@@ -174,6 +165,7 @@ void CAdvWater::Draw(bool useBlending)
 	va->Initialize();
 	va->EnlargeArrays(5*numDivs*(numDivs + 1)*2, 5*numDivs, VA_SIZE_TC); //! alloc room for all vertexes and strips
 	float3 dir, zpos;
+
 	for (int a = 0; a < 5; ++a) { //! CAUTION: loop count must match EnlargeArrays above
 		bool maxReached = false;
 		for (int y = 0; y < numDivs; ++y) {
@@ -190,14 +182,14 @@ void CAdvWater::Draw(bool useBlending)
 				dir = xbase + dv;
 				dir.ANormalize();
 				zpos = camera->GetPos() + dir*(camera->GetPos().y / -dir.y);
-				zpos.y = math::sin(zpos.z*0.1f + gs->frameNum*0.06f)*0.06f + 0.05f;
+				zpos.y = std::sin(zpos.z*0.1f + gs->frameNum*0.06f)*0.06f + 0.05f;
 				col[3] = (unsigned char)((0.8f + 0.7f*dir.y)*255);
 				va->AddVertexQTC(zpos, x*(1.0f/numDivs), screenY - yInc, col);
 
 				dir = xbase;
 				dir.ANormalize();
 				zpos = camera->GetPos() + dir*(camera->GetPos().y / -dir.y);
-				zpos.y = math::sin(zpos.z*0.1f + gs->frameNum*0.06f)*0.06f + 0.05f;
+				zpos.y = std::sin(zpos.z*0.1f + gs->frameNum*0.06f)*0.06f + 0.05f;
 				col[3] = (unsigned char)((0.8f + 0.7f*dir.y)*255);
 				va->AddVertexQTC(zpos, x*(1.0f/numDivs), screenY, col);
 
@@ -207,9 +199,10 @@ void CAdvWater::Draw(bool useBlending)
 			base += dv;
 			screenY -= yInc;
 		}
-		if (!maxReached) {
+
+		if (!maxReached)
 			break;
-		}
+
 		dv   *= 0.5f;
 		maxY *= 0.5f;
 		yInc *= 0.5f;
@@ -308,7 +301,10 @@ void CAdvWater::UpdateWater(CGame* game)
 	glClearColor(sky->fogColor[0], sky->fogColor[1], sky->fogColor[2], 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	const double clipPlaneEq[4] = {0.0, 1.0, 0.0, 0.0};
+	const double clipPlaneEqs[2 * 4] = {
+		0.0, 1.0, 0.0, 0.0,
+		0.0, 1.0, 0.0, 0.0,
+	};
 
 	CCamera* prvCam = CCamera::GetSetActiveCamera(CCamera::CAMTYPE_UWREFL);
 	CCamera* curCam = CCamera::GetActiveCamera();
@@ -317,36 +313,7 @@ void CAdvWater::UpdateWater(CGame* game)
 		curCam->CopyStateReflect(prvCam);
 		curCam->UpdateLoadViewPort(0, 0, 512, 512);
 
-		game->SetDrawMode(CGame::gameReflectionDraw);
-
-		{
-			drawReflection = true;
-
-			glEnable(GL_CLIP_PLANE2);
-			glClipPlane(GL_CLIP_PLANE2, clipPlaneEq);
-
-			// opaque
-			sky->Draw();
-			readMap->GetGroundDrawer()->Draw(DrawPass::WaterReflection);
-
-			// rest needs the plane in model-space; V is combined with P
-			SetModelClippingPlane(clipPlaneEq);
-			unitDrawer->Draw(true);
-			featureDrawer->Draw();
-
-			// transparent
-			unitDrawer->DrawAlphaPass();
-			featureDrawer->DrawAlphaPass();
-			projectileDrawer->Draw(true);
-			sky->DrawSun();
-
-			eventHandler.DrawWorldReflection();
-			glDisable(GL_CLIP_PLANE2);
-
-			drawReflection = false;
-		}
-
-		game->SetDrawMode(CGame::gameNormalDraw);
+		DrawReflections(&clipPlaneEqs[0], true, true);
 	}
 
 	CCamera::SetActiveCamera(prvCam->GetCamType());

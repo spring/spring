@@ -3,6 +3,7 @@ set -e
 . buildbot/slave/prepare.sh
 
 FILEPREFIX="${OUTPUTDIR}-static"
+PLATFORM=${OUTPUTDIR}
 
 DEST=${TMP_BASE}/inst
 INSTALLDIR=${DEST}
@@ -77,3 +78,4 @@ ${SEVENZIP} ${MIN_PORTABLE_ARCHIVE} ${INSTALLDIR}/* -xr!*.dbg -xr!*.dbg.7z
 # create relative symbolic links to current files for rsyncing
 cd ${TMP_PATH}/../..
 ln -sfv ${REV}/$OUTPUTDIR/spring_${VERSION}_minimal-portable-${FILEPREFIX}.7z  spring_testing_minimal-portable-${FILEPREFIX}.7z
+echo ${VERSION} > LATEST_${PLATFORM}

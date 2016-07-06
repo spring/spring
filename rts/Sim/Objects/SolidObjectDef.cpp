@@ -7,26 +7,6 @@
 #include "System/EventHandler.h"
 #include "System/Log/ILog.h"
 
-CR_BIND(SolidObjectDecalDef, )
-CR_REG_METADATA(SolidObjectDecalDef,
-(
-	CR_MEMBER(groundDecalTypeName),
-	CR_MEMBER(trackDecalTypeName),
-
-	CR_MEMBER(useGroundDecal),
-	CR_MEMBER(groundDecalType),
-	CR_MEMBER(groundDecalSizeX),
-	CR_MEMBER(groundDecalSizeY),
-	CR_MEMBER(groundDecalDecaySpeed),
-
-	CR_MEMBER(leaveTrackDecals),
-	CR_MEMBER(trackDecalType),
-	CR_MEMBER(trackDecalWidth),
-	CR_MEMBER(trackDecalOffset),
-	CR_MEMBER(trackDecalStrength),
-	CR_MEMBER(trackDecalStretch)
-))
-
 SolidObjectDecalDef::SolidObjectDecalDef()
 	: useGroundDecal(false)
 	, groundDecalType(-1)
@@ -60,36 +40,6 @@ void SolidObjectDecalDef::Parse(const LuaTable& table) {
 	trackDecalStretch  = table.GetFloat("trackStretch",  1.0f);
 }
 
-CR_BIND(SolidObjectDef, )
-CR_REG_METADATA(SolidObjectDef,
-(
-	CR_MEMBER(id),
-
-	CR_MEMBER(xsize),
-	CR_MEMBER(zsize),
-
-	CR_MEMBER(metal),
-	CR_MEMBER(energy),
-	CR_MEMBER(health),
-	CR_MEMBER(mass),
-	CR_MEMBER(crushResistance),
-
-	CR_MEMBER(collidable),
-	CR_MEMBER(selectable),
-	CR_MEMBER(upright),
-	CR_MEMBER(reclaimable),
-
-	CR_IGNORED(model),
-	CR_MEMBER(collisionVolume),
-
-	CR_MEMBER(decalDef),
-
-	CR_MEMBER(name),
-	CR_MEMBER(modelName),
-
-	CR_MEMBER(customParams)
-))
-
 SolidObjectDef::SolidObjectDef()
 	: id(-1)
 
@@ -114,7 +64,7 @@ SolidObjectDef::SolidObjectDef()
 void SolidObjectDef::PreloadModel() const
 {
 	if (model == nullptr && !modelName.empty()) {
-		modelParser->Preload3DModel(modelName);
+		modelLoader.PreloadModel(modelName);
 	}
 }
 
@@ -122,7 +72,7 @@ S3DModel* SolidObjectDef::LoadModel() const
 {
 	if (model == nullptr) {
 		if (!modelName.empty()) {
-			model = modelParser->Load3DModel(modelName);
+			model = modelLoader.LoadModel(modelName);
 		} else {
 			// not useful, too much spam
 			// LOG_L(L_WARNING, "[SolidObjectDef::%s] object \"%s\" has no model defined", __FUNCTION__, name.c_str());

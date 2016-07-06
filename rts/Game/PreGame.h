@@ -42,7 +42,7 @@ public:
 
 	void LoadSetupscript(const std::string& script);
 	void LoadDemo(const std::string& demo);
-	void LoadSavefile(const std::string& save);
+	void LoadSavefile(const std::string& save, bool usecreg);
 
 	bool Draw();
 	int KeyPressed(int k, bool isRepeat);

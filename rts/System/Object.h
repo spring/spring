@@ -19,6 +19,7 @@ public:
 	virtual ~CObject();
 
 	void Serialize(creg::ISerializer* ser);
+	void PostLoad();
 
 	/// Request to not inform this when obj dies
 	virtual void DeleteDeathDependence(CObject* obj, DependenceType dep);

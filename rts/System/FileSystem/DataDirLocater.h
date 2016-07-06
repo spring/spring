@@ -22,6 +22,9 @@ struct DataDir
 class DataDirLocater
 {
 public:
+	static DataDirLocater& GetInstance();
+	static void FreeInstance();
+
 	/**
 	 * @brief construct a data directory locater
 	 *
@@ -169,6 +172,7 @@ private:
 	static bool IsInstallDirDataDir();
 	static bool LooksLikeMultiVersionDataDir(const std::string& dirPath);
 
+
 private:
 	bool isolationMode;
 	std::string isolationModeDir;
@@ -178,6 +182,6 @@ private:
 	const DataDir* writeDir;
 };
 
-extern DataDirLocater dataDirLocater;
+#define dataDirLocater DataDirLocater::GetInstance()
 
 #endif // !defined(DATA_DIR_LOCATER_H)

@@ -3,7 +3,7 @@
 /**
 	\mainpage
 	This is the documentation of the Spring RTS Engine.
-	http://springrts.com/
+	https://springrts.com/
 */
 
 

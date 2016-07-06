@@ -83,9 +83,14 @@ add_custom_target(spring WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")
 add_custom_target(install-spring WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")
 
 ### Add icon and manifest to exe using windres
-IF    (WIN32 AND MINGW)
+IF    (WIN32)
 	SET(ENGINE_ICON "${ENGINE_SRC_ROOT_DIR}/icon.rc")
-ENDIF (WIN32 AND MINGW)
+	
+	IF (MSVC)
+		# Make sure we disable the default manifest generation to prevent conflicts
+		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /MANIFEST:NO")
+	ENDIF()
+ENDIF (WIN32)
 
 # the build targets
 AddEngineBuild(legacy)

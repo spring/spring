@@ -3,7 +3,12 @@
 #ifndef RECTANGLE_OPTIMIZER_H
 #define RECTANGLE_OPTIMIZER_H
 
+#ifdef RO_USE_DEQUE_CONTAINER
+#include <deque>
+#else
 #include <list>
+#endif
+
 #include <bitset>
 #include "System/Rectangle.h"
 #include "System/creg/creg_cond.h"
@@ -28,32 +33,42 @@ public:
 
 public:
 	//! std container funcs
-	typedef std::list<SRectangle>::iterator iterator;
-	typedef std::list<SRectangle>::const_iterator const_iterator;
-	bool empty() const {
-		return rectangles.empty();
-	}
-	size_t size() const {
-		return rectangles.size();
-	}
-	SRectangle& front() {
-		return rectangles.front();
-	}
-	void pop_front() {
-		return rectangles.pop_front();
-	}
-	void swap(CRectangleOptimizer &other) {
+	#ifdef RO_USE_DEQUE_CONTAINER
+	typedef std::deque<SRectangle> container;
+	#else
+	typedef std::list<SRectangle> container;
+	#endif
+	typedef container::iterator iterator;
+	typedef container::const_iterator const_iterator;
+
+	bool empty() const { return rectangles.empty(); }
+	size_t size() const { return rectangles.size(); }
+
+	SRectangle& front() { return rectangles.front(); }
+	SRectangle& back() { return rectangles.back(); }
+
+	void pop_front() { return rectangles.pop_front(); }
+	void pop_back() { return rectangles.pop_back(); }
+
+	void swap(CRectangleOptimizer& other) {
 		rectangles.swap(other.rectangles);
 		std::swap(needsUpdate, other.needsUpdate);
 		other.maxAreaPerRect = maxAreaPerRect; // intentional one-way copy here
 	}
-	void splice(iterator pos, CRectangleOptimizer &other) {
+	void splice(iterator pos, CRectangleOptimizer& other) {
 		needsUpdate = other.needsUpdate || !rectangles.empty();
+		#ifdef RO_USE_DEQUE_CONTAINER
+		while (!other.empty()) {
+			pos = rectangles.insert(pos, other.back());
+			other.pop_back();
+		}
+		#else
 		rectangles.splice(pos, other.rectangles);
+		#endif
 	}
 	void clear() {
 		needsUpdate = false;
-		return rectangles.clear();
+		rectangles.clear();
 	}
 	void push_back(const SRectangle& rect) {
 		//! skip empty/negative rectangles
@@ -63,17 +78,16 @@ public:
 		needsUpdate = true;
 		rectangles.push_back(rect);
 	}
-	void swap(std::list<SRectangle>& lst)
-	{
-		rectangles.swap(lst);
+	void swap(container& dq) {
+		rectangles.swap(dq);
 		needsUpdate = !rectangles.empty();
 	}
-	iterator begin() {
-		return rectangles.begin();
-	}
-	iterator end() {
-		return rectangles.end();
-	}
+
+	const_iterator cbegin() { return rectangles.cbegin(); }
+	const_iterator cend() { return rectangles.cend(); }
+
+	iterator begin() { return rectangles.begin(); }
+	iterator end() { return rectangles.end(); }
 
 public:
 	int maxAreaPerRect;
@@ -90,7 +104,7 @@ private:
 	static bool AreMergable(const SRectangle& rect1, const SRectangle& rect2);
 
 private:
-	std::list<SRectangle> rectangles;
+	container rectangles;
 	bool needsUpdate;
 
 private:

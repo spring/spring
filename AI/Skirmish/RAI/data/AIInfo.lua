@@ -41,7 +41,7 @@ Known to Support: BA, SA, XTA, NOTA]],
 	},
 	{
 		key    = 'url',
-		value  = 'http://springrts.com/wiki/AI:RAI',
+		value  = 'https://springrts.com/wiki/AI:RAI',
 		desc   = 'URL with more detailed info about the AI',
 	},
 	{

@@ -7,6 +7,7 @@
 #include "System/EventHandler.h"
 #include "System/Platform/Threading.h"
 #include "System/Threading/SpringMutex.h"
+#include "System/FileSystem/ArchiveScanner.h"
 
 #include <queue>
 
@@ -154,9 +155,12 @@ int Download(int ID, const std::string& filename, DownloadEnum::Category cat)
 		result = 2;
 		QueueDownloadFailed(ID, result);
 	} else {
+		LOG_L(L_DEBUG, "Download finished %s", filename.c_str());
 		QueueDownloadStarted(ID);
 		result = DownloadStart();
-		LOG_L(L_DEBUG, "Download finished %s", filename.c_str());
+		// TODO: This works but there are errors spammed as it's trying to clear timers in the main thread, which this is not:
+		// Error: [Watchdog::ClearTimer(id)] Invalid thread 4 (_threadId=(nil))
+		archiveScanner->ScanAllDirs();
 	}
 	DownloadShutdown();
 

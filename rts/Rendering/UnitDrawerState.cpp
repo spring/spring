@@ -69,36 +69,11 @@ IUnitDrawerState* IUnitDrawerState::GetInstance(bool haveARB, bool haveGLSL) {
 
 void IUnitDrawerState::EnableCommon(const CUnitDrawer* ud, bool deferredPass) {
 	PushTransform(camera);
+	EnableTexturesCommon();
 
 	SetActiveShader(shadowHandler->ShadowsLoaded(), deferredPass);
 	assert(modelShaders[MODEL_SHADER_ACTIVE] != nullptr);
 	modelShaders[MODEL_SHADER_ACTIVE]->Enable();
-
-	// TODO: refactor to use EnableTexturesCommon
-	glActiveTexture(GL_TEXTURE0);
-	glEnable(GL_TEXTURE_2D);
-
-	glActiveTexture(GL_TEXTURE1);
-	glEnable(GL_TEXTURE_2D);
-
-	if (shadowHandler->ShadowsLoaded()) {
-		glActiveTexture(GL_TEXTURE2);
-		glBindTexture(GL_TEXTURE_2D, shadowHandler->shadowTexture);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC_ARB, GL_LEQUAL);
-		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
-		glEnable(GL_TEXTURE_2D);
-	}
-
-	glActiveTexture(GL_TEXTURE3);
-	glEnable(GL_TEXTURE_CUBE_MAP_ARB);
-	glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, cubeMapHandler->GetEnvReflectionTextureID());
-
-	glActiveTexture(GL_TEXTURE4);
-	glEnable(GL_TEXTURE_CUBE_MAP_ARB);
-	glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, cubeMapHandler->GetSpecularTextureID());
-
-	glActiveTexture(GL_TEXTURE0);
 
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
@@ -109,62 +84,44 @@ void IUnitDrawerState::DisableCommon(const CUnitDrawer* ud, bool deferredPass) {
 	modelShaders[MODEL_SHADER_ACTIVE]->Disable();
 	SetActiveShader(shadowHandler->ShadowsLoaded(), deferredPass);
 
-	// TODO: refactor to use DisableTexturesCommon
-	glActiveTexture(GL_TEXTURE1);
-	glDisable(GL_TEXTURE_2D);
-
-	glActiveTexture(GL_TEXTURE2);
-	glDisable(GL_TEXTURE_2D);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);
-	glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
-
-	glActiveTexture(GL_TEXTURE3);
-	glDisable(GL_TEXTURE_CUBE_MAP_ARB);
-
-	glActiveTexture(GL_TEXTURE4);
-	glDisable(GL_TEXTURE_CUBE_MAP_ARB);
-
-	glActiveTexture(GL_TEXTURE0);
-
+	DisableTexturesCommon();
 	PopTransform();
 }
 
 
-void IUnitDrawerState::EnableTexturesCommon(const CUnitDrawer* ud) const {
-	glEnable(GL_TEXTURE_2D);
-
+void IUnitDrawerState::EnableTexturesCommon() const {
 	glActiveTexture(GL_TEXTURE1);
 	glEnable(GL_TEXTURE_2D);
 
-	if (shadowHandler->ShadowsLoaded()) {
-		glActiveTexture(GL_TEXTURE2);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE);
-		glEnable(GL_TEXTURE_2D);
-	}
+	if (shadowHandler->ShadowsLoaded())
+		shadowHandler->SetupShadowTexSampler(GL_TEXTURE2, true);
 
 	glActiveTexture(GL_TEXTURE3);
 	glEnable(GL_TEXTURE_CUBE_MAP_ARB);
+	glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, cubeMapHandler->GetEnvReflectionTextureID());
+
 	glActiveTexture(GL_TEXTURE4);
 	glEnable(GL_TEXTURE_CUBE_MAP_ARB);
+	glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, cubeMapHandler->GetSpecularTextureID());
 
 	glActiveTexture(GL_TEXTURE0);
+	glEnable(GL_TEXTURE_2D);
 }
 
-void IUnitDrawerState::DisableTexturesCommon(const CUnitDrawer* ud) const {
+void IUnitDrawerState::DisableTexturesCommon() const {
 	glActiveTexture(GL_TEXTURE1);
 	glDisable(GL_TEXTURE_2D);
 
-	glActiveTexture(GL_TEXTURE2);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);
+	if (shadowHandler->ShadowsLoaded())
+		shadowHandler->ResetShadowTexSampler(GL_TEXTURE2, true);
 
-	glDisable(GL_TEXTURE_2D);
 	glActiveTexture(GL_TEXTURE3);
-
 	glDisable(GL_TEXTURE_CUBE_MAP_ARB);
+
 	glActiveTexture(GL_TEXTURE4);
 	glDisable(GL_TEXTURE_CUBE_MAP_ARB);
-	glActiveTexture(GL_TEXTURE0);
 
+	glActiveTexture(GL_TEXTURE0);
 	glDisable(GL_TEXTURE_2D);
 }
 
@@ -208,7 +165,7 @@ void UnitDrawerStateFFP::Disable(const CUnitDrawer* ud, bool) {
 }
 
 
-void UnitDrawerStateFFP::EnableTextures(const CUnitDrawer*) const {
+void UnitDrawerStateFFP::EnableTextures() const {
 	glEnable(GL_LIGHTING);
 	glColor3f(1.0f, 1.0f, 1.0f);
 	glEnable(GL_TEXTURE_2D);
@@ -217,7 +174,7 @@ void UnitDrawerStateFFP::EnableTextures(const CUnitDrawer*) const {
 	glActiveTexture(GL_TEXTURE0);
 }
 
-void UnitDrawerStateFFP::DisableTextures(const CUnitDrawer*) const {
+void UnitDrawerStateFFP::DisableTextures() const {
 	glDisable(GL_LIGHTING);
 	glDisable(GL_TEXTURE_2D);
 	glActiveTexture(GL_TEXTURE1);
@@ -233,6 +190,16 @@ void UnitDrawerStateFFP::SetTeamColor(int team, const float2 alpha) const {
 	glActiveTexture(GL_TEXTURE0);
 	glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, std::move(GetTeamColor(team, alpha.x)));
 	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, &m.x);
+}
+
+void UnitDrawerStateFFP::SetNanoColor(const float4& color) const {
+	if (color.a > 0.0f) {
+		UnitDrawerStateFFP::DisableTextures();
+		glColorf4(color);
+	} else {
+		UnitDrawerStateFFP::EnableTextures();
+		glColorf3(OnesVector);
+	}
 }
 
 
@@ -304,8 +271,8 @@ void UnitDrawerStateARB::Disable(const CUnitDrawer* ud, bool) {
 }
 
 
-void UnitDrawerStateARB::EnableTextures(const CUnitDrawer* ud) const { EnableTexturesCommon(ud); }
-void UnitDrawerStateARB::DisableTextures(const CUnitDrawer* ud) const { DisableTexturesCommon(ud); }
+void UnitDrawerStateARB::EnableTextures() const { EnableTexturesCommon(); }
+void UnitDrawerStateARB::DisableTextures() const { DisableTexturesCommon(); }
 
 void UnitDrawerStateARB::EnableShaders(const CUnitDrawer*) { modelShaders[MODEL_SHADER_ACTIVE]->Enable(); }
 void UnitDrawerStateARB::DisableShaders(const CUnitDrawer*) { modelShaders[MODEL_SHADER_ACTIVE]->Disable(); }
@@ -322,6 +289,13 @@ void UnitDrawerStateARB::SetTeamColor(int team, const float2 alpha) const {
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4fv(14, std::move(GetTeamColor(team, alpha.x)));
 }
 
+void UnitDrawerStateARB::SetNanoColor(const float4& color) const {
+	if (color.a > 0.0f) {
+		glColorf4(color);
+	} else {
+		glColorf3(OnesVector);
+	}
+}
 
 
 
@@ -373,12 +347,13 @@ bool UnitDrawerStateGLSL::Init(const CUnitDrawer* ud) {
 		modelShaders[n]->SetUniformLocation("cameraMat");         // idx  7
 		modelShaders[n]->SetUniformLocation("cameraMatInv");      // idx  8
 		modelShaders[n]->SetUniformLocation("teamColor");         // idx  9
-		modelShaders[n]->SetUniformLocation("sunAmbient");        // idx 10
-		modelShaders[n]->SetUniformLocation("sunDiffuse");        // idx 11
-		modelShaders[n]->SetUniformLocation("shadowDensity");     // idx 12
-		modelShaders[n]->SetUniformLocation("shadowMatrix");      // idx 13
-		modelShaders[n]->SetUniformLocation("shadowParams");      // idx 14
-		modelShaders[n]->SetUniformLocation("alphaPass");         // idx 15
+		modelShaders[n]->SetUniformLocation("nanoColor");         // idx 10
+		modelShaders[n]->SetUniformLocation("sunAmbient");        // idx 11
+		modelShaders[n]->SetUniformLocation("sunDiffuse");        // idx 12
+		modelShaders[n]->SetUniformLocation("shadowDensity");     // idx 13
+		modelShaders[n]->SetUniformLocation("shadowMatrix");      // idx 14
+		modelShaders[n]->SetUniformLocation("shadowParams");      // idx 15
+		// modelShaders[n]->SetUniformLocation("alphaPass");         // idx 16
 
 		modelShaders[n]->Enable();
 		modelShaders[n]->SetUniform1i(0, 0); // diffuseTex  (idx 0, texunit 0)
@@ -387,10 +362,10 @@ bool UnitDrawerStateGLSL::Init(const CUnitDrawer* ud) {
 		modelShaders[n]->SetUniform1i(3, 3); // reflectTex  (idx 3, texunit 3)
 		modelShaders[n]->SetUniform1i(4, 4); // specularTex (idx 4, texunit 4)
 		modelShaders[n]->SetUniform3fv(5, &sky->GetLight()->GetLightDir().x);
-		modelShaders[n]->SetUniform3fv(10, &sunLighting->unitAmbientColor[0]);
-		modelShaders[n]->SetUniform3fv(11, &sunLighting->unitDiffuseColor[0]);
-		modelShaders[n]->SetUniform1f(12, sky->GetLight()->GetUnitShadowDensity());
-		modelShaders[n]->SetUniform1f(15, 0.0f); // alphaPass
+		modelShaders[n]->SetUniform3fv(11, &sunLighting->unitAmbientColor[0]);
+		modelShaders[n]->SetUniform3fv(12, &sunLighting->unitDiffuseColor[0]);
+		modelShaders[n]->SetUniform1f(13, sky->GetLight()->GetUnitShadowDensity());
+		// modelShaders[n]->SetUniform1f(16, 0.0f); // alphaPass
 		modelShaders[n]->Disable();
 		modelShaders[n]->Validate();
 	}
@@ -417,8 +392,8 @@ void UnitDrawerStateGLSL::Enable(const CUnitDrawer* ud, bool deferredPass, bool 
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform3fv(6, &camera->GetPos()[0]);
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniformMatrix4fv(7, false, camera->GetViewMatrix());
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniformMatrix4fv(8, false, camera->GetViewMatrixInverse());
-	modelShaders[MODEL_SHADER_ACTIVE]->SetUniformMatrix4fv(13, false, shadowHandler->GetShadowMatrixRaw());
-	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4fv(14, &(shadowHandler->GetShadowParams().x));
+	modelShaders[MODEL_SHADER_ACTIVE]->SetUniformMatrix4fv(14, false, shadowHandler->GetShadowMatrixRaw());
+	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4fv(15, &(shadowHandler->GetShadowParams().x));
 
 	const_cast<GL::LightHandler*>(ud->GetLightHandler())->Update(modelShaders[MODEL_SHADER_ACTIVE]);
 }
@@ -428,40 +403,36 @@ void UnitDrawerStateGLSL::Disable(const CUnitDrawer* ud, bool deferredPass) {
 }
 
 
-void UnitDrawerStateGLSL::EnableTextures(const CUnitDrawer* ud) const { EnableTexturesCommon(ud); }
-void UnitDrawerStateGLSL::DisableTextures(const CUnitDrawer* ud) const { DisableTexturesCommon(ud); }
+void UnitDrawerStateGLSL::EnableTextures() const { EnableTexturesCommon(); }
+void UnitDrawerStateGLSL::DisableTextures() const { DisableTexturesCommon(); }
 
 void UnitDrawerStateGLSL::EnableShaders(const CUnitDrawer*) { modelShaders[MODEL_SHADER_ACTIVE]->Enable(); }
 void UnitDrawerStateGLSL::DisableShaders(const CUnitDrawer*) { modelShaders[MODEL_SHADER_ACTIVE]->Disable(); }
 
 
 void UnitDrawerStateGLSL::UpdateCurrentShaderSky(const CUnitDrawer* ud, const ISkyLight* skyLight) const {
-	const float3 modUnitSunColor = sunLighting->unitDiffuseColor * skyLight->GetLightIntensity();
-
 	// note: the NOSHADOW shaders do not care about shadow-density
 	for (unsigned int n = MODEL_SHADER_NOSHADOW_STANDARD; n <= MODEL_SHADER_SHADOWED_DEFERRED; n++) {
 		modelShaders[n]->Enable();
 		modelShaders[n]->SetUniform3fv(5, &skyLight->GetLightDir().x);
-		modelShaders[n]->SetUniform1f(12, skyLight->GetUnitShadowDensity());
-		modelShaders[n]->SetUniform3fv(11, &modUnitSunColor.x);
+		modelShaders[n]->SetUniform3fv(11, &sunLighting->unitAmbientColor[0]);
+		modelShaders[n]->SetUniform3fv(12, &sunLighting->unitDiffuseColor[0]);
+		modelShaders[n]->SetUniform1f(13, skyLight->GetUnitShadowDensity());
 		modelShaders[n]->Disable();
 	}
 }
 
-void UnitDrawerStateGLSL::UpdateCurrentShaderSunLighting(const CUnitDrawer* ud) const {
-	for (unsigned int n = MODEL_SHADER_NOSHADOW_STANDARD; n <= MODEL_SHADER_SHADOWED_DEFERRED; n++) {
-		modelShaders[n]->Enable();
-		modelShaders[n]->SetUniform3fv(10, &sunLighting->unitAmbientColor[0]);
-		modelShaders[n]->SetUniform3fv(11, &sunLighting->unitDiffuseColor[0]);
-		modelShaders[n]->Disable();
-	}
-}
 
 void UnitDrawerStateGLSL::SetTeamColor(int team, const float2 alpha) const {
 	// NOTE: see UnitDrawerStateARB::SetTeamColor
 	assert(modelShaders[MODEL_SHADER_ACTIVE]->IsBound());
 
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4fv(9, std::move(GetTeamColor(team, alpha.x)));
-	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform1f(15, alpha.y);
+	// modelShaders[MODEL_SHADER_ACTIVE]->SetUniform1f(16, alpha.y);
+}
+
+void UnitDrawerStateGLSL::SetNanoColor(const float4& color) const {
+	assert(modelShaders[MODEL_SHADER_ACTIVE]->IsBound());
+	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4fv(10, color);
 }
 

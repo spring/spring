@@ -98,6 +98,11 @@ set(unitsync_files
 	${CMAKE_CURRENT_SOURCE_DIR}/LuaParserAPI.cpp
 	)
 
+# Add list of all exported functions to .def file to prevent decoration
+if (MSVC)
+	LIST(APPEND unitsync_files ${CMAKE_CURRENT_SOURCE_DIR}/exports.def)
+endif ()
+
 # HACK unitsync should actually be MODULE (not SHARED),
 #   but the python bindings need it as SHARED,
 #   to be able to link to it

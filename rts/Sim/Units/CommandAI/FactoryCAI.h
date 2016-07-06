@@ -17,14 +17,6 @@ class CFactoryCAI : public CCommandAI
 {
 public:
 	CR_DECLARE(CFactoryCAI)
-	CR_DECLARE_SUB(BuildOption)
-
-	struct BuildOption {
-		CR_DECLARE_STRUCT(BuildOption)
-		std::string name;
-		std::string fullName;
-		int numQued;
-	};
 
 	CFactoryCAI(CUnit* owner);
 	CFactoryCAI();
@@ -37,16 +29,16 @@ public:
 	void InsertBuildCommand(CCommandQueue::iterator& it, const Command& c);
 	bool RemoveBuildCommand(CCommandQueue::iterator& it);
 
-	void DecreaseQueueCount(const Command& c, BuildOption& buildOption);
+	void DecreaseQueueCount(const Command& c, int& buildOption);
 	void FactoryFinishBuild(const Command& command);
 	void ExecuteStop(Command& c);
 
 	CCommandQueue newUnitCommands;
 
-	std::map<int, BuildOption> buildOptions;
+	std::map<int, int> buildOptions;
 
 private:
-	void UpdateIconName(int id, const BuildOption& bo);
+	void UpdateIconName(int id, const int& numQueued);
 };
 
 #endif // _FACTORY_AI_H_

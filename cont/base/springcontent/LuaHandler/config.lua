@@ -23,6 +23,14 @@ VFSMODE = VFS.RAW_FIRST
 --// when false, the handler will `compress` some output (e.g. list of started widgets)
 handler.verbose = false or true
 
+local function LoadLibraries()
+	for _, lib in pairs(VFS.SubDirs("libs/")) do
+		local addonDir = lib .. LUA_NAME .. "/widgets"
+		if #VFS.DirList(addonDir) > 0 then
+			table.insert(ADDON_DIRS, addonDir)
+		end
+	end
+end
 
 if LUA_NAME == "LuaUI" then
 	assert(LUAUI_DIRNAME)
@@ -37,9 +45,8 @@ if LUA_NAME == "LuaUI" then
 		LUAUI_DIRNAME .. 'Widgets/';
 		LUAUI_DIRNAME .. 'SystemAddons/';
 		LUAUI_DIRNAME .. 'SystemWidgets/';
-		LUA_DIRNAME .. 'chili/';
+		LUA_DIRNAME .. 'chili/'; -- DEPRECATED: Scheduled for removal in 103
 	}
-
 	--// Create the "LuaUI/Config" directory
 	Spring.CreateDir(LUAUI_DIRNAME .. 'Config') --FIXME LuaRules!
 
@@ -52,6 +59,7 @@ else
 		LUA_DIRNAME .. AddonNames;
 		LUA_DIRNAME .. 'SystemAddons/';
 		LUA_DIRNAME .. 'System' .. AddonNames;
-		LUA_DIRNAME .. 'chili/';
+		LUA_DIRNAME .. 'chili/'; -- DEPRECATED: Scheduled for removal in 103
 	}
 end
+LoadLibraries()

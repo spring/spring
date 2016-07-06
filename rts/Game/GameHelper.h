@@ -9,7 +9,6 @@
 #include "System/float3.h"
 #include "System/type2.h"
 
-#include <list>
 #include <map>
 #include <vector>
 
@@ -21,7 +20,29 @@ class CMobileCAI;
 struct UnitDef;
 struct MoveDef;
 struct BuildInfo;
-class CStdExplosionGenerator;
+
+struct CExplosionParams {
+	const float3& pos;
+	const float3& dir;
+	const DamageArray& damages;
+	const WeaponDef* weaponDef;
+
+	CUnit* owner;
+	CUnit* hitUnit;
+	CFeature* hitFeature;
+
+	float craterAreaOfEffect;
+	float damageAreaOfEffect; // radius
+	float edgeEffectiveness;
+	float explosionSpeed;
+	float gfxMod;
+
+	bool impactOnly;
+	bool ignoreOwner;
+	bool damageGround;
+
+	unsigned int projectileID;
+};
 
 class CGameHelper
 {
@@ -35,30 +56,6 @@ public:
 		BUILDSQUARE_OCCUPIED    = 1,
 		BUILDSQUARE_RECLAIMABLE = 2,
 		BUILDSQUARE_OPEN        = 3
-	};
-
-
-	struct ExplosionParams {
-		const float3& pos;
-		const float3& dir;
-		const DamageArray& damages;
-		const WeaponDef* weaponDef;
-
-		CUnit* owner;
-		CUnit* hitUnit;
-		CFeature* hitFeature;
-
-		float craterAreaOfEffect;
-		float damageAreaOfEffect; // radius
-		float edgeEffectiveness;
-		float explosionSpeed;
-		float gfxMod;
-
-		bool impactOnly;
-		bool ignoreOwner;
-		bool damageGround;
-
-		unsigned int projectileID;
 	};
 
 	CGameHelper();
@@ -145,12 +142,10 @@ public:
 		const int projectileID
 	);
 
-	void DamageObjectsInExplosionRadius(const ExplosionParams& params, const float expRad, const int weaponDefID);
-	void Explosion(const ExplosionParams& params);
+	void DamageObjectsInExplosionRadius(const CExplosionParams& params, const float expRad, const int weaponDefID);
+	void Explosion(const CExplosionParams& params);
 
 private:
-	CStdExplosionGenerator* stdExplosionGenerator;
-
 	struct WaitingDamage {
 		WaitingDamage(int attacker, int target, const DamageArray& damage, const float3& impulse, const int _weaponID, const int _projectileID)
 		: target(target)
@@ -170,7 +165,7 @@ private:
 		float3 impulse;
 	};
 
-	std::vector< std::list<WaitingDamage*> > waitingDamageLists;
+	std::vector< std::vector<WaitingDamage> > waitingDamageLists;
 };
 
 extern CGameHelper* helper;

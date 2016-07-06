@@ -55,11 +55,15 @@ AAirMoveType::AAirMoveType(CUnit* unit):
 	useSmoothMesh(false),
 	autoLand(true),
 
-	lastColWarning(NULL),
+	lastColWarning(nullptr),
 
 	lastColWarningType(0)
 {
-	assert(unit != NULL);
+	// creg
+	if (unit == nullptr)
+		return;
+
+	assert(owner->unitDef != nullptr);
 
 	oldGoalPos = unit->pos;
 	// same as {Ground, HoverAir}MoveType::accRate
@@ -141,6 +145,9 @@ void AAirMoveType::UpdateLanded()
 
 void AAirMoveType::LandAt(float3 pos, float distanceSq)
 {
+	if (distanceSq < 0.0f)
+		distanceSq = Square(BrakingDistance(maxSpeed, decRate));
+
 	if (aircraftState != AIRCRAFT_LANDING)
 		SetState(AIRCRAFT_LANDING);
 

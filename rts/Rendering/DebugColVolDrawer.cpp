@@ -174,7 +174,7 @@ static inline void DrawFeatureColVol(const CFeature* f)
 		return;
 
 	const bool vCustomType = (v->GetVolumeType() < CollisionVolume::COLVOL_TYPE_SPHERE);
-	const bool vCustomDims = ((v->GetOffsets()).SqLength() >= 1.0f || math::fabs(v->GetBoundingRadius() - f->radius) >= 1.0f);
+	const bool vCustomDims = ((v->GetOffsets()).SqLength() >= 1.0f || std::fabs(v->GetBoundingRadius() - f->radius) >= 1.0f);
 
 	glPushMatrix();
 		glMultMatrixf(f->GetTransformMatrixRef());
@@ -214,7 +214,7 @@ static inline void DrawUnitColVol(const CUnit* u)
 
 	const CollisionVolume* v = &u->collisionVolume;
 	const bool vCustomType = (v->GetVolumeType() < CollisionVolume::COLVOL_TYPE_SPHERE);
-	const bool vCustomDims = ((v->GetOffsets()).SqLength() >= 1.0f || math::fabs(v->GetBoundingRadius() - u->radius) >= 1.0f);
+	const bool vCustomDims = ((v->GetOffsets()).SqLength() >= 1.0f || std::fabs(v->GetBoundingRadius() - u->radius) >= 1.0f);
 
 	GLUquadricObj* q = gluNewQuadric();
 	gluQuadricDrawStyle(q, GLU_FILL);
@@ -331,6 +331,8 @@ namespace DebugColVolDrawer
 	{
 		if (!enable)
 			return;
+
+		SCOPED_GMARKER("DebugColVolDrawer::Draw");
 
 		glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
 			glDisable(GL_LIGHTING);

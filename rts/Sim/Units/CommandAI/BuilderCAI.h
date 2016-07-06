@@ -8,7 +8,7 @@
 #include "Sim/Units/BuildInfo.h"
 #include "System/Misc/BitwiseEnum.h"
 
-#include <map>
+#include <set>
 #include <string>
 
 class CUnit;
@@ -64,7 +64,7 @@ public:
 	bool IsInBuildRange(const float3& pos, const float radius) const;
 
 public:
-	std::map<int, std::string> buildOptions;
+	std::set<int> buildOptions;
 
 	static CUnitSet reclaimers;
 	static CUnitSet featureReclaimers;
@@ -118,7 +118,7 @@ private:
 		return IsBuildPosBlocked(build, &u);
 	}
 
-	void CancelRestrictedUnit(const std::string& buildOption);
+	void CancelRestrictedUnit();
 	bool OutOfImmobileRange(const Command& cmd) const;
 	/// add a command to reclaim a feature that is blocking our build-site
 	void ReclaimFeature(CFeature* f);

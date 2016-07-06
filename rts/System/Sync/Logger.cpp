@@ -15,17 +15,17 @@
 #include "System/Util.h"
 #include "System/SafeCStrings.h"
 
+#ifdef _MSC_VER
+#include <Windows.h>
+#include <imagehlp.h>
+#include "System/Platform/CrashHandler.h"
+#endif
 
 #ifdef WIN32
 // msvcrt doesn't have thread safe ctime_r
 # define ctime_r(tm, buf) ctime(tm)
-# ifdef _MSC_VER
-// MSVC doesn't have popen/pclose, but it's not needed anyway,
-// as addr2line isn't available for MSVC compiled executables.
-#  define popen(cmd, mode) (NULL)
-#  define pclose(p)
-# endif
 #endif
+
 
 extern "C" void get_executable_name(char *output, int size);
 
@@ -57,7 +57,7 @@ extern "C" void get_executable_name(char *output, int size);
  */
 void CLogger::AddLine(const char* fmt, ...)
 {
-	boost::mutex::scoped_lock scoped_lock(logmutex);
+	boost::recursive_mutex::scoped_lock scoped_lock(logmutex);
 	char buf[500]; // same size as buffer in infolog
 
 	va_list argp;
@@ -83,7 +83,7 @@ void CLogger::AddLine(const char* fmt, ...)
  */
 void CLogger::CloseSession()
 {
-	boost::mutex::scoped_lock scoped_lock(logmutex);
+	boost::recursive_mutex::scoped_lock scoped_lock(logmutex);
 
 	if (logfile || !buffer.empty()) {
 		FlushBuffer();
@@ -102,6 +102,8 @@ void CLogger::CloseSession()
  */
 void CLogger::FlushBuffer()
 {
+	boost::recursive_mutex::scoped_lock scoped_lock(logmutex);
+
 	char buf1[4096], buf2[4096];
 	char* nl;
 
@@ -146,6 +148,37 @@ void CLogger::FlushBuffer()
 		fprintf(logfile, "executable name: '%s'\n", exename.c_str());
 	}
 
+#ifdef _MSC_VER
+	for (auto it = buffer.begin(); it != buffer.end(); ++it) {
+		const int open = it->find('{');
+		const int close = it->find('}', open + 1);
+		std::stringstream ss;
+		if (open != std::string::npos && close != std::string::npos) {
+			void* p;
+			ss << std::hex << it->substr(open + 1, close - open - 1) << std::dec;
+			ss >> p;
+
+			const int SYMLENGTH = 4096;
+			char symbuf[sizeof(SYMBOL_INFO) + SYMLENGTH];
+			PSYMBOL_INFO pSym = reinterpret_cast<SYMBOL_INFO*>(symbuf);
+			pSym->SizeOfStruct = sizeof(SYMBOL_INFO);
+			pSym->MaxNameLen = SYMLENGTH;
+
+			if (CrashHandler::InitImageHlpDll() &&
+				SymFromAddr(GetCurrentProcess(), (DWORD64)p, nullptr, pSym)) {
+
+				IMAGEHLP_LINE64 line;
+				DWORD displacement;
+				line.SizeOfStruct = sizeof(line);
+				SymGetLineFromAddr64(GetCurrentProcess(), (DWORD64) p, &displacement, &line);
+
+				fprintf(logfile, "%s%s:%d [%p]%s\n", it->substr(0, open).c_str(), pSym->Name, line.LineNumber, p, it->substr(close + 1).c_str());
+			}
+		} else {
+			fprintf(logfile, "%s\n", it->c_str());
+		}
+	}
+#else
 	// Compose addr2line command.
 
 	std::stringstream command;
@@ -205,6 +238,7 @@ void CLogger::FlushBuffer()
 			fprintf(logfile, "%s\n", it->c_str());
 		}
 	}
+#endif
 
 	buffer.clear();
 }

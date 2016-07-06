@@ -7,6 +7,7 @@
 #include "Sim/Units/Unit.h"
 
 CR_BIND_DERIVED(CDGunWeapon, CWeapon, (NULL, NULL))
+CR_REG_METADATA(CDGunWeapon, )
 
 CDGunWeapon::CDGunWeapon(CUnit* owner, const WeaponDef* def): CWeapon(owner, def)
 {

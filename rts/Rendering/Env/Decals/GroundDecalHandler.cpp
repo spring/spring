@@ -5,6 +5,7 @@
 
 #include "GroundDecalHandler.h"
 #include "Game/Camera.h"
+#include "Game/GameHelper.h"
 #include "Game/GameSetup.h"
 #include "Game/GlobalUnsynced.h"
 #include "Lua/LuaParser.h"
@@ -13,6 +14,7 @@
 #include "Map/ReadMap.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/ShadowHandler.h"
+#include "Rendering/UnitDrawer.h"
 #include "Rendering/Env/ISky.h"
 #include "Rendering/Env/SunLighting.h"
 #include "Rendering/GL/myGL.h"
@@ -35,6 +37,7 @@
 #include "System/Util.h"
 #include "System/FileSystem/FileSystem.h"
 
+
 using std::min;
 using std::max;
 
@@ -52,7 +55,7 @@ CGroundDecalHandler::CGroundDecalHandler()
 
 	groundScarAlphaFade = (configHandler->GetInt("GroundScarAlphaFade") != 0);
 
-	unsigned char buf[512*512*4] = {0};
+	std::vector<unsigned char> buf(512 * 512 * 4);
 
 	LuaParser resourcesParser("gamedata/resources.lua",
 	                          SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
@@ -62,16 +65,16 @@ CGroundDecalHandler::CGroundDecalHandler()
 	}
 
 	const LuaTable scarsTable = resourcesParser.GetRoot().SubTable("graphics").SubTable("scars");
-	LoadScar("bitmaps/" + scarsTable.GetString(2, "scars/scar2.bmp"), buf, 0,   0);
-	LoadScar("bitmaps/" + scarsTable.GetString(3, "scars/scar3.bmp"), buf, 256, 0);
-	LoadScar("bitmaps/" + scarsTable.GetString(1, "scars/scar1.bmp"), buf, 0,   256);
-	LoadScar("bitmaps/" + scarsTable.GetString(4, "scars/scar4.bmp"), buf, 256, 256);
+	LoadScar("bitmaps/" + scarsTable.GetString(2, "scars/scar2.bmp"), buf.data(), 0,   0);
+	LoadScar("bitmaps/" + scarsTable.GetString(3, "scars/scar3.bmp"), buf.data(), 256, 0);
+	LoadScar("bitmaps/" + scarsTable.GetString(1, "scars/scar1.bmp"), buf.data(), 0,   256);
+	LoadScar("bitmaps/" + scarsTable.GetString(4, "scars/scar4.bmp"), buf.data(), 256, 256);
 
 	glGenTextures(1, &scarTex);
 	glBindTexture(GL_TEXTURE_2D, scarTex);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
-	glBuildMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,512, 512, GL_RGBA, GL_UNSIGNED_BYTE, buf);
+	glBuildMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,512, 512, GL_RGBA, GL_UNSIGNED_BYTE, buf.data());
 
 	scarFieldX = mapDims.mapx / 32;
 	scarFieldY = mapDims.mapy / 32;
@@ -88,23 +91,6 @@ CGroundDecalHandler::CGroundDecalHandler()
 CGroundDecalHandler::~CGroundDecalHandler()
 {
 	eventHandler.RemoveClient(this);
-
-	for (TrackType& tt: trackTypes) {
-		for (UnitTrackStruct* uts: tt.tracks)
-			VectorInsertUnique(tracksToBeDeleted, uts, true);
-
-		glDeleteTextures(1, &tt.texture);
-	}
-
-	for (auto ti = tracksToBeAdded.cbegin(); ti != tracksToBeAdded.cend(); ++ti)
-		VectorInsertUnique(tracksToBeDeleted, *ti, true);
-
-	for (auto ti = tracksToBeDeleted.cbegin(); ti != tracksToBeDeleted.cend(); ++ti)
-		delete *ti;
-
-	trackTypes.clear();
-	tracksToBeAdded.clear();
-	tracksToBeDeleted.clear();
 
 	for (SolidObjectDecalType* dctype: objectDecalTypes) {
 		for (SolidObjectGroundDecal* dc: dctype->objectDecals) {
@@ -182,7 +168,7 @@ void CGroundDecalHandler::LoadDecalShaders() {
 	#undef sh
 }
 
-void CGroundDecalHandler::SunChanged(const float3& sunDir) {
+void CGroundDecalHandler::SunChanged() {
 	if (globalRendering->haveGLSL && decalShaders.size() > DECAL_SHADER_GLSL) {
 		decalShaders[DECAL_SHADER_GLSL]->Enable();
 		decalShaders[DECAL_SHADER_GLSL]->SetUniform1f(7, sky->GetLight()->GetGroundShadowDensity());
@@ -428,10 +414,11 @@ void CGroundDecalHandler::GatherDecalsForType(CGroundDecalHandler::SolidObjectDe
 				const CUnit* decalOwnerUnit = static_cast<const CUnit*>(decalOwner);
 				if (decalOwnerUnit->isIcon)
 					continue;
-				if ((decalOwnerUnit->losStatus[gu->myAllyTeam] & LOS_INLOS) == 0 && !gu->spectatingFullView)
+				if (!gu->spectatingFullView &&
+					(decalOwnerUnit->losStatus[gu->myAllyTeam] & LOS_INLOS) == 0 &&
+					(!gameSetup->ghostedBuildings || (decalOwnerUnit->losStatus[gu->myAllyTeam] & LOS_PREVLOS) == 0))
 					continue;
-				if (!gameSetup->ghostedBuildings || (decalOwnerUnit->losStatus[gu->myAllyTeam] & LOS_PREVLOS) == 0)
-					continue;
+
 				decal->alpha = std::max(0.0f, decalOwnerUnit->buildProgress);
 			} else {
 				const CFeature* decalOwnerFeature = static_cast<const CFeature*>(decalOwner);
@@ -468,134 +455,6 @@ void CGroundDecalHandler::DrawObjectDecals() {
 		// glBindTexture(GL_TEXTURE_2D, 0);
 	}
 }
-
-
-
-void CGroundDecalHandler::AddTracks() {
-	{
-		// Delayed addition of new tracks
-		for (const UnitTrackStruct* uts: tracksToBeAdded) {
-			const CUnit* unit = uts->owner;
-			const TrackPart& tp = uts->lastAdded;
-
-			// check if RenderUnitDestroyed pre-empted us
-			if (unit == nullptr)
-				continue;
-
-			// if the unit is moving in a straight line only place marks at half the rate by replacing old ones
-			bool replace = false;
-
-			if (unit->myTrack->parts.size() > 1) {
-				std::deque<TrackPart>::iterator pi = --unit->myTrack->parts.end();
-				std::deque<TrackPart>::iterator pi2 = pi--;
-
-				replace = (((tp.pos1 + (*pi).pos1) * 0.5f).SqDistance((*pi2).pos1) < 1.0f);
-			}
-
-			if (replace) {
-				unit->myTrack->parts.back() = tp;
-			} else {
-				unit->myTrack->parts.push_back(tp);
-			}
-		}
-
-		tracksToBeAdded.clear();
-	}
-
-	for (UnitTrackStruct* uts: tracksToBeDeleted)
-		delete uts;
-
-	tracksToBeDeleted.clear();
-}
-
-void CGroundDecalHandler::DrawTracks() {
-	unsigned char curPartColor[4] = {255, 255, 255, 255};
-	unsigned char nxtPartColor[4] = {255, 255, 255, 255};
-
-	// create and draw the unit footprint quads
-	for (TrackType& tt: trackTypes) {
-		if (tt.tracks.empty())
-			continue;
-
-
-		CVertexArray* va = GetVertexArray();
-		va->Initialize();
-		glBindTexture(GL_TEXTURE_2D, tt.texture);
-
-		for (UnitTrackStruct* track: tt.tracks) {
-			if (track->parts.empty()) {
-				tracksToBeCleaned.push_back(TrackToClean(track, &(tt.tracks)));
-				continue;
-			}
-
-			if (gs->frameNum > ((track->parts.front()).creationTime + track->lifeTime)) {
-				tracksToBeCleaned.push_back(TrackToClean(track, &(tt.tracks)));
-				// still draw the track to avoid flicker
-				// continue;
-			}
-
-			const auto frontPart = track->parts.front();
-			const auto backPart = track->parts.back();
-
-			if (!camera->InView((frontPart.pos1 + backPart.pos1) * 0.5f, frontPart.pos1.distance(backPart.pos1) + 500.0f))
-				continue;
-
-			// walk across the track parts from front (oldest) to back (newest) and draw
-			// a quad between "connected" parts (ie. parts differing 8 sim-frames in age)
-			std::deque<TrackPart>::const_iterator curPart =   (track->parts.begin());
-			std::deque<TrackPart>::const_iterator nxtPart = ++(track->parts.begin());
-
-			curPartColor[3] = std::max(0.0f, (1.0f - (gs->frameNum - (*curPart).creationTime) * track->alphaFalloff) * 255.0f);
-
-			va->EnlargeArrays(track->parts.size() * 4, 0, VA_SIZE_TC);
-
-			for (; nxtPart != track->parts.end(); ++nxtPart) {
-				nxtPartColor[3] = std::max(0.0f, (1.0f - (gs->frameNum - (*nxtPart).creationTime) * track->alphaFalloff) * 255.0f);
-
-				if ((*nxtPart).connected) {
-					va->AddVertexQTC((*curPart).pos1, (*curPart).texPos, 0, curPartColor);
-					va->AddVertexQTC((*curPart).pos2, (*curPart).texPos, 1, curPartColor);
-					va->AddVertexQTC((*nxtPart).pos2, (*nxtPart).texPos, 1, nxtPartColor);
-					va->AddVertexQTC((*nxtPart).pos1, (*nxtPart).texPos, 0, nxtPartColor);
-				}
-
-				curPartColor[3] = nxtPartColor[3];
-				curPart = nxtPart;
-			}
-		}
-
-		va->DrawArrayTC(GL_QUADS);
-	}
-}
-
-void CGroundDecalHandler::CleanTracks()
-{
-	// Cleanup old tracks; runs *immediately* after DrawTracks
-	for (TrackToClean& ttc: tracksToBeCleaned) {
-		UnitTrackStruct* track = ttc.track;
-
-		while (!track->parts.empty()) {
-			// stop at the first part that is still too young for deletion
-			if (gs->frameNum < ((track->parts.front()).creationTime + track->lifeTime))
-				break;
-
-			track->parts.pop_front();
-		}
-
-		if (track->parts.empty()) {
-			if (track->owner != nullptr) {
-				track->owner->myTrack = nullptr;
-				track->owner = nullptr;
-			}
-
-			VectorErase(*ttc.tracks, track);
-			tracksToBeDeleted.push_back(track);
-		}
-	}
-
-	tracksToBeCleaned.clear();
-}
-
 
 
 void CGroundDecalHandler::AddScars()
@@ -642,7 +501,9 @@ void CGroundDecalHandler::DrawScars() {
 
 void CGroundDecalHandler::Draw()
 {
-	if (!drawDecals)
+	trackHandler.Draw();
+
+	if (!GetDrawDecals())
 		return;
 
 	glEnable(GL_TEXTURE_2D);
@@ -676,13 +537,8 @@ void CGroundDecalHandler::BindTextures()
 	}
 
 	if (shadowHandler->ShadowsLoaded()) {
-		glActiveTexture(GL_TEXTURE2);
-		glEnable(GL_TEXTURE_2D);
-		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-		glBindTexture(GL_TEXTURE_2D, shadowHandler->shadowTexture);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC_ARB, GL_LEQUAL);
-		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
+		shadowHandler->SetupShadowTexSampler(GL_TEXTURE2, true);
+		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE); //??
 	}
 
 	if (infoTextureHandler->IsEnabled()) {
@@ -717,10 +573,7 @@ void CGroundDecalHandler::KillTextures()
 	}
 
 	if (shadowHandler->ShadowsLoaded()) {
-		glActiveTexture(GL_TEXTURE2);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);
-		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
-		glDisable(GL_TEXTURE_2D);
+		shadowHandler->ResetShadowTexSampler(GL_TEXTURE2, true);
 
 		glActiveTexture(GL_TEXTURE1);
 		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB_ARB, GL_TEXTURE);
@@ -768,12 +621,6 @@ void CGroundDecalHandler::DrawDecals()
 	glPolygonOffset(-10, -200);
 	DrawObjectDecals();
 
-	// draw track decals
-	glPolygonOffset(-10, -20);
-	AddTracks();
-	DrawTracks();
-	CleanTracks();
-
 	// draw explosion decals
 	glBindTexture(GL_TEXTURE_2D, scarTex);
 	glPolygonOffset(-10, -400);
@@ -784,165 +631,18 @@ void CGroundDecalHandler::DrawDecals()
 }
 
 
-void CGroundDecalHandler::UnitMoved(const CUnit* unit)
+void CGroundDecalHandler::AddDecal(CUnit* unit, const float3& newPos)
 {
-	if (decalLevel == 0)
+	if (!GetDrawDecals())
 		return;
 
-	AddDecalAndTrack(const_cast<CUnit*>(unit), unit->pos);
-}
-
-
-void CGroundDecalHandler::AddDecalAndTrack(CUnit* unit, const float3& newPos)
-{
 	MoveSolidObject(unit, newPos);
-
-	if (!unit->leaveTracks)
-		return;
-
-	const UnitDef* unitDef = unit->unitDef;
-	const SolidObjectDecalDef& decalDef = unitDef->decalDef;
-
-	if (!unitDef->IsGroundUnit())
-		return;
-
-	if (decalDef.trackDecalType < -1)
-		return;
-
-	if (decalDef.trackDecalType < 0) {
-		const_cast<SolidObjectDecalDef&>(decalDef).trackDecalType = GetTrackType(decalDef.trackDecalTypeName);
-		if (decalDef.trackDecalType < -1)
-			return;
-	}
-
-	if (unit->myTrack != NULL && unit->myTrack->lastUpdate >= (gs->frameNum - 7))
-		return;
-
-	if (!((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectatingFullView))
-		return;
-
-	// calculate typemap-index
-	const int tmz = newPos.z / (SQUARE_SIZE * 2);
-	const int tmx = newPos.x / (SQUARE_SIZE * 2);
-	const int tmi = Clamp(tmz * mapDims.hmapx + tmx, 0, mapDims.hmapx * mapDims.hmapy - 1);
-
-	const unsigned char* typeMap = readMap->GetTypeMapSynced();
-	const CMapInfo::TerrainType& terType = mapInfo->terrainTypes[ typeMap[tmi] ];
-
-	if (!terType.receiveTracks)
-		return;
-
-	const float trackLifeTime = GAME_SPEED * decalLevel * decalDef.trackDecalStrength;
-
-	if (trackLifeTime <= 0.0f)
-		return;
-
-	const float3 pos = newPos + unit->frontdir * decalDef.trackDecalOffset;
-
-
-	// prepare the new part of the track; will be copied
-	TrackPart trackPart;
-	trackPart.pos1 = pos + unit->rightdir * decalDef.trackDecalWidth * 0.5f;
-	trackPart.pos2 = pos - unit->rightdir * decalDef.trackDecalWidth * 0.5f;
-	trackPart.pos1.y = CGround::GetHeightReal(trackPart.pos1.x, trackPart.pos1.z, false);
-	trackPart.pos2.y = CGround::GetHeightReal(trackPart.pos2.x, trackPart.pos2.z, false);
-	trackPart.creationTime = gs->frameNum;
-
-	UnitTrackStruct** unitTrack = &unit->myTrack;
-
-	if ((*unitTrack) == nullptr) {
-		(*unitTrack) = new UnitTrackStruct(unit);
-		(*unitTrack)->lifeTime = trackLifeTime;
-		(*unitTrack)->alphaFalloff = 1.0f / trackLifeTime;
-
-		trackPart.texPos = 0;
-		trackPart.connected = false;
-		trackPart.isNewTrack = true;
-	} else {
-		const TrackPart& prevPart = (*unitTrack)->lastAdded;
-
-		const float partDist = (trackPart.pos1).distance(prevPart.pos1);
-		const float texShift = (partDist / decalDef.trackDecalWidth) * decalDef.trackDecalStretch;
-
-		trackPart.texPos = prevPart.texPos + texShift;
-		trackPart.connected = (prevPart.creationTime == (gs->frameNum - 8));
-	}
-
-	if (trackPart.isNewTrack) {
-		auto& decDef = unit->unitDef->decalDef;
-		auto& trType = trackTypes[decDef.trackDecalType];
-
-		VectorInsertUnique(trType.tracks, *unitTrack);
-	}
-
-	(*unitTrack)->lastUpdate = gs->frameNum;
-	(*unitTrack)->lastAdded = trackPart;
-
-	tracksToBeAdded.push_back(*unitTrack);
 }
 
 
-int CGroundDecalHandler::GetTrackType(const std::string& name)
+void CGroundDecalHandler::AddExplosion(float3 pos, float damage, float radius)
 {
-	if (decalLevel == 0)
-		return -2;
-
-	const std::string& lowerName = StringToLower(name);
-
-	unsigned int a = 0;
-
-	for (auto ti = trackTypes.begin(); ti != trackTypes.end(); ++ti) {
-		if ((*ti).name == lowerName)
-			return a;
-
-		++a;
-	}
-
-	trackTypes.push_back(TrackType());
-	(trackTypes.back()).name = lowerName;
-	(trackTypes.back()).texture = LoadTexture(lowerName);
-
-	return (trackTypes.size() - 1);
-}
-
-
-unsigned int CGroundDecalHandler::LoadTexture(const std::string& name)
-{
-	std::string fullName = name;
-	if (fullName.find_first_of('.') == string::npos) {
-		fullName += ".bmp";
-	}
-	if ((fullName.find_first_of('\\') == string::npos) &&
-	    (fullName.find_first_of('/')  == string::npos)) {
-		fullName = string("bitmaps/tracks/") + fullName;
-	}
-
-	CBitmap bm;
-	if (!bm.Load(fullName)) {
-		throw content_error("Could not load ground decal from file " + fullName);
-	}
-	if (FileSystem::GetExtension(fullName) == "bmp") {
-		//! bitmaps don't have an alpha channel
-		//! so use: red := brightness & green := alpha
-		for (int y = 0; y < bm.ysize; ++y) {
-			for (int x = 0; x < bm.xsize; ++x) {
-				const int index = ((y * bm.xsize) + x) * 4;
-				bm.mem[index + 3]    = bm.mem[index + 1];
-				const int brightness = bm.mem[index + 0];
-				bm.mem[index + 0] = (brightness * 90) / 255;
-				bm.mem[index + 1] = (brightness * 60) / 255;
-				bm.mem[index + 2] = (brightness * 30) / 255;
-			}
-		}
-	}
-
-	return bm.CreateMipMapTexture();
-}
-
-
-void CGroundDecalHandler::AddExplosion(float3 pos, float damage, float radius, bool addScar)
-{
-	if (decalLevel == 0 || !addScar)
+	if (!GetDrawDecals())
 		return;
 
 	const float altitude = pos.y - CGround::GetHeightReal(pos.x, pos.z, false);
@@ -964,7 +664,7 @@ void CGroundDecalHandler::AddExplosion(float3 pos, float damage, float radius, b
 	radius = std::min(radius, damage * 0.25f);
 
 	if (damage > 400.0f)
-		damage = 400.0f + math::sqrt(damage - 399.0f);
+		damage = 400.0f + std::sqrt(damage - 399.0f);
 
 	const int ttl = std::max(1.0f, decalLevel * damage * 3.0f);
 
@@ -999,10 +699,13 @@ void CGroundDecalHandler::LoadScar(const std::string& file, unsigned char* buf,
 	if (!bm.Load(file)) {
 		throw content_error("Could not load scar from file " + file);
 	}
+	if (bm.ysize != 256 || bm.xsize != 256) {
+		bm = bm.CreateRescaled(256,256);
+	}
 
 	if (FileSystem::GetExtension(file) == "bmp") {
-		//! bitmaps don't have an alpha channel
-		//! so use: red := brightness & green := alpha
+		// bitmaps don't have an alpha channel
+		// so use: red := brightness & green := alpha
 		for (int y = 0; y < bm.ysize; ++y) {
 			for (int x = 0; x < bm.xsize; ++x) {
 				const int memIndex = ((y * bm.xsize) + x) * 4;
@@ -1015,15 +718,11 @@ void CGroundDecalHandler::LoadScar(const std::string& file, unsigned char* buf,
 			}
 		}
 	} else {
+		// we copy into an atlas, so we need to copy line by line
 		for (int y = 0; y < bm.ysize; ++y) {
-			for (int x = 0; x < bm.xsize; ++x) {
-				const int memIndex = ((y * bm.xsize) + x) * 4;
-				const int bufIndex = (((y + yoffset) * 512) + x + xoffset) * 4;
-				buf[bufIndex + 0]    = bm.mem[memIndex + 0];
-				buf[bufIndex + 1]    = bm.mem[memIndex + 1];
-				buf[bufIndex + 2]    = bm.mem[memIndex + 2];
-				buf[bufIndex + 3]    = bm.mem[memIndex + 3];
-			}
+			const int memIndex = (y * bm.xsize) * 4;
+			const int bufIndex = (((y + yoffset) * 512) + xoffset) * 4;
+			memcpy(&buf[bufIndex], &bm.mem[memIndex], bm.xsize * sizeof(SColor));
 		}
 	}
 }
@@ -1115,13 +814,58 @@ void CGroundDecalHandler::RemoveScar(Scar* scar, bool removeFromScars)
 	delete scar;
 }
 
+int CGroundDecalHandler::GetSolidObjectDecalType(const std::string& name)
+{
+	if (!GetDrawDecals())
+		return -2;
+
+	const std::string& lowerName = StringToLower(name);
+	const std::string& fullName = "unittextures/" + lowerName;
+
+	int decalType = 0;
+	for (auto& dt: objectDecalTypes) {
+		if (dt->name == lowerName) {
+			return decalType;
+		}
+		++decalType;
+	}
+
+	CBitmap bm;
+	if (!bm.Load(fullName)) {
+		LOG_L(L_ERROR, "[%s] Could not load object-decal from file \"%s\"", __FUNCTION__, fullName.c_str());
+		return -2;
+	}
+
+	SolidObjectDecalType* tt = new SolidObjectDecalType();
+	tt->name = lowerName;
+	tt->texture = bm.CreateMipMapTexture();
+
+	objectDecalTypes.push_back(tt);
+	return (objectDecalTypes.size() - 1);
+}
+
+
+SolidObjectGroundDecal::~SolidObjectGroundDecal() {
+	SafeDelete(va);
+}
+
+CGroundDecalHandler::Scar::~Scar() {
+	SafeDelete(va);
+}
+
+
+
+
+
+
+
 
 void CGroundDecalHandler::MoveSolidObject(CSolidObject* object, const float3& pos)
 {
-	if (decalLevel == 0)
+	if (!GetDrawDecals())
 		return;
 
-	const SolidObjectDecalDef& decalDef = object->objectDef->decalDef;
+	const SolidObjectDecalDef& decalDef = object->GetDef()->decalDef;
 
 	if (!decalDef.useGroundDecal || decalDef.groundDecalType < -1)
 		return;
@@ -1149,7 +893,7 @@ void CGroundDecalHandler::MoveSolidObject(CSolidObject* object, const float3& po
 	decal->alphaFalloff = decalDef.groundDecalDecaySpeed;
 	decal->alpha = 0.0f;
 	decal->pos = pos;
-	decal->radius = math::sqrt(float(sizex * sizex + sizey * sizey)) * SQUARE_SIZE + 20.0f;
+	decal->radius = std::sqrt(float(sizex * sizex + sizey * sizey)) * SQUARE_SIZE + 20.0f;
 	decal->facing = object->buildFacing;
 	// convert to heightmap coors
 	decal->xsize = sizex << 1;
@@ -1202,41 +946,18 @@ void CGroundDecalHandler::ForceRemoveSolidObject(CSolidObject* object)
 }
 
 
-int CGroundDecalHandler::GetSolidObjectDecalType(const std::string& name)
-{
-	if (decalLevel == 0)
-		return -2;
 
-	const std::string& lowerName = StringToLower(name);
-	const std::string& fullName = "unittextures/" + lowerName;
 
-	int decalType = 0;
 
-	std::vector<SolidObjectDecalType*>::iterator bi;
-	for (bi = objectDecalTypes.begin(); bi != objectDecalTypes.end(); ++bi) {
-		if ((*bi)->name == lowerName) {
-			return decalType;
-		}
-		++decalType;
-	}
 
-	CBitmap bm;
-	if (!bm.Load(fullName)) {
-		LOG_L(L_ERROR, "[%s] Could not load object-decal from file \"%s\"", __FUNCTION__, fullName.c_str());
-		return -2;
-	}
 
-	SolidObjectDecalType* tt = new SolidObjectDecalType();
-	tt->name = lowerName;
-	tt->texture = bm.CreateMipMapTexture();
 
-	objectDecalTypes.push_back(tt);
-	return (objectDecalTypes.size() - 1);
-}
 
-void CGroundDecalHandler::GhostCreated(CSolidObject* object, GhostSolidObject* gb) {
-	RemoveSolidObject(object, gb);
-}
+
+
+
+
+void CGroundDecalHandler::UnitMoved(const CUnit* unit) { AddDecal(const_cast<CUnit*>(unit), unit->pos); }
 
 void CGroundDecalHandler::GhostDestroyed(GhostSolidObject* gb) {
 	if (gb->decal)
@@ -1244,54 +965,29 @@ void CGroundDecalHandler::GhostDestroyed(GhostSolidObject* gb) {
 }
 
 
-SolidObjectGroundDecal::~SolidObjectGroundDecal() {
-	SafeDelete(va);
-}
 
-CGroundDecalHandler::Scar::~Scar() {
-	SafeDelete(va);
-}
 
-void CGroundDecalHandler::ExplosionOccurred(const CExplosionEvent& event) {
-	AddExplosion(event.GetPos(), event.GetDamage(), event.GetRadius(), ((event.GetWeaponDef() != NULL) && event.GetWeaponDef()->visuals.explosionScar));
-}
 
-void CGroundDecalHandler::RenderUnitCreated(const CUnit* unit, int cloaked) {
-	MoveSolidObject(const_cast<CUnit*>(unit), unit->pos);
-}
 
-void CGroundDecalHandler::RenderUnitDestroyed(const CUnit* unit) {
-	CUnit* u = const_cast<CUnit*>(unit);
+void CGroundDecalHandler::GhostCreated(CSolidObject* object, GhostSolidObject* gb) { RemoveSolidObject(object, gb); }
+void CGroundDecalHandler::FeatureMoved(const CFeature* feature, const float3& oldpos) { MoveSolidObject(const_cast<CFeature*>(feature), feature->pos); }
 
-	RemoveSolidObject(u, nullptr);
-
-	if (unit->myTrack == nullptr)
+void CGroundDecalHandler::ExplosionOccurred(const CExplosionParams& event) {
+	if ((event.weaponDef != nullptr) && !event.weaponDef->visuals.explosionScar)
 		return;
 
-	// same pointer as in tracksToBeAdded, so this also pre-empts DrawTracks
-	u->myTrack->owner = nullptr;
-	u->myTrack = nullptr;
+	AddExplosion(event.pos, event.damages.GetDefault(), event.craterAreaOfEffect);
 }
 
-void CGroundDecalHandler::RenderFeatureCreated(const CFeature* feature)
-{
-	MoveSolidObject(const_cast<CFeature*>(feature), feature->pos);
+void CGroundDecalHandler::RenderUnitCreated(const CUnit* unit, int cloaked) { MoveSolidObject(const_cast<CUnit*>(unit), unit->pos); }
+void CGroundDecalHandler::RenderUnitDestroyed(const CUnit* unit) {
+	RemoveSolidObject(const_cast<CUnit*>(unit), nullptr);
 }
 
-void CGroundDecalHandler::RenderFeatureDestroyed(const CFeature* feature)
-{
-	RemoveSolidObject(const_cast<CFeature*>(feature), NULL);
-}
+void CGroundDecalHandler::RenderFeatureCreated(const CFeature* feature) { MoveSolidObject(const_cast<CFeature*>(feature), feature->pos); }
+void CGroundDecalHandler::RenderFeatureDestroyed(const CFeature* feature) { RemoveSolidObject(const_cast<CFeature*>(feature), nullptr); }
 
-void CGroundDecalHandler::FeatureMoved(const CFeature* feature, const float3& oldpos) {
-	if (feature->def->drawType == DRAWTYPE_MODEL)
-		MoveSolidObject(const_cast<CFeature*>(feature), feature->pos);
-}
+// FIXME: Add a RenderUnitLoaded event
+void CGroundDecalHandler::UnitLoaded(const CUnit* unit, const CUnit* transport) { ForceRemoveSolidObject(const_cast<CUnit*>(unit)); }
+void CGroundDecalHandler::UnitUnloaded(const CUnit* unit, const CUnit* transport) { MoveSolidObject(const_cast<CUnit*>(unit), unit->pos); }
 
-void CGroundDecalHandler::UnitLoaded(const CUnit* unit, const CUnit* transport) {
-	RemoveSolidObject(const_cast<CUnit*>(unit), NULL); // FIXME: Add a RenderUnitLoaded event
-}
-
-void CGroundDecalHandler::UnitUnloaded(const CUnit* unit, const CUnit* transport) {
-	MoveSolidObject(const_cast<CUnit*>(unit), unit->pos); // FIXME: Add a RenderUnitUnloaded event
-}

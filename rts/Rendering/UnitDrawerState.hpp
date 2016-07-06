@@ -6,7 +6,7 @@
 #include <array>
 #include "System/type2.h"
 
-class float4;
+struct float4;
 class CUnitDrawer;
 class CCamera;
 struct ISkyLight;
@@ -42,17 +42,17 @@ public:
 	virtual bool CanDrawAlpha() const { return false; }
 	virtual bool CanDrawDeferred() const { return false; }
 
-	virtual void Enable(const CUnitDrawer*, bool, bool) {}
-	virtual void Disable(const CUnitDrawer*, bool) {}
+	virtual void Enable(const CUnitDrawer*, bool, bool) = 0;
+	virtual void Disable(const CUnitDrawer*, bool) = 0;
 
-	virtual void EnableTextures(const CUnitDrawer*) const {}
-	virtual void DisableTextures(const CUnitDrawer*) const {}
+	virtual void EnableTextures() const = 0;
+	virtual void DisableTextures() const = 0;
 	virtual void EnableShaders(const CUnitDrawer*) {}
 	virtual void DisableShaders(const CUnitDrawer*) {}
 
 	virtual void UpdateCurrentShaderSky(const CUnitDrawer*, const ISkyLight*) const {}
-	virtual void UpdateCurrentShaderSunLighting(const CUnitDrawer*) const {}
-	virtual void SetTeamColor(int team, const float2 alpha) const {}
+	virtual void SetTeamColor(int team, const float2 alpha) const = 0;
+	virtual void SetNanoColor(const float4& color) const {}
 
 	void SetActiveShader(unsigned int shadowed, unsigned int deferred) {
 		// shadowed=1 --> shader 1 (deferred=0) or 3 (deferred=1)
@@ -74,8 +74,8 @@ protected:
 	// shared ARB and GLSL state managers
 	void EnableCommon(const CUnitDrawer*, bool);
 	void DisableCommon(const CUnitDrawer*, bool);
-	void EnableTexturesCommon(const CUnitDrawer*) const;
-	void DisableTexturesCommon(const CUnitDrawer*) const;
+	void EnableTexturesCommon() const;
+	void DisableTexturesCommon() const;
 
 protected:
 	std::array<Shader::IProgramObject*, MODEL_SHADER_COUNT> modelShaders;
@@ -86,57 +86,59 @@ protected:
 
 struct UnitDrawerStateFFP: public IUnitDrawerState {
 public:
-	bool CanEnable(const CUnitDrawer*) const;
+	bool CanEnable(const CUnitDrawer*) const override;
 
-	void Enable(const CUnitDrawer*, bool, bool);
-	void Disable(const CUnitDrawer*, bool);
+	void Enable(const CUnitDrawer*, bool, bool) override;
+	void Disable(const CUnitDrawer*, bool) override;
 
-	void EnableTextures(const CUnitDrawer*) const;
-	void DisableTextures(const CUnitDrawer*) const;
+	void EnableTextures() const override;
+	void DisableTextures() const override;
 
-	void SetTeamColor(int team, const float2 alpha) const;
+	void SetTeamColor(int team, const float2 alpha) const override;
+	void SetNanoColor(const float4& color) const override;
 };
 
 
 struct UnitDrawerStateARB: public IUnitDrawerState {
 public:
-	bool Init(const CUnitDrawer*);
-	void Kill();
+	bool Init(const CUnitDrawer*) override;
+	void Kill() override;
 
-	bool CanEnable(const CUnitDrawer*) const;
+	bool CanEnable(const CUnitDrawer*) const override;
 
-	void Enable(const CUnitDrawer*, bool, bool);
-	void Disable(const CUnitDrawer*, bool);
+	void Enable(const CUnitDrawer*, bool, bool) override;
+	void Disable(const CUnitDrawer*, bool) override;
 
-	void EnableTextures(const CUnitDrawer*) const;
-	void DisableTextures(const CUnitDrawer*) const;
-	void EnableShaders(const CUnitDrawer*);
-	void DisableShaders(const CUnitDrawer*);
+	void EnableTextures() const override;
+	void DisableTextures() const override;
+	void EnableShaders(const CUnitDrawer*) override;
+	void DisableShaders(const CUnitDrawer*) override;
 
-	void SetTeamColor(int team, const float2 alpha) const;
+	void SetNanoColor(const float4& color) const override;
+	void SetTeamColor(int team, const float2 alpha) const override;
 };
 
 
 struct UnitDrawerStateGLSL: public IUnitDrawerState {
 public:
-	bool Init(const CUnitDrawer*);
-	void Kill();
+	bool Init(const CUnitDrawer*) override;
+	void Kill() override;
 
-	bool CanEnable(const CUnitDrawer*) const;
-	bool CanDrawAlpha() const { return true; }
-	bool CanDrawDeferred() const { return true; }
+	bool CanEnable(const CUnitDrawer*) const override;
+	bool CanDrawAlpha() const override { return true; }
+	bool CanDrawDeferred() const  override { return true; }
 
-	void Enable(const CUnitDrawer*, bool, bool);
-	void Disable(const CUnitDrawer*, bool);
+	void Enable(const CUnitDrawer*, bool, bool) override;
+	void Disable(const CUnitDrawer*, bool) override;
 
-	void EnableTextures(const CUnitDrawer*) const;
-	void DisableTextures(const CUnitDrawer*) const;
-	void EnableShaders(const CUnitDrawer*);
-	void DisableShaders(const CUnitDrawer*);
+	void EnableTextures() const override;
+	void DisableTextures() const override;
+	void EnableShaders(const CUnitDrawer*) override;
+	void DisableShaders(const CUnitDrawer*) override;
 
-	void UpdateCurrentShaderSky(const CUnitDrawer*, const ISkyLight*) const;
-	void UpdateCurrentShaderSunLighting(const CUnitDrawer*) const;
-	void SetTeamColor(int team, const float2 alpha) const;
+	void UpdateCurrentShaderSky(const CUnitDrawer*, const ISkyLight*) const override;
+	void SetTeamColor(int team, const float2 alpha) const override;
+	void SetNanoColor(const float4& color) const override;
 };
 
 #endif

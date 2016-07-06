@@ -91,7 +91,7 @@ void COverheadController::MouseWheelMove(float move)
 
 	const float shiftSpeed = (KeyInput::GetKeyModState(KMOD_SHIFT) ? 3.0f : 1.0f);
 	const float altZoomDist = height * move * 0.007f * shiftSpeed;
-	
+
 	// tilt the camera if LCTRL is pressed
 	//
 	// otherwise holding down LALT uses 'instant-zoom'
@@ -161,9 +161,8 @@ void COverheadController::Update()
 	pos.y = CGround::GetHeightAboveWater(pos.x, pos.z, false);
 	height = Clamp(height, 60.0f, maxHeight);
 
-	float alpha = std::roundf(angle / angleStep) * angleStep;
-	alpha = Clamp(alpha, 0.01f, fastmath::HALFPI);
-	dir = float3(0.0f, -fastmath::cos(alpha), flipped ? fastmath::sin(alpha) : -fastmath::sin(alpha));
+	angle = Clamp(angle, 0.01f, fastmath::HALFPI);
+	dir = float3(0.0f, -fastmath::cos(angle), flipped ? fastmath::sin(angle) : -fastmath::sin(angle));
 	pixelSize = (camera->GetTanHalfFov() * 2.0f) / globalRendering->viewSizeY * height * 2.0f;
 }
 

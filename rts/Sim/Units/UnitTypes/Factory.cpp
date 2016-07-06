@@ -20,6 +20,7 @@
 #include "System/EventHandler.h"
 #include "System/Matrix44f.h"
 #include "System/myMath.h"
+#include "System/creg/DefTypes.h"
 #include "System/Sound/ISoundChannels.h"
 #include "System/Sync/SyncTracer.h"
 
@@ -29,14 +30,11 @@ CR_BIND_DERIVED(CFactory, CBuilding, )
 
 CR_REG_METADATA(CFactory, (
 	CR_MEMBER(buildSpeed),
-	CR_MEMBER(curBuild),
-	CR_MEMBER(nextBuildUnitDefID),
 	CR_MEMBER(lastBuildUpdateFrame),
 	CR_MEMBER(curBuildDef),
 	CR_MEMBER(curBuild),
 	CR_MEMBER(finishedBuildCommand),
-	CR_MEMBER(nanoPieceCache),
-	CR_POSTLOAD(PostLoad)
+	CR_MEMBER(nanoPieceCache)
 ))
 
 //////////////////////////////////////////////////////////////////////
@@ -45,32 +43,17 @@ CR_REG_METADATA(CFactory, (
 
 CFactory::CFactory():
 	buildSpeed(100.0f),
-	curBuildDef(NULL),
-	curBuild(NULL),
-	nextBuildUnitDefID(-1),
+	curBuild(nullptr),
+	curBuildDef(nullptr),
 	lastBuildUpdateFrame(-1)
 {
 }
 
-
-
-void CFactory::PostLoad()
-{
-	curBuildDef = unitDefHandler->GetUnitDefByID(nextBuildUnitDefID);
-
-	if (yardOpen) {
-		script->Activate();
-	}
-	if (curBuild) {
-		script->StartBuilding();
-	}
-}
-
 void CFactory::KillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed, bool showDeathSequence)
 {
-	if (curBuild != NULL) {
-		curBuild->KillUnit(NULL, false, true);
-		curBuild = NULL;
+	if (curBuild != nullptr) {
+		curBuild->KillUnit(nullptr, false, true);
+		curBuild = nullptr;
 	}
 
 	CUnit::KillUnit(attacker, selfDestruct, reclaimed, showDeathSequence);
@@ -108,7 +91,7 @@ void CFactory::Update()
 		// unit, in which case our buildee can either be allowed to finish
 		// construction (by assisting builders) or has to be killed --> the
 		// latter is easier
-		if (curBuild != NULL) {
+		if (curBuild != nullptr) {
 			StopBuild();
 		}
 		#endif
@@ -117,7 +100,7 @@ void CFactory::Update()
 	}
 
 
-	if (curBuildDef != NULL) {
+	if (curBuildDef != nullptr) {
 		if (!yardOpen && !IsStunned()) {
 			if (groundBlockingObjectMap->CanOpenYard(this)) {
 				script->Activate();
@@ -134,13 +117,13 @@ void CFactory::Update()
 		}
 	}
 
-	if (curBuild != NULL) {
+	if (curBuild != nullptr) {
 		UpdateBuild(curBuild);
 		FinishBuild(curBuild);
 	}
 
 	const bool wantClose = (!IsStunned() && yardOpen && (gs->frameNum >= (lastBuildUpdateFrame + GAME_SPEED * 7)));
-	const bool closeYard = (wantClose && curBuild == NULL && groundBlockingObjectMap->CanCloseYard(this));
+	const bool closeYard = (wantClose && curBuild == nullptr && groundBlockingObjectMap->CanCloseYard(this));
 
 	if (closeYard) {
 		// close the factory after inactivity
@@ -195,7 +178,7 @@ void CFactory::StartBuild(const UnitDef* buildeeDef) {
 	// set curBuildDef to NULL to indicate construction
 	// has started, otherwise we would keep being called
 	curBuild = buildee;
-	curBuildDef = NULL;
+	curBuildDef = nullptr;
 
 	if (losStatus[gu->myAllyTeam] & LOS_INLOS) {
 		Channels::General->PlayRandomSample(unitDef->sounds.build, buildPos);
@@ -252,7 +235,7 @@ void CFactory::FinishBuild(CUnit* buildee) {
 	const CCommandAI* bcai = buildee->commandAI;
 	// if not idle, the buildee already has user orders
 	const bool buildeeIdle = (bcai->commandQue.empty());
-	const bool buildeeMobile = (dynamic_cast<const CMobileCAI*>(bcai) != NULL);
+	const bool buildeeMobile = (dynamic_cast<const CMobileCAI*>(bcai) != nullptr);
 
 	if (buildeeIdle || buildeeMobile) {
 		AssignBuildeeOrders(buildee);
@@ -272,20 +255,19 @@ void CFactory::FinishBuild(CUnit* buildee) {
 unsigned int CFactory::QueueBuild(const UnitDef* buildeeDef, const Command& buildCmd)
 {
 	assert(!beingBuilt);
-	assert(buildeeDef != NULL);
+	assert(buildeeDef != nullptr);
 
-	if (curBuild != NULL)
+	if (curBuild != nullptr)
 		return FACTORY_KEEP_BUILD_ORDER;
 	if (unitHandler->unitsByDefs[team][buildeeDef->id].size() >= buildeeDef->maxThisUnit)
 		return FACTORY_SKIP_BUILD_ORDER;
 	if (teamHandler->Team(team)->AtUnitLimit())
 		return FACTORY_KEEP_BUILD_ORDER;
-	if (!eventHandler.AllowUnitCreation(buildeeDef, this, NULL))
+	if (!eventHandler.AllowUnitCreation(buildeeDef, this, nullptr))
 		return FACTORY_SKIP_BUILD_ORDER;
 
 	finishedBuildCommand = buildCmd;
 	curBuildDef = buildeeDef;
-	nextBuildUnitDefID = buildeeDef->id;
 
 	// signal that the build-order was accepted (queued)
 	return FACTORY_NEXT_BUILD_ORDER;
@@ -299,19 +281,19 @@ void CFactory::StopBuild()
 	if (curBuild) {
 		if (curBuild->beingBuilt) {
 			AddMetal(curBuild->cost.metal * curBuild->buildProgress, false);
-			curBuild->KillUnit(NULL, false, true);
+			curBuild->KillUnit(nullptr, false, true);
 		}
 		DeleteDeathDependence(curBuild, DEPENDENCE_BUILD);
 	}
 
-	curBuild = NULL;
-	curBuildDef = NULL;
+	curBuild = nullptr;
+	curBuildDef = nullptr;
 }
 
 void CFactory::DependentDied(CObject* o)
 {
 	if (o == curBuild) {
-		curBuild = NULL;
+		curBuild = nullptr;
 		StopBuild();
 	}
 
@@ -345,8 +327,9 @@ void CFactory::SendToEmptySpot(CUnit* unit)
 
 		testPos.y = CGround::GetHeightAboveWater(testPos.x, testPos.z);
 
-		if (quadField->GetSolidsExact(testPos, unit->radius * 1.5f, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS).empty()) {
-			foundPos = testPos; break;
+		if (quadField->NoSolidsExact(testPos, unit->radius * 1.5f, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS)) {
+			foundPos = testPos;
+			break;
 		}
 	}
 
@@ -444,8 +427,12 @@ void CFactory::AssignBuildeeOrders(CUnit* unit) {
 			c.options |= SHIFT_KEY;
 
 			if (c.GetID() == CMD_MOVE) {
+				float xjit = gs->randFloat() * TWOPI;
+				float zjit = gs->randFloat() * TWOPI;
+
 				const float3 p1 = c.GetPos(0);
-				const float3 p2 = float3(p1.x + gs->randFloat() * TWOPI, p1.y, p1.z + gs->randFloat() * TWOPI);
+				const float3 p2 = float3(p1.x + xjit, p1.y, p1.z + zjit);
+
 				// apply a small amount of random jitter to move commands
 				// such that new units do not all share the same goal-pos
 				// and start forming a "trail" back to the factory exit

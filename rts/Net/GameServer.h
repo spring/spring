@@ -99,6 +99,7 @@ public:
 	bool PreSimFrame() const { return (serverFrameNum == -1); }
 	bool HasStarted() const { return gameHasStarted; }
 	bool HasGameID() const { return generatedGameID; }
+	bool HasLocalClient() const { return (localClientNumber != -1u); }
 	/// Is the server still running?
 	bool HasFinished() const;
 
@@ -223,6 +224,7 @@ private:
 	float medianCpu;
 	int medianPing;
 	int curSpeedCtrl;
+	int loopSleepTime;
 
 	/// The maximum speed users are allowed to set
 	float maxUserSpeed;
@@ -256,7 +258,6 @@ private:
 	unsigned char ReserveNextAvailableSkirmishAIId();
 	void FreeSkirmishAIId(const unsigned char skirmishAIId);
 
-	bool hasLocalClient;
 	unsigned localClientNumber;
 
 	/// If the server receives a command, it will forward it to clients if it is not in this set

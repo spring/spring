@@ -3,8 +3,6 @@
 #ifndef LUA_ARCHIVE_H
 #define LUA_ARCHIVE_H
 
-#include <string>
-
 struct lua_State;
 
 
@@ -25,6 +23,8 @@ class LuaArchive {
 		static int GetArchiveReplaces(lua_State* L);
 
 		static int GetArchiveChecksum(lua_State* L);
+
+		static int GetAvailableAIs(lua_State* L);
 };
 
 

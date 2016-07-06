@@ -51,8 +51,6 @@ static AAirMoveType* GetAirMoveType(const CUnit* owner) {
 
 CR_BIND_DERIVED(CMobileCAI ,CCommandAI , )
 CR_REG_METADATA(CMobileCAI, (
-	CR_MEMBER(goalPos),
-	CR_MEMBER(goalRadius),
 	CR_MEMBER(lastBuggerGoalPos),
 	CR_MEMBER(lastUserGoal),
 
@@ -79,8 +77,6 @@ CR_REG_METADATA(CMobileCAI, (
 
 CMobileCAI::CMobileCAI():
 	CCommandAI(),
-	goalPos(-1,-1,-1),
-	goalRadius(0.0f),
 	lastBuggerGoalPos(-1,0,-1),
 	lastUserGoal(ZeroVector),
 	lastIdleCheck(0),
@@ -101,8 +97,6 @@ CMobileCAI::CMobileCAI():
 
 CMobileCAI::CMobileCAI(CUnit* owner):
 	CCommandAI(owner),
-	goalPos(-1,-1,-1),
-	goalRadius(0.0f),
 	lastBuggerGoalPos(-1,0,-1),
 	lastUserGoal(owner->pos),
 	lastIdleCheck(0),
@@ -122,8 +116,7 @@ CMobileCAI::CMobileCAI(CUnit* owner):
 	CalculateCancelDistance();
 
 	{
-		possibleCommands.emplace_back();
-		CommandDescription& c = possibleCommands.back();
+		SCommandDescription c;
 
 		c.id   = CMD_LOAD_ONTO;
 		c.type = CMDTYPE_ICON_UNIT;
@@ -134,11 +127,11 @@ CMobileCAI::CMobileCAI(CUnit* owner):
 		c.mouseicon = c.name;
 
 		c.hidden = true;
+		possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
 	}
 
 	if (owner->unitDef->canmove) {
-		possibleCommands.emplace_back();
-		CommandDescription& c = possibleCommands.back();
+		SCommandDescription c;
 
 		c.id   = CMD_MOVE;
 		c.type = CMDTYPE_ICON_FRONT;
@@ -149,11 +142,11 @@ CMobileCAI::CMobileCAI(CUnit* owner):
 		c.mouseicon = c.name;
 
 		c.params.push_back("1000000"); // max distance
+		possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
 	}
 
 	if (owner->unitDef->canPatrol) {
-		possibleCommands.emplace_back();
-		CommandDescription& c = possibleCommands.back();
+		SCommandDescription c;
 
 		c.id   = CMD_PATROL;
 		c.type = CMDTYPE_ICON_MAP;
@@ -162,11 +155,11 @@ CMobileCAI::CMobileCAI(CUnit* owner):
 		c.name      = "Patrol";
 		c.tooltip   = c.name + ": Order the unit to patrol to one or more waypoints";
 		c.mouseicon = c.name;
+		possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
 	}
 
 	if (owner->unitDef->canFight) {
-		possibleCommands.emplace_back();
-		CommandDescription& c = possibleCommands.back();
+		SCommandDescription c;
 
 		c.id   = CMD_FIGHT;
 		c.type = CMDTYPE_ICON_FRONT;
@@ -175,11 +168,11 @@ CMobileCAI::CMobileCAI(CUnit* owner):
 		c.name      = "Fight";
 		c.tooltip   = c.name + ": Order the unit to take action while moving to a position";
 		c.mouseicon = c.name;
+		possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
 	}
 
 	if (owner->unitDef->canGuard) {
-		possibleCommands.emplace_back();
-		CommandDescription& c = possibleCommands.back();
+		SCommandDescription c;
 
 		c.id   = CMD_GUARD;
 		c.type = CMDTYPE_ICON_UNIT;
@@ -188,12 +181,12 @@ CMobileCAI::CMobileCAI(CUnit* owner):
 		c.name      = "Guard";
 		c.tooltip   = c.name + ": Order a unit to guard another unit and attack units attacking it";
 		c.mouseicon = c.name;
+		possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
 	}
 
 	if (owner->unitDef->canfly) {
 		{
-			possibleCommands.emplace_back();
-			CommandDescription& c = possibleCommands.back();
+			SCommandDescription c;
 
 			c.id   = CMD_AUTOREPAIRLEVEL;
 			c.type = CMDTYPE_ICON_MODE;
@@ -210,10 +203,10 @@ CMobileCAI::CMobileCAI(CUnit* owner):
 			c.params.push_back("LandAt 30");
 			c.params.push_back("LandAt 50");
 			c.params.push_back("LandAt 80");
+			possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
 		}
 		{
-			possibleCommands.emplace_back();
-			CommandDescription& c = possibleCommands.back();
+			SCommandDescription c;
 
 			c.id   = CMD_IDLEMODE;
 			c.type = CMDTYPE_ICON_MODE;
@@ -228,13 +221,13 @@ CMobileCAI::CMobileCAI(CUnit* owner):
 			c.params.push_back("1");
 			c.params.push_back(" Fly ");
 			c.params.push_back("Land");
+			possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
 		}
 	}
 
 	if (owner->unitDef->IsTransportUnit()) {
 		{
-			possibleCommands.emplace_back();
-			CommandDescription& c = possibleCommands.back();
+			SCommandDescription c;
 
 			c.id   = CMD_LOAD_UNITS;
 			c.type = CMDTYPE_ICON_UNIT_OR_AREA;
@@ -243,10 +236,10 @@ CMobileCAI::CMobileCAI(CUnit* owner):
 			c.name      = "Load units";
 			c.tooltip   = c.name + ": Sets the transport to load a unit or units within an area";
 			c.mouseicon = c.name;
+			possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
 		}
 		{
-			possibleCommands.emplace_back();
-			CommandDescription& c = possibleCommands.back();
+			SCommandDescription c;
 
 			c.id   = CMD_UNLOAD_UNITS;
 			c.type = CMDTYPE_ICON_AREA;
@@ -255,6 +248,7 @@ CMobileCAI::CMobileCAI(CUnit* owner):
 			c.name      = "Unload units";
 			c.tooltip   = c.name + ": Sets the transport to unload units in an area";
 			c.mouseicon = c.name;
+			possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
 		}
 	}
 
@@ -290,10 +284,10 @@ void CMobileCAI::GiveCommandReal(const Command& c, bool fromSynced)
 			}
 
 			for (unsigned int n = 0; n < possibleCommands.size(); n++) {
-				if (possibleCommands[n].id != CMD_AUTOREPAIRLEVEL)
+				if (possibleCommands[n]->id != CMD_AUTOREPAIRLEVEL)
 					continue;
 
-				possibleCommands[n].params[0] = IntToString(int(c.params[0]), "%d");
+				UpdateCommandDescription(n, c);
 				break;
 			}
 
@@ -319,10 +313,10 @@ void CMobileCAI::GiveCommandReal(const Command& c, bool fromSynced)
 			}
 
 			for (unsigned int n = 0; n < possibleCommands.size(); n++) {
-				if (possibleCommands[n].id != CMD_IDLEMODE)
+				if (possibleCommands[n]->id != CMD_IDLEMODE)
 					continue;
 
-				possibleCommands[n].params[0] = IntToString(int(c.params[0]), "%d");
+				UpdateCommandDescription(n, c);
 				break;
 			}
 
@@ -348,8 +342,7 @@ void CMobileCAI::SlowUpdate()
 
 
 	if (!commandQue.empty() && commandQue.front().timeOut < gs->frameNum) {
-		StopMove();
-		FinishCommand();
+		StopMoveAndFinishCommand();
 		return;
 	}
 
@@ -415,21 +408,33 @@ void CMobileCAI::ExecuteMove(Command &c)
 {
 	const float3 cmdPos = c.GetPos(0);
 
-	if (cmdPos != goalPos) {
-		SetGoal(cmdPos, owner->pos);
+	const float sqDist = owner->pos.SqDistance2D(cmdPos);
+	if (sqDist < Square(SQUARE_SIZE)) {
+		if (!HasMoreMoveCommands())
+			StopMove();
+
+		FinishCommand();
+		return;
 	}
 
-	if ((owner->pos - goalPos).SqLength2D() < cancelDistance || owner->moveType->progressState == AMoveType::Failed) {
-		FinishCommand();
+	// This check is important to process failed orders properly
+	if (!owner->moveType->IsMovingTowards(cmdPos, SQUARE_SIZE, false))
+		SetGoal(cmdPos, owner->pos);
+
+	if (owner->moveType->progressState == AMoveType::Failed) {
+		StopMoveAndFinishCommand();
+		return;
 	}
-	return;
+
+	if (sqDist < cancelDistance && HasMoreMoveCommands())
+		FinishCommand();
 }
 
 void CMobileCAI::ExecuteLoadOnto(Command &c) {
 	CUnit* unit = unitHandler->GetUnit(c.params[0]);
 
 	if (unit == nullptr || !unit->unitDef->IsTransportUnit()) {
-		FinishCommand();
+		StopMoveAndFinishCommand();
 		return;
 	}
 
@@ -440,21 +445,19 @@ void CMobileCAI::ExecuteLoadOnto(Command &c) {
 	}
 	if (owner->GetTransporter() != NULL) {
 		if (!commandQue.empty())
-			FinishCommand();
+			StopMoveAndFinishCommand();
+
 		return;
 	}
 
 	if (unit == NULL)
 		return;
 
-	if ((unit->pos - goalPos).SqLength2D() > cancelDistance) {
+	if ((owner->pos - unit->pos).SqLength2D() < cancelDistance) {
+		StopMove();
+	} else {
 		SetGoal(unit->pos, owner->pos);
 	}
-	if ((owner->pos - goalPos).SqLength2D() < cancelDistance) {
-		StopMove();
-	}
-
-	return;
 }
 
 /**
@@ -526,18 +529,15 @@ void CMobileCAI::ExecuteFight(Command& c)
 		}
 	}
 
-	float3 pos = c.GetPos(0);
+	float3 cmdPos = c.GetPos(0);
 
 	if (!inCommand) {
 		inCommand = true;
-		commandPos2 = pos;
+		commandPos2 = cmdPos;
 		lastUserGoal = commandPos2;
 	}
 	if (c.params.size() >= 6) {
-		pos = ClosestPointOnLine(commandPos1, commandPos2, owner->pos);
-	}
-	if (pos != goalPos) {
-		SetGoal(pos, owner->pos);
+		cmdPos = ClosestPointOnLine(commandPos1, commandPos2, owner->pos);
 	}
 
 	if (owner->unitDef->canAttack && owner->fireState >= FIRESTATE_FIREATWILL && !owner->weapons.empty()) {
@@ -565,10 +565,7 @@ void CMobileCAI::ExecuteFight(Command& c)
 		}
 	}
 
-	if ((owner->pos - goalPos).SqLength2D() < (64 * 64)
-			|| (owner->moveType->progressState == AMoveType::Failed)){
-		FinishCommand();
-	}
+	ExecuteMove(c);
 }
 
 bool CMobileCAI::IsValidTarget(const CUnit* enemy) const {
@@ -609,9 +606,9 @@ void CMobileCAI::ExecuteGuard(Command &c)
 
 	const CUnit* guardee = unitHandler->GetUnit(c.params[0]);
 
-	if (guardee == NULL) { FinishCommand(); return; }
-	if (UpdateTargetLostTimer(guardee->id) == 0) { FinishCommand(); return; }
-	if (guardee->outOfMapTime > (GAME_SPEED * 5)) { FinishCommand(); return; }
+	if (guardee == NULL) { StopMoveAndFinishCommand(); return; }
+	if (UpdateTargetLostTimer(guardee->id) == 0) { StopMoveAndFinishCommand(); return; }
+	if (guardee->outOfMapTime > (GAME_SPEED * 5)) { StopMoveAndFinishCommand(); return; }
 
 	const bool pushAttackCommand =
 		owner->unitDef->canAttack &&
@@ -628,8 +625,8 @@ void CMobileCAI::ExecuteGuard(Command &c)
 		const float3 dif = (guardee->pos - owner->pos).SafeNormalize();
 		const float3 goal = guardee->pos - dif * (guardee->radius + owner->radius + 64.0f);
 		const bool resetGoal =
-			((goalPos - goal).SqLength2D() > 1600.0f) ||
-			(goalPos - owner->pos).SqLength2D() < Square(owner->moveType->GetMaxSpeed() * GAME_SPEED + 1 + SQUARE_SIZE * 2);
+			((owner->moveType->goalPos - goal).SqLength2D() > 1600.0f) ||
+			(owner->moveType->goalPos - owner->pos).SqLength2D() < Square(owner->moveType->GetMaxSpeed() * GAME_SPEED + 1 + SQUARE_SIZE * 2);
 
 		if (resetGoal) {
 			SetGoal(goal, owner->pos);
@@ -668,8 +665,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 		const float maxTargetDist = (owner->moveType->GetManeuverLeash() * owner->moveState + owner->maxRange);
 
 		if (owner->moveState < MOVESTATE_ROAM && curTargetDist > maxTargetDist) {
-			StopMove();
-			FinishCommand();
+			StopMoveAndFinishCommand();
 			return;
 		}
 	}
@@ -678,10 +674,10 @@ void CMobileCAI::ExecuteAttack(Command &c)
 			CUnit* targetUnit = unitHandler->GetUnit(c.params[0]);
 
 			// check if we have valid target parameter and that we aren't attacking ourselves
-			if (targetUnit == NULL) { StopMove(); FinishCommand(); return; }
-			if (targetUnit == owner) { StopMove(); FinishCommand(); return; }
+			if (targetUnit == NULL) { StopMoveAndFinishCommand(); return; }
+			if (targetUnit == owner) { StopMoveAndFinishCommand(); return; }
 			if (targetUnit->GetTransporter() != NULL && !modInfo.targetableTransportedUnits) {
-				StopMove(); FinishCommand(); return;
+				StopMoveAndFinishCommand(); return;
 			}
 
 			const float3 tgtErrPos = targetUnit->GetErrorPos(owner->allyteam, false);
@@ -713,8 +709,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 	// NOTE: unit should actually just continue to target area!
 	if (targetDied || (c.params.size() == 1 && UpdateTargetLostTimer(int(c.params[0])) == 0)) {
 		// cancel keeppointingto
-		StopMove();
-		FinishCommand();
+		StopMoveAndFinishCommand();
 		return;
 	}
 
@@ -729,7 +724,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 
 		const float3 errPos = orderTarget->GetErrorPos(owner->allyteam, false);
 
-		const float targetGoalDist = errPos.SqDistance2D(goalPos);
+		const float targetGoalDist = errPos.SqDistance2D(owner->moveType->goalPos);
 		const float targetPosDist = Square(10.0f + orderTarget->pos.distance2D(owner->pos) * 0.2f);
 		const float minPointingDist = std::min(1.0f * owner->losRadius, owner->maxRange * 0.9f);
 
@@ -739,8 +734,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 
 		if (!owner->weapons.empty()) {
 			if (!(c.options & ALT_KEY) && SkipParalyzeTarget(orderTarget)) {
-				StopMove();
-				FinishCommand();
+				StopMoveAndFinishCommand();
 				return;
 			}
 		}
@@ -789,8 +783,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 		// if we're on hold pos in a temporary order, then none of the close-in
 		// code below should run, and the attack command is cancelled.
 		else if (tempOrder && owner->moveState == MOVESTATE_HOLDPOS) {
-			StopMove();
-			FinishCommand();
+			StopMoveAndFinishCommand();
 			return;
 		}
 
@@ -888,7 +881,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 				owner->moveType->KeepPointingTo(trg.groundPos, owner->maxRange * 0.9f, true);
 			}
 
-			if (attackVec.SqLength2D() < Square(goalRadius)) {
+			if (attackVec.SqLength2D() < Square(owner->maxRange * 0.9f)) {
 				owner->AttackGround(trg.groundPos, trg.isUserTarget, false);
 				StopMoveAndKeepPointing(attackPos, owner->maxRange * 0.9f, true);
 			}
@@ -924,21 +917,21 @@ int CMobileCAI::GetDefaultCmd(const CUnit* pointed, const CFeature* feature)
 void CMobileCAI::SetGoal(const float3& pos, const float3& /*curPos*/, float goalRadius)
 {
 	// already have equal move order?
-	if (owner->moveType->progressState == AMoveType::Active && goalPos == pos && this->goalRadius == goalRadius)
+	if (owner->moveType->IsMovingTowards(pos, goalRadius, true))
 		return;
 
 	// give new move order
-	owner->moveType->StartMoving(goalPos = pos, this->goalRadius = goalRadius);
+	owner->moveType->StartMoving(pos, goalRadius);
 }
 
 void CMobileCAI::SetGoal(const float3& pos, const float3& /*curPos*/, float goalRadius, float speed)
 {
 	// already have equal move order?
-	if (owner->moveType->progressState == AMoveType::Active && goalPos == pos && this->goalRadius == goalRadius)
+	if (owner->moveType->IsMovingTowards(pos, goalRadius, true))
 		return;
 
 	// give new move order
-	owner->moveType->StartMoving(goalPos = pos, this->goalRadius = goalRadius, speed);
+	owner->moveType->StartMoving(pos, goalRadius, speed);
 }
 
 bool CMobileCAI::SetFrontMoveCommandPos(const float3& pos)
@@ -955,8 +948,12 @@ bool CMobileCAI::SetFrontMoveCommandPos(const float3& pos)
 void CMobileCAI::StopMove()
 {
 	owner->moveType->StopMoving();
-	goalPos = owner->pos;
-	goalRadius = 0.f;
+}
+
+void CMobileCAI::StopMoveAndFinishCommand()
+{
+	StopMove();
+	FinishCommand();
 }
 
 void CMobileCAI::StopMoveAndKeepPointing(const float3& p, const float r, bool b)
@@ -1214,14 +1211,14 @@ void CMobileCAI::ExecuteLoadUnits(Command& c)
 		CUnit* unit = unitHandler->GetUnit(c.params[0]);
 
 		if (unit == NULL) {
-			FinishCommand();
+			StopMoveAndFinishCommand();
 			return;
 		}
 
 		if (c.options & INTERNAL_ORDER) {
 			if (unit->commandAI->commandQue.empty()) {
 				if (!LoadStillValid(unit)) {
-					FinishCommand();
+					StopMoveAndFinishCommand();
 					return;
 				}
 			} else {
@@ -1230,11 +1227,11 @@ void CMobileCAI::ExecuteLoadUnits(Command& c)
 				if ((currentUnitCommand.GetID() == CMD_LOAD_ONTO) && (currentUnitCommand.params.size() == 1) && (int(currentUnitCommand.params[0]) == owner->id)) {
 					if ((unit->moveType->progressState == AMoveType::Failed) && (owner->moveType->progressState == AMoveType::Failed)) {
 						unit->commandAI->FinishCommand();
-						FinishCommand();
+						StopMoveAndFinishCommand();
 						return;
 					}
 				} else if (!LoadStillValid(unit)) {
-					FinishCommand();
+					StopMoveAndFinishCommand();
 					return;
 				}
 			}
@@ -1242,11 +1239,11 @@ void CMobileCAI::ExecuteLoadUnits(Command& c)
 
 		if (inCommand) {
 			if (!owner->script->IsBusy()) {
-				FinishCommand();
+				StopMoveAndFinishCommand();
 			}
 			return;
 		}
-		if (unit != NULL && owner->CanTransport(unit) && UpdateTargetLostTimer(int(c.params[0]))) {
+		if (owner->CanTransport(unit) && UpdateTargetLostTimer(int(c.params[0]))) {
 			SetTransportee(unit);
 
 			const float sqDist = unit->pos.SqDistance2D(owner->pos);
@@ -1255,7 +1252,7 @@ void CMobileCAI::ExecuteLoadUnits(Command& c)
 			CHoverAirMoveType* am = dynamic_cast<CHoverAirMoveType*>(owner->moveType);
 
 			// subtract 1 square to account for PFS/GMT inaccuracy
-			const bool outOfRange = (goalPos.SqDistance2D(unit->pos) > Square(owner->unitDef->loadingRadius - SQUARE_SIZE));
+			const bool outOfRange = (owner->moveType->goalPos.SqDistance2D(unit->pos) > Square(owner->unitDef->loadingRadius - SQUARE_SIZE));
 			const bool moveCloser = (!inLoadingRadius && (!owner->IsMoving() || (am != NULL && am->aircraftState != AAirMoveType::AIRCRAFT_FLYING)));
 
 			if (outOfRange || moveCloser) {
@@ -1293,7 +1290,7 @@ void CMobileCAI::ExecuteLoadUnits(Command& c)
 						SetTransportee(NULL);
 						owner->AttachUnit(unit, owner->script->QueryTransport(unit));
 
-						FinishCommand();
+						StopMoveAndFinishCommand();
 						return;
 					}
 				} else {
@@ -1309,7 +1306,7 @@ void CMobileCAI::ExecuteLoadUnits(Command& c)
 				SetGoal((unit->pos + owner->pos) * 0.5f, owner->pos);
 			}
 		} else {
-			FinishCommand();
+			StopMoveAndFinishCommand();
 		}
 	} else if (c.params.size() == 4) { // area-load
 		if (lastPC == gs->frameNum) { // avoid infinite loops
@@ -1331,7 +1328,7 @@ void CMobileCAI::ExecuteLoadUnits(Command& c)
 			SlowUpdate();
 			return;
 		} else {
-			FinishCommand();
+			StopMoveAndFinishCommand();
 			return;
 		}
 	}
@@ -1348,7 +1345,7 @@ void CMobileCAI::ExecuteUnloadUnits(Command& c)
 	lastPC = gs->frameNum;
 
 	if (owner->transportedUnits.empty()) {
-		FinishCommand();
+		StopMoveAndFinishCommand();
 		return;
 	}
 
@@ -1377,12 +1374,12 @@ void CMobileCAI::ExecuteUnloadUnit(Command& c)
 {
 	if (inCommand) {
 		if (!owner->script->IsBusy()) {
-			FinishCommand();
+			StopMoveAndFinishCommand();
 		}
 		return;
 	}
 	if (owner->transportedUnits.empty()) {
-		FinishCommand();
+		StopMoveAndFinishCommand();
 		return;
 	}
 	// new methods
@@ -1588,9 +1585,8 @@ bool CMobileCAI::SpotIsClear(float3 pos, CUnit* unitToUnload)
 
 	const float radius = std::max(1.0f, math::ceil(unitToUnload->radius / SQUARE_SIZE)) * SQUARE_SIZE;
 
-	if (!quadField->GetSolidsExact(pos, radius, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS).empty()) {
+	if (!quadField->NoSolidsExact(pos, radius, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS))
 		return false;
-	}
 
 	return true;
 }
@@ -1684,7 +1680,7 @@ void CMobileCAI::UnloadUnits_Land(Command& c)
 		SlowUpdate();
 		return;
 	}
-	FinishCommand();
+	StopMoveAndFinishCommand();
 }
 
 
@@ -1699,7 +1695,7 @@ void CMobileCAI::UnloadUnits_Drop(Command& c)
 
 	const bool canUnload = FindEmptyDropSpots(startingDropPos, startingDropPos + approachVector * std::max(16.0f, c.params[3]), dropSpots);
 
-	FinishCommand();
+	StopMoveAndFinishCommand();
 
 	if (canUnload) {
 		auto ti = transportees.begin();
@@ -1712,7 +1708,7 @@ void CMobileCAI::UnloadUnits_Drop(Command& c)
 		return;
 	}
 
-	FinishCommand();
+	StopMoveAndFinishCommand();
 }
 
 
@@ -1723,10 +1719,11 @@ void CMobileCAI::UnloadUnits_LandFlood(Command& c)
 	const float radius = c.params[3];
 	const float dist = std::max(64.0f, owner->unitDef->loadingRadius - radius);
 
-	SetGoal(pos, owner->pos, dist);
 
-	if (pos.SqDistance2D(owner->pos) > dist)
+	if (pos.SqDistance2D(owner->pos) > dist) {
+		SetGoal(pos, owner->pos, dist);
 		return;
+	}
 
 	const auto& transportees = owner->transportedUnits;
 	const CUnit* transportee = transportees[0].unit;
@@ -1741,7 +1738,7 @@ void CMobileCAI::UnloadUnits_LandFlood(Command& c)
 		return;
 	}
 
-	FinishCommand();
+	StopMoveAndFinishCommand();
 }
 
 
@@ -1772,7 +1769,7 @@ void CMobileCAI::UnloadLand(Command& c)
 			}
 		}
 		if (transportee == NULL) {
-			FinishCommand();
+			StopMoveAndFinishCommand();
 			return;
 		}
 	}
@@ -1838,7 +1835,7 @@ void CMobileCAI::UnloadDrop(Command& c)
 	// head towards goal
 	// note that HoverAirMoveType must be modified to allow
 	// non-stop movement through goals for this to work well
-	if (goalPos.SqDistance2D(pos) > Square(20.0f)) {
+	if (owner->moveType->goalPos.SqDistance2D(pos) > Square(20.0f)) {
 		SetGoal(pos, owner->pos);
 	}
 

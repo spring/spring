@@ -12,6 +12,7 @@
 #include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/MoveTypes/MoveMath/MoveMath.h"
 #include "Sim/Units/BuildInfo.h"
+#include "Sim/Units/CommandAI/CommandDescription.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitDefHandler.h"
 
@@ -266,9 +267,9 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 						lowResStates.gCost[(hy / lowResBlockSize) * lowResBlocksX + (hx / lowResBlockSize)],
 					};
 
-					if (math::isinf(gCost[0])) { gCost[0] = gCostMax[0]; }
-					if (math::isinf(gCost[1])) { gCost[1] = gCostMax[1]; }
-					if (math::isinf(gCost[2])) { gCost[2] = gCostMax[2]; }
+					if (std::isinf(gCost[0])) { gCost[0] = gCostMax[0]; }
+					if (std::isinf(gCost[1])) { gCost[1] = gCostMax[1]; }
+					if (std::isinf(gCost[2])) { gCost[2] = gCostMax[2]; }
 
 					// NOTE:
 					//     the normalisation means each extraTextureUpdate block
@@ -340,7 +341,7 @@ void DefaultPathDrawer::Draw(const CPathFinderDef* pfd) const {
 	} else {
 		glColor4f(0.0f, 1.0f, 1.0f, 1.0f);
 	}
-	glSurfaceCircle(pfd->goal, math::sqrt(pfd->sqGoalRadius), 20);
+	glSurfaceCircle(pfd->goal, std::sqrt(pfd->sqGoalRadius), 20);
 }
 
 void DefaultPathDrawer::Draw(const CPathFinder* pf) const {
@@ -437,7 +438,7 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 						p2.z = (blockStates.peNodeOffsets[md->pathType][obBlockNr].y) * SQUARE_SIZE;
 						p2.y = CGround::GetHeightAboveWater(p2.x, p2.z, false) + 10.0f;
 
-					glColor3f(1.0f / math::sqrt(cost), 1.0f / cost, 0.75f * drawLowResPE);
+					glColor3f(1.0f / std::sqrt(cost), 1.0f / cost, 0.75f * drawLowResPE);
 					glVertexf3(p1);
 					glVertexf3(p2);
 				}

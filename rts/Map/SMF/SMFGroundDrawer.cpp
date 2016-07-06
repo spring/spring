@@ -53,10 +53,6 @@ CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
 	smfRenderStates[RENDER_STATE_FFP] = ISMFRenderState::GetInstance(                   false,                     false, false);
 	smfRenderStates[RENDER_STATE_LUA] = ISMFRenderState::GetInstance(                   false,                      true,  true);
 
-	// also set in ::Draw, but UpdateSunDir can be called
-	// first if DynamicSun is enabled --> must be non-NULL
-	smfRenderStates[RENDER_STATE_SEL] = smfRenderStates[RENDER_STATE_FFP];
-
 	// LH must be initialized before render-state is initialized
 	lightHandler.Init(2U, configHandler->GetInt("MaxDynamicMapLights"));
 	geomBuffer.SetName("GROUNDDRAWER-GBUFFER");
@@ -73,12 +69,16 @@ CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
 	//   (see AdvMapShadingActionExecutor), so we will always use
 	//   states[FFP] (in ::Draw) in that special case and it does
 	//   not matter whether states[SSP] is initialized
-	if ((advShading = smfRenderStates[RENDER_STATE_SSP]->Init(this))) {
+	if ((advShading = smfRenderStates[RENDER_STATE_SSP]->Init(this)))
 		smfRenderStates[RENDER_STATE_SSP]->Update(this, nullptr);
-	}
 
 	// always initialize this state; defer Update (allows re-use)
 	smfRenderStates[RENDER_STATE_LUA]->Init(this);
+
+	// note: state must be pre-selected before the first drawn frame
+	// Sun*Changed can be called first, e.g. if DynamicSun is enabled
+	smfRenderStates[RENDER_STATE_SEL] = SelectRenderState(DrawPass::Normal);
+
 
 
 	waterPlaneDispLists[0] = 0;
@@ -104,7 +104,6 @@ CSMFGroundDrawer::~CSMFGroundDrawer()
 	// if ROAM _was_ enabled, the configvar is written in CRoamMeshDrawer's dtor
 	if (dynamic_cast<CRoamMeshDrawer*>(meshDrawer) == nullptr)
 		configHandler->Set("ROAM", 0);
-	configHandler->Set("GroundDetail", groundDetail);
 
 	smfRenderStates[RENDER_STATE_FFP]->Kill(); ISMFRenderState::FreeInstance(smfRenderStates[RENDER_STATE_FFP]);
 	smfRenderStates[RENDER_STATE_SSP]->Kill(); ISMFRenderState::FreeInstance(smfRenderStates[RENDER_STATE_SSP]);
@@ -386,6 +385,8 @@ void CSMFGroundDrawer::DrawBorder(const DrawPass::e drawPass)
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 
+	ISMFRenderState* prvState = smfRenderStates[RENDER_STATE_SEL];
+
 	smfRenderStates[RENDER_STATE_SEL] = smfRenderStates[RENDER_STATE_FFP];
 	// smfRenderStates[RENDER_STATE_SEL]->Enable(this, drawPass);
 
@@ -449,6 +450,8 @@ void CSMFGroundDrawer::DrawBorder(const DrawPass::e drawPass)
 	glDisable(GL_TEXTURE_2D);
 
 	smfRenderStates[RENDER_STATE_SEL]->Disable(this, drawPass);
+	smfRenderStates[RENDER_STATE_SEL] = prvState;
+
 	glDisable(GL_CULL_FACE);
 }
 
@@ -506,19 +509,15 @@ void CSMFGroundDrawer::UpdateRenderState()
 	smfRenderStates[RENDER_STATE_SSP]->Update(this, nullptr);
 }
 
-void CSMFGroundDrawer::SunChanged(const float3& sunDir) {
+void CSMFGroundDrawer::SunChanged() {
 	// Lua has gl.GetSun
 	if (HaveLuaRenderState())
 		return;
 
 	// always update, SSMF shader needs current sundir even when shadows are disabled
+	// note: only the active state is notified of a given change
 	smfRenderStates[RENDER_STATE_SEL]->UpdateCurrentShaderSky(sky->GetLight());
 }
-
-void CSMFGroundDrawer::SunLightingChanged() {
-	smfRenderStates[RENDER_STATE_SSP]->UpdateCurrentShaderSunLighting();
-}
-
 
 
 bool CSMFGroundDrawer::UpdateGeometryBuffer(bool init)
@@ -535,16 +534,26 @@ bool CSMFGroundDrawer::UpdateGeometryBuffer(bool init)
 
 void CSMFGroundDrawer::IncreaseDetail()
 {
-	groundDetail += 2;
+	configHandler->Set("GroundDetail", groundDetail += 2);
 	LOG("GroundDetail is now %i", groundDetail);
 }
 
 void CSMFGroundDrawer::DecreaseDetail()
 {
 	if (groundDetail > 4) {
-		groundDetail -= 2;
+		configHandler->Set("GroundDetail", groundDetail -= 2);
 		LOG("GroundDetail is now %i", groundDetail);
 	}
+}
+
+void CSMFGroundDrawer::SetDetail(int newGroundDetail)
+{
+	if (newGroundDetail < 4)
+		newGroundDetail = 4;
+
+	groundDetail = newGroundDetail;
+	configHandler->Set("GroundDetail", groundDetail);
+	LOG("GroundDetail is now %i", groundDetail);
 }
 
 

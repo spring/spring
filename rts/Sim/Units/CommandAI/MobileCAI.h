@@ -27,6 +27,7 @@ public:
 	virtual void BuggerOff(const float3& pos, float radius);
 	bool SetFrontMoveCommandPos(const float3& pos);
 	void StopMove();
+	void StopMoveAndFinishCommand();
 	void StopMoveAndKeepPointing(const float3& p, const float r, bool b);
 
 	bool AllowedCommand(const Command& c, bool fromSynced);
@@ -73,8 +74,6 @@ public:
 	void UnloadDrop(Command& c);
 	void UnloadLandFlood(Command& c);
 
-	float3 goalPos;
-	float  goalRadius;
 	float3 lastBuggerGoalPos;
 	float3 lastUserGoal;
 

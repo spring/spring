@@ -35,6 +35,8 @@
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/Env/IWater.h"
+#include "Rendering/Env/IGroundDecalDrawer.h"
+#include "Rendering/Env/Decals/DecalsDrawerGL4.h"
 #include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureDef.h"
@@ -45,6 +47,7 @@
 #include "Sim/Projectiles/Projectile.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
+#include "Sim/Units/CommandAI/CommandDescription.h"
 #include "Game/UI/Groups/Group.h"
 #include "Game/UI/Groups/GroupHandler.h"
 #include "Net/Protocol/NetProtocol.h"
@@ -165,6 +168,7 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetPixelDir);
 
 	REGISTER_LUA_CFUNC(GetTimer);
+	REGISTER_LUA_CFUNC(GetFrameTimer);
 	REGISTER_LUA_CFUNC(DiffTimers);
 
 	REGISTER_LUA_CFUNC(GetSoundStreamTime);
@@ -219,6 +223,15 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(GetConfigParams);
 	REGISTER_LUA_CFUNC(GetLogSections);
+
+	REGISTER_LUA_CFUNC(GetAllDecals);
+	REGISTER_LUA_CFUNC(GetDecalPos);
+	REGISTER_LUA_CFUNC(GetDecalSize);
+	REGISTER_LUA_CFUNC(GetDecalRotation);
+	REGISTER_LUA_CFUNC(GetDecalTexture);
+	REGISTER_LUA_CFUNC(GetDecalAlpha);
+	REGISTER_LUA_CFUNC(GetDecalOwner);
+	REGISTER_LUA_CFUNC(GetDecalType);
 
 	return true;
 }
@@ -488,14 +501,17 @@ int LuaUnsyncedRead::IsSphereInView(lua_State* L)
 int LuaUnsyncedRead::IsUnitAllied(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+
+	if (unit == nullptr)
 		return 0;
-	}
+
 	if (CLuaHandle::GetHandleReadAllyTeam(L) < 0) {
-		lua_pushboolean(L, CLuaHandle::GetHandleFullRead(L));
+		// in this case handle has full-read access since unit != nullptr
+		lua_pushboolean(L, unit->allyteam == gu->myAllyTeam);
 	} else {
-		lua_pushboolean(L, (unit->allyteam == CLuaHandle::GetHandleReadAllyTeam(L)));
+		lua_pushboolean(L, unit->allyteam == CLuaHandle::GetHandleReadAllyTeam(L));
 	}
+
 	return 1;
 }
 
@@ -762,7 +778,7 @@ int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
 	// arg 3 - noIcons
 	const bool noIcons = !luaL_optboolean(L, 3, true);
 
-	float radiusMult = 0.0f; // 0 or 1
+	float radiusMult = 1.0f;
 	float testRadius = 0.0f;
 
 	// arg 2 - use fixed test-value or add unit radii to it
@@ -872,7 +888,7 @@ int LuaUnsyncedRead::GetVisibleFeatures(lua_State* L)
 			if (f->noDraw)
 				continue;
 
-			if (noIcons && f->drawAlpha < 0.01f)
+			if (noIcons && f->drawFlag == CFeature::FD_FARTEX_FLAG)
 				continue;
 
 			if (noGeos && f->def->geoThermal)
@@ -1220,8 +1236,10 @@ int LuaUnsyncedRead::GetLosViewColors(lua_State* L)
 
 int LuaUnsyncedRead::GetCameraNames(lua_State* L)
 {
-	lua_newtable(L);
-	const std::vector<CCameraController*>& cc = camHandler->GetAvailableControllers();
+	const std::vector<CCameraController*>& cc = camHandler->GetControllers();
+
+	lua_createtable(L, cc.size(), 0);
+
 	for (size_t i = 0; i < cc.size(); ++i) {
 		lua_pushsstring(L, cc[i]->GetName());
 		lua_pushnumber(L, i);
@@ -1231,19 +1249,18 @@ int LuaUnsyncedRead::GetCameraNames(lua_State* L)
 	return 1;
 }
 
-
 int LuaUnsyncedRead::GetCameraState(lua_State* L)
 {
 	lua_newtable(L);
 
 	lua_pushliteral(L, "name");
-	lua_pushsstring(L, camHandler->GetCurrentControllerName());
+	lua_pushsstring(L, (camHandler->GetCurrentController()).GetName());
 	lua_rawset(L, -3);
 
 	CCameraController::StateMap camState;
-	CCameraController::StateMap::const_iterator it;
 	camHandler->GetState(camState);
-	for (it = camState.begin(); it != camState.end(); ++it) {
+
+	for (auto it = camState.cbegin(); it != camState.cend(); ++it) {
 		lua_pushsstring(L, it->first);
 		lua_pushnumber(L, it->second);
 		lua_rawset(L, -3);
@@ -1261,7 +1278,6 @@ int LuaUnsyncedRead::GetCameraPosition(lua_State* L)
 	return 3;
 }
 
-
 int LuaUnsyncedRead::GetCameraDirection(lua_State* L)
 {
 	lua_pushnumber(L, camera->GetDir().x);
@@ -1270,14 +1286,12 @@ int LuaUnsyncedRead::GetCameraDirection(lua_State* L)
 	return 3;
 }
 
-
 int LuaUnsyncedRead::GetCameraFOV(lua_State* L)
 {
 	lua_pushnumber(L, camera->GetVFOV());
 	lua_pushnumber(L, camera->GetHFOV());
 	return 2;
 }
-
 
 int LuaUnsyncedRead::GetCameraVectors(lua_State* L)
 {
@@ -1500,7 +1514,7 @@ int LuaUnsyncedRead::GetTeamOrigColor(lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 
-int LuaUnsyncedRead::GetTimer(lua_State* L)
+static void PushTimer(lua_State* L, const spring_time& time)
 {
 	// use time since Spring's epoch in MILLIseconds because that
 	// is more likely to fit in a 32-bit pointer (on any platforms
@@ -1509,7 +1523,6 @@ int LuaUnsyncedRead::GetTimer(lua_State* L)
 	// single-precision floats better
 	//
 	// 4e9millis == 4e6s == 46.3 days until overflow
-	const spring_time time = spring_now();
 	const boost::uint64_t millis = time.toMilliSecs<boost::uint64_t>();
 
 	ptrdiff_t p = 0;
@@ -1521,6 +1534,21 @@ int LuaUnsyncedRead::GetTimer(lua_State* L)
 	}
 
 	lua_pushlightuserdata(L, reinterpret_cast<void*>(p));
+}
+
+int LuaUnsyncedRead::GetTimer(lua_State* L)
+{
+	PushTimer(L, spring_now());
+	return 1;
+}
+
+int LuaUnsyncedRead::GetFrameTimer(lua_State* L)
+{
+	if (luaL_optboolean(L, 1, false)) {
+		PushTimer(L, game->lastFrameTime);
+	} else {
+		PushTimer(L, globalRendering->lastFrameStart);
+	}
 	return 1;
 }
 
@@ -1682,7 +1710,7 @@ int LuaUnsyncedRead::GetActiveCommand(lua_State* L)
 		return 0;
 	}
 
-	const vector<CommandDescription>& cmdDescs = guihandler->commands;
+	const vector<SCommandDescription>& cmdDescs = guihandler->commands;
 	const int cmdDescCount = (int)cmdDescs.size();
 
 	const int inCommand = guihandler->inCommand;
@@ -1705,7 +1733,7 @@ int LuaUnsyncedRead::GetDefaultCommand(lua_State* L)
 
 	const int defCmd = guihandler->GetDefaultCommand(mouse->lastx, mouse->lasty);
 
-	const vector<CommandDescription>& cmdDescs = guihandler->commands;
+	const vector<SCommandDescription>& cmdDescs = guihandler->commands;
 	const int cmdDescCount = (int)cmdDescs.size();
 
 	lua_pushnumber(L, defCmd + CMD_INDEX_OFFSET);
@@ -1725,7 +1753,7 @@ int LuaUnsyncedRead::GetActiveCmdDescs(lua_State* L)
 		return 0;
 	}
 
-	const vector<CommandDescription>& cmdDescs = guihandler->commands;
+	const vector<SCommandDescription>& cmdDescs = guihandler->commands;
 	const int cmdDescCount = (int)cmdDescs.size();
 
 	lua_checkstack(L, 1 + 2);
@@ -1746,7 +1774,7 @@ int LuaUnsyncedRead::GetActiveCmdDesc(lua_State* L)
 	}
 	const int cmdIndex = luaL_checkint(L, 1) - CMD_INDEX_OFFSET;
 
-	const vector<CommandDescription>& cmdDescs = guihandler->commands;
+	const vector<SCommandDescription>& cmdDescs = guihandler->commands;
 	const int cmdDescCount = (int)cmdDescs.size();
 	if ((cmdIndex < 0) || (cmdIndex >= cmdDescCount)) {
 		return 0;
@@ -1763,7 +1791,7 @@ int LuaUnsyncedRead::GetCmdDescIndex(lua_State* L)
 	}
 	const int cmdId = luaL_checkint(L, 1);
 
-	const vector<CommandDescription>& cmdDescs = guihandler->commands;
+	const vector<SCommandDescription>& cmdDescs = guihandler->commands;
 	const int cmdDescCount = (int)cmdDescs.size();
 	for (int i = 0; i < cmdDescCount; i++) {
 		if (cmdId == cmdDescs[i].id) {
@@ -2415,3 +2443,136 @@ int LuaUnsyncedRead::GetLogSections(lua_State* L) {
 
 /******************************************************************************/
 /******************************************************************************/
+
+int LuaUnsyncedRead::GetAllDecals(lua_State* L)
+{
+	auto decalsGl4 = dynamic_cast<CDecalsDrawerGL4*>(groundDecals);
+	if (decalsGl4 == nullptr)
+		return 0;
+
+	const auto decals = decalsGl4->GetAllDecals();
+
+	int i = 1;
+	lua_createtable(L, decals.size(), 0);
+	for (auto& d: decals) {
+		if (!d.IsValid())
+			continue;
+
+		lua_pushnumber(L, d.GetIdx());
+		lua_rawseti(L, -2, i++);
+	}
+
+	return 1;
+}
+
+
+int LuaUnsyncedRead::GetDecalPos(lua_State* L)
+{
+	auto decalsGl4 = dynamic_cast<CDecalsDrawerGL4*>(groundDecals);
+	if (decalsGl4 == nullptr)
+		return 0;
+
+	auto decal = decalsGl4->GetDecalByIdx(luaL_checkint(L, 1));
+	lua_pushnumber(L, decal.pos.x);
+	lua_pushnumber(L, decal.pos.y);
+	lua_pushnumber(L, decal.pos.z);
+	return 3;
+}
+
+
+int LuaUnsyncedRead::GetDecalSize(lua_State* L)
+{
+	auto decalsGl4 = dynamic_cast<CDecalsDrawerGL4*>(groundDecals);
+	if (decalsGl4 == nullptr)
+		return 0;
+
+	auto decal = decalsGl4->GetDecalByIdx(luaL_checkint(L, 1));
+	lua_pushnumber(L, decal.size.x);
+	lua_pushnumber(L, decal.size.y);
+	return 2;
+}
+
+
+int LuaUnsyncedRead::GetDecalRotation(lua_State* L)
+{
+	auto decalsGl4 = dynamic_cast<CDecalsDrawerGL4*>(groundDecals);
+	if (decalsGl4 == nullptr)
+		return 0;
+
+	auto decal = decalsGl4->GetDecalByIdx(luaL_checkint(L, 1));
+	lua_pushnumber(L, decal.rot);
+	return 1;
+}
+
+
+int LuaUnsyncedRead::GetDecalTexture(lua_State* L)
+{
+	auto decalsGl4 = dynamic_cast<CDecalsDrawerGL4*>(groundDecals);
+	if (decalsGl4 == nullptr)
+		return 0;
+
+	auto decal = decalsGl4->GetDecalByIdx(luaL_checkint(L, 1));
+	lua_pushsstring(L, decal.GetTexture());
+	return 1;
+}
+
+
+int LuaUnsyncedRead::GetDecalAlpha(lua_State* L)
+{
+	auto decalsGl4 = dynamic_cast<CDecalsDrawerGL4*>(groundDecals);
+	if (decalsGl4 == nullptr)
+		return 0;
+
+	auto decal = decalsGl4->GetDecalByIdx(luaL_checkint(L, 1));
+	lua_pushnumber(L, decal.alpha);
+	return 1;
+}
+
+
+int LuaUnsyncedRead::GetDecalOwner(lua_State* L)
+{
+	auto decalsGl4 = dynamic_cast<CDecalsDrawerGL4*>(groundDecals);
+	if (decalsGl4 == nullptr)
+		return 0;
+
+	auto decal = decalsGl4->GetDecalByIdx(luaL_checkint(L, 1));
+	if (decal.owner == nullptr) return 0;
+
+	//XXX: I know, not very fast, but you cannot dynamic_cast a void* back to a CUnit*
+	//     also it's not called very often and so doesn't matter
+	for (auto u: unitHandler->activeUnits) {
+		if (u != decal.owner)
+			continue;
+
+		lua_pushnumber(L, u->id);
+		return 1;
+	}
+
+	return 0;
+}
+
+
+int LuaUnsyncedRead::GetDecalType(lua_State* L)
+{
+	auto decalsGl4 = dynamic_cast<CDecalsDrawerGL4*>(groundDecals);
+	if (decalsGl4 == nullptr)
+		return 0;
+
+	auto decal = decalsGl4->GetDecalByIdx(luaL_checkint(L, 1));
+	switch (decal.type) {
+		case CDecalsDrawerGL4::Decal::EXPLOSION: {
+			lua_pushliteral(L, "explosion");
+		} break;
+		case CDecalsDrawerGL4::Decal::BUILDING: {
+			lua_pushliteral(L, "building");
+		} break;
+		case CDecalsDrawerGL4::Decal::LUA: {
+			lua_pushliteral(L, "lua");
+		} break;
+		default: {
+			lua_pushliteral(L, "unknown");
+		}
+	}
+	return 1;
+}
+

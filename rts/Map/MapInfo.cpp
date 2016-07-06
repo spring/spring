@@ -12,6 +12,7 @@
 #include "System/Exceptions.h"
 #include "System/myMath.h"
 #include "System/Util.h"
+#include "System/FileSystem/FileHandler.h"
 
 #if !defined(HEADLESS) && !defined(NO_SOUND)
 #include "System/Sound/OpenAL/EFX.h"
@@ -20,10 +21,6 @@
 
 #include <cassert>
 #include <cfloat>
-#include <sstream>
-
-using std::max;
-using std::min;
 
 
 // Before delete, the const is const_cast'ed away. There are
@@ -31,6 +28,18 @@ using std::min;
 //   LuaUnsyncedCtrl may change water
 //   LuaSyncedCtrl may change terrainTypes
 const CMapInfo* mapInfo = NULL;
+
+
+static void FIND_MAP_TEXTURE(std::string* filePath, const std::string& defaultDir = "maps/")
+{
+	if (filePath->empty())
+		return;
+	if (CFileHandler::FileExists(*filePath, SPRING_VFS_ZIP)) // no RawFS, cause it's also used for synced textures (typemap, metalmap, ...)
+		return;
+
+	*filePath = defaultDir + *filePath;
+}
+
 
 
 CMapInfo::CMapInfo(const std::string& mapInfoFile, const string& mapName)
@@ -96,7 +105,7 @@ void CMapInfo::ReadGlobal()
 	map.notDeformable = topTable.GetBool("notDeformable", false);
 
 	map.gravity = topTable.GetFloat("gravity", 130.0f);
-	map.gravity = max(0.001f, map.gravity);
+	map.gravity = std::max(0.001f, map.gravity);
 	map.gravity = -map.gravity / (GAME_SPEED * GAME_SPEED);
 
 	map.tidalStrength   = topTable.GetFloat("tidalStrength", 0.0f);
@@ -107,13 +116,11 @@ void CMapInfo::ReadGlobal()
 	map.voidGround      = topTable.GetBool("voidGround", false);
 
 	// clamps
-	if (-0.001f < map.hardness && map.hardness <= 0.0f)
-		map.hardness = -0.001f;
-	else if (0.0f <= map.hardness && map.hardness < 0.001f)
-		map.hardness = 0.001f;
-	map.tidalStrength   = max(0.000f, map.tidalStrength);
-	map.maxMetal        = max(0.000f, map.maxMetal);
-	map.extractorRadius = max(0.000f, map.extractorRadius);
+	if (std::abs(map.hardness) < 0.001f)
+		map.hardness = std::copysignf(0.001f, map.hardness);
+	map.tidalStrength   = std::max(0.000f, map.tidalStrength);
+	map.maxMetal        = std::max(0.000f, map.maxMetal);
+	map.extractorRadius = std::max(0.000f, map.extractorRadius);
 }
 
 
@@ -147,10 +154,10 @@ void CMapInfo::ReadAtmosphere()
 	atmo.cloudDensity = atmoTable.GetFloat("cloudDensity", 0.5f);
 
 	// clamps
-	atmo.cloudDensity = max(0.0f, atmo.cloudDensity);
-	atmo.maxWind      = max(0.0f, atmo.maxWind);
-	atmo.minWind      = max(0.0f, atmo.minWind);
-	atmo.minWind      = min(atmo.maxWind, atmo.minWind);
+	atmo.cloudDensity = std::max(0.0f, atmo.cloudDensity);
+	atmo.maxWind      = std::max(0.0f, atmo.maxWind);
+	atmo.minWind      = std::max(0.0f, atmo.minWind);
+	atmo.minWind      = std::min(atmo.maxWind, atmo.minWind);
 }
 
 
@@ -159,7 +166,7 @@ void CMapInfo::ReadSplats()
 	const LuaTable& splatsTable = parser->GetRoot().SubTable("splats");
 
 	splats.texScales = splatsTable.GetFloat4("texScales", float4(0.02f, 0.02f, 0.02f, 0.02f));
-	splats.texMults = splatsTable.GetFloat4("texMults", float4(1.0f, 1.0f, 1.0f, 1.0f));
+	splats.texMults  = splatsTable.GetFloat4("texMults",  float4(1.0f, 1.0f, 1.0f, 1.0f));
 }
 
 void CMapInfo::ReadGrass()
@@ -175,9 +182,7 @@ void CMapInfo::ReadGrass()
 	grass.color            = grassTable.GetFloat3("bladeColor", float3(0.10f, 0.40f, 0.10f));
 
 	grass.bladeTexName     = mapResTable.GetString("grassBladeTex", "");
-	if (!grass.bladeTexName.empty()) { //FIXME only do when file doesn't exists under that path
-		grass.bladeTexName = "maps/" + grass.bladeTexName;
-	}
+	FIND_MAP_TEXTURE(&grass.bladeTexName);
 }
 
 void CMapInfo::ReadLight()
@@ -185,7 +190,7 @@ void CMapInfo::ReadLight()
 	const LuaTable& lightTable = parser->GetRoot().SubTable("lighting");
 
 	light.sunStartAngle = lightTable.GetFloat("sunStartAngle", 0.0f);
-	light.sunOrbitTime = lightTable.GetFloat("sunOrbitTime", 1440.0f);
+	light.sunOrbitTime = lightTable.GetFloat("sunOrbitTime", 10 * GAME_SPEED);
 	light.sunDir = lightTable.GetFloat4("sunDir", float4(0.0f, 1.0f, 2.0f, FLT_MAX));
 
 	if (light.sunDir.w == FLT_MAX) {
@@ -209,7 +214,7 @@ void CMapInfo::ReadLight()
 	light.specularExponent = lightTable.GetFloat("specularExponent", 100.0f);
 
 	light.groundShadowDensity = Clamp(light.groundShadowDensity, 0.0f, 1.0f);
-	light.unitShadowDensity = Clamp(light.unitShadowDensity, 0.0f, 1.0f);
+	light.unitShadowDensity   = Clamp(light.unitShadowDensity,   0.0f, 1.0f);
 }
 
 
@@ -264,73 +269,71 @@ void CMapInfo::ReadWater()
 	// use 'resources.lua' for missing fields  (our the engine defaults)
 	const LuaTable& resGfxMaps = resRoot->SubTable("graphics").SubTable("maps");
 
-	if (!water.texture.empty()) {
-		water.texture = "maps/" + water.texture;
-	} else {
-		water.texture = "bitmaps/" + resGfxMaps.GetString("watertex", "ocean.jpg");
+	FIND_MAP_TEXTURE(&water.texture);
+	if (water.texture.empty()) {
+		water.texture = resGfxMaps.GetString("watertex", "ocean.jpg");
+		FIND_MAP_TEXTURE(&water.texture, "bitmaps/");
 	}
 
-	if (!water.foamTexture.empty()) {
-		water.foamTexture = "maps/" + water.foamTexture;
-	} else {
-		water.foamTexture = "bitmaps/" + resGfxMaps.GetString("waterfoamtex", "foam.jpg");
+	FIND_MAP_TEXTURE(&water.foamTexture);
+	if (water.foamTexture.empty()) {
+		water.foamTexture = resGfxMaps.GetString("waterfoamtex", "foam.jpg");
+		FIND_MAP_TEXTURE(&water.foamTexture, "bitmaps/");
 	}
 
-	if (!water.normalTexture.empty()) {
-		water.normalTexture = "maps/" + water.normalTexture;
-		water.numTiles    = std::min(16,std::max(1,wt.GetInt("numTiles",1)));
-	} else {
-		water.normalTexture = "bitmaps/" + resGfxMaps.GetString("waternormaltex", "waterbump.png");
+	FIND_MAP_TEXTURE(&water.normalTexture);
+	water.numTiles = Clamp(wt.GetInt("numTiles", 1), 1, 16);
+	if (water.normalTexture.empty()) {
+		water.normalTexture = resGfxMaps.GetString("waternormaltex", "waterbump.png");
+		FIND_MAP_TEXTURE(&water.normalTexture, "bitmaps/");
+
+		// default texture is a TileSet of 3x3
+		// user-defined textures are expected to be 1x1 (no DynWaves possible)
+		water.numTiles = 3;
+
 		if (resGfxMaps.KeyExists("waternormaltex")) {
-			water.numTiles = std::min(16,std::max(1,resGfxMaps.GetInt("numTiles",1)));
-		}else{
-			// default texture is a TileSet of 3x3
-			// user-defined textures are expected to be 1x1 (no DynWaves possible)
-			water.numTiles = 3;
+			water.numTiles = Clamp(resGfxMaps.GetInt("numTiles", 1), 1, 16);
 		}
 	}
 
 	// water caustic textures
 	LuaTable caustics = wt.SubTable("caustics");
-	string causticPrefix = "maps/";
+	std::string causticPrefix = "maps/";
 	if (!caustics.IsValid()) {
 		caustics = resRoot->SubTable("graphics").SubTable("caustics");
 		causticPrefix = "bitmaps/";
 	}
 	if (caustics.IsValid()) {
 		for (int i = 1; true; i++) {
-			const string texName = caustics.GetString(i, "");
+			std::string texName = caustics.GetString(i, "");
 			if (texName.empty()) {
 				break;
 			}
-			water.causticTextures.push_back(causticPrefix + texName);
+
+			FIND_MAP_TEXTURE(&texName, causticPrefix);
+			water.causticTextures.push_back(texName);
 		}
 	} else {
 		// load the default 32 textures
 		for (int i = 0; i < 32; i++) {
-			char defTex[256];
-			sprintf(defTex, "bitmaps/caustics/caustic%02i.jpg", i);
-			water.causticTextures.push_back(defTex);
+			water.causticTextures.push_back(IntToString(i, "bitmaps/caustics/caustic%02i.jpg"));
 		}
 	}
 }
 
 
-template<typename T> bool ParseSplatDetailNormalTexture(const LuaTable& table, const T key, std::vector<std::string>& texNames)
+template<typename T>
+static bool ParseSplatDetailNormalTexture(const LuaTable& table, const T key, std::vector<std::string>& texNames)
 {
 	if (!table.KeyExists(key))
 		return false;
 
-	const std::string& val = table.GetString(key, "");
-
-	if (!val.empty()) {
-		texNames.push_back("maps/" + val);
-	} else {
-		texNames.push_back("");
-	}
-
+	std::string val = table.GetString(key, "");
+	FIND_MAP_TEXTURE(&val);
+	texNames.push_back(val);
 	return true;
 }
+
 
 void CMapInfo::ReadSMF()
 {
@@ -338,39 +341,27 @@ void CMapInfo::ReadSMF()
 	const LuaTable& mapResTable = parser->GetRoot().SubTable("resources");
 	const LuaTable& sdnTexTable = mapResTable.SubTable("splatDetailNormalTex");
 
-	smf.detailTexName      = mapResTable.GetString("detailTex", "");
-	smf.specularTexName    = mapResTable.GetString("specularTex", "");
-	smf.splatDetailTexName = mapResTable.GetString("splatDetailTex", "");
-	smf.splatDistrTexName  = mapResTable.GetString("splatDistrTex", "");
-	smf.grassShadingTexName = mapResTable.GetString("grassShadingTex", "");
-	smf.skyReflectModTexName  = mapResTable.GetString("skyReflectModTex", "");
-	smf.blendNormalsTexName   = mapResTable.GetString("detailNormalTex", "");
-	smf.lightEmissionTexName  = mapResTable.GetString("lightEmissionTex", "");
-	smf.parallaxHeightTexName = mapResTable.GetString("parallaxHeightTex", "");
-
-	if (!smf.detailTexName.empty()) {
-		smf.detailTexName = "maps/" + smf.detailTexName;
-	} else {
-		const LuaTable& resGfxMaps = resRoot->SubTable("graphics").SubTable("maps");
-		smf.detailTexName = resGfxMaps.GetString("detailtex", "detailtex2.bmp");
-		smf.detailTexName = "bitmaps/" + smf.detailTexName;
-	}
-
-	const std::vector<std::string*> texNames = {
-		&smf.specularTexName,
-		&smf.splatDetailTexName,
-		&smf.splatDistrTexName,
-		&smf.grassShadingTexName,
-		&smf.skyReflectModTexName,
-		&smf.blendNormalsTexName,
-		&smf.lightEmissionTexName,
-		&smf.parallaxHeightTexName,
+	const std::vector<std::pair<std::string*, std::string>> texNames = {
+		{&smf.detailTexName,         "detailTex"},
+		{&smf.specularTexName,       "specularTex"},
+		{&smf.splatDetailTexName,    "splatDetailTex"},
+		{&smf.splatDistrTexName,     "splatDistrTex"},
+		{&smf.grassShadingTexName,   "grassShadingTex"},
+		{&smf.skyReflectModTexName,  "skyReflectModTex"},
+		{&smf.blendNormalsTexName,   "detailNormalTex"},
+		{&smf.lightEmissionTexName,  "lightEmissionTex"},
+		{&smf.parallaxHeightTexName, "parallaxHeightTex"},
 	};
 
-	for (size_t i = 0; i < texNames.size(); i++) {
-		if (!texNames[i]->empty()) {
-			*texNames[i] = "maps/" + *texNames[i];
-		}
+	for (auto& pair: texNames) {
+		*pair.first = mapResTable.GetString(pair.second, "");
+		FIND_MAP_TEXTURE(pair.first);
+	}
+
+	if (smf.detailTexName.empty()) {
+		const LuaTable& resGfxMaps = resRoot->SubTable("graphics").SubTable("maps");
+		smf.detailTexName = resGfxMaps.GetString("detailtex", "detailtex2.bmp");
+		FIND_MAP_TEXTURE(&smf.detailTexName, "bitmaps/");
 	}
 
 	if (sdnTexTable.IsValid()) {
@@ -400,27 +391,23 @@ void CMapInfo::ReadSMF()
 	smf.minHeight         = smfTable.GetFloat("minHeight", 0.0f);
 	smf.maxHeight         = smfTable.GetFloat("maxHeight", 0.0f);
 
-	smf.minimapTexName  = smfTable.GetString("minimapTex", "");
+	smf.minimapTexName  = smfTable.GetString("minimapTex",  "");
 	smf.metalmapTexName = smfTable.GetString("metalmapTex", "");
-	smf.typemapTexName  = smfTable.GetString("typemapTex", "");
+	smf.typemapTexName  = smfTable.GetString("typemapTex",  "");
 	smf.grassmapTexName = smfTable.GetString("grassmapTex", "");
 
-	if (!smf.minimapTexName.empty() ) { smf.minimapTexName  = "maps/" + smf.minimapTexName; }
-	if (!smf.metalmapTexName.empty()) { smf.metalmapTexName = "maps/" + smf.metalmapTexName; }
-	if (!smf.typemapTexName.empty() ) { smf.typemapTexName  = "maps/" + smf.typemapTexName; }
-	if (!smf.grassmapTexName.empty()) { smf.grassmapTexName = "maps/" + smf.grassmapTexName; }
-
-	std::stringstream ss;
+	FIND_MAP_TEXTURE(&smf.minimapTexName);
+	FIND_MAP_TEXTURE(&smf.metalmapTexName);
+	FIND_MAP_TEXTURE(&smf.typemapTexName);
+	FIND_MAP_TEXTURE(&smf.grassmapTexName);
 
 	for (int i = 0; /* no test */; i++) {
-		ss.str("");
-		ss << "smtFileName" << i;
+		const std::string key = IntToString(i, "smtFileName%i");
 
-		if (smfTable.KeyExists(ss.str())) {
-			smf.smtFileNames.push_back(smfTable.GetString(ss.str(), ".smt"));
-		} else {
+		if (!smfTable.KeyExists(key))
 			break;
-		}
+
+		smf.smtFileNames.push_back(smfTable.GetString(key, ".smt"));
 	}
 }
 
@@ -451,11 +438,11 @@ void CMapInfo::ReadTerrainTypes()
 		terrType.shipSpeed  = moveTable.GetFloat("ship",  1.0f);
 
 		// clamps
-		terrType.hardness   = max(0.001f, terrType.hardness);
-		terrType.tankSpeed  = max(0.000f, terrType.tankSpeed);
-		terrType.kbotSpeed  = max(0.000f, terrType.kbotSpeed);
-		terrType.hoverSpeed = max(0.000f, terrType.hoverSpeed);
-		terrType.shipSpeed  = max(0.000f, terrType.shipSpeed);
+		terrType.hardness   = std::max(0.001f, terrType.hardness);
+		terrType.tankSpeed  = std::max(0.000f, terrType.tankSpeed);
+		terrType.kbotSpeed  = std::max(0.000f, terrType.kbotSpeed);
+		terrType.hoverSpeed = std::max(0.000f, terrType.hoverSpeed);
+		terrType.shipSpeed  = std::max(0.000f, terrType.shipSpeed);
 	}
 }
 

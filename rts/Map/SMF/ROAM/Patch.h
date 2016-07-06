@@ -21,7 +21,6 @@ class CCamera;
 
 // How many TriTreeNodes should be allocated?
 #define POOL_SIZE      (500000)
-#define MAX_POOL_SIZE (8000000)
 
 
 /**
@@ -65,20 +64,16 @@ struct TriTreeNode
 class CTriNodePool
 {
 public:
-	static void InitPools(const size_t newPoolSize = POOL_SIZE);
-	static void FreePools();
-	static void ResetAll();
-	inline static CTriNodePool* GetPool();
+	static void InitPools(bool shadowPass, size_t newPoolSize = POOL_SIZE);
+	static void FreePools(bool shadowPass);
+	static void ResetAll(bool shadowPass);
+	inline static CTriNodePool* GetPool(bool shadowPass);
 
 public:
-	CTriNodePool(const size_t poolSize) {
-		pool.resize(poolSize);
-		pool.resize(poolSize);
-		m_NextTriNode = 0;
-	}
+	CTriNodePool(const size_t poolSize);
 
 	void Reset();
-	TriTreeNode* AllocateTri();
+	void Allocate(TriTreeNode*& left, TriTreeNode*& right);
 
 	bool OutOfNodes() const {
 		return (m_NextTriNode >= pool.size());
@@ -125,7 +120,7 @@ public:
 
 	void UpdateHeightMap(const SRectangle& rect = SRectangle(0, 0, PATCH_SIZE, PATCH_SIZE));
 
-	bool Tessellate(const float3& campos, int viewradius);
+	bool Tessellate(const float3& campos, int viewradius, bool shadowPass);
 	void ComputeVariance();
 
 	void GenerateIndices();
@@ -167,6 +162,8 @@ private:
 		bool leftChild
 	);
 
+	float GetHeight(int2 pos);
+
 	void GenerateBorderIndices(CVertexArray* va);
 
 private:
@@ -174,11 +171,9 @@ private:
 
 	CSMFGroundDrawer* smfGroundDrawer;
 
-	//< Pointer to height map to use
-	const float* heightMap;
-
 	//< Which variance we are currently using. [Only valid during the Tessellate and ComputeVariance passes]
 	float* currentVariance;
+	CTriNodePool* currentPool;
 
 	//< Does the Variance Tree need to be recalculated for this Patch?
 	bool isDirty;

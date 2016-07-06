@@ -38,7 +38,6 @@ public:
 
 	CBuilder();
 	virtual ~CBuilder();
-	void PostLoad();
 
 	void Update();
 	void SlowUpdate();

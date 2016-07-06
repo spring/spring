@@ -9,6 +9,7 @@ class CGeoSquareProjectile : public CProjectile
 {
 	CR_DECLARE_DERIVED(CGeoSquareProjectile)
 public:
+	CGeoSquareProjectile() { }
 	CGeoSquareProjectile(
 		const float3& p1, const float3& p2,
 		const float3& v1, const float3& v2,

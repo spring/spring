@@ -7,11 +7,12 @@
 
 class CNullUnitScript : public CUnitScript
 {
-
+	CR_DECLARE_DERIVED(CNullUnitScript)
 protected:
-	CNullUnitScript(): CUnitScript(nullptr) {}
+	CNullUnitScript(CUnit* u);
 
 	void ShowScriptError(const std::string& msg) override;
+	void PostLoad();
 
 public:
 	static CNullUnitScript value;
@@ -59,6 +60,7 @@ public:
 	void  Shot(int weaponNum) override {}
 	bool  BlockShot(int weaponNum, const CUnit* targetUnit, bool userTarget) override { return false; }
 	float TargetWeight(int weaponNum, const CUnit* targetUnit) override { return 1.0f; }
+	void AnimFinished(AnimType type, int piece, int axis) override { };
 };
 
 #endif

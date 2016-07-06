@@ -20,13 +20,8 @@ CR_REG_METADATA(LocalModelPiece, (
 	CR_MEMBER(pos),
 	CR_MEMBER(rot),
 	CR_MEMBER(dir),
-	CR_MEMBER(pieceSpaceMat),
-	CR_MEMBER(modelSpaceMat),
 	CR_MEMBER(colvol),
-	CR_MEMBER(numUpdatesSynced),
-	CR_MEMBER(lastMatrixUpdate),
 	CR_MEMBER(scriptSetVisible),
-	CR_MEMBER(identityTransform),
 	CR_MEMBER(lmodelPieceIndex),
 	CR_MEMBER(scriptPieceIndex),
 	CR_MEMBER(parent),
@@ -36,13 +31,15 @@ CR_REG_METADATA(LocalModelPiece, (
 	CR_IGNORED(dispListID),
 	CR_IGNORED(original),
 
+	CR_IGNORED(dirty),
+	CR_IGNORED(modelSpaceMat),
+	CR_IGNORED(pieceSpaceMat),
+
 	CR_IGNORED(lodDispLists) //FIXME GL idx!
 ))
 
 CR_BIND(LocalModel, )
 CR_REG_METADATA(LocalModel, (
-	CR_IGNORED(dirtyPieces),
-	CR_IGNORED(bvFrameTime),
 	CR_IGNORED(lodCount), //FIXME?
 	CR_MEMBER(pieces),
 
@@ -282,15 +279,35 @@ void LocalModel::SetLODCount(unsigned int count)
 }
 
 
+void LocalModel::SetOriginalPieces(const S3DModelPiece* mp, int& idx)
+{
+	pieces[idx].original = mp;
+	pieces[idx++].dispListID = mp->GetDisplayListID();
 
-void LocalModel::SetModel(const S3DModel* model)
+	for (unsigned int i = 0; i < mp->GetChildCount(); i++) {
+		SetOriginalPieces(mp->GetChild(i), idx);
+	}
+}
+
+void LocalModel::SetModel(const S3DModel* model, bool initialize)
 {
 	// make sure we do not get called for trees, etc
 	assert(model != nullptr);
 	assert(model->numPieces >= 1);
 
-	dirtyPieces = model->numPieces;
-	bvFrameTime = 0;
+	// Only update the pieces
+	if (!initialize) {
+		assert(pieces.size() == model->numPieces);
+		int idx = 0;
+		SetOriginalPieces(model->GetRootPiece(), idx);
+		assert (idx == model->numPieces);
+		pieces[0].UpdateMatricesRec(true);
+		UpdateBoundingVolume();
+		return;
+	}
+
+	assert(pieces.size() == 0);
+
 	lodCount = 0;
 
 	pieces.reserve(model->numPieces);
@@ -301,7 +318,7 @@ void LocalModel::SetModel(const S3DModel* model)
 	// LocalModel::Update is never called, but they might have
 	// baked piece rotations (if .dae)
 	pieces[0].UpdateMatricesRec(false);
-	UpdateBoundingVolume(0);
+	UpdateBoundingVolume();
 
 	assert(pieces.size() == model->numPieces);
 }
@@ -330,10 +347,8 @@ LocalModelPiece* LocalModel::CreateLocalModelPieces(const S3DModelPiece* mpParen
 	return lmpParent;
 }
 
-void LocalModel::UpdateBoundingVolume(unsigned int frameNum)
+void LocalModel::UpdateBoundingVolume()
 {
-	bvFrameTime = frameNum;
-
 	// bounding-box extrema (local space)
 	float3 bbMins = DEF_MIN_SIZE;
 	float3 bbMaxs = DEF_MAX_SIZE;
@@ -399,11 +414,9 @@ void LocalModel::UpdateBoundingVolume(unsigned int frameNum)
 LocalModelPiece::LocalModelPiece(const S3DModelPiece* piece)
 	: colvol(piece->GetCollisionVolume())
 
-	, numUpdatesSynced(1)
-	, lastMatrixUpdate(0)
+	, dirty(true)
 
 	, scriptSetVisible(piece->HasGeometryData())
-	, identityTransform(true)
 
 	, lmodelPieceIndex(-1)
 	, scriptPieceIndex(-1)
@@ -416,23 +429,30 @@ LocalModelPiece::LocalModelPiece(const S3DModelPiece* piece)
 	pos = piece->offset;
 	dir = piece->GetEmitDir();
 
-	identityTransform = UpdateMatrix();
+	UpdateMatrix();
 	dispListID = piece->GetDisplayListID();
 
 	children.reserve(piece->children.size());
 }
 
-
-bool LocalModelPiece::UpdateMatrix()
-{
-	return (original->ComposeTransform(pieceSpaceMat.LoadIdentity(), pos, rot, original->scales));
+void LocalModelPiece::SetDirty() {
+	dirty = true;
+	for (LocalModelPiece* child: children) {
+		if (!child->dirty)
+			child->SetDirty();
+	}
 }
 
-void LocalModelPiece::UpdateMatricesRec(bool updateChildMatrices)
+void LocalModelPiece::UpdateMatrix() const
 {
-	if (lastMatrixUpdate != numUpdatesSynced) {
-		lastMatrixUpdate = numUpdatesSynced;
-		identityTransform = UpdateMatrix();
+	original->ComposeTransform(pieceSpaceMat.LoadIdentity(), pos, rot, original->scales);
+}
+
+void LocalModelPiece::UpdateMatricesRec(bool updateChildMatrices) const
+{
+	if (dirty) {
+		dirty = false;
+		UpdateMatrix();
 		updateChildMatrices = true;
 	}
 
@@ -449,6 +469,19 @@ void LocalModelPiece::UpdateMatricesRec(bool updateChildMatrices)
 	}
 }
 
+void LocalModelPiece::UpdateParentMatricesRec() const
+{
+	if (parent != nullptr && parent->dirty)
+		parent->UpdateParentMatricesRec();
+
+	dirty = false;
+	UpdateMatrix();
+	modelSpaceMat = pieceSpaceMat;
+	if (parent != nullptr)
+		modelSpaceMat >>= parent->modelSpaceMat;
+
+	return;
+}
 
 
 void LocalModelPiece::Draw() const
@@ -457,7 +490,7 @@ void LocalModelPiece::Draw() const
 		return;
 
 	glPushMatrix();
-	glMultMatrixf(modelSpaceMat);
+	glMultMatrixf(GetModelSpaceMatrix());
 	glCallList(dispListID);
 	glPopMatrix();
 }
@@ -468,7 +501,7 @@ void LocalModelPiece::DrawLOD(unsigned int lod) const
 		return;
 
 	glPushMatrix();
-	glMultMatrixf(modelSpaceMat);
+	glMultMatrixf(GetModelSpaceMatrix());
 	glCallList(lodDispLists[lod]);
 	glPopMatrix();
 }
@@ -491,8 +524,8 @@ bool LocalModelPiece::GetEmitDirPos(float3& emitPos, float3& emitDir) const
 	if (original == nullptr)
 		return false;
 
-	emitPos = modelSpaceMat * original->GetEmitPos();
-	emitDir = modelSpaceMat * float4(original->GetEmitDir(), 0.f);
+	emitPos = GetModelSpaceMatrix() * original->GetEmitPos();
+	emitDir = GetModelSpaceMatrix() * float4(original->GetEmitDir(), 0.f);
 
 	// note: actually OBJECT_TO_WORLD but transform is the same
 	emitPos *= WORLD_TO_OBJECT_SPACE;

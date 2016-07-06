@@ -21,9 +21,12 @@ public:
 	~CShadowHandler() { Kill(); }
 
 	void Reload(const char* argv);
-	void CreateShadows();
 
-	const float4& GetShadowParams() const { return shadowTexProjCenter; }
+	void SetupShadowTexSampler(unsigned int texUnit, bool enable = false) const;
+	void SetupShadowTexSamplerRaw() const;
+	void ResetShadowTexSampler(unsigned int texUnit, bool disable = false) const;
+	void ResetShadowTexSamplerRaw() const;
+	void CreateShadows();
 
 	enum ShadowGenerationBits {
 		SHADOWGEN_BIT_NONE  = 0,
@@ -64,6 +67,11 @@ public:
 	const CMatrix44f& GetShadowMatrix   (unsigned int idx = SHADOWMAT_TYPE_DRAWING) const { return  viewMatrix[idx];      }
 	const      float* GetShadowMatrixRaw(unsigned int idx = SHADOWMAT_TYPE_DRAWING) const { return &viewMatrix[idx].m[0]; }
 
+	const float4& GetShadowParams() const { return shadowTexProjCenter; }
+
+	unsigned int GetShadowTextureID() const { return shadowTexture; }
+	unsigned int GetColorTextureID() const { return dummyColorTexture; }
+
 	static bool ShadowsInitialized() { return firstInit; }
 	static bool ShadowsSupported() { return shadowsSupported; }
 
@@ -96,13 +104,13 @@ public:
 	int shadowGenBits;
 	int shadowProMode;
 
+private:
 	unsigned int shadowTexture;
 	unsigned int dummyColorTexture;
 
 	bool shadowsLoaded;
 	bool inShadowPass;
 
-private:
 	static bool firstInit;
 	static bool shadowsSupported;
 

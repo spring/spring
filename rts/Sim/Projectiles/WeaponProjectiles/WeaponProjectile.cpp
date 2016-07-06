@@ -19,40 +19,26 @@
 #include "Map/Ground.h"
 #include "System/Matrix44f.h"
 #include "System/myMath.h"
+#include "System/creg/DefTypes.h"
 
 
-CR_BIND_DERIVED(CWeaponProjectile, CProjectile, )
+CR_BIND_DERIVED_INTERFACE(CWeaponProjectile, CProjectile)
 
 CR_REG_METADATA(CWeaponProjectile,(
 	CR_SETFLAG(CF_Synced),
 	CR_MEMBER(damages),
 	CR_MEMBER(targeted),
-	CR_IGNORED(weaponDef), //PostLoad
+	CR_MEMBER(weaponDef),
 	CR_MEMBER(target),
 	CR_MEMBER(targetPos),
 	CR_MEMBER(startPos),
 	CR_MEMBER(ttl),
 	CR_MEMBER(bounces),
-	CR_MEMBER(weaponDefID),
 	CR_MEMBER(weaponNum),
+
 	CR_POSTLOAD(PostLoad)
 ))
 
-
-
-CWeaponProjectile::CWeaponProjectile(): CProjectile()
-	, damages(nullptr)
-	, weaponDef(NULL)
-	, target(NULL)
-
-	, weaponDefID(0)
-
-	, ttl(0)
-	, bounces(0)
-
-	, targeted(false)
-{
-}
 
 CWeaponProjectile::CWeaponProjectile(const ProjectileParams& params)
 	: CProjectile(params.pos, params.speed, params.owner, true, true, false, false)
@@ -60,8 +46,6 @@ CWeaponProjectile::CWeaponProjectile(const ProjectileParams& params)
 	, damages(nullptr)
 	, weaponDef(params.weaponDef)
 	, target(params.target)
-
-	, weaponDefID(-1u)
 
 	, ttl(params.ttl)
 	, bounces(0)
@@ -73,9 +57,7 @@ CWeaponProjectile::CWeaponProjectile(const ProjectileParams& params)
 {
 	projectileType = WEAPON_BASE_PROJECTILE;
 
-	//creg
-	if (weaponDef == nullptr)
-		return;
+	assert(weaponDef != nullptr);
 
 	if (weaponDef->IsHitScanWeapon()) {
 		hitscan = true;
@@ -105,7 +87,6 @@ CWeaponProjectile::CWeaponProjectile(const ProjectileParams& params)
 	}
 
 	collisionFlags = weaponDef->collisionFlags;
-	weaponDefID = params.weaponDef->id;
 	weaponNum = params.weaponNum;
 	alwaysVisible = weaponDef->visuals.alwaysVisible;
 	ignoreWater = weaponDef->waterweapon;
@@ -174,7 +155,7 @@ void CWeaponProjectile::Explode(
 	float3 impactDir
 ) {
 	const DamageArray& damageArray = damages->GetDynamicDamages(startPos, impactPos);
-	const CGameHelper::ExplosionParams params = {
+	const CExplosionParams params = {
 		impactPos,
 		impactDir.SafeNormalize(),
 		damageArray,
@@ -365,6 +346,6 @@ void CWeaponProjectile::DependentDied(CObject* o)
 
 void CWeaponProjectile::PostLoad()
 {
-	weaponDef = weaponDefHandler->GetWeaponDefByID(weaponDefID);
+	assert(weaponDef != nullptr);
 	model = weaponDef->LoadModel();
 }

@@ -282,14 +282,17 @@ CMatrix44f& CMatrix44f::Scale(const float3 scales)
 	m[ 0] *= scales.x;
 	m[ 1] *= scales.x;
 	m[ 2] *= scales.x;
+	m[ 3] *= scales.x;
 
 	m[ 4] *= scales.y;
 	m[ 5] *= scales.y;
 	m[ 6] *= scales.y;
+	m[ 7] *= scales.y;
 
 	m[ 8] *= scales.z;
 	m[ 9] *= scales.z;
 	m[10] *= scales.z;
+	m[11] *= scales.z;
 	return *this;
 }
 

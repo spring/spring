@@ -11,7 +11,7 @@
  */
 class CStrafeAirMoveType: public AAirMoveType
 {
-	CR_DECLARE(CStrafeAirMoveType)
+	CR_DECLARE_DERIVED(CStrafeAirMoveType)
 	CR_DECLARE_SUB(DrawLine)
 
 public:
@@ -23,10 +23,10 @@ public:
 
 	CStrafeAirMoveType(CUnit* owner);
 
-	bool Update();
-	void SlowUpdate();
+	bool Update() override;
+	void SlowUpdate() override;
 
-	bool SetMemberValue(unsigned int memberHash, void* memberValue);
+	bool SetMemberValue(unsigned int memberHash, void* memberValue) override;
 
 	void UpdateManeuver();
 	void UpdateAttack();
@@ -39,20 +39,20 @@ public:
 		float engine,
 		const float3& engineVector
 	);
-	void SetState(AircraftState state);
+	void SetState(AircraftState state) override;
 	void UpdateTakeOff();
 
-	float3 FindLandingPos() const;
+	float3 FindLandingPos();
 
-	void SetMaxSpeed(float speed);
-	float GetBrakeDistance();
+	void SetMaxSpeed(float speed) override;
+	float BrakingDistance(float speed, float rate) const override;
 
-	void KeepPointingTo(float3 pos, float distance, bool aggressive) {}
-	void StartMoving(float3 pos, float goalRadius);
-	void StartMoving(float3 pos, float goalRadius, float speed);
-	void StopMoving(bool callScript = false, bool hardStop = false);
+	void KeepPointingTo(float3 pos, float distance, bool aggressive) override {}
+	void StartMoving(float3 pos, float goalRadius) override;
+	void StartMoving(float3 pos, float goalRadius, float speed) override;
+	void StopMoving(bool callScript = false, bool hardStop = false) override;
 
-	void Takeoff();
+	void Takeoff() override;
 
 	int maneuverState;
 	int maneuverSubState;

@@ -644,13 +644,8 @@ void CGrassDrawer::SetupGlStateNear()
 	if (globalRendering->haveGLSL) {
 		EnableShader(GRASS_PROGRAM_NEAR);
 
-		if (shadowHandler->ShadowsLoaded()) {
-			glActiveTextureARB(GL_TEXTURE4_ARB);
-				glBindTexture(GL_TEXTURE_2D, shadowHandler->shadowTexture);
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE);
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC_ARB, GL_LEQUAL);
-				glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_ALPHA);
-		}
+		if (shadowHandler->ShadowsLoaded())
+			shadowHandler->SetupShadowTexSampler(GL_TEXTURE4);
 
 		glMatrixMode(GL_PROJECTION);
 			glPushMatrix();
@@ -768,13 +763,9 @@ void CGrassDrawer::SetupGlStateFar()
 		glBindTexture(GL_TEXTURE_2D, readMap->GetShadingTexture());
 	glActiveTextureARB(GL_TEXTURE3_ARB);
 		glBindTexture(GL_TEXTURE_2D, infoTextureHandler->GetCurrentInfoTexture());
-	if (shadowHandler->ShadowsLoaded()) {
-		glActiveTextureARB(GL_TEXTURE4_ARB);
-			glBindTexture(GL_TEXTURE_2D, shadowHandler->shadowTexture);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC_ARB, GL_LEQUAL);
-			glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_ALPHA);
-	}
+
+	if (shadowHandler->ShadowsLoaded())
+		shadowHandler->SetupShadowTexSampler(GL_TEXTURE4);
 
 	glActiveTextureARB(GL_TEXTURE0_ARB);
 }

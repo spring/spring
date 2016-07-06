@@ -15,7 +15,7 @@
 // #define FORCE_CHRONO_TIMERS
 // #define FORCE_BOOST_CHRONO
 
-#if (__cplusplus > 199711L) && !defined(FORCE_BOOST_CHRONO)
+#if (__cplusplus > 199711L) && !defined(FORCE_BOOST_CHRONO) || defined(_MSC_VER)
 	#define SPRINGTIME_USING_STDCHRONO
 	#undef gt
 	#include <chrono>

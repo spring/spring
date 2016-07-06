@@ -11,6 +11,7 @@
 #include "Game/GlobalUnsynced.h"
 #include "Net/GameServer.h"
 #include "Rendering/Models/3DModel.h"
+#include "Sim/Features/FeatureDef.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/TeamHandler.h"

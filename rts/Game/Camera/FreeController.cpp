@@ -98,7 +98,7 @@ void CFreeController::Update()
 		prevAvel = avel;
 		return;
 	}
-
+	camera->SetRot(rot);
 	// safeties
 	velTime  = max(0.1f,  velTime);
 	avelTime = max(0.1f, avelTime);
@@ -119,7 +119,7 @@ void CFreeController::Update()
 	if (gndLock && (autoTilt > 0.0f)) {
 		const float gndHeight = CGround::GetHeightReal(pos.x, pos.z, false);
 		if (pos.y < (gndHeight + gndOffset + 1.0f)) {
-			const float3 hDir(math::sin(rot.y), 0.f, math::cos(rot.y));
+			const float3 hDir(std::sin(rot.y), 0.f, std::cos(rot.y));
 			const float3 gndNormal = CGround::GetSmoothNormal(pos.x, pos.z, false);
 			const float dot = gndNormal.dot(hDir);
 			const float gndRotX = (float)math::acos(dot) - (PI * 0.5f);
@@ -200,8 +200,8 @@ void CFreeController::Update()
 		// convert the angular velocity into its positional change
 		const float3 diff2 = (pos - trackPos);
 		const float deltaRad = (avel.y * ft);
-		const float cos_val = math::cos(deltaRad);
-		const float sin_val = math::sin(deltaRad);
+		const float cos_val = std::cos(deltaRad);
+		const float sin_val = std::sin(deltaRad);
 		pos.x = trackPos.x + ((cos_val * diff2.x) + (sin_val * diff2.z));
 		pos.z = trackPos.z + ((cos_val * diff2.z) - (sin_val * diff2.x));
 	}
@@ -439,7 +439,6 @@ bool CFreeController::SetState(const StateMap& sm)
 	SetStateFloat(sm, "rz", rot.z);
 	rot.x = fastmath::HALFPI - rot.x;
 	rot.y = fastmath::PI - rot.y;
-	camera->SetRot(rot);
 
 	SetStateFloat(sm, "vx", prevVel.x);
 	SetStateFloat(sm, "vy", prevVel.y);

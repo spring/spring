@@ -17,7 +17,8 @@ CR_REG_METADATA(CObject, (
 	CR_IGNORED(listening), //handled in Serialize
 	CR_IGNORED(listeners), //handled in Serialize
 
-	CR_SERIALIZER(Serialize)
+	CR_SERIALIZER(Serialize),
+	CR_POSTLOAD(PostLoad)
 	))
 
 Threading::AtomicCounterInt64 CObject::cur_sync_id(0);
@@ -60,7 +61,6 @@ CObject::~CObject()
 			continue;
 
 		for (CObject* obj: *listening[depType]) {
-
 			assert(obj->listeners[depType]);
 			obj->listeners[depType]->erase(this);
 		}
@@ -113,12 +113,32 @@ void CObject::Serialize(creg::ISerializer* ser)
 			TSyncSafeSet& dl = *listening[dt];
 			for (int o = 0; o < size; o++) {
 				CObject* obj = NULL;
-				ser->SerializeObjectPtr((void**)&*obj, NULL);
+				ser->SerializeObjectPtr((void**)&obj, NULL);
 				dl.insert(obj);
 			}
 		}
+		// cur_sync_id needs fixing since it's not serialized
+		// it might not be exactly where we left it, but that's not important
+		// since only order matters
+		cur_sync_id = Threading::AtomicCounterInt64(std::max(sync_id, (boost::int64_t) cur_sync_id));
 	}
 }
+
+void CObject::PostLoad()
+{
+	for (int depType = 0; depType < DEPENDENCE_COUNT; ++depType) {
+		if (!listening[depType])
+			continue;
+
+		for (CObject* obj: *listening[depType]) {
+			if (!obj->listeners[depType])
+				obj->listeners[depType] = new TSyncSafeSet();
+
+			obj->listeners[depType]->insert(this);
+		}
+	}
+}
+
 #endif //USING_CREG
 
 void CObject::DependentDied(CObject* obj)

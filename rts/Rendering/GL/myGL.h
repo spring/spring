@@ -20,7 +20,7 @@
 #include "System/float4.h"
 
 #include "glStateDebug.h"
-
+#include "glMarkers.h"
 
 #if       defined(HEADLESS)
 	// All OpenGL functions should always exists on HEADLESS.
@@ -33,6 +33,10 @@
 	// Check if the functions address is non-NULL.
 	#define IS_GL_FUNCTION_AVAILABLE(functionName) (functionName != NULL)
 #endif // defined(HEADLESS)
+
+#ifndef GL_INVALID_INDEX
+	#define GL_INVALID_INDEX -1
+#endif
 
 
 static inline void glVertexf3(const float3& v)    { glVertex3f(v.r, v.g, v.b); }
@@ -49,8 +53,11 @@ void WorkaroundATIPointSizeBug();
 void SetTexGen(const float& scaleX, const float& scaleZ, const float& offsetX, const float& offsetZ);
 
 void glSaveTexture(const GLuint textureID, const std::string& filename);
+void glSpringBindTextures(GLuint first, GLsizei count, const GLuint* textures);
 void glSpringTexStorage2D(const GLenum target, GLint levels, const GLint internalFormat, const GLsizei width, const GLsizei height);
 void glBuildMipmaps(const GLenum target, GLint internalFormat, const GLsizei width, const GLsizei height, const GLenum format, const GLenum type, const void* data);
+
+void glSpringMatrix2dProj(const int sizex, const int sizey);
 
 void ClearScreen();
 

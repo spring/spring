@@ -46,7 +46,7 @@ SetCompressor /FINAL /SOLID lzma
 
 ; Finish page
 
-!define MUI_FINISHPAGE_SHOWREADME "http://springrts.com/wiki/Read_Me_First"
+!define MUI_FINISHPAGE_SHOWREADME "https://springrts.com/wiki/Read_Me_First"
 !define MUI_FINISHPAGE_SHOWREADME_TEXT "Open $\"Read Me First$\" Webpage"
 ;!define MUI_FINISHPAGE_RUN "$INSTDIR\spring.exe"
 ;!define MUI_FINISHPAGE_RUN_TEXT "Configure ${PRODUCT_NAME} settings now"
@@ -82,7 +82,6 @@ VAR REGISTRY ; if 1 registry values are written
 !include "include\fileExistChecks.nsh"
 !include "include\fileMisc.nsh"
 !include "include\extractFile.nsh"
-!include "include\checkrunning.nsh"
 !include "include\getParameterValue.nsh"
 
 
@@ -120,23 +119,11 @@ Section "Engine" SEC_MAIN
 	!undef INSTALL
 SectionEnd
 
-SectionGroup "Multiplayer battlerooms"
-	Section "SpringLobby" SEC_SPRINGLOBBY
-		!define INSTALL
-			${!echonow} "Processing: springlobby"
-			!include "sections\springlobby.nsh"
-		!undef INSTALL
-	SectionEnd
-
-SectionGroupEnd
-
 Section "Desktop shortcuts" SEC_DESKTOP
-	${If} ${SectionIsSelected} ${SEC_SPRINGLOBBY}
-		!define INSTALL
-			${!echonow} "Processing: shortcuts - Desktop"
-			!include "sections\shortcuts_desktop.nsh"
-		!undef INSTALL
-	${EndIf}
+	!define INSTALL
+		${!echonow} "Processing: shortcuts - Desktop"
+		!include "sections\shortcuts_desktop.nsh"
+	!undef INSTALL
 SectionEnd
 
 Section "Start menu shortcuts" SEC_START
@@ -185,15 +172,6 @@ SectionEnd
 
 Function .onInit
 	${!echonow} ""
-	IfSilent skiprunchecks ; don't check for running apps, the calling app has to do it
-	; check if we need to exit some processes which may be using unitsync
-	${CheckExecutableRunning} "TASClient.exe" "TASClient"
-	${CheckExecutableRunning} "springlobby.exe" "Spring Lobby"
-	${CheckExecutableRunning} "Zero-K.exe" "Zero-K Lobby"
-	${CheckExecutableRunning} "CADownloader.exe" "CA Downloader"
-	${CheckExecutableRunning} "springsettings.exe" "Spring Settings"
-	skiprunchecks:
-
 	; enable/disable sections depending on parameters
 	!include "sections/setupSections.nsh"
 FunctionEnd
@@ -226,7 +204,6 @@ Section Uninstall
 	!ifdef NSI_UNINSTALL_FILES
 	!include "${NSI_UNINSTALL_FILES}"
 	!endif
-	!include "sections\springlobby.nsh"
 	; All done
 	RMDir "$INSTDIR"
 

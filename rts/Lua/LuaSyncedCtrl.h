@@ -38,9 +38,10 @@ class LuaSyncedCtrl
 		static int CallCOBScript(lua_State* L);
 		static int GetCOBScriptID(lua_State* L);
 
-		static int SetUnitRulesParam(lua_State* L);
-		static int SetTeamRulesParam(lua_State* L);
 		static int SetGameRulesParam(lua_State* L);
+		static int SetTeamRulesParam(lua_State* L);
+		static int SetUnitRulesParam(lua_State* L);
+		static int SetFeatureRulesParam(lua_State* L);
 
 		static int GiveOrderToUnit(lua_State* L);
 		static int GiveOrderToUnitMap(lua_State* L);
@@ -85,6 +86,7 @@ class LuaSyncedCtrl
 		static int SetUnitFuel(lua_State* L);
 		static int SetUnitMoveGoal(lua_State* L);
 		static int SetUnitLandGoal(lua_State* L);
+		static int ClearUnitGoal(lua_State* L);
 		static int SetUnitNeutral(lua_State* L);
 		static int SetUnitTarget(lua_State* L);
 		static int SetUnitMidAndAimPos(lua_State* L);

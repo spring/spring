@@ -115,7 +115,7 @@ bool CVFSHandler::RemoveArchive(const std::string& archiveName)
 	for (std::map<std::string, FileData>::iterator f = files.begin(); f != files.end();) {
 		if (f->second.ar == ar) {
 			LOG_L(L_DEBUG, "%s (removing)", f->first.c_str());
-			f = set_erase(files, f);
+			f = files.erase(f);
 		} else {
 			 ++f;
 		}

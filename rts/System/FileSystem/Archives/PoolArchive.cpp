@@ -13,8 +13,10 @@
 
 #include "System/FileSystem/DataDirsAccess.h"
 #include "System/FileSystem/FileSystem.h"
+#include "System/Exceptions.h"
 #include "System/Util.h"
 #include "System/Log/ILog.h"
+#include <boost/format.hpp>
 
 
 CPoolArchiveFactory::CPoolArchiveFactory()
@@ -55,8 +57,7 @@ CPoolArchive::CPoolArchive(const std::string& name)
 
 	gzFile in = gzopen(name.c_str(), "rb");
 	if (in == NULL) {
-		LOG_L(L_ERROR, "couldn't open %s", name.c_str());
-		return;
+		throw content_error(boost::str(boost::format("couldn't open %s") % name));
 	}
 
 	while (true) {
@@ -139,7 +140,6 @@ bool CPoolArchive::GetFileImpl(unsigned int fid, std::vector<boost::uint8_t>& bu
 	std::string path = dataDirsAccess.LocateFile(rpath);
 	gzFile in = gzopen(path.c_str(), "rb");
 	if (in == NULL){
-		LOG_L(L_ERROR, "couldn't open %s", path.c_str());
 		return false;
 	}
 

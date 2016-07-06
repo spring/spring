@@ -315,14 +315,15 @@ public:
 class WaterActionExecutor : public IUnsyncedActionExecutor {
 public:
 	WaterActionExecutor() : IUnsyncedActionExecutor("Water",
-			"Set water rendering mode: 0=basic, 1=reflective, 2=dynamic"
-			", 3=reflective&refractive?, 4=bump-mapped") {}
+		"Set water rendering mode: 0=basic, 1=reflective, 2=dynamic"
+		", 3=reflective&refractive, 4=bump-mapped") {}
 
-	bool Execute(const UnsyncedAction& action) const {
-
+	bool Execute(const UnsyncedAction& action) const
+	{
 		int nextWaterRendererMode = 0;
-		if (!action.GetArgs().empty()) {
-			nextWaterRendererMode = std::max(0, atoi(action.GetArgs().c_str()) % IWater::NUM_WATER_RENDERERS);
+
+		if (!(action.GetArgs()).empty()) {
+			nextWaterRendererMode = atoi((action.GetArgs()).c_str());
 		} else {
 			nextWaterRendererMode = -1;
 		}
@@ -1441,6 +1442,27 @@ public:
 
 
 
+class GroundDetailActionExecutor : public IUnsyncedActionExecutor {
+public:
+	GroundDetailActionExecutor() : IUnsyncedActionExecutor("GroundDetail",
+			"Set the level of ground detail") {}
+
+	bool Execute(const UnsyncedAction& action) const {
+		int detail;
+		if (action.GetArgs().empty()) {
+			LOG_L(L_WARNING, "/%s: missing argument", GetCommand().c_str());
+			return false;
+		}
+		detail = atoi((action.GetArgs()).c_str());
+
+		readMap->GetGroundDrawer()->SetDetail(detail);
+		return true;
+	}
+
+};
+
+
+
 class MoreTreesActionExecutor : public IUnsyncedActionExecutor {
 public:
 	MoreTreesActionExecutor() : IUnsyncedActionExecutor("MoreTrees",
@@ -2321,7 +2343,6 @@ public:
 		bool modUICtrl = CLuaHandle::GetModUICtrl();
 		InverseOrSetBool(modUICtrl, action.GetArgs());
 		CLuaHandle::SetModUICtrl(modUICtrl);
-		configHandler->Set("LuaModUICtrl", modUICtrl ? 1 : 0);
 		return true;
 	}
 };
@@ -2752,7 +2773,7 @@ public:
 			"Save the game state to QuickSave.ssf (BROKEN)") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		game->SaveGame("Saves/QuickSave.ssf", true);
+		game->SaveGame("Saves/QuickSave.ssf", true, true);
 		return true;
 	}
 };
@@ -2781,17 +2802,33 @@ public:
 /// /save [-y ]<savename>
 class SaveActionExecutor : public IUnsyncedActionExecutor {
 public:
-	SaveActionExecutor() : IUnsyncedActionExecutor("Save",
-			"Save the game state to a specific file (BROKEN)") {}
+	SaveActionExecutor(bool _usecreg) : IUnsyncedActionExecutor((_usecreg ? "Save" : "LuaSave"),
+			"Save the game state to a specific file, add -y to overwrite when file is already present"),
+			usecreg(_usecreg) {}
 
 	bool Execute(const UnsyncedAction& action) const {
-
-		const bool saveOverride = action.GetArgs().find("-y ") == 0;
-		const std::string saveName(action.GetArgs().c_str() + (saveOverride ? 3 : 0));
-		const std::string saveFileName = "Saves/" + saveName + ".ssf";
-		game->SaveGame(saveFileName, saveOverride);
+		const std::vector<std::string>& args = _local_strSpaceTokenize(action.GetArgs());
+		bool overwrite = false;
+		std::string saveFileName;
+		switch (args.size()) {
+			case 2:
+				overwrite = args[1] == "-y";
+				//no break, fall through
+			case 1:
+				saveFileName = "Saves/" + args[0];
+				if (usecreg)
+					saveFileName += ".ssf";
+				else
+					saveFileName += ".slsf";
+				break;
+			default:
+				return false;
+		}
+		game->SaveGame(saveFileName, overwrite, usecreg);
 		return true;
 	}
+private:
+	bool usecreg;
 };
 
 
@@ -3093,6 +3130,7 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new FullscreenActionExecutor());
 	AddActionExecutor(new IncreaseViewRadiusActionExecutor());
 	AddActionExecutor(new DecreaseViewRadiusActionExecutor());
+	AddActionExecutor(new GroundDetailActionExecutor());
 	AddActionExecutor(new MoreTreesActionExecutor());
 	AddActionExecutor(new LessTreesActionExecutor());
 	AddActionExecutor(new MoreCloudsActionExecutor());
@@ -3162,7 +3200,8 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new SendActionExecutor());
 	AddActionExecutor(new SaveGameActionExecutor());
 	AddActionExecutor(new DumpStateActionExecutor());
-	AddActionExecutor(new SaveActionExecutor());
+	AddActionExecutor(new SaveActionExecutor(true));
+	AddActionExecutor(new SaveActionExecutor(false));
 	AddActionExecutor(new ReloadGameActionExecutor());
 	AddActionExecutor(new ReloadShadersActionExecutor());
 	AddActionExecutor(new DebugInfoActionExecutor());

@@ -4,7 +4,6 @@
 #define COB_THREAD_H
 
 #include "CobInstance.h"
-#include "System/Object.h"
 #include "Lua/LuaRules.h"
 
 #include <string>
@@ -16,10 +15,14 @@ class CCobInstance;
 using std::vector;
 
 
-class CCobThread : public CObject, public CUnitScript::IAnimListener
+class CCobThread
 {
+	CR_DECLARE_STRUCT(CCobThread)
+	CR_DECLARE_SUB(CallInfo)
 public:
-	CCobThread(CCobFile& script, CCobInstance* owner);
+	//creg only
+	CCobThread();
+	CCobThread(CCobInstance* owner);
 	/// Inform the vultures that we finally croaked
 	~CCobThread();
 
@@ -37,8 +40,7 @@ public:
 	 * Sets a callback that will be called when the thread dies.
 	 * There can be only one.
 	 */
-	void SetCallback(CBCobThreadFinish cb, void* p1, void* p2);
-	void DependentDied(CObject* o);
+	void SetCallback(CCobInstance::ThreadCallbackType cb, int cbp);
 	/**
 	 * @brief Checks whether the stack has at least size items.
 	 * @returns min(size, stack.size())
@@ -56,41 +58,43 @@ public:
 	 * interpreter.
 	 */
 	void ShowError(const std::string& msg);
+	void AnimFinished(CUnitScript::AnimType type, int piece, int axis);
 
+	int GetRetCode() const { return retCode; }
+	bool IsWaiting() const { return (waitAxis != -1); }
+
+	CCobInstance* owner;
 protected:
 	std::string GetOpcodeName(int opcode);
 	void LuaCall();
-	// implementation of IAnimListener
-	void AnimFinished(CUnitScript::AnimType type, int piece, int axis);
 
 	inline int POP();
-
-
-	CCobFile& script;
-	CCobInstance* owner;
 
 	int wakeTime;
 	int PC;
 	vector<int> stack;
-	vector<int> execTrace;
+	//vector<int> execTrace;
 
 	int paramCount;
 	int retCode;
 
 	int luaArgs[MAX_LUA_COB_ARGS];
 
-	struct callInfo {
+	struct CallInfo {
+		CR_DECLARE_STRUCT(CallInfo)
 		int functionId;
 		int returnAddr;
-		size_t stackTop;
+		int stackTop;
 	};
-	vector<struct callInfo> callStack;
+	vector<CallInfo> callStack;
 
-	CBCobThreadFinish callback;
-	void* cbParam1;
-	void* cbParam2;
+	CCobInstance::ThreadCallbackType cbType;
+	int cbParam;
+
 
 public:
+	int waitAxis;
+	int waitPiece;
 	enum State {Init, Sleep, Run, Dead, WaitTurn, WaitMove};
 	State state;
 	int signalMask;

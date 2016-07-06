@@ -7,25 +7,20 @@
 
 #include <string>
 #include <vector>
-#include <list>
 
-#include "System/Object.h"
 #include "Rendering/Models/3DModel.h"
+#include "System/creg/creg_cond.h"
 
 
 class CUnit;
 class CPlasmaRepulser;
 
-
-class CUnitScript : public CObject
+class CUnitScript
 {
+	CR_DECLARE(CUnitScript)
+	CR_DECLARE_SUB(AnimInfo)
 public:
 	enum AnimType {ANone = -1, ATurn = 0, ASpin = 1, AMove = 2};
-
-	struct IAnimListener {
-		virtual ~IAnimListener() {}
-		virtual void AnimFinished(AnimType type, int piece, int axis) = 0;
-	};
 
 public:
 	static const int UNIT_VAR_COUNT   = 8;
@@ -43,50 +38,36 @@ public:
 	static const int ALLY_VAR_END   = ALLY_VAR_START   + ALLY_VAR_COUNT   - 1;
 	static const int GLOBAL_VAR_END = GLOBAL_VAR_START + GLOBAL_VAR_COUNT - 1;
 
-	static void InitVars(int numTeams, int numAllyTeams);
-
-public:
-	static const int* GetTeamVars(int team) { return &teamVars[team][0]; }
-	static const int* GetAllyVars(int ally) { return &allyVars[ally][0]; }
-	static const int* GetGlobalVars()       { return globalVars; }
-
-	const int* GetUnitVars() const { return unitVars; }
-protected:
-	static std::vector< std::vector<int> > teamVars;
-	static std::vector< std::vector<int> > allyVars;
-	static int globalVars[GLOBAL_VAR_COUNT];
-
-	int unitVars[UNIT_VAR_COUNT];
-
 protected:
 	CUnit* unit;
 	bool busy;
 
 	struct AnimInfo {
-		AnimType type;
+		CR_DECLARE_STRUCT(AnimInfo)
 		int axis;
 		int piece;
 		float speed;
 		float dest;     // means final position when turning or moving, final speed when spinning
 		float accel;    // used for spinning, can be negative
 		bool done;
-		std::list<IAnimListener*> listeners;
+		bool hasWaiting;
 	};
 
-	std::list<AnimInfo*> anims[AMove + 1];
+	typedef std::vector<AnimInfo> AnimContainerType;
+	typedef AnimContainerType::iterator AnimContainerTypeIt;
+
+	AnimContainerType anims[AMove + 1];
 
 	bool hasSetSFXOccupy;
 	bool hasRockUnit;
 	bool hasStartBuilding;
 
-	void UnblockAll(AnimInfo* anim);
-
 	bool MoveToward(float& cur, float dest, float speed);
 	bool TurnToward(float& cur, float dest, float speed);
 	bool DoSpin(float& cur, float dest, float& speed, float accel, int divisor);
 
-	std::list<AnimInfo*>::iterator FindAnim(AnimType anim, int piece, int axis);
-	void RemoveAnim(AnimType type, const std::list<AnimInfo*>::iterator& animInfoIt);
+	AnimContainerTypeIt FindAnim(AnimType type, int piece, int axis);
+	void RemoveAnim(AnimType type, const AnimContainerTypeIt& animInfoIt);
 	void AddAnim(AnimType type, int piece, int axis, float speed, float dest, float accel);
 
 	virtual void ShowScriptError(const std::string& msg) = 0;
@@ -139,7 +120,7 @@ public:
 	const CUnit* GetUnit() const { return unit; }
 
 	bool Tick(int deltaTime);
-	void TickAnims(int deltaTime, AnimType type, std::list< std::list<AnimInfo*>::iterator >& doneAnims);
+	void TickAnims(int deltaTime, AnimType type, std::vector<AnimInfo>& doneAnims);
 
 	// animation, used by CCobThread
 	void Spin(int piece, int axis, float speed, float accel);
@@ -149,7 +130,7 @@ public:
 	void MoveNow(int piece, int axis, float destination);
 	void TurnNow(int piece, int axis, float destination);
 
-	bool AddAnimListener(AnimType type, int piece, int axis, IAnimListener* listener);
+	bool NeedsWait(AnimType type, int piece, int axis);
 
 	// misc, used by CCobThread and callouts for Lua unitscripts
 	void SetVisibility(int piece, bool visible);
@@ -168,7 +149,6 @@ public:
 	bool HaveAnimations() const {
 		return (!anims[ATurn].empty() || !anims[ASpin].empty() || !anims[AMove].empty());
 	}
-	inline bool HaveListeners() const;
 
 	// checks for callin existence
 	bool HasSetSFXOccupy () const { return hasSetSFXOccupy; }
@@ -225,17 +205,7 @@ public:
 	virtual void  Shot(int weaponNum) = 0;
 	virtual bool  BlockShot(int weaponNum, const CUnit* targetUnit, bool userTarget) = 0; // returns whether shot should be blocked
 	virtual float TargetWeight(int weaponNum, const CUnit* targetUnit) = 0; // returns target weight
+	virtual void AnimFinished(AnimType type, int piece, int axis) = 0;
 };
-
-inline bool CUnitScript::HaveListeners() const {
-	for (int animType = ATurn; animType <= AMove; animType++) {
-		for (std::list<AnimInfo *>::const_iterator i = anims[animType].begin(); i != anims[animType].end(); ++i) {
-			if (!(*i)->listeners.empty()) {
-				return true;
-			}
-		}
-	}
-	return false;
-}
 
 #endif // UNIT_SCRIPT_H

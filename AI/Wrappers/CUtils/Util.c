@@ -646,7 +646,8 @@ bool util_makeDir(const char* dirPath, bool recursive) {
 }
 
 bool util_getParentDir(char* path) {
-
+	if (path == NULL)
+		return false;
 	util_removeTrailingSlash(path);
 
 	char* ptr = strrchr(path, '/'); // search char from end reverse

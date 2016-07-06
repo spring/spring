@@ -1,2 +1,2 @@
 For build instructions, see the wiki page:
-http://springrts.com/wiki/Building_spring
+https://springrts.com/wiki/Building_spring

@@ -1,7 +1,11 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "RectangleOptimizer.h"
+#ifdef RO_USE_DEQUE_CONTAINER
+#include "System/creg/STL_Deque.h"
+#else
 #include "System/creg/STL_List.h"
+#endif
 #include "System/Log/ILog.h"
 
 #include <cassert>
@@ -69,7 +73,12 @@ void CRectangleOptimizer::StageMerge()
 	CRectangleOptimizer::iterator it;
 	CRectangleOptimizer::iterator jt;
 
+	#ifdef RO_USE_DEQUE_CONTAINER
+	std::sort(rectangles.begin(), rectangles.end());
+	#else
 	rectangles.sort();
+	#endif
+
 	for (it = rectangles.begin(); it != rectangles.end(); ++it) {
 		for (jt = it, ++jt; jt != rectangles.end(); ++jt) {
 			const bool del = HandleMerge(*it, *jt);

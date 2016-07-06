@@ -23,9 +23,9 @@ CUnitScript* CUnitScriptFactory::CreateScript(const std::string& name, CUnit* un
 	CUnitScript* script = NULL;
 
 	if (ext == "cob") {
-		CCobFile* file = GCobFileHandler.GetCobFile(name);
+		CCobFile* file = cobFileHandler->GetCobFile(name);
 		if (file) {
-			script = new CCobInstance(*file, unit);
+			script = new CCobInstance(file, unit);
 		} else {
 			LOG_L(L_WARNING, "Could not load COB script for unit \"%s\" from: %s", unit->unitDef->name.c_str(), name.c_str());
 		}

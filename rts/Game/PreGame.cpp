@@ -110,10 +110,10 @@ void CPreGame::LoadDemo(const std::string& demo)
 	ReadDataFromDemo(demo);
 }
 
-void CPreGame::LoadSavefile(const std::string& save)
+void CPreGame::LoadSavefile(const std::string& save, bool usecreg)
 {
 	assert(clientSetup->isHost);
-	savefile = ILoadSaveHandler::Create();
+	savefile = ILoadSaveHandler::Create(usecreg);
 	savefile->LoadGameStartInfo(save.c_str());
 
 	StartServer(savefile->scriptText);
@@ -228,8 +228,11 @@ void CPreGame::StartServer(const std::string& setupscript)
 
 	const std::string& modArchive = archiveScanner->ArchiveFromName(startGameSetup->modName);
 	const std::string& mapArchive = archiveScanner->ArchiveFromName(startGameSetup->mapName);
-	startGameData->SetModChecksum(archiveScanner->GetArchiveCompleteChecksum(modArchive));
-	startGameData->SetMapChecksum(archiveScanner->GetArchiveCompleteChecksum(mapArchive));
+	const auto modChecksum = archiveScanner->GetArchiveCompleteChecksum(modArchive);
+	const auto mapChecksum = archiveScanner->GetArchiveCompleteChecksum(mapArchive);
+	startGameData->SetModChecksum(modChecksum);
+	startGameData->SetMapChecksum(mapChecksum);
+	LOG("Checksums: game=0x%X map=0x%X", modChecksum, mapChecksum);
 
 	good_fpu_control_registers("before CGameServer creation");
 	startGameData->SetSetupText(startGameSetup->setupText);

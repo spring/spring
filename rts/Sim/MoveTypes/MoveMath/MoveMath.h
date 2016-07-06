@@ -62,6 +62,9 @@ public:
 	static bool IsNonBlocking(const MoveDef& colliderMD, const CSolidObject* collidee, const CSolidObject* collider);
 	static bool IsNonBlocking(const CSolidObject* collidee, const CSolidObject* collider);
 
+	// check how this unit blocks its squares
+	static BlockType ObjectBlockType(const MoveDef& moveDef, const CSolidObject* collidee, const CSolidObject* collider);
+
 	// checks if a single square is accessable for any object which uses the given MoveDef
 	static BlockType SquareIsBlocked(const MoveDef& moveDef, int xSquare, int zSquare, const CSolidObject* collider);
 	static BlockType SquareIsBlocked(const MoveDef& moveDef, const float3& pos, const CSolidObject* collider) {

@@ -9,7 +9,7 @@
 #include "Rendering/Textures/TextureAtlas.h"
 
 
-CR_BIND_DERIVED(CMuzzleFlame, CProjectile, (ZeroVector, ZeroVector, ZeroVector, 0))
+CR_BIND_DERIVED(CMuzzleFlame, CProjectile, )
 
 CR_REG_METADATA(CMuzzleFlame,(
 	CR_MEMBER(size),
@@ -18,6 +18,7 @@ CR_REG_METADATA(CMuzzleFlame,(
 	CR_MEMBER(numSmoke),
 	CR_MEMBER(randSmokeDir)
 ))
+
 
 CMuzzleFlame::CMuzzleFlame(const float3& pos, const float3& speed, const float3& dir, float size):
 	CProjectile(pos, speed, NULL, false, false, false),

@@ -24,7 +24,7 @@
 #include "Rendering/Textures/3DOTextureHandler.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
 #include "Sim/Features/FeatureDef.h"
-#include "Sim/Features/FeatureHandler.h"
+#include "Sim/Features/FeatureDefHandler.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/UnitDefImage.h"
@@ -109,18 +109,19 @@ static const std::unordered_map<std::string, LuaMatTexture::Type> luaMatTexTypeM
 };
 
 static const std::unordered_map<std::string, LuaMatrixType> luaMatrixTypeMap = {
-	{"shadow", LUAMATRICES_SHADOW},
-	{"view", LUAMATRICES_VIEW},
-	{"viewinverse", LUAMATRICES_VIEWINVERSE},
-	{"projection", LUAMATRICES_PROJECTION},
-	{"projectioninverse", LUAMATRICES_PROJECTIONINVERSE},
-	{"viewprojection", LUAMATRICES_VIEWPROJECTION},
+	{"view",                  LUAMATRICES_VIEW                 },
+	{"projection",            LUAMATRICES_PROJECTION           },
+	{"viewprojection",        LUAMATRICES_VIEWPROJECTION       },
+	{"viewinverse",           LUAMATRICES_VIEWINVERSE          },
+	{"projectioninverse",     LUAMATRICES_PROJECTIONINVERSE    },
 	{"viewprojectioninverse", LUAMATRICES_VIEWPROJECTIONINVERSE},
-	{"billboard", LUAMATRICES_BILLBOARD},
+	{"billboard",             LUAMATRICES_BILLBOARD            },
+	{"shadow",                LUAMATRICES_SHADOW               },
+
 	// backward compability
-	{"camera", LUAMATRICES_VIEW},
-	{"caminv", LUAMATRICES_VIEWINVERSE},
-	{"camprj", LUAMATRICES_PROJECTION},
+	{"camera",    LUAMATRICES_VIEW             },
+	{"camprj",    LUAMATRICES_PROJECTION       },
+	{"caminv",    LUAMATRICES_VIEWINVERSE      },
 	{"camprjinv", LUAMATRICES_PROJECTIONINVERSE},
 };
 
@@ -196,7 +197,7 @@ S3DModel* ParseModel(int defID)
 	const SolidObjectDef* objectDef = nullptr;
 
 	if (defID < 0) {
-		objectDef = featureHandler->GetFeatureDefByID(-defID);
+		objectDef = featureDefHandler->GetFeatureDefByID(-defID);
 	} else {
 		objectDef = unitDefHandler->GetUnitDefByID(defID);
 	}
@@ -212,24 +213,25 @@ bool ParseTexture(const S3DModel* model, LuaMatTexture& texUnit, char texNum)
 	if (model == nullptr)
 		return false;
 
-	const unsigned int texType = model->textureType;
+	const int texType = model->textureType;
 
 	if (texType == 0)
 		return false;
 
-	const CS3OTextureHandler::S3oTex* stex = texturehandlerS3O->GetS3oTex(texType);
+	// note: textures are stored contiguously, so this pointer can not be leaked
+	const CS3OTextureHandler::S3OTexMat* stex = texturehandlerS3O->GetTexture(texType);
 
 	if (stex == nullptr)
 		return false;
 
 	if (texNum == '0') {
 		texUnit.type = LuaMatTexture::LUATEX_UNITTEXTURE1;
-		texUnit.data = reinterpret_cast<const void*>(stex);
+		texUnit.data = reinterpret_cast<const void*>(texType);
 		return true;
 	}
 	if (texNum == '1') {
 		texUnit.type = LuaMatTexture::LUATEX_UNITTEXTURE2;
-		texUnit.data = reinterpret_cast<const void*>(stex);
+		texUnit.data = reinterpret_cast<const void*>(texType);
 		return true;
 	}
 
@@ -485,10 +487,10 @@ GLuint LuaMatTexture::GetTextureID() const
 
 		// object model-textures
 		case LUATEX_UNITTEXTURE1: {
-			texID = (reinterpret_cast<const CS3OTextureHandler::S3oTex*>(data))->tex1;
+			texID = texturehandlerS3O->GetTexture(*reinterpret_cast<const int*>(&data))->tex1;
 		} break;
 		case LUATEX_UNITTEXTURE2: {
-			texID = (reinterpret_cast<const CS3OTextureHandler::S3oTex*>(data))->tex2;
+			texID = texturehandlerS3O->GetTexture(*reinterpret_cast<const int*>(&data))->tex2;
 		} break;
 		case LUATEX_3DOTEXTURE: {
 			if (texturehandler3DO != nullptr) {
@@ -529,7 +531,7 @@ GLuint LuaMatTexture::GetTextureID() const
 
 		case LUATEX_SHADOWMAP: {
 			if (shadowHandler != nullptr) {
-				texID = shadowHandler->shadowTexture;
+				texID = shadowHandler->GetShadowTextureID();
 			}
 		} break;
 		case LUATEX_HEIGHTMAP: {
@@ -706,18 +708,29 @@ void LuaMatTexture::Bind() const
 
 	if (texID != 0) {
 		glBindTexture(texType, texID);
-		if (enable && (texType == GL_TEXTURE_2D)) {
-			glEnable(GL_TEXTURE_2D);
+
+		// do not enable cubemap samplers here (not
+		// needed for shaders, not wanted otherwise)
+		if (enable) {
+			switch (texType) {
+				case GL_TEXTURE_2D:           {   glEnable(texType);   } break;
+				case GL_TEXTURE_CUBE_MAP_ARB: { /*glEnable(texType);*/ } break;
+				default:                      {                        } break;
+			}
 		}
-	} else if (!enable && (texType == GL_TEXTURE_2D)) {
-		glDisable(GL_TEXTURE_2D);
 	}
 
-	if (enableTexParams && type == LUATEX_SHADOWMAP) {
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC_ARB, GL_LEQUAL);
-		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
+	else if (!enable) {
+		switch (texType) {
+			case GL_TEXTURE_2D:           {   glDisable(texType);   } break;
+			case GL_TEXTURE_CUBE_MAP_ARB: { /*glDisable(texType);*/ } break;
+			default:                      {                         } break;
+		}
 	}
+
+	if (enableTexParams && type == LUATEX_SHADOWMAP)
+		shadowHandler->SetupShadowTexSamplerRaw();
+
 }
 
 
@@ -726,17 +739,17 @@ void LuaMatTexture::Unbind() const
 	if (type == LUATEX_NONE)
 		return;
 
-	if (enableTexParams && type == LUATEX_SHADOWMAP) {
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);
-		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
-	}
+	if (enableTexParams && type == LUATEX_SHADOWMAP)
+		shadowHandler->ResetShadowTexSamplerRaw();
 
 	if (!enable)
 		return;
 
-	const GLuint texType = GetTextureTarget();
-	if (texType == GL_TEXTURE_2D)
-		glDisable(GL_TEXTURE_2D);
+	switch (GetTextureTarget()) {
+		case GL_TEXTURE_2D:           {   glDisable(GL_TEXTURE_2D);             } break;
+		case GL_TEXTURE_CUBE_MAP_ARB: { /*glDisable(GL_TEXTURE_CUBE_MAP_ARB);*/ } break;
+		default:                      {                                         } break;
+	}
 }
 
 
@@ -760,11 +773,11 @@ int2 LuaMatTexture::GetSize() const
 
 
 		case LUATEX_UNITTEXTURE1: {
-			const auto stex = reinterpret_cast<const CS3OTextureHandler::S3oTex*>(data);
+			const auto stex = texturehandlerS3O->GetTexture(*reinterpret_cast<const int*>(&data));
 			return int2(stex->tex1SizeX, stex->tex1SizeY);
 		} break;
 		case LUATEX_UNITTEXTURE2: {
-			const auto stex = reinterpret_cast<const CS3OTextureHandler::S3oTex*>(data);
+			const auto stex = texturehandlerS3O->GetTexture(*reinterpret_cast<const int*>(&data));
 			return int2(stex->tex2SizeX, stex->tex2SizeY);
 		} break;
 		case LUATEX_3DOTEXTURE: {
@@ -902,23 +915,25 @@ int2 LuaMatTexture::GetSize() const
 
 void LuaMatTexture::Finalize()
 {
-	//if (type == LUATEX_NONE) {
-	//	enable = false;
-	//}
+	// enable &= (type != LUATEX_NONE);
+	enableTexParams = true;
 }
 
 
 int LuaMatTexture::Compare(const LuaMatTexture& a, const LuaMatTexture& b)
 {
-	if (a.type != b.type) {
+	if (a.type != b.type)
 		return (a.type < b.type) ? -1 : +1;
-	}
-	if (a.data != b.data) {
+
+	if (a.data != b.data)
 		return (a.data < b.data) ? -1 : +1;
-	}
-	if (a.enable != b.enable) {
+
+	if (a.enable != b.enable)
 		return a.enable ? -1 : +1;
-	}
+
+	if (a.enableTexParams != b.enableTexParams)
+		return a.enableTexParams ? -1 : +1;
+
 	return 0;
 }
 

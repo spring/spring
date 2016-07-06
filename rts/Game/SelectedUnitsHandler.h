@@ -11,6 +11,7 @@
 #include <string>
 
 class CFeature;
+struct SCommandDescription;
 
 class CSelectedUnitsHandler : public CObject
 {
@@ -29,7 +30,7 @@ public:
 	void Draw();
 
 	struct AvailableCommandsStruct {
-		std::vector<CommandDescription> commands;
+		std::vector<SCommandDescription> commands;
 		int commandPage;
 	};
 	AvailableCommandsStruct GetAvailableCommands();

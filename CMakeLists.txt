@@ -90,15 +90,14 @@ INCLUDE(TestCXXFlags)
 ## 32bit or 64bit?
 set(MARCH_FLAG ${MARCH} CACHE STRING "CPU optimization (use i686 for generic optimization)")
 if    (CMAKE_SIZEOF_VOID_P EQUAL 8)
-	Message(STATUS "Building Spring for 64bit environment")
-	set(MARCH_BITS 64 INTERNAL)
-	if     (MINGW)
-		Message(WARNING "The 64bit version of spring on windows is experimental and may not sync with regular builds")
-	endif  (MINGW)
+	set(MARCH_BITS 64 CACHE INTERNAL "" FORCE)
 else  (CMAKE_SIZEOF_VOID_P EQUAL 8)
-	Message(STATUS "Building Spring for 32bit environment")
-	set(MARCH_BITS 32 INTERNAL)
+	set(MARCH_BITS 32 CACHE INTERNAL "" FORCE)
 endif (CMAKE_SIZEOF_VOID_P EQUAL 8)
+
+Message(STATUS "Building Spring on ${MARCH_BITS}bit environment")
+set(BUILD_BITS "${MARCH_BITS}" CACHE STRING "Target arch machine type")
+Message(STATUS "Targetting ${BUILD_BITS}bit")
 
 
 ### Install paths (relative to CMAKE_INSTALL_PREFIX)
@@ -122,11 +121,11 @@ else  (UNIX AND NOT MINGW)
 		if(MSVC)
 			set(MINGWLIBS ${CMAKE_SOURCE_DIR}/vclibs CACHE PATH "Location of the vclibs package")
 		else(MSVC)
-			if(MARCH_BITS EQUAL 32)
+			if(BUILD_BITS EQUAL 32)
 				set(MINGWLIBS ${CMAKE_SOURCE_DIR}/mingwlibs CACHE PATH "Location of the mingwlibs package")
-			else(MARCH_BITS EQUAL 32)
+			else(BUILD_BITS EQUAL 32)
 				set(MINGWLIBS ${CMAKE_SOURCE_DIR}/mingwlibs64 CACHE PATH "Location of the mingwlibs package")
-			endif(MARCH_BITS EQUAL 32)
+			endif(BUILD_BITS EQUAL 32)
 		endif(MSVC)
 	endif ()
 	if    (EXISTS "${MINGWLIBS}" AND IS_DIRECTORY "${MINGWLIBS}")
@@ -157,7 +156,7 @@ else  (UNIX AND NOT MINGW)
 	if(MSVC)
 		add_definitions(-DBOOST_ALL_NO_LIB -DNOMINMAX -DWIN32_LEAN_AND_MEAN)
 		set(Boost_USE_STATIC_LIBS ON)
-		#set(GLEW_STATIC ON)
+		set(GLEW_STATIC ON)
 		set(EXE_FLAGS WIN32)
 	endif()
 endif (UNIX AND NOT MINGW)
@@ -356,10 +355,6 @@ add_definitions(-D_RANDOM_TCC) # don't include <bits/random.tcc>, it fails to co
 
 ### our custom OpenMP replacement
 option(THREADPOOL "Enable ThreadPools" TRUE)
-if(MSVC)
-	message(WARNING "MSVC doesn't support THREADPOOL, disabled!")
-	set(THREADPOOL FALSE CACHE BOOL "" FORCE)
-endif()
 if (THREADPOOL)
 	add_definitions(-DTHREADPOOL)
 endif(THREADPOOL)
@@ -375,12 +370,7 @@ if(NOT MSVC)
 
 
 	### CompileTime Warnings
-	set(COMMON_WARNINGS "")
-	if    (NOT OPENMP)
-		# disable warnings about unknown pragmas because of:
-		# "#pragma omp parallel for *"
-		set(COMMON_WARNINGS "${COMMON_WARNINGS} -Wno-unknown-pragmas")
-	endif (NOT OPENMP)
+	set(COMMON_WARNINGS "${COMMON_WARNINGS} -Wformat -Wformat-security")
 
 	option(DEBUG_MAX_WARNINGS "Enable verbose compile" ${DEBUG_BUILD})
 	if    (DEBUG_MAX_WARNINGS)
@@ -437,10 +427,24 @@ else   (MSVC)
 	Message(WARNING "unknown compiler")
 endif ($ENV{CXX} MATCHES "icpc")
 
+set(CXX_DEBUG_DEFINES          "-DDEBUG -D_DEBUG -DNO_CATCH_EXCEPTIONS")
+set(CXX_RELWITHDEBINFO_DEFINES "-DNDEBUG")
+set(CXX_RELEASE_DEFINES        "-DNDEBUG")
+set(CXX_PROFILE_DEFINES        "-DNDEBUG -DPROFILE")
 
 #### build types
 if    (MSVC)
 	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /LARGEADDRESSAWARE")
+	set(MSVC_CXX_FLAGS "/wd4146 /wd4711")
+
+	set(CMAKE_CXX_FLAGS_DEBUG           "${CMAKE_CXX_FLAGS_DEBUG}                       /MP ${MSVC_CXX_FLAGS} ${CXX_DEBUG_DEFINES}")
+	set(CMAKE_CXX_FLAGS_RELWITHDEBINFO  "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} /O2 /Ob2 /GL /MP ${MSVC_CXX_FLAGS} ${CXX_RELWITHDEBINFO_DEFINES}")
+	set(CMAKE_CXX_FLAGS_RELEASE         "${CMAKE_CXX_FLAGS_RELEASE}        /O2 /Ob2 /GL /MP ${MSVC_CXX_FLAGS} ${CXX_RELEASE_DEFINES}")
+	set(CMAKE_CXX_FLAGS_PROFILE         "${CMAKE_CXX_FLAGS_PROFILE}        /O2 /Ob2 /GL /MP ${MSVC_CXX_FLAGS} ${CXX_PROFILE_DEFINES}")
+	
+	set(CMAKE_EXE_LINKER_FLAGS_RELEASE        "${CMAKE_EXE_LINKER_FLAGS_RELEASE}        /LTCG")
+	set(CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO "${CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO} /LTCG")
+	set(CMAKE_CXX_FLAGS_PROFILE               "${CMAKE_CXX_FLAGS_PROFILE} /LTCG")
 else  (MSVC)
 	if (CMAKE_COMPILER_IS_GNUCXX)
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsingle-precision-constant -frounding-math")
@@ -455,24 +459,31 @@ else  (MSVC)
 
 	add_definitions(-DBOOST_NO_FENV_H) # streflop overrides fenv.h
 
-	set(CMAKE_CXX_FLAGS_DEBUG           "${CXX_FLAGS_DEBUG_ADDITIONAL} -O0     ${DEBUG_WARNINGS}  -DDEBUG -D_DEBUG -DNO_CATCH_EXCEPTIONS")
-	set(CMAKE_CXX_FLAGS_RELWITHDEBINFO  "${CXX_FLAGS_DEBUG_ADDITIONAL} -O2     ${COMMON_WARNINGS} -DNDEBUG")
-	set(CMAKE_CXX_FLAGS_RELEASE         "                              -O2     ${COMMON_WARNINGS} -DNDEBUG")
-	set(CMAKE_CXX_FLAGS_PROFILE         "                              -O2 -pg ${DEBUG_WARNINGS}  -DNDEBUG -DPROFILE")
+	set(CMAKE_CXX_FLAGS_DEBUG           "${CXX_FLAGS_DEBUG_ADDITIONAL} -O0     ${DEBUG_WARNINGS}  ${CXX_DEBUG_DEFINES}")
+	set(CMAKE_CXX_FLAGS_RELWITHDEBINFO  "${CXX_FLAGS_DEBUG_ADDITIONAL} -O2     ${COMMON_WARNINGS} ${CXX_RELWITHDEBINFO_DEFINES}")
+	set(CMAKE_CXX_FLAGS_RELEASE         "                              -O2     ${COMMON_WARNINGS} ${CXX_RELEASE_DEFINES}")
+	set(CMAKE_CXX_FLAGS_PROFILE         "                              -O2 -pg ${DEBUG_WARNINGS}  ${CXX_PROFILE_DEFINES}")
 	set(CMAKE_MODULE_LINKER_FLAGS_PROFILE "-pg")
 	set(CMAKE_SHARED_LINKER_FLAGS_PROFILE "-pg")
 
 	set(CMAKE_CXX_FLAGS_DEBUG          "${CMAKE_CXX_FLAGS_DEBUG} -ggdb")
 	set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -g")
 
+	if (MARCH_BITS EQUAL 64 AND BUILD_BITS EQUAL 32)
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -m32")
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m32")
+	endif (MARCH_BITS EQUAL 64 AND BUILD_BITS EQUAL 32)
+
 	if     (MINGW)
 		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static -static-libgcc -static-libstdc++ -Wl,--enable-auto-import")
-		if    (MARCH_BITS EQUAL 32)
+		if    (BUILD_BITS EQUAL 32)
 			# Increase memory limit from 2GB to 3GB on 32bit Windows and 2GB->4GB on 64bit Windows (assuming spring.exe is 32bit)
 			# http://msdn.microsoft.com/en-us/library/windows/desktop/aa366778(v=vs.85).aspx
 			Message(STATUS "Enable IMAGE_FILE_LARGE_ADDRESS_AWARE (>2GB memory limit)")
 			set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--large-address-aware")
-		endif (MARCH_BITS EQUAL 32)
+		else (BUILD_BITS EQUAL 32)
+			Message(WARNING "The 64bit version of spring on windows is experimental and may not sync with regular builds")
+		endif (BUILD_BITS EQUAL 32)
 	endif  (MINGW)
 endif (MSVC)
 

@@ -56,6 +56,8 @@
 #include "Rendering/Textures/3DOTextureHandler.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
 #include "Sim/Features/Feature.h"
+#include "Sim/Features/FeatureDef.h"
+#include "Sim/Features/FeatureDefHandler.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Units/Unit.h"
@@ -1629,14 +1631,14 @@ int LuaOpenGL::FeatureTextures(lua_State* L)
 int LuaOpenGL::FeatureShape(lua_State* L)
 {
 	CheckDrawingEnabled(L, __FUNCTION__);
-	GLObjectShape(L, featureHandler->GetFeatureDefByID(luaL_checkint(L, 1)));
+	GLObjectShape(L, featureDefHandler->GetFeatureDefByID(luaL_checkint(L, 1)));
 	return 0;
 }
 
 int LuaOpenGL::FeatureShapeTextures(lua_State* L)
 {
 	CheckDrawingEnabled(L, __FUNCTION__);
-	GLObjectShapeTextures(L, featureHandler->GetFeatureDefByID(luaL_checkint(L, 1)));
+	GLObjectShapeTextures(L, featureDefHandler->GetFeatureDefByID(luaL_checkint(L, 1)));
 	return 0;
 }
 
@@ -3186,18 +3188,15 @@ int LuaOpenGL::Texture(lua_State* L)
 		luaL_error(L, "Incorrect arguments to gl.Texture()");
 	}
 
-	const string texture = lua_tostring(L, nextArg);
-
 	LuaMatTexture tex;
-	const bool loaded = LuaOpenGLUtils::ParseTextureImage(L, tex, texture);
+	const bool loaded = LuaOpenGLUtils::ParseTextureImage(L, tex, lua_tostring(L, nextArg));
 	if (loaded) {
 		tex.enable = true;
 		tex.Bind();
 	}
 
-	if (texUnit != GL_TEXTURE0) {
+	if (texUnit != GL_TEXTURE0)
 		glActiveTexture(GL_TEXTURE0);
-	}
 
 	lua_pushboolean(L, loaded);
 	return 1;

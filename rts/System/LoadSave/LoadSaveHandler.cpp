@@ -9,12 +9,9 @@
 #include "System/FileSystem/FileSystem.h"
 
 
-CONFIG(bool, UseCREGSaveLoad).defaultValue(false);
-
-
-ILoadSaveHandler* ILoadSaveHandler::Create()
+ILoadSaveHandler* ILoadSaveHandler::Create(bool usecreg)
 {
-	if (configHandler->GetBool("UseCREGSaveLoad"))
+	if (usecreg)
 		return new CCregLoadSaveHandler();
 	else
 		return new CLuaLoadSaveHandler();
@@ -28,9 +25,8 @@ ILoadSaveHandler::~ILoadSaveHandler()
 
 std::string ILoadSaveHandler::FindSaveFile(const std::string& file)
 {
-	if (!FileSystem::IsAbsolutePath(file)) {
-		return FileSystem::EnsurePathSepAtEnd("Saves") + file;
+	if (FileSystem::FileExists(file)) {
+		return file;
 	}
-
-	return file;
+	return FileSystem::EnsurePathSepAtEnd("Saves") + file;
 }

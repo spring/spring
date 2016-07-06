@@ -43,7 +43,6 @@ private:
 	void CreateGranTexBranch(const float3& start, const float3& end);
 	void CreateGranTex(unsigned char* data, int xpos, int ypos, int xsize);
 	void PineTree(int numBranch, float height);
-	float fRand(float size);
 	void CreateLeafTex(unsigned int baseTex, int xpos, int ypos, unsigned char buf[256][2048][4]);
 };
 

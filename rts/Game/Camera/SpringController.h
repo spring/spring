@@ -4,7 +4,7 @@
 #define _SPRING_CONTROLLER_H
 
 #include "CameraController.h"
-
+#include "System/type2.h"
 
 class CSpringController : public CCameraController
 {
@@ -19,11 +19,11 @@ public:
 	void MouseWheelMove(float move);
 
 	void Update();
+	void SetPos(const float3& newPos) { pos = newPos; Update(); }
 	float3 GetPos() const;
-	void SetPos(const float3& newPos);
-	float3 GetRot() const;
+	float3 GetRot() const { return (float3(rot.x, GetAzimuth(), 0.0f)); }
 
-	float3 SwitchFrom() const;
+	float3 SwitchFrom() const { return pos; }
 	void SwitchTo(const int oldCam, const bool showText);
 
 	void GetState(StateMap& sm) const;
@@ -33,12 +33,19 @@ private:
 	float GetAzimuth() const;
 	float MoveAzimuth(float move);
 
+	inline float ZoomIn(const float3& curCamPos, const float2& zoomParams);
+	inline float ZoomOut(const float3& curCamPos, const float2& zoomParams);
+
 private:
 	float3 rot;
-	float dist;
-	float maxDist;
-	bool zoomBack;
+
+	float curDist; // current zoom-out distance
+	float maxDist; // maximum zoom-out distance
 	float oldDist;
+
+	bool zoomBack;
+	bool cursorZoomIn;
+	bool cursorZoomOut;
 };
 
 #endif // _SPRING_CONTROLLER_H

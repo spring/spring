@@ -4,15 +4,10 @@
 #define IMODELPARSER_H
 
 #include <unordered_map>
-#include <deque>
-
+#include <vector>
 #include <string>
-
 #include "System/Threading/SpringMutex.h"
 
-namespace boost {
-	class thread;
-};
 
 struct S3DModel;
 struct S3DModelPiece;
@@ -25,36 +20,22 @@ public:
 };
 
 
-struct LoadQueue {
-public:
-	LoadQueue(): thread(nullptr) {}
-	~LoadQueue();
-
-	void Pump();
-	void Push(const std::string& modelName);
-
-	void GrabLock() { mutex.lock(); }
-	void FreeLock() { mutex.unlock(); }
-
-private:
-	std::deque<std::string> queue;
-	spring::mutex mutex;
-	boost::thread* thread;
-};
 
 
 
-class C3DModelLoader
+class CModelLoader
 {
 public:
-	C3DModelLoader();
-	~C3DModelLoader();
+	static CModelLoader& GetInstance();
 
-	S3DModel* Load3DModel(std::string name, bool preload = false);
+	void Init();
+	void Kill();
 
+	S3DModel* LoadModel(std::string name, bool preload = false);
 	std::string FindModelPath(std::string name) const;
 
-	void Preload3DModel(const std::string& name) { loadQueue.Push(name); }
+	bool IsValid() const { return (!formats.empty()); }
+	void PreloadModel(const std::string& name);
 
 public:
 	typedef std::unordered_map<std::string, unsigned int> ModelMap; // "armflash.3do" --> id
@@ -62,11 +43,14 @@ public:
 	typedef std::unordered_map<unsigned int, IModelParser*> ParserMap; // MODELTYPE_3DO --> parser
 
 private:
-	S3DModel* LoadCached3DModel(const std::string& name, bool preload);
+	S3DModel* LoadCachedModel(const std::string& name, bool preload);
 	S3DModel* CreateModel(const std::string& name, const std::string& path, bool preload);
 	S3DModel* ParseModel(const std::string& name, const std::string& path);
 
 	IModelParser* GetFormatParser(const std::string& pathExt);
+
+	void KillModels();
+	void KillParsers();
 
 	void AddModelToCache(S3DModel* model, const std::string& name, const std::string& path);
 
@@ -77,13 +61,13 @@ private:
 	ModelMap cache;
 	FormatMap formats;
 	ParserMap parsers;
-	// preloading
-	LoadQueue loadQueue;
+
+	spring::mutex mutex;
 
 	// all unique models loaded so far
 	std::vector<S3DModel*> models;
 };
 
-extern C3DModelLoader* modelParser;
+#define modelLoader (CModelLoader::GetInstance())
 
 #endif /* IMODELPARSER_H */

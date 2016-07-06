@@ -77,7 +77,7 @@ void CSunLighting::Copy(const CSunLighting& sl) {
 		return;
 
 	// send event only if at least one value was changed for the global instance
-	eventHandler.SunLightingChanged();
+	eventHandler.SunChanged();
 }
 
 

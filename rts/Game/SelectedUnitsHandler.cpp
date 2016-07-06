@@ -103,9 +103,8 @@ CSelectedUnitsHandler::AvailableCommandsStruct CSelectedUnitsHandler::GetAvailab
 	std::map<int, int> states;
 
 	for (const CUnit* u: selectedUnits) {
-		const std::vector<CommandDescription>& c = u->commandAI->GetPossibleCommands();
-		for (const CommandDescription& cmdDesc: c) {
-			states[cmdDesc.id] = cmdDesc.disabled ? 2 : 1;
+		for (const SCommandDescription* cmdDesc: u->commandAI->GetPossibleCommands()) {
+			states[cmdDesc->id] = cmdDesc->disabled ? 2 : 1;
 		}
 		if (u->commandAI->lastSelectedCommandPage < commandPage) {
 			commandPage = u->commandAI->lastSelectedCommandPage;
@@ -126,41 +125,39 @@ CSelectedUnitsHandler::AvailableCommandsStruct CSelectedUnitsHandler::GetAvailab
 		}
 	}
 
-	std::vector<CommandDescription> commands;
+	std::vector<SCommandDescription> commands;
 	// load the first set (separating build and non-build commands)
 	for (const CUnit* u: selectedUnits) {
-		const std::vector<CommandDescription>& c = u->commandAI->GetPossibleCommands();
-		for (const CommandDescription& cmdDesc: c) {
+		for (const SCommandDescription* cmdDesc: u->commandAI->GetPossibleCommands()) {
 			if (buildIconsFirst) {
-				if (cmdDesc.id >= 0) { continue; }
+				if (cmdDesc->id >= 0) { continue; }
 			} else {
-				if (cmdDesc.id < 0)  { continue; }
+				if (cmdDesc->id < 0)  { continue; }
 			}
-			if (cmdDesc.showUnique && selectedUnits.size() > 1) {
+			if (cmdDesc->showUnique && selectedUnits.size() > 1) {
 				continue;
 			}
-			if (states[cmdDesc.id] > 0) {
-				commands.push_back(cmdDesc);
-				states[cmdDesc.id] = 0;
+			if (states[cmdDesc->id] > 0) {
+				commands.push_back(*cmdDesc);
+				states[cmdDesc->id] = 0;
 			}
 		}
 	}
 
 	// load the second set (all those that have not already been included)
 	for (const CUnit* u: selectedUnits) {
-		const std::vector<CommandDescription>& c = u->commandAI->GetPossibleCommands();
-		for (const CommandDescription& cmdDesc: c) {
+		for (const SCommandDescription* cmdDesc: u->commandAI->GetPossibleCommands()) {
 			if (buildIconsFirst) {
-				if (cmdDesc.id < 0)  { continue; }
+				if (cmdDesc->id < 0)  { continue; }
 			} else {
-				if (cmdDesc.id >= 0) { continue; }
+				if (cmdDesc->id >= 0) { continue; }
 			}
-			if (cmdDesc.showUnique && selectedUnits.size() > 1) {
+			if (cmdDesc->showUnique && selectedUnits.size() > 1) {
 				continue;
 			}
-			if (states[cmdDesc.id] > 0) {
-				commands.push_back(cmdDesc);
-				states[cmdDesc.id] = 0;
+			if (states[cmdDesc->id] > 0) {
+				commands.push_back(*cmdDesc);
+				states[cmdDesc->id] = 0;
 			}
 		}
 	}
@@ -497,6 +494,8 @@ void CSelectedUnitsHandler::SelectCycle(const std::string& command)
 
 void CSelectedUnitsHandler::Draw()
 {
+	SCOPED_GMARKER("CSelectedUnitsHandler::Draw");
+
 	glDisable(GL_TEXTURE_2D);
 	glDepthMask(false);
 	glDisable(GL_DEPTH_TEST);

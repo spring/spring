@@ -117,6 +117,8 @@ bool GetJREPathFromEnvVars(char* path, size_t pathSize, const char* arch)
 			if (found) {
 				simpleLog_logL(LOG_LEVEL_NOTICE, "JRE found in env var \"%s\"!", possLoc[l]);
 				goto locSearchEnd;
+			} else {
+				simpleLog_logL(LOG_LEVEL_WARNING, "Unusable JRE from env var \"%s\"=\"%s\"!", possLoc[l], envPath);
 			}
 		}
 	}

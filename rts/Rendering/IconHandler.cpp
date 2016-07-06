@@ -1,16 +1,16 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include "IconHandler.h"
+
 #include <algorithm>
 #include <assert.h>
 #include <locale>
 #include <cctype>
-#include <vector>
-#include <string>
+#include <cmath>
 
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
 #include "System/Log/ILog.h"
-#include "IconHandler.h"
 #include "Lua/LuaParser.h"
 #include "Textures/Bitmap.h"
 #include "System/Exceptions.h"
@@ -174,7 +174,7 @@ unsigned int CIconHandler::GetDefaultTexture()
 			const int index = ((y * 128) + x) * 4;
 			const int dx = (x - 64);
 			const int dy = (y - 64);
-			const float r = math::sqrt((dx * dx) + (dy * dy)) / 64.0f;
+			const float r = std::sqrt((dx * dx) + (dy * dy)) / 64.0f;
 			if (r > 1.0f) {
 				si[index + 0] = 0;
 				si[index + 1] = 0;

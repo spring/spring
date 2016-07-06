@@ -248,7 +248,7 @@ static LuaObjectMaterial* GetObjectMaterial(CSolidObject* obj, const string& mat
 
 /******************************************************************************/
 
-static void ParseShader(lua_State* L, const char* caller, int index, LuaMatShader& shader)
+static void ParseShader(lua_State* L, int index, LuaMatShader& shader)
 {
 	const LuaShaders& shaders = CLuaHandle::GetActiveShaders(L);
 
@@ -266,220 +266,59 @@ static void ParseShader(lua_State* L, const char* caller, int index, LuaMatShade
 	}
 }
 
-/*
-static GLuint ParseUnitTexture(const string& texture)
-{
-	if (texture.length() < 4)
-		return 0;
 
-	char* endPtr;
-	const char* startPtr = texture.c_str() + 1; // skip the '%'
-	const int id = (int)strtol(startPtr, &endPtr, 10);
-	if ((endPtr == startPtr) || (*endPtr != ':')) {
-		return 0;
-	}
-
-	endPtr++; // skip the ':'
-	if ( (startPtr-1)+texture.length() <= endPtr ) {
-		return 0; // ':' is end of string, but we expect '%num:0'
-	}
-
-	if (id == 0) {
-		if (*endPtr == '0') {
-			return texturehandler3DO->GetAtlasTex1ID();
-		}
-		else if (*endPtr == '1') {
-			return texturehandler3DO->GetAtlasTex2ID();
-		}
-		return 0;
-	}
-
-	S3DModel* model;
-
-	if (id < 0) {
-		const FeatureDef* fd = featureHandler->GetFeatureDefByID(-id);
-		if (fd == nullptr) {
-			return 0;
-		}
-		model = fd->LoadModel();
-	} else {
-		const UnitDef* ud = unitDefHandler->GetUnitDefByID(id);
-		if (ud == nullptr) {
-			return 0;
-		}
-		model = ud->LoadModel();
-	}
-
-	if (model == nullptr) {
-		return 0;
-	}
-
-	const unsigned int texType = model->textureType;
-	if (texType == 0) {
-		return 0;
-	}
-
-	const CS3OTextureHandler::S3oTex* stex = texturehandlerS3O->GetS3oTex(texType);
-	if (stex == nullptr) {
-		return 0;
-	}
-
-	if (*endPtr == '0') {
-		return stex->tex1;
-	}
-	else if (*endPtr == '1') {
-		return stex->tex2;
-	}
-
-	return 0;
-}
-*/
-
-static void ParseTexture(lua_State* L, const char* caller, int index,
-                        LuaMatTexture& texUnit)
-{
-	if (index < 0) {
+static void ParseTexture(lua_State* L, int index, LuaMatTexture& texUnit) {
+	if (index < 0)
 		index = lua_gettop(L) + index + 1;
-	}
 
 	if (lua_isstring(L, index)) {
-		const string texName = lua_tostring(L, index);
-		LuaOpenGLUtils::ParseTextureImage(L, texUnit, texName);
+		LuaOpenGLUtils::ParseTextureImage(L, texUnit, lua_tostring(L, index));
 		texUnit.enable = true;
 		return;
 	}
 
-	if (!lua_istable(L, index)) {
+	if (!lua_istable(L, index))
 		return;
-	}
 
 	const int table = (index > 0) ? index : (lua_gettop(L) + index + 1);
+
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-		if (!lua_israwstring(L, -2)) {
+		if (!lua_israwstring(L, -2))
 			continue;
-		}
+
 		const string key = StringToLower(lua_tostring(L, -2));
+
 		if (key == "tex") {
-			const string texName = lua_tostring(L, -1);
-			LuaOpenGLUtils::ParseTextureImage(L, texUnit, texName);
-		}
-		else if (key == "enable") {
-			if (lua_isboolean(L, -1)) {
-				texUnit.enable = lua_toboolean(L, -1);
-			}
-		}
-	}
-}
-
-
-static GLuint ParseDisplayList(lua_State* L, const char* caller, int index)
-{
-	if (lua_isnumber(L, index)) {
-		const unsigned int ilist = (unsigned int)luaL_checknumber(L, index);
-		const CLuaDisplayLists& displayLists = CLuaHandle::GetActiveDisplayLists(L);
-		return displayLists.GetDList(ilist);
-	}
-	return 0;
-}
-
-
-static LuaMatRef ParseMaterial(lua_State* L, const char* caller, int index,
-                               LuaMatType matType)
-{
-	if (!lua_istable(L, index)) {
-		return LuaMatRef();
-	}
-	LuaMaterial mat;
-	mat.type = matType;
-	const int table = index;
-	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-		if (!lua_israwstring(L, -2)) {
+			LuaOpenGLUtils::ParseTextureImage(L, texUnit, lua_tostring(L, -1));
+			texUnit.enable = true;
 			continue;
 		}
-		const string key = StringToLower(lua_tostring(L, -2));
 
-		if (key == "order") {
-			mat.order = luaL_checkint(L, -1);
-		}
-
-		else if (key == "standard_shader" || key == "shader") {
-			ParseShader(L, caller, -1, mat.shaders[LuaMatShader::LUASHADER_PASS_FWD]);
-		}
-		else if (key == "deferred_shader" || key == "deferred") {
-			ParseShader(L, caller, -1, mat.shaders[LuaMatShader::LUASHADER_PASS_DFR]);
-		}
-
-		else if (key == "texunits") {
-			if (lua_istable(L, -1)) {
-			  const int texTable = (int)lua_gettop(L);
-				for (lua_pushnil(L); lua_next(L, texTable) != 0; lua_pop(L, 1)) {
-					if (lua_israwnumber(L, -2)) {
-						const int texUnit = lua_toint(L, -2);
-						if ((texUnit >= 0) && (texUnit < LuaMatTexture::maxTexUnits)) {
-							ParseTexture(L, caller, -1, mat.textures[texUnit]);
-						}
-					}
-				}
-			}
-		}
-		else if (key.substr(0, 7) == "texunit") {
-			const int texUnit = atoi(key.c_str() + 7);
-			if ((texUnit >= 0) && (texUnit < LuaMatTexture::maxTexUnits)) {
-				ParseTexture(L, caller, -1, mat.textures[texUnit]);
-			}
-		}
-		else if (key == "prelist") {
-			mat.preList = ParseDisplayList(L, caller, -1);
-		}
-		else if (key == "postlist") {
-			mat.postList = ParseDisplayList(L, caller, -1);
-		}
-		else if (key == "usecamera") {
-			if (lua_isboolean(L, -1)) {
-				mat.useCamera = lua_toboolean(L, -1);
-			}
-		}
-		else if (key == "culling") {
-			if (lua_isnumber(L, -1)) {
-				mat.culling = (GLenum)lua_tonumber(L, -1);
-			}
-		}
-
-		else if (key == "cameraloc") {
-			if (lua_isnumber(L, -1)) {
-				mat.cameraLoc = (GLint)lua_tonumber(L, -1);
-			}
-		}
-		else if (key == "camerainvloc") {
-			if (lua_isnumber(L, -1)) {
-				mat.cameraInvLoc = (GLint)lua_tonumber(L, -1);
-			}
-		}
-		else if (key == "cameraposloc") {
-			if (lua_isnumber(L, -1)) {
-				mat.cameraPosLoc = (GLint)lua_tonumber(L, -1);
-			}
-		}
-
-		else if (key == "sunposloc") {
-			if (lua_isnumber(L, -1)) {
-				mat.sunPosLoc = (GLint)lua_tonumber(L, -1);
-			}
-		}
-		else if (key == "shadowloc") {
-			if (lua_isnumber(L, -1)) {
-				mat.shadowLoc = (GLint)lua_tonumber(L, -1);
-			}
-		}
-		else if (key == "shadowparamsloc") {
-			if (lua_isnumber(L, -1)) {
-				mat.shadowParamsLoc = (GLint)lua_tonumber(L, -1);
-			}
+		if (key == "enable") {
+			texUnit.enable = lua_isboolean(L, -1) && lua_toboolean(L, -1);
+			continue;
 		}
 	}
+}
 
+static GLuint ParseDisplayList(lua_State* L, int index)
+{
+	if (!lua_isnumber(L, index))
+		return 0;
+
+	const unsigned int ilist = (unsigned int)luaL_checknumber(L, index);
+	const CLuaDisplayLists& displayLists = CLuaHandle::GetActiveDisplayLists(L);
+	return displayLists.GetDList(ilist);
+}
+
+static LuaMatRef ParseMaterial(lua_State* L, int index, LuaMatType matType) {
+	if (!lua_istable(L, index))
+		return LuaMatRef();
+
+	LuaMaterial mat(matType);
+	mat.Parse(L, index, &ParseShader, &ParseTexture, &ParseDisplayList);
 	mat.Finalize();
-	return luaMatHandler.GetRef(mat);
+	return (luaMatHandler.GetRef(mat));
 }
 
 
@@ -490,16 +329,15 @@ int LuaObjectRenderingImpl::GetMaterial(lua_State* L)
 {
 	const LuaMatType matType = ParseMaterialType(luaL_checkstring(L, 1));
 
-	if (!lua_istable(L, 2)) {
+	if (!lua_istable(L, 2))
 		luaL_error(L, "Incorrect arguments to GetMaterial");
-	}
 
 	LuaMatRef** matRef = (LuaMatRef**) lua_newuserdata(L, sizeof(LuaMatRef*));
 	luaL_getmetatable(L, "MatRef");
 	lua_setmetatable(L, -2);
 
 	*matRef = new LuaMatRef;
-	**matRef = ParseMaterial(L, __FUNCTION__, 2, matType);
+	**matRef = ParseMaterial(L, 2, matType);
 
 	return 1;
 }
@@ -535,7 +373,7 @@ int LuaObjectRenderingImpl::SetMaterial(lua_State* L)
 			lodMat->matref = **matRef;
 		}
 	} else {
-		lodMat->matref = ParseMaterial(L, __FUNCTION__, 4, matType);
+		lodMat->matref = ParseMaterial(L, 4, matType);
 	}
 
 	return 0;
@@ -578,41 +416,11 @@ int LuaObjectRenderingImpl::SetMaterialDisplayLists(lua_State* L)
 	if (lodMat == nullptr)
 		return 0;
 
-	lodMat->preDisplayList  = ParseDisplayList(L, __FUNCTION__, 4);
-	lodMat->postDisplayList = ParseDisplayList(L, __FUNCTION__, 5);
+	lodMat->preDisplayList  = ParseDisplayList(L, 4);
+	lodMat->postDisplayList = ParseDisplayList(L, 5);
 	return 0;
 }
 
-
-int LuaObjectRenderingImpl::SetObjectUniform(lua_State* L)
-{
-	/*
-	// args=<objID, matName, lodLevel [, ...]>
-	CSolidObject* obj = ParseSolidObject(L, __FUNCTION__, 1, GetObjectType());
-
-	if (obj == nullptr)
-		return 0;
-
-	LuaObjectMaterial* objMat = GetObjectMaterial(obj, luaL_checkstring(L, 2));
-
-	if (objMat == nullptr)
-		return 0;
-
-	LuaObjectLODMaterial* lodMat = objMat->GetMaterial(luaL_checknumber(L, 3) - 1);
-
-	if (lodMat == nullptr)
-		return 0;
-
-	const int args = lua_gettop(L) - 3;
-	const int lastArg = std::min(args, lodMat->uniforms.customCount + 3);
-
-	for (int i = 3; i <= lastArg; i++) {
-		// FIXME: Set all lods at once?
-	}
-	*/
-
-	return 0;
-}
 
 /******************************************************************************/
 /******************************************************************************/
@@ -682,8 +490,8 @@ int LuaObjectRenderingImpl::Debug(lua_State* L)
 
 	LOG_L(L_DEBUG, "%s", "");
 	LOG_L(L_DEBUG, "ObjectID      = %i", obj->id);
-	LOG_L(L_DEBUG, "ObjectDefID   = %i", obj->objectDef->id);
-	LOG_L(L_DEBUG, "ObjectDefName = %s", obj->objectDef->name.c_str());
+	LOG_L(L_DEBUG, "ObjectDefID   = %i", obj->GetDef()->id);
+	LOG_L(L_DEBUG, "ObjectDefName = %s", obj->GetDef()->name.c_str());
 	LOG_L(L_DEBUG, "LodCount      = %i", lmd->GetLODCount());
 	LOG_L(L_DEBUG, "CurrentLod    = %i", lmd->GetCurrentLOD());
 	LOG_L(L_DEBUG, "%s", "");

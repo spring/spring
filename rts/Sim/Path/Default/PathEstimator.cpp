@@ -356,7 +356,7 @@ void CPathEstimator::CalculateVertex(
 	const float3 goalPos   = SquareToFloat3(childSquare.x, childSquare.y);
 
 	// keep search exactly contained within the two blocks
-	CRectangularSearchConstraint pfDef(startPos, goalPos, BLOCK_SIZE);
+	CRectangularSearchConstraint pfDef(startPos, goalPos, 0.0f, BLOCK_SIZE);
 
 	// we never want to allow searches from any blocked starting positions
 	// (otherwise PE and PF can disagree), but are more lenient for normal
@@ -376,9 +376,9 @@ void CPathEstimator::CalculateVertex(
 	// since CPathFinder::GetPath() is not thread-safe, use
 	// this thread's "private" CPathFinder instance (rather
 	// than locking pathFinder->GetPath()) if we are in one
-	pfDef.testMobile = false;
-	pfDef.needPath   = false;
-	pfDef.exactPath  = true;
+	pfDef.testMobile     = false;
+	pfDef.needPath       = false;
+	pfDef.exactPath      = true;
 	pfDef.dirIndependent = true;
 	IPath::Path path;
 	IPath::SearchResult result = pathFinders[threadNum]->GetPath(moveDef, pfDef, nullptr, startPos, path, MAX_SEARCHED_NODES_PF >> 2);
@@ -654,7 +654,8 @@ bool CPathEstimator::TestBlock(
 		return false;
 	}
 
-	if (testBlockPos == goalBlockPos) {
+	// constraintDisabled is a hackish way to make sure we don't check this in CalculateVertices
+	if (testBlockPos == goalBlockPos && peDef.needPath) {
 		IPath::Path path;
 
 		// if we have expanded the goal-block, check if a valid
@@ -664,19 +665,28 @@ bool CPathEstimator::TestBlock(
 		//
 		// const float3 gWorldPos = {            testBlockPos.x * BLOCK_PIXEL_SIZE * 1.0f, 0.0f,             testBlockPos.y * BLOCK_PIXEL_SIZE * 1.0f};
 		// const float3 sWorldPos = {parentOpenBlock->nodePos.x * BLOCK_PIXEL_SIZE * 1.0f, 0.0f, parentOpenBlock->nodePos.y * BLOCK_PIXEL_SIZE * 1.0f};
-		const float3 sWorldPos = {testBlockPos.x * BLOCK_PIXEL_SIZE * 1.0f, 0.0f, testBlockPos.y * BLOCK_PIXEL_SIZE * 1.0f};
+		const int idx = BlockPosToIdx(testBlockPos);
+		const int2 testSquare = blockStates.peNodeOffsets[moveDef.pathType][idx];
+
+		const float3 sWorldPos = SquareToFloat3(testSquare.x, testSquare.y);
 		const float3 gWorldPos = peDef.goal;
 
-		const CRectangularSearchConstraint searchCon = CRectangularSearchConstraint(sWorldPos, gWorldPos, BLOCK_SIZE); // sets goalSquare{X,Z}
-		const IPath::SearchResult searchRes = pathFinder->GetPath(moveDef, searchCon, owner, sWorldPos, path, MAX_SEARCHED_NODES_PF >> 2);
+		if (sWorldPos.SqDistance2D(gWorldPos) > peDef.sqGoalRadius) {
+			CRectangularSearchConstraint pfDef = CRectangularSearchConstraint(sWorldPos, gWorldPos, peDef.sqGoalRadius, BLOCK_SIZE); // sets goalSquare{X,Z}
+			pfDef.testMobile     = false;
+			pfDef.needPath       = false;
+			pfDef.exactPath      = true;
+			pfDef.dirIndependent = true;
+			const IPath::SearchResult searchRes = pathFinder->GetPath(moveDef, pfDef, owner, sWorldPos, path, MAX_SEARCHED_NODES_PF >> 3);
 
-		if (searchRes != IPath::Ok) {
-			// we cannot set PATHOPT_BLOCKED here either, result
-			// depends on direction of entry from the parent node
-			//
-			// blockStates.nodeMask[testBlockIdx] |= PATHOPT_BLOCKED;
-			// dirtyBlocks.push_back(testBlockIdx);
-			return false;
+			if (searchRes != IPath::Ok) {
+				// we cannot set PATHOPT_BLOCKED here either, result
+				// depends on direction of entry from the parent node
+				//
+				// blockStates.nodeMask[testBlockIdx] |= PATHOPT_BLOCKED;
+				// dirtyBlocks.push_back(testBlockIdx);
+				return false;
+			}
 		}
 	}
 
@@ -864,8 +874,9 @@ void CPathEstimator::WriteFile(const std::string& cacheFileName, const std::stri
 	zipWriteInFileInZip(file, (void*) &hash, 4);
 
 	// Write block-center-offsets.
-	for (int pathType = 0; pathType < moveDefHandler->GetNumMoveDefs(); ++pathType)
-		zipWriteInFileInZip(file, (void*) &blockStates.peNodeOffsets[pathType][0], blockStates.GetSize() * sizeof(short2));
+	for (int pathType = 0; pathType < moveDefHandler->GetNumMoveDefs(); ++pathType) {
+		zipWriteInFileInZip(file, (void*) &blockStates.peNodeOffsets[pathType][0], blockStates.peNodeOffsets[pathType].size() * sizeof(short2));
+	}
 
 	// Write vertices.
 	zipWriteInFileInZip(file, &vertexCosts[0], vertexCosts.size() * sizeof(float));
@@ -908,9 +919,19 @@ boost::uint32_t CPathEstimator::CalcChecksum() const
  */
 unsigned int CPathEstimator::Hash() const
 {
-	return readMap->CalcHeightmapChecksum() +
-	       readMap->CalcTypemapChecksum() +
-	       moveDefHandler->GetCheckSum() +
-	       groundBlockingObjectMap->CalcChecksum() +
+	unsigned int mapChecksum = readMap->CalcHeightmapChecksum();
+	LOG("[PathEstimator::%s] mapChecksum=%u", __FUNCTION__, mapChecksum);
+	unsigned int typeMapChecksum = readMap->CalcTypemapChecksum();
+	LOG("[PathEstimator::%s] typeMapChecksum=%u", __FUNCTION__, typeMapChecksum);
+	unsigned int moveDefChecksum = moveDefHandler->GetCheckSum();
+	LOG("[PathEstimator::%s] moveDefChecksum=%u", __FUNCTION__, moveDefChecksum);
+	unsigned int blockingChecksum = groundBlockingObjectMap->CalcChecksum();
+	LOG("[PathEstimator::%s] blockingChecksum=%u", __FUNCTION__, blockingChecksum);
+	LOG("[PathEstimator::%s] BLOCK_SIZE=%u", __FUNCTION__, BLOCK_SIZE);
+	LOG("[PathEstimator::%s] PATHESTIMATOR_VERSION=%u", __FUNCTION__, PATHESTIMATOR_VERSION);
+	return mapChecksum +
+	       typeMapChecksum +
+	       moveDefChecksum +
+	       blockingChecksum +
 	       BLOCK_SIZE + PATHESTIMATOR_VERSION;
 }

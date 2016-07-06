@@ -7,6 +7,7 @@
 #include <set>
 
 #include "System/Object.h"
+#include "CommandDescription.h"
 #include "CommandQueue.h"
 #include "System/float3.h"
 
@@ -23,8 +24,12 @@ public:
 	CCommandAI(CUnit* owner);
 	CCommandAI();
 	virtual ~CCommandAI();
-	void PostLoad() {}
+
 	void DependentDied(CObject* o);
+
+	static void InitCommandDescriptionCache();
+	static void KillCommandDescriptionCache();
+
 	inline void SetOrderTarget(CUnit* o);
 
 	void SetScriptMaxSpeed(float speed, bool persistent);
@@ -58,7 +63,7 @@ public:
 	void StopAttackingAllyTeam(int ally);
 
 	bool HasCommand(int cmdID) const;
-	bool HasMoreMoveCommands() const;
+	bool HasMoreMoveCommands(bool skipFirstCmd = true) const;
 
 	int CancelCommands(const Command& c, CCommandQueue& queue, bool& first);
 	/**
@@ -76,7 +81,7 @@ public:
 	std::vector<Command> GetOverlapQueued(const Command& c,
 	                                      CCommandQueue& queue);
 
-	const std::vector<CommandDescription>& GetPossibleCommands() const { return possibleCommands; }
+	const std::vector<const SCommandDescription*>& GetPossibleCommands() const { return possibleCommands; }
 
 	/**
 	 * @brief Causes this CommandAI to execute the attack order c
@@ -88,8 +93,9 @@ public:
 	 */
 	virtual void ExecuteStop(Command& c);
 
-	void UpdateCommandDescription(unsigned int cmdDescIdx, const CommandDescription& modCmdDesc);
-	void InsertCommandDescription(unsigned int cmdDescIdx, const CommandDescription& cmdDesc);
+	void UpdateCommandDescription(unsigned int cmdDescIdx, const Command& cmd);
+	void UpdateCommandDescription(unsigned int cmdDescIdx, const SCommandDescription& modCmdDesc);
+	void InsertCommandDescription(unsigned int cmdDescIdx, const SCommandDescription& cmdDesc);
 	bool RemoveCommandDescription(unsigned int cmdDescIdx);
 
 	void UpdateNonQueueingCommands();
@@ -109,7 +115,7 @@ public:
 
 	CWeapon* stockpileWeapon;
 
-	std::vector<CommandDescription> possibleCommands;
+	std::vector<const SCommandDescription*> possibleCommands;
 	std::set<int> nonQueingCommands;
 
 	CCommandQueue commandQue;

@@ -5,8 +5,6 @@
 
 #include <string>
 #include <vector>
-using std::string;
-using std::vector;
 
 #include "Rendering/GL/myGL.h"
 
@@ -21,7 +19,7 @@ class LuaShaders {
 		LuaShaders();
 		~LuaShaders();
 
-		string errorLog;
+		std::string errorLog;
 
 		GLuint GetProgramName(unsigned int progIdx) const;
 
@@ -40,15 +38,15 @@ class LuaShaders {
 		};
 
 		std::vector<Program> programs;
-		vector<unsigned int> unused; // references slots in programs
+		std::vector<unsigned int> unused; // references slots in programs
 
 	private:
 		unsigned int AddProgram(const Program& p);
-		void RemoveProgram(unsigned int progID);
+		bool RemoveProgram(unsigned int progIdx);
 		GLuint GetProgramName(lua_State* L, int index) const;
 
 	private:
-		static void DeleteProgram(Program& p);
+		static bool DeleteProgram(Program& p);
 
 	private:
 		// the call-outs

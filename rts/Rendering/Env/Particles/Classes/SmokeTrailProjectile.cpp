@@ -11,7 +11,7 @@
 #include "Rendering/Textures/TextureAtlas.h"
 #include "System/myMath.h"
 
-CR_BIND_DERIVED(CSmokeTrailProjectile, CProjectile, (NULL, ZeroVector, ZeroVector, ZeroVector, ZeroVector, false, false, 0.0f, 0, 0.0f, NULL))
+CR_BIND_DERIVED(CSmokeTrailProjectile, CProjectile, )
 
 CR_REG_METADATA(CSmokeTrailProjectile,(
 	CR_MEMBER(pos1),
@@ -32,9 +32,6 @@ CR_REG_METADATA(CSmokeTrailProjectile,(
 	CR_MEMBER(texture)
 ))
 
-//////////////////////////////////////////////////////////////////////
-// Construction/Destruction
-//////////////////////////////////////////////////////////////////////
 
 CSmokeTrailProjectile::CSmokeTrailProjectile(
 	const CUnit* owner,
@@ -112,14 +109,14 @@ void CSmokeTrailProjectile::Draw()
 
 	const SColor colBase(color, color, color, 1.f);
 
-	float a1 = (1.f - age * invLifeTime) * (0.7f + math::fabs(dif1.dot(dir1)));
+	float a1 = (1.f - age * invLifeTime) * (0.7f + std::fabs(dif1.dot(dir1)));
 	if (lastSegment) {
 		a1 = 0;
 	}
 	const float alpha1 = Clamp(a1, 0.f, 1.f);
 	const SColor col = colBase * alpha1;
 
-	float a2 = (1.f - (age + 8) * invLifeTime) * (0.7f + math::fabs(dif2.dot(dir2)));
+	float a2 = (1.f - (age + 8) * invLifeTime) * (0.7f + std::fabs(dif2.dot(dir2)));
 	if (firstSegment) {
 		a2 = 0;
 	}
@@ -135,7 +132,7 @@ void CSmokeTrailProjectile::Draw()
 		const float3 odir3 = (dif3.cross(middir)).ANormalize();
 		const float size3 = (0.2f + t) * orgSize;
 
-		const float a2 = (1.f - t) * (0.7f + math::fabs(dif3.dot(middir)));
+		const float a2 = (1.f - t) * (0.7f + std::fabs(dif3.dot(middir)));
 		const float alpha = Clamp(a2, 0.f, 1.f);
 		const SColor col3 = colBase * alpha;
 

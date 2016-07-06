@@ -245,7 +245,7 @@ void CSphereParticleSpawner::Init(const CUnit* owner, const float3& offset)
 		const float az = gu->RandFloat() * 2 * PI;
 		const float ay = (emitRot + emitRotSpread*gu->RandFloat()) * (PI / 180.0);
 
-		const float3 pspeed = ((up * emitMul.y) * math::cos(ay) - ((right * emitMul.x) * math::cos(az) - (forward * emitMul.z) * math::sin(az)) * math::sin(ay)) * (particleSpeed + (gu->RandFloat() * particleSpeedSpread));
+		const float3 pspeed = ((up * emitMul.y) * std::cos(ay) - ((right * emitMul.x) * std::cos(az) - (forward * emitMul.z) * std::sin(az)) * std::sin(ay)) * (particleSpeed + (gu->RandFloat() * particleSpeedSpread));
 
 		CGenericParticleProjectile* particle = new CGenericParticleProjectile(owner, pos + offset, pspeed);
 
