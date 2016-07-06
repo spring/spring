@@ -73,8 +73,7 @@ ${SEVENZIP} ${MIN_PORTABLE_ARCHIVE} ${INSTALLDIR}/* -xr!*.dbg &
 # TODO: remove creation of the zip package, when Zero-K Lobby switched to 7z (will save a lot of resources)
 # Update 2016/07/06 ZK is yet to support, so only stable releases will have a zipped archive,
 # and that's because we're feeling nice.
-# develop is temporary, to verify this works
-if [ "$OUTPUTDIR" == "win32" ] && [ x${BRANCH} = xdevelop ]; then
+if [ "$OUTPUTDIR" == "win32" ] && [ -z ${BRANCH} ]; then
 	(cd ${INSTALLDIR} && ${ZIP} ${MIN_PORTABLE_ZIP} * -x spring-headless.exe spring-dedicated.exe \*.dbg) &
 fi
 
