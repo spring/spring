@@ -13,5 +13,7 @@ set -e
 # boost
 #sudo add-apt-repository --yes ppa:boost-latest/ppa
 
-#sudo apt-get update -qq
+#libstreflop-dev
+sudo add-apt-repository --yes ppa:kip/streflop
+sudo apt-get update -qq
 

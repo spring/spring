@@ -15,3 +15,4 @@ sudo apt-get install -y libboost-thread1.55-dev libboost-regex1.55-dev libboost-
   libboost-program-options1.55-dev libboost-signals1.55-dev libboost-chrono1.55-dev \
   libboost-filesystem1.55-dev libboost-test1.55-dev binutils-gold cmake cmake-data
 
+sudo apt-get install -y libstreflop-dev
