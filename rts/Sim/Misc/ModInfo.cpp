@@ -79,6 +79,8 @@ void CModInfo::ResetState()
 
 	pathFinderSystem = PFS_TYPE_DEFAULT;
 	pfUpdateRate     = 0.0f;
+
+	allowTake = true;
 }
 
 void CModInfo::Init(const char* modArchive)
@@ -116,6 +118,7 @@ void CModInfo::Init(const char* modArchive)
 		pathFinderSystem = system.GetInt("pathFinderSystem", PFS_TYPE_DEFAULT) % PFS_NUM_TYPES;
 		pfUpdateRate = system.GetFloat("pathFinderUpdateRate", 0.007f);
 
+		allowTake = system.GetBool("allowTake", true);
 	}
 
 	{

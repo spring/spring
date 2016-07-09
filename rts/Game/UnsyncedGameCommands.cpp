@@ -56,6 +56,7 @@
 #include "Lua/LuaUI.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/Misc/TeamHandler.h"
+#include "Sim/Misc/ModInfo.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/Scripts/UnitScript.h"
@@ -3212,7 +3213,9 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new RedirectToSyncedActionExecutor("Desync"));
 #endif
 	AddActionExecutor(new RedirectToSyncedActionExecutor("Resync"));
-	AddActionExecutor(new RedirectToSyncedActionExecutor("Take"));
+	if (modInfo.allowTake) {
+		AddActionExecutor(new RedirectToSyncedActionExecutor("Take"));
+	}
 	AddActionExecutor(new RedirectToSyncedActionExecutor("LuaRules"));
 	AddActionExecutor(new RedirectToSyncedActionExecutor("LuaGaia"));
 	AddActionExecutor(new CommandListActionExecutor());
