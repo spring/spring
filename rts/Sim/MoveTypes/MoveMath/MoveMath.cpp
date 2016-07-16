@@ -106,7 +106,6 @@ float CMoveMath::GetPosSpeedMod(const MoveDef& moveDef, unsigned xSquare, unsign
 /* Check if a given square-position is accessable by the MoveDef footprint. */
 CMoveMath::BlockType CMoveMath::IsBlockedNoSpeedModCheck(const MoveDef& moveDef, int xSquare, int zSquare, const CSolidObject* collider)
 {
-	BlockType ret = BLOCK_NONE;
 	const int xmin = xSquare - moveDef.xsizeh, xmax = xSquare + moveDef.xsizeh;
 	if ((unsigned)xmin >= mapDims.mapx || (unsigned)xmax >= mapDims.mapx)
 		return BLOCK_IMPASSABLE;
@@ -114,6 +113,7 @@ CMoveMath::BlockType CMoveMath::IsBlockedNoSpeedModCheck(const MoveDef& moveDef,
 	if ((unsigned)zmin >= mapDims.mapy || (unsigned)zmax >= mapDims.mapy)
 		return BLOCK_IMPASSABLE;
 
+	BlockType ret = BLOCK_NONE;
 	const int xstep = 2, zstep = 2;
 
 	// (footprints are point-symmetric around <xSquare, zSquare>)
@@ -250,5 +250,37 @@ CMoveMath::BlockType CMoveMath::SquareIsBlocked(const MoveDef& moveDef, int xSqu
 	}
 
 	return r;
+}
+
+CMoveMath::BlockType CMoveMath::RangeIsBlocked(const MoveDef& moveDef, int xmin, int xmax, int zmin, int zmax, const CSolidObject* collider)
+{
+	if ((unsigned)xmin >= mapDims.mapx || (unsigned)xmax >= mapDims.mapx)
+		return BLOCK_IMPASSABLE;
+
+	if ((unsigned)zmin >= mapDims.mapy || (unsigned)zmax >= mapDims.mapy)
+		return BLOCK_IMPASSABLE;
+
+	BlockType ret = BLOCK_NONE;
+	const int xstep = 2, zstep = 2;
+	const int tempNum = gs->GetTempNum();
+
+	// (footprints are point-symmetric around <xSquare, zSquare>)
+	for (int z = zmin; z <= zmax; z += zstep) {
+		const int zOffset = z * mapDims.mapx;
+		for (int x = xmin; x <= xmax; x += xstep) {
+			const BlockingMapCell& cell = groundBlockingObjectMap->GetCellUnsafeConst(zOffset + x);
+			for (CSolidObject* collidee: cell) {
+				if (collidee->tempNum == tempNum)
+					continue;
+
+				collidee->tempNum = tempNum;
+				ret |= ObjectBlockType(moveDef, collidee, collider);
+				if (ret & BLOCK_STRUCTURE)
+					return ret;
+			}
+		}
+	}
+
+	return ret;
 }
 

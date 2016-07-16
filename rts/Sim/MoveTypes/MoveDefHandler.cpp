@@ -350,13 +350,10 @@ bool MoveDef::TestMoveSquare(
 
 	// GetPosSpeedMod only checks *one* square of terrain
 	// (heightmap/slopemap/typemap), not the blocking-map
-	for (int z = zMin; (z <= zMax) && retTestMove; z++) {
-		for (int x = xMin; (x <= xMax) && retTestMove; x++) {
-			const CMoveMath::BlockType blockBits = CMoveMath::SquareIsBlocked(*this, xTestMoveSqr + x, zTestMoveSqr + z, collider);
-
-			maxBlockBit |= blockBits;
-			retTestMove &= (!testObjects || (blockBits & CMoveMath::BLOCK_STRUCTURE) == 0);
-		}
+	if (retTestMove) {
+		const CMoveMath::BlockType blockBits = CMoveMath::RangeIsBlocked(*this, xTestMoveSqr + xMin, xTestMoveSqr + xMax, zTestMoveSqr + zMin, zTestMoveSqr + zMax, collider);
+		maxBlockBit |= blockBits;
+		retTestMove &= (!testObjects || (blockBits & CMoveMath::BLOCK_STRUCTURE) == 0);
 	}
 
 	// don't use std::min or |= because the values might be garbage
