@@ -409,7 +409,11 @@ bool CProjectileDrawer::CanDrawProjectile(const CProjectile* pro, const CSolidOb
 {
 	auto& th = teamHandler;
 	auto& lh = losHandler;
-	return (gu->spectatingFullView || (owner != nullptr && th->Ally(owner->allyteam, gu->myAllyTeam)) || lh->InLos(pro, gu->myAllyTeam));
+	if (!(gu->spectatingFullView || (owner != nullptr && th->Ally(owner->allyteam, gu->myAllyTeam)) || lh->InLos(pro, gu->myAllyTeam)))
+		return false;
+
+	const CCamera* cam = CCamera::GetActiveCamera();
+	return (cam->InView(pro->drawPos, pro->GetDrawRadius()));
 }
 
 void CProjectileDrawer::DrawProjectileNow(CProjectile* pro, bool drawReflection, bool drawRefraction)
@@ -422,9 +426,6 @@ void CProjectileDrawer::DrawProjectileNow(CProjectile* pro, bool drawReflection,
 	if (drawRefraction && (pro->drawPos.y > pro->GetDrawRadius()) /*!pro->IsInWater()*/)
 		return;
 	if (drawReflection && !CUnitDrawer::ObjectVisibleReflection(pro->drawPos, camera->GetPos(), pro->GetDrawRadius()))
-		return;
-
-	if (!camera->InView(pro->drawPos, pro->GetDrawRadius()))
 		return;
 
 	DrawProjectileModel(pro);

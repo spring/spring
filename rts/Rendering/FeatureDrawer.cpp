@@ -248,8 +248,6 @@ inline void CFeatureDrawer::UpdateDrawPos(CFeature* f)
 {
 	f->drawPos    = f->GetDrawPos(globalRendering->timeOffset);
 	f->drawMidPos = f->GetMdlDrawMidPos();
-
-	f->UpdateTransform(f->drawPos, false);
 }
 
 
@@ -643,8 +641,11 @@ void CFeatureDrawer::FlagVisibleFeatures(
 
 
 					if (drawShadowPass) {
-						// no shadows for fully alpha-faded features from player's POV
-						f->drawFlag = CFeature::FD_SHADOW_FLAG * SetFeatureDrawAlpha(f, playerCam, sqFadeDistBegin, sqFadeDistEnd);
+						if (SetFeatureDrawAlpha(f, playerCam, sqFadeDistBegin, sqFadeDistEnd)) {
+							// no shadows for fully alpha-faded features from player's POV
+							f->UpdateTransform(f->drawPos, false);
+							f->drawFlag = CFeature::FD_SHADOW_FLAG;
+						}
 						continue;
 					}
 
@@ -656,6 +657,7 @@ void CFeatureDrawer::FlagVisibleFeatures(
 
 
 					if (SetFeatureDrawAlpha(f, cam, sqFadeDistBegin, sqFadeDistEnd)) {
+						f->UpdateTransform(f->drawPos, false);
 						f->drawFlag += (CFeature::FD_OPAQUE_FLAG * (f->drawAlpha == 1.0f));
 						f->drawFlag += (CFeature::FD_ALPHAF_FLAG * (f->drawAlpha <  1.0f));
 						continue;
