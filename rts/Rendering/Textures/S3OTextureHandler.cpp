@@ -140,7 +140,7 @@ unsigned int CS3OTextureHandler::LoadAndCacheTexture(
 	if (preloadCall)
 		return 0;
 
-	const unsigned int texID = bitmap->CreateTexture(true);
+	const unsigned int texID = bitmap->CreateMipMapTexture();
 
 	textureCache[textureName] = {
 		texID,
