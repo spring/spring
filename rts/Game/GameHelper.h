@@ -91,6 +91,7 @@ public:
 		const MoveDef* moveDef,
 		CFeature *&feature,
 		int allyteam,
+		boost::uint16_t mask,
 		bool synced
 	);
 

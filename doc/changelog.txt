@@ -2,6 +2,11 @@ Spring changelog
 (since 85.0: "!" prefix indicate backward compatibility broke)
 (numbers in brackets normally mean the mantis ticket ID)
 
+-- 103.0 --------------------------------------------------------
+ - Added new UnitDef tag "buildingMask" and LuaSyncedCtrl function "SetSquareBuildingMask".
+   Both used in conjunction to allow/disallow construction of certain unit types (via setting buildingMask)
+   on certain tiles (via SetSquareBuildingMask). By default all tiles and buildings have mask of b'0000000000000001 (1)
+
 -- 102.0 --------------------------------------------------------
 General:
  - Fix & Improve LoS performance

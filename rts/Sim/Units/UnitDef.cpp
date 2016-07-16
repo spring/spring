@@ -600,6 +600,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 
 	if (IsImmobileUnit()) {
 		CreateYardMap(udTable.GetString("yardMap", ""));
+		buildingMask = (boost::uint16_t)udTable.GetInt("buildingMask", 1); //1st bit set to 1 constitutes for "normal building"
 	}
 
 	decalDef.Parse(udTable);

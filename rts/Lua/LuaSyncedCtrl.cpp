@@ -45,6 +45,7 @@
 #include "Sim/Misc/Team.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/QuadField.h"
+#include "Sim/Misc/BuildingMaskMap.h"
 #include "Sim/MoveTypes/AAirMoveType.h"
 #include "Sim/Path/IPathManager.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
@@ -296,6 +297,8 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(SetMapSquareTerrainType);
 	REGISTER_LUA_CFUNC(SetTerrainTypeData);
+
+	REGISTER_LUA_CFUNC(SetSquareBuildingMask);
 
 	REGISTER_LUA_CFUNC(UnitWeaponFire);
 	REGISTER_LUA_CFUNC(UnitWeaponHoldFire);
@@ -3944,6 +3947,26 @@ int LuaSyncedCtrl::SetTerrainTypeData(lua_State* L)
 
 	lua_pushboolean(L, true);
 	return 1;
+}
+
+/******************************************************************************/
+/******************************************************************************/
+
+int LuaSyncedCtrl::SetSquareBuildingMask(lua_State* L)
+{
+	const int x = luaL_checkint(L, 1);
+	const int z = luaL_checkint(L, 2);
+	const int mask = luaL_checkint(L, 3);	
+	if (mask < 0 || mask > USHRT_MAX) {
+		luaL_error(L, "Incorrect value of mask: %s(%d, %d, %d)", __FUNCTION__, x, z, mask);
+		return 0;
+	}	
+	const bool result = buildingMaskMap->SetTileMask(x, z, (boost::uint16_t)mask);
+	if (!result) {
+		luaL_error(L, "Invalid values supplied: %s(%d, %d, %d)", __FUNCTION__, x, z, mask);
+		return 0;
+	}
+	return 0; //no error = success
 }
 
 /******************************************************************************/
