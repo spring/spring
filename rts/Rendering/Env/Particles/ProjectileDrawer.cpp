@@ -409,8 +409,7 @@ bool CProjectileDrawer::CanDrawProjectile(const CProjectile* pro, const CSolidOb
 {
 	auto& th = teamHandler;
 	auto& lh = losHandler;
-	if (!(gu->spectatingFullView || (owner != nullptr && th->Ally(owner->allyteam, gu->myAllyTeam)) || lh->InLos(pro, gu->myAllyTeam)))
-		return false;
+	return (gu->spectatingFullView || (owner != nullptr && th->Ally(owner->allyteam, gu->myAllyTeam)) || lh->InLos(pro, gu->myAllyTeam));
 }
 
 void CProjectileDrawer::DrawProjectileNow(CProjectile* pro, bool drawReflection, bool drawRefraction)
