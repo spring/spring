@@ -1465,6 +1465,10 @@ void CGame::SimFrame() {
 		unitScriptEngine->Tick(33);
 		wind.Update();
 		losHandler->Update();
+		// dead ghosts have to be updated in sim, after los,
+		// to make sure they represent the current knowledge correctly.
+		// should probably be split from drawer
+		unitDrawer->UpdateGhostedBuildings();
 		interceptHandler.Update(false);
 
 		teamHandler->GameFrame(gs->frameNum);
