@@ -472,9 +472,10 @@ bool CGroundMoveType::FollowPath()
 	bool wantReverse = false;
 
 	if (WantToStop()) {
-		// keep flatFrontDir in sync; acceleration is applied along it
+		currWayPoint.y = -1.0f;
+		nextWayPoint.y = -1.0f;
+		SetMainHeading();
 		ChangeSpeed(0.0f, false);
-		ChangeHeading(owner->heading);
 	} else {
 		ASSERT_SYNCED(currWayPoint);
 		ASSERT_SYNCED(nextWayPoint);

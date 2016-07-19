@@ -69,6 +69,7 @@
 #include "Sim/Misc/DamageArrayHandler.h"
 #include "Sim/Misc/GeometricObjects.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
+#include "Sim/Misc/BuildingMaskMap.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/InterceptHandler.h"
@@ -418,6 +419,7 @@ void CGame::LoadMap(const std::string& mapName)
 
 		readMap = CReadMap::LoadMap(mapName);
 		groundBlockingObjectMap = new CGroundBlockingObjectMap(mapDims.mapSquares);
+		buildingMaskMap = new BuildingMaskMap();
 	}
 
 	LEAVE_SYNCED_CODE();
@@ -826,6 +828,7 @@ void CGame::KillSimulation()
 	SafeDelete(readMap);
 	SafeDelete(smoothGround);
 	SafeDelete(groundBlockingObjectMap);
+	SafeDelete(buildingMaskMap);
 	SafeDelete(losHandler);
 	SafeDelete(mapDamage);
 	SafeDelete(quadField);
@@ -1465,6 +1468,10 @@ void CGame::SimFrame() {
 		unitScriptEngine->Tick(33);
 		wind.Update();
 		losHandler->Update();
+		// dead ghosts have to be updated in sim, after los,
+		// to make sure they represent the current knowledge correctly.
+		// should probably be split from drawer
+		unitDrawer->UpdateGhostedBuildings();
 		interceptHandler.Update(false);
 
 		teamHandler->GameFrame(gs->frameNum);

@@ -20,6 +20,7 @@
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/TeamHandler.h"
+#include "Sim/Misc/ModInfo.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/UnitHandler.h"
@@ -490,7 +491,9 @@ void SyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new DesyncActionExecutor());
 #endif // defined DEBUG
 	AddActionExecutor(new AtmActionExecutor());
-	AddActionExecutor(new TakeActionExecutor());
+	if (modInfo.allowTake) {
+		AddActionExecutor(new TakeActionExecutor());
+	}
 	AddActionExecutor(new SkipActionExecutor());
 }
 

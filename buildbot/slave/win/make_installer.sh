@@ -74,7 +74,7 @@ ${SEVENZIP} ${MIN_PORTABLE_ARCHIVE} ${INSTALLDIR}/* -xr!*.dbg &
 # Update 2016/07/06 ZK is yet to support, so only stable releases will have a zipped archive,
 # and that's because we're feeling nice.
 if [ "$OUTPUTDIR" == "win32" ] && [ x${BRANCH} = xmaster ]; then
-	(cd ${INSTALLDIR} && ${ZIP} ${MIN_PORTABLE_ZIP} * -x spring-headless.exe spring-dedicated.exe \*.dbg) &
+	(cd ${INSTALLDIR} && ${ZIP} ${MIN_PORTABLE_ZIP} * -x spring-headless.exe \*.dbg) &
 fi
 
 # compress UnitTests

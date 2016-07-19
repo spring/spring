@@ -52,6 +52,8 @@ BasicTimer::BasicTimer(const std::string& myname)
 	nameIterator = hashToName.find(hash);
 	if (nameIterator == hashToName.end()) {
 		nameIterator = hashToName.insert(std::pair<int,std::string>(hash, myname)).first;
+	} else {
+		assert(nameIterator->second == myname);
 	}
 }
 
@@ -64,6 +66,8 @@ BasicTimer::BasicTimer(const char* myname)
 	nameIterator = hashToName.find(hash);
 	if (nameIterator == hashToName.end()) {
 		nameIterator = hashToName.insert(std::pair<int,std::string>(hash, myname)).first;
+	} else {
+		assert(nameIterator->second == myname);
 	}
 }
 

@@ -598,6 +598,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	xsize = std::max(1 * SPRING_FOOTPRINT_SCALE, (udTable.GetInt("footprintX", 1) * SPRING_FOOTPRINT_SCALE));
 	zsize = std::max(1 * SPRING_FOOTPRINT_SCALE, (udTable.GetInt("footprintZ", 1) * SPRING_FOOTPRINT_SCALE));
 
+	buildingMask = (boost::uint16_t)udTable.GetInt("buildingMask", 1); //1st bit set to 1 constitutes for "normal building"
 	if (IsImmobileUnit()) {
 		CreateYardMap(udTable.GetString("yardMap", ""));
 	}

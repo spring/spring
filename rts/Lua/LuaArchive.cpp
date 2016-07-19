@@ -220,10 +220,10 @@ int LuaArchive::GetAvailableAIs(lua_State* L)
 
 	// load selected archives to get lua ais
 	if (!gameArchivePath.empty()) {
-		vfsHandler->AddArchive(gameArchivePath, true);
+		vfsHandler->AddArchive(gameArchivePath, false);
 	}
 	if (!mapArchivePath.empty()) {
-		vfsHandler->AddArchive(mapArchivePath, true);
+		vfsHandler->AddArchive(mapArchivePath, false);
 	}
 
 	const IAILibraryManager::T_skirmishAIKeys& skirmishAIKeys = aiLibManager->GetSkirmishAIKeys();

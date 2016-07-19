@@ -237,6 +237,9 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 		alphaModelRenderers[modelType] = IModelRenderContainer::GetInstance(modelType);
 	}
 
+	deadGhostBuildings.resize(teamHandler->ActiveAllyTeams());
+	liveGhostBuildings.resize(teamHandler->ActiveAllyTeams());
+
 	// LH must be initialized before drawer-state is initialized
 	lightHandler.Init(2U, configHandler->GetInt("MaxDynamicModelLights"));
 
@@ -280,16 +283,20 @@ CUnitDrawer::~CUnitDrawer()
 		groundDecals->ForceRemoveSolidObject(u);
 	}
 
-	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-		for (GhostSolidObject* ghost: deadGhostBuildings[modelType]) {
-			// <ghost> might be the gbOwner of a decal; groundDecals is deleted after us
-			groundDecals->GhostDestroyed(ghost);
-			delete ghost;
-		}
+	for (int allyTeam = 0; allyTeam < deadGhostBuildings.size(); ++allyTeam) {
+		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
+			for (GhostSolidObject* ghost: deadGhostBuildings[allyTeam][modelType]) {
+				// <ghost> might be the gbOwner of a decal; groundDecals is deleted after us
+				groundDecals->GhostDestroyed(ghost);
+				delete ghost;
+			}
 
-		deadGhostBuildings[modelType].clear();
-		liveGhostBuildings[modelType].clear();
+			deadGhostBuildings[allyTeam][modelType].clear();
+			liveGhostBuildings[allyTeam][modelType].clear();
+		}
 	}
+	deadGhostBuildings.clear();
+	liveGhostBuildings.clear();
 
 
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
@@ -749,7 +756,8 @@ void CUnitDrawer::DrawAlphaUnits(int modelType)
 	}
 
 	// living and dead ghosted buildings
-	DrawGhostedBuildings(modelType);
+	if (!gu->spectatingFullView)
+		DrawGhostedBuildings(modelType);
 }
 
 inline void CUnitDrawer::DrawAlphaUnit(CUnit* unit, int modelType, bool drawGhostBuildingsPass) {
@@ -870,47 +878,53 @@ void CUnitDrawer::DrawAlphaAIUnitBorder(const TempDrawUnit& unit)
 	glEnable(GL_TEXTURE_2D);
 }
 
+void CUnitDrawer::UpdateGhostedBuildings()
+{
+	for (int allyTeam = 0; allyTeam < deadGhostBuildings.size(); ++allyTeam) {
+		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
+			auto& dgb = deadGhostBuildings[allyTeam][modelType];
 
+			for (auto it = dgb.begin(); it != dgb.end(); ) {
+				if (losHandler->InLos((*it)->pos, allyTeam)) {
+					// obtained LOS on the ghost of a dead building
+					groundDecals->GhostDestroyed(*it);
+
+					delete *it;
+					*it = dgb.back();
+					dgb.pop_back();
+				} else {
+					++it;
+				}
+			}
+		}
+	}
+}
 
 void CUnitDrawer::DrawGhostedBuildings(int modelType)
 {
-	std::vector<GhostSolidObject*>& deadGhostedBuildings = deadGhostBuildings[modelType];
-	std::vector<CUnit*>& liveGhostedBuildings = liveGhostBuildings[modelType];
+	assert((unsigned) gu->myAllyTeam < deadGhostBuildings.size());
+	std::vector<GhostSolidObject*>& deadGhostedBuildings = deadGhostBuildings[gu->myAllyTeam][modelType];
+	std::vector<CUnit*>& liveGhostedBuildings = liveGhostBuildings[gu->myAllyTeam][modelType];
 
 	glColor4f(0.6f, 0.6f, 0.6f, alphaValues.y);
 
 	// buildings that died while ghosted
-	for (auto it = deadGhostedBuildings.begin(); it != deadGhostedBuildings.end(); ) {
-		if (losHandler->InLos((*it)->pos, gu->myAllyTeam) || gu->spectatingFullView) {
-			// obtained LOS on the ghost of a dead building
-			groundDecals->GhostDestroyed(*it);
+	for (auto it = deadGhostedBuildings.begin(); it != deadGhostedBuildings.end(); ++it) {
+		if (camera->InView((*it)->pos, (*it)->model->GetDrawRadius())) {
+			glPushMatrix();
+			glTranslatef3((*it)->pos);
+			glRotatef((*it)->facing * 90.0f, 0, 1, 0);
 
-			delete *it;
-			*it = deadGhostedBuildings.back();
-			deadGhostedBuildings.pop_back();
-		} else {
-			if (camera->InView((*it)->pos, (*it)->model->GetDrawRadius())) {
-				glPushMatrix();
-				glTranslatef3((*it)->pos);
-				glRotatef((*it)->facing * 90.0f, 0, 1, 0);
+			BindModelTypeTexture(modelType, (*it)->model->textureType);
+			SetTeamColour((*it)->team, float2(alphaValues.y, 1.0f));
 
-				BindModelTypeTexture(modelType, (*it)->model->textureType);
-				SetTeamColour((*it)->team, float2(alphaValues.y, 1.0f));
-
-				(*it)->model->DrawStatic();
-				glPopMatrix();
-			}
-
-			++it;
+			(*it)->model->DrawStatic();
+			glPopMatrix();
 		}
 	}
 
-	if (!gu->spectatingFullView) {
-		for (CUnit* u: liveGhostedBuildings) {
-			// because of team switching via cheat, ghost buildings can exist for units in LOS
-			if (!(u->losStatus[gu->myAllyTeam] & LOS_INLOS))
-				DrawAlphaUnit(u, modelType, true);
-		}
+	for (CUnit* u: liveGhostedBuildings) {
+		DrawAlphaUnit(u, modelType, true);
 	}
 }
 
@@ -1744,24 +1758,27 @@ void CUnitDrawer::RenderUnitDestroyed(const CUnit* unit) {
 
 	// TODO - make ghosted buildings per allyTeam - so they are correctly dealt with
 	// when spectating
-	if (unitDef->IsBuildingUnit() && gameSetup->ghostedBuildings &&
-		!(u->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_CONTRADAR)) &&
-		(u->losStatus[gu->myAllyTeam] & (LOS_PREVLOS)) && !gu->spectatingFullView
-	) {
-		// FIXME -- adjust decals for decoys? gets weird?
-		S3DModel* gbModel = (decoyDef == nullptr)? u->model: decoyDef->LoadModel();
+	for (int allyTeam = 0; allyTeam < deadGhostBuildings.size(); ++allyTeam) {
+		if (unitDef->IsBuildingUnit() && gameSetup->ghostedBuildings &&
+			!(u->losStatus[allyTeam] & (LOS_INLOS | LOS_CONTRADAR)) &&
+			(u->losStatus[allyTeam] & (LOS_PREVLOS))
+		) {
+			// FIXME -- adjust decals for decoys? gets weird?
+			S3DModel* gbModel = (decoyDef == nullptr)? u->model: decoyDef->LoadModel();
 
-		GhostSolidObject* gb = new GhostSolidObject();
-		gb->pos    = u->pos;
-		gb->model  = gbModel;
-		gb->decal  = nullptr;
-		gb->facing = u->buildFacing;
-		gb->dir    = u->frontdir;
-		gb->team   = u->team;
+			GhostSolidObject* gb = new GhostSolidObject();
+			gb->pos    = u->pos;
+			gb->model  = gbModel;
+			gb->decal  = nullptr;
+			gb->facing = u->buildFacing;
+			gb->dir    = u->frontdir;
+			gb->team   = u->team;
 
-		deadGhostBuildings[gbModel->type].push_back(gb);
+			deadGhostBuildings[allyTeam][gbModel->type].push_back(gb);
 
-		groundDecals->GhostCreated(u, gb);
+			groundDecals->GhostCreated(u, gb);
+		}
+		VectorErase(liveGhostBuildings[allyTeam][MDL_TYPE(u)], u);
 	}
 
 	if (u->model != nullptr) {
@@ -1771,7 +1788,6 @@ void CUnitDrawer::RenderUnitDestroyed(const CUnit* unit) {
 	}
 
 	VectorErase(unsortedUnits, u);
-	VectorErase(liveGhostBuildings[MDL_TYPE(u)], u);
 
 	UpdateUnitMiniMapIcon(unit, false, true);
 	LuaObjectDrawer::SetObjectLOD(u, LUAOBJ_UNIT, 0);
@@ -1799,11 +1815,11 @@ void CUnitDrawer::UnitDecloaked(const CUnit* unit) {
 void CUnitDrawer::UnitEnteredLos(const CUnit* unit, int allyTeam) {
 	CUnit* u = const_cast<CUnit*>(unit); //cleanup
 
+	if (gameSetup->ghostedBuildings && unit->unitDef->IsImmobileUnit())
+		VectorErase(liveGhostBuildings[allyTeam][MDL_TYPE(unit)], u);
+
 	if (allyTeam != gu->myAllyTeam)
 		return;
-
-	if (gameSetup->ghostedBuildings && unit->unitDef->IsImmobileUnit())
-		VectorErase(liveGhostBuildings[MDL_TYPE(unit)], u);
 
 	UpdateUnitMiniMapIcon(unit, false, false);
 }
@@ -1811,11 +1827,11 @@ void CUnitDrawer::UnitEnteredLos(const CUnit* unit, int allyTeam) {
 void CUnitDrawer::UnitLeftLos(const CUnit* unit, int allyTeam) {
 	CUnit* u = const_cast<CUnit*>(unit); //cleanup
 
+	if (gameSetup->ghostedBuildings && unit->unitDef->IsImmobileUnit())
+		VectorInsertUnique(liveGhostBuildings[allyTeam][MDL_TYPE(unit)], u, true);
+
 	if (allyTeam != gu->myAllyTeam)
 		return;
-
-	if (gameSetup->ghostedBuildings && unit->unitDef->IsImmobileUnit())
-		VectorInsertUnique(liveGhostBuildings[MDL_TYPE(unit)], u, true);
 
 	UpdateUnitMiniMapIcon(unit, false, false);
 }

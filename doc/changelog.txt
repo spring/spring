@@ -2,6 +2,24 @@ Spring changelog
 (since 85.0: "!" prefix indicate backward compatibility broke)
 (numbers in brackets normally mean the mantis ticket ID)
 
+-- 103.0 --------------------------------------------------------
+General:
+ - Fix & Improve performace
+ - Add 'allowTake' modoption (default: true) to enable/disable /take (by lamer)
+
+Sim:
+ - Add new UnitDef tag "buildingMask" and LuaSyncedCtrl function "SetSquareBuildingMask". (by ivand)
+   Both used in conjunction to allow/disallow construction of certain unit types (via setting buildingMask)
+   on certain tiles (via SetSquareBuildingMask). By default all tiles and buildings have mask of 1
+
+Rendering:
+ - Ghosted buildings are now consistent when changing specTeam/specFullView
+
+
+Bugfixes:
+ - Fix #5301 Units with restricted firearcs do not turn to aim
+ - Fix #5302 extreme slowdown
+
 -- 102.0 --------------------------------------------------------
 General:
  - Fix & Improve LoS performance

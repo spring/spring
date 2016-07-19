@@ -84,6 +84,8 @@ public:
 
 	void Update();
 
+	void UpdateGhostedBuildings();
+
 	void Draw(bool drawReflection, bool drawRefraction = false);
 	void DrawOpaquePass(bool deferredPass, bool drawReflection, bool drawRefraction);
 	void DrawShadowPass();
@@ -265,9 +267,9 @@ private:
 	std::array< std::vector<TempDrawUnit>, MODELTYPE_OTHER> tempAlphaUnits;
 
 	/// buildings that were in LOS_PREVLOS when they died and not in LOS since
-	std::array<std::vector<GhostSolidObject*>, MODELTYPE_OTHER> deadGhostBuildings;
+	std::vector<std::array<std::vector<GhostSolidObject*>, MODELTYPE_OTHER>> deadGhostBuildings;
 	/// buildings that left LOS but are still alive
-	std::array<std::vector<CUnit*>, MODELTYPE_OTHER> liveGhostBuildings;
+	std::vector<std::array<std::vector<CUnit*>, MODELTYPE_OTHER>> liveGhostBuildings;
 
 	/// units that are only rendered as icons this frame
 	std::vector<CUnit*> iconUnits;

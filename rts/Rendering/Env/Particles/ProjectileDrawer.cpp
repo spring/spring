@@ -419,18 +419,20 @@ void CProjectileDrawer::DrawProjectileNow(CProjectile* pro, bool drawReflection,
 	if (!CanDrawProjectile(pro, pro->owner()))
 		return;
 
+
 	if (drawRefraction && (pro->drawPos.y > pro->GetDrawRadius()) /*!pro->IsInWater()*/)
 		return;
 	if (drawReflection && !CUnitDrawer::ObjectVisibleReflection(pro->drawPos, camera->GetPos(), pro->GetDrawRadius()))
 		return;
 
-	if (!camera->InView(pro->drawPos, pro->GetDrawRadius()))
+	const CCamera* cam = CCamera::GetActiveCamera();
+	if (!cam->InView(pro->drawPos, pro->GetDrawRadius()))
 		return;
 
 	DrawProjectileModel(pro);
 
 	if (pro->drawSorted) {
-		pro->SetSortDist(camera->ProjectedDistance(pro->pos));
+		pro->SetSortDist(cam->ProjectedDistance(pro->pos));
 		zSortedProjectiles.insert(pro);
 	} else {
 		unsortedProjectiles.push_back(pro);
@@ -460,6 +462,10 @@ void CProjectileDrawer::DrawProjectilesSetShadow(const std::vector<CProjectile*>
 void CProjectileDrawer::DrawProjectileShadow(CProjectile* p)
 {
 	if (CanDrawProjectile(p, p->owner())) {
+		const CCamera* cam = CCamera::GetActiveCamera();
+		if (!cam->InView(p->drawPos, p->GetDrawRadius()))
+			return;
+
 		// if this returns false, then projectile is
 		// neither weapon nor piece, or has no model
 		if (DrawProjectileModel(p))

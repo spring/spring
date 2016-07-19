@@ -146,6 +146,8 @@ public:
 	/// which pathfinder system (DEFAULT/legacy or QTPFS) the mod will use
 	int pathFinderSystem;
 	float pfUpdateRate;
+
+	bool allowTake;
 };
 
 extern CModInfo modInfo;
