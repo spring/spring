@@ -52,8 +52,6 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_ARCHIVESCANNER)
 const int INTERNAL_VER = 10;
 CArchiveScanner* archiveScanner = NULL;
 
-CONFIG(bool, FastArchiveScan).defaultValue(true).description("If enabled, only generate archive checksums on-demand.");
-
 
 /*
  * Engine known (and used?) tags in [map|mod]info.lua
@@ -386,12 +384,12 @@ void CArchiveScanner::ScanAllDirs()
 #if !defined(DEDICATED) && !defined(UNITSYNC)
 	ScopedOnceTimer foo("CArchiveScanner");
 #endif
-	ScanDirs(scanDirs, !configHandler->GetBool("FastArchiveScan"));
+	ScanDirs(scanDirs);
 	WriteCacheData(GetFilepath());
 }
 
 
-void CArchiveScanner::ScanDirs(const std::vector<std::string>& scanDirs, bool doChecksum)
+void CArchiveScanner::ScanDirs(const std::vector<std::string>& scanDirs)
 {
 	isDirty = true;
 
@@ -422,7 +420,7 @@ void CArchiveScanner::ScanDirs(const std::vector<std::string>& scanDirs, bool do
 
 	// Create archiveInfos etc. when not being in cache already
 	for (const std::string& archive: foundArchives) {
-		ScanArchive(archive, doChecksum);
+		ScanArchive(archive, false);
 	#if !defined(DEDICATED) && !defined(UNITSYNC)
 		Watchdog::ClearTimer(WDT_MAIN);
 	#endif

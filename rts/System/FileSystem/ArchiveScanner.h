@@ -157,7 +157,7 @@ private:
 	};
 
 private:
-	void ScanDirs(const std::vector<std::string>& dirs, bool checksum = false);
+	void ScanDirs(const std::vector<std::string>& dirs);
 	void ScanDir(const std::string& curPath, std::list<std::string>* foundArchives);
 
 	/// scan mapinfo / modinfo lua files
