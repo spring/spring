@@ -530,7 +530,7 @@ void OpenURL(const std::string& url)
 	if (pid == 0) {
 		execl("/usr/bin/xdg-open", "xdg-open", url.c_str(), (char *)0);
 		//TODO: maybe use execl to find xdg-open?
-		exit(1);
+		exit(EXIT_SUCCESS);
 	}
 #endif
 }
