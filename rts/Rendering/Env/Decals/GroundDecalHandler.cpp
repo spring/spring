@@ -963,12 +963,13 @@ void CGroundDecalHandler::ForceRemoveSolidObject(CSolidObject* object)
 void CGroundDecalHandler::UnitMoved(const CUnit* unit) { AddDecal(const_cast<CUnit*>(unit), unit->pos); }
 
 void CGroundDecalHandler::GhostDestroyed(GhostSolidObject* gb) {
-	if (gb->decal)
+	if (gb->decal) {
 		gb->decal->gbOwner = NULL;
 
-	//If a ghost wasn't drawn, remove the decal
-	if (gb->lastDrawFrame < (globalRendering->drawFrame - 1))
-		gb->decal->alpha = 0.0f;
+		//If a ghost wasn't drawn, remove the decal
+		if (gb->lastDrawFrame < (globalRendering->drawFrame - 1))
+			gb->decal->alpha = 0.0f;
+	}
 }
 
 
