@@ -871,7 +871,7 @@ static const vector<SearchOffset>& GetSearchOffsetTable (int radius)
 				i.qdist = i.dx*i.dx + i.dy*i.dy;
 			}
 
-		std::sort(searchOffsets.begin(), searchOffsets.end(), SearchOffsetComparator);
+		std::stable_sort(searchOffsets.begin(), searchOffsets.end(), SearchOffsetComparator);
 	}
 
 	return searchOffsets;
@@ -1161,7 +1161,7 @@ CGameHelper::BuildSquareStatus CGameHelper::TestBuildSquare(
 
 	if (!buildingMaskMap->TestTileMaskUnsafe(sqx >> 1, sqz >> 1, mask))
 		return BUILDSQUARE_BLOCKED;
-	
+
 
 	// check maxHeightDif constraint (structures only)
 	//

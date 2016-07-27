@@ -538,14 +538,14 @@ void CSelectedUnitsHandlerAI::SelectAttack(const Command& cmd, int player)
 
 	for (unsigned int t = 0; t < targetsCount; t++) {
 		const CUnit* unit = unitHandler->units[ targets[t] ];
-		const float3 unitPos = queueing ? LastQueuePosition(unit) : float3(unit->midPos);
+		const float3 unitPos = float3(unit->midPos);
 
 		DistInfo di;
 		di.unitID = targets[t];
 		di.dist = (unitPos - midPos).SqLength2D();
 		distVec.push_back(di);
 	}
-	sort(distVec.begin(), distVec.end());
+	stable_sort(distVec.begin(), distVec.end());
 
 	// give the commands
 	for (unsigned int s = 0; s < selectedCount; s++) {
@@ -566,6 +566,7 @@ void CSelectedUnitsHandlerAI::SelectAttack(const Command& cmd, int player)
 
 			if (!queueing || !commandAI->WillCancelQueued(attackCmd)) {
 				commandAI->GiveCommand(attackCmd, false);
+
 				AddUnitSetMaxSpeedCommand(unit, attackCmd.options);
 				// following commands are always queued
 				attackCmd.options |= SHIFT_KEY;
