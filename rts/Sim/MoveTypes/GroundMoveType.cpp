@@ -2124,10 +2124,10 @@ void CGroundMoveType::KeepPointingTo(CUnit* unit, float distance, bool aggressiv
 * @brief Orients owner so that weapon[0]'s arc includes mainHeadingPos
 */
 void CGroundMoveType::SetMainHeading() {
-	if (!useMainHeading)
+	if (!useMainHeading || owner->weapons.empty()) {
+		ChangeHeading(owner->heading);
 		return;
-	if (owner->weapons.empty())
-		return;
+	}
 
 	const CWeapon* frontWeapon = owner->weapons.front();
 

@@ -551,6 +551,8 @@ void CHoverAirMoveType::UpdateFlying()
 		// switch to hovering (if !CanLand()))
 		if (!IsUnitBusy(owner)) {
 			ExecuteStop();
+		} else {
+			wantedSpeed = ZeroVector;
 		}
 	}
 
