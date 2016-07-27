@@ -42,7 +42,6 @@
 
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
-#include "System/Log/ILog.h"
 #include "System/myMath.h"
 #include "System/Util.h"
 
@@ -887,9 +886,12 @@ void CUnitDrawer::UpdateGhostedBuildings()
 			for (auto it = dgb.begin(); it != dgb.end(); ) {
 				if (losHandler->InLos((*it)->pos, allyTeam)) {
 					// obtained LOS on the ghost of a dead building
-					groundDecals->GhostDestroyed(*it);
-
-					delete *it;
+					if ((*it)->refCount <= 1) {
+						groundDecals->GhostDestroyed(*it);
+						delete *it;
+					} else {
+						(*it)->refCount -= 1;
+					}
 					*it = dgb.back();
 					dgb.pop_back();
 				} else {
@@ -920,6 +922,7 @@ void CUnitDrawer::DrawGhostedBuildings(int modelType)
 
 			(*it)->model->DrawStatic();
 			glPopMatrix();
+			(*it)->lastDrawFrame = globalRendering->drawFrame;
 		}
 	}
 
@@ -1758,6 +1761,7 @@ void CUnitDrawer::RenderUnitDestroyed(const CUnit* unit) {
 
 	// TODO - make ghosted buildings per allyTeam - so they are correctly dealt with
 	// when spectating
+	GhostSolidObject* gb = nullptr;
 	for (int allyTeam = 0; allyTeam < deadGhostBuildings.size(); ++allyTeam) {
 		if (unitDef->IsBuildingUnit() && gameSetup->ghostedBuildings &&
 			!(u->losStatus[allyTeam] & (LOS_INLOS | LOS_CONTRADAR)) &&
@@ -1765,18 +1769,22 @@ void CUnitDrawer::RenderUnitDestroyed(const CUnit* unit) {
 		) {
 			// FIXME -- adjust decals for decoys? gets weird?
 			S3DModel* gbModel = (decoyDef == nullptr)? u->model: decoyDef->LoadModel();
+			if (gb == nullptr) {
+				gb = new GhostSolidObject();
+				gb->pos    = u->pos;
+				gb->model  = gbModel;
+				gb->decal  = nullptr;
+				gb->facing = u->buildFacing;
+				gb->dir    = u->frontdir;
+				gb->team   = u->team;
+				gb->refCount = 0;
+				gb->lastDrawFrame = 0;
 
-			GhostSolidObject* gb = new GhostSolidObject();
-			gb->pos    = u->pos;
-			gb->model  = gbModel;
-			gb->decal  = nullptr;
-			gb->facing = u->buildFacing;
-			gb->dir    = u->frontdir;
-			gb->team   = u->team;
+				groundDecals->GhostCreated(u, gb);
+			}
 
 			deadGhostBuildings[allyTeam][gbModel->type].push_back(gb);
-
-			groundDecals->GhostCreated(u, gb);
+			gb->refCount += 1;
 		}
 		VectorErase(liveGhostBuildings[allyTeam][MDL_TYPE(u)], u);
 	}

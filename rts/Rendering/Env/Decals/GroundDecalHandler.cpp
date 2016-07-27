@@ -394,6 +394,9 @@ void CGroundDecalHandler::GatherDecalsForType(CGroundDecalHandler::SolidObjectDe
 		if (decalOwner == NULL) {
 			if (decal->gbOwner == NULL) {
 				decal->alpha -= (decal->alphaFalloff * globalRendering->lastFrameTime * 0.001f * gs->speedFactor);
+			} else if (decal->gbOwner->lastDrawFrame < (globalRendering->drawFrame - 1)) {
+				++i;
+				continue;
 			}
 			if (decal->alpha < 0.0f) {
 				// make sure RemoveSolidObject() won't try to modify this decal
@@ -878,9 +881,9 @@ void CGroundDecalHandler::MoveSolidObject(CSolidObject* object, const float3& po
 	}
 
 	SolidObjectGroundDecal* olddecal = object->groundDecal;
-	if (olddecal != NULL) {
-		olddecal->owner = NULL;
-		olddecal->gbOwner = NULL;
+	if (olddecal != nullptr) {
+		olddecal->owner = nullptr;
+		olddecal->gbOwner = nullptr;
 	}
 
 	const int sizex = decalDef.groundDecalSizeX;
@@ -889,7 +892,7 @@ void CGroundDecalHandler::MoveSolidObject(CSolidObject* object, const float3& po
 	SolidObjectGroundDecal* decal = new SolidObjectGroundDecal();
 
 	decal->owner = object;
-	decal->gbOwner = 0;
+	decal->gbOwner = nullptr;
 	decal->alphaFalloff = decalDef.groundDecalDecaySpeed;
 	decal->alpha = 0.0f;
 	decal->pos = pos;
@@ -962,6 +965,10 @@ void CGroundDecalHandler::UnitMoved(const CUnit* unit) { AddDecal(const_cast<CUn
 void CGroundDecalHandler::GhostDestroyed(GhostSolidObject* gb) {
 	if (gb->decal)
 		gb->decal->gbOwner = NULL;
+
+	//If a ghost wasn't drawn, remove the decal
+	if (gb->lastDrawFrame < (globalRendering->drawFrame - 1))
+		gb->decal->alpha = 0.0f;
 }
 
 

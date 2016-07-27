@@ -44,6 +44,8 @@ struct GhostSolidObject {
 
 	int facing; //FIXME replaced with dir-vector just legacy decal drawer uses this
 	int team;
+	int refCount;
+	int lastDrawFrame;
 };
 
 
