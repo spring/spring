@@ -26,12 +26,17 @@ static std::array<std::vector<float>, ThreadPool::MAX_THREADS> isqrt_table;
 
 static float isqrt_lookup(unsigned r, int threadNum)
 {
+	assert(r < isqrt_table[threadNum].size());
+	return isqrt_table[threadNum][r];
+}
+
+static void isqrt_verify(unsigned r, int threadNum)
+{
 	auto& isqrt = isqrt_table[threadNum];
 	if (r >= isqrt.size()) {
 		for (unsigned i=isqrt.size(); i<=r; ++i)
 			isqrt.push_back(math::isqrt(std::max(i, 1u)));
 	}
-	return isqrt[r];
 }
 
 
@@ -560,6 +565,7 @@ void CLosMap::UnsafeLosAdd(SLosInstance* li) const
 	std::vector<bool> squaresMap(area, false); // saves the list of visible squares
 	std::vector<float> anglesMap(area, -1e8);
 	int threadNum = ThreadPool::GetThreadNum();
+	isqrt_verify((radius + 1) * (radius + 1), threadNum);
 
 	// Optimization: precalc all angles, cause:
 	// 1. Many squares are accessed by multiple rays. Imagine you got a 128 radius circle
@@ -627,6 +633,7 @@ void CLosMap::SafeLosAdd(SLosInstance* li) const
 	std::vector<float> anglesMap(area, -1e8);
 	const SRectangle safeRect(0, 0, size.x, size.y);
 	int threadNum = ThreadPool::GetThreadNum();
+	isqrt_verify((radius + 1) * (radius + 1), threadNum);
 
 	// Optimization: precalc all angles
 	MidpointCircleAlgoPerLine(radius, [&](int width, int y) {
