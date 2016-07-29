@@ -23,7 +23,6 @@
 #include "System/Util.h"
 #include "System/Exceptions.h"
 #include "System/ThreadPool.h"
-#include "System/Config/ConfigHandler.h"
 #include "System/FileSystem/RapidHandler.h"
 
 #if !defined(DEDICATED) && !defined(UNITSYNC)
