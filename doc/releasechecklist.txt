@@ -46,6 +46,7 @@ Release Time
    buildbot to compile the master branch.
 9) Check if everything went fine on http://buildbot.springrts.com/waterfall and fetch these archives:
 		wget https://springrts.com/dl/buildbot/default/master/${REL_VERS}/win32/spring_${REL_VERS}_win32.exe
+		wget https://springrts.com/dl/buildbot/default/master/${REL_VERS}/win32/spring_${REL_VERS}_win32_portable.7z
 		wget https://springrts.com/dl/buildbot/default/master/${REL_VERS}/win32/spring_${REL_VERS}_win32-minimal-portable.7z
 		wget https://springrts.com/dl/buildbot/default/master/${REL_VERS}/win64/spring_${REL_VERS}_win64-minimal-portable.7z
 		wget https://springrts.com/dl/buildbot/default/master/${REL_VERS}/osx64/spring_${REL_VERS}_MacOSX-10.6-SnowLeopard.zip
