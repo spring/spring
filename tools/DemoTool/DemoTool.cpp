@@ -237,7 +237,7 @@ void TrafficDump(CDemoReader& reader, bool trafficStats)
 				std::cout << " CommandId: " << GetCommandName(cmdId) << "(" << cmdId << ")";
 				std::cout << " Options: " << (unsigned)buffer[11];
 				std::cout << " Parameters:";
-				for (unsigned short i = 12; i < packet->length; i += 4) {
+				for (unsigned short i = 12; i < packet->length; i += sizeof(float)) {
 					std::cout << " " << *((float*)(buffer + i));
 				}
 				std::cout << std::endl;
@@ -332,7 +332,16 @@ void TrafficDump(CDemoReader& reader, bool trafficStats)
 				std::cout << " Parameter:" << (int)buffer[3] << std::endl;
 				break;
 			case NETMSG_COMMAND:
-				std::cout << "COMMAND Playernum: " << (int)buffer[3] << " Size: " << *(unsigned short*)(buffer+1) << std::endl;
+				std::cout << "COMMAND Playernum: " << (int)buffer[3];
+				std::cout << " Size: " << *(unsigned short*)(buffer+1);
+				cmdId = *((int*)(buffer + 4));
+				std::cout << " CommandId: " << GetCommandName(cmdId) << "(" << cmdId << ")";
+				std::cout << " Options: " << (unsigned)buffer[8];
+				std::cout << " Parameters:";
+				for (unsigned short i = 9; i < packet->length; i += sizeof(float)) {
+					std::cout << " " << *((float*)(buffer + i));
+				}
+				std::cout << std::endl;
 				if (*(unsigned short*)(buffer+1) != packet->length)
 					std::cout << "      packet length error: expected: " <<  *(unsigned short*)(buffer+1) << " got: " << packet->length << std::endl;
 				break;

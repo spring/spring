@@ -6,6 +6,9 @@ Spring changelog
 General:
  - Fix & Improve performace
  - Add 'allowTake' modoption (default: true) to enable/disable /take (by lamer)
+ - Add onlyLocal boolean value to modinfo.lua (default false)
+   If true, spring won't listen for incoming connections when running
+   this game unless GAME\OnlyLocal is specified in the start script.
 
 Sim:
  - Add new UnitDef tag "buildingMask" and LuaSyncedCtrl function "SetSquareBuildingMask". (by ivand)
