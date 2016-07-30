@@ -569,7 +569,6 @@ bool CGameSetup::Init(const std::string& buf)
 	file.GetTDef(gameStartDelay, 4u, "GAME\\GameStartDelay");
 
 	file.GetDef(recordDemo,          "1", "GAME\\RecordDemo");
-	file.GetDef(onlyLocal,           "0", "GAME\\OnlyLocal");
 	file.GetDef(useLuaGaia,          "1", "GAME\\ModOptions\\LuaGaia");
 	file.GetDef(noHelperAIs,         "0", "GAME\\ModOptions\\NoHelperAIs");
 	file.GetDef(maxUnitsPerTeam, "32000", "GAME\\ModOptions\\MaxUnits");
@@ -609,6 +608,7 @@ bool CGameSetup::Init(const std::string& buf)
 	// Postprocessing
 	modName = GetRapidPackageFromTag(modName);
 	modName = archiveScanner->NameFromArchive(modName);
+	file.GetDef(onlyLocal, (archiveScanner->GetArchiveData(modName).GetOnlyLocal() ? "1" : "0"), "GAME\\OnlyLocal");
 
 	return true;
 }

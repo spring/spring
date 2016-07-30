@@ -72,7 +72,8 @@ const KnownInfoTag knownTags[] = {
 	{"mapfile",     "in case its a map, store location of smf/sm3 file", false}, //FIXME is this ever used in the engine?! or does it auto calc the location?
 	{"modtype",     "1=primary, 0=hidden, 3=map", true},
 	{"depend",      "a table with all archives that needs to be loaded for this one", false},
-	{"replace",     "a table with archives that got replaced with this one", false}
+	{"replace",     "a table with archives that got replaced with this one", false},
+	{"onlyLocal",   "if true spring will not listen for incoming connections", false}
 };
 
 /*
