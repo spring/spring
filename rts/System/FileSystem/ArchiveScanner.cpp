@@ -344,14 +344,8 @@ CArchiveScanner::CArchiveScanner()
 : isDirty(false)
 {
 	// the "cache" dir is created in DataDirLocater
-	const std:: string cacheFolder = dataDirLocater.GetWriteDirPath() + FileSystem::EnsurePathSepAtEnd(FileSystem::GetCacheBaseDir());
-	cachefile = cacheFolder + IntToString(INTERNAL_VER, "ArchiveCache%i.lua");
+	cachefile = FileSystem::EnsurePathSepAtEnd(FileSystem::GetCacheDir()) + IntToString(INTERNAL_VER, "ArchiveCache%i.lua");
 	ReadCacheData(GetFilepath());
-	if (archiveInfos.empty()) {
-		// when versioned ArchiveCache%i.lua is missing or empty, try old unversioned filename
-		ReadCacheData(cacheFolder + "ArchiveCache.lua");
-	}
-
 	ScanAllDirs();
 }
 
@@ -543,6 +537,7 @@ void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 	unsigned modifiedTime;
 	if (CheckCachedData(fullName, &modifiedTime, doChecksum))
 		return;
+	isDirty = true;
 
 	const std::string fn    = FileSystem::GetFilename(fullName);
 	const std::string fpath = FileSystem::GetDirectory(fullName);
