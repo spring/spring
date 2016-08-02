@@ -509,16 +509,12 @@ Set(VERSION_GENERATE_SOURCES
 		"${VERSION_GENERATE_DIR}/VERSION"
 	)
 
-Set_Source_Files_Properties(
-		VERSION_GENERATE_SOURCES
-		PROPERTIES GENERATED TRUE
-	)
 
 # This is always executed (on every run of "make"),
 # but the actual version files are only written in case of a change
 # in the version info they use, or in the template file content.
-Add_Custom_Target(generateVersionFiles DEPENDS ${VERSION_GENERATE_SOURCES})
-Add_Custom_Command(OUTPUT VERSION_GENERATE_SOURCES
+Add_Custom_Command(
+	OUTPUT ${VERSION_GENERATE_SOURCES}
 	COMMAND "${CMAKE_COMMAND}"
 		"-DSOURCE_ROOT=${CMAKE_SOURCE_DIR}"
 		"-DCMAKE_MODULES_SPRING=${CMAKE_MODULES_SPRING}"
@@ -530,6 +526,12 @@ Add_Custom_Command(OUTPUT VERSION_GENERATE_SOURCES
 		"  Configuring Version files ..." VERBATIM
 	)
 
+Set_Source_Files_Properties(
+	VERSION_GENERATE_SOURCES
+	PROPERTIES GENERATED TRUE
+)
+
+Add_Custom_Target(generateVersionFiles DEPENDS ${VERSION_GENERATE_SOURCES})
 Add_Dependencies(generateSources generateVersionFiles)
 
 
