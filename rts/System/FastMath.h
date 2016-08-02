@@ -220,11 +220,19 @@ namespace fastmath {
 	static const float SQRT2 = 1.41421356237f;
 
 	/**
-	* @brief Degree (300) to Radians (2pi)
+	* @brief Degree (360) to Radians (2pi)
 	*
 	* 360 / (2*PI)
 	*/
 	static const float DEG_TO_RAD = 180.f / PI;
+
+
+	/**
+	* @brief Radians (2pi) to Degrees (360)
+	*
+	* 360 / (2*PI)
+	*/
+	static const float RAD_TO_DEG = PI / 180.f;
 
 	/**
 	* @brief calculates the sine of x

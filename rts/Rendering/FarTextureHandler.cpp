@@ -162,7 +162,7 @@ void CFarTextureHandler::CreateFarTexture(const CSolidObject* obj)
 	// twice the radius is not quite far away enough for some models
 	viewMat.Translate(float3(0.0f, 0.0f, -obj->GetDrawRadius() * (2.0f + 1.0f)));
 	viewMat.Scale(float3(-1.0f, 1.0f, 1.0f));
-	viewMat.RotateX(-60.0f * (M_PI / 180.0f));
+	viewMat.RotateX(-60.0f * (PI / 180.0f));
 
 	// overwrite the matrices set by SetupOpaqueDrawing
 	//
@@ -309,7 +309,7 @@ bool CFarTextureHandler::CheckResizeAtlas()
 	}
 
 	if (texSize.y > globalRendering->maxTextureSize) {
-		LOG_L(L_DEBUG, "Out of farTextures"); 
+		LOG_L(L_DEBUG, "Out of farTextures");
 		texSize.y = oldTexSizeY;
 		return false;
 	}

@@ -19,8 +19,8 @@
 
 
 #undef PI
-#define PI (3.14159265358979323846)
-#define RADIANS_PER_DEGREE (PI/180.0)
+#define PI fastmath::PI //SPRING(3.14159265358979323846)
+#define RADIANS_PER_DEGREE fastmath::RAD_TO_DEG //SPRING(PI/180.0)
 
 
 static int math_abs (lua_State *L) {
