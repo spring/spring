@@ -441,7 +441,7 @@ if    (MSVC)
 	set(CMAKE_CXX_FLAGS_RELWITHDEBINFO  "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} /O2 /Ob2 /GL /MP ${MSVC_CXX_FLAGS} ${CXX_RELWITHDEBINFO_DEFINES}")
 	set(CMAKE_CXX_FLAGS_RELEASE         "${CMAKE_CXX_FLAGS_RELEASE}        /O2 /Ob2 /GL /MP ${MSVC_CXX_FLAGS} ${CXX_RELEASE_DEFINES}")
 	set(CMAKE_CXX_FLAGS_PROFILE         "${CMAKE_CXX_FLAGS_PROFILE}        /O2 /Ob2 /GL /MP ${MSVC_CXX_FLAGS} ${CXX_PROFILE_DEFINES}")
-	
+
 	set(CMAKE_EXE_LINKER_FLAGS_RELEASE        "${CMAKE_EXE_LINKER_FLAGS_RELEASE}        /LTCG")
 	set(CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO "${CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO} /LTCG")
 	set(CMAKE_CXX_FLAGS_PROFILE               "${CMAKE_CXX_FLAGS_PROFILE} /LTCG")
@@ -504,9 +504,13 @@ Endif(EXISTS "${CMAKE_SOURCE_DIR}/.git")
 # Generate the version files
 Set(VERSION_GENERATE_DIR "${CMAKE_BINARY_DIR}")
 
-Set_Source_Files_Properties(
+Set(VERSION_GENERATE_SOURCES
 		"${VERSION_GENERATE_DIR}/src-generated/engine/System/VersionGenerated.h"
 		"${VERSION_GENERATE_DIR}/VERSION"
+	)
+
+Set_Source_Files_Properties(
+		VERSION_GENERATE_SOURCES
 		PROPERTIES GENERATED TRUE
 	)
 
@@ -527,6 +531,7 @@ Add_Custom_Command(TARGET generateVersionFiles
 	)
 
 Add_Dependencies(generateSources generateVersionFiles)
+Add_Dependencies(generateVersionFiles VERSION_GENERATE_SOURCES)
 
 
 ### Where the other CMakeLists.txt are
