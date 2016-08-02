@@ -517,7 +517,7 @@ Set_Source_Files_Properties(
 # This is always executed (on every run of "make"),
 # but the actual version files are only written in case of a change
 # in the version info they use, or in the template file content.
-Add_Custom_Target(generateVersionFiles)
+Add_Custom_Target(generateVersionFiles DEPENDS ${VERSION_GENERATE_SOURCES})
 Add_Custom_Command(TARGET generateVersionFiles
 	COMMAND "${CMAKE_COMMAND}"
 		"-DSOURCE_ROOT=${CMAKE_SOURCE_DIR}"
@@ -531,7 +531,6 @@ Add_Custom_Command(TARGET generateVersionFiles
 	)
 
 Add_Dependencies(generateSources generateVersionFiles)
-Add_Dependencies(generateVersionFiles VERSION_GENERATE_SOURCES)
 
 
 ### Where the other CMakeLists.txt are
