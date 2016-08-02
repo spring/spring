@@ -40,6 +40,8 @@ find_file(DOCBOOK_XSL
 	PATHS /usr /usr/share /usr/local /usr/local/share
 	PATH_SUFFIXES
 		xml/docbook/stylesheet/nwalsh/manpages
+		xml/docbook/stylesheet/nwalsh/1.78.1/manpages
+		xml/docbook/stylesheet/nwalsh/1.79.0/manpages
 		sgml/docbook/xsl-stylesheets/manpages
 		xsl/docbook/manpages
 	DOC "DocBook XSL Style-Sheet"
