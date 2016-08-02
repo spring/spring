@@ -51,7 +51,8 @@ boost::int64_t CPathManager::Finalize() {
 	const spring_time t0 = spring_gettime();
 
 	{
-		maxResPF = new CPathFinder();
+		// Thread unsafe pathfinder
+		maxResPF = new CPathFinder(false);
 		medResPE = new CPathEstimator(maxResPF, MEDRES_PE_BLOCKSIZE, "pe",  mapInfo->map.name);
 		lowResPE = new CPathEstimator(medResPE, LOWRES_PE_BLOCKSIZE, "pe2", mapInfo->map.name);
 

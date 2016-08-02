@@ -11,6 +11,7 @@
 #include "Sim/Objects/SolidObject.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
+#include "System/Platform/Threading.h"
 
 bool CMoveMath::noHoverWaterMove = false;
 float CMoveMath::waterDamageCost = 0.0f;
@@ -130,6 +131,13 @@ CMoveMath::BlockType CMoveMath::IsBlockedNoSpeedModCheck(const MoveDef& moveDef,
 	}
 	return ret;
 }
+
+CMoveMath::BlockType CMoveMath::IsBlockedNoSpeedModCheckThreadUnsafe(const MoveDef& moveDef, int xSquare, int zSquare, const CSolidObject* collider)
+{
+	assert(Threading::IsMainThread());
+	return RangeIsBlocked(moveDef, xSquare - moveDef.xsizeh, xSquare + moveDef.xsizeh, zSquare - moveDef.zsizeh, zSquare + moveDef.zsizeh, collider);
+}
+
 
 bool CMoveMath::CrushResistant(const MoveDef& colliderMD, const CSolidObject* collidee)
 {

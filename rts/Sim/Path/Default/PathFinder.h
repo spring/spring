@@ -11,6 +11,7 @@
 #include "IPathFinder.h"
 #include "PathConstants.h"
 #include "PathDataTypes.h"
+#include "Sim/MoveTypes/MoveMath/MoveMath.h"
 #include "Sim/Objects/SolidObject.h"
 
 struct MoveDef;
@@ -19,7 +20,7 @@ class CPathFinderDef;
 
 class CPathFinder: public IPathFinder {
 public:
-	CPathFinder();
+	CPathFinder(bool threadSafe = true);
 
 	static void InitDirectionVectorsTable();
 	static void InitDirectionCostsTable();
@@ -99,6 +100,10 @@ private:
 		IPath::Path& foundPath,
 		const float3 nextPoint
 	) const;
+
+	typedef CMoveMath::BlockType (*BlockCheckFunc)(const MoveDef&, int, int, const CSolidObject*);
+
+	BlockCheckFunc blockCheckFunc;
 };
 
 #endif // PATH_FINDER_H
