@@ -509,29 +509,47 @@ Set(VERSION_GENERATE_SOURCES
 		"${VERSION_GENERATE_DIR}/VERSION"
 	)
 
+Set_Source_Files_Properties(
+	${VERSION_GENERATE_SOURCES}
+	PROPERTIES GENERATED TRUE
+)
 
 # This is always executed (on every run of "make"),
 # but the actual version files are only written in case of a change
 # in the version info they use, or in the template file content.
-Add_Custom_Command(
-	OUTPUT ${VERSION_GENERATE_SOURCES}
-	COMMAND "${CMAKE_COMMAND}"
-		"-DSOURCE_ROOT=${CMAKE_SOURCE_DIR}"
-		"-DCMAKE_MODULES_SPRING=${CMAKE_MODULES_SPRING}"
-		"-DGENERATE_DIR=${VERSION_GENERATE_DIR}"
-		"-DVERSION_ADDITIONAL=${VERSION_ADDITIONAL}"
-		-P "${CMAKE_MODULES_SPRING}/ConfigureVersion.cmake"
-		"${VERSION_GENERATE_DIR}"
-	COMMENT
-		"  Configuring Version files ..." VERBATIM
+IF (MSVC)
+	Add_Custom_Command(
+		OUTPUT ${VERSION_GENERATE_SOURCES}
+		COMMAND "${CMAKE_COMMAND}"
+			"-DSOURCE_ROOT=${CMAKE_SOURCE_DIR}"
+			"-DCMAKE_MODULES_SPRING=${CMAKE_MODULES_SPRING}"
+			"-DGENERATE_DIR=${VERSION_GENERATE_DIR}"
+			"-DVERSION_ADDITIONAL=${VERSION_ADDITIONAL}"
+			-P "${CMAKE_MODULES_SPRING}/ConfigureVersion.cmake"
+			"${VERSION_GENERATE_DIR}"
+		COMMENT
+			"  Configuring Version files ..." VERBATIM
+		)
+	Add_Custom_Target(generateVersionFiles DEPENDS ${VERSION_GENERATE_SOURCES})
+ELSE (MSVC)
+	# This is always executed (on every run of "make"),
+	# but the actual version files are only written in case of a change
+	# in the version info they use, or in the template file content.
+	Add_Custom_Target(generateVersionFiles)
+	Add_Custom_Command(TARGET generateVersionFiles
+		COMMAND "${CMAKE_COMMAND}"
+			"-DSOURCE_ROOT=${CMAKE_SOURCE_DIR}"
+			"-DCMAKE_MODULES_SPRING=${CMAKE_MODULES_SPRING}"
+			"-DGENERATE_DIR=${VERSION_GENERATE_DIR}"
+			"-DVERSION_ADDITIONAL=${VERSION_ADDITIONAL}"
+			-P "${CMAKE_MODULES_SPRING}/ConfigureVersion.cmake"
+			"${VERSION_GENERATE_DIR}"
+		COMMENT
+			"  Configuring Version files ..." VERBATIM
 	)
 
-Set_Source_Files_Properties(
-	VERSION_GENERATE_SOURCES
-	PROPERTIES GENERATED TRUE
-)
+ENDIF (MSVC)
 
-Add_Custom_Target(generateVersionFiles DEPENDS ${VERSION_GENERATE_SOURCES})
 Add_Dependencies(generateSources generateVersionFiles)
 
 
