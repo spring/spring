@@ -6,7 +6,6 @@
 #include "KeyCodes.h"
 #include "SDL_keycode.h"
 #include "System/Log/ILog.h"
-#include "System/Platform/SDL1_keysym.h"
 #include "System/Util.h"
 
 CKeyCodes* keyCodes = NULL;
@@ -249,7 +248,7 @@ void CKeyCodes::Reset()
 void CKeyCodes::PrintNameToCode() const
 {
 	for (const auto& p: nameToCode) {
-		LOG("KEYNAME: %13s = 0x%03X (SDL1 = 0x%03X)", p.first.c_str(), p.second, SDL21_keysyms(p.second));
+		LOG("KEYNAME: %13s = 0x%03X", p.first.c_str(), p.second);
 	}
 }
 
@@ -257,7 +256,7 @@ void CKeyCodes::PrintNameToCode() const
 void CKeyCodes::PrintCodeToName() const
 {
 	for (const auto& p: codeToName) {
-		LOG("KEYCODE: 0x%03X = '%s' (SDL1 = 0x%03X)", p.first, p.second.c_str(), SDL21_keysyms(p.first));
+		LOG("KEYCODE: 0x%03X = '%s'", p.first, p.second.c_str());
 	}
 }
 

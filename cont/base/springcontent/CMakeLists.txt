@@ -165,7 +165,6 @@ set(FILES
 	LuaHandler/Utilities/vector.lua
 	LuaHandler/Utilities/setupdefs.lua
 	LuaHandler/Utilities/ctrlpanel.lua
-	LuaHandler/Utilities/keysym.lua
 	LuaHandler/Utilities/list.lua
 	LuaHandler/Utilities/cache.lua
 	LuaHandler/Utilities/colors.lua

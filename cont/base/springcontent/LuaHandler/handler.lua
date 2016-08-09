@@ -15,7 +15,6 @@
 --// Note: all here included modules/utilities are auto exposed to the addons, too!
 require "setupdefs.lua"
 require "savetable.lua"
-require "keysym.lua"
 require "actions.lua"
 
 

@@ -59,7 +59,6 @@
 #include "System/LoadSave/demofile.h"
 #include "System/LoadSave/DemoReader.h"
 #include "System/Log/DefaultFilter.h"
-#include "System/Platform/SDL1_keysym.h"
 #include "System/Sound/ISoundChannels.h"
 #include "System/Misc/SpringTime.h"
 
@@ -1983,7 +1982,7 @@ int LuaUnsyncedRead::GetCurrentTooltip(lua_State* L)
 
 int LuaUnsyncedRead::GetKeyState(lua_State* L)
 {
-	const int key = SDL12_keysyms(luaL_checkint(L, 1));
+	const int key = luaL_checkint(L, 1);
 	lua_pushboolean(L, KeyInput::IsKeyPressed(key));
 	return 1;
 }
@@ -2004,7 +2003,7 @@ int LuaUnsyncedRead::GetPressedKeys(lua_State* L)
 	lua_newtable(L);
 	for (auto key: KeyInput::GetPressedKeys()) {
 		if (key.second) {
-			const int keyCode = SDL21_keysyms(key.first);
+			const int keyCode = key.first;
 
 			// [keyCode] = true
 			lua_pushboolean(L, true);
@@ -2037,14 +2036,14 @@ int LuaUnsyncedRead::GetKeyCode(lua_State* L)
 	}
 
 	const int keycode = keyCodes->GetCode(luaL_checksstring(L, 1));
-	lua_pushnumber(L, SDL21_keysyms(keycode));
+	lua_pushnumber(L, keycode);
 	return 1;
 }
 
 
 int LuaUnsyncedRead::GetKeySymbol(lua_State* L)
 {
-	const int keycode = SDL12_keysyms(luaL_checkint(L, 1));
+	const int keycode = luaL_checkint(L, 1);
 	lua_pushsstring(L, (keyCodes != NULL)? keyCodes->GetName(keycode): "");
 	lua_pushsstring(L, (keyCodes != NULL)? keyCodes->GetDefaultName(keycode): "");
 	return 2;
