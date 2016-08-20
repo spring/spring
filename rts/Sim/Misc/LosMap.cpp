@@ -227,7 +227,7 @@ std::vector<int2> CLosTables::GetCircleSurface(const int radius)
  */
 void CLosTables::AddMissing(LosTable& losRays, const std::vector<int2>& circlePoints, const int radius)
 {
-	std::vector<bool> image((radius+1) * (radius+1), 0);
+	std::vector<char> image((radius+1) * (radius+1), 0);
 	auto setpixel = [&](int2 p) { image[p.y * (radius+1) + p.x] = true; };
 	auto getpixel = [&](int2 p) { return image[p.y * (radius+1) + p.x]; };
 	for (auto& line: losRays) {
@@ -499,7 +499,7 @@ inline static constexpr size_t ToAngleMapIdx(const int2 p, const int radius)
 }
 
 
-inline void CastLos(float* prevAng, float* maxAng, const int2& off, std::vector<bool>& squaresMap, std::vector<float>& anglesMap, int radius, int threadNum)
+inline void CastLos(float* prevAng, float* maxAng, const int2& off, std::vector<char>& squaresMap, std::vector<float>& anglesMap, int radius, int threadNum)
 {
 	// check if we got a new maxAngle
 	const size_t oidx = ToAngleMapIdx(off, radius);
@@ -520,7 +520,7 @@ inline void CastLos(float* prevAng, float* maxAng, const int2& off, std::vector<
 }
 
 
-void CLosMap::AddSquaresToInstance(SLosInstance* li, const std::vector<bool>& squaresMap) const
+void CLosMap::AddSquaresToInstance(SLosInstance* li, const std::vector<char>& squaresMap) const
 {
 	const int2 pos   = li->basePos;
 	const int radius = li->radius;
@@ -562,7 +562,7 @@ void CLosMap::UnsafeLosAdd(SLosInstance* li) const
 	const float losHeight = li->baseHeight;
 	const size_t area = Square((2*radius) + 1);
 	CLosTables::GenerateForLosSize(radius); //Only generates if not in cache
-	std::vector<bool> squaresMap(area, false); // saves the list of visible squares
+	std::vector<char> squaresMap(area, false); // saves the list of visible squares
 	std::vector<float> anglesMap(area, -1e8);
 	int threadNum = ThreadPool::GetThreadNum();
 	isqrt_verify((radius + 1) * (radius + 1), threadNum);
@@ -629,7 +629,7 @@ void CLosMap::SafeLosAdd(SLosInstance* li) const
 	const float losHeight = li->baseHeight;
 	const size_t area = Square((2*radius) + 1);
 	CLosTables::GenerateForLosSize(radius); //Only generates if not in cache
-	std::vector<bool> squaresMap(area, false); // saves the list of visible squares
+	std::vector<char> squaresMap(area, false); // saves the list of visible squares
 	std::vector<float> anglesMap(area, -1e8);
 	const SRectangle safeRect(0, 0, size.x, size.y);
 	int threadNum = ThreadPool::GetThreadNum();

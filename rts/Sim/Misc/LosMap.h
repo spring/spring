@@ -50,7 +50,7 @@ private:
 	void UnsafeLosAdd(SLosInstance* instance) const;
 	void SafeLosAdd(SLosInstance* instance) const;
 
-	void AddSquaresToInstance(SLosInstance* li, const std::vector<bool>& squaresMap) const;
+	void AddSquaresToInstance(SLosInstance* li, const std::vector<char>& squaresMap) const;
 
 protected:
 	const int2 size;
