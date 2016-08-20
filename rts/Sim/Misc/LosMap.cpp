@@ -503,20 +503,20 @@ inline void CastLos(float* prevAng, float* maxAng, const int2& off, std::vector<
 {
 	// check if we got a new maxAngle
 	const size_t oidx = ToAngleMapIdx(off, radius);
-	if (anglesMap[oidx] < *maxAng)
+	if (anglesMap[oidx] < *maxAng) {
+		squaresMap[oidx] = false;
 		return;
+	}
 
 	if (anglesMap[oidx] < *prevAng) {
 		const float invR = isqrt_lookup(off.x*off.x + off.y*off.y, threadNum);
 		*maxAng = *prevAng - LOS_BONUS_HEIGHT * invR;
-		if (anglesMap[oidx] < *maxAng)
+		if (anglesMap[oidx] < *maxAng) {
+			squaresMap[oidx] = false;
 			return;
+		}
 	}
 	*prevAng = anglesMap[oidx];
-
-	// add square to visibility list when not already done
-	assert(anglesMap[oidx] != -1e8);
-	squaresMap[oidx] = true;
 }
 
 
@@ -525,16 +525,16 @@ void CLosMap::AddSquaresToInstance(SLosInstance* li, const std::vector<char>& sq
 	const int2 pos   = li->basePos;
 	const int radius = li->radius;
 
+	const char *ptr = &squaresMap[0];
 	for (int y = -radius; y<=radius; ++y) {
 		SLosInstance::RLE rle = {MAP_SQUARE(pos + int2(-radius,y)), 0};
 		for (int x = -radius; x<=radius; ++x) {
 			const int2 off = int2(x, y);
-			const size_t oidx = ToAngleMapIdx(off, radius);
-			if (squaresMap[oidx]) {
+			if (*(ptr++)) {
 				++rle.length;
 			} else {
 				if (rle.length > 0) li->squares.push_back(rle);
-				rle.start  = MAP_SQUARE(pos + off) + 1;
+				rle.start  += rle.length + 1;
 				rle.length = 0;
 			}
 		}
@@ -578,20 +578,25 @@ void CLosMap::UnsafeLosAdd(SLosInstance* li) const
 		const unsigned sx = pos.x - width;
 		const unsigned ex = pos.x + width + 1;
 
+		const size_t oidx = ToAngleMapIdx(int2(sx - pos.x, y), radius);
+		float* anglesPtr = &anglesMap[oidx];
+		char* squaresPtr = &squaresMap[oidx];
+		int idx = MAP_SQUARE(int2(sx, y_));
 		for (unsigned x_ = sx; x_ < ex; ++x_) {
-			const int2 wpos = int2(x_,y_);
-			const int2  off = int2(wpos.x - pos.x, y);
+			const int2 off(x_ - pos.x, y);
 
-			if (off == int2(0,0))
+			if (off == int2(0,0)) {
+				++idx;
+				++anglesPtr;
+				++squaresPtr;
 				continue;
+			}
 
 			const float invR = isqrt_lookup(off.x*off.x + off.y*off.y, threadNum);
+			const float dh = std::max(0.f, heightmap[idx++]) - losHeight;
 
-			const int idx = MAP_SQUARE(wpos);
-			const float dh = std::max(0.f, heightmap[idx]) - losHeight;
-			const size_t oidx = ToAngleMapIdx(off, radius);
-
-			anglesMap[oidx] = (dh + LOS_BONUS_HEIGHT) * invR;
+			*(anglesPtr++) = (dh + LOS_BONUS_HEIGHT) * invR;
+			*(squaresPtr++) = true;
 		}
 	});
 
@@ -642,21 +647,25 @@ void CLosMap::SafeLosAdd(SLosInstance* li) const
 			const unsigned sx = Clamp(pos.x - width,     0, size.x);
 			const unsigned ex = Clamp(pos.x + width + 1, 0, size.x);
 
+			const size_t oidx = ToAngleMapIdx(int2(sx - pos.x, y), radius);
+			float* anglesPtr = &anglesMap[oidx];
+			char* squaresPtr = &squaresMap[oidx];
+			int idx = MAP_SQUARE(int2(sx, y_));
 			for (unsigned x_ = sx; x_ < ex; ++x_) {
-				const int2 wpos = int2(x_,y_);
-				const int2  off = int2(wpos.x - pos.x, y);
+				const int2 off(x_ - pos.x, y);
 
-				if (off == int2(0,0))
+				if (off == int2(0,0)) {
+					++idx;
+					++anglesPtr;
+					++squaresPtr;
 					continue;
+				}
 
-				//assert(safeRect.Inside(wpos));
 				const float invR = isqrt_lookup(off.x*off.x + off.y*off.y, threadNum);
+				const float dh = std::max(0.f, heightmap[idx++]) - losHeight;
 
-				const int idx = MAP_SQUARE(wpos);
-				const float dh = std::max(0.f, heightmap[idx]) - losHeight;
-				const size_t oidx = ToAngleMapIdx(off, radius);
-
-				anglesMap[oidx] = (dh + LOS_BONUS_HEIGHT) * invR;
+				*(anglesPtr++) = (dh + LOS_BONUS_HEIGHT) * invR;
+				*(squaresPtr++) = true;
 			}
 		}
 	});
