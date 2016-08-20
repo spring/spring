@@ -743,23 +743,31 @@ int LuaUtils::PushFeatureModelDrawType(lua_State* L, const FeatureDef* def)
 
 int LuaUtils::PushModelName(lua_State* L, const SolidObjectDef* def)
 {
-	// redundant with model.path
-	// lua_pushsstring(L, modelLoader.FindModelPath(def->modelName));
-	lua_pushsstring(L, "deprecated! use def.model.path instead!");
+	lua_pushsstring(L, def->modelName);
+	return 1;
+}
+
+int LuaUtils::PushModelType(lua_State* L, const SolidObjectDef* def)
+{
+	const std::string& modelPath = modelLoader.FindModelPath(def->modelName);
+	const std::string& modelType = StringToLower(FileSystem::GetExtension(modelPath));
+	lua_pushsstring(L, modelType);
+	return 1;
+}
+
+int LuaUtils::PushModelPath(lua_State* L, const SolidObjectDef* def)
+{
+	const std::string& modelPath = modelLoader.FindModelPath(def->modelName);
+	lua_pushsstring(L, modelPath);
 	return 1;
 }
 
 
 int LuaUtils::PushModelTable(lua_State* L, const SolidObjectDef* def) {
-	const std::string& modelPath = modelLoader.FindModelPath(def->modelName);
-	const std::string& modelType = StringToLower(FileSystem::GetExtension(modelPath));
 
 	const S3DModel* model = def->LoadModel();
 
 	lua_newtable(L);
-	HSTR_PUSH_STRING(L, "type", modelType);
-	HSTR_PUSH_STRING(L, "path", modelPath);
-	HSTR_PUSH_STRING(L, "name", def->modelName);
 
 	if (model != nullptr) {
 		// unit, or non-tree feature

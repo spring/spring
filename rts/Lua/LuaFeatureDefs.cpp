@@ -294,6 +294,14 @@ static int ModelName(lua_State* L, const void* data) {
 	return (LuaUtils::PushModelName(L, static_cast<const SolidObjectDef*>(data)));
 }
 
+static int ModelType(lua_State* L, const void* data) {
+	return (LuaUtils::PushModelType(L, static_cast<const SolidObjectDef*>(data)));
+}
+
+static int ModelPath(lua_State* L, const void* data) {
+	return (LuaUtils::PushModelPath(L, static_cast<const SolidObjectDef*>(data)));
+}
+
 static int ModelHeight(lua_State* L, const void* data) {
 	return (LuaUtils::PushModelHeight(L, static_cast<const SolidObjectDef*>(data), false));
 }
@@ -330,6 +338,8 @@ static bool InitParamMap()
 	ADD_FUNCTION("collisionVolume", fd.collisionVolume, ColVolTable);
 
 	ADD_FUNCTION("modelname", fd, ModelName);
+	ADD_FUNCTION("modeltype", fd, ModelType);
+	ADD_FUNCTION("modelpath", fd, ModelPath);
 	ADD_FUNCTION("height", fd, ModelHeight);
 	ADD_FUNCTION("radius", fd, ModelRadius);
 	ADD_FUNCTION("drawTypeString", fd, ModelDrawType);

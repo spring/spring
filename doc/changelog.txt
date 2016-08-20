@@ -2,6 +2,16 @@ Spring changelog
 (since 85.0: "!" prefix indicate backward compatibility broke)
 (numbers in brackets normally mean the mantis ticket ID)
 
+-- 104.0 --------------------------------------------------------
+General:
+ - Add onlyLocal boolean value to modinfo.lua
+ - Assorted bugfixes and optimisations
+
+Lua:
+ ! Undeprecate {unit,feature}def.modelname and add .modeltype and .modelpath to
+   allow reading these without loading the model. Removed def.model.{name,type,path}
+   so they aren't used accidentally.
+
 -- 103.0 --------------------------------------------------------
 General:
  - Fix & Improve performace

@@ -506,6 +506,14 @@ static int ModelName(lua_State* L, const void* data) {
 	return (LuaUtils::PushModelName(L, static_cast<const SolidObjectDef*>(data)));
 }
 
+static int ModelType(lua_State* L, const void* data) {
+	return (LuaUtils::PushModelType(L, static_cast<const SolidObjectDef*>(data)));
+}
+
+static int ModelPath(lua_State* L, const void* data) {
+	return (LuaUtils::PushModelPath(L, static_cast<const SolidObjectDef*>(data)));
+}
+
 static int ModelHeight(lua_State* L, const void* data) {
 	return (LuaUtils::PushModelHeight(L, static_cast<const SolidObjectDef*>(data), true));
 }
@@ -626,6 +634,8 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_FUNCTION("isBomberAirUnit", ud, IsBomberAirUnit);
 
 	ADD_FUNCTION("modelname", ud, ModelName);
+	ADD_FUNCTION("modeltype", ud, ModelType);
+	ADD_FUNCTION("modelpath", ud, ModelPath);
 	ADD_FUNCTION("height", ud, ModelHeight);
 	ADD_FUNCTION("radius", ud, ModelRadius);
 

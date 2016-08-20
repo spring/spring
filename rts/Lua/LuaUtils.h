@@ -89,6 +89,8 @@ class LuaUtils {
 		static int PushModelRadius(lua_State* L, const SolidObjectDef* def, bool isUnitDef);
 		static int PushFeatureModelDrawType(lua_State* L, const FeatureDef* def);
 		static int PushModelName(lua_State* L, const SolidObjectDef* def);
+		static int PushModelType(lua_State* L, const SolidObjectDef* def);
+		static int PushModelPath(lua_State* L, const SolidObjectDef* def);
 
 		static int PushModelTable(lua_State* L, const SolidObjectDef* def);
 		static int PushColVolTable(lua_State* L, const CollisionVolume* vol);
