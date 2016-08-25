@@ -4012,10 +4012,10 @@ int LuaSyncedRead::GetUnitCommands(lua_State* L)
 		static int calls = 0;
 		static spring_time nextWarning = spring_gettime();
 		calls++;
-		if (spring_gettime() >= nextWarning) {
+		if (spring_gettime() >= nextWarning) { //spring_gettime() isn't sync-safe!
 			nextWarning = spring_gettime() + spring_secs(5);
 			if (calls > 1000) {
-				luaL_error(L,
+				LOG_L(L_ERROR,
 					"[%s] called too often without a 2nd argument to define maxNumCmds returned in the table, please check your code!\n"
 					"Especially when you only read the first cmd or want to check if the queue is non-empty, this can be a huge performance leak!\n", __FUNCTION__);
 			}
