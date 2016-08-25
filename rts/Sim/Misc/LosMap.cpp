@@ -529,7 +529,6 @@ void CLosMap::AddSquaresToInstance(SLosInstance* li, const std::vector<char>& sq
 	for (int y = -radius; y<=radius; ++y) {
 		SLosInstance::RLE rle = {MAP_SQUARE(pos + int2(-radius,y)), 0};
 		for (int x = -radius; x<=radius; ++x) {
-			const int2 off = int2(x, y);
 			if (*(ptr++)) {
 				++rle.length;
 			} else {
