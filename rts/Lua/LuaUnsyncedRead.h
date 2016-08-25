@@ -15,7 +15,6 @@ class LuaUnsyncedRead {
 	public:
 		static int IsReplay(lua_State* L);
 		static int GetReplayLength(lua_State* L);
-		static int GetModUICtrl(lua_State* L);
 
 		static int GetDrawFrame(lua_State* L);
 		static int GetFrameTimeOffset(lua_State* L);

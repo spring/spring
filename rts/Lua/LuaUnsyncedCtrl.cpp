@@ -1692,10 +1692,6 @@ int LuaUnsyncedCtrl::FreeUnitIcon(lua_State* L)
 // TODO: move this to LuaVFS?
 int LuaUnsyncedCtrl::ExtractModArchiveFile(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L)) {
-		return 0;
-	}
-
 	const string path = luaL_checkstring(L, 1);
 
 	CFileHandler fhVFS(path, SPRING_VFS_MOD);
@@ -1764,9 +1760,6 @@ int LuaUnsyncedCtrl::ExtractModArchiveFile(lua_State* L)
 
 int LuaUnsyncedCtrl::SendCommands(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L)) {
-		return 0;
-	}
 	if ((guihandler == NULL) || gs->noHelperAIs) {
 		return 0;
 	}
@@ -1812,9 +1805,6 @@ int LuaUnsyncedCtrl::SendCommands(lua_State* L)
 
 static int SetActiveCommandByIndex(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L)) {
-		return 0;
-	}
 	if (guihandler == NULL) {
 		return 0;
 	}
@@ -1845,9 +1835,6 @@ static int SetActiveCommandByIndex(lua_State* L)
 
 static int SetActiveCommandByAction(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L)) {
-		return 0;
-	}
 	if (guihandler == NULL) {
 		return 0;
 	}
@@ -1867,9 +1854,6 @@ static int SetActiveCommandByAction(lua_State* L)
 
 int LuaUnsyncedCtrl::SetActiveCommand(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L)) {
-		return 0;
-	}
 	if (guihandler == NULL) {
 		return 0;
 	}
@@ -1890,9 +1874,6 @@ int LuaUnsyncedCtrl::SetActiveCommand(lua_State* L)
 
 int LuaUnsyncedCtrl::LoadCmdColorsConfig(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L)) {
-		return 0;
-	}
 	const string cfg = luaL_checkstring(L, 1);
 	cmdColors.LoadConfigFromString(cfg);
 	return 0;
@@ -1901,9 +1882,6 @@ int LuaUnsyncedCtrl::LoadCmdColorsConfig(lua_State* L)
 
 int LuaUnsyncedCtrl::LoadCtrlPanelConfig(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L)) {
-		return 0;
-	}
 	if (guihandler == NULL) {
 		return 0;
 	}
@@ -1915,9 +1893,6 @@ int LuaUnsyncedCtrl::LoadCtrlPanelConfig(lua_State* L)
 
 int LuaUnsyncedCtrl::ForceLayoutUpdate(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L)) {
-		return 0;
-	}
 	if (guihandler == NULL) {
 		return 0;
 	}
@@ -1930,9 +1905,6 @@ int LuaUnsyncedCtrl::ForceLayoutUpdate(lua_State* L)
 
 int LuaUnsyncedCtrl::WarpMouse(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L)) {
-		return 0;
-	}
 	const int x = luaL_checkint(L, 1);
 	const int y = globalRendering->viewSizeY - luaL_checkint(L, 2) - 1;
 	mouse->WarpMouse(x, y);
@@ -1942,10 +1914,6 @@ int LuaUnsyncedCtrl::WarpMouse(lua_State* L)
 
 int LuaUnsyncedCtrl::SetMouseCursor(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L)) {
-		return 0;
-	}
-
 	const std::string& cursorName = luaL_checkstring(L, 1);
 	const float cursorScale = luaL_optfloat(L, 2, 1.0f);
 
@@ -1958,10 +1926,6 @@ int LuaUnsyncedCtrl::SetMouseCursor(lua_State* L)
 
 int LuaUnsyncedCtrl::SetClipboard(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L)) {
-		return 0;
-	}
-
 	SDL_SetClipboardText(luaL_checkstring(L, 1));
 	return 0;
 }
@@ -1970,9 +1934,6 @@ int LuaUnsyncedCtrl::SetClipboard(lua_State* L)
 
 int LuaUnsyncedCtrl::SetCameraOffset(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L)) {
-		return 0;
-	}
 	if (camera == NULL) {
 		return 0;
 	}
@@ -2042,11 +2003,6 @@ int LuaUnsyncedCtrl::SetLosViewColors(lua_State* L)
 
 int LuaUnsyncedCtrl::GetConfigInt(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L)) {
-		// FIXME: why not put this in UnsyncedRead without the ModUICtrl restriction?
-		lua_pushnumber(L, 0);
-		return 1;
-	}
 	const string name = luaL_checkstring(L, 1);
 	const int def     = luaL_optint(L, 2, 0);
 	SET_IN_OVERLAY_WARNING;
@@ -2057,9 +2013,6 @@ int LuaUnsyncedCtrl::GetConfigInt(lua_State* L)
 
 int LuaUnsyncedCtrl::SetConfigInt(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L)) {
-		return 0;
-	}
 	const string name = luaL_checkstring(L, 1);
 	const int value   = luaL_checkint(L, 2);
 	const bool useOverlay = luaL_optboolean(L, 3, false);
@@ -2076,11 +2029,6 @@ int LuaUnsyncedCtrl::SetConfigInt(lua_State* L)
 
 int LuaUnsyncedCtrl::GetConfigString(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L)) {
-		// FIXME: why not put this in UnsyncedRead without the ModUICtrl restriction?
-		lua_pushstring(L, "");
-		return 1;
-	}
 	const string name = luaL_checkstring(L, 1);
 	const string def  = luaL_optstring(L, 2, "");
 	SET_IN_OVERLAY_WARNING;
@@ -2092,9 +2040,6 @@ int LuaUnsyncedCtrl::GetConfigString(lua_State* L)
 
 int LuaUnsyncedCtrl::SetConfigString(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L)) {
-		return 0;
-	}
 	const string name  = luaL_checkstring(L, 1);
 	const string value = luaL_checkstring(L, 2);
 	const bool useOverlay = luaL_optboolean(L, 3, false);
@@ -2114,9 +2059,6 @@ int LuaUnsyncedCtrl::SetConfigString(lua_State* L)
 
 int LuaUnsyncedCtrl::CreateDir(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L)) {
-		return 0;
-	}
 	const string dir = luaL_checkstring(L, 1);
 
 	// keep directories within the Spring directory
@@ -2231,10 +2173,6 @@ int LuaUnsyncedCtrl::SetWMCaption(lua_State* L)
 
 int LuaUnsyncedCtrl::SetUnitDefIcon(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L)) {
-		return 0;
-	}
-
 	const int unitDefID = luaL_checkint(L, 1);
 	const UnitDef* ud = unitDefHandler->GetUnitDefByID(unitDefID);
 	if (ud == NULL) {
@@ -2267,10 +2205,6 @@ int LuaUnsyncedCtrl::SetUnitDefIcon(lua_State* L)
 
 int LuaUnsyncedCtrl::SetUnitDefImage(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L)) {
-		return 0;
-	}
-
 	const int unitDefID = luaL_checkint(L, 1);
 	const UnitDef* ud = unitDefHandler->GetUnitDefByID(unitDefID);
 	if (ud == NULL) {
@@ -2306,9 +2240,6 @@ int LuaUnsyncedCtrl::SetUnitDefImage(lua_State* L)
 
 int LuaUnsyncedCtrl::SetUnitGroup(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L))
-		return 0;
-
 	if (gs->noHelperAIs)
 		return 0;
 
@@ -2400,9 +2331,6 @@ static bool CanGiveOrders(const lua_State* L)
 
 int LuaUnsyncedCtrl::GiveOrder(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L))
-		return 0;
-
 	if (!CanGiveOrders(L))
 		return 1;
 
@@ -2418,9 +2346,6 @@ int LuaUnsyncedCtrl::GiveOrder(lua_State* L)
 
 int LuaUnsyncedCtrl::GiveOrderToUnit(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L))
-		return 0;
-
 	if (!CanGiveOrders(L)) {
 		lua_pushboolean(L, false);
 		return 1;
@@ -2443,9 +2368,6 @@ int LuaUnsyncedCtrl::GiveOrderToUnit(lua_State* L)
 
 int LuaUnsyncedCtrl::GiveOrderToUnitMap(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L))
-		return 0;
-
 	if (!CanGiveOrders(L)) {
 		lua_pushboolean(L, false);
 		return 1;
@@ -2474,9 +2396,6 @@ int LuaUnsyncedCtrl::GiveOrderToUnitMap(lua_State* L)
 
 int LuaUnsyncedCtrl::GiveOrderToUnitArray(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L))
-		return 0;
-
 	if (!CanGiveOrders(L)) {
 		lua_pushboolean(L, false);
 		return 1;
@@ -2505,9 +2424,6 @@ int LuaUnsyncedCtrl::GiveOrderToUnitArray(lua_State* L)
 
 int LuaUnsyncedCtrl::GiveOrderArrayToUnitMap(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L))
-		return 0;
-
 	if (!CanGiveOrders(L)) {
 		lua_pushboolean(L, false);
 		return 1;
@@ -2535,9 +2451,6 @@ int LuaUnsyncedCtrl::GiveOrderArrayToUnitMap(lua_State* L)
 
 int LuaUnsyncedCtrl::GiveOrderArrayToUnitArray(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L))
-		return 0;
-
 	if (!CanGiveOrders(L)) {
 		lua_pushboolean(L, false);
 		return 1;
@@ -2579,9 +2492,6 @@ static string GetRawMsg(lua_State* L, const char* caller, int index)
 
 int LuaUnsyncedCtrl::SendLuaUIMsg(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L)) {
-		return 0;
-	}
 	const string msg = GetRawMsg(L, __FUNCTION__, 1);
 	std::vector<boost::uint8_t> data(msg.size());
 	std::copy(msg.begin(), msg.end(), data.begin());
@@ -2607,9 +2517,6 @@ int LuaUnsyncedCtrl::SendLuaUIMsg(lua_State* L)
 
 int LuaUnsyncedCtrl::SendLuaGaiaMsg(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L)) {
-		return 0;
-	}
 	const string msg = GetRawMsg(L, __FUNCTION__, 1);
 	std::vector<boost::uint8_t> data(msg.size());
 	std::copy(msg.begin(), msg.end(), data.begin());
@@ -2624,9 +2531,6 @@ int LuaUnsyncedCtrl::SendLuaGaiaMsg(lua_State* L)
 
 int LuaUnsyncedCtrl::SendLuaRulesMsg(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L)) {
-		return 0;
-	}
 	const string msg = GetRawMsg(L, __FUNCTION__, 1);
 	std::vector<boost::uint8_t> data(msg.size());
 	std::copy(msg.begin(), msg.end(), data.begin());
@@ -2643,9 +2547,6 @@ int LuaUnsyncedCtrl::SendLuaRulesMsg(lua_State* L)
 
 int LuaUnsyncedCtrl::SetShareLevel(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L))
-		return 0;
-
 	if (gu->spectating || gs->noHelperAIs || gs->PreSimFrame())
 		return 0;
 
@@ -2668,9 +2569,6 @@ int LuaUnsyncedCtrl::SetShareLevel(lua_State* L)
 
 int LuaUnsyncedCtrl::ShareResources(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L))
-		return 0;
-
 	if (gu->spectating || gs->noHelperAIs || gs->PreSimFrame())
 		return 0;
 
@@ -2728,9 +2626,6 @@ int LuaUnsyncedCtrl::SetLastMessagePosition(lua_State* L)
 
 int LuaUnsyncedCtrl::MarkerAddPoint(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L)) {
-		return 0;
-	}
 	if (inMapDrawer == NULL) {
 		return 0;
 	}
@@ -2752,9 +2647,6 @@ int LuaUnsyncedCtrl::MarkerAddPoint(lua_State* L)
 
 int LuaUnsyncedCtrl::MarkerAddLine(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L)) {
-		return 0;
-	}
 	if (inMapDrawer == NULL) {
 		return 0;
 	}
@@ -2778,9 +2670,6 @@ int LuaUnsyncedCtrl::MarkerAddLine(lua_State* L)
 
 int LuaUnsyncedCtrl::MarkerErasePosition(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L)) {
-		return 0;
-	}
 	if (inMapDrawer == NULL) {
 		return 0;
 	}
@@ -2799,10 +2688,6 @@ int LuaUnsyncedCtrl::MarkerErasePosition(lua_State* L)
 
 int LuaUnsyncedCtrl::SetDrawSelectionInfo(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L)) {
-		return 0;
-	}
-
 	if (guihandler)
 		guihandler->SetDrawSelectionInfo(luaL_checkboolean(L, 1));
 
@@ -2815,10 +2700,6 @@ int LuaUnsyncedCtrl::SetDrawSelectionInfo(lua_State* L)
 
 int LuaUnsyncedCtrl::SetBuildSpacing(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L)) {
-		return 0;
-	}
-
 	if (guihandler)
 		guihandler->SetBuildSpacing(luaL_checkinteger(L, 1));
 
@@ -2827,10 +2708,6 @@ int LuaUnsyncedCtrl::SetBuildSpacing(lua_State* L)
 
 int LuaUnsyncedCtrl::SetBuildFacing(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L)) {
-		return 0;
-	}
-
 	if (guihandler)
 		guihandler->SetBuildFacing(luaL_checkint(L, 1));
 

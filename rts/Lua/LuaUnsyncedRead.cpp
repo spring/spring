@@ -93,7 +93,6 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(IsReplay);
 	REGISTER_LUA_CFUNC(GetReplayLength);
-	REGISTER_LUA_CFUNC(GetModUICtrl);
 
 	REGISTER_LUA_CFUNC(GetDrawFrame);
 	REGISTER_LUA_CFUNC(GetFrameTimeOffset);
@@ -340,13 +339,6 @@ int LuaUnsyncedRead::GetReplayLength(lua_State* L)
 		return 1;
 	}
 	return 0;
-}
-
-
-int LuaUnsyncedRead::GetModUICtrl(lua_State* L)
-{
-	lua_pushboolean(L, CLuaHandle::GetModUICtrl());
-	return 1;
 }
 
 

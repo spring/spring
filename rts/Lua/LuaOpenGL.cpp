@@ -4289,9 +4289,6 @@ int LuaOpenGL::ReadPixels(lua_State* L)
 
 int LuaOpenGL::SaveImage(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L)) {
-		return 0;
-	}
 	const GLint x = (GLint)luaL_checknumber(L, 1);
 	const GLint y = (GLint)luaL_checknumber(L, 2);
 	const GLsizei width  = (GLsizei)luaL_checknumber(L, 3);

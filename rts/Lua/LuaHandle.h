@@ -70,10 +70,8 @@ class CLuaHandle : public CEventClient
 		static bool GetHandleSynced(const lua_State* L) { return GetLuaContextData(L)->synced; }
 
 		bool GetUserMode() const { return userMode; }
-		bool CheckModUICtrl() const { return GetModUICtrl() || GetUserMode(); }
 
 		static bool GetHandleUserMode(lua_State* L) { return (GetHandle(L))->GetUserMode(); }
-		static bool CheckModUICtrl(lua_State* L) { return GetModUICtrl() || GetHandleUserMode(L); }
 
 		static int GetHandleAllowChanges(const lua_State* L) { return GetLuaContextData(L)->allowChanges; }
 
@@ -324,14 +322,10 @@ class CLuaHandle : public CEventClient
 		static void SetDevMode(bool value) { devMode = value; }
 		static bool GetDevMode() { return devMode; }
 
-		static void SetModUICtrl(bool value) { modUICtrl = value; }
-		static bool GetModUICtrl() { return modUICtrl; }
-
 		static void HandleLuaMsg(int playerID, int script, int mode, const std::vector<boost::uint8_t>& msg);
 
 	protected: // static
 		static bool devMode; // allows real file access
-		static bool modUICtrl; // allows non-user scripts to use UI controls
 
 		// FIXME: because CLuaUnitScript needs to access RunCallIn
 		friend class CLuaUnitScript;

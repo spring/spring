@@ -283,7 +283,6 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 	ParseInputTextGeometry("default");
 	ParseInputTextGeometry(configHandler->GetString("InputTextGeo"));
 
-	CLuaHandle::SetModUICtrl(true);
 	// clear left-over receivers in case we reloaded
 	commandConsole.ResetState();
 

@@ -2332,24 +2332,6 @@ public:
 };
 
 
-
-class LuaModUICtrlActionExecutor : public IUnsyncedActionExecutor {
-public:
-	LuaModUICtrlActionExecutor() : IUnsyncedActionExecutor("LuaModUICtrl",
-			"Allow/Disallow Lua to receive UI control events, like mouse-,"
-			" keyboard- and joystick-events") {}
-
-	bool Execute(const UnsyncedAction& action) const {
-
-		bool modUICtrl = CLuaHandle::GetModUICtrl();
-		InverseOrSetBool(modUICtrl, action.GetArgs());
-		CLuaHandle::SetModUICtrl(modUICtrl);
-		return true;
-	}
-};
-
-
-
 class MiniMapActionExecutor : public IUnsyncedActionExecutor {
 public:
 	MiniMapActionExecutor() : IUnsyncedActionExecutor("MiniMap",
@@ -3180,7 +3162,6 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new ClearMapMarksActionExecutor());
 	AddActionExecutor(new NoLuaDrawActionExecutor());
 	AddActionExecutor(new LuaUIActionExecutor());
-	AddActionExecutor(new LuaModUICtrlActionExecutor());
 	AddActionExecutor(new MiniMapActionExecutor());
 	AddActionExecutor(new GroundDecalsActionExecutor());
 	AddActionExecutor(new MaxParticlesActionExecutor());

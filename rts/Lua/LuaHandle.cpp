@@ -53,7 +53,6 @@
 #include <string>
 
 bool CLuaHandle::devMode = false;
-bool CLuaHandle::modUICtrl = true;
 
 
 /******************************************************************************/
@@ -1862,9 +1861,6 @@ void CLuaHandle::GameProgress(int frameNum )
 
 bool CLuaHandle::KeyPress(int key, bool isRepeat)
 {
-	if (!CheckModUICtrl()) {
-		return false;
-	}
 	LUA_CALL_IN_CHECK(L, false);
 	luaL_checkstack(L, 6, __func__);
 	static const LuaHashString cmdStr(__func__);
@@ -1899,9 +1895,6 @@ bool CLuaHandle::KeyPress(int key, bool isRepeat)
 
 bool CLuaHandle::KeyRelease(int key)
 {
-	if (!CheckModUICtrl()) {
-		return false;
-	}
 	LUA_CALL_IN_CHECK(L, false);
 	luaL_checkstack(L, 5, __func__);
 	static const LuaHashString cmdStr(__func__);
@@ -1933,9 +1926,6 @@ bool CLuaHandle::KeyRelease(int key)
 
 bool CLuaHandle::TextInput(const std::string& utf8)
 {
-	if (!CheckModUICtrl()) {
-		return false;
-	}
 	LUA_CALL_IN_CHECK(L, false);
 	luaL_checkstack(L, 3, __func__);
 	static const LuaHashString cmdStr(__func__);
@@ -1958,9 +1948,6 @@ bool CLuaHandle::TextInput(const std::string& utf8)
 
 bool CLuaHandle::MousePress(int x, int y, int button)
 {
-	if (!CheckModUICtrl()) {
-		return false;
-	}
 	LUA_CALL_IN_CHECK(L, false);
 	luaL_checkstack(L, 5, __func__);
 	static const LuaHashString cmdStr(__func__);
@@ -1984,9 +1971,6 @@ bool CLuaHandle::MousePress(int x, int y, int button)
 
 void CLuaHandle::MouseRelease(int x, int y, int button)
 {
-	if (!CheckModUICtrl()) {
-		return;
-	}
 	LUA_CALL_IN_CHECK(L, false);
 	luaL_checkstack(L, 5, __func__);
 	static const LuaHashString cmdStr(__func__);
@@ -2005,9 +1989,6 @@ void CLuaHandle::MouseRelease(int x, int y, int button)
 
 bool CLuaHandle::MouseMove(int x, int y, int dx, int dy, int button)
 {
-	if (!CheckModUICtrl()) {
-		return false;
-	}
 	LUA_CALL_IN_CHECK(L, false);
 	luaL_checkstack(L, 7, __func__);
 	static const LuaHashString cmdStr(__func__);
@@ -2033,9 +2014,6 @@ bool CLuaHandle::MouseMove(int x, int y, int dx, int dy, int button)
 
 bool CLuaHandle::MouseWheel(bool up, float value)
 {
-	if (!CheckModUICtrl()) {
-		return false;
-	}
 	LUA_CALL_IN_CHECK(L, false);
 	luaL_checkstack(L, 4, __func__);
 	static const LuaHashString cmdStr(__func__);
@@ -2057,9 +2035,6 @@ bool CLuaHandle::MouseWheel(bool up, float value)
 
 bool CLuaHandle::JoystickEvent(const std::string& event, int val1, int val2)
 {
-	if (!CheckModUICtrl()) {
-		return false;
-	}
 	LUA_CALL_IN_CHECK(L, false);
 	luaL_checkstack(L, 4, __func__);
 	const LuaHashString cmdStr(event);
@@ -2081,9 +2056,6 @@ bool CLuaHandle::JoystickEvent(const std::string& event, int val1, int val2)
 
 bool CLuaHandle::IsAbove(int x, int y)
 {
-	if (!CheckModUICtrl()) {
-		return false;
-	}
 	LUA_CALL_IN_CHECK(L, false);
 	luaL_checkstack(L, 4, __func__);
 	static const LuaHashString cmdStr(__func__);
@@ -2106,9 +2078,6 @@ bool CLuaHandle::IsAbove(int x, int y)
 
 string CLuaHandle::GetTooltip(int x, int y)
 {
-	if (!CheckModUICtrl()) {
-		return "";
-	}
 	LUA_CALL_IN_CHECK(L, "");
 	luaL_checkstack(L, 4, __func__);
 	static const LuaHashString cmdStr(__func__);
@@ -2131,9 +2100,6 @@ string CLuaHandle::GetTooltip(int x, int y)
 
 bool CLuaHandle::CommandNotify(const Command& cmd)
 {
-	if (!CheckModUICtrl()) {
-		return false;
-	}
 	LUA_CALL_IN_CHECK(L, false);
 	luaL_checkstack(L, 5, __func__);
 	static const LuaHashString cmdStr(__func__);
@@ -2162,10 +2128,6 @@ bool CLuaHandle::CommandNotify(const Command& cmd)
 
 bool CLuaHandle::AddConsoleLine(const string& msg, const string& section, int level)
 {
-	if (!CheckModUICtrl()) {
-		return true; // FIXME?
-	}
-
 	LUA_CALL_IN_CHECK(L, true);
 	luaL_checkstack(L, 4, __func__);
 	static const LuaHashString cmdStr(__func__);
@@ -2187,9 +2149,6 @@ bool CLuaHandle::AddConsoleLine(const string& msg, const string& section, int le
 
 bool CLuaHandle::GroupChanged(int groupID)
 {
-	if (!CheckModUICtrl()) {
-		return false;
-	}
 	LUA_CALL_IN_CHECK(L, false);
 	luaL_checkstack(L, 3, __func__);
 	static const LuaHashString cmdStr(__func__);
@@ -2212,9 +2171,6 @@ string CLuaHandle::WorldTooltip(const CUnit* unit,
                                 const CFeature* feature,
                                 const float3* groundPos)
 {
-	if (!CheckModUICtrl()) {
-		return "";
-	}
 	LUA_CALL_IN_CHECK(L, "");
 	luaL_checkstack(L, 6, __func__);
 	static const LuaHashString cmdStr(__func__);
@@ -2260,9 +2216,6 @@ bool CLuaHandle::MapDrawCmd(int playerID, int type,
                             const float3* pos1,
                             const string* label)
 {
-	if (!CheckModUICtrl()) {
-		return false;
-	}
 	LUA_CALL_IN_CHECK(L, false);
 	luaL_checkstack(L, 9, __func__);
 	static const LuaHashString cmdStr(__func__);
@@ -2320,9 +2273,6 @@ bool CLuaHandle::MapDrawCmd(int playerID, int type,
 bool CLuaHandle::GameSetup(const string& state, bool& ready,
                            const map<int, string>& playerStates)
 {
-	if (!CheckModUICtrl()) {
-		return false;
-	}
 	LUA_CALL_IN_CHECK(L, false);
 	luaL_checkstack(L, 5, __func__);
 	static const LuaHashString cmdStr(__func__);
