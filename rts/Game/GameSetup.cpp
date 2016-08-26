@@ -56,6 +56,7 @@ CR_REG_METADATA(CGameSetup, (
 	CR_IGNORED(recordDemo),
 	CR_IGNORED(demoName),
 	CR_IGNORED(saveName),
+	CR_IGNORED(menuName),
 
 	CR_IGNORED(playerRemap),
 	CR_IGNORED(teamRemap),
