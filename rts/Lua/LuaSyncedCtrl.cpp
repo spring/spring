@@ -230,6 +230,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(SetFeatureAlwaysVisible);
 	REGISTER_LUA_CFUNC(SetFeatureHealth);
+	REGISTER_LUA_CFUNC(SetFeatureMaxHealth);
 	REGISTER_LUA_CFUNC(SetFeatureReclaim);
 	REGISTER_LUA_CFUNC(SetFeatureResurrect);
 
@@ -1493,14 +1494,14 @@ int LuaSyncedCtrl::SetUnitHealth(lua_State* L)
 int LuaSyncedCtrl::SetUnitMaxHealth(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+	if (unit == NULL)
 		return 0;
-	}
+
 	unit->maxHealth = std::max(0.1f, luaL_checkfloat(L, 2));
 
-	if (unit->health > unit->maxHealth) {
+	if (unit->health > unit->maxHealth)
 		unit->health = unit->maxHealth;
-	}
+
 	return 0;
 }
 
@@ -2763,6 +2764,21 @@ int LuaSyncedCtrl::SetFeatureHealth(lua_State* L)
 }
 
 
+int LuaSyncedCtrl::SetFeatureMaxHealth(lua_State* L)
+{
+	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
+	if (feature == nullptr)
+		return 0;
+
+	feature->maxHealth = std::max(0.1f, luaL_checkfloat(L, 2));
+
+	if (feature->health > feature->maxHealth)
+		feature->health = feature->maxHealth;
+
+	return 0;
+}
+
+
 int LuaSyncedCtrl::SetFeatureReclaim(lua_State* L)
 {
 	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
@@ -3956,11 +3972,11 @@ int LuaSyncedCtrl::SetSquareBuildingMask(lua_State* L)
 {
 	const int x = luaL_checkint(L, 1);
 	const int z = luaL_checkint(L, 2);
-	const int mask = luaL_checkint(L, 3);	
+	const int mask = luaL_checkint(L, 3);
 	if (mask < 0 || mask > USHRT_MAX) {
 		luaL_error(L, "Incorrect value of mask: %s(%d, %d, %d)", __FUNCTION__, x, z, mask);
 		return 0;
-	}	
+	}
 	const bool result = buildingMaskMap->SetTileMask(x, z, (boost::uint16_t)mask);
 	if (!result) {
 		luaL_error(L, "Invalid values supplied: %s(%d, %d, %d)", __FUNCTION__, x, z, mask);

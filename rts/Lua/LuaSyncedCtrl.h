@@ -117,6 +117,7 @@ class LuaSyncedCtrl
 
 		static int SetFeatureAlwaysVisible(lua_State* L);
 		static int SetFeatureHealth(lua_State* L);
+		static int SetFeatureMaxHealth(lua_State* L);
 		static int SetFeatureReclaim(lua_State* L);
 		static int SetFeatureResurrect(lua_State* L);
 
