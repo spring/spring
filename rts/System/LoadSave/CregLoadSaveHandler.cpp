@@ -14,8 +14,9 @@
 #include "Net/GameServer.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Units/UnitHandler.h"
-#include "Sim/Misc/LosHandler.h"
+#include "Sim/Misc/BuildingMaskMap.h"
 #include "Sim/Misc/InterceptHandler.h"
+#include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/CategoryHandler.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
@@ -77,6 +78,7 @@ void CGameStateCollector::Serialize(creg::ISerializer* s)
 	s->SerializeObjectInstance(losHandler, losHandler->GetClass());
 	s->SerializeObjectInstance(&interceptHandler, interceptHandler.GetClass());
 	s->SerializeObjectInstance(CCategoryHandler::Instance(), CCategoryHandler::Instance()->GetClass());
+	s->SerializeObjectInstance(buildingMaskMap, buildingMaskMap->GetClass());
 	s->SerializeObjectInstance(projectileHandler, projectileHandler->GetClass());
 	s->SerializeObjectInstance(&waitCommandsAI, waitCommandsAI.GetClass());
 	s->SerializeObjectInstance(&wind, wind.GetClass());
