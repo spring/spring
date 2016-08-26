@@ -93,6 +93,12 @@ bool IsRunningInGDB();
  * @return error message, or "" on success
  */
 std::string ExecuteProcess(const std::string& file, std::vector<std::string> args, bool asSubprocess = false);
+
+/**
+ * Opens a URL in the default system application
+ * @param  url the URL to open
+ */
+void OpenURL(const std::string& url);
 }
 
 #endif // PLATFORM_MISC_H

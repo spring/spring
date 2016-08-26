@@ -519,4 +519,20 @@ std::string ExecuteProcess(const std::string& file, std::vector<std::string> arg
 	return execError;
 }
 
+void OpenURL(const std::string& url)
+{
+#ifdef WIN32
+	ShellExecute(NULL, "open", url.c_str(), NULL, NULL, SW_SHOWNORMAL);
+#elseif __APPLE__
+	system(("open " + url).c_str()); // uhh
+#else
+	int pid = fork();
+	if (pid == 0) {
+		execl("/usr/bin/xdg-open", "xdg-open", url.c_str(), (char *)0);
+		//TODO: maybe use execl to find xdg-open?
+		exit(EXIT_SUCCESS);
+	}
+#endif
+}
+
 } // namespace Platform
