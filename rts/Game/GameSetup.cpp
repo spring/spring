@@ -563,6 +563,7 @@ bool CGameSetup::Init(const std::string& buf)
 	modName     = file.SGetValueDef("",  "GAME\\Gametype");
 	mapName     = file.SGetValueDef("",  "GAME\\MapName");
 	saveName    = file.SGetValueDef("",  "GAME\\Savefile");
+	menuName    = file.SGetValueDef("",  "GAME\\MenuName");
 	demoName    = file.SGetValueDef("",  "GAME\\Demofile");
 	hostDemo    = !demoName.empty();
 

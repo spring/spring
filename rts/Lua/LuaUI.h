@@ -15,13 +15,10 @@ class CFeature;
 struct Command;
 struct lua_State;
 struct SCommandDescription;
-class LuaLobby;
 
 
 class CLuaUI : public CLuaHandle
 {
-	friend class LuaLobby;
-
 	public: // structs
 		enum QueuedAction {
 			ACTION_RELOAD  =  0,

@@ -22,6 +22,7 @@ SET(sources_engine_Lua
 		"${CMAKE_CURRENT_SOURCE_DIR}/LuaIntro.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/LuaMaterial.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/LuaMathExtra.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/LuaMenu.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/LuaMetalMap.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/LuaObjectRendering.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/LuaOpenGL.cpp"

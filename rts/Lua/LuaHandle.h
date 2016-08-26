@@ -26,6 +26,7 @@ using std::set;
 #define LUA_HANDLE_ORDER_GAIA_UNSYNCED   1300
 #define LUA_HANDLE_ORDER_UI              2000
 #define LUA_HANDLE_ORDER_INTRO           3000
+#define LUA_HANDLE_ORDER_MENU            4000
 
 
 class CUnit;

@@ -157,6 +157,7 @@ public:
 	std::string setupText;
 	std::string demoName;
 	std::string saveName;
+	std::string menuName;
 
 private:
 	std::map<int, int> playerRemap;
