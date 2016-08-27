@@ -879,7 +879,7 @@ int CGame::KeyPressed(int key, bool isRepeat)
 		for (const Action& action: actionList) {
 			if (ProcessKeyPressAction(key, action)) {
 				// the key was used, ignore it (ex: alt+a)
-				ignoreNextChar = true;
+				ignoreNextChar = keyCodes->IsPrintable(key);
 				break;
 			}
 		}
