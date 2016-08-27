@@ -1195,22 +1195,9 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 			//FIXME don't known when this is called
 		} break;
 		case SDL_TEXTINPUT: {
-			if (!activeController) {
-				break;
-			}
-
-			std::string utf8Text = event.text.text;
-
-			const bool catched = eventHandler.TextInput(utf8Text);
-
-			if (activeController->userWriting && !catched){
-				auto ac = activeController;
-				if (ac->ignoreNextChar) {
-					utf8Text = utf8Text.substr(Utf8NextChar(utf8Text, 0));
-				}
-				ac->writingPos = Clamp<int>(ac->writingPos, 0, ac->userInput.length());
-				ac->userInput.insert(ac->writingPos, utf8Text);
-				ac->writingPos += utf8Text.length();
+			if (activeController) {
+				std::string utf8Text = event.text.text;
+				activeController->TextInput(utf8Text);
 			}
 		} break;
 		case SDL_KEYDOWN: {

@@ -123,6 +123,8 @@ private:
 	int KeyReleased(int k);
 	/// Called when the key is pressed by the user (can be called several times due to key repeat)
 	int KeyPressed(int k, bool isRepeat);
+	///
+	int TextInput(std::string& utf8Text);
 
 	bool ActionPressed(unsigned int key, const Action& action, bool isRepeat);
 	bool ActionReleased(const Action& action);

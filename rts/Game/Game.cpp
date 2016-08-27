@@ -951,6 +951,21 @@ int CGame::KeyReleased(int k)
 }
 
 
+int CGame::TextInput(std::string& utf8Text)
+{
+	const bool caught = eventHandler.TextInput(utf8Text);
+
+	if (userWriting && !caught){
+		if (ignoreNextChar) {
+			utf8Text = utf8Text.substr(Utf8NextChar(utf8Text, 0));
+		}
+		writingPos = Clamp<int>(writingPos, 0, userInput.length());
+		userInput.insert(writingPos, utf8Text);
+		writingPos += utf8Text.length();
+	}
+	return 0;
+}
+
 
 bool CGame::Update()
 {

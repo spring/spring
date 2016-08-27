@@ -48,6 +48,13 @@ int CGameController::KeyReleased(int key)
 }
 
 
+int CGameController::TextInput(std::string& utf8Text)
+{
+	return 0;
+}
+
+
+
 void CGameController::PasteClipboard()
 {
 	CClipboard clipboard;
