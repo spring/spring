@@ -261,6 +261,7 @@ bool CLuaMenu::LoadUnsyncedReadFunctions(lua_State* L)
 	REGISTER_LUA_CFUNC(GetScreenGeometry);
 	REGISTER_LUA_CFUNC(GetMiniMapDualScreen);
 	REGISTER_LUA_CFUNC(GetDrawFrame);
+	REGISTER_LUA_CFUNC(IsGUIHidden);
 
 	REGISTER_LUA_CFUNC(GetTeamColor);
 	REGISTER_LUA_CFUNC(GetTeamOrigColor);
