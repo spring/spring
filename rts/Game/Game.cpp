@@ -53,6 +53,7 @@
 #include "Lua/LuaInputReceiver.h"
 #include "Lua/LuaHandle.h"
 #include "Lua/LuaGaia.h"
+#include "Lua/LuaMenu.h"
 #include "Lua/LuaRules.h"
 #include "Lua/LuaOpenGL.h"
 #include "Lua/LuaParser.h"
@@ -906,6 +907,11 @@ int CGame::KeyPressed(int key, bool isRepeat)
 	if (luaUI != NULL) {
 		for (const Action& action: actionList) {
 			luaUI->GotChatMsg(action.rawline, false);
+		}
+	}
+	if (luaMenu != NULL) {
+		for (const Action& action: actionList) {
+			luaMenu->GotChatMsg(action.rawline, false);
 		}
 	}
 
@@ -2085,6 +2091,9 @@ bool CGame::ProcessAction(const Action& action, unsigned int key, bool isRepeat)
 	// maybe a widget is interested?
 	if (luaUI != NULL) {
 		luaUI->GotChatMsg(action.rawline, false); //FIXME add return argument!
+	}
+	if (luaMenu != NULL) {
+		luaMenu->GotChatMsg(action.rawline, false); //FIXME add return argument!
 	}
 
 	return false;

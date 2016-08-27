@@ -29,6 +29,7 @@
 #include "Net/GameServer.h"
 #include "Game/UI/KeyBindings.h"
 #include "Game/UI/MouseHandler.h"
+#include "Lua/LuaMenu.h"
 #include "Lua/LuaOpenGL.h"
 #include "Lua/LuaVFSDownload.h"
 #include "Menu/SelectMenu.h"
@@ -470,7 +471,6 @@ void SpringApp::GetDisplayGeometry()
 void SpringApp::SaveWindowPosition()
 {
 #ifndef HEADLESS
-	configHandler->Set("Fullscreen", globalRendering->fullScreen);
 	if (globalRendering->fullScreen) {
 		return;
 	}
@@ -1053,6 +1053,8 @@ void SpringApp::ShutDown()
 	}
 	SafeDelete(game);
 	SafeDelete(pregame);
+
+	CLuaMenu::FreeHandler();
 
 	LOG("[SpringApp::%s][3]", __FUNCTION__);
 	SafeDelete(clientNet);

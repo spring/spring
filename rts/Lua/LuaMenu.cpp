@@ -243,7 +243,10 @@ bool CLuaMenu::LoadUnsyncedCtrlFunctions(lua_State* L)
 
 	REGISTER_LUA_CFUNC(SetLogSectionFilterLevel);
 
-	REGISTER_LUA_CFUNC(SendCommands);
+	REGISTER_LUA_CFUNC(Restart);
+	REGISTER_LUA_CFUNC(Reload);
+	REGISTER_LUA_CFUNC(Quit);
+	REGISTER_LUA_CFUNC(Start);
 	#undef REGISTER_LUA_CFUNC
 	return true;
 }
