@@ -170,6 +170,12 @@ CGlobalRendering::CGlobalRendering()
 
 	, window(nullptr)
 {
+	configHandler->NotifyOnChange(this);
+}
+
+CGlobalRendering::~CGlobalRendering()
+{
+	configHandler->RemoveObserver(this);
 }
 
 void CGlobalRendering::PostInit() {
@@ -301,6 +307,32 @@ void CGlobalRendering::SetFullScreen(bool configFullScreen, bool cmdLineWindowed
 		fullScreen = false;
 	} else if (cmdLineFullScreen) {
 		fullScreen = true;
+	}
+
+	configHandler->Set("Fullscreen", fullScreen);
+}
+
+void CGlobalRendering::ConfigNotify(const std::string& key, const std::string& value)
+{
+	if (key != "Fullscreen" && key != "WindowBorderless")
+		return;
+
+	fullScreen = configHandler->GetBool("Fullscreen");
+
+	const int2 res = GetWantedViewSize(fullScreen);
+	const bool borderless = configHandler->GetBool("WindowBorderless");
+	if (fullScreen) {
+		SDL_SetWindowSize(window, res.x, res.y);
+		if (borderless) {
+			SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+		} else {
+			SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
+		}
+	} else {
+		SDL_SetWindowFullscreen(window, 0);
+		SDL_SetWindowBordered(window, borderless ? SDL_FALSE : SDL_TRUE);
+		SDL_SetWindowSize(window, res.x, res.y);
+		SDL_SetWindowPosition(window, configHandler->GetInt("WindowPosX"), configHandler->GetInt("WindowPosY"));
 	}
 }
 

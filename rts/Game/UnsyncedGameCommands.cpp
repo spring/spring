@@ -1389,28 +1389,13 @@ public:
 			"Switches fullscreen mode") {}
 
 	bool Execute(const UnsyncedAction& action) const {
+		bool b;
 		if (!action.GetArgs().empty()) {
-			globalRendering->fullScreen = (atoi(action.GetArgs().c_str()) != 0);
+			b = (atoi(action.GetArgs().c_str()) != 0);
 		} else {
-			globalRendering->fullScreen = !globalRendering->fullScreen;
+			b = !globalRendering->fullScreen;
 		}
-
-		const int2 res = globalRendering->GetWantedViewSize(globalRendering->fullScreen);
-		const bool borderless = configHandler->GetBool("WindowBorderless");
-		if (globalRendering->fullScreen) {
-			SDL_SetWindowSize(globalRendering->window, res.x, res.y);
-
-			if (borderless) {
-				SDL_SetWindowFullscreen(globalRendering->window, SDL_WINDOW_FULLSCREEN_DESKTOP);
-			} else {
-				SDL_SetWindowFullscreen(globalRendering->window, SDL_WINDOW_FULLSCREEN);
-			}
-		} else {
-			SDL_SetWindowFullscreen(globalRendering->window, 0);
-			SDL_SetWindowBordered(globalRendering->window, borderless ? SDL_FALSE : SDL_TRUE);
-			SDL_SetWindowSize(globalRendering->window, res.x, res.y);
-			SDL_SetWindowPosition(globalRendering->window, configHandler->GetInt("WindowPosX"), configHandler->GetInt("WindowPosY"));
-		}
+		configHandler->Set("Fullscreen", b);
 		return true;
 	}
 };

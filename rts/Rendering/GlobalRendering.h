@@ -20,8 +20,11 @@ class CGlobalRendering {
 
 public:
 	CGlobalRendering();
+	~CGlobalRendering();
 	void PostInit();
 	void SetFullScreen(bool configFullScreen, bool cmdLineWindowed, bool cmdLineFullScreen);
+	// Notify on Fullscreen/WindowBorderless change
+	void ConfigNotify(const std::string& key, const std::string& value);
 	void SetDualScreenParams();
 	void UpdateViewPortGeometry();
 	void UpdatePixelGeometry();
