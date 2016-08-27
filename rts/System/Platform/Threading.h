@@ -21,9 +21,6 @@
 
 
 
-class CGameController;
-
-
 namespace Threading {
 
 	class ThreadControls;
