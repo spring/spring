@@ -28,10 +28,12 @@
 #include "Game/LoadScreen.h"
 #include "Net/GameServer.h"
 #include "Game/UI/KeyBindings.h"
+#include "Game/UI/KeyCodes.h"
 #include "Game/UI/MouseHandler.h"
 #include "Lua/LuaMenu.h"
 #include "Lua/LuaOpenGL.h"
 #include "Lua/LuaVFSDownload.h"
+#include "Menu/LuaMenuController.h"
 #include "Menu/SelectMenu.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Fonts/glFont.h"
@@ -266,6 +268,7 @@ bool SpringApp::Initialize()
 	// GUIs
 	agui::InitGui();
 	LoadFonts();
+	keyCodes = new CKeyCodes();
 
 	CNamedTextures::Init();
 	LuaOpenGL::Init();
@@ -660,6 +663,7 @@ void SpringApp::ParseCmdLine(const std::string& binaryName)
 	cmdline->AddString('d', "write-dir",          "Specify where Spring writes to.");
 	cmdline->AddString('g', "game",               "Specify the game that will be instantly loaded");
 	cmdline->AddString('m', "map",                "Specify the map that will be instantly loaded");
+	cmdline->AddString('e', "menu",                "Specify the map that will be instantly loaded");
 	cmdline->AddString('n', "name",               "Set your player name");
 	cmdline->AddSwitch(0,   "oldmenu",            "Start the old menu");
 
@@ -832,7 +836,9 @@ void SpringApp::LoadSpringMenu()
 		defaultscript = "defaultstartscript.txt";
 	}
 
-	if (cmdline->IsSet("oldmenu") || defaultscript.empty()) {
+	if (cmdline->IsSet("menu")){
+		activeController = new CLuaMenuController(cmdline->GetString("menu"));
+	} else if (cmdline->IsSet("oldmenu") || defaultscript.empty()) {
 		// old menu
 	#ifdef HEADLESS
 		handleerror(NULL,
@@ -1055,6 +1061,7 @@ void SpringApp::ShutDown()
 	SafeDelete(pregame);
 
 	CLuaMenu::FreeHandler();
+	SafeDelete(luaMenuController);
 
 	LOG("[SpringApp::%s][3]", __FUNCTION__);
 	SafeDelete(clientNet);
@@ -1067,6 +1074,7 @@ void SpringApp::ShutDown()
 	FreeJoystick();
 
 	LOG("[SpringApp::%s][5]", __FUNCTION__);
+	SafeDelete(keyCodes);
 	agui::FreeGui();
 	SafeDelete(font);
 	SafeDelete(smallFont);

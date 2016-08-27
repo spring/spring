@@ -48,7 +48,7 @@ int CGameController::KeyReleased(int key)
 }
 
 
-int CGameController::TextInput(std::string& utf8Text)
+int CGameController::TextInput(const std::string& utf8Text)
 {
 	return 0;
 }

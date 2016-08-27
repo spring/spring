@@ -15,7 +15,7 @@ public:
 	virtual bool Update();
 	virtual int KeyPressed(int key, bool isRepeat);
 	virtual int KeyReleased(int key);
-	virtual int TextInput(std::string& utf8Text);
+	virtual int TextInput(const std::string& utf8Text);
 	virtual void ResizeEvent() {}
 
 	/// true if user is writing

@@ -50,9 +50,9 @@
 #include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Rendering/Textures/ColorMap.h"
 #include "Rendering/Textures/NamedTextures.h"
-#include "Lua/LuaInputReceiver.h"
-#include "Lua/LuaHandle.h"
 #include "Lua/LuaGaia.h"
+#include "Lua/LuaHandle.h"
+#include "Lua/LuaInputReceiver.h"
 #include "Lua/LuaMenu.h"
 #include "Lua/LuaRules.h"
 #include "Lua/LuaOpenGL.h"
@@ -576,6 +576,7 @@ void CGame::LoadInterface()
 		ScopedOnceTimer timer("Game::LoadInterface (Camera&Mouse)");
 
 		camHandler = new CCameraHandler();
+		SafeDelete(mouse);
 		mouse = new CMouseHandler();
 	}
 
@@ -629,7 +630,6 @@ void CGame::LoadInterface()
 	guihandler = new CGuiHandler();
 	minimap = new CMiniMap();
 	resourceBar = new CResourceBar();
-	keyCodes = new CKeyCodes();
 	keyBindings = new CKeyBindings();
 	keyBindings->Load("uikeys.txt");
 	selectionKeys = new CSelectionKeyHandler();
@@ -663,6 +663,7 @@ void CGame::LoadLua()
 	CLuaUI::LoadFreeHandler();
 
 	// last in, first served
+	SafeDelete(luaInputReceiver);
 	luaInputReceiver = new LuaInputReceiver();
 
 	SafeDelete(defsParser);
@@ -785,7 +786,6 @@ void CGame::KillInterface()
 	SafeDelete(infoConsole);
 	SafeDelete(consoleHistory);
 	SafeDelete(keyBindings);
-	SafeDelete(keyCodes);
 	SafeDelete(selectionKeys); // CSelectionKeyHandler*
 	SafeDelete(luaInputReceiver);
 	SafeDelete(mouse); // CMouseHandler*
@@ -951,17 +951,15 @@ int CGame::KeyReleased(int k)
 }
 
 
-int CGame::TextInput(std::string& utf8Text)
+int CGame::TextInput(const std::string& utf8Text)
 {
 	const bool caught = eventHandler.TextInput(utf8Text);
 
 	if (userWriting && !caught){
-		if (ignoreNextChar) {
-			utf8Text = utf8Text.substr(Utf8NextChar(utf8Text, 0));
-		}
+		std::string text = ignoreNextChar ? utf8Text.substr(Utf8NextChar(utf8Text, 0)) : utf8Text;
 		writingPos = Clamp<int>(writingPos, 0, userInput.length());
-		userInput.insert(writingPos, utf8Text);
-		writingPos += utf8Text.length();
+		userInput.insert(writingPos, text);
+		writingPos += text.length();
 	}
 	return 0;
 }

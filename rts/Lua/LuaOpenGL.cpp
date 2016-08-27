@@ -942,6 +942,9 @@ void LuaOpenGL::ResetDrawInMiniMapBackground()
 
 void LuaOpenGL::SetupWorldLighting()
 {
+	if (sky == nullptr)
+		return;
+
 	glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
 	glLightfv(GL_LIGHT1, GL_POSITION, sky->GetLight()->GetLightDir());
 	glEnable(GL_LIGHT1);
@@ -1008,6 +1011,9 @@ void LuaOpenGL::RevertScreenMatrices()
 
 void LuaOpenGL::SetupScreenLighting()
 {
+	if (camera == nullptr)
+		return;
+
 	// back light
 	const float backLightPos[4]  = { 1.0f, 2.0f, 2.0f, 0.0f };
 	const float backLightAmbt[4] = { 0.0f, 0.0f, 0.0f, 1.0f };

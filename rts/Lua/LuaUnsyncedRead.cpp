@@ -1111,7 +1111,7 @@ int LuaUnsyncedRead::GetSelectedUnitsCount(lua_State* L)
 
 int LuaUnsyncedRead::IsGUIHidden(lua_State* L)
 {
-	lua_pushboolean(L, game->hideInterface);
+	lua_pushboolean(L, game != nullptr && game->hideInterface);
 	return 1;
 }
 

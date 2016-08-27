@@ -17,7 +17,6 @@
 #include "LoadScreen.h"
 #include "Game/Players/Player.h"
 #include "Game/Players/PlayerHandler.h"
-#include "Lua/LuaMenu.h"
 #include "Net/GameServer.h"
 #include "System/TimeProfiler.h"
 #include "UI/InfoConsole.h"
@@ -207,13 +206,6 @@ void CPreGame::StartServer(const std::string& setupscript)
 	boost::shared_ptr<CGameSetup> startGameSetup(new CGameSetup());
 
 	startGameSetup->Init(setupscript);
-
-	// create LuaMenu if necessary
-	if (!startGameSetup->menuName.empty()) {
-		LOG("[%s] using menu: %s", __FUNCTION__, startGameSetup->menuName.c_str());
-		vfsHandler->AddArchiveWithDeps(startGameSetup->menuName, false);
-		CLuaMenu::LoadFreeHandler();
-	}
 
 	startGameData->SetRandomSeed(static_cast<unsigned>(gu->RandInt()));
 
