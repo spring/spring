@@ -222,6 +222,7 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(Reload);
 	REGISTER_LUA_CFUNC(Restart);
 	REGISTER_LUA_CFUNC(Start);
+	REGISTER_LUA_CFUNC(Quit);
 
 	REGISTER_LUA_CFUNC(SetWMIcon);
 	REGISTER_LUA_CFUNC(SetWMCaption);
@@ -2144,6 +2145,13 @@ int LuaUnsyncedCtrl::Start(lua_State* L)
 		return 1;
 	}
 
+	return 0;
+}
+
+
+int LuaUnsyncedCtrl::Quit(lua_State* L)
+{
+	gu->globalQuit = true;
 	return 0;
 }
 
