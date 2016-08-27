@@ -7,6 +7,10 @@ Spring (formerly TASpring) is an Open Source Real Time Strategy game engine.
 Visit our [project homepage](https://springrts.com/) for help, suggestions,
 bugs, community forum and everything spring related.
 
+## License
+
+This program is distributed under the GNU General Public License, see license.html for more info
+
 ### Compiling
 
 Detailed instructions for how to compile Spring can be found [here](https://springrts.com/wiki/Building_spring)

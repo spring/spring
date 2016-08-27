@@ -186,6 +186,8 @@ bool SpringApp::Initialize()
 	assert(cmdline != NULL);
 	assert(configHandler != NULL);
 
+	LOG("Spring is distributed under the GNU General Public License, see license.html for more info");
+
 	// list user's config
 	LOG("============== <User Config> ==============");
 	const std::map<std::string, std::string> settings = configHandler->GetDataWithoutDefaults();
