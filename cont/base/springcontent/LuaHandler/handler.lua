@@ -693,7 +693,7 @@ handler[s"Remove%{Addon}"] = handler.Remove
 -- Save/Load addon related data
 
 function handler:LoadOrderList()
-	if (LUA_NAME ~= "LuaUI") then return end
+	if (LUA_NAME ~= "LuaUI" and LUA_NAME ~= "LuaMenu") then return end
 
 	if VFS.FileExists(ORDER_FILENAME) then
 		local success, rvalue = pcall(VFS.Include, ORDER_FILENAME, {math = {huge = math.huge}})
@@ -707,7 +707,7 @@ end
 
 
 function handler:SaveOrderList()
-	if (LUA_NAME ~= "LuaUI") then return end
+	if (LUA_NAME ~= "LuaUI" and LUA_NAME ~= "LuaMenu") then return end
 
 	--// update the current order
 	local i = 1
@@ -720,7 +720,7 @@ end
 
 
 function handler:LoadKnownData()
-	if (LUA_NAME ~= "LuaUI") then return end
+	if (LUA_NAME ~= "LuaUI" and LUA_NAME ~= "LuaMenu") then return end
 
 	if (handler.initialized) then --FIXME make the code below work even at runtime
 		error("Called handler:LoadKnownData after Initialization.", 2)
@@ -749,7 +749,7 @@ end
 
 
 function handler:SaveKnownData()
-	if (LUA_NAME ~= "LuaUI") then return end
+	if (LUA_NAME ~= "LuaUI" and LUA_NAME ~= "LuaMenu") then return end
 
 	local t = {}
 	for i,ki in pairs(handler.knownInfos) do
@@ -762,7 +762,7 @@ end
 
 
 function handler:LoadConfigData()
-	if (LUA_NAME ~= "LuaUI") then return end
+	if (LUA_NAME ~= "LuaUI" and LUA_NAME ~= "LuaMenu") then return end
 
 	if VFS.FileExists(CONFIG_FILENAME) then
 		handler.configData = VFS.Include(CONFIG_FILENAME, {})
@@ -772,7 +772,7 @@ end
 
 
 function handler:SaveAddonConfigData(addon)
-	if (LUA_NAME ~= "LuaUI") then return end
+	if (LUA_NAME ~= "LuaUI" and LUA_NAME ~= "LuaMenu") then return end
 
 	if (addon.GetConfigData) then
 		local name = addon._info.name
@@ -782,7 +782,7 @@ end
 
 
 function handler:SaveConfigData()
-	if (LUA_NAME ~= "LuaUI") then return end
+	if (LUA_NAME ~= "LuaUI" and LUA_NAME ~= "LuaMenu") then return end
 
 	handler:LoadConfigData()
 	for _,addon in handler.addons:iter() do
