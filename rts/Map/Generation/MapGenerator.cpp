@@ -3,7 +3,6 @@
 #include "MapGenerator.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/Exceptions.h"
-#include "System/FileSystem/VFSHandler.h"
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/Archives/VirtualArchive.h"
 #include "Map/SMF/SMFFormat.h"

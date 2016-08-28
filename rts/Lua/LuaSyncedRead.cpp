@@ -67,7 +67,6 @@
 #include "System/bitops.h"
 #include "System/myMath.h"
 #include "System/FileSystem/FileHandler.h"
-#include "System/FileSystem/VFSHandler.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/Util.h"
 

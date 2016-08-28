@@ -6,7 +6,6 @@
 #include "System/Exceptions.h"
 #include "System/Util.h"
 #include "System/Log/ILog.h"
-#include "System/FileSystem/VFSHandler.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/SimpleParser.h"
 #include "System/Platform/byteorder.h"

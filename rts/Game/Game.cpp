@@ -120,7 +120,6 @@
 #include "System/Util.h"
 #include "System/Input/KeyInput.h"
 #include "System/FileSystem/FileSystem.h"
-#include "System/FileSystem/VFSHandler.h"
 #include "System/LoadSave/LoadSaveHandler.h"
 #include "System/LoadSave/DemoRecorder.h"
 #include "System/Log/ILog.h"

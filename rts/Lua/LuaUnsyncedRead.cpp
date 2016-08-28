@@ -54,7 +54,6 @@
 #include "System/Config/ConfigVariable.h"
 #include "System/Input/KeyInput.h"
 #include "System/FileSystem/FileHandler.h"
-#include "System/FileSystem/VFSHandler.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/LoadSave/demofile.h"
 #include "System/LoadSave/DemoReader.h"

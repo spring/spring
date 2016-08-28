@@ -70,7 +70,6 @@
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/FileSystem/FileSystemInitializer.h"
-#include "System/FileSystem/VFSHandler.h"
 #include "System/Platform/Battery.h"
 #include "System/Platform/CmdLineParams.h"
 #include "System/Platform/Misc.h"

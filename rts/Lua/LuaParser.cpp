@@ -19,7 +19,6 @@
 #include "Game/GameVersion.h"
 #include "System/Log/ILog.h"
 #include "System/FileSystem/FileHandler.h"
-#include "System/FileSystem/VFSHandler.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/Misc/SpringTime.h"
 #include "System/ScopedFPUSettings.h"
