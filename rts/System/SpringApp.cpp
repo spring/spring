@@ -1083,7 +1083,7 @@ void SpringApp::ShutDown()
 	SafeDelete(font);
 	SafeDelete(smallFont);
 
-	CNamedTextures::Kill();
+	CNamedTextures::Kill(true);
 	GLContext::Free();
 	GlobalConfig::Deallocate();
 	UnloadExtensions();

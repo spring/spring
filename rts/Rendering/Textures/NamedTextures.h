@@ -7,7 +7,7 @@
 
 namespace CNamedTextures {
 	void Init();
-	void Kill();
+	void Kill(bool shutdown = false);
 
 	/**
 	 * Reload textures we could not load because Bind() was called
@@ -22,14 +22,15 @@ namespace CNamedTextures {
 
 	struct TexInfo {
 		TexInfo()
-			: id(0), xsize(-1), ysize(-1), alpha(false) {}
+			: id(0), xsize(-1), ysize(-1), alpha(false), persist(false) {}
 		unsigned int id;
 		int xsize;
 		int ysize;
 		bool alpha;
+		bool persist;
 	};
 
-	const TexInfo* GetInfo(const std::string& texName, const bool forceLoad = false);
+	const TexInfo* GetInfo(const std::string& texName, bool forceLoad = false, bool persist = false);
 }
 
 #endif /* NAMED_TEXTURES_H */
