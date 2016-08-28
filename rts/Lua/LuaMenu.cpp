@@ -222,8 +222,6 @@ bool CLuaMenu::LoadUnsyncedCtrlFunctions(lua_State* L)
 
 	//REGISTER_LUA_CFUNC(SetTeamColor);
 
-	//REGISTER_LUA_CFUNC(AssignMouseCursor);
-	//REGISTER_LUA_CFUNC(ReplaceMouseCursor);
 
 	REGISTER_LUA_CFUNC(ExtractModArchiveFile);
 
@@ -234,12 +232,15 @@ bool CLuaMenu::LoadUnsyncedCtrlFunctions(lua_State* L)
 
 	REGISTER_LUA_CFUNC(CreateDir);
 
-	//REGISTER_LUA_CFUNC(SetMouseCursor);
-	//REGISTER_LUA_CFUNC(WarpMouse);
-
-	//REGISTER_LUA_CFUNC(Restart);
 	REGISTER_LUA_CFUNC(SetWMIcon);
 	REGISTER_LUA_CFUNC(SetWMCaption);
+
+	REGISTER_LUA_CFUNC(SetClipboard);
+	REGISTER_LUA_CFUNC(AssignMouseCursor);
+	REGISTER_LUA_CFUNC(ReplaceMouseCursor);
+	REGISTER_LUA_CFUNC(SetMouseCursor);
+	REGISTER_LUA_CFUNC(WarpMouse);
+
 
 	REGISTER_LUA_CFUNC(SetLogSectionFilterLevel);
 
@@ -280,6 +281,7 @@ bool CLuaMenu::LoadUnsyncedReadFunctions(lua_State* L)
 	REGISTER_LUA_CFUNC(GetSoundStreamTime);
 	REGISTER_LUA_CFUNC(GetSoundEffectParams);
 
+	REGISTER_LUA_CFUNC(GetClipboard);
 	REGISTER_LUA_CFUNC(GetMouseState);
 	REGISTER_LUA_CFUNC(GetMouseCursor);
 
