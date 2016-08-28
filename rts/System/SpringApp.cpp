@@ -1021,7 +1021,9 @@ int SpringApp::Run()
 		input.PushEvents();
 
 		if (gu->globalReload) {
-			Reload(gu->reloadScript);
+			std::string script = gu->reloadScript;
+			gu->reloadScript = ""
+			Reload(script);
 		} else {
 			if (!Update()) {
 				break;
