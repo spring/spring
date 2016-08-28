@@ -10,28 +10,45 @@
 #include "System/FileSystem/VFSHandler.h"
 #include "System/Log/ILog.h"
 
-CONFIG(std::string, DefaultMenu).defaultValue("").description("Sets the default menu to be used when spring is started.");
+CONFIG(std::string, DefaultLuaMenu).defaultValue("").description("Sets the default menu to be used when spring is started.");
 
 CLuaMenuController* luaMenuController = nullptr;
 
 
 CLuaMenuController::CLuaMenuController(const std::string& menuName)
+ : menuArchive(menuName)
 {
-	SafeDelete(luaMenuController);
-	luaMenuController = this;
+	if (menuArchive.empty())
+		menuArchive = configHandler->GetString("DefaultLuaMenu");
 
 	// create LuaMenu if necessary
-	if (!menuName.empty()) {
-		LOG("[%s] using menu: %s", __FUNCTION__, menuName.c_str());
-		vfsHandler->AddArchiveWithDeps(menuName, false);
+	if (!menuArchive.empty()) {
+		Reset();
 		CLuaMenu::LoadFreeHandler();
 	}
-	SafeDelete(mouse);
-	mouse = new CMouseHandler();
-	SafeDelete(luaInputReceiver);
-	luaInputReceiver = new LuaInputReceiver();
-	mouse->ShowMouse();
+}
 
+
+void CLuaMenuController::Reset()
+{
+	if (!Valid())
+		return;
+
+	LOG("[%s] using menu: %s", __FUNCTION__, menuArchive.c_str());
+	vfsHandler->AddArchiveWithDeps(menuArchive, false);
+
+	if (mouse == nullptr)
+		mouse = new CMouseHandler();
+
+	if (luaInputReceiver == nullptr)
+		luaInputReceiver = new LuaInputReceiver();
+}
+
+void CLuaMenuController::Activate()
+{
+	assert(luaMenuController != nullptr && Valid());
+	activeController = luaMenuController;
+	mouse->ShowMouse();
 }
 
 

@@ -2079,7 +2079,7 @@ int LuaUnsyncedCtrl::CreateDir(lua_State* L)
 static int ReloadOrRestart(const std::string& springArgs, const std::string& scriptText, bool isStart=false) {
 	if (springArgs.empty() && !isStart) {
 		// signal SpringApp
-		gameSetup->setupText = scriptText;
+		gu->reloadScript = scriptText;
 		gu->globalReload = true;
 
 		LOG("[%s] Spring \"%s\" should be reloading", __FUNCTION__, (Platform::GetProcessExecutableFile()).c_str());

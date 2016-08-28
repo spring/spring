@@ -11,11 +11,21 @@ public:
 	CLuaMenuController(const std::string& menuName);
 	~CLuaMenuController();
 
+	// Reloads the archives but not LuaMenu
+	void Reset();
+
+	void Activate();
+
 	int KeyReleased(int k);
 	int KeyPressed(int k, bool isRepeat);
 	int TextInput(const std::string& utf8Text);
 
 	bool Draw();
+
+	bool Valid() { return !menuArchive.empty(); }
+
+private:
+	std::string menuArchive;
 };
 
 extern CLuaMenuController* luaMenuController;

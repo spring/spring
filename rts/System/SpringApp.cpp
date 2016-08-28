@@ -663,7 +663,7 @@ void SpringApp::ParseCmdLine(const std::string& binaryName)
 	cmdline->AddString('d', "write-dir",          "Specify where Spring writes to.");
 	cmdline->AddString('g', "game",               "Specify the game that will be instantly loaded");
 	cmdline->AddString('m', "map",                "Specify the map that will be instantly loaded");
-	cmdline->AddString('e', "menu",                "Specify the map that will be instantly loaded");
+	cmdline->AddString('e', "menu",               "Specify a lua menu archive to be used by spring");
 	cmdline->AddString('n', "name",               "Set your player name");
 	cmdline->AddSwitch(0,   "oldmenu",            "Start the old menu");
 
@@ -836,8 +836,8 @@ void SpringApp::LoadSpringMenu()
 		defaultscript = "defaultstartscript.txt";
 	}
 
-	if (cmdline->IsSet("menu")){
-		activeController = new CLuaMenuController(cmdline->GetString("menu"));
+	if (luaMenuController->Valid()){
+		luaMenuController->Activate();
 	} else if (cmdline->IsSet("oldmenu") || defaultscript.empty()) {
 		// old menu
 	#ifdef HEADLESS
@@ -872,6 +872,8 @@ void SpringApp::Startup()
 
 	clientSetup->myPlayerName = configHandler->GetString("name");
 	clientSetup->SanityCheck();
+
+	luaMenuController = new CLuaMenuController(cmdline->GetString("menu"));
 
 	// no argument (either game is given or show selectmenu)
 	if (inputFile.empty()) {
@@ -961,6 +963,8 @@ void SpringApp::Reload(const std::string& script)
 	// must hold or we would loop forever
 	assert(!gu->globalReload);
 
+	luaMenuController->Reset();
+
 	if (script.empty()) {
 		// if no script, drop back to menu
 		LoadSpringMenu();
@@ -1017,7 +1021,7 @@ int SpringApp::Run()
 		input.PushEvents();
 
 		if (gu->globalReload) {
-			Reload(gameSetup->setupText);
+			Reload(gu->reloadScript);
 		} else {
 			if (!Update()) {
 				break;
