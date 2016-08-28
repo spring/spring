@@ -296,6 +296,7 @@ bool CLuaMenu::LoadUnsyncedReadFunctions(lua_State* L)
 	REGISTER_LUA_CFUNC(GetActionHotKeys);
 
 	REGISTER_LUA_CFUNC(GetLogSections);
+	REGISTER_LUA_CFUNC(GetConfigParams);
 
 	#undef REGISTER_LUA_CFUNC
 	return true;

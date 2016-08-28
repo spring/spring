@@ -1022,7 +1022,7 @@ int SpringApp::Run()
 
 		if (gu->globalReload) {
 			std::string script = gu->reloadScript;
-			gu->reloadScript = ""
+			gu->reloadScript = "";
 			Reload(script);
 		} else {
 			if (!Update()) {

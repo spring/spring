@@ -96,7 +96,7 @@ void CGlobalUnsynced::ResetState()
 	fpsMode = false;
 	globalQuit = false;
 	globalReload = false;
-	gu->reloadScript = "";
+	reloadScript = "";
 
 	if (playerHandler == NULL) {
 		playerHandler = new CPlayerHandler();
