@@ -54,7 +54,6 @@ void CLuaMenuController::Activate()
 
 CLuaMenuController::~CLuaMenuController()
 {
-	LOG_L(L_WARNING, "deleted blabla");
 	SafeDelete(mouse);
 	SafeDelete(luaInputReceiver);
 }
@@ -68,6 +67,7 @@ bool CLuaMenuController::Draw()
 	mouse->Update();
 	mouse->UpdateCursors();
 	eventHandler.Update();
+
 	// calls IsAbove
 	mouse->GetCurrentTooltip();
 
