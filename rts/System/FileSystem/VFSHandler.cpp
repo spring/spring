@@ -82,9 +82,6 @@ static const std::string GetArchivePath(const std::string& name){
 
 bool CVFSHandler::AddArchive(const std::string& archiveName, bool overwrite)
 {
-	LOG_L(L_WARNING,
-		"AddArchive(arName = \"%s\", overwrite = %s)",
-		archiveName.c_str(), overwrite ? "true" : "false");
 	LOG_L(L_DEBUG,
 		"AddArchive(arName = \"%s\", overwrite = %s)",
 		archiveName.c_str(), overwrite ? "true" : "false");
@@ -137,9 +134,6 @@ bool CVFSHandler::AddArchive(const std::string& archiveName, bool overwrite)
 
 bool CVFSHandler::AddArchiveWithDeps(const std::string& archiveName, bool overwrite)
 {
-	LOG_L(L_WARNING,
-		"AddArchive(arName = \"%s\", overwrite = %s)",
-		archiveName.c_str(), overwrite ? "true" : "false");
 	const std::vector<std::string> &ars = archiveScanner->GetAllArchivesUsedBy(archiveName);
 
 	if (ars.empty())
@@ -157,9 +151,6 @@ bool CVFSHandler::AddArchiveWithDeps(const std::string& archiveName, bool overwr
 
 bool CVFSHandler::RemoveArchive(const std::string& archiveName)
 {
-	LOG_L(L_WARNING,
-		"RemoveArchive(arName = \"%s\")",
-		archiveName.c_str());
 	const CArchiveScanner::ArchiveData ad = archiveScanner->GetArchiveData(archiveName);
 	assert(!ad.IsEmpty());
 
