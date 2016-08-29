@@ -20,7 +20,7 @@ public:
 private:
 	bool TryReadFromPWD(const std::string& fileName) override;
 	bool TryReadFromRawFS(const std::string& fileName) override;
-	bool TryReadFromModFS(const std::string& fileName) override;
+	bool TryReadFromVFS(const std::string& fileName, int section) override;
 	bool ReadToBuffer(const std::string& path);
 	bool UncompressBuffer();
 };

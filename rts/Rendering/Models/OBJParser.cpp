@@ -38,7 +38,7 @@ S3DModel* COBJParser::Load(const std::string& modelFileName)
 		throw content_error("[OBJParser] could not find meta-file \"" + metaFileName + "\"");
 
 
-	LuaParser metaFileParser(metaFileName, SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
+	LuaParser metaFileParser(metaFileName, SPRING_VFS_ZIP, SPRING_VFS_ZIP);
 	metaFileParser.Execute();
 
 	if (!metaFileParser.IsValid())

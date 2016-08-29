@@ -34,6 +34,7 @@ static const std::string GetFileName(const std::string& name){
 	return path + filename;
 }
 
+
 SelectionWidget::SelectionWidget(agui::GuiElement* parent) : agui::GuiElement(parent)
 {
 	SetPos(0.5f, 0.2f);
@@ -117,17 +118,15 @@ void SelectionWidget::ShowMapList()
 
 
 static void AddArchive(const std::string& name) {
-	const std::string& filename = GetFileName(name);
-	if (filename.empty())
+	if (name.empty())
 		return;
-	vfsHandler->AddArchive(filename, true);
+	vfsHandler->AddArchive(name, true);
 }
 
 static void RemoveArchive(const std::string& name) {
-	const std::string& filename = GetFileName(name);
-	if (filename.empty())
+	if (name.empty())
 		return;
-	vfsHandler->RemoveArchive(filename);
+	vfsHandler->RemoveArchive(name);
 }
 
 void SelectionWidget::UpdateAvailableScripts()

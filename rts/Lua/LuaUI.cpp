@@ -77,7 +77,7 @@ static const char* GetVFSMode(bool lockedAccess)
 		if (!CLuaHandle::GetDevMode()) {
 			accessMode = SPRING_VFS_MOD;
 		} else {
-			accessMode = SPRING_VFS_RAW SPRING_VFS_MOD;
+			accessMode = SPRING_VFS_RAW SPRING_VFS_ZIP;
 		}
 	}
 

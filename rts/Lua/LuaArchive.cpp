@@ -15,18 +15,6 @@
 
 #include <string>
 
-// returns absolute filename for given archive name, empty if not found
-static const std::string GetFileName(const std::string& name){
-	if (name.empty())
-		return name;
-	const std::string& filename = archiveScanner->ArchiveFromName(name);
-	if (filename == name)
-		return "";
-	const std::string& path = archiveScanner->GetArchivePath(filename);
-	return path + filename;
-}
-
-
 /******************************************************************************/
 /******************************************************************************/
 
@@ -215,19 +203,19 @@ int LuaArchive::GetArchiveChecksum(lua_State* L)
 
 int LuaArchive::GetAvailableAIs(lua_State* L)
 {
-	const std::string gameArchivePath = GetFileName(luaL_optsstring(L, 1, ""));
-	const std::string mapArchivePath = GetFileName(luaL_optsstring(L, 2, ""));
+	const std::string gameArchiveName = luaL_optsstring(L, 1, "");
+	const std::string mapArchiveName = luaL_optsstring(L, 2, "");
 
 	// load selected archives to get lua ais
-	if (!gameArchivePath.empty()) {
-		vfsHandler->AddArchive(gameArchivePath, false);
+	if (!gameArchiveName.empty()) {
+		vfsHandler->AddArchive(gameArchiveName, false);
 	}
-	if (!mapArchivePath.empty()) {
-		vfsHandler->AddArchive(mapArchivePath, false);
+	if (!mapArchiveName.empty()) {
+		vfsHandler->AddArchive(mapArchiveName, false);
 	}
 
 	const IAILibraryManager::T_skirmishAIKeys& skirmishAIKeys = aiLibManager->GetSkirmishAIKeys();
-	std::vector< std::vector<InfoItem> > luaAIInfos = luaAIImplHandler.LoadInfos();	
+	std::vector< std::vector<InfoItem> > luaAIInfos = luaAIImplHandler.LoadInfos();
 
 	lua_createtable(L, skirmishAIKeys.size() + luaAIInfos.size(), 0);
 	unsigned int count = 0;
@@ -244,15 +232,15 @@ int LuaArchive::GetAvailableAIs(lua_State* L)
 		}
 		lua_rawseti(L, -2, ++count);
 	}
-	
+
 	// close archives
-	if (!mapArchivePath.empty()) {
-		vfsHandler->RemoveArchive(mapArchivePath);
+	if (!mapArchiveName.empty()) {
+		vfsHandler->RemoveArchive(mapArchiveName);
 	}
-	if (!gameArchivePath.empty()) {
-		vfsHandler->RemoveArchive(gameArchivePath);
+	if (!gameArchiveName.empty()) {
+		vfsHandler->RemoveArchive(gameArchiveName);
 	}
-	
+
 	IAILibraryManager::T_skirmishAIKeys::const_iterator i = skirmishAIKeys.begin();
 	IAILibraryManager::T_skirmishAIKeys::const_iterator e = skirmishAIKeys.end();
 
@@ -263,6 +251,6 @@ int LuaArchive::GetAvailableAIs(lua_State* L)
 		}
 		lua_rawseti(L, -2, ++count);
 	}
-	
+
 	return 1;
 }

@@ -144,7 +144,7 @@ CLuaMenu::~CLuaMenu()
 
 string CLuaMenu::LoadFile(const string& name) const
 {
-	CFileHandler f(name, SPRING_VFS_RAW_FIRST);
+	CFileHandler f(name, SPRING_VFS_MENU SPRING_VFS_MOD SPRING_VFS_BASE);
 
 	string code;
 	if (!f.LoadStringData(code))

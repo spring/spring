@@ -54,7 +54,7 @@ CLuaRules::CLuaRules()
 	SetReadAllyTeam(CEventClient::AllAccessTeam);
 	SetSelectTeam(CEventClient::AllAccessTeam);
 
-	Init(LuaRulesSyncedFilename, LuaRulesUnsyncedFilename, SPRING_VFS_MOD);
+	Init(LuaRulesSyncedFilename, LuaRulesUnsyncedFilename, SPRING_VFS_MOD_BASE);
 }
 
 CLuaRules::~CLuaRules()

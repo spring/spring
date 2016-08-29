@@ -134,15 +134,14 @@ SelectMenu::SelectMenu(boost::shared_ptr<ClientSetup> setup)
 	{ // GUI stuff
 		agui::Picture* background = new agui::Picture(this);;
 		{
-			const std::string archive = archiveScanner->ArchiveFromName(configHandler->GetString("MenuArchive"));
-			const std::string archivePath = archiveScanner->GetArchivePath(archive)+archive;
-			vfsHandler->AddArchive(archivePath, false);
+			const std::string archiveName = configHandler->GetString("MenuArchive");
+			vfsHandler->AddArchive(archiveName, false);
 			const std::vector<std::string> files = CFileHandler::FindFiles("bitmaps/ui/background/", "*");
 			if (!files.empty()) {
 				//TODO: select by resolution / aspect ratio with fallback image
 				background->Load(files[gu->RandInt() % files.size()]);
 			}
-			vfsHandler->RemoveArchive(archivePath);
+			vfsHandler->RemoveArchive(archiveName);
 		}
 		selw = new SelectionWidget(this);
 		agui::VerticalLayout* menu = new agui::VerticalLayout(this);

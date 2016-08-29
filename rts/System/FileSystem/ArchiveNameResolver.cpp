@@ -45,7 +45,7 @@ namespace ArchiveNameResolver {
 
 		std::string error;
 		if (aData.IsValid(error)) {
-			if (aData.GetModType() == modtype::primary) {
+			if (aData.IsGame()) {
 				*applicableName = lazyName;
 				return true;
 			}
@@ -118,7 +118,7 @@ namespace ArchiveNameResolver {
 
 		std::string error;
 		if (aData.IsValid(error)) {
-			if (aData.GetModType() == modtype::map) {
+			if (aData.IsMap()) {
 				*applicableName = lazyName;
 				return true;
 			}

@@ -27,9 +27,14 @@ class LuaTable;
 
 namespace modtype
 {
-	static const int primary = 1;
-	static const int hidden = 0;
-	static const int map = 3;
+	enum {
+		hidden = 0,
+		primary = 1,
+		reserved = 2,
+		map = 3,
+		base = 4,
+		menu = 5
+	};
 }
 
 class CArchiveScanner
@@ -76,6 +81,9 @@ public:
 
 		bool IsValid(std::string& error) const;
 		bool IsEmpty() const { return info.empty(); }
+
+		bool IsGame() const { int mt = GetModType(); return mt == modtype::hidden || mt == modtype::primary; }
+		bool IsMap() const { int mt = GetModType(); return mt == modtype::map; }
 
 		static bool IsReservedKey(const std::string& keyLower);
 		static std::string GetKeyDescription(const std::string& keyLower);

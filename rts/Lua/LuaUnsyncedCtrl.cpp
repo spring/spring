@@ -1695,7 +1695,7 @@ int LuaUnsyncedCtrl::ExtractModArchiveFile(lua_State* L)
 {
 	const string path = luaL_checkstring(L, 1);
 
-	CFileHandler fhVFS(path, SPRING_VFS_MOD);
+	CFileHandler fhVFS(path, SPRING_VFS_ZIP);
 	CFileHandler fhRAW(path, SPRING_VFS_RAW);
 
 	if (!fhVFS.FileExists()) {

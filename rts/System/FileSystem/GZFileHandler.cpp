@@ -131,7 +131,7 @@ bool CGZFileHandler::TryReadFromRawFS(const std::string& fileName)
 }
 
 
-bool CGZFileHandler::TryReadFromModFS(const std::string& fileName)
+bool CGZFileHandler::TryReadFromVFS(const std::string& fileName, int section)
 {
-	return CFileHandler::TryReadFromModFS(fileName) && UncompressBuffer();
+	return CFileHandler::TryReadFromVFS(fileName, section) && UncompressBuffer();
 }
