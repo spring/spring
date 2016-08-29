@@ -115,7 +115,7 @@ void CFileHandler::Open(const string& fileName, const string& modes)
 	this->fileName = fileName;
 	for (char c: modes) {
 		CVFSHandler::Section section = CVFSHandler::GetModeSection(c);
-		if ((section != CVFSHandler::Section::None) && TryReadFromVFS(fileName, section))
+		if ((section != CVFSHandler::Section::Error) && TryReadFromVFS(fileName, section))
 			break;
 
 		if ((c == SPRING_VFS_RAW[0]) && TryReadFromRawFS(fileName))
@@ -134,7 +134,7 @@ bool CFileHandler::FileExists(const std::string& filePath, const std::string& mo
 	for (char c: modes) {
 #ifndef TOOLS
 		CVFSHandler::Section section = CVFSHandler::GetModeSection(c);
-		if ((section != CVFSHandler::Section::None) && vfsHandler->FileExists(filePath, section))
+		if ((section != CVFSHandler::Section::Error) && vfsHandler->FileExists(filePath, section))
 			return true;
 
 		if ((c == SPRING_VFS_RAW[0]) && FileSystem::FileExists(dataDirsAccess.LocateFile(filePath)))
@@ -299,7 +299,7 @@ std::vector<string> CFileHandler::DirList(const string& path,
 	std::set<string> fileSet;
 	for (char c: modes) {
 		CVFSHandler::Section section = CVFSHandler::GetModeSection(c);
-		if (section != CVFSHandler::Section::None)
+		if (section != CVFSHandler::Section::Error)
 			InsertVFSFiles(fileSet, path, pat, section);
 
 		if (c == SPRING_VFS_RAW[0])
@@ -371,7 +371,7 @@ std::vector<string> CFileHandler::SubDirs(const string& path,
 	std::set<string> dirSet;
 	for (char c: modes) {
 		CVFSHandler::Section section = CVFSHandler::GetModeSection(c);
-		if (section != CVFSHandler::Section::None)
+		if (section != CVFSHandler::Section::Error)
 			InsertVFSDirs(dirSet, path, pat, section);
 
 		if (c == SPRING_VFS_RAW[0])
