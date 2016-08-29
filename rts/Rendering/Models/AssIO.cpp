@@ -8,7 +8,7 @@
 
 AssVFSStream::AssVFSStream(const std::string& pFile, const std::string& pMode)
 {
-	file = new CFileHandler(pFile, pMode);
+	file = new CFileHandler(pFile, SPRING_VFS_ZIP);
 }
 
 AssVFSStream::~AssVFSStream(void)
