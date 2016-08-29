@@ -52,7 +52,7 @@ CVFSHandler::Section CVFSHandler::GetModeSection(char mode)
 		case SPRING_VFS_MAP[0]:  return Section::Map;
 		case SPRING_VFS_BASE[0]: return Section::Base;
 		case SPRING_VFS_MENU[0]: return Section::Menu;
-		default:                 return Section::None;
+		default:                 return Section::Error;
 	}
 }
 
@@ -64,7 +64,7 @@ CVFSHandler::Section CVFSHandler::GetModTypeSection(int mt)
 		case modtype::map:     return Section::Map;
 		case modtype::base:    return Section::Base;
 		case modtype::menu:    return Section::Menu;
-		default:               return Section::None;
+		default:               return Section::Error;
 	}
 }
 

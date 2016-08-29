@@ -27,7 +27,7 @@ public:
 		Base,
 		Menu,
 		Count,
-		None
+		Error
 	};
 
 	static Section GetModeSection(char mode);
