@@ -318,15 +318,10 @@ bool CFileHandler::InsertRawFiles(std::set<string>& fileSet,
 		const string& path, const string& pattern)
 {
 #ifndef TOOLS
-	boost::regex regexpattern(FileSystem::ConvertGlobToRegex(pattern),
-	                          boost::regex::icase);
-
 	const std::vector<string> &found = dataDirsAccess.FindFiles(path, pattern);
 	std::vector<string>::const_iterator fi;
 	for (fi = found.begin(); fi != found.end(); ++fi) {
-		if (boost::regex_match(*fi, regexpattern)) {
-			fileSet.insert(fi->c_str());
-		}
+		fileSet.insert(fi->c_str());
 	}
 #endif
 	return true;
