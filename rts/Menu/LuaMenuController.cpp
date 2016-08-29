@@ -64,9 +64,10 @@ bool CLuaMenuController::Draw()
 {
 	spring_msecs(10).sleep();
 
-	eventHandler.Update();
+	configHandler->Update();
 	mouse->Update();
 	mouse->UpdateCursors();
+	eventHandler.Update();
 	// calls IsAbove
 	mouse->GetCurrentTooltip();
 
