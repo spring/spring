@@ -1917,7 +1917,7 @@ int LuaUnsyncedRead::GetClipboard(lua_State* L)
 
 int LuaUnsyncedRead::GetLastMessagePositions(lua_State* L)
 {
-	CInfoConsole* ic = game->infoConsole;
+	CInfoConsole* ic = infoConsole;
 
 	if (ic == NULL)
 		return 0;
@@ -1939,7 +1939,7 @@ int LuaUnsyncedRead::GetLastMessagePositions(lua_State* L)
 
 int LuaUnsyncedRead::GetConsoleBuffer(lua_State* L)
 {
-	CInfoConsole* ic = game->infoConsole;
+	CInfoConsole* ic = infoConsole;
 	if (ic == NULL) {
 		return true;
 	}

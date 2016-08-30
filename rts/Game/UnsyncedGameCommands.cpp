@@ -1047,12 +1047,12 @@ public:
 			"Moves the camera to show the position of the last message") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		if (game->infoConsole->GetMsgPosCount() == 0)
+		if (infoConsole->GetMsgPosCount() == 0)
 			return false;
 
 		// cycle through the positions
 		camHandler->CameraTransition(0.6f);
-		camHandler->GetCurrentController().SetPos(game->infoConsole->GetMsgPos());
+		camHandler->GetCurrentController().SetPos(infoConsole->GetMsgPos());
 		return true;
 	}
 };
@@ -2169,10 +2169,10 @@ public:
 			"Enables/Disables the in-game console") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		if (!game->infoConsole)
+		if (infoConsole == nullptr)
 			return false;
 
-		InverseOrSetBool(game->infoConsole->enabled, action.GetArgs());
+		InverseOrSetBool(infoConsole->enabled, action.GetArgs());
 		return true;
 	}
 };

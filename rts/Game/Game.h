@@ -14,7 +14,6 @@
 
 class JobDispatcher;
 class CConsoleHistory;
-class CInfoConsole;
 class LuaParser;
 class ILoadSaveHandler;
 class Action;
@@ -214,7 +213,6 @@ public:
 	 */
 	int speedControl;
 
-	CInfoConsole* infoConsole;
 	CConsoleHistory* consoleHistory;
 
 private:
