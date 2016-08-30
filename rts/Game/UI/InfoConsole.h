@@ -84,4 +84,6 @@ private:
 	size_t maxLines;
 };
 
+extern CInfoConsole* infoConsole;
+
 #endif /* INFO_CONSOLE_H */

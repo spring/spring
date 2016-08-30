@@ -15,6 +15,9 @@
 CONFIG(int, InfoMessageTime).defaultValue(10).description("Timeout till old messages disappear from the ingame console.");
 CONFIG(std::string, InfoConsoleGeometry).defaultValue("0.26 0.96 0.41 0.205");
 
+CInfoConsole* infoConsole = nullptr;
+
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////

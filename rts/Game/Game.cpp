@@ -177,7 +177,6 @@ CR_REG_METADATA(CGame, (
 	CR_IGNORED(playerTraffic),
 	CR_MEMBER(noSpectatorChat),
 	CR_MEMBER(gameID),
-	//CR_MEMBER(infoConsole),
 	//CR_MEMBER(consoleHistory),
 	CR_IGNORED(inputTextPosX),
 	CR_IGNORED(inputTextPosY),
@@ -199,7 +198,6 @@ CR_REG_METADATA(CGame, (
 
 	CR_MEMBER(speedControl),
 
-	CR_IGNORED(infoConsole),
 	CR_IGNORED(consoleHistory),
 	CR_IGNORED(jobDispatcher),
 	CR_IGNORED(worldDrawer),
@@ -250,7 +248,6 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 	, skipOldUserSpeed(0.0f)
 	, skipLastDrawTime(spring_gettime())
 	, speedControl(-1)
-	, infoConsole(NULL)
 	, consoleHistory(NULL)
 	, worldDrawer(NULL)
 	, defsParser(NULL)

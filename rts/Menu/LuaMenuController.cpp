@@ -2,6 +2,7 @@
 
 #include "LuaMenuController.h"
 
+#include "Game/UI/InfoConsole.h"
 #include "Game/UI/MouseHandler.h"
 #include "Lua/LuaInputReceiver.h"
 #include "Lua/LuaMenu.h"
@@ -42,6 +43,9 @@ void CLuaMenuController::Reset()
 
 	if (luaInputReceiver == nullptr)
 		luaInputReceiver = new LuaInputReceiver();
+
+	if (infoConsole == nullptr)
+		infoConsole = new CInfoConsole();
 }
 
 void CLuaMenuController::Activate()
@@ -56,6 +60,7 @@ CLuaMenuController::~CLuaMenuController()
 {
 	SafeDelete(mouse);
 	SafeDelete(luaInputReceiver);
+	SafeDelete(infoConsole);
 }
 
 
@@ -63,6 +68,7 @@ bool CLuaMenuController::Draw()
 {
 	spring_msecs(10).sleep();
 
+	infoConsole->PushNewLinesToEventHandler();
 	configHandler->Update();
 	mouse->Update();
 	mouse->UpdateCursors();
