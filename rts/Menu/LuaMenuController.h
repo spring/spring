@@ -22,7 +22,8 @@ public:
 
 	bool Draw();
 
-	bool Valid() { return !menuArchive.empty(); }
+	bool Valid() const { return !menuArchive.empty(); }
+	const std::string& GetMenuName() const { return menuArchive; }
 
 private:
 	std::string menuArchive;

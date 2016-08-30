@@ -10,7 +10,7 @@ General:
  ! base archives now have modtype of 4 and menu archive have modtype of 5
 
 Lua:
- - Add Spring.GetGameName (returns the same as Game.modname) to LuaUnsyncedRead, so LuaMenu knows which game is loaded (if any)
+ - Add Spring.Get{Game,Menu}Name to LuaUnsyncedRead, so LuaMenu and unsynced Lua handles know about each other
 
 Lua:
  ! Undeprecate {unit,feature}def.modelname and add .modeltype and .modelpath to

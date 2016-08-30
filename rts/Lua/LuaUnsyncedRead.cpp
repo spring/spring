@@ -30,6 +30,7 @@
 #include "Map/BaseGroundTextures.h"
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
+#include "Menu/LuaMenuController.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/IconHandler.h"
 #include "Rendering/ShadowHandler.h"
@@ -95,6 +96,7 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetReplayLength);
 
 	REGISTER_LUA_CFUNC(GetGameName);
+	REGISTER_LUA_CFUNC(GetMenuName);
 
 	REGISTER_LUA_CFUNC(GetDrawFrame);
 	REGISTER_LUA_CFUNC(GetFrameTimeOffset);
@@ -348,6 +350,13 @@ int LuaUnsyncedRead::GetReplayLength(lua_State* L)
 int LuaUnsyncedRead::GetGameName(lua_State* L)
 {
 	lua_pushstring(L, modInfo.humanNameVersioned.c_str());
+	return 1;
+}
+
+
+int LuaUnsyncedRead::GetMenuName(lua_State* L)
+{
+	lua_pushstring(L, luaMenuController->GetMenuName().c_str());
 	return 1;
 }
 

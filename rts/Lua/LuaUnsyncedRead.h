@@ -17,6 +17,7 @@ class LuaUnsyncedRead {
 		static int GetReplayLength(lua_State* L);
 
 		static int GetGameName(lua_State* L);
+		static int GetMenuName(lua_State* L);
 
 		static int GetDrawFrame(lua_State* L);
 		static int GetFrameTimeOffset(lua_State* L);
