@@ -517,7 +517,7 @@ EXPORT(void) AddArchive(const char* archiveName)
 		CheckNullOrEmpty(archiveName);
 
 		LOG_L(L_DEBUG, "adding archive: %s", archiveName);
-		vfsHandler->AddArchive(archiveName, false);
+		vfsHandler->AddArchive(archiveScanner->NameFromArchive(archiveName), false);
 	}
 	UNITSYNC_CATCH_BLOCKS;
 }
