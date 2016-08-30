@@ -42,6 +42,7 @@
 #include "Sim/Features/FeatureDef.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/LosHandler.h"
+#include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Projectiles/Projectile.h"
@@ -92,6 +93,8 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(IsReplay);
 	REGISTER_LUA_CFUNC(GetReplayLength);
+
+	REGISTER_LUA_CFUNC(GetGameName);
 
 	REGISTER_LUA_CFUNC(GetDrawFrame);
 	REGISTER_LUA_CFUNC(GetFrameTimeOffset);
@@ -340,6 +343,13 @@ int LuaUnsyncedRead::GetReplayLength(lua_State* L)
 	return 0;
 }
 
+/******************************************************************************/
+
+int LuaUnsyncedRead::GetGameName(lua_State* L)
+{
+	lua_pushstring(L, modInfo.humanNameVersioned.c_str());
+	return 1;
+}
 
 /******************************************************************************/
 

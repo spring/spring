@@ -298,6 +298,7 @@ bool CLuaMenu::LoadUnsyncedReadFunctions(lua_State* L)
 	REGISTER_LUA_CFUNC(GetLogSections);
 	REGISTER_LUA_CFUNC(GetConfigParams);
 
+	REGISTER_LUA_CFUNC(GetGameName);
 	#undef REGISTER_LUA_CFUNC
 	return true;
 }

@@ -285,7 +285,6 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 
 	wind.ResetState();
 
-	modInfo.ResetState();
 	modInfo.Init(modName.c_str());
 
 	// needed for LuaIntro (pushes LuaConstGame)

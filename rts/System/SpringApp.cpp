@@ -45,6 +45,7 @@
 #include "Sim/Misc/DefinitionTag.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/GlobalSynced.h"
+#include "Sim/Misc/ModInfo.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "System/bitops.h"
 #include "System/Config/ConfigHandler.h"
@@ -958,6 +959,8 @@ void SpringApp::Reload(const std::string& script)
 
 	gu->ResetState();
 	gs->ResetState();
+
+	modInfo.ResetState();
 
 	// must hold or we would loop forever
 	assert(!gu->globalReload);

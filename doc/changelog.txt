@@ -4,8 +4,13 @@ Spring changelog
 
 -- 104.0 --------------------------------------------------------
 General:
- - Add onlyLocal boolean value to modinfo.lua
  - Assorted bugfixes and optimisations
+ - Add LuaMenu - an unsynced stripped down lua environment that starts before the game is loaded and persists through reload
+ - Implement VFS modes - VFS.MOD, VFS.MAP & VFS.BASE now actually work. Added VFS.MENU
+ ! base archives now have modtype of 4 and menu archive have modtype of 5
+
+Lua:
+ - Add Spring.GetGameName (returns the same as Game.modname) to LuaUnsyncedRead, so LuaMenu knows which game is loaded (if any)
 
 Lua:
  ! Undeprecate {unit,feature}def.modelname and add .modeltype and .modelpath to

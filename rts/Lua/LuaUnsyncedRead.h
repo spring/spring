@@ -16,6 +16,8 @@ class LuaUnsyncedRead {
 		static int IsReplay(lua_State* L);
 		static int GetReplayLength(lua_State* L);
 
+		static int GetGameName(lua_State* L);
+
 		static int GetDrawFrame(lua_State* L);
 		static int GetFrameTimeOffset(lua_State* L);
 		static int GetLastUpdateSeconds(lua_State* L);
