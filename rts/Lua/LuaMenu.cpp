@@ -8,8 +8,9 @@
 #include "LuaInclude.h"
 
 #include "LuaArchive.h"
-#include "LuaIO.h"
+#include "LuaCallInCheck.h"
 #include "LuaConstGL.h"
+#include "LuaIO.h"
 #include "LuaOpenGL.h"
 #include "LuaScream.h"
 #include "LuaUtils.h"
@@ -313,6 +314,19 @@ bool CLuaMenu::PushGameVersion(lua_State* L)
 }
 
 
+/******************************************************************************/
+/******************************************************************************/
 
-/******************************************************************************/
-/******************************************************************************/
+
+void CLuaMenu::ActivateMenu()
+{
+	LUA_CALL_IN_CHECK(L);
+	luaL_checkstack(L, 2, __func__);
+	static const LuaHashString cmdStr(__func__);
+	if (!cmdStr.GetGlobalFunc(L)) {
+		return; // the call is not defined
+	}
+
+	// call the routine
+	RunCallIn(L, cmdStr, 0, 0);
+}

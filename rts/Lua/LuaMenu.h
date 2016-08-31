@@ -15,6 +15,9 @@ public:
 	static bool LoadHandler();
 	static bool FreeHandler();
 
+	// callin called when LuaMenu is active with no game
+	void ActivateMenu();
+
 protected:
 	CLuaMenu();
 	virtual ~CLuaMenu();

@@ -50,6 +50,8 @@ void CLuaMenuController::Activate()
 	assert(luaMenuController != nullptr && Valid());
 	activeController = luaMenuController;
 	mouse->ShowMouse();
+
+	luaMenu->ActivateMenu();
 }
 
 
