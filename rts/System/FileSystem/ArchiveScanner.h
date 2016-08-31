@@ -62,7 +62,7 @@ public:
 		std::string GetShortGame() const { return GetInfoValueString("shortGame"); }     /// ex:  TA
 		std::string GetDescription() const { return GetInfoValueString("description"); } /// ex:  Little units blowing up other little units
 		std::string GetMapFile() const { return GetInfoValueString("mapFile"); }         /// in case its a map, store location of smf/sm3 file
-		int GetModType() const { return GetInfoValueInteger("modType"); }                /// 1=primary, 0=hidden, 3=map
+		int GetModType() const { return GetInfoValueInteger("modType"); }                /// 0=hidden, 1=primary, (2=unused), 3=map, 4=base, 5=menu
 		bool GetOnlyLocal() const { return GetInfoValueBool("onlyLocal"); }              /// if true spring will not listen for incoming connections
 
 		const std::map<std::string, InfoItem>& GetInfo() const { return info; }

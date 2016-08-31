@@ -108,7 +108,7 @@ const string LuaVFS::GetModes(lua_State* L, int index, bool synced)
 
 	string modes = luaL_optstring(L, index, defMode);
 	if (synced && !CLuaHandle::GetDevMode()) {
-		modes = CFileHandler::ForbidModes(modes, SPRING_VFS_RAW);
+		modes = CFileHandler::ForbidModes(modes, SPRING_VFS_RAW SPRING_VFS_MENU);
 	}
 
 	return modes;

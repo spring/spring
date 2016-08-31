@@ -2,7 +2,6 @@
 
 
 #include "ResourceBar.h"
-#include "MouseHandler.h"
 #include "GuiHandler.h"
 #include "Game/GlobalUnsynced.h"
 #include "Rendering/GL/myGL.h"

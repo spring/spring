@@ -8,7 +8,6 @@
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/myGL.h"
 #include "Game/GlobalUnsynced.h"
-#include "Game/UI/MouseHandler.h"
 #include "Gui.h"
 #include "System/Util.h"
 

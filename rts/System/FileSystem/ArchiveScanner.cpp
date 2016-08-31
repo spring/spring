@@ -48,7 +48,7 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_ARCHIVESCANNER)
  * but mapping them all, every time to make the list is)
  */
 
-const int INTERNAL_VER = 10;
+const int INTERNAL_VER = 11;
 CArchiveScanner* archiveScanner = NULL;
 
 
