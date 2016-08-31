@@ -293,11 +293,9 @@ void CMouseHandler::MousePress(int x, int y, int button)
 	// limited receivers for MMB
 	if (button == SDL_BUTTON_MIDDLE) {
 		if (!locked) {
-			if (luaInputReceiver != NULL) {
-				if (luaInputReceiver->MousePress(x, y, button)) {
-					activeReceiver = luaInputReceiver;
-					return;
-				}
+			if (luaInputReceiver->MousePress(x, y, button)) {
+				activeReceiver = luaInputReceiver;
+				return;
 			}
 			if ((minimap != NULL) && minimap->FullProxy()) {
 				if (minimap->MousePress(x, y, button)) {
@@ -306,6 +304,12 @@ void CMouseHandler::MousePress(int x, int y, int button)
 				}
 			}
 		}
+		return;
+	}
+
+	if (luaInputReceiver->MousePress(x, y, button)) {
+		if (!activeReceiver)
+			activeReceiver = luaInputReceiver;
 		return;
 	}
 
@@ -322,11 +326,6 @@ void CMouseHandler::MousePress(int x, int y, int button)
 			}
 		}
 	} else {
-		if (luaInputReceiver && luaInputReceiver->MousePress(x, y, button)) {
-			if (!activeReceiver)
-				activeReceiver = luaInputReceiver;
-			return;
-		}
 		if (guihandler && guihandler->MousePress(x,y,button)) {
 			if (!activeReceiver)
 				activeReceiver = guihandler; // for default (rmb) commands
@@ -533,6 +532,14 @@ void CMouseHandler::DrawSelectionBox()
 std::string CMouseHandler::GetCurrentTooltip()
 {
 	std::string s;
+
+	if (luaInputReceiver->IsAbove(lastx, lasty)) {
+		s = luaInputReceiver->GetTooltip(lastx, lasty);
+		if (s != "") {
+			return s;
+		}
+	}
+
 	std::list<CInputReceiver*>& inputReceivers = GetInputReceivers();
 	std::list<CInputReceiver*>::iterator ri;
 	for (ri = inputReceivers.begin(); ri != inputReceivers.end(); ++ri) {

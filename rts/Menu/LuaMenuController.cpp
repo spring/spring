@@ -41,9 +41,6 @@ void CLuaMenuController::Reset()
 	if (mouse == nullptr)
 		mouse = new CMouseHandler();
 
-	if (luaInputReceiver == nullptr)
-		luaInputReceiver = new LuaInputReceiver();
-
 	if (infoConsole == nullptr)
 		infoConsole = new CInfoConsole();
 }
@@ -59,7 +56,6 @@ void CLuaMenuController::Activate()
 CLuaMenuController::~CLuaMenuController()
 {
 	SafeDelete(mouse);
-	SafeDelete(luaInputReceiver);
 	SafeDelete(infoConsole);
 }
 

@@ -13,7 +13,8 @@ class CInputReceiver
 protected:
 	enum Where {
 		FRONT,
-		BACK
+		BACK,
+		OUT
 	};
 
 	CInputReceiver(Where w = FRONT);

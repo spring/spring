@@ -657,10 +657,6 @@ void CGame::LoadLua()
 	loadscreen->SetLoadMessage("Loading LuaUI");
 	CLuaUI::LoadFreeHandler();
 
-	// last in, first served
-	SafeDelete(luaInputReceiver);
-	luaInputReceiver = new LuaInputReceiver();
-
 	SafeDelete(defsParser);
 }
 
@@ -782,7 +778,6 @@ void CGame::KillInterface()
 	SafeDelete(consoleHistory);
 	SafeDelete(keyBindings);
 	SafeDelete(selectionKeys); // CSelectionKeyHandler*
-	SafeDelete(luaInputReceiver);
 	SafeDelete(mouse); // CMouseHandler*
 	SafeDelete(inMapDrawerModel);
 	SafeDelete(inMapDrawer);
@@ -883,6 +878,9 @@ int CGame::KeyPressed(int key, bool isRepeat)
 		return 0;
 	}
 
+	if (luaInputReceiver->KeyPressed(key, isRepeat))
+		return 0;
+
 	// try the input receivers
 	for (CInputReceiver* recv: GetInputReceivers()) {
 		if (recv && recv->KeyPressed(key, isRepeat)) {
@@ -925,6 +923,9 @@ int CGame::KeyReleased(int k)
 			return 0;
 		}
 	}
+
+	if (luaInputReceiver->KeyReleased(k))
+		return 0;
 
 	// try the input receivers
 	for (CInputReceiver* recv: GetInputReceivers()) {

@@ -29,6 +29,7 @@ CInputReceiver::CInputReceiver(Where w)
 			GetInputReceivers().push_back(this);
 			break;
 		}
+		default: break;
 	}
 }
 
