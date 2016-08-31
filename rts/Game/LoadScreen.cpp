@@ -333,7 +333,7 @@ bool CLoadScreen::Draw()
 		font->glFormat(0.5f,0.06f, globalRendering->viewSizeY / 35.0f, FONT_OUTLINE | FONT_CENTER | FONT_NORM,
 				"Spring %s", SpringVersion::GetFull().c_str());
 		font->glFormat(0.5f,0.02f, globalRendering->viewSizeY / 50.0f, FONT_OUTLINE | FONT_CENTER | FONT_NORM,
-			"This program is distributed under the GNU General Public License, see license.html for more info");
+			"This program is distributed under the GNU General Public License, see doc/LICENSE for more info");
 	font->End();
 
 	if (!mtLoading)
