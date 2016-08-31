@@ -59,6 +59,11 @@ CLuaMenuController::~CLuaMenuController()
 	SafeDelete(infoConsole);
 }
 
+void CLuaMenuController::ResizeEvent()
+{
+	eventHandler.ViewResize();
+}
+
 
 bool CLuaMenuController::Draw()
 {

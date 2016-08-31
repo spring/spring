@@ -21,6 +21,7 @@ public:
 	int TextInput(const std::string& utf8Text);
 
 	bool Draw();
+	void ResizeEvent();
 
 	bool Valid() const { return !menuArchive.empty(); }
 	const std::string& GetMenuName() const { return menuArchive; }
