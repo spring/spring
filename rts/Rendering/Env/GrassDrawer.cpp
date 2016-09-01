@@ -206,7 +206,7 @@ CGrassDrawer::CGrassDrawer()
 		if (grassbm.width != mapDims.mapx / grassSquareSize || grassbm.height != mapDims.mapy / grassSquareSize) {
 			char b[128];
 			SNPRINTF(b, sizeof(b), "grass-map has wrong size (%dx%d, should be %dx%d)\n",
-				grassbm.width, grassbm.height, mapDims.mapx / 4, mapDims.mapy / 4);
+				grassbm.width, grassbm.height, mapDims.mapx / grassSquareSize, mapDims.mapy / grassSquareSize);
 			throw std::runtime_error(b);
 		}
 		const int grassMapSize = mapDims.mapx * mapDims.mapy / (grassSquareSize * grassSquareSize);
