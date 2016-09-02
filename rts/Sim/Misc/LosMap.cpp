@@ -146,40 +146,36 @@ CLosTables::CLosTables()
 
 
 // Calls func for every square in a ray
-template<typename F>
-inline void for_ray_square(const CLosTables::LosLine& line, F func)
-{
-	// first char is whether in the endpoint x > y
-	const char inc_x = line[0];
-	const char inc_y = !line[0];
-
-	int2 square(0, 0);
-	const char *ptr = &line[1];
-	const char *end = ptr + line.size() - 1;
-	for (; ptr < end; ++ptr) {
-		square += int2(inc_x || *ptr, inc_y || *ptr);
-		func(square);
-	}
+#define for_ray_square(line, func)                                      \
+{                                                                       \
+	const char inc_x = line[0];                                         \
+	const char inc_y = !line[0];                                        \
+                                                                        \
+	int2 square(0, 0);                                                  \
+	const char *ptr = &line[1];                                         \
+	const char *end = ptr + line.size() - 1;                            \
+	for (; ptr < end; ++ptr) {                                          \
+		square += int2(inc_x || *ptr, inc_y || *ptr);                   \
+		func;                                                           \
+	}                                                                   \
 }
 
 // Calls func for every square in a ray, with a rule for breaking
-template<typename F, typename G>
-inline void for_ray_square(const CLosTables::LosLine& line, F func, G rule)
-{
-	// first char is whether in the endpoint x > y
-	const char inc_x = line[0];
-	const char inc_y = !line[0];
-
-	int2 square(0, 0);
-	const char *ptr = &line[1];
-	const char *end = ptr + line.size() - 1;
-	for (; ptr < end; ++ptr) {
-		square += int2(inc_x || *ptr, inc_y || *ptr);
-		if (rule(square))
-			break;
-
-		func(square);
-	}
+#define for_ray_square_rule(line, func, rule)                           \
+{                                                                       \
+	const char inc_x = line[0];                                         \
+	const char inc_y = !line[0];                                        \
+                                                                        \
+	int2 square(0, 0);                                                  \
+	const char *ptr = &line[1];                                         \
+	const char *end = ptr + line.size() - 1;                            \
+	for (; ptr < end; ++ptr) {                                          \
+		square += int2(inc_x || *ptr, inc_y || *ptr);                   \
+		if (rule)                                                       \
+			break;                                                      \
+                                                                        \
+		func;                                                           \
+	}                                                                   \
 }
 
 
@@ -246,9 +242,7 @@ void CLosTables::AddMissing(LosTable& losRays, const std::vector<int2>& circlePo
 	auto setpixel = [&](int2 p) { image[p.y * (radius+1) + p.x] = true; };
 	auto getpixel = [&](int2 p) { return image[p.y * (radius+1) + p.x]; };
 	for (auto& line: losRays) {
-		for_ray_square(line, [&](int2 p) {
-			setpixel(p);
-		});
+		for_ray_square(line, setpixel(square));
 	}
 
 	// start the check from 45deg bisector and go from there to 0deg & 90deg
@@ -260,15 +254,11 @@ void CLosTables::AddMissing(LosTable& losRays, const std::vector<int2>& circlePo
 			int2 t2(p.y, a);
 			if (!getpixel(t1)) {
 				losRays.push_back(GetRay(t1.x, t1.y));
-				for_ray_square(losRays.back(), [&](int2 p_) {
-					setpixel(p_);
-				});
+				for_ray_square(losRays.back(), setpixel(square));
 			}
 			if (!getpixel(t2) && t2 != int2(0,radius)) { // (0,radius) is a mirror of (radius,0), so don't add it
 				losRays.push_back(GetRay(t2.x, t2.y));
-				for_ray_square(losRays.back(), [&](int2 p_) {
-					setpixel(p_);
-				});
+				for_ray_square(losRays.back(), setpixel(square));
 			}
 		}
 	}
@@ -341,12 +331,12 @@ void CLosTables::Debug(const LosTable& losRays, const std::vector<int2>& points,
 	};
 	int2 midp = int2(radius, radius);
 	for (auto& line: losRays) {
-		for_ray_square(line, [&](int2 p) {
-			setpixel(midp + p, 127);
-			setpixel(midp - p, 127);
-			setpixel(midp + int2(p.y, -p.x), 127);
-			setpixel(midp + int2(-p.y, p.x), 127);
-		});
+		for_ray_square(line,
+			setpixel(midp + square, 127);
+			setpixel(midp - square, 127);
+			setpixel(midp + int2(square.y, -square.x), 127);
+			setpixel(midp + int2(-square.y, square.x), 127);
+		);
 	}
 	for (int2 p: points) {
 		setpixel(midp + p, 1);
@@ -378,9 +368,7 @@ void CLosTables::Debug(const LosTable& losRays, const std::vector<int2>& points,
 	LOG("- los rays -");
 	for (auto& line: losRays) {
 		std::string s;
-		for_ray_square(line, [&](int2 p) {
-			s += "(" + IntToString(p.x) + "," + IntToString(p.y) + ") ";
-		});
+		for_ray_square(line, (s += "(" + IntToString(square.x) + "," + IntToString(square.y) + ") "));
 		LOG("%s", s.c_str());
 	}
 	LOG_L(L_DEBUG, "------------------------------------");
@@ -615,12 +603,12 @@ void CLosMap::UnsafeLosAdd(SLosInstance* li) const
 		float maxAng[4] = {-1e7, -1e7, -1e7, -1e7};
 		float prevAng[4] = {-1e7, -1e7, -1e7, -1e7};
 
-		for_ray_square(line, [&](int2 square) {
+		for_ray_square(line,
 			CastLos(&prevAng[0], &maxAng[0], square,                    squaresMap, anglesMap, radius, threadNum);
 			CastLos(&prevAng[1], &maxAng[1], -square,                   squaresMap, anglesMap, radius, threadNum);
 			CastLos(&prevAng[2], &maxAng[2], int2(square.y, -square.x), squaresMap, anglesMap, radius, threadNum);
 			CastLos(&prevAng[3], &maxAng[3], int2(-square.y, square.x), squaresMap, anglesMap, radius, threadNum);
-		});
+		);
 	}
 
 	// translate visible square indices to map square idx + RLE
@@ -683,26 +671,26 @@ void CLosMap::SafeLosAdd(SLosInstance* li) const
 			float maxAng[4] = {-1e7, -1e7, -1e7, -1e7};
 			float prevAng[4] = {-1e7, -1e7, -1e7, -1e7};
 
-			for_ray_square(line, [&](int2 square) {
-				CastLos(&prevAng[0], &maxAng[0], square,                    squaresMap, anglesMap, radius, threadNum);
-			}, [&](int2 square) {
-				return !safeRect.Inside(pos + square);
-			});
-			for_ray_square(line, [&](int2 square) {
-				CastLos(&prevAng[1], &maxAng[1], -square,                   squaresMap, anglesMap, radius, threadNum);
-			}, [&](int2 square) {
-				return !safeRect.Inside(pos - square);
-			});
-			for_ray_square(line, [&](int2 square) {
+			for_ray_square_rule(line,
+				CastLos(&prevAng[0], &maxAng[0], square,                    squaresMap, anglesMap, radius, threadNum)
+			,
+				!safeRect.Inside(pos + square)
+			);
+			for_ray_square_rule(line,
+				CastLos(&prevAng[1], &maxAng[1], -square,                   squaresMap, anglesMap, radius, threadNum)
+			,
+				!safeRect.Inside(pos - square)
+			);
+			for_ray_square_rule(line,
 				CastLos(&prevAng[2], &maxAng[2], int2(square.y, -square.x), squaresMap, anglesMap, radius, threadNum);
-			}, [&](int2 square) {
-				return !safeRect.Inside(pos + int2(square.y, -square.x));
-			});
-			for_ray_square(line, [&](int2 square) {
+			,
+				!safeRect.Inside(pos + int2(square.y, -square.x))
+			);
+			for_ray_square_rule(line,
 				CastLos(&prevAng[3], &maxAng[3], int2(-square.y, square.x), squaresMap, anglesMap, radius, threadNum);
-			}, [&](int2 square) {
-				return !safeRect.Inside(pos + int2(-square.y, square.x));
-			});
+			,
+				!safeRect.Inside(pos + int2(-square.y, square.x))
+			);
 		}
 	} else {
 		// emit position outside the map
@@ -710,7 +698,7 @@ void CLosMap::SafeLosAdd(SLosInstance* li) const
 			float maxAng[4] = {-1e7, -1e7, -1e7, -1e7};
 			float prevAng[4] = {-1e7, -1e7, -1e7, -1e7};
 
-			for_ray_square(line, [&](int2 square) {
+			for_ray_square(line,
 				if (safeRect.Inside(pos + square)) {
 					CastLos(&prevAng[0], &maxAng[0], square,                    squaresMap, anglesMap, radius, threadNum);
 				}
@@ -723,7 +711,7 @@ void CLosMap::SafeLosAdd(SLosInstance* li) const
 				if (safeRect.Inside(pos + int2(-square.y, square.x))) {
 					CastLos(&prevAng[3], &maxAng[3], int2(-square.y, square.x), squaresMap, anglesMap, radius, threadNum);
 				}
-			});
+			);
 		}
 	}
 
