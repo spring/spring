@@ -90,8 +90,8 @@ local mapDefaults = {
   },
 
   splats = {
-    splatTexScales = {0.02, 0.02, 0.02, 0.02},
-    splatTexMults  = {1.00, 1.00, 1.00, 1.00},
+    texScales = {0.02, 0.02, 0.02, 0.02},
+    texMults  = {1.00, 1.00, 1.00, 1.00},
   },
 
   resources = {
