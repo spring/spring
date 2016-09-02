@@ -243,10 +243,10 @@ std::vector<int2> CLosTables::GetCircleSurface(const int radius)
 void CLosTables::AddMissing(LosTable& losRays, const std::vector<int2>& circlePoints, const int radius)
 {
 	std::vector<char> image((radius+1) * (radius+1), 0);
-	auto setpixel = [&](int2 p) { image[p.y * (radius+1) + p.x] = true; };
-	auto getpixel = [&](int2 p) { return image[p.y * (radius+1) + p.x]; };
+	auto setpixel = [&](const int2& p) { image[p.y * (radius+1) + p.x] = true; };
+	auto getpixel = [&](const int2& p) { return image[p.y * (radius+1) + p.x]; };
 	for (auto& line: losRays) {
-		for_ray_square(line, [&](int2 p) {
+		for_ray_square(line, [&](const int2& p) {
 			setpixel(p);
 		});
 	}
@@ -260,13 +260,13 @@ void CLosTables::AddMissing(LosTable& losRays, const std::vector<int2>& circlePo
 			int2 t2(p.y, a);
 			if (!getpixel(t1)) {
 				losRays.push_back(GetRay(t1.x, t1.y));
-				for_ray_square(losRays.back(), [&](int2 p_) {
+				for_ray_square(losRays.back(), [&](const int2& p_) {
 					setpixel(p_);
 				});
 			}
 			if (!getpixel(t2) && t2 != int2(0,radius)) { // (0,radius) is a mirror of (radius,0), so don't add it
 				losRays.push_back(GetRay(t2.x, t2.y));
-				for_ray_square(losRays.back(), [&](int2 p_) {
+				for_ray_square(losRays.back(), [&](const int2& p_) {
 					setpixel(p_);
 				});
 			}
@@ -336,12 +336,12 @@ void CLosTables::Debug(const LosTable& losRays, const std::vector<int2>& points,
 	// draw the sphere image
 	LOG("- sketch -");
 	std::vector<char> image((2*radius+1) * (2*radius+1), 0);
-	auto setpixel = [&](int2 p, char value = 1) {
+	auto setpixel = [&](const int2& p, char value = 1) {
 		image[p.y * (2*radius+1) + p.x] = value;
 	};
 	int2 midp = int2(radius, radius);
 	for (auto& line: losRays) {
-		for_ray_square(line, [&](int2 p) {
+		for_ray_square(line, [&](const int2& p) {
 			setpixel(midp + p, 127);
 			setpixel(midp - p, 127);
 			setpixel(midp + int2(p.y, -p.x), 127);
@@ -378,7 +378,7 @@ void CLosTables::Debug(const LosTable& losRays, const std::vector<int2>& points,
 	LOG("- los rays -");
 	for (auto& line: losRays) {
 		std::string s;
-		for_ray_square(line, [&](int2 p) {
+		for_ray_square(line, [&](const int2& p) {
 			s += "(" + IntToString(p.x) + "," + IntToString(p.y) + ") ";
 		});
 		LOG("%s", s.c_str());
@@ -476,7 +476,7 @@ void CLosMap::PrepareRaycast(SLosInstance* instance) const
 
 void CLosMap::LosAdd(SLosInstance* li) const
 {
-	auto MAP_SQUARE_FULLRES = [&](int2 pos) {
+	auto MAP_SQUARE_FULLRES = [&](const int2& pos) {
 		float2 fpos = pos;
 		fpos += 0.5f;
 		fpos /= float2(size);
@@ -615,7 +615,7 @@ void CLosMap::UnsafeLosAdd(SLosInstance* li) const
 		float maxAng[4] = {-1e7, -1e7, -1e7, -1e7};
 		float prevAng[4] = {-1e7, -1e7, -1e7, -1e7};
 
-		for_ray_square(line, [&](int2 square) {
+		for_ray_square(line, [&](const int2& square) {
 			CastLos(&prevAng[0], &maxAng[0], square,                    squaresMap, anglesMap, radius, threadNum);
 			CastLos(&prevAng[1], &maxAng[1], -square,                   squaresMap, anglesMap, radius, threadNum);
 			CastLos(&prevAng[2], &maxAng[2], int2(square.y, -square.x), squaresMap, anglesMap, radius, threadNum);
@@ -683,24 +683,24 @@ void CLosMap::SafeLosAdd(SLosInstance* li) const
 			float maxAng[4] = {-1e7, -1e7, -1e7, -1e7};
 			float prevAng[4] = {-1e7, -1e7, -1e7, -1e7};
 
-			for_ray_square(line, [&](int2 square) {
+			for_ray_square(line, [&](const int2& square) {
 				CastLos(&prevAng[0], &maxAng[0], square,                    squaresMap, anglesMap, radius, threadNum);
-			}, [&](int2 square) {
+			}, [&](const int2& square) {
 				return !safeRect.Inside(pos + square);
 			});
-			for_ray_square(line, [&](int2 square) {
+			for_ray_square(line, [&](const int2& square) {
 				CastLos(&prevAng[1], &maxAng[1], -square,                   squaresMap, anglesMap, radius, threadNum);
-			}, [&](int2 square) {
+			}, [&](const int2& square) {
 				return !safeRect.Inside(pos - square);
 			});
-			for_ray_square(line, [&](int2 square) {
+			for_ray_square(line, [&](const int2& square) {
 				CastLos(&prevAng[2], &maxAng[2], int2(square.y, -square.x), squaresMap, anglesMap, radius, threadNum);
-			}, [&](int2 square) {
+			}, [&](const int2& square) {
 				return !safeRect.Inside(pos + int2(square.y, -square.x));
 			});
-			for_ray_square(line, [&](int2 square) {
+			for_ray_square(line, [&](const int2& square) {
 				CastLos(&prevAng[3], &maxAng[3], int2(-square.y, square.x), squaresMap, anglesMap, radius, threadNum);
-			}, [&](int2 square) {
+			}, [&](const int2& square) {
 				return !safeRect.Inside(pos + int2(-square.y, square.x));
 			});
 		}
@@ -710,7 +710,7 @@ void CLosMap::SafeLosAdd(SLosInstance* li) const
 			float maxAng[4] = {-1e7, -1e7, -1e7, -1e7};
 			float prevAng[4] = {-1e7, -1e7, -1e7, -1e7};
 
-			for_ray_square(line, [&](int2 square) {
+			for_ray_square(line, [&](const int2& square) {
 				if (safeRect.Inside(pos + square)) {
 					CastLos(&prevAng[0], &maxAng[0], square,                    squaresMap, anglesMap, radius, threadNum);
 				}
