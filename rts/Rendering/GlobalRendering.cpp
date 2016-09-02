@@ -38,7 +38,6 @@ const float CGlobalRendering::NEAR_PLANE         =    2.8f;
 const float CGlobalRendering::SMF_INTENSITY_MULT = 210.0f / 255.0f;
 const int CGlobalRendering::minWinSizeX = 400;
 const int CGlobalRendering::minWinSizeY = 300;
-static SDL_GLContext sdlGlCtx;
 
 CR_BIND(CGlobalRendering, )
 
@@ -99,7 +98,8 @@ CR_REG_METADATA(CGlobalRendering, (
 	CR_IGNORED(dualScreenMode),
 	CR_IGNORED(dualScreenMiniMapOnLeft),
 	CR_IGNORED(fullScreen),
-	CR_IGNORED(window)
+	CR_IGNORED(window),
+	CR_IGNORED(sdlGlCtx)
 ))
 
 CGlobalRendering::CGlobalRendering()
@@ -174,6 +174,7 @@ CGlobalRendering::CGlobalRendering()
 	, fullScreen(true)
 
 	, window(nullptr)
+	, sdlGlCtx(nullptr)
 {
 	configHandler->NotifyOnChange(this);
 }
@@ -250,7 +251,12 @@ bool CGlobalRendering::CreateSDLWindow(const char* title)
 
 	// Create GL Context
 	SDL_SetWindowMinimumSize(window, minWinSizeX, minWinSizeY);
-	sdlGlCtx = SDL_GL_CreateContext(window);
+
+	if (sdlGlCtx == nullptr) {
+		sdlGlCtx = SDL_GL_CreateContext(window);
+	} else {
+		SDL_GL_MakeCurrent(window, sdlGlCtx);
+	}
 
 #if !defined(HEADLESS)
 	// disable desktop compositing to fix tearing
@@ -275,6 +281,14 @@ void CGlobalRendering::DestroySDLWindow() {
 #endif
 }
 
+
+void CGlobalRendering::ReCreateSDLWindow() {
+	SDL_Window* oldWindow = window;
+	const char* title = SDL_GetWindowTitle(window);
+	if (CreateSDLWindow(title)) {
+		SDL_DestroyWindow(oldWindow);
+	}
+}
 
 
 void CGlobalRendering::PostInit() {
@@ -421,24 +435,26 @@ void CGlobalRendering::ConfigNotify(const std::string& key, const std::string& v
 
 	fullScreen = configHandler->GetBool("Fullscreen");
 
-	const int2 res = GetWantedViewSize(fullScreen);
-	const bool borderless = configHandler->GetBool("WindowBorderless");
-	SDL_SetWindowSize(window, res.x, res.y);
-	SDL_SetWindowPosition(window, configHandler->GetInt("WindowPosX"), configHandler->GetInt("WindowPosY"));
-	if (fullScreen) {
-		SDL_SetWindowPosition(window, 0, 0);
-		SDL_SetWindowBordered(window, borderless ? SDL_FALSE : SDL_TRUE);
-		if (borderless) {
-			SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
-		} else {
-			SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
-		}
-		SDL_SetWindowBordered(window, borderless ? SDL_FALSE : SDL_TRUE);
-	} else {
-		SDL_SetWindowBordered(window, borderless ? SDL_FALSE : SDL_TRUE);
-		SDL_SetWindowFullscreen(window, 0);
-		SDL_SetWindowBordered(window, borderless ? SDL_FALSE : SDL_TRUE);
-	}
+	ReCreateSDLWindow();
+
+	// const int2 res = GetWantedViewSize(fullScreen);
+	// const bool borderless = configHandler->GetBool("WindowBorderless");
+	// SDL_SetWindowSize(window, res.x, res.y);
+	// SDL_SetWindowPosition(window, configHandler->GetInt("WindowPosX"), configHandler->GetInt("WindowPosY"));
+	// if (fullScreen) {
+		// SDL_SetWindowPosition(window, 0, 0);
+		// SDL_SetWindowBordered(window, borderless ? SDL_FALSE : SDL_TRUE);
+		// if (borderless) {
+			// SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+		// } else {
+			// SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
+		// }
+		// SDL_SetWindowBordered(window, borderless ? SDL_FALSE : SDL_TRUE);
+	// } else {
+		// SDL_SetWindowBordered(window, borderless ? SDL_FALSE : SDL_TRUE);
+		// SDL_SetWindowFullscreen(window, 0);
+		// SDL_SetWindowBordered(window, borderless ? SDL_FALSE : SDL_TRUE);
+	// }
 }
 
 

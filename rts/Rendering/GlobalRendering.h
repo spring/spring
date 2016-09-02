@@ -8,6 +8,7 @@
 #include "System/type2.h"
 
 struct SDL_Window;
+typedef void* SDL_GLContext;
 
 /**
  * @brief Globally accessible unsynced, rendering related data
@@ -28,6 +29,7 @@ public:
 	 */
 	bool CreateSDLWindow(const char* title);
 	void DestroySDLWindow();
+	void ReCreateSDLWindow();
 	void PostInit();
 	void SetFullScreen(bool configFullScreen, bool cmdLineWindowed, bool cmdLineFullScreen);
 	// Notify on Fullscreen/WindowBorderless change
@@ -253,6 +255,7 @@ public:
 	bool fullScreen;
 
 	SDL_Window* window;
+	SDL_GLContext sdlGlCtx;
 
 	/**
 	* @brief max view range in elmos
