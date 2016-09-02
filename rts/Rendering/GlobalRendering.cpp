@@ -436,25 +436,6 @@ void CGlobalRendering::ConfigNotify(const std::string& key, const std::string& v
 	fullScreen = configHandler->GetBool("Fullscreen");
 
 	ReCreateSDLWindow();
-
-	// const int2 res = GetWantedViewSize(fullScreen);
-	// const bool borderless = configHandler->GetBool("WindowBorderless");
-	// SDL_SetWindowSize(window, res.x, res.y);
-	// SDL_SetWindowPosition(window, configHandler->GetInt("WindowPosX"), configHandler->GetInt("WindowPosY"));
-	// if (fullScreen) {
-		// SDL_SetWindowPosition(window, 0, 0);
-		// SDL_SetWindowBordered(window, borderless ? SDL_FALSE : SDL_TRUE);
-		// if (borderless) {
-			// SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
-		// } else {
-			// SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
-		// }
-		// SDL_SetWindowBordered(window, borderless ? SDL_FALSE : SDL_TRUE);
-	// } else {
-		// SDL_SetWindowBordered(window, borderless ? SDL_FALSE : SDL_TRUE);
-		// SDL_SetWindowFullscreen(window, 0);
-		// SDL_SetWindowBordered(window, borderless ? SDL_FALSE : SDL_TRUE);
-	// }
 }
 
 
