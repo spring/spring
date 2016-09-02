@@ -48,6 +48,9 @@ extern DECLSPEC int SDLCALL SDL_InitSubSystem(Uint32 flags) {
 	return 0;
 }
 
+extern DECLSPEC void SDLCALL SDL_QuitSubSystem(Uint32 flags) {
+}
+
 extern DECLSPEC const char* SDLCALL SDL_GetError() {
 	return "using the SDL stub library";
 }
@@ -59,6 +62,17 @@ extern DECLSPEC int SDLCALL SDL_GL_SetAttribute(SDL_GLattr attr, int value) {
 extern DECLSPEC SDL_Window* SDLCALL SDL_CreateWindow(const char* title, int x, int y, int w, int h, Uint32 flags) {
 	static int foo;
 	return (SDL_Window*)(&foo);
+}
+
+extern DECLSPEC void SDLCALL SDL_DestroyWindow(SDL_Window * window){
+}
+
+extern DECLSPEC int SDLCALL SDL_GL_MakeCurrent(SDL_Window * window, SDL_GLContext context){
+	return 0;
+}
+
+extern DECLSPEC const char *SDLCALL SDL_GetWindowTitle(SDL_Window * window) {
+	return NULL;
 }
 
 extern DECLSPEC struct SDL_RWops* SDLCALL SDL_RWFromFile(const char* file, const char* mode) {
