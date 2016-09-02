@@ -987,7 +987,7 @@ int SpringApp::Update()
 		glEnable(GL_MULTISAMPLE_ARB);
 
 	int ret = 1;
-
+	configHandler->Update();
 	if (activeController != NULL) {
 		ret = activeController->Update();
 

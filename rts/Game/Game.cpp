@@ -1140,7 +1140,6 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 	infoConsole->PushNewLinesToEventHandler();
 	infoConsole->Update();
 
-	configHandler->Update();
 	mouse->Update();
 	mouse->UpdateCursors();
 	guihandler->Update();

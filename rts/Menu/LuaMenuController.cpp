@@ -72,7 +72,6 @@ bool CLuaMenuController::Draw()
 	spring_msecs(10).sleep();
 
 	infoConsole->PushNewLinesToEventHandler();
-	configHandler->Update();
 	mouse->Update();
 	mouse->UpdateCursors();
 	eventHandler.Update();
