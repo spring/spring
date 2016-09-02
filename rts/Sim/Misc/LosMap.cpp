@@ -8,7 +8,6 @@
 #include "System/Log/ILog.h"
 #include "System/Util.h"
 #include "System/ThreadPool.h"
-#include "System/Threading/SpringMutex.h"
 #ifdef USE_UNSYNCED_HEIGHTMAP
 	#include "Game/GlobalUnsynced.h" // for myAllyTeam
 #endif
@@ -20,7 +19,6 @@
 constexpr float LOS_BONUS_HEIGHT = 5.f;
 
 
-static spring::shared_spinlock mutex;
 static std::array<std::vector<float>, ThreadPool::MAX_THREADS> isqrt_table;
 
 
@@ -45,7 +43,7 @@ static void isqrt_verify(unsigned r, int threadNum)
 // func() only get called for the lower top right octant.
 // The others need to get by mirroring.
 template<typename F>
-void MidpointCircleAlgo(int radius, F func)
+inline void MidpointCircleAlgo(int radius, F func)
 {
 	int x = radius;
 	int y = 0;
@@ -66,7 +64,7 @@ void MidpointCircleAlgo(int radius, F func)
 
 // Calls func(half_line_width, y) for each line of the filled circle.
 template<typename F>
-void MidpointCircleAlgoPerLine(int radius, F func)
+inline void MidpointCircleAlgoPerLine(int radius, F func)
 {
 	int x = radius;
 	int y = 0;
@@ -93,9 +91,6 @@ void MidpointCircleAlgoPerLine(int radius, F func)
 
 
 
-
-
-
 //////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////
 /// CLosTables precalc helper
@@ -103,27 +98,20 @@ void MidpointCircleAlgoPerLine(int radius, F func)
 class CLosTables
 {
 public:
-	typedef std::vector<int2> LosLine;
+	typedef std::vector<char> LosLine;
 	typedef std::vector<LosLine> LosTable;
 
-	static void GenerateForLosSize(size_t losSize);
+	static void GenerateForLosSize(size_t losSize, int threadNum);
 
 	// note: copy, references are not threadsafe
-	static const int2 GetLosTableRaySquare(size_t losSize, size_t rayIndex, size_t squareIdx) {
-		return instance.lostables[losSize][rayIndex][squareIdx];
+	static LosTable& GetLosTable(size_t losSize, int threadNum) {
+		return instance.lostables[threadNum][losSize];
 	}
 
-	static size_t GetLosTableRaySize(size_t losSize, size_t rayIndex) {
-		return instance.lostables[losSize][rayIndex].size();
-	}
-
-	static size_t GetLosTableSize(size_t losSize) {
-		return instance.lostables[losSize].size();
-	}
 
 private:
 	static CLosTables instance;
-	std::vector<LosTable> lostables;
+	std::array<std::vector<LosTable>, ThreadPool::MAX_THREADS> lostables;
 
 private:
 	CLosTables();
@@ -133,38 +121,65 @@ private:
 	static std::vector<int2> GetCircleSurface(const int radius);
 	static void AddMissing(LosTable& losRays, const std::vector<int2>& circlePoints, const int radius);
 };
-
 CLosTables CLosTables::instance;
 
-
-void CLosTables::GenerateForLosSize(size_t losSize)
+void CLosTables::GenerateForLosSize(size_t losSize, int threadNum)
 {
-	boost::upgrade_lock<spring::shared_spinlock> lock(mutex);
-	// guard against insane sight distances
-	assert(losSize < instance.lostables.capacity());
+	if (instance.lostables[threadNum].size() <= losSize)
+		instance.lostables[threadNum].resize(losSize+1);
 
-	if (instance.lostables.size() <= losSize) {
-		boost::upgrade_to_unique_lock<spring::shared_spinlock> uniqueLock(lock);
-		if (instance.lostables.size() <= losSize) {
-			instance.lostables.resize(losSize+1);
-		}
-	}
-
-	LosTable& tl = instance.lostables[losSize];
-	if (tl.empty() && losSize > 0) {
-		auto lrays = GetLosRays(losSize);
-		boost::upgrade_to_unique_lock<spring::shared_spinlock> uniqueLock(lock);
-		if (tl.empty()) {
-			tl = std::move(lrays);
-		}
-	}
+	LosTable& tl = instance.lostables[threadNum][losSize];
+	if (tl.empty())
+		tl = std::move(GetLosRays(losSize));
 }
 
 
 CLosTables::CLosTables()
 {
-	lostables.reserve(256*256);
-	lostables.emplace_back(); // zero radius
+	for (auto& lt: lostables){
+		lt.reserve(256);
+		lt.emplace_back(); // zero radius
+	}
+}
+
+
+
+
+// Calls func for every square in a ray
+template<typename F>
+inline void for_ray_square(const CLosTables::LosLine& line, F func)
+{
+	// first char is whether in the endpoint x > y
+	const char inc_x = line[0];
+	const char inc_y = !line[0];
+
+	int2 square(0, 0);
+	const char *ptr = &line[1];
+	const char *end = ptr + line.size() - 1;
+	for (; ptr < end; ++ptr) {
+		square += int2(inc_x || *ptr, inc_y || *ptr);
+		func(square);
+	}
+}
+
+// Calls func for every square in a ray, with a rule for breaking
+template<typename F, typename G>
+inline void for_ray_square(const CLosTables::LosLine& line, F func, G rule)
+{
+	// first char is whether in the endpoint x > y
+	const char inc_x = line[0];
+	const char inc_y = !line[0];
+
+	int2 square(0, 0);
+	const char *ptr = &line[1];
+	const char *end = ptr + line.size() - 1;
+	for (; ptr < end; ++ptr) {
+		square += int2(inc_x || *ptr, inc_y || *ptr);
+		if (rule(square))
+			break;
+
+		func(square);
+	}
 }
 
 
@@ -231,9 +246,9 @@ void CLosTables::AddMissing(LosTable& losRays, const std::vector<int2>& circlePo
 	auto setpixel = [&](int2 p) { image[p.y * (radius+1) + p.x] = true; };
 	auto getpixel = [&](int2 p) { return image[p.y * (radius+1) + p.x]; };
 	for (auto& line: losRays) {
-		for (int2& p: line) {
+		for_ray_square(line, [&](int2 p) {
 			setpixel(p);
-		}
+		});
 	}
 
 	// start the check from 45deg bisector and go from there to 0deg & 90deg
@@ -245,15 +260,15 @@ void CLosTables::AddMissing(LosTable& losRays, const std::vector<int2>& circlePo
 			int2 t2(p.y, a);
 			if (!getpixel(t1)) {
 				losRays.push_back(GetRay(t1.x, t1.y));
-				for (int2& p_: losRays.back()) {
+				for_ray_square(losRays.back(), [&](int2 p_) {
 					setpixel(p_);
-				}
+				});
 			}
 			if (!getpixel(t2) && t2 != int2(0,radius)) { // (0,radius) is a mirror of (radius,0), so don't add it
 				losRays.push_back(GetRay(t2.x, t2.y));
-				for (int2& p_: losRays.back()) {
+				for_ray_square(losRays.back(), [&](int2 p_) {
 					setpixel(p_);
-				}
+				});
 			}
 		}
 	}
@@ -269,23 +284,22 @@ CLosTables::LosLine CLosTables::GetRay(int xf, int yf)
 	assert(yf >= 0);
 
 	LosLine losline;
+	int larger, smaller;
 	if (xf > yf) {
-		// horizontal line
-		const float m = (float) yf / (float) xf;
-		losline.reserve(xf);
-		for (int x = 1; x <= xf; x++) {
-			losline.emplace_back(x, Round(m*x));
-		}
+		larger = xf;
+		smaller = yf;
+		losline.push_back(true);
 	} else {
-		// vertical line
-		const float m = (float) xf / (float) yf;
-		losline.reserve(yf);
-		for (int y = 1; y <= yf; y++) {
-			losline.emplace_back(Round(m*y), y);
-		}
+		larger = yf;
+		smaller = xf;
+		losline.push_back(false);
+	}
+	losline.reserve(larger + 1);
+	const float m = (float) smaller / (float) larger;
+	for (int i = 1; i <= larger; i++) {
+		losline.push_back(Round(m*i) != Round(m*(i-1)));
 	}
 
-	assert(losline.back() == int2(xf,yf));
 	assert(!losline.empty());
 	return losline;
 }
@@ -293,10 +307,6 @@ CLosTables::LosLine CLosTables::GetRay(int xf, int yf)
 
 void CLosTables::Debug(const LosTable& losRays, const std::vector<int2>& points, int radius)
 {
-	// only one should be included (the other one is generated via mirroring)
-	assert(losRays.front().back() == int2(radius, 0));
-	assert(losRays.back().back() != int2(0,radius));
-
 	// check for duplicated/included rays
 	auto losRaysCopy = losRays;
 	for (const auto& ray1: losRaysCopy) {
@@ -331,12 +341,12 @@ void CLosTables::Debug(const LosTable& losRays, const std::vector<int2>& points,
 	};
 	int2 midp = int2(radius, radius);
 	for (auto& line: losRays) {
-		for (int2 p: line) {
+		for_ray_square(line, [&](int2 p) {
 			setpixel(midp + p, 127);
 			setpixel(midp - p, 127);
 			setpixel(midp + int2(p.y, -p.x), 127);
 			setpixel(midp + int2(-p.y, p.x), 127);
-		}
+		});
 	}
 	for (int2 p: points) {
 		setpixel(midp + p, 1);
@@ -368,9 +378,9 @@ void CLosTables::Debug(const LosTable& losRays, const std::vector<int2>& points,
 	LOG("- los rays -");
 	for (auto& line: losRays) {
 		std::string s;
-		for (int2 p: line) {
+		for_ray_square(line, [&](int2 p) {
 			s += "(" + IntToString(p.x) + "," + IntToString(p.y) + ") ";
-		}
+		});
 		LOG("%s", s.c_str());
 	}
 	LOG_L(L_DEBUG, "------------------------------------");
@@ -560,10 +570,10 @@ void CLosMap::UnsafeLosAdd(SLosInstance* li) const
 	const int radius = li->radius;
 	const float losHeight = li->baseHeight;
 	const size_t area = Square((2*radius) + 1);
-	CLosTables::GenerateForLosSize(radius); //Only generates if not in cache
+	int threadNum = ThreadPool::GetThreadNum();
+	CLosTables::GenerateForLosSize(radius, threadNum); //Only generates if not in cache
 	std::vector<char> squaresMap(area, false); // saves the list of visible squares
 	std::vector<float> anglesMap(area, -1e8);
-	int threadNum = ThreadPool::GetThreadNum();
 	isqrt_verify((radius + 1) * (radius + 1), threadNum);
 
 	// Optimization: precalc all angles, cause:
@@ -601,21 +611,16 @@ void CLosMap::UnsafeLosAdd(SLosInstance* li) const
 
 	// Cast the Rays
 	squaresMap[ToAngleMapIdx(int2(0,0), radius)] = true;
-	const size_t numRays = CLosTables::GetLosTableSize(radius);
-	for (size_t i = 0; i < numRays; ++i) {
+	for (const CLosTables::LosLine& line: CLosTables::GetLosTable(radius, threadNum)) {
 		float maxAng[4] = {-1e7, -1e7, -1e7, -1e7};
 		float prevAng[4] = {-1e7, -1e7, -1e7, -1e7};
 
-		const size_t numSquares = CLosTables::GetLosTableRaySize(radius, i);
-
-		for (size_t n = 0; n < numSquares; n++) {
-			const int2 square = CLosTables::GetLosTableRaySquare(radius, i, n);
-
+		for_ray_square(line, [&](int2 square) {
 			CastLos(&prevAng[0], &maxAng[0], square,                    squaresMap, anglesMap, radius, threadNum);
 			CastLos(&prevAng[1], &maxAng[1], -square,                   squaresMap, anglesMap, radius, threadNum);
 			CastLos(&prevAng[2], &maxAng[2], int2(square.y, -square.x), squaresMap, anglesMap, radius, threadNum);
 			CastLos(&prevAng[3], &maxAng[3], int2(-square.y, square.x), squaresMap, anglesMap, radius, threadNum);
-		}
+		});
 	}
 
 	// translate visible square indices to map square idx + RLE
@@ -632,11 +637,11 @@ void CLosMap::SafeLosAdd(SLosInstance* li) const
 	const int radius = li->radius;
 	const float losHeight = li->baseHeight;
 	const size_t area = Square((2*radius) + 1);
-	CLosTables::GenerateForLosSize(radius); //Only generates if not in cache
+	int threadNum = ThreadPool::GetThreadNum();
+	CLosTables::GenerateForLosSize(radius, threadNum); //Only generates if not in cache
 	std::vector<char> squaresMap(area, false); // saves the list of visible squares
 	std::vector<float> anglesMap(area, -1e8);
 	const SRectangle safeRect(0, 0, size.x, size.y);
-	int threadNum = ThreadPool::GetThreadNum();
 	isqrt_verify((radius + 1) * (radius + 1), threadNum);
 
 	// Optimization: precalc all angles
@@ -671,61 +676,41 @@ void CLosMap::SafeLosAdd(SLosInstance* li) const
 
 
 	// Cast the Rays
-	const size_t numRays = CLosTables::GetLosTableSize(radius);
-
 	if (safeRect.Inside(pos)) {
 		squaresMap[ToAngleMapIdx(int2(0,0), radius)] = true;
 
-		for (size_t i = 0; i < numRays; ++i) {
+		for (const CLosTables::LosLine& line: CLosTables::GetLosTable(radius, threadNum)) {
 			float maxAng[4] = {-1e7, -1e7, -1e7, -1e7};
 			float prevAng[4] = {-1e7, -1e7, -1e7, -1e7};
 
-			const size_t numSquares = CLosTables::GetLosTableRaySize(radius, i);
-
-			for (size_t n = 0; n < numSquares; n++) {
-				const int2 square = CLosTables::GetLosTableRaySquare(radius, i, n);
-
-				if (!safeRect.Inside(pos + square))
-					break;
-
+			for_ray_square(line, [&](int2 square) {
 				CastLos(&prevAng[0], &maxAng[0], square,                    squaresMap, anglesMap, radius, threadNum);
-			}
-			for (size_t n = 0; n < numSquares; n++) {
-				const int2 square = CLosTables::GetLosTableRaySquare(radius, i, n);
-
-				if (!safeRect.Inside(pos - square))
-					break;
-
+			}, [&](int2 square) {
+				return !safeRect.Inside(pos + square);
+			});
+			for_ray_square(line, [&](int2 square) {
 				CastLos(&prevAng[1], &maxAng[1], -square,                   squaresMap, anglesMap, radius, threadNum);
-			}
-			for (size_t n = 0; n < numSquares; n++) {
-				const int2 square = CLosTables::GetLosTableRaySquare(radius, i, n);
-
-				if (!safeRect.Inside(pos + int2(square.y, -square.x)))
-					break;
-
+			}, [&](int2 square) {
+				return !safeRect.Inside(pos - square);
+			});
+			for_ray_square(line, [&](int2 square) {
 				CastLos(&prevAng[2], &maxAng[2], int2(square.y, -square.x), squaresMap, anglesMap, radius, threadNum);
-			}
-			for (size_t n = 0; n < numSquares; n++) {
-				const int2 square = CLosTables::GetLosTableRaySquare(radius, i, n);
-
-				if (!safeRect.Inside(pos + int2(-square.y, square.x)))
-					break;
-
+			}, [&](int2 square) {
+				return !safeRect.Inside(pos + int2(square.y, -square.x));
+			});
+			for_ray_square(line, [&](int2 square) {
 				CastLos(&prevAng[3], &maxAng[3], int2(-square.y, square.x), squaresMap, anglesMap, radius, threadNum);
-			}
+			}, [&](int2 square) {
+				return !safeRect.Inside(pos + int2(-square.y, square.x));
+			});
 		}
 	} else {
 		// emit position outside the map
-		for (size_t i = 0; i < numRays; ++i) {
+		for (const CLosTables::LosLine& line: CLosTables::GetLosTable(radius, threadNum)) {
 			float maxAng[4] = {-1e7, -1e7, -1e7, -1e7};
 			float prevAng[4] = {-1e7, -1e7, -1e7, -1e7};
 
-			const size_t numSquares = CLosTables::GetLosTableRaySize(radius, i);
-
-			for (size_t n = 0; n < numSquares; n++) {
-				const int2 square = CLosTables::GetLosTableRaySquare(radius, i, n);
-
+			for_ray_square(line, [&](int2 square) {
 				if (safeRect.Inside(pos + square)) {
 					CastLos(&prevAng[0], &maxAng[0], square,                    squaresMap, anglesMap, radius, threadNum);
 				}
@@ -738,7 +723,7 @@ void CLosMap::SafeLosAdd(SLosInstance* li) const
 				if (safeRect.Inside(pos + int2(-square.y, square.x))) {
 					CastLos(&prevAng[3], &maxAng[3], int2(-square.y, square.x), squaresMap, anglesMap, radius, threadNum);
 				}
-			}
+			});
 		}
 	}
 
