@@ -7,12 +7,16 @@
 #include "Rendering/GL/FBO.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "System/Util.h"
+#include "System/bitops.h"
 #include "System/type2.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
+#include "System/Platform/WindowManagerHelper.h"
+#include "System/Platform/errorhandler.h"
 #include "System/creg/creg_cond.h"
 
 #include <string>
+#include <SDL.h>
 #include <SDL_video.h>
 
 CONFIG(bool, CompressTextures).defaultValue(false).safemodeValue(true).description("Runtime compress most textures to save VideoRAM."); // in safemode enabled, cause it ways more likely the gpu runs out of memory than this extension cause crashes!
@@ -34,6 +38,7 @@ const float CGlobalRendering::NEAR_PLANE         =    2.8f;
 const float CGlobalRendering::SMF_INTENSITY_MULT = 210.0f / 255.0f;
 const int CGlobalRendering::minWinSizeX = 400;
 const int CGlobalRendering::minWinSizeY = 300;
+static SDL_GLContext sdlGlCtx;
 
 CR_BIND(CGlobalRendering, )
 
@@ -178,6 +183,100 @@ CGlobalRendering::~CGlobalRendering()
 	configHandler->RemoveObserver(this);
 }
 
+
+bool CGlobalRendering::CreateSDLWindow(const char* title)
+{
+	int sdlflags = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE;
+
+	// use standard: 24bit color + 24bit depth + 8bit stencil & doublebuffered
+	SDL_GL_SetAttribute(SDL_GL_RED_SIZE,   8);
+	SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
+	SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE,  8);
+	SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
+	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE,  24);
+	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
+	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+
+	// Create GL debug context when wanted (allows further GL verbose informations, but runs slower)
+	if (configHandler->GetBool("DebugGL")) {
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
+	}
+
+	// FullScreen AntiAliasing
+	FSAA = configHandler->GetInt("FSAALevel");
+
+	if (FSAA > 0) {
+		if (getenv("LIBGL_ALWAYS_SOFTWARE") != NULL) {
+			LOG_L(L_WARNING, "FSAALevel > 0 and LIBGL_ALWAYS_SOFTWARE set, this will very likely crash!");
+		}
+		make_even_number(FSAA);
+		SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
+		SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, FSAA);
+	}
+
+	// Get wanted resolution
+	int2 res = GetWantedViewSize(fullScreen);
+
+	// Borderless
+	const bool borderless = configHandler->GetBool("WindowBorderless");
+	if (fullScreen) {
+		sdlflags |= borderless ? SDL_WINDOW_FULLSCREEN_DESKTOP : SDL_WINDOW_FULLSCREEN;
+	}
+	sdlflags |= borderless ? SDL_WINDOW_BORDERLESS : 0;
+
+#if defined(WIN32)
+	if (borderless && !fullScreen) {
+		sdlflags &= ~SDL_WINDOW_RESIZABLE;
+	}
+#endif
+
+	// Window Pos & State
+	winPosX  = configHandler->GetInt("WindowPosX");
+	winPosY  = configHandler->GetInt("WindowPosY");
+	winState = configHandler->GetInt("WindowState");
+	switch (winState) {
+		case CGlobalRendering::WINSTATE_MAXIMIZED: sdlflags |= SDL_WINDOW_MAXIMIZED; break;
+		case CGlobalRendering::WINSTATE_MINIMIZED: sdlflags |= SDL_WINDOW_MINIMIZED; break;
+	}
+
+	// Create Window
+	window = SDL_CreateWindow(title, winPosX, winPosY, res.x, res.y, sdlflags);
+	if (!window) {
+		char buf[1024];
+		SNPRINTF(buf, sizeof(buf), "Could not set video mode:\n%s", SDL_GetError());
+		handleerror(NULL, buf, "ERROR", MBF_OK|MBF_EXCL);
+		return false;
+	}
+
+	// Create GL Context
+	SDL_SetWindowMinimumSize(window, minWinSizeX, minWinSizeY);
+	sdlGlCtx = SDL_GL_CreateContext(window);
+
+#if !defined(HEADLESS)
+	// disable desktop compositing to fix tearing
+	// (happens at 300fps, neither fullscreen nor vsync fixes it, so disable compositing)
+	// On Windows Aero often uses vsync, and so when Spring runs windowed it will run with
+	// vsync too, resulting in bad performance.
+	if (configHandler->GetBool("BlockCompositing")) {
+		WindowManagerHelper::BlockCompositing(globalRendering->window);
+	}
+#endif
+
+	return true;
+}
+
+
+void CGlobalRendering::DestroySDLWindow() {
+	SDL_DestroyWindow(window);
+	window = nullptr;
+#if !defined(HEADLESS)
+	SDL_GL_DeleteContext(sdlGlCtx);
+	SDL_QuitSubSystem(SDL_INIT_VIDEO);
+#endif
+}
+
+
+
 void CGlobalRendering::PostInit() {
 	supportNPOTs = GLEW_ARB_texture_non_power_of_two;
 	haveARB   = GLEW_ARB_vertex_program && GLEW_ARB_fragment_program;
@@ -314,6 +413,9 @@ void CGlobalRendering::SetFullScreen(bool configFullScreen, bool cmdLineWindowed
 
 void CGlobalRendering::ConfigNotify(const std::string& key, const std::string& value)
 {
+	if (window == nullptr)
+		return;
+
 	if (key != "Fullscreen" && key != "WindowBorderless")
 		return;
 
@@ -321,18 +423,21 @@ void CGlobalRendering::ConfigNotify(const std::string& key, const std::string& v
 
 	const int2 res = GetWantedViewSize(fullScreen);
 	const bool borderless = configHandler->GetBool("WindowBorderless");
+	SDL_SetWindowSize(window, res.x, res.y);
+	SDL_SetWindowPosition(window, configHandler->GetInt("WindowPosX"), configHandler->GetInt("WindowPosY"));
 	if (fullScreen) {
-		SDL_SetWindowSize(window, res.x, res.y);
+		SDL_SetWindowPosition(window, 0, 0);
+		SDL_SetWindowBordered(window, borderless ? SDL_FALSE : SDL_TRUE);
 		if (borderless) {
 			SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
 		} else {
 			SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
 		}
+		SDL_SetWindowBordered(window, borderless ? SDL_FALSE : SDL_TRUE);
 	} else {
+		SDL_SetWindowBordered(window, borderless ? SDL_FALSE : SDL_TRUE);
 		SDL_SetWindowFullscreen(window, 0);
 		SDL_SetWindowBordered(window, borderless ? SDL_FALSE : SDL_TRUE);
-		SDL_SetWindowSize(window, res.x, res.y);
-		SDL_SetWindowPosition(window, configHandler->GetInt("WindowPosX"), configHandler->GetInt("WindowPosY"));
 	}
 }
 

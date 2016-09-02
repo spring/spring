@@ -124,9 +124,6 @@ CONFIG(bool, BlockCompositing).defaultValue(false).safemodeValue(true).descripti
 CONFIG(std::string, name).defaultValue(UnnamedPlayerName).description("Sets your name in the game. Since this is overridden by lobbies with your lobby username when playing, it usually only comes up when viewing replays or starting the engine directly for testing purposes.");
 CONFIG(std::string, DefaultStartScript).defaultValue("").description("filename of script.txt to use when no command line parameters are specified.");
 
-static SDL_GLContext sdlGlCtx;
-static SDL_Window* window;
-
 
 /**
  * @brief multisample verify
@@ -312,96 +309,10 @@ bool SpringApp::InitWindow(const char* title)
 	PrintAvailableResolutions();
 	SDL_DisableScreenSaver();
 
-	if (!CreateSDLWindow(title)) {
+	if (!globalRendering->CreateSDLWindow(title)) {
 		LOG_L(L_FATAL, "Failed to set SDL video mode: %s", SDL_GetError());
 		return false;
 	}
-
-	if (cmdline->IsSet("minimise")) {
-		SDL_HideWindow(window);
-	}
-
-	// anyone other thread spawned from the main-process should be `unknown`
-	Threading::SetThreadName("unknown");
-	return true;
-}
-
-/**
- * @return whether setting the video mode was successful
- *
- * Sets SDL video mode options/settings
- */
-bool SpringApp::CreateSDLWindow(const char* title)
-{
-	int sdlflags = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE;
-
-	// use standard: 24bit color + 24bit depth + 8bit stencil & doublebuffered
-	SDL_GL_SetAttribute(SDL_GL_RED_SIZE,   8);
-	SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
-	SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE,  8);
-	SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
-	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE,  24);
-	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
-	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-
-	// Create GL debug context when wanted (allows further GL verbose informations, but runs slower)
-	if (configHandler->GetBool("DebugGL")) {
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
-	}
-
-	// FullScreen AntiAliasing
-	globalRendering->FSAA = configHandler->GetInt("FSAALevel");
-
-	if (globalRendering->FSAA > 0) {
-		if (getenv("LIBGL_ALWAYS_SOFTWARE") != NULL) {
-			LOG_L(L_WARNING, "FSAALevel > 0 and LIBGL_ALWAYS_SOFTWARE set, this will very likely crash!");
-		}
-		make_even_number(globalRendering->FSAA);
-		SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
-		SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, globalRendering->FSAA);
-	}
-
-	// Get wanted resolution
-	int2 res = globalRendering->GetWantedViewSize(globalRendering->fullScreen);
-
-	// Borderless
-	const bool borderless = configHandler->GetBool("WindowBorderless");
-	if (globalRendering->fullScreen) {
-		sdlflags |= borderless ? SDL_WINDOW_FULLSCREEN_DESKTOP : SDL_WINDOW_FULLSCREEN;
-	}
-	sdlflags |= borderless ? SDL_WINDOW_BORDERLESS : 0;
-
-#if defined(WIN32)
-	if (borderless && !globalRendering->fullScreen) {
-		sdlflags &= ~SDL_WINDOW_RESIZABLE;
-	}
-#endif
-
-	// Window Pos & State
-	globalRendering->winPosX  = configHandler->GetInt("WindowPosX");
-	globalRendering->winPosY  = configHandler->GetInt("WindowPosY");
-	globalRendering->winState = configHandler->GetInt("WindowState");
-	switch (globalRendering->winState) {
-		case CGlobalRendering::WINSTATE_MAXIMIZED: sdlflags |= SDL_WINDOW_MAXIMIZED; break;
-		case CGlobalRendering::WINSTATE_MINIMIZED: sdlflags |= SDL_WINDOW_MINIMIZED; break;
-	}
-
-	// Create Window
-	window = SDL_CreateWindow(title,
-		globalRendering->winPosX, globalRendering->winPosY,
-		res.x, res.y,
-		sdlflags);
-	if (!window) {
-		char buf[1024];
-		SNPRINTF(buf, sizeof(buf), "Could not set video mode:\n%s", SDL_GetError());
-		handleerror(NULL, buf, "ERROR", MBF_OK|MBF_EXCL);
-		return false;
-	}
-
-	// Create GL Context
-	SDL_SetWindowMinimumSize(window, globalRendering->minWinSizeX, globalRendering->minWinSizeY);
-	sdlGlCtx = SDL_GL_CreateContext(window);
-	globalRendering->window = window;
 
 #ifdef STREFLOP_H
 	// Something in SDL_SetVideoMode (OpenGL drivers?) messes with the FPU control word.
@@ -409,20 +320,12 @@ bool SpringApp::CreateSDLWindow(const char* title)
 	streflop::streflop_init<streflop::Simple>();
 #endif
 
-#if defined(WIN32) && !defined _MSC_VER
-	_set_output_format(_TWO_DIGIT_EXPONENT);
-#endif
-
-#if !defined(HEADLESS)
-	// disable desktop compositing to fix tearing
-	// (happens at 300fps, neither fullscreen nor vsync fixes it, so disable compositing)
-	// On Windows Aero often uses vsync, and so when Spring runs windowed it will run with
-	// vsync too, resulting in bad performance.
-	if (configHandler->GetBool("BlockCompositing")) {
-		WindowManagerHelper::BlockCompositing(window);
+	if (cmdline->IsSet("minimise")) {
+		SDL_HideWindow(globalRendering->window);
 	}
-#endif
 
+	// anyone other thread spawned from the main-process should be `unknown`
+	Threading::SetThreadName("unknown");
 	return true;
 }
 
@@ -442,12 +345,12 @@ void SpringApp::GetDisplayGeometry()
 
 #else
 	SDL_Rect screenSize;
-	SDL_GetDisplayBounds(SDL_GetWindowDisplayIndex(window), &screenSize);
+	SDL_GetDisplayBounds(SDL_GetWindowDisplayIndex(globalRendering->window), &screenSize);
 	globalRendering->screenSizeX = screenSize.w;
 	globalRendering->screenSizeY = screenSize.h;
 
-	SDL_GetWindowSize(window, &globalRendering->winSizeX, &globalRendering->winSizeY);
-	SDL_GetWindowPosition(window, &globalRendering->winPosX, &globalRendering->winPosY);
+	SDL_GetWindowSize(globalRendering->window, &globalRendering->winSizeX, &globalRendering->winSizeY);
+	SDL_GetWindowPosition(globalRendering->window, &globalRendering->winPosX, &globalRendering->winPosY);
 
 	globalRendering->UpdateViewPortGeometry();
 
@@ -455,7 +358,7 @@ void SpringApp::GetDisplayGeometry()
 	// Reading window state fails if it is changed via the window manager, like clicking on the titlebar (2013)
 	// https://bugzilla.libsdl.org/show_bug.cgi?id=1508 & https://bugzilla.libsdl.org/show_bug.cgi?id=2282
 	// happens on linux too!
-	const int state = WindowManagerHelper::GetWindowState(window);
+	const int state = WindowManagerHelper::GetWindowState(globalRendering->window);
 
 	globalRendering->winState = CGlobalRendering::WINSTATE_DEFAULT;
 	if (state & SDL_WINDOW_MAXIMIZED) {
@@ -581,12 +484,12 @@ void SpringApp::InitOpenGL()
 	// Clear Window
 	glClearColor(0.0f,0.0f,0.0f,0.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	SDL_GL_SwapWindow(window);
+	SDL_GL_SwapWindow(globalRendering->window);
 
 	// Print Final Mode (call after SetupViewportGeometry, which updates viewSizeX/Y)
 	SDL_DisplayMode dmode;
-	SDL_GetWindowDisplayMode(window, &dmode);
-	bool isBorderless = (SDL_GetWindowFlags(window) & SDL_WINDOW_BORDERLESS) != 0;
+	SDL_GetWindowDisplayMode(globalRendering->window, &dmode);
+	bool isBorderless = (SDL_GetWindowFlags(globalRendering->window) & SDL_WINDOW_BORDERLESS) != 0;
 	LOG("[%s] video mode set to %ix%i:%ibit @%iHz %s", __FUNCTION__, globalRendering->viewSizeX, globalRendering->viewSizeY, SDL_BITSPERPIXEL(dmode.format), dmode.refresh_rate, globalRendering->fullScreen ? (isBorderless ? "(borderless)" : "") : "(windowed)");
 }
 
@@ -1000,7 +903,7 @@ int SpringApp::Update()
 	ScopedTimer cputimer("SwapBuffers");
 	spring_time pre = spring_now();
 	VSync.Delay();
-	SDL_GL_SwapWindow(window);
+	SDL_GL_SwapWindow(globalRendering->window);
 	eventHandler.DbgTimingInfo(TIMING_SWAP, pre, spring_now());
 	return ret;
 }
@@ -1095,12 +998,9 @@ void SpringApp::ShutDown()
 	IMouseInput::FreeInstance(mouseInput);
 
 	LOG("[SpringApp::%s][6]", __FUNCTION__);
-	SDL_SetWindowGrab(window, SDL_FALSE);
+	SDL_SetWindowGrab(globalRendering->window, SDL_FALSE);
 	WindowManagerHelper::FreeIcon();
-#if !defined(HEADLESS)
-	SDL_GL_DeleteContext(sdlGlCtx);
-	SDL_QuitSubSystem(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK);
-#endif
+	globalRendering->DestroySDLWindow();
 	SDL_Quit();
 
 	LOG("[SpringApp::%s][7]", __FUNCTION__);
@@ -1193,8 +1093,8 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 					}
 
 					// and make sure to un-capture mouse
-					if (SDL_GetWindowGrab(window))
-						SDL_SetWindowGrab(window, SDL_FALSE);
+					if (SDL_GetWindowGrab(globalRendering->window))
+						SDL_SetWindowGrab(globalRendering->window, SDL_FALSE);
 
 					break;
 				}

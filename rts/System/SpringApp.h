@@ -41,7 +41,6 @@ private:
 
 	static void InitOpenGL();                       //!< Initializes OpenGL
 	static void LoadFonts();                        //!< Initialize glFonts (font & smallFont)
-	static bool CreateSDLWindow(const char* title); //!< Creates a SDL window
 
 	static void GetDisplayGeometry();
 	static void SetupViewportGeometry();

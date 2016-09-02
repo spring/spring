@@ -21,6 +21,13 @@ class CGlobalRendering {
 public:
 	CGlobalRendering();
 	~CGlobalRendering();
+	/**
+	 * @return whether setting the video mode was successful
+	 *
+	 * Sets SDL video mode options/settings
+	 */
+	bool CreateSDLWindow(const char* title);
+	void DestroySDLWindow();
 	void PostInit();
 	void SetFullScreen(bool configFullScreen, bool cmdLineWindowed, bool cmdLineFullScreen);
 	// Notify on Fullscreen/WindowBorderless change

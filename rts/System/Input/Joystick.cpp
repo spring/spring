@@ -38,6 +38,7 @@ void FreeJoystick() {
 		delete stick;
 		stick = NULL;
 	}
+	SDL_QuitSubSystem(SDL_INIT_JOYSTICK);
 }
 
 Joystick::Joystick()
