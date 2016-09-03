@@ -1,7 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "System/Platform/WindowManagerHelper.h"
-#include "Rendering/GlobalRendering.h"
 #include <SDL_syswm.h>
 #include <windows.h>
 
@@ -37,7 +36,7 @@ int GetWindowState(SDL_Window* window)
 
 	struct SDL_SysWMinfo info;
 	SDL_VERSION(&info.version);
-	SDL_GetWindowWMInfo(globalRendering->window, &info);
+	SDL_GetWindowWMInfo(window, &info);
 
 	if (GetWindowPlacement(info.info.win.window, &wp)) {
 		if (wp.showCmd == SW_SHOWMAXIMIZED)
@@ -47,6 +46,26 @@ int GetWindowState(SDL_Window* window)
 	}
 #endif
 	return state;
+}
+
+
+// taken from http://stackoverflow.com/questions/27116152
+void SetWindowResizable(SDL_Window* window, bool resizable)
+{
+#ifndef HEADLESS
+	SDL_SysWMinfo info;
+	SDL_VERSION(&info.version);
+	SDL_GetWindowWMInfo(window, &info);
+
+	HWND hwnd = info.info.win.window;
+	DWORD style = GetWindowLong(hwnd, GWL_STYLE);
+	if (resizable) {
+		style |= WS_THICKFRAME;
+	} else {
+		style &= ~WS_THICKFRAME;
+	}
+	SetWindowLong(hwnd, GWL_STYLE, style);
+#endif
 }
 
 }; // namespace WindowManagerHelper

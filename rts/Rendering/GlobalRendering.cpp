@@ -282,15 +282,6 @@ void CGlobalRendering::DestroySDLWindow() {
 }
 
 
-void CGlobalRendering::ReCreateSDLWindow() {
-	SDL_Window* oldWindow = window;
-	const char* title = SDL_GetWindowTitle(window);
-	if (CreateSDLWindow(title)) {
-		SDL_DestroyWindow(oldWindow);
-	}
-}
-
-
 void CGlobalRendering::PostInit() {
 	supportNPOTs = GLEW_ARB_texture_non_power_of_two;
 	haveARB   = GLEW_ARB_vertex_program && GLEW_ARB_fragment_program;
@@ -435,7 +426,29 @@ void CGlobalRendering::ConfigNotify(const std::string& key, const std::string& v
 
 	fullScreen = configHandler->GetBool("Fullscreen");
 
-	ReCreateSDLWindow();
+	if (window == nullptr)
+		return;
+
+	if (key != "Fullscreen" && key != "WindowBorderless")
+		return;
+
+	fullScreen = configHandler->GetBool("Fullscreen");
+
+	const int2 res = GetWantedViewSize(fullScreen);
+	const bool borderless = configHandler->GetBool("WindowBorderless");
+	SDL_SetWindowSize(window, res.x, res.y);
+	SDL_SetWindowPosition(window, configHandler->GetInt("WindowPosX"), configHandler->GetInt("WindowPosY"));
+	SDL_SetWindowBordered(window, borderless ? SDL_FALSE : SDL_TRUE);
+	WindowManagerHelper::SetWindowResizable(window, !borderless);
+	if (fullScreen) {
+		if (borderless) {
+			SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+		} else {
+			SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
+		}
+	} else {
+		SDL_SetWindowFullscreen(window, 0);
+	}
 }
 
 

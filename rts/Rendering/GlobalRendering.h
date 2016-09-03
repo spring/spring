@@ -29,7 +29,6 @@ public:
 	 */
 	bool CreateSDLWindow(const char* title);
 	void DestroySDLWindow();
-	void ReCreateSDLWindow();
 	void PostInit();
 	void SetFullScreen(bool configFullScreen, bool cmdLineWindowed, bool cmdLineFullScreen);
 	// Notify on Fullscreen/WindowBorderless change

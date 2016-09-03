@@ -17,4 +17,10 @@ int GetWindowState(SDL_Window* window)
 	return SDL_GetWindowFlags(window);
 }
 
+
+void SetWindowResizable(SDL_Window* window, bool resizable)
+{
+	//FIXME implement?
+}
+
 }; // namespace WindowManagerHelper

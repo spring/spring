@@ -870,6 +870,9 @@ void SpringApp::Reload(const std::string& script)
 
 	luaMenuController->Reset();
 
+	// clean changed configs
+	configHandler->Update();
+
 	if (script.empty()) {
 		// if no script, drop back to menu
 		LoadSpringMenu();

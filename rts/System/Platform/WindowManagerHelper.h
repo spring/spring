@@ -40,6 +40,11 @@ namespace WindowManagerHelper {
 	 * @brief returns the window-state of the given window in SDL_GetWindowFlags() format
 	 */
 	int GetWindowState(SDL_Window* window);
+
+	/**
+	 * @brief returns the window-state of the given window in SDL_GetWindowFlags() format
+	 */
+	void SetWindowResizable(SDL_Window* window, bool resizable);
 };
 
 #endif // WINDOW_MANAGER_HELPER_H
