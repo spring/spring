@@ -620,7 +620,9 @@ void CGame::LoadInterface()
 		}
 	}
 
+	SafeDelete(infoConsole);
 	infoConsole = new CInfoConsole();
+
 	tooltip = new CTooltipConsole();
 	guihandler = new CGuiHandler();
 	minimap = new CMiniMap();
