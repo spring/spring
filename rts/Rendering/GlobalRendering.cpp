@@ -225,11 +225,6 @@ bool CGlobalRendering::CreateSDLWindow(const char* title)
 	}
 	sdlflags |= borderless ? SDL_WINDOW_BORDERLESS : 0;
 
-#if defined(WIN32)
-	if (borderless && !fullScreen) {
-		sdlflags &= ~SDL_WINDOW_RESIZABLE;
-	}
-#endif
 
 	// Window Pos & State
 	winPosX  = configHandler->GetInt("WindowPosX");
@@ -248,6 +243,16 @@ bool CGlobalRendering::CreateSDLWindow(const char* title)
 		handleerror(NULL, buf, "ERROR", MBF_OK|MBF_EXCL);
 		return false;
 	}
+
+#if defined(WIN32)
+	if (borderless && !fullScreen) {
+		WindowManagerHelper::SetWindowResizable(window, !borderless);
+		SDL_SetWindowBordered(window, borderless ? SDL_FALSE : SDL_TRUE);
+		//SDL_SetWindowMaximumSize(window, 0, 0); //auto
+		SDL_SetWindowPosition(window, winPosX, winPosY);
+		SDL_SetWindowSize(window, res.x, res.y);
+	}
+#endif
 
 	// Create GL Context
 	SDL_SetWindowMinimumSize(window, minWinSizeX, minWinSizeY);
@@ -434,12 +439,9 @@ void CGlobalRendering::ConfigNotify(const std::string& key, const std::string& v
 
 	fullScreen = configHandler->GetBool("Fullscreen");
 
-	const int2 res = GetWantedViewSize(fullScreen);
 	const bool borderless = configHandler->GetBool("WindowBorderless");
+	const int2 res = GetWantedViewSize(fullScreen);
 	SDL_SetWindowSize(window, res.x, res.y);
-	SDL_SetWindowPosition(window, configHandler->GetInt("WindowPosX"), configHandler->GetInt("WindowPosY"));
-	SDL_SetWindowBordered(window, borderless ? SDL_FALSE : SDL_TRUE);
-	WindowManagerHelper::SetWindowResizable(window, !borderless);
 	if (fullScreen) {
 		if (borderless) {
 			SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
@@ -449,6 +451,10 @@ void CGlobalRendering::ConfigNotify(const std::string& key, const std::string& v
 	} else {
 		SDL_SetWindowFullscreen(window, 0);
 	}
+	SDL_SetWindowPosition(window, configHandler->GetInt("WindowPosX"), configHandler->GetInt("WindowPosY"));
+	SDL_SetWindowBordered(window, borderless ? SDL_FALSE : SDL_TRUE);
+	WindowManagerHelper::SetWindowResizable(window, !borderless);
+	SDL_SetWindowMaximumSize(window, 0, 0); //auto
 }
 
 

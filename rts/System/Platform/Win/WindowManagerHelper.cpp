@@ -60,9 +60,9 @@ void SetWindowResizable(SDL_Window* window, bool resizable)
 	HWND hwnd = info.info.win.window;
 	DWORD style = GetWindowLong(hwnd, GWL_STYLE);
 	if (resizable) {
-		style |= WS_THICKFRAME;
+		style |= (WS_THICKFRAME | WS_MAXIMIZEBOX);
 	} else {
-		style &= ~WS_THICKFRAME;
+		style &= ~(WS_THICKFRAME | WS_MAXIMIZEBOX);
 	}
 	SetWindowLong(hwnd, GWL_STYLE, style);
 #endif
