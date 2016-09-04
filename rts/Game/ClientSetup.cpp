@@ -72,4 +72,5 @@ void ClientSetup::LoadFromStartScript(const std::string& setup)
 	}
 
 	file.GetDef(saveFile, "", "GAME\\SaveFile");
+	file.GetDef(demoFile, "", "GAME\\DemoFile");
 }

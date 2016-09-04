@@ -694,9 +694,28 @@ CGameController* SpringApp::LoadSaveFile(const std::string& saveFile)
 }
 
 
+CGameController* SpringApp::LoadDemoFile(const std::string& demoFile)
+{
+	const std::string ext = FileSystem::GetExtension(demoFile);
+
+	if (ext != "sdfz")
+		throw content_error(std::string("Unknown demo extension: ") + ext);
+
+	clientSetup->isHost        = true;
+	clientSetup->myPlayerName += " (spec)";
+
+	pregame = new CPreGame(clientSetup);
+	pregame->LoadDemo(demoFile);
+	return pregame;
+}
+
+
 CGameController* SpringApp::RunScript(const std::string& buf)
 {
 	clientSetup->LoadFromStartScript(buf);
+
+	if (!clientSetup->demoFile.empty())
+		return LoadDemoFile(clientSetup->demoFile);
 
 	if (!clientSetup->saveFile.empty())
 		return LoadSaveFile(clientSetup->saveFile);
@@ -798,13 +817,8 @@ void SpringApp::Startup()
 
 		clientSetup->isHost = false;
 		pregame = new CPreGame(clientSetup);
-	} else if (inputFile.rfind(".sdfz") != std::string::npos) {
-		// demo.sdfz
-		clientSetup->isHost        = true;
-		clientSetup->myPlayerName += " (spec)";
-
-		pregame = new CPreGame(clientSetup);
-		pregame->LoadDemo(inputFile);
+	} else if (extension == "sdfz") {
+		LoadDemoFile(inputFile);
 	} else if (extension == "slsf" || extension == "ssf") {
 		LoadSaveFile(inputFile);
 	} else {

@@ -62,6 +62,7 @@ private:
 
 	CGameController* RunScript(const std::string& buf);
 	CGameController* LoadSaveFile(const std::string& saveName); //!< Starts game from a specified save
+	CGameController* LoadDemoFile(const std::string& demoName); //!< Starts game from a specified save
 };
 
 /**

@@ -17,6 +17,7 @@ public:
 	std::string myPlayerName;
 	std::string myPasswd;
 	std::string saveFile;
+	std::string demoFile;
 
 	//! if this client is not the server player, the IP address we connect to
 	//! if this client is the server player, the IP address that other players connect to
