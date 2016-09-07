@@ -389,6 +389,7 @@ static void TranslateStackTrace(bool* aiCrash, StackTrace& stacktrace, const int
 		containsDriverSo = (containsDriverSo || (path.find("psb_dri.so") != std::string::npos));
 		containsDriverSo = (containsDriverSo || (path.find("i965_dri.so") != std::string::npos));
 		containsDriverSo = (containsDriverSo || (path.find("fglrx_dri.so") != std::string::npos));
+		containsDriverSo = (containsDriverSo || (path.find("amdgpu_dri.so") != std::string::npos));
 		if (!containsAIInterfaceSo && (absPath.find("Interfaces") != std::string::npos)) {
 			containsAIInterfaceSo = true;
 		}
