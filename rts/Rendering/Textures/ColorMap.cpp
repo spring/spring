@@ -80,10 +80,9 @@ void CColorMap::LoadMap(const unsigned char* buf, int num)
 CColorMap* CColorMap::LoadFromBitmapFile(const std::string& fileName)
 {
 	const std::string& lowFilename = StringToLower(fileName);
-
-	CColorMap* map = colorMapsMap.find(lowFilename)->second;
-	if (colorMapsMap.find(lowFilename) != colorMapsMap.end())
-		return map;
+	auto it = colorMapsMap.find(lowFilename);
+	if (it != colorMapsMap.end())
+		return it->second;
 
 	colorMaps.emplace_back(fileName);
 	colorMapsMap[lowFilename] = &colorMaps.back();
