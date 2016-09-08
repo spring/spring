@@ -94,9 +94,10 @@ void QueueDownloadProgress(int ID, long downloaded, long total) //queue from oth
 }
 
 
-LuaVFSDownload::LuaVFSDownload():
+LuaVFSDownload::LuaVFSDownload(const std::string& writepath):
 	CEventClient("[LuaVFSDownload]", 314161, false)
 {
+	DownloadSetConfig(CONFIG_FILESYSTEM_WRITEPATH, writepath.c_str());
 	eventHandler.AddClient(this);
 }
 

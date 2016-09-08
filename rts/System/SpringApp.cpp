@@ -280,7 +280,7 @@ bool SpringApp::Initialize()
 	Threading::InitThreadPool();
 	Threading::SetThreadScheduler();
 	battery = new CBattery();
-	luavfsdownload = new LuaVFSDownload();
+	luavfsdownload = new LuaVFSDownload(dataDirLocater.GetWriteDirPath());
 
 	// Create CGameSetup and CPreGame objects
 	Startup();
@@ -872,7 +872,7 @@ void SpringApp::Reload(const std::string& script)
 	eventHandler.ResetState();
 
 	battery = new CBattery();
-	luavfsdownload = new LuaVFSDownload();
+	luavfsdownload = new LuaVFSDownload(dataDirLocater.GetWriteDirPath());
 
 	gu->ResetState();
 	gs->ResetState();

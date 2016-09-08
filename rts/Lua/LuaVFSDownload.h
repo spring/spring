@@ -7,7 +7,7 @@ struct lua_State;
 
 class LuaVFSDownload: public CEventClient {
 	public:
-		LuaVFSDownload();
+		LuaVFSDownload(const std::string& writepath);
 		virtual ~LuaVFSDownload();
 
 		bool WantsEvent(const std::string& eventName) override {
