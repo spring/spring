@@ -996,6 +996,7 @@ void CMiniMap::Draw()
 	if (slaveDrawMode)
 		return;
 
+	SCOPED_TIMER("Draw::Screen::InputReceivers::MiniMap");
 	// Draw Border
 	{
 		glEnable(GL_BLEND);
@@ -1029,8 +1030,6 @@ void CMiniMap::Draw()
 
 void CMiniMap::DrawForReal(bool use_geo, bool updateTex)
 {
-	SCOPED_TIMER("MiniMap::DrawForReal");
-
 	if (minimized)
 		return;
 

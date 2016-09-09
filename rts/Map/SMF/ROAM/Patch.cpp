@@ -20,7 +20,6 @@
 #include "Rendering/GL/VertexArray.h"
 #include "System/Log/ILog.h"
 #include "System/ThreadPool.h"
-#include "System/TimeProfiler.h"
 
 #include <climits>
 

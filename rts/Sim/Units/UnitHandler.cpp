@@ -201,7 +201,7 @@ void CUnitHandler::Update()
 	DeleteUnitsNow();
 
 	{
-		SCOPED_TIMER("Unit::MoveType::Update");
+		SCOPED_TIMER("Sim::Unit::MoveType");
 
 		for (activeUpdateUnit = 0; activeUpdateUnit < activeUnits.size();++activeUpdateUnit) {
 			CUnit* unit = activeUnits[activeUpdateUnit];
@@ -243,7 +243,7 @@ void CUnitHandler::Update()
 	}
 
 	{
-		SCOPED_TIMER("Unit::UpdateLosStatus");
+		SCOPED_TIMER("Sim::Unit::UpdateLosStatus");
 		for (CUnit* unit: activeUnits) {
 			for (int at = 0; at < teamHandler->ActiveAllyTeams(); ++at) {
 				unit->UpdateLosStatus(at);
@@ -252,7 +252,7 @@ void CUnitHandler::Update()
 	}
 
 	{
-		SCOPED_TIMER("Unit::SlowUpdate");
+		SCOPED_TIMER("Sim::Unit::SlowUpdate");
 		assert(activeSlowUpdateUnit >= 0);
 		// reset the iterator every <UNIT_SLOWUPDATE_RATE> frames
 		if ((gs->frameNum % UNIT_SLOWUPDATE_RATE) == 0) {
@@ -276,7 +276,7 @@ void CUnitHandler::Update()
 	}
 
 	{
-		SCOPED_TIMER("Unit::Update");
+		SCOPED_TIMER("Sim::Unit::Update");
 
 		for (activeUpdateUnit = 0; activeUpdateUnit < activeUnits.size();++activeUpdateUnit) {
 			CUnit* unit = activeUnits[activeUpdateUnit];
@@ -288,7 +288,7 @@ void CUnitHandler::Update()
 	}
 
 	{
-		SCOPED_TIMER("Unit::Weapon::Update");
+		SCOPED_TIMER("Sim::Unit::Weapon");
 
 		for (activeUpdateUnit = 0; activeUpdateUnit < activeUnits.size();++activeUpdateUnit) {
 			CUnit* unit = activeUnits[activeUpdateUnit];

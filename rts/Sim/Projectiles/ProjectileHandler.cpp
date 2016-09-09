@@ -218,7 +218,7 @@ void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool
 		++i;
 	}
 
-	SCOPED_TIMER("ProjectileHandler::Update::PP");
+	SCOPED_TIMER("Sim::Projectiles::Update");
 
 	//WARNING: we can't use iters here cause p->Update() may add new projectiles to the container!
 	for (size_t i = 0; i < pc.size(); ++i) {
@@ -296,7 +296,7 @@ static void UPDATE_REF_CONTAINER(T& cont) {
 void CProjectileHandler::Update()
 {
 	{
-		SCOPED_TIMER("ProjectileHandler::Update");
+		SCOPED_TIMER("Sim::Projectiles");
 
 		// particles
 		CheckCollisions(); // before :Update() to check if the particles move into stuff
@@ -570,7 +570,7 @@ void CProjectileHandler::CheckGroundCollisions(ProjectileContainer& pc)
 
 void CProjectileHandler::CheckCollisions()
 {
-	SCOPED_TIMER("ProjectileHandler::Update::CheckCollisions");
+	SCOPED_TIMER("Sim::Projectiles::Collisions");
 
 	CheckUnitFeatureCollisions(syncedProjectiles); //! changes simulation state
 	CheckUnitFeatureCollisions(unsyncedProjectiles); //! does not change simulation state

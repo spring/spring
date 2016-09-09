@@ -190,7 +190,7 @@ CFeature* CFeatureHandler::CreateWreckage(
 
 void CFeatureHandler::Update()
 {
-	SCOPED_TIMER("FeatureHandler::Update");
+	SCOPED_TIMER("Sim::Features");
 
 	if ((gs->frameNum & 31) == 0) {
 		toBeFreedFeatureIDs.erase(std::remove_if(toBeFreedFeatureIDs.begin(), toBeFreedFeatureIDs.end(),
@@ -198,7 +198,7 @@ void CFeatureHandler::Update()
 		), toBeFreedFeatureIDs.end());
 	}
 
-	updateFeatures.erase(std::remove_if(updateFeatures.begin(), updateFeatures.end(), 
+	updateFeatures.erase(std::remove_if(updateFeatures.begin(), updateFeatures.end(),
 		[this](CFeature* feature) { return this->UpdateFeature(feature); }
 	), updateFeatures.end());
 }

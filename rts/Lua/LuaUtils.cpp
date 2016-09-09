@@ -134,7 +134,7 @@ static bool CopyPushTable(lua_State* dst, lua_State* src, int index, int depth, 
 
 int LuaUtils::CopyData(lua_State* dst, lua_State* src, int count)
 {
-	SCOPED_TIMER("::CopyData");
+	SCOPED_TIMER("Lua::CopyData");
 
 	const int srcTop = lua_gettop(src);
 	const int dstTop = lua_gettop(dst);

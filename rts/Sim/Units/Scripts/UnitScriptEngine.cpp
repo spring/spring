@@ -9,13 +9,6 @@
 #include "System/Util.h"
 #include "System/FileSystem/FileHandler.h"
 
-#ifndef _CONSOLE
-	#include "System/TimeProfiler.h"
-#else
-	#define START_TIME_PROFILE(a) {}
-	#define END_TIME_PROFILE(a) {}
-	#define SCOPED_TIMER(a) {}
-#endif
 CUnitScriptEngine* unitScriptEngine = nullptr;
 
 
@@ -91,8 +84,6 @@ void CUnitScriptEngine::RemoveInstance(CUnitScript *instance)
 
 void CUnitScriptEngine::Tick(int deltaTime)
 {
-	SCOPED_TIMER("UnitScriptEngine::Tick");
-
 	// Tick all instances that have registered themselves as animating
 	int i = 0;
 	while (i < animating.size()) {

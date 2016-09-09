@@ -20,7 +20,6 @@
 #include "System/FastMath.h"
 #include "System/Log/ILog.h"
 #include "System/myMath.h"
-#include "System/TimeProfiler.h"
 
 CONFIG(int, GroundDetail).defaultValue(60).headlessValue(0).minimumValue(0).maximumValue(200).description("Controls how detailed the map geometry will be. On lowered settings, cliffs may appear to be jagged or \"melting\".");
 CONFIG(bool, MapBorder).defaultValue(true).description("Draws a solid border at the edges of the map.");
@@ -373,7 +372,6 @@ void CSMFGroundDrawer::Draw(const DrawPass::e& drawPass)
 		}
 
 		if (drawMapEdges) {
-			SCOPED_TIMER("CSMFGroundDrawer::DrawBorder");
 			DrawBorder(drawPass);
 		}
 	}

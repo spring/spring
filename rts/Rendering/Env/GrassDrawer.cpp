@@ -509,7 +509,7 @@ void CGrassDrawer::Update()
 
 	// update visible turfs
 	if (oldCamPos != cam->GetPos() || oldCamDir != cam->GetDir()) {
-		SCOPED_TIMER("Grass::Update");
+		SCOPED_TIMER("Update::Update::Grass");
 		oldCamPos = cam->GetPos();
 		oldCamDir = cam->GetDir();
 		lastVisibilityUpdate = globalRendering->drawFrame;
@@ -548,7 +548,7 @@ void CGrassDrawer::Draw()
 	if (grassOff || !readMap->GetGrassShadingTexture())
 		return;
 
-	SCOPED_TIMER("Grass::Draw");
+	SCOPED_TIMER("Draw::World::Foliage::Grass");
 	glPushAttrib(GL_CURRENT_BIT);
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 

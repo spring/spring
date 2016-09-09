@@ -97,7 +97,7 @@ CSkirmishAIWrapper::CSkirmishAIWrapper(const int skirmishAIId):
 	teamId = aiData->team;
 	key    = aiLibManager->ResolveSkirmishAIKey(SkirmishAIKey(aiData->shortName, aiData->version));
 
-	timerName += ("AI t:" + IntToString(teamId));
+	timerName += ("AI::t:" + IntToString(teamId));
 	timerName += (" id:" + IntToString(skirmishAIId));
 	timerName += (" " + key.GetShortName());
 	timerName += (" " + key.GetVersion());

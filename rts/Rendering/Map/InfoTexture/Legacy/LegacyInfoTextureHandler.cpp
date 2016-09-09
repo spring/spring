@@ -13,7 +13,6 @@
 #include "Rendering/IPathDrawer.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/ModInfo.h"
-#include "System/TimeProfiler.h"
 #include "System/Log/ILog.h"
 #include "System/Config/ConfigHandler.h"
 

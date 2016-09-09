@@ -1532,7 +1532,7 @@ void CGroundMoveType::Fail(bool callScript)
 
 void CGroundMoveType::HandleObjectCollisions()
 {
-	SCOPED_TIMER("Unit::MoveType::Update::Collisions");
+	SCOPED_TIMER("Sim::Unit::MoveType::Collisions");
 
 	CUnit* collider = owner;
 

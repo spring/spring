@@ -632,8 +632,6 @@ void QTPFS::PathManager::Serialize(const std::string& cacheFileDir) {
 // note that this is called twice per object:
 // height-map changes, then blocking-map does
 void QTPFS::PathManager::TerrainChange(unsigned int x1, unsigned int z1,  unsigned int x2, unsigned int z2, unsigned int type) {
-	SCOPED_TIMER("PathManager::TerrainChange");
-
 	if (!IsFinalized())
 		return;
 
@@ -659,7 +657,7 @@ void QTPFS::PathManager::TerrainChange(unsigned int x1, unsigned int z1,  unsign
 
 
 void QTPFS::PathManager::Update() {
-	SCOPED_TIMER("PathManager::Update");
+	SCOPED_TIMER("Sim::Path");
 
 	#ifdef QTPFS_ENABLE_THREADED_UPDATE
 	streflop::streflop_init<streflop::Simple>();
@@ -974,7 +972,8 @@ unsigned int QTPFS::PathManager::RequestPath(
 	float radius,
 	bool synced)
 {
-	SCOPED_TIMER("PathManager::RequestPath");
+	// in misc since it is called from many points
+	SCOPED_TIMER("Misc::Path::RequestPath");
 
 	if (!IsFinalized())
 		return 0;
@@ -1013,7 +1012,8 @@ float3 QTPFS::PathManager::NextWayPoint(
 	float, // radius,
 	bool synced
 ) {
-	SCOPED_TIMER("PathManager::NextWayPoint");
+	// in misc since it is called from many points
+	SCOPED_TIMER("Misc::Path::NextWayPoint");
 
 	const PathTypeMap::const_iterator pathTypeIt = pathTypes.find(pathID);
 	const float3 noPathPoint = -XZVector;

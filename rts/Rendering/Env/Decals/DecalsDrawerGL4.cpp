@@ -712,8 +712,6 @@ void CDecalsDrawerGL4::Draw()
 {
 	trackHandler.Draw();
 
-	SCOPED_TIMER("DecalsDrawerGL4::Draw");
-
 	if (!GetDrawDecals())
 		return;
 
@@ -864,8 +862,7 @@ void CDecalsDrawerGL4::UpdateDecalsVBO()
 
 void CDecalsDrawerGL4::Update()
 {
-	SCOPED_TIMER("DecalsDrawerGL4::Update");
-
+	SCOPED_TIMER("Update::Update::DecalsDrawerGL4");
 	UpdateOverlap();
 	OptimizeGroups();
 	UpdateDecalsVBO();
@@ -874,7 +871,7 @@ void CDecalsDrawerGL4::Update()
 
 void CDecalsDrawerGL4::GameFrame(int n)
 {
-	SCOPED_TIMER("DecalsDrawerGL4::Update");
+	SCOPED_TIMER("Sim::GameFrame::DecalsDrawerGL4");
 
 	for (int idx: alphaDecayingDecals) {
 		Decal& d = decals[idx];
@@ -1383,7 +1380,7 @@ void CDecalsDrawerGL4::GetWorstRatedDecal(int* idx, float* rating, const bool in
 
 int CDecalsDrawerGL4::CreateLuaDecal()
 {
-	SCOPED_TIMER("DecalsDrawerGL4::Update");
+	//SCOPED_TIMER("DecalsDrawerGL4::Update");
 
 	if (freeIds.empty()) { // try to make space for new one
 		// current worst decal is inview, try to find a better one (at best outside of view)
@@ -1407,7 +1404,7 @@ int CDecalsDrawerGL4::CreateLuaDecal()
 
 int CDecalsDrawerGL4::NewDecal(const Decal& d)
 {
-	SCOPED_TIMER("DecalsDrawerGL4::Update");
+	//SCOPED_TIMER("DecalsDrawerGL4::Update");
 
 	if (freeIds.empty()) {
 		// early-exit: all decals are `better` than the new one -> don't add
@@ -1456,7 +1453,7 @@ void CDecalsDrawerGL4::FreeDecal(int idx)
 	if (idx == 0)
 		return;
 
-	SCOPED_TIMER("DecalsDrawerGL4::Update");
+	//SCOPED_TIMER("DecalsDrawerGL4::Update");
 
 	Decal& d = decals[idx];
 	if ((d.owner == nullptr) && (d.type == Decal::BUILDING)) {

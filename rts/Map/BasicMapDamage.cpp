@@ -157,14 +157,20 @@ void CBasicMapDamage::RecalcArea(int x1, int x2, int y1, int y2)
 {
 	readMap->UpdateHeightMapSynced(SRectangle(x1, y1, x2, y2));
 	featureHandler->TerrainChanged(x1, y1, x2, y2);
-	losHandler->UpdateHeightMapSynced(SRectangle(x1, y1, x2, y2));
-	pathManager->TerrainChange(x1, y1, x2, y2, TERRAINCHANGE_DAMAGE_RECALCULATION);
+	{
+		SCOPED_TIMER("Sim::BasicMapDamage::Los");
+		losHandler->UpdateHeightMapSynced(SRectangle(x1, y1, x2, y2));
+	}
+	{
+		SCOPED_TIMER("Sim::BasicMapDamage::Path");
+		pathManager->TerrainChange(x1, y1, x2, y2, TERRAINCHANGE_DAMAGE_RECALCULATION);
+	}
 }
 
 
 void CBasicMapDamage::Update()
 {
-	SCOPED_TIMER("BasicMapDamage::Update");
+	SCOPED_TIMER("Sim::BasicMapDamage");
 
 	for (Explo& e: explosions) {
 		if (e.ttl <= 0)

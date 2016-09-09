@@ -322,7 +322,8 @@ unsigned int CPathManager::RequestPath(
 	if (!IsFinalized())
 		return 0;
 
-	SCOPED_TIMER("PathManager::RequestPath");
+	// in misc since it is called from many points
+	SCOPED_TIMER("Misc::Path::RequestPath");
 	startPos.ClampInBounds();
 	goalPos.ClampInBounds();
 
@@ -481,7 +482,8 @@ float3 CPathManager::NextWayPoint(
 	float radius,
 	bool synced
 ) {
-	SCOPED_TIMER("PathManager::NextWayPoint");
+	// in misc since it is called from many points
+	SCOPED_TIMER("Misc::Path::NextWayPoint");
 
 	const float3 noPathPoint = -XZVector;
 
@@ -592,8 +594,6 @@ void CPathManager::DeletePath(unsigned int pathID) {
 
 // Tells estimators about changes in or on the map.
 void CPathManager::TerrainChange(unsigned int x1, unsigned int z1, unsigned int x2, unsigned int z2, unsigned int /*type*/) {
-	SCOPED_TIMER("PathManager::TerrainChange");
-
 	if (!IsFinalized())
 		return;
 
@@ -606,7 +606,7 @@ void CPathManager::TerrainChange(unsigned int x1, unsigned int z1, unsigned int 
 
 void CPathManager::Update()
 {
-	SCOPED_TIMER("PathManager::Update");
+	SCOPED_TIMER("Sim::Path");
 	assert(IsFinalized());
 
 	pathFlowMap->Update();

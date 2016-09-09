@@ -676,7 +676,7 @@ void CLosHandler::UnitLoaded(const CUnit* unit, const CUnit* transport)
 
 void CLosHandler::Update()
 {
-	SCOPED_TIMER("LosHandler::Update");
+	SCOPED_TIMER("Sim::Los");
 
 	for_mt(0, losTypes.size(), [&](const int idx){
 		ILosType* lt = losTypes[idx];
@@ -692,7 +692,6 @@ void CLosHandler::Update()
 
 void CLosHandler::UpdateHeightMapSynced(SRectangle rect)
 {
-	SCOPED_TIMER("LosHandler::UpdateHeightMapSynced");
 	for (ILosType* lt: losTypes) {
 		lt->UpdateHeightMapSynced(rect);
 	}

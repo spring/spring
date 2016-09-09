@@ -409,7 +409,7 @@ static void DrawInfoText()
 
 void ProfileDrawer::DrawScreen()
 {
-	SCOPED_TIMER("ProfileDrawer");
+	SCOPED_TIMER("Draw::Screen::DrawScreen::Profile");
 
 	glMatrixMode(GL_MODELVIEW);
 	glPushMatrix();

@@ -11,7 +11,6 @@
 #include "Radar.h"
 
 #include "System/Config/ConfigHandler.h"
-#include "System/TimeProfiler.h"
 
 CONFIG(bool, ForceCPUInfotextureUpdate).safemodeValue(true).defaultValue(false).description("Use slower but more stable InfoTexture update method, may fix AMD crash.");
 

@@ -912,12 +912,11 @@ int SpringApp::Update()
 		ret = activeController->Update();
 
 		if (ret) {
-			ScopedTimer cputimer("GameController::Draw");
 			ret = activeController->Draw();
 		}
 	}
 
-	ScopedTimer cputimer("SwapBuffers");
+	SCOPED_TIMER("Misc::SwapBuffers");
 	spring_time pre = spring_now();
 	VSync.Delay();
 	SDL_GL_SwapWindow(globalRendering->window);

@@ -135,11 +135,12 @@ void CWorldDrawer::LoadPost() const
 
 void CWorldDrawer::Update(bool newSimFrame)
 {
+	SCOPED_TIMER("Update::World");
 	LuaObjectDrawer::Update(numUpdates == 0);
 	readMap->UpdateDraw(numUpdates == 0);
 
 	if (globalRendering->drawGround) {
-		SCOPED_TIMER("GroundDrawer::Update");
+		SCOPED_TIMER("Update::World::Terrain");
 		(readMap->GetGroundDrawer())->Update();
 	}
 
@@ -165,36 +166,36 @@ void CWorldDrawer::Update(bool newSimFrame)
 
 void CWorldDrawer::GenerateIBLTextures() const
 {
-	SCOPED_GMARKER("WorldDrawer::GenerateIBLTextures");
+	SCOPED_GMARKER("Draw::World::GenerateIBLTextures");
 
 	if (shadowHandler->ShadowsLoaded()) {
-		SCOPED_TIMER("ShadowHandler::CreateShadows");
-		SCOPED_GMARKER("ShadowHandler::CreateShadows");
+		SCOPED_TIMER("Draw::World::CreateShadows");
+		SCOPED_GMARKER("Draw::World::CreateShadows");
 		game->SetDrawMode(CGame::gameShadowDraw);
 		shadowHandler->CreateShadows();
 		game->SetDrawMode(CGame::gameNormalDraw);
 	}
 
 	{
-		SCOPED_TIMER("CubeMapHandler::UpdateReflTex");
-		SCOPED_GMARKER("CubeMapHandler::UpdateReflTex");
+		SCOPED_TIMER("Draw::World::UpdateReflTex");
+		SCOPED_GMARKER("Draw::World::UpdateReflTex");
 		cubeMapHandler->UpdateReflectionTexture();
 	}
 
 	if (sky->GetLight()->IsDynamic()) {
 		{
-			SCOPED_TIMER("CubeMapHandler::UpdateSpecTex");
-			SCOPED_GMARKER("CubeMapHandler::UpdateSpecTex");
+			SCOPED_TIMER("Draw::World::UpdateSpecTex");
+			SCOPED_GMARKER("Draw::World::UpdateSpecTex");
 			cubeMapHandler->UpdateSpecularTexture();
 		}
 		{
-			SCOPED_TIMER("Sky::UpdateSkyTex");
-			SCOPED_GMARKER("Sky::UpdateSkyTex");
+			SCOPED_TIMER("Draw::World::UpdateSkyTex");
+			SCOPED_GMARKER("Draw::World::UpdateSkyTex");
 			sky->UpdateSkyTexture();
 		}
 		{
-			SCOPED_TIMER("ReadMap::UpdateShadingTex");
-			SCOPED_GMARKER("ReadMap::UpdateShadingTex");
+			SCOPED_TIMER("Draw::World::UpdateShadingTexture");
+			SCOPED_GMARKER("Draw::World::UpdateShadingTexture");
 			readMap->UpdateShadingTexture();
 		}
 	}
@@ -223,8 +224,8 @@ void CWorldDrawer::ResetMVPMatrices() const
 
 void CWorldDrawer::Draw() const
 {
-	SCOPED_TIMER("WorldDrawer::Total");
-	SCOPED_GMARKER("WorldDrawer::Draw");
+	SCOPED_TIMER("Draw::World");
+	SCOPED_GMARKER("Draw::World");
 
 	glClearColor(sky->fogColor[0], sky->fogColor[1], sky->fogColor[2], 0.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
@@ -239,15 +240,16 @@ void CWorldDrawer::Draw() const
 	DrawAlphaObjects();
 
 	{
-		SCOPED_TIMER("WorldDrawer::Projectiles");
-		SCOPED_GMARKER("WorldDrawer::Projectiles");
+		SCOPED_TIMER("Draw::World::Projectiles");
+		SCOPED_GMARKER("Draw::World::Projectiles");
 		projectileDrawer->Draw(false);
 	}
 
 	sky->DrawSun();
 
 	{
-		SCOPED_GMARKER("EventHandler::DrawWorld");
+		SCOPED_TIMER("Draw::World::DrawWorld");
+		SCOPED_GMARKER("Draw::World::DrawWorld");
 		eventHandler.DrawWorld();
 	}
 
@@ -260,27 +262,25 @@ void CWorldDrawer::Draw() const
 
 void CWorldDrawer::DrawOpaqueObjects() const
 {
-	SCOPED_GMARKER("WorldDrawer::DrawOpaqueObjects");
-
 	CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
 
 	sky->Draw();
 
 	if (globalRendering->drawGround) {
 		{
-			SCOPED_TIMER("WorldDrawer::Terrain");
-			SCOPED_GMARKER("WorldDrawer::Terrain");
+			SCOPED_TIMER("Draw::World::Terrain");
+			SCOPED_GMARKER("Draw::World::Terrain");
 			gd->Draw(DrawPass::Normal);
 		}
 		{
-			SCOPED_TIMER("WorldDrawer::GroundDecals");
-			SCOPED_GMARKER("WorldDrawer::GroundDecals");
+			SCOPED_TIMER("Draw::World::Decals");
+			SCOPED_GMARKER("Draw::World::Decals");
 			groundDecals->Draw();
 			projectileDrawer->DrawGroundFlashes();
 		}
 		{
-			SCOPED_TIMER("WorldDrawer::Foliage");
-			SCOPED_GMARKER("WorldDrawer::Foliage");
+			SCOPED_TIMER("Draw::World::Foliage");
+			SCOPED_GMARKER("Draw::World::Foliage");
 			grassDrawer->Draw();
 			gd->DrawTrees();
 		}
@@ -289,17 +289,19 @@ void CWorldDrawer::DrawOpaqueObjects() const
 
 	// run occlusion query here so it has more time to finish before UpdateWater
 	if (globalRendering->drawWater && !mapInfo->map.voidWater) {
-		SCOPED_TIMER("WorldDrawer::Water::OcclusionQuery");
-		SCOPED_GMARKER("WorldDrawer::Water::OcclusionQuery");
+		SCOPED_GMARKER("Draw::World::Water::OcclusionQuery");
 		water->OcclusionQuery();
 	}
 
 	selectedUnitsHandler.Draw();
-	eventHandler.DrawWorldPreUnit();
+	{
+		SCOPED_TIMER("Draw::World::PreUnit");
+		eventHandler.DrawWorldPreUnit();
+	}
 
 	{
-		SCOPED_TIMER("WorldDrawer::Models");
-		SCOPED_GMARKER("WorldDrawer::Models");
+		SCOPED_TIMER("Draw::World::Models::Opaque");
+		SCOPED_GMARKER("Draw::World::Models::Opaque");
 		unitDrawer->Draw(false);
 		featureDrawer->Draw();
 
@@ -310,7 +312,6 @@ void CWorldDrawer::DrawOpaqueObjects() const
 
 void CWorldDrawer::DrawAlphaObjects() const
 {
-	SCOPED_GMARKER("WorldDrawer::DrawAlphaObjects");
 
 	// transparent objects
 	glEnable(GL_BLEND);
@@ -320,6 +321,8 @@ void CWorldDrawer::DrawAlphaObjects() const
 	static const double abovePlaneEq[4] = {0.0f,  1.0f, 0.0f, 0.0f};
 
 	{
+		SCOPED_GMARKER("Draw::World::Models::Alpha");
+		SCOPED_TIMER("Draw::World::Models::Alpha");
 		// clip in model-space
 		glPushMatrix();
 		glLoadIdentity();
@@ -336,14 +339,16 @@ void CWorldDrawer::DrawAlphaObjects() const
 
 	// draw water (in-between)
 	if (globalRendering->drawWater && !mapInfo->map.voidWater) {
-		SCOPED_TIMER("WorldDrawer::Water");
-		SCOPED_GMARKER("WorldDrawer::Water");
+		SCOPED_TIMER("Draw::World::Water");
+		SCOPED_GMARKER("Draw::World::Water");
 
 		water->UpdateWater(game);
 		water->Draw();
 	}
 
 	{
+		SCOPED_GMARKER("Draw::World::Models::Alpha");
+		SCOPED_TIMER("Draw::World::Models::Alpha");
 		glPushMatrix();
 		glLoadIdentity();
 		glClipPlane(GL_CLIP_PLANE3, abovePlaneEq);
@@ -360,7 +365,7 @@ void CWorldDrawer::DrawAlphaObjects() const
 
 void CWorldDrawer::DrawMiscObjects() const
 {
-	SCOPED_GMARKER("WorldDrawer::DrawMiscObjects");
+	SCOPED_GMARKER("Draw::World::Misc");
 
 	{
 		// note: duplicated in CMiniMap::DrawWorldStuff()
@@ -391,7 +396,7 @@ void CWorldDrawer::DrawMiscObjects() const
 
 void CWorldDrawer::DrawBelowWaterOverlay() const
 {
-	SCOPED_GMARKER("WorldDrawer::DrawBelowWaterOverlay");
+	SCOPED_GMARKER("Draw::World::BelowWaterOverlay");
 
 	if (!globalRendering->drawWater)
 		return;

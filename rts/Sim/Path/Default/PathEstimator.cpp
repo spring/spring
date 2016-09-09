@@ -499,7 +499,7 @@ void CPathEstimator::Update()
 
 	// FindOffset (threadsafe)
 	{
-		SCOPED_TIMER("CPathEstimator::FindOffset");
+		SCOPED_TIMER("Sim::Path::Estimator::FindOffset");
 		for_mt(0, consumedBlocks.size(), [&](const int n) {
 			// copy the next block in line
 			const SingleBlock sb = consumedBlocks[n];
@@ -511,7 +511,7 @@ void CPathEstimator::Update()
 
 	// CalculateVertices (not threadsafe)
 	{
-		SCOPED_TIMER("CPathEstimator::CalculateVertices");
+		SCOPED_TIMER("Sim::Path::Estimator::CalculateVertices");
 		for (unsigned int n = 0; n < consumedBlocks.size(); ++n) {
 			// copy the next block in line
 			const SingleBlock sb = consumedBlocks[n];

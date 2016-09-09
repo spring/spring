@@ -34,9 +34,9 @@ static unsigned hash_(const char* s)
 	for (size_t i = 0; ; ++i) {
 		if (s[i]) {
 			hash += s[i];
+			hash ^= (hash << 1) | (hash >> (sizeof(hash) * CHAR_BIT - 1));
 		} else {
-			unsigned len = i;
-			hash += len;
+			hash += (unsigned) i;
 			break;
 		}
 	}
@@ -53,7 +53,12 @@ BasicTimer::BasicTimer(const std::string& myname)
 	if (nameIterator == hashToName.end()) {
 		nameIterator = hashToName.insert(std::pair<int,std::string>(hash, myname)).first;
 	} else {
-		assert(nameIterator->second == myname);
+#ifdef DEBUG
+		if (nameIterator->second != myname) {
+			LOG_L(L_ERROR, "Timer hash collision: %s <=> %s", myname.c_str(), nameIterator->second.c_str());
+			assert(false);
+		}
+#endif
 	}
 }
 
@@ -67,7 +72,12 @@ BasicTimer::BasicTimer(const char* myname)
 	if (nameIterator == hashToName.end()) {
 		nameIterator = hashToName.insert(std::pair<int,std::string>(hash, myname)).first;
 	} else {
-		assert(nameIterator->second == myname);
+#ifdef DEBUG
+		if (nameIterator->second != myname) {
+			LOG_L(L_ERROR, "Timer hash collision: %s <=> %s", myname, nameIterator->second.c_str());
+			assert(false);
+		}
+#endif
 	}
 }
 

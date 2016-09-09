@@ -344,7 +344,7 @@ void CGame::AddTimedJobs()
 		JobDispatcher::Job j;
 
 		j.f = []() -> bool {
-			SCOPED_TIMER("CollectGarbage");
+			SCOPED_TIMER("Misc::CollectGarbage");
 			eventHandler.CollectGarbage();
 			CInputReceiver::CollectGarbage();
 			return true;
@@ -999,6 +999,7 @@ bool CGame::Update()
 
 bool CGame::UpdateUnsynced(const spring_time currentTime)
 {
+	SCOPED_TIMER("Update");
 	// timings and frame interpolation
 	const spring_time deltaDrawFrameTime = currentTime - lastDrawFrameTime;
 	const float modGameDeltaTimeSecs = mix(deltaDrawFrameTime.toMilliSecsf() * 0.001f, 0.01f, skipping);
@@ -1075,7 +1076,10 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 	// set camera
 	camHandler->UpdateController(playerHandler->Player(gu->myPlayerNum), gu->fpsMode, fullscreenEdgeMove, windowedEdgeMove);
 
-	unitDrawer->Update();
+	{
+		SCOPED_TIMER("Update::UnitDrawer");
+		unitDrawer->Update();
+	}
 	lineDrawer.UpdateLineStipple();
 
 	if (doDrawWorld) {
@@ -1093,7 +1097,7 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 		lastUnsyncedUpdateTime = currentTime;
 
 		{
-			SCOPED_TIMER("InfoTexture");
+			SCOPED_TIMER("Update::InfoTexture");
 			infoTextureHandler->Update();
 		}
 
@@ -1147,7 +1151,10 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 	guihandler->Update();
 	commandDrawer->Update();
 
-	eventHandler.Update();
+	{
+		SCOPED_TIMER("Update::Update");
+		eventHandler.Update();
+	}
 	eventHandler.DbgTimingInfo(TIMING_UNSYNCED, currentTime, spring_now());
 	return false;
 }
@@ -1159,11 +1166,13 @@ bool CGame::Draw() {
 	if (UpdateUnsynced(currentTimePreUpdate))
 		return true;
 
+	SCOPED_TIMER("Draw");
 	const bool doDrawWorld = hideInterface || !minimap->GetMaximized() || minimap->GetMinimized();
 	const spring_time currentTimePreDraw = spring_gettime();
 
 	{
-		SCOPED_GMARKER("Game::DrawGenesis");
+		SCOPED_GMARKER("Draw::DrawGenesis");
+		SCOPED_TIMER("Draw::DrawGenesis");
 		eventHandler.DrawGenesis();
 	}
 
@@ -1214,9 +1223,6 @@ bool CGame::Draw() {
 	}
 
 	{
-		SCOPED_TIMER("Game::DrawWorld");
-		SCOPED_GMARKER("Game::DrawWorld");
-
 		minimap->Update();
 
 		if (doDrawWorld)
@@ -1231,8 +1237,8 @@ bool CGame::Draw() {
 	}
 
 	{
-		SCOPED_TIMER("Game::DrawScreen");
-		SCOPED_GMARKER("Game::DrawScreen");
+		SCOPED_TIMER("Draw::Screen");
+		SCOPED_GMARKER("Draw::Screen");
 
 		if (doDrawWorld)
 			eventHandler.DrawScreenEffects();
@@ -1266,13 +1272,16 @@ bool CGame::Draw() {
 
 void CGame::DrawInputReceivers()
 {
-	SCOPED_TIMER("CInputReceiver::DrawScreen");
 
 	glEnable(GL_TEXTURE_2D);
+	if (!hideInterface) {
+		SCOPED_TIMER("Draw::Screen::DrawScreen");
+		luaInputReceiver->Draw();
+	}
 
+	SCOPED_TIMER("Draw::Screen::InputReceivers");
 	if (!hideInterface) {
 		std::list<CInputReceiver*>& inputReceivers = GetInputReceivers();
-		luaInputReceiver->Draw();
 
 		for (auto ri = inputReceivers.rbegin(); ri != inputReceivers.rend(); ++ri) {
 			CInputReceiver* rcvr = *ri;
@@ -1469,19 +1478,22 @@ void CGame::SimFrame() {
 
 	// everything from here is simulation
 	{
-		SCOPED_TIMER("EventHandler::GameFrame");
-		eventHandler.GameFrame(gs->frameNum);
-	}
-	{
-		SCOPED_TIMER("SimFrame");
+		SCOPED_TIMER("Sim");
+		{
+			SCOPED_TIMER("Sim::GameFrame");
+			eventHandler.GameFrame(gs->frameNum);
+		}
 		helper->Update();
 		mapDamage->Update();
 		pathManager->Update();
 		unitHandler->Update();
 		projectileHandler->Update();
 		featureHandler->Update();
-		cobEngine->Tick(33);
-		unitScriptEngine->Tick(33);
+		{
+			SCOPED_TIMER("Sim::Script");
+			cobEngine->Tick(33);
+			unitScriptEngine->Tick(33);
+		}
 		wind.Update();
 		losHandler->Update();
 		// dead ghosts have to be updated in sim, after los,

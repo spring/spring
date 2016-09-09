@@ -369,7 +369,7 @@ void CAdvSky::Update()
 	if (!dynamicSky)
 		return;
 
-	SCOPED_TIMER("AdvSky::Update");
+	SCOPED_TIMER("Update::WorldDrawer::AdvSky");
 
 	CreateDetailTex();
 

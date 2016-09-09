@@ -6,7 +6,6 @@
 #include "CobInstance.h"
 #include "CobFile.h"
 #include "System/FileSystem/FileHandler.h"
-#include "System/TimeProfiler.h"
 
 
 CCobEngine* cobEngine = nullptr;
@@ -99,8 +98,6 @@ void CCobEngine::TickThread(CCobThread* thread)
 
 void CCobEngine::Tick(int deltaTime)
 {
-	SCOPED_TIMER("CobEngine::Tick");
-
 	currentTime += deltaTime;
 
 	// Advance all running threads

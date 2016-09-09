@@ -674,13 +674,12 @@ void CBumpWater::Update()
 	windStrength += (smoothstep(0.0f, 12.0f, wind.GetCurrentStrength()) * 0.5f + 4.0f) * 0.0001f;
 	windVec   = windndir * windStrength;
 */
+	SCOPED_TIMER("Update::WorldDrawer::BumpWater");
 
 	if (dynWaves)
 		UpdateDynWaves();
 
 	if (shoreWaves) {
-		SCOPED_TIMER("BumpWater::Update (Coastmap)");
-
 		if ((gs->frameNum % 10) == 0 && !heightmapUpdates.empty())
 			UploadCoastline();
 
@@ -697,7 +696,7 @@ void CBumpWater::UpdateWater(CGame* game)
 
 #ifdef GLEW_ARB_occlusion_query2
 	if (occlusionQuery && !wasVisibleLastFrame) {
-		SCOPED_TIMER("BumpWater::UpdateWater (Occlcheck)");
+		SCOPED_TIMER("Draw::World::Water::BumpWater");
 
 		glGetQueryObjectuiv(occlusionQuery, GL_QUERY_RESULT_AVAILABLE, &occlusionQueryResult);
 		if (occlusionQueryResult) {

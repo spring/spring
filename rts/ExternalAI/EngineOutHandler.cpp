@@ -89,7 +89,7 @@ CEngineOutHandler::~CEngineOutHandler() {
 #define AI_EVT_MTH()            \
 	if (id_skirmishAI.empty())  \
 		return;                 \
-	SCOPED_TIMER("AI Total");
+	SCOPED_TIMER("AI");
 
 
 #define DO_FOR_SKIRMISH_AIS(FUNC)     \
@@ -482,7 +482,7 @@ void CEngineOutHandler::SendChatMessage(const char* msg, int fromPlayerId) {
 }
 
 bool CEngineOutHandler::SendLuaMessages(int aiTeam, const char* inData, std::vector<const char*>& outData) {
-	SCOPED_TIMER("AI Total");
+	SCOPED_TIMER("AI");
 
 	if (id_skirmishAI.empty()) {
 		return false;
@@ -528,7 +528,7 @@ bool CEngineOutHandler::SendLuaMessages(int aiTeam, const char* inData, std::vec
 
 
 void CEngineOutHandler::CreateSkirmishAI(const size_t skirmishAIId) {
-	SCOPED_TIMER("AI Total");
+	SCOPED_TIMER("AI");
 
 	//const bool unpauseAfterAIInit = configHandler->GetBool("AI_UnpauseAfterInit");
 
@@ -591,7 +591,7 @@ void CEngineOutHandler::CreateSkirmishAI(const size_t skirmishAIId) {
 }
 
 void CEngineOutHandler::SetSkirmishAIDieing(const size_t skirmishAIId) {
-	SCOPED_TIMER("AI Total");
+	SCOPED_TIMER("AI");
 
 	// if exiting before start, AI's have not been loaded yet
 	// and std::map<>::operator[] would insert a NULL instance
@@ -615,7 +615,7 @@ static void internal_aiErase(std::vector<unsigned char>& ais, const unsigned cha
 }
 
 void CEngineOutHandler::DestroySkirmishAI(const size_t skirmishAIId) {
-	SCOPED_TIMER("AI Total");
+	SCOPED_TIMER("AI");
 
 	CSkirmishAIWrapper* aiWrapper = id_skirmishAI[skirmishAIId].get();
 

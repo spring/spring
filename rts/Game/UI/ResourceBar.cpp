@@ -9,7 +9,6 @@
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Net/Protocol/NetProtocol.h"
-#include "System/TimeProfiler.h"
 #include "System/myMath.h"
 
 CResourceBar* resourceBar = NULL;

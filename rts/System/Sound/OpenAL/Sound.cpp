@@ -24,7 +24,6 @@
 #include "EFX.h"
 #include "EFXPresets.h"
 
-#include "System/TimeProfiler.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Exceptions.h"
 #include "System/FileSystem/FileHandler.h"

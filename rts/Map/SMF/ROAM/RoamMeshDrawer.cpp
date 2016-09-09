@@ -137,7 +137,7 @@ void CRoamMeshDrawer::Update()
 
 	{
 		// Check if a retessellation is needed
-		SCOPED_TIMER("ROAM::ComputeVariance");
+		//SCOPED_TIMER("ROAM::ComputeVariance");
 
 		for (int i = 0; i < (numPatchesX * numPatchesY); ++i) {
 			//FIXME multithread? don't retessellate on small heightmap changes?
@@ -181,14 +181,14 @@ void CRoamMeshDrawer::Update()
 		return;
 
 	{
-		SCOPED_TIMER("ROAM::Tessellate");
+		//SCOPED_TIMER("ROAM::Tessellate");
 
 		Reset(shadowPass);
 		forceTessellate[shadowPass] = Tessellate(patchMeshGrid[shadowPass], cam, smfGroundDrawer->GetGroundDetail(), shadowPass);
 	}
 
 	{
-		SCOPED_TIMER("ROAM::GenerateIndexArray");
+		//SCOPED_TIMER("ROAM::GenerateIndexArray");
 
 		for_mt(0, patches.size(), [&patches, &cam](const int i) {
 			Patch* p = &patches[i];
@@ -200,7 +200,7 @@ void CRoamMeshDrawer::Update()
 	}
 
 	{
-		SCOPED_TIMER("ROAM::Upload");
+		//SCOPED_TIMER("ROAM::Upload");
 
 		for (Patch& p: patches) {
 			if (p.IsVisible(cam)) {
@@ -226,6 +226,7 @@ void CRoamMeshDrawer::DrawMesh(const DrawPass::e& drawPass)
 	//   Updating for all passes produces the optimal tessellation per
 	//   camera but consumes far too many cycles; force any non-shadow
 	//   pass to reuse MESH_NORMAL
+	SCOPED_TIMER(drawPass == DrawPass::Normal ? "Draw::World::Terrain::ROAM" : "Misc::ROAM");
 	switch (drawPass) {
 		case DrawPass::Normal: { Update(); } break;
 		case DrawPass::Shadow: { Update(); } break;

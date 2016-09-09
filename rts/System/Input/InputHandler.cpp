@@ -16,7 +16,7 @@ void InputHandler::PushEvent(const SDL_Event& ev)
 
 void InputHandler::PushEvents()
 {
-	SCOPED_TIMER("InputHandler::PushEvents");
+	SCOPED_TIMER("Misc::InputHandler::PushEvents");
 	SDL_Event event;
 
 	while (SDL_PollEvent(&event)) {

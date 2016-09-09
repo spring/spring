@@ -205,7 +205,7 @@ void CBitmap::AllocDummy(const SColor fill)
 bool CBitmap::Load(std::string const& filename, unsigned char defaultAlpha)
 {
 #ifndef BITMAP_NO_OPENGL
-	ScopedTimer timer("Textures::CBitmap::Load");
+	SCOPED_TIMER("Misc::Bitmap::Load");
 #endif
 
 	bool noAlpha = true;
