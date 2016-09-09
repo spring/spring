@@ -452,7 +452,7 @@ void CGlobalRendering::ConfigNotify(const std::string& key, const std::string& v
 	}
 	SDL_SetWindowPosition(window, configHandler->GetInt("WindowPosX"), configHandler->GetInt("WindowPosY"));
 	SDL_SetWindowBordered(window, borderless ? SDL_FALSE : SDL_TRUE);
-	WindowManagerHelper::SetWindowResizable(window, !borderless);
+	WindowManagerHelper::SetWindowResizable(window, !borderless && !fullScreen);
 }
 
 
