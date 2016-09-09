@@ -136,11 +136,11 @@ CHeightTexture::~CHeightTexture()
 }
 
 
-void CHeightTexture::Update()
+void CHeightTexture::Update(bool forceCPU)
 {
 	needUpdate = false;
 
-	if (!fbo.IsValid() || !shader->IsValid() || (heightMapTexture->GetTextureID() == 0))
+	if (forceCPU || !fbo.IsValid() || !shader->IsValid() || (heightMapTexture->GetTextureID() == 0))
 		return UpdateCPU();
 
 	fbo.Bind();

@@ -155,9 +155,9 @@ void CRadarTexture::UpdateCPU()
 }
 
 
-void CRadarTexture::Update()
+void CRadarTexture::Update(bool forceCPU)
 {
-	if (!fbo.IsValid() || !shader->IsValid() || uploadTexRadar == 0 || uploadTexJammer == 0)
+	if (forceCPU || !fbo.IsValid() || !shader->IsValid() || uploadTexRadar == 0 || uploadTexJammer == 0)
 		return UpdateCPU();
 
 	if (losHandler->globalLOS[gu->myAllyTeam]) {

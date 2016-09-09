@@ -185,7 +185,7 @@ bool CPathTexture::IsUpdateNeeded()
 }
 
 
-void CPathTexture::Update()
+void CPathTexture::Update(bool)
 {
 	const MoveDef* md = GetSelectedMoveDef();
 	const UnitDef* ud = GetCurrentBuildCmdUnitDef();

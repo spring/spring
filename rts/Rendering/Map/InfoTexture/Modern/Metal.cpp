@@ -25,7 +25,7 @@ CMetalTexture::CMetalTexture()
 }
 
 
-void CMetalTexture::Update()
+void CMetalTexture::Update(bool)
 {
 	const     CMetalMap* metalMap = readMap->metalMap;
 	const unsigned char* extraTex = metalMap->GetDistributionMap();

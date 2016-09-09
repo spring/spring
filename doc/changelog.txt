@@ -9,11 +9,12 @@ General:
  - Implement VFS modes - VFS.MOD, VFS.MAP & VFS.BASE now actually work. Added VFS.MENU
  ! base archives now have modtype of 4 and menu archive have modtype of 5
 
+Rendering:
+ - Add ForceCPUInfotextureUpdate to bypass AMD crash
+
 Lua:
  - Add Spring.Get{Game,Menu}Name to LuaUnsyncedRead, so LuaMenu and unsynced Lua handles know about each other
  - Add new callin (LuaMenu only) ActivateMenu() that is called whenever LuaMenu is on with no game loaded.
-
-Lua:
  ! Undeprecate {unit,feature}def.modelname and add .modeltype and .modelpath to
    allow reading these without loading the model. Removed def.model.{name,type,path}
    so they aren't used accidentally.

@@ -24,7 +24,7 @@ public:
 	void SwitchMode(const std::string& name);
 
 public:
-	void Update() override;
+	void Update(bool forceCPU) override;
 	bool IsUpdateNeeded() override { return !disabled; }
 
 private:

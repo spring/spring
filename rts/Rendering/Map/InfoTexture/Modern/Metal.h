@@ -24,7 +24,7 @@ public:
 
 public:
 	// IInfoTexture interface
-	void Update() override;
+	void Update(bool forceCPU) override;
 	bool IsUpdateNeeded() override;
 
 private:
