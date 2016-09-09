@@ -148,6 +148,7 @@ void CHeightTexture::Update()
 	shader->Enable();
 	glDisable(GL_BLEND);
 	glActiveTexture(GL_TEXTURE1);
+	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, paletteTex);
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, heightMapTexture->GetTextureID());
@@ -160,6 +161,9 @@ void CHeightTexture::Update()
 	shader->Disable();
 	glViewport(globalRendering->viewPosX,0,globalRendering->viewSizeX,globalRendering->viewSizeY);
 	FBO::Unbind();
+
+	// cleanup
+	glDisable(GL_TEXTURE_2D);
 }
 
 

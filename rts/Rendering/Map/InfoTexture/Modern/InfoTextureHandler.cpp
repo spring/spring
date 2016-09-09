@@ -126,6 +126,8 @@ int2 CInfoTextureHandler::GetCurrentInfoTextureSize() const
 
 void CInfoTextureHandler::Update()
 {
+	glActiveTexture(GL_TEXTURE0);
+	glEnable(GL_TEXTURE_2D);
 	for (auto& p: infoTextures) {
 		if (p.second->IsUpdateNeeded())
 			p.second->Update();
