@@ -14,7 +14,7 @@ protected:
 	enum Where {
 		FRONT,
 		BACK,
-		OUT
+		MANUAL
 	};
 
 	CInputReceiver(Where w = FRONT);

@@ -1272,6 +1272,7 @@ void CGame::DrawInputReceivers()
 
 	if (!hideInterface) {
 		std::list<CInputReceiver*>& inputReceivers = GetInputReceivers();
+		luaInputReceiver->Draw();
 
 		for (auto ri = inputReceivers.rbegin(); ri != inputReceivers.rend(); ++ri) {
 			CInputReceiver* rcvr = *ri;

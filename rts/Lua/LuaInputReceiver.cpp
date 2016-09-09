@@ -8,7 +8,7 @@
 
 
 CLuaInputReceiver::CLuaInputReceiver()
-: CInputReceiver(OUT)
+: CInputReceiver(MANUAL)
 {
 }
 
