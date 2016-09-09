@@ -163,7 +163,9 @@ void CHeightTexture::Update()
 	FBO::Unbind();
 
 	// cleanup
+	glActiveTexture(GL_TEXTURE1);
 	glDisable(GL_TEXTURE_2D);
+	glActiveTexture(GL_TEXTURE0);
 }
 
 
