@@ -18,7 +18,7 @@ public:
 	CPathTexture();
 
 public:
-	void Update(bool forceCPU) override;
+	void Update() override;
 	bool IsUpdateNeeded() override;
 
 	GLuint GetTexture() override;

@@ -115,7 +115,7 @@ bool CInfoTextureCombiner::CreateShader(const std::string& filename, const bool 
 }
 
 
-void CInfoTextureCombiner::Update(bool)
+void CInfoTextureCombiner::Update()
 {
 	shader->Enable();
 	fbo.Bind();

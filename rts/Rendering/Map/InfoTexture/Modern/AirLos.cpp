@@ -120,9 +120,9 @@ void CAirLosTexture::UpdateCPU()
 }
 
 
-void CAirLosTexture::Update(bool forceCPU)
+void CAirLosTexture::Update()
 {
-	if (forceCPU || !fbo.IsValid() || !shader->IsValid() || uploadTex == 0)
+	if (!fbo.IsValid() || !shader->IsValid() || uploadTex == 0)
 		return UpdateCPU();
 
 	if (losHandler->globalLOS[gu->myAllyTeam]) {

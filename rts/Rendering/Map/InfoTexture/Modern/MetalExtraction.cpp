@@ -90,7 +90,7 @@ bool CMetalExtractionTexture::IsUpdateNeeded()
 }
 
 
-void CMetalExtractionTexture::Update(bool)
+void CMetalExtractionTexture::Update()
 {
 	// los-checking is done in FBO: when FBO isn't working don't expose hidden data!
 	if (!fbo.IsValid() || !shader->IsValid())

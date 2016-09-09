@@ -20,7 +20,7 @@ public:
 	~CRadarTexture();
 
 public:
-	void Update(bool forceCPU) override;
+	void Update() override;
 	bool IsUpdateNeeded() override { return true; }
 
 private:

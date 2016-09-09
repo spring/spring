@@ -10,9 +10,8 @@
 #include "Path.h"
 #include "Radar.h"
 
-#include "System/Config/ConfigHandler.h"
 
-CONFIG(bool, ForceCPUInfotextureUpdate).safemodeValue(true).defaultValue(false).description("Use slower but more stable InfoTexture update method, may fix AMD crash.");
+
 
 CInfoTextureHandler::CInfoTextureHandler()
 : returnToLOS(false)
@@ -127,9 +126,8 @@ int2 CInfoTextureHandler::GetCurrentInfoTextureSize() const
 
 void CInfoTextureHandler::Update()
 {
-	bool forceCPU = configHandler->GetBool("ForceCPUInfotextureUpdate");
 	for (auto& p: infoTextures) {
 		if (p.second->IsUpdateNeeded())
-			p.second->Update(forceCPU);
+			p.second->Update();
 	}
 }

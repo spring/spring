@@ -16,7 +16,7 @@ public:
 	CPboInfoTexture(const CPboInfoTexture&) = delete; // no-copy
 
 public:
-	virtual void Update(bool forceCPU) = 0;
+	virtual void Update() = 0;
 	virtual bool IsUpdateNeeded() = 0;
 
 protected:
