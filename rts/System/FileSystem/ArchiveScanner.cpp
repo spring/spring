@@ -1155,8 +1155,8 @@ unsigned int CArchiveScanner::GetArchiveCompleteChecksum(const std::string& name
 	const std::vector<std::string>& ars = GetAllArchivesUsedBy(name);
 	unsigned int checksum = 0;
 
-	for (const std::string& filePath: ars) {
-		checksum ^= GetSingleArchiveChecksum(filePath);
+	for (const std::string& depName: ars) {
+		checksum ^= GetSingleArchiveChecksum(ArchiveFromName(depName));
 	}
 	LOG_S(LOG_SECTION_ARCHIVESCANNER, "archive checksum %s: %d/%u", name.c_str(), checksum, checksum);
 	return checksum;
