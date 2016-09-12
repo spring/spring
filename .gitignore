@@ -141,3 +141,9 @@ progress.make
 *.vcxproj.filters
 *.vcxproj.user
 *.pyc
+
+# downloaded files
+/pool
+/maps
+/rapid
+/packages
