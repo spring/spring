@@ -97,6 +97,7 @@ void QueueDownloadProgress(int ID, long downloaded, long total) //queue from oth
 LuaVFSDownload::LuaVFSDownload(const std::string& writepath):
 	CEventClient("[LuaVFSDownload]", 314161, false)
 {
+	DownloadInit();
 	DownloadSetConfig(CONFIG_FILESYSTEM_WRITEPATH, writepath.c_str());
 	eventHandler.AddClient(this);
 }
@@ -104,6 +105,7 @@ LuaVFSDownload::LuaVFSDownload(const std::string& writepath):
 LuaVFSDownload::~LuaVFSDownload()
 {
 	eventHandler.RemoveClient(this);
+	DownloadShutdown();
 }
 
 
@@ -140,7 +142,6 @@ int Download(int ID, const std::string& filename, DownloadEnum::Category cat)
 	// FIXME: Progress is incorrectly updated when rapid is queried to check for existing packages.
 	SetDownloadListener(UpdateProgress);
 	LOG_L(L_DEBUG, "Going to download %s", filename.c_str());
-	DownloadInit();
 	const int count = DownloadSearch(cat, filename.c_str());
 	for (int i = 0; i < count; i++) {
 		DownloadAdd(i);
@@ -163,7 +164,6 @@ int Download(int ID, const std::string& filename, DownloadEnum::Category cat)
 		// Error: [Watchdog::ClearTimer(id)] Invalid thread 4 (_threadId=(nil))
 		archiveScanner->ScanAllDirs();
 	}
-	DownloadShutdown();
 
 	return result;
 }
