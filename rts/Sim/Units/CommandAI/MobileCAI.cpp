@@ -542,7 +542,7 @@ void CMobileCAI::ExecuteFight(Command& c)
 
 	if (owner->unitDef->canAttack && owner->fireState >= FIRESTATE_FIREATWILL && !owner->weapons.empty()) {
 		const float3 curPosOnLine = ClosestPointOnLine(commandPos1, commandPos2, owner->pos);
-		const float searchRadius = owner->maxRange + 100 * owner->moveState * owner->moveState;
+		const float searchRadius = owner->maxRange + owner->moveType->GetManeuverLeash() * owner->moveState * owner->moveState;
 		CUnit* enemy = CGameHelper::GetClosestValidTarget(curPosOnLine, searchRadius, owner->allyteam, this);
 
 		if (enemy != NULL) {
@@ -1070,7 +1070,7 @@ bool CMobileCAI::GenerateAttackCmd()
 	if (owner->fireState == FIRESTATE_HOLDFIRE)
 		return false;
 
-	const float extraRange = 200.0f * owner->moveState * owner->moveState;
+	const float extraRange = owner->moveType->GetManeuverLeash() * owner->moveState * owner->moveState;
 	const float maxRangeSq = Square(owner->maxRange + extraRange);
 	int newAttackTargetId = -1;
 
@@ -1108,7 +1108,7 @@ bool CMobileCAI::GenerateAttackCmd()
 
 			//Get target from wherever
 			if (newAttackTargetId < 0) {
-				const float searchRadius = owner->maxRange + 150.0f * owner->moveState * owner->moveState;
+				const float searchRadius = owner->maxRange + owner->moveType->GetManeuverLeash() * owner->moveState * owner->moveState;
 				const CUnit* enemy = CGameHelper::GetClosestValidTarget(owner->pos, searchRadius, owner->allyteam, this);
 
 				if (enemy != NULL) {
