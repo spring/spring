@@ -723,7 +723,7 @@ void CBuilderCAI::ExecuteRepair(Command& c)
 
 		if (tempOrder && owner->moveState <= MOVESTATE_MANEUVER) {
 			// limit how far away we go when not roaming
-			if (LinePointDist(commandPos1, commandPos2, unit->pos) > std::max(500.0f, GetBuildRange(unit->radius))) {
+			if (LinePointDist(commandPos1, commandPos2, unit->pos) > owner->moveType->GetManeuverLeash() + GetBuildRange(unit->radius)) {
 				StopMoveAndFinishCommand();
 				return;
 			}
@@ -1223,7 +1223,7 @@ void CBuilderCAI::ExecuteFight(Command& c)
 	if (reclaimEnemyMode)     recopt |= REC_ENEMY;
 	if (reclaimEnemyOnlyMode) recopt |= REC_ENEMYONLY;
 
-	const float searchRadius = (owner->immobile ? 0 : (300 * owner->moveState)) + ownerBuilder->buildDistance;
+	const float searchRadius = (owner->immobile ? 0 : (owner->moveType->GetManeuverLeash() * owner->moveState)) + ownerBuilder->buildDistance;
 
 	if (!reclaimEnemyOnlyMode && (owner->unitDef->canRepair || owner->unitDef->canAssist) && // Priority 1: Repair
 	    FindRepairTargetAndRepair(curPosOnLine, searchRadius, c.options, true, resurrectMode)){
