@@ -712,7 +712,11 @@ CGameController* SpringApp::LoadDemoFile(const std::string& demoFile)
 
 CGameController* SpringApp::RunScript(const std::string& buf)
 {
-	clientSetup->LoadFromStartScript(buf);
+	try {
+		clientSetup->LoadFromStartScript(buf);
+	} catch (const content_error& err) {
+		throw content_error(std::string("Invalid script file\n") + err.what());
+	}
 
 	if (!clientSetup->demoFile.empty())
 		return LoadDemoFile(clientSetup->demoFile);
