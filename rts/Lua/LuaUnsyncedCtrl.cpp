@@ -65,6 +65,7 @@
 #include "System/GlobalConfig.h"
 #include "System/Log/DefaultFilter.h"
 #include "System/Log/ILog.h"
+#include "System/Misc/SpringTime.h"
 #include "System/Net/PackPacket.h"
 #include "System/Platform/Misc.h"
 #include "System/Util.h"
@@ -257,6 +258,8 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetLogSectionFilterLevel);
 
 	REGISTER_LUA_CFUNC(ClearWatchDogTimer);
+
+	REGISTER_LUA_CFUNC(SystemSleep);
 
 	REGISTER_LUA_CFUNC(PreloadUnitDefModel);
 	REGISTER_LUA_CFUNC(PreloadFeatureDefModel);
@@ -2924,6 +2927,14 @@ int LuaUnsyncedCtrl::ClearWatchDogTimer(lua_State* L) {
 	} else {
 		Watchdog::ClearTimer("main");
 	}
+
+	return 0;
+}
+
+
+int LuaUnsyncedCtrl::SystemSleep(lua_State* L) {
+	const int msecs = luaL_checkint(L, 1);
+	spring_msecs(msecs).sleep();
 
 	return 0;
 }
