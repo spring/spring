@@ -3,6 +3,7 @@
 #ifndef _VFS_HANDLER_H
 #define _VFS_HANDLER_H
 
+#include <array>
 #include <map>
 #include <string>
 #include <vector>
