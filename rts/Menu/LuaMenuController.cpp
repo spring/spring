@@ -79,6 +79,9 @@ bool CLuaMenuController::Draw()
 	// calls IsAbove
 	mouse->GetCurrentTooltip();
 
+	
+	spring_msecs(10).sleep(true);
+
 	ClearScreen();
 	eventHandler.DrawGenesis();
 	eventHandler.DrawScreen();
