@@ -69,7 +69,6 @@ void CLuaMenuController::ResizeEvent()
 
 bool CLuaMenuController::Draw()
 {
-	spring_msecs(5).sleep();
 	eventHandler.CollectGarbage();
 
 	infoConsole->PushNewLinesToEventHandler();
@@ -79,6 +78,9 @@ bool CLuaMenuController::Draw()
 
 	// calls IsAbove
 	mouse->GetCurrentTooltip();
+
+	
+	spring_msecs(10).sleep(true);
 
 	ClearScreen();
 	eventHandler.DrawGenesis();

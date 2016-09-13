@@ -147,3 +147,17 @@ progress.make
 /maps
 /rapid
 /packages
+
+# windows build artefacts
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+x64/
+build/
+bld/
+[Bb]in/
+[Oo]bj/
+
+Spring.sln
+*.db
+Spring.VC.VC.opendb

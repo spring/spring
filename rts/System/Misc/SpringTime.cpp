@@ -206,8 +206,17 @@ static void thread_yield()
 }
 
 
-void spring_time::sleep()
+void spring_time::sleep(bool forceThreadSleep)
 {
+	if (forceThreadSleep) {
+#if defined(SPRINGTIME_USING_STD_SLEEP)
+		this_thread::sleep_for(chrono::nanoseconds(toNanoSecsi()));
+#else
+		boost::this_thread::sleep(boost::posix_time::microseconds(std::ceil(toNanoSecsf() * 1e-3)));
+#endif
+		return;
+	}
+
 	// for very short time intervals use a yielding loop (yield is ~5x more accurate than sleep(), check the UnitTest)
 	if (toMilliSecsf() < (avgThreadSleepTimeMilliSecs + avgThreadYieldTimeMilliSecs * 5.0f)) {
 		const spring_time s = gettime();
