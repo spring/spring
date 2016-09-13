@@ -206,10 +206,10 @@ static void thread_yield()
 }
 
 
-void spring_time::sleep()
+void spring_time::sleep(bool forceThreadSleep)
 {
 	// for very short time intervals use a yielding loop (yield is ~5x more accurate than sleep(), check the UnitTest)
-	if (toMilliSecsf() < (avgThreadSleepTimeMilliSecs + avgThreadYieldTimeMilliSecs * 5.0f)) {
+	if (!forceThreadSleep && toMilliSecsf() < (avgThreadSleepTimeMilliSecs + avgThreadYieldTimeMilliSecs * 5.0f)) {
 		const spring_time s = gettime();
 
 		while ((gettime() - s) < *this)

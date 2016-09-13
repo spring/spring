@@ -2934,7 +2934,7 @@ int LuaUnsyncedCtrl::ClearWatchDogTimer(lua_State* L) {
 
 int LuaUnsyncedCtrl::SystemSleep(lua_State* L) {
 	const int msecs = luaL_checkint(L, 1);
-	spring_msecs(msecs).sleep();
+	spring_msecs(msecs).sleep(true);
 
 	return 0;
 }
