@@ -162,8 +162,6 @@ class LuaUnsyncedCtrl {
 
 		static int ClearWatchDogTimer(lua_State* L);
 
-		static int SystemSleep(lua_State* L);
-
 		static int PreloadUnitDefModel(lua_State* L);
 		static int PreloadFeatureDefModel(lua_State* L);
 
