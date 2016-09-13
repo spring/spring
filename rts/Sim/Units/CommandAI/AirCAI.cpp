@@ -329,7 +329,7 @@ void CAirCAI::ExecuteFight(Command& c)
 
 		if (owner->unitDef->IsFighterAirUnit()) {
 			const float3 P = ClosestPointOnLine(commandPos1, commandPos2, owner->pos + owner->speed*10);
-			const float R = 1000.0f * owner->moveState;
+			const float R = owner->moveType->GetManeuverLeash() * owner->moveState;
 
 			enemy = CGameHelper::GetClosestEnemyAircraft(NULL, P, R, owner->allyteam);
 		}
@@ -357,7 +357,7 @@ void CAirCAI::ExecuteFight(Command& c)
 			return;
 		} else {
 			const float3 P = ClosestPointOnLine(commandPos1, commandPos2, owner->pos + owner->speed * 20);
-			const float R = 500.0f * owner->moveState;
+			const float R = owner->moveType->GetManeuverLeash() * owner->moveState;
 
 			enemy = CGameHelper::GetClosestValidTarget(P, R, owner->allyteam, this);
 
