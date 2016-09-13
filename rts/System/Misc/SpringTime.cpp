@@ -4,7 +4,8 @@
 #include "System/maindefines.h"
 #include "System/myMath.h"
 
-#include <boost/thread/mutex.hpp>
+#include <mutex>
+#include "System/Threading/SpringMutex.h"
 
 
 #ifndef UNIT_TEST
@@ -33,7 +34,6 @@ CR_REG_METADATA(spring_time,(
 	#endif
 	#define _GLIBCXX_USE_SCHED_YIELD // workaround a gcc <4.8 bug
 	#include <thread>
-	#include <mutex>
 	namespace this_thread { using namespace std::this_thread; }
 #endif
 
@@ -189,8 +189,8 @@ boost::int64_t spring_time::xs = 0;
 static float avgThreadYieldTimeMilliSecs = 0.0f;
 static float avgThreadSleepTimeMilliSecs = 0.0f;
 
-static boost::mutex yieldTimeMutex;
-static boost::mutex sleepTimeMutex;
+static spring::mutex yieldTimeMutex;
+static spring::mutex sleepTimeMutex;
 
 static void thread_yield()
 {
@@ -200,7 +200,7 @@ static void thread_yield()
 	const spring_time dt = t1 - t0;
 
 	if (t1 >= t0) {
-		boost::mutex::scoped_lock lock(yieldTimeMutex);
+		std::lock_guard<spring::mutex> lock(yieldTimeMutex);
 		avgThreadYieldTimeMilliSecs = mix(avgThreadYieldTimeMilliSecs, dt.toMilliSecsf(), 0.1f);
 	}
 }
@@ -240,7 +240,7 @@ void spring_time::sleep(bool forceThreadSleep)
 	const spring_time dt = t1 - t0;
 
 	if (t1 >= t0) {
-		boost::mutex::scoped_lock lock(sleepTimeMutex);
+		std::lock_guard<spring::mutex> lock(sleepTimeMutex);
 		avgThreadSleepTimeMilliSecs = mix(avgThreadSleepTimeMilliSecs, dt.toMilliSecsf(), 0.1f);
 	}
 }
