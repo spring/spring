@@ -178,7 +178,7 @@ SelectMenu::~SelectMenu()
 
 bool SelectMenu::Draw()
 {
-	spring_msecs(10).sleep();
+	spring_msecs(10).sleep(true);
 	ClearScreen();
 	agui::gui->Draw();
 

@@ -135,7 +135,7 @@ int CPreGame::KeyPressed(int k, bool isRepeat)
 
 bool CPreGame::Draw()
 {
-	spring_msecs(10).sleep();
+	spring_msecs(10).sleep(true);
 	ClearScreen();
 	agui::gui->Draw();
 

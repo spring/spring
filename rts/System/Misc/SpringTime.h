@@ -106,7 +106,7 @@ public:
 	bool isDuration() const { return (x != 0); }
 	bool isTime() const { return (x > 0); }
 
-	void sleep();
+	void sleep(bool forceThreadSleep = false);
 	void sleep_until();
 
 

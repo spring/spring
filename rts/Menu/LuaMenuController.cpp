@@ -69,7 +69,7 @@ void CLuaMenuController::ResizeEvent()
 
 bool CLuaMenuController::Draw()
 {
-	spring_msecs(5).sleep();
+	spring_msecs(10).sleep(true);
 	eventHandler.CollectGarbage();
 
 	infoConsole->PushNewLinesToEventHandler();
