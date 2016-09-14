@@ -2,6 +2,7 @@
 
 
 #include "InputReceiver.h"
+#include "Lua/LuaInputReceiver.h"
 #include "Rendering/GL/myGL.h"
 
 
@@ -66,6 +67,9 @@ void CInputReceiver::CollectGarbage()
 
 CInputReceiver* CInputReceiver::GetReceiverAt(int x,int y)
 {
+	if (luaInputReceiver != nullptr && luaInputReceiver->IsAbove(x,y))
+		return luaInputReceiver;
+
 	std::list<CInputReceiver*>& inputReceivers = GetInputReceivers();
 	std::list<CInputReceiver*>::iterator ri;
 	for (ri = inputReceivers.begin(); ri != inputReceivers.end(); ++ri) {
