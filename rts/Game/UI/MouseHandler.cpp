@@ -975,5 +975,7 @@ void CMouseHandler::ConfigNotify(const std::string& key, const std::string& valu
 {
 	if (key == "MouseDragScrollThreshold") {
 		dragScrollThreshold = atof(value.c_str());
+	} else if (key =="ScrollWheelSpeed") {
+		scrollWheelSpeed = atof(value.c_str());
 	}
 }
