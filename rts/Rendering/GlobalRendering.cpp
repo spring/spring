@@ -25,6 +25,9 @@ CONFIG(int, AtiHacks).defaultValue(-1).headlessValue(0).minimumValue(-1).maximum
 CONFIG(bool, DualScreenMode).defaultValue(false).description("Sets whether to split the screen in half, with one half for minimap and one for main screen. Right side is for minimap unless DualScreenMiniMapOnLeft is set.");
 CONFIG(bool, DualScreenMiniMapOnLeft).defaultValue(false).description("When set, will make the left half of the screen the minimap when DualScreenMode is set.");
 CONFIG(bool, TeamNanoSpray).defaultValue(true).headlessValue(false);
+CONFIG(int, SmoothLines).defaultValue(2).headlessValue(0).safemodeValue(0).minimumValue(0).maximumValue(3).description("Smooth lines.\n 0 := off\n 1 := fastest\n 2 := don't care\n 3 := nicest");
+CONFIG(int, SmoothPoints).defaultValue(2).headlessValue(0).safemodeValue(0).minimumValue(0).maximumValue(3).description("Smooth points.\n 0 := off\n 1 := fastest\n 2 := don't care\n 3 := nicest");
+CONFIG(float, TextureLODBias).defaultValue(0.0f).minimumValue(-4.0f).maximumValue(4.0f);
 
 /**
  * @brief global rendering
@@ -422,6 +425,12 @@ void CGlobalRendering::SetFullScreen(bool configFullScreen, bool cmdLineWindowed
 
 void CGlobalRendering::ConfigNotify(const std::string& key, const std::string& value)
 {
+	if (key == "SmoothLines" || key == "SmoothPoints" || key == "TextureLODBias") {
+		UpdateGLConfigs();
+		return;
+	}
+
+
 	if (window == nullptr)
 		return;
 
@@ -485,7 +494,8 @@ int2 CGlobalRendering::GetWantedViewSize(const bool fullscreen)
 }
 
 
-void CGlobalRendering::SetDualScreenParams() {
+void CGlobalRendering::SetDualScreenParams()
+{
 	dualScreenMode = configHandler->GetBool("DualScreenMode");
 
 	if (dualScreenMode) {
@@ -495,7 +505,8 @@ void CGlobalRendering::SetDualScreenParams() {
 	}
 }
 
-void CGlobalRendering::UpdateViewPortGeometry() {
+void CGlobalRendering::UpdateViewPortGeometry()
+{
 	// NOTE: viewPosY is not currently used (always 0)
 	if (!dualScreenMode) {
 		viewSizeX = winSizeX;
@@ -516,9 +527,48 @@ void CGlobalRendering::UpdateViewPortGeometry() {
 	}
 }
 
-void CGlobalRendering::UpdatePixelGeometry() {
+void CGlobalRendering::UpdatePixelGeometry()
+{
 	pixelX = 1.0f / viewSizeX;
 	pixelY = 1.0f / viewSizeY;
 
 	aspectRatio = viewSizeX / float(viewSizeY);
+}
+
+void CGlobalRendering::UpdateGLConfigs()
+{
+	const int lineSmoothing = configHandler->GetInt("SmoothLines");
+	if (lineSmoothing > 0) {
+		GLenum hint = GL_FASTEST;
+		if (lineSmoothing >= 3) {
+			hint = GL_NICEST;
+		} else if (lineSmoothing >= 2) {
+			hint = GL_DONT_CARE;
+		}
+		glEnable(GL_LINE_SMOOTH);
+		glHint(GL_LINE_SMOOTH_HINT, hint);
+	} else {
+		glDisable(GL_LINE_SMOOTH);
+	}
+
+	const int pointSmoothing = configHandler->GetInt("SmoothPoints");
+	if (pointSmoothing > 0) {
+		GLenum hint = GL_FASTEST;
+		if (pointSmoothing >= 3) {
+			hint = GL_NICEST;
+		} else if (pointSmoothing >= 2) {
+			hint = GL_DONT_CARE;
+		}
+		glEnable(GL_POINT_SMOOTH);
+		glHint(GL_POINT_SMOOTH_HINT, hint);
+	} else {
+		glDisable(GL_POINT_SMOOTH);
+	}
+
+	const float lodBias = configHandler->GetFloat("TextureLODBias");
+	if (math::fabs(lodBias) > 0.01f) {
+		glTexEnvf(GL_TEXTURE_FILTER_CONTROL, GL_TEXTURE_LOD_BIAS, lodBias);
+	} else {
+		glTexEnvf(GL_TEXTURE_FILTER_CONTROL, GL_TEXTURE_LOD_BIAS, 0.0f);
+	}
 }
