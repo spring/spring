@@ -199,6 +199,7 @@ namespace Shader {
 		CompiledShaderObjectUniquePtr res(new CompiledShaderObject(), [](CompiledShaderObject* so) {
 			glDeleteShader(so->id);
 			so->id = 0;
+			SafeDelete(so);
 		});
 
 		assert(!curShaderSrc.empty());
