@@ -290,6 +290,10 @@ extern DECLSPEC SDL_PowerState SDL_GetPowerInfo(int *secs, int *pct) {
 	return SDL_POWERSTATE_UNKNOWN;
 }
 
+extern DECLSPEC SDL_bool SDL_SetHint(const char* name, const char* value) {
+	return SDL_TRUE;
+}
+
 
 
 #ifdef __cplusplus
