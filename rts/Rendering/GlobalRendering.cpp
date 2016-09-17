@@ -28,6 +28,7 @@ CONFIG(bool, TeamNanoSpray).defaultValue(true).headlessValue(false);
 CONFIG(int, SmoothLines).defaultValue(2).headlessValue(0).safemodeValue(0).minimumValue(0).maximumValue(3).description("Smooth lines.\n 0 := off\n 1 := fastest\n 2 := don't care\n 3 := nicest");
 CONFIG(int, SmoothPoints).defaultValue(2).headlessValue(0).safemodeValue(0).minimumValue(0).maximumValue(3).description("Smooth points.\n 0 := off\n 1 := fastest\n 2 := don't care\n 3 := nicest");
 CONFIG(float, TextureLODBias).defaultValue(0.0f).minimumValue(-4.0f).maximumValue(4.0f);
+CONFIG(int, MinimizeOnFocusLoss).defaultValue(0).minimumValue(0).maximumValue(1).description("When set to 1 minimize Window if it loses key focus when in fullscreen mode.");
 
 /**
  * @brief global rendering
@@ -245,6 +246,11 @@ bool CGlobalRendering::CreateSDLWindow(const char* title)
 		SNPRINTF(buf, sizeof(buf), "Could not set video mode:\n%s", SDL_GetError());
 		handleerror(NULL, buf, "ERROR", MBF_OK|MBF_EXCL);
 		return false;
+	}
+
+	const int autominimize = configHandler->GetInt("MinimizeOnFocusLoss");
+	if (autominimize == 0) {
+		SDL_SetHint(SDL_HINT_VIDEO_MINIMIZE_ON_FOCUS_LOSS, "0");
 	}
 
 #if defined(WIN32)
