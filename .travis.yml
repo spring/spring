@@ -4,6 +4,7 @@ os:
 
 sudo: required
 dist: trusty
+cache: ccache
 
 language: cpp
 compiler:
