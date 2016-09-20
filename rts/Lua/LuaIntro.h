@@ -36,7 +36,7 @@ class CLuaIntro : public CLuaHandle
 };
 
 
-extern CLuaIntro* LuaIntro;
+extern CLuaIntro* luaIntro;
 
 
 #endif /* LUA_LOADSCREEN_H */
