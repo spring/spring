@@ -24,6 +24,7 @@ public:
 	virtual ~CMouseHandler();
 
 	void ChangeCursor(const std::string& cmdName, const float& scale = 1.0f);
+	void ReloadCursors();
 
 	void Update();
 	void UpdateCursors();
@@ -104,7 +105,6 @@ private:
 	void SetCursor(const std::string& cmdName, const bool& forceRebind = false);
 
 	void SafeDeleteCursor(CMouseCursor* cursor);
-	void LoadCursors();
 
 	static void GetSelectionBoxCoeff(const float3& pos1, const float3& dir1, const float3& pos2, const float3& dir2, float2& topright, float2& btmleft);
 
