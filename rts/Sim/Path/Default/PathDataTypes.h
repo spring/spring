@@ -35,7 +35,7 @@ struct PathNode {
 /// functor to define node priority
 struct lessCost: public std::binary_function<PathNode*, PathNode*, bool> {
 	inline bool operator() (const PathNode* x, const PathNode* y) const {
-		return (x->fCost > y->fCost);
+		return (x->fCost ==  y->fCost) ? (x->gCost > y->gCost) : (x->fCost > y->fCost);
 	}
 };
 
@@ -96,7 +96,7 @@ struct PathNodeStateBuffer {
 		gCost[idx] = PATHCOST_INFINITY;
 		nodeMask[idx] &= PATHOPT_OBSOLETE; // clear all except PATHOPT_OBSOLETE
 	}
-	
+
 
 	/// size of the memory-region we hold allocated (excluding sizeof(*this))
 	unsigned int GetMemFootPrint() const {
