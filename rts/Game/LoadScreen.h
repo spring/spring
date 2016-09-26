@@ -49,7 +49,6 @@ private:
 	void RandomStartPicture(const std::string& sidePref);
 	void LoadStartPicture(const std::string& picture);
 	void UnloadStartPicture();
-	void Stop();
 
 private:
 	static CLoadScreen* singleton;

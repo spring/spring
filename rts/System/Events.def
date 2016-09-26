@@ -195,6 +195,7 @@
 
 	// LuaMenu
 	SETUP_UNMANAGED_EVENT(ActivateMenu, UNSYNCED_BIT)
+	SETUP_UNMANAGED_EVENT(ActivateGame, UNSYNCED_BIT)
 
 	// System
 	SETUP_EVENT(CollectGarbage,  MANAGED_BIT)

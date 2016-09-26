@@ -138,7 +138,16 @@ void CLoadScreen::Init()
 
 CLoadScreen::~CLoadScreen()
 {
-	assert(!gameLoadThread); // ensure we stopped
+	if (gameLoadThread != nullptr)
+	{
+		// at this point, the thread running CGame::LoadGame
+		// has finished and deregistered itself from WatchDog
+		if (mtLoading)
+			gameLoadThread->Join();
+
+		CglFont::threadSafety = false;
+		SafeDelete(gameLoadThread);
+	}
 
 	if (clientNet != nullptr)
 		clientNet->KeepUpdating(false);
@@ -147,8 +156,11 @@ CLoadScreen::~CLoadScreen()
 
 	SafeDelete(netHeartbeatThread);
 
-	if (!gu->globalQuit)
+	if (!gu->globalQuit) {
 		activeController = game;
+		if (luaMenu != nullptr)
+			luaMenu->ActivateGame();
+	}
 
 	if (activeController == this)
 		activeController = nullptr;
@@ -202,10 +214,6 @@ void CLoadScreen::CreateInstance(const std::string& mapName, const std::string& 
 
 void CLoadScreen::DeleteInstance()
 {
-	if (singleton) {
-		singleton->Stop();
-	}
-
 	SafeDelete(singleton);
 }
 
@@ -466,22 +474,6 @@ void CLoadScreen::UnloadStartPicture()
 		glDeleteTextures(1, &startupTexture);
 
 	startupTexture = 0;
-}
-
-
-void CLoadScreen::Stop()
-{
-	if (gameLoadThread)
-	{
-		// at this point, the thread running CGame::LoadGame
-		// has finished and deregistered itself from WatchDog
-		if (mtLoading && gameLoadThread) {
-			gameLoadThread->Join();
-			CglFont::threadSafety = false;
-		}
-
-		SafeDelete(gameLoadThread);
-	}
 }
 
 

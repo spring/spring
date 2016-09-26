@@ -330,3 +330,23 @@ void CLuaMenu::ActivateMenu()
 	// call the routine
 	RunCallIn(L, cmdStr, 0, 0);
 }
+
+
+void CLuaMenu::ActivateGame()
+{
+	LUA_CALL_IN_CHECK(L);
+	luaL_checkstack(L, 2, __func__);
+	static const LuaHashString cmdStr(__func__);
+	if (!cmdStr.GetGlobalFunc(L)) {
+		return; // the call is not defined
+	}
+
+	// call the routine
+	RunCallIn(L, cmdStr, 0, 0);
+}
+
+
+// Don't call GamePreload since it may be called concurrent
+// with other callins during loading.
+void CLuaMenu::GamePreload()
+{ }

@@ -365,5 +365,11 @@ void CLuaIntro::LoadProgress(const std::string& msg, const bool replace_lastline
 	RunCallIn(L, cmdStr, 2, 0);
 }
 
+
+// Don't call GamePreload since it may be called concurrent
+// with other callins during loading.
+void CLuaIntro::GamePreload()
+{ }
+
 /******************************************************************************/
 /******************************************************************************/
