@@ -11,7 +11,9 @@ General:
 
 Lua:
  - Add Spring.Get{Game,Menu}Name to LuaUnsyncedRead, so LuaMenu and unsynced Lua handles know about each other
- - Add new callin (LuaMenu only) ActivateMenu() that is called whenever LuaMenu is on with no game loaded.
+ - Add new callins (LuaMenu only):
+   ActivateMenu() that is called whenever LuaMenu is on with no game loaded.
+   ActivateGame() that is called whenever LuaMenu is on with a game loaded.
 
 Lua:
  ! Undeprecate {unit,feature}def.modelname and add .modeltype and .modelpath to

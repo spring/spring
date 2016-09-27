@@ -96,9 +96,6 @@ CONFIG(bool, UseHighResTimer).defaultValue(false).description("On Windows, sets 
 CONFIG(int, PathingThreadCount).defaultValue(0).safemodeValue(1).minimumValue(0);
 
 CONFIG(int, FSAALevel).defaultValue(0).minimumValue(0).maximumValue(8).description("If >0 enables FullScreen AntiAliasing.");
-CONFIG(int, SmoothLines).defaultValue(2).headlessValue(0).safemodeValue(0).minimumValue(0).maximumValue(3).description("Smooth lines.\n 0 := off\n 1 := fastest\n 2 := don't care\n 3 := nicest");
-CONFIG(int, SmoothPoints).defaultValue(2).headlessValue(0).safemodeValue(0).minimumValue(0).maximumValue(3).description("Smooth points.\n 0 := off\n 1 := fastest\n 2 := don't care\n 3 := nicest");
-CONFIG(float, TextureLODBias).defaultValue(0.0f).minimumValue(-4.0f).maximumValue(4.0f);
 CONFIG(bool, FixAltTab).defaultValue(false);
 
 CONFIG(std::string, FontFile).defaultValue("fonts/FreeSansBold.otf").description("Sets the font of Spring engine text.");
@@ -427,35 +424,7 @@ void SpringApp::InitOpenGL()
 	if (globalRendering->FSAA && !MultisampleVerify())
 		globalRendering->FSAA = 0;
 
-	// setup GL smoothing
-	const int lineSmoothing = configHandler->GetInt("SmoothLines");
-	if (lineSmoothing > 0) {
-		GLenum hint = GL_FASTEST;
-		if (lineSmoothing >= 3) {
-			hint = GL_NICEST;
-		} else if (lineSmoothing >= 2) {
-			hint = GL_DONT_CARE;
-		}
-		glEnable(GL_LINE_SMOOTH);
-		glHint(GL_LINE_SMOOTH_HINT, hint);
-	}
-	const int pointSmoothing = configHandler->GetInt("SmoothPoints");
-	if (pointSmoothing > 0) {
-		GLenum hint = GL_FASTEST;
-		if (pointSmoothing >= 3) {
-			hint = GL_NICEST;
-		} else if (pointSmoothing >= 2) {
-			hint = GL_DONT_CARE;
-		}
-		glEnable(GL_POINT_SMOOTH);
-		glHint(GL_POINT_SMOOTH_HINT, hint);
-	}
-
-	// setup LOD bias factor
-	const float lodBias = configHandler->GetFloat("TextureLODBias");
-	if (math::fabs(lodBias) > 0.01f) {
-		glTexEnvf(GL_TEXTURE_FILTER_CONTROL, GL_TEXTURE_LOD_BIAS, lodBias );
-	}
+	globalRendering->UpdateGLConfigs();
 
 	//FIXME not needed anymore with SDL2?
 	if (configHandler->GetBool("FixAltTab")) {

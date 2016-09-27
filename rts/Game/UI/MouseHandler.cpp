@@ -108,7 +108,7 @@ CMouseHandler::CMouseHandler()
 		buttons[a].movement = 0;
 	}
 
-	LoadCursors();
+	ReloadCursors();
 
 	currentCursor = cursorCommandMap[""];
 
@@ -137,16 +137,22 @@ CMouseHandler::~CMouseHandler()
 		SDL_ShowCursor(SDL_ENABLE);
 
 	std::map<std::string, CMouseCursor*>::iterator ci;
-	for (ci = cursorFileMap.begin(); ci != cursorFileMap.end(); ++ci) {
-		delete ci->second;
+	for (auto& ci : cursorFileMap) {
+		delete ci.second;
 	}
 }
 
 
-void CMouseHandler::LoadCursors()
+void CMouseHandler::ReloadCursors()
 {
 	const CMouseCursor::HotSpot mCenter  = CMouseCursor::Center;
 	const CMouseCursor::HotSpot mTopLeft = CMouseCursor::TopLeft;
+
+	cursorCommandMap.clear();
+	for (auto& ci : cursorFileMap) {
+		delete ci.second;
+	}
+	cursorFileMap.clear();
 
 	CMouseCursor* nullCursor = CMouseCursor::GetNullCursor();
 	cursorCommandMap["none"] = nullCursor;
@@ -975,5 +981,7 @@ void CMouseHandler::ConfigNotify(const std::string& key, const std::string& valu
 {
 	if (key == "MouseDragScrollThreshold") {
 		dragScrollThreshold = atof(value.c_str());
+	} else if (key =="ScrollWheelSpeed") {
+		scrollWheelSpeed = atof(value.c_str());
 	}
 }

@@ -36,6 +36,7 @@ public:
 	void SetDualScreenParams();
 	void UpdateViewPortGeometry();
 	void UpdatePixelGeometry();
+	void UpdateGLConfigs();
 	int2 GetWantedViewSize(const bool fullscreen);
 
 	bool SetGetDrawDebug(bool dbg) { const bool ret =       dbg; drawdebug = dbg; return ret; }

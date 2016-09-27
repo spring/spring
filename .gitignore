@@ -141,9 +141,17 @@ progress.make
 *.vcxproj.filters
 *.vcxproj.user
 *.pyc
+/Debug
+/RelWithDebInfo
+/Release
+/x64
+*.sln
+*.db
+Spring.VC.VC.opendb
 
 # downloaded files
 /pool
 /maps
 /rapid
 /packages
+

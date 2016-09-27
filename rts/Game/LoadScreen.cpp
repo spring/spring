@@ -14,6 +14,7 @@
 #include "Game/UI/InputReceiver.h"
 #include "ExternalAI/SkirmishAIHandler.h"
 #include "Lua/LuaIntro.h"
+#include "Lua/LuaMenu.h"
 #include "Map/MapInfo.h"
 #include "Rendering/Fonts/glFont.h"
 #include "Rendering/GlobalRendering.h"
@@ -96,7 +97,7 @@ void CLoadScreen::Init()
 	CLuaIntro::LoadFreeHandler();
 
 	// old stuff
-	if (LuaIntro == nullptr) {
+	if (luaIntro == nullptr) {
 		const CTeam* team = teamHandler->Team(gu->myTeam);
 
 		const std::string mapStartPic(mapInfo->GetStringValue("Startpic"));
@@ -137,7 +138,16 @@ void CLoadScreen::Init()
 
 CLoadScreen::~CLoadScreen()
 {
-	assert(!gameLoadThread); // ensure we stopped
+	if (gameLoadThread != nullptr)
+	{
+		// at this point, the thread running CGame::LoadGame
+		// has finished and deregistered itself from WatchDog
+		if (mtLoading)
+			gameLoadThread->Join();
+
+		CglFont::threadSafety = false;
+		SafeDelete(gameLoadThread);
+	}
 
 	if (clientNet != nullptr)
 		clientNet->KeepUpdating(false);
@@ -146,15 +156,18 @@ CLoadScreen::~CLoadScreen()
 
 	SafeDelete(netHeartbeatThread);
 
-	if (!gu->globalQuit)
+	if (!gu->globalQuit) {
 		activeController = game;
+		if (luaMenu != nullptr)
+			luaMenu->ActivateGame();
+	}
 
 	if (activeController == this)
 		activeController = nullptr;
 
-	if (LuaIntro != nullptr) {
+	if (luaIntro != nullptr) {
 		Draw(); // one last frame
-		LuaIntro->Shutdown();
+		luaIntro->Shutdown();
 	}
 	CLuaIntro::FreeHandler();
 
@@ -201,10 +214,6 @@ void CLoadScreen::CreateInstance(const std::string& mapName, const std::string& 
 
 void CLoadScreen::DeleteInstance()
 {
-	if (singleton) {
-		singleton->Stop();
-	}
-
 	SafeDelete(singleton);
 }
 
@@ -213,16 +222,16 @@ void CLoadScreen::DeleteInstance()
 
 void CLoadScreen::ResizeEvent()
 {
-	if (LuaIntro != nullptr)
-		LuaIntro->ViewResize();
+	if (luaIntro != nullptr)
+		luaIntro->ViewResize();
 }
 
 
 int CLoadScreen::KeyPressed(int k, bool isRepeat)
 {
 	//FIXME add mouse events
-	if (LuaIntro != nullptr)
-		LuaIntro->KeyPress(k, isRepeat);
+	if (luaIntro != nullptr)
+		luaIntro->KeyPress(k, isRepeat);
 
 	return 0;
 }
@@ -230,8 +239,8 @@ int CLoadScreen::KeyPressed(int k, bool isRepeat)
 
 int CLoadScreen::KeyReleased(int k)
 {
-	if (LuaIntro != nullptr)
-		LuaIntro->KeyRelease(k);
+	if (luaIntro != nullptr)
+		luaIntro->KeyRelease(k);
 
 	return 0;
 }
@@ -279,11 +288,16 @@ bool CLoadScreen::Draw()
 	//! cause of `curLoadMessage`
 	boost::recursive_mutex::scoped_lock lck(mutex);
 
-	if (LuaIntro != nullptr) {
-		LuaIntro->Update();
-		LuaIntro->DrawGenesis();
+	if (luaMenu != nullptr) {
+		// let LuaMenu keep the lobby conncetion alive
+		luaMenu->Update();
+	}
+
+	if (luaIntro != nullptr) {
+		luaIntro->Update();
+		luaIntro->DrawGenesis();
 		ClearScreen();
-		LuaIntro->DrawLoadScreen();
+		luaIntro->DrawLoadScreen();
 	} else {
 		ClearScreen();
 
@@ -364,8 +378,8 @@ void CLoadScreen::SetLoadMessage(const std::string& text, bool replace_lastline)
 	LOG("%s", text.c_str());
 	LOG_CLEANUP();
 
-	if (LuaIntro)
-		LuaIntro->LoadProgress(text, replace_lastline);
+	if (luaIntro != nullptr)
+		luaIntro->LoadProgress(text, replace_lastline);
 
 	//! Check the FPU state (needed for synced computations),
 	//! some external libraries which get linked during loading might reset those.
@@ -460,22 +474,6 @@ void CLoadScreen::UnloadStartPicture()
 		glDeleteTextures(1, &startupTexture);
 
 	startupTexture = 0;
-}
-
-
-void CLoadScreen::Stop()
-{
-	if (gameLoadThread)
-	{
-		// at this point, the thread running CGame::LoadGame
-		// has finished and deregistered itself from WatchDog
-		if (mtLoading && gameLoadThread) {
-			gameLoadThread->Join();
-			CglFont::threadSafety = false;
-		}
-
-		SafeDelete(gameLoadThread);
-	}
 }
 
 

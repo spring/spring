@@ -18,6 +18,11 @@ public:
 	// callin called when LuaMenu is active with no game
 	void ActivateMenu();
 
+	// callin called when LuaMenu is active with a game
+	void ActivateGame();
+
+	void GamePreload() override;
+
 protected:
 	CLuaMenu();
 	virtual ~CLuaMenu();

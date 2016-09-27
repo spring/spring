@@ -571,8 +571,11 @@ void CGame::LoadInterface()
 		ScopedOnceTimer timer("Game::LoadInterface (Camera&Mouse)");
 
 		camHandler = new CCameraHandler();
-		SafeDelete(mouse);
-		mouse = new CMouseHandler();
+		if (mouse == nullptr) {
+			mouse = new CMouseHandler();
+		} else {
+			mouse->ReloadCursors();
+		}
 	}
 
 	selectedUnitsHandler.Init(playerHandler->ActivePlayers());
@@ -620,8 +623,8 @@ void CGame::LoadInterface()
 		}
 	}
 
-	SafeDelete(infoConsole);
-	infoConsole = new CInfoConsole();
+	if (infoConsole == nullptr)
+		infoConsole = new CInfoConsole();
 
 	tooltip = new CTooltipConsole();
 	guihandler = new CGuiHandler();

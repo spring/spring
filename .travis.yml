@@ -4,6 +4,7 @@ os:
 
 sudo: required
 dist: trusty
+cache: ccache
 
 language: cpp
 compiler:
@@ -13,7 +14,7 @@ env:
   global:
     - SPRING_DATADIR=~/build/spring/spring
   matrix:
-    - TARGET="AAI CppTestAI E323AI HughAI KAIK NullAI NullJavaAI NullOOJavaAI RAI Shard"
+    - TARGET="AAI CppTestAI E323AI HughAI KAIK NullAI NullJavaAI NullOOJavaAI RAI Shard demotool"
     - TARGET="engine-headless tests check"
 
 matrix:

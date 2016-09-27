@@ -31,15 +31,15 @@
 #include "System/Util.h"
 
 
-CLuaIntro* LuaIntro = NULL;
+CLuaIntro* luaIntro = NULL;
 
 /******************************************************************************/
 /******************************************************************************/
 
 static boost::mutex m_singleton;
 
-DECL_LOAD_HANDLER(CLuaIntro, LuaIntro)
-DECL_FREE_HANDLER(CLuaIntro, LuaIntro)
+DECL_LOAD_HANDLER(CLuaIntro, luaIntro)
+DECL_FREE_HANDLER(CLuaIntro, luaIntro)
 
 
 /******************************************************************************/
@@ -47,7 +47,7 @@ DECL_FREE_HANDLER(CLuaIntro, LuaIntro)
 CLuaIntro::CLuaIntro()
 : CLuaHandle("LuaIntro", LUA_HANDLE_ORDER_INTRO, true, false)
 {
-	LuaIntro = this;
+	luaIntro = this;
 
 	if (!IsValid()) {
 		return;
@@ -137,7 +137,7 @@ CLuaIntro::CLuaIntro()
 
 CLuaIntro::~CLuaIntro()
 {
-	LuaIntro = NULL;
+	luaIntro = NULL;
 }
 
 
@@ -364,6 +364,12 @@ void CLuaIntro::LoadProgress(const std::string& msg, const bool replace_lastline
 	// call the routine
 	RunCallIn(L, cmdStr, 2, 0);
 }
+
+
+// Don't call GamePreload since it may be called concurrent
+// with other callins during loading.
+void CLuaIntro::GamePreload()
+{ }
 
 /******************************************************************************/
 /******************************************************************************/

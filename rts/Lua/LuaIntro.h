@@ -22,6 +22,8 @@ class CLuaIntro : public CLuaHandle
 		void DrawLoadScreen();
 		void LoadProgress(const std::string& msg, const bool replace_lastline);
 
+		void GamePreload() override;
+
 	protected:
 		CLuaIntro();
 		virtual ~CLuaIntro();
@@ -36,7 +38,7 @@ class CLuaIntro : public CLuaHandle
 };
 
 
-extern CLuaIntro* LuaIntro;
+extern CLuaIntro* luaIntro;
 
 
 #endif /* LUA_LOADSCREEN_H */

@@ -74,6 +74,11 @@ if(NOT DEFINED ENV{CI})
 		${test_Log_sources}
 	)
 
+	if(WIN32)
+		LIST(APPEND test_src
+			"${ENGINE_SOURCE_DIR}/System/Threading/CriticalSection.cpp")
+	endif(WIN32)
+
 	set(test_libs
 		engineSystemNet
 		${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
@@ -148,6 +153,11 @@ endif()
 			${test_Log_sources}
 		)
 
+	if(WIN32)
+		LIST(APPEND test_src
+			"${ENGINE_SOURCE_DIR}/System/Threading/CriticalSection.cpp")
+	endif(WIN32)
+
 	set(test_libs
 			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
 			${Boost_SYSTEM_LIBRARY}
@@ -171,6 +181,11 @@ endif()
 			"${ENGINE_SOURCE_DIR}/System/Misc/SpringTime.cpp"
 			${test_Log_sources}
 		)
+
+	if(WIN32)
+		LIST(APPEND test_src
+			"${ENGINE_SOURCE_DIR}/System/Threading/CriticalSection.cpp")
+	endif(WIN32)
 
 	set(test_libs
 			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
@@ -213,6 +228,11 @@ endif()
 			"${ENGINE_SOURCE_DIR}/System/UnsyncedRNG.cpp"
 			${test_Log_sources}
 		)
+
+	if(WIN32)
+		LIST(APPEND test_src
+			"${ENGINE_SOURCE_DIR}/System/Threading/CriticalSection.cpp")
+	endif(WIN32)
 
 	set(test_libs
 			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
@@ -342,10 +362,15 @@ endif()
 
 			${test_Log_sources}
 		)
-	if(NOT WIN32)
+
+	if(WIN32)
+		LIST(APPEND test_src
+			"${ENGINE_SOURCE_DIR}/System/Threading/CriticalSection.cpp")
+	else(WIN32)
 		LIST(APPEND test_src
 			"${ENGINE_SOURCE_DIR}/System/Platform/Linux/ThreadSupport.cpp")
 	endif()
+
 	set(test_libs
 			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
 			${Boost_THREAD_LIBRARY}
@@ -373,6 +398,11 @@ endif()
 			${test_Log_sources}
 			${sources_engine_System_Threading}
 		)
+
+	if(WIN32)
+		LIST(APPEND test_src
+			"${ENGINE_SOURCE_DIR}/System/Threading/CriticalSection.cpp")
+	endif(WIN32)
 
 	set(test_libs
 			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}

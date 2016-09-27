@@ -38,8 +38,11 @@ void CLuaMenuController::Reset()
 	LOG("[%s] using menu: %s", __FUNCTION__, menuArchive.c_str());
 	vfsHandler->AddArchiveWithDeps(menuArchive, false);
 
-	if (mouse == nullptr)
+	if (mouse == nullptr) {
 		mouse = new CMouseHandler();
+	} else {
+		mouse->ReloadCursors();
+	}
 
 	if (infoConsole == nullptr)
 		infoConsole = new CInfoConsole();
@@ -69,7 +72,7 @@ void CLuaMenuController::ResizeEvent()
 
 bool CLuaMenuController::Draw()
 {
-	spring_msecs(5).sleep();
+	spring_msecs(10).sleep(true);
 	eventHandler.CollectGarbage();
 
 	infoConsole->PushNewLinesToEventHandler();
