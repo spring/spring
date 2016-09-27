@@ -113,8 +113,8 @@ bool CFileHandler::TryReadFromVFS(const string& fileName, int section)
 void CFileHandler::Open(const string& fileName, const string& modes)
 {
 	this->fileName = fileName;
-#ifndef TOOLS
 	for (char c: modes) {
+#ifndef TOOLS
 		CVFSHandler::Section section = CVFSHandler::GetModeSection(c);
 		if ((section != CVFSHandler::Section::Error) && TryReadFromVFS(fileName, section))
 			break;
@@ -122,10 +122,10 @@ void CFileHandler::Open(const string& fileName, const string& modes)
 		if ((c == SPRING_VFS_RAW[0]) && TryReadFromRawFS(fileName))
 			break;
 
+#endif
 		if ((c == SPRING_VFS_PWD[0]) && TryReadFromPWD(fileName))
 			break;
 	}
-#endif
 }
 
 
