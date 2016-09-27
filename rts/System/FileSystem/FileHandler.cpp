@@ -113,6 +113,7 @@ bool CFileHandler::TryReadFromVFS(const string& fileName, int section)
 void CFileHandler::Open(const string& fileName, const string& modes)
 {
 	this->fileName = fileName;
+#ifndef TOOLS
 	for (char c: modes) {
 		CVFSHandler::Section section = CVFSHandler::GetModeSection(c);
 		if ((section != CVFSHandler::Section::Error) && TryReadFromVFS(fileName, section))
@@ -124,6 +125,7 @@ void CFileHandler::Open(const string& fileName, const string& modes)
 		if ((c == SPRING_VFS_PWD[0]) && TryReadFromPWD(fileName))
 			break;
 	}
+#endif
 }
 
 
@@ -294,8 +296,10 @@ std::vector<string> CFileHandler::FindFiles(const string& path,
 std::vector<string> CFileHandler::DirList(const string& path,
 		const string& pattern, const string& modes)
 {
-	const string pat = pattern.empty() ? "*" : pattern;
 
+	std::vector<string> fileVec;
+#ifndef TOOLS
+	const string pat = pattern.empty() ? "*" : pattern;
 	std::set<string> fileSet;
 	for (char c: modes) {
 		CVFSHandler::Section section = CVFSHandler::GetModeSection(c);
@@ -305,11 +309,11 @@ std::vector<string> CFileHandler::DirList(const string& path,
 		if (c == SPRING_VFS_RAW[0])
 			InsertRawFiles(fileSet, path, pat);
 	}
-	std::vector<string> fileVec;
 	std::set<string>::const_iterator it;
 	for (it = fileSet.begin(); it != fileSet.end(); ++it) {
 		fileVec.push_back(*it);
 	}
+#endif
 	return fileVec;
 }
 
@@ -361,6 +365,8 @@ bool CFileHandler::InsertVFSFiles(std::set<string>& fileSet,
 std::vector<string> CFileHandler::SubDirs(const string& path,
 		const string& pattern, const string& modes)
 {
+	std::vector<string> dirVec;
+#ifndef TOOLS
 	const string pat = pattern.empty() ? "*" : pattern;
 
 	std::set<string> dirSet;
@@ -372,11 +378,11 @@ std::vector<string> CFileHandler::SubDirs(const string& path,
 		if (c == SPRING_VFS_RAW[0])
 			InsertRawDirs(dirSet, path, pat);
 	}
-	std::vector<string> dirVec;
 	std::set<string>::const_iterator it;
 	for (it = dirSet.begin(); it != dirSet.end(); ++it) {
 		dirVec.push_back(*it);
 	}
+#endif
 	return dirVec;
 }
 
