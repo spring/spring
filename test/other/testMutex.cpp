@@ -1,6 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "System/TimeProfiler.h"
+#include "System/Misc/SpringTime.h"
 #include "System/Log/ILog.h"
 #include "System/Threading/SpringMutex.h"
 #include <boost/thread/recursive_mutex.hpp>
@@ -21,6 +22,7 @@
 #define BOOST_TEST_MODULE Mutex
 #include <boost/test/unit_test.hpp>
 
+BOOST_GLOBAL_FIXTURE(InitSpringTime);
 
 #ifndef _WIN32
 	typedef boost::uint32_t futex;
@@ -78,8 +80,6 @@ spring_time Test(const char* name, voidFnc pre, voidFnc post)
 
 BOOST_AUTO_TEST_CASE( Mutex )
 {
-	spring_clock::PushTickRate();
-	spring_time::setstarttime(spring_time::gettime(true));
 
 	spring::mutex spmtx;
 	spring::recursive_mutex sprmtx;

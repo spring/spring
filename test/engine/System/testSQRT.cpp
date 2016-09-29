@@ -4,11 +4,13 @@
 #include <cmath>
 #include "lib/streflop/streflop_cond.h"
 #include "System/TimeProfiler.h"
+#include "System/Misc/SpringTime.h"
 #include "System/FastMath.h"
 
 
 #define BOOST_TEST_MODULE SQRT
 #include <boost/test/unit_test.hpp>
+BOOST_GLOBAL_FIXTURE(InitSpringTime);
 
 
 static inline float randf() {

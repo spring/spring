@@ -2,6 +2,7 @@
 
 #include "System/Log/ILog.h"
 #include "System/TimeProfiler.h"
+#include "System/Misc/SpringTime.h"
 #include "lib/streflop/streflop_cond.h"
 #include "lib/lua/include/LuaUser.h"
 
@@ -15,6 +16,7 @@
 
 #define BOOST_TEST_MODULE Printf
 #include <boost/test/unit_test.hpp>
+BOOST_GLOBAL_FIXTURE(InitSpringTime);
 
 
 static char s[128];

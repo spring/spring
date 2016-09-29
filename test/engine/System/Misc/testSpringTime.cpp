@@ -4,12 +4,15 @@
 #include <boost/test/unit_test.hpp>
 
 #include "System/TimeProfiler.h"
+#include "System/Misc/SpringTime.h"
 #include "System/Log/ILog.h"
 #include "System/Misc/SpringTime.h"
 #include <cmath>
 
 #include <boost/chrono/include.hpp> // boost chrono
 #include <boost/thread.hpp>
+
+BOOST_GLOBAL_FIXTURE(InitSpringTime);
 
 // #define BOOST_MONOTONIC_RAW_CLOCK
 
@@ -159,8 +162,6 @@ struct TestProcessor {
 BOOST_AUTO_TEST_CASE( ClockQualityCheck )
 {
 	LOG("Clock Precision Test");
-	spring_clock::PushTickRate();
-	spring_time::setstarttime(spring_time::gettime(true));
 
 	#ifdef BOOST_CHRONO_HAS_CLOCK_STEADY
 	LOG("[%s] BOOST_CHRONO_HAS_CLOCK_STEADY defined --> CLOCK_MONOTONIC", __FUNCTION__);

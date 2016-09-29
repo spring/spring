@@ -160,4 +160,14 @@ static const spring_time spring_nulltime(0);
 #define spring_diffsecs(now, before)  ((now - before).toSecsi())
 #define spring_diffmsecs(now, before) ((now - before).toMilliSecsi())
 
+#ifdef UNIT_TEST
+struct InitSpringTime{
+	InitSpringTime()
+	{
+		spring_clock::PushTickRate(true);
+		spring_time::setstarttime(spring_time::gettime(true));
+	}
+};
+#endif
+
 #endif // SPRINGTIME_H
