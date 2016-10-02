@@ -418,9 +418,15 @@ void spring_lua_ftoa(float f, char* buf, int precision)
 	float fractF = std::modf(f, &truncF);
 	const bool carrierBit = HandleRounding(&fractF, log10, charsInStdNotation, nDigits, scienceNotation, precision);
 
-	const int iDigits = PrintIntPart(buf, truncF, carrierBit);
-	if (scienceNotation)
+	int iDigits = PrintIntPart(buf, truncF, carrierBit);
+	if (scienceNotation) {
+		if (iDigits == 2) {
+			iDigits = 1;
+			e10 += 1;
+			assert(fractF == 0);
+		}
 		assert(iDigits == 1);
+	}
 	nDigits -= iDigits;
 	buf += iDigits;
 
