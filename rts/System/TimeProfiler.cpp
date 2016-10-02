@@ -24,6 +24,7 @@ static unsigned hash_(const std::string& s)
 	unsigned hash = s.size();
 	for (std::string::const_iterator it = s.begin(); it != s.end(); ++it) {
 		hash += *it;
+		hash ^= (hash << 7) | (hash >> (sizeof(hash) * CHAR_BIT - 7));
 	}
 	return hash;
 }
@@ -34,7 +35,7 @@ static unsigned hash_(const char* s)
 	for (size_t i = 0; ; ++i) {
 		if (s[i]) {
 			hash += s[i];
-			hash ^= (hash << 1) | (hash >> (sizeof(hash) * CHAR_BIT - 1));
+			hash ^= (hash << 7) | (hash >> (sizeof(hash) * CHAR_BIT - 7));
 		} else {
 			hash += (unsigned) i;
 			break;
@@ -130,6 +131,7 @@ ScopedTimer::~ScopedTimer()
 ScopedOnceTimer::~ScopedOnceTimer()
 {
 	LOG("%s: %i ms", GetName().c_str(), int(GetDuration().toMilliSecsi()));
+	hashToName.erase(nameIterator);
 }
 
 
