@@ -213,14 +213,12 @@ std::string FileSystem::GetExtension(const std::string& path)
 
 std::string FileSystem::GetNormalizedPath(const std::string& path) {
 
-	const std::string posixSep("/");
-	const std::string emptyStr;
-	std::string normalizedPath = StringReplace(path, "\\", posixSep); // convert to POSIX path separators
+	std::string normalizedPath = StringReplace(path, "\\", "/"); // convert to POSIX path separators
 
-	normalizedPath = StringReplace(normalizedPath, "/./", posixSep);
-	normalizedPath = std::regex_replace(normalizedPath, std::regex("[/]{2,}"), posixSep);
-	normalizedPath = std::regex_replace(normalizedPath, std::regex("[^/]+[/][.]{2}"), emptyStr);
-	normalizedPath = std::regex_replace(normalizedPath, std::regex("[/]{2,}"), posixSep);
+	normalizedPath = StringReplace(normalizedPath, "/./", "/");
+	normalizedPath = std::regex_replace(normalizedPath, std::regex("[/]{2,}"), "/");
+	normalizedPath = std::regex_replace(normalizedPath, std::regex("[^/]+[/][.]{2}"), "");
+	normalizedPath = std::regex_replace(normalizedPath, std::regex("[/]{2,}"), "/");
 
 	return normalizedPath; // maybe use FixSlashes here
 }
