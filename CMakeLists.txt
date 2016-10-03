@@ -366,7 +366,7 @@ if(NOT MSVC)
 	option(DEBUG_SIGNAL_NANS "Enable NaN-Signaling" ${DEBUG_BUILD})
 	if (DEBUG_SIGNAL_NANS AND CMAKE_COMPILER_IS_GNUCXX)
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsignaling-nans")
-	endif(DEBUG_SIGNAL_NANS)
+	endif()
 
 
 	### CompileTime Warnings
