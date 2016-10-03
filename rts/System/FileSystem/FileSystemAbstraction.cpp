@@ -16,8 +16,8 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <errno.h>
-#include <cstring>
-#include <regex>
+#include <string.h>
+#include <boost/regex.hpp>
 #include <boost/filesystem.hpp>
 
 #ifndef _WIN32
@@ -372,7 +372,7 @@ void FileSystemAbstraction::ChDir(const std::string& dir)
 	}
 }
 
-static void FindFiles(std::vector<std::string>& matches, const std::string& datadir, const std::string& dir, const std::regex& regexPattern, int flags)
+static void FindFiles(std::vector<std::string>& matches, const std::string& datadir, const std::string& dir, const boost::regex& regexPattern, int flags)
 {
 #ifdef _WIN32
 	WIN32_FIND_DATA wfd;
@@ -383,13 +383,13 @@ static void FindFiles(std::vector<std::string>& matches, const std::string& data
 			if(strcmp(wfd.cFileName,".") && strcmp(wfd.cFileName ,"..")) {
 				if(!(wfd.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY)) {
 					if ((flags & FileQueryFlags::ONLY_DIRS) == 0) {
-						if (std::regex_match(wfd.cFileName, regexPattern)) {
+						if (boost::regex_match(wfd.cFileName, regexPattern)) {
 							matches.push_back(dir + wfd.cFileName);
 						}
 					}
 				} else {
 					if (flags & FileQueryFlags::INCLUDE_DIRS) {
-						if (std::regex_match(wfd.cFileName, regexPattern)) {
+						if (boost::regex_match(wfd.cFileName, regexPattern)) {
 							matches.push_back(dir + wfd.cFileName + "\\");
 						}
 					}
@@ -418,14 +418,14 @@ static void FindFiles(std::vector<std::string>& matches, const std::string& data
 			if (stat((datadir + dir + ep->d_name).c_str(), &info) == 0) {
 				if (!S_ISDIR(info.st_mode)) {
 					if ((flags & FileQueryFlags::ONLY_DIRS) == 0) {
-						if (std::regex_match(ep->d_name, regexPattern)) {
+						if (boost::regex_match(ep->d_name, regexPattern)) {
 							matches.push_back(dir + ep->d_name);
 						}
 					}
 				} else {
 					// or a directory?
 					if (flags & FileQueryFlags::INCLUDE_DIRS) {
-						if (std::regex_match(ep->d_name, regexPattern)) {
+						if (boost::regex_match(ep->d_name, regexPattern)) {
 							matches.push_back(dir + ep->d_name + "/");
 						}
 					}
@@ -442,7 +442,7 @@ static void FindFiles(std::vector<std::string>& matches, const std::string& data
 
 void FileSystemAbstraction::FindFiles(std::vector<std::string>& matches, const std::string& dataDir, const std::string& dir, const std::string& regex, int flags)
 {
-	const std::regex regexPattern(regex);
+	const boost::regex regexPattern(regex);
 	::FindFiles(matches, dataDir, dir, regexPattern, flags);
 }
 

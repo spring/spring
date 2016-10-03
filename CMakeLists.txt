@@ -244,7 +244,7 @@ endif (USE_LIBSQUISH)
 
 
 
-FIND_PACKAGE(Boost 1.51.0 COMPONENTS thread program_options system chrono signals filesystem REQUIRED)
+FIND_PACKAGE(Boost 1.51.0 COMPONENTS thread regex program_options system chrono signals filesystem REQUIRED)
 FIND_PACKAGE(Boost 1.51.0 COMPONENTS timer)
 INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
 

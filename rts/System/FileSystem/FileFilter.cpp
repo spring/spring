@@ -3,10 +3,10 @@
 #include "FileFilter.h"
 
 
+#include <boost/regex.hpp>
 
 #include <limits.h>
 #include <ctype.h>
-#include <regex>
 #include <sstream>
 #include <vector>
 
@@ -26,7 +26,7 @@ private:
 	struct Rule {
 		Rule() : negate(false) {}
 		string glob;
-		std::regex regex;
+		boost::regex regex;
 		bool negate;
 	};
 
@@ -108,7 +108,8 @@ void CFileFilter::AddRule(const string& rule)
 		}
 	}
 	r.glob = rule.substr(p, 1 + q - p);
-	r.regex = std::regex(glob_to_regex(r.glob), std::regex::icase);
+	r.regex = boost::regex(glob_to_regex(r.glob)
+		, boost::regex::icase | boost::regex::no_escape_in_lists);
 	rules.push_back(r);
 	//printf("added %s%s: %s\n", r.negate ? "!" : "", r.glob.c_str(), r.regex.expression());
 }
@@ -119,7 +120,7 @@ bool CFileFilter::Match(const string& filename) const
 {
 	bool match = false;
 	for (vector<Rule>::const_iterator it = rules.begin(); it != rules.end(); ++it) {
-		if (std::regex_search(filename, it->regex))
+		if (boost::regex_search(filename, it->regex))
 			match = !it->negate;
 	}
 	return match;

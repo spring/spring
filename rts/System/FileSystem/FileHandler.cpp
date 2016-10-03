@@ -10,7 +10,7 @@
 #include <algorithm>
 #include <cctype>
 #include <limits.h>
-#include <regex>
+#include <boost/regex.hpp>
 
 #include "FileQueryFlags.h"
 #include "FileSystem.h"
@@ -345,13 +345,13 @@ bool CFileHandler::InsertVFSFiles(std::set<string>& fileSet,
 		prefix += '/';
 	}
 
-	std::regex regexpattern(FileSystem::ConvertGlobToRegex(pattern),
-			std::regex::icase);
+	boost::regex regexpattern(FileSystem::ConvertGlobToRegex(pattern),
+			boost::regex::icase);
 
 	const std::vector<string> &found = vfsHandler->GetFilesInDir(path, (CVFSHandler::Section) section);
 	std::vector<string>::const_iterator fi;
 	for (fi = found.begin(); fi != found.end(); ++fi) {
-		if (std::regex_match(*fi, regexpattern)) {
+		if (boost::regex_match(*fi, regexpattern)) {
 			fileSet.insert(prefix + *fi);
 		}
 	}
@@ -391,15 +391,15 @@ bool CFileHandler::InsertRawDirs(std::set<string>& dirSet,
 		const string& path, const string& pattern)
 {
 #ifndef TOOLS
-	std::regex regexpattern(FileSystem::ConvertGlobToRegex(pattern),
-	                          std::regex::icase);
+	boost::regex regexpattern(FileSystem::ConvertGlobToRegex(pattern),
+	                          boost::regex::icase);
 
 	const std::vector<string> &found = dataDirsAccess.FindFiles(path, pattern,
 	                                            FileQueryFlags::ONLY_DIRS);
 	std::vector<string>::const_iterator fi;
 	for (fi = found.begin(); fi != found.end(); ++fi) {
 		const string& dir = *fi;
-		if (std::regex_match(dir, regexpattern)) {
+		if (boost::regex_match(dir, regexpattern)) {
 			dirSet.insert(dir);
 		}
 	}
@@ -421,13 +421,13 @@ bool CFileHandler::InsertVFSDirs(std::set<string>& dirSet,
 		prefix += '/';
 	}
 
-	std::regex regexpattern(FileSystem::ConvertGlobToRegex(pattern),
-			std::regex::icase | std::regex::basic);
+	boost::regex regexpattern(FileSystem::ConvertGlobToRegex(pattern),
+			boost::regex::icase);
 
 	const std::vector<string> &found = vfsHandler->GetDirsInDir(path, (CVFSHandler::Section) section);
 	std::vector<string>::const_iterator fi;
 	for (fi = found.begin(); fi != found.end(); ++fi) {
-		if (std::regex_match(*fi, regexpattern)) {
+		if (boost::regex_match(*fi, regexpattern)) {
 			dirSet.insert(prefix + *fi);
 		}
 	}
