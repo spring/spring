@@ -67,7 +67,7 @@ void CInfoConsole::Draw()
 	if (!smallFont) return;
 	if (data.empty()) return;
 
-	boost::recursive_mutex::scoped_lock scoped_lock(infoConsoleMutex);
+	std::lock_guard<spring::recursive_mutex> scoped_lock(infoConsoleMutex);
 
 	if (guihandler && !guihandler->GetOutlineFonts()) {
 		// draw a black background when not using outlined font
@@ -106,7 +106,7 @@ void CInfoConsole::Draw()
 
 void CInfoConsole::Update()
 {
-	boost::recursive_mutex::scoped_lock scoped_lock(infoConsoleMutex);
+	std::lock_guard<spring::recursive_mutex> scoped_lock(infoConsoleMutex);
 	if (data.empty())
 		return;
 
@@ -137,7 +137,7 @@ void CInfoConsole::PushNewLinesToEventHandler()
 	std::deque<RawLine> newRawLines;
 
 	{
-		boost::recursive_mutex::scoped_lock scoped_lock(infoConsoleMutex);
+		std::lock_guard<spring::recursive_mutex> scoped_lock(infoConsoleMutex);
 
 		const int count = (int)rawData.size();
 		const int start = count - newLines;
@@ -157,7 +157,7 @@ void CInfoConsole::PushNewLinesToEventHandler()
 
 int CInfoConsole::GetRawLines(std::deque<RawLine>& lines)
 {
-	boost::recursive_mutex::scoped_lock scoped_lock(infoConsoleMutex);
+	std::lock_guard<spring::recursive_mutex> scoped_lock(infoConsoleMutex);
 	lines = rawData;
 	int tmp = newLines;
 	newLines = 0;
@@ -168,7 +168,7 @@ int CInfoConsole::GetRawLines(std::deque<RawLine>& lines)
 void CInfoConsole::RecordLogMessage(const std::string& section, int level,
 			const std::string& text)
 {
-	boost::recursive_mutex::scoped_lock scoped_lock(infoConsoleMutex);
+	std::lock_guard<spring::recursive_mutex> scoped_lock(infoConsoleMutex);
 
 	if (rawData.size() > maxRawLines) {
 		rawData.pop_front();

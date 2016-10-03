@@ -4,12 +4,12 @@
 #define _LOAD_SCREEN_H
 
 #include <string>
-#include <boost/thread/recursive_mutex.hpp>
 
 #include "GameController.h"
 #include "System/LoadSave/LoadSaveHandler.h"
 #include "System/OffscreenGLContext.h"
 #include "System/Misc/SpringTime.h"
+#include "System/Threading/SpringMutex.h"
 
 namespace boost {
 	class thread;
@@ -60,7 +60,7 @@ private:
 	std::string modName;
 	ILoadSaveHandler* saveFile;
 
-	boost::recursive_mutex mutex;
+	spring::recursive_mutex mutex;
 	boost::thread* netHeartbeatThread;
 	COffscreenGLThread* gameLoadThread;
 

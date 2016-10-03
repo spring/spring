@@ -3,7 +3,6 @@
 
 #include <cmath>
 #include <zlib.h>
-#include <boost/regex.hpp>
 
 #include "LuaVFS.h"
 

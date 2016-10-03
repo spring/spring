@@ -18,7 +18,7 @@
 #include "System/UnsyncedRNG.h"
 #include "System/float3.h"
 #include "System/Misc/SpringTime.h"
-#include "System/Platform/RecursiveScopedLock.h"
+#include "System/Threading/SpringMutex.h"
 
 /**
  * "player" number for GameServer-generated messages
@@ -271,7 +271,7 @@ private:
 	UnsyncedRNG rng;
 	boost::thread* thread;
 
-	mutable Threading::RecursiveMutex gameServerMutex;
+	mutable spring::recursive_mutex gameServerMutex;
 
 	volatile bool gameHasStarted;
 	volatile bool generatedGameID;

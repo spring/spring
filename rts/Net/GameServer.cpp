@@ -301,7 +301,7 @@ void CGameServer::Initialize()
 
 void CGameServer::PostLoad(int newServerFrameNum)
 {
-	Threading::RecursiveScopedLock scoped_lock(gameServerMutex);
+	std::lock_guard<spring::recursive_mutex> scoped_lock(gameServerMutex);
 	serverFrameNum = newServerFrameNum;
 
 	gameHasStarted = !PreSimFrame();
@@ -381,7 +381,7 @@ void CGameServer::StripGameSetupText(const GameData* newGameData)
 
 void CGameServer::AddLocalClient(const std::string& myName, const std::string& myVersion)
 {
-	Threading::RecursiveScopedLock scoped_lock(gameServerMutex);
+	std::lock_guard<spring::recursive_mutex> scoped_lock(gameServerMutex);
 	assert(!HasLocalClient());
 
 	localClientNumber = BindConnection(myName, "", myVersion, true, boost::shared_ptr<netcode::CConnection>(new netcode::CLocalConnection()));
@@ -2294,7 +2294,10 @@ void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 		return;
 	}
 
-	Threading::RecursiveScopedLock(gameServerMutex, !fromServerThread);
+	std::unique_lock<spring::recursive_mutex> lck(gameServerMutex, std::defer_lock);
+	if (!fromServerThread)
+		lck.lock();
+
 	CheckSync();
 
 	const bool vidRecording = videoCapturing->IsCapturing();
@@ -2429,7 +2432,7 @@ void CGameServer::UpdateLoop()
 			if (UDPNet)
 				UDPNet->Update();
 
-			Threading::RecursiveScopedLock scoped_lock(gameServerMutex);
+			std::lock_guard<spring::recursive_mutex> scoped_lock(gameServerMutex);
 			ServerReadNet();
 			Update();
 		}

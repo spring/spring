@@ -250,7 +250,7 @@ bool CLoadScreen::Update()
 {
 	{
 		//! cause of `curLoadMessage`
-		boost::recursive_mutex::scoped_lock lck(mutex);
+		std::lock_guard<spring::recursive_mutex> lck(mutex);
 		//! Stuff that needs to be done regularly while loading.
 		good_fpu_control_registers(curLoadMessage.c_str());
 	}
@@ -286,7 +286,7 @@ bool CLoadScreen::Draw()
 	}
 
 	//! cause of `curLoadMessage`
-	boost::recursive_mutex::scoped_lock lck(mutex);
+	std::lock_guard<spring::recursive_mutex> lck(mutex);
 
 	if (luaMenu != nullptr) {
 		// let LuaMenu keep the lobby conncetion alive
@@ -364,7 +364,7 @@ void CLoadScreen::SetLoadMessage(const std::string& text, bool replace_lastline)
 {
 	Watchdog::ClearTimer(WDT_LOAD);
 
-	boost::recursive_mutex::scoped_lock lck(mutex);
+	std::lock_guard<spring::recursive_mutex> lck(mutex);
 
 	if (!replace_lastline) {
 		if (oldLoadMessages.empty()) {
