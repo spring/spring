@@ -4,7 +4,6 @@
 #include <boost/thread.hpp>
 #include <boost/thread/condition.hpp>
 #include <cinttypes>
-#include <mutex>
 
 #include "System/ThreadPool.h"
 
@@ -24,6 +23,7 @@
 #include "System/FileSystem/FileSystem.h"
 #include "System/Log/ILog.h"
 #include "System/Platform/Threading.h"
+#include "System/Threading/SpringMutex.h"
 #include "System/Rectangle.h"
 #include "System/TimeProfiler.h"
 #include "System/Util.h"
@@ -43,7 +43,7 @@ namespace QTPFS {
 
 		void SetLoading(bool b) { loading = b; }
 		void AddLoadMessage(const std::string& msg) {
-			std::lock_guard<std::mutex> loadMessageLock(loadMessageMutex);
+			std::lock_guard<spring::mutex> loadMessageLock(loadMessageMutex);
 			loadMessages.push_back(msg);
 		}
 		void SetLoadMessage(const std::string& msg) {
@@ -54,7 +54,7 @@ namespace QTPFS {
 			#endif
 		}
 		void SetLoadMessages() {
-			std::lock_guard<std::mutex> loadMessageLock(loadMessageMutex);
+			std::lock_guard<spring::mutex> loadMessageLock(loadMessageMutex);
 
 			while (!loadMessages.empty()) {
 				SetLoadMessage(loadMessages.front());
@@ -75,7 +75,7 @@ namespace QTPFS {
 
 	private:
 		std::list<std::string> loadMessages;
-		std::mutex loadMessageMutex;
+		spring::mutex loadMessageMutex;
 
 		volatile bool loading;
 	};
@@ -154,7 +154,7 @@ std::int64_t QTPFS::PathManager::Finalize() {
 		pmLoadThread.join();
 
 		#ifdef QTPFS_ENABLE_THREADED_UPDATE
-		mutexThreadUpdate = new std::mutex();
+		mutexThreadUpdate = new spring::mutex();
 		condThreadUpdate = new boost::condition_variable();
 		condThreadUpdated = new boost::condition_variable();
 		updateThread = new boost::thread(boost::bind(&PathManager::ThreadUpdate, this));
@@ -663,7 +663,7 @@ void QTPFS::PathManager::Update() {
 	#ifdef QTPFS_ENABLE_THREADED_UPDATE
 	streflop::streflop_init<streflop::Simple>();
 
-	std::lock_guard<std::mutex> lock(*mutexThreadUpdate);
+	std::lock_guard<spring::mutex> lock(*mutexThreadUpdate);
 
 	// allow ThreadUpdate to run one iteration
 	condThreadUpdate->notify_one();
@@ -681,7 +681,7 @@ __FORCE_ALIGN_STACK__
 void QTPFS::PathManager::ThreadUpdate() {
 	#ifdef QTPFS_ENABLE_THREADED_UPDATE
 	while (!nodeLayers.empty()) {
-		std::lock_guard<std::mutex> lock(*mutexThreadUpdate);
+		std::lock_guard<spring::mutex> lock(*mutexThreadUpdate);
 
 		// wait for green light from Update
 		condThreadUpdate->wait(lock);

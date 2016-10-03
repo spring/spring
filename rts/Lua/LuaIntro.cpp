@@ -1,7 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include <mutex>
-
 #include "LuaIntro.h"
 
 #include "LuaInclude.h"
@@ -22,11 +20,12 @@
 #include "LuaIO.h"
 #include "LuaZip.h"
 #include "Rendering/IconHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
 #include "System/Log/ILog.h"
 #include "System/FileSystem/FileHandler.h"
-#include "System/Config/ConfigHandler.h"
 #include "System/FileSystem/FileSystem.h"
+#include "System/Threading/SpringMutex.h"
 #include "System/Util.h"
 
 
@@ -35,7 +34,7 @@ CLuaIntro* luaIntro = NULL;
 /******************************************************************************/
 /******************************************************************************/
 
-static std::mutex m_singleton;
+static spring::mutex m_singleton;
 
 DECL_LOAD_HANDLER(CLuaIntro, luaIntro)
 DECL_FREE_HANDLER(CLuaIntro, luaIntro)

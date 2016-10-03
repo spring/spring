@@ -34,11 +34,12 @@
 #include "System/Util.h"
 #include "System/Platform/Threading.h"
 #include "System/Platform/Watchdog.h"
+#include "System/Threading/SpringMutex.h"
 
 #include "System/float3.h"
 
 
-boost::recursive_mutex soundMutex;
+spring::recursive_mutex soundMutex;
 
 
 CSound::CSound()
@@ -47,7 +48,7 @@ CSound::CSound()
 	, soundThreadQuit(false)
 	, canLoadDefs(false)
 {
-	boost::recursive_mutex::scoped_lock lck(soundMutex);
+	std::lock_guard<spring::recursive_mutex> lck(soundMutex);
 	mute = false;
 	appIsIconified = false;
 	int maxSounds = configHandler->GetInt("MaxSounds");
@@ -108,7 +109,7 @@ bool CSound::HasSoundItem(const std::string& name) const
 
 size_t CSound::GetSoundId(const std::string& name)
 {
-	boost::recursive_mutex::scoped_lock lck(soundMutex);
+	std::lock_guard<spring::recursive_mutex> lck(soundMutex);
 
 	if (sources.empty())
 		return 0;
@@ -144,7 +145,7 @@ SoundItem* CSound::GetSoundItem(size_t id) const {
 
 CSoundSource* CSound::GetNextBestSource(bool lock)
 {
-	boost::recursive_mutex::scoped_lock lck(soundMutex, boost::defer_lock);
+	std::unique_lock<spring::recursive_mutex> lck(soundMutex, std::defer_lock);
 	if (lock)
 		lck.lock();
 
@@ -175,14 +176,14 @@ CSoundSource* CSound::GetNextBestSource(bool lock)
 
 void CSound::PitchAdjust(const float newPitch)
 {
-	boost::recursive_mutex::scoped_lock lck(soundMutex);
+	std::lock_guard<spring::recursive_mutex> lck(soundMutex);
 	if (pitchAdjust)
 		CSoundSource::SetPitch(newPitch);
 }
 
 void CSound::ConfigNotify(const std::string& key, const std::string& value)
 {
-	boost::recursive_mutex::scoped_lock lck(soundMutex);
+	std::lock_guard<spring::recursive_mutex> lck(soundMutex);
 	if (key == "snd_volmaster")
 	{
 		masterVolume = std::atoi(value.c_str()) * 0.01f;
@@ -241,7 +242,7 @@ void CSound::ConfigNotify(const std::string& key, const std::string& value)
 
 bool CSound::Mute()
 {
-	boost::recursive_mutex::scoped_lock lck(soundMutex);
+	std::lock_guard<spring::recursive_mutex> lck(soundMutex);
 	mute = !mute;
 	if (mute)
 		alListenerf(AL_GAIN, 0.0f);
@@ -257,7 +258,7 @@ bool CSound::IsMuted() const
 
 void CSound::Iconified(bool state)
 {
-	boost::recursive_mutex::scoped_lock lck(soundMutex);
+	std::lock_guard<spring::recursive_mutex> lck(soundMutex);
 	if (appIsIconified != state && !mute)
 	{
 		if (state == false)
@@ -272,7 +273,7 @@ __FORCE_ALIGN_STACK__
 void CSound::StartThread(int maxSounds)
 {
 	{
-		boost::recursive_mutex::scoped_lock lck(soundMutex);
+		std::lock_guard<spring::recursive_mutex> lck(soundMutex);
 
 		// alc... will create its own thread it will copy the name from the current thread.
 		// Later we finally rename `our` audio thread.
@@ -393,7 +394,7 @@ void CSound::StartThread(int maxSounds)
 
 void CSound::Update()
 {
-	boost::recursive_mutex::scoped_lock lck(soundMutex); // lock
+	std::lock_guard<spring::recursive_mutex> lck(soundMutex); // lock
 	for (sourceVecT::iterator it = sources.begin(); it != sources.end(); ++it)
 		it->Update();
 	CheckError("CSound::Update");
@@ -403,7 +404,7 @@ void CSound::Update()
 size_t CSound::MakeItemFromDef(const soundItemDef& itemDef)
 {
 	//! MakeItemFromDef is private. Only caller is LoadSoundDefs and it sets the mutex itself.
-	//boost::recursive_mutex::scoped_lock lck(soundMutex);
+	//std::lock_guard<spring::recursive_mutex> lck(soundMutex);
 	const size_t newid = sounds.size();
 	soundItemDef::const_iterator it = itemDef.find("file");
 	if (it == itemDef.end())
@@ -474,7 +475,7 @@ void CSound::UpdateListenerReal()
 
 void CSound::PrintDebugInfo()
 {
-	boost::recursive_mutex::scoped_lock lck(soundMutex);
+	std::lock_guard<spring::recursive_mutex> lck(soundMutex);
 
 	LOG_L(L_DEBUG, "OpenAL Sound System:");
 	LOG_L(L_DEBUG, "# SoundSources: %i", (int)sources.size());
@@ -489,7 +490,7 @@ void CSound::PrintDebugInfo()
 bool CSound::LoadSoundDefsImpl(const std::string& fileName, const std::string& modes)
 {
 	//! can be called from LuaUnsyncedCtrl too
-	boost::recursive_mutex::scoped_lock lck(soundMutex);
+	std::lock_guard<spring::recursive_mutex> lck(soundMutex);
 
 	LuaParser parser(fileName, modes, modes);
 	parser.Execute();

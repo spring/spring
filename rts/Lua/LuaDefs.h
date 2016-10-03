@@ -87,7 +87,7 @@ namespace {
 #define DECL_LOAD_HANDLER(HandlerType, HandlerInstance)     \
 	bool HandlerType::LoadHandler() {                       \
 		{                                                   \
-			std::lock_guard<std::mutex> lk(m_singleton);  \
+			std::lock_guard<spring::mutex> lk(m_singleton);  \
                                                             \
 			if (HandlerInstance != NULL)                    \
 				return (HandlerInstance->IsValid());        \
@@ -99,7 +99,7 @@ namespace {
 
 #define DECL_FREE_HANDLER(HandlerType, HandlerInstance)  \
 	bool HandlerType::FreeHandler() {                    \
-		std::lock_guard<std::mutex> lk(m_singleton);   \
+		std::lock_guard<spring::mutex> lk(m_singleton);   \
                                                          \
 		if (HandlerInstance == NULL)                     \
 			return false;                                \

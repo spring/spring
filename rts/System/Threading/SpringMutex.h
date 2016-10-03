@@ -12,8 +12,8 @@
 	#include <mutex>
 #else
 	#include "Futex.h"
-	#include <mutex>
 #endif
+#include <mutex>
 #include <boost/thread/shared_mutex.hpp>
 
 

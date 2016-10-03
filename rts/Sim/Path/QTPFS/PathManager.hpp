@@ -21,7 +21,7 @@ namespace boost {
 	class thread;
 	class condition_variable;
 };
-namespace std {
+namespace spring {
 	class mutex;
 };
 #endif
@@ -170,7 +170,7 @@ namespace QTPFS {
 
 		#ifdef QTPFS_ENABLE_THREADED_UPDATE
 		boost::thread* updateThread;
-		std::mutex* mutexThreadUpdate;
+		spring::mutex* mutexThreadUpdate;
 		boost::condition_variable* condThreadUpdate;
 		boost::condition_variable* condThreadUpdated;
 		#endif

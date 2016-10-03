@@ -48,9 +48,9 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/Util.h"
+#include "System/Threading/SpringMutex.h"
 #include "lib/luasocket/src/luasocket.h"
 
-#include <mutex>
 #include <stdio.h>
 #include <set>
 #include <cctype>
@@ -86,7 +86,7 @@ static const char* GetVFSMode(bool lockedAccess)
 /******************************************************************************/
 /******************************************************************************/
 
-static std::mutex m_singleton;
+static spring::mutex m_singleton;
 
 DECL_LOAD_HANDLER(CLuaUI, luaUI)
 DECL_FREE_HANDLER(CLuaUI, luaUI)

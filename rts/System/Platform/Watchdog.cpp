@@ -10,7 +10,6 @@
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
-#include <mutex>
 
 #include "Game/GameVersion.h"
 #include "System/Config/ConfigHandler.h"
@@ -20,6 +19,7 @@
 #include "System/Platform/CrashHandler.h"
 #include "System/Platform/Misc.h"
 #include "System/Platform/Threading.h"
+#include "System/Threading/SpringMutex.h"
 
 CONFIG(int, HangTimeout).defaultValue(10).minimumValue(-1).maximumValue(600)
 		.description("Number of seconds that, if spent in the same code segment, indicate a hang; -1 to disable.");
@@ -28,7 +28,7 @@ namespace Watchdog
 {
 	const char* threadNames[] = {"main", "sim", "load", "audio", "self"};
 
-	static std::mutex wdmutex;
+	static spring::mutex wdmutex;
 
 	static unsigned int curorder = 0;
 
@@ -160,7 +160,7 @@ namespace Watchdog
 
 	void RegisterThread(WatchdogThreadnum num, bool primary)
 	{
-		std::lock_guard<std::mutex> lock(wdmutex);
+		std::lock_guard<spring::mutex> lock(wdmutex);
 
 		if (num >= WDT_COUNT || registeredThreads[num]->numreg != 0) {
 			LOG_L(L_ERROR, "[Watchdog::%s] Invalid thread number %u", __FUNCTION__, num);
@@ -213,7 +213,7 @@ namespace Watchdog
 
 	void DeregisterThread(WatchdogThreadnum num)
 	{
-		std::lock_guard<std::mutex> lock(wdmutex);
+		std::lock_guard<spring::mutex> lock(wdmutex);
 
 		WatchDogThreadInfo* threadInfo = nullptr;
 
@@ -328,7 +328,7 @@ namespace Watchdog
 
 	void Install()
 	{
-		std::lock_guard<std::mutex> lock(wdmutex);
+		std::lock_guard<spring::mutex> lock(wdmutex);
 
 		memset(registeredThreadsData, 0, sizeof(registeredThreadsData));
 		for (unsigned int i = 0; i < WDT_COUNT; ++i) {
@@ -372,7 +372,7 @@ namespace Watchdog
 		if (hangDetectorThread == NULL)
 			return;
 
-		std::lock_guard<std::mutex> lock(wdmutex);
+		std::lock_guard<spring::mutex> lock(wdmutex);
 
 		hangDetectorThreadInterrupted = true;
 

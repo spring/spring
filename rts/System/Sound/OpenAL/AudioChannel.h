@@ -8,7 +8,6 @@
 #include <string.h>
 
 #include "System/Sound/IAudioChannel.h"
-#include <boost/thread/recursive_mutex.hpp>
 
 struct GuiSoundSet;
 class CSoundSource;
@@ -41,7 +40,7 @@ public:
 
 	/**
 	 * @brief Stop playback
-	 * 
+	 *
 	 * Do not call this if you just want to play another file (for performance).
 	 */
 	void StreamStop();
@@ -67,7 +66,7 @@ private:
 		std::string fileName;
 		float volume;
 	};
-	
+
 	CSoundSource* curStreamSrc;
 	std::vector<StreamQueueItem> streamQueue;
 	static const size_t MAX_STREAM_QUEUESIZE;

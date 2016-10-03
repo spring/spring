@@ -10,7 +10,6 @@
 #include <map>
 #include <vector>
 #include <boost/ptr_container/ptr_vector.hpp>
-#include <boost/thread/recursive_mutex.hpp>
 
 #include "System/float3.h"
 

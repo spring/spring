@@ -3,7 +3,6 @@
 // must be included before streflop! else we get streflop/cmath resolve conflicts in its hash implementation files
 #include <boost/unordered_map.hpp>
 #include <vector>
-#include <mutex>
 
 #include "NamedTextures.h"
 

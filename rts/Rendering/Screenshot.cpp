@@ -5,7 +5,6 @@
 #include <vector>
 #include <iomanip>
 #include <boost/thread.hpp>
-#include <mutex>
 
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GlobalRendering.h"
@@ -15,6 +14,7 @@
 #include "System/FileSystem/FileSystem.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/Platform/Threading.h"
+#include "System/Threading/SpringMutex.h"
 
 #undef CreateDirectory
 
@@ -44,7 +44,7 @@ public:
 	void AddTask(FunctionArgs arg)
 	{
 		{
-			std::lock_guard<std::mutex> mylock(myMutex);
+			std::lock_guard<spring::mutex> mylock(myMutex);
 			tasks.push_back(arg);
 			Update();
 		}
@@ -70,7 +70,7 @@ public:
 private:
 	bool GetTask(FunctionArgs& args)
 	{
-		std::lock_guard<std::mutex> mylock(myMutex);
+		std::lock_guard<spring::mutex> mylock(myMutex);
 		if (!tasks.empty())
 		{
 			args = tasks.front();
@@ -100,7 +100,7 @@ private:
 		finished = true;
 	};
 
-	std::mutex myMutex;
+	spring::mutex myMutex;
 	boost::thread* myThread;
 	volatile bool finished;
 	std::list<FunctionArgs> tasks;

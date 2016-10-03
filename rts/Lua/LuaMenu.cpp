@@ -2,8 +2,6 @@
 
 #include "LuaMenu.h"
 
-#include <mutex>
-
 #include "LuaInclude.h"
 
 #include "LuaArchive.h"
@@ -25,6 +23,7 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
+#include "System/Threading/SpringMutex.h"
 #include "lib/luasocket/src/luasocket.h"
 
 CLuaMenu* luaMenu = nullptr;
@@ -32,7 +31,7 @@ CLuaMenu* luaMenu = nullptr;
 /******************************************************************************/
 /******************************************************************************/
 
-static std::mutex m_singleton;
+static spring::mutex m_singleton;
 
 DECL_LOAD_HANDLER(CLuaMenu, luaMenu)
 DECL_FREE_HANDLER(CLuaMenu, luaMenu)

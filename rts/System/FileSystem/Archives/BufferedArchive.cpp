@@ -16,7 +16,7 @@ CBufferedArchive::~CBufferedArchive()
 
 bool CBufferedArchive::GetFile(unsigned int fid, std::vector<std::uint8_t>& buffer)
 {
-	std::lock_guard<std::mutex> lck(archiveLock);
+	std::lock_guard<spring::mutex> lck(archiveLock);
 	assert(IsFileId(fid));
 
 	if (!caching) {

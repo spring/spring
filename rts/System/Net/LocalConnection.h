@@ -3,8 +3,8 @@
 #ifndef _LOCAL_CONNECTION_H
 #define _LOCAL_CONNECTION_H
 
-#include <mutex>
 #include <deque>
+#include "System/Threading/SpringMutex.h"
 
 #include "Connection.h"
 
@@ -54,7 +54,7 @@ public:
 
 private:
 	static std::deque< boost::shared_ptr<const RawPacket> > pqueues[2];
-	static std::mutex mutexes[2];
+	static spring::mutex mutexes[2];
 
 	unsigned int OtherInstance() const { return ((instance + 1) % 2); }
 

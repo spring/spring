@@ -14,9 +14,9 @@
 #include "Sim/Units/Scripts/CobInstance.h" // for UNPACK{X,Z}
 #include "System/Log/ILog.h"
 #include "System/FileSystem/VFSModes.h" // for SPRING_VFS_*
+#include "System/Threading/SpringMutex.h"
 
 #include <assert.h>
-#include <mutex>
 
 CLuaRules* luaRules = NULL;
 
@@ -29,7 +29,7 @@ const int* CLuaRules::currentCobArgs = NULL;
 /******************************************************************************/
 /******************************************************************************/
 
-static std::mutex m_singleton;
+static spring::mutex m_singleton;
 
 DECL_LOAD_HANDLER(CLuaRules, luaRules)
 DECL_FREE_HANDLER(CLuaRules, luaRules)

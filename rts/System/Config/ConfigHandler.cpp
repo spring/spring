@@ -5,6 +5,7 @@
 #include "ConfigSource.h"
 #include "System/Util.h"
 #include "System/Log/ILog.h"
+#include "System/Threading/SpringMutex.h"
 
 #ifdef WIN32
 	#include <io.h>
@@ -14,8 +15,6 @@
 
 #include <list>
 #include <stdexcept>
-
-#include <mutex>
 
 /******************************************************************************/
 
@@ -71,7 +70,7 @@ private:
 
 	// observer related
 	list<NamedConfigNotifyCallback> observers;
-	std::mutex observerMutex;
+	spring::mutex observerMutex;
 	StringMap changedValues;
 	bool writingEnabled;
 };
@@ -311,13 +310,13 @@ void ConfigHandlerImpl::SetString(const string& key, const string& value, bool u
 		}
 	}
 
-	std::lock_guard<std::mutex> lck(observerMutex);
+	std::lock_guard<spring::mutex> lck(observerMutex);
 	changedValues[key] = value;
 }
 
 void ConfigHandlerImpl::Update()
 {
-	std::lock_guard<std::mutex> lck(observerMutex);
+	std::lock_guard<spring::mutex> lck(observerMutex);
 	for (StringMap::const_iterator ut = changedValues.begin(); ut != changedValues.end(); ++ut) {
 		const string& key = ut->first;
 		const string& value = ut->second;
@@ -343,12 +342,12 @@ const StringMap ConfigHandlerImpl::GetData() const {
 }
 
 void ConfigHandlerImpl::AddObserver(ConfigNotifyCallback observer, void* holder) {
-	std::lock_guard<std::mutex> lck(observerMutex);
+	std::lock_guard<spring::mutex> lck(observerMutex);
 	observers.emplace_back(observer, holder);
 }
 
 void ConfigHandlerImpl::RemoveObserver(void* holder) {
-	std::lock_guard<std::mutex> lck(observerMutex);
+	std::lock_guard<spring::mutex> lck(observerMutex);
 	for (list<NamedConfigNotifyCallback>::iterator it = observers.begin(); it != observers.end(); ++it) {
 		if (it->holder == holder) {
 			observers.erase(it);
