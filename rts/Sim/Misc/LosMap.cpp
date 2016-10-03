@@ -20,7 +20,7 @@
 constexpr float LOS_BONUS_HEIGHT = 5.f;
 
 
-static spring::shared_spinlock mutex;
+static spring::spinlock mutex;
 static std::array<std::vector<float>, ThreadPool::MAX_THREADS> isqrt_table;
 
 
@@ -139,12 +139,11 @@ CLosTables CLosTables::instance;
 
 void CLosTables::GenerateForLosSize(size_t losSize)
 {
-	boost::upgrade_lock<spring::shared_spinlock> lock(mutex);
+	std::lock_guard<spring::spinlock> lck(mutex);
 	// guard against insane sight distances
 	assert(losSize < instance.lostables.capacity());
 
 	if (instance.lostables.size() <= losSize) {
-		boost::upgrade_to_unique_lock<spring::shared_spinlock> uniqueLock(lock);
 		if (instance.lostables.size() <= losSize) {
 			instance.lostables.resize(losSize+1);
 		}
@@ -153,7 +152,6 @@ void CLosTables::GenerateForLosSize(size_t losSize)
 	LosTable& tl = instance.lostables[losSize];
 	if (tl.empty() && losSize > 0) {
 		auto lrays = GetLosRays(losSize);
-		boost::upgrade_to_unique_lock<spring::shared_spinlock> uniqueLock(lock);
 		if (tl.empty()) {
 			tl = std::move(lrays);
 		}
