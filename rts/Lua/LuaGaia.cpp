@@ -3,7 +3,6 @@
 
 #include <set>
 #include <mutex>
-#include <boost/thread/mutex.hpp>
 
 #include "LuaGaia.h"
 
@@ -36,7 +35,7 @@ static const char* LuaGaiaUnsyncedFilename = "LuaGaia/draw.lua";
 /******************************************************************************/
 /******************************************************************************/
 
-static boost::mutex m_singleton;
+static std::mutex m_singleton;
 
 DECL_LOAD_HANDLER(CLuaGaia, luaGaia)
 DECL_FREE_HANDLER(CLuaGaia, luaGaia)

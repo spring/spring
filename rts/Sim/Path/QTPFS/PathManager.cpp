@@ -4,6 +4,7 @@
 #include <boost/thread.hpp>
 #include <boost/thread/condition.hpp>
 #include <cinttypes>
+#include <mutex>
 
 #include "System/ThreadPool.h"
 
@@ -42,7 +43,7 @@ namespace QTPFS {
 
 		void SetLoading(bool b) { loading = b; }
 		void AddLoadMessage(const std::string& msg) {
-			boost::mutex::scoped_lock loadMessageLock(loadMessageMutex);
+			std::lock_guard<std::mutex> loadMessageLock(loadMessageMutex);
 			loadMessages.push_back(msg);
 		}
 		void SetLoadMessage(const std::string& msg) {
@@ -53,7 +54,7 @@ namespace QTPFS {
 			#endif
 		}
 		void SetLoadMessages() {
-			boost::mutex::scoped_lock loadMessageLock(loadMessageMutex);
+			std::lock_guard<std::mutex> loadMessageLock(loadMessageMutex);
 
 			while (!loadMessages.empty()) {
 				SetLoadMessage(loadMessages.front());
@@ -74,7 +75,7 @@ namespace QTPFS {
 
 	private:
 		std::list<std::string> loadMessages;
-		boost::mutex loadMessageMutex;
+		std::mutex loadMessageMutex;
 
 		volatile bool loading;
 	};
@@ -153,7 +154,7 @@ std::int64_t QTPFS::PathManager::Finalize() {
 		pmLoadThread.join();
 
 		#ifdef QTPFS_ENABLE_THREADED_UPDATE
-		mutexThreadUpdate = new boost::mutex();
+		mutexThreadUpdate = new std::mutex();
 		condThreadUpdate = new boost::condition_variable();
 		condThreadUpdated = new boost::condition_variable();
 		updateThread = new boost::thread(boost::bind(&PathManager::ThreadUpdate, this));
@@ -662,7 +663,7 @@ void QTPFS::PathManager::Update() {
 	#ifdef QTPFS_ENABLE_THREADED_UPDATE
 	streflop::streflop_init<streflop::Simple>();
 
-	boost::mutex::scoped_lock lock(*mutexThreadUpdate);
+	std::lock_guard<std::mutex> lock(*mutexThreadUpdate);
 
 	// allow ThreadUpdate to run one iteration
 	condThreadUpdate->notify_one();
@@ -680,7 +681,7 @@ __FORCE_ALIGN_STACK__
 void QTPFS::PathManager::ThreadUpdate() {
 	#ifdef QTPFS_ENABLE_THREADED_UPDATE
 	while (!nodeLayers.empty()) {
-		boost::mutex::scoped_lock lock(*mutexThreadUpdate);
+		std::lock_guard<std::mutex> lock(*mutexThreadUpdate);
 
 		// wait for green light from Update
 		condThreadUpdate->wait(lock);

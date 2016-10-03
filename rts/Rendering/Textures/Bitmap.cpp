@@ -7,7 +7,7 @@
 #include <string.h>
 #include <IL/il.h>
 #include <SDL_video.h>
-#include <boost/thread.hpp>
+#include <mutex>
 
 #ifndef BITMAP_NO_OPENGL
 	#include "Rendering/GL/myGL.h"
@@ -25,7 +25,7 @@
 #include "System/FileSystem/FileHandler.h"
 
 
-boost::mutex devilMutex; // devil functions, whilst expensive, aren't thread-save
+std::mutex devilMutex; // devil functions, whilst expensive, aren't thread-save
 
 static const float blurkernel[9] = {
 	1.0f/16.0f, 2.0f/16.0f, 1.0f/16.0f,
@@ -263,7 +263,7 @@ bool CBitmap::Load(std::string const& filename, unsigned char defaultAlpha)
 	unsigned char* buffer = new unsigned char[file.FileSize() + 2];
 	file.Read(buffer, file.FileSize());
 
-	boost::mutex::scoped_lock lck(devilMutex);
+	std::lock_guard<std::mutex> lck(devilMutex);
 	ilOriginFunc(IL_ORIGIN_UPPER_LEFT);
 	ilEnable(IL_ORIGIN_SET);
 
@@ -335,7 +335,7 @@ bool CBitmap::LoadGrayscale(const std::string& filename)
 	unsigned char* buffer = new unsigned char[file.FileSize() + 1];
 	file.Read(buffer, file.FileSize());
 
-	boost::mutex::scoped_lock lck(devilMutex);
+	std::lock_guard<std::mutex> lck(devilMutex);
 	ilOriginFunc(IL_ORIGIN_UPPER_LEFT);
 	ilEnable(IL_ORIGIN_SET);
 
@@ -394,7 +394,7 @@ bool CBitmap::Save(std::string const& filename, bool opaque) const
 		}
 	}
 
-	boost::mutex::scoped_lock lck(devilMutex);
+	std::lock_guard<std::mutex> lck(devilMutex);
 	ilOriginFunc(IL_ORIGIN_UPPER_LEFT);
 	ilEnable(IL_ORIGIN_SET);
 
@@ -437,7 +437,7 @@ bool CBitmap::SaveFloat(std::string const& filename) const
 		}
 	}
 
-	boost::mutex::scoped_lock lck(devilMutex);
+	std::lock_guard<std::mutex> lck(devilMutex);
 	ilHint(IL_COMPRESSION_HINT, IL_USE_COMPRESSION);
 	ilSetInteger(IL_JPG_QUALITY, 80);
 

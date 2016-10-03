@@ -1,7 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include <mutex>
-#include <boost/thread/mutex.hpp>
 
 #include "LuaIntro.h"
 
@@ -36,7 +35,7 @@ CLuaIntro* luaIntro = NULL;
 /******************************************************************************/
 /******************************************************************************/
 
-static boost::mutex m_singleton;
+static std::mutex m_singleton;
 
 DECL_LOAD_HANDLER(CLuaIntro, luaIntro)
 DECL_FREE_HANDLER(CLuaIntro, luaIntro)

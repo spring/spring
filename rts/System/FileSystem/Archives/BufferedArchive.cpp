@@ -1,8 +1,8 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-
 #include "BufferedArchive.h"
 
+#include <cassert>
 
 CBufferedArchive::CBufferedArchive(const std::string& name, bool cache)
 	: IArchive(name)
@@ -16,7 +16,7 @@ CBufferedArchive::~CBufferedArchive()
 
 bool CBufferedArchive::GetFile(unsigned int fid, std::vector<std::uint8_t>& buffer)
 {
-	boost::mutex::scoped_lock lck(archiveLock);
+	std::lock_guard<std::mutex> lck(archiveLock);
 	assert(IsFileId(fid));
 
 	if (!caching) {

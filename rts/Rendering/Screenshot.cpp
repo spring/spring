@@ -5,6 +5,7 @@
 #include <vector>
 #include <iomanip>
 #include <boost/thread.hpp>
+#include <mutex>
 
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GlobalRendering.h"
@@ -43,7 +44,7 @@ public:
 	void AddTask(FunctionArgs arg)
 	{
 		{
-			boost::mutex::scoped_lock mylock(myMutex);
+			std::lock_guard<std::mutex> mylock(myMutex);
 			tasks.push_back(arg);
 			Update();
 		}
@@ -69,7 +70,7 @@ public:
 private:
 	bool GetTask(FunctionArgs& args)
 	{
-		boost::mutex::scoped_lock mylock(myMutex);
+		std::lock_guard<std::mutex> mylock(myMutex);
 		if (!tasks.empty())
 		{
 			args = tasks.front();
@@ -99,7 +100,7 @@ private:
 		finished = true;
 	};
 
-	boost::mutex myMutex;
+	std::mutex myMutex;
 	boost::thread* myThread;
 	volatile bool finished;
 	std::list<FunctionArgs> tasks;

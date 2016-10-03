@@ -4,7 +4,7 @@
 #define _BUFFERED_ARCHIVE_H
 
 #include <map>
-#include <boost/thread/mutex.hpp>
+#include <mutex>
 
 #include "IArchive.h"
 
@@ -23,7 +23,7 @@ public:
 protected:
 	virtual bool GetFileImpl(unsigned int fid, std::vector<std::uint8_t>& buffer) = 0;
 
-	boost::mutex archiveLock; // neither 7zip nor zlib are threadsafe
+	std::mutex archiveLock; // neither 7zip nor zlib are threadsafe
 	struct FileBuffer
 	{
 		FileBuffer() : populated(false), exists(false) {};

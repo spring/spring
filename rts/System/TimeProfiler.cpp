@@ -3,9 +3,7 @@
 #include "System/TimeProfiler.h"
 
 #include <cstring>
-#include <boost/unordered_map.hpp>
-#include <boost/thread/mutex.hpp>
-#include <boost/thread/locks.hpp>
+#include <mutex>
 
 #include "System/Log/ILog.h"
 #include "System/UnsyncedRNG.h"
@@ -13,7 +11,7 @@
 	#include "System/ThreadPool.h"
 #endif
 
-static boost::mutex m;
+static std::mutex m;
 static std::map<int, std::string> hashToName;
 static std::map<int, int> refs;
 
@@ -176,7 +174,7 @@ CTimeProfiler::CTimeProfiler():
 
 CTimeProfiler::~CTimeProfiler()
 {
-	boost::unique_lock<boost::mutex> ulk(m, boost::defer_lock);
+	std::unique_lock<std::mutex> ulk(m, std::defer_lock);
 	while (!ulk.try_lock()) {}
 }
 
@@ -189,7 +187,7 @@ CTimeProfiler& CTimeProfiler::GetInstance()
 void CTimeProfiler::Update()
 {
 	//FIXME non-locking threadsafe
-	boost::unique_lock<boost::mutex> ulk(m, boost::defer_lock);
+	std::unique_lock<std::mutex> ulk(m, std::defer_lock);
 	while (!ulk.try_lock()) {}
 
 	++currentPosition;
@@ -226,7 +224,7 @@ void CTimeProfiler::Update()
 
 float CTimeProfiler::GetPercent(const char* name)
 {
-	boost::unique_lock<boost::mutex> ulk(m, boost::defer_lock);
+	std::unique_lock<std::mutex> ulk(m, std::defer_lock);
 	while (!ulk.try_lock()) {}
 
 	return profile[name].percent;
@@ -247,7 +245,7 @@ void CTimeProfiler::AddTime(const std::string& name, const spring_time time, con
 			p.newLagPeak = true;
 		}
 	} else {
-		boost::unique_lock<boost::mutex> ulk(m, boost::defer_lock);
+		std::unique_lock<std::mutex> ulk(m, std::defer_lock);
 		while (!ulk.try_lock()) {}
 
 		// create a new profile

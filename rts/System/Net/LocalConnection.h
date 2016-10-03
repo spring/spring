@@ -3,7 +3,7 @@
 #ifndef _LOCAL_CONNECTION_H
 #define _LOCAL_CONNECTION_H
 
-#include <boost/thread/mutex.hpp>
+#include <mutex>
 #include <deque>
 
 #include "Connection.h"
@@ -54,7 +54,7 @@ public:
 
 private:
 	static std::deque< boost::shared_ptr<const RawPacket> > pqueues[2];
-	static boost::mutex mutexes[2];
+	static std::mutex mutexes[2];
 
 	unsigned int OtherInstance() const { return ((instance + 1) % 2); }
 

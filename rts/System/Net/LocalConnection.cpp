@@ -14,7 +14,7 @@ namespace netcode {
 unsigned CLocalConnection::instances = 0;
 
 std::deque< boost::shared_ptr<const RawPacket> > CLocalConnection::pqueues[2];
-boost::mutex CLocalConnection::mutexes[2];
+std::mutex CLocalConnection::mutexes[2];
 
 CLocalConnection::CLocalConnection()
 {
@@ -40,7 +40,7 @@ CLocalConnection::~CLocalConnection()
 void CLocalConnection::Close(bool flush)
 {
 	if (flush) {
-		boost::mutex::scoped_lock scoped_lock(mutexes[instance]);
+		std::lock_guard<std::mutex> scoped_lock(mutexes[instance]);
 		pqueues[instance].clear();
 	}
 }
@@ -58,13 +58,13 @@ void CLocalConnection::SendData(boost::shared_ptr<const RawPacket> packet)
 	dataSent += packet->length;
 
 	// when sending from A to B we must lock B's queue
-	boost::mutex::scoped_lock scoped_lock(mutexes[OtherInstance()]);
+	std::lock_guard<std::mutex> scoped_lock(mutexes[OtherInstance()]);
 	pqueues[OtherInstance()].push_back(packet);
 }
 
 boost::shared_ptr<const RawPacket> CLocalConnection::GetData()
 {
-	boost::mutex::scoped_lock scoped_lock(mutexes[instance]);
+	std::lock_guard<std::mutex> scoped_lock(mutexes[instance]);
 
 	if (!pqueues[instance].empty()) {
 		boost::shared_ptr<const RawPacket> next = pqueues[instance].front();
@@ -79,7 +79,7 @@ boost::shared_ptr<const RawPacket> CLocalConnection::GetData()
 
 boost::shared_ptr<const RawPacket> CLocalConnection::Peek(unsigned ahead) const
 {
-	boost::mutex::scoped_lock scoped_lock(mutexes[instance]);
+	std::lock_guard<std::mutex> scoped_lock(mutexes[instance]);
 
 	if (ahead < pqueues[instance].size())
 		return pqueues[instance][ahead];
@@ -90,7 +90,7 @@ boost::shared_ptr<const RawPacket> CLocalConnection::Peek(unsigned ahead) const
 
 void CLocalConnection::DeleteBufferPacketAt(unsigned index)
 {
-	boost::mutex::scoped_lock scoped_lock(mutexes[instance]);
+	std::lock_guard<std::mutex> scoped_lock(mutexes[instance]);
 
 	if (index >= pqueues[instance].size())
 		return;
@@ -115,13 +115,13 @@ std::string CLocalConnection::GetFullAddress() const
 
 bool CLocalConnection::HasIncomingData() const
 {
-	boost::mutex::scoped_lock scoped_lock(mutexes[instance]);
+	std::lock_guard<std::mutex> scoped_lock(mutexes[instance]);
 	return (!pqueues[instance].empty());
 }
 
 unsigned int CLocalConnection::GetPacketQueueSize() const
 {
-	boost::mutex::scoped_lock scoped_lock(mutexes[instance]);
+	std::lock_guard<std::mutex> scoped_lock(mutexes[instance]);
 	return (!pqueues[instance].size());
 }
 

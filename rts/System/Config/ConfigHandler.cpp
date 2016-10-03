@@ -15,7 +15,7 @@
 #include <list>
 #include <stdexcept>
 
-#include <boost/thread/mutex.hpp>
+#include <mutex>
 
 /******************************************************************************/
 
@@ -71,7 +71,7 @@ private:
 
 	// observer related
 	list<NamedConfigNotifyCallback> observers;
-	boost::mutex observerMutex;
+	std::mutex observerMutex;
 	StringMap changedValues;
 	bool writingEnabled;
 };
@@ -311,13 +311,13 @@ void ConfigHandlerImpl::SetString(const string& key, const string& value, bool u
 		}
 	}
 
-	boost::mutex::scoped_lock lck(observerMutex);
+	std::lock_guard<std::mutex> lck(observerMutex);
 	changedValues[key] = value;
 }
 
 void ConfigHandlerImpl::Update()
 {
-	boost::mutex::scoped_lock lck(observerMutex);
+	std::lock_guard<std::mutex> lck(observerMutex);
 	for (StringMap::const_iterator ut = changedValues.begin(); ut != changedValues.end(); ++ut) {
 		const string& key = ut->first;
 		const string& value = ut->second;
@@ -343,12 +343,12 @@ const StringMap ConfigHandlerImpl::GetData() const {
 }
 
 void ConfigHandlerImpl::AddObserver(ConfigNotifyCallback observer, void* holder) {
-	boost::mutex::scoped_lock lck(observerMutex);
+	std::lock_guard<std::mutex> lck(observerMutex);
 	observers.emplace_back(observer, holder);
 }
 
 void ConfigHandlerImpl::RemoveObserver(void* holder) {
-	boost::mutex::scoped_lock lck(observerMutex);
+	std::lock_guard<std::mutex> lck(observerMutex);
 	for (list<NamedConfigNotifyCallback>::iterator it = observers.begin(); it != observers.end(); ++it) {
 		if (it->holder == holder) {
 			observers.erase(it);

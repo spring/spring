@@ -10,7 +10,7 @@
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
-#include <boost/thread/recursive_mutex.hpp>
+#include <mutex>
 
 #include "Game/GameVersion.h"
 #include "System/Config/ConfigHandler.h"
@@ -28,7 +28,7 @@ namespace Watchdog
 {
 	const char* threadNames[] = {"main", "sim", "load", "audio", "self"};
 
-	static boost::mutex wdmutex;
+	static std::mutex wdmutex;
 
 	static unsigned int curorder = 0;
 
@@ -160,7 +160,7 @@ namespace Watchdog
 
 	void RegisterThread(WatchdogThreadnum num, bool primary)
 	{
-		boost::mutex::scoped_lock lock(wdmutex);
+		std::lock_guard<std::mutex> lock(wdmutex);
 
 		if (num >= WDT_COUNT || registeredThreads[num]->numreg != 0) {
 			LOG_L(L_ERROR, "[Watchdog::%s] Invalid thread number %u", __FUNCTION__, num);
@@ -213,7 +213,7 @@ namespace Watchdog
 
 	void DeregisterThread(WatchdogThreadnum num)
 	{
-		boost::mutex::scoped_lock lock(wdmutex);
+		std::lock_guard<std::mutex> lock(wdmutex);
 
 		WatchDogThreadInfo* threadInfo = nullptr;
 
@@ -328,7 +328,7 @@ namespace Watchdog
 
 	void Install()
 	{
-		boost::mutex::scoped_lock lock(wdmutex);
+		std::lock_guard<std::mutex> lock(wdmutex);
 
 		memset(registeredThreadsData, 0, sizeof(registeredThreadsData));
 		for (unsigned int i = 0; i < WDT_COUNT; ++i) {
@@ -372,7 +372,7 @@ namespace Watchdog
 		if (hangDetectorThread == NULL)
 			return;
 
-		boost::mutex::scoped_lock lock(wdmutex);
+		std::lock_guard<std::mutex> lock(wdmutex);
 
 		hangDetectorThreadInterrupted = true;
 
