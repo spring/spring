@@ -33,7 +33,7 @@ GameData::GameData(boost::shared_ptr<const RawPacket> pckt)
 	assert(pckt->data[0] == NETMSG_GAMEDATA);
 
 	UnpackPacket packet(pckt, 3);
-	boost::uint16_t compressedSize;
+	std::uint16_t compressedSize;
 	packet >> compressedSize;
 	compressed.resize(compressedSize);
 	packet >> compressed;
@@ -46,7 +46,7 @@ GameData::GameData(boost::shared_ptr<const RawPacket> pckt)
 	unsigned long bufSize = 256 * 1024;
 	unsigned long rawSize = bufSize;
 
-	std::vector<boost::uint8_t> buffer(bufSize);
+	std::vector<std::uint8_t> buffer(bufSize);
 
 	int ret;
 	while ((ret = uncompress(&buffer[0], &rawSize, &compressed[0], compressed.size())) == Z_BUF_ERROR) {
@@ -70,7 +70,7 @@ const netcode::RawPacket* GameData::Pack() const
 	if (compressed.empty()) {
 		long unsigned bufsize = compressBound(setupText.size());
 		compressed.resize(bufsize);
-		const int error = compress(&compressed[0], &bufsize, reinterpret_cast<const boost::uint8_t*>(setupText.c_str()), setupText.length());
+		const int error = compress(&compressed[0], &bufsize, reinterpret_cast<const std::uint8_t*>(setupText.c_str()), setupText.length());
 		compressed.resize(bufsize);
 		assert(error == Z_OK);
 	}
@@ -78,7 +78,7 @@ const netcode::RawPacket* GameData::Pack() const
 	unsigned short size = 3 + 2*sizeof(unsigned) + compressed.size()+2 + 4;
 	PackPacket* buffer = new PackPacket(size, NETMSG_GAMEDATA);
 	*buffer << size;
-	*buffer << boost::uint16_t(compressed.size());
+	*buffer << std::uint16_t(compressed.size());
 	*buffer << compressed;
 	*buffer << mapChecksum;
 	*buffer << modChecksum;

@@ -17,7 +17,7 @@
 #include <functional>
 #include <atomic>
 #include <boost/thread.hpp>
-#include <boost/cstdint.hpp>
+#include <cinttypes>
 
 
 
@@ -108,10 +108,10 @@ namespace Threading {
 	 * want to run. Note that this approach will fail when N > 32.
 	 */
 	void DetectCores();
-	boost::uint32_t GetAffinity();
-	boost::uint32_t SetAffinity(boost::uint32_t cores_bitmask, bool hard = true);
-	void SetAffinityHelper(const char* threadName, boost::uint32_t affinity);
-	boost::uint32_t GetAvailableCoresMask();
+	std::uint32_t GetAffinity();
+	std::uint32_t SetAffinity(std::uint32_t cores_bitmask, bool hard = true);
+	void SetAffinityHelper(const char* threadName, std::uint32_t affinity);
+	std::uint32_t GetAvailableCoresMask();
 
 	/**
 	 * returns count of cpu cores/ hyperthreadings cores
@@ -197,48 +197,48 @@ namespace Threading {
 
 	struct AtomicCounterInt64 {
 	public:
-		AtomicCounterInt64(boost::int64_t start = 0) : num(start) {}
+		AtomicCounterInt64(std::int64_t start = 0) : num(start) {}
 
 		// prefix
-		boost::int64_t operator++() {
+		std::int64_t operator++() {
 	#ifdef _MSC_VER
 			return InterlockedIncrement64(&num);
 	#elif defined(__APPLE__)
 			return OSAtomicIncrement64(&num);
 	#else // assuming GCC (__sync_add_and_fetch is a builtin)
-			return __sync_add_and_fetch(&num, boost::int64_t(1));
+			return __sync_add_and_fetch(&num, std::int64_t(1));
 	#endif
 		}
 
-		boost::int64_t operator+=(int x) {
+		std::int64_t operator+=(int x) {
 	#ifdef _MSC_VER
-			return InterlockedExchangeAdd64(&num, boost::int64_t(x));
+			return InterlockedExchangeAdd64(&num, std::int64_t(x));
 	#elif defined(__APPLE__)
-			return OSAtomicAdd64(boost::int64_t(x), &num);
+			return OSAtomicAdd64(std::int64_t(x), &num);
 	#else // assuming GCC (__sync_fetch_and_add is a builtin)
-			return __sync_fetch_and_add(&num, boost::int64_t(x));
+			return __sync_fetch_and_add(&num, std::int64_t(x));
 	#endif
 		}
 
-		boost::int64_t operator-=(int x) {
+		std::int64_t operator-=(int x) {
 	#ifdef _MSC_VER
-			return InterlockedExchangeAdd64(&num, boost::int64_t(-x));
+			return InterlockedExchangeAdd64(&num, std::int64_t(-x));
 	#elif defined(__APPLE__)
-			return OSAtomicAdd64(boost::int64_t(-x), &num);
+			return OSAtomicAdd64(std::int64_t(-x), &num);
 	#else // assuming GCC (__sync_fetch_and_add is a builtin)
-			return __sync_fetch_and_add(&num, boost::int64_t(-x));
+			return __sync_fetch_and_add(&num, std::int64_t(-x));
 	#endif
 		}
 
-		operator boost::int64_t() {
+		operator std::int64_t() {
 			return num;
 		}
 
 	private:
 	#ifdef _MSC_VER
-		__declspec(align(8)) boost::int64_t num;
+		__declspec(align(8)) std::int64_t num;
 	#else
-		__attribute__ ((aligned (8))) boost::int64_t num;
+		__attribute__ ((aligned (8))) std::int64_t num;
 	#endif
 	};
 }

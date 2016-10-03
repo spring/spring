@@ -688,7 +688,7 @@ bool CArchiveScanner::CheckCachedData(const std::string& fullName, unsigned* mod
 
 bool CArchiveScanner::ScanArchiveLua(IArchive* ar, const std::string& fileName, ArchiveInfo& ai, std::string& err)
 {
-	std::vector<boost::uint8_t> buf;
+	std::vector<std::uint8_t> buf;
 	if (!ar->GetFile(fileName, buf) || buf.empty()) {
 		err = "Error reading " + fileName;
 		if (ar->GetArchiveName().find(".sdp") != std::string::npos) {
@@ -721,7 +721,7 @@ bool CArchiveScanner::ScanArchiveLua(IArchive* ar, const std::string& fileName, 
 IFileFilter* CArchiveScanner::CreateIgnoreFilter(IArchive* ar)
 {
 	IFileFilter* ignore = IFileFilter::Create();
-	std::vector<boost::uint8_t> buf;
+	std::vector<std::uint8_t> buf;
 	if (ar->GetFile("springignore.txt", buf) && !buf.empty()) {
 		// this automatically splits lines
 		ignore->AddRule(std::string((char*)(&buf[0]), buf.size()));

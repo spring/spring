@@ -235,7 +235,7 @@ int main(int argc, char* argv[])
 				printData = false;
 
 				const boost::scoped_ptr<CDemoRecorder>& demoRec = server->GetDemoRecorder();
-				const boost::uint8_t* gameID = (demoRec->GetFileHeader()).gameID;
+				const std::uint8_t* gameID = (demoRec->GetFileHeader()).gameID;
 
 				LOG("recording demo: %s", (demoRec->GetName()).c_str());
 				LOG("using mod: %s", (dsGameSetup->modName).c_str());

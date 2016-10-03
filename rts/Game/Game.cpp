@@ -692,8 +692,8 @@ void CGame::LoadFinalize()
 		loadscreen->SetLoadMessage("[" + std::string(__FUNCTION__) + "] finalizing PFS");
 
 		ENTER_SYNCED_CODE();
-		const boost::uint64_t dt = pathManager->Finalize();
-		const boost::uint32_t cs = pathManager->GetPathCheckSum();
+		const std::uint64_t dt = pathManager->Finalize();
+		const std::uint32_t cs = pathManager->GetPathCheckSum();
 		LEAVE_SYNCED_CODE();
 
 		loadscreen->SetLoadMessage(

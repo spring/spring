@@ -1533,14 +1533,14 @@ static void PushTimer(lua_State* L, const spring_time& time)
 	// single-precision floats better
 	//
 	// 4e9millis == 4e6s == 46.3 days until overflow
-	const boost::uint64_t millis = time.toMilliSecs<boost::uint64_t>();
+	const std::uint64_t millis = time.toMilliSecs<std::uint64_t>();
 
 	ptrdiff_t p = 0;
 
 	if (sizeof(void*) == 8) {
-		*reinterpret_cast<boost::uint64_t*>(&p) = millis;
+		*reinterpret_cast<std::uint64_t*>(&p) = millis;
 	} else {
-		*reinterpret_cast<boost::uint32_t*>(&p) = millis;
+		*reinterpret_cast<std::uint32_t*>(&p) = millis;
 	}
 
 	lua_pushlightuserdata(L, reinterpret_cast<void*>(p));
@@ -1572,12 +1572,12 @@ int LuaUnsyncedRead::DiffTimers(lua_State* L)
 	const void* p1 = lua_touserdata(L, 1);
 	const void* p2 = lua_touserdata(L, 2);
 
-	const boost::uint64_t t1 = (sizeof(void*) == 8)?
-		*reinterpret_cast<boost::uint64_t*>(&p1):
-		*reinterpret_cast<boost::uint32_t*>(&p1);
-	const boost::uint64_t t2 = (sizeof(void*) == 8)?
-		*reinterpret_cast<boost::uint64_t*>(&p2):
-		*reinterpret_cast<boost::uint32_t*>(&p2);
+	const std::uint64_t t1 = (sizeof(void*) == 8)?
+		*reinterpret_cast<std::uint64_t*>(&p1):
+		*reinterpret_cast<std::uint32_t*>(&p1);
+	const std::uint64_t t2 = (sizeof(void*) == 8)?
+		*reinterpret_cast<std::uint64_t*>(&p2):
+		*reinterpret_cast<std::uint32_t*>(&p2);
 
 	// t1 is supposed to be the most recent time-point
 	assert(t1 >= t2);

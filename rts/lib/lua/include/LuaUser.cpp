@@ -2,7 +2,7 @@
 
 #include <map>
 #include <array>
-#include <boost/cstdint.hpp>
+#include <cinttypes>
 #include <boost/thread.hpp>
 #include "lib/streflop/streflop_cond.h"
 
@@ -236,7 +236,7 @@ void spring_lua_alloc_update_stats(bool clear)
 #ifdef WIN32
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wformat"
-static inline int sprintf64(char* dst, boost::int64_t x) { return sprintf(dst, "%I64d", x); }
+static inline int sprintf64(char* dst, std::int64_t x) { return sprintf(dst, "%I64d", x); }
 #pragma GCC diagnostic pop
 #else
 static inline int sprintf64(char* dst, long int x)      { return sprintf(dst, "%ld", x); }
@@ -247,7 +247,7 @@ static inline int sprintf64(char* dst, long long int x) { return sprintf(dst, "%
 // int numbers in that range are 100% exact, and don't suffer float precision issues
 static constexpr int MAX_PRECISE_DIGITS_IN_FLOAT = std::numeric_limits<float>::digits10;
 static constexpr auto SPRING_FLOAT_MAX = std::numeric_limits<float>::max();
-static constexpr auto SPRING_INT64_MAX = std::numeric_limits<boost::int64_t>::max();
+static constexpr auto SPRING_INT64_MAX = std::numeric_limits<std::int64_t>::max();
 
 static constexpr std::array<double, 11> v = {
 	1, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10
@@ -264,9 +264,9 @@ static const inline int FastLog10(const float f)
 {
 	assert(f != 0.0f); // log10(0) = -inf
 	if (f>=1.f && f<(SPRING_INT64_MAX >> 1)) {
-		const boost::int64_t i = f;
+		const std::int64_t i = f;
 		int log10 = 0;
-		boost::int64_t n = 10;
+		std::int64_t n = 10;
 		while (i >= n) {
 			++log10;
 			n *= 10;
@@ -297,7 +297,7 @@ static inline int PrintIntPart(char* buf, float f, const bool carrierBit = false
 	} else
 #endif
 	if (f < (SPRING_INT64_MAX - carrierBit)) {
-		return sprintf64(buf, boost::int64_t(f) + carrierBit); // much faster than printing a float!
+		return sprintf64(buf, std::int64_t(f) + carrierBit); // much faster than printing a float!
 	} else {
 		return sprintf(buf, "%1.0f", f + carrierBit);
 	}
@@ -317,8 +317,8 @@ static inline int PrintFractPart(char* buf, float f, int digits, int precision)
 	const auto old = buf;
 
 	assert(digits <= 15);
-	assert(digits <= std::numeric_limits<boost::int64_t>::digits10);
-	const boost::int64_t i = double(f) * Pow10d(digits) + 0.5;
+	assert(digits <= std::numeric_limits<std::int64_t>::digits10);
+	const std::int64_t i = double(f) * Pow10d(digits) + 0.5;
 	char s[16];
 	const int len = sprintf64(s, i);
 	if (len < digits) {

@@ -6,7 +6,6 @@
 #include <boost/bind.hpp>
 #include <sstream>
 #include <stack>
-#include <boost/cstdint.hpp>
 
 #include "SelectionWidget.h"
 #include "System/AIScriptHandler.h"

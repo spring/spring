@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include <boost/cstdint.hpp>
 #include <SDL_keycode.h>
 
 #include "SpringController.h"

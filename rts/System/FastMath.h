@@ -6,7 +6,7 @@
 #ifndef DEDICATED_NOSSE
 #include <xmmintrin.h>
 #endif
-#include <boost/cstdint.hpp>
+#include <cinttypes>
 #include "lib/streflop/streflop_cond.h"
 #include "System/maindefines.h"
 
@@ -101,7 +101,7 @@ namespace fastmath {
 	*/
 	inline float isqrt_nosse(float x) {
 		float xh = 0.5f * x;
-		boost::int32_t i = *(boost::int32_t*) &x;
+		std::int32_t i = *(std::int32_t*) &x;
 		// "magic number" which makes a very good first guess
 		i = 0x5f375a86 - (i >> 1);
 		x = *(float*) &i;
@@ -121,7 +121,7 @@ namespace fastmath {
 	*/
 	inline float isqrt2_nosse(float x) {
 		float xh = 0.5f * x;
-		boost::int32_t i = *(boost::int32_t*) &x;
+		std::int32_t i = *(std::int32_t*) &x;
 		// "magic number" which makes a very good first guess
 		i = 0x5f375a86 - (i >> 1);
 		x = *(float*) &i;

@@ -5,7 +5,7 @@
 	#include <intrin.h>
 #endif
 #include <cstring>
-#include <boost/cstdint.hpp>
+#include <cinttypes>
 
 
 std::string StringReplace(const std::string& text,
@@ -124,9 +124,9 @@ void InverseOrSetBool(bool& container, const std::string& argValue, const bool i
 
 
 
-static inline unsigned count_leading_ones(boost::uint8_t x)
+static inline unsigned count_leading_ones(std::uint8_t x)
 {
-	boost::uint32_t i = ~x;
+	std::uint32_t i = ~x;
 	i = (i<<24) | 0x00FFFFFF;
 #ifdef _MSC_VER
 	unsigned long r;
@@ -152,8 +152,8 @@ char32_t Utf8GetNextChar(const std::string& text, int& pos)
 	static const auto UTF8_CONT_OKAY = 0x80; // 10xxxxxx
 
 	union UTF8_4Byte {
-		boost::uint32_t i;
-		boost::uint8_t  c[4];
+		std::uint32_t i;
+		std::uint8_t  c[4];
 	};
 
 	// read next 4bytes and check if it is an utf8 sequence
@@ -161,7 +161,7 @@ char32_t Utf8GetNextChar(const std::string& text, int& pos)
 	const int remainingChars = text.length() - pos;
 	if (remainingChars >= 4) {
 		// we need to use memcpy cause text[pos] isn't memory aligned as ints need to be
-		memcpy(&utf8.i, &text[pos], sizeof(boost::uint32_t));
+		memcpy(&utf8.i, &text[pos], sizeof(std::uint32_t));
 	} else {
 		// read ahead of end of string
 		if (remainingChars <= 0)
@@ -169,9 +169,9 @@ char32_t Utf8GetNextChar(const std::string& text, int& pos)
 
 		// end of string reached, only read till end
 		switch (remainingChars) {
-			case 3: utf8.c[2] = boost::uint8_t(text[pos + 2]);
-			case 2: utf8.c[1] = boost::uint8_t(text[pos + 1]);
-			case 1: utf8.c[0] = boost::uint8_t(text[pos    ]);
+			case 3: utf8.c[2] = std::uint8_t(text[pos + 2]);
+			case 2: utf8.c[1] = std::uint8_t(text[pos + 1]);
+			case 1: utf8.c[0] = std::uint8_t(text[pos    ]);
 			default: {}
 		};
 	}

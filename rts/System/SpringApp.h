@@ -4,7 +4,6 @@
 #define SPRING_APP
 
 #include <string>
-#include <boost/cstdint.hpp>
 #include <boost/shared_ptr.hpp>
 
 class CmdLineParams;

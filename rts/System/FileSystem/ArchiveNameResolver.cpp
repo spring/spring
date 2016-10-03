@@ -10,7 +10,7 @@
 #include "System/Util.h"
 
 #include <iostream>
-#include <boost/cstdint.hpp>
+#include <cinttypes>
 
 namespace ArchiveNameResolver {
 	//////////////////////////////////////////////////////////////////////////////
@@ -18,10 +18,10 @@ namespace ArchiveNameResolver {
 //  Helpers
 //
 
-	static boost::uint64_t ExtractVersionNumber(const std::string& version)
+	static std::uint64_t ExtractVersionNumber(const std::string& version)
 	{
 		std::istringstream iss(version);
-		boost::uint64_t versionInt = 0;
+		std::uint64_t versionInt = 0;
 		int num;
 		while (true) {
 			if (iss >> num) {
@@ -62,12 +62,12 @@ namespace ArchiveNameResolver {
 
 		std::string matchingName;
 		std::string matchingVersion;
-		boost::uint64_t matchingVersionInt = 0;
+		std::uint64_t matchingVersionInt = 0;
 
 		for (std::vector<CArchiveScanner::ArchiveData>::const_iterator it = found.begin(); it != found.end(); ++it) {
 			if (lowerLazyName == StringToLower(it->GetShortName())) {
 				// find latest version of the game
-				boost::uint64_t versionInt = ExtractVersionNumber(it->GetVersion());
+				std::uint64_t versionInt = ExtractVersionNumber(it->GetVersion());
 
 				if (versionInt > matchingVersionInt) {
 					matchingName = it->GetNameVersioned();

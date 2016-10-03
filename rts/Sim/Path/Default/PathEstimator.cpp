@@ -812,7 +812,7 @@ bool CPathEstimator::ReadFile(const std::string& cacheFileName, const std::strin
 
 	pathChecksum = file.GetCrc32(fid);
 
-	std::vector<boost::uint8_t> buffer;
+	std::vector<std::uint8_t> buffer;
 	if (!file.GetFile(fid, buffer))
 		return false;
 
@@ -900,9 +900,9 @@ void CPathEstimator::WriteFile(const std::string& cacheFileName, const std::stri
 }
 
 
-boost::uint32_t CPathEstimator::CalcChecksum() const
+std::uint32_t CPathEstimator::CalcChecksum() const
 {
-	boost::uint32_t pathChecksum = 0;
+	std::uint32_t pathChecksum = 0;
 
 	for (auto& pathTypeOffsets: blockStates.peNodeOffsets) {
 		pathChecksum = HsiehHash(&pathTypeOffsets[0], pathTypeOffsets.size() * sizeof(short2), pathChecksum);

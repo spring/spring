@@ -510,8 +510,8 @@ int LuaVFS::ZlibCompress(lua_State* L)
 	const char* inData = luaL_checklstring(L, 1, &inLen);
 
 	long unsigned bufsize = compressBound(inLen);
-	std::vector<boost::uint8_t> compressed(bufsize, 0);
-	const int error = compress(&compressed[0], &bufsize, (const boost::uint8_t*)inData, inLen);
+	std::vector<std::uint8_t> compressed(bufsize, 0);
+	const int error = compress(&compressed[0], &bufsize, (const std::uint8_t*)inData, inLen);
 	if (error == Z_OK)
 	{
 		lua_pushlstring(L, (const char*)&compressed[0], bufsize);
@@ -531,8 +531,8 @@ int LuaVFS::ZlibDecompress(lua_State* L)
 
 	long unsigned bufsize = std::max(luaL_optint(L, 2, 65000), 0);
 
-	std::vector<boost::uint8_t> uncompressed(bufsize, 0);
-	const int error = uncompress(&uncompressed[0], &bufsize, (const boost::uint8_t*)inData, inLen);
+	std::vector<std::uint8_t> uncompressed(bufsize, 0);
+	const int error = uncompress(&uncompressed[0], &bufsize, (const std::uint8_t*)inData, inLen);
 	if (error == Z_OK)
 	{
 		lua_pushlstring(L, (const char*)&uncompressed[0], bufsize);
@@ -601,12 +601,12 @@ int PackType(lua_State* L)
 }
 
 
-int LuaVFS::PackU8(lua_State*  L) { return PackType<boost::uint8_t>(L);  }
-int LuaVFS::PackU16(lua_State* L) { return PackType<boost::uint16_t>(L); }
-int LuaVFS::PackU32(lua_State* L) { return PackType<boost::uint32_t>(L); }
-int LuaVFS::PackS8(lua_State*  L) { return PackType<boost::int8_t>(L);   }
-int LuaVFS::PackS16(lua_State* L) { return PackType<boost::int16_t>(L);  }
-int LuaVFS::PackS32(lua_State* L) { return PackType<boost::int32_t>(L);  }
+int LuaVFS::PackU8(lua_State*  L) { return PackType<std::uint8_t>(L);  }
+int LuaVFS::PackU16(lua_State* L) { return PackType<std::uint16_t>(L); }
+int LuaVFS::PackU32(lua_State* L) { return PackType<std::uint32_t>(L); }
+int LuaVFS::PackS8(lua_State*  L) { return PackType<std::int8_t>(L);   }
+int LuaVFS::PackS16(lua_State* L) { return PackType<std::int16_t>(L);  }
+int LuaVFS::PackS32(lua_State* L) { return PackType<std::int32_t>(L);  }
 int LuaVFS::PackF32(lua_State* L) { return PackType<float>(L);           }
 
 
@@ -661,12 +661,12 @@ int UnpackType(lua_State* L)
 }
 
 
-int LuaVFS::UnpackU8(lua_State*  L) { return UnpackType<boost::uint8_t>(L);  }
-int LuaVFS::UnpackU16(lua_State* L) { return UnpackType<boost::uint16_t>(L); }
-int LuaVFS::UnpackU32(lua_State* L) { return UnpackType<boost::uint32_t>(L); }
-int LuaVFS::UnpackS8(lua_State*  L) { return UnpackType<boost::int8_t>(L);   }
-int LuaVFS::UnpackS16(lua_State* L) { return UnpackType<boost::int16_t>(L);  }
-int LuaVFS::UnpackS32(lua_State* L) { return UnpackType<boost::int32_t>(L);  }
+int LuaVFS::UnpackU8(lua_State*  L) { return UnpackType<std::uint8_t>(L);  }
+int LuaVFS::UnpackU16(lua_State* L) { return UnpackType<std::uint16_t>(L); }
+int LuaVFS::UnpackU32(lua_State* L) { return UnpackType<std::uint32_t>(L); }
+int LuaVFS::UnpackS8(lua_State*  L) { return UnpackType<std::int8_t>(L);   }
+int LuaVFS::UnpackS16(lua_State* L) { return UnpackType<std::int16_t>(L);  }
+int LuaVFS::UnpackS32(lua_State* L) { return UnpackType<std::int32_t>(L);  }
 int LuaVFS::UnpackF32(lua_State* L) { return UnpackType<float>(L);           }
 
 

@@ -43,7 +43,6 @@
 #include "System/Input/MouseInput.h"
 
 #include <algorithm>
-#include <boost/cstdint.hpp>
 
 // can't be up there since those contain conflicting definitions
 #include <SDL_mouse.h>

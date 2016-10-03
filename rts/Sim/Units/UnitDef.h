@@ -196,7 +196,7 @@ public:
 	std::vector<YardMapStatus> yardmap;
 
 	///< buildingMask used to disallow construction on certain map squares
-	boost::uint16_t buildingMask;
+	std::uint16_t buildingMask;
 
 	std::vector<std::string> modelCEGTags;
 	std::vector<std::string> pieceCEGTags;

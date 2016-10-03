@@ -102,7 +102,7 @@ bool QTPFS::PathSearch::Execute(
 	if (srcNode->GetMoveCost() == 0.0f) {
 		srcNode->SetMoveCost(QTPFS_POSITIVE_INFINITY);
 	}
-		
+
 
 	#ifdef QTPFS_SUPPORT_PARTIAL_SEARCHES
 	// adjust the target-point if we only got a partial result
@@ -563,7 +563,7 @@ bool QTPFS::PathSearch::SharedFinalize(const IPath* srcPath, IPath* dstPath) {
 	return false;
 }
 
-const boost::uint64_t QTPFS::PathSearch::GetHash(boost::uint64_t N, boost::uint32_t k) const {
+const std::uint64_t QTPFS::PathSearch::GetHash(std::uint64_t N, std::uint32_t k) const {
 	return (srcNode->GetNodeNumber() + (tgtNode->GetNodeNumber() * N) + (k * N * N));
 }
 

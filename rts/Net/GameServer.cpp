@@ -958,7 +958,7 @@ static int countNumSkirmishAIsInTeam(const std::map<unsigned char, GameSkirmishA
 
 void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<const netcode::RawPacket> packet)
 {
-	const boost::uint8_t* inbuf = packet->data;
+	const std::uint8_t* inbuf = packet->data;
 	const unsigned a = playerNum;
 	unsigned msgCode = (unsigned) inbuf[0];
 
@@ -1041,7 +1041,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 
 		case NETMSG_PATH_CHECKSUM: {
 			const unsigned char playerNum = inbuf[1];
-			const boost::uint32_t playerCheckSum = *(boost::uint32_t*) &inbuf[2];
+			const std::uint32_t playerCheckSum = *(std::uint32_t*) &inbuf[2];
 			if (playerNum != a) {
 				Message(str(format(WrongPlayer) %msgCode %a %playerNum));
 				break;
@@ -1933,7 +1933,7 @@ void CGameServer::CheckForGameStart(bool forced)
 			readyTime = spring_gettime();
 
 			// we have to wait at least 1 msec during countdown, because 0 is a special case
-			Broadcast(CBaseNetProtocol::Get().SendStartPlaying(std::max(boost::int64_t(1), spring_tomsecs(gameStartDelay))));
+			Broadcast(CBaseNetProtocol::Get().SendStartPlaying(std::max(std::int64_t(1), spring_tomsecs(gameStartDelay))));
 
 			// make seed more random
 			if (myGameSetup->gameID.empty())

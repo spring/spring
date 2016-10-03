@@ -5,7 +5,7 @@
 
 #include "System/creg/creg_cond.h"
 
-#include <boost/cstdint.hpp>
+#include <cinttypes>
 #include <cassert>
 
 // glibc's chrono is non monotonic/not steady atm (it depends on set timezone and can change at runtime!)
@@ -38,26 +38,26 @@ namespace spring_clock {
 	//   ToSecs is inaccurate in that case
 	//   these cannot be written as integer divisions or tests
 	//   will fail because of intermediate conversions to FP32
-	template<typename T> static T ToSecs     (const boost::int64_t ns) { return (ns * 1e-9); }
-	template<typename T> static T ToMilliSecs(const boost::int64_t ns) { return (ns * 1e-6); }
-	template<typename T> static T ToMicroSecs(const boost::int64_t ns) { return (ns * 1e-3); }
-	template<typename T> static T ToNanoSecs (const boost::int64_t ns) { return (ns       ); }
+	template<typename T> static T ToSecs     (const std::int64_t ns) { return (ns * 1e-9); }
+	template<typename T> static T ToMilliSecs(const std::int64_t ns) { return (ns * 1e-6); }
+	template<typename T> static T ToMicroSecs(const std::int64_t ns) { return (ns * 1e-3); }
+	template<typename T> static T ToNanoSecs (const std::int64_t ns) { return (ns       ); }
 
 	// specializations
-	template<> boost::int64_t ToSecs     <boost::int64_t>(const boost::int64_t ns) { return (ns / boost::int64_t(1e9)); }
-	template<> boost::int64_t ToMilliSecs<boost::int64_t>(const boost::int64_t ns) { return (ns / boost::int64_t(1e6)); }
-	template<> boost::int64_t ToMicroSecs<boost::int64_t>(const boost::int64_t ns) { return (ns / boost::int64_t(1e3)); }
+	template<> std::int64_t ToSecs     <std::int64_t>(const std::int64_t ns) { return (ns / std::int64_t(1e9)); }
+	template<> std::int64_t ToMilliSecs<std::int64_t>(const std::int64_t ns) { return (ns / std::int64_t(1e6)); }
+	template<> std::int64_t ToMicroSecs<std::int64_t>(const std::int64_t ns) { return (ns / std::int64_t(1e3)); }
 
-	template<typename T> static boost::int64_t FromSecs     (const T  s) { return ( s * boost::int64_t(1e9)); }
-	template<typename T> static boost::int64_t FromMilliSecs(const T ms) { return (ms * boost::int64_t(1e6)); }
-	template<typename T> static boost::int64_t FromMicroSecs(const T us) { return (us * boost::int64_t(1e3)); }
-	template<typename T> static boost::int64_t FromNanoSecs (const T ns) { return (ns                      ); }
+	template<typename T> static std::int64_t FromSecs     (const T  s) { return ( s * std::int64_t(1e9)); }
+	template<typename T> static std::int64_t FromMilliSecs(const T ms) { return (ms * std::int64_t(1e6)); }
+	template<typename T> static std::int64_t FromMicroSecs(const T us) { return (us * std::int64_t(1e3)); }
+	template<typename T> static std::int64_t FromNanoSecs (const T ns) { return (ns                      ); }
 
 	void PushTickRate(bool hres = false);
 	void PopTickRate();
 
 	// number of ticks since clock epoch
-	boost::int64_t GetTicks();
+	std::int64_t GetTicks();
 	const char* GetName();
 }
 
@@ -68,7 +68,7 @@ struct spring_time {
 private:
 	CR_DECLARE_STRUCT(spring_time)
 
-	typedef boost::int64_t int64;
+	typedef std::int64_t int64;
 
 public:
 	spring_time(): x(0) {}

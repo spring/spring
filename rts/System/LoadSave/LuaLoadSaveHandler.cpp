@@ -213,7 +213,7 @@ void CLuaLoadSaveHandler::LoadAIData()
 
 void CLuaLoadSaveHandler::LoadHeightmap()
 {
-	std::vector<boost::uint8_t> buf;
+	std::vector<std::uint8_t> buf;
 
 	if (loadfile->GetFile(FILE_HEIGHTMAP, buf)) {
 		const int size = mapDims.mapxp1 * mapDims.mapyp1;
@@ -234,7 +234,7 @@ void CLuaLoadSaveHandler::LoadHeightmap()
 
 std::string CLuaLoadSaveHandler::LoadEntireFile(const std::string& file)
 {
-	std::vector<boost::uint8_t> buf;
+	std::vector<std::uint8_t> buf;
 	if (loadfile->GetFile(file, buf)) {
 		return std::string((char*) &*buf.begin(), buf.size());
 	}

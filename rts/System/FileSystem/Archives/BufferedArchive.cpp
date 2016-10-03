@@ -14,7 +14,7 @@ CBufferedArchive::~CBufferedArchive()
 {
 }
 
-bool CBufferedArchive::GetFile(unsigned int fid, std::vector<boost::uint8_t>& buffer)
+bool CBufferedArchive::GetFile(unsigned int fid, std::vector<std::uint8_t>& buffer)
 {
 	boost::mutex::scoped_lock lck(archiveLock);
 	assert(IsFileId(fid));
@@ -26,7 +26,7 @@ bool CBufferedArchive::GetFile(unsigned int fid, std::vector<boost::uint8_t>& bu
 	if (fid >= cache.size()) {
 		cache.resize(fid + 1);
 	}
-	
+
 	if (!cache[fid].populated) {
 		cache[fid].exists = GetFileImpl(fid, cache[fid].data);
 		cache[fid].populated = true;

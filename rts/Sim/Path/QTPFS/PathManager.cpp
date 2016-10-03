@@ -3,7 +3,7 @@
 #include <boost/bind.hpp>
 #include <boost/thread.hpp>
 #include <boost/thread/condition.hpp>
-#include <boost/cstdint.hpp>
+#include <cinttypes>
 
 #include "System/ThreadPool.h"
 
@@ -144,7 +144,7 @@ QTPFS::PathManager::~PathManager() {
 	#endif
 }
 
-boost::int64_t QTPFS::PathManager::Finalize() {
+std::int64_t QTPFS::PathManager::Finalize() {
 	const spring_time t0 = spring_gettime();
 
 	{
@@ -190,8 +190,8 @@ void QTPFS::PathManager::Load() {
 	numPrevExecutedSearches.resize(teamHandler->ActiveTeams() + 1, 0);
 
 	{
-		const boost::uint32_t mapCheckSum = archiveScanner->GetArchiveCompleteChecksum(gameSetup->mapName);
-		const boost::uint32_t modCheckSum = archiveScanner->GetArchiveCompleteChecksum(gameSetup->modName);
+		const std::uint32_t mapCheckSum = archiveScanner->GetArchiveCompleteChecksum(gameSetup->mapName);
+		const std::uint32_t modCheckSum = archiveScanner->GetArchiveCompleteChecksum(gameSetup->modName);
 		const std::string& cacheDirName = GetCacheDirName(mapCheckSum, modCheckSum);
 
 		{
@@ -242,8 +242,8 @@ void QTPFS::PathManager::Load() {
 	}
 }
 
-boost::uint64_t QTPFS::PathManager::GetMemFootPrint() const {
-	boost::uint64_t memFootPrint = sizeof(PathManager);
+std::uint64_t QTPFS::PathManager::GetMemFootPrint() const {
+	std::uint64_t memFootPrint = sizeof(PathManager);
 
 	for (unsigned int i = 0; i < nodeLayers.size(); i++) {
 		memFootPrint += nodeLayers[i].GetMemFootPrint();
@@ -523,7 +523,7 @@ void QTPFS::PathManager::ExecQueuedNodeLayerUpdates(unsigned int layerNum, bool 
 
 
 
-std::string QTPFS::PathManager::GetCacheDirName(boost::uint32_t mapCheckSum, boost::uint32_t modCheckSum) const {
+std::string QTPFS::PathManager::GetCacheDirName(std::uint32_t mapCheckSum, std::uint32_t modCheckSum) const {
 	static const std::string ver = IntToString(QTPFS_CACHE_VERSION, "%04x");
 	static const std::string dir = FileSystem::GetCacheDir() + "/QTPFS/" + ver + "/" +
 		IntToString(mapCheckSum, "%08x") + "-" +

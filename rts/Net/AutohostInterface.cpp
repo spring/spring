@@ -8,7 +8,7 @@
 
 #include <string.h>
 #include <vector>
-#include <boost/cstdint.hpp>
+#include <cinttypes>
 
 
 #define LOG_SECTION_AUTOHOST_INTERFACE "AutohostInterface"
@@ -195,16 +195,16 @@ void AutohostInterface::SendQuit()
 
 void AutohostInterface::SendStartPlaying(const unsigned char* gameID, const std::string& demoName)
 {
-	if (demoName.size() > std::numeric_limits<boost::uint32_t>::max() - 30)
+	if (demoName.size() > std::numeric_limits<std::uint32_t>::max() - 30)
 		throw std::runtime_error("Path to demofile too long.");
 
-	const boost::uint32_t msgsize =
+	const std::uint32_t msgsize =
 			1                                            // SERVER_STARTPLAYING
-			+ sizeof(boost::uint32_t)                    // msgsize
-			+ 16 * sizeof(boost::uint8_t)                // gameID
+			+ sizeof(std::uint32_t)                    // msgsize
+			+ 16 * sizeof(std::uint8_t)                // gameID
 			+ demoName.size();                           // is 0, if demo recording is off!
 
-	std::vector<boost::uint8_t> buffer(msgsize);
+	std::vector<std::uint8_t> buffer(msgsize);
 	unsigned int pos = 0;
 
 	buffer[pos++] = SERVER_STARTPLAYING;
@@ -225,7 +225,7 @@ void AutohostInterface::SendStartPlaying(const unsigned char* gameID, const std:
 void AutohostInterface::SendGameOver(uchar playerNum, const std::vector<uchar>& winningAllyTeams)
 {
 	const unsigned char msgsize = 1 + 1 + 1 + (winningAllyTeams.size() * sizeof(uchar));
-	std::vector<boost::uint8_t> buffer(msgsize);
+	std::vector<std::uint8_t> buffer(msgsize);
 	buffer[0] = SERVER_GAMEOVER;
 	buffer[1] = msgsize;
 	buffer[2] = playerNum;
@@ -240,7 +240,7 @@ void AutohostInterface::SendPlayerJoined(uchar playerNum, const std::string& nam
 {
 	if (autohost.is_open()) {
 		unsigned msgsize = 2 * sizeof(uchar) + name.size();
-		std::vector<boost::uint8_t> buffer(msgsize);
+		std::vector<std::uint8_t> buffer(msgsize);
 		buffer[0] = PLAYER_JOINED;
 		buffer[1] = playerNum;
 		strncpy((char*)(&buffer[2]), name.c_str(), name.size());
@@ -267,7 +267,7 @@ void AutohostInterface::SendPlayerChat(uchar playerNum, uchar destination, const
 {
 	if (autohost.is_open()) {
 		const unsigned msgsize = 3 * sizeof(uchar) + chatmsg.size();
-		std::vector<boost::uint8_t> buffer(msgsize);
+		std::vector<std::uint8_t> buffer(msgsize);
 		buffer[0] = PLAYER_CHAT;
 		buffer[1] = playerNum;
 		buffer[2] = destination;
@@ -288,7 +288,7 @@ void AutohostInterface::Message(const std::string& message)
 {
 	if (autohost.is_open()) {
 		const unsigned msgsize = sizeof(uchar) + message.size();
-		std::vector<boost::uint8_t> buffer(msgsize);
+		std::vector<std::uint8_t> buffer(msgsize);
 		buffer[0] = SERVER_MESSAGE;
 		strncpy((char*)(&buffer[1]), message.c_str(), message.size());
 
@@ -300,7 +300,7 @@ void AutohostInterface::Warning(const std::string& message)
 {
 	if (autohost.is_open()) {
 		const unsigned msgsize = sizeof(uchar) + message.size();
-		std::vector<boost::uint8_t> buffer(msgsize);
+		std::vector<std::uint8_t> buffer(msgsize);
 		buffer[0] = SERVER_WARNING;
 		strncpy((char*)(&buffer[1]), message.c_str(), message.size());
 
@@ -308,10 +308,10 @@ void AutohostInterface::Warning(const std::string& message)
 	}
 }
 
-void AutohostInterface::SendLuaMsg(const boost::uint8_t* msg, size_t msgSize)
+void AutohostInterface::SendLuaMsg(const std::uint8_t* msg, size_t msgSize)
 {
 	if (autohost.is_open()) {
-		std::vector<boost::uint8_t> buffer(msgSize+1);
+		std::vector<std::uint8_t> buffer(msgSize+1);
 		buffer[0] = GAME_LUAMSG;
 		std::copy(msg, msg + msgSize, buffer.begin() + 1);
 
@@ -319,10 +319,10 @@ void AutohostInterface::SendLuaMsg(const boost::uint8_t* msg, size_t msgSize)
 	}
 }
 
-void AutohostInterface::Send(const boost::uint8_t* msg, size_t msgSize)
+void AutohostInterface::Send(const std::uint8_t* msg, size_t msgSize)
 {
 	if (autohost.is_open()) {
-		std::vector<boost::uint8_t> buffer(msgSize);
+		std::vector<std::uint8_t> buffer(msgSize);
 		std::copy(msg, msg + msgSize, buffer.begin());
 
 		Send(boost::asio::buffer(buffer));
@@ -335,7 +335,7 @@ std::string AutohostInterface::GetChatMessage()
 		size_t bytes_avail = 0;
 
 		if ((bytes_avail = autohost.available()) > 0) {
-			std::vector<boost::uint8_t> buffer(bytes_avail+1, 0);
+			std::vector<std::uint8_t> buffer(bytes_avail+1, 0);
 			/*const size_t bytesReceived = */autohost.receive(boost::asio::buffer(buffer));
 			return std::string((char*)(&buffer[0]));
 		}

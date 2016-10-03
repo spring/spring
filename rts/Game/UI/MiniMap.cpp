@@ -42,8 +42,6 @@
 #include "System/FileSystem/SimpleParser.h"
 #include "System/Sound/ISoundChannels.h"
 
-#include <boost/cstdint.hpp>
-
 CONFIG(std::string, MiniMapGeometry).defaultValue("2 2 200 200");
 CONFIG(bool, MiniMapFullProxy).defaultValue(true);
 CONFIG(int, MiniMapButtonSize).defaultValue(16);

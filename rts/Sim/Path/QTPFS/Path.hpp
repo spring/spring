@@ -52,12 +52,12 @@ namespace QTPFS {
 		unsigned int GetNextPointIndex() const { return nextPointIndex; }
 		unsigned int GetNumPathUpdates() const { return numPathUpdates; }
 
-		void SetHash(boost::uint64_t hash) { this->hash = hash; }
+		void SetHash(std::uint64_t hash) { this->hash = hash; }
 		void SetRadius(float radius) { this->radius = radius; }
 		void SetSynced(bool synced) { this->synced = synced; }
 
 		float GetRadius() const { return radius; }
-		boost::uint64_t GetHash() const { return hash; }
+		std::uint64_t GetHash() const { return hash; }
 		bool GetSynced() const { return synced; }
 
 		void SetBoundingBox() {
@@ -107,7 +107,7 @@ namespace QTPFS {
 		unsigned int nextPointIndex; // index of the next waypoint to be visited
 		unsigned int numPathUpdates; // number of times this path was invalidated
 
-		boost::uint64_t hash;
+		std::uint64_t hash;
 		float radius;
 		bool synced;
 

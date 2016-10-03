@@ -77,7 +77,6 @@
 #include "System/Platform/WindowManagerHelper.h"
 #include "System/Sync/HsiehHash.h"
 
-#include <boost/cstdint.hpp>
 
 #if !defined(HEADLESS) && !defined(NO_SOUND)
 #include "System/Sound/OpenAL/EFX.h"
@@ -88,6 +87,7 @@
 #include <set>
 #include <cctype>
 #include <cfloat>
+#include <cinttypes>
 
 #include <fstream>
 
@@ -2501,7 +2501,7 @@ static string GetRawMsg(lua_State* L, const char* caller, int index)
 int LuaUnsyncedCtrl::SendLuaUIMsg(lua_State* L)
 {
 	const string msg = GetRawMsg(L, __FUNCTION__, 1);
-	std::vector<boost::uint8_t> data(msg.size());
+	std::vector<std::uint8_t> data(msg.size());
 	std::copy(msg.begin(), msg.end(), data.begin());
 	const string mode = luaL_optstring(L, 2, "");
 	unsigned char modeNum = 0;
@@ -2526,7 +2526,7 @@ int LuaUnsyncedCtrl::SendLuaUIMsg(lua_State* L)
 int LuaUnsyncedCtrl::SendLuaGaiaMsg(lua_State* L)
 {
 	const string msg = GetRawMsg(L, __FUNCTION__, 1);
-	std::vector<boost::uint8_t> data(msg.size());
+	std::vector<std::uint8_t> data(msg.size());
 	std::copy(msg.begin(), msg.end(), data.begin());
 	try {
 		clientNet->Send(CBaseNetProtocol::Get().SendLuaMsg(gu->myPlayerNum, LUA_HANDLE_ORDER_GAIA, 0, data));
@@ -2540,7 +2540,7 @@ int LuaUnsyncedCtrl::SendLuaGaiaMsg(lua_State* L)
 int LuaUnsyncedCtrl::SendLuaRulesMsg(lua_State* L)
 {
 	const string msg = GetRawMsg(L, __FUNCTION__, 1);
-	std::vector<boost::uint8_t> data(msg.size());
+	std::vector<std::uint8_t> data(msg.size());
 	std::copy(msg.begin(), msg.end(), data.begin());
 	try {
 		clientNet->Send(CBaseNetProtocol::Get().SendLuaMsg(gu->myPlayerNum, LUA_HANDLE_ORDER_RULES, 0, data));

@@ -14,7 +14,7 @@
 #include "System/float3.h"
 
 #include <boost/detail/atomic_count.hpp>
-#include <boost/cstdint.hpp>
+#include <cinttypes>
 
 struct MoveDef;
 class CPathFinder;
@@ -66,7 +66,7 @@ public:
 	 * Returns a checksum that can be used to check if every player has the same
 	 * path data.
 	 */
-	boost::uint32_t GetPathChecksum() const { return pathChecksum; }
+	std::uint32_t GetPathChecksum() const { return pathChecksum; }
 
 	static const int2* GetDirectionVectorsTable();
 
@@ -114,7 +114,7 @@ private:
 
 	bool ReadFile(const std::string& cacheFileName, const std::string& map);
 	void WriteFile(const std::string& cacheFileName, const std::string& map);
-	boost::uint32_t CalcChecksum() const;
+	std::uint32_t CalcChecksum() const;
 	unsigned int Hash() const;
 
 private:
@@ -126,7 +126,7 @@ private:
 	unsigned int nextOffsetMessageIdx;
 	unsigned int nextCostMessageIdx;
 
-	boost::uint32_t pathChecksum;               ///< currently crc from the zip
+	std::uint32_t pathChecksum;               ///< currently crc from the zip
 
 	boost::detail::atomic_count offsetBlockNum;
 	boost::detail::atomic_count costBlockNum;
@@ -140,7 +140,7 @@ private:
 
 	CPathEstimator* nextPathEstimator;
 
-	std::vector<float> vertexCosts;	
+	std::vector<float> vertexCosts;
 	std::deque<int2> updatedBlocks;       /// Blocks that may need an update due to map changes.
 
 	int blockUpdatePenalty;

@@ -195,10 +195,10 @@ bool CSyncDebugger::ServerReceived(const unsigned char* inbuf)
 					const unsigned* end = begin + HISTORY_SIZE;
 					players[player].checksumResponses.resize(HISTORY_SIZE);
 					std::copy(begin, end, players[player].checksumResponses.begin());
-					players[player].remoteFlop = *(boost::uint64_t*)&inbuf[4];
+					players[player].remoteFlop = *(std::uint64_t*)&inbuf[4];
 					assert(!players[player].checksumResponses.empty());
 					int i = 0;
-					while (i < playerHandler->ActivePlayers() && 
+					while (i < playerHandler->ActivePlayers() &&
 						(!players[i].checksumResponses.empty() ||
 						!playerHandler->Player(i)->active)) ++i;
 					if (i == playerHandler->ActivePlayers()) {
@@ -223,7 +223,7 @@ bool CSyncDebugger::ServerReceived(const unsigned char* inbuf)
 					players[player].remoteHistory.resize(size + BLOCK_SIZE);
 					std::copy(begin, end, players[player].remoteHistory.begin() + size);
 					int i = 0;
-					size += BLOCK_SIZE; 
+					size += BLOCK_SIZE;
 					while (i < playerHandler->ActivePlayers() &&
 						(size == players[i].remoteHistory.size() ||
 						!playerHandler->Player(i)->active)) ++i;
@@ -312,7 +312,7 @@ void CSyncDebugger::ClientSendChecksumResponse()
 void CSyncDebugger::ServerQueueBlockRequests()
 {
 	logger.AddLine("Server: queuing block requests");
-	boost::uint64_t correctFlop = 0;
+	std::uint64_t correctFlop = 0;
 	for (int j = 0; j < playerHandler->ActivePlayers(); ++j) {
 		if (correctFlop) {
 			if (players[j].remoteFlop != correctFlop)
@@ -432,7 +432,7 @@ void CSyncDebugger::ServerDumpStack()
 		if (i == virtualHistorySize) i = 0;
 		bool err = false;
 		for (int j = 0; j < playerHandler->ActivePlayers(); ++j) {
-			if (!playerHandler->Player(j)->active) 
+			if (!playerHandler->Player(j)->active)
 				continue;
 			if (correctChecksum && players[j].remoteHistory[i] != correctChecksum) {
 				if (historybt) {

@@ -3,7 +3,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <cassert>
-#include <boost/cstdint.hpp>
+#include <cinttypes>
 
 #include "ExplosionGenerator.h"
 #include "ExpGenSpawner.h" //!!
@@ -607,21 +607,21 @@ void CCustomExplosionGenerator::ExecuteExplosionCode(const char* code, float dam
 				return;
 			}
 			case OP_STOREI: {
-				boost::uint8_t  size   = *(boost::uint8_t*)  code; code++;
-				boost::uint16_t offset = *(boost::uint16_t*) code; code += 2;
+				std::uint8_t  size   = *(std::uint8_t*)  code; code++;
+				std::uint16_t offset = *(std::uint16_t*) code; code += 2;
 				switch (size) {
-					case 1: { *(boost::int8_t*)  (instance + offset) = (int) val; } break;
-					case 2: { *(boost::int16_t*) (instance + offset) = (int) val; } break;
-					case 4: { *(boost::int32_t*) (instance + offset) = (int) val; } break;
-					case 8: { *(boost::int64_t*) (instance + offset) = (int) val; } break;
+					case 1: { *(std::int8_t*)  (instance + offset) = (int) val; } break;
+					case 2: { *(std::int16_t*) (instance + offset) = (int) val; } break;
+					case 4: { *(std::int32_t*) (instance + offset) = (int) val; } break;
+					case 8: { *(std::int64_t*) (instance + offset) = (int) val; } break;
 					default: { /*no op*/ } break;
 				}
 				val = 0.0f;
 				break;
 			}
 			case OP_STOREF: {
-				boost::uint8_t  size   = *(boost::uint8_t*)  code; code++;
-				boost::uint16_t offset = *(boost::uint16_t*) code; code += 2;
+				std::uint8_t  size   = *(std::uint8_t*)  code; code++;
+				std::uint16_t offset = *(std::uint16_t*) code; code += 2;
 				switch (size) {
 					case 4: { *(float*)  (instance + offset) = val; } break;
 					case 8: { *(double*) (instance + offset) = val; } break;
@@ -656,14 +656,14 @@ void CCustomExplosionGenerator::ExecuteExplosionCode(const char* code, float dam
 				break;
 			}
 			case OP_STOREP: {
-				boost::uint16_t offset = *(boost::uint16_t*) code;
+				std::uint16_t offset = *(std::uint16_t*) code;
 				code += 2;
 				*(void**) (instance + offset) = ptr;
 				ptr = NULL;
 				break;
 			}
 			case OP_DIR: {
-				boost::uint16_t offset = *(boost::uint16_t*) code;
+				std::uint16_t offset = *(std::uint16_t*) code;
 				code += 2;
 				*reinterpret_cast<float3*>(instance + offset) = dir;
 				break;
@@ -735,7 +735,7 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 			throw content_error("[CCEG::ParseExplosionCode] incorrect use of \"dir\" (" + script + ")");
 
 		code += OP_DIR;
-		boost::uint16_t ofs = memberInfo.offset;
+		std::uint16_t ofs = memberInfo.offset;
 		code.append((char*) &ofs, (char*) &ofs + sizeof(ofs));
 
 		return;
@@ -763,7 +763,7 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 		code += OP_LOADP;
 		code.append((char*)(&ptr), ((char*)(&ptr)) + sizeof(void*));
 		code += OP_STOREP;
-		boost::uint16_t ofs = memberInfo.offset;
+		std::uint16_t ofs = memberInfo.offset;
 		code.append((char*)&ofs, (char*)&ofs + sizeof(ofs));
 
 		return;
@@ -774,8 +774,8 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 
 	assert (isFloat || memberInfo.type == SExpGenSpawnableMemberInfo::TYPE_INT);
 
-	static const std::set<boost::uint8_t> allowedSizeInt = {1,2,4 /*,0,8*/};
-	static const std::set<boost::uint8_t> allowedSizeFlt = {4 /*,8*/};
+	static const std::set<std::uint8_t> allowedSizeInt = {1,2,4 /*,0,8*/};
+	static const std::set<std::uint8_t> allowedSizeFlt = {4 /*,8*/};
 	if (isFloat) {
 		if (allowedSizeFlt.find(memberInfo.size) == allowedSizeFlt.end())
 			throw content_error("[CCEG::ParseExplosionCode] incompatible float size \"" + IntToString(memberInfo.size) + "\" (" + script + ")");
@@ -842,7 +842,7 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 	// store the final value
 	code.push_back(isFloat ? OP_STOREF : OP_STOREI);
 	code.push_back(memberInfo.size);
-	boost::uint16_t ofs = memberInfo.offset;
+	std::uint16_t ofs = memberInfo.offset;
 	code.append((char*)&ofs, (char*)&ofs + sizeof(ofs));
 }
 

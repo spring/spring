@@ -12,7 +12,7 @@
 #include "System/Sync/HsiehHash.h"
 
 #include <cctype>
-#include <boost/cstdint.hpp>
+#include <cinttypes>
 
 
 #define SCALE_FACTOR_3DO (1.0f / 65536.0f)
@@ -256,7 +256,7 @@ void C3DOParser::GetPrimitives(S3DOPiece* obj, int pos, int num, int excludePrim
 		// load vertex indices list
 		curOffset = p.OffsetToVertexIndexArray;
 		for (int b=0; b<p.NumberOfVertexIndexes; b++) {
-			boost::uint16_t w;
+			std::uint16_t w;
 			STREAM_READ(&w,2, fileBuf, curOffset);
 			swabWordInPlace(w);
 			sp.indices[b] = w;

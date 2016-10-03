@@ -47,7 +47,7 @@ CPathManager::~CPathManager()
 	PathFlowMap::FreeInstance(pathFlowMap);
 }
 
-boost::int64_t CPathManager::Finalize() {
+std::int64_t CPathManager::Finalize() {
 	const spring_time t0 = spring_gettime();
 
 	{
@@ -708,7 +708,7 @@ void CPathManager::GetPathWayPoints(
 
 
 
-boost::uint32_t CPathManager::GetPathCheckSum() const {
+std::uint32_t CPathManager::GetPathCheckSum() const {
 	assert(IsFinalized());
 	return (medResPE->GetPathChecksum() + lowResPE->GetPathChecksum());
 }

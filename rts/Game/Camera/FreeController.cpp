@@ -1,6 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include <boost/cstdint.hpp>
+#include <cinttypes>
 #include <SDL_keycode.h>
 
 #include "FreeController.h"
@@ -294,9 +294,9 @@ void CFreeController::KeyMove(float3 move)
 
 void CFreeController::MouseMove(float3 move)
 {
-	const boost::uint8_t prevAlt   = KeyInput::GetKeyModState(KMOD_ALT);
-	const boost::uint8_t prevCtrl  = KeyInput::GetKeyModState(KMOD_CTRL);
-	const boost::uint8_t prevShift = KeyInput::GetKeyModState(KMOD_SHIFT);
+	const std::uint8_t prevAlt   = KeyInput::GetKeyModState(KMOD_ALT);
+	const std::uint8_t prevCtrl  = KeyInput::GetKeyModState(KMOD_CTRL);
+	const std::uint8_t prevShift = KeyInput::GetKeyModState(KMOD_SHIFT);
 
 	KeyInput::SetKeyModState(KMOD_CTRL, !prevCtrl);
 	KeyInput::SetKeyModState(KMOD_ALT, (invertAlt == !prevAlt));
@@ -311,9 +311,9 @@ void CFreeController::MouseMove(float3 move)
 
 void CFreeController::ScreenEdgeMove(float3 move)
 {
-	const boost::uint8_t prevAlt   = KeyInput::GetKeyModState(KMOD_ALT);
-	const boost::uint8_t prevCtrl  = KeyInput::GetKeyModState(KMOD_CTRL);
-	const boost::uint8_t prevShift = KeyInput::GetKeyModState(KMOD_SHIFT);
+	const std::uint8_t prevAlt   = KeyInput::GetKeyModState(KMOD_ALT);
+	const std::uint8_t prevCtrl  = KeyInput::GetKeyModState(KMOD_CTRL);
+	const std::uint8_t prevShift = KeyInput::GetKeyModState(KMOD_SHIFT);
 
 	KeyInput::SetKeyModState(KMOD_ALT, (invertAlt == !prevAlt));
 	KeyMove(move);
@@ -326,8 +326,8 @@ void CFreeController::ScreenEdgeMove(float3 move)
 
 void CFreeController::MouseWheelMove(float move)
 {
-	const boost::uint8_t prevCtrl  = KeyInput::GetKeyModState(KMOD_CTRL);
-	const boost::uint8_t prevShift = KeyInput::GetKeyModState(KMOD_SHIFT);
+	const std::uint8_t prevCtrl  = KeyInput::GetKeyModState(KMOD_CTRL);
+	const std::uint8_t prevShift = KeyInput::GetKeyModState(KMOD_SHIFT);
 
 	KeyInput::SetKeyModState(KMOD_CTRL, 0);
 	KeyInput::SetKeyModState(KMOD_SHIFT, 1);

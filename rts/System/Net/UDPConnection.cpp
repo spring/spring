@@ -4,7 +4,7 @@
 
 #include <boost/format.hpp>
 #include <boost/shared_ptr.hpp>
-#include <boost/cstdint.hpp>
+#include <cinttypes>
 
 
 #include "Socket.h"
@@ -64,7 +64,7 @@ void EMULATE_PACKET_CORRUPTION(uint8_t& crc) {
 #else
 static int dummyLossCounter = 0;
 inline bool EMULATE_PACKET_LOSS(int &lossCtr) { return false; }
-inline void EMULATE_PACKET_CORRUPTION(boost::uint8_t& crc) {}
+inline void EMULATE_PACKET_CORRUPTION(std::uint8_t& crc) {}
 #define LOSS_COUNTER dummyLossCounter
 #endif
 
@@ -103,7 +103,7 @@ public:
 		pos += sizeof(t);
 	}
 
-	void Unpack(std::vector<boost::uint8_t>& t, unsigned unpackLength) {
+	void Unpack(std::vector<std::uint8_t>& t, unsigned unpackLength) {
 		std::copy(data + pos, data + pos + unpackLength, std::back_inserter(t));
 		pos += unpackLength;
 	}
@@ -120,7 +120,7 @@ private:
 class Packer
 {
 public:
-	Packer(std::vector<boost::uint8_t>& data): data(data)
+	Packer(std::vector<std::uint8_t>& data): data(data)
 	{
 		assert(data.empty());
 	}
@@ -132,12 +132,12 @@ public:
 		*reinterpret_cast<T*>(&data[pos]) = t;
 	}
 
-	void Pack(std::vector<boost::uint8_t>& _data) {
+	void Pack(std::vector<std::uint8_t>& _data) {
 		std::copy(_data.begin(), _data.end(), std::back_inserter(data));
 	}
 
 private:
-	std::vector<boost::uint8_t>& data;
+	std::vector<std::uint8_t>& data;
 };
 
 
@@ -205,7 +205,7 @@ unsigned Packet::GetSize() const {
 	return size;
 }
 
-boost::uint8_t Packet::GetChecksum() const {
+std::uint8_t Packet::GetChecksum() const {
 
 	CRC crc;
 	crc << lastContinuous;
@@ -217,10 +217,10 @@ boost::uint8_t Packet::GetChecksum() const {
 	for (auto chk = chunks.begin(); chk != chunks.end(); ++chk)
 		(*chk)->UpdateChecksum(crc);
 
-	return (boost::uint8_t)crc.GetDigest();
+	return (std::uint8_t)crc.GetDigest();
 }
 
-void Packet::Serialize(std::vector<boost::uint8_t>& data)
+void Packet::Serialize(std::vector<std::uint8_t>& data)
 {
 	data.reserve(GetSize());
 	Packer buf(data);
@@ -440,7 +440,7 @@ void UDPConnection::Update()
 		size_t bytesAvail = 0;
 
 		while ((bytesAvail = mySocket->available()) > 0) {
-			std::vector<boost::uint8_t> buffer(bytesAvail, 0);
+			std::vector<std::uint8_t> buffer(bytesAvail, 0);
 			ip::udp::endpoint sender_endpoint;
 			ip::udp::socket::message_flags flags = 0;
 			boost::system::error_code err;
@@ -552,7 +552,7 @@ void UDPConnection::ProcessRawPacket(Packet& incoming)
 
 	// process all in order packets that we have waiting
 	while ((wpi = waitingPackets.find(lastInOrder + 1)) != waitingPackets.end()) {
-		std::vector<boost::uint8_t> buf;
+		std::vector<std::uint8_t> buf;
 
 		if (fragmentBuffer != NULL) {
 			buf.resize(fragmentBuffer->length);
@@ -639,7 +639,7 @@ void UDPConnection::Flush(const bool forced)
 	}
 
 	if (forced || (!waitMore && outgoingLength > requiredLength)) {
-		boost::uint8_t buffer[udpMaxPacketSize];
+		std::uint8_t buffer[udpMaxPacketSize];
 		unsigned pos = 0;
 
 		// Manually fragment packets to respect configured UDP_MTU.
@@ -823,9 +823,9 @@ void UDPConnection::SendIfNecessary(bool flushed)
 		int maxResend = resendRequested.size();
 		int unackPrevSize = unackedChunks.size();
 
-		std::map<boost::int32_t, ChunkPtr>::iterator resIter = resendRequested.begin();
-		std::map<boost::int32_t, ChunkPtr>::iterator resMidIter, resMidIterStart, resMidIterEnd;
-		std::map<boost::int32_t, ChunkPtr>::reverse_iterator resRevIter;
+		std::map<std::int32_t, ChunkPtr>::iterator resIter = resendRequested.begin();
+		std::map<std::int32_t, ChunkPtr>::iterator resMidIter, resMidIterStart, resMidIterEnd;
+		std::map<std::int32_t, ChunkPtr>::reverse_iterator resRevIter;
 
 		if (netLossFactor != MIN_LOSS_FACTOR) {
 			maxResend = std::min(maxResend, 20 * netLossFactor); // keep it reasonable, or it could cause a tremendous flood of packets
@@ -938,7 +938,7 @@ void UDPConnection::SendIfNecessary(bool flushed)
 
 void UDPConnection::SendPacket(Packet& pkt)
 {
-	std::vector<boost::uint8_t> data;
+	std::vector<std::uint8_t> data;
 	pkt.Serialize(data);
 
 	outgoing.DataSent(data.size());

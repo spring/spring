@@ -10,7 +10,6 @@
 
 #include <boost/shared_ptr.hpp>
 #include "creg_cond.h"
-#include <boost/cstdint.hpp>
 
 namespace creg {
 

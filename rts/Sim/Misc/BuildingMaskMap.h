@@ -22,14 +22,14 @@ public:
 		maskMap.resize(mapDims.hmapx * mapDims.hmapy, 1); //1st bit set to 1 constitutes for "normal tile"
 	};
 
-	bool SetTileMask(unsigned int x, unsigned int z, boost::uint16_t value);
-	bool TestTileMask(unsigned int x, unsigned int z, boost::uint16_t value);
-	bool TestTileMaskUnsafe(unsigned int x, unsigned int z, boost::uint16_t value);
+	bool SetTileMask(unsigned int x, unsigned int z, std::uint16_t value);
+	bool TestTileMask(unsigned int x, unsigned int z, std::uint16_t value);
+	bool TestTileMaskUnsafe(unsigned int x, unsigned int z, std::uint16_t value);
 
 private:
 	bool CheckBounds(unsigned int x, unsigned int z);
 private:
-	std::vector<boost::uint16_t> maskMap;
+	std::vector<std::uint16_t> maskMap;
 };
 
 extern BuildingMaskMap* buildingMaskMap;

@@ -3977,7 +3977,7 @@ int LuaSyncedCtrl::SetSquareBuildingMask(lua_State* L)
 		luaL_error(L, "Incorrect value of mask: %s(%d, %d, %d)", __FUNCTION__, x, z, mask);
 		return 0;
 	}
-	const bool result = buildingMaskMap->SetTileMask(x, z, (boost::uint16_t)mask);
+	const bool result = buildingMaskMap->SetTileMask(x, z, (std::uint16_t)mask);
 	if (!result) {
 		luaL_error(L, "Invalid values supplied: %s(%d, %d, %d)", __FUNCTION__, x, z, mask);
 		return 0;

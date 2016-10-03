@@ -411,7 +411,7 @@ inline SLosInstance::TLosStatus ILosType::OptimizeInstanceUpdate(SLosInstance* l
 
 inline int ILosType::GetHashNum(const int allyteam, const int2 baseLos, const float radius) const
 {
-	boost::uint32_t hash = 0;
+	std::uint32_t hash = 0;
 	hash = HsiehHash(&allyteam, sizeof(allyteam), hash);
 	hash = HsiehHash(&baseLos,  sizeof(baseLos),  hash);
 	hash = HsiehHash(&radius,   sizeof(radius),   hash);

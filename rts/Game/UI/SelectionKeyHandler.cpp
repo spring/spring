@@ -20,7 +20,6 @@
 #include "System/Log/ILog.h"
 #include "System/myMath.h"
 #include "System/FileSystem/DataDirsAccess.h"
-#include <boost/cstdint.hpp>
 
 CSelectionKeyHandler* selectionKeys;
 

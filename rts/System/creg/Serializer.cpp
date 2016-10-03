@@ -21,7 +21,7 @@
 #include <vector>
 #include <string>
 #include <string.h>
-#include <boost/cstdint.hpp>
+#include <cinttypes>
 
 using namespace creg;
 using std::string;
@@ -255,12 +255,12 @@ void COutputStreamSerializer::SerializeInt(void* data, int byteSize)
 	// always save ints as 64bit
 	// cause of int-types might differ in size depending on platforms
 	// to make savegames compatible between those we need to so
-	boost::int64_t x = 0;
+	std::int64_t x = 0;
 	switch (byteSize) {
-		case 1: { x = *(boost::int8_t* )data; break; }
-		case 2: { x = *(boost::int16_t*)data; break; }
-		case 4: { x = *(boost::int32_t*)data; break; }
-		case 8: { x = *(boost::int64_t*)data; break; }
+		case 1: { x = *(std::int8_t* )data; break; }
+		case 2: { x = *(std::int16_t*)data; break; }
+		case 4: { x = *(std::int32_t*)data; break; }
+		case 8: { x = *(std::int64_t*)data; break; }
 		default: {
 			throw "Unknown int type";
 		}
@@ -472,13 +472,13 @@ void CInputStreamSerializer::SerializeInt(void* data, int byteSize)
 	// always save ints as 64bit
 	// cause of int-types might differ in size depending on platforms
 	// to make savegames compatible between those we need to so
-	boost::int64_t x = 0;
+	std::int64_t x = 0;
 	stream->read((char*)&x, 8);
 	switch (byteSize) {
-		case 1: { *(boost::int8_t* )data = x; break; }
-		case 2: { *(boost::int16_t*)data = x; break; }
-		case 4: { *(boost::int32_t*)data = x; break; }
-		case 8: { *(boost::int64_t*)data = x; break; }
+		case 1: { *(std::int8_t* )data = x; break; }
+		case 2: { *(std::int16_t*)data = x; break; }
+		case 4: { *(std::int32_t*)data = x; break; }
+		case 8: { *(std::int64_t*)data = x; break; }
 		default: {
 			throw "Unknown int type";
 		}

@@ -12,7 +12,7 @@
 // #include <alext.h>
 #endif
 
-#include <boost/cstdint.hpp>
+#include <cinttypes>
 #include <boost/thread/thread.hpp>
 
 #include "System/Sound/ISoundChannels.h"
@@ -577,7 +577,7 @@ size_t CSound::LoadSoundBuffer(const std::string& path)
 			return 0;
 		}
 
-		std::vector<boost::uint8_t> buf(file.FileSize());
+		std::vector<std::uint8_t> buf(file.FileSize());
 		file.Read(&buf[0], file.FileSize());
 
 		boost::shared_ptr<SoundBuffer> buffer(new SoundBuffer());

@@ -36,7 +36,7 @@
 #include "System/Net/UnpackPacket.h"
 #include "System/Sound/ISound.h"
 
-#include <boost/cstdint.hpp>
+#include <cinttypes>
 
 #define LOG_SECTION_NET "Net"
 LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_NET)
@@ -358,7 +358,7 @@ void CGame::ClientReadNet()
 				}
 				CPlayer* p  = playerHandler->Player(playerId);
 				p->cpuUsage =           *(float*) &inbuf[2];
-				p->ping     = *(boost::uint32_t*) &inbuf[6];
+				p->ping     = *(std::uint32_t*) &inbuf[6];
 
 				AddTraffic(playerId, packetCode, dataLength);
 				break;
@@ -471,8 +471,8 @@ void CGame::ClientReadNet()
 					break;
 				}
 
-				const boost::uint32_t playerCheckSum = *(boost::uint32_t*) &inbuf[2];
-				const boost::uint32_t localCheckSum = pathManager->GetPathCheckSum();
+				const std::uint32_t playerCheckSum = *(std::uint32_t*) &inbuf[2];
+				const std::uint32_t localCheckSum = pathManager->GetPathCheckSum();
 
 				const CPlayer* player = playerHandler->Player(playerNum);
 
@@ -818,19 +818,19 @@ void CGame::ClientReadNet()
 			case NETMSG_LUAMSG: {
 				try {
 					netcode::UnpackPacket unpack(packet, 1);
-					boost::uint16_t size;
+					std::uint16_t size;
 					unpack >> size;
 					if (size != packet->length)
 						throw netcode::UnpackPacketException("Invalid size");
-					boost::uint8_t playerNum;
+					std::uint8_t playerNum;
 					unpack >> playerNum;
 					if (!playerHandler->IsValidPlayer(playerNum))
 						throw netcode::UnpackPacketException("Invalid player number");
-					boost::uint16_t script;
+					std::uint16_t script;
 					unpack >> script;
-					boost::uint8_t mode;
+					std::uint8_t mode;
 					unpack >> mode;
-					std::vector<boost::uint8_t> data(size - 7);
+					std::vector<std::uint8_t> data(size - 7);
 					unpack >> data;
 
 					CLuaHandle::HandleLuaMsg(playerNum, script, mode, data);

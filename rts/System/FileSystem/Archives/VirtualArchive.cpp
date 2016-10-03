@@ -65,7 +65,7 @@ unsigned int CVirtualArchiveOpen::NumFiles() const
 	return archive->NumFiles();
 }
 
-bool CVirtualArchiveOpen::GetFile( unsigned int fid, std::vector<boost::uint8_t>& buffer )
+bool CVirtualArchiveOpen::GetFile( unsigned int fid, std::vector<std::uint8_t>& buffer )
 {
 	return archive->GetFile(fid, buffer);
 }
@@ -99,7 +99,7 @@ unsigned int CVirtualArchive::NumFiles() const
 	return files.size();
 }
 
-bool CVirtualArchive::GetFile( unsigned int fid, std::vector<boost::uint8_t>& buffer )
+bool CVirtualArchive::GetFile( unsigned int fid, std::vector<std::uint8_t>& buffer )
 {
 	if(fid >= files.size()) return false;
 

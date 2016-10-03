@@ -6,7 +6,7 @@
 #include <array>
 #include <vector>
 #include <fstream>
-#include <boost/cstdint.hpp>
+#include <cinttypes>
 
 #include "PathEnums.hpp"
 #include "PathDefines.hpp"
@@ -123,8 +123,8 @@ namespace QTPFS {
 		unsigned int GetChildID(unsigned int i) const { return (nodeNumber << 2) + (i + 1); }
 		unsigned int GetParentID() const { return ((nodeNumber - 1) >> 2); }
 
-		boost::uint64_t GetMemFootPrint() const;
-		boost::uint64_t GetCheckSum() const;
+		std::uint64_t GetMemFootPrint() const;
+		std::uint64_t GetCheckSum() const;
 
 		void Delete();
 		void PreTesselate(NodeLayer& nl, const SRectangle& r, SRectangle& ur);

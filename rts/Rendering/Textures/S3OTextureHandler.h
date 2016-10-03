@@ -61,7 +61,7 @@ private:
 private:
 	typedef boost::unordered_map<std::string, CachedS3OTex> TextureCache;
 	typedef boost::unordered_map<std::string, CBitmap> BitmapCache;
-	typedef boost::unordered_map<boost::uint64_t, unsigned int> TextureTable;
+	typedef boost::unordered_map<std::uint64_t, unsigned int> TextureTable;
 
 	TextureCache textureCache; // stores individual primary- and secondary-textures by name
 	TextureTable textureTable; // stores (primary, secondary) texture-pairs by unique ident

@@ -4,7 +4,7 @@
 #define AUTOHOST_INTERFACE_H
 
 #include <string>
-#include <boost/cstdint.hpp>
+#include <cinttypes>
 #include <boost/asio/ip/udp.hpp>
 
 /**
@@ -46,8 +46,8 @@ public:
 	void Message(const std::string& message);
 	void Warning(const std::string& message);
 
-	void SendLuaMsg(const boost::uint8_t* msg, size_t msgSize);
-	void Send(const boost::uint8_t* msg, size_t msgSize);
+	void SendLuaMsg(const std::uint8_t* msg, size_t msgSize);
+	void Send(const std::uint8_t* msg, size_t msgSize);
 
 	/**
 	 * @brief Receive a chat message from the autohost

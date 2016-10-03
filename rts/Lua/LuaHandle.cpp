@@ -1532,7 +1532,7 @@ bool CLuaHandle::RecvLuaMsg(const string& msg, int playerID)
 
 /******************************************************************************/
 
-void CLuaHandle::HandleLuaMsg(int playerID, int script, int mode, const std::vector<boost::uint8_t>& data)
+void CLuaHandle::HandleLuaMsg(int playerID, int script, int mode, const std::vector<std::uint8_t>& data)
 {
 	std::string msg;
 	msg.resize(data.size());

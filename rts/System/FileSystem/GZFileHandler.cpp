@@ -42,7 +42,7 @@ bool CGZFileHandler::ReadToBuffer(const std::string& path)
 	if (file == Z_NULL)
 		return false;
 
-	boost::uint8_t unzipBuffer[BUFFER_SIZE];
+	std::uint8_t unzipBuffer[BUFFER_SIZE];
 
 	while (true) {
 		int unzippedBytes = gzread(file, unzipBuffer, BUFFER_SIZE);
@@ -64,7 +64,7 @@ bool CGZFileHandler::ReadToBuffer(const std::string& path)
 
 bool CGZFileHandler::UncompressBuffer()
 {
-	std::vector<boost::uint8_t> compressed;
+	std::vector<std::uint8_t> compressed;
 	std::swap(compressed, fileBuffer);
 
 
@@ -80,7 +80,7 @@ bool CGZFileHandler::UncompressBuffer()
 	zstream.next_in   = &compressed[0];
 	zstream.avail_in  = compressed.size();
 
-	boost::uint8_t unzipBuffer[BUFFER_SIZE];
+	std::uint8_t unzipBuffer[BUFFER_SIZE];
 
 	while (true) {
 		zstream.avail_out = BUFFER_SIZE;

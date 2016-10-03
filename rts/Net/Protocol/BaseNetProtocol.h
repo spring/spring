@@ -4,7 +4,7 @@
 #define _BASE_NET_PROTOCOL_H
 
 #include <boost/shared_ptr.hpp>
-#include <boost/cstdint.hpp>
+#include <cinttypes>
 #include <vector>
 #include <string>
 #include <stdlib.h>
@@ -47,7 +47,7 @@ enum NETMSG {
 	NETMSG_CHAT             = 7,  // uchar from, dest; std::string message;
 	NETMSG_RANDSEED         = 8,  // uint randSeed;
 	NETMSG_GAMEID           = 9,  // uchar gameID[16];
-	NETMSG_PATH_CHECKSUM    = 10, // uchar myPlayerNum, boost::uint32_t checksum
+	NETMSG_PATH_CHECKSUM    = 10, // uchar myPlayerNum, std::uint32_t checksum
 	NETMSG_COMMAND          = 11, // uchar myPlayerNum; int id; uchar options; std::vector<float> params;
 	NETMSG_SELECT           = 12, // uchar myPlayerNum; std::vector<short> selectedUnitIDs;
 	NETMSG_PAUSE            = 13, // uchar playerNum, bPaused;
@@ -153,7 +153,7 @@ public:
 	PacketType SendPlayerName(uchar myPlayerNum, const std::string& playerName);
 	PacketType SendRandSeed(uint randSeed);
 	PacketType SendGameID(const uchar* buf);
-	PacketType SendPathCheckSum(uchar myPlayerNum, boost::uint32_t checksum);
+	PacketType SendPathCheckSum(uchar myPlayerNum, std::uint32_t checksum);
 	PacketType SendCommand(uchar myPlayerNum, int id, uchar options, const std::vector<float>& params);
 	PacketType SendSelect(uchar myPlayerNum, const std::vector<short>& selectedUnitIDs);
 	PacketType SendPause(uchar myPlayerNum, uchar bPaused);
@@ -181,7 +181,7 @@ public:
 	PacketType SendStartPos(uchar myPlayerNum, uchar teamNum, uchar readyState, float x, float y, float z);
 	PacketType SendPlayerInfo(uchar myPlayerNum, float cpuUsage, int ping);
 	PacketType SendPlayerLeft(uchar myPlayerNum, uchar bIntended);
-	PacketType SendLuaMsg(uchar myPlayerNum, unsigned short script, uchar mode, const std::vector<boost::uint8_t>& msg);
+	PacketType SendLuaMsg(uchar myPlayerNum, unsigned short script, uchar mode, const std::vector<std::uint8_t>& msg);
 	PacketType SendCurrentFrameProgress(int frameNum);
 
 	PacketType SendPlayerStat(uchar myPlayerNum, const PlayerStatistics& currentStats);
@@ -216,7 +216,7 @@ public:
 
 #ifdef SYNCDEBUG
 	PacketType SendSdCheckrequest(int frameNum);
-	PacketType SendSdCheckresponse(uchar myPlayerNum, boost::uint64_t flop, std::vector<unsigned> checksums);
+	PacketType SendSdCheckresponse(uchar myPlayerNum, std::uint64_t flop, std::vector<unsigned> checksums);
 	PacketType SendSdReset();
 	PacketType SendSdBlockrequest(unsigned short begin, unsigned short length, unsigned short requestSize);
 	PacketType SendSdBlockresponse(uchar myPlayerNum, std::vector<unsigned> checksums);
