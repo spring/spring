@@ -3,6 +3,7 @@
 #include "Futex.h"
 #include <sys/syscall.h>
 #include <linux/futex.h>
+#include <cstdlib>
 
 
 spring_futex::spring_futex() noexcept
