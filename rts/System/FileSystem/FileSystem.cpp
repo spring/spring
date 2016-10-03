@@ -218,9 +218,9 @@ std::string FileSystem::GetNormalizedPath(const std::string& path) {
 	std::string normalizedPath = StringReplace(path, "\\", posixSep); // convert to POSIX path separators
 
 	normalizedPath = StringReplace(normalizedPath, "/./", posixSep);
-	normalizedPath = std::regex_replace(normalizedPath, std::regex("[/]{2,}", std::regex::ECMAScript), posixSep);
-	normalizedPath = std::regex_replace(normalizedPath, std::regex("[^/]+[/][.]{2}", std::regex::ECMAScript), emptyStr);
-	normalizedPath = std::regex_replace(normalizedPath, std::regex("[/]{2,}", std::regex::ECMAScript), posixSep);
+	normalizedPath = std::regex_replace(normalizedPath, std::regex("[/]{2,}", std::regex::extended), posixSep);
+	normalizedPath = std::regex_replace(normalizedPath, std::regex("[^/]+[/][.]{2}", std::regex::extended), emptyStr);
+	normalizedPath = std::regex_replace(normalizedPath, std::regex("[/]{2,}", std::regex::extended), posixSep);
 
 	return normalizedPath; // maybe use FixSlashes here
 }
