@@ -442,7 +442,7 @@ static void FindFiles(std::vector<std::string>& matches, const std::string& data
 
 void FileSystemAbstraction::FindFiles(std::vector<std::string>& matches, const std::string& dataDir, const std::string& dir, const std::string& regex, int flags)
 {
-	const std::regex regexPattern(regex, std::regex::extended);
+	const std::regex regexPattern(regex);
 	::FindFiles(matches, dataDir, dir, regexPattern, flags);
 }
 

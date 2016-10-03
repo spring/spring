@@ -348,7 +348,7 @@ bool CFileHandler::InsertVFSFiles(std::set<string>& fileSet,
 	}
 
 	std::regex regexpattern(FileSystem::ConvertGlobToRegex(pattern),
-			std::regex::icase | std::regex::extended);
+			std::regex::icase);
 
 	const std::vector<string> &found = vfsHandler->GetFilesInDir(path, (CVFSHandler::Section) section);
 	std::vector<string>::const_iterator fi;
@@ -394,7 +394,7 @@ bool CFileHandler::InsertRawDirs(std::set<string>& dirSet,
 {
 #ifndef TOOLS
 	std::regex regexpattern(FileSystem::ConvertGlobToRegex(pattern),
-	                          std::regex::icase | std::regex::extended);
+	                          std::regex::icase);
 
 	const std::vector<string> &found = dataDirsAccess.FindFiles(path, pattern,
 	                                            FileQueryFlags::ONLY_DIRS);
@@ -424,7 +424,7 @@ bool CFileHandler::InsertVFSDirs(std::set<string>& dirSet,
 	}
 
 	std::regex regexpattern(FileSystem::ConvertGlobToRegex(pattern),
-			std::regex::icase | std::regex::extended);
+			std::regex::icase | std::regex::basic);
 
 	const std::vector<string> &found = vfsHandler->GetDirsInDir(path, (CVFSHandler::Section) section);
 	std::vector<string>::const_iterator fi;

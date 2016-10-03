@@ -108,7 +108,7 @@ void CFileFilter::AddRule(const string& rule)
 		}
 	}
 	r.glob = rule.substr(p, 1 + q - p);
-	r.regex = std::regex(glob_to_regex(r.glob), std::regex::icase | std::regex::extended);
+	r.regex = std::regex(glob_to_regex(r.glob), std::regex::icase);
 	rules.push_back(r);
 	//printf("added %s%s: %s\n", r.negate ? "!" : "", r.glob.c_str(), r.regex.expression());
 }
