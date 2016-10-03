@@ -4,7 +4,7 @@
 #define _GAME_SERVER_H
 
 #include <boost/shared_ptr.hpp>
-#include <boost/scoped_ptr.hpp>
+#include <memory>
 
 #include <string>
 #include <map>
@@ -113,8 +113,8 @@ public:
 	const boost::shared_ptr<const    GameData> GetGameData() const { return myGameData; }
 	const boost::shared_ptr<const  CGameSetup> GetGameSetup() const { return myGameSetup; }
 
-	const boost::scoped_ptr<CDemoReader>& GetDemoReader() const { return demoReader; }
-	const boost::scoped_ptr<CDemoRecorder>& GetDemoRecorder() const { return demoRecorder; }
+	const std::unique_ptr<CDemoReader>& GetDemoReader() const { return demoReader; }
+	const std::unique_ptr<CDemoRecorder>& GetDemoRecorder() const { return demoRecorder; }
 
 private:
 	/**
@@ -263,10 +263,10 @@ private:
 	/// If the server receives a command, it will forward it to clients if it is not in this set
 	static std::set<std::string> commandBlacklist;
 
-	boost::scoped_ptr<netcode::UDPListener> UDPNet;
-	boost::scoped_ptr<CDemoReader> demoReader;
-	boost::scoped_ptr<CDemoRecorder> demoRecorder;
-	boost::scoped_ptr<AutohostInterface> hostif;
+	std::unique_ptr<netcode::UDPListener> UDPNet;
+	std::unique_ptr<CDemoReader> demoReader;
+	std::unique_ptr<CDemoRecorder> demoRecorder;
+	std::unique_ptr<AutohostInterface> hostif;
 
 	UnsyncedRNG rng;
 	boost::thread* thread;

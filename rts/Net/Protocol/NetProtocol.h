@@ -4,7 +4,7 @@
 #define NET_PROTOCOL_H
 
 #include <string>
-#include <boost/scoped_ptr.hpp>
+#include <memory>
 #include <boost/shared_ptr.hpp>
 
 #include "BaseNetProtocol.h" // not used in here, but in all files including this one
@@ -109,8 +109,8 @@ public:
 private:
 	volatile bool keepUpdating;
 
-	boost::scoped_ptr<netcode::CConnection> serverConn;
-	boost::scoped_ptr<CDemoRecorder> demoRecorder;
+	std::unique_ptr<netcode::CConnection> serverConn;
+	std::unique_ptr<CDemoRecorder> demoRecorder;
 
 	std::string userName;
 	std::string userPasswd;

@@ -234,7 +234,7 @@ int main(int argc, char* argv[])
 			if (printData) {
 				printData = false;
 
-				const boost::scoped_ptr<CDemoRecorder>& demoRec = server->GetDemoRecorder();
+				const boost::unique_ptr<CDemoRecorder>& demoRec = server->GetDemoRecorder();
 				const std::uint8_t* gameID = (demoRec->GetFileHeader()).gameID;
 
 				LOG("recording demo: %s", (demoRec->GetName()).c_str());
