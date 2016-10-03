@@ -1,6 +1,7 @@
 
 #include "System/FileSystem/FileSystem.h"
 
+#include <regex>
 #include <string>
 #include <cstdio>
 #include <sys/stat.h>
@@ -71,10 +72,14 @@ BOOST_FIXTURE_TEST_SUITE(everything, PrepareFileSystem)
 
 BOOST_AUTO_TEST_CASE(FileExists)
 {
-	BOOST_CHECK(FileSystem::FileExists("testFile.txt"));
-	BOOST_CHECK(!FileSystem::FileExists("testFile99.txt"));
-	BOOST_CHECK(!FileSystem::FileExists("testDir"));
-	BOOST_CHECK(!FileSystem::FileExists("testDir99"));
+	try {
+		BOOST_CHECK(FileSystem::FileExists("testFile.txt"));
+		BOOST_CHECK(!FileSystem::FileExists("testFile99.txt"));
+		BOOST_CHECK(!FileSystem::FileExists("testDir"));
+		BOOST_CHECK(!FileSystem::FileExists("testDir99"));
+	} catch (const std::regex_error e) {
+		LOG("%s", e.what());
+	}
 }
 
 
