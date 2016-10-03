@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include <boost/regex.hpp>
 
 #include "OBJParser.h"
 
@@ -13,6 +12,7 @@
 #include "System/Util.h"
 
 #include <cassert>
+#include <regex>
 #include <sstream>
 
 #define LOG_SECTION_OBJ_PARSER "OBJParser"
@@ -82,29 +82,29 @@ S3DModel* COBJParser::Load(const std::string& modelFileName)
 
 bool COBJParser::ParseModelData(S3DModel* model, const std::string& modelData, const LuaTable& metaData)
 {
-	static const boost::regex commentPattern("^[ ]*(#|//).*");
-	static const boost::regex objectPattern("^[ ]*o [ ]*[a-zA-Z0-9_]+[ ]*");
-	static const boost::regex vertexPattern(
+	static const std::regex commentPattern("^[ ]*(#|//).*");
+	static const std::regex objectPattern("^[ ]*o [ ]*[a-zA-Z0-9_]+[ ]*");
+	static const std::regex vertexPattern(
 		"^[ ]*v "
 		"[ ]*-?[0-9]*\\.?[0-9]*(e-?[0-9]*)? "
 		"[ ]*-?[0-9]*\\.?[0-9]*(e-?[0-9]*)? "
 		"[ ]*-?[0-9]*\\.?[0-9]*(e-?[0-9]*)?"
 		"[ ]*"
 	);
-	static const boost::regex normalPattern(
+	static const std::regex normalPattern(
 		"^[ ]*vn "
 		"[ ]*-?[0-9]*\\.?[0-9]*(e-?[0-9]*)? "
 		"[ ]*-?[0-9]*\\.?[0-9]*(e-?[0-9]*)? "
 		"[ ]*-?[0-9]*\\.?[0-9]*(e-?[0-9]*)?"
 		"[ ]*"
 	);
-	static const boost::regex txcoorPattern(
+	static const std::regex txcoorPattern(
 		"^[ ]*vt "
 		"[ ]*-?[0-9]*\\.?[0-9]*(e-?[0-9]*)? "
 		"[ ]*-?[0-9]*\\.?[0-9]*(e-?[0-9]*)?"
 		"[ ]*"
 	);
-	static const boost::regex polygonPattern(
+	static const std::regex polygonPattern(
 		"^[ ]*f "
 		"[ ]*-?[0-9]+/-?[0-9]+/-?[0-9]+"
 		"[ ]*-?[0-9]+/-?[0-9]+/-?[0-9]+"
@@ -140,12 +140,12 @@ bool COBJParser::ParseModelData(S3DModel* model, const std::string& modelData, c
 		line = StringReplaceInPlace(line, '\r', ' ');
 
 		if (!line.empty()) {
-			                   regexMatch = (boost::regex_match(line, commentPattern));
-			if (!regexMatch) { regexMatch = (boost::regex_match(line, objectPattern )); }
-			if (!regexMatch) { regexMatch = (boost::regex_match(line, vertexPattern )); }
-			if (!regexMatch) { regexMatch = (boost::regex_match(line, normalPattern )); }
-			if (!regexMatch) { regexMatch = (boost::regex_match(line, txcoorPattern )); }
-			if (!regexMatch) { regexMatch = (boost::regex_match(line, polygonPattern)); }
+			                   regexMatch = (std::regex_match(line, commentPattern));
+			if (!regexMatch) { regexMatch = (std::regex_match(line, objectPattern )); }
+			if (!regexMatch) { regexMatch = (std::regex_match(line, vertexPattern )); }
+			if (!regexMatch) { regexMatch = (std::regex_match(line, normalPattern )); }
+			if (!regexMatch) { regexMatch = (std::regex_match(line, txcoorPattern )); }
+			if (!regexMatch) { regexMatch = (std::regex_match(line, polygonPattern)); }
 
 			if (!regexMatch) {
 				// ignore groups ('g'), smoothing groups ('s'),
