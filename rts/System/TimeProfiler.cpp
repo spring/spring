@@ -2,6 +2,7 @@
 
 #include "System/TimeProfiler.h"
 
+#include <limits.h>
 #include <cstring>
 #include <mutex>
 
