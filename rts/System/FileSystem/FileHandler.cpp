@@ -3,7 +3,6 @@
 
 #include "FileHandler.h"
 
-#include <cassert>
 #include <string>
 #include <vector>
 #include <set>
