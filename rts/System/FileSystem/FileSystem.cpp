@@ -11,10 +11,7 @@
 #include "System/Util.h"
 
 #include <regex>
-
-#ifdef _WIN32
-#include <io.h>
-#endif
+#include <unistd.h>
 
 ////////////////////////////////////////
 ////////// FileSystem
