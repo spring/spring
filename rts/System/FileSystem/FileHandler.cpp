@@ -4,6 +4,7 @@
 #include "FileHandler.h"
 
 #include <cassert>
+#include <cstring>
 #include <string>
 #include <vector>
 #include <set>
