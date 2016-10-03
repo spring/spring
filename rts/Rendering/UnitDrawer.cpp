@@ -427,7 +427,7 @@ inline void CUnitDrawer::DrawOpaqueUnit(CUnit* unit, bool drawReflection, bool d
 
 	// draw the unit with the default (non-Lua) material
 	SetTeamColour(unit->team);
-	DrawUnit(unit, 0, 0, false, false);
+	DrawUnitTrans(unit, 0, 0, false, false);
 }
 
 
@@ -551,7 +551,7 @@ void CUnitDrawer::DrawOpaqueUnitShadow(CUnit* unit) {
 	if (LuaObjectDrawer::AddShadowMaterialObject(unit, LUAOBJ_UNIT))
 		return;
 
-	DrawUnit(unit, 0, 0, false, false);
+	DrawUnitTrans(unit, 0, 0, false, false);
 }
 
 
@@ -813,7 +813,7 @@ inline void CUnitDrawer::DrawAlphaUnit(CUnit* unit, int modelType, bool drawGhos
 
 	if ((losStatus & LOS_INLOS) || gu->spectatingFullView) {
 		SetTeamColour(unit->team, float2(alphaValues.x, 1.0f));
-		DrawUnit(unit, 0, 0, false, false);
+		DrawUnitTrans(unit, 0, 0, false, false);
 	}
 }
 
@@ -1120,7 +1120,7 @@ void CUnitDrawer::DrawIndividual(const CUnit* unit, bool noLuaCall)
 	if (!LuaObjectDrawer::DrawSingleObject(unit, LUAOBJ_UNIT /*, noLuaCall*/)) {
 		// set the full default state
 		PushIndividualOpaqueState(unit, false);
-		DrawUnit(unit, 0, 0, false, noLuaCall);
+		DrawUnitTrans(unit, 0, 0, false, noLuaCall);
 		PopIndividualOpaqueState(unit, false);
 	}
 
@@ -1420,7 +1420,7 @@ void CUnitDrawer::DrawUnitNoTrans(
 	}
 }
 
-void CUnitDrawer::DrawUnit(const CUnit* unit, unsigned int preList, unsigned int postList, bool lodCall, bool noLuaCall)
+void CUnitDrawer::DrawUnitTrans(const CUnit* unit, unsigned int preList, unsigned int postList, bool lodCall, bool noLuaCall)
 {
 	glPushMatrix();
 	glMultMatrixf(unit->GetTransformMatrix());

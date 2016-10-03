@@ -223,7 +223,7 @@ void LuaObjectDrawer::Init()
 	eventFuncs[LUAOBJ_FEATURE] = &CEventHandler::DrawFeaturesPostDeferred;
 
 	unitDrawFuncs[false] = &CUnitDrawer::DrawUnitNoTrans;
-	unitDrawFuncs[ true] = &CUnitDrawer::DrawUnit;
+	unitDrawFuncs[ true] = &CUnitDrawer::DrawUnitTrans;
 
 	featureDrawFuncs[false] = &CFeatureDrawer::DrawFeatureNoTrans;
 	featureDrawFuncs[ true] = &CFeatureDrawer::DrawFeature;

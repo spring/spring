@@ -1495,7 +1495,7 @@ int LuaOpenGL::UnitCommon(lua_State* L, bool applyTransform, bool callDrawUnit)
 	typedef void(CUnitDrawer::*RawDrawMemFunc)(const CUnit*, unsigned int, unsigned int, bool, bool);
 	typedef void(CUnitDrawer::*MatDrawMemFunc)(const CUnit*, bool);
 
-	const RawDrawMemFunc rawDrawFuncs[2] = {&CUnitDrawer::DrawUnitNoTrans, &CUnitDrawer::DrawUnit};
+	const RawDrawMemFunc rawDrawFuncs[2] = {&CUnitDrawer::DrawUnitNoTrans, &CUnitDrawer::DrawUnitTrans};
 	const MatDrawMemFunc matDrawFuncs[2] = {&CUnitDrawer::DrawIndividualNoTrans, &CUnitDrawer::DrawIndividual};
 
 	if (!useLuaMat) {
