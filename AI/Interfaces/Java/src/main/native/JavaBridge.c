@@ -689,8 +689,8 @@ static bool java_createJavaVMInitArgs(struct JavaVMInitArgs* vm_args, const stru
 		// ### ... or set default ones, if the JVM config file was not found ###
 		simpleLog_logL(LOG_LEVEL_WARNING, "JVM: properties file ("JVM_PROPERTIES_FILE") not found; using default options.");
 
-		strOptions[op++] = "-Xms4M";
-		strOptions[op++] = "-Xmx64M";
+		strOptions[op++] = "-Xms64M";
+		strOptions[op++] = "-Xmx512M";
 		strOptions[op++] = "-Xss512K";
 		strOptions[op++] = "-Xoss400K";
 
