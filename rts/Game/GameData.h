@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 #include <cinttypes>
-#include <memory>
+#include <boost/shared_ptr.hpp>
 
 namespace netcode {
 	class RawPacket;
@@ -17,7 +17,7 @@ class GameData
 public:
 	GameData();
 	GameData(const std::string& setup);
-	GameData(std::shared_ptr<const netcode::RawPacket> pckt);
+	GameData(boost::shared_ptr<const netcode::RawPacket> pckt);
 
 	const netcode::RawPacket* Pack() const;
 

@@ -5,6 +5,7 @@
 
 #include <string>
 #include <memory>
+#include <boost/shared_ptr.hpp>
 
 #include "GameController.h"
 #include "System/Misc/SpringTime.h"
@@ -59,7 +60,7 @@ private:
 	/// receive network traffic
 	void UpdateClientNet();
 
-	void GameDataReceived(std::shared_ptr<const netcode::RawPacket> packet);
+	void GameDataReceived(boost::shared_ptr<const netcode::RawPacket> packet);
 
 	/**
 	@brief GameData we received from server

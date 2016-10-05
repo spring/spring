@@ -3,7 +3,7 @@
 #ifndef IN_MAP_DRAW_H
 #define IN_MAP_DRAW_H
 
-#include <memory>
+#include <boost/shared_ptr.hpp>
 #include <string>
 #include <vector>
 #include <list>
@@ -31,7 +31,7 @@ public:
 	void MouseRelease(int x, int y, int button);
 	void MouseMove(int x, int y, int dx, int dy, int button);
 	/** @return playerId */
-	int GotNetMsg(std::shared_ptr<const netcode::RawPacket>& packet);
+	int GotNetMsg(boost::shared_ptr<const netcode::RawPacket>& packet);
 
 	void SendPoint(const float3& pos, const std::string& label, bool fromLua);
 	void SendLine(const float3& pos1, const float3& pos2, bool fromLua);

@@ -2,7 +2,7 @@
 
 #include "Socket.h"
 
-#include "asio/error.hpp"
+#include <boost/system/error_code.hpp>
 #include "lib/streflop/streflop_cond.h"
 
 #include "System/Log/ILog.h"
@@ -11,15 +11,16 @@
 
 namespace netcode
 {
+using namespace boost::system::errc;
 
-asio::io_service netservice;
+boost::asio::io_service netservice;
 
-bool CheckErrorCode(asio::error_code& err)
+bool CheckErrorCode(boost::system::error_code& err)
 {
 	// connection reset can happen when host did not start up
 	// before the client wants to connect
-	if (!err || err.value() == asio::error::connection_reset ||
-		err.value() == asio::error::try_again) { // this should only ever happen with async sockets, but testing indicates it happens anyway...
+	if (!err || err.value() == connection_reset || 
+		err.value() == resource_unavailable_try_again) { // this should only ever happen with async sockets, but testing indicates it happens anyway...
 		return false;
 	} else {
 		LOG_L(L_WARNING, "Network error %i: %s", err.value(),
@@ -28,16 +29,16 @@ bool CheckErrorCode(asio::error_code& err)
 	}
 }
 
-asio::ip::udp::endpoint ResolveAddr(const std::string& host, int port, asio::error_code* err)
+boost::asio::ip::udp::endpoint ResolveAddr(const std::string& host, int port, boost::system::error_code* err)
 {
 	assert(err);
-	using namespace asio;
+	using namespace boost::asio;
 	ip::address tempAddr = WrapIP(host, err);
 	if (!*err)
 		return ip::udp::endpoint(tempAddr, port);
 
 	auto errBuf = *err; // WrapResolve() might clear err
-	asio::io_service io_service;
+	boost::asio::io_service io_service;
 	ip::udp::resolver resolver(io_service);
 	ip::udp::resolver::query query(host, IntToString(port));
 	auto iter = WrapResolve(resolver, query, err);
@@ -51,15 +52,15 @@ asio::ip::udp::endpoint ResolveAddr(const std::string& host, int port, asio::err
 }
 
 
-asio::ip::address WrapIP(const std::string& ip,
-		asio::error_code* err)
+boost::asio::ip::address WrapIP(const std::string& ip,
+		boost::system::error_code* err)
 {
-	asio::ip::address addr;
+	boost::asio::ip::address addr;
 
 	if (err == NULL) {
-		addr = asio::ip::address::from_string(ip);
+		addr = boost::asio::ip::address::from_string(ip);
 	} else {
-		addr = asio::ip::address::from_string(ip, *err);
+		addr = boost::asio::ip::address::from_string(ip, *err);
 	}
 //#ifdef STREFLOP_H
 	// (date of note: 08/05/10)
@@ -71,12 +72,12 @@ asio::ip::address WrapIP(const std::string& ip,
 	return addr;
 }
 
-asio::ip::udp::resolver::iterator WrapResolve(
-		asio::ip::udp::resolver& resolver,
-		asio::ip::udp::resolver::query& query,
-		asio::error_code* err)
+boost::asio::ip::udp::resolver::iterator WrapResolve(
+		boost::asio::ip::udp::resolver& resolver,
+		boost::asio::ip::udp::resolver::query& query,
+		boost::system::error_code* err)
 {
-	asio::ip::udp::resolver::iterator resolveIt;
+	boost::asio::ip::udp::resolver::iterator resolveIt;
 
 	if (err == NULL) {
 		resolveIt = resolver.resolve(query);
@@ -93,12 +94,12 @@ asio::ip::udp::resolver::iterator WrapResolve(
 }
 
 
-asio::ip::address GetAnyAddress(const bool IPv6)
+boost::asio::ip::address GetAnyAddress(const bool IPv6)
 {
 	if (IPv6) {
-		return asio::ip::address_v6::any();
+		return boost::asio::ip::address_v6::any();
 	}
-	return asio::ip::address_v4::any();
+	return boost::asio::ip::address_v4::any();
 }
 
 

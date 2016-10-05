@@ -30,10 +30,10 @@ public:
 
 	// START overriding CConnection
 
-	void SendData(std::shared_ptr<const RawPacket> packet);
+	void SendData(boost::shared_ptr<const RawPacket> packet);
 	bool HasIncomingData() const;
-	std::shared_ptr<const RawPacket> Peek(unsigned ahead) const;
-	std::shared_ptr<const RawPacket> GetData();
+	boost::shared_ptr<const RawPacket> Peek(unsigned ahead) const;
+	boost::shared_ptr<const RawPacket> GetData();
 	void DeleteBufferPacketAt(unsigned index);
 	void Flush(const bool forced) {}
 	bool CheckTimeout(int seconds, bool initial) const { return false; }
@@ -53,7 +53,7 @@ public:
 	// END overriding CConnection
 
 private:
-	static std::deque< std::shared_ptr<const RawPacket> > pqueues[2];
+	static std::deque< boost::shared_ptr<const RawPacket> > pqueues[2];
 	static spring::mutex mutexes[2];
 
 	unsigned int OtherInstance() const { return ((instance + 1) % 2); }

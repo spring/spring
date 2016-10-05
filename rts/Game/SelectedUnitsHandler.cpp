@@ -994,6 +994,6 @@ void CSelectedUnitsHandler::SendCommandsToUnits(const std::vector<int>& unitIDs,
 		*packet << cmd.params;
 	}
 
-	clientNet->Send(std::shared_ptr<netcode::RawPacket>(packet));
+	clientNet->Send(boost::shared_ptr<netcode::RawPacket>(packet));
 	return;
 }

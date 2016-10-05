@@ -5,9 +5,10 @@
 #ifdef DEBUG
 	#include <boost/format.hpp>
 #endif
+#include <boost/weak_ptr.hpp>
 #include <boost/noncopyable.hpp>
-#include <memory>
-#include "asio.hpp"
+#include <boost/shared_ptr.hpp>
+#include <boost/asio.hpp>
 #include <cinttypes>
 #include <list>
 #include <queue>
@@ -23,7 +24,7 @@
 
 namespace netcode
 {
-using namespace asio;
+using namespace boost::asio;
 
 UDPListener::UDPListener(int port, const std::string& ip)
 	: acceptNewConnections(false)
@@ -33,7 +34,7 @@ UDPListener::UDPListener(int port, const std::string& ip)
 	const std::string err = TryBindSocket(port, &socket, ip);
 
 	if (err.empty()) {
-		asio::socket_base::non_blocking_io socketCommand(true);
+		boost::asio::socket_base::non_blocking_io socketCommand(true);
 		socket->io_control(socketCommand);
 
 		mySocket = socket;
@@ -52,7 +53,7 @@ std::string UDPListener::TryBindSocket(int port, SocketPtr* socket, const std::s
 	std::string errorMsg = "";
 
 	try {
-		asio::error_code err;
+		boost::system::error_code err;
 
 		if ((port < 0) || (port > 65535)) {
 			throw std::range_error("Port is out of range [0, 65535]: " + IntToString(port));
@@ -113,9 +114,9 @@ void UDPListener::Update() {
 	while ((bytes_avail = mySocket->available()) > 0) {
 		std::vector<std::uint8_t> buffer(bytes_avail);
 		ip::udp::endpoint sender_endpoint;
-		asio::ip::udp::socket::message_flags flags = 0;
-		asio::error_code err;
-		size_t bytesReceived = mySocket->receive_from(asio::buffer(buffer), sender_endpoint, flags, err);
+		boost::asio::ip::udp::socket::message_flags flags = 0;
+		boost::system::error_code err;
+		size_t bytesReceived = mySocket->receive_from(boost::asio::buffer(buffer), sender_endpoint, flags, err);
 
 		ConnMap::iterator ci = conn.find(sender_endpoint);
 		bool knownConnection = (ci != conn.end());
@@ -138,7 +139,7 @@ void UDPListener::Update() {
 			if (acceptNewConnections && data.lastContinuous == -1 && data.nakType == 0)	{
 				if (!data.chunks.empty() && (*data.chunks.begin())->chunkNumber == 0) {
 					// new client wants to connect
-					std::shared_ptr<UDPConnection> incoming(new UDPConnection(mySocket, sender_endpoint));
+					boost::shared_ptr<UDPConnection> incoming(new UDPConnection(mySocket, sender_endpoint));
 					waiting.push(incoming);
 					conn[sender_endpoint] = incoming;
 					incoming->ProcessRawPacket(data);
@@ -170,9 +171,9 @@ void UDPListener::Update() {
 	}
 }
 
-std::shared_ptr<UDPConnection> UDPListener::SpawnConnection(const std::string& ip, const unsigned port)
+boost::shared_ptr<UDPConnection> UDPListener::SpawnConnection(const std::string& ip, const unsigned port)
 {
-	std::shared_ptr<UDPConnection> newConn(new UDPConnection(mySocket, ip::udp::endpoint(WrapIP(ip), port)));
+	boost::shared_ptr<UDPConnection> newConn(new UDPConnection(mySocket, ip::udp::endpoint(WrapIP(ip), port)));
 	conn[newConn->GetEndpoint()] = newConn;
 	return newConn;
 }
@@ -192,14 +193,14 @@ bool UDPListener::HasIncomingConnections() const
 	return !waiting.empty();
 }
 
-std::weak_ptr<UDPConnection> UDPListener::PreviewConnection()
+boost::weak_ptr<UDPConnection> UDPListener::PreviewConnection()
 {
 	return waiting.front();
 }
 
-std::shared_ptr<UDPConnection> UDPListener::AcceptConnection()
+boost::shared_ptr<UDPConnection> UDPListener::AcceptConnection()
 {
-	std::shared_ptr<UDPConnection> newConn = waiting.front();
+	boost::shared_ptr<UDPConnection> newConn = waiting.front();
 	waiting.pop();
 	conn[newConn->GetEndpoint()] = newConn;
 	return newConn;
@@ -212,7 +213,7 @@ void UDPListener::RejectConnection()
 
 void UDPListener::UpdateConnections() {
 	for (ConnMap::iterator i = conn.begin(); i != conn.end(); ) {
-		std::shared_ptr<UDPConnection> uc = i->second.lock();
+		boost::shared_ptr<UDPConnection> uc = i->second.lock();
 		if (uc && i->first != uc->GetEndpoint()) {
 			conn[uc->GetEndpoint()] = uc; // inserting does not invalidate iterators
 			i = conn.erase(i);

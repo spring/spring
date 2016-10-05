@@ -17,7 +17,7 @@ ChatMessage::ChatMessage(int from, int dest, const std::string& chat)
 {
 }
 
-ChatMessage::ChatMessage(std::shared_ptr<const netcode::RawPacket> data)
+ChatMessage::ChatMessage(boost::shared_ptr<const netcode::RawPacket> data)
 {
 	assert(data->data[0] == NETMSG_CHAT);
 	UnpackPacket packet(data, 2);

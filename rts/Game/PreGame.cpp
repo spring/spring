@@ -258,7 +258,7 @@ void CPreGame::UpdateClientNet()
 		return;
 	}
 
-	std::shared_ptr<const RawPacket> packet;
+	boost::shared_ptr<const RawPacket> packet;
 
 	while ((packet = clientNet->GetData(gs->frameNum))) {
 		const unsigned char* inbuf = packet->data;
@@ -430,7 +430,7 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 	assert(gameServer != NULL);
 }
 
-void CPreGame::GameDataReceived(std::shared_ptr<const netcode::RawPacket> packet)
+void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> packet)
 {
 	ScopedOnceTimer startserver("PreGame::GameDataReceived");
 

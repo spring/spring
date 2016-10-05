@@ -10,14 +10,14 @@ CLoopbackConnection::CLoopbackConnection() {
 CLoopbackConnection::~CLoopbackConnection() {
 }
 
-void CLoopbackConnection::SendData(std::shared_ptr<const RawPacket> data) {
+void CLoopbackConnection::SendData(boost::shared_ptr<const RawPacket> data) {
 	Data.push_back(data);
 }
 
-std::shared_ptr<const RawPacket> CLoopbackConnection::Peek(unsigned ahead) const {
+boost::shared_ptr<const RawPacket> CLoopbackConnection::Peek(unsigned ahead) const {
 	if (ahead < Data.size())
 		return Data[ahead];
-	std::shared_ptr<const RawPacket> empty;
+	boost::shared_ptr<const RawPacket> empty;
 	return empty;
 }
 
@@ -26,13 +26,13 @@ void CLoopbackConnection::DeleteBufferPacketAt(unsigned index) {
 		Data.erase(Data.begin() + index);
 }
 
-std::shared_ptr<const RawPacket> CLoopbackConnection::GetData() {
+boost::shared_ptr<const RawPacket> CLoopbackConnection::GetData() {
 	if (!Data.empty()) {
-		std::shared_ptr<const RawPacket> next = Data.front();
+		boost::shared_ptr<const RawPacket> next = Data.front();
 		Data.pop_front();
 		return next;
 	}
-	std::shared_ptr<const RawPacket> empty;
+	boost::shared_ptr<const RawPacket> empty;
 	return empty;
 }
 

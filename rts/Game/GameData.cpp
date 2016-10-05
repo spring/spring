@@ -28,7 +28,7 @@ GameData::GameData(const std::string& setup)
 }
 
 
-GameData::GameData(std::shared_ptr<const RawPacket> pckt)
+GameData::GameData(boost::shared_ptr<const RawPacket> pckt)
 {
 	assert(pckt->data[0] == NETMSG_GAMEDATA);
 

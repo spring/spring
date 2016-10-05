@@ -13,7 +13,7 @@ namespace netcode {
 // static stuff
 unsigned CLocalConnection::instances = 0;
 
-std::deque< std::shared_ptr<const RawPacket> > CLocalConnection::pqueues[2];
+std::deque< boost::shared_ptr<const RawPacket> > CLocalConnection::pqueues[2];
 spring::mutex CLocalConnection::mutexes[2];
 
 CLocalConnection::CLocalConnection()
@@ -45,7 +45,7 @@ void CLocalConnection::Close(bool flush)
 	}
 }
 
-void CLocalConnection::SendData(std::shared_ptr<const RawPacket> packet)
+void CLocalConnection::SendData(boost::shared_ptr<const RawPacket> packet)
 {
 	if (!ProtocolDef::GetInstance()->IsValidPacket(packet->data, packet->length)) {
 		// having this check here makes it easier to find networking bugs
@@ -62,29 +62,29 @@ void CLocalConnection::SendData(std::shared_ptr<const RawPacket> packet)
 	pqueues[OtherInstance()].push_back(packet);
 }
 
-std::shared_ptr<const RawPacket> CLocalConnection::GetData()
+boost::shared_ptr<const RawPacket> CLocalConnection::GetData()
 {
 	std::lock_guard<spring::mutex> scoped_lock(mutexes[instance]);
 
 	if (!pqueues[instance].empty()) {
-		std::shared_ptr<const RawPacket> next = pqueues[instance].front();
+		boost::shared_ptr<const RawPacket> next = pqueues[instance].front();
 		pqueues[instance].pop_front();
 		dataRecv += next->length;
 		return next;
 	}
 
-	std::shared_ptr<const RawPacket> empty;
+	boost::shared_ptr<const RawPacket> empty;
 	return empty;
 }
 
-std::shared_ptr<const RawPacket> CLocalConnection::Peek(unsigned ahead) const
+boost::shared_ptr<const RawPacket> CLocalConnection::Peek(unsigned ahead) const
 {
 	std::lock_guard<spring::mutex> scoped_lock(mutexes[instance]);
 
 	if (ahead < pqueues[instance].size())
 		return pqueues[instance][ahead];
 
-	std::shared_ptr<const RawPacket> empty;
+	boost::shared_ptr<const RawPacket> empty;
 	return empty;
 }
 

@@ -155,7 +155,7 @@ float3 CInMapDraw::GetMouseMapPos() // TODO move to some more global place?
 	return pos;
 }
 
-int CInMapDraw::GotNetMsg(std::shared_ptr<const netcode::RawPacket>& packet)
+int CInMapDraw::GotNetMsg(boost::shared_ptr<const netcode::RawPacket>& packet)
 {
 	int playerID = -1;
 

@@ -1,6 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include <memory>
+#include <boost/shared_ptr.hpp>
 
 // NOTE: these _must_ be included before NetProtocol.h due to some ambiguity in
 // Boost hash_float.hpp ("call of overloaded ‘ldexp(float&, int&)’ is ambiguous")
@@ -95,7 +95,7 @@ std::string CNetProtocol::ConnectionStr() const
 	return serverConn->GetFullAddress();
 }
 
-std::shared_ptr<const netcode::RawPacket> CNetProtocol::Peek(unsigned ahead) const
+boost::shared_ptr<const netcode::RawPacket> CNetProtocol::Peek(unsigned ahead) const
 {
 	return serverConn->Peek(ahead);
 }
@@ -114,9 +114,9 @@ float CNetProtocol::GetPacketTime(int frameNum) const
 	return (gu->startTime + frameNum / (1.0f * GAME_SPEED));
 }
 
-std::shared_ptr<const netcode::RawPacket> CNetProtocol::GetData(int frameNum)
+boost::shared_ptr<const netcode::RawPacket> CNetProtocol::GetData(int frameNum)
 {
-	std::shared_ptr<const netcode::RawPacket> ret = serverConn->GetData();
+	boost::shared_ptr<const netcode::RawPacket> ret = serverConn->GetData();
 
 	if (ret.get() == NULL) { return ret; }
 	if (ret->data[0] == NETMSG_GAMEDATA) { return ret; }
@@ -128,14 +128,14 @@ std::shared_ptr<const netcode::RawPacket> CNetProtocol::GetData(int frameNum)
 	return ret;
 }
 
-void CNetProtocol::Send(std::shared_ptr<const netcode::RawPacket> pkt)
+void CNetProtocol::Send(boost::shared_ptr<const netcode::RawPacket> pkt)
 {
 	serverConn->SendData(pkt);
 }
 
 void CNetProtocol::Send(const netcode::RawPacket* pkt)
 {
-	std::shared_ptr<const netcode::RawPacket> ptr(pkt);
+	boost::shared_ptr<const netcode::RawPacket> ptr(pkt);
 	Send(ptr);
 }
 
