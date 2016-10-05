@@ -1,6 +1,9 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "EmgCannon.h"
+
+#include <cmath>
+
 #include "WeaponDef.h"
 #include "Sim/Misc/Team.h"
 #include "Map/Ground.h"

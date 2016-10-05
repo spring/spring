@@ -1,11 +1,13 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include "ExplosionGenerator.h"
+
 #include <iostream>
 #include <stdexcept>
 #include <cassert>
 #include <cinttypes>
+#include <cmath>
 
-#include "ExplosionGenerator.h"
 #include "ExpGenSpawner.h" //!!
 #include "ExpGenSpawnable.h"
 #include "ExpGenSpawnableMemberInfo.h"

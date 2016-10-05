@@ -3,6 +3,8 @@
 
 #include "BitmapMuzzleFlame.h"
 
+#include <cmath>
+
 #include "Sim/Misc/GlobalSynced.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Env/Particles/ProjectileDrawer.h"

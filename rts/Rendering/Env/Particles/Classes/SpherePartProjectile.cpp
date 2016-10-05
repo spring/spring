@@ -2,6 +2,8 @@
 
 #include "SpherePartProjectile.h"
 
+#include <cmath>
+
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
 #include "Rendering/GL/VertexArray.h"

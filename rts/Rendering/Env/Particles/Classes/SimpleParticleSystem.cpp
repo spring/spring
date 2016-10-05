@@ -3,6 +3,8 @@
 
 #include "SimpleParticleSystem.h"
 
+#include <cmath>
+
 #include "GenericParticleProjectile.h"
 #include "Game/Camera.h"
 #include "Game/GlobalUnsynced.h"
