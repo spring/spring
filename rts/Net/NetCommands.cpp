@@ -89,7 +89,7 @@ unsigned int CGame::GetNumQueuedSimFrameMessages(unsigned int maxFrames) const
 {
 	// read ahead to find number of NETMSG_XXXFRAMES we still have to process
 	// this number is effectively a measure of current user network conditions
-	boost::shared_ptr<const netcode::RawPacket> packet;
+	std::shared_ptr<const netcode::RawPacket> packet;
 
 	unsigned int numQueuedFrames = 0;
 	unsigned int packetPeekIndex = 0;
@@ -233,7 +233,7 @@ void CGame::ClientReadNet()
 		lastNetPacketProcessTime = spring_gettime();
 
 		// get netpacket from the queue
-		boost::shared_ptr<const netcode::RawPacket> packet = clientNet->GetData(gs->frameNum);
+		std::shared_ptr<const netcode::RawPacket> packet = clientNet->GetData(gs->frameNum);
 
 		if (!packet) {
 			// LOG_SL(LOG_SECTION_NET, L_DEBUG, "Run out of netpackets!");

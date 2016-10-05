@@ -3,7 +3,6 @@
 #ifndef _GAME_SERVER_H
 #define _GAME_SERVER_H
 
-#include <boost/shared_ptr.hpp>
 #include <memory>
 
 #include <string>
@@ -143,13 +142,13 @@ private:
 
 	bool CheckPlayersPassword(const int playerNum, const std::string& pw) const;
 
-	unsigned BindConnection(std::string name, const std::string& passwd, const std::string& version, bool isLocal, boost::shared_ptr<netcode::CConnection> link, bool reconnect = false, int netloss = 0);
+	unsigned BindConnection(std::string name, const std::string& passwd, const std::string& version, bool isLocal, std::shared_ptr<netcode::CConnection> link, bool reconnect = false, int netloss = 0);
 
 	void CheckForGameStart(bool forced = false);
 	void StartGame(bool forced);
 	void UpdateLoop();
 	void Update();
-	void ProcessPacket(const unsigned playerNum, boost::shared_ptr<const netcode::RawPacket> packet);
+	void ProcessPacket(const unsigned playerNum, std::shared_ptr<const netcode::RawPacket> packet);
 	void CheckSync();
 	void HandleConnectionAttempts();
 	void ServerReadNet();
@@ -163,7 +162,7 @@ private:
 	/// read data from demo and send it to clients
 	bool SendDemoData(int targetFrameNum);
 
-	void Broadcast(boost::shared_ptr<const netcode::RawPacket> packet);
+	void Broadcast(std::shared_ptr<const netcode::RawPacket> packet);
 
 	/**
 	 * @brief skip frames
@@ -176,7 +175,7 @@ private:
 	void Message(const std::string& message, bool broadcast = true);
 	void PrivateMessage(int playerNum, const std::string& message);
 
-	void AddToPacketCache(boost::shared_ptr<const netcode::RawPacket>& pckt);
+	void AddToPacketCache(std::shared_ptr<const netcode::RawPacket>& pckt);
 
 	float GetDemoTime() const;
 
@@ -241,7 +240,7 @@ private:
 	bool logInfoMessages;
 	bool logDebugMessages;
 
-	std::list< std::vector<boost::shared_ptr<const netcode::RawPacket> > > packetCache;
+	std::list< std::vector<std::shared_ptr<const netcode::RawPacket> > > packetCache;
 
 	/////////////////// sync stuff ///////////////////
 #ifdef SYNCCHECK

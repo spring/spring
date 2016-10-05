@@ -4,9 +4,8 @@
 #define _UDP_LISTENER_H
 
 #include <boost/noncopyable.hpp>
-#include <boost/shared_ptr.hpp>
-#include <boost/weak_ptr.hpp>
-#include <boost/asio/ip/udp.hpp>
+#include <memory>
+#include <asio/ip/udp.hpp>
 #include <list>
 #include <map>
 #include <queue>
@@ -15,7 +14,7 @@
 namespace netcode
 {
 class UDPConnection;
-typedef boost::shared_ptr<boost::asio::ip::udp::socket> SocketPtr;
+typedef std::shared_ptr<asio::ip::udp::socket> SocketPtr;
 
 /**
  * @brief Class for handling Connections on an UDPSocket
@@ -63,7 +62,7 @@ public:
 	 * @brief Initiate a connection
 	 * Make a new connection to ip:port. It will be pushed back in conn.
 	 */
-	boost::shared_ptr<UDPConnection> SpawnConnection(const std::string& ip,
+	std::shared_ptr<UDPConnection> SpawnConnection(const std::string& ip,
 			const unsigned port);
 
 	/**
@@ -74,8 +73,8 @@ public:
 	bool IsAcceptingConnections() const;
 
 	bool HasIncomingConnections() const;
-	boost::weak_ptr<UDPConnection> PreviewConnection();
-	boost::shared_ptr<UDPConnection> AcceptConnection();
+	std::weak_ptr<UDPConnection> PreviewConnection();
+	std::shared_ptr<UDPConnection> AcceptConnection();
 	void RejectConnection();
 
 	void UpdateConnections(); // Updates connections when the endpoint has been reconnected
@@ -88,14 +87,14 @@ private:
 	bool acceptNewConnections;
 
 	/// Our socket
-	/// typedef boost::shared_ptr<boost::asio::ip::udp::socket> SocketPtr;
+	/// typedef std::shared_ptr<asio::ip::udp::socket> SocketPtr;
 	SocketPtr mySocket;
 
 	/// all connections
-	typedef std::map< boost::asio::ip::udp::endpoint, boost::weak_ptr<UDPConnection> > ConnMap;
+	typedef std::map< asio::ip::udp::endpoint, std::weak_ptr<UDPConnection> > ConnMap;
 	ConnMap conn;
 
-	std::queue< boost::shared_ptr<UDPConnection> > waiting;
+	std::queue< std::shared_ptr<UDPConnection> > waiting;
 };
 
 }

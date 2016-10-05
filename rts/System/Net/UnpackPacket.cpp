@@ -2,12 +2,12 @@
 
 #include "UnpackPacket.h"
 
-#include <boost/shared_ptr.hpp>
+#include <memory>
 
 namespace netcode
 {
 
-UnpackPacket::UnpackPacket(boost::shared_ptr<const RawPacket> packet, size_t skipBytes)
+UnpackPacket::UnpackPacket(std::shared_ptr<const RawPacket> packet, size_t skipBytes)
 	: pckt(packet)
 	, pos(skipBytes)
 {

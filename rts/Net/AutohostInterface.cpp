@@ -96,7 +96,7 @@ enum EVENT
 };
 }
 
-using namespace boost::asio;
+using namespace asio;
 
 AutohostInterface::AutohostInterface(const std::string& remoteIP, int remotePort, const std::string& localIP, int localPort)
 		: autohost(netcode::netservice)
@@ -112,7 +112,7 @@ AutohostInterface::AutohostInterface(const std::string& remoteIP, int remotePort
 }
 
 std::string AutohostInterface::TryBindSocket(
-			boost::asio::ip::udp::socket& socket,
+			asio::ip::udp::socket& socket,
 			const std::string& remoteIP, int remotePort,
 			const std::string& localIP, int localPort)
 {
@@ -120,7 +120,7 @@ std::string AutohostInterface::TryBindSocket(
 
 	ip::address localAddr;
 	ip::address remoteAddr;
-	boost::system::error_code err;
+	asio::error_code err;
 	try {
 		socket.open(ip::udp::v6(), err); // test IP v6 support
 		const bool supportsIPv6 = !err;
@@ -157,7 +157,7 @@ std::string AutohostInterface::TryBindSocket(
 
 		socket.bind(ip::udp::endpoint(localAddr, localPort));
 
-		boost::asio::socket_base::non_blocking_io command(true);
+		asio::socket_base::non_blocking_io command(true);
 		socket.io_control(command);
 
 		// A similar, slighly less verbose message is already in GameServer
@@ -183,14 +183,14 @@ void AutohostInterface::SendStart()
 {
 	uchar msg = SERVER_STARTED;
 
-	Send(boost::asio::buffer(&msg, sizeof(uchar)));
+	Send(asio::buffer(&msg, sizeof(uchar)));
 }
 
 void AutohostInterface::SendQuit()
 {
 	uchar msg = SERVER_QUIT;
 
-	Send(boost::asio::buffer(&msg, sizeof(uchar)));
+	Send(asio::buffer(&msg, sizeof(uchar)));
 }
 
 void AutohostInterface::SendStartPlaying(const unsigned char* gameID, const std::string& demoName)
@@ -219,7 +219,7 @@ void AutohostInterface::SendStartPlaying(const unsigned char* gameID, const std:
 	strncpy((char*)(&buffer[pos]), demoName.c_str(), demoName.size());
 	assert(int(pos + demoName.size()) == int(msgsize));
 
-	Send(boost::asio::buffer(buffer));
+	Send(asio::buffer(buffer));
 }
 
 void AutohostInterface::SendGameOver(uchar playerNum, const std::vector<uchar>& winningAllyTeams)
@@ -233,7 +233,7 @@ void AutohostInterface::SendGameOver(uchar playerNum, const std::vector<uchar>& 
 	for (unsigned int i = 0; i < winningAllyTeams.size(); i++) {
 		buffer[3 + i] = winningAllyTeams[i];
 	}
-	Send(boost::asio::buffer(buffer));
+	Send(asio::buffer(buffer));
 }
 
 void AutohostInterface::SendPlayerJoined(uchar playerNum, const std::string& name)
@@ -245,7 +245,7 @@ void AutohostInterface::SendPlayerJoined(uchar playerNum, const std::string& nam
 		buffer[1] = playerNum;
 		strncpy((char*)(&buffer[2]), name.c_str(), name.size());
 
-		Send(boost::asio::buffer(buffer));
+		Send(asio::buffer(buffer));
 	}
 }
 
@@ -253,14 +253,14 @@ void AutohostInterface::SendPlayerLeft(uchar playerNum, uchar reason)
 {
 	uchar msg[3] = {PLAYER_LEFT, playerNum, reason};
 
-	Send(boost::asio::buffer(&msg, 3 * sizeof(uchar)));
+	Send(asio::buffer(&msg, 3 * sizeof(uchar)));
 }
 
 void AutohostInterface::SendPlayerReady(uchar playerNum, uchar readyState)
 {
 	uchar msg[3] = {PLAYER_READY, playerNum, readyState};
 
-	Send(boost::asio::buffer(&msg, 3 * sizeof(uchar)));
+	Send(asio::buffer(&msg, 3 * sizeof(uchar)));
 }
 
 void AutohostInterface::SendPlayerChat(uchar playerNum, uchar destination, const std::string& chatmsg)
@@ -273,7 +273,7 @@ void AutohostInterface::SendPlayerChat(uchar playerNum, uchar destination, const
 		buffer[2] = destination;
 		strncpy((char*)(&buffer[3]), chatmsg.c_str(), chatmsg.size());
 
-		Send(boost::asio::buffer(buffer));
+		Send(asio::buffer(buffer));
 	}
 }
 
@@ -281,7 +281,7 @@ void AutohostInterface::SendPlayerDefeated(uchar playerNum)
 {
 	uchar msg[2] = {PLAYER_DEFEATED, playerNum};
 
-	Send(boost::asio::buffer(&msg, 2 * sizeof(uchar)));
+	Send(asio::buffer(&msg, 2 * sizeof(uchar)));
 }
 
 void AutohostInterface::Message(const std::string& message)
@@ -292,7 +292,7 @@ void AutohostInterface::Message(const std::string& message)
 		buffer[0] = SERVER_MESSAGE;
 		strncpy((char*)(&buffer[1]), message.c_str(), message.size());
 
-		Send(boost::asio::buffer(buffer));
+		Send(asio::buffer(buffer));
 	}
 }
 
@@ -304,7 +304,7 @@ void AutohostInterface::Warning(const std::string& message)
 		buffer[0] = SERVER_WARNING;
 		strncpy((char*)(&buffer[1]), message.c_str(), message.size());
 
-		Send(boost::asio::buffer(buffer));
+		Send(asio::buffer(buffer));
 	}
 }
 
@@ -315,7 +315,7 @@ void AutohostInterface::SendLuaMsg(const std::uint8_t* msg, size_t msgSize)
 		buffer[0] = GAME_LUAMSG;
 		std::copy(msg, msg + msgSize, buffer.begin() + 1);
 
-		Send(boost::asio::buffer(buffer));
+		Send(asio::buffer(buffer));
 	}
 }
 
@@ -325,7 +325,7 @@ void AutohostInterface::Send(const std::uint8_t* msg, size_t msgSize)
 		std::vector<std::uint8_t> buffer(msgSize);
 		std::copy(msg, msg + msgSize, buffer.begin());
 
-		Send(boost::asio::buffer(buffer));
+		Send(asio::buffer(buffer));
 	}
 }
 
@@ -336,7 +336,7 @@ std::string AutohostInterface::GetChatMessage()
 
 		if ((bytes_avail = autohost.available()) > 0) {
 			std::vector<std::uint8_t> buffer(bytes_avail+1, 0);
-			/*const size_t bytesReceived = */autohost.receive(boost::asio::buffer(buffer));
+			/*const size_t bytesReceived = */autohost.receive(asio::buffer(buffer));
 			return std::string((char*)(&buffer[0]));
 		}
 	}
@@ -344,16 +344,16 @@ std::string AutohostInterface::GetChatMessage()
 	return "";
 }
 
-void AutohostInterface::Send(boost::asio::mutable_buffers_1 buffer)
+void AutohostInterface::Send(asio::mutable_buffers_1 buffer)
 {
 	if (autohost.is_open()) {
 		try {
 			autohost.send(buffer);
-		} catch (boost::system::system_error& e) {
+		} catch (asio::error_code& e) {
 			autohost.close();
 			LOG_L(L_ERROR,
 					"Failed to send buffer; the autohost may not be reachable: %s",
-					e.what());
+					e.message().c_str());
 		}
 	}
 }
