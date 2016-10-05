@@ -1,5 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include <atomic>
 #include <map>
 #include <array>
 #include <cinttypes>
@@ -10,7 +11,6 @@
 #include "Game/GameVersion.h"
 #include "Lua/LuaHandle.h"
 #include "System/myMath.h"
-#include "System/Platform/Threading.h"
 #include "System/Threading/SpringMutex.h"
 #include "System/Log/ILog.h"
 #if (!defined(DEDICATED) && !defined(UNITSYNC) && !defined(BUILDING_AI))
@@ -173,9 +173,9 @@ const char* spring_lua_getName(lua_State* L)
 // Custom Memory Allocator
 //
 // these track allocations across all states
-static Threading::AtomicCounterInt64 totalBytesAlloced = 0;
-static Threading::AtomicCounterInt64 totalNumLuaAllocs = 0;
-static Threading::AtomicCounterInt64 totalLuaAllocTime = 0;
+static std::atomic<std::int64_t> totalBytesAlloced(0);
+static std::atomic<std::int64_t> totalNumLuaAllocs(0);
+static std::atomic<std::int64_t> totalLuaAllocTime(0);
 
 static const unsigned int maxAllocedBytes = 768u * 1024u*1024u;
 static const char* maxAllocFmtStr = "%s: cannot allocate more memory! (%u bytes already used, %u bytes maximum)";

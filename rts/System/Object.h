@@ -3,11 +3,11 @@
 #ifndef OBJECT_H
 #define OBJECT_H
 
+#include <atomic>
 #include <map>
 #include <set>
 #include <array>
 #include "ObjectDependenceTypes.h"
-#include "System/Platform/Threading.h"
 #include "System/creg/creg_cond.h"
 
 class CObject
@@ -68,7 +68,7 @@ private:
 	// Note, this has nothing to do with the UnitID, FeatureID, ...
 	// It's only purpose is to make the sorting in TSyncSafeSet syncsafe
 	std::int64_t sync_id;
-	static Threading::AtomicCounterInt64 cur_sync_id;
+	static std::atomic<std::int64_t> cur_sync_id;
 
 	// makes std::set<T*> syncsafe (else iteration order depends on the pointer's address, which is not syncsafe)
 	struct syncsafe_compare

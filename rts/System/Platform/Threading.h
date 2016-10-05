@@ -163,12 +163,6 @@ namespace Threading {
 	};
 	void SetThreadError(const Error& err);
 	Error* GetThreadError();
-
-
-	/**
-	 * A 64bit atomic counter
-	 */
-	struct AtomicCounterInt64;
 }
 
 
@@ -193,54 +187,6 @@ namespace Threading {
 
 		return (thID1 == thID2);
 	}
-
-
-	struct AtomicCounterInt64 {
-	public:
-		AtomicCounterInt64(std::int64_t start = 0) : num(start) {}
-
-		// prefix
-		std::int64_t operator++() {
-	#ifdef _MSC_VER
-			return InterlockedIncrement64(&num);
-	#elif defined(__APPLE__)
-			return OSAtomicIncrement64(&num);
-	#else // assuming GCC (__sync_add_and_fetch is a builtin)
-			return __sync_add_and_fetch(&num, std::int64_t(1));
-	#endif
-		}
-
-		std::int64_t operator+=(int x) {
-	#ifdef _MSC_VER
-			return InterlockedExchangeAdd64(&num, std::int64_t(x));
-	#elif defined(__APPLE__)
-			return OSAtomicAdd64(std::int64_t(x), &num);
-	#else // assuming GCC (__sync_fetch_and_add is a builtin)
-			return __sync_fetch_and_add(&num, std::int64_t(x));
-	#endif
-		}
-
-		std::int64_t operator-=(int x) {
-	#ifdef _MSC_VER
-			return InterlockedExchangeAdd64(&num, std::int64_t(-x));
-	#elif defined(__APPLE__)
-			return OSAtomicAdd64(std::int64_t(-x), &num);
-	#else // assuming GCC (__sync_fetch_and_add is a builtin)
-			return __sync_fetch_and_add(&num, std::int64_t(-x));
-	#endif
-		}
-
-		operator std::int64_t() {
-			return num;
-		}
-
-	private:
-	#ifdef _MSC_VER
-		__declspec(align(8)) std::int64_t num;
-	#else
-		__attribute__ ((aligned (8))) std::int64_t num;
-	#endif
-	};
 }
 
 #endif // _THREADING_H_
