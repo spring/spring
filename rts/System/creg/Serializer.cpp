@@ -14,6 +14,7 @@
 #include "System/Platform/byteorder.h"
 #include "System/Exceptions.h"
 
+#include <algorithm>
 #include <fstream>
 #include <assert.h>
 #include <stdexcept>

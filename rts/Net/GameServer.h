@@ -71,15 +71,15 @@ class CGameServer
 	friend class CCregLoadSaveHandler; // For initializing server state after load
 public:
 	CGameServer(
-		const boost::shared_ptr<const ClientSetup> newClientSetup,
-		const boost::shared_ptr<const    GameData> newGameData,
-		const boost::shared_ptr<const  CGameSetup> newGameSetup
+		const std::shared_ptr<const ClientSetup> newClientSetup,
+		const std::shared_ptr<const    GameData> newGameData,
+		const std::shared_ptr<const  CGameSetup> newGameSetup
 	);
 
 	CGameServer(const CGameServer&) = delete; // no-copy
 	~CGameServer();
 
-	static void Reload(const boost::shared_ptr<const CGameSetup> newGameSetup);
+	static void Reload(const std::shared_ptr<const CGameSetup> newGameSetup);
 
 	void AddLocalClient(const std::string& myName, const std::string& myVersion);
 	void AddAutohostInterface(const std::string& autohostIP, const int autohostPort);
@@ -109,9 +109,9 @@ public:
 
 	std::string GetPlayerNames(const std::vector<int>& indices) const;
 
-	const boost::shared_ptr<const ClientSetup> GetClientSetup() const { return myClientSetup; }
-	const boost::shared_ptr<const    GameData> GetGameData() const { return myGameData; }
-	const boost::shared_ptr<const  CGameSetup> GetGameSetup() const { return myGameSetup; }
+	const std::shared_ptr<const ClientSetup> GetClientSetup() const { return myClientSetup; }
+	const std::shared_ptr<const    GameData> GetGameData() const { return myGameData; }
+	const std::shared_ptr<const  CGameSetup> GetGameSetup() const { return myGameSetup; }
 
 	const std::unique_ptr<CDemoReader>& GetDemoReader() const { return demoReader; }
 	const std::unique_ptr<CDemoRecorder>& GetDemoRecorder() const { return demoRecorder; }
@@ -182,9 +182,9 @@ private:
 
 private:
 	/////////////////// game settings ///////////////////
-	boost::shared_ptr<const ClientSetup> myClientSetup;
-	boost::shared_ptr<const    GameData> myGameData;
-	boost::shared_ptr<const  CGameSetup> myGameSetup;
+	std::shared_ptr<const ClientSetup> myClientSetup;
+	std::shared_ptr<const    GameData> myGameData;
+	std::shared_ptr<const  CGameSetup> myGameSetup;
 
 	/////////////////// game status variables ///////////////////
 	volatile bool quitServer;

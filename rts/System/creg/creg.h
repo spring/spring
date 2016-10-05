@@ -8,7 +8,7 @@
 #include <vector>
 #include <string>
 #include <type_traits> // std::is_polymorphic
-#include <boost/shared_ptr.hpp>
+#include <memory>
 #include <functional>
 
 #include "ISerializer.h"
@@ -56,10 +56,10 @@ namespace creg {
 		virtual std::string GetName() const = 0;
 		virtual size_t GetSize() const = 0;
 
-		static boost::shared_ptr<IType> CreateBasicType(BasicTypeID t, size_t size);
-		static boost::shared_ptr<IType> CreateStringType();
-		static boost::shared_ptr<IType> CreateObjInstanceType(Class* objectType);
-		static boost::shared_ptr<IType> CreateIgnoredType(size_t size);
+		static std::shared_ptr<IType> CreateBasicType(BasicTypeID t, size_t size);
+		static std::shared_ptr<IType> CreateStringType();
+		static std::shared_ptr<IType> CreateObjInstanceType(Class* objectType);
+		static std::shared_ptr<IType> CreateIgnoredType(size_t size);
 	};
 
 
@@ -74,7 +74,7 @@ namespace creg {
 		struct Member
 		{
 			const char* name;
-			boost::shared_ptr<IType> type;
+			std::shared_ptr<IType> type;
 			unsigned int offset;
 			int alignment;
 			int flags; // combination of ClassMemberFlag's
@@ -91,7 +91,7 @@ namespace creg {
 
 		/// Calculate a checksum from the class metadata
 		void CalculateChecksum(unsigned int& checksum);
-		void AddMember(const char* name, boost::shared_ptr<IType> type, unsigned int offset, int alignment);
+		void AddMember(const char* name, std::shared_ptr<IType> type, unsigned int offset, int alignment);
 		void SetMemberFlag(const char* name, ClassMemberFlag f);
 		Member* FindMember(const char* name, const bool inherited = true);
 

@@ -41,9 +41,9 @@ size_t BasicType::GetSize() const
 	return size;
 }
 
-boost::shared_ptr<IType> IType::CreateBasicType(BasicTypeID t, size_t size)
+std::shared_ptr<IType> IType::CreateBasicType(BasicTypeID t, size_t size)
 {
-	return boost::shared_ptr<IType>(new BasicType(t, size));
+	return std::shared_ptr<IType>(new BasicType(t, size));
 }
 
 std::string StringType::GetName() const
@@ -56,12 +56,12 @@ size_t StringType::GetSize() const
 	return sizeof(std::string);
 }
 
-StringType::StringType(boost::shared_ptr<IType> charType) : DynamicArrayType<string>(charType) {}
+StringType::StringType(std::shared_ptr<IType> charType) : DynamicArrayType<string>(charType) {}
 
-boost::shared_ptr<IType> IType::CreateStringType()
+std::shared_ptr<IType> IType::CreateStringType()
 {
 	DeduceType<char> charType;
-	return boost::shared_ptr<IType>(new StringType(charType.Get()));
+	return std::shared_ptr<IType>(new StringType(charType.Get()));
 }
 
 void ObjectInstanceType::Serialize(ISerializer* s, void* inst)
@@ -79,9 +79,9 @@ size_t ObjectInstanceType::GetSize() const
 	return objectClass->size;
 }
 
-boost::shared_ptr<IType> IType::CreateObjInstanceType(Class* objectType)
+std::shared_ptr<IType> IType::CreateObjInstanceType(Class* objectType)
 {
-	return boost::shared_ptr<IType>(new ObjectInstanceType(objectType));
+	return std::shared_ptr<IType>(new ObjectInstanceType(objectType));
 }
 
 string StaticArrayBaseType::GetName() const
@@ -91,7 +91,7 @@ string StaticArrayBaseType::GetName() const
 	return elemType->GetName() + "[" + std::string(sstr) + "]";
 }
 
-boost::shared_ptr<IType> IType::CreateIgnoredType(size_t size)
+std::shared_ptr<IType> IType::CreateIgnoredType(size_t size)
 {
-	return boost::shared_ptr<IType>(new IgnoredType(size));
+	return std::shared_ptr<IType>(new IgnoredType(size));
 }

@@ -6,7 +6,6 @@
 #include <boost/bind.hpp>
 #include <boost/format.hpp>
 #include <boost/version.hpp>
-#include <boost/shared_ptr.hpp>
 #include <boost/thread/thread.hpp>
 #include <deque>
 #if defined DEDICATED || defined DEBUG
@@ -131,9 +130,9 @@ std::set<std::string> CGameServer::commandBlacklist;
 CGameServer* gameServer = NULL;
 
 CGameServer::CGameServer(
-	const boost::shared_ptr<const ClientSetup> newClientSetup,
-	const boost::shared_ptr<const    GameData> newGameData,
-	const boost::shared_ptr<const  CGameSetup> newGameSetup
+	const std::shared_ptr<const ClientSetup> newClientSetup,
+	const std::shared_ptr<const    GameData> newGameData,
+	const std::shared_ptr<const  CGameSetup> newGameSetup
 )
 : quitServer(false)
 , serverFrameNum(-1)
@@ -313,10 +312,10 @@ void CGameServer::PostLoad(int newServerFrameNum)
 }
 
 
-void CGameServer::Reload(const boost::shared_ptr<const CGameSetup> newGameSetup)
+void CGameServer::Reload(const std::shared_ptr<const CGameSetup> newGameSetup)
 {
-	const boost::shared_ptr<const ClientSetup> clientSetup = gameServer->GetClientSetup();
-	const boost::shared_ptr<const    GameData>    gameData = gameServer->GetGameData();
+	const std::shared_ptr<const ClientSetup> clientSetup = gameServer->GetClientSetup();
+	const std::shared_ptr<const    GameData>    gameData = gameServer->GetGameData();
 
 	delete gameServer;
 

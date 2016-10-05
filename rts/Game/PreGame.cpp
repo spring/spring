@@ -58,7 +58,7 @@ CONFIG(bool, DemoFromDemo).defaultValue(false);
 
 CPreGame* pregame = NULL;
 
-CPreGame::CPreGame(boost::shared_ptr<ClientSetup> setup)
+CPreGame::CPreGame(std::shared_ptr<ClientSetup> setup)
 	: clientSetup(setup)
 	, savefile(NULL)
 	, timer(spring_gettime())
@@ -202,8 +202,8 @@ void CPreGame::StartServer(const std::string& setupscript)
 	assert(!gameServer);
 	ScopedOnceTimer startserver("PreGame::StartServer");
 
-	boost::shared_ptr<GameData> startGameData(new GameData());
-	boost::shared_ptr<CGameSetup> startGameSetup(new CGameSetup());
+	std::shared_ptr<GameData> startGameData(new GameData());
+	std::shared_ptr<CGameSetup> startGameSetup(new CGameSetup());
 
 	startGameSetup->Init(setupscript);
 
@@ -396,7 +396,7 @@ void CPreGame::StartServerForDemo(const std::string& demoName)
 	gameData->SetSetupText(moddedDemoScript.str());
 
 	// create the server-private demo GameSetup containing the additional player
-	boost::shared_ptr<CGameSetup> demoGameSetup(new CGameSetup());
+	std::shared_ptr<CGameSetup> demoGameSetup(new CGameSetup());
 
 	if (!demoGameSetup->Init(moddedDemoScript.str()))
 		throw content_error("Demo contains incorrect script");

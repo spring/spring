@@ -410,7 +410,7 @@ size_t CSound::MakeItemFromDef(const soundItemDef& itemDef)
 	if (it == itemDef.end())
 		return 0;
 
-	boost::shared_ptr<SoundBuffer> buffer = SoundBuffer::GetById(LoadSoundBuffer(it->second));
+	std::shared_ptr<SoundBuffer> buffer = SoundBuffer::GetById(LoadSoundBuffer(it->second));
 
 	if (!buffer)
 		return 0;
@@ -581,7 +581,7 @@ size_t CSound::LoadSoundBuffer(const std::string& path)
 		std::vector<std::uint8_t> buf(file.FileSize());
 		file.Read(&buf[0], file.FileSize());
 
-		boost::shared_ptr<SoundBuffer> buffer(new SoundBuffer());
+		std::shared_ptr<SoundBuffer> buffer(new SoundBuffer());
 		bool success = false;
 		const std::string ending = file.GetFileExt();
 		if (ending == "wav") {

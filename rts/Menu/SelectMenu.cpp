@@ -119,7 +119,7 @@ private:
 	};
 };
 
-SelectMenu::SelectMenu(boost::shared_ptr<ClientSetup> setup)
+SelectMenu::SelectMenu(std::shared_ptr<ClientSetup> setup)
 : GuiElement(NULL)
 , clientSetup(setup)
 , conWindow(NULL)

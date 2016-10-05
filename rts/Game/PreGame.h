@@ -4,6 +4,7 @@
 #define PREGAME_H
 
 #include <string>
+#include <memory>
 #include <boost/shared_ptr.hpp>
 
 #include "GameController.h"
@@ -37,7 +38,7 @@ namespace netcode {
 class CPreGame : public CGameController
 {
 public:
-	CPreGame(boost::shared_ptr<ClientSetup> setup);
+	CPreGame(std::shared_ptr<ClientSetup> setup);
 	virtual ~CPreGame();
 
 	void LoadSetupscript(const std::string& script);
@@ -66,8 +67,8 @@ private:
 
 	We won't start until we received this (NULL until GameDataReceived)
 	*/
-	boost::shared_ptr<GameData> gameData;
-	boost::shared_ptr<ClientSetup> clientSetup;
+	std::shared_ptr<GameData> gameData;
+	std::shared_ptr<ClientSetup> clientSetup;
 
 	std::string modArchive;
 	ILoadSaveHandler* savefile;

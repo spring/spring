@@ -162,9 +162,9 @@ int main(int argc, char* argv[])
 		CGameServer* server = NULL;
 
 		// server will take ownership of these
-		boost::shared_ptr<ClientSetup> dsClientSetup(new ClientSetup());
-		boost::shared_ptr<GameData> dsGameData(new GameData());
-		boost::shared_ptr<CGameSetup> dsGameSetup(new CGameSetup());
+		std::shared_ptr<ClientSetup> dsClientSetup(new ClientSetup());
+		std::shared_ptr<GameData> dsGameData(new GameData());
+		std::shared_ptr<CGameSetup> dsGameSetup(new CGameSetup());
 
 		CFileHandler fh(scriptName);
 

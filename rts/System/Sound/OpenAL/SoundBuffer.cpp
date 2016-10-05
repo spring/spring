@@ -10,6 +10,7 @@
 
 #include <vorbis/vorbisfile.h>
 #include <ogg/ogg.h>
+#include <cassert>
 #include <cstring>
 
 namespace
@@ -250,7 +251,7 @@ size_t SoundBuffer::GetId(const std::string& name)
 		return 0;
 }
 
-boost::shared_ptr<SoundBuffer> SoundBuffer::GetById(const size_t id)
+std::shared_ptr<SoundBuffer> SoundBuffer::GetById(const size_t id)
 {
 	assert(id < buffers.size());
 	return buffers.at(id);
@@ -269,7 +270,7 @@ size_t SoundBuffer::AllocedSize()
 	return numBytes;
 }
 
-size_t SoundBuffer::Insert(boost::shared_ptr<SoundBuffer> buffer)
+size_t SoundBuffer::Insert(std::shared_ptr<SoundBuffer> buffer)
 {
 	size_t bufId = buffers.size();
 	buffers.push_back(buffer);
