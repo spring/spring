@@ -11,7 +11,7 @@ addons:
     project:
       name: "spring/spring"
     notification_email: ashdnazg.springrts@gmail.com
-    build_command:   make engine-headless
+    build_command:   ninja engine-headless
     branch_pattern: coverity_scan
 language: cpp
 compiler:
@@ -43,7 +43,7 @@ before_script:
 
 script:
   - test "${TRAVIS_BRANCH}" != "coverity_scan" || exit 0
-  - make -k $TARGET
+  - ninja -k 20 $TARGET
 
 notifications:
   irc:
