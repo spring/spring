@@ -2,7 +2,6 @@
 
 #include "CFontTexture.h"
 #include "FontLogSection.h"
-#include "LanguageBlocksDefs.h"
 
 #include <string>
 #include <cstring> // for memset, memcpy
@@ -14,6 +13,7 @@
 		#include <fontconfig/fontconfig.h>
 		#include <fontconfig/fcfreetype.h>
 	#endif
+	#include "LanguageBlocksDefs.h"
 #endif // HEADLESS
 
 #include "Game/Camera.h"

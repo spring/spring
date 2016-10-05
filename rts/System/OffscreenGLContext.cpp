@@ -11,7 +11,9 @@
 #include <boost/thread.hpp>
 
 
+#ifndef HEADLESS
 static PFNGLACTIVETEXTUREPROC mainGlActiveTexture = NULL;
+#endif
 
 
 #ifdef HEADLESS

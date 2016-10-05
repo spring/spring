@@ -7,6 +7,7 @@
 #include <tuple>
 #include <string>
 
+#ifndef HEADLESS
 // Predefined blocks
 // It contains only the most widly used blocks (Latin and Cyrilic)
 static const std::map<std::string, std::tuple<char32_t, char32_t>> blocks {
@@ -51,5 +52,6 @@ static char32_t GetLanguageBlock(char32_t ch, char32_t& end)
 
 	return GetUndefLanguageBlock(ch, end);
 }
+#endif
 
 #endif // LANGUAGEBLOCKSDEFS_H_INCLUDED
