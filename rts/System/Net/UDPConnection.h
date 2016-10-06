@@ -3,9 +3,9 @@
 #ifndef _UDP_CONNECTION_H
 #define _UDP_CONNECTION_H
 
-#include <boost/ptr_container/ptr_map.hpp>
-#include <memory>
 #include <asio/ip/udp.hpp>
+#include <map>
+#include <memory>
 #include <deque>
 #include <list>
 
@@ -155,7 +155,7 @@ private:
 	spring_time lastFramePacketRecvTime;
 	#endif
 
-	typedef boost::ptr_map<int,RawPacket> packetMap;
+	typedef std::map<int,RawPacket*> packetMap;
 	typedef std::list< std::shared_ptr<const RawPacket> > packetList;
 	/// address of the other end
 	asio::ip::udp::endpoint addr;

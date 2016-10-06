@@ -9,7 +9,6 @@
 #include <string>
 #include <map>
 #include <vector>
-#include <boost/ptr_container/ptr_vector.hpp>
 
 #include "System/float3.h"
 
@@ -94,7 +93,7 @@ private:
 	float3 prevVelocity;
 	bool listenerNeedsUpdate;
 
-	typedef boost::ptr_vector<CSoundSource> sourceVecT;
+	typedef std::vector<CSoundSource*> sourceVecT;
 	sourceVecT sources;
 
 	soundItemDef defaultItem;

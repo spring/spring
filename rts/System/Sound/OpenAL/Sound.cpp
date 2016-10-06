@@ -153,22 +153,22 @@ CSoundSource* CSound::GetNextBestSource(bool lock)
 		return nullptr;
 
 	// find if we got a free source
-	for (CSoundSource& src: sources) {
-		if (!src.IsPlaying(false)){
-			return &src;
+	for (CSoundSource* src: sources) {
+		if (!src->IsPlaying(false)){
+			return src;
 		}
 	}
 
 	// check the next best free source
 	CSoundSource* bestSrc = nullptr;
 	int bestPriority = INT_MAX;
-	for (CSoundSource& src: sources) {
+	for (CSoundSource* src: sources) {
 		/*if (!src.IsPlaying(true)) {
 			return &src;
 		}
-		else*/ if (src.GetCurrentPriority() <= bestPriority) {
-			bestSrc = &src;
-			bestPriority = src.GetCurrentPriority();
+		else*/ if (src->GetCurrentPriority() <= bestPriority) {
+			bestSrc = src;
+			bestPriority = src->GetCurrentPriority();
 		}
 	}
 	return bestSrc;
@@ -382,6 +382,8 @@ void CSound::StartThread(int maxSounds)
 
 	Watchdog::DeregisterThread(WDT_AUDIO);
 
+	for (CSoundSource* source: sources)
+		delete source;
 	sources.clear(); // delete all sources
 	delete efx; // must happen after sources and before context
 	efx = NULL;
@@ -395,8 +397,8 @@ void CSound::StartThread(int maxSounds)
 void CSound::Update()
 {
 	std::lock_guard<spring::recursive_mutex> lck(soundMutex); // lock
-	for (sourceVecT::iterator it = sources.begin(); it != sources.end(); ++it)
-		it->Update();
+	for (CSoundSource* source: sources)
+		source->Update();
 	CheckError("CSound::Update");
 	UpdateListenerReal();
 }

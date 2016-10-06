@@ -340,6 +340,9 @@ void UDPConnection::InitConnection(ip::udp::endpoint address, std::shared_ptr<ip
 UDPConnection::~UDPConnection()
 {
 	delete fragmentBuffer;
+	for (auto &it: waitingPackets)
+		delete it.second;
+
 	fragmentBuffer = NULL;
 	Flush(true);
 }
@@ -545,7 +548,7 @@ void UDPConnection::ProcessRawPacket(Packet& incoming)
 			continue;
 		}
 
-		waitingPackets.insert(c->chunkNumber, new RawPacket(&c->data[0], c->data.size()));
+		waitingPackets.emplace(c->chunkNumber, new RawPacket(&c->data[0], c->data.size()));
 	}
 
 	packetMap::iterator wpi;
