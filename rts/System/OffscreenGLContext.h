@@ -5,6 +5,8 @@
 
 #include "Rendering/GL/myGL.h"
 
+#include <functional>
+
 #if defined(HEADLESS)
 	//! nothing
 #elif defined(WIN32)
@@ -19,6 +21,9 @@
 	#undef KeyRelease
 	#undef GrayScale
 #endif
+
+#include "System/Threading/SpringThreading.h"
+#include <chrono>
 
 class COffscreenGLContext
 {
@@ -47,32 +52,26 @@ private:
 
 /******************************************************************************/
 
-#include <boost/function.hpp>
-#include <boost/date_time/posix_time/posix_time_types.hpp>
 
-namespace boost {
-	class thread;
-}
 
 /**
  * @brief COffscreenGLThread
- * Runs a boost::bind in an additional thread with an offscreen OpenGL context.
+ * Runs a std::bind in an additional thread with an offscreen OpenGL context.
  * (Don't try render to the 'screen' a.k.a. default framebuffer in that thread, the results will be undetermistic)
  */
 class COffscreenGLThread
 {
 public:
-	COffscreenGLThread(boost::function<void()> f);
+	COffscreenGLThread(std::function<void()> f);
 	~COffscreenGLThread();
 
-	bool IsFinished(boost::posix_time::time_duration wait = boost::posix_time::milliseconds(200));
 	void Join();
 	void join() {Join();}
 
 private:
-	void WrapFunc(boost::function<void()> f);
+	void WrapFunc(std::function<void()> f);
 
-	boost::thread* thread;
+	spring::thread* thread;
 	COffscreenGLContext glOffscreenCtx;
 };
 

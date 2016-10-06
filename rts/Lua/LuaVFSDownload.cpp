@@ -6,7 +6,7 @@
 #include "System/Util.h"
 #include "System/EventHandler.h"
 #include "System/Platform/Threading.h"
-#include "System/Threading/SpringMutex.h"
+#include "System/Threading/SpringThreading.h"
 #include "System/FileSystem/ArchiveScanner.h"
 
 #include <queue>
@@ -178,7 +178,7 @@ void StartDownload() {
 	if (!filename.empty()) {
 		LOG_L(L_DEBUG, "DOWNLOADING: %s", filename.c_str());
 	}
-	boost::thread {[ID, filename, cat]() {
+	spring::thread {[ID, filename, cat]() {
 			const int result = Download(ID, filename, cat);
 			if (result == 0) {
 				QueueDownloadFinished(ID);

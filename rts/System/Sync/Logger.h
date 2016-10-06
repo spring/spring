@@ -8,7 +8,7 @@
 #include <stdio.h>
 #include <string>
 #include <vector>
-#include "System/Threading/SpringMutex.h"
+#include "System/Threading/SpringThreading.h"
 
 /**
  * @brief logging class for sync debugger

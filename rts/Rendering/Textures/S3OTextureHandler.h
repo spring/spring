@@ -9,7 +9,7 @@
 
 #include "Bitmap.h"
 
-#include "System/Threading/SpringMutex.h"
+#include "System/Threading/SpringThreading.h"
 
 struct S3DModel;
 class CBitmap;

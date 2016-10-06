@@ -10,10 +10,8 @@
 #include "System/myMath.h"
 #if (ENABLE_USERSTATE_LOCKS != 0)
 	#include <map>
-	#include <boost/thread.hpp>
-	#include "System/Threading/SpringMutex.h"
-#endif
-#include "System/Log/ILog.h"
+	#include "System/Threading/SpringThreading.h"
+#endif#include "System/Log/ILog.h"
 #if (!defined(DEDICATED) && !defined(UNITSYNC) && !defined(BUILDING_AI))
 	#include "System/Misc/SpringTime.h"
 #endif

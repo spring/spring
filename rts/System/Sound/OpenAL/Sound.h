@@ -11,6 +11,7 @@
 #include <vector>
 
 #include "System/float3.h"
+#include "System/Threading/SpringThreading.h"
 
 #include "SoundItem.h"
 
@@ -19,11 +20,6 @@ class SoundBuffer;
 class SoundItem;
 struct ALCdevice_struct;
 typedef struct ALCdevice_struct ALCdevice;
-
-namespace boost {
-	class thread;
-}
-
 
 /// Default sound system implementation (OpenAL)
 class CSound : public ISound
@@ -99,7 +95,7 @@ private:
 	soundItemDef defaultItem;
 	soundItemDefMap soundItemDefs;
 
-	boost::thread* soundThread;
+	spring::thread* soundThread;
 
 	volatile bool soundThreadQuit;
 	volatile bool canLoadDefs;

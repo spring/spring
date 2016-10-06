@@ -48,7 +48,7 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/Util.h"
-#include "System/Threading/SpringMutex.h"
+#include "System/Threading/SpringThreading.h"
 #include "lib/luasocket/src/luasocket.h"
 
 #include <stdio.h>

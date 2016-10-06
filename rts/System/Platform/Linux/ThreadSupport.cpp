@@ -1,11 +1,11 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include <functional>
 #include <pthread.h>
 #include <unistd.h>
 #include <signal.h>
 #include <fstream>
 #include <sys/syscall.h>
-#include <boost/thread/tss.hpp>
 
 #include "System/Log/ILog.h"
 #include "System/Platform/Threading.h"
@@ -186,7 +186,7 @@ void SetCurrentThreadControls(bool isLoadThread)
  * @param ptr Points to a platform-specific ThreadControls object.
  */
 void ThreadStart(
-	boost::function<void()> taskFunc,
+	std::function<void()> taskFunc,
 	std::shared_ptr<ThreadControls>* ppCtlsReturn,
 	ThreadControls* tempCtls
 ) {

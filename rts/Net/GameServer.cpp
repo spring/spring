@@ -3,10 +3,9 @@
 #include "System/Net/UDPListener.h"
 #include "System/Net/UDPConnection.h"
 
-#include <boost/bind.hpp>
 #include <boost/format.hpp>
 #include <boost/version.hpp>
-#include <boost/thread/thread.hpp>
+#include <functional>
 #include <deque>
 #if defined DEDICATED || defined DEBUG
 	#include <iostream>
@@ -54,6 +53,7 @@
 #include "System/Log/ILog.h"
 #include "System/Platform/errorhandler.h"
 #include "System/Platform/Threading.h"
+#include "System/Threading/SpringThreading.h"
 
 #ifndef DEDICATED
 #include "lib/luasocket/src/restrictions.h"
@@ -282,7 +282,7 @@ void CGameServer::Initialize()
 	linkMinPacketSize = globalConfig->linkIncomingMaxPacketRate > 0 ? (globalConfig->linkIncomingSustainedBandwidth / globalConfig->linkIncomingMaxPacketRate) : 1;
 	lastBandwidthUpdate = spring_gettime();
 
-	thread = new boost::thread(boost::bind<void, CGameServer, CGameServer*>(&CGameServer::UpdateLoop, this));
+	thread = new spring::thread(std::bind(&CGameServer::UpdateLoop, this));
 
 #ifdef STREFLOP_H
 	// Something in CGameServer::CGameServer borks the FPU control word

@@ -5,7 +5,7 @@
 #include "ConfigSource.h"
 #include "System/Util.h"
 #include "System/Log/ILog.h"
-#include "System/Threading/SpringMutex.h"
+#include "System/Threading/SpringThreading.h"
 
 #ifdef WIN32
 	#include <io.h>

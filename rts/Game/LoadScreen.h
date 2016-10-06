@@ -9,11 +9,7 @@
 #include "System/LoadSave/LoadSaveHandler.h"
 #include "System/OffscreenGLContext.h"
 #include "System/Misc/SpringTime.h"
-#include "System/Threading/SpringMutex.h"
-
-namespace boost {
-	class thread;
-}
+#include "System/Threading/SpringThreading.h"
 
 class CLoadScreen : public CGameController
 {
@@ -61,7 +57,7 @@ private:
 	ILoadSaveHandler* saveFile;
 
 	spring::recursive_mutex mutex;
-	boost::thread* netHeartbeatThread;
+	spring::thread* netHeartbeatThread;
 	COffscreenGLThread* gameLoadThread;
 
 	bool mtLoading;

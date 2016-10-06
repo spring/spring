@@ -5,9 +5,7 @@
 #include "PathEstimator.h"
 
 #include <fstream>
-#include <boost/bind.hpp>
-#include <boost/thread/barrier.hpp>
-#include <boost/thread/thread.hpp>
+#include <functional>
 
 #include "minizip/zip.h"
 
@@ -31,6 +29,7 @@
 #include "System/FileSystem/FileQueryFlags.h"
 #include "System/Platform/Threading.h"
 #include "System/Sync/HsiehHash.h"
+#include "System/Threading/SpringThreading.h"
 
 
 CONFIG(int, MaxPathCostsMemoryFootPrint).defaultValue(512).minimumValue(64).description("Maximum memusage (in MByte) of mutlithreaded pathcache generator at loading time.");
@@ -135,11 +134,11 @@ void CPathEstimator::InitEstimator(const std::string& cacheFileName, const std::
 		}
 
 		// note: only really needed if numExtraThreads > 0
-		pathBarrier = new boost::barrier(numExtraThreads + 1);
+		pathBarrier = new spring::barrier(numExtraThreads + 1);
 
 		for (unsigned int i = 1; i <= numExtraThreads; i++) {
 			pathFinders[i] = new CPathFinder();
-			threads[i] = new boost::thread(boost::bind(&CPathEstimator::CalcOffsetsAndPathCosts, this, i));
+			threads[i] = new spring::thread(std::bind(&CPathEstimator::CalcOffsetsAndPathCosts, this, i));
 		}
 
 		// Use the current thread as thread zero

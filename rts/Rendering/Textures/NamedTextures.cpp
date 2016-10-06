@@ -12,7 +12,7 @@
 #include "System/bitops.h"
 #include "System/type2.h"
 #include "System/Log/ILog.h"
-#include "System/Threading/SpringMutex.h"
+#include "System/Threading/SpringThreading.h"
 
 
 typedef std::unordered_map<std::string, CNamedTextures::TexInfo> TEXMAP;

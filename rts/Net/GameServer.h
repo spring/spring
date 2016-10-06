@@ -18,18 +18,12 @@
 #include "System/UnsyncedRNG.h"
 #include "System/float3.h"
 #include "System/Misc/SpringTime.h"
-#include "System/Threading/SpringMutex.h"
+#include "System/Threading/SpringThreading.h"
 
 /**
  * "player" number for GameServer-generated messages
  */
 #define SERVER_PLAYER 255
-
-
-
-namespace boost {
-	class thread;
-}
 
 namespace netcode
 {
@@ -269,7 +263,7 @@ private:
 	std::unique_ptr<AutohostInterface> hostif;
 
 	UnsyncedRNG rng;
-	boost::thread* thread;
+	spring::thread* thread;
 
 	mutable spring::recursive_mutex gameServerMutex;
 

@@ -17,12 +17,10 @@ struct SRectangle;
 class CSolidObject;
 
 #ifdef QTPFS_ENABLE_THREADED_UPDATE
-namespace boost {
-	class thread;
-	class condition_variable;
-};
 namespace spring {
 	class mutex;
+	class thread;
+	class condition_variable;
 };
 #endif
 
@@ -93,7 +91,7 @@ namespace QTPFS {
 		typedef std::list<IPathSearch*> PathSearchList;
 		typedef std::list<IPathSearch*>::iterator PathSearchListIt;
 
-		void SpawnBoostThreads(MemberFunc f, const SRectangle& r);
+		void SpawnSpringThreads(MemberFunc f, const SRectangle& r);
 
 		void InitNodeLayersThreaded(const SRectangle& rect);
 		void UpdateNodeLayersThreaded(const SRectangle& rect);
@@ -169,10 +167,10 @@ namespace QTPFS {
 		bool haveCacheDir;
 
 		#ifdef QTPFS_ENABLE_THREADED_UPDATE
-		boost::thread* updateThread;
+		spring::thread* updateThread;
 		spring::mutex* mutexThreadUpdate;
-		boost::condition_variable* condThreadUpdate;
-		boost::condition_variable* condThreadUpdated;
+		spring::condition_variable* condThreadUpdate;
+		spring::condition_variable* condThreadUpdated;
 		#endif
 	};
 }

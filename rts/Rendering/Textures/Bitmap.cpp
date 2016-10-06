@@ -22,7 +22,7 @@
 #include "System/FileSystem/DataDirsAccess.h"
 #include "System/FileSystem/FileQueryFlags.h"
 #include "System/FileSystem/FileHandler.h"
-#include "System/Threading/SpringMutex.h"
+#include "System/Threading/SpringThreading.h"
 
 
 spring::mutex devilMutex; // devil functions, whilst expensive, aren't thread-save

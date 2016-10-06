@@ -1,9 +1,8 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include <boost/bind.hpp>
-#include <boost/thread.hpp>
-#include <boost/thread/condition.hpp>
+#include <chrono>
 #include <cinttypes>
+#include <functional>
 
 #include "System/ThreadPool.h"
 
@@ -23,7 +22,7 @@
 #include "System/FileSystem/FileSystem.h"
 #include "System/Log/ILog.h"
 #include "System/Platform/Threading.h"
-#include "System/Threading/SpringMutex.h"
+#include "System/Threading/SpringThreading.h"
 #include "System/Rectangle.h"
 #include "System/TimeProfiler.h"
 #include "System/Util.h"
@@ -63,7 +62,7 @@ namespace QTPFS {
 		}
 		void Loop() {
 			while (loading) {
-				boost::this_thread::sleep(boost::posix_time::millisec(50));
+				spring::this_thread::sleep_for(std::chrono::milliseconds(50));
 
 				// need this to be always executed after waking up
 				SetLoadMessages();
@@ -81,7 +80,7 @@ namespace QTPFS {
 	};
 
 	static PMLoadScreen pmLoadScreen;
-	static boost::thread pmLoadThread;
+	static spring::thread pmLoadThread;
 
 	static size_t GetNumThreads() {
 		const size_t numThreads = std::max(0, configHandler->GetInt("PathingThreadCount"));
@@ -149,15 +148,15 @@ std::int64_t QTPFS::PathManager::Finalize() {
 	const spring_time t0 = spring_gettime();
 
 	{
-		pmLoadThread = boost::thread(boost::bind(&PathManager::Load, this));
+		pmLoadThread = spring::thread(std::bind(&PathManager::Load, this));
 		pmLoadScreen.Loop();
 		pmLoadThread.join();
 
 		#ifdef QTPFS_ENABLE_THREADED_UPDATE
 		mutexThreadUpdate = new spring::mutex();
-		condThreadUpdate = new boost::condition_variable();
-		condThreadUpdated = new boost::condition_variable();
-		updateThread = new boost::thread(boost::bind(&PathManager::ThreadUpdate, this));
+		condThreadUpdate = new spring::condition_variable();
+		condThreadUpdated = new spring::condition_variable();
+		updateThread = new spring::thread(std::bind(&PathManager::ThreadUpdate, this));
 		#endif
 	}
 
@@ -257,11 +256,11 @@ std::uint64_t QTPFS::PathManager::GetMemFootPrint() const {
 
 
 
-void QTPFS::PathManager::SpawnBoostThreads(MemberFunc f, const SRectangle& r) {
-	static std::vector<boost::thread*> threads(std::min(GetNumThreads(), nodeLayers.size()), NULL);
+void QTPFS::PathManager::SpawnSpringThreads(MemberFunc f, const SRectangle& r) {
+	static std::vector<spring::thread*> threads(std::min(GetNumThreads(), nodeLayers.size()), NULL);
 
 	for (unsigned int threadNum = 0; threadNum < threads.size(); threadNum++) {
-		threads[threadNum] = new boost::thread(boost::bind(f, this, threadNum, threads.size(), r));
+		threads[threadNum] = new spring::thread(std::bind(f, this, threadNum, threads.size(), r));
 	}
 
 	for (unsigned int threadNum = 0; threadNum < threads.size(); threadNum++) {
@@ -317,7 +316,7 @@ void QTPFS::PathManager::InitNodeLayersThreaded(const SRectangle& rect) {
 		sprintf(loadMsg, fmtString, __FUNCTION__, GetNumThreads(), nodeLayers.size(), (haveCacheDir? "cached": "uncached"));
 		pmLoadScreen.AddLoadMessage(loadMsg);
 
-		SpawnBoostThreads(&PathManager::InitNodeLayersThread, rect);
+		SpawnSpringThreads(&PathManager::InitNodeLayersThread, rect);
 	}
 	#endif
 
@@ -386,7 +385,7 @@ void QTPFS::PathManager::UpdateNodeLayersThreaded(const SRectangle& rect) {
 	}
 	#else
 	{
-		SpawnBoostThreads(&PathManager::UpdateNodeLayersThread, rect);
+		SpawnSpringThreads(&PathManager::UpdateNodeLayersThread, rect);
 	}
 	#endif
 
@@ -571,10 +570,10 @@ void QTPFS::PathManager::Serialize(const std::string& cacheFileDir) {
 				// fstreams can not be easily locked however, see
 				// http://stackoverflow.com/questions/839856/
 				while (!FileSystem::FileExists(fileNames[i] + "-tmp")) {
-					boost::this_thread::sleep(boost::posix_time::millisec(100));
+					spring::this_thread::sleep_for(std::chrono::milliseconds(100));
 				}
 				while (FileSystem::GetFileSize(fileNames[i] + "-tmp") != sizeof(unsigned int)) {
-					boost::this_thread::sleep(boost::posix_time::millisec(100));
+					spring::this_thread::sleep_for(std::chrono::milliseconds(100));
 				}
 
 				fileStreams[i]->open((fileNames[i] + "-tmp").c_str(), std::ios::in | std::ios::binary);
@@ -582,10 +581,10 @@ void QTPFS::PathManager::Serialize(const std::string& cacheFileDir) {
 				fileStreams[i]->close();
 
 				while (!FileSystem::FileExists(fileNames[i])) {
-					boost::this_thread::sleep(boost::posix_time::millisec(100));
+					spring::this_thread::sleep_for(std::chrono::milliseconds(100));
 				}
 				while (FileSystem::GetFileSize(fileNames[i]) != fileSizes[i]) {
-					boost::this_thread::sleep(boost::posix_time::millisec(100));
+					spring::this_thread::sleep_for(std::chrono::milliseconds(100));
 				}
 			}
 			#else

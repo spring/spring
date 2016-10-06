@@ -6,7 +6,7 @@
 #include <unordered_map>
 #include <vector>
 #include <string>
-#include "System/Threading/SpringMutex.h"
+#include "System/Threading/SpringThreading.h"
 
 
 struct S3DModel;

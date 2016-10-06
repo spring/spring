@@ -13,7 +13,7 @@
 #endif
 
 #include <cinttypes>
-#include <boost/thread/thread.hpp>
+#include <functional>
 
 #include "System/Sound/ISoundChannels.h"
 #include "System/Sound/SoundLog.h"
@@ -34,7 +34,7 @@
 #include "System/Util.h"
 #include "System/Platform/Threading.h"
 #include "System/Platform/Watchdog.h"
-#include "System/Threading/SpringMutex.h"
+#include "System/Threading/SpringThreading.h"
 
 #include "System/float3.h"
 
@@ -69,8 +69,8 @@ CSound::CSound()
 	sounds.push_back(NULL);
 
 	assert(maxSounds>0);
-	soundThread = new boost::thread();
-	*soundThread = Threading::CreateNewThread(boost::bind(&CSound::StartThread, this, maxSounds));
+	soundThread = new spring::thread();
+	*soundThread = Threading::CreateNewThread(std::bind(&CSound::StartThread, this, maxSounds));
 
 	configHandler->NotifyOnChange(this);
 }
@@ -375,7 +375,7 @@ void CSound::StartThread(int maxSounds)
 
 	while (!soundThreadQuit) {
 		constexpr int FREQ_IN_HZ = 30;
-		boost::this_thread::sleep(boost::posix_time::millisec(1000 / FREQ_IN_HZ));
+		spring::this_thread::sleep_for(std::chrono::milliseconds(1000 / FREQ_IN_HZ));
 		Watchdog::ClearTimer(WDT_AUDIO);
 		Update();
 	}

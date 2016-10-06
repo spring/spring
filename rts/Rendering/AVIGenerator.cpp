@@ -12,7 +12,7 @@
 
 #include <windows.h>
 
-#include <boost/bind.hpp>
+#include <functional>
 #include <cassert>
 
 #if defined(_WIN32) && !defined(__MINGW32__)
@@ -116,7 +116,7 @@ CAVIGenerator::~CAVIGenerator() {
 
 	if (AVIThread) {
 		{
-			boost::mutex::scoped_lock lock(AVIMutex);
+			std::lock_guard<spring::mutex> lock(AVIMutex);
 			quitAVIgen = true;
 			AVICondition.notify_all();
 		}
@@ -348,8 +348,8 @@ bool CAVIGenerator::InitEngine() {
 	if (globalRendering->fullScreen) {
 		ShowWindow(mainWindow, SW_SHOWMINNOACTIVE);
 	}
-	boost::mutex::scoped_lock lock(AVIMutex);
-	AVIThread = new boost::thread(boost::bind(&CAVIGenerator::AVIGeneratorThreadProc, this));
+	std::unique_lock<spring::mutex> lock(AVIMutex);
+	AVIThread = new spring::thread(std::bind(&CAVIGenerator::AVIGeneratorThreadProc, this));
 	AVICondition.wait(lock);  // Wait until InitAVICompressionEngine() completes.
 	if (globalRendering->fullScreen) {
 		ShowWindow(mainWindow, SW_RESTORE);
@@ -380,7 +380,7 @@ HRESULT CAVIGenerator::AddFrame(unsigned char* pixelData){
 bool CAVIGenerator::readOpenglPixelDataThreaded() {
 
 	while (true) {
-		boost::mutex::scoped_lock lock(AVIMutex);
+		std::unique_lock<spring::mutex> lock(AVIMutex);
 		if (quitAVIgen) {
 			return false;
 		} else if (readBuf != NULL) {
@@ -418,7 +418,7 @@ void CAVIGenerator::AVIGeneratorThreadProc() {
 
 	while (true) {
 		{
-			boost::mutex::scoped_lock lock(AVIMutex);
+			std::unique_lock<spring::mutex> lock(AVIMutex);
 			if (encoderError) {
 				LOG_L(L_ERROR, "The avi generator terminated unexpectedly!");
 				quitAVIgen = true;

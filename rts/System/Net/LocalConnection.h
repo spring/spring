@@ -4,7 +4,7 @@
 #define _LOCAL_CONNECTION_H
 
 #include <deque>
-#include "System/Threading/SpringMutex.h"
+#include "System/Threading/SpringThreading.h"
 
 #include "Connection.h"
 

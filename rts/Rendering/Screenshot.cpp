@@ -4,7 +4,7 @@
 
 #include <vector>
 #include <iomanip>
-#include <boost/thread.hpp>
+#include <functional>
 
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GlobalRendering.h"
@@ -14,7 +14,7 @@
 #include "System/FileSystem/FileSystem.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/Platform/Threading.h"
-#include "System/Threading/SpringMutex.h"
+#include "System/Threading/SpringThreading.h"
 
 #undef CreateDirectory
 
@@ -52,7 +52,7 @@ public:
 		if (!myThread)
 		{
 			finished = false;
-			myThread = new boost::thread(boost::bind(&SaverThread::SaveStuff, this));
+			myThread = new spring::thread(std::bind(&SaverThread::SaveStuff, this));
 		}
 	};
 
@@ -101,7 +101,7 @@ private:
 	};
 
 	spring::mutex myMutex;
-	boost::thread* myThread;
+	spring::thread* myThread;
 	volatile bool finished;
 	std::list<FunctionArgs> tasks;
 };

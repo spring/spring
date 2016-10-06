@@ -2,6 +2,7 @@
 
 #include "SelectionWidget.h"
 
+#include <functional>
 #include <set>
 
 #include "System/FileSystem/ArchiveScanner.h"
@@ -45,7 +46,7 @@ SelectionWidget::SelectionWidget(agui::GuiElement* parent) : agui::GuiElement(pa
 	vl->SetBorder(1.2f);
 	agui::HorizontalLayout* modL = new agui::HorizontalLayout(vl);
 	mod = new agui::Button("Select", modL);
-	mod->Clicked.connect(boost::bind(&SelectionWidget::ShowModList, this));
+	mod->Clicked.connect(std::bind(&SelectionWidget::ShowModList, this));
 	mod->SetSize(0.1f, 0.00f, true);
 	userMod = configHandler->GetString("LastSelectedMod");
 	if (GetFileName(userMod).empty())
@@ -53,7 +54,7 @@ SelectionWidget::SelectionWidget(agui::GuiElement* parent) : agui::GuiElement(pa
 	modT = new agui::TextElement(userMod, modL);
 	agui::HorizontalLayout* mapL = new agui::HorizontalLayout(vl);
 	map = new agui::Button("Select", mapL);
-	map->Clicked.connect(boost::bind(&SelectionWidget::ShowMapList, this));
+	map->Clicked.connect(std::bind(&SelectionWidget::ShowMapList, this));
 	map->SetSize(0.1f, 0.00f, true);
 	userMap = configHandler->GetString("LastSelectedMap");
 	if (GetFileName(userMap).empty())
@@ -61,7 +62,7 @@ SelectionWidget::SelectionWidget(agui::GuiElement* parent) : agui::GuiElement(pa
 	mapT = new agui::TextElement(userMap, mapL);
 	agui::HorizontalLayout* scriptL = new agui::HorizontalLayout(vl);
 	script = new agui::Button("Select", scriptL);
-	script->Clicked.connect(boost::bind(&SelectionWidget::ShowScriptList, this));
+	script->Clicked.connect(std::bind(&SelectionWidget::ShowScriptList, this));
 	script->SetSize(0.1f, 0.00f, true);
 	userScript = configHandler->GetString("LastSelectedScript");
 	scriptT = new agui::TextElement(userScript, scriptL);
@@ -78,8 +79,8 @@ void SelectionWidget::ShowModList()
 	if (curSelect)
 		return;
 	curSelect = new ListSelectWnd("Select game");
-	curSelect->Selected.connect(boost::bind(&SelectionWidget::SelectMod, this, _1));
-	curSelect->WantClose.connect(boost::bind(&SelectionWidget::CleanWindow, this));
+	curSelect->Selected.connect(std::bind(&SelectionWidget::SelectMod, this, std::placeholders::_1));
+	curSelect->WantClose.connect(std::bind(&SelectionWidget::CleanWindow, this));
 
 	const std::vector<CArchiveScanner::ArchiveData> &found = archiveScanner->GetPrimaryMods();
 
@@ -100,8 +101,8 @@ void SelectionWidget::ShowMapList()
 	if (curSelect)
 		return;
 	curSelect = new ListSelectWnd("Select map");
-	curSelect->Selected.connect(boost::bind(&SelectionWidget::SelectMap, this, _1));
-	curSelect->WantClose.connect(boost::bind(&SelectionWidget::CleanWindow, this));
+	curSelect->Selected.connect(std::bind(&SelectionWidget::SelectMap, this, std::placeholders::_1));
+	curSelect->WantClose.connect(std::bind(&SelectionWidget::CleanWindow, this));
 
 	const std::vector<std::string> &arFound = archiveScanner->GetMaps();
 
@@ -173,8 +174,8 @@ void SelectionWidget::ShowScriptList()
 	if (curSelect)
 		return;
 	curSelect = new ListSelectWnd("Select script");
-	curSelect->Selected.connect(boost::bind(&SelectionWidget::SelectScript, this, _1));
-	curSelect->WantClose.connect(boost::bind(&SelectionWidget::CleanWindow, this));
+	curSelect->Selected.connect(std::bind(&SelectionWidget::SelectScript, this, std::placeholders::_1));
+	curSelect->WantClose.connect(std::bind(&SelectionWidget::CleanWindow, this));
 
 	for (std::string &scriptName: availableScripts) {
 		curSelect->list->AddItem(scriptName, "");

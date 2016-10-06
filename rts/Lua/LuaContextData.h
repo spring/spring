@@ -10,7 +10,7 @@
 #include "LuaDisplayLists.h"
 #include "System/EventClient.h"
 #include "System/Log/ILog.h"
-#include "System/Threading/SpringMutex.h"
+#include "System/Threading/SpringThreading.h"
 
 class CLuaHandle;
 

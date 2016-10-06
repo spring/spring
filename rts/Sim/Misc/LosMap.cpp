@@ -8,7 +8,7 @@
 #include "System/Log/ILog.h"
 #include "System/Util.h"
 #include "System/ThreadPool.h"
-#include "System/Threading/SpringMutex.h"
+#include "System/Threading/SpringThreading.h"
 #ifdef USE_UNSYNCED_HEIGHTMAP
 	#include "Game/GlobalUnsynced.h" // for myAllyTeam
 #endif

@@ -4,7 +4,7 @@
 #include "System/maindefines.h"
 #include "System/myMath.h"
 
-#include "System/Threading/SpringMutex.h"
+#include "System/Threading/SpringThreading.h"
 
 
 #ifndef UNIT_TEST
@@ -24,8 +24,9 @@ CR_REG_METADATA(spring_time,(
 // mingw doesn't support std::this_thread (yet?)
 #if defined(__MINGW32__) || defined(SPRINGTIME_USING_BOOST)
 	#undef gt
-	#include <boost/thread/thread.hpp>
-	namespace this_thread { using namespace boost::this_thread; };
+	#define SPRINGTIME_USING_STD_SLEEP
+	#include "System/Threading/SpringThreading.h"
+	namespace this_thread { using namespace spring::this_thread; };
 #else
 	#define SPRINGTIME_USING_STD_SLEEP
 	#ifdef _GLIBCXX_USE_SCHED_YIELD

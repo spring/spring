@@ -4,7 +4,7 @@
 #define _BUFFERED_ARCHIVE_H
 
 #include <map>
-#include "System/Threading/SpringMutex.h"
+#include "System/Threading/SpringThreading.h"
 
 #include "IArchive.h"
 

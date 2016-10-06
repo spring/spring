@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include <SDL.h>
-#include <boost/thread.hpp>
+#include <functional>
 
 #include "Rendering/GL/myGL.h"
 #include "LoadScreen.h"
@@ -88,8 +88,8 @@ void CLoadScreen::Init()
 	//! Create a thread during the loading that pings the host/server, so it knows that this client is still alive/loading
 	clientNet->KeepUpdating(true);
 
-	netHeartbeatThread = new boost::thread();
-	*netHeartbeatThread = Threading::CreateNewThread(boost::bind<void, CNetProtocol, CNetProtocol*>(&CNetProtocol::UpdateLoop, clientNet));
+	netHeartbeatThread = new spring::thread();
+	*netHeartbeatThread = Threading::CreateNewThread(std::bind(&CNetProtocol::UpdateLoop, clientNet));
 
 	game = new CGame(mapName, modName, saveFile);
 
@@ -119,7 +119,7 @@ void CLoadScreen::Init()
 		//! Create the Game Loading Thread
 		if (mtLoading) {
 			CglFont::threadSafety = true;
-			gameLoadThread = new COffscreenGLThread(boost::bind(&CGame::LoadGame, game, mapName, true));
+			gameLoadThread = new COffscreenGLThread(std::bind(&CGame::LoadGame, game, mapName, true));
 		}
 
 	} catch (const opengl_error& gle) {

@@ -11,6 +11,7 @@
 
 #include <boost/algorithm/string.hpp>
 #include <fstream>
+#include <sstream>
 
 CMapGenerator::CMapGenerator(const CGameSetup* setup) : setup(setup)
 {

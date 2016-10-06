@@ -8,7 +8,7 @@
 #include "System/EventClient.h"
 #include "System/Log/LogSinkHandler.h"
 #include "System/Misc/SpringTime.h"
-#include "System/Threading/SpringMutex.h"
+#include "System/Threading/SpringThreading.h"
 
 #include <deque>
 #include <string>

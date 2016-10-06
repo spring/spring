@@ -6,7 +6,7 @@
 #include <cstring>
 
 #include "System/Log/ILog.h"
-#include "System/Threading/SpringMutex.h"
+#include "System/Threading/SpringThreading.h"
 #include "System/UnsyncedRNG.h"
 #ifdef THREADPOOL
 	#include "System/ThreadPool.h"

@@ -5,7 +5,7 @@
 
 #include <string>
 #include <vector>
-#include <boost/bind.hpp>
+#include <functional>
 
 #include "aGui/GuiElement.h"
 #include "aGui/Window.h"
@@ -34,13 +34,13 @@ public:
 
 		agui::VerticalLayout* modWindowLayout = new agui::VerticalLayout(this);
 		list = new agui::List(modWindowLayout);
-		list->FinishSelection.connect(boost::bind(&ListSelectWnd::SelectButton, this));
+		list->FinishSelection.connect(std::bind(&ListSelectWnd::SelectButton, this));
 		agui::HorizontalLayout* buttons = new agui::HorizontalLayout(modWindowLayout);
 		buttons->SetSize(0.0f, 0.04f, true);
 		agui::Button* select = new agui::Button("Select", buttons);
-		select->Clicked.connect(boost::bind(&ListSelectWnd::SelectButton, this));
+		select->Clicked.connect(std::bind(&ListSelectWnd::SelectButton, this));
 		agui::Button* cancel = new agui::Button("Close", buttons);
-		cancel->Clicked.connect(boost::bind(&ListSelectWnd::CancelButton, this));
+		cancel->Clicked.connect(std::bind(&ListSelectWnd::CancelButton, this));
 		GeometryChange();
 	}
 
@@ -85,7 +85,7 @@ public:
 private:
 	void CleanWindow();
 	void UpdateAvailableScripts();
-	
+
 	agui::Button* mod;
 	agui::TextElement* modT;
 	agui::Button* map;

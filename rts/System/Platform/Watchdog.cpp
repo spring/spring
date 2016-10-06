@@ -7,9 +7,7 @@
 #endif
 
 #include <algorithm>
-#include <boost/thread.hpp>
-#include <boost/bind.hpp>
-#include <boost/function.hpp>
+#include <functional>
 
 #include "Game/GameVersion.h"
 #include "System/Config/ConfigHandler.h"
@@ -19,7 +17,7 @@
 #include "System/Platform/CrashHandler.h"
 #include "System/Platform/Misc.h"
 #include "System/Platform/Threading.h"
-#include "System/Threading/SpringMutex.h"
+#include "System/Threading/SpringThreading.h"
 
 CONFIG(int, HangTimeout).defaultValue(10).minimumValue(-1).maximumValue(600)
 		.description("Number of seconds that, if spent in the same code segment, indicate a hang; -1 to disable.");
@@ -85,7 +83,7 @@ namespace Watchdog
 
 	static std::map<std::string, unsigned int> threadNameToNum;
 
-	static boost::thread* hangDetectorThread = NULL;
+	static spring::thread* hangDetectorThread = NULL;
 	static spring_time hangTimeout = spring_msecs(0);
 	static volatile bool hangDetectorThreadInterrupted = false;
 
@@ -153,7 +151,7 @@ namespace Watchdog
 				CrashHandler::CleanupStacktrace(LOG_LEVEL_WARNING);
 			}
 
-			boost::this_thread::sleep(boost::posix_time::seconds(1));
+			spring::this_thread::sleep_for(std::chrono::seconds(1));
 		}
 	}
 
@@ -359,7 +357,7 @@ namespace Watchdog
 		hangTimeout = spring_secs(hangTimeoutSecs);
 
 		// start the watchdog thread
-		hangDetectorThread = new boost::thread(&HangDetectorLoop);
+		hangDetectorThread = new spring::thread(&HangDetectorLoop);
 
 		LOG("[WatchDog%s] Installed (HangTimeout: %isec)", __FUNCTION__, hangTimeoutSecs);
 	}

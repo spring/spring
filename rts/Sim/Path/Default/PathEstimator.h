@@ -3,18 +3,18 @@
 #ifndef PATHESTIMATOR_H
 #define PATHESTIMATOR_H
 
+#include <atomic>
+#include <cinttypes>
+#include <deque>
 #include <string>
 #include <vector>
-#include <deque>
 
 #include "IPath.h"
 #include "IPathFinder.h"
 #include "PathConstants.h"
 #include "PathDataTypes.h"
 #include "System/float3.h"
-
-#include <boost/detail/atomic_count.hpp>
-#include <cinttypes>
+#include "System/Threading/SpringThreading.h"
 
 struct MoveDef;
 class CPathFinder;
@@ -22,12 +22,6 @@ class CPathEstimatorDef;
 class CPathFinderDef;
 class CPathCache;
 class CSolidObject;
-
-
-namespace boost {
-	class thread;
-	class barrier;
-}
 
 class CPathEstimator: public IPathFinder {
 public:
@@ -128,15 +122,15 @@ private:
 
 	std::uint32_t pathChecksum;               ///< currently crc from the zip
 
-	boost::detail::atomic_count offsetBlockNum;
-	boost::detail::atomic_count costBlockNum;
-	boost::barrier* pathBarrier;
+	std::atomic<std::int64_t> offsetBlockNum;
+	std::atomic<std::int64_t> costBlockNum;
+	spring::barrier* pathBarrier;
 
 	IPathFinder* pathFinder;
 	CPathCache* pathCache[2];                   /// [0] = !synced, [1] = synced
 
 	std::vector<IPathFinder*> pathFinders;
-	std::vector<boost::thread*> threads;
+	std::vector<spring::thread*> threads;
 
 	CPathEstimator* nextPathEstimator;
 
