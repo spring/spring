@@ -1,9 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-
 #include "SimpleParticleSystem.h"
-
-#include <cmath>
 
 #include "GenericParticleProjectile.h"
 #include "Game/Camera.h"
@@ -15,6 +12,7 @@
 #include "Sim/Projectiles/ExpGenSpawnableMemberInfo.h"
 #include "System/float3.h"
 #include "System/Log/ILog.h"
+#include "System/myMath.h"
 
 CR_BIND_DERIVED(CSimpleParticleSystem, CProjectile, )
 

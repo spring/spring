@@ -2,13 +2,12 @@
 
 #include "SpherePartProjectile.h"
 
-#include <cmath>
-
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ExpGenSpawnableMemberInfo.h"
+#include "System/myMath.h"
 
 CR_BIND_DERIVED(CSpherePartProjectile, CProjectile, )
 

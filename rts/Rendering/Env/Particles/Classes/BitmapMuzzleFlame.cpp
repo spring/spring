@@ -1,9 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-
 #include "BitmapMuzzleFlame.h"
-
-#include <cmath>
 
 #include "Sim/Misc/GlobalSynced.h"
 #include "Rendering/GlobalRendering.h"
@@ -13,6 +10,7 @@
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ExpGenSpawnableMemberInfo.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
+#include "System/myMath.h"
 
 CR_BIND_DERIVED(CBitmapMuzzleFlame, CProjectile, )
 
@@ -124,4 +122,3 @@ bool CBitmapMuzzleFlame::GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo)
 
 	return false;
 }
-

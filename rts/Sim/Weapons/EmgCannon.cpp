@@ -2,8 +2,6 @@
 
 #include "EmgCannon.h"
 
-#include <cmath>
-
 #include "WeaponDef.h"
 #include "Sim/Misc/Team.h"
 #include "Map/Ground.h"
@@ -11,6 +9,7 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "System/Sync/SyncTracer.h"
+#include "System/myMath.h"
 
 CR_BIND_DERIVED(CEmgCannon, CWeapon, (NULL, NULL))
 CR_REG_METADATA(CEmgCannon, )
@@ -36,7 +35,7 @@ void CEmgCannon::FireImpl(const bool scriptCall)
 	ProjectileParams params = GetProjectileParams();
 	params.pos = weaponMuzzlePos;
 	params.speed = dir * projectileSpeed;
-	params.ttl = std::ceil(std::max(dist, range) / projectileSpeed);
+	params.ttl = math::ceil(std::max(dist, range) / projectileSpeed);
 
 	WeaponProjectileFactory::LoadProjectile(params);
 }

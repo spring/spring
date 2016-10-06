@@ -2,12 +2,11 @@
 
 #include "FlameThrower.h"
 
-#include <cmath>
-
 #include "WeaponDef.h"
 #include "Map/Ground.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
 #include "Sim/Units/Unit.h"
+#include "System/myMath.h"
 
 CR_BIND_DERIVED(CFlameThrower, CWeapon, (NULL, NULL))
 
@@ -34,7 +33,7 @@ void CFlameThrower::FireImpl(const bool scriptCall)
 	params.pos = weaponMuzzlePos;
 	params.speed = dir * projectileSpeed;
 	params.spread = spread;
-	params.ttl = std::ceil(std::max(dist, range) / projectileSpeed * weaponDef->duration);
+	params.ttl = math::ceil(std::max(dist, range) / projectileSpeed * weaponDef->duration);
 
 	WeaponProjectileFactory::LoadProjectile(params);
 }

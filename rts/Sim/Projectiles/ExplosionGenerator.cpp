@@ -1,13 +1,11 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "ExplosionGenerator.h"
-
 #include <iostream>
 #include <stdexcept>
 #include <cassert>
 #include <cinttypes>
-#include <cmath>
 
+#include "ExplosionGenerator.h"
 #include "ExpGenSpawner.h" //!!
 #include "ExpGenSpawnable.h"
 #include "ExpGenSpawnableMemberInfo.h"
@@ -31,15 +29,16 @@
 
 #include "System/creg/STL_Map.h"
 #include "System/Config/ConfigHandler.h"
-#include "System/FileSystem/FileSystemInitializer.h"
-#include "System/Log/DefaultFilter.h"
-#include "System/Log/ILog.h"
-#include "System/Exceptions.h"
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/FileHandler.h"
+#include "System/FileSystem/FileSystemInitializer.h"
 #include "System/FileSystem/VFSHandler.h"
-#include "System/Util.h"
+#include "System/Log/DefaultFilter.h"
+#include "System/Log/ILog.h"
 #include "System/Sync/HsiehHash.h"
+#include "System/Exceptions.h"
+#include "System/myMath.h"
+#include "System/Util.h"
 
 
 CR_BIND_INTERFACE(IExplosionGenerator)
@@ -104,7 +103,7 @@ unsigned int CCustomExplosionGenerator::GetFlagsFromHeight(float height, float g
 {
 	unsigned int flags = 0;
 
-	const float waterDist = std::abs(height);
+	const float waterDist = math::fabsf(height);
 	const float altitude  = height - groundHeight;
 
 	// note: ranges do not overlap, although code in
@@ -433,7 +432,7 @@ bool CStdExplosionGenerator::Explosion(
 			const float time = (40.0f + smokeDamageSQRT * 15.0f) * (0.8f + gu->RandFloat() * 0.7f);
 
 			float3 dir = gu->RandVector() * smokeDamage;
-			dir.y = std::abs(dir.y);
+			dir.y = math::fabsf(dir.y);
 			const float3 npos = pos + dir;
 
 			new CSmokeProjectile2(owner, pos, npos, speed, time, smokeDamageSQRT * 4.0f, 0.4f, 0.6f);
