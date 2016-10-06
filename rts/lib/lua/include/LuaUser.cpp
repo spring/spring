@@ -184,9 +184,10 @@ static const char* maxAllocFmtStr = "%s: cannot allocate more memory! (%u bytes 
 void* spring_lua_alloc(void* ud, void* ptr, size_t osize, size_t nsize)
 {
 	auto lcd = (luaContextData*) ud;
+	totalBytesAlloced -= osize;
+	totalBytesAlloced += nsize;
 
 	if (nsize == 0) {
-		totalBytesAlloced -= osize;
 		free(ptr);
 		return NULL;
 	}
@@ -203,7 +204,6 @@ void* spring_lua_alloc(void* ud, void* ptr, size_t osize, size_t nsize)
 	void* mem = realloc(ptr, nsize);
 	const spring_time t1 = spring_gettime();
 
-	totalBytesAlloced += (nsize - osize);
 	totalNumLuaAllocs += 1;
 	totalLuaAllocTime += (t1 - t0).toMicroSecsi();
 
