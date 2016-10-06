@@ -479,6 +479,7 @@ else  (MSVC)
 
 	if     (MINGW)
 		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static -static-libgcc -static-libstdc++ -Wl,--enable-auto-import")
+		set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -static -static-libgcc -static-libstdc++ -Wl,--enable-auto-import")
 		if    (BUILD_BITS EQUAL 32)
 			# Increase memory limit from 2GB to 3GB on 32bit Windows and 2GB->4GB on 64bit Windows (assuming spring.exe is 32bit)
 			# http://msdn.microsoft.com/en-us/library/windows/desktop/aa366778(v=vs.85).aspx
