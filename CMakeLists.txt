@@ -399,6 +399,9 @@ endif()
 add_definitions(-DSTREFLOP_SSE) # would break AI compiling, but is undefined in ./AI/CMakeLists.txt
 
 
+### Asio
+add_definitions(-DASIO_STANDALONE)
+
 ### compiler specific flags
 set(CXX_FLAGS_DEBUG_ADDITIONAL "")
 if    ($ENV{CXX} MATCHES "icpc")
