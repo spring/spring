@@ -3,7 +3,7 @@
 #ifndef _BASE_NET_PROTOCOL_H
 #define _BASE_NET_PROTOCOL_H
 
-#include <boost/shared_ptr.hpp>
+#include <memory>
 #include <cinttypes>
 #include <vector>
 #include <string>
@@ -140,7 +140,7 @@ class CBaseNetProtocol
 public:
 	typedef unsigned char uchar;
 	typedef unsigned int uint;
-	typedef boost::shared_ptr<const netcode::RawPacket> PacketType;
+	typedef std::shared_ptr<const netcode::RawPacket> PacketType;
 
 	static CBaseNetProtocol& Get();
 

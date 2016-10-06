@@ -3,7 +3,7 @@
 #ifndef CHAT_MESSAGE_H
 #define CHAT_MESSAGE_H
 
-#include <boost/shared_ptr.hpp>
+#include <memory>
 #include <string>
 
 namespace netcode {
@@ -14,7 +14,7 @@ class ChatMessage
 {
 public:
 	ChatMessage(int fromP, int dest, const std::string& chat);
-	ChatMessage(boost::shared_ptr<const netcode::RawPacket> packet);
+	ChatMessage(std::shared_ptr<const netcode::RawPacket> packet);
 
 	const netcode::RawPacket* Pack() const;
 
@@ -23,7 +23,7 @@ public:
 	static const int TO_EVERYONE = 254;
 
 	int fromPlayer;
-	
+
 	/// the destination can be: TO_ALLIES, TO_SPECTATORS, TO_EVERYONE or a playernumber
 	int destination;
 	std::string msg;

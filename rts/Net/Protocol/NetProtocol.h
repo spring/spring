@@ -5,7 +5,6 @@
 
 #include <string>
 #include <memory>
-#include <boost/shared_ptr.hpp>
 
 #include "BaseNetProtocol.h" // not used in here, but in all files including this one
 
@@ -58,7 +57,7 @@ public:
 	 * @param ahead How many packets to look ahead. A typical usage would be:
 	 * for (int ahead = 0; (packet = clientNet->Peek(ahead)) != NULL; ++ahead) {}
 	 */
-	boost::shared_ptr<const netcode::RawPacket> Peek(unsigned ahead) const;
+	std::shared_ptr<const netcode::RawPacket> Peek(unsigned ahead) const;
 
 	/**
 	 * @brief Deletes a packet from the buffer
@@ -78,12 +77,12 @@ public:
 	 * so call this until you get a 0 in return.
 	 * When a demo recorder is present it will be recorded.
 	 */
-	boost::shared_ptr<const netcode::RawPacket> GetData(int framenum);
+	std::shared_ptr<const netcode::RawPacket> GetData(int framenum);
 
 	/**
 	 * @brief Send a message to the server
 	 */
-	void Send(boost::shared_ptr<const netcode::RawPacket> pkt);
+	void Send(std::shared_ptr<const netcode::RawPacket> pkt);
 	/// @overload
 	void Send(const netcode::RawPacket* pkt);
 

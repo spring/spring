@@ -4,8 +4,8 @@
 #define _UDP_CONNECTION_H
 
 #include <boost/ptr_container/ptr_map.hpp>
-#include <boost/shared_ptr.hpp>
-#include <boost/asio/ip/udp.hpp>
+#include <memory>
+#include <asio/ip/udp.hpp>
 #include <deque>
 #include <list>
 
@@ -38,7 +38,7 @@ public:
 	std::uint8_t chunkSize;
 	std::vector<std::uint8_t> data;
 };
-typedef boost::shared_ptr<Chunk> ChunkPtr;
+typedef std::shared_ptr<Chunk> ChunkPtr;
 
 class Packet
 {
@@ -75,8 +75,8 @@ public:
 class UDPConnection : public CConnection
 {
 public:
-	UDPConnection(boost::shared_ptr<boost::asio::ip::udp::socket> netSocket,
-			const boost::asio::ip::udp::endpoint& myAddr);
+	UDPConnection(std::shared_ptr<asio::ip::udp::socket> netSocket,
+			const asio::ip::udp::endpoint& myAddr);
 	UDPConnection(int sourceport, const std::string& address,
 			const unsigned port);
 	UDPConnection(CConnection& conn);
@@ -86,10 +86,10 @@ public:
 
 
 	// START overriding CConnection
-	void SendData(boost::shared_ptr<const RawPacket> data);
+	void SendData(std::shared_ptr<const RawPacket> data);
 	bool HasIncomingData() const { return !msgQueue.empty(); }
-	boost::shared_ptr<const RawPacket> Peek(unsigned ahead) const;
-	boost::shared_ptr<const RawPacket> GetData();
+	std::shared_ptr<const RawPacket> Peek(unsigned ahead) const;
+	std::shared_ptr<const RawPacket> GetData();
 	void DeleteBufferPacketAt(unsigned index);
 	void Flush(const bool forced);
 	bool CheckTimeout(int seconds = 0, bool initial = false) const;
@@ -117,17 +117,17 @@ public:
 	int GetReconnectSecs() const { return reconnectTime; }
 
 	/// Are we using this address?
-	bool IsUsingAddress(const boost::asio::ip::udp::endpoint& from) const;
+	bool IsUsingAddress(const asio::ip::udp::endpoint& from) const;
 	/// Connections are stealth by default, this allow them to send data
 	void Unmute() { muted = false; }
 	void Close(bool flush);
 	void SetLossFactor(int factor);
 
-	const boost::asio::ip::udp::endpoint &GetEndpoint() const { return addr; }
+	const asio::ip::udp::endpoint &GetEndpoint() const { return addr; }
 
 private:
-	void InitConnection(boost::asio::ip::udp::endpoint address,
-			boost::shared_ptr<boost::asio::ip::udp::socket> socket);
+	void InitConnection(asio::ip::udp::endpoint address,
+			std::shared_ptr<asio::ip::udp::socket> socket);
 
 	void CopyConnection(UDPConnection& conn);
 
@@ -156,9 +156,9 @@ private:
 	#endif
 
 	typedef boost::ptr_map<int,RawPacket> packetMap;
-	typedef std::list< boost::shared_ptr<const RawPacket> > packetList;
+	typedef std::list< std::shared_ptr<const RawPacket> > packetList;
 	/// address of the other end
-	boost::asio::ip::udp::endpoint addr;
+	asio::ip::udp::endpoint addr;
 
 	/// maximum size of packets to send
 	unsigned mtu;
@@ -186,7 +186,7 @@ private:
 	std::map<std::int32_t, ChunkPtr> resendRequested;
 
 	/// complete packets we received but did not yet consume
-	std::deque< boost::shared_ptr<const RawPacket> > msgQueue;
+	std::deque< std::shared_ptr<const RawPacket> > msgQueue;
 
 	std::int32_t lastMidChunk;
 
@@ -200,7 +200,7 @@ private:
 	int lastNak;
 
 	/// Our socket
-	boost::shared_ptr<boost::asio::ip::udp::socket> mySocket;
+	std::shared_ptr<asio::ip::udp::socket> mySocket;
 
 	RawPacket* fragmentBuffer;
 

@@ -19,13 +19,13 @@ GameParticipant::GameParticipant()
 	linkData[MAX_AIS] = PlayerLinkData(false);
 }
 
-void GameParticipant::SendData(boost::shared_ptr<const netcode::RawPacket> packet)
+void GameParticipant::SendData(std::shared_ptr<const netcode::RawPacket> packet)
 {
 	if (link)
 		link->SendData(packet);
 }
 
-void GameParticipant::Connected(boost::shared_ptr<netcode::CConnection> _link, bool local)
+void GameParticipant::Connected(std::shared_ptr<netcode::CConnection> _link, bool local)
 {
 	link = _link;
 	linkData[MAX_AIS].link.reset(new netcode::CLoopbackConnection());

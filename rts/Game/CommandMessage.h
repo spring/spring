@@ -4,7 +4,7 @@
 #define COMMAND_MESSAGE_H
 
 #include <string>
-#include <boost/shared_ptr.hpp>
+#include <memory>
 
 #include "Action.h"
 
@@ -18,7 +18,7 @@ class CommandMessage
 public:
 	CommandMessage(const std::string& cmd, int playerID);
 	CommandMessage(const Action& action, int playerID);
-	CommandMessage(boost::shared_ptr<const netcode::RawPacket> pckt);
+	CommandMessage(std::shared_ptr<const netcode::RawPacket> pckt);
 
 	const netcode::RawPacket* Pack() const;
 
@@ -31,4 +31,4 @@ private:
 };
 
 #endif // COMMAND_MESSAGE_H
- 
+
