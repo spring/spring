@@ -571,13 +571,13 @@ static void LogStacktrace(const int logLevel, StackTrace& stacktrace)
 
 __FORCE_ALIGN_STACK__
 static void ForcedExitAfterFiveSecs() {
-	spring::this_thread::sleep(std::chrono::seconds(5));
+	spring::this_thread::sleep_for(std::chrono::seconds(5));
 	std::exit(-1);
 }
 
 __FORCE_ALIGN_STACK__
 static void ForcedExitAfterTenSecs() {
-	spring::this_thread::sleep(std::chrono::seconds(10));
+	spring::this_thread::sleep_for(std::chrono::seconds(10));
 #if defined(__GNUC__)
 	std::_Exit(-1);
 #else
