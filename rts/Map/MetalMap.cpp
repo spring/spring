@@ -1,11 +1,12 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-
 #include "MetalMap.h"
 #include "ReadMap.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/myMath.h"
 #include "System/EventHandler.h"
+
+#include <cstring>
 
 CONFIG(bool, MetalMapPalette).defaultValue(false);
 

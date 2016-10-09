@@ -90,12 +90,6 @@ namespace Threading {
 		ucontext_t              ucontext;
 		pid_t                   thread_id;
 	#endif
-
-		friend void ThreadStart(
-			std::function<void()> taskFunc,
-			std::shared_ptr<ThreadControls>* ppCtlsReturn,
-			ThreadControls* tempCtls
-		);
 	};
 
 	inline bool NativeThreadIdsEqual(const NativeThreadId thID1, const NativeThreadId thID2);

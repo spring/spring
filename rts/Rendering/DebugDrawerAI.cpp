@@ -10,6 +10,8 @@
 #include "Sim/Misc/TeamHandler.h"
 #include "System/bitops.h"
 
+#include <algorithm>
+
 static const float3 GRAPH_MIN_SCALE = float3( 1e9,  1e9, 0.0f);
 static const float3 GRAPH_MAX_SCALE = float3(-1e9, -1e9, 0.0f);
 

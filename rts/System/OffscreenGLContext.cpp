@@ -7,6 +7,7 @@
 
 #include "System/Exceptions.h"
 #include "System/maindefines.h"
+#include "System/Util.h"
 #include "System/Log/ILog.h"
 #include "System/Platform/errorhandler.h"
 #include "System/Platform/Threading.h"
@@ -279,15 +280,15 @@ COffscreenGLThread::COffscreenGLThread(std::function<void()> f) :
 
 COffscreenGLThread::~COffscreenGLThread()
 {
-	if (thread)
-		Join();
-	delete thread; thread = NULL;
+	Join();
 }
 
 
 void COffscreenGLThread::Join()
 {
-	thread->join();
+	if (thread)
+		thread->join();
+	SafeDelete(thread);
 }
 
 
@@ -307,8 +308,6 @@ void COffscreenGLThread::WrapFunc(std::function<void()> f)
 
 	try {
 		f();
-	} catch(std::runtime_error const&) {
-		// do nothing
 	} CATCH_SPRING_ERRORS
 
 	glOffscreenCtx.WorkerThreadFree();

@@ -10,6 +10,7 @@
 
 #include <vorbis/vorbisfile.h>
 #include <ogg/ogg.h>
+#include <algorithm>
 #include <cassert>
 #include <cstring>
 

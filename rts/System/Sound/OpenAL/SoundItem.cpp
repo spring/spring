@@ -2,6 +2,7 @@
 
 #include "SoundItem.h"
 
+#include <algorithm>
 #include <sstream>
 #include <stdexcept>
 #include <cfloat>

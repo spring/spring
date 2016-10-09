@@ -8,14 +8,14 @@
 	#define _XOPEN_SOURCE 700
 #endif
 #include <ucontext.h>
+#include <functional>
 #include <memory>
-#include <boost/thread.hpp>
 
 namespace Threading {
 	class ThreadControls;
 
 	void ThreadStart(
-		boost::function<void()> taskFunc,
+		std::function<void()> taskFunc,
 		std::shared_ptr<ThreadControls>* ppCtlsReturn,
 		ThreadControls* tempCtls
 	);

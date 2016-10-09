@@ -11,7 +11,8 @@
 #if (ENABLE_USERSTATE_LOCKS != 0)
 	#include <map>
 	#include "System/Threading/SpringThreading.h"
-#endif#include "System/Log/ILog.h"
+#endif
+#include "System/Log/ILog.h"
 #if (!defined(DEDICATED) && !defined(UNITSYNC) && !defined(BUILDING_AI))
 	#include "System/Misc/SpringTime.h"
 #endif

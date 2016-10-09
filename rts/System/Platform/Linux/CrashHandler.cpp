@@ -199,7 +199,7 @@ static char* fgets_addr2line(char* line, int maxLength, FILE* cmdOut)
  */
 static uintptr_t HexToInt(const char* hexStr)
 {
-	static_assert(sizeof(unsigned int long) == sizeof(uintptr_t));
+	static_assert(sizeof(unsigned int long) == sizeof(uintptr_t), "sizeof(unsigned int long) != sizeof(uintptr_t)");
 	unsigned long int value = 0;
 	sscanf(hexStr, "%lx", &value);
 	return (uintptr_t) value;
