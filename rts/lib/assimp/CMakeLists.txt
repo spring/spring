@@ -186,11 +186,11 @@ INCLUDE_DIRECTORIES( ${CMAKE_CURRENT_SOURCE_DIR}/include )
 # write the library/executable files to the respective directories in the
 # source tree. During an out-of-source build, however, do not litter this
 # directory, since that is probably what the user wanted to avoid.
-IF ( CMAKE_SOURCE_DIR STREQUAL CMAKE_BINARY_DIR )
+IF (FALSE AND CMAKE_SOURCE_DIR STREQUAL CMAKE_BINARY_DIR )
   SET( CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_HOME_DIRECTORY}/lib" )
   SET( CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_HOME_DIRECTORY}/lib" )
   SET( CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_HOME_DIRECTORY}/bin" )
-ENDIF ( CMAKE_SOURCE_DIR STREQUAL CMAKE_BINARY_DIR )
+ENDIF (FALSE AND CMAKE_SOURCE_DIR STREQUAL CMAKE_BINARY_DIR )
 
 # Cache these to allow the user to override them manually.
 SET( ASSIMP_LIB_INSTALL_DIR "lib" CACHE STRING
@@ -423,7 +423,7 @@ IF(FALSE AND CMAKE_CPACK_COMMAND AND UNIX AND ASSIMP_OPT_BUILD_PACKAGES)
   include(DebSourcePPA)
 ENDIF()
 
-if(WIN32)
+if(FALSE AND WIN32)
 	if (CMAKE_SIZEOF_VOID_P EQUAL 8)
 		SET(BIN_DIR "${PROJECT_SOURCE_DIR}/bin64/")
 		SET(LIB_DIR "${PROJECT_SOURCE_DIR}/lib64/")
@@ -449,4 +449,4 @@ if(WIN32)
 		add_custom_command(TARGET UpdateAssimpLibsDebugSymbolsAndDLLs COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/code/Debug/assimp-${ASSIMP_MSVC_VERSION}-mtd.lib		${LIB_DIR}assimp-${ASSIMP_MSVC_VERSION}-mtd.lib VERBATIM)
 		add_custom_command(TARGET UpdateAssimpLibsDebugSymbolsAndDLLs COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/code/Debug/assimp-${ASSIMP_MSVC_VERSION}-mtd.pdb		${LIB_DIR}assimp-${ASSIMP_MSVC_VERSION}-mtd.pdb VERBATIM)
 	ENDIF(MSVC12 OR MSVC14)
-ENDIF (WIN32)
+ENDIF (FALSE AND WIN32)
