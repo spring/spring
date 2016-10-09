@@ -24,7 +24,7 @@ env:
      #   via the "travis encrypt" command using the project repo's public key
      #   also note that forks don't get access to secure keys
      #   you have to test using a branch in the main repo
-    - secure: "dK9vLJc80WI1KfsJF0VUhB8WNvEdJvsVUWuKkqAo6BOMxFfyEj3Pa7ITHtGH9ilJz8/ZwDrDB8gwGuar4vl8smkFs2i0REnSJL8R9HHjNI0CMvL0drQ8DCLgbV1hfnWh9u06/xPUPiu0+u2gcRjtRmnC4iVWJYLE9QVxSmiHkcY="
+    - secure: "QSZUdSH72Y+X73FBy6cDdhlMH3ppMewbU/LquXe/sIUdJE0LmcCFHnPayI91TTRgS8r6YXKh3DIhE9XTs1OUxmV+RUL84z85byAtotb+ukHSzlSLSGGZfrqey+/vrCXbYykfaxhazlVDfk5vx63lRYiD5lp5KLL24+PIdK6Qd5E="
   matrix:
     - TARGET="AAI CppTestAI E323AI HughAI KAIK NullAI NullJavaAI NullOOJavaAI RAI demotool"
     - TARGET="engine-headless tests check"
