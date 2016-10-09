@@ -134,6 +134,7 @@ MakeGlobalVar(engineSources
 		${sources_engine_System}
 		${sources_engine_ExternalAI}
 	)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/lib/assimp/include) #FIXME: hack for rts/Rendering/Models/IModelParser.cpp
 
 ### Add headers for generated project files (e.g. Code::Blocks)
 file(GLOB_RECURSE engineHeaders "*.h" "*.hpp" "*.inl")

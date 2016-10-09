@@ -8,15 +8,42 @@ ADD_SUBDIRECTORY(minizip)
 ADD_SUBDIRECTORY(streflop)
 ADD_SUBDIRECTORY(headlessStubs)
 
-# minizip & unzip is the same, use minizip for assimp:
-set(UNZIP_FOUND TRUE)
-set(UNZIP_INCLUDE_DIRS ${SPRING_MINIZIP_INCLUDE_DIR}/minizip)
-set(UNZIP_LIBRARIES ${SPRING_MINIZIP_LIBRARY})
-set(ZLIB_LIBRARIES ${ZLIB_LIBRARY})
-add_definitions(-DASSIMP_BUILD_NO_OWN_ZLIB)
-ADD_SUBDIRECTORY(assimp)
 
-if    (USE_LIBSQUISH)
-	ADD_SUBDIRECTORY(rg-etc1)
-	ADD_SUBDIRECTORY(squish)
-endif (USE_LIBSQUISH)
+# to change assimp for springs need, see fix_assimp.sh
+# sadly still manual changes are needed!
+
+set(DISABLED_ASSIMP_FORMATS "")
+foreach(var AMF AC ASE ASSBIN ASSXML B3D BVH DXF CSM HMP IRRMESH IRR LWS MD2 MD3 MD5 MDC MDL NFF NDO OFF OBJ OGRE OPENGEX PLY MS3D COB IFC XGL FBX Q3D Q3BSP RAW SIB SMD STL TERRAGEN 3D X X3D GLTF 3MF)
+	list(APPEND DISABLED_ASSIMP_FORMATS "ASSIMP_BUILD_${var}_IMPORTER")
+endforeach()
+
+foreach(var
+		${DISABLED_ASSIMP_FORMATS}
+		BUILD_SHARED_LIBS
+		ASSIMP_BUILD_ASSIMP_TOOLS
+		ASSIMP_BUILD_TESTS
+		ASSIMP_NO_EXPORT
+		ASSIMP_OPT_BUILD_PACKAGES
+		ASSIMP_BUILD_ASSIMP_TOOLS
+		ASSIMP_BUILD_NONFREE_C4D_IMPORTER
+		ASSIMP_DOUBLE_PRECISION
+	)
+	set("${var}" OFF CACHE STRING "forced off by spring build env" FORCE)
+endforeach()
+
+foreach(var ASSIMP_BUILD_STATIC_LIB ASSIMP_NO_EXPORT)
+	message(STATUS "Forcing assimp option ${var} to on")
+	set("${var}" ON CACHE STRING "forced on by spring build env" FORCE)
+endforeach()
+
+ADD_SUBDIRECTORY(assimp)
+target_compile_definitions(assimp PRIVATE -DASSIMP_BUILD_NO_OWN_ZLIB)
+
+if    (NOT HEADLESS_SYSTEM)
+
+	if    (USE_LIBSQUISH)
+		ADD_SUBDIRECTORY(rg-etc1)
+		ADD_SUBDIRECTORY(squish)
+	endif (USE_LIBSQUISH)
+endif (NOT HEADLESS_SYSTEM)
+

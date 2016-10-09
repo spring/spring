@@ -174,12 +174,12 @@ private:
    * @param node - middle node
    * @return the angle between 3 front nodes
    */
-  float HoleAngle(Node& node);
+  double HoleAngle(Node& node);
 
   /**
    * The basin angle is decided against the horizontal line [1,0]
    */
-  float BasinAngle(Node& node);
+  double BasinAngle(Node& node);
 
   /**
    * Fills a basin that has formed on the Advancing Front to the right

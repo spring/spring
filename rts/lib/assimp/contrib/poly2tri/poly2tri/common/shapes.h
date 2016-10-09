@@ -38,6 +38,7 @@
 #include <stdexcept>
 #include <assert.h>
 #include "lib/streflop/streflop_cond.h"
+#include <string>
 
 namespace p2t {
 
@@ -45,7 +46,7 @@ struct Edge;
 
 struct Point {
 
-  float x, y;
+  double x, y;
 
   /// Default constructor does nothing (for performance).
   Point()
@@ -58,7 +59,7 @@ struct Point {
   std::vector<Edge*> edge_list;
 
   /// Construct using coordinates.
-  Point(float x, float y) : x(x), y(y) {}
+  Point(double x, double y) : x(x), y(y) {}
 
   /// Set this point to all zeros.
   void set_zero()
@@ -97,16 +98,16 @@ struct Point {
   }
 
   /// Multiply this point by a scalar.
-  void operator *=(float a)
+  void operator *=(double a)
   {
     x *= a;
     y *= a;
   }
 
   /// Get the length of this point (the norm).
-  float Length() const
+  double Length() const
   {
-    return math::sqrt(x * x + y * y);
+    return sqrt(x * x + y * y);
   }
 
   /// Convert this point into a unit point. Returns the Length.
@@ -137,8 +138,8 @@ struct Edge {
         p = &p2;
       } else if (p1.x == p2.x) {
         // Repeat points
-		  // ASSIMP_CHANGE (aramis_acg)
-		  throw std::runtime_error("repeat points");
+        // ASSIMP_CHANGE (aramis_acg)
+        throw std::runtime_error(std::string("repeat points"));
         //assert(false);
       }
     }

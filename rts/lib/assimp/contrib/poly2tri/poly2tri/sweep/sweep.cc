@@ -231,7 +231,7 @@ void Sweep::FillAdvancingFront(SweepContext& tcx, Node& n)
 
   while (node->next) {
     double angle = HoleAngle(*node);
-    if (angle > M_PI_2 || angle < -M_PI_2) break;
+    if (angle > PI_2 || angle < -PI_2) break;
     Fill(tcx, *node);
     node = node->next;
   }
@@ -241,7 +241,7 @@ void Sweep::FillAdvancingFront(SweepContext& tcx, Node& n)
 
   while (node->prev) {
     double angle = HoleAngle(*node);
-    if (angle > M_PI_2 || angle < -M_PI_2) break;
+    if (angle > PI_2 || angle < -PI_2) break;
     Fill(tcx, *node);
     node = node->prev;
   }
@@ -255,14 +255,14 @@ void Sweep::FillAdvancingFront(SweepContext& tcx, Node& n)
   }
 }
 
-float Sweep::BasinAngle(Node& node)
+double Sweep::BasinAngle(Node& node)
 {
-  float ax = node.point->x - node.next->next->point->x;
-  float ay = node.point->y - node.next->next->point->y;
-  return math::atan2(ay, ax);
+  double ax = node.point->x - node.next->next->point->x;
+  double ay = node.point->y - node.next->next->point->y;
+  return atan2(ay, ax);
 }
 
-float Sweep::HoleAngle(Node& node)
+double Sweep::HoleAngle(Node& node)
 {
   /* Complex plane
    * ab = cosA +i*sinA
@@ -272,11 +272,11 @@ float Sweep::HoleAngle(Node& node)
    * Where x = ax*bx + ay*by
    *       y = ax*by - ay*bx
    */
-  float ax = node.next->point->x - node.point->x;
-  float ay = node.next->point->y - node.point->y;
-  float bx = node.prev->point->x - node.point->x;
-  float by = node.prev->point->y - node.point->y;
-  return math::atan2(ax * by - ay * bx, ax * bx + ay * by);
+  double ax = node.next->point->x - node.point->x;
+  double ay = node.next->point->y - node.point->y;
+  double bx = node.prev->point->x - node.point->x;
+  double by = node.prev->point->y - node.point->y;
+  return atan2(ax * by - ay * bx, ax * bx + ay * by);
 }
 
 bool Sweep::Legalize(SweepContext& tcx, Triangle& t)
@@ -652,13 +652,6 @@ void Sweep::FlipEdgeEvent(SweepContext& tcx, Point& ep, Point& eq, Triangle* t, 
   Triangle& ot = t->NeighborAcross(p);
   Point& op = *ot.OppositePoint(*t, p);
 
-  if (&ot == NULL) {
-    // If we want to integrate the fillEdgeEvent do it here
-    // With current implementation we should never get here
-    //throw new RuntimeException( "[BUG:FIXME] FLIP failed due to missing triangle");
-    assert(0);
-  }
-
   if (InScanArea(p, *t->PointCCW(p), *t->PointCW(p), op)) {
     // Lets rotate shared edge one vertex CW
     RotateTrianglePair(*t, p, ot, op);
@@ -728,13 +721,6 @@ void Sweep::FlipScanEdgeEvent(SweepContext& tcx, Point& ep, Point& eq, Triangle&
   Triangle& ot = t.NeighborAcross(p);
   Point& op = *ot.OppositePoint(t, p);
 
-  if (&t.NeighborAcross(p) == NULL) {
-    // If we want to integrate the fillEdgeEvent do it here
-    // With current implementation we should never get here
-    //throw new RuntimeException( "[BUG:FIXME] FLIP failed due to missing triangle");
-    assert(0);
-  }
-
   if (InScanArea(eq, *flip_triangle.PointCCW(eq), *flip_triangle.PointCW(eq), op)) {
     // flip with new edge op->eq
     FlipEdgeEvent(tcx, eq, op, &ot, op);
@@ -754,7 +740,7 @@ void Sweep::FlipScanEdgeEvent(SweepContext& tcx, Point& ep, Point& eq, Triangle&
 Sweep::~Sweep() {
 
     // Clean up memory
-    for(int i = 0; i < nodes_.size(); i++) {
+    for(unsigned int i = 0; i < nodes_.size(); i++) {
         delete nodes_[i];
     }
 

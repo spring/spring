@@ -33,14 +33,12 @@
 #define UTILS_H
 
 #include <exception>
-#include "lib/streflop/streflop_cond.h"
-#include "System/FastMath.h"
-#define M_PI fastmath::PI
-#define M_PI_2 fastmath::HALFPI
 
 namespace p2t {
 
-const double PI_3div4 = 3 * M_PI / 4;
+const double PI = 3.1415926535897932384626433832795029;
+const double PI_2 = 2 * PI;
+const double PI_3div4 = 3 * PI / 4;
 const double EPSILON = 1e-15;
 
 enum Orientation { CW, CCW, COLLINEAR };
