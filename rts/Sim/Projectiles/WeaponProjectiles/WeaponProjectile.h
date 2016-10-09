@@ -22,7 +22,6 @@ class CWeaponProjectile : public CProjectile
 {
 	CR_DECLARE_DERIVED(CWeaponProjectile)
 public:
-	CWeaponProjectile() { }
 	CWeaponProjectile(const ProjectileParams& params);
 	virtual ~CWeaponProjectile();
 
@@ -69,6 +68,7 @@ public:
 	const DynDamageArray* damages;
 
 protected:
+	CWeaponProjectile() { }
 	void UpdateInterception();
 	virtual void UpdateGroundBounce();
 

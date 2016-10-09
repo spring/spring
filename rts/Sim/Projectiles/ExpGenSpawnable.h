@@ -12,7 +12,6 @@ class CExpGenSpawnable: public CWorldObject
 {
 	CR_DECLARE(CExpGenSpawnable)
 public:
-	CExpGenSpawnable() : CWorldObject() {}
 	CExpGenSpawnable(const float3& pos, const float3& spd) : CWorldObject(pos, spd) {}
 
 	virtual ~CExpGenSpawnable() {}
@@ -25,6 +24,7 @@ public:
 	static CExpGenSpawnable* CreateSpawnable(int spawnableID);
 
 protected:
+	CExpGenSpawnable() : CWorldObject() {}
 	static bool GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo);
 };
 

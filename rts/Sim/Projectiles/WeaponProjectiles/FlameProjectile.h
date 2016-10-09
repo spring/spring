@@ -9,7 +9,6 @@ class CFlameProjectile : public CWeaponProjectile
 {
 	CR_DECLARE_DERIVED(CFlameProjectile)
 public:
-	CFlameProjectile() { }
 	CFlameProjectile(const ProjectileParams& params);
 
 	void Update() override;
@@ -21,6 +20,8 @@ public:
 	int ShieldRepulse(const float3& shieldPos, float shieldForce, float shieldMaxSpeed) override;
 
 private:
+	CFlameProjectile() { }
+
 	float curTime;
 	/// precentage of lifetime when the projectile is active and can collide
 	float physLife;

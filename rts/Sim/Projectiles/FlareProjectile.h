@@ -11,7 +11,6 @@ class CFlareProjectile : public CProjectile
 	CR_DECLARE_DERIVED(CFlareProjectile)
 
 public:
-	CFlareProjectile() { }
 	CFlareProjectile(const float3& pos, const float3& speed, CUnit* owner, int activateFrame);
 	~CFlareProjectile();
 
@@ -29,6 +28,10 @@ public:
 	std::vector<float3> subPos;
 	std::vector<float3> subSpeed;
 	float alphaFalloff;
+
+private:
+	CFlareProjectile() { }
+
 };
 
 #endif // FLARE_PROJECTILE_H
