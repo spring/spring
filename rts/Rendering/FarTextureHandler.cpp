@@ -40,10 +40,7 @@ CFarTextureHandler::CFarTextureHandler()
 	texSize.y = std::max(iconSize.y, 4 * NUM_ICON_ORIENTATIONS * iconSize.x * iconSize.y / texSize.x); // minimum space for 4 icons
 	texSize.y = next_power_of_2(texSize.y);
 
-	#ifdef HEADLESS
-	return;
-	#endif
-
+#ifndef HEADLESS
 	if (!fbo.IsValid()) {
 		LOG_L(L_WARNING, "framebuffer not valid!");
 		return;
@@ -67,6 +64,7 @@ CFarTextureHandler::CFarTextureHandler()
 	fbo.Unbind();
 
 	fbo.reloadOnAltTab = true;
+#endif
 }
 
 

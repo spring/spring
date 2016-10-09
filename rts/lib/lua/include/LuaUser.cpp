@@ -1,17 +1,18 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include <atomic>
-#include <map>
 #include <array>
 #include <cinttypes>
-#include <boost/thread.hpp>
 #include "lib/streflop/streflop_cond.h"
 
 #include "LuaInclude.h"
-#include "Game/GameVersion.h"
 #include "Lua/LuaHandle.h"
 #include "System/myMath.h"
-#include "System/Threading/SpringMutex.h"
+#if (ENABLE_USERSTATE_LOCKS != 0)
+	#include <map>
+	#include <boost/thread.hpp>
+	#include "System/Threading/SpringMutex.h"
+#endif
 #include "System/Log/ILog.h"
 #if (!defined(DEDICATED) && !defined(UNITSYNC) && !defined(BUILDING_AI))
 	#include "System/Misc/SpringTime.h"
@@ -21,25 +22,22 @@
 ///////////////////////////////////////////////////////////////////////////
 // Custom Lua Mutexes
 
-static std::map<lua_State*, spring::recursive_mutex*> mutexes;
+
+#if (ENABLE_USERSTATE_LOCKS != 0)
 static std::map<lua_State*, bool> coroutines;
+static std::map<lua_State*, spring::recursive_mutex*> mutexes;
 
 static spring::recursive_mutex* GetLuaMutex(lua_State* L)
 {
 	assert(!mutexes[L]);
 	return new spring::recursive_mutex();
 }
-
+#endif
 
 
 void LuaCreateMutex(lua_State* L)
 {
-	#if (ENABLE_USERSTATE_LOCKS == 0)
-	// if LoadingMT=1, everything runs in the game-load thread (on startup)
-	//assert(Threading::IsMainThread() || Threading::IsGameLoadThread() || SpringVersion::IsUnitsync());
-	return;
-	#endif
-
+#if (ENABLE_USERSTATE_LOCKS != 0)
 	luaContextData* lcd = GetLuaContextData(L);
 	if (!lcd) return; // CLuaParser
 	assert(lcd);
@@ -47,16 +45,13 @@ void LuaCreateMutex(lua_State* L)
 	spring::recursive_mutex* mutex = GetLuaMutex(L);
 	lcd->luamutex = mutex;
 	mutexes[L] = mutex;
+#endif
 }
 
 
 void LuaDestroyMutex(lua_State* L)
 {
-	#if (ENABLE_USERSTATE_LOCKS == 0)
-	//assert(Threading::IsMainThread() || Threading::IsGameLoadThread() || SpringVersion::IsUnitsync());
-	return;
-	#endif
-
+#if (ENABLE_USERSTATE_LOCKS != 0)
 	if (!GetLuaContextData(L)) return; // CLuaParser
 	assert(GetLuaContextData(L));
 
@@ -72,16 +67,13 @@ void LuaDestroyMutex(lua_State* L)
 		mutexes.erase(L);
 		//TODO erase all related coroutines too?
 	}
+#endif
 }
 
 
 void LuaLinkMutex(lua_State* L_parent, lua_State* L_child)
 {
-	#if (ENABLE_USERSTATE_LOCKS == 0)
-	//assert(Threading::IsMainThread() || Threading::IsGameLoadThread() || SpringVersion::IsUnitsync());
-	return;
-	#endif
-
+#if (ENABLE_USERSTATE_LOCKS != 0)
 	luaContextData* plcd = GetLuaContextData(L_parent);
 	assert(plcd);
 
@@ -92,15 +84,13 @@ void LuaLinkMutex(lua_State* L_parent, lua_State* L_child)
 
 	coroutines[L_child] = true;
 	mutexes[L_child] = plcd->luamutex;
+#endif
 }
 
 
 void LuaMutexLock(lua_State* L)
 {
-	#if (ENABLE_USERSTATE_LOCKS == 0)
-	//assert(Threading::IsMainThread() || Threading::IsGameLoadThread() || SpringVersion::IsUnitsync());
-	return;
-	#endif
+#if (ENABLE_USERSTATE_LOCKS != 0)
 
 	if (!GetLuaContextData(L)) return; // CLuaParser
 
@@ -112,30 +102,24 @@ void LuaMutexLock(lua_State* L)
 	//static int failedLocks = 0;
 	//LOG("LuaMutexLock %i", ++failedLocks);
 	mutex->lock();
+#endif
 }
 
 
 void LuaMutexUnlock(lua_State* L)
 {
-	#if (ENABLE_USERSTATE_LOCKS == 0)
-	//assert(Threading::IsMainThread() || Threading::IsGameLoadThread() || SpringVersion::IsUnitsync());
-	return;
-	#endif
-
+#if (ENABLE_USERSTATE_LOCKS != 0)
 	if (!GetLuaContextData(L)) return; // CLuaParser
 
 	spring::recursive_mutex* mutex = GetLuaContextData(L)->luamutex;
 	mutex->unlock();
+#endif
 }
 
 
 void LuaMutexYield(lua_State* L)
 {
-	#if (ENABLE_USERSTATE_LOCKS == 0)
-	//assert(Threading::IsMainThread() || Threading::IsGameLoadThread() || SpringVersion::IsUnitsync());
-	return;
-	#endif
-
+#if (ENABLE_USERSTATE_LOCKS != 0)
 	assert(GetLuaContextData(L));
 	/*mutexes[L]->unlock();
 	if (!mutexes[L]->try_lock()) {
@@ -151,6 +135,7 @@ void LuaMutexYield(lua_State* L)
 
 	if (y) boost::this_thread::yield();
 	LuaMutexLock(L);
+#endif
 }
 
 
@@ -218,7 +203,11 @@ void spring_lua_alloc_get_stats(SLuaInfo* info)
 	info->allocedBytes = totalBytesAlloced;
 	info->numLuaAllocs = totalNumLuaAllocs;
 	info->luaAllocTime = totalLuaAllocTime;
+#if (ENABLE_USERSTATE_LOCKS != 0)
 	info->numLuaStates = mutexes.size() - coroutines.size();
+#else
+	info->numLuaStates = 0;
+#endif
 }
 
 void spring_lua_alloc_update_stats(bool clear)

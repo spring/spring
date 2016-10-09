@@ -93,10 +93,9 @@ static inline float GetPenalty(const char32_t& c, unsigned int strpos, unsigned 
 	} else if (IsUpperCase(c)) {
 		// uppercase char
 		return 1.0f + (strlen - strpos)*0.75;
-	} else {
-		// any special chars
-		return Square(dist / 4);
 	}
+
+	// any special chars
 	return Square(dist / 4);
 }
 

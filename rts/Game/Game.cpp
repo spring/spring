@@ -1698,7 +1698,7 @@ void CGame::HandleChatMsg(const ChatMessage& msg)
 
 void CGame::StartSkip(int toFrame) {
 	return; // FIXME: desyncs
-
+/*
 	if (skipping) {
 		LOG_L(L_ERROR, "skipping appears to be busted (%i)", skipping);
 	}
@@ -1728,6 +1728,7 @@ void CGame::StartSkip(int toFrame) {
 	skipLastDrawTime = spring_gettime();
 
 	skipping = true;
+*/
 }
 
 void CGame::EndSkip() {

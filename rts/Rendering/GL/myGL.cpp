@@ -204,9 +204,7 @@ static bool GetAvailableVideoRAM(GLint* memory)
 
 static void ShowCrappyGpuWarning(const char* glVendor, const char* glRenderer)
 {
-#ifdef DEBUG
-	{ return; }
-#endif
+#ifndef DEBUG
 
 	// Print out warnings for really crappy graphic cards/drivers
 	const std::string gfxCardVendor = (glVendor != NULL)? glVendor: "UNKNOWN";
@@ -282,6 +280,7 @@ static void ShowCrappyGpuWarning(const char* glVendor, const char* glRenderer)
 			Platform::MsgBox(mesa_msg, "Warning: No OpenGL drivers found", MBF_EXCL);
 		}
 	}
+#endif
 }
 
 
