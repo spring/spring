@@ -434,8 +434,8 @@ ADD_ASSIMP_IMPORTER( BLEND
   BlenderIntermediate.h
   BlenderModifier.h
   BlenderModifier.cpp
-  BlenderBMesh.h
-  BlenderBMesh.cpp
+#  BlenderBMesh.h
+#  BlenderBMesh.cpp
 #  BlenderTessellator.h
 #  BlenderTessellator.cpp
 )
