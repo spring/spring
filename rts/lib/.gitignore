@@ -45,4 +45,4 @@
 /assimp/include/assimp/\.*
 /assimp/code/*Exporter.cpp
 /assimp/code/*Exporter.h
-/assimp/contrib/poly2tri_patch.txt
+/assimp/contrib/poly2tri*
