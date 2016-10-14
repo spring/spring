@@ -5,9 +5,10 @@
 #include "LuaInclude.h"
 #include "LuaHandle.h"
 #include "LuaHashString.h"
-#include "LuaUtils.h"
-#include "LuaTextures.h"
+#include "LuaMenu.h"
 #include "LuaOpenGLUtils.h"
+#include "LuaTextures.h"
+#include "LuaUtils.h"
 
 #include "ExternalAI/EngineOutHandler.h"
 #include "ExternalAI/SkirmishAIHandler.h"
@@ -93,7 +94,6 @@
 
 #include <SDL_clipboard.h>
 #include <SDL_mouse.h>
-#include "LuaMenu.h"
 
 using std::min;
 using std::max;
@@ -2555,7 +2555,8 @@ int LuaUnsyncedCtrl::SendLuaRulesMsg(lua_State* L)
 int LuaUnsyncedCtrl::SendLuaMenuMsg(lua_State* L)
 {
 	const string msg = GetRawMsg(L, __FUNCTION__, 1);
-	luaMenu->RecvLuaMsg(msg, gu->myPlayerNum);
+	if (luaMenu != nullptr)
+		luaMenu->RecvLuaMsg(msg, gu->myPlayerNum);
 	return 0;
 }
 
