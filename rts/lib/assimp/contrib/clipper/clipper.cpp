@@ -3311,11 +3311,11 @@ void DoSquare(float mul = 1.0)
         (long64)Round(m_p[m_i][m_j].Y + normals[m_j].Y * m_delta));
     if ((normals[m_k].X * normals[m_j].Y - normals[m_j].X * normals[m_k].Y) * m_delta >= 0)
     {
-      float a1 = std::atan2(normals[m_k].Y, normals[m_k].X);
-      float a2 = std::atan2(-normals[m_j].Y, -normals[m_j].X);
+      float a1 = math::atan2(normals[m_k].Y, normals[m_k].X);
+      float a2 = math::atan2(-normals[m_j].Y, -normals[m_j].X);
       a1 = math::fabs(a2 - a1);
       if (a1 > pi) a1 = pi * 2 - a1;
-      float dx = std::tan((pi - a1)/4) * math::fabs(m_delta * mul);
+      float dx = math::tan((pi - a1)/4) * math::fabs(m_delta * mul);
       pt1 = IntPoint((long64)(pt1.X -normals[m_k].Y * dx),
         (long64)(pt1.Y + normals[m_k].X * dx));
       AddPoint(pt1);
@@ -3366,8 +3366,8 @@ void DoRound()
     {
       if (normals[m_j].X * normals[m_k].X + normals[m_j].Y * normals[m_k].Y < 0.985)
       {
-        float a1 = std::atan2(normals[m_k].Y, normals[m_k].X);
-        float a2 = std::atan2(normals[m_j].Y, normals[m_j].X);
+        float a1 = math::atan2(normals[m_k].Y, normals[m_k].X);
+        float a2 = math::atan2(normals[m_j].Y, normals[m_j].X);
         if (m_delta > 0 && a2 < a1) a2 += pi *2;
         else if (m_delta < 0 && a2 > a1) a2 -= pi *2;
         Polygon arc = BuildArc(m_p[m_i][m_j], a1, a2, m_delta);

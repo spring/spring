@@ -457,7 +457,7 @@ void ColladaExporter::WriteSpotLight(const aiLight *const light){
     double temp = light->mAngleOuterCone-light->mAngleInnerCone;
 
     temp = math::cos(temp);
-    temp = std::log(temp)/std::log(0.1);
+    temp = math::log(temp)/math::log(0.1);
     temp = 1/temp;
     mOutput << startstr << "<falloff_exponent sid=\"fall_off_exponent\">"
                             << temp

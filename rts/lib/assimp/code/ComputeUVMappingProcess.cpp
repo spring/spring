@@ -197,9 +197,9 @@ void ComputeUVMappingProcess::ComputeSphereMapping(aiMesh* mesh,const aiVector3D
         // UV axes. Problems occur around the poles ... unsolvable.
         //
         // The spherical coordinate system looks like this:
-        // x = cos(lon)*cos(lat)
-        // y = sin(lon)*cos(lat)
-        // z = sin(lat)
+        // x = math::cos(lon)*math::cos(lat)
+        // y = math::sin(lon)*math::cos(lat)
+        // z = math::sin(lat)
         //
         // Thus we can derive:
         // lat  = arcsin (z)
@@ -207,7 +207,7 @@ void ComputeUVMappingProcess::ComputeSphereMapping(aiMesh* mesh,const aiVector3D
         for (unsigned int pnt = 0; pnt < mesh->mNumVertices;++pnt)  {
             const aiVector3D diff = (mesh->mVertices[pnt]-center).Normalize();
             out[pnt] = aiVector3D((atan2 (diff.z, diff.y) + AI_MATH_PI_F ) / AI_MATH_TWO_PI_F,
-                (std::asin  (diff.x) + AI_MATH_HALF_PI_F) / AI_MATH_PI_F, 0.0);
+                (math::asin  (diff.x) + AI_MATH_HALF_PI_F) / AI_MATH_PI_F, 0.0);
         }
     }
     else if (axis * base_axis_y >= angle_epsilon)   {
@@ -215,7 +215,7 @@ void ComputeUVMappingProcess::ComputeSphereMapping(aiMesh* mesh,const aiVector3D
         for (unsigned int pnt = 0; pnt < mesh->mNumVertices;++pnt)  {
             const aiVector3D diff = (mesh->mVertices[pnt]-center).Normalize();
             out[pnt] = aiVector3D((atan2 (diff.x, diff.z) + AI_MATH_PI_F ) / AI_MATH_TWO_PI_F,
-                (std::asin  (diff.y) + AI_MATH_HALF_PI_F) / AI_MATH_PI_F, 0.0);
+                (math::asin  (diff.y) + AI_MATH_HALF_PI_F) / AI_MATH_PI_F, 0.0);
         }
     }
     else if (axis * base_axis_z >= angle_epsilon)   {
@@ -223,7 +223,7 @@ void ComputeUVMappingProcess::ComputeSphereMapping(aiMesh* mesh,const aiVector3D
         for (unsigned int pnt = 0; pnt < mesh->mNumVertices;++pnt)  {
             const aiVector3D diff = (mesh->mVertices[pnt]-center).Normalize();
             out[pnt] = aiVector3D((atan2 (diff.y, diff.x) + AI_MATH_PI_F ) / AI_MATH_TWO_PI_F,
-                (std::asin  (diff.z) + AI_MATH_HALF_PI_F) / AI_MATH_PI_F, 0.0);
+                (math::asin  (diff.z) + AI_MATH_HALF_PI_F) / AI_MATH_PI_F, 0.0);
         }
     }
     // slower code path in case the mapping axis is not one of the coordinate system axes
