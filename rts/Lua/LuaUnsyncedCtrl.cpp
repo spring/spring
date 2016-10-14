@@ -93,6 +93,7 @@
 
 #include <SDL_clipboard.h>
 #include <SDL_mouse.h>
+#include "LuaMenu.h"
 
 using std::min;
 using std::max;
@@ -203,6 +204,7 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SendLuaUIMsg);
 	REGISTER_LUA_CFUNC(SendLuaGaiaMsg);
 	REGISTER_LUA_CFUNC(SendLuaRulesMsg);
+	REGISTER_LUA_CFUNC(SendLuaMenuMsg);
 
 	REGISTER_LUA_CFUNC(LoadCmdColorsConfig);
 	REGISTER_LUA_CFUNC(LoadCtrlPanelConfig);
@@ -2547,6 +2549,13 @@ int LuaUnsyncedCtrl::SendLuaRulesMsg(lua_State* L)
 	} catch (const netcode::PackPacketException& ex) {
 		luaL_error(L, "SendLuaRulesMsg() packet error: %s", ex.what());
 	}
+	return 0;
+}
+
+int LuaUnsyncedCtrl::SendLuaMenuMsg(lua_State* L)
+{
+	const string msg = GetRawMsg(L, __FUNCTION__, 1);
+	luaMenu->RecvLuaMsg(msg, gu->myPlayerNum);
 	return 0;
 }
 
