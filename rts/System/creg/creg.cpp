@@ -167,7 +167,7 @@ void Class::SetFlag(ClassFlags flag)
 	binder->flags = (ClassFlags) (binder->flags | flag);
 }
 
-void Class::AddMember(const char* name, boost::shared_ptr<IType> type, unsigned int offset, int alignment)
+void Class::AddMember(const char* name, std::shared_ptr<IType> type, unsigned int offset, int alignment)
 {
 	assert(!FindMember(name, false));
 

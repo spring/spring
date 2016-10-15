@@ -44,11 +44,11 @@ public:
 private:
 	void RemoveFrontQueItem();
 
-	boost::uint64_t GetHash(
+	std::uint64_t GetHash(
 		const int2 strtBlk,
 		const int2 goalBlk,
-		boost::uint32_t goalRadius,
-		boost::int32_t pathType
+		std::uint32_t goalRadius,
+		std::int32_t pathType
 	) const;
 
 	bool HashCollision(
@@ -68,23 +68,23 @@ private:
 
 private:
 	struct CacheQue {
-		boost::int32_t timeout;
-		boost::uint64_t hash;
+		std::int32_t timeout;
+		std::uint64_t hash;
 	};
 
 	std::list<CacheQue> cacheQue;
-	std::map<boost::uint64_t, CacheItem*> cachedPaths;
+	std::map<std::uint64_t, CacheItem*> cachedPaths;
 
-	typedef std::map<boost::uint64_t, CacheItem*>::const_iterator CachedPathConstIter;
+	typedef std::map<std::uint64_t, CacheItem*>::const_iterator CachedPathConstIter;
 
-	boost::uint32_t numBlocksX;
-	boost::uint32_t numBlocksZ;
-	boost::uint64_t numBlocks;
+	std::uint32_t numBlocksX;
+	std::uint32_t numBlocksZ;
+	std::uint64_t numBlocks;
 
-	boost::uint64_t maxCacheSize;
-	boost::uint32_t numCacheHits;
-	boost::uint32_t numCacheMisses;
-	boost::uint32_t numHashCollisions;
+	std::uint64_t maxCacheSize;
+	std::uint32_t numCacheHits;
+	std::uint32_t numCacheMisses;
+	std::uint32_t numHashCollisions;
 };
 
 #endif

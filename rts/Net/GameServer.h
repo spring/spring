@@ -3,8 +3,8 @@
 #ifndef _GAME_SERVER_H
 #define _GAME_SERVER_H
 
-#include <boost/shared_ptr.hpp>
-#include <boost/scoped_ptr.hpp>
+#include <memory>
+#include <memory>
 
 #include <string>
 #include <map>
@@ -18,18 +18,12 @@
 #include "System/UnsyncedRNG.h"
 #include "System/float3.h"
 #include "System/Misc/SpringTime.h"
-#include "System/Platform/RecursiveScopedLock.h"
+#include "System/Threading/SpringThreading.h"
 
 /**
  * "player" number for GameServer-generated messages
  */
 #define SERVER_PLAYER 255
-
-
-
-namespace boost {
-	class thread;
-}
 
 namespace netcode
 {
@@ -71,15 +65,15 @@ class CGameServer
 	friend class CCregLoadSaveHandler; // For initializing server state after load
 public:
 	CGameServer(
-		const boost::shared_ptr<const ClientSetup> newClientSetup,
-		const boost::shared_ptr<const    GameData> newGameData,
-		const boost::shared_ptr<const  CGameSetup> newGameSetup
+		const std::shared_ptr<const ClientSetup> newClientSetup,
+		const std::shared_ptr<const    GameData> newGameData,
+		const std::shared_ptr<const  CGameSetup> newGameSetup
 	);
 
 	CGameServer(const CGameServer&) = delete; // no-copy
 	~CGameServer();
 
-	static void Reload(const boost::shared_ptr<const CGameSetup> newGameSetup);
+	static void Reload(const std::shared_ptr<const CGameSetup> newGameSetup);
 
 	void AddLocalClient(const std::string& myName, const std::string& myVersion);
 	void AddAutohostInterface(const std::string& autohostIP, const int autohostPort);
@@ -109,12 +103,12 @@ public:
 
 	std::string GetPlayerNames(const std::vector<int>& indices) const;
 
-	const boost::shared_ptr<const ClientSetup> GetClientSetup() const { return myClientSetup; }
-	const boost::shared_ptr<const    GameData> GetGameData() const { return myGameData; }
-	const boost::shared_ptr<const  CGameSetup> GetGameSetup() const { return myGameSetup; }
+	const std::shared_ptr<const ClientSetup> GetClientSetup() const { return myClientSetup; }
+	const std::shared_ptr<const    GameData> GetGameData() const { return myGameData; }
+	const std::shared_ptr<const  CGameSetup> GetGameSetup() const { return myGameSetup; }
 
-	const boost::scoped_ptr<CDemoReader>& GetDemoReader() const { return demoReader; }
-	const boost::scoped_ptr<CDemoRecorder>& GetDemoRecorder() const { return demoRecorder; }
+	const std::unique_ptr<CDemoReader>& GetDemoReader() const { return demoReader; }
+	const std::unique_ptr<CDemoRecorder>& GetDemoRecorder() const { return demoRecorder; }
 
 private:
 	/**
@@ -143,13 +137,13 @@ private:
 
 	bool CheckPlayersPassword(const int playerNum, const std::string& pw) const;
 
-	unsigned BindConnection(std::string name, const std::string& passwd, const std::string& version, bool isLocal, boost::shared_ptr<netcode::CConnection> link, bool reconnect = false, int netloss = 0);
+	unsigned BindConnection(std::string name, const std::string& passwd, const std::string& version, bool isLocal, std::shared_ptr<netcode::CConnection> link, bool reconnect = false, int netloss = 0);
 
 	void CheckForGameStart(bool forced = false);
 	void StartGame(bool forced);
 	void UpdateLoop();
 	void Update();
-	void ProcessPacket(const unsigned playerNum, boost::shared_ptr<const netcode::RawPacket> packet);
+	void ProcessPacket(const unsigned playerNum, std::shared_ptr<const netcode::RawPacket> packet);
 	void CheckSync();
 	void HandleConnectionAttempts();
 	void ServerReadNet();
@@ -163,7 +157,7 @@ private:
 	/// read data from demo and send it to clients
 	bool SendDemoData(int targetFrameNum);
 
-	void Broadcast(boost::shared_ptr<const netcode::RawPacket> packet);
+	void Broadcast(std::shared_ptr<const netcode::RawPacket> packet);
 
 	/**
 	 * @brief skip frames
@@ -176,15 +170,15 @@ private:
 	void Message(const std::string& message, bool broadcast = true);
 	void PrivateMessage(int playerNum, const std::string& message);
 
-	void AddToPacketCache(boost::shared_ptr<const netcode::RawPacket>& pckt);
+	void AddToPacketCache(std::shared_ptr<const netcode::RawPacket>& pckt);
 
 	float GetDemoTime() const;
 
 private:
 	/////////////////// game settings ///////////////////
-	boost::shared_ptr<const ClientSetup> myClientSetup;
-	boost::shared_ptr<const    GameData> myGameData;
-	boost::shared_ptr<const  CGameSetup> myGameSetup;
+	std::shared_ptr<const ClientSetup> myClientSetup;
+	std::shared_ptr<const    GameData> myGameData;
+	std::shared_ptr<const  CGameSetup> myGameSetup;
 
 	/////////////////// game status variables ///////////////////
 	volatile bool quitServer;
@@ -241,7 +235,7 @@ private:
 	bool logInfoMessages;
 	bool logDebugMessages;
 
-	std::list< std::vector<boost::shared_ptr<const netcode::RawPacket> > > packetCache;
+	std::list< std::vector<std::shared_ptr<const netcode::RawPacket> > > packetCache;
 
 	/////////////////// sync stuff ///////////////////
 #ifdef SYNCCHECK
@@ -263,15 +257,15 @@ private:
 	/// If the server receives a command, it will forward it to clients if it is not in this set
 	static std::set<std::string> commandBlacklist;
 
-	boost::scoped_ptr<netcode::UDPListener> UDPNet;
-	boost::scoped_ptr<CDemoReader> demoReader;
-	boost::scoped_ptr<CDemoRecorder> demoRecorder;
-	boost::scoped_ptr<AutohostInterface> hostif;
+	std::unique_ptr<netcode::UDPListener> UDPNet;
+	std::unique_ptr<CDemoReader> demoReader;
+	std::unique_ptr<CDemoRecorder> demoRecorder;
+	std::unique_ptr<AutohostInterface> hostif;
 
 	UnsyncedRNG rng;
-	boost::thread* thread;
+	spring::thread* thread;
 
-	mutable Threading::RecursiveMutex gameServerMutex;
+	mutable spring::recursive_mutex gameServerMutex;
 
 	volatile bool gameHasStarted;
 	volatile bool generatedGameID;

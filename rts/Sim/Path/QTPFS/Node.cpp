@@ -239,8 +239,8 @@ void QTPFS::QTNode::Delete() {
 
 
 
-boost::uint64_t QTPFS::QTNode::GetMemFootPrint() const {
-	boost::uint64_t memFootPrint = sizeof(QTNode);
+std::uint64_t QTPFS::QTNode::GetMemFootPrint() const {
+	std::uint64_t memFootPrint = sizeof(QTNode);
 
 	if (IsLeaf()) {
 		memFootPrint += (neighbors.size() * sizeof(INode*));
@@ -256,8 +256,8 @@ boost::uint64_t QTPFS::QTNode::GetMemFootPrint() const {
 	return memFootPrint;
 }
 
-boost::uint64_t QTPFS::QTNode::GetCheckSum() const {
-	boost::uint64_t sum = 0;
+std::uint64_t QTPFS::QTNode::GetCheckSum() const {
+	std::uint64_t sum = 0;
 
 	{
 		const unsigned char* minByte = reinterpret_cast<const unsigned char*>(&nodeNumber);

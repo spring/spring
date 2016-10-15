@@ -6,6 +6,13 @@
 #include <vector>
 #include <string>
 
+#if defined(CreateDirectory)
+	#undef CreateDirectory
+#endif
+#if defined(DeleteFile)
+	#undef DeleteFile
+#endif
+
 /**
  * Native file-system handling abstraction.
  * This contains only functions that have to implemented differently on

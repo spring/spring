@@ -9,10 +9,11 @@
 #include "SoundSource.h"
 #include "Sim/Misc/GuiSoundSet.h"
 #include "Sim/Objects/WorldObject.h"
+#include "System/Threading/SpringThreading.h"
 
 #include <climits>
 
-extern boost::recursive_mutex soundMutex;
+extern spring::recursive_mutex soundMutex;
 
 const size_t AudioChannel::MAX_STREAM_QUEUESIZE = 10;
 
@@ -30,7 +31,7 @@ void AudioChannel::SetVolume(float newVolume)
 	if (cur_sources.empty())
 		return;
 
-	boost::recursive_mutex::scoped_lock lck(soundMutex);
+	std::lock_guard<spring::recursive_mutex> lck(soundMutex);
 
 	for (std::map<CSoundSource*, bool>::iterator it = cur_sources.begin(); it != cur_sources.end(); ++it) {
 		it->first->UpdateVolume();
@@ -41,7 +42,7 @@ void AudioChannel::SetVolume(float newVolume)
 
 void AudioChannel::Enable(bool newState)
 {
-	boost::recursive_mutex::scoped_lock lck(soundMutex);
+	std::lock_guard<spring::recursive_mutex> lck(soundMutex);
 
 	enabled = newState;
 
@@ -69,7 +70,7 @@ void AudioChannel::SoundSourceFinished(CSoundSource* sndSource)
 
 void AudioChannel::FindSourceAndPlay(size_t id, const float3& pos, const float3& velocity, float volume, bool relative)
 {
-	boost::recursive_mutex::scoped_lock lck(soundMutex);
+	std::lock_guard<spring::recursive_mutex> lck(soundMutex);
 
 	if (!enabled)
 		return;
@@ -174,7 +175,7 @@ void AudioChannel::PlayRandomSample(const GuiSoundSet& soundSet, const float3& p
 
 void AudioChannel::StreamPlay(const std::string& filepath, float volume, bool enqueue)
 {
-	boost::recursive_mutex::scoped_lock lck(soundMutex);
+	std::lock_guard<spring::recursive_mutex> lck(soundMutex);
 
 	if (!enabled)
 		return;
@@ -200,7 +201,7 @@ void AudioChannel::StreamPlay(const std::string& filepath, float volume, bool en
 
 void AudioChannel::StreamPause()
 {
-	boost::recursive_mutex::scoped_lock lck(soundMutex);
+	std::lock_guard<spring::recursive_mutex> lck(soundMutex);
 
 	if (curStreamSrc)
 		curStreamSrc->StreamPause();
@@ -208,7 +209,7 @@ void AudioChannel::StreamPause()
 
 void AudioChannel::StreamStop()
 {
-	boost::recursive_mutex::scoped_lock lck(soundMutex);
+	std::lock_guard<spring::recursive_mutex> lck(soundMutex);
 
 	if (curStreamSrc)
 		curStreamSrc->StreamStop();
@@ -216,7 +217,7 @@ void AudioChannel::StreamStop()
 
 float AudioChannel::StreamGetTime()
 {
-	boost::recursive_mutex::scoped_lock lck(soundMutex);
+	std::lock_guard<spring::recursive_mutex> lck(soundMutex);
 
 	if (curStreamSrc)
 		return curStreamSrc->GetStreamTime();
@@ -226,7 +227,7 @@ float AudioChannel::StreamGetTime()
 
 float AudioChannel::StreamGetPlayTime()
 {
-	boost::recursive_mutex::scoped_lock lck(soundMutex);
+	std::lock_guard<spring::recursive_mutex> lck(soundMutex);
 
 	if (curStreamSrc)
 		return curStreamSrc->GetStreamPlayTime();

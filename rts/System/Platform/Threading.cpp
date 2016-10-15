@@ -15,10 +15,10 @@
 	#include "System/Sync/FPUCheck.h"
 #endif
 
+#include <functional>
 #include <memory>
-#include <boost/version.hpp>
 #include <boost/thread.hpp>
-#include <boost/cstdint.hpp>
+#include <cinttypes>
 #if defined(__APPLE__) || defined(__FreeBSD__)
 #elif defined(WIN32)
 	#include <windows.h>
@@ -27,6 +27,10 @@
 		#include <sys/prctl.h>
 	#endif
 	#include <sched.h>
+#endif
+
+#ifndef WIN32
+	#include "Linux/ThreadSupport.h"
 #endif
 
 #ifndef UNIT_TEST
@@ -80,7 +84,7 @@ namespace Threading {
 	}
 
 
-	boost::uint32_t GetAffinity()
+	std::uint32_t GetAffinity()
 	{
 	#if defined(__APPLE__) || defined(__FreeBSD__)
 		// no-op
@@ -96,7 +100,7 @@ namespace Threading {
 		CPU_ZERO(&curAffinity);
 		sched_getaffinity(0, sizeof(cpu_set_t), &curAffinity);
 
-		boost::uint32_t mask = 0;
+		std::uint32_t mask = 0;
 
 		int numCpus = std::min(CPU_COUNT(&curAffinity), 32); // w/o the min(.., 32) `(1 << n)` could overflow!
 		for (int n = numCpus - 1; n >= 0; --n) {
@@ -110,7 +114,7 @@ namespace Threading {
 	}
 
 
-	boost::uint32_t SetAffinity(boost::uint32_t cores_bitmask, bool hard)
+	std::uint32_t SetAffinity(std::uint32_t cores_bitmask, bool hard)
 	{
 		if (cores_bitmask == 0) {
 			return ~0;
@@ -134,7 +138,7 @@ namespace Threading {
 		}
 
 		// Return final mask
-		return (result > 0) ? (boost::uint32_t)cpusWanted : 0;
+		return (result > 0) ? (std::uint32_t)cpusWanted : 0;
 	#else
 		// Create mask
 		cpu_set_t cpusWanted; CPU_ZERO(&cpusWanted);
@@ -160,8 +164,8 @@ namespace Threading {
 	#endif
 	}
 
-	void SetAffinityHelper(const char *threadName, boost::uint32_t affinity) {
-		const boost::uint32_t cpuMask  = Threading::SetAffinity(affinity);
+	void SetAffinityHelper(const char *threadName, std::uint32_t affinity) {
+		const std::uint32_t cpuMask  = Threading::SetAffinity(affinity);
 		if (cpuMask == ~0) {
 			LOG("[Threading] %s thread CPU affinity not set", threadName);
 		}
@@ -177,9 +181,9 @@ namespace Threading {
 	}
 
 
-	boost::uint32_t GetAvailableCoresMask()
+	std::uint32_t GetAvailableCoresMask()
 	{
-		boost::uint32_t systemCores = 0;
+		std::uint32_t systemCores = 0;
 	#if defined(__APPLE__) || defined(__FreeBSD__)
 		// no-op
 		systemCores = ~0;
@@ -202,9 +206,9 @@ namespace Threading {
 	}
 
 
-	static boost::uint32_t GetCpuCoreForWorkerThread(int index, boost::uint32_t availCores, boost::uint32_t avoidCores)
+	static std::uint32_t GetCpuCoreForWorkerThread(int index, std::uint32_t availCores, std::uint32_t avoidCores)
 	{
-		boost::uint32_t ompCore = 1;
+		std::uint32_t ompCore = 1;
 
 		// find an unused core
 		// count down cause hyperthread cores are appended to the end and we prefer those for our worker threads
@@ -241,11 +245,11 @@ namespace Threading {
 
 	int GetLogicalCpuCores() {
 		// auto-detect number of system threads (including hyperthreading)
-		return boost::thread::hardware_concurrency();
+		return spring::thread::hardware_concurrency();
 	}
 
 
-	/** Function that returns the number of real cpu cores (not 
+	/** Function that returns the number of real cpu cores (not
 	    hyperthreading ones). These are the total cores in the system
 	    (across all existing processors, if more than one)*/
 	int GetPhysicalCpuCores() {
@@ -261,12 +265,12 @@ namespace Threading {
 
 
 	void InitThreadPool() {
-		boost::uint32_t systemCores   = Threading::GetAvailableCoresMask();
-		boost::uint32_t mainAffinity  = systemCores;
+		std::uint32_t systemCores   = Threading::GetAvailableCoresMask();
+		std::uint32_t mainAffinity  = systemCores;
 #ifndef UNIT_TEST
 		mainAffinity &= configHandler->GetUnsigned("SetCoreAffinity");
 #endif
-		boost::uint32_t ompAvailCores = systemCores & ~mainAffinity;
+		std::uint32_t ompAvailCores = systemCores & ~mainAffinity;
 
 		{
 #ifndef UNIT_TEST
@@ -297,22 +301,22 @@ namespace Threading {
 		}
 
 		// set affinity of worker threads
-		boost::uint32_t ompCores = 0;
-		ompCores = parallel_reduce([&]() -> boost::uint32_t {
+		std::uint32_t ompCores = 0;
+		ompCores = parallel_reduce([&]() -> std::uint32_t {
 			const int i = ThreadPool::GetThreadNum();
 
 			// 0 is the source thread, skip
 			if (i == 0)
 				return 0;
 
-			boost::uint32_t ompCore = GetCpuCoreForWorkerThread(i - 1, ompAvailCores, mainAffinity);
-			//boost::uint32_t ompCore = ompAvailCores;
+			std::uint32_t ompCore = GetCpuCoreForWorkerThread(i - 1, ompAvailCores, mainAffinity);
+			//std::uint32_t ompCore = ompAvailCores;
 			Threading::SetAffinity(ompCore);
 			return ompCore;
-		}, [](boost::uint32_t a, boost::unique_future<boost::uint32_t>& b) -> boost::uint32_t { return a | b.get(); });
+		}, [](std::uint32_t a, boost::unique_future<std::uint32_t>& b) -> std::uint32_t { return a | b.get(); });
 
 		// affinity of mainthread
-		boost::uint32_t nonOmpCores = ~ompCores;
+		std::uint32_t nonOmpCores = ~ompCores;
 		if (mainAffinity == 0) mainAffinity = systemCores;
 		Threading::SetAffinityHelper("Main", mainAffinity & nonOmpCores);
 	}
@@ -392,19 +396,19 @@ namespace Threading {
 	}
 
 
-	boost::thread CreateNewThread(boost::function<void()> taskFunc, std::shared_ptr<Threading::ThreadControls>* ppCtlsReturn)
+	spring::thread CreateNewThread(std::function<void()> taskFunc, std::shared_ptr<Threading::ThreadControls>* ppCtlsReturn)
 	{
 #ifndef WIN32
 		// only used as locking mechanism, not installed by thread
 		Threading::ThreadControls tempCtls;
 
-		boost::unique_lock<boost::mutex> lock(tempCtls.mutSuspend);
-		boost::thread localthread(boost::bind(Threading::ThreadStart, taskFunc, ppCtlsReturn, &tempCtls));
+		std::unique_lock<spring::mutex> lock(tempCtls.mutSuspend);
+		spring::thread localthread(std::bind(Threading::ThreadStart, taskFunc, ppCtlsReturn, &tempCtls));
 
 		// Wait so that we know the thread is running and fully initialized before returning.
 		tempCtls.condInitialized.wait(lock);
 #else
-		boost::thread localthread(taskFunc);
+		spring::thread localthread(taskFunc);
 #endif
 
 		return localthread;
@@ -413,7 +417,7 @@ namespace Threading {
 	void SetMainThread() {
 		if (!haveMainThreadID) {
 			haveMainThreadID = true;
-			// boostMainThreadID = boost::this_thread::get_id();
+			// springMainThreadID = spring::this_thread::get_id();
 			nativeMainThreadID = Threading::GetCurrentThreadId();
 		}
 
@@ -432,7 +436,7 @@ namespace Threading {
 	void SetGameLoadThread() {
 		if (!haveGameLoadThreadID) {
 			haveGameLoadThreadID = true;
-			// boostGameLoadThreadID = boost::this_thread::get_id();
+			// springGameLoadThreadID = spring::this_thread::get_id();
 			nativeGameLoadThreadID = Threading::GetCurrentThreadId();
 		}
 
@@ -451,7 +455,7 @@ namespace Threading {
 	void SetWatchDogThread() {
 		if (!haveWatchDogThreadID) {
 			haveWatchDogThreadID = true;
-			// boostWatchDogThreadID = boost::this_thread::get_id();
+			// springWatchDogThreadID = spring::this_thread::get_id();
 			nativeWatchDogThreadID = Threading::GetCurrentThreadId();
 		}
 	}

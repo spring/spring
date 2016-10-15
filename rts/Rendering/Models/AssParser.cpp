@@ -133,11 +133,11 @@ public:
 };
 
 
-CAssParser::CAssParser() :
- maxIndices(1024),
- maxVertices(1024)
+CAssParser::CAssParser()
 {
 #ifndef BITMAP_NO_OPENGL
+	maxIndices = 1024;
+	maxVertices = 1024;
 	// FIXME returns non-optimal data, at best compute it ourselves (pre-TL cache size!)
 	glGetIntegerv(GL_MAX_ELEMENTS_INDICES,  &maxIndices);
 	glGetIntegerv(GL_MAX_ELEMENTS_VERTICES, &maxVertices);

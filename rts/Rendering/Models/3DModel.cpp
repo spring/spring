@@ -14,6 +14,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cstring>
 
 CR_BIND(LocalModelPiece, (NULL))
 CR_REG_METADATA(LocalModelPiece, (

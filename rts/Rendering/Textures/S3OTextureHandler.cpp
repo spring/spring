@@ -27,7 +27,7 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_TEXTURE)
 #endif
 #define LOG_SECTION_CURRENT LOG_SECTION_TEXTURE
 
-#define TEX_MAT_UID(pTxID, sTxID) ((boost::uint64_t(pTxID) << 32u) | sTxID)
+#define TEX_MAT_UID(pTxID, sTxID) ((std::uint64_t(pTxID) << 32u) | sTxID)
 
 
 // The S3O texture handler uses two textures.

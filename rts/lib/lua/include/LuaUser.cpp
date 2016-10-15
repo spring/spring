@@ -1,17 +1,17 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include <map>
+#include <atomic>
 #include <array>
-#include <boost/cstdint.hpp>
-#include <boost/thread.hpp>
+#include <cinttypes>
 #include "lib/streflop/streflop_cond.h"
 
 #include "LuaInclude.h"
-#include "Game/GameVersion.h"
 #include "Lua/LuaHandle.h"
 #include "System/myMath.h"
-#include "System/Platform/Threading.h"
-#include "System/Threading/SpringMutex.h"
+#if (ENABLE_USERSTATE_LOCKS != 0)
+	#include <map>
+	#include "System/Threading/SpringThreading.h"
+#endif
 #include "System/Log/ILog.h"
 #if (!defined(DEDICATED) && !defined(UNITSYNC) && !defined(BUILDING_AI))
 	#include "System/Misc/SpringTime.h"
@@ -21,25 +21,22 @@
 ///////////////////////////////////////////////////////////////////////////
 // Custom Lua Mutexes
 
-static std::map<lua_State*, spring::recursive_mutex*> mutexes;
+
+#if (ENABLE_USERSTATE_LOCKS != 0)
 static std::map<lua_State*, bool> coroutines;
+static std::map<lua_State*, spring::recursive_mutex*> mutexes;
 
 static spring::recursive_mutex* GetLuaMutex(lua_State* L)
 {
 	assert(!mutexes[L]);
 	return new spring::recursive_mutex();
 }
-
+#endif
 
 
 void LuaCreateMutex(lua_State* L)
 {
-	#if (ENABLE_USERSTATE_LOCKS == 0)
-	// if LoadingMT=1, everything runs in the game-load thread (on startup)
-	//assert(Threading::IsMainThread() || Threading::IsGameLoadThread() || SpringVersion::IsUnitsync());
-	return;
-	#endif
-
+#if (ENABLE_USERSTATE_LOCKS != 0)
 	luaContextData* lcd = GetLuaContextData(L);
 	if (!lcd) return; // CLuaParser
 	assert(lcd);
@@ -47,16 +44,13 @@ void LuaCreateMutex(lua_State* L)
 	spring::recursive_mutex* mutex = GetLuaMutex(L);
 	lcd->luamutex = mutex;
 	mutexes[L] = mutex;
+#endif
 }
 
 
 void LuaDestroyMutex(lua_State* L)
 {
-	#if (ENABLE_USERSTATE_LOCKS == 0)
-	//assert(Threading::IsMainThread() || Threading::IsGameLoadThread() || SpringVersion::IsUnitsync());
-	return;
-	#endif
-
+#if (ENABLE_USERSTATE_LOCKS != 0)
 	if (!GetLuaContextData(L)) return; // CLuaParser
 	assert(GetLuaContextData(L));
 
@@ -72,16 +66,13 @@ void LuaDestroyMutex(lua_State* L)
 		mutexes.erase(L);
 		//TODO erase all related coroutines too?
 	}
+#endif
 }
 
 
 void LuaLinkMutex(lua_State* L_parent, lua_State* L_child)
 {
-	#if (ENABLE_USERSTATE_LOCKS == 0)
-	//assert(Threading::IsMainThread() || Threading::IsGameLoadThread() || SpringVersion::IsUnitsync());
-	return;
-	#endif
-
+#if (ENABLE_USERSTATE_LOCKS != 0)
 	luaContextData* plcd = GetLuaContextData(L_parent);
 	assert(plcd);
 
@@ -92,15 +83,13 @@ void LuaLinkMutex(lua_State* L_parent, lua_State* L_child)
 
 	coroutines[L_child] = true;
 	mutexes[L_child] = plcd->luamutex;
+#endif
 }
 
 
 void LuaMutexLock(lua_State* L)
 {
-	#if (ENABLE_USERSTATE_LOCKS == 0)
-	//assert(Threading::IsMainThread() || Threading::IsGameLoadThread() || SpringVersion::IsUnitsync());
-	return;
-	#endif
+#if (ENABLE_USERSTATE_LOCKS != 0)
 
 	if (!GetLuaContextData(L)) return; // CLuaParser
 
@@ -112,30 +101,24 @@ void LuaMutexLock(lua_State* L)
 	//static int failedLocks = 0;
 	//LOG("LuaMutexLock %i", ++failedLocks);
 	mutex->lock();
+#endif
 }
 
 
 void LuaMutexUnlock(lua_State* L)
 {
-	#if (ENABLE_USERSTATE_LOCKS == 0)
-	//assert(Threading::IsMainThread() || Threading::IsGameLoadThread() || SpringVersion::IsUnitsync());
-	return;
-	#endif
-
+#if (ENABLE_USERSTATE_LOCKS != 0)
 	if (!GetLuaContextData(L)) return; // CLuaParser
 
 	spring::recursive_mutex* mutex = GetLuaContextData(L)->luamutex;
 	mutex->unlock();
+#endif
 }
 
 
 void LuaMutexYield(lua_State* L)
 {
-	#if (ENABLE_USERSTATE_LOCKS == 0)
-	//assert(Threading::IsMainThread() || Threading::IsGameLoadThread() || SpringVersion::IsUnitsync());
-	return;
-	#endif
-
+#if (ENABLE_USERSTATE_LOCKS != 0)
 	assert(GetLuaContextData(L));
 	/*mutexes[L]->unlock();
 	if (!mutexes[L]->try_lock()) {
@@ -151,6 +134,7 @@ void LuaMutexYield(lua_State* L)
 
 	if (y) boost::this_thread::yield();
 	LuaMutexLock(L);
+#endif
 }
 
 
@@ -173,9 +157,9 @@ const char* spring_lua_getName(lua_State* L)
 // Custom Memory Allocator
 //
 // these track allocations across all states
-static Threading::AtomicCounterInt64 totalBytesAlloced = 0;
-static Threading::AtomicCounterInt64 totalNumLuaAllocs = 0;
-static Threading::AtomicCounterInt64 totalLuaAllocTime = 0;
+static std::atomic<std::int64_t> totalBytesAlloced(0);
+static std::atomic<std::int64_t> totalNumLuaAllocs(0);
+static std::atomic<std::int64_t> totalLuaAllocTime(0);
 
 static const unsigned int maxAllocedBytes = 768u * 1024u*1024u;
 static const char* maxAllocFmtStr = "%s: cannot allocate more memory! (%u bytes already used, %u bytes maximum)";
@@ -184,9 +168,10 @@ static const char* maxAllocFmtStr = "%s: cannot allocate more memory! (%u bytes 
 void* spring_lua_alloc(void* ud, void* ptr, size_t osize, size_t nsize)
 {
 	auto lcd = (luaContextData*) ud;
+	totalBytesAlloced -= osize;
+	totalBytesAlloced += nsize;
 
 	if (nsize == 0) {
-		totalBytesAlloced -= osize;
 		free(ptr);
 		return NULL;
 	}
@@ -203,7 +188,6 @@ void* spring_lua_alloc(void* ud, void* ptr, size_t osize, size_t nsize)
 	void* mem = realloc(ptr, nsize);
 	const spring_time t1 = spring_gettime();
 
-	totalBytesAlloced += (nsize - osize);
 	totalNumLuaAllocs += 1;
 	totalLuaAllocTime += (t1 - t0).toMicroSecsi();
 
@@ -218,7 +202,11 @@ void spring_lua_alloc_get_stats(SLuaInfo* info)
 	info->allocedBytes = totalBytesAlloced;
 	info->numLuaAllocs = totalNumLuaAllocs;
 	info->luaAllocTime = totalLuaAllocTime;
+#if (ENABLE_USERSTATE_LOCKS != 0)
 	info->numLuaStates = mutexes.size() - coroutines.size();
+#else
+	info->numLuaStates = 0;
+#endif
 }
 
 void spring_lua_alloc_update_stats(bool clear)
@@ -236,7 +224,7 @@ void spring_lua_alloc_update_stats(bool clear)
 #ifdef WIN32
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wformat"
-static inline int sprintf64(char* dst, boost::int64_t x) { return sprintf(dst, "%I64d", x); }
+static inline int sprintf64(char* dst, std::int64_t x) { return sprintf(dst, "%I64d", x); }
 #pragma GCC diagnostic pop
 #else
 static inline int sprintf64(char* dst, long int x)      { return sprintf(dst, "%ld", x); }
@@ -247,7 +235,7 @@ static inline int sprintf64(char* dst, long long int x) { return sprintf(dst, "%
 // int numbers in that range are 100% exact, and don't suffer float precision issues
 static constexpr int MAX_PRECISE_DIGITS_IN_FLOAT = std::numeric_limits<float>::digits10;
 static constexpr auto SPRING_FLOAT_MAX = std::numeric_limits<float>::max();
-static constexpr auto SPRING_INT64_MAX = std::numeric_limits<boost::int64_t>::max();
+static constexpr auto SPRING_INT64_MAX = std::numeric_limits<std::int64_t>::max();
 
 static constexpr std::array<double, 11> v = {
 	1, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10
@@ -264,9 +252,9 @@ static const inline int FastLog10(const float f)
 {
 	assert(f != 0.0f); // log10(0) = -inf
 	if (f>=1.f && f<(SPRING_INT64_MAX >> 1)) {
-		const boost::int64_t i = f;
+		const std::int64_t i = f;
 		int log10 = 0;
-		boost::int64_t n = 10;
+		std::int64_t n = 10;
 		while (i >= n) {
 			++log10;
 			n *= 10;
@@ -297,7 +285,7 @@ static inline int PrintIntPart(char* buf, float f, const bool carrierBit = false
 	} else
 #endif
 	if (f < (SPRING_INT64_MAX - carrierBit)) {
-		return sprintf64(buf, boost::int64_t(f) + carrierBit); // much faster than printing a float!
+		return sprintf64(buf, std::int64_t(f) + carrierBit); // much faster than printing a float!
 	} else {
 		return sprintf(buf, "%1.0f", f + carrierBit);
 	}
@@ -317,8 +305,8 @@ static inline int PrintFractPart(char* buf, float f, int digits, int precision)
 	const auto old = buf;
 
 	assert(digits <= 15);
-	assert(digits <= std::numeric_limits<boost::int64_t>::digits10);
-	const boost::int64_t i = double(f) * Pow10d(digits) + 0.5;
+	assert(digits <= std::numeric_limits<std::int64_t>::digits10);
+	const std::int64_t i = double(f) * Pow10d(digits) + 0.5;
 	char s[16];
 	const int len = sprintf64(s, i);
 	if (len < digits) {
@@ -418,9 +406,15 @@ void spring_lua_ftoa(float f, char* buf, int precision)
 	float fractF = std::modf(f, &truncF);
 	const bool carrierBit = HandleRounding(&fractF, log10, charsInStdNotation, nDigits, scienceNotation, precision);
 
-	const int iDigits = PrintIntPart(buf, truncF, carrierBit);
-	if (scienceNotation)
+	int iDigits = PrintIntPart(buf, truncF, carrierBit);
+	if (scienceNotation) {
+		if (iDigits == 2) {
+			iDigits = 1;
+			e10 += 1;
+			assert(fractF == 0);
+		}
 		assert(iDigits == 1);
+	}
 	nDigits -= iDigits;
 	buf += iDigits;
 

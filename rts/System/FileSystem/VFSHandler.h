@@ -7,7 +7,7 @@
 #include <map>
 #include <string>
 #include <vector>
-#include <boost/cstdint.hpp>
+#include <cinttypes>
 
 class IArchive;
 
@@ -50,7 +50,7 @@ public:
 	 *   case-insensitive
 	 * @return true if the file exists in the VFS and was successfully read
 	 */
-	bool LoadFile(const std::string& filePath, std::vector<boost::uint8_t>& buffer, Section section);
+	bool LoadFile(const std::string& filePath, std::vector<std::uint8_t>& buffer, Section section);
 
 	/**
 	 * Returns all the files in the given (virtual) directory without the

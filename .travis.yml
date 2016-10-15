@@ -6,6 +6,13 @@ sudo: required
 dist: trusty
 cache: ccache
 
+addons:
+  coverity_scan:
+    project:
+      name: "spring/spring"
+    notification_email: ashdnazg.springrts@gmail.com
+    build_command:   make engine-headless
+    branch_pattern: coverity_scan
 language: cpp
 compiler:
   - gcc
@@ -13,14 +20,19 @@ compiler:
 env:
   global:
     - SPRING_DATADIR=~/build/spring/spring
+     # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
+     #   via the "travis encrypt" command using the project repo's public key
+     #   also note that forks don't get access to secure keys
+     #   you have to test using a branch in the main repo
+    - secure: "QSZUdSH72Y+X73FBy6cDdhlMH3ppMewbU/LquXe/sIUdJE0LmcCFHnPayI91TTRgS8r6YXKh3DIhE9XTs1OUxmV+RUL84z85byAtotb+ukHSzlSLSGGZfrqey+/vrCXbYykfaxhazlVDfk5vx63lRYiD5lp5KLL24+PIdK6Qd5E="
   matrix:
-    - TARGET="AAI CppTestAI E323AI HughAI KAIK NullAI NullJavaAI NullOOJavaAI RAI Shard demotool"
+    - TARGET="AAI CppTestAI E323AI HughAI KAIK NullAI NullJavaAI NullOOJavaAI RAI demotool"
     - TARGET="engine-headless tests check"
-
 matrix:
   fast_finish: true
 
 before_install:
+  - test "${TRAVIS_BRANCH}" != "coverity_scan" -o "${TRAVIS_JOB_NUMBER##*.}" = "1" || exit 0
   - tools/scripts/travis_before_install.sh
 
 install:
@@ -30,6 +42,7 @@ before_script:
   - tools/scripts/travis_before_script.sh
 
 script:
+  - test "${TRAVIS_BRANCH}" != "coverity_scan" || exit 0
   - make -k $TARGET
 
 notifications:

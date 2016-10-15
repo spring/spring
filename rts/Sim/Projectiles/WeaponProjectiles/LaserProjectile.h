@@ -9,7 +9,6 @@ class CLaserProjectile : public CWeaponProjectile
 {
 	CR_DECLARE_DERIVED(CLaserProjectile)
 public:
-	CLaserProjectile() { }
 	CLaserProjectile(const ProjectileParams& params);
 
 	void Draw() override;
@@ -28,6 +27,8 @@ private:
 	void CollisionCommon(const float3& oldPos);
 
 private:
+	CLaserProjectile() { }
+
 	float speedf;
 
 	float maxLength;

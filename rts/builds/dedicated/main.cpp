@@ -162,9 +162,9 @@ int main(int argc, char* argv[])
 		CGameServer* server = NULL;
 
 		// server will take ownership of these
-		boost::shared_ptr<ClientSetup> dsClientSetup(new ClientSetup());
-		boost::shared_ptr<GameData> dsGameData(new GameData());
-		boost::shared_ptr<CGameSetup> dsGameSetup(new CGameSetup());
+		std::shared_ptr<ClientSetup> dsClientSetup(new ClientSetup());
+		std::shared_ptr<GameData> dsGameData(new GameData());
+		std::shared_ptr<CGameSetup> dsGameSetup(new CGameSetup());
 
 		CFileHandler fh(scriptName);
 
@@ -234,8 +234,8 @@ int main(int argc, char* argv[])
 			if (printData) {
 				printData = false;
 
-				const boost::scoped_ptr<CDemoRecorder>& demoRec = server->GetDemoRecorder();
-				const boost::uint8_t* gameID = (demoRec->GetFileHeader()).gameID;
+				const std::unique_ptr<CDemoRecorder>& demoRec = server->GetDemoRecorder();
+				const std::uint8_t* gameID = (demoRec->GetFileHeader()).gameID;
 
 				LOG("recording demo: %s", (demoRec->GetName()).c_str());
 				LOG("using mod: %s", (dsGameSetup->modName).c_str());

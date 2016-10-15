@@ -4,7 +4,7 @@
 #define _BUFFERED_ARCHIVE_H
 
 #include <map>
-#include <boost/thread/mutex.hpp>
+#include "System/Threading/SpringThreading.h"
 
 #include "IArchive.h"
 
@@ -18,18 +18,18 @@ public:
 	CBufferedArchive(const std::string& name, bool cache = true);
 	virtual ~CBufferedArchive();
 
-	virtual bool GetFile(unsigned int fid, std::vector<boost::uint8_t>& buffer);
+	virtual bool GetFile(unsigned int fid, std::vector<std::uint8_t>& buffer);
 
 protected:
-	virtual bool GetFileImpl(unsigned int fid, std::vector<boost::uint8_t>& buffer) = 0;
+	virtual bool GetFileImpl(unsigned int fid, std::vector<std::uint8_t>& buffer) = 0;
 
-	boost::mutex archiveLock; // neither 7zip nor zlib are threadsafe
+	spring::mutex archiveLock; // neither 7zip nor zlib are threadsafe
 	struct FileBuffer
 	{
 		FileBuffer() : populated(false), exists(false) {};
 		bool populated; // cause a file may be 0 bytes big
 		bool exists;
-		std::vector<boost::uint8_t> data;
+		std::vector<std::uint8_t> data;
 	};
 	std::vector<FileBuffer> cache; // cache[fileId]
 private:

@@ -3,13 +3,13 @@
 #ifndef SPRINGFUTEX_H
 #define SPRINGFUTEX_H
 
-#include <boost/cstdint.hpp>
+#include <cinttypes>
 
 
 class spring_futex
 {
 private:
-	typedef boost::uint32_t native_type;
+	typedef std::uint32_t native_type;
 
 public:
 	typedef native_type* native_handle_type;
@@ -34,7 +34,7 @@ protected:
 class recursive_futex
 {
 private:
-	typedef boost::uint32_t native_type;
+	typedef std::uint32_t native_type;
 
 public:
 	typedef native_type* native_handle_type;

@@ -5,9 +5,10 @@
 #include "LuaInclude.h"
 #include "LuaHandle.h"
 #include "LuaHashString.h"
-#include "LuaUtils.h"
-#include "LuaTextures.h"
+#include "LuaMenu.h"
 #include "LuaOpenGLUtils.h"
+#include "LuaTextures.h"
+#include "LuaUtils.h"
 
 #include "ExternalAI/EngineOutHandler.h"
 #include "ExternalAI/SkirmishAIHandler.h"
@@ -77,7 +78,6 @@
 #include "System/Platform/WindowManagerHelper.h"
 #include "System/Sync/HsiehHash.h"
 
-#include <boost/cstdint.hpp>
 
 #if !defined(HEADLESS) && !defined(NO_SOUND)
 #include "System/Sound/OpenAL/EFX.h"
@@ -88,12 +88,12 @@
 #include <set>
 #include <cctype>
 #include <cfloat>
+#include <cinttypes>
 
 #include <fstream>
 
 #include <SDL_clipboard.h>
 #include <SDL_mouse.h>
-#include "LuaMenu.h"
 
 using std::min;
 using std::max;
@@ -2503,7 +2503,7 @@ static string GetRawMsg(lua_State* L, const char* caller, int index)
 int LuaUnsyncedCtrl::SendLuaUIMsg(lua_State* L)
 {
 	const string msg = GetRawMsg(L, __FUNCTION__, 1);
-	std::vector<boost::uint8_t> data(msg.size());
+	std::vector<std::uint8_t> data(msg.size());
 	std::copy(msg.begin(), msg.end(), data.begin());
 	const string mode = luaL_optstring(L, 2, "");
 	unsigned char modeNum = 0;
@@ -2528,7 +2528,7 @@ int LuaUnsyncedCtrl::SendLuaUIMsg(lua_State* L)
 int LuaUnsyncedCtrl::SendLuaGaiaMsg(lua_State* L)
 {
 	const string msg = GetRawMsg(L, __FUNCTION__, 1);
-	std::vector<boost::uint8_t> data(msg.size());
+	std::vector<std::uint8_t> data(msg.size());
 	std::copy(msg.begin(), msg.end(), data.begin());
 	try {
 		clientNet->Send(CBaseNetProtocol::Get().SendLuaMsg(gu->myPlayerNum, LUA_HANDLE_ORDER_GAIA, 0, data));
@@ -2542,7 +2542,7 @@ int LuaUnsyncedCtrl::SendLuaGaiaMsg(lua_State* L)
 int LuaUnsyncedCtrl::SendLuaRulesMsg(lua_State* L)
 {
 	const string msg = GetRawMsg(L, __FUNCTION__, 1);
-	std::vector<boost::uint8_t> data(msg.size());
+	std::vector<std::uint8_t> data(msg.size());
 	std::copy(msg.begin(), msg.end(), data.begin());
 	try {
 		clientNet->Send(CBaseNetProtocol::Get().SendLuaMsg(gu->myPlayerNum, LUA_HANDLE_ORDER_RULES, 0, data));
@@ -2555,7 +2555,8 @@ int LuaUnsyncedCtrl::SendLuaRulesMsg(lua_State* L)
 int LuaUnsyncedCtrl::SendLuaMenuMsg(lua_State* L)
 {
 	const string msg = GetRawMsg(L, __FUNCTION__, 1);
-	luaMenu->RecvLuaMsg(msg, gu->myPlayerNum);
+	if (luaMenu != nullptr)
+		luaMenu->RecvLuaMsg(msg, gu->myPlayerNum);
 	return 0;
 }
 

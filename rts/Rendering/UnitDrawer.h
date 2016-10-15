@@ -101,7 +101,7 @@ public:
 	static void DrawUnitModelBeingBuiltOpaque(const CUnit* unit, bool noLuaCall);
 	// note: make these static?
 	void DrawUnitNoTrans(const CUnit* unit, unsigned int preList, unsigned int postList, bool lodCall, bool noLuaCall);
-	void DrawUnit(const CUnit* unit, unsigned int preList, unsigned int postList, bool lodCall, bool noLuaCall);
+	void DrawUnitTrans(const CUnit* unit, unsigned int preList, unsigned int postList, bool lodCall, bool noLuaCall);
 
 	void PushIndividualOpaqueState(const S3DModel* model, int teamID, bool deferredPass);
 	void PushIndividualAlphaState(const S3DModel* model, int teamID, bool deferredPass);

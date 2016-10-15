@@ -5,9 +5,7 @@
 
 #ifdef WIN32
 
-#include <boost/thread/thread.hpp>
-#include <boost/thread/mutex.hpp>
-#include <boost/thread/condition.hpp>
+#include "System/Threading/SpringThreading.h"
 #include <boost/noncopyable.hpp>
 
 #include <windows.h>
@@ -47,9 +45,9 @@ private:
 
 	volatile bool quitAVIgen;
 
-	boost::thread* AVIThread;
-	boost::mutex AVIMutex;
-	boost::condition AVICondition;
+	spring::thread* AVIThread;
+	spring::mutex AVIMutex;
+	spring::condition_variable_any AVICondition;
 
 
 	std::list<unsigned char*> freeImageBuffers;

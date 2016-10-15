@@ -163,17 +163,7 @@ void AAI::InitAI(IGlobalAICallback* callback, int team)
 	// open log file
 	// this size equals the one used in "AIAICallback::GetValue(AIVAL_LOCATE_FILE_..."
 	char filename[2048];
-	char buffer[500];
-	char team_number[3];
-
-	SNPRINTF(team_number, 3, "%d", team);
-
-	STRCPY(buffer, "");
-	STRCAT(buffer, AILOG_PATH);
-	STRCAT(buffer, "AAI_log_team_");
-	STRCAT(buffer, team_number);
-	STRCAT(buffer, ".txt");
-	ReplaceExtension (buffer, filename, sizeof(filename), ".txt");
+	SNPRINTF(filename, 2048, "%sAAI_log_team_%d.txt", AILOG_PATH, team);
 
 	cb->GetValue(AIVAL_LOCATE_FILE_W, filename);
 

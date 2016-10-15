@@ -10,7 +10,7 @@
 #endif
 #include <string.h>
 #include <stdexcept>
-#include <boost/bind.hpp>
+#include <functional>
 
 /******************************************************************************/
 
@@ -74,7 +74,7 @@ void FileConfigSource::SetStringInternal(const std::string& key, const std::stri
 
 void FileConfigSource::SetString(const string& key, const string& value)
 {
-	ReadModifyWrite(boost::bind(&FileConfigSource::SetStringInternal, this, key, value));
+	ReadModifyWrite(std::bind(&FileConfigSource::SetStringInternal, this, key, value));
 }
 
 void FileConfigSource::DeleteInternal(const string& key)
@@ -86,7 +86,7 @@ void FileConfigSource::DeleteInternal(const string& key)
 
 void FileConfigSource::Delete(const string& key)
 {
-	ReadModifyWrite(boost::bind(&FileConfigSource::DeleteInternal, this, key));
+	ReadModifyWrite(std::bind(&FileConfigSource::DeleteInternal, this, key));
 }
 
 void FileConfigSource::ReadModifyWrite(boost::function<void ()> modify) {

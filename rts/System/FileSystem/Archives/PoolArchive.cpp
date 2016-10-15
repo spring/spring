@@ -16,7 +16,6 @@
 #include "System/Exceptions.h"
 #include "System/Util.h"
 #include "System/Log/ILog.h"
-#include <boost/format.hpp>
 
 
 CPoolArchiveFactory::CPoolArchiveFactory()
@@ -57,7 +56,7 @@ CPoolArchive::CPoolArchive(const std::string& name)
 
 	gzFile in = gzopen(name.c_str(), "rb");
 	if (in == NULL) {
-		throw content_error(boost::str(boost::format("couldn't open %s") % name));
+		throw content_error(std::string("couldn't open ") + name);
 	}
 
 	while (true) {
@@ -117,7 +116,7 @@ unsigned int CPoolArchive::GetCrc32(unsigned int fid)
 }
 
 
-bool CPoolArchive::GetFileImpl(unsigned int fid, std::vector<boost::uint8_t>& buffer)
+bool CPoolArchive::GetFileImpl(unsigned int fid, std::vector<std::uint8_t>& buffer)
 {
 	assert(IsFileId(fid));
 

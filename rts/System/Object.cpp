@@ -21,7 +21,7 @@ CR_REG_METADATA(CObject, (
 	CR_POSTLOAD(PostLoad)
 	))
 
-Threading::AtomicCounterInt64 CObject::cur_sync_id(0);
+std::atomic<std::int64_t> CObject::cur_sync_id(0);
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -120,7 +120,7 @@ void CObject::Serialize(creg::ISerializer* ser)
 		// cur_sync_id needs fixing since it's not serialized
 		// it might not be exactly where we left it, but that's not important
 		// since only order matters
-		cur_sync_id = Threading::AtomicCounterInt64(std::max(sync_id, (boost::int64_t) cur_sync_id));
+		cur_sync_id = std::max(sync_id, (std::int64_t) cur_sync_id);
 	}
 }
 

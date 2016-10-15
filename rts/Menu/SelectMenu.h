@@ -5,7 +5,7 @@
 
 #include "aGui/GuiElement.h"
 #include "Game/GameController.h"
-#include <boost/shared_ptr.hpp>
+#include <memory>
 
 class SelectionWidget;
 class ConnectWindow;
@@ -24,7 +24,7 @@ When everything is selected, it will generate a gamesetup-script and start CPreG
 class SelectMenu : public CGameController, public agui::GuiElement
 {
 public:
-	SelectMenu(boost::shared_ptr<ClientSetup> setup);
+	SelectMenu(std::shared_ptr<ClientSetup> setup);
 	~SelectMenu();
 
 	bool Draw();
@@ -49,7 +49,7 @@ private:
 	void CleanWindow();
 
 private:
-	boost::shared_ptr<ClientSetup> clientSetup;
+	std::shared_ptr<ClientSetup> clientSetup;
 
 	ConnectWindow* conWindow;
 	SelectionWidget* selw;

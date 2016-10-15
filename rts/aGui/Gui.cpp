@@ -3,7 +3,7 @@
 #include "System/Input/InputHandler.h"
 #include "Gui.h"
 
-#include <boost/bind.hpp>
+#include <functional>
 #include <SDL_events.h>
 
 #include "GuiElement.h"
@@ -17,7 +17,7 @@ namespace agui
 Gui::Gui():
 	inputConBlock(inputCon)
 {
-	inputCon = input.AddHandler(boost::bind(&Gui::HandleEvent, this, _1));
+	inputCon = input.AddHandler(std::bind(&Gui::HandleEvent, this, std::placeholders::_1));
 }
 
 void Gui::Draw()

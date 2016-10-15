@@ -17,9 +17,9 @@ struct SRectangle;
 class CSolidObject;
 
 #ifdef QTPFS_ENABLE_THREADED_UPDATE
-namespace boost {
-	class thread;
+namespace spring {
 	class mutex;
+	class thread;
 	class condition_variable;
 };
 #endif
@@ -34,9 +34,9 @@ namespace QTPFS {
 		static void InitStatic();
 
 		unsigned int GetPathFinderType() const { return PFS_TYPE_QTPFS; }
-		boost::uint32_t GetPathCheckSum() const { return pfsCheckSum; }
+		std::uint32_t GetPathCheckSum() const { return pfsCheckSum; }
 
-		boost::int64_t Finalize();
+		std::int64_t Finalize();
 
 		bool PathUpdated(unsigned int pathID);
 
@@ -75,7 +75,7 @@ namespace QTPFS {
 		void ThreadUpdate();
 		void Load();
 
-		boost::uint64_t GetMemFootPrint() const;
+		std::uint64_t GetMemFootPrint() const;
 
 		typedef void (PathManager::*MemberFunc)(
 			unsigned int threadNum,
@@ -86,12 +86,12 @@ namespace QTPFS {
 		typedef std::map<unsigned int, unsigned int>::iterator PathTypeMapIt;
 		typedef std::map<unsigned int, PathSearchTrace::Execution*> PathTraceMap;
 		typedef std::map<unsigned int, PathSearchTrace::Execution*>::iterator PathTraceMapIt;
-		typedef std::map<boost::uint64_t, IPath*> SharedPathMap;
-		typedef std::map<boost::uint64_t, IPath*>::iterator SharedPathMapIt;
+		typedef std::map<std::uint64_t, IPath*> SharedPathMap;
+		typedef std::map<std::uint64_t, IPath*>::iterator SharedPathMapIt;
 		typedef std::list<IPathSearch*> PathSearchList;
 		typedef std::list<IPathSearch*>::iterator PathSearchListIt;
 
-		void SpawnBoostThreads(MemberFunc f, const SRectangle& r);
+		void SpawnSpringThreads(MemberFunc f, const SRectangle& r);
 
 		void InitNodeLayersThreaded(const SRectangle& rect);
 		void UpdateNodeLayersThreaded(const SRectangle& rect);
@@ -137,7 +137,7 @@ namespace QTPFS {
 		bool IsFinalized() const { return (!nodeTrees.empty()); }
 
 
-		std::string GetCacheDirName(boost::uint32_t mapCheckSum, boost::uint32_t modCheckSum) const;
+		std::string GetCacheDirName(std::uint32_t mapCheckSum, std::uint32_t modCheckSum) const;
 		void Serialize(const std::string& cacheFileDir);
 
 		std::vector<NodeLayer> nodeLayers;
@@ -148,7 +148,7 @@ namespace QTPFS {
 		std::map<unsigned int, PathSearchTrace::Execution*> pathTraces;
 
 		// maps "hashes" of executed searches to the found paths
-		std::map<boost::uint64_t, IPath*> sharedPaths;
+		std::map<std::uint64_t, IPath*> sharedPaths;
 
 		std::vector<unsigned int> numCurrExecutedSearches;
 		std::vector<unsigned int> numPrevExecutedSearches;
@@ -161,16 +161,16 @@ namespace QTPFS {
 		unsigned int numPathRequests;
 		unsigned int maxNumLeafNodes;
 
-		boost::uint32_t pfsCheckSum;
+		std::uint32_t pfsCheckSum;
 
 		bool layersInited;
 		bool haveCacheDir;
 
 		#ifdef QTPFS_ENABLE_THREADED_UPDATE
-		boost::thread* updateThread;
-		boost::mutex* mutexThreadUpdate;
-		boost::condition_variable* condThreadUpdate;
-		boost::condition_variable* condThreadUpdated;
+		spring::thread* updateThread;
+		spring::mutex* mutexThreadUpdate;
+		spring::condition_variable* condThreadUpdate;
+		spring::condition_variable* condThreadUpdated;
 		#endif
 	};
 }

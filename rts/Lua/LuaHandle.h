@@ -2,7 +2,7 @@
 
 #ifndef LUA_HANDLE_H
 #define LUA_HANDLE_H
-#include <boost/cstdint.hpp>
+#include <cinttypes>
 
 #include "System/EventClient.h"
 //FIXME#include "LuaArrays.h"
@@ -323,7 +323,7 @@ class CLuaHandle : public CEventClient
 		static void SetDevMode(bool value) { devMode = value; }
 		static bool GetDevMode() { return devMode; }
 
-		static void HandleLuaMsg(int playerID, int script, int mode, const std::vector<boost::uint8_t>& msg);
+		static void HandleLuaMsg(int playerID, int script, int mode, const std::vector<std::uint8_t>& msg);
 
 	protected: // static
 		static bool devMode; // allows real file access

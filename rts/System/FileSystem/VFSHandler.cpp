@@ -212,7 +212,7 @@ const CVFSHandler::FileData* CVFSHandler::GetFileData(const std::string& normali
 }
 
 
-bool CVFSHandler::LoadFile(const std::string& filePath, std::vector<boost::uint8_t>& buffer, Section section)
+bool CVFSHandler::LoadFile(const std::string& filePath, std::vector<std::uint8_t>& buffer, Section section)
 {
 	assert(section < Section::Count);
 

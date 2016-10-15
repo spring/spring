@@ -4,7 +4,7 @@
 #define PATHMANAGER_H
 
 #include <map>
-#include <boost/cstdint.hpp> /* Replace with <stdint.h> if appropriate */
+#include <cinttypes>
 
 #include "Sim/Path/IPathManager.h"
 #include "IPath.h"
@@ -24,9 +24,9 @@ public:
 	~CPathManager();
 
 	unsigned int GetPathFinderType() const override { return PFS_TYPE_DEFAULT; }
-	boost::uint32_t GetPathCheckSum() const override;
+	std::uint32_t GetPathCheckSum() const override;
 
-	boost::int64_t Finalize() override;
+	std::int64_t Finalize() override;
 
 	void Update() override;
 	void UpdatePath(const CSolidObject*, unsigned int) override;

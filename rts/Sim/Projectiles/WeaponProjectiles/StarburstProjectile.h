@@ -15,7 +15,6 @@ class CStarburstProjectile : public CWeaponProjectile
 	CR_DECLARE_SUB(TracerPart)
 
 public:
-	CStarburstProjectile() { }
 	CStarburstProjectile(const ProjectileParams& params);
 
 	void Collision(CUnit* unit) override;
@@ -33,6 +32,8 @@ private:
 	void UpdateTrajectory();
 
 private:
+	CStarburstProjectile() { }
+
 	float3 aimError;
 	float tracking;
 	bool ignoreError;

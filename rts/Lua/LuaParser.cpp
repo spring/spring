@@ -5,7 +5,6 @@
 
 #include <algorithm>
 #include <limits.h>
-#include <boost/regex.hpp>
 
 #include "lib/streflop/streflop_cond.h"
 

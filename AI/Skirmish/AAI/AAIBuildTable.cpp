@@ -2907,23 +2907,6 @@ float AAIBuildTable::GetMaxDamage(int unit_id)
 	return max_damage;
 }
 
-// declaration is in aidef.h
-void ReplaceExtension(const char *n, char *dst, int s, const char *ext)
-{
-	unsigned int l = strlen (n);
-
-	unsigned int a=l-1;
-	while (n[a] && n[a]!='.' && a>0)
-		a--;
-
-	strncpy (dst, "", s);
-	if (a>s-sizeof("")) a=s-sizeof("");
-	memcpy (&dst [sizeof ("")-1], n, a);
-	dst[a+sizeof("")]=0;
-
-	strncat (dst, ext, s);
-}
-
 float AAIBuildTable::GetFactoryRating(int def_id)
 {
 	// check if value already chached

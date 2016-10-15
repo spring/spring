@@ -87,7 +87,7 @@ namespace QTPFS {
 		virtual bool SharedFinalize(const IPath* srcPath, IPath* dstPath) { return false; }
 		virtual PathSearchTrace::Execution* GetExecutionTrace() { return NULL; }
 
-		virtual const boost::uint64_t GetHash(boost::uint64_t N, boost::uint32_t k) const = 0;
+		virtual const std::uint64_t GetHash(std::uint64_t N, std::uint32_t k) const = 0;
 
 		void SetID(unsigned int n) { searchID = n; }
 		void SetTeam(unsigned int n) { searchTeam = n; }
@@ -137,7 +137,7 @@ namespace QTPFS {
 		bool SharedFinalize(const IPath* srcPath, IPath* dstPath);
 		PathSearchTrace::Execution* GetExecutionTrace() { return searchExec; }
 
-		const boost::uint64_t GetHash(boost::uint64_t N, boost::uint32_t k) const;
+		const std::uint64_t GetHash(std::uint64_t N, std::uint32_t k) const;
 
 		static void InitGlobalQueue(unsigned int n) { openNodes.reserve(n); }
 		static void FreeGlobalQueue() { openNodes.clear(); }

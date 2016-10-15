@@ -41,7 +41,7 @@ public:
 	CVirtualFile(int fid, const std::string& name);
 	virtual ~CVirtualFile();
 
-	std::vector<boost::uint8_t> buffer;
+	std::vector<std::uint8_t> buffer;
 
 	const std::string& GetName() const
 	{ return name; }
@@ -67,7 +67,7 @@ public:
 
 	virtual bool IsOpen();
 	virtual unsigned int NumFiles() const;
-	virtual bool GetFile( unsigned int fid, std::vector<boost::uint8_t>& buffer );
+	virtual bool GetFile( unsigned int fid, std::vector<std::uint8_t>& buffer );
 	virtual void FileInfo( unsigned int fid, std::string& name, int& size ) const;
 
 private:
@@ -87,7 +87,7 @@ public:
 	CVirtualFile* AddFile(const std::string& file);
 
 	unsigned int NumFiles() const;
-	bool GetFile( unsigned int fid, std::vector<boost::uint8_t>& buffer );
+	bool GetFile( unsigned int fid, std::vector<std::uint8_t>& buffer );
 	void FileInfo( unsigned int fid, std::string& name, int& size ) const;
 
 	const std::string& GetFileName() const

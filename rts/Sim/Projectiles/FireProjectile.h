@@ -12,7 +12,6 @@ class CFireProjectile : public CProjectile
 	CR_DECLARE_DERIVED(CFireProjectile)
 	CR_DECLARE_SUB(SubParticle)
 public:
-	CFireProjectile() { }
 	CFireProjectile(
 		const float3& pos,
 		const float3& spd,
@@ -53,6 +52,10 @@ public:
 
 	part_list_type subParticles;
 	part_list_type subParticles2;
+
+private:
+	CFireProjectile() { }
+
 };
 
 #endif // FIRE_PROJECTILE_H

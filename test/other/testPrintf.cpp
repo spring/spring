@@ -2,6 +2,7 @@
 
 #include "System/Log/ILog.h"
 #include "System/TimeProfiler.h"
+#include "System/Misc/SpringTime.h"
 #include "lib/streflop/streflop_cond.h"
 #include "lib/lua/include/LuaUser.h"
 
@@ -15,6 +16,7 @@
 
 #define BOOST_TEST_MODULE Printf
 #include <boost/test/unit_test.hpp>
+BOOST_GLOBAL_FIXTURE(InitSpringTime);
 
 
 static char s[128];
@@ -54,6 +56,7 @@ static const std::vector<std::pair<float, const char*>> testNumbers = {
 	{1000000000, "1000000000"},
 	{10000000000, "1.0e+10"},
 	{1e22, "1.0e+22"}, // larger than max int64!
+	{9999968252998916767744.0f, "1.0e+22"}, // carry in scientific notation
 	{std::pow(2, 24), "16777216"},
 	{std::numeric_limits<int>::max(), "2147483648"},
 	{std::numeric_limits<float>::max(), "3.4028e+38"},

@@ -4,7 +4,7 @@
 
 #include <vector>
 #include <iomanip>
-#include <boost/thread.hpp>
+#include <functional>
 
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GlobalRendering.h"
@@ -14,6 +14,7 @@
 #include "System/FileSystem/FileSystem.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/Platform/Threading.h"
+#include "System/Threading/SpringThreading.h"
 
 #undef CreateDirectory
 
@@ -21,7 +22,7 @@ CONFIG(int, ScreenshotCounter).defaultValue(0);
 
 struct FunctionArgs
 {
-	boost::uint8_t* buf;
+	std::uint8_t* buf;
 	std::string filename;
 	int x;
 	int y;
@@ -43,7 +44,7 @@ public:
 	void AddTask(FunctionArgs arg)
 	{
 		{
-			boost::mutex::scoped_lock mylock(myMutex);
+			std::lock_guard<spring::mutex> mylock(myMutex);
 			tasks.push_back(arg);
 			Update();
 		}
@@ -51,7 +52,7 @@ public:
 		if (!myThread)
 		{
 			finished = false;
-			myThread = new boost::thread(boost::bind(&SaverThread::SaveStuff, this));
+			myThread = new spring::thread(std::bind(&SaverThread::SaveStuff, this));
 		}
 	};
 
@@ -69,7 +70,7 @@ public:
 private:
 	bool GetTask(FunctionArgs& args)
 	{
-		boost::mutex::scoped_lock mylock(myMutex);
+		std::lock_guard<spring::mutex> mylock(myMutex);
 		if (!tasks.empty())
 		{
 			args = tasks.front();
@@ -86,7 +87,7 @@ private:
 	void SaveStuff()
 	{
 		Threading::SetThreadName("screenshot");
-		
+
 		FunctionArgs args;
 		while (GetTask(args))
 		{
@@ -99,8 +100,8 @@ private:
 		finished = true;
 	};
 
-	boost::mutex myMutex;
-	boost::thread* myThread;
+	spring::mutex myMutex;
+	spring::thread* myThread;
 	volatile bool finished;
 	std::list<FunctionArgs> tasks;
 };
@@ -134,7 +135,7 @@ void TakeScreenshot(std::string type)
 			}
 		}
 
-		args.buf = new boost::uint8_t[args.x * args.y * 4];
+		args.buf = new std::uint8_t[args.x * args.y * 4];
 		glReadPixels(0, 0, args.x, args.y, GL_RGBA, GL_UNSIGNED_BYTE, args.buf);
 		screenshotThread.AddTask(args);
 	}

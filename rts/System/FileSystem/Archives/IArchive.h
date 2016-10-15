@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 #include <map>
-#include <boost/cstdint.hpp>
+#include <cinttypes>
 
 /**
  * @brief Abstraction of different archive types
@@ -26,7 +26,7 @@ public:
 
 	virtual bool IsOpen() = 0;
 	const std::string& GetArchiveName() const;
-	
+
 	/**
 	 * @return The amount of files in the archive, does not change during
 	 * lifetime
@@ -59,9 +59,9 @@ public:
 	 *   of the file
 	 * @return true if the file was found, and its contents have been
 	 *   successfully read into buffer
-	 * @see GetFile(unsigned int fid, std::vector<boost::uint8_t>& buffer)
+	 * @see GetFile(unsigned int fid, std::vector<std::uint8_t>& buffer)
 	 */
-	virtual bool GetFile(unsigned int fid, std::vector<boost::uint8_t>& buffer) = 0;
+	virtual bool GetFile(unsigned int fid, std::vector<std::uint8_t>& buffer) = 0;
 	/**
 	 * Fetches the content of a file by its name.
 	 * @param name VFS path to the file, for example "maps/myMap.smf"
@@ -69,9 +69,9 @@ public:
 	 *   of the file
 	 * @return true if the file was found, and its contents have been
 	 *   successfully read into buffer
-	 * @see GetFile(unsigned int fid, std::vector<boost::uint8_t>& buffer)
+	 * @see GetFile(unsigned int fid, std::vector<std::uint8_t>& buffer)
 	 */
-	bool GetFile(const std::string& name, std::vector<boost::uint8_t>& buffer);
+	bool GetFile(const std::string& name, std::vector<std::uint8_t>& buffer);
 	/**
 	 * Fetches the name and size in bytes of a file by its ID.
 	 */

@@ -5,8 +5,7 @@
 #include <limits.h>
 #include <stdexcept>
 #include <sstream>
-
-#include <boost/scoped_array.hpp>
+#include <vector>
 
 #include "tdf_grammar.h"
 #include "System/TdfParser.h"
@@ -206,10 +205,10 @@ void TdfParser::LoadFile(std::string const& filename)
 
 	const size_t fileBuf_size = file.FileSize();
 	//char* fileBuf = new char[fileBuf_size];
-	boost::scoped_array<char> fileBuf(new char[fileBuf_size]);
+	std::vector<char> fileBuf(fileBuf_size);
 
-	file.Read(fileBuf.get(), file.FileSize());
-	parse_buffer(fileBuf.get(), fileBuf_size);
+	file.Read(fileBuf.data(), file.FileSize());
+	parse_buffer(fileBuf.data(), fileBuf_size);
 
 	//delete[] fileBuf;
 }

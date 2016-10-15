@@ -364,9 +364,9 @@ endif(THREADPOOL)
 if(NOT MSVC)
 	### SigNan
 	option(DEBUG_SIGNAL_NANS "Enable NaN-Signaling" ${DEBUG_BUILD})
-	if (DEBUG_SIGNAL_NANS)
+	if (DEBUG_SIGNAL_NANS AND CMAKE_COMPILER_IS_GNUCXX)
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsignaling-nans")
-	endif(DEBUG_SIGNAL_NANS)
+	endif()
 
 
 	### CompileTime Warnings
@@ -399,6 +399,9 @@ endif()
 add_definitions(-DSTREFLOP_SSE) # would break AI compiling, but is undefined in ./AI/CMakeLists.txt
 
 
+### Asio
+add_definitions(-DASIO_STANDALONE)
+
 ### compiler specific flags
 set(CXX_FLAGS_DEBUG_ADDITIONAL "")
 if    ($ENV{CXX} MATCHES "icpc")
@@ -408,7 +411,7 @@ if    ($ENV{CXX} MATCHES "icpc")
 	set(CXX_FLAGS_DEBUG_ADDITIONAL "-g -debug full")
 elseif (CMAKE_COMPILER_IS_GNUCXX)
 	if    (UNIX)
-		CHECK_AND_ADD_FLAGS(CMAKE_CXX_FLAGS "-fdiagnostics-color=always")
+		CHECK_AND_ADD_FLAGS(CMAKE_CXX_FLAGS "-fdiagnostics-color=auto")
 	endif (UNIX)
 
 	if    (MARCH_FLAG)
@@ -476,6 +479,7 @@ else  (MSVC)
 
 	if     (MINGW)
 		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static -static-libgcc -static-libstdc++ -Wl,--enable-auto-import")
+		set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -static -static-libgcc -static-libstdc++ -Wl,--enable-auto-import")
 		if    (BUILD_BITS EQUAL 32)
 			# Increase memory limit from 2GB to 3GB on 32bit Windows and 2GB->4GB on 64bit Windows (assuming spring.exe is 32bit)
 			# http://msdn.microsoft.com/en-us/library/windows/desktop/aa366778(v=vs.85).aspx

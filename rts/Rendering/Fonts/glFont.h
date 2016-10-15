@@ -11,7 +11,7 @@
 
 #include "Rendering/GL/VertexArray.h"
 #include "System/float4.h"
-#include "System/Threading/SpringMutex.h"
+#include "System/Threading/SpringThreading.h"
 
 #undef GetCharWidth // winapi.h
 

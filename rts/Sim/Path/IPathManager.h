@@ -4,7 +4,7 @@
 #define I_PATH_MANAGER_H
 
 #include <vector>
-#include <boost/cstdint.hpp> /* Replace with <stdint.h> if appropriate */
+#include <cinttypes>
 
 #include "PFSTypes.h"
 #include "System/type2.h"
@@ -21,9 +21,9 @@ public:
 	virtual ~IPathManager() {}
 
 	virtual unsigned int GetPathFinderType() const = 0;
-	virtual boost::uint32_t GetPathCheckSum() const = 0;
+	virtual std::uint32_t GetPathCheckSum() const = 0;
 
-	virtual boost::int64_t Finalize() = 0;
+	virtual std::int64_t Finalize() = 0;
 
 	/**
 	 * returns if a path was changed after RequestPath returned its pathID

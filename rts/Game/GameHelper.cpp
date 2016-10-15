@@ -1147,7 +1147,7 @@ CGameHelper::BuildSquareStatus CGameHelper::TestBuildSquare(
 	const MoveDef* moveDef,
 	CFeature*& feature,
 	int allyteam,
-	boost::uint16_t mask,
+	std::uint16_t mask,
 	bool synced
 ) {
 	assert(pos.IsInBounds());

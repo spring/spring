@@ -2,6 +2,7 @@
 
 #include "SoundItem.h"
 
+#include <algorithm>
 #include <sstream>
 #include <stdexcept>
 #include <cfloat>
@@ -12,7 +13,7 @@
 namespace
 {
 	UnsyncedRNG randnum; // no need for strong randomness here, so default seed is ok
-	
+
 	template <typename T>
 	inline bool MapEntryValExtract(const std::map<std::string, std::string>& map, const std::string& key, T& t)
 	{
@@ -34,7 +35,7 @@ namespace
 	}
 }
 
-SoundItem::SoundItem(boost::shared_ptr<SoundBuffer> _buffer, const std::map<std::string, std::string>& items)
+SoundItem::SoundItem(std::shared_ptr<SoundBuffer> _buffer, const std::map<std::string, std::string>& items)
 	: buffer(_buffer)
 	, gain(1.0)
 	, gainMod(0)

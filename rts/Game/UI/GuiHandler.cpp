@@ -1391,10 +1391,10 @@ bool CGuiHandler::SetActiveCommand(int cmdIndex, int button,
 	// setup the mouse and key states
 	const bool  prevLMB   = mouse->buttons[SDL_BUTTON_LEFT].pressed;
 	const bool  prevRMB   = mouse->buttons[SDL_BUTTON_RIGHT].pressed;
-	const boost::uint8_t prevAlt   = KeyInput::GetKeyModState(KMOD_ALT);
-	const boost::uint8_t prevCtrl  = KeyInput::GetKeyModState(KMOD_CTRL);
-	const boost::uint8_t prevMeta  = KeyInput::GetKeyModState(KMOD_GUI);
-	const boost::uint8_t prevShift = KeyInput::GetKeyModState(KMOD_SHIFT);
+	const std::uint8_t prevAlt   = KeyInput::GetKeyModState(KMOD_ALT);
+	const std::uint8_t prevCtrl  = KeyInput::GetKeyModState(KMOD_CTRL);
+	const std::uint8_t prevMeta  = KeyInput::GetKeyModState(KMOD_GUI);
+	const std::uint8_t prevShift = KeyInput::GetKeyModState(KMOD_SHIFT);
 
 	mouse->buttons[SDL_BUTTON_LEFT].pressed  = leftMouseButton;
 	mouse->buttons[SDL_BUTTON_RIGHT].pressed = rightMouseButton;

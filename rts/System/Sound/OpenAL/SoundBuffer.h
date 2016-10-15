@@ -5,15 +5,15 @@
 
 #include <al.h>
 #include <boost/noncopyable.hpp>
-#include <boost/shared_ptr.hpp>
+#include <memory>
 #include <string>
 #include <map>
 #include <vector>
-#include <boost/cstdint.hpp>
+#include <cinttypes>
 
 /**
  * @brief A buffer holding a sound
- * 
+ *
  * One of this will be created for each wav-file used.
  * They are loaded on demand and unloaded when game ends.
  * They can be shared among multiple SoundItem
@@ -26,8 +26,8 @@ public:
 	SoundBuffer();
 	~SoundBuffer();
 
-	bool LoadWAV(const std::string& file, std::vector<boost::uint8_t> buffer);
-	bool LoadVorbis(const std::string& file, std::vector<boost::uint8_t> buffer);
+	bool LoadWAV(const std::string& file, std::vector<std::uint8_t> buffer);
+	bool LoadVorbis(const std::string& file, std::vector<std::uint8_t> buffer);
 
 	const std::string& GetFilename() const
 	{
@@ -48,29 +48,29 @@ public:
 	{
 		return length;
 	};
-	
+
 	int BufferSize() const;
-	
+
 	static void Initialise();
 	static void Deinitialise();
-	
+
 	static size_t GetId(const std::string& name);
-	static boost::shared_ptr<SoundBuffer> GetById(const size_t id);
-	
+	static std::shared_ptr<SoundBuffer> GetById(const size_t id);
+
 	static size_t Count();
 	static size_t AllocedSize();
-	
-	static size_t Insert(boost::shared_ptr<SoundBuffer> buffer);
+
+	static size_t Insert(std::shared_ptr<SoundBuffer> buffer);
 private:
-	bool AlGenBuffer(const std::string& file, ALenum format, const boost::uint8_t* data, size_t datalength, int rate);
+	bool AlGenBuffer(const std::string& file, ALenum format, const std::uint8_t* data, size_t datalength, int rate);
 
 	std::string filename;
 	ALuint id;
 	ALuint channels;
 	ALfloat length;
-	
+
 	typedef std::map<std::string, size_t> bufferMapT;
-	typedef std::vector< boost::shared_ptr<SoundBuffer> > bufferVecT;
+	typedef std::vector< std::shared_ptr<SoundBuffer> > bufferVecT;
 	static bufferMapT bufferMap; // filename, index into Buffers
 	static bufferVecT buffers;
 };

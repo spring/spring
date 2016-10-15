@@ -2,13 +2,9 @@
 
 #include "CFontTexture.h"
 #include "FontLogSection.h"
-#include "LanguageBlocksDefs.h"
 
-#include <mutex>
 #include <string>
 #include <cstring> // for memset, memcpy
-
-#include <boost/thread/recursive_mutex.hpp>
 
 #ifndef HEADLESS
 	#include <ft2build.h>
@@ -17,6 +13,7 @@
 		#include <fontconfig/fontconfig.h>
 		#include <fontconfig/fcfreetype.h>
 	#endif
+	#include "LanguageBlocksDefs.h"
 #endif // HEADLESS
 
 #include "Game/Camera.h"
@@ -26,6 +23,7 @@
 #include "System/Log/ILog.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
+#include "System/Threading/SpringThreading.h"
 #include "System/Exceptions.h"
 #include "System/Util.h"
 #include "System/float4.h"
@@ -87,7 +85,7 @@ struct FontFace {
 static std::unordered_set<CFontTexture*> allFonts;
 static std::unordered_map<std::string, std::weak_ptr<FontFace>> fontCache;
 static std::unordered_map<std::string, std::weak_ptr<SP_Byte>> fontMemCache;
-static boost::recursive_mutex m;
+static spring::recursive_mutex m;
 
 
 
@@ -123,7 +121,7 @@ public:
 			singleton.reset(new FtLibraryHandler());
 		});
 #else
-		std::lock_guard<boost::recursive_mutex> lk(m);
+		std::lock_guard<spring::recursive_mutex> lk(m);
 		if (flag) {
 			singleton.reset(new FtLibraryHandler());
 			flag = false;
@@ -174,7 +172,7 @@ static inline uint32_t GetKerningHash(char32_t lchar, char32_t rchar)
 #ifndef HEADLESS
 static std::shared_ptr<FontFace> GetFontFace(const std::string& fontfile, const int size)
 {
-	std::lock_guard<boost::recursive_mutex> lk(m);
+	std::lock_guard<spring::recursive_mutex> lk(m);
 
 	//TODO add support to load fonts by name (needs fontconfig)
 
@@ -409,7 +407,7 @@ CFontTexture::~CFontTexture()
 
 
 void CFontTexture::Update() {
-	std::lock_guard<boost::recursive_mutex> lk(m);
+	std::lock_guard<spring::recursive_mutex> lk(m);
 	for (auto& font: allFonts) {
 		font->UpdateTexture();
 	}
@@ -466,7 +464,7 @@ float CFontTexture::GetKerning(const GlyphInfo& lgl, const GlyphInfo& rgl)
 
 void CFontTexture::LoadBlock(char32_t start, char32_t end)
 {
-	std::lock_guard<boost::recursive_mutex> lk(m);
+	std::lock_guard<spring::recursive_mutex> lk(m);
 
 	// generate list of wnated glyphs
 	std::list<char32_t> map;
@@ -655,7 +653,7 @@ void CFontTexture::CreateTexture(const int width, const int height)
 void CFontTexture::UpdateTexture()
 {
 #ifndef HEADLESS
-	std::lock_guard<boost::recursive_mutex> lk(m);
+	std::lock_guard<spring::recursive_mutex> lk(m);
 	if (curTextureUpdate == lastTextureUpdate) return;
 	lastTextureUpdate = curTextureUpdate;
 	texWidth  = wantedTexWidth;

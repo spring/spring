@@ -70,7 +70,6 @@ static inline auto parallel_reduce(F&& f, G&& g) -> typename std::result_of<F()>
 // mingw is missing c++11 thread support atm, so for KISS always prefer boost atm
 #include <boost/thread/future.hpp>
 #undef gt
-#include <boost/chrono/include.hpp>
 #include <memory>
 
 #ifdef UNITSYNC
@@ -92,9 +91,9 @@ public:
 	virtual int RemainingTasks() const = 0;
 
 	template< class Rep, class Period >
-	bool wait_for(const boost::chrono::duration<Rep, Period>& rel_time) const {
-		const auto end = boost::chrono::high_resolution_clock::now() + rel_time;
-		while (!IsFinished() && (boost::chrono::high_resolution_clock::now() < end)) {
+	bool wait_for(const std::chrono::duration<Rep, Period>& rel_time) const {
+		const auto end = std::chrono::high_resolution_clock::now() + rel_time;
+		while (!IsFinished() && (std::chrono::high_resolution_clock::now() < end)) {
 		}
 		return IsFinished();
 	}
@@ -233,8 +232,8 @@ public:
 	std::vector<std::function<void()>> tasks;
 	std::vector<boost::unique_future<return_type>> results;
 
-	boost::chrono::time_point<boost::chrono::high_resolution_clock> start; // use for latency profiling!
-	boost::chrono::nanoseconds latency;
+	std::chrono::time_point<std::chrono::high_resolution_clock> start; // use for latency profiling!
+	std::chrono::nanoseconds latency;
 };
 
 

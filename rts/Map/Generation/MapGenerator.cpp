@@ -11,6 +11,7 @@
 
 #include <boost/algorithm/string.hpp>
 #include <fstream>
+#include <sstream>
 
 CMapGenerator::CMapGenerator(const CGameSetup* setup) : setup(setup)
 {
@@ -49,12 +50,12 @@ void CMapGenerator::Generate()
 
 void CMapGenerator::AppendToBuffer(CVirtualFile* file, const void* data, int size)
 {
-	file->buffer.insert(file->buffer.end(), (boost::uint8_t*)data, (boost::uint8_t*)data + size);
+	file->buffer.insert(file->buffer.end(), (std::uint8_t*)data, (std::uint8_t*)data + size);
 }
 
 void CMapGenerator::SetToBuffer(CVirtualFile* file, const void* data, int size, int position)
 {
-	std::copy((boost::uint8_t*)data, (boost::uint8_t*)data + size, file->buffer.begin() + position);
+	std::copy((std::uint8_t*)data, (std::uint8_t*)data + size, file->buffer.begin() + position);
 }
 
 void CMapGenerator::GenerateSMF(CVirtualArchive* archive)
@@ -160,7 +161,7 @@ void CMapGenerator::GenerateSMF(CVirtualArchive* archive)
 	memset(metalmapPtr, 0, metalmapSize);
 
 	//--- Write to final buffer ---
-	//std::vector<boost::uint8_t>& smb = fileSMF->buffer;
+	//std::vector<std::uint8_t>& smb = fileSMF->buffer;
 	AppendToBuffer(fileSMF, smfHeader);
 
 	AppendToBuffer(fileSMF, vegHeader);

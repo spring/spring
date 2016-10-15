@@ -20,7 +20,7 @@ public:
 
 	void ReadMinimap(void* data);
 	/// @return mip size
-	int ReadMinimap(std::vector<boost::uint8_t>& data, unsigned miplevel);
+	int ReadMinimap(std::vector<std::uint8_t>& data, unsigned miplevel);
 	void ReadHeightmap(unsigned short* heightmap);
 	void ReadHeightmap(float* sHeightMap, float* uHeightMap, float base, float mod);
 	void ReadFeatureInfo();

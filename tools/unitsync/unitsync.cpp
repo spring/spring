@@ -4,6 +4,7 @@
 #include "unitsync_api.h"
 
 #include <algorithm>
+#include <cstring>
 #include <string>
 #include <vector>
 #include <set>
@@ -2276,7 +2277,7 @@ EXPORT(int) ReadArchiveFile(int archive, int file, unsigned char* buffer, int nu
 		std::vector<uint8_t> buf;
 		if (!a->GetFile(file, buf))
 			return -1;
-		std::memcpy(buffer, &buf[0], std::min(buf.size(), (size_t)numBytes));
+		memcpy(buffer, &buf[0], std::min(buf.size(), (size_t)numBytes));
 		return std::min(buf.size(), (size_t)numBytes);
 	}
 	UNITSYNC_CATCH_BLOCKS;

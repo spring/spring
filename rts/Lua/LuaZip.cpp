@@ -343,7 +343,7 @@ int LuaZipFileReader::meta_open(lua_State* L)
 		luaL_error(L, "zip not open");
 	}
 
-	std::vector<boost::uint8_t> buf;
+	std::vector<std::uint8_t> buf;
 	const bool result = f->archive->GetFile(name, buf);
 
 	f->stream = new std::stringstream(std::string((char*) &*buf.begin(), buf.size()), std::ios_base::in);

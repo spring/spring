@@ -31,13 +31,13 @@ class CDirArchive : public IArchive
 public:
 	CDirArchive(const std::string& archiveName);
 	virtual ~CDirArchive();
-	
+
 	virtual bool IsOpen();
-	
+
 	virtual unsigned int NumFiles() const;
-	virtual bool GetFile(unsigned int fid, std::vector<boost::uint8_t>& buffer);
+	virtual bool GetFile(unsigned int fid, std::vector<std::uint8_t>& buffer);
 	virtual void FileInfo(unsigned int fid, std::string& name, int& size) const;
-	
+
 private:
 	/// "ExampleArchive.sdd/"
 	std::string dirName;

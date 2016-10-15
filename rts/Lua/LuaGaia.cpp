@@ -2,8 +2,6 @@
 
 
 #include <set>
-#include <mutex>
-#include <boost/thread/mutex.hpp>
 
 #include "LuaGaia.h"
 
@@ -25,6 +23,7 @@
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/Util.h"
+#include "System/Threading/SpringThreading.h"
 
 
 CLuaGaia* luaGaia = NULL;
@@ -36,7 +35,7 @@ static const char* LuaGaiaUnsyncedFilename = "LuaGaia/draw.lua";
 /******************************************************************************/
 /******************************************************************************/
 
-static boost::mutex m_singleton;
+static spring::mutex m_singleton;
 
 DECL_LOAD_HANDLER(CLuaGaia, luaGaia)
 DECL_FREE_HANDLER(CLuaGaia, luaGaia)

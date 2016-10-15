@@ -3,11 +3,9 @@
 #include "System/Net/UDPListener.h"
 #include "System/Net/UDPConnection.h"
 
-#include <boost/bind.hpp>
 #include <boost/format.hpp>
 #include <boost/version.hpp>
-#include <boost/shared_ptr.hpp>
-#include <boost/thread/thread.hpp>
+#include <functional>
 #include <deque>
 #if defined DEDICATED || defined DEBUG
 	#include <iostream>
@@ -55,6 +53,7 @@
 #include "System/Log/ILog.h"
 #include "System/Platform/errorhandler.h"
 #include "System/Platform/Threading.h"
+#include "System/Threading/SpringThreading.h"
 
 #ifndef DEDICATED
 #include "lib/luasocket/src/restrictions.h"
@@ -131,9 +130,9 @@ std::set<std::string> CGameServer::commandBlacklist;
 CGameServer* gameServer = NULL;
 
 CGameServer::CGameServer(
-	const boost::shared_ptr<const ClientSetup> newClientSetup,
-	const boost::shared_ptr<const    GameData> newGameData,
-	const boost::shared_ptr<const  CGameSetup> newGameSetup
+	const std::shared_ptr<const ClientSetup> newClientSetup,
+	const std::shared_ptr<const    GameData> newGameData,
+	const std::shared_ptr<const  CGameSetup> newGameSetup
 )
 : quitServer(false)
 , serverFrameNum(-1)
@@ -283,7 +282,7 @@ void CGameServer::Initialize()
 	linkMinPacketSize = globalConfig->linkIncomingMaxPacketRate > 0 ? (globalConfig->linkIncomingSustainedBandwidth / globalConfig->linkIncomingMaxPacketRate) : 1;
 	lastBandwidthUpdate = spring_gettime();
 
-	thread = new boost::thread(boost::bind<void, CGameServer, CGameServer*>(&CGameServer::UpdateLoop, this));
+	thread = new spring::thread(std::bind(&CGameServer::UpdateLoop, this));
 
 #ifdef STREFLOP_H
 	// Something in CGameServer::CGameServer borks the FPU control word
@@ -301,7 +300,7 @@ void CGameServer::Initialize()
 
 void CGameServer::PostLoad(int newServerFrameNum)
 {
-	Threading::RecursiveScopedLock scoped_lock(gameServerMutex);
+	std::lock_guard<spring::recursive_mutex> scoped_lock(gameServerMutex);
 	serverFrameNum = newServerFrameNum;
 
 	gameHasStarted = !PreSimFrame();
@@ -313,10 +312,10 @@ void CGameServer::PostLoad(int newServerFrameNum)
 }
 
 
-void CGameServer::Reload(const boost::shared_ptr<const CGameSetup> newGameSetup)
+void CGameServer::Reload(const std::shared_ptr<const CGameSetup> newGameSetup)
 {
-	const boost::shared_ptr<const ClientSetup> clientSetup = gameServer->GetClientSetup();
-	const boost::shared_ptr<const    GameData>    gameData = gameServer->GetGameData();
+	const std::shared_ptr<const ClientSetup> clientSetup = gameServer->GetClientSetup();
+	const std::shared_ptr<const    GameData>    gameData = gameServer->GetGameData();
 
 	delete gameServer;
 
@@ -381,10 +380,10 @@ void CGameServer::StripGameSetupText(const GameData* newGameData)
 
 void CGameServer::AddLocalClient(const std::string& myName, const std::string& myVersion)
 {
-	Threading::RecursiveScopedLock scoped_lock(gameServerMutex);
+	std::lock_guard<spring::recursive_mutex> scoped_lock(gameServerMutex);
 	assert(!HasLocalClient());
 
-	localClientNumber = BindConnection(myName, "", myVersion, true, boost::shared_ptr<netcode::CConnection>(new netcode::CLocalConnection()));
+	localClientNumber = BindConnection(myName, "", myVersion, true, std::shared_ptr<netcode::CConnection>(new netcode::CLocalConnection()));
 }
 
 void CGameServer::AddAutohostInterface(const std::string& autohostIP, const int autohostPort)
@@ -430,7 +429,7 @@ void CGameServer::SkipTo(int targetFrameNum)
 
 	CommandMessage startMsg(str(format("skip start %d") %targetFrameNum), SERVER_PLAYER);
 	CommandMessage endMsg("skip end", SERVER_PLAYER);
-	Broadcast(boost::shared_ptr<const netcode::RawPacket>(startMsg.Pack()));
+	Broadcast(std::shared_ptr<const netcode::RawPacket>(startMsg.Pack()));
 
 	// fast-read and send demo data
 	//
@@ -447,7 +446,7 @@ void CGameServer::SkipTo(int targetFrameNum)
 		UDPNet->Update();
 	}
 
-	Broadcast(boost::shared_ptr<const netcode::RawPacket>(endMsg.Pack()));
+	Broadcast(std::shared_ptr<const netcode::RawPacket>(endMsg.Pack()));
 
 	if (UDPNet) {
 		UDPNet->Update();
@@ -480,7 +479,7 @@ bool CGameServer::SendDemoData(int targetFrameNum)
 
 	// get all packets from the stream up to <modGameTime>
 	while ((buf = demoReader->GetData(modGameTime))) {
-		boost::shared_ptr<const RawPacket> rpkt(buf);
+		std::shared_ptr<const RawPacket> rpkt(buf);
 
 		if (buf->length <= 0) {
 			Message(str(format("Warning: Discarding zero size packet in demo")));
@@ -567,7 +566,7 @@ bool CGameServer::SendDemoData(int targetFrameNum)
 	return ret;
 }
 
-void CGameServer::Broadcast(boost::shared_ptr<const netcode::RawPacket> packet)
+void CGameServer::Broadcast(std::shared_ptr<const netcode::RawPacket> packet)
 {
 	for (GameParticipant& p: players) {
 		p.SendData(packet);
@@ -956,9 +955,9 @@ static int countNumSkirmishAIsInTeam(const std::map<unsigned char, GameSkirmishA
 }
 
 
-void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<const netcode::RawPacket> packet)
+void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const netcode::RawPacket> packet)
 {
-	const boost::uint8_t* inbuf = packet->data;
+	const std::uint8_t* inbuf = packet->data;
 	const unsigned a = playerNum;
 	unsigned msgCode = (unsigned) inbuf[0];
 
@@ -1041,7 +1040,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 
 		case NETMSG_PATH_CHECKSUM: {
 			const unsigned char playerNum = inbuf[1];
-			const boost::uint32_t playerCheckSum = *(boost::uint32_t*) &inbuf[2];
+			const std::uint32_t playerCheckSum = *(std::uint32_t*) &inbuf[2];
 			if (playerNum != a) {
 				Message(str(format(WrongPlayer) %msgCode %a %playerNum));
 				break;
@@ -1717,8 +1716,8 @@ void CGameServer::ProcessPacket(const unsigned playerNum, boost::shared_ptr<cons
 void CGameServer::HandleConnectionAttempts()
 {
 	while (UDPNet && UDPNet->HasIncomingConnections()) {
-		boost::shared_ptr<netcode::UDPConnection> prev = UDPNet->PreviewConnection().lock();
-		boost::shared_ptr<const RawPacket> packet = prev->GetData();
+		std::shared_ptr<netcode::UDPConnection> prev = UDPNet->PreviewConnection().lock();
+		std::shared_ptr<const RawPacket> packet = prev->GetData();
 
 		if (!packet) {
 			UDPNet->RejectConnection();
@@ -1775,7 +1774,7 @@ void CGameServer::ServerReadNet()
 		lastBandwidthUpdate = spring_gettime();
 
 	for (GameParticipant& player: players) {
-		boost::shared_ptr<netcode::CConnection>& plink = player.link;
+		std::shared_ptr<netcode::CConnection>& plink = player.link;
 		if (!plink)
 			continue; // player not connected
 		if (plink->CheckTimeout(0, !gameHasStarted)) {
@@ -1788,7 +1787,7 @@ void CGameServer::ServerReadNet()
 		}
 
 		std::map<unsigned char, GameParticipant::PlayerLinkData>& pld = player.linkData;
-		boost::shared_ptr<const RawPacket> packet;
+		std::shared_ptr<const RawPacket> packet;
 		while ((packet = plink->GetData())) {  // relay all the packets to separate connections for the player and AIs
 			unsigned char aiID = MAX_AIS;
 			int cID = -1;
@@ -1806,14 +1805,14 @@ void CGameServer::ServerReadNet()
 
 		for (std::map<unsigned char, GameParticipant::PlayerLinkData>::iterator lit = pld.begin(); lit != pld.end(); ++lit) {
 			int bandwidthUsage = lit->second.bandwidthUsage;
-			boost::shared_ptr<netcode::CConnection>& link = lit->second.link;
+			std::shared_ptr<netcode::CConnection>& link = lit->second.link;
 
 			bool bwLimitWasReached = (globalConfig->linkIncomingPeakBandwidth > 0 && bandwidthUsage > globalConfig->linkIncomingPeakBandwidth);
 			if (updateBandwidth >= 1.0f && globalConfig->linkIncomingSustainedBandwidth > 0)
 				bandwidthUsage = std::max(0, bandwidthUsage - std::max(1, (int)((float)globalConfig->linkIncomingSustainedBandwidth / (1000.0f / (playerBandwidthInterval * updateBandwidth)))));
 
 			int numDropped = 0;
-			boost::shared_ptr<const RawPacket> packet;
+			std::shared_ptr<const RawPacket> packet;
 
 			bool dropPacket = globalConfig->linkIncomingMaxWaitingPackets > 0 && (globalConfig->linkIncomingPeakBandwidth <= 0 || bwLimitWasReached);
 			int ahead = 0;
@@ -1933,7 +1932,7 @@ void CGameServer::CheckForGameStart(bool forced)
 			readyTime = spring_gettime();
 
 			// we have to wait at least 1 msec during countdown, because 0 is a special case
-			Broadcast(CBaseNetProtocol::Get().SendStartPlaying(std::max(boost::int64_t(1), spring_tomsecs(gameStartDelay))));
+			Broadcast(CBaseNetProtocol::Get().SendStartPlaying(std::max(std::int64_t(1), spring_tomsecs(gameStartDelay))));
 
 			// make seed more random
 			if (myGameSetup->gameID.empty())
@@ -2133,13 +2132,13 @@ void CGameServer::PushAction(const Action& action, bool fromAutoHost)
 		InverseOrSetBool(noHelperAIs, action.extra);
 		// sent it because clients have to do stuff when this changes
 		CommandMessage msg(action, SERVER_PLAYER);
-		Broadcast(boost::shared_ptr<const RawPacket>(msg.Pack()));
+		Broadcast(std::shared_ptr<const RawPacket>(msg.Pack()));
 	}
 	else if (action.command == "nospecdraw") {
 		InverseOrSetBool(allowSpecDraw, action.extra, true);
 		// sent it because clients have to do stuff when this changes
 		CommandMessage msg(action, SERVER_PLAYER);
-		Broadcast(boost::shared_ptr<const RawPacket>(msg.Pack()));
+		Broadcast(std::shared_ptr<const RawPacket>(msg.Pack()));
 	}
 	else if (action.command == "setmaxspeed" && !action.extra.empty()) {
 		float newUserSpeed = std::max(static_cast<float>(atof(action.extra.c_str())), minUserSpeed);
@@ -2198,7 +2197,7 @@ void CGameServer::PushAction(const Action& action, bool fromAutoHost)
 	else if (action.command == "cheat") {
 		InverseOrSetBool(cheating, action.extra);
 		CommandMessage msg(action, SERVER_PLAYER);
-		Broadcast(boost::shared_ptr<const RawPacket>(msg.Pack()));
+		Broadcast(std::shared_ptr<const RawPacket>(msg.Pack()));
 	}
 	else if (action.command == "singlestep") {
 		if (isPaused) {
@@ -2277,7 +2276,7 @@ void CGameServer::PushAction(const Action& action, bool fromAutoHost)
 	else {
 		// only forward to players (send over network)
 		CommandMessage msg(action, SERVER_PLAYER);
-		Broadcast(boost::shared_ptr<const RawPacket>(msg.Pack()));
+		Broadcast(std::shared_ptr<const RawPacket>(msg.Pack()));
 	}
 }
 
@@ -2294,7 +2293,10 @@ void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 		return;
 	}
 
-	Threading::RecursiveScopedLock(gameServerMutex, !fromServerThread);
+	std::unique_lock<spring::recursive_mutex> lck(gameServerMutex, std::defer_lock);
+	if (!fromServerThread)
+		lck.lock();
+
 	CheckSync();
 
 	const bool vidRecording = videoCapturing->IsCapturing();
@@ -2429,7 +2431,7 @@ void CGameServer::UpdateLoop()
 			if (UDPNet)
 				UDPNet->Update();
 
-			Threading::RecursiveScopedLock scoped_lock(gameServerMutex);
+			std::lock_guard<spring::recursive_mutex> scoped_lock(gameServerMutex);
 			ServerReadNet();
 			Update();
 		}
@@ -2578,7 +2580,7 @@ void CGameServer::AddAdditionalUser(const std::string& name, const std::string& 
 }
 
 
-unsigned CGameServer::BindConnection(std::string name, const std::string& passwd, const std::string& version, bool isLocal, boost::shared_ptr<netcode::CConnection> link, bool reconnect, int netloss)
+unsigned CGameServer::BindConnection(std::string name, const std::string& passwd, const std::string& version, bool isLocal, std::shared_ptr<netcode::CConnection> link, bool reconnect, int netloss)
 {
 	Message(str(format("%s attempt from %s") %(reconnect ? "Reconnection" : "Connection") %name));
 	Message(str(format(" -> Version: %s") %version));
@@ -2678,13 +2680,13 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 	}
 
 	newPlayer.Connected(link, isLocal);
-	newPlayer.SendData(boost::shared_ptr<const RawPacket>(myGameData->Pack()));
+	newPlayer.SendData(std::shared_ptr<const RawPacket>(myGameData->Pack()));
 	newPlayer.SendData(CBaseNetProtocol::Get().SendSetPlayerNum((unsigned char)newPlayerNumber));
 
 	// after gamedata and playerNum, the player can start loading
 	// throw at him all stuff he missed until now
 	for (auto& pv: packetCache)
-		for (boost::shared_ptr<const netcode::RawPacket>& p: pv)
+		for (std::shared_ptr<const netcode::RawPacket>& p: pv)
 			newPlayer.SendData(p);
 
 	if (demoReader == NULL || myGameSetup->demoName.empty()) {
@@ -2710,7 +2712,7 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 void CGameServer::GotChatMessage(const ChatMessage& msg)
 {
 	if (!msg.msg.empty()) { // silently drop empty chat messages
-		Broadcast(boost::shared_ptr<const RawPacket>(msg.Pack()));
+		Broadcast(std::shared_ptr<const RawPacket>(msg.Pack()));
 		if (hostif && msg.fromPlayer >= 0 && msg.fromPlayer != SERVER_PLAYER) {
 			// do not echo packets to the autohost
 			hostif->SendPlayerChat(msg.fromPlayer, msg.destination, msg.msg);
@@ -2768,10 +2770,10 @@ void CGameServer::FreeSkirmishAIId(const unsigned char skirmishAIId)
 }
 
 
-void CGameServer::AddToPacketCache(boost::shared_ptr<const netcode::RawPacket> &pckt)
+void CGameServer::AddToPacketCache(std::shared_ptr<const netcode::RawPacket> &pckt)
 {
 	if (packetCache.empty() || packetCache.back().size() >= PKTCACHE_VECSIZE) {
-		packetCache.push_back(std::vector<boost::shared_ptr<const netcode::RawPacket> >());
+		packetCache.push_back(std::vector<std::shared_ptr<const netcode::RawPacket> >());
 		packetCache.back().reserve(PKTCACHE_VECSIZE);
 	}
 	packetCache.back().push_back(pckt);

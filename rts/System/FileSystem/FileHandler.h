@@ -7,7 +7,7 @@
 #include <vector>
 #include <string>
 #include <fstream>
-#include <boost/cstdint.hpp>
+#include <cinttypes>
 
 #include "VFSModes.h"
 
@@ -69,7 +69,7 @@ protected:
 
 	std::string fileName;
 	std::ifstream ifs;
-	std::vector<boost::uint8_t> fileBuffer;
+	std::vector<std::uint8_t> fileBuffer;
 	int filePos;
 	int fileSize;
 };

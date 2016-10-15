@@ -411,7 +411,7 @@ inline SLosInstance::TLosStatus ILosType::OptimizeInstanceUpdate(SLosInstance* l
 
 inline int ILosType::GetHashNum(const int allyteam, const int2 baseLos, const float radius) const
 {
-	boost::uint32_t hash = 0;
+	std::uint32_t hash = 0;
 	hash = HsiehHash(&allyteam, sizeof(allyteam), hash);
 	hash = HsiehHash(&baseLos,  sizeof(baseLos),  hash);
 	hash = HsiehHash(&radius,   sizeof(radius),   hash);
@@ -782,13 +782,17 @@ bool CLosHandler::InRadar(const float3 pos, int allyTeam) const
 
 bool CLosHandler::InRadar(const CUnit* unit, int allyTeam) const
 {
-	if (unit->IsUnderWater()) {
-		// unit is completely submerged, only sonar can see it
-		if (unit->sonarStealth && !unit->beingBuilt)
-			return false;
-
-		return (sonar.InSight(unit->pos, allyTeam) && !InJammer(unit, allyTeam));
+	// unit is discoverable by sonar
+	if (unit->IsInWater()) {
+		if ((!unit->sonarStealth || unit->beingBuilt) &&
+		    sonar.InSight(unit->pos, allyTeam) &&
+		    !InJammer(unit, allyTeam))
+			return true;
 	}
+
+	// unit is completely submerged, only sonar can see it
+	if (unit->IsUnderWater())
+		return false;
 
 	// radar stealth
 	if (unit->stealth && !unit->beingBuilt)

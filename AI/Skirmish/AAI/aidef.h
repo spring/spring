@@ -18,10 +18,6 @@
 #pragma warning(disable: 4244 4018) // signed/unsigned and loss of precision...
 #endif
 
-// The following two helper functions implementations are in AAIBuildTable.cpp
-
-void ReplaceExtension(const char *n, char *dst, int s, const char *ext);
-
 #define AAI_VERSION aiexport_getVersion()
 #define MAP_CACHE_VERSION "MAP_DATA_0_89"
 #define MAP_LEARN_VERSION "MAP_LEARN_0_89"

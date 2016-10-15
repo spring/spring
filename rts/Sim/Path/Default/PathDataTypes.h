@@ -9,7 +9,7 @@
 
 #include "PathConstants.h"
 #include "System/type2.h"
-#include <boost/cstdint.hpp>
+#include <cinttypes>
 
 /// represents either a single square (PF) or a block of squares (PE)
 struct PathNode {
@@ -106,7 +106,7 @@ struct PathNodeStateBuffer {
 			memFootPrint += (peNodeOffsets.size() * (sizeof(std::vector<short2>) + peNodeOffsets[0].size() * sizeof(short2)));
 		}
 
-		memFootPrint += (nodeMask.size() * sizeof(boost::uint8_t));
+		memFootPrint += (nodeMask.size() * sizeof(std::uint8_t));
 		memFootPrint += ((fCost.size() + gCost.size()) * sizeof(float));
 		memFootPrint += ((extraCostSynced.size() + extraCostUnsynced.size()) * sizeof(float));
 
@@ -180,9 +180,9 @@ public:
 	std::vector<float> gCost;
 
 	/// bitmask of PATHOPT_{OPEN, ..., OBSOLETE} flags
-	std::vector<boost::uint8_t> nodeMask;
+	std::vector<std::uint8_t> nodeMask;
 #if !defined(_MSC_FULL_VER) || _MSC_FULL_VER > 180040000 // ensure that ::max() is constexpr
-	static_assert(PATHOPT_SIZE <= std::numeric_limits<boost::uint8_t>::max(), "nodeMask basic type to small to hold bitmask of PATHOPT");
+	static_assert(PATHOPT_SIZE <= std::numeric_limits<std::uint8_t>::max(), "nodeMask basic type to small to hold bitmask of PATHOPT");
 #endif
 	/// for the PE, maintains an array of the
 	/// best accessible offset (from its own center

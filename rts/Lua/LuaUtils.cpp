@@ -2,8 +2,6 @@
 
 //#include "System/Platform/Win/win32.h"
 
-#include <boost/cstdint.hpp>
-
 #include <string.h>
 #include <map>
 

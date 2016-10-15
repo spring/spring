@@ -8,7 +8,7 @@
 #include "System/Log/ILog.h"
 #include "System/Util.h"
 #include "System/ThreadPool.h"
-#include "System/Threading/SpringMutex.h"
+#include "System/Threading/SpringThreading.h"
 #ifdef USE_UNSYNCED_HEIGHTMAP
 	#include "Game/GlobalUnsynced.h" // for myAllyTeam
 #endif
@@ -20,7 +20,7 @@
 constexpr float LOS_BONUS_HEIGHT = 5.f;
 
 
-static spring::shared_spinlock mutex;
+static spring::spinlock spinlock;
 static std::array<std::vector<float>, ThreadPool::MAX_THREADS> isqrt_table;
 
 
@@ -139,21 +139,21 @@ CLosTables CLosTables::instance;
 
 void CLosTables::GenerateForLosSize(size_t losSize)
 {
-	boost::upgrade_lock<spring::shared_spinlock> lock(mutex);
+	std::unique_lock<spring::spinlock> lck(spinlock);
 	// guard against insane sight distances
 	assert(losSize < instance.lostables.capacity());
 
 	if (instance.lostables.size() <= losSize) {
-		boost::upgrade_to_unique_lock<spring::shared_spinlock> uniqueLock(lock);
 		if (instance.lostables.size() <= losSize) {
 			instance.lostables.resize(losSize+1);
 		}
 	}
 
-	LosTable& tl = instance.lostables[losSize];
-	if (tl.empty() && losSize > 0) {
+	if (instance.lostables[losSize].empty() && losSize > 0) {
+		lck.unlock();
 		auto lrays = GetLosRays(losSize);
-		boost::upgrade_to_unique_lock<spring::shared_spinlock> uniqueLock(lock);
+		lck.lock();
+		LosTable& tl = instance.lostables[losSize];
 		if (tl.empty()) {
 			tl = std::move(lrays);
 		}
@@ -475,7 +475,10 @@ void CLosMap::LosAdd(SLosInstance* li) const
 		return ipos.y * mapDims.mapx + ipos.x;
 	};
 
-	// skip when unit is underground
+	// skip when unit is underground/underwater
+	if (li->baseHeight < 0.0f)
+		return;
+
 	const float* heightmapFull = readMap->GetCenterHeightMapSynced();
 	if (SRectangle(0,0,size.x,size.y).Inside(li->basePos) && li->baseHeight <= heightmapFull[MAP_SQUARE_FULLRES(li->basePos)])
 		return;

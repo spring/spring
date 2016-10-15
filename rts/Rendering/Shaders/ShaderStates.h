@@ -5,7 +5,7 @@
 
 #include "Rendering/GL/myGL.h"
 
-#include <boost/cstdint.hpp>
+#include <cinttypes>
 #include <string.h>
 #include <string>
 #include <unordered_map>
@@ -22,7 +22,7 @@ namespace Shader {
 	struct UniformState {
 	private:
 		union {
-			boost::int32_t i[17];
+			std::int32_t i[17];
 			float          f[17];
 		};
 

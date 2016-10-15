@@ -1,8 +1,10 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "Futex.h"
-#include <sys/syscall.h>
+#include <cstdlib>
 #include <linux/futex.h>
+#include <sys/syscall.h>
+#include <unistd.h>
 
 
 spring_futex::spring_futex() noexcept

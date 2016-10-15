@@ -10,7 +10,6 @@ class CLargeBeamLaserProjectile : public CWeaponProjectile
 {
 	CR_DECLARE_DERIVED(CLargeBeamLaserProjectile)
 public:
-	CLargeBeamLaserProjectile() { }
 	CLargeBeamLaserProjectile(const ProjectileParams& params);
 
 	void Update() override;
@@ -20,6 +19,8 @@ public:
 	virtual int GetProjectilesCount() const override;
 
 private:
+	CLargeBeamLaserProjectile() { }
+
 	unsigned char coreColStart[4];
 	unsigned char edgeColStart[4];
 

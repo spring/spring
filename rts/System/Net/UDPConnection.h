@@ -3,9 +3,9 @@
 #ifndef _UDP_CONNECTION_H
 #define _UDP_CONNECTION_H
 
-#include <boost/ptr_container/ptr_map.hpp>
-#include <boost/shared_ptr.hpp>
-#include <boost/asio/ip/udp.hpp>
+#include <asio/ip/udp.hpp>
+#include <map>
+#include <memory>
 #include <deque>
 #include <list>
 
@@ -34,11 +34,11 @@ public:
 	void UpdateChecksum(CRC& crc) const;
 	static const unsigned maxSize = 254;
 	static const unsigned headerSize = 5;
-	boost::int32_t chunkNumber;
-	boost::uint8_t chunkSize;
-	std::vector<boost::uint8_t> data;
+	std::int32_t chunkNumber;
+	std::uint8_t chunkSize;
+	std::vector<std::uint8_t> data;
 };
-typedef boost::shared_ptr<Chunk> ChunkPtr;
+typedef std::shared_ptr<Chunk> ChunkPtr;
 
 class Packet
 {
@@ -49,15 +49,15 @@ public:
 
 	unsigned GetSize() const;
 
-	boost::uint8_t GetChecksum() const;
+	std::uint8_t GetChecksum() const;
 
-	void Serialize(std::vector<boost::uint8_t>& data);
+	void Serialize(std::vector<std::uint8_t>& data);
 
-	boost::int32_t lastContinuous;
+	std::int32_t lastContinuous;
 	/// if < 0, we lost -x packets since lastContinuous, if >0, x = size of naks
-	boost::int8_t nakType;
-	boost::uint8_t checksum;
-	std::vector<boost::uint8_t> naks;
+	std::int8_t nakType;
+	std::uint8_t checksum;
+	std::vector<std::uint8_t> naks;
 	std::list<ChunkPtr> chunks;
 };
 
@@ -75,8 +75,8 @@ public:
 class UDPConnection : public CConnection
 {
 public:
-	UDPConnection(boost::shared_ptr<boost::asio::ip::udp::socket> netSocket,
-			const boost::asio::ip::udp::endpoint& myAddr);
+	UDPConnection(std::shared_ptr<asio::ip::udp::socket> netSocket,
+			const asio::ip::udp::endpoint& myAddr);
 	UDPConnection(int sourceport, const std::string& address,
 			const unsigned port);
 	UDPConnection(CConnection& conn);
@@ -86,10 +86,10 @@ public:
 
 
 	// START overriding CConnection
-	void SendData(boost::shared_ptr<const RawPacket> data);
+	void SendData(std::shared_ptr<const RawPacket> data);
 	bool HasIncomingData() const { return !msgQueue.empty(); }
-	boost::shared_ptr<const RawPacket> Peek(unsigned ahead) const;
-	boost::shared_ptr<const RawPacket> GetData();
+	std::shared_ptr<const RawPacket> Peek(unsigned ahead) const;
+	std::shared_ptr<const RawPacket> GetData();
 	void DeleteBufferPacketAt(unsigned index);
 	void Flush(const bool forced);
 	bool CheckTimeout(int seconds = 0, bool initial = false) const;
@@ -117,17 +117,17 @@ public:
 	int GetReconnectSecs() const { return reconnectTime; }
 
 	/// Are we using this address?
-	bool IsUsingAddress(const boost::asio::ip::udp::endpoint& from) const;
+	bool IsUsingAddress(const asio::ip::udp::endpoint& from) const;
 	/// Connections are stealth by default, this allow them to send data
 	void Unmute() { muted = false; }
 	void Close(bool flush);
 	void SetLossFactor(int factor);
 
-	const boost::asio::ip::udp::endpoint &GetEndpoint() const { return addr; }
+	const asio::ip::udp::endpoint &GetEndpoint() const { return addr; }
 
 private:
-	void InitConnection(boost::asio::ip::udp::endpoint address,
-			boost::shared_ptr<boost::asio::ip::udp::socket> socket);
+	void InitConnection(asio::ip::udp::endpoint address,
+			std::shared_ptr<asio::ip::udp::socket> socket);
 
 	void CopyConnection(UDPConnection& conn);
 
@@ -155,10 +155,10 @@ private:
 	spring_time lastFramePacketRecvTime;
 	#endif
 
-	typedef boost::ptr_map<int,RawPacket> packetMap;
-	typedef std::list< boost::shared_ptr<const RawPacket> > packetList;
+	typedef std::map<int,RawPacket*> packetMap;
+	typedef std::list< std::shared_ptr<const RawPacket> > packetList;
 	/// address of the other end
-	boost::asio::ip::udp::endpoint addr;
+	asio::ip::udp::endpoint addr;
 
 	/// maximum size of packets to send
 	unsigned mtu;
@@ -183,16 +183,16 @@ private:
 	std::deque<ChunkPtr> unackedChunks;
 
 	/// Packets the other side missed
-	std::map<boost::int32_t, ChunkPtr> resendRequested;
+	std::map<std::int32_t, ChunkPtr> resendRequested;
 
 	/// complete packets we received but did not yet consume
-	std::deque< boost::shared_ptr<const RawPacket> > msgQueue;
+	std::deque< std::shared_ptr<const RawPacket> > msgQueue;
 
-	boost::int32_t lastMidChunk;
+	std::int32_t lastMidChunk;
 
 #if	NETWORK_TEST
 	/// Delayed packets, for testing purposes
-	std::map< spring_time, std::vector<boost::uint8_t> > delayed;
+	std::map< spring_time, std::vector<std::uint8_t> > delayed;
 	int lossCounter;
 #endif
 
@@ -200,7 +200,7 @@ private:
 	int lastNak;
 
 	/// Our socket
-	boost::shared_ptr<boost::asio::ip::udp::socket> mySocket;
+	std::shared_ptr<asio::ip::udp::socket> mySocket;
 
 	RawPacket* fragmentBuffer;
 

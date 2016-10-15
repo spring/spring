@@ -7,10 +7,10 @@
 #include "System/Net/RawPacket.h"
 #include "System/Net/PackPacket.h"
 #include "System/Net/ProtocolDef.h"
-#include <boost/cstdint.hpp>
+#include <cinttypes>
 
 using netcode::PackPacket;
-typedef boost::shared_ptr<const netcode::RawPacket> PacketType;
+typedef std::shared_ptr<const netcode::RawPacket> PacketType;
 
 CBaseNetProtocol& CBaseNetProtocol::Get()
 {
@@ -35,7 +35,7 @@ PacketType CBaseNetProtocol::SendQuit(const std::string& reason)
 {
 	unsigned size = 3 + reason.size() + 1;
 	PackPacket* packet = new PackPacket(size, NETMSG_QUIT);
-	*packet << static_cast<boost::uint16_t>(size) << reason;
+	*packet << static_cast<std::uint16_t>(size) << reason;
 	return PacketType(packet);
 }
 
@@ -76,9 +76,9 @@ PacketType CBaseNetProtocol::SendGameID(const uchar* buf)
 	return PacketType(packet);
 }
 
-PacketType CBaseNetProtocol::SendPathCheckSum(uchar myPlayerNum, boost::uint32_t checksum)
+PacketType CBaseNetProtocol::SendPathCheckSum(uchar myPlayerNum, std::uint32_t checksum)
 {
-	PackPacket* packet = new PackPacket(1 + 1 + sizeof(boost::uint32_t), NETMSG_PATH_CHECKSUM);
+	PackPacket* packet = new PackPacket(1 + 1 + sizeof(std::uint32_t), NETMSG_PATH_CHECKSUM);
 	*packet << myPlayerNum;
 	*packet << checksum;
 	return PacketType(packet);
@@ -130,7 +130,7 @@ PacketType CBaseNetProtocol::SendAICommand(uchar myPlayerNum, unsigned char aiID
 
 PacketType CBaseNetProtocol::SendAIShare(uchar myPlayerNum, unsigned char aiID, uchar sourceTeam, uchar destTeam, float metal, float energy, const std::vector<short>& unitIDs)
 {
-	boost::uint16_t totalNumBytes = 1 + sizeof(boost::uint16_t) + 1 + 1 + 1 + 1 + (2 * sizeof(float)) + (unitIDs.size() * sizeof(short));
+	std::uint16_t totalNumBytes = 1 + sizeof(std::uint16_t) + 1 + 1 + 1 + 1 + (2 * sizeof(float)) + (unitIDs.size() * sizeof(short));
 
 	PackPacket* packet = new PackPacket(totalNumBytes, NETMSG_AISHARE);
 	*packet << totalNumBytes << myPlayerNum << aiID << sourceTeam << destTeam << metal << energy << unitIDs;
@@ -175,7 +175,7 @@ PacketType CBaseNetProtocol::SendDirectControlUpdate(uchar myPlayerNum, uchar st
 
 PacketType CBaseNetProtocol::SendAttemptConnect(const std::string& name, const std::string& passwd, const std::string& version, int netloss, bool reconnect)
 {
-	boost::uint16_t size = 10 + name.size() + passwd.size() + version.size();
+	std::uint16_t size = 10 + name.size() + passwd.size() + version.size();
 	PackPacket* packet = new PackPacket(size , NETMSG_ATTEMPTCONNECT);
 	*packet << size << NETWORK_VERSION << name << passwd << version << uchar(reconnect) << uchar(netloss);
 	return PacketType(packet);
@@ -186,7 +186,7 @@ PacketType CBaseNetProtocol::SendRejectConnect(const std::string& reason)
 {
 	unsigned size = 3 + reason.size() + 1;
 	PackPacket* packet = new PackPacket(size, NETMSG_REJECT_CONNECT);
-	*packet << static_cast<boost::uint16_t>(size) << reason;
+	*packet << static_cast<std::uint16_t>(size) << reason;
 	return PacketType(packet);
 }
 
@@ -286,7 +286,7 @@ PacketType CBaseNetProtocol::SendSystemMessage(uchar myPlayerNum, std::string me
 	}
 	unsigned size = 1 + 2 + 1 + message.size() + 1;
 	PackPacket* packet = new PackPacket(size, NETMSG_SYSTEMMSG);
-	*packet << static_cast<boost::uint16_t>(size) << myPlayerNum << message;
+	*packet << static_cast<std::uint16_t>(size) << myPlayerNum << message;
 	return PacketType(packet);
 }
 
@@ -300,7 +300,7 @@ PacketType CBaseNetProtocol::SendStartPos(uchar myPlayerNum, uchar teamNum, ucha
 PacketType CBaseNetProtocol::SendPlayerInfo(uchar myPlayerNum, float cpuUsage, int ping)
 {
 	PackPacket* packet = new PackPacket(10, NETMSG_PLAYERINFO);
-	*packet << myPlayerNum << cpuUsage << static_cast<boost::uint32_t>(ping);
+	*packet << myPlayerNum << cpuUsage << static_cast<std::uint32_t>(ping);
 	return PacketType(packet);
 }
 
@@ -312,11 +312,11 @@ PacketType CBaseNetProtocol::SendPlayerLeft(uchar myPlayerNum, uchar bIntended)
 }
 
 // NETMSG_LUAMSG = 50, uchar myPlayerNum; std::string modName; (e.g. `custom msg')
-PacketType CBaseNetProtocol::SendLuaMsg(uchar myPlayerNum, unsigned short script, uchar mode, const std::vector<boost::uint8_t>& msg)
+PacketType CBaseNetProtocol::SendLuaMsg(uchar myPlayerNum, unsigned short script, uchar mode, const std::vector<std::uint8_t>& msg)
 {
-	if ((7 + msg.size()) >= (1 << (sizeof(boost::uint16_t) * 8)))
+	if ((7 + msg.size()) >= (1 << (sizeof(std::uint16_t) * 8)))
 		throw netcode::PackPacketException("Maximum size exceeded");
-	boost::uint16_t size = 7 + msg.size();
+	std::uint16_t size = 7 + msg.size();
 	PackPacket* packet = new PackPacket(size, NETMSG_LUAMSG);
 	*packet << size << myPlayerNum << script << mode << msg;
 	return PacketType(packet);
@@ -387,9 +387,9 @@ PacketType CBaseNetProtocol::SendSetAllied(uchar myPlayerNum, uchar whichAllyTea
 
 PacketType CBaseNetProtocol::SendCreateNewPlayer( uchar playerNum, bool spectator, uchar teamNum, std::string playerName )
 {
-	unsigned size = 1 + sizeof(uchar) + sizeof(uchar) + sizeof(uchar) + sizeof (boost::uint16_t) +playerName.size()+1;
+	unsigned size = 1 + sizeof(uchar) + sizeof(uchar) + sizeof(uchar) + sizeof (std::uint16_t) +playerName.size()+1;
 	PackPacket* packet = new PackPacket( size, NETMSG_CREATE_NEWPLAYER);
-	*packet << static_cast<boost::uint16_t>(size) << playerNum << (uchar)spectator << teamNum << playerName;
+	*packet << static_cast<std::uint16_t>(size) << playerNum << (uchar)spectator << teamNum << playerName;
 	return PacketType(packet);
 
 }
@@ -411,11 +411,11 @@ PacketType CBaseNetProtocol::SendSdCheckrequest(int frameNum)
 	return PacketType(packet);
 }
 
-PacketType CBaseNetProtocol::SendSdCheckresponse(uchar myPlayerNum, boost::uint64_t flop, std::vector<unsigned> checksums)
+PacketType CBaseNetProtocol::SendSdCheckresponse(uchar myPlayerNum, std::uint64_t flop, std::vector<unsigned> checksums)
 {
 	unsigned size = 1 + 2 + 1 + 8 + checksums.size() * 4;
 	PackPacket* packet = new PackPacket(size, NETMSG_SD_CHKRESPONSE);
-	*packet << static_cast<boost::uint16_t>(size) << myPlayerNum << flop << checksums;
+	*packet << static_cast<std::uint16_t>(size) << myPlayerNum << flop << checksums;
 	return PacketType(packet);
 }
 
@@ -437,7 +437,7 @@ PacketType CBaseNetProtocol::SendSdBlockresponse(uchar myPlayerNum, std::vector<
 {
 	unsigned size = 1 + 2 + 1 + checksums.size() * 4;
 	PackPacket* packet = new PackPacket(size, NETMSG_SD_BLKRESPONSE);
-	*packet << static_cast<boost::uint16_t>(size) << myPlayerNum << checksums;
+	*packet << static_cast<std::uint16_t>(size) << myPlayerNum << checksums;
 	return PacketType(packet);
 }
 #endif // SYNCDEBUG
@@ -459,7 +459,7 @@ CBaseNetProtocol::CBaseNetProtocol()
 	proto->AddType(NETMSG_CHAT, -1);
 	proto->AddType(NETMSG_RANDSEED, 5);
 	proto->AddType(NETMSG_GAMEID, 17);
-	proto->AddType(NETMSG_PATH_CHECKSUM, 1 + 1 + sizeof(boost::uint32_t));
+	proto->AddType(NETMSG_PATH_CHECKSUM, 1 + 1 + sizeof(std::uint32_t));
 	proto->AddType(NETMSG_COMMAND, -2);
 	proto->AddType(NETMSG_SELECT, -2);
 	proto->AddType(NETMSG_PAUSE, 3);

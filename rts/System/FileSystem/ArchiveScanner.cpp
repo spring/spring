@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <boost/scoped_ptr.hpp>
+#include <memory>
 
 #include "ArchiveNameResolver.h"
 #include "ArchiveScanner.h"
@@ -544,7 +544,7 @@ void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 	const std::string fpath = FileSystem::GetDirectory(fullName);
 	const std::string lcfn  = StringToLower(fn);
 
-	boost::scoped_ptr<IArchive> ar(archiveLoader.OpenArchive(fullName));
+	std::unique_ptr<IArchive> ar(archiveLoader.OpenArchive(fullName));
 	if (!ar || !ar->IsOpen()) {
 		LOG_L(L_WARNING, "Unable to open archive: %s", fullName.c_str());
 
@@ -688,7 +688,7 @@ bool CArchiveScanner::CheckCachedData(const std::string& fullName, unsigned* mod
 
 bool CArchiveScanner::ScanArchiveLua(IArchive* ar, const std::string& fileName, ArchiveInfo& ai, std::string& err)
 {
-	std::vector<boost::uint8_t> buf;
+	std::vector<std::uint8_t> buf;
 	if (!ar->GetFile(fileName, buf) || buf.empty()) {
 		err = "Error reading " + fileName;
 		if (ar->GetArchiveName().find(".sdp") != std::string::npos) {
@@ -721,7 +721,7 @@ bool CArchiveScanner::ScanArchiveLua(IArchive* ar, const std::string& fileName, 
 IFileFilter* CArchiveScanner::CreateIgnoreFilter(IArchive* ar)
 {
 	IFileFilter* ignore = IFileFilter::Create();
-	std::vector<boost::uint8_t> buf;
+	std::vector<std::uint8_t> buf;
 	if (ar->GetFile("springignore.txt", buf) && !buf.empty()) {
 		// this automatically splits lines
 		ignore->AddRule(std::string((char*)(&buf[0]), buf.size()));
@@ -749,13 +749,13 @@ unsigned int CArchiveScanner::GetCRC(const std::string& arcName)
 	std::list<std::string> files;
 
 	// Try to open an archive
-	boost::scoped_ptr<IArchive> ar(archiveLoader.OpenArchive(arcName));
+	std::unique_ptr<IArchive> ar(archiveLoader.OpenArchive(arcName));
 	if (!ar) {
 		return 0; // It wasn't an archive
 	}
 
 	// Load ignore list.
-	boost::scoped_ptr<IFileFilter> ignore(CreateIgnoreFilter(ar.get()));
+	std::unique_ptr<IFileFilter> ignore(CreateIgnoreFilter(ar.get()));
 
 	// Insert all files to check in lowercase format
 	for (unsigned fid = 0; fid != ar->NumFiles(); ++fid) {

@@ -4,8 +4,7 @@
 #define SPRING_APP
 
 #include <string>
-#include <boost/cstdint.hpp>
-#include <boost/shared_ptr.hpp>
+#include <memory>
 
 class CmdLineParams;
 class ClientSetup;
@@ -51,11 +50,11 @@ private:
 	 *
 	 * Pointer to instance of commandline parser
 	 */
-	boost::shared_ptr<CmdLineParams> cmdline;
+	std::shared_ptr<CmdLineParams> cmdline;
 
 	// this gets passed along to PreGame (or SelectMenu then PreGame),
 	// and from thereon to GameServer if this client is also the host
-	boost::shared_ptr<ClientSetup> clientSetup;
+	std::shared_ptr<ClientSetup> clientSetup;
 
 private:
 	bool MainEventHandler(const SDL_Event& ev);

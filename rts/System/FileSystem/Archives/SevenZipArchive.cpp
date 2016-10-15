@@ -222,10 +222,10 @@ unsigned int CSevenZipArchive::NumFiles() const
 	return fileData.size();
 }
 
-bool CSevenZipArchive::GetFileImpl(unsigned int fid, std::vector<boost::uint8_t>& buffer)
+bool CSevenZipArchive::GetFileImpl(unsigned int fid, std::vector<std::uint8_t>& buffer)
 {
 	assert(IsFileId(fid));
-	
+
 	// Get 7zip to decompress it
 	size_t offset;
 	size_t outSizeProcessed;

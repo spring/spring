@@ -5,13 +5,14 @@
 #include "System/Matrix44f.h"
 #include "System/float4.h"
 #include "System/TimeProfiler.h"
+#include "System/Misc/SpringTime.h"
 #include "System/Log/ILog.h"
 #include "System/Sync/HsiehHash.h"
 
 
 #define BOOST_TEST_MODULE Matrix44f
 #include <boost/test/unit_test.hpp>
-
+BOOST_GLOBAL_FIXTURE(InitSpringTime);
 
 static const int testRuns = 40000000;
 
@@ -257,8 +258,6 @@ _noinline static int TestSSE()
 
 BOOST_AUTO_TEST_CASE( Matrix44VectorMultiply )
 {
-	spring_clock::PushTickRate();
-	spring_time::setstarttime(spring_time::gettime(true));
 
 	for (int i = 0; i < 16; ++i) {
 		if ((i != 7) && (i != 3)) {

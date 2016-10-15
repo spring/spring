@@ -13,7 +13,6 @@
 #ifdef USING_CREG
 
 #include <string>
-#include <boost/shared_ptr.hpp>
 
 namespace creg
 {
@@ -43,10 +42,10 @@ namespace creg
 	template<typename T>
 	struct MapType : public IType
 	{
-		boost::shared_ptr<IType> keyType, mappedType;
+		std::shared_ptr<IType> keyType, mappedType;
 		typedef typename T::iterator iterator;
 
-		MapType(boost::shared_ptr<IType> keyType, boost::shared_ptr<IType> mappedType) :
+		MapType(std::shared_ptr<IType> keyType, std::shared_ptr<IType> mappedType) :
 			keyType(keyType), mappedType(mappedType) {}
 		~MapType() {
 		}
@@ -81,33 +80,33 @@ namespace creg
 	// Map type
 	template<typename TKey, typename TValue>
 	struct DeduceType<std::map<TKey, TValue> > {
-		static boost::shared_ptr<IType> Get() {
-			return boost::shared_ptr<IType>(new MapType<std::map<TKey, TValue> >(DeduceType<TKey>::Get(), DeduceType<TValue>::Get()));
+		static std::shared_ptr<IType> Get() {
+			return std::shared_ptr<IType>(new MapType<std::map<TKey, TValue> >(DeduceType<TKey>::Get(), DeduceType<TValue>::Get()));
 		}
 	};
 	// Multimap
 	template<typename TKey, typename TValue>
 	struct DeduceType<std::multimap<TKey, TValue> > {
-		static boost::shared_ptr<IType> Get() {
-			return boost::shared_ptr<IType>(new MapType<std::multimap<TKey, TValue> >(DeduceType<TKey>::Get(), DeduceType<TValue>::Get()));
+		static std::shared_ptr<IType> Get() {
+			return std::shared_ptr<IType>(new MapType<std::multimap<TKey, TValue> >(DeduceType<TKey>::Get(), DeduceType<TValue>::Get()));
 		}
 	};
 	// Hash map
 	template<typename TKey, typename TValue>
 	struct DeduceType<SPRING_HASH_MAP<TKey, TValue> > {
-		static boost::shared_ptr<IType> Get() {
-			return boost::shared_ptr<IType>(new MapType<SPRING_HASH_MAP<TKey, TValue> >(DeduceType<TKey>::Get(), DeduceType<TValue>::Get()));
+		static std::shared_ptr<IType> Get() {
+			return std::shared_ptr<IType>(new MapType<SPRING_HASH_MAP<TKey, TValue> >(DeduceType<TKey>::Get(), DeduceType<TValue>::Get()));
 		}
 	};
 
 	template<typename T>
 	struct PairType : public IType
 	{
-		PairType(boost::shared_ptr<IType> first, boost::shared_ptr<IType> second):
+		PairType(std::shared_ptr<IType> first, std::shared_ptr<IType> second):
 				firstType(first), secondType(second) {}
 		~PairType() {
 		}
-		boost::shared_ptr<IType> firstType, secondType;
+		std::shared_ptr<IType> firstType, secondType;
 
 		void Serialize(ISerializer *s, void *instance)
 		{
@@ -123,8 +122,8 @@ namespace creg
 	template<typename TFirst, typename TSecond>
 	struct DeduceType<std::pair<TFirst, TSecond> >
 	{
-		static boost::shared_ptr<IType> Get() {
-			return boost::shared_ptr<IType>(new PairType<std::pair<TFirst, TSecond> >(DeduceType<TFirst>::Get(), DeduceType<TSecond>::Get()));
+		static std::shared_ptr<IType> Get() {
+			return std::shared_ptr<IType>(new PairType<std::pair<TFirst, TSecond> >(DeduceType<TFirst>::Get(), DeduceType<TSecond>::Get()));
 		}
 	};
 }

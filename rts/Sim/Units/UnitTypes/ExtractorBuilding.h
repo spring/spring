@@ -3,6 +3,8 @@
 #ifndef _EXTRACTOR_BUILDING_H
 #define _EXTRACTOR_BUILDING_H
 
+#include <list>
+
 #include "Building.h"
 
 class CExtractorBuilding : public CBuilding {

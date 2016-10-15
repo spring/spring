@@ -4,6 +4,7 @@
 
 #include <SDL.h>
 
+#include <functional>
 #include <iostream>
 
 #ifdef WIN32
@@ -253,7 +254,7 @@ bool SpringApp::Initialize()
 	FileSystemInitializer::Initialize();
 
 	mouseInput = IMouseInput::GetInstance();
-	input.AddHandler(boost::bind(&SpringApp::MainEventHandler, this, _1));
+	input.AddHandler(std::bind(&SpringApp::MainEventHandler, this, std::placeholders::_1));
 
 	// Global structures
 	gs = new CGlobalSynced();

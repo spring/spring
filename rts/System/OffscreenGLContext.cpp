@@ -3,15 +3,20 @@
 #include "lib/streflop/streflop_cond.h" //! must happen before OffscreenGLContext.h, which includes agl.h
 #include "System/OffscreenGLContext.h"
 
+#include <functional>
+
 #include "System/Exceptions.h"
 #include "System/maindefines.h"
+#include "System/Util.h"
 #include "System/Log/ILog.h"
 #include "System/Platform/errorhandler.h"
 #include "System/Platform/Threading.h"
-#include <boost/thread.hpp>
+#include "System/Threading/SpringThreading.h"
 
 
+#ifndef HEADLESS
 static PFNGLACTIVETEXTUREPROC mainGlActiveTexture = NULL;
+#endif
 
 
 #ifdef HEADLESS
@@ -265,38 +270,30 @@ void COffscreenGLContext::WorkerThreadFree()
 /******************************************************************************/
 /******************************************************************************/
 
-COffscreenGLThread::COffscreenGLThread(boost::function<void()> f) :
+COffscreenGLThread::COffscreenGLThread(std::function<void()> f) :
 	thread(NULL),
 	glOffscreenCtx() //! may trigger an opengl_error exception!
 {
-	thread = new boost::thread( boost::bind(&COffscreenGLThread::WrapFunc, this, f) );
+	thread = new spring::thread( std::bind(&COffscreenGLThread::WrapFunc, this, f) );
 }
 
 
 COffscreenGLThread::~COffscreenGLThread()
 {
-	if (thread)
-		Join();
-	delete thread; thread = NULL;
-}
-
-
-bool COffscreenGLThread::IsFinished(boost::posix_time::time_duration wait)
-{
-	return thread->timed_join(wait);
+	Join();
 }
 
 
 void COffscreenGLThread::Join()
 {
-	while(thread->joinable())
-		if(thread->timed_join(boost::posix_time::seconds(1)))
-			break;
+	if (thread)
+		thread->join();
+	SafeDelete(thread);
 }
 
 
 __FORCE_ALIGN_STACK__
-void COffscreenGLThread::WrapFunc(boost::function<void()> f)
+void COffscreenGLThread::WrapFunc(std::function<void()> f)
 {
 	Threading::SetThreadName("OffscreenGLThread");
 
@@ -311,8 +308,6 @@ void COffscreenGLThread::WrapFunc(boost::function<void()> f)
 
 	try {
 		f();
-	} catch(boost::thread_interrupted const&) {
-		// do nothing
 	} CATCH_SPRING_ERRORS
 
 	glOffscreenCtx.WorkerThreadFree();

@@ -3,10 +3,10 @@
 #ifndef HSIEH_HASH_H
 #define HSIEH_HASH_H
 
-#include <boost/cstdint.hpp> /* Replace with <stdint.h> if appropriate */
+#include <cinttypes>
 
 #undef get16bits
-#define get16bits(d) (*reinterpret_cast<const boost::uint16_t*>(d))
+#define get16bits(d) (*reinterpret_cast<const std::uint16_t*>(d))
 
 
 /** @brief a fast hash function
@@ -14,9 +14,9 @@
  * This hash function is roughly 4x as fast as CRC32, but even that is too slow.
  * We use a very simplistic add/xor feedback scheme when not debugging.
  */
-static inline boost::uint32_t HsiehHash (const void* data_, int len, boost::uint32_t hash)
+static inline std::uint32_t HsiehHash (const void* data_, int len, std::uint32_t hash)
 {
-	const boost::uint8_t* data = reinterpret_cast<const boost::uint8_t*>(data_);
+	const std::uint8_t* data = reinterpret_cast<const std::uint8_t*>(data_);
 	assert(data != nullptr || len == 0);
 
 	int rem = len & 3;
@@ -25,10 +25,10 @@ static inline boost::uint32_t HsiehHash (const void* data_, int len, boost::uint
 	/* Main loop */
 	for (;len > 0; len--) {
 		hash  += get16bits (data);
-		boost::uint32_t tmp = (get16bits (data+2) << 11) ^ hash;
+		std::uint32_t tmp = (get16bits (data+2) << 11) ^ hash;
 		hash   = (hash << 16) ^ tmp;
 		hash  += hash >> 11;
-		data  += 2*sizeof (boost::uint16_t);
+		data  += 2*sizeof (std::uint16_t);
 	}
 
 	/* Handle end cases */
@@ -36,7 +36,7 @@ static inline boost::uint32_t HsiehHash (const void* data_, int len, boost::uint
 	case 3:
 		hash += get16bits (data);
 		hash ^= hash << 16;
-		hash ^= data[sizeof (boost::uint16_t)] << 18;
+		hash ^= data[sizeof (std::uint16_t)] << 18;
 		hash += hash >> 11;
 		break;
 	case 2:

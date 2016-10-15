@@ -3,7 +3,7 @@
 #ifndef _COLOR_H
 #define _COLOR_H
 
-#include <boost/cstdint.hpp>
+#include <cinttypes>
 #include "System/creg/creg_cond.h"
 
 
@@ -17,7 +17,7 @@ struct SColor
 	SColor() : r(255), g(255), b(255), a(255) {}
 
 	/// Initialize with values in the range [0, 255]
-	SColor(const boost::uint8_t r, const boost::uint8_t g, const boost::uint8_t b, const boost::uint8_t a = 255)
+	SColor(const std::uint8_t r, const std::uint8_t g, const std::uint8_t b, const std::uint8_t a = 255)
 		: r(r), g(g), b(b), a(a) {}
 	/// Initialize with values in the range [0, 255]
 	SColor(const int r, const int g, const int b, const int a = 255)
@@ -52,9 +52,9 @@ struct SColor
 public:
 	union {
 		/// individual color channel values in the range [0, 255]
-		struct { boost::uint8_t r, g, b, a; };
+		struct { std::uint8_t r, g, b, a; };
 		/// The color as a single 32bit value
-		boost::uint32_t i;
+		std::uint32_t i;
 	};
 };
 

@@ -7,8 +7,7 @@
 #include <sstream>
 #include <map>
 
-#include <boost/function.hpp>
-#include <boost/bind.hpp>
+#include <functional>
 
 #include "ConfigVariable.h"
 #include "System/Util.h"
@@ -51,7 +50,7 @@ public:
 	void NotifyOnChange(T* observer)
 	{
 		// issues: still needs to call configHandler->Get() on startup, automate it
-		AddObserver(boost::bind(&T::ConfigNotify, observer, _1, _2), (void*)observer);
+		AddObserver(std::bind(&T::ConfigNotify, observer, std::placeholders::_1, std::placeholders::_2), (void*)observer);
 	}
 
 	template<class T>
@@ -148,7 +147,7 @@ public:
 	virtual void EnableWriting(bool write) = 0;
 
 protected:
-	typedef boost::function<void(const std::string&, const std::string&)> ConfigNotifyCallback;
+	typedef std::function<void(const std::string&, const std::string&)> ConfigNotifyCallback;
 
 	virtual void AddObserver(ConfigNotifyCallback observer, void* holder) = 0;
 	virtual void RemoveObserver(void* holder) = 0;

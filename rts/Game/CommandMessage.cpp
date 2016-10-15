@@ -23,7 +23,7 @@ CommandMessage::CommandMessage(const Action& action, int playerID)
 {
 }
 
-CommandMessage::CommandMessage(boost::shared_ptr<const netcode::RawPacket> pckt)
+CommandMessage::CommandMessage(std::shared_ptr<const netcode::RawPacket> pckt)
 {
 	assert(pckt->data[0] == NETMSG_CCOMMAND);
 	UnpackPacket packet(pckt, 3);

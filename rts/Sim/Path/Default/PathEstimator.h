@@ -3,18 +3,18 @@
 #ifndef PATHESTIMATOR_H
 #define PATHESTIMATOR_H
 
+#include <atomic>
+#include <cinttypes>
+#include <deque>
 #include <string>
 #include <vector>
-#include <deque>
 
 #include "IPath.h"
 #include "IPathFinder.h"
 #include "PathConstants.h"
 #include "PathDataTypes.h"
 #include "System/float3.h"
-
-#include <boost/detail/atomic_count.hpp>
-#include <boost/cstdint.hpp>
+#include "System/Threading/SpringThreading.h"
 
 struct MoveDef;
 class CPathFinder;
@@ -22,12 +22,6 @@ class CPathEstimatorDef;
 class CPathFinderDef;
 class CPathCache;
 class CSolidObject;
-
-
-namespace boost {
-	class thread;
-	class barrier;
-}
 
 class CPathEstimator: public IPathFinder {
 public:
@@ -66,7 +60,7 @@ public:
 	 * Returns a checksum that can be used to check if every player has the same
 	 * path data.
 	 */
-	boost::uint32_t GetPathChecksum() const { return pathChecksum; }
+	std::uint32_t GetPathChecksum() const { return pathChecksum; }
 
 	static const int2* GetDirectionVectorsTable();
 
@@ -114,7 +108,7 @@ private:
 
 	bool ReadFile(const std::string& cacheFileName, const std::string& map);
 	void WriteFile(const std::string& cacheFileName, const std::string& map);
-	boost::uint32_t CalcChecksum() const;
+	std::uint32_t CalcChecksum() const;
 	unsigned int Hash() const;
 
 private:
@@ -126,21 +120,21 @@ private:
 	unsigned int nextOffsetMessageIdx;
 	unsigned int nextCostMessageIdx;
 
-	boost::uint32_t pathChecksum;               ///< currently crc from the zip
+	std::uint32_t pathChecksum;               ///< currently crc from the zip
 
-	boost::detail::atomic_count offsetBlockNum;
-	boost::detail::atomic_count costBlockNum;
-	boost::barrier* pathBarrier;
+	std::atomic<std::int64_t> offsetBlockNum;
+	std::atomic<std::int64_t> costBlockNum;
+	spring::barrier* pathBarrier;
 
 	IPathFinder* pathFinder;
 	CPathCache* pathCache[2];                   /// [0] = !synced, [1] = synced
 
 	std::vector<IPathFinder*> pathFinders;
-	std::vector<boost::thread*> threads;
+	std::vector<spring::thread*> threads;
 
 	CPathEstimator* nextPathEstimator;
 
-	std::vector<float> vertexCosts;	
+	std::vector<float> vertexCosts;
 	std::deque<int2> updatedBlocks;       /// Blocks that may need an update due to map changes.
 
 	int blockUpdatePenalty;

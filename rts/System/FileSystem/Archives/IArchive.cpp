@@ -43,7 +43,7 @@ bool IArchive::HasLowReadingCost(unsigned int fid) const
 unsigned int IArchive::GetCrc32(unsigned int fid)
 {
 	CRC crc;
-	std::vector<boost::uint8_t> buffer;
+	std::vector<std::uint8_t> buffer;
 	if (GetFile(fid, buffer) && !buffer.empty()) {
 		crc.Update(&buffer[0], buffer.size());
 	}
@@ -51,7 +51,7 @@ unsigned int IArchive::GetCrc32(unsigned int fid)
 	return crc.GetDigest();
 }
 
-bool IArchive::GetFile(const std::string& name, std::vector<boost::uint8_t>& buffer)
+bool IArchive::GetFile(const std::string& name, std::vector<std::uint8_t>& buffer)
 {
 	const unsigned int fid = FindFile(name);
 	const bool found = (fid < NumFiles());

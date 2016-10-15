@@ -14,9 +14,7 @@
 #include <cstdlib>
 #include <cstdio>
 #include <inttypes.h> // for uintptr_t
-#include <boost/bind.hpp>
-#include <boost/static_assert.hpp> // for BOOST_STATIC_ASSERT
-#include <boost/thread.hpp>
+#include <functional>
 #include <SDL_events.h>
 #include <sys/resource.h> //for getrlimits
 #define UNW_LOCAL_ONLY
@@ -201,7 +199,7 @@ static char* fgets_addr2line(char* line, int maxLength, FILE* cmdOut)
  */
 static uintptr_t HexToInt(const char* hexStr)
 {
-	BOOST_STATIC_ASSERT(sizeof(unsigned int long) == sizeof(uintptr_t));
+	static_assert(sizeof(unsigned int long) == sizeof(uintptr_t), "sizeof(unsigned int long) != sizeof(uintptr_t)");
 	unsigned long int value = 0;
 	sscanf(hexStr, "%lx", &value);
 	return (uintptr_t) value;
@@ -573,13 +571,13 @@ static void LogStacktrace(const int logLevel, StackTrace& stacktrace)
 
 __FORCE_ALIGN_STACK__
 static void ForcedExitAfterFiveSecs() {
-	boost::this_thread::sleep(boost::posix_time::seconds(5));
+	spring::this_thread::sleep_for(std::chrono::seconds(5));
 	std::exit(-1);
 }
 
 __FORCE_ALIGN_STACK__
 static void ForcedExitAfterTenSecs() {
-	boost::this_thread::sleep(boost::posix_time::seconds(10));
+	spring::this_thread::sleep_for(std::chrono::seconds(10));
 #if defined(__GNUC__)
 	std::_Exit(-1);
 #else
@@ -864,8 +862,8 @@ namespace CrashHandler
 #endif
 
 			// abort after 5sec
-			boost::thread(boost::bind(&ForcedExitAfterFiveSecs));
-			boost::thread(boost::bind(&ForcedExitAfterTenSecs));
+			spring::thread(std::bind(&ForcedExitAfterFiveSecs));
+			spring::thread(std::bind(&ForcedExitAfterTenSecs));
 			return;
 		}
 
@@ -960,14 +958,14 @@ namespace CrashHandler
 			ErrorMessageBox(buf.str(), "Spring crashed", MBF_OK | MBF_CRASH); // this also calls exit()
 		}
 
-        // Re-enable signal handling for this signal
+		// Re-enable signal handling for this signal
 		// FIXME: reentrances should be implemented using boost::thread_specific_ptr
-        if (reentrances >= 2) {
-            sigaction_t& sa = GetSigAction(&HandleSignal);
-            sigaction(signal, &sa, NULL);
-        }
+		if (reentrances >= 2) {
+			sigaction_t& sa = GetSigAction(&HandleSignal);
+			sigaction(signal, &sa, NULL);
+		}
 
-        reentrances--;
+
 
 	}
 

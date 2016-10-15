@@ -12,9 +12,9 @@ namespace creg {
 		typedef typename T::iterator iterator;
 		typedef typename T::value_type ElemT;
 
-		boost::shared_ptr<IType> elemType;
+		std::shared_ptr<IType> elemType;
 
-		DynamicArrayType(boost::shared_ptr<IType> et)
+		DynamicArrayType(std::shared_ptr<IType> et)
 			: elemType(et) {}
 		~DynamicArrayType() {}
 
@@ -43,10 +43,10 @@ namespace creg {
 	class StaticArrayBaseType : public IType
 	{
 	public:
-		boost::shared_ptr<IType> elemType;
+		std::shared_ptr<IType> elemType;
 		int size, elemSize;
 
-		StaticArrayBaseType(boost::shared_ptr<IType> et, int Size, int ElemSize)
+		StaticArrayBaseType(std::shared_ptr<IType> et, int Size, int ElemSize)
 			: elemType(et), size(Size), elemSize(ElemSize) {}
 		~StaticArrayBaseType() {}
 
@@ -59,7 +59,7 @@ namespace creg {
 	{
 	public:
 		typedef T ArrayType[Size];
-		StaticArrayType(boost::shared_ptr<IType> et)
+		StaticArrayType(std::shared_ptr<IType> et)
 			: StaticArrayBaseType(et, Size, sizeof(ArrayType)/Size) {}
 		void Serialize(ISerializer* s, void* instance)
 		{
@@ -73,9 +73,9 @@ namespace creg {
 	class BitArrayType : public IType
 	{
 	public:
-		boost::shared_ptr<IType> elemType;
+		std::shared_ptr<IType> elemType;
 
-		BitArrayType(boost::shared_ptr<IType> et)
+		BitArrayType(std::shared_ptr<IType> et)
 			: elemType(et) {}
 		~BitArrayType() {}
 

@@ -1,11 +1,13 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "TorpedoLauncher.h"
+
 #include "WeaponDef.h"
 #include "Map/Ground.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/Unit.h"
+#include "System/myMath.h"
 
 CR_BIND_DERIVED(CTorpedoLauncher, CWeapon, (NULL, NULL))
 
@@ -65,7 +67,7 @@ void CTorpedoLauncher::FireImpl(const bool scriptCall)
 	params.speed = vel;
 	params.pos = weaponMuzzlePos;
 	params.end = currentTargetPos;
-	params.ttl = (weaponDef->flighttime == 0)? std::ceil(std::max(dist, range) / projectileSpeed + 25): weaponDef->flighttime;
+	params.ttl = (weaponDef->flighttime == 0)? math::ceil(std::max(dist, range) / projectileSpeed + 25): weaponDef->flighttime;
 	params.tracking = tracking;
 
 	WeaponProjectileFactory::LoadProjectile(params);

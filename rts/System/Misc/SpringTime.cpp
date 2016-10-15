@@ -4,8 +4,7 @@
 #include "System/maindefines.h"
 #include "System/myMath.h"
 
-#include <mutex>
-#include "System/Threading/SpringMutex.h"
+#include "System/Threading/SpringThreading.h"
 
 
 #ifndef UNIT_TEST
@@ -25,8 +24,9 @@ CR_REG_METADATA(spring_time,(
 // mingw doesn't support std::this_thread (yet?)
 #if defined(__MINGW32__) || defined(SPRINGTIME_USING_BOOST)
 	#undef gt
-	#include <boost/thread/thread.hpp>
-	namespace this_thread { using namespace boost::this_thread; };
+	#define SPRINGTIME_USING_STD_SLEEP
+	#include "System/Threading/SpringThreading.h"
+	namespace this_thread { using namespace spring::this_thread; };
 #else
 	#define SPRINGTIME_USING_STD_SLEEP
 	#ifdef _GLIBCXX_USE_SCHED_YIELD
@@ -76,7 +76,7 @@ namespace spring_clock {
 	#if USE_NATIVE_WINDOWS_CLOCK
 	// QPC wants the LARGE_INTEGER's to be qword-aligned
 	__FORCE_ALIGN_STACK__
-	boost::int64_t GetTicksNative() {
+	std::int64_t GetTicksNative() {
 		assert(timerInited);
 
 		if (highResMode) {
@@ -111,7 +111,7 @@ namespace spring_clock {
 			LARGE_INTEGER currTick;
 
 			if (!QueryPerformanceFrequency(&tickFreq))
-				return (FromMilliSecs<boost::int64_t>(0));
+				return (FromMilliSecs<std::int64_t>(0));
 
 			QueryPerformanceCounter(&currTick);
 
@@ -127,11 +127,11 @@ namespace spring_clock {
 			//
 			// currTick.QuadPart /= tickFreq.QuadPart;
 
-			if (tickFreq.QuadPart >= boost::int64_t(1e9)) return (FromNanoSecs <boost::uint64_t>(std::max(0.0, currTick.QuadPart / (tickFreq.QuadPart * 1e-9))));
-			if (tickFreq.QuadPart >= boost::int64_t(1e6)) return (FromMicroSecs<boost::uint64_t>(std::max(0.0, currTick.QuadPart / (tickFreq.QuadPart * 1e-6))));
-			if (tickFreq.QuadPart >= boost::int64_t(1e3)) return (FromMilliSecs<boost::uint64_t>(std::max(0.0, currTick.QuadPart / (tickFreq.QuadPart * 1e-3))));
+			if (tickFreq.QuadPart >= std::int64_t(1e9)) return (FromNanoSecs <std::uint64_t>(std::max(0.0, currTick.QuadPart / (tickFreq.QuadPart * 1e-9))));
+			if (tickFreq.QuadPart >= std::int64_t(1e6)) return (FromMicroSecs<std::uint64_t>(std::max(0.0, currTick.QuadPart / (tickFreq.QuadPart * 1e-6))));
+			if (tickFreq.QuadPart >= std::int64_t(1e3)) return (FromMilliSecs<std::uint64_t>(std::max(0.0, currTick.QuadPart / (tickFreq.QuadPart * 1e-3))));
 
-			return (FromSecs<boost::int64_t>(std::max(0LL, currTick.QuadPart)));
+			return (FromSecs<std::int64_t>(std::max(0LL, currTick.QuadPart)));
 		} else {
 			// timeGetTime is affected by time{Begin,End}Period whereas
 			// GetTickCount is not ---> resolution of the former can be
@@ -143,12 +143,12 @@ namespace spring_clock {
 			// risk of overflowing)
 			//
 			// note: there is a GetTickCount64 but no timeGetTime64
-			return (FromMilliSecs<boost::uint32_t>(timeGetTime()));
+			return (FromMilliSecs<std::uint32_t>(timeGetTime()));
 		}
 	}
 	#endif
 
-	boost::int64_t GetTicks() {
+	std::int64_t GetTicks() {
 		assert(timerInited);
 
 		#if USE_NATIVE_WINDOWS_CLOCK
@@ -184,7 +184,7 @@ namespace spring_clock {
 
 
 
-boost::int64_t spring_time::xs = 0;
+std::int64_t spring_time::xs = 0;
 
 static float avgThreadYieldTimeMilliSecs = 0.0f;
 static float avgThreadSleepTimeMilliSecs = 0.0f;

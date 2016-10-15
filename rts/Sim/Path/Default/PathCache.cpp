@@ -47,8 +47,8 @@ bool CPathCache::AddPath(
 	if (cacheQue.size() > MAX_CACHE_QUEUE_SIZE)
 		RemoveFrontQueItem();
 
-	const boost::uint64_t hash = GetHash(strtBlock, goalBlock, goalRadius, pathType);
-	const boost::uint32_t cols = numHashCollisions;
+	const std::uint64_t hash = GetHash(strtBlock, goalBlock, goalRadius, pathType);
+	const std::uint32_t cols = numHashCollisions;
 	const CachedPathConstIter iter = cachedPaths.find(hash);
 
 	// register any hash collisions
@@ -73,7 +73,7 @@ bool CPathCache::AddPath(
 	cq.timeout = gs->frameNum + lifeTime;
 
 	cacheQue.push_back(cq);
-	maxCacheSize = std::max<boost::uint64_t>(maxCacheSize, cacheQue.size());
+	maxCacheSize = std::max<std::uint64_t>(maxCacheSize, cacheQue.size());
 	return false;
 }
 
@@ -83,7 +83,7 @@ const CPathCache::CacheItem* CPathCache::GetCachedPath(
 	float goalRadius,
 	int pathType
 ) {
-	const boost::uint64_t hash = GetHash(strtBlock, goalBlock, goalRadius, pathType);
+	const std::uint64_t hash = GetHash(strtBlock, goalBlock, goalRadius, pathType);
 	const CachedPathConstIter iter = cachedPaths.find(hash);
 
 	if (iter == cachedPaths.end()) {
@@ -120,11 +120,11 @@ void CPathCache::RemoveFrontQueItem()
 	cacheQue.pop_front();
 }
 
-boost::uint64_t CPathCache::GetHash(
+std::uint64_t CPathCache::GetHash(
 	const int2 strtBlk,
 	const int2 goalBlk,
-	boost::uint32_t goalRadius,
-	boost::int32_t pathType
+	std::uint32_t goalRadius,
+	std::int32_t pathType
 ) const {
 	#define N numBlocks
 	#define NX numBlocksX
@@ -139,15 +139,15 @@ boost::uint64_t CPathCache::GetHash(
 	//   Hash(sb=<13,10> gb=<15, 3> ...)==Hash(sb=<12,10> gb=<17, 3> ...)
 	//   Hash(sb=<12,18> gb=< 6,28> ...)==Hash(sb=<11,18> gb=< 8,28> ...)
 	//
-	const boost::uint32_t index = ((goalBlk.y * NX + goalBlk.x) * NZ + strtBlk.y) * NX;
-	const boost::uint32_t offset = strtBlk.x * (pathType + 1) * std::max(1.0f, goalRadius);
+	const std::uint32_t index = ((goalBlk.y * NX + goalBlk.x) * NZ + strtBlk.y) * NX;
+	const std::uint32_t offset = strtBlk.x * (pathType + 1) * std::max(1.0f, goalRadius);
 	return (index + offset);
 	#else
 	// map into linear space, cannot collide unless given non-integer radii
-	const boost::uint64_t index =
+	const std::uint64_t index =
 		(strtBlk.y * NX + strtBlk.x) +
 		(goalBlk.y * NX + goalBlk.x) * N;
-	const boost::uint64_t offset =
+	const std::uint64_t offset =
 		pathType * N*N +
 		goalRadius * N*N*N;
 	return (index + offset);

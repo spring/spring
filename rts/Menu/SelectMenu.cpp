@@ -3,10 +3,9 @@
 #include "SelectMenu.h"
 
 #include <SDL_keycode.h>
-#include <boost/bind.hpp>
+#include <functional>
 #include <sstream>
 #include <stack>
-#include <boost/cstdint.hpp>
 
 #include "SelectionWidget.h"
 #include "System/AIScriptHandler.h"
@@ -58,14 +57,14 @@ public:
 		HorizontalLayout* input = new HorizontalLayout(wndLayout);
 		/*agui::TextElement* label = */new agui::TextElement("Address:", input); // will be deleted in input
 		address = new agui::LineEdit(input);
-		address->DefaultAction.connect(boost::bind(&ConnectWindow::Finish, this, true));
+		address->DefaultAction.connect(std::bind(&ConnectWindow::Finish, this, true));
 		address->SetFocus(true);
 		address->SetContent(configHandler->GetString("address"));
 		HorizontalLayout* buttons = new HorizontalLayout(wndLayout);
 		Button* connect = new Button("Connect", buttons);
-		connect->Clicked.connect(boost::bind(&ConnectWindow::Finish, this, true));
+		connect->Clicked.connect(std::bind(&ConnectWindow::Finish, this, true));
 		Button* close = new Button("Close", buttons);
-		close->Clicked.connect(boost::bind(&ConnectWindow::Finish, this, false));
+		close->Clicked.connect(std::bind(&ConnectWindow::Finish, this, false));
 		GeometryChange();
 	}
 
@@ -95,15 +94,15 @@ public:
 		HorizontalLayout* input = new HorizontalLayout(wndLayout);
 		/*agui::TextElement* value_label = */new agui::TextElement("Value:", input); // will be deleted in input
 		value = new agui::LineEdit(input);
-		value->DefaultAction.connect(boost::bind(&SettingsWindow::Finish, this, true));
+		value->DefaultAction.connect(std::bind(&SettingsWindow::Finish, this, true));
 		value->SetFocus(true);
 		if (configHandler->IsSet(name))
 			value->SetContent(configHandler->GetString(name));
 		HorizontalLayout* buttons = new HorizontalLayout(wndLayout);
 		Button* ok = new Button("OK", buttons);
-		ok->Clicked.connect(boost::bind(&SettingsWindow::Finish, this, true));
+		ok->Clicked.connect(std::bind(&SettingsWindow::Finish, this, true));
 		Button* close = new Button("Cancel", buttons);
-		close->Clicked.connect(boost::bind(&SettingsWindow::Finish, this, false));
+		close->Clicked.connect(std::bind(&SettingsWindow::Finish, this, false));
 		GeometryChange();
 	}
 
@@ -120,7 +119,7 @@ private:
 	};
 };
 
-SelectMenu::SelectMenu(boost::shared_ptr<ClientSetup> setup)
+SelectMenu::SelectMenu(std::shared_ptr<ClientSetup> setup)
 : GuiElement(NULL)
 , clientSetup(setup)
 , conWindow(NULL)
@@ -150,17 +149,17 @@ SelectMenu::SelectMenu(boost::shared_ptr<ClientSetup> setup)
 		menu->SetBorder(1.2f);
 		/*agui::TextElement* title = */new agui::TextElement("Spring", menu); // will be deleted in menu
 		Button* single = new Button("Test the Game", menu);
-		single->Clicked.connect(boost::bind(&SelectMenu::Single, this));
+		single->Clicked.connect(std::bind(&SelectMenu::Single, this));
 
 		userSetting = configHandler->GetString("LastSelectedSetting");
 		Button* editsettings = new Button("Edit settings", menu);
-		editsettings->Clicked.connect(boost::bind(&SelectMenu::ShowSettingsList, this));
+		editsettings->Clicked.connect(std::bind(&SelectMenu::ShowSettingsList, this));
 
 		Button* direct = new Button("Direct connect", menu);
-		direct->Clicked.connect(boost::bind(&SelectMenu::ShowConnectWindow, this, true));
+		direct->Clicked.connect(std::bind(&SelectMenu::ShowConnectWindow, this, true));
 
 		Button* quit = new Button("Quit", menu);
-		quit->Clicked.connect(boost::bind(&SelectMenu::Quit, this));
+		quit->Clicked.connect(std::bind(&SelectMenu::Quit, this));
 		background->GeometryChange();
 	}
 
@@ -217,8 +216,8 @@ void SelectMenu::ShowConnectWindow(bool show)
 	if (show && !conWindow)
 	{
 		conWindow = new ConnectWindow();
-		conWindow->Connect.connect(boost::bind(&SelectMenu::DirectConnect, this, _1));
-		conWindow->WantClose.connect(boost::bind(&SelectMenu::ShowConnectWindow, this, false));
+		conWindow->Connect.connect(std::bind(&SelectMenu::DirectConnect, this, std::placeholders::_1));
+		conWindow->WantClose.connect(std::bind(&SelectMenu::ShowConnectWindow, this, false));
 	}
 	else if (!show && conWindow)
 	{
@@ -236,8 +235,8 @@ void SelectMenu::ShowSettingsWindow(bool show, std::string name)
 			settingsWindow = NULL;
 		}
 		settingsWindow = new SettingsWindow(name);
-		settingsWindow->OK.connect(boost::bind(&SelectMenu::ShowSettingsWindow, this, false, _1));
-		settingsWindow->WantClose.connect(boost::bind(&SelectMenu::ShowSettingsWindow, this, false, ""));
+		settingsWindow->OK.connect(std::bind(&SelectMenu::ShowSettingsWindow, this, false, std::placeholders::_1));
+		settingsWindow->WantClose.connect(std::bind(&SelectMenu::ShowSettingsWindow, this, false, ""));
 	}
 	else if (!show && settingsWindow)
 	{
@@ -257,8 +256,8 @@ void SelectMenu::ShowSettingsList()
 {
 	if (!curSelect) {
 		curSelect = new ListSelectWnd("Select setting");
-		curSelect->Selected.connect(boost::bind(&SelectMenu::SelectSetting, this, _1));
-		curSelect->WantClose.connect(boost::bind(&SelectMenu::CleanWindow, this));
+		curSelect->Selected.connect(std::bind(&SelectMenu::SelectSetting, this, std::placeholders::_1));
+		curSelect->WantClose.connect(std::bind(&SelectMenu::CleanWindow, this));
 	}
 	curSelect->list->RemoveAllItems();
 	const std::map<std::string, std::string> &data = configHandler->GetData();

@@ -1,12 +1,14 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "MissileLauncher.h"
+
 #include "WeaponDef.h"
 #include "Game/TraceRay.h"
 #include "Map/Ground.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
+#include "System/myMath.h"
 
 CR_BIND_DERIVED(CMissileLauncher, CWeapon, (NULL, NULL))
 CR_REG_METADATA(CMissileLauncher, )
@@ -53,7 +55,7 @@ void CMissileLauncher::FireImpl(const bool scriptCall)
 	params.pos = weaponMuzzlePos;
 	params.end = currentTargetPos;
 	params.speed = startSpeed;
-	params.ttl = weaponDef->flighttime == 0? std::ceil(std::max(dist, range) / projectileSpeed + 25 * weaponDef->selfExplode): weaponDef->flighttime;
+	params.ttl = weaponDef->flighttime == 0? math::ceil(std::max(dist, range) / projectileSpeed + 25 * weaponDef->selfExplode): weaponDef->flighttime;
 
 	WeaponProjectileFactory::LoadProjectile(params);
 }
