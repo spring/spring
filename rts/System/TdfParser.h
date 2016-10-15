@@ -12,6 +12,8 @@
 #include "System/Exceptions.h"
 #include "System/float3.h"
 
+class LuaTable;
+
 /**
  * Used to parse TDF Config files.
  * An example of such a file is script.txt.
@@ -129,7 +131,8 @@ private:
 
 	std::vector<std::string> GetLocationVector(std::string const& location) const;
 
-	void parse_buffer(char const* buf, size_t size);
+	void ParseLuaTable(const LuaTable& table, TdfSection* currentSection);
+	void ParseBuffer(char const* buf, size_t size);
 
 public:
 	float3 GetFloat3(float3 def, std::string const& location) const;
