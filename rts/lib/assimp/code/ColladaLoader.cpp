@@ -1071,7 +1071,7 @@ void ColladaLoader::CreateAnimation( aiScene* pScene, const ColladaParser& pPars
             continue;
 
         // resolve the data pointers for all anim channels. Find the minimum time while we're at it
-        ai_real startTime = 1e20, endTime = -1e20;
+        ai_real startTime = 1e20f, endTime = -1e20f;
         for( std::vector<Collada::ChannelEntry>::iterator it = entries.begin(); it != entries.end(); ++it)
         {
             Collada::ChannelEntry& e = *it;
@@ -1109,7 +1109,7 @@ void ColladaLoader::CreateAnimation( aiScene* pScene, const ColladaParser& pPars
 
                   // find the keyframe behind the current point in time
                   size_t pos = 0;
-                  ai_real postTime = 0.0;
+                  ai_real postTime = 0.0f;
                   while( 1)
                   {
                       if( pos >= e.mTimeAccessor->mCount)
@@ -1152,7 +1152,7 @@ void ColladaLoader::CreateAnimation( aiScene* pScene, const ColladaParser& pPars
               resultTrafos.push_back( mat);
 
               // find next point in time to evaluate. That's the closest frame larger than the current in any channel
-              ai_real nextTime = 1e20;
+              ai_real nextTime = 1e20f;
               for( std::vector<Collada::ChannelEntry>::iterator it = entries.begin(); it != entries.end(); ++it)
               {
                   Collada::ChannelEntry& channelElement = *it;
@@ -1180,8 +1180,8 @@ void ColladaLoader::CreateAnimation( aiScene* pScene, const ColladaParser& pPars
                       const ai_real last_key_time = ReadFloat(*channelElement.mTimeAccessor, *channelElement.mTimeData, pos - 1, 0);
                       const ai_real last_eval_angle = last_key_angle + (cur_key_angle - last_key_angle) * (time - last_key_time) / (cur_key_time - last_key_time);
                       const ai_real delta = std::abs(cur_key_angle - last_eval_angle);
-				      if (delta >= 180.0) {
-						const int subSampleCount = static_cast<int>(math::floor(delta / 90.0));
+				      if (delta >= 180.0f) {
+						const int subSampleCount = static_cast<int>(math::floor(delta / 90.0f));
 						if (cur_key_time != time) {
 							const ai_real nextSampleTime = time + (cur_key_time - time) / subSampleCount;
 							nextTime = std::min(nextTime, nextSampleTime);
