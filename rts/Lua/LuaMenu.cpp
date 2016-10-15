@@ -344,6 +344,26 @@ void CLuaMenu::ActivateGame()
 }
 
 
+bool CLuaMenu::AllowDraw()
+{
+	LUA_CALL_IN_CHECK(L);
+	luaL_checkstack(L, 2, __func__);
+	static const LuaHashString cmdStr(__func__);
+	if (!cmdStr.GetGlobalFunc(L)) {
+		return true; // the call is not defined, allow draw
+	}
+
+	// call the function
+	if (!RunCallIn(L, cmdStr, 0, 1)) return true;
+
+	// get the results
+	const bool retval = luaL_optboolean(L, -1, true);
+	lua_pop(L, 1);
+	return retval;
+}
+
+
+
 // Don't call GamePreload since it may be called concurrent
 // with other callins during loading.
 void CLuaMenu::GamePreload()

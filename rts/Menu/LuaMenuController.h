@@ -20,8 +20,11 @@ public:
 	int KeyPressed(int k, bool isRepeat);
 	int TextInput(const std::string& utf8Text);
 
+	bool Update();
 	bool Draw();
 	void ResizeEvent();
+
+
 
 	bool Valid() const { return !menuArchive.empty(); }
 	const std::string& GetMenuName() const { return menuArchive; }
