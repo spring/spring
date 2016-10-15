@@ -7,6 +7,8 @@
 
 #ifdef WIN32
 	#include <io.h>
+#else
+	#include <unistd.h>
 #endif
 #include <string.h>
 #include <stdexcept>
