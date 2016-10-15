@@ -1025,6 +1025,7 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 					activeController->ResizeEvent();
 					mouseInput->InstallWndCallback();
 				} break;
+				case SDL_WINDOWEVENT_RESTORED:
 				case SDL_WINDOWEVENT_SHOWN: {
 					// reactivate sounds and other
 					globalRendering->active = true;
@@ -1035,6 +1036,7 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 						FBO::GLContextReinit();
 					}
 				} break;
+				case SDL_WINDOWEVENT_MINIMIZED:
 				case SDL_WINDOWEVENT_HIDDEN: {
 					// deactivate sounds and other
 					globalRendering->active = false;

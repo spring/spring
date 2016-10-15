@@ -20,7 +20,6 @@ public:
 	int KeyPressed(int k, bool isRepeat);
 	int TextInput(const std::string& utf8Text);
 
-	bool Update();
 	bool Draw();
 	void ResizeEvent();
 

@@ -70,28 +70,29 @@ void CLuaMenuController::ResizeEvent()
 }
 
 
-bool CLuaMenuController::Update()
-{
-	return luaMenu->AllowDraw();
-}
 
 
 bool CLuaMenuController::Draw()
 {
 	eventHandler.CollectGarbage();
-
 	infoConsole->PushNewLinesToEventHandler();
 	mouse->Update();
 	mouse->UpdateCursors();
 	eventHandler.Update();
-
 	// calls IsAbove
 	mouse->GetCurrentTooltip();
 
-	ClearScreen();
-	eventHandler.DrawGenesis();
-	eventHandler.DrawScreen();
-	mouse->DrawCursor();
+	if (globalRendering->active) {
+		ClearScreen();
+		eventHandler.DrawGenesis();
+		eventHandler.DrawScreen();
+		mouse->DrawCursor();
+	} else
+	{
+		spring_msecs(100).sleep(true);
+	}
+	spring_msecs(10).sleep(true);
+	
 	return true;
 }
 

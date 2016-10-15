@@ -359,6 +359,7 @@ bool CLuaMenu::AllowDraw()
 	// get the results
 	const bool retval = luaL_optboolean(L, -1, true);
 	lua_pop(L, 1);
+
 	return retval;
 }
 
