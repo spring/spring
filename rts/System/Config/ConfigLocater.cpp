@@ -18,7 +18,6 @@
 #include "System/FileSystem/FileSystem.h"
 #include "System/Platform/Misc.h"
 #include "System/Platform/Win/win32.h"
-#include <boost/foreach.hpp>
 
 
 using std::string;
@@ -27,7 +26,7 @@ using std::vector;
 
 static void AddCfgFile(vector<string>& locations, const  std::string& filepath)
 {
-	BOOST_FOREACH(std::string& fp, locations) {
+	for(const std::string& fp: locations) {
 		if (FileSystem::ComparePaths(fp, filepath)) {
 			return;
 		}
@@ -87,7 +86,7 @@ void ConfigLocater::GetDefaultLocations(vector<string>& locations)
 	LoadCfgsInFolder(locations, dataDirLocater.GetWriteDirPath(), false);
 
 	// add additional readonly config files
-	BOOST_FOREACH(std::string path, dataDirLocater.GetDataDirPaths()) {
+	for(const std::string& path: dataDirLocater.GetDataDirPaths()) {
 		LoadCfgsInFolder(locations, path);
 	}
 }

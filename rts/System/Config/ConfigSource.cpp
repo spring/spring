@@ -89,7 +89,7 @@ void FileConfigSource::Delete(const string& key)
 	ReadModifyWrite(std::bind(&FileConfigSource::DeleteInternal, this, key));
 }
 
-void FileConfigSource::ReadModifyWrite(boost::function<void ()> modify) {
+void FileConfigSource::ReadModifyWrite(std::function<void ()> modify) {
 	FILE* file = fopen(filename.c_str(), "r+");
 
 	if (file) {

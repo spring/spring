@@ -2,7 +2,6 @@
 
 #include "Socket.h"
 
-#include <boost/system/error_code.hpp>
 #include "lib/streflop/streflop_cond.h"
 
 #include "System/Log/ILog.h"

@@ -8,7 +8,7 @@
 	#include <intrin.h>
 #endif
 
-#include <boost/thread/thread.hpp>
+#include "System/Threading/SpringThreading.h"
 #include <assert.h>
 #include <set>
 
@@ -230,7 +230,7 @@ namespace springproc {
 		assert(processorNumber <= 32); // spring uses uint32_t
 		for (size_t processor = 0; processor < processorNumber; processor++) {
 			Threading::SetAffinity(((uint32_t) 1) << processor, true);
-			boost::this_thread::yield();
+			spring::this_thread::yield();
 			processorApicIds[processor] = getApicIdIntel();
 		}
 
