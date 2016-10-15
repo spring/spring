@@ -141,10 +141,10 @@ progress.make
 *.vcxproj.filters
 *.vcxproj.user
 *.pyc
-/Debug
-/RelWithDebInfo
-/Release
-/x64
+Debug/
+Release/
+RelWithDebInfo/
+x64/
 *.sln
 *.db
 Spring.VC.VC.opendb
