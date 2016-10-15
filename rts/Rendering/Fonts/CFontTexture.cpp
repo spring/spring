@@ -240,10 +240,10 @@ static std::shared_ptr<FontFace> GetFontFace(const std::string& fontfile, const 
 #endif
 
 
-
+#ifndef HEADLESS
 static std::shared_ptr<FontFace> GetFontForCharacters(std::list<char32_t>& characters, const FT_Face origFace, const int origSize)
 {
-#if !defined(HEADLESS) && defined(USE_FONTCONFIG)
+#if defined(USE_FONTCONFIG)
 	if (characters.empty()) {
 		return nullptr;
 	}
@@ -313,6 +313,7 @@ static std::shared_ptr<FontFace> GetFontForCharacters(std::list<char32_t>& chara
 	return nullptr;
 #endif
 }
+#endif
 
 
 /*******************************************************************************/
