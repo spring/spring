@@ -1,5 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include <cassert>
 #include <functional>
 #include <pthread.h>
 #include <unistd.h>
@@ -88,11 +89,10 @@ static void ThreadSIGUSR1Handler(int signum, siginfo_t* info, void* pCtx)
 
 	LOG_L(L_DEBUG, "ThreadSIGUSR1Handler[1]");
 
-	std::shared_ptr<Threading::ThreadControls> pThreadCtls = *threadCtls;
 
 	// Fill in ucontext_t structure before locking, this allows stack walking...
 
-	err = getcontext(&pThreadCtls->ucontext);
+	err = getcontext(&(threadCtls->ucontext));
 	if (err != 0) {
 		LOG_L(L_ERROR, "Couldn't get thread context within suspend signal handler: %s", strerror(err));
 		return;
@@ -100,15 +100,15 @@ static void ThreadSIGUSR1Handler(int signum, siginfo_t* info, void* pCtx)
 
 	// Change the "running" flag to false. Note that we don't own a lock on the suspend mutex, but in order to get here,
 	//   it had to have been locked by some other thread.
-	pThreadCtls->running.store(false);
+	threadCtls->running.store(false);
 
 	LOG_L(L_DEBUG, "ThreadSIGUSR1Handler[2]");
 
 	// Wait on the mutex. This should block the thread.
 	{
-		pThreadCtls->mutSuspend.lock();
-		pThreadCtls->running.store(true);
-		pThreadCtls->mutSuspend.unlock();
+		threadCtls->mutSuspend.lock();
+		threadCtls->running.store(true);
+		threadCtls->mutSuspend.unlock();
 	}
 
 	LOG_L(L_DEBUG, "ThreadSIGUSR1Handler[3]");
@@ -168,14 +168,13 @@ void SetCurrentThreadControls(bool isLoadThread)
 	{
 		// take ownership of the shared_ptr (this is wrapped inside
 		// a boost::thread_specific_ptr, so has to be new'ed itself)
-		threadCtls.reset(new std::shared_ptr<Threading::ThreadControls>(new Threading::ThreadControls()));
+		threadCtls.reset(new Threading::ThreadControls());
 
-		auto ppThreadCtls = threadCtls.get(); assert(ppThreadCtls != nullptr);
-		auto pThreadCtls = ppThreadCtls->get(); assert(pThreadCtls != nullptr);
+		assert(threadCtls.get() != nullptr);
 
-		pThreadCtls->handle = GetCurrentThread();
-		pThreadCtls->thread_id = gettid();
-		pThreadCtls->running.store(true);
+		threadCtls->handle = GetCurrentThread();
+		threadCtls->thread_id = gettid();
+		threadCtls->running.store(true);
 	}
 	#endif
 }
@@ -193,20 +192,16 @@ void ThreadStart(
 	// Install the SIGUSR1 handler
 	SetCurrentThreadControls(false);
 
-	auto ppThreadCtls = threadCtls.get(); // std::shared_ptr<Threading::ThreadControls>*
-	auto pThreadCtls = ppThreadCtls->get(); // Threading::ThreadControls*
-
-	assert(ppThreadCtls != nullptr);
-	assert(pThreadCtls != nullptr);
+	assert(threadCtls.get() != nullptr);
 
 	if (ppCtlsReturn != nullptr)
-		*ppCtlsReturn = *ppThreadCtls;
+		*ppCtlsReturn = threadCtls;
 
 	{
 		// Lock the thread object so that users can't suspend/resume yet.
 		tempCtls->mutSuspend.lock();
 
-		LOG_L(L_DEBUG, "ThreadStart(): New thread's handle is %.4lx", pThreadCtls->handle);
+		LOG_L(L_DEBUG, "ThreadStart(): New thread's handle is %.4lx", threadCtls->handle);
 
 		// We are fully initialized, so notify the condition variable. The
 		// thread's parent will unblock in whatever function created this
@@ -221,9 +216,9 @@ void ThreadStart(
 	taskFunc();
 
 	// Finish up: change the thread's running state to false.
-	pThreadCtls->mutSuspend.lock();
-	pThreadCtls->running = false;
-	pThreadCtls->mutSuspend.unlock();
+	threadCtls->mutSuspend.lock();
+	threadCtls->running = false;
+	threadCtls->mutSuspend.unlock();
 }
 
 

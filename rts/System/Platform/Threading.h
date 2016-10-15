@@ -17,7 +17,6 @@
 #include "System/Threading/SpringThreading.h"
 #include <functional>
 #include <atomic>
-#include <boost/thread.hpp>
 #include <cinttypes>
 
 
@@ -26,7 +25,7 @@ namespace Threading {
 
 	class ThreadControls;
 
-	extern boost::thread_specific_ptr<std::shared_ptr<Threading::ThreadControls>> threadCtls;
+	extern thread_local std::shared_ptr<Threading::ThreadControls> threadCtls;
 
 	/**
 	 * Generic types & functions to handle OS native threads

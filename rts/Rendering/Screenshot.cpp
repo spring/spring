@@ -2,6 +2,7 @@
 
 #include "Screenshot.h"
 
+#include <list>
 #include <vector>
 #include <iomanip>
 #include <functional>

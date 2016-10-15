@@ -17,7 +17,6 @@
 
 #include <functional>
 #include <memory>
-#include <boost/thread.hpp>
 #include <cinttypes>
 #if defined(__APPLE__) || defined(__FreeBSD__)
 #elif defined(WIN32)
@@ -50,7 +49,7 @@ namespace Threading {
 	static NativeThreadId nativeGameLoadThreadID;
 	static NativeThreadId nativeWatchDogThreadID;
 
-	boost::thread_specific_ptr<std::shared_ptr<Threading::ThreadControls>> threadCtls;
+	thread_local std::shared_ptr<Threading::ThreadControls> threadCtls;
 
 #if defined(__APPLE__) || defined(__FreeBSD__)
 #elif defined(WIN32)
@@ -392,7 +391,7 @@ namespace Threading {
 			return std::shared_ptr<ThreadControls>();
 		}
 
-		return *(threadCtls.get());
+		return threadCtls;
 	}
 
 

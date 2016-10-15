@@ -3,7 +3,8 @@
 #include "System/Platform/CrashHandler.h"
 
 #include <string>
-#include <string.h> // strnlen
+#include <cstring> // strnlen
+#include <list>
 #include <vector>
 #include <queue>
 #include <set>

@@ -123,7 +123,7 @@ void LuaMutexYield(lua_State* L)
 	/*mutexes[L]->unlock();
 	if (!mutexes[L]->try_lock()) {
 		// only yield if another thread is waiting for the mutex
-		boost::this_thread::yield();
+		spring::this_thread::yield();
 		mutexes[L]->lock();
 	}*/
 
@@ -132,7 +132,7 @@ void LuaMutexYield(lua_State* L)
 	if (count-- <= 0) { y = true; count = 30; }
 	LuaMutexUnlock(L);
 
-	if (y) boost::this_thread::yield();
+	if (y) spring::this_thread::yield();
 	LuaMutexLock(L);
 #endif
 }

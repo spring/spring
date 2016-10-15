@@ -12,6 +12,7 @@
 // #include <alext.h>
 #endif
 
+#include <climits>
 #include <cinttypes>
 #include <functional>
 
