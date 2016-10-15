@@ -12,10 +12,6 @@
 extern "C" {
 #endif
 
-// @see sdlstub_cppbit.cpp
-int stub_sdl_getSystemMilliSeconds();
-void stub_sdl_sleepMilliSeconds(int milliSeconds);
-
 
 static struct SDL_Surface stubSurface;
 static struct SDL_RWops stubRWops;
