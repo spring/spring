@@ -3,7 +3,6 @@ SET(headlessStubsSources
 		"glstub"
 		"glustub"
 		"sdlstub"
-		"sdlstub_cppbit"
 	)
 
 IF    (WIN32)

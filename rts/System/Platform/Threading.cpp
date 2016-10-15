@@ -15,6 +15,8 @@
 	#include "System/Sync/FPUCheck.h"
 #endif
 
+#include <boost/thread/future.hpp>
+
 #include <functional>
 #include <memory>
 #include <cinttypes>

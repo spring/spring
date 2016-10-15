@@ -1,15 +1,15 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "MapGenerator.h"
+#include "Game/LoadScreen.h"
+#include "Map/SMF/SMFFormat.h"
+#include "Rendering/GL/myGL.h"
+#include "System/FileSystem/Archives/VirtualArchive.h"
+#include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/Exceptions.h"
-#include "System/FileSystem/ArchiveScanner.h"
-#include "System/FileSystem/Archives/VirtualArchive.h"
-#include "Map/SMF/SMFFormat.h"
-#include "Game/LoadScreen.h"
-#include "Rendering/GL/myGL.h"
+#include "System/Util.h"
 
-#include <boost/algorithm/string.hpp>
 #include <fstream>
 #include <sstream>
 
@@ -213,9 +213,9 @@ void CMapGenerator::GenerateMapInfo(CVirtualArchive* archive)
 	startPosString = ss.str();
 
 	//Replace tags in mapinfo.lua
-	boost::replace_first(luaInfo, "${NAME}", setup->mapName);
-	boost::replace_first(luaInfo, "${DESCRIPTION}", GetMapDescription());
-	boost::replace_first(luaInfo, "${START_POSITIONS}", startPosString);
+	StringReplace(luaInfo, "${NAME}", setup->mapName);
+	StringReplace(luaInfo, "${DESCRIPTION}", GetMapDescription());
+	StringReplace(luaInfo, "${START_POSITIONS}", startPosString);
 
 	//Copy to filebuffer
 	fileMapInfo->buffer.assign(luaInfo.begin(), luaInfo.end());

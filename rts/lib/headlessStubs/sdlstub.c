@@ -17,7 +17,6 @@ int stub_sdl_getSystemMilliSeconds();
 void stub_sdl_sleepMilliSeconds(int milliSeconds);
 
 
-static int startSystemMilliSeconds;
 static struct SDL_Surface stubSurface;
 static struct SDL_RWops stubRWops;
 static Uint8 stubKeyState[1];
@@ -30,8 +29,6 @@ extern DECLSPEC void SDLCALL SDL_free(void* p) {
 }
 
 extern DECLSPEC int SDLCALL SDL_Init(Uint32 flags) {
-
-	startSystemMilliSeconds = stub_sdl_getSystemMilliSeconds();
 
 	stubSurface.w = 512;
 	stubSurface.h = 512;
@@ -98,14 +95,6 @@ extern DECLSPEC void SDLCALL SDL_FreeSurface(SDL_Surface* surface) {
 }
 
 extern DECLSPEC void SDLCALL SDL_GL_SwapWindow(SDL_Window* window) {
-}
-
-extern DECLSPEC void SDLCALL SDL_Delay(Uint32 ms) {
-	stub_sdl_sleepMilliSeconds(ms);
-}
-
-extern DECLSPEC Uint32 SDLCALL SDL_GetTicks() {
-	return stub_sdl_getSystemMilliSeconds() - startSystemMilliSeconds;
 }
 
 extern DECLSPEC void SDLCALL SDL_WarpMouseInWindow(SDL_Window* window, int x, int y) {
