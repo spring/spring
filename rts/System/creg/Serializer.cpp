@@ -155,6 +155,7 @@ void COutputStreamSerializer::SerializeObject(Class* c, void* ptr, ObjectRef* ob
 
 	ObjectMemberGroup omg;
 	omg.membersClass = c;
+	omg.size = 0;
 
 	for (uint a = 0; a < c->members.size(); a++)
 	{

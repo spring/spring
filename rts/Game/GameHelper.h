@@ -22,8 +22,8 @@ struct MoveDef;
 struct BuildInfo;
 
 struct CExplosionParams {
-	const float3& pos;
-	const float3& dir;
+	const float3 pos;
+	const float3 dir;
 	const DamageArray& damages;
 	const WeaponDef* weaponDef;
 
