@@ -129,10 +129,13 @@ public:
 private:
 	CBitmap* atlasUpdate;
 	CBitmap* atlasUpdateShadow;
+#ifndef HEADLESS
 	int lastTextureUpdate;
+	FT_Face face;
+#endif
 	int curTextureUpdate;
 
-	FT_Face face;
+
 	std::shared_ptr<FontFace> shFace;
 	std::unordered_set<std::shared_ptr<FontFace>> usedFallbackFonts;
 

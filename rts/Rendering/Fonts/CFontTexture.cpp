@@ -160,6 +160,7 @@ std::unique_ptr<FtLibraryHandler> FtLibraryHandler::singleton = nullptr;
 /*******************************************************************************/
 /*******************************************************************************/
 
+#ifndef HEADLESS
 static inline uint32_t GetKerningHash(char32_t lchar, char32_t rchar)
 {
 	if (lchar < 128 && rchar < 128) {
@@ -169,7 +170,6 @@ static inline uint32_t GetKerningHash(char32_t lchar, char32_t rchar)
 }
 
 
-#ifndef HEADLESS
 static std::shared_ptr<FontFace> GetFontFace(const std::string& fontfile, const int size)
 {
 	std::lock_guard<spring::recursive_mutex> lk(m);
@@ -340,9 +340,7 @@ CFontTexture::CFontTexture(const std::string& fontfile, int size, int _outlinesi
 	, textureSpaceMatrix(0)
 	, atlasUpdate(NULL)
 	, atlasUpdateShadow(NULL)
-	, lastTextureUpdate(0)
 	, curTextureUpdate(0)
-	, face(NULL)
 {
 	if (fontSize <= 0)
 		fontSize = 14;
@@ -354,6 +352,8 @@ CFontTexture::CFontTexture(const std::string& fontfile, int size, int _outlinesi
 	fontStyle  = "unknown";
 
 #ifndef HEADLESS
+	lastTextureUpdate = 0;
+	face = nullptr;
 	shFace = GetFontFace(fontfile, fontSize);
 	face = *shFace;
 
