@@ -44,9 +44,10 @@ namespace Watchdog
 			#endif
 		}
 
-		void SetThreadControls(const std::shared_ptr<Threading::ThreadControls>& c)
+		void SetThreadControls()
 		{
 			#ifndef WIN32
+			const auto& c = Threading::GetCurrentThreadControls();
 			assert(c.get() != nullptr);
 			// copy shared_ptr object, not shared_ptr*
 			ctls = c;
@@ -199,7 +200,7 @@ namespace Watchdog
 
 		// note: WDT_MAIN and WDT_LOAD share the same controls if LoadingMT=0
 		LOG("[WatchDog] registering controls for thread [%s]", threadNames[num]);
-		threadInfo->SetThreadControls(Threading::GetCurrentThreadControls());
+		threadInfo->SetThreadControls();
 
 		++threadInfo->numreg;
 
