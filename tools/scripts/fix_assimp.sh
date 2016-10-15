@@ -8,17 +8,17 @@ fi
 
 replace_func () {
 	sed -i "s/std::$1\b/math::$1/g" $file
-	sed -i "s/\([^:a-zA-Z0-9_]\|^\)$1(/\1math::$1(/g" $file
+	sed -i "s/\([^:a-zA-Z0-9_]\|^\)$1 *(/\1math::$1(/g" $file
 }
 
 for file in $(find -name '*.cpp' -or -name '*.h' -or -name '*.inl');
 do
 	sed -i 's/<cmath>/"lib\/streflop\/streflop_cond.h"/g' $file
 	sed -i 's/<math.h>/"lib\/streflop\/streflop_cond.h"/g' $file
-	replace_func sin
 	replace_func fabs;
 	replace_func sin;
 	replace_func cos;
+	replace_func cosf;
 
 	replace_func sinh;
 	replace_func cosh;
