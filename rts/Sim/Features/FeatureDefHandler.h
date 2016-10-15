@@ -7,14 +7,14 @@
 #include <vector>
 #include <unordered_map>
 
-#include <boost/noncopyable.hpp>
+#include "System/Misc/NonCopyable.h"
 
 
 class LuaTable;
 class LuaParser;
 struct FeatureDef;
 
-class CFeatureDefHandler : public boost::noncopyable
+class CFeatureDefHandler : public spring::noncopyable
 {
 
 public:

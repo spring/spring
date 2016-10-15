@@ -4,7 +4,7 @@
 #define SOUNDBUFFER_H
 
 #include <al.h>
-#include <boost/noncopyable.hpp>
+#include "System/Misc/NonCopyable.h"
 #include <memory>
 #include <string>
 #include <map>
@@ -18,7 +18,7 @@
  * They are loaded on demand and unloaded when game ends.
  * They can be shared among multiple SoundItem
  */
-class SoundBuffer : boost::noncopyable
+class SoundBuffer : spring::noncopyable
 {
 public:
 	/// Construct an "empty" buffer

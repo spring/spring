@@ -6,7 +6,7 @@
 #ifdef WIN32
 
 #include "System/Threading/SpringThreading.h"
-#include <boost/noncopyable.hpp>
+#include "System/Misc/NonCopyable.h"
 
 #include <windows.h>
 #include <vfw.h>
@@ -15,7 +15,7 @@
 #include <list>
 
 
-class CAVIGenerator : boost::noncopyable {
+class CAVIGenerator : spring::noncopyable {
 public:
 
 	CAVIGenerator(const std::string& fileName, int videoSizeX, int videoSizeY, DWORD videoFPS);

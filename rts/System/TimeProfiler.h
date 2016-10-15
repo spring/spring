@@ -6,7 +6,7 @@
 #include "System/Misc/SpringTime.h"
 #include "System/float3.h"
 
-#include <boost/noncopyable.hpp>
+#include "System/Misc/NonCopyable.h"
 #include <cstring>
 #include <string>
 #include <map>
@@ -19,7 +19,7 @@
 #define SCOPED_MT_TIMER(name) ScopedMtTimer myScopedTimerFromMakro(name);
 
 
-class BasicTimer : public boost::noncopyable
+class BasicTimer : public spring::noncopyable
 {
 public:
 	BasicTimer(const std::string& myname);

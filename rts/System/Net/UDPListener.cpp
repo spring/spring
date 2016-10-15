@@ -5,7 +5,7 @@
 #ifdef DEBUG
 	#include <boost/format.hpp>
 #endif
-#include <boost/noncopyable.hpp>
+#include "System/Misc/NonCopyable.h"
 #include <memory>
 #include <asio.hpp>
 #include <cinttypes>

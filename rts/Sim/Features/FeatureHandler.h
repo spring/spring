@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-#include <boost/noncopyable.hpp>
+#include "System/Misc/NonCopyable.h"
 #include "System/creg/creg_cond.h"
 
 #include "FeatureSet.h"
@@ -35,7 +35,7 @@ struct FeatureLoadParams {
 };
 
 class LuaParser;
-class CFeatureHandler : public boost::noncopyable
+class CFeatureHandler : public spring::noncopyable
 {
 	CR_DECLARE_STRUCT(CFeatureHandler)
 

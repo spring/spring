@@ -6,11 +6,11 @@
 #include <string>
 #include <vector>
 #include <map>
-#include <boost/noncopyable.hpp>
+#include "System/Misc/NonCopyable.h"
 #include "System/creg/creg_cond.h"
 
 class LuaParser;
-class CDamageArrayHandler : public boost::noncopyable
+class CDamageArrayHandler : public spring::noncopyable
 {
 	CR_DECLARE_STRUCT(CDamageArrayHandler)
 

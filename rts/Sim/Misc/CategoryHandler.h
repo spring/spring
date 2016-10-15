@@ -6,10 +6,10 @@
 #include <string>
 #include <vector>
 #include <map>
-#include <boost/noncopyable.hpp>
+#include "System/Misc/NonCopyable.h"
 #include "System/creg/creg_cond.h"
 
-class CCategoryHandler : public boost::noncopyable
+class CCategoryHandler : public spring::noncopyable
 {
 	CR_DECLARE_STRUCT(CCategoryHandler)
 

@@ -4,7 +4,7 @@
 #define QUAD_FIELD_H
 
 #include <vector>
-#include <boost/noncopyable.hpp>
+#include "System/Misc/NonCopyable.h"
 
 #include "System/creg/creg_cond.h"
 #include "System/float3.h"
@@ -17,7 +17,7 @@ class CSolidObject;
 class CPlasmaRepulser;
 
 
-class CQuadField : boost::noncopyable
+class CQuadField : spring::noncopyable
 {
 	CR_DECLARE_STRUCT(CQuadField)
 	CR_DECLARE_SUB(Quad)

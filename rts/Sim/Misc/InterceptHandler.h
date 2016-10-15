@@ -4,7 +4,7 @@
 #define INTERCEPT_HANDLER_H
 
 #include <deque>
-#include <boost/noncopyable.hpp>
+#include "System/Misc/NonCopyable.h"
 #include "System/Object.h"
 
 class CWeapon;
@@ -12,7 +12,7 @@ class CWeaponProjectile;
 class CProjectile;
 class float3;
 
-class CInterceptHandler : public CObject, boost::noncopyable
+class CInterceptHandler : public CObject, spring::noncopyable
 {
 	CR_DECLARE(CInterceptHandler)
 

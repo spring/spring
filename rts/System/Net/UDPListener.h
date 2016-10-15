@@ -3,7 +3,7 @@
 #ifndef _UDP_LISTENER_H
 #define _UDP_LISTENER_H
 
-#include <boost/noncopyable.hpp>
+#include "System/Misc/NonCopyable.h"
 #include <memory>
 #include <asio/ip/udp.hpp>
 #include <list>
@@ -23,7 +23,7 @@ typedef std::shared_ptr<asio::ip::udp::socket> SocketPtr;
  * You can Listen for new connections, initiate new ones and send/recieve data
  * to/from them.
  */
-class UDPListener : boost::noncopyable
+class UDPListener : spring::noncopyable
 {
 public:
 	/**

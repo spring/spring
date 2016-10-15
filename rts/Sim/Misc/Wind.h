@@ -4,13 +4,13 @@
 #define WIND_H
 
 #include <map>
-#include <boost/noncopyable.hpp>
+#include "System/Misc/NonCopyable.h"
 
 #include "System/float3.h"
 
 class CUnit;
 
-class CWind : public boost::noncopyable
+class CWind : public spring::noncopyable
 {
 	CR_DECLARE_STRUCT(CWind)
 

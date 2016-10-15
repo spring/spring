@@ -6,7 +6,7 @@
 #include <vector>
 #include <list>
 #include <string>
-#include <boost/noncopyable.hpp>
+#include "System/Misc/NonCopyable.h"
 
 #include "Sim/Objects/SolidObject.h"
 #include "System/Matrix44f.h"
@@ -24,7 +24,7 @@ class CFireProjectile;
 
 
 
-class CFeature: public CSolidObject, public boost::noncopyable
+class CFeature: public CSolidObject, public spring::noncopyable
 {
 	CR_DECLARE(CFeature)
 

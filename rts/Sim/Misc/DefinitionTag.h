@@ -6,7 +6,7 @@
 #define DEFINTION_TAG_H
 
 #include <assert.h>
-#include <boost/noncopyable.hpp>
+#include "System/Misc/NonCopyable.h"
 #include <map>
 #include <vector>
 #include <sstream>
@@ -43,7 +43,7 @@ namespace {
  * That is, meta data of a type that does not depend on the declared type
  * of the definition tag.
  */
-class DefTagMetaData : public boost::noncopyable
+class DefTagMetaData : public spring::noncopyable
 {
 public:
 	typedef TypedStringConvertibleOptionalValue<std::string> OptionalString;

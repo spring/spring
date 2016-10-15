@@ -6,7 +6,7 @@
 #include <string>
 
 #include <al.h>
-#include <boost/noncopyable.hpp>
+#include "System/Misc/NonCopyable.h"
 #include "System/Misc/SpringTime.h"
 #include "System/float3.h"
 
@@ -19,7 +19,7 @@ class COggStream;
  *
  * Construct some of them, and they can play SoundItems positioned anywhere in 3D-space for you.
  */
-class CSoundSource : boost::noncopyable
+class CSoundSource : spring::noncopyable
 {
 public:
 	/// is ready after this

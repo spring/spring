@@ -5,14 +5,14 @@
 
 #include <map>
 #include <vector>
-#include <boost/noncopyable.hpp>
+#include "System/Misc/NonCopyable.h"
 #include "System/creg/creg_cond.h"
 #include "System/float3.h"
 
 
 class CGeoSquareProjectile;
 
-class CGeometricObjects : public boost::noncopyable
+class CGeometricObjects : public spring::noncopyable
 {
 	CR_DECLARE_STRUCT(CGeometricObjects)
 	CR_DECLARE_SUB(GeoGroup)

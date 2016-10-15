@@ -5,7 +5,6 @@
 
 #include <vector>
 #include <deque>
-#include <boost/noncopyable.hpp>
 #include "Map/Ground.h"
 #include "Sim/Misc/LosMap.h"
 #include "Sim/Objects/WorldObject.h"

@@ -5,13 +5,13 @@
 
 #include <vector>
 #include <map>
-#include <boost/noncopyable.hpp>
+#include "System/Misc/NonCopyable.h"
 #include "System/creg/creg_cond.h"
 #include "Resource.h"
 
 class CResourceMapAnalyzer;
 
-class CResourceHandler : public boost::noncopyable
+class CResourceHandler : public spring::noncopyable
 {
 	CR_DECLARE_STRUCT(CResourceHandler)
 
