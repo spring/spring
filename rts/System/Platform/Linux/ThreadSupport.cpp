@@ -166,8 +166,6 @@ void SetCurrentThreadControls(bool isLoadThread)
 	}
 
 	{
-		// take ownership of the shared_ptr (this is wrapped inside
-		// a boost::thread_specific_ptr, so has to be new'ed itself)
 		threadCtls.reset(new Threading::ThreadControls());
 
 		assert(threadCtls.get() != nullptr);

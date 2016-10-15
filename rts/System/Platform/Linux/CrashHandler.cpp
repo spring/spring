@@ -960,7 +960,7 @@ namespace CrashHandler
 		}
 
 		// Re-enable signal handling for this signal
-		// FIXME: reentrances should be implemented using boost::thread_specific_ptr
+		// FIXME: reentrances should be implemented using __thread
 		if (reentrances >= 2) {
 			sigaction_t& sa = GetSigAction(&HandleSignal);
 			sigaction(signal, &sa, NULL);
