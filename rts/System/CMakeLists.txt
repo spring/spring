@@ -145,6 +145,7 @@ MakeGlobalVar(sources_engine_System_Threading_Linux
 	)
 MakeGlobalVar(sources_engine_System_Threading_Windows
 		"${CMAKE_CURRENT_SOURCE_DIR}/Threading/CriticalSection.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Threading/SpringThreading.cpp"
 	)
 
 ### only use the target platform related directory

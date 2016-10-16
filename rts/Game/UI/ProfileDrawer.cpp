@@ -8,7 +8,6 @@
 #include "Game/GlobalUnsynced.h"
 #include "System/EventHandler.h"
 #include "System/Rectangle.h"
-#include "System/ThreadPool.h"
 #include "System/TimeProfiler.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Fonts/glFont.h"
