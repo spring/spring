@@ -14,15 +14,15 @@ Sim:
    note that wobble still exists without LoS.
 
 Lua:
+ ! Undeprecate {unit,feature}def.modelname and add .modeltype and .modelpath to
+   allow reading these without loading the model. Removed def.model.{name,type,path}
+   so they aren't used accidentally.
  - Add Spring.Get{Game,Menu}Name to LuaUnsyncedRead, so LuaMenu and unsynced Lua handles know about each other
  - Add new callins (LuaMenu only):
    ActivateMenu() that is called whenever LuaMenu is on with no game loaded.
    ActivateGame() that is called whenever LuaMenu is on with a game loaded.
+   AllowDraw() if it returns false, the next draw call is skipped (only active when a game isn't running)
 
-Lua:
- ! Undeprecate {unit,feature}def.modelname and add .modeltype and .modelpath to
-   allow reading these without loading the model. Removed def.model.{name,type,path}
-   so they aren't used accidentally.
 
 -- 103.0 --------------------------------------------------------
 General:
