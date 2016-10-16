@@ -44,18 +44,18 @@ public:
 		GeometryChange();
 	}
 
-	boost::signals2::signal<void (std::string)> Selected;
+	slimsig::signal<void (std::string)> Selected;
 	agui::List* list;
 
 private:
 	void SelectButton()
 	{
 		list->SetFocus(false);
-		Selected(list->GetCurrentItem());
+		Selected.emit(list->GetCurrentItem());
 	}
 	void CancelButton()
 	{
-		WantClose();
+		WantClose.emit();
 	}
 };
 

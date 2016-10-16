@@ -68,16 +68,16 @@ public:
 		GeometryChange();
 	}
 
-	boost::signals2::signal<void (std::string)> Connect;
+	slimsig::signal<void (std::string)> Connect;
 	agui::LineEdit* address;
 
 private:
 	void Finish(bool connect)
 	{
 		if (connect)
-			Connect(address->GetContent());
+			Connect.emit(address->GetContent());
 		else
-			WantClose();
+			WantClose.emit();
 	};
 };
 
@@ -106,16 +106,16 @@ public:
 		GeometryChange();
 	}
 
-	boost::signals2::signal<void (std::string)> OK;
+	slimsig::signal<void (std::string)> OK;
 	agui::LineEdit* value;
 
 private:
 	void Finish(bool set)
 	{
 		if (set)
-			OK(title + " = " + value->GetContent());
+			OK.emit(title + " = " + value->GetContent());
 		else
-			WantClose();
+			WantClose.emit();
 	};
 };
 

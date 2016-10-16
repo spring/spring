@@ -4,8 +4,8 @@
 #define GUI_H
 
 #include <list>
-#include <boost/signals2/connection.hpp>
-#include <boost/signals2/shared_connection_block.hpp>
+#include <slimsig/connection.h>
+#include "System/Input/InputHandler.h"
 
 union SDL_Event;
 
@@ -19,21 +19,20 @@ class Gui
 public:
 	Gui();
 	virtual ~Gui();
-	
+
 	void Clean();
 	void Draw();
 	void AddElement(GuiElement*, bool asBackground = false);
 	/// deletes the element on the next draw
 	void RmElement(GuiElement*);
-	
+
 	void UpdateScreenGeometry(int screenx, int screeny, int screenOffsetX, int screenOffsetY);
 
 	bool MouseOverElement(const GuiElement*, int x, int y) const;
 
 private:
 	bool HandleEvent(const SDL_Event& ev);
-	boost::signals2::scoped_connection inputCon;
-	boost::signals2::shared_connection_block inputConBlock;
+	InputHandler::SignalType::connection_type inputCon;
 
 	struct GuiItem
 	{

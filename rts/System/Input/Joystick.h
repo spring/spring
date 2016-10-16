@@ -4,7 +4,8 @@
 #define JOYSTICK_H
 
 #include <SDL_joystick.h>
-#include <boost/signals2/connection.hpp>
+#include <slimsig/connection.h>
+#include "System/Input/InputHandler.h"
 
 union SDL_Event;
 
@@ -16,10 +17,10 @@ class Joystick
 public:
 	Joystick();
 	~Joystick();
-	
+
 private:
 	bool HandleEvent(const SDL_Event& event);
-	boost::signals2::scoped_connection inputCon;
+	InputHandler::SignalType::connection_type inputCon;
 
 	SDL_Joystick* myStick;
 };

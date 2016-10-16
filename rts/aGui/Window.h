@@ -4,7 +4,7 @@
 #define WINDOW_H
 
 #include <string>
-#include <boost/signals2/signal.hpp>
+#include <slimsig/slimsig.h>
 
 #include "GuiElement.h"
 
@@ -14,9 +14,9 @@ class Window : public GuiElement
 {
 public:
 	Window(const std::string& title = "", GuiElement* parent = NULL);
-	
+
 	virtual void AddChild(GuiElement* elem);
-	boost::signals2::signal<void (void)> WantClose;
+	slimsig::signal<void (void)> WantClose;
 
 protected:
 	std::string title;

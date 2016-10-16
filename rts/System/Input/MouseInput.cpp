@@ -42,6 +42,12 @@ IMouseInput::IMouseInput()
 }
 
 
+IMouseInput::~IMouseInput()
+{
+	inputCon.disconnect();
+}
+
+
 bool IMouseInput::HandleSDLMouseEvent(const SDL_Event& event)
 {
 	switch (event.type) {

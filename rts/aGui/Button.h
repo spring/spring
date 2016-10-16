@@ -4,7 +4,7 @@
 #define BUTTON_H
 
 #include <string>
-#include <boost/signals2/signal.hpp>
+#include <slimsig/slimsig.h>
 
 #include "GuiElement.h"
 
@@ -15,10 +15,10 @@ class Button : public GuiElement
 {
 public:
 	Button(const std::string& label = "", GuiElement* parent = NULL);
-	
+
 	void Label(const std::string& label);
-	
-	boost::signals2::signal<void (void)> Clicked;
+
+	slimsig::signal<void (void)> Clicked;
 
 private:
 	virtual void DrawSelf();

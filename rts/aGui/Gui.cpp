@@ -14,8 +14,7 @@
 namespace agui
 {
 
-Gui::Gui():
-	inputConBlock(inputCon)
+Gui::Gui()
 {
 	inputCon = input.AddHandler(std::bind(&Gui::HandleEvent, this, std::placeholders::_1));
 }
@@ -77,13 +76,11 @@ void Gui::Clean() {
 
 Gui::~Gui() {
 	Clean();
+	inputCon.disconnect();
 }
 
 void Gui::AddElement(GuiElement* elem, bool asBackground)
 {
-	if (elements.empty()) {
-		inputConBlock.unblock();
-	}
 	toBeAdded.push_back(GuiItem(elem,asBackground));
 }
 
@@ -95,10 +92,6 @@ void Gui::RmElement(GuiElement* elem)
 			toBeRemoved.push_back(GuiItem(elem,true));
 			break;
 		}
-	}
-
-	if (elements.empty()) {
-		inputConBlock.block();
 	}
 }
 

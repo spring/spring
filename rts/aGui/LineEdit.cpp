@@ -134,7 +134,7 @@ bool LineEdit::HandleEventSelf(const SDL_Event& ev)
 					break;
 				}
 				case SDLK_RETURN: {
-					DefaultAction();
+					DefaultAction.emit();
 					return true;
 				}
 				default:

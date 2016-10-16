@@ -44,6 +44,7 @@ LIST(APPEND engineHeadlessLibraries pr-downloader_static)
 
 INCLUDE_DIRECTORIES(${ENGINE_SRC_ROOT_DIR}/lib/assimp/include)
 INCLUDE_DIRECTORIES(${ENGINE_SRC_ROOT_DIR}/lib/asio/include)
+INCLUDE_DIRECTORIES(${ENGINE_SRC_ROOT_DIR}/lib/slimsig/include)
 
 
 ### Build the executable

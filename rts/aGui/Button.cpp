@@ -76,7 +76,7 @@ bool Button::HandleEventSelf(const SDL_Event& ev)
 					&& clicked)
 			{
 				if (!Clicked.empty()) {
-					Clicked();
+					Clicked.emit();
 				} else {
 					LOG_L(L_WARNING, "Button %s clicked without callback", label.c_str());
 				}

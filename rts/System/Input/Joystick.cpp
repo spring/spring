@@ -69,6 +69,8 @@ Joystick::~Joystick()
 {
 	if (myStick)
 		SDL_JoystickClose(myStick);
+	if (inputCon.connected())
+		inputCon.disconnect();
 }
 
 bool Joystick::HandleEvent(const SDL_Event& event)
