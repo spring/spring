@@ -1025,7 +1025,8 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 					activeController->ResizeEvent();
 					mouseInput->InstallWndCallback();
 				} break;
-				case SDL_WINDOWEVENT_RESTORED:
+				case SDL_WINDOWEVENT_MAXIMIZED:
+				case SDL_WINDOWEVENT_RESTORED: 
 				case SDL_WINDOWEVENT_SHOWN: {
 					// reactivate sounds and other
 					globalRendering->active = true;

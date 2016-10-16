@@ -4,6 +4,7 @@
 #define LUA_MENU_CONTROLLER
 
 #include "Game/GameController.h"
+#include "System/Misc/SpringTime.h"
 
 class CLuaMenuController : public CGameController
 {
@@ -30,6 +31,7 @@ public:
 
 private:
 	std::string menuArchive;
+	spring_time lastDrawFrameTime;
 };
 
 extern CLuaMenuController* luaMenuController;
