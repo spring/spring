@@ -881,20 +881,24 @@ int SpringApp::Update()
 		glEnable(GL_MULTISAMPLE_ARB);
 
 	int ret = 1;
+	bool drawOccured = false;
+
 	configHandler->Update();
 	if (activeController != NULL) {
 		ret = activeController->Update();
 
 		if (ret) {
-			ret = activeController->Draw();
+			drawOccured = activeController->Draw();
 		}
 	}
 
-	SCOPED_TIMER("Misc::SwapBuffers");
-	spring_time pre = spring_now();
-	VSync.Delay();
-	SDL_GL_SwapWindow(globalRendering->window);
-	eventHandler.DbgTimingInfo(TIMING_SWAP, pre, spring_now());
+	if (drawOccured) {
+		SCOPED_TIMER("Misc::SwapBuffers");
+		spring_time pre = spring_now();
+		VSync.Delay();
+		SDL_GL_SwapWindow(globalRendering->window);
+		eventHandler.DbgTimingInfo(TIMING_SWAP, pre, spring_now());
+	}
 	return ret;
 }
 
@@ -1025,6 +1029,8 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 					activeController->ResizeEvent();
 					mouseInput->InstallWndCallback();
 				} break;
+				case SDL_WINDOWEVENT_MAXIMIZED:
+				case SDL_WINDOWEVENT_RESTORED: 
 				case SDL_WINDOWEVENT_SHOWN: {
 					// reactivate sounds and other
 					globalRendering->active = true;
@@ -1035,6 +1041,7 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 						FBO::GLContextReinit();
 					}
 				} break;
+				case SDL_WINDOWEVENT_MINIMIZED:
 				case SDL_WINDOWEVENT_HIDDEN: {
 					// deactivate sounds and other
 					globalRendering->active = false;

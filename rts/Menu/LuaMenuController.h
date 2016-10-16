@@ -4,6 +4,7 @@
 #define LUA_MENU_CONTROLLER
 
 #include "Game/GameController.h"
+#include "System/Misc/SpringTime.h"
 
 class CLuaMenuController : public CGameController
 {
@@ -23,11 +24,14 @@ public:
 	bool Draw();
 	void ResizeEvent();
 
+
+
 	bool Valid() const { return !menuArchive.empty(); }
 	const std::string& GetMenuName() const { return menuArchive; }
 
 private:
 	std::string menuArchive;
+	spring_time lastDrawFrameTime;
 };
 
 extern CLuaMenuController* luaMenuController;

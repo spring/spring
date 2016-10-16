@@ -17,7 +17,8 @@ CLuaMenuController* luaMenuController = nullptr;
 
 
 CLuaMenuController::CLuaMenuController(const std::string& menuName)
- : menuArchive(menuName)
+ : menuArchive(menuName),
+   lastDrawFrameTime(spring_gettime())
 {
 	if (menuArchive.empty())
 		menuArchive = configHandler->GetString("DefaultLuaMenu");
@@ -70,24 +71,31 @@ void CLuaMenuController::ResizeEvent()
 }
 
 
+
+
 bool CLuaMenuController::Draw()
 {
-	spring_msecs(10).sleep(true);
 	eventHandler.CollectGarbage();
-
 	infoConsole->PushNewLinesToEventHandler();
 	mouse->Update();
 	mouse->UpdateCursors();
 	eventHandler.Update();
-
 	// calls IsAbove
 	mouse->GetCurrentTooltip();
 
-	ClearScreen();
-	eventHandler.DrawGenesis();
-	eventHandler.DrawScreen();
-	mouse->DrawCursor();
-	return true;
+	// render if global rendering active + luamenu allows it, and at least once per 30s
+	const bool shouldDraw = (globalRendering->active && luaMenu->AllowDraw()) || ((spring_gettime() - lastDrawFrameTime).toSecsi() > 30);
+	if (shouldDraw) {
+		ClearScreen();
+		eventHandler.DrawGenesis();
+		eventHandler.DrawScreen();
+		mouse->DrawCursor();
+		lastDrawFrameTime = spring_gettime();
+	} else {
+		spring_msecs(10).sleep(true); // no draw needed, sleep a bit
+	}
+	
+	return shouldDraw;
 }
 
 

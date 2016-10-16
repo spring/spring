@@ -377,3 +377,18 @@ function hHookFuncs.SelectionChanged(selectedUnits)
 		end
 	end
 end
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+-- LuaMenu callin
+
+function hHookFuncs.AllowDraw()
+	for _,f in hCallInLists.AllowDraw:iter() do
+		if not f() then
+			return false
+		end
+	end
+
+	return true
+end
+

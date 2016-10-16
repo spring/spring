@@ -21,6 +21,9 @@ public:
 	// callin called when LuaMenu is active with a game
 	void ActivateGame();
 
+	// callin called before each render, can block rendering
+	bool AllowDraw();
+
 	void GamePreload() override;
 
 protected:

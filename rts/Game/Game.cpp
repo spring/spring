@@ -1167,7 +1167,7 @@ bool CGame::Draw() {
 	const spring_time currentTimePreUpdate = spring_gettime();
 
 	if (UpdateUnsynced(currentTimePreUpdate))
-		return true;
+		return false;
 
 	SCOPED_TIMER("Draw");
 	const bool doDrawWorld = hideInterface || !minimap->GetMaximized() || minimap->GetMinimized();
@@ -1186,7 +1186,7 @@ bool CGame::Draw() {
 		// so we force render two frames per minute when minimized to clear batches and free memory
 		// don't need to mess with globalRendering->active since only mouse-input code depends on it
 		if ((currentTimePreDraw - lastDrawFrameTime).toSecsi() < 30)
-			return true;
+			return false;
 	}
 
 	if (globalRendering->drawdebug) {
