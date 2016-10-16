@@ -34,6 +34,10 @@ namespace std {
 
   __future_base::_Result_base::~_Result_base() = default;
 
+#if defined(__GNUC__) && (__GNUC__ == 4) && (__GNUC_MINOR__ < 9)
+  __future_base::_State_base::~_State_base() = default;
+#endif
+
   __thread void* __once_callable;
   __thread void (*__once_call)();
 
