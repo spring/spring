@@ -84,7 +84,8 @@ bool CLuaMenuController::Draw()
 	mouse->GetCurrentTooltip();
 
 	// render if global rendering active + luamenu allows it, and at least once per 30s
-	if ((globalRendering->active && luaMenu->AllowDraw()) || ((spring_gettime() - lastDrawFrameTime).toSecsi() > 30)) {
+	const bool shouldDraw = (globalRendering->active && luaMenu->AllowDraw()) || ((spring_gettime() - lastDrawFrameTime).toSecsi() > 30);
+	if (shouldDraw) {
 		ClearScreen();
 		eventHandler.DrawGenesis();
 		eventHandler.DrawScreen();
@@ -94,7 +95,7 @@ bool CLuaMenuController::Draw()
 		spring_msecs(10).sleep(true); // no draw needed, sleep a bit
 	}
 	
-	return true;
+	return shouldDraw;
 }
 
 
