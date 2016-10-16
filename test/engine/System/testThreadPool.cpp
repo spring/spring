@@ -2,8 +2,8 @@
 
 #include "System/ThreadPool.h"
 #include "System/Log/ILog.h"
+#include "System/Threading/SpringThreading.h"
 #include "System/UnsyncedRNG.h"
-#include <boost/thread/future.hpp>
 #include <vector>
 #include <atomic>
 
@@ -13,8 +13,8 @@
 static int NUM_THREADS = std::min(ThreadPool::GetMaxThreads(), 10);
 
 // !!! BOOST.TEST IS NOT THREADSAFE !!! (facepalms)
-#define SAFE_BOOST_CHECK( P )           do { boost::lock_guard<boost::mutex> _(m); BOOST_CHECK( ( P ) );               } while( 0 );
-static boost::mutex m;
+#define SAFE_BOOST_CHECK( P )           do { std::lock_guard<spring::mutex> _(m); BOOST_CHECK( ( P ) );               } while( 0 );
+static spring::mutex m;
 
 
 BOOST_AUTO_TEST_CASE( testThreadPool1 )
@@ -75,7 +75,7 @@ BOOST_AUTO_TEST_CASE( testThreadPool3 )
 		SAFE_BOOST_CHECK(threadnum >= 0);
 		SAFE_BOOST_CHECK(threadnum < NUM_THREADS);
 		return threadnum;
-	}, [](int a, boost::unique_future<int>& b) -> int { return a + b.get(); });
+	}, [](int a, std::future<int>& b) -> int { return a + b.get(); });
 	BOOST_CHECK(result == ((NUM_THREADS-1)*((NUM_THREADS-1) + 1))/2);
 }
 
