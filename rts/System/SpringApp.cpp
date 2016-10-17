@@ -191,7 +191,7 @@ SpringApp::SpringApp(int argc, char** argv)
 	// initializes configHandler which we need
 	std::string binaryName = argv[0];
 
-	gflags::SetUsageMessage("Usage: " + binaryName + " [options] path_to_script.txt");
+	gflags::SetUsageMessage("Usage: " + binaryName + " [options] [path_to_script.txt or demo.sdfz]");
 	gflags::SetVersionString(SpringVersion::GetFull());
 	gflags::ParseCommandLineFlags(&argc, &argv, true);
 	ParseCmdLine(argc, argv);
