@@ -79,6 +79,7 @@ struct MoveDef {
 
 	std::string name;
 
+#pragma pack(push, 1)
 	SpeedModClass speedModClass;
 	TerrainClass terrainClass;
 
@@ -129,6 +130,7 @@ struct MoveDef {
 	/// do we leave heat and avoid any left by others?
 	bool heatMapping;
 	bool flowMapping;
+#pragma pack(pop)
 };
 
 
