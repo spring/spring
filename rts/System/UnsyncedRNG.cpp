@@ -9,13 +9,6 @@
 
 UnsyncedRNG::UnsyncedRNG()
 : randSeed(0)
-#ifdef USE_BOOST_RNG
-, distInt(0, RANDINT_MAX)
-, distSphere(3)
-, gen01(rng, dist01)
-, genInt(rng, distInt)
-, genSphere(rng, distSphere)
-#endif
 {
 
 }
@@ -31,44 +24,28 @@ void UnsyncedRNG::operator=(const UnsyncedRNG& urng)
 void UnsyncedRNG::Seed(unsigned seed)
 {
 	randSeed = seed;
-#ifdef USE_BOOST_RNG
-	rng.seed(seed);
-#endif
 }
 
 int UnsyncedRNG::RandInt()
 {
-#ifdef USE_BOOST_RNG
-	return genInt();
-#else
 	randSeed = (randSeed * 214013L + 2531011L);
 	return (randSeed >> 16) & RANDINT_MAX;
-#endif
 }
 
 float UnsyncedRNG::RandFloat()
 {
-#ifdef USE_BOOST_RNG
-	return gen01();
-#else
 	randSeed = (randSeed * 214013L + 2531011L);
 	return float((randSeed >> 16) & RANDINT_MAX) / RANDINT_MAX;
-#endif
 }
 
 float3 UnsyncedRNG::RandVector()
 {
-#ifdef USE_BOOST_RNG
-	float3 ret(&genSphere()[0]);
-	ret *= RandFloat();
-#else
 	float3 ret;
 	do {
 		ret.x = RandFloat() * 2 - 1;
 		ret.y = RandFloat() * 2 - 1;
 		ret.z = RandFloat() * 2 - 1;
 	} while (ret.SqLength() > 1);
-#endif
 
 	return ret;
 }

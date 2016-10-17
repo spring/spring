@@ -190,7 +190,6 @@ BOOST_AUTO_TEST_CASE( Pow )
 {
 	srand( 0 );
 	int iterations = 0xFFFFFF;
-	int iterations2 = 0xFFFFFFF;
 
 	//typedef float(sqrtfunc*)(float*);
 	//std::array

@@ -164,8 +164,8 @@ template<class F, class... Args>
 class TaskGroup : public ITaskGroup
 {
 public:
-	TaskGroup(const int num = 0) : remainingTasks(0), curtask(0), latency(0) {
-		//start = boost::chrono::high_resolution_clock::now();
+	TaskGroup(const int num = 0) : remainingTasks(0), curtask(0)/*, latency(0)*/ {
+		//start = std::chrono::high_resolution_clock::now();
 		results.reserve(num);
 		tasks.reserve(num);
 	}
@@ -234,8 +234,8 @@ public:
 	std::vector<std::function<void()>> tasks;
 	std::vector<std::future<return_type>> results;
 
-	std::chrono::time_point<std::chrono::high_resolution_clock> start; // use for latency profiling!
-	std::chrono::nanoseconds latency;
+	//std::chrono::time_point<std::chrono::high_resolution_clock> start; // use for latency profiling!
+	//std::chrono::nanoseconds latency;
 };
 
 

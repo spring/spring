@@ -21,21 +21,8 @@ CR_REG_METADATA(spring_time,(
 #endif
 
 
-// mingw doesn't support std::this_thread (yet?)
-#if defined(__MINGW32__) || defined(SPRINGTIME_USING_BOOST)
-	#undef gt
-	#define SPRINGTIME_USING_STD_SLEEP
-	#include "System/Threading/SpringThreading.h"
-	namespace this_thread { using namespace spring::this_thread; };
-#else
-	#define SPRINGTIME_USING_STD_SLEEP
-	#ifdef _GLIBCXX_USE_SCHED_YIELD
-	#undef _GLIBCXX_USE_SCHED_YIELD
-	#endif
-	#define _GLIBCXX_USE_SCHED_YIELD // workaround a gcc <4.8 bug
-	#include <thread>
-	namespace this_thread { using namespace std::this_thread; }
-#endif
+#include "System/Threading/SpringThreading.h"
+#include <chrono>
 
 #define USE_NATIVE_WINDOWS_CLOCK (defined(WIN32) && !defined(FORCE_CHRONO_TIMERS))
 #if USE_NATIVE_WINDOWS_CLOCK
@@ -154,7 +141,7 @@ namespace spring_clock {
 		#if USE_NATIVE_WINDOWS_CLOCK
 		return (GetTicksNative());
 		#else
-		return (chrono::duration_cast<chrono::nanoseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count());
+		return (std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count());
 		#endif
 	}
 
@@ -171,12 +158,7 @@ namespace spring_clock {
 
 		#else
 
-		#ifdef SPRINGTIME_USING_BOOST
-		return "boost::chrono::high_resolution_clock";
-		#endif
-		#ifdef SPRINGTIME_USING_STDCHRONO
 		return "std::chrono::high_resolution_clock";
-		#endif
 
 		#endif
 	}
@@ -195,7 +177,7 @@ static spring::mutex sleepTimeMutex;
 static void thread_yield()
 {
 	const spring_time t0 = spring_time::gettime();
-	this_thread::yield();
+	spring::this_thread::yield();
 	const spring_time t1 = spring_time::gettime();
 	const spring_time dt = t1 - t0;
 
@@ -209,11 +191,7 @@ static void thread_yield()
 void spring_time::sleep(bool forceThreadSleep)
 {
 	if (forceThreadSleep) {
-#if defined(SPRINGTIME_USING_STD_SLEEP)
-		this_thread::sleep_for(chrono::nanoseconds(toNanoSecsi()));
-#else
-		boost::this_thread::sleep(boost::posix_time::microseconds(std::ceil(toNanoSecsf() * 1e-3)));
-#endif
+		spring::this_thread::sleep_for(std::chrono::nanoseconds(toNanoSecsi()));
 		return;
 	}
 
@@ -231,11 +209,7 @@ void spring_time::sleep(bool forceThreadSleep)
 	// expected wakeup time
 	const spring_time t0 = gettime() + *this;
 
-	#if defined(SPRINGTIME_USING_STD_SLEEP)
-		this_thread::sleep_for(chrono::nanoseconds(toNanoSecsi()));
-	#else
-		boost::this_thread::sleep(boost::posix_time::microseconds(std::ceil(toNanoSecsf() * 1e-3)));
-	#endif
+	spring::this_thread::sleep_for(std::chrono::nanoseconds(toNanoSecsi()));
 
 	const spring_time t1 = gettime();
 	const spring_time dt = t1 - t0;
@@ -248,10 +222,11 @@ void spring_time::sleep(bool forceThreadSleep)
 
 void spring_time::sleep_until()
 {
-#if defined(SPRINGTIME_USING_STD_SLEEP)
-	auto tp = chrono::time_point<chrono::high_resolution_clock, chrono::nanoseconds>(chrono::nanoseconds(toNanoSecsi()));
-	this_thread::sleep_until(tp);
-#else
+// #if defined(SPRINGTIME_USING_STD_SLEEP)
+	// auto tp = std::chrono::time_point<std::chrono::high_resolution_clock, std::chrono::nanoseconds>(std::chrono::nanoseconds(toNanoSecsi()));
+	// spring::this_thread::sleep_until(tp);
+// #else
+
 	spring_time napTime = gettime() - *this;
 
 	if (napTime.toMilliSecsf() < avgThreadYieldTimeMilliSecs) {
@@ -263,7 +238,6 @@ void spring_time::sleep_until()
 	}
 
 	napTime.sleep();
-#endif
 }
 
 #if defined USING_CREG && !defined UNIT_TEST

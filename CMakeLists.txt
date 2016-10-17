@@ -244,25 +244,8 @@ endif (USE_LIBSQUISH)
 
 
 
-FIND_PACKAGE(Boost 1.51.0 COMPONENTS thread regex program_options system chrono signals filesystem REQUIRED)
-FIND_PACKAGE(Boost 1.51.0 COMPONENTS timer)
+FIND_PACKAGE(Boost 1.51.0 COMPONENTS regex program_options REQUIRED)
 INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
-
-# boost::chrono depends on clock_gettime which we need to link ourself when boost is static linked
-Set(Boost_CHRONO_LIBRARY_WITH_RT ${Boost_CHRONO_LIBRARY})
-IF    (UNIX AND NOT MINGW)
-	FIND_LIBRARY(REALTIME_LIBRARY rt)
-
-	IF    (PREFER_STATIC_LIBS AND NOT EXISTS "${REALTIME_LIBRARY}")
-		MESSAGE(FATAL_ERROR "librt.[so|a] not found! Needed by std/boost chrono when static linked!")
-	ENDIF (PREFER_STATIC_LIBS AND NOT EXISTS "${REALTIME_LIBRARY}")
-
-	# zydox buildslave seems to have problems to autolink it from dynlinked boost libs
-	#  so always link it (won't hurt cause std/boost chrono need it never the less)
-	if    (EXISTS "${REALTIME_LIBRARY}")
-		LIST(APPEND Boost_CHRONO_LIBRARY_WITH_RT ${REALTIME_LIBRARY})
-	ENDIF (EXISTS "${REALTIME_LIBRARY}")
-ENDIF (UNIX AND NOT MINGW)
 
 # Note the missing REQUIRED, as headless & dedi may not depend on those.
 #  So req. checks are done in the build target's CMakeLists.txt.

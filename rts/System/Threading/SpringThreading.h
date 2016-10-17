@@ -172,20 +172,6 @@ namespace spring {
 			}
 		}
 	};
-
-
-
-
-	// class shared_spinlock : public boost::shared_mutex {
-	// public:
-		// void lock() {
-			// while (!try_lock()) { /* busy-wait */ }
-		// }
-
-		// void lock_shared() {
-			// while (!try_lock_shared()) { /* busy-wait */ }
-		// }
-	// };
 }
 
 #endif // SPRINGTHREADING_H
