@@ -55,7 +55,7 @@ namespace Assimp {
 template <typename T>
 inline float GetArea2D(const T& v1, const T& v2, const T& v3)
 {
-    return 0.5 * (v1.x * ((float)v3.y - v2.y) + v2.x * ((float)v1.y - v3.y) + v3.x * ((float)v2.y - v1.y));
+    return ai_real(0.5) * (v1.x * (v3.y - v2.y) + v2.x * (v1.y - v3.y) + v3.x * (v2.y - v1.y));
 }
 
 // -------------------------------------------------------------------------------

@@ -120,7 +120,7 @@ struct Key
     {}
 
     //! Current time
-    double time;
+    float time;
 
     //! Current value
     float value;
@@ -133,7 +133,7 @@ struct Key
 
 
     // for std::find()
-    operator double () {
+    operator float () {
         return time;
     }
 };
@@ -198,7 +198,7 @@ public:
      *  @note The input envelopes are possibly modified.
      */
     AnimResolver(std::list<Envelope>& envelopes,
-        double tick);
+        float tick);
 
 public:
 
@@ -227,14 +227,14 @@ public:
      *  AI_LWO_ANIM_FLAG_SAMPLE_ANIMS is specified for ExtractAnimChannel(),
      *  the class finds a suitable sample rate by itself.
      */
-    void SetSampleRate(double sr) {
+    void SetSampleRate(float sr) {
         sample_rate = sr;
     }
 
     // ------------------------------------------------------------------
     /** @brief Getter for SetSampleRate()
      */
-    double GetSampleRate() const {
+    float GetSampleRate() const {
         return sample_rate;
     }
 
@@ -244,7 +244,7 @@ public:
      *  @param first Time where the animation starts, in ticks
      *  @param last  Time where the animation ends, in ticks
      */
-    void SetAnimationRange(double _first, double _last) {
+    void SetAnimationRange(float _first, float _last) {
         first = _first;
         last  = _last;
 
@@ -278,7 +278,7 @@ protected:
      *  @param fill Receives the interpolated output value.
      */
     void DoInterpolation(std::vector<LWO::Key>::const_iterator cur,
-        LWO::Envelope* envl,double time, float& fill);
+        LWO::Envelope* envl,float time, float& fill);
 
     // ------------------------------------------------------------------
     /** @brief Almost the same, except we won't handle pre/post
@@ -286,7 +286,7 @@ protected:
      *  @see DoInterpolation
      */
     void DoInterpolation2(std::vector<LWO::Key>::const_iterator beg,
-        std::vector<LWO::Key>::const_iterator end,double time, float& fill);
+        std::vector<LWO::Key>::const_iterator end,float time, float& fill);
 
     // ------------------------------------------------------------------
     /** @brief Interpolate 2 tracks if one is given
@@ -296,7 +296,7 @@ protected:
      *  @param time Time to interpolate for
      */
     void InterpolateTrack(std::vector<aiVectorKey>& out,
-        aiVectorKey& key_out,double time);
+        aiVectorKey& key_out,float time);
 
     // ------------------------------------------------------------------
     /** @brief Subsample an animation track by a given sampling rate
@@ -307,7 +307,7 @@ protected:
      *  @param sample_delta Time delta between two samples
      */
     void SubsampleAnimTrack(std::vector<aiVectorKey>& out,
-        double time,double sample_delta);
+        float time,float sample_delta);
 
     // ------------------------------------------------------------------
     /** @brief Delete all keys which we inserted to match anim setup
@@ -322,13 +322,13 @@ protected:
 
 private:
     std::list<Envelope>& envelopes;
-    double sample_rate;
+    float sample_rate;
 
     LWO::Envelope* trans_x, *trans_y, *trans_z;
     LWO::Envelope* rotat_x, *rotat_y, *rotat_z;
     LWO::Envelope* scale_x, *scale_y, *scale_z;
 
-    double first, last;
+    float first, last;
     bool need_to_setup;
 
     // temporary storage
@@ -337,7 +337,7 @@ private:
     bool end_x, end_y, end_z;
 
     unsigned int flags;
-    double sample_delta;
+    float sample_delta;
 };
 
 } // end namespace LWO

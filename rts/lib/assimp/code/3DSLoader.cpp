@@ -776,7 +776,7 @@ void Discreet3DSImporter::ParseHierarchyChunk(uint16_t parent)
 
             // Setup a new position key
             aiVectorKey v;
-            v.mTime = (double)fidx;
+            v.mTime = fidx;
 
             SkipTCBInfo();
             v.mValue.x = stream->GetF4();
@@ -819,7 +819,7 @@ void Discreet3DSImporter::ParseHierarchyChunk(uint16_t parent)
 
             // Setup a new position key
             aiFloatKey v;
-            v.mTime = (double)fidx;
+            v.mTime = fidx;
 
             // This is just a single float
             SkipTCBInfo();
@@ -867,7 +867,7 @@ void Discreet3DSImporter::ParseHierarchyChunk(uint16_t parent)
             SkipTCBInfo();
 
             aiQuatKey v;
-            v.mTime = (double)fidx;
+            v.mTime = fidx;
 
             // The rotation keyframe is given as an axis-angle pair
             const float rad = stream->GetF4();
@@ -914,7 +914,7 @@ void Discreet3DSImporter::ParseHierarchyChunk(uint16_t parent)
 
             // Setup a new key
             aiVectorKey v;
-            v.mTime = (double)fidx;
+            v.mTime = fidx;
 
             // ... and read its value
             v.mValue.x = stream->GetF4();

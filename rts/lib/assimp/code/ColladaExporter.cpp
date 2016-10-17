@@ -178,7 +178,7 @@ void ColladaExporter::WriteHeader()
 
     ai_real scale = 1.0;
     if(std::abs(scaling.x - scaling.y) <= epsilon && std::abs(scaling.x - scaling.z) <= epsilon && std::abs(scaling.y - scaling.z) <= epsilon) {
-        scale = (ai_real) ((((double) scaling.x) + ((double) scaling.y) + ((double) scaling.z)) / 3.0);
+        scale = (scaling.x + scaling.y + scaling.z) / ai_real(3.0);
     } else {
         add_root_node = true;
     }
@@ -454,7 +454,7 @@ void ColladaExporter::WriteSpotLight(const aiLight *const light){
     mOutput << startstr <<"<falloff_angle sid=\"fall_off_angle\">"
                                 << fallOffAngle
                         <<"</falloff_angle>" << endstr;
-    double temp = light->mAngleOuterCone-light->mAngleInnerCone;
+    float temp = light->mAngleOuterCone-light->mAngleInnerCone;
 
     temp = math::cos(temp);
     temp = math::log(temp)/math::log(0.1);

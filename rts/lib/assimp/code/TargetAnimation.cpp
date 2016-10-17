@@ -98,7 +98,7 @@ void KeyIterator::operator ++()
 
     // Now search in all arrays for the time value closest
     // to our current position on the time line
-    double d0,d1;
+    float d0,d1;
 
     d0 = objPos->at      ( std::min<unsigned int> ( nextObjPos, objPos->size()-1)             ).mTime;
     d1 = targetObjPos->at( std::min<unsigned int> ( nextTargetObjPos, targetObjPos->size()-1) ).mTime;
