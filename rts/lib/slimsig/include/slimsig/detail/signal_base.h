@@ -320,15 +320,18 @@ private:
   };
 
   template<class C, class T>
-  [[gnu::always_inline]]
+#ifdef __GNUC__
+  __attribute__((always_inline))
+#endif
   inline connection_type create_connection(T&& slot)
   {
     auto sid = prepare_connection();
     emplace(sid, C { std::move(slot), {m_self, sid} });
     return connection_type { m_self, sid };
   };
-
-  [[gnu::always_inline]]
+#ifdef __GNUC__
+  __attribute__((always_inline))
+#endif
   inline slot_id prepare_connection()
   {
     // lazy initialize to put off heap allocations if the user
@@ -339,7 +342,9 @@ private:
   };
 
   template <class... SlotArgs>
-  [[gnu::always_inline]]
+#ifdef __GNUC__
+  __attribute__((always_inline))
+#endif
   inline void emplace(SlotArgs&&... args)
   {
     pending.emplace_back(std::forward<SlotArgs>(args)...);

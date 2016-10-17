@@ -18,8 +18,15 @@ namespace slimsig {
 namespace detail {
 
 template <class T>
-[[gnu::always_inline]] inline T default_value() { return T(); }
-template<> [[gnu::always_inline]] inline void default_value<void>() {};
+#ifdef __GNUC__
+__attribute__((always_inline))
+#endif
+inline T default_value() { return T(); }
+template<>
+#ifdef __GNUC__
+__attribute__((always_inline))
+#endif
+inline void default_value<void>() {};
 };
 
 template <class Callback, class SlotID>
@@ -30,7 +37,7 @@ class basic_slot<R(Args...), SlotID> {
 public:
   using callback = std::function<R(Args...)>;
   using slot_id = SlotID;
-  
+
   basic_slot(slot_id sid, callback fn) : m_fn(std::move(fn)), m_slot_id(sid), m_is_connected(bool(m_fn)), m_is_running(false) {};
   basic_slot() : basic_slot(0, nullptr) {};
   template <class... Arguments>
@@ -39,64 +46,90 @@ public:
   basic_slot(const basic_slot&) = default;
   inline basic_slot& operator=(const basic_slot&) = default;
   inline basic_slot& operator=(basic_slot&&) = default;
-  
-  [[gnu::always_inline]]
+#ifdef __GNUC__
+  __attribute__((always_inline))
+#endif
   inline bool operator==(const basic_slot& other) const{
     return m_slot_id == other.m_slot_id;
   }
-  [[gnu::always_inline]]
+#ifdef __GNUC__
+  __attribute__((always_inline))
+#endif
   inline bool operator==(const slot_id& other) const {
     return m_slot_id == other;
   }
-  [[gnu::always_inline]]
+#ifdef __GNUC__
+  __attribute__((always_inline))
+#endif
   inline bool operator <(const basic_slot& other) const {
     return m_slot_id < other.m_slot_id;
   }
-  [[gnu::always_inline]]
+#ifdef __GNUC__
+  __attribute__((always_inline))
+#endif
   inline bool operator <(const slot_id& other) const {
     return m_slot_id < other;
   }
-  [[gnu::always_inline]]
+#ifdef __GNUC__
+  __attribute__((always_inline))
+#endif
   inline bool operator >(const basic_slot& other) const {
     return m_slot_id > other.m_slot_id;
   }
-  [[gnu::always_inline]]
+#ifdef __GNUC__
+  __attribute__((always_inline))
+#endif
   inline bool operator >(const slot_id& other) const {
     return m_slot_id > other;
   }
-  [[gnu::always_inline]]
+#ifdef __GNUC__
+  __attribute__((always_inline))
+#endif
   inline bool operator <=(const slot_id& other) const {
     return m_slot_id <= other;
   }
-  [[gnu::always_inline]]
+#ifdef __GNUC__
+  __attribute__((always_inline))
+#endif
   inline bool operator >=(const slot_id& other) const {
     return m_slot_id >= other;
   }
-  [[gnu::always_inline]]
+#ifdef __GNUC__
+  __attribute__((always_inline))
+#endif
   inline explicit operator bool()  const{
    return m_is_connected;
   }
-  [[gnu::always_inline]]
+#ifdef __GNUC__
+  __attribute__((always_inline))
+#endif
   inline bool connected() const {
     return m_is_connected;
   }
-  [[gnu::always_inline]]
+#ifdef __GNUC__
+  __attribute__((always_inline))
+#endif
   inline void disconnect() {
     m_is_connected = false;
     if (!m_is_running) {
       m_fn = nullptr;
     }
   }
-  
-  [[gnu::always_inline, deprecated("Use operator()")]]
+#ifdef __GNUC__
+  __attribute__((always_inline, deprecated("Use operator()")))
+#endif
   inline const callback& operator*() const{
     return m_fn;
   };
-  [[gnu::always_inline, deprecated("Use operator()")]]
+#ifdef __GNUC__
+  __attribute__((always_inline, deprecated("Use operator()")))
+#endif
   inline const callback* operator->() const {
     return &m_fn;
   }
-  [[gnu::always_inline]]
+#ifdef __GNUC__
+  __attribute__((always_inline))
+#endif
   inline R operator() (Args... args) const{
     struct invoke_guard
     {
@@ -114,7 +147,7 @@ public:
 
 /**
  *  Specialized container adaptor for slot/callback values
- *  Because of some assumptions we can make about how signals will use 
+ *  Because of some assumptions we can make about how signals will use
  *  this list, we can achieve great performance boosts over using a standard containers alone
  *  Requirements:
  *  T must meet all requirements of Container
@@ -126,11 +159,11 @@ public:
  *
  *  We use this type of lookup for slots because we need a way to access slots after the vectors
  *  iterators have been invalidated, but we need to do this quickly.
- *  
+ *
  *  To accomplish this we use a simple linear search if the container contains less than 4 elements
  *  Otherwise we use std::lower_bound to quickly locate the slot with this ID in the vector
  *  This requires the vector to be sorted with lower IDs (older slots) first
- *  
+ *
  *  Because generally slots aren't removed or queried nearly as much as they are emitted
  *  Applications will see huge performance gains over using a list or a vector of shared_ptr's
  *  due to the memory being contigious. Additions are pretty snappy in most cases because we don't
@@ -168,15 +201,15 @@ public:
   slot_list(allocator_type alloc) : active{alloc}, pending{std::move(alloc)}, last_id(1), is_locked(false) {};
   slot_list(slot_list&&) = default;
   slot_list(const slot_list&) = default;
-  
+
   bool try_lock() { lock(); return true; }
   void lock() { is_locked = true; }
-  
-  
+
+
   void unlock() {
     using std::make_move_iterator;
     using std::sort;
-    
+
     struct guard_t{
       flag& locked;
       container_type& pending;
@@ -192,9 +225,9 @@ public:
       throw;
     }
   }
-  
+
   bool locked() const noexcept (noexcept(bool(std::declval<FlagType>()))) { return is_locked; }
-  
+
   slot_id push(const value_type& value) {
     using std::move;
     auto& queue = !is_locked ? active : pending;
@@ -202,7 +235,7 @@ public:
     queue.emplace_back({ sid, move(value)});
     return sid;
   }
-  
+
   slot_id push(value_type&& value) {
     using std::move;
     auto& queue = !is_locked ? active : pending;
@@ -210,7 +243,7 @@ public:
     queue.emplace_back({ sid, move(value)});
     return sid;
   }
-  
+
   template <class... Args>
   slot_id emplace(Args&&... args) {
     auto& queue = !is_locked ? active : pending;
@@ -218,7 +251,7 @@ public:
     queue.emplace_back(sid, std::forward<Args>(args)...);
     return sid;
   }
-  
+
   template <class U, class... Args>
   slot_id emplace_extended(Args&&... args) {
     auto& queue = !is_locked ? active : pending;
@@ -226,12 +259,12 @@ public:
     queue.emplace_back(sid, U{std::forward<Args>(args)..., {this->shared_from_this(), sid}});
     return sid;
   }
-  
-  
-  
+
+
+
   inline iterator erase(const_iterator position) { return active.erase(position); }
   inline iterator erase(const_iterator begin, const_iterator end) { return active.erase(begin, end); }
-  
+
   inline iterator begin() { return active.begin(); }
   inline iterator end() { return active.end(); }
   inline const_iterator cbegin() const { return active.cbegin(); }
@@ -245,7 +278,7 @@ public:
   inline bool active_empty() const { return active_size() == 0; }
   inline bool pending_empty() const { return pending_size() == 0; }
   inline bool empty() const { return total_size() == 0; }
-  
+
   iterator find(slot_id index) noexcept {
     auto end = active.end();
     auto slot = find(index, active.begin(), end);
@@ -256,7 +289,7 @@ public:
     }
     return slot;
   };
-  
+
   const_iterator find(slot_id index) const noexcept{
     auto end = active.cend();
     auto slot = find(index, active.cbegin(), end);
@@ -276,7 +309,7 @@ private:
     using std::find_if;
     using std::bind;
     using std::less_equal;
-    
+
     begin = find_if(lower_bound(begin, end, index), end, [&] (const_reference slot){
       return index >= index;
     });

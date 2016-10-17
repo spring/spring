@@ -21,7 +21,7 @@ class connection;
 template <class ThreadPolicy, class Allocator, class F>
 class signal_base;
  // detail
-  
+
   template <class Signal>
   class connection {
   using slot = typename Signal::slot;
@@ -36,7 +36,7 @@ class signal_base;
     connection() {}; // empty connection
     connection(const connection& other) : m_slots(other.m_slots), m_slot_id(other.m_slot_id) {};
     connection(connection&& other) : m_slots(std::move(other.m_slots)), m_slot_id(other.m_slot_id) {};
-    
+
     connection& operator=(connection&& rhs) {
       this->swap(rhs);
       return *this;
@@ -46,13 +46,15 @@ class signal_base;
       m_slots = rhs.m_slots;
       return *this;
     }
-    
+
     void swap(connection& other) {
       using std::swap;
       swap(m_slots, other.m_slots);
       swap(m_slot_id, other.m_slot_id);
     }
-    [[gnu::always_inline]]
+#ifdef __GNUC__
+    __attribute__((always_inline))
+#endif
     inline explicit operator bool() const { return connected(); };
     bool connected() const {
       const auto slots = m_slots.lock();
@@ -76,13 +78,13 @@ class signal_base;
     friend class signal_base;
     template < class T, class IDGenerator, class FlagType, class Allocator>
     friend class slot_list;
-    
-    
+
+
   private:
     std::weak_ptr<signal_holder> m_slots;
     slot_id m_slot_id;
   };
-  
+
   template <class connection>
   class scoped_connection {
   public:
@@ -90,7 +92,7 @@ class signal_base;
     scoped_connection(const connection& target) : m_connection(target) {};
     scoped_connection(const scoped_connection&) = delete;
     scoped_connection(scoped_connection&& other) : m_connection(other.m_connection) {};
-    
+
     scoped_connection& operator=(const connection& rhs) {
       m_connection = rhs;
     };
@@ -112,12 +114,12 @@ class signal_base;
   private:
     connection m_connection;
   };
-  
+
   template <class connection>
   scoped_connection<connection> make_scoped_connection(connection&& target) {
     return scoped_connection<connection>(std::forward<connection>(target));
   };
- 
+
 }
 
 #endif
