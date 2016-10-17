@@ -119,7 +119,7 @@ static inline std::string GetSystemErrorStr(WRes wres)
 	//Free the buffer.
 	LocalFree(messageBuffer);
 #else
-	return std::string(strerror(wres));
+	std::string errorstr(strerror(wres));
 #endif
 
 	return errorstr;
