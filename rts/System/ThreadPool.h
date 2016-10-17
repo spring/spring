@@ -206,7 +206,7 @@ public:
 		const int pos = curtask.fetch_add(1, std::memory_order_relaxed);
 		if (pos < tasks.size()) {
 			/*if (latency.count() == 0) {
-				auto now = boost::chrono::high_resolution_clock::now();
+				auto now = std::chrono::high_resolution_clock::now();
 				latency = (now - start);
 				LOG("latency %fms", latency.count() / 1000000.f);
 			}*/
