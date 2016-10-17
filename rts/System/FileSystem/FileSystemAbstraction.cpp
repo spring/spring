@@ -258,10 +258,23 @@ bool FileSystemAbstraction::MkDir(const std::string& dir)
 	return dirCreated;
 }
 
+
 bool FileSystemAbstraction::DeleteFile(const std::string& file)
 {
-	// on windows this func doesn't allow deletion of dirs
-	// but no such usage exist in spring at the moment
+#ifdef WIN32
+	if (DirExists(file)) {
+		BOOL success = RemoveDirectory(StripTrailingSlashes(file).c_str());
+		if (!success) {
+			LPSTR messageBuffer = nullptr;
+			size_t size = FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+								NULL, GetLastError(), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&messageBuffer, 0, NULL);
+			LOG_L(L_WARNING, "Could not delete directory %s: %s", file.c_str(), messageBuffer);
+			LocalFree(messageBuffer);
+			return false;
+		}
+		return true;
+	}
+#endif
 	int ret = remove(file.c_str());
 	if (ret) {
 		LOG_L(L_WARNING, "Could not delete file %s: %s", file.c_str(), strerror(errno));
@@ -282,7 +295,7 @@ bool FileSystemAbstraction::FileExists(const std::string& file)
 bool FileSystemAbstraction::DirExists(const std::string& dir)
 {
 	struct stat info;
-	const int ret = stat(dir.c_str(), &info);
+	const int ret = stat(StripTrailingSlashes(dir).c_str(), &info);
 	bool dirExists = ((ret == 0 && S_ISDIR(info.st_mode)));
 	return dirExists;
 }
@@ -361,15 +374,26 @@ bool FileSystemAbstraction::ComparePaths(const std::string& path1, const std::st
 		FILE_FLAG_BACKUP_SEMANTICS,
 		0);
 
-	if (h2 == INVALID_HANDLE_VALUE)
+	if (h2 == INVALID_HANDLE_VALUE) {
+		CloseHandle(h1);
 		return false;
+	}
 
 	BY_HANDLE_FILE_INFORMATION info1, info2;
-	if (!GetFileInformationByHandle(h1, &info1))
+	if (!GetFileInformationByHandle(h1, &info1)) {
+		CloseHandle(h1);
+		CloseHandle(h2);
 		return false;
+	}
 
-	if (!GetFileInformationByHandle(h2, &info2))
+	if (!GetFileInformationByHandle(h2, &info2)) {
+		CloseHandle(h1);
+		CloseHandle(h2);
 		return false;
+	}
+
+	CloseHandle(h1);
+	CloseHandle(h2);
 
 	return
 		info1.dwVolumeSerialNumber == info2.dwVolumeSerialNumber
