@@ -18,7 +18,6 @@
 #include <errno.h>
 #include <string.h>
 #include <boost/regex.hpp>
-#include <boost/filesystem.hpp>
 
 #ifndef _WIN32
 	#include <dirent.h>
@@ -182,20 +181,21 @@ bool FileSystemAbstraction::IsReadableFile(const std::string& file)
 
 std::string FileSystemAbstraction::GetFileModificationDate(const std::string& file)
 {
-	try {
-		const boost::filesystem::path f(file);
-		const std::time_t t = boost::filesystem::last_write_time(f);
-		struct tm* clock = std::gmtime(&t);
-
-		const size_t cTime_size = 20;
-		char cTime[cTime_size];
-		SNPRINTF(cTime, cTime_size, "%d%02d%02d%02d%02d%02d", 1900+clock->tm_year, clock->tm_mon, clock->tm_mday, clock->tm_hour, clock->tm_min, clock->tm_sec);
-		return cTime;
-	} catch (const boost::filesystem::filesystem_error& ex) {
+	struct stat info;
+	const int statfailed = stat(file.c_str(), &info);
+	if (statfailed) {
 		LOG_L(L_WARNING, "Failed fetching last modification time from file: %s", file.c_str());
-		LOG_L(L_WARNING, "Error is: \"%s\"", ex.what());
+		LOG_L(L_WARNING, "Error is: \"%s\"", strerror(errno));
 		return "";
 	}
+
+	const std::time_t t = info.st_mtime;
+	struct tm* clock = std::gmtime(&t);
+
+	const size_t cTime_size = 20;
+	char cTime[cTime_size];
+	SNPRINTF(cTime, cTime_size, "%d%02d%02d%02d%02d%02d", 1900+clock->tm_year, clock->tm_mon, clock->tm_mday, clock->tm_hour, clock->tm_min, clock->tm_sec);
+	return cTime;
 }
 
 
@@ -260,15 +260,15 @@ bool FileSystemAbstraction::MkDir(const std::string& dir)
 
 bool FileSystemAbstraction::DeleteFile(const std::string& file)
 {
-	try {
-		const boost::filesystem::path f(file);
-		// same as posix remove(), but on windows that func doesn't allow deletion of dirs
-		// so it's easier to use boost from the start
-		return (boost::filesystem::remove_all(f) >= 1);
-	} catch (const boost::filesystem::filesystem_error& ex) {
-		LOG_L(L_WARNING, "Could not delete file %s: %s", file.c_str(), ex.what());
+	// on windows this func doesn't allow deletion of dirs
+	// but no such usage exist in spring at the moment
+	int ret = remove(file.c_str());
+	if (ret) {
+		LOG_L(L_WARNING, "Could not delete file %s: %s", file.c_str(), strerror(errno));
 		return false;
 	}
+
+	return true;
 }
 
 bool FileSystemAbstraction::FileExists(const std::string& file)
@@ -281,12 +281,10 @@ bool FileSystemAbstraction::FileExists(const std::string& file)
 
 bool FileSystemAbstraction::DirExists(const std::string& dir)
 {
-	try {
-		const boost::filesystem::path p(dir);
-		return boost::filesystem::exists(p) && boost::filesystem::is_directory(p);
-	} catch (const boost::filesystem::filesystem_error& ex) {
-		return false;
-	}
+	struct stat info;
+	const int ret = stat(dir.c_str(), &info);
+	bool dirExists = ((ret == 0 && S_ISDIR(info.st_mode)));
+	return dirExists;
 }
 
 
@@ -330,13 +328,60 @@ bool FileSystemAbstraction::DirIsWritable(const std::string& dir)
 
 bool FileSystemAbstraction::ComparePaths(const std::string& path1, const std::string& path2)
 {
-	try {
-		const boost::filesystem::path p1(path1);
-		const boost::filesystem::path p2(path2);
-		return boost::filesystem::equivalent(p1, p2);
-	} catch (const boost::filesystem::filesystem_error& ex) {
+
+#ifndef WIN32
+	struct stat info1, info2;
+	const int ret1 = stat(path1.c_str(), &info1);
+	const int ret2 = stat(path2.c_str(), &info2);
+
+	// If either files doesn't exist, return false
+	if (ret1 || ret2)
 		return false;
-	}
+
+	return (info1.st_dev == info2.st_dev) && (info1.st_ino == info2.st_ino);
+#else
+	HANDLE h1 = CreateFile(
+		path1.c_str(),
+		0,
+		FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
+		0,
+		OPEN_EXISTING,
+		FILE_FLAG_BACKUP_SEMANTICS,
+		0);
+
+	if (h1 == INVALID_HANDLE_VALUE)
+		return false;
+
+	HANDLE h2 = CreateFile(
+		path2.c_str(),
+		0,
+		FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
+		0,
+		OPEN_EXISTING,
+		FILE_FLAG_BACKUP_SEMANTICS,
+		0);
+
+	if (h2 == INVALID_HANDLE_VALUE)
+		return false;
+
+	BY_HANDLE_FILE_INFORMATION info1, info2;
+	if (!GetFileInformationByHandle(h1, &info1))
+		return false;
+
+	if (!GetFileInformationByHandle(h2, &info2))
+		return false;
+
+	return
+		info1.dwVolumeSerialNumber == info2.dwVolumeSerialNumber
+		&& info1.nFileIndexHigh == info2.nFileIndexHigh
+		&& info1.nFileIndexLow == info2.nFileIndexLow
+		&& info1.nFileSizeHigh == info2.nFileSizeHigh
+		&& info1.nFileSizeLow == info2.nFileSizeLow
+		&& info1.ftLastWriteTime.dwLowDateTime
+		== info2.ftLastWriteTime.dwLowDateTime
+		&& info1.ftLastWriteTime.dwHighDateTime
+		== info2.ftLastWriteTime.dwHighDateTime;
+#endif
 }
 
 
