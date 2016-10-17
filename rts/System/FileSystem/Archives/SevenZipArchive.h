@@ -95,7 +95,6 @@ private:
 		int packedSize;
 	};
 	int GetFileName(const CSzArEx* db, int i);
-	const char* GetErrorStr(int res);
 
 	std::vector<FileData> fileData;
 	UInt16 *tempBuf;
