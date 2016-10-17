@@ -1,12 +1,11 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include <boost/format.hpp>
-
 #include "LocalConnection.h"
 #include "Net/Protocol/BaseNetProtocol.h"
 #include "Exception.h"
 #include "ProtocolDef.h"
 #include "System/Log/ILog.h"
+#include "System/SpringFormat.h"
 
 namespace netcode {
 
@@ -102,8 +101,8 @@ void CLocalConnection::DeleteBufferPacketAt(unsigned index)
 std::string CLocalConnection::Statistics() const
 {
 	std::string msg = "Statistics for local connection:\n";
-	msg += str( boost::format("Received: %1% bytes\n") %dataRecv );
-	msg += str( boost::format("Sent: %1% bytes\n") %dataSent );
+	msg += spring::format("Received: %u bytes\n", dataRecv);
+	msg += spring::format("Sent: %u bytes\n", dataSent);
 	return msg;
 }
 

@@ -3,7 +3,7 @@
 #include "UDPListener.h"
 
 #ifdef DEBUG
-	#include <boost/format.hpp>
+	#include "System/SpringFormat.h"
 #endif
 #include "System/Misc/NonCopyable.h"
 #include <memory>
@@ -151,7 +151,7 @@ void UDPListener::Update() {
 			#ifdef DEBUG
 				std::string conns;
 				for (ConnMap::iterator it = conn.begin(); it != conn.end(); ++it) {
-					conns += str(boost::format(" [%s]:%i;") %it->first.address().to_string().c_str() %it->first.port());
+					conns += spring::format(" [%s]:%i;", it->first.address().to_string().c_str(),it->first.port());
 				}
 				LOG_L(L_DEBUG, "Open connections: %s", conns.c_str());
 			#endif

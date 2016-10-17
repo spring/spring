@@ -3,8 +3,6 @@
 #include "System/Net/UDPListener.h"
 #include "System/Net/UDPConnection.h"
 
-#include <boost/format.hpp>
-#include <boost/version.hpp>
 #include <functional>
 #include <deque>
 #if defined DEDICATED || defined DEBUG
@@ -41,8 +39,9 @@
 #include "System/GlobalConfig.h"
 #include "System/MsgStrings.h"
 #include "System/myMath.h"
-#include "System/Util.h"
+#include "System/SpringFormat.h"
 #include "System/TdfParser.h"
+#include "System/Util.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/FileSystem/SimpleParser.h"
 #include "System/Net/Connection.h"
@@ -63,7 +62,6 @@
 #define PKTCACHE_VECSIZE 1000
 
 using netcode::RawPacket;
-using boost::format;
 
 
 CONFIG(int, AutohostPort).defaultValue(0);
@@ -208,7 +206,7 @@ void CGameServer::Initialize()
 		UDPNet.reset(new netcode::UDPListener(myClientSetup->hostPort, myClientSetup->hostIP));
 	}
 	AddAutohostInterface(StringToLower(configHandler->GetString("AutohostIP")), configHandler->GetInt("AutohostPort"));
-	Message(str(format(ServerStart) %myClientSetup->hostPort), false);
+	Message(spring::format(ServerStart, myClientSetup->hostPort), false);
 
 	// start script
 	maxUserSpeed = myGameSetup->maxSpeed;
@@ -218,7 +216,7 @@ void CGameServer::Initialize()
 
 	// load demo (if there is one)
 	if (myGameSetup->hostDemo) {
-		Message(str(format(PlayingDemo) %myGameSetup->demoName));
+		Message(spring::format(PlayingDemo, myGameSetup->demoName.c_str()));
 		demoReader.reset(new CDemoReader(myGameSetup->demoName, modGameTime + 0.1f));
 	}
 
@@ -236,7 +234,7 @@ void CGameServer::Initialize()
 			const size_t demoPlayers = demoReader->GetFileHeader().numPlayers;
 			players.resize(std::max(demoPlayers, playerStartData.size()));
 			if (players.size() >= MAX_PLAYERS) {
-				Message(str(format("Too many Players (%d) in the demo") %players.size()));
+				Message(spring::format("Too many Players (%d) in the demo", players.size()));
 			}
 		}
 
@@ -252,7 +250,7 @@ void CGameServer::Initialize()
 		for (const SkirmishAIData& skd: aiStartData) {
 			const unsigned char skirmishAIId = ReserveNextAvailableSkirmishAIId();
 			if (skirmishAIId == MAX_AIS) {
-				Message(str(format("Too many AIs (%d) in game setup") %aiStartData.size()));
+				Message(spring::format("Too many AIs (%d) in game setup", aiStartData.size()));
 				break;
 			}
 			players[skd.hostPlayer].linkData[skirmishAIId] = GameParticipant::PlayerLinkData();
@@ -405,14 +403,14 @@ void CGameServer::AddAutohostInterface(const std::string& autohostIP, const int 
 		hostif.reset(new AutohostInterface(autohostIP, autohostPort));
 		if (hostif->IsInitialized()) {
 			hostif->SendStart();
-			Message(str(format(ConnectAutohost) %autohostPort), false);
+			Message(spring::format(ConnectAutohost, autohostPort), false);
 		} else {
 			// Quit if we are instructed to communicate with an auto-host,
 			// but are unable to do so: we do not want an auto-host running
 			// a spring game that it has no control over. If we get here,
 			// it suggests a configuration problem in the auto-host.
 			hostif.reset();
-			Message(str(format(ConnectAutohostFailed) %autohostIP %autohostPort), false);
+			Message(spring::format(ConnectAutohostFailed, autohostIP.c_str(), autohostPort), false);
 			quitServer = true;
 		}
 	}
@@ -427,7 +425,7 @@ void CGameServer::SkipTo(int targetFrameNum)
 	if (serverFrameNum >= targetFrameNum) { return; }
 	if (demoReader == NULL) { return; }
 
-	CommandMessage startMsg(str(format("skip start %d") %targetFrameNum), SERVER_PLAYER);
+	CommandMessage startMsg(spring::format("skip start %d", targetFrameNum), SERVER_PLAYER);
 	CommandMessage endMsg("skip end", SERVER_PLAYER);
 	Broadcast(std::shared_ptr<const netcode::RawPacket>(startMsg.Pack()));
 
@@ -482,7 +480,7 @@ bool CGameServer::SendDemoData(int targetFrameNum)
 		std::shared_ptr<const RawPacket> rpkt(buf);
 
 		if (buf->length <= 0) {
-			Message(str(format("Warning: Discarding zero size packet in demo")));
+			Message("Warning: Discarding zero size packet in demo");
 			continue;
 		}
 
@@ -516,7 +514,7 @@ bool CGameServer::SendDemoData(int targetFrameNum)
 					pckt >> name;
 					AddAdditionalUser(name, "", true, (bool)spectator, (int)team, playerNum); // even though this is a demo, keep the players vector properly updated
 				} catch (const netcode::UnpackPacketException& ex) {
-					Message(str(format("Warning: Discarding invalid new player packet in demo: %s") %ex.what()));
+					Message(spring::format("Warning: Discarding invalid new player packet in demo: %s", ex.what()));
 					continue;
 				}
 
@@ -538,7 +536,7 @@ bool CGameServer::SendDemoData(int targetFrameNum)
 					if (msg.GetPlayerID() == SERVER_PLAYER && action.command == "cheat")
 						InverseOrSetBool(cheating, action.extra);
 				} catch (const netcode::UnpackPacketException& ex) {
-					Message(str(format("Warning: Discarding invalid command message packet in demo: %s") %ex.what()));
+					Message(spring::format("Warning: Discarding invalid command message packet in demo: %s", ex.what()));
 					continue;
 				}
 				Broadcast(rpkt);
@@ -683,7 +681,7 @@ void CGameServer::CheckSync()
 				syncWarningFrame = *f;
 
 				std::string playernames = GetPlayerNames(noSyncResponse);
-				Message(str(format(NoSyncResponse) %playernames %(*f)));
+				Message(spring::format(NoSyncResponse, playernames.c_str(), *f));
 			}
 		}
 
@@ -699,7 +697,7 @@ void CGameServer::CheckSync()
 			#ifdef SYNCDEBUG
 				CSyncDebugger::GetInstance()->ServerTriggerSyncErrorHandling(serverFrameNum);
 				if (demoReader) // pause is a synced message, thus demo spectators may not pause for real
-					Message(str(format("%s paused the demo") %players[gu->myPlayerNum].name));
+					Message(spring::format("%s paused the demo", players[gu->myPlayerNum].name));
 				else
 					Broadcast(CBaseNetProtocol::Get().SendPause(gu->myPlayerNum, true));
 				isPaused = true;
@@ -711,17 +709,17 @@ void CGameServer::CheckSync()
 				std::map<unsigned, std::vector<int> >::const_iterator g = desyncGroups.begin();
 				for (; g != desyncGroups.end(); ++g) {
 					std::string playernames = GetPlayerNames(g->second);
-					Message(str(format(SyncError) %playernames %(*f) %g->first %correctChecksum));
+					Message(spring::format(SyncError, playernames.c_str(), (*f), g->first, correctChecksum));
 				}
 
 				// send spectator desyncs as private messages to reduce spam
 				for (std::map<int, unsigned>::const_iterator s = desyncSpecs.begin(); s != desyncSpecs.end(); ++s) {
 					int playerNum = s->first;
 
-					LOG_L(L_ERROR, "%s", str(format(SyncError) %players[playerNum].name %(*f) %s->second %correctChecksum).c_str());
-					Message(str(format(SyncError) %players[playerNum].name %(*f) %s->second %correctChecksum));
+					LOG_L(L_ERROR, "%s", spring::format(SyncError, players[playerNum].name.c_str(), (*f), s->second, correctChecksum).c_str());
+					Message(spring::format(SyncError, players[playerNum].name.c_str(), (*f), s->second, correctChecksum));
 
-					PrivateMessage(playerNum, str(format(SyncError) %players[playerNum].name %(*f) %s->second %correctChecksum));
+					PrivateMessage(playerNum, spring::format(SyncError, players[playerNum].name.c_str(), (*f), s->second, correctChecksum));
 				}
 			}
 			SetExitCode(-1);
@@ -971,7 +969,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 
 		case NETMSG_PAUSE:
 			if (inbuf[1] != a) {
-				Message(str(format(WrongPlayer) %msgCode %a %(unsigned)inbuf[1]));
+				Message(spring::format(WrongPlayer, msgCode, a, (unsigned)inbuf[1]));
 				break;
 			}
 			if (!inbuf[2])  // reset sync checker
@@ -986,7 +984,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 					if ((isPaused != !!inbuf[2]) || demoReader)
 						isPaused = !isPaused;
 					if (demoReader) // pause is a synced message, thus demo spectators may not pause for real
-						Message(str(format("%s %s the demo") %players[a].name %(isPaused ? "paused" : "unpaused")));
+						Message(spring::format("%s %s the demo", players[a].name.c_str(), (isPaused ? "paused" : "unpaused")));
 					else
 						Broadcast(CBaseNetProtocol::Get().SendPause(a, inbuf[2]));
 				}
@@ -1008,7 +1006,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 			break;
 
 		case NETMSG_QUIT: {
-			Message(str(format(PlayerLeft) %players[a].GetType() %players[a].name %" normal quit"));
+			Message(spring::format(PlayerLeft, players[a].GetType(), players[a].name.c_str(), " normal quit"));
 			Broadcast(CBaseNetProtocol::Get().SendPlayerLeft(a, 1));
 			players[a].Kill("[GameServer] user exited", true);
 			if (hostif)
@@ -1022,18 +1020,18 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 				unsigned char playerNum;
 				pckt >> playerNum;
 				if (playerNum != a) {
-					Message(str(format(WrongPlayer) %msgCode %a %playerNum));
+					Message(spring::format(WrongPlayer, msgCode, a, playerNum));
 					break;
 				}
 				pckt >> players[playerNum].name;
 				players[playerNum].myState = GameParticipant::INGAME;
 				Broadcast(CBaseNetProtocol::Get().SendPlayerInfo(a, 0, 0)); // reset pathing display
-				Message(str(format(PlayerJoined) %players[playerNum].GetType() %players[playerNum].name), false);
+				Message(spring::format(PlayerJoined, players[playerNum].GetType(), players[playerNum].name.c_str()), false);
 				Broadcast(CBaseNetProtocol::Get().SendPlayerName(playerNum, players[playerNum].name));
 				if (hostif)
 					hostif->SendPlayerJoined(playerNum, players[playerNum].name);
 			} catch (const netcode::UnpackPacketException& ex) {
-				Message(str(format("Player %d sent invalid PlayerName: %s") %a %ex.what()));
+				Message(spring::format("Player %d sent invalid PlayerName: %s", a, ex.what()));
 			}
 			break;
 		}
@@ -1042,7 +1040,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 			const unsigned char playerNum = inbuf[1];
 			const std::uint32_t playerCheckSum = *(std::uint32_t*) &inbuf[2];
 			if (playerNum != a) {
-				Message(str(format(WrongPlayer) %msgCode %a %playerNum));
+				Message(spring::format(WrongPlayer, msgCode, a, playerNum));
 				break;
 			}
 			Broadcast(CBaseNetProtocol::Get().SendPathCheckSum(playerNum, playerCheckSum));
@@ -1052,7 +1050,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 			try {
 				ChatMessage msg(packet);
 				if (static_cast<unsigned>(msg.fromPlayer) != a) {
-					Message(str(format(WrongPlayer) %msgCode %a %(unsigned)msg.fromPlayer));
+					Message(spring::format(WrongPlayer, msgCode, a, (unsigned)msg.fromPlayer));
 					break;
 				}
 				if (a < mutedPlayersChat.size() && mutedPlayersChat[a] ) {
@@ -1061,7 +1059,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 				}
 				GotChatMessage(msg);
 			} catch (const netcode::UnpackPacketException& ex) {
-				Message(str(format("Player %s sent invalid ChatMessage: %s") %players[a].name %ex.what()));
+				Message(spring::format("Player %s sent invalid ChatMessage: %s", players[a].name.c_str(), ex.what()));
 			}
 			break;
 		}
@@ -1073,12 +1071,12 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 				std::string strmsg;
 				pckt >> strmsg;
 				if (playerNum != a) {
-					Message(str(format(WrongPlayer) %msgCode %a %(unsigned)playerNum));
+					Message(spring::format(WrongPlayer, msgCode, a, (unsigned)playerNum));
 					break;
 				}
 				Broadcast(CBaseNetProtocol::Get().SendSystemMessage(playerNum, strmsg));
 			} catch (const netcode::UnpackPacketException& ex) {
-				Message(str(format("Player %d sent invalid SystemMessage: %s") %a %ex.what()));
+				Message(spring::format("Player %d sent invalid SystemMessage: %s", a, ex.what()));
 			}
 			break;
 
@@ -1088,14 +1086,14 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 			const unsigned char rdyState = inbuf[3];
 
 			if (player != a) {
-				Message(str(format(WrongPlayer) %msgCode %a %(unsigned)inbuf[1]));
+				Message(spring::format(WrongPlayer, msgCode, a, (unsigned)inbuf[1]));
 				break;
 			}
 			if (myGameSetup->startPosType == CGameSetup::StartPos_ChooseInGame) {
 				if (team >= teams.size()) {
-					Message(str(format("Invalid teamID %d in NETMSG_STARTPOS from player %d") %team %player));
+					Message(spring::format("Invalid teamID %d in NETMSG_STARTPOS from player %d", team, player));
 				} else if (getSkirmishAIIds(ais, team, player).empty() && ((team != players[player].team) || (players[player].spectator))) {
-					Message(str(format("Player %d sent spoofed NETMSG_STARTPOS with teamID %d") %player %team));
+					Message(spring::format("Player %d sent spoofed NETMSG_STARTPOS with teamID %d", player, team));
 				} else {
 					teams[team].SetStartPos(float3(*((float*)&inbuf[4]), *((float*)&inbuf[8]), *((float*)&inbuf[12])));
 					players[player].SetReadyToStart(rdyState != CPlayer::PLAYER_RDYSTATE_UPDATED);
@@ -1107,7 +1105,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 					}
 				}
 			} else {
-				Message(str(format(NoStartposChange) %a));
+				Message(spring::format(NoStartposChange, a));
 			}
 			break;
 		}
@@ -1118,7 +1116,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 				unsigned char playerNum;
 				pckt >> playerNum;
 				if (playerNum != a) {
-					Message(str(format(WrongPlayer) %msgCode %a %(unsigned)playerNum));
+					Message(spring::format(WrongPlayer, msgCode, a, (unsigned)playerNum));
 					break;
 				}
 
@@ -1129,7 +1127,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 					Broadcast(packet); //forward data
 				}
 			} catch (const netcode::UnpackPacketException& ex) {
-				Message(str(format("Player %s sent invalid Command: %s") %players[a].name %ex.what()));
+				Message(spring::format("Player %s sent invalid Command: %s", players[a].name.c_str(), ex.what()));
 			}
 			break;
 
@@ -1139,7 +1137,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 				unsigned char playerNum;
 				pckt >> playerNum;
 				if (playerNum != a) {
-					Message(str(format(WrongPlayer) %msgCode %a %(unsigned)playerNum));
+					Message(spring::format(WrongPlayer, msgCode, a, (unsigned)playerNum));
 					break;
 				}
 
@@ -1150,7 +1148,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 					Broadcast(packet); //forward data
 				}
 			} catch (const netcode::UnpackPacketException& ex) {
-				Message(str(format("Player %s sent invalid Select: %s") %players[a].name %ex.what()));
+				Message(spring::format("Player %s sent invalid Select: %s", players[a].name.c_str(), ex.what()));
 			}
 			break;
 
@@ -1160,15 +1158,15 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 				unsigned char playerNum;
 				pckt >> playerNum;
 				if (playerNum != a) {
-					Message(str(format(WrongPlayer) %msgCode  %a  %(unsigned) playerNum));
+					Message(spring::format(WrongPlayer, msgCode , a , (unsigned) playerNum));
 					break;
 				}
 				if (noHelperAIs)
-					Message(str(format(NoHelperAI) %players[a].name %a));
+					Message(spring::format(NoHelperAI, players[a].name.c_str(), a));
 				else if (demoReader == NULL)
 					Broadcast(packet); //forward data
 			} catch (const netcode::UnpackPacketException& ex) {
-				Message(str(format("Player %s sent invalid AICommand: %s") %players[a].name %ex.what()));
+				Message(spring::format("Player %s sent invalid AICommand: %s", players[a].name.c_str(), ex.what()));
 			}
 		}
 		break;
@@ -1179,15 +1177,15 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 				unsigned char playerNum;
 				pckt >> playerNum;
 				if (playerNum != a) {
-					Message(str(format(WrongPlayer) %msgCode  %a  %(unsigned) playerNum));
+					Message(spring::format(WrongPlayer, msgCode , a , (unsigned) playerNum));
 					break;
 				}
 				if (noHelperAIs)
-					Message(str(format(NoHelperAI) %players[a].name %a));
+					Message(spring::format(NoHelperAI, players[a].name.c_str(), a));
 				else if (demoReader == NULL)
 					Broadcast(packet); //forward data
 			} catch (const netcode::UnpackPacketException& ex) {
-				Message(str(format("Player %s sent invalid AICommands: %s") %players[a].name %ex.what()));
+				Message(spring::format("Player %s sent invalid AICommands: %s", players[a].name.c_str(), ex.what()));
 			}
 		} break;
 
@@ -1197,15 +1195,15 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 				unsigned char playerNum;
 				pckt >> playerNum;
 				if (playerNum != a) {
-					Message(str(format(WrongPlayer) %msgCode  %a  %(unsigned) playerNum));
+					Message(spring::format(WrongPlayer, msgCode , a , (unsigned) playerNum));
 					break;
 				}
 				if (noHelperAIs)
-					Message(str(format(NoHelperAI) %players[a].name %a));
+					Message(spring::format(NoHelperAI, players[a].name.c_str(), a));
 				else if (demoReader == NULL)
 					Broadcast(packet); //forward data
 			} catch (const netcode::UnpackPacketException& ex) {
-				Message(str(format("Player %s sent invalid AIShare: %s") %players[a].name %ex.what()));
+				Message(spring::format("Player %s sent invalid AIShare: %s", players[a].name.c_str(), ex.what()));
 			}
 		} break;
 
@@ -1216,7 +1214,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 				unsigned char playerNum;
 				pckt >> playerNum;
 				if (playerNum != a) {
-					Message(str(format(WrongPlayer) %msgCode %a %(unsigned)playerNum));
+					Message(spring::format(WrongPlayer, msgCode, a, (unsigned)playerNum));
 					break;
 				}
 				if (demoReader == NULL) {
@@ -1225,7 +1223,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 						hostif->SendLuaMsg(packet->data, packet->length);
 				}
 			} catch (const netcode::UnpackPacketException& ex) {
-				Message(str(format("Player %s sent invalid LuaMsg: %s") %players[a].name %ex.what()));
+				Message(spring::format("Player %s sent invalid LuaMsg: %s", players[a].name.c_str(), ex.what()));
 			}
 		} break;
 
@@ -1259,7 +1257,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 
 		case NETMSG_SHARE:
 			if (inbuf[1] != a) {
-				Message(str(format(WrongPlayer) %msgCode %a %(unsigned)inbuf[1]));
+				Message(spring::format(WrongPlayer, msgCode, a, (unsigned)inbuf[1]));
 				break;
 			}
 			if (demoReader == NULL)
@@ -1268,7 +1266,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 
 		case NETMSG_SETSHARE:
 			if (inbuf[1] != a) {
-				Message(str(format(WrongPlayer) %msgCode %a %(unsigned)inbuf[1]));
+				Message(spring::format(WrongPlayer, msgCode, a, (unsigned)inbuf[1]));
 				break;
 			}
 			if (demoReader == NULL)
@@ -1277,7 +1275,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 
 		case NETMSG_PLAYERSTAT:
 			if (inbuf[1] != a) {
-				Message(str(format(WrongPlayer) %msgCode %a %(unsigned)inbuf[1]));
+				Message(spring::format(WrongPlayer, msgCode, a, (unsigned)inbuf[1]));
 				break;
 			}
 			players[a].lastStats = *reinterpret_cast<const PlayerStatistics*>(&inbuf[2]);
@@ -1290,7 +1288,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 				unsigned char playerNum;
 				pckt >> playerNum;
 				if (playerNum != a) {
-					Message(str(format(WrongPlayer) %msgCode %a %(unsigned)playerNum));
+					Message(spring::format(WrongPlayer, msgCode, a, (unsigned)playerNum));
 					break;
 				}
 				if (a < mutedPlayersDraw.size() && mutedPlayersDraw[a] ) {
@@ -1300,26 +1298,26 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 				if (!players[playerNum].spectator || allowSpecDraw)
 					Broadcast(packet); //forward data
 			} catch (const netcode::UnpackPacketException& ex) {
-				Message(str(format("Player %s sent invalid MapDraw: %s") %players[a].name %ex.what()));
+				Message(spring::format("Player %s sent invalid MapDraw: %s", players[a].name.c_str(), ex.what()));
 			}
 			break;
 
 		case NETMSG_DIRECT_CONTROL:
 			if (inbuf[1] != a) {
-				Message(str(format(WrongPlayer) %msgCode %a %(unsigned)inbuf[1]));
+				Message(spring::format(WrongPlayer, msgCode, a, (unsigned)inbuf[1]));
 				break;
 			}
 			if (demoReader == NULL) {
 				if (!players[inbuf[1]].spectator)
 					Broadcast(CBaseNetProtocol::Get().SendDirectControl(inbuf[1]));
 				else
-					Message(str(format("Error: spectator %s tried direct-controlling a unit") %players[inbuf[1]].name));
+					Message(spring::format("Error: spectator %s tried direct-controlling a unit", players[inbuf[1]].name.c_str()));
 			}
 			break;
 
 		case NETMSG_DC_UPDATE:
 			if (inbuf[1] != a) {
-				Message(str(format(WrongPlayer) %msgCode %a %(unsigned)inbuf[1]));
+				Message(spring::format(WrongPlayer, msgCode, a, (unsigned)inbuf[1]));
 				break;
 			}
 			if (demoReader == NULL)
@@ -1335,7 +1333,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 			//TODO update players[] and teams[] and send all to hostif
 			const unsigned player = (unsigned)inbuf[1];
 			if (player != a) {
-				Message(str(format(WrongPlayer) %msgCode %a %(unsigned)player));
+				Message(spring::format(WrongPlayer, msgCode, a, (unsigned)player));
 				break;
 			}
 			const unsigned action = inbuf[2];
@@ -1348,11 +1346,11 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 					const unsigned giverTeam = inbuf[4];
 
 					if (toTeam >= teams.size()) {
-						Message(str(format("Invalid teamID %d in TEAMMSG_GIVEAWAY from player %d") %toTeam %player));
+						Message(spring::format("Invalid teamID %d in TEAMMSG_GIVEAWAY from player %d", toTeam, player));
 						break;
 					}
 					if (giverTeam >= teams.size()) {
-						Message(str(format("Invalid teamID %d in TEAMMSG_GIVEAWAY from player %d") %giverTeam %player));
+						Message(spring::format("Invalid teamID %d in TEAMMSG_GIVEAWAY from player %d", giverTeam, player));
 						break;
 					}
 
@@ -1372,7 +1370,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 					if (!isSinglePlayer &&
 						(isSpec || (!isGiverOwnTeam && !isGiverLeader) ||
 						(giverHasAIs && !giverIsAllied && !cheating))) {
-							Message(str(format("%s %s sent invalid team giveaway") %playerType %players[player].name), true);
+							Message(spring::format("%s %s sent invalid team giveaway", playerType, players[player].name.c_str()), true);
 							break;
 					}
 
@@ -1395,7 +1393,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 							ais.erase(myAIsInGiverTeam[0]);
 							giveAwayOk = true;
 						} else {
-							Message(str(format("%s %s can not give away stuff of team %i (still has human players left)") %playerType %players[player].name %giverTeam), true);
+							Message(spring::format("%s %s can not give away stuff of team %i (still has human players left)", playerType, players[player].name.c_str(), giverTeam), true);
 						}
 					}
 
@@ -1418,7 +1416,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 					const bool isSinglePlayer = (players.size() <= 1);
 
 					if (isSpec && !isSinglePlayer) {
-						Message(str(format("Spectator %s sent invalid team resign") %players[player].name), true);
+						Message(spring::format("Spectator %s sent invalid team resign", players[player].name.c_str()), true);
 						break;
 					}
 					ResignPlayer(player);
@@ -1433,7 +1431,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 					if (isNewTeamValid && (isSinglePlayer || cheating)) {
 						// joining the team is ok
 					} else {
-						Message(str(format(NoTeamChange) %players[player].name %player));
+						Message(spring::format(NoTeamChange, players[player].name.c_str(), player));
 						break;
 					}
 					Broadcast(CBaseNetProtocol::Get().SendJoinTeam(player, newTeam));
@@ -1455,7 +1453,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 					if (!players[player].desynced) {
 #endif
 						if (teamID >= teams.size()) {
-							Message(str(format("Invalid teamID %d in TEAMMSG_TEAM_DIED from player %d") %teamID %player));
+							Message(spring::format("Invalid teamID %d in TEAMMSG_TEAM_DIED from player %d", teamID, player));
 							break;
 						}
 
@@ -1483,7 +1481,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 					break;
 				}
 				default: {
-					Message(str(format(UnknownTeammsg) %action %player));
+					Message(spring::format(UnknownTeammsg, action, player));
 				}
 			}
 			break;
@@ -1494,7 +1492,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 				unsigned char playerId;
 				pckt >> playerId;
 				if (playerId != a) {
-					Message(str(format(WrongPlayer) %msgCode %a %(unsigned)playerId));
+					Message(spring::format(WrongPlayer, msgCode, a, (unsigned)playerId));
 					break;
 				}
 				unsigned char skirmishAIId_rec; // ignored, we have to create the real one
@@ -1505,7 +1503,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 				pckt >> aiName;
 
 				if (aiTeamId >= teams.size()) {
-					Message(str(format("Invalid teamID %d in NETMSG_AI_CREATED from player %d") %unsigned(aiTeamId) %unsigned(playerId)));
+					Message(spring::format("Invalid teamID %d in NETMSG_AI_CREATED from player %d", unsigned(aiTeamId), unsigned(playerId)));
 					break;
 				}
 
@@ -1521,12 +1519,12 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 				if (weAreLeader || singlePlayer || (weAreAllied && (cheating || !tai->HasLeader()))) {
 					// creating the AI is ok
 				} else {
-					Message(str(format(NoAICreated) %players[playerId].name %(int)playerId %(int)aiTeamId));
+					Message(spring::format(NoAICreated, players[playerId].name.c_str(), (int)playerId, (int)aiTeamId));
 					break;
 				}
 				const unsigned char skirmishAIId = ReserveNextAvailableSkirmishAIId();
 				if (skirmishAIId == MAX_AIS) {
-					Message(str(format("Unable to create AI, limit reached (%d)") %(int)MAX_AIS));
+					Message(spring::format("Unable to create AI, limit reached (%d)", (int)MAX_AIS));
 					break;
 				}
 				players[playerId].linkData[skirmishAIId] = GameParticipant::PlayerLinkData();
@@ -1535,7 +1533,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 /*
 #ifdef SYNCDEBUG
 			if (myId != skirmishAIId) {
-				Message(str(format("Sync Error, Skirmish AI ID from player %s (%i) does not match the one on the server (%i).") %players[playerId].name %skirmishAIId %myId));
+				Message(spring::format("Sync Error, Skirmish AI ID from player %s (%i) does not match the one on the server (%i).", players[playerId].name, skirmishAIId, myId));
 			}
 #endif // SYNCDEBUG
 */
@@ -1548,14 +1546,14 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 					tai->SetActive(true);
 				}
 			} catch (const netcode::UnpackPacketException& ex) {
-				Message(str(format("Player %s sent invalid AICreated: %s") %players[a].name %ex.what()));
+				Message(spring::format("Player %s sent invalid AICreated: %s", players[a].name.c_str(), ex.what()));
 			}
 			break;
 		}
 		case NETMSG_AI_STATE_CHANGED: {
 			const unsigned char playerId     = inbuf[1];
 			if (playerId != a) {
-				Message(str(format(WrongPlayer) %msgCode %a %(unsigned)playerId));
+				Message(spring::format(WrongPlayer, msgCode, a, (unsigned)playerId));
 				break;
 			}
 			const unsigned char skirmishAIId = inbuf[2];
@@ -1563,7 +1561,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 
 			const bool skirmishAIId_valid    = (ais.find(skirmishAIId) != ais.end());
 			if (!skirmishAIId_valid) {
-				Message(str(format(NoAIChangeState) %players[playerId].name %(int)playerId %skirmishAIId %(-1) %(int)newState));
+				Message(spring::format(NoAIChangeState, players[playerId].name.c_str(), (int)playerId, skirmishAIId, (-1), (int)newState));
 				break;
 			}
 
@@ -1582,7 +1580,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 			const ESkirmishAIStatus oldState = ais[skirmishAIId].status;
 
 			if (!(weAreAIHost || weAreLeader || singlePlayer || (weAreAllied && cheating))) {
-				Message(str(format(NoAIChangeState) %players[playerId].name %(int)playerId %skirmishAIId %(int)aiTeamId %(int)newState));
+				Message(spring::format(NoAIChangeState, players[playerId].name.c_str(), (int)playerId, skirmishAIId, (int)aiTeamId, (int)newState));
 				break;
 			}
 			Broadcast(packet); // forward data
@@ -1610,11 +1608,11 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 			const int whichAllyTeam = inbuf[2];
 			const unsigned char allied = inbuf[3];
 			if (player != a) {
-				Message(str(format(WrongPlayer) %msgCode %a %(unsigned)player));
+				Message(spring::format(WrongPlayer, msgCode, a, (unsigned)player));
 				break;
 			}
 			if (whichAllyTeam == teams[players[a].team].teamAllyteam) {
-				Message(str(format("Player %s tried to send spoofed alliance message") %players[a].name));
+				Message(spring::format("Player %s tried to send spoofed alliance message", players[a].name.c_str()));
 			}
 			else {
 				if (!myGameSetup->fixedAllies) {
@@ -1640,11 +1638,11 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 					}
 					else {
 						// hack!
-						Message(str(format(CommandNotAllowed) %msg.GetPlayerID() %msg.GetAction().command.c_str()));
+						Message(spring::format(CommandNotAllowed, msg.GetPlayerID(), msg.GetAction().command.c_str()));
 					}
 				}
 			} catch (const netcode::UnpackPacketException& ex) {
-				Message(str(format("Player %s sent invalid CommandMessage: %s") %players[a].name %ex.what()));
+				Message(spring::format("Player %s sent invalid CommandMessage: %s", players[a].name.c_str(), ex.what()));
 			}
 			break;
 		}
@@ -1666,7 +1664,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 				unsigned char playerNum; pckt >> playerNum;
 
 				if (playerNum != a) {
-					Message(str(format(WrongPlayer) %msgCode %a %(unsigned)playerNum));
+					Message(spring::format(WrongPlayer, msgCode, a, (unsigned)playerNum));
 					break;
 				}
 
@@ -1682,7 +1680,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 
 				gameEndTime = spring_gettime();
 			} catch (const netcode::UnpackPacketException& ex) {
-				Message(str(format("Player %s sent invalid GameOver: %s") %players[a].name %ex.what()));
+				Message(spring::format("Player %s sent invalid GameOver: %s", players[a].name.c_str(), ex.what()));
 			}
 			break;
 		}
@@ -1706,7 +1704,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 		//case NETMSG_GAMEDATA:
 		//case NETMSG_RANDSEED:
 		default: {
-			Message(str(format(UnknownNetmsg) %msgCode %a));
+			Message(spring::format(UnknownNetmsg, msgCode, a));
 		}
 		break;
 	}
@@ -1728,7 +1726,7 @@ void CGameServer::HandleConnectionAttempts()
 			if (packet->length < 3) {
 				std::string pkts;
 				for (int i = 0; i < packet->length; ++i) {
-					pkts += str(format(" 0x%x") %(int)packet->data[i]);
+					pkts += spring::format(" 0x%x", (int)packet->data[i]);
 				}
 				throw netcode::UnpackPacketException("Packet too short (data: " + pkts + ")");
 			}
@@ -1748,11 +1746,11 @@ void CGameServer::HandleConnectionAttempts()
 			msg >> netloss;
 
 			if (netversion != NETWORK_VERSION)
-				throw netcode::UnpackPacketException(str(format("Wrong network version: %d, required version: %d") %(int)netversion %(int)NETWORK_VERSION));
+				throw netcode::UnpackPacketException(spring::format("Wrong network version: %d, required version: %d", (int)netversion, (int)NETWORK_VERSION));
 
 			BindConnection(name, passwd, version, false, UDPNet->AcceptConnection(), reconnect, netloss);
 		} catch (const netcode::UnpackPacketException& ex) {
-			const std::string msg = str(format(ConnectionReject) %ex.what());
+			const std::string msg = spring::format(ConnectionReject, ex.what());
 			prev->Unmute();
 			prev->SendData(CBaseNetProtocol::Get().SendRejectConnect(msg));
 			prev->SendData(CBaseNetProtocol::Get().SendQuit(msg)); //FIXME backward compatibility (remove ~2017)
@@ -1778,7 +1776,7 @@ void CGameServer::ServerReadNet()
 		if (!plink)
 			continue; // player not connected
 		if (plink->CheckTimeout(0, !gameHasStarted)) {
-			Message(str(format(PlayerLeft) %player.GetType() %player.name %" timeout")); //this must happen BEFORE the reset!
+			Message(spring::format(PlayerLeft, player.GetType(), player.name.c_str(), " timeout")); //this must happen BEFORE the reset!
 			Broadcast(CBaseNetProtocol::Get().SendPlayerLeft(player.id, 0));
 			player.Kill("User timeout");
 			if (hostif)
@@ -1800,7 +1798,7 @@ void CGameServer::ServerReadNet()
 			if (liit != pld.end())
 				liit->second.link->SendData(packet);
 			else
-				Message(str(format("Player %s sent invalid AI ID %d in AICOMMAND %d") %player.name %(int)aiID %cID));
+				Message(spring::format("Player %s sent invalid AI ID %d in AICOMMAND %d", player.name.c_str(), (int)aiID, cID));
 		}
 
 		for (std::map<unsigned char, GameParticipant::PlayerLinkData>::iterator lit = pld.begin(); lit != pld.end(); ++lit) {
@@ -1838,16 +1836,16 @@ void CGameServer::ServerReadNet()
 			}
 			if (numDropped > 0) {
 				if (lit->first == MAX_AIS)
-					PrivateMessage(player.id, str(format("Warning: Waiting packet limit was reached for %s [packets dropped]") %player.name));
+					PrivateMessage(player.id, spring::format("Warning: Waiting packet limit was reached for %s [packets dropped]", player.name.c_str()));
 				else
-					PrivateMessage(player.id, str(format("Warning: Waiting packet limit was reached for %s AI #%d [packets dropped]") %player.name %(int)lit->first));
+					PrivateMessage(player.id, spring::format("Warning: Waiting packet limit was reached for %s AI #%d [packets dropped]", player.name.c_str(), (int)lit->first));
 			}
 
 			if (!bwLimitWasReached && bwLimitIsReached) {
 				if (lit->first == MAX_AIS)
-					PrivateMessage(player.id, str(format("Warning: Bandwidth limit was reached for %s [packets delayed]") %player.name));
+					PrivateMessage(player.id, spring::format("Warning: Bandwidth limit was reached for %s [packets delayed]", player.name.c_str()));
 				else
-					PrivateMessage(player.id, str(format("Warning: Bandwidth limit was reached for %s AI #%d [packets delayed]") %player.name %(int)lit->first));
+					PrivateMessage(player.id, spring::format("Warning: Bandwidth limit was reached for %s AI #%d [packets delayed]", player.name.c_str(), (int)lit->first));
 			}
 		}
 	}
@@ -2399,7 +2397,7 @@ void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 void CGameServer::UpdateSpeedControl(int speedCtrl)
 {
 	if (speedCtrl != curSpeedCtrl) {
-		Message(str(format("Server speed control: %s") %(SpeedControlToString(speedCtrl).c_str())));
+		Message(spring::format("Server speed control: %s", (SpeedControlToString(speedCtrl).c_str())));
 		curSpeedCtrl = speedCtrl;
 	}
 }
@@ -2465,10 +2463,10 @@ void CGameServer::UpdateLoop()
 void CGameServer::KickPlayer(const int playerNum)
 {
 	if (!players[playerNum].link) { // only kick connected players
-		Message(str(format("Attempt to kick user %d who is not connected") %playerNum));
+		Message(spring::format("Attempt to kick user %d who is not connected", playerNum));
 		return;
 	}
-	Message(str(format(PlayerLeft) %players[playerNum].GetType() %players[playerNum].name %"kicked"));
+	Message(spring::format(PlayerLeft, players[playerNum].GetType(), players[playerNum].name.c_str(), "kicked"));
 	Broadcast(CBaseNetProtocol::Get().SendPlayerLeft(playerNum, 2));
 	players[playerNum].Kill("Kicked from the battle", true);
 	if (hostif)
@@ -2496,14 +2494,14 @@ void CGameServer::MutePlayer(const int playerNum, bool muteChat, bool muteDraw)
 void CGameServer::SpecPlayer(const int player)
 {
 	if (!players[player].link) {
-		Message(str(format("Attempt to spec user %d who is not connected") %player));
+		Message(spring::format("Attempt to spec user %d who is not connected", player));
 		return;
 	}
 	if (players[player].spectator) {
-		Message(str(format("Attempt to spec user %d who is spectating already") %player));
+		Message(spring::format("Attempt to spec user %d who is spectating already", player));
 		return;
 	}
-	Message(str(format(PlayerResigned) %players[player].name %"forced spec"));
+	Message(spring::format(PlayerResigned, players[player].name.c_str(), "forced spec"));
 	ResignPlayer(player);
 }
 
@@ -2582,9 +2580,9 @@ void CGameServer::AddAdditionalUser(const std::string& name, const std::string& 
 
 unsigned CGameServer::BindConnection(std::string name, const std::string& passwd, const std::string& version, bool isLocal, std::shared_ptr<netcode::CConnection> link, bool reconnect, int netloss)
 {
-	Message(str(format("%s attempt from %s") %(reconnect ? "Reconnection" : "Connection") %name));
-	Message(str(format(" -> Version: %s") %version));
-	Message(str(format(" -> Address: %s") %link->GetFullAddress()), false);
+	Message(spring::format("%s attempt from %s", (reconnect ? "Reconnection" : "Connection"), name.c_str()));
+	Message(spring::format(" -> Version: %s", version.c_str()));
+	Message(spring::format(" -> Address: %s", link->GetFullAddress().c_str()), false);
 
 	if (link->CanReconnect())
 		canReconnect = true;
@@ -2645,8 +2643,8 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 
 	// >> Reject Connection <<
 	if (!errmsg.empty() || newPlayerNumber >= players.size()) {
-		Message(str(format(" -> %s") %errmsg));
-		link->SendData(CBaseNetProtocol::Get().SendQuit(str(format("Connection rejected: %s") %errmsg)));
+		Message(spring::format(" -> %s", errmsg.c_str()));
+		link->SendData(CBaseNetProtocol::Get().SendQuit(spring::format("Connection rejected: %s", errmsg.c_str())));
 		return 0;
 	}
 
@@ -2656,7 +2654,7 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 
 	// there is a running link already -> terminate it
 	if (terminate) {
-		Message(str(format(PlayerLeft) %newPlayer.GetType() %newPlayer.name %" terminating existing connection"));
+		Message(spring::format(PlayerLeft, newPlayer.GetType(), newPlayer.name.c_str(), " terminating existing connection"));
 		Broadcast(CBaseNetProtocol::Get().SendPlayerLeft(newPlayerNumber, 0));
 		newPlayer.link.reset(); // prevent sending a quit message since this might kill the new connection
 		newPlayer.Kill("Terminating connection");
@@ -2673,7 +2671,7 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 		newPlayer.link->ReconnectTo(*link);
 		if (UDPNet)
 			UDPNet->UpdateConnections();
-		Message(str(format(" -> Connection reestablished (id %i)") %newPlayerNumber));
+		Message(spring::format(" -> Connection reestablished (id %i)", newPlayerNumber));
 		newPlayer.link->SetLossFactor(netloss);
 		newPlayer.link->Flush(!gameHasStarted);
 		return newPlayerNumber;
@@ -2702,7 +2700,7 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 	}
 
 	// new connection established
-	Message(str(format(" -> Connection established (given id %i)") %newPlayerNumber));
+	Message(spring::format(" -> Connection established (given id %i)", newPlayerNumber));
 	link->SetLossFactor(netloss);
 	link->Flush(!gameHasStarted);
 	return newPlayerNumber;

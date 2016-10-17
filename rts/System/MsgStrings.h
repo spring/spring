@@ -5,9 +5,9 @@
 
 #include <string>
 
-// All strings used by CGameServer, in a printf / boost::format compatible way
+// All strings used by CGameServer, in a printf / spring::format compatible way
 
-const std::string ServerStart = "Server started on port %d"; 
+const std::string ServerStart = "Server started on port %d";
 const std::string PlayingDemo = "Opening demofile %s";
 const std::string ConnectAutohost = "Connecting to autohost on port %d";
 const std::string ConnectAutohostFailed = "Failed connecting to autohost on IP %s, port %d";

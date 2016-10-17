@@ -2,7 +2,6 @@
 
 #include "UDPConnection.h"
 
-#include <boost/format.hpp>
 #include <memory>
 #include <cinttypes>
 
@@ -15,6 +14,7 @@
 #include "System/CRC.h"
 #include "System/GlobalConfig.h"
 #include "System/Log/ILog.h"
+#include "System/SpringFormat.h"
 #include "System/Util.h"
 
 #ifndef UNIT_TEST
@@ -730,14 +730,14 @@ bool UDPConnection::CanReconnect() const {
 std::string UDPConnection::Statistics() const
 {
 	std::string msg = "Statistics for UDP connection:\n";
-	msg += str( boost::format("Received: %1% bytes in %2% packets (%3% bytes/package)\n")
-			%dataRecv %recvPackets %(SafeDivide(dataRecv, recvPackets)));
-	msg += str( boost::format("Sent: %1% bytes in %2% packets (%3% bytes/package)\n")
-			%dataSent %sentPackets %(SafeDivide(dataSent, sentPackets)));
-	msg += str( boost::format("Relative protocol overhead: %1% up, %2% down\n")
-			%SafeDivide(sentOverhead, dataSent) %SafeDivide(recvOverhead, dataRecv) );
-	msg += str( boost::format("%1% incoming chunks dropped, %2% outgoing chunks resent\n")
-			%droppedChunks %resentChunks);
+	msg += spring::format("Received: %u bytes in %u packets (%f bytes/package)\n",
+			dataRecv, recvPackets, SafeDivide(dataRecv, recvPackets));
+	msg += spring::format("Sent: %u bytes in %u packets (%f bytes/package)\n",
+			dataSent, sentPackets, SafeDivide(dataSent, sentPackets));
+	msg += spring::format("Relative protocol overhead: %f up, %f down\n",
+			SafeDivide(sentOverhead, dataSent), SafeDivide(recvOverhead, dataRecv) );
+	msg += spring::format("%u incoming chunks dropped, %u outgoing chunks resent\n",
+			droppedChunks, resentChunks);
 	return msg;
 }
 
@@ -748,7 +748,7 @@ bool UDPConnection::IsUsingAddress(const ip::udp::endpoint& from) const
 
 std::string UDPConnection::GetFullAddress() const
 {
-	return str( boost::format("[%s]:%u") %addr.address().to_string() %addr.port() );
+	return spring::format("[%s]:%u", addr.address().to_string().c_str(), addr.port());
 }
 
 void UDPConnection::SetMTU(unsigned mtu2)

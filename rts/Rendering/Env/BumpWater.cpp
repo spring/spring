@@ -4,10 +4,7 @@
  * @brief extended bump-mapping water shader
  */
 
-
 #include "BumpWater.h"
-
-#include <boost/format.hpp>
 
 #include "ISky.h"
 #include "SunLighting.h"
@@ -33,6 +30,7 @@
 #include "System/TimeProfiler.h"
 #include "System/Log/ILog.h"
 #include "System/Exceptions.h"
+#include "System/SpringFormat.h"
 #include "System/Util.h"
 
 using std::string;
@@ -69,30 +67,30 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_BUMP_WATER)
 
 static void GLSLDefineConst4f(string& str, const string& name, const float x, const float y, const float z, const float w)
 {
-	str += boost::str(boost::format(string("#define ")+name+" vec4(%1$.12f,%2$.12f,%3$.12f,%4$.12f)\n") % (x) % (y) % (z) % (w));
+	str += spring::format(string("#define ")+name+" vec4(%.12f,%.12f,%.12f,%.12f)\n", x, y, z, w);
 }
 
 static void GLSLDefineConstf4(string& str, const string& name, const float3& v, const float& alpha)
 {
-	str += boost::str(boost::format(string("#define ")+name+" vec4(%1$.12f,%2$.12f,%3$.12f,%4$.12f)\n") % (v.x) % (v.y) % (v.z) % (alpha));
+	str += spring::format(string("#define ")+name+" vec4(%.12f,%.12f,%.12f,%.12f)\n", v.x, v.y, v.z, alpha);
 }
 
 
 static void GLSLDefineConstf3(string& str, const string& name, const float3& v)
 {
-	str += boost::str(boost::format(string("#define ")+name+" vec3(%1$.12f,%2$.12f,%3$.12f)\n") % (v.x) % (v.y) % (v.z));
+	str += spring::format(string("#define ")+name+" vec3(%.12f,%.12f,%.12f)\n", v.x, v.y, v.z);
 }
 
 
 static void GLSLDefineConstf2(string& str, const string& name, const float& x, const float& y)
 {
-	str += boost::str(boost::format(string("#define ")+name+" vec2(%1$.12f,%2$.12f)\n") % x % y);
+	str += spring::format(string("#define ")+name+" vec2(%.12f,%.12f)\n", x, y);
 }
 
 
 static void GLSLDefineConstf1(string& str, const string& name, const float& x)
 {
-	str += boost::str(boost::format(string("#define ")+name+" %1$.12f\n") % x);
+	str += spring::format(string("#define ")+name+" %.12f\n", x);
 }
 
 

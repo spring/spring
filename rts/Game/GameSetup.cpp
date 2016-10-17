@@ -6,6 +6,7 @@
 #include "System/TdfParser.h"
 #include "System/UnsyncedRNG.h"
 #include "System/Exceptions.h"
+#include "System/SpringFormat.h"
 #include "System/Util.h"
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/RapidHandler.h"
@@ -18,7 +19,6 @@
 #include <cctype>
 #include <cstring>
 #include <fstream>
-#include <boost/format.hpp>
 
 CR_BIND(CGameSetup,)
 CR_REG_METADATA(CGameSetup, (
@@ -323,9 +323,9 @@ void CGameSetup::LoadPlayers(const TdfParser& file, std::set<std::string>& nameL
 
 		// do checks for sanity
 		if (playerBase.name.empty())
-			throw content_error(str( boost::format("GameSetup: No name given for Player %i") %a ));
+			throw content_error(spring::format("GameSetup: No name given for Player %i", a));
 		if (nameList.find(playerBase.name) != nameList.end())
-			throw content_error(str(boost::format("GameSetup: Player %i has name %s which is already taken")  %a %playerBase.name.c_str() ));
+			throw content_error(spring::format("GameSetup: Player %i has name %s which is already taken", a, playerBase.name.c_str()));
 
 		numDemoPlayers += playerBase.isFromDemo;
 
@@ -513,7 +513,7 @@ void CGameSetup::RemapTeams()
 			playerStartingData[a].team = 0;
 		} else {
 			if (teamRemap.find(playerStartingData[a].team) == teamRemap.end())
-				throw content_error( str(boost::format("GameSetup: Player %i belong to wrong team: %i") %a %playerStartingData[a].team) );
+				throw content_error(spring::format("GameSetup: Player %i belong to wrong team: %i", a, playerStartingData[a].team));
 
 			playerStartingData[a].team = teamRemap[playerStartingData[a].team];
 		}
