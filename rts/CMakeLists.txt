@@ -75,9 +75,9 @@ ENDIF (UNIX AND NOT MINGW)
 
 FIND_PACKAGE_STATIC(ZLIB REQUIRED)
 LIST(APPEND engineCommonLibraries ${IL_LIBRARIES} ${JPEG_LIBRARY} ${PNG_LIBRARY} ${TIFF_LIBRARY} ${GIF_LIBRARY})
-LIST(APPEND engineCommonLibraries ${Boost_REGEX_LIBRARY} ${Boost_PROGRAM_OPTIONS_LIBRARY})
+LIST(APPEND engineCommonLibraries ${Boost_REGEX_LIBRARY})
 LIST(APPEND engineCommonLibraries 7zip ${SPRING_MINIZIP_LIBRARY} ${ZLIB_LIBRARY})
-LIST(APPEND engineCommonLibraries lua luasocket archives streflop assimp)
+LIST(APPEND engineCommonLibraries lua luasocket archives streflop assimp gflags)
 include_directories(${ZLIB_INCLUDE_DIR})
 
 IF (WIN32)

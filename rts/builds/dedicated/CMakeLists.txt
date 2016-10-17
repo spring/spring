@@ -20,8 +20,8 @@ SET(ENGINE_SRC_ROOT_DIR "${CMAKE_SOURCE_DIR}/rts")
 
 
 ### Assemble libraries
-LIST(APPEND engineDedicatedLibraries ${Boost_REGEX_LIBRARY} ${Boost_PROGRAM_OPTIONS_LIBRARY})
-LIST(APPEND engineDedicatedLibraries lua archives 7zip ${SPRING_MINIZIP_LIBRARY} ${ZLIB_LIBRARY})
+LIST(APPEND engineDedicatedLibraries ${Boost_REGEX_LIBRARY})
+LIST(APPEND engineDedicatedLibraries lua archives 7zip ${SPRING_MINIZIP_LIBRARY} ${ZLIB_LIBRARY} gflags)
 LIST(APPEND engineDedicatedLibraries headlessStubs engineSystemNet)
 LIST(APPEND engineDedicatedLibraries ${LIBUNWIND_LIBRARIES})
 
@@ -101,7 +101,6 @@ SET(system_files
 	${ENGINE_SRC_ROOT_DIR}/System/Config/ConfigVariable.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/CRC.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/Platform/errorhandler.cpp
-	${ENGINE_SRC_ROOT_DIR}/System/Platform/CmdLineParams.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/Platform/CpuID.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/Platform/Misc.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/Platform/ScopedFileLock.cpp

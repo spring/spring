@@ -6,7 +6,6 @@
 #include <string>
 #include <memory>
 
-class CmdLineParams;
 class ClientSetup;
 class CGameController;
 
@@ -30,9 +29,9 @@ public:
 
 private:
 	bool Initialize();                              //!< Initialize app
-	void ParseCmdLine(const std::string&);          //!< Parse command line
+	void ParseCmdLine(int argc, char* argv[]);          //!< Parse command line
 	void Startup();                                 //!< Parses startup data (script etc.) and starts SelectMenu or PreGame
-	void StartScript(const std::string& inputFile); //!< Starts game from specified script.txt
+	void StartScript(const std::string& script); //!< Starts game from specified script.txt
 	void LoadSpringMenu();                          //!< Load menu (old or luaified depending on start parameters)
 	bool InitWindow(const char* title);             //!< Initializes window
 
@@ -45,12 +44,7 @@ private:
 	static void SetupViewportGeometry();
 	static void SaveWindowPosition();
 
-	/**
-	 * @brief command line
-	 *
-	 * Pointer to instance of commandline parser
-	 */
-	std::shared_ptr<CmdLineParams> cmdline;
+	std::string inputFile;
 
 	// this gets passed along to PreGame (or SelectMenu then PreGame),
 	// and from thereon to GameServer if this client is also the host

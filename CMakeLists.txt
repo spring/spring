@@ -244,7 +244,7 @@ endif (USE_LIBSQUISH)
 
 
 
-FIND_PACKAGE(Boost 1.51.0 COMPONENTS regex program_options REQUIRED)
+FIND_PACKAGE(Boost 1.51.0 COMPONENTS regex REQUIRED)
 INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
 
 # Note the missing REQUIRED, as headless & dedi may not depend on those.

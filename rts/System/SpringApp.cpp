@@ -7,6 +7,8 @@
 #include <functional>
 #include <iostream>
 
+#include <gflags/gflags.h>
+
 #ifdef WIN32
 //windows workarrounds
 #undef KeyPress
@@ -73,7 +75,6 @@
 #include "System/FileSystem/FileSystem.h"
 #include "System/FileSystem/FileSystemInitializer.h"
 #include "System/Platform/Battery.h"
-#include "System/Platform/CmdLineParams.h"
 #include "System/Platform/Misc.h"
 #include "System/Platform/errorhandler.h"
 #include "System/Platform/CrashHandler.h"
@@ -87,6 +88,8 @@
 
 #ifdef WIN32
 	#include "System/Platform/Win/WinVersion.h"
+#else
+	#include <unistd.h>
 #endif
 
 
@@ -123,6 +126,36 @@ CONFIG(std::string, name).defaultValue(UnnamedPlayerName).description("Sets your
 CONFIG(std::string, DefaultStartScript).defaultValue("").description("filename of script.txt to use when no command line parameters are specified.");
 
 
+DEFINE_bool_EX  (sync_version,       "sync-version",       false, "Display program sync version (for online gaming)");
+DEFINE_bool     (fullscreen,                               false, "Run in fullscreen mode");
+DEFINE_bool     (window,                                   false, "Run in windowed mode");
+DEFINE_bool     (minimise,                                 false, "Start in background (minimised)");
+DEFINE_bool     (nocolor,                                  false, "Disables colorized stdout");
+DEFINE_string   (server,                                   "",    "Set listening IP for server");
+DEFINE_bool     (textureatlas,                             false, "Dump each finalized textureatlas in textureatlasN.tga");
+DEFINE_int32    (benchmark,                                -1,    "Enable benchmark mode (writes a benchmark.data file). The given number specifies the timespan to test.");
+DEFINE_int32    (benchmarkstart,                           -1,    "Benchmark start time in minutes.");
+
+DEFINE_bool_EX  (list_ai_interfaces, "list-ai-interfaces", false, "Dump a list of available AI Interfaces to stdout");
+DEFINE_bool_EX  (list_skirmish_ais,  "list-skirmish-ais",  false, "Dump a list of available Skirmish AIs to stdout");
+DEFINE_bool_EX  (list_config_vars,   "list-config-vars",   false, "Dump a list of config vars and meta data to stdout");
+DEFINE_bool_EX  (list_def_tags,      "list-def-tags",      false, "Dump a list of all unitdef-, weapondef-, ... tags and meta data to stdout");
+DEFINE_bool_EX  (list_ceg_classes,   "list-ceg-classes",   false, "Dump a list of available projectile classes to stdout");
+DEFINE_bool_EX  (test_creg,          "test-creg",          false, "Test if all CREG classes are completed");
+
+DEFINE_bool     (safemode,                                 false, "Turns off many things that are known to cause problems (i.e. on PC/Mac's with lower-end graphic cards)");
+
+DEFINE_string   (config,                                   "",    "Exclusive configuration file");
+DEFINE_bool     (isolation,                                false, "Limit the data-dir (games & maps) scanner to one directory");
+DEFINE_string_EX(isolation_dir,      "isolation-dir",      "",    "Specify the isolation-mode data-dir (see --isolation)");
+DEFINE_string_EX(write_dir,          "write-dir",          "",    "Specify where Spring writes to.");
+DEFINE_string   (game,                                     "",    "Specify the game that will be instantly loaded");
+DEFINE_string   (map,                                      "",    "Specify the map that will be instantly loaded");
+DEFINE_string   (menu,                                     "",    "Specify a lua menu archive to be used by spring");
+DEFINE_string   (name,                                     "",    "Set your player name");
+DEFINE_bool     (oldmenu,                                  false, "Start the old menu");
+
+
 /**
  * @brief multisample verify
  * @return whether verification passed
@@ -153,12 +186,17 @@ static bool MultisampleVerify()
  * @param argc argument count
  * @param argv array of argument strings
  */
-SpringApp::SpringApp(int argc, char** argv): cmdline(new CmdLineParams(argc, argv))
+SpringApp::SpringApp(int argc, char** argv)
 {
 	// initializes configHandler which we need
-	ParseCmdLine(argv[0]);
+	std::string binaryName = argv[0];
 
-	spring_clock::PushTickRate(configHandler->GetBool("UseHighResTimer") || cmdline->IsSet("useHighResTimer"));
+	gflags::SetUsageMessage("Usage: " + binaryName + " [options] path_to_script.txt");
+	gflags::SetVersionString(SpringVersion::GetFull());
+	gflags::ParseCommandLineFlags(&argc, &argv, true);
+	ParseCmdLine(argc, argv);
+
+	spring_clock::PushTickRate(configHandler->GetBool("UseHighResTimer"));
 	// set the Spring "epoch" to be whatever value the first
 	// call to gettime() returns, should not be 0 (can safely
 	// be done before SDL_Init, we are not using SDL_GetTicks
@@ -180,7 +218,6 @@ SpringApp::~SpringApp()
  */
 bool SpringApp::Initialize()
 {
-	assert(cmdline != NULL);
 	assert(configHandler != NULL);
 
 	// list user's config
@@ -203,7 +240,7 @@ bool SpringApp::Initialize()
 	CMyMath::Init();
 
 	globalRendering = new CGlobalRendering();
-	globalRendering->SetFullScreen(configHandler->GetBool("Fullscreen"), cmdline->IsSet("window"), cmdline->IsSet("fullscreen"));
+	globalRendering->SetFullScreen(configHandler->GetBool("Fullscreen"), FLAGS_window, FLAGS_fullscreen);
 
 #if !(defined(WIN32) || defined(__APPLE__) || defined(HEADLESS))
 	// this MUST run before any other X11 call (esp. those by SDL!)
@@ -318,7 +355,7 @@ bool SpringApp::InitWindow(const char* title)
 	streflop::streflop_init<streflop::Simple>();
 #endif
 
-	if (cmdline->IsSet("minimise")) {
+	if (FLAGS_minimise) {
 		SDL_HideWindow(globalRendering->window);
 	}
 
@@ -501,107 +538,57 @@ static void ConsolePrintInitialize(const std::string& configSource, bool safemod
 	LOG_ENABLE();
 }
 
+
 /**
  * @return whether commandline parsing was successful
  *
  * Parse command line arguments
  */
-void SpringApp::ParseCmdLine(const std::string& binaryName)
+void SpringApp::ParseCmdLine(int argc, char* argv[])
 {
-	cmdline->SetUsageDescription("Usage: " + binaryName + " [options] [path_to_script.txt or demo.sdfz]");
-	cmdline->AddSwitch(0,   "sync-version",       "Display program sync version (for online gaming)");
-	cmdline->AddSwitch('f', "fullscreen",         "Run in fullscreen mode");
-	cmdline->AddSwitch('w', "window",             "Run in windowed mode");
-	cmdline->AddSwitch('b', "minimise",           "Start in background (minimised)");
-	cmdline->AddSwitch(0,   "nocolor",            "Disables colorized stdout");
-	cmdline->AddSwitch('q', "quiet",              "Ignore unrecognized arguments");
-	cmdline->AddString('s', "server",             "Run as a server");
-
-	cmdline->AddSwitch('t', "textureatlas",       "Dump each finalized textureatlas in textureatlasN.tga");
-	cmdline->AddInt(   0,   "benchmark",          "Enable benchmark mode (writes a benchmark.data file). The given number specifies the timespan to test.");
-	cmdline->AddInt(   0,   "benchmarkstart",     "Benchmark start time in minutes.");
-
-	cmdline->AddSwitch(0,   "list-ai-interfaces", "Dump a list of available AI Interfaces to stdout");
-	cmdline->AddSwitch(0,   "list-skirmish-ais",  "Dump a list of available Skirmish AIs to stdout");
-	cmdline->AddSwitch(0,   "list-config-vars",   "Dump a list of config vars and meta data to stdout");
-	cmdline->AddSwitch(0,   "list-def-tags",      "Dump a list of all unitdef-, weapondef-, ... tags and meta data to stdout");
-	cmdline->AddSwitch(0,   "list-ceg-classes",   "Dump a list of available projectile classes to stdout");
-	cmdline->AddSwitch(0,   "test-creg",          "Test if all CREG classes are completed");
-
-	cmdline->AddSwitch(0,   "safemode",           "Turns off many things that are known to cause problems (i.e. on PC/Mac's with lower-end graphic cards)");
-
-	cmdline->AddString('C', "config",             "Exclusive configuration file");
-	cmdline->AddSwitch('i', "isolation",          "Limit the data-dir (games & maps) scanner to one directory");
-	cmdline->AddString(0,   "isolation-dir",      "Specify the isolation-mode data-dir (see --isolation)");
-	cmdline->AddString('d', "write-dir",          "Specify where Spring writes to.");
-	cmdline->AddString('g', "game",               "Specify the game that will be instantly loaded");
-	cmdline->AddString('m', "map",                "Specify the map that will be instantly loaded");
-	cmdline->AddString('e', "menu",               "Specify a lua menu archive to be used by spring");
-	cmdline->AddString('n', "name",               "Set your player name");
-	cmdline->AddSwitch(0,   "oldmenu",            "Start the old menu");
-
-	try {
-		cmdline->Parse();
-	} catch (const CmdLineParams::unrecognized_option& err) {
-		LOG_L(L_ERROR, "%s\n", err.what());
-		if (!cmdline->IsSet("quiet")) {
-			cmdline->PrintUsage();
-			exit(EXIT_FAILURE);
-		}
-	}
-
 #ifndef WIN32
-	if (!cmdline->IsSet("nocolor") && (getenv("SPRING_NOCOLOR") == NULL)) {
+	if (!FLAGS_nocolor && (getenv("SPRING_NOCOLOR") == NULL)) {
 		// don't colorize, if our output is piped to a diff tool or file
 		if (isatty(fileno(stdout)))
 			log_console_colorizedOutput(true);
 	}
 #endif
 
-	// mutually exclusive options that cause spring to quit immediately
-	if (cmdline->IsSet("help")) {
-		cmdline->PrintUsage();
-		exit(EXIT_SUCCESS);
-	}
-	if (cmdline->IsSet("version")) {
-		std::cout << "Spring " << SpringVersion::GetFull() << std::endl;
-		exit(EXIT_SUCCESS);
-	}
-	if (cmdline->IsSet("sync-version")) {
+	if (FLAGS_sync_version) {
 		// Note, the missing "Spring " is intentionally to make it compatible with `spring-dedicated --sync-version`
 		std::cout << SpringVersion::GetSync() << std::endl;
 		exit(EXIT_SUCCESS);
 	}
 
-	if (cmdline->IsSet("isolation")) {
+	if (FLAGS_isolation) {
 		dataDirLocater.SetIsolationMode(true);
 	}
 
-	if (cmdline->IsSet("isolation-dir")) {
+	if (!FLAGS_isolation_dir.empty()) {
 		dataDirLocater.SetIsolationMode(true);
-		dataDirLocater.SetIsolationModeDir(cmdline->GetString("isolation-dir"));
+		dataDirLocater.SetIsolationModeDir(FLAGS_isolation_dir);
 	}
 
-	if (cmdline->IsSet("write-dir")) {
-		dataDirLocater.SetWriteDir(cmdline->GetString("write-dir"));
+	if (!FLAGS_write_dir.empty()) {
+		dataDirLocater.SetWriteDir(FLAGS_write_dir);
 	}
 
 	// Interface Documentations in JSON-Format
-	if (cmdline->IsSet("list-config-vars")) {
+	if (FLAGS_list_config_vars) {
 		ConfigVariable::OutputMetaDataMap();
 		exit(EXIT_SUCCESS);
 	}
-	else if (cmdline->IsSet("list-def-tags")) {
+	if (FLAGS_list_def_tags) {
 		DefType::OutputTagMap();
-		exit(0);
+		exit(EXIT_SUCCESS);
 	}
-	else if (cmdline->IsSet("list-ceg-classes")) {
+	if (FLAGS_list_ceg_classes) {
 		const int res = CCustomExplosionGenerator::OutputProjectileClassInfo() ? EXIT_SUCCESS : EXIT_FAILURE;
 		exit(res);
 	}
 
 	// Runtime Tests
-	if (cmdline->IsSet("test-creg")) {
+	if (FLAGS_test_creg) {
 #ifdef USING_CREG
 		exit(creg::RuntimeTest() ? EXIT_SUCCESS : EXIT_FAILURE);
 #else
@@ -610,41 +597,38 @@ void SpringApp::ParseCmdLine(const std::string& binaryName)
 #endif
 	}
 
-	const string configSource = (cmdline->IsSet("config") ? cmdline->GetString("config") : "");
-	const bool safemode = cmdline->IsSet("safemode");
-
 	// mutually exclusive options that cause spring to quit immediately
-	if (cmdline->IsSet("list-ai-interfaces")) {
-		ConsolePrintInitialize(configSource, safemode);
+	if (FLAGS_list_ai_interfaces) {
+		ConsolePrintInitialize(FLAGS_config, FLAGS_safemode);
 		IAILibraryManager::OutputAIInterfacesInfo();
-		exit(0);
+		exit(EXIT_SUCCESS);
 	}
-	else if (cmdline->IsSet("list-skirmish-ais")) {
-		ConsolePrintInitialize(configSource, safemode);
+	else if (FLAGS_list_skirmish_ais) {
+		ConsolePrintInitialize(FLAGS_config, FLAGS_safemode);
 		IAILibraryManager::OutputSkirmishAIInfo();
-		exit(0);
+		exit(EXIT_SUCCESS);
 	}
 
-	LOG("[%s] command-line args: \"%s\"", __FUNCTION__, cmdline->GetCmdLine().c_str());
-	FileSystemInitializer::PreInitializeConfigHandler(configSource, safemode);
+	//LOG("[%s] command-line args: \"%s\"", __FUNCTION__, cmdline->GetCmdLine().c_str());
+	FileSystemInitializer::PreInitializeConfigHandler(FLAGS_config, FLAGS_safemode);
 
-	if (cmdline->IsSet("textureatlas")) {
+	if (FLAGS_textureatlas) {
 		CTextureAtlas::SetDebug(true);
 	}
 
-	if (cmdline->IsSet("name")) {
-		const string name = cmdline->GetString("name");
-		if (!name.empty()) {
-			configHandler->SetString("name", StringReplace(name, " ", "_"));
+	if (!FLAGS_name.empty())
+		configHandler->SetString("name", StringReplace(FLAGS_name, " ", "_"));
+
+	if (FLAGS_benchmark > 0) {
+		CBenchmark::enabled = true;
+		if (FLAGS_benchmarkstart > 0) {
+			CBenchmark::startFrame = FLAGS_benchmarkstart * 60 * GAME_SPEED;
 		}
+		CBenchmark::endFrame = CBenchmark::startFrame + FLAGS_benchmark * 60 * GAME_SPEED;
 	}
 
-	if (cmdline->IsSet("benchmark")) {
-		CBenchmark::enabled = true;
-		if (cmdline->IsSet("benchmarkstart")) {
-			CBenchmark::startFrame = cmdline->GetInt("benchmarkstart") * 60 * GAME_SPEED;
-		}
-		CBenchmark::endFrame = CBenchmark::startFrame + cmdline->GetInt("benchmark") * 60 * GAME_SPEED;
+	if (argc >= 2) {
+		inputFile = argv[1];
 	}
 }
 
@@ -695,8 +679,8 @@ CGameController* SpringApp::RunScript(const std::string& buf)
 		return LoadSaveFile(clientSetup->saveFile);
 
 	// LoadFromStartScript overrides all values so reset cmdline defined ones
-	if (cmdline->IsSet("server")) {
-		clientSetup->hostIP = cmdline->GetString("server");
+	if (!FLAGS_server.empty()) {
+		clientSetup->hostIP = FLAGS_server;
 		clientSetup->isHost = true;
 	}
 
@@ -710,17 +694,17 @@ CGameController* SpringApp::RunScript(const std::string& buf)
 	return pregame;
 }
 
-void SpringApp::StartScript(const std::string& inputFile)
+void SpringApp::StartScript(const std::string& script)
 {
 	// startscript
-	LOG("[%s] Loading StartScript from: %s", __FUNCTION__, inputFile.c_str());
-	CFileHandler fh(inputFile, SPRING_VFS_PWD_ALL);
+	LOG("[%s] Loading StartScript from: %s", __FUNCTION__, script.c_str());
+	CFileHandler fh(script, SPRING_VFS_PWD_ALL);
 	if (!fh.FileExists())
-		throw content_error("Setup-script does not exist in given location: " + inputFile);
+		throw content_error("Setup-script does not exist in given location: " + script);
 
 	std::string buf;
 	if (!fh.LoadStringData(buf))
-		throw content_error("Setup-script cannot be read: " + inputFile);
+		throw content_error("Setup-script cannot be read: " + script);
 
 	activeController = RunScript(buf);
 }
@@ -734,7 +718,7 @@ void SpringApp::LoadSpringMenu()
 
 	if (luaMenuController->Valid()){
 		luaMenuController->Activate();
-	} else if (cmdline->IsSet("oldmenu") || defaultscript.empty()) {
+	} else if (FLAGS_oldmenu || defaultscript.empty()) {
 		// old menu
 	#ifdef HEADLESS
 		handleerror(NULL,
@@ -754,29 +738,28 @@ void SpringApp::LoadSpringMenu()
 void SpringApp::Startup()
 {
 	// bash input
-	const std::string inputFile = cmdline->GetInputFile();
 	const std::string extension = FileSystem::GetExtension(inputFile);
 
 	// note: avoid any .get() leaks between here and GameServer!
 	clientSetup.reset(new ClientSetup());
 
 	// create base client-setup
-	if (cmdline->IsSet("server")) {
-		clientSetup->hostIP = cmdline->GetString("server");
+	if (!FLAGS_server.empty()) {
+		clientSetup->hostIP = FLAGS_server;
 		clientSetup->isHost = true;
 	}
 
 	clientSetup->myPlayerName = configHandler->GetString("name");
 	clientSetup->SanityCheck();
 
-	luaMenuController = new CLuaMenuController(cmdline->GetString("menu"));
+	luaMenuController = new CLuaMenuController(FLAGS_menu);
 
 	// no argument (either game is given or show selectmenu)
 	if (inputFile.empty()) {
 		clientSetup->isHost = true;
-		if (cmdline->IsSet("game") && cmdline->IsSet("map")) {
+		if ((!FLAGS_game.empty()) && (!FLAGS_map.empty())) {
 			// --game and --map directly specified, try to run them
-			activeController = RunScript(StartScriptGen::CreateMinimalSetup(cmdline->GetString("game"), cmdline->GetString("map")));
+			activeController = RunScript(StartScriptGen::CreateMinimalSetup(FLAGS_game, FLAGS_map));
 			return;
 		}
 		LoadSpringMenu();
@@ -1030,7 +1013,7 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 					mouseInput->InstallWndCallback();
 				} break;
 				case SDL_WINDOWEVENT_MAXIMIZED:
-				case SDL_WINDOWEVENT_RESTORED: 
+				case SDL_WINDOWEVENT_RESTORED:
 				case SDL_WINDOWEVENT_SHOWN: {
 					// reactivate sounds and other
 					globalRendering->active = true;

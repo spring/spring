@@ -8,6 +8,7 @@ General:
  - Add LuaMenu - an unsynced stripped down lua environment that starts before the game is loaded and persists through reload
  - Implement VFS modes - VFS.MOD, VFS.MAP & VFS.BASE now actually work. Added VFS.MENU
  ! base archives now have modtype of 4 and menu archive have modtype of 5
+ ! one letter command line flags (e.g. -g instead of --game) are removed
 
 Sim:
  ! Sonar will now detect ships/hovers - this is since los can't raycast through water.

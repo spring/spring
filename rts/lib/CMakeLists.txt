@@ -7,6 +7,7 @@ ADD_SUBDIRECTORY(7z)
 ADD_SUBDIRECTORY(minizip)
 ADD_SUBDIRECTORY(streflop)
 ADD_SUBDIRECTORY(headlessStubs)
+ADD_SUBDIRECTORY(gflags)
 
 
 # to change assimp for springs need, see fix_assimp.sh
