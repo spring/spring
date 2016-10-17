@@ -155,7 +155,7 @@ void CBuilder::Update()
 			assert(!mapDamage->disabled); // The map should not be deformed in the first place.
 
 			const float* heightmap = readMap->GetCornerHeightMapSynced();
-			float terraformScale = 0.1;
+			float terraformScale = 0.1f;
 
 			switch (terraformType) {
 				case Terraform_Building:

@@ -33,7 +33,7 @@ public:
 		float alpha,
 		float expansionSpeed,
 		float3 pos,
-		float3 color = float3(0.8, 0.8, 0.6)
+		float3 color = float3(0.8f, 0.8f, 0.6f)
 	);
 
 private:

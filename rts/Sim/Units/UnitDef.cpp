@@ -377,7 +377,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 
 	flankingBonusMode = udTable.GetInt("flankingBonusMode", modInfo.flankingBonusModeDefault);
 	flankingBonusMax  = udTable.GetFloat("flankingBonusMax", 1.9f);
-	flankingBonusMin  = udTable.GetFloat("flankingBonusMin", 0.9);
+	flankingBonusMin  = udTable.GetFloat("flankingBonusMin", 0.9f);
 	flankingBonusDir  = udTable.GetFloat3("flankingBonusDir", FwdVector);
 	flankingBonusMobilityAdd = udTable.GetFloat("flankingBonusMobilityAdd", 0.01f);
 
@@ -459,7 +459,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	releaseHeld       = udTable.GetBool("releaseHeld",       false);
 	cantBeTransported = udTable.GetBool("cantBeTransported", !RequireMoveDef());
 	transportByEnemy  = udTable.GetBool("transportByEnemy",  true);
-	fallSpeed         = udTable.GetFloat("fallSpeed",    0.2);
+	fallSpeed         = udTable.GetFloat("fallSpeed",    0.2f);
 	unitFallSpeed     = udTable.GetFloat("unitFallSpeed",  0);
 	transportUnloadMethod = udTable.GetInt("transportUnloadMethod" , 0);
 
