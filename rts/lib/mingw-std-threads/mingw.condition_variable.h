@@ -50,6 +50,7 @@ protected:
     atomic<int> mNumWaiters;
     HANDLE mSemaphore;
     HANDLE mWakeEvent;
+    HANDLE mTimer;
 public:
     typedef HANDLE native_handle_type;
     native_handle_type native_handle() {return mSemaphore;}
@@ -57,9 +58,10 @@ public:
     condition_variable_any& operator=(const condition_variable_any&) = delete;
     condition_variable_any()
         :mNumWaiters(0), mSemaphore(CreateSemaphore(NULL, 0, 0xFFFF, NULL)),
-         mWakeEvent(CreateEvent(NULL, FALSE, FALSE, NULL))
+         mWakeEvent(CreateEvent(NULL, FALSE, FALSE, NULL)),
+         mTimer(CreateWaitableTimer(NULL, FALSE, NULL))
     {}
-    ~condition_variable_any() {  CloseHandle(mWakeEvent); CloseHandle(mSemaphore);  }
+    ~condition_variable_any() {  CloseHandle(mWakeEvent); CloseHandle(mSemaphore); CloseHandle(mTimer); }
 protected:
     template <class M>
     bool wait_impl(M& lock, DWORD timeout)
@@ -92,6 +94,38 @@ protected:
         else
             throw system_error(EPROTO, generic_category());
     }
+//SPRING
+    template <class M>
+    bool wait_impl_ns(M& lock, DWORD timeout)
+    {
+        {
+            lock_guard<recursive_mutex> guard(mMutex);
+            mNumWaiters++;
+        }
+        lock.unlock();
+        LARGE_INTEGER liDueTime;
+        liDueTime.QuadPart = -timeout;
+        SetWaitableTimer(
+           mTimer,                 // Handle to the timer object.
+           &liDueTime,             // When timer will become signaled.
+           0,                      // signal once.
+           NULL,           // Completion routine.
+           NULL,                // Argument to the completion routine.
+           FALSE );                // Do not restore a suspended system.
+        DWORD ret = WaitForSingleObjectEx(mSemaphore, 1, TRUE);
+
+        mNumWaiters--;
+        SetEvent(mWakeEvent);
+        lock.lock();
+        if (ret == WAIT_OBJECT_0)
+            return true;
+        else if (ret == WAIT_TIMEOUT || ret == WAIT_IO_COMPLETION)
+            return false;
+
+        else
+            throw system_error(EPROTO, generic_category());
+    }
+
 public:
     template <class M>
     void wait(M& lock)
@@ -151,6 +185,17 @@ public:
         if (timeout < 0)
             timeout = 0;
         bool ret = wait_impl(lock, (DWORD)timeout);
+        return ret?cv_status::no_timeout:cv_status::timeout;
+    }
+
+    template <class M, class Rep>
+    std::cv_status wait_for(M& lock,
+      const std::chrono::duration<Rep, std::nano>& rel_time)
+    {
+        int timeout = chrono::duration_cast<chrono::nanoseconds>(rel_time).count() / 100;
+        if (timeout < 0)
+            timeout = 0;
+        bool ret = wait_impl_ns(lock, (DWORD)timeout);
         return ret?cv_status::no_timeout:cv_status::timeout;
     }
 
