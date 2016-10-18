@@ -158,6 +158,8 @@ else  (UNIX AND NOT MINGW)
 		set(Boost_USE_STATIC_LIBS ON)
 		set(GLEW_STATIC ON)
 		set(EXE_FLAGS WIN32)
+	else()
+		INCLUDE_DIRECTORIES(rts/lib/mingw-std-threads)
 	endif()
 endif (UNIX AND NOT MINGW)
 
