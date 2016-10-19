@@ -24,6 +24,8 @@ CR_REG_METADATA(spring_time,(
 #include "System/Threading/SpringThreading.h"
 #include <chrono>
 
+#define FORCE_CHRONO_TIMERS
+
 #define USE_NATIVE_WINDOWS_CLOCK (defined(WIN32) && !defined(FORCE_CHRONO_TIMERS))
 #if USE_NATIVE_WINDOWS_CLOCK
 #include <windows.h>

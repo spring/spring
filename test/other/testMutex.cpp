@@ -116,3 +116,25 @@ BOOST_AUTO_TEST_CASE( Mutex )
 	//BOOST_CHECK(tMtx.toMilliSecsi()  <= 4 * tRaw.toMilliSecsi());
 	//BOOST_CHECK(tRMtx.toMilliSecsi() <= 4 * tRaw.toMilliSecsi());
 }
+
+BOOST_AUTO_TEST_CASE( ConditionVariable )
+{
+	spring::mutex m;
+	spring::condition_variable_any cv;
+	std::unique_lock<spring::mutex> lk(m);
+	// check error in wait_for times
+	spring_time t, emin, emax;
+	float eavg = 0;
+	for (int i=0; i<100; ++i) {
+		const auto sleepTime = ((rand() % 50) + 1) * 100; // 100..5100ns
+
+		t = spring_gettime();
+		cv.wait_for(lk, std::chrono::nanoseconds(sleepTime));
+		spring_time diff = (spring_gettime() - t) - spring_time::fromNanoSecs(sleepTime);
+
+		if ((diff > emax) || !emax.isDuration()) emax = diff;
+		if ((diff < emin) || !emin.isDuration()) emin = diff;
+		eavg = float(i * eavg + std::abs(diff.toNanoSecsf())) / (i + 1);
+	}
+	LOG("[spring::condition_variable::wait_for] accuracy:={ err: %+.4fms %+.4fms erravg: %.4fms } ", emin.toMilliSecsf(), emax.toMilliSecsf(), eavg * 1e-6);
+}

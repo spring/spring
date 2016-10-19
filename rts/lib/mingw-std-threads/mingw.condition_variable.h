@@ -103,23 +103,27 @@ protected:
             mNumWaiters++;
         }
         lock.unlock();
-        LARGE_INTEGER liDueTime;
-        liDueTime.QuadPart = -timeout;
-        SetWaitableTimer(
-           mTimer,                 // Handle to the timer object.
-           &liDueTime,             // When timer will become signaled.
-           0,                      // signal once.
-           NULL,           // Completion routine.
-           NULL,                // Argument to the completion routine.
-           FALSE );                // Do not restore a suspended system.
-        DWORD ret = WaitForSingleObjectEx(mSemaphore, 1, TRUE);
+        DWORD ret;
+        if ((ret = WaitForSingleObject(mSemaphore, 0)) != WAIT_OBJECT_0) {
+            LARGE_INTEGER liDueTime;
+            liDueTime.QuadPart = - int64_t(timeout);
+            SetWaitableTimer(
+               mTimer,                 // Handle to the timer object.
+               &liDueTime,             // When timer will become signaled.
+               0,                      // signal once.
+               NULL,           // Completion routine.
+               NULL,                // Argument to the completion routine.
+               FALSE );                // Do not restore a suspended system.
+            WaitForSingleObject(mTimer, INFINITE);
+            ret = WaitForSingleObject(mSemaphore, 0);
+        }
 
         mNumWaiters--;
         SetEvent(mWakeEvent);
         lock.lock();
         if (ret == WAIT_OBJECT_0)
             return true;
-        else if (ret == WAIT_TIMEOUT || ret == WAIT_IO_COMPLETION)
+        else if (ret == WAIT_TIMEOUT)
             return false;
 
         else
