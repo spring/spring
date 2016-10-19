@@ -362,3 +362,19 @@ BOOST_AUTO_TEST_CASE( ThreadSleepTime )
 	BenchmarkSleepFnc("sleep_spring", &sleep_spring, 500, 1e0);
 	BenchmarkSleepFnc("sleep_spring2", &sleep_spring2, 500, 1e6);
 }
+
+
+BOOST_AUTO_TEST_CASE(Timer)
+{
+
+	ScopedTimer t2("test");
+	ScopedOnceTimer t("test");
+	sleep_spring(500);
+
+	BOOST_CHECK(t2.GetDuration().toMilliSecsi() >= 500);
+	BOOST_CHECK(t.GetDuration().toMilliSecsi() >= 500);
+
+	BOOST_CHECK(t2.GetDuration().toMilliSecsi() <= 550);
+	BOOST_CHECK(t.GetDuration().toMilliSecsi() <= 550);
+}
+
