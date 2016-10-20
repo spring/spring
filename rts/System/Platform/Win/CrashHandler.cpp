@@ -279,11 +279,13 @@ inline static void StacktraceInline(const char *threadName, LPEXCEPTION_POINTERS
 		}
 
 		// OpenGL lib names (ATI): "atioglxx.dll" "atioglx2.dll"
-		containsOglDll = containsOglDll || strstr(modname, "atiogl");
+		containsOglDll |= strstr(modname, "atiogl") != nullptr;
 		// OpenGL lib names (Nvidia): "nvoglnt.dll" "nvoglv32.dll" "nvoglv64.dll" (last one is a guess)
-		containsOglDll = containsOglDll || strstr(modname, "nvogl");
+		containsOglDll |= strstr(modname, "nvogl") != nullptr;
 		// OpenGL lib names (Intel): "ig4dev32.dll" "ig4dev64.dll" "ig4icd32.dll"
-		containsOglDll = containsOglDll || strstr(modname, "ig4");
+		containsOglDll |= strstr(modname, "ig4") != nullptr;
+		// OpenGL lib names (Intel)
+		containsOglDll |= strstr(modname, "ig75icd32.dll") != nullptr;
 
 		++count;
 	}
