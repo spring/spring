@@ -71,12 +71,18 @@ private:
 /**
  * @brief print passed time to infolog
  */
-class ScopedOnceTimer : public BasicTimer
+class ScopedOnceTimer
 {
 public:
-	ScopedOnceTimer(const std::string& name): BasicTimer(name) {}
-	ScopedOnceTimer(const char* name): BasicTimer(name) {}
+	ScopedOnceTimer(const std::string& name);
+	ScopedOnceTimer(const char* name);
 	~ScopedOnceTimer();
+	const std::string& GetName() const;
+	spring_time GetDuration() const;
+
+protected:
+	const spring_time starttime;
+	std::string name;
 };
 
 

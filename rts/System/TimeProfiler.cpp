@@ -127,10 +127,29 @@ ScopedTimer::~ScopedTimer()
 		profiler.AddTime(GetName(), GetDuration(), autoShowGraph);
 }
 
+ScopedOnceTimer::ScopedOnceTimer(const char* name_)
+ : starttime(spring_gettime())
+ , name(name_)
+{ }
+
+ScopedOnceTimer::ScopedOnceTimer(const std::string& name_)
+ : starttime(spring_gettime())
+ , name(name_)
+{ }
+
+const std::string& ScopedOnceTimer::GetName() const
+{
+	return name;
+}
+
+spring_time ScopedOnceTimer::GetDuration() const
+{
+	return spring_difftime(spring_gettime(), starttime);
+}
+
 ScopedOnceTimer::~ScopedOnceTimer()
 {
 	LOG("%s: %i ms", GetName().c_str(), int(GetDuration().toMilliSecsi()));
-	hashToName.erase(nameIterator);
 }
 
 
