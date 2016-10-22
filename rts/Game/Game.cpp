@@ -775,6 +775,7 @@ void CGame::KillRendering()
 void CGame::KillInterface()
 {
 	LOG("[%s][1]", __FUNCTION__);
+	ProfileDrawer::SetEnabled(false);
 	SafeDelete(guihandler);
 	SafeDelete(minimap);
 	SafeDelete(resourceBar);
