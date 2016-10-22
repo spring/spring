@@ -3,6 +3,7 @@
 #include "System/ThreadPool.h"
 #include "System/Log/ILog.h"
 #include "System/Threading/SpringThreading.h"
+#include "System/myMath.h"
 #include "System/UnsyncedRNG.h"
 #include <vector>
 #include <atomic>
