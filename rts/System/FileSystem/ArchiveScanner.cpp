@@ -18,12 +18,13 @@
 #include "FileSystem.h"
 #include "FileQueryFlags.h"
 #include "Lua/LuaParser.h"
-#include "System/Log/ILog.h"
 #include "System/CRC.h"
 #include "System/Util.h"
 #include "System/Exceptions.h"
 #include "System/ThreadPool.h"
 #include "System/FileSystem/RapidHandler.h"
+#include "System/Log/ILog.h"
+#include "System/Threading/SpringThreading.h"
 
 #if !defined(DEDICATED) && !defined(UNITSYNC)
 	#include "System/TimeProfiler.h"
@@ -335,7 +336,7 @@ bool CArchiveScanner::ArchiveData::GetInfoValueBool(const std::string& key) cons
 
 
 
-
+spring::recursive_mutex mutex;
 
 /*
  * CArchiveScanner
@@ -344,6 +345,7 @@ bool CArchiveScanner::ArchiveData::GetInfoValueBool(const std::string& key) cons
 CArchiveScanner::CArchiveScanner()
 : isDirty(false)
 {
+
 	// the "cache" dir is created in DataDirLocater
 	cachefile = FileSystem::EnsurePathSepAtEnd(FileSystem::GetCacheDir()) + IntToString(INTERNAL_VER, "ArchiveCache%i.lua");
 	ReadCacheData(GetFilepath());
@@ -366,6 +368,7 @@ const std::string& CArchiveScanner::GetFilepath() const
 
 void CArchiveScanner::ScanAllDirs()
 {
+	std::lock_guard<spring::recursive_mutex> lck(mutex);
 	const std::vector<std::string>& datadirs = dataDirLocater.GetDataDirPaths();
 	std::vector<std::string> scanDirs;
 	for (auto d = datadirs.rbegin(); d != datadirs.rend(); ++d) {
@@ -385,6 +388,7 @@ void CArchiveScanner::ScanAllDirs()
 
 void CArchiveScanner::ScanDirs(const std::vector<std::string>& scanDirs)
 {
+	std::lock_guard<spring::recursive_mutex> lck(mutex);
 	isDirty = true;
 
 	// scan for all archives
@@ -825,6 +829,7 @@ void CArchiveScanner::ComputeChecksumForArchive(const std::string& filePath)
 
 void CArchiveScanner::ReadCacheData(const std::string& filename)
 {
+	std::lock_guard<spring::recursive_mutex> lck(mutex);
 	if (!FileSystem::FileExists(filename)) {
 		LOG_L(L_INFO, "Archive cache doesn't exist: %s", filename.c_str());
 		return;
@@ -904,6 +909,7 @@ void FilterDep(std::vector<std::string>& deps, const std::string& exclude)
 
 void CArchiveScanner::WriteCacheData(const std::string& filename)
 {
+	std::lock_guard<spring::recursive_mutex> lck(mutex);
 	if (!isDirty) {
 		return;
 	}
