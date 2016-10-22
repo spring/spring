@@ -262,8 +262,10 @@ void LuaVFSDownload::Init()
 void LuaVFSDownload::Free(bool stopDownloads)
 {
 	eventHandler.RemoveClient(luaVFSDownload);
-	if (stopDownloads)
+	if (stopDownloads) {
+		SetAbortDownloads();
 		downloadQueue.Join();
+	}
 }
 
 
