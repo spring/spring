@@ -5,24 +5,31 @@
 
 struct lua_State;
 
+#include <deque>
+#include "System/Threading/SpringThreading.h"
+#include "../tools/pr-downloader/src/pr-downloader.h"
+
+
 class LuaVFSDownload: public CEventClient {
 	public:
-		LuaVFSDownload(const std::string& writepath);
-		virtual ~LuaVFSDownload();
+		static LuaVFSDownload* GetInstance();
+		static void Free(bool stopDownloads = false);
+		static void Init();
 
 		bool WantsEvent(const std::string& eventName) override {
 			return (eventName == "Update");
-		 }
+		}
 
 		static bool PushEntries(lua_State* L);
 		//checks if some events have arrived from other threads and then fires the events
 		void Update() override;
 
 	private:
+		LuaVFSDownload();
+		virtual ~LuaVFSDownload();
 		static int DownloadArchive(lua_State* L);
-
 };
 
-extern LuaVFSDownload* luavfsdownload;
+#define luaVFSDownload (LuaVFSDownload::GetInstance())
 
 #endif /* LUA_DOWNLOADER_H */

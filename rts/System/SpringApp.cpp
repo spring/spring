@@ -315,7 +315,7 @@ bool SpringApp::Initialize()
 	Threading::InitThreadPool();
 	Threading::SetThreadScheduler();
 	battery = new CBattery();
-	luavfsdownload = new LuaVFSDownload(dataDirLocater.GetWriteDirPath());
+	LuaVFSDownload::Init();
 
 	// Create CGameSetup and CPreGame objects
 	Startup();
@@ -805,7 +805,7 @@ void SpringApp::Reload(const std::string& script)
 	// PreGame allocates clientNet, so we need to delete our old connection
 	SafeDelete(clientNet);
 
-	SafeDelete(luavfsdownload);
+	LuaVFSDownload::Free();
 	SafeDelete(battery);
 
 	// note: technically we only need to use RemoveArchive
@@ -829,7 +829,7 @@ void SpringApp::Reload(const std::string& script)
 	eventHandler.ResetState();
 
 	battery = new CBattery();
-	luavfsdownload = new LuaVFSDownload(dataDirLocater.GetWriteDirPath());
+	LuaVFSDownload::Init();
 
 	gu->ResetState();
 	gs->ResetState();
@@ -940,7 +940,7 @@ void SpringApp::ShutDown()
 	LOG("[SpringApp::%s][1]", __FUNCTION__);
 	ThreadPool::SetThreadCount(0);
 	LOG("[SpringApp::%s][2]", __FUNCTION__);
-	SafeDelete(luavfsdownload);
+	LuaVFSDownload::Free(true);
 
 	if (game != nullptr) {
 		game->KillLua(); // must be called before `game` var gets nulled, else stuff in LuaSyncedRead.cpp will fail

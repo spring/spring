@@ -6,13 +6,10 @@
 #include "System/Util.h"
 #include "System/EventHandler.h"
 #include "System/Platform/Threading.h"
-#include "System/Threading/SpringThreading.h"
 #include "System/FileSystem/ArchiveScanner.h"
-
-#include <queue>
+#include "System/FileSystem/DataDirLocater.h"
 
 #include "LuaInclude.h"
-#include "../tools/pr-downloader/src/pr-downloader.h"
 
 /******************************************************************************/
 /******************************************************************************/
@@ -20,8 +17,6 @@
         lua_pushstring(L, #x);      \
         lua_pushcfunction(L, x);    \
         lua_rawset(L, -3)
-
-LuaVFSDownload* luavfsdownload = nullptr;
 
 struct dlEvent {
 	int ID;
@@ -53,12 +48,40 @@ struct dlProgress : public dlEvent {
 	}
 };
 
-std::queue<dlEvent*> dlEventQueue;
+struct DownloadItem {
+	int ID;
+	std::string filename;
+	DownloadEnum::Category cat;
+	DownloadItem() { }
+	DownloadItem(int ID, const std::string& filename, DownloadEnum::Category& cat) : ID(ID), filename(filename), cat(cat) { }
+};
+
+
+struct DownloadQueue {
+public:
+	DownloadQueue(): thread(nullptr), shutdown(false) {}
+	~DownloadQueue() { Join(); }
+
+	void Pump();
+	void Push(const DownloadItem& downloadItem);
+
+	void GrabLock() { mutex.lock(); }
+	void FreeLock() { mutex.unlock(); }
+
+	void Join();
+private:
+	std::deque<DownloadItem> queue;
+	spring::mutex mutex;
+	spring::thread* thread;
+	bool shutdown;
+} downloadQueue;
+
+std::deque<dlEvent*> dlEventQueue;
 spring::mutex dlEventQueueMutex;
 
 void AddQueueEvent(dlEvent* ev) {
 	dlEventQueueMutex.lock();
-	dlEventQueue.push(ev);
+	dlEventQueue.push_back(ev);
 	dlEventQueueMutex.unlock();
 }
 
@@ -94,40 +117,8 @@ void QueueDownloadProgress(int ID, long downloaded, long total) //queue from oth
 }
 
 
-LuaVFSDownload::LuaVFSDownload(const std::string& writepath):
-	CEventClient("[LuaVFSDownload]", 314161, false)
-{
-	DownloadInit();
-	DownloadSetConfig(CONFIG_FILESYSTEM_WRITEPATH, writepath.c_str());
-	eventHandler.AddClient(this);
-}
-
-LuaVFSDownload::~LuaVFSDownload()
-{
-	eventHandler.RemoveClient(this);
-	DownloadShutdown();
-}
-
-
-bool LuaVFSDownload::PushEntries(lua_State* L)
-{
-	REGISTER_LUA_CFUNC(DownloadArchive);
-	return true;
-}
-
-struct DownloadItem {
-	int ID;
-	std::string filename;
-	DownloadEnum::Category cat;
-	DownloadItem(int ID, const std::string& filename, DownloadEnum::Category& cat) : ID(ID), filename(filename), cat(cat) {
-	}
-};
-
 static int queueIDCount = -1;
 static int currentDownloadID = -1;
-static std::list<DownloadItem> queue;
-static bool isDownloading = false;
-spring::mutex queueMutex;
 
 void StartDownload();
 
@@ -135,7 +126,7 @@ void UpdateProgress(int done, int size) {
 	QueueDownloadProgress(currentDownloadID, done, size);
 }
 
-__FORCE_ALIGN_STACK__
+
 int Download(int ID, const std::string& filename, DownloadEnum::Category cat)
 {
 	currentDownloadID = ID;
@@ -168,37 +159,119 @@ int Download(int ID, const std::string& filename, DownloadEnum::Category cat)
 	return result;
 }
 
-void StartDownload() {
-	isDownloading = true;
-	const DownloadItem downloadItem = queue.front();
-	queue.pop_front();
-	const std::string& filename = downloadItem.filename;
-	DownloadEnum::Category cat = downloadItem.cat;
-	int ID = downloadItem.ID;
-	if (!filename.empty()) {
-		LOG_L(L_DEBUG, "DOWNLOADING: %s", filename.c_str());
+
+
+void DownloadQueue::Join()
+{
+	shutdown = true;
+	if (thread != nullptr) {
+		thread->join();
+		SafeDelete(thread);
 	}
-	spring::thread {[ID, filename, cat]() {
+}
+
+__FORCE_ALIGN_STACK__
+void DownloadQueue::Pump()
+{
+	while (!shutdown) {
+		DownloadItem downloadItem;
+
+		{
+			GrabLock();
+			assert(queue.size() > 0);
+			downloadItem = queue.front();
+			FreeLock();
+		}
+		const std::string& filename = downloadItem.filename;
+		DownloadEnum::Category cat = downloadItem.cat;
+		int ID = downloadItem.ID;
+
+		if (!filename.empty()) {
+			LOG_L(L_DEBUG, "DOWNLOADING: %s", filename.c_str());
 			const int result = Download(ID, filename, cat);
 			if (result == 0) {
 				QueueDownloadFinished(ID);
 			} else {
 				QueueDownloadFailed(ID, result);
 			}
-
-			queueMutex.lock();
-			if (!queue.empty()) {
-				queueMutex.unlock();
-				StartDownload();
-			} else {
-				isDownloading = false;
-				queueMutex.unlock();
-			}
 		}
-	}.detach();
+
+		{
+			GrabLock();
+			queue.pop_front();
+			const bool empty = queue.empty();
+			FreeLock();
+			if (empty)
+				break;
+		}
+	}
 }
 
+void DownloadQueue::Push(const DownloadItem& downloadItem)
+{
+	GrabLock();
+
+	if (queue.empty()) {
+		if (thread != nullptr) {
+			FreeLock();
+
+			thread->join();
+			SafeDelete(thread);
+
+			GrabLock();
+		}
+
+		// mutex is still locked, thread will block if it gets
+		// to queue.front() before we get to queue.push_back()
+		thread = new spring::thread(std::bind(&DownloadQueue::Pump, this));
+	}
+
+	queue.push_back(downloadItem);
+
+	FreeLock();
+}
+
+
+
 /******************************************************************************/
+
+bool LuaVFSDownload::PushEntries(lua_State* L)
+{
+	REGISTER_LUA_CFUNC(DownloadArchive);
+	return true;
+}
+
+
+LuaVFSDownload::LuaVFSDownload():
+	CEventClient("[LuaVFSDownload]", 314161, false)
+{
+	DownloadInit();
+	DownloadSetConfig(CONFIG_FILESYSTEM_WRITEPATH, dataDirLocater.GetWriteDirPath().c_str());
+}
+
+LuaVFSDownload::~LuaVFSDownload()
+{
+	DownloadShutdown();
+}
+
+void LuaVFSDownload::Init()
+{
+	eventHandler.AddClient(luaVFSDownload);
+}
+
+void LuaVFSDownload::Free(bool stopDownloads)
+{
+	eventHandler.RemoveClient(luaVFSDownload);
+	if (stopDownloads)
+		downloadQueue.Join();
+}
+
+
+LuaVFSDownload* LuaVFSDownload::GetInstance()
+{
+	static LuaVFSDownload instance;
+	return &instance;
+}
 
 int LuaVFSDownload::DownloadArchive(lua_State* L)
 {
@@ -220,15 +293,8 @@ int LuaVFSDownload::DownloadArchive(lua_State* L)
 	}
 
 	queueIDCount++;
-	queueMutex.lock();
-	queue.push_back(DownloadItem(queueIDCount, filename, cat));
-	queueMutex.unlock();
+	downloadQueue.Push(DownloadItem(queueIDCount, filename, cat));
 	eventHandler.DownloadQueued(queueIDCount, filename, categoryStr);
-	if (!isDownloading) {
-		if (queue.size() == 1) {
-			StartDownload();
-		}
-	}
 	return 0;
 }
 
@@ -241,7 +307,7 @@ void LuaVFSDownload::Update()
 		dlEvent* ev;
 		while (!dlEventQueue.empty()) {
 			ev = dlEventQueue.front();
-			dlEventQueue.pop();
+			dlEventQueue.pop_front();
 			ev->processEvent();
 			SafeDelete(ev);
 		}
