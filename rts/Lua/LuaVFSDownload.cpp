@@ -227,12 +227,12 @@ bool DownloadQueue::Remove(int id)
 {
 	std::unique_lock<spring::mutex> lck(mutex);
 
-	for (auto it = queue.cbegin(); it != queue.cend(); ++it) {
+	for (auto it = queue.begin(); it != queue.end(); ++it) {
 		if (it->id != id) {
 			continue;
 		}
 
-		if (it == queue.cbegin()) {
+		if (it == queue.begin()) {
 			SetAbortDownloads(true);
 			lck.unlock();
 			Join();
