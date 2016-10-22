@@ -234,6 +234,7 @@ void SetThreadCount(int num)
 			auto taskgroup = std::make_shared<ParallelTaskGroup<const std::function<void()>>>();
 			taskgroup->enqueue_unique(GetNumThreads() - 1, []{ exitThread = true; });
 			ThreadPool::PushTaskGroup(taskgroup);
+			ThreadPool::WaitForFinished(taskgroup);
 #ifndef UNITSYNC
 			if (hasOGLthreads) {
 				auto th = reinterpret_cast<COffscreenGLThread*>(thread_group.back());
