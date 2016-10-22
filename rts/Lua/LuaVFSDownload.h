@@ -28,6 +28,7 @@ class LuaVFSDownload: public CEventClient {
 		LuaVFSDownload();
 		virtual ~LuaVFSDownload();
 		static int DownloadArchive(lua_State* L);
+		static int AbortDownload(lua_State* L);
 };
 
 #define luaVFSDownload (LuaVFSDownload::GetInstance())

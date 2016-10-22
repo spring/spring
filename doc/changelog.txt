@@ -18,6 +18,7 @@ Lua:
  ! Undeprecate {unit,feature}def.modelname and add .modeltype and .modelpath to
    allow reading these without loading the model. Removed def.model.{name,type,path}
    so they aren't used accidentally.
+ - Add VFS.AbortDownload(id) - returns whether the download was found&removed from the queue
  - Add Spring.Get{Game,Menu}Name to LuaUnsyncedRead, so LuaMenu and unsynced Lua handles know about each other
  - Add new callins (LuaMenu only):
    ActivateMenu() that is called whenever LuaMenu is on with no game loaded.
