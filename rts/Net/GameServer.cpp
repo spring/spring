@@ -2424,7 +2424,7 @@ void CGameServer::UpdateLoop()
 		Threading::SetAffinity(~0);
 
 		while (!quitServer) {
-			spring_sleep(spring_msecs(loopSleepTime));
+			spring_msecs(loopSleepTime).sleep(true);
 
 			if (UDPNet)
 				UDPNet->Update();

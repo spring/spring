@@ -222,7 +222,7 @@ int main(int argc, char* argv[])
 				LOG("GameID: %02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x", gameID[0], gameID[1], gameID[2], gameID[3], gameID[4], gameID[5], gameID[6], gameID[7], gameID[8], gameID[9], gameID[10], gameID[11], gameID[12], gameID[13], gameID[14], gameID[15]);
 			}
 
-			spring_sleep(spring_secs(sleepTime));
+			spring_secs(sleepTime).sleep(true);
 		}
 
 		LOG("exiting");
