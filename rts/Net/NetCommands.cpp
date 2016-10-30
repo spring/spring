@@ -775,25 +775,35 @@ void CGame::ClientReadNet()
 					const int fixedLen = (1 + sizeof(short) + 3 + (2 * sizeof(float)));
 					const int variableLen = numBytes - fixedLen;
 					const int numUnitIDs = variableLen / sizeof(short); // each unitID is two bytes
-					unsigned char srcTeam;
-					pckt >> srcTeam;
-					unsigned char dstTeam;
-					pckt >> dstTeam;
+					unsigned char srcTeamID;
+					pckt >> srcTeamID;
+					unsigned char dstTeamID;
+					pckt >> dstTeamID;
 					float metalShare;
 					pckt >> metalShare;
 					float energyShare;
 					pckt >> energyShare;
+					CTeam* srcTeam = teamHandler->Team(srcTeamID);
+					CTeam* dstTeam = teamHandler->Team(dstTeamID);
 
 					if (metalShare > 0.0f) {
-						if (eventHandler.AllowResourceTransfer(srcTeam, dstTeam, "m", metalShare)) {
-							teamHandler->Team(srcTeam)->res.metal -= metalShare;
-							teamHandler->Team(dstTeam)->res.metal += metalShare;
+						if (eventHandler.AllowResourceTransfer(srcTeamID, dstTeamID, "m", metalShare)) {
+							srcTeam->res.metal                       -= metalShare;
+							srcTeam->resSent.metal                   += metalShare;
+							srcTeam->GetCurrentStats().metalSent     += metalShare;
+							dstTeam->res.metal                       += metalShare;
+							dstTeam->resReceived.metal               += metalShare;
+							dstTeam->GetCurrentStats().metalReceived += metalShare;
 						}
 					}
 					if (energyShare > 0.0f) {
-						if (eventHandler.AllowResourceTransfer(srcTeam, dstTeam, "e", energyShare)) {
-							teamHandler->Team(srcTeam)->res.energy -= energyShare;
-							teamHandler->Team(dstTeam)->res.energy += energyShare;
+						if (eventHandler.AllowResourceTransfer(srcTeamID, dstTeamID, "e", energyShare)) {
+							srcTeam->res.energy                       -= energyShare;
+							srcTeam->resSent.energy                   += energyShare;
+							srcTeam->GetCurrentStats().energySent     += energyShare;
+							dstTeam->res.energy                       += energyShare;
+							dstTeam->resReceived.energy               += energyShare;
+							dstTeam->GetCurrentStats().energyReceived += energyShare;
 						}
 					}
 
@@ -805,8 +815,8 @@ void CGame::ClientReadNet()
 
 						CUnit* u = unitHandler->units[unitID];
 						// ChangeTeam() handles the AllowUnitTransfer() LuaRule
-						if (u && u->team == srcTeam && !u->beingBuilt) {
-							u->ChangeTeam(dstTeam, CUnit::ChangeGiven);
+						if (u && u->team == srcTeamID && !u->beingBuilt) {
+							u->ChangeTeam(dstTeamID, CUnit::ChangeGiven);
 						}
 					}
 				} catch (const netcode::UnpackPacketException& ex) {
