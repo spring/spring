@@ -92,14 +92,13 @@ static bool DoTask(std::unique_lock<spring::mutex>& lk_)
 					break;
 				} else {
 					lk.unlock();
-					std::function<void()> f;
-					bool success = tg->GetTask(f);
+					auto p = tg->GetTask();
 					do {
-						if (success) {
+						if (p) {
 							SCOPED_MT_TIMER("::ThreadWorkers (accumulated)");
-							f();
+							(*p)();
 						}
-					} while ((success = tg->GetTask(f)));
+					} while (bool(p = tg->GetTask()));
 					break;
 				}
 			}
@@ -134,13 +133,12 @@ static bool DoTask(std::unique_lock<spring::mutex>& lk_)
 
 static bool DoTask(std::shared_ptr<ITaskGroup> tg)
 {
-	std::function<void()> f;
-	bool success = tg->GetTask(f);
-	if (success) {
+	auto p = tg->GetTask();
+	if (p) {
 		SCOPED_MT_TIMER("::ThreadWorkers (accumulated)");
-		f();
+		(*p)();
 	}
-	return success;
+	return static_cast<bool>(p);
 }
 
 
