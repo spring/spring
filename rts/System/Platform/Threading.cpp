@@ -15,6 +15,8 @@
 	#include "System/Sync/FPUCheck.h"
 #endif
 
+#include <boost/thread/future.hpp>
+
 #include <functional>
 #include <memory>
 #include <cinttypes>
@@ -312,7 +314,7 @@ namespace Threading {
 			//std::uint32_t ompCore = ompAvailCores;
 			Threading::SetAffinity(ompCore);
 			return ompCore;
-		}, [](std::uint32_t a, std::future<std::uint32_t>& b) -> std::uint32_t { return a | b.get(); });
+		}, [](std::uint32_t a, boost::unique_future<std::uint32_t>& b) -> std::uint32_t { return a | b.get(); });
 
 		// affinity of mainthread
 		std::uint32_t nonOmpCores = ~ompCores;
