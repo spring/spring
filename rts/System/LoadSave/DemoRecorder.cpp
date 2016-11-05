@@ -134,6 +134,8 @@ void CDemoRecorder::SetTime(int gameTime, int wallclockTime)
 void CDemoRecorder::InitializeStats(int numPlayers, int numTeams)
 {
 	playerStats.resize(numPlayers);
+	// must be here so WriteWinnerList works
+	fileHeader.numTeams = numTeams;
 	teamStats.resize(numTeams);
 }
 
@@ -263,7 +265,6 @@ void CDemoRecorder::WriteTeamStats()
 		}
 	}
 
-	fileHeader.numTeams = teamStats.size();
 	fileHeader.teamStatSize = (int)demoStream.tellp() - pos;
 
 	teamStats.clear();

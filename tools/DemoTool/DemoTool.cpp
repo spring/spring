@@ -102,6 +102,13 @@ int main (int argc, char* argv[])
 				std::wcout << buf.str();
 			}
 		}
+		const std::vector<unsigned char>& winningAllyTeams = reader.GetWinningAllyTeams();
+		std::wcout << L"Winning Allyteams:";
+		wstringstream buf;
+		for (unsigned char allyteam: winningAllyTeams){
+			buf << " " << (unsigned) allyteam;
+		}
+		std::wcout << buf.str();
 	}
 	return 0;
 }
@@ -337,7 +344,14 @@ void TrafficDump(CDemoReader& reader, bool trafficStats)
 				std::cout << std::endl;
 				break;
 			case NETMSG_GAMEOVER:
-				std::cout << "NETMSG_GAMEOVER" << std::endl;
+				std::cout << "NETMSG_GAMEOVER";
+				std::cout << " Length: " << (unsigned)packet->length;
+				std::cout << " Player: " << (unsigned)buffer[2];
+				std::cout << " Winning ids:";
+				for (unsigned short i = 3; i < packet->length; i += 1) {
+					std::cout << " " << (unsigned) *((char*)(buffer + i));
+				}
+				std::cout << std::endl;
 				break;
 			case NETMSG_MAPDRAW:
 				std::cout << "NETMSG_MAPDRAW" << std::endl;
