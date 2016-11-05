@@ -808,6 +808,8 @@ void SpringApp::Reload(const std::string& script)
 	LuaVFSDownload::Free();
 	SafeDelete(battery);
 
+	clientSetup.reset(new ClientSetup());
+
 	// note: technically we only need to use RemoveArchive
 	FileSystemInitializer::Cleanup(false);
 	FileSystemInitializer::Initialize();
