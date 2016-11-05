@@ -70,6 +70,7 @@ static inline auto parallel_reduce(F&& f, G&& g) -> typename std::result_of<F()>
 // mingw is missing c++11 thread support atm, so for KISS always prefer boost atm
 #include <boost/thread/future.hpp>
 #undef gt
+#include <boost/chrono/include.hpp>
 #include <memory>
 
 #ifdef UNITSYNC
@@ -91,9 +92,9 @@ public:
 	virtual int RemainingTasks() const = 0;
 
 	template< class Rep, class Period >
-	bool wait_for(const std::chrono::duration<Rep, Period>& rel_time) const {
-		const auto end = std::chrono::high_resolution_clock::now() + rel_time;
-		while (!IsFinished() && (std::chrono::high_resolution_clock::now() < end)) {
+	bool wait_for(const boost::chrono::duration<Rep, Period>& rel_time) const {
+		const auto end = boost::chrono::high_resolution_clock::now() + rel_time;
+		while (!IsFinished() && (boost::chrono::high_resolution_clock::now() < end)) {
 		}
 		return IsFinished();
 	}
@@ -163,8 +164,8 @@ template<class F, class... Args>
 class TaskGroup : public ITaskGroup
 {
 public:
-	TaskGroup(const int num = 0) : remainingTasks(0), curtask(0)/*, latency(0)*/ {
-		//start = std::chrono::high_resolution_clock::now();
+	TaskGroup(const int num = 0) : remainingTasks(0), curtask(0), latency(0) {
+		//start = boost::chrono::high_resolution_clock::now();
 		results.reserve(num);
 		tasks.reserve(num);
 	}
@@ -205,7 +206,7 @@ public:
 		const int pos = curtask.fetch_add(1, std::memory_order_relaxed);
 		if (pos < tasks.size()) {
 			/*if (latency.count() == 0) {
-				auto now = std::chrono::high_resolution_clock::now();
+				auto now = boost::chrono::high_resolution_clock::now();
 				latency = (now - start);
 				LOG("latency %fms", latency.count() / 1000000.f);
 			}*/
@@ -232,8 +233,8 @@ public:
 	std::vector<std::function<void()>> tasks;
 	std::vector<boost::unique_future<return_type>> results;
 
-	//std::chrono::time_point<std::chrono::high_resolution_clock> start; // use for latency profiling!
-	//std::chrono::nanoseconds latency;
+	boost::chrono::time_point<boost::chrono::high_resolution_clock> start; // use for latency profiling!
+	boost::chrono::nanoseconds latency;
 };
 
 

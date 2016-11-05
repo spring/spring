@@ -12,13 +12,15 @@
 #include <deque>
 #include <vector>
 #include <utility>
-#include <functional>
+#include <boost/optional.hpp>
+#include <boost/thread.hpp>
+#include <boost/thread/shared_mutex.hpp>
 
 static std::deque<std::shared_ptr<ITaskGroup>> taskGroups;
 static std::deque<void*> thread_group;
 
-static spring::mutex taskMutex;
-static spring::condition_variable_any newTasks;
+static boost::shared_mutex taskMutex;
+static boost::condition_variable newTasks;
 static std::atomic<bool> waitForLock(false);
 
 #if !defined(UNITSYNC) && !defined(UNIT_TEST)
@@ -30,7 +32,7 @@ static bool hasOGLthreads = false;
 static __declspec(thread) int threadnum(0);
 static __declspec(thread) bool exitThread(false);
 #else
-static __thread int threadnum(0);
+static __thread int threadnum(0); 
 static __thread bool exitThread(false);
 #endif
 
@@ -75,12 +77,16 @@ bool HasThreads()
 
 
 /// returns false, when no further tasks were found
-static bool DoTask(std::unique_lock<spring::mutex>& lk_)
+static bool DoTask(boost::shared_lock<boost::shared_mutex>& lk_)
 {
 	if (waitForLock.load(std::memory_order_acquire))
 		return true;
 
+#ifndef __MINGW32__
 	auto& lk = lk_;
+#else
+	boost::unique_lock<boost::shared_mutex> lk(taskMutex, boost::defer_lock);
+#endif
 
 	if (!taskGroups.empty()) {
 		if (lk.try_lock()) {
@@ -107,7 +113,7 @@ static bool DoTask(std::unique_lock<spring::mutex>& lk_)
 			if (foundEmpty) {
 				//FIXME this could be made lock-free too, but is it worth it?
 				waitForLock.store(true, std::memory_order_release);
-				std::unique_lock<spring::mutex> ulk(taskMutex, std::defer_lock);
+				boost::unique_lock<boost::shared_mutex> ulk(taskMutex, boost::defer_lock);
 				while (!ulk.try_lock()) {}
 				for(auto it = taskGroups.begin(); it != taskGroups.end();) {
 					if ((*it)->IsEmpty()) {
@@ -149,16 +155,21 @@ static void WorkerLoop(int id)
 #ifndef UNIT_TEST
 	Threading::SetThreadName(IntToString(id, "worker%i"));
 #endif
-	std::unique_lock<spring::mutex> lk(taskMutex, std::defer_lock);
-	spring::mutex m;
-	std::unique_lock<spring::mutex> lk2(m);
+	boost::shared_lock<boost::shared_mutex> lk(taskMutex, boost::defer_lock);
+	boost::mutex m;
+	boost::unique_lock<boost::mutex> lk2(m);
 
 	while (!exitThread) {
-		const auto spinlockStart = std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(spinlockMs);
+		const auto spinlockStart = boost::chrono::high_resolution_clock::now() + boost::chrono::milliseconds(spinlockMs);
 
 		while (!DoTask(lk) && !exitThread) {
-			if (spinlockStart < std::chrono::high_resolution_clock::now()) {
-				newTasks.wait_for(lk2, std::chrono::nanoseconds(100));
+			if (spinlockStart < boost::chrono::high_resolution_clock::now()) {
+			#ifndef BOOST_THREAD_USES_CHRONO
+				const boost::system_time timeout = boost::get_system_time() + boost::posix_time::microseconds(1);
+				newTasks.timed_wait(lk2, timeout);
+			#else
+				newTasks.wait_for(lk2, boost::chrono::nanoseconds(100));
+			#endif
 			}
 		}
 	}
@@ -170,7 +181,7 @@ void WaitForFinished(std::shared_ptr<ITaskGroup> taskgroup)
 	while (DoTask(taskgroup)) {
 	}
 
-	while (!taskgroup->wait_for(std::chrono::seconds(5))) {
+	while (!taskgroup->wait_for(boost::chrono::seconds(5))) {
 		LOG_L(L_WARNING, "Hang in ThreadPool");
 	}
 
@@ -183,7 +194,7 @@ void WaitForFinished(std::shared_ptr<ITaskGroup> taskgroup)
 void PushTaskGroup(std::shared_ptr<ITaskGroup> taskgroup)
 {
 	waitForLock.store(true, std::memory_order_release);
-	std::unique_lock<spring::mutex> lk(taskMutex, std::defer_lock);
+	boost::unique_lock<boost::shared_mutex> lk(taskMutex, boost::defer_lock);
 	while (!lk.try_lock()) {}
 	taskGroups.emplace_back(taskgroup);
 	waitForLock.store(false, std::memory_order_release);
@@ -209,7 +220,7 @@ void SetThreadCount(int num)
 		if (hasOGLthreads) {
 			try {
 				for (int i = curThreads; i < num; ++i) {
-					thread_group.push_back(new COffscreenGLThread(std::bind(&WorkerLoop, i)));
+					thread_group.push_back(new COffscreenGLThread(boost::bind(&WorkerLoop, i)));
 				}
 			} catch (const opengl_error& gle) {
 				// shared gl context creation failed :<
@@ -222,7 +233,7 @@ void SetThreadCount(int num)
 #endif
 		if (!hasOGLthreads) {
 			for (int i = curThreads; i<num; ++i) {
-				thread_group.push_back(new spring::thread(std::bind(&WorkerLoop, i)));
+				thread_group.push_back(new boost::thread(boost::bind(&WorkerLoop, i)));
 			}
 		}
 	} else {
@@ -232,7 +243,6 @@ void SetThreadCount(int num)
 			auto taskgroup = std::make_shared<ParallelTaskGroup<const std::function<void()>>>();
 			taskgroup->enqueue_unique(GetNumThreads() - 1, []{ exitThread = true; });
 			ThreadPool::PushTaskGroup(taskgroup);
-			ThreadPool::WaitForFinished(taskgroup);
 #ifndef UNITSYNC
 			if (hasOGLthreads) {
 				auto th = reinterpret_cast<COffscreenGLThread*>(thread_group.back());
@@ -241,7 +251,7 @@ void SetThreadCount(int num)
 			} else
 #endif
 			{
-				auto th = reinterpret_cast<spring::thread*>(thread_group.back());
+				auto th = reinterpret_cast<boost::thread*>(thread_group.back());
 				th->join();
 				delete th;
 			}
