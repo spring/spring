@@ -929,7 +929,7 @@ bool CWeapon::TestRange(const float3 tgtPos, const SWeaponTarget& trg) const
 {
 	const float3 tmpTargetDir = (tgtPos - aimFromPos).SafeNormalize();
 
-	const float heightDiff = tgtPos.y - owner->pos.y;
+	const float heightDiff = tgtPos.y - aimFromPos.y;
 	float weaponRange = 0.0f; // range modified by heightDiff and cylinderTargeting
 
 	if (trg.type == Target_Pos || weaponDef->cylinderTargeting < 0.01f) {
