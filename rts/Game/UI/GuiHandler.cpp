@@ -2159,12 +2159,14 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 		}
 
 		case CMDTYPE_ICON_BUILDING: {
-			const float dist = CGround::LineGroundCol(cameraPos, cameraPos + mouseDir * globalRendering->viewRange * 1.4f, false);
+			const UnitDef* unitdef = unitDefHandler->GetUnitDefByID(-commands[inCommand].id);
+			const float dist = unitdef->floatOnWater ?
+			  CGround::LinePlaneCol(cameraPos, mouseDir, globalRendering->viewRange * 1.4f, 0.0f)
+			: CGround::LineGroundCol(cameraPos, cameraPos + mouseDir * globalRendering->viewRange * 1.4f, false);
 
 			if (dist < 0.0f)
 				return defaultRet;
 
-			const UnitDef* unitdef = unitDefHandler->GetUnitDefByID(-commands[inCommand].id);
 
 			if (unitdef == nullptr)
 				return Command(CMD_STOP);
@@ -2173,12 +2175,19 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 			BuildInfo bi(unitdef, cameraPos + mouseDir * dist, buildFacing);
 
 			if (GetQueueKeystate() && (button == SDL_BUTTON_LEFT)) {
-				const float dist2 = CGround::LineGroundCol(
-					mouse->buttons[SDL_BUTTON_LEFT].camPos,
-					mouse->buttons[SDL_BUTTON_LEFT].camPos +
-					mouse->buttons[SDL_BUTTON_LEFT].dir * globalRendering->viewRange * 1.4f,
-					false
-				);
+				const float dist2 = unitdef->floatOnWater ?
+				  CGround::LinePlaneCol(
+				  	mouse->buttons[SDL_BUTTON_LEFT].camPos,
+				  	mouse->buttons[SDL_BUTTON_LEFT].dir,
+				  	globalRendering->viewRange * 1.4f,
+				  	0.0f
+				  )
+				: CGround::LineGroundCol(
+				  	mouse->buttons[SDL_BUTTON_LEFT].camPos,
+				  	mouse->buttons[SDL_BUTTON_LEFT].camPos +
+				  	mouse->buttons[SDL_BUTTON_LEFT].dir * globalRendering->viewRange * 1.4f,
+				  	false
+				  );
 				const float3 pos2 = mouse->buttons[SDL_BUTTON_LEFT].camPos + mouse->buttons[SDL_BUTTON_LEFT].dir * dist2;
 				buildPos = GetBuildPos(BuildInfo(unitdef, pos2, buildFacing), bi, cameraPos, mouseDir);
 			} else
@@ -2429,7 +2438,7 @@ std::vector<BuildInfo> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, cons
 	if (GetQueueKeystate() && KeyInput::GetKeyModState(KMOD_CTRL)) {
 		const CUnit* unit = nullptr;
 		const CFeature* feature = nullptr;
-		TraceRay::GuiTraceRay(cameraPos, mouseDir, globalRendering->viewRange * 1.4f, NULL, unit, feature, true);
+		TraceRay::GuiTraceRay(cameraPos, mouseDir, globalRendering->viewRange * 1.4f, NULL, unit, feature, startInfo.def->floatOnWater);
 
 		if (unit != nullptr) {
 			other.def = unit->unitDef;
@@ -3675,10 +3684,16 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 
 			if (unitdef != nullptr) {
 				const CMouseHandler::ButtonPressEvt& bp = mouse->buttons[SDL_BUTTON_LEFT];
-				const float bpDist = CGround::LineGroundCol(bp.camPos, bp.camPos + bp.dir * globalRendering->viewRange * 1.4f, false);
+				const float bpDist = unitdef->floatOnWater ?
+				  CGround::LinePlaneCol(bp.camPos, bp.dir, globalRendering->viewRange * 1.4f, 0.0f)
+				: CGround::LineGroundCol(bp.camPos, bp.camPos + bp.dir * globalRendering->viewRange * 1.4f, false);
+
+				const float actualDist = unitdef->floatOnWater ?
+				  CGround::LinePlaneCol(cameraPos, mouseDir, globalRendering->viewRange * 1.4f, 0.0f)
+				: dist;
 
 				// get the build information
-				const float3 cPos = cameraPos + mouseDir * dist;
+				const float3 cPos = cameraPos + mouseDir * actualDist;
 				const float3 bPos = bp.camPos + bp.dir * bpDist;
 
 				std::vector<BuildInfo> buildInfos;

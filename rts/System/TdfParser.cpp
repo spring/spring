@@ -10,7 +10,6 @@
 
 #include "Lua/LuaParser.h"
 #include "System/TdfParser.h"
-#include "System/TdfParser.h"
 #include "System/Util.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/VFSHandler.h"
