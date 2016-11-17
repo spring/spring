@@ -35,7 +35,7 @@ struct PathNode {
 /// functor to define node priority
 struct lessCost: public std::binary_function<PathNode*, PathNode*, bool> {
 	inline bool operator() (const PathNode* x, const PathNode* y) const {
-		return (x->fCost ==  y->fCost) ? (x->gCost > y->gCost) : (x->fCost > y->fCost);
+		return (x->fCost ==  y->fCost) ? (x->gCost < y->gCost) : (x->fCost > y->fCost);
 	}
 };
 
