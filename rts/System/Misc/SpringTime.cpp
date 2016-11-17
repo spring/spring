@@ -126,9 +126,9 @@ namespace spring_clock {
 			//
 			// currTick.QuadPart /= tickFreq.QuadPart;
 
-			if (tickFreq.QuadPart >= std::int64_t(1e9)) return (FromNanoSecs <std::uint64_t>(std::max(0.0, currTick.QuadPart / (tickFreq.QuadPart * 1e-9))));
-			if (tickFreq.QuadPart >= std::int64_t(1e6)) return (FromMicroSecs<std::uint64_t>(std::max(0.0, currTick.QuadPart / (tickFreq.QuadPart * 1e-6))));
-			if (tickFreq.QuadPart >= std::int64_t(1e3)) return (FromMilliSecs<std::uint64_t>(std::max(0.0, currTick.QuadPart / (tickFreq.QuadPart * 1e-3))));
+			if (tickFreq.QuadPart >= std::int64_t(double(1e9))) return (FromNanoSecs <std::uint64_t>(std::max(double(0.0), currTick.QuadPart / (tickFreq.QuadPart * double(1e-9)))));
+			if (tickFreq.QuadPart >= std::int64_t(double(1e6))) return (FromMicroSecs<std::uint64_t>(std::max(double(0.0), currTick.QuadPart / (tickFreq.QuadPart * double(1e-6)))));
+			if (tickFreq.QuadPart >= std::int64_t(double(1e3))) return (FromMilliSecs<std::uint64_t>(std::max(double(0.0), currTick.QuadPart / (tickFreq.QuadPart * double(1e-3)))));
 
 			return (FromSecs<std::int64_t>(std::max(0LL, currTick.QuadPart)));
 		} else {
