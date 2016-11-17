@@ -2160,9 +2160,7 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 
 		case CMDTYPE_ICON_BUILDING: {
 			const UnitDef* unitdef = unitDefHandler->GetUnitDefByID(-commands[inCommand].id);
-			const float dist = unitdef->floatOnWater ?
-			  CGround::LinePlaneCol(cameraPos, mouseDir, globalRendering->viewRange * 1.4f, 0.0f)
-			: CGround::LineGroundCol(cameraPos, cameraPos + mouseDir * globalRendering->viewRange * 1.4f, false);
+			const float dist = CGround::LineGroundWaterCol(cameraPos, mouseDir, globalRendering->viewRange * 1.4f, unitdef->floatOnWater, false);
 
 			if (dist < 0.0f)
 				return defaultRet;
@@ -2175,19 +2173,13 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 			BuildInfo bi(unitdef, cameraPos + mouseDir * dist, buildFacing);
 
 			if (GetQueueKeystate() && (button == SDL_BUTTON_LEFT)) {
-				const float dist2 = unitdef->floatOnWater ?
-				  CGround::LinePlaneCol(
-				  	mouse->buttons[SDL_BUTTON_LEFT].camPos,
-				  	mouse->buttons[SDL_BUTTON_LEFT].dir,
-				  	globalRendering->viewRange * 1.4f,
-				  	0.0f
-				  )
-				: CGround::LineGroundCol(
-				  	mouse->buttons[SDL_BUTTON_LEFT].camPos,
-				  	mouse->buttons[SDL_BUTTON_LEFT].camPos +
-				  	mouse->buttons[SDL_BUTTON_LEFT].dir * globalRendering->viewRange * 1.4f,
-				  	false
-				  );
+				const float dist2 = CGround::LineGroundWaterCol(
+					mouse->buttons[SDL_BUTTON_LEFT].camPos,
+					mouse->buttons[SDL_BUTTON_LEFT].dir,
+					globalRendering->viewRange * 1.4f,
+					unitdef->floatOnWater,
+					false
+				);
 				const float3 pos2 = mouse->buttons[SDL_BUTTON_LEFT].camPos + mouse->buttons[SDL_BUTTON_LEFT].dir * dist2;
 				buildPos = GetBuildPos(BuildInfo(unitdef, pos2, buildFacing), bi, cameraPos, mouseDir);
 			} else
@@ -3677,23 +3669,17 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 			}
 		}
 
-		const float dist = CGround::LineGroundCol(cameraPos, cameraPos + mouseDir * globalRendering->viewRange * 1.4f, false);
+		const UnitDef* unitdef = unitDefHandler->GetUnitDefByID(-commands[inCommand].id);
 
-		if (dist > 0.0f) {
-			const UnitDef* unitdef = unitDefHandler->GetUnitDefByID(-commands[inCommand].id);
+		if (unitdef != nullptr) {
+		const float dist = CGround::LineGroundWaterCol(cameraPos, mouseDir, globalRendering->viewRange * 1.4f, unitdef->floatOnWater, false);
 
-			if (unitdef != nullptr) {
+			if (dist > 0.0f) {
 				const CMouseHandler::ButtonPressEvt& bp = mouse->buttons[SDL_BUTTON_LEFT];
-				const float bpDist = unitdef->floatOnWater ?
-				  CGround::LinePlaneCol(bp.camPos, bp.dir, globalRendering->viewRange * 1.4f, 0.0f)
-				: CGround::LineGroundCol(bp.camPos, bp.camPos + bp.dir * globalRendering->viewRange * 1.4f, false);
-
-				const float actualDist = unitdef->floatOnWater ?
-				  CGround::LinePlaneCol(cameraPos, mouseDir, globalRendering->viewRange * 1.4f, 0.0f)
-				: dist;
+				const float bpDist = CGround::LineGroundWaterCol(bp.camPos, bp.dir, globalRendering->viewRange * 1.4f, unitdef->floatOnWater, false);
 
 				// get the build information
-				const float3 cPos = cameraPos + mouseDir * actualDist;
+				const float3 cPos = cameraPos + mouseDir * dist;
 				const float3 bPos = bp.camPos + bp.dir * bpDist;
 
 				std::vector<BuildInfo> buildInfos;

@@ -38,6 +38,7 @@ public:
 	static float LineGroundCol(float3 from, float3 to, bool synced = true);
 	static float LineGroundCol(const float3 pos, const float3 dir, float len, bool synced = true);
 	static float LinePlaneCol(const float3 pos, const float3 dir, float len, float hgt);
+	static float LineGroundWaterCol(const float3 pos, const float3 dir, float len, bool testWater, bool synced = true);
 	static float TrajectoryGroundCol(float3 from, const float3& flatdir, float length, float linear, float quadratic);
 
 	static int GetSquare(const float3& pos);

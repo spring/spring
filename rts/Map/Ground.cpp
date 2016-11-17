@@ -398,6 +398,30 @@ float CGround::LinePlaneCol(const float3 pos, const float3 dir, float len, float
 }
 
 
+float CGround::LineGroundWaterCol(const float3 pos, const float3 dir, float len, bool testWater, bool synced)
+{
+	const float dist = LineGroundCol(pos, dir, len, synced);
+	if (!testWater)
+		return dist;
+
+	const float waterDist = LinePlaneCol(pos, dir, len, 0.0f);
+	if (waterDist < 0.0f)
+		return dist;
+
+	float3 end = pos + dir * waterDist;
+	if (end.x > float3::maxxpos || end.x < 0.0f)
+		return dist;
+
+	if (end.z > float3::maxzpos || end.z < 0.0f)
+		return dist;
+
+	if (dist < 0.0f)
+		return waterDist;
+
+	return std::min(dist, waterDist);
+}
+
+
 float CGround::GetApproximateHeight(float x, float z, bool synced)
 {
 	const float* heightMap = readMap->GetSharedCenterHeightMap(synced);
@@ -525,7 +549,6 @@ float CGround::TrajectoryGroundCol(float3 from, const float3& flatdir, float len
 
 	return -1.0f;
 }
-
 
 int CGround::GetSquare(const float3& pos) {
 	const int x = Clamp((int(pos.x) / SQUARE_SIZE), 0, mapDims.mapxm1);
