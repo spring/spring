@@ -25,6 +25,9 @@ Lua:
    ActivateGame() that is called whenever LuaMenu is on with a game loaded.
    AllowDraw() if it returns false, the next draw call is skipped (only active when a game isn't running)
 
+UI:
+ - Add FPSClampPos config for whether the engine should verify the camera doesn't hit ground/go too far
+   this and other FPS camera configs can be changed midgame and will affect the next frame drawn.
 
 -- 103.0 --------------------------------------------------------
 General:

@@ -9,6 +9,7 @@ class CFPSController : public CCameraController
 {
 public:
 	CFPSController();
+	~CFPSController();
 
 	const std::string GetName() const { return "fps"; }
 
@@ -25,11 +26,16 @@ public:
 	void GetState(StateMap& sm) const;
 	bool SetState(const StateMap& sm);
 
+
 	void Update();
+
+	void ConfigNotify(const std::string& key, const std::string& value);
+	void ConfigUpdate();
 
 private:
 	float mouseScale;
 	float oldHeight;
+	bool clampPos;
 };
 
 #endif // _FPS_CONTROLLER_H
