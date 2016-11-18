@@ -69,6 +69,9 @@ public:
 	/// Frames Per Second
 	float FPS;
 
+	/// whether we're capturing video - relevant for frame timing
+	bool isVideoCapturing;
+
 	/// the window state (0=normal,1=maximized,2=minimized)
 	enum {
 		WINSTATE_DEFAULT   = 0,

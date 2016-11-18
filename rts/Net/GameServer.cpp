@@ -56,6 +56,7 @@
 
 #ifndef DEDICATED
 #include "lib/luasocket/src/restrictions.h"
+#include "Rendering/GlobalRendering.h"
 #endif
 
 #define ALLOW_DEMO_GODMODE
@@ -2296,8 +2297,11 @@ void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 		lck.lock();
 
 	CheckSync();
-
-	const bool vidRecording = videoCapturing->IsCapturing();
+#ifndef DEDICATED
+	const bool vidRecording = globalRendering->isVideoCapturing;
+#else
+	const bool vidRecording = false;
+#endif
 	const bool normalFrame = !isPaused && !vidRecording;
 	const bool videoFrame = !isPaused && fixedFrameTime;
 	const bool singleStep = fixedFrameTime && !vidRecording;

@@ -156,6 +156,7 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetDrawGround);
 	REGISTER_LUA_CFUNC(SetDrawGroundDeferred);
 	REGISTER_LUA_CFUNC(SetDrawModelsDeferred);
+	REGISTER_LUA_CFUNC(SetVideoCapturingMode);
 
 	REGISTER_LUA_CFUNC(SetWaterParams);
 
@@ -1034,7 +1035,7 @@ int LuaUnsyncedCtrl::SetDrawGroundDeferred(lua_State* L)
 
 	lua_pushboolean(L, gd->DrawDeferred());
 	lua_pushboolean(L, gd->DrawForward());
-	return 1;
+	return 2;
 }
 
 int LuaUnsyncedCtrl::SetDrawModelsDeferred(lua_State* L)
@@ -1051,6 +1052,14 @@ int LuaUnsyncedCtrl::SetDrawModelsDeferred(lua_State* L)
 	lua_pushboolean(L,    unitDrawer->DrawForward());
 	lua_pushboolean(L, featureDrawer->DrawForward());
 	return 4;
+}
+
+
+int LuaUnsyncedCtrl::SetVideoCapturingMode(lua_State* L)
+{
+	// NOTE the argument ordering
+	globalRendering->isVideoCapturing = !!luaL_checkboolean(L, 1);
+	return 0;
 }
 
 

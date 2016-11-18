@@ -528,9 +528,6 @@ void CGame::ClientReadNet()
 #endif
 				AddTraffic(-1, packetCode, dataLength);
 
-				if (videoCapturing->IsCapturing()) {
-					return;
-				}
 			} break;
 
 			case NETMSG_SYNCRESPONSE: {

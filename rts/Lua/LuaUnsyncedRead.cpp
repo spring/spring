@@ -102,6 +102,7 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetFrameTimeOffset);
 	REGISTER_LUA_CFUNC(GetLastUpdateSeconds);
 	REGISTER_LUA_CFUNC(GetHasLag);
+	REGISTER_LUA_CFUNC(GetVideoCapturingMode);
 
 	REGISTER_LUA_CFUNC(GetViewGeometry);
 	REGISTER_LUA_CFUNC(GetWindowGeometry);
@@ -482,6 +483,14 @@ int LuaUnsyncedRead::GetHasLag(lua_State* L)
 	lua_pushboolean(L, (game != NULL)? game->IsLagging(luaL_optfloat(L, 1, 500.0f)) : false);
 	return 1;
 }
+
+
+int LuaUnsyncedRead::GetVideoCapturingMode(lua_State* L)
+{
+	lua_pushboolean(L, globalRendering->isVideoCapturing);
+	return 1;
+}
+
 
 int LuaUnsyncedRead::IsAABBInView(lua_State* L)
 {

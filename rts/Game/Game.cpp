@@ -978,7 +978,7 @@ bool CGame::Update()
 
 	// When video recording do step by step simulation, so each simframe gets a corresponding videoframe
 	// FIXME: SERVER ALREADY DOES THIS BY ITSELF
-	if (videoCapturing->IsCapturing() && playing && gameServer != NULL) {
+	if (globalRendering->isVideoCapturing && playing && gameServer != NULL) {
 		gameServer->CreateNewFrame(false, true);
 	}
 
@@ -1055,7 +1055,7 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 	globalRendering->drawFrame = std::max(1U, globalRendering->drawFrame + 1);
 	globalRendering->lastFrameStart = currentTime;
 	// Update the interpolation coefficient (globalRendering->timeOffset)
-	if (!gs->paused && !IsLagging() && !gs->PreSimFrame() && !videoCapturing->IsCapturing()) {
+	if (!gs->paused && !IsLagging() && !gs->PreSimFrame() && !globalRendering->isVideoCapturing) {
 		globalRendering->weightedSpeedFactor = 0.001f * gu->simFPS;
 		globalRendering->timeOffset = (currentTime - lastFrameTime).toMilliSecsf() * globalRendering->weightedSpeedFactor;
 	} else {
@@ -1259,7 +1259,11 @@ bool CGame::Draw() {
 	glEnable(GL_DEPTH_TEST);
 	glLoadIdentity();
 
-	videoCapturing->RenderFrame();
+	if (globalRendering->isVideoCapturing) {
+		globalRendering->lastFrameTime = 1000.0f / GAME_SPEED;
+		if (videoCapturing->IsCapturing())
+			videoCapturing->RenderFrame();
+	}
 
 	SetDrawMode(gameNotDrawing);
 	CTeamHighlight::Disable();

@@ -61,6 +61,7 @@ CR_REG_METADATA(CGlobalRendering, (
 	CR_MEMBER(drawFrame),
 	CR_MEMBER(FPS),
 
+	CR_IGNORED(isVideoCapturing),
 	CR_IGNORED(winState),
 	CR_IGNORED(screenSizeX),
 	CR_IGNORED(screenSizeY),
@@ -114,6 +115,7 @@ CGlobalRendering::CGlobalRendering()
 	, drawFrame(1)
 	, FPS(GAME_SPEED)
 
+	, isVideoCapturing(false)
 	, winState(WINSTATE_DEFAULT)
 	, screenSizeX(1)
 	, screenSizeY(1)
