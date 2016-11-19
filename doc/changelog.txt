@@ -24,6 +24,8 @@ Lua:
    ActivateMenu() that is called whenever LuaMenu is on with no game loaded.
    ActivateGame() that is called whenever LuaMenu is on with a game loaded.
    AllowDraw() if it returns false, the next draw call is skipped (only active when a game isn't running)
+ - Add Spring.{Set,Get}VideoCapturingMode() - this doesn't actually record the game in any way,
+   it just regulates the framerate and interpolations.
 
 UI:
  - Add FPSClampPos config for whether the engine should verify the camera doesn't hit ground/go too far
