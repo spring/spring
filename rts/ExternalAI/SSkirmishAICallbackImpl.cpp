@@ -2031,7 +2031,7 @@ EXPORT(int) skirmishAiCallback_Map_getSlopeMap(int skirmishAIId,
 EXPORT(int) skirmishAiCallback_Map_get##name##Map(int skirmishAIId,	\
 		int* sensor##Values, int sensor##ValuesMaxSize) {	\
 \
-	static const int sensor##ValuesRealSize = losHandler->sensor.size.x * losHandler->sensor.size.y;	\
+	const int sensor##ValuesRealSize = losHandler->sensor.size.x * losHandler->sensor.size.y;	\
 \
 	int sensor##ValuesSize = sensor##ValuesRealSize;	\
 \
