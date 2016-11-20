@@ -90,7 +90,7 @@ static void CheckPieceNormals(const S3DModel* model, const S3DModelPiece* modelP
 			const char* modelName = model->name.c_str();
 			const char* pieceName = modelPiece->name.c_str();
 
-			LOG_L(L_INFO, formatStr, __FUNCTION__, pieceName, modelName, numNullNormals, modelPiece->GetVertexCount());
+			LOG_L(L_DEBUG, formatStr, __FUNCTION__, pieceName, modelName, numNullNormals, modelPiece->GetVertexCount());
 		}
 	}
 
@@ -292,7 +292,7 @@ S3DModel* CModelLoader::ParseModel(const std::string& name, const std::string& p
 		try {
 			model = parser->Load(path);
 		} catch (const content_error& ex) {
-			LOG_L(L_WARNING, "could not load model \"%s\" (reason: %s)", name.c_str(), ex.what());
+			LOG_L(L_ERROR, "could not load model \"%s\" (reason: %s)", name.c_str(), ex.what());
 		}
 	} else {
 		LOG_L(L_ERROR, "could not find a parser for model \"%s\" (unknown format?)", name.c_str());
