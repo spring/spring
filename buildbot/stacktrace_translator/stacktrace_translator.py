@@ -28,7 +28,7 @@ WWWROOT = os.path.expanduser('~/www')
 PIDFILE = os.path.expanduser('~/run/stacktrace_translator.pid')
 
 # Object passed into the XMLRPC server object to listen on.
-LISTEN_ADDR = ('', 8000)
+LISTEN_ADDR = ('127.0.0.1', 8000)
 
 # path to test file
 TESTFILE = os.path.join(WWWROOT, "default/release/93.2.1-56-gdca244e/win32/{release}93.2.1-56-gdca244e_spring_dbg.7z")

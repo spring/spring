@@ -167,7 +167,7 @@ $res['PASTEBIN']=""; /*initianlize vars for template*/
 $res['RESULTHTML']="";
 $res['RESULTCLEAN']="";
 $res['TEXTAREA']=getinfolog();
-$res['TRANSLATOR']="http://springrts.com:8000";
+$res['TRANSLATOR']="http://localhost:8000";
 $res['INFO']="";
 
 if ($res['TEXTAREA']!=""){
