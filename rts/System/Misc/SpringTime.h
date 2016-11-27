@@ -76,7 +76,9 @@ public:
 
 	spring_time& operator+=(const spring_time st)       { x += st.x; return *this; }
 	spring_time& operator-=(const spring_time st)       { x -= st.x; return *this; }
-	spring_time& operator%=(const spring_time mt)       { x %= mt.x; return *this;    }
+	spring_time& operator%=(const spring_time mt)       { x %= mt.x; return *this; }
+	spring_time& operator*=(const int n)                { x *= n; return *this; }
+	spring_time& operator*=(const float n)              { x *= n; return *this; }
 	spring_time   operator-(const spring_time st) const { return spring_time_native(x - st.x); }
 	spring_time   operator+(const spring_time st) const { return spring_time_native(x + st.x); }
 	spring_time   operator%(const spring_time mt) const { return spring_time_native(x % mt.x); }
@@ -84,6 +86,9 @@ public:
 	bool          operator>(const spring_time st) const { return (x >  st.x); }
 	bool         operator<=(const spring_time st) const { return (x <= st.x); }
 	bool         operator>=(const spring_time st) const { return (x >= st.x); }
+
+	spring_time   operator*(const int n)   const { return spring_time_native(x * n); }
+	spring_time   operator*(const float n) const { return spring_time_native(x * n); }
 
 	// short-hands
 	int64 toSecsi()        const { return (toSecs     <int64>()); }
