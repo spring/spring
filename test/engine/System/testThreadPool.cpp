@@ -12,6 +12,7 @@
 
 #define BOOST_TEST_MODULE ThreadPool
 #include <boost/test/unit_test.hpp>
+BOOST_GLOBAL_FIXTURE(InitSpringTime);
 
 static int NUM_THREADS = std::min(ThreadPool::GetMaxThreads(), 10);
 
