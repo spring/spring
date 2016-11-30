@@ -6,6 +6,7 @@
 
 #include "System/Threading/SpringThreading.h"
 
+#include <atomic>
 
 #ifndef UNIT_TEST
 #ifdef USING_CREG
@@ -185,11 +186,9 @@ namespace spring_clock {
 
 std::int64_t spring_time::xs = 0;
 
-static float avgThreadYieldTimeMilliSecs = 0.0f;
-static float avgThreadSleepTimeMilliSecs = 0.0f;
+static std::atomic_int avgThreadYieldTimeMicroSecs = {0};
+static std::atomic_int avgThreadSleepTimeMicroSecs = {0};
 
-static spring::mutex yieldTimeMutex;
-static spring::mutex sleepTimeMutex;
 
 static void thread_yield()
 {
@@ -199,8 +198,10 @@ static void thread_yield()
 	const spring_time dt = t1 - t0;
 
 	if (t1 >= t0) {
-		std::lock_guard<spring::mutex> lock(yieldTimeMutex);
-		avgThreadYieldTimeMilliSecs = mix(avgThreadYieldTimeMilliSecs, dt.toMilliSecsf(), 0.1f);
+		// yes, it's not 100% thread correct, but it's okay when 1 of 1 million writes is dropped
+		int avg = avgThreadYieldTimeMicroSecs.load();
+		int newAvg = mix<float>(avg, dt.toMicroSecsf(), 0.1f);
+		avgThreadYieldTimeMicroSecs.store(newAvg);
 	}
 }
 
@@ -218,7 +219,7 @@ void spring_time::sleep(bool forceThreadSleep)
 
 
 	// for very short time intervals use a yielding loop (yield is ~5x more accurate than sleep(), check the UnitTest)
-	if (toMilliSecsf() < (avgThreadSleepTimeMilliSecs + avgThreadYieldTimeMilliSecs * 5.0f)) {
+	if (toMicroSecsi() < (avgThreadSleepTimeMicroSecs + avgThreadYieldTimeMicroSecs * 5)) {
 		const spring_time s = gettime();
 
 		while ((gettime() - s) < *this)
@@ -240,8 +241,10 @@ void spring_time::sleep(bool forceThreadSleep)
 	const spring_time dt = t1 - t0;
 
 	if (t1 >= t0) {
-		std::lock_guard<spring::mutex> lock(sleepTimeMutex);
-		avgThreadSleepTimeMilliSecs = mix(avgThreadSleepTimeMilliSecs, dt.toMilliSecsf(), 0.1f);
+		// yes, it's not 100% thread correct, but it's okay when 1 of 1 million writes is dropped
+		int avg = avgThreadSleepTimeMicroSecs.load();
+		int newAvg = mix<float>(avg, dt.toMicroSecsf(), 0.1f);
+		avgThreadSleepTimeMicroSecs.store(newAvg);
 	}
 }
 
@@ -253,7 +256,7 @@ void spring_time::sleep_until()
 #else
 	spring_time napTime = gettime() - *this;
 
-	if (napTime.toMilliSecsf() < avgThreadYieldTimeMilliSecs) {
+	if (napTime.toMicroSecsi() < avgThreadYieldTimeMicroSecs) {
 		while (napTime.isTime()) {
 			thread_yield();
 			napTime = gettime() - *this;
