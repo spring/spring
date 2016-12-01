@@ -7,6 +7,7 @@
 
 #include <windows.h>
 #include <atomic>
+#include "System/Misc/SpringTime.h"
 
 
 class CriticalSection
