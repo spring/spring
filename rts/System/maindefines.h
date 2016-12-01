@@ -49,6 +49,14 @@
 /* a shorter form */
 #define _STPF_ __SIZE_T_PRINTF_FORMAT__
 
+
+#if defined(_MSC_VER)
+	#define _threadlocal __declspec(thread)
+#else
+	#define _threadlocal __thread
+#endif
+
+
 #ifdef _MSC_VER
 	/* Microsoft Visual C++ 7.0: MSC_VER = 1300
 	   Microsoft Visual C++ 7.1: MSC_VER = 1310 */
