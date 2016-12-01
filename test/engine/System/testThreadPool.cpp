@@ -99,7 +99,7 @@ BOOST_AUTO_TEST_CASE( testThreadPool3 )
 		SAFE_BOOST_CHECK(threadnum >= 0);
 		SAFE_BOOST_CHECK(threadnum < NUM_THREADS);
 		return threadnum;
-	}, [](int a, boost::unique_future<int>& b) -> int { return a + b.get(); });
+	}, [](int a, std::future<int>& b) -> int { return a + b.get(); });
 	BOOST_CHECK(result == ((NUM_THREADS-1)*((NUM_THREADS-1) + 1))/2);
 }
 
