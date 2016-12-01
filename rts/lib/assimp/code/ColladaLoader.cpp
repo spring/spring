@@ -59,6 +59,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "time.h"
 #include "math.h"
 #include <numeric>
+#include <cmath>
 #include "Defines.h"
 
 
