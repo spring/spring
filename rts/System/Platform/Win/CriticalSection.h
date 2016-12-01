@@ -6,6 +6,7 @@
 #if   defined(_WIN32)
 
 #include <windows.h>
+#include <atomic>
 
 
 class CriticalSection
@@ -31,6 +32,26 @@ public:
 protected:
 	native_type mtx;
 };
+
+
+
+class win_signal {
+public:
+	win_signal() noexcept;
+	~win_signal();
+
+	win_signal(const win_signal&) = delete;
+	win_signal& operator=(const win_signal&) = delete;
+
+	void wait();
+	void wait_for(spring_time t);
+	void notify_all(const int min_sleepers = 1);
+
+protected:
+	std::atomic_int sleepers;
+	HANDLE event;
+};
+
 #endif
 
 #endif // CRITICALSECTION_H

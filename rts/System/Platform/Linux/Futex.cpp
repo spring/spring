@@ -5,6 +5,7 @@
 #include <linux/futex.h>
 #include <sys/syscall.h>
 #include <unistd.h>
+#include <climits>
 
 
 spring_futex::spring_futex() noexcept
@@ -42,7 +43,7 @@ void spring_futex::unlock()
 {
 	if (__sync_fetch_and_sub(&mtx, 1) != 1) {
 		mtx = 0;
-		syscall(SYS_futex, &mtx, FUTEX_WAKE_PRIVATE, 1, NULL, NULL, 0);
+		syscall(SYS_futex, &mtx, FUTEX_WAKE_PRIVATE, 4, NULL, NULL, 0);
 	}
 }
 
@@ -88,4 +89,72 @@ void recursive_futex::unlock()
 	}
 }
 */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+linux_signal::linux_signal() noexcept
+: sleepers(false)
+, gen(0)
+, mtx(0)
+{
+}
+
+
+linux_signal::~linux_signal()
+{
+	gen = {0};
+	mtx = 0;
+}
+
+
+void linux_signal::wait()
+{
+	int m; // cur gen
+	const int g = gen.load(); // our gen
+	sleepers++;
+	while ((g - (m = mtx)) >= 0) {
+		syscall(SYS_futex, &mtx, FUTEX_WAIT_PRIVATE, m, NULL, NULL, 0);
+	}
+	sleepers--;
+}
+
+
+void linux_signal::wait_for(spring_time t)
+{
+	int m; // cur gen
+	const int g = gen.load(); // our gen
+	sleepers++;
+
+	struct timespec linux_t;
+	linux_t.tv_sec  = 0;
+	linux_t.tv_nsec = t.toNanoSecsi();
+
+	const spring_time endTimer = spring_now() + t;
+
+	while (((g - (m = mtx)) >= 0) && (spring_now() < endTimer)) {
+		syscall(SYS_futex, &mtx, FUTEX_WAIT_PRIVATE, m, &linux_t, NULL, 0);
+	}
+	sleepers--;
+}
+
+
+void linux_signal::notify_all(const int min_sleepers)
+{
+	if (sleepers.load() < min_sleepers)
+		return;
+
+	mtx = gen++;
+	syscall(SYS_futex, &mtx, FUTEX_WAKE_PRIVATE, INT_MAX, NULL, NULL, 0);
+}
 

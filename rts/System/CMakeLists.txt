@@ -139,13 +139,28 @@ MakeGlobalVar(sources_engine_System_Platform_Windows
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Win/WindowManagerHelper.cpp"
 	)
 
+MakeGlobalVar(sources_engine_System_Threading_Mac
+		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Mac/Signal.cpp"
+	)
 MakeGlobalVar(sources_engine_System_Threading_Linux
-		"${CMAKE_CURRENT_SOURCE_DIR}/Threading/Futex.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Linux/Futex.cpp"
 	)
 MakeGlobalVar(sources_engine_System_Threading_Windows
-		"${CMAKE_CURRENT_SOURCE_DIR}/Threading/CriticalSection.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Threading/SpringThreading.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Win/CriticalSection.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Win/Future.cpp"
 	)
+
+
+target_sources(platform_sources
+	PRIVATE
+		${sources_engine_System_Platform_Windows}
+		${sources_engine_System_Platform_Linux}
+		${sources_engine_System_Platform_Mac}
+		${sources_engine_System_Threading_Windows}
+		${sources_engine_System_Threading_Linux}
+		${sources_engine_System_Threading_Mac}
+	)
+
 
 ### only use the target platform related directory
 IF     (APPLE)
@@ -158,6 +173,7 @@ IF     (APPLE)
 			${sources_engine_System_Log_sinkFile}
 			${sources_engine_System_Platform_Mac}
 		)
+	MakeGlobalVar(sources_engine_System_Threading ${sources_engine_System_Threading_Mac})
 ELSEIF (UNIX)
 	MakeGlobalVar(sources_engine_System
 			${sources_engine_System_common}

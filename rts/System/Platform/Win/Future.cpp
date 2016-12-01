@@ -1,13 +1,14 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "SpringThreading.h"
 
-#if defined(__MINGW32__) && !defined(_GLIBCXX_HAS_GTHREADS)
+#include "Future.h"
 
-// This is part of the hack in SpringThreading.h which allows the use of std::future
+// This is part of the hack which allows the use of std::future
 // the code below is copied directly from GNU ISO C++ Library
 // it is available under the following license:
 
+
+#if defined(__MINGW32__) && !defined(_GLIBCXX_HAS_GTHREADS)
 // Copyright (C) 2003-2014 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
@@ -50,4 +51,5 @@ namespace std {
   }
 
 }
+
 #endif

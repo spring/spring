@@ -4,6 +4,9 @@
 #define SPRINGFUTEX_H
 
 #include <cinttypes>
+#include <atomic>
+#include "System/Misc/SpringTime.h"
+
 
 
 class spring_futex
@@ -55,4 +58,25 @@ protected:
 	native_type mtx;
 };
 */
+
+
+
+class linux_signal {
+public:
+	linux_signal() noexcept;
+	~linux_signal();
+
+	linux_signal(const linux_signal&) = delete;
+	linux_signal& operator=(const linux_signal&) = delete;
+
+	void wait();
+	void wait_for(spring_time t);
+	void notify_all(const int min_sleepers = 1);
+
+protected:
+	std::atomic_int sleepers;
+	std::atomic_int gen;
+	std::uint32_t mtx;
+};
+
 #endif // SPRINGFUTEX_H
