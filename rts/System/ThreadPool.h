@@ -141,9 +141,9 @@ class SingleTask : public ITaskGroup
 public:
 	typedef typename std::result_of<F(Args...)>::type return_type;
 
-	SingleTask(F& f, Args... args) : done(false) {
+	SingleTask(F f, Args... args) : done(false) {
 		auto p = std::make_shared<std::packaged_task<return_type()>>(
-			std::bind(std::forward<F>(f), std::forward<Args>(args)...)
+			std::bind(f, std::forward<Args>(args)...)
 		);
 		result = std::make_shared<std::future<return_type>>(p->get_future());
 		task = p;
@@ -154,7 +154,7 @@ public:
 		if (done.exchange(true, std::memory_order_relaxed))
 			return false;
 
-		task();
+		(*task)();
 		this->remainingTasks--;
 		return true;
 	}
@@ -163,7 +163,7 @@ public:
 
 public:
 	std::atomic<bool> done;
-	std::function<void()> task;
+	std::shared_ptr<std::packaged_task<return_type()>> task;
 	std::shared_ptr<std::future<return_type>> result;
 };
 
@@ -180,10 +180,10 @@ public:
 
 	typedef R return_type;
 
-	void enqueue(F& f, Args... args)
+	void enqueue(F f, Args... args)
 	{
 		auto task = std::make_shared<std::packaged_task<return_type()>>(
-			std::bind(f, args ...)
+			std::bind(f, std::forward<Args>(args)...)
 		);
 		results.emplace_back(task->get_future());
 		tasks.emplace_back(task);
