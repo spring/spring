@@ -452,8 +452,8 @@ bool LuaOpenGLUtils::ParseTextureImage(lua_State* L, LuaMatTexture& texUnit, con
 	}
 
 	else {
-		bool persist = CLuaHandle::GetHandle(L)->GetName() == "LuaMenu";
-		const CNamedTextures::TexInfo* texInfo = CNamedTextures::GetInfo(image, true, persist);
+		const CLuaHandle* luaHandle = CLuaHandle::GetHandle(L);
+		const CNamedTextures::TexInfo* texInfo = CNamedTextures::GetInfo(image, true, luaHandle->PersistOnReload());
 
 		if (texInfo != nullptr) {
 			texUnit.type = LuaMatTexture::LUATEX_NAMED;

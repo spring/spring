@@ -73,7 +73,7 @@ public:
 	 * Converts the empty string to ".\" or "./" respectively.
 	 * @see #HasPathSepAtEnd()
 	 */
-	static void EnsurePathSepAtEnd(std::string& path);
+	static std::string& EnsurePathSepAtEnd(std::string& path);
 	/// @see #EnsurePathSepAtEnd(std::string&)
 	static std::string EnsurePathSepAtEnd(const std::string& path);
 
@@ -107,6 +107,8 @@ public:
 
 	// custom functions
 	static bool IsReadableFile(const std::string& file);
+
+	static unsigned int GetFileModificationTime(const std::string& file);
 	/**
 	 * Returns the last file modification time formatted in a sort friendly
 	 * way, with second resolution.

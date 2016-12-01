@@ -996,7 +996,7 @@ bool CCustomExplosionGenerator::OutputProjectileClassInfo()
 	LOG_DISABLE();
 		// we need to load basecontent for class aliases
 		FileSystemInitializer::Initialize();
-		vfsHandler->AddArchiveWithDeps(archiveScanner->ArchiveFromName("Spring content v1"), false);
+		vfsHandler->AddArchiveWithDeps(archiveScanner->ArchiveFromName(CArchiveScanner::GetSpringBaseContentName()), false);
 	LOG_ENABLE();
 
 	const vector<creg::Class*>& classes = creg::System::GetClasses();

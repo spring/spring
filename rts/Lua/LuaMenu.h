@@ -24,6 +24,8 @@ public:
 	// callin called before each render, can block rendering
 	bool AllowDraw();
 
+	bool PersistOnReload() const override { return true; }
+
 	void GamePreload() override;
 
 protected:

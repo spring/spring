@@ -2,7 +2,7 @@
 
 #include <algorithm>
 #include <cctype>
-#include <limits.h>
+#include <climits>
 #include <stdexcept>
 #include <sstream>
 #include <vector>
@@ -11,6 +11,7 @@
 #include "Lua/LuaParser.h"
 #include "System/TdfParser.h"
 #include "System/Util.h"
+#include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/VFSHandler.h"
 #include "System/Log/ILog.h"
@@ -133,23 +134,19 @@ void TdfParser::ParseLuaTable(const LuaTable& table, TdfSection* currentSection)
 		LuaTable::DataType dt = table.GetType(key);
 		switch (dt) {
 			case LuaTable::DataType::TABLE: {
-				TdfSection* subSection = currentSection->construct_subsection(key);
-				ParseLuaTable(table.SubTable(key), subSection);
+				ParseLuaTable(table.SubTable(key), currentSection->construct_subsection(key));
 				break;
 			}
 			case LuaTable::DataType::BOOLEAN: {
-				bool value = table.Get(key, false);
-				currentSection->AddPair(key, value);
+				currentSection->AddPair(key, table.Get(key, false));
 				break;
 			}
 			case LuaTable::DataType::NUMBER: {
-				float value = table.Get(key, 0.0f);
-				currentSection->AddPair(key, value);
+				currentSection->AddPair(key, table.Get(key, 0.0f));
 				break;
 			}
 			case LuaTable::DataType::STRING: {
-				std::string value = table.Get(key, std::string(""));
-				currentSection->AddPair(key, value);
+				currentSection->AddPair(key, table.Get(key, std::string("")));
 				break;
 			}
 			default:
@@ -162,15 +159,16 @@ void TdfParser::ParseLuaTable(const LuaTable& table, TdfSection* currentSection)
 void TdfParser::ParseBuffer(char const* buf, size_t size) {
 	CVFSHandler* oldHandler = vfsHandler;
 	CVFSHandler tempvfsHandler;
+
 	vfsHandler = &tempvfsHandler;
-	vfsHandler->AddArchive("Spring content v1", false);
+	vfsHandler->AddArchive(CArchiveScanner::GetSpringBaseContentName(), false);
 
 	{
-		std::string script = std::string("local TDF = VFS.Include('gamedata/parse_tdf.lua');return TDF.ParseText([[") + buf + "]])";
+		const std::string script = std::string("local TDF = VFS.Include('gamedata/parse_tdf.lua'); return TDF.ParseText([[") + buf + "]])";
+
 		LuaParser luaParser(script, SPRING_VFS_BASE);
 		luaParser.Execute();
-		const LuaTable root = luaParser.GetRoot();
-		ParseLuaTable(root, GetRootSection());
+		ParseLuaTable(luaParser.GetRoot(), GetRootSection());
 	}
 
 	vfsHandler = oldHandler;

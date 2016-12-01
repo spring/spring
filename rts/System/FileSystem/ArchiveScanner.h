@@ -4,9 +4,10 @@
 #define _ARCHIVE_SCANNER_H
 
 #include <string>
-#include <vector>
-#include <list>
+#include <deque>
 #include <map>
+#include <vector>
+
 #include "System/Info.h"
 
 class IArchive;
@@ -82,8 +83,10 @@ public:
 		bool IsValid(std::string& error) const;
 		bool IsEmpty() const { return info.empty(); }
 
-		bool IsGame() const { int mt = GetModType(); return mt == modtype::hidden || mt == modtype::primary; }
-		bool IsMap() const { int mt = GetModType(); return mt == modtype::map; }
+		bool IsMap() const { const int mt = GetModType(); return (mt == modtype::map); }
+		bool IsGame() const { const int mt = GetModType(); return (mt == modtype::hidden || mt == modtype::primary); }
+		bool IsBase() const { const int mt = GetModType(); return (mt == modtype::base); }
+		bool IsMenu() const { const int mt = GetModType(); return (mt == modtype::menu); }
 
 		static bool IsReservedKey(const std::string& keyLower);
 		static std::string GetKeyDescription(const std::string& keyLower);
@@ -110,7 +113,10 @@ public:
 	~CArchiveScanner();
 
 public:
-	const std::string& GetFilepath() const;
+	const std::string& GetFilepath() const { return cachefile; }
+
+	static const char* GetMapHelperContentName() { return "Map Helper v1"; }
+	static const char* GetSpringBaseContentName() { return "Spring content v1"; }
 
 	std::vector<std::string> GetMaps() const;
 	std::vector<ArchiveData> GetPrimaryMods() const;
@@ -138,8 +144,7 @@ public:
 
 
 private:
-	struct ArchiveInfo
-	{
+	struct ArchiveInfo {
 		ArchiveInfo()
 			: modified(0)
 			, checksum(0)
@@ -153,8 +158,7 @@ private:
 		unsigned int checksum;
 		bool updated;
 	};
-	struct BrokenArchive
-	{
+	struct BrokenArchive {
 		BrokenArchive()
 			: modified(0)
 			, updated(false)
@@ -167,7 +171,7 @@ private:
 
 private:
 	void ScanDirs(const std::vector<std::string>& dirs);
-	void ScanDir(const std::string& curPath, std::list<std::string>* foundArchives);
+	void ScanDir(const std::string& curPath, std::deque<std::string>& foundArchives);
 
 	/// scan mapinfo / modinfo lua files
 	bool ScanArchiveLua(IArchive* ar, const std::string& fileName, ArchiveInfo& ai, std::string& err);
@@ -211,8 +215,8 @@ private:
 	 *         1 if the file is a first class meta-file,
 	 *         2 if the file is a second class meta-file
 	 */
-	static unsigned char GetMetaFileClass(const std::string& filePath);
-	static bool CheckCompression(const IArchive* ar,const std::string& fullName, std::string& error);
+	static int GetMetaFileClass(const std::string& filePath);
+	static bool CheckCompression(const IArchive* ar, const std::string& fullName, std::string& error);
 
 private:
 	std::map<std::string, ArchiveInfo> archiveInfos;

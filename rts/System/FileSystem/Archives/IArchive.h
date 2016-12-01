@@ -22,10 +22,10 @@ protected:
 	IArchive(const std::string& archiveName);
 
 public:
-	virtual ~IArchive();
+	virtual ~IArchive() {}
 
 	virtual bool IsOpen() = 0;
-	const std::string& GetArchiveName() const;
+	const std::string& GetArchiveName() const { return archiveFile; }
 
 	/**
 	 * @return The amount of files in the archive, does not change during
@@ -45,7 +45,10 @@ public:
 	 *   using forward-slashes, for example "maps/mymap.smf"
 	 * @return true if the file exists in this archive, false otherwise
 	 */
-	bool FileExists(const std::string& normalizedFilePath) const;
+	bool FileExists(const std::string& normalizedFilePath) const {
+		return (lcNameIndex.find(normalizedFilePath) != lcNameIndex.end());
+	}
+
 	/**
 	 * Returns the fileID of a file.
 	 * @param filePath VFS path to the file, for example "maps/myMap.smf"
@@ -72,10 +75,17 @@ public:
 	 * @see GetFile(unsigned int fid, std::vector<std::uint8_t>& buffer)
 	 */
 	bool GetFile(const std::string& name, std::vector<std::uint8_t>& buffer);
+
+	std::pair<std::string, int> FileInfo(unsigned int fid) const {
+		std::pair<std::string, int> info;
+		FileInfo(fid, info.first, info.second);
+		return info;
+	}
 	/**
 	 * Fetches the name and size in bytes of a file by its ID.
 	 */
 	virtual void FileInfo(unsigned int fid, std::string& name, int& size) const = 0;
+
 	/**
 	 * Returns true if the cost of reading the file is qualitatively relative
 	 * to its file-size.
@@ -87,7 +97,7 @@ public:
 	 * Most implementations may always return true.
 	 * @return true if cost is ~ relative to its file-size
 	 */
-	virtual bool HasLowReadingCost(unsigned int fid) const;
+	virtual bool HasLowReadingCost(unsigned int fid) const { return true; }
 
 	/**
 	 * @return true if archive type can be packed solid (which is VERY slow when reading)
