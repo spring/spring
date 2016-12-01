@@ -87,13 +87,9 @@ if(NOT DEFINED ENV{CI})
 		"${ENGINE_SOURCE_DIR}/System/Net/UDPConnection.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/NullGlobalConfig.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/Nullerrorhandler.cpp"
+		${sources_engine_System_Threading}
 		${test_Log_sources}
 	)
-
-	if(WIN32)
-		LIST(APPEND test_src
-			"${ENGINE_SOURCE_DIR}/System/Threading/CriticalSection.cpp")
-	endif(WIN32)
 
 	set(test_libs
 		engineSystemNet
@@ -170,11 +166,6 @@ endif()
 			${test_Log_sources}
 		)
 
-	if(WIN32)
-		LIST(APPEND test_src
-			"${ENGINE_SOURCE_DIR}/System/Threading/CriticalSection.cpp")
-	endif(WIN32)
-
 	set(test_libs
 			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
 			${Boost_SYSTEM_LIBRARY}
@@ -199,11 +190,6 @@ endif()
 			${sources_engine_System_Threading}
 			${test_Log_sources}
 		)
-
-	if(WIN32)
-		LIST(APPEND test_src
-			"${ENGINE_SOURCE_DIR}/System/Threading/CriticalSection.cpp")
-	endif(WIN32)
 
 	set(test_libs
 			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
@@ -247,11 +233,6 @@ endif()
 			${sources_engine_System_Threading}
 			${test_Log_sources}
 		)
-
-	if(WIN32)
-		LIST(APPEND test_src
-			"${ENGINE_SOURCE_DIR}/System/Threading/CriticalSection.cpp")
-	endif(WIN32)
 
 	set(test_libs
 			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
@@ -382,14 +363,6 @@ endif()
 			${test_Log_sources}
 		)
 
-	if(WIN32)
-		LIST(APPEND test_src
-			"${ENGINE_SOURCE_DIR}/System/Threading/CriticalSection.cpp")
-	else(WIN32)
-		LIST(APPEND test_src
-			"${ENGINE_SOURCE_DIR}/System/Platform/Linux/ThreadSupport.cpp")
-	endif()
-
 	set(test_libs
 			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
 			${Boost_THREAD_LIBRARY}
@@ -417,11 +390,6 @@ endif()
 			${sources_engine_System_Threading}
 			${test_Log_sources}
 		)
-
-	if(WIN32)
-		LIST(APPEND test_src
-			"${ENGINE_SOURCE_DIR}/System/Threading/CriticalSection.cpp")
-	endif(WIN32)
 
 	set(test_libs
 			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
