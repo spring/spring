@@ -166,6 +166,7 @@ endif()
 			"${ENGINE_SOURCE_DIR}/System/Misc/SpringTime.cpp"
 			"${ENGINE_SOURCE_DIR}/System/UnsyncedRNG.cpp"
 			"${ENGINE_SOURCE_DIR}/System/TimeProfiler.cpp"
+			${sources_engine_System_Threading}
 			${test_Log_sources}
 		)
 
@@ -195,6 +196,7 @@ endif()
 			"${ENGINE_SOURCE_DIR}/System/TimeProfiler.cpp"
 			"${ENGINE_SOURCE_DIR}/System/UnsyncedRNG.cpp"
 			"${ENGINE_SOURCE_DIR}/System/Misc/SpringTime.cpp"
+			${sources_engine_System_Threading}
 			${test_Log_sources}
 		)
 
@@ -242,6 +244,7 @@ endif()
 			"${ENGINE_SOURCE_DIR}/System/Misc/SpringTime.cpp"
 			"${ENGINE_SOURCE_DIR}/System/TimeProfiler.cpp"
 			"${ENGINE_SOURCE_DIR}/System/UnsyncedRNG.cpp"
+			${sources_engine_System_Threading}
 			${test_Log_sources}
 		)
 
@@ -375,7 +378,7 @@ endif()
 			"${ENGINE_SOURCE_DIR}/System/UnsyncedRNG.cpp"
 			"${ENGINE_SOURCE_DIR}/System/Platform/CpuID.cpp"
 			"${ENGINE_SOURCE_DIR}/System/Platform/Threading.cpp"
-
+			${sources_engine_System_Threading}
 			${test_Log_sources}
 		)
 
@@ -411,8 +414,8 @@ endif()
 			"${ENGINE_SOURCE_DIR}/System/Misc/SpringTime.cpp"
 			"${ENGINE_SOURCE_DIR}/System/TimeProfiler.cpp"
 			"${ENGINE_SOURCE_DIR}/System/UnsyncedRNG.cpp"
-			${test_Log_sources}
 			${sources_engine_System_Threading}
+			${test_Log_sources}
 		)
 
 	if(WIN32)
@@ -468,8 +471,8 @@ endif()
 			"${ENGINE_SOURCE_DIR}/System/Misc/SpringTime.cpp"
 			"${ENGINE_SOURCE_DIR}/System/UnsyncedRNG.cpp"
 			"${ENGINE_SOURCE_DIR}/System/TimeProfiler.cpp"
-			${test_Log_sources}
 			${sources_engine_System_Threading}
+			${test_Log_sources}
 		)
 	set(test_libs
 			streflop
@@ -492,8 +495,8 @@ endif()
 			"${ENGINE_SOURCE_DIR}/System/Misc/SpringTime.cpp"
 			"${ENGINE_SOURCE_DIR}/System/UnsyncedRNG.cpp"
 			"${ENGINE_SOURCE_DIR}/System/TimeProfiler.cpp"
-			${test_Log_sources}
 			${sources_engine_System_Threading}
+			${test_Log_sources}
 		)
 	set(test_libs
 			streflop
