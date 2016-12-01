@@ -4,21 +4,26 @@
 #include "System/maindefines.h"
 #include "System/myMath.h"
 
-#include "System/Threading/SpringThreading.h"
+#define FORCE_CHRONO_TIMERS
 
+#include <chrono>
 #include <atomic>
 
-#ifndef UNIT_TEST
-#ifdef USING_CREG
-#include "System/creg/Serializer.h"
+#if defined(USING_CREG) && !defined(UNIT_TEST)
+	#include "System/creg/Serializer.h"
 
-//FIXME always use class even in non-debug! for creg!
-CR_BIND(spring_time, )
-CR_REG_METADATA(spring_time,(
-	CR_IGNORED(x),
-	CR_SERIALIZER(Serialize)
-))
+	//FIXME always use class even in non-debug! for creg!
+	CR_BIND(spring_time, )
+	CR_REG_METADATA(spring_time,(
+		CR_IGNORED(x),
+		CR_SERIALIZER(Serialize)
+	))
 #endif
+
+
+#define USE_NATIVE_WINDOWS_CLOCK (defined(WIN32) && !defined(FORCE_CHRONO_TIMERS))
+#if USE_NATIVE_WINDOWS_CLOCK
+	#include <windows.h>
 #endif
 
 
@@ -36,12 +41,6 @@ CR_REG_METADATA(spring_time,(
 	#include <thread>
 	namespace this_thread { using namespace std::this_thread; }
 #endif
-
-#define USE_NATIVE_WINDOWS_CLOCK (defined(WIN32) && !defined(FORCE_CHRONO_TIMERS))
-#if USE_NATIVE_WINDOWS_CLOCK
-#include <windows.h>
-#endif
-
 
 
 namespace spring_clock {
