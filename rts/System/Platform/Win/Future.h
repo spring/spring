@@ -13,6 +13,11 @@
 // it is available under the following license:
 
 #if defined(__MINGW32__) && !defined(_GLIBCXX_HAS_GTHREADS)
+	#include <mutex>
+	#include <atomic>
+	#include <thread>
+	#include <condition_variable>
+
 	#include <mingw.thread.h>
 	#include <mingw.condition_variable.h>
 	#include <mingw.mutex.h>
