@@ -151,15 +151,17 @@ MakeGlobalVar(sources_engine_System_Threading_Windows
 	)
 
 
-target_sources(platform_sources
-	PRIVATE
-		${sources_engine_System_Platform_Windows}
-		${sources_engine_System_Platform_Linux}
-		${sources_engine_System_Platform_Mac}
-		${sources_engine_System_Threading_Windows}
-		${sources_engine_System_Threading_Linux}
-		${sources_engine_System_Threading_Mac}
-	)
+if(CMAKE_VERSION VERSION_GREATER 3.1.2)
+	target_sources(platform_sources
+		PRIVATE
+			${sources_engine_System_Platform_Windows}
+			${sources_engine_System_Platform_Linux}
+			${sources_engine_System_Platform_Mac}
+			${sources_engine_System_Threading_Windows}
+			${sources_engine_System_Threading_Linux}
+			${sources_engine_System_Threading_Mac}
+		)
+endif()
 
 
 ### only use the target platform related directory

@@ -10,7 +10,11 @@ LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_MODULES_SPRING}")
 set(CMAKE_USER_MAKE_RULES_OVERRIDE "${CMAKE_MODULES_SPRING}/OverrideFlags.cmake")
 
 project(Spring)
-add_library(platform_sources "") # dummy so that qtcreator shows all files (even those of windows)
+
+# dummy so that qtcreator shows all files (even those of windows)
+if(CMAKE_VERSION VERSION_GREATER 3.1.2)
+	add_library(platform_sources "")
+endif()
 
 # includes rts/build/cmake/Util.cmake & rts/build/cmake/PreferStaticLibs.cmake
 INCLUDE(Util)
