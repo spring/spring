@@ -13,7 +13,7 @@ project(Spring)
 
 # dummy so that qtcreator shows all files (even those of windows)
 if(CMAKE_VERSION VERSION_GREATER 3.1.2)
-	add_library(platform_sources "")
+	add_library(platform_sources EXCLUDE_FROM_ALL "")
 endif()
 
 # includes rts/build/cmake/Util.cmake & rts/build/cmake/PreferStaticLibs.cmake
