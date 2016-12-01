@@ -414,7 +414,7 @@ public:
 
 
 
-template <template<typename> typename TG, typename F>
+template <template<typename> class TG, typename F>
 struct TaskPool {
 	typedef TG<F> I;
 	typedef std::shared_ptr<I> P;
