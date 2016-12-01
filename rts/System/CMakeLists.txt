@@ -166,53 +166,46 @@ Set(sources_engine_System_Threading
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Threading.cpp"
 	)
 
+Set(sources_engine_System
+		${sources_engine_System_common}
+		${sources_engine_System_creg}
+		${sources_engine_System_FileSystem}
+		${sources_engine_System_Log}
+		${sources_engine_System_Log_sinkConsole}
+		${sources_engine_System_Log_sinkFile}
+	)
+
+
 ### only use the target platform related directory
 IF     (APPLE)
-	MakeGlobalVar(sources_engine_System
-			${sources_engine_System_common}
-			${sources_engine_System_creg}
-			${sources_engine_System_FileSystem}
-			${sources_engine_System_Log}
-			${sources_engine_System_Log_sinkConsole}
-			${sources_engine_System_Log_sinkFile}
-			${sources_engine_System_Platform_Mac}
-		)
 	MakeGlobalVar(sources_engine_System_Threading ${sources_engine_System_Threading} ${sources_engine_System_Threading_Mac})
-ELSEIF (UNIX)
 	MakeGlobalVar(sources_engine_System
-			${sources_engine_System_common}
-			${sources_engine_System_creg}
-			${sources_engine_System_FileSystem}
-			${sources_engine_System_Log}
-			${sources_engine_System_Log_sinkConsole}
-			${sources_engine_System_Log_sinkFile}
-			${sources_engine_System_Platform_Linux}
-			${sources_engine_System_Threading_Linux}
+			${sources_engine_System}
+			${sources_engine_System_Threading}
 		)
+ELSEIF (UNIX)
 	MakeGlobalVar(sources_engine_System_Threading ${sources_engine_System_Threading} ${sources_engine_System_Threading_Linux})
-ELSEIF (WIN32)
 	MakeGlobalVar(sources_engine_System
-			${sources_engine_System_common}
-			${sources_engine_System_creg}
-			${sources_engine_System_FileSystem}
-			${sources_engine_System_Log}
-			${sources_engine_System_Log_sinkConsole}
-			${sources_engine_System_Log_sinkFile}
+			${sources_engine_System}
+			${sources_engine_System_Platform_Linux}
+			${sources_engine_System_Threading}
+		)
+
+ELSEIF (WIN32)
+	MakeGlobalVar(sources_engine_System_Threading ${sources_engine_System_Threading} ${sources_engine_System_Threading_Windows})
+	MakeGlobalVar(sources_engine_System
+			${sources_engine_System}
 			${sources_engine_System_Log_sinkOutputDebugString}
 			${sources_engine_System_Platform_Windows}
-			${sources_engine_System_Threading_Windows}
+			${sources_engine_System_Threading}
 		)
-	MakeGlobalVar(sources_engine_System_Threading ${sources_engine_System_Threading} ${sources_engine_System_Threading_Windows})
-ELSE   ()
+ELSE()
 	MakeGlobalVar(sources_engine_System
-			${sources_engine_System_common}
-			${sources_engine_System_creg}
-			${sources_engine_System_FileSystem}
-			${sources_engine_System_Log}
-			${sources_engine_System_Log_sinkConsole}
-			${sources_engine_System_Log_sinkFile}
+			${sources_engine_System}
+			${sources_engine_System_Threading}
 		)
 ENDIF  ()
+
 
 Add_Subdirectory(FileSystem)
 Add_Subdirectory(Net)
