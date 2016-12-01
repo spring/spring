@@ -2,42 +2,97 @@
 
 #include "ThreadPool.h"
 #include "Exceptions.h"
+#include "myMath.h"
 #include "Platform/Threading.h"
+#include "Threading/SpringThreading.h"
 #include "TimeProfiler.h"
 #include "Util.h"
+
 #if !defined(UNITSYNC) && !defined(UNIT_TEST)
 	#include "OffscreenGLContext.h"
 #endif
 
 #include <deque>
-#include <vector>
 #include <utility>
-#include <boost/optional.hpp>
-#include <boost/thread.hpp>
-#include <boost/thread/shared_mutex.hpp>
+#include <functional>
 
-static std::deque<std::shared_ptr<ITaskGroup>> taskGroups;
-static std::deque<void*> thread_group;
 
-static boost::shared_mutex taskMutex;
-static boost::condition_variable newTasks;
-static std::atomic<bool> waitForLock(false);
+static std::deque<void*> thread_group; //the worker threads
+
+
+
+template<typename T>
+struct SingleConsumerQueue {
+	static constexpr unsigned ringSize = 256;
+	typedef typename std::array<std::shared_ptr<T>, ringSize> container_type; //FIME remove shared_ptr
+
+	unsigned ourGen = 0; //< always <= curGen+1
+	static std::atomic_uint curGen; //< position in the ringbuffer is ringBuffer[curGen % 256]
+	static container_type ringBuffer;
+
+	T* pop() {
+		//if (empty())
+		//	return nullptr;
+
+		auto v = ringBuffer[ourGen % ringSize].get();
+
+		if (v == nullptr)
+			return nullptr;
+
+		if (v->GetId() < ourGen)
+			return nullptr;
+
+		++ourGen;
+		return v;
+	}
+
+	static void push(std::shared_ptr<T>& v) {
+		const unsigned id = v->GetId();
+
+		ringBuffer[id % ringSize] = v;
+
+		const unsigned nextGen = id + 1;
+		unsigned cg = nextGen - 1;
+		while (!curGen.compare_exchange_weak(cg, nextGen)) {
+			// note: compare_exchange_weak updates 'cg' var
+		}
+	}
+
+	bool empty() const {
+		return (ourGen == curGen);
+	}
+
+	void reset() {
+		// has to be called after a thread is created
+		ourGen = curGen;
+	}
+};
+template<typename T>
+typename SingleConsumerQueue<T>::container_type SingleConsumerQueue<T>::ringBuffer;
+template<typename T>
+std::atomic_uint SingleConsumerQueue<T>::curGen = {0};
+
+
+
+
+
+
+
+static std::array<SingleConsumerQueue<ITaskGroup>,ThreadPool::MAX_THREADS> perThreadQueue;
+static spring::mutex newTasksMutex;
+static spring::signal newTasks;
+static _threadlocal int threadnum(0);
+static std::array<bool, ThreadPool::MAX_THREADS> exitThread;
+static int spinlockMs = 5;
+
 
 #if !defined(UNITSYNC) && !defined(UNIT_TEST)
 static bool hasOGLthreads = false; // disable for now (not used atm)
 #else
 static bool hasOGLthreads = false;
 #endif
-#if defined(_MSC_VER)
-static __declspec(thread) int threadnum(0);
-static __declspec(thread) bool exitThread(false);
-#else
-static __thread int threadnum(0); 
-static __thread bool exitThread(false);
-#endif
 
-
-static int spinlockMs = 5;
+std::atomic_uint ITaskGroup::lastId(0);
 
 
 namespace ThreadPool {
@@ -56,11 +111,11 @@ static void SetThreadNum(const int idx)
 
 int GetMaxThreads()
 {
-#ifndef UNIT_TEST
+//#ifndef UNIT_TEST
 	return std::min(MAX_THREADS, Threading::GetPhysicalCpuCores());
-#else
-	return 10;
-#endif
+//#else
+//	return 10;
+//#endif
 }
 
 int GetNumThreads()
@@ -76,75 +131,27 @@ bool HasThreads()
 }
 
 
+
 /// returns false, when no further tasks were found
-static bool DoTask(boost::shared_lock<boost::shared_mutex>& lk_)
+static bool DoTask(SingleConsumerQueue<ITaskGroup>& queue)
 {
-	if (waitForLock.load(std::memory_order_acquire))
-		return true;
+	if (queue.empty())
+		return false;
 
-#ifndef __MINGW32__
-	auto& lk = lk_;
-#else
-	boost::unique_lock<boost::shared_mutex> lk(taskMutex, boost::defer_lock);
-#endif
+	// inform other workers that there is work to do
+	// wakeing is a kernel-syscall and so eats time,
+	// it's better to shift this task to the workers
+	// (the main thread only wakes when _all_ workers are sleeping)
+	NotifyWorkerThreads(true);
 
-	if (!taskGroups.empty()) {
-		if (lk.try_lock()) {
-			bool foundEmpty = false;
-
-			for (auto tg: taskGroups) {
-				if (tg->IsEmpty()) {
-					foundEmpty = true;
-					break;
-				} else {
-					lk.unlock();
-					auto p = tg->GetTask();
-					do {
-						if (p) {
-							SCOPED_MT_TIMER("::ThreadWorkers (accumulated)");
-							(*p)();
-						}
-					} while (bool(p = tg->GetTask()));
-					break;
-				}
-			}
-			if (lk.owns_lock()) lk.unlock();
-
-			if (foundEmpty) {
-				//FIXME this could be made lock-free too, but is it worth it?
-				waitForLock.store(true, std::memory_order_release);
-				boost::unique_lock<boost::shared_mutex> ulk(taskMutex, boost::defer_lock);
-				while (!ulk.try_lock()) {}
-				for(auto it = taskGroups.begin(); it != taskGroups.end();) {
-					if ((*it)->IsEmpty()) {
-						it = taskGroups.erase(it);
-					} else {
-						++it;
-					}
-				}
-				waitForLock.store(false, std::memory_order_release);
-				ulk.unlock();
-			}
-
-			return false;
+	// start with the work
+	SCOPED_MT_TIMER("::ThreadWorkers (accumulated)");
+	while (auto tg = queue.pop()) {
+		while (tg->ExecuteTask()) {
 		}
-
-		// we didn't got a lock, so we couldn't see if there are further tasks
-		return true;
 	}
 
-	return false;
-}
-
-
-static bool DoTask(std::shared_ptr<ITaskGroup> tg)
-{
-	auto p = tg->GetTask();
-	if (p) {
-		SCOPED_MT_TIMER("::ThreadWorkers (accumulated)");
-		(*p)();
-	}
-	return static_cast<bool>(p);
+	return true;
 }
 
 
@@ -155,111 +162,158 @@ static void WorkerLoop(int id)
 #ifndef UNIT_TEST
 	Threading::SetThreadName(IntToString(id, "worker%i"));
 #endif
-	boost::shared_lock<boost::shared_mutex> lk(taskMutex, boost::defer_lock);
-	boost::mutex m;
-	boost::unique_lock<boost::mutex> lk2(m);
+	auto& queue = perThreadQueue[id];
+	queue.reset();
+	static const auto maxSleepTime = spring_time::fromMilliSecs(30);
+	const auto ourSpinTime = spring_time::fromMilliSecs(spinlockMs + ((id == 1) ? 1 : 0));
 
-	while (!exitThread) {
-		const auto spinlockStart = boost::chrono::high_resolution_clock::now() + boost::chrono::milliseconds(spinlockMs);
+	while (!exitThread[id]) {
+		const auto spinlockEnd = spring_now() + ourSpinTime;
+		      auto sleepTime   = spring_time::fromMicroSecs(1);
 
-		while (!DoTask(lk) && !exitThread) {
-			if (spinlockStart < boost::chrono::high_resolution_clock::now()) {
-			#ifndef BOOST_THREAD_USES_CHRONO
-				const boost::system_time timeout = boost::get_system_time() + boost::posix_time::microseconds(1);
-				newTasks.timed_wait(lk2, timeout);
-			#else
-				newTasks.wait_for(lk2, boost::chrono::nanoseconds(100));
-			#endif
-			}
+		while (!DoTask(queue) && !exitThread[id]) {
+			if (spring_now() < spinlockEnd)
+				continue;
+
+			sleepTime *= 1.25f;
+			if (sleepTime > maxSleepTime)
+				sleepTime = maxSleepTime;
+			newTasks.wait_for(sleepTime);
 		}
 	}
 }
 
 
-void WaitForFinished(std::shared_ptr<ITaskGroup> taskgroup)
+void WaitForFinished(std::shared_ptr<ITaskGroup>&& taskgroup)
 {
-	while (DoTask(taskgroup)) {
+	{
+		SCOPED_MT_TIMER("::ThreadWorkers (accumulated)");
+		while (taskgroup->ExecuteTask()) {
+		}
 	}
 
-	while (!taskgroup->wait_for(boost::chrono::seconds(5))) {
-		LOG_L(L_WARNING, "Hang in ThreadPool");
+
+	if (!taskgroup->IsFinished()) {
+		// the task hasn't completed yet
+		// use the waiting time to execute other tasks
+		NotifyWorkerThreads(true);
+		const auto id = ThreadPool::GetThreadNum();
+		auto& queue = perThreadQueue[id];
+
+		do {
+			const auto spinlockEnd = spring_now() + spring_time::fromMilliSecs(500);
+
+			while (!DoTask(queue) && !taskgroup->IsFinished() && !exitThread[id]) {
+				if (spring_now() < spinlockEnd)
+					continue;
+
+				//LOG_L(L_DEBUG, "Hang in ThreadPool");
+				NotifyWorkerThreads(true);
+				break;
+			}
+		} while (!taskgroup->IsFinished() && !exitThread[id]);
 	}
 
 	//LOG("WaitForFinished %i", taskgroup->GetExceptions().size());
-	//for (auto& r: taskgroup->results())
-	//	r.get();
+	//for (auto& ep: taskgroup->GetExceptions())
+	//	std::rethrow_exception(ep);
 }
 
 
-void PushTaskGroup(std::shared_ptr<ITaskGroup> taskgroup)
+void PushTaskGroup(std::shared_ptr<ITaskGroup>&& taskgroup)
 {
-	waitForLock.store(true, std::memory_order_release);
-	boost::unique_lock<boost::shared_mutex> lk(taskMutex, boost::defer_lock);
-	while (!lk.try_lock()) {}
-	taskGroups.emplace_back(taskgroup);
-	waitForLock.store(false, std::memory_order_release);
-	lk.unlock();
-	newTasks.notify_all();
+	SingleConsumerQueue<ITaskGroup>::push(taskgroup);
+	NotifyWorkerThreads();
 }
 
 
-void NotifyWorkerThreads()
+void NotifyWorkerThreads(const bool force)
 {
-	newTasks.notify_all();
+	// OPTIMIZATION
+	// if !force only wake up threads when _all_ are sleeping,
+	// this is an optimization cause wakeing up other threads
+	// is a kernel-syscall that costs a lot of time, we prefer
+	// to not do so on the thread that added the ThreadPool-Task
+	// and instead let the worker threads themselves inform each other.
+	const int minSleepers = (force) ? 0 : ThreadPool::GetNumThreads() - 1;
+
+	newTasks.notify_all(minSleepers);
 }
 
 
-void SetThreadCount(int num)
+
+
+
+
+
+
+
+static void SpawnThreads(int num, int curThreads)
+{
+#ifndef UNITSYNC
+	if (hasOGLthreads) {
+		try {
+			for (int i = curThreads; i < num; ++i) {
+				exitThread[i] = false;
+				thread_group.push_back(new COffscreenGLThread(std::bind(&WorkerLoop, i)));
+			}
+		} catch (const opengl_error& gle) {
+			// shared gl context creation failed :<
+			ThreadPool::SetThreadCount(0);
+
+			hasOGLthreads = false;
+			curThreads = ThreadPool::GetNumThreads();
+		}
+	} else
+#endif
+	{
+		for (int i = curThreads; i<num; ++i) {
+			exitThread[i] = false;
+			thread_group.push_back(new spring::thread(std::bind(&WorkerLoop, i)));
+		}
+	}
+}
+
+
+static void KillThreads(int num, int curThreads)
+{
+	for (int i = curThreads - 1; i >= num && i > 0; --i) {
+		exitThread[i] = true;
+	}
+
+	NotifyWorkerThreads(true);
+
+	for (int i = curThreads - 1; i >= num && i > 0; --i) {
+		assert(!thread_group.empty());
+	#ifndef UNITSYNC
+		if (hasOGLthreads) {
+			auto th = reinterpret_cast<COffscreenGLThread*>(thread_group.back());
+			th->join();
+			delete th;
+		} else
+	#endif
+		{
+			auto th = reinterpret_cast<spring::thread*>(thread_group.back());
+			th->join();
+			delete th;
+		}
+		thread_group.pop_back();
+	}
+
+	assert((num != 0) || thread_group.empty());
+}
+
+
+void SetThreadCount(int numWantedThreads)
 {
 	int curThreads = ThreadPool::GetNumThreads();
-	LOG("[ThreadPool::%s][1] #wanted=%d #current=%d #max=%d", __FUNCTION__, num, curThreads, ThreadPool::GetMaxThreads());
-	num = std::min(num, ThreadPool::GetMaxThreads());
+	LOG("[ThreadPool::%s][1] #wanted=%d #current=%d #max=%d", __FUNCTION__, numWantedThreads, curThreads, ThreadPool::GetMaxThreads());
+	numWantedThreads = Clamp(numWantedThreads, 1, ThreadPool::GetMaxThreads());
 
-	if (curThreads < num) {
-#ifndef UNITSYNC
-		if (hasOGLthreads) {
-			try {
-				for (int i = curThreads; i < num; ++i) {
-					thread_group.push_back(new COffscreenGLThread(boost::bind(&WorkerLoop, i)));
-				}
-			} catch (const opengl_error& gle) {
-				// shared gl context creation failed :<
-				ThreadPool::SetThreadCount(0);
-
-				hasOGLthreads = false;
-				curThreads = ThreadPool::GetNumThreads();
-			}
-		}
-#endif
-		if (!hasOGLthreads) {
-			for (int i = curThreads; i<num; ++i) {
-				thread_group.push_back(new boost::thread(boost::bind(&WorkerLoop, i)));
-			}
-		}
+	if (curThreads < numWantedThreads) {
+		SpawnThreads(numWantedThreads, curThreads);
 	} else {
-		for (int i = curThreads; i > num && i > 1; --i) {
-			assert(!thread_group.empty());
-
-			auto taskgroup = std::make_shared<ParallelTaskGroup<const std::function<void()>>>();
-			taskgroup->enqueue_unique(GetNumThreads() - 1, []{ exitThread = true; });
-			ThreadPool::PushTaskGroup(taskgroup);
-#ifndef UNITSYNC
-			if (hasOGLthreads) {
-				auto th = reinterpret_cast<COffscreenGLThread*>(thread_group.back());
-				th->join();
-				delete th;
-			} else
-#endif
-			{
-				auto th = reinterpret_cast<boost::thread*>(thread_group.back());
-				th->join();
-				delete th;
-			}
-			thread_group.pop_back();
-		}
-
-		if (num == 0)
-			assert(thread_group.empty());
+		KillThreads(numWantedThreads, curThreads);
 	}
 
 	LOG("[ThreadPool::%s][2] #threads=%u", __FUNCTION__, (unsigned) thread_group.size());
@@ -273,4 +327,3 @@ void SetThreadSpinTime(int milliSeconds)
 }
 
 #endif
-
