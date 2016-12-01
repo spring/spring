@@ -224,7 +224,7 @@ public:
 
 	void enqueue(F f, Args... args)
 	{
-		tasks.emplace_back([=]{ f(args...); });
+		tasks.emplace_back(std::bind(f, args...));
 		this->remainingTasks.fetch_add(1, std::memory_order_release);
 	}
 
