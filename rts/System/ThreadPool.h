@@ -150,7 +150,7 @@ public:
 		this->remainingTasks++;
 	}
 
-	bool ExecuteTask() {
+	bool ExecuteTask() override {
 		if (done.exchange(true, std::memory_order_relaxed))
 			return false;
 
@@ -191,7 +191,7 @@ public:
 	}
 
 
-	bool ExecuteTask()
+	bool ExecuteTask() override
 	{
 		const int pos = curtask.fetch_add(1, std::memory_order_relaxed);
 		if (pos < tasks.size()) {
@@ -228,7 +228,7 @@ public:
 		this->remainingTasks.fetch_add(1, std::memory_order_release);
 	}
 
-	bool ExecuteTask()
+	bool ExecuteTask() override
 	{
 		const int pos = curtask.fetch_add(1, std::memory_order_relaxed);
 		if (pos < tasks.size()) {
@@ -259,7 +259,7 @@ public:
 		this->remainingTasks.fetch_add(1, std::memory_order_release);
 	}
 
-	bool ExecuteTask()
+	bool ExecuteTask() override
 	{
 		const int pos = curtask.fetch_add(1, std::memory_order_relaxed);
 		if (pos < tasks.size()) {
@@ -293,7 +293,7 @@ public:
 		this->remainingTasks++;
 	}
 
-	bool ExecuteTask()
+	bool ExecuteTask() override
 	{
 		auto& func = uniqueTasks[ThreadPool::GetThreadNum()];
 		if (!func)
@@ -347,7 +347,7 @@ public:
 	}
 
 
-	bool ExecuteTask()
+	bool ExecuteTask() override
 	{
 		auto& ut = uniqueTasks[ThreadPool::GetThreadNum()];
 		if (ut) {
@@ -388,7 +388,7 @@ public:
 	}
 
 
-	bool ExecuteTask()
+	bool ExecuteTask() override
 	{
 		const int i = from + (step * curtask.fetch_add(1, std::memory_order_relaxed));
 		if (i < to) {
