@@ -178,8 +178,7 @@ unsigned int FileSystemAbstraction::GetFileModificationTime(const std::string& f
 	struct stat info;
 
 	if (stat(file.c_str(), &info) != 0) {
-		LOG_L(L_WARNING, "Failed fetching last modification time from file: %s", file.c_str());
-		LOG_L(L_WARNING, "Error is: \"%s\"", strerror(errno));
+		LOG_L(L_WARNING, "Failed to get last modification time of file '%s' (error '%s')", file.c_str(), strerror(errno));
 		return 0;
 	}
 
@@ -189,6 +188,10 @@ unsigned int FileSystemAbstraction::GetFileModificationTime(const std::string& f
 std::string FileSystemAbstraction::GetFileModificationDate(const std::string& file)
 {
 	const std::time_t t = GetFileModificationTime(file);
+
+	if (t == 0)
+		return "";
+
 	const struct tm* clk = std::gmtime(&t);
 	const char* fmt = "%d%02d%02d%02d%02d%02d";
 
@@ -338,7 +341,6 @@ bool FileSystemAbstraction::DirIsWritable(const std::string& dir)
 
 bool FileSystemAbstraction::ComparePaths(const std::string& path1, const std::string& path2)
 {
-
 #ifndef WIN32
 	struct stat info1, info2;
 	const int ret1 = stat(path1.c_str(), &info1);
