@@ -27,8 +27,6 @@ public:
 	CProjectileDrawer();
 	~CProjectileDrawer();
 
-	typedef std::set<CProjectile*, ProjectileDistanceComparator> SortedProjectileSet;
-
 	void Draw(bool drawReflection, bool drawRefraction = false);
 	void DrawProjectilesMiniMap();
 	void DrawGroundFlashes();
@@ -126,11 +124,13 @@ private:
 	/// projectiles with a model
 	std::array<IModelRenderContainer*, MODELTYPE_OTHER> modelRenderers;
 
+	ProjectileDistanceComparator zSortCmp;
+
 	/**
-	 * z-sorted set of projectiles without models; used
+	 * distance-sorted projectiles without models; used
 	 * to render particle effects in back-to-front order
 	 */
-	SortedProjectileSet zSortedProjectiles;
+	std::vector<CProjectile*> zSortedProjectiles;
 	std::vector<CProjectile*> unsortedProjectiles;
 };
 

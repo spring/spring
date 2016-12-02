@@ -433,7 +433,7 @@ void CProjectileDrawer::DrawProjectileNow(CProjectile* pro, bool drawReflection,
 
 	if (pro->drawSorted) {
 		pro->SetSortDist(cam->ProjectedDistance(pro->pos));
-		zSortedProjectiles.insert(pro);
+		zSortedProjectiles.push_back(pro);
 	} else {
 		unsortedProjectiles.push_back(pro);
 	}
@@ -597,6 +597,8 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 		CProjectile::inArray = false;
 		CProjectile::va = GetVertexArray();
 		CProjectile::va->Initialize();
+
+		std::sort(zSortedProjectiles.begin(), zSortedProjectiles.end(), zSortCmp);
 
 		// draw the particle effects
 		for (CProjectile* p: zSortedProjectiles) {
