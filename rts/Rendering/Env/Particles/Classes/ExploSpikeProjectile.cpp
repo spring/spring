@@ -64,12 +64,9 @@ void CExploSpikeProjectile::Update()
 {
 	pos += speed;
 	length += lengthGrowth;
-	alpha -= alphaDecay;
+	alpha = std::max(0.0f, alpha - alphaDecay);
 
-	if (alpha <= 0) {
-		alpha = 0;
-		deleteMe = true;
-	}
+	deleteMe |= (alpha <= 0.0f);
 }
 
 void CExploSpikeProjectile::Draw()
@@ -80,7 +77,7 @@ void CExploSpikeProjectile::Draw()
 	const float3 dir2 = (dif.cross(dir)).ANormalize();
 
 	unsigned char col[4];
-	const float a = std::max(0.0f, alpha-alphaDecay * globalRendering->timeOffset) * 255;
+	const float a = std::max(0.0f, alpha - alphaDecay * globalRendering->timeOffset) * 255.0f;
 	col[0] = (unsigned char)(a * color.x);
 	col[1] = (unsigned char)(a * color.y);
 	col[2] = (unsigned char)(a * color.z);
