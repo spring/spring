@@ -297,7 +297,7 @@ public:
 
 private:
 	static constexpr float defBaseRadarErrorSize = 96.0f;
-	static constexpr float defBaseRadarErrorMult = 20.f;
+	static constexpr float defBaseRadarErrorMult = 2.0f;
 
 	float baseRadarErrorSize;
 	float baseRadarErrorMult;
