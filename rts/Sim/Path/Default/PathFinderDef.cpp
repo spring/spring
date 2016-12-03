@@ -38,10 +38,8 @@ float CPathFinderDef::Heuristic(unsigned int xSquare, unsigned int zSquare, unsi
 	const float dz = std::abs(int(zSquare) - int(goalSquareZ));
 
 	// grid is 8-connected, so use octile distance metric
-	// note that using C1=1 and C2=sqrt(2) will over-estimate
-	// on terrain with extreme speed modifiers, so scale both
-	constexpr const float C1 = (1.0f    / PATH_NODE_SPACING) * 0.5f;
-	constexpr const float C2 = (1.4142f / PATH_NODE_SPACING) * 0.5f - (2.0f * C1);
+	constexpr const float C1 = (1.0f    / PATH_NODE_SPACING);
+	constexpr const float C2 = (1.4142f / PATH_NODE_SPACING) - (2.0f * C1);
 	return ((dx + dz) * C1 + std::min(dx, dz) * C2);
 }
 

@@ -61,10 +61,13 @@ CPathEstimator::CPathEstimator(IPathFinder* pf, unsigned int BLOCK_SIZE, const s
 	, blockUpdatePenalty(0)
 {
 	vertexCosts.resize(moveDefHandler->GetNumMoveDefs() * blockStates.GetSize() * PATH_DIRECTION_VERTICES, PATHCOST_INFINITY);
+	maxSpeedMods.resize(moveDefHandler->GetNumMoveDefs(), 0.001f);
 
-	if (dynamic_cast<CPathEstimator*>(pf) != nullptr) {
-		dynamic_cast<CPathEstimator*>(pf)->nextPathEstimator = this;
-	}
+	CPathEstimator*  childPE = this;
+	CPathEstimator* parentPE = dynamic_cast<CPathEstimator*>(pf);
+
+	if (parentPE != nullptr)
+		parentPE->nextPathEstimator = childPE;
 
 	// precalc for FindOffset()
 	{
@@ -78,9 +81,33 @@ CPathEstimator::CPathEstimator(IPathFinder* pf, unsigned int BLOCK_SIZE, const s
 				offsetBlocksSortedByCost.emplace_back(cost, x, z);
 			}
 		}
-		std::stable_sort(offsetBlocksSortedByCost.begin(), offsetBlocksSortedByCost.end(), [](const SOffsetBlock a, const SOffsetBlock b) {
-			return a.cost < b.cost;
+		std::stable_sort(offsetBlocksSortedByCost.begin(), offsetBlocksSortedByCost.end(), [](const SOffsetBlock& a, const SOffsetBlock& b) {
+			return (a.cost < b.cost);
 		});
+	}
+
+	if (BLOCK_SIZE == LOWRES_PE_BLOCKSIZE) {
+		assert(parentPE != nullptr);
+
+		// calculate map-wide maximum positional speedmod for each MoveDef
+		for_mt(0, moveDefHandler->GetNumMoveDefs(), [&](unsigned int i) {
+			const MoveDef* md = moveDefHandler->GetMoveDefByPathType(i);
+
+			if (md->udRefCount == 0)
+				return;
+
+			for (int y = 0; y < mapDims.mapy; y++) {
+				for (int x = 0; x < mapDims.mapx; x++) {
+					childPE->maxSpeedMods[i] = std::max(childPE->maxSpeedMods[i], CMoveMath::GetPosSpeedMod(*md, x, y));
+				}
+			}
+		});
+
+		// calculate reciprocals, avoids divisions in TestBlock
+		for (unsigned int i = 0; i < maxSpeedMods.size(); i++) {
+			 childPE->maxSpeedMods[i] = 1.0f / childPE->maxSpeedMods[i];
+			parentPE->maxSpeedMods[i] = childPE->maxSpeedMods[i];
+		}
 	}
 
 	// load precalculated data if it exists
@@ -691,12 +718,21 @@ bool CPathEstimator::TestBlock(
 
 
 	// evaluate this node (NOTE the max-resolution indexing for {flow,extra}Cost)
-	//const float flowCost  = (peDef.testMobile) ? (PathFlowMap::GetInstance())->GetFlowCost(square.x, square.y, moveDef, PathDir2PathOpt(pathDir)) : 0.0f;
-	const float extraCost = blockStates.GetNodeExtraCost(square.x, square.y, peDef.synced);
-	const float nodeCost  = vertexCosts[vertexIdx] + extraCost;
+	//
+	// nodeCost incorporates speed-modifiers, but the heuristic estimate does not
+	// this causes an overestimation (and hence sub-optimal paths) if the average
+	// modifier is greater than 1, which can only be fixed by choosing a constant
+	// multiplier smaller than 1
+	// however, since that would increase the number of explored nodes on "normal"
+	// maps where the average is ~1, it is better to divide hCost by the (initial)
+	// maximum modifier value
+	//
+	// const float flowCost  = (peDef.testMobile) ? (PathFlowMap::GetInstance())->GetFlowCost(square.x, square.y, moveDef, PathDir2PathOpt(pathDir)) : 0.0f;
+	const float   extraCost = blockStates.GetNodeExtraCost(square.x, square.y, peDef.synced);
+	const float    nodeCost = vertexCosts[vertexIdx] + extraCost;
 
 	const float gCost = parentOpenBlock->gCost + nodeCost;
-	const float hCost = peDef.Heuristic(square.x, square.y, BLOCK_SIZE);
+	const float hCost = peDef.Heuristic(square.x, square.y, BLOCK_SIZE) * maxSpeedMods[moveDef.pathType];
 	const float fCost = gCost + hCost;
 
 	// already in the open set?

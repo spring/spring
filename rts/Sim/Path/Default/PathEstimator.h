@@ -132,8 +132,10 @@ private:
 	std::vector<IPathFinder*> pathFinders;
 	std::vector<spring::thread*> threads;
 
+	// next lower-resolution estimator
 	CPathEstimator* nextPathEstimator;
 
+	std::vector<float> maxSpeedMods;
 	std::vector<float> vertexCosts;
 	std::deque<int2> updatedBlocks;       /// Blocks that may need an update due to map changes.
 
