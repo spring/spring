@@ -31,13 +31,16 @@ bool CPathFinderDef::IsGoal(unsigned int xSquare, unsigned int zSquare) const {
 // returns distance to goal center in heightmap-squares
 float CPathFinderDef::Heuristic(unsigned int xSquare, unsigned int zSquare, unsigned int blockSize) const
 {
-	const float  s = 1.0f / blockSize;
-	const float dx = std::abs(int(xSquare) - int(goalSquareX)) * s;
-	const float dz = std::abs(int(zSquare) - int(goalSquareZ)) * s;
+	(void) blockSize;
 
-	// grid is 8-connected, so use octile distance (normalized by block-size)
-	constexpr const float C1 = 1.0f;
-	constexpr const float C2 = 1.4142f - (2.0f * C1);
+	const float dx = std::abs(int(xSquare) - int(goalSquareX));
+	const float dz = std::abs(int(zSquare) - int(goalSquareZ));
+
+	// grid is 8-connected, so use octile distance metric
+	// note that using C1=1 and C2=sqrt(2) will over-estimate
+	// on terrain with extreme speed modifiers, so scale both
+	constexpr const float C1 = 1.0f    * 0.5f;
+	constexpr const float C2 = 1.4142f * 0.5f - (2.0f * C1);
 	return ((dx + dz) * C1 + std::min(dx, dz) * C2);
 }
 
