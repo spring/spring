@@ -696,7 +696,7 @@ bool CPathEstimator::TestBlock(
 	const float nodeCost  = vertexCosts[vertexIdx] + extraCost;
 
 	const float gCost = parentOpenBlock->gCost + nodeCost;
-	const float hCost = peDef.Heuristic(square.x, square.y);
+	const float hCost = peDef.Heuristic(square.x, square.y, BLOCK_SIZE);
 	const float fCost = gCost + hCost;
 
 	// already in the open set?

@@ -189,7 +189,7 @@ IPath::SearchResult IPathFinder::InitSearch(const MoveDef& moveDef, const CPathF
 
 	// mark starting point as best found position
 	mGoalBlockIdx  = mStartBlockIdx;
-	mGoalHeuristic = pfDef.Heuristic(square.x, square.y);
+	mGoalHeuristic = pfDef.Heuristic(square.x, square.y, BLOCK_SIZE);
 
 	// perform the search
 	const IPath::SearchResult result = DoSearch(moveDef, pfDef, owner);

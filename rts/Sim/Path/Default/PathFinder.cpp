@@ -258,9 +258,9 @@ bool CPathFinder::TestBlock(
 	const float dirMoveCost = (1.0f + heatCost) * PF_DIRECTION_COSTS[pathOptDir];
 	const float nodeCost = (dirMoveCost / speedMod) + extraCost;
 
-	const float gCost = parentSquare->gCost + nodeCost;      // g
-	const float hCost = pfDef.Heuristic(square.x, square.y); // h
-	const float fCost = gCost + hCost;                       // f
+	const float gCost = parentSquare->gCost + nodeCost;                  // g
+	const float hCost = pfDef.Heuristic(square.x, square.y, BLOCK_SIZE); // h
+	const float fCost = gCost + hCost;                                   // f
 
 	if (blockStates.nodeMask[sqrIdx] & PATHOPT_OPEN) {
 		// already in the open set, look for a cost-improvement

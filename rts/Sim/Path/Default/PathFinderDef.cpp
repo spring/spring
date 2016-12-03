@@ -5,7 +5,6 @@
 #include "PathFinderDef.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
 
-
 CPathFinderDef::CPathFinderDef(const float3& goalCenter, float goalRadius, float sqGoalDistance)
 : goal(goalCenter)
 , sqGoalRadius(goalRadius * goalRadius)
@@ -30,12 +29,13 @@ bool CPathFinderDef::IsGoal(unsigned int xSquare, unsigned int zSquare) const {
 }
 
 // returns distance to goal center in heightmap-squares
-float CPathFinderDef::Heuristic(unsigned int xSquare, unsigned int zSquare) const
+float CPathFinderDef::Heuristic(unsigned int xSquare, unsigned int zSquare, unsigned int blockSize) const
 {
-	const float dx = std::abs(int(xSquare) - int(goalSquareX));
-	const float dz = std::abs(int(zSquare) - int(goalSquareZ));
+	const float  s = 1.0f / blockSize;
+	const float dx = std::abs(int(xSquare) - int(goalSquareX)) * s;
+	const float dz = std::abs(int(zSquare) - int(goalSquareZ)) * s;
 
-	// grid is 8-connected, so use octile distance
+	// grid is 8-connected, so use octile distance (normalized by block-size)
 	constexpr const float C1 = 1.0f;
 	constexpr const float C2 = 1.4142f - (2.0f * C1);
 	return ((dx + dz) * C1 + std::min(dx, dz) * C2);

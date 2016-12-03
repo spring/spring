@@ -21,7 +21,7 @@ public:
 	void DisableConstraint(bool b) { constraintDisabled = b; }
 
 	bool IsGoal(unsigned int xSquare, unsigned int zSquare) const;
-	float Heuristic(unsigned int xSquare, unsigned int zSquare) const;
+	float Heuristic(unsigned int xSquare, unsigned int zSquare, unsigned int blockSize) const;
 	bool IsGoalBlocked(const MoveDef& moveDef, const CMoveMath::BlockType& blockMask, const CSolidObject* owner) const;
 	int2 GoalSquareOffset(unsigned int blockSize) const;
 
