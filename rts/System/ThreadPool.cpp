@@ -1,3 +1,5 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
+
 #ifdef THREADPOOL
 
 #include "ThreadPool.h"
@@ -31,9 +33,6 @@ struct SingleConsumerQueue {
 	static container_type ringBuffer;
 
 	T* pop() {
-		//if (empty())
-		//	return nullptr;
-
 		auto v = ringBuffer[ourGen % ringSize].get();
 
 		if (v == nullptr)
@@ -59,7 +58,8 @@ struct SingleConsumerQueue {
 	}
 
 	bool empty() const {
-		return (ourGen == curGen);
+		auto v = ringBuffer[ourGen % ringSize].get();
+		return (v == nullptr) || (v->GetId() < ourGen);
 	}
 
 	void reset() {
@@ -83,7 +83,6 @@ static spring::mutex newTasksMutex;
 static spring::signal newTasks;
 static _threadlocal int threadnum(0);
 static std::array<bool, ThreadPool::MAX_THREADS> exitThread;
-static int spinlockMs = 5;
 
 
 #if !defined(UNITSYNC) && !defined(UNIT_TEST)
@@ -111,11 +110,7 @@ static void SetThreadNum(const int idx)
 
 int GetMaxThreads()
 {
-//#ifndef UNIT_TEST
 	return std::min(MAX_THREADS, Threading::GetPhysicalCpuCores());
-//#else
-//	return 10;
-//#endif
 }
 
 int GetNumThreads()
@@ -165,7 +160,11 @@ static void WorkerLoop(int id)
 	auto& queue = perThreadQueue[id];
 	queue.reset();
 	static const auto maxSleepTime = spring_time::fromMilliSecs(30);
-	const auto ourSpinTime = spring_time::fromMilliSecs(spinlockMs + ((id == 1) ? 1 : 0));
+
+	// make first worker spin a while before sleeping/waiting on the thread signal
+	// this increase the chance that at least one worker is awake when a new TP-Task is inserted
+	// and this worker can then take over the job of waking up the sleeping workers (see NotifyWorkerThreads)
+	const auto ourSpinTime = spring_time::fromMilliSecs((id == 1) ? 1 : 0);
 
 	while (!exitThread[id]) {
 		const auto spinlockEnd = spring_now() + ourSpinTime;
@@ -175,9 +174,7 @@ static void WorkerLoop(int id)
 			if (spring_now() < spinlockEnd)
 				continue;
 
-			sleepTime *= 1.25f;
-			if (sleepTime > maxSleepTime)
-				sleepTime = maxSleepTime;
+			sleepTime = std::min(sleepTime * 1.25f, maxSleepTime);
 			newTasks.wait_for(sleepTime);
 		}
 	}
@@ -317,11 +314,6 @@ void SetThreadCount(int numWantedThreads)
 	}
 
 	LOG("[ThreadPool::%s][2] #threads=%u", __FUNCTION__, (unsigned) thread_group.size());
-}
-
-void SetThreadSpinTime(int milliSeconds)
-{
-	spinlockMs = milliSeconds;
 }
 
 }

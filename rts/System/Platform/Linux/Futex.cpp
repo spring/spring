@@ -6,6 +6,7 @@
 #include <sys/syscall.h>
 #include <unistd.h>
 #include <climits>
+#include <algorithm>
 
 
 spring_futex::spring_futex() noexcept
@@ -151,7 +152,7 @@ void linux_signal::wait_for(spring_time t)
 
 void linux_signal::notify_all(const int min_sleepers)
 {
-	if (sleepers.load() < min_sleepers)
+	if (sleepers.load() < std::max(1, min_sleepers))
 		return;
 
 	mtx = gen++;

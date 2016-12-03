@@ -2,6 +2,7 @@
 
 #include "Signal.h"
 #include <chrono>
+#include <algorithm>
 
 
 mac_signal::mac_signal()
@@ -40,7 +41,7 @@ void mac_signal::wait_for(spring_time t)
 
 void mac_signal::notify_all(const int min_sleepers = 1)
 {
-	if (sleepers.load() < min_sleepers)
+	if (sleepers.load() < std::max(1, min_sleepers))
 		return;
 
 	cv.notify_all();

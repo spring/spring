@@ -22,6 +22,8 @@ public:
 
 	void Update();
 
+	bool OnBattery() const { return onBattery; }
+
 private:
 	static bool HasBattery();
 

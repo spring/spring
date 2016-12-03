@@ -1,3 +1,4 @@
+/* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #ifndef _THREADPOOL_H
 #define _THREADPOOL_H
@@ -14,7 +15,6 @@ namespace ThreadPool {
 	}
 
 	static inline void SetThreadCount(int num) {}
-	static inline void SetThreadSpinTime(int milliSeconds) {}
 	static inline int GetThreadNum() { return 0; }
 	static inline int GetMaxThreads() { return 1; }
 	static inline int GetNumThreads() { return 1; }
@@ -124,7 +124,6 @@ namespace ThreadPool {
 	inline void WaitForFinished(std::shared_ptr<T>& taskgroup) { WaitForFinished(std::move(std::static_pointer_cast<ITaskGroup>(taskgroup))); }
 
 	void SetThreadCount(int num);
-	void SetThreadSpinTime(int milliSeconds);
 	int GetThreadNum();
 	bool HasThreads();
 	int GetMaxThreads();

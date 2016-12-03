@@ -251,9 +251,8 @@ BOOST_AUTO_TEST_CASE( testThreadPool8 )
 	LOG_L(L_WARNING, "reaction times");
 	//ThreadPool::SetThreadCount(ThreadPool::GetMaxThreads());
 
-	for (int spin: {0, 1, 5, 10, 0}) {
-		LOG_L(L_WARNING, "reaction times with %ims spin", spin);
-		ThreadPool::SetThreadSpinTime(spin);
+	for (int i: {0, 1, 2, 3, 4}) {
+		LOG_L(L_WARNING, "run %i", i);
 		TestReactionTimes(RUNS);
 	}
 }
@@ -267,7 +266,6 @@ BOOST_AUTO_TEST_CASE( testThreadPool9 )
 	spring_time start;
 
 	ThreadPool::SetThreadCount(ThreadPool::GetMaxThreads());
-	ThreadPool::SetThreadSpinTime(5);
 
 	for (const char* s: {"cold","hot"}) {
 		LOG_L(L_WARNING, "reaction times %s", s);

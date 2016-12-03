@@ -1,6 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "CriticalSection.h"
+#include <algorithm>
 
 
 CriticalSection::CriticalSection() noexcept
@@ -65,7 +66,7 @@ void win_signal::wait_for(spring_time t)
 
 void win_signal::notify_all(const int min_sleepers)
 {
-	if (sleepers.load() < min_sleepers)
+	if (sleepers.load() < std::max(1, min_sleepers))
 		return;
 
 	PulseEvent(event);
