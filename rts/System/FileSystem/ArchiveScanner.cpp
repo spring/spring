@@ -766,7 +766,7 @@ unsigned int CArchiveScanner::GetCRC(const std::string& arcName)
 	crcs.reserve(ar->NumFiles());
 
 	for (unsigned fid = 0; fid != ar->NumFiles(); ++fid) {
-		const std::pair<std::string, int>& info = std::move(ar->FileInfo(fid));
+		const std::pair<std::string, int>& info = ar->FileInfo(fid);
 
 		if (ignore->Match(info.first))
 			continue;
@@ -789,6 +789,7 @@ unsigned int CArchiveScanner::GetCRC(const std::string& arcName)
 	//       current (2011) packing libraries support multithreading :/
 	for_mt(0, crcs.size(), [&](const int i) {
 		CRCPair& crcp = crcs[i];
+		assert(crcp.filename == &files[i]);
 		const unsigned int nameCRC = CRC::GetCRC(crcp.filename->data(), crcp.filename->size());
 		const unsigned fid = ar->FindFile(*crcp.filename);
 		const unsigned int dataCRC = ar->GetCrc32(fid);
