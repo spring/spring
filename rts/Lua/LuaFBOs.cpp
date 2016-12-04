@@ -159,16 +159,18 @@ void LuaFBOs::FBO::Free(lua_State* L)
 	glDeleteFramebuffersEXT(1, &id);
 	id = 0;
 
-	// get rid of the userdatum
-	LuaFBOs& activeFBOs = CLuaHandle::GetActiveFBOs(L);
-	auto& fbos = activeFBOs.fbos;
+	{
+		// get rid of the userdatum
+		LuaFBOs& activeFBOs = CLuaHandle::GetActiveFBOs(L);
+		auto& fbos = activeFBOs.fbos;
 
-	assert(index < fbos.size());
-	assert(fbos[index] == this);
+		assert(index < fbos.size());
+		assert(fbos[index] == this);
 
-	fbos[index] = fbos.back();
-	fbos[index]->index = index;
-	fbos.pop_back();
+		fbos[index] = fbos.back();
+		fbos[index]->index = index;
+		fbos.pop_back();
+	}
 }
 
 
@@ -194,7 +196,6 @@ int LuaFBOs::meta_index(lua_State* L)
 	lua_rawgeti(L, LUA_REGISTRYINDEX, fbo->luaRef);
 	lua_pushvalue(L, 2);
 	lua_rawget(L, -2);
-
 	return 1;
 }
 

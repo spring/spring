@@ -768,7 +768,7 @@ bool CGuiHandler::LayoutCustomIcons(bool useSelectionPage)
 	const int tmpIconsPerPage = (tmpXicons * tmpYicons);
 
 	// build a set to better find unwanted commands
-	set<int> removeIDs;
+	std::set<int> removeIDs;
 	for (unsigned int i = 0; i < removeCmds.size(); i++) {
 		const int index = removeCmds[i];
 		if ((index >= 0) || ((size_t)index < cmds.size())) {

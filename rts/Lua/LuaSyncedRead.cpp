@@ -70,7 +70,6 @@
 #include "System/FileSystem/FileSystem.h"
 #include "System/Util.h"
 
-#include <set>
 #include <map>
 #include <cctype>
 
@@ -78,7 +77,6 @@
 using std::min;
 using std::max;
 using std::map;
-using std::set;
 
 static const LuaHashString hs_n("n");
 
@@ -1836,70 +1834,81 @@ int LuaSyncedRead::GetTeamUnitsCounts(lua_State* L)
 }
 
 
-static inline void InsertSearchUnitDefs(const UnitDef* ud, bool allied,
-                                        set<int>& defs)
+static inline void InsertSearchUnitDefs(const UnitDef* ud, bool allied, std::vector<int>& unitDefIDs)
 {
-	if (ud != NULL) {
-		if (allied) {
-			defs.insert(ud->id);
-		}
-		else if (ud->decoyDef == NULL) {
-			defs.insert(ud->id);
-			map<int, set<int> >::const_iterator dmit;
-			dmit = unitDefHandler->decoyMap.find(ud->id);
-			if (dmit != unitDefHandler->decoyMap.end()) {
-				const set<int>& decoys = dmit->second;
-				set<int>::const_iterator dit;
-				for (dit = decoys.begin(); dit != decoys.end(); ++dit) {
-					defs.insert(*dit);
-				}
-			}
-		}
+	if (ud == nullptr)
+		return;
+
+	if (allied) {
+		unitDefIDs.push_back(ud->id);
+		return;
+	}
+	if (ud->decoyDef != nullptr)
+		return;
+
+	unitDefIDs.push_back(ud->id);
+
+	// std::map<int, std::set<int> >
+	const auto& decoyMap = unitDefHandler->decoyMap;
+	const auto decoyMapIt = decoyMap.find(ud->id);
+
+	if (decoyMapIt == unitDefHandler->decoyMap.end())
+		return;
+
+	const auto& decoyDefIDs = decoyMapIt->second;
+
+	for (int decoyDefID: decoyDefIDs) {
+		unitDefIDs.push_back(decoyDefID);
 	}
 }
 
 
 int LuaSyncedRead::GetTeamUnitsByDefs(lua_State* L)
 {
-	if (CLuaHandle::GetHandleReadAllyTeam(L) == CEventClient::NoAccessTeam) {
+	if (CLuaHandle::GetHandleReadAllyTeam(L) == CEventClient::NoAccessTeam)
 		return 0;
-	}
 
-	// parse the team
 	const CTeam* team = ParseTeam(L, __FUNCTION__, 1);
-	if (team == NULL) {
-		return 0;
-	}
-	const int teamID = team->teamNum;
 
+	if (team == nullptr)
+		return 0;
+
+	const int teamID = team->teamNum;
 	const bool allied = IsAlliedTeam(L, teamID);
 
 	// parse the unitDefs
-	set<int> defs;
+	std::vector<int> unitDefIDs;
+
 	if (lua_isnumber(L, 2)) {
-		const int unitDefID = lua_toint(L, 2);
-		const UnitDef* ud = unitDefHandler->GetUnitDefByID(unitDefID);
-		InsertSearchUnitDefs(ud, allied, defs);
-	}
-	else if (lua_istable(L, 2)) {
-		const int table = 2;
-		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-			if (lua_isnumber(L, -1)) {
-				const int unitDefID = lua_toint(L, -1);
-				const UnitDef* ud = unitDefHandler->GetUnitDefByID(unitDefID);
-				InsertSearchUnitDefs(ud, allied, defs);
-			}
+		InsertSearchUnitDefs(unitDefHandler->GetUnitDefByID(lua_toint(L, 2)), allied, unitDefIDs);
+	} else if (lua_istable(L, 2)) {
+		const int tableIdx = 2;
+
+		for (lua_pushnil(L); lua_next(L, tableIdx) != 0; lua_pop(L, 1)) {
+			if (!lua_isnumber(L, -1))
+				continue;
+
+			InsertSearchUnitDefs(unitDefHandler->GetUnitDefByID(lua_toint(L, -1)), allied, unitDefIDs);
 		}
-	}
-	else {
+	} else {
 		luaL_error(L, "Incorrect arguments to GetTeamUnitsByDefs()");
 	}
 
-	lua_newtable(L);
-	int count = 1;
+	// sort the ID's so duplicates can be skipped
+	std::sort(unitDefIDs.begin(), unitDefIDs.end());
 
-	for (const int ud: defs) {
-		for (const CUnit* unit: unitHandler->unitsByDefs[teamID][ud]) {
+	lua_createtable(L, unitDefIDs.size(), 0);
+
+	int count = 1;
+	int prevUnitDefID = -1;
+
+	for (const int unitDefID: unitDefIDs) {
+		if (unitDefID == prevUnitDefID)
+			continue;
+
+		prevUnitDefID = unitDefID;
+
+		for (const CUnit* unit: unitHandler->unitsByDefs[teamID][unitDefID]) {
 			if (allied || IsUnitTyped(L, unit)) {
 				lua_pushnumber(L, unit->id);
 				lua_rawseti(L, -2, count++);
@@ -1913,23 +1922,23 @@ int LuaSyncedRead::GetTeamUnitsByDefs(lua_State* L)
 
 int LuaSyncedRead::GetTeamUnitDefCount(lua_State* L)
 {
-	if (CLuaHandle::GetHandleReadAllyTeam(L) == CEventClient::NoAccessTeam) {
+	if (CLuaHandle::GetHandleReadAllyTeam(L) == CEventClient::NoAccessTeam)
 		return 0;
-	}
 
 	// parse the team
 	const CTeam* team = ParseTeam(L, __FUNCTION__, 1);
-	if (team == NULL) {
+
+	if (team == nullptr)
 		return 0;
-	}
+
 	const int teamID = team->teamNum;
 
 	// parse the unitDef
 	const int unitDefID = luaL_checkint(L, 2);
 	const UnitDef* unitDef = unitDefHandler->GetUnitDefByID(unitDefID);
-	if (unitDef == NULL) {
+
+	if (unitDef == nullptr)
 		luaL_error(L, "Bad unitDefID in GetTeamUnitDefCount()");
-	}
 
 	// use the unitsByDefs count for allies
 	if (IsAlliedTeam(L, teamID)) {
@@ -1938,7 +1947,7 @@ int LuaSyncedRead::GetTeamUnitDefCount(lua_State* L)
 	}
 
 	// you can never count enemy decoys
-	if (unitDef->decoyDef != NULL) {
+	if (unitDef->decoyDef != nullptr) {
 		lua_pushnumber(L, 0);
 		return 1;
 	}
@@ -1951,7 +1960,7 @@ int LuaSyncedRead::GetTeamUnitDefCount(lua_State* L)
 	}
 
 	// tally the decoy units for the given unitDef
-	auto dmit = unitDefHandler->decoyMap.find(unitDef->id);
+	const auto dmit = unitDefHandler->decoyMap.find(unitDef->id);
 
 	if (dmit != unitDefHandler->decoyMap.end()) {
 		for (const int ud: dmit->second) {

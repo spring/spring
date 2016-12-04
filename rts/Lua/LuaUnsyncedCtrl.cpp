@@ -85,7 +85,6 @@
 #endif
 
 #include <map>
-#include <set>
 #include <cctype>
 #include <cfloat>
 #include <cinttypes>
@@ -2192,30 +2191,29 @@ int LuaUnsyncedCtrl::SetWMCaption(lua_State* L)
 
 int LuaUnsyncedCtrl::SetUnitDefIcon(lua_State* L)
 {
-	const int unitDefID = luaL_checkint(L, 1);
-	const UnitDef* ud = unitDefHandler->GetUnitDefByID(unitDefID);
-	if (ud == NULL) {
+	const UnitDef* ud = unitDefHandler->GetUnitDefByID(luaL_checkint(L, 1));
+
+	if (ud == nullptr)
 		return 0;
-	}
 
 	ud->iconType = icon::iconHandler->GetIcon(luaL_checksstring(L, 2));
 
 	// set decoys to the same icon
-	std::map<int, std::set<int> >::const_iterator fit;
-
-	if (ud->decoyDef) {
+	if (ud->decoyDef != nullptr)
 		ud->decoyDef->iconType = ud->iconType;
-		fit = unitDefHandler->decoyMap.find(ud->decoyDef->id);
-	} else {
-		fit = unitDefHandler->decoyMap.find(ud->id);
-	}
-	if (fit != unitDefHandler->decoyMap.end()) {
-		const std::set<int>& decoySet = fit->second;
-		std::set<int>::const_iterator dit;
-		for (dit = decoySet.begin(); dit != decoySet.end(); ++dit) {
-  		const UnitDef* decoyDef = unitDefHandler->GetUnitDefByID(*dit);
-			decoyDef->iconType = ud->iconType;
-		}
+
+	// std::map<int, std::set<int> >
+	const auto& decoyMap = unitDefHandler->decoyMap;
+	const auto decoyMapIt = decoyMap.find((ud->decoyDef != nullptr)? ud->decoyDef->id: ud->id);
+
+	if (decoyMapIt == decoyMap.end())
+		return 0;
+
+	const auto& decoySet = decoyMapIt->second;
+
+	for (const int decoyDefID: decoySet) {
+		const UnitDef* decoyDef = unitDefHandler->GetUnitDefByID(decoyDefID);
+		decoyDef->iconType = ud->iconType;
 	}
 
 	return 0;
@@ -2224,11 +2222,10 @@ int LuaUnsyncedCtrl::SetUnitDefIcon(lua_State* L)
 
 int LuaUnsyncedCtrl::SetUnitDefImage(lua_State* L)
 {
-	const int unitDefID = luaL_checkint(L, 1);
-	const UnitDef* ud = unitDefHandler->GetUnitDefByID(unitDefID);
-	if (ud == NULL) {
+	const UnitDef* ud = unitDefHandler->GetUnitDefByID(luaL_checkint(L, 1));
+
+	if (ud == nullptr)
 		return 0;
-	}
 
 	if (lua_isnoneornil(L, 2)) {
 		// reset to default texture
@@ -2236,21 +2233,23 @@ int LuaUnsyncedCtrl::SetUnitDefImage(lua_State* L)
 		return 0;
 	}
 
-	if (!lua_israwstring(L, 2)) {
+	if (!lua_israwstring(L, 2))
+		return 0;
+
+	const std::string& texName = lua_tostring(L, 2);
+
+	if (texName[0] != LuaTextures::prefix) { // '!'
+		unitDefHandler->SetUnitDefImage(ud, texName);
 		return 0;
 	}
-	const string texName = lua_tostring(L, 2);
 
-	if (texName[0] == LuaTextures::prefix) { // '!'
-		LuaTextures& textures = CLuaHandle::GetActiveTextures(L);
-		const LuaTextures::Texture* tex = textures.GetInfo(texName);
-		if (tex == NULL) {
-			return 0;
-		}
-		unitDefHandler->SetUnitDefImage(ud, tex->id, tex->xsize, tex->ysize);
-	} else {
-		unitDefHandler->SetUnitDefImage(ud, texName);
-	}
+	const LuaTextures& textures = CLuaHandle::GetActiveTextures(L);
+	const LuaTextures::Texture* tex = textures.GetInfo(texName);
+
+	if (tex == nullptr)
+		return 0;
+
+	unitDefHandler->SetUnitDefImage(ud, tex->id, tex->xsize, tex->ysize);
 	return 0;
 }
 

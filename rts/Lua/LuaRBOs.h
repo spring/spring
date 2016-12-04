@@ -3,8 +3,7 @@
 #ifndef LUA_RBOS_H
 #define LUA_RBOS_H
 
-#include <set>
-using std::set;
+#include <vector>
 
 #include "Rendering/GL/myGL.h"
 
@@ -14,7 +13,7 @@ struct lua_State;
 
 class LuaRBOs {
 	public:
-		LuaRBOs();
+		LuaRBOs() { rbos.reserve(8); }
 		~LuaRBOs();
 
 		static bool PushEntries(lua_State* L);
@@ -24,10 +23,12 @@ class LuaRBOs {
 
 	public:
 		struct RBO {
-			RBO() : id(0), target(0), format(0), xsize(0), ysize(0) {}
+			RBO() : index(-1u), id(0), target(0), format(0), xsize(0), ysize(0) {}
+
 			void Init();
 			void Free(lua_State* L);
 
+			GLuint index; // into LuaRBOs::rbos
 			GLuint id;
 			GLenum target;
 			GLenum format;
@@ -36,7 +37,7 @@ class LuaRBOs {
 		};
 
 	private:
-		set<RBO*> rbos;
+		std::vector<RBO*> rbos;
 
 	private: // helpers
 		static bool CreateMetatable(lua_State* L);

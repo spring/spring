@@ -4,7 +4,8 @@
 #define LUA_GL_H
 
 #include <string>
-#include <set>
+#include <vector>
+
 #include "Lua/LuaHandle.h"
 
 
@@ -129,7 +130,13 @@ class LuaOpenGL {
 		static float screenDistance;
 		static void (*resetMatrixFunc)(void);
 		static unsigned int resetStateList;
-		static std::set<unsigned int> occlusionQueries;
+
+		struct OcclusionQuery {
+			unsigned int index; // into LuaOpenGL::occlusionQueries
+			unsigned int id;
+		};
+
+		static std::vector<OcclusionQuery*> occlusionQueries;
 
 	private:
 		static void CheckDrawingEnabled(lua_State* L, const char* caller);

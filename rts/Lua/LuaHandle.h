@@ -12,10 +12,10 @@
 
 #include <string>
 #include <vector>
-#include <set>
+
 using std::string;
 using std::vector;
-using std::set;
+
 
 
 #define LUA_HANDLE_ORDER_RULES            100
