@@ -229,7 +229,8 @@ class CLuaHandleSynced
 		CUnsyncedLuaHandle unsyncedLuaHandle;
 
 	public:
-		static const LuaRulesParams::Params&  GetGameParams() { return gameParams; }
+		static void ClearGameParams() { gameParams.clear(); }
+		static const LuaRulesParams::Params& GetGameParams() { return gameParams; }
 
 	private:
 		//FIXME: add to CREG?

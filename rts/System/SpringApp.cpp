@@ -791,10 +791,10 @@ void SpringApp::Reload(const std::string& script)
 	ThreadPool::SetThreadCount(0);
 	ThreadPool::SetThreadCount(ThreadPool::GetMaxThreads());
 
-	if (gameServer != NULL)
+	if (gameServer != nullptr)
 		gameServer->SetReloading(true);
 
-	//Lua shutdown functions need to access 'game' but SafeDelete sets it to NULL.
+	// Lua shutdown functions need to access 'game' but SafeDelete sets it to NULL.
 	game->KillLua();
 
 	SafeDelete(game);
@@ -944,9 +944,10 @@ void SpringApp::ShutDown()
 	LOG("[SpringApp::%s][2]", __FUNCTION__);
 	LuaVFSDownload::Free(true);
 
-	if (game != nullptr) {
-		game->KillLua(); // must be called before `game` var gets nulled, else stuff in LuaSyncedRead.cpp will fail
-	}
+	// see ::Reload
+	if (game != nullptr)
+		game->KillLua();
+
 	SafeDelete(game);
 	SafeDelete(pregame);
 

@@ -736,6 +736,8 @@ void CGame::KillLua()
 
 	LOG("[%s][2]", __FUNCTION__);
 	CLuaRules::FreeHandler();
+
+	CLuaHandleSynced::ClearGameParams();
 	LEAVE_SYNCED_CODE();
 
 	// kill LuaUI here, various handler pointers are invalid in ~GuiHandler
