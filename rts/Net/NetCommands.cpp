@@ -807,10 +807,12 @@ void CGame::ClientReadNet()
 					for (int i = 0, j = fixedLen;  i < numUnitIDs;  i++, j += sizeof(short)) {
 						short int unitID;
 						pckt >> unitID;
-						if (unitID >= unitHandler->MaxUnits() || unitID < 0)
+
+						CUnit* u = unitHandler->GetUnit(unitID);
+
+						if (u == nullptr)
 							throw netcode::UnpackPacketException("Invalid unit ID");
 
-						CUnit* u = unitHandler->units[unitID];
 						// ChangeTeam() handles the AllowUnitTransfer() LuaRule
 						if (u && u->team == srcTeamID && !u->beingBuilt) {
 							u->ChangeTeam(dstTeamID, CUnit::ChangeGiven);

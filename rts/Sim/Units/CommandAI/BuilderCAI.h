@@ -4,11 +4,10 @@
 #define _BUILDER_CAI_H_
 
 #include "MobileCAI.h"
-#include "Sim/Units/UnitSet.h"
 #include "Sim/Units/BuildInfo.h"
 #include "System/Misc/BitwiseEnum.h"
 
-#include <set>
+#include <unordered_set>
 #include <string>
 
 class CUnit;
@@ -64,11 +63,11 @@ public:
 	bool IsInBuildRange(const float3& pos, const float radius) const;
 
 public:
-	std::set<int> buildOptions;
+	std::unordered_set<int> buildOptions;
 
-	static CUnitSet reclaimers;
-	static CUnitSet featureReclaimers;
-	static CUnitSet resurrecters;
+	static std::unordered_set<int> reclaimers;
+	static std::unordered_set<int> featureReclaimers;
+	static std::unordered_set<int> resurrecters;
 
 private:
 	enum ReclaimOptions {

@@ -23,15 +23,12 @@
 #define CHECK_UNITID(id) ((unsigned)(id) < (unsigned)unitHandler->MaxUnits())
 #define CHECK_GROUPID(id) ((unsigned)(id) < (unsigned)gh->groups.size())
 
-CUnit* CAICheats::GetUnit(int unitId) const {
+CUnit* CAICheats::GetUnit(int unitId) const
+{
+	if (CHECK_UNITID(unitId))
+		return unitHandler->GetUnit(unitId);
 
-	CUnit* unit = NULL;
-
-	if (CHECK_UNITID(unitId)) {
-		unit = unitHandler->units[unitId];
-	}
-
-	return unit;
+	return nullptr;
 }
 
 
@@ -424,14 +421,15 @@ int CAICheats::HandleCommand(int commandId, void* data)
 			AIHCTraceRay* cmdData = static_cast<AIHCTraceRay*>(data);
 
 			if (CHECK_UNITID(cmdData->srcUID)) {
-				const CUnit* srcUnit = unitHandler->units[cmdData->srcUID];
-				CUnit* hitUnit = NULL;
-				CFeature* hitFeature = NULL;
+				const CUnit* srcUnit = unitHandler->GetUnit(cmdData->srcUID);
 
-				if (srcUnit != NULL) {
+				CUnit* hitUnit = nullptr;
+				CFeature* hitFeature = nullptr;
+
+				if (srcUnit != nullptr) {
 					//FIXME ignore features?
 					cmdData->rayLen = TraceRay::TraceRay(cmdData->rayPos, cmdData->rayDir, cmdData->rayLen, cmdData->flags, srcUnit, hitUnit, hitFeature);
-					cmdData->hitUID = (hitUnit != NULL)? hitUnit->id: -1;
+					cmdData->hitUID = (hitUnit != nullptr)? hitUnit->id: -1;
 				}
 			}
 
@@ -442,14 +440,15 @@ int CAICheats::HandleCommand(int commandId, void* data)
 			AIHCFeatureTraceRay* cmdData = static_cast<AIHCFeatureTraceRay*>(data);
 
 			if (CHECK_UNITID(cmdData->srcUID)) {
-				const CUnit* srcUnit = unitHandler->units[cmdData->srcUID];
-				CUnit* hitUnit = NULL;
-				CFeature* hitFeature = NULL;
+				const CUnit* srcUnit = unitHandler->GetUnit(cmdData->srcUID);
 
-				if (srcUnit != NULL) {
+				CUnit* hitUnit = nullptr;
+				CFeature* hitFeature = nullptr;
+
+				if (srcUnit != nullptr) {
 					//FIXME ignore units?
 					cmdData->rayLen = TraceRay::TraceRay(cmdData->rayPos, cmdData->rayDir, cmdData->rayLen, cmdData->flags, srcUnit, hitUnit, hitFeature);
-					cmdData->hitFID = (hitFeature != NULL)? hitFeature->id: -1;
+					cmdData->hitFID = (hitFeature != nullptr)? hitFeature->id: -1;
 				}
 			}
 

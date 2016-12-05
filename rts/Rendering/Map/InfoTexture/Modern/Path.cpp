@@ -11,6 +11,7 @@
 #include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/Units/BuildInfo.h"
 #include "Sim/Units/CommandAI/CommandDescription.h"
+#include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "System/Color.h"
@@ -91,14 +92,13 @@ static SColor GetSpeedModColor(const float sm) {
 
 const MoveDef* CPathTexture::GetSelectedMoveDef()
 {
-	if (forcedPathType >= 0) {
+	if (forcedPathType >= 0)
 		return moveDefHandler->GetMoveDefByPathType(forcedPathType);
-	}
 
 	const MoveDef* md = nullptr;
-	const CUnitSet& unitSet = selectedUnitsHandler.selectedUnits;
+	const auto& unitSet = selectedUnitsHandler.selectedUnits;
 	if (!unitSet.empty()) {
-		const CUnit* unit = *(unitSet.begin());
+		const CUnit* unit = unitHandler->GetUnit(*unitSet.begin());
 		md = unit->moveDef;
 	}
 	return md;

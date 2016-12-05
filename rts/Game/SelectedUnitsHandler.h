@@ -3,13 +3,15 @@
 #ifndef SELECTED_UNITS_H
 #define SELECTED_UNITS_H
 
-#include "Sim/Units/UnitSet.h"
 #include "Sim/Units/CommandAI/Command.h"
 #include "System/float4.h"
 #include "System/Object.h"
+
 #include <vector>
 #include <string>
+#include <unordered_set>
 
+class CUnit;
 class CFeature;
 struct SCommandDescription;
 
@@ -64,11 +66,10 @@ public:
 	void SelectCycle(const std::string& command);
 
 public:
-	CUnitSet selectedUnits;
-
 	bool selectionChanged;
 	bool possibleCommandsChanged;
 
+	std::unordered_set<int> selectedUnits;
 	std::vector< std::vector<int> > netSelected;
 
 private:

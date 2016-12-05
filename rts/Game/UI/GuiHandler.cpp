@@ -1134,7 +1134,9 @@ bool CGuiHandler::TryTarget(const SCommandDescription& cmdDesc) const
 	if (dist <= 0.0f)
 		return false;
 
-	for (const CUnit* u: selectedUnitsHandler.selectedUnits) {
+	for (const int unitID: selectedUnitsHandler.selectedUnits) {
+		const CUnit* u = unitHandler->GetUnit(unitID);
+
 		// mobile kamikaze can always move into range
 		//FIXME do a range check in case of immobile kamikaze (-> mines)
 		if (u->unitDef->canKamikaze && !u->immobile)
@@ -2075,10 +2077,14 @@ Command CGuiHandler::GetOrderPreview()
 inline Command CheckCommand(Command c) {
 	if (selectedUnitsHandler.selectedUnits.empty() || (c.options & SHIFT_KEY))
 		return c; // always allow queued commands, since conditions may change so the command becomes valid
-	for (CUnitSet::iterator ui = selectedUnitsHandler.selectedUnits.begin(); ui != selectedUnitsHandler.selectedUnits.end(); ++ui) {
-		if((*ui)->commandAI->AllowedCommand(c, false))
+
+	for (const int unitID: selectedUnitsHandler.selectedUnits) {
+		const CUnit* u = unitHandler->GetUnit(unitID);
+
+		if (u->commandAI->AllowedCommand(c, false))
 			return c;
 	}
+
 	Command failedRet(CMD_FAILED);
 	return failedRet;
 }
@@ -2394,13 +2400,16 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 
 static bool WouldCancelAnyQueued(const BuildInfo& b)
 {
-	Command c = b.CreateCommand();
-	CUnitSet::iterator ui = selectedUnitsHandler.selectedUnits.begin();
-	for (; ui != selectedUnitsHandler.selectedUnits.end(); ++ui) {
-		if ((*ui)->commandAI->WillCancelQueued(c)) {
+	const Command c = b.CreateCommand();
+
+	for (const int unitID: selectedUnitsHandler.selectedUnits) {
+		const CUnit* u = unitHandler->GetUnit(unitID);
+
+		if (u->commandAI->WillCancelQueued(c)) {
 			return true;
 		}
 	}
+
 	return false;
 }
 
@@ -3724,8 +3733,10 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 
 					if (GetQueueKeystate()) {
 						const Command c = bpi->CreateCommand();
-						for (const CUnit* su: selectedUnitsHandler.selectedUnits) {
-							for (Command& cmd: su->commandAI->GetOverlapQueued(c)) {
+						for (const int unitID: selectedUnitsHandler.selectedUnits) {
+							const CUnit* su = unitHandler->GetUnit(unitID);
+							const CCommandAI* cai = su->commandAI;
+							for (const Command& cmd: cai->GetOverlapQueued(c)) {
 								cv.push_back(cmd);
 							}
 						}
@@ -3755,22 +3766,22 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 
 	// draw range circles if attack orders are imminent
 	int defcmd = GetDefaultCommand(mouse->lastx, mouse->lasty, cameraPos, mouseDir);
-	if ((inCommand>=0 && (size_t)inCommand<commands.size() && commands[inCommand].id==CMD_ATTACK) ||
-		(inCommand==-1 && defcmd>0 && commands[defcmd].id==CMD_ATTACK)
+	if ((inCommand >= 0 && (size_t)inCommand<commands.size() && commands[inCommand].id == CMD_ATTACK) ||
+		(inCommand == -1 && defcmd > 0 && commands[defcmd].id == CMD_ATTACK)
 	) {
-		for(CUnitSet::iterator si=selectedUnitsHandler.selectedUnits.begin(); si!=selectedUnitsHandler.selectedUnits.end(); ++si) {
-			CUnit* unit = *si;
-			if (unit == pointedAt) {
+		for (const int unitID: selectedUnitsHandler.selectedUnits) {
+			const CUnit* unit = unitHandler->GetUnit(unitID);
+
+			if (unit == pointedAt)
 				continue;
-			}
-			if (onMinimap && (unit->unitDef->speed > 0.0f)) {
+
+			if (onMinimap && (unit->unitDef->speed > 0.0f))
 				continue;
-			}
-			if(unit->maxRange>0 && ((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectatingFullView)) {
+
+			if (unit->maxRange > 0.0f && ((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectatingFullView)) {
 				glDisable(GL_DEPTH_TEST);
 				glColor4fv(cmdColors.rangeAttack);
-				glBallisticCircle(unit->pos, unit->maxRange,
-				                  unit->weapons.front(), 40);
+				glBallisticCircle(unit->pos, unit->maxRange, unit->weapons.front(), 40);
 				glEnable(GL_DEPTH_TEST);
 				if (!onMinimap && gs->cheatEnabled && globalRendering->drawdebug) {
 					DrawWeaponArc(unit);
@@ -3870,17 +3881,17 @@ void CGuiHandler::DrawCentroidCursor()
 		return;
 	}
 
-	const CUnitSet& selUnits = selectedUnitsHandler.selectedUnits;
-	if (selUnits.size() < 2) {
+	const auto& selUnits = selectedUnitsHandler.selectedUnits;
+	if (selUnits.size() < 2)
 		return;
-	}
 
 	float3 pos;
-	CUnitSet::const_iterator it;
-	for (it = selUnits.begin(); it != selUnits.end(); ++it) {
-		pos += (*it)->midPos;
+
+	for (const int unitID: selUnits) {
+		pos += (unitHandler->GetUnit(unitID))->midPos;
 	}
 	pos /= (float)selUnits.size();
+
 	const float3 winPos = camera->CalcWindowCoordinates(pos);
 	if (winPos.z <= 1.0f) {
 		const CMouseCursor* mc = mouse->FindCursor("Centroid");

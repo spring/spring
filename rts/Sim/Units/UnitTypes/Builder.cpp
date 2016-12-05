@@ -388,8 +388,8 @@ void CBuilder::Update()
 								// TODO: make configurable if this should happen
 								resurrectee->health *= 0.05f;
 
-								for (CUnitSet::iterator it = cai->resurrecters.begin(); it != cai->resurrecters.end(); ++it) {
-									CBuilder* bld = static_cast<CBuilder*>(*it);
+								for (auto it = cai->resurrecters.begin(); it != cai->resurrecters.end(); ++it) {
+									CBuilder* bld = static_cast<CBuilder*>(unitHandler->GetUnit(*it));
 									CCommandAI* bldCAI = bld->commandAI;
 
 									if (bldCAI->commandQue.empty())

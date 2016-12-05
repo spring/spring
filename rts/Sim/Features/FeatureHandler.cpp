@@ -21,7 +21,7 @@ CR_BIND(CFeatureHandler, )
 CR_REG_METADATA(CFeatureHandler, (
 	CR_MEMBER(idPool),
 	CR_MEMBER(toBeFreedFeatureIDs),
-	CR_MEMBER(activeFeatures),
+	CR_MEMBER(activeFeatureIDs),
 	CR_MEMBER(features),
 	CR_MEMBER(updateFeatures)
 ))
@@ -30,11 +30,7 @@ CR_REG_METADATA(CFeatureHandler, (
 
 CFeatureHandler::~CFeatureHandler()
 {
-	for (CFeatureSet::iterator fi = activeFeatures.begin(); fi != activeFeatures.end(); ++fi) {
-		delete *fi;
-	}
-
-	activeFeatures.clear();
+	activeFeatureIDs.clear();
 	features.clear();
 }
 
@@ -117,7 +113,7 @@ void CFeatureHandler::InsertActiveFeature(CFeature* feature)
 	assert(feature->id < features.size());
 	assert(features[feature->id] == NULL);
 
-	activeFeatures.insert(feature);
+	activeFeatureIDs.insert(feature->id);
 	features[feature->id] = feature;
 }
 
@@ -228,7 +224,7 @@ bool CFeatureHandler::UpdateFeature(CFeature* feature)
 		eventHandler.RenderFeatureDestroyed(feature);
 		eventHandler.FeatureDestroyed(feature);
 		toBeFreedFeatureIDs.push_back(feature->id);
-		activeFeatures.erase(feature);
+		activeFeatureIDs.erase(feature->id);
 		features[feature->id] = NULL;
 
 		// ID must match parameter for object commands, just use this

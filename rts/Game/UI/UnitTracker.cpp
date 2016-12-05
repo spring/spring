@@ -84,7 +84,7 @@ void CUnitTracker::SetMode(int mode)
 
 void CUnitTracker::Track()
 {
-	CUnitSet& units = selectedUnitsHandler.selectedUnits;
+	const auto& units = selectedUnitsHandler.selectedUnits;
 
 	CleanTrackGroup();
 
@@ -97,9 +97,9 @@ void CUnitTracker::Track()
 			enabled = true;
 		}
 	} else {
-		if (!units.empty()) {
+		if (!units.empty())
 			MakeTrackGroup();
-		}
+
 		if (trackGroup.find(trackUnit) == trackGroup.end()) {
 			trackUnit = *trackGroup.begin();
 			enabled = true;
@@ -120,10 +120,11 @@ void CUnitTracker::MakeTrackGroup()
 {
 	smoothedRight = RgtVector;
 	trackGroup.clear();
-	CUnitSet& units = selectedUnitsHandler.selectedUnits;
-	CUnitSet::const_iterator it;
-	for (it = units.begin(); it != units.end(); ++it) {
-		trackGroup.insert((*it)->id);
+
+	const auto& selUnits = selectedUnitsHandler.selectedUnits;
+
+	for (const int unitID: selUnits) {
+		trackGroup.insert(unitID);
 	}
 }
 

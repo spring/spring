@@ -362,18 +362,21 @@ public:
 		//ASSERT_SYNCED(float3(gu->myPlayerNum, gu->myPlayerNum, gu->myPlayerNum));
 
 		for (int i = unitHandler->MaxUnits() - 1; i >= 0; --i) {
-			if (unitHandler->units[i]) {
-				if (action.GetPlayerID() == gu->myPlayerNum) {
-					++unitHandler->units[i]->midPos.x; // and desync...
-					++unitHandler->units[i]->midPos.x;
-				} else {
-					// execute the same amount of flops on any other player,
-					// but do not desync (it is a NOP)
-					++unitHandler->units[i]->midPos.x;
-					--unitHandler->units[i]->midPos.x;
-				}
-				break;
+			CUnit* u = unitHandler->GetUnit(i);
+
+			if (u == nullptr)
+				continue;
+
+			if (action.GetPlayerID() == gu->myPlayerNum) {
+				++u->midPos.x; // and desync...
+				++u->midPos.x;
+			} else {
+				// execute the same amount of flops on any other player,
+				// but do not desync (it is a NOP)
+				++u->midPos.x;
+				--u->midPos.x;
 			}
+			break;
 		}
 		LOG_L(L_ERROR, "Desyncing in frame %d.", gs->frameNum);
 		return true;

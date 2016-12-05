@@ -253,7 +253,7 @@ static inline CUnit* ParseUnit(lua_State* L, const char* caller, int index)
 {
 	if (!lua_isnumber(L, index)) {
 		luaL_error(L, "%s(): unitID not a number", caller);
-		return NULL;
+		return nullptr;
 	}
 
 	CUnit* unit = unitHandler->GetUnit(lua_toint(L, index));
@@ -593,11 +593,11 @@ int LuaUnsyncedRead::IsUnitIcon(lua_State* L)
 int LuaUnsyncedRead::IsUnitSelected(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+	if (unit == nullptr)
 		return 0;
-	}
-	const CUnitSet& selUnits = selectedUnitsHandler.selectedUnits;
-	lua_pushboolean(L, selUnits.find(unit) != selUnits.end());
+
+	const auto& selUnits = selectedUnitsHandler.selectedUnits;
+	lua_pushboolean(L, selUnits.find(unit->id) != selUnits.end());
 	return 1;
 }
 
@@ -1039,14 +1039,13 @@ int LuaUnsyncedRead::GetSpectatingState(lua_State* L)
 int LuaUnsyncedRead::GetSelectedUnits(lua_State* L)
 {
 	unsigned int count = 0;
-	const CUnitSet& selUnits = selectedUnitsHandler.selectedUnits;
+	const auto& selUnits = selectedUnitsHandler.selectedUnits;
 
 	// { [1] = number unitID, ... }
 	lua_createtable(L, selUnits.size(), 0);
 
-	CUnitSet::const_iterator it;
-	for (it = selUnits.begin(); it != selUnits.end(); ++it) {
-		lua_pushnumber(L, (*it)->id);
+	for (const int unitID: selUnits) {
+		lua_pushnumber(L, unitID);
 		lua_rawseti(L, -2, ++count);
 	}
 	return 1;
@@ -1055,14 +1054,13 @@ int LuaUnsyncedRead::GetSelectedUnits(lua_State* L)
 
 int LuaUnsyncedRead::GetSelectedUnitsSorted(lua_State* L)
 {
-	map<int, vector<CUnit*> > unitDefMap;
-	map<int, vector<CUnit*> >::const_iterator mit;
+	std::map<int, std::vector<const CUnit*> > unitDefMap;
+	std::map<int, std::vector<const CUnit*> >::const_iterator mit;
 
-	const CUnitSet& selUnits = selectedUnitsHandler.selectedUnits;
-	CUnitSet::const_iterator it;
+	const auto& selUnits = selectedUnitsHandler.selectedUnits;
 
-	for (it = selUnits.begin(); it != selUnits.end(); ++it) {
-		CUnit* unit = *it;
+	for (const int unitID: selUnits) {
+		const CUnit* unit = unitHandler->GetUnit(unitID);
 		unitDefMap[unit->unitDef->id].push_back(unit);
 	}
 
@@ -1070,7 +1068,7 @@ int LuaUnsyncedRead::GetSelectedUnitsSorted(lua_State* L)
 	lua_createtable(L, 0, unitDefMap.size());
 
 	for (mit = unitDefMap.begin(); mit != unitDefMap.end(); ++mit) {
-		const vector<CUnit*>& v = mit->second;
+		const vector<const CUnit*>& v = mit->second;
 
 		// inner array-table
 		lua_createtable(L, v.size(), 0);
@@ -1094,16 +1092,15 @@ int LuaUnsyncedRead::GetSelectedUnitsSorted(lua_State* L)
 
 int LuaUnsyncedRead::GetSelectedUnitsCounts(lua_State* L)
 {
-	map<int, int> countMap;
-	map<int, int>::const_iterator mit;
+	std::map<int, int> countMap;
+	std::map<int, int>::const_iterator mit;
 
-	const CUnitSet& selUnits = selectedUnitsHandler.selectedUnits;
-	CUnitSet::const_iterator it;
+	const auto& selUnits = selectedUnitsHandler.selectedUnits;
 
 	// tally the types
-	for (it = selUnits.begin(); it != selUnits.end(); ++it) {
-		CUnit* unit = *it;
-		map<int, int>::iterator mit = countMap.find(unit->unitDef->id);
+	for (const int unitID: selUnits) {
+		const CUnit* unit = unitHandler->GetUnit(unitID);
+		std::map<int, int>::iterator mit = countMap.find(unit->unitDef->id);
 
 		if (mit == countMap.end()) {
 			countMap[unit->unitDef->id] = 1;
@@ -2149,13 +2146,15 @@ int LuaUnsyncedRead::GetSelectedGroup(lua_State* L)
 int LuaUnsyncedRead::GetUnitGroup(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+
+	if (unit == nullptr)
 		return 0;
-	}
+
 	if ((unit->team == gu->myTeam) && (unit->group)) {
 		lua_pushnumber(L, unit->group->id);
 		return 1;
 	}
+
 	return 0;
 }
 
@@ -2166,20 +2165,19 @@ int LuaUnsyncedRead::GetGroupUnits(lua_State* L)
 {
 	const int groupID = luaL_checkint(L, 1);
 	const vector<CGroup*>& groups = grouphandlers[gu->myTeam]->groups;
-	if ((groupID < 0) || ((size_t)groupID >= groups.size()) ||
-	    (groups[groupID] == NULL)) {
+
+	if ((groupID < 0) || ((size_t)groupID >= groups.size()) || (groups[groupID] == nullptr))
 		return 0; // nils
-	}
 
 	lua_newtable(L);
 
 	unsigned int count = 0;
 
-	const CUnitSet& groupUnits = groups[groupID]->units;
-	CUnitSet::const_iterator it;
-	for (it = groupUnits.begin(); it != groupUnits.end(); ++it) {
+	const auto& groupUnits = groups[groupID]->units;
+
+	for (const int unitID: groupUnits) {
 		count++;
-		lua_pushnumber(L, (*it)->id);
+		lua_pushnumber(L, unitID);
 		lua_rawseti(L, -2, count);
 	}
 
@@ -2190,23 +2188,22 @@ int LuaUnsyncedRead::GetGroupUnits(lua_State* L)
 int LuaUnsyncedRead::GetGroupUnitsSorted(lua_State* L)
 {
 	const int groupID = luaL_checkint(L, 1);
-	const vector<CGroup*>& groups = grouphandlers[gu->myTeam]->groups;
-	if ((groupID < 0) || ((size_t)groupID >= groups.size()) ||
-	    (groups[groupID] == NULL)) {
-		return 0; // nils
-	}
+	const std::vector<CGroup*>& groups = grouphandlers[gu->myTeam]->groups;
 
-	map<int, vector<CUnit*> > unitDefMap;
-	const CUnitSet& groupUnits = groups[groupID]->units;
-	CUnitSet::const_iterator it;
-	for (it = groupUnits.begin(); it != groupUnits.end(); ++it) {
-		CUnit* unit = *it;
+	if ((groupID < 0) || ((size_t)groupID >= groups.size()) || (groups[groupID] == nullptr))
+		return 0; // nils
+
+	std::map<int, std::vector<CUnit*> > unitDefMap;
+	const auto& groupUnits = groups[groupID]->units;
+
+	for (const int unitID: groupUnits) {
+		CUnit* unit = unitHandler->GetUnit(unitID);
 		unitDefMap[unit->unitDef->id].push_back(unit);
 	}
 
 	lua_newtable(L);
-	map<int, vector<CUnit*> >::const_iterator mit;
-	for (mit = unitDefMap.begin(); mit != unitDefMap.end(); ++mit) {
+
+	for (auto mit = unitDefMap.begin(); mit != unitDefMap.end(); ++mit) {
 		lua_pushnumber(L, mit->first); // push the UnitDef index
 		lua_newtable(L); {
 			const vector<CUnit*>& v = mit->second;
@@ -2226,19 +2223,19 @@ int LuaUnsyncedRead::GetGroupUnitsSorted(lua_State* L)
 int LuaUnsyncedRead::GetGroupUnitsCounts(lua_State* L)
 {
 	const int groupID = luaL_checkint(L, 1);
-	const vector<CGroup*>& groups = grouphandlers[gu->myTeam]->groups;
-	if ((groupID < 0) || ((size_t)groupID >= groups.size()) ||
-	    (groups[groupID] == NULL)) {
-		return 0; // nils
-	}
+	const std::vector<CGroup*>& groups = grouphandlers[gu->myTeam]->groups;
 
-	map<int, int> countMap;
-	const CUnitSet& groupUnits = groups[groupID]->units;
-	CUnitSet::const_iterator it;
-	for (it = groupUnits.begin(); it != groupUnits.end(); ++it) {
-		CUnit* unit = *it;
+	if ((groupID < 0) || ((size_t)groupID >= groups.size()) || (groups[groupID] == nullptr))
+		return 0; // nils
+
+	std::map<int, int> countMap;
+	const auto& groupUnits = groups[groupID]->units;
+
+	for (const int unitID: groupUnits) {
+		const CUnit* unit = unitHandler->GetUnit(unitID);
 		const int udID = unit->unitDef->id;
-		map<int, int>::iterator mit = countMap.find(udID);
+		auto mit = countMap.find(udID);
+
 		if (mit == countMap.end()) {
 			countMap[udID] = 1;
 		} else {
@@ -2247,8 +2244,8 @@ int LuaUnsyncedRead::GetGroupUnitsCounts(lua_State* L)
 	}
 
 	lua_newtable(L);
-	map<int, int>::const_iterator mit;
-	for (mit = countMap.begin(); mit != countMap.end(); ++mit) {
+
+	for (auto mit = countMap.begin(); mit != countMap.end(); ++mit) {
 		lua_pushnumber(L, mit->second); // push the UnitDef unit count
 		lua_rawseti(L, -2, mit->first); // push the UnitDef index
 	}

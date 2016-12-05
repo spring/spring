@@ -89,9 +89,9 @@ CResourceMapAnalyzer::CResourceMapAnalyzer(int resourceId)
 
 float3 CResourceMapAnalyzer::GetNearestSpot(int builderUnitId, const UnitDef* extractor) const {
 
-	CUnit* builder = unitHandler->units[builderUnitId];
+	CUnit* builder = unitHandler->GetUnit(builderUnitId);
 
-	if (builder == NULL) {
+	if (builder == nullptr) {
 		LOG_L(L_WARNING, "GetNearestSpot: Invalid unit ID: %i", builderUnitId);
 		return ERRORVECTOR;
 	}

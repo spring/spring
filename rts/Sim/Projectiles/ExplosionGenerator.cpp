@@ -775,14 +775,16 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 
 	assert (isFloat || memberInfo.type == SExpGenSpawnableMemberInfo::TYPE_INT);
 
-	static const std::set<std::uint8_t> allowedSizeInt = {1,2,4 /*,0,8*/};
-	static const std::set<std::uint8_t> allowedSizeFlt = {4 /*,8*/};
 	if (isFloat) {
-		if (allowedSizeFlt.find(memberInfo.size) == allowedSizeFlt.end())
-			throw content_error("[CCEG::ParseExplosionCode] incompatible float size \"" + IntToString(memberInfo.size) + "\" (" + script + ")");
+		switch (memberInfo.size) {
+			case 4: {} break;
+			default: { throw content_error("[CCEG::ParseExplosionCode] incompatible float size \"" + IntToString(memberInfo.size) + "\" (" + script + ")"); } break;
+		}
 	} else {
-		if (allowedSizeInt.find(memberInfo.size) == allowedSizeInt.end())
-			throw content_error("[CCEG::ParseExplosionCode] incompatible integer size \"" + IntToString(memberInfo.size) + "\" (" + script + ")");
+		switch (memberInfo.size) {
+			case 1: case 2: case 4: {} break;
+			default: { throw content_error("[CCEG::ParseExplosionCode] incompatible integer size \"" + IntToString(memberInfo.size) + "\" (" + script + ")"); } break;
+		}
 	}
 
 	// parse the code

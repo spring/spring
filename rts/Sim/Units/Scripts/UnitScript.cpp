@@ -685,8 +685,8 @@ void CUnitScript::AttachUnit(int piece, int u)
 	}
 
 #ifndef _CONSOLE
-	if (unit->unitDef->IsTransportUnit() && unitHandler->units[u]) {
-		unit->AttachUnit(unitHandler->units[u], piece);
+	if (unit->unitDef->IsTransportUnit() && unitHandler->GetUnit(u) != nullptr) {
+		unit->AttachUnit(unitHandler->GetUnit(u), piece);
 	}
 #endif
 }
@@ -695,8 +695,8 @@ void CUnitScript::AttachUnit(int piece, int u)
 void CUnitScript::DropUnit(int u)
 {
 #ifndef _CONSOLE
-	if (unit->unitDef->IsTransportUnit() && unitHandler->units[u]) {
-		unit->DetachUnit(unitHandler->units[u]);
+	if (unit->unitDef->IsTransportUnit() && unitHandler->GetUnit(u) != nullptr) {
+		unit->DetachUnit(unitHandler->GetUnit(u));
 	}
 #endif
 }

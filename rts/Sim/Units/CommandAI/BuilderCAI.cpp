@@ -19,7 +19,6 @@
 #include "Sim/Misc/Team.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/MoveTypes/MoveType.h"
-#include "Sim/Units/UnitSet.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitTypes/Builder.h"
@@ -55,9 +54,9 @@ CR_REG_METADATA(CBuilderCAI , (
 ))
 
 // not adding to members, should repopulate itself
-CUnitSet CBuilderCAI::reclaimers;
-CUnitSet CBuilderCAI::featureReclaimers;
-CUnitSet CBuilderCAI::resurrecters;
+std::unordered_set<int> CBuilderCAI::reclaimers;
+std::unordered_set<int> CBuilderCAI::featureReclaimers;
+std::unordered_set<int> CBuilderCAI::resurrecters;
 
 
 static std::string GetUnitDefBuildOptionToolTip(const UnitDef* ud, bool disabled) {
@@ -1324,37 +1323,14 @@ int CBuilderCAI::GetDefaultCmd(const CUnit* pointed, const CFeature* feature)
 }
 
 
-void CBuilderCAI::AddUnitToReclaimers(CUnit* unit)
-{
-	reclaimers.insert(unit);
-}
+void CBuilderCAI::AddUnitToReclaimers(CUnit* unit) { reclaimers.insert(unit->id); }
+void CBuilderCAI::RemoveUnitFromReclaimers(CUnit* unit) { reclaimers.erase(unit->id); }
 
+void CBuilderCAI::AddUnitToFeatureReclaimers(CUnit* unit) { featureReclaimers.insert(unit->id); }
+void CBuilderCAI::RemoveUnitFromFeatureReclaimers(CUnit* unit) { featureReclaimers.erase(unit->id); }
 
-void CBuilderCAI::RemoveUnitFromReclaimers(CUnit* unit)
-{
-	reclaimers.erase(unit);
-}
-
-
-void CBuilderCAI::AddUnitToFeatureReclaimers(CUnit* unit)
-{
-	featureReclaimers.insert(unit);
-}
-
-void CBuilderCAI::RemoveUnitFromFeatureReclaimers(CUnit* unit)
-{
-	featureReclaimers.erase(unit);
-}
-
-void CBuilderCAI::AddUnitToResurrecters(CUnit* unit)
-{
-	resurrecters.insert(unit);
-}
-
-void CBuilderCAI::RemoveUnitFromResurrecters(CUnit* unit)
-{
-	resurrecters.erase(unit);
-}
+void CBuilderCAI::AddUnitToResurrecters(CUnit* unit) { resurrecters.insert(unit->id); }
+void CBuilderCAI::RemoveUnitFromResurrecters(CUnit* unit) { resurrecters.erase(unit->id); }
 
 
 /**
@@ -1371,26 +1347,33 @@ void CBuilderCAI::RemoveUnitFromResurrecters(CUnit* unit)
 bool CBuilderCAI::IsUnitBeingReclaimed(const CUnit* unit, CUnit *friendUnit)
 {
 	bool retval = false;
-	std::list<CUnit*> rm;
 
-	for (CUnitSet::iterator it = reclaimers.begin(); it != reclaimers.end(); ++it) {
-		if ((*it)->commandAI->commandQue.empty()) {
-			rm.push_back(*it);
+	std::vector<int> rm;
+
+	for (auto it = reclaimers.begin(); it != reclaimers.end(); ++it) {
+		const CUnit* u = unitHandler->GetUnit(*it);
+		const CCommandAI* cai = u->commandAI;
+		const CCommandQueue& cq = cai->commandQue;
+
+		if (cq.empty()) {
+			rm.push_back(u->id);
 			continue;
 		}
-		const Command& c = (*it)->commandAI->commandQue.front();
+		const Command& c = cq.front();
 		if (c.GetID() != CMD_RECLAIM || (c.params.size() != 1 && c.params.size() != 5)) {
-			rm.push_back(*it);
+			rm.push_back(u->id);
 			continue;
 		}
 		const int cmdUnitId = (int)c.params[0];
-		if (cmdUnitId == unit->id && (!friendUnit || teamHandler->Ally(friendUnit->allyteam, (*it)->allyteam))) {
+		if (cmdUnitId == unit->id && (!friendUnit || teamHandler->Ally(friendUnit->allyteam, u->allyteam))) {
 			retval = true;
 			break;
 		}
 	}
-	for (std::list<CUnit*>::iterator it = rm.begin(); it != rm.end(); ++it)
-		RemoveUnitFromReclaimers(*it);
+
+	for (auto it = rm.begin(); it != rm.end(); ++it)
+		RemoveUnitFromReclaimers(unitHandler->GetUnit(*it));
+
 	return retval;
 }
 
@@ -1398,26 +1381,33 @@ bool CBuilderCAI::IsUnitBeingReclaimed(const CUnit* unit, CUnit *friendUnit)
 bool CBuilderCAI::IsFeatureBeingReclaimed(int featureId, CUnit *friendUnit)
 {
 	bool retval = false;
-	std::list<CUnit*> rm;
 
-	for (CUnitSet::iterator it = featureReclaimers.begin(); it != featureReclaimers.end(); ++it) {
-		if ((*it)->commandAI->commandQue.empty()) {
-			rm.push_back(*it);
+	std::vector<int> rm;
+
+	for (auto it = featureReclaimers.begin(); it != featureReclaimers.end(); ++it) {
+		const CUnit* u = unitHandler->GetUnit(*it);
+		const CCommandAI* cai = u->commandAI;
+		const CCommandQueue& cq = cai->commandQue;
+
+		if (cq.empty()) {
+			rm.push_back(u->id);
 			continue;
 		}
-		const Command& c = (*it)->commandAI->commandQue.front();
+		const Command& c = cq.front();
 		if (c.GetID() != CMD_RECLAIM || (c.params.size() != 1 && c.params.size() != 5)) {
-			rm.push_back(*it);
+			rm.push_back(u->id);
 			continue;
 		}
 		const int cmdFeatureId = (int)c.params[0];
-		if (cmdFeatureId-unitHandler->MaxUnits() == featureId && (!friendUnit || teamHandler->Ally(friendUnit->allyteam, (*it)->allyteam))) {
+		if (cmdFeatureId-unitHandler->MaxUnits() == featureId && (!friendUnit || teamHandler->Ally(friendUnit->allyteam, u->allyteam))) {
 			retval = true;
 			break;
 		}
 	}
-	for (std::list<CUnit*>::iterator it = rm.begin(); it != rm.end(); ++it)
-		RemoveUnitFromFeatureReclaimers(*it);
+
+	for (auto it = rm.begin(); it != rm.end(); ++it)
+		RemoveUnitFromFeatureReclaimers(unitHandler->GetUnit(*it));
+
 	return retval;
 }
 
@@ -1425,26 +1415,33 @@ bool CBuilderCAI::IsFeatureBeingReclaimed(int featureId, CUnit *friendUnit)
 bool CBuilderCAI::IsFeatureBeingResurrected(int featureId, CUnit *friendUnit)
 {
 	bool retval = false;
-	std::list<CUnit*> rm;
 
-	for (CUnitSet::iterator it = resurrecters.begin(); it != resurrecters.end(); ++it) {
-		if ((*it)->commandAI->commandQue.empty()) {
-			rm.push_back(*it);
+	std::vector<int> rm;
+
+	for (auto it = resurrecters.begin(); it != resurrecters.end(); ++it) {
+		const CUnit* u = unitHandler->GetUnit(*it);
+		const CCommandAI* cai = u->commandAI;
+		const CCommandQueue& cq = cai->commandQue;
+
+		if (cq.empty()) {
+			rm.push_back(u->id);
 			continue;
 		}
-		const Command& c = (*it)->commandAI->commandQue.front();
+		const Command& c = cq.front();
 		if (c.GetID() != CMD_RESURRECT || c.params.size() != 1) {
-			rm.push_back(*it);
+			rm.push_back(u->id);
 			continue;
 		}
 		const int cmdFeatureId = (int)c.params[0];
-		if (cmdFeatureId-unitHandler->MaxUnits() == featureId && (!friendUnit || teamHandler->Ally(friendUnit->allyteam, (*it)->allyteam))) {
+		if (cmdFeatureId-unitHandler->MaxUnits() == featureId && (!friendUnit || teamHandler->Ally(friendUnit->allyteam, u->allyteam))) {
 			retval = true;
 			break;
 		}
 	}
-	for (std::list<CUnit*>::iterator it = rm.begin(); it != rm.end(); ++it)
-		RemoveUnitFromResurrecters(*it);
+
+	for (auto it = rm.begin(); it != rm.end(); ++it)
+		RemoveUnitFromResurrecters(unitHandler->GetUnit(*it));
+
 	return retval;
 }
 

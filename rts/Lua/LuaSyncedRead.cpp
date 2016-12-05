@@ -4377,20 +4377,19 @@ int LuaSyncedRead::ValidFeatureID(lua_State* L)
 int LuaSyncedRead::GetAllFeatures(lua_State* L)
 {
 	int count = 0;
-	const CFeatureSet& activeFeatures = featureHandler->GetActiveFeatures();
-	CFeatureSet::const_iterator fit;
+	const auto& activeFeatureIDs = featureHandler->GetActiveFeatureIDs();
+
+	lua_createtable(L, activeFeatureIDs.size(), 0);
+
 	if (CLuaHandle::GetHandleFullRead(L)) {
-		lua_createtable(L, activeFeatures.size(), 0);
-		for (fit = activeFeatures.begin(); fit != activeFeatures.end(); ++fit) {
-			lua_pushnumber(L, (*fit)->id);
+		for (const int featureID: activeFeatureIDs) {
+			lua_pushnumber(L, featureID);
 			lua_rawseti(L, -2, ++count);
 		}
-	}
-	else {
-		lua_newtable(L);
-		for (fit = activeFeatures.begin(); fit != activeFeatures.end(); ++fit) {
-			if (IsFeatureVisible(L, *fit)) {
-				lua_pushnumber(L, (*fit)->id);
+	} else {
+		for (const int featureID: activeFeatureIDs) {
+			if (IsFeatureVisible(L, featureHandler->GetFeature(featureID))) {
+				lua_pushnumber(L, featureID);
 				lua_rawseti(L, -2, ++count);
 			}
 		}

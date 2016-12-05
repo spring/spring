@@ -57,9 +57,9 @@
 #include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/ModInfo.h"
+#include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitDefHandler.h"
-#include "Sim/Units/Scripts/UnitScript.h"
 #include "Game/UI/Groups/GroupHandler.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "UI/CommandColors.h"
@@ -549,15 +549,16 @@ public:
 			"Moves the camera to the center of the currently selected units") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		const CUnitSet& selUnits = selectedUnitsHandler.selectedUnits;
+		const auto& selUnits = selectedUnitsHandler.selectedUnits;
+
 		if (selUnits.empty())
 			return false;
 
-		// XXX this code is duplicated in CGroup::CalculateCenter(), move to CUnitSet maybe
+		// XXX this code is duplicated in CGroup::CalculateCenter()
 		float3 pos;
-		CUnitSet::const_iterator ui;
-		for (ui = selUnits.begin(); ui != selUnits.end(); ++ui) {
-			pos += (*ui)->midPos;
+
+		for (const int unitID: selUnits) {
+			pos += (unitHandler->GetUnit(unitID))->midPos;
 		}
 		pos /= (float)selUnits.size();
 		camHandler->CameraTransition(0.6f);
@@ -2708,11 +2709,11 @@ public:
 		// kill selected units
 		std::stringstream ss;
 		ss << GetCommand();
-		for (CUnitSet::iterator it = selectedUnitsHandler.selectedUnits.begin();
-				it != selectedUnitsHandler.selectedUnits.end(); ++it)
-		{
-			ss << " " << (*it)->id;
+
+		for (const int unitID: selectedUnitsHandler.selectedUnits) {
+			ss << " " << unitID;
 		}
+
 		CommandMessage pckt(ss.str(), gu->myPlayerNum);
 		clientNet->Send(pckt.Pack());
 		return true;

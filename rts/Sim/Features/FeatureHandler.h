@@ -5,14 +5,16 @@
 
 #include <string>
 #include <vector>
+#include <unordered_set>
 
+#include "System/float3.h"
 #include "System/Misc/NonCopyable.h"
 #include "System/creg/creg_cond.h"
 
-#include "FeatureSet.h"
 #include "Sim/Misc/SimObjectIDPool.h"
 
 
+class CFeature;
 struct UnitDef;
 class LuaTable;
 struct FeatureDef;
@@ -40,7 +42,7 @@ class CFeatureHandler : public spring::noncopyable
 	CR_DECLARE_STRUCT(CFeatureHandler)
 
 public:
-	CFeatureHandler() { }
+	CFeatureHandler() { assert(std::hash<int>{}(12345678) == 12345678); }
 	~CFeatureHandler();
 
 	CFeature* LoadFeature(const FeatureLoadParams& params);
@@ -59,7 +61,7 @@ public:
 	void SetFeatureUpdateable(CFeature* feature);
 	void TerrainChanged(int x1, int y1, int x2, int y2);
 
-	const CFeatureSet& GetActiveFeatures() const { return activeFeatures; }
+	const std::unordered_set<int>& GetActiveFeatureIDs() const { return activeFeatureIDs; }
 
 private:
 	bool CanAddFeature(int id) const {
@@ -81,8 +83,8 @@ private:
 private:
 	SimObjectIDPool idPool;
 
+	std::unordered_set<int> activeFeatureIDs;
 	std::vector<int> toBeFreedFeatureIDs;
-	CFeatureSet activeFeatures;
 	std::vector<CFeature*> features;
 
 	std::vector<CFeature*> updateFeatures;

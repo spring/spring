@@ -1811,16 +1811,18 @@ void CGame::ReloadCOB(const string& msg, int player)
 	}
 	int count = 0;
 	for (size_t i = 0; i < unitHandler->MaxUnits(); i++) {
-		CUnit* unit = unitHandler->units[i];
-		if (unit != NULL) {
-			CCobInstance* cob = dynamic_cast<CCobInstance*>(unit->script);
-			if (cob != NULL && cob->GetScriptAddr() == oldScript) {
-				count++;
-				delete unit->script;
-				unit->script = new CCobInstance(newScript, unit);
-				unit->script->Create();
-			}
-		}
+		CUnit* unit = unitHandler->GetUnit(i);
+		if (unit == nullptr)
+			continue;
+
+		CCobInstance* cob = dynamic_cast<CCobInstance*>(unit->script);
+		if (cob == nullptr || cob->GetScriptAddr() != oldScript)
+			continue;
+
+		count++;
+		delete unit->script;
+		unit->script = new CCobInstance(newScript, unit);
+		unit->script->Create();
 	}
 	LOG("Reloaded cob script for %i units", count);
 }

@@ -11,6 +11,7 @@
 #include "Game/GlobalUnsynced.h"
 #include "Net/GameServer.h"
 #include "Rendering/Models/3DModel.h"
+#include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureDef.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/GlobalSynced.h"
@@ -88,10 +89,9 @@ void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod)
 
 	// we only care about the synced projectile data here
 	const std::vector<CUnit*>& units = unitHandler->activeUnits;
-	const CFeatureSet& features = featureHandler->GetActiveFeatures();
-	      ProjectileContainer& projectiles = projectileHandler->syncedProjectiles;
+	const auto& activeFeatureIDs = featureHandler->GetActiveFeatureIDs();
+	ProjectileContainer& projectiles = projectileHandler->syncedProjectiles;
 
-	CFeatureSet::const_iterator featuresIt;
 	ProjectileContainer::iterator projectilesIt;
 	std::vector<CWeapon*>::const_iterator weaponsIt;
 
@@ -202,11 +202,11 @@ void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod)
 	}
 	#endif
 
-	file << "\tfeatures: " << features.size() << "\n";
+	file << "\tfeatures: " << activeFeatureIDs.size() << "\n";
 
 	#ifdef DUMP_FEATURE_DATA
-	for (featuresIt = features.begin(); featuresIt != features.end(); ++featuresIt) {
-		const CFeature* f = *featuresIt;
+	for (const int featureID: activeFeatureIDs) {
+		const CFeature* f = featureHandler->GetFeature(featureID);
 
 		file << "\t\tfeatureID: " << f->id << " (name: " << f->def->name << ")\n";
 		file << "\t\t\tpos: <" << f->pos.x << ", " << f->pos.y << ", " << f->pos.z << ">\n";

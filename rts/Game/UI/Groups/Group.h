@@ -4,9 +4,9 @@
 #define GROUP_H
 
 #include <vector>
+#include <unordered_set>
 
 #include "Sim/Units/CommandAI/Command.h"
-#include "Sim/Units/UnitSet.h"
 #include "System/creg/creg_cond.h"
 #include "System/float3.h"
 
@@ -46,7 +46,7 @@ private:
 
 public:
 	int id;
-	CUnitSet units;
+	std::unordered_set<int> units;
 
 private:
 	CGroupHandler* handler;

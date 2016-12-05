@@ -8,6 +8,7 @@
 #include "Sim/Path/Default/PathManager.h"
 #include "Sim/Path/QTPFS/PathManager.hpp"
 #include "Sim/Units/Unit.h"
+#include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitDef.h"
 #include "System/EventHandler.h"
 
@@ -44,11 +45,11 @@ IPathDrawer::~IPathDrawer() {
 }
 
 const MoveDef* IPathDrawer::GetSelectedMoveDef() {
-	const MoveDef* md = NULL;
-	const CUnitSet& unitSet = selectedUnitsHandler.selectedUnits;
+	const MoveDef* md = nullptr;
+	const auto& unitSet = selectedUnitsHandler.selectedUnits;
 
 	if (!unitSet.empty()) {
-		const CUnit* unit = *(unitSet.begin());
+		const CUnit* unit = unitHandler->GetUnit(*unitSet.begin());
 		md = unit->moveDef;
 	}
 

@@ -180,7 +180,7 @@ bool CSkirmishAIWrapper::LoadSkirmishAI(bool postLoad) {
 	Init();
 
 	for (size_t a = 0; a < unitHandler->MaxUnits(); a++) {
-		const CUnit* unit = unitHandler->units[a];
+		const CUnit* unit = unitHandler->GetUnit(a);
 
 		if (unit == nullptr)
 			continue;

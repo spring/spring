@@ -29,9 +29,9 @@
 #include "Rendering/GL/glExtra.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/Bitmap.h"
-#include "Sim/Misc/LosHandler.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/Unit.h"
+#include "Sim/Units/UnitHandler.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
 #include "System/Config/ConfigHandler.h"
@@ -1503,8 +1503,11 @@ void CMiniMap::DrawUnitIcons() const
 void CMiniMap::DrawUnitRanges() const
 {
 	// draw unit ranges
-	CUnitSet& selUnits = selectedUnitsHandler.selectedUnits;
-	for(const CUnit* unit: selUnits) {
+	const auto& selUnits = selectedUnitsHandler.selectedUnits;
+
+	for (const int unitID: selUnits) {
+		const CUnit* unit = unitHandler->GetUnit(unitID);
+
 		// LOS Ranges
 		if (unit->radarRadius && !unit->beingBuilt && unit->activated) {
 			glColor3fv(cmdColors.rangeRadar);

@@ -77,9 +77,8 @@ public:
 	 * @brief Returns commands that overlap c, but will not be canceled by c
 	 * @return a vector containing commands that overlap c
 	 */
-	std::vector<Command> GetOverlapQueued(const Command& c);
-	std::vector<Command> GetOverlapQueued(const Command& c,
-	                                      CCommandQueue& queue);
+	std::vector<Command> GetOverlapQueued(const Command& c) const;
+	std::vector<Command> GetOverlapQueued(const Command& c, const CCommandQueue& queue) const;
 
 	const std::vector<const SCommandDescription*>& GetPossibleCommands() const { return possibleCommands; }
 

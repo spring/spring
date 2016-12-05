@@ -151,9 +151,13 @@ namespace
 		std::set<int> prevTypes;
 		void Prepare() {
 			prevTypes.clear();
-			const CUnitSet& tu = selectedUnitsHandler.selectedUnits;
-			for (CUnitSet::const_iterator si = tu.begin(); si != tu.end(); ++si) {
-				prevTypes.insert((*si)->unitDef->id);
+
+			const auto& selUnits = selectedUnitsHandler.selectedUnits;
+
+			for (const int unitID: selUnits) {
+				const CUnit* u = unitHandler->GetUnit(unitID);
+				const UnitDef* ud = u->unitDef;
+				prevTypes.insert(ud->id);
 			}
 		},
 	)
@@ -282,9 +286,10 @@ void CSelectionKeyHandler::DoSelection(std::string selectString)
 			}
 		}
 	} else if(s=="PrevSelection"){
-		CUnitSet* su=&selectedUnitsHandler.selectedUnits;
-		for(CUnitSet::iterator ui=su->begin();ui!=su->end();++ui){
-			selection.push_back(*ui);
+		const auto& selUnits = selectedUnitsHandler.selectedUnits;
+
+		for (const int unitID: selUnits) {
+			selection.push_back(unitHandler->GetUnit(unitID));
 		}
 	} else {
 		LOG_L(L_WARNING, "Unknown source token %s", s.c_str());

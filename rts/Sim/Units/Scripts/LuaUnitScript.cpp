@@ -963,26 +963,28 @@ bool CLuaUnitScript::PushEntries(lua_State* L)
 
 static inline CUnit* ParseRawUnit(lua_State* L, const char* caller, int index)
 {
-	if (!lua_israwnumber(L, index)) {
+	if (!lua_israwnumber(L, index))
 		luaL_error(L, "%s(): Bad unitID", caller);
-	}
-	const int unitID = lua_toint(L, index);
-	if ((unitID < 0) || (static_cast<size_t>(unitID) >= unitHandler->MaxUnits())) {
-		luaL_error(L, "%s(): Bad unitID: %d", caller, unitID);
-	}
-	return unitHandler->units[unitID];
+
+	CUnit* u = unitHandler->GetUnit(lua_toint(L, index));
+
+	if (u == nullptr)
+		luaL_error(L, "%s(): Bad unitID: %d", caller, lua_toint(L, index));
+
+	return u;
 }
 
 
 static inline CUnit* ParseUnit(lua_State* L, const char* caller, int index)
 {
 	CUnit* unit = ParseRawUnit(L, caller, index);
-	if (unit == NULL) {
-		return NULL;
-	}
-	if (!CanControlUnit(L, unit)) {
-		return NULL;
-	}
+
+	if (unit == nullptr)
+		return nullptr;
+
+	if (!CanControlUnit(L, unit))
+		return nullptr;
+
 	return unit;
 }
 

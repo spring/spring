@@ -19,6 +19,7 @@
 #include "Map/MapInfo.h"
 #include "Lua/LuaRulesParams.h"
 #include "Lua/LuaHandleSynced.h"
+#include "Sim/Features/Feature.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/UnitHandler.h"
@@ -4018,7 +4019,7 @@ EXPORT(int) skirmishAiCallback_Unit_getLastUserOrderFrame(int skirmishAIId, int 
 	if (!isControlledByLocalPlayer(skirmishAIId))
 		return -1;
 
-	return unitHandler->units[unitId]->commandAI->lastUserCommand;
+	return unitHandler->GetUnit(unitId)->commandAI->lastUserCommand;
 }
 
 EXPORT(int) skirmishAiCallback_Unit_getWeapons(int skirmishAIId, int unitId) {
@@ -4333,8 +4334,8 @@ EXPORT(int) skirmishAiCallback_FeatureDef_getCustomParams(
 EXPORT(int) skirmishAiCallback_getFeatures(int skirmishAIId, int* featureIds, int featureIdsMaxSize) {
 	if (skirmishAiCallback_Cheats_isEnabled(skirmishAIId)) {
 		// cheating
-		const CFeatureSet& fset = featureHandler->GetActiveFeatures();
-		const int featureIdsRealSize = fset.size();
+		const auto& activeFeatureIDs = featureHandler->GetActiveFeatureIDs();
+		const int featureIdsRealSize = activeFeatureIDs.size();
 
 		int featureIdsSize = featureIdsRealSize;
 
@@ -4343,8 +4344,8 @@ EXPORT(int) skirmishAiCallback_getFeatures(int skirmishAIId, int* featureIds, in
 
 			size_t f = 0;
 
-			for (auto it = fset.cbegin(); it != fset.cend() && f < featureIdsSize; ++it) {
-				const CFeature* feature = *it;
+			for (auto it = activeFeatureIDs.cbegin(); it != activeFeatureIDs.cend() && f < featureIdsSize; ++it) {
+				const CFeature* feature = featureHandler->GetFeature(*it);
 
 				assert(feature != nullptr);
 				featureIds[f++] = feature->id;

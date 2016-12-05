@@ -113,7 +113,6 @@ add_library(engineSim STATIC
 		"${CMAKE_CURRENT_SOURCE_DIR}/Units/UnitDefHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Units/UnitHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Units/UnitLoader.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Units/UnitSet.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Units/UnitTypes/Builder.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Units/UnitTypes/Building.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Units/UnitTypes/ExtractorBuilding.cpp"

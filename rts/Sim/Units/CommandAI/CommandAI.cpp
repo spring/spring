@@ -1322,15 +1322,15 @@ int CCommandAI::CancelCommands(const Command &c, CCommandQueue& q, bool& first)
 }
 
 
-std::vector<Command> CCommandAI::GetOverlapQueued(const Command& c)
+std::vector<Command> CCommandAI::GetOverlapQueued(const Command& c) const
 {
 	return GetOverlapQueued(c, commandQue);
 }
 
 
-std::vector<Command> CCommandAI::GetOverlapQueued(const Command& c, CCommandQueue& q)
+std::vector<Command> CCommandAI::GetOverlapQueued(const Command& c, const CCommandQueue& q) const
 {
-	CCommandQueue::iterator ci = q.end();
+	CCommandQueue::const_iterator ci = q.end();
 	std::vector<Command> v;
 	BuildInfo cbi(c);
 

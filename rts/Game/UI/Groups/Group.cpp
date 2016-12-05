@@ -4,6 +4,7 @@
 #include "Group.h"
 #include "GroupHandler.h"
 #include "Game/GlobalUnsynced.h"
+#include "Sim/Units/UnitHandler.h"
 #include "System/EventHandler.h"
 #include "System/creg/STL_Set.h"
 #include "System/float3.h"
@@ -36,25 +37,27 @@ CGroup::~CGroup()
 
 void CGroup::PostLoad()
 {
-	CUnitSet unitBackup = units;
+	assert(unitHandler != nullptr);
 
-	for (CUnitSet::const_iterator ui = unitBackup.begin(); ui != unitBackup.end(); ++ui) {
-		units.erase(*ui);
-		(*ui)->group = NULL;
+	auto unitBackup = units;
+
+	for (const int unitID: unitBackup) {
+		CUnit* unit = unitHandler->GetUnit(unitID);
+		units.erase(unit->id);
+		unit->group = nullptr;
 	}
 }
 
 bool CGroup::AddUnit(CUnit* unit)
 {
-	units.insert(unit);
+	units.insert(unit->id);
 	handler->PushGroupChange(id);
-
 	return true;
 }
 
 void CGroup::RemoveUnit(CUnit* unit)
 {
-	units.erase(unit);
+	units.erase(unit->id);
 	handler->PushGroupChange(id);
 }
 
@@ -77,7 +80,8 @@ void CGroup::Update()
 void CGroup::ClearUnits()
 {
 	while (!units.empty()) {
-		(*units.begin())->SetGroup(0);
+		CUnit* unit = unitHandler->GetUnit(*units.begin());
+		unit->SetGroup(0);
 	}
 	handler->PushGroupChange(id);
 }
@@ -87,9 +91,8 @@ float3 CGroup::CalculateCenter() const
 	float3 center = ZeroVector;
 
 	if (!units.empty()) {
-		CUnitSet::const_iterator ui;
-		for (ui = units.begin(); ui != units.end(); ++ui) {
-			center += (*ui)->pos;
+		for (const int unitID: units) {
+			center += (unitHandler->GetUnit(unitID))->pos;
 		}
 		center /= units.size();
 	}

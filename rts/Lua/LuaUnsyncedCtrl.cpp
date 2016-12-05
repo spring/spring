@@ -1616,8 +1616,9 @@ int LuaUnsyncedCtrl::SetUnitNoSelect(lua_State* L)
 
 	// deselect the unit if it's selected and shouldn't be
 	if (unit->noSelect) {
-		const CUnitSet& selUnits = selectedUnitsHandler.selectedUnits;
-		if (selUnits.find(unit) != selUnits.end()) {
+		const auto& selUnits = selectedUnitsHandler.selectedUnits;
+
+		if (selUnits.find(unit->id) != selUnits.end()) {
 			selectedUnitsHandler.RemoveUnit(unit);
 		}
 	}

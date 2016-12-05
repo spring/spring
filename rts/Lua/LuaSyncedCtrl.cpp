@@ -2462,9 +2462,10 @@ int LuaSyncedCtrl::SetUnitVelocity(lua_State* L)
 int LuaSyncedCtrl::AddUnitDamage(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+
+	if (unit == nullptr)
 		return 0;
-	}
+
 	const float damage    = luaL_checkfloat(L, 2);
 	const int paralyze    = luaL_optint(L, 3, 0);
 	const int attackerID  = luaL_optint(L, 4, -1);
@@ -2473,23 +2474,23 @@ int LuaSyncedCtrl::AddUnitDamage(lua_State* L)
 	                               Clamp(luaL_optfloat(L, 7, 0.0f), -MAX_EXPLOSION_IMPULSE, MAX_EXPLOSION_IMPULSE),
 	                               Clamp(luaL_optfloat(L, 8, 0.0f), -MAX_EXPLOSION_IMPULSE, MAX_EXPLOSION_IMPULSE));
 
-	CUnit* attacker = NULL;
+	CUnit* attacker = nullptr;
+
 	if (attackerID >= 0) {
-		if (static_cast<size_t>(attackerID) >= unitHandler->MaxUnits()) {
+		if (static_cast<size_t>(attackerID) >= unitHandler->MaxUnits())
 			return 0;
-		}
-		attacker = unitHandler->units[attackerID];
+
+		attacker = unitHandler->GetUnit(attackerID);
 	}
 
-	if (weaponDefID >= int(weaponDefHandler->weaponDefs.size())) {
+	if (weaponDefID >= int(weaponDefHandler->weaponDefs.size()))
 		return 0;
-	}
 
 	DamageArray damages;
 	damages.Set(unit->armorType, damage);
-	if (paralyze) {
+
+	if (paralyze)
 		damages.paralyzeDamageTime = paralyze;
-	}
 
 	unit->DoDamage(damages, impulse, attacker, weaponDefID, -1);
 	return 0;
@@ -2499,9 +2500,9 @@ int LuaSyncedCtrl::AddUnitDamage(lua_State* L)
 int LuaSyncedCtrl::AddUnitImpulse(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+
+	if (unit == nullptr)
 		return 0;
-	}
 
 	const float3 impulse(Clamp(luaL_checkfloat(L, 2), -MAX_EXPLOSION_IMPULSE, MAX_EXPLOSION_IMPULSE),
 	                     Clamp(luaL_checkfloat(L, 3), -MAX_EXPLOSION_IMPULSE, MAX_EXPLOSION_IMPULSE),

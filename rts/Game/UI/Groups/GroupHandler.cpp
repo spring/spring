@@ -6,6 +6,7 @@
 #include "Group.h"
 #include "Game/SelectedUnitsHandler.h"
 #include "Game/CameraHandler.h"
+#include "Sim/Units/UnitHandler.h"
 #include "System/creg/STL_Set.h"
 #include "System/Log/ILog.h"
 #include "System/Input/KeyInput.h"
@@ -93,37 +94,37 @@ bool CGroupHandler::GroupCommand(int num, const std::string& cmd)
 		if (cmd == "set") {
 			group->ClearUnits();
 		}
-		const CUnitSet& selUnits = selectedUnitsHandler.selectedUnits;
-		CUnitSet::const_iterator ui;
-		for(ui = selUnits.begin(); ui != selUnits.end(); ++ui) {
-			(*ui)->SetGroup(group);
+		const auto& selUnits = selectedUnitsHandler.selectedUnits;
+
+		for (const int unitID: selUnits) {
+			(unitHandler->GetUnit(unitID))->SetGroup(group);
 		}
 	}
 	else if (cmd == "selectadd")  {
 		// do not select the group, just add its members to the current selection
-		CUnitSet::const_iterator ui;
-		for (ui = group->units.begin(); ui != group->units.end(); ++ui) {
-			selectedUnitsHandler.AddUnit(*ui);
+		for (const int unitID: group->units) {
+			selectedUnitsHandler.AddUnit(unitHandler->GetUnit(unitID));
 		}
 		return true;
 	}
 	else if (cmd == "selectclear")  {
 		// do not select the group, just remove its members from the current selection
-		CUnitSet::const_iterator ui;
-		for (ui = group->units.begin(); ui != group->units.end(); ++ui) {
-			selectedUnitsHandler.RemoveUnit(*ui);
+		for (const int unitID: group->units) {
+			selectedUnitsHandler.RemoveUnit(unitHandler->GetUnit(unitID));
 		}
 		return true;
 	}
 	else if (cmd == "selecttoggle")  {
 		// do not select the group, just toggle its members with the current selection
-		const CUnitSet& selUnits = selectedUnitsHandler.selectedUnits;
-		CUnitSet::const_iterator ui;
-		for (ui = group->units.begin(); ui != group->units.end(); ++ui) {
-			if (selUnits.find(*ui) == selUnits.end()) {
-				selectedUnitsHandler.AddUnit(*ui);
+		const auto& selUnits = selectedUnitsHandler.selectedUnits;
+
+		for (const int unitID: group->units) {
+			CUnit* unit = unitHandler->GetUnit(unitID);
+
+			if (selUnits.find(unitID) == selUnits.end()) {
+				selectedUnitsHandler.AddUnit(unit);
 			} else {
-				selectedUnitsHandler.RemoveUnit(*ui);
+				selectedUnitsHandler.RemoveUnit(unit);
 			}
 		}
 		return true;

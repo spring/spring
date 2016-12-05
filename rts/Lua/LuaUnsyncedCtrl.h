@@ -3,8 +3,6 @@
 #ifndef LUA_UNSYNCED_CTRL_H
 #define LUA_UNSYNCED_CTRL_H
 
-#include "Sim/Units/UnitSet.h"
-
 struct lua_State;
 
 // MinGW defines this for a WINAPI function

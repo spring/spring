@@ -1146,7 +1146,7 @@ float3 CGroundMoveType::GetObstacleAvoidanceDir(const float3& desiredDir) {
 		// (or not yet fully apart), then the object is on the path of the unit
 		// and they are not collided
 		if (DEBUG_DRAWING_ENABLED) {
-			if (selectedUnitsHandler.selectedUnits.find(owner) != selectedUnitsHandler.selectedUnits.end()) {
+			if (selectedUnitsHandler.selectedUnits.find(owner->id) != selectedUnitsHandler.selectedUnits.end()) {
 				geometricObjects->AddLine(avoider->pos + (UpVector * 20.0f), avoidee->pos + (UpVector * 20.0f), 3, 1, 4);
 			}
 		}
@@ -1183,7 +1183,7 @@ float3 CGroundMoveType::GetObstacleAvoidanceDir(const float3& desiredDir) {
 	avoidanceDir = (mix(avoidanceDir, lastAvoidanceDir, LAST_DIR_MIX_ALPHA)).SafeNormalize();
 
 	if (DEBUG_DRAWING_ENABLED) {
-		if (selectedUnitsHandler.selectedUnits.find(owner) != selectedUnitsHandler.selectedUnits.end()) {
+		if (selectedUnitsHandler.selectedUnits.find(owner->id) != selectedUnitsHandler.selectedUnits.end()) {
 			const float3 p0 = owner->pos + (    UpVector * 20.0f);
 			const float3 p1 =         p0 + (avoidanceVec * 40.0f);
 			const float3 p2 =         p0 + (avoidanceDir * 40.0f);
@@ -1309,7 +1309,7 @@ bool CGroundMoveType::CanGetNextWayPoint() {
 		}
 
 		if (DEBUG_DRAWING_ENABLED) {
-			if (selectedUnitsHandler.selectedUnits.find(owner) != selectedUnitsHandler.selectedUnits.end()) {
+			if (selectedUnitsHandler.selectedUnits.find(owner->id) != selectedUnitsHandler.selectedUnits.end()) {
 				// plot the vectors to {curr, next}WayPoint
 				const int cwpFigGroupID = geometricObjects->AddLine(pos + (UpVector * 20.0f), cwp + (UpVector * (pos.y + 20.0f)), 8.0f, 1, 4);
 				const int nwpFigGroupID = geometricObjects->AddLine(pos + (UpVector * 20.0f), nwp + (UpVector * (pos.y + 20.0f)), 8.0f, 1, 4);
