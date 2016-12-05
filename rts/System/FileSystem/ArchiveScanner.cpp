@@ -1055,63 +1055,92 @@ std::vector<CArchiveScanner::ArchiveData> CArchiveScanner::GetAllArchives() cons
 	return ret;
 }
 
-std::vector<std::string> CArchiveScanner::GetAllArchivesUsedBy(const std::string& root, int depth) const
+std::vector<std::string> CArchiveScanner::GetAllArchivesUsedBy(const std::string& rootArchive) const
 {
-	LOG_S(LOG_SECTION_ARCHIVESCANNER, "GetArchives: %s (depth %u)", root.c_str(), depth);
+	LOG_S(LOG_SECTION_ARCHIVESCANNER, "GetArchives: %s", rootArchive.c_str());
 
-	// Protect against circular dependencies
-	// (worst case depth is if all archives form one huge dependency chain)
-	if ((unsigned)depth > archiveInfos.size())
-		throw content_error("Circular dependency");
+	// VectorInsertUnique'ing via AddDependency can become a performance hog
+	// for very long dependency chains, prefer to sort and remove duplicates
+	std::vector<std::string> retArchives;
+	std::vector<std::string> tmpArchives;
+	std::deque<std::string> archiveQueue = {rootArchive};
 
+	retArchives.reserve(8);
+	tmpArchives.reserve(8);
 
-	std::vector<std::string> ret;
+	while (!archiveQueue.empty()) {
+		// protect against circular dependencies; worst case is if all archives form one huge chain
+		if (archiveQueue.size() > archiveInfos.size())
+			break;
 
-	const std::string& resolvedName = ArchiveNameResolver::GetGame(root);
-	const std::string& lcName = StringToLower(ArchiveFromName(resolvedName));
+		const std::string& resolvedName = ArchiveNameResolver::GetGame(archiveQueue.front());
+		const std::string& lowerCaseName = StringToLower(ArchiveFromName(resolvedName));
 
-	auto aii = archiveInfos.find(lcName);
-	auto aij = aii;
+		archiveQueue.pop_front();
 
-#ifdef UNITSYNC
-	// add unresolved deps for unitsync so it still shows this file
-	const auto HandleUnresolvedDep = [&ret](const std::string& archName) { ret.push_back(archName); return true; };
-#else
-	const auto HandleUnresolvedDep = [&ret](const std::string& archName) { (void) archName; return false; };
-#endif
+		const ArchiveInfo* ai = nullptr;
 
+		const auto CanAddSubDependencies = [&](const std::string& lwrCaseName) -> const ArchiveInfo* {
+			#ifdef UNITSYNC
+			// add unresolved deps for unitsync so it still shows this file
+			const auto HandleUnresolvedDep = [&tmpArchives](const std::string& archName) { tmpArchives.push_back(archName); return true; };
+			#else
+			const auto HandleUnresolvedDep = [&tmpArchives](const std::string& archName) { (void) archName; return false; };
+			#endif
 
-	if (aii == archiveInfos.end()) {
-		if (HandleUnresolvedDep(lcName)) return ret;
-		throw content_error("Archive \"" + lcName + "\" not found");
-	} else {
-		const ArchiveInfo* ai = &aii->second;
+			auto aii = archiveInfos.find(lwrCaseName);
+			auto aij = aii;
 
-		// Check if this archive has an unresolved replacement
-		while (!ai->replaced.empty()) {
-			if ((aii = archiveInfos.find(ai->replaced)) == archiveInfos.end()) {
-				if (HandleUnresolvedDep(lcName)) return ret;
-				throw content_error("Replacement \"" + ai->replaced + "\" for archive \"" + lcName + "\" not found");
+			const ArchiveInfo* ai = nullptr;
+
+			if (aii == archiveInfos.end()) {
+				if (!HandleUnresolvedDep(lwrCaseName))
+					throw content_error("Archive \"" + lwrCaseName + "\" not found");
+
+				return nullptr;
 			}
 
-			aij = aii;
-			ai = &aij->second;
+			ai = &aii->second;
+
+			// check if this archive has an unresolved replacement
+			while (!ai->replaced.empty()) {
+				if ((aii = archiveInfos.find(ai->replaced)) == archiveInfos.end()) {
+					if (!HandleUnresolvedDep(lwrCaseName))
+						throw content_error("Replacement \"" + ai->replaced + "\" for archive \"" + lwrCaseName + "\" not found");
+
+					return nullptr;
+				}
+
+				aij = aii;
+				ai = &aij->second;
+			}
+
+			return ai;
+		};
+
+
+		if ((ai = CanAddSubDependencies(lowerCaseName)) == nullptr)
+			continue;
+
+		tmpArchives.push_back(ai->archiveData.GetNameVersioned());
+
+		// expand dependencies in depth-first order
+		for (const std::string& archiveDep: ai->archiveData.GetDependencies()) {
+			assert(archiveDep != rootArchive);
+			assert(archiveDep != tmpArchives.back());
+			archiveQueue.push_front(archiveDep);
 		}
 	}
 
+	std::sort(tmpArchives.begin(), tmpArchives.end());
 
-	// add depth-first
-	ret.push_back(aii->second.archiveData.GetNameVersioned());
-
-	for (const std::string& dep: aii->second.archiveData.GetDependencies()) {
-		assert(dep != root);
-
-		for (const std::string& depSub: GetAllArchivesUsedBy(dep, depth + 1)) {
-			AddDependency(ret, depSub);
+	for (std::string& archiveName: tmpArchives) {
+		if (retArchives.empty() || archiveName != retArchives.back()) {
+			retArchives.emplace_back(std::move(archiveName));
 		}
 	}
 
-	return ret;
+	return retArchives;
 }
 
 
@@ -1160,7 +1189,8 @@ unsigned int CArchiveScanner::GetSingleArchiveChecksum(const std::string& filePa
 
 unsigned int CArchiveScanner::GetArchiveCompleteChecksum(const std::string& name)
 {
-	const std::vector<std::string>& ars = GetAllArchivesUsedBy(name);
+	const std::vector<std::string> ars = std::move(GetAllArchivesUsedBy(name));
+
 	unsigned int checksum = 0;
 
 	for (const std::string& depName: ars) {

@@ -131,14 +131,12 @@ bool CVFSHandler::AddArchive(const std::string& archiveName, bool overwrite)
 
 bool CVFSHandler::AddArchiveWithDeps(const std::string& archiveName, bool overwrite)
 {
-	const std::vector<std::string> &ars = archiveScanner->GetAllArchivesUsedBy(archiveName);
+	const std::vector<std::string> ars = std::move(archiveScanner->GetAllArchivesUsedBy(archiveName));
 
 	if (ars.empty())
 		throw content_error("Could not find any archives for '" + archiveName + "'.");
 
 	for (auto it = ars.cbegin(); it != ars.cend(); ++it) {
-		assert(*it != archiveName);
-
 		if (!AddArchive(*it, overwrite))
 			throw content_error("Failed loading archive '" + *it + "', dependency of '" + archiveName + "'.");
 	}

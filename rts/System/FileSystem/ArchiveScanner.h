@@ -123,7 +123,7 @@ public:
 	std::vector<ArchiveData> GetAllMods() const;
 	std::vector<ArchiveData> GetAllArchives() const;
 
-	std::vector<std::string> GetAllArchivesUsedBy(const std::string& root, int depth = 0) const;
+	std::vector<std::string> GetAllArchivesUsedBy(const std::string& rootArchive) const;
 
 public:
 	/// checksum of the given archive (without dependencies)
