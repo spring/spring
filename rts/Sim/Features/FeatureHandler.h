@@ -42,7 +42,7 @@ class CFeatureHandler : public spring::noncopyable
 	CR_DECLARE_STRUCT(CFeatureHandler)
 
 public:
-	CFeatureHandler() { assert(std::hash<int>{}(12345678) == 12345678); }
+	CFeatureHandler() { activeFeatureIDs.rehash(128); }
 	~CFeatureHandler();
 
 	CFeature* LoadFeature(const FeatureLoadParams& params);
