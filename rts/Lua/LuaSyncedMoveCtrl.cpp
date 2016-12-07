@@ -548,8 +548,8 @@ static int SetMoveTypeData(lua_State* L, AMoveType* moveType, const char* caller
 {
 	int numAssignedValues = 0;
 
-	if (moveType == NULL) {
-		luaL_error(L, "[%s] unit %d has incompatible movetype for %s", __FUNCTION__, lua_tonumber(L, 1), caller);
+	if (moveType == nullptr) {
+		luaL_error(L, "[%s] unit %d has incompatible movetype for %s", __FUNCTION__, lua_tointeger(L, 1), caller);
 		return numAssignedValues;
 	}
 
