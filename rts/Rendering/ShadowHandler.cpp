@@ -613,10 +613,6 @@ float4 CShadowHandler::GetShadowProjectionScales(CCamera* cam, const float3& pro
 	//   become less sharp as the viewing volume increases (through eg.camera
 	//   rotations) and geometry can be omitted in some cases
 	//
-	// NOTE:
-	//   when DynamicSun is enabled, the orbit is always circular in the xz
-	//   plane, instead of elliptical when the map has an aspect-ratio != 1
-	//
 	switch (shadowProMode) {
 		case SHADOWPROMODE_CAM_CENTER: {
 			projScales.x = GetOrthoProjectedFrustumRadius(cam, projMidPos[2]);

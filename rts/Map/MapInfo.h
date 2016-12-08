@@ -117,17 +117,15 @@ public:
 
 	/** settings read from "MAP\LIGHT" section */
 	struct light_t {
-		float4 sunDir;     ///< Holds vector for the direction of the sun
-		float sunOrbitTime;
-		float sunStartAngle;
+		float4 sunDir;     ///< .xyz is direction vector; .w is intensity
 		float3 groundAmbientColor;
 		float3 groundDiffuseColor;
 		float3 groundSpecularColor;
 		float  groundShadowDensity;
-		float4 unitAmbientColor;
-		float4 unitDiffuseColor;
-		float  unitShadowDensity;
-		float3 unitSpecularColor;
+		float4 modelAmbientColor;
+		float4 modelDiffuseColor;
+		float  modelShadowDensity;
+		float3 modelSpecularColor;
 		float  specularExponent;
 	} light;
 

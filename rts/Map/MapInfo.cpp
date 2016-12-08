@@ -20,7 +20,6 @@
 #endif
 
 #include <cassert>
-#include <cfloat>
 
 
 // Before delete, the const is const_cast'ed away. There are
@@ -189,16 +188,9 @@ void CMapInfo::ReadLight()
 {
 	const LuaTable& lightTable = parser->GetRoot().SubTable("lighting");
 
-	light.sunStartAngle = lightTable.GetFloat("sunStartAngle", 0.0f);
-	light.sunOrbitTime = lightTable.GetFloat("sunOrbitTime", 10 * GAME_SPEED);
-	light.sunDir = lightTable.GetFloat4("sunDir", float4(0.0f, 1.0f, 2.0f, FLT_MAX));
-
-	if (light.sunDir.w == FLT_MAX) {
-		// if four params are not specified for sundir, fallback to the old three param format
-		light.sunDir = lightTable.GetFloat3("sunDir", float3(0.0f, 1.0f, 2.0f));
-		light.sunDir.w = FLT_MAX;
-	}
-
+	// read the float4 direction first; keep it if the float3 value does not exist
+	light.sunDir =  lightTable.GetFloat4("sunDir", float4(0.0f, 1.0f, 2.0f, 1.0f));
+	light.sunDir = {lightTable.GetFloat3("sunDir", light.sunDir), light.sunDir.w};
 	light.sunDir.ANormalize();
 
 	light.groundAmbientColor  = lightTable.GetFloat3("groundAmbientColor", float3(0.5f, 0.5f, 0.5f));
@@ -206,15 +198,15 @@ void CMapInfo::ReadLight()
 	light.groundSpecularColor = lightTable.GetFloat3("groundSpecularColor", float3(0.1f, 0.1f, 0.1f));
 	light.groundShadowDensity = lightTable.GetFloat("groundShadowDensity", 0.8f);
 
-	light.unitAmbientColor  = lightTable.GetFloat3("unitAmbientColor", float3(0.4f, 0.4f, 0.4f));
-	light.unitDiffuseColor  = lightTable.GetFloat3("unitDiffuseColor", float3(0.7f, 0.7f, 0.7f));
-	light.unitSpecularColor = lightTable.GetFloat3("unitSpecularColor", light.unitDiffuseColor);
-	light.unitShadowDensity = lightTable.GetFloat("unitShadowDensity", 0.8f);
+	light.modelAmbientColor  = lightTable.GetFloat3("unitAmbientColor", float3(0.4f, 0.4f, 0.4f));
+	light.modelDiffuseColor  = lightTable.GetFloat3("unitDiffuseColor", float3(0.7f, 0.7f, 0.7f));
+	light.modelSpecularColor = lightTable.GetFloat3("unitSpecularColor", light.modelDiffuseColor);
+	light.modelShadowDensity = lightTable.GetFloat("unitShadowDensity", 0.8f);
 
 	light.specularExponent = lightTable.GetFloat("specularExponent", 100.0f);
 
 	light.groundShadowDensity = Clamp(light.groundShadowDensity, 0.0f, 1.0f);
-	light.unitShadowDensity   = Clamp(light.unitShadowDensity,   0.0f, 1.0f);
+	light.modelShadowDensity   = Clamp(light.modelShadowDensity,   0.0f, 1.0f);
 }
 
 

@@ -1031,8 +1031,8 @@ void LuaOpenGL::SetupScreenLighting()
 
 	const float sunFactor = 1.0f;
 	const float sf = sunFactor;
-	const float* la = sunLighting->unitAmbientColor;
-	const float* ld = sunLighting->unitDiffuseColor;
+	const float* la = sunLighting->modelAmbientColor;
+	const float* ld = sunLighting->modelDiffuseColor;
 
 	const float sunLightAmbt[4] = { la[0]*sf, la[1]*sf, la[2]*sf, la[3]*sf };
 	const float sunLightDiff[4] = { ld[0]*sf, ld[1]*sf, ld[2]*sf, ld[3]*sf };
@@ -4558,16 +4558,15 @@ int LuaOpenGL::GetSun(lua_State* L)
 		return 3;
 	}
 
-	const bool unitMode = lua_israwstring(L, 2) &&
-	                      (strcmp(lua_tostring(L, 2), "unit") == 0);
+	const bool unitMode = lua_israwstring(L, 2) && (strcmp(lua_tostring(L, 2), "unit") == 0);
 
-	const float3* data = NULL;
+	const float3* data = nullptr;
 
 	if (param == "shadowDensity") {
 		if (!unitMode) {
-			lua_pushnumber(L, sky->GetLight()->GetGroundShadowDensity());
+			lua_pushnumber(L, sunLighting->groundShadowDensity);
 		} else {
-			lua_pushnumber(L, sky->GetLight()->GetUnitShadowDensity());
+			lua_pushnumber(L, sunLighting->modelShadowDensity);
 		}
 		return 1;
 	}
@@ -4575,25 +4574,25 @@ int LuaOpenGL::GetSun(lua_State* L)
 		if (!unitMode) {
 			data = &sunLighting->groundDiffuseColor;
 		} else {
-			data = &sunLighting->unitDiffuseColor;
+			data = &sunLighting->modelDiffuseColor;
 		}
 	}
 	else if (param == "ambient") {
 		if (!unitMode) {
 			data = &sunLighting->groundAmbientColor;
 		} else {
-			data = &sunLighting->unitAmbientColor;
+			data = &sunLighting->modelAmbientColor;
 		}
 	}
 	else if (param == "specular") {
 		if (!unitMode) {
 			data = &sunLighting->groundSpecularColor;
 		} else {
-			data = &sunLighting->unitSpecularColor;
+			data = &sunLighting->modelSpecularColor;
 		}
 	}
 
-	if (data != NULL) {
+	if (data != nullptr) {
 		lua_pushnumber(L, data->x);
 		lua_pushnumber(L, data->y);
 		lua_pushnumber(L, data->z);

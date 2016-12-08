@@ -444,7 +444,7 @@ CBumpWater::CBumpWater()
 		GLSLDefineConstf1(definitions, "PerlinLacunarity", mapInfo->water.perlinLacunarity);
 		GLSLDefineConstf1(definitions, "PerlinAmp",        mapInfo->water.perlinAmplitude);
 		GLSLDefineConstf1(definitions, "WindSpeed",        mapInfo->water.windSpeed);
-		GLSLDefineConstf1(definitions, "shadowDensity",  sky->GetLight()->GetGroundShadowDensity());
+		GLSLDefineConstf1(definitions, "shadowDensity",  sunLighting->groundShadowDensity);
 	}
 
 	{
@@ -1039,7 +1039,7 @@ void CBumpWater::SetUniforms()
 	glUniform1f( uniforms[16], mapInfo->water.perlinLacunarity);
 	glUniform1f( uniforms[17], mapInfo->water.perlinAmplitude);
 	glUniform1f( uniforms[18], mapInfo->water.windSpeed);
-	glUniform1f( uniforms[19], sky->GetLight()->GetGroundShadowDensity());
+	glUniform1f( uniforms[19], sunLighting->groundShadowDensity);
 }
 
 
@@ -1147,18 +1147,18 @@ void CBumpWater::DrawRefraction(CGame* game)
 		0.0, -1.0, 0.0, 0.0, // models
 	};
 
-	const float3 oldsun = sunLighting->unitDiffuseColor;
-	const float3 oldambient = sunLighting->unitAmbientColor;
+	const float3 oldsun = sunLighting->modelDiffuseColor;
+	const float3 oldambient = sunLighting->modelAmbientColor;
 
-	sunLighting->unitDiffuseColor *= float3(0.5f, 0.7f, 0.9f);
-	sunLighting->unitAmbientColor *= float3(0.6f, 0.8f, 1.0f);
+	sunLighting->modelDiffuseColor *= float3(0.5f, 0.7f, 0.9f);
+	sunLighting->modelAmbientColor *= float3(0.6f, 0.8f, 1.0f);
 
 	DrawRefractions(&clipPlaneEqs[0], true, true);
 
 	glEnable(GL_FOG);
 
-	sunLighting->unitDiffuseColor = oldsun;
-	sunLighting->unitAmbientColor = oldambient;
+	sunLighting->modelDiffuseColor = oldsun;
+	sunLighting->modelAmbientColor = oldambient;
 }
 
 

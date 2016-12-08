@@ -1291,23 +1291,6 @@ public:
 
 
 
-class DynamicSunActionExecutor : public IUnsyncedActionExecutor {
-public:
-	DynamicSunActionExecutor() : IUnsyncedActionExecutor("DynamicSun",
-			"Enable/Disable dynamic-sun rendering") {}
-
-	bool Execute(const UnsyncedAction& action) const {
-
-		bool dynamicSun = sky->GetLight()->IsDynamic();
-		InverseOrSetBool(dynamicSun, action.GetArgs());
-		sky->SetLight(dynamicSun);
-		LogSystemStatus("dynamic-sun rendering", sky->GetLight()->IsDynamic());
-		return true;
-	}
-};
-
-
-
 class SpeedControlActionExecutor : public IUnsyncedActionExecutor {
 public:
 	SpeedControlActionExecutor() : IUnsyncedActionExecutor("SpeedControl",
@@ -3091,7 +3074,6 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new CreateVideoActionExecutor());
 	AddActionExecutor(new DrawTreesActionExecutor());
 	AddActionExecutor(new DynamicSkyActionExecutor());
-	AddActionExecutor(new DynamicSunActionExecutor());
 	AddActionExecutor(new SpeedControlActionExecutor());
 	AddActionExecutor(new GameInfoActionExecutor());
 	AddActionExecutor(new HideInterfaceActionExecutor());

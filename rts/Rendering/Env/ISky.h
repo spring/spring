@@ -29,7 +29,6 @@ public:
 	float GetCloudDensity() const { return cloudDensity; }
 
 	ISkyLight* GetLight() const { return skyLight; }
-	void SetLight(bool dynamic);
 
 	bool SunVisible(const float3 pos) const;
 

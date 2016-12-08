@@ -486,19 +486,19 @@ void CDynWater::DrawRefraction(CGame* game)
 		0.0, -1.0, 0.0, 0.0, // models
 	};
 
-	const float3 oldsun = sunLighting->unitDiffuseColor;
-	const float3 oldambient = sunLighting->unitAmbientColor;
+	const float3 oldsun = sunLighting->modelDiffuseColor;
+	const float3 oldambient = sunLighting->modelAmbientColor;
 
-	sunLighting->unitDiffuseColor *= float3(0.5f, 0.7f, 0.9f);
-	sunLighting->unitAmbientColor *= float3(0.6f, 0.8f, 1.0f);
+	sunLighting->modelDiffuseColor *= float3(0.5f, 0.7f, 0.9f);
+	sunLighting->modelAmbientColor *= float3(0.6f, 0.8f, 1.0f);
 
 	DrawRefractions(&clipPlaneEqs[0], true, true);
 
 	glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 	glClearColor(sky->fogColor[0], sky->fogColor[1], sky->fogColor[2], 1);
 
-	sunLighting->unitDiffuseColor = oldsun;
-	sunLighting->unitAmbientColor = oldambient;
+	sunLighting->modelDiffuseColor = oldsun;
+	sunLighting->modelAmbientColor = oldambient;
 }
 
 void CDynWater::DrawWaves()

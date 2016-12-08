@@ -250,8 +250,6 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(SetAtmosphere);
 	REGISTER_LUA_CFUNC(SetSunLighting);
-	REGISTER_LUA_CFUNC(SetSunParameters);
-	REGISTER_LUA_CFUNC(SetSunManualControl);
 	REGISTER_LUA_CFUNC(SetSunDirection);
 
 	REGISTER_LUA_CFUNC(SendSkirmishAIMessage);
@@ -2790,11 +2788,16 @@ int LuaUnsyncedCtrl::SetAtmosphere(lua_State* L)
 	return 0;
 }
 
+int LuaUnsyncedCtrl::SetSunDirection(lua_State* L)
+{
+	sky->GetLight()->SetLightDir(float4(luaL_checkfloat(L, 1), luaL_checkfloat(L, 2), luaL_checkfloat(L, 3), luaL_optfloat(L, 4, 1.0f)));
+	return 0;
+}
+
 int LuaUnsyncedCtrl::SetSunLighting(lua_State* L)
 {
-	if (!lua_istable(L, 1)) {
+	if (!lua_istable(L, 1))
 		luaL_error(L, "Incorrect arguments to SetSunLighting()");
-	}
 
 	CSunLighting sl = *sunLighting;
 
@@ -2825,46 +2828,6 @@ int LuaUnsyncedCtrl::SetSunLighting(lua_State* L)
 	*sunLighting = sl;
 	return 0;
 }
-
-int LuaUnsyncedCtrl::SetSunParameters(lua_State* L)
-{
-	DynamicSkyLight* dynSkyLight = dynamic_cast<DynamicSkyLight*>(sky->GetLight());
-
-	if (dynSkyLight == NULL)
-		return 0;
-
-	const float4 sunDir(luaL_checkfloat(L, 1), luaL_checkfloat(L, 2), luaL_checkfloat(L, 3), luaL_checkfloat(L, 4));
-	const float startAngle = luaL_checkfloat(L, 5);
-	const float orbitTime = luaL_checkfloat(L, 6);
-
-	dynSkyLight->SetLightParams(sunDir, startAngle, orbitTime);
-	return 0;
-}
-
-int LuaUnsyncedCtrl::SetSunManualControl(lua_State* L)
-{
-	DynamicSkyLight* dynSkyLight = dynamic_cast<DynamicSkyLight*>(sky->GetLight());
-
-	if (dynSkyLight == NULL)
-		return 0;
-
-	dynSkyLight->SetLuaControl(luaL_checkboolean(L, 1));
-	return 0;
-}
-
-int LuaUnsyncedCtrl::SetSunDirection(lua_State* L)
-{
-	DynamicSkyLight* dynSkyLight = dynamic_cast<DynamicSkyLight*>(sky->GetLight());
-
-	if (dynSkyLight == NULL)
-		return 0;
-	if (!dynSkyLight->GetLuaControl())
-		return 0;
-
-	dynSkyLight->SetLightDir(float3(luaL_checkfloat(L, 1), luaL_checkfloat(L, 2), luaL_checkfloat(L, 3)));
-	return 0;
-}
-
 
 
 /******************************************************************************/

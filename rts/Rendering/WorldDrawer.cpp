@@ -155,7 +155,6 @@ void CWorldDrawer::Update(bool newSimFrame)
 	if (newSimFrame) {
 		projectileDrawer->UpdateTextures();
 		sky->Update();
-		sky->GetLight()->Update();
 		water->Update();
 	}
 
@@ -182,7 +181,7 @@ void CWorldDrawer::GenerateIBLTextures() const
 		cubeMapHandler->UpdateReflectionTexture();
 	}
 
-	if (sky->GetLight()->IsDynamic()) {
+	if (sky->GetLight()->Update()) {
 		{
 			SCOPED_TIMER("Draw::World::UpdateSpecTex");
 			SCOPED_GMARKER("Draw::World::UpdateSpecTex");

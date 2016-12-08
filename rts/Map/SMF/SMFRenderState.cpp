@@ -228,7 +228,7 @@ void SMFRenderStateGLSL::Update(
 			glslShaders[n]->SetUniform3v("groundDiffuseColor",  &sunLighting->groundDiffuseColor[0]);
 			glslShaders[n]->SetUniform3v("groundSpecularColor", &sunLighting->groundSpecularColor[0]);
 			glslShaders[n]->SetUniform  ("groundSpecularExponent", sunLighting->specularExponent);
-			glslShaders[n]->SetUniform  ("groundShadowDensity", sky->GetLight()->GetGroundShadowDensity());
+			glslShaders[n]->SetUniform  ("groundShadowDensity", sunLighting->groundShadowDensity);
 
 			glslShaders[n]->SetUniform3v("waterMinColor",    &mapInfo->water.minColor[0]);
 			glslShaders[n]->SetUniform3v("waterBaseColor",   &mapInfo->water.baseColor[0]);
@@ -438,7 +438,7 @@ void SMFRenderStateARB::Enable(const CSMFGroundDrawer* smfGroundDrawer, const Dr
 	arbShaders[ARB_SHADER_CURRENT]->SetUniform4f(14, 0.02f, 0.02f, 0, 1);
 	arbShaders[ARB_SHADER_CURRENT]->SetUniformTarget(GL_FRAGMENT_PROGRAM_ARB);
 	arbShaders[ARB_SHADER_CURRENT]->SetUniform4f(10, ambientColor.x, ambientColor.y, ambientColor.z, 1);
-	arbShaders[ARB_SHADER_CURRENT]->SetUniform4f(11, 0, 0, 0, sky->GetLight()->GetGroundShadowDensity());
+	arbShaders[ARB_SHADER_CURRENT]->SetUniform4f(11, 0, 0, 0, sunLighting->groundShadowDensity);
 
 	glMatrixMode(GL_MATRIX0_ARB);
 	glLoadMatrixf(shadowHandler->GetShadowMatrixRaw());
@@ -588,14 +588,14 @@ void SMFRenderStateGLSL::SetCurrentShader(const DrawPass::e& drawPass) {
 
 void SMFRenderStateARB::UpdateCurrentShaderSky(const ISkyLight* skyLight) const {
 	arbShaders[ARB_SHADER_CURRENT]->Enable();
-	arbShaders[ARB_SHADER_CURRENT]->SetUniform4f(11, 0, 0, 0, skyLight->GetGroundShadowDensity());
+	arbShaders[ARB_SHADER_CURRENT]->SetUniform4f(11, 0, 0, 0, sunLighting->groundShadowDensity);
 	arbShaders[ARB_SHADER_CURRENT]->Disable();
 }
 
 void SMFRenderStateGLSL::UpdateCurrentShaderSky(const ISkyLight* skyLight) const {
 	glslShaders[GLSL_SHADER_CURRENT]->Enable();
 	glslShaders[GLSL_SHADER_CURRENT]->SetUniform4v("lightDir", &skyLight->GetLightDir().x);
-	glslShaders[GLSL_SHADER_CURRENT]->SetUniform("groundShadowDensity", skyLight->GetGroundShadowDensity());
+	glslShaders[GLSL_SHADER_CURRENT]->SetUniform("groundShadowDensity", sunLighting->groundShadowDensity);
 	glslShaders[GLSL_SHADER_CURRENT]->SetUniform3v("groundAmbientColor",  &sunLighting->groundAmbientColor[0]);
 	glslShaders[GLSL_SHADER_CURRENT]->SetUniform3v("groundDiffuseColor",  &sunLighting->groundDiffuseColor[0]);
 	glslShaders[GLSL_SHADER_CURRENT]->SetUniform3v("groundSpecularColor", &sunLighting->groundSpecularColor[0]);

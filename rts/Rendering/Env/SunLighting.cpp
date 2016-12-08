@@ -20,9 +20,13 @@ CSunLighting::CSunLighting() {
 	colors[1] = &groundDiffuseColor;
 	colors[2] = &groundSpecularColor;
 
-	colors[3] = &unitAmbientColor;
-	colors[4] = &unitDiffuseColor;
-	colors[5] = &unitSpecularColor;
+	colors[3] = &modelAmbientColor;
+	colors[4] = &modelDiffuseColor;
+	colors[5] = &modelSpecularColor;
+
+	specularExponent    = 0.0f;
+	groundShadowDensity = 0.0f;
+	modelShadowDensity  = 0.0f;
 }
 
 // need an explicit copy-ctor because of colors[]
@@ -31,9 +35,9 @@ CSunLighting::CSunLighting(const CSunLighting& sl) {
 	colors[1] = &groundDiffuseColor;
 	colors[2] = &groundSpecularColor;
 
-	colors[3] = &unitAmbientColor;
-	colors[4] = &unitDiffuseColor;
-	colors[5] = &unitSpecularColor;
+	colors[3] = &modelAmbientColor;
+	colors[4] = &modelDiffuseColor;
+	colors[5] = &modelSpecularColor;
 
 	Copy(sl);
 }
@@ -54,11 +58,13 @@ void CSunLighting::Init() {
 	groundDiffuseColor   = light.groundDiffuseColor;
 	groundSpecularColor  = light.groundSpecularColor;
 
-	unitAmbientColor     = light.unitAmbientColor;
-	unitDiffuseColor     = light.unitDiffuseColor;
-	unitSpecularColor    = light.unitSpecularColor;
+	modelAmbientColor    = light.modelAmbientColor;
+	modelDiffuseColor    = light.modelDiffuseColor;
+	modelSpecularColor   = light.modelSpecularColor;
 
 	specularExponent     = light.specularExponent;
+	groundShadowDensity  = light.groundShadowDensity;
+	modelShadowDensity   = light.modelShadowDensity;
 }
 
 void CSunLighting::Copy(const CSunLighting& sl) {
@@ -71,7 +77,9 @@ void CSunLighting::Copy(const CSunLighting& sl) {
 	for (unsigned int n = 0; n < sizeof(colors) / sizeof(colors[0]); n++)
 		*colors[n] = *sl.colors[n];
 
-	specularExponent = sl.specularExponent;
+	specularExponent    = sl.specularExponent;
+	groundShadowDensity = sl.groundShadowDensity;
+	modelShadowDensity  = sl.modelShadowDensity;
 
 	if (!IsGlobalInstance())
 		return;
@@ -91,12 +99,22 @@ bool CSunLighting::SetValue(unsigned int keyHash, const float4 value) {
 		HsiehHash("unitDiffuseColor",  sizeof("unitDiffuseColor" ) - 1, 0),
 		HsiehHash("unitSpecularColor", sizeof("unitSpecularColor") - 1, 0),
 
-		HsiehHash("specularExponent", sizeof("specularExponent") - 1, 0),
+		HsiehHash(   "specularExponent", sizeof(   "specularExponent") - 1, 0),
+		HsiehHash("groundShadowDensity", sizeof("groundShadowDensity") - 1, 0),
+		HsiehHash( "modelShadowDensity", sizeof( "modelShadowDensity") - 1, 0),
 	};
 
-	// special case
+	// special casees
 	if (keyHash == keyHashes[6]) {
 		specularExponent = value.x;
+		return true;
+	}
+	if (keyHash == keyHashes[7]) {
+		groundShadowDensity = value.x;
+		return true;
+	}
+	if (keyHash == keyHashes[8]) {
+		modelShadowDensity = value.x;
 		return true;
 	}
 
@@ -117,6 +135,11 @@ bool CSunLighting::operator == (const CSunLighting& sl) const {
 			return false;
 		}
 	}
+
+	if (groundShadowDensity != sl.groundShadowDensity)
+		return false;
+	if (modelShadowDensity != sl.modelShadowDensity)
+		return false;
 
 	return (specularExponent == sl.specularExponent);
 }
