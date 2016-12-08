@@ -647,8 +647,7 @@ void CAssParser::BuildPieceHierarchy(S3DModel* model, ModelPieceMap& pieceMap, c
 // Iterate over the model and calculate its overall dimensions
 void CAssParser::CalculateModelDimensions(S3DModel* model, S3DModelPiece* piece)
 {
-	CMatrix44f scaleRotMat;
-	piece->ComposeTransform(scaleRotMat, ZeroVector, ZeroVector, piece->scales);
+	const CMatrix44f scaleRotMat = std::move(piece->ComposeTransform(ZeroVector, ZeroVector, piece->scales));
 
 	// cannot set this until parent relations are known, so either here or in BuildPieceHierarchy()
 	piece->goffset = scaleRotMat.Mul(piece->offset) + ((piece->parent != nullptr)? piece->parent->goffset: ZeroVector);

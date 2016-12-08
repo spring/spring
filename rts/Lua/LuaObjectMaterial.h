@@ -138,6 +138,7 @@ public:
 	}
 
 	bool Enabled() const { return (lodCount > 0); }
+	bool ValidLOD(unsigned int lod) const { return (lod < lodCount); }
 
 	const LuaObjectMaterial* GetLuaMaterials() const { return &luaMats[0]; }
 

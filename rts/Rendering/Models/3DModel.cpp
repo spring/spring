@@ -16,13 +16,14 @@
 #include <cctype>
 #include <cstring>
 
-CR_BIND(LocalModelPiece, (NULL))
+CR_BIND(LocalModelPiece, (nullptr))
 CR_REG_METADATA(LocalModelPiece, (
 	CR_MEMBER(pos),
 	CR_MEMBER(rot),
 	CR_MEMBER(dir),
 	CR_MEMBER(colvol),
 	CR_MEMBER(scriptSetVisible),
+	CR_MEMBER(blockScriptAnims),
 	CR_MEMBER(lmodelPieceIndex),
 	CR_MEMBER(scriptPieceIndex),
 	CR_MEMBER(parent),
@@ -41,7 +42,6 @@ CR_REG_METADATA(LocalModelPiece, (
 
 CR_BIND(LocalModel, )
 CR_REG_METADATA(LocalModel, (
-	CR_IGNORED(lodCount), //FIXME?
 	CR_MEMBER(pieces),
 
 	CR_IGNORED(boundingVolume),
@@ -68,7 +68,7 @@ void S3DModel::DeletePieces(S3DModelPiece* piece)
  */
 
 S3DModelPiece::S3DModelPiece()
-	: parent(NULL)
+	: parent(nullptr)
 	, axisMapType(AXIS_MAPPING_XYZ)
 	, scales(OnesVector)
 	, mins(DEF_MIN_SIZE)
@@ -94,10 +94,8 @@ void S3DModelPiece::CreateDispList()
 
 void S3DModelPiece::DrawStatic() const
 {
-	CMatrix44f mat;
-
 	// get the static transform (sans script influences)
-	ComposeTransform(mat, offset, ZeroVector, scales);
+	const CMatrix44f mat = std::move(ComposeTransform(offset, ZeroVector, scales));
 
 	glPushMatrix();
 	glMultMatrixf(mat);
@@ -262,7 +260,7 @@ void LocalModel::DrawPieces() const
 
 void LocalModel::DrawPiecesLOD(unsigned int lod) const
 {
-	if (lod > lodCount)
+	if (!luaMaterialData.ValidLOD(lod))
 		return;
 
 	for (const auto& p: pieces) {
@@ -270,10 +268,9 @@ void LocalModel::DrawPiecesLOD(unsigned int lod) const
 	}
 }
 
-void LocalModel::SetLODCount(unsigned int count)
+void LocalModel::SetLODCount(unsigned int lodCount)
 {
 	assert(Initialized());
-	lodCount = count;
 
 	luaMaterialData.SetLODCount(lodCount);
 	pieces[0].SetLODCount(lodCount);
@@ -282,7 +279,7 @@ void LocalModel::SetLODCount(unsigned int count)
 
 void LocalModel::SetOriginalPieces(const S3DModelPiece* mp, int& idx)
 {
-	pieces[idx].original = mp;
+	pieces[idx  ].original = mp;
 	pieces[idx++].dispListID = mp->GetDisplayListID();
 
 	for (unsigned int i = 0; i < mp->GetChildCount(); i++) {
@@ -301,16 +298,13 @@ void LocalModel::SetModel(const S3DModel* model, bool initialize)
 		assert(pieces.size() == model->numPieces);
 		int idx = 0;
 		SetOriginalPieces(model->GetRootPiece(), idx);
-		assert (idx == model->numPieces);
-		pieces[0].UpdateMatricesRec(true);
+		assert(idx == model->numPieces);
+		pieces[0].UpdateChildMatricesRec(true);
 		UpdateBoundingVolume();
 		return;
 	}
 
 	assert(pieces.size() == 0);
-
-	lodCount = 0;
-
 	pieces.reserve(model->numPieces);
 
 	CreateLocalModelPieces(model->GetRootPiece());
@@ -318,7 +312,7 @@ void LocalModel::SetModel(const S3DModel* model, bool initialize)
 	// must recursively update matrices here too: for features
 	// LocalModel::Update is never called, but they might have
 	// baked piece rotations (if .dae)
-	pieces[0].UpdateMatricesRec(false);
+	pieces[0].UpdateChildMatricesRec(false);
 	UpdateBoundingVolume();
 
 	assert(pieces.size() == model->numPieces);
@@ -326,7 +320,7 @@ void LocalModel::SetModel(const S3DModel* model, bool initialize)
 
 LocalModelPiece* LocalModel::CreateLocalModelPieces(const S3DModelPiece* mpParent)
 {
-	LocalModelPiece* lmpChild = NULL;
+	LocalModelPiece* lmpChild = nullptr;
 
 	// construct an LMP(mp) in-place
 	pieces.emplace_back(mpParent);
@@ -418,19 +412,20 @@ LocalModelPiece::LocalModelPiece(const S3DModelPiece* piece)
 	, dirty(true)
 
 	, scriptSetVisible(piece->HasGeometryData())
+	, blockScriptAnims(false)
 
 	, lmodelPieceIndex(-1)
 	, scriptPieceIndex(-1)
 
 	, original(piece)
-	, parent(NULL) // set later
+	, parent(nullptr) // set later
 {
-	assert(piece != NULL);
+	assert(piece != nullptr);
 
 	pos = piece->offset;
 	dir = piece->GetEmitDir();
 
-	UpdateMatrix();
+	pieceSpaceMat = std::move(CalcPieceSpaceMatrix(pos, rot, original->scales));
 	dispListID = piece->GetDisplayListID();
 
 	children.reserve(piece->children.size());
@@ -438,35 +433,43 @@ LocalModelPiece::LocalModelPiece(const S3DModelPiece* piece)
 
 void LocalModelPiece::SetDirty() {
 	dirty = true;
+
 	for (LocalModelPiece* child: children) {
-		if (!child->dirty)
-			child->SetDirty();
+		if (child->dirty)
+			continue;
+		child->SetDirty();
 	}
 }
 
-void LocalModelPiece::UpdateMatrix() const
-{
-	original->ComposeTransform(pieceSpaceMat.LoadIdentity(), pos, rot, original->scales);
+void LocalModelPiece::SetPosOrRot(const float3& src, float3& dst) {
+	if (blockScriptAnims)
+		return;
+	if (!dirty && !dst.same(src))
+		SetDirty();
+
+	dst = src;
 }
 
-void LocalModelPiece::UpdateMatricesRec(bool updateChildMatrices) const
+
+void LocalModelPiece::UpdateChildMatricesRec(bool updateChildMatrices) const
 {
 	if (dirty) {
 		dirty = false;
-		UpdateMatrix();
 		updateChildMatrices = true;
+
+		pieceSpaceMat = std::move(CalcPieceSpaceMatrix(pos, rot, original->scales));
 	}
 
 	if (updateChildMatrices) {
 		modelSpaceMat = pieceSpaceMat;
 
-		if (parent != NULL) {
+		if (parent != nullptr) {
 			modelSpaceMat >>= parent->modelSpaceMat;
 		}
 	}
 
 	for (unsigned int i = 0; i < children.size(); i++) {
-		children[i]->UpdateMatricesRec(updateChildMatrices);
+		children[i]->UpdateChildMatricesRec(updateChildMatrices);
 	}
 }
 
@@ -476,12 +479,12 @@ void LocalModelPiece::UpdateParentMatricesRec() const
 		parent->UpdateParentMatricesRec();
 
 	dirty = false;
-	UpdateMatrix();
+
+	pieceSpaceMat = std::move(CalcPieceSpaceMatrix(pos, rot, original->scales));
 	modelSpaceMat = pieceSpaceMat;
+
 	if (parent != nullptr)
 		modelSpaceMat >>= parent->modelSpaceMat;
-
-	return;
 }
 
 

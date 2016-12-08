@@ -2251,30 +2251,56 @@ int LuaSyncedCtrl::SetUnitPieceParent(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
 
-	if (unit == NULL)
+	if (unit == nullptr)
 		return 0;
 
-	LocalModelPiece* lmpAlteredPiece = ParseObjectLocalModelPiece(L, unit, 2);
-	if (lmpAlteredPiece == nullptr) {
-		luaL_error(L,  "invalid piece");
-		return 0;
-	}
+	LocalModelPiece* childPiece = ParseObjectLocalModelPiece(L, unit, 2);
 
-	LocalModelPiece* lmpParentPiece = ParseObjectLocalModelPiece(L, unit, 3);
-	if (lmpParentPiece == nullptr) {
-		luaL_error(L,  "invalid parent piece");
+	if (childPiece == nullptr) {
+		luaL_error(L, "invalid piece");
 		return 0;
 	}
 
-	if (lmpAlteredPiece == unit->localModel.GetRoot()) {
-		luaL_error(L,  "Can't change a root piece's parent");
+	LocalModelPiece* parentPiece = ParseObjectLocalModelPiece(L, unit, 3);
+
+	if (parentPiece == nullptr) {
+		luaL_error(L, "invalid parent piece");
 		return 0;
 	}
 
-	lmpAlteredPiece->parent->RemoveChild(lmpAlteredPiece );
-	lmpAlteredPiece->SetParent(lmpParentPiece);
-	lmpParentPiece->AddChild(lmpAlteredPiece);
+	if (childPiece == unit->localModel.GetRoot()) {
+		luaL_error(L, "Can't change a root piece's parent");
+		return 0;
+	}
+
+	childPiece->parent->RemoveChild(childPiece );
+	childPiece->SetParent(parentPiece);
+	parentPiece->AddChild(childPiece);
 	return 0;
+}
+
+int LuaSyncedCtrl::SetUnitPieceMatrix(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+
+	if (unit == nullptr)
+		return 0;
+
+	LocalModelPiece* lmp = ParseObjectLocalModelPiece(L, unit, 2);
+
+	if (lmp == nullptr)
+		return 0;
+
+	CMatrix44f mat;
+
+	if (LuaUtils::ParseFloatArray(L, 3, &mat.m[0], 16) == -1)
+		return 0;
+
+	if (lmp->SetPieceSpaceMatrix(mat))
+		lmp->SetDirty();
+
+	lua_pushboolean(L, lmp->blockScriptAnims);
+	return 1;
 }
 
 

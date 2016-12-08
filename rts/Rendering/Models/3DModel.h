@@ -137,8 +137,8 @@ public:
 		return m;
 	}
 
-	void ComposeTransform(CMatrix44f& m, const float3& t, const float3& r, const float3& s) const {
-
+	CMatrix44f ComposeTransform(const float3& t, const float3& r, const float3& s) const {
+		CMatrix44f m;
 		// note: translating + rotating is faster than
 		// matrix-multiplying (but the branching hurts)
 		//
@@ -147,6 +147,7 @@ public:
 		if (!hasIdentityRot) { m *= bakedRotMatrix; }
 		if (!r.same(ZeroVector)) { m = ComposeRotation(m, r); }
 		if (!s.same(OnesVector)) { m = m.Scale(s); }
+		return m;
 	}
 
 	void SetModelMatrix(const CMatrix44f& m) {
@@ -217,7 +218,7 @@ struct S3DModel
 		, maxs(DEF_MAX_SIZE)
 		, relMidPos(ZeroVector)
 
-		, rootPiece(NULL)
+		, rootPiece(nullptr)
 	{
 	}
 
@@ -261,9 +262,8 @@ struct LocalModelPiece
 {
 	CR_DECLARE_STRUCT(LocalModelPiece)
 
-	LocalModelPiece() : dirty(true) {}
+	LocalModelPiece(): dirty(true) {}
 	LocalModelPiece(const S3DModelPiece* piece);
-	~LocalModelPiece() {}
 
 	void AddChild(LocalModelPiece* c) { children.push_back(c); }
 	void RemoveChild(LocalModelPiece* c) { children.erase(std::find(children.begin(), children.end(), c)); }
@@ -278,19 +278,43 @@ struct LocalModelPiece
 	void DrawLOD(unsigned int lod) const;
 	void SetLODCount(unsigned int count);
 
-	void UpdateMatrix() const;
-	void UpdateMatricesRec(bool updateChildMatrices) const;
+
+	// on-demand functions
+	void UpdateChildMatricesRec(bool updateChildMatrices) const;
 	void UpdateParentMatricesRec() const;
+
+	CMatrix44f CalcPieceSpaceMatrixRaw(const float3& p, const float3& r, const float3& s) const { return (original->ComposeTransform(p, r, s)); }
+	CMatrix44f CalcPieceSpaceMatrix(const float3& p, const float3& r, const float3& s) const {
+		if (blockScriptAnims)
+			return pieceSpaceMat;
+		return (CalcPieceSpaceMatrixRaw(p, r, s));
+	}
 
 	// note: actually OBJECT_TO_WORLD but transform is the same
 	float3 GetAbsolutePos() const { return (GetModelSpaceMatrix().GetPos() * WORLD_TO_OBJECT_SPACE); }
 
 	bool GetEmitDirPos(float3& emitPos, float3& emitDir) const;
 
-	void SetPosition(const float3& p) { if (!dirty && !pos.same(p)) SetDirty(); pos = p; }
-	void SetRotation(const float3& r) { if (!dirty && !rot.same(r)) SetDirty(); rot = r; }
-	void SetDirection(const float3& d) { dir = d; } // unused
+
 	void SetDirty();
+	void SetPosOrRot(const float3& src, float3& dst); // anim-script only
+	void SetPosition(const float3& p) { SetPosOrRot(p, pos); } // anim-script only
+	void SetRotation(const float3& r) { SetPosOrRot(r, rot); } // anim-script only
+
+	bool SetPieceSpaceMatrix(const CMatrix44f& mat) {
+		if ((blockScriptAnims = (mat.GetX() != ZeroVector))) {
+			pieceSpaceMat = mat;
+
+			// neither of these are used outside of animation scripts, and
+			// GetEulerAngles wants a matrix created by PYR rotation while
+			// <rot> is YPR
+			// pos = mat.GetPos();
+			// rot = mat.GetEulerAnglesLftHand();
+			return true;
+		}
+
+		return false;
+	}
 
 	const float3& GetPosition() const { return pos; }
 	const float3& GetRotation() const { return rot; }
@@ -305,17 +329,18 @@ struct LocalModelPiece
 private:
 	float3 pos; // translation relative to parent LMP, *INITIALLY* equal to original->offset
 	float3 rot; // orientation relative to parent LMP, in radians (updated by scripts)
-	float3 dir; // direction (same as emitdir)
+	float3 dir; // cached copy of original->GetEmitDir()
 
 	mutable CMatrix44f pieceSpaceMat; // transform relative to parent LMP (SYNCED), combines <pos> and <rot>
-	mutable CMatrix44f modelSpaceMat; // transform relative to root LMP (SYNCED)
+	mutable CMatrix44f modelSpaceMat; // transform relative to root LMP (SYNCED), chained pieceSpaceMat's
 
 	CollisionVolume colvol;
 
 	mutable bool dirty;
 
 public:
-	bool scriptSetVisible;  // TODO: add (visibility) maxradius!
+	bool scriptSetVisible; // TODO: add (visibility) maxradius!
+	bool blockScriptAnims; // if true, Set{Position,Rotation} are ignored for this piece
 
 	unsigned int lmodelPieceIndex; // index of this piece into LocalModel::pieces
 	unsigned int scriptPieceIndex; // index of this piece into UnitScript::pieces
@@ -333,12 +358,8 @@ struct LocalModel
 {
 	CR_DECLARE_STRUCT(LocalModel)
 
-	LocalModel() {
-		lodCount = 0;
-	}
-	~LocalModel() {
-		pieces.clear();
-	}
+	LocalModel() {}
+	~LocalModel() { pieces.clear(); }
 
 
 	bool HasPiece(unsigned int i) const { return (i < pieces.size()); }
@@ -373,7 +394,7 @@ struct LocalModel
 	}
 
 	void SetModel(const S3DModel* model, bool initialize = true);
-	void SetLODCount(unsigned int count);
+	void SetLODCount(unsigned int lodCount);
 	void UpdateBoundingVolume();
 
 	void SetOriginalPieces(const S3DModelPiece* mp, int& idx);
@@ -410,8 +431,6 @@ private:
 	void DrawPiecesLOD(unsigned int lod) const;
 
 public:
-	unsigned int lodCount;
-
 	std::vector<LocalModelPiece> pieces;
 
 private:
