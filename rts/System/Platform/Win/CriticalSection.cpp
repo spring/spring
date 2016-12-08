@@ -59,7 +59,7 @@ void win_signal::wait_for(spring_time t)
 	DWORD dwWaitResult;
 	do {
 		dwWaitResult = WaitForSingleObject(event, timeout_milliseconds);
-	} while (dwWaitResult != WAIT_OBJECT_0);
+	} while (dwWaitResult != WAIT_OBJECT_0 && dwWaitResult != WAIT_TIMEOUT);
 
 	--sleepers;
 }
