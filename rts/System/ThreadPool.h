@@ -60,7 +60,6 @@ static inline auto parallel_reduce(F&& f, G&& g) -> typename std::result_of<F()>
 #else
 
 #include "TimeProfiler.h"
-#include "System/Log/ILog.h"
 #include "System/Platform/Threading.h"
 #include "System/Threading/SpringThreading.h"
 
@@ -378,7 +377,7 @@ public:
 	void enqueue(const int from, const int to, const int step, F& func)
 	{
 		assert(to >= from);
-		this->remainingTasks = (step == 1) ? (to - from) : ((to - from) / step);
+		this->remainingTasks = (step == 1) ? (to - from) : ((to - from + step - 1) / step);
 		this->curtask = {0};
 		this->from = from;
 		this->to   = to;

@@ -5,6 +5,7 @@
 #include "ThreadPool.h"
 #include "Exceptions.h"
 #include "myMath.h"
+#include "Log/ILog.h"
 #include "Platform/Threading.h"
 #include "Threading/SpringThreading.h"
 #include "TimeProfiler.h"

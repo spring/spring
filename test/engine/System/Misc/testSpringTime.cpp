@@ -371,8 +371,8 @@ BOOST_AUTO_TEST_CASE(Timer)
 	ScopedOnceTimer t("test");
 	sleep_spring(500);
 
-	BOOST_CHECK(t2.GetDuration().toMilliSecsi() >= 500);
-	BOOST_CHECK(t.GetDuration().toMilliSecsi() >= 500);
+	BOOST_CHECK(t2.GetDuration().toMilliSecsi() >= 450);
+	BOOST_CHECK(t.GetDuration().toMilliSecsi() >= 450);
 
 	BOOST_CHECK(t2.GetDuration().toMilliSecsi() <= 550);
 	BOOST_CHECK(t.GetDuration().toMilliSecsi() <= 550);
