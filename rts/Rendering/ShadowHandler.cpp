@@ -205,10 +205,10 @@ void CShadowHandler::LoadShadowGenShaderProgs()
 		for (int i = 0; i < SHADOWGEN_PROGRAM_LAST; i++) {
 			Shader::IProgramObject* po = sh->CreateProgramObject("[ShadowHandler]", shadowGenProgHandles[i] + "GLSL", false);
 			Shader::IShaderObject* vso = sh->CreateShaderObject("GLSL/ShadowGenVertProg.glsl", shadowGenProgDefines[i] + extraDef, GL_VERTEX_SHADER);
-			Shader::IShaderObject* fso = sh->CreateShaderObject("GLSL/ShadowGenFragProg.glsl", shadowGenProgDefines[i] + extraDef, GL_FRAGMENT_SHADER);
+			// Shader::IShaderObject* fso = sh->CreateShaderObject("GLSL/ShadowGenFragProg.glsl", shadowGenProgDefines[i] + extraDef, GL_FRAGMENT_SHADER);
 
 			po->AttachShaderObject(vso);
-			po->AttachShaderObject(fso);
+			// po->AttachShaderObject(fso);
 			po->Link();
 			po->SetUniformLocation("shadowParams");  // idx 0
 			po->SetUniformLocation("cameraDirX");    // idx 1, used by SHADOWGEN_PROGRAM_TREE_NEAR
