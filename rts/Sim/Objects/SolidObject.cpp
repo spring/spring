@@ -352,7 +352,6 @@ float3 CSolidObject::GetDragAccelerationVec(const float4& params) const
 	//
 	// params.xyzw map: {{atmosphere, water}Density, {drag, friction}Coefficient}
 	//
-	const float3 speedSignVec = float3(Sign(speed.x), Sign(speed.y), Sign(speed.z));
 	const float3 dragScaleVec = float3(
 		IsInAir()    * dragScales.x * (0.5f * params.x * params.z * (PI * sqRadius * 0.01f * 0.01f)), // air
 		IsInWater()  * dragScales.y * (0.5f * params.y * params.z * (PI * sqRadius * 0.01f * 0.01f)), // water
@@ -361,29 +360,36 @@ float3 CSolidObject::GetDragAccelerationVec(const float4& params) const
 
 	float3 dragAccelVec;
 
-	dragAccelVec.x += (speed.x * speed.x * dragScaleVec.x * -speedSignVec.x);
-	dragAccelVec.y += (speed.y * speed.y * dragScaleVec.x * -speedSignVec.y);
-	dragAccelVec.z += (speed.z * speed.z * dragScaleVec.x * -speedSignVec.z);
+	const float totalSpeed = speed.Length();
+	
+	const float totalairDrag = dragScaleVec.x * totalSpeed * totalSpeed
+	dragAccelVec.x += (-speed.x / totalSpeed * totalairDrag);
+	dragAccelVec.y += (-speed.y / totalSpeed * totalairDrag);
+	dragAccelVec.z += (-speed.z / totalSpeed * totalairDrag);
 
-	dragAccelVec.x += (speed.x * speed.x * dragScaleVec.y * -speedSignVec.x);
-	dragAccelVec.y += (speed.y * speed.y * dragScaleVec.y * -speedSignVec.y);
-	dragAccelVec.z += (speed.z * speed.z * dragScaleVec.y * -speedSignVec.z);
+	const float totalwaterDrag = dragScaleVec.y * totalSpeed * totalSpeed
+	dragAccelVec.x += (-speed.x / totalSpeed * totalwaterDrag);
+	dragAccelVec.y += (-speed.y / totalSpeed * totalwaterDrag);
+	dragAccelVec.z += (-speed.z / totalSpeed * totalwaterDrag);
 
 	// FIXME?
 	//   magnitude of dynamic friction may or may not depend on speed
 	//   coefficient must be multiplied by mass or it will be useless
 	//   (due to division by mass since the coefficient is normalized)
-	dragAccelVec.x += (math::fabs(speed.x) * dragScaleVec.z * -speedSignVec.x);
-	dragAccelVec.y += (math::fabs(speed.y) * dragScaleVec.z * -speedSignVec.y);
-	dragAccelVec.z += (math::fabs(speed.z) * dragScaleVec.z * -speedSignVec.z);
+	const float totalfriction = dragScaleVec.z * totalSpeed
+	dragAccelVec.x += (-speed.x / totalSpeed * totalfriction);
+	dragAccelVec.y += (-speed.y / totalSpeed * totalfriction);
+	dragAccelVec.z += (-speed.z / totalSpeed * totalfriction);
 
 	// convert from force
 	dragAccelVec /= mass;
 
-	// limit the acceleration
-	dragAccelVec.x = Clamp(dragAccelVec.x, -math::fabs(speed.x), math::fabs(speed.x));
-	dragAccelVec.y = Clamp(dragAccelVec.y, -math::fabs(speed.y), math::fabs(speed.y));
-	dragAccelVec.z = Clamp(dragAccelVec.z, -math::fabs(speed.z), math::fabs(speed.z));
+	// limit the acceleration to twice the reverse speed. If acceleration
+	// happen to be twice the speed in reverse, it simulate rock skipping
+	// on water (speed sign reversal from negative to positive). 
+	dragAccelVec.x = Clamp(dragAccelVec.x, -math::fabs(speed.x)*2, math::fabs(speed.x)*2);
+	dragAccelVec.y = Clamp(dragAccelVec.y, -math::fabs(speed.y)*2, math::fabs(speed.y)*2);
+	dragAccelVec.z = Clamp(dragAccelVec.z, -math::fabs(speed.z)*2, math::fabs(speed.z)*2);
 
 	return dragAccelVec;
 }
