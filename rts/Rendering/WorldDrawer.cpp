@@ -281,7 +281,7 @@ void CWorldDrawer::DrawOpaqueObjects() const
 			SCOPED_TIMER("Draw::World::Foliage");
 			SCOPED_GMARKER("Draw::World::Foliage");
 			grassDrawer->Draw();
-			treeDrawer->Draw(false);
+			treeDrawer->Draw();
 		}
 		smoothHeightMeshDrawer->Draw(1.0f);
 	}
