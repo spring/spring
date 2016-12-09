@@ -204,14 +204,20 @@ void CShadowHandler::LoadShadowGenShaderProgs()
 	if (globalRendering->haveGLSL) {
 		for (int i = 0; i < SHADOWGEN_PROGRAM_LAST; i++) {
 			Shader::IProgramObject* po = sh->CreateProgramObject("[ShadowHandler]", shadowGenProgHandles[i] + "GLSL", false);
-			Shader::IShaderObject* so = sh->CreateShaderObject("GLSL/ShadowGenVertProg.glsl", shadowGenProgDefines[i] + extraDef, GL_VERTEX_SHADER);
+			Shader::IShaderObject* vso = sh->CreateShaderObject("GLSL/ShadowGenVertProg.glsl", shadowGenProgDefines[i] + extraDef, GL_VERTEX_SHADER);
+			Shader::IShaderObject* fso = sh->CreateShaderObject("GLSL/ShadowGenFragProg.glsl", shadowGenProgDefines[i] + extraDef, GL_FRAGMENT_SHADER);
 
-			po->AttachShaderObject(so);
+			po->AttachShaderObject(vso);
+			po->AttachShaderObject(fso);
 			po->Link();
-			po->SetUniformLocation("shadowParams");
-			po->SetUniformLocation("cameraDirX");    // used by SHADOWGEN_PROGRAM_TREE_NEAR
-			po->SetUniformLocation("cameraDirY");    // used by SHADOWGEN_PROGRAM_TREE_NEAR
-			po->SetUniformLocation("treeOffset");    // used by SHADOWGEN_PROGRAM_TREE_NEAR
+			po->SetUniformLocation("shadowParams");  // idx 0
+			po->SetUniformLocation("cameraDirX");    // idx 1, used by SHADOWGEN_PROGRAM_TREE_NEAR
+			po->SetUniformLocation("cameraDirY");    // idx 2, used by SHADOWGEN_PROGRAM_TREE_NEAR
+			po->SetUniformLocation("treeOffset");    // idx 3, used by SHADOWGEN_PROGRAM_TREE_NEAR
+			po->SetUniformLocation("alphaMaskTex");  // idx 4
+			po->Enable();
+			po->SetUniform1i(4, 0); // alphaMaskTex
+			po->Disable();
 			po->Validate();
 
 			shadowGenProgs[i] = po;
@@ -393,7 +399,8 @@ void CShadowHandler::SetShadowMapSizeFactors()
 		shadowTexProjCenter.w = -0.05f;
 	}
 	#else
-	// .x = scale, .y = bias (vec2(x, y) * scale + vec2(bias, bias))
+	// .xy are used to bias the SM-space projection; the values
+	// of .z and .w are such that (invsqrt(xy + zz) + ww) ~= 1
 	shadowTexProjCenter.x = 0.5f;
 	shadowTexProjCenter.y = 0.5f;
 	shadowTexProjCenter.z = FLT_MAX;

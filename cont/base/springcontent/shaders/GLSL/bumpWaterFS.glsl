@@ -97,14 +97,12 @@ vec4 waveIntensity(const vec4 v) {
 #endif
 
 float GetShadowOcclusion(vec3 worldPos) {
-	float shadowInt = 1.0;
 #ifdef opt_shadows
 	vec4 vertexShadowPos = shadowMatrix * vec4(worldPos, 1.0);
-	vertexShadowPos.st += vec2(0.5, 0.5);
-	shadowInt = shadow2DProj(shadowmap, vertexShadowPos).r;
-	shadowInt = mix(1.0, shadowInt, shadowDensity);
+	vertexShadowPos.xy += vec2(0.5, 0.5); // shadowParams.xy
+	return mix(1.0, shadow2DProj(shadowmap, vertexShadowPos).r, shadowDensity);
 #endif
-	return shadowInt;
+	return 1.0;
 }
 
 
