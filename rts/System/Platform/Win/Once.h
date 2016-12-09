@@ -186,12 +186,12 @@ namespace spring
 				long status=InterlockedCompareExchange(&flag.status,0,0);
 				if(status==ctx.function_complete_flag_value)
 				{
-						break;
+					break;
 				}
 				if(!ctx.event_handle)
 				{
-						ctx.event_handle=once::create_once_event(ctx.mutex_name,&flag);
-						continue;
+					ctx.event_handle=once::create_once_event(ctx.mutex_name,&flag);
+					continue;
 				}
 			}
 			WaitForSingleObjectEx(ctx.event_handle, INFINITE, 0);
@@ -205,7 +205,7 @@ namespace spring
 		// just skip through:
 		once::once_context ctx;
 		while(InterlockedCompareExchange(&flag.status,0,0)
-					!=ctx.function_complete_flag_value)
+				!=ctx.function_complete_flag_value)
 		{
 			if(once::enter_once_region(flag, ctx))
 			{
