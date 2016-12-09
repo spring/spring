@@ -457,11 +457,6 @@ void CAdvTreeSquareDrawer::DrawQuad(int x, int y)
 
 void CAdvTreeDrawer::Draw(float treeDistance)
 {
-	if (!drawTrees)
-		return;
-
-	ITreeDrawer::SetupState();
-
 	// trees are never drawn in any special (non-opaque) pass
 	CCamera* cam = CCamera::GetCamera(CCamera::CAMTYPE_PLAYER);
 	Shader::IProgramObject* treeShader = nullptr;
@@ -729,9 +724,6 @@ void CAdvTreeDrawer::Draw(float treeDistance)
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);
 		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
 	}
-
-	ITreeDrawer::ResetState();
-
 
 
 	// clean out squares from memory that are no longer visible

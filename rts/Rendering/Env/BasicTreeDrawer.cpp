@@ -350,11 +350,6 @@ private:
 
 void CBasicTreeDrawer::Draw(float treeDistance)
 {
-	if (!drawTrees)
-		return;
-
-	ITreeDrawer::SetupState();
-
 	glBindTexture(GL_TEXTURE_2D, treetex);
 	glEnable(GL_TEXTURE_2D);
 
@@ -415,7 +410,5 @@ void CBasicTreeDrawer::Draw(float treeDistance)
 			}
 		}
 	}
-
-	ITreeDrawer::ResetState();
 }
 
