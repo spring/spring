@@ -702,8 +702,7 @@ bool CArchiveScanner::ScanArchiveLua(IArchive* ar, const std::string& fileName, 
 
 		return false;
 	}
-
-	LuaParser p(std::string((char*)(&buf[0]), buf.size()), SPRING_VFS_MOD_BASE);
+	LuaParser p(std::string((char*)(&buf[0]), buf.size()), SPRING_VFS_ZIP);
 	if (!p.Execute()) {
 		err = "Error in " + fileName + ": " + p.GetErrorLog();
 		return false;

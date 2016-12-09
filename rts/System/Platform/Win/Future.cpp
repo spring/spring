@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-
 #include "Future.h"
 
 // This is part of the hack which allows the use of std::future
@@ -38,18 +37,6 @@ namespace std {
 #if defined(__GNUC__) && (__GNUC__ == 4) && (__GNUC_MINOR__ < 9)
   __future_base::_State_base::~_State_base() = default;
 #endif
-
-  __thread void* __once_callable;
-  __thread void (*__once_call)();
-
-  extern "C"
-  {
-    void __once_proxy()
-    {
-      __once_call();
-    }
-  }
-
 }
 
 #endif
