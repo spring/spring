@@ -348,11 +348,15 @@ private:
 
 
 
-void CBasicTreeDrawer::Draw(float treeDistance, bool drawReflection)
+void CBasicTreeDrawer::Draw(float treeDistance)
 {
+	if (!drawTrees)
+		return;
+
+	ITreeDrawer::SetupState();
+
 	glBindTexture(GL_TEXTURE_2D, treetex);
 	glEnable(GL_TEXTURE_2D);
-	glEnable(GL_ALPHA_TEST);
 
 	sky->SetupFog();
 	glColor4f(1, 1, 1, 1);
@@ -412,9 +416,6 @@ void CBasicTreeDrawer::Draw(float treeDistance, bool drawReflection)
 		}
 	}
 
-	glDisable(GL_FOG);
-
-	glDisable(GL_BLEND);
-	glDisable(GL_ALPHA_TEST);
+	ITreeDrawer::ResetState();
 }
 

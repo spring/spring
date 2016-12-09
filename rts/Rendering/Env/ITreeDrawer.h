@@ -22,9 +22,12 @@ public:
 
 	static ITreeDrawer* GetTreeDrawer();
 
-	void Draw(bool drawReflection);
-	virtual void Draw(float treeDistance, bool drawReflection) = 0;
-	virtual void DrawShadowPass();
+	void SetupState() const;
+	void ResetState() const;
+	void Draw();
+
+	virtual void Draw(float treeDistance) = 0;
+	virtual void DrawShadowPass() {}
 	virtual void Update() = 0;
 
 	virtual void ResetPos(const float3& pos);

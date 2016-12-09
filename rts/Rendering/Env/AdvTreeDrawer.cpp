@@ -455,17 +455,20 @@ void CAdvTreeSquareDrawer::DrawQuad(int x, int y)
 
 
 
-void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
+void CAdvTreeDrawer::Draw(float treeDistance)
 {
+	if (!drawTrees)
+		return;
+
+	ITreeDrawer::SetupState();
+
 	// trees are never drawn in any special (non-opaque) pass
 	CCamera* cam = CCamera::GetCamera(CCamera::CAMTYPE_PLAYER);
-	Shader::IProgramObject* treeShader = NULL;
+	Shader::IProgramObject* treeShader = nullptr;
 
 	const int activeFarTex = treeGen->farTex[cam->GetDir().z >= 0.0f];
-	const bool drawDetailed = ((treeDistance >= 4.0f) || drawReflection);
+	const bool drawDetailed = (treeDistance >= 4.0f);
 
-	glPushAttrib(GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-	glEnable(GL_ALPHA_TEST);
 	glEnable(GL_TEXTURE_2D);
 	glDepthMask(GL_TRUE);
 
@@ -727,7 +730,7 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
 	}
 
-	glPopAttrib();
+	ITreeDrawer::ResetState();
 
 
 
@@ -808,10 +811,9 @@ void CAdvTreeSquareShadowPassDrawer::DrawQuad(int x, int y)
 	const int treesX = td->treesX;
 	ITreeDrawer::TreeSquareStruct* tss = &td->treeSquares[(y * treesX) + x];
 
-	if ((abs(cy - y) <= 2) && (abs(cx - x) <= 2) && drawDetailed) {
-		// skip the closest squares
+	// skip the closest squares
+	if ((abs(cy - y) <= 2) && (abs(cx - x) <= 2) && drawDetailed)
 		return;
-	}
 
 	float3 dif;
 		dif.x = camera->GetPos().x - ((x * SQUARE_SIZE * TREE_SQUARE_SIZE) + (SQUARE_SIZE * TREE_SQUARE_SIZE / 2));
@@ -913,8 +915,11 @@ void CAdvTreeSquareShadowPassDrawer::DrawQuad(int x, int y)
 
 void CAdvTreeDrawer::DrawShadowPass()
 {
+	if (!drawTrees)
+		return;
+
 	CCamera* cam = CCamera::GetCamera(CCamera::CAMTYPE_SHADOW);
-	Shader::IProgramObject* po = NULL;
+	Shader::IProgramObject* po = nullptr;
 
 	const float treeDistance = oldTreeDistance;
 	const int activeFarTex = (cam->GetDir().z < 0.0f)? treeGen->farTex[0] : treeGen->farTex[1];

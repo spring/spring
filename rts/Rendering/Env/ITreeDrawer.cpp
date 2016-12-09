@@ -6,6 +6,7 @@
 #include "AdvTreeDrawer.h"
 #include "Map/ReadMap.h"
 #include "Rendering/GlobalRendering.h"
+#include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureDef.h"
@@ -133,22 +134,64 @@ ITreeDrawer* ITreeDrawer::GetTreeDrawer()
 
 
 
-void ITreeDrawer::DrawShadowPass()
-{
+void ITreeDrawer::SetupState() const {
+	glPushAttrib(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT | GL_CURRENT_BIT);
+
+	glEnable(GL_ALPHA_TEST);
+	glAlphaFunc(GL_GREATER, 0.005f);
+
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	// NOTE:
+	//   the info-texture now contains an alpha-component
+	//   so binding it here means trees will be invisible
+	//   when shadows are disabled
+	if (infoTextureHandler->IsEnabled()) {
+		glActiveTexture(GL_TEXTURE1);
+		glEnable(GL_TEXTURE_2D);
+		glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_ADD_SIGNED);
+		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_PREVIOUS);
+		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB, GL_TEXTURE);
+		glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_MODULATE);
+		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_PREVIOUS);
+		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_ALPHA, GL_TEXTURE);
+		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
+		glBindTexture(GL_TEXTURE_2D, infoTextureHandler->GetCurrentInfoTexture());
+		SetTexGen(1.0f / (mapDims.pwr2mapx * SQUARE_SIZE), 1.0f / (mapDims.pwr2mapy * SQUARE_SIZE), 0, 0);
+		glActiveTexture(GL_TEXTURE0);
+	}
 }
 
-void ITreeDrawer::Draw(bool drawReflection)
+void ITreeDrawer::ResetState() const {
+	if (infoTextureHandler->IsEnabled()) {
+		glActiveTexture(GL_TEXTURE1);
+		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_TEXTURE);
+		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB, GL_PREVIOUS);
+		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+
+		glDisable(GL_TEXTURE_GEN_S);
+		glDisable(GL_TEXTURE_GEN_T);
+		glDisable(GL_TEXTURE_2D);
+		glActiveTexture(GL_TEXTURE0);
+	}
+
+	glPopAttrib();
+}
+
+
+
+void ITreeDrawer::Draw()
 {
 	const float maxDistance = CGlobalRendering::MAX_VIEW_RANGE / (SQUARE_SIZE * TREE_SQUARE_SIZE);
 	const float treeDistance = Clamp(baseTreeDistance, 1.0f, maxDistance);
-	// call the subclasses draw method
-	Draw(treeDistance, drawReflection);
+
+	Draw(treeDistance);
 }
 
 void ITreeDrawer::Update()
 {
-	std::vector<GLuint>::iterator i;
-	for (i = delDispLists.begin(); i != delDispLists.end(); ++i) {
+	for (auto i = delDispLists.begin(); i != delDispLists.end(); ++i) {
 		glDeleteLists(*i, 1);
 	}
 	delDispLists.clear();

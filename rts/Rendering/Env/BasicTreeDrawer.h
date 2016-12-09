@@ -16,7 +16,7 @@ public:
 	CBasicTreeDrawer();
 	virtual ~CBasicTreeDrawer();
 
-	void Draw(float treeDistance, bool drawReflection);
+	void Draw(float treeDistance);
 	void Update() {}
 
 private:
