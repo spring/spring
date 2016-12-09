@@ -40,9 +40,14 @@
 
 
 
-float GetShadowCoeff(vec4 shadowCoors) {
+float GetShadowCoeff(float zBias) {
 	#if (USE_SHADOWS == 1)
-	return mix(1.0, shadow2DProj(shadowTex, shadowCoors).r, shadowDensity);
+	vec4 vertexShadowPos = shadowMatrix * vertexWorldPos;
+		vertexShadowPos.xy *= (inversesqrt(abs(vertexShadowPos.xy) + shadowParams.zz) + shadowParams.ww);
+		vertexShadowPos.xy += shadowParams.xy;
+		vertexShadowPos.z  += zBias;
+
+	return mix(1.0, shadow2DProj(shadowTex, vertexShadowPos).r, shadowDensity);
 	#endif
 	return 1.0;
 }
@@ -107,16 +112,7 @@ void main(void)
 	vec3 reflection = textureCube(reflectTex,  reflectDir).rgb;
 
 
-	#if (USE_SHADOWS == 1)
-	vec4 vertexShadowPos = shadowMatrix * vertexWorldPos;
-		vertexShadowPos.xy *= (inversesqrt(abs(vertexShadowPos.xy) + shadowParams.zz) + shadowParams.ww);
-		vertexShadowPos.xy += shadowParams.xy;
-
-	float shadow = GetShadowCoeff(vertexShadowPos + vec4(0.0, 0.0, -0.00005, 0.0));
-	#else
-	float shadow = 1.0;
-	#endif
-
+	float shadow = GetShadowCoeff(-0.00005);
 	float alpha = teamColor.a * extraColor.a; // apply one-bit mask
 
 	// no highlights if in shadow; decrease light to ambient level
