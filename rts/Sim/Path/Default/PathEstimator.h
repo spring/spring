@@ -76,7 +76,7 @@ protected: // IPathFinder impl
 		float speedMod);
 	IPath::SearchResult FinishSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, IPath::Path& path) const;
 
-	const CPathCache::CacheItem* GetCache(
+	const CPathCache::CacheItem& GetCache(
 		const int2 strtBlock,
 		const int2 goalBlock,
 		float goalRadius,

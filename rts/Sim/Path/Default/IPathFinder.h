@@ -98,7 +98,7 @@ protected: // pure virtuals
 	virtual IPath::SearchResult FinishSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, IPath::Path& path) const = 0;
 
 
-	virtual const CPathCache::CacheItem* GetCache(
+	virtual const CPathCache::CacheItem& GetCache(
 		const int2 strtBlock,
 		const int2 goalBlock,
 		float goalRadius,

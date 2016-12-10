@@ -111,10 +111,11 @@ IPath::SearchResult IPathFinder::GetPath(
 	int2 goalBlock;
 	goalBlock.x = pfDef.goalSquareX / BLOCK_SIZE;
 	goalBlock.y = pfDef.goalSquareZ / BLOCK_SIZE;
-	const CPathCache::CacheItem* ci = GetCache(mStartBlock, goalBlock, pfDef.sqGoalRadius, moveDef.pathType, pfDef.synced);
-	if (ci != nullptr) {
-		path = ci->path;
-		return ci->result;
+
+	const CPathCache::CacheItem& ci = GetCache(mStartBlock, goalBlock, pfDef.sqGoalRadius, moveDef.pathType, pfDef.synced);
+	if (ci.pathType != -1) {
+		path = ci.path;
+		return ci.result;
 	}
 
 	// Start up a new search

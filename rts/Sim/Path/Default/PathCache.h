@@ -3,8 +3,8 @@
 #ifndef PATHCACHE_H
 #define PATHCACHE_H
 
-#include <map>
-#include <list>
+#include <unordered_map>
+#include <deque>
 
 #include "IPath.h"
 #include "System/type2.h"
@@ -34,7 +34,7 @@ public:
 		int pathType
 	);
 
-	const CacheItem* GetCachedPath(
+	const CacheItem& GetCachedPath(
 		const int2 strtBlock,
 		const int2 goalBlock,
 		float goalRadius,
@@ -52,7 +52,7 @@ private:
 	) const;
 
 	bool HashCollision(
-		const CacheItem* ci,
+		const CacheItem& ci,
 		const int2 strtBlk,
 		const int2 goalBlk,
 		float goalRadius,
@@ -67,15 +67,16 @@ private:
 	}
 
 private:
-	struct CacheQue {
+	struct CacheQueItem {
 		std::int32_t timeout;
 		std::uint64_t hash;
 	};
 
-	std::list<CacheQue> cacheQue;
-	std::map<std::uint64_t, CacheItem*> cachedPaths;
+	// returned on any cache-miss
+	CacheItem dummyCacheItem;
 
-	typedef std::map<std::uint64_t, CacheItem*>::const_iterator CachedPathConstIter;
+	std::deque<CacheQueItem> cacheQue;
+	std::unordered_map<std::uint64_t, CacheItem> cachedPaths; // ints are sync-safe keys
 
 	std::uint32_t numBlocksX;
 	std::uint32_t numBlocksZ;

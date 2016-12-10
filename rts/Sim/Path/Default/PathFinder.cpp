@@ -28,14 +28,14 @@ const CMoveMath::BlockType squareMobileBlockBits = (CMoveMath::BLOCK_MOBILE | CM
 static float3 PF_DIRECTION_VECTORS_3D[PATH_DIRECTIONS << 1];
 static  float PF_DIRECTION_COSTS[PATH_DIRECTIONS << 1];
 
-CPathFinder::CPathFinder(bool threadSafe)
-	: IPathFinder(1)
+CPathFinder::CPathFinder(bool threadSafe): IPathFinder(1)
 {
 	static const BlockCheckFunc funcs[2] = {
 		CMoveMath::IsBlockedNoSpeedModCheckThreadUnsafe,
 		CMoveMath::IsBlockedNoSpeedModCheck
 	};
 	blockCheckFunc = funcs[threadSafe];
+	dummyCacheItem = CPathCache::CacheItem{IPath::Error, {}, {-1, -1}, {-1, -1}, -1.0f, -1};
 }
 
 

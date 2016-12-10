@@ -53,7 +53,7 @@ protected: // IPathFinder impl
 	 */
 	IPath::SearchResult FinishSearch(const MoveDef&, const CPathFinderDef&, IPath::Path&) const;
 
-	const CPathCache::CacheItem* GetCache(
+	const CPathCache::CacheItem& GetCache(
 		const int2 strtBlock,
 		const int2 goalBlock,
 		float goalRadius,
@@ -61,7 +61,7 @@ protected: // IPathFinder impl
 		const bool synced
 	) const {
 		// only cache in Estimator! (cause of flow & heatmapping etc.)
-		return nullptr;
+		return dummyCacheItem;
 	}
 
 	void AddCache(
@@ -104,6 +104,7 @@ private:
 	typedef CMoveMath::BlockType (*BlockCheckFunc)(const MoveDef&, int, int, const CSolidObject*);
 
 	BlockCheckFunc blockCheckFunc;
+	CPathCache::CacheItem dummyCacheItem;
 };
 
 #endif // PATH_FINDER_H

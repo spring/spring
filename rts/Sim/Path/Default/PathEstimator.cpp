@@ -117,8 +117,8 @@ CPathEstimator::CPathEstimator(IPathFinder* pf, unsigned int BLOCK_SIZE, const s
 
 CPathEstimator::~CPathEstimator()
 {
-	delete pathCache[0]; pathCache[0] = NULL;
-	delete pathCache[1]; pathCache[1] = NULL;
+	SafeDelete(pathCache[0]);
+	SafeDelete(pathCache[1]);
 }
 
 
@@ -547,11 +547,10 @@ void CPathEstimator::Update()
 }
 
 
-const CPathCache::CacheItem* CPathEstimator::GetCache(const int2 strtBlock, const int2 goalBlock, float goalRadius, int pathType, const bool synced) const
+const CPathCache::CacheItem& CPathEstimator::GetCache(const int2 strtBlock, const int2 goalBlock, float goalRadius, int pathType, const bool synced) const
 {
 	return pathCache[synced]->GetCachedPath(strtBlock, goalBlock, goalRadius, pathType);
 }
-
 
 void CPathEstimator::AddCache(const IPath::Path* path, const IPath::SearchResult result, const int2 strtBlock, const int2 goalBlock, float goalRadius, int pathType, const bool synced)
 {
