@@ -47,6 +47,7 @@ CRoamMeshDrawer::CRoamMeshDrawer(CSMFReadMap* rm, CSMFGroundDrawer* gd)
 
 	// set ROAM upload mode (VA,DL,VBO)
 	Patch::SwitchRenderMode(configHandler->GetInt("ROAM"));
+
 	for (unsigned int i = MESH_NORMAL; i <= MESH_SHADOW; i++) {
 		CTriNodePool::InitPools(i);
 	}
@@ -83,16 +84,10 @@ CRoamMeshDrawer::CRoamMeshDrawer(CSMFReadMap* rm, CSMFGroundDrawer* gd)
 		unsigned int patchIdx = 0;
 
 		// gather corner patches
-		borderPatches[i][patchIdx++] = &patches[                                  (              0)];
-
-		if (numPatchesX > 1)
-			borderPatches[i][patchIdx++] = &patches[                                  (numPatchesX - 1)];
-
-		if (numPatchesY > 1)
-			borderPatches[i][patchIdx++] = &patches[(numPatchesY - 1) * numPatchesX + (              0)];
-
-		if (numPatchesX > 1 && numPatchesY > 1)
-			borderPatches[i][patchIdx++] = &patches[(numPatchesY - 1) * numPatchesX + (numPatchesX - 1)];
+		                                        borderPatches[i][patchIdx++] = &patches[                                  (              0)];
+		if (numPatchesX > 1                   ) borderPatches[i][patchIdx++] = &patches[                                  (numPatchesX - 1)];
+		if (numPatchesY > 1                   ) borderPatches[i][patchIdx++] = &patches[(numPatchesY - 1) * numPatchesX + (              0)];
+		if (numPatchesX > 1 && numPatchesY > 1) borderPatches[i][patchIdx++] = &patches[(numPatchesY - 1) * numPatchesX + (numPatchesX - 1)];
 
 		// gather x-border patches
 		for (int py = 1; py < (numPatchesY - 1); ++py) {
@@ -115,6 +110,8 @@ CRoamMeshDrawer::~CRoamMeshDrawer()
 	for (unsigned int i = MESH_NORMAL; i <= MESH_SHADOW; i++) {
 		CTriNodePool::FreePools(i);
 	}
+
+	eventHandler.RemoveClient(this);
 }
 
 
