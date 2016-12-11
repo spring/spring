@@ -338,9 +338,8 @@ unsigned int CPathManager::RequestPath(
 	newPath->caller = caller;
 	pfDef->synced = synced;
 
-	if (caller != nullptr) {
+	if (caller != nullptr)
 		caller->UnBlock();
-	}
 
 	const IPath::SearchResult result = ArrangePath(newPath, moveDef, startPos, goalPos, pfDef, caller);
 
@@ -371,21 +370,10 @@ unsigned int CPathManager::RequestPath(
 		delete newPath;
 	}
 
-	if (caller != nullptr) {
+	if (caller != nullptr)
 		caller->Block();
-	}
 
 	return pathID;
-}
-
-
-/*
-Store a new multipath into the pathmap.
-*/
-unsigned int CPathManager::Store(MultiPath* path)
-{
-	pathMap[++nextPathID] = path;
-	return nextPathID;
 }
 
 

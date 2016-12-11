@@ -3,7 +3,7 @@
 #ifndef PATHMANAGER_H
 #define PATHMANAGER_H
 
-#include <map>
+#include <unordered_map>
 #include <cinttypes>
 
 #include "Sim/Path/IPathManager.h"
@@ -89,7 +89,7 @@ private:
 			, peDef(def)
 			, moveDef(moveDef)
 			, finalGoal(ZeroVector)
-			, caller(NULL)
+			, caller(nullptr)
 		{}
 
 		~MultiPath() { delete peDef; }
@@ -120,13 +120,23 @@ private:
 		CSolidObject* caller
 	) const;
 
-	inline MultiPath* GetMultiPath(int pathID) const;
-	unsigned int Store(MultiPath* path);
+	MultiPath* GetMultiPath(int pathID) const {
+		const auto pi = pathMap.find(pathID);
+		if (pi == pathMap.end())
+			return nullptr;
+		return pi->second;
+	}
+
+	unsigned int Store(MultiPath* path) {
+		pathMap[++nextPathID] = path;
+		return nextPathID;
+	}
+
 	static void FinalizePath(MultiPath* path, const float3 startPos, const float3 goalPos, const bool cantGetCloser);
 	void LowRes2MedRes(MultiPath& path, const float3& startPos, const CSolidObject* owner, bool synced) const;
 	void MedRes2MaxRes(MultiPath& path, const float3& startPos, const CSolidObject* owner, bool synced) const;
 
-	bool IsFinalized() const { return (maxResPF != NULL); }
+	bool IsFinalized() const { return (maxResPF != nullptr); }
 
 private:
 	CPathFinder* maxResPF;
@@ -136,15 +146,8 @@ private:
 	PathFlowMap* pathFlowMap;
 	PathHeatMap* pathHeatMap;
 
-	std::map<unsigned int, MultiPath*> pathMap;
+	std::unordered_map<unsigned int, MultiPath*> pathMap;
 	unsigned int nextPathID;
 };
-
-inline CPathManager::MultiPath* CPathManager::GetMultiPath(int pathID) const {
-	const std::map<unsigned int, MultiPath*>::const_iterator pi = pathMap.find(pathID);
-	if (pi == pathMap.end())
-		return NULL;
-	return pi->second;
-}
 
 #endif

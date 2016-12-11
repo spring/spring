@@ -296,11 +296,8 @@ void DefaultPathDrawer::Draw() const {
 	glDisable(GL_LIGHTING);
 	glLineWidth(3);
 
-	const std::map<unsigned int, CPathManager::MultiPath*>& pathMap = pm->pathMap;
-	std::map<unsigned int, CPathManager::MultiPath*>::const_iterator pi;
-
-	for (pi = pathMap.begin(); pi != pathMap.end(); ++pi) {
-		const CPathManager::MultiPath* path = pi->second;
+	for (const auto& p: pm->pathMap) {
+		const CPathManager::MultiPath* path = p.second;
 
 		glBegin(GL_LINE_STRIP);
 
