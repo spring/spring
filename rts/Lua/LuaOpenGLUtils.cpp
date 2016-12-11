@@ -359,109 +359,114 @@ bool LuaOpenGLUtils::ParseTextureImage(lua_State* L, LuaMatTexture& texUnit, con
 	if (image.empty())
 		return false;
 
-	if (image[0] == LuaTextures::prefix) {
-		if (L == nullptr)
-			return false;
+	switch (image[0]) {
+		case LuaTextures::prefix: {
+			if (L == nullptr)
+				return false;
 
-		// dynamic texture
-		const LuaTextures& textures = CLuaHandle::GetActiveTextures(L);
-		const LuaTextures::Texture* texInfo = textures.GetInfo(image);
+			// dynamic texture
+			const LuaTextures& textures = CLuaHandle::GetActiveTextures(L);
+			const LuaTextures::Texture* texInfo = textures.GetInfo(image);
 
-		if (texInfo == nullptr)
-			return false;
+			if (texInfo == nullptr)
+				return false;
 
-		texUnit.type = LuaMatTexture::LUATEX_LUATEXTURE;
-		texUnit.data = reinterpret_cast<const void*>(texInfo);
-	}
-	else if (image[0] == '%') {
-		return ParseUnitTexture(texUnit, image);
-	}
-	else if (image[0] == '#') {
-		// unit build picture
-		char* endPtr;
-		const char* startPtr = image.c_str() + 1; // skip the '#'
-		const int unitDefID = (int)strtol(startPtr, &endPtr, 10);
-
-		if (endPtr == startPtr)
-			return false;
-
-		const UnitDef* ud = unitDefHandler->GetUnitDefByID(unitDefID);
-
-		if (ud == nullptr)
-			return false;
-
-		texUnit.type = LuaMatTexture::LUATEX_UNITBUILDPIC;
-		texUnit.data = reinterpret_cast<const void*>(ud);
-	}
-	else if (image[0] == '^') {
-		// unit icon
-		char* endPtr;
-		const char* startPtr = image.c_str() + 1; // skip the '^'
-		const int unitDefID = (int)strtol(startPtr, &endPtr, 10);
-
-		if (endPtr == startPtr)
-			return false;
-
-		const UnitDef* ud = unitDefHandler->GetUnitDefByID(unitDefID);
-
-		if (ud == nullptr)
-			return false;
-
-		texUnit.type = LuaMatTexture::LUATEX_UNITRADARICON;
-		texUnit.data = reinterpret_cast<const void*>(ud);
-	}
-
-	else if (image[0] == '$') {
-		switch ((texUnit.type = GetLuaMatTextureType(image))) {
-			case LuaMatTexture::LUATEX_NONE: {
-				// name not found in table, check for special case overrides
-				if (!ParseNamedSubTexture(texUnit, image)) {
-					return false;
-				}
-			} break;
-
-			case LuaMatTexture::LUATEX_3DOTEXTURE: {
-				if (image.size() == 5) {
-					// "$units"
-					texUnit.data = reinterpret_cast<const void*>(int(1));
-				} else {
-					// "$units1" or "$units2"
-					switch (image[6]) {
-						case '1': { texUnit.data = reinterpret_cast<const void*>(int(1)); } break;
-						case '2': { texUnit.data = reinterpret_cast<const void*>(int(2)); } break;
-						default: { return false; } break;
-					}
-				}
-			} break;
-
-			case LuaMatTexture::LUATEX_HEIGHTMAP: {
-				if (heightMapTexture->GetTextureID() == 0) {
-					// optional, return false when not available
-					return false;
-				}
-			} break;
-
-			case LuaMatTexture::LUATEX_SSMF_SNORMALS: {
-				// suffix case (":X") is handled by ParseNamedSubTexture
-				texUnit.data = reinterpret_cast<const void*>(int(0));
-			} break;
-
-			default: {
-			} break;
-		}
-	}
-
-	else {
-		const CLuaHandle* luaHandle = CLuaHandle::GetHandle(L);
-		const CNamedTextures::TexInfo* texInfo = CNamedTextures::GetInfo(image, true, luaHandle->PersistOnReload());
-
-		if (texInfo != nullptr) {
-			texUnit.type = LuaMatTexture::LUATEX_NAMED;
+			texUnit.type = LuaMatTexture::LUATEX_LUATEXTURE;
 			texUnit.data = reinterpret_cast<const void*>(texInfo);
-		} else {
-			LOG_L(L_WARNING, "Lua: Couldn't load texture named \"%s\"!", image.c_str());
-			return false;
-		}
+		} break;
+
+		case '%': {
+			return ParseUnitTexture(texUnit, image);
+		} break;
+
+		case '#': {
+			// unit build picture
+			char* endPtr;
+			const char* startPtr = image.c_str() + 1; // skip the '#'
+			const int unitDefID = (int)strtol(startPtr, &endPtr, 10);
+
+			if (endPtr == startPtr)
+				return false;
+
+			const UnitDef* ud = unitDefHandler->GetUnitDefByID(unitDefID);
+
+			if (ud == nullptr)
+				return false;
+
+			texUnit.type = LuaMatTexture::LUATEX_UNITBUILDPIC;
+			texUnit.data = reinterpret_cast<const void*>(ud);
+		} break;
+
+		case '^': {
+			// unit icon
+			char* endPtr;
+			const char* startPtr = image.c_str() + 1; // skip the '^'
+			const int unitDefID = (int)strtol(startPtr, &endPtr, 10);
+
+			if (endPtr == startPtr)
+				return false;
+
+			const UnitDef* ud = unitDefHandler->GetUnitDefByID(unitDefID);
+
+			if (ud == nullptr)
+				return false;
+
+			texUnit.type = LuaMatTexture::LUATEX_UNITRADARICON;
+			texUnit.data = reinterpret_cast<const void*>(ud);
+		} break;
+
+		case '$': {
+			switch ((texUnit.type = GetLuaMatTextureType(image))) {
+				case LuaMatTexture::LUATEX_NONE: {
+					// name not found in table, check for special case overrides
+					if (!ParseNamedSubTexture(texUnit, image)) {
+						return false;
+					}
+				} break;
+
+				case LuaMatTexture::LUATEX_3DOTEXTURE: {
+					if (image.size() == 5) {
+						// "$units"
+						texUnit.data = reinterpret_cast<const void*>(int(1));
+					} else {
+						// "$units1" or "$units2"
+						switch (image[6]) {
+							case '1': { texUnit.data = reinterpret_cast<const void*>(int(1)); } break;
+							case '2': { texUnit.data = reinterpret_cast<const void*>(int(2)); } break;
+							default: { return false; } break;
+						}
+					}
+				} break;
+
+				case LuaMatTexture::LUATEX_HEIGHTMAP: {
+					if (heightMapTexture->GetTextureID() == 0) {
+						// optional, return false when not available
+						return false;
+					}
+				} break;
+
+				case LuaMatTexture::LUATEX_SSMF_SNORMALS: {
+					// suffix case (":X") is handled by ParseNamedSubTexture
+					texUnit.data = reinterpret_cast<const void*>(int(0));
+				} break;
+
+				default: {
+				} break;
+			}
+		} break;
+
+		default: {
+			const CLuaHandle* luaHandle = CLuaHandle::GetHandle(L);
+			const CNamedTextures::TexInfo* texInfo = CNamedTextures::GetInfo(image, true, luaHandle->PersistOnReload());
+
+			if (texInfo != nullptr) {
+				texUnit.type = LuaMatTexture::LUATEX_NAMED;
+				texUnit.data = reinterpret_cast<const void*>(texInfo);
+			} else {
+				LOG_L(L_WARNING, "Lua: Couldn't load texture named \"%s\"!", image.c_str());
+				return false;
+			}
+		} break;
 	}
 
 	return true;

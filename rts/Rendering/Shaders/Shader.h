@@ -11,6 +11,7 @@
 #include <unordered_map>
 
 #include "ShaderStates.h"
+#include "Lua/LuaOpenGLUtils.h"
 
 
 
@@ -181,7 +182,7 @@ namespace Shader {
 
 	public:
 		/// interface to auto bind textures with the shader
-		void AddTextureBinding(const int index, const std::string& luaTexName);
+		void AddTextureBinding(const int texUnit, const std::string& luaTexName);
 		void BindTextures() const;
 
 	protected:
@@ -247,7 +248,7 @@ namespace Shader {
 
 	public:
 		std::unordered_map<std::size_t, UniformState, fast_hash> uniformStates;
-		std::unordered_map<int, std::string> textures;
+		std::unordered_map<int, LuaMatTexture> luaTextures;
 	};
 
 	struct NullProgramObject: public Shader::IProgramObject {

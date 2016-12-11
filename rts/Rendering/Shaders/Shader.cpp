@@ -6,7 +6,6 @@
 #include "Rendering/Shaders/GLSLCopyState.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GlobalRendering.h"
-#include "Lua/LuaMaterial.h"
 
 #include "System/Util.h"
 #include "System/FileSystem/FileHandler.h"
@@ -269,7 +268,7 @@ namespace Shader {
 
 		uniformStates.clear();
 		shaderObjs.clear();
-		textures.clear();
+		luaTextures.clear();
 		valid = false;
 		log = "";
 	}
@@ -332,19 +331,22 @@ namespace Shader {
 		return us;
 	}
 
-	void IProgramObject::AddTextureBinding(const int index, const std::string& luaTexName)
+
+	void IProgramObject::AddTextureBinding(const int texUnit, const std::string& luaTexName)
 	{
-		textures[index] = luaTexName;
+		LuaMatTexture luaTex;
+
+		if (!LuaOpenGLUtils::ParseTextureImage(nullptr, luaTex, luaTexName))
+			return;
+
+		luaTextures[texUnit] = luaTex;
 	}
 
 	void IProgramObject::BindTextures() const
 	{
-		LuaMatTexture luaTex;
-		for (auto& p: textures) {
-			if (LuaOpenGLUtils::ParseTextureImage(nullptr, luaTex, p.second)) {
-				glActiveTexture(GL_TEXTURE0 + p.first);
-				luaTex.Bind();
-			}
+		for (const auto& p: luaTextures) {
+			glActiveTexture(GL_TEXTURE0 + p.first);
+			(p.second).Bind();
 		}
 		glActiveTexture(GL_TEXTURE0);
 	}
