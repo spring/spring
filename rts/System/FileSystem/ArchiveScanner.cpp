@@ -378,6 +378,7 @@ void CArchiveScanner::ScanAllDirs()
 	std::lock_guard<spring::recursive_mutex> lck(mutex);
 	const std::vector<std::string>& datadirs = dataDirLocater.GetDataDirPaths();
 	std::vector<std::string> scanDirs;
+	scanDirs.reserve(datadirs.size());
 	for (auto d = datadirs.rbegin(); d != datadirs.rend(); ++d) {
 		scanDirs.push_back(*d + "maps");
 		scanDirs.push_back(*d + "base");
@@ -1077,7 +1078,7 @@ std::vector<std::string> CArchiveScanner::GetAllArchivesUsedBy(const std::string
 
 		archiveQueue.pop_front();
 
-		const ArchiveInfo* ai = nullptr;
+		const ArchiveInfo* archiveInfo = nullptr;
 
 		const auto CanAddSubDependencies = [&](const std::string& lwrCaseName) -> const ArchiveInfo* {
 			#ifdef UNITSYNC
@@ -1118,13 +1119,13 @@ std::vector<std::string> CArchiveScanner::GetAllArchivesUsedBy(const std::string
 		};
 
 
-		if ((ai = CanAddSubDependencies(lowerCaseName)) == nullptr)
+		if ((archiveInfo = CanAddSubDependencies(lowerCaseName)) == nullptr)
 			continue;
 
-		tmpArchives.push_back(ai->archiveData.GetNameVersioned());
+		tmpArchives.push_back(archiveInfo->archiveData.GetNameVersioned());
 
 		// expand dependencies in depth-first order
-		for (const std::string& archiveDep: ai->archiveData.GetDependencies()) {
+		for (const std::string& archiveDep: archiveInfo->archiveData.GetDependencies()) {
 			assert(archiveDep != rootArchive);
 			assert(archiveDep != tmpArchives.back());
 			archiveQueue.push_front(archiveDep);
