@@ -43,6 +43,7 @@
 #include "Rendering/GLContext.h"
 #include "Rendering/VerticalSync.h"
 #include "Rendering/GL/FBO.h"
+#include "Rendering/GL/myGL.h"
 #include "Rendering/Textures/NamedTextures.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Misc/DefinitionTag.h"
@@ -483,6 +484,10 @@ void SpringApp::InitOpenGL()
 	glClearDepth(1.0f);
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LEQUAL);
+	#ifdef GL_ARB_clip_control
+	// avoid precision loss with default DR transform
+	glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE);
+	#endif
 
 	// FFP model lighting
 	glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 0.0f);
