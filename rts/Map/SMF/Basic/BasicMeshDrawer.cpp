@@ -3,18 +3,19 @@
 #include "BasicMeshDrawer.h"
 #include "Game/Camera.h"
 #include "Game/TraceRay.h"
+#include "Map/Ground.h"
 #include "Map/ReadMap.h"
 #include "Map/SMF/SMFGroundDrawer.h"
 #include "Rendering/GlobalRendering.h"
 #include "System/EventHandler.h"
 
-#define USE_TRIANGLE_STRIPS 1
-#define USE_MIPMAP_BUFFERS  0
-#define USE_PACKED_BUFFERS  1
-
 #ifndef glPrimitiveRestartIndex
 #define glPrimitiveRestartIndex glPrimitiveRestartIndexNV
 #endif
+
+#define USE_TRIANGLE_STRIPS 1
+#define USE_MIPMAP_BUFFERS  0
+#define USE_PACKED_BUFFERS  1
 
 
 
@@ -253,7 +254,7 @@ void CBasicMeshDrawer::UploadPatchBorderGeometry(uint32_t n, uint32_t px, uint32
 				verts[vertexIndx           ].z =     (bpy + vy * lodStep) * SQUARE_SIZE;
 				verts[vertexIndx + lodVerts].z =     (bpy + vy * lodStep) * SQUARE_SIZE;
 				verts[vertexIndx           ].y = chm[(bpy + vy * lodStep) * mapDims.mapxp1 + 0];
-				verts[vertexIndx + lodVerts].y = -500.0f;
+				verts[vertexIndx + lodVerts].y = std::min(readMap->GetInitMinHeight(), -500.0f);
 
 				vertexIndx += 1;
 			}
@@ -284,7 +285,7 @@ void CBasicMeshDrawer::UploadPatchBorderGeometry(uint32_t n, uint32_t px, uint32
 				verts[vertexIndx           ].z =     (bpy + vy * lodStep) * SQUARE_SIZE;
 				verts[vertexIndx + lodVerts].z =     (bpy + vy * lodStep) * SQUARE_SIZE;
 				verts[vertexIndx           ].y = chm[(bpy + vy * lodStep) * mapDims.mapxp1 + mapDims.mapx];
-				verts[vertexIndx + lodVerts].y = -500.0f;
+				verts[vertexIndx + lodVerts].y = std::min(readMap->GetInitMinHeight(), -500.0f);
 
 				vertexIndx += 1;
 			}
@@ -315,7 +316,7 @@ void CBasicMeshDrawer::UploadPatchBorderGeometry(uint32_t n, uint32_t px, uint32
 				verts[vertexIndx           ].z = 0.0f;
 				verts[vertexIndx + lodVerts].z = 0.0f;
 				verts[vertexIndx           ].y = chm[0 + (bpx + vx * lodStep)];
-				verts[vertexIndx + lodVerts].y = -500.0f;
+				verts[vertexIndx + lodVerts].y = std::min(readMap->GetInitMinHeight(), -500.0f);
 
 				vertexIndx += 1;
 			}
@@ -345,7 +346,7 @@ void CBasicMeshDrawer::UploadPatchBorderGeometry(uint32_t n, uint32_t px, uint32
 				verts[vertexIndx           ].z = mapDims.mapy * SQUARE_SIZE;
 				verts[vertexIndx + lodVerts].z = mapDims.mapy * SQUARE_SIZE;
 				verts[vertexIndx           ].y = chm[mapDims.mapy * mapDims.mapxp1 + (bpx + vx * lodStep)];
-				verts[vertexIndx + lodVerts].y = -500.0f;
+				verts[vertexIndx + lodVerts].y = std::min(readMap->GetInitMinHeight(), -500.0f);
 
 				vertexIndx += 1;
 			}
@@ -493,18 +494,26 @@ void CBasicMeshDrawer::UploadPatchIndices(uint32_t n) {
 
 
 uint32_t CBasicMeshDrawer::CalcDrawPassLOD(const CCamera* cam, const DrawPass::e& drawPass) const {
-	const CUnit* hitUnit = nullptr;
-	const CFeature* hitFeature = nullptr;
-
-	// const float mapRayDist = CGround::LinePlaneCol(cam->GetPos(), cam->GetDir(), globalRendering->viewRange, readMap->GetCurrMinHeight());
-	const float mapRayDist = TraceRay::GuiTraceRay(cam->GetPos(), cam->GetDir(), globalRendering->viewRange, nullptr, hitUnit, hitFeature, false, true, true);
-
 	// higher detail biases LOD-step toward a smaller value
 	// NOTE: should perhaps prevent an insane initial bias?
 	int32_t lodBias = smfGroundDrawer->GetGroundDetail(drawPass) % LOD_LEVELS;
 	int32_t lodIndx = LOD_LEVELS - 1;
 
-	if (mapRayDist >= 0.0f) {
+	// force SP and NP to equal LOD; avoids projection issues
+	if (drawPass == DrawPass::Shadow)
+		cam = CCamera::GetCamera(CCamera::CAMTYPE_PLAYER);
+
+	{
+		const CUnit* hitUnit = nullptr;
+		const CFeature* hitFeature = nullptr;
+
+		float mapRayDist = 0.0f;
+
+		if ((mapRayDist = TraceRay::GuiTraceRay(cam->GetPos(), cam->GetDir(), globalRendering->viewRange, nullptr, hitUnit, hitFeature, false, true, true)) < 0.0f)
+			mapRayDist = CGround::LinePlaneCol(cam->GetPos(), cam->GetDir(), globalRendering->viewRange, readMap->GetCurrMinHeight());
+		if (mapRayDist < 0.0f)
+			return lodIndx;
+
 		for (uint32_t n = 0; n < LOD_LEVELS; n += 1) {
 			if (mapRayDist < lodDistTable[n]) {
 				lodIndx = n;
@@ -515,11 +524,12 @@ uint32_t CBasicMeshDrawer::CalcDrawPassLOD(const CCamera* cam, const DrawPass::e
 
 	switch (drawPass) {
 		case DrawPass::Normal         : { return (std::max(lodIndx - lodBias, 0)); } break;
+		case DrawPass::Shadow         : { return (std::max(lodIndx - lodBias, 0)); } break;
 		case DrawPass::TerrainDeferred: { return (std::max(lodIndx - lodBias, 0)); } break;
 		default: {} break;
 	}
 
-	// prevent shadows, reflections, etc from becoming too low-res
+	// prevent reflections etc from becoming too low-res
 	return (Clamp(lodIndx - lodBias, 0, LOD_LEVELS - 4));
 }
 
