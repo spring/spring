@@ -20,6 +20,7 @@ CPathCache::CPathCache(int blocksX, int blocksZ)
 	, numCacheMisses(0)
 	, numHashCollisions(0)
 {
+	// {result, path, strtBlock, goalBlock, goalRadius, pathType}
 	dummyCacheItem = {IPath::Error, {}, {-1, -1}, {-1, -1}, -1.0f, -1};
 }
 
@@ -54,7 +55,6 @@ bool CPathCache::AddPath(
 	if (iter != cachedPaths.end())
 		return ((numHashCollisions += HashCollision(iter->second, strtBlock, goalBlock, goalRadius, pathType)) != cols);
 
-	// {result, path, strtBlock, goalBlock, goalRadius, pathType}
 	cachedPaths[hash] = CacheItem{result, *path, strtBlock, goalBlock, goalRadius, pathType};
 
 	const int lifeTime = (result == IPath::Ok) ? GAME_SPEED * MAX_PATH_LIFETIME_SECS : GAME_SPEED * (MAX_PATH_LIFETIME_SECS / 2);

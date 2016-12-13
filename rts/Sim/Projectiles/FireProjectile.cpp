@@ -15,7 +15,7 @@
 #include "Sim/Misc/Wind.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Units/Unit.h"
-#include "System/creg/STL_List.h"
+#include "System/creg/STL_Deque.h"
 
 CR_BIND_DERIVED(CFireProjectile, CProjectile, )
 CR_BIND(CFireProjectile::SubParticle, )
@@ -69,11 +69,6 @@ CFireProjectile::CFireProjectile(
 	castShadow = true;
 }
 
-void CFireProjectile::StopFire()
-{
-	ttl = 0;
-}
-
 void CFireProjectile::Update()
 {
 	ttl--;
@@ -118,26 +113,27 @@ void CFireProjectile::Update()
 		}
 	}
 
-	for(part_list_type::iterator pi=subParticles.begin();pi!=subParticles.end();++pi){
-		pi->age+=ageSpeed;
-		if(pi->age>1){
+	for (SubParticle& pi: subParticles) {
+		if ((pi.age += ageSpeed) > 1.0f) {
 			subParticles.pop_back();
 			break;
 		}
-		pi->pos+=speed + wind.GetCurrentWind()*pi->age*0.05f + pi->posDif*0.1f;
-		pi->posDif*=0.9f;
+
+		pi.pos += (speed + wind.GetCurrentWind() * pi.age * 0.05f + pi.posDif * 0.1f);
+		pi.posDif *= 0.9f;
 	}
-	for(part_list_type::iterator pi=subParticles2.begin();pi!=subParticles2.end();++pi){
-		pi->age+=ageSpeed*1.5f;
-		if(pi->age>1){
+
+	for (SubParticle& pi: subParticles2) {
+		if ((pi.age += (ageSpeed * 1.5f)) > 1.0f) {
 			subParticles2.pop_back();
 			break;
 		}
-		pi->pos+=speed*0.7f+pi->posDif*0.1f;
-		pi->posDif*=0.9f;
+
+		pi.pos += (speed * 0.7f + pi.posDif * 0.1f);
+		pi.posDif *= 0.9f;
 	}
 
-	deleteMe |= ttl <= -particleTime;
+	deleteMe |= (ttl <= -particleTime);
 }
 
 void CFireProjectile::Draw()
@@ -149,17 +145,19 @@ void CFireProjectile::Draw()
 	size_t sz2 = subParticles2.size();
 	size_t sz = subParticles.size();
 	va->EnlargeArrays(sz2 * 4 + sz * 8, 0, VA_SIZE_TC);
-	for(part_list_type::iterator pi = subParticles2.begin(); pi != subParticles2.end(); ++pi) {
-		float age = pi->age+ageSpeed*globalRendering->timeOffset;
-		float size = pi->maxSize*(age);
-		float rot = pi->rotSpeed*age;
 
-		float sinRot = fastmath::sin(rot);
-		float cosRot = fastmath::cos(rot);
+	for (const SubParticle& pi: subParticles2) {
+		const float  age = pi.age + ageSpeed * globalRendering->timeOffset;
+		const float size = pi.maxSize * age;
+		const float  rot = pi.rotSpeed * age;
+
+		const float sinRot = fastmath::sin(rot);
+		const float cosRot = fastmath::cos(rot);
+
 		float3 dir1 = (camera->GetRight()*cosRot + camera->GetUp()*sinRot) * size;
 		float3 dir2 = (camera->GetRight()*sinRot - camera->GetUp()*cosRot) * size;
 
-		float3 interPos=pi->pos;
+		float3 interPos = pi.pos;
 
 		col[0] = (unsigned char) ((1 - age) * 255);
 		col[1] = (unsigned char) ((1 - age) * 255);
@@ -170,18 +168,19 @@ void CFireProjectile::Draw()
 		va->AddVertexQTC(interPos + dir1 + dir2, projectileDrawer->explotex->xend,   projectileDrawer->explotex->yend,   col);
 		va->AddVertexQTC(interPos - dir1 + dir2, projectileDrawer->explotex->xstart, projectileDrawer->explotex->yend,   col);
 	}
-	for (part_list_type::iterator pi = subParticles.begin(); pi != subParticles.end(); ++pi) {
-		const AtlasedTexture* at = projectileDrawer->smoketex[pi->smokeType];
-		float age = pi->age+ageSpeed * globalRendering->timeOffset;
-		float size = pi->maxSize * fastmath::apxsqrt(age);
-		float rot = pi->rotSpeed * age;
+	for (const SubParticle& pi: subParticles) {
+		const AtlasedTexture* at = projectileDrawer->smoketex[pi.smokeType];
+		const float  age = pi.age + ageSpeed * globalRendering->timeOffset;
+		const float size = pi.maxSize * fastmath::apxsqrt(age);
+		const float  rot = pi.rotSpeed * age;
 
-		float sinRot = fastmath::sin(rot);
-		float cosRot = fastmath::cos(rot);
+		const float sinRot = fastmath::sin(rot);
+		const float cosRot = fastmath::cos(rot);
+
 		float3 dir1 = (camera->GetRight()*cosRot + camera->GetUp()*sinRot) * size;
 		float3 dir2 = (camera->GetRight()*sinRot - camera->GetUp()*cosRot) * size;
 
-		float3 interPos = pi->pos;
+		float3 interPos = pi.pos;
 
 		if (age < 1/1.31f) {
 			col[0] = (unsigned char) ((1 - age * 1.3f) * 255);

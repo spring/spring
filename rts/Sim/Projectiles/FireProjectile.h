@@ -4,7 +4,7 @@
 #define FIRE_PROJECTILE_H
 
 #include "Projectile.h"
-#include <list>
+#include <deque>
 
 
 class CFireProjectile : public CProjectile
@@ -24,7 +24,7 @@ public:
 
 	void Draw() override;
 	void Update() override;
-	void StopFire();
+	void StopFire() { ttl = 0; }
 
 	virtual int GetProjectilesCount() const override;
 
@@ -48,7 +48,7 @@ public:
 		int smokeType;
 	};
 
-	typedef std::list<SubParticle> part_list_type; //FIXME
+	typedef std::deque<SubParticle> part_list_type; //FIXME
 
 	part_list_type subParticles;
 	part_list_type subParticles2;

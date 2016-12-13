@@ -12,8 +12,7 @@
 #include "Map/MetalMap.h"
 #include "Sim/Misc/QuadField.h"
 #include "System/Sync/SyncTracer.h"
-#include "System/creg/STL_List.h"
-#include "System/myMath.h"
+#include "System/Util.h"
 
 CR_BIND_DERIVED(CExtractorBuilding, CBuilding, )
 
@@ -43,7 +42,7 @@ CExtractorBuilding::CExtractorBuilding():
 CExtractorBuilding::~CExtractorBuilding()
 {
 	// if uh == NULL then all pointers to units should be considered dangling pointers
-	if (unitHandler != NULL) {
+	if (unitHandler != nullptr) {
 		ResetExtraction();
 	}
 }
@@ -52,16 +51,16 @@ CExtractorBuilding::~CExtractorBuilding()
 void CExtractorBuilding::ResetExtraction()
 {
 	// undo the extraction-area
-	for(std::vector<MetalSquareOfControl>::iterator si = metalAreaOfControl.begin(); si != metalAreaOfControl.end(); ++si) {
+	for (auto si = metalAreaOfControl.begin(); si != metalAreaOfControl.end(); ++si) {
 		readMap->metalMap->RemoveExtraction(si->x, si->z, si->extractionDepth);
 	}
 
 	metalAreaOfControl.clear();
 
 	// tell the neighbours (if any) to take it over
-	for (std::list<CExtractorBuilding*>::iterator ei = neighbours.begin(); ei != neighbours.end(); ++ei) {
-		(*ei)->RemoveNeighbour(this);
-		(*ei)->ReCalculateMetalExtraction();
+	for (CExtractorBuilding* ngb: neighbours) {
+		ngb->RemoveNeighbour(this);
+		ngb->ReCalculateMetalExtraction();
 	}
 	neighbours.clear();
 }
@@ -83,25 +82,29 @@ void CExtractorBuilding::SetExtractionRangeAndDepth(float range, float depth)
 	maxExtractionRange = std::max(extractionRange, maxExtractionRange);
 
 	// find any neighbouring extractors
-	const std::vector<CUnit*> &cu = quadField->GetUnits(pos, extractionRange + maxExtractionRange);
+	const std::vector<CUnit*>& cu = quadField->GetUnits(pos, extractionRange + maxExtractionRange);
 
-	for (std::vector<CUnit*>::const_iterator ui = cu.begin(); ui != cu.end(); ++ui) {
-		if (typeid(**ui) == typeid(CExtractorBuilding) && *ui != this) {
-			CExtractorBuilding* eb = (CExtractorBuilding*) *ui;
+	for (auto ui = cu.begin(); ui != cu.end(); ++ui) {
+		if (*ui == this)
+			continue;
+		if (typeid(**ui) != typeid(CExtractorBuilding))
+			continue;
 
-			if (IsNeighbour(eb)) {
-				neighbours.push_back(eb);
-				eb->AddNeighbour(this);
-			}
-		}
+		CExtractorBuilding* eb = static_cast<CExtractorBuilding*>(*ui);
+
+		if (!IsNeighbour(eb))
+			continue;
+
+		this->AddNeighbour(eb);
+		eb->AddNeighbour(this);
 	}
 
 	// calculate this extractor's area of control and metalExtract amount
 	metalExtract = 0;
-	int xBegin = std::max(0,                (int) ((pos.x - extractionRange) / METAL_MAP_SQUARE_SIZE));
-	int xEnd   = std::min(mapDims.mapx / 2 - 1, (int) ((pos.x + extractionRange) / METAL_MAP_SQUARE_SIZE));
-	int zBegin = std::max(0,                (int) ((pos.z - extractionRange) / METAL_MAP_SQUARE_SIZE));
-	int zEnd   = std::min(mapDims.mapy / 2 - 1, (int) ((pos.z + extractionRange) / METAL_MAP_SQUARE_SIZE));
+	const int xBegin = std::max(                   0, (int) ((pos.x - extractionRange) / METAL_MAP_SQUARE_SIZE));
+	const int xEnd   = std::min(mapDims.mapx / 2 - 1, (int) ((pos.x + extractionRange) / METAL_MAP_SQUARE_SIZE));
+	const int zBegin = std::max(                   0, (int) ((pos.z - extractionRange) / METAL_MAP_SQUARE_SIZE));
+	const int zEnd   = std::min(mapDims.mapy / 2 - 1, (int) ((pos.z + extractionRange) / METAL_MAP_SQUARE_SIZE));
 
 	metalAreaOfControl.reserve((xEnd - xBegin + 1) * (zEnd - zBegin + 1));
 
@@ -131,22 +134,17 @@ void CExtractorBuilding::SetExtractionRangeAndDepth(float range, float depth)
 
 
 /* adds a neighbour for this extractor */
-void CExtractorBuilding::AddNeighbour(CExtractorBuilding* neighboor)
+void CExtractorBuilding::AddNeighbour(CExtractorBuilding* neighbour)
 {
-	if (neighboor != this) {
-		for (std::list<CExtractorBuilding*>::iterator ei = neighbours.begin(); ei != neighbours.end(); ++ei) {
-			if ((*ei) == neighboor)
-				return;
-		}
-		neighbours.push_back(neighboor);
-	}
+	assert(neighbour != this);
+	VectorInsertUnique(neighbours, neighbour, true);
 }
 
-
-/* removes a neighboor for this extractor */
-void CExtractorBuilding::RemoveNeighbour(CExtractorBuilding* neighboor)
+/* removes a neighbour for this extractor */
+void CExtractorBuilding::RemoveNeighbour(CExtractorBuilding* neighbour)
 {
-	neighbours.remove(neighboor);
+	assert(neighbour != this);
+	VectorErase(neighbours, neighbour);
 }
 
 
@@ -154,13 +152,15 @@ void CExtractorBuilding::RemoveNeighbour(CExtractorBuilding* neighboor)
 void CExtractorBuilding::ReCalculateMetalExtraction()
 {
 	metalExtract = 0;
-	for (std::vector<MetalSquareOfControl>::iterator si = metalAreaOfControl.begin(); si != metalAreaOfControl.end(); ++si) {
-		MetalSquareOfControl& msqr = *si;
-		readMap->metalMap->RemoveExtraction(msqr.x, msqr.z, msqr.extractionDepth);
+
+	CMetalMap* metalMap = readMap->metalMap;
+
+	for (MetalSquareOfControl& msqr: metalAreaOfControl) {
+		metalMap->RemoveExtraction(msqr.x, msqr.z, msqr.extractionDepth);
 
 		// extraction is done in a cylinder
-		msqr.extractionDepth = readMap->metalMap->RequestExtraction(msqr.x, msqr.z, extractionDepth);
-		metalExtract += msqr.extractionDepth * readMap->metalMap->GetMetalAmount(msqr.x, msqr.z);
+		msqr.extractionDepth = metalMap->RequestExtraction(msqr.x, msqr.z, extractionDepth);
+		metalExtract += msqr.extractionDepth * metalMap->GetMetalAmount(msqr.x, msqr.z);
 	}
 
 	// set the new rotation-speed

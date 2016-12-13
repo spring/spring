@@ -3,7 +3,7 @@
 #ifndef _EXTRACTOR_BUILDING_H
 #define _EXTRACTOR_BUILDING_H
 
-#include <list>
+#include <vector>
 
 #include "Building.h"
 
@@ -37,7 +37,7 @@ protected:
 
 	float extractionRange, extractionDepth;
 	std::vector<MetalSquareOfControl> metalAreaOfControl;
-	std::list<CExtractorBuilding*> neighbours;
+	std::vector<CExtractorBuilding*> neighbours;
 
 	static float maxExtractionRange;
 };
