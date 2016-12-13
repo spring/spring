@@ -55,7 +55,7 @@ bool CPathCache::AddPath(
 		return ((numHashCollisions += HashCollision(iter->second, strtBlock, goalBlock, goalRadius, pathType)) != cols);
 
 	// {result, path, strtBlock, goalBlock, goalRadius, pathType}
-	cachedPaths[hash] = std::move(CacheItem{result, *path, strtBlock, goalBlock, goalRadius, pathType});
+	cachedPaths[hash] = CacheItem{result, *path, strtBlock, goalBlock, goalRadius, pathType};
 
 	const int lifeTime = (result == IPath::Ok) ? GAME_SPEED * MAX_PATH_LIFETIME_SECS : GAME_SPEED * (MAX_PATH_LIFETIME_SECS / 2);
 

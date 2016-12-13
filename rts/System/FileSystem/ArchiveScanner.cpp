@@ -494,7 +494,7 @@ bool CArchiveScanner::CheckCompression(const IArchive* ar, const std::string& fu
 		if (ar->HasLowReadingCost(fid))
 			continue;
 
-		const std::pair<std::string, int>& info = std::move(ar->FileInfo(fid));
+		const std::pair<std::string, int>& info = ar->FileInfo(fid);
 
 		switch (GetMetaFileClass(StringToLower(info.first))) {
 			case 1: {
@@ -521,7 +521,7 @@ std::string CArchiveScanner::SearchMapFile(const IArchive* ar, std::string& erro
 
 	// check for smf/sm3 and if the uncompression of important files is too costy
 	for (unsigned fid = 0; fid != ar->NumFiles(); ++fid) {
-		const std::pair<std::string, int>& info = std::move(ar->FileInfo(fid));
+		const std::pair<std::string, int>& info = ar->FileInfo(fid);
 		const std::string& ext = FileSystem::GetExtension(StringToLower(info.first));
 
 		if ((ext == "smf") || (ext == "sm3")) {
@@ -1136,7 +1136,7 @@ std::vector<std::string> CArchiveScanner::GetAllArchivesUsedBy(const std::string
 
 	for (std::string& archiveName: tmpArchives) {
 		if (retArchives.empty() || archiveName != retArchives.back()) {
-			retArchives.emplace_back(std::move(archiveName));
+			retArchives.emplace_back(archiveName);
 		}
 	}
 
@@ -1189,7 +1189,7 @@ unsigned int CArchiveScanner::GetSingleArchiveChecksum(const std::string& filePa
 
 unsigned int CArchiveScanner::GetArchiveCompleteChecksum(const std::string& name)
 {
-	const std::vector<std::string> ars = std::move(GetAllArchivesUsedBy(name));
+	const std::vector<std::string> ars = GetAllArchivesUsedBy(name);
 
 	unsigned int checksum = 0;
 
