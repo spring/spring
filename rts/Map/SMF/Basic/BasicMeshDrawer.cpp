@@ -12,6 +12,10 @@
 #define USE_MIPMAP_BUFFERS  0
 #define USE_PACKED_BUFFERS  1
 
+#ifndef glPrimitiveRestartIndex
+#define glPrimitiveRestartIndex glPrimitiveRestartIndexNV
+#endif
+
 
 
 typedef CBasicMeshDrawer::MeshPatch MeshPatch;
@@ -126,19 +130,22 @@ void CBasicMeshDrawer::UploadPatchSquareGeometry(uint32_t n, uint32_t px, uint32
 	MeshPatch& patch = meshPatches[py * numPatchesX + px];
 
 	VBO& squareVertexBuffer = patch.squareVertexBuffers[n];
+	#if (USE_PACKED_BUFFERS == 0)
 	VBO& squareNormalBuffer = patch.squareNormalBuffers[n];
+	#endif
 
 	patch.uhmUpdateFrames[0] = globalRendering->drawFrame;
 
 	const uint32_t lodStep  = 1 << n;
-	const uint32_t lodQuads = (PATCH_SIZE / lodStep);
 	const uint32_t lodVerts = (PATCH_SIZE / lodStep) + 1;
 
 	const uint32_t bpx = px * PATCH_SIZE;
 	const uint32_t bpy = py * PATCH_SIZE;
 
 	uint32_t vertexIndx = 0;
+	#if (USE_PACKED_BUFFERS == 0)
 	uint32_t normalIndx = 0;
+	#endif
 
 	{
 		squareVertexBuffer.Bind(GL_ARRAY_BUFFER);
@@ -146,8 +153,10 @@ void CBasicMeshDrawer::UploadPatchSquareGeometry(uint32_t n, uint32_t px, uint32
 
 		float3* verts = patch.squareVertexPtrs[n];
 
+		#ifdef GL_MAP_PERSISTENT_BIT
 		if (verts == nullptr)
 			verts = reinterpret_cast<float3*>(squareVertexBuffer.MapBuffer(GL_MAP_WRITE_BIT | GL_MAP_UNSYNCHRONIZED_BIT | GL_MAP_PERSISTENT_BIT));
+		#endif
 
 		if (verts == nullptr) {
 			verts = reinterpret_cast<float3*>(squareVertexBuffer.MapBuffer());
@@ -184,8 +193,10 @@ void CBasicMeshDrawer::UploadPatchSquareGeometry(uint32_t n, uint32_t px, uint32
 
 		float3* nrmls = patch.squareNormalPtrs[n];
 
+		#ifdef GL_MAP_PERSISTENT_BIT
 		if (nrmls == nullptr)
 			nrmls = reinterpret_cast<float3*>(squareNormalBuffer.MapBuffer(GL_MAP_WRITE_BIT | GL_MAP_UNSYNCHRONIZED_BIT | GL_MAP_PERSISTENT_BIT));
+		#endif
 
 		if (nrmls == nullptr) {
 			nrmls = reinterpret_cast<float3*>(squareNormalBuffer.MapBuffer());
@@ -216,14 +227,12 @@ void CBasicMeshDrawer::UploadPatchBorderGeometry(uint32_t n, uint32_t px, uint32
 	MeshPatch& patch = meshPatches[py * numPatchesX + px];
 
 	const uint32_t lodStep  = 1 << n;
-	const uint32_t lodQuads = (PATCH_SIZE / lodStep);
 	const uint32_t lodVerts = (PATCH_SIZE / lodStep) + 1;
 
 	const uint32_t bpx = px * PATCH_SIZE;
 	const uint32_t bpy = py * PATCH_SIZE;
 
 	uint32_t vertexIndx = 0;
-	uint32_t normalIndx = 0;
 
 	if (px == 0) {
 		vertexIndx = 0;
@@ -398,7 +407,7 @@ void CBasicMeshDrawer::UploadPatchIndices(uint32_t n) {
 		uint16_t* indcs = reinterpret_cast<uint16_t*>(squareIndexBuffer.MapBuffer());
 
 		uint32_t indxCtr = 0;
-		uint32_t quadCtr = 0;
+		// uint32_t quadCtr = 0;
 
 		// A B    B   or   A ... [B]
 		// C    C D        C ... [D]
@@ -465,7 +474,7 @@ void CBasicMeshDrawer::UploadPatchIndices(uint32_t n) {
 		uint16_t* indcs = reinterpret_cast<uint16_t*>(borderIndexBuffer.MapBuffer());
 
 		uint32_t indxCtr = 0;
-		uint32_t quadCtr = 0;
+		// uint32_t quadCtr = 0;
 
 		for (uint32_t vi = 0; vi < lodQuads; vi += 1) {
 			indcs[indxCtr++] = (vi               ); // A
@@ -518,7 +527,9 @@ uint32_t CBasicMeshDrawer::CalcDrawPassLOD(const CCamera* cam, const DrawPass::e
 
 void CBasicMeshDrawer::DrawSquareMeshPatch(const MeshPatch& meshPatch, const VBO& indexBuffer, const CCamera* activeCam) const {
 	const VBO& vertexBuffer = meshPatch.squareVertexBuffers[drawPassLOD * USE_MIPMAP_BUFFERS];
+	#if (USE_PACKED_BUFFERS == 0)
 	const VBO& normalBuffer = meshPatch.squareNormalBuffers[drawPassLOD * USE_MIPMAP_BUFFERS];
+	#endif
 
 	#if (USE_PACKED_BUFFERS == 0)
 		vertexBuffer.Bind(GL_ARRAY_BUFFER);
