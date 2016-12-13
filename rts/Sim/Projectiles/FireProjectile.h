@@ -48,10 +48,8 @@ public:
 		int smokeType;
 	};
 
-	typedef std::deque<SubParticle> part_list_type; //FIXME
-
-	part_list_type subParticles;
-	part_list_type subParticles2;
+	std::deque<SubParticle> subParticles;
+	std::deque<SubParticle> subParticles2;
 
 private:
 	CFireProjectile() { }
