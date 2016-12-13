@@ -7,6 +7,7 @@
 #include "Game/Camera.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
+#include "Map/SMF/Basic/BasicMeshDrawer.h"
 #include "Map/SMF/Legacy/LegacyMeshDrawer.h"
 #include "Map/SMF/ROAM/RoamMeshDrawer.h"
 #include "Rendering/GlobalRendering.h"
@@ -42,10 +43,13 @@ CONFIG(int, ROAM)
 
 CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
 	: smfMap(rm)
-	, meshDrawer(NULL)
+	, meshDrawer(nullptr)
 {
+	drawerMode = (configHandler->GetInt("ROAM") != 0)? SMF_MESHDRAWER_ROAM: SMF_MESHDRAWER_BASIC;
+	groundDetail = configHandler->GetInt("GroundDetail");
+
 	groundTextures = new CSMFGroundTextures(smfMap);
-	meshDrawer = SwitchMeshDrawer((configHandler->GetInt("ROAM") != 0) ? SMF_MESHDRAWER_ROAM : SMF_MESHDRAWER_LEGACY);
+	meshDrawer = SwitchMeshDrawer(drawerMode);
 
 	smfRenderStates.resize(RENDER_STATE_CNT, nullptr);
 	smfRenderStates[RENDER_STATE_SSP] = ISMFRenderState::GetInstance(globalRendering->haveARB, globalRendering->haveGLSL, false);
@@ -59,8 +63,6 @@ CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
 	drawForward = true;
 	drawDeferred = geomBuffer.Valid();
 	drawMapEdges = configHandler->GetBool("MapBorder");
-
-	groundDetail = configHandler->GetInt("GroundDetail");
 
 
 	// NOTE:
@@ -119,30 +121,32 @@ CSMFGroundDrawer::~CSMFGroundDrawer()
 
 
 
-IMeshDrawer* CSMFGroundDrawer::SwitchMeshDrawer(int mode)
+IMeshDrawer* CSMFGroundDrawer::SwitchMeshDrawer(int wantedMode)
 {
-	const int curMode = ((dynamic_cast<CRoamMeshDrawer*>(meshDrawer) != nullptr) ? SMF_MESHDRAWER_ROAM : SMF_MESHDRAWER_LEGACY);
-
-	// mode == -1: toggle modes
-	if (mode < 0) {
-		mode = curMode + 1;
-		mode %= SMF_MESHDRAWER_LAST;
+	// toggle
+	if (wantedMode <= -1) {
+		wantedMode = drawerMode + 1;
+		wantedMode %= SMF_MESHDRAWER_LAST;
 	}
 
-	if ((curMode == mode) && (meshDrawer != nullptr))
+	if ((wantedMode == drawerMode) && (meshDrawer != nullptr))
 		return meshDrawer;
 
-	delete meshDrawer;
+	SafeDelete(meshDrawer);
 
-	switch (mode) {
-		case SMF_MESHDRAWER_LEGACY:
+	switch ((drawerMode = wantedMode)) {
+		case SMF_MESHDRAWER_LEGACY: {
 			LOG("Switching to Legacy Mesh Rendering");
 			meshDrawer = new CLegacyMeshDrawer(smfMap, this);
-			break;
-		default:
+		} break;
+		case SMF_MESHDRAWER_BASIC: {
+			LOG("Switching to Basic Mesh Rendering");
+			meshDrawer = new CBasicMeshDrawer(smfMap, this);
+		} break;
+		default: {
 			LOG("Switching to ROAM Mesh Rendering");
 			meshDrawer = new CRoamMeshDrawer(smfMap, this);
-			break;
+		} break;
 	}
 
 	return meshDrawer;
@@ -532,26 +536,35 @@ bool CSMFGroundDrawer::UpdateGeometryBuffer(bool init)
 
 void CSMFGroundDrawer::IncreaseDetail()
 {
-	configHandler->Set("GroundDetail", groundDetail += 2);
-	LOG("GroundDetail is now %i", groundDetail);
+	configHandler->Set("GroundDetail", groundDetail = std::min(groundDetail + 1, 400));
+
+	if (drawerMode != SMF_MESHDRAWER_BASIC) {
+		LOG("GroundDetail is now %i", groundDetail);
+	} else {
+		LOG("GroundDetailBias is now %i", (groundDetail % CBasicMeshDrawer::LOD_LEVELS));
+	}
 }
 
 void CSMFGroundDrawer::DecreaseDetail()
 {
-	if (groundDetail > 4) {
-		configHandler->Set("GroundDetail", groundDetail -= 2);
+	configHandler->Set("GroundDetail", groundDetail = std::max(groundDetail - 1, 4));
+
+	if (drawerMode != SMF_MESHDRAWER_BASIC) {
 		LOG("GroundDetail is now %i", groundDetail);
+	} else {
+		LOG("GroundDetailBias is now %i", (groundDetail % CBasicMeshDrawer::LOD_LEVELS));
 	}
 }
 
 void CSMFGroundDrawer::SetDetail(int newGroundDetail)
 {
-	if (newGroundDetail < 4)
-		newGroundDetail = 4;
+	configHandler->Set("GroundDetail", groundDetail = Clamp(newGroundDetail, 4, 400));
 
-	groundDetail = newGroundDetail;
-	configHandler->Set("GroundDetail", groundDetail);
-	LOG("GroundDetail is now %i", groundDetail);
+	if (drawerMode != SMF_MESHDRAWER_BASIC) {
+		LOG("GroundDetail is now %i", groundDetail);
+	} else {
+		LOG("GroundDetailBias is now %i", (groundDetail % CBasicMeshDrawer::LOD_LEVELS));
+	}
 }
 
 
@@ -581,6 +594,6 @@ int CSMFGroundDrawer::GetGroundDetail(const DrawPass::e& drawPass) const
 			break;
 	}
 
-	return std::max(4, detail);
+	return detail;
 }
 
