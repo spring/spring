@@ -62,12 +62,12 @@ namespace fastmath {
 		vec = _mm_rsqrt_ss(vec);
 		return _mm_cvtss_f32(vec);
 #else
-		return isqrt_nosse(x);
+		return fastmath::isqrt_nosse(x);
 #endif
 	}
 
 	/**
-	* @brief Sync-safe. Calculates square root with using SSE instructions.
+	* @brief Sync-safe. Calculates square root using SSE instructions.
 	*
 	* Slower than std::sqrtf, much faster than streflop
 	*/
@@ -79,7 +79,12 @@ namespace fastmath {
 		vec = _mm_sqrt_ss(vec);
 		return _mm_cvtss_f32(vec);
 #else
-		return sqrt(x);
+	#ifdef STREFLOP_H
+		return streflop::sqrt(x);
+	#else
+		// not in synced context, pick either fm or std
+		return fastmath::sqrt_builtin(x);
+	#endif
 #endif
 	}
 
@@ -148,7 +153,7 @@ namespace fastmath {
 	* Use with care.
 	*/
 	inline float apxsqrt(float x) {
-		return x * isqrt_nosse(x);
+		return x * fastmath::isqrt_nosse(x);
 	}
 
 	/**
@@ -157,7 +162,7 @@ namespace fastmath {
 	* Use with care. This should be a little bit better, albeit slower, than fastmath::sqrt.
 	*/
 	inline float apxsqrt2(float x) {
-		return x * isqrt2_nosse(x);
+		return x * fastmath::isqrt2_nosse(x);
 	}
 
 
@@ -226,13 +231,13 @@ namespace fastmath {
 	*/
 	static const float DEG_TO_RAD = 180.f / PI;
 
-
 	/**
 	* @brief Radians (2pi) to Degrees (360)
 	*
 	* 360 / (2*PI)
 	*/
 	static const float RAD_TO_DEG = PI / 180.f;
+
 
 	/**
 	* @brief calculates the sine of x
@@ -265,7 +270,7 @@ namespace fastmath {
 	* Adds half of pi to x and then uses the sine method.
 	*/
 	inline float cos(float x) {
-		return sin(x + HALFPI);
+		return fastmath::sin(x + HALFPI);
 	}
 
 
@@ -286,18 +291,12 @@ using fastmath::PI;
 namespace math {
 	// override streflop with faster sqrt!
 	float sqrt(float x) _const;
-	inline float sqrt(float x) {
-		return fastmath::sqrt_sse(x);
-	}
 	float sqrtf(float x) _const;
-	inline float sqrtf(float x) {
-		return fastmath::sqrt_sse(x);
-	}
-
 	float isqrt(float x) _const;
-	inline float isqrt(float x) {
-		return fastmath::isqrt2_nosse(x);
-	}
+
+	inline float sqrt(float x) { return fastmath::sqrt_sse(x); }
+	inline float sqrtf(float x) { return fastmath::sqrt_sse(x); }
+	inline float isqrt(float x) { return fastmath::isqrt2_nosse(x); }
 
 	using fastmath::floor;
 }
