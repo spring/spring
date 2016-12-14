@@ -29,7 +29,7 @@ CONFIG(bool, DebugGL).defaultValue(false).description("Enables _driver_ debug fe
 CONFIG(bool, DebugGLStacktraces).defaultValue(false).description("Create a stacktrace when an OpenGL error occurs");
 
 
-static std::vector<CVertexArray*> vertexArrays;
+static std::vector<CVertexArray> vertexArrays;
 static int currentVertexArray = 0;
 
 
@@ -39,7 +39,7 @@ static int currentVertexArray = 0;
 CVertexArray* GetVertexArray()
 {
 	currentVertexArray = (currentVertexArray + 1) % vertexArrays.size();
-	return vertexArrays[currentVertexArray];
+	return &vertexArrays[currentVertexArray];
 }
 
 
@@ -367,15 +367,13 @@ void LoadExtensions()
 	}
 #endif
 
-	for (int i = 0; i<2; ++i)
-		vertexArrays.push_back(new CVertexArray);
+	vertexArrays.resize(2);
 }
 
 
 void UnloadExtensions()
 {
-	for (CVertexArray* va: vertexArrays)
-		delete va;
+	vertexArrays.clear();
 }
 
 /******************************************************************************/
@@ -396,7 +394,7 @@ void WorkaroundATIPointSizeBug()
 
 /******************************************************************************/
 
-void glSaveTexture(const GLuint textureID, const std::string& filename)
+void glSaveTexture(const GLuint textureID, const char* filename)
 {
 	const GLenum target = GL_TEXTURE_2D;
 	GLenum format = GL_RGBA8;
@@ -526,10 +524,10 @@ void ClearScreen()
 	glClearColor(0, 0, 0, 1);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	glMatrixMode(GL_PROJECTION); // Select The Projection Matrix
-	glLoadIdentity();            // Reset The Projection Matrix
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
 	gluOrtho2D(0, 1, 0, 1);
-	glMatrixMode(GL_MODELVIEW);  // Select The Modelview Matrix
+	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
 	glEnable(GL_BLEND);
@@ -711,7 +709,7 @@ void glClearErrors()
 
 /******************************************************************************/
 
-void SetTexGen(const float& scaleX, const float& scaleZ, const float& offsetX, const float& offsetZ)
+void SetTexGen(const float scaleX, const float scaleZ, const float offsetX, const float offsetZ)
 {
 	const GLfloat planeX[] = {scaleX, 0.0f,   0.0f,  offsetX};
 	const GLfloat planeZ[] = {  0.0f, 0.0f, scaleZ,  offsetZ};

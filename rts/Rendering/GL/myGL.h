@@ -8,14 +8,12 @@
 #define NOMINMAX
 #endif
 
-#include <string>
 #if       defined(HEADLESS)
 	#include "lib/headlessStubs/glewstub.h"
 #else
 	#include <GL/glew.h>
 #endif // defined(HEADLESS)
 
-// includes boost now!
 #include "System/float3.h"
 #include "System/float4.h"
 
@@ -48,11 +46,27 @@ static inline void glSecondaryColorf3(const float3& v) { glSecondaryColor3f(v.r,
 static inline void glColorf4(const float3& v, const float alpha) { glColor4f(v.r, v.g, v.b, alpha); }
 static inline void glUniformf3(const GLint location, const float3& v) { glUniform3f(location, v.r, v.g, v.b); }
 
+#ifdef GL_ARB_clip_control
+#undef glOrtho
+#undef gluOrtho2D
+#undef glFrustum
+static inline void glOrtho(float l, float r,  float b, float t,  float n, float f) {
+	glTranslatef(0.0f, 0.0f, 0.5f);
+	glScalef(1.0f, 1.0f, 0.5f);
+	glOrtho(l, r,  b, t,  n, f);
+}
+static inline void gluOrtho2D(float l, float r,  float b, float t) { glOrtho(l, r, b, t, -1.0f, 1.0f); }
+static inline void glFrustum(float l, float r,  float b, float t,  float n, float f) {
+	glTranslatef(0.0f, 0.0f, 0.5f);
+	glScalef(1.0f, 1.0f, 0.5f);
+	glFrustum(l, r,  b, t,  n, f);
+}
+#endif
 
 void WorkaroundATIPointSizeBug();
-void SetTexGen(const float& scaleX, const float& scaleZ, const float& offsetX, const float& offsetZ);
+void SetTexGen(const float scaleX, const float scaleZ, const float offsetX, const float offsetZ);
 
-void glSaveTexture(const GLuint textureID, const std::string& filename);
+void glSaveTexture(const GLuint textureID, const char* filename);
 void glSpringBindTextures(GLuint first, GLsizei count, const GLuint* textures);
 void glSpringTexStorage2D(const GLenum target, GLint levels, const GLint internalFormat, const GLsizei width, const GLsizei height);
 void glBuildMipmaps(const GLenum target, GLint internalFormat, const GLsizei width, const GLsizei height, const GLenum format, const GLenum type, const void* data);
