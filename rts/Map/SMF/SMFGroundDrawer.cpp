@@ -275,6 +275,7 @@ void CSMFGroundDrawer::DrawDeferredPass(const DrawPass::e& drawPass, bool alphaT
 
 	{
 		geomBuffer.Bind();
+		geomBuffer.SetDepthRange(1.0f, 0.0f);
 		geomBuffer.Clear();
 
 		smfRenderStates[RENDER_STATE_SEL]->SetCurrentShader(DrawPass::TerrainDeferred);
@@ -297,6 +298,7 @@ void CSMFGroundDrawer::DrawDeferredPass(const DrawPass::e& drawPass, bool alphaT
 		smfRenderStates[RENDER_STATE_SEL]->Disable(this, drawPass);
 		smfRenderStates[RENDER_STATE_SEL]->SetCurrentShader(DrawPass::Normal);
 
+		geomBuffer.SetDepthRange(0.0f, 1.0f);
 		geomBuffer.UnBind();
 	}
 

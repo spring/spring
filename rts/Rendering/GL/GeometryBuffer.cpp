@@ -29,9 +29,8 @@ void GL::GeometryBuffer::Kill(bool dtor) {
 		return;
 	}
 
-	if (buffer.IsValid()) {
+	if (buffer.IsValid())
 		DetachTextures(false);
-	}
 
 	dead = true;
 }
@@ -40,6 +39,14 @@ void GL::GeometryBuffer::Clear() const {
 	assert(bound);
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+}
+
+void GL::GeometryBuffer::SetDepthRange(float nearDepth, float farDepth) const {
+	#ifdef GL_ARB_clip_control
+	glDepthRangef(nearDepth, farDepth); // the bad way
+	glClearDepth(farDepth);
+	glDepthFunc((nearDepth <= farDepth)? GL_LEQUAL: GL_GREATER);
+	#endif
 }
 
 void GL::GeometryBuffer::DetachTextures(const bool init) {
@@ -102,7 +109,7 @@ bool GL::GeometryBuffer::Create(const int2 size) {
 
 		if (n == ATTACHMENT_ZVALTEX) {
 			glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32, size.x, size.y, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, size.x, size.y, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 			bufferAttachments[n] = GL_DEPTH_ATTACHMENT_EXT;
 		} else {
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size.x, size.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);

@@ -463,6 +463,8 @@ void LuaObjectDrawer::DrawDeferredPass(LuaObjType objType)
 	// note: should also set this during the map pass (in SMFGD)
 	game->SetDrawMode(CGame::gameDeferredDraw);
 	geomBuffer->Bind();
+	geomBuffer->SetDepthRange(1.0f, 0.0f);
+
 	// reset the buffer (since we do not perform a single pass
 	// writing both units and features into it at the same time)
 	// this however forces Lua to execute two shading passes and
@@ -484,6 +486,7 @@ void LuaObjectDrawer::DrawDeferredPass(LuaObjType objType)
 		} break;
 	}
 
+	geomBuffer->SetDepthRange(0.0f, 1.0f);
 	geomBuffer->UnBind();
 	game->SetDrawMode(CGame::gameNormalDraw);
 
