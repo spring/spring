@@ -269,6 +269,12 @@ bool CGlobalRendering::CreateSDLWindow(const char* title)
 
 	if (sdlGlCtx == nullptr) {
 		sdlGlCtx = SDL_GL_CreateContext(window);
+		if (sdlGlCtx == nullptr) {
+			char buf[1024];
+			SNPRINTF(buf, sizeof(buf), "Could not create SDL GL context:\n%s", SDL_GetError());
+			handleerror(NULL, buf, "ERROR", MBF_OK|MBF_EXCL);
+			return false;
+		}
 	} else {
 		SDL_GL_MakeCurrent(window, sdlGlCtx);
 	}
