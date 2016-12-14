@@ -50,13 +50,13 @@ static inline void glUniformf3(const GLint location, const float3& v) { glUnifor
 #undef glOrtho
 #undef gluOrtho2D
 #undef glFrustum
-static inline void glOrtho(float l, float r,  float b, float t,  float n, float f) {
+static inline void glOrtho(GLdouble l, GLdouble r,  GLdouble b, GLdouble t,  GLdouble n, GLdouble f) {
 	glTranslatef(0.0f, 0.0f, 0.5f);
 	glScalef(1.0f, 1.0f, 0.5f);
 	glOrtho(l, r,  b, t,  n, f);
 }
-static inline void gluOrtho2D(float l, float r,  float b, float t) { glOrtho(l, r, b, t, -1.0f, 1.0f); }
-static inline void glFrustum(float l, float r,  float b, float t,  float n, float f) {
+static inline void gluOrtho2D(GLdouble l, GLdouble r,  GLdouble b, GLdouble t) { glOrtho(l, r, b, t, -1.0, 1.0); }
+static inline void glFrustum(GLdouble l, GLdouble r,  GLdouble b, GLdouble t,  GLdouble n, GLdouble f) {
 	glTranslatef(0.0f, 0.0f, 0.5f);
 	glScalef(1.0f, 1.0f, 0.5f);
 	glFrustum(l, r,  b, t,  n, f);
