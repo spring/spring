@@ -386,9 +386,11 @@ void CBasicMeshDrawer::UploadPatchBorderNormals(VBO& normalBuffer, const float3&
 
 void CBasicMeshDrawer::UploadPatchIndices(uint32_t n) {
 	// base-level constants
-	constexpr uint32_t numQuads = PATCH_SIZE;
 	constexpr uint32_t numVerts = PATCH_SIZE + 1;
+	#if (USE_TRIANGLE_STRIPS == 0)
+	constexpr uint32_t numQuads = PATCH_SIZE;
 	constexpr uint32_t numPolys = (numQuads * numQuads) * 2;
+	#endif
 
 	const uint32_t lodStep  = 1 << n;
 	const uint32_t lodQuads = (PATCH_SIZE / lodStep);
