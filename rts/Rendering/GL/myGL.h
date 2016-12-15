@@ -50,9 +50,6 @@ static inline void glUniformf3(const GLint location, const float3& v) { glUnifor
 #undef glOrtho
 #undef gluOrtho2D
 #undef glFrustum
-#define glOrtho __spring_glOrtho
-#define gluOrtho2D __spring_gluOrtho2D
-#define glFrustum __spring_glFrustum
 
 static inline void __spring_glOrtho(GLdouble l, GLdouble r,  GLdouble b, GLdouble t,  GLdouble n, GLdouble f) {
 	glTranslatef(0.0f, 0.0f, 0.5f);
@@ -65,6 +62,11 @@ static inline void __spring_glFrustum(GLdouble l, GLdouble r,  GLdouble b, GLdou
 	glScalef(1.0f, 1.0f, 0.5f);
 	glFrustum(l, r,  b, t,  n, f);
 }
+
+#define glOrtho __spring_glOrtho
+#define gluOrtho2D __spring_gluOrtho2D
+#define glFrustum __spring_glFrustum
+
 #endif
 
 void WorkaroundATIPointSizeBug();
