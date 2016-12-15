@@ -278,10 +278,8 @@ bool CBitmap::Load(std::string const& filename, unsigned char defaultAlpha)
 
 		const bool success = !!ilLoadL(IL_TYPE_UNKNOWN, buffer, file.FileSize());
 
-#ifdef STREFLOP_H
 		//FPU control word has to be restored as well
 		streflop::streflop_init<streflop::Simple>();
-#endif
 
 		ilDisable(IL_ORIGIN_SET);
 		delete[] buffer;

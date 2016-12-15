@@ -350,11 +350,9 @@ bool SpringApp::InitWindow(const char* title)
 		return false;
 	}
 
-#ifdef STREFLOP_H
 	// Something in SDL_SetVideoMode (OpenGL drivers?) messes with the FPU control word.
 	// Set single precision floating point math.
 	streflop::streflop_init<streflop::Simple>();
-#endif
 
 	if (FLAGS_minimise) {
 		SDL_HideWindow(globalRendering->window);

@@ -12,8 +12,8 @@
 #include "System/Platform/CpuID.h"
 
 #ifndef STREFLOP_H
-void good_fpu_control_registers(const char*) {}
-void good_fpu_init() {}
+void good_fpu_control_registers(const char* text) { LOG_L(L_WARNING, "[%s](%s) streflop is disabled", __func__, text); }
+void good_fpu_init() { LOG_L(L_WARNING, "[%s] streflop is disabled", __func__); }
 
 #else
 
@@ -106,8 +106,8 @@ void good_fpu_control_registers(const char* text)
 	           ((fx87 == x87_a) || (fx87 == x87_b) || (fx87 == x87_c));
 
 	if (!ret) {
-		LOG_L(L_WARNING, "[%s] Sync warning: (env.sse_mode) MXCSR 0x%04X instead of 0x%04X or 0x%04X (\"%s\")", __FUNCTION__, fsse, sse_a, sse_b, text);
-		LOG_L(L_WARNING, "[%s] Sync warning: (env.x87_mode) FPUCW 0x%04X instead of 0x%04X or 0x%04X (\"%s\")", __FUNCTION__, fx87, x87_a, x87_b, text);
+		LOG_L(L_WARNING, "[%s] Sync warning: (env.sse_mode) MXCSR 0x%04X instead of 0x%04X or 0x%04X (\"%s\")", __func__, fsse, sse_a, sse_b, text);
+		LOG_L(L_WARNING, "[%s] Sync warning: (env.x87_mode) FPUCW 0x%04X instead of 0x%04X or 0x%04X (\"%s\")", __func__, fx87, x87_a, x87_b, text);
 
 		// Set single precision floating point math.
 		streflop::streflop_init<streflop::Simple>();
@@ -121,24 +121,23 @@ void good_fpu_control_registers(const char* text)
 	streflop::fpenv_t fenv;
 	streflop::fegetenv(&fenv);
 
-	bool ret = (fenv & 0x1F3F) == x87_a || (fenv & 0x1F3F) == x87_b || (fenv & 0x1F3F) == x87_c;
+	if ((fenv & 0x1F3F) == x87_a || (fenv & 0x1F3F) == x87_b || (fenv & 0x1F3F) == x87_c)
+		return;
 
-	if (!ret) {
-		LOG_L(L_WARNING, "[%s] Sync warning: FPUCW 0x%04X instead of 0x%04X or 0x%04X (\"%s\")", __FUNCTION__, fenv, x87_a, x87_b, text);
+	LOG_L(L_WARNING, "[%s] Sync warning: FPUCW 0x%04X instead of 0x%04X or 0x%04X (\"%s\")", __func__, fenv, x87_a, x87_b, text);
 
-		// Set single precision floating point math.
-		streflop::streflop_init<streflop::Simple>();
+	// Set single precision floating point math.
+	streflop::streflop_init<streflop::Simple>();
 	#if defined(__SUPPORT_SNAN__)
-		streflop::feraiseexcept(streflop::FPU_Exceptions(streflop::FE_INVALID | streflop::FE_DIVBYZERO | streflop::FE_OVERFLOW));
+	streflop::feraiseexcept(streflop::FPU_Exceptions(streflop::FE_INVALID | streflop::FE_DIVBYZERO | streflop::FE_OVERFLOW));
 	#endif
-	}
 #endif
 }
 
 void good_fpu_init()
 {
 	const unsigned int sseBits = springproc::GetProcSSEBits();
-		LOG("[CMyMath::Init] CPU SSE mask: %u, flags:", sseBits);
+		LOG("[%s] CPU SSE mask: %u, flags:", __func__, sseBits);
 		LOG("\tSSE 1.0:  %d,  SSE 2.0:  %d", (sseBits >> 5) & 1, (sseBits >> 4) & 1);
 		LOG("\tSSE 3.0:  %d, SSSE 3.0:  %d", (sseBits >> 3) & 1, (sseBits >> 2) & 1);
 		LOG("\tSSE 4.1:  %d,  SSE 4.2:  %d", (sseBits >> 1) & 1, (sseBits >> 0) & 1);

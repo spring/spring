@@ -299,12 +299,10 @@ void COffscreenGLThread::WrapFunc(std::function<void()> f)
 
 	glOffscreenCtx.WorkerThreadPost();
 
-#ifdef STREFLOP_H
 	// init streflop
 	// not needed for sync'ness (precision flags are per-process)
 	// but fpu exceptions are per-thread
 	streflop::streflop_init<streflop::Simple>();
-#endif
 
 	try {
 		f();
