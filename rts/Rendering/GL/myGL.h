@@ -56,7 +56,7 @@ static inline void __spring_glOrtho(GLdouble l, GLdouble r,  GLdouble b, GLdoubl
 	glScalef(1.0f, 1.0f, 0.5f);
 	glOrtho(l, r,  b, t,  n, f);
 }
-static inline void __spring_gluOrtho2D(GLdouble l, GLdouble r,  GLdouble b, GLdouble t) { glOrtho(l, r, b, t, -1.0, 1.0); }
+static inline void __spring_gluOrtho2D(GLdouble l, GLdouble r,  GLdouble b, GLdouble t) { __spring_glOrtho(l, r, b, t, -1.0, 1.0); }
 static inline void __spring_glFrustum(GLdouble l, GLdouble r,  GLdouble b, GLdouble t,  GLdouble n, GLdouble f) {
 	glTranslatef(0.0f, 0.0f, 0.5f);
 	glScalef(1.0f, 1.0f, 0.5f);
