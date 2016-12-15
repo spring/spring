@@ -150,20 +150,28 @@ void CBasicMeshDrawer::UploadPatchSquareGeometry(uint32_t n, uint32_t px, uint32
 
 	{
 		squareVertexBuffer.Bind(GL_ARRAY_BUFFER);
+		#ifndef GL_MAP_PERSISTENT_BIT
 		squareVertexBuffer.New((lodVerts * lodVerts) * sizeof(float3) * (USE_PACKED_BUFFERS + 1), GL_DYNAMIC_DRAW);
+		#else
+		// HACK
+		//   VBO class does not allow persistent non-immutable mappings, bypass it
+		//   set the correct size manually so we can still call MapBuffer normally
+		glBufferStorage(GL_ARRAY_BUFFER, squareVertexBuffer.size = (lodVerts * lodVerts) * sizeof(float3) * (USE_PACKED_BUFFERS + 1), nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT);
+		#endif
 
 		float3* verts = patch.squareVertexPtrs[n];
 
-		#ifdef GL_MAP_PERSISTENT_BIT
+		// do not use GL_MAP_UNSYNCHRONIZED_BIT in either case; causes slow driver sync
+		#ifndef GL_MAP_PERSISTENT_BIT
 		if (verts == nullptr)
-			verts = reinterpret_cast<float3*>(squareVertexBuffer.MapBuffer(GL_MAP_WRITE_BIT | GL_MAP_UNSYNCHRONIZED_BIT | GL_MAP_PERSISTENT_BIT));
+			verts = reinterpret_cast<float3*>(squareVertexBuffer.MapBuffer(GL_MAP_WRITE_BIT));
+		#else
+		if (verts == nullptr)
+			verts = reinterpret_cast<float3*>(squareVertexBuffer.MapBuffer(GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT));
+
+		patch.squareVertexPtrs[n] = verts;
 		#endif
 
-		if (verts == nullptr) {
-			verts = reinterpret_cast<float3*>(squareVertexBuffer.MapBuffer());
-		} else {
-			patch.squareVertexPtrs[n] = verts;
-		}
 
 		assert(verts != nullptr);
 
@@ -190,20 +198,23 @@ void CBasicMeshDrawer::UploadPatchSquareGeometry(uint32_t n, uint32_t px, uint32
 	#if (USE_PACKED_BUFFERS == 0)
 	{
 		squareNormalBuffer.Bind(GL_ARRAY_BUFFER);
+		#ifndef GL_MAP_PERSISTENT_BIT
 		squareNormalBuffer.New((lodVerts * lodVerts) * sizeof(float3), GL_DYNAMIC_DRAW);
+		#else
+		glBufferStorage(GL_ARRAY_BUFFER, squareNormalBuffer.size = (lodVerts * lodVerts) * sizeof(float3), nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT);
+		#endif
 
 		float3* nrmls = patch.squareNormalPtrs[n];
 
-		#ifdef GL_MAP_PERSISTENT_BIT
+		#ifndef GL_MAP_PERSISTENT_BIT
 		if (nrmls == nullptr)
-			nrmls = reinterpret_cast<float3*>(squareNormalBuffer.MapBuffer(GL_MAP_WRITE_BIT | GL_MAP_UNSYNCHRONIZED_BIT | GL_MAP_PERSISTENT_BIT));
-		#endif
+			nrmls = reinterpret_cast<float3*>(squareNormalBuffer.MapBuffer(GL_MAP_WRITE_BIT));
+		#else
+		if (nrmls == nullptr)
+			nrmls = reinterpret_cast<float3*>(squareNormalBuffer.MapBuffer(GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT));
 
-		if (nrmls == nullptr) {
-			nrmls = reinterpret_cast<float3*>(squareNormalBuffer.MapBuffer());
-		} else {
-			patch.squareNormalPtrs[n] = nrmls;
-		}
+		patch.squareNormalPtrs[n] = nrmls;
+		#endif
 
 		assert(nrmls != nullptr);
 
