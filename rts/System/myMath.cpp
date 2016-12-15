@@ -42,7 +42,7 @@ void CMyMath::Init()
 	}
 #endif
 
-#ifdef STREFLOP_ENABLED
+#if STREFLOP_ENABLED
 	if (checksum != HEADING_CHECKSUM) {
 		throw unsupported_error(
 			"Invalid headingToVectorTable checksum. Most likely"

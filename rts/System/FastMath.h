@@ -69,7 +69,7 @@ namespace fastmath {
 		vec = _mm_sqrt_ss(vec);
 		return _mm_cvtss_f32(vec);
 #else
-	#ifdef STREFLOP_ENABLED
+	#if STREFLOP_ENABLED
 		return streflop::sqrt(x);
 	#else
 		// not in synced context, pick either fm or std

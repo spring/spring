@@ -266,7 +266,7 @@ LUALIB_API int luaopen_math (lua_State *L) {
   luaL_register(L, LUA_MATHLIBNAME, mathlib);
   lua_pushnumber(L, PI);
   lua_setfield(L, -2, "pi");
-#ifdef STREFLOP_ENABLED
+#if STREFLOP_ENABLED
   lua_pushnumber(L, math::SimplePositiveInfinity); // streflop
 #else
   lua_pushnumber(L, HUGE_VAL);
