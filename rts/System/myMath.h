@@ -10,16 +10,6 @@
 #include <cmath> // std::fabs
 #include <algorithm> // std::{min,max}
 
-#ifdef __GNUC__
-	#define _const __attribute__((const))
-	#define _pure __attribute__((pure))
-	#define _warn_unused_result __attribute__((warn_unused_result))
-#else
-	#define _const
-	#define _pure
-	#define _warn_unused_result
-#endif
-
 #ifndef M_PI
     #define M_PI       3.14159265358979323846
 #endif 

@@ -14,16 +14,6 @@
 #define __builtin_sqrtf sqrt_sse
 #endif
 
-#ifdef __GNUC__
-	#define _const __attribute__((const))
-	#define _pure __attribute__((pure))
-	#define _warn_unused_result __attribute__((warn_unused_result))
-#else
-	#define _const
-	#define _pure
-	#define _warn_unused_result
-#endif
-
 /**
  * @brief Fast math routines
  *

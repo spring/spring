@@ -78,7 +78,11 @@ LIST(APPEND engineCommonLibraries ${IL_LIBRARIES} ${JPEG_LIBRARY} ${PNG_LIBRARY}
 LIST(APPEND engineCommonLibraries ${Boost_REGEX_LIBRARY})
 LIST(APPEND engineCommonLibraries ${Boost_SYSTEM_LIBRARY} ${Boost_CHRONO_LIBRARY_WITH_RT})
 LIST(APPEND engineCommonLibraries 7zip ${SPRING_MINIZIP_LIBRARY} ${ZLIB_LIBRARY})
-LIST(APPEND engineCommonLibraries lua luasocket archives streflop assimp gflags)
+LIST(APPEND engineCommonLibraries lua luasocket archives assimp gflags)
+if (ENABLE_STREFLOP)
+LIST(APPEND engineCommonLibraries streflop)
+endif ()
+
 include_directories(${ZLIB_INCLUDE_DIR})
 
 IF (WIN32)

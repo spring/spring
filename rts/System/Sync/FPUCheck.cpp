@@ -11,13 +11,18 @@
 #include "System/Log/ILog.h"
 #include "System/Platform/CpuID.h"
 
-#ifdef STREFLOP_H
-	#ifdef STREFLOP_SSE
-	#elif STREFLOP_X87
-	#else
-		#error "streflop FP-math mode must be either SSE or X87"
-	#endif
+#ifndef STREFLOP_H
+void good_fpu_control_registers(const char*) {}
+void good_fpu_init() {}
+
+#else
+
+#ifdef STREFLOP_SSE
+#elif STREFLOP_X87
+#else
+	#error "streflop FP-math mode must be either SSE or X87"
 #endif
+
 
 /**
 	@brief checks FPU control registers.
@@ -67,6 +72,7 @@ MaskRsvd:    0    0    0  1  1  1  1  1|   0    0   1  1  1  1  1  1 = 0x1F3F
 
 	Source: Intel Architecture Software Development Manual, Volume 1, Basic Architecture
 */
+
 void good_fpu_control_registers(const char* text)
 {
 #ifdef USE_VALGRIND
@@ -173,6 +179,7 @@ void good_fpu_init()
 	LOG_L(L_WARNING, "This makes keeping multi-player sync 99% impossible");
 #endif
 }
+#endif
 
 namespace springproc {
 	unsigned int GetProcMaxStandardLevel()
@@ -231,3 +238,4 @@ namespace springproc {
 		return bits;
 	}
 }
+

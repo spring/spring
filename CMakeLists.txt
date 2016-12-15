@@ -401,8 +401,17 @@ if(DEBUG_LUANAN)
 endif()
 
 
+
 ### streflop
-add_definitions(-DSTREFLOP_SSE) # would break AI compiling, but is undefined in ./AI/CMakeLists.txt
+option(ENABLE_STREFLOP "build Spring with streflop support (REQUIRED FOR MULTIPLAYER)" TRUE)
+
+if (ENABLE_STREFLOP)
+## note: is removed in ./AI/CMakeLists.txt since it would break AI compilation
+add_definitions(-DSTREFLOP_SSE)
+else ()
+add_definitions(-DNOT_USING_STREFLOP)
+endif ()
+
 
 
 ### Asio
