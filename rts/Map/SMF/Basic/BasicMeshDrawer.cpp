@@ -149,15 +149,13 @@ void CBasicMeshDrawer::UploadPatchSquareGeometry(uint32_t n, uint32_t px, uint32
 	#endif
 
 	{
-		squareVertexBuffer.Bind(GL_ARRAY_BUFFER);
-		#ifndef GL_MAP_PERSISTENT_BIT
-		squareVertexBuffer.New((lodVerts * lodVerts) * sizeof(float3) * (USE_PACKED_BUFFERS + 1), GL_DYNAMIC_DRAW);
-		#else
-		// HACK
-		//   VBO class does not allow persistent non-immutable mappings, bypass it
-		//   set the correct size manually so we can still call MapBuffer normally
-		glBufferStorage(GL_ARRAY_BUFFER, squareVertexBuffer.size = (lodVerts * lodVerts) * sizeof(float3) * (USE_PACKED_BUFFERS + 1), nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT);
+		#ifdef GLEW_ARB_buffer_storage
+		// HACK: the VBO constructor defaults to storage=false
+		squareVertexBuffer.immutableStorage = GLEW_ARB_buffer_storage;
 		#endif
+
+		squareVertexBuffer.Bind(GL_ARRAY_BUFFER);
+		squareVertexBuffer.New((lodVerts * lodVerts) * sizeof(float3) * (USE_PACKED_BUFFERS + 1), GL_DYNAMIC_DRAW);
 
 		float3* verts = patch.squareVertexPtrs[n];
 
@@ -171,7 +169,6 @@ void CBasicMeshDrawer::UploadPatchSquareGeometry(uint32_t n, uint32_t px, uint32
 
 		patch.squareVertexPtrs[n] = verts;
 		#endif
-
 
 		assert(verts != nullptr);
 
@@ -197,12 +194,12 @@ void CBasicMeshDrawer::UploadPatchSquareGeometry(uint32_t n, uint32_t px, uint32
 	}
 	#if (USE_PACKED_BUFFERS == 0)
 	{
-		squareNormalBuffer.Bind(GL_ARRAY_BUFFER);
-		#ifndef GL_MAP_PERSISTENT_BIT
-		squareNormalBuffer.New((lodVerts * lodVerts) * sizeof(float3), GL_DYNAMIC_DRAW);
-		#else
-		glBufferStorage(GL_ARRAY_BUFFER, squareNormalBuffer.size = (lodVerts * lodVerts) * sizeof(float3), nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT);
+		#ifdef GLEW_ARB_buffer_storage
+		squareNormalBuffer.immutableStorage = GLEW_ARB_buffer_storage;
 		#endif
+
+		squareNormalBuffer.Bind(GL_ARRAY_BUFFER);
+		squareNormalBuffer.New((lodVerts * lodVerts) * sizeof(float3), GL_DYNAMIC_DRAW);
 
 		float3* nrmls = patch.squareNormalPtrs[n];
 
