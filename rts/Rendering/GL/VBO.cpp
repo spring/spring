@@ -205,8 +205,9 @@ void VBO::Resize(GLsizeiptr _size, GLenum usage)
 void VBO::New(GLsizeiptr _size, GLenum usage, const void* data_)
 {
 	assert(bound);
-	assert(!mapped);
+	assert(!mapped || (data_ == nullptr && _size == size && usage == this->usage));
 
+	// no-op new, allows e.g. repeated Bind+New with persistent buffers
 	if (data_ == nullptr && _size == size && usage == this->usage)
 		return;
 
