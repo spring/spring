@@ -219,7 +219,9 @@ void CPathTexture::Update()
 	const bool losFullView = ((gu->spectating && gu->spectatingFullView) || losHandler->globalLOS[gu->myAllyTeam]);
 
 	if (ud != nullptr) {
-		for_mt(start, updateProcess, [&](const int y) {
+		// CGameHelper::TestUnitBuildSquare accesses QuadField which is not re-entrant
+		// for_mt(start, updateProcess, [&](const int y) {
+		for (int y = start; y < updateProcess; y++) {
 			for (int x = 0; x < texSize.x; ++x) {
 				const float3 pos = float3(x << 1, 0.0f, y << 1) * SQUARE_SIZE;
 				const int idx = y * texSize.x + x;
