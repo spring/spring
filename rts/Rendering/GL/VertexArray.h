@@ -150,7 +150,7 @@ public:
 protected:
 	void DrawArrays(const GLenum mode, const unsigned int stride);
 	void DrawArraysCallback(const GLenum mode, const unsigned int stride, StripCallback callback, void* data);
-	inline void CheckEnlargeDrawArray();
+	inline void CheckEnlargeDrawArray(size_t bytesNeeded);
 	void EnlargeStripArray();
 	void EnlargeDrawArray();
 	inline void CheckEndStrip();
