@@ -528,8 +528,8 @@ void CBasicSky::DrawSun()
 		return;
 
 	const float3 xzSunCameraPos =
-		sundir1 * camera->GetPos().x +
-		sundir2 * camera->GetPos().z;
+		skyLight->GetLightDirX() * camera->GetPos().x +
+		skyLight->GetLightDirZ() * camera->GetPos().z;
 	const float3 modSunColor = sunColor * skyLight->GetLightIntensity();
 
 	// sun-disc vertices might be clipped against the
@@ -696,24 +696,8 @@ void CBasicSky::CreateCover(int baseX, int baseY, float *buf)
 }
 
 void CBasicSky::UpdateSunDir() {
-	const float3& L = skyLight->GetLightDir();
-
-	sundir2 = L;
-	sundir2.y = 0.0f;
-
-	if (sundir2.SqLength() == 0.0f)
-		sundir2.x = 1.0f;
-
-	sundir2.ANormalize();
-	sundir1 = sundir2.cross(UpVector);
-
-	// polar-coordinate direction in yz-plane (sin(zenith-angle), radius)
-	modSunDir.x = 0.0f;
-	modSunDir.y = L.y;
-	modSunDir.z = std::sqrt(L.x * L.x + L.z * L.z);
-
 	sunTexCoordX = 0.5f;
-	sunTexCoordY = GetTexCoordFromDir(modSunDir);
+	sunTexCoordY = GetTexCoordFromDir(skyLight->CalcPolarLightDir());
 
 	// FIXME: expensive with dynamic sun
 	UpdateSunFlare();

@@ -153,6 +153,7 @@ public:
 
 	bool UseAdvShading() const { return advShading; }
 	bool& UseAdvShadingRef() { return advShading; }
+	bool& WireFrameModeRef() { return wireFrameMode; }
 
 public:
 	struct TempDrawUnit {
@@ -248,6 +249,7 @@ public:
 private:
 	bool drawForward;
 	bool drawDeferred;
+	bool wireFrameMode;
 
 	bool advShading;
 

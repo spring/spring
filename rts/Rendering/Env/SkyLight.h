@@ -23,9 +23,18 @@ public:
 	const float4& GetLightDir() const { return lightDir; }
 	const float GetLightIntensity() const { return lightDir.w; }
 
-protected:
+	const float3& GetLightDirX() const { return lightDirX; }
+	const float3& GetLightDirZ() const { return lightDirZ; }
+
+	float3& CalcPolarLightDir();
+
+private:
 	float4 lightDir;
 	float4 cacheDir;
+
+	float3 lightDirX;
+	float3 lightDirZ;
+	float3 modLightDir;
 };
 
 #endif

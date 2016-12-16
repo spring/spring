@@ -321,9 +321,11 @@ void CSMFGroundDrawer::DrawForwardPass(const DrawPass::e& drawPass, bool alphaTe
 		smfRenderStates[RENDER_STATE_SEL]->SetCurrentShader(drawPass);
 		smfRenderStates[RENDER_STATE_SEL]->Enable(this, drawPass);
 
-		if (wireframe) {
+		glPushAttrib((GL_ENABLE_BIT * alphaTest) | (GL_POLYGON_BIT * wireframe));
+
+		if (wireframe)
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-		}
+
 		if (alphaTest) {
 			glEnable(GL_ALPHA_TEST);
 			glAlphaFunc(GL_GREATER, mapInfo->map.voidAlphaMin);
@@ -334,12 +336,7 @@ void CSMFGroundDrawer::DrawForwardPass(const DrawPass::e& drawPass, bool alphaTe
 
 		meshDrawer->DrawMesh(drawPass);
 
-		if (alphaTest) {
-			glDisable(GL_ALPHA_TEST);
-		}
-		if (wireframe) {
-			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-		}
+		glPopAttrib();
 
 		smfRenderStates[RENDER_STATE_SEL]->Disable(this, drawPass);
 		smfRenderStates[RENDER_STATE_SEL]->SetCurrentShader(DrawPass::Normal);

@@ -255,6 +255,7 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 
 	drawForward = true;
 	drawDeferred = (geomBuffer->Valid());
+	wireFrameMode = false;
 
 	// NOTE:
 	//   advShading can NOT change at runtime if initially false***
@@ -690,7 +691,10 @@ void CUnitDrawer::DrawIcon(CUnit* unit, bool useDefaultIcon)
 
 void CUnitDrawer::SetupAlphaDrawing(bool deferredPass)
 {
-	glPushAttrib(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glPushAttrib(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | (GL_POLYGON_BIT * wireFrameMode));
+
+	if (wireFrameMode)
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	unitDrawerStates[DRAWER_STATE_SEL] = const_cast<IUnitDrawerState*>(GetWantedDrawerState(true));
 	unitDrawerStates[DRAWER_STATE_SEL]->Enable(this, deferredPass && false, true);
@@ -938,13 +942,16 @@ void CUnitDrawer::DrawGhostedBuildings(int modelType)
 
 void CUnitDrawer::SetupOpaqueDrawing(bool deferredPass)
 {
-	glPushAttrib(GL_ENABLE_BIT);
+	glPushAttrib(GL_ENABLE_BIT | (GL_POLYGON_BIT * wireFrameMode));
 
 	glCullFace(GL_BACK);
 	glEnable(GL_CULL_FACE);
 
 	glAlphaFunc(GL_GREATER, 0.5f);
 	glEnable(GL_ALPHA_TEST);
+
+	if (wireFrameMode)
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	// pick base shaders (ARB/GLSL) or FFP; not used by custom-material models
 	unitDrawerStates[DRAWER_STATE_SEL] = const_cast<IUnitDrawerState*>(GetWantedDrawerState(false));

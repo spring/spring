@@ -1282,9 +1282,9 @@ public:
 			"Enable/Disable dynamic-sky rendering") {}
 
 	bool Execute(const UnsyncedAction& action) const {
+		sky->DynamicSkyRef() = !sky->DynamicSkyRef();
 
-		InverseOrSetBool(sky->dynamicSky, action.GetArgs());
-		LogSystemStatus("dynamic-sky rendering", sky->dynamicSky);
+		LogSystemStatus("dynamic-sky rendering", sky->DynamicSkyRef());
 		return true;
 	}
 };
@@ -2542,17 +2542,38 @@ public:
 
 
 
-class WireMapActionExecutor : public IUnsyncedActionExecutor {
+class WireModelActionExecutor: public IUnsyncedActionExecutor {
 public:
-	WireMapActionExecutor() : IUnsyncedActionExecutor("WireMap",
-			"Enable/Disable drawing of the map as wire-frame (no textures) (Graphic setting)") {}
+	WireModelActionExecutor(): IUnsyncedActionExecutor("WireModel", "Toggle wireframe-mode drawing of model geometry") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
-		InverseOrSetBool(gd->WireFrameModeRef(), action.GetArgs());
-		// TODO: make this a separate action
-		// sky->wireframe = gd->WireFrameMode();
-		LogSystemStatus("wireframe map-drawing mode", gd->WireFrameMode());
+		unitDrawer->WireFrameModeRef() = !unitDrawer->WireFrameModeRef();
+
+		LogSystemStatus("wireframe model-drawing mode", unitDrawer->WireFrameModeRef());
+		return true;
+	}
+};
+
+class WireMapActionExecutor: public IUnsyncedActionExecutor {
+public:
+	WireMapActionExecutor(): IUnsyncedActionExecutor("WireMap", "Toggle wireframe-mode drawing of map geometry") {}
+
+	bool Execute(const UnsyncedAction& action) const {
+		(readMap->GetGroundDrawer())->WireFrameModeRef() = !(readMap->GetGroundDrawer())->WireFrameModeRef();
+
+		LogSystemStatus("wireframe map-drawing mode", (readMap->GetGroundDrawer())->WireFrameMode());
+		return true;
+	}
+};
+
+class WireSkyActionExecutor: public IUnsyncedActionExecutor {
+public:
+	WireSkyActionExecutor(): IUnsyncedActionExecutor("WireSky", "Toggle wireframe-mode drawing of skydome geometry") {}
+
+	bool Execute(const UnsyncedAction& action) const {
+		sky->WireFrameModeRef() = !sky->WireFrameModeRef();
+
+		LogSystemStatus("wireframe sky-drawing mode", sky->WireFrameModeRef());
 		return true;
 	}
 };
@@ -3141,7 +3162,9 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new DistIconActionExecutor());
 	AddActionExecutor(new DistDrawActionExecutor());
 	AddActionExecutor(new LODScaleActionExecutor());
+	AddActionExecutor(new WireModelActionExecutor());
 	AddActionExecutor(new WireMapActionExecutor());
+	AddActionExecutor(new WireSkyActionExecutor());
 	AddActionExecutor(new CrashActionExecutor());
 	AddActionExecutor(new ExceptionActionExecutor());
 	AddActionExecutor(new DivByZeroActionExecutor());
