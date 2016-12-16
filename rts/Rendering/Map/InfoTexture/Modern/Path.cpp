@@ -241,7 +241,7 @@ void CPathTexture::Update()
 
 				infoTexMem[idx - offset] = GetBuildColor(status);
 			}
-		});
+		}
 	} else if (md != NULL) {
 		for_mt(start, updateProcess, [&](const int y) {
 			for (int x = 0; x < texSize.x; ++x) {
