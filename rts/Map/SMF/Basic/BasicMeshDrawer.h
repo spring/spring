@@ -6,10 +6,10 @@
 #include <array>
 #include <vector>
 
-#include "Map/BaseGroundDrawer.h"
+#include "Map/MapDrawPassTypes.h"
 #include "Map/SMF/IMeshDrawer.h"
 #include "Rendering/GL/VBO.h"
-#include "System/EventHandler.h"
+#include "System/EventClient.h"
 
 class CSMFReadMap;
 class CSMFGroundDrawer;
