@@ -748,7 +748,7 @@ int CGroundDecalHandler::GetScarID() {
 
 	if (scarIndices.empty()) {
 		const size_t prevSize = scars.size();
-		const size_t nextSize = std::max(scars.size() * 2, size_t(4));
+		const size_t nextSize = std::max(scars.size() * 2, size_t(64));
 
 		scars.resize(nextSize);
 
