@@ -412,27 +412,30 @@ void CLosMap::AddCircle(SLosInstance* instance, int amount)
 
 void CLosMap::AddRaycast(SLosInstance* instance, int amount)
 {
-	if (instance->squares.empty() || instance->squares.front().length == SLosInstance::EMPTY_RLE.length) {
+	if (instance->squares.empty() || instance->squares.front().length == SLosInstance::EMPTY_RLE.length)
 		return;
-	}
 
 #ifdef USE_UNSYNCED_HEIGHTMAP
 	// Inform ReadMap when squares enter LoS
-	const bool updateUnsyncedHeightMap = (sendReadmapEvents && instance->allyteam >= 0 && (instance->allyteam == gu->myAllyTeam || gu->spectatingFullView));
-	if ((amount > 0) && updateUnsyncedHeightMap) {
+	const bool updateUnsyncedHeightMap = (instance->allyteam >= 0 && (instance->allyteam == gu->myAllyTeam || gu->spectatingFullView));
+
+	if ((amount > 0) && (sendReadmapEvents && updateUnsyncedHeightMap)) {
 		for (const SLosInstance::RLE rle: instance->squares) {
 			int idx = rle.start;
-			for (int l = rle.length; l>0; --l, ++idx) {
-				const bool squareEnteredLOS = (losmap[idx] == 0);
+
+			for (int l = rle.length; l > 0; --l, ++idx) {
 				losmap[idx] += amount;
 
-				if (!squareEnteredLOS) { continue; }
+				// skip if this los-square did not *enter* LOS
+				if (losmap[idx] != amount)
+					continue;
 
 				const int2 lm = IdxToCoord(idx, size.x);
-				const int2 p1 = lm * LOS2HEIGHT;
-				const int2 p2 = std::min(p1 + int2(1,1), int2(mapDims.mapxm1, mapDims.mapym1));
+				const int2 p1 = (lm             ) * LOS2HEIGHT;
+				const int2 p2 = (lm + int2(1, 1)) * LOS2HEIGHT;
+				const int2 p3 = {std::min(p2.x, mapDims.mapxm1), std::min(p2.y, mapDims.mapym1)};
 
-				readMap->UpdateLOS(SRectangle(p1.x, p1.y, p2.x, p2.y));
+				readMap->UpdateLOS(SRectangle(p1.x, p1.y,  p3.x, p3.y));
 			}
 		}
 
@@ -442,7 +445,8 @@ void CLosMap::AddRaycast(SLosInstance* instance, int amount)
 
 	for (const SLosInstance::RLE rle: instance->squares) {
 		int idx = rle.start;
-		for (int l = rle.length; l>0; --l, ++idx) {
+
+		for (int l = rle.length; l > 0; --l, ++idx) {
 			losmap[idx] += amount;
 		}
 	}

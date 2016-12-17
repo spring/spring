@@ -15,6 +15,7 @@
 #include "System/Misc/RectangleOptimizer.h"
 
 #define USE_UNSYNCED_HEIGHTMAP
+#define USE_HEIGHTMAP_DIGESTS
 
 class CMetalMap;
 class CCamera;
@@ -81,7 +82,7 @@ public:
 	CR_DECLARE_STRUCT(CReadMap)
 
 	static CReadMap* LoadMap(const std::string& mapname);
-	static inline unsigned char EncodeHeight(const float h) {
+	static inline uint8_t EncodeHeight(const float h) {
 		return std::max(0, 255 + int(10.0f * h));
 	}
 
@@ -93,8 +94,8 @@ public:
 	 * calculates derived heightmap information
 	 * such as normals, centerheightmap and slopemap
 	 */
-	void UpdateHeightMapSynced(SRectangle rect, bool initialize = false);
-	void UpdateLOS(const SRectangle& rect);
+	void UpdateHeightMapSynced(SRectangle hmRect, bool initialize = false);
+	void UpdateLOS(const SRectangle& hmRect);
 	void BecomeSpectator();
 	void UpdateDraw(bool firstCall);
 
@@ -158,8 +159,8 @@ public:
 	const float* GetCenterHeightMapSynced() const { return &centerHeightMap[0]; }
 	const float* GetMIPHeightMapSynced(unsigned int mip) const { return mipPointerHeightMaps[mip]; }
 	const float* GetSlopeMapSynced() const { return &slopeMap[0]; }
-	const unsigned char* GetTypeMapSynced() const { return &typeMap[0]; }
-	      unsigned char* GetTypeMapSynced()       { return &typeMap[0]; }
+	const uint8_t* GetTypeMapSynced() const { return &typeMap[0]; }
+	      uint8_t* GetTypeMapSynced()       { return &typeMap[0]; }
 
 	/// unsynced only
 	const float3* GetVisVertexNormalsUnsynced() const { return &visVertexNormals[0]; }
@@ -211,9 +212,9 @@ private:
 	void UpdateFaceNormals(const SRectangle& rect, bool initialize);
 	void UpdateSlopemap(const SRectangle& rect, bool initialize);
 
-	inline void HeightMapUpdateLOSCheck(const SRectangle& rect);
+	inline void HeightMapUpdateLOSCheck(const SRectangle& hmRect);
 	inline bool HasHeightMapChanged(const int lmx, const int lmy);
-	inline void InitHeightMapDigestsVectors();
+	inline void InitHeightMapDigestVectors(bool initialize);
 
 public:
 	/// number of heightmap mipmaps, including full resolution
@@ -248,7 +249,7 @@ protected:
 	std::vector<float3> centerNormals2DUnsynced;
 
 	std::vector<float> slopeMap;               //< size: (mapx/2)    * (mapy/2)  , same as 1.0 - interpolate(centernomal[i]).y [SYNCED]
-	std::vector<unsigned char> typeMap;
+	std::vector<uint8_t> typeMap;
 
 	CRectangleOptimizer unsyncedHeightMapUpdates;
 	CRectangleOptimizer unsyncedHeightMapUpdatesTemp;
@@ -264,10 +265,12 @@ private:
 	const float* sharedSlopeMaps[2];
 
 #ifdef USE_UNSYNCED_HEIGHTMAP
-	/// used to filer LOS updates (so only update UHM on LOS updates when the heightmap was changed beforehand)
-	/// size: in LOS resolution
-	std::vector<unsigned char>   syncedHeightMapDigests;
-	std::vector<unsigned char> unsyncedHeightMapDigests;
+	/// these are not "digests", just simple rolling counters
+	/// for each LOS-map square the counter value indicates how many times
+	/// the synced heightmap block of squares corresponding to it has been
+	/// changed, s.t. UHM updates are only pushed when necessary
+	std::vector<uint8_t>   syncedHeightMapDigests;
+	std::vector<uint8_t> unsyncedHeightMapDigests;
 #endif
 
 	unsigned int mapChecksum;
