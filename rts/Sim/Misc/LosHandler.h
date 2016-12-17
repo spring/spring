@@ -67,11 +67,11 @@ public:
 	// helpers
 	int hashNum;
 	enum TLosStatus {
-		NONE = 0,
-		NEW  = 1,
-		REACTIVATE = 2,
-		RECALC = 4,
-		REMOVE = 8,
+		NONE       =  0,
+		NEW        =  1,
+		REACTIVATE =  2,
+		RECALC     =  4,
+		REMOVE     =  8,
 	};
 	int status;
 
@@ -129,7 +129,7 @@ public:
 	void Update();
 	void UpdateHeightMapSynced(SRectangle rect);
 	void RemoveUnit(CUnit* unit, bool delayed = false);
-	void UpdateUnit(CUnit* unit);
+	void UpdateUnit(CUnit* unit, bool ignore = false);
 
 private:
 	//void PostLoad();

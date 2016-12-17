@@ -15,6 +15,9 @@
 #include "System/ThreadPool.h"
 #include "System/TimeProfiler.h"
 
+#define USE_STAGGERED_UPDATES 0
+
+
 
 CR_BIND(CLosHandler, )
 
@@ -116,7 +119,7 @@ float ILosType::GetHeight(const CUnit* unit) const
 }
 
 
-inline void ILosType::UpdateUnit(CUnit* unit)
+inline void ILosType::UpdateUnit(CUnit* unit, bool ignore)
 {
 	// NOTE: under normal circumstances, this only gets called if a unit
 	// has moved to a new map square since its last SlowUpdate cycle, so
@@ -134,14 +137,24 @@ inline void ILosType::UpdateUnit(CUnit* unit)
 	//   this creates an exploit via Unit::Activate if the unit is
 	//   a transported radar/jammer and leaves a detached coverage
 	//   zone behind
-	const bool isPureSight = (type == LOS_TYPE_LOS) || (type == LOS_TYPE_AIRLOS);
-	if (!isPureSight && (!unit->activated || unit->IsStunned())) {
-		// deactivate any type of radar/jam when deactivated
+	const bool sightOnly = (type == LOS_TYPE_LOS) || (type == LOS_TYPE_AIRLOS);
+	const bool noSensors = (!unit->activated || unit->IsStunned());
+	if (!sightOnly && noSensors) {
+		// deactivate any type of radar/jammer when deactivated
 		RemoveUnit(unit);
 		return;
 	}
 
 	SLosInstance* uli = unit->los[type];
+
+	#if (USE_STAGGERED_UPDATES == 1)
+	if (ignore && uli != nullptr) {
+		// make sure ILosType::Update will do nothing with this instance
+		uli->status = SLosInstance::TLosStatus::NONE;
+		return;
+	}
+	#endif
+
 	const float3 losPos = unit->midPos;
 	const float radius = GetRadius(unit);
 	const float height = GetHeight(unit);
@@ -150,11 +163,10 @@ inline void ILosType::UpdateUnit(CUnit* unit)
 
 	// jammers share all the same map independent of the allyTeam
 	if (type == LOS_TYPE_JAMMER || type == LOS_TYPE_SONAR_JAMMER)
-		if (!modInfo.separateJammers)
-			allyteam = 0;
+		allyteam *= modInfo.separateJammers;
 
-	if (radius <= 0) {
-		if (uli) {
+	if (radius <= 0.0f) {
+		if (uli != nullptr) {
 			unit->los[type] = nullptr;
 			UnrefInstance(uli);
 		}
@@ -162,7 +174,7 @@ inline void ILosType::UpdateUnit(CUnit* unit)
 	}
 
 	auto IS_FITTING_INSTANCE = [&](SLosInstance* li) -> bool {
-		return (li
+		return (li != nullptr
 		    && (li->basePos    == baseLos)
 		    && (li->baseHeight == height)
 		    && (li->radius     == radius)
@@ -171,10 +183,10 @@ inline void ILosType::UpdateUnit(CUnit* unit)
 	};
 
 	// unchanged?
-	if (IS_FITTING_INSTANCE(uli)) {
+	if (IS_FITTING_INSTANCE(uli))
 		return;
-	}
-	if (uli) {
+
+	if (uli != nullptr) {
 		unit->los[type] = nullptr;
 		UnrefInstance(uli);
 	}
@@ -185,7 +197,7 @@ inline void ILosType::UpdateUnit(CUnit* unit)
 	for (auto it = pair.first; it != pair.second; ++it) {
 		SLosInstance* li = it->second;
 		if (IS_FITTING_INSTANCE(li)) {
-			if (algoType == LOS_ALGO_RAYCAST) ++cacheHits;
+			cacheHits += (algoType == LOS_ALGO_RAYCAST);
 			unit->los[type] = li;
 			RefInstance(li);
 			return;
@@ -193,7 +205,7 @@ inline void ILosType::UpdateUnit(CUnit* unit)
 	}
 
 	// New - create a new one
-	if (algoType == LOS_ALGO_RAYCAST) ++cacheFails;
+	cacheFails += (algoType == LOS_ALGO_RAYCAST);
 	SLosInstance* li = CreateInstance();
 	li->Init(radius, allyteam, baseLos, height, hash);
 	li->refCount++;
@@ -243,16 +255,17 @@ inline void ILosType::LosRemove(SLosInstance* li)
 inline void ILosType::RefInstance(SLosInstance* li)
 {
 	li->refCount++;
-	if (li->refCount == 1) {
-		if (li->isCache) {
-			if (algoType == LOS_ALGO_RAYCAST) ++cacheReactivated;
-			auto it = std::find(losCache.begin(), losCache.end(), li);
-			li->isCache = false;
-			losCache.erase(it);
-		}
+	if (li->refCount != 1)
+		return;
 
-		UpdateInstanceStatus(li, SLosInstance::TLosStatus::REACTIVATE);
+	if (li->isCache) {
+		cacheReactivated += (algoType == LOS_ALGO_RAYCAST);
+		auto it = std::find(losCache.begin(), losCache.end(), li);
+		li->isCache = false;
+		losCache.erase(it);
 	}
+
+	UpdateInstanceStatus(li, SLosInstance::TLosStatus::REACTIVATE);
 }
 
 
@@ -260,9 +273,8 @@ void ILosType::UnrefInstance(SLosInstance* li)
 {
 	assert(li->refCount > 0);
 	li->refCount--;
-	if (li->refCount > 0) {
+	if (li->refCount > 0)
 		return;
-	}
 
 	UpdateInstanceStatus(li, SLosInstance::TLosStatus::REMOVE);
 }
@@ -388,19 +400,18 @@ inline SLosInstance::TLosStatus ILosType::OptimizeInstanceUpdate(SLosInstance* l
 		li->status &= ~a;
 	}
 
-
 	if (li->status & SLosInstance::TLosStatus::NEW) {
 		assert(li->refCount > 0);
 		return SLosInstance::TLosStatus::NEW;
-	} else
+	}
 	if (li->status & SLosInstance::TLosStatus::REMOVE) {
 		assert(li->refCount == 0);
 		return SLosInstance::TLosStatus::REMOVE;
-	} else
+	}
 	if (li->status & SLosInstance::TLosStatus::REACTIVATE) {
 		assert(li->refCount > 0);
 		return SLosInstance::TLosStatus::REACTIVATE;
-	} else
+	}
 	if (li->status & SLosInstance::TLosStatus::RECALC) {
 		assert(li->refCount > 0);
 		return SLosInstance::TLosStatus::RECALC;
@@ -431,9 +442,9 @@ void ILosType::Update()
 	while (!delayedTerraQue.empty() && delayedTerraQue.front().timeoutTime < gs->frameNum) {
 		SLosInstance* li = delayedTerraQue.front().instance;
 		li->isQueuedForTerraform = false;
-		if (!li->isQueuedForUpdate) {
+		if (!li->isQueuedForUpdate)
 			losUpdate.push_back(li);
-		}
+
 		delayedTerraQue.pop_front();
 	}
 
@@ -442,13 +453,16 @@ void ILosType::Update()
 		return;
 
 	std::vector<SLosInstance*> losRemove;
-	std::vector<SLosInstance*> losRecalc;
 	std::vector<SLosInstance*> losAdd;
 	std::vector<SLosInstance*> losDeleted;
+	std::vector<SLosInstance*> losRecalc;
+
 	losRemove.reserve(losUpdate.size());
-	if (algoType == LOS_ALGO_RAYCAST) losRecalc.reserve(losUpdate.size());
 	losAdd.reserve(losUpdate.size());
 	losDeleted.reserve(losUpdate.size());
+
+	if (algoType == LOS_ALGO_RAYCAST)
+		losRecalc.reserve(losUpdate.size());
 
 	// filter the updates into their subparts
 	for (SLosInstance* li: losUpdate) {
@@ -678,12 +692,30 @@ void CLosHandler::Update()
 {
 	SCOPED_TIMER("Sim::Los");
 
-	for_mt(0, losTypes.size(), [&](const int idx){
+	const std::vector<CUnit*>& activeUnits = unitHandler->activeUnits;
+
+	#if (USE_STAGGERED_UPDATES == 1)
+	const size_t losBatchRate = UNIT_SLOWUPDATE_RATE;
+	const size_t losBatchSize = std::max(size_t(1), activeUnits.size() / losBatchRate);
+	const size_t losBatchMult = gs->frameNum % losBatchRate;
+	const size_t minUnitIndex = losBatchSize * losBatchMult;
+	const size_t maxUnitIndex = minUnitIndex + losBatchSize + (activeUnits.size() % losBatchRate) * (losBatchMult == (losBatchRate - 1));
+	#endif
+
+	for_mt(0, losTypes.size(), [&](const int idx) {
 		ILosType* lt = losTypes[idx];
 
-		for (CUnit* u: unitHandler->activeUnits) {
-			lt->UpdateUnit(u);
+		#if (USE_STAGGERED_UPDATES == 1)
+		// staggered
+		for (size_t n = 0; n < activeUnits.size(); n++) {
+			lt->UpdateUnit(activeUnits[n], n < minUnitIndex || n >= maxUnitIndex);
 		}
+		#else
+		// all at once
+		for (CUnit* u: activeUnits) {
+			lt->UpdateUnit(u, false);
+		}
+		#endif
 
 		lt->Update();
 	});
