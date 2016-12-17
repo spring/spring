@@ -3,7 +3,7 @@
 #ifndef SIMOBJECT_IDPOOL_H
 #define SIMOBJECT_IDPOOL_H
 
-#include <map>
+#include <unordered_map>
 #include "System/creg/creg_cond.h"
 
 
@@ -18,10 +18,10 @@ public:
 	void FreeID(unsigned int id, bool delayed);
 
 	bool HasID(unsigned int id) const;
-	bool IsEmpty() const { return (liveIndexIdentMap.empty()); }
+	bool IsEmpty() const { return (liveIndexToIdentMap.empty()); }
 
-	unsigned int GetSize() const { return (liveIndexIdentMap.size()); } // number of ID's still unused
-	unsigned int MaxSize() const { return (liveIdentIndexMap.size()); } // number of ID's this pool owns
+	unsigned int GetSize() const { return (liveIndexToIdentMap.size()); } // number of ID's still unused
+	unsigned int MaxSize() const { return (liveIdentToIndexMap.size()); } // number of ID's this pool owns
 
 private:
 	unsigned int ExtractID();
@@ -30,11 +30,11 @@ private:
 
 private:
 	typedef std::pair<unsigned int, unsigned int> IDPair;
-	typedef std::map<unsigned int, unsigned int> IDMap;
+	typedef std::unordered_map<unsigned int, unsigned int> IDMap;
 
-	IDMap liveIdentIndexMap;
-	IDMap liveIndexIdentMap;
-	IDMap tempIndexIdentMap;
+	IDMap liveIdentToIndexMap;
+	IDMap liveIndexToIdentMap;
+	IDMap tempIndexToIdentMap;
 };
 
 #endif
