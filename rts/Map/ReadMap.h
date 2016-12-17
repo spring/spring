@@ -90,6 +90,8 @@ public:
 	void Serialize(creg::ISerializer* s);
 	void PostLoad();
 
+	void InitHeightMapDigestVectors(const int2 losMapSize);
+
 	/**
 	 * calculates derived heightmap information
 	 * such as normals, centerheightmap and slopemap
@@ -214,7 +216,6 @@ private:
 
 	inline void HeightMapUpdateLOSCheck(const SRectangle& hmRect);
 	inline bool HasHeightMapChanged(const int lmx, const int lmy);
-	inline void InitHeightMapDigestVectors(bool initialize);
 
 public:
 	/// number of heightmap mipmaps, including full resolution

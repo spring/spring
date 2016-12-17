@@ -315,8 +315,8 @@ void CReadMap::Initialize()
 
 	mapChecksum = CalcHeightmapChecksum();
 
-	// not callable here because losHandler is still NULL
-	// InitHeightMapDigestVectors(true);
+	// not callable here because losHandler is still NULL, deferred to Game::PostLoadSim
+	// InitHeightMapDigestVectors();
 	UpdateHeightMapSynced(SRectangle(0, 0, mapDims.mapx, mapDims.mapy), true);
 
 	// FIXME can't call that yet cause sky & skyLight aren't created yet (crashes in SMFReadMap.cpp)
@@ -621,8 +621,6 @@ void CReadMap::UpdateSlopemap(const SRectangle& rect, bool initialize)
 /// split the update into multiple invididual (los-square) chunks
 void CReadMap::HeightMapUpdateLOSCheck(const SRectangle& hmRect)
 {
-	InitHeightMapDigestVectors(false);
-
 	// size of LOS square in heightmap coords; divisor is SQUARE_SIZE * 2^mipLevel
 	const int losSqSize = losHandler->los.divisor / SQUARE_SIZE;
 
@@ -668,18 +666,17 @@ void CReadMap::HeightMapUpdateLOSCheck(const SRectangle& hmRect)
 }
 
 
-void CReadMap::InitHeightMapDigestVectors(bool initialize)
+void CReadMap::InitHeightMapDigestVectors(const int2 losMapSize)
 {
 #if (defined(USE_HEIGHTMAP_DIGESTS) && defined(USE_UNSYNCED_HEIGHTMAP))
 	assert(losHandler != nullptr);
+	assert(syncedHeightMapDigests.empty());
 
-	if (syncedHeightMapDigests.empty()) {
-		const int xsize = losHandler->los.size.x + 1;
-		const int ysize = losHandler->los.size.y + 1;
+	const int xsize = losMapSize.x + 1;
+	const int ysize = losMapSize.y + 1;
 
-		syncedHeightMapDigests.resize(xsize * ysize, 0);
-		unsyncedHeightMapDigests.resize(xsize * ysize, 0);
-	}
+	syncedHeightMapDigests.resize(xsize * ysize, 0);
+	unsyncedHeightMapDigests.resize(xsize * ysize, 0);
 #endif
 }
 

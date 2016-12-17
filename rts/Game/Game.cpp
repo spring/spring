@@ -497,8 +497,11 @@ void CGame::PostLoadSimulation()
 {
 	loadscreen->SetLoadMessage("Loading Weapon Definitions");
 	weaponDefHandler = new CWeaponDefHandler(defsParser);
+
 	loadscreen->SetLoadMessage("Loading Unit Definitions");
 	unitDefHandler = new CUnitDefHandler(defsParser);
+
+	loadscreen->SetLoadMessage("Loading Feature Definitions");
 	featureDefHandler = new CFeatureDefHandler(defsParser);
 
 	CUnit::InitStatic();
@@ -508,10 +511,9 @@ void CGame::PostLoadSimulation()
 	unitHandler = new CUnitHandler();
 	featureHandler = new CFeatureHandler();
 	projectileHandler = new CProjectileHandler();
-
-	loadscreen->SetLoadMessage("Loading Feature Definitions");
-
 	losHandler = new CLosHandler();
+
+	readMap->InitHeightMapDigestVectors(losHandler->los.size);
 
 	// pre-load the PFS, gets finalized after Lua
 	//
