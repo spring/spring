@@ -18,6 +18,14 @@
 #include "System/Log/ILog.h"
 #include "System/Util.h"
 
+static const std::unordered_map<std::string, LuaMatType> matNameMap = {
+	{"alpha",          LUAMAT_ALPHA},
+	{"opaque",         LUAMAT_OPAQUE},
+	{"alpha_reflect",  LUAMAT_ALPHA_REFLECT},
+	{"opaque_reflect", LUAMAT_OPAQUE_REFLECT},
+	{"shadow",         LUAMAT_SHADOW},
+};
+
 
 
 static int material_index(lua_State* L)
@@ -208,33 +216,18 @@ int LuaObjectRenderingImpl::SetPieceList(lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 
-static const map<string, LuaMatType>& GetMatNameMap()
+static LuaMatType ParseMaterialType(const std::string& matName)
 {
-	static map<string, LuaMatType> matNameMap;
-	if (matNameMap.empty()) {
-		matNameMap["alpha"]          = LUAMAT_ALPHA;
-		matNameMap["opaque"]         = LUAMAT_OPAQUE;
-		matNameMap["alpha_reflect"]  = LUAMAT_ALPHA_REFLECT;
-		matNameMap["opaque_reflect"] = LUAMAT_OPAQUE_REFLECT;
-		matNameMap["shadow"]         = LUAMAT_SHADOW;
-	}
-	return matNameMap;
-}
+	const auto it = matNameMap.find(StringToLower(matName));
 
-
-static LuaMatType ParseMaterialType(const string& matName)
-{
-	const string lower = StringToLower(matName);
-	const auto it = GetMatNameMap().find(lower);
-
-	if (it == GetMatNameMap().end())
+	if (it == matNameMap.end())
 		return (LuaMatType) -1;
 
 	return it->second;
 }
 
 
-static LuaObjectMaterial* GetObjectMaterial(CSolidObject* obj, const string& matName)
+static LuaObjectMaterial* GetObjectMaterial(CSolidObject* obj, const std::string& matName)
 {
 	LuaMatType matType = ParseMaterialType(matName);
 	LuaObjectMaterialData* lmd = obj->GetLuaMaterialData();

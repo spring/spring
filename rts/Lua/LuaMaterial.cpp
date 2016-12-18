@@ -17,10 +17,17 @@
 #include "System/Log/ILog.h"
 #include "System/Util.h"
 
+struct LuaMatBinPtrLessThan {
+	bool operator()(const LuaMatBin* a, const LuaMatBin* b) const {
+		const LuaMaterial* ma = static_cast<const LuaMaterial*>(a);
+		const LuaMaterial* mb = static_cast<const LuaMaterial*>(b);
+		return (*ma < *mb);
+	}
+};
 
 LuaMatHandler LuaMatHandler::handler;
 LuaMatHandler& luaMatHandler = LuaMatHandler::handler;
-
+LuaMatBinPtrLessThan matBinCmp;
 
 /******************************************************************************/
 /******************************************************************************/
@@ -60,7 +67,6 @@ bool LuaObjectMaterial::SetLODCount(unsigned int count)
 	lodMats.resize(count);
 	return true;
 }
-
 
 bool LuaObjectMaterial::SetLastLOD(unsigned int lod)
 {
@@ -382,10 +388,10 @@ int LuaMaterial::Compare(const LuaMaterial& a, const LuaMaterial& b)
 	if (a.postList != b.postList)
 		return ((a.postList > b.postList) * 2 - 1);
 
-	// have no influence on the performance cost
-	// still LuaMaterial/LuaMatBin are used in a std::set (:=LuaMatBinSet)
-	// and there there < operator is also used to detect equality (a == b iff !(a<b) && !(b<a))
-	// that's why need to check _all_ properties
+	// these have no influence on the performance cost
+	// previously LuaMaterial/LuaMatBin were kept in a std::set (LuaMatBinSet, now a sorted std::vector)
+	// for which the comparison operator < was also used to detect equality (a == b iff !(a<b) && !(b<a))
+	// so check _all_ properties
 	if ((cmp = LuaMatUniforms::Compare(a.uniforms[LuaMatShader::LUASHADER_PASS_FWD], b.uniforms[LuaMatShader::LUASHADER_PASS_FWD])) != 0)
 		return cmp;
 	if ((cmp = LuaMatUniforms::Compare(a.uniforms[LuaMatShader::LUASHADER_PASS_DFR], b.uniforms[LuaMatShader::LUASHADER_PASS_DFR])) != 0)
@@ -708,57 +714,55 @@ void LuaMatUniforms::Print(const string& indent, bool isDeferred) const
 LuaMatRef::LuaMatRef(LuaMatBin* _bin)
 {
 	bin = _bin;
-	if (bin != NULL) {
+	if (bin != nullptr) {
 		bin->Ref();
 	}
 }
 
-
 LuaMatRef::~LuaMatRef()
 {
-	if (bin != NULL) {
+	if (bin != nullptr) {
 		bin->UnRef();
+	}
+}
+
+LuaMatRef::LuaMatRef(const LuaMatRef& mr)
+{
+	bin = mr.bin;
+	if (bin != nullptr) {
+		bin->Ref();
 	}
 }
 
 
 void LuaMatRef::Reset()
 {
-	if (bin != NULL) {
+	if (bin != nullptr) {
 		bin->UnRef();
 	}
-	bin = NULL;
+	bin = nullptr;
 }
 
 
 LuaMatRef& LuaMatRef::operator=(const LuaMatRef& mr)
 {
-	if (mr.bin != NULL) { mr.bin->Ref();   }
-	if (   bin != NULL) {    bin->UnRef(); }
+	if (mr.bin != nullptr) { mr.bin->Ref();   }
+	if (   bin != nullptr) {    bin->UnRef(); }
 	bin = mr.bin;
 	return *this;
 }
 
 
-LuaMatRef::LuaMatRef(const LuaMatRef& mr)
-{
-	bin = mr.bin;
-	if (bin != NULL) {
-		bin->Ref();
-	}
-}
-
-
 void LuaMatRef::AddUnit(CSolidObject* o)
 {
-	if (bin != NULL) {
+	if (bin != nullptr) {
 		bin->AddUnit(o);
 	}
 }
 
 void LuaMatRef::AddFeature(CSolidObject* o)
 {
-	if (bin != NULL) {
+	if (bin != nullptr) {
 		bin->AddFeature(o);
 	}
 }
@@ -830,16 +834,22 @@ LuaMatRef LuaMatHandler::GetRef(const LuaMaterial& mat)
 	LuaMatBin* fakeBin = (LuaMatBin*) &mat;
 
 	LuaMatBinSet& binSet = binTypes[mat.type];
-	LuaMatBinSet::iterator it = binSet.find(fakeBin);
+	LuaMatBinSet::iterator it = std::find_if(binSet.begin(), binSet.end(), [&](LuaMatBin* bin) {
+		return (!matBinCmp(bin, fakeBin) && !matBinCmp(fakeBin, bin));
+	});
 
 	if (it != binSet.end()) {
-		assert(*fakeBin == **it);
+		assert(*fakeBin == *(*it));
 		return LuaMatRef(*it);
 	}
 
-	LuaMatBin* bin = new LuaMatBin(mat);
-	binSet.insert(bin);
-	return LuaMatRef(bin);
+	binSet.push_back(new LuaMatBin(mat));
+
+	LuaMatBin* bin = binSet.back();
+	LuaMatRef ref(bin);
+
+	std::sort(binSet.begin(), binSet.end(), matBinCmp);
+	return ref;
 }
 
 
@@ -866,22 +876,30 @@ void LuaMatHandler::ClearBins(LuaObjType objType)
 }
 
 
-void LuaMatHandler::FreeBin(LuaMatBin* bin)
+void LuaMatHandler::FreeBin(LuaMatBin* argBin)
 {
-	LuaMatBinSet& binSet = binTypes[bin->type];
-	LuaMatBinSet::iterator it = binSet.find(bin);
-	if (it != binSet.end()) {
-		delete bin;
-		binSet.erase(it);
-	}
+	LuaMatBinSet& binSet = binTypes[argBin->type];
+	LuaMatBinSet::iterator it = std::find_if(binSet.begin(), binSet.end(), [&](LuaMatBin* bin) {
+		return (!matBinCmp(bin, argBin) && !matBinCmp(argBin, bin));
+	});
+
+	if (it == binSet.end())
+		return;
+
+	delete argBin;
+
+	binSet[it - binSet.begin()] = binSet.back();
+	binSet.pop_back();
+
+	std::sort(binSet.begin(), binSet.end(), matBinCmp);
 }
 
 
 void LuaMatHandler::PrintBins(const string& indent, LuaMatType type) const
 {
-	if ((type < 0) || (type >= LUAMAT_TYPE_COUNT)) {
+	if ((type < 0) || (type >= LUAMAT_TYPE_COUNT))
 		return;
-	}
+
 	int num = 0;
 	LOG("%sBINCOUNT = " _STPF_, indent.c_str(), binTypes[type].size());
 	for (LuaMatBin* bin: binTypes[type]) {

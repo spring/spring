@@ -2,7 +2,6 @@
 
 #include <cctype>
 #include <map>
-#include <set>
 
 #include "LuaOpenGLUtils.h"
 

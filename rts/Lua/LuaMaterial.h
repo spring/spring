@@ -5,7 +5,6 @@
 
 #include <string>
 #include <vector>
-#include <set>
 #include <unordered_map>
 
 /*
@@ -305,15 +304,8 @@ class LuaMatBin : public LuaMaterial {
 
 /******************************************************************************/
 
-struct LuaMatBinPtrLessThan {
-	bool operator()(const LuaMatBin* a, const LuaMatBin* b) const {
-		const LuaMaterial* ma = static_cast<const LuaMaterial*>(a);
-		const LuaMaterial* mb = static_cast<const LuaMaterial*>(b);
-		return (*ma < *mb);
-	}
-};
-
-typedef std::set<LuaMatBin*, LuaMatBinPtrLessThan> LuaMatBinSet;
+// typedef std::set<LuaMatBin*, LuaMatBinPtrLessThan> LuaMatBinSet;
+typedef std::vector<LuaMatBin*> LuaMatBinSet;
 
 
 /******************************************************************************/
