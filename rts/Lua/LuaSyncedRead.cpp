@@ -5713,7 +5713,11 @@ int LuaSyncedRead::GetRadarErrorParams(lua_State* L)
 	if (!teamHandler->IsValidAllyTeam(allyTeamID))
 		return 0;
 
-	lua_pushnumber(L, losHandler->GetAllyTeamRadarErrorSize(allyTeamID));
+	if (IsAlliedAllyTeam(L, allyTeamID)) {
+		lua_pushnumber(L, losHandler->GetAllyTeamRadarErrorSize(allyTeamID));
+	} else { 
+		lua_pushnumber(L, losHandler->GetBaseRadarErrorSize());
+	}
 	lua_pushnumber(L, losHandler->GetBaseRadarErrorSize());
 	lua_pushnumber(L, losHandler->GetBaseRadarErrorMult());
 	return 3;
