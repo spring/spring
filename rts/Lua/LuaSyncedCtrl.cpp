@@ -1553,6 +1553,10 @@ static int SetSingleUnitWeaponState(lua_State* L, CWeapon* weapon, int index)
 		weapon->salvoDelay = (int)(value * GAME_SPEED);
 	} else if (key == "projectiles") {
 		weapon->projectilesPerShot = (int)value;
+	} else if (key == "salvoLeft") {
+		weapon->salvoLeft = (int)value;
+	} else if (key == "nextSalvo") {
+		weapon->nextSalvo = (int)value;
 	} else if (key == "aimReady") {
 		// HACK, this should be set to result of lua_toboolean
 		weapon->angleGood = (value != 0.0f);
