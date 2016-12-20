@@ -3,7 +3,7 @@
 #ifndef FBO_H
 #define FBO_H
 
-#include <map>
+#include <unordered_map>
 #include <vector>
 
 #include "myGL.h"
@@ -148,18 +148,36 @@ private:
 	 *
 	 * List with all Renderbuffer Objects that should be destructed with the FBO
 	 */
-	std::vector<GLuint> myRBOs;
+	std::vector<GLuint> rboIDs;
 
 
 	struct TexData {
+	public:
+		TexData() { id = 0; }
+		TexData(const TexData& td) = delete;
+		TexData(TexData&& td) {
+			id = td.id;
+
+			xsize = td.xsize;
+			ysize = td.ysize;
+			zsize = td.zsize;
+
+			target = td.target;
+			format = td.format;
+			type   = td.type;
+
+			pixels = std::move(td.pixels);
+		}
+
+	public:
 		GLuint id;
-		unsigned char* pixels;
-		GLsizei xsize,ysize,zsize;
-		GLenum target,format,type;
+		GLsizei xsize, ysize, zsize;
+		GLenum target, format, type;
+		std::vector<unsigned char> pixels;
 	};
 
-	static std::vector<FBO*> fboList;
-	static std::map<GLuint, TexData*> texBuf;
+	static std::vector<FBO*> activeFBOs;
+	static std::unordered_map<GLuint, TexData> fboTexData;
 
 	static GLint maxAttachments;
 	static GLsizei maxSamples;

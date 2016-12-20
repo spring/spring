@@ -15,6 +15,7 @@
 struct NodeCostOverlay {
 public:
 	NodeCostOverlay() { Clear(); }
+	NodeCostOverlay(const NodeCostOverlay& o) = delete;
 	NodeCostOverlay(NodeCostOverlay&& o) {
 		costs = std::move(o.costs);
 		sizex = o.sizex;

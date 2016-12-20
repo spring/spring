@@ -5,18 +5,17 @@
  * EXT_framebuffer_object class implementation
  */
 
-#include <assert.h>
+#include <cassert>
 #include <vector>
 
 #include "FBO.h"
-#include "Rendering/Textures/Bitmap.h"
 #include "System/Log/ILog.h"
 #include "System/Config/ConfigHandler.h"
 
 CONFIG(bool, AtiSwapRBFix).defaultValue(false);
 
-std::vector<FBO*> FBO::fboList;
-std::map<GLuint,FBO::TexData*> FBO::texBuf;
+std::vector<FBO*> FBO::activeFBOs;
+std::unordered_map<GLuint, FBO::TexData> FBO::fboTexData;
 
 GLint FBO::maxAttachments = 0;
 GLsizei FBO::maxSamples = -1;
@@ -45,16 +44,16 @@ static GLint GetCurrentBoundFBO()
  */
 GLenum FBO::GetTextureTargetByID(const GLuint id, const unsigned int i)
 {
-	static GLenum _targets[ 4 ] = { GL_TEXTURE_2D, GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_1D, GL_TEXTURE_3D };
+	static constexpr GLenum _targets[4] = { GL_TEXTURE_2D, GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_1D, GL_TEXTURE_3D };
 	GLint format;
-	glBindTexture(_targets[i],id);
+	glBindTexture(_targets[i], id);
 	glGetTexLevelParameteriv(_targets[i], 0, GL_TEXTURE_INTERNAL_FORMAT, &format);
 
-	if (format!=1) {
+	if (format != 1)
 		return _targets[i];
-	} else if (i<3) {
-		return GetTextureTargetByID(id, i+1);
-	} else	return GL_INVALID_ENUM;
+	if (i < 3)
+		return GetTextureTargetByID(id, i + 1);
+	return GL_INVALID_ENUM;
 }
 
 
@@ -64,38 +63,37 @@ GLenum FBO::GetTextureTargetByID(const GLuint id, const unsigned int i)
 void FBO::DownloadAttachment(const GLenum attachment)
 {
 	GLuint target;
-	glGetFramebufferAttachmentParameterivEXT(GL_FRAMEBUFFER_EXT, attachment,
-		GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE_EXT,
-		(GLint*)&target);
 	GLuint id;
-	glGetFramebufferAttachmentParameterivEXT(GL_FRAMEBUFFER_EXT, attachment,
-		GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME_EXT,
-		(GLint*)&id);
 
-	if (target==GL_NONE || id==0)
+	glGetFramebufferAttachmentParameterivEXT(GL_FRAMEBUFFER_EXT, attachment, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE_EXT, (GLint*) &target);
+	glGetFramebufferAttachmentParameterivEXT(GL_FRAMEBUFFER_EXT, attachment, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME_EXT, (GLint*) &id);
+
+	if (target == GL_NONE || id == 0)
 		return;
 
-	if (texBuf.find(id)!=texBuf.end())
+	if (fboTexData.find(id) != fboTexData.end())
 		return;
 
-	if (target==GL_TEXTURE) {
+	if (target == GL_TEXTURE) {
 		target = GetTextureTargetByID(id);
 
 		if (target == GL_INVALID_ENUM)
 			return;
 	}
 
-	struct FBO::TexData* tex = new FBO::TexData;
-	tex->id = id;
-	tex->target = target;
+	fboTexData.emplace(id, FBO::TexData{});
+	FBO::TexData& tex = fboTexData[id];
+
+	tex.id = id;
+	tex.target = target;
 
 	int bits = 0;
 
-	if (target==GL_RENDERBUFFER_EXT) {
+	if (target == GL_RENDERBUFFER_EXT) {
 		glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, id);
-		glGetRenderbufferParameterivEXT(GL_RENDERBUFFER_EXT, GL_RENDERBUFFER_WIDTH_EXT,  &tex->xsize);
-		glGetRenderbufferParameterivEXT(GL_RENDERBUFFER_EXT, GL_RENDERBUFFER_HEIGHT_EXT, &tex->ysize);
-		glGetRenderbufferParameterivEXT(GL_RENDERBUFFER_EXT, GL_RENDERBUFFER_INTERNAL_FORMAT_EXT, (GLint*)&tex->format);
+		glGetRenderbufferParameterivEXT(GL_RENDERBUFFER_EXT, GL_RENDERBUFFER_WIDTH_EXT,  &tex.xsize);
+		glGetRenderbufferParameterivEXT(GL_RENDERBUFFER_EXT, GL_RENDERBUFFER_HEIGHT_EXT, &tex.ysize);
+		glGetRenderbufferParameterivEXT(GL_RENDERBUFFER_EXT, GL_RENDERBUFFER_INTERNAL_FORMAT_EXT, (GLint*)&tex.format);
 
 		GLint _cbits;
 		glGetRenderbufferParameterivEXT(GL_RENDERBUFFER_EXT, GL_RENDERBUFFER_RED_SIZE_EXT, &_cbits); bits += _cbits;
@@ -105,12 +103,12 @@ void FBO::DownloadAttachment(const GLenum attachment)
 		glGetRenderbufferParameterivEXT(GL_RENDERBUFFER_EXT, GL_RENDERBUFFER_DEPTH_SIZE_EXT, &_cbits); bits += _cbits;
 		glGetRenderbufferParameterivEXT(GL_RENDERBUFFER_EXT, GL_RENDERBUFFER_STENCIL_SIZE_EXT, &_cbits); bits += _cbits;
 	} else {
-		glBindTexture(target,id);
+		glBindTexture(target, id);
 
-		glGetTexLevelParameteriv(target, 0, GL_TEXTURE_WIDTH, &tex->xsize);
-		glGetTexLevelParameteriv(target, 0, GL_TEXTURE_HEIGHT, &tex->ysize);
-		glGetTexLevelParameteriv(target, 0, GL_TEXTURE_DEPTH, &tex->zsize);
-		glGetTexLevelParameteriv(target, 0, GL_TEXTURE_INTERNAL_FORMAT, (GLint*)&tex->format);
+		glGetTexLevelParameteriv(target, 0, GL_TEXTURE_WIDTH, &tex.xsize);
+		glGetTexLevelParameteriv(target, 0, GL_TEXTURE_HEIGHT, &tex.ysize);
+		glGetTexLevelParameteriv(target, 0, GL_TEXTURE_DEPTH, &tex.zsize);
+		glGetTexLevelParameteriv(target, 0, GL_TEXTURE_INTERNAL_FORMAT, (GLint*)&tex.format);
 
 		GLint _cbits;
 		glGetTexLevelParameteriv(target, 0, GL_TEXTURE_RED_SIZE, &_cbits); bits += _cbits;
@@ -121,35 +119,34 @@ void FBO::DownloadAttachment(const GLenum attachment)
 	}
 
 	if (configHandler->GetBool("AtiSwapRBFix")) {
-		if (tex->format == GL_RGBA) {
-			tex->format = GL_BGRA;
-		} else if (tex->format == GL_RGB) {
-			tex->format = GL_BGR;
+		if (tex.format == GL_RGBA) {
+			tex.format = GL_BGRA;
+		} else if (tex.format == GL_RGB) {
+			tex.format = GL_BGR;
 		}
 	}
 
-	if(bits < 32) /*FIXME*/
+	if (bits < 32) /*FIXME*/
 		bits = 32;
 
 	switch (target) {
 		case GL_TEXTURE_3D:
-			tex->pixels = new unsigned char[tex->xsize*tex->ysize*tex->zsize*(bits/8)];
-			glGetTexImage(tex->target,0,/*FIXME*/GL_RGBA,/*FIXME*/GL_UNSIGNED_BYTE, tex->pixels);
+			tex.pixels.resize(tex.xsize * tex.ysize * tex.zsize * (bits / 8));
+			glGetTexImage(tex.target, 0, /*FIXME*/GL_RGBA, /*FIXME*/GL_UNSIGNED_BYTE, &tex.pixels[0]);
 			break;
 		case GL_TEXTURE_1D:
-			tex->pixels = new unsigned char[tex->xsize*(bits/8)];
-			glGetTexImage(tex->target,0,/*FIXME*/GL_RGBA,/*FIXME*/GL_UNSIGNED_BYTE, tex->pixels);
+			tex.pixels.resize(tex.xsize * (bits / 8));
+			glGetTexImage(tex.target, 0, /*FIXME*/GL_RGBA, /*FIXME*/GL_UNSIGNED_BYTE, &tex.pixels[0]);
 			break;
 		case GL_RENDERBUFFER_EXT:
-			tex->pixels = new unsigned char[tex->xsize*tex->ysize*(bits/8)];
+			tex.pixels.resize(tex.xsize * tex.ysize * (bits / 8));
 			glReadBuffer(attachment);
-			glReadPixels(0, 0, tex->xsize, tex->ysize, /*FIXME*/GL_RGBA, /*FIXME*/GL_UNSIGNED_BYTE, tex->pixels);
+			glReadPixels(0, 0, tex.xsize, tex.ysize, /*FIXME*/GL_RGBA, /*FIXME*/GL_UNSIGNED_BYTE, &tex.pixels[0]);
 			break;
 		default: //GL_TEXTURE_2D & GL_TEXTURE_RECTANGLE
-			tex->pixels = new unsigned char[tex->xsize*tex->ysize*(bits/8)];
-			glGetTexImage(tex->target,0,/*FIXME*/GL_RGBA,/*FIXME*/GL_UNSIGNED_BYTE, tex->pixels);
+			tex.pixels.resize(tex.xsize * tex.ysize * (bits / 8));
+			glGetTexImage(tex.target, 0, /*FIXME*/GL_RGBA, /*FIXME*/GL_UNSIGNED_BYTE, &tex.pixels[0]);
 	}
-	texBuf[id] = tex;
 }
 
 /**
@@ -157,24 +154,27 @@ void FBO::DownloadAttachment(const GLenum attachment)
  */
 void FBO::GLContextLost()
 {
-	if (!IsSupported()) return;
+	if (!IsSupported())
+		return;
 
 	GLint oldReadBuffer;
 
-	for (std::vector<FBO*>::iterator fi=fboList.begin(); fi!=fboList.end(); ++fi) {
-		if ((*fi)->reloadOnAltTab) {
-			glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, (*fi)->fboId);
-			glGetIntegerv(GL_READ_BUFFER,&oldReadBuffer);
+	for (FBO* fbo: activeFBOs) {
+		if (!fbo->reloadOnAltTab)
+			continue;
 
-			for (int i = 0; i < maxAttachments; ++i) {
-				DownloadAttachment(GL_COLOR_ATTACHMENT0_EXT + i);
-			}
-			DownloadAttachment(GL_DEPTH_ATTACHMENT_EXT);
-			DownloadAttachment(GL_STENCIL_ATTACHMENT_EXT);
+		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, fbo->fboId);
+		glGetIntegerv(GL_READ_BUFFER, &oldReadBuffer);
 
-			glReadBuffer(oldReadBuffer);
+		for (int i = 0; i < maxAttachments; ++i) {
+			DownloadAttachment(GL_COLOR_ATTACHMENT0_EXT + i);
 		}
+		DownloadAttachment(GL_DEPTH_ATTACHMENT_EXT);
+		DownloadAttachment(GL_STENCIL_ATTACHMENT_EXT);
+
+		glReadBuffer(oldReadBuffer);
 	}
+
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
 }
 
@@ -184,35 +184,35 @@ void FBO::GLContextLost()
  */
 void FBO::GLContextReinit()
 {
-	if (!IsSupported()) return;
+	if (!IsSupported())
+		return;
 
-	for (std::map<GLuint,FBO::TexData*>::iterator ti=texBuf.begin(); ti!=texBuf.end(); ++ti) {
-		FBO::TexData* tex = ti->second;
+	for (auto ti = fboTexData.begin(); ti != fboTexData.end(); ++ti) {
+		const FBO::TexData& tex = ti->second;
 
-		if (glIsTexture(tex->id)) {
-			glBindTexture(tex->target,tex->id);
+		if (glIsTexture(tex.id)) {
+			glBindTexture(tex.target, tex.id);
+
 			// TODO regen mipmaps?
-			switch (tex->target) {
+			switch (tex.target) {
 				case GL_TEXTURE_3D:
-					//glTexSubImage3D(tex->target, 0, 0,0,0, tex->xsize, tex->ysize, tex->zsize, /*FIXME?*/GL_RGBA, /*FIXME?*/GL_UNSIGNED_BYTE, tex->pixels);
-					glTexImage3D(tex->target, 0, tex->format, tex->xsize, tex->ysize, tex->zsize, 0, /*FIXME?*/GL_RGBA, /*FIXME?*/GL_UNSIGNED_BYTE, tex->pixels);
+					// glTexSubImage3D(tex.target, 0, 0,0,0, tex.xsize, tex.ysize, tex.zsize, /*FIXME?*/GL_RGBA, /*FIXME?*/GL_UNSIGNED_BYTE, &tex.pixels[0]);
+					glTexImage3D(tex.target, 0, tex.format, tex.xsize, tex.ysize, tex.zsize, 0, /*FIXME?*/GL_RGBA, /*FIXME?*/GL_UNSIGNED_BYTE, &tex.pixels[0]);
 					break;
 				case GL_TEXTURE_1D:
-					//glTexSubImage1D(tex->target, 0, 0, tex->xsize, /*FIXME?*/GL_RGBA, /*FIXME?*/GL_UNSIGNED_BYTE, tex->pixels);
-					glTexImage1D(tex->target, 0, tex->format, tex->xsize, /*FIXME?*/GL_RGBA, 0, /*FIXME?*/GL_UNSIGNED_BYTE, tex->pixels);
+					// glTexSubImage1D(tex.target, 0, 0, tex.xsize, /*FIXME?*/GL_RGBA, /*FIXME?*/GL_UNSIGNED_BYTE, &tex.pixels[0]);
+					glTexImage1D(tex.target, 0, tex.format, tex.xsize, /*FIXME?*/GL_RGBA, 0, /*FIXME?*/GL_UNSIGNED_BYTE, &tex.pixels[0]);
 					break;
-				default: //GL_TEXTURE_2D & GL_TEXTURE_RECTANGLE
-					//glTexSubImage2D(tex->target, 0, 0,0, tex->xsize, tex->ysize, /*FIXME?*/GL_RGBA, /*FIXME?*/GL_UNSIGNED_BYTE, tex->pixels);
-					glTexImage2D(tex->target, 0, tex->format, tex->xsize, tex->ysize, 0, /*FIXME?*/GL_RGBA, /*FIXME?*/GL_UNSIGNED_BYTE, tex->pixels);
+				default: // case GL_TEXTURE_2D & GL_TEXTURE_RECTANGLE
+					// glTexSubImage2D(tex.target, 0, 0,0, tex.xsize, tex.ysize, /*FIXME?*/GL_RGBA, /*FIXME?*/GL_UNSIGNED_BYTE, &tex.pixels[0]);
+					glTexImage2D(tex.target, 0, tex.format, tex.xsize, tex.ysize, 0, /*FIXME?*/GL_RGBA, /*FIXME?*/GL_UNSIGNED_BYTE, &tex.pixels[0]);
 			}
-		} else if (glIsRenderbufferEXT(tex->id)) {
+		} else if (glIsRenderbufferEXT(tex.id)) {
 			// FIXME implement rendering buffer context init
 		}
-
-		delete[] tex->pixels;
-		delete tex;
 	}
-	texBuf.clear();
+
+	fboTexData.clear();
 }
 
 
@@ -222,7 +222,8 @@ void FBO::GLContextReinit()
  */
 FBO::FBO() : fboId(0), reloadOnAltTab(false)
 {
-	if (!IsSupported()) return;
+	if (!IsSupported())
+		return;
 
 	glGetIntegerv(GL_MAX_COLOR_ATTACHMENTS_EXT, &maxAttachments);
 
@@ -240,20 +241,19 @@ FBO::FBO() : fboId(0), reloadOnAltTab(false)
 		if (multisampleExtensionFound) {
 			glGetIntegerv(GL_MAX_SAMPLES_EXT, &maxSamples);
 			maxSamples = std::max(0, maxSamples);
-		}
-		else {
+		} else {
 			maxSamples = 0;
 		}
 		LOG_L(L_INFO, "FBO::maxSamples: %d", maxSamples);
 	}
 
-	glGenFramebuffersEXT(1,&fboId);
+	glGenFramebuffersEXT(1, &fboId);
 
 	// we need to bind it once, else it isn't valid
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, fboId);
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
 
-	fboList.push_back(this);
+	activeFBOs.push_back(this);
 
 	valid = true;
 }
@@ -264,10 +264,11 @@ FBO::FBO() : fboId(0), reloadOnAltTab(false)
  */
 FBO::~FBO()
 {
-	if (!IsSupported()) return;
+	if (!IsSupported())
+		return;
 
 	glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, 0);
-	for (std::vector<GLuint>::iterator ri=myRBOs.begin(); ri!=myRBOs.end(); ++ri) {
+	for (auto ri = rboIDs.begin(); ri != rboIDs.end(); ++ri) {
 		glDeleteRenderbuffersEXT(1, &(*ri));
 	}
 
@@ -275,23 +276,14 @@ FBO::~FBO()
 	if (fboId)
 		glDeleteFramebuffersEXT(1, &fboId);
 
-	for (std::vector<FBO*>::iterator fi=fboList.begin(); fi!=fboList.end(); ++fi) {
-		if (*fi==this) {
-			fboList.erase(fi);
-			break;
-		}
-	}
+	VectorErase(activeFBOs, this);
+
+	if (!activeFBOs.empty())
+		return;
 
 	// seems the application exits and we are the last fbo left
 	// so we delete the remaining alloc'ed stuff
-	if (fboList.empty()) {
-		for (std::map<GLuint,FBO::TexData*>::iterator ti=texBuf.begin(); ti!=texBuf.end(); ++ti) {
-			FBO::TexData* tex = ti->second;
-			delete[] tex->pixels;
-			delete tex;
-		}
-		texBuf.clear();
-	}
+	fboTexData.clear();
 }
 
 
@@ -417,29 +409,22 @@ void FBO::Detach(const GLenum attachment)
 {
 	assert(GetCurrentBoundFBO() == fboId);
 	GLuint target = 0;
-	glGetFramebufferAttachmentParameterivEXT(GL_FRAMEBUFFER_EXT, attachment,
-		GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE_EXT,
-		(GLint*)&target);
+	glGetFramebufferAttachmentParameterivEXT(GL_FRAMEBUFFER_EXT, attachment, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE_EXT, (GLint*) &target);
 
-	if (target==GL_RENDERBUFFER_EXT) {
-		//! check if the RBO was created via FBO::CreateRenderBuffer()
-		GLuint id;
-		glGetFramebufferAttachmentParameterivEXT(GL_FRAMEBUFFER_EXT, attachment,
-			GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME_EXT,
-			(GLint*)&id);
-
-		glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, attachment, GL_RENDERBUFFER_EXT, 0);
-
-		for (std::vector<GLuint>::iterator ri=myRBOs.begin(); ri!=myRBOs.end(); ++ri) {
-			if (*ri == id) {
-				glDeleteRenderbuffersEXT(1, &(*ri));
-				myRBOs.erase(ri);
-				break;
-			}
-		}
-	} else {
+	if (target != GL_RENDERBUFFER_EXT) {
 		glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, attachment, GL_TEXTURE_2D, 0, 0);
+		return;
 	}
+
+	//! check if the RBO was created via FBO::CreateRenderBuffer()
+	GLuint attID;
+	glGetFramebufferAttachmentParameterivEXT(GL_FRAMEBUFFER_EXT, attachment, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME_EXT, (GLint*) &attID);
+	glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, attachment, GL_RENDERBUFFER_EXT, 0);
+
+	VectorEraseIf(rboIDs, [&](GLuint& rboID) {
+		if (rboID != attID) return false;
+		glDeleteRenderbuffersEXT(1, &rboID); return true;
+	});
 }
 
 
@@ -468,7 +453,7 @@ void FBO::CreateRenderBuffer(const GLenum attachment, const GLenum format, const
 	glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, rbo);
 	glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT, format, width, height);
 	glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, attachment, GL_RENDERBUFFER_EXT, rbo);
-	myRBOs.push_back(rbo);
+	rboIDs.push_back(rbo);
 }
 
 
@@ -486,7 +471,7 @@ void FBO::CreateRenderBufferMultisample(const GLenum attachment, const GLenum fo
 	glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, rbo);
 	glRenderbufferStorageMultisampleEXT(GL_RENDERBUFFER_EXT, samples, format, width, height);
 	glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, attachment, GL_RENDERBUFFER_EXT, rbo);
-	myRBOs.push_back(rbo);
+	rboIDs.push_back(rbo);
 }
 
 GLsizei FBO::GetMaxSamples()
