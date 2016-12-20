@@ -56,6 +56,8 @@ bool LuaPathFinder::PushEntries(lua_State* L)
 	// safety in case of reload
 	costOverlays[ true].clear();
 	costOverlays[false].clear();
+	costOverlays[ true].resize(4);
+	costOverlays[false].resize(4);
 
 	CreatePathMetatable(L);
 
@@ -127,7 +129,7 @@ static int path_next(lua_State* L)
 
 	const int args = lua_gettop(L);
 
-	float3 callerPos = ZeroVector;
+	float3 callerPos;
 	if (args >= 4) {
 		callerPos.x = luaL_checkfloat(L, 2);
 		callerPos.y = luaL_checkfloat(L, 3);
