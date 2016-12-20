@@ -40,12 +40,12 @@ void CInterceptHandler::Update(bool forced) {
 		for (CWeaponProjectile* p: interceptables) {
 			if (!p->CanBeInterceptedBy(wDef))
 				continue;
-			if (w->incomingProjectiles.find(p->id) != w->incomingProjectiles.end())
+			if (w->HasIncomingProjectile(p->id))
 				continue;
 
 			const int pAllyTeam = p->GetAllyteamID();
 
-			if (teamHandler->IsValidAllyTeam(pAllyTeam)  && teamHandler->Ally(wOwner->allyteam, pAllyTeam))
+			if (teamHandler->IsValidAllyTeam(pAllyTeam) && teamHandler->Ally(wOwner->allyteam, pAllyTeam))
 				continue;
 
 			// note: will be called every Update so long as gadget does not return true
@@ -69,7 +69,7 @@ void CInterceptHandler::Update(bool forced) {
 
 			if (w->aimFromPos.SqDistance2D(pTargetPos) < Square(wDef->coverageRange)) {
 				w->AddDeathDependence(p, DEPENDENCE_INTERCEPT);
-				w->incomingProjectiles[p->id] = p;
+				w->AddIncomingProjectile(p->id);
 				continue; // 1
 			}
 
@@ -83,7 +83,7 @@ void CInterceptHandler::Update(bool forced) {
 
 			if (pWeaponVec.SqLength2D() < Square(wDef->coverageRange)) {
 				w->AddDeathDependence(p, DEPENDENCE_INTERCEPT);
-				w->incomingProjectiles[p->id] = p;
+				w->AddIncomingProjectile(p->id);
 				continue; // 2
 			}
 
@@ -96,7 +96,7 @@ void CInterceptHandler::Update(bool forced) {
 				// perform an extra test (NOTE: assumes non-parabolic trajectory)
 				if (pTargetDir.dot(pImpactDir) >= 0.999f) {
 					w->AddDeathDependence(p, DEPENDENCE_INTERCEPT);
-					w->incomingProjectiles[p->id] = p;
+					w->AddIncomingProjectile(p->id);
 					continue; // 3
 				}
 			}
@@ -106,7 +106,7 @@ void CInterceptHandler::Update(bool forced) {
 
 			if (pMinSepVec.SqLength() < Square(wDef->coverageRange)) {
 				w->AddDeathDependence(p, DEPENDENCE_INTERCEPT);
-				w->incomingProjectiles[p->id] = p;
+				w->AddIncomingProjectile(p->id);
 				continue; // 4
 			}
 		}

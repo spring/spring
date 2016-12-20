@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/creg/STL_Map.h"
 #include "WeaponDefHandler.h"
 #include "Weapon.h"
 #include "Game/GameHelper.h"
@@ -14,6 +13,7 @@
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/MoveTypes/AAirMoveType.h"
+#include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
 #include "Sim/Units/Scripts/CobInstance.h"
 #include "Sim/Units/Scripts/NullUnitScript.h"
@@ -28,11 +28,13 @@
 #include "System/Sync/SyncTracer.h"
 #include "System/Sound/ISoundChannels.h"
 #include "System/Log/ILog.h"
+#include "System/Util.h"
 
-CR_BIND_DERIVED(CWeapon, CObject, (NULL, NULL))
+CR_BIND_DERIVED(CWeapon, CObject, (nullptr, nullptr))
 
 CR_REG_METADATA(CWeapon, (
 	CR_MEMBER(owner),
+	CR_MEMBER(slavedTo),
 	CR_MEMBER(weaponDef),
 	CR_MEMBER(aimFromPiece),
 	CR_MEMBER(muzzlePiece),
@@ -62,7 +64,7 @@ CR_REG_METADATA(CWeapon, (
 
 	CR_MEMBER(badTargetCategory),
 	CR_MEMBER(onlyTargetCategory),
-	CR_MEMBER(incomingProjectiles),
+
 	CR_MEMBER(buildPercent),
 	CR_MEMBER(numStockpiled),
 	CR_MEMBER(numStockpileQued),
@@ -71,7 +73,6 @@ CR_REG_METADATA(CWeapon, (
 	CR_MEMBER(lastRequest),
 	CR_MEMBER(lastTargetRetry),
 
-	CR_MEMBER(slavedTo),
 	CR_MEMBER(maxForwardAngleDif),
 	CR_MEMBER(maxMainDirAngleDif),
 	CR_MEMBER(heightBoostFactor),
@@ -92,7 +93,9 @@ CR_REG_METADATA(CWeapon, (
 	CR_MEMBER(errorVectorAdd),
 
 	CR_MEMBER(currentTarget),
-	CR_MEMBER(currentTargetPos)
+	CR_MEMBER(currentTargetPos),
+
+	CR_MEMBER(incomingProjectileIDs)
 ))
 
 
@@ -103,6 +106,7 @@ CR_REG_METADATA(CWeapon, (
 
 CWeapon::CWeapon(CUnit* owner, const WeaponDef* def):
 	owner(owner),
+	slavedTo(nullptr),
 	weaponDef(def),
 	weaponNum(-1),
 	aimFromPiece(-1),
@@ -139,7 +143,6 @@ CWeapon::CWeapon(CUnit* owner, const WeaponDef* def):
 	lastRequest(0),
 	lastTargetRetry(-100),
 
-	slavedTo(NULL),
 	maxForwardAngleDif(0.0f),
 	maxMainDirAngleDif(-1.0f),
 	heightBoostFactor(-1.f),
@@ -394,7 +397,7 @@ bool CWeapon::CanFire(bool ignoreAngleGood, bool ignoreTargetType, bool ignoreRe
 
 	// if in FPS mode, player must be pressing at least one button to fire
 	const CPlayer* fpsPlayer = owner->fpsControlPlayer;
-	if (fpsPlayer != NULL && !fpsPlayer->fpsController.mouse1 && !fpsPlayer->fpsController.mouse2)
+	if (fpsPlayer != nullptr && !fpsPlayer->fpsController.mouse1 && !fpsPlayer->fpsController.mouse2)
 		return false;
 
 	return true;
@@ -580,7 +583,7 @@ bool CWeapon::AllowWeaponAutoTarget() const
 	//FIXME these need to be merged
 	if (weaponDef->noAutoTarget || noAutoTarget) { return false; }
 	if (owner->fireState < FIRESTATE_FIREATWILL) { return false; }
-	if (slavedTo != NULL)                        { return false; }
+	if (slavedTo != nullptr)                     { return false; }
 	if (weaponDef->interceptor)                  { return false; }
 
 	// if CAI has an auto-generated attack order, do not interfere
@@ -694,7 +697,7 @@ void CWeapon::SlowUpdate()
 	HoldIfTargetInvalid();
 
 	// SlavedWeapon: Update Weapon Target
-	if (slavedTo != NULL) {
+	if (slavedTo != nullptr) {
 		// clone targets from the weapon we are slaved to
 		SetAttackTarget(slavedTo->currentTarget);
 	} else
@@ -735,7 +738,7 @@ void CWeapon::DependentDied(CObject* o)
 
 	// NOTE: DependentDied is called from ~CObject-->Detach, object is just barely valid
 	if (weaponDef->interceptor || weaponDef->isShield) {
-		incomingProjectiles.erase(static_cast<CWeaponProjectile*>(o)->id);
+		VectorErase(incomingProjectileIDs, static_cast<CWeaponProjectile*>(o)->id);
 	}
 }
 
@@ -792,7 +795,7 @@ float3 CWeapon::GetTargetBorderPos(
 
 	if (weaponDef->targetBorder == 0.0f)
 		return targetBorderPos;
-	if (targetUnit == NULL)
+	if (targetUnit == nullptr)
 		return targetBorderPos;
 	if (rawTargetDir == ZeroVector)
 		return targetBorderPos;
@@ -809,7 +812,7 @@ float3 CWeapon::GetTargetBorderPos(
 	tmpColVol.SetBoundingRadius();
 	tmpColVol.SetUseContHitTest(false);
 
-	if (CCollisionHandler::DetectHit(targetUnit, &tmpColVol, targetUnit->GetTransformMatrix(true), weaponMuzzlePos, ZeroVector, NULL)) {
+	if (CCollisionHandler::DetectHit(targetUnit, &tmpColVol, targetUnit->GetTransformMatrix(true), weaponMuzzlePos, ZeroVector, nullptr)) {
 		// FIXME use aimFromPos ?
 		// our weapon muzzle is inside the target unit's volume
 		targetBorderPos = weaponMuzzlePos;
@@ -885,7 +888,7 @@ bool CWeapon::TestTarget(const float3 tgtPos, const SWeaponTarget& trg) const
 			if (!trg.isUserTarget && teamHandler->Ally(owner->allyteam, trg.unit->allyteam))
 				return false;
 
-			if (trg.unit->GetTransporter() != NULL) {
+			if (trg.unit->GetTransporter() != nullptr) {
 				if (!modInfo.targetableTransportedUnits)
 					return false;
 				// the transportee might be "hidden" below terrain, in which case we can't target it
@@ -1054,7 +1057,7 @@ void CWeapon::Init()
 	}
 
 	if (weaponDef->isShield) {
-		if ((owner->shieldWeapon == NULL) ||
+		if ((owner->shieldWeapon == nullptr) ||
 		    (owner->shieldWeapon->weaponDef->shieldRadius < weaponDef->shieldRadius)) {
 			owner->shieldWeapon = this;
 		}
@@ -1083,16 +1086,18 @@ void CWeapon::UpdateInterceptTarget()
 {
 	CWeaponProjectile* newTarget = nullptr;
 	float minInterceptTargetDistSq = std::numeric_limits<float>::max();
-	if (currentTarget.type == Target_Intercept) {
-		minInterceptTargetDistSq = aimFromPos.SqDistance(currentTarget.intercept->pos);
-	}
 
-	for (std::map<int, CWeaponProjectile*>::iterator pi = incomingProjectiles.begin(); pi != incomingProjectiles.end(); ++pi) {
-		CWeaponProjectile* p = pi->second;
-		const float curInterceptTargetDistSq = aimFromPos.SqDistance(p->pos);
+	if (currentTarget.type == Target_Intercept)
+		minInterceptTargetDistSq = aimFromPos.SqDistance(currentTarget.intercept->pos);
+
+	for (const int projID: incomingProjectileIDs) {
+		CProjectile* p = projectileHandler->GetProjectileBySyncedID(projID);
+		CWeaponProjectile* wp = static_cast<CWeaponProjectile*>(p);
+
+		const float curInterceptTargetDistSq = aimFromPos.SqDistance(wp->pos);
 
 		// set by CWeaponProjectile's ctor when the interceptor fires
-		if (weaponDef->interceptSolo && p->IsBeingIntercepted()) //FIXME add bad target?
+		if (weaponDef->interceptSolo && wp->IsBeingIntercepted()) //FIXME add bad target?
 			continue;
 
 		if (curInterceptTargetDistSq >= minInterceptTargetDistSq)
@@ -1104,7 +1109,7 @@ void CWeapon::UpdateInterceptTarget()
 		// we do not really need to set targetPos here since it
 		// will be read from params.target (GetProjectileParams)
 		// when our subclass Fire()'s
-		newTarget = p;
+		newTarget = wp;
 	}
 
 	if (newTarget) {
