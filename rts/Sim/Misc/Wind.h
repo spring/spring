@@ -3,9 +3,9 @@
 #ifndef WIND_H
 #define WIND_H
 
-#include <map>
-#include "System/Misc/NonCopyable.h"
+#include <vector>
 
+#include "System/Misc/NonCopyable.h"
 #include "System/float3.h"
 
 class CUnit;
@@ -15,8 +15,8 @@ class CWind : public spring::noncopyable
 	CR_DECLARE_STRUCT(CWind)
 
 public:
-	CWind();
-	~CWind();
+	CWind() { ResetState(); }
+	~CWind() { windGenIDs.clear(); }
 
 	void ResetState();
 	void LoadWind(float min, float max);
@@ -44,7 +44,7 @@ private:
 
 	int status;
 
-	std::map<int, CUnit*> windGens;
+	std::vector<int> windGenIDs;
 };
 
 extern CWind wind;
