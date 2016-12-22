@@ -10,6 +10,7 @@
 #include "ExternalAI/IAILibraryManager.h"
 #include "ExternalAI/Interface/SSkirmishAILibrary.h"
 #include "System/FileSystem/ArchiveScanner.h"
+#include "System/FileSystem/RapidHandler.h"
 #include "System/FileSystem/VFSHandler.h"
 #include "System/Util.h"
 
@@ -40,6 +41,8 @@ bool LuaArchive::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetArchiveReplaces);
 
 	REGISTER_LUA_CFUNC(GetArchiveChecksum);
+
+	REGISTER_LUA_CFUNC(GetNameFromRapidTag);
 
 	REGISTER_LUA_CFUNC(GetAvailableAIs);
 
@@ -196,6 +199,19 @@ int LuaArchive::GetArchiveChecksum(lua_State* L)
 	lua_pushsstring(L, IntToString(checksumSingl, "%X"));
 	lua_pushsstring(L, IntToString(checksumAccum, "%X"));
 	return 2;
+}
+
+
+/******************************************************************************/
+/******************************************************************************/
+
+int LuaArchive::GetNameFromRapidTag(lua_State* L)
+{
+	const std::string rapidName = luaL_checksstring(L, 1);
+	std::string archiveName = GetRapidPackageFromTag(rapidName);
+	archiveName = archiveScanner->NameFromArchive(archiveName);
+	lua_pushsstring(L, archiveName);
+	return 1;
 }
 
 /******************************************************************************/

@@ -24,6 +24,8 @@ class LuaArchive {
 
 		static int GetArchiveChecksum(lua_State* L);
 
+		static int GetNameFromRapidTag(lua_State* L);
+
 		static int GetAvailableAIs(lua_State* L);
 };
 
