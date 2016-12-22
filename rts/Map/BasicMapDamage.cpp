@@ -102,8 +102,8 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength, float radius)
 				for (int i = -1; i <= 1; i++) {
 					const int tmz = Clamp((y >> 1) + j, 0, mapDims.hmapy - 1);
 					const int tmx = Clamp((x >> 1) + i, 0, mapDims.hmapx - 1);
-					const int tt  = typeMap[tmz * mapDims.hmapx + tmx];
-					sumRawHardness += (rawHardness[tt] * weightTable[(j + 1) * 3 + (i + 1)]);
+					const int tti = typeMap[tmz * mapDims.hmapx + tmx];
+					sumRawHardness += (rawHardness[tti] * weightTable[(j + 1) * 3 + (i + 1)]);
 				}
 			}
 
@@ -214,16 +214,17 @@ void CBasicMapDamage::Update()
 		for (const ExploBuilding& b: e.buildings) {
 			CUnit* unit = unitHandler->GetUnit(b.id);
 
-			if (unit != nullptr) {
-				// only change ground level if building is still here
-				for (int z = b.tz1; z < b.tz2; z++) {
-					for (int x = b.tx1; x < b.tx2; x++) {
-						readMap->AddHeight(z * mapDims.mapxp1 + x, b.dif);
-					}
-				}
+			if (unit == nullptr)
+				continue;
 
-				unit->Move(UpVector * b.dif, true);
+			// only change ground level if building is still here
+			for (int z = b.tz1; z < b.tz2; z++) {
+				for (int x = b.tx1; x < b.tx2; x++) {
+					readMap->AddHeight(z * mapDims.mapxp1 + x, b.dif);
+				}
 			}
+
+			unit->Move(UpVector * b.dif, true);
 		}
 
 		if (e.ttl == 0) {
