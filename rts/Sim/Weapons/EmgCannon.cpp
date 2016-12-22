@@ -35,7 +35,7 @@ void CEmgCannon::FireImpl(const bool scriptCall)
 	ProjectileParams params = GetProjectileParams();
 	params.pos = weaponMuzzlePos;
 	params.speed = dir * projectileSpeed;
-	params.ttl = math::ceil(std::max(dist, range) / projectileSpeed);
+	params.ttl = weaponDef->flighttime > 0 ? weaponDef->flighttime : math::ceil(std::max(dist, range) / projectileSpeed);
 
 	WeaponProjectileFactory::LoadProjectile(params);
 }
