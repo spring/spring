@@ -27,7 +27,7 @@ CStarburstLauncher::CStarburstLauncher(CUnit* owner, const WeaponDef* def): CWea
 void CStarburstLauncher::FireImpl(const bool scriptCall)
 {
 	const float3 speed = ((weaponDef->fixedLauncher)? weaponDir: UpVector) * weaponDef->startvelocity;
-	const float3 aimError = (gs->randVector() * SprayAngleExperience() + SalvoErrorExperience());
+	const float3 aimError = (gsRNG.NextVector() * SprayAngleExperience() + SalvoErrorExperience());
 
 	ProjectileParams params = GetProjectileParams();
 	params.pos = weaponMuzzlePos + UpVector * 2.0f;

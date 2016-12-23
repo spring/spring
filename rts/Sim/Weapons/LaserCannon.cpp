@@ -47,7 +47,7 @@ void CLaserCannon::FireImpl(const bool scriptCall)
 		dir = owner->frontdir;
 	}
 
-	dir += (gs->randVector() * SprayAngleExperience() + SalvoErrorExperience());
+	dir += (gsRNG.NextVector() * SprayAngleExperience() + SalvoErrorExperience());
 	dir.Normalize();
 
 	ProjectileParams params = GetProjectileParams();

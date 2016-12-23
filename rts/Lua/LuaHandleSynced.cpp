@@ -42,8 +42,9 @@
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "System/EventHandler.h"
-#include "System/Log/ILog.h"
 #include "System/FileSystem/FileHandler.h"
+#include "System/Log/ILog.h"
+#include "System/myMath.h"
 
 
 
@@ -1121,39 +1122,53 @@ bool CSyncedLuaHandle::AllowWeaponInterceptTarget(
 
 int CSyncedLuaHandle::SyncedRandom(lua_State* L)
 {
-	const int args = lua_gettop(L);
-	if (args == 0) {
-		lua_pushnumber(L, gs->randFloat());
+	switch (lua_gettop(L)) {
+		case 0: {
+			lua_pushnumber(L, gsRNG.NextFloat());
+			return 1;
+		} break;
+
+		case 1: {
+			if (lua_isnumber(L, 1)) {
+				const int maxn = lua_toint(L, 1);
+
+				if (maxn < 1)
+					luaL_error(L, "error: too small upper limit (%d) given to math.random(), should be >= 1 {synced}", maxn);
+
+				lua_pushnumber(L, 1 + (gsRNG.NextInt() % maxn));
+				return 1;
+			}
+		} break;
+
+		case 2: {
+			if (lua_isnumber(L, 1) && lua_isnumber(L, 2)) {
+				const int lower = lua_toint(L, 1);
+				const int upper = lua_toint(L, 2);
+
+				if (lower > upper)
+					luaL_error(L, "Empty interval in math.random() {synced}");
+
+				const float diff  = (upper - lower);
+				const float r = gsRNG.NextFloat(); // [0,1], not [0,1) ?
+				const int value = lower + (int)(r * (diff + 1));
+
+				lua_pushnumber(L, Clamp(value, lower, upper));
+				return 1;
+			}
+		} break;
+
+		default: {
+		} break;
 	}
-	else if ((args == 1) && lua_isnumber(L, 1)) {
-		const int maxn = lua_toint(L, 1);
-		if (maxn < 1) {
-			luaL_error(L, "error: too small upper limit (%d) given to math.random(), should be >= 1 {synced}", maxn);
-		}
-		lua_pushnumber(L, 1 + (gs->randInt() % maxn));
-	}
-	else if ((args == 2) && lua_isnumber(L, 1) && lua_isnumber(L, 2)) {
-		const int lower = lua_toint(L, 1);
-		const int upper = lua_toint(L, 2);
-		if (lower > upper) {
-			luaL_error(L, "Empty interval in math.random() {synced}");
-		}
-		const float diff  = (upper - lower);
-		const float r = gs->randFloat(); // [0,1], not [0,1) ?
-		int value = lower + (int)(r * (diff + 1));
-		value = std::max(lower, std::min(upper, value));
-		lua_pushnumber(L, value);
-	}
-	else {
-		luaL_error(L, "Incorrect arguments to math.random() {synced}");
-	}
-	return 1;
+
+	luaL_error(L, "Incorrect arguments to math.random() {synced}");
+	return 0;
 }
 
 
 int CSyncedLuaHandle::SyncedRandomSeed(lua_State* L)
 {
-	gs->SetRandSeed(luaL_checkint(L, -1));
+	gsRNG.SetSeed(luaL_checkint(L, -1), false);
 	return 0;
 }
 

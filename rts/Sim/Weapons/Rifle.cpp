@@ -33,7 +33,7 @@ void CRifle::FireImpl(const bool scriptCall)
 {
 	float3 dir = (currentTargetPos - weaponMuzzlePos).SafeNormalize();
 	dir +=
-		(gs->randVector() * SprayAngleExperience() + SalvoErrorExperience());
+		(gsRNG.NextVector() * SprayAngleExperience() + SalvoErrorExperience());
 	dir.Normalize();
 
 	CUnit* hitUnit;

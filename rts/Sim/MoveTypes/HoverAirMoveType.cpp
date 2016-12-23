@@ -100,7 +100,7 @@ CHoverAirMoveType::CHoverAirMoveType(CUnit* owner) :
 
 	turnRate = owner->unitDef->turnRate;
 
-	wantedHeight = owner->unitDef->wantedHeight + gs->randFloat() * 5.0f;
+	wantedHeight = owner->unitDef->wantedHeight + gsRNG.NextFloat() * 5.0f;
 	orgWantedHeight = wantedHeight;
 	dontLand = owner->unitDef->DontLand();
 	collide = owner->unitDef->collide;
@@ -395,8 +395,8 @@ void CHoverAirMoveType::UpdateHovering()
 
 	// random movement (a sort of fake wind effect)
 	// random drift values are in range -0.5 ... 0.5
-	randomWind.x = randomWind.x * 0.9f + (gs->randFloat() - 0.5f) * 0.5f;
-	randomWind.z = randomWind.z * 0.9f + (gs->randFloat() - 0.5f) * 0.5f;
+	randomWind.x = randomWind.x * 0.9f + (gsRNG.NextFloat() - 0.5f) * 0.5f;
+	randomWind.z = randomWind.z * 0.9f + (gsRNG.NextFloat() - 0.5f) * 0.5f;
 
 	wantedSpeed = owner->speed + deltaDir;
 	wantedSpeed += (randomWind * driftSpeed * 0.5f);
@@ -405,8 +405,8 @@ void CHoverAirMoveType::UpdateHovering()
 	#endif
 
 	#if 1
-	randomWind.x = randomWind.x * 0.9f + (gs->randFloat() - 0.5f) * 0.5f;
-	randomWind.z = randomWind.z * 0.9f + (gs->randFloat() - 0.5f) * 0.5f;
+	randomWind.x = randomWind.x * 0.9f + (gsRNG.NextFloat() - 0.5f) * 0.5f;
+	randomWind.z = randomWind.z * 0.9f + (gsRNG.NextFloat() - 0.5f) * 0.5f;
 
 	// randomly drift (but not too far from goal-position)
 	wantedSpeed = (randomWind * math::fabs(owner->unitDef->dlHoverFactor) * 0.5f);
@@ -508,8 +508,8 @@ void CHoverAirMoveType::UpdateFlying()
 						relPos.x = 0.0001f;
 					}
 
-					float rotY = 0.6f + gs->randFloat() * 0.6f;
-					rotY *= (gs->randFloat() > 0.5f) ? 1.0f : -1.0f;
+					float rotY = 0.6f + gsRNG.NextFloat() * 0.6f;
+					rotY *= (gsRNG.NextFloat() > 0.5f) ? 1.0f : -1.0f;
 					const CMatrix44f rot(0.0f, rotY, 0.0f);
 
 					// Go there in a straight line
@@ -603,7 +603,7 @@ void CHoverAirMoveType::UpdateLanding()
 		} else {
 			if (goalPos.SqDistance2D(pos) < (30.0f * 30.0f)) {
 				// randomly pick another landing spot and try again
-				goalPos += (gs->randVector() * 300.0f);
+				goalPos += (gsRNG.NextVector() * 300.0f);
 				goalPos.ClampInBounds();
 
 				// exact landing pos failed, make sure finishcommand is called anyway

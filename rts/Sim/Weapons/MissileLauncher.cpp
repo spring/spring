@@ -42,7 +42,7 @@ void CMissileLauncher::FireImpl(const bool scriptCall)
 		dir.Normalize();
 	}
 
-	dir += (gs->randVector() * SprayAngleExperience() + SalvoErrorExperience());
+	dir += (gsRNG.NextVector() * SprayAngleExperience() + SalvoErrorExperience());
 	dir.Normalize();
 
 	float3 startSpeed = dir * weaponDef->startvelocity;

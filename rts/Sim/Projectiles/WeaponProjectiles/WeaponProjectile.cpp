@@ -199,7 +199,7 @@ void CWeaponProjectile::Collision(CFeature* feature)
 			impactDir = targetPos - startPos;
 		}
 
-		if (gs->randFloat() < weaponDef->fireStarter) {
+		if (gsRNG.NextFloat() < weaponDef->fireStarter) {
 			feature->StartFire();
 		}
 	} else {

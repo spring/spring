@@ -57,7 +57,7 @@ CPieceProjectile::CPieceProjectile(
 
 	if (owner != NULL) {
 		if ((explFlags & PF_NoCEGTrail) == 0) {
-			explGenHandler->GenExplosion((cegID = owner->unitDef->GetPieceExplosionGeneratorID(gs->randInt())), pos, speed, 100, 0.0f, 0.0f, NULL, NULL);
+			explGenHandler->GenExplosion((cegID = owner->unitDef->GetPieceExplosionGeneratorID(gsRNG.NextInt())), pos, speed, 100, 0.0f, 0.0f, NULL, NULL);
 		}
 
 		model = owner->model;
@@ -74,8 +74,8 @@ CPieceProjectile::CPieceProjectile(
 	// LuaSynced{Ctrl, Read} exposure we treat
 	// them that way for consistency
 	spinAngle = 0.0f;
-	spinVec = gs->randVector().Normalize();
-	spinSpeed = gs->randFloat() * 20;
+	spinVec = gsRNG.NextVector().Normalize();
+	spinSpeed = gsRNG.NextFloat() * 20;
 
 	for (auto& ftp: fireTrailPoints) {
 		ftp.pos = pos;
@@ -97,7 +97,7 @@ CPieceProjectile::CPieceProjectile(
 void CPieceProjectile::Collision()
 {
 	Collision(nullptr, nullptr);
-	if (gs->randFloat() < 0.666f) { // give it a small chance to `ground bounce`
+	if (gsRNG.NextFloat() < 0.666f) { // give it a small chance to `ground bounce`
 		CProjectile::Collision();
 		return;
 	}

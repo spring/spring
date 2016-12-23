@@ -144,7 +144,7 @@ void CBombDropper::FireImpl(const bool scriptCall)
 
 		dir = dir.SafeNormalize();
 		// add a random spray
-		dir += (gs->randVector() * SprayAngleExperience() + SalvoErrorExperience());
+		dir += (gsRNG.NextVector() * SprayAngleExperience() + SalvoErrorExperience());
 		dir.y = std::min(0.0f, dir.y);
 		dir = dir.SafeNormalize();
 

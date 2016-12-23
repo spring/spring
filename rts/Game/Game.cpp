@@ -1470,7 +1470,7 @@ void CGame::SimFrame() {
 	spring_lua_alloc_update_stats((gs->frameNum % GAME_SPEED) == 0);
 
 #ifdef TRACE_SYNC
-	tracefile << "New frame:" << gs->frameNum << " " << gs->GetRandSeed() << "\n";
+	tracefile << "New frame:" << gs->frameNum << " " << gsRNG.GetSeed() << "\n";
 #endif
 
 	if (!skipping) {

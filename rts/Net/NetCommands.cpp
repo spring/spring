@@ -442,7 +442,7 @@ void CGame::ClientReadNet()
 			}
 
 			case NETMSG_RANDSEED: {
-				gs->SetRandSeed(*((unsigned int*)&inbuf[1]), true);
+				gsRNG.SetSeed(*((unsigned int*)&inbuf[1]), true);
 				AddTraffic(-1, packetCode, dataLength);
 				break;
 			}

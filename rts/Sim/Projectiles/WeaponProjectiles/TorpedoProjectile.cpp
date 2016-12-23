@@ -140,7 +140,7 @@ void CTorpedoProjectile::Update()
 		--nextBubble;
 
 		if (nextBubble == 0) {
-			nextBubble = 1 + (int) (gs->randFloat() * 1.5f);
+			nextBubble = 1 + (int) (gsRNG.NextFloat() * 1.5f);
 
 			const float3 pspeed = (gu->RandVector() * 0.1f) + float3(0.0f, 0.2f, 0.0f);
 

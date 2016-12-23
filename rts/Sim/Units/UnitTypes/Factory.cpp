@@ -339,7 +339,7 @@ void CFactory::SendToEmptySpot(CUnit* unit)
 		foundPos.y = 0.0f;
 
 		do {
-			const float x = ((gs->randInt() * 1.0f) / RANDINT_MAX) * numSteps;
+			const float x = ((gsRNG.NextInt() * 1.0f) / RANDINT_MAX) * numSteps;
 			const float a = searchRadius * math::cos(x * PI / (numSteps * 0.5f));
 			const float b = searchRadius * math::sin(x * PI / (numSteps * 0.5f));
 
@@ -427,8 +427,8 @@ void CFactory::AssignBuildeeOrders(CUnit* unit) {
 			c.options |= SHIFT_KEY;
 
 			if (c.GetID() == CMD_MOVE) {
-				float xjit = gs->randFloat() * TWOPI;
-				float zjit = gs->randFloat() * TWOPI;
+				float xjit = gsRNG.NextFloat() * TWOPI;
+				float zjit = gsRNG.NextFloat() * TWOPI;
 
 				const float3 p1 = c.GetPos(0);
 				const float3 p2 = float3(p1.x + xjit, p1.y, p1.z + zjit);

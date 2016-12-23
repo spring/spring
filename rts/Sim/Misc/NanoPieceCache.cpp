@@ -19,7 +19,7 @@ int NanoPieceCache::GetNanoPiece(CUnitScript* ownerScript) {
 
 	if (!nanoPieces.empty()) {
 		const unsigned cnt = nanoPieces.size();
-		const unsigned rnd = gs->randInt();
+		const unsigned rnd = gsRNG.NextInt();
 		nanoPiece = nanoPieces[rnd % cnt];
 	}
 

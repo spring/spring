@@ -26,7 +26,7 @@ void CFlameThrower::FireImpl(const bool scriptCall)
 
 	const float dist = dir.LengthNormalize();
 	const float3 spread =
-		(gs->randVector() * SprayAngleExperience() + SalvoErrorExperience()) -
+		(gsRNG.NextVector() * SprayAngleExperience() + SalvoErrorExperience()) -
 		(dir * 0.001f);
 
 	ProjectileParams params = GetProjectileParams();

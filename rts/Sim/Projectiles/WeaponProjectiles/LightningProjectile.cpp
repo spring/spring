@@ -38,8 +38,8 @@ CLightningProjectile::CLightningProjectile(const ProjectileParams& params): CWea
 	displacements2[0] = 0.0f;
 
 	for (size_t d = 1; d < displacements_size; ++d) {
-		displacements[d]  = (gs->randFloat() - 0.5f) * drawRadius * 0.05f;
-		displacements2[d] = (gs->randFloat() - 0.5f) * drawRadius * 0.05f;
+		displacements[d]  = (gsRNG.NextFloat() - 0.5f) * drawRadius * 0.05f;
+		displacements2[d] = (gsRNG.NextFloat() - 0.5f) * drawRadius * 0.05f;
 	}
 
 #ifdef TRACE_SYNC
@@ -58,8 +58,8 @@ void CLightningProjectile::Update()
 	}
 
 	for (size_t d = 1; d < displacements_size; ++d) {
-		displacements[d]  += (gs->randFloat() - 0.5f) * 0.3f;
-		displacements2[d] += (gs->randFloat() - 0.5f) * 0.3f;
+		displacements[d]  += (gsRNG.NextFloat() - 0.5f) * 0.3f;
+		displacements2[d] += (gsRNG.NextFloat() - 0.5f) * 0.3f;
 	}
 
 	UpdateInterception();

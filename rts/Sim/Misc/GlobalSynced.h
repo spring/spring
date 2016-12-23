@@ -32,18 +32,6 @@ public:
 	void ResetState();
 	void LoadFromSetup(const CGameSetup*);
 
-	int    randInt();    //!< synced random int
-	float  randFloat();  //!< synced random float
-	float3 randVector(); //!< synced random vector
-
-	void SetRandSeed(unsigned int seed, bool init = false) {
-		randSeed = seed;
-		if (init) { initRandSeed = randSeed; }
-	}
-
-	unsigned int GetRandSeed()     const { return randSeed; }
-	unsigned int GetInitRandSeed() const { return initRandSeed; }
-
 	// Lua should never see the pre-simframe value
 	int GetLuaSimFrame() { return std::max(frameNum, 0); }
 	int GetTempNum() { return tempNum++; }
@@ -125,18 +113,46 @@ public:
 	bool useLuaGaia;
 
 private:
-	class SyncedRNG
-	{
-	public:
-		int operator()(unsigned N)
-		{
-			extern CGlobalSynced* gs;
-			return gs->randInt()%N;
-		};
-	};
+	/**
+	* @brief temp num
+	*
+	* Used for getting temporary but unique numbers
+	* (increase after each use)
+	*/
+	int tempNum;
+};
 
+
+// crappy but fast LCG
+class CGlobalSyncedRNG {
 public:
-	static SyncedRNG rng;
+	CGlobalSyncedRNG() { SetSeed(0, true); }
+
+	// needed for random_shuffle
+	int operator()(unsigned int N) { return (NextInt() % N); }
+
+	int NextInt() { return (((randSeed = (randSeed * 214013L + 2531011L)) >> 16) & RANDINT_MAX); }
+	float NextFloat() { return ((NextInt() * 1.0f) / RANDINT_MAX); }
+
+	float3 NextVector() {
+		float3 ret;
+
+		do {
+			ret.x = NextFloat() * 2.0f - 1.0f;
+			ret.y = NextFloat() * 2.0f - 1.0f;
+			ret.z = NextFloat() * 2.0f - 1.0f;
+		} while (ret.SqLength() > 1.0f);
+
+		return ret;
+	}
+
+	unsigned int GetSeed() const { return randSeed; }
+	unsigned int GetInitSeed() const { return initRandSeed; }
+
+	void SetSeed(unsigned int seed, bool init) {
+		randSeed = seed;
+		initRandSeed = (seed * init) + initRandSeed * (1 - init);
+	}
 
 private:
 	/**
@@ -152,16 +168,11 @@ private:
 	* Holds the synced initial random seed
 	*/
 	int initRandSeed;
-
-	/**
-	* @brief temp num
-	*
-	* Used for getting temporary but unique numbers
-	* (increase after each use)
-	*/
-	int tempNum;
 };
 
+
 extern CGlobalSynced* gs;
+extern CGlobalSyncedRNG gsRNG;
 
 #endif // _GLOBAL_SYNCED_H
+

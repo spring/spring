@@ -586,8 +586,8 @@ void CUnit::ForcedKillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed, b
 				// (if no such spot, unload on transporter wreck)
 				for (int i = 0; i < 10; ++i) {
 					float3 pos = transportee->pos;
-					pos.x += (gs->randFloat() * 2.0f * r2 - r2);
-					pos.z += (gs->randFloat() * 2.0f * r2 - r2);
+					pos.x += (gsRNG.NextFloat() * 2.0f * r2 - r2);
+					pos.z += (gsRNG.NextFloat() * 2.0f * r2 - r2);
 					pos.y = CGround::GetHeightReal(pos.x, pos.z);
 
 					if (!pos.IsInBounds())
@@ -615,7 +615,7 @@ void CUnit::ForcedKillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed, b
 			}
 
 			transportee->SetStunned(transportee->paralyzeDamage > (modInfo.paralyzeOnMaxHealth? transportee->maxHealth: transportee->health));
-			transportee->SetVelocityAndSpeed(speed * (0.5f + 0.5f * gs->randFloat()));
+			transportee->SetVelocityAndSpeed(speed * (0.5f + 0.5f * gsRNG.NextFloat()));
 
 			eventHandler.UnitUnloaded(transportee, this);
 		}
@@ -738,7 +738,7 @@ void CUnit::UpdatePosErrorParams(bool updateError, bool updateDelta)
 
 	if (updateDelta) {
 		if ((--nextPosErrorUpdate) <= 0) {
-			float3 newPosError = gs->randVector();
+			float3 newPosError = gsRNG.NextVector();
 			newPosError.y *= 0.2f;
 
 			if (posErrorVector.dot(newPosError) < 0.0f) {
@@ -1470,8 +1470,8 @@ void CUnit::SetMass(float newMass)
 
 void CUnit::DoSeismicPing(float pingSize)
 {
-	float rx = gs->randFloat();
-	float rz = gs->randFloat();
+	float rx = gsRNG.NextFloat();
+	float rz = gsRNG.NextFloat();
 
 	if (!(losStatus[gu->myAllyTeam] & LOS_INLOS) && losHandler->InSeismicDistance(this, gu->myAllyTeam)) {
 		const float3 err = float3(0.5f - rx, 0.0f, 0.5f - rz) * losHandler->GetAllyTeamRadarErrorSize(gu->myAllyTeam);
@@ -2353,7 +2353,7 @@ void CUnit::IncomingMissile(CMissileProjectile* missile)
 	if (lastFlareDrop >= (gs->frameNum - unitDef->flareReloadTime * GAME_SPEED))
 		return;
 
-	new CFlareProjectile(pos, speed, this, (int) (gs->frameNum + unitDef->flareDelay * (1 + gs->randFloat()) * 15));
+	new CFlareProjectile(pos, speed, this, (int) (gs->frameNum + unitDef->flareDelay * (1 + gsRNG.NextFloat()) * 15));
 	lastFlareDrop = gs->frameNum;
 }
 

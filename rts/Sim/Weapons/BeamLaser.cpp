@@ -292,7 +292,7 @@ void CBeamLaser::FireInternal(float3 curDir)
 	CollisionQuery hitColQuery;
 
 	if (!sweepFireState.IsSweepFiring()) {
-		curDir += (gs->randVector() * SprayAngleExperience());
+		curDir += (gsRNG.NextVector() * SprayAngleExperience());
 		curDir.SafeNormalize();
 
 		// increase range if targets are searched for in a cylinder

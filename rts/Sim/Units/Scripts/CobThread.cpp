@@ -514,7 +514,7 @@ bool CCobThread::Tick()
 			case RAND:
 				r2 = POP();
 				r1 = POP();
-				r3 = gs->randInt() % (r2 - r1 + 1) + r1;
+				r3 = gsRNG.NextInt() % (r2 - r1 + 1) + r1;
 				stack.push_back(r3);
 				break;
 			case EMIT_SFX:

@@ -329,11 +329,11 @@ static int SelectLoopBackManeuver(
 		return CStrafeAirMoveType::MANEUVER_FLY_STRAIGHT;
 
 	if (groundDist > TurnRadius(turnRadius, spd.w)) {
-		if (math::fabs(frontdir.y) <= 0.2f && gs->randFloat() > 0.3f) {
+		if (math::fabs(frontdir.y) <= 0.2f && gsRNG.NextFloat() > 0.3f) {
 			return CStrafeAirMoveType::MANEUVER_IMMELMAN_INV;
 		}
 	} else {
-		if (frontdir.y > -0.2f && gs->randFloat() > 0.7f) {
+		if (frontdir.y > -0.2f && gsRNG.NextFloat() > 0.7f) {
 			return CStrafeAirMoveType::MANEUVER_IMMELMAN;
 		}
 	}
@@ -386,7 +386,7 @@ CStrafeAirMoveType::CStrafeAirMoveType(CUnit* owner):
 
 	wantedHeight =
 		(owner->unitDef->wantedHeight * 1.5f) +
-		((gs->randFloat() - 0.3f) * 15.0f * (isFighter? 2.0f: 1.0f));
+		((gsRNG.NextFloat() - 0.3f) * 15.0f * (isFighter? 2.0f: 1.0f));
 
 	orgWantedHeight = wantedHeight;
 
@@ -398,15 +398,15 @@ CStrafeAirMoveType::CStrafeAirMoveType(CUnit* owner):
 	useSmoothMesh = owner->unitDef->useSmoothMesh;
 
 	// FIXME: WHY ARE THESE RANDOMIZED?
-	maxRudder   *= (0.99f + gs->randFloat() * 0.02f);
-	maxElevator *= (0.99f + gs->randFloat() * 0.02f);
-	maxAileron  *= (0.99f + gs->randFloat() * 0.02f);
-	accRate     *= (0.99f + gs->randFloat() * 0.02f);
+	maxRudder   *= (0.99f + gsRNG.NextFloat() * 0.02f);
+	maxElevator *= (0.99f + gsRNG.NextFloat() * 0.02f);
+	maxAileron  *= (0.99f + gsRNG.NextFloat() * 0.02f);
+	accRate     *= (0.99f + gsRNG.NextFloat() * 0.02f);
 
-	crashAileron = 1.0f - (gs->randFloat() * gs->randFloat());
-	crashAileron *= ((gs->randInt() & 1)? -1.0f: 1.0f);
-	crashElevator = gs->randFloat();
-	crashRudder = gs->randFloat() - 0.5f;
+	crashAileron = 1.0f - (gsRNG.NextFloat() * gsRNG.NextFloat());
+	crashAileron *= ((gsRNG.NextInt() & 1)? -1.0f: 1.0f);
+	crashElevator = gsRNG.NextFloat();
+	crashRudder = gsRNG.NextFloat() - 0.5f;
 
 	lastRudderPos = 0.0f;
 	lastElevatorPos = 0.0f;
@@ -520,7 +520,7 @@ bool CStrafeAirMoveType::Update()
 				owner->KillUnit(NULL, true, false);
 			}
 
-			new CSmokeProjectile(owner, owner->midPos, gs->randVector() * 0.08f, 100 + gs->randFloat() * 50, 5, 0.2f, 0.4f);
+			new CSmokeProjectile(owner, owner->midPos, gsRNG.NextVector() * 0.08f, 100 + gsRNG.NextFloat() * 50, 5, 0.2f, 0.4f);
 		} break;
 		case AIRCRAFT_TAKEOFF:
 			UpdateTakeOff();

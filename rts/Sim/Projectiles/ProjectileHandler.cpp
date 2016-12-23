@@ -90,7 +90,7 @@ CProjectileHandler::CProjectileHandler()
 	for (int i = 0; i < syncedProjectileIDs.size(); i++) {
 		freeSyncedIDs.push_back(i);
 	}
-	std::random_shuffle(freeSyncedIDs.begin(), freeSyncedIDs.end(), gs->rng);
+	std::random_shuffle(freeSyncedIDs.begin(), freeSyncedIDs.end(), gsRNG);
 
 	for (int i = 0; i < unsyncedProjectileIDs.size(); i++) {
 		freeUnsyncedIDs.push_back(i);
@@ -361,7 +361,7 @@ void CProjectileHandler::AddProjectile(CProjectile* p)
 			freeIDs->push_back(i);
 		}
 		if (p->synced) {
-			std::random_shuffle(freeIDs->begin(), freeIDs->end(), gs->rng);
+			std::random_shuffle(freeIDs->begin(), freeIDs->end(), gsRNG);
 		} else{
 			std::random_shuffle(freeIDs->begin(), freeIDs->end(), gu->rng);
 		}

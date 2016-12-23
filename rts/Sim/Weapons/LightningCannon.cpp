@@ -37,7 +37,7 @@ void CLightningCannon::FireImpl(const bool scriptCall)
 	float3 curDir = (currentTargetPos - weaponMuzzlePos).SafeNormalize();
 
 	curDir +=
-		(gs->randVector() * SprayAngleExperience() + SalvoErrorExperience());
+		(gsRNG.NextVector() * SprayAngleExperience() + SalvoErrorExperience());
 	curDir.Normalize();
 
 	CUnit* hitUnit = NULL;

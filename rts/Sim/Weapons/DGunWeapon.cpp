@@ -25,7 +25,7 @@ void CDGunWeapon::FireImpl(const bool scriptCall)
 {
 	float3 dir = wantedDir;
 
-	dir += (gs->randVector() * SprayAngleExperience() + SalvoErrorExperience());
+	dir += (gsRNG.NextVector() * SprayAngleExperience() + SalvoErrorExperience());
 	dir.Normalize();
 
 	ProjectileParams params = GetProjectileParams();

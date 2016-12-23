@@ -101,7 +101,7 @@ void CFireProjectile::Update()
 			const std::vector<CUnit*> units = quadField->GetUnitsExact(emitPos + wind.GetCurrentWind() * 0.7f, emitRadius * 2);
 
 			for (CFeature* f: features) {
-				if (gs->randFloat() > 0.8f) {
+				if (gsRNG.NextFloat() > 0.8f) {
 					f->StartFire();
 				}
 			}

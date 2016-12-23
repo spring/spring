@@ -442,7 +442,7 @@ void CWeapon::UpdateFire()
 
 	salvoLeft = salvoSize;
 	nextSalvo = gs->frameNum;
-	salvoError = gs->randVector() * (owner->IsMoving()? weaponDef->movingAccuracy: accuracyError);
+	salvoError = gsRNG.NextVector() * (owner->IsMoving()? weaponDef->movingAccuracy: accuracyError);
 
 	if (currentTarget.type == Target_Pos || (currentTarget.type == Target_Unit && !(currentTarget.unit->losStatus[owner->allyteam] & LOS_INLOS))) {
 		// area firing stuff is too effective at radar firing...
@@ -682,8 +682,8 @@ bool CWeapon::AutoTarget()
 
 void CWeapon::SlowUpdate()
 {
-	errorVectorAdd = (gs->randVector() - errorVector) * (1.0f / UNIT_SLOWUPDATE_RATE);
-	predictSpeedMod = 1.0f + (gs->randFloat() - 0.5f) * 2 * (1.0f - owner->limExperience);
+	errorVectorAdd = (gsRNG.NextVector() - errorVector) * (1.0f / UNIT_SLOWUPDATE_RATE);
+	predictSpeedMod = 1.0f + (gsRNG.NextFloat() - 0.5f) * 2 * (1.0f - owner->limExperience);
 
 #ifdef TRACE_SYNC
 	tracefile << "Weapon slow update: ";

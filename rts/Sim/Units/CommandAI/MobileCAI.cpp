@@ -91,7 +91,7 @@ CMobileCAI::CMobileCAI():
 	cancelDistance(1024),
 	lastCloseInTry(-1),
 	slowGuard(false),
-	moveDir(gs->randFloat() > 0.5)
+	moveDir(gsRNG.NextFloat() > 0.5)
 {}
 
 
@@ -111,7 +111,7 @@ CMobileCAI::CMobileCAI(CUnit* owner):
 	cancelDistance(1024),
 	lastCloseInTry(-1),
 	slowGuard(false),
-	moveDir(gs->randFloat() > 0.5f)
+	moveDir(gsRNG.NextFloat() > 0.5f)
 {
 	CalculateCancelDistance();
 
@@ -993,8 +993,8 @@ void CMobileCAI::NonMoving()
 			lastBuggerGoalPos.z = goalPos.z;
 			if (randomize) {
 				lastBuggerGoalPos.y += 32.0f; // gradually increase the amplitude of the random factor
-				goalPos.x += (2.0f * lastBuggerGoalPos.y) * gs->randFloat() - lastBuggerGoalPos.y;
-				goalPos.z += (2.0f * lastBuggerGoalPos.y) * gs->randFloat() - lastBuggerGoalPos.y;
+				goalPos.x += (2.0f * lastBuggerGoalPos.y) * gsRNG.NextFloat() - lastBuggerGoalPos.y;
+				goalPos.z += (2.0f * lastBuggerGoalPos.y) * gsRNG.NextFloat() - lastBuggerGoalPos.y;
 			}
 			else
 				lastBuggerGoalPos.y = 0.0f;
@@ -1476,8 +1476,8 @@ bool CMobileCAI::FindEmptySpot(const float3& center, float radius, float spread,
 
 		for (int b = 0; b < bmax; ++b) {
 			// FIXME: using a deterministic technique might be better, since it would allow an unload command to be tested for validity from unsynced (with predictable results)
-			const float ang = 2.0f * PI * (fromSynced ? gs->randFloat() : gu->RandFloat());
-			const float len = math::sqrt(fromSynced ? gs->randFloat() : gu->RandFloat());
+			const float ang = 2.0f * PI * (fromSynced ? gsRNG.NextFloat() : gu->RandFloat());
+			const float len = math::sqrt(fromSynced ? gsRNG.NextFloat() : gu->RandFloat());
 
 			delta.x = len * math::sin(ang);
 			delta.z = len * math::cos(ang);

@@ -82,7 +82,7 @@ void CFlareProjectile::Update()
 			lastSub = gs->frameNum;
 
 			for (CMissileProjectile* missile: owner->incomingMissiles) {
-				if (gs->randFloat() < owner->unitDef->flareEfficiency) {
+				if (gsRNG.NextFloat() < owner->unitDef->flareEfficiency) {
 					missile->SetTargetObject(this);
 					missile->AddDeathDependence(this, DEPENDENCE_DECOYTARGET);
 				}

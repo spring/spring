@@ -92,7 +92,7 @@ void CUnitHandler::DeleteScripts()
 
 void CUnitHandler::InsertActiveUnit(CUnit* unit)
 {
-	const unsigned int insertionPos = gs->randFloat() * activeUnits.size();
+	const unsigned int insertionPos = gsRNG.NextFloat() * activeUnits.size();
 
 	idPool.AssignID(unit);
 

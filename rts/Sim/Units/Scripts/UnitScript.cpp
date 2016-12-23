@@ -769,12 +769,12 @@ void CUnitScript::Explode(int piece, int flags)
 	// This means that we are going to do a full fledged piece explosion!
 	float3 baseSpeed = unit->speed;
 	float3 explSpeed;
-	explSpeed.x = (0.5f - gs->randFloat()) * 6.0f;
-	explSpeed.y = 1.2f + (gs->randFloat() * 5.0f);
-	explSpeed.z = (0.5f - gs->randFloat()) * 6.0f;
+	explSpeed.x = (0.5f - gsRNG.NextFloat()) * 6.0f;
+	explSpeed.y = 1.2f + (gsRNG.NextFloat() * 5.0f);
+	explSpeed.z = (0.5f - gsRNG.NextFloat()) * 6.0f;
 
 	if (unit->pos.y - CGround::GetApproximateHeight(unit->pos.x, unit->pos.z) > 15)
-		explSpeed.y = (0.5f - gs->randFloat()) * 6.0f;
+		explSpeed.y = (0.5f - gsRNG.NextFloat()) * 6.0f;
 
 	if (baseSpeed.SqLength() > 9.0f) {
 		const float l  = baseSpeed.Length();

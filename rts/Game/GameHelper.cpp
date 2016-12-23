@@ -694,7 +694,7 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* avoi
 				}
 
 				if (targetLOSState & LOS_PREVLOS) {
-					targetPriority /= (damageMul * targetUnit->power * (0.7f + gs->randFloat() * 0.6f));
+					targetPriority /= (damageMul * targetUnit->power * (0.7f + gsRNG.NextFloat() * 0.6f));
 
 					if (targetUnit->category & weapon->badTargetCategory)
 						targetPriority *= 100.0f;

@@ -82,8 +82,8 @@ void CWind::Update()
 		float newStrength = 0.0f;
 
 		do {
-			newWind.x -= (gs->randFloat() - 0.5f) * maxWind;
-			newWind.z -= (gs->randFloat() - 0.5f) * maxWind;
+			newWind.x -= (gsRNG.NextFloat() - 0.5f) * maxWind;
+			newWind.z -= (gsRNG.NextFloat() - 0.5f) * maxWind;
 			newStrength = newWind.Length();
 		} while (newStrength == 0.0f);
 

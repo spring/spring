@@ -74,8 +74,8 @@ void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod)
 			file << "map name: " << gameSetup->mapName << "\n";
 			file << "mod name: " << gameSetup->modName << "\n";
 			file << "minFrame: " << gMinFrameNum << ", maxFrame: " << gMaxFrameNum << "\n";
-			file << "randSeed: " << gs->GetRandSeed() << "\n";
-			file << "initSeed: " << gs->GetInitRandSeed() << "\n";
+			file << "randSeed: " << gsRNG.GetSeed() << "\n";
+			file << "initSeed: " << gsRNG.GetInitSeed() << "\n";
 		}
 
 		LOG("[DumpState] using dump-file \"%s\"", name.c_str());
@@ -95,7 +95,7 @@ void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod)
 	ProjectileContainer::iterator projectilesIt;
 	std::vector<CWeapon*>::const_iterator weaponsIt;
 
-	file << "frame: " << gs->frameNum << ", seed: " << gs->GetRandSeed() << "\n";
+	file << "frame: " << gs->frameNum << ", seed: " << gsRNG.GetSeed() << "\n";
 	file << "\tunits: " << unitHandler->activeUnits.size() << "\n";
 
 	#define DUMP_UNIT_DATA

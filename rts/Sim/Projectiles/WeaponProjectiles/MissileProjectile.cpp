@@ -271,7 +271,7 @@ void CMissileProjectile::UpdateWobble() {
 		return;
 
 	if ((--wobbleTime) <= 0) {
-		wobbleDif = (gs->randVector() - wobbleDir) * (1.0f / 16);
+		wobbleDif = (gsRNG.NextVector() - wobbleDir) * (1.0f / 16);
 		wobbleTime = 16;
 	}
 
@@ -289,7 +289,7 @@ void CMissileProjectile::UpdateDance() {
 		return;
 
 	if ((--danceTime) <= 0) {
-		danceMove = gs->randVector() * weaponDef->dance - danceCenter;
+		danceMove = gsRNG.NextVector() * weaponDef->dance - danceCenter;
 		danceCenter += danceMove;
 		danceTime = 8;
 	}

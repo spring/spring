@@ -310,8 +310,8 @@ void CSM3ReadMap::LoadFeatureData()
 		for (int a=0;a<numFeatures;a++) {
 			MapFeatureInfo& fi = featureInfo[a];
 			fi.featureType = featureTypes.size()-1;
-			fi.pos.x = gs->randFloat() * mapDims.mapx * SQUARE_SIZE;
-			fi.pos.z = gs->randFloat() * mapDims.mapy * SQUARE_SIZE;
+			fi.pos.x = gsRNG.NextFloat() * mapDims.mapx * SQUARE_SIZE;
+			fi.pos.z = gsRNG.NextFloat() * mapDims.mapy * SQUARE_SIZE;
 			fi.rotation = 0.0f;
 		}
 	}*/
