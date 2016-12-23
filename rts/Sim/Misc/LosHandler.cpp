@@ -121,26 +121,23 @@ float ILosType::GetHeight(const CUnit* unit) const
 
 inline void ILosType::UpdateUnit(CUnit* unit, bool ignore)
 {
-	// NOTE: under normal circumstances, this only gets called if a unit
-	// has moved to a new map square since its last SlowUpdate cycle, so
-	// any units that changed position between enabling and disabling of
-	// globalLOS and *stopped moving* will still provide LOS at their old
-	// square *after* it is disabled (until they start moving again)
 	if (losHandler->globalLOS[unit->allyteam])
 		return;
-	if (unit->isDead || unit->beingBuilt || unit->transporter != nullptr)
+	// do not check if the unit is inside a transporter here
+	// non-firebase transporters stun their cargo, so are already handled below
+	// firebase transporters should not deprive sensor coverage from their cargo
+	if (unit->isDead || unit->beingBuilt)
 		return;
 
 	// NOTE:
-	//   when stunned, we are not called during Unit::SlowUpdate's
-	//   but units can in principle still be given on/off commands
-	//   this creates an exploit via Unit::Activate if the unit is
-	//   a transported radar/jammer and leaves a detached coverage
-	//   zone behind
+	//   when stunned, units can in principle still be given on/off commands
+	//   this creates an exploit via Unit::Activate if a unit is a !firebase
+	//   transported radar/jammer (it would leave a detached sensor coverage
+	//   zone behind at its old position)
 	const bool sightOnly = (type == LOS_TYPE_LOS) || (type == LOS_TYPE_AIRLOS);
 	const bool noSensors = (!unit->activated || unit->IsStunned());
 	if (!sightOnly && noSensors) {
-		// deactivate any type of radar/jammer when deactivated
+		// block any type of radar/jammer coverage when deactivated
 		RemoveUnit(unit);
 		return;
 	}
