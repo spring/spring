@@ -679,6 +679,9 @@ void CLosHandler::UnitReverseBuilt(const CUnit* unit)
 
 void CLosHandler::UnitLoaded(const CUnit* unit, const CUnit* transport)
 {
+	if (!unit->IsStunned())
+		return;
+
 	for (ILosType* lt: losTypes) {
 		lt->RemoveUnit(const_cast<CUnit*>(unit));
 	}
