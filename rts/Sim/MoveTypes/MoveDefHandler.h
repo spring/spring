@@ -42,6 +42,10 @@ struct MoveDef {
 		float* minSpeedMod = NULL,
 		int* maxBlockBit = NULL
 	) const;
+
+	// aircraft and buildings defer to UnitDef::floatOnWater
+	bool FloatOnWater() const { return (speedModClass == MoveDef::Hover || speedModClass == MoveDef::Ship); }
+
 	float GetDepthMod(const float height) const;
 	unsigned int GetCheckSum() const;
 

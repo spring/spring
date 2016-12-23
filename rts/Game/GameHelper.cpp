@@ -1089,7 +1089,7 @@ CGameHelper::BuildSquareStatus CGameHelper::TestUnitBuildSquare(
 		for (int z = z1; z < z2; z++) {
 			for (int x = x1; x < x2; x++) {
 				const float3 bpos(x * SQUARE_SIZE, buildHeight, z * SQUARE_SIZE);
-				BuildSquareStatus tbs = (bpos.IsInBounds()) ? TestBuildSquare(bpos, xrange, zrange, buildInfo.def, moveDef, feature, gu->myAllyTeam, buildInfo.def->buildingMask, synced) : BUILDSQUARE_BLOCKED;
+				BuildSquareStatus tbs = (bpos.IsInBounds()) ? TestBuildSquare(bpos, xrange, zrange, buildInfo.def, moveDef, feature, gu->myAllyTeam, synced) : BUILDSQUARE_BLOCKED;
 
 				if (tbs != BUILDSQUARE_BLOCKED) {
 					// test if build-position overlaps a queued command
@@ -1127,7 +1127,7 @@ CGameHelper::BuildSquareStatus CGameHelper::TestUnitBuildSquare(
 		// this can be called in either context
 		for (int z = z1; z < z2; z++) {
 			for (int x = x1; x < x2; x++) {
-				canBuild = std::min(canBuild, TestBuildSquare(float3(x * SQUARE_SIZE, buildHeight, z * SQUARE_SIZE), xrange, zrange, buildInfo.def, moveDef, feature, allyteam, buildInfo.def->buildingMask, synced));
+				canBuild = std::min(canBuild, TestBuildSquare(float3(x * SQUARE_SIZE, buildHeight, z * SQUARE_SIZE), xrange, zrange, buildInfo.def, moveDef, feature, allyteam, synced));
 
 				if (canBuild == BUILDSQUARE_BLOCKED) {
 					return BUILDSQUARE_BLOCKED;
@@ -1147,7 +1147,6 @@ CGameHelper::BuildSquareStatus CGameHelper::TestBuildSquare(
 	const MoveDef* moveDef,
 	CFeature*& feature,
 	int allyteam,
-	std::uint16_t mask,
 	bool synced
 ) {
 	assert(pos.IsInBounds());
@@ -1159,7 +1158,7 @@ CGameHelper::BuildSquareStatus CGameHelper::TestBuildSquare(
 	if (!unitDef->CheckTerrainConstraints(moveDef, groundHeight))
 		return BUILDSQUARE_BLOCKED;
 
-	if (!buildingMaskMap->TestTileMaskUnsafe(sqx >> 1, sqz >> 1, mask))
+	if (!buildingMaskMap->TestTileMaskUnsafe(sqx >> 1, sqz >> 1, unitDef->buildingMask))
 		return BUILDSQUARE_BLOCKED;
 
 

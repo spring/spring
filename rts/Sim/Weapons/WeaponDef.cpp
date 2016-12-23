@@ -389,107 +389,113 @@ WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 		soundTrigger = wdTable.GetBool("soundTrigger", singleSampleShot || singleShotWeapon);
 	}
 
-	// get some weapon specific defaults
-	int defInterceptType = 0;
+	{
+		// get some weapon specific defaults
+		defInterceptType = 0;
 
-	ownerExpAccWeight = -1.0f;
-	if (type == "Cannon") {
-		// CExplosiveProjectile
-		defInterceptType = 1;
-		projectileType = WEAPON_EXPLOSIVE_PROJECTILE;
+		ownerExpAccWeight = -1.0f;
+		if (type == "Cannon") {
+			// CExplosiveProjectile
+			defInterceptType = 1;
+			projectileType = WEAPON_EXPLOSIVE_PROJECTILE;
 
-		ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.9f);
-		intensity = wdTable.GetFloat("intensity", 0.2f);
-	} else if (type == "Rifle") {
-		// no projectile or intercept type
-		defInterceptType = 128;
+			ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.9f);
+			intensity = wdTable.GetFloat("intensity", 0.2f);
+		} else if (type == "Rifle") {
+			// no projectile or intercept type
+			defInterceptType = 128;
 
-		ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.9f);
-	} else if (type == "Melee") {
-		// no projectile or intercept type
-		defInterceptType = 256;
+			ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.9f);
+		} else if (type == "Melee") {
+			// no projectile or intercept type
+			defInterceptType = 256;
 
-		ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.9f);
-	} else if (type == "Flame") {
-		// CFlameProjectile
-		projectileType = WEAPON_FLAME_PROJECTILE;
-		defInterceptType = 16;
+			ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.9f);
+		} else if (type == "Flame") {
+			// CFlameProjectile
+			projectileType = WEAPON_FLAME_PROJECTILE;
+			defInterceptType = 16;
 
-		ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.2f);
-		collisionSize     = wdTable.GetFloat("collisionSize", 0.5f);
-	} else if (type == "MissileLauncher") {
-		// CMissileProjectile
-		projectileType = WEAPON_MISSILE_PROJECTILE;
-		defInterceptType = 4;
+			ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.2f);
+			collisionSize     = wdTable.GetFloat("collisionSize", 0.5f);
+		} else if (type == "MissileLauncher") {
+			// CMissileProjectile
+			projectileType = WEAPON_MISSILE_PROJECTILE;
+			defInterceptType = 4;
 
-		ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.5f);
-	} else if (type == "LaserCannon") {
-		// CLaserProjectile
-		projectileType = WEAPON_LASER_PROJECTILE;
-		defInterceptType = 2;
+			ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.5f);
+		} else if (type == "LaserCannon") {
+			// CLaserProjectile
+			projectileType = WEAPON_LASER_PROJECTILE;
+			defInterceptType = 2;
 
-		ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.7f);
-		collisionSize = wdTable.GetFloat("collisionSize", 0.5f);
-	} else if (type == "BeamLaser") {
-		projectileType = largeBeamLaser? WEAPON_LARGEBEAMLASER_PROJECTILE: WEAPON_BEAMLASER_PROJECTILE;
-		defInterceptType = 2;
+			ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.7f);
+			collisionSize = wdTable.GetFloat("collisionSize", 0.5f);
+		} else if (type == "BeamLaser") {
+			projectileType = largeBeamLaser? WEAPON_LARGEBEAMLASER_PROJECTILE: WEAPON_BEAMLASER_PROJECTILE;
+			defInterceptType = 2;
 
-		ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.7f);
-	} else if (type == "LightningCannon") {
-		projectileType = WEAPON_LIGHTNING_PROJECTILE;
-		defInterceptType = 64;
+			ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.7f);
+		} else if (type == "LightningCannon") {
+			projectileType = WEAPON_LIGHTNING_PROJECTILE;
+			defInterceptType = 64;
 
-		ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.5f);
-	} else if (type == "EmgCannon") {
-		// CEmgProjectile
-		projectileType = WEAPON_EMG_PROJECTILE;
-		defInterceptType = 1;
+			ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.5f);
+		} else if (type == "EmgCannon") {
+			// CEmgProjectile
+			projectileType = WEAPON_EMG_PROJECTILE;
+			defInterceptType = 1;
 
-		ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.5f);
-		size = wdTable.GetFloat("size", 3.0f);
-	} else if (type == "TorpedoLauncher") {
-		// WeaponLoader will create either BombDropper with dropTorpedoes = true
-		// (owner->unitDef->canfly && !weaponDef->submissile) or TorpedoLauncher
-		// (both types of weapons will spawn TorpedoProjectile's)
-		//
-		projectileType = WEAPON_TORPEDO_PROJECTILE;
-		defInterceptType = 32;
+			ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.5f);
+			size = wdTable.GetFloat("size", 3.0f);
+		} else if (type == "TorpedoLauncher") {
+			// WeaponLoader will create either BombDropper with dropTorpedoes = true
+			// (owner->unitDef->canfly && !weaponDef->submissile) or TorpedoLauncher
+			// (both types of weapons will spawn TorpedoProjectile's)
+			//
+			projectileType = WEAPON_TORPEDO_PROJECTILE;
+			defInterceptType = 32;
 
-		ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.5f);
-		waterweapon = true;
-	} else if (type == "DGun") {
-		// CFireBallProjectile
-		projectileType = WEAPON_FIREBALL_PROJECTILE;
+			ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.5f);
+			waterweapon = true;
+		} else if (type == "DGun") {
+			// CFireBallProjectile
+			projectileType = WEAPON_FIREBALL_PROJECTILE;
 
-		ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.5f);
-		collisionSize = wdTable.GetFloat("collisionSize", 10.0f);
-	} else if (type == "StarburstLauncher") {
-		// CStarburstProjectile
-		projectileType = WEAPON_STARBURST_PROJECTILE;
-		defInterceptType = 4;
+			ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.5f);
+			collisionSize = wdTable.GetFloat("collisionSize", 10.0f);
+		} else if (type == "StarburstLauncher") {
+			// CStarburstProjectile
+			projectileType = WEAPON_STARBURST_PROJECTILE;
+			defInterceptType = 4;
 
-		ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.7f);
-	} else if (type == "AircraftBomb") {
-		// WeaponLoader will create BombDropper with dropTorpedoes = false
-		// BombDropper with dropTorpedoes=false spawns ExplosiveProjectile's
-		//
-		projectileType = WEAPON_EXPLOSIVE_PROJECTILE;
-		defInterceptType = 8;
+			ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.7f);
+		} else if (type == "AircraftBomb") {
+			// WeaponLoader will create BombDropper with dropTorpedoes = false
+			// BombDropper with dropTorpedoes=false spawns ExplosiveProjectile's
+			//
+			projectileType = WEAPON_EXPLOSIVE_PROJECTILE;
+			defInterceptType = 8;
 
-		ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.9f);
-	} else {
-		ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.0f);
+			ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.9f);
+		} else {
+			ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.0f);
+		}
+
+		if (ownerExpAccWeight < 0.0f)
+			LOG_L(L_ERROR, "ownerExpAccWeight is negative in weaponDef %s", name.c_str());
+
+		interceptedByShieldType = wdTable.GetInt("interceptedByShieldType", defInterceptType);
 	}
-	if (ownerExpAccWeight < 0.0f)
-		LOG_L(L_ERROR, "ownerExpAccWeight is negative in weaponDef %s", name.c_str());
 
-	interceptedByShieldType = wdTable.GetInt("interceptedByShieldType", defInterceptType);
+	{
+		const std::string& colormap = wdTable.GetString("colormap", "");
 
-	const std::string& colormap = wdTable.GetString("colormap", "");
+		visuals.colorMap = nullptr;
 
-	visuals.colorMap = nullptr;
-	if (!colormap.empty()) {
-		visuals.colorMap = CColorMap::LoadFromDefString(colormap);
+		if (!colormap.empty()) {
+			visuals.colorMap = CColorMap::LoadFromDefString(colormap);
+		}
 	}
 
 	ParseWeaponSounds(wdTable);

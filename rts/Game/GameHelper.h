@@ -89,9 +89,8 @@ public:
 		const int2& zrange,
 		const UnitDef* unitDef,
 		const MoveDef* moveDef,
-		CFeature *&feature,
+		CFeature*& feature,
 		int allyteam,
-		std::uint16_t mask,
 		bool synced
 	);
 

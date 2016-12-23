@@ -352,13 +352,18 @@ void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amoun
 void CUnitLoader::FlattenGround(const CUnit* unit)
 {
 	const UnitDef* unitDef = unit->unitDef;
-	const float groundheight = CGround::GetHeightReal(unit->pos.x, unit->pos.z);
+	const MoveDef* moveDef = unit->moveDef;
 
-	if (mapDamage->disabled) return;
-	if (!unitDef->levelGround) return;
-	if (unitDef->IsAirUnit()) return;
-	if (!unitDef->IsImmobileUnit()) return;
-	if (unitDef->floatOnWater && groundheight <= 0.0f) return;
+	if (mapDamage->disabled)
+		return;
+	if (!unitDef->levelGround)
+		return;
+	if (unitDef->IsAirUnit())
+		return;
+	if (!unitDef->IsImmobileUnit())
+		return;
+	if (unit->FloatOnWater() && unit->IsInWater())
+		return;
 
 	// if we are float-capable, only flatten
 	// if the terrain here is above sea level
@@ -383,13 +388,17 @@ void CUnitLoader::FlattenGround(const CUnit* unit)
 void CUnitLoader::RestoreGround(const CUnit* unit)
 {
 	const UnitDef* unitDef = unit->unitDef;
-	const float groundheight = CGround::GetHeightReal(unit->pos.x, unit->pos.z);
 
-	if (mapDamage->disabled) return;
-	if (!unitDef->levelGround) return;
-	if (unitDef->IsAirUnit()) return;
-	if (!unitDef->IsImmobileUnit()) return;
-	if (unitDef->floatOnWater && groundheight <= 0.0f) return;
+	if (mapDamage->disabled)
+		return;
+	if (!unitDef->levelGround)
+		return;
+	if (unitDef->IsAirUnit())
+		return;
+	if (!unitDef->IsImmobileUnit())
+		return;
+	if (unit->FloatOnWater() && unit->IsInWater())
+		return;
 
 	BuildInfo bi(unitDef, unit->pos, unit->buildFacing);
 	bi.pos = CGameHelper::Pos2BuildPos(bi, true);
@@ -430,3 +439,4 @@ void CUnitLoader::RestoreGround(const CUnit* unit)
 
 	mapDamage->RecalcArea(tx1, tx2, tz1, tz2);
 }
+

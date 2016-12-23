@@ -419,17 +419,15 @@ void CUnit::PostInit(const CUnit* builder)
 	UpdateCollidableStateBit(CSolidObject::CSTATE_BIT_SOLIDOBJECTS, unitDef->collidable && (!immobile || !unitDef->canKamikaze));
 	Block();
 
-	if (unitDef->windGenerator > 0.0f) {
+	if (unitDef->windGenerator > 0.0f)
 		wind.AddUnit(this);
-	}
 
 	UpdateTerrainType();
 	UpdatePhysicalState(0.1f);
 	UpdatePosErrorParams(true, true);
 
-	if (unitDef->floatOnWater && IsInWater()) {
+	if (FloatOnWater() && IsInWater())
 		Move(UpVector * (std::max(CGround::GetHeightReal(pos.x, pos.z), -unitDef->waterline) - pos.y), true);
-	}
 
 	if (unitDef->canmove || unitDef->builder) {
 		if (unitDef->moveState <= MOVESTATE_NONE) {
@@ -635,9 +633,8 @@ void CUnit::ForcedKillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed, b
 	// Will be called in the destructor again, but this can not hurt
 	SetGroup(nullptr);
 
-	if (unitDef->windGenerator > 0.0f) {
+	if (unitDef->windGenerator > 0.0f)
 		wind.DelUnit(this);
-	}
 
 	blockHeightChanges = false;
 	deathScriptFinished = (!showDeathSequence || reclaimed || beingBuilt);
@@ -1653,6 +1650,13 @@ void CUnit::ChangeTeamReset()
 	}
 }
 
+bool CUnit::FloatOnWater() const {
+	if (moveDef != nullptr)
+		return (moveDef->FloatOnWater());
+
+	// aircraft or building
+	return (unitDef->floatOnWater);
+}
 
 bool CUnit::IsIdle() const
 {
@@ -2667,7 +2671,7 @@ bool CUnit::CanLoadUnloadAtPos(const float3& wantedPos, const CUnit* unit, float
 	bool canLoadUnload = false;
 	float wantedHeight = GetTransporteeWantedHeight(wantedPos, unit, &canLoadUnload);
 
-	if (wantedHeightPtr != NULL)
+	if (wantedHeightPtr != nullptr)
 		*wantedHeightPtr = wantedHeight;
 
 	return canLoadUnload;
@@ -2682,14 +2686,13 @@ float CUnit::GetTransporteeWantedHeight(const float3& wantedPos, const CUnit* un
 	const UnitDef* transporteeUnitDef = unit->unitDef;
 	const MoveDef* transporteeMoveDef = unit->moveDef;
 
-	if (unit->GetTransporter() != NULL) {
+	if (unit->GetTransporter() != nullptr) {
 		// if unit is being transported, set <clampedHeight>
 		// to the altitude at which to UNload the transportee
 		wantedHeight = CGround::GetHeightReal(wantedPos.x, wantedPos.z);
-		isAllowedHeight = transporteeUnitDef->CheckTerrainConstraints(transporteeMoveDef, wantedHeight, &clampedHeight);
 
-		if (isAllowedHeight) {
-			if (transporteeMoveDef != NULL) {
+		if ((isAllowedHeight = transporteeUnitDef->CheckTerrainConstraints(transporteeMoveDef, wantedHeight, &clampedHeight))) {
+			if (transporteeMoveDef != nullptr) {
 				// transportee is a mobile ground unit
 				switch (transporteeMoveDef->speedModClass) {
 					case MoveDef::Ship: {
@@ -2710,14 +2713,14 @@ float CUnit::GetTransporteeWantedHeight(const float3& wantedPos, const CUnit* un
 			}
 		}
 
-		if (dynamic_cast<const CBuilding*>(unit) != NULL) {
+		if (dynamic_cast<const CBuilding*>(unit) != nullptr) {
 			// for transported structures, <wantedPos> must be free/buildable
 			// (note: TestUnitBuildSquare calls CheckTerrainConstraints again)
 			BuildInfo bi(transporteeUnitDef, wantedPos, unit->buildFacing);
 			bi.pos = CGameHelper::Pos2BuildPos(bi, true);
-			CFeature* f = NULL;
+			CFeature* f = nullptr;
 
-			if (isAllowedHeight && (!CGameHelper::TestUnitBuildSquare(bi, f, -1, true) || f != NULL))
+			if (isAllowedHeight && (!CGameHelper::TestUnitBuildSquare(bi, f, -1, true) || f != nullptr))
 				isAllowedHeight = false;
 		}
 	}
@@ -2730,23 +2733,21 @@ float CUnit::GetTransporteeWantedHeight(const float3& wantedPos, const CUnit* un
 	// however this check fails for eg. ships that want to (un)load
 	// land units on shore --> would require too many special cases
 	// therefore restrict its use to transport aircraft
-	if (this->moveDef == NULL) {
-		isAllowedHeight &= unitDef->CheckTerrainConstraints(NULL, rawContactHeight, &modContactHeight);
-	}
+	if (this->moveDef == nullptr)
+		isAllowedHeight &= unitDef->CheckTerrainConstraints(nullptr, rawContactHeight, &modContactHeight);
 
-	if (allowedPos != NULL) {
+	if (allowedPos != nullptr)
 		*allowedPos = isAllowedHeight;
-	}
 
 	return modContactHeight;
 }
 
 short CUnit::GetTransporteeWantedHeading(const CUnit* unit) const {
-	if (unit->GetTransporter() == NULL)
+	if (unit->GetTransporter() == nullptr)
 		return unit->heading;
-	if (dynamic_cast<CHoverAirMoveType*>(moveType) == NULL)
+	if (dynamic_cast<CHoverAirMoveType*>(moveType) == nullptr)
 		return unit->heading;
-	if (dynamic_cast<const CBuilding*>(unit) == NULL)
+	if (dynamic_cast<const CBuilding*>(unit) == nullptr)
 		return unit->heading;
 
 	// transported structures want to face a cardinal direction

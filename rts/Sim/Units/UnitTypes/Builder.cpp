@@ -683,8 +683,7 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo, CFeature*& feature, bool& waitSt
 	CUnit* buildee = unitLoader->LoadUnit(buildeeParams);
 
 	// floating structures don't terraform the seabed
-	const float groundheight = CGround::GetHeightReal(buildee->pos.x, buildee->pos.z);
-	const bool onWater = (buildeeDef->floatOnWater && groundheight <= 0.0f);
+	const bool onWater = (buildee->FloatOnWater() && buildee->IsInWater());
 
 	if (mapDamage->disabled || !buildeeDef->levelGround || onWater ||
 	    buildeeDef->IsAirUnit() || !buildeeDef->IsImmobileUnit()
@@ -693,9 +692,9 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo, CFeature*& feature, bool& waitSt
 		buildee->terraformLeft = 0;
 		buildee->groundLevelled = true;
 	} else {
-		tx1 = (int)max(    0.0f, (buildee->pos.x - (buildeeDef->xsize * 0.5f * SQUARE_SIZE)) / SQUARE_SIZE);
+		tx1 = (int)max(        0.0f, (buildee->pos.x - (buildeeDef->xsize * 0.5f * SQUARE_SIZE)) / SQUARE_SIZE);
 		tx2 =      min(mapDims.mapx,             tx1 +  buildeeDef->xsize                                     );
-		tz1 = (int)max(    0.0f, (buildee->pos.z - (buildeeDef->zsize * 0.5f * SQUARE_SIZE)) / SQUARE_SIZE);
+		tz1 = (int)max(        0.0f, (buildee->pos.z - (buildeeDef->zsize * 0.5f * SQUARE_SIZE)) / SQUARE_SIZE);
 		tz2 =      min(mapDims.mapy,             tz1 +  buildeeDef->zsize                                     );
 
 		buildee->terraformLeft = CalculateBuildTerraformCost(buildInfo);

@@ -24,11 +24,21 @@ public:
 	S3DModel* LoadModel();
 	S3DModel* LoadModel() const;
 
+	bool IsAircraftWeapon() const {
+		switch (projectileType) {
+			case WEAPON_TORPEDO_PROJECTILE:   { return (                 true); } break;
+			case WEAPON_EXPLOSIVE_PROJECTILE: { return (defInterceptType == 8); } break;
+			default: {} break;
+		}
+		return false;
+	}
+
 	bool IsHitScanWeapon() const {
 		switch (projectileType) {
 			case WEAPON_BEAMLASER_PROJECTILE:      { return true; } break;
 			case WEAPON_LARGEBEAMLASER_PROJECTILE: { return true; } break;
 			case WEAPON_LIGHTNING_PROJECTILE:      { return true; } break;
+			default: {} break;
 		}
 
 		return false;
@@ -166,6 +176,7 @@ public:
 
 	unsigned int shieldInterceptType;      // type of shield (bitfield)
 	unsigned int interceptedByShieldType;  // weapon can be affected by shields where (shieldInterceptType & interceptedByShieldType) is not zero
+	unsigned int defInterceptType;
 
 	bool avoidFriendly;     // if true, try to avoid friendly units while aiming
 	bool avoidFeature;      // if true, try to avoid features while aiming

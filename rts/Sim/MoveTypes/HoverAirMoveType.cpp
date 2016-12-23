@@ -998,11 +998,9 @@ bool CHoverAirMoveType::CanLandAt(const float3& pos) const
 		return false;
 
 	const UnitDef* ud = owner->unitDef;
-	const float gah = CGround::GetApproximateHeight(pos.x, pos.z);
 
-	if ((gah < 0.0f) && !(ud->floatOnWater || ud->canSubmerge)) {
+	if ((CGround::GetApproximateHeight(pos.x, pos.z) < 0.0f) && !(ud->floatOnWater || ud->canSubmerge))
 		return false;
-	}
 
 	const int2 mp = owner->GetMapPos(pos);
 

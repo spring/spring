@@ -504,7 +504,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	extractRange = mapInfo->map.extractorRadius * int(extractsMetal > 0.0f);
 
 	{
-		MoveDef* moveDef = NULL;
+		MoveDef* moveDef = nullptr;
 
 		// aircraft have MoveTypes but no MoveDef;
 		// static structures have no use for either
@@ -513,15 +513,15 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 			const std::string& moveClass = StringToLower(udTable.GetString("movementClass", ""));
 			const std::string errMsg = "WARNING: Couldn't find a MoveClass named " + moveClass + " (used in UnitDef: " + unitName + ")";
 
-			if ((moveDef = moveDefHandler->GetMoveDefByName(moveClass)) == NULL) {
-				throw content_error(errMsg); //! invalidate unitDef (this gets catched in ParseUnitDef!)
-			}
+			// invalidate this unitDef; caught in ParseUnitDef
+			if ((moveDef = moveDefHandler->GetMoveDefByName(moveClass)) == nullptr)
+				throw content_error(errMsg);
 
 			moveDef->udRefCount += 1;
 			this->pathType = moveDef->pathType;
 		}
 
-		if (moveDef == NULL) {
+		if (moveDef == nullptr) {
 			upright           |= !canfly;
 			floatOnWater      |= udTable.GetBool("floater", udTable.KeyExists("WaterLine"));
 
@@ -530,8 +530,6 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 		} else {
 			upright           |= (moveDef->speedModClass == MoveDef::Hover);
 			upright           |= (moveDef->speedModClass == MoveDef::Ship );
-			floatOnWater      |= (moveDef->speedModClass == MoveDef::Hover);
-			floatOnWater      |= (moveDef->speedModClass == MoveDef::Ship );
 
 			// we have a MoveDef, so pathType != -1 and IsGroundUnit() MUST be true
 			cantBeTransported |= (!modInfo.transportGround && moveDef->speedModClass == MoveDef::Tank );
@@ -839,7 +837,7 @@ bool UnitDef::CheckTerrainConstraints(const MoveDef* moveDef, float rawHeight, f
 	float minDepth = MoveDef::GetDefaultMinWaterDepth();
 	float maxDepth = MoveDef::GetDefaultMaxWaterDepth();
 
-	if (moveDef != NULL) {
+	if (moveDef != nullptr) {
 		// we are a mobile ground-unit, use MoveDef limits
 		if (moveDef->speedModClass == MoveDef::Ship) {
 			minDepth = moveDef->depth;
@@ -852,25 +850,26 @@ bool UnitDef::CheckTerrainConstraints(const MoveDef* moveDef, float rawHeight, f
 			minDepth = this->minWaterDepth;
 			maxDepth = this->maxWaterDepth;
 		} else {
+			// submerging or floating aircraft
 			maxDepth *= canSubmerge;
 			maxDepth *= (1 - floatOnWater);
 		}
 	}
 
-	if (clampedHeight != NULL) {
+	if (clampedHeight != nullptr)
 		*clampedHeight = Clamp(rawHeight, -maxDepth, -minDepth);
-	}
 
 	// <rawHeight> must lie in the range [-maxDepth, -minDepth]
 	return (rawHeight >= -maxDepth && rawHeight <= -minDepth);
 }
 
 bool UnitDef::HasBomberWeapon() const {
-	if (weapons.empty()) { return false; }
-	if (weapons[0].def == NULL) { return false; }
-	return
-		weapons[0].def->type == "AircraftBomb" ||
-		weapons[0].def->type == "TorpedoLauncher";
+	if (weapons.empty())
+		return false;
+	if (weapons[0].def == nullptr)
+		return false;
+
+	return (weapons[0].def->IsAircraftWeapon());
 }
 
 /******************************************************************************/

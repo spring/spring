@@ -204,7 +204,7 @@ void CFactory::UpdateBuild(CUnit* buildee) {
 	// rotate unit nanoframe with platform
 	buildee->heading = (-buildPieceHeading + GetHeadingFromFacing(buildFacing)) & (SPRING_CIRCLE_DIVS - 1);
 
-	if (buildee->unitDef->floatOnWater && (buildeePos.y <= 0.0f))
+	if (buildee->FloatOnWater() && buildee->IsInWater())
 		buildeePos.y = -buildee->unitDef->waterline;
 
 	buildee->Move(buildeePos, false);

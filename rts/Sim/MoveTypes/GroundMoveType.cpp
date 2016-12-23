@@ -2168,9 +2168,12 @@ bool CGroundMoveType::OnSlope(float minSlideTolerance) {
 	const MoveDef* md = owner->moveDef;
 	const float3& pos = owner->pos;
 
-	if (ud->slideTolerance < minSlideTolerance) { return false; }
-	if (ud->floatOnWater && owner->IsInWater()) { return false; }
-	if (!pos.IsInBounds()) { return false; }
+	if (ud->slideTolerance < minSlideTolerance)
+		return false;
+	if (owner->FloatOnWater() && owner->IsInWater())
+		return false;
+	if (!pos.IsInBounds())
+		return false;
 
 	// if minSlideTolerance is LEQ 0, do not multiply maxSlope by ud->slideTolerance
 	// (otherwise the unit could stop on an invalid path location, and be teleported
@@ -2200,7 +2203,7 @@ float CGroundMoveType::GetGroundHeight(const float3& p) const
 	const float gh = CGround::GetHeightReal(p.x, p.z);
 	const float wh = -owner->unitDef->waterline * (gh <= 0.0f);
 
-	if (owner->unitDef->floatOnWater) {
+	if (owner->FloatOnWater()) {
 		// in [-waterline, maxHeight], note that waterline
 		// can be much deeper than ground in shallow water
 		return (std::max(gh, wh));
@@ -2217,7 +2220,7 @@ void CGroundMoveType::AdjustPosToWaterLine()
 		return;
 
 	if (modInfo.allowGroundUnitGravity) {
-		if (owner->unitDef->floatOnWater) {
+		if (owner->FloatOnWater()) {
 			owner->Move(UpVector * (std::max(CGround::GetHeightReal(owner->pos.x, owner->pos.z), -owner->unitDef->waterline) - owner->pos.y), true);
 		} else {
 			owner->Move(UpVector * (std::max(CGround::GetHeightReal(owner->pos.x, owner->pos.z),               owner->pos.y) - owner->pos.y), true);
