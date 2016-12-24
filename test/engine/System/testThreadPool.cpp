@@ -5,7 +5,7 @@
 #include "System/Threading/SpringThreading.h"
 #include "System/Misc/SpringTime.h"
 #include "System/myMath.h"
-#include "System/UnsyncedRNG.h"
+#include "System/GlobalRNG.h"
 #include <vector>
 #include <atomic>
 #include <boost/thread/future.hpp>
@@ -157,7 +157,7 @@ BOOST_AUTO_TEST_CASE( testThreadPoolSSE )
 {
 	LOG_L(L_WARNING, "SSE in for_mt");
 
-	std::vector<UnsyncedRNG> rngs(NUM_THREADS);
+	std::vector<CGlobalUnsyncedRNG> rngs(NUM_THREADS);
 
 	for (unsigned int n = 0; n < rngs.size(); n++)
 		rngs[n].Seed(n);

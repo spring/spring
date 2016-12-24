@@ -160,7 +160,6 @@ endif()
 			"${ENGINE_SOURCE_DIR}/System/float3.cpp"
 			"${ENGINE_SOURCE_DIR}/System/float4.cpp"
 			"${ENGINE_SOURCE_DIR}/System/Misc/SpringTime.cpp"
-			"${ENGINE_SOURCE_DIR}/System/UnsyncedRNG.cpp"
 			"${ENGINE_SOURCE_DIR}/System/TimeProfiler.cpp"
 			${sources_engine_System_Threading}
 			${test_Log_sources}
@@ -185,7 +184,6 @@ endif()
 			"${ENGINE_SOURCE_DIR}/System/float3.cpp"
 			"${ENGINE_SOURCE_DIR}/System/float4.cpp"
 			"${ENGINE_SOURCE_DIR}/System/TimeProfiler.cpp"
-			"${ENGINE_SOURCE_DIR}/System/UnsyncedRNG.cpp"
 			"${ENGINE_SOURCE_DIR}/System/Misc/SpringTime.cpp"
 			${sources_engine_System_Threading}
 			${test_Log_sources}
@@ -229,7 +227,6 @@ endif()
 			"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/Misc/testSpringTime.cpp"
 			"${ENGINE_SOURCE_DIR}/System/Misc/SpringTime.cpp"
 			"${ENGINE_SOURCE_DIR}/System/TimeProfiler.cpp"
-			"${ENGINE_SOURCE_DIR}/System/UnsyncedRNG.cpp"
 			${sources_engine_System_Threading}
 			${test_Log_sources}
 		)
@@ -356,7 +353,6 @@ endif()
 			"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/testThreadPool.cpp"
 			"${ENGINE_SOURCE_DIR}/System/ThreadPool.cpp"
 			"${ENGINE_SOURCE_DIR}/System/Misc/SpringTime.cpp"
-			"${ENGINE_SOURCE_DIR}/System/UnsyncedRNG.cpp"
 			"${ENGINE_SOURCE_DIR}/System/Platform/CpuID.cpp"
 			"${ENGINE_SOURCE_DIR}/System/Platform/Threading.cpp"
 			${sources_engine_System_Threading}
@@ -386,7 +382,6 @@ endif()
 			"${CMAKE_CURRENT_SOURCE_DIR}/other/testMutex.cpp"
 			"${ENGINE_SOURCE_DIR}/System/Misc/SpringTime.cpp"
 			"${ENGINE_SOURCE_DIR}/System/TimeProfiler.cpp"
-			"${ENGINE_SOURCE_DIR}/System/UnsyncedRNG.cpp"
 			${sources_engine_System_Threading}
 			${test_Log_sources}
 		)
@@ -437,7 +432,6 @@ endif()
 			"${CMAKE_CURRENT_SOURCE_DIR}/other/testPrintf.cpp"
 			"${ENGINE_SOURCE_DIR}/lib/lua/include/LuaUser.cpp"
 			"${ENGINE_SOURCE_DIR}/System/Misc/SpringTime.cpp"
-			"${ENGINE_SOURCE_DIR}/System/UnsyncedRNG.cpp"
 			"${ENGINE_SOURCE_DIR}/System/TimeProfiler.cpp"
 			${sources_engine_System_Threading}
 			${test_Log_sources}
@@ -461,7 +455,6 @@ endif()
 	Set(test_src
 			"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/testSQRT.cpp"
 			"${ENGINE_SOURCE_DIR}/System/Misc/SpringTime.cpp"
-			"${ENGINE_SOURCE_DIR}/System/UnsyncedRNG.cpp"
 			"${ENGINE_SOURCE_DIR}/System/TimeProfiler.cpp"
 			${sources_engine_System_Threading}
 			${test_Log_sources}
