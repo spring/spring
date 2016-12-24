@@ -434,7 +434,7 @@ void CGame::LoadDefs()
 		ScopedOnceTimer timer("Game::LoadDefs (GameData)");
 		loadscreen->SetLoadMessage("Loading GameData Definitions");
 
-		defsParser = new LuaParser("gamedata/defs.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
+		defsParser = new LuaParser("gamedata/defs.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP, true);
 		// customize the defs environment
 		defsParser->GetTable("Spring");
 		defsParser->AddFunc("GetModOptions", LuaSyncedRead::GetModOptions);
@@ -442,30 +442,31 @@ void CGame::LoadDefs()
 		defsParser->EndTable();
 
 		// run the parser
-		if (!defsParser->Execute()) {
+		if (!defsParser->Execute())
 			throw content_error("Defs-Parser: " + defsParser->GetErrorLog());
-		}
-		const LuaTable root = defsParser->GetRoot();
-		if (!root.IsValid()) {
+
+		const LuaTable& root = defsParser->GetRoot();
+
+		if (!root.IsValid())
 			throw content_error("Error loading gamedata definitions");
-		}
-		// bail now if any of these tables in invalid
-		// (makes searching for errors that much easier
-		if (!root.SubTable("UnitDefs").IsValid()) {
+
+		// bail now if any of these tables are invalid
+		// makes searching for errors that much easier
+		if (!root.SubTable("UnitDefs").IsValid())
 			throw content_error("Error loading UnitDefs");
-		}
-		if (!root.SubTable("FeatureDefs").IsValid()) {
+
+		if (!root.SubTable("FeatureDefs").IsValid())
 			throw content_error("Error loading FeatureDefs");
-		}
-		if (!root.SubTable("WeaponDefs").IsValid()) {
+
+		if (!root.SubTable("WeaponDefs").IsValid())
 			throw content_error("Error loading WeaponDefs");
-		}
-		if (!root.SubTable("ArmorDefs").IsValid()) {
+
+		if (!root.SubTable("ArmorDefs").IsValid())
 			throw content_error("Error loading ArmorDefs");
-		}
-		if (!root.SubTable("MoveDefs").IsValid()) {
+
+		if (!root.SubTable("MoveDefs").IsValid())
 			throw content_error("Error loading MoveDefs");
-		}
+
 	}
 
 	{

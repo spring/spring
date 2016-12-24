@@ -38,7 +38,7 @@ class LuaTable {
 		LuaTable SubTable(const string& key) const;
 		LuaTable SubTableExpr(const string& expr) const;
 
-		bool IsValid() const { return (parser != NULL); }
+		bool IsValid() const { return (parser != nullptr); }
 
 		const string& GetPath() const { return path; }
 
@@ -122,16 +122,12 @@ class LuaParser {
 	friend class LuaTable;
 
 	public:
-		LuaParser(const string& fileName,
-		          const string& fileModes,
-		          const string& accessModes);
-		LuaParser(const string& textChunk,
-		          const string& accessModes);
+		LuaParser(const string& fileName, const string& fileModes, const string& accessModes, bool synced = false);
+		LuaParser(const string& textChunk, const string& accessModes, bool synced = false);
 		~LuaParser();
 
 		bool Execute();
-
-		bool IsValid() const { return (L != NULL); }
+		bool IsValid() const { return (L != nullptr); }
 
 		LuaTable GetRoot();
 
@@ -168,7 +164,7 @@ class LuaParser {
 		const string accessModes;
 
 	private:
-		void SetupEnv();
+		void SetupEnv(bool synced);
 
 		void PushParam();
 
@@ -195,6 +191,10 @@ class LuaParser {
 		static int DontMessWithMyCase(lua_State* L);
 
 		// Spring call-outs
+		static int RandomSeed(lua_State* L);
+		static int Random(lua_State* L);
+		static int DummyRandomSeed(lua_State* L);
+		static int DummyRandom(lua_State* L);
 		static int TimeCheck(lua_State* L);
 
 		// VFS call-outs

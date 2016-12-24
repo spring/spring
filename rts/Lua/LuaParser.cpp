@@ -16,9 +16,10 @@
 #include "LuaUtils.h"
 
 #include "Game/GameVersion.h"
+#include "Sim/Misc/GlobalSynced.h" // gsRNG
 #include "System/Log/ILog.h"
 #include "System/FileSystem/FileHandler.h"
-#include "System/FileSystem/FileSystem.h"
+/// #include "System/FileSystem/FileSystem.h"
 #include "System/Misc/SpringTime.h"
 #include "System/ScopedFPUSettings.h"
 #include "System/Util.h"
@@ -32,9 +33,7 @@ LuaParser* LuaParser::currentParser = NULL;
 //  LuaParser
 //
 
-LuaParser::LuaParser(const string& _fileName,
-                     const string& _fileModes,
-                     const string& _accessModes)
+LuaParser::LuaParser(const string& _fileName, const string& _fileModes, const string& _accessModes, bool synced)
 : fileName(_fileName),
   fileModes(_fileModes),
   textChunk(""),
@@ -46,16 +45,13 @@ LuaParser::LuaParser(const string& _fileName,
   lowerKeys(true),
   lowerCppKeys(true)
 {
-	L = LUA_OPEN();
-
-	if (L != NULL) {
-		SetupEnv();
+	if ((L = LUA_OPEN()) != nullptr) {
+		SetupEnv(synced);
 	}
 }
 
 
-LuaParser::LuaParser(const string& _textChunk,
-                     const string& _accessModes)
+LuaParser::LuaParser(const string& _textChunk, const string& _accessModes, bool synced)
 : fileName(""),
   fileModes(""),
   textChunk(_textChunk),
@@ -67,21 +63,18 @@ LuaParser::LuaParser(const string& _textChunk,
   lowerKeys(true),
   lowerCppKeys(true)
 {
-	L = LUA_OPEN();
-
-	if (L != NULL) {
-		SetupEnv();
+	if ((L = LUA_OPEN()) != nullptr) {
+		SetupEnv(synced);
 	}
 }
 
 
 LuaParser::~LuaParser()
 {
-	if (L != NULL)
+	if (L != nullptr)
 		LUA_CLOSE(&L);
 
-	set<LuaTable*>::iterator it;
-	for (it = tables.begin(); it != tables.end(); ++it) {
+	for (auto it = tables.begin(); it != tables.end(); ++it) {
 		LuaTable& table = **it;
 		table.parser  = NULL;
 		table.L       = NULL;
@@ -91,7 +84,7 @@ LuaParser::~LuaParser()
 }
 
 
-void LuaParser::SetupEnv()
+void LuaParser::SetupEnv(bool synced)
 {
 	LUA_OPEN_LIB(L, luaopen_base);
 	LUA_OPEN_LIB(L, luaopen_math);
@@ -111,11 +104,17 @@ void LuaParser::SetupEnv()
 	lua_pushnil(L); lua_setglobal(L, "collectgarbage");
 	lua_pushnil(L); lua_setglobal(L, "newproxy"); // not sync-safe cause of __gc
 
-	// FIXME: replace "random" _as in_ LuaHandleSynced (can write your own for now)
-	lua_getglobal(L, "math");
-	lua_pushliteral(L, "random");     lua_pushnil(L); lua_rawset(L, -3);
-	lua_pushliteral(L, "randomseed"); lua_pushnil(L); lua_rawset(L, -3);
-	lua_pop(L, 1); // pop "math"
+	{
+		lua_getglobal(L, "math");
+		if (synced) {
+			LuaPushNamedCFunc(L, "random", Random);
+			LuaPushNamedCFunc(L, "randomseed", RandomSeed);
+		} else {
+			LuaPushNamedCFunc(L, "random", DummyRandom);
+			LuaPushNamedCFunc(L, "randomseed", DummyRandomSeed);
+		}
+		lua_pop(L, 1); // pop "math"
+	}
 
 	AddFunc("DontMessWithMyCase", DontMessWithMyCase);
 
@@ -246,7 +245,8 @@ LuaTable LuaParser::GetRoot()
 
 void LuaParser::PushParam()
 {
-	if (!IsValid() || (initDepth < 0)) { return; }
+	if (!IsValid() || (initDepth < 0))
+		return;
 	if (initDepth > 0) {
 		lua_rawset(L, -3);
 	} else {
@@ -257,7 +257,8 @@ void LuaParser::PushParam()
 
 void LuaParser::GetTable(const string& name, bool overwrite)
 {
-	if (!IsValid() || (initDepth < 0)) { return; }
+	if (!IsValid() || (initDepth < 0))
+		return;
 
 	lua_pushsstring(L, name);
 
@@ -279,14 +280,14 @@ void LuaParser::GetTable(const string& name, bool overwrite)
 
 void LuaParser::GetTable(int index, bool overwrite)
 {
-	if (!IsValid() || (initDepth < 0)) { return; }
+	if (!IsValid() || (initDepth < 0))
+		return;
 
 	lua_pushnumber(L, index);
 
 	if (overwrite) {
 		lua_newtable(L);
-	}
-	else {
+	} else {
 		lua_pushnumber(L, index);
 		lua_gettable(L, (initDepth == 0) ? LUA_GLOBALSINDEX : -3);
 		if (!lua_istable(L, -1)) {
@@ -301,7 +302,8 @@ void LuaParser::GetTable(int index, bool overwrite)
 
 void LuaParser::EndTable()
 {
-	if (!IsValid() || (initDepth < 0)) { return; }
+	if (!IsValid() || (initDepth < 0))
+		return;
 	assert(initDepth > 0);
 	initDepth--;
 	PushParam();
@@ -312,8 +314,13 @@ void LuaParser::EndTable()
 
 void LuaParser::AddFunc(const string& key, int (*func)(lua_State*))
 {
-	if (!IsValid() || (initDepth < 0)) { return; }
-	if (func == NULL) { return; }
+	if (!IsValid() || (initDepth < 0))
+		return;
+	if (func == nullptr)
+		return;
+
+	// can not use this; initDepth check in PushParam
+	// LuaPushNamedCFunc(L, key, func);
 	lua_pushsstring(L, key);
 	lua_pushcfunction(L, func);
 	PushParam();
@@ -322,7 +329,8 @@ void LuaParser::AddFunc(const string& key, int (*func)(lua_State*))
 
 void LuaParser::AddInt(const string& key, int value)
 {
-	if (!IsValid() || (initDepth < 0)) { return; }
+	if (!IsValid() || (initDepth < 0))
+		return;
 	lua_pushsstring(L, key);
 	lua_pushnumber(L, value);
 	PushParam();
@@ -331,7 +339,8 @@ void LuaParser::AddInt(const string& key, int value)
 
 void LuaParser::AddBool(const string& key, bool value)
 {
-	if (!IsValid() || (initDepth < 0)) { return; }
+	if (!IsValid() || (initDepth < 0))
+		return;
 	lua_pushsstring(L, key);
 	lua_pushboolean(L, value);
 	PushParam();
@@ -340,7 +349,8 @@ void LuaParser::AddBool(const string& key, bool value)
 
 void LuaParser::AddFloat(const string& key, float value)
 {
-	if (!IsValid() || (initDepth < 0)) { return; }
+	if (!IsValid() || (initDepth < 0))
+		return;
 	lua_pushsstring(L, key);
 	lua_pushnumber(L, value);
 	PushParam();
@@ -349,7 +359,8 @@ void LuaParser::AddFloat(const string& key, float value)
 
 void LuaParser::AddString(const string& key, const string& value)
 {
-	if (!IsValid() || (initDepth < 0)) { return; }
+	if (!IsValid() || (initDepth < 0))
+		return;
 	lua_pushsstring(L, key);
 	lua_pushsstring(L, value);
 	PushParam();
@@ -360,8 +371,11 @@ void LuaParser::AddString(const string& key, const string& value)
 
 void LuaParser::AddFunc(int key, int (*func)(lua_State*))
 {
-	if (!IsValid() || (initDepth < 0)) { return; }
-	if (func == NULL) { return; }
+	if (!IsValid() || (initDepth < 0))
+		return;
+	if (func == nullptr)
+		return;
+
 	lua_pushnumber(L, key);
 	lua_pushcfunction(L, func);
 	PushParam();
@@ -370,7 +384,8 @@ void LuaParser::AddFunc(int key, int (*func)(lua_State*))
 
 void LuaParser::AddInt(int key, int value)
 {
-	if (!IsValid() || (initDepth < 0)) { return; }
+	if (!IsValid() || (initDepth < 0))
+		return;
 	lua_pushnumber(L, key);
 	lua_pushnumber(L, value);
 	PushParam();
@@ -379,7 +394,8 @@ void LuaParser::AddInt(int key, int value)
 
 void LuaParser::AddBool(int key, bool value)
 {
-	if (!IsValid() || (initDepth < 0)) { return; }
+	if (!IsValid() || (initDepth < 0))
+		return;
 	lua_pushnumber(L, key);
 	lua_pushboolean(L, value);
 	PushParam();
@@ -388,7 +404,8 @@ void LuaParser::AddBool(int key, bool value)
 
 void LuaParser::AddFloat(int key, float value)
 {
-	if (!IsValid() || (initDepth < 0)) { return; }
+	if (!IsValid() || (initDepth < 0))
+		return;
 	lua_pushnumber(L, key);
 	lua_pushnumber(L, value);
 	PushParam();
@@ -397,7 +414,8 @@ void LuaParser::AddFloat(int key, float value)
 
 void LuaParser::AddString(int key, const string& value)
 {
-	if (!IsValid() || (initDepth < 0)) { return; }
+	if (!IsValid() || (initDepth < 0))
+		return;
 	lua_pushnumber(L, key);
 	lua_pushsstring(L, value);
 	PushParam();
@@ -435,11 +453,23 @@ int LuaParser::TimeCheck(lua_State* L)
 
 /******************************************************************************/
 
+// seeding makes little sense inside LuaParser execution
+int LuaParser::RandomSeed(lua_State* L) { return (DummyRandomSeed(L)); }
+int LuaParser::Random(lua_State* L)
+{
+	lua_pushnumber(L, gsRNG.NextFloat());
+	return 1;
+}
+
+int LuaParser::DummyRandomSeed(lua_State* L) { return 0; }
+int LuaParser::DummyRandom(lua_State* L) { return 0; }
+
+/******************************************************************************/
+
 int LuaParser::DirList(lua_State* L)
 {
-	if (currentParser == NULL) {
+	if (currentParser == nullptr)
 		luaL_error(L, "invalid call to DirList() after execution");
-	}
 
 	const string dir = luaL_checkstring(L, 1);
 	if (!LuaIO::IsSimplePath(dir)) {
@@ -456,9 +486,8 @@ int LuaParser::DirList(lua_State* L)
 
 int LuaParser::SubDirs(lua_State* L)
 {
-	if (currentParser == NULL) {
+	if (currentParser == nullptr)
 		luaL_error(L, "invalid call to SubDirs() after execution");
-	}
 
 	const string dir = luaL_checkstring(L, 1);
 	if (!LuaIO::IsSimplePath(dir)) {
@@ -476,9 +505,8 @@ int LuaParser::SubDirs(lua_State* L)
 
 int LuaParser::Include(lua_State* L)
 {
-	if (currentParser == NULL) {
+	if (currentParser == nullptr)
 		luaL_error(L, "invalid call to Include() after execution");
-	}
 
 	// filename [, fenv]
 	const string filename = luaL_checkstring(L, 1);
@@ -549,9 +577,8 @@ int LuaParser::Include(lua_State* L)
 
 int LuaParser::LoadFile(lua_State* L)
 {
-	if (currentParser == NULL) {
+	if (currentParser == nullptr)
 		luaL_error(L, "invalid call to LoadFile() after execution");
-	}
 
 	const string filename = luaL_checkstring(L, 1);
 	if (!LuaIO::IsSimplePath(filename)) {
@@ -582,13 +609,14 @@ int LuaParser::LoadFile(lua_State* L)
 
 int LuaParser::FileExists(lua_State* L)
 {
-	if (currentParser == NULL) {
+	if (currentParser == nullptr)
 		luaL_error(L, "invalid call to FileExists() after execution");
-	}
+
 	const string filename = luaL_checkstring(L, 1);
-	if (!LuaIO::IsSimplePath(filename)) {
+
+	if (!LuaIO::IsSimplePath(filename))
 		return 0;
-	}
+
 	lua_pushboolean(L, CFileHandler::FileExists(filename, currentParser->accessModes));
 	return 1;
 }
@@ -596,9 +624,9 @@ int LuaParser::FileExists(lua_State* L)
 
 int LuaParser::DontMessWithMyCase(lua_State* L)
 {
-	if (currentParser == NULL) {
+	if (currentParser == nullptr)
 		luaL_error(L, "invalid call to DontMessWithMyCase() after execution");
-	}
+
 	currentParser->SetLowerKeys(lua_toboolean(L, 1));
 	return 0;
 }

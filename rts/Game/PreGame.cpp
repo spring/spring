@@ -199,14 +199,13 @@ void CPreGame::AddGameSetupArchivesToVFS(const CGameSetup* setup, bool mapOnly)
 
 void CPreGame::StartServer(const std::string& setupscript)
 {
-	assert(!gameServer);
+	assert(gameServer == nullptr);
 	ScopedOnceTimer startserver("PreGame::StartServer");
 
 	std::shared_ptr<GameData> startGameData(new GameData());
 	std::shared_ptr<CGameSetup> startGameSetup(new CGameSetup());
 
 	startGameSetup->Init(setupscript);
-
 	startGameData->SetRandomSeed(static_cast<unsigned>(guRNG.NextInt()));
 
 	if (startGameSetup->mapName.empty()) {
@@ -439,6 +438,10 @@ void CPreGame::GameDataReceived(std::shared_ptr<const netcode::RawPacket> packet
 	} catch (const netcode::UnpackPacketException& ex) {
 		throw content_error(std::string("Server sent us invalid GameData: ") + ex.what());
 	}
+
+	// preseed the synced RNG until GameID-based NETMSG_RANDSEED arrives
+	// allows proper randomness in LuaParser when executing defs.lua, etc
+	gsRNG.SetSeed(gameData->GetRandomSeed(), true);
 
 	// for demos, ReadDataFromDemo precedes UpdateClientNet -> GameDataReceived
 	// this means gameSetup contains data from the original game but we need the

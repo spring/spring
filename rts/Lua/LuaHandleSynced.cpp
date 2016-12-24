@@ -1165,7 +1165,6 @@ int CSyncedLuaHandle::SyncedRandom(lua_State* L)
 	return 0;
 }
 
-
 int CSyncedLuaHandle::SyncedRandomSeed(lua_State* L)
 {
 	gsRNG.SetSeed(luaL_checkint(L, -1), false);
@@ -1211,7 +1210,6 @@ int CSyncedLuaHandle::SyncedNext(lua_State* L)
 
 	return retCount;
 }
-
 
 int CSyncedLuaHandle::SyncedPairs(lua_State* L)
 {
