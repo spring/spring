@@ -61,6 +61,7 @@ public:
 		radius       = d.radius;
 		alpha        = d.alpha;
 		alphaFalloff = d.alphaFalloff;
+		return *this;
 	}
 
 public:

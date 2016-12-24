@@ -352,7 +352,7 @@ void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amoun
 void CUnitLoader::FlattenGround(const CUnit* unit)
 {
 	const UnitDef* unitDef = unit->unitDef;
-	const MoveDef* moveDef = unit->moveDef;
+	// const MoveDef* moveDef = unit->moveDef;
 
 	if (mapDamage->disabled)
 		return;

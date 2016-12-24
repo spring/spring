@@ -17,9 +17,7 @@ CONFIG(bool, AdvSky).defaultValue(true).headlessValue(false).defaultValue(false)
 ISky* sky = nullptr;
 
 ISky::ISky()
-	: wireframe(false)
-	, dynamicSky(false)
-	, skyColor(mapInfo->atmosphere.skyColor)
+	: skyColor(mapInfo->atmosphere.skyColor)
 	, sunColor(mapInfo->atmosphere.sunColor)
 	, cloudColor(mapInfo->atmosphere.cloudColor)
 	, fogColor(mapInfo->atmosphere.fogColor)
@@ -27,7 +25,9 @@ ISky::ISky()
 	, fogEnd(mapInfo->atmosphere.fogEnd)
 	, cloudDensity(mapInfo->atmosphere.cloudDensity)
 	, skyLight(nullptr)
-// 	, cloudDensity(0.0f)
+	, wireframe(false)
+	, dynamicSky(false)
+
 {
 	skyLight = new ISkyLight();
 }

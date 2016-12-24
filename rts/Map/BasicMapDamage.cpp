@@ -89,7 +89,7 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength, float radius)
 			const float relDist = std::min(1.0f, expDist * invRadius);
 
 			const unsigned int tableIdx = relDist * CRATER_TABLE_SIZE;
-			const unsigned int ttypeIdx = typeMap[(y >> 1) * mapDims.hmapx + x >> 1];
+			// const unsigned int ttypeIdx = typeMap[(y >> 1) * mapDims.hmapx + (x >> 1)];
 
 
 			// prevent formation of spikes from isolated "soft spots"

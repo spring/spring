@@ -163,7 +163,7 @@ BOOST_AUTO_TEST_CASE( testThreadPoolSSE )
 		rngs[n].Seed(n);
 
 	for_mt(0, 1000000, [&](const int i) {
-		const float r = rngs[ThreadPool::GetThreadNum()].RandFloat() * 1000.0f;
+		const float r = rngs[ThreadPool::GetThreadNum()].NextFloat() * 1000.0f;
 		const float s = math::sqrt(r); // test SSE intrinsics (should be 100% reentrant)
 
 		SAFE_BOOST_CHECK(!std::isinf(s));
