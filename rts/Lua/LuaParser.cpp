@@ -456,8 +456,12 @@ int LuaParser::TimeCheck(lua_State* L)
 int LuaParser::RandomSeed(lua_State* L) { return (DummyRandomSeed(L)); }
 int LuaParser::Random(lua_State* L)
 {
+	#ifndef UNITSYNC
 	lua_pushnumber(L, gsRNG.NextFloat());
 	return 1;
+	#else
+	return (DummyRandom(L));
+	#endif
 }
 
 int LuaParser::DummyRandomSeed(lua_State* L) { return 0; }
@@ -471,9 +475,10 @@ int LuaParser::DirList(lua_State* L)
 		luaL_error(L, "invalid call to DirList() after execution");
 
 	const string dir = luaL_checkstring(L, 1);
-	if (!LuaIO::IsSimplePath(dir)) {
+
+	if (!LuaIO::IsSimplePath(dir))
 		return 0;
-	}
+
 	const string pat = luaL_optstring(L, 2, "*");
 	string modes = luaL_optstring(L, 3, currentParser->accessModes.c_str());
 	modes = CFileHandler::AllowModes(modes, currentParser->accessModes);
