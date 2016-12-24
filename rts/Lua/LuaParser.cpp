@@ -75,8 +75,8 @@ LuaParser::~LuaParser()
 
 	for (auto it = tables.begin(); it != tables.end(); ++it) {
 		LuaTable& table = **it;
-		table.parser  = NULL;
-		table.L       = NULL;
+		table.parser  = nullptr;
+		table.L       = nullptr;
 		table.isValid = false;
 		table.refnum  = LUA_NOREF;
 	}
@@ -456,7 +456,8 @@ int LuaParser::TimeCheck(lua_State* L)
 int LuaParser::RandomSeed(lua_State* L) { return (DummyRandomSeed(L)); }
 int LuaParser::Random(lua_State* L)
 {
-	#ifndef UNITSYNC
+	// both US and DS depend on LuaParser via MapParser, etc
+	#if (!defined(UNITSYNC) && !defined(DEDICATED))
 	lua_pushnumber(L, gsRNG.NextFloat());
 	return 1;
 	#else
