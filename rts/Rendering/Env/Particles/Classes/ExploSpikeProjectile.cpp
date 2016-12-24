@@ -52,7 +52,7 @@ CExploSpikeProjectile::CExploSpikeProjectile(
 	alphaDecay(alphaDecay),
 	color(1.0f, 0.8f, 0.5f)
 {
-	lengthGrowth = speed.w * (0.5f + gu->RandFloat() * 0.4f);
+	lengthGrowth = speed.w * (0.5f + guRNG.NextFloat() * 0.4f);
 
 	checkCol  = false;
 	useAirLos = true;
@@ -98,7 +98,7 @@ void CExploSpikeProjectile::Init(const CUnit* owner, const float3& offset)
 {
 	CProjectile::Init(owner, offset);
 
-	lengthGrowth = dir.Length() * (0.5f + gu->RandFloat() * 0.4f);
+	lengthGrowth = dir.Length() * (0.5f + guRNG.NextFloat() * 0.4f);
 	dir /= lengthGrowth;
 
 	SetRadiusAndHeight(length + lengthGrowth * alpha / alphaDecay, 0.0f);

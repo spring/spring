@@ -4,8 +4,7 @@
 #define _GLOBAL_UNSYNCED_H
 
 #include "System/creg/creg_cond.h"
-#include "System/float3.h"
-#include "System/UnsyncedRNG.h"
+#include "System/GlobalRNG.h"
 
 class CPlayer;
 class CGameSetup;
@@ -21,12 +20,6 @@ public:
 
 	CGlobalUnsynced();
 	~CGlobalUnsynced();
-
-	static UnsyncedRNG rng;
-
-	int    RandInt()    { return rng.RandInt(); }    //!< random int [0, (INT_MAX & 0x7FFF))
-	float  RandFloat()  { return rng.RandFloat(); }  //!< random float [0, 1)
-	float3 RandVector() { return rng.RandVector(); } //!< random vector with length = [0, 1)
 
 	void ResetState();
 	void LoadFromSetup(const CGameSetup* setup);
@@ -179,6 +172,8 @@ public:
 	std::string reloadScript;
 };
 
+
 extern CGlobalUnsynced* gu;
+extern CGlobalUnsyncedRNG guRNG;
 
 #endif /* _GLOBAL_UNSYNCED_H */

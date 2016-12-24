@@ -1515,7 +1515,7 @@ static inline bool ExplosionInAirLos(const CExplosionParams& event)
 		const auto p = event.pos;
 		const auto r = event.craterAreaOfEffect;
 		for (int i = r * 0.3f; i >= 0; --i) {
-			if (losHandler->InAirLos(p + (gu->rng.RandVector2D() * r), gu->myAllyTeam))
+			if (losHandler->InAirLos(p + (guRNG.NextVector2D() * r), gu->myAllyTeam))
 				return true;
 		}
 	}
@@ -1541,11 +1541,11 @@ void CDecalsDrawerGL4::AddExplosion(float3 pos, float damage, float radius)
 
 	Decal d;
 	d.pos    = pos;
-	d.rot    = gu->RandFloat() * fastmath::PI2;
+	d.rot    = guRNG.NextFloat() * fastmath::PI2;
 	d.size.x = radius * fastmath::SQRT2;
 	d.size.y = d.size.x;
 	d.alpha  = Clamp(damage / 255.0f, 0.75f, 1.0f);
-	d.SetTexture(IntToString((gu->RandInt() & 3) + 1)); // pick one of 4 scar textures
+	d.SetTexture(IntToString((guRNG.NextInt() & 3) + 1)); // pick one of 4 scar textures
 	d.type  = Decal::EXPLOSION;
 	d.owner = nullptr;
 	d.generation = gs->frameNum;

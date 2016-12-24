@@ -116,7 +116,6 @@ SET(system_files
 	${ENGINE_SRC_ROOT_DIR}/System/LoadSave/DemoRecorder.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/SafeCStrings.c
 	${ENGINE_SRC_ROOT_DIR}/System/SafeVector.cpp
-	${ENGINE_SRC_ROOT_DIR}/System/UnsyncedRNG.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/UriParser.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/Util.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/float4.cpp

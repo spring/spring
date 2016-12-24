@@ -69,8 +69,8 @@ CSmokeProjectile2::CSmokeProjectile2(
 	if ((pos.y - CGround::GetApproximateHeight(pos.x, pos.z, false)) > 10) {
 		useAirLos = true;
 	}
-	glowFalloff = 4.5f + gu->RandFloat() * 6;
-	textureNum = (int)(gu->RandInt() % projectileDrawer->smoketex.size());
+	glowFalloff = 4.5f + guRNG.NextFloat() * 6;
+	textureNum = (int)(guRNG.NextInt() % projectileDrawer->smoketex.size());
 }
 
 

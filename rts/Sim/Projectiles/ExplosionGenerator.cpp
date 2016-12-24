@@ -424,14 +424,14 @@ bool CStdExplosionGenerator::Explosion(
 
 		for (int a = 0; a < smokeDamage * 0.6f; ++a) {
 			const float3 speed(
-				(-0.1f + gu->RandFloat() * 0.2f),
-				( 0.1f + gu->RandFloat() * 0.3f) * smokeDamageISQRT,
-				(-0.1f + gu->RandFloat() * 0.2f)
+				(-0.1f + guRNG.NextFloat() * 0.2f),
+				( 0.1f + guRNG.NextFloat() * 0.3f) * smokeDamageISQRT,
+				(-0.1f + guRNG.NextFloat() * 0.2f)
 			);
 
-			const float time = (40.0f + smokeDamageSQRT * 15.0f) * (0.8f + gu->RandFloat() * 0.7f);
+			const float time = (40.0f + smokeDamageSQRT * 15.0f) * (0.8f + guRNG.NextFloat() * 0.7f);
 
-			float3 dir = gu->RandVector() * smokeDamage;
+			float3 dir = guRNG.NextVector() * smokeDamage;
 			dir.y = math::fabsf(dir.y);
 			const float3 npos = pos + dir;
 
@@ -445,15 +445,15 @@ bool CStdExplosionGenerator::Explosion(
 
 			for (int a = 0; a < numDirt; ++a) {
 				const float3 explSpeed = float3(
-					(0.5f - gu->RandFloat()) * 1.5f,
-					 1.7f + gu->RandFloat()  * 1.6f,
-					(0.5f - gu->RandFloat()) * 1.5f
+					(0.5f - guRNG.NextFloat()) * 1.5f,
+					 1.7f + guRNG.NextFloat()  * 1.6f,
+					(0.5f - guRNG.NextFloat()) * 1.5f
 				);
 
 				const float3 npos(
-					pos.x - (0.5f - gu->RandFloat()) * (radius * 0.6f),
+					pos.x - (0.5f - guRNG.NextFloat()) * (radius * 0.6f),
 					pos.y -  2.0f - damage * 0.2f,
-					pos.z - (0.5f - gu->RandFloat()) * (radius * 0.6f)
+					pos.z - (0.5f - guRNG.NextFloat()) * (radius * 0.6f)
 				);
 
 				new CDirtProjectile(owner, npos, explSpeed  * explSpeedMod, 90.0f + damage * 2.0f, 2.0f + sqrtDmg * 1.5f, 0.4f, 0.999f, color);
@@ -466,14 +466,14 @@ bool CStdExplosionGenerator::Explosion(
 
 			for (int a = 0; a < numDirt; ++a) {
 				const float3 speed(
-					(    0.5f - gu->RandFloat()) * 0.2f,
-					(a * 0.1f + gu->RandFloat()  * 0.8f),
-					(    0.5f - gu->RandFloat()) * 0.2f
+					(    0.5f - guRNG.NextFloat()) * 0.2f,
+					(a * 0.1f + guRNG.NextFloat()  * 0.8f),
+					(    0.5f - guRNG.NextFloat()) * 0.2f
 				);
 				const float3 npos(
-					pos.x - (0.5f - gu->RandFloat()) * (radius * 0.2f),
+					pos.x - (0.5f - guRNG.NextFloat()) * (radius * 0.2f),
 					pos.y -  2.0f - sqrtDmg          *           2.0f,
-					pos.z - (0.5f - gu->RandFloat()) * (radius * 0.2f)
+					pos.z - (0.5f - guRNG.NextFloat()) * (radius * 0.2f)
 				);
 
 				new CDirtProjectile(
@@ -489,18 +489,18 @@ bool CStdExplosionGenerator::Explosion(
 			}
 		}
 		if (damage >= 20.0f && !uwExplosion && !airExplosion) {
-			const int numDebris = (gu->RandInt() % 6) + 3 + int(damage * 0.04f);
+			const int numDebris = (guRNG.NextInt() % 6) + 3 + int(damage * 0.04f);
 			const float explSpeedMod = (0.7f + std::min(30.0f, damage) / 23);
 
 			for (int a = 0; a < numDebris; ++a) {
 				const float3 explSpeed = (altitude < 4.0f)?
-					float3((0.5f - gu->RandFloat()) * 2.0f, 1.8f + gu->RandFloat() * 1.8f, (0.5f - gu->RandFloat()) * 2.0f):
-					float3(gu->RandVector() * 2);
+					float3((0.5f - guRNG.NextFloat()) * 2.0f, 1.8f + guRNG.NextFloat() * 1.8f, (0.5f - guRNG.NextFloat()) * 2.0f):
+					float3(guRNG.NextVector() * 2);
 
 				const float3 npos(
-					pos.x - (0.5f - gu->RandFloat()) * (radius * 1),
+					pos.x - (0.5f - guRNG.NextFloat()) * (radius * 1),
 					pos.y,
-					pos.z - (0.5f - gu->RandFloat()) * (radius * 1)
+					pos.z - (0.5f - guRNG.NextFloat()) * (radius * 1)
 				);
 
 				new CWreckProjectile(owner, npos, explSpeed * explSpeedMod, 90.0f + damage * 2.0f);
@@ -512,12 +512,12 @@ bool CStdExplosionGenerator::Explosion(
 			for (int a = 0; a < numBubbles; ++a) {
 				new CBubbleProjectile(
 					owner,
-					pos + gu->RandVector() * radius * 0.5f,
-					gu->RandVector() * 0.2f + float3(0.0f, 0.2f, 0.0f),
-					damage * 2.0f + gu->RandFloat() * damage,
-					1.0f + gu->RandFloat() * 2.0f,
+					pos + guRNG.NextVector() * radius * 0.5f,
+					guRNG.NextVector() * 0.2f + float3(0.0f, 0.2f, 0.0f),
+					damage * 2.0f + guRNG.NextFloat() * damage,
+					1.0f + guRNG.NextFloat() * 2.0f,
 					0.02f,
-					0.5f + gu->RandFloat() * 0.3f
+					0.5f + guRNG.NextFloat() * 0.3f
 				);
 			}
 		}
@@ -527,12 +527,12 @@ bool CStdExplosionGenerator::Explosion(
 			for (int a = 0; a < numWake; ++a) {
 				new CWakeProjectile(
 					owner,
-					pos + gu->RandVector() * radius * 0.2f,
-					gu->RandVector() * radius * 0.003f,
+					pos + guRNG.NextVector() * radius * 0.2f,
+					guRNG.NextVector() * radius * 0.003f,
 					sqrtDmg * 4.0f,
 					damage * 0.03f,
-					0.3f + gu->RandFloat() * 0.2f,
-					0.8f / (sqrtDmg * 3 + 50 + gu->RandFloat() * 90.0f),
+					0.3f + guRNG.NextFloat() * 0.2f,
+					0.8f / (sqrtDmg * 3 + 50 + guRNG.NextFloat() * 90.0f),
 					1
 				);
 			}
@@ -542,7 +542,7 @@ bool CStdExplosionGenerator::Explosion(
 			const float explSpeedMod = (8 + damage * 3.0f) / (9 + sqrtDmg * 0.7f) * 0.35f;
 
 			for (int a = 0; a < numSpike; ++a) {
-				float3 explSpeed = (gu->RandVector()).SafeNormalize() * explSpeedMod;
+				float3 explSpeed = (guRNG.NextVector()).SafeNormalize() * explSpeedMod;
 
 				if (!airExplosion && !waterExplosion && (explSpeed.y < 0.0f)) {
 					explSpeed.y = -explSpeed.y;
@@ -551,7 +551,7 @@ bool CStdExplosionGenerator::Explosion(
 				new CExploSpikeProjectile(
 					owner,
 					pos + explSpeed,
-					explSpeed * (0.9f + gu->RandFloat() * 0.4f),
+					explSpeed * (0.9f + guRNG.NextFloat() * 0.4f),
 					radius * 0.1f,
 					radius * 0.1f,
 					0.6f,
@@ -637,7 +637,7 @@ void CCustomExplosionGenerator::ExecuteExplosionCode(const char* code, float dam
 				break;
 			}
 			case OP_RAND: {
-				val += gu->RandFloat() * (*(float*) code);
+				val += guRNG.NextFloat() * (*(float*) code);
 				code += 4;
 				break;
 			}

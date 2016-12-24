@@ -15,8 +15,8 @@
 
 #include "Game/GameData.h"
 #include "Sim/Misc/TeamBase.h"
-#include "System/UnsyncedRNG.h"
 #include "System/float3.h"
+#include "System/GlobalRNG.h"
 #include "System/Misc/SpringTime.h"
 #include "System/Threading/SpringThreading.h"
 
@@ -262,7 +262,7 @@ private:
 	std::unique_ptr<CDemoRecorder> demoRecorder;
 	std::unique_ptr<AutohostInterface> hostif;
 
-	UnsyncedRNG rng;
+	CGlobalUnsyncedRNG rng;
 	spring::thread* thread;
 
 	mutable spring::recursive_mutex gameServerMutex;

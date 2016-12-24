@@ -605,8 +605,8 @@ bool CFeature::Update()
 
 	if (smokeTime != 0) {
 		if (!((gs->frameNum + id) & 3) && projectileHandler->GetParticleSaturation() < 0.7f) {
-			new CSmokeProjectile(NULL, midPos + gu->RandVector() * radius * 0.3f,
-				gu->RandVector() * 0.3f + UpVector, smokeTime / 6 + 20, 6, 0.4f, 0.5f);
+			new CSmokeProjectile(NULL, midPos + guRNG.NextVector() * radius * 0.3f,
+				guRNG.NextVector() * 0.3f + UpVector, smokeTime / 6 + 20, 6, 0.4f, 0.5f);
 		}
 	}
 	if (fireTime == 1)
@@ -668,10 +668,10 @@ void CFeature::EmitGeoSmoke()
 	if (u == NULL || !u->unitDef->needGeo) {
 		const float partSat = !(gs->frameNum & 3) ? 1.0f : 0.7f;
 		if (projectileHandler->GetParticleSaturation() < partSat) {
-			const float3 pPos = gu->RandVector() * 10.0f + float3(pos.x, pos.y - 10.0f, pos.z);
-			const float3 pSpeed = (gu->RandVector() * 0.5f) + (UpVector * 2.0f);
+			const float3 pPos = guRNG.NextVector() * 10.0f + float3(pos.x, pos.y - 10.0f, pos.z);
+			const float3 pSpeed = (guRNG.NextVector() * 0.5f) + (UpVector * 2.0f);
 
-			new CGeoThermSmokeProjectile(pPos, pSpeed, int(50 + gu->RandFloat() * 7), this);
+			new CGeoThermSmokeProjectile(pPos, pSpeed, int(50 + guRNG.NextFloat() * 7), this);
 		}
 	}
 }

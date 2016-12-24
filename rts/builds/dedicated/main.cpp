@@ -11,6 +11,10 @@
 #include "Game/GameData.h"
 #include "Game/GameVersion.h"
 #include "Net/GameServer.h"
+#include "System/Exceptions.h"
+#include "System/GlobalConfig.h"
+#include "System/GlobalRNG.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/FileSystem/DataDirLocater.h"
 #include "System/FileSystem/FileSystemInitializer.h"
 #include "System/FileSystem/ArchiveScanner.h"
@@ -21,14 +25,10 @@
 #include "System/Log/ILog.h"
 #include "System/Log/DefaultFilter.h"
 #include "System/LogOutput.h"
+#include "System/Misc/SpringTime.h"
 #include "System/Platform/CrashHandler.h"
 #include "System/Platform/errorhandler.h"
 #include "System/Platform/Threading.h"
-#include "System/Config/ConfigHandler.h"
-#include "System/Misc/SpringTime.h"
-#include "System/GlobalConfig.h"
-#include "System/Exceptions.h"
-#include "System/UnsyncedRNG.h"
 
 #include <gflags/gflags.h>
 
@@ -162,13 +162,13 @@ int main(int argc, char* argv[])
 		}
 
 		// Create the server, it will run in a separate thread
-		UnsyncedRNG rng;
+		CGlobalUnsyncedRNG rng;
 
 		const unsigned sleepTime = FLAGS_sleeptime;
 		const unsigned randSeed = time(NULL) % ((spring_gettime().toNanoSecsi() + 1) * 9007);
 
 		rng.Seed(randSeed);
-		dsGameData->SetRandomSeed(rng.RandInt());
+		dsGameData->SetRandomSeed(rng.NextInt());
 
 		//  Use script provided hashes if they exist
 		if (dsGameSetup->mapHash != 0) {

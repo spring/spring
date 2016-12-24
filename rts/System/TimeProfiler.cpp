@@ -5,9 +5,10 @@
 #include <limits.h>
 #include <cstring>
 
+#include "System/GlobalRNG.h"
 #include "System/Log/ILog.h"
 #include "System/Threading/SpringThreading.h"
-#include "System/UnsyncedRNG.h"
+
 #ifdef THREADPOOL
 	#include "System/ThreadPool.h"
 #endif
@@ -275,11 +276,11 @@ void CTimeProfiler::AddTime(const std::string& name, const spring_time time, con
 		p.maxLag  = time.toMilliSecsf();
 		p.percent = 0;
 		memset(p.frames, 0, TimeRecord::frames_size * sizeof(unsigned));
-		static UnsyncedRNG rand;
+		static CGlobalUnsyncedRNG rand;
 		rand.Seed(spring_tomsecs(spring_gettime()));
-		p.color.x = rand.RandFloat();
-		p.color.y = rand.RandFloat();
-		p.color.z = rand.RandFloat();
+		p.color.x = rand.NextFloat();
+		p.color.y = rand.NextFloat();
+		p.color.z = rand.NextFloat();
 		p.showGraph = showGraph;
 	}
 }

@@ -207,7 +207,7 @@ void CPreGame::StartServer(const std::string& setupscript)
 
 	startGameSetup->Init(setupscript);
 
-	startGameData->SetRandomSeed(static_cast<unsigned>(gu->RandInt()));
+	startGameData->SetRandomSeed(static_cast<unsigned>(guRNG.NextInt()));
 
 	if (startGameSetup->mapName.empty()) {
 		throw content_error("No map selected in startscript");

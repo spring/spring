@@ -3,8 +3,8 @@
 #include "GameSetup.h"
 #include "Map/MapParser.h"
 #include "Sim/Misc/GlobalConstants.h"
+#include "System/GlobalRNG.h"
 #include "System/TdfParser.h"
-#include "System/UnsyncedRNG.h"
 #include "System/Exceptions.h"
 #include "System/SpringFormat.h"
 #include "System/Util.h"
@@ -279,7 +279,7 @@ void CGameSetup::LoadStartPositions(bool withoutMap)
 
 	if (startPosType == StartPos_Random) {
 		// Server syncs these later, so we can use unsynced rng
-		UnsyncedRNG rng;
+		CGlobalUnsyncedRNG rng;
 		rng.Seed(HsiehHash(setupText.c_str(), setupText.length(), 1234567));
 		std::random_shuffle(teamStartNum.begin(), teamStartNum.end(), rng);
 	}

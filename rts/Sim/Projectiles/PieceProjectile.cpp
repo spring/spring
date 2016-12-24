@@ -178,7 +178,7 @@ float3 CPieceProjectile::RandomVertexPos() const
 {
 	if (omp == nullptr)
 		return ZeroVector;
-	#define rf gu->RandFloat()
+	#define rf guRNG.NextFloat()
 	return mix(omp->mins, omp->maxs, float3(rf,rf,rf));
 }
 
@@ -217,7 +217,7 @@ void CPieceProjectile::Update()
 		m.Translate(RandomVertexPos());
 
 		fireTrailPoints[0].pos  = m.GetPos();
-		fireTrailPoints[0].size = 1 + gu->RandFloat();
+		fireTrailPoints[0].size = 1 + guRNG.NextFloat();
 	}
 
 	if (explFlags & PF_Smoke) {

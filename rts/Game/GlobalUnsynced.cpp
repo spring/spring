@@ -10,8 +10,6 @@
 #include "Game/Players/Player.h"
 #include "Game/Players/PlayerHandler.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "Sim/Misc/GlobalConstants.h" // for RANDINT_MAX
-#include "Sim/Units/Unit.h" // required by CREG
 #include "System/Config/ConfigHandler.h"
 #include "System/Exceptions.h"
 #include "System/Util.h"
@@ -19,7 +17,7 @@
 #include "System/Misc/SpringTime.h"
 #include "System/Sync/SyncTracer.h"
 
-#include <time.h>
+#include <ctime>
 
 
 /**
@@ -28,9 +26,9 @@
  * Global instance of CGlobalUnsynced
  */
 CGlobalUnsynced* gu;
+CGlobalUnsyncedRNG guRNG;
 
 const float CGlobalUnsynced::reconnectSimDrawBalance = 0.15f;
-UnsyncedRNG CGlobalUnsynced::rng;
 
 CR_BIND(CGlobalUnsynced, )
 
@@ -58,16 +56,16 @@ CR_REG_METADATA(CGlobalUnsynced, (
 
 CGlobalUnsynced::CGlobalUnsynced()
 {
-	rng.Seed(time(NULL) % ((spring_gettime().toNanoSecsi() + 1) * 9007));
+	guRNG.Seed(time(nullptr) % ((spring_gettime().toNanoSecsi() + 1) * 9007));
 
-	assert(playerHandler == NULL);
+	assert(playerHandler == nullptr);
 	ResetState();
 }
 
 CGlobalUnsynced::~CGlobalUnsynced()
 {
 	SafeDelete(playerHandler);
-	assert(playerHandler == NULL);
+	assert(playerHandler == nullptr);
 }
 
 
@@ -98,7 +96,7 @@ void CGlobalUnsynced::ResetState()
 	globalReload = false;
 	reloadScript = "";
 
-	if (playerHandler == NULL) {
+	if (playerHandler == nullptr) {
 		playerHandler = new CPlayerHandler();
 	} else {
 		playerHandler->ResetState();

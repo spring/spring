@@ -21,11 +21,11 @@
 #include "Rendering/Textures/Bitmap.h"
 #include "Sim/Misc/Wind.h"
 #include "System/EventHandler.h"
+#include "System/GlobalRNG.h"
 #include "System/myMath.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Color.h"
 #include "System/Exceptions.h"
-#include "System/UnsyncedRNG.h"
 #include "System/Util.h"
 #include "System/ThreadPool.h"
 #include "System/TimeProfiler.h"
@@ -43,7 +43,7 @@ static const int   blockMapSize    = grassSquareSize * grassBlockSize;
 static const int   gSSsq = SQUARE_SIZE * grassSquareSize;
 static const int   bMSsq = SQUARE_SIZE * blockMapSize;
 
-static UnsyncedRNG rng;
+static CGlobalUnsyncedRNG rng;
 
 
 
@@ -118,7 +118,7 @@ private:
 
 				rng.Seed(y2 * mapDims.mapx / grassSquareSize + x2);
 				const float dist  = GetCamDistOfGrassBlock(x2, y2, false);
-				const float rdist = 1.0f + rng.RandFloat() * 0.5f;
+				const float rdist = 1.0f + rng.NextFloat() * 0.5f;
 
 				//TODO instead of adding grass turfs depending on their distance to the camera,
 				//     there should be a fixed sized pool for mesh & billboard turfs
@@ -382,12 +382,12 @@ struct STurfParams {
 };
 
 
-static STurfParams GetTurfParams(UnsyncedRNG& rng, const int x, const int y)
+static STurfParams GetTurfParams(CGlobalUnsyncedRNG& rng, const int x, const int y)
 {
 	STurfParams result;
-	result.x = (x + rng.RandFloat()) * gSSsq;
-	result.y = (y + rng.RandFloat()) * gSSsq;
-	result.rotation = rng.RandFloat() * 360.f;
+	result.x = (x + rng.NextFloat()) * gSSsq;
+	result.y = (y + rng.NextFloat()) * gSSsq;
+	result.rotation = rng.NextFloat() * 360.f;
 	return result;
 }
 
@@ -398,7 +398,7 @@ void CGrassDrawer::DrawNear(const std::vector<InviewNearGrass>& inviewGrass)
 	for (const InviewNearGrass& g: inviewGrass) {
 		rng.Seed(g.y * mapDims.mapx / grassSquareSize + g.x);
 //		const float distSq = GetCamDistOfGrassBlock(g.x, g.y, true);
-		const float rdist  = 1.0f + rng.RandFloat() * 0.5f;
+		const float rdist  = 1.0f + rng.NextFloat() * 0.5f;
 		const float alpha  = linearstep(maxDetailedDist, maxDetailedDist + 128.f * rdist, g.dist);
 
 		for (int a = 0; a < numTurfs; a++) {
@@ -419,9 +419,9 @@ void CGrassDrawer::DrawNear(const std::vector<InviewNearGrass>& inviewGrass)
 
 void CGrassDrawer::DrawBillboard(const int x, const int y, const float dist, VA_TYPE_TN* va_tn)
 {
-	UnsyncedRNG rng; // need our own, cause this function may run threaded
+	CGlobalUnsyncedRNG rng; // need our own, cause this function may run threaded
 	rng.Seed(y * mapDims.mapx / grassSquareSize + x);
-	const float rdist  = 1.0f + rng.RandFloat() * 0.5f;
+	const float rdist  = 1.0f + rng.NextFloat() * 0.5f;
 	float alpha = 1.0f - linearstep(maxGrassDist,  maxGrassDist + 127.f, dist + 128.f);
 	alpha = std::min(alpha, linearstep(maxDetailedDist, maxDetailedDist + 128.f * rdist, dist));
 
@@ -802,18 +802,18 @@ void CGrassDrawer::CreateGrassDispList(int listNum)
 
 	for (int a = 0; a < strawPerTurf; ++a) {
 		// draw a single blade
-		const float lngRnd = rng.RandFloat();
+		const float lngRnd = rng.NextFloat();
 		const float length = mapInfo->grass.bladeHeight * (1.0f + lngRnd);
-		const float maxAng = mapInfo->grass.bladeAngle * std::max(rng.RandFloat(), 1.f - smoothstep(0.f,1.f,lngRnd));
+		const float maxAng = mapInfo->grass.bladeAngle * std::max(rng.NextFloat(), 1.f - smoothstep(0.f,1.f,lngRnd));
 
-		float3 sideVect(rng.RandFloat() - 0.5f, 0.0f, rng.RandFloat() - 0.5f);
+		float3 sideVect(rng.NextFloat() - 0.5f, 0.0f, rng.NextFloat() - 0.5f);
 		sideVect.ANormalize();
 		float3 bendVect = sideVect.cross(UpVector); // direction to bend into
 		sideVect *= mapInfo->grass.bladeWidth * (-0.15f * lngRnd + 1.0f);
-		const float3 basePos = rng.RandVector2D() * (turfSize - (bendVect * std::sin(maxAng) * length).Length2D());
+		const float3 basePos = rng.NextVector2D() * (turfSize - (bendVect * std::sin(maxAng) * length).Length2D());
 
 		// select one of the 16 color shadings
-		const float xtexCoord = (rng.RandInt() % 16) / 16.0f;
+		const float xtexCoord = (rng.NextInt() % 16) / 16.0f;
 		const int numSections = 2 + int(maxAng * 1.2f + length * 0.2f);
 
 		float3 normalBend = -bendVect;
@@ -850,7 +850,7 @@ void CGrassDrawer::CreateGrassDispList(int listNum)
 void CGrassDrawer::CreateGrassBladeTex(unsigned char* buf)
 {
 	float3 redish = float3(0.95f, 0.70f, 0.4f);
-	float3 col = mix(mapInfo->grass.color, redish, 0.1f * rng.RandFloat());
+	float3 col = mix(mapInfo->grass.color, redish, 0.1f * rng.NextFloat());
 	col.x = Clamp(col.x, 0.f, 1.f);
 	col.y = Clamp(col.y, 0.f, 1.f);
 	col.z = Clamp(col.z, 0.f, 1.f);

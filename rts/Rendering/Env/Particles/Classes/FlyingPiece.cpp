@@ -37,19 +37,19 @@ FlyingPiece::FlyingPiece(
 
 	InitCommon(pos, speed, _pieceParams.x, _renderParams.y, _renderParams.x);
 
-	const S3DModelPiecePart& shatterPiecePart = piece->shatterParts[gu->RandInt() % piece->shatterParts.size()];
+	const S3DModelPiecePart& shatterPiecePart = piece->shatterParts[guRNG.NextInt() % piece->shatterParts.size()];
 	const auto& shatterPieceData = shatterPiecePart.renderData;
 
 	splitterParts.reserve(shatterPieceData.size());
 	for (const auto& cp: shatterPieceData) {
-		if (gu->RandFloat() > _pieceParams.x)
+		if (guRNG.NextFloat() > _pieceParams.x)
 			continue;
 
-		const float3 flyDir = (cp.dir + (gu->RandVector() * 0.3f)).ANormalize();
+		const float3 flyDir = (cp.dir + (guRNG.NextVector() * 0.3f)).ANormalize();
 
 		splitterParts.emplace_back();
-		splitterParts.back().speed                = speed + flyDir * mix<float>(1.f, EXPLOSION_SPEED, gu->RandFloat());
-		splitterParts.back().rotationAxisAndSpeed = float4(gu->RandVector().ANormalize(), gu->RandFloat() * 0.1f);
+		splitterParts.back().speed                = speed + flyDir * mix<float>(1.f, EXPLOSION_SPEED, guRNG.NextFloat());
+		splitterParts.back().rotationAxisAndSpeed = float4(guRNG.NextVector().ANormalize(), guRNG.NextFloat() * 0.1f);
 		splitterParts.back().indexCount           = cp.indexCount;
 		splitterParts.back().vboOffset            = cp.vboOffset;
 	}

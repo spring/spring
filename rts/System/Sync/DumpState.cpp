@@ -61,7 +61,7 @@ void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod)
 
 		std::string name = (gameServer != NULL)? "Server": "Client";
 		name += "GameState-";
-		name += IntToString(gu->RandInt());
+		name += IntToString(guRNG.NextInt());
 		name += "-[";
 		name += IntToString(gMinFrameNum);
 		name += "-";

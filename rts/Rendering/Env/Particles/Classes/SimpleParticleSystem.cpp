@@ -172,14 +172,14 @@ void CSimpleParticleSystem::Init(const CUnit* owner, const float3& offset)
 
 	particles.resize(numParticles);
 	for (auto& p: particles) {
-		float az = gu->RandFloat() * 2 * PI;
-		float ay = (emitRot + (emitRotSpread * gu->RandFloat())) * (PI / 180.0);
+		float az = guRNG.NextFloat() * 2 * PI;
+		float ay = (emitRot + (emitRotSpread * guRNG.NextFloat())) * (PI / 180.0);
 
 		p.pos = offset;
-		p.speed = ((up * emitMul.y) * fastmath::cos(ay) - ((right * emitMul.x) * fastmath::cos(az) - (forward * emitMul.z) * fastmath::sin(az)) * fastmath::sin(ay)) * (particleSpeed + (gu->RandFloat() * particleSpeedSpread));
+		p.speed = ((up * emitMul.y) * fastmath::cos(ay) - ((right * emitMul.x) * fastmath::cos(az) - (forward * emitMul.z) * fastmath::sin(az)) * fastmath::sin(ay)) * (particleSpeed + (guRNG.NextFloat() * particleSpeedSpread));
 		p.life = 0;
-		p.decayrate = 1.0f / (particleLife + (gu->RandFloat() * particleLifeSpread));
-		p.size = particleSize + gu->RandFloat()*particleSizeSpread;
+		p.decayrate = 1.0f / (particleLife + (guRNG.NextFloat() * particleLifeSpread));
+		p.size = particleSize + guRNG.NextFloat()*particleSizeSpread;
 	}
 
 	drawRadius = (particleSpeed + particleSpeedSpread) * (particleLife * particleLifeSpread);
@@ -242,16 +242,16 @@ void CSphereParticleSpawner::Init(const CUnit* owner, const float3& offset)
 	}
 
 	for (int i = 0; i < numParticles; i++) {
-		const float az = gu->RandFloat() * 2 * PI;
-		const float ay = (emitRot + emitRotSpread*gu->RandFloat()) * (PI / 180.0);
+		const float az = guRNG.NextFloat() * 2 * PI;
+		const float ay = (emitRot + emitRotSpread*guRNG.NextFloat()) * (PI / 180.0);
 
-		const float3 pspeed = ((up * emitMul.y) * std::cos(ay) - ((right * emitMul.x) * std::cos(az) - (forward * emitMul.z) * std::sin(az)) * std::sin(ay)) * (particleSpeed + (gu->RandFloat() * particleSpeedSpread));
+		const float3 pspeed = ((up * emitMul.y) * std::cos(ay) - ((right * emitMul.x) * std::cos(az) - (forward * emitMul.z) * std::sin(az)) * std::sin(ay)) * (particleSpeed + (guRNG.NextFloat() * particleSpeedSpread));
 
 		CGenericParticleProjectile* particle = new CGenericParticleProjectile(owner, pos + offset, pspeed);
 
-		particle->decayrate = 1.0f / (particleLife + gu->RandFloat() * particleLifeSpread);
+		particle->decayrate = 1.0f / (particleLife + guRNG.NextFloat() * particleLifeSpread);
 		particle->life = 0;
-		particle->size = particleSize + gu->RandFloat() * particleSizeSpread;
+		particle->size = particleSize + guRNG.NextFloat() * particleSizeSpread;
 
 		particle->texture = texture;
 		particle->colorMap = colorMap;

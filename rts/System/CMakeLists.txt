@@ -59,7 +59,6 @@ MakeGlobalVar(sources_engine_System_common
 		"${CMAKE_CURRENT_SOURCE_DIR}/ThreadPool.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/TimeProfiler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/TimeUtil.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/UnsyncedRNG.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/UriParser.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Util.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/type2.cpp"

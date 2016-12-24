@@ -962,7 +962,7 @@ bool CHoverAirMoveType::Update()
 			}
 
 			// Spawn unsynced smoke projectile
-			new CSmokeProjectile(owner, owner->midPos, gu->RandVector() * 0.08f, 100 + gu->RandFloat() * 50, 5, 0.2f, 0.4f);
+			new CSmokeProjectile(owner, owner->midPos, guRNG.NextVector() * 0.08f, 100 + guRNG.NextFloat() * 50, 5, 0.2f, 0.4f);
 		} break;
 	}
 

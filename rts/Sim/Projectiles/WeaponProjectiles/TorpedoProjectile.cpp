@@ -142,13 +142,13 @@ void CTorpedoProjectile::Update()
 		if (nextBubble == 0) {
 			nextBubble = 1 + (int) (gsRNG.NextFloat() * 1.5f);
 
-			const float3 pspeed = (gu->RandVector() * 0.1f) + float3(0.0f, 0.2f, 0.0f);
+			const float3 pspeed = (guRNG.NextVector() * 0.1f) + float3(0.0f, 0.2f, 0.0f);
 
 			// Spawn unsynced bubble projectile
 			new CBubbleProjectile(
 				owner(),
-				pos + gu->RandVector(), pspeed, 40 + gu->RandFloat() * GAME_SPEED,
-				1 + gu->RandFloat() * 2, 0.01f, 0.3f + gu->RandFloat() * 0.3f
+				pos + guRNG.NextVector(), pspeed, 40 + guRNG.NextFloat() * GAME_SPEED,
+				1 + guRNG.NextFloat() * 2, 0.01f, 0.3f + guRNG.NextFloat() * 0.3f
 			);
 		}
 	}

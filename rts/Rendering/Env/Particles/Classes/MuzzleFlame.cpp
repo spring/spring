@@ -35,7 +35,7 @@ CMuzzleFlame::CMuzzleFlame(const float3& pos, const float3& speed, const float3&
 	randSmokeDir.resize(numSmoke);
 
 	for (int a = 0; a < numSmoke; ++a) {
-		randSmokeDir[a] = dir + gu->RandFloat() * 0.4f;
+		randSmokeDir[a] = dir + guRNG.NextFloat() * 0.4f;
 	}
 }
 

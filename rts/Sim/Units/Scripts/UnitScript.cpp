@@ -534,7 +534,7 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 	const float3 pos = unit->GetObjectSpacePos(relPos);
 	const float3 dir = unit->GetObjectSpaceVec(relDir);
 
-	float alpha = 0.3f + gu->RandFloat() * 0.2f;
+	float alpha = 0.3f + guRNG.NextFloat() * 0.2f;
 	float alphaFalloff = 0.004f;
 	float fadeupTime = 4;
 
@@ -544,7 +544,7 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 	// hovercraft need special care
 	if (md != NULL && md->speedModClass == MoveDef::Hover) {
 		fadeupTime = 8.0f;
-		alpha = 0.15f + gu->RandFloat() * 0.2f;
+		alpha = 0.15f + guRNG.NextFloat() * 0.2f;
 		alphaFalloff = 0.008f;
 	}
 
@@ -553,10 +553,10 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 		case SFX_REVERSE_WAKE_2: {  //reverse wake
 			new CWakeProjectile(
 				unit,
-				pos + gu->RandVector() * 2.0f,
+				pos + guRNG.NextVector() * 2.0f,
 				dir * 0.4f,
-				6.0f + gu->RandFloat() * 4.0f,
-				0.15f + gu->RandFloat() * 0.3f,
+				6.0f + guRNG.NextFloat() * 4.0f,
+				0.15f + guRNG.NextFloat() * 0.3f,
 				alpha, alphaFalloff, fadeupTime
 			);
 			break;
@@ -566,35 +566,35 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 		case SFX_WAKE: {  //regular ship wake
 			new CWakeProjectile(
 				unit,
-				pos + gu->RandVector() * 2.0f,
+				pos + guRNG.NextVector() * 2.0f,
 				dir * 0.4f,
-				6.0f + gu->RandFloat() * 4.0f,
-				0.15f + gu->RandFloat() * 0.3f,
+				6.0f + guRNG.NextFloat() * 4.0f,
+				0.15f + guRNG.NextFloat() * 0.3f,
 				alpha, alphaFalloff, fadeupTime
 			);
 			break;
 		}
 
 		case SFX_BUBBLE: {  //submarine bubble. does not provide direction through piece vertices..
-			float3 pspeed = gu->RandVector() * 0.1f;
+			float3 pspeed = guRNG.NextVector() * 0.1f;
 				pspeed.y += 0.2f;
 
 			new CBubbleProjectile(
 				unit,
-				pos + gu->RandVector() * 2.0f,
+				pos + guRNG.NextVector() * 2.0f,
 				pspeed,
-				40.0f + gu->RandFloat() * GAME_SPEED,
-				1.0f + gu->RandFloat() * 2.0f,
+				40.0f + guRNG.NextFloat() * GAME_SPEED,
+				1.0f + guRNG.NextFloat() * 2.0f,
 				0.01f,
-				0.3f + gu->RandFloat() * 0.3f
+				0.3f + guRNG.NextFloat() * 0.3f
 			);
 		} break;
 
 		case SFX_WHITE_SMOKE:  //damaged unit smoke
-			new CSmokeProjectile(unit, pos, gu->RandVector() * 0.5f + UpVector * 1.1f, 60, 4, 0.5f, 0.5f);
+			new CSmokeProjectile(unit, pos, guRNG.NextVector() * 0.5f + UpVector * 1.1f, 60, 4, 0.5f, 0.5f);
 			break;
 		case SFX_BLACK_SMOKE:  //damaged unit smoke
-			new CSmokeProjectile(unit, pos, gu->RandVector() * 0.5f + UpVector * 1.1f, 60, 4, 0.5f, 0.6f);
+			new CSmokeProjectile(unit, pos, guRNG.NextVector() * 0.5f + UpVector * 1.1f, 60, 4, 0.5f, 0.6f);
 			break;
 		case SFX_VTOL: {
 			const float3 speed =
@@ -607,8 +607,8 @@ void CUnitScript::EmitSfx(int sfxType, int piece)
 				unit,
 				pos,
 				speed,
-				10 + gu->RandFloat() * 5,
-				3 + gu->RandFloat() * 2
+				10 + guRNG.NextFloat() * 5,
+				3 + guRNG.NextFloat() * 2
 			);
 			hc->size = 3;
 			break;

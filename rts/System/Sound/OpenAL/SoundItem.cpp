@@ -8,11 +8,11 @@
 #include <cfloat>
 
 #include "SoundBuffer.h"
-#include "System/UnsyncedRNG.h"
+#include "System/GlobalRNG.h"
 
 namespace
 {
-	UnsyncedRNG randnum; // no need for strong randomness here, so default seed is ok
+	CGlobalUnsyncedRNG randnum; // no need for strong randomness here, so default seed is ok
 
 	template <typename T>
 	inline bool MapEntryValExtract(const std::map<std::string, std::string>& map, const std::string& key, T& t)

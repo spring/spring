@@ -880,7 +880,7 @@ void CProjectileDrawer::GenerateNoiseTex(unsigned int tex)
 	std::array<unsigned char, 4 * perlinBlendTexSize * perlinBlendTexSize> mem;
 
 	for (int a = 0; a < perlinBlendTexSize * perlinBlendTexSize; ++a) {
-		const unsigned char rnd = int(std::max(0.0f, gu->RandFloat() * 555.0f - 300.0f));
+		const unsigned char rnd = int(std::max(0.0f, guRNG.NextFloat() * 555.0f - 300.0f));
 
 		mem[a * 4 + 0] = rnd;
 		mem[a * 4 + 1] = rnd;

@@ -409,7 +409,7 @@ static string SelectPicture(const std::string& dir, const std::string& prefix)
 	if (prefPics.empty())
 		return "";
 
-	return prefPics[gu->RandInt() % prefPics.size()];
+	return prefPics[guRNG.NextInt() % prefPics.size()];
 }
 
 

@@ -171,7 +171,7 @@ void S3DModelPiece::CreateShatterPiecesVariation(const int num)
 	// initialize splitter parts
 	shatterPartsBuf.resize(S3DModelPiecePart::SHATTER_MAX_PARTS);
 	for (auto& cp: shatterPartsBuf) {
-		cp.dir = gu->RandVector().ANormalize();
+		cp.dir = guRNG.NextVector().ANormalize();
 	}
 
 	// helper

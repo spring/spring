@@ -954,7 +954,7 @@ void CBumpWater::UpdateDynWaves(const bool initialize)
 	if (modFrameNum == 0) {
 		for (unsigned char i = 0; i < ntiles; ++i) {
 			do {
-				tileOffsets[i] = (unsigned char)(gu->RandFloat()*ntiles);
+				tileOffsets[i] = (unsigned char)(guRNG.NextFloat()*ntiles);
 			} while (tileOffsets[i] == i);
 		}
 	}

@@ -95,7 +95,7 @@ CProjectileHandler::CProjectileHandler()
 	for (int i = 0; i < unsyncedProjectileIDs.size(); i++) {
 		freeUnsyncedIDs.push_back(i);
 	}
-	std::random_shuffle(freeUnsyncedIDs.begin(), freeUnsyncedIDs.end(), gu->rng);
+	std::random_shuffle(freeUnsyncedIDs.begin(), freeUnsyncedIDs.end(), guRNG);
 
 	for (int modelType = 0; modelType < MODELTYPE_OTHER; ++modelType) {
 		flyingPieces[modelType].reserve(1000);
@@ -363,7 +363,7 @@ void CProjectileHandler::AddProjectile(CProjectile* p)
 		if (p->synced) {
 			std::random_shuffle(freeIDs->begin(), freeIDs->end(), gsRNG);
 		} else{
-			std::random_shuffle(freeIDs->begin(), freeIDs->end(), gu->rng);
+			std::random_shuffle(freeIDs->begin(), freeIDs->end(), guRNG);
 		}
 		proIDs->resize(newSize, nullptr);
 	}
@@ -619,7 +619,7 @@ void CProjectileHandler::AddNanoParticle(
 	const float l = fastmath::apxsqrt2(dif.SqLength());
 
 	dif /= l;
-	dif += gu->RandVector() * 0.15f;
+	dif += guRNG.NextVector() * 0.15f;
 
 	const float3 udColor = unitDef->nanoColor;
 	const uint8_t* tColor = (teamHandler->Team(teamNum))->color;
@@ -652,7 +652,7 @@ void CProjectileHandler::AddNanoParticle(
 	const float l = fastmath::apxsqrt2(dif.SqLength());
 	dif /= l;
 
-	float3 error = gu->RandVector() * (radius / l);
+	float3 error = guRNG.NextVector() * (radius / l);
 
 	const float3 udColor = unitDef->nanoColor;
 	const uint8_t* tColor = (teamHandler->Team(teamNum))->color;
@@ -694,7 +694,7 @@ float CProjectileHandler::GetParticleSaturation(const bool withRandomization) co
 	// use the random mult to weaken the max limit a little
 	// so the chance is better spread when being close to the limit
 	// i.e. when there are rockets that spam CEGs this gives smaller CEGs still a chance
-	return (GetCurrentParticles() / float(maxParticles)) * (1.f + int(withRandomization) * 0.3f * gu->RandFloat());
+	return (GetCurrentParticles() / float(maxParticles)) * (1.f + int(withRandomization) * 0.3f * guRNG.NextFloat());
 }
 
 int CProjectileHandler::GetCurrentParticles() const
