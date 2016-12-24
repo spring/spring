@@ -209,9 +209,13 @@ int LuaArchive::GetNameFromRapidTag(lua_State* L)
 {
 	const std::string rapidName = luaL_checksstring(L, 1);
 	std::string archiveName = GetRapidPackageFromTag(rapidName);
-	archiveName = archiveScanner->NameFromArchive(archiveName);
-	lua_pushsstring(L, archiveName);
-	return 1;
+	if (archiveName != rapidName) {
+		archiveName = archiveScanner->NameFromArchive(archiveName);
+		lua_pushsstring(L, archiveName);
+		return 1;
+	} else {
+		return 0;
+	}
 }
 
 /******************************************************************************/
