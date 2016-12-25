@@ -32,38 +32,40 @@ LuaParser* LuaParser::currentParser = NULL;
 //  LuaParser
 //
 
-LuaParser::LuaParser(const string& _fileName, const string& _fileModes, const string& _accessModes, bool synced)
+LuaParser::LuaParser(const string& _fileName, const string& _fileModes, const string& _accessModes, const boolean& synced)
 : fileName(_fileName),
   fileModes(_fileModes),
-  textChunk(""),
   accessModes(_accessModes),
-  valid(false),
+
   initDepth(0),
   rootRef(LUA_NOREF),
   currentRef(LUA_NOREF),
+
+  valid(false),
   lowerKeys(true),
   lowerCppKeys(true)
 {
 	if ((L = LUA_OPEN()) != nullptr) {
-		SetupEnv(synced);
+		SetupEnv(synced.b);
 	}
 }
 
-
-LuaParser::LuaParser(const string& _textChunk, const string& _accessModes, bool synced)
+LuaParser::LuaParser(const string& _textChunk, const string& _accessModes, const boolean& synced)
 : fileName(""),
   fileModes(""),
   textChunk(_textChunk),
   accessModes(_accessModes),
-  valid(false),
+
   initDepth(0),
   rootRef(LUA_NOREF),
   currentRef(LUA_NOREF),
+
+  valid(false),
   lowerKeys(true),
   lowerCppKeys(true)
 {
 	if ((L = LUA_OPEN()) != nullptr) {
-		SetupEnv(synced);
+		SetupEnv(synced.b);
 	}
 }
 
@@ -157,6 +159,7 @@ bool LuaParser::Execute()
 
 	string code;
 	string codeLabel;
+
 	if (!textChunk.empty()) {
 		code = textChunk;
 		codeLabel = "text chunk";
@@ -176,12 +179,11 @@ bool LuaParser::Execute()
 		return false;
 	}
 
-	int error;
-	error = luaL_loadbuffer(L, code.c_str(), code.size(), codeLabel.c_str());
+	int error = luaL_loadbuffer(L, code.c_str(), code.size(), codeLabel.c_str());
+
 	if (error != 0) {
 		errorLog = lua_tostring(L, -1);
-		LOG_L(L_ERROR, "%i, %s, %s",
-		                error, codeLabel.c_str(), errorLog.c_str());
+		LOG_L(L_ERROR, "%i, %s, %s", error, codeLabel.c_str(), errorLog.c_str());
 		LUA_CLOSE(&L);
 		return false;
 	}

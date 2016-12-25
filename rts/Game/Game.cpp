@@ -434,7 +434,7 @@ void CGame::LoadDefs()
 		ScopedOnceTimer timer("Game::LoadDefs (GameData)");
 		loadscreen->SetLoadMessage("Loading GameData Definitions");
 
-		defsParser = new LuaParser("gamedata/defs.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP, true);
+		defsParser = new LuaParser("gamedata/defs.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP, {true});
 		// customize the defs environment
 		defsParser->GetTable("Spring");
 		defsParser->AddFunc("GetModOptions", LuaSyncedRead::GetModOptions);

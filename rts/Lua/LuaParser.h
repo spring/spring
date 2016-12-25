@@ -118,94 +118,96 @@ class LuaTable {
 /******************************************************************************/
 
 class LuaParser {
-
+private:
 	friend class LuaTable;
+	// prevent implicit bool-to-string conversion
+	struct boolean { bool b; };
 
-	public:
-		LuaParser(const string& fileName, const string& fileModes, const string& accessModes, bool synced = false);
-		LuaParser(const string& textChunk, const string& accessModes, bool synced = false);
-		~LuaParser();
+public:
+	LuaParser(const string& fileName, const string& fileModes, const string& accessModes, const boolean& synced = {false});
+	LuaParser(const string& textChunk, const string& accessModes, const boolean& synced = {false});
+	~LuaParser();
 
-		bool Execute();
-		bool IsValid() const { return (L != nullptr); }
+	bool Execute();
+	bool IsValid() const { return (L != nullptr); }
 
-		LuaTable GetRoot();
+	LuaTable GetRoot();
 
-		LuaTable SubTableExpr(const string& expr) {
-			return GetRoot().SubTableExpr(expr);
-		}
+	LuaTable SubTableExpr(const string& expr) {
+		return GetRoot().SubTableExpr(expr);
+	}
 
-		const string& GetErrorLog() const { return errorLog; }
+	const string& GetErrorLog() const { return errorLog; }
 
-		const set<string>& GetAccessedFiles() const { return accessedFiles; }
+	const set<string>& GetAccessedFiles() const { return accessedFiles; }
 
-		// for setting up the initial params table
-		void GetTable(int index,          bool overwrite = false);
-		void GetTable(const string& name, bool overwrite = false);
-		void EndTable();
-		void AddFunc(int key, int (*func)(lua_State*));
-		void AddInt(int key, int value);
-		void AddBool(int key, bool value);
-		void AddFloat(int key, float value);
-		void AddString(int key, const string& value);
-		void AddFunc(const string& key, int (*func)(lua_State*));
-		void AddInt(const string& key, int value);
-		void AddBool(const string& key, bool value);
-		void AddFloat(const string& key, float value);
-		void AddString(const string& key, const string& value);
+	// for setting up the initial params table
+	void GetTable(int index,          bool overwrite = false);
+	void GetTable(const string& name, bool overwrite = false);
+	void EndTable();
+	void AddFunc(int key, int (*func)(lua_State*));
+	void AddInt(int key, int value);
+	void AddBool(int key, bool value);
+	void AddFloat(int key, float value);
+	void AddString(int key, const string& value);
+	void AddFunc(const string& key, int (*func)(lua_State*));
+	void AddInt(const string& key, int value);
+	void AddBool(const string& key, bool value);
+	void AddFloat(const string& key, float value);
+	void AddString(const string& key, const string& value);
 
-		void SetLowerKeys(bool state) { lowerKeys = state; }
-		void SetLowerCppKeys(bool state) { lowerCppKeys = state; }
+	void SetLowerKeys(bool state) { lowerKeys = state; }
+	void SetLowerCppKeys(bool state) { lowerCppKeys = state; }
 
-	public:
-		const string fileName;
-		const string fileModes;
-		const string textChunk;
-		const string accessModes;
+public:
+	const string fileName;
+	const string fileModes;
+	const string textChunk;
+	const string accessModes;
 
-	private:
-		void SetupEnv(bool synced);
+private:
+	void SetupEnv(bool synced);
 
-		void PushParam();
+	void PushParam();
 
-		void AddTable(LuaTable* tbl);
-		void RemoveTable(LuaTable* tbl);
+	void AddTable(LuaTable* tbl);
+	void RemoveTable(LuaTable* tbl);
 
-	private:
-		bool valid;
-		int initDepth;
+private:
+	lua_State* L;
+	set<LuaTable*> tables;
 
-		lua_State* L;
-		set<LuaTable*> tables;
-		int rootRef;
-		int currentRef;
+	int initDepth;
+	int rootRef;
+	int currentRef;
 
-		bool lowerKeys; // convert all returned keys to lower case
-		bool lowerCppKeys; // convert strings in arguments keys to lower case
+	bool valid;
+	bool lowerKeys; // convert all returned keys to lower case
+	bool lowerCppKeys; // convert strings in arguments keys to lower case
 
-		string errorLog;
-		set<string> accessedFiles;
+	string errorLog;
+	set<string> accessedFiles;
 
-	private:
-		// Weird call-outs
-		static int DontMessWithMyCase(lua_State* L);
+private:
+	// Weird call-outs
+	static int DontMessWithMyCase(lua_State* L);
 
-		// Spring call-outs
-		static int RandomSeed(lua_State* L);
-		static int Random(lua_State* L);
-		static int DummyRandomSeed(lua_State* L);
-		static int DummyRandom(lua_State* L);
-		static int TimeCheck(lua_State* L);
+	// Spring call-outs
+	static int RandomSeed(lua_State* L);
+	static int Random(lua_State* L);
+	static int DummyRandomSeed(lua_State* L);
+	static int DummyRandom(lua_State* L);
+	static int TimeCheck(lua_State* L);
 
-		// VFS call-outs
-		static int DirList(lua_State* L);
-		static int SubDirs(lua_State* L);
-		static int Include(lua_State* L);
-		static int LoadFile(lua_State* L);
-		static int FileExists(lua_State* L);
+	// VFS call-outs
+	static int DirList(lua_State* L);
+	static int SubDirs(lua_State* L);
+	static int Include(lua_State* L);
+	static int LoadFile(lua_State* L);
+	static int FileExists(lua_State* L);
 
-	private:
-		static LuaParser* currentParser;
+private:
+	static LuaParser* currentParser;
 };
 
 
