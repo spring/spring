@@ -8,7 +8,6 @@
 #include <string>
 #include <vector>
 #include <map>
-#include <set>
 
 class float3;
 struct float4;
@@ -17,9 +16,7 @@ class LuaParser;
 struct lua_State;
 
 using std::string;
-using std::vector;
 using std::map;
-using std::set;
 
 
 /******************************************************************************/
@@ -46,8 +43,8 @@ class LuaTable {
 		int GetLength(int key) const;           // lua '#' operator
 		int GetLength(const string& key) const; // lua '#' operator
 
-		bool GetKeys(vector<int>& data) const;
-		bool GetKeys(vector<string>& data) const;
+		bool GetKeys(std::vector<int>& data) const;
+		bool GetKeys(std::vector<string>& data) const;
 
 		bool GetMap(map<int, float>& data) const;
 		bool GetMap(map<int, string>& data) const;
@@ -139,8 +136,6 @@ public:
 
 	const string& GetErrorLog() const { return errorLog; }
 
-	const set<string>& GetAccessedFiles() const { return accessedFiles; }
-
 	// for setting up the initial params table
 	void GetTable(int index,          bool overwrite = false);
 	void GetTable(const string& name, bool overwrite = false);
@@ -167,7 +162,6 @@ public:
 
 private:
 	void SetupEnv(bool synced);
-
 	void PushParam();
 
 	void AddTable(LuaTable* tbl);
@@ -175,7 +169,9 @@ private:
 
 private:
 	lua_State* L;
-	set<LuaTable*> tables;
+
+	// NOTE: holds *stack* pointers
+	std::vector<LuaTable*> tables;
 
 	int initDepth;
 	int rootRef;
@@ -186,7 +182,7 @@ private:
 	bool lowerCppKeys; // convert strings in arguments keys to lower case
 
 	string errorLog;
-	set<string> accessedFiles;
+	std::vector<string> accessedFiles;
 
 private:
 	// Weird call-outs

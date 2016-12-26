@@ -19,7 +19,6 @@ class CWeaponDefHandler : CommonDefHandler
 {
 public:
 	CWeaponDefHandler(LuaParser* defsParser);
-	~CWeaponDefHandler();
 
 	const WeaponDef* GetWeaponDef(std::string weaponname) const;
 	const WeaponDef* GetWeaponDefByID(int weaponDefId) const;

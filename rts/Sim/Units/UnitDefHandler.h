@@ -19,7 +19,6 @@ class CUnitDefHandler : CommonDefHandler
 {
 public:
 	CUnitDefHandler(LuaParser* defsParser);
-	~CUnitDefHandler();
 
 	void Init();
 	void ProcessDecoys();

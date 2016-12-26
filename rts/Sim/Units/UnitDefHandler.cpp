@@ -33,12 +33,12 @@ bool isblank(int c) {
 
 CUnitDefHandler::CUnitDefHandler(LuaParser* defsParser) : noCost(false)
 {
-	const LuaTable rootTable = defsParser->GetRoot().SubTable("UnitDefs");
-	if (!rootTable.IsValid()) {
-		throw content_error("Error loading UnitDefs");
-	}
+	const LuaTable& rootTable = defsParser->GetRoot().SubTable("UnitDefs");
 
-	vector<string> unitDefNames;
+	if (!rootTable.IsValid())
+		throw content_error("Error loading UnitDefs");
+
+	std::vector<std::string> unitDefNames;
 	rootTable.GetKeys(unitDefNames);
 
 	unitDefs.reserve(unitDefNames.size() + 1);
@@ -58,9 +58,6 @@ CUnitDefHandler::CUnitDefHandler(LuaParser* defsParser) : noCost(false)
 	AssignTechLevels();
 }
 
-
-CUnitDefHandler::~CUnitDefHandler()
-{ }
 
 
 int CUnitDefHandler::PushNewUnitDef(const std::string& unitName, const LuaTable& udTable)
@@ -326,8 +323,7 @@ bool CUnitDefHandler::ToggleNoCost()
 
 void CUnitDefHandler::AssignTechLevels()
 {
-	set<int>::iterator it;
-	for (it = startUnitIDs.begin(); it != startUnitIDs.end(); ++it) {
+	for (auto it = startUnitIDs.begin(); it != startUnitIDs.end(); ++it) {
 		AssignTechLevel(unitDefs[*it], 0);
 	}
 }
@@ -335,17 +331,15 @@ void CUnitDefHandler::AssignTechLevels()
 
 void CUnitDefHandler::AssignTechLevel(UnitDef& ud, int level)
 {
-	if ((ud.techLevel >= 0) && (ud.techLevel <= level)) {
+	if ((ud.techLevel >= 0) && (ud.techLevel <= level))
 		return;
-	}
 
 	ud.techLevel = level;
 
 	level++;
 
-	map<int, std::string>::const_iterator bo_it;
-	for (bo_it = ud.buildOptions.begin(); bo_it != ud.buildOptions.end(); ++bo_it) {
-		std::map<std::string, int>::const_iterator ud_it = unitDefIDsByName.find(bo_it->second);
+	for (auto bo_it = ud.buildOptions.begin(); bo_it != ud.buildOptions.end(); ++bo_it) {
+		const auto ud_it = unitDefIDsByName.find(bo_it->second);
 		if (ud_it != unitDefIDsByName.end()) {
 			AssignTechLevel(unitDefs[ud_it->second], level);
 		}

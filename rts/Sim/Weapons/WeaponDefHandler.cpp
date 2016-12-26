@@ -19,12 +19,12 @@ CWeaponDefHandler* weaponDefHandler = NULL;
 
 CWeaponDefHandler::CWeaponDefHandler(LuaParser* defsParser)
 {
-	const LuaTable rootTable = defsParser->GetRoot().SubTable("WeaponDefs");
-	if (!rootTable.IsValid()) {
-		throw content_error("Error loading WeaponDefs");
-	}
+	const LuaTable& rootTable = defsParser->GetRoot().SubTable("WeaponDefs");
 
-	vector<string> weaponNames;
+	if (!rootTable.IsValid())
+		throw content_error("Error loading WeaponDefs");
+
+	std::vector<std::string> weaponNames;
 	rootTable.GetKeys(weaponNames);
 
 	weaponDefs.reserve(weaponNames.size());
@@ -35,11 +35,6 @@ CWeaponDefHandler::CWeaponDefHandler(LuaParser* defsParser)
 		weaponDefs.emplace_back(wdTable, name, wid);
 		weaponID[name] = wid;
 	}
-}
-
-
-CWeaponDefHandler::~CWeaponDefHandler()
-{
 }
 
 

@@ -23,7 +23,7 @@
 #include "System/ScopedFPUSettings.h"
 #include "System/Util.h"
 
-LuaParser* LuaParser::currentParser = NULL;
+LuaParser* LuaParser::currentParser = nullptr;
 
 
 /******************************************************************************/
@@ -75,12 +75,12 @@ LuaParser::~LuaParser()
 	if (L != nullptr)
 		LUA_CLOSE(&L);
 
-	for (auto it = tables.begin(); it != tables.end(); ++it) {
-		LuaTable& table = **it;
-		table.parser  = nullptr;
-		table.L       = nullptr;
-		table.isValid = false;
-		table.refnum  = LUA_NOREF;
+	// invalidate leftover tables if parser is destroyed first
+	for (LuaTable* table: tables) {
+		table->parser  = nullptr;
+		table->L       = nullptr;
+		table->isValid = false;
+		table->refnum  = LUA_NOREF;
 	}
 }
 
@@ -211,9 +211,8 @@ bool LuaParser::Execute()
 		return false;
 	}
 
-	if (lowerKeys) {
+	if (lowerKeys)
 		LuaUtils::LowerKeys(L, 1);
-	}
 
 	LuaUtils::CheckTableForNaNs(L, 1, fileName);
 
@@ -224,16 +223,8 @@ bool LuaParser::Execute()
 }
 
 
-void LuaParser::AddTable(LuaTable* tbl)
-{
-	tables.insert(tbl);
-}
-
-
-void LuaParser::RemoveTable(LuaTable* tbl)
-{
-	tables.erase(tbl);
-}
+void LuaParser::AddTable(LuaTable* tbl) { VectorInsertUnique(tables, tbl); }
+void LuaParser::RemoveTable(LuaTable* tbl) { VectorErase(tables, tbl); }
 
 
 LuaTable LuaParser::GetRoot()
@@ -517,9 +508,10 @@ int LuaParser::Include(lua_State* L)
 
 	// filename [, fenv]
 	const string filename = luaL_checkstring(L, 1);
-	if (!LuaIO::IsSimplePath(filename)) {
+
+	if (!LuaIO::IsSimplePath(filename))
 		luaL_error(L, "bad pathname");
-	}
+
 	string modes = luaL_optstring(L, 3, currentParser->accessModes.c_str());
 	modes = CFileHandler::AllowModes(modes, currentParser->accessModes);
 
@@ -574,9 +566,9 @@ int LuaParser::Include(lua_State* L)
 		lua_error(L);
 	}
 
-	currentParser->accessedFiles.insert(StringToLower(filename));
+	VectorInsertUnique(currentParser->accessedFiles, StringToLower(filename));
 
-	return lua_gettop(L) - paramTop;
+	return (lua_gettop(L) - paramTop);
 }
 
 
@@ -588,9 +580,10 @@ int LuaParser::LoadFile(lua_State* L)
 		luaL_error(L, "invalid call to LoadFile() after execution");
 
 	const string filename = luaL_checkstring(L, 1);
-	if (!LuaIO::IsSimplePath(filename)) {
+
+	if (!LuaIO::IsSimplePath(filename))
 		return 0;
-	}
+
 	string modes = luaL_optstring(L, 2, currentParser->accessModes.c_str());
 	modes = CFileHandler::AllowModes(modes, currentParser->accessModes);
 
@@ -608,8 +601,7 @@ int LuaParser::LoadFile(lua_State* L)
 	}
 	lua_pushstring(L, data.c_str());
 
-	currentParser->accessedFiles.insert(StringToLower(filename));
-
+	VectorInsertUnique(currentParser->accessedFiles, StringToLower(filename));
 	return 1;
 }
 
@@ -665,6 +657,8 @@ LuaTable::LuaTable(LuaParser* _parser)
 	L       = parser->L;
 	refnum  = parser->rootRef;
 
+	parser->AddTable(this);
+
 	if (PushTable()) {
 		lua_pushvalue(L, -1); // copy
 		refnum = luaL_ref(L, LUA_REGISTRYINDEX);
@@ -672,8 +666,6 @@ LuaTable::LuaTable(LuaParser* _parser)
 	 	refnum = LUA_NOREF;
 	}
 	isValid = (refnum != LUA_NOREF);
-
-	parser->AddTable(this);
 }
 
 
@@ -683,6 +675,9 @@ LuaTable::LuaTable(const LuaTable& tbl)
 	L      = tbl.L;
 	path   = tbl.path;
 
+	if (parser != nullptr)
+		parser->AddTable(this);
+
 	if (tbl.PushTable()) {
 		lua_pushvalue(L, -1); // copy
 		refnum = luaL_ref(L, LUA_REGISTRYINDEX);
@@ -690,31 +685,27 @@ LuaTable::LuaTable(const LuaTable& tbl)
 		refnum = LUA_NOREF;
 	}
 	isValid = (refnum != LUA_NOREF);
-
-	if (parser) {
-		parser->AddTable(this);
-	}
 }
 
 
 LuaTable& LuaTable::operator=(const LuaTable& tbl)
 {
-	if (parser && (refnum != LUA_NOREF) && (parser->currentRef == refnum)) {
+	if (parser != nullptr && (refnum != LUA_NOREF) && (parser->currentRef == refnum)) {
 		lua_settop(L, 0);
 		parser->currentRef = LUA_NOREF;
 	}
 
 	if (parser != tbl.parser) {
-		if (parser != NULL) {
+		if (parser != nullptr)
 			parser->RemoveTable(this);
-		}
-		if (L && (refnum != LUA_NOREF)) {
+
+		if (L != nullptr && (refnum != LUA_NOREF))
 			luaL_unref(L, LUA_REGISTRYINDEX, refnum);
-		}
+
+		if (tbl.parser != nullptr)
+			tbl.parser->AddTable(this);
+
 		parser = tbl.parser;
-		if (parser != NULL) {
-			parser->AddTable(this);
-		}
 	}
 
 	L    = tbl.L;
@@ -740,9 +731,8 @@ LuaTable LuaTable::SubTable(int key) const
 	SNPRINTF(buf, 32, "[%i]", key);
 	subTable.path = path + buf;
 
-	if (!PushTable()) {
+	if (!PushTable())
 		return subTable;
-	}
 
 	lua_pushnumber(L, key);
 	lua_gettable(L, -2);
@@ -757,22 +747,19 @@ LuaTable LuaTable::SubTable(int key) const
 	subTable.isValid = (subTable.refnum != LUA_NOREF);
 
 	parser->AddTable(&subTable);
-
 	return subTable;
 }
 
 
 LuaTable LuaTable::SubTable(const string& mixedKey) const
 {
-
 	const string key = !(parser ? parser->lowerCppKeys : true) ? mixedKey : StringToLower(mixedKey);
 
 	LuaTable subTable;
 	subTable.path = path + "." + key;
 
-	if (!PushTable()) {
+	if (!PushTable())
 		return subTable;
-	}
 
 	lua_pushstring(L, key.c_str());
 	lua_gettable(L, -2);
@@ -787,7 +774,6 @@ LuaTable LuaTable::SubTable(const string& mixedKey) const
 	subTable.isValid = (subTable.refnum != LUA_NOREF);
 
 	parser->AddTable(&subTable);
-
 	return subTable;
 }
 
@@ -835,15 +821,16 @@ LuaTable LuaTable::SubTableExpr(const string& expr) const
 
 LuaTable::~LuaTable()
 {
-	if (L && (refnum != LUA_NOREF)) {
+	if (parser != nullptr)
+		parser->RemoveTable(this);
+
+	if (L != nullptr && (refnum != LUA_NOREF)) {
 		luaL_unref(L, LUA_REGISTRYINDEX, refnum);
-		if (parser && (parser->currentRef == refnum)) {
+
+		if (parser != nullptr && (parser->currentRef == refnum)) {
 			lua_settop(L, 0);
 			parser->currentRef = LUA_NOREF;
 		}
-	}
-	if (parser) {
-		parser->RemoveTable(this);
 	}
 }
 
@@ -852,14 +839,12 @@ LuaTable::~LuaTable()
 
 bool LuaTable::PushTable() const
 {
-	if (!isValid) {
+	if (!isValid)
 		return false;
-	}
 
 	if ((refnum != LUA_NOREF) && (parser->currentRef == refnum)) {
 		if (!lua_istable(L, -1)) {
-			LOG_L(L_ERROR, "Internal Error: LuaTable::PushTable() = %s",
-					path.c_str());
+			LOG_L(L_ERROR, "Internal Error: LuaTable::PushTable() = %s", path.c_str());
 			parser->currentRef = LUA_NOREF;
 			lua_settop(L, 0);
 			return false;
@@ -1090,11 +1075,11 @@ int LuaTable::GetLength(const string& key) const
 //  Key list functions
 //
 
-bool LuaTable::GetKeys(vector<int>& data) const
+bool LuaTable::GetKeys(std::vector<int>& data) const
 {
-	if (!PushTable()) {
+	if (!PushTable())
 		return false;
-	}
+
 	const int table = lua_gettop(L);
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 		if (lua_israwnumber(L, -2)) {
@@ -1107,11 +1092,11 @@ bool LuaTable::GetKeys(vector<int>& data) const
 }
 
 
-bool LuaTable::GetKeys(vector<string>& data) const
+bool LuaTable::GetKeys(std::vector<string>& data) const
 {
-	if (!PushTable()) {
+	if (!PushTable())
 		return false;
-	}
+
 	const int table = lua_gettop(L);
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 		if (lua_israwstring(L, -2)) {
