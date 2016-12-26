@@ -19,14 +19,11 @@ CONFIG(bool, DisableDemoVersionCheck).defaultValue(false).description("Allow to 
 #include <cstring>
 
 
-CDemoReader::CDemoReader(const std::string& filename, float curTime)
-	: playbackDemo(NULL)
+CDemoReader::CDemoReader(const std::string& filename, float curTime): playbackDemo(new CGZFileHandler(filename, SPRING_VFS_PWD_ALL))
 {
-	playbackDemo = new CGZFileHandler(filename, SPRING_VFS_PWD_ALL);
-
 	if (!playbackDemo->FileExists()) {
 		// file not found -> exception
-		throw user_error(std::string("Demofile not found: ")+filename);
+		throw user_error(std::string("Demofile not found: ") + filename);
 	}
 
 	playbackDemo->Read((char*)&fileHeader, sizeof(fileHeader));
@@ -90,7 +87,7 @@ CDemoReader::~CDemoReader()
 netcode::RawPacket* CDemoReader::GetData(const float readTime)
 {
 	if (ReachedEnd())
-		return NULL;
+		return nullptr;
 
 	// when paused, modGameTime does not increase (ie. we
 	// always pass the same readTime value) so no seperate
@@ -100,7 +97,7 @@ netcode::RawPacket* CDemoReader::GetData(const float readTime)
 		if (playbackDemo->Read((char*)(buf->data), chunkHeader.length) < chunkHeader.length) {
 			delete buf;
 			bytesRemaining = 0;
-			return NULL;
+			return nullptr;
 		}
 		bytesRemaining -= chunkHeader.length;
 
@@ -109,7 +106,7 @@ netcode::RawPacket* CDemoReader::GetData(const float readTime)
 			if (playbackDemo->Read((char*)&chunkHeader, sizeof(chunkHeader)) < sizeof(chunkHeader)) {
 				delete buf;
 				bytesRemaining = 0;
-				return NULL;
+				return nullptr;
 			}
 			chunkHeader.swab();
 			nextDemoReadTime = chunkHeader.modGameTime + demoTimeOffset;
@@ -117,30 +114,25 @@ netcode::RawPacket* CDemoReader::GetData(const float readTime)
 		}
 		if (readTime < 0) {
 			delete buf;
-			return NULL;
+			return nullptr;
 		}
 		return buf;
-	} else {
-		return NULL;
 	}
+
+	return nullptr;
 }
 
 bool CDemoReader::ReachedEnd()
 {
-	if (bytesRemaining <= 0 || playbackDemo->Eof() ||
-		(playbackDemo->GetPos() > playbackDemoSize) )
-		return true;
-	else
-		return false;
+	return (bytesRemaining <= 0 || playbackDemo->Eof() || (playbackDemo->GetPos() > playbackDemoSize));
 }
 
 
 void CDemoReader::LoadStats()
 {
 	// Stats are not available if Spring crashed while writing the demo.
-	if (fileHeader.demoStreamSize == 0) {
+	if (fileHeader.demoStreamSize == 0)
 		return;
-	}
 
 	const int curPos = playbackDemo->GetPos();
 	playbackDemo->Seek(fileHeader.headerSize + fileHeader.scriptSize + fileHeader.demoStreamSize);

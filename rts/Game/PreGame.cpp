@@ -56,15 +56,15 @@ using std::string;
 
 CONFIG(bool, DemoFromDemo).defaultValue(false);
 
-CPreGame* pregame = NULL;
+CPreGame* pregame = nullptr;
 
 CPreGame::CPreGame(std::shared_ptr<ClientSetup> setup)
 	: clientSetup(setup)
-	, savefile(NULL)
+	, savefile(nullptr)
 	, timer(spring_gettime())
 	, wantDemo(true)
 {
-	assert(clientNet == NULL);
+	assert(clientNet == nullptr);
 
 	clientNet = new CNetProtocol();
 	activeController = this;
@@ -91,7 +91,7 @@ CPreGame::~CPreGame()
 	// but do not delete infoconsole, it is reused by CGame
 	agui::gui->Draw();
 
-	pregame = NULL;
+	pregame = nullptr;
 }
 
 void CPreGame::LoadSetupscript(const std::string& script)
@@ -208,9 +208,8 @@ void CPreGame::StartServer(const std::string& setupscript)
 	startGameSetup->Init(setupscript);
 	startGameData->SetRandomSeed(static_cast<unsigned>(guRNG.NextInt()));
 
-	if (startGameSetup->mapName.empty()) {
+	if (startGameSetup->mapName.empty())
 		throw content_error("No map selected in startscript");
-	}
 
 	if (startGameSetup->mapSeed != 0) {
 		CSimpleMapGenerator gen(startGameSetup.get());
@@ -275,7 +274,7 @@ void CPreGame::UpdateClientNet()
 					std::string message;
 					pckt >> message;
 					LOG("%s", message.c_str());
-					handleerror(NULL, "Remote requested quit: " + message, "Quit message", MBF_OK | MBF_EXCL);
+					handleerror(nullptr, "Remote requested quit: " + message, "Quit message", MBF_OK | MBF_EXCL);
 				} catch (const netcode::UnpackPacketException& ex) {
 					LOG_L(L_ERROR, "Got invalid QuitMessage: %s", ex.what());
 				}
@@ -329,7 +328,7 @@ void CPreGame::UpdateClientNet()
 				// this is sent after NETMSG_GAMEDATA, to let us know which
 				// player number we have (server assigns them based on order
 				// of connection)
-				if (gameSetup == NULL)
+				if (gameSetup == nullptr)
 					throw content_error("No game data received from server");
 
 				const unsigned char playerNum = packet->data[1];
@@ -343,7 +342,7 @@ void CPreGame::UpdateClientNet()
 
 				CLoadScreen::CreateInstance(gameSetup->MapFile(), modArchive, savefile);
 
-				pregame = NULL;
+				pregame = nullptr;
 				delete this;
 				return;
 			}
@@ -366,7 +365,7 @@ void CPreGame::StartServerForDemo(const std::string& demoName)
 
 	{
 		// server will always use a modified copy of this
-		assert(gameSetup != NULL);
+		assert(gameSetup != nullptr);
 
 		// modify the demo's start-script so it can be used to watch the demo
 		tgame->AddPair("MapName", gameSetup->mapName);
@@ -413,12 +412,16 @@ void CPreGame::StartServerForDemo(const std::string& demoName)
 void CPreGame::ReadDataFromDemo(const std::string& demoName)
 {
 	ScopedOnceTimer startserver("PreGame::ReadDataFromDemo");
-	assert(gameServer == NULL);
+	assert(gameServer == nullptr);
 	LOG("[%s] pre-scanning demo file for game data...", __FUNCTION__);
-	CDemoReader scanner(demoName, 0);
+	CDemoReader scanner(demoName, 0.0f);
 
 	{
-		gameData.reset(new GameData(scanner.GetSetupScript()));
+		// this does not extract the RNG preseed, use first packet
+		// gameData.reset(new GameData(scanner.GetSetupScript()));
+		gameData.reset(new GameData(std::shared_ptr<netcode::RawPacket>(scanner.GetData(0.0f))));
+		assert(gameData->GetSetupText() == scanner.GetSetupScript());
+
 		if (CGameSetup::LoadReceivedScript(gameData->GetSetupText(), true)) {
 			StartServerForDemo(demoName);
 		} else {
@@ -426,7 +429,7 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 		}
 	}
 
-	assert(gameServer != NULL);
+	assert(gameServer != nullptr);
 }
 
 void CPreGame::GameDataReceived(std::shared_ptr<const netcode::RawPacket> packet)
@@ -434,6 +437,8 @@ void CPreGame::GameDataReceived(std::shared_ptr<const netcode::RawPacket> packet
 	ScopedOnceTimer startserver("PreGame::GameDataReceived");
 
 	try {
+		// in demos, gameData is first new'ed in ReadDataFromDemo()
+		// in live games it will always still be NULL at this point
 		gameData.reset(new GameData(packet));
 	} catch (const netcode::UnpackPacketException& ex) {
 		throw content_error(std::string("Server sent us invalid GameData: ") + ex.what());
@@ -447,11 +452,11 @@ void CPreGame::GameDataReceived(std::shared_ptr<const netcode::RawPacket> packet
 	// this means gameSetup contains data from the original game but we need the
 	// modified version (cf StartServerForDemo) which the server already has that
 	// contains an extra player
-	if (gameSetup != NULL)
+	if (gameSetup != nullptr)
 		SafeDelete(gameSetup);
 
 	if (CGameSetup::LoadReceivedScript(gameData->GetSetupText(), clientSetup->isHost)) {
-		assert(gameSetup != NULL);
+		assert(gameSetup != nullptr);
 		gu->LoadFromSetup(gameSetup);
 		gs->LoadFromSetup(gameSetup);
 		// do we really need to do this so early?
@@ -493,8 +498,8 @@ void CPreGame::GameDataReceived(std::shared_ptr<const netcode::RawPacket> packet
 		wantDemo = false;
 	}
 
-	if (clientNet != NULL && wantDemo) {
-		assert(clientNet->GetDemoRecorder() == NULL);
+	if (clientNet != nullptr && wantDemo) {
+		assert(clientNet->GetDemoRecorder() == nullptr);
 
 		CDemoRecorder* recorder = new CDemoRecorder(gameSetup->mapName, gameSetup->modName, false);
 		recorder->WriteSetupText(gameData->GetSetupText());
