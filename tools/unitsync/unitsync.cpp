@@ -1874,7 +1874,7 @@ EXPORT(const char*) GetOptionListItemName(int optIndex, int itemIndex)
 {
 	try {
 		CheckOptionType(optIndex, opt_list);
-		const vector<OptionListItem>& list = options[optIndex].list;
+		const std::vector<OptionListItem>& list = options[optIndex].list;
 		CheckBounds(itemIndex, list.size());
 		return GetStr(list[itemIndex].name);
 	}
