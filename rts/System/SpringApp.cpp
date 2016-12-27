@@ -41,7 +41,6 @@
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Fonts/glFont.h"
 #include "Rendering/GLContext.h"
-#include "Rendering/VerticalSync.h"
 #include "Rendering/GL/FBO.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Textures/NamedTextures.h"
@@ -63,7 +62,6 @@
 #include "System/MsgStrings.h"
 #include "Net/Protocol/NetProtocol.h"
 #include "System/StartScriptGen.h"
-#include "System/TimeProfiler.h"
 #include "System/ThreadPool.h"
 #include "System/Util.h"
 #include "System/creg/creg_runtime_tests.h"
@@ -155,29 +153,6 @@ DEFINE_string   (map,                                      "",    "Specify the m
 DEFINE_string   (menu,                                     "",    "Specify a lua menu archive to be used by spring");
 DEFINE_string   (name,                                     "",    "Set your player name");
 DEFINE_bool     (oldmenu,                                  false, "Start the old menu");
-
-
-/**
- * @brief multisample verify
- * @return whether verification passed
- *
- * Tests whether FSAA was actually enabled
- */
-static bool MultisampleVerify()
-{
-	if (!GLEW_ARB_multisample)
-		return false;
-	GLint buffers = 0;
-	GLint samples = 0;
-	glGetIntegerv(GL_SAMPLE_BUFFERS_ARB, &buffers);
-	glGetIntegerv(GL_SAMPLES_ARB, &samples);
-	if (buffers && samples) {
-		return true;
-	}
-	return false;
-}
-
-
 
 
 
@@ -278,7 +253,6 @@ bool SpringApp::Initialize()
 	}
 
 	// Init OpenGL
-	LoadExtensions(); // Initialize GLEW
 	globalRendering->PostInit();
 	InitOpenGL();
 
@@ -446,6 +420,9 @@ void SpringApp::SetupViewportGeometry()
 	if (agui::gui != nullptr) {
 		agui::gui->UpdateScreenGeometry(globalRendering->viewSizeX, globalRendering->viewSizeY, vpx, vpy);
 	}
+
+	glViewport(globalRendering->viewPosX, globalRendering->viewPosY, globalRendering->viewSizeX, globalRendering->viewSizeY);
+	gluPerspective(45.0f, globalRendering->aspectRatio, 2.8f, CGlobalRendering::MAX_VIEW_RANGE);
 }
 
 
@@ -454,13 +431,6 @@ void SpringApp::SetupViewportGeometry()
  */
 void SpringApp::InitOpenGL()
 {
-	// reinit vsync
-	VSync.Init();
-
-	// check if FSAA init worked fine
-	if (globalRendering->FSAA && !MultisampleVerify())
-		globalRendering->FSAA = 0;
-
 	globalRendering->UpdateGLConfigs();
 
 	//FIXME not needed anymore with SDL2?
@@ -474,8 +444,6 @@ void SpringApp::InitOpenGL()
 
 	// setup viewport
 	SetupViewportGeometry();
-	glViewport(globalRendering->viewPosX, globalRendering->viewPosY, globalRendering->viewSizeX, globalRendering->viewSizeY);
-	gluPerspective(45.0f, globalRendering->aspectRatio, 2.8f, CGlobalRendering::MAX_VIEW_RANGE);
 
 	// Initialize some GL states
 	glShadeModel(GL_SMOOTH);
@@ -487,12 +455,18 @@ void SpringApp::InitOpenGL()
 	glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE);
 	#endif
 
+	if (globalRendering->EnableFSAA()) {
+		glEnable(GL_MULTISAMPLE);
+	} else {
+		glDisable(GL_MULTISAMPLE);
+	}
+
 	// FFP model lighting
 	glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 0.0f);
 	glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, 0);
 
 	// Clear Window
-	glClearColor(0.0f,0.0f,0.0f,0.0f);
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	SDL_GL_SwapWindow(globalRendering->window);
 
@@ -863,31 +837,19 @@ void SpringApp::Reload(const std::string& script)
  * Draw function repeatedly called, it calls all the
  * other draw functions
  */
-int SpringApp::Update()
+bool SpringApp::Update()
 {
-	if (globalRendering->FSAA)
-		glEnable(GL_MULTISAMPLE_ARB);
-
-	int ret = 1;
-	bool drawOccured = false;
-
 	configHandler->Update();
-	if (activeController != NULL) {
-		ret = activeController->Update();
 
-		if (ret) {
-			drawOccured = activeController->Draw();
-		}
-	}
+	if (activeController == nullptr)
+		return true;
+	if (!activeController->Update())
+		return false;
+	if (!activeController->Draw())
+		return true;
 
-	if (drawOccured) {
-		SCOPED_TIMER("Misc::SwapBuffers");
-		spring_time pre = spring_now();
-		VSync.Delay();
-		SDL_GL_SwapWindow(globalRendering->window);
-		eventHandler.DbgTimingInfo(TIMING_SWAP, pre, spring_now());
-	}
-	return ret;
+	globalRendering->SwapBuffers();
+	return true;
 }
 
 
@@ -976,7 +938,6 @@ void SpringApp::ShutDown()
 	CNamedTextures::Kill(true);
 	GLContext::Free();
 	GlobalConfig::Deallocate();
-	UnloadExtensions();
 
 	IMouseInput::FreeInstance(mouseInput);
 

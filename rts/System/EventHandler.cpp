@@ -9,21 +9,16 @@
 #include "System/Platform/Threading.h"
 #include "System/GlobalConfig.h"
 
-using std::string;
-using std::vector;
-using std::map;
-
-
 CEventHandler eventHandler;
 
 
 /******************************************************************************/
 /******************************************************************************/
 
-void CEventHandler::SetupEvent(const string& eName,
-                               EventClientList* list, int props)
+void CEventHandler::SetupEvent(const std::string& eName, EventClientList* list, int props)
 {
-	eventMap[eName] = EventInfo(eName, list, props);
+	assert(std::find_if(eventMap.cbegin(), eventMap.cend(), [&](const EventPair& p) { return (p.first == eName); }) == eventMap.cend());
+	eventMap.push_back({eName, EventInfo(eName, list, props)});
 }
 
 /******************************************************************************/
@@ -31,21 +26,17 @@ void CEventHandler::SetupEvent(const string& eName,
 
 CEventHandler::CEventHandler()
 {
-	mouseOwner = NULL;
-
-	SetupEvents();
+	ResetState();
 }
-
-CEventHandler::~CEventHandler()
-{ }
-
 
 void CEventHandler::ResetState()
 {
-	mouseOwner = NULL;
+	mouseOwner = nullptr;
 
 	eventMap.clear();
+	eventMap.reserve(64);
 	handles.clear();
+	handles.reserve(16);
 
 	SetupEvents();
 }
@@ -55,8 +46,11 @@ void CEventHandler::SetupEvents()
 	#define SETUP_EVENT(name, props) SetupEvent(#name, &list ## name, props);
 	#define SETUP_UNMANAGED_EVENT(name, props) SetupEvent(#name, NULL, props);
 		#include "Events.def"
-	#undef SETUP_EVENT
 	#undef SETUP_UNMANAGED_EVENT
+	#undef SETUP_EVENT
+
+	// sort by name
+	std::sort(eventMap.begin(), eventMap.end(), [](const EventPair& a, const EventPair& b) { return (a.first < b.first); });
 }
 
 
@@ -69,6 +63,7 @@ void CEventHandler::AddClient(CEventClient* ec)
 
 	for (auto it = eventMap.cbegin(); it != eventMap.cend(); ++it) {
 		const EventInfo& ei = it->second;
+
 		if (ei.HasPropBit(MANAGED_BIT)) {
 			if (ec->WantsEvent(it->first)) {
 				InsertEvent(ec, it->first);
@@ -79,9 +74,8 @@ void CEventHandler::AddClient(CEventClient* ec)
 
 void CEventHandler::RemoveClient(CEventClient* ec)
 {
-	if (mouseOwner == ec) {
-		mouseOwner = NULL;
-	}
+	if (mouseOwner == ec)
+		mouseOwner = nullptr;
 
 	ListRemove(handles, ec);
 
@@ -97,7 +91,7 @@ void CEventHandler::RemoveClient(CEventClient* ec)
 /******************************************************************************/
 /******************************************************************************/
 
-void CEventHandler::GetEventList(vector<string>& list) const
+void CEventHandler::GetEventList(std::vector<std::string>& list) const
 {
 	list.clear();
 
@@ -107,56 +101,66 @@ void CEventHandler::GetEventList(vector<string>& list) const
 }
 
 
-bool CEventHandler::IsKnown(const string& eName) const
+bool CEventHandler::IsKnown(const std::string& eName) const
 {
-	return (eventMap.find(eName) != eventMap.end());
+	// std::binary_search does not return an iterator
+	const auto comp = [](const EventPair& a, const EventPair& b) { return (a.first < b.first); };
+	const auto iter = std::lower_bound(eventMap.begin(), eventMap.end(), EventPair{eName, {}}, comp);
+	return (iter != eventMap.end() && iter->first == eName);
 }
 
 
-bool CEventHandler::IsManaged(const string& eName) const
+bool CEventHandler::IsManaged(const std::string& eName) const
 {
-	const EventMap::const_iterator it = eventMap.find(eName);
-	return ((it != eventMap.end()) && (it->second.HasPropBit(MANAGED_BIT)));
+	const auto comp = [](const EventPair& a, const EventPair& b) { return (a.first < b.first); };
+	const auto iter = std::lower_bound(eventMap.begin(), eventMap.end(), EventPair{eName, {}}, comp);
+	return (iter != eventMap.end() && iter->first == eName && iter->second.HasPropBit(MANAGED_BIT));
 }
 
 
-bool CEventHandler::IsUnsynced(const string& eName) const
+bool CEventHandler::IsUnsynced(const std::string& eName) const
 {
-	const EventMap::const_iterator it = eventMap.find(eName);
-	return ((it != eventMap.end()) && (it->second.HasPropBit(UNSYNCED_BIT)));
+	const auto comp = [](const EventPair& a, const EventPair& b) { return (a.first < b.first); };
+	const auto iter = std::lower_bound(eventMap.begin(), eventMap.end(), EventPair{eName, {}}, comp);
+	return (iter != eventMap.end() && iter->first == eName && iter->second.HasPropBit(UNSYNCED_BIT));
 }
 
 
-bool CEventHandler::IsController(const string& eName) const
+bool CEventHandler::IsController(const std::string& eName) const
 {
-	const EventMap::const_iterator it = eventMap.find(eName);
-	return ((it != eventMap.end()) && (it->second.HasPropBit(CONTROL_BIT)));
+	const auto comp = [](const EventPair& a, const EventPair& b) { return (a.first < b.first); };
+	const auto iter = std::lower_bound(eventMap.begin(), eventMap.end(), EventPair{eName, {}}, comp);
+	return (iter != eventMap.end() && iter->first == eName && iter->second.HasPropBit(CONTROL_BIT));
 }
 
 
 /******************************************************************************/
 
-bool CEventHandler::InsertEvent(CEventClient* ec, const string& ciName)
+bool CEventHandler::InsertEvent(CEventClient* ec, const std::string& ciName)
 {
-	EventMap::iterator it = eventMap.find(ciName);
-	if ((it == eventMap.end()) || (it->second.GetList() == NULL)) {
+	const auto comp = [](const EventPair& a, const EventPair& b) { return (a.first < b.first); };
+	const auto iter = std::lower_bound(eventMap.begin(), eventMap.end(), EventPair{ciName, {}}, comp);
+
+	if ((iter == eventMap.end()) || (iter->first != ciName) || (iter->second.GetList() == nullptr))
 		return false;
-	}
-	if (ec->GetSynced() && it->second.HasPropBit(UNSYNCED_BIT)) {
+
+	if (ec->GetSynced() && iter->second.HasPropBit(UNSYNCED_BIT))
 		return false;
-	}
-	ListInsert(*it->second.GetList(), ec);
+
+	ListInsert(*iter->second.GetList(), ec);
 	return true;
 }
 
 
-bool CEventHandler::RemoveEvent(CEventClient* ec, const string& ciName)
+bool CEventHandler::RemoveEvent(CEventClient* ec, const std::string& ciName)
 {
-	EventMap::iterator it = eventMap.find(ciName);
-	if ((it == eventMap.end()) || (it->second.GetList() == NULL)) {
+	const auto comp = [](const EventPair& a, const EventPair& b) { return (a.first < b.first); };
+	const auto iter = std::lower_bound(eventMap.begin(), eventMap.end(), EventPair{ciName, {}}, comp);
+
+	if ((iter == eventMap.end()) || (iter->first != ciName) || (iter->second.GetList() == nullptr))
 		return false;
-	}
-	ListRemove(*it->second.GetList(), ec);
+
+	ListRemove(*iter->second.GetList(), ec);
 	return true;
 }
 
@@ -165,19 +169,20 @@ bool CEventHandler::RemoveEvent(CEventClient* ec, const string& ciName)
 
 void CEventHandler::ListInsert(EventClientList& ecList, CEventClient* ec)
 {
-	EventClientList::iterator it;
-	for (it = ecList.begin(); it != ecList.end(); ++it) {
+	for (auto it = ecList.begin(); it != ecList.end(); ++it) {
 		const CEventClient* ecIt = *it;
-		if (ec == ecIt) {
+
+		if (ec == ecIt)
 			return; // already in the list
-		}
-		else if ((ec->GetOrder()  <  ecIt->GetOrder()) ||
+
+		if ((ec->GetOrder()  <  ecIt->GetOrder()) ||
 		         ((ec->GetOrder() == ecIt->GetOrder()) &&
 		          (ec->GetName()  <  ecIt->GetName()))) { // should not happen
 			ecList.insert(it, ec);
 			return;
 		}
 	}
+
 	ecList.push_back(ec);
 }
 
@@ -262,13 +267,13 @@ bool CEventHandler::AllowFeatureBuildStep(const CUnit* builder, const CFeature* 
 }
 
 
-bool CEventHandler::AllowResourceLevel(int teamID, const string& type, float level)
+bool CEventHandler::AllowResourceLevel(int teamID, const std::string& type, float level)
 {
 	CONTROL_ITERATE_DEF_TRUE(AllowResourceLevel, teamID, type, level)
 }
 
 
-bool CEventHandler::AllowResourceTransfer(int oldTeam, int newTeam, const string& type, float amount)
+bool CEventHandler::AllowResourceTransfer(int oldTeam, int newTeam, const std::string& type, float amount)
 {
 	CONTROL_ITERATE_DEF_TRUE(AllowResourceTransfer, oldTeam, newTeam, type, amount)
 }
@@ -375,7 +380,7 @@ bool CEventHandler::ShieldPreDamaged(
 }
 
 
-bool CEventHandler::SyncedActionFallback(const string& line, int playerID)
+bool CEventHandler::SyncedActionFallback(const std::string& line, int playerID)
 {
 	for (int i = 0; i < listSyncedActionFallback.size(); ) {
 		CEventClient* ec = listSyncedActionFallback[i];
@@ -683,7 +688,7 @@ bool CEventHandler::IsAbove(int x, int y)
 	return false;
 }
 
-string CEventHandler::GetTooltip(int x, int y)
+std::string CEventHandler::GetTooltip(int x, int y)
 {
 	CONTROL_REVERSE_ITERATE_STRING(GetTooltip, x, y)
 	return "";
@@ -714,14 +719,14 @@ bool CEventHandler::GroupChanged(int groupID)
 
 
 
-bool CEventHandler::GameSetup(const string& state, bool& ready,
-                                  const map<int, string>& playerStates)
+bool CEventHandler::GameSetup(const std::string& state, bool& ready,
+                                  const std::map<int, std::string>& playerStates)
 {
 	CONTROL_REVERSE_ITERATE_DEF_TRUE(GameSetup, state, ready, playerStates)
 	return false;
 }
 
-void CEventHandler::DownloadQueued(int ID, const string& archiveName, const string& archiveType)
+void CEventHandler::DownloadQueued(int ID, const std::string& archiveName, const std::string& archiveType)
 {
 	ITERATE_EVENTCLIENTLIST(DownloadQueued, ID, archiveName, archiveType);
 }
@@ -746,7 +751,7 @@ void CEventHandler::DownloadProgress(int ID, long downloaded, long total)
 	ITERATE_EVENTCLIENTLIST(DownloadProgress, ID, downloaded, total);
 }
 
-string CEventHandler::WorldTooltip(const CUnit* unit,
+std::string CEventHandler::WorldTooltip(const CUnit* unit,
                                    const CFeature* feature,
                                    const float3* groundPos)
 {
@@ -757,7 +762,7 @@ string CEventHandler::WorldTooltip(const CUnit* unit,
 
 bool CEventHandler::MapDrawCmd(int playerID, int type,
                                const float3* pos0, const float3* pos1,
-                                   const string* label)
+                               const std::string* label)
 {
 	CONTROL_REVERSE_ITERATE_DEF_TRUE(MapDrawCmd, playerID, type, pos0, pos1, label)
 	return false;

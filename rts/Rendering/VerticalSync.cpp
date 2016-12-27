@@ -17,33 +17,9 @@ CONFIG(int, VSync).defaultValue(0).minimumValue(0).description("Vertical synchro
 
 CVerticalSync VSync;
 
-
-/******************************************************************************/
-
-CVerticalSync::CVerticalSync()
-{
-	interval = -1;
-}
-
-
-CVerticalSync::~CVerticalSync()
-{
-}
-
-
-/******************************************************************************/
-
-void CVerticalSync::Init()
-{
-	SetInterval(configHandler->GetInt("VSync"));
-}
-
-
 void CVerticalSync::SetInterval(int i)
 {
-	i = std::max(0, i);
-
-	if (i == interval)
+	if ((i = std::max(0, i)) == interval)
 		return;
 
 	configHandler->Set("VSync", i);

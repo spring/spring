@@ -30,6 +30,7 @@ public:
 	bool CreateSDLWindow(const char* title);
 	void DestroySDLWindow();
 	void PostInit();
+	void SwapBuffers();
 	void SetFullScreen(bool configFullScreen, bool cmdLineWindowed, bool cmdLineFullScreen);
 	// Notify on Fullscreen/WindowBorderless change
 	void ConfigNotify(const std::string& key, const std::string& value);
@@ -39,6 +40,7 @@ public:
 	void UpdateGLConfigs();
 	int2 GetWantedViewSize(const bool fullscreen);
 
+	bool EnableFSAA() const;
 	bool SetGetDrawDebug(bool dbg) { const bool ret =       dbg; drawdebug = dbg; return ret; }
 	bool GetSetDrawDebug(bool dbg) { const bool ret = drawdebug; drawdebug = dbg; return ret; }
 
@@ -125,7 +127,7 @@ public:
 	 *
 	 * Level of full-screen anti-aliasing
 	 */
-	int FSAA;
+	int fsaaLevel;
 
 	/**
 	 * @brief maxTextureSize

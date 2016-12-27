@@ -44,9 +44,10 @@ public:
 	void LoadDemo(const std::string& demo);
 	void LoadSavefile(const std::string& save, bool usecreg);
 
-	bool Draw();
-	int KeyPressed(int k, bool isRepeat);
-	bool Update();
+	bool Draw() override;
+	bool Update() override;
+
+	int KeyPressed(int k, bool isRepeat) override;
 
 private:
 	void AddGameSetupArchivesToVFS(const CGameSetup* setup, bool mapOnly);

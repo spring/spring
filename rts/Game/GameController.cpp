@@ -5,8 +5,7 @@
 #include "System/Platform/Clipboard.h"
 
 
-CGameController* activeController = NULL;
-
+CGameController* activeController = nullptr;
 
 CGameController::CGameController()
 	: userWriting(false)
@@ -15,44 +14,12 @@ CGameController::CGameController()
 {
 }
 
-
 CGameController::~CGameController()
 {
 	if (activeController == this) {
-		activeController = NULL;
+		activeController = nullptr;
 	}
 }
-
-
-bool CGameController::Draw()
-{
-	return true;
-}
-
-
-bool CGameController::Update()
-{
-	return true;
-}
-
-
-int CGameController::KeyPressed(int key, bool isRepeat)
-{
-	return 0;
-}
-
-
-int CGameController::KeyReleased(int key)
-{
-	return 0;
-}
-
-
-int CGameController::TextInput(const std::string& utf8Text)
-{
-	return 0;
-}
-
 
 
 void CGameController::PasteClipboard()

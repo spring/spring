@@ -3,12 +3,15 @@
 
 #include "GlobalRendering.h"
 
+#include "Rendering/VerticalSync.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/FBO.h"
 #include "Sim/Misc/GlobalConstants.h"
-#include "System/Util.h"
 #include "System/bitops.h"
+#include "System/EventHandler.h"
 #include "System/type2.h"
+#include "System/TimeProfiler.h"
+#include "System/Util.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
 #include "System/Platform/WindowManagerHelper.h"
@@ -78,7 +81,7 @@ CR_REG_METADATA(CGlobalRendering, (
 	CR_IGNORED(aspectRatio),
 	CR_IGNORED(zNear),
 	CR_IGNORED(viewRange),
-	CR_IGNORED(FSAA),
+	CR_IGNORED(fsaaLevel),
 	CR_IGNORED(maxTextureSize),
 	CR_IGNORED(active),
 	CR_IGNORED(compressTextures),
@@ -140,8 +143,8 @@ CGlobalRendering::CGlobalRendering()
 
 	, zNear(NEAR_PLANE)
 	, viewRange(MAX_VIEW_RANGE)
-	, FSAA(0)
 
+	, fsaaLevel(0)
 	, maxTextureSize(2048)
 
 	, drawSky(true)
@@ -188,6 +191,7 @@ CGlobalRendering::CGlobalRendering()
 CGlobalRendering::~CGlobalRendering()
 {
 	configHandler->RemoveObserver(this);
+	UnloadExtensions();
 }
 
 
@@ -205,31 +209,27 @@ bool CGlobalRendering::CreateSDLWindow(const char* title)
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
 	// Create GL debug context when wanted (allows further GL verbose informations, but runs slower)
-	if (configHandler->GetBool("DebugGL")) {
+	if (configHandler->GetBool("DebugGL"))
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
-	}
 
 	// FullScreen AntiAliasing
-	FSAA = configHandler->GetInt("FSAALevel");
-
-	if (FSAA > 0) {
-		if (getenv("LIBGL_ALWAYS_SOFTWARE") != NULL) {
+	if ((fsaaLevel = configHandler->GetInt("FSAALevel")) > 0) {
+		if (getenv("LIBGL_ALWAYS_SOFTWARE") != nullptr)
 			LOG_L(L_WARNING, "FSAALevel > 0 and LIBGL_ALWAYS_SOFTWARE set, this will very likely crash!");
-		}
-		make_even_number(FSAA);
+
+		make_even_number(fsaaLevel);
 		SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
-		SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, FSAA);
+		SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, fsaaLevel);
 	}
 
 	// Get wanted resolution
-	int2 res = GetWantedViewSize(fullScreen);
+	const int2 res = GetWantedViewSize(fullScreen);
 
 	// Borderless
 	const bool borderless = configHandler->GetBool("WindowBorderless");
-	if (fullScreen) {
-		sdlflags |= borderless ? SDL_WINDOW_FULLSCREEN_DESKTOP : SDL_WINDOW_FULLSCREEN;
-	}
-	sdlflags |= borderless ? SDL_WINDOW_BORDERLESS : 0;
+
+	sdlflags |= (borderless ? SDL_WINDOW_FULLSCREEN_DESKTOP : SDL_WINDOW_FULLSCREEN) * fullScreen;
+	sdlflags |= (SDL_WINDOW_BORDERLESS * borderless);
 
 
 	// Window Pos & State
@@ -242,18 +242,15 @@ bool CGlobalRendering::CreateSDLWindow(const char* title)
 	}
 
 	// Create Window
-	window = SDL_CreateWindow(title, winPosX, winPosY, res.x, res.y, sdlflags);
-	if (!window) {
+	if ((window = SDL_CreateWindow(title, winPosX, winPosY, res.x, res.y, sdlflags)) == nullptr) {
 		char buf[1024];
 		SNPRINTF(buf, sizeof(buf), "Could not set video mode:\n%s", SDL_GetError());
-		handleerror(NULL, buf, "ERROR", MBF_OK|MBF_EXCL);
+		handleerror(nullptr, buf, "ERROR", MBF_OK|MBF_EXCL);
 		return false;
 	}
 
-	const int autominimize = configHandler->GetInt("MinimizeOnFocusLoss");
-	if (autominimize == 0) {
+	if (configHandler->GetInt("MinimizeOnFocusLoss") == 0)
 		SDL_SetHint(SDL_HINT_VIDEO_MINIMIZE_ON_FOCUS_LOSS, "0");
-	}
 
 #if defined(WIN32)
 	if (borderless && !fullScreen) {
@@ -268,11 +265,10 @@ bool CGlobalRendering::CreateSDLWindow(const char* title)
 	SDL_SetWindowMinimumSize(window, minWinSizeX, minWinSizeY);
 
 	if (sdlGlCtx == nullptr) {
-		sdlGlCtx = SDL_GL_CreateContext(window);
-		if (sdlGlCtx == nullptr) {
+		if ((sdlGlCtx = SDL_GL_CreateContext(window)) == nullptr) {
 			char buf[1024];
 			SNPRINTF(buf, sizeof(buf), "Could not create SDL GL context:\n%s", SDL_GetError());
-			handleerror(NULL, buf, "ERROR", MBF_OK|MBF_EXCL);
+			handleerror(nullptr, buf, "ERROR", MBF_OK|MBF_EXCL);
 			return false;
 		}
 	} else {
@@ -304,17 +300,19 @@ void CGlobalRendering::DestroySDLWindow() {
 
 
 void CGlobalRendering::PostInit() {
+	LoadExtensions(); // initialize GLEW
+
 	supportNPOTs = GLEW_ARB_texture_non_power_of_two;
 	haveARB   = GLEW_ARB_vertex_program && GLEW_ARB_fragment_program;
-	haveGLSL  = (glGetString(GL_SHADING_LANGUAGE_VERSION) != NULL);
+	haveGLSL  = (glGetString(GL_SHADING_LANGUAGE_VERSION) != nullptr);
 	haveGLSL &= GLEW_ARB_vertex_shader && GLEW_ARB_fragment_shader;
 	haveGLSL &= !!GLEW_VERSION_2_0; // we want OpenGL 2.0 core functions
 
 	{
 		const char* glVendor = (const char*) glGetString(GL_VENDOR);
 		const char* glRenderer = (const char*) glGetString(GL_RENDERER);
-		const std::string vendor = (glVendor != NULL)? StringToLower(std::string(glVendor)): "";
-		const std::string renderer = (glRenderer != NULL)? StringToLower(std::string(glRenderer)): "";
+		const std::string vendor = (glVendor != nullptr)? StringToLower(std::string(glVendor)): "";
+		const std::string renderer = (glRenderer != nullptr)? StringToLower(std::string(glRenderer)): "";
 
 		haveATI    = (vendor.find("ati ") != std::string::npos) || (vendor.find("amd ") != std::string::npos);
 		haveMesa   = (renderer.find("mesa ") != std::string::npos) || (renderer.find("gallium ") != std::string::npos);
@@ -360,7 +358,7 @@ void CGlobalRendering::PostInit() {
 		glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTextureSize);
 	}
 
-	// retrieve maximu smoothed PointSize
+	// retrieve maximum smoothed PointSize
 	float2 aliasedPointSizeRange, smoothPointSizeRange;
 	glGetFloatv(GL_ALIASED_POINT_SIZE_RANGE, (GLfloat*)&aliasedPointSizeRange);
 	glGetFloatv(GL_SMOOTH_POINT_SIZE_RANGE,  (GLfloat*)&smoothPointSizeRange);
@@ -383,7 +381,7 @@ void CGlobalRendering::PostInit() {
 		// ATI seems to support GL_DEPTH_COMPONENT24 for static textures, but you can't render to them
 		/*
 		GLint state = 0;
-		glTexImage2D(GL_PROXY_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, 16, 16, 0, GL_LUMINANCE, GL_FLOAT, NULL);
+		glTexImage2D(GL_PROXY_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, 16, 16, 0, GL_LUMINANCE, GL_FLOAT, nullptr);
 		glGetTexLevelParameteriv(GL_PROXY_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &state);
 		support24bitDepthBuffers = (state > 0);
 		*/
@@ -404,23 +402,24 @@ void CGlobalRendering::PostInit() {
 	}
 
 	// print info
-	LOG(
-		"GL info:\n"
-		"\thaveARB: %i, haveGLSL: %i, ATI hacks: %i\n"
-		"\tFBO support: %i, NPOT-texture support: %i, 24bit Z-buffer support: %i\n"
-		"\tmaximum texture size: %i, compress MIP-map textures: %i\n"
-		"\tmaximum SmoothPointSize: %0.0f, maximum vec4 varying/attributes: %i/%i\n"
-		"\tmaximum drawbuffers: %i, maximum recommended indices/vertices: %i/%i\n"
-		"\tnumber of UniformBufferBindings: %i (%ikB)",
-		haveARB, haveGLSL, atiHacks,
-		FBO::IsSupported(), supportNPOTs, support24bitDepthBuffers,
-		maxTextureSize, compressTextures, maxSmoothPointSize,
-		glslMaxVaryings, glslMaxAttributes, glslMaxDrawBuffers,
-		glslMaxRecommendedIndices, glslMaxRecommendedVertices,
-		glslMaxUniformBufferBindings, glslMaxUniformBufferSize / 1024
-	);
+	LOG("[GR::%s]", __func__);
+	LOG("\tARB support: %i, GLSL support: %i, ATI hacks: %i", haveARB, haveGLSL, atiHacks);
+	LOG("\tFBO support: %i, NPOT-texture support: %i, 24bit Z-buffer support: %i", FBO::IsSupported(), supportNPOTs, support24bitDepthBuffers);
+	LOG("\tmax. FBO samples: %i, max. texture size: %i, compress MIP-map textures: %i", FBO::GetMaxSamples(), maxTextureSize, compressTextures);
+	LOG("\tmax. smooth point-size: %0.0f, max. vec4 varying/attributes: %i/%i", maxSmoothPointSize, glslMaxVaryings, glslMaxAttributes);
+	LOG("\tmax. draw-buffers: %i, max. recommended indices/vertices: %i/%i", glslMaxDrawBuffers, glslMaxRecommendedIndices, glslMaxRecommendedVertices);
+	LOG("\tmax. buffer-bindings: %i, max. block-size: %ikB", glslMaxUniformBufferBindings, glslMaxUniformBufferSize / 1024);
 
 	teamNanospray = configHandler->GetBool("TeamNanoSpray");
+}
+
+void CGlobalRendering::SwapBuffers()
+{
+	SCOPED_TIMER("Misc::SwapBuffers");
+	const spring_time pre = spring_now();
+	VSync.Delay();
+	SDL_GL_SwapWindow(window);
+	eventHandler.DbgTimingInfo(TIMING_SWAP, pre, spring_now());
 }
 
 void CGlobalRendering::SetFullScreen(bool configFullScreen, bool cmdLineWindowed, bool cmdLineFullScreen)
@@ -530,11 +529,11 @@ void CGlobalRendering::UpdateViewPortGeometry()
 		viewPosX = 0;
 		viewPosY = 0;
 	} else {
-		viewSizeX = winSizeX / 2;
+		viewSizeX = winSizeX >> 1;
 		viewSizeY = winSizeY;
 
 		if (dualScreenMiniMapOnLeft) {
-			viewPosX = winSizeX / 2;
+			viewPosX = winSizeX >> 1;
 			viewPosY = 0;
 		} else {
 			viewPosX = 0;
@@ -554,6 +553,11 @@ void CGlobalRendering::UpdatePixelGeometry()
 void CGlobalRendering::UpdateGLConfigs()
 {
 	const int lineSmoothing = configHandler->GetInt("SmoothLines");
+	const int pointSmoothing = configHandler->GetInt("SmoothPoints");
+	const float lodBias = configHandler->GetFloat("TextureLODBias");
+
+	VSync.SetInterval(configHandler->GetInt("VSync"));
+
 	if (lineSmoothing > 0) {
 		GLenum hint = GL_FASTEST;
 		if (lineSmoothing >= 3) {
@@ -567,7 +571,6 @@ void CGlobalRendering::UpdateGLConfigs()
 		glDisable(GL_LINE_SMOOTH);
 	}
 
-	const int pointSmoothing = configHandler->GetInt("SmoothPoints");
 	if (pointSmoothing > 0) {
 		GLenum hint = GL_FASTEST;
 		if (pointSmoothing >= 3) {
@@ -581,10 +584,29 @@ void CGlobalRendering::UpdateGLConfigs()
 		glDisable(GL_POINT_SMOOTH);
 	}
 
-	const float lodBias = configHandler->GetFloat("TextureLODBias");
 	if (math::fabs(lodBias) > 0.01f) {
 		glTexEnvf(GL_TEXTURE_FILTER_CONTROL, GL_TEXTURE_LOD_BIAS, lodBias);
 	} else {
 		glTexEnvf(GL_TEXTURE_FILTER_CONTROL, GL_TEXTURE_LOD_BIAS, 0.0f);
 	}
 }
+
+/**
+ * @brief multisample verify
+ * @return whether verification passed
+ *
+ * Tests whether FSAA was actually enabled
+ */
+bool CGlobalRendering::EnableFSAA() const
+{
+	if (fsaaLevel == 0)
+		return false;
+	if (!GLEW_ARB_multisample)
+		return false;
+	GLint buffers = 0;
+	GLint samples = 0;
+	glGetIntegerv(GL_SAMPLE_BUFFERS_ARB, &buffers);
+	glGetIntegerv(GL_SAMPLES_ARB, &samples);
+	return (buffers != 0 && samples != 0);
+}
+

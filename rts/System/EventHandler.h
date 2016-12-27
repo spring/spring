@@ -21,7 +21,6 @@ class CEventHandler
 {
 	public:
 		CEventHandler();
-		~CEventHandler();
 
 		void ResetState();
 		void SetupEvents();
@@ -225,7 +224,7 @@ class CEventHandler
 		bool GroupChanged(int groupID);
 
 		bool GameSetup(const std::string& state, bool& ready,
-		               const map<int, std::string>& playerStates);
+		               const std::map<int, std::string>& playerStates);
 		void DownloadQueued(int ID, const string& archiveName, const string& archiveType);
 		void DownloadStarted(int ID);
 		void DownloadFinished(int ID);
@@ -277,7 +276,7 @@ class CEventHandler
 		/// @}
 
 	private:
-		typedef vector<CEventClient*> EventClientList;
+		typedef std::vector<CEventClient*> EventClientList;
 
 		enum EventPropertyBits {
 			MANAGED_BIT  = (1 << 0), // managed by eventHandler
@@ -303,7 +302,8 @@ class CEventHandler
 				int propBits;
 		};
 
-		typedef map<std::string, EventInfo> EventMap;
+		typedef std::pair<std::string, EventInfo> EventPair;
+		typedef std::vector<EventPair> EventMap;
 
 	private:
 		void SetupEvent(const std::string& ciName,

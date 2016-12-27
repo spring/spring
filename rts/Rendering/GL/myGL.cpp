@@ -47,30 +47,31 @@ CVertexArray* GetVertexArray()
 
 void PrintAvailableResolutions()
 {
+	LOG("[GL::%s]", __func__);
+
 	// Get available fullscreen/hardware modes
-	const int numdisplays = SDL_GetNumVideoDisplays();
-	for(int k=0; k < numdisplays; ++k) {
-		std::string modes;
+	const int numDisplays = SDL_GetNumVideoDisplays();
+
+	for (int k = 0; k < numDisplays; ++k) {
+		std::vector<SDL_DisplayMode> modes(std::max(0, SDL_GetNumDisplayModes(k)));
+
+		if (modes.empty()) {
+			LOG("\tdisplay: %d, bounds: N/A, FS modes: N/A", k + 1);
+			continue;
+		}
+
 		SDL_Rect rect;
-		const int nummodes = SDL_GetNumDisplayModes(k);
 		SDL_GetDisplayBounds(k, &rect);
 
-		std::set<int2> resolutions;
-		for (int i = 0; i < nummodes; ++i) {
-			SDL_DisplayMode mode;
-			SDL_GetDisplayMode(k, i, &mode);
-			resolutions.insert(int2(mode.w, mode.h));
+		for (size_t i = 0; i < modes.size(); ++i) {
+			SDL_GetDisplayMode(k, i, &modes[i]);
 		}
-		for (const int2& res: resolutions) {
-			if (!modes.empty()) {
-				modes += ", ";
-			}
-			modes += IntToString(res.x) + "x" + IntToString(res.y);
+
+		LOG("\tdisplay: %d, bounds: {x=%d, y=%d, w=%d, h=%d}, FS modes:", k + 1, rect.x, rect.y, rect.w, rect.h);
+
+		for (size_t i = 0; i < modes.size(); ++i) {
+			LOG("\t\t[%2i] %ix%ix%ibpp@%iHz", int(i + 1), modes[i].w, modes[i].h, SDL_BITSPERPIXEL(modes[i].format), modes[i].refresh_rate);
 		}
-		if (nummodes < 1) {
-			modes = "NONE";
-		}
-		LOG("Supported Video modes on Display %d x:%d y:%d %dx%d:\n\t%s", k+1,rect.x, rect.y, rect.w, rect.h, modes.c_str());
 	}
 }
 
@@ -288,6 +289,7 @@ static void ShowCrappyGpuWarning(const char* glVendor, const char* glRenderer)
 //FIXME move most of this to globalRendering's ctor?
 void LoadExtensions()
 {
+	glewExperimental = true;
 	glewInit();
 
 	SDL_version sdlVersionCompiled;
@@ -315,27 +317,28 @@ void LoadExtensions()
 	}
 
 	// log some useful version info
-	LOG("SDL version:  linked %d.%d.%d; compiled %d.%d.%d", sdlVersionLinked.major, sdlVersionLinked.minor, sdlVersionLinked.patch, sdlVersionCompiled.major, sdlVersionCompiled.minor, sdlVersionCompiled.patch);
-	LOG("GL version:   %s", glVersion);
-	LOG("GL vendor:    %s", glVendor);
-	LOG("GL renderer:  %s", glRenderer);
-	LOG("GLSL version: %s", glslVersion);
-	LOG("GLEW version: %s", glewVersion);
-	LOG("Video RAM:    %s", glVidMemStr);
-	LOG("SwapInterval: %d", SDL_GL_GetSwapInterval());
+	LOG("[GL::%s]", __func__);
+	LOG("\tSDL version:  linked %d.%d.%d; compiled %d.%d.%d", sdlVersionLinked.major, sdlVersionLinked.minor, sdlVersionLinked.patch, sdlVersionCompiled.major, sdlVersionCompiled.minor, sdlVersionCompiled.patch);
+	LOG("\tGL version:   %s", glVersion);
+	LOG("\tGL vendor:    %s", glVendor);
+	LOG("\tGL renderer:  %s", glRenderer);
+	LOG("\tGLSL version: %s", glslVersion);
+	LOG("\tGLEW version: %s", glewVersion);
+	LOG("\tVideo RAM:    %s", glVidMemStr);
+	LOG("\tSwapInterval: %d", SDL_GL_GetSwapInterval());
 
 	ShowCrappyGpuWarning(glVendor, glRenderer);
 
 	std::string missingExts = "";
-	if (!GLEW_ARB_multitexture) {
+
+	if (!GLEW_ARB_multitexture)
 		missingExts += " GL_ARB_multitexture";
-	}
-	if (!GLEW_ARB_texture_env_combine) {
+
+	if (!GLEW_ARB_texture_env_combine)
 		missingExts += " GL_ARB_texture_env_combine";
-	}
-	if (!GLEW_ARB_texture_compression) {
+
+	if (!GLEW_ARB_texture_compression)
 		missingExts += " GL_ARB_texture_compression";
-	}
 
 	if (!missingExts.empty()) {
 		static const unsigned int errorMsg_maxSize = 2048;

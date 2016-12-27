@@ -29,13 +29,13 @@ public:
 
 private:
 	bool Initialize();                              //!< Initialize app
-	void ParseCmdLine(int argc, char* argv[]);          //!< Parse command line
+	void ParseCmdLine(int argc, char* argv[]);      //!< Parse command line
 	void Startup();                                 //!< Parses startup data (script etc.) and starts SelectMenu or PreGame
-	void StartScript(const std::string& script); //!< Starts game from specified script.txt
+	void StartScript(const std::string& script);    //!< Starts game from specified script.txt
 	void LoadSpringMenu();                          //!< Load menu (old or luaified depending on start parameters)
 	bool InitWindow(const char* title);             //!< Initializes window
 
-	int Update();                                   //!< Run simulation and draw
+	bool Update();                                  //!< Run simulation and draw
 
 	static void InitOpenGL();                       //!< Initializes OpenGL
 	static void LoadFonts();                        //!< Initialize glFonts (font & smallFont)

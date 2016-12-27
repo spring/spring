@@ -244,7 +244,6 @@ FBO::FBO() : fboId(0), reloadOnAltTab(false)
 		} else {
 			maxSamples = 0;
 		}
-		LOG_L(L_INFO, "FBO::maxSamples: %d", maxSamples);
 	}
 
 	glGenFramebuffersEXT(1, &fboId);

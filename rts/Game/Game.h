@@ -101,13 +101,14 @@ public:
 	void ReloadGame();
 	void SaveGame(const std::string& filename, bool overwrite, bool usecreg);
 
-	void ResizeEvent();
+	void ResizeEvent() override;
 
 	void SetDrawMode(GameDrawMode mode) { gameDrawMode = mode; }
 	GameDrawMode GetDrawMode() const { return gameDrawMode; }
 
 private:
-	bool Draw();
+	bool Draw() override;
+	bool Update() override;
 	bool UpdateUnsynced(const spring_time currentTime);
 
 	void DrawSkip(bool blackscreen = true);
@@ -119,11 +120,11 @@ private:
 	void HandleChatMsg(const ChatMessage& msg);
 
 	/// Called when a key is released by the user
-	int KeyReleased(int k);
+	int KeyReleased(int k) override;
 	/// Called when the key is pressed by the user (can be called several times due to key repeat)
-	int KeyPressed(int k, bool isRepeat);
+	int KeyPressed(int k, bool isRepeat) override;
 	///
-	int TextInput(const std::string& utf8Text);
+	int TextInput(const std::string& utf8Text) override;
 
 	bool ActionPressed(unsigned int key, const Action& action, bool isRepeat);
 	bool ActionReleased(const Action& action);
@@ -141,7 +142,6 @@ private:
 	void UpdateNetMessageProcessingTimeLeft();
 	void SimFrame();
 	void StartPlaying();
-	bool Update();
 
 public:
 	GameDrawMode gameDrawMode;
