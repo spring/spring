@@ -289,7 +289,9 @@ static void ShowCrappyGpuWarning(const char* glVendor, const char* glRenderer)
 //FIXME move most of this to globalRendering's ctor?
 void LoadExtensions()
 {
+	#ifndef HEADLESS
 	glewExperimental = true;
+	#endif
 	glewInit();
 
 	SDL_version sdlVersionCompiled;
