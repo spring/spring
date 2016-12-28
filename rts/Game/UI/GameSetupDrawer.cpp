@@ -19,30 +19,29 @@
 
 #include <cassert>
 #include <string>
-#include <map>
 
 
-GameSetupDrawer* GameSetupDrawer::instance = NULL;
+GameSetupDrawer* GameSetupDrawer::instance = nullptr;
 
 
 void GameSetupDrawer::Enable()
 {
-	assert(instance == NULL);
+	assert(instance == nullptr);
 	assert(gameSetup);
 
 	instance = new GameSetupDrawer();
 }
 
-
 void GameSetupDrawer::Disable()
 {
 	delete instance;
-	instance = NULL;
+	instance = nullptr;
 }
+
 
 void GameSetupDrawer::StartCountdown(unsigned time)
 {
-	if (instance) {
+	if (instance != nullptr) {
 		instance->lastTick = spring_gettime(); //FIXME
 		instance->readyCountdown = spring_msecs(time);
 	}
@@ -113,10 +112,10 @@ void GameSetupDrawer::Draw()
 	// if choosing in-game, selector remains non-NULL
 	// so long as a position has not been picked yet
 	// and deletes itself afterwards
-	bool playerHasReadied = (CStartPosSelecter::GetSelector() == NULL);
+	bool playerHasReadied = (CStartPosSelecter::GetSelector() == nullptr);
 
 	if (eventHandler.GameSetup(startState, playerHasReadied, playerStates)) {
-		if (CStartPosSelecter::GetSelector() != NULL) {
+		if (CStartPosSelecter::GetSelector() != nullptr) {
 			CStartPosSelecter::GetSelector()->ShowReadyBox(false);
 
 			if (playerHasReadied) {
@@ -132,7 +131,7 @@ void GameSetupDrawer::Draw()
 	}
 
 	// LuaUI doesn't want to draw, keep showing the box
-	if (CStartPosSelecter::GetSelector() != NULL) {
+	if (CStartPosSelecter::GetSelector() != nullptr) {
 		CStartPosSelecter::GetSelector()->ShowReadyBox(true);
 	}
 
@@ -155,8 +154,8 @@ void GameSetupDrawer::Draw()
 		const float yPos = 0.5f - (0.5f * yScale * numPlayers) + (yScale * a);
 		const float xPos = 10.0f * globalRendering->pixelX;
 
-		const CPlayer* player = NULL;
-		const float4* color = NULL;
+		const CPlayer* player = nullptr;
+		const float4* color = nullptr;
 
 		std::string name;
 
@@ -182,7 +181,7 @@ void GameSetupDrawer::Draw()
 			}
 		}
 
-		font->SetColors(color, NULL);
+		font->SetColors(color, nullptr);
 		font->glPrint(xPos, yPos, fontSize, FONT_OUTLINE | FONT_NORM, name);
 	}
 	font->End();
