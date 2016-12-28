@@ -18,7 +18,7 @@
 #include "System/Log/ILog.h"
 #include "System/Util.h"
 
-static const std::unordered_map<std::string, LuaMatType> matNameMap = {
+static const spring::unordered_map<std::string, LuaMatType> matNameMap = {
 	{"alpha",          LUAMAT_ALPHA},
 	{"opaque",         LUAMAT_OPAQUE},
 	{"alpha_reflect",  LUAMAT_ALPHA_REFLECT},

@@ -36,9 +36,9 @@
 
 
 // for "$info:los", etc
-static std::unordered_map<size_t, LuaMatTexture> luaMatTextures;
+static spring::unordered_map<size_t, LuaMatTexture> luaMatTextures;
 
-static const std::unordered_map<std::string, LuaMatTexture::Type> luaMatTexTypeMap = {
+static const spring::unordered_map<std::string, LuaMatTexture::Type> luaMatTexTypeMap = {
 	// atlases
 	{"$units",  LuaMatTexture::LUATEX_3DOTEXTURE},
 	{"$units1", LuaMatTexture::LUATEX_3DOTEXTURE},
@@ -108,7 +108,7 @@ static const std::unordered_map<std::string, LuaMatTexture::Type> luaMatTexTypeM
 
 };
 
-static const std::unordered_map<std::string, LuaMatrixType> luaMatrixTypeMap = {
+static const spring::unordered_map<std::string, LuaMatrixType> luaMatrixTypeMap = {
 	{"view",                  LUAMATRICES_VIEW                 },
 	{"projection",            LUAMATRICES_PROJECTION           },
 	{"viewprojection",        LUAMATRICES_VIEWPROJECTION       },

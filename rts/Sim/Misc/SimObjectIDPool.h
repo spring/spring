@@ -3,9 +3,8 @@
 #ifndef SIMOBJECT_IDPOOL_H
 #define SIMOBJECT_IDPOOL_H
 
-#include <unordered_map>
 #include "System/creg/creg_cond.h"
-
+#include "System/UnorderedMap.hpp"
 
 class CSolidObject;
 class SimObjectIDPool {
@@ -30,7 +29,7 @@ private:
 
 private:
 	typedef std::pair<unsigned int, unsigned int> IDPair;
-	typedef std::unordered_map<unsigned int, unsigned int> IDMap;
+	typedef spring::unordered_map<unsigned int, unsigned int> IDMap;
 
 	IDMap liveIdentToIndexMap;
 	IDMap liveIndexToIdentMap;

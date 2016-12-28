@@ -6,8 +6,8 @@
 #include "MobileCAI.h"
 #include "Sim/Units/BuildInfo.h"
 #include "System/Misc/BitwiseEnum.h"
+#include "System/UnorderedSet.hpp"
 
-#include <unordered_set>
 #include <string>
 
 class CUnit;
@@ -63,11 +63,11 @@ public:
 	bool IsInBuildRange(const float3& pos, const float radius) const;
 
 public:
-	std::unordered_set<int> buildOptions;
+	spring::unordered_set<int> buildOptions;
 
-	static std::unordered_set<int> reclaimers;
-	static std::unordered_set<int> featureReclaimers;
-	static std::unordered_set<int> resurrecters;
+	static spring::unordered_set<int> reclaimers;
+	static spring::unordered_set<int> featureReclaimers;
+	static spring::unordered_set<int> resurrecters;
 
 private:
 	enum ReclaimOptions {

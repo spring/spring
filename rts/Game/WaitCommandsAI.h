@@ -3,13 +3,13 @@
 #ifndef WAIT_COMMANDS_AI_H
 #define WAIT_COMMANDS_AI_H
 
-#include <map>
-#include <unordered_set>
 #include <deque>
 #include <string>
 
 #include "System/Object.h"
 #include "System/Misc/SpringTime.h"
+#include "System/UnorderedMap.hpp"
+#include "System/UnorderedSet.hpp"
 
 class float3;
 class CObject;
@@ -26,7 +26,7 @@ class CWaitCommandsAI {
 	CR_DECLARE_SUB(GatherWait)
 
 	public:
-		typedef std::unordered_set<int> CUnitSet;
+		typedef spring::unordered_set<int> CUnitSet;
 
 		CWaitCommandsAI();
 		~CWaitCommandsAI();
@@ -58,7 +58,7 @@ class CWaitCommandsAI {
 
 	private:
 		typedef int KeyType;
-		typedef std::map<KeyType, Wait*> WaitMap;
+		typedef spring::unordered_map<KeyType, Wait*> WaitMap;
 		WaitMap waitMap;
 		WaitMap unackedMap;
 

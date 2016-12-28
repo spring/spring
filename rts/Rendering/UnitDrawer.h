@@ -5,13 +5,13 @@
 
 #include <array>
 #include <vector>
-#include <unordered_map>
 
 #include "Rendering/GL/LightHandler.h"
 #include "Rendering/Models/3DModel.h"
 #include "Rendering/UnitDrawerState.hpp"
 #include "System/EventClient.h"
 #include "System/type2.h"
+#include "System/UnorderedMap.hpp"
 
 struct SolidObjectDef;
 struct UnitDef;
@@ -278,7 +278,7 @@ private:
 	/// units that are only rendered as icons this frame
 	std::vector<CUnit*> iconUnits;
 
-	std::unordered_map<icon::CIconData*, std::vector<const CUnit*> > unitsByIcon;
+	spring::unordered_map<icon::CIconData*, std::vector<const CUnit*> > unitsByIcon;
 
 	// [0] := fallback shader-less rendering path
 	// [1] := default shader-driven rendering path

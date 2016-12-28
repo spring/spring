@@ -8,10 +8,10 @@
 #include <string>
 #include <memory>
 #include <vector>
-#include <unordered_map>
 
 #include "ShaderStates.h"
 #include "Lua/LuaOpenGLUtils.h"
+#include "System/UnorderedMap.hpp"
 
 
 
@@ -247,8 +247,8 @@ namespace Shader {
 		std::vector<IShaderObject*> shaderObjs;
 
 	public:
-		std::unordered_map<std::size_t, UniformState, fast_hash> uniformStates;
-		std::unordered_map<int, LuaMatTexture> luaTextures;
+		spring::unordered_map<std::size_t, UniformState, fast_hash> uniformStates;
+		spring::unordered_map<int, LuaMatTexture> luaTextures;
 	};
 
 	struct NullProgramObject: public Shader::IProgramObject {

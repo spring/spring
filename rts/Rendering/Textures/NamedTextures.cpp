@@ -2,8 +2,6 @@
 
 // must be included before streflop! else we get streflop/cmath resolve conflicts in its hash implementation files
 #include <vector>
-#include <unordered_map>
-
 #include "NamedTextures.h"
 
 #include "Rendering/GL/myGL.h"
@@ -13,9 +11,11 @@
 #include "System/type2.h"
 #include "System/Log/ILog.h"
 #include "System/Threading/SpringThreading.h"
+#include "System/UnorderedMap.hpp"
 
 
-typedef std::unordered_map<std::string, CNamedTextures::TexInfo> TEXMAP;
+
+typedef spring::unordered_map<std::string, CNamedTextures::TexInfo> TEXMAP;
 
 namespace CNamedTextures {
 

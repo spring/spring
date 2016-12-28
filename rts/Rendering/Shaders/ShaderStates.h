@@ -3,13 +3,13 @@
 #ifndef SPRING_SHADER_STATES_HDR
 #define SPRING_SHADER_STATES_HDR
 
-#include "Rendering/GL/myGL.h"
-
 #include <cinttypes>
 #include <string.h>
 #include <string>
-#include <unordered_map>
 #include <sstream>
+
+#include "Rendering/GL/myGL.h"
+#include "System/UnorderedMap.hpp"
 
 // NOTE:
 //   the hash used here collides too much on certain inputs (eg. team-color
@@ -317,7 +317,7 @@ namespace Shader {
 		int updates;
 		int lastUpdates;
 		int lastHash;
-		std::unordered_map<std::string, std::string> flags;
+		spring::unordered_map<std::string, std::string> flags;
 		//std::set<std::string> skipAutoUpdate;
 	};
 }

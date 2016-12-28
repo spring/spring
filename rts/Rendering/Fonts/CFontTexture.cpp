@@ -20,11 +20,12 @@
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Textures/Bitmap.h"
+#include "System/Exceptions.h"
 #include "System/Log/ILog.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/Threading/SpringThreading.h"
-#include "System/Exceptions.h"
+#include "System/UnorderedMap.hpp"
 #include "System/Util.h"
 #include "System/float4.h"
 #include "System/bitops.h"
@@ -82,9 +83,9 @@ struct FontFace {
 	std::shared_ptr<SP_Byte> memory;
 };
 
-static std::unordered_set<CFontTexture*> allFonts;
-static std::unordered_map<std::string, std::weak_ptr<FontFace>> fontCache;
-static std::unordered_map<std::string, std::weak_ptr<SP_Byte>> fontMemCache;
+static spring::unordered_set<CFontTexture*> allFonts;
+static spring::unordered_map<std::string, std::weak_ptr<FontFace>> fontCache;
+static spring::unordered_map<std::string, std::weak_ptr<SP_Byte>> fontMemCache;
 static spring::recursive_mutex m;
 
 
@@ -467,7 +468,7 @@ void CFontTexture::LoadBlock(char32_t start, char32_t end)
 {
 	std::lock_guard<spring::recursive_mutex> lk(m);
 
-	// generate list of wnated glyphs
+	// generate list of wanted glyphs
 	std::list<char32_t> map;
 	for(char32_t i=start; i<end; ++i)
 		map.push_back(i);

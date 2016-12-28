@@ -3,13 +3,12 @@
 #ifndef S3O_TEXTURE_HANDLER_H
 #define S3O_TEXTURE_HANDLER_H
 
-#include <unordered_map>
 #include <string>
 #include <vector>
 
 #include "Bitmap.h"
-
 #include "System/Threading/SpringThreading.h"
+#include "System/UnorderedMap.hpp"
 
 struct S3DModel;
 class CBitmap;
@@ -61,9 +60,9 @@ private:
 	unsigned int InsertTextureMat(const S3DModel* model);
 
 private:
-	typedef std::unordered_map<std::string, CachedS3OTex> TextureCache;
-	typedef std::unordered_map<std::string, CBitmap> BitmapCache;
-	typedef std::unordered_map<std::uint64_t, unsigned int> TextureTable;
+	typedef spring::unordered_map<std::string, CachedS3OTex> TextureCache;
+	typedef spring::unordered_map<std::string, CBitmap> BitmapCache;
+	typedef spring::unordered_map<std::uint64_t, unsigned int> TextureTable;
 
 	TextureCache textureCache; // stores individual primary- and secondary-textures by name
 	TextureTable textureTable; // stores (primary, secondary) texture-pairs by unique ident

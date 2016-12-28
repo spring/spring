@@ -5,6 +5,7 @@
 
 #include <vector>
 #include <deque>
+
 #include "Map/Ground.h"
 #include "Sim/Misc/LosMap.h"
 #include "Sim/Objects/WorldObject.h"
@@ -12,7 +13,7 @@
 #include "System/type2.h"
 #include "System/Rectangle.h"
 #include "System/EventClient.h"
-#include <boost/unordered_map.hpp>
+#include "System/UnorderedMap.hpp"
 
 
 /**
@@ -167,7 +168,7 @@ public:
 	static size_t cacheHits;
 	static size_t cacheReactivated;
 
-	boost::unordered_multimap<int, SLosInstance*> instanceHash; // we intentionally use boost version here, gcc's one uses a linked listed and so is much slower
+	spring::unordered_multimap<int, SLosInstance*> instanceHash;
 	std::deque<SLosInstance> instances;
 	std::deque<int> freeIDs;
 

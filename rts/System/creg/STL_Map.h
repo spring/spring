@@ -4,9 +4,7 @@
 #define CR_MAP_TYPE_IMPL_H
 
 #include "creg_cond.h"
-
-#include <unordered_map>
-#define SPRING_HASH_MAP std::unordered_map
+#include "System/UnorderedMap.hpp"
 
 #include <map>
 
@@ -93,9 +91,9 @@ namespace creg
 	};
 	// Hash map
 	template<typename TKey, typename TValue>
-	struct DeduceType<SPRING_HASH_MAP<TKey, TValue> > {
+	struct DeduceType<spring::unordered_map<TKey, TValue> > {
 		static std::shared_ptr<IType> Get() {
-			return std::shared_ptr<IType>(new MapType<SPRING_HASH_MAP<TKey, TValue> >(DeduceType<TKey>::Get(), DeduceType<TValue>::Get()));
+			return std::shared_ptr<IType>(new MapType<spring::unordered_map<TKey, TValue> >(DeduceType<TKey>::Get(), DeduceType<TValue>::Get()));
 		}
 	};
 

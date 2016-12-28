@@ -1,10 +1,8 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include <cassert>
 
 #include "BuilderCAI.h"
-
-#include <assert.h>
-
 #include "ExternalAI/EngineOutHandler.h"
 #include "Game/GameHelper.h"
 #include "Game/SelectedUnitsHandler.h"
@@ -54,9 +52,9 @@ CR_REG_METADATA(CBuilderCAI , (
 ))
 
 // not adding to members, should repopulate itself
-std::unordered_set<int> CBuilderCAI::reclaimers;
-std::unordered_set<int> CBuilderCAI::featureReclaimers;
-std::unordered_set<int> CBuilderCAI::resurrecters;
+spring::unordered_set<int> CBuilderCAI::reclaimers;
+spring::unordered_set<int> CBuilderCAI::featureReclaimers;
+spring::unordered_set<int> CBuilderCAI::resurrecters;
 
 
 static std::string GetUnitDefBuildOptionToolTip(const UnitDef* ud, bool disabled) {

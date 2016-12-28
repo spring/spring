@@ -14,8 +14,7 @@
 #include "LuaTextures.h"
 
 #include "System/Log/ILog.h"
-
-#include <unordered_map>
+#include "System/UnorderedMap.hpp"
 
 
 /******************************************************************************/
@@ -95,7 +94,7 @@ static GLenum GetBindingEnum(GLenum target)
 
 static GLenum ParseAttachment(const std::string& name)
 {
-	static const std::unordered_map<std::string, GLenum> attachMap = {
+	static const spring::unordered_map<std::string, GLenum> attachMap = {
 		{"depth"  , GL_DEPTH_ATTACHMENT_EXT},
 		{"stencil", GL_STENCIL_ATTACHMENT_EXT},
 		{"color0" , GL_COLOR_ATTACHMENT0_EXT},

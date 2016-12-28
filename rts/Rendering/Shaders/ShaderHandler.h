@@ -4,8 +4,9 @@
 #define SPRING_SHADERHANDLER_HDR
 
 #include <string>
-#include <unordered_map>
+
 #include "Rendering/GL/myGL.h" //GLuint
+#include "System/UnorderedMap.hpp"
 
 namespace Shader {
 	struct IProgramObject;
@@ -14,9 +15,9 @@ namespace Shader {
 
 class CShaderHandler {
 public:
-	typedef std::unordered_map<std::string, Shader::IProgramObject*> ProgramObjMap;
-	typedef std::unordered_map<std::string, Shader::IProgramObject*>::iterator ProgramObjMapIt;
-	typedef std::unordered_map<std::string, ProgramObjMap> ProgramTable;
+	typedef spring::unordered_map<std::string, Shader::IProgramObject*> ProgramObjMap;
+	typedef spring::unordered_map<std::string, Shader::IProgramObject*>::iterator ProgramObjMapIt;
+	typedef spring::unordered_map<std::string, ProgramObjMap> ProgramTable;
 
 	~CShaderHandler();
 
@@ -67,7 +68,7 @@ public:
 		}
 
 	private:
-		std::unordered_map<size_t, GLuint> cache;
+		spring::unordered_map<size_t, GLuint> cache;
 	};
 
 	const ShaderCache& GetShaderCache() const { return shaderCache; }

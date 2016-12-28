@@ -1,21 +1,22 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include <cstdio>
+#include <cstdarg>
+#include <cassert>
+
+#include <memory>
+#include <stack>
+#include <string>
+
+#include <map>
+#include <set>
+
 #include "DefaultFilter.h"
 
 #include "Level.h"
 #include "Section.h"
 #include "ILog.h"
-
-#include <cstdio>
-#include <cstdarg>
-#include <cassert>
-
-#include <map>
-#include <unordered_map>
-#include <memory>
-#include <set>
-#include <stack>
-#include <string>
+#include "System/UnorderedMap.hpp"
 
 
 #ifdef __cplusplus
@@ -39,6 +40,7 @@ struct log_filter_section_compare {
 #ifdef __cplusplus
 }
 #endif
+
 
 namespace {
 	typedef std::set<const char*, log_filter_section_compare> secSet_t;
@@ -269,16 +271,16 @@ void log_frontend_cleanup() {
 
 
 
-std::set<const char*> log_filter_section_getRegisteredSet()
+spring::unordered_set<const char*> log_filter_section_getRegisteredSet()
 {
 	const auto& registeredSections = log_filter_getRegisteredSections();
-	std::set<const char*> outSet(registeredSections.begin(), registeredSections.end());
+	const spring::unordered_set<const char*> outSet(registeredSections.begin(), registeredSections.end());
 	return outSet;
 }
 
 const char* log_filter_section_getSectionCString(const char* section_cstr_tmp)
 {
-	static std::unordered_map<std::string, std::unique_ptr<const char[]>> cache;
+	static spring::unordered_map<std::string, std::unique_ptr<const char[]>> cache;
 
 	const auto str = std::string(section_cstr_tmp);
 	const auto it = cache.find(str);

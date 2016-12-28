@@ -4,11 +4,11 @@
 #define GROUP_H
 
 #include <vector>
-#include <unordered_set>
 
 #include "Sim/Units/CommandAI/Command.h"
 #include "System/creg/creg_cond.h"
 #include "System/float3.h"
+#include "System/UnorderedSet.hpp"
 
 class CUnit;
 class CFeature;
@@ -46,7 +46,7 @@ private:
 
 public:
 	int id;
-	std::unordered_set<int> units;
+	spring::unordered_set<int> units;
 
 private:
 	CGroupHandler* handler;

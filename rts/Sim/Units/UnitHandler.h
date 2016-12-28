@@ -49,7 +49,7 @@ public:
 	CUnit* GetUnitUnsafe(unsigned int unitID) const { return units[unitID]; }
 	CUnit* GetUnit(unsigned int unitID) const { return (unitID < MaxUnits()? units[unitID]: nullptr); }
 
-	const std::unordered_map<unsigned int, CBuilderCAI*>& GetBuilderCAIs() const { return builderCAIs; }
+	const spring::unordered_map<unsigned int, CBuilderCAI*>& GetBuilderCAIs() const { return builderCAIs; }
 
 public:
 	// FIXME
@@ -67,7 +67,7 @@ private:
 	SimObjectIDPool idPool;
 
 	std::vector<CUnit*> unitsToBeRemoved;              ///< units that will be removed at start of next update
-	std::unordered_map<unsigned int, CBuilderCAI*> builderCAIs;
+	spring::unordered_map<unsigned int, CBuilderCAI*> builderCAIs;
 
 	size_t activeSlowUpdateUnit;  ///< first unit of batch that will be SlowUpdate'd this frame
 	size_t activeUpdateUnit;  ///< first unit of batch that will be SlowUpdate'd this frame

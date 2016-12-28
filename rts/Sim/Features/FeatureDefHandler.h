@@ -5,9 +5,9 @@
 
 #include <string>
 #include <vector>
-#include <unordered_map>
 
 #include "System/Misc/NonCopyable.h"
+#include "System/UnorderedMap.hpp"
 
 
 class LuaTable;
@@ -30,7 +30,7 @@ public:
 		return &featureDefsVector[id];
 	}
 
-	const std::unordered_map<std::string, int>& GetFeatureDefs() const { return featureDefs; }
+	const spring::unordered_map<std::string, int>& GetFeatureDefs() const { return featureDefs; }
 
 private:
 
@@ -43,7 +43,7 @@ private:
 	void AddFeatureDef(const std::string& name, FeatureDef* feature, bool isDefaultFeature);
 
 private:
-	std::unordered_map<std::string, int> featureDefs;
+	spring::unordered_map<std::string, int> featureDefs;
 	std::vector<FeatureDef> featureDefsVector;
 };
 

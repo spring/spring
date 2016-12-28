@@ -3,9 +3,10 @@
 #ifndef IMODELPARSER_H
 #define IMODELPARSER_H
 
-#include <unordered_map>
 #include <vector>
 #include <string>
+
+#include "System/UnorderedMap.hpp"
 #include "System/Threading/SpringThreading.h"
 
 
@@ -38,9 +39,9 @@ public:
 	void PreloadModel(const std::string& name);
 
 public:
-	typedef std::unordered_map<std::string, unsigned int> ModelMap; // "armflash.3do" --> id
-	typedef std::unordered_map<std::string, unsigned int> FormatMap; // "3do" --> MODELTYPE_3DO
-	typedef std::unordered_map<unsigned int, IModelParser*> ParserMap; // MODELTYPE_3DO --> parser
+	typedef spring::unordered_map<std::string, unsigned int> ModelMap; // "armflash.3do" --> id
+	typedef spring::unordered_map<std::string, unsigned int> FormatMap; // "3do" --> MODELTYPE_3DO
+	typedef spring::unordered_map<unsigned int, IModelParser*> ParserMap; // MODELTYPE_3DO --> parser
 
 private:
 	S3DModel* LoadCachedModel(const std::string& name, bool preload);

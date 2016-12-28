@@ -12,9 +12,9 @@
 #include "System/Log/Level.h"
 #include "System/Log/LogUtil.h"
 #include "System/Platform/Misc.h"
+#include "System/UnorderedMap.hpp"
 
 #include <string>
-#include <set>
 #include <vector>
 #include <iostream>
 #include <fstream>
@@ -39,8 +39,8 @@ CONFIG(int, LogFlushLevel).defaultValue(LOG_LEVEL_ERROR)
 /******************************************************************************/
 /******************************************************************************/
 
-static std::map<std::string, int> GetEnabledSections() {
-	std::map<std::string, int> sectionLevelMap;
+static spring::unordered_map<std::string, int> GetEnabledSections() {
+	spring::unordered_map<std::string, int> sectionLevelMap;
 
 	std::string enabledSections = ",";
 	std::string envSections = ",";
@@ -131,11 +131,11 @@ static std::map<std::string, int> GetEnabledSections() {
 static void InitializeLogSections()
 {
 	// the new systems (ILog.h) log-sub-systems are called sections
-	const std::set<const char*>& registeredSections = log_filter_section_getRegisteredSet();
+	const auto& registeredSections = log_filter_section_getRegisteredSet();
 
 	// enabled sections is a superset of the ones specified in the
 	// environment and the ones specified in the configuration file.
-	const std::map<std::string, int>& enabledSections = GetEnabledSections();
+	const auto& enabledSections = GetEnabledSections();
 
 	std::stringstream availableLogSectionsStr;
 	std::stringstream enabledLogSectionsStr;

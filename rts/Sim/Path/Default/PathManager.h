@@ -3,12 +3,12 @@
 #ifndef PATHMANAGER_H
 #define PATHMANAGER_H
 
-#include <unordered_map>
 #include <cinttypes>
 
 #include "Sim/Path/IPathManager.h"
 #include "IPath.h"
 #include "PathFinderDef.h"
+#include "System/UnorderedMap.hpp"
 
 class CSolidObject;
 class CPathFinder;
@@ -146,7 +146,7 @@ private:
 	PathFlowMap* pathFlowMap;
 	PathHeatMap* pathHeatMap;
 
-	std::unordered_map<unsigned int, MultiPath*> pathMap;
+	spring::unordered_map<unsigned int, MultiPath*> pathMap;
 	unsigned int nextPathID;
 };
 

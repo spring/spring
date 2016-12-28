@@ -4,9 +4,7 @@
 #define CR_SET_TYPE_IMPL_H
 
 #include "creg_cond.h"
-
-#include <unordered_set>
-#define SPRING_HASH_SET std::unordered_set
+#include "System/UnorderedSet.hpp"
 
 #include <set>
 
@@ -65,9 +63,9 @@ namespace creg
 	};
 	// Hash set
 	template<typename T>
-	struct DeduceType<SPRING_HASH_SET<T> > {
+	struct DeduceType<spring::unordered_set<T> > {
 		static std::shared_ptr<IType> Get() {
-			return std::shared_ptr<IType>(new SetType<SPRING_HASH_SET<T> >(DeduceType<T>::Get()));
+			return std::shared_ptr<IType>(new SetType<spring::unordered_set<T> >(DeduceType<T>::Get()));
 		}
 	};
 }

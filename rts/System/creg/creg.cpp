@@ -5,12 +5,12 @@
  * Classes for serialization of registrated class instances
  */
 
-#include <unordered_map>
 #include <vector>
 #include <string>
 #include <string.h>
 
 #include "creg_cond.h"
+#include "System/UnorderedMap.hpp"
 #include "System/Util.h"
 #include "System/Sync/HsiehHash.h"
 
@@ -21,7 +21,7 @@ using namespace creg;
 // some local statics, needed cause we work with global static vars
 // -------------------------------------------------------------------
 
-static std::unordered_map<const Class*, std::vector<Class*>>& derivedClasses()
+static spring::unordered_map<const Class*, std::vector<Class*>>& derivedClasses()
 {
 	// note: we cannot save this in `class Class`, cause those are created with
 	//   global statics, and those have an arbitrary init order. And when a Class
@@ -30,13 +30,13 @@ static std::unordered_map<const Class*, std::vector<Class*>>& derivedClasses()
 	//   So we cannot access other's Class' members that early in the loading
 	//   stage, that's solved with these local static vars, which get created
 	//   on access.
-	static std::unordered_map<const Class*, std::vector<Class*>> m;
+	static spring::unordered_map<const Class*, std::vector<Class*>> m;
 	return m;
 }
 
-static std::unordered_map<std::string, Class*>& mapNameToClass()
+static spring::unordered_map<std::string, Class*>& mapNameToClass()
 {
-	static std::unordered_map<std::string, Class*> m;
+	static spring::unordered_map<std::string, Class*> m;
 	return m;
 }
 

@@ -5,7 +5,6 @@
 #include "Rendering/GL/myGL.h"
 #include "System/Log/ILog.h"
 #include "System/Util.h"
-#include <map>
 
 
 #define LOG_SECTION_SHADER "Shader"
@@ -38,7 +37,7 @@ enum {
 	FLOAT_MAT4,
 	ATOMIC
 };
-std::map<GLenum, int> bindingType;
+spring::unordered_map<GLenum, int> bindingType;
 
 static void CreateBindingTypeMap()
 {
@@ -166,7 +165,7 @@ static void CreateBindingTypeMap()
 DO_ONCE(CreateBindingTypeMap)
 
 
-static void CopyShaderState_Uniforms(GLuint newProgID, GLuint oldProgID, std::unordered_map<std::size_t, Shader::UniformState, fast_hash>* uniformStates)
+static void CopyShaderState_Uniforms(GLuint newProgID, GLuint oldProgID, spring::unordered_map<std::size_t, Shader::UniformState, fast_hash>* uniformStates)
 {
 	GLsizei numUniforms, maxUniformNameLength = 0;
 	glGetProgramiv(newProgID, GL_ACTIVE_UNIFORMS, &numUniforms);
@@ -466,7 +465,7 @@ static void CopyShaderState_Geometry(GLuint newProgID, GLuint oldProgID)
 #endif
 
 namespace Shader {
-	void GLSLCopyState(GLuint newProgID, GLuint oldProgID, std::unordered_map<std::size_t, UniformState, fast_hash>* uniformStates)
+	void GLSLCopyState(GLuint newProgID, GLuint oldProgID, spring::unordered_map<std::size_t, UniformState, fast_hash>* uniformStates)
 	{
 	#if !defined(HEADLESS)
 		CopyShaderState_Uniforms(newProgID, oldProgID, uniformStates);

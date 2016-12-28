@@ -3,10 +3,10 @@
 #ifndef FBO_H
 #define FBO_H
 
-#include <unordered_map>
 #include <vector>
 
 #include "myGL.h"
+#include "System/UnorderedMap.hpp"
 
 // TODO: add multisample buffers
 
@@ -177,7 +177,7 @@ private:
 	};
 
 	static std::vector<FBO*> activeFBOs;
-	static std::unordered_map<GLuint, TexData> fboTexData;
+	static spring::unordered_map<GLuint, TexData> fboTexData;
 
 	static GLint maxAttachments;
 	static GLsizei maxSamples;

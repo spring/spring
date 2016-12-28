@@ -15,7 +15,7 @@
 CONFIG(bool, AtiSwapRBFix).defaultValue(false);
 
 std::vector<FBO*> FBO::activeFBOs;
-std::unordered_map<GLuint, FBO::TexData> FBO::fboTexData;
+spring::unordered_map<GLuint, FBO::TexData> FBO::fboTexData;
 
 GLint FBO::maxAttachments = 0;
 GLsizei FBO::maxSamples = -1;

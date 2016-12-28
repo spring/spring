@@ -3,12 +3,12 @@
 #ifndef _INFO_TEXTURE_HANDLER_H
 #define _INFO_TEXTURE_HANDLER_H
 
+#include <string>
 
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "System/type2.h"
-#include <string>
-#include <unordered_map>
+#include "System/UnorderedMap.hpp"
 
 
 class CPboInfoTexture;
@@ -43,7 +43,7 @@ protected:
 
 protected:
 	bool returnToLOS;
-	std::unordered_map<std::string, CPboInfoTexture*> infoTextures;
+	spring::unordered_map<std::string, CPboInfoTexture*> infoTextures;
 	CInfoTextureCombiner* infoTex;
 };
 

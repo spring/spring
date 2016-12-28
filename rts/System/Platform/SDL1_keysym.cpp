@@ -2,14 +2,15 @@
 
 #include "SDL1_keysym.h"
 #include <SDL_keycode.h>
-#include <unordered_map>
+
+#include "System/UnorderedMap.hpp"
 #include "System/Log/ILog.h"
 
 template<typename First, typename Second>
 class unordered_bimap {
 public:
-	typedef std::unordered_map<First, Second> first_type;
-	typedef std::unordered_map<Second, First> second_type;
+	typedef spring::unordered_map<First, Second> first_type;
+	typedef spring::unordered_map<Second, First> second_type;
 
 	first_type const& first() const { return first_; }
 	second_type const& second() const { return second_; }

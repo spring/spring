@@ -3,13 +3,13 @@
 #ifndef SELECTED_UNITS_H
 #define SELECTED_UNITS_H
 
+#include <vector>
+#include <string>
+
 #include "Sim/Units/CommandAI/Command.h"
 #include "System/float4.h"
 #include "System/Object.h"
-
-#include <vector>
-#include <string>
-#include <unordered_set>
+#include "System/UnorderedSet.hpp"
 
 class CUnit;
 class CFeature;
@@ -69,7 +69,7 @@ public:
 	bool selectionChanged;
 	bool possibleCommandsChanged;
 
-	std::unordered_set<int> selectedUnits;
+	spring::unordered_set<int> selectedUnits;
 	std::vector< std::vector<int> > netSelected;
 
 private:

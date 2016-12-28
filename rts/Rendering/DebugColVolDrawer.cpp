@@ -1,7 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "DebugColVolDrawer.h"
-#include <unordered_set>
 
 #include "Game/Camera.h"
 #include "Game/GlobalUnsynced.h"
@@ -17,6 +16,7 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Weapons/PlasmaRepulser.h"
 #include "Sim/Weapons/Weapon.h"
+#include "System/UnorderedSet.hpp"
 
 static const float4 DEFAULT_VOLUME_COLOR = float4(0.45f, 0.0f, 0.45f, 0.35f);
 static unsigned int volumeDisplayListIDs[3] = {0, 0, 0};
@@ -318,7 +318,7 @@ public:
 		}
 	}
 
-	std::unordered_set<int> alreadyDrawnIds;
+	spring::unordered_set<int> alreadyDrawnIds;
 };
 
 

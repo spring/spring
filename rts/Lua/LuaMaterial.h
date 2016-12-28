@@ -5,7 +5,6 @@
 
 #include <string>
 #include <vector>
-#include <unordered_map>
 
 /*
 LuaMaterial
@@ -37,6 +36,7 @@ LuaObjectMaterialData (helper to choose the current LOD) //FIXME rename
 #include "LuaOpenGLUtils.h"
 #include "LuaObjectMaterial.h" // for LuaMatRef
 #include "Rendering/GL/myGL.h"
+#include "System/UnorderedMap.hpp"
 
 
 class CSolidObject;
@@ -167,8 +167,8 @@ private:
 	};
 
 private:
-	std::unordered_map<IUniform*, std::string> GetUniformsAndStandardName();
-	std::unordered_map<std::string, IUniform*> GetUniformsAndPossibleNames();
+	spring::unordered_map<IUniform*, std::string> GetUniformsAndStandardName();
+	spring::unordered_map<std::string, IUniform*> GetUniformsAndPossibleNames();
 
 public:
 	UniformMat<CMatrix44f> viewMatrix;

@@ -37,8 +37,8 @@
 #include "System/Util.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
+#include "System/UnorderedMap.hpp"
 
-#include <unordered_map>
 #include <numeric>
 
 
@@ -99,7 +99,7 @@ struct STex {
 };
 
 typedef float4 SAtlasTex;
-static std::unordered_map<std::string, SAtlasTex> atlasTexs;
+static spring::unordered_map<std::string, SAtlasTex> atlasTexs;
 
 
 static std::string GetExtraTextureName(const std::string& s)
@@ -405,7 +405,7 @@ static STex LoadTexture(const std::string& name)
 }
 
 
-static inline void GetBuildingDecals(std::unordered_map<std::string, STex>& textures)
+static inline void GetBuildingDecals(spring::unordered_map<std::string, STex>& textures)
 {
 	for (UnitDef& unitDef: unitDefHandler->unitDefs) {
 		SolidObjectDecalDef& decalDef = unitDef.decalDef;
@@ -425,7 +425,7 @@ static inline void GetBuildingDecals(std::unordered_map<std::string, STex>& text
 }
 
 
-static inline void GetGroundScars(std::unordered_map<std::string, STex>& textures)
+static inline void GetGroundScars(spring::unordered_map<std::string, STex>& textures)
 {
 	LuaParser resourcesParser("gamedata/resources.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
 	if (!resourcesParser.Execute()) {
@@ -449,7 +449,7 @@ static inline void GetGroundScars(std::unordered_map<std::string, STex>& texture
 }
 
 
-static inline void GetFallbacks(std::unordered_map<std::string, STex>& textures)
+static inline void GetFallbacks(spring::unordered_map<std::string, STex>& textures)
 {
 	auto CREATE_SINGLE_COLOR = [](SColor c) -> STex {
 		CBitmap bm;
@@ -465,7 +465,7 @@ static inline void GetFallbacks(std::unordered_map<std::string, STex>& textures)
 
 void CDecalsDrawerGL4::GenerateAtlasTexture()
 {
-	std::unordered_map<std::string, STex> textures;
+	spring::unordered_map<std::string, STex> textures;
 	GetBuildingDecals(textures);
 	GetGroundScars(textures);
 	GetFallbacks(textures);

@@ -158,9 +158,8 @@ void CReadMap::Serialize(creg::ISerializer* s)
 {
 	// using integers so we can xor the original heightmap with the
 	// current one - should compress significantly better.
-	      float* shm  = const_cast<float*>(GetCornerHeightMapSynced());
-	      int*   ishm  = reinterpret_cast<int*>(shm);
-	const int*   ioshm = reinterpret_cast<const int*>(GetOriginalHeightMapSynced());
+	      int*  ishm = reinterpret_cast<int*>(const_cast<float*>(GetCornerHeightMapSynced()));
+	const int* ioshm = reinterpret_cast<const int*>(GetOriginalHeightMapSynced());
 
 	int height;
 	if (s->IsWriting()) {

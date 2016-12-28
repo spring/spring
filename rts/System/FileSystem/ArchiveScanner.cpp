@@ -4,7 +4,6 @@
 #include <algorithm>
 #include <cstdio>
 #include <memory>
-#include <unordered_map>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -26,6 +25,7 @@
 #include "System/FileSystem/RapidHandler.h"
 #include "System/Log/ILog.h"
 #include "System/Threading/SpringThreading.h"
+#include "System/UnorderedMap.hpp"
 
 #if !defined(DEDICATED) && !defined(UNITSYNC)
 	#include "System/TimeProfiler.h"
@@ -80,7 +80,7 @@ const std::array<KnownInfoTag, 12> knownTags = {
 	KnownInfoTag{"onlyLocal",   "if true spring will not listen for incoming connections",        false}
 };
 
-const std::unordered_map<std::string, bool> baseContentArchives = {
+const spring::unordered_map<std::string, bool> baseContentArchives = {
 	{      "bitmaps.sdz", true},
 	{"springcontent.sdz", true},
 	{    "maphelper.sdz", true},
@@ -94,7 +94,7 @@ const std::unordered_map<std::string, bool> baseContentArchives = {
 // Lobbies get the unit list from unitsync. Unitsync gets it by executing
 // gamedata/defs.lua, which loads units, features, weapons, movetypes and
 // armors (that is why armor.txt is in the list).
-const std::unordered_map<std::string, int> metaFileClasses = {
+const spring::unordered_map<std::string, int> metaFileClasses = {
 	{      "mapinfo.lua", 1},   // basic archive info
 	{      "modinfo.lua", 1},   // basic archive info
 	{   "modoptions.lua", 2},   // used by lobbies
@@ -105,7 +105,7 @@ const std::unordered_map<std::string, int> metaFileClasses = {
 	{ "springignore.txt", 2},   // used by lobbies (disabled units list)
 };
 
-const std::unordered_map<std::string, int> metaDirClasses = {
+const spring::unordered_map<std::string, int> metaDirClasses = {
 	{"sidepics/", 2},   // used by lobbies
 	{"gamedata/", 2},   // used by lobbies
 	{   "units/", 2},   // used by lobbies (disabled units list)
@@ -1136,7 +1136,7 @@ std::vector<std::string> CArchiveScanner::GetAllArchivesUsedBy(const std::string
 
 	for (std::string& archiveName: tmpArchives) {
 		if (retArchives.empty() || archiveName != retArchives.back()) {
-			retArchives.emplace_back(archiveName);
+			retArchives.emplace_back(std::move(archiveName));
 		}
 	}
 

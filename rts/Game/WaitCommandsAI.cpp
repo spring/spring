@@ -20,7 +20,6 @@
 #include "System/Object.h"
 #include "System/Util.h"
 #include "System/creg/STL_Map.h"
-#include "System/creg/STL_List.h"
 #include "System/creg/STL_Set.h"
 #include <assert.h>
 
@@ -752,7 +751,7 @@ void CWaitCommandsAI::DeathWait::Update()
 	if (!deathUnits.empty())
 		return; // more must die
 
-	std::unordered_set<int> unblockSet;
+	spring::unordered_set<int> unblockSet;
 	std::vector<int> voidWaitUnitIDs;
 
 	for (const int unitID: waitUnits) {
@@ -947,7 +946,7 @@ void CWaitCommandsAI::SquadWait::Update()
 	}
 
 	if ((int)waitUnits.size() >= squadCount) {
-		std::unordered_set<int> unblockSet;
+		spring::unordered_set<int> unblockSet;
 		std::vector<int> voidWaitUnitIDs;
 
 		for (const int unitID: waitUnits) {
