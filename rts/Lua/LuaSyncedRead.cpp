@@ -1895,7 +1895,7 @@ int LuaSyncedRead::GetTeamUnitsByDefs(lua_State* L)
 	}
 
 	// sort the ID's so duplicates can be skipped
-	std::sort(unitDefIDs.begin(), unitDefIDs.end());
+	std::stable_sort(unitDefIDs.begin(), unitDefIDs.end());
 
 	lua_createtable(L, unitDefIDs.size(), 0);
 

@@ -1087,7 +1087,7 @@ bool LuaTable::GetKeys(std::vector<int>& data) const
 			data.push_back(value);
 		}
 	}
-	std::sort(data.begin(), data.end());
+	std::stable_sort(data.begin(), data.end());
 	return true;
 }
 
@@ -1104,7 +1104,7 @@ bool LuaTable::GetKeys(std::vector<string>& data) const
 			data.push_back(value);
 		}
 	}
-	std::sort(data.begin(), data.end());
+	std::stable_sort(data.begin(), data.end());
 	return true;
 }
 

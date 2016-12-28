@@ -313,7 +313,7 @@ void CProjectileHandler::Update()
 			UPDATE_REF_CONTAINER(fpc);
 
 			if (resortFlyingPieces[modelType]) {
-				std::sort(fpc.begin(), fpc.end());
+				std::stable_sort(fpc.begin(), fpc.end());
 			}
 		}
 	}

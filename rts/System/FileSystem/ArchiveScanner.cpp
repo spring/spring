@@ -776,7 +776,7 @@ unsigned int CArchiveScanner::GetCRC(const std::string& arcName)
 	}
 
 	// sort by filename
-	std::sort(files.begin(), files.end());
+	std::stable_sort(files.begin(), files.end());
 
 	for (std::string& f: files) {
 		crcs.push_back(CRCPair{&f, 0, 0});
@@ -995,7 +995,7 @@ void CArchiveScanner::WriteCacheData(const std::string& filename)
 
 static void sortByName(std::vector<CArchiveScanner::ArchiveData>& data)
 {
-	std::sort(data.begin(), data.end(), [](const CArchiveScanner::ArchiveData& a, const CArchiveScanner::ArchiveData& b){
+	std::stable_sort(data.begin(), data.end(), [](const CArchiveScanner::ArchiveData& a, const CArchiveScanner::ArchiveData& b) {
 		return (a.GetNameVersioned() < b.GetNameVersioned());
 	});
 }
@@ -1132,7 +1132,7 @@ std::vector<std::string> CArchiveScanner::GetAllArchivesUsedBy(const std::string
 		}
 	}
 
-	std::sort(tmpArchives.begin(), tmpArchives.end());
+	std::stable_sort(tmpArchives.begin(), tmpArchives.end());
 
 	for (std::string& archiveName: tmpArchives) {
 		if (retArchives.empty() || archiveName != retArchives.back()) {

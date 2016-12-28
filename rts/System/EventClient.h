@@ -97,7 +97,7 @@ class CEventClient
 				#include "Events.def"
 			#undef SETUP_EVENT
 
-			std::sort(autoLinkedEvents.begin(), autoLinkedEvents.end(), [](const LinkPair& a, const LinkPair& b) { return (a.first < b.first); });
+			std::stable_sort(autoLinkedEvents.begin(), autoLinkedEvents.end(), [](const LinkPair& a, const LinkPair& b) { return (a.first < b.first); });
 		}
 
 	public:

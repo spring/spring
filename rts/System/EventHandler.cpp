@@ -50,7 +50,7 @@ void CEventHandler::SetupEvents()
 	#undef SETUP_EVENT
 
 	// sort by name
-	std::sort(eventMap.begin(), eventMap.end(), [](const EventPair& a, const EventPair& b) { return (a.first < b.first); });
+	std::stable_sort(eventMap.begin(), eventMap.end(), [](const EventPair& a, const EventPair& b) { return (a.first < b.first); });
 }
 
 
