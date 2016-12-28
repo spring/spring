@@ -2271,24 +2271,24 @@ bool CLuaHandle::MapDrawCmd(int playerID, int type,
 
 
 bool CLuaHandle::GameSetup(const string& state, bool& ready,
-                           const map<int, string>& playerStates)
+                           const std::vector< std::pair<int, std::string> >& playerStates)
 {
 	LUA_CALL_IN_CHECK(L, false);
 	luaL_checkstack(L, 5, __func__);
+
 	static const LuaHashString cmdStr(__func__);
-	if (!cmdStr.GetGlobalFunc(L)) {
+
+	if (!cmdStr.GetGlobalFunc(L))
 		return false;
-	}
 
 	lua_pushsstring(L, state);
-
 	lua_pushboolean(L, ready);
 
 	lua_newtable(L);
-	map<int, string>::const_iterator it;
-	for (it = playerStates.begin(); it != playerStates.end(); ++it) {
-		lua_pushsstring(L, it->second);
-		lua_rawseti(L, -2, it->first);
+
+	for (size_t n = 0; n < playerStates.size(); n++) {
+		lua_pushsstring(L, playerStates[n].second);
+		lua_rawseti(L, -2, playerStates[n].first);
 	}
 
 	// call the routine

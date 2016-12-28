@@ -3,10 +3,10 @@
 #ifndef EVENT_CLIENT_H
 #define EVENT_CLIENT_H
 
+#include <algorithm>
+#include <typeinfo>
 #include <string>
 #include <vector>
-#include <map>
-#include <typeinfo>
 
 #include "System/float3.h"
 #include "System/Misc/SpringTime.h"
@@ -19,7 +19,6 @@
 
 using std::string;
 using std::vector;
-using std::map;
 
 class CUnit;
 class CWeapon;
@@ -86,15 +85,19 @@ class CEventClient
 
 	protected:
 		friend class CEventHandler;
-		std::map<std::string, bool> autoLinkedEvents;
+		typedef std::pair<std::string, bool> LinkPair;
+
+		std::vector<LinkPair> autoLinkedEvents;
 
 		template <class T>
 		void RegisterLinkedEvents(T* foo) {
 			#define SETUP_EVENT(eventname, props) \
-				autoLinkedEvents[#eventname] = (typeid(&T::eventname) != typeid(&CEventClient::eventname));
+				autoLinkedEvents.push_back({#eventname, typeid(&T::eventname) != typeid(&CEventClient::eventname)});
 
 				#include "Events.def"
 			#undef SETUP_EVENT
+
+			std::sort(autoLinkedEvents.begin(), autoLinkedEvents.end(), [](const LinkPair& a, const LinkPair& b) { return (a.first < b.first); });
 		}
 
 	public:
@@ -284,7 +287,7 @@ class CEventClient
 		virtual bool GroupChanged(int groupID);
 
 		virtual bool GameSetup(const std::string& state, bool& ready,
-		                       const map<int, std::string>& playerStates);
+		                       const std::vector< std::pair<int, std::string> >& playerStates);
 
 		virtual std::string WorldTooltip(const CUnit* unit,
 		                                 const CFeature* feature,

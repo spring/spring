@@ -76,7 +76,9 @@ void GameSetupDrawer::Draw()
 		}
 	}
 
-	std::map<int, std::string> playerStates;
+	const unsigned int numPlayers = playerHandler->ActivePlayers();
+
+	std::vector< std::pair<int, std::string> > playerStates(numPlayers);
 	std::string startState = "Unknown state.";
 
 	if (readyCountdown > spring_nulltime) {
@@ -92,19 +94,19 @@ void GameSetupDrawer::Draw()
 		startState = "Waiting for players";
 	}
 
-	const unsigned int numPlayers = playerHandler->ActivePlayers();
-
-	// not the most efficent way to do this, but who cares?
 	for (unsigned int a = 0; a < numPlayers; a++) {
 		const CPlayer* player = playerHandler->Player(a);
 
+		// redundant
+		playerStates[a].first = a;
+
 		if (!player->active) {
 			// player does not become active until we receive NETMSG_PLAYERNAME
-			playerStates[a] = "missing";
+			playerStates[a].second = "missing";
 		} else if (!player->spectator && !player->IsReadyToStart()) {
-			playerStates[a] = "notready";
+			playerStates[a].second = "notready";
 		} else {
-			playerStates[a] = "ready";
+			playerStates[a].second = "ready";
 		}
 	}
 

@@ -695,7 +695,7 @@ void CMouseHandler::SetCursor(const std::string& cmdName, const bool& forceRebin
 	}
 
 	cursorText = cmdName;
-	map<string, CMouseCursor*>::iterator it = cursorCommandMap.find(cmdName);
+	const auto it = cursorCommandMap.find(cmdName);
 	if (it != cursorCommandMap.end()) {
 		currentCursor = it->second;
 	} else {
@@ -718,9 +718,8 @@ void CMouseHandler::SetCursor(const std::string& cmdName, const bool& forceRebin
 void CMouseHandler::UpdateCursors()
 {
 	// we update all cursors (for the command queue icons)
-	map<string, CMouseCursor *>::iterator it;
-	for (it = cursorFileMap.begin(); it != cursorFileMap.end(); ++it) {
-		if (it->second != NULL) {
+	for (auto it = cursorFileMap.begin(); it != cursorFileMap.end(); ++it) {
+		if (it->second != nullptr) {
 			it->second->Update();
 		}
 	}

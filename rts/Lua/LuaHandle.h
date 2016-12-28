@@ -207,7 +207,7 @@ class CLuaHandle : public CEventClient
 		bool GroupChanged(int groupID) override;
 
 		bool GameSetup(const string& state, bool& ready,
-		               const map<int, string>& playerStates) override;
+		               const std::vector< std::pair<int, std::string> >& playerStates) override;
 
 		const char* RecvSkirmishAIMessage(int aiID, const char* data, int inSize);
 

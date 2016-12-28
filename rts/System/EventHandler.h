@@ -5,7 +5,6 @@
 
 #include <string>
 #include <vector>
-#include <map>
 
 #include "System/EventClient.h"
 #include "Sim/Units/Unit.h"
@@ -224,7 +223,7 @@ class CEventHandler
 		bool GroupChanged(int groupID);
 
 		bool GameSetup(const std::string& state, bool& ready,
-		               const std::map<int, std::string>& playerStates);
+		               const std::vector< std::pair<int, std::string> >& playerStates);
 		void DownloadQueued(int ID, const string& archiveName, const string& archiveType);
 		void DownloadStarted(int ID);
 		void DownloadFinished(int ID);

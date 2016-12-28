@@ -160,7 +160,7 @@ bool CEventHandler::RemoveEvent(CEventClient* ec, const std::string& ciName)
 	if ((iter == eventMap.end()) || (iter->first != ciName) || (iter->second.GetList() == nullptr))
 		return false;
 
-	ListRemove(*iter->second.GetList(), ec);
+	ListRemove(*(iter->second.GetList()), ec);
 	return true;
 }
 
@@ -720,7 +720,7 @@ bool CEventHandler::GroupChanged(int groupID)
 
 
 bool CEventHandler::GameSetup(const std::string& state, bool& ready,
-                                  const std::map<int, std::string>& playerStates)
+                                  const std::vector< std::pair<int, std::string> >& playerStates)
 {
 	CONTROL_REVERSE_ITERATE_DEF_TRUE(GameSetup, state, ready, playerStates)
 	return false;
