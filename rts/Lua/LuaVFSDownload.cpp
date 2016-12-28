@@ -5,6 +5,7 @@
 #include "LuaVFSDownload.h"
 #include "System/Util.h"
 #include "System/EventHandler.h"
+#include "System/Platform/Threading.h" // Is{Main,GameLoad}Thread
 #include "System/Threading/SpringThreading.h"
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/DataDirLocater.h"
