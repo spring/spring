@@ -177,17 +177,17 @@ void InMapDraw_QuadDrawer::DrawQuad(int x, int y)
 
 	pointsVa->EnlargeArrays(dq->points.size() * 12, 0, VA_SIZE_TC);
 	//! draw point markers
-	for (std::list<CInMapDrawModel::MapPoint>::const_iterator pi = dq->points.begin(); pi != dq->points.end(); ++pi) {
-		if (pi->IsLocalPlayerAllowedToSee(inMapDrawerModel)) {
-			DrawPoint(&*pi);
+	for (const CInMapDrawModel::MapPoint& pi: dq->points) {
+		if (pi.IsLocalPlayerAllowedToSee(inMapDrawerModel)) {
+			DrawPoint(&pi);
 		}
 	}
 
 	linesVa->EnlargeArrays(dq->lines.size() * 2, 0, VA_SIZE_C);
 	//! draw line markers
-	for (std::list<CInMapDrawModel::MapLine>::const_iterator li = dq->lines.begin(); li != dq->lines.end(); ++li) {
-		if (li->IsLocalPlayerAllowedToSee(inMapDrawerModel)) {
-			DrawLine(&*li);
+	for (const CInMapDrawModel::MapLine& li: dq->lines) {
+		if (li.IsLocalPlayerAllowedToSee(inMapDrawerModel)) {
+			DrawLine(&li);
 		}
 	}
 }

@@ -4,7 +4,7 @@
 #define _GLFONT_H
 
 #include <string>
-#include <list>
+#include <deque>
 
 #include "TextWrap.h"
 #include "ustring.h"
@@ -77,7 +77,7 @@ public:
 	inline float GetTextHeight(const std::string& text, float* descender = NULL, int* numLines = NULL);
 	inline static int GetTextNumLines(const std::string& text);
 	inline static std::string StripColorCodes(const std::string& text);
-	static std::list<std::string> SplitIntoLines(const std::u8string&);
+	static std::deque<std::string> SplitIntoLines(const std::u8string&);
 
 	const std::string& GetFilePath() const { return fontPath; }
 

@@ -40,8 +40,8 @@ public:
 
 	void PromptLabel(const float3& pos);
 
-	void GetPoints(std::vector<PointMarker>& points, int pointsSizeMax, const std::list<int>& teamIDs);
-	void GetLines(std::vector<LineMarker>& lines, int linesSizeMax, const std::list<int>& teamIDs);
+	void GetPoints(std::vector<PointMarker>& points, size_t maxPoints, const std::list<int>& teamIDs);
+	void GetLines(std::vector<LineMarker>& lines, size_t maxLines, const std::list<int>& teamIDs);
 
 	void SetDrawMode(bool drawMode) { this->drawMode = drawMode; }
 	bool IsDrawMode() const { return drawMode; }

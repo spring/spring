@@ -170,17 +170,16 @@ void CInfoConsole::RecordLogMessage(const std::string& section, int level,
 {
 	std::lock_guard<spring::recursive_mutex> scoped_lock(infoConsoleMutex);
 
-	if (rawData.size() > maxRawLines) {
+	if (rawData.size() > maxRawLines)
 		rawData.pop_front();
-	}
-	if (newLines < maxRawLines) {
+
+	if (newLines < maxRawLines)
 		++newLines;
-	}
+
 	rawData.emplace_back(text, section, level, rawId++);
 
-	if (!smallFont) {
+	if (!smallFont)
 		return;
-	}
 
 	// !!! Warning !!!
 	// We must not remove elements from `data` here
@@ -190,9 +189,10 @@ void CInfoConsole::RecordLogMessage(const std::string& section, int level,
 	// possible that we delete a var that is used in
 	// Draw() & co, and so we might invalidate references
 	// (e.g. of std::strings) and cause SIGFAULTs!
-	const float maxWidth = (width  * globalRendering->viewSizeX) - (2 * border);
-	std::string wrappedText = smallFont->Wrap(text, fontSize, maxWidth);
-	std::list<std::string> lines = smallFont->SplitIntoLines(toustring(wrappedText));
+	const float maxWidth = (width * globalRendering->viewSizeX) - (2 * border);
+	const std::string& wrappedText = smallFont->Wrap(text, fontSize, maxWidth);
+
+	std::deque<std::string> lines = std::move(smallFont->SplitIntoLines(toustring(wrappedText)));
 
 	for (auto& line: lines) {
 		// add the line to the console

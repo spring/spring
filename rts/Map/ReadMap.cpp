@@ -2,6 +2,7 @@
 
 
 #include <cstdlib>
+#include <cstring> // memcpy
 
 #include "ReadMap.h"
 #include "MapDamage.h"

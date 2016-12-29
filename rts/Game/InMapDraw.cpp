@@ -274,19 +274,18 @@ void CInMapDraw::PromptLabel(const float3& pos)
 }
 
 
-void CInMapDraw::GetPoints(std::vector<PointMarker>& points, int pointsSizeMax, const std::list<int>& teamIDs)
+void CInMapDraw::GetPoints(std::vector<PointMarker>& points, size_t maxPoints, const std::list<int>& teamIDs)
 {
-	pointsSizeMax = std::min(pointsSizeMax, inMapDrawerModel->GetNumPoints());
+	maxPoints = std::min(maxPoints, inMapDrawerModel->GetNumPoints());
+
 	points.clear();
-	points.reserve(pointsSizeMax);
+	points.reserve(maxPoints);
 
-	const std::list<CInMapDrawModel::MapPoint>* pointsInt = NULL;
+	for (size_t y = 0; (y < inMapDrawerModel->GetDrawQuadY() && points.size() < maxPoints); y++) {
+		for (size_t x = 0; (x < inMapDrawerModel->GetDrawQuadX() && points.size() < maxPoints); x++) {
+			const std::vector<CInMapDrawModel::MapPoint>& quadPoints = (inMapDrawerModel->GetDrawQuad(x, y))->points;
 
-	for (size_t y = 0; (y < inMapDrawerModel->GetDrawQuadY()) && ((int)points.size() < pointsSizeMax); y++) {
-		for (size_t x = 0; (x < inMapDrawerModel->GetDrawQuadX()) && ((int)points.size() < pointsSizeMax); x++) {
-			pointsInt = &(inMapDrawerModel->GetDrawQuad(x, y)->points);
-
-			for (auto point = pointsInt->cbegin(); (point != pointsInt->cend()) && ((int)points.size()  < pointsSizeMax); ++point) {
+			for (auto point = quadPoints.cbegin(); (point != quadPoints.cend() && points.size() < maxPoints); ++point) {
 				for (auto it = teamIDs.cbegin(); it != teamIDs.cend(); ++it) {
 					if (point->GetTeamID() != *it)
 						continue;
@@ -303,19 +302,18 @@ void CInMapDraw::GetPoints(std::vector<PointMarker>& points, int pointsSizeMax, 
 	}
 }
 
-void CInMapDraw::GetLines(std::vector<LineMarker>& lines, int linesSizeMax, const std::list<int>& teamIDs)
+void CInMapDraw::GetLines(std::vector<LineMarker>& lines, size_t maxLines, const std::list<int>& teamIDs)
 {
-	linesSizeMax = std::min(linesSizeMax, inMapDrawerModel->GetNumLines());
+	maxLines = std::min(maxLines, inMapDrawerModel->GetNumLines());
+
 	lines.clear();
-	lines.reserve(linesSizeMax);
+	lines.reserve(maxLines);
 
-	const std::list<CInMapDrawModel::MapLine>* linesInt = NULL;
+	for (size_t y = 0; (y < inMapDrawerModel->GetDrawQuadY() && lines.size() < maxLines); y++) {
+		for (size_t x = 0; (x < inMapDrawerModel->GetDrawQuadX() && lines.size() < maxLines); x++) {
+			const std::vector<CInMapDrawModel::MapLine>& quadLines = (inMapDrawerModel->GetDrawQuad(x, y))->lines;
 
-	for (size_t y = 0; (y < inMapDrawerModel->GetDrawQuadY()) && ((int)lines.size() < linesSizeMax); y++) {
-		for (size_t x = 0; (x < inMapDrawerModel->GetDrawQuadX()) && ((int)lines.size() < linesSizeMax); x++) {
-			linesInt = &(inMapDrawerModel->GetDrawQuad(x, y)->lines);
-
-			for (auto line = linesInt->cbegin(); (line != linesInt->cend()) && ((int)lines.size() < linesSizeMax); ++line) {
+			for (auto line = quadLines.cbegin(); (line != quadLines.cend()) && (lines.size() < maxLines); ++line) {
 				for (auto it = teamIDs.cbegin(); it != teamIDs.cend(); ++it) {
 					if (line->GetTeamID() != *it)
 						continue;

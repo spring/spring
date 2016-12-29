@@ -32,9 +32,6 @@ CInMapDrawModel::CInMapDrawModel()
 }
 
 
-CInMapDrawModel::~CInMapDrawModel()
-{
-}
 
 bool CInMapDrawModel::MapDrawPrimitive::IsLocalPlayerAllowedToSee(const CInMapDrawModel* inMapDrawModel) const
 {
@@ -83,9 +80,8 @@ bool CInMapDrawModel::AddPoint(const float3& constPos, const std::string& label,
 
 	// event clients may process the point
 	// if their owner is allowed to see it
-	if (allowed && eventHandler.MapDrawCmd(playerID, MAPDRAW_POINT, &pos, NULL, &label)) {
+	if (allowed && eventHandler.MapDrawCmd(playerID, MAPDRAW_POINT, &pos, NULL, &label))
 		return false;
-	}
 
 
 	// let the engine handle it (disallowed
@@ -163,20 +159,21 @@ void CInMapDrawModel::EraseNear(const float3& constPos, int playerID)
 		for (int x = xStart; x <= xEnd; ++x) {
 			DrawQuad* dq = &drawQuads[(y * drawQuadsX) + x];
 
-			std::list<MapPoint>::iterator pi;
-			for (pi = dq->points.begin(); pi != dq->points.end(); /* none */) {
+			for (auto pi = dq->points.begin(); pi != dq->points.end(); /* none */) {
 				if (pi->GetPos().SqDistance2D(pos) < (radius*radius) && (pi->IsBySpectator() == sender->spectator)) {
-					pi = dq->points.erase(pi);
+					*pi = dq->points.back();
+					dq->points.pop_back();
 					numPoints--;
 				} else {
 					++pi;
 				}
 			}
-			std::list<MapLine>::iterator li;
-			for (li = dq->lines.begin(); li != dq->lines.end(); /* none */) {
+
+			for (auto li = dq->lines.begin(); li != dq->lines.end(); /* none */) {
 				// TODO maybe erase on pos2 too?
 				if (li->GetPos1().SqDistance2D(pos) < (radius*radius) && (li->IsBySpectator() == sender->spectator)) {
-					li = dq->lines.erase(li);
+					*li = dq->lines.back();
+					dq->lines.pop_back();
 					numLines--;
 				} else {
 					++li;

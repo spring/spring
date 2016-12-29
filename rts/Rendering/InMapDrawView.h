@@ -5,7 +5,6 @@
 
 #include <string>
 #include <vector>
-#include <list>
 
 #include "System/float3.h"
 #include "Game/InMapDrawModel.h"

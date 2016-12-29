@@ -308,15 +308,16 @@ int CglFont::GetTextNumLines_(const std::u8string& text)
 }
 
 
-std::list<std::string> CglFont::SplitIntoLines(const std::u8string& text)
+std::deque<std::string> CglFont::SplitIntoLines(const std::u8string& text)
 {
-	std::list<std::string> lines;
+	std::deque<std::string> lines;
+	std::deque<std::string> colorCodeStack;
 
 	if (text.empty())
 		return lines;
 
 	lines.push_back("");
-	std::list<std::string> colorCodeStack;
+
 	for (int pos = 0 ; pos < text.length(); pos++) {
 		const char8_t& c = text[pos];
 		switch(c) {
