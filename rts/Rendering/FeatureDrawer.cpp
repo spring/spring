@@ -331,7 +331,7 @@ void CFeatureDrawer::DrawOpaqueFeatures(int modelType)
 
 				unitDrawer->SetTeamColour(f->team);
 
-				DrawFeature(f, 0, 0, false, false);
+				DrawFeatureTrans(f, 0, 0, false, false);
 			}
 		}
 	}
@@ -383,7 +383,7 @@ void CFeatureDrawer::DrawFeatureNoTrans(
 	}
 }
 
-void CFeatureDrawer::DrawFeature(const CFeature* feature, unsigned int preList, unsigned int postList, bool lodCall, bool noLuaCall)
+void CFeatureDrawer::DrawFeatureTrans(const CFeature* feature, unsigned int preList, unsigned int postList, bool lodCall, bool noLuaCall)
 {
 	glPushMatrix();
 	glMultMatrixf(feature->GetTransformMatrixRef());
@@ -417,7 +417,7 @@ void CFeatureDrawer::DrawIndividual(const CFeature* feature, bool noLuaCall)
 	if (!LuaObjectDrawer::DrawSingleObject(feature, LUAOBJ_FEATURE /*, noLuaCall*/)) {
 		// set the full default state
 		PushIndividualState(feature, false);
-		DrawFeature(feature, 0, 0, false, noLuaCall);
+		DrawFeatureTrans(feature, 0, 0, false, noLuaCall);
 		PopIndividualState(feature, false);
 	}
 
@@ -510,7 +510,7 @@ void CFeatureDrawer::DrawAlphaFeatures(int modelType)
 				unitDrawer->SetTeamColour(f->team, float2(f->drawAlpha, 1.0f));
 
 				setFeatureAlphaMatFuncs[ffpAlphaMat](f);
-				DrawFeature(f, 0, 0, false, false);
+				DrawFeatureTrans(f, 0, 0, false, false);
 			}
 		}
 	}

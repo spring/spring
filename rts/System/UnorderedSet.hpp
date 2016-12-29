@@ -3,7 +3,7 @@
 #ifndef _SPRING_UNORDERED_SET_H_
 #define _SPRING_UNORDERED_SET_H_
 
-#define USE_BOOST_HASH_SET
+// #define USE_BOOST_HASH_SET
 
 
 #ifdef USE_BOOST_HASH_SET

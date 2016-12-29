@@ -226,7 +226,7 @@ void LuaObjectDrawer::Init()
 	unitDrawFuncs[ true] = &CUnitDrawer::DrawUnitTrans;
 
 	featureDrawFuncs[false] = &CFeatureDrawer::DrawFeatureNoTrans;
-	featureDrawFuncs[ true] = &CFeatureDrawer::DrawFeature;
+	featureDrawFuncs[ true] = &CFeatureDrawer::DrawFeatureTrans;
 
 	drawDeferredAllowed = configHandler->GetBool("AllowDeferredModelRendering");
 	bufferClearAllowed = configHandler->GetBool("AllowDeferredModelBufferClear");

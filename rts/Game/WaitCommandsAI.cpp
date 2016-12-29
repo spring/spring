@@ -589,7 +589,7 @@ void CWaitCommandsAI::TimeWait::Update()
 		}
 		else {
 			if (endFrame <= gs->frameNum) {
-				SendWaitCommand({unit->id});
+				SendWaitCommand(CUnitSet{unit->id});
 
 				if (!factory) {
 					delete this;
