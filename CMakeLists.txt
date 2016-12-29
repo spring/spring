@@ -360,7 +360,7 @@ add_definitions(-D_RANDOM_TCC) # don't include <bits/random.tcc>, it fails to co
 
 
 ### our custom OpenMP replacement
-option(THREADPOOL "Enable ThreadPools" TRUE)
+option(THREADPOOL "Enable ThreadPools" FALSE)
 if (THREADPOOL)
 	add_definitions(-DTHREADPOOL)
 endif(THREADPOOL)
