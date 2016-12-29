@@ -178,7 +178,7 @@ void InMapDraw_QuadDrawer::DrawQuad(int x, int y)
 	pointsVa->EnlargeArrays(dq->points.size() * 12, 0, VA_SIZE_TC);
 	//! draw point markers
 	for (const CInMapDrawModel::MapPoint& pi: dq->points) {
-		if (pi.IsLocalPlayerAllowedToSee(inMapDrawerModel)) {
+		if (pi.IsVisibleToPlayer(inMapDrawerModel->GetAllMarksVisible())) {
 			DrawPoint(&pi);
 		}
 	}
@@ -186,7 +186,7 @@ void InMapDraw_QuadDrawer::DrawQuad(int x, int y)
 	linesVa->EnlargeArrays(dq->lines.size() * 2, 0, VA_SIZE_C);
 	//! draw line markers
 	for (const CInMapDrawModel::MapLine& li: dq->lines) {
-		if (li.IsLocalPlayerAllowedToSee(inMapDrawerModel)) {
+		if (li.IsVisibleToPlayer(inMapDrawerModel->GetAllMarksVisible())) {
 			DrawLine(&li);
 		}
 	}

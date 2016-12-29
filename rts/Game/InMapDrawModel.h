@@ -41,7 +41,6 @@ public:
 
 
 	struct MapDrawPrimitive {
-
 	public:
 		MapDrawPrimitive(bool spectator, int teamID, const TeamController* teamController)
 			: spectator(spectator)
@@ -49,7 +48,7 @@ public:
 			, teamController(teamController)
 		{}
 
-		bool IsLocalPlayerAllowedToSee(const CInMapDrawModel* inMapDraw) const;
+		bool IsVisibleToPlayer(bool drawAllMarks) const;
 
 		/**
 		 * Was the creator of this map-drawing spectator at the time it was

@@ -29,38 +29,40 @@ CInMapDrawModel::CInMapDrawModel()
 	, numLines(0)
 {
 	drawQuads.resize(drawQuadsX * drawQuadsY);
+
+	for (int y = 0; y < drawQuadsY; y++) {
+		for (int x = 0; x < drawQuadsX; x++) {
+			drawQuads[y * drawQuadsX + x].points.reserve(16);
+			drawQuads[y * drawQuadsX + x].lines.reserve(16);
+		}
+	}
 }
 
 
 
-bool CInMapDrawModel::MapDrawPrimitive::IsLocalPlayerAllowedToSee(const CInMapDrawModel* inMapDrawModel) const
+bool CInMapDrawModel::MapDrawPrimitive::IsVisibleToPlayer(bool drawAllMarks) const
 {
 	const int allyTeam = teamHandler->AllyTeam(teamID);
-	const bool allied =
-		(teamHandler->Ally(gu->myAllyTeam, allyTeam) &&
-		teamHandler->Ally(allyTeam, gu->myAllyTeam));
-	const bool maySee = (gu->spectating || (!spectator && allied) || inMapDrawModel->drawAllMarks);
 
-	return maySee;
+	const bool alliedAB = teamHandler->Ally(allyTeam, gu->myAllyTeam);
+	const bool alliedBA = teamHandler->Ally(gu->myAllyTeam, allyTeam);
+
+	return (gu->spectating || drawAllMarks || (!spectator && alliedAB && alliedBA));
 }
 
 
 bool CInMapDrawModel::AllowedMsg(const CPlayer* sender) const
 {
-	const int  team      = sender->team;
-	const int  allyteam  = teamHandler->AllyTeam(team);
-	const bool alliedMsg = (teamHandler->Ally(gu->myAllyTeam, allyteam) &&
-	                        teamHandler->Ally(allyteam, gu->myAllyTeam));
+	const int  allyTeam  = teamHandler->AllyTeam(sender->team);
 
-	if (!gu->spectating && (sender->spectator || !alliedMsg)) {
-		// we are playing and the guy sending the
-		// net-msg is a spectator or not an ally;
-		// cannot just ignore the message due to
-		// drawAllMarks mode considerations
-		return false;
-	}
+	const bool alliedAB = teamHandler->Ally(allyTeam, gu->myAllyTeam);
+	const bool alliedBA = teamHandler->Ally(gu->myAllyTeam, allyTeam);
+	const bool alliedMsg = alliedAB && alliedBA;
 
-	return true;
+	// if we are playing and the guy sending the message is
+	// a spectator (or not an ally), we can not just ignore
+	// it due to drawAllMarks mode considerations
+	return (gu->spectating || (!sender->spectator && alliedMsg));
 }
 
 
