@@ -32,7 +32,7 @@ CONFIG(int, Shadows).defaultValue(2).headlessValue(-1).minimumValue(-1).safemode
 CONFIG(int, ShadowMapSize).defaultValue(CShadowHandler::DEF_SHADOWMAP_SIZE).minimumValue(32).description("Sets the resolution of shadows. Higher numbers increase quality at the cost of performance.");
 CONFIG(int, ShadowProjectionMode).defaultValue(CShadowHandler::SHADOWPROMODE_CAM_CENTER);
 
-CShadowHandler* shadowHandler = NULL;
+CShadowHandler* shadowHandler = nullptr;
 
 bool CShadowHandler::shadowsSupported = false;
 bool CShadowHandler::firstInit = true;
@@ -44,9 +44,12 @@ void CShadowHandler::Reload(const char* argv)
 	int nextShadowMapSize = shadowMapSize;
 	int nextShadowProMode = shadowProMode;
 
-	if (argv != NULL) {
+	if (argv != nullptr)
 		(void) sscanf(argv, "%i %i %i", &nextShadowConfig, &nextShadowMapSize, &nextShadowProMode);
-	}
+
+	// do nothing without a parameter change
+	if (nextShadowConfig == shadowConfig && nextShadowMapSize == shadowMapSize && nextShadowProMode == shadowProMode)
+		return;
 
 	configHandler->Set("Shadows", nextShadowConfig & 0xF);
 	configHandler->Set("ShadowMapSize", Clamp(nextShadowMapSize, int(MIN_SHADOWMAP_SIZE), int(MAX_SHADOWMAP_SIZE)));
@@ -472,7 +475,7 @@ void CShadowHandler::SetShadowMatrix(CCamera* playerCam, CCamera* shadowCam)
 	viewMatrix[SHADOWMAT_TYPE_DRAWING].Scale(float3(scaleMatrix[0], scaleMatrix[5], scaleMatrix[10])); // extract (X.x, Y.y, Z.z)
 	viewMatrix[SHADOWMAT_TYPE_DRAWING].Transpose();
 	viewMatrix[SHADOWMAT_TYPE_DRAWING].SetPos(viewMatrix[SHADOWMAT_TYPE_DRAWING] * -projMidPos[2]);
-	viewMatrix[SHADOWMAT_TYPE_DRAWING].SetPos(viewMatrix[SHADOWMAT_TYPE_DRAWING].GetPos() + (FwdVector * 0.5f)); // add z-bias
+	viewMatrix[SHADOWMAT_TYPE_DRAWING].SetPos(viewMatrix[SHADOWMAT_TYPE_DRAWING].GetPos() + scaleMatrix.GetPos()); // add z-bias
 
 	#if 0
 	// holds true in the non-KISS case, but needs an epsilon-tolerance equality test

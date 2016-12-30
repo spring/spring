@@ -93,14 +93,24 @@ namespace Shader {
 #endif
 
 
-	unsigned int SShaderFlagState::GetHash()
-	{
-		if (updates != lastUpdates) {
-			const std::string defs = GetString();
-			lastUpdates = updates;
-			lastHash = HsiehHash(&defs[0], defs.length(), 997);
-			assert(lastHash != 0);
+	unsigned int ShaderFlags::CalcHash() const {
+		unsigned int hash = 997;
+
+		for (const auto& p: bitFlags) {
+			hash = HsiehHash(p.first, (p.second).first, hash);
+			hash = HsiehHash(reinterpret_cast<const uint8_t*>(&((p.second).second)), sizeof((p.second).second), hash);
 		}
-		return lastHash;
+		for (const auto& p: intFlags) {
+			hash = HsiehHash(p.first, (p.second).first, hash);
+			hash = HsiehHash(reinterpret_cast<const uint8_t*>(&((p.second).second)), sizeof((p.second).second), hash);
+		}
+		for (const auto& p: fltFlags) {
+			hash = HsiehHash(p.first, (p.second).first, hash);
+			hash = HsiehHash(reinterpret_cast<const uint8_t*>(&((p.second).second)), sizeof((p.second).second), hash);
+		}
+
+		assert(hash != 0);
+		return hash;
 	}
 }
+

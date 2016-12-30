@@ -59,7 +59,7 @@ static std::string glslGetLog(GLuint obj)
 	assert(glIsShader(obj) || glIsProgram(obj));
 
 	int infologLength = 0;
-	int maxLength;
+	int maxLength = 0;
 
 	if (isShader)
 		glGetShaderiv(obj, GL_INFO_LOG_LENGTH, &maxLength);
@@ -127,22 +127,26 @@ namespace Shader {
 
 	unsigned int IShaderObject::GetHash() const {
 		unsigned int hash = 127;
-		hash = HsiehHash((const void*)curShaderSrc.data(), curShaderSrc.size(), hash);
+		hash = HsiehHash((const void*)   srcText.data(),    srcText.size(), hash); // srcTextHash is not worth it, only called on reload
 		hash = HsiehHash((const void*)modDefStrs.data(), modDefStrs.size(), hash);
-		hash = HsiehHash((const void*)rawDefStrs.data(), rawDefStrs.size(), hash);
+		hash = HsiehHash((const void*)rawDefStrs.data(), rawDefStrs.size(), hash); // rawDefStrsHash is not worth it, only called on reload
 		return hash;
 	}
 
 
 	bool IShaderObject::ReloadFromDisk()
 	{
-		std::string newsrc = GetShaderSource(srcFile);
-		if (newsrc != curShaderSrc) {
-			curShaderSrc = std::move(newsrc);
+		std::string newText = GetShaderSource(srcFile);
+
+		if (newText != srcText) {
+			srcText = std::move(newText);
 			return true;
 		}
+
 		return false;
 	}
+
+
 
 
 	/*****************************************************************/
@@ -161,10 +165,11 @@ namespace Shader {
 		glEnable(type);
 
 		glBindProgramARB(type, objID);
-		glProgramStringARB(type, GL_PROGRAM_FORMAT_ASCII_ARB, curShaderSrc.size(), curShaderSrc.c_str());
+		glProgramStringARB(type, GL_PROGRAM_FORMAT_ASCII_ARB, srcText.size(), srcText.c_str());
 
 		int errorPos = -1;
 		int isNative =  0;
+
 		glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &errorPos);
 		glGetProgramivARB(type, GL_PROGRAM_UNDER_NATIVE_LIMITS_ARB, &isNative);
 
@@ -180,6 +185,8 @@ namespace Shader {
 	void ARBShaderObject::Release() {
 		glDeleteProgramsARB(1, &objID);
 	}
+
+
 
 
 	/*****************************************************************/
@@ -201,9 +208,9 @@ namespace Shader {
 			SafeDelete(so);
 		});
 
-		assert(!curShaderSrc.empty());
+		assert(!srcText.empty());
 
-		std::string sourceStr = curShaderSrc;
+		std::string sourceStr = srcText;
 		std::string defFlags  = rawDefStrs + "\n" + modDefStrs;
 		std::string versionStr;
 
@@ -243,21 +250,11 @@ namespace Shader {
 	}
 
 
+
+
 	/*****************************************************************/
 
-	IProgramObject::IProgramObject(const std::string& poName): name(poName), objID(0), curFlagsHash(0), valid(false), bound(false) {
-	}
-
-	void IProgramObject::Enable() {
-		bound = true;
-	}
-
-	void IProgramObject::Disable() {
-		bound = false;
-	}
-
-	bool IProgramObject::IsBound() const {
-		return bound;
+	IProgramObject::IProgramObject(const std::string& poName): name(poName), objID(0), valid(false), bound(false) {
 	}
 
 	void IProgramObject::Release() {
@@ -269,8 +266,9 @@ namespace Shader {
 		uniformStates.clear();
 		shaderObjs.clear();
 		luaTextures.clear();
+		log.clear();
+
 		valid = false;
-		log = "";
 	}
 
 
@@ -280,17 +278,10 @@ namespace Shader {
 
 	void IProgramObject::RecompileIfNeeded(bool validate)
 	{
-		if (curFlagsHash != 0 && GetHash() == curFlagsHash)
+		if (shaderFlags.HashSet() && !shaderFlags.Updated())
 			return;
 
-		// NOTE: this does not preserve the #version pragma
-		const std::string& definitionFlags = GetString();
-
-		for (IShaderObject*& so: shaderObjs) {
-			so->SetDefinitions(definitionFlags);
-		}
-
-		Reload(curFlagsHash == 0, validate);
+		Reload(!shaderFlags.HashSet(), validate);
 		PrintDebugInfo();
 	}
 
@@ -298,8 +289,9 @@ namespace Shader {
 	{
 	#if DEBUG
 		LOG_L(L_DEBUG, "Uniform States for program-object \"%s\":", name.c_str());
-		LOG_L(L_DEBUG, "Defs:\n %s", GetString().c_str());
+		LOG_L(L_DEBUG, "Defs:\n %s", (shaderFlags.GetString()).c_str());
 		LOG_L(L_DEBUG, "Uniforms:");
+
 		for (const auto& p : uniformStates) {
 			const bool curUsed = GetUniformLocation(p.second.GetName()) >= 0;
 			if (p.second.IsUninit()) {
@@ -352,6 +344,8 @@ namespace Shader {
 	}
 
 
+
+
 	/*****************************************************************/
 
 	ARBProgramObject::ARBProgramObject(const std::string& poName): IProgramObject(poName) {
@@ -384,16 +378,11 @@ namespace Shader {
 
 	void ARBProgramObject::Link() {
 		RecompileIfNeeded(false);
-		bool shaderObjectsValid = true;
+		valid = true;
 
 		for (const IShaderObject* so: shaderObjs) {
-			shaderObjectsValid = (shaderObjectsValid && so->IsValid());
+			valid &= so->IsValid();
 		}
-
-		valid = shaderObjectsValid;
-	}
-	void ARBProgramObject::Release() {
-		IProgramObject::Release();
 	}
 	void ARBProgramObject::Reload(bool reloadFromDisk, bool validate) {
 		for (IShaderObject* so: GetAttachedShaderObjs()) {
@@ -403,9 +392,6 @@ namespace Shader {
 		if (validate) Validate();
 	}
 
-	int ARBProgramObject::GetUniformLoc(const std::string& name) {
-		return -1; //FIXME
-	}
 
 	void ARBProgramObject::SetUniform1i(int idx, int   v0                              ) { glProgramEnvParameter4fARB(uniformTarget, idx, float(v0), float( 0), float( 0), float( 0)); }
 	void ARBProgramObject::SetUniform2i(int idx, int   v0, int   v1                    ) { glProgramEnvParameter4fARB(uniformTarget, idx, float(v0), float(v1), float( 0), float( 0)); }
@@ -424,14 +410,12 @@ namespace Shader {
 	void ARBProgramObject::SetUniform4fv(int idx, const float* v) { float vv[4]; vv[0] = v[0]; vv[1] = v[1]; vv[2] = v[2]; vv[3] = v[3]; glProgramEnvParameter4fvARB(uniformTarget, idx,          vv); }
 
 
+
+
 	/*****************************************************************/
 
 	GLSLProgramObject::GLSLProgramObject(const std::string& poName): IProgramObject(poName), curSrcHash(0) {
 		objID = glCreateProgram();
-	}
-
-	GLSLProgramObject::~GLSLProgramObject() {
-		Release();
 	}
 
 	void GLSLProgramObject::Enable() {
@@ -497,36 +481,42 @@ namespace Shader {
 	void GLSLProgramObject::Release() {
 		IProgramObject::Release();
 		glDeleteProgram(objID);
-		ClearHash();
+		shaderFlags.Clear();
 
 		objID = 0;
-		curFlagsHash = 0;
 		curSrcHash = 0;
 	}
 
 	void GLSLProgramObject::Reload(bool reloadFromDisk, bool validate) {
-		const auto   oldSrcHash = curSrcHash;
-		      bool   oldValid  = IsValid();
-		const GLuint oldProgID = objID;
+		const unsigned int oldProgID = objID;
+		const unsigned int oldSrcHash = curSrcHash;
 
-		// reload shader from disk?
-		reloadFromDisk = reloadFromDisk || !oldValid || (oldProgID == 0);
+		const bool oldValid = IsValid();
+		valid = false;
 
-		if (reloadFromDisk) {
-			for (IShaderObject*& so: GetAttachedShaderObjs()) {
+		{
+			// NOTE: this does not preserve the #version pragma
+			for (IShaderObject*& so: shaderObjs) {
+				so->SetDefinitions(shaderFlags.GetString());
+			}
+
+			log.clear();
+		}
+
+		// reload shader from disk if requested or necessary
+		if ((reloadFromDisk = reloadFromDisk || !oldValid || (oldProgID == 0))) {
+			for (IShaderObject*& so: shaderObjs) {
 				so->ReloadFromDisk();
 			}
 		}
 
-		//
-		log = "";
-		valid = false;
+		{
+			// create shader source hash
+			curSrcHash = shaderFlags.UpdateHash();
 
-		// create shader source hash
-		curFlagsHash = GetHash();
-		curSrcHash = curFlagsHash;
-		for (const IShaderObject* so: GetAttachedShaderObjs()) {
-			curSrcHash ^= so->GetHash();
+			for (const IShaderObject* so: shaderObjs) {
+				curSrcHash ^= so->GetHash();
+			}
 		}
 
 		// clear all uniform locations
@@ -534,19 +524,21 @@ namespace Shader {
 			us_pair.second.SetLocation(GL_INVALID_INDEX);
 		}
 
-		// early-exit: empty program
-		// TODO delete existing program if exists?
-		if (GetAttachedShaderObjs().empty())
+		// early-exit: empty program (TODO: delete it?)
+		if (shaderObjs.empty())
 			return;
 
-		// push old program to cache and pop new if available
-		const bool useShaderCache = oldValid && configHandler->GetBool("UseShaderCache");
 		bool deleteOldShader = true;
-		objID = 0;
-		if (useShaderCache) {
-			CShaderHandler::ShaderCache& shadersCache = shaderHandler->GetShaderCache();
-			deleteOldShader = !shadersCache.Push(oldSrcHash, oldProgID);
-			objID = shadersCache.Find(curSrcHash);
+
+		{
+			objID = 0;
+
+			// push old program to cache and pop new if available
+			if (oldValid && configHandler->GetBool("UseShaderCache")) {
+				CShaderHandler::ShaderCache& shadersCache = shaderHandler->GetShaderCache();
+				deleteOldShader = !shadersCache.Push(oldSrcHash, oldProgID);
+				objID = shadersCache.Find(curSrcHash);
+			}
 		}
 
 		// recompile if not found in cache (id 0)
@@ -554,8 +546,9 @@ namespace Shader {
 			objID = glCreateProgram();
 
 			bool shadersValid = true;
-			for (IShaderObject*& so: GetAttachedShaderObjs()) {
+			for (IShaderObject*& so: shaderObjs) {
 				assert(dynamic_cast<GLSLShaderObject*>(so));
+
 				auto gso = static_cast<GLSLShaderObject*>(so);
 				auto obj = gso->CompileShaderObject();
 
@@ -581,16 +574,13 @@ namespace Shader {
 			valid = true;
 		}
 
-		//
-		//FIXME: fails on ATI, see https://springrts.com/mantis/view.php?id=4715
-		//if (validate && !globalRendering->haveATI) {
-		//	Validate();
-		//}
+		// FIXME: fails on ATI, see https://springrts.com/mantis/view.php?id=4715
+		if (validate && !globalRendering->haveATI)
+			Validate();
 
 		// copy full program state from old to new program (uniforms etc.)
-		if (IsValid()) {
+		if (IsValid())
 			GLSLCopyState(objID, oldValid ? oldProgID : 0, &uniformStates);
-		}
 
 		// delete old program when not further used
 		if (deleteOldShader)
