@@ -57,6 +57,7 @@ namespace Threading {
 	static cpu_set_t cpusSystem;
 #endif
 
+
 	void DetectCores()
 	{
 		static bool inited = false;
@@ -82,6 +83,42 @@ namespace Threading {
 	}
 
 
+
+	#if defined(__APPLE__) || defined(__FreeBSD__)
+	#elif defined(WIN32)
+	#else
+	static std::uint32_t CalcCoreAffinityMask(const cpu_set_t* cpuSet) {
+		std::uint32_t coreMask = 0;
+
+		// without the min(..., 32), `(1 << n)` could overflow
+		const int numCPUs = std::min(CPU_COUNT(cpuSet), 32);
+
+		for (int n = numCPUs - 1; n >= 0; --n) {
+			if (CPU_ISSET(n, cpuSet)) {
+				coreMask |= (1 << n);
+			}
+		}
+
+		return coreMask;
+	}
+
+	static void SetWantedCoreAffinityMask(const cpu_set_t* cpuSrcSet, cpu_set_t* cpuDstSet, std::uint32_t coreMask) {
+		CPU_ZERO(cpuDstSet);
+
+		const int numCPUs = std::min(CPU_COUNT(cpuSrcSet), 32);
+
+		for (int n = numCPUs - 1; n >= 0; --n) {
+			if ((coreMask & (1 << n)) != 0) {
+				CPU_SET(n, cpuDstSet);
+			}
+		}
+
+		CPU_AND(cpuDstSet, cpuDstSet, cpuSrcSet);
+	}
+	#endif
+
+
+
 	std::uint32_t GetAffinity()
 	{
 	#if defined(__APPLE__) || defined(__FreeBSD__)
@@ -98,67 +135,47 @@ namespace Threading {
 		CPU_ZERO(&curAffinity);
 		sched_getaffinity(0, sizeof(cpu_set_t), &curAffinity);
 
-		std::uint32_t mask = 0;
-
-		int numCpus = std::min(CPU_COUNT(&curAffinity), 32); // w/o the min(.., 32) `(1 << n)` could overflow!
-		for (int n = numCpus - 1; n >= 0; --n) {
-			if (CPU_ISSET(n, &curAffinity)) {
-				mask |= (1 << n);
-			}
-		}
-
-		return mask;
+		return (CalcCoreAffinityMask(&curAffinity));
 	#endif
 	}
 
 
-	std::uint32_t SetAffinity(std::uint32_t cores_bitmask, bool hard)
+	std::uint32_t SetAffinity(std::uint32_t coreMask, bool hard)
 	{
-		if (cores_bitmask == 0) {
-			return ~0;
-		}
+		if (coreMask == 0)
+			return (~0);
 
 	#if defined(__APPLE__) || defined(__FreeBSD__)
 		// no-op
 		return 0;
 
 	#elif defined(WIN32)
-		// Create mask
-		DWORD_PTR cpusWanted = (cores_bitmask & cpusSystem);
-
-		// Set the affinity
-		HANDLE thread = GetCurrentThread();
+		// create mask
+		DWORD_PTR cpusWanted = (coreMask & cpusSystem);
 		DWORD_PTR result = 0;
+
+		HANDLE thread = GetCurrentThread();
+
+		// set the affinity
 		if (hard) {
 			result = SetThreadAffinityMask(thread, cpusWanted);
 		} else {
 			result = SetThreadIdealProcessor(thread, (DWORD)cpusWanted);
 		}
 
-		// Return final mask
-		return (result > 0) ? (std::uint32_t)cpusWanted : 0;
+		// return final mask
+		return ((static_cast<std::uint32_t>(cpusWanted)) * (result > 0));
 	#else
-		// Create mask
-		cpu_set_t cpusWanted; CPU_ZERO(&cpusWanted);
-		int numCpus = std::min(CPU_COUNT(&cpusSystem), 32); // w/o the min(.., 32) `(1 << n)` could overflow!
-		for (int n = numCpus - 1; n >= 0; --n) {
-			if ((cores_bitmask & (1 << n)) != 0) {
-				CPU_SET(n, &cpusWanted);
-			}
-		}
-		CPU_AND(&cpusWanted, &cpusWanted, &cpusSystem);
+		cpu_set_t cpusWanted;
 
-		// Set the affinity
-		int result = sched_setaffinity(0, sizeof(cpu_set_t), &cpusWanted);
+		// create wanted mask
+		SetWantedCoreAffinityMask(&cpusSystem, &cpusWanted, coreMask);
 
-		// Return final mask
-		uint32_t finalMask = 0;
-		for (int n = numCpus - 1; n >= 0; --n) {
-			if (CPU_ISSET(n, &cpusWanted)) {
-				finalMask |= (1 << n);
-			}
-		}
-		return (result == 0) ? finalMask : 0;
+		// set the affinity; return final mask (can differ from wanted)
+		if (sched_setaffinity(0, sizeof(cpu_set_t), &cpusWanted) == 0)
+			return (CalcCoreAffinityMask(&cpusWanted));
+
+		return 0;
 	#endif
 	}
 
@@ -181,63 +198,48 @@ namespace Threading {
 
 	std::uint32_t GetAvailableCoresMask()
 	{
-		std::uint32_t systemCores = 0;
 	#if defined(__APPLE__) || defined(__FreeBSD__)
 		// no-op
-		systemCores = ~0;
-
+		return (~0);
 	#elif defined(WIN32)
-		// Create mask
-		systemCores = cpusSystem;
-
+		return cpusSystem;
 	#else
-		// Create mask
-		const int numCpus = std::min(CPU_COUNT(&cpusSystem), 32); // w/o the min(.., 32) `(1 << n)` could overflow!
-		for (int n = numCpus - 1; n >= 0; --n) {
-			if (CPU_ISSET(n, &cpusSystem)) {
-				systemCores |= (1 << n);
-			}
-		}
+		return (CalcCoreAffinityMask(&cpusSystem));
 	#endif
-
-		return systemCores;
 	}
 
 
-	static std::uint32_t GetCpuCoreForWorkerThread(int index, std::uint32_t availCores, std::uint32_t avoidCores)
+	static std::uint32_t GetCpuCoreForWorkerThread(std::int32_t index, std::uint32_t availCores, std::uint32_t avoidCores)
 	{
-		std::uint32_t ompCore = 1;
+		// find an unused core for worker-thread <index>
+		const auto FindCore = [&index](std::uint32_t targetCores) {
+			std::uint32_t workerCore = 1;
+			std::int32_t n = index;
 
-		// find an unused core
-		// count down cause hyperthread cores are appended to the end and we prefer those for our worker threads
-		// (the physical cores are prefered for task specific threads)
-		{
-			while ((ompCore) && !(ompCore & availCores))
-				ompCore <<= 1;
-			int n = index;
-			// select n'th bit in availCores
+			while ((workerCore != 0) && !(workerCore & targetCores))
+				workerCore <<= 1;
+
+			// select n'th bit in targetCores
+			// counts down because hyper-thread cores are appended to the end
+			// and we prefer those for our worker threads (physical cores are
+			// preferred for task specific threads)
 			while (n--)
-				do ompCore <<= 1; while ((ompCore) && !(ompCore & availCores));
-		}
+				do workerCore <<= 1; while ((workerCore != 0) && !(workerCore & targetCores));
 
-		// select one of the mainthread cores if none found
-		if (ompCore == 0) {
-			/*int cntBits =*/ count_bits_set(avoidCores);
-			ompCore = 1;
-			while ((ompCore) && !(ompCore & avoidCores))
-				ompCore <<= 1;
-			int n = index;
-			// select n'th bit in avoidCores
-			while (n--)
-				do ompCore <<= 1; while ((ompCore) && !(ompCore & avoidCores));
-		}
+			return workerCore;
+		};
 
-		// fallback use all
-		if (ompCore == 0) {
-			ompCore = ~0;
-		}
+		const std::uint32_t threadAvailCore = FindCore(availCores);
+		const std::uint32_t threadAvoidCore = FindCore(avoidCores);
 
-		return ompCore;
+		if (threadAvailCore != 0)
+			return threadAvailCore;
+		// select one of the main-thread cores if no others are available
+		if (threadAvoidCore != 0)
+			return threadAvoidCore;
+
+		// fallback; use all
+		return (~0);
 	}
 
 
@@ -245,7 +247,6 @@ namespace Threading {
 		// auto-detect number of system threads (including hyperthreading)
 		return spring::thread::hardware_concurrency();
 	}
-
 
 	/** Function that returns the number of real cpu cores (not
 	    hyperthreading ones). These are the total cores in the system
@@ -268,7 +269,7 @@ namespace Threading {
 #ifndef UNIT_TEST
 		mainAffinity &= configHandler->GetUnsigned("SetCoreAffinity");
 #endif
-		std::uint32_t ompAvailCores = systemCores & ~mainAffinity;
+		std::uint32_t workerAvailCores = systemCores & ~mainAffinity;
 
 		{
 #ifndef UNIT_TEST
@@ -297,25 +298,28 @@ namespace Threading {
 			ThreadPool::SetThreadCount(workerCount);
 		}
 
-		// set affinity of worker threads
-		std::uint32_t ompCores = 0;
-		ompCores = parallel_reduce([&]() -> std::uint32_t {
+		const auto ReduceFunc = [](std::uint32_t a, std::future<std::uint32_t>& b) -> std::uint32_t { return (a | b.get()); };
+		const auto AffinityFunc = [&]() -> std::uint32_t {
 			const int i = ThreadPool::GetThreadNum();
 
 			// 0 is the source thread, skip
 			if (i == 0)
 				return 0;
 
-			std::uint32_t ompCore = GetCpuCoreForWorkerThread(i - 1, ompAvailCores, mainAffinity);
-			//std::uint32_t ompCore = ompAvailCores;
-			Threading::SetAffinity(ompCore);
-			return ompCore;
-		}, [](std::uint32_t a, std::future<std::uint32_t>& b) -> std::uint32_t { return a | b.get(); });
+			const std::uint32_t workerCore = GetCpuCoreForWorkerThread(i - 1, workerAvailCores, mainAffinity);
+			// const std::uint32_t workerCore = workerAvailCores;
 
-		// affinity of mainthread
-		std::uint32_t nonOmpCores = ~ompCores;
-		if (mainAffinity == 0) mainAffinity = systemCores;
-		Threading::SetAffinityHelper("Main", mainAffinity & nonOmpCores);
+			Threading::SetAffinity(workerCore);
+			return workerCore;
+		};
+
+		const std::uint32_t    workerCoreAffin = parallel_reduce(AffinityFunc, ReduceFunc);
+		const std::uint32_t nonWorkerCoreAffin = ~workerCoreAffin;
+
+		if (mainAffinity == 0)
+			mainAffinity = systemCores;
+
+		Threading::SetAffinityHelper("Main", mainAffinity & nonWorkerCoreAffin);
 	}
 
 	void SetThreadScheduler()
@@ -385,9 +389,8 @@ namespace Threading {
 	std::shared_ptr<ThreadControls> GetCurrentThreadControls()
 	{
 		// If there is no object registered, need to return an "empty" shared_ptr
-		if (threadCtls.get() == nullptr) {
+		if (threadCtls.get() == nullptr)
 			return std::shared_ptr<ThreadControls>();
-		}
 
 		return threadCtls;
 	}
@@ -471,6 +474,7 @@ namespace Threading {
 		prctl(PR_SET_NAME, newname.c_str(), 0, 0, 0);
 	#elif _MSC_VER
 		const DWORD MS_VC_EXCEPTION = 0x406D1388;
+
 		#pragma pack(push,8)
 		struct THREADNAME_INFO
 		{
@@ -480,10 +484,12 @@ namespace Threading {
 			DWORD dwFlags; // Reserved for future use, must be zero.
 		} info;
 		#pragma pack(pop)
+
 		info.dwType = 0x1000;
 		info.szName = newname.c_str();
 		info.dwThreadID = (DWORD)-1;
 		info.dwFlags = 0;
+
 		__try {
 			RaiseException(MS_VC_EXCEPTION, 0, sizeof(info) / sizeof(ULONG_PTR), (ULONG_PTR*) &info);
 		}
