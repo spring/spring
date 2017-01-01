@@ -94,12 +94,15 @@ BOOST_AUTO_TEST_CASE( testThreadPool3 )
 {
 	LOG_L(L_WARNING, "parallel_reduce");
 
-	int result = parallel_reduce([]() -> int {
+	const auto ReduceFunc = [](int a, std::shared_ptr< std::future<int> >& b) -> int { return (a + (b.get())->get()); };
+	const auto TestFunc = []() -> int {
 		const int threadnum = ThreadPool::GetThreadNum();
 		SAFE_BOOST_CHECK(threadnum >= 0);
 		SAFE_BOOST_CHECK(threadnum < NUM_THREADS);
 		return threadnum;
-	}, [](int a, std::future<int>& b) -> int { return a + b.get(); });
+	};
+
+	int result = parallel_reduce(TestFunc, ReduceFunc);
 	BOOST_CHECK(result == ((NUM_THREADS-1)*((NUM_THREADS-1) + 1))/2);
 }
 
