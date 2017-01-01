@@ -24,7 +24,9 @@
 #include <utility>
 #include <functional>
 
-#define USE_BOOST_LOCKFREE_QUEUE
+// not in mingwlibs
+// #define USE_BOOST_LOCKFREE_QUEUE
+
 #ifdef USE_BOOST_LOCKFREE_QUEUE
 #include <boost/lockfree/queue.hpp>
 #else
