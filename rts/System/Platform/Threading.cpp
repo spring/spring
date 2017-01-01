@@ -298,7 +298,9 @@ namespace Threading {
 			ThreadPool::SetThreadCount(workerCount);
 		}
 
-		const auto ReduceFunc = [](std::uint32_t a, std::future<std::uint32_t>& b) -> std::uint32_t { return (a | b.get()); };
+		// parallel_reduce now folds over shared_ptrs to futures
+		// const auto ReduceFunc = [](std::uint32_t a, std::future<std::uint32_t>& b) -> std::uint32_t { return (a | b.get()); };
+		const auto ReduceFunc = [](std::uint32_t a, std::shared_ptr< std::future<std::uint32_t> >& b) -> std::uint32_t { return (a | (b.get())->get()); };
 		const auto AffinityFunc = [&]() -> std::uint32_t {
 			const int i = ThreadPool::GetThreadNum();
 

@@ -15,75 +15,37 @@
 	#include "OffscreenGLContext.h"
 #endif
 
+#ifdef likely
+#undef   likely
+#undef unlikely
+#endif
+
 #include <deque>
 #include <utility>
 #include <functional>
 
-
-static std::deque<void*> thread_group; //the worker threads
-
-
-
-template<typename T>
-struct SingleConsumerQueue {
-	static constexpr unsigned ringSize = 256;
-	typedef typename std::array<std::shared_ptr<T>, ringSize> container_type; //FIME remove shared_ptr
-
-	unsigned ourGen = 0; //< always <= curGen+1
-	static std::atomic_uint curGen; //< position in the ringbuffer is ringBuffer[curGen % 256]
-	static container_type ringBuffer;
-
-	T* pop() {
-		auto v = ringBuffer[ourGen % ringSize].get();
-
-		if (v == nullptr)
-			return nullptr;
-
-		if (v->GetId() < ourGen)
-			return nullptr;
-
-		++ourGen;
-		return v;
-	}
-
-	static void push(std::shared_ptr<T>& v) {
-		const unsigned id = v->GetId();
-
-		ringBuffer[id % ringSize] = v;
-
-		const unsigned nextGen = id + 1;
-		unsigned cg = nextGen - 1;
-		while (!curGen.compare_exchange_weak(cg, nextGen)) {
-			// note: compare_exchange_weak updates 'cg' var
-		}
-	}
-
-	bool empty() const {
-		auto v = ringBuffer[ourGen % ringSize].get();
-		return (v == nullptr) || (v->GetId() < ourGen);
-	}
-
-	void reset() {
-		// has to be called after a thread is created
-		ourGen = curGen;
-	}
-};
-template<typename T>
-typename SingleConsumerQueue<T>::container_type SingleConsumerQueue<T>::ringBuffer;
-template<typename T>
-std::atomic_uint SingleConsumerQueue<T>::curGen = {0};
+#define USE_BOOST_LOCKFREE_QUEUE
+#ifdef USE_BOOST_LOCKFREE_QUEUE
+#include <boost/lockfree/queue.hpp>
+#else
+#include "System/ConcurrentQueue.h"
+#endif
 
 
 
+// std::shared_ptr<T> can not be made atomic, must store T*
+#ifdef USE_BOOST_LOCKFREE_QUEUE
+static boost::lockfree::queue<ITaskGroup*> taskQueue(1024);
+#else
+static moodycamel::ConcurrentQueue<ITaskGroup*> taskQueue;
+#endif
 
-
-
-
-static std::array<SingleConsumerQueue<ITaskGroup>,ThreadPool::MAX_THREADS> perThreadQueue;
+static std::deque<void*> threadGroup; // worker threads
 static spring::mutex newTasksMutex;
 static spring::signal newTasks;
-static _threadlocal int threadnum(0);
 static std::array<bool, ThreadPool::MAX_THREADS> exitThread;
+
+static _threadlocal int threadnum(0);
 
 
 #if !defined(UNITSYNC) && !defined(UNIT_TEST)
@@ -93,6 +55,7 @@ static bool hasOGLthreads = false;
 #endif
 
 std::atomic_uint ITaskGroup::lastId(0);
+
 
 
 namespace ThreadPool {
@@ -118,36 +81,45 @@ int GetNumThreads()
 {
 	// FIXME: mutex/atomic?
 	// NOTE: +1 cause we also count mainthread
-	return (thread_group.size() + 1);
+	return (threadGroup.size() + 1);
 }
 
 bool HasThreads()
 {
-	return !thread_group.empty();
+	return !threadGroup.empty();
 }
 
 
 
-/// returns false, when no further tasks were found
-static bool DoTask(SingleConsumerQueue<ITaskGroup>& queue)
+static bool DoTask()
 {
-	if (queue.empty())
-		return false;
-
-	// inform other workers that there is work to do
-	// wakeing is a kernel-syscall and so eats time,
-	// it's better to shift this task to the workers
-	// (the main thread only wakes when _all_ workers are sleeping)
-	NotifyWorkerThreads(true);
-
-	// start with the work
 	SCOPED_MT_TIMER("::ThreadWorkers (accumulated)");
-	while (auto tg = queue.pop()) {
-		while (tg->ExecuteTask()) {
-		}
+
+	ITaskGroup* tg = nullptr;
+
+	// inform other workers when there is work to do
+	// waking is an expensive kernel-syscall, so better shift this
+	// cost to the workers too (the main thread only wakes when ALL
+	// workers are sleeping)
+	#ifdef USE_BOOST_LOCKFREE_QUEUE
+	if (taskQueue.pop(tg)) {
+	#else
+	if (taskQueue.try_dequeue(tg)) {
+	#endif
+		NotifyWorkerThreads(true);
+		while (tg->ExecuteTask());
 	}
 
-	return true;
+	#ifdef USE_BOOST_LOCKFREE_QUEUE
+	while (taskQueue.pop(tg)) {
+	#else
+	while (taskQueue.try_dequeue(tg)) {
+	#endif
+		while (tg->ExecuteTask());
+	}
+
+	// if true, queue contained at least one element
+	return (tg != nullptr);
 }
 
 
@@ -158,8 +130,6 @@ static void WorkerLoop(int id)
 #ifndef UNIT_TEST
 	Threading::SetThreadName(IntToString(id, "worker%i"));
 #endif
-	auto& queue = perThreadQueue[id];
-	queue.reset();
 	static const auto maxSleepTime = spring_time::fromMilliSecs(30);
 
 	// make first worker spin a while before sleeping/waiting on the thread signal
@@ -171,7 +141,7 @@ static void WorkerLoop(int id)
 		const auto spinlockEnd = spring_now() + ourSpinTime;
 		      auto sleepTime   = spring_time::fromMicroSecs(1);
 
-		while (!DoTask(queue) && !exitThread[id]) {
+		while (!DoTask() && !exitThread[id]) {
 			if (spring_now() < spinlockEnd)
 				continue;
 
@@ -182,26 +152,24 @@ static void WorkerLoop(int id)
 }
 
 
-void WaitForFinished(std::shared_ptr<ITaskGroup>&& taskgroup)
+void WaitForFinished(std::shared_ptr<ITaskGroup>&& taskGroup)
 {
 	{
 		SCOPED_MT_TIMER("::ThreadWorkers (accumulated)");
-		while (taskgroup->ExecuteTask()) {
+		while (taskGroup->ExecuteTask()) {
 		}
 	}
 
 
-	if (!taskgroup->IsFinished()) {
-		// the task hasn't completed yet
-		// use the waiting time to execute other tasks
+	if (!taskGroup->IsFinished()) {
+		// task hasn't completed yet, use waiting time to execute other tasks
 		NotifyWorkerThreads(true);
 		const auto id = ThreadPool::GetThreadNum();
-		auto& queue = perThreadQueue[id];
 
 		do {
 			const auto spinlockEnd = spring_now() + spring_time::fromMilliSecs(500);
 
-			while (!DoTask(queue) && !taskgroup->IsFinished() && !exitThread[id]) {
+			while (!DoTask() && !taskGroup->IsFinished() && !exitThread[id]) {
 				if (spring_now() < spinlockEnd)
 					continue;
 
@@ -209,18 +177,28 @@ void WaitForFinished(std::shared_ptr<ITaskGroup>&& taskgroup)
 				NotifyWorkerThreads(true);
 				break;
 			}
-		} while (!taskgroup->IsFinished() && !exitThread[id]);
+		} while (!taskGroup->IsFinished() && !exitThread[id]);
 	}
 
-	//LOG("WaitForFinished %i", taskgroup->GetExceptions().size());
-	//for (auto& ep: taskgroup->GetExceptions())
+	//LOG("WaitForFinished %i", taskGroup->GetExceptions().size());
+	//for (auto& ep: taskGroup->GetExceptions())
 	//	std::rethrow_exception(ep);
 }
 
 
-void PushTaskGroup(std::shared_ptr<ITaskGroup>&& taskgroup)
+// WARNING:
+//   leaking the raw pointer *forces* caller to WaitForFinished
+//   otherwise task might get deleted while its pointer is still
+//   in the queue
+void PushTaskGroup(std::shared_ptr<ITaskGroup>&& taskGroup) { PushTaskGroup(taskGroup.get()); }
+void PushTaskGroup(ITaskGroup* taskGroup)
 {
-	SingleConsumerQueue<ITaskGroup>::push(taskgroup);
+	#ifdef USE_BOOST_LOCKFREE_QUEUE
+	while (!taskQueue.push(taskGroup)) {}
+	#else
+	while (!taskQueue.enqueue(taskGroup)) {}
+	#endif
+
 	NotifyWorkerThreads();
 }
 
@@ -233,9 +211,7 @@ void NotifyWorkerThreads(const bool force)
 	// is a kernel-syscall that costs a lot of time, we prefer
 	// to not do so on the thread that added the ThreadPool-Task
 	// and instead let the worker threads themselves inform each other.
-	const int minSleepers = (force) ? 0 : ThreadPool::GetNumThreads() - 1;
-
-	newTasks.notify_all(minSleepers);
+	newTasks.notify_all((ThreadPool::GetNumThreads() - 1) * (1 - force));
 }
 
 
@@ -253,10 +229,10 @@ static void SpawnThreads(int num, int curThreads)
 		try {
 			for (int i = curThreads; i < num; ++i) {
 				exitThread[i] = false;
-				thread_group.push_back(new COffscreenGLThread(std::bind(&WorkerLoop, i)));
+				threadGroup.push_back(new COffscreenGLThread(std::bind(&WorkerLoop, i)));
 			}
 		} catch (const opengl_error& gle) {
-			// shared gl context creation failed :<
+			// shared gl context creation failed
 			ThreadPool::SetThreadCount(0);
 
 			hasOGLthreads = false;
@@ -267,7 +243,7 @@ static void SpawnThreads(int num, int curThreads)
 	{
 		for (int i = curThreads; i<num; ++i) {
 			exitThread[i] = false;
-			thread_group.push_back(new spring::thread(std::bind(&WorkerLoop, i)));
+			threadGroup.push_back(new spring::thread(std::bind(&WorkerLoop, i)));
 		}
 	}
 }
@@ -282,29 +258,30 @@ static void KillThreads(int num, int curThreads)
 	NotifyWorkerThreads(true);
 
 	for (int i = curThreads - 1; i >= num && i > 0; --i) {
-		assert(!thread_group.empty());
+		assert(!threadGroup.empty());
 	#ifndef UNITSYNC
 		if (hasOGLthreads) {
-			auto th = reinterpret_cast<COffscreenGLThread*>(thread_group.back());
+			auto th = reinterpret_cast<COffscreenGLThread*>(threadGroup.back());
 			th->join();
 			delete th;
 		} else
 	#endif
 		{
-			auto th = reinterpret_cast<spring::thread*>(thread_group.back());
+			auto th = reinterpret_cast<spring::thread*>(threadGroup.back());
 			th->join();
 			delete th;
 		}
-		thread_group.pop_back();
+		threadGroup.pop_back();
 	}
 
-	assert((num != 0) || thread_group.empty());
+	assert((num != 0) || threadGroup.empty());
 }
 
 
 void SetThreadCount(int numWantedThreads)
 {
-	int curThreads = ThreadPool::GetNumThreads();
+	const int curThreads = ThreadPool::GetNumThreads();
+
 	LOG("[ThreadPool::%s][1] #wanted=%d #current=%d #max=%d", __FUNCTION__, numWantedThreads, curThreads, ThreadPool::GetMaxThreads());
 	numWantedThreads = Clamp(numWantedThreads, 1, ThreadPool::GetMaxThreads());
 
@@ -314,9 +291,10 @@ void SetThreadCount(int numWantedThreads)
 		KillThreads(numWantedThreads, curThreads);
 	}
 
-	LOG("[ThreadPool::%s][2] #threads=%u", __FUNCTION__, (unsigned) thread_group.size());
+	LOG("[ThreadPool::%s][2] #threads=%u", __FUNCTION__, (unsigned) threadGroup.size());
 }
 
 }
 
 #endif
+
