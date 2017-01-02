@@ -83,14 +83,16 @@ static inline auto parallel_reduce(F&& f, G&& g) -> typename std::result_of<F()>
 class ITaskGroup
 {
 public:
-	ITaskGroup(const bool getid = true) : remainingTasks(0), id(getid ? lastId.fetch_add(1) : -1) { }
+	ITaskGroup(const bool getid = true) : remainingTasks(0), wantedThread(0), id(getid ? lastId.fetch_add(1) : -1) {}
 	virtual ~ITaskGroup() {}
 
-	virtual bool DeleteWhenDone() const { return false; }
+	virtual void DeleteWhenDone(bool b) {}
 	virtual bool ExecuteTask() = 0;
 
-	bool IsFinished() const      { assert(remainingTasks.load() >= 0); return (remainingTasks.load(std::memory_order_relaxed) == 0); }
-	int RemainingTasks() const   { return remainingTasks; }
+	bool IsFinished() const { assert(remainingTasks.load() >= 0); return (remainingTasks.load(std::memory_order_relaxed) == 0); }
+
+	int RemainingTasks() const { return remainingTasks; }
+	int WantedThread() const { return wantedThread; }
 
 	bool wait_for(const spring_time& rel_time) const {
 		const auto end = spring_now() + rel_time;
@@ -104,6 +106,8 @@ public:
 
 public:
 	std::atomic_int remainingTasks;
+	// if 0 (default), task will be executed by an arbitrary thread
+	std::atomic_int wantedThread;
 
 private:
 	static std::atomic_uint lastId;
@@ -142,7 +146,7 @@ class SingleTask : public ITaskGroup
 public:
 	typedef typename std::result_of<F(Args...)>::type return_type;
 
-	SingleTask(F f, bool b, Args... args) : taskDone(false), deleteMe(b) {
+	SingleTask(F f, Args... args) : taskDone(false), deleteMe(false) {
 		auto p = std::make_shared<std::packaged_task<return_type()>>(
 			std::bind(f, std::forward<Args>(args)...)
 		);
@@ -151,7 +155,7 @@ public:
 		this->remainingTasks++;
 	}
 
-	bool DeleteWhenDone() const override { return deleteMe; }
+	void DeleteWhenDone(bool b) override { deleteMe.store(b); }
 	bool ExecuteTask() override {
 		if (taskDone.load(std::memory_order_relaxed)) {
 			if (deleteMe.load()) delete this;
@@ -526,8 +530,12 @@ static inline auto parallel_reduce(F&& f, G&& g) -> typename std::result_of<F()>
 
 	// need to push N individual tasks; see NOTE in TParallelTaskGroup
 	for (size_t i = 0; i < results.size(); ++i) {
-		tasks[i] = std::move(std::make_shared<SingleTask<F>>(std::forward<F>(f), false));
+		tasks[i] = std::move(std::make_shared<SingleTask<F>>(std::forward<F>(f)));
 		results[i] = std::move(tasks[i]->GetFuture());
+
+		if (i > 0)
+			tasks[i]->wantedThread.store(i);
+
 		ThreadPool::PushTaskGroup(tasks[i]);
 	}
 
@@ -554,8 +562,10 @@ namespace ThreadPool {
 
 		// can not use shared_ptr here, make async tasks delete themselves instead
 		// auto task = std::make_shared<SingleTask<F, Args...>>(std::forward<F>(f), std::forward<Args>(args)...);
-		auto task = new SingleTask<F, Args...>(std::forward<F>(f), true, std::forward<Args>(args)...);
+		auto task = new SingleTask<F, Args...>(std::forward<F>(f), std::forward<Args>(args)...);
 		auto fut = task->GetFuture();
+
+		task->DeleteWhenDone(true);
 
 		ThreadPool::PushTaskGroup(task);
 		return fut;
