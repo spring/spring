@@ -65,7 +65,6 @@ static inline auto parallel_reduce(F&& f, G&& g) -> typename std::result_of<F()>
 
 #include <deque>
 #include <vector>
-#include <list>
 #include <numeric>
 #include <atomic>
 
