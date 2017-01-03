@@ -76,33 +76,36 @@ bool HasThreads() { return !workerThreads.empty(); }
 
 
 
-static bool DoTask(int id)
+static bool DoTask(int tid)
 {
 	SCOPED_MT_TIMER("::ThreadWorkers (accumulated)");
-	assert(id > 0);
 
 	ITaskGroup* tg = nullptr;
 
-	for (auto* queue: {&taskQueues[0], &taskQueues[id]}) {
+	// any external thread calling WaitForFinished will have
+	// id=0 and *only* processes tasks from the global queue
+	for (int idx = 0; idx <= tid; idx += std::max(tid, 1)) {
+		auto& queue = taskQueues[idx];
+
 		#ifdef USE_BOOST_LOCKFREE_QUEUE
-		if (queue->pop(tg)) {
+		if (queue.pop(tg)) {
 		#else
-		if (queue->try_dequeue(tg)) {
+		if (queue.try_dequeue(tg)) {
 		#endif
 			// inform other workers when there is global work to do
 			// waking is an expensive kernel-syscall, so better shift this
 			// cost to the workers too (the main thread only wakes when ALL
 			// workers are sleeping)
-			if (queue == &taskQueues[0])
+			if (idx == 0)
 				NotifyWorkerThreads(true);
 
 			while (tg->ExecuteTask());
 		}
 
 		#ifdef USE_BOOST_LOCKFREE_QUEUE
-		while (queue->pop(tg)) {
+		while (queue.pop(tg)) {
 		#else
-		while (queue->try_dequeue(tg)) {
+		while (queue.try_dequeue(tg)) {
 		#endif
 			while (tg->ExecuteTask());
 		}
@@ -114,24 +117,24 @@ static bool DoTask(int id)
 
 
 __FORCE_ALIGN_STACK__
-static void WorkerLoop(int id)
+static void WorkerLoop(int tid)
 {
-	SetThreadNum(id);
+	SetThreadNum(tid);
 #ifndef UNIT_TEST
-	Threading::SetThreadName(IntToString(id, "worker%i"));
+	Threading::SetThreadName(IntToString(tid, "worker%i"));
 #endif
 
 	// make first worker spin a while before sleeping/waiting on the thread signal
 	// this increases the chance that at least one worker is awake when a new TP-Task is inserted
 	// and this worker can then take over the job of waking up the sleeping workers (see NotifyWorkerThreads)
-	const auto ourSpinTime = spring_time::fromMilliSecs(1 * (id == 1));
+	const auto ourSpinTime = spring_time::fromMilliSecs(1 * (tid == 1));
 	const auto maxSleepTime = spring_time::fromMilliSecs(30);
 
-	while (!exitFlags[id]) {
+	while (!exitFlags[tid]) {
 		const auto spinlockEnd = spring_now() + ourSpinTime;
 		      auto sleepTime   = spring_time::fromMicroSecs(1);
 
-		while (!DoTask(id) && !exitFlags[id]) {
+		while (!DoTask(tid) && !exitFlags[tid]) {
 			if (spring_now() < spinlockEnd)
 				continue;
 
@@ -155,12 +158,12 @@ void WaitForFinished(std::shared_ptr<ITaskGroup>&& taskGroup)
 	// task hasn't completed yet, use waiting time to execute other tasks
 	NotifyWorkerThreads(true);
 
-	const auto id = ThreadPool::GetThreadNum();
+	const auto tid = ThreadPool::GetThreadNum();
 
 	do {
 		const auto spinlockEnd = spring_now() + spring_time::fromMilliSecs(500);
 
-		while (!DoTask(id) && !taskGroup->IsFinished() && !exitFlags[id]) {
+		while (!DoTask(tid) && !taskGroup->IsFinished() && !exitFlags[tid]) {
 			if (spring_now() < spinlockEnd)
 				continue;
 
@@ -168,7 +171,7 @@ void WaitForFinished(std::shared_ptr<ITaskGroup>&& taskGroup)
 			NotifyWorkerThreads(true);
 			break;
 		}
-	} while (!taskGroup->IsFinished() && !exitFlags[id]);
+	} while (!taskGroup->IsFinished() && !exitFlags[tid]);
 
 	//LOG("WaitForFinished %i", taskGroup->GetExceptions().size());
 	//for (auto& ep: taskGroup->GetExceptions())
