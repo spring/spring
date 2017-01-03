@@ -34,14 +34,12 @@ void TakeScreenshot(std::string type)
 		return;
 
 	FunctionArgs args;
-	args.x = globalRendering->dualScreenMode? globalRendering->viewSizeX << 1: globalRendering->viewSizeX;
-	args.y = globalRendering->viewSizeY;
+	args.x  = globalRendering->dualScreenMode? globalRendering->viewSizeX << 1: globalRendering->viewSizeX;
+	args.y  = globalRendering->viewSizeY;
+	args.x += ((4 - (args.x % 4)) * int((args.x % 4) != 0));
 	args.buf.resize(args.x * args.y * 4);
 
 	char buf[512] = {0};
-
-	if (args.x % 4)
-		args.x += (4 - args.x % 4);
 
 	for (int a = configHandler->GetInt("ScreenshotCounter"); a <= 99999; ++a) {
 		snprintf(&buf[0], sizeof(buf), "screenshots/screen%05d.%s", a, type.c_str());
