@@ -9,7 +9,7 @@
 
 namespace ThreadPool {
 	template<class F, class... Args>
-	static inline void enqueue(F&& f, Args&&... args)
+	static inline void Enqueue(F&& f, Args&&... args)
 	{
 		f(args ...);
 	}
@@ -116,7 +116,7 @@ private:
 
 namespace ThreadPool {
 	template<class F, class... Args>
-	static auto enqueue(F&& f, Args&&... args)
+	static auto Enqueue(F&& f, Args&&... args)
 	-> std::shared_ptr<std::future<typename std::result_of<F(Args...)>::type>>;
 
 	void PushTaskGroup(ITaskGroup* taskGroup);
@@ -190,7 +190,7 @@ public:
 
 	typedef R return_type;
 
-	void enqueue(F f, Args... args)
+	void Enqueue(F f, Args... args)
 	{
 		auto task = std::make_shared<std::packaged_task<return_type()>>(
 			std::bind(f, std::forward<Args>(args)...)
@@ -235,7 +235,7 @@ public:
 		tasks.reserve(num);
 	}
 
-	void enqueue(F f, Args... args)
+	void Enqueue(F f, Args... args)
 	{
 		tasks.emplace_back(std::bind(f, args...));
 		this->remainingTasks.fetch_add(1, std::memory_order_release);
@@ -266,7 +266,7 @@ public:
 		tasks.reserve(num);
 	}
 
-	void enqueue(F f)
+	void Enqueue(F f)
 	{
 		tasks.emplace_back(f);
 		this->remainingTasks.fetch_add(1, std::memory_order_release);
@@ -299,7 +299,7 @@ public:
 		uniqueTasks.fill(nullptr);
 	}
 
-	void enqueue_unique(const int threadNum, F& f, Args... args)
+	void EnqueueUnique(const int threadNum, F& f, Args... args)
 	{
 		auto task = std::make_shared< std::packaged_task<return_type()> >(
 			std::bind(std::forward<F>(f), std::forward<Args>(args)...)
@@ -365,7 +365,7 @@ public:
 	}
 
 
-	void enqueue(F& func)
+	void Enqueue(F& func)
 	{
 		f = func;
 		this->remainingTasks = ThreadPool::GetNumThreads();
@@ -402,7 +402,7 @@ public:
 	}
 
 
-	void enqueue(const int from, const int to, const int step, F& func)
+	void Enqueue(const int from, const int to, const int step, F& func)
 	{
 		assert(to >= from);
 		this->remainingTasks = (step == 1) ? (to - from) : ((to - from + step - 1) / step);
@@ -483,7 +483,7 @@ static inline void for_mt(int start, int end, int step, F&& f)
 	SCOPED_MT_TIMER("::ThreadWorkers (real)");
 	static TaskPool<ForTaskGroup,F> pool;
 	auto taskGroup = pool.Get();
-	taskGroup->enqueue(start, end, step, f);
+	taskGroup->Enqueue(start, end, step, f);
 	taskGroup->UpdateId();
 	ThreadPool::PushTaskGroup(taskGroup);
 	ThreadPool::WaitForFinished(taskGroup); // make calling thread also run ExecuteTask
@@ -505,7 +505,7 @@ static inline void parallel(F&& f)
 	SCOPED_MT_TIMER("::ThreadWorkers (real)");
 	static TaskPool<Parallel2TaskGroup, F> pool;
 	auto taskGroup = pool.Get();
-	taskGroup->enqueue(f);
+	taskGroup->Enqueue(f);
 	taskGroup->UpdateId();
 	ThreadPool::PushTaskGroup(taskGroup);
 	ThreadPool::WaitForFinished(taskGroup);
@@ -546,7 +546,7 @@ static inline auto parallel_reduce(F&& f, G&& g) -> typename std::result_of<F()>
 
 namespace ThreadPool {
 	template<class F, class... Args>
-	static inline auto enqueue(F&& f, Args&&... args)
+	static inline auto Enqueue(F&& f, Args&&... args)
 	-> std::shared_ptr<std::future<typename std::result_of<F(Args...)>::type>>
 	{
 		typedef typename std::result_of<F(Args...)>::type return_type;

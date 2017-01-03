@@ -35,7 +35,7 @@ void CBattery::Update()
 
 	// SDL_GetPowerInfo() seems to cause a lag of (milli-)secs
 	// run it threaded, so that it doesn't block the mainthread
-	ThreadPool::enqueue([&]{
+	ThreadPool::Enqueue([&]{
 		int secs, pct;
 		onBattery = (SDL_GetPowerInfo(&secs, &pct) == SDL_POWERSTATE_ON_BATTERY);
 	});

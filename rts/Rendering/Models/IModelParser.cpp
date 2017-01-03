@@ -200,7 +200,7 @@ void CModelLoader::PreloadModel(const std::string& modelName)
 	if (cache.find(StringToLower(modelName)) != cache.end())
 		return;
 
-	ThreadPool::enqueue([modelName](){
+	ThreadPool::Enqueue([modelName]() {
 		modelLoader.LoadModel(modelName, true);
 	});
 }
