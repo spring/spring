@@ -40,7 +40,6 @@
 #include "Menu/SelectMenu.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Fonts/glFont.h"
-#include "Rendering/GLContext.h"
 #include "Rendering/GL/FBO.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Textures/NamedTextures.h"
@@ -99,7 +98,6 @@ CONFIG(bool, UseHighResTimer).defaultValue(false).description("On Windows, sets 
 CONFIG(int, PathingThreadCount).defaultValue(0).safemodeValue(1).minimumValue(0);
 
 CONFIG(int, FSAALevel).defaultValue(0).minimumValue(0).maximumValue(8).description("If >0 enables FullScreen AntiAliasing.");
-CONFIG(bool, FixAltTab).defaultValue(false);
 
 CONFIG(std::string, FontFile).defaultValue("fonts/FreeSansBold.otf").description("Sets the font of Spring engine text.");
 CONFIG(std::string, SmallFontFile).defaultValue("fonts/FreeSansBold.otf").description("Sets the font of Spring engine small text.");
@@ -432,15 +430,6 @@ void SpringApp::SetupViewportGeometry()
 void SpringApp::InitOpenGL()
 {
 	globalRendering->UpdateGLConfigs();
-
-	//FIXME not needed anymore with SDL2?
-	if (configHandler->GetBool("FixAltTab")) {
-		// free GL resources
-		GLContext::Free();
-
-		// initialize any GL resources that were lost
-		GLContext::Init();
-	}
 
 	// setup viewport
 	SetupViewportGeometry();
@@ -936,7 +925,6 @@ void SpringApp::ShutDown()
 	SafeDelete(smallFont);
 
 	CNamedTextures::Kill(true);
-	GLContext::Free();
 	GlobalConfig::Deallocate();
 
 	IMouseInput::FreeInstance(mouseInput);
