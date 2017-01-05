@@ -1,5 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include <algorithm>
 #include <climits>
 #include <cstring>
 
@@ -234,6 +235,22 @@ void CTimeProfiler::Update()
 			auto& p = pi.second;
 			p.maxLag *= 0.5f;
 		}
+	}
+
+	{
+		sortedProfile.clear();
+		sortedProfile.reserve(profile.size());
+
+		typedef std::pair<std::string, TimeRecord> TimeRecordPair;
+		typedef std::function<bool(const TimeRecordPair&, const TimeRecordPair&)> ProfileSortFunc;
+
+		const ProfileSortFunc sortFunc = [](const TimeRecordPair& a, const TimeRecordPair& b) { return (a.first < b.first); };
+
+		for (auto it = profile.begin(); it != profile.end(); ++it) {
+			sortedProfile.emplace_back(it->first, it->second);
+		}
+
+		std::sort(sortedProfile.begin(), sortedProfile.end(), sortFunc);
 	}
 }
 

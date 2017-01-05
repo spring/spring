@@ -240,8 +240,8 @@ static void DrawProfiler()
 		va->Initialize();
 			va->AddVertex0(start_x, start_y + lineHeight + 0.005f,                          0);
 			va->AddVertex0(end_x,   start_y + lineHeight + 0.005f,                          0);
-			va->AddVertex0(start_x, start_y - profiler.profile.size() * lineHeight - 0.01f, 0);
-			va->AddVertex0(end_x,   start_y - profiler.profile.size() * lineHeight - 0.01f, 0);
+			va->AddVertex0(start_x, start_y - profiler.sortedProfile.size() * lineHeight - 0.01f, 0);
+			va->AddVertex0(end_x,   start_y - profiler.sortedProfile.size() * lineHeight - 0.01f, 0);
 		glColor4f(0.0f, 0.0f, 0.5f, 0.5f);
 		va->DrawArray0(GL_TRIANGLE_STRIP);
 	}
@@ -272,7 +272,7 @@ static void DrawProfiler()
 
 	// draw the textual info (total-time, short-time percentual time, timer-name)
 	int y = 1;
-	for (auto pi = profiler.profile.begin(); pi != profiler.profile.end(); ++pi, ++y) {
+	for (auto pi = profiler.sortedProfile.begin(); pi != profiler.sortedProfile.end(); ++pi, ++y) {
 		const auto& profileData = pi->second;
 
 		const float fStartY = start_y - y * lineHeight;
@@ -306,7 +306,7 @@ static void DrawProfiler()
 		va->Initialize();
 		va2->Initialize();
 			int i = 1;
-			for (auto pi = profiler.profile.begin(); pi != profiler.profile.end(); ++pi, ++i){
+			for (auto pi = profiler.sortedProfile.begin(); pi != profiler.sortedProfile.end(); ++pi, ++i){
 				auto& fc = pi->second.color;
 				SColor c(fc[0], fc[1], fc[2]);
 				va->AddVertexC(float3(0, -i*lineHeight, 0), c); // upper left
@@ -330,10 +330,10 @@ static void DrawProfiler()
 
 	// draw the graph
 	glLineWidth(3.0f);
-	for (auto pi = profiler.profile.begin(); pi != profiler.profile.end(); ++pi) {
-		if (!pi->second.showGraph) {
+	for (auto pi = profiler.sortedProfile.begin(); pi != profiler.sortedProfile.end(); ++pi) {
+		if (!pi->second.showGraph)
 			continue;
-		}
+
 		CVertexArray* va = GetVertexArray();
 		va->Initialize();
 		const float steps_x = (end_x - start_x) / CTimeProfiler::TimeRecord::frames_size;
