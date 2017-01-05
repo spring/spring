@@ -18,34 +18,30 @@ static spring::unordered_map<int, int> refCounters;
 
 
 
-static unsigned hash_(const std::string& s)
-{
-	unsigned hash = s.size();
-	for (std::string::const_iterator it = s.begin(); it != s.end(); ++it) {
-		hash += *it;
-		hash ^= (hash << 7) | (hash >> (sizeof(hash) * CHAR_BIT - 7));
-	}
-	return hash;
-}
-
-static unsigned hash_(const char* s)
+static unsigned HashString(const char* s, size_t n)
 {
 	unsigned hash = 0;
-	for (size_t i = 0; ; ++i) {
-		if (s[i]) {
+
+	for (size_t i = 0; (i < n || n == std::string::npos); ++i) {
+		if (s[i] != 0) {
 			hash += s[i];
 			hash ^= (hash << 7) | (hash >> (sizeof(hash) * CHAR_BIT - 7));
 		} else {
-			hash += (unsigned) i;
 			break;
 		}
 	}
+
 	return hash;
 }
 
+static unsigned HashString(const std::string& s) {
+	return (HashString(s.c_str(), s.size()));
+}
+
+
 
 BasicTimer::BasicTimer(const std::string& timerName)
-	: nameHash(hash_(timerName))
+	: nameHash(HashString(timerName))
 	, startTime(spring_gettime())
 
 	, name(timerName)
@@ -66,7 +62,7 @@ BasicTimer::BasicTimer(const std::string& timerName)
 
 
 BasicTimer::BasicTimer(const char* timerName)
-	: nameHash(hash_(timerName))
+	: nameHash(HashString(timerName, std::string::npos))
 	, startTime(spring_gettime())
 
 	, name(timerName)
@@ -95,32 +91,36 @@ spring_time BasicTimer::GetDuration() const
 ScopedTimer::ScopedTimer(const std::string& name, bool autoShow)
 	: BasicTimer(name)
 	, autoShowGraph(autoShow)
-
 {
-	refsIterator = refCounters.find(nameHash);
+	auto iter = refCounters.find(nameHash);
 
-	if (refsIterator == refCounters.end())
-		refsIterator = refCounters.insert(std::pair<int, int>(nameHash, 0)).first;
+	if (iter == refCounters.end())
+		iter = refCounters.insert(std::pair<int, int>(nameHash, 0)).first;
 
-	++(refsIterator->second);
+	++(iter->second);
 }
 
 ScopedTimer::ScopedTimer(const char* name, bool autoShow)
 	: BasicTimer(name)
 	, autoShowGraph(autoShow)
-
 {
-	refsIterator = refCounters.find(nameHash);
+	auto iter = refCounters.find(nameHash);
 
-	if (refsIterator == refCounters.end())
-		refsIterator = refCounters.insert(std::pair<int, int>(nameHash, 0)).first;
+	if (iter == refCounters.end())
+		iter = refCounters.insert(std::pair<int, int>(nameHash, 0)).first;
 
-	++(refsIterator->second);
+	++(iter->second);
 }
 
 ScopedTimer::~ScopedTimer()
 {
-	if (--(refsIterator->second) == 0) {
+	// no avoiding a second lookup since iterators can be invalidated with unordered_map
+	auto iter = refCounters.find(nameHash);
+
+	assert(iter != refCounters.end());
+	assert(iter->second > 0);
+
+	if (--(iter->second) == 0) {
 		profiler.AddTime(GetName(), startTime, GetDuration(), autoShowGraph, false);
 	}
 }

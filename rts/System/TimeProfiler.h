@@ -33,10 +33,6 @@ protected:
 	const unsigned nameHash;
 	const spring_time startTime;
 
-	// spring::unordered_map<int, std::string>::iterator nameIterator;
-	spring::unordered_map<int, int>::iterator refsIterator;
-
-	// needed because iterator can be invalidated
 	std::string name;
 };
 
