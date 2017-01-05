@@ -35,6 +35,15 @@
 
 
 
+struct ThreadStats {
+	uint64_t numTasks;
+	uint64_t sumTime;
+	uint64_t minTime;
+	uint64_t maxTime;
+};
+
+
+
 // global [idx = 0] and smaller per-thread [idx > 0] queues; the latter are
 // for tasks that want to execute on specific threads, e.g. parallel_reduce
 // note: std::shared_ptr<T> can not be made atomic, queues must store T*'s
@@ -46,6 +55,7 @@ static std::array<moodycamel::ConcurrentQueue<ITaskGroup*>, ThreadPool::MAX_THRE
 
 static std::deque<void*> workerThreads;
 static std::array<bool, ThreadPool::MAX_THREADS> exitFlags;
+static std::array<ThreadStats, ThreadPool::MAX_THREADS> threadStats;
 static spring::signal newTasksSignal;
 
 static _threadlocal int threadnum(0);
@@ -56,6 +66,8 @@ static bool hasOGLthreads = false; // disable for now (not used atm)
 #else
 static bool hasOGLthreads = false;
 #endif
+
+
 
 std::atomic_uint ITaskGroup::lastId(0);
 
@@ -92,6 +104,8 @@ static bool DoTask(int tid)
 		#else
 		if (queue.try_dequeue(tg)) {
 		#endif
+			const spring_time t0 = spring_now();
+
 			// inform other workers when there is global work to do
 			// waking is an expensive kernel-syscall, so better shift this
 			// cost to the workers too (the main thread only wakes when ALL
@@ -100,6 +114,14 @@ static bool DoTask(int tid)
 				NotifyWorkerThreads(true);
 
 			while (tg->ExecuteTask());
+
+			const spring_time t1 = spring_now();
+			const spring_time dt = t1 - t0;
+
+			threadStats[tid].numTasks += 1;
+			threadStats[tid].sumTime  += dt.toNanoSecsi();
+			threadStats[tid].minTime   = std::min(threadStats[tid].minTime, uint64_t(dt.toNanoSecsi()));
+			threadStats[tid].maxTime   = std::max(threadStats[tid].maxTime, uint64_t(dt.toNanoSecsi()));
 		}
 
 		#ifdef USE_BOOST_LOCKFREE_QUEUE
@@ -107,7 +129,17 @@ static bool DoTask(int tid)
 		#else
 		while (queue.try_dequeue(tg)) {
 		#endif
+			const spring_time t0 = spring_now();
+
 			while (tg->ExecuteTask());
+
+			const spring_time t1 = spring_now();
+			const spring_time dt = t1 - t0;
+
+			threadStats[tid].numTasks += 1;
+			threadStats[tid].sumTime  += dt.toNanoSecsi();
+			threadStats[tid].minTime   = std::min(threadStats[tid].minTime, uint64_t(dt.toNanoSecsi()));
+			threadStats[tid].maxTime   = std::max(threadStats[tid].maxTime, uint64_t(dt.toNanoSecsi()));
 		}
 	}
 
@@ -273,11 +305,30 @@ void SetThreadCount(int wantedNumThreads)
 	const int curNumThreads = ThreadPool::GetNumThreads();
 	const int wtdNumThreads = Clamp(wantedNumThreads, 1, ThreadPool::GetMaxThreads());
 
-	LOG("[ThreadPool::%s][1] #wanted=%d #current=%d #max=%d", __FUNCTION__, wantedNumThreads, curNumThreads, ThreadPool::GetMaxThreads());
+	const char* fmts[3] = {
+		"[ThreadPool::%s][1] wanted=%d current=%d maximum=%d",
+		"[ThreadPool::%s][2] threads=%u tasks=%lu {sum,avg}time={%.3f, %.3f}ms",
+		"\tthread=%d tasks=%lu (%3.3f%%) {sum,min,max,avg}time={%.3f, %.3f, %.3f, %.3f}ms",
+	};
+
+	// total number of tasks executed by pool; total time spent in DoTask
+	uint64_t pNumTasks = 0lu;
+	uint64_t pSumTime  = 0lu;
+
+	LOG(fmts[0], __func__, wantedNumThreads, curNumThreads, ThreadPool::GetMaxThreads());
 
 	#ifdef USE_BOOST_LOCKFREE_QUEUE
 	taskQueues[0].reserve(1024);
 	#endif
+
+	if (workerThreads.empty()) {
+		for (int i = 0; i < ThreadPool::MAX_THREADS; i++) {
+			threadStats[i].numTasks =  0lu;
+			threadStats[i].sumTime  =  0lu;
+			threadStats[i].minTime  = -1lu;
+			threadStats[i].maxTime  =  0lu;
+		}
+	}
 
 	if (curNumThreads < wtdNumThreads) {
 		SpawnThreads(wtdNumThreads, curNumThreads);
@@ -285,7 +336,26 @@ void SetThreadCount(int wantedNumThreads)
 		KillThreads(wtdNumThreads, curNumThreads);
 	}
 
-	LOG("[ThreadPool::%s][2] #threads=%u", __FUNCTION__, (unsigned) workerThreads.size());
+	if (workerThreads.empty()) {
+		for (int i = 0; i < curNumThreads; i++) {
+			pNumTasks += threadStats[i].numTasks;
+			pSumTime  += threadStats[i].sumTime;
+		}
+
+		for (int i = 0; i < curNumThreads; i++) {
+			const ThreadStats& ts = threadStats[i];
+
+			const float tSumTime = ts.sumTime * 1e-6f; // ms
+			const float tMinTime = ts.minTime * 1e-6f; // ms
+			const float tMaxTime = ts.maxTime * 1e-6f; // ms
+			const float tRelFrac = (ts.numTasks * 1e2f) / std::max(pNumTasks, 1lu);
+			const float tAvgTime = tSumTime / std::max(ts.numTasks, 1lu);
+
+			LOG(fmts[2], i, ts.numTasks, tRelFrac, tSumTime, tMinTime, tMaxTime, tAvgTime);
+		}
+	}
+
+	LOG(fmts[1], __func__, (unsigned) workerThreads.size(), pNumTasks, pSumTime * 1e-6f, (pSumTime * 1e-6f) / std::max(pNumTasks, 1lu));
 }
 
 }
