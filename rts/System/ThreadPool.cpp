@@ -395,14 +395,14 @@ void SetThreadCount(int wantedNumThreads)
 			const float tSumTime = ts.sumTime * 1e-6f; // ms
 			const float tMinTime = ts.minTime * 1e-6f; // ms
 			const float tMaxTime = ts.maxTime * 1e-6f; // ms
-			const float tAvgTime = tSumTime / std::max(ts.numTasks, 1lu);
-			const float tRelFrac = (ts.numTasks * 1e2f) / std::max(pNumTasks, 1lu);
+			const float tAvgTime = tSumTime / std::max(ts.numTasks, uint64_t(1));
+			const float tRelFrac = (ts.numTasks * 1e2f) / std::max(pNumTasks, uint64_t(1));
 
 			LOG(fmts[2], i, ts.numTasks, tRelFrac, tSumTime, tMinTime, tMaxTime, tAvgTime);
 		}
 	}
 
-	LOG(fmts[1], __func__, (unsigned) workerThreads.size(), pNumTasks, pSumTime * 1e-6f, (pSumTime * 1e-6f) / std::max(pNumTasks, 1lu));
+	LOG(fmts[1], __func__, (unsigned) workerThreads.size(), pNumTasks, pSumTime * 1e-6f, (pSumTime * 1e-6f) / std::max(pNumTasks, uint64_t(1)));
 }
 
 
