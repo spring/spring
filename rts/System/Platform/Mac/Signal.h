@@ -12,8 +12,7 @@
 
 class mac_signal {
 public:
-	mac_signal() noexcept;
-	~mac_signal();
+	mac_signal() noexcept { sleepers = 0; }
 
 	mac_signal(const mac_signal&) = delete;
 	mac_signal& operator=(const mac_signal&) = delete;
