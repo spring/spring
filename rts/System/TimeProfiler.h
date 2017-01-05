@@ -3,15 +3,15 @@
 #ifndef TIME_PROFILER_H
 #define TIME_PROFILER_H
 
-#include "System/Misc/SpringTime.h"
-#include "System/float3.h"
-
-#include "System/Misc/NonCopyable.h"
-#include <cstring>
+#include <cstring> // memset
 #include <string>
-#include <map>
 #include <deque>
 #include <vector>
+
+#include "System/Misc/SpringTime.h"
+#include "System/Misc/NonCopyable.h"
+#include "System/float3.h"
+#include "System/UnorderedMap.hpp"
 
 // disable this if you want minimal profiling
 // (sim time is still measured because of game slowdown)
@@ -22,16 +22,19 @@
 class BasicTimer : public spring::noncopyable
 {
 public:
-	BasicTimer(const std::string& myname);
-	BasicTimer(const char* myname);
+	BasicTimer(const spring_time time): hash(0), starttime(time) {}
+	BasicTimer(const std::string& timerName);
+	BasicTimer(const char* timerName);
 
-	const std::string& GetName() const;
+	const std::string& GetName() const { return (nameIterator->second); }
 	spring_time GetDuration() const;
 
 protected:
 	const unsigned hash;
 	const spring_time starttime;
-	std::map<int, std::string>::iterator nameIterator;
+
+	spring::unordered_map<int, std::string>::iterator nameIterator;
+	spring::unordered_map<int, int>::iterator refsIterator;
 };
 
 
@@ -44,26 +47,26 @@ protected:
 class ScopedTimer : public BasicTimer
 {
 public:
-	ScopedTimer(const std::string& name, bool autoShow = false);
-	ScopedTimer(const char* name, bool autoShow = false);
+	ScopedTimer(const std::string& timerName, bool autoShow = false);
+	ScopedTimer(const char* timerName, bool autoShow = false);
 	~ScopedTimer();
 
 private:
 	const bool autoShowGraph;
-	std::map<int, int>::iterator it;
 };
 
 
 class ScopedMtTimer : public BasicTimer
 {
 public:
-	ScopedMtTimer(const std::string& name, bool autoShow = false);
-	ScopedMtTimer(const char* name, bool autoShow = false);
+	ScopedMtTimer(const std::string& timerName, bool autoShow = false);
+	ScopedMtTimer(const char* timerName, bool autoShow = false);
 	~ScopedMtTimer();
 
 private:
 	const bool autoShowGraph;
-	std::map<int, int>::iterator it;
+
+	std::string name;
 };
 
 
@@ -77,11 +80,12 @@ public:
 	ScopedOnceTimer(const std::string& name);
 	ScopedOnceTimer(const char* name);
 	~ScopedOnceTimer();
-	const std::string& GetName() const;
+	const std::string& GetName() const { return name; }
 	spring_time GetDuration() const;
 
 protected:
 	const spring_time starttime;
+
 	std::string name;
 };
 
@@ -130,9 +134,9 @@ public:
 		bool showGraph;
 	};
 
-	std::map<std::string,TimeRecord> profile;
+	spring::unordered_map<std::string, TimeRecord> profile;
 
-	std::vector<std::deque<std::pair<spring_time,spring_time>>> profileCore;
+	std::vector< std::deque< std::pair<spring_time, spring_time> > > profileCore;
 
 private:
 	spring_time lastBigUpdate;

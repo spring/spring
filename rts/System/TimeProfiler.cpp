@@ -1,10 +1,9 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/TimeProfiler.h"
-
-#include <limits.h>
+#include <climits>
 #include <cstring>
 
+#include "System/TimeProfiler.h"
 #include "System/GlobalRNG.h"
 #include "System/Log/ILog.h"
 #include "System/Threading/SpringThreading.h"
@@ -14,8 +13,8 @@
 #endif
 
 static spring::mutex m;
-static std::map<int, std::string> hashToName;
-static std::map<int, int> refs;
+static spring::unordered_map<int, std::string> hashToName;
+static spring::unordered_map<int, int> refCounters;
 
 
 
@@ -45,18 +44,19 @@ static unsigned hash_(const char* s)
 }
 
 
-BasicTimer::BasicTimer(const std::string& myname)
-: hash(hash_(myname))
+BasicTimer::BasicTimer(const std::string& timerName)
+: hash(hash_(timerName))
 , starttime(spring_gettime())
 
 {
 	nameIterator = hashToName.find(hash);
+
 	if (nameIterator == hashToName.end()) {
-		nameIterator = hashToName.insert(std::pair<int,std::string>(hash, myname)).first;
+		nameIterator = hashToName.insert(std::pair<int, std::string>(hash, timerName)).first;
 	} else {
 #ifdef DEBUG
-		if (nameIterator->second != myname) {
-			LOG_L(L_ERROR, "Timer hash collision: %s <=> %s", myname.c_str(), nameIterator->second.c_str());
+		if (nameIterator->second != timerName) {
+			LOG_L(L_ERROR, "Timer hash collision: %s <=> %s", timerName.c_str(), nameIterator->second.c_str());
 			assert(false);
 		}
 #endif
@@ -64,30 +64,23 @@ BasicTimer::BasicTimer(const std::string& myname)
 }
 
 
-BasicTimer::BasicTimer(const char* myname)
-: hash(hash_(myname))
-, starttime(spring_gettime())
-
+BasicTimer::BasicTimer(const char* timerName)
+	: hash(hash_(timerName))
+	, starttime(spring_gettime())
 {
 	nameIterator = hashToName.find(hash);
+
 	if (nameIterator == hashToName.end()) {
-		nameIterator = hashToName.insert(std::pair<int,std::string>(hash, myname)).first;
+		nameIterator = hashToName.insert(std::pair<int, std::string>(hash, timerName)).first;
 	} else {
 #ifdef DEBUG
-		if (nameIterator->second != myname) {
-			LOG_L(L_ERROR, "Timer hash collision: %s <=> %s", myname, nameIterator->second.c_str());
+		if (nameIterator->second != timerName) {
+			LOG_L(L_ERROR, "Timer hash collision: %s <=> %s", timerName, nameIterator->second.c_str());
 			assert(false);
 		}
 #endif
 	}
 }
-
-
-const std::string& BasicTimer::GetName() const
-{
-	return nameIterator->second;
-}
-
 
 spring_time BasicTimer::GetDuration() const
 {
@@ -95,52 +88,55 @@ spring_time BasicTimer::GetDuration() const
 }
 
 
+
 ScopedTimer::ScopedTimer(const std::string& name, bool autoShow)
 	: BasicTimer(name)
 	, autoShowGraph(autoShow)
 
 {
-	it = refs.find(hash);
-	if (it == refs.end()) {
-		it = refs.insert(std::pair<int,int>(hash, 0)).first;
-	}
-	++(it->second);
-}
+	refsIterator = refCounters.find(hash);
 
+	if (refsIterator == refCounters.end())
+		refsIterator = refCounters.insert(std::pair<int, int>(hash, 0)).first;
+
+	++(refsIterator->second);
+}
 
 ScopedTimer::ScopedTimer(const char* name, bool autoShow)
 	: BasicTimer(name)
 	, autoShowGraph(autoShow)
 
 {
-	it = refs.find(hash);
-	if (it == refs.end()) {
-		it = refs.insert(std::pair<int,int>(hash, 0)).first;
-	}
-	++(it->second);
-}
+	refsIterator = refCounters.find(hash);
 
+	if (refsIterator == refCounters.end())
+		refsIterator = refCounters.insert(std::pair<int, int>(hash, 0)).first;
+
+	++(refsIterator->second);
+}
 
 ScopedTimer::~ScopedTimer()
 {
-	int& ref = it->second;
-	if (--ref == 0)
+	if (--(refsIterator->second) == 0) {
 		profiler.AddTime(GetName(), GetDuration(), autoShowGraph);
+	}
 }
 
+
+
 ScopedOnceTimer::ScopedOnceTimer(const char* name_)
- : starttime(spring_gettime())
- , name(name_)
+	: starttime(spring_gettime())
+	, name(name_)
 { }
 
 ScopedOnceTimer::ScopedOnceTimer(const std::string& name_)
- : starttime(spring_gettime())
- , name(name_)
+	: starttime(spring_gettime())
+	, name(name_)
 { }
 
-const std::string& ScopedOnceTimer::GetName() const
+ScopedOnceTimer::~ScopedOnceTimer()
 {
-	return name;
+	LOG("%s: %i ms", GetName().c_str(), int(GetDuration().toMilliSecsi()));
 }
 
 spring_time ScopedOnceTimer::GetDuration() const
@@ -148,30 +144,28 @@ spring_time ScopedOnceTimer::GetDuration() const
 	return spring_difftime(spring_gettime(), starttime);
 }
 
-ScopedOnceTimer::~ScopedOnceTimer()
-{
-	LOG("%s: %i ms", GetName().c_str(), int(GetDuration().toMilliSecsi()));
-}
 
 
-
-ScopedMtTimer::ScopedMtTimer(const std::string& name, bool autoShow)
-	: BasicTimer(name)
+ScopedMtTimer::ScopedMtTimer(const std::string& timerName, bool autoShow)
+	// can not call BasicTimer's other ctor, accesses global map
+	// collisions for MT timers do not need to be checked anyway
+	: BasicTimer(spring_gettime())
 	, autoShowGraph(autoShow)
 {
+	name = timerName;
 }
 
-
-ScopedMtTimer::ScopedMtTimer(const char* name, bool autoShow)
-	: BasicTimer(name)
+ScopedMtTimer::ScopedMtTimer(const char* timerName, bool autoShow)
+	: BasicTimer(spring_gettime())
 	, autoShowGraph(autoShow)
 {
+	name = timerName;
 }
-
 
 ScopedMtTimer::~ScopedMtTimer()
 {
-	profiler.AddTime(GetName(), GetDuration(), autoShowGraph);
+	profiler.AddTime(name, GetDuration(), autoShowGraph);
+
 #ifdef THREADPOOL
 	auto& list = profiler.profileCore[ThreadPool::GetThreadNum()];
 	list.emplace_back(starttime, spring_gettime());
