@@ -136,10 +136,10 @@ namespace std {
 	T hypot(T x, T y) {
 		x = std::abs(x);
 		y = std::abs(y);
-		auto t = std::min(x,y);
-		     x = std::max(x,y);
+		auto t = std::min(x, y);
+		     x = std::max(x, y);
 		t = t / x;
-		return x * fastmath::sqrtf(1.f + t*t);
+		return x * math::sqrtf(1.0f + t*t);
 	}
 }
 #endif
