@@ -172,6 +172,8 @@ private:
 
 	// NOTE: holds *stack* pointers
 	std::vector<LuaTable*> tables;
+	// unused
+	std::vector<string> accessedFiles;
 
 	int initDepth;
 	int rootRef;
@@ -182,7 +184,6 @@ private:
 	bool lowerCppKeys; // convert strings in arguments keys to lower case
 
 	string errorLog;
-	std::vector<string> accessedFiles;
 
 private:
 	// Weird call-outs

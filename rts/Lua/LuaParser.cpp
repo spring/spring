@@ -566,8 +566,9 @@ int LuaParser::Include(lua_State* L)
 		lua_error(L);
 	}
 
-	VectorInsertUnique(currentParser->accessedFiles, StringToLower(filename));
-
+	#if 0
+	VectorInsertUnique(currentParser->accessedFiles, StringToLower(filename), true);
+	#endif
 	return (lua_gettop(L) - paramTop);
 }
 
@@ -601,7 +602,9 @@ int LuaParser::LoadFile(lua_State* L)
 	}
 	lua_pushstring(L, data.c_str());
 
-	VectorInsertUnique(currentParser->accessedFiles, StringToLower(filename));
+	#if 0
+	VectorInsertUnique(currentParser->accessedFiles, StringToLower(filename), true);
+	#endif
 	return 1;
 }
 
