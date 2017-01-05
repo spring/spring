@@ -165,9 +165,11 @@ static void WorkerLoop(int tid)
 #endif
 
 	// make first worker spin a while before sleeping/waiting on the thread signal
-	// this increases the chance that at least one worker is awake when a new TP-Task is inserted
-	// and this worker can then take over the job of waking up the sleeping workers (see NotifyWorkerThreads)
-	const auto ourSpinTime = spring_time::fromMilliSecs(1 * (tid == 1));
+	// this increases the chance that at least one worker is awake when a new task
+	// is inserted, which can then take over the job of waking up sleeping workers
+	// (see NotifyWorkerThreads)
+	// NOTE: the spin-time has to be *short* to avoid biasing thread 1's workload
+	const auto ourSpinTime = spring_time::fromMicroSecs(30 * (tid == 1));
 	const auto maxSleepTime = spring_time::fromMilliSecs(30);
 
 	while (!exitFlags[tid]) {
