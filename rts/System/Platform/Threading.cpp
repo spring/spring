@@ -3,10 +3,6 @@
 #include "Threading.h"
 #include "Game/GameController.h"
 #include "System/bitops.h"
-#include "System/ThreadPool.h"
-#ifndef UNIT_TEST
-	#include "System/Config/ConfigHandler.h"
-#endif
 #include "System/Log/ILog.h"
 #include "System/Platform/CpuID.h"
 #include "System/Platform/CrashHandler.h"
@@ -32,9 +28,6 @@
 	#include "Linux/ThreadSupport.h"
 #endif
 
-#ifndef UNIT_TEST
-CONFIG(int, WorkerThreadCount).defaultValue(-1).safemodeValue(0).minimumValue(-1).description("Count of worker threads (including mainthread!) used in parallel sections.");
-#endif
 
 
 namespace Threading {
@@ -209,40 +202,6 @@ namespace Threading {
 	}
 
 
-	static std::uint32_t GetCpuCoreForWorkerThread(std::int32_t index, std::uint32_t availCores, std::uint32_t avoidCores)
-	{
-		// find an unused core for worker-thread <index>
-		const auto FindCore = [&index](std::uint32_t targetCores) {
-			std::uint32_t workerCore = 1;
-			std::int32_t n = index;
-
-			while ((workerCore != 0) && !(workerCore & targetCores))
-				workerCore <<= 1;
-
-			// select n'th bit in targetCores
-			// counts down because hyper-thread cores are appended to the end
-			// and we prefer those for our worker threads (physical cores are
-			// preferred for task specific threads)
-			while (n--)
-				do workerCore <<= 1; while ((workerCore != 0) && !(workerCore & targetCores));
-
-			return workerCore;
-		};
-
-		const std::uint32_t threadAvailCore = FindCore(availCores);
-		const std::uint32_t threadAvoidCore = FindCore(avoidCores);
-
-		if (threadAvailCore != 0)
-			return threadAvailCore;
-		// select one of the main-thread cores if no others are available
-		if (threadAvoidCore != 0)
-			return threadAvoidCore;
-
-		// fallback; use all
-		return (~0);
-	}
-
-
 	int GetLogicalCpuCores() {
 		// auto-detect number of system threads (including hyperthreading)
 		return spring::thread::hardware_concurrency();
@@ -262,67 +221,6 @@ namespace Threading {
 		return (GetLogicalCpuCores() > GetPhysicalCpuCores());
 	}
 
-
-	void InitThreadPool() {
-		std::uint32_t systemCores   = Threading::GetAvailableCoresMask();
-		std::uint32_t mainAffinity  = systemCores;
-#ifndef UNIT_TEST
-		mainAffinity &= configHandler->GetUnsigned("SetCoreAffinity");
-#endif
-		std::uint32_t workerAvailCores = systemCores & ~mainAffinity;
-
-		{
-#ifndef UNIT_TEST
-			int workerCount = configHandler->GetInt("WorkerThreadCount");
-#else
-			int workerCount = -1;
-#endif
-			const int numCores = ThreadPool::GetMaxThreads();
-
-			// For latency reasons our worker threads yield rarely and so eat a lot cputime with idleing.
-			// So it's better we always leave 1 core free for our other threads, drivers & OS
-			if (workerCount < 0) {
-				if (numCores == 2) {
-					workerCount = numCores;
-				} else if (numCores < 6) {
-					workerCount = numCores - 1;
-				} else {
-					workerCount = numCores / 2;
-				}
-			}
-			if (workerCount > numCores) {
-				LOG_L(L_WARNING, "Set ThreadPool workers to %i, but there are just %i cores!", workerCount, numCores);
-				workerCount = numCores;
-			}
-
-			ThreadPool::SetThreadCount(workerCount);
-		}
-
-		// parallel_reduce now folds over shared_ptrs to futures
-		// const auto ReduceFunc = [](std::uint32_t a, std::future<std::uint32_t>& b) -> std::uint32_t { return (a | b.get()); };
-		const auto ReduceFunc = [](std::uint32_t a, std::shared_ptr< std::future<std::uint32_t> >& b) -> std::uint32_t { return (a | (b.get())->get()); };
-		const auto AffinityFunc = [&]() -> std::uint32_t {
-			const int i = ThreadPool::GetThreadNum();
-
-			// 0 is the source thread, skip
-			if (i == 0)
-				return 0;
-
-			const std::uint32_t workerCore = GetCpuCoreForWorkerThread(i - 1, workerAvailCores, mainAffinity);
-			// const std::uint32_t workerCore = workerAvailCores;
-
-			Threading::SetAffinity(workerCore);
-			return workerCore;
-		};
-
-		const std::uint32_t    workerCoreAffin = parallel_reduce(AffinityFunc, ReduceFunc);
-		const std::uint32_t nonWorkerCoreAffin = ~workerCoreAffin;
-
-		if (mainAffinity == 0)
-			mainAffinity = systemCores;
-
-		Threading::SetAffinityHelper("Main", mainAffinity & nonWorkerCoreAffin);
-	}
 
 	void SetThreadScheduler()
 	{

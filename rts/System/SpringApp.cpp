@@ -284,9 +284,10 @@ bool SpringApp::Initialize()
 	luaSocketRestrictions = new CLuaSocketRestrictions();
 
 	// Multithreading & Affinity
-	Threading::SetThreadName("unknown"); // set default threadname
-	Threading::InitThreadPool();
+	Threading::SetThreadName("spring-main"); // set default threadname for pstree
 	Threading::SetThreadScheduler();
+	ThreadPool::InitWorkerThreads();
+
 	battery = new CBattery();
 	LuaVFSDownload::Init();
 
@@ -330,7 +331,7 @@ bool SpringApp::InitWindow(const char* title)
 		SDL_HideWindow(globalRendering->window);
 	}
 
-	// anyone other thread spawned from the main-process should be `unknown`
+	// any other thread spawned from the main-process should be `unknown`
 	Threading::SetThreadName("unknown");
 	return true;
 }

@@ -3,19 +3,21 @@
 #ifdef THREADPOOL
 
 #include "ThreadPool.h"
-#include "Exceptions.h"
-#include "myMath.h"
-#include "Log/ILog.h"
-#include "Platform/Threading.h"
-#include "Threading/SpringThreading.h"
-#include "TimeProfiler.h"
-#include "Util.h"
-
+#include "System/Exceptions.h"
+#include "System/myMath.h"
 #if !defined(UNITSYNC) && !defined(UNIT_TEST)
-	#include "OffscreenGLContext.h"
+	#include "System/OffscreenGLContext.h"
 #endif
+#include "System/TimeProfiler.h"
+#include "System/Util.h"
+#ifndef UNIT_TEST
+	#include "System/Config/ConfigHandler.h"
+#endif
+#include "System/Log/ILog.h"
+#include "System/Platform/Threading.h"
+#include "System/Threading/SpringThreading.h"
 
-#ifdef likely
+#ifdef   likely
 #undef   likely
 #undef unlikely
 #endif
@@ -31,6 +33,12 @@
 #include <boost/lockfree/queue.hpp>
 #else
 #include "System/ConcurrentQueue.h"
+#endif
+
+
+
+#ifndef UNIT_TEST
+CONFIG(int, WorkerThreadCount).defaultValue(-1).safemodeValue(0).minimumValue(-1).description("Count of worker threads (including mainthread!) used in parallel sections.");
 #endif
 
 
@@ -177,6 +185,9 @@ static void WorkerLoop(int tid)
 }
 
 
+
+
+
 void WaitForFinished(std::shared_ptr<ITaskGroup>&& taskGroup)
 {
 	{
@@ -243,8 +254,6 @@ void NotifyWorkerThreads(const bool force)
 
 
 
-
-
 static void SpawnThreads(int wantedNumThreads, int curNumThreads)
 {
 #ifndef UNITSYNC
@@ -300,6 +309,42 @@ static void KillThreads(int wantedNumThreads, int curNumThreads)
 }
 
 
+static std::uint32_t FindWorkerThreadCore(std::int32_t index, std::uint32_t availCores, std::uint32_t avoidCores)
+{
+	// find an unused core for worker-thread <index>
+	const auto FindCore = [&index](std::uint32_t targetCores) {
+		std::uint32_t workerCore = 1;
+		std::int32_t n = index;
+
+		while ((workerCore != 0) && !(workerCore & targetCores))
+			workerCore <<= 1;
+
+		// select n'th bit in targetCores
+		// counts down because hyper-thread cores are appended to the end
+		// and we prefer those for our worker threads (physical cores are
+		// preferred for task specific threads)
+		while (n--)
+			do workerCore <<= 1; while ((workerCore != 0) && !(workerCore & targetCores));
+
+		return workerCore;
+	};
+
+	const std::uint32_t threadAvailCore = FindCore(availCores);
+	const std::uint32_t threadAvoidCore = FindCore(avoidCores);
+
+	if (threadAvailCore != 0)
+		return threadAvailCore;
+	// select one of the main-thread cores if no others are available
+	if (threadAvoidCore != 0)
+		return threadAvoidCore;
+
+	// fallback; use all
+	return (~0);
+}
+
+
+
+
 void SetThreadCount(int wantedNumThreads)
 {
 	const int curNumThreads = ThreadPool::GetNumThreads();
@@ -307,7 +352,7 @@ void SetThreadCount(int wantedNumThreads)
 
 	const char* fmts[3] = {
 		"[ThreadPool::%s][1] wanted=%d current=%d maximum=%d",
-		"[ThreadPool::%s][2] threads=%u tasks=%lu {sum,avg}time={%.3f, %.3f}ms",
+		"[ThreadPool::%s][2] workers=%u tasks=%lu {sum,avg}time={%.3f, %.3f}ms",
 		"\tthread=%d tasks=%lu (%3.3f%%) {sum,min,max,avg}time={%.3f, %.3f, %.3f, %.3f}ms",
 	};
 
@@ -317,11 +362,11 @@ void SetThreadCount(int wantedNumThreads)
 
 	LOG(fmts[0], __func__, wantedNumThreads, curNumThreads, ThreadPool::GetMaxThreads());
 
-	#ifdef USE_BOOST_LOCKFREE_QUEUE
-	taskQueues[0].reserve(1024);
-	#endif
-
 	if (workerThreads.empty()) {
+		#ifdef USE_BOOST_LOCKFREE_QUEUE
+		taskQueues[0].reserve(1024);
+		#endif
+
 		for (int i = 0; i < ThreadPool::MAX_THREADS; i++) {
 			threadStats[i].numTasks =  0lu;
 			threadStats[i].sumTime  =  0lu;
@@ -348,14 +393,79 @@ void SetThreadCount(int wantedNumThreads)
 			const float tSumTime = ts.sumTime * 1e-6f; // ms
 			const float tMinTime = ts.minTime * 1e-6f; // ms
 			const float tMaxTime = ts.maxTime * 1e-6f; // ms
-			const float tRelFrac = (ts.numTasks * 1e2f) / std::max(pNumTasks, 1lu);
 			const float tAvgTime = tSumTime / std::max(ts.numTasks, 1lu);
+			const float tRelFrac = (ts.numTasks * 1e2f) / std::max(pNumTasks, 1lu);
 
 			LOG(fmts[2], i, ts.numTasks, tRelFrac, tSumTime, tMinTime, tMaxTime, tAvgTime);
 		}
 	}
 
 	LOG(fmts[1], __func__, (unsigned) workerThreads.size(), pNumTasks, pSumTime * 1e-6f, (pSumTime * 1e-6f) / std::max(pNumTasks, 1lu));
+}
+
+
+void InitWorkerThreads()
+{
+	std::uint32_t systemCores  = Threading::GetAvailableCoresMask();
+	std::uint32_t mainAffinity = systemCores;
+
+#ifndef UNIT_TEST
+	mainAffinity &= configHandler->GetUnsigned("SetCoreAffinity");
+#endif
+
+	std::uint32_t workerAvailCores = systemCores & ~mainAffinity;
+
+	{
+#ifndef UNIT_TEST
+		int workerCount = configHandler->GetInt("WorkerThreadCount");
+#else
+		int workerCount = -1;
+#endif
+		const int numCores = GetMaxThreads();
+
+		// For latency reasons our worker threads yield rarely and so eat a lot cputime with idleing.
+		// So it's better we always leave 1 core free for our other threads, drivers & OS
+		if (workerCount < 0) {
+			if (numCores == 2) {
+				workerCount = numCores;
+			} else if (numCores < 6) {
+				workerCount = numCores - 1;
+			} else {
+				workerCount = numCores / 2;
+			}
+		}
+		if (workerCount > numCores) {
+			LOG_L(L_WARNING, "[ThreadPool::%s] workers set to %i, but there are just %i cores!", __func__, workerCount, numCores);
+			workerCount = numCores;
+		}
+
+		SetThreadCount(workerCount);
+	}
+
+	// parallel_reduce now folds over shared_ptrs to futures
+	// const auto ReduceFunc = [](std::uint32_t a, std::future<std::uint32_t>& b) -> std::uint32_t { return (a | b.get()); };
+	const auto ReduceFunc = [](std::uint32_t a, std::shared_ptr< std::future<std::uint32_t> >& b) -> std::uint32_t { return (a | (b.get())->get()); };
+	const auto AffinityFunc = [&]() -> std::uint32_t {
+		const int i = ThreadPool::GetThreadNum();
+
+		// 0 is the source thread, skip
+		if (i == 0)
+			return 0;
+
+		const std::uint32_t workerCore = FindWorkerThreadCore(i - 1, workerAvailCores, mainAffinity);
+		// const std::uint32_t workerCore = workerAvailCores;
+
+		Threading::SetAffinity(workerCore);
+		return workerCore;
+	};
+
+	const std::uint32_t    workerCoreAffin = parallel_reduce(AffinityFunc, ReduceFunc);
+	const std::uint32_t nonWorkerCoreAffin = ~workerCoreAffin;
+
+	if (mainAffinity == 0)
+		mainAffinity = systemCores;
+
+	Threading::SetAffinityHelper("Main", mainAffinity & nonWorkerCoreAffin);
 }
 
 }
