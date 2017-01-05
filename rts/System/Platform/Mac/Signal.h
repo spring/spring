@@ -23,7 +23,7 @@ public:
 
 protected:
 	std::mutex mtx;
-	std::condition_variable<std::mutex> cv;
+	std::condition_variable cv;
 	std::atomic_int sleepers;
 };
 
