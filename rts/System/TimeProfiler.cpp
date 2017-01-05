@@ -45,18 +45,19 @@ static unsigned hash_(const char* s)
 
 
 BasicTimer::BasicTimer(const std::string& timerName)
-: hash(hash_(timerName))
-, starttime(spring_gettime())
+	: nameHash(hash_(timerName))
+	, startTime(spring_gettime())
 
+	, name(timerName)
 {
-	nameIterator = hashToName.find(hash);
+	const auto iter = hashToName.find(nameHash);
 
-	if (nameIterator == hashToName.end()) {
-		nameIterator = hashToName.insert(std::pair<int, std::string>(hash, timerName)).first;
+	if (iter == hashToName.end()) {
+		hashToName.insert(std::pair<int, std::string>(nameHash, timerName)).first;
 	} else {
 #ifdef DEBUG
-		if (nameIterator->second != timerName) {
-			LOG_L(L_ERROR, "Timer hash collision: %s <=> %s", timerName.c_str(), nameIterator->second.c_str());
+		if (iter->second != timerName) {
+			LOG_L(L_ERROR, "Timer hash collision: %s <=> %s", timerName.c_str(), iter->second.c_str());
 			assert(false);
 		}
 #endif
@@ -65,17 +66,19 @@ BasicTimer::BasicTimer(const std::string& timerName)
 
 
 BasicTimer::BasicTimer(const char* timerName)
-	: hash(hash_(timerName))
-	, starttime(spring_gettime())
-{
-	nameIterator = hashToName.find(hash);
+	: nameHash(hash_(timerName))
+	, startTime(spring_gettime())
 
-	if (nameIterator == hashToName.end()) {
-		nameIterator = hashToName.insert(std::pair<int, std::string>(hash, timerName)).first;
+	, name(timerName)
+{
+	const auto iter = hashToName.find(nameHash);
+
+	if (iter == hashToName.end()) {
+		hashToName.insert(std::pair<int, std::string>(nameHash, timerName)).first;
 	} else {
 #ifdef DEBUG
-		if (nameIterator->second != timerName) {
-			LOG_L(L_ERROR, "Timer hash collision: %s <=> %s", timerName, nameIterator->second.c_str());
+		if (iter->second != timerName) {
+			LOG_L(L_ERROR, "Timer hash collision: %s <=> %s", timerName, iter->second.c_str());
 			assert(false);
 		}
 #endif
@@ -84,7 +87,7 @@ BasicTimer::BasicTimer(const char* timerName)
 
 spring_time BasicTimer::GetDuration() const
 {
-	return spring_difftime(spring_gettime(), starttime);
+	return spring_difftime(spring_gettime(), startTime);
 }
 
 
@@ -94,10 +97,10 @@ ScopedTimer::ScopedTimer(const std::string& name, bool autoShow)
 	, autoShowGraph(autoShow)
 
 {
-	refsIterator = refCounters.find(hash);
+	refsIterator = refCounters.find(nameHash);
 
 	if (refsIterator == refCounters.end())
-		refsIterator = refCounters.insert(std::pair<int, int>(hash, 0)).first;
+		refsIterator = refCounters.insert(std::pair<int, int>(nameHash, 0)).first;
 
 	++(refsIterator->second);
 }
@@ -107,10 +110,10 @@ ScopedTimer::ScopedTimer(const char* name, bool autoShow)
 	, autoShowGraph(autoShow)
 
 {
-	refsIterator = refCounters.find(hash);
+	refsIterator = refCounters.find(nameHash);
 
 	if (refsIterator == refCounters.end())
-		refsIterator = refCounters.insert(std::pair<int, int>(hash, 0)).first;
+		refsIterator = refCounters.insert(std::pair<int, int>(nameHash, 0)).first;
 
 	++(refsIterator->second);
 }
@@ -118,30 +121,32 @@ ScopedTimer::ScopedTimer(const char* name, bool autoShow)
 ScopedTimer::~ScopedTimer()
 {
 	if (--(refsIterator->second) == 0) {
-		profiler.AddTime(GetName(), GetDuration(), autoShowGraph);
+		profiler.AddTime(GetName(), startTime, GetDuration(), autoShowGraph, false);
 	}
 }
 
 
 
-ScopedOnceTimer::ScopedOnceTimer(const char* name_)
-	: starttime(spring_gettime())
-	, name(name_)
-{ }
+ScopedOnceTimer::ScopedOnceTimer(const char* timerName)
+	: startTime(spring_gettime())
+	, name(timerName)
+{
+}
 
-ScopedOnceTimer::ScopedOnceTimer(const std::string& name_)
-	: starttime(spring_gettime())
-	, name(name_)
-{ }
+ScopedOnceTimer::ScopedOnceTimer(const std::string& timerName)
+	: startTime(spring_gettime())
+	, name(timerName)
+{
+}
 
 ScopedOnceTimer::~ScopedOnceTimer()
 {
-	LOG("%s: %i ms", GetName().c_str(), int(GetDuration().toMilliSecsi()));
+	LOG("%s: %i ms", name.c_str(), int(GetDuration().toMilliSecsi()));
 }
 
 spring_time ScopedOnceTimer::GetDuration() const
 {
-	return spring_difftime(spring_gettime(), starttime);
+	return spring_difftime(spring_gettime(), startTime);
 }
 
 
@@ -164,12 +169,7 @@ ScopedMtTimer::ScopedMtTimer(const char* timerName, bool autoShow)
 
 ScopedMtTimer::~ScopedMtTimer()
 {
-	profiler.AddTime(name, GetDuration(), autoShowGraph);
-
-#ifdef THREADPOOL
-	auto& list = profiler.profileCore[ThreadPool::GetThreadNum()];
-	list.emplace_back(starttime, spring_gettime());
-#endif
+	profiler.AddTime(GetName(), startTime, GetDuration(), autoShowGraph, true);
 }
 
 
@@ -245,18 +245,30 @@ float CTimeProfiler::GetPercent(const char* name)
 	return profile[name].percent;
 }
 
-void CTimeProfiler::AddTime(const std::string& name, const spring_time time, const bool showGraph)
-{
+void CTimeProfiler::AddTime(
+	const std::string& name,
+	const spring_time startTime,
+	const spring_time deltaTime,
+	const bool showGraph,
+	const bool threadTimer
+) {
+#ifdef THREADPOOL
+	if (threadTimer)
+		profileCore[ThreadPool::GetThreadNum()].emplace_back(startTime, spring_gettime());
+#endif
+
 	auto pi = profile.find(name);
+
 	if (pi != profile.end()) {
 		// profile already exists
 		//FIXME use atomic ints
 		auto& p = pi->second;
-		p.total   += time;
-		p.current += time;
-		p.frames[currentPosition] += time;
-		if (p.maxLag < time.toMilliSecsf()) {
-			p.maxLag     = time.toMilliSecsf();
+		p.total   += deltaTime;
+		p.current += deltaTime;
+		p.frames[currentPosition] += deltaTime;
+
+		if (p.maxLag < deltaTime.toMilliSecsf()) {
+			p.maxLag     = deltaTime.toMilliSecsf();
 			p.newLagPeak = true;
 		}
 	} else {
@@ -265,13 +277,15 @@ void CTimeProfiler::AddTime(const std::string& name, const spring_time time, con
 
 		// create a new profile
 		auto& p = profile[name];
-		p.total   = time;
-		p.current = time;
-		p.maxLag  = time.toMilliSecsf();
+		p.total   = deltaTime;
+		p.current = deltaTime;
+		p.maxLag  = deltaTime.toMilliSecsf();
 		p.percent = 0;
 		memset(p.frames, 0, TimeRecord::frames_size * sizeof(unsigned));
+
 		static CGlobalUnsyncedRNG rand;
 		rand.Seed(spring_tomsecs(spring_gettime()));
+
 		p.color.x = rand.NextFloat();
 		p.color.y = rand.NextFloat();
 		p.color.z = rand.NextFloat();

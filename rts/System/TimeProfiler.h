@@ -22,19 +22,22 @@
 class BasicTimer : public spring::noncopyable
 {
 public:
-	BasicTimer(const spring_time time): hash(0), starttime(time) {}
+	BasicTimer(const spring_time time): nameHash(0), startTime(time) {}
 	BasicTimer(const std::string& timerName);
 	BasicTimer(const char* timerName);
 
-	const std::string& GetName() const { return (nameIterator->second); }
+	const std::string& GetName() const { return name; }
 	spring_time GetDuration() const;
 
 protected:
-	const unsigned hash;
-	const spring_time starttime;
+	const unsigned nameHash;
+	const spring_time startTime;
 
-	spring::unordered_map<int, std::string>::iterator nameIterator;
+	// spring::unordered_map<int, std::string>::iterator nameIterator;
 	spring::unordered_map<int, int>::iterator refsIterator;
+
+	// needed because iterator can be invalidated
+	std::string name;
 };
 
 
@@ -65,8 +68,6 @@ public:
 
 private:
 	const bool autoShowGraph;
-
-	std::string name;
 };
 
 
@@ -80,11 +81,11 @@ public:
 	ScopedOnceTimer(const std::string& name);
 	ScopedOnceTimer(const char* name);
 	~ScopedOnceTimer();
-	const std::string& GetName() const { return name; }
+
 	spring_time GetDuration() const;
 
 protected:
-	const spring_time starttime;
+	const spring_time startTime;
 
 	std::string name;
 };
@@ -104,7 +105,13 @@ public:
 
 	void PrintProfilingInfo() const;
 
-	void AddTime(const std::string& name, const spring_time time, const bool showGraph = false);
+	void AddTime(
+		const std::string& name,
+		const spring_time startTime,
+		const spring_time deltaTime,
+		const bool showGraph = false,
+		const bool threadTimer = false
+	);
 
 public:
 	struct TimeRecord {
