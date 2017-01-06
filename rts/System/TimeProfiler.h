@@ -144,8 +144,10 @@ public:
 
 private:
 	spring_time lastBigUpdate;
+
 	/// increases each update, from 0 to (frames_size-1)
 	unsigned currentPosition;
+	unsigned resortProfile;
 };
 
 #define profiler (CTimeProfiler::GetInstance())

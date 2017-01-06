@@ -17,6 +17,8 @@ static spring::mutex m;
 static spring::unordered_map<int, std::string> hashToName;
 static spring::unordered_map<int, int> refCounters;
 
+static CGlobalUnsyncedRNG profileColorRNG;
+
 
 
 static unsigned HashString(const char* s, size_t n)
@@ -181,7 +183,8 @@ ScopedMtTimer::~ScopedMtTimer()
 
 CTimeProfiler::CTimeProfiler():
 	lastBigUpdate(spring_gettime()),
-	currentPosition(0)
+	currentPosition(0),
+	resortProfile(0)
 {
 #ifdef THREADPOOL
 	profileCore.resize(ThreadPool::GetMaxThreads());
@@ -200,6 +203,7 @@ CTimeProfiler& CTimeProfiler::GetInstance()
 	return tp;
 }
 
+
 void CTimeProfiler::Update()
 {
 	//FIXME non-locking threadsafe
@@ -207,7 +211,8 @@ void CTimeProfiler::Update()
 	while (!ulk.try_lock()) {}
 
 	++currentPosition;
-	currentPosition &= TimeRecord::frames_size-1;
+	currentPosition &= (TimeRecord::frames_size - 1);
+
 	for (auto& pi: profile) {
 		pi.second.frames[currentPosition] = spring_notime;
 	}
@@ -238,7 +243,9 @@ void CTimeProfiler::Update()
 		}
 	}
 
-	{
+	if (resortProfile > 0) {
+		resortProfile = 0;
+
 		sortedProfile.clear();
 		sortedProfile.reserve(profile.size());
 
@@ -301,13 +308,14 @@ void CTimeProfiler::AddTime(
 		p.percent = 0;
 		memset(p.frames, 0, TimeRecord::frames_size * sizeof(unsigned));
 
-		static CGlobalUnsyncedRNG rand;
-		rand.Seed(spring_tomsecs(spring_gettime()));
+		profileColorRNG.Seed(spring_tomsecs(spring_gettime()));
 
-		p.color.x = rand.NextFloat();
-		p.color.y = rand.NextFloat();
-		p.color.z = rand.NextFloat();
+		p.color.x = profileColorRNG.NextFloat();
+		p.color.y = profileColorRNG.NextFloat();
+		p.color.z = profileColorRNG.NextFloat();
 		p.showGraph = showGraph;
+
+		resortProfile += 1;
 	}
 }
 

@@ -234,14 +234,24 @@ static void DrawProfiler()
 {
 	font->SetTextColor(1,1,1,1);
 
+	// refresh sorted profiles; might need a mutex
+	for (auto it = profiler.sortedProfile.begin(); it != profiler.sortedProfile.end(); ++it) {
+		CTimeProfiler::TimeRecord& rec = it->second;
+
+		const bool showGraph = rec.showGraph;
+
+		rec = profiler.profile[it->first];
+		rec.showGraph = showGraph;
+	}
+
 	// draw the background of the window
 	{
 		CVertexArray* va  = GetVertexArray();
 		va->Initialize();
-			va->AddVertex0(start_x, start_y + lineHeight + 0.005f,                          0);
-			va->AddVertex0(end_x,   start_y + lineHeight + 0.005f,                          0);
-			va->AddVertex0(start_x, start_y - profiler.sortedProfile.size() * lineHeight - 0.01f, 0);
-			va->AddVertex0(end_x,   start_y - profiler.sortedProfile.size() * lineHeight - 0.01f, 0);
+			va->AddVertex0(start_x, start_y +                                 lineHeight + 0.005f, 0);
+			va->AddVertex0(end_x,   start_y +                                 lineHeight + 0.005f, 0);
+			va->AddVertex0(start_x, start_y - profiler.sortedProfile.size() * lineHeight - 0.010f, 0);
+			va->AddVertex0(end_x,   start_y - profiler.sortedProfile.size() * lineHeight - 0.010f, 0);
 		glColor4f(0.0f, 0.0f, 0.5f, 0.5f);
 		va->DrawArray0(GL_TRIANGLE_STRIP);
 	}
@@ -254,16 +264,12 @@ static void DrawProfiler()
 		float fStartX = start_x + 0.005f + 0.015f + 0.005f;
 
 		// print total-time running since application start
-		fStartX += 0.04f;
-		font->glPrint(fStartX, fStartY, textSize, FONT_SHADOW | FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "totaltime");
+		fStartX += 0.04f; font->glPrint(fStartX, fStartY, textSize, FONT_SHADOW | FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "totaltime");
 
 		// print percent of CPU time used within the last 500ms
-		fStartX += 0.06f;
-		font->glPrint(fStartX, fStartY, textSize, FONT_SHADOW | FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "cur-%usage");
-		fStartX += 0.04f;
-		font->glPrint(fStartX, fStartY, textSize, FONT_SHADOW | FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "max-%usage");
-		fStartX += 0.04f;
-		font->glPrint(fStartX, fStartY, textSize, FONT_SHADOW | FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "lag");
+		fStartX += 0.06f; font->glPrint(fStartX, fStartY, textSize, FONT_SHADOW | FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "cur-%usage");
+		fStartX += 0.04f; font->glPrint(fStartX, fStartY, textSize, FONT_SHADOW | FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "max-%usage");
+		fStartX += 0.04f; font->glPrint(fStartX, fStartY, textSize, FONT_SHADOW | FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "lag");
 
 		// print timer name
 		fStartX += 0.01f;
@@ -279,20 +285,15 @@ static void DrawProfiler()
 		float fStartX = start_x + 0.005f + 0.015f + 0.005f;
 
 		// print total-time running since application start
-		fStartX += 0.04f;
-		font->glFormat(fStartX, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "%.2fs", profileData.total.toSecsf());
+		fStartX += 0.04f; font->glFormat(fStartX, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "%.2fs", profileData.total.toSecsf());
 
 		// print percent of CPU time used within the last 500ms
-		fStartX += 0.06f;
-		font->glFormat(fStartX, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "%.2f%%", profileData.percent * 100);
-		fStartX += 0.04f;
-		font->glFormat(fStartX, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "\xff\xff%c%c%.2f%%", profileData.newPeak?1:255, profileData.newPeak?1:255, profileData.peak * 100);
-		fStartX += 0.04f;
-		font->glFormat(fStartX, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "\xff\xff%c%c%.0fms", profileData.newLagPeak?1:255, profileData.newLagPeak?1:255, profileData.maxLag);
+		fStartX += 0.06f; font->glFormat(fStartX, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "%.2f%%", profileData.percent * 100);
+		fStartX += 0.04f; font->glFormat(fStartX, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "\xff\xff%c%c%.2f%%", profileData.newPeak?1:255, profileData.newPeak?1:255, profileData.peak * 100);
+		fStartX += 0.04f; font->glFormat(fStartX, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "\xff\xff%c%c%.0fms", profileData.newLagPeak?1:255, profileData.newLagPeak?1:255, profileData.maxLag);
 
 		// print timer name
-		fStartX += 0.01f;
-		font->glPrint(fStartX, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM, pi->first);
+		fStartX += 0.01f; font->glPrint(fStartX, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM, pi->first);
 	}
 
 
