@@ -97,7 +97,9 @@ bool HasThreads() { return !workerThreads.empty(); }
 
 static bool DoTask(int tid)
 {
+	#ifndef UNIT_TEST
 	SCOPED_MT_TIMER("::ThreadWorkers (accumulated)");
+	#endif
 
 	ITaskGroup* tg = nullptr;
 
@@ -192,7 +194,9 @@ static void WorkerLoop(int tid)
 void WaitForFinished(std::shared_ptr<ITaskGroup>&& taskGroup)
 {
 	{
+		#ifndef UNIT_TEST
 		SCOPED_MT_TIMER("::ThreadWorkers (accumulated)");
+		#endif
 		while (taskGroup->ExecuteTask());
 	}
 
@@ -414,7 +418,9 @@ void InitWorkerThreads()
 	//   do *not* remove, this makes sure the profiler instance
 	//   exists before any thread creates a timer that accesses
 	//   it on destruction
+	#ifndef UNIT_TEST
 	profiler.PrintProfilingInfo();
+	#endif
 
 	std::uint32_t systemCores  = Threading::GetAvailableCoresMask();
 	std::uint32_t mainAffinity = systemCores;

@@ -305,6 +305,9 @@ void CTimeProfiler::AddTime(
 	const bool showGraph,
 	const bool threadTimer
 ) {
+	std::unique_lock<spring::mutex> ulk(profileMutex, std::defer_lock);
+	while (!ulk.try_lock()) {}
+
 #ifdef THREADPOOL
 	if (threadTimer)
 		profileCore[ThreadPool::GetThreadNum()].emplace_back(startTime, spring_gettime());
@@ -325,9 +328,6 @@ void CTimeProfiler::AddTime(
 			p.newLagPeak = true;
 		}
 	} else {
-		std::unique_lock<spring::mutex> ulk(profileMutex, std::defer_lock);
-		while (!ulk.try_lock()) {}
-
 		// create a new profile
 		auto& p = profile[name];
 		p.total   = deltaTime;
