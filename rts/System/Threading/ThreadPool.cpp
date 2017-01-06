@@ -22,7 +22,6 @@
 #undef unlikely
 #endif
 
-#include <deque>
 #include <utility>
 #include <functional>
 
@@ -61,7 +60,7 @@ static std::array<boost::lockfree::queue<ITaskGroup*>, ThreadPool::MAX_THREADS> 
 static std::array<moodycamel::ConcurrentQueue<ITaskGroup*>, ThreadPool::MAX_THREADS> taskQueues;
 #endif
 
-static std::deque<void*> workerThreads;
+static std::vector<void*> workerThreads;
 static std::array<bool, ThreadPool::MAX_THREADS> exitFlags;
 static std::array<ThreadStats, ThreadPool::MAX_THREADS> threadStats;
 static spring::signal newTasksSignal;
@@ -408,6 +407,15 @@ void SetThreadCount(int wantedNumThreads)
 
 void InitWorkerThreads()
 {
+	workerThreads.clear();
+	workerThreads.reserve(ThreadPool::MAX_THREADS);
+
+	// NOTE:
+	//   do *not* remove, this makes sure the profiler instance
+	//   exists before any thread creates a timer that accesses
+	//   it on destruction
+	profiler.PrintProfilingInfo();
+
 	std::uint32_t systemCores  = Threading::GetAvailableCoresMask();
 	std::uint32_t mainAffinity = systemCores;
 

@@ -13,7 +13,7 @@
 	#include "System/Threading/ThreadPool.h"
 #endif
 
-static spring::mutex m;
+static spring::mutex profileMutex;
 static spring::unordered_map<int, std::string> hashToName;
 static spring::unordered_map<int, int> refCounters;
 
@@ -193,8 +193,11 @@ CTimeProfiler::CTimeProfiler():
 
 CTimeProfiler::~CTimeProfiler()
 {
-	std::unique_lock<spring::mutex> ulk(m, std::defer_lock);
+	#if 0
+	// should not be needed, destructor runs after main returns and all threads are gone
+	std::unique_lock<spring::mutex> ulk(profileMutex, std::defer_lock);
 	while (!ulk.try_lock()) {}
+	#endif
 }
 
 CTimeProfiler& CTimeProfiler::GetInstance()
@@ -207,7 +210,7 @@ CTimeProfiler& CTimeProfiler::GetInstance()
 void CTimeProfiler::Update()
 {
 	//FIXME non-locking threadsafe
-	std::unique_lock<spring::mutex> ulk(m, std::defer_lock);
+	std::unique_lock<spring::mutex> ulk(profileMutex, std::defer_lock);
 	while (!ulk.try_lock()) {}
 
 	++currentPosition;
@@ -250,7 +253,7 @@ void CTimeProfiler::UpdateSorted(bool resort)
 {
 	if (!resort) {
 		// lock so nothing modifies *unsorted* profiles during the refresh
-		std::unique_lock<spring::mutex> ulk(m, std::defer_lock);
+		std::unique_lock<spring::mutex> ulk(profileMutex, std::defer_lock);
 		while (!ulk.try_lock()) {}
 
 		// refresh sorted profiles
@@ -289,7 +292,7 @@ void CTimeProfiler::UpdateSorted(bool resort)
 
 float CTimeProfiler::GetPercent(const char* name)
 {
-	std::unique_lock<spring::mutex> ulk(m, std::defer_lock);
+	std::unique_lock<spring::mutex> ulk(profileMutex, std::defer_lock);
 	while (!ulk.try_lock()) {}
 
 	return profile[name].percent;
@@ -322,7 +325,7 @@ void CTimeProfiler::AddTime(
 			p.newLagPeak = true;
 		}
 	} else {
-		std::unique_lock<spring::mutex> ulk(m, std::defer_lock);
+		std::unique_lock<spring::mutex> ulk(profileMutex, std::defer_lock);
 		while (!ulk.try_lock()) {}
 
 		// create a new profile
@@ -346,12 +349,16 @@ void CTimeProfiler::AddTime(
 
 void CTimeProfiler::PrintProfilingInfo() const
 {
+	if (sortedProfile.empty())
+		return;
+
 	LOG("%35s|%18s|%s", "Part", "Total Time", "Time of the last 0.5s");
 
-	for (auto pi = profile.begin(); pi != profile.end(); ++pi) {
+	for (auto pi = sortedProfile.begin(); pi != sortedProfile.end(); ++pi) {
 		const std::string& name = pi->first;
 		const TimeRecord& tr = pi->second;
 
 		LOG("%35s %16.2fms %5.2f%%", name.c_str(), tr.total.toMilliSecsf(), tr.percent * 100);
 	}
 }
+
