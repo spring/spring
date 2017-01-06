@@ -9,9 +9,9 @@
 #ifndef STREFLOP_COND_H
 #define STREFLOP_COND_H
 
-#define STREFLOP_ENABLED (!defined(NOT_USING_STREFLOP) && (defined(STREFLOP_SSE) || defined(STREFLOP_X87) || defined(STREFLOP_SOFT)))
-
-
+#if (!defined(NOT_USING_STREFLOP) && (defined(STREFLOP_SSE) || defined(STREFLOP_X87) || defined(STREFLOP_SOFT)))
+#define STREFLOP_ENABLED 1
+#endif
 
 // these need to be known in FastMath.h and myMath.h which both include us
 #ifdef __GNUC__
