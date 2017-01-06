@@ -451,7 +451,7 @@ bool ProfileDrawer::MousePress(int x, int y, int button)
 
 	// switch the selected Timers showGraph value
 	// this reverts when the profile is re-sorted
-	profiler.sortedProfile[selIndex].showGraph = !profiler.sortedProfile[selIndex].showGraph;
+	profiler.sortedProfile[selIndex].second.showGraph = !profiler.sortedProfile[selIndex].second.showGraph;
 	return true;
 }
 
