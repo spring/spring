@@ -29,7 +29,7 @@ public:
 	void LoadFromSetup(const CGameSetup*);
 
 	// Lua should never see the pre-simframe value
-	int GetLuaSimFrame() { return std::max(frameNum, 0); }
+	int GetLuaSimFrame() { return (frameNum > 0) ? frameNum : 0; }
 	int GetTempNum() { return tempNum++; }
 
 	// remains true until first SimFrame call
