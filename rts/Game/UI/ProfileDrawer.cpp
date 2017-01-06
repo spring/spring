@@ -444,15 +444,15 @@ bool ProfileDrawer::MousePress(int x, int y, int button)
 	const float my = CInputReceiver::MouseY(y);
 	const int selIndex = (int) ((start_y - my) / lineHeight);
 
-	// switch the selected Timers showGraph value
-	if ((selIndex >= 0) && (selIndex < profiler.profile.size())) {
-		auto pi = profiler.profile.begin();
-		std::advance(pi, selIndex);
-		pi->second.showGraph = !pi->second.showGraph;
-		return true;
-	}
+	if (selIndex < 0)
+		return false;
+	if (selIndex >= profiler.sortedProfile.size())
+		return false;
 
-	return false;
+	// switch the selected Timers showGraph value
+	// this reverts when the profile is re-sorted
+	profiler.sortedProfile[selIndex].showGraph = !profiler.sortedProfile[selIndex].showGraph;
+	return true;
 }
 
 bool ProfileDrawer::IsAbove(int x, int y)
@@ -461,9 +461,8 @@ bool ProfileDrawer::IsAbove(int x, int y)
 	const float my = CInputReceiver::MouseY(y);
 
 	// check if a Timer selection box was hit
-	if (mx<start_x || mx>end_x || my<start_y - profiler.profile.size()*lineHeight || my>start_y) {
+	if (mx<start_x || mx>end_x || my<start_y - profiler.sortedProfile.size()*lineHeight || my>start_y)
 		return false;
-	}
 
 	return true;
 }

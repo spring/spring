@@ -214,15 +214,16 @@ void CTimeProfiler::Update()
 
 	const spring_time curTime = spring_gettime();
 	const float timeDiff = spring_diffmsecs(curTime, lastBigUpdate);
-	if (timeDiff > 500.0f) // twice every second
-	{
+
+	if (timeDiff > 500.0f) {
+		// twice every second
 		for (auto& pi: profile) {
 			auto& p = pi.second;
 			p.percent = spring_tomsecs(p.current) / timeDiff;
 			p.current = spring_notime;
 			p.newLagPeak = false;
 			p.newPeak = false;
-			if(p.percent > p.peak) {
+			if (p.percent > p.peak) {
 				p.peak = p.percent;
 				p.newPeak = true;
 			}
