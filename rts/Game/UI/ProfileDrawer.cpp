@@ -331,8 +331,8 @@ static void DrawProfiler()
 
 		CVertexArray* va = GetVertexArray();
 		va->Initialize();
-		const float steps_x = (end_x - start_x) / CTimeProfiler::TimeRecord::frames_size;
-		for (size_t a=0; a < CTimeProfiler::TimeRecord::frames_size; ++a) {
+		const float steps_x = (end_x - start_x) / CTimeProfiler::TimeRecord::numFrames;
+		for (size_t a=0; a < CTimeProfiler::TimeRecord::numFrames; ++a) {
 			// profile runtime; eg 0.5f means: uses 50% of a CPU (during that frame)
 			// This may be more then 1.0f, in case an operation
 			// which ran over many frames, ended in this one.

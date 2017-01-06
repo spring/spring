@@ -114,26 +114,32 @@ public:
 public:
 	struct TimeRecord {
 		TimeRecord()
-		: total(0)
-		, current(0)
-		, maxLag(0)
-		, percent(0)
-		, color(0,0,0)
-		, peak(0)
+		: total(0.0f)
+		, current(0.0f)
+
+		, maxLag(0.0f)
+		, percent(0.0f)
+		, peak(0.0f)
+
 		, newPeak(false)
 		, newLagPeak(false)
 		, showGraph(false)
 		{
 			memset(frames, 0, sizeof(frames));
 		}
+
+		static constexpr unsigned numFrames = 128;
+
 		spring_time total;
 		spring_time current;
+		spring_time frames[numFrames];
+
 		float maxLag;
-		static const unsigned frames_size = 128;
-		spring_time frames[frames_size];
 		float percent;
-		float3 color;
 		float peak;
+
+		float3 color;
+
 		bool newPeak;
 		bool newLagPeak;
 		bool showGraph;
@@ -147,7 +153,7 @@ public:
 private:
 	spring_time lastBigUpdate;
 
-	/// increases each update, from 0 to (frames_size-1)
+	/// increases each update, from 0 to (numFrames-1)
 	unsigned currentPosition;
 	unsigned resortProfiles;
 };

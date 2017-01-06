@@ -189,6 +189,7 @@ CTimeProfiler::CTimeProfiler():
 #ifdef THREADPOOL
 	profileCore.resize(ThreadPool::GetMaxThreads());
 #endif
+	profileColorRNG.Seed(spring_tomsecs(spring_gettime()));
 }
 
 CTimeProfiler::~CTimeProfiler()
@@ -213,8 +214,8 @@ void CTimeProfiler::Update()
 	std::unique_lock<spring::mutex> ulk(profileMutex, std::defer_lock);
 	while (!ulk.try_lock()) {}
 
-	++currentPosition;
-	currentPosition &= (TimeRecord::frames_size - 1);
+	currentPosition += 1;
+	currentPosition &= (TimeRecord::numFrames - 1);
 
 	for (auto& pi: profile) {
 		pi.second.frames[currentPosition] = spring_notime;
@@ -227,10 +228,13 @@ void CTimeProfiler::Update()
 		// twice every second
 		for (auto& pi: profile) {
 			auto& p = pi.second;
+
 			p.percent = spring_tomsecs(p.current) / timeDiff;
 			p.current = spring_notime;
+
 			p.newLagPeak = false;
 			p.newPeak = false;
+
 			if (p.percent > p.peak) {
 				p.peak = p.percent;
 				p.newPeak = true;
@@ -241,8 +245,7 @@ void CTimeProfiler::Update()
 
 	if (curTime.toSecsi() % 6 == 0) {
 		for (auto& pi: profile) {
-			auto& p = pi.second;
-			p.maxLag *= 0.5f;
+			(pi.second).maxLag *= 0.5f;
 		}
 	}
 
@@ -305,6 +308,8 @@ void CTimeProfiler::AddTime(
 	const bool showGraph,
 	const bool threadTimer
 ) {
+	// acquire lock at the start; one inserting thread could
+	// cause a profile rehash and invalidate <pi> for another
 	std::unique_lock<spring::mutex> ulk(profileMutex, std::defer_lock);
 	while (!ulk.try_lock()) {}
 
@@ -314,30 +319,20 @@ void CTimeProfiler::AddTime(
 #endif
 
 	auto pi = profile.find(name);
+	auto& p = (pi != profile.end())? pi->second: profile[name];
+
+	// these are 0 if just created, works for both paths
+	p.total   += deltaTime;
+	p.current += deltaTime;
+
+	p.newLagPeak = (p.maxLag > 0.0f && deltaTime.toMilliSecsf() > p.maxLag);
+	p.maxLag     = std::max(p.maxLag, deltaTime.toMilliSecsf());
 
 	if (pi != profile.end()) {
 		// profile already exists
-		//FIXME use atomic ints
-		auto& p = pi->second;
-		p.total   += deltaTime;
-		p.current += deltaTime;
 		p.frames[currentPosition] += deltaTime;
-
-		if (p.maxLag < deltaTime.toMilliSecsf()) {
-			p.maxLag     = deltaTime.toMilliSecsf();
-			p.newLagPeak = true;
-		}
 	} else {
-		// create a new profile
-		auto& p = profile[name];
-		p.total   = deltaTime;
-		p.current = deltaTime;
-		p.maxLag  = deltaTime.toMilliSecsf();
-		p.percent = 0;
-		memset(p.frames, 0, TimeRecord::frames_size * sizeof(unsigned));
-
-		profileColorRNG.Seed(spring_tomsecs(spring_gettime()));
-
+		// new profile, new color
 		p.color.x = profileColorRNG.NextFloat();
 		p.color.y = profileColorRNG.NextFloat();
 		p.color.z = profileColorRNG.NextFloat();
