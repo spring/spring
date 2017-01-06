@@ -10,7 +10,7 @@
 #include "System/Threading/SpringThreading.h"
 
 #ifdef THREADPOOL
-	#include "System/ThreadPool.h"
+	#include "System/Threading/ThreadPool.h"
 #endif
 
 static spring::mutex m;
@@ -184,7 +184,7 @@ ScopedMtTimer::~ScopedMtTimer()
 CTimeProfiler::CTimeProfiler():
 	lastBigUpdate(spring_gettime()),
 	currentPosition(0),
-	resortProfile(0)
+	resortProfiles(0)
 {
 #ifdef THREADPOOL
 	profileCore.resize(ThreadPool::GetMaxThreads());
@@ -249,6 +249,7 @@ void CTimeProfiler::Update()
 void CTimeProfiler::UpdateSorted(bool resort)
 {
 	if (!resort) {
+		// lock so nothing modifies *unsorted* profiles during the refresh
 		std::unique_lock<spring::mutex> ulk(m, std::defer_lock);
 		while (!ulk.try_lock()) {}
 
@@ -265,8 +266,8 @@ void CTimeProfiler::UpdateSorted(bool resort)
 		return;
 	}
 
-	if (resortProfile > 0) {
-		resortProfile = 0;
+	if (resortProfiles > 0) {
+		resortProfiles = 0;
 
 		sortedProfile.clear();
 		sortedProfile.reserve(profile.size());
@@ -276,6 +277,7 @@ void CTimeProfiler::UpdateSorted(bool resort)
 
 		const ProfileSortFunc sortFunc = [](const TimeRecordPair& a, const TimeRecordPair& b) { return (a.first < b.first); };
 
+		// safe, caller already has lock
 		for (auto it = profile.begin(); it != profile.end(); ++it) {
 			sortedProfile.emplace_back(it->first, it->second);
 		}
@@ -338,7 +340,7 @@ void CTimeProfiler::AddTime(
 		p.color.z = profileColorRNG.NextFloat();
 		p.showGraph = showGraph;
 
-		resortProfile += 1;
+		resortProfiles += 1;
 	}
 }
 

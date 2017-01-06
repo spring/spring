@@ -56,7 +56,7 @@ MakeGlobalVar(sources_engine_System_common
 		"${CMAKE_CURRENT_SOURCE_DIR}/Sync/backtrace.c"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Sync/get_executable_name.c"
 		"${CMAKE_CURRENT_SOURCE_DIR}/TdfParser.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/ThreadPool.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Threading/ThreadPool.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/TimeProfiler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/TimeUtil.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/UriParser.cpp"

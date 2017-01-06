@@ -12,7 +12,7 @@
 #include "System/Sync/HsiehHash.h"
 #include "System/creg/STL_Deque.h"
 #include "System/EventHandler.h"
-#include "System/ThreadPool.h"
+#include "System/Threading/ThreadPool.h"
 #include "System/TimeProfiler.h"
 
 #define USE_STAGGERED_UPDATES 0

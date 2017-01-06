@@ -16,7 +16,7 @@
 #include "Sim/Units/UnitDefHandler.h"
 #include "System/Color.h"
 #include "System/Exceptions.h"
-#include "System/ThreadPool.h"
+#include "System/Threading/ThreadPool.h"
 #include "System/Log/ILog.h"
 
 

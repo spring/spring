@@ -7,7 +7,7 @@
 #include "FPUCheck.h"
 #include "lib/streflop/streflop_cond.h"
 #include "System/Exceptions.h"
-#include "System/ThreadPool.h"
+#include "System/Threading/ThreadPool.h"
 #include "System/Log/ILog.h"
 #include "System/Platform/CpuID.h"
 

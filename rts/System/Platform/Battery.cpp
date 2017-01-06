@@ -2,7 +2,7 @@
 
 #include "Battery.h"
 #include "System/EventHandler.h"
-#include "System/ThreadPool.h"
+#include "System/Threading/ThreadPool.h"
 #include "System/Config/ConfigHandler.h"
 #include <SDL2/SDL_power.h>
 

@@ -21,7 +21,7 @@
 #include "System/CRC.h"
 #include "System/Util.h"
 #include "System/Exceptions.h"
-#include "System/ThreadPool.h"
+#include "System/Threading/ThreadPool.h"
 #include "System/FileSystem/RapidHandler.h"
 #include "System/Log/ILog.h"
 #include "System/Threading/SpringThreading.h"

@@ -41,7 +41,7 @@
 #include "System/Info.h"
 #include "System/Option.h"
 #include "System/SafeCStrings.h"
-#include "System/ThreadPool.h"
+#include "System/Threading/ThreadPool.h"
 
 #ifdef WIN32
 #include <windows.h>

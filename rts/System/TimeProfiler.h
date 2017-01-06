@@ -149,7 +149,7 @@ private:
 
 	/// increases each update, from 0 to (frames_size-1)
 	unsigned currentPosition;
-	unsigned resortProfile;
+	unsigned resortProfiles;
 };
 
 #define profiler (CTimeProfiler::GetInstance())

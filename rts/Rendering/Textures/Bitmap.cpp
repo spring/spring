@@ -19,7 +19,7 @@
 #include "System/bitops.h"
 #include "System/ScopedFPUSettings.h"
 #include "System/Log/ILog.h"
-#include "System/ThreadPool.h"
+#include "System/Threading/ThreadPool.h"
 #include "System/FileSystem/DataDirsAccess.h"
 #include "System/FileSystem/FileQueryFlags.h"
 #include "System/FileSystem/FileHandler.h"

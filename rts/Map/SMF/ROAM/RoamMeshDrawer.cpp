@@ -9,7 +9,7 @@
 #include "Rendering/ShadowHandler.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "System/Rectangle.h"
-#include "System/ThreadPool.h"
+#include "System/Threading/ThreadPool.h"
 #include "System/TimeProfiler.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"

@@ -7,7 +7,7 @@
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDef.h"
 #include "System/myMath.h"
-#include "System/ThreadPool.h"
+#include "System/Threading/ThreadPool.h"
 
 
 /**
