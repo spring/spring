@@ -351,7 +351,7 @@ endif()
 	set(test_name ThreadPool)
 	Set(test_src
 			"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/testThreadPool.cpp"
-			"${ENGINE_SOURCE_DIR}/System/ThreadPool.cpp"
+			"${ENGINE_SOURCE_DIR}/System/Threading/ThreadPool.cpp"
 			"${ENGINE_SOURCE_DIR}/System/Misc/SpringTime.cpp"
 			"${ENGINE_SOURCE_DIR}/System/Platform/CpuID.cpp"
 			"${ENGINE_SOURCE_DIR}/System/Platform/Threading.cpp"

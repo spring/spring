@@ -77,7 +77,7 @@ set(main_files
 	"${ENGINE_SRC_ROOT}/System/SafeVector.cpp"
 	"${ENGINE_SRC_ROOT}/System/SafeCStrings.c"
 	"${ENGINE_SRC_ROOT}/System/TdfParser.cpp"
-	"${ENGINE_SRC_ROOT}/System/ThreadPool.cpp"
+	"${ENGINE_SRC_ROOT}/System/Threading/ThreadPool.cpp"
 	"${ENGINE_SRC_ROOT}/System/UriParser.cpp"
 	"${ENGINE_SRC_ROOT}/System/Util.cpp"
 	)
