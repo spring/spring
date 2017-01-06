@@ -234,15 +234,9 @@ static void DrawProfiler()
 {
 	font->SetTextColor(1,1,1,1);
 
-	// refresh sorted profiles; might need a mutex
-	for (auto it = profiler.sortedProfile.begin(); it != profiler.sortedProfile.end(); ++it) {
-		CTimeProfiler::TimeRecord& rec = it->second;
-
-		const bool showGraph = rec.showGraph;
-
-		rec = profiler.profile[it->first];
-		rec.showGraph = showGraph;
-	}
+	// this locks a mutex, so don't call it every frame
+	if ((globalRendering->drawFrame % 10) == 0)
+		profiler.UpdateSorted(false);
 
 	// draw the background of the window
 	{

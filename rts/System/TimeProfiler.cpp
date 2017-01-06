@@ -243,6 +243,28 @@ void CTimeProfiler::Update()
 		}
 	}
 
+	UpdateSorted(true);
+}
+
+void CTimeProfiler::UpdateSorted(bool resort)
+{
+	if (!resort) {
+		std::unique_lock<spring::mutex> ulk(m, std::defer_lock);
+		while (!ulk.try_lock()) {}
+
+		// refresh sorted profiles
+		for (auto it = sortedProfile.begin(); it != sortedProfile.end(); ++it) {
+			TimeRecord& rec = it->second;
+
+			const bool showGraph = rec.showGraph;
+
+			rec = profile[it->first];
+			rec.showGraph = showGraph;
+		}
+
+		return;
+	}
+
 	if (resortProfile > 0) {
 		resortProfile = 0;
 
@@ -261,6 +283,7 @@ void CTimeProfiler::Update()
 		std::sort(sortedProfile.begin(), sortedProfile.end(), sortFunc);
 	}
 }
+
 
 float CTimeProfiler::GetPercent(const char* name)
 {

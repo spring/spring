@@ -115,11 +115,6 @@ namespace Threading {
 	bool HasHyperThreading();
 
 	/**
-	 * threadpool related stuff
-	 */
-	void InitThreadPool();
-
-	/**
 	 * Inform the OS kernel that we are a cpu-intensive task
 	 */
 	void SetThreadScheduler();

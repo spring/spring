@@ -97,7 +97,9 @@ public:
 	static CTimeProfiler& GetInstance();
 
 	float GetPercent(const char *name);
+
 	void Update();
+	void UpdateSorted(bool resort);
 
 	void PrintProfilingInfo() const;
 
