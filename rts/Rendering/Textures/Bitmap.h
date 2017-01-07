@@ -20,10 +20,10 @@ class CBitmap
 public:
 	CBitmap(const unsigned char* data, int xsize, int ysize, int channels = 4);
 	CBitmap();
-	CBitmap(const CBitmap& old);
-	CBitmap& operator=(const CBitmap& bm);
-	CBitmap(CBitmap&& bm);
-	CBitmap& operator=(CBitmap&& bm);
+	CBitmap(const CBitmap& bmp) { *this = bmp; }
+	CBitmap(CBitmap&& bmp) { *this = std::move(bmp); }
+	CBitmap& operator=(const CBitmap& bmp);
+	CBitmap& operator=(CBitmap&& bmp);
 
 	virtual ~CBitmap();
 

@@ -83,47 +83,12 @@ CBitmap::CBitmap()
 {
 }
 
-
 CBitmap::~CBitmap()
 {
 #ifndef BITMAP_NO_OPENGL
 	SafeDelete(ddsimage);
 #endif // !BITMAP_NO_OPENGL
 }
-
-
-CBitmap::CBitmap(const CBitmap& old)
-	: mem(old.mem)
-	, xsize(old.xsize)
-	, ysize(old.ysize)
-	, channels(old.channels)
-	, compressed(false)
-#ifndef BITMAP_NO_OPENGL
-	, textype(old.textype)
-	, ddsimage(nullptr)
-#endif // !BITMAP_NO_OPENGL
-{
-	assert(!old.compressed);
-}
-
-
-CBitmap::CBitmap(CBitmap&& bm)
-{
-	mem = std::move(bm.mem);
-
-	xsize = bm.xsize;
-	ysize = bm.ysize;
-	channels = bm.channels;
-	compressed = bm.compressed;
-
-	#ifndef BITMAP_NO_OPENGL
-	textype = bm.textype;
-
-	ddsimage = bm.ddsimage;
-	bm.ddsimage = nullptr;
-	#endif
-}
-
 
 CBitmap::CBitmap(const unsigned char* data, int _xsize, int _ysize, int _channels)
 	: xsize(_xsize)
@@ -139,42 +104,46 @@ CBitmap::CBitmap(const unsigned char* data, int _xsize, int _ysize, int _channel
 }
 
 
-CBitmap& CBitmap::operator=(const CBitmap& bm)
+CBitmap& CBitmap::operator=(const CBitmap& bmp)
 {
-	if (this != &bm) {
-		xsize = bm.xsize;
-		ysize = bm.ysize;
-		channels = bm.channels;
-		compressed = bm.compressed;
+	if (this != &bmp) {
+		mem = bmp.mem;
 
-		mem = bm.mem;
+		xsize = bmp.xsize;
+		ysize = bmp.ysize;
+		channels = bmp.channels;
+		compressed = bmp.compressed;
 
 #ifndef BITMAP_NO_OPENGL
-		textype = bm.textype;
+		textype = bmp.textype;
 
-		if (bm.ddsimage != nullptr) {
-			SafeDelete(ddsimage);
-			ddsimage = new nv_dds::CDDSImage(*bm.ddsimage);
-		}
+		SafeDelete(ddsimage);
+
+		if (bmp.ddsimage != nullptr)
+			ddsimage = new nv_dds::CDDSImage(*bmp.ddsimage);
+
 #endif // !BITMAP_NO_OPENGL
 	}
 
 	return *this;
 }
 
-
-CBitmap& CBitmap::operator=(CBitmap&& bm)
+CBitmap& CBitmap::operator=(CBitmap&& bmp)
 {
-	xsize = bm.xsize;
-	ysize = bm.ysize;
-	channels = bm.channels;
-	compressed = bm.compressed;
-	mem = bm.mem;
+	mem = std::move(bmp.mem);
+
+	xsize = bmp.xsize;
+	ysize = bmp.ysize;
+	channels = bmp.channels;
+	compressed = bmp.compressed;
 
 #ifndef BITMAP_NO_OPENGL
-	textype = bm.textype;
-	ddsimage = bm.ddsimage;
-	bm.ddsimage = nullptr;
+	textype = bmp.textype;
+
+	SafeDelete(ddsimage);
+
+	ddsimage = bmp.ddsimage;
+	bmp.ddsimage = nullptr;
 #endif // !BITMAP_NO_OPENGL
 
 	return *this;

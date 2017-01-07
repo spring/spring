@@ -228,7 +228,7 @@ C3DOTextureHandler::UnitTexture* C3DOTextureHandler::Get3DOTexture(const std::st
 	const auto tti = textures.find(name);
 
 	if (tti != textures.end())
-		return &tti->second; // FIXME
+		return &tti->second;
 
 	// unknown texture
 	return nullptr;
