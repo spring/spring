@@ -38,7 +38,6 @@
 #endif
 
 
-
 namespace spring {
 	template<typename K, typename V>
 	class unordered_bimap {
@@ -62,7 +61,7 @@ namespace spring {
 
 	private:
 		const kv_map_type kv_map;
-			  vk_map_type vk_map;
+		      vk_map_type vk_map;
 	};
 };
 
