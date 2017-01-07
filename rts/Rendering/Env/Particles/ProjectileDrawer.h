@@ -3,14 +3,14 @@
 #ifndef PROJECTILE_DRAWER_HDR
 #define PROJECTILE_DRAWER_HDR
 
-#include "Rendering/GL/myGL.h"
 #include <array>
-#include <set>
 
+#include "Rendering/GL/myGL.h"
 #include "Rendering/GL/FBO.h"
 #include "Rendering/Models/3DModel.h"
 #include "Sim/Projectiles/ProjectileFunctors.h"
 #include "System/EventClient.h"
+#include "System/UnorderedSet.hpp"
 
 class CSolidObject;
 class CTextureAtlas;
@@ -92,7 +92,7 @@ public:
 	std::vector<const AtlasedTexture*> smoketex;
 
 private:
-	static void ParseAtlasTextures(const bool, const LuaTable&, std::set<std::string>&, CTextureAtlas*);
+	static void ParseAtlasTextures(const bool, const LuaTable&, spring::unordered_set<std::string>&, CTextureAtlas*);
 
 	void DrawProjectiles(int modelType, bool drawReflection, bool drawRefraction);
 	void DrawProjectilesShadow(int modelType);

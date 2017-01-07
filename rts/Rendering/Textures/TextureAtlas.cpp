@@ -14,7 +14,6 @@
 #include "System/Util.h"
 #include "System/Exceptions.h"
 
-#include <list>
 #include <cstring>
 
 CR_BIND(AtlasedTexture, )
@@ -83,7 +82,7 @@ int CTextureAtlas::AddTexFromFile(std::string name, std::string file)
 
 	// if the file is already loaded, use that instead
 	std::string lcFile = StringToLower(file);
-	std::map<std::string, MemTex*>::iterator it = files.find(lcFile);
+	const auto it = files.find(lcFile);
 	if (it != files.end()) {
 		MemTex* memtex = it->second;
 		memtex->names.push_back(name);
@@ -92,9 +91,8 @@ int CTextureAtlas::AddTexFromFile(std::string name, std::string file)
 
 
 	CBitmap bitmap;
-	if (!bitmap.Load(file)) {
+	if (!bitmap.Load(file))
 		throw content_error("Could not load texture from file " + file);
-	}
 
 	if (bitmap.channels != 4 || bitmap.compressed) {
 		// only suport RGBA for now
@@ -102,9 +100,10 @@ int CTextureAtlas::AddTexFromFile(std::string name, std::string file)
 	}
 
 	const int ret = AddTexFromMem(name, bitmap.xsize, bitmap.ysize, RGBA32, &bitmap.mem[0]);
-	if (ret == 1) {
+
+	if (ret == 1)
 		files[lcFile] = memtextures.back();
-	}
+
 	return ret;
 }
 
@@ -115,7 +114,7 @@ bool CTextureAtlas::Finalize()
 	if (success)
 		CreateTexture();
 
-	for (std::vector<MemTex*>::iterator it = memtextures.begin(); it != memtextures.end(); ++it) {
+	for (auto it = memtextures.begin(); it != memtextures.end(); ++it) {
 		delete[] (char*)(*it)->data;
 		delete (*it);
 	}
@@ -138,7 +137,7 @@ void CTextureAtlas::CreateTexture()
 		// make spacing between textures black transparent to avoid ugly lines with linear filtering
 		std::memset(data, 0, atlasSize.x * atlasSize.y * 4);
 
-		for (std::vector<MemTex*>::iterator it = memtextures.begin(); it != memtextures.end(); ++it) {
+		for (auto it = memtextures.begin(); it != memtextures.end(); ++it) {
 			const float4 texCoords = atlasAllocator->GetTexCoords((*it)->names[0]);
 			const float4 absCoords = atlasAllocator->GetEntry((*it)->names[0]);
 			const int xpos = absCoords.x;

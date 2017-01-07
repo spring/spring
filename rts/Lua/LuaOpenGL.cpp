@@ -4451,13 +4451,11 @@ int LuaOpenGL::GetQuery(lua_State* L)
 
 int LuaOpenGL::GetGlobalTexNames(lua_State* L)
 {
-	map<string, C3DOTextureHandler::UnitTexture>::const_iterator it;
-	const map<string, C3DOTextureHandler::UnitTexture>& textures =
-		texturehandler3DO->GetAtlasTextures();
+	const auto& textures = texturehandler3DO->GetAtlasTextures();
 
 	lua_createtable(L, textures.size(), 0);
 	int count = 1;
-	for (it = textures.begin(); it != textures.end(); ++it) {
+	for (auto it = textures.begin(); it != textures.end(); ++it) {
 		lua_pushsstring(L, it->first);
 		lua_rawseti(L, -2, count++);
 	}
@@ -4467,17 +4465,16 @@ int LuaOpenGL::GetGlobalTexNames(lua_State* L)
 
 int LuaOpenGL::GetGlobalTexCoords(lua_State* L)
 {
-	const string name = luaL_checkstring(L, 1);
-	C3DOTextureHandler::UnitTexture* texCoords = NULL;
-	texCoords = texturehandler3DO->Get3DOTexture(name);
-	if (texCoords) {
-		lua_pushnumber(L, texCoords->xstart);
-		lua_pushnumber(L, texCoords->ystart);
-		lua_pushnumber(L, texCoords->xend);
-		lua_pushnumber(L, texCoords->yend);
-		return 4;
-	}
-	return 0;
+	const C3DOTextureHandler::UnitTexture* texCoords = texturehandler3DO->Get3DOTexture(luaL_checkstring(L, 1));
+
+	if (texCoords == nullptr)
+		return 0;
+
+	lua_pushnumber(L, texCoords->xstart);
+	lua_pushnumber(L, texCoords->ystart);
+	lua_pushnumber(L, texCoords->xend);
+	lua_pushnumber(L, texCoords->yend);
+	return 4;
 }
 
 

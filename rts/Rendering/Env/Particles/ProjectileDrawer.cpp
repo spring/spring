@@ -35,7 +35,6 @@
 #include "System/Exceptions.h"
 #include "System/Log/ILog.h"
 #include "System/Util.h"
-#include <array>
 
 
 
@@ -63,7 +62,7 @@ CProjectileDrawer::CProjectileDrawer(): CEventClient("[CProjectileDrawer]", 1234
 	// used to block resources_map.* from overriding any of
 	// resources.lua:{projectile, smoke, groundfx}textures,
 	// as well as various defaults (repulsegfxtexture, etc)
-	std::set<std::string> blockedTexNames;
+	spring::unordered_set<std::string> blockedTexNames;
 
 	ParseAtlasTextures(true, resProjTexturesTable, blockedTexNames, textureAtlas);
 	ParseAtlasTextures(true, resGroundFXTexturesTable, blockedTexNames, groundFXAtlas);
@@ -256,28 +255,26 @@ CProjectileDrawer::~CProjectileDrawer() {
 void CProjectileDrawer::ParseAtlasTextures(
 	const bool blockTextures,
 	const LuaTable& textureTable,
-	std::set<std::string>& blockedTextures,
+	spring::unordered_set<std::string>& blockedTextures,
 	CTextureAtlas* textureAtlas)
 {
 	std::vector<std::string> subTables;
 	std::map<std::string, std::string> texturesMap;
-	std::map<std::string, std::string>::iterator texturesMapIt;
 
 	textureTable.GetMap(texturesMap);
 	textureTable.GetKeys(subTables);
 
-	for (texturesMapIt = texturesMap.begin(); texturesMapIt != texturesMap.end(); ++texturesMapIt) {
+	for (auto texturesMapIt = texturesMap.begin(); texturesMapIt != texturesMap.end(); ++texturesMapIt) {
 		const std::string textureName = StringToLower(texturesMapIt->first);
 
-		if (blockTextures) {
-			// no textures added to this atlas are allowed
-			// to be overwritten later by other textures of
-			// the same name
+		// no textures added to this atlas are allowed
+		// to be overwritten later by other textures of
+		// the same name
+		if (blockTextures)
 			blockedTextures.insert(textureName);
-		}
-		if (blockTextures || (blockedTextures.find(textureName) == blockedTextures.end())) {
+
+		if (blockTextures || (blockedTextures.find(textureName) == blockedTextures.end()))
 			textureAtlas->AddTexFromFile(texturesMapIt->first, "bitmaps/" + texturesMapIt->second);
-		}
 	}
 
 	texturesMap.clear();
@@ -285,22 +282,22 @@ void CProjectileDrawer::ParseAtlasTextures(
 	for (size_t i = 0; i < subTables.size(); i++) {
 		const LuaTable& textureSubTable = textureTable.SubTable(subTables[i]);
 
-		if (textureSubTable.IsValid()) {
-			textureSubTable.GetMap(texturesMap);
+		if (!textureSubTable.IsValid())
+			continue;
 
-			for (texturesMapIt = texturesMap.begin(); texturesMapIt != texturesMap.end(); ++texturesMapIt) {
-				const std::string textureName = StringToLower(texturesMapIt->first);
+		textureSubTable.GetMap(texturesMap);
 
-				if (blockTextures) {
-					blockedTextures.insert(textureName);
-				}
-				if (blockTextures || (blockedTextures.find(textureName) == blockedTextures.end())) {
-					textureAtlas->AddTexFromFile(texturesMapIt->first, "bitmaps/" + texturesMapIt->second);
-				}
-			}
+		for (auto texturesMapIt = texturesMap.begin(); texturesMapIt != texturesMap.end(); ++texturesMapIt) {
+			const std::string textureName = StringToLower(texturesMapIt->first);
 
-			texturesMap.clear();
+			if (blockTextures)
+				blockedTextures.insert(textureName);
+
+			if (blockTextures || (blockedTextures.find(textureName) == blockedTextures.end()))
+				textureAtlas->AddTexFromFile(texturesMapIt->first, "bitmaps/" + texturesMapIt->second);
 		}
+
+		texturesMap.clear();
 	}
 }
 

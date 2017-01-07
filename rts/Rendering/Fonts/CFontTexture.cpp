@@ -3,8 +3,9 @@
 #include "CFontTexture.h"
 #include "FontLogSection.h"
 
-#include <string>
 #include <cstring> // for memset, memcpy
+#include <string>
+#include <vector>
 
 #ifndef HEADLESS
 	#include <ft2build.h>
@@ -242,12 +243,11 @@ static std::shared_ptr<FontFace> GetFontFace(const std::string& fontfile, const 
 
 
 #ifndef HEADLESS
-static std::shared_ptr<FontFace> GetFontForCharacters(std::list<char32_t>& characters, const FT_Face origFace, const int origSize)
+static std::shared_ptr<FontFace> GetFontForCharacters(const std::vector<char32_t>& characters, const FT_Face origFace, const int origSize)
 {
 #if defined(USE_FONTCONFIG)
-	if (characters.empty()) {
+	if (characters.empty())
 		return nullptr;
-	}
 
 	// create list of wanted characters
 	FcCharSet* cset = FcCharSetCreate();
@@ -468,31 +468,39 @@ void CFontTexture::LoadBlock(char32_t start, char32_t end)
 {
 	std::lock_guard<spring::recursive_mutex> lk(m);
 
-	// generate list of wanted glyphs
-	std::list<char32_t> map;
-	for(char32_t i=start; i<end; ++i)
-		map.push_back(i);
-
 	// load glyphs from different fonts (using fontconfig)
 	std::shared_ptr<FontFace> f = shFace;
-	std::set<std::shared_ptr<FontFace>> alreadyCheckedFonts;
+
+	spring::unordered_set<std::shared_ptr<FontFace>> alreadyCheckedFonts;
+
+	// generate list of wanted glyphs
+	std::vector<char32_t> map(end - start, 0);
+
+	for (char32_t i = start; i < end; ++i)
+		map[i - start] = i;
+
 #ifndef HEADLESS
 	do {
 		alreadyCheckedFonts.insert(f);
-		for (auto it = map.begin(); it != map.end();) {
+
+		for (auto it = map.begin(); it != map.end(); ) {
 			FT_UInt index = FT_Get_Char_Index(*f, *it);
 
 			if (index != 0) {
 				LoadGlyph(f, *it, index);
-				it = map.erase(it);
+
+				*it = map.back();
+				map.pop_back();
 			} else {
 				++it;
 			}
 		}
+
 		f = GetFontForCharacters(map, *f, fontSize);
 		usedFallbackFonts.insert(f);
 	} while (!map.empty() && f && (alreadyCheckedFonts.find(f) == alreadyCheckedFonts.end()));
 #endif
+
 	// load fail glyph for all remaining ones (they will all share the same fail glyph)
 	for (auto c: map) {
 		LoadGlyph(shFace, c, 0);

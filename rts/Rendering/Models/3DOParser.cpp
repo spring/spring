@@ -1,9 +1,13 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include <cctype>
+#include <cinttypes>
+
 #include "3DOParser.h"
 
 #include "Sim/Misc/CollisionVolume.h"
 #include "System/Exceptions.h"
+#include "System/UnorderedMap.hpp"
 #include "System/Util.h"
 #include "System/Log/ILog.h"
 #include "System/FileSystem/FileHandler.h"
@@ -11,8 +15,6 @@
 #include "System/Platform/byteorder.h"
 #include "System/Sync/HsiehHash.h"
 
-#include <cctype>
-#include <cinttypes>
 
 
 #define SCALE_FACTOR_3DO (1.0f / 65536.0f)
@@ -209,10 +211,10 @@ bool C3DOParser::IsBasePlate(S3DOPiece* obj, S3DOPrimitive* face)
 C3DOTextureHandler::UnitTexture* C3DOParser::GetTexture(S3DOPiece* obj, _Primitive* p, const std::vector<unsigned char>& fileBuf) const
 {
 	std::string texName;
+
 	if (p->OffsetToTextureName != 0) {
 		int unused;
-		texName = GET_TEXT(p->OffsetToTextureName, fileBuf, unused);
-		StringToLowerInPlace(texName);
+		texName = std::move(StringToLower(GET_TEXT(p->OffsetToTextureName, fileBuf, unused)));
 
 		if (teamtex.find(texName) == teamtex.end()) {
 			texName += "00";
@@ -225,8 +227,7 @@ C3DOTextureHandler::UnitTexture* C3DOParser::GetTexture(S3DOPiece* obj, _Primiti
 	if (tex != nullptr)
 		return tex;
 
-	LOG_L(L_WARNING, "[%s] unknown 3DO texture \"%s\" for piece \"%s\"",
-			__FUNCTION__, texName.c_str(), obj->name.c_str());
+	LOG_L(L_WARNING, "[%s] unknown 3DO texture \"%s\" for piece \"%s\"", __func__, texName.c_str(), obj->name.c_str());
 
 	// assign a dummy texture (the entire atlas)
 	return texturehandler3DO->Get3DOTexture("___dummy___");
@@ -235,12 +236,11 @@ C3DOTextureHandler::UnitTexture* C3DOParser::GetTexture(S3DOPiece* obj, _Primiti
 
 void C3DOParser::GetPrimitives(S3DOPiece* obj, int pos, int num, int excludePrim, const std::vector<unsigned char>& fileBuf)
 {
-	std::map<int,int> prevHashes;
+	spring::unordered_map<int, int> prevHashes;
 
-	for (int a=0; a<num; a++) {
-		if (a == excludePrim) {
+	for (int a = 0; a < num; a++) {
+		if (a == excludePrim)
 			continue;
-		}
 
 		_Primitive p;
 		int curOffset = pos + a * sizeof(_Primitive);

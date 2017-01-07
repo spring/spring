@@ -605,6 +605,7 @@ private:
 				return bucket;
 			}
 		}
+		return (size_t(-1));
 	}
 
 private:

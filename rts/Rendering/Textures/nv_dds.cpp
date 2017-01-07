@@ -1191,6 +1191,17 @@ CTexture &CTexture::operator= (const CTexture &rhs)
     return *this;
 }
 
+CTexture &CTexture::operator= (CTexture &&rhs)
+{
+	if (this != &rhs) {
+		static_cast<CSurface&>(*this) = std::move(static_cast<CSurface&&>(rhs));
+
+		m_mipmaps = std::move(rhs.m_mipmaps);
+	}
+
+	return *this;
+}
+
 void CTexture::create(unsigned int w, unsigned int h, unsigned int d, unsigned int imgsize, const unsigned char *pixels)
 {
     CSurface::create(w, h, d, imgsize, pixels);
@@ -1274,6 +1285,21 @@ CSurface &CSurface::operator= (const CSurface &rhs)
     }
 
     return *this;
+}
+
+CSurface &CSurface::operator= (CSurface &&rhs)
+{
+	if (this != &rhs) {
+		m_size = rhs.get_size();
+		m_width = rhs.get_width();
+		m_height = rhs.get_height();
+		m_depth = rhs.get_depth();
+
+		m_pixels = rhs.m_pixels;
+		rhs.m_pixels = nullptr;
+	}
+
+	return *this;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

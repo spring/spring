@@ -4,11 +4,12 @@
 #define ASS_PARSER_H
 
 #include <vector>
-#include <map>
+
 #include "3DModel.h"
 #include "IModelParser.h"
 #include "System/float3.h"
 #include "System/type2.h"
+#include "System/UnorderedMap.hpp"
 
 
 struct aiNode;
@@ -48,8 +49,8 @@ public:
 class CAssParser: public IModelParser
 {
 public:
-	typedef std::map<std::string, S3DModelPiece*> ModelPieceMap;
-	typedef std::map<SAssPiece*, std::string> ParentNameMap;
+	typedef spring::unordered_map<std::string, S3DModelPiece*> ModelPieceMap;
+	typedef spring::unordered_map<SAssPiece*, std::string> ParentNameMap;
 
 	CAssParser();
 	~CAssParser();

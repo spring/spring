@@ -7,9 +7,7 @@
 #define GL_STATE_CHECKER(name)
 #else
 
-#include <map>
 #include <string>
-#include <set>
 	
 #include "Rendering/GL/myGL.h"
 // GL_STATE_CHECKER(name) verifies the GL state has default values when entering/exiting its scope.
@@ -87,8 +85,7 @@ public:
 	CGLStateChecker(std::string id);
 	~CGLStateChecker();
 	const std::string id;
-	static std::map<std::string, std::string> lastSet;
-	static std::set<std::string> errorsSet;
+
 private:
 	void VerifyState(std::string area);
 };

@@ -20,7 +20,8 @@
 
 
 static void RegisterAssimpModelFormats(CModelLoader::FormatMap& formats) {
-	std::set<std::string> whitelist;
+	spring::unordered_set<std::string> whitelist;
+
 	std::string extension;
 	std::string extensions;
 	std::string enabledExtensions;

@@ -4,15 +4,17 @@
 
 #define NO_GL_WRAP
 
-#include <map>
 #include <string>
-#include <set>
 
 #include "glStateDebug.h"
 
 #include "System/Log/ILog.h"
-
 #include "System/Platform/Threading.h"
+#include "System/UnorderedMap.hpp"
+#include "System/UnorderedSet.hpp"
+
+static spring::unordered_map<std::string, std::string> lastSet;
+static spring::unordered_set<std::string> errorsSet;
 
 template<typename T, typename F>
 static void VERIFYGL(F func, GLenum pname, T defaultValue, std::string pstr, std::string area) {
@@ -62,32 +64,25 @@ static void VERIFYGL4(F func, GLenum pname, T default0, T default1, T default2, 
 #define VERIFYGLINT(pname, defaultValue, area) VERIFYGL(glGetIntegerv, pname, (GLint) defaultValue, #pname, area)
 #define VERIFYGLINT2(pname, default0, default1, area) VERIFYGL2(glGetIntegerv, pname, (GLint) default0, (GLint) default1, #pname, area)
 
-std::map<std::string, std::string> CGLStateChecker::lastSet;
-std::set<std::string> CGLStateChecker::errorsSet;
-
-
 void _wrap_glEnable(GLenum pname, std::string pstr, std::string location)
 {
-	if(Threading::IsMainThread())
-	{
+	if (Threading::IsMainThread())
 		CGLStateChecker::lastSet[pstr] = location;
-	}
+
 	glEnable(pname);
 }
 
 void _wrap_glDisable(GLenum pname, std::string pstr, std::string location)
 {
-	if(Threading::IsMainThread())
-	{
+	if (Threading::IsMainThread())
 		CGLStateChecker::lastSet[pstr] = location;
-	}
+
 	glDisable(pname);
 }
 
 void _wrap_glBlendFunc(GLenum sfactor, GLenum dfactor, std::string location)
 {
-	if(Threading::IsMainThread())
-	{
+	if (Threading::IsMainThread()) {
 		CGLStateChecker::lastSet["GL_BLEND_SRC_RGB"] = location;
 		CGLStateChecker::lastSet["GL_BLEND_SRC_ALPHA"] = location;
 		CGLStateChecker::lastSet["GL_BLEND_DST_RGB"] = location;
@@ -98,8 +93,7 @@ void _wrap_glBlendFunc(GLenum sfactor, GLenum dfactor, std::string location)
 
 void _wrap_glBlendFuncSeparate(GLenum srcRGB, GLenum dstRGB, GLenum srcAlpha, GLenum dstAlpha, std::string location)
 {
-	if(Threading::IsMainThread())
-	{
+	if (Threading::IsMainThread()) {
 		CGLStateChecker::lastSet["GL_BLEND_SRC_RGB"] = location;
 		CGLStateChecker::lastSet["GL_BLEND_SRC_ALPHA"] = location;
 		CGLStateChecker::lastSet["GL_BLEND_DST_RGB"] = location;
@@ -110,62 +104,55 @@ void _wrap_glBlendFuncSeparate(GLenum srcRGB, GLenum dstRGB, GLenum srcAlpha, GL
 
 void _wrap_glColor3f(GLfloat red, GLfloat green, GLfloat blue, std::string location)
 {
-	if(Threading::IsMainThread())
-	{
+	if (Threading::IsMainThread())
 		CGLStateChecker::lastSet["GL_CURRENT_COLOR"] = location;
-	}
+
 	glColor3f(red, green, blue);
 }
 
 void _wrap_glColor4f(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha, std::string location)
 {
-	if(Threading::IsMainThread())
-	{
+	if (Threading::IsMainThread())
 		CGLStateChecker::lastSet["GL_CURRENT_COLOR"] = location;
-	}
+
 	glColor4f(red, green, blue, alpha);
 }
 
 void _wrap_glColor4fv(const GLfloat *v, std::string location)
 {
-	if(Threading::IsMainThread())
-	{
+	if (Threading::IsMainThread())
 		CGLStateChecker::lastSet["GL_CURRENT_COLOR"] = location;
-	}
+
 	glColor4fv(v);
 }
 
 void _wrap_glDepthMask(GLboolean flag, std::string location)
 {
-	if(Threading::IsMainThread())
-	{
+	if (Threading::IsMainThread())
 		CGLStateChecker::lastSet["GL_DEPTH_WRITEMASK"] = location;
-	}
+
 	glDepthMask(flag);
 }
 
 
 void _wrap_glDepthFunc(GLenum func, std::string location)
 {
-	if(Threading::IsMainThread())
-	{
+	if (Threading::IsMainThread())
 		CGLStateChecker::lastSet["GL_DEPTH_FUNC"] = location;
-	}
+
 	glDepthFunc(func);
 }
 
 void _wrap_glColorMask(GLboolean red, GLboolean green, GLboolean blue, GLboolean alpha, std::string location)
 {
-	if(Threading::IsMainThread())
-	{
+	if (Threading::IsMainThread())
 		CGLStateChecker::lastSet["GL_COLOR_WRITEMASK"] = location;
-	}
+
 	glColorMask(red, green, blue, alpha);
 }
 
 void CGLStateChecker::VerifyState(std::string area) {
-	if (Threading::IsMainThread())
-	{
+	if (Threading::IsMainThread()) {
 		std::string _area = area + " " + id;
 		//VERIFYGLBOOL(GL_CULL_FACE, GL_FALSE)
 		VERIFYGLBOOL(GL_ALPHA_TEST, GL_FALSE, _area);

@@ -69,7 +69,12 @@ static const void BindOpaqueTex(const CS3OTextureHandler::S3OTexMat* textureMat)
 	glBindTexture(GL_TEXTURE_2D, textureMat->tex1);
 }
 
-static const void BindOpaqueTexAtlas(const CS3OTextureHandler::S3OTexMat*) { texturehandler3DO->Set3doAtlases(); }
+static const void BindOpaqueTexAtlas(const CS3OTextureHandler::S3OTexMat*) {
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, texturehandler3DO->GetAtlasTex2ID());
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, texturehandler3DO->GetAtlasTex1ID());
+}
 static const void BindOpaqueTexDummy(const CS3OTextureHandler::S3OTexMat*) {}
 
 static const void BindShadowTexDummy(const CS3OTextureHandler::S3OTexMat*) {}

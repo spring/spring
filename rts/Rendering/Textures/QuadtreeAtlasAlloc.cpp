@@ -1,14 +1,13 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include <cstring> // memset
+#include <algorithm>
+#include <vector>
 
 #include "QuadtreeAtlasAlloc.h"
-#include <string.h> // memset
 #include "System/Exceptions.h"
 #include "System/bitops.h"
 #include "System/Log/ILog.h"
-
-#include <algorithm>
-#include <vector>
 
 static int NODE_MIN_SIZE = 8;
 
@@ -152,7 +151,7 @@ int CQuadtreeAtlasAlloc::CompareTex(SAtlasEntry* tex1, SAtlasEntry* tex2)
 
 bool CQuadtreeAtlasAlloc::Allocate()
 {
-	if (!root) {
+	if (root == nullptr) {
 		root = new QuadTreeNode();
 		root->posx = 0;
 		root->posy = 0;
@@ -162,17 +161,20 @@ bool CQuadtreeAtlasAlloc::Allocate()
 	bool failure = false;
 
 	std::vector<SAtlasEntry*> sortedEntries;
-	for (std::map<std::string, SAtlasEntry>::iterator it = entries.begin(); it != entries.end(); ++it) {
+	sortedEntries.reserve(entries.size());
+
+	for (auto it = entries.begin(); it != entries.end(); ++it) {
 		sortedEntries.push_back(&it->second);
 	}
-	sort(sortedEntries.begin(), sortedEntries.end(), CQuadtreeAtlasAlloc::CompareTex);
 
-	for (std::vector<SAtlasEntry*>::iterator it = sortedEntries.begin(); it != sortedEntries.end(); ++it) {
+	std::sort(sortedEntries.begin(), sortedEntries.end(), CQuadtreeAtlasAlloc::CompareTex);
+
+	for (auto it = sortedEntries.begin(); it != sortedEntries.end(); ++it) {
 		SAtlasEntry& entry = **it;
 		QuadTreeNode* node = FindPosInQuadTree(entry.size.x, entry.size.y);
 
-		if (!node) {
-			for (std::map<std::string, SAtlasEntry>::iterator jt = entries.begin(); jt != entries.end(); ++jt) {
+		if (node == nullptr) {
+			for (auto jt = entries.begin(); jt != entries.end(); ++jt) {
 				if (&entry == &(jt->second)) {
 					LOG_L(L_ERROR, "CQuadtreeAtlasAlloc full: failed to add %s", jt->first.c_str());
 					break;

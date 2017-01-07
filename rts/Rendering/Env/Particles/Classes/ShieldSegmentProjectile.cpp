@@ -11,6 +11,7 @@
 #include "Sim/Weapons/WeaponDef.h"
 #include "System/EventHandler.h"
 #include "System/myMath.h"
+#include "System/UnorderedMap.hpp"
 
 
 CR_BIND(ShieldSegmentCollection, )
@@ -36,7 +37,7 @@ CR_REG_METADATA(ShieldSegmentProjectile, (
 
 
 static std::vector<float3> spherevertices;
-static std::map<const AtlasedTexture*, std::vector<float2> > spheretexcoords;
+static spring::unordered_map<const AtlasedTexture*, std::vector<float2> > spheretexcoords;
 
 
 
@@ -251,7 +252,8 @@ const float3* ShieldSegmentProjectile::GetSegmentVertices(const int xpart, const
 
 const float2* ShieldSegmentProjectile::GetSegmentTexCoords(const AtlasedTexture* texture, const int xpart, const int ypart)
 {
-	std::map<const AtlasedTexture*, std::vector<float2> >::iterator fit = spheretexcoords.find(texture);
+	auto fit = spheretexcoords.find(texture);
+
 	if (fit == spheretexcoords.end()) {
 		std::vector<float2>& texcoords = spheretexcoords[texture];
 		texcoords.resize(NUM_SEGMENTS_Y * NUM_SEGMENTS_X * NUM_VERTICES_Y * NUM_VERTICES_X);

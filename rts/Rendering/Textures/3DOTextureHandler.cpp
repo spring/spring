@@ -2,7 +2,6 @@
 
 
 #include <cctype>
-#include <set>
 #include <sstream>
 
 #include "3DOTextureHandler.h"
@@ -14,6 +13,7 @@
 #include "Rendering/Textures/TextureAtlas.h"
 #include "TAPalette.h"
 #include "System/Exceptions.h"
+#include "System/UnorderedSet.hpp"
 #include "System/Util.h"
 #include "System/type2.h"
 #include "System/FileSystem/FileHandler.h"
@@ -36,7 +36,7 @@ struct TexFile {
 
 C3DOTextureHandler::C3DOTextureHandler()
 {
-	std::vector<TexFile*> texfiles = LoadTexFiles();
+	std::vector<TexFile> texfiles = std::move(LoadTexFiles());
 
 	// TODO: make this use TextureAtlas directly
 	CTextureAtlas atlas;
@@ -51,8 +51,8 @@ C3DOTextureHandler::C3DOTextureHandler()
 	// default for 3DO primitives that point to non-existing textures
 	textures["___dummy___"] = UnitTexture(0.0f, 0.0f, 1.0f, 1.0f);
 
-	for (std::vector<TexFile*>::iterator it = texfiles.begin(); it != texfiles.end(); ++it) {
-		atlasAlloc->AddEntry((*it)->name, int2((*it)->tex.xsize, (*it)->tex.ysize));
+	for (auto it = texfiles.begin(); it != texfiles.end(); ++it) {
+		atlasAlloc->AddEntry(it->name, int2(it->tex.xsize, it->tex.ysize));
 	}
 
 	const bool allocated = atlasAlloc->Allocate();
@@ -89,13 +89,13 @@ C3DOTextureHandler::C3DOTextureHandler()
 		bigtex2[a*4 + 3] = 255;
 	}
 
-	for (std::vector<TexFile*>::iterator it = texfiles.begin(); it != texfiles.end(); ++it) {
-		CBitmap& curtex1 = (*it)->tex;
-		CBitmap& curtex2 = (*it)->tex2;
+	for (auto it = texfiles.begin(); it != texfiles.end(); ++it) {
+		CBitmap& curtex1 = it->tex;
+		CBitmap& curtex2 = it->tex2;
 
-		const size_t foundx = atlasAlloc->GetEntry((*it)->name).x;
-		const size_t foundy = atlasAlloc->GetEntry((*it)->name).y;
-		const float4 texCoords = atlasAlloc->GetTexCoords((*it)->name);
+		const size_t foundx = atlasAlloc->GetEntry(it->name).x;
+		const size_t foundy = atlasAlloc->GetEntry(it->name).y;
+		const float4 texCoords = atlasAlloc->GetTexCoords(it->name);
 
 		for (int y = 0; y < curtex1.ysize; ++y) {
 			for (int x = 0; x < curtex1.xsize; ++x) {
@@ -106,9 +106,7 @@ C3DOTextureHandler::C3DOTextureHandler()
 			}
 		}
 
-		textures[(*it)->name] = UnitTexture(texCoords);
-
-		delete (*it);
+		textures[it->name] = UnitTexture(texCoords);
 	}
 
 	const int maxMipMaps = atlasAlloc->GetMaxMipMaps();
@@ -161,99 +159,91 @@ C3DOTextureHandler::~C3DOTextureHandler()
 }
 
 
-std::vector<TexFile*> C3DOTextureHandler::LoadTexFiles()
+std::vector<TexFile> C3DOTextureHandler::LoadTexFiles()
 {
 	CFileHandler teamTexFile("unittextures/tatex/teamtex.txt");
 	CFileHandler paletteFile("unittextures/tatex/palette.pal");
 
 	CSimpleParser parser(teamTexFile);
 
-	std::set<std::string> teamTexes;
+	spring::unordered_set<std::string> teamTexes;
+	spring::unordered_set<string> usedNames;
+
 	while (!parser.Eof()) {
 		teamTexes.insert(StringToLower(parser.GetCleanLine()));
 	}
 
-	std::vector<TexFile*> texfiles;
+	std::vector<TexFile> texFiles;
 
 	const std::vector<std::string>& filesBMP = CFileHandler::FindFiles("unittextures/tatex/", "*.bmp");
-	std::vector<std::string> files = CFileHandler::FindFiles("unittextures/tatex/", "*.tga");
-	files.insert(files.end(), filesBMP.begin(), filesBMP.end());
+	      std::vector<std::string>  files    = CFileHandler::FindFiles("unittextures/tatex/", "*.tga");
 
-	std::set<string> usedNames;
-	for (std::vector<std::string>::iterator fi = files.begin(); fi != files.end(); ++fi) {
+	files.insert(files.end(), filesBMP.begin(), filesBMP.end());
+	texFiles.reserve(files.size() + CTAPalette::NUM_PALETTE_ENTRIES);
+
+	for (auto fi = files.begin(); fi != files.end(); ++fi) {
 		const std::string& s = *fi;
 		const std::string s2 = StringToLower(FileSystem::GetBasename(s));
 
 		// avoid duplicate names and give tga images priority
-		if (usedNames.find(s2) != usedNames.end()) {
+		if (usedNames.find(s2) != usedNames.end())
 			continue;
-		}
+
 		usedNames.insert(s2);
 
-		if(teamTexes.find(s2) == teamTexes.end()){
-			TexFile* tex = CreateTex(s, s2, false);
-			texfiles.push_back(tex);
+		if (teamTexes.find(s2) == teamTexes.end()) {
+			texFiles.push_back(CreateTex(s, s2, false));
 		} else {
-			TexFile* tex = CreateTex(s, s2, true);
-			texfiles.push_back(tex);
+			texFiles.push_back(CreateTex(s, s2, true));
 		}
 	}
 
-	if (paletteFile.FileExists()) {
+	if (paletteFile.FileExists())
 		palette.Init(paletteFile);
-	}
 
 	for (unsigned a = 0; a < CTAPalette::NUM_PALETTE_ENTRIES; ++a) {
-		TexFile* tex = new TexFile();
-		tex->name = "ta_color" + IntToString(a, "%i");
-		tex->tex.Alloc(1, 1);
-		tex->tex.mem[0] = palette[a][0];
-		tex->tex.mem[1] = palette[a][1];
-		tex->tex.mem[2] = palette[a][2];
-		tex->tex.mem[3] = 0; // teamcolor
+		TexFile texFile;
+		texFile.name = "ta_color" + IntToString(a, "%i");
+		texFile.tex.Alloc(1, 1);
+		texFile.tex.mem[0] = palette[a][0];
+		texFile.tex.mem[1] = palette[a][1];
+		texFile.tex.mem[2] = palette[a][2];
+		texFile.tex.mem[3] = 0; // teamcolor
 
-		tex->tex2.Alloc(1, 1);
-		tex->tex2.mem[0] = 0;  // self illum
-		tex->tex2.mem[1] = 30; // reflectivity
-		tex->tex2.mem[2] =  0;
-		tex->tex2.mem[3] = 255;
+		texFile.tex2.Alloc(1, 1);
+		texFile.tex2.mem[0] = 0;  // self illum
+		texFile.tex2.mem[1] = 30; // reflectivity
+		texFile.tex2.mem[2] =  0;
+		texFile.tex2.mem[3] = 255;
 
-		texfiles.push_back(tex);
+		texFiles.push_back(texFile);
 	}
 
-	return texfiles;
+	return texFiles;
 }
 
 
 C3DOTextureHandler::UnitTexture* C3DOTextureHandler::Get3DOTexture(const std::string& name)
 {
-	std::map<std::string, UnitTexture>::iterator tti;
-	if ((tti = textures.find(name)) != textures.end()) {
-		return &tti->second;
-	}
+	const auto tti = textures.find(name);
+
+	if (tti != textures.end())
+		return &tti->second; // FIXME
 
 	// unknown texture
-	return NULL;
+	return nullptr;
 }
 
-void C3DOTextureHandler::Set3doAtlases() const
+TexFile C3DOTextureHandler::CreateTex(const std::string& name, const std::string& name2, bool teamcolor)
 {
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, atlas3do2);
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, atlas3do1);
-}
+	TexFile texFile;
+	texFile.tex.Load(name, 30);
+	texFile.name = name2;
 
-TexFile* C3DOTextureHandler::CreateTex(const std::string& name, const std::string& name2, bool teamcolor)
-{
-	TexFile* tex = new TexFile;
-	tex->tex.Load(name, 30);
-	tex->name = name2;
+	texFile.tex2.Alloc(texFile.tex.xsize, texFile.tex.ysize);
 
-	tex->tex2.Alloc(tex->tex.xsize, tex->tex.ysize);
-
-	CBitmap* tex1 = &tex->tex;
-	CBitmap* tex2 = &tex->tex2;
+	CBitmap* tex1 = &texFile.tex;
+	CBitmap* tex2 = &texFile.tex2;
 
 	for (int a = 0; a < (tex1->ysize * tex1->xsize); ++a) {
 		tex2->mem[a*4 + 0] = 0;
@@ -275,6 +265,6 @@ TexFile* C3DOTextureHandler::CreateTex(const std::string& name, const std::strin
 		}
 	}
 
-	return tex;
+	return texFile;
 }
 

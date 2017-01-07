@@ -117,10 +117,10 @@ unsigned int CS3OTextureHandler::LoadAndCacheTexture(
 
 		auto pair = bitmapCache.emplace(textureName, CBitmap());
 		auto iter = pair.first;
+		bool found = false;
 
 		bitmap = &(iter->second);
 
-		bool found = false;
 		if (!textureName.empty()) {
 			if (bitmap->Load(textureName) || bitmap->Load("unittextures/" + textureName)) {
 				found = true;

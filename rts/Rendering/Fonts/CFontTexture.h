@@ -3,7 +3,6 @@
 #ifndef _CFONTTEXTURE_H
 #define _CFONTTEXTURE_H
 
-#include <list>
 #include <string>
 #include <memory>
 

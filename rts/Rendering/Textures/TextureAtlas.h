@@ -5,11 +5,11 @@
 
 #include <string>
 #include <vector>
-#include <map>
 
 #include "System/creg/creg_cond.h"
 #include "System/float4.h"
 #include "System/type2.h"
+#include "System/UnorderedMap.hpp"
 
 
 class IAtlasAllocator;
@@ -73,6 +73,7 @@ public:
 	//! @return reference to the Texture struct of the specified texture
 	AtlasedTexture& GetTexture(const std::string& name);
 
+	// NOTE: safe with unordered_map after atlas has been finalized
 	AtlasedTexture* GetTexturePtr(const std::string& name) { return &GetTexture(name); }
 
 	/**
@@ -115,9 +116,9 @@ protected:
 
 	// temporary storage of all textures
 	std::vector<MemTex*> memtextures;
-	std::map<std::string, MemTex*> files;
 
-	std::map<std::string, AtlasedTexture> textures;
+	spring::unordered_map<std::string, MemTex*> files;
+	spring::unordered_map<std::string, AtlasedTexture> textures;
 
 	unsigned int atlasTexID;
 

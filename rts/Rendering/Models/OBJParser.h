@@ -7,8 +7,7 @@
 #include "IModelParser.h"
 
 #include "System/type2.h"
-
-#include <map>
+#include "System/UnorderedMap.hpp"
 
 struct SOBJTriangle {
 	int vIndices[3]; ///< index of 1st/2nd/3rd vertex
@@ -81,7 +80,7 @@ public:
 	S3DModel* Load(const std::string& modelFileName);
 
 private:
-	typedef std::map<std::string, SOBJPiece*> PieceMap;
+	typedef spring::unordered_map<std::string, SOBJPiece*> PieceMap;
 
 	bool ParseModelData(
 		S3DModel* model,

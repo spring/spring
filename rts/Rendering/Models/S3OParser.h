@@ -8,8 +8,6 @@
 
 #include "System/type2.h"
 
-#include <map>
-
 enum {
 	S3O_PRIMTYPE_TRIANGLES      = 0,
 	S3O_PRIMTYPE_TRIANGLE_STRIP = 1,

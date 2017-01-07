@@ -18,7 +18,7 @@
 namespace icon {
 using std::string;
 
-CIconHandler* iconHandler = NULL;
+CIconHandler* iconHandler = nullptr;
 CIconData CIconHandler::safetyData;
 
 
@@ -30,15 +30,15 @@ CIconData CIconHandler::safetyData;
 CIconHandler::CIconHandler()
 {
 	defTexID = 0;
-	defIconData = NULL;
+	defIconData = nullptr;
 
 	LoadIcons("gamedata/icontypes.lua");
 
-	IconMap::iterator it = iconMap.find("default");
+	auto it = iconMap.find("default");
+
 	if (it != iconMap.end()) {
 		defIconData = it->second.data;
-	}
-	else {
+	} else {
 		defIconData = new CIconData("default", GetDefaultTexture(), 1.0f, 1.0f, false, false, 128, 128);
 		iconMap["default"] = CIcon(defIconData);
 	}
@@ -112,19 +112,18 @@ bool CIconHandler::AddIcon(const string& iconName, const string& textureName,
 		return false;
 	}
 
-	IconMap::iterator it = iconMap.find(iconName);
-	if (it != iconMap.end()) {
+	auto it = iconMap.find(iconName);
+
+	if (it != iconMap.end())
 		FreeIcon(iconName);
-	}
 
 	CIconData* iconData = new CIconData(iconName, texID,  size, distance,
 	                                         radAdj, ownTexture, xsize, ysize);
 
 	iconMap[iconName] = CIcon(iconData);
 
-	if (iconName == "default") {
+	if (iconName == "default")
 		defIconData = iconData;
-	}
 
 	return true;
 }
@@ -132,31 +131,28 @@ bool CIconHandler::AddIcon(const string& iconName, const string& textureName,
 
 bool CIconHandler::FreeIcon(const string& iconName)
 {
-	IconMap::iterator it = iconMap.find(iconName);
-	if (it == iconMap.end()) {
+	auto it = iconMap.find(iconName);
+	if (it == iconMap.end())
 		return false;
-	}
-	if (iconName == "default") {
+	if (iconName == "default")
 		return false;
-	}
 
 	CIconData* iconData = it->second.data;
 	iconData->CopyData(defIconData);
 
 	iconMap.erase(iconName);
-
 	return true;
 }
 
 
 CIcon CIconHandler::GetIcon(const string& iconName) const
 {
-	IconMap::const_iterator it = iconMap.find(iconName);
-	if (it == iconMap.end()) {
+	auto it = iconMap.find(iconName);
+
+	if (it == iconMap.end())
 		return CIcon(defIconData);
-	} else {
-		return it->second;
-	}
+
+	return it->second;
 }
 
 
@@ -164,9 +160,8 @@ unsigned int CIconHandler::GetDefaultTexture()
 {
 	// FIXME: just use a PNG ?
 
-	if (defTexID != 0) {
+	if (defTexID != 0)
 		return defTexID;
-	}
 
 	unsigned char si[128 * 128 * 4];
 	for (int y = 0; y < 128; ++y) {

@@ -18,6 +18,7 @@
 #include "Rendering/GlobalRendering.h"
 #include "System/bitops.h"
 #include "System/ScopedFPUSettings.h"
+#include "System/Util.h"
 #include "System/Log/ILog.h"
 #include "System/Threading/ThreadPool.h"
 #include "System/FileSystem/DataDirsAccess.h"
@@ -77,7 +78,7 @@ CBitmap::CBitmap()
 	, compressed(false)
 #ifndef BITMAP_NO_OPENGL
 	, textype(GL_TEXTURE_2D)
-	, ddsimage(NULL)
+	, ddsimage(nullptr)
 #endif // !BITMAP_NO_OPENGL
 {
 }
@@ -86,7 +87,7 @@ CBitmap::CBitmap()
 CBitmap::~CBitmap()
 {
 #ifndef BITMAP_NO_OPENGL
-	delete ddsimage;
+	SafeDelete(ddsimage);
 #endif // !BITMAP_NO_OPENGL
 }
 
@@ -99,7 +100,7 @@ CBitmap::CBitmap(const CBitmap& old)
 	, compressed(false)
 #ifndef BITMAP_NO_OPENGL
 	, textype(old.textype)
-	, ddsimage(NULL)
+	, ddsimage(nullptr)
 #endif // !BITMAP_NO_OPENGL
 {
 	assert(!old.compressed);
@@ -107,16 +108,20 @@ CBitmap::CBitmap(const CBitmap& old)
 
 
 CBitmap::CBitmap(CBitmap&& bm)
-	: mem(std::move(bm.mem))
-	, xsize(std::move(bm.xsize))
-	, ysize(std::move(bm.ysize))
-	, channels(std::move(bm.channels))
-	, compressed(std::move(bm.compressed))
-#ifndef BITMAP_NO_OPENGL
-	, textype(std::move(bm.textype))
-	, ddsimage(std::move(bm.ddsimage))
-#endif
 {
+	mem = std::move(bm.mem);
+
+	xsize = bm.xsize;
+	ysize = bm.ysize;
+	channels = bm.channels;
+	compressed = bm.compressed;
+
+	#ifndef BITMAP_NO_OPENGL
+	textype = bm.textype;
+
+	ddsimage = bm.ddsimage;
+	bm.ddsimage = nullptr;
+	#endif
 }
 
 
@@ -127,11 +132,10 @@ CBitmap::CBitmap(const unsigned char* data, int _xsize, int _ysize, int _channel
 	, compressed(false)
 #ifndef BITMAP_NO_OPENGL
 	, textype(GL_TEXTURE_2D)
-	, ddsimage(NULL)
+	, ddsimage(nullptr)
 #endif
 {
-	const int size = xsize*ysize * channels;
-	mem.insert(mem.begin(), data, data + size);
+	mem.insert(mem.begin(), data, data + (xsize * ysize * channels));
 }
 
 
@@ -147,12 +151,10 @@ CBitmap& CBitmap::operator=(const CBitmap& bm)
 
 #ifndef BITMAP_NO_OPENGL
 		textype = bm.textype;
-		delete ddsimage;
-		if (bm.ddsimage == NULL) {
-			ddsimage = NULL;
-		} else {
-			ddsimage = new nv_dds::CDDSImage();
-			*ddsimage = *(bm.ddsimage);
+
+		if (bm.ddsimage != nullptr) {
+			SafeDelete(ddsimage);
+			ddsimage = new nv_dds::CDDSImage(*bm.ddsimage);
 		}
 #endif // !BITMAP_NO_OPENGL
 	}
@@ -172,7 +174,7 @@ CBitmap& CBitmap::operator=(CBitmap&& bm)
 #ifndef BITMAP_NO_OPENGL
 	textype = bm.textype;
 	ddsimage = bm.ddsimage;
-	bm.ddsimage = NULL;
+	bm.ddsimage = nullptr;
 #endif // !BITMAP_NO_OPENGL
 
 	return *this;

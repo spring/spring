@@ -1,16 +1,18 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include <sstream>
 #include <cstring>
+#include <deque>
+#include <sstream>
 
 #include "ColorMap.h"
 #include "Bitmap.h"
 #include "System/FileSystem/FileHandler.h"
+#include "System/UnorderedMap.hpp"
 #include "System/Util.h"
 #include "System/Exceptions.h"
 
-std::deque<CColorMap> CColorMap::colorMaps;
-std::map<std::string, CColorMap*> CColorMap::colorMapsMap;
+static std::deque<CColorMap> colorMaps;
+static spring::unordered_map<std::string, CColorMap*> colorMapsMap;
 
 CR_BIND(CColorMap,)
 CR_REG_METADATA(CColorMap, (
@@ -32,9 +34,8 @@ CColorMap::CColorMap()
 
 CColorMap::CColorMap(const std::vector<float>& vec)
 {
-	if (vec.size() < 8) {
+	if (vec.size() < 8)
 		throw content_error("[ColorMap] too few colors in colormap (need at least two RGBA values)");
-	}
 
 	xsize  = (vec.size() - (vec.size() % 4)) / 4;
 	ysize  = 1;
@@ -53,13 +54,11 @@ CColorMap::CColorMap(const std::string& fileName)
 {
 	CBitmap bitmap;
 
-	if (!bitmap.Load(fileName)) {
+	if (!bitmap.Load(fileName))
 		throw content_error("Could not load texture from file " + fileName);
-	}
 
-	if (bitmap.compressed || (bitmap.channels != 4) || (bitmap.xsize < 2)) {
+	if (bitmap.compressed || (bitmap.channels != 4) || (bitmap.xsize < 2))
 		throw content_error("Unsupported bitmap format in file " + fileName);
-	}
 
 	xsize  = bitmap.xsize;
 	ysize  = bitmap.ysize;

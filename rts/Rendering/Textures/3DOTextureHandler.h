@@ -3,11 +3,12 @@
 #ifndef _3DO_TEXTURE_HANDLER_H
 #define _3DO_TEXTURE_HANDLER_H
 
-#include <map>
 #include <string>
 #include <vector>
+
 #include "Rendering/GL/myGL.h"
 #include "System/float4.h"
+#include "System/UnorderedMap.hpp"
 
 struct TexFile;
 
@@ -19,25 +20,28 @@ public:
 	C3DOTextureHandler();
 	~C3DOTextureHandler();
 
-	void Set3doAtlases() const;
-
+	// NOTE: safe with unordered_map after all textures have been loaded
 	UnitTexture* Get3DOTexture(const std::string& name);
 
 	unsigned int GetAtlasTex1ID() const { return atlas3do1; }
 	unsigned int GetAtlasTex2ID() const { return atlas3do2; }
 	unsigned int GetAtlasTexSizeX() const { return bigTexX; }
 	unsigned int GetAtlasTexSizeY() const { return bigTexY; }
-	const std::map<std::string, UnitTexture>& GetAtlasTextures() const { return textures; }
+
+	const spring::unordered_map<std::string, UnitTexture>& GetAtlasTextures() const { return textures; }
 
 private:
-	std::map<std::string, UnitTexture> textures;
+	std::vector<TexFile> LoadTexFiles();
+
+	static TexFile CreateTex(const std::string& name, const std::string& name2, bool teamcolor = false);
+
+private:
+	spring::unordered_map<std::string, UnitTexture> textures;
+
 	GLuint atlas3do1;
 	GLuint atlas3do2;
 	int bigTexX;
 	int bigTexY;
-
-	std::vector<TexFile*> LoadTexFiles();
-	static TexFile* CreateTex(const std::string& name, const std::string& name2, bool teamcolor = false);
 };
 
 extern C3DOTextureHandler* texturehandler3DO;
