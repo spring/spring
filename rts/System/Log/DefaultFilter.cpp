@@ -273,8 +273,12 @@ void log_frontend_cleanup() {
 
 spring::unordered_set<const char*> log_filter_section_getRegisteredSet()
 {
-	const auto& registeredSections = log_filter_getRegisteredSections();
-	const spring::unordered_set<const char*> outSet(registeredSections.begin(), registeredSections.end());
+	spring::unordered_set<const char*> outSet;
+
+	for (const auto& key: log_filter_getRegisteredSections()) {
+		outSet.insert(key);
+	}
+
 	return outSet;
 }
 

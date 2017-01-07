@@ -154,7 +154,7 @@ private:
 	struct TexData {
 	public:
 		TexData() { id = 0; }
-		TexData(const TexData& td) = delete;
+		TexData(const TexData& td) { assert(td.id == 0); } // = delete;
 		TexData(TexData&& td) {
 			id = td.id;
 

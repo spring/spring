@@ -170,7 +170,7 @@ inline void ILosType::UpdateUnit(CUnit* unit, bool ignore)
 		return;
 	}
 
-	auto IS_FITTING_INSTANCE = [&](SLosInstance* li) -> bool {
+	const auto CanRefInstance = [&](SLosInstance* li) -> bool {
 		return (li != nullptr
 		    && (li->basePos    == baseLos)
 		    && (li->baseHeight == height)
@@ -180,24 +180,27 @@ inline void ILosType::UpdateUnit(CUnit* unit, bool ignore)
 	};
 
 	// unchanged?
-	if (IS_FITTING_INSTANCE(uli))
+	if (CanRefInstance(uli))
 		return;
 
 	if (uli != nullptr) {
 		unit->los[type] = nullptr;
 		UnrefInstance(uli);
 	}
+
 	const int hash = GetHashNum(unit->allyteam, baseLos, radius);
 
 	// Cache - search if there is already an instance with same properties
-	auto pair = instanceHash.equal_range(hash);
-	for (auto it = pair.first; it != pair.second; ++it) {
-		SLosInstance* li = it->second;
-		if (IS_FITTING_INSTANCE(li)) {
-			cacheHits += (algoType == LOS_ALGO_RAYCAST);
-			unit->los[type] = li;
-			RefInstance(li);
-			return;
+	auto vit = instanceHash.find(hash);
+
+	if (vit != instanceHash.end()) {
+		for (SLosInstance* li: vit->second) {
+			if (CanRefInstance(li)) {
+				cacheHits += (algoType == LOS_ALGO_RAYCAST);
+				unit->los[type] = li;
+				RefInstance(li);
+				return;
+			}
 		}
 	}
 
@@ -207,7 +210,7 @@ inline void ILosType::UpdateUnit(CUnit* unit, bool ignore)
 	li->Init(radius, allyteam, baseLos, height, hash);
 	li->refCount++;
 	unit->los[type] = li;
-	instanceHash.emplace(hash, li);
+	instanceHash[hash].push_back(li);
 	UpdateInstanceStatus(li, SLosInstance::TLosStatus::NEW);
 }
 
@@ -315,9 +318,11 @@ inline SLosInstance* ILosType::CreateInstance()
 inline void ILosType::DeleteInstance(SLosInstance* li)
 {
 	assert(li->refCount == 0);
-	auto pair = instanceHash.equal_range(li->hashNum);
-	auto it = std::find_if(pair.first, pair.second, [&](decltype(*pair.first)& p){ return (p.second == li); });
-	instanceHash.erase(it);
+
+	auto pit = instanceHash.find(li->hashNum); assert(pit != instanceHash.end());
+	auto vit = std::find((pit->second).begin(), (pit->second).end(), li); assert(vit != (pit->second).end());
+
+	(pit->second).erase(vit);
 
 	// caller has to do that
 	assert(!li->isCache);
@@ -582,14 +587,14 @@ void ILosType::UpdateHeightMapSynced(SRectangle rect)
 
 	// relos used instances
 	for (auto& p: instanceHash) {
-		SLosInstance* li = p.second;
+		for (SLosInstance* li: p.second) {
+			if (li->status & SLosInstance::TLosStatus::RECALC)
+				continue;
+			if (!CheckOverlap(li, rect))
+				continue;
 
-		if (li->status & SLosInstance::TLosStatus::RECALC)
-			continue;
-		if (!CheckOverlap(li, rect))
-			continue;
-
-		UpdateInstanceStatus(li, SLosInstance::TLosStatus::RECALC);
+			UpdateInstanceStatus(li, SLosInstance::TLosStatus::RECALC);
+		}
 	}
 }
 

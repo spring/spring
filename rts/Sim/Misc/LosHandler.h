@@ -168,7 +168,8 @@ public:
 	static size_t cacheHits;
 	static size_t cacheReactivated;
 
-	spring::unordered_multimap<int, SLosInstance*> instanceHash;
+	spring::unordered_map<int, std::vector<SLosInstance*> > instanceHash;
+
 	std::deque<SLosInstance> instances;
 	std::deque<int> freeIDs;
 

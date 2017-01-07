@@ -6,10 +6,10 @@
 #include <list>
 #include <string>
 #include <memory>
-#include <unordered_map>
 
 #include "Rendering/Textures/IAtlasAllocator.h"
 #include "Rendering/Textures/RowAtlasAlloc.h"
+#include "System/UnorderedMap.hpp"
 #include "System/UnorderedSet.hpp"
 
 
@@ -108,8 +108,8 @@ private:
 	void LoadGlyph(std::shared_ptr<FontFace>& f, char32_t ch, unsigned index);
 
 protected:
-	std::unordered_map<char32_t, GlyphInfo> glyphs; // UTF16 -> GlyphInfo (boost::unordered_map does not compile)
-	std::unordered_map<uint32_t, float> kerningDynamic; // contains unicode kerning
+	spring::unordered_map<char32_t, GlyphInfo> glyphs; // UTF16 -> GlyphInfo (boost::unordered_map does not compile)
+	spring::unordered_map<uint32_t, float> kerningDynamic; // contains unicode kerning
 
 	float kerningPrecached[128 * 128]; // contains ASCII kerning
 
