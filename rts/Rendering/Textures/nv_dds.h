@@ -114,8 +114,8 @@ namespace nv_dds
         public:
             CSurface();
             CSurface(unsigned int w, unsigned int h, unsigned int d, unsigned int imgsize, const unsigned char *pixels);
-            CSurface(const CSurface &copy) { *this = copy; }
-            CSurface(CSurface &&surf) { *this = std::move(surf); }
+            CSurface(const CSurface &copy): CSurface() { *this = copy; }
+            CSurface(CSurface &&surf): CSurface() { *this = std::move(surf); }
             CSurface &operator= (const CSurface &rhs);
             CSurface &operator= (CSurface &&rhs);
             virtual ~CSurface() { clear(); }
@@ -144,10 +144,10 @@ namespace nv_dds
         friend class CDDSImage;
 
         public:
-            CTexture();
+            CTexture(): CSurface() {}
             CTexture(unsigned int w, unsigned int h, unsigned int d, unsigned int imgsize, const unsigned char *pixels);
-            CTexture(const CTexture &copy) { *this = copy; }
-            CTexture(CTexture &&text) { *this = std::move(text); }
+            CTexture(const CTexture &copy): CTexture() { *this = copy; }
+            CTexture(CTexture &&text): CTexture() { *this = std::move(text); }
             CTexture &operator= (const CTexture &rhs);
             CTexture &operator= (CTexture &&rhs);
 
@@ -188,7 +188,6 @@ namespace nv_dds
 			CDDSImage();
 			CDDSImage(const CDDSImage& img) { *this = img; }
 			CDDSImage(CDDSImage&& img) { *this = std::move(img); }
-			~CDDSImage();
 
 			CDDSImage& operator = (const CDDSImage& img) {
 				m_format = img.m_format;

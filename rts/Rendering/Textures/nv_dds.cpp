@@ -187,10 +187,6 @@ CDDSImage::CDDSImage()
 {
 }
 
-CDDSImage::~CDDSImage()
-{
-}
-
 void CDDSImage::create_textureFlat(unsigned int format, unsigned int components, const CTexture &baseImage)
 {
     assert(format != 0);
@@ -1149,13 +1145,6 @@ void CDDSImage::flip_blocks_dxtc5(DXTColBlock *line, unsigned int numBlocks)
 ///////////////////////////////////////////////////////////////////////////////
 
 ///////////////////////////////////////////////////////////////////////////////
-// default constructor
-CTexture::CTexture()
-  : CSurface()  // initialize base class part
-{
-}
-
-///////////////////////////////////////////////////////////////////////////////
 // creates an empty texture
 CTexture::CTexture(unsigned int w, unsigned int h, unsigned int d, unsigned int imgsize, const unsigned char *pixels)
   : CSurface(w, h, d, imgsize, pixels)  // initialize base class part
@@ -1244,12 +1233,12 @@ CSurface &CSurface::operator= (const CSurface &rhs)
 	if (this != &rhs) {
 		clear();
 
-		if (rhs.get_size() != 0) {
-			m_size = rhs.get_size();
-			m_width = rhs.get_width();
-			m_height = rhs.get_height();
-			m_depth = rhs.get_depth();
+		m_size = rhs.get_size();
+		m_width = rhs.get_width();
+		m_height = rhs.get_height();
+		m_depth = rhs.get_depth();
 
+		if (m_size != 0) {
 			m_pixels = new unsigned char[m_size];
 			memcpy(m_pixels, rhs, m_size);
 		}
@@ -1306,9 +1295,6 @@ void CSurface::create(unsigned int w, unsigned int h, unsigned int d, unsigned i
 // free surface memory
 void CSurface::clear()
 {
-    if (m_pixels != NULL)
-    {
-        delete [] m_pixels;
-        m_pixels = NULL;
-    }
+	delete [] m_pixels;
+	m_pixels = NULL;
 }
