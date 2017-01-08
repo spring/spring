@@ -130,21 +130,23 @@ CBitmap& CBitmap::operator=(const CBitmap& bmp)
 
 CBitmap& CBitmap::operator=(CBitmap&& bmp)
 {
-	mem = std::move(bmp.mem);
+	if (this != &bmp) {
+		mem = std::move(bmp.mem);
 
-	xsize = bmp.xsize;
-	ysize = bmp.ysize;
-	channels = bmp.channels;
-	compressed = bmp.compressed;
+		xsize = bmp.xsize;
+		ysize = bmp.ysize;
+		channels = bmp.channels;
+		compressed = bmp.compressed;
 
 #ifndef BITMAP_NO_OPENGL
-	textype = bmp.textype;
+		textype = bmp.textype;
 
-	SafeDelete(ddsimage);
+		SafeDelete(ddsimage);
 
-	ddsimage = bmp.ddsimage;
-	bmp.ddsimage = nullptr;
+		ddsimage = bmp.ddsimage;
+		bmp.ddsimage = nullptr;
 #endif // !BITMAP_NO_OPENGL
+	}
 
 	return *this;
 }
@@ -156,9 +158,7 @@ void CBitmap::Alloc(int w, int h, int c)
 	ysize = h;
 	channels = c;
 
-	const int size = w * h * c;
-
-	mem.resize(size, 0);
+	mem.resize(w * h * c, 0);
 	mem.shrink_to_fit();
 }
 

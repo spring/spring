@@ -452,7 +452,7 @@ bool CDDSImage::load(string filename, bool flipImage)
         for (unsigned int i = 0; i < numMipmaps && (w || h); i++)
         {
             // add empty surface
-            img.add_mipmap(CSurface());
+            img.add_mipmap();
 
             // get reference to newly added mipmap
             CSurface &mipmap = img.get_mipmap(i);
@@ -1162,31 +1162,19 @@ CTexture::CTexture(unsigned int w, unsigned int h, unsigned int d, unsigned int 
 {
 }
 
-CTexture::~CTexture()
-{
-}
-
-///////////////////////////////////////////////////////////////////////////////
-// copy constructor
-CTexture::CTexture(const CTexture &copy)
-  : CSurface(copy)
-{
-    for (unsigned int i = 0; i < copy.get_num_mipmaps(); i++)
-        m_mipmaps.push_back(copy.get_mipmap(i));
-}
-
 ///////////////////////////////////////////////////////////////////////////////
 // assignment operator
 CTexture &CTexture::operator= (const CTexture &rhs)
 {
-    if (this != &rhs)
-    {
-        CSurface::operator = (rhs);
+	if (this != &rhs) {
+		CSurface::operator = (rhs);
 
-        m_mipmaps.clear();
-        for (unsigned int i = 0; i < rhs.get_num_mipmaps(); i++)
-            m_mipmaps.push_back(rhs.get_mipmap(i));
-    }
+		m_mipmaps.clear();
+		m_mipmaps.resize(rhs.get_num_mipmaps());
+
+		for (unsigned int i = 0; i < rhs.get_num_mipmaps(); i++)
+			m_mipmaps[i] = rhs.m_mipmaps[i];
+	}
 
     return *this;
 }
@@ -1194,9 +1182,15 @@ CTexture &CTexture::operator= (const CTexture &rhs)
 CTexture &CTexture::operator= (CTexture &&rhs)
 {
 	if (this != &rhs) {
-		static_cast<CSurface&>(*this) = std::move(static_cast<CSurface&&>(rhs));
+		CSurface::operator = (rhs);
 
-		m_mipmaps = std::move(rhs.m_mipmaps);
+		m_mipmaps.clear();
+		m_mipmaps.resize(rhs.get_num_mipmaps());
+
+		for (unsigned int i = 0; i < rhs.get_num_mipmaps(); i++)
+			m_mipmaps[i] = std::move(rhs.m_mipmaps[i]);
+
+		rhs.m_mipmaps.clear();
 	}
 
 	return *this;
@@ -1244,52 +1238,31 @@ CSurface::CSurface(unsigned int w, unsigned int h, unsigned int d, unsigned int 
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-// copy constructor
-CSurface::CSurface(const CSurface &copy)
-  : m_width(0),
-    m_height(0),
-    m_depth(0),
-    m_size(0),
-    m_pixels(NULL)
-{
-    if (copy.get_size() != 0)
-    {
-        m_size = copy.get_size();
-        m_width = copy.get_width();
-        m_height = copy.get_height();
-        m_depth = copy.get_depth();
-
-        m_pixels = new unsigned char[m_size];
-        memcpy(m_pixels, copy, m_size);
-    }
-}
-
-///////////////////////////////////////////////////////////////////////////////
 // assignment operator
 CSurface &CSurface::operator= (const CSurface &rhs)
 {
-    if (this != &rhs)
-    {
-        clear();
+	if (this != &rhs) {
+		clear();
 
-        if (rhs.get_size())
-        {
-            m_size = rhs.get_size();
-            m_width = rhs.get_width();
-            m_height = rhs.get_height();
-            m_depth = rhs.get_depth();
+		if (rhs.get_size() != 0) {
+			m_size = rhs.get_size();
+			m_width = rhs.get_width();
+			m_height = rhs.get_height();
+			m_depth = rhs.get_depth();
 
-            m_pixels = new unsigned char[m_size];
-            memcpy(m_pixels, rhs, m_size);
-        }
-    }
+			m_pixels = new unsigned char[m_size];
+			memcpy(m_pixels, rhs, m_size);
+		}
+	}
 
-    return *this;
+	return *this;
 }
 
 CSurface &CSurface::operator= (CSurface &&rhs)
 {
 	if (this != &rhs) {
+		clear();
+
 		m_size = rhs.get_size();
 		m_width = rhs.get_width();
 		m_height = rhs.get_height();
@@ -1300,13 +1273,6 @@ CSurface &CSurface::operator= (CSurface &&rhs)
 	}
 
 	return *this;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-// clean up image memory
-CSurface::~CSurface()
-{
-    clear();
 }
 
 ///////////////////////////////////////////////////////////////////////////////

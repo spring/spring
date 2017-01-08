@@ -114,11 +114,11 @@ namespace nv_dds
         public:
             CSurface();
             CSurface(unsigned int w, unsigned int h, unsigned int d, unsigned int imgsize, const unsigned char *pixels);
-            CSurface(const CSurface &copy);
+            CSurface(const CSurface &copy) { *this = copy; }
             CSurface(CSurface &&surf) { *this = std::move(surf); }
             CSurface &operator= (const CSurface &rhs);
             CSurface &operator= (CSurface &&rhs);
-            virtual ~CSurface();
+            virtual ~CSurface() { clear(); }
 
             operator unsigned char*() const;
 
@@ -146,11 +146,10 @@ namespace nv_dds
         public:
             CTexture();
             CTexture(unsigned int w, unsigned int h, unsigned int d, unsigned int imgsize, const unsigned char *pixels);
-            CTexture(const CTexture &copy);
+            CTexture(const CTexture &copy) { *this = copy; }
             CTexture(CTexture &&text) { *this = std::move(text); }
             CTexture &operator= (const CTexture &rhs);
             CTexture &operator= (CTexture &&rhs);
-            ~CTexture();
 
             void create(unsigned int w, unsigned int h, unsigned int d, unsigned int imgsize, const unsigned char *pixels);
             void clear();
@@ -163,9 +162,9 @@ namespace nv_dds
                 return m_mipmaps[index];
             }
 
-            inline void add_mipmap(const CSurface &mipmap)
+            inline void add_mipmap()
             {
-                m_mipmaps.push_back(mipmap);
+                m_mipmaps.emplace_back();
             }
 
             inline unsigned int get_num_mipmaps() const { return (unsigned int)m_mipmaps.size(); }
