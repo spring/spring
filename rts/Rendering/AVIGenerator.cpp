@@ -272,9 +272,9 @@ HRESULT CAVIGenerator::InitAVICompressionEngine()
 
 	if (hr != AVIERR_OK) {
 		errorMsg = "AVI Stream creation failed. Check Bitmap info.";
-		if (hr == AVIERR_READONLY) {
+		if (hr == AVIERR_READONLY)
 			errorMsg += " Read only file.";
-		}
+
 		return hr;
 	}
 
@@ -324,7 +324,7 @@ bool CAVIGenerator::InitEngine()
 		return false;
 
 	for (int i = 0; i < 10; i++) {
-		freeImageBuffers.emplace_back(bitmapInfo.biSizeImage);
+		freeImageBuffers.push_back(new unsigned char[bitmapInfo.biSizeImage]);
 	}
 
 	HWND mainWindow = FindWindow(nullptr, ("Spring " + SpringVersion::GetFull()).c_str());
