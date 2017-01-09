@@ -5,10 +5,10 @@
 
 #include <vector>
 #include <string>
-#include <map>
 
 #include "Lua/LuaHashString.h"
 #include "CobScriptNames.h"
+#include "System/UnorderedMap.hpp"
 
 class CFileHandler;
 
@@ -28,8 +28,8 @@ public:
 	std::vector<std::string> pieceNames;
 	std::vector<int> scriptIndex;
 	std::vector<int> sounds;
-	std::map<std::string, int> scriptMap;
 	std::vector<LuaHashString> luaScripts;
+	spring::unordered_map<std::string, int> scriptMap;
 	int* code;
 	int numStaticVars;
 	std::string name;

@@ -269,7 +269,7 @@ static int Pairs(lua_State* L)
 
 static int CustomParamsTable(lua_State* L, const void* data)
 {
-	const map<string, string>& params = *((const map<string, string>*)data);
+	const spring::unordered_map<std::string, std::string>& params = *((const spring::unordered_map<std::string, std::string>*)data);
 	lua_newtable(L);
 
 	for (auto it = params.cbegin(); it != params.cend(); ++it) {

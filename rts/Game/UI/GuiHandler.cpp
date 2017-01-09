@@ -2,7 +2,6 @@
 
 #include "GuiHandler.h"
 
-
 #include "CommandColors.h"
 #include "KeyBindings.h"
 #include "KeyCodes.h"
@@ -45,16 +44,14 @@
 #include "System/GlobalConfig.h"
 #include "System/Log/ILog.h"
 #include "System/myMath.h"
+#include "System/UnorderedMap.hpp"
+#include "System/UnorderedSet.hpp"
 #include "System/Util.h"
 #include "System/Input/KeyInput.h"
 #include "System/Sound/ISound.h"
 #include "System/Sound/ISoundChannels.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/SimpleParser.h"
-
-#include <map>
-#include <set>
-#include <list>
 
 #include <SDL_keycode.h>
 #include <SDL_mouse.h>
@@ -424,7 +421,7 @@ void CGuiHandler::ParseFillOrder(const std::string& text)
 	if ((int)slotNames.size() != iconsPerPage)
 		return;
 
-	std::set<int>    slotSet;
+	spring::unordered_set<int> slotSet;
 	std::vector<int> slotVec;
 
 	for (int s = 0; s < iconsPerPage; s++) {
@@ -750,7 +747,7 @@ bool CGuiHandler::LayoutCustomIcons(bool useSelectionPage)
 	std::vector<CLuaUI::ReStringPair> reNamedCmds;
 	std::vector<CLuaUI::ReStringPair> reTooltipCmds;
 	std::vector<CLuaUI::ReParamsPair> reParamsCmds;
-	std::map<int, int> iconMap;
+	spring::unordered_map<int, int> iconMap;
 
 	if (!luaUI->LayoutButtons(tmpXicons, tmpYicons, cmds,
 	                          removeCmds, customCmds,
@@ -768,7 +765,7 @@ bool CGuiHandler::LayoutCustomIcons(bool useSelectionPage)
 	const int tmpIconsPerPage = (tmpXicons * tmpYicons);
 
 	// build a set to better find unwanted commands
-	std::set<int> removeIDs;
+	spring::unordered_set<int> removeIDs;
 	for (unsigned int i = 0; i < removeCmds.size(); i++) {
 		const int index = removeCmds[i];
 		if ((index >= 0) || ((size_t)index < cmds.size())) {
@@ -843,7 +840,7 @@ bool CGuiHandler::LayoutCustomIcons(bool useSelectionPage)
 	for (unsigned int i = 0; i < reParamsCmds.size(); i++) {
 		const int index = reParamsCmds[i].cmdIndex;
 		if ((index >= 0) && (index < cmdCount)) {
-			const map<int, std::string>& params = reParamsCmds[i].params;
+			const auto& params = reParamsCmds[i].params;
 
 			for (auto pit = params.cbegin(); pit != params.cend(); ++pit) {
 				const int p = pit->first;

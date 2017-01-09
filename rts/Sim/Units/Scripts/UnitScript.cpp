@@ -1089,16 +1089,18 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
  		// FIXME: this can currently only work for CCobInstance, because Lua can not get sound IDs
  		// (however, for Lua scripts there is already LuaUnsyncedCtrl::PlaySoundFile)
  		CCobInstance* cob = dynamic_cast<CCobInstance*>(this);
- 		if (cob == NULL) {
+
+ 		if (cob == nullptr)
  			return 1;
- 		}
+
  		const CCobFile* script = cob->GetScriptAddr();
- 		if (script == NULL) {
+
+ 		if (script == nullptr)
  			return 1;
- 		}
-		if ((p1 < 0) || (static_cast<size_t>(p1) >= script->sounds.size())) {
+
+		if ((p1 < 0) || (static_cast<size_t>(p1) >= script->sounds.size()))
 			return 1;
-		}
+
 		switch (p3) {	//who hears the sound
 			case 0:		//ALOS
 				if (!losHandler->InAirLos(unit,gu->myAllyTeam)) { return 0; }

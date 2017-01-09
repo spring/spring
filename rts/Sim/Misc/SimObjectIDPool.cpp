@@ -26,14 +26,14 @@ void SimObjectIDPool::Expand(unsigned int baseID, unsigned int numIDs) {
 	std::random_shuffle(newIDs.begin(), newIDs.end(), gsRNG);
 
 	// NOTE:
-	//   any randomization would be undone by using a std::set as-is
+	//   any randomization would be undone by a sorted std::container
 	//   instead create a bi-directional mapping from indices to ID's
 	//   (where the ID's are a random permutation of the index range)
 	//   such that ID's can be assigned and returned to the pool with
 	//   their original index
 	//
-	//     indexIdentMap = {<0, 13>, < 1, 27>, < 2, 54>, < 3, 1>, ...}
-	//     identIndexMap = {<1,  3>, <13,  0>, <27,  1>, <54, 2>, ...}
+	//     indexToIdentMap = {<0, 13>, < 1, 27>, < 2, 54>, < 3, 1>, ...}
+	//     identToIndexMap = {<1,  3>, <13,  0>, <27,  1>, <54, 2>, ...}
 	//
 	//   (the ID --> index map is never changed at runtime!)
 	for (unsigned int offsetID = 0; offsetID < numIDs; offsetID++) {

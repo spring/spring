@@ -3,9 +3,10 @@
 #ifndef LUA_DEFS_H
 #define LUA_DEFS_H
 
-#include <map>
+#include <cassert>
 #include <string>
-#include <assert.h>
+
+#include "System/UnorderedMap.hpp"
 
 enum DataType {
 	INT_TYPE,
@@ -39,7 +40,7 @@ struct DataElement {
 };
 
 
-typedef std::map<std::string, DataElement> ParamMap;
+typedef spring::unordered_map<std::string, DataElement> ParamMap;
 
 
 namespace {

@@ -69,6 +69,7 @@ CTeam::CTeam():
 	origColor(0, 0, 0, 0),
 	highlight(0.0f)
 {
+	statHistory.reserve(1024);
 	statHistory.push_back(TeamStatistics());
 }
 

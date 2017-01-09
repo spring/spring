@@ -735,23 +735,23 @@ public:
 			std::string aiShortName;
 			std::string aiVersion;
 			std::string aiName;
-			std::map<std::string, std::string> aiOptions;
+			spring::unordered_map<std::string, std::string> aiOptions;
 
 			const int teamToControlId = atoi(args[0].c_str());
 			const CTeam* teamToControl = teamHandler->IsActiveTeam(teamToControlId) ?
-				teamHandler->Team(teamToControlId) : NULL;
+				teamHandler->Team(teamToControlId) : nullptr;
 
 			if (args.size() >= 2) {
 				aiShortName = args[1];
 			} else {
 				LOG_L(L_WARNING, "/%s: missing mandatory argument \"aiShortName\"", GetCommand().c_str());
 			}
-			if (args.size() >= 3) {
+
+			if (args.size() >= 3)
 				aiVersion = args[2];
-			}
-			if (args.size() >= 4) {
+
+			if (args.size() >= 4)
 				aiName = args[3];
-			}
 
 			if (teamToControl == NULL) {
 				LOG_L(L_WARNING, "Team to control: not a valid team number: \"%s\"", args[0].c_str());
@@ -810,8 +810,8 @@ public:
 					for (auto o = aiOptions.cbegin(); o != aiOptions.cend(); ++o)
 						aiData.optionKeys.push_back(o->first);
 
-					aiData.options    = aiOptions;
-					aiData.isLuaAI    = aiLibInfo.IsLuaAI();
+					aiData.options = aiOptions;
+					aiData.isLuaAI = aiLibInfo.IsLuaAI();
 
 					skirmishAIHandler.CreateLocalSkirmishAI(aiData);
 				}

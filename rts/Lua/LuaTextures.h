@@ -4,18 +4,16 @@
 #define LUA_TEXTURES_H
 
 #include <string>
-#include <map>
-using std::string;
-using std::map;
 
 #include "Rendering/GL/myGL.h"
+#include "System/UnorderedMap.hpp"
 
 
 class LuaTextures {
 	public:
 		static const char prefix = '!';
 
-		LuaTextures();
+		LuaTextures() { lastCode = 0; }
 		~LuaTextures();
 
 		struct Texture {
@@ -28,7 +26,7 @@ class LuaTextures {
 			  aniso(0.0f)
 			{}
 
-			string name;
+			std::string name;
 
 			GLuint id;
 
@@ -53,16 +51,16 @@ class LuaTextures {
 			GLfloat aniso;
 		};
 
-		string Create(const Texture& tex);
-		bool Bind(const string& name) const;
-		bool Free(const string& name);
-		bool FreeFBO(const string& name);
+		std::string Create(const Texture& tex);
+		bool Bind(const std::string& name) const;
+		bool Free(const std::string& name);
+		bool FreeFBO(const std::string& name);
 		void FreeAll();
-		const Texture* GetInfo(const string& name) const;
+		const Texture* GetInfo(const std::string& name) const;
 
 	private:
 		int lastCode;
-		map<string, Texture> textures;
+		spring::unordered_map<std::string, Texture> textures;
 };
 
 

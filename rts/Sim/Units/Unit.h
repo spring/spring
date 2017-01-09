@@ -299,7 +299,7 @@ public:
 	/// quads the unit is part of
 	std::vector<int> quads;
 
-	std::vector<CMissileProjectile*> incomingMissiles; //FIXME make std::set?
+	std::vector<CMissileProjectile*> incomingMissiles;
 
 	float3 deathSpeed;
 	float3 lastMuzzleFlameDir;

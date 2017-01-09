@@ -259,7 +259,7 @@ void CProjectileDrawer::ParseAtlasTextures(
 	CTextureAtlas* textureAtlas)
 {
 	std::vector<std::string> subTables;
-	std::map<std::string, std::string> texturesMap;
+	spring::unordered_map<std::string, std::string> texturesMap;
 
 	textureTable.GetMap(texturesMap);
 	textureTable.GetKeys(subTables);

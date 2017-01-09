@@ -3,11 +3,11 @@
 #ifndef LUA_PARSER_H
 #define LUA_PARSER_H
 
-#include "System/FileSystem/VFSModes.h"
-
 #include <string>
 #include <vector>
-#include <map>
+
+#include "System/FileSystem/VFSModes.h"
+#include "System/UnorderedMap.hpp"
 
 class float3;
 struct float4;
@@ -16,7 +16,6 @@ class LuaParser;
 struct lua_State;
 
 using std::string;
-using std::map;
 
 
 /******************************************************************************/
@@ -46,10 +45,10 @@ class LuaTable {
 		bool GetKeys(std::vector<int>& data) const;
 		bool GetKeys(std::vector<string>& data) const;
 
-		bool GetMap(map<int, float>& data) const;
-		bool GetMap(map<int, string>& data) const;
-		bool GetMap(map<string, float>& data) const;
-		bool GetMap(map<string, string>& data) const;
+		bool GetMap(spring::unordered_map<int, float>& data) const;
+		bool GetMap(spring::unordered_map<int, string>& data) const;
+		bool GetMap(spring::unordered_map<string, float>& data) const;
+		bool GetMap(spring::unordered_map<string, string>& data) const;
 
 		bool KeyExists(int key) const;
 		bool KeyExists(const string& key) const;

@@ -33,7 +33,7 @@ void AudioChannel::SetVolume(float newVolume)
 
 	std::lock_guard<spring::recursive_mutex> lck(soundMutex);
 
-	for (std::map<CSoundSource*, bool>::iterator it = cur_sources.begin(); it != cur_sources.end(); ++it) {
+	for (auto it = cur_sources.begin(); it != cur_sources.end(); ++it) {
 		it->first->UpdateVolume();
 	}
 	CheckError("AudioChannel::SetVolume");
@@ -103,7 +103,7 @@ void AudioChannel::FindSourceAndPlay(size_t id, const float3& pos, const float3&
 	if (cur_sources.size() >= maxConcurrentSources) {
 		CSoundSource* src = NULL;
 		int prio = INT_MAX;
-		for (std::map<CSoundSource*, bool>::iterator it = cur_sources.begin(); it != cur_sources.end(); ++it) {
+		for (auto it = cur_sources.begin(); it != cur_sources.end(); ++it) {
 			if (it->first->GetCurrentPriority() < prio) {
 				src  = it->first;
 				prio = it->first->GetCurrentPriority();

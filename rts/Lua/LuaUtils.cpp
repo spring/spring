@@ -2,8 +2,7 @@
 
 //#include "System/Platform/Win/win32.h"
 
-#include <string.h>
-#include <map>
+#include <cstring>
 
 #include "LuaUtils.h"
 #include "LuaConfig.h"
@@ -15,6 +14,7 @@
 #include "Sim/Units/CommandAI/CommandDescription.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/Log/ILog.h"
+#include "System/UnorderedMap.hpp"
 #include "System/Util.h"
 
 #if !defined UNITSYNC && !defined DEDICATED && !defined BUILDING_AI
@@ -32,8 +32,8 @@ int LuaUtils::exportedDataSize = 0;
 /******************************************************************************/
 
 
-static bool CopyPushData(lua_State* dst, lua_State* src, int index, int depth, std::map<const void*, int>& alreadyCopied);
-static bool CopyPushTable(lua_State* dst, lua_State* src, int index, int depth, std::map<const void*, int>& alreadyCopied);
+static bool CopyPushData(lua_State* dst, lua_State* src, int index, int depth, spring::unordered_map<const void*, int>& alreadyCopied);
+static bool CopyPushTable(lua_State* dst, lua_State* src, int index, int depth, spring::unordered_map<const void*, int>& alreadyCopied);
 
 
 static inline int PosAbsLuaIndex(lua_State* src, int index)
@@ -45,7 +45,7 @@ static inline int PosAbsLuaIndex(lua_State* src, int index)
 }
 
 
-static bool CopyPushData(lua_State* dst, lua_State* src, int index, int depth, std::map<const void*, int>& alreadyCopied)
+static bool CopyPushData(lua_State* dst, lua_State* src, int index, int depth, spring::unordered_map<const void*, int>& alreadyCopied)
 {
 	const int type = lua_type(src, index);
 	switch (type) {
@@ -91,7 +91,7 @@ static bool CopyPushData(lua_State* dst, lua_State* src, int index, int depth, s
 }
 
 
-static bool CopyPushTable(lua_State* dst, lua_State* src, int index, int depth, std::map<const void*, int>& alreadyCopied)
+static bool CopyPushTable(lua_State* dst, lua_State* src, int index, int depth, spring::unordered_map<const void*, int>& alreadyCopied)
 {
 	const int table = PosAbsLuaIndex(src, index);
 
@@ -145,7 +145,7 @@ int LuaUtils::CopyData(lua_State* dst, lua_State* src, int count)
 
 	// hold a map of all already copied tables in the lua's registry table
 	// needed for recursive tables, i.e. "local t = {}; t[t] = t"
-	std::map<const void*, int> alreadyCopied;
+	spring::unordered_map<const void*, int> alreadyCopied;
 
 	const int startIndex = (srcTop - count + 1);
 	const int endIndex   = srcTop;

@@ -4,10 +4,10 @@
 #define MOVEDEF_HANDLER_H
 
 #include <vector>
-#include <map>
 #include <string>
 
 #include "System/float3.h"
+#include "System/UnorderedMap.hpp"
 #include "System/creg/creg_cond.h"
 
 class MoveDefHandler;
@@ -154,7 +154,7 @@ public:
 
 private:
 	std::vector<MoveDef> moveDefs;
-	std::map<std::string, int> moveDefNames;
+	spring::unordered_map<std::string, int> moveDefNames;
 
 	unsigned int checksum;
 };

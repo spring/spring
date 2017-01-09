@@ -357,16 +357,15 @@ WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 		if (!paralyzer)
 			damages.paralyzeDamageTime = 0;
 
-		std::map<string, float> dmgs;
-		std::map<string, float>::const_iterator di;
+		spring::unordered_map<string, float> dmgs;
+		spring::unordered_map<string, float>::const_iterator di;
 
 		dmgTable.GetMap(dmgs);
 
-		for (di = dmgs.begin(); di != dmgs.end(); ++di) {
+		for (di = dmgs.cbegin(); di != dmgs.cend(); ++di) {
 			const int type = damageArrayHandler->GetTypeFromName(di->first);
 			if (type != 0) {
-				const float dmg = di->second;
-				damages.Set(type, std::max(0.0001f, dmg));
+				damages.Set(type, std::max(0.0001f, di->second));
 			}
 		}
 

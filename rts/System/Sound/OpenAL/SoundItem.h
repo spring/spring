@@ -4,8 +4,9 @@
 #define SOUNDITEM_H
 
 #include <string>
-#include <map>
 #include <memory>
+
+#include "System/UnorderedMap.hpp"
 
 class SoundBuffer;
 
@@ -21,7 +22,7 @@ class SoundItem
 {
 	friend class CSoundSource;
 public:
-	SoundItem(std::shared_ptr<SoundBuffer> buffer, const std::map<std::string, std::string>& items);
+	SoundItem(std::shared_ptr<SoundBuffer> buffer, const spring::unordered_map<std::string, std::string>& items);
 
 	bool PlayNow();
 	void StopPlay();

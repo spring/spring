@@ -17,12 +17,6 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Weapons/PlasmaRepulser.h"
 
-
-using std::map;
-using std::pair;
-using std::string;
-using std::vector;
-
 static inline LocalModelPiece* ParseLocalModelPiece(lua_State* L, CUnitScript* script, const char* caller)
 {
 	const int piece = luaL_checkint(L, 1) - 1;
@@ -193,10 +187,10 @@ CLuaUnitScript::CLuaUnitScript(lua_State* L, CUnit* unit)
 	, inKilled(false)
 {
 	for (lua_pushnil(L); lua_next(L, 2) != 0; /*lua_pop(L, 1)*/) {
-		const string fname = lua_tostring(L, -2);
+		const std::string& fname = lua_tostring(L, -2);
 		const int r = luaL_ref(L, LUA_REGISTRYINDEX);
 
-		scriptNames.insert(pair<string, int>(fname, r));
+		scriptNames.insert(std::pair<std::string, int>(fname, r));
 		UpdateCallIn(fname, r);
 	}
 	for (auto& p: unit->localModel.pieces) {
@@ -211,7 +205,7 @@ CLuaUnitScript::~CLuaUnitScript()
 	if (L != NULL) {
 		// notify Lua the script is going down
 		Destroy();
-		for (map<string, int>::iterator it = scriptNames.begin(); it != scriptNames.end(); ++it) {
+		for (auto it = scriptNames.begin(); it != scriptNames.end(); ++it) {
 			luaL_unref(L, LUA_REGISTRYINDEX, it->second);
 		}
 	}
@@ -242,9 +236,10 @@ void CLuaUnitScript::HandleFreed(CLuaHandle* handle)
 
 int CLuaUnitScript::UpdateCallIn()
 {
-	const string fname = lua_tostring(L, 2);
+	const std::string& fname = lua_tostring(L, 2);
 	const bool remove = lua_isnoneornil(L, 3);
-	map<string, int>::iterator it = scriptNames.find(fname);
+
+	auto it = scriptNames.find(fname);
 	int r = LUA_NOREF;
 
 	if (it != scriptNames.end()) {
@@ -267,7 +262,7 @@ int CLuaUnitScript::UpdateCallIn()
 	else {
 		// adding new callIn
 		r = luaL_ref(L, LUA_REGISTRYINDEX);
-		scriptNames.insert(pair<string, int>(fname, r));
+		scriptNames.insert(std::pair<std::string, int>(fname, r));
 	}
 
 	UpdateCallIn(fname, r);
@@ -281,7 +276,7 @@ int CLuaUnitScript::UpdateCallIn()
 }
 
 
-void CLuaUnitScript::UpdateCallIn(const string& fname, int ref)
+void CLuaUnitScript::UpdateCallIn(const std::string& fname, int ref)
 {
 	// Map common function names to indices
 	int num = CLuaUnitScriptNames::GetScriptNumber(fname);
@@ -302,9 +297,9 @@ void CLuaUnitScript::UpdateCallIn(const string& fname, int ref)
 }
 
 
-void CLuaUnitScript::RemoveCallIn(const string& fname)
+void CLuaUnitScript::RemoveCallIn(const std::string& fname)
 {
-	map<string, int>::iterator it = scriptNames.find(fname);
+	const auto it = scriptNames.find(fname);
 
 	if (it != scriptNames.end()) {
 		luaL_unref(L, LUA_REGISTRYINDEX, it->second);
@@ -316,7 +311,7 @@ void CLuaUnitScript::RemoveCallIn(const string& fname)
 }
 
 
-void CLuaUnitScript::ShowScriptError(const string& msg)
+void CLuaUnitScript::ShowScriptError(const std::string& msg)
 {
 	// if we are in the same handle, we can truely raise an error
 	if (handle->IsRunning()) {
@@ -347,7 +342,7 @@ bool CLuaUnitScript::HasTargetWeight(int weaponNum) const
 inline float CLuaUnitScript::PopNumber(int fn, float def)
 {
 	if (!lua_israwnumber(L, -1)) {
-		const string& fname = CLuaUnitScriptNames::GetScriptName(fn);
+		const std::string& fname = CLuaUnitScriptNames::GetScriptName(fn);
 
 		LOG_L(L_ERROR, "%s: bad return value, expected number", fname.c_str());
 		RemoveCallIn(fname);
@@ -365,7 +360,7 @@ inline float CLuaUnitScript::PopNumber(int fn, float def)
 inline bool CLuaUnitScript::PopBoolean(int fn, bool def)
 {
 	if (!lua_isboolean(L, -1)) {
-		const string& fname = CLuaUnitScriptNames::GetScriptName(fn);
+		const std::string& fname = CLuaUnitScriptNames::GetScriptName(fn);
 
 		LOG_L(L_ERROR, "%s: bad return value, expected boolean", fname.c_str());
 		RemoveCallIn(fname);
@@ -557,7 +552,7 @@ void CLuaUnitScript::Killed()
 		unit->delayedWreckLevel = lua_toint(L, -1);
 	}
 	else if (!lua_isnoneornil(L, -1)) {
-		const string& fname = CLuaUnitScriptNames::GetScriptName(fn);
+		const std::string& fname = CLuaUnitScriptNames::GetScriptName(fn);
 
 		LOG_L(L_ERROR, "%s: bad return value, expected number or nil", fname.c_str());
 		RemoveCallIn(fname);
@@ -611,7 +606,7 @@ void CLuaUnitScript::HitByWeapon(const float3& hitDir, int weaponDefId, float& i
 		inoutDamage = lua_tonumber(L, -1);
 	}
 	else if (!lua_isnoneornil(L, -1)) {
-		const string& fname = CLuaUnitScriptNames::GetScriptName(fn);
+		const std::string& fname = CLuaUnitScriptNames::GetScriptName(fn);
 
 		LOG_L(L_ERROR, "%s: bad return value, expected number or nil", fname.c_str());
 		RemoveCallIn(fname);
@@ -667,7 +662,7 @@ void CLuaUnitScript::QueryLandingPads(std::vector<int>& out_pieces)
 
 		lua_pop(L, 1);
 	} else {
-		const string& fname = CLuaUnitScriptNames::GetScriptName(fn);
+		const std::string& fname = CLuaUnitScriptNames::GetScriptName(fn);
 
 		LOG_L(L_ERROR, "%s: bad return value, expected table", fname.c_str());
 		RemoveCallIn(fname);
@@ -829,10 +824,10 @@ void CLuaUnitScript::RawCall(int functionId)
 }
 
 
-string CLuaUnitScript::GetScriptName(int functionId) const
+std::string CLuaUnitScript::GetScriptName(int functionId) const
 {
 	// only for error messages, so speed doesn't matter
-	map<string, int>::const_iterator it = scriptNames.begin();
+	auto it = scriptNames.begin();
 	for (; it != scriptNames.end(); ++it) {
 		if (it->second == functionId) return it->first;
 	}
@@ -857,7 +852,7 @@ bool CLuaUnitScript::RawRunCallIn(int functionId, int inArgs, int outArgs)
 	activeScript = oldActiveScript;
 
 	if (error != 0) {
-		const string& fname = GetScriptName(functionId);
+		const std::string& fname = GetScriptName(functionId);
 
 		LOG_L(L_ERROR, "%s::RunCallIn: error = %i, %s::%s, %s",
 				handle->GetName().c_str(), error, "CLuaUnitScript",

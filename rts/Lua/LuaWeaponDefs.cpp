@@ -368,10 +368,10 @@ static int CategorySetFromBits(lua_State* L, const void* data)
 
 static int CustomParamsTable(lua_State* L, const void* data)
 {
-	const map<string, string>& params = *((const map<string, string>*)data);
+	const spring::unordered_map<std::string, std::string>& params = *((const spring::unordered_map<std::string, std::string>*)data);
 	lua_newtable(L);
-	map<string, string>::const_iterator it;
-	for (it = params.begin(); it != params.end(); ++it) {
+
+	for (auto it = params.cbegin(); it != params.cend(); ++it) {
 		lua_pushsstring(L, it->first);
 		lua_pushsstring(L, it->second);
 		lua_rawset(L, -3);

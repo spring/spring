@@ -79,8 +79,8 @@ CDamageArrayHandler::CDamageArrayHandler(LuaParser* defsParser)
 			}
 
 			for (unsigned int armorDefEntryIdx = 0; armorDefEntryIdx < numArmorDefEntries; armorDefEntryIdx++) {
-				const std::string unitDefName = StringToLower(armorDefTable.GetString(armorDefEntryIdx + 1, ""));
-				const std::map<std::string, int>::const_iterator armorDefTableIt = armorDefNameIdxMap.find(unitDefName);
+				const std::string& unitDefName = StringToLower(armorDefTable.GetString(armorDefEntryIdx + 1, ""));
+				const auto armorDefTableIt = armorDefNameIdxMap.find(unitDefName);
 
 				if (armorDefTableIt == armorDefNameIdxMap.end()) {
 					armorDefNameIdxMap[unitDefName] = armorDefIdx;
@@ -105,7 +105,7 @@ CDamageArrayHandler::CDamageArrayHandler(LuaParser* defsParser)
 
 int CDamageArrayHandler::GetTypeFromName(const std::string& name) const
 {
-	const std::map<std::string, int>::const_iterator it = armorDefNameIdxMap.find(StringToLower(name));
+	const auto it = armorDefNameIdxMap.find(StringToLower(name));
 
 	if (it != armorDefNameIdxMap.end())
 		return it->second;

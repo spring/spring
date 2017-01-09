@@ -186,10 +186,10 @@ CCobFile::CCobFile(CFileHandler &in, string name)
 	}
 
 	//Map common function names to indices
-	const std::map<string, int>& nameMap = CCobUnitScriptNames::GetScriptMap();
+	const spring::unordered_map<string, int>& nameMap = CCobUnitScriptNames::GetScriptMap();
 	scriptIndex.resize(COBFN_Last + (MAX_WEAPONS_PER_UNIT * COBFN_Weapon_Funcs), -1);
-	for (std::map<string, int>::const_iterator it = nameMap.begin(); it != nameMap.end(); ++it) {
-		int fn = GetFunctionId(it->first);
+	for (auto it = nameMap.begin(); it != nameMap.end(); ++it) {
+		const int fn = GetFunctionId(it->first);
 		if (fn >= 0) {
 			scriptIndex[it->second] = fn;
 		}
@@ -203,12 +203,12 @@ CCobFile::~CCobFile()
 }
 
 
-int CCobFile::GetFunctionId(const string &name)
+int CCobFile::GetFunctionId(const std::string& name)
 {
-	std::map<std::string, int>::iterator i;
-	if ((i = scriptMap.find(name)) != scriptMap.end()) {
+	const auto i = scriptMap.find(name);
+
+	if (i != scriptMap.end())
 		return i->second;
-	}
 
 	return -1;
 }

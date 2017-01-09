@@ -10,6 +10,7 @@
 #include "Sim/Objects/SolidObject.h"
 #include "Sim/Objects/SolidObjectDef.h"
 #include "System/float3.h"
+#include "System/UnorderedMap.hpp"
 
 
 struct Command;
@@ -205,7 +206,7 @@ public:
 	std::vector<unsigned int> modelExplGenIDs;
 	std::vector<unsigned int> pieceExplGenIDs;
 
-	std::map<int, std::string> buildOptions;
+	spring::unordered_map<int, std::string> buildOptions;
 
 	const WeaponDef* shieldWeaponDef;
 	const WeaponDef* stockpileWeaponDef;

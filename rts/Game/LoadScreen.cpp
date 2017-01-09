@@ -184,7 +184,7 @@ CLoadScreen::~CLoadScreen()
 		// sound is initialized at this point,
 		// but EFX support is *not* guaranteed
 		if (efx != nullptr) {
-			*(efx->sfxProperties) = *(mapInfo->efxprops);
+			efx->sfxProperties = *(mapInfo->efxprops);
 			efx->CommitEffects();
 		}
 #endif

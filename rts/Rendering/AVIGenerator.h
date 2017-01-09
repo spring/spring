@@ -12,7 +12,8 @@
 #include <vfw.h>
 
 #include <string>
-#include <list>
+#include <deque>
+#include <vector>
 
 
 class CAVIGenerator : spring::noncopyable {
@@ -29,6 +30,17 @@ public:
 
 	bool readOpenglPixelDataThreaded();
 
+private:
+	bool initVFW();
+
+	HRESULT InitAVICompressionEngine();
+	/// Adds a frame to the movie.
+	HRESULT AddFrame(unsigned char* pixelData);
+
+	void AVIGeneratorThreadProc();
+
+	/// Release streams allocated for movie compression.
+	void ReleaseAVICompressionEngine();
 
 private:
 	/// name of output file
@@ -49,25 +61,10 @@ private:
 	spring::mutex AVIMutex;
 	spring::condition_variable_any AVICondition;
 
-
-	std::list<unsigned char*> freeImageBuffers;
-	std::list<unsigned char*> imageBuffers;
+	std::deque< unsigned char > freeImageBuffers;
+	std::deque< unsigned char > imageBuffers;
 
 	unsigned char* readBuf;
-
-
-
-	bool initVFW();
-
-	HRESULT InitAVICompressionEngine();
-
-	/// Release streams allocated for movie compression.
-	void ReleaseAVICompressionEngine();
-
-	/// Adds a frame to the movie.
-	HRESULT AddFrame(unsigned char* pixelData);
-
-	void AVIGeneratorThreadProc();
 
 
 	/// frame counter
@@ -96,7 +93,6 @@ private:
 	typedef HIC (__stdcall *ICOpen_type)(DWORD, DWORD, UINT);
 
 
-
 	VideoForWindowsVersion_type VideoForWindowsVersion_ptr;
 	AVIFileInit_type AVIFileInit_ptr;
 	AVIFileOpenA_type AVIFileOpenA_ptr;
@@ -110,7 +106,6 @@ private:
 	ICCompressorChoose_type ICCompressorChoose_ptr;
 	ICCompressorFree_type ICCompressorFree_ptr;
 	ICOpen_type ICOpen_ptr;
-
 };
 
 #endif /* WIN32 */

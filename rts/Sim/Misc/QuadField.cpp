@@ -67,21 +67,21 @@ void CQuadField::Resize(int quad_size)
 			//   if a unit exists in multiple quads in the old field, it will
 			//   be removed from all of them and there is no danger of double
 			//   re-insertion (important if new grid has higher resolution)
-			const std::list<CUnit*      > units       = quad.units;
-			const std::list<CFeature*   > features    = quad.features;
-			const std::list<CProjectile*> projectiles = quad.projectiles;
+			const std::vector<CUnit*      > units       = quad.units;
+			const std::vector<CFeature*   > features    = quad.features;
+			const std::vector<CProjectile*> projectiles = quad.projectiles;
 
-			for (std::list<CUnit*>::const_iterator it = units.begin(); it != units.end(); ++it) {
+			for (auto it = units.cbegin(); it != units.cend(); ++it) {
 				oldQuadField->RemoveUnit(*it);
 				newQuadField->MovedUnit(*it); // handles addition
 			}
 
-			for (std::list<CFeature*>::const_iterator it = features.begin(); it != features.end(); ++it) {
+			for (auto it = features.cbegin(); it != features.cend(); ++it) {
 				oldQuadField->RemoveFeature(*it);
 				newQuadField->AddFeature(*it);
 			}
 
-			for (std::list<CProjectile*>::const_iterator it = projectiles.begin(); it != projectiles.end(); ++it) {
+			for (auto it = projectiles.cbegin(); it != projectiles.cend(); ++it) {
 				oldQuadField->RemoveProjectile(*it);
 				newQuadField->AddProjectile(*it);
 			}

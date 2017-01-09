@@ -3,11 +3,11 @@
 #ifndef AUDIO_CHANNEL_H
 #define AUDIO_CHANNEL_H
 
-#include <map>
 #include <vector>
-#include <string.h>
+#include <cstring>
 
 #include "System/Sound/IAudioChannel.h"
+#include "System/UnorderedMap.hpp"
 
 struct GuiSoundSet;
 class CSoundSource;
@@ -54,7 +54,7 @@ protected:
 	void SoundSourceFinished(CSoundSource* sndSource);
 
 private:
-	std::map<CSoundSource*, bool> cur_sources;
+	spring::unordered_map<CSoundSource*, bool> cur_sources;
 
 	//! streams
 	struct StreamQueueItem {

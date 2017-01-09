@@ -3,11 +3,11 @@
 #ifndef GEOMETRIC_OBJECTS_H
 #define GEOMETRIC_OBJECTS_H
 
-#include <map>
 #include <vector>
 #include "System/Misc/NonCopyable.h"
 #include "System/creg/creg_cond.h"
 #include "System/float3.h"
+#include "System/UnorderedMap.hpp"
 
 
 class CGeoSquareProjectile;
@@ -36,8 +36,10 @@ public:
 	void MarkSquare(int mapSquare);
 
 private:
-	std::map<int, GeoGroup> geoGroups;
-	std::multimap<int, int> toBeDeleted;
+	spring::unordered_map<int, GeoGroup> geoGroups;
+	spring::unordered_map<int, std::vector<int> > timedGroups;
+	std::vector<int> expiredGroups;
+
 	int firstFreeGroup;
 };
 

@@ -140,10 +140,11 @@ MoveDefHandler::MoveDefHandler(LuaParser* defsParser)
 
 MoveDef* MoveDefHandler::GetMoveDefByName(const std::string& name)
 {
-	map<string, int>::const_iterator it = moveDefNames.find(name);
-	if (it == moveDefNames.end()) {
-		return NULL;
-	}
+	auto it = moveDefNames.find(name);
+
+	if (it == moveDefNames.end())
+		return nullptr;
+
 	return &moveDefs[it->second];
 }
 

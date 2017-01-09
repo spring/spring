@@ -3,12 +3,11 @@
 #ifndef QTPFS_PATHCACHE_HDR
 #define QTPFS_PATHCACHE_HDR
 
-#include <list>
-#include <map>
 #include <vector>
 
 #include "PathEnums.hpp"
 #include "Path.hpp"
+#include "System/UnorderedMap.hpp"
 
 #ifdef GetTempPath
 #undef GetTempPath
@@ -24,8 +23,8 @@ namespace QTPFS {
 			numCacheMisses.resize(PATH_TYPE_DEAD + 1, 0);
 		}
 
-		typedef std::map<unsigned int, IPath*> PathMap;
-		typedef std::map<unsigned int, IPath*>::iterator PathMapIt;
+		typedef spring::unordered_map<unsigned int, IPath*> PathMap;
+		typedef spring::unordered_map<unsigned int, IPath*>::iterator PathMapIt;
 
 		bool MarkDeadPaths(const SRectangle& r);
 		void KillDeadPaths();

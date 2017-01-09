@@ -4,12 +4,12 @@
 #define _COMMAND_AI_H
 
 #include <vector>
-#include <set>
 
 #include "System/Object.h"
 #include "CommandDescription.h"
 #include "CommandQueue.h"
 #include "System/float3.h"
+#include "System/UnorderedSet.hpp"
 
 class CUnit;
 class CFeature;
@@ -115,7 +115,7 @@ public:
 	CWeapon* stockpileWeapon;
 
 	std::vector<const SCommandDescription*> possibleCommands;
-	std::set<int> nonQueingCommands;
+	spring::unordered_set<int> nonQueingCommands;
 
 	CCommandQueue commandQue;
 
@@ -151,7 +151,7 @@ protected:
 	void DrawDefaultCommand(const Command& c) const;
 
 private:
-	std::set<CObject*> commandDeathDependences;
+	spring::unordered_set<CObject*> commandDeathDependences;
 	/**
 	 * continuously set to some non-zero value while target is in radar
 	 * decremented by 1 every SlowUpdate (!), command is canceled when

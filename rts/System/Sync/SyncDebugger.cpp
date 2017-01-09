@@ -3,21 +3,21 @@
 
 #ifdef SYNCDEBUG
 
+#include <cstring>
+
 #include "SyncDebugger.h"
 #include "Game/GlobalUnsynced.h"
 #include "Game/Players/PlayerHandler.h"
 #include "Game/Players/Player.h"
 #include "Net/Protocol/BaseNetProtocol.h"
-#include "Sim/Misc/GlobalSynced.h"
-#include "System/Log/ILog.h"
 #include "Net/Protocol/NetProtocol.h"
+#include "Sim/Misc/GlobalSynced.h"
+#include "System/UnorderedMap.hpp"
+#include "System/Log/ILog.h"
 
 #include "HsiehHash.h"
 #include "Logger.h"
 #include "SyncTracer.h"
-
-#include <string.h>
-#include <map>
 
 #ifndef WIN32
 	/* for backtrace() function */
@@ -423,8 +423,9 @@ void CSyncDebugger::ServerDumpStack()
 
 	// we make a pool of backtraces (to merge identical ones)
 	unsigned curBacktrace = 0;
-	std::map<unsigned, unsigned> checksumToIndex;
-	std::map<unsigned, unsigned> indexToHistPos;
+
+	spring::unordered_map<unsigned, unsigned> checksumToIndex;
+	spring::unordered_map<unsigned, unsigned> indexToHistPos;
 
 	// then loop from virtualPosInHistory to virtualHistorySize and from 0 to virtualPosInHistory.
 	for (unsigned i = virtualPosInHistory, c = 0; c < virtualHistorySize; ++i, ++c) {
@@ -440,7 +441,7 @@ void CSyncDebugger::ServerDumpStack()
 					blockNr = requestedBlocks[virtualBlockNr];
 					unsigned histPos = blockNr * BLOCK_SIZE + i % BLOCK_SIZE;
 					unsigned checksum = GetBacktraceChecksum(histPos);
-					std::map<unsigned, unsigned>::iterator it = checksumToIndex.find(checksum);
+					const auto it = checksumToIndex.find(checksum);
 					if (it == checksumToIndex.end()) {
 						++curBacktrace;
 						checksumToIndex[checksum] = curBacktrace;
@@ -478,7 +479,7 @@ void CSyncDebugger::ServerDumpStack()
 
 	if (historybt) {
 		// output backtraces we collected earlier this function
-		for (std::map<unsigned, unsigned>::iterator it = indexToHistPos.begin(); it != indexToHistPos.end(); ++it) {
+		for (auto it = indexToHistPos.cbegin(); it != indexToHistPos.cend(); ++it) {
 			logger.AddLine("Server: === Backtrace %u ===", it->first);
 			Backtrace(it->second, "Server: ");
 		}

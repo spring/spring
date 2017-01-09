@@ -4,11 +4,11 @@
 #define _GAME_H
 
 #include <string>
-#include <map>
 #include <vector>
 
 #include "GameController.h"
 #include "Game/UI/KeySet.h"
+#include "System/UnorderedMap.hpp"
 #include "System/creg/creg_cond.h"
 #include "System/Misc/SpringTime.h"
 
@@ -43,8 +43,10 @@ public:
 
 	struct PlayerTrafficInfo {
 		PlayerTrafficInfo() : total(0) {}
+
 		int total;
-		std::map<int, int> packets;
+
+		spring::unordered_map<int, int> packets;
 	};
 
 public:
@@ -78,7 +80,7 @@ public:
 	bool IsGameOver() const { return gameOver; }
 	bool IsLagging(float maxLatency = 500.0f) const;
 
-	const std::map<int, PlayerTrafficInfo>& GetPlayerTraffic() const {
+	const spring::unordered_map<int, PlayerTrafficInfo>& GetPlayerTraffic() const {
 		return playerTraffic;
 	}
 	void AddTraffic(int playerID, int packetCode, int length);
@@ -193,7 +195,7 @@ public:
 	std::string userInputPrefix;
 
 	/// <playerID, <packetCode, total bytes> >
-	std::map<int, PlayerTrafficInfo> playerTraffic;
+	spring::unordered_map<int, PlayerTrafficInfo> playerTraffic;
 
 	// to smooth out SimFrame calls
 	float msgProcTimeLeft;  ///< How many SimFrame() calls we still may do.

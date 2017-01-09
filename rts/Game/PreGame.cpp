@@ -378,7 +378,7 @@ void CPreGame::StartServerForDemo(const std::string& demoName)
 		tgame->remove("SourcePort", false);
 		//tgame->remove("IsHost", false);
 
-		for (std::map<std::string, TdfParser::TdfSection*>::iterator it = tgame->sections.begin(); it != tgame->sections.end(); ++it) {
+		for (auto it = tgame->sections.begin(); it != tgame->sections.end(); ++it) {
 			if (it->first.size() > 6 && it->first.substr(0, 6) == "player") {
 				it->second->AddPair("isfromdemo", 1);
 			}

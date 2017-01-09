@@ -4,9 +4,9 @@
 #define TEAM_BASE_H
 
 #include <string>
-#include <map>
 
 #include "System/float3.h"
+#include "System/UnorderedMap.hpp"
 #include "System/creg/creg_cond.h"
 
 
@@ -15,7 +15,7 @@ class TeamBase
 	CR_DECLARE(TeamBase)
 
 public:
-	typedef std::map<std::string, std::string> customOpts;
+	typedef spring::unordered_map<std::string, std::string> customOpts;
 
 	TeamBase();
 	virtual ~TeamBase() {}

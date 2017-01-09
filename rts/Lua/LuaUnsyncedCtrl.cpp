@@ -68,6 +68,7 @@
 #include "System/Log/ILog.h"
 #include "System/Net/PackPacket.h"
 #include "System/Platform/Misc.h"
+#include "System/UnorderedMap.hpp"
 #include "System/Util.h"
 #include "System/Sound/ISound.h"
 #include "System/Sound/ISoundChannels.h"
@@ -84,7 +85,6 @@
 #include "System/Sound/OpenAL/EFXPresets.h"
 #endif
 
-#include <map>
 #include <cctype>
 #include <cfloat>
 #include <cinttypes>
@@ -622,9 +622,8 @@ int LuaUnsyncedCtrl::SetSoundEffectParams(lua_State* L)
 		return 0;
 	}
 
-	if (!lua_istable(L, 1)) {
+	if (!lua_istable(L, 1))
 		luaL_error(L, "Incorrect arguments to SetSoundEffectParams()");
-	}
 
 	//! first parse the 'preset' key (so all following params use it as base and override it)
 	lua_pushliteral(L, "preset");
@@ -636,10 +635,7 @@ int LuaUnsyncedCtrl::SetSoundEffectParams(lua_State* L)
 	lua_pop(L, 1);
 
 
-	if (!efx->sfxProperties)
-		return 0;
-
-	EAXSfxProps* efxprops = efx->sfxProperties;
+	EAXSfxProps& efxprops = efx->sfxProperties;
 
 
 	//! parse pass filter
@@ -651,7 +647,7 @@ int LuaUnsyncedCtrl::SetSoundEffectParams(lua_State* L)
 				continue;
 
 			const string key = StringToLower(lua_tostring(L, -2));
-			std::map<std::string, ALuint>::iterator it = nameToALFilterParam.find(key);
+			const auto it = nameToALFilterParam.find(key);
 
 			if (it == nameToALFilterParam.end())
 				continue;
@@ -663,7 +659,7 @@ int LuaUnsyncedCtrl::SetSoundEffectParams(lua_State* L)
 			if (alParamType[param] != EFXParamTypes::FLOAT)
 				continue;
 
-			efxprops->filter_properties_f[param] = lua_tofloat(L, -1);
+			efxprops.filter_props_f[param] = lua_tofloat(L, -1);
 		}
 	}
 	lua_pop(L, 1);
@@ -677,29 +673,30 @@ int LuaUnsyncedCtrl::SetSoundEffectParams(lua_State* L)
 				continue;
 
 			const string key = StringToLower(lua_tostring(L, -2));
-			std::map<std::string, ALuint>::iterator it = nameToALParam.find(key);
+			const auto it = nameToALParam.find(key);
 
 			if (it == nameToALParam.end())
 				continue;
 
-			ALuint param = it->second;
+			const ALuint param = it->second;
+
 			if (lua_istable(L, -1)) {
 				if (alParamType[param] == EFXParamTypes::VECTOR) {
 					float3 v;
 
 					if (LuaUtils::ParseFloatArray(L, -1, &v[0], 3) >= 3) {
-						efxprops->properties_v[param] = v;
+						efxprops.reverb_props_v[param] = v;
 					}
 				}
 			}
 			else if (lua_isnumber(L, -1)) {
 				if (alParamType[param] == EFXParamTypes::FLOAT) {
-					efxprops->properties_f[param] = lua_tofloat(L, -1);
+					efxprops.reverb_props_f[param] = lua_tofloat(L, -1);
 				}
 			}
 			else if (lua_isboolean(L, -1)) {
 				if (alParamType[param] == EFXParamTypes::BOOL) {
-					efxprops->properties_i[param] = lua_toboolean(L, -1);
+					efxprops.reverb_props_i[param] = lua_toboolean(L, -1);
 				}
 			}
 		}
@@ -2201,7 +2198,7 @@ int LuaUnsyncedCtrl::SetUnitDefIcon(lua_State* L)
 	if (ud->decoyDef != nullptr)
 		ud->decoyDef->iconType = ud->iconType;
 
-	// std::map<int, std::set<int> >
+	// unordered_map<int, unordered_set<int> >
 	const auto& decoyMap = unitDefHandler->decoyMap;
 	const auto decoyMapIt = decoyMap.find((ud->decoyDef != nullptr)? ud->decoyDef->id: ud->id);
 

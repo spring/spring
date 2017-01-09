@@ -464,16 +464,14 @@ void CMapInfo::ReadSound()
 
 	efxprops = new EAXSfxProps();
 
-	const std::string presetname = soundTable.GetString("preset", "default");
-	std::map<std::string, EAXSfxProps>::const_iterator et = eaxPresets.find(presetname);
-	if (et != eaxPresets.end()) {
-		*efxprops = et->second;
-	}
+	const auto presetIt = eaxPresets.find(soundTable.GetString("preset", "default"));
 
-	std::map<std::string, ALuint>::const_iterator it;
+	if (presetIt != eaxPresets.end())
+		*efxprops = presetIt->second;
 
 	const LuaTable& filterTable = soundTable.SubTable("passfilter");
-	for (it = nameToALFilterParam.begin(); it != nameToALFilterParam.end(); ++it) {
+
+	for (auto it = nameToALFilterParam.cbegin(); it != nameToALFilterParam.cend(); ++it) {
 		const std::string& name = it->first;
 		const int luaType = filterTable.GetType(name);
 
@@ -481,17 +479,19 @@ void CMapInfo::ReadSound()
 			continue;
 		
 		const ALuint param = it->second;
-		const unsigned& type = alParamType[param];
+		const unsigned type = alParamType[param];
+
 		switch (type) {
 			case EFXParamTypes::FLOAT:
 				if (luaType == LuaTable::NUMBER)
-					efxprops->filter_properties_f[param] = filterTable.GetFloat(name, 0.f);
+					efxprops->filter_props_f[param] = filterTable.GetFloat(name, 0.0f);
 				break;
 		}
 	}
 
 	soundTable.SubTable("reverb");
-	for (it = nameToALParam.begin(); it != nameToALParam.end(); ++it) {
+
+	for (auto it = nameToALParam.begin(); it != nameToALParam.end(); ++it) {
 		const std::string& name = it->first;
 		const int luaType = filterTable.GetType(name);
 
@@ -499,19 +499,20 @@ void CMapInfo::ReadSound()
 			continue;
 
 		const ALuint param = it->second;
-		const unsigned& type = alParamType[param];
+		const unsigned type = alParamType[param];
+
 		switch (type) {
 			case EFXParamTypes::VECTOR:
 				if (luaType == LuaTable::TABLE)
-					efxprops->properties_v[param] = filterTable.GetFloat3(name, ZeroVector);
+					efxprops->reverb_props_v[param] = filterTable.GetFloat3(name, ZeroVector);
 				break;
 			case EFXParamTypes::FLOAT:
 				if (luaType == LuaTable::NUMBER)
-					efxprops->properties_f[param] = filterTable.GetFloat(name, 0.f);
+					efxprops->reverb_props_f[param] = filterTable.GetFloat(name, 0.0f);
 				break;
 			case EFXParamTypes::BOOL:
 				if (luaType == LuaTable::BOOLEAN)
-					efxprops->properties_i[param] = filterTable.GetBool(name, false);
+					efxprops->reverb_props_i[param] = filterTable.GetBool(name, false);
 				break;
 		}
 	}

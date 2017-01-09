@@ -5,10 +5,10 @@
 #include "QTPFS/PathManager.hpp"
 #include "System/Log/ILog.h"
 
-IPathManager* pathManager = NULL;
+IPathManager* pathManager = nullptr;
 
 IPathManager* IPathManager::GetInstance(unsigned int type) {
-	if (pathManager == NULL) {
+	if (pathManager == nullptr) {
 		const char* fmtStr = "[IPathManager::GetInstance] using %s path-manager";
 		const char* typeStr = "";
 
@@ -26,6 +26,6 @@ IPathManager* IPathManager::GetInstance(unsigned int type) {
 void IPathManager::FreeInstance(IPathManager* pm) {
 	assert(pm == pathManager);
 	delete pm;
-	pathManager = NULL;
+	pathManager = nullptr;
 }
 

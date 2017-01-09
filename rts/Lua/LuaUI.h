@@ -5,9 +5,9 @@
 
 #include <string>
 #include <vector>
-#include <map>
 
 #include "LuaHandle.h"
+#include "System/UnorderedMap.hpp"
 
 
 class CUnit;
@@ -33,7 +33,7 @@ class CLuaUI : public CLuaHandle
 
 		struct ReParamsPair {
 			int cmdIndex;
-			map<int, string> params;
+			spring::unordered_map<int, string> params;
 		};
 
 	public:
@@ -66,7 +66,7 @@ class CLuaUI : public CLuaHandle
 		                   vector<ReStringPair>& reNamedCmds,
 		                   vector<ReStringPair>& reTooltipCmds,
 		                   vector<ReParamsPair>& reParamsCmds,
-		                   map<int, int>& iconList,
+		                   spring::unordered_map<int, int>& iconList,
 		                   string& menuName);
 
 		bool ConfigCommand(const string& command);
@@ -83,7 +83,7 @@ class CLuaUI : public CLuaHandle
 		void InitLuaSocket(lua_State* L);
 
 		bool BuildCmdDescTable(lua_State* L, const vector<SCommandDescription>& cmds);
-		bool GetLuaIntMap(lua_State* L, int index, map<int, int>& intList);
+		bool GetLuaIntMap(lua_State* L, int index, spring::unordered_map<int, int>& intList);
 		bool GetLuaIntList(lua_State* L, int index, vector<int>& intList);
 		bool GetLuaReStringList(lua_State* L, int index, vector<ReStringPair>& reStringCmds);
 		bool GetLuaReParamsList(lua_State* L, int index, vector<ReParamsPair>& reParamsCmds);

@@ -3,13 +3,13 @@
 #include "EFXPresets.h"
 #include "System/Util.h"
 
-std::map<std::string, EAXSfxProps> eaxPresets;
+spring::unordered_map<std::string, EAXSfxProps> eaxPresets;
 
-std::map<ALuint, unsigned> alParamType;
-std::map<std::string, ALuint> nameToALParam;
-std::map<ALuint, std::string> alParamToName;
-std::map<std::string, ALuint> nameToALFilterParam;
-std::map<ALuint, std::string> alFilterParamToName;
+spring::unordered_map<ALuint, unsigned> alParamType;
+spring::unordered_map<std::string, ALuint> nameToALParam;
+spring::unordered_map<ALuint, std::string> alParamToName;
+spring::unordered_map<std::string, ALuint> nameToALFilterParam;
+spring::unordered_map<ALuint, std::string> alFilterParamToName;
 
 static void InitPresets()
 {
@@ -213,12 +213,13 @@ static void InitConversionTables()
 	alFilterParamToName[AL_LOWPASS_GAIN]   = "gainlf";
 	alFilterParamToName[AL_LOWPASS_GAINHF] = "gainhf";
 
-	for (std::map<ALuint, std::string>::iterator it=alParamToName.begin(); it != alParamToName.end(); ++it)
+	for (auto it = alParamToName.begin(); it != alParamToName.end(); ++it)
 		nameToALParam[it->second] = it->first;
 
-	for (std::map<ALuint, std::string>::iterator it=alFilterParamToName.begin(); it != alFilterParamToName.end(); ++it)
+	for (auto it = alFilterParamToName.begin(); it != alFilterParamToName.end(); ++it)
 		nameToALFilterParam[it->second] = it->first;
 }
 
 DO_ONCE(InitPresets)
 DO_ONCE(InitConversionTables)
+

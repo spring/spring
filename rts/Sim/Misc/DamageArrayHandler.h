@@ -5,9 +5,10 @@
 
 #include <string>
 #include <vector>
-#include <map>
+
 #include "System/Misc/NonCopyable.h"
 #include "System/creg/creg_cond.h"
+#include "System/UnorderedMap.hpp"
 
 class LuaParser;
 class CDamageArrayHandler : public spring::noncopyable
@@ -23,7 +24,7 @@ public:
 	const std::vector<std::string>& GetTypeList() const { return armorDefKeys; }
 
 private:
-	std::map<std::string, int> armorDefNameIdxMap;
+	spring::unordered_map<std::string, int> armorDefNameIdxMap;
 	std::vector<std::string> armorDefKeys;
 };
 

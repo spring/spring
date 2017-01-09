@@ -4,12 +4,13 @@
 #define _EFX_H_
 
 #include <string>
-#include <map>
+
 #include <al.h>
 #include <alc.h>
 #include <efx.h>
 
-struct EAXSfxProps;
+#include "EFXPresets.h"
+#include "System/UnorderedMap.hpp"
 
 /// Default sound effects system implementation
 class CEFX
@@ -18,7 +19,7 @@ public:
 	CEFX(ALCdevice* device);
 	~CEFX();
 
-	void SetPreset(std::string name, bool verbose = true, bool commit = true);
+	void SetPreset(const std::string& name, bool verbose = true, bool commit = true);
 	void CommitEffects();
 
 	void Enable();
@@ -34,29 +35,29 @@ public:
 	ALfloat GetAirAbsorptionFactor() const { return airAbsorptionFactor; }
 
 
+	int updates;
+	int maxSlots;
+
 	bool enabled;
 	bool supported;
 
-	EAXSfxProps* sfxProperties;
+	EAXSfxProps sfxProperties;
+
 	ALuint sfxSlot;
 	ALuint sfxReverb;
 	ALuint sfxFilter;
+	ALuint maxSlotsPerSource;
+
 private:
 	ALfloat airAbsorptionFactor;
-public:
 
-	int updates;
-
-private:
-	//! reduce the rolloff when the camera is height above the ground (so we still hear something in tab mode or far zoom)
+	// reduces the rolloff when camera is high above the ground (so we still hear something in tab mode or far zoom)
 	static float heightRolloffModifier;
 
 private:
-	//! some more information about the supported features
-	std::map<ALuint, bool> effectsSupported;
-	std::map<ALuint, bool> filtersSupported;
-	int maxSlots;
-	ALuint maxSlotsPerSource;
+	// information about the supported features
+	spring::unordered_map<ALuint, bool> effectsSupported;
+	spring::unordered_map<ALuint, bool> filtersSupported;
 };
 
 //! init in Sound.cpp

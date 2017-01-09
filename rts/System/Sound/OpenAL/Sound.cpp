@@ -197,11 +197,11 @@ void CSound::ConfigNotify(const std::string& key, const std::string& value)
 	}
 	else if (key == "snd_filter")
 	{
-		float gainlf = 1.f;
-		float gainhf = 1.f;
+		float gainlf = 1.0f;
+		float gainhf = 1.0f;
 		sscanf(value.c_str(), "%f %f", &gainlf, &gainhf);
-		efx->sfxProperties->filter_properties_f[AL_LOWPASS_GAIN]   = gainlf;
-		efx->sfxProperties->filter_properties_f[AL_LOWPASS_GAINHF] = gainhf;
+		efx->sfxProperties.filter_props_f[AL_LOWPASS_GAIN]   = gainlf;
+		efx->sfxProperties.filter_props_f[AL_LOWPASS_GAINHF] = gainhf;
 		efx->CommitEffects();
 	}
 	else if (key == "UseEFX")

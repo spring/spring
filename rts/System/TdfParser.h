@@ -5,12 +5,12 @@
 
 #include <string>
 #include <vector>
-#include <map>
 #include <sstream>
 
 #include "System/Sync/SyncedPrimitiveIO.h"
 #include "System/Exceptions.h"
 #include "System/float3.h"
+#include "System/UnorderedMap.hpp"
 
 class LuaTable;
 
@@ -22,8 +22,8 @@ class TdfParser
 {
 public:
 	struct TdfSection;
-	typedef std::map<std::string, std::string> valueMap_t;
-	typedef std::map<std::string, TdfSection*> sectionsMap_t;
+	typedef spring::unordered_map<std::string, std::string> valueMap_t;
+	typedef spring::unordered_map<std::string, TdfSection*> sectionsMap_t;
 
 	struct parse_error : public content_error
 	{

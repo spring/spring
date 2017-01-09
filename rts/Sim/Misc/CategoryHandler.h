@@ -5,7 +5,8 @@
 
 #include <string>
 #include <vector>
-#include <map>
+
+#include "System/UnorderedMap.hpp"
 #include "System/Misc/NonCopyable.h"
 #include "System/creg/creg_cond.h"
 
@@ -51,7 +52,7 @@ private:
 private:
 	static CCategoryHandler* instance;
 
-	std::map<std::string, unsigned int> categories;
+	spring::unordered_map<std::string, unsigned int> categories;
 	unsigned int firstUnused;
 };
 

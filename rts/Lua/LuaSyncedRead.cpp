@@ -76,7 +76,6 @@
 
 using std::min;
 using std::max;
-using std::map;
 
 static const LuaHashString hs_n("n");
 
@@ -918,9 +917,9 @@ int LuaSyncedRead::GetMapOptions(lua_State* L)
 {
 	lua_newtable(L);
 
-	const map<string, string>& mapOpts = CGameSetup::GetMapOptions();
-	map<string, string>::const_iterator it;
-	for (it = mapOpts.begin(); it != mapOpts.end(); ++it) {
+	const auto& mapOpts = CGameSetup::GetMapOptions();
+
+	for (auto it = mapOpts.cbegin(); it != mapOpts.cend(); ++it) {
 		lua_pushsstring(L, it->first);
 		lua_pushsstring(L, it->second);
 		lua_rawset(L, -3);
@@ -934,9 +933,9 @@ int LuaSyncedRead::GetModOptions(lua_State* L)
 {
 	lua_newtable(L);
 
-	const map<string, string>& modOpts = CGameSetup::GetModOptions();
-	map<string, string>::const_iterator it;
-	for (it = modOpts.begin(); it != modOpts.end(); ++it) {
+	const auto& modOpts = CGameSetup::GetModOptions();
+
+	for (auto it = modOpts.cbegin(); it != modOpts.cend(); ++it) {
 		lua_pushsstring(L, it->first);
 		lua_pushsstring(L, it->second);
 		lua_rawset(L, -3);
@@ -1519,8 +1518,8 @@ int LuaSyncedRead::GetAIInfo(lua_State* L)
 		lua_pushsstring(L, aiData->version);
 
 		lua_newtable(L);
-		std::map<std::string, std::string>::const_iterator o;
-		for (o = aiData->options.begin(); o != aiData->options.end(); ++o) {
+
+		for (auto o = aiData->options.begin(); o != aiData->options.end(); ++o) {
 			lua_pushsstring(L, o->first);
 			lua_pushsstring(L, o->second);
 			lua_rawset(L, -3);
@@ -1761,21 +1760,23 @@ int LuaSyncedRead::GetTeamUnitsSorted(lua_State* L)
 
 int LuaSyncedRead::GetTeamUnitsCounts(lua_State* L)
 {
-	if (CLuaHandle::GetHandleReadAllyTeam(L) == CEventClient::NoAccessTeam) {
+	if (CLuaHandle::GetHandleReadAllyTeam(L) == CEventClient::NoAccessTeam)
 		return 0;
-	}
 
 	// parse the team
 	const CTeam* team = ParseTeam(L, __FUNCTION__, 1);
-	if (team == NULL) {
+
+	if (team == nullptr)
 		return 0;
-	}
+
 	const int teamID = team->teamNum;
+
+	int unknownCount = 0;
+	int defCount = 0;
 
 	// send the raw unitsByDefs counts for allies
 	if (IsAlliedTeam(L, teamID)) {
 		lua_newtable(L);
-		int defCount = 0;
 
 		for (int udID = 0; udID < unitDefHandler->unitDefs.size(); udID++) {
 			const int unitCount = unitHandler->unitsByDefs[teamID][udID].size();
@@ -1792,33 +1793,29 @@ int LuaSyncedRead::GetTeamUnitsCounts(lua_State* L)
 	}
 
 	// tally the counts for enemies
-	map<int, int> unitDefCounts;
-	map<int, int>::const_iterator mit;
+	std::vector< std::pair<int, int> > unitDefCounts;
+	unitDefCounts.resize(unitDefHandler->unitDefs.size() + 1, {0, 0});
 
-	int unknownCount = 0;
-	for(CUnit* unit: team->units) {
-
+	for (const CUnit* unit: team->units) {
 		if (!IsUnitVisible(L, unit))
 			continue;
 
 		if (!IsUnitTyped(L, unit)) {
 			unknownCount++;
 		} else {
-			const UnitDef* ud = EffectiveUnitDef(L, unit);
-			map<int, int>::iterator mit = unitDefCounts.find(ud->id);
-			if (mit == unitDefCounts.end()) {
-				unitDefCounts[ud->id] = 1;
-			} else {
-				unitDefCounts[ud->id] = mit->second + 1;
-			}
+			const UnitDef* unitDef = EffectiveUnitDef(L, unit);
+
+			unitDefCounts[unitDef->id].first = unitDef->id;
+			unitDefCounts[unitDef->id].second += 1;
 		}
 	}
 
 	// push the counts
-	lua_newtable(L);
-	int defCount = 0;
+	lua_createtable(L, 0, unitDefCounts.size());
 
-	for (mit = unitDefCounts.begin(); mit != unitDefCounts.end(); ++mit) {
+	for (auto mit = unitDefCounts.begin(); mit != unitDefCounts.end(); ++mit) {
+		if (mit->second == 0)
+			continue;
 		lua_pushnumber(L, mit->second);
 		lua_rawseti(L, -2, mit->first);
 		defCount++;
@@ -1848,7 +1845,7 @@ static inline void InsertSearchUnitDefs(const UnitDef* ud, bool allied, std::vec
 
 	unitDefIDs.push_back(ud->id);
 
-	// std::map<int, std::set<int> >
+	// spring::unordered_map<int, spring::unordered_set<int> >
 	const auto& decoyMap = unitDefHandler->decoyMap;
 	const auto decoyMapIt = decoyMap.find(ud->id);
 
@@ -4192,20 +4189,22 @@ static int PackBuildQueue(lua_State* L, bool canBuild, const char* caller)
 				// skip build orders that this unit can not start
 				const UnitDef* order_ud = unitDefHandler->GetUnitDefByID(unitDefID);
 				const UnitDef* builder_ud = unit->unitDef;
-				if ((order_ud == NULL) || (builder_ud == NULL)) {
-					continue; // something is wrong, bail
-				}
+
+				// if something is wrong, bail
+				if ((order_ud == nullptr) || (builder_ud == nullptr))
+					continue;
+
 				const string& orderName = StringToLower(order_ud->name);
-				const map<int, std::string>& bOpts = builder_ud->buildOptions;
-				map<int, std::string>::const_iterator it;
-				for (it = bOpts.begin(); it != bOpts.end(); ++it) {
-					if (it->second == orderName) {
+				const auto& bOpts = builder_ud->buildOptions;
+				auto it = bOpts.cbegin();
+
+				for (; it != bOpts.cend(); ++it) {
+					if (it->second == orderName)
 						break;
-					}
 				}
-				if (it == bOpts.end()) {
-					continue; // didn't find a matching entry
-				}
+				// didn't find a matching entry
+				if (it == bOpts.end())
+					continue;
 			}
 
 			if (currentType == unitDefID) {

@@ -1,7 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include <cassert>
-#include <list>
 #include <limits>
 
 #include "PathSearch.hpp"
@@ -309,8 +308,8 @@ void QTPFS::PathSearch::Finalize(IPath* path) {
 }
 
 void QTPFS::PathSearch::TracePath(IPath* path) {
-	std::list<float3> points;
-//	std::list<float3>::const_iterator pointsIt;
+	std::deque<float3> points;
+//	std::deque<float3>::const_iterator pointsIt;
 
 	if (srcNode != tgtNode) {
 		INode* tmpNode = tgtNode;
@@ -318,7 +317,7 @@ void QTPFS::PathSearch::TracePath(IPath* path) {
 
 		float3 prvPoint = tgtPoint;
 
-		while ((prvNode != NULL) && (tmpNode != srcNode)) {
+		while ((prvNode != nullptr) && (tmpNode != srcNode)) {
 			const float3& tmpPoint = tmpNode->GetNeighborEdgeTransitionPoint(0);
 
 			assert(!math::isinf(tmpPoint.x) && !math::isinf(tmpPoint.z));

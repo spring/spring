@@ -4,13 +4,13 @@
 #define LUA_RULES_H
 
 #include <string>
-using std::string;
 #include <vector>
+
+using std::string;
 using std::vector;
-#include <map>
-using std::map;
 
 #include "LuaHandleSynced.h"
+#include "System/UnorderedMap.hpp"
 
 #define MAX_LUA_COB_ARGS 10
 

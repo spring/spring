@@ -5,7 +5,7 @@
 
 #include <limits>
 #include <vector>
-#include <list> // for QTPFS_STAGGERED_LAYER_UPDATES
+#include <deque> // for QTPFS_STAGGERED_LAYER_UPDATES
 #include <cinttypes>
 
 #include "System/Rectangle.h"
@@ -101,7 +101,7 @@ namespace QTPFS {
 		std::vector<SpeedBinType> oldSpeedBins;
 
 		#ifdef QTPFS_STAGGERED_LAYER_UPDATES
-		std::list<LayerUpdate> layerUpdates;
+		std::deque<LayerUpdate> layerUpdates;
 		#endif
 
 		// NOTE:

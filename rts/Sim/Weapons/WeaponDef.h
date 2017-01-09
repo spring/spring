@@ -3,12 +3,11 @@
 #ifndef _WEAPON_DEF_H
 #define _WEAPON_DEF_H
 
-#include <map>
-
-#include "System/float3.h"
 #include "Sim/Misc/DamageArray.h"
 #include "Sim/Misc/GuiSoundSet.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileTypes.h"
+#include "System/float3.h"
+#include "System/UnorderedMap.hpp"
 
 struct AtlasedTexture;
 class CColorMap;
@@ -214,7 +213,7 @@ public:
 
 	float cameraShake;
 
-	std::map<std::string, std::string> customParams;
+	spring::unordered_map<std::string, std::string> customParams;
 
 	struct Visuals {
 		Visuals()

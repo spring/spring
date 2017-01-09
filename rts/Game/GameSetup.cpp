@@ -122,9 +122,9 @@ bool CGameSetup::LoadSavedScript(const std::string& file, const std::string& scr
 }
 
 
-const std::map<std::string, std::string>& CGameSetup::GetMapOptions()
+const spring::unordered_map<std::string, std::string>& CGameSetup::GetMapOptions()
 {
-	static std::map<std::string, std::string> dummyOptions;
+	static spring::unordered_map<std::string, std::string> dummyOptions;
 
 	if (gameSetup != nullptr)
 		return gameSetup->GetMapOptionsCont();
@@ -132,9 +132,9 @@ const std::map<std::string, std::string>& CGameSetup::GetMapOptions()
 	return dummyOptions;
 }
 
-const std::map<std::string, std::string>& CGameSetup::GetModOptions()
+const spring::unordered_map<std::string, std::string>& CGameSetup::GetModOptions()
 {
-	static std::map<std::string, std::string> dummyOptions;
+	static spring::unordered_map<std::string, std::string> dummyOptions;
 
 	if (gameSetup != nullptr)
 		return gameSetup->GetModOptionsCont();
@@ -302,7 +302,7 @@ void CGameSetup::LoadMutators(const TdfParser& file, std::vector<std::string>& m
 	}
 }
 
-void CGameSetup::LoadPlayers(const TdfParser& file, std::set<std::string>& nameList)
+void CGameSetup::LoadPlayers(const TdfParser& file, spring::unordered_set<std::string>& nameList)
 {
 	assert(numDemoPlayers == 0);
 
@@ -345,7 +345,7 @@ void CGameSetup::LoadPlayers(const TdfParser& file, std::set<std::string>& nameL
 	LOG_L(L_WARNING, _STPF_ " players in GameSetup script (NumPlayers says %i)", playerStartingData.size(), playerCount);
 }
 
-void CGameSetup::LoadSkirmishAIs(const TdfParser& file, std::set<std::string>& nameList)
+void CGameSetup::LoadSkirmishAIs(const TdfParser& file, spring::unordered_set<std::string>& nameList)
 {
 	// i = AI index in game (no gaps), a = AI index in script
 	for (int a = 0; a < MAX_PLAYERS; ++a) {
@@ -593,7 +593,8 @@ bool CGameSetup::Init(const std::string& buf)
 	startPosType = std::min(startPosType, StartPos_Last);
 
 	// Read subsections
-	std::set<std::string> playersNameList;
+	spring::unordered_set<std::string> playersNameList;
+
 	LoadPlayers(file, playersNameList);
 	LoadSkirmishAIs(file, playersNameList);
 	LoadTeams(file);

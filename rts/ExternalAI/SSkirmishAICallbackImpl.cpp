@@ -79,7 +79,7 @@ static void checkSkirmishAIId(int skirmishAIId) {
 }
 
 static int fillCMap(
-	const std::map<std::string,std::string>* map,
+	const spring::unordered_map<std::string,std::string>* map,
 	const char* cMapKeys[],
 	const char* cMapValues[]
 ) {
@@ -3472,7 +3472,7 @@ EXPORT(int) skirmishAiCallback_UnitDef_getBuildOptions(
 	int* unitDefIds,
 	int unitDefIdsMaxSize
 ) {
-	const std::map<int,std::string>& bo = getUnitDefById(skirmishAIId, unitDefId)->buildOptions;
+	const auto& bo = getUnitDefById(skirmishAIId, unitDefId)->buildOptions;
 	const int unitDefIdsRealSize = bo.size();
 
 	size_t unitDefIdsSize = unitDefIdsRealSize;
@@ -3496,7 +3496,7 @@ EXPORT(int) skirmishAiCallback_UnitDef_getCustomParams(
 	const char** keys,
 	const char** values
 ) {
-	const std::map<std::string,std::string>& ps = getUnitDefById(skirmishAIId, unitDefId)->customParams;
+	const auto& ps = getUnitDefById(skirmishAIId, unitDefId)->customParams;
 	const size_t paramsRealSize = ps.size();
 
 	if ((keys != nullptr) && (values != nullptr))
@@ -4318,12 +4318,11 @@ EXPORT(int) skirmishAiCallback_FeatureDef_getCustomParams(
 	const char** keys,
 	const char** values
 ) {
-	const std::map<std::string,std::string>& ps = getFeatureDefById(skirmishAIId, featureDefId)->customParams;
+	const auto& ps = getFeatureDefById(skirmishAIId, featureDefId)->customParams;
 	const size_t paramsRealSize = ps.size();
 
-	if ((keys != nullptr) && (values != nullptr)) {
+	if ((keys != nullptr) && (values != nullptr))
 		fillCMap(&ps, keys, values);
-	}
 
 	return paramsRealSize;
 }
@@ -4995,12 +4994,11 @@ EXPORT(bool) skirmishAiCallback_WeaponDef_isDynDamageInverted(int skirmishAIId, 
 EXPORT(int) skirmishAiCallback_WeaponDef_getCustomParams(int skirmishAIId, int weaponDefId,
 		const char** keys, const char** values) {
 
-	const std::map<std::string,std::string>& ps = getWeaponDefById(skirmishAIId, weaponDefId)->customParams;
+	const auto& ps = getWeaponDefById(skirmishAIId, weaponDefId)->customParams;
 	const size_t paramsRealSize = ps.size();
 
-	if ((keys != NULL) && (values != NULL)) {
+	if ((keys != nullptr) && (values != nullptr))
 		fillCMap(&ps, keys, values);
-	}
 
 	return paramsRealSize;
 }

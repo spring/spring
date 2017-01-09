@@ -85,11 +85,12 @@ void PathFlowMap::Update() {
 /*
 	std::vector<FlowCell>& fCells = buffers[fBufferIdx];
 	std::vector<FlowCell>& bCells = buffers[bBufferIdx];
-	std::set<unsigned int>& fIndices = indices[fBufferIdx];
-	std::set<unsigned int>& bIndices = indices[bBufferIdx];
 
-	std::set<unsigned int>::iterator it;
-	std::set<unsigned int>::iterator nit;
+	spring::unordered_set<unsigned int>& fIndices = indices[fBufferIdx];
+	spring::unordered_set<unsigned int>& bIndices = indices[bBufferIdx];
+
+	spring::unordered_set<unsigned int>::iterator it;
+	spring::unordered_set<unsigned int>::iterator nit;
 
 	#if (FLOW_DECAY_ENABLED == 0)
 		for (it = fIndices.begin(); it != fIndices.end(); ++it) {
@@ -178,7 +179,7 @@ void PathFlowMap::AddFlow(const CSolidObject* o) {
 	const unsigned int cellIdx = GetCellIdx(o);
 
 	std::vector<FlowCell>& bCells = buffers[bBufferIdx];
-	std::set<unsigned int>& bIndices = indices[bBufferIdx];
+	spring::unordered_set<unsigned int>& bIndices = indices[bBufferIdx];
 
 	FlowCell& bCell = bCells[cellIdx];
 

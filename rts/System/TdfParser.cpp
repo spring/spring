@@ -45,12 +45,12 @@ std::string const& TdfParser::parse_error::get_filename() const { return filenam
 
 void TdfParser::TdfSection::print(std::ostream & out) const
 {
-	for (std::map<std::string,TdfSection*>::const_iterator it = sections.begin(), e=sections.end(); it != e; ++it) {
+	for (auto it = sections.cbegin(), e = sections.cend(); it != e; ++it) {
 		out << "[" << it->first << "]\n{\n";
 		it->second->print(out);
 		out << "}\n";
 	}
-	for (std::map<std::string,std::string>::const_iterator it = values.begin(), e=values.end(); it != e; ++it) {
+	for (auto it = values.cbegin(), e = values.cend(); it != e; ++it) {
 		out << it->first << "=" << it->second << ";\n";
 	}
 }
@@ -58,14 +58,14 @@ void TdfParser::TdfSection::print(std::ostream & out) const
 TdfParser::TdfSection* TdfParser::TdfSection::construct_subsection(const std::string& name)
 {
 	std::string lowerd_name = StringToLower(name);
-	std::map<std::string,TdfSection*>::iterator it = sections.find(lowerd_name);
-	if (it != sections.end()) {
+	const auto it = sections.find(lowerd_name);
+
+	if (it != sections.end())
 		return it->second;
-	} else {
-		TdfSection* ret = new TdfSection;
-		sections[lowerd_name] = ret;
-		return ret;
-	}
+
+	TdfSection* ret = new TdfSection;
+	sections[lowerd_name] = ret;
+	return ret;
 }
 
 bool TdfParser::TdfSection::remove(const std::string& key, bool caseSensitive)
@@ -101,7 +101,7 @@ void TdfParser::TdfSection::add_name_value(const std::string& name, const std::s
 
 TdfParser::TdfSection::~TdfSection()
 {
-	for (std::map<std::string,TdfSection*>::iterator it = sections.begin(), e=sections.end(); it != e; ++it) {
+	for (auto it = sections.cbegin(), e = sections.cend(); it != e; ++it) {
 		delete it->second;
 	}
 }
@@ -297,10 +297,12 @@ const TdfParser::valueMap_t& TdfParser::GetAllValues(std::string const& location
 
 std::vector<std::string> TdfParser::GetSectionList(std::string const& location) const
 {
-	std::string lowerd = StringToLower(location);
+	const std::string& lowerd = StringToLower(location);
 	const std::vector<std::string>& loclist = GetLocationVector(lowerd);
-	std::vector<std::string> returnvec;
 	const sectionsMap_t* sectionsptr = &root_section.sections;
+
+	std::vector<std::string> returnvec;
+
 	if (!loclist[0].empty()) {
 		std::string searchpath;
 		for (unsigned int i = 0; i < loclist.size(); i++) {
@@ -314,22 +316,25 @@ std::vector<std::string> TdfParser::GetSectionList(std::string const& location) 
 			searchpath += '\\';
 		}
 	}
-	std::map<std::string,TdfSection*>::const_iterator it;
-	for (it = sectionsptr->begin(); it != sectionsptr->end(); ++it) {
+
+	for (auto it = sectionsptr->begin(); it != sectionsptr->end(); ++it) {
 		returnvec.push_back(it->first);
 		StringToLowerInPlace(returnvec.back());
 	}
+
 	return returnvec;
 }
 
 bool TdfParser::SectionExist(std::string const& location) const
 {
-	std::string lowerd = StringToLower(location);
+	const std::string& lowerd = StringToLower(location);
 	const std::vector<std::string>& loclist = GetLocationVector(lowerd);
+
 	sectionsMap_t::const_iterator sit = root_section.sections.find(loclist[0]);
-	if (sit == root_section.sections.end()) {
+
+	if (sit == root_section.sections.end())
 		return false;
-	}
+
 	TdfSection* sectionptr = sit->second;
 	for (unsigned int i = 1; i < loclist.size(); i++) {
 		sit = sectionptr->sections.find(loclist[i]);
@@ -343,7 +348,8 @@ bool TdfParser::SectionExist(std::string const& location) const
 
 std::vector<std::string> TdfParser::GetLocationVector(std::string const& location) const
 {
-	std::string lowerd = StringToLower(location);
+	const std::string& lowerd = StringToLower(location);
+
 	std::vector<std::string> loclist;
 	std::string::size_type start = 0;
 	std::string::size_type next = 0;

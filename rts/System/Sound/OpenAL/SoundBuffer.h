@@ -4,12 +4,14 @@
 #define SOUNDBUFFER_H
 
 #include <al.h>
-#include "System/Misc/NonCopyable.h"
+
 #include <memory>
 #include <string>
-#include <map>
 #include <vector>
 #include <cinttypes>
+
+#include "System/UnorderedMap.hpp"
+#include "System/Misc/NonCopyable.h"
 
 /**
  * @brief A buffer holding a sound
@@ -69,8 +71,9 @@ private:
 	ALuint channels;
 	ALfloat length;
 
-	typedef std::map<std::string, size_t> bufferMapT;
+	typedef spring::unordered_map<std::string, size_t> bufferMapT;
 	typedef std::vector< std::shared_ptr<SoundBuffer> > bufferVecT;
+
 	static bufferMapT bufferMap; // filename, index into Buffers
 	static bufferVecT buffers;
 };

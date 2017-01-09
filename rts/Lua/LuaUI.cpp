@@ -384,7 +384,7 @@ bool CLuaUI::LayoutButtons(int& xButtons, int& yButtons,
                            vector<ReStringPair>& reNamedCmds,
                            vector<ReStringPair>& reTooltipCmds,
                            vector<ReParamsPair>& reParamsCmds,
-                           map<int, int>& buttonList,
+                           spring::unordered_map<int, int>& buttonList,
                            string& menuName)
 {
 	customCmds.clear();
@@ -518,12 +518,12 @@ bool CLuaUI::BuildCmdDescTable(lua_State* L,
 }
 
 
-bool CLuaUI::GetLuaIntMap(lua_State* L, int index, map<int, int>& intMap)
+bool CLuaUI::GetLuaIntMap(lua_State* L, int index, spring::unordered_map<int, int>& intMap)
 {
 	const int table = index;
-	if (!lua_istable(L, table)) {
+	if (!lua_istable(L, table))
 		return false;
-	}
+
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 		if (!lua_isnumber(L, -1) || !lua_israwnumber(L, -2)) {
 			lua_pop(L, 2);

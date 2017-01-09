@@ -2,23 +2,15 @@
 
 
 #include "LuaTextures.h"
-
 #include "System/Util.h"
 
 
 /******************************************************************************/
 /******************************************************************************/
 
-LuaTextures::LuaTextures()
-{
-	lastCode = 0;
-}
-
-
 LuaTextures::~LuaTextures()
 {
-	map<string, Texture>::iterator it;
-	for (it = textures.begin(); it != textures.end(); ++it) {
+	for (auto it = textures.begin(); it != textures.end(); ++it) {
 		const Texture& tex = it->second;
 		glDeleteTextures(1, &tex.id);
 		if (GLEW_EXT_framebuffer_object) {
@@ -30,7 +22,7 @@ LuaTextures::~LuaTextures()
 }
 
 
-string LuaTextures::Create(const Texture& tex)
+std::string LuaTextures::Create(const Texture& tex)
 {	
 	GLint currentBinding;
 	glGetIntegerv(GL_TEXTURE_BINDING_2D, &currentBinding);
@@ -57,7 +49,7 @@ string LuaTextures::Create(const Texture& tex)
 	if (err != GL_NO_ERROR) {
 		glDeleteTextures(1, &texID);
 		glBindTexture(GL_TEXTURE_2D, currentBinding);
-		return string("");
+		return std::string("");
 	}
 
 	glTexParameteri(tex.target, GL_TEXTURE_WRAP_S, tex.wrap_s);
@@ -84,7 +76,7 @@ string LuaTextures::Create(const Texture& tex)
 	if (tex.fbo != 0) {
 		if (!GLEW_EXT_framebuffer_object) {
 			glDeleteTextures(1, &texID);
-			return string("");
+			return std::string("");
 		}
 		GLint currentFBO;
 		glGetIntegerv(GL_FRAMEBUFFER_BINDING_EXT, &currentFBO);
@@ -110,7 +102,7 @@ string LuaTextures::Create(const Texture& tex)
 			glDeleteFramebuffersEXT(1, &fbo);
 			glDeleteRenderbuffersEXT(1, &fboDepth);
 			glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, currentFBO);
-			return string("");
+			return std::string("");
 		}
 
 		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, currentFBO);
@@ -130,9 +122,9 @@ string LuaTextures::Create(const Texture& tex)
 }
 
 
-bool LuaTextures::Bind(const string& name) const
+bool LuaTextures::Bind(const std::string& name) const
 {	
-	map<string, Texture>::const_iterator it = textures.find(name);
+	auto it = textures.find(name);
 	if (it != textures.end()) {
 		const Texture& tex = it->second;
 		glBindTexture(tex.target, tex.id);
@@ -142,9 +134,9 @@ bool LuaTextures::Bind(const string& name) const
 }
 
 
-bool LuaTextures::Free(const string& name)
+bool LuaTextures::Free(const std::string& name)
 {
-	map<string, Texture>::iterator it = textures.find(name);
+	auto it = textures.find(name);
 	if (it != textures.end()) {
 		const Texture& tex = it->second;
 		glDeleteTextures(1, &tex.id);
@@ -159,15 +151,15 @@ bool LuaTextures::Free(const string& name)
 }
 
 
-bool LuaTextures::FreeFBO(const string& name)
+bool LuaTextures::FreeFBO(const std::string& name)
 {
-	if (!GLEW_EXT_framebuffer_object) {
+	if (!GLEW_EXT_framebuffer_object)
 		return false;
-	}
-	map<string, Texture>::iterator it = textures.find(name);
-	if (it == textures.end()) {
+
+	auto it = textures.find(name);
+	if (it == textures.end())
 		return false;
-	}
+
 	Texture& tex = it->second;
 	glDeleteFramebuffersEXT(1, &tex.fbo);
 	glDeleteRenderbuffersEXT(1, &tex.fboDepth);
@@ -179,8 +171,7 @@ bool LuaTextures::FreeFBO(const string& name)
 
 void LuaTextures::FreeAll()
 {
-	map<string, Texture>::iterator it;
-	for (it = textures.begin(); it != textures.end(); ++it) {
+	for (auto it = textures.begin(); it != textures.end(); ++it) {
 		const Texture& tex = it->second;
 		glDeleteTextures(1, &tex.id);
 		if (GLEW_EXT_framebuffer_object) {
@@ -192,13 +183,15 @@ void LuaTextures::FreeAll()
 }
 
 
-const LuaTextures::Texture* LuaTextures::GetInfo(const string& name) const
+const LuaTextures::Texture* LuaTextures::GetInfo(const std::string& name) const
 {
-	map<string, Texture>::const_iterator it = textures.find(name);
-	if (it != textures.end()) {
+	auto it = textures.find(name);
+
+	// NOTE: only safe if pointers are not leaked
+	if (it != textures.end())
 		return &(it->second);
-	}
-	return NULL;
+
+	return nullptr;
 }
 
 

@@ -136,7 +136,7 @@ unsigned int CCustomExplosionGenerator::GetFlagsFromHeight(float height, float g
 
 void ClassAliasList::Load(const LuaTable& aliasTable)
 {
-	map<string, string> aliasList;
+	spring::unordered_map<string, string> aliasList;
 	aliasTable.GetMap(aliasList);
 	aliases.insert(aliasList.begin(), aliasList.end());
 }
@@ -147,10 +147,11 @@ std::string ClassAliasList::ResolveAlias(const string& name) const
 	string n = name;
 
 	for (;;) {
-		map<string, string>::const_iterator i = aliases.find(n);
-		if (i == aliases.end()) {
+		const auto i = aliases.find(n);
+
+		if (i == aliases.end())
 			break;
-		}
+
 		n = i->second;
 	}
 
@@ -160,10 +161,9 @@ std::string ClassAliasList::ResolveAlias(const string& name) const
 
 string ClassAliasList::FindAlias(const string& className) const
 {
-	for (map<string, string>::const_iterator i = aliases.begin(); i != aliases.end(); ++i) {
-		if (i->second == className) {
+	for (auto i = aliases.cbegin(); i != aliases.cend(); ++i) {
+		if (i->second == className)
 			return i->first;
-		}
 	}
 
 	return className;
@@ -893,7 +893,7 @@ bool CCustomExplosionGenerator::Load(CExplosionGeneratorHandler* handler, const 
 		psi.count = std::max(0, spawnTable.GetInt("count", 1));
 
 		string code;
-		map<string, string> props;
+		spring::unordered_map<string, string> props;
 
 		spawnTable.SubTable("properties").GetMap(props);
 

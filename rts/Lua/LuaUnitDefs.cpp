@@ -289,10 +289,10 @@ static int SafeIconType(lua_State* L, const void* data)
 
 static int CustomParamsTable(lua_State* L, const void* data)
 {
-	const map<string, string>& params = *((const map<string, string>*)data);
+	const spring::unordered_map<std::string, std::string>& params = *((const spring::unordered_map<std::string, std::string>*)data);
 	lua_newtable(L);
-	map<string, string>::const_iterator it;
-	for (it = params.begin(); it != params.end(); ++it) {
+
+	for (auto it = params.cbegin(); it != params.cend(); ++it) {
 		lua_pushsstring(L, it->first);
 		lua_pushsstring(L, it->second);
 		lua_rawset(L, -3);
@@ -303,14 +303,15 @@ static int CustomParamsTable(lua_State* L, const void* data)
 
 static int BuildOptions(lua_State* L, const void* data)
 {
-	const map<int, string>& buildOptions = *((const map<int, string>*)data);
-	const map<string, int>& unitMap = unitDefHandler->unitDefIDsByName;
+	const spring::unordered_map<int, std::string>& buildOptions = *((const spring::unordered_map<int, std::string>*)data);
+	const spring::unordered_map<std::string, int>& unitMap = unitDefHandler->unitDefIDsByName;
 
 	lua_newtable(L);
 	int count = 0;
-	map<int, string>::const_iterator it;
-	for (it = buildOptions.begin(); it != buildOptions.end(); ++it) {
-		map<string, int>::const_iterator fit = unitMap.find(it->second);
+
+	for (auto it = buildOptions.cbegin(); it != buildOptions.cend(); ++it) {
+		const auto fit = unitMap.find(it->second);
+
 		if (fit != unitMap.end()) {
 			count++;
 			lua_pushnumber(L, count);

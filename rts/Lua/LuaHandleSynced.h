@@ -3,13 +3,13 @@
 #ifndef LUA_HANDLE_SYNCED
 #define LUA_HANDLE_SYNCED
 
-#include <map>
 #include <string>
-using std::map;
+
 using std::string;
 
 #include "LuaHandle.h"
 #include "LuaRulesParams.h"
+#include "System/UnorderedMap.hpp"
 
 struct lua_State;
 class LuaSyncedCtrl;
@@ -122,7 +122,7 @@ class CSyncedLuaHandle : public CLuaHandle
 	protected:
 		CLuaHandleSynced& base;
 
-		map<string, string> textCommands; // name, help
+		spring::unordered_map<string, string> textCommands; // name, help
 
 	private:
 		int origNextRef;

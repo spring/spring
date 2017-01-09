@@ -3,10 +3,10 @@
 #ifndef COBSCRIPTNAMES_H
 #define COBSCRIPTNAMES_H
 
-
-#include <map>
 #include <string>
 #include <vector>
+
+#include "System/UnorderedMap.hpp"
 
 
 //These are mapped by the CCobFile at startup to make common function calls faster
@@ -64,7 +64,7 @@ class CCobUnitScriptNames
 {
 public:
 	static const std::vector<std::string>& GetScriptNames(); // COBFN_* -> string
-	static const std::map<std::string, int>& GetScriptMap(); // string -> COBFN_*
+	static const spring::unordered_map<std::string, int>& GetScriptMap(); // string -> COBFN_*
 
 	static int GetScriptNumber(const std::string& fname);
 	static const std::string& GetScriptName(int num);

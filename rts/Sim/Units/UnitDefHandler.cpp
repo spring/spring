@@ -96,35 +96,28 @@ int CUnitDefHandler::PushNewUnitDef(const std::string& unitName, const LuaTable&
 
 void CUnitDefHandler::CleanBuildOptions()
 {
+	std::vector<int> eraseOpts;
+
 	// remove invalid build options
 	for (int i = 1; i < unitDefs.size(); i++) {
 		UnitDef& ud = unitDefs[i];
-		map<int, string>& bo = ud.buildOptions;
-		map<int, string>::iterator it = bo.begin();
-		while (it != bo.end()) {
-			bool erase = false;
 
+		auto& buildOpts = ud.buildOptions;
+
+		eraseOpts.clear();
+		eraseOpts.reserve(buildOpts.size());
+
+		for (auto it = buildOpts.cbegin(); it != buildOpts.cend(); ++it) {
 			const UnitDef* bd = GetUnitDefByName(it->second);
-			if (bd == NULL) {
-				LOG_L(L_WARNING,
-						"removed the \"%s\" entry from the \"%s\" build menu",
-						it->second.c_str(), ud.name.c_str());
-				erase = true;
-			}
-			/*
-			else if (bd->maxThisUnit <= 0) {
-				// don't remove, just grey out the icon
-				erase = true; // silent removal
-			}
-			*/
 
-			if (erase) {
-				map<int, string>::iterator tmp = it;
-				++it;
-				bo.erase(tmp);
-			} else {
-				++it;
+			if (bd == nullptr /*|| bd->maxThisUnit <= 0*/) {
+				LOG_L(L_WARNING, "removed the \"%s\" entry from the \"%s\" build menu", it->second.c_str(), ud.name.c_str());
+				eraseOpts.push_back(it->first);
 			}
+		}
+
+		for (const int buildOptionID: eraseOpts) {
+			buildOpts.erase(buildOptionID);
 		}
 	}
 }
@@ -133,11 +126,10 @@ void CUnitDefHandler::CleanBuildOptions()
 void CUnitDefHandler::ProcessDecoys()
 {
 	// assign the decoy pointers, and build the decoy map
-	map<string, string>::const_iterator mit;
-	for (mit = decoyNameMap.begin(); mit != decoyNameMap.end(); ++mit) {
-		map<string, int>::iterator fakeIt, realIt;
-		fakeIt = unitDefIDsByName.find(mit->first);
-		realIt = unitDefIDsByName.find(mit->second);
+	for (auto mit = decoyNameMap.begin(); mit != decoyNameMap.end(); ++mit) {
+		auto fakeIt = unitDefIDsByName.find(mit->first);
+		auto realIt = unitDefIDsByName.find(mit->second);
+
 		if ((fakeIt != unitDefIDsByName.end()) && (realIt != unitDefIDsByName.end())) {
 			UnitDef& fake = unitDefs[fakeIt->second];
 			UnitDef& real = unitDefs[realIt->second];
@@ -153,11 +145,14 @@ void CUnitDefHandler::FindStartUnits()
 {
 	for (unsigned int i = 0; i < sideParser.GetCount(); i++) {
 		const std::string& startUnit = sideParser.GetStartUnit(i);
-		if (!startUnit.empty()) {
-			std::map<std::string, int>::iterator it = unitDefIDsByName.find(startUnit);
-			if (it != unitDefIDsByName.end()) {
-				startUnitIDs.insert(it->second);
-			}
+
+		if (startUnit.empty())
+			continue;
+
+		const auto it = unitDefIDsByName.find(startUnit);
+
+		if (it != unitDefIDsByName.end()) {
+			startUnitIDs.insert(it->second);
 		}
 	}
 }
@@ -223,10 +218,10 @@ const UnitDef* CUnitDefHandler::GetUnitDefByName(std::string name)
 {
 	StringToLowerInPlace(name);
 
-	std::map<std::string, int>::iterator it = unitDefIDsByName.find(name);
-	if (it == unitDefIDsByName.end()) {
-		return NULL;
-	}
+	const auto it = unitDefIDsByName.find(name);
+
+	if (it == unitDefIDsByName.end())
+		return nullptr;
 
 	return &unitDefs[it->second];
 }
@@ -234,9 +229,9 @@ const UnitDef* CUnitDefHandler::GetUnitDefByName(std::string name)
 
 const UnitDef* CUnitDefHandler::GetUnitDefByID(int defid)
 {
-	if ((defid <= 0) || (defid >= unitDefs.size())) {
-		return NULL;
-	}
+	if ((defid <= 0) || (defid >= unitDefs.size()))
+		return nullptr;
+
 	return &unitDefs[defid];
 }
 

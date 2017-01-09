@@ -3,8 +3,9 @@
 #ifndef ROW_ATLAS_ALLOC_H
 #define ROW_ATLAS_ALLOC_H
 
+#include <vector>
+
 #include "IAtlasAllocator.h"
-#include <list>
 
 
 class CRowAtlasAlloc : public IAtlasAllocator
@@ -30,7 +31,7 @@ private:
 
 private:
 	int nextRowPos;
-	std::list<Row> imageRows;
+	std::vector<Row> imageRows;
 
 private:
 	void EstimateNeededSize();

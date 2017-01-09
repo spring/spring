@@ -1,5 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include <cinttypes>
+
 #include "Game/Game.h"
 #include "GameServer.h"
 
@@ -36,26 +38,24 @@
 #include "System/Net/UnpackPacket.h"
 #include "System/Sound/ISound.h"
 
-#include <cinttypes>
-
 #define LOG_SECTION_NET "Net"
 LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_NET)
 
-
-static std::map<int, unsigned int> mySyncChecksums;
+static spring::unordered_map<int, unsigned int> localSyncChecksums;
 
 
 void CGame::AddTraffic(int playerID, int packetCode, int length)
 {
-	std::map<int, PlayerTrafficInfo>::iterator it = playerTraffic.find(playerID);
+	auto it = playerTraffic.find(playerID);
 	if (it == playerTraffic.end()) {
 		playerTraffic[playerID] = PlayerTrafficInfo();
 		it = playerTraffic.find(playerID);
 	}
+
 	PlayerTrafficInfo& pti = it->second;
 	pti.total += length;
 
-	std::map<int, int>::iterator cit = pti.packets.find(packetCode);
+	auto cit = pti.packets.find(packetCode);
 	if (cit == pti.packets.end()) {
 		pti.packets[packetCode] = length;
 	} else {
@@ -518,7 +518,7 @@ void CGame::ClientReadNet()
 
 				if (gameServer != NULL && gameServer->GetDemoReader() != NULL) {
 					// buffer all checksums, so we can check sync later between demo & local
-					mySyncChecksums[gs->frameNum] = CSyncChecker::GetChecksum();
+					localSyncChecksums[gs->frameNum] = CSyncChecker::GetChecksum();
 				}
 
 				if ((gs->frameNum & 4095) == 0) {
@@ -543,7 +543,7 @@ void CGame::ClientReadNet()
 					          int  frameNum; pckt >> frameNum;
 					unsigned  int  checkSum; pckt >> checkSum;
 
-					const unsigned int ourCheckSum = mySyncChecksums[frameNum];
+					const unsigned int ourCheckSum = localSyncChecksums[frameNum];
 					const CPlayer* player = playerHandler->Player(playerNum);
 
 					// check if our checksum for this frame matches what

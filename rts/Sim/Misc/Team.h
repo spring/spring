@@ -95,7 +95,7 @@ public:
 	SResourcePack resPrevExcess;
 
 	int nextHistoryEntry;
-	std::list<TeamStatistics> statHistory;
+	std::vector<TeamStatistics> statHistory;
 
 	/// mod controlled parameters
 	LuaRulesParams::Params  modParams;

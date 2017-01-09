@@ -3,10 +3,10 @@
 #ifndef LUAUNITSCRIPT_H
 #define LUAUNITSCRIPT_H
 
-#include <map>
 #include "UnitScript.h"
 #include "NullUnitScript.h"
 #include "Sim/Units/Unit.h"
+#include "System/UnorderedMap.hpp"
 
 class CLuaHandle;
 struct lua_State;
@@ -29,7 +29,7 @@ private:
 	// contrary to COB the list of functions may differ per unit,
 	// so the LUAFN_* -> function mapping can differ per unit too.
 	std::vector<int> scriptIndex;
-	std::map<std::string, int> scriptNames;
+	spring::unordered_map<std::string, int> scriptNames;
 
 	// used to enforce SetDeathScriptFinished can only be used inside Killed
 	bool inKilled;

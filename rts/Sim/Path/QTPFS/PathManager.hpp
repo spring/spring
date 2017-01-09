@@ -3,14 +3,13 @@
 #ifndef QTPFS_PATHMANAGER_HDR
 #define QTPFS_PATHMANAGER_HDR
 
-#include <map>
-#include <list>
 #include <vector>
 
 #include "Sim/Path/IPathManager.h"
 #include "NodeLayer.hpp"
 #include "PathCache.hpp"
 #include "PathSearch.hpp"
+#include "System/UnorderedMap.hpp"
 
 struct MoveDef;
 struct SRectangle;
@@ -82,14 +81,15 @@ namespace QTPFS {
 			unsigned int numThreads,
 			const SRectangle& rect
 		);
-		typedef std::map<unsigned int, unsigned int> PathTypeMap;
-		typedef std::map<unsigned int, unsigned int>::iterator PathTypeMapIt;
-		typedef std::map<unsigned int, PathSearchTrace::Execution*> PathTraceMap;
-		typedef std::map<unsigned int, PathSearchTrace::Execution*>::iterator PathTraceMapIt;
-		typedef std::map<std::uint64_t, IPath*> SharedPathMap;
-		typedef std::map<std::uint64_t, IPath*>::iterator SharedPathMapIt;
-		typedef std::list<IPathSearch*> PathSearchList;
-		typedef std::list<IPathSearch*>::iterator PathSearchListIt;
+		typedef spring::unordered_map<unsigned int, unsigned int> PathTypeMap;
+		typedef spring::unordered_map<unsigned int, unsigned int>::iterator PathTypeMapIt;
+		typedef spring::unordered_map<unsigned int, PathSearchTrace::Execution*> PathTraceMap;
+		typedef spring::unordered_map<unsigned int, PathSearchTrace::Execution*>::iterator PathTraceMapIt;
+		typedef spring::unordered_map<std::uint64_t, IPath*> SharedPathMap;
+		typedef spring::unordered_map<std::uint64_t, IPath*>::iterator SharedPathMapIt;
+
+		typedef std::vector<IPathSearch*> PathSearchVect;
+		typedef std::vector<IPathSearch*>::iterator PathSearchVectIt;
 
 		void SpawnSpringThreads(MemberFunc f, const SRectangle& r);
 
@@ -127,8 +127,8 @@ namespace QTPFS {
 		);
 
 		bool ExecuteSearch(
-			PathSearchList& searches,
-			PathSearchListIt& searchesIt,
+			PathSearchVect& searches,
+			PathSearchVectIt& searchesIt,
 			NodeLayer& nodeLayer,
 			PathCache& pathCache,
 			unsigned int pathType
@@ -143,12 +143,13 @@ namespace QTPFS {
 		std::vector<NodeLayer> nodeLayers;
 		std::vector<QTNode*> nodeTrees;
 		std::vector<PathCache> pathCaches;
-		std::vector< std::list<IPathSearch*> > pathSearches;
-		std::map<unsigned int, unsigned int> pathTypes;
-		std::map<unsigned int, PathSearchTrace::Execution*> pathTraces;
+		std::vector< std::vector<IPathSearch*> > pathSearches;
+
+		spring::unordered_map<unsigned int, unsigned int> pathTypes;
+		spring::unordered_map<unsigned int, PathSearchTrace::Execution*> pathTraces;
 
 		// maps "hashes" of executed searches to the found paths
-		std::map<std::uint64_t, IPath*> sharedPaths;
+		spring::unordered_map<std::uint64_t, IPath*> sharedPaths;
 
 		std::vector<unsigned int> numCurrExecutedSearches;
 		std::vector<unsigned int> numPrevExecutedSearches;

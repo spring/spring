@@ -1118,11 +1118,11 @@ bool LuaTable::GetKeys(std::vector<string>& data) const
 //  Map functions
 //
 
-bool LuaTable::GetMap(map<int, float>& data) const
+bool LuaTable::GetMap(spring::unordered_map<int, float>& data) const
 {
-	if (!PushTable()) {
+	if (!PushTable())
 		return false;
-	}
+
 	const int table = lua_gettop(L);
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 		if (lua_israwnumber(L, -2) && lua_isnumber(L, -1)) {
@@ -1135,11 +1135,11 @@ bool LuaTable::GetMap(map<int, float>& data) const
 }
 
 
-bool LuaTable::GetMap(map<int, string>& data) const
+bool LuaTable::GetMap(spring::unordered_map<int, string>& data) const
 {
-	if (!PushTable()) {
+	if (!PushTable())
 		return false;
-	}
+
 	const int table = lua_gettop(L);
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 		if (lua_israwnumber(L, -2) && lua_isstring(L, -1)) {
@@ -1158,11 +1158,11 @@ bool LuaTable::GetMap(map<int, string>& data) const
 }
 
 
-bool LuaTable::GetMap(map<string, float>& data) const
+bool LuaTable::GetMap(spring::unordered_map<string, float>& data) const
 {
-	if (!PushTable()) {
+	if (!PushTable())
 		return false;
-	}
+
 	const int table = lua_gettop(L);
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 		if (lua_israwstring(L, -2) && lua_isnumber(L, -1)) {
@@ -1175,11 +1175,11 @@ bool LuaTable::GetMap(map<string, float>& data) const
 }
 
 
-bool LuaTable::GetMap(map<string, string>& data) const
+bool LuaTable::GetMap(spring::unordered_map<string, string>& data) const
 {
-	if (!PushTable()) {
+	if (!PushTable())
 		return false;
-	}
+
 	const int table = lua_gettop(L);
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 		if (lua_israwstring(L, -2)) {

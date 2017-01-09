@@ -15,17 +15,15 @@ namespace
 	CGlobalUnsyncedRNG randnum; // no need for strong randomness here, so default seed is ok
 
 	template <typename T>
-	inline bool MapEntryValExtract(const std::map<std::string, std::string>& map, const std::string& key, T& t)
+	inline bool MapEntryValExtract(const spring::unordered_map<std::string, std::string>& map, const std::string& key, T& t)
 	{
-		std::map<std::string, std::string>::const_iterator it = map.find(key);
-		if (it != map.end())
-		{
+		auto it = map.find(key);
+		if (it != map.end()) {
 			std::istringstream stream(it->second);
 			stream >> t;
 			return true;
 		}
-		else
-			return false;
+		return false;
 	}
 
 	template <typename T>
@@ -35,7 +33,7 @@ namespace
 	}
 }
 
-SoundItem::SoundItem(std::shared_ptr<SoundBuffer> _buffer, const std::map<std::string, std::string>& items)
+SoundItem::SoundItem(std::shared_ptr<SoundBuffer> _buffer, const spring::unordered_map<std::string, std::string>& items)
 	: buffer(_buffer)
 	, gain(1.0)
 	, gainMod(0)

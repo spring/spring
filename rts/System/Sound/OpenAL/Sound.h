@@ -3,14 +3,12 @@
 #ifndef _SOUND_H_
 #define _SOUND_H_
 
-#include "System/Sound/ISound.h"
-
-#include <set>
 #include <string>
-#include <map>
 #include <vector>
 
+#include "System/Sound/ISound.h"
 #include "System/float3.h"
+#include "System/UnorderedMap.hpp"
 #include "System/Threading/SpringThreading.h"
 
 #include "SoundItem.h"
@@ -55,8 +53,8 @@ public:
 	const float3& GetListenerPos() const { return myPos; }
 
 private:
-	typedef std::map<std::string, std::string> soundItemDef;
-	typedef std::map<std::string, soundItemDef> soundItemDefMap;
+	typedef spring::unordered_map<std::string, std::string> soundItemDef;
+	typedef spring::unordered_map<std::string, soundItemDef> soundItemDefMap;
 
 private:
 	void StartThread(int maxSounds);
@@ -65,7 +63,6 @@ private:
 	void UpdateListenerReal();
 
 	size_t MakeItemFromDef(const soundItemDef& itemDef);
-
 	size_t LoadSoundBuffer(const std::string& filename);
 
 private:
@@ -77,7 +74,7 @@ private:
 	bool appIsIconified;
 	bool pitchAdjust;
 
-	typedef std::map<std::string, size_t> soundMapT;
+	typedef spring::unordered_map<std::string, size_t> soundMapT;
 	typedef std::vector<SoundItem*> soundVecT;
 	soundMapT soundMap;
 	soundVecT sounds;

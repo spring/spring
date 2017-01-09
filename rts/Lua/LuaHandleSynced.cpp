@@ -1276,14 +1276,13 @@ int CSyncedLuaHandle::AddSyncedActionFallback(lua_State* L)
 int CSyncedLuaHandle::RemoveSyncedActionFallback(lua_State* L)
 {
 	//TODO move to LuaHandle
-	string cmdRaw  = luaL_checkstring(L, 1);
-	cmdRaw = "/" + cmdRaw;
-
+	string cmdRaw = "/" + std::string(luaL_checkstring(L, 1));
 	string cmd = cmdRaw;
+
 	const string::size_type pos = cmdRaw.find_first_of(" \t");
-	if (pos != string::npos) {
+
+	if (pos != string::npos)
 		cmd.resize(pos);
-	}
 
 	if (cmd.empty()) {
 		lua_pushboolean(L, false);
@@ -1291,14 +1290,18 @@ int CSyncedLuaHandle::RemoveSyncedActionFallback(lua_State* L)
 	}
 
 	auto lhs = GetSyncedHandle(L);
-	map<string, string>::iterator it = lhs->textCommands.find(cmd);
-	if (it != lhs->textCommands.end()) {
-		lhs->textCommands.erase(it);
+	auto& cmds = lhs->textCommands;
+
+	const auto it = cmds.find(cmd);
+
+	if (it != cmds.end()) {
+		cmds.erase(it);
 		wordCompletion->RemoveWord(cmdRaw);
 		lua_pushboolean(L, true);
 	} else {
 		lua_pushboolean(L, false);
 	}
+
 	return 1;
 }
 

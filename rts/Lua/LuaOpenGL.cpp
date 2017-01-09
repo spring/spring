@@ -3315,15 +3315,17 @@ int LuaOpenGL::CopyToTexture(lua_State* L)
 {
 	CheckDrawingEnabled(L, __FUNCTION__);
 
-	const string texture = luaL_checkstring(L, 1);
-	if (texture[0] != LuaTextures::prefix) { // '!'
+	const std::string& texture = luaL_checkstring(L, 1);
+
+	if (texture[0] != LuaTextures::prefix) // '!'
 		luaL_error(L, "gl.CopyToTexture() can only write to lua textures");
-	}
-	LuaTextures& textures = CLuaHandle::GetActiveTextures(L);
+
+	const LuaTextures& textures = CLuaHandle::GetActiveTextures(L);
 	const LuaTextures::Texture* tex = textures.GetInfo(texture);
-	if (tex == NULL) {
+
+	if (tex == nullptr)
 		return 0;
-	}
+
 	glBindTexture(tex->target, tex->id);
 	glEnable(tex->target); // leave it bound and enabled
 
@@ -3349,18 +3351,19 @@ int LuaOpenGL::RenderToTexture(lua_State* L)
 {
 	CheckDrawingEnabled(L, __FUNCTION__);
 
-	const string texture = luaL_checkstring(L, 1);
-	if (texture[0] != LuaTextures::prefix) { // '!'
+	const std::string& texture = luaL_checkstring(L, 1);
+
+	if (texture[0] != LuaTextures::prefix) // '!'
 		luaL_error(L, "gl.RenderToTexture() can only write to fbo textures");
-	}
-	if (!lua_isfunction(L, 2)) {
+
+	if (!lua_isfunction(L, 2))
 		luaL_error(L, "Incorrect arguments to gl.RenderToTexture()");
-	}
-	LuaTextures& textures = CLuaHandle::GetActiveTextures(L);
+
+	const LuaTextures& textures = CLuaHandle::GetActiveTextures(L);
 	const LuaTextures::Texture* tex = textures.GetInfo(texture);
-	if ((tex == NULL) || (tex->fbo == 0)) {
+
+	if ((tex == nullptr) || (tex->fbo == 0))
 		return 0;
-	}
 
 	GLint currentFBO = 0;
 	if (drawMode == DRAW_WORLD_SHADOW) {
@@ -3395,15 +3398,17 @@ int LuaOpenGL::RenderToTexture(lua_State* L)
 int LuaOpenGL::GenerateMipmap(lua_State* L)
 {
 	//CheckDrawingEnabled(L, __FUNCTION__);
-	const string& texStr = luaL_checkstring(L, 1);
-	if (texStr[0] != LuaTextures::prefix) { // '!'
+	const std::string& texStr = luaL_checkstring(L, 1);
+
+	if (texStr[0] != LuaTextures::prefix) // '!'
 		return 0;
-	}
-	LuaTextures& textures = CLuaHandle::GetActiveTextures(L);
+
+	const LuaTextures& textures = CLuaHandle::GetActiveTextures(L);
 	const LuaTextures::Texture* tex = textures.GetInfo(texStr);
-	if (tex == NULL) {
+
+	if (tex == nullptr)
 		return 0;
-	}
+
 	GLint currentBinding;
 	glGetIntegerv(GL_TEXTURE_BINDING_2D, &currentBinding);
 	glBindTexture(GL_TEXTURE_2D, tex->id);

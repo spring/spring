@@ -9,12 +9,14 @@
  * It also manages reading and caching of the actual .cob files
  */
 
+#include <vector>
+
 #include "CobThread.h"
 #include "System/creg/creg_cond.h"
 
 #include "System/creg/STL_Queue.h"
-#include <vector>
-#include <map>
+#include "System/UnorderedMap.hpp"
+
 
 class CCobThread;
 class CCobInstance;
@@ -56,7 +58,7 @@ public:
 class CCobFileHandler
 {
 protected:
-	std::map<std::string, CCobFile*> cobFiles;
+	spring::unordered_map<std::string, CCobFile*> cobFiles;
 public:
 	~CCobFileHandler();
 	CCobFile* GetCobFile(const std::string& name);

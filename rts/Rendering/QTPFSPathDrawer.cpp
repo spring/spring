@@ -55,8 +55,8 @@ void QTPFSPathDrawer::DrawNodeTree(const MoveDef* md) const {
 	QTPFS::QTNode* nt = pm->nodeTrees[md->pathType];
 	CVertexArray* va = GetVertexArray();
 
-	std::list<const QTPFS::QTNode*> nodes;
-	std::list<const QTPFS::QTNode*>::const_iterator nodesIt;
+	std::vector<const QTPFS::QTNode*> nodes;
+	std::vector<const QTPFS::QTNode*>::const_iterator nodesIt;
 
 	GetVisibleNodes(nt, nodes);
 
@@ -95,7 +95,7 @@ void QTPFSPathDrawer::DrawNodeTreeRec(
 	}
 }
 
-void QTPFSPathDrawer::GetVisibleNodes(const QTPFS::QTNode* nt, std::list<const QTPFS::QTNode*>& nodes) const {
+void QTPFSPathDrawer::GetVisibleNodes(const QTPFS::QTNode* nt, std::vector<const QTPFS::QTNode*>& nodes) const {
 	if (nt->IsLeaf()) {
 		nodes.push_back(nt);
 	} else {
@@ -187,8 +187,8 @@ void QTPFSPathDrawer::DrawPath(const QTPFS::IPath* path, CVertexArray* va) const
 
 void QTPFSPathDrawer::DrawSearchExecution(unsigned int pathType, const QTPFS::PathSearchTrace::Execution* searchExec) const {
 	// TODO: prevent overdraw so oft-visited nodes do not become darker
-	const std::list<QTPFS::PathSearchTrace::Iteration>& searchIters = searchExec->GetIterations();
-	      std::list<QTPFS::PathSearchTrace::Iteration>::const_iterator it;
+	const std::vector<QTPFS::PathSearchTrace::Iteration>& searchIters = searchExec->GetIterations();
+	      std::vector<QTPFS::PathSearchTrace::Iteration>::const_iterator it;
 	const unsigned searchFrame = searchExec->GetFrame();
 
 	// number of frames reserved to draw the entire trace
@@ -205,14 +205,14 @@ void QTPFSPathDrawer::DrawSearchExecution(unsigned int pathType, const QTPFS::Pa
 			break;
 
 		const QTPFS::PathSearchTrace::Iteration& searchIter = *it;
-		const std::list<unsigned int>& nodeIndices = searchIter.GetNodeIndices();
+		const std::vector<unsigned int>& nodeIndices = searchIter.GetNodeIndices();
 
 		DrawSearchIteration(pathType, nodeIndices, va);
 	}
 }
 
-void QTPFSPathDrawer::DrawSearchIteration(unsigned int pathType, const std::list<unsigned int>& nodeIndices, CVertexArray* va) const {
-	std::list<unsigned int>::const_iterator it = nodeIndices.begin();
+void QTPFSPathDrawer::DrawSearchIteration(unsigned int pathType, const std::vector<unsigned int>& nodeIndices, CVertexArray* va) const {
+	std::vector<unsigned int>::const_iterator it = nodeIndices.cbegin();
 
 	unsigned int hmx = (*it) % mapDims.mapx;
 	unsigned int hmz = (*it) / mapDims.mapx;

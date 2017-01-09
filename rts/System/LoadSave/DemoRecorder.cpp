@@ -1,20 +1,19 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include <cassert>
+#include <cerrno>
+#include <cstring>
+
 #include "DemoRecorder.h"
+#include "Game/GameVersion.h"
+#include "Sim/Misc/TeamStatistics.h"
+#include "System/TimeUtil.h"
+#include "System/Util.h"
 #include "System/FileSystem/DataDirsAccess.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/FileSystem/FileQueryFlags.h"
 #include "System/FileSystem/FileHandler.h"
-#include "Game/GameVersion.h"
-#include "Sim/Misc/TeamStatistics.h"
-#include "System/Util.h"
-#include "System/TimeUtil.h"
-
 #include "System/Log/ILog.h"
-
-#include <cassert>
-#include <cerrno>
-#include <cstring>
 
 
 CDemoRecorder::CDemoRecorder(const std::string& mapName, const std::string& modName, bool serverDemo):
@@ -159,14 +158,14 @@ void CDemoRecorder::SetPlayerStats(int playerNum, const PlayerStatistics& stats)
 }
 
 /** @brief Set (overwrite) the TeamStatistics history for team teamNum */
-void CDemoRecorder::SetTeamStats(int teamNum, const std::list< TeamStatistics >& stats)
+void CDemoRecorder::SetTeamStats(int teamNum, const std::vector<TeamStatistics>& stats)
 {
 	assert((unsigned)teamNum < teamStats.size()); //FIXME
 
 	teamStats[teamNum].clear();
 	teamStats[teamNum].reserve(stats.size());
 
-	for (std::list< TeamStatistics >::const_iterator it = stats.begin(); it != stats.end(); ++it)
+	for (auto it = stats.cbegin(); it != stats.cend(); ++it)
 		teamStats[teamNum].push_back(*it);
 }
 
