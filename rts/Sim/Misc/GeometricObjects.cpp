@@ -13,6 +13,7 @@ CR_BIND(CGeometricObjects::GeoGroup, )
 CR_REG_METADATA(CGeometricObjects, (
 	CR_MEMBER(geoGroups),
 	CR_MEMBER(timedGroups),
+	CR_IGNORED(expiredGroups),
 	CR_MEMBER(firstFreeGroup)
 ))
 
@@ -20,12 +21,6 @@ CR_REG_METADATA_SUB(CGeometricObjects, GeoGroup, (CR_MEMBER(squares)))
 
 
 CGeometricObjects* geometricObjects;
-
-CGeometricObjects::CGeometricObjects()
-	: firstFreeGroup(1)
-{
-}
-
 
 CGeometricObjects::~CGeometricObjects()
 {

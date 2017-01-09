@@ -24,7 +24,7 @@ private:
 	};
 
 public:
-	CGeometricObjects();
+	CGeometricObjects() { firstFreeGroup = 1; }
 	~CGeometricObjects();
 
 	int AddSpline(float3 b1, float3 b2, float3 b3, float3 b4, float width, int arrow, int lifeTime = -1, int group = 0);
