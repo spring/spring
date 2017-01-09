@@ -105,12 +105,6 @@ public:
 	typedef std::vector<int2> LosLine;
 	typedef std::vector<LosLine> LosTable;
 
-	CLosTableHelper()
-	{
-		// [0] is the zero-radius table
-		losTables.resize(MAX_UNIT_SENSOR_RADIUS + 1);
-	}
-
 	// only generates table if not in cache
 	void GenerateForLosSize(size_t losSize);
 
@@ -127,7 +121,11 @@ public:
 	}
 
 private:
-	std::vector<LosTable> losTables;
+	// [0] is the zero-radius table
+	// NOTE:
+	//   do we even need a table for *every* possible radius?
+	//   why not precalculate only the largest and subsample?
+	std::array<LosTable, MAX_UNIT_SENSOR_RADIUS + 1> losTables;
 
 private:
 	static LosLine GetRay(int x, int y);
