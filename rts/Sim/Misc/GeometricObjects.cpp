@@ -13,7 +13,6 @@ CR_BIND(CGeometricObjects::GeoGroup, )
 CR_REG_METADATA(CGeometricObjects, (
 	CR_MEMBER(geoGroups),
 	CR_MEMBER(timedGroups),
-	CR_IGNORED(expiredGroups),
 	CR_MEMBER(firstFreeGroup)
 ))
 
@@ -123,26 +122,16 @@ int CGeometricObjects::AddLine(float3 start, float3 end, float width, int arrow,
 
 void CGeometricObjects::Update()
 {
-	expiredGroups.clear();
-	expiredGroups.reserve(timedGroups.size());
+	const auto iter = timedGroups.find(gs->frameNum);
 
-	for (const auto& p: timedGroups) {
-		if (p.first > gs->frameNum)
-			continue;
-
-		for (const int groupID: p.second) {
-			expiredGroups.push_back(groupID);
-		}
-	}
-
-	if (expiredGroups.empty())
+	if (iter == timedGroups.end())
 		return;
 
-	for (const int groupID: expiredGroups) {
+	for (const int groupID: iter->second) {
 		DeleteGroup(groupID);
 	}
 
-	timedGroups.erase(gs->frameNum);
+	timedGroups.erase(iter->first);
 }
 
 

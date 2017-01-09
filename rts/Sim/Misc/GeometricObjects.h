@@ -38,7 +38,6 @@ public:
 private:
 	spring::unordered_map<int, GeoGroup> geoGroups;
 	spring::unordered_map<int, std::vector<int> > timedGroups;
-	std::vector<int> expiredGroups;
 
 	int firstFreeGroup;
 };
