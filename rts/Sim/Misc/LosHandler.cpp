@@ -319,10 +319,12 @@ inline void ILosType::DeleteInstance(SLosInstance* li)
 {
 	assert(li->refCount == 0);
 
-	auto pit = instanceHash.find(li->hashNum); assert(pit != instanceHash.end());
-	auto vit = std::find((pit->second).begin(), (pit->second).end(), li); assert(vit != (pit->second).end());
+	auto  pit = instanceHash.find(li->hashNum); assert(pit != instanceHash.end());
+	auto& vec = pit->second;
+	auto  vit = std::find(vec.begin(), vec.end(), li); assert(vit != vec.end());
 
-	(pit->second).erase(vit);
+	*vit = vec.back();
+	vec.pop_back();
 
 	// caller has to do that
 	assert(!li->isCache);
