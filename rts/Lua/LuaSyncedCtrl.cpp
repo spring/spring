@@ -2321,20 +2321,18 @@ int LuaSyncedCtrl::SetUnitPieceCollisionVolumeData(lua_State* L)
 int LuaSyncedCtrl::SetUnitSensorRadius(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
-		return 0;
-	}
 
-	const string key = luaL_checkstring(L, 2);
-	const float radius = luaL_checkfloat(L, 3);
+	if (unit == nullptr)
+		return 0;
+
+	const std::string& key = luaL_checkstring(L, 2);
+	const int radius = Clamp(luaL_checkint(L, 3), 0, MAX_UNIT_SENSOR_RADIUS);
 
 	if (key == "los") {
-		unit->ChangeLos(radius, unit->realAirLosRadius);
-		unit->realLosRadius = radius;
+		unit->ChangeLos(unit->realLosRadius = radius, unit->realAirLosRadius);
 		lua_pushnumber(L, unit->losRadius);
 	} else if (key == "airLos") {
-		unit->ChangeLos(unit->realLosRadius, radius);
-		unit->realAirLosRadius = radius;
+		unit->ChangeLos(unit->realAirLosRadius = radius, radius);
 		lua_pushnumber(L, unit->airLosRadius);
 	} else if (key == "radar") {
 		unit->radarRadius = radius;

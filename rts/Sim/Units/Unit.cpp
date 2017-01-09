@@ -361,14 +361,15 @@ void CUnit::PreInit(const UnitLoadParams& params)
 
 
 	// sensor parameters
-	realLosRadius = int(unitDef->losRadius);
-	realAirLosRadius = int(unitDef->airLosRadius);
-	radarRadius      = unitDef->radarRadius;
-	sonarRadius      = unitDef->sonarRadius;
-	jammerRadius     = unitDef->jammerRadius;
-	sonarJamRadius   = unitDef->sonarJamRadius;
-	seismicRadius    = unitDef->seismicRadius;
+	realLosRadius    = Clamp(int(unitDef->losRadius)    , 0, MAX_UNIT_SENSOR_RADIUS);
+	realAirLosRadius = Clamp(int(unitDef->airLosRadius) , 0, MAX_UNIT_SENSOR_RADIUS);
+	radarRadius      = Clamp(    unitDef->radarRadius   , 0, MAX_UNIT_SENSOR_RADIUS);
+	sonarRadius      = Clamp(    unitDef->sonarRadius   , 0, MAX_UNIT_SENSOR_RADIUS);
+	jammerRadius     = Clamp(    unitDef->jammerRadius  , 0, MAX_UNIT_SENSOR_RADIUS);
+	sonarJamRadius   = Clamp(    unitDef->sonarJamRadius, 0, MAX_UNIT_SENSOR_RADIUS);
+	seismicRadius    = Clamp(    unitDef->seismicRadius , 0, MAX_UNIT_SENSOR_RADIUS);
 	seismicSignature = unitDef->seismicSignature;
+
 	stealth = unitDef->stealth;
 	sonarStealth = unitDef->sonarStealth;
 
@@ -495,9 +496,8 @@ void CUnit::PostLoad()
 
 void CUnit::FinishedBuilding(bool postInit)
 {
-	if (!beingBuilt && !postInit) {
+	if (!beingBuilt && !postInit)
 		return;
-	}
 
 	beingBuilt = false;
 	buildProgress = 1.0f;

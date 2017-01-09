@@ -133,4 +133,12 @@ static constexpr float MAX_PROJECTILE_RANGE = 1e6f;
  */
 static constexpr float MAX_PROJECTILE_HEIGHT = 1e6f;
 
+/**
+ * maximum allowed sensor radius (LOS, airLOS, ...) of any unit, in elmos
+ * the value chosen is sufficient to cover a 40x40 map with room to spare
+ * from any point
+ */
+static constexpr int MAX_UNIT_SENSOR_RADIUS = 32768;
+
 #endif // _GLOBAL_CONSTANTS_H
+
