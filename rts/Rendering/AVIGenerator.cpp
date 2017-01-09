@@ -7,8 +7,9 @@
 #include "Rendering/GL/myGL.h"
 #include "Game/GameVersion.h"
 #include "System/Log/ILog.h"
-#include "System/SpringApp.h"
 #include "System/Platform/Threading.h"
+#include "System/SpringApp.h"
+#include "System/Util.h"
 
 #include <windows.h>
 

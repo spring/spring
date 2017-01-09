@@ -61,8 +61,8 @@ private:
 	spring::mutex AVIMutex;
 	spring::condition_variable_any AVICondition;
 
-	std::deque< unsigned char > freeImageBuffers;
-	std::deque< unsigned char > imageBuffers;
+	std::deque< unsigned char* > freeImageBuffers;
+	std::deque< unsigned char* > imageBuffers;
 
 	unsigned char* readBuf;
 
