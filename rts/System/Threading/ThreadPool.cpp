@@ -113,8 +113,6 @@ static bool DoTask(int tid)
 		#else
 		if (queue.try_dequeue(tg)) {
 		#endif
-			const spring_time t0 = spring_now();
-
 			// inform other workers when there is global work to do
 			// waking is an expensive kernel-syscall, so better shift this
 			// cost to the workers too (the main thread only wakes when ALL
@@ -122,10 +120,7 @@ static bool DoTask(int tid)
 			if (idx == 0)
 				NotifyWorkerThreads(true);
 
-			for (tg->ExitedQueue(); tg->ExecuteTask(); ) {}
-
-			const spring_time t1 = spring_now();
-			const spring_time dt = t1 - t0;
+			const spring_time dt = tg->ExecuteLoop();
 
 			threadStats[tid].numTasks += 1;
 			threadStats[tid].sumTime  += dt.toNanoSecsi();
@@ -138,12 +133,7 @@ static bool DoTask(int tid)
 		#else
 		while (queue.try_dequeue(tg)) {
 		#endif
-			const spring_time t0 = spring_now();
-
-			for (tg->ExitedQueue(); tg->ExecuteTask(); ) {}
-
-			const spring_time t1 = spring_now();
-			const spring_time dt = t1 - t0;
+			const spring_time dt = tg->ExecuteLoop();
 
 			threadStats[tid].numTasks += 1;
 			threadStats[tid].sumTime  += dt.toNanoSecsi();
@@ -194,8 +184,6 @@ static void WorkerLoop(int tid)
 
 void WaitForFinished(std::shared_ptr<ITaskGroup>&& taskGroup)
 {
-	assert(!taskGroup->IsSingleTask());
-
 	// can be any worker-thread (for_mt inside another for_mt, etc)
 	const int tid = ThreadPool::GetThreadNum();
 
@@ -203,7 +191,10 @@ void WaitForFinished(std::shared_ptr<ITaskGroup>&& taskGroup)
 		#ifndef UNIT_TEST
 		SCOPED_MT_TIMER("::ThreadWorkers (accumulated)");
 		#endif
-		while (taskGroup->ExecuteTask());
+
+		assert(!taskGroup->IsSingleTask());
+		assert(!taskGroup->SelfDelete());
+		taskGroup->ExecuteLoop();
 	}
 
 	// NOTE:
@@ -211,7 +202,7 @@ void WaitForFinished(std::shared_ptr<ITaskGroup>&& taskGroup)
 	//   entirely by the loop above, before any worker thread has
 	//   even had a chance to pop it from the queue (so returning
 	//   under that condition could cause the group to be deleted
-	//   prematurely)
+	//   prematurely) --> wait
 	if (taskGroup->IsFinished()) {
 		while (taskGroup->IsInQueue()) {
 			DoTask(tid);
