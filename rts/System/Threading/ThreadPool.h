@@ -83,21 +83,30 @@ static inline auto parallel_reduce(F&& f, G&& g) -> typename std::result_of<F()>
 class ITaskGroup
 {
 public:
-	ITaskGroup(const bool getid = true) : remainingTasks(0), wantedThread(0), id(getid ? lastId.fetch_add(1) : -1) {}
-	virtual ~ITaskGroup() {}
+	ITaskGroup(const bool getid = true) : id(getid ? lastId.fetch_add(1) : -1) {
+		remainingTasks = 0;
+		wantedThread = 0;
+		inTaskQueue = 1;
+	}
 
-	virtual void DeleteWhenDone(bool b) {}
+	virtual ~ITaskGroup() {
+		assert(IsFinished());
+		assert(!IsInQueue());
+	}
+
+	virtual bool IsSingleTask() const { return false; }
 	virtual bool ExecuteTask() = 0;
+	virtual void ExitedQueue() { assert(inTaskQueue.load() == 1); inTaskQueue.store(0); }
 
 	bool IsFinished() const { assert(remainingTasks.load() >= 0); return (remainingTasks.load(std::memory_order_relaxed) == 0); }
+	bool IsInQueue() const { return (inTaskQueue.load(std::memory_order_relaxed) == 1); }
 
 	int RemainingTasks() const { return remainingTasks; }
 	int WantedThread() const { return wantedThread; }
 
 	bool wait_for(const spring_time& rel_time) const {
 		const auto end = spring_now() + rel_time;
-		while (!IsFinished() && (spring_now() < end)) {
-		}
+		while (!IsFinished() && (spring_now() < end));
 		return IsFinished();
 	}
 
@@ -108,6 +117,7 @@ public:
 	std::atomic_int remainingTasks;
 	// if 0 (default), task will be executed by an arbitrary thread
 	std::atomic_int wantedThread;
+	std::atomic_int inTaskQueue;
 
 private:
 	static std::atomic_uint lastId;
@@ -147,29 +157,29 @@ class SingleTask : public ITaskGroup
 public:
 	typedef typename std::result_of<F(Args...)>::type return_type;
 
-	SingleTask(F f, Args... args) : taskDone(false), deleteMe(false) {
-		auto p = std::make_shared<std::packaged_task<return_type()>>(
-			std::bind(f, std::forward<Args>(args)...)
-		);
-		result = std::make_shared<std::future<return_type>>(p->get_future());
-		task = p;
-		this->remainingTasks++;
+	SingleTask(F f, Args... args) : taskDone(false), deleteMe(true) {
+		task = std::make_shared<std::packaged_task<return_type()>>(std::bind(f, std::forward<Args>(args)...));
+		result = std::make_shared<std::future<return_type>>(task->get_future());
+
+		remainingTasks += 1;
 	}
 
-	void DeleteWhenDone(bool b) override { deleteMe.store(b); }
+	bool IsSingleTask() const override { return true; }
 	bool ExecuteTask() override {
+		// note: *never* called from WaitForFinished
 		if (taskDone.load(std::memory_order_relaxed)) {
 			if (deleteMe.load()) delete this;
 			return false;
 		}
 
 		(*task)();
-		this->remainingTasks--;
+		remainingTasks -= 1;
 		taskDone.store(true);
 		return true;
 	}
 
-	std::shared_ptr<std::future<return_type>> GetFuture() { assert(result->valid()); return std::move(result); } //FIXME rethrow exceptions some time
+	// FIXME: rethrow exceptions some time
+	std::shared_ptr<std::future<return_type>> GetFuture() { assert(result->valid()); return std::move(result); }
 
 public:
 	std::atomic<bool> taskDone;
@@ -199,7 +209,7 @@ public:
 		);
 		results.emplace_back(task->get_future());
 		tasks.emplace_back(task);
-		this->remainingTasks.fetch_add(1, std::memory_order_release);
+		remainingTasks.fetch_add(1, std::memory_order_release);
 	}
 
 
@@ -209,9 +219,10 @@ public:
 
 		if (pos < tasks.size()) {
 			tasks[pos]();
-			this->remainingTasks.fetch_sub(1, std::memory_order_release);
+			remainingTasks.fetch_sub(1, std::memory_order_release);
 			return true;
 		}
+
 		return false;
 	}
 
@@ -240,17 +251,19 @@ public:
 	void Enqueue(F f, Args... args)
 	{
 		tasks.emplace_back(std::bind(f, args...));
-		this->remainingTasks.fetch_add(1, std::memory_order_release);
+		remainingTasks.fetch_add(1, std::memory_order_release);
 	}
 
 	bool ExecuteTask() override
 	{
 		const int pos = curtask.fetch_add(1, std::memory_order_relaxed);
+
 		if (pos < tasks.size()) {
 			tasks[pos]();
-			this->remainingTasks.fetch_sub(1, std::memory_order_release);
+			remainingTasks.fetch_sub(1, std::memory_order_release);
 			return true;
 		}
+
 		return false;
 	}
 
@@ -271,17 +284,19 @@ public:
 	void Enqueue(F f)
 	{
 		tasks.emplace_back(f);
-		this->remainingTasks.fetch_add(1, std::memory_order_release);
+		remainingTasks.fetch_add(1, std::memory_order_release);
 	}
 
 	bool ExecuteTask() override
 	{
 		const int pos = curtask.fetch_add(1, std::memory_order_relaxed);
+
 		if (pos < tasks.size()) {
 			tasks[pos]();
-			this->remainingTasks.fetch_sub(1, std::memory_order_release);
+			remainingTasks.fetch_sub(1, std::memory_order_release);
 			return true;
 		}
+
 		return false;
 	}
 
@@ -308,6 +323,8 @@ public:
 		);
 
 		this->results.emplace_back(task->get_future());
+		this->remainingTasks += 1;
+
 		// NOTE:
 		//   here we want task <task> to be executed by thread <threadNum>
 		//   this does not actually happen, thread i can call ExecuteTask
@@ -315,7 +332,6 @@ public:
 		//   is pulled from the queue *once*, by a random thread) meaning
 		//   we will have leftover unexecuted tasks and hang
 		uniqueTasks[threadNum] = [=](){ (*task)(); };
-		this->remainingTasks++;
 	}
 
 	bool ExecuteTask() override
@@ -330,8 +346,12 @@ public:
 		func();
 		func = nullptr;
 
-		this->remainingTasks--;
-		return (this->remainingTasks.load() != 0);
+		if (!this->IsFinished()) {
+			this->remainingTasks -= 1;
+			return true;
+		}
+
+		return false;
 	}
 
 public:
@@ -370,7 +390,7 @@ public:
 	void Enqueue(F& func)
 	{
 		f = func;
-		this->remainingTasks = ThreadPool::GetNumThreads();
+		remainingTasks = ThreadPool::GetNumThreads();
 		uniqueTasks.fill(false);
 	}
 
@@ -379,15 +399,15 @@ public:
 	{
 		auto& ut = uniqueTasks[ThreadPool::GetThreadNum()];
 
-		if (ut)
-			return false;
+		if (!ut) {
+			// no need to make threadsafe; each thread has its own container
+			ut = true;
+			f();
+			remainingTasks -= 1;
+			return (!IsFinished());
+		}
 
-		// no need to make threadsafe; each thread has its own container
-		ut = true;
-		f();
-		this->remainingTasks--;
-		assert(this->remainingTasks.load() >= 0);
-		return true;
+		return false;
 	}
 
 public:
@@ -407,8 +427,9 @@ public:
 	void Enqueue(const int from, const int to, const int step, F& func)
 	{
 		assert(to >= from);
-		this->remainingTasks = (step == 1) ? (to - from) : ((to - from + step - 1) / step);
-		this->curtask = {0};
+		remainingTasks = (step == 1) ? (to - from) : ((to - from + step - 1) / step);
+		curtask = {0};
+
 		this->from = from;
 		this->to   = to;
 		this->step = step;
@@ -419,11 +440,13 @@ public:
 	bool ExecuteTask() override
 	{
 		const int i = from + (step * curtask.fetch_add(1, std::memory_order_relaxed));
+
 		if (i < to) {
 			f(i);
-			this->remainingTasks--;
+			remainingTasks -= 1;
 			return true;
 		}
+
 		return false;
 	}
 
@@ -474,8 +497,7 @@ struct TaskPool {
 template <typename F>
 static inline void for_mt(int start, int end, int step, F&& f)
 {
-	const bool singleIteration = (end - start) < step;
-	if (!ThreadPool::HasThreads() || singleIteration) {
+	if (!ThreadPool::HasThreads() || ((end - start) < step)) {
 		for (int i = start; i < end; i += step) {
 			f(i);
 		}
@@ -522,25 +544,38 @@ static inline auto parallel_reduce(F&& f, G&& g) -> typename std::result_of<F()>
 
 	SCOPED_MT_TIMER("::ThreadWorkers (real)");
 
-	typedef  typename std::shared_ptr< SingleTask<F> >  task_type;
-	typedef  typename std::result_of<F()>::type  ret_type;
-	typedef  std::shared_ptr< std::future<ret_type> >  fut_type;
+	typedef  typename std::result_of<F()>::type  RetType;
+	typedef  typename std::shared_ptr< SingleTask<F> >  TaskType;
+	typedef           std::shared_ptr< std::future<RetType> >  FoldType;
 
-	std::vector<task_type> tasks(ThreadPool::GetNumThreads());
-	std::vector<fut_type> results(ThreadPool::GetNumThreads());
+	std::vector<TaskType> tasks(ThreadPool::GetNumThreads());
+	std::vector<FoldType> results(ThreadPool::GetNumThreads());
 
 	// need to push N individual tasks; see NOTE in TParallelTaskGroup
 	for (size_t i = 0; i < results.size(); ++i) {
 		tasks[i] = std::move(std::make_shared<SingleTask<F>>(std::forward<F>(f)));
 		results[i] = std::move(tasks[i]->GetFuture());
 
-		if (i > 0)
-			tasks[i]->wantedThread.store(i);
+		tasks[i]->deleteMe.store(false);
+		tasks[i]->wantedThread.store(i);
 
 		ThreadPool::PushTaskGroup(tasks[i]);
 	}
 
+	#if 0
 	return (std::accumulate(results.begin(), results.end(), 0, g));
+	#else
+	const auto result = std::accumulate(results.begin(), results.end(), 0, g);
+
+	// minor hack: the futures should block on get() and prevent ~tasks
+	// from being invoked when we return until all threads are finished
+	// however this ordering is (very rarely but reproducably) violated
+	for (size_t i = 0; i < tasks.size(); i++) {
+		while (!tasks[i]->IsFinished() || tasks[i]->IsInQueue());
+	}
+
+	return result;
+	#endif
 }
 
 
@@ -565,8 +600,6 @@ namespace ThreadPool {
 		// auto task = std::make_shared<SingleTask<F, Args...>>(std::forward<F>(f), std::forward<Args>(args)...);
 		auto task = new SingleTask<F, Args...>(std::forward<F>(f), std::forward<Args>(args)...);
 		auto fut = task->GetFuture();
-
-		task->DeleteWhenDone(true);
 
 		ThreadPool::PushTaskGroup(task);
 		return fut;

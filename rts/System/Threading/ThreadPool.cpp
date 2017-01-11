@@ -87,7 +87,7 @@ static void SetThreadNum(const int idx) { threadnum = idx; }
 
 
 // FIXME: mutex/atomic?
-// NOTE: +1 cause we also count mainthread (workers start at 1)
+// NOTE: +1 because we also count the main thread, workers start at 1
 int GetNumThreads() { return (workerThreads.size() + 1); }
 int GetMaxThreads() { return std::min(MAX_THREADS, Threading::GetPhysicalCpuCores()); }
 
@@ -122,7 +122,7 @@ static bool DoTask(int tid)
 			if (idx == 0)
 				NotifyWorkerThreads(true);
 
-			while (tg->ExecuteTask());
+			for (tg->ExitedQueue(); tg->ExecuteTask(); ) {}
 
 			const spring_time t1 = spring_now();
 			const spring_time dt = t1 - t0;
@@ -140,7 +140,7 @@ static bool DoTask(int tid)
 		#endif
 			const spring_time t0 = spring_now();
 
-			while (tg->ExecuteTask());
+			for (tg->ExitedQueue(); tg->ExecuteTask(); ) {}
 
 			const spring_time t1 = spring_now();
 			const spring_time dt = t1 - t0;
@@ -160,6 +160,7 @@ static bool DoTask(int tid)
 __FORCE_ALIGN_STACK__
 static void WorkerLoop(int tid)
 {
+	assert(tid != 0);
 	SetThreadNum(tid);
 #ifndef UNIT_TEST
 	Threading::SetThreadName(IntToString(tid, "worker%i"));
@@ -193,6 +194,11 @@ static void WorkerLoop(int tid)
 
 void WaitForFinished(std::shared_ptr<ITaskGroup>&& taskGroup)
 {
+	assert(!taskGroup->IsSingleTask());
+
+	// can be any worker-thread (for_mt inside another for_mt, etc)
+	const int tid = ThreadPool::GetThreadNum();
+
 	{
 		#ifndef UNIT_TEST
 		SCOPED_MT_TIMER("::ThreadWorkers (accumulated)");
@@ -200,13 +206,22 @@ void WaitForFinished(std::shared_ptr<ITaskGroup>&& taskGroup)
 		while (taskGroup->ExecuteTask());
 	}
 
-	if (taskGroup->IsFinished())
+	// NOTE:
+	//   it is possible for the task-group to have been completed
+	//   entirely by the loop above, before any worker thread has
+	//   even had a chance to pop it from the queue (so returning
+	//   under that condition could cause the group to be deleted
+	//   prematurely)
+	if (taskGroup->IsFinished()) {
+		while (taskGroup->IsInQueue()) {
+			DoTask(tid);
+		}
+
 		return;
+	}
 
 	// task hasn't completed yet, use waiting time to execute other tasks
 	NotifyWorkerThreads(true);
-
-	const auto tid = ThreadPool::GetThreadNum();
 
 	do {
 		const auto spinlockEnd = spring_now() + spring_time::fromMilliSecs(500);
@@ -215,7 +230,7 @@ void WaitForFinished(std::shared_ptr<ITaskGroup>&& taskGroup)
 			if (spring_now() < spinlockEnd)
 				continue;
 
-			//LOG_L(L_DEBUG, "Hang in ThreadPool");
+			// avoid a hang if the task is still not finished
 			NotifyWorkerThreads(true);
 			break;
 		}
@@ -224,6 +239,10 @@ void WaitForFinished(std::shared_ptr<ITaskGroup>&& taskGroup)
 	//LOG("WaitForFinished %i", taskGroup->GetExceptions().size());
 	//for (auto& ep: taskGroup->GetExceptions())
 	//	std::rethrow_exception(ep);
+
+	while (taskGroup->IsInQueue()) {
+		DoTask(tid);
+	}
 }
 
 
@@ -235,6 +254,13 @@ void PushTaskGroup(std::shared_ptr<ITaskGroup>&& taskGroup) { PushTaskGroup(task
 void PushTaskGroup(ITaskGroup* taskGroup)
 {
 	auto& queue = taskQueues[ taskGroup->WantedThread() ];
+
+	#if 0
+	// fake single-task group, handled by WaitForFinished to
+	// avoid a (delete) race-condition between it and DoTask
+	if (taskGroup->RemainingTasks() == 1 && !taskGroup->IsSingleTask())
+		return;
+	#endif
 
 	#ifdef USE_BOOST_LOCKFREE_QUEUE
 	while (!queue.push(taskGroup));
@@ -308,6 +334,17 @@ static void KillThreads(int wantedNumThreads, int curNumThreads)
 			delete th;
 		}
 		workerThreads.pop_back();
+	}
+
+	// play it safe
+	for (int i = curNumThreads - 1; i >= wantedNumThreads && i > 0; --i) {
+		ITaskGroup* tg = nullptr;
+
+		#ifdef USE_BOOST_LOCKFREE_QUEUE
+		while (taskQueues[i].pop(tg));
+		#else
+		while (taskQueues[i].try_dequeue(tg));
+		#endif
 	}
 
 	assert((wantedNumThreads != 0) || workerThreads.empty());
@@ -458,30 +495,32 @@ void InitWorkerThreads()
 		SetThreadCount(workerCount);
 	}
 
-	// parallel_reduce now folds over shared_ptrs to futures
-	// const auto ReduceFunc = [](std::uint32_t a, std::future<std::uint32_t>& b) -> std::uint32_t { return (a | b.get()); };
-	const auto ReduceFunc = [](std::uint32_t a, std::shared_ptr< std::future<std::uint32_t> >& b) -> std::uint32_t { return (a | (b.get())->get()); };
-	const auto AffinityFunc = [&]() -> std::uint32_t {
-		const int i = ThreadPool::GetThreadNum();
+	{
+		// parallel_reduce now folds over shared_ptrs to futures
+		// const auto ReduceFunc = [](std::uint32_t a, std::future<std::uint32_t>& b) -> std::uint32_t { return (a | b.get()); };
+		const auto ReduceFunc = [](std::uint32_t a, std::shared_ptr< std::future<std::uint32_t> >& b) -> std::uint32_t { return (a | (b.get())->get()); };
+		const auto AffinityFunc = [&]() -> std::uint32_t {
+			const int i = ThreadPool::GetThreadNum();
 
-		// 0 is the source thread, skip
-		if (i == 0)
-			return 0;
+			// 0 is the source thread, skip
+			if (i == 0)
+				return 0;
 
-		const std::uint32_t workerCore = FindWorkerThreadCore(i - 1, workerAvailCores, mainAffinity);
-		// const std::uint32_t workerCore = workerAvailCores;
+			const std::uint32_t workerCore = FindWorkerThreadCore(i - 1, workerAvailCores, mainAffinity);
+			// const std::uint32_t workerCore = workerAvailCores;
 
-		Threading::SetAffinity(workerCore);
-		return workerCore;
-	};
+			Threading::SetAffinity(workerCore);
+			return workerCore;
+		};
 
-	const std::uint32_t    workerCoreAffin = parallel_reduce(AffinityFunc, ReduceFunc);
-	const std::uint32_t nonWorkerCoreAffin = ~workerCoreAffin;
+		const std::uint32_t    workerCoreAffin = parallel_reduce(AffinityFunc, ReduceFunc);
+		const std::uint32_t nonWorkerCoreAffin = ~workerCoreAffin;
 
-	if (mainAffinity == 0)
-		mainAffinity = systemCores;
+		if (mainAffinity == 0)
+			mainAffinity = systemCores;
 
-	Threading::SetAffinityHelper("Main", mainAffinity & nonWorkerCoreAffin);
+		Threading::SetAffinityHelper("Main", mainAffinity & nonWorkerCoreAffin);
+	}
 }
 
 }
