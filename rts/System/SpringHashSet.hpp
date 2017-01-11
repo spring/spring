@@ -180,6 +180,7 @@ public:
 	// ------------------------------------------------------------------------
 
 	HashSet() = default;
+	HashSet(size_t num_elems) { reserve(num_elems); }
 	HashSet(const std::initializer_list<KeyT>& l)
 	{
 		reserve(l.size());

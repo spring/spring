@@ -41,7 +41,7 @@ class CFeatureHandler : public spring::noncopyable
 	CR_DECLARE_STRUCT(CFeatureHandler)
 
 public:
-	CFeatureHandler() { activeFeatureIDs.rehash(128); }
+	CFeatureHandler() { activeFeatureIDs.reserve(128); }
 	~CFeatureHandler();
 
 	CFeature* LoadFeature(const FeatureLoadParams& params);
