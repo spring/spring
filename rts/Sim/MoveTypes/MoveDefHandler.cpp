@@ -6,7 +6,6 @@
 #include "Map/MapInfo.h"
 #include "MoveMath/MoveMath.h"
 #include "Sim/Misc/GlobalConstants.h"
-#include "System/creg/STL_Deque.h"
 #include "System/creg/STL_Map.h"
 #include "System/Exceptions.h"
 #include "System/CRC.h"
@@ -14,7 +13,7 @@
 #include "System/Util.h"
 
 CR_BIND(MoveDef, ())
-CR_BIND(MoveDefHandler, (NULL))
+CR_BIND(MoveDefHandler, (nullptr))
 
 CR_REG_METADATA(MoveDef, (
 	CR_MEMBER(name),
@@ -98,7 +97,7 @@ static MoveDef::SpeedModClass ParseSpeedModClass(const std::string& moveDefName,
 
 MoveDefHandler::MoveDefHandler(LuaParser* defsParser)
 {
-	const LuaTable rootTable = defsParser->GetRoot().SubTable("MoveDefs");
+	const LuaTable& rootTable = defsParser->GetRoot().SubTable("MoveDefs");
 
 	if (!rootTable.IsValid())
 		throw content_error("Error loading movement definitions");
@@ -114,11 +113,10 @@ MoveDefHandler::MoveDefHandler(LuaParser* defsParser)
 
 	moveDefs.reserve(rootTable.GetLength());
 	for (size_t num = 1; /* no test */; num++) {
-		const LuaTable moveDefTable = rootTable.SubTable(num);
+		const LuaTable& moveDefTable = rootTable.SubTable(num);
 
-		if (!moveDefTable.IsValid()) {
+		if (!moveDefTable.IsValid())
 			break;
-		}
 
 		moveDefs.emplace_back(moveDefTable, num);
 		const MoveDef& md = moveDefs.back();
