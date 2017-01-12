@@ -70,6 +70,14 @@ void PrintAvailableResolutions()
 		LOG("\tdisplay: %d, bounds: {x=%d, y=%d, w=%d, h=%d}, FS modes:", k + 1, rect.x, rect.y, rect.w, rect.h);
 
 		for (size_t i = 0; i < modes.size(); ++i) {
+			// skip legacy (3:2, 4:3, 5:4, ...) and weird (10:6, ...) ratios
+			const float r0 = (modes[i].w *  9.0f) / modes[i].h;
+			const float r1 = (modes[i].w * 10.0f) / modes[i].h;
+			const float r2 = (modes[i].w * 16.0f) / modes[i].h;
+
+			if (r0 != 16.0f && r1 != 16.0f && r2 != 25.0f)
+				continue;
+
 			LOG("\t\t[%2i] %ix%ix%ibpp@%iHz", int(i + 1), modes[i].w, modes[i].h, SDL_BITSPERPIXEL(modes[i].format), modes[i].refresh_rate);
 		}
 	}
