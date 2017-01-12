@@ -2,9 +2,6 @@
 
 #include "3DModel.h"
 
-
-#include "3DOParser.h"
-#include "S3OParser.h"
 #include "Game/GlobalUnsynced.h"
 #include "Rendering/GL/myGL.h"
 #include "Sim/Misc/CollisionVolume.h"
@@ -67,18 +64,6 @@ void S3DModel::DeletePieces(S3DModelPiece* piece)
  * S3DModelPiece
  */
 
-S3DModelPiece::S3DModelPiece()
-	: parent(nullptr)
-	, axisMapType(AXIS_MAPPING_XYZ)
-	, scales(OnesVector)
-	, mins(DEF_MIN_SIZE)
-	, maxs(DEF_MAX_SIZE)
-	, rotAxisSigns(-OnesVector)
-	, hasIdentityRot(true)
-	, dispListID(0)
-{
-}
-
 S3DModelPiece::~S3DModelPiece()
 {
 	glDeleteLists(dispListID, 1);
@@ -86,8 +71,7 @@ S3DModelPiece::~S3DModelPiece()
 
 void S3DModelPiece::CreateDispList()
 {
-	dispListID = glGenLists(1);
-	glNewList(dispListID, GL_COMPILE);
+	glNewList(dispListID = glGenLists(1), GL_COMPILE);
 	DrawForList();
 	glEndList();
 }

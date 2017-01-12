@@ -28,14 +28,6 @@ enum ModelType {
 	MODELTYPE_ASS   = 3, // Model loaded by Assimp library
 	MODELTYPE_OTHER = 4  // For future use. Still used in some parts of code.
 };
-enum AxisMappingType {
-	AXIS_MAPPING_XYZ = 0,
-	AXIS_MAPPING_ZXY = 1,
-	AXIS_MAPPING_YZX = 2,
-	AXIS_MAPPING_XZY = 3,
-	AXIS_MAPPING_ZYX = 4,
-	AXIS_MAPPING_YXZ = 5,
-};
 
 struct CollisionVolume;
 struct S3DModel;
@@ -86,7 +78,16 @@ public:
  */
 
 struct S3DModelPiece {
-	S3DModelPiece();
+	S3DModelPiece()
+		: parent(nullptr)
+		, scales(OnesVector)
+		, mins(DEF_MIN_SIZE)
+		, maxs(DEF_MAX_SIZE)
+		, dispListID(0)
+		, hasBakedMat(false)
+		, dummyPadding(false)
+	{}
+
 	virtual ~S3DModelPiece();
 
 	virtual float3 GetEmitPos() const;
@@ -102,6 +103,13 @@ struct S3DModelPiece {
 	virtual void BindVertexAttribVBOs() const = 0;
 	virtual void UnbindVertexAttribVBOs() const = 0;
 
+	void BindShatterIndexVBO() const { vboShatterIndices.Bind(GL_ELEMENT_ARRAY_BUFFER); }
+	void UnbindShatterIndexVBO() const { vboShatterIndices.Unbind(); }
+
+	const VBO& GetIndexVBO() const { return vboIndices; }
+	const VBO& GetAttribVBO() const { return vboAttributes; }
+	const VBO& GetShatterIndexVBO() const { return vboShatterIndices; }
+
 protected:
 	virtual void DrawForList() const = 0;
 	virtual const std::vector<unsigned>& GetVertexIndices() const = 0;
@@ -114,47 +122,28 @@ public:
 	void CreateShatterPieces();
 	void Shatter(float, int, int, int, const float3, const float3, const CMatrix44f&) const;
 
-	CMatrix44f& ComposeRotation(CMatrix44f& m, const float3& r) const {
-		switch (axisMapType) {
-			case AXIS_MAPPING_XYZ: {
-				// default Spring rotation-order [YPR=YXZ]
-				m.RotateEulerYXZ(r * rotAxisSigns);
-			} break;
-
-			case AXIS_MAPPING_XZY: {
-				// y- and z-angles swapped wrt MAPPING_XYZ; ?? rotation-order [RPY=ZXY]
-				m.RotateEulerZXY(float3(r.x * rotAxisSigns.x, r.z * rotAxisSigns.z, r.y * rotAxisSigns.y));
-			} break;
-
-			case AXIS_MAPPING_YXZ:
-			case AXIS_MAPPING_YZX:
-			case AXIS_MAPPING_ZXY:
-			case AXIS_MAPPING_ZYX: {
-				// FIXME: implement
-			} break;
-		}
-
-		return m;
+	void SetBakedMatrix(const CMatrix44f& m) {
+		bakedMatrix = m;
+		hasBakedMat = !m.IsIdentity();
+		assert(m.IsOrthoNormal());
 	}
 
 	CMatrix44f ComposeTransform(const float3& t, const float3& r, const float3& s) const {
 		CMatrix44f m;
-		// note: translating + rotating is faster than
-		// matrix-multiplying (but the branching hurts)
-		//
-		// NOTE: ORDER MATTERS (T(baked + script) * R(baked) * R(script) * S(baked))
-		if (!t.same(ZeroVector)) { m = m.Translate(t); }
-		if (!hasIdentityRot) { m *= bakedRotMatrix; }
-		if (!r.same(ZeroVector)) { m = ComposeRotation(m, r); }
-		if (!s.same(OnesVector)) { m = m.Scale(s); }
-		return m;
-	}
 
-	void SetModelMatrix(const CMatrix44f& m) {
-		// assimp only
-		bakedRotMatrix = m;
-		hasIdentityRot = m.IsIdentity();
-		assert(m.IsOrthoNormal());
+		// NOTE:
+		//   ORDER MATTERS (T(baked + script) * R(baked) * R(script) * S(baked))
+		//   translating + rotating + scaling is faster than matrix-multiplying
+		//   m is identity so m.SetPos(t)==m.Translate(t) but with fewer instrs
+		m.SetPos(t);
+
+		if (hasBakedMat)
+			m *= bakedMatrix;
+
+		// default Spring rotation-order [YPR=Y,X,Z]
+		m.RotateEulerYXZ(-r);
+		m.Scale(s);
+		return m;
 	}
 
 	void SetCollisionVolume(const CollisionVolume& cv) { colvol = cv; }
@@ -165,7 +154,6 @@ public:
 	S3DModelPiece* GetChild(unsigned int i) const { return children[i]; }
 
 	bool HasGeometryData() const { return (GetVertexDrawIndexCount() >= 3); }
-	bool HasIdentityRotation() const { return hasIdentityRot; }
 
 private:
 	void CreateShatterPiecesVariation(const int num);
@@ -178,26 +166,23 @@ public:
 	S3DModelPiece* parent;
 	CollisionVolume colvol;
 
-	AxisMappingType axisMapType;
+	CMatrix44f bakedMatrix;    /// baked local-space rotations
 
 	float3 offset;             /// local (piece-space) offset wrt. parent piece
 	float3 goffset;            /// global (model-space) offset wrt. root piece
 	float3 scales;             /// baked uniform scaling factors (assimp-only)
 	float3 mins;
 	float3 maxs;
-	float3 rotAxisSigns;
 
 protected:
-	CMatrix44f bakedRotMatrix; /// baked local-space rotations (assimp-only)
-	bool hasIdentityRot;       /// if bakedRotMatrix is identity
+	VBO vboIndices;
+	VBO vboAttributes;
+	VBO vboShatterIndices;
 
 	unsigned int dispListID;
 
-	VBO vboIndices;
-	VBO vboAttributes;
-
-public:
-	VBO vboShatterIndices;
+	bool hasBakedMat;
+	bool dummyPadding;
 };
 
 

@@ -184,7 +184,7 @@ void FlyingPiece::CheckDrawStateChange(const FlyingPiece* prev) const
 			CUnitDrawer::BindModelTypeTexture(MODELTYPE_S3O, texture);
 
 		piece->BindVertexAttribVBOs();
-		piece->vboShatterIndices.Bind(GL_ELEMENT_ARRAY_BUFFER);
+		piece->BindShatterIndexVBO();
 		return;
 	}
 
@@ -195,17 +195,17 @@ void FlyingPiece::CheckDrawStateChange(const FlyingPiece* prev) const
 		CUnitDrawer::BindModelTypeTexture(MODELTYPE_S3O, texture);
 
 	if (piece != prev->piece) {
-		prev->piece->vboShatterIndices.Unbind();
+		prev->piece->UnbindShatterIndexVBO();
 		prev->piece->UnbindVertexAttribVBOs();
 		piece->BindVertexAttribVBOs();
-		piece->vboShatterIndices.Bind(GL_ELEMENT_ARRAY_BUFFER);
+		piece->BindShatterIndexVBO();
 	}
 }
 
 
 void FlyingPiece::EndDraw() const
 {
-	piece->vboShatterIndices.Unbind();
+	piece->UnbindShatterIndexVBO();
 	piece->UnbindVertexAttribVBOs();
 }
 
@@ -213,12 +213,15 @@ void FlyingPiece::EndDraw() const
 void FlyingPiece::Draw(const FlyingPiece* prev) const
 {
 	CheckDrawStateChange(prev);
+
 	const float3 dragFactors = GetDragFactors(); // speedDrag, gravityDrag, interAge
+	const VBO& shatterIndices = piece->GetShatterIndexVBO();
 
 	for (auto& cp: splitterParts) {
 		glPushMatrix();
 		glMultMatrixf(GetMatrixOf(cp, dragFactors));
-		glDrawRangeElements(GL_TRIANGLES, 0, piece->GetVertexCount() - 1, cp.indexCount, GL_UNSIGNED_INT, piece->vboShatterIndices.GetPtr(cp.vboOffset));
+		glDrawRangeElements(GL_TRIANGLES, 0, piece->GetVertexCount() - 1, cp.indexCount, GL_UNSIGNED_INT, shatterIndices.GetPtr(cp.vboOffset));
 		glPopMatrix();
 	}
 }
+
