@@ -308,11 +308,24 @@ void CTimeProfiler::AddTime(
 	const bool showGraph,
 	const bool threadTimer
 ) {
+	const spring_time t0 = spring_now();
+
 	// acquire lock at the start; one inserting thread could
 	// cause a profile rehash and invalidate <pi> for another
 	std::unique_lock<spring::mutex> ulk(profileMutex, std::defer_lock);
 	while (!ulk.try_lock()) {}
 
+	AddTimeRaw(name, startTime, deltaTime, showGraph, threadTimer);
+	AddTimeRaw("TimeProfiler::AddTime", t0, spring_now() - t0, false, false);
+}
+
+void CTimeProfiler::AddTimeRaw(
+	const std::string& name,
+	const spring_time startTime,
+	const spring_time deltaTime,
+	const bool showGraph,
+	const bool threadTimer
+) {
 #ifdef THREADPOOL
 	if (threadTimer)
 		profileCore[ThreadPool::GetThreadNum()].emplace_back(startTime, spring_gettime());

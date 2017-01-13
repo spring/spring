@@ -110,6 +110,13 @@ public:
 		const bool showGraph = false,
 		const bool threadTimer = false
 	);
+	void AddTimeRaw(
+		const std::string& name,
+		const spring_time startTime,
+		const spring_time deltaTime,
+		const bool showGraph,
+		const bool threadTimer
+	);
 
 public:
 	struct TimeRecord {
