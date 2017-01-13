@@ -316,7 +316,7 @@ void CTimeProfiler::AddTime(
 	while (!ulk.try_lock()) {}
 
 	AddTimeRaw(name, startTime, deltaTime, showGraph, threadTimer);
-	AddTimeRaw("TimeProfiler::AddTime", t0, spring_now() - t0, false, false);
+	AddTimeRaw("Misc::Profiler::AddTime", t0, spring_now() - t0, false, false);
 }
 
 void CTimeProfiler::AddTimeRaw(
