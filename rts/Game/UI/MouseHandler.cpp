@@ -313,7 +313,7 @@ void CMouseHandler::MousePress(int x, int y, int button)
 	}
 
 	if (luaInputReceiver->MousePress(x, y, button)) {
-		if (!activeReceiver)
+		if (activeReceiver == nullptr)
 			activeReceiver = luaInputReceiver;
 		return;
 	}
