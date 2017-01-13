@@ -135,9 +135,6 @@ void CUnitTracker::CleanTrackGroup()
 	deadUnitIDs.reserve(trackGroup.size());
 
 	for (const int unitID: trackGroup) {
-		if (unitID == trackUnit)
-			trackUnit = -1;
-
 		if (unitHandler->GetUnitUnsafe(unitID) == nullptr)
 			deadUnitIDs.push_back(unitID);
 	}
@@ -150,6 +147,7 @@ void CUnitTracker::CleanTrackGroup()
 		Disable();
 		return;
 	}
+	// reset trackUnit if it was erased above
 	if (trackGroup.find(trackUnit) == trackGroup.end()) {
 		trackUnit = *trackGroup.begin();
 	}
@@ -165,14 +163,14 @@ void CUnitTracker::NextUnit()
 
 	if (it == trackGroup.end()) {
 		trackUnit = *trackGroup.begin();
+		return;
+	}
+
+	if ((++it) == trackGroup.end()) {
+		trackUnit = *trackGroup.begin();
+		Disable();
 	} else {
-		++it;
-		if (it == trackGroup.end()) {
-			trackUnit = *trackGroup.begin();
-			Disable();
-		} else {
-			trackUnit = *it;
-		}
+		trackUnit = *it;
 	}
 }
 
