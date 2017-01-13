@@ -893,8 +893,8 @@ int CGame::KeyPressed(int key, bool isRepeat)
 		return 0;
 
 	// try the input receivers
-	for (CInputReceiver* recv: GetInputReceivers()) {
-		if (recv && recv->KeyPressed(key, isRepeat)) {
+	for (CInputReceiver* recv: CInputReceiver::GetReceivers()) {
+		if (recv != nullptr && recv->KeyPressed(key, isRepeat)) {
 			return 0;
 		}
 	}
@@ -939,8 +939,8 @@ int CGame::KeyReleased(int k)
 		return 0;
 
 	// try the input receivers
-	for (CInputReceiver* recv: GetInputReceivers()) {
-		if (recv && recv->KeyReleased(k)) {
+	for (CInputReceiver* recv: CInputReceiver::GetReceivers()) {
+		if (recv != nullptr && recv->KeyReleased(k)) {
 			return 0;
 		}
 	}
@@ -1294,12 +1294,9 @@ void CGame::DrawInputReceivers()
 
 	SCOPED_TIMER("Draw::Screen::InputReceivers");
 	if (!hideInterface) {
-		std::list<CInputReceiver*>& inputReceivers = GetInputReceivers();
-
-		for (auto ri = inputReceivers.rbegin(); ri != inputReceivers.rend(); ++ri) {
-			CInputReceiver* rcvr = *ri;
-			if (rcvr) {
-				rcvr->Draw();
+		for (CInputReceiver* recv: CInputReceiver::GetReceivers()) {
+			if (recv != nullptr) {
+				recv->Draw();
 			}
 		}
 	} else {

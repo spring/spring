@@ -281,7 +281,7 @@ void CMouseHandler::MousePress(int x, int y, int button)
 	bp.time     = gu->gameTime;
 	bp.x        = x;
 	bp.y        = y;
-	bp.camPos   = camera == nullptr ? ZeroVector : camera->GetPos();
+	bp.camPos   = (camera == nullptr)? ZeroVector : camera->GetPos();
 	bp.dir      = dir;
 	bp.movement = 0;
 
@@ -302,7 +302,7 @@ void CMouseHandler::MousePress(int x, int y, int button)
 				activeReceiver = luaInputReceiver;
 				return;
 			}
-			if ((minimap != NULL) && minimap->FullProxy()) {
+			if ((minimap != nullptr) && minimap->FullProxy()) {
 				if (minimap->MousePress(x, y, button)) {
 					activeReceiver = minimap;
 					return;
@@ -318,22 +318,20 @@ void CMouseHandler::MousePress(int x, int y, int button)
 		return;
 	}
 
-	std::list<CInputReceiver*>& inputReceivers = GetInputReceivers();
-	std::list<CInputReceiver*>::iterator ri;
 	if (game != nullptr && !game->hideInterface) {
-		for (ri = inputReceivers.begin(); ri != inputReceivers.end(); ++ri) {
-			CInputReceiver* recv=*ri;
-			if (recv && recv->MousePress(x, y, button))
-			{
-				if (!activeReceiver)
+		for (CInputReceiver* recv: CInputReceiver::GetReceivers()) {
+			if (recv != nullptr && recv->MousePress(x, y, button)) {
+				if (activeReceiver == nullptr)
 					activeReceiver = recv;
+
 				return;
 			}
 		}
 	} else {
-		if (guihandler && guihandler->MousePress(x,y,button)) {
-			if (!activeReceiver)
+		if (guihandler != nullptr && guihandler->MousePress(x, y, button)) {
+			if (activeReceiver == nullptr)
 				activeReceiver = guihandler; // for default (rmb) commands
+
 			return;
 		}
 	}
@@ -539,19 +537,18 @@ std::string CMouseHandler::GetCurrentTooltip()
 	std::string s;
 
 	if (luaInputReceiver->IsAbove(lastx, lasty)) {
-		s = luaInputReceiver->GetTooltip(lastx, lasty);
-		if (s != "") {
+		s = std::move(luaInputReceiver->GetTooltip(lastx, lasty));
+
+		if (!s.empty()) {
 			return s;
 		}
 	}
 
-	std::list<CInputReceiver*>& inputReceivers = GetInputReceivers();
-	std::list<CInputReceiver*>::iterator ri;
-	for (ri = inputReceivers.begin(); ri != inputReceivers.end(); ++ri) {
-		CInputReceiver* recv=*ri;
-		if (recv && recv->IsAbove(lastx, lasty)) {
-			s = recv->GetTooltip(lastx, lasty);
-			if (s != "") {
+	for (CInputReceiver* recv: CInputReceiver::GetReceivers()) {
+		if (recv != nullptr && recv->IsAbove(lastx, lasty)) {
+			s = std::move(recv->GetTooltip(lastx, lasty));
+
+			if (!s.empty()) {
 				return s;
 			}
 		}
@@ -560,7 +557,7 @@ std::string CMouseHandler::GetCurrentTooltip()
 	if (guihandler == nullptr || camera == nullptr)
 		return "";
 
-	const string buildTip = guihandler->GetBuildTooltip();
+	const std::string& buildTip = guihandler->GetBuildTooltip();
 	if (!buildTip.empty())
 		return buildTip;
 
