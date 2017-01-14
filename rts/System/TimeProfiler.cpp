@@ -114,8 +114,9 @@ ScopedTimer::ScopedTimer(const char* name, bool autoShow)
 	: BasicTimer(name)
 
 	// Game::SendClientProcUsage depends on "Sim" and "Draw" percentages, BenchMark on "Lua"
+	// note that address-comparison is intended here, timer names are (and must be) literals
 	, autoShowGraph(autoShow)
-	, specialTimer(name == "Sim" || name == "Draw" || name == "Lua")
+	, specialTimer((name == (void*) "Sim") || (name == (void*) "Draw") || (name == (void*) "Lua"))
 {
 	auto iter = refCounters.find(nameHash);
 
