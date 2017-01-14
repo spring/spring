@@ -93,11 +93,6 @@ public:
 		assert(!IsInQueue());
 	}
 
-	virtual void ResetState() {
-		remainingTasks = 0;
-		wantedThread = 0;
-		inTaskQueue = 1;
-	}
 	virtual bool IsSingleTask() const { return false; }
 	virtual bool ExecuteStep() = 0;
 	virtual bool SelfDelete() const { return false; }
@@ -136,6 +131,12 @@ public:
 
 	unsigned GetId() const { return id; }
 	void UpdateId() { id = lastId.fetch_add(1); }
+
+	void ResetState() {
+		remainingTasks = 0;
+		wantedThread = 0;
+		inTaskQueue = 1;
+	}
 
 public:
 	std::atomic_int remainingTasks;
