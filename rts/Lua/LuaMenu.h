@@ -28,12 +28,15 @@ public:
 
 	void GamePreload() override;
 
+	static int SendLuaUIMsg(lua_State* L);
+
 protected:
 	CLuaMenu();
 	virtual ~CLuaMenu();
 
 	string LoadFile(const string& name) const;
 	static bool LoadUnsyncedCtrlFunctions(lua_State* L);
+	static bool LoadLuaMenuFunctions(lua_State* L);
 	static bool LoadUnsyncedReadFunctions(lua_State* L);
 	static bool RemoveSomeOpenGLFunctions(lua_State* L);
 	static bool PushGameVersion(lua_State* L);
