@@ -25,6 +25,7 @@
 #include "System/FileSystem/FileSystem.h"
 #include "System/Threading/SpringThreading.h"
 #include "lib/luasocket/src/luasocket.h"
+#include "LuaUI.h"
 
 CLuaMenu* luaMenu = nullptr;
 
@@ -104,6 +105,7 @@ CLuaMenu::CLuaMenu()
 	if (
 	    !AddEntriesToTable(L, "Spring",    LoadUnsyncedCtrlFunctions)      ||
 	    !AddEntriesToTable(L, "Spring",    LoadUnsyncedReadFunctions)      ||
+		!AddEntriesToTable(L, "Spring",    LoadLuaMenuFunctions) ||
 	    !AddEntriesToTable(L, "Game",      PushGameVersion)                ||
 
 	    !AddEntriesToTable(L, "Script",    LuaScream::PushEntries)         ||
@@ -247,10 +249,24 @@ bool CLuaMenu::LoadUnsyncedCtrlFunctions(lua_State* L)
 	REGISTER_LUA_CFUNC(Reload);
 	REGISTER_LUA_CFUNC(Quit);
 	REGISTER_LUA_CFUNC(Start);
+
 	#undef REGISTER_LUA_CFUNC
 	return true;
 }
 
+
+bool CLuaMenu::LoadLuaMenuFunctions(lua_State* L)
+{
+	#define REGISTER_LUA_CFUNC(x) \
+		lua_pushstring(L, #x);      \
+		lua_pushcfunction(L, CLuaMenu::x);    \
+		lua_rawset(L, -3)
+
+	REGISTER_LUA_CFUNC(SendLuaUIMsg);
+
+	#undef REGISTER_LUA_CFUNC
+	return true;
+}
 
 bool CLuaMenu::LoadUnsyncedReadFunctions(lua_State* L)
 {
@@ -364,8 +380,17 @@ bool CLuaMenu::AllowDraw()
 }
 
 
+int CLuaMenu::SendLuaUIMsg(lua_State* L)
+{
+	const string msg = luaL_checksstring(L, 1);
+	if (luaUI != nullptr) luaUI->RecvLuaMsg(msg, 0);
+	return 0;
+}
+
+
 
 // Don't call GamePreload since it may be called concurrent
 // with other callins during loading.
 void CLuaMenu::GamePreload()
 { }
+
