@@ -412,29 +412,23 @@ void CFeatureDrawer::PopIndividualState(const CFeature* feature, bool deferredPa
 
 void CFeatureDrawer::DrawIndividual(const CFeature* feature, bool noLuaCall)
 {
-	const bool origDrawDebug = globalRendering->GetSetDrawDebug(false);
+	if (LuaObjectDrawer::DrawSingleObject(feature, LUAOBJ_FEATURE /*, noLuaCall*/))
+		return;
 
-	if (!LuaObjectDrawer::DrawSingleObject(feature, LUAOBJ_FEATURE /*, noLuaCall*/)) {
-		// set the full default state
-		PushIndividualState(feature, false);
-		DrawFeatureTrans(feature, 0, 0, false, noLuaCall);
-		PopIndividualState(feature, false);
-	}
-
-	globalRendering->GetSetDrawDebug(origDrawDebug);
+	// set the full default state
+	PushIndividualState(feature, false);
+	DrawFeatureTrans(feature, 0, 0, false, noLuaCall);
+	PopIndividualState(feature, false);
 }
 
 void CFeatureDrawer::DrawIndividualNoTrans(const CFeature* feature, bool noLuaCall)
 {
-	const bool origDrawDebug = globalRendering->GetSetDrawDebug(false);
+	if (LuaObjectDrawer::DrawSingleObjectNoTrans(feature, LUAOBJ_FEATURE /*, noLuaCall*/))
+		return;
 
-	if (!LuaObjectDrawer::DrawSingleObjectNoTrans(feature, LUAOBJ_FEATURE /*, noLuaCall*/)) {
-		PushIndividualState(feature, false);
-		DrawFeatureNoTrans(feature, 0, 0, false, noLuaCall);
-		PopIndividualState(feature, false);
-	}
-
-	globalRendering->GetSetDrawDebug(origDrawDebug);
+	PushIndividualState(feature, false);
+	DrawFeatureNoTrans(feature, 0, 0, false, noLuaCall);
+	PopIndividualState(feature, false);
 }
 
 

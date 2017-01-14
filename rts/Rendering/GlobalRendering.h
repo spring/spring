@@ -41,8 +41,6 @@ public:
 	int2 GetWantedViewSize(const bool fullscreen);
 
 	bool EnableFSAA() const;
-	bool SetGetDrawDebug(bool dbg) { const bool ret =       dbg; drawdebug = dbg; return ret; }
-	bool GetSetDrawDebug(bool dbg) { const bool ret = drawdebug; drawdebug = dbg; return ret; }
 
 	/**
 	 * @brief time offset

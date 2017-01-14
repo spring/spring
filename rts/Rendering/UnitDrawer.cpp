@@ -1127,29 +1127,23 @@ void CUnitDrawer::PopIndividualOpaqueState(const CUnit* unit, bool deferredPass)
 
 void CUnitDrawer::DrawIndividual(const CUnit* unit, bool noLuaCall)
 {
-	const bool origDrawDebug = globalRendering->GetSetDrawDebug(false);
+	if (LuaObjectDrawer::DrawSingleObject(unit, LUAOBJ_UNIT /*, noLuaCall*/))
+		return;
 
-	if (!LuaObjectDrawer::DrawSingleObject(unit, LUAOBJ_UNIT /*, noLuaCall*/)) {
-		// set the full default state
-		PushIndividualOpaqueState(unit, false);
-		DrawUnitTrans(unit, 0, 0, false, noLuaCall);
-		PopIndividualOpaqueState(unit, false);
-	}
-
-	globalRendering->GetSetDrawDebug(origDrawDebug);
+	// set the full default state
+	PushIndividualOpaqueState(unit, false);
+	DrawUnitTrans(unit, 0, 0, false, noLuaCall);
+	PopIndividualOpaqueState(unit, false);
 }
 
 void CUnitDrawer::DrawIndividualNoTrans(const CUnit* unit, bool noLuaCall)
 {
-	const bool origDrawDebug = globalRendering->GetSetDrawDebug(false);
+	if (LuaObjectDrawer::DrawSingleObjectNoTrans(unit, LUAOBJ_UNIT /*, noLuaCall*/))
+		return;
 
-	if (!LuaObjectDrawer::DrawSingleObjectNoTrans(unit, LUAOBJ_UNIT /*, noLuaCall*/)) {
-		PushIndividualOpaqueState(unit, false);
-		DrawUnitNoTrans(unit, 0, 0, false, noLuaCall);
-		PopIndividualOpaqueState(unit, false);
-	}
-
-	globalRendering->GetSetDrawDebug(origDrawDebug);
+	PushIndividualOpaqueState(unit, false);
+	DrawUnitNoTrans(unit, 0, 0, false, noLuaCall);
+	PopIndividualOpaqueState(unit, false);
 }
 
 

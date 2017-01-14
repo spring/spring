@@ -1,14 +1,11 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include <assert.h>
+#include <cassert>
 #include <deque>
 
 #include "ProfileDrawer.h"
 #include "InputReceiver.h"
 #include "Game/GlobalUnsynced.h"
-#include "System/EventHandler.h"
-#include "System/Rectangle.h"
-#include "System/TimeProfiler.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Fonts/glFont.h"
 #include "Rendering/GlobalRendering.h"
@@ -17,9 +14,13 @@
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Path/IPathManager.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
+#include "System/EventHandler.h"
+#include "System/Rectangle.h"
+#include "System/TimeProfiler.h"
+#include "System/Util.h"
 #include "lib/lua/include/LuaUser.h"
 
-ProfileDrawer* ProfileDrawer::instance = NULL;
+ProfileDrawer* ProfileDrawer::instance = nullptr;
 
 static const float start_x = 0.6f;
 static const float end_x   = 0.99f;
@@ -44,31 +45,23 @@ ProfileDrawer::ProfileDrawer()
 	eventHandler.AddClient(this);
 }
 
-
-ProfileDrawer::~ProfileDrawer()
-{
-}
-
-
 void ProfileDrawer::SetEnabled(bool enable)
 {
 	if (enable) {
-		assert(instance == NULL);
+		assert(instance == nullptr);
 		instance = new ProfileDrawer();
+
 		// reset peak indicators each time the drawer is restarted
 		for (auto& p: profiler.profile)
 			p.second.peak = 0.0f;
 	} else {
-		ProfileDrawer* tmpInstance = instance;
-		instance = NULL;
-		delete tmpInstance;
+		SafeDelete(instance);
 	}
 }
 
-
 bool ProfileDrawer::IsEnabled()
 {
-	return (instance != NULL);
+	return (instance != nullptr);
 }
 
 
@@ -236,7 +229,7 @@ static void DrawProfiler()
 
 	// this locks a mutex, so don't call it every frame
 	if ((globalRendering->drawFrame % 10) == 0)
-		profiler.UpdateSorted(false);
+		profiler.RefreshProfiles();
 
 	// draw the background of the window
 	{
@@ -486,3 +479,4 @@ void ProfileDrawer::DbgTimingInfo(DbgTimingInfoType type, const spring_time star
 		} break;
 	}
 }
+

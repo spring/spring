@@ -1173,6 +1173,8 @@ public:
 		globalRendering->drawdebug = !globalRendering->drawdebug;
 
 		ProfileDrawer::SetEnabled(globalRendering->drawdebug);
+		profiler.SetEnabled(globalRendering->drawdebug);
+
 		LogSystemStatus("debug-info rendering mode", globalRendering->drawdebug);
 		return true;
 	}

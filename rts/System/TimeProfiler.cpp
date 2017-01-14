@@ -93,7 +93,9 @@ spring_time BasicTimer::GetDuration() const
 
 ScopedTimer::ScopedTimer(const std::string& name, bool autoShow)
 	: BasicTimer(name)
+
 	, autoShowGraph(autoShow)
+	, specialTimer(name == "Sim" || name == "Draw" || name == "Lua")
 {
 	auto iter = refCounters.find(nameHash);
 
@@ -105,7 +107,10 @@ ScopedTimer::ScopedTimer(const std::string& name, bool autoShow)
 
 ScopedTimer::ScopedTimer(const char* name, bool autoShow)
 	: BasicTimer(name)
+
+	// Game::SendClientProcUsage depends on "Sim" and "Draw" percentages, BenchMark on "Lua"
 	, autoShowGraph(autoShow)
+	, specialTimer(name == "Sim" || name == "Draw" || name == "Lua")
 {
 	auto iter = refCounters.find(nameHash);
 
@@ -124,7 +129,7 @@ ScopedTimer::~ScopedTimer()
 	assert(iter->second > 0);
 
 	if (--(iter->second) == 0) {
-		profiler.AddTime(GetName(), startTime, GetDuration(), autoShowGraph, false);
+		profiler.AddTime(GetName(), startTime, GetDuration(), autoShowGraph, specialTimer, false);
 	}
 }
 
@@ -172,7 +177,7 @@ ScopedMtTimer::ScopedMtTimer(const char* timerName, bool autoShow)
 
 ScopedMtTimer::~ScopedMtTimer()
 {
-	profiler.AddTime(GetName(), startTime, GetDuration(), autoShowGraph, true);
+	profiler.AddTime(GetName(), startTime, GetDuration(), autoShowGraph, false, true);
 }
 
 
@@ -184,7 +189,8 @@ ScopedMtTimer::~ScopedMtTimer()
 CTimeProfiler::CTimeProfiler():
 	lastBigUpdate(spring_gettime()),
 	currentPosition(0),
-	resortProfiles(0)
+	resortProfiles(0),
+	enabled(false)
 {
 #ifdef THREADPOOL
 	profileCore.resize(ThreadPool::GetMaxThreads());
@@ -210,10 +216,24 @@ CTimeProfiler& CTimeProfiler::GetInstance()
 
 void CTimeProfiler::Update()
 {
-	//FIXME non-locking threadsafe
+	if (!enabled) {
+		UpdateRaw();
+		ResortProfilesRaw();
+		RefreshProfilesRaw();
+		return;
+	}
+
+	// FIXME: non-locking threadsafe
 	std::unique_lock<spring::mutex> ulk(profileMutex, std::defer_lock);
 	while (!ulk.try_lock()) {}
 
+	UpdateRaw();
+	ResortProfilesRaw();
+	RefreshProfilesRaw();
+}
+
+void CTimeProfiler::UpdateRaw()
+{
 	currentPosition += 1;
 	currentPosition &= (TimeRecord::numFrames - 1);
 
@@ -225,7 +245,7 @@ void CTimeProfiler::Update()
 	const float timeDiff = spring_diffmsecs(curTime, lastBigUpdate);
 
 	if (timeDiff > 500.0f) {
-		// twice every second
+		// update percentages and peaks twice every second
 		for (auto& pi: profile) {
 			auto& p = pi.second;
 
@@ -248,30 +268,10 @@ void CTimeProfiler::Update()
 			(pi.second).maxLag *= 0.5f;
 		}
 	}
-
-	UpdateSorted(true);
 }
 
-void CTimeProfiler::UpdateSorted(bool resort)
+void CTimeProfiler::ResortProfilesRaw()
 {
-	if (!resort) {
-		// lock so nothing modifies *unsorted* profiles during the refresh
-		std::unique_lock<spring::mutex> ulk(profileMutex, std::defer_lock);
-		while (!ulk.try_lock()) {}
-
-		// refresh sorted profiles
-		for (auto it = sortedProfile.begin(); it != sortedProfile.end(); ++it) {
-			TimeRecord& rec = it->second;
-
-			const bool showGraph = rec.showGraph;
-
-			rec = profile[it->first];
-			rec.showGraph = showGraph;
-		}
-
-		return;
-	}
-
 	if (resortProfiles > 0) {
 		resortProfiles = 0;
 
@@ -283,7 +283,7 @@ void CTimeProfiler::UpdateSorted(bool resort)
 
 		const ProfileSortFunc sortFunc = [](const TimeRecordPair& a, const TimeRecordPair& b) { return (a.first < b.first); };
 
-		// safe, caller already has lock
+		// either caller already has lock, or we are disabled and thread-safe
 		for (auto it = profile.begin(); it != profile.end(); ++it) {
 			sortedProfile.emplace_back(it->first, it->second);
 		}
@@ -293,22 +293,66 @@ void CTimeProfiler::UpdateSorted(bool resort)
 }
 
 
-float CTimeProfiler::GetPercent(const char* name)
+void CTimeProfiler::RefreshProfiles()
 {
+	// ProfileDrawer calls this, and is only enabled when we are
+	assert(enabled);
+
+	// lock so nothing modifies *unsorted* profiles during the refresh
 	std::unique_lock<spring::mutex> ulk(profileMutex, std::defer_lock);
 	while (!ulk.try_lock()) {}
 
-	return profile[name].percent;
+	RefreshProfilesRaw();
 }
+
+void CTimeProfiler::RefreshProfilesRaw()
+{
+	// either called from ProfileDrawer or from Update; the latter
+	// makes the "/debuginfo profiling" command work when disabled
+	for (auto it = sortedProfile.begin(); it != sortedProfile.end(); ++it) {
+		TimeRecord& rec = it->second;
+
+		const bool showGraph = rec.showGraph;
+
+		rec = profile[it->first];
+		rec.showGraph = showGraph;
+	}
+}
+
+
+float CTimeProfiler::GetPercent(const char* name)
+{
+	// if disabled, only special timers can pass AddTime
+	// all of those are non-threaded, so no need to lock
+	if (!enabled)
+		return (GetPercentRaw(name));
+
+	std::unique_lock<spring::mutex> ulk(profileMutex, std::defer_lock);
+	while (!ulk.try_lock()) {}
+
+	return (GetPercentRaw(name));
+}
+
 
 void CTimeProfiler::AddTime(
 	const std::string& name,
 	const spring_time startTime,
 	const spring_time deltaTime,
 	const bool showGraph,
+	const bool specialTimer,
 	const bool threadTimer
 ) {
 	const spring_time t0 = spring_now();
+
+	if (!enabled) {
+		if (!specialTimer)
+			return;
+
+		assert(!threadTimer);
+		AddTimeRaw(name, startTime, deltaTime, showGraph, threadTimer);
+		AddTimeRaw("Misc::Profiler::AddTime", t0, spring_now() - t0, false, false);
+		return;
+	}
 
 	// acquire lock at the start; one inserting thread could
 	// cause a profile rehash and invalidate <pi> for another
