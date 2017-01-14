@@ -120,7 +120,7 @@ static bool DoTask(int tid)
 			if (idx == 0)
 				NotifyWorkerThreads(true);
 
-			const spring_time dt = tg->ExecuteLoop();
+			const spring_time dt = tg->ExecuteLoop(false);
 
 			threadStats[tid].numTasks += 1;
 			threadStats[tid].sumTime  += dt.toNanoSecsi();
@@ -133,7 +133,7 @@ static bool DoTask(int tid)
 		#else
 		while (queue.try_dequeue(tg)) {
 		#endif
-			const spring_time dt = tg->ExecuteLoop();
+			const spring_time dt = tg->ExecuteLoop(false);
 
 			threadStats[tid].numTasks += 1;
 			threadStats[tid].sumTime  += dt.toNanoSecsi();
@@ -194,7 +194,7 @@ void WaitForFinished(std::shared_ptr<ITaskGroup>&& taskGroup)
 
 		assert(!taskGroup->IsSingleTask());
 		assert(!taskGroup->SelfDelete());
-		taskGroup->ExecuteLoop();
+		taskGroup->ExecuteLoop(true);
 	}
 
 	// NOTE:

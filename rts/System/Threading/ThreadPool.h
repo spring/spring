@@ -99,7 +99,7 @@ public:
 	virtual bool ExecuteStep() = 0;
 	virtual bool SelfDelete() const { return false; }
 
-	spring_time ExecuteLoop() {
+	spring_time ExecuteLoop(bool wffCall) {
 		const spring_time t0 = spring_now();
 
 		while (ExecuteStep());
@@ -107,8 +107,10 @@ public:
 		const spring_time t1 = spring_now();
 		const spring_time dt = t1 - t0;
 
-		assert(inTaskQueue.load() == 1);
-		inTaskQueue.store(0);
+		if (!wffCall) {
+			assert(inTaskQueue.load() == 1);
+			inTaskQueue.store(0);
+		}
 
 		if (SelfDelete())
 			delete this;
@@ -577,7 +579,7 @@ static inline auto parallel_reduce(F&& f, G&& g) -> typename std::result_of<F()>
 	results[0] = std::move(tasks[0]->GetFuture());
 
 	// first job usually wants to run on the main thread
-	tasks[0]->ExecuteLoop();
+	tasks[0]->ExecuteLoop(false);
 
 	// need to push N individual tasks; see NOTE in TParallelTaskGroup
 	for (size_t i = 1; i < results.size(); ++i) {
