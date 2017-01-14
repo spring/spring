@@ -559,7 +559,7 @@ static inline auto parallel_reduce(F&& f, G&& g) -> typename std::result_of<F()>
 	SCOPED_MT_TIMER("::ThreadWorkers (real)");
 
 	typedef  typename std::result_of<F()>::type  RetType;
-	typedef  typename std::shared_ptr< SingleTask<F> >  TaskType;
+	// typedef  typename std::shared_ptr< SingleTask<F> >  TaskType;
 	typedef           std::shared_ptr< std::future<RetType> >  FoldType;
 
 	// std::vector<TaskType> tasks(ThreadPool::GetNumThreads());
