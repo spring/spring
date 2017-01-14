@@ -101,6 +101,8 @@ public:
 	float GetPercent(const char* name);
 	float GetPercentRaw(const char* name) { return profile[name].percent; }
 
+	void ResetState();
+
 	void Update();
 	void UpdateRaw();
 

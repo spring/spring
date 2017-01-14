@@ -43,6 +43,8 @@ static unsigned HashString(const std::string& s) {
 
 
 
+#if 0
+// unused
 BasicTimer::BasicTimer(const std::string& timerName)
 	: nameHash(HashString(timerName))
 	, startTime(spring_gettime())
@@ -62,7 +64,7 @@ BasicTimer::BasicTimer(const std::string& timerName)
 #endif
 	}
 }
-
+#endif
 
 BasicTimer::BasicTimer(const char* timerName)
 	: nameHash(HashString(timerName, std::string::npos))
@@ -91,6 +93,8 @@ spring_time BasicTimer::GetDuration() const
 
 
 
+#if 0
+// unused
 ScopedTimer::ScopedTimer(const std::string& name, bool autoShow)
 	: BasicTimer(name)
 
@@ -104,6 +108,7 @@ ScopedTimer::ScopedTimer(const std::string& name, bool autoShow)
 
 	++(iter->second);
 }
+#endif
 
 ScopedTimer::ScopedTimer(const char* name, bool autoShow)
 	: BasicTimer(name)
@@ -186,16 +191,9 @@ ScopedMtTimer::~ScopedMtTimer()
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CTimeProfiler::CTimeProfiler():
-	lastBigUpdate(spring_gettime()),
-	currentPosition(0),
-	resortProfiles(0),
-	enabled(false)
+CTimeProfiler::CTimeProfiler()
 {
-#ifdef THREADPOOL
-	profileCore.resize(ThreadPool::GetMaxThreads());
-#endif
-	profileColorRNG.Seed(spring_tomsecs(spring_gettime()));
+	ResetState();
 }
 
 CTimeProfiler::~CTimeProfiler()
@@ -213,6 +211,26 @@ CTimeProfiler& CTimeProfiler::GetInstance()
 	return tp;
 }
 
+
+void CTimeProfiler::ResetState() {
+	// grab lock; ThreadPool workers might already be running SCOPED_MT_TIMER
+	std::unique_lock<spring::mutex> ulk(profileMutex, std::defer_lock);
+	while (!ulk.try_lock()) {}
+
+	profile.clear();
+	sortedProfile.clear();
+	#ifdef THREADPOOL
+	profileCore.clear();
+	profileCore.resize(ThreadPool::GetMaxThreads());
+	#endif
+
+	profileColorRNG.Seed(spring_tomsecs(lastBigUpdate = spring_gettime()));
+
+	currentPosition = 0;
+	resortProfiles = 0;
+
+	enabled = false;
+}
 
 void CTimeProfiler::Update()
 {

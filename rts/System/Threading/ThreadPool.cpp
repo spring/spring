@@ -447,7 +447,7 @@ void InitWorkerThreads()
 	//   exists before any thread creates a timer that accesses
 	//   it on destruction
 	#ifndef UNIT_TEST
-	profiler.PrintProfilingInfo();
+	profiler.ResetState();
 	#endif
 
 	std::uint32_t systemCores  = Threading::GetAvailableCoresMask();

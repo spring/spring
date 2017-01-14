@@ -803,6 +803,7 @@ void SpringApp::Reload(const std::string& script)
 	gu->ResetState();
 	gs->ResetState();
 
+	profiler.ResetState();
 	modInfo.ResetState();
 
 	// must hold or we would loop forever
