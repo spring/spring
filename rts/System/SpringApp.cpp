@@ -259,9 +259,14 @@ bool SpringApp::Initialize()
 	Watchdog::RegisterThread(WDT_MAIN, true);
 
 	// ArchiveScanner uses for_mt --> needs thread-count set
-	// (use all threads available, later switch to less)
-	ThreadPool::SetThreadCount(ThreadPool::GetMaxThreads());
+	// (employ all available threads, then switch to default)
+	ThreadPool::SetMaxThreadCount();
 	FileSystemInitializer::Initialize();
+	ThreadPool::SetDefaultThreadCount();
+
+	// Multithreading & Affinity
+	Threading::SetThreadName("spring-main"); // set default threadname for pstree
+	Threading::SetThreadScheduler();
 
 	mouseInput = IMouseInput::GetInstance();
 	input.AddHandler(std::bind(&SpringApp::MainEventHandler, this, std::placeholders::_1));
@@ -282,11 +287,6 @@ bool SpringApp::Initialize()
 
 	// Lua socket restrictions
 	luaSocketRestrictions = new CLuaSocketRestrictions();
-
-	// Multithreading & Affinity
-	Threading::SetThreadName("spring-main"); // set default threadname for pstree
-	Threading::SetThreadScheduler();
-	ThreadPool::InitWorkerThreads();
 
 	battery = new CBattery();
 	LuaVFSDownload::Init();

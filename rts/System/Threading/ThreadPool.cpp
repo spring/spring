@@ -185,7 +185,7 @@ static void WorkerLoop(int tid)
 void WaitForFinished(std::shared_ptr<ITaskGroup>&& taskGroup)
 {
 	// can be any worker-thread (for_mt inside another for_mt, etc)
-	const int tid = ThreadPool::GetThreadNum();
+	const int tid = GetThreadNum();
 
 	{
 		#ifndef UNIT_TEST
@@ -270,7 +270,7 @@ void NotifyWorkerThreads(const bool force)
 	// is a kernel-syscall that costs a lot of time, we prefer
 	// to not do so on the thread that added the ThreadPool-Task
 	// and instead let the worker threads themselves inform each other.
-	newTasksSignal.notify_all((ThreadPool::GetNumThreads() - 1) * (1 - force));
+	newTasksSignal.notify_all((GetNumThreads() - 1) * (1 - force));
 }
 
 
@@ -380,8 +380,8 @@ static std::uint32_t FindWorkerThreadCore(std::int32_t index, std::uint32_t avai
 
 void SetThreadCount(int wantedNumThreads)
 {
-	const int curNumThreads = ThreadPool::GetNumThreads();
-	const int wtdNumThreads = Clamp(wantedNumThreads, 1, ThreadPool::GetMaxThreads());
+	const int curNumThreads = GetNumThreads();
+	const int wtdNumThreads = Clamp(wantedNumThreads, 1, GetMaxThreads());
 
 	const char* fmts[3] = {
 		"[ThreadPool::%s][1] wanted=%d current=%d maximum=%d",
@@ -393,14 +393,14 @@ void SetThreadCount(int wantedNumThreads)
 	uint64_t pNumTasks = 0lu;
 	uint64_t pSumTime  = 0lu;
 
-	LOG(fmts[0], __func__, wantedNumThreads, curNumThreads, ThreadPool::GetMaxThreads());
+	LOG(fmts[0], __func__, wantedNumThreads, curNumThreads, GetMaxThreads());
 
 	if (workerThreads.empty()) {
 		#ifdef USE_BOOST_LOCKFREE_QUEUE
 		taskQueues[0].reserve(1024);
 		#endif
 
-		for (int i = 0; i < ThreadPool::MAX_THREADS; i++) {
+		for (int i = 0; i < MAX_THREADS; i++) {
 			threadStats[i].numTasks =  0lu;
 			threadStats[i].sumTime  =  0lu;
 			threadStats[i].minTime  = -1lu;
@@ -436,20 +436,25 @@ void SetThreadCount(int wantedNumThreads)
 	LOG(fmts[1], __func__, (unsigned) workerThreads.size(), pNumTasks, pSumTime * 1e-6f, (pSumTime * 1e-6f) / std::max(pNumTasks, uint64_t(1)));
 }
 
-
-void InitWorkerThreads()
+void SetMaxThreadCount()
 {
-	workerThreads.clear();
-	workerThreads.reserve(ThreadPool::MAX_THREADS);
+	if (workerThreads.empty()) {
+		workerThreads.reserve(MAX_THREADS);
 
-	// NOTE:
-	//   do *not* remove, this makes sure the profiler instance
-	//   exists before any thread creates a timer that accesses
-	//   it on destruction
-	#ifndef UNIT_TEST
-	profiler.ResetState();
-	#endif
+		// NOTE:
+		//   do *not* remove, this makes sure the profiler instance
+		//   exists before any thread creates a timer that accesses
+		//   it on destruction
+		#ifndef UNIT_TEST
+		profiler.ResetState();
+		#endif
+	}
 
+	SetThreadCount(GetMaxThreads());
+}
+
+void SetDefaultThreadCount()
+{
 	std::uint32_t systemCores  = Threading::GetAvailableCoresMask();
 	std::uint32_t mainAffinity = systemCores;
 

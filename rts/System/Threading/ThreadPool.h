@@ -14,7 +14,8 @@ namespace ThreadPool {
 		f(args ...);
 	}
 
-	static inline void InitWorkerThreads() {}
+	static inline void SetMaxThreadCount() {}
+	static inline void SetDefaultThreadCount() {}
 	static inline void SetThreadCount(int num) {}
 	static inline int GetThreadNum() { return 0; }
 	static inline int GetMaxThreads() { return 1; }
@@ -156,7 +157,8 @@ namespace ThreadPool {
 	template<typename T>
 	inline void WaitForFinished(std::shared_ptr<T>& taskGroup) { WaitForFinished(std::move(std::static_pointer_cast<ITaskGroup>(taskGroup))); }
 
-	void InitWorkerThreads();
+	void SetMaxThreadCount();
+	void SetDefaultThreadCount();
 	void SetThreadCount(int num);
 	int GetThreadNum();
 	bool HasThreads();
