@@ -155,7 +155,7 @@ ScopedOnceTimer::ScopedOnceTimer(const std::string& timerName)
 
 ScopedOnceTimer::~ScopedOnceTimer()
 {
-	LOG("%s: %i ms", name.c_str(), int(GetDuration().toMilliSecsi()));
+	LOG("[%s][%s] %ims", __func__, name.c_str(), int(GetDuration().toMilliSecsi()));
 }
 
 spring_time ScopedOnceTimer::GetDuration() const

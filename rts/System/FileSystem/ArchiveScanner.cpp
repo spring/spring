@@ -294,9 +294,11 @@ std::vector<InfoItem> CArchiveScanner::ArchiveData::GetInfoItems() const
 {
 	std::vector<InfoItem> infoItems;
 
+	infoItems.reserve(info.size());
+
 	for (auto i = info.cbegin(); i != info.cend(); ++i) {
 		infoItems.push_back(i->second);
-		infoItems.at(infoItems.size() - 1).desc = GetKeyDescription(i->first);
+		infoItems.back().desc = GetKeyDescription(i->first);
 	}
 
 	return infoItems;
@@ -388,7 +390,7 @@ void CArchiveScanner::ScanAllDirs()
 	}
 	// ArchiveCache has been parsed at this point --> archiveInfos is populated
 #if !defined(DEDICATED) && !defined(UNITSYNC)
-	ScopedOnceTimer foo("CArchiveScanner");
+	ScopedOnceTimer foo("CArchiveScanner::ScanAllDirs");
 #endif
 	ScanDirs(scanDirs);
 	WriteCacheData(GetFilepath());
