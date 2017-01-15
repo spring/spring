@@ -136,10 +136,11 @@ static bool LoadFileWithModes(const string& filename, string& data,
 
 int LuaVFS::Include(lua_State* L, bool synced)
 {
-	const string filename = luaL_checkstring(L, 1);
+	const std::string& filename = luaL_checkstring(L, 1);
+
 	if (!LuaIO::IsSimplePath(filename)) {
 		// the path may point to a file or dir outside of any data-dir
-//FIXME		return 0;
+		//FIXME: return 0;
 	}
 
 	bool hasCustomEnv = false;
@@ -151,13 +152,10 @@ int LuaVFS::Include(lua_State* L, bool synced)
 		hasCustomEnv = true;
 	}
 
-	const string modes = GetModes(L, 3, synced);
-
-	string code;
-	if (!LoadFileWithModes(filename, code, modes)) {
+	std::string code;
+	if (!LoadFileWithModes(filename, code, GetModes(L, 3, synced))) {
 		char buf[1024];
-		SNPRINTF(buf, sizeof(buf),
-			 "Include() could not load '%s'", filename.c_str());
+		SNPRINTF(buf, sizeof(buf), "Include() could not load '%s'", filename.c_str());
 		lua_pushstring(L, buf);
  		lua_error(L);
 	}
@@ -165,8 +163,7 @@ int LuaVFS::Include(lua_State* L, bool synced)
 	int error = luaL_loadbuffer(L, code.c_str(), code.size(), filename.c_str());
 	if (error != 0) {
 		char buf[1024];
-		SNPRINTF(buf, sizeof(buf), "error = %i, %s, %s",
-		         error, filename.c_str(), lua_tostring(L, -1));
+		SNPRINTF(buf, sizeof(buf), "error = %i, %s, %s", error, filename.c_str(), lua_tostring(L, -1));
 		lua_pushstring(L, buf);
 		lua_error(L);
 	}
@@ -179,24 +176,19 @@ int LuaVFS::Include(lua_State* L, bool synced)
 	}
 
 	// set the include fenv to the current function's fenv
-	if (lua_setfenv(L, -2) == 0) {
+	if (lua_setfenv(L, -2) == 0)
 		luaL_error(L, "Include(): error with setfenv");
-	}
 
 	const int paramTop = lua_gettop(L) - 1;
 
-	error = lua_pcall(L, 0, LUA_MULTRET, 0);
-
-	if (error != 0) {
+	if ((error = lua_pcall(L, 0, LUA_MULTRET, 0)) != 0) {
 		char buf[1024];
-		SNPRINTF(buf, sizeof(buf), "error = %i, %s, %s",
-		         error, filename.c_str(), lua_tostring(L, -1));
+		SNPRINTF(buf, sizeof(buf), "error = %i, %s, %s", error, filename.c_str(), lua_tostring(L, -1));
 		lua_pushstring(L, buf);
 		lua_error(L);
 	}
 
 	// FIXME -- adjust stack?
-
 	return lua_gettop(L) - paramTop;
 }
 

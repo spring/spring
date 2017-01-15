@@ -908,12 +908,12 @@ int CGame::KeyPressed(int key, bool isRepeat)
 	}
 
 	// maybe a widget is interested?
-	if (luaUI != NULL) {
+	if (luaUI != nullptr) {
 		for (const Action& action: actionList) {
 			luaUI->GotChatMsg(action.rawline, false);
 		}
 	}
-	if (luaMenu != NULL) {
+	if (luaMenu != nullptr) {
 		for (const Action& action: actionList) {
 			luaMenu->GotChatMsg(action.rawline, false);
 		}
@@ -2125,12 +2125,11 @@ bool CGame::ProcessAction(const Action& action, unsigned int key, bool isRepeat)
 		return true;
 
 	// maybe a widget is interested?
-	if (luaUI != NULL) {
+	if (luaUI != nullptr)
 		luaUI->GotChatMsg(action.rawline, false); //FIXME add return argument!
-	}
-	if (luaMenu != NULL) {
+
+	if (luaMenu != nullptr)
 		luaMenu->GotChatMsg(action.rawline, false); //FIXME add return argument!
-	}
 
 	return false;
 }

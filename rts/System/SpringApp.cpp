@@ -678,24 +678,25 @@ void SpringApp::StartScript(const std::string& script)
 
 void SpringApp::LoadSpringMenu()
 {
-	std::string defaultscript = configHandler->GetString("DefaultStartScript");
-	if (defaultscript.empty() && CFileHandler("defaultstartscript.txt", SPRING_VFS_PWD_ALL).FileExists()) {
-		defaultscript = "defaultstartscript.txt";
-	}
+	const std::string  vfsScript = "defaultstartscript.txt";
+	const std::string& cfgScript = configHandler->GetString("DefaultStartScript");
 
-	if (luaMenuController->Valid()){
+	const std::string& startScript = (cfgScript.empty() && CFileHandler(vfsScript, SPRING_VFS_PWD_ALL).FileExists())? vfsScript: cfgScript;
+
+	if (luaMenuController->Valid()) {
 		luaMenuController->Activate();
-	} else if (FLAGS_oldmenu || defaultscript.empty()) {
+	} else if (FLAGS_oldmenu || startScript.empty()) {
 		// old menu
 	#ifdef HEADLESS
-		handleerror(NULL,
+		handleerror(nullptr,
 			"The headless version of the engine can not be run in interactive mode.\n"
 			"Please supply a start-script, save- or demo-file.", "ERROR", MBF_OK|MBF_EXCL);
 	#endif
 		// not a memory-leak: SelectMenu deletes itself on start
 		activeController = new SelectMenu(clientSetup);
-	} else { // run custom menu from game and map
-		StartScript(defaultscript);
+	} else {
+		// run custom menu from game and map
+		StartScript(startScript);
 	}
 }
 

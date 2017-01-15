@@ -71,9 +71,8 @@ CLuaMenu::CLuaMenu()
 	LUA_OPEN_LIB(L, luaopen_debug);
 
 	//initialize luasocket
-	if (luaSocketEnabled){
+	if (luaSocketEnabled)
 		InitLuaSocket(L);
-	}
 
 	// setup the lua IO access check functions
 	lua_set_fopen(L, LuaIO::fopen);
@@ -103,20 +102,20 @@ CLuaMenu::CLuaMenu()
 
 	// load the spring libraries
 	if (
-	    !AddEntriesToTable(L, "Spring",    LoadUnsyncedCtrlFunctions)      ||
-	    !AddEntriesToTable(L, "Spring",    LoadUnsyncedReadFunctions)      ||
-		!AddEntriesToTable(L, "Spring",    LoadLuaMenuFunctions) ||
-	    !AddEntriesToTable(L, "Game",      PushGameVersion)                ||
+		!AddEntriesToTable(L, "Spring",    LoadUnsyncedCtrlFunctions)      ||
+		!AddEntriesToTable(L, "Spring",    LoadUnsyncedReadFunctions)      ||
+		!AddEntriesToTable(L, "Spring",    LoadLuaMenuFunctions)           ||
+		!AddEntriesToTable(L, "Game",      PushGameVersion)                ||
 
-	    !AddEntriesToTable(L, "Script",    LuaScream::PushEntries)         ||
-	    !AddEntriesToTable(L, "VFS",       LuaVFS::PushUnsynced)           ||
-	    !AddEntriesToTable(L, "VFS",       LuaZipFileReader::PushUnsynced) ||
-	    !AddEntriesToTable(L, "VFS",       LuaZipFileWriter::PushUnsynced) ||
-	    !AddEntriesToTable(L, "VFS",       LuaArchive::PushEntries)        ||
-	    !AddEntriesToTable(L, "gl",        LuaOpenGL::PushEntries)         ||
-	    !AddEntriesToTable(L, "GL",        LuaConstGL::PushEntries)        ||
-	    !AddEntriesToTable(L, "LOG",       LuaUtils::PushLogEntries)       ||
-	    !AddEntriesToTable(L, "VFS",       LuaVFSDownload::PushEntries)
+		!AddEntriesToTable(L, "Script",    LuaScream::PushEntries)         ||
+		!AddEntriesToTable(L, "VFS",       LuaVFS::PushUnsynced)           ||
+		!AddEntriesToTable(L, "VFS",       LuaZipFileReader::PushUnsynced) ||
+		!AddEntriesToTable(L, "VFS",       LuaZipFileWriter::PushUnsynced) ||
+		!AddEntriesToTable(L, "VFS",       LuaArchive::PushEntries)        ||
+		!AddEntriesToTable(L, "gl",        LuaOpenGL::PushEntries)         ||
+		!AddEntriesToTable(L, "GL",        LuaConstGL::PushEntries)        ||
+		!AddEntriesToTable(L, "LOG",       LuaUtils::PushLogEntries)       ||
+		!AddEntriesToTable(L, "VFS",       LuaVFSDownload::PushEntries)
 	) {
 		KillLua();
 		return;
@@ -136,10 +135,9 @@ CLuaMenu::CLuaMenu()
 	lua_settop(L, 0);
 }
 
-
 CLuaMenu::~CLuaMenu()
 {
-	luaMenu = NULL;
+	luaMenu = nullptr;
 }
 
 
@@ -337,9 +335,8 @@ void CLuaMenu::ActivateMenu()
 	LUA_CALL_IN_CHECK(L);
 	luaL_checkstack(L, 2, __func__);
 	static const LuaHashString cmdStr(__func__);
-	if (!cmdStr.GetGlobalFunc(L)) {
+	if (!cmdStr.GetGlobalFunc(L))
 		return; // the call is not defined
-	}
 
 	// call the routine
 	RunCallIn(L, cmdStr, 0, 0);
@@ -351,9 +348,8 @@ void CLuaMenu::ActivateGame()
 	LUA_CALL_IN_CHECK(L);
 	luaL_checkstack(L, 2, __func__);
 	static const LuaHashString cmdStr(__func__);
-	if (!cmdStr.GetGlobalFunc(L)) {
+	if (!cmdStr.GetGlobalFunc(L))
 		return; // the call is not defined
-	}
 
 	// call the routine
 	RunCallIn(L, cmdStr, 0, 0);
@@ -365,12 +361,12 @@ bool CLuaMenu::AllowDraw()
 	LUA_CALL_IN_CHECK(L);
 	luaL_checkstack(L, 2, __func__);
 	static const LuaHashString cmdStr(__func__);
-	if (!cmdStr.GetGlobalFunc(L)) {
+	if (!cmdStr.GetGlobalFunc(L))
 		return true; // the call is not defined, allow draw
-	}
 
 	// call the function
-	if (!RunCallIn(L, cmdStr, 0, 1)) return true;
+	if (!RunCallIn(L, cmdStr, 0, 1))
+		return true;
 
 	// get the results
 	const bool retval = luaL_optboolean(L, -1, true);
@@ -382,15 +378,9 @@ bool CLuaMenu::AllowDraw()
 
 int CLuaMenu::SendLuaUIMsg(lua_State* L)
 {
-	const string msg = luaL_checksstring(L, 1);
-	if (luaUI != nullptr) luaUI->RecvLuaMsg(msg, 0);
+	if (luaUI != nullptr)
+		luaUI->RecvLuaMsg(luaL_checksstring(L, 1), 0);
+
 	return 0;
 }
-
-
-
-// Don't call GamePreload since it may be called concurrent
-// with other callins during loading.
-void CLuaMenu::GamePreload()
-{ }
 

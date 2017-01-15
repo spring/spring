@@ -288,10 +288,9 @@ bool CLoadScreen::Draw()
 	//! cause of `curLoadMessage`
 	std::lock_guard<spring::recursive_mutex> lck(mutex);
 
-	if (luaMenu != nullptr) {
-		// let LuaMenu keep the lobby conncetion alive
+	// let LuaMenu keep the lobby connection alive
+	if (luaMenu != nullptr)
 		luaMenu->Update();
-	}
 
 	if (luaIntro != nullptr) {
 		luaIntro->Update();

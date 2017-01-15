@@ -26,7 +26,9 @@ public:
 
 	bool PersistOnReload() const override { return true; }
 
-	void GamePreload() override;
+	// Don't call GamePreload since it may be called concurrent
+	// with other callins during loading.
+	void GamePreload() override {}
 
 	static int SendLuaUIMsg(lua_State* L);
 

@@ -17,17 +17,24 @@ CLuaMenuController* luaMenuController = nullptr;
 
 
 CLuaMenuController::CLuaMenuController(const std::string& menuName)
- : menuArchive(menuName),
-   lastDrawFrameTime(spring_gettime())
+	: menuArchive(menuName)
+	, lastDrawFrameTime(spring_gettime())
 {
-	if (menuArchive.empty())
+	if (!Valid())
 		menuArchive = configHandler->GetString("DefaultLuaMenu");
 
 	// create LuaMenu if necessary
-	if (!menuArchive.empty()) {
-		Reset();
-		CLuaMenu::LoadFreeHandler();
-	}
+	if (!Valid())
+		return;
+
+	Reset();
+	CLuaMenu::LoadFreeHandler();
+}
+
+CLuaMenuController::~CLuaMenuController()
+{
+	SafeDelete(mouse);
+	SafeDelete(infoConsole);
 }
 
 
@@ -36,7 +43,7 @@ void CLuaMenuController::Reset()
 	if (!Valid())
 		return;
 
-	LOG("[%s] using menu: %s", __FUNCTION__, menuArchive.c_str());
+	LOG("[%s] using menu: %s", __func__, menuArchive.c_str());
 	vfsHandler->AddArchiveWithDeps(menuArchive, false);
 
 	if (mouse == nullptr) {
@@ -51,18 +58,14 @@ void CLuaMenuController::Reset()
 
 void CLuaMenuController::Activate()
 {
-	assert(luaMenuController != nullptr && Valid());
+	// LuaMenu might have failed to load, making the controller deadweight
+	if (luaMenu == nullptr)
+		return;
+
+	assert(Valid());
 	activeController = luaMenuController;
 	mouse->ShowMouse();
-
 	luaMenu->ActivateMenu();
-}
-
-
-CLuaMenuController::~CLuaMenuController()
-{
-	SafeDelete(mouse);
-	SafeDelete(infoConsole);
 }
 
 void CLuaMenuController::ResizeEvent()
@@ -75,6 +78,9 @@ void CLuaMenuController::ResizeEvent()
 
 bool CLuaMenuController::Draw()
 {
+	// we should not become the active controller unless this holds (see ::Activate)
+	assert(luaMenu != nullptr);
+
 	eventHandler.CollectGarbage();
 	infoConsole->PushNewLinesToEventHandler();
 	mouse->Update();
@@ -84,18 +90,20 @@ bool CLuaMenuController::Draw()
 	mouse->GetCurrentTooltip();
 
 	// render if global rendering active + luamenu allows it, and at least once per 30s
-	const bool shouldDraw = (globalRendering->active && luaMenu->AllowDraw()) || ((spring_gettime() - lastDrawFrameTime).toSecsi() > 30);
-	if (shouldDraw) {
+	const bool allowDraw = (globalRendering->active && luaMenu->AllowDraw());
+	const bool forceDraw = ((spring_gettime() - lastDrawFrameTime).toSecsi() > 30);
+
+	if (allowDraw || forceDraw) {
 		ClearScreen();
 		eventHandler.DrawGenesis();
 		eventHandler.DrawScreen();
 		mouse->DrawCursor();
 		lastDrawFrameTime = spring_gettime();
-	} else {
-		spring_msecs(10).sleep(true); // no draw needed, sleep a bit
+		return true;
 	}
-	
-	return shouldDraw;
+
+	spring_msecs(10).sleep(true); // no draw needed, sleep a bit
+	return false;
 }
 
 
@@ -105,13 +113,11 @@ int CLuaMenuController::KeyReleased(int k)
 	return 0;
 }
 
-
 int CLuaMenuController::KeyPressed(int k, bool isRepeat)
 {
 	luaInputReceiver->KeyPressed(k, isRepeat);
 	return 0;
 }
-
 
 int CLuaMenuController::TextInput(const std::string& utf8Text)
 {

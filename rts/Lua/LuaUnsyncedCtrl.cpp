@@ -2558,9 +2558,9 @@ int LuaUnsyncedCtrl::SendLuaRulesMsg(lua_State* L)
 
 int LuaUnsyncedCtrl::SendLuaMenuMsg(lua_State* L)
 {
-	const string msg = GetRawMsg(L, __FUNCTION__, 1);
 	if (luaMenu != nullptr)
-		luaMenu->RecvLuaMsg(msg, gu->myPlayerNum);
+		luaMenu->RecvLuaMsg(GetRawMsg(L, __FUNCTION__, 1), gu->myPlayerNum);
+
 	return 0;
 }
 

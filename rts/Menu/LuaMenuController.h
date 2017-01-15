@@ -14,15 +14,14 @@ public:
 
 	// Reloads the archives but not LuaMenu
 	void Reset();
-
 	void Activate();
 
-	int KeyReleased(int k);
-	int KeyPressed(int k, bool isRepeat);
-	int TextInput(const std::string& utf8Text);
+	int KeyReleased(int k) override;
+	int KeyPressed(int k, bool isRepeat) override;
+	int TextInput(const std::string& utf8Text) override;
 
-	bool Draw();
-	void ResizeEvent();
+	bool Draw() override;
+	void ResizeEvent() override;
 
 
 
