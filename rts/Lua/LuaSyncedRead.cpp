@@ -5215,9 +5215,9 @@ static int GetEffectiveLosAllyTeam(lua_State* L, int arg)
 	}
 
 	const int aat = luaL_optint(L, arg, CEventClient::MinSpecialTeam - 1);
-	if (aat == CEventClient::NoAccessTeam) {
+	if (aat == CEventClient::NoAccessTeam)
 		return aat;
-	}
+
 	if (CLuaHandle::GetHandleFullRead(L)) {
 		if (teamHandler->IsValidAllyTeam(aat))
 			return aat;
