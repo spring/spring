@@ -5219,10 +5219,12 @@ static int GetEffectiveLosAllyTeam(lua_State* L, int arg)
 		if (teamHandler->IsValidAllyTeam(aat))
 			return aat;
 
-		if (aat == CEventClient::AllAccessTeam || aat == CEventClient::NoAccessTeam)
+		if (aat == CEventClient::AllAccessTeam)
 			return aat;
 	} else {
 		if (aat == CLuaHandle::GetHandleReadAllyTeam(L))
+			return aat;
+		if (aat == CEventClient::NoAccessTeam)
 			return aat;
 	}
 
