@@ -84,13 +84,13 @@ static inline auto parallel_reduce(F&& f, G&& g) -> typename std::result_of<F()>
 class ITaskGroup
 {
 public:
-	ITaskGroup(const bool getid = true) : id(getid ? lastId.fetch_add(1) : -1) {
-		ResetState();
+	ITaskGroup(const bool getid = true, const bool pooled = false) : id(getid ? lastId.fetch_add(1) : -1) {
+		ResetState(pooled);
 	}
 
 	virtual ~ITaskGroup() {
-		assert(IsFinished());
-		assert(!IsInQueue());
+		// pooled tasks are deleted only when their pool dies (on exit)
+		assert(IsFinished() && (!IsInQueue() || IsInPool()));
 	}
 
 	virtual bool IsSingleTask() const { return false; }
@@ -107,8 +107,8 @@ public:
 
 		if (!wffCall) {
 			// do not set this from WFF, defeats the purpose
-			assert(inTaskQueue.load() == 1);
-			inTaskQueue.store(0);
+			assert(inTaskQueue.load());
+			inTaskQueue.store(false);
 		}
 
 		if (SelfDelete())
@@ -118,7 +118,8 @@ public:
 	}
 
 	bool IsFinished() const { assert(remainingTasks.load() >= 0); return (remainingTasks.load(std::memory_order_relaxed) == 0); }
-	bool IsInQueue() const { return (inTaskQueue.load(std::memory_order_relaxed) == 1); }
+	bool IsInQueue() const { return (inTaskQueue.load(std::memory_order_relaxed)); }
+	bool IsInPool() const { return (inTaskPool.load(std::memory_order_relaxed)); }
 
 	int RemainingTasks() const { return remainingTasks; }
 	int WantedThread() const { return wantedThread; }
@@ -132,17 +133,21 @@ public:
 	unsigned GetId() const { return id; }
 	void UpdateId() { id = lastId.fetch_add(1); }
 
-	void ResetState() {
+	void ResetState(bool pooled) {
 		remainingTasks = 0;
 		wantedThread = 0;
-		inTaskQueue = 1;
+
+		inTaskQueue = true;
+		inTaskPool = pooled;
 	}
 
 public:
 	std::atomic_int remainingTasks;
 	// if 0 (default), task will be executed by an arbitrary thread
 	std::atomic_int wantedThread;
-	std::atomic_int inTaskQueue;
+
+	std::atomic_bool inTaskQueue;
+	std::atomic_bool inTaskPool;
 
 private:
 	static std::atomic_uint lastId;
@@ -403,7 +408,7 @@ template<typename F>
 class Parallel2TaskGroup : public ITaskGroup
 {
 public:
-	Parallel2TaskGroup() : ITaskGroup(false) {
+	Parallel2TaskGroup(bool pooled) : ITaskGroup(false, pooled) {
 		//uniqueTasks.fill(false);
 	}
 
@@ -441,7 +446,7 @@ template<typename F>
 class ForTaskGroup : public ITaskGroup
 {
 public:
-	ForTaskGroup() : ITaskGroup(false), curtask(0) {
+	ForTaskGroup(bool pooled) : ITaskGroup(false, pooled), curtask(0) {
 	}
 
 
@@ -497,7 +502,7 @@ struct TaskPool {
 
 	TaskPool() {
 		for (int i = 0; i < tgPool.size(); ++i) {
-			tgPool[i] = FuncTaskGroupPtr(new FuncTaskGroup());
+			tgPool[i] = FuncTaskGroupPtr(new FuncTaskGroup(true));
 		}
 	}
 
@@ -506,7 +511,9 @@ struct TaskPool {
 		auto tg = tgPool[pos.fetch_add(1) % tgPool.size()];
 
 		assert(tg->IsFinished());
-		tg->ResetState();
+		assert(tg->IsInPool());
+
+		tg->ResetState(true);
 		return tg;
 	}
 };
