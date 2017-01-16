@@ -37,14 +37,14 @@ static unsigned HashString(const char* s, size_t n)
 	return hash;
 }
 
+#if 0
+// unused
 static unsigned HashString(const std::string& s) {
 	return (HashString(s.c_str(), s.size()));
 }
 
 
 
-#if 0
-// unused
 BasicTimer::BasicTimer(const std::string& timerName)
 	: nameHash(HashString(timerName))
 	, startTime(spring_gettime())
