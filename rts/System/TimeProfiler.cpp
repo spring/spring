@@ -26,12 +26,11 @@ static unsigned HashString(const char* s, size_t n)
 	unsigned hash = 0;
 
 	for (size_t i = 0; (i < n || n == std::string::npos); ++i) {
-		if (s[i] != 0) {
-			hash += s[i];
-			hash ^= (hash << 7) | (hash >> (sizeof(hash) * CHAR_BIT - 7));
-		} else {
+		if (s[i] == 0)
 			break;
-		}
+
+		hash += s[i];
+		hash ^= (hash << 7) | (hash >> (sizeof(hash) * CHAR_BIT - 7));
 	}
 
 	return hash;
