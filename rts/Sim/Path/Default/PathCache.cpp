@@ -22,6 +22,8 @@ CPathCache::CPathCache(int blocksX, int blocksZ)
 {
 	// {result, path, strtBlock, goalBlock, goalRadius, pathType}
 	dummyCacheItem = {IPath::Error, {}, {-1, -1}, {-1, -1}, -1.0f, -1};
+
+	cachedPaths.reserve(4096);
 }
 
 CPathCache::~CPathCache()

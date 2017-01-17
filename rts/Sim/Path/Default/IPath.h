@@ -21,19 +21,40 @@ namespace IPath {
 
 	struct Path {
 		Path()
-			: desiredGoal(ZeroVector)
-			, pathGoal(ZeroVector)
-			, goalRadius(-1.0f)
+			: goalRadius(-1.0f)
 			, pathCost(-1.0f)
 		{}
+		Path(const Path& p) { *this = p; }
+		Path(Path&& p) { *this = std::move(p); }
 
-		// Information about the requested path.
-		float3 desiredGoal;
-		// Information about the generated path.
-		float3 pathGoal;
+		Path& operator = (const Path& p) {
+			path    = p.path;
+			squares = p.squares;
+
+			desiredGoal = p.desiredGoal;
+			pathGoal    = p.pathGoal;
+
+			goalRadius = p.goalRadius;
+			pathCost   = p.pathCost;
+			return *this;
+		}
+		Path& operator = (Path&& p) {
+			path    = std::move(p.path);
+			squares = std::move(p.squares);
+
+			desiredGoal = p.desiredGoal;
+			pathGoal    = p.pathGoal;
+
+			goalRadius = p.goalRadius;
+			pathCost   = p.pathCost;
+			return *this;
+		}
 
 		path_list_type path;
 		square_list_type squares;
+
+		float3 desiredGoal; // requested goal-position
+		float3 pathGoal; // generated goal-position
 
 		float goalRadius;
 		float pathCost;
