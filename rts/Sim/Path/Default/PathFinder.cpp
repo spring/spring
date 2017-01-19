@@ -343,8 +343,8 @@ IPath::SearchResult CPathFinder::FinishSearch(const MoveDef& moveDef, const CPat
 			blockIdx = BlockPosToIdx(square);
 		}
 
-		if (!foundPath.path.empty()) {
-			foundPath.pathGoal = foundPath.path.front();
+		if (numNodes > 0) {
+			foundPath.pathGoal = foundPath.path[0];
 		}
 	}
 

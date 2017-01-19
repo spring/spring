@@ -818,14 +818,11 @@ IPath::SearchResult CPathEstimator::FinishSearch(const MoveDef& moveDef, const C
 			const unsigned int pathOpt = blockStates.nodeMask[blockIdx] & PATHOPT_CARDINALS;
 			const unsigned int pathDir = PathOpt2PathDir(pathOpt);
 
-			const int2 blockVec = PE_DIRECTION_VECTORS[pathDir];
-			const int2 blockPos = BlockIdxToPos(blockIdx) - blockVec;
-
-			blockIdx = BlockPosToIdx(blockPos);
+			blockIdx = BlockPosToIdx(BlockIdxToPos(blockIdx) - PE_DIRECTION_VECTORS[pathDir]);
 		}
 
-		if (!foundPath.path.empty()) {
-			foundPath.pathGoal = foundPath.path.front();
+		if (numNodes > 0) {
+			foundPath.pathGoal = foundPath.path[0];
 		}
 	}
 
