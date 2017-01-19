@@ -399,9 +399,8 @@ void CPathManager::MedRes2MaxRes(MultiPath& multiPath, const float3& startPos, c
 
 	// get the goal of the detailed search
 	float3 goalPos = medResPath.pathGoal;
-	if (!medResPath.path.empty()) {
+	if (!medResPath.path.empty())
 		goalPos = medResPath.path.back();
-	}
 
 	// define the search
 	CCircularSearchConstraint rangedGoalDef(startPos, goalPos, 0.0f, 2.0f, Square(MAXRES_SEARCH_DISTANCE));
@@ -439,9 +438,8 @@ void CPathManager::LowRes2MedRes(MultiPath& multiPath, const float3& startPos, c
 
 	// get the goal of the detailed search
 	float3 goalPos = lowResPath.pathGoal;
-	if (!lowResPath.path.empty()) {
+	if (!lowResPath.path.empty())
 		goalPos = lowResPath.path.back();
-	}
 
 	// define the search
 	CCircularSearchConstraint rangedGoalDef(startPos, goalPos, 0.0f, 2.0f, Square(MEDRES_SEARCH_DISTANCE));
@@ -618,16 +616,17 @@ void CPathManager::UpdatePath(const CSolidObject* owner, unsigned int pathID)
 // get the waypoints in world-coordinates
 void CPathManager::GetDetailedPath(unsigned pathID, std::vector<float3>& points) const
 {
-	points.clear();
-
 	MultiPath* multiPath = GetMultiPath(pathID);
 
-	if (multiPath == nullptr)
+	if (multiPath == nullptr) {
+		points.clear();
 		return;
+	}
 
 	const IPath::Path& path = multiPath->maxResPath;
 	const IPath::path_list_type& maxResPoints = path.path;
 
+	points.clear();
 	points.reserve(maxResPoints.size());
 
 	for (auto pvi = maxResPoints.rbegin(); pvi != maxResPoints.rend(); ++pvi) {
@@ -635,22 +634,23 @@ void CPathManager::GetDetailedPath(unsigned pathID, std::vector<float3>& points)
 	}
 }
 
-void CPathManager::GetDetailedPathSquares(unsigned pathID, std::vector<int2>& points) const
+void CPathManager::GetDetailedPathSquares(unsigned pathID, std::vector<int2>& squares) const
 {
-	points.clear();
-
 	MultiPath* multiPath = GetMultiPath(pathID);
 
-	if (multiPath == nullptr)
+	if (multiPath == nullptr) {
+		squares.clear();
 		return;
+	}
 
 	const IPath::Path& path = multiPath->maxResPath;
 	const IPath::square_list_type& maxResSquares = path.squares;
 
-	points.reserve(maxResSquares.size());
+	squares.clear();
+	squares.reserve(maxResSquares.size());
 
 	for (auto pvi = maxResSquares.rbegin(); pvi != maxResSquares.rend(); ++pvi) {
-		points.push_back(*pvi);
+		squares.push_back(*pvi);
 	}
 }
 

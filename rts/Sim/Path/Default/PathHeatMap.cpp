@@ -8,10 +8,10 @@
 #include "Sim/Objects/SolidObject.h"
 
 // not extern'ed, so static
-static PathHeatMap* gPathHeatMap = NULL;
+static PathHeatMap* gPathHeatMap = nullptr;
 
 PathHeatMap* PathHeatMap::GetInstance() {
-	if (gPathHeatMap == NULL)
+	if (gPathHeatMap == nullptr)
 		gPathHeatMap = new PathHeatMap(PATH_HEATMAP_XSCALE, PATH_HEATMAP_ZSCALE);
 
 	return gPathHeatMap;
@@ -20,7 +20,7 @@ PathHeatMap* PathHeatMap::GetInstance() {
 void PathHeatMap::FreeInstance(PathHeatMap* phm) {
 	assert(phm == gPathHeatMap);
 	delete phm;
-	gPathHeatMap = NULL;
+	gPathHeatMap = nullptr;
 }
 
 
@@ -42,7 +42,7 @@ PathHeatMap::~PathHeatMap() {
 unsigned int PathHeatMap::GetHeatMapIndex(unsigned int hmx, unsigned int hmz) const {
 	assert(!heatMap.empty());
 
-	//! x & y are given in mapDims.mapi coords (:= mapDims.hmapi * 2)
+	// x & y are given in mapDims.mapi coords (:= mapDims.hmapi * 2)
 	hmx >>= xscale;
 	hmz >>= zscale;
 
@@ -55,39 +55,39 @@ void PathHeatMap::AddHeat(const CSolidObject* owner, const CPathManager* pm, uns
 	if (!owner->moveDef->heatMapping)
 		return;
 
-	std::vector<int2> points;
+	// internally clears and reserves squares
+	pm->GetDetailedPathSquares(pathID, pathSquares);
 
-	pm->GetDetailedPathSquares(pathID, points);
+	if (pathSquares.empty())
+		return;
 
-	if (!points.empty()) {
-		// called every frame by PathManager::UpdatePath
-		//
-		// the i-th waypoint receives an amount of heat equal to
-		// ((N - i) / N) * heatProduced so the entire _remaining_
-		// path is constantly reserved (the default PFS consumes
-		// waypoints as they are passed by units) but far-future
-		// waypoints do not contribute much cost for other units
-		//
-		//   i=0   --> value=((N-0)/N)*heatProd
-		//   i=1   --> value=((N-1)/N)*heatProd
-		//   ...
-		//   i=N-1 --> value=((  1)/N)*heatProd
-		//
-		// NOTE:
-		//   only the max-resolution pathfinder reacts to heat!
-		//
-		//   waypoints are spaced SQUARE_SIZE*2 elmos apart so
-		//   the heatmapped paths look like "breadcrumb" trails
-		//   this does not matter only because the default PFS
-		//   uses the same spacing-factor between waypoints
-		const float scale = 1.0f / points.size();
-		const float value = scale * owner->moveDef->heatProduced;
+	// called every frame by PathManager::UpdatePath
+	//
+	// the i-th waypoint receives an amount of heat equal to
+	// ((N - i) / N) * heatProduced so the entire _remaining_
+	// path is constantly reserved (the default PFS consumes
+	// waypoints as they are passed by units) but far-future
+	// waypoints do not contribute much cost for other units
+	//
+	//   i=0   --> value=((N-0)/N)*heatProd
+	//   i=1   --> value=((N-1)/N)*heatProd
+	//   ...
+	//   i=N-1 --> value=((  1)/N)*heatProd
+	//
+	// NOTE:
+	//   only the max-resolution pathfinder reacts to heat!
+	//
+	//   waypoints are spaced SQUARE_SIZE*2 elmos apart so
+	//   the heatmapped paths look like "breadcrumb" trails
+	//   this does not matter only because the default PFS
+	//   uses the same spacing-factor between waypoints
+	const float scale = 1.0f / pathSquares.size();
+	const float value = scale * owner->moveDef->heatProduced;
 
-		unsigned int i = points.size();
+	unsigned int i = pathSquares.size();
 
-		for (std::vector<int2>::const_iterator it = points.begin(); it != points.end(); ++it) {
-			UpdateHeatValue(it->x, it->y, (i--) * value, owner->id);
-		}
+	for (const int2 sqr: pathSquares) {
+		UpdateHeatValue(sqr.x, sqr.y, (i--) * value, owner->id);
 	}
 }
 
@@ -103,8 +103,10 @@ void PathHeatMap::UpdateHeatValue(unsigned int x, unsigned int y, unsigned int v
 float PathHeatMap::GetHeatCost(unsigned int x, unsigned int z, const MoveDef& md, unsigned int ownerID) const {
 	float c = 0.0f;
 
-	if (!enabled) { return c; }
-	if (!md.heatMapping) { return c; }
+	if (!enabled)
+		return c;
+	if (!md.heatMapping)
+		return c;
 
 	const unsigned int idx = GetHeatMapIndex(x, z);
 	const unsigned int val = (heatMapOffset >= heatMap[idx].value)? 0: (heatMap[idx].value - heatMapOffset);

@@ -314,20 +314,21 @@ int2 CPathEstimator::FindOffset(const MoveDef& moveDef, unsigned int blockX, uns
 	// can early exit, when it increases above our current best one.
 	// Performance: tests showed that only ~60% need to be tested
 	for (const SOffsetBlock& ob: offsetBlocksSortedByCost) {
-		if (ob.cost >= bestCost) {
+		if (ob.cost >= bestCost)
 			break;
-		}
 
 		const int2 blockPos(lowerX + ob.offset.x, lowerZ + ob.offset.y);
 		const float speedMod = CMoveMath::GetPosSpeedMod(moveDef, blockPos.x, blockPos.y);
 
 		//assert((blockArea / (0.001f + speedMod) >= 0.0f);
 		const float cost = ob.cost + (blockArea / (0.001f + speedMod));
-		if (cost < bestCost) {
-			if (!CMoveMath::IsBlockedStructure(moveDef, blockPos.x, blockPos.y, NULL)) {
-				bestCost = cost;
-				bestPos  = blockPos;
-			}
+
+		if (cost >= bestCost)
+			continue;
+
+		if (!CMoveMath::IsBlockedStructure(moveDef, blockPos.x, blockPos.y, NULL)) {
+			bestCost = cost;
+			bestPos  = blockPos;
 		}
 	}
 
@@ -455,10 +456,10 @@ void CPathEstimator::Update()
 	pathCache[0]->Update();
 	pathCache[1]->Update();
 
-	const auto numMoveDefs = moveDefHandler->GetNumMoveDefs();
-	if (numMoveDefs == 0) {
+	const unsigned int numMoveDefs = moveDefHandler->GetNumMoveDefs();
+
+	if (numMoveDefs == 0)
 		return;
-	}
 
 	// determine how many blocks we should update
 	int blocksToUpdate = 0;
@@ -504,9 +505,8 @@ void CPathEstimator::Update()
 			continue;
 		}
 
-		if (consumedBlocks.size() >= blocksToUpdate) {
+		if (consumedBlocks.size() >= blocksToUpdate)
 			break;
-		}
 
 		// issue repathing for all active movedefs
 		for (unsigned int i = 0; i < numMoveDefs; i++) {
@@ -785,21 +785,42 @@ IPath::SearchResult CPathEstimator::FinishSearch(const MoveDef& moveDef, const C
 
 	if (pfDef.needPath) {
 		unsigned int blockIdx = mGoalBlockIdx;
+		unsigned int numNodes = 0;
+
+		{
+			while (blockIdx != mStartBlockIdx) {
+				const unsigned int pathOpt = blockStates.nodeMask[blockIdx] & PATHOPT_CARDINALS;
+				const unsigned int pathDir = PathOpt2PathDir(pathOpt);
+
+				blockIdx  = BlockPosToIdx(BlockIdxToPos(blockIdx) - PE_DIRECTION_VECTORS[pathDir]);
+				numNodes += 1;
+			}
+
+			// PE's do not need the squares
+			// foundPath.squares.reserve(numNodes);
+			foundPath.path.reserve(numNodes);
+
+			// reset
+			blockIdx = mGoalBlockIdx;
+		}
 
 		while (true) {
 			// use offset defined by the block
 			const int2 square = blockStates.peNodeOffsets[moveDef.pathType][blockIdx];
-			float3 pos(square.x * SQUARE_SIZE, 0.0f, square.y * SQUARE_SIZE);
-			pos.y = CMoveMath::yLevel(moveDef, square.x, square.y);
 
-			foundPath.path.push_back(pos);
+			// foundPath.squares.push_back(square);
+			foundPath.path.emplace_back(square.x * SQUARE_SIZE, CMoveMath::yLevel(moveDef, square.x, square.y), square.y * SQUARE_SIZE);
 
 			if (blockIdx == mStartBlockIdx)
 				break;
 
 			// next step backwards
-			auto pathDir  = PathOpt2PathDir(blockStates.nodeMask[blockIdx] & PATHOPT_CARDINALS);
-			int2 blockPos = BlockIdxToPos(blockIdx) - PE_DIRECTION_VECTORS[pathDir];
+			const unsigned int pathOpt = blockStates.nodeMask[blockIdx] & PATHOPT_CARDINALS;
+			const unsigned int pathDir = PathOpt2PathDir(pathOpt);
+
+			const int2 blockVec = PE_DIRECTION_VECTORS[pathDir];
+			const int2 blockPos = BlockIdxToPos(blockIdx) - blockVec;
+
 			blockIdx = BlockPosToIdx(blockPos);
 		}
 

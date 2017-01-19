@@ -20,7 +20,7 @@ class CSolidObject;
 class IPathFinder {
 public:
 	IPathFinder(unsigned int BLOCK_SIZE);
-	virtual ~IPathFinder();
+	virtual ~IPathFinder() {}
 
 	// size of the memory-region we hold allocated (excluding sizeof(*this))
 	// (PathManager stores HeatMap and FlowMap, so we do not need to add them)

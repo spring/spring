@@ -88,17 +88,15 @@ private:
 	void AdjustFoundPath(
 		const MoveDef&,
 		IPath::Path&,
-		const float3 nextPoint,
-		std::deque<int2>& previous,
-		int2 square
+		const std::deque<int2>& previous,
+		int2 curSquare
 	) const;
 
 	inline void SmoothMidWaypoint(
-		const int2 testsqr,
-		const int2 prvsqr,
+		const int2 testSqr,
+		const int2 prevSqr,
 		const MoveDef& moveDef,
-		IPath::Path& foundPath,
-		const float3 nextPoint
+		IPath::Path& foundPath
 	) const;
 
 	typedef CMoveMath::BlockType (*BlockCheckFunc)(const MoveDef&, int, int, const CSolidObject*);

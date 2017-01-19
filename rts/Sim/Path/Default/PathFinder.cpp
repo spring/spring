@@ -304,24 +304,34 @@ IPath::SearchResult CPathFinder::FinishSearch(const MoveDef& moveDef, const CPat
 	// backtrack
 	if (pfDef.needPath) {
 		int2 square = BlockIdxToPos(mGoalBlockIdx);
+
 		unsigned int blockIdx = mGoalBlockIdx;
+		unsigned int numNodes = 0;
+
+		{
+			while (blockIdx != mStartBlockIdx) {
+				blockIdx  = BlockPosToIdx(square -= PF_DIRECTION_VECTORS_2D[blockStates.nodeMask[blockIdx] & PATHOPT_CARDINALS]);
+				numNodes += 1;
+			}
+
+			// note: <squares> is only used for heatmapping (via PathManager::GetDetailedPathSquares)
+			foundPath.squares.reserve(numNodes);
+			foundPath.path.reserve(numNodes);
+
+			// reset
+			square = BlockIdxToPos(blockIdx = mGoalBlockIdx);
+		}
 
 		// for path adjustment (cutting corners)
-		std::deque<int2> previous;
-
 		// make sure we don't match anything
-		previous.push_back(square);
-		previous.push_back(square);
+		std::deque<int2> previous = {square, square};
 
 		while (true) {
-			float3 pos(square.x * SQUARE_SIZE, 0.0f, square.y * SQUARE_SIZE);
-			pos.y = CMoveMath::yLevel(moveDef, square.x, square.y);
+			foundPath.squares.push_back(square);
+			foundPath.path.emplace_back(square.x * SQUARE_SIZE, CMoveMath::yLevel(moveDef, square.x, square.y), square.y * SQUARE_SIZE);
 
 			// try to cut corners
-			AdjustFoundPath(moveDef, foundPath, pos, previous, square);
-
-			foundPath.path.push_back(pos);
-			foundPath.squares.push_back(square);
+			AdjustFoundPath(moveDef, foundPath, previous, square);
 
 			previous.pop_front();
 			previous.push_back(square);
@@ -344,7 +354,10 @@ IPath::SearchResult CPathFinder::FinishSearch(const MoveDef& moveDef, const CPat
 	return IPath::Ok;
 }
 
-/** Helper function for AdjustFoundPath */
+
+
+
+/** Helper function for SmoothMidWaypoint */
 static inline void FixupPath3Pts(const MoveDef& moveDef, const float3 p1, float3& p2, const float3 p3)
 {
 #if PATHDEBUG
@@ -355,27 +368,33 @@ static inline void FixupPath3Pts(const MoveDef& moveDef, const float3 p1, float3
 	p2.y = CMoveMath::yLevel(moveDef, p2);
 
 #if PATHDEBUG
-	geometricObjects->AddLine(old + float3(0, 10, 0), p2 + float3(0, 10, 0), 5, 10, 600, 0);
+	geometricObjects->AddLine(old + UpVector * 10.0f, p2 + UpVector * 10.0f, 5, 10, 600, 0);
 #endif
 }
 
 
-void CPathFinder::SmoothMidWaypoint(const int2 testsqr, const int2 prevsqr, const MoveDef& moveDef, IPath::Path& foundPath, const float3 nextPoint) const
-{
-	static const float COSTMOD = 1.39f; // (math::sqrt(2) + 1) / math::sqrt(3)
-	const int tstsqr = BlockPosToIdx(testsqr);
-	const int prvsqr = BlockPosToIdx(prevsqr);
+void CPathFinder::SmoothMidWaypoint(
+	const int2 testSqr,
+	const int2 prevSqr,
+	const MoveDef& moveDef,
+	IPath::Path& foundPath
+) const {
+	constexpr float COSTMOD = 1.39f; // (math::sqrt(2) + 1) / math::sqrt(3)
+
+	const int tstSqrIdx = BlockPosToIdx(testSqr);
+	const int prvSqrIdx = BlockPosToIdx(prevSqr);
+
 	if (
-		   ((blockStates.nodeMask[tstsqr] & PATHOPT_BLOCKED) == 0)
-		&& (blockStates.fCost[tstsqr] <= COSTMOD * blockStates.fCost[prvsqr])
+		   ((blockStates.nodeMask[tstSqrIdx] & PATHOPT_BLOCKED) == 0)
+		&& (blockStates.fCost[tstSqrIdx] <= COSTMOD * blockStates.fCost[prvSqrIdx])
 	) {
-		const float3& p2 = foundPath.path[foundPath.path.size() - 2];
-		      float3& p1 = foundPath.path.back();
-		const float3& p0 = nextPoint;
+		const float3& p2 = foundPath.path[foundPath.path.size() - 3];
+		      float3& p1 = foundPath.path[foundPath.path.size() - 2];
+		const float3& p0 = foundPath.path[foundPath.path.size() - 1];
+
 		FixupPath3Pts(moveDef, p0, p1, p2);
 	}
 }
-
 
 /*
  * This function takes the current & the last 2 waypoints and detects when they form
@@ -384,21 +403,27 @@ void CPathFinder::SmoothMidWaypoint(const int2 testsqr, const int2 prevsqr, cons
  * Hint: hard curves (e.g. `move North then West`) can't and will not smoothed. Only soft ones
  *  like `move North then North-West` can.
  */
-void CPathFinder::AdjustFoundPath(const MoveDef& moveDef, IPath::Path& foundPath, const float3 nextPoint,
-	std::deque<int2>& previous, int2 curquare) const
-{
+void CPathFinder::AdjustFoundPath(
+	const MoveDef& moveDef,
+	IPath::Path& foundPath,
+	const std::deque<int2>& previous,
+	int2 curSquare
+) const {
 	assert(previous.size() == 2);
-	const int2& p1 = previous[0]; // two before curquare
-	const int2& p2 = previous[1]; // one before curquare
+	const int2& p1 = previous[0]; // two before curSquare
+	const int2& p2 = previous[1]; // one before curSquare
 
-	int2 dirNow = (p2 - curquare);
-	int2 dirPrv = (p1 - curquare) - dirNow;
+	int2 dirNow = (p2 - curSquare);
+	int2 dirPrv = (p1 - curSquare) - dirNow;
 	assert(dirNow.x % PATH_NODE_SPACING == 0);
 	assert(dirNow.y % PATH_NODE_SPACING == 0);
 	assert(dirPrv.x % PATH_NODE_SPACING == 0);
 	assert(dirPrv.y % PATH_NODE_SPACING == 0);
 	dirNow /= PATH_NODE_SPACING;
 	dirPrv /= PATH_NODE_SPACING;
+
+	if (foundPath.path.size() < 3)
+		return;
 
 	for (unsigned pathDir = PATHDIR_LEFT; pathDir < PATH_DIRECTIONS; ++pathDir) {
 		// find the pathDir
@@ -408,10 +433,11 @@ void CPathFinder::AdjustFoundPath(const MoveDef& moveDef, IPath::Path& foundPath
 		// only smooth "soft" curves (e.g. `move North-East then North`)
 		if (
 			   (dirPrv == PE_DIRECTION_VECTORS[(pathDir + PATH_DIRECTIONS - 1) % PATH_DIRECTIONS])
-			|| (dirPrv == PE_DIRECTION_VECTORS[(pathDir+1) % PATH_DIRECTIONS])
+			|| (dirPrv == PE_DIRECTION_VECTORS[(pathDir                   + 1) % PATH_DIRECTIONS])
 		) {
-			SmoothMidWaypoint(curquare + (dirPrv * PATH_NODE_SPACING), p2, moveDef, foundPath, nextPoint);
+			SmoothMidWaypoint(curSquare + (dirPrv * PATH_NODE_SPACING), p2, moveDef, foundPath);
 		}
+
 		break;
 	}
 }

@@ -59,23 +59,20 @@ IPathFinder::IPathFinder(unsigned int _BLOCK_SIZE)
 	, nbrOfBlocks(mapDims.mapx / BLOCK_SIZE, mapDims.mapy / BLOCK_SIZE)
 	, blockStates(nbrOfBlocks, int2(mapDims.mapx, mapDims.mapy))
 {
-}
-
-
-IPathFinder::~IPathFinder()
-{
-	//ResetSearch();
+	// reserve a batch of dirty blocks
+	ResetSearch();
 }
 
 
 void IPathFinder::ResetSearch()
 {
-	openBlocks.Clear();
-
 	while (!dirtyBlocks.empty()) {
 		blockStates.ClearSquare(dirtyBlocks.back());
 		dirtyBlocks.pop_back();
 	}
+
+	dirtyBlocks.reserve(4096);
+	openBlocks.Clear();
 
 	testedBlocks = 0;
 }
