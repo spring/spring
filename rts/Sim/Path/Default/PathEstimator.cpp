@@ -788,6 +788,7 @@ IPath::SearchResult CPathEstimator::FinishSearch(const MoveDef& moveDef, const C
 		unsigned int numNodes = 0;
 
 		{
+			#if 1
 			while (blockIdx != mStartBlockIdx) {
 				const unsigned int pathOpt = blockStates.nodeMask[blockIdx] & PATHOPT_CARDINALS;
 				const unsigned int pathDir = PathOpt2PathDir(pathOpt);
@@ -802,6 +803,13 @@ IPath::SearchResult CPathEstimator::FinishSearch(const MoveDef& moveDef, const C
 
 			// reset
 			blockIdx = mGoalBlockIdx;
+
+			#else
+
+			// more wasteful, but slightly faster for very long paths
+			// foundPath.squares.reserve(1024 / BLOCK_SIZE);
+			foundPath.path.reserve(1024 / BLOCK_SIZE);
+			#endif
 		}
 
 		while (true) {

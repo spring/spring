@@ -81,10 +81,10 @@ void PathHeatMap::AddHeat(const CSolidObject* owner, const CPathManager* pm, uns
 	//   the heatmapped paths look like "breadcrumb" trails
 	//   this does not matter only because the default PFS
 	//   uses the same spacing-factor between waypoints
-	const float scale = 1.0f / pathSquares.size();
-	const float value = scale * owner->moveDef->heatProduced;
-
 	unsigned int i = pathSquares.size();
+
+	const float scale = 1.0f / i;
+	const float value = scale * owner->moveDef->heatProduced;
 
 	for (const int2 sqr: pathSquares) {
 		UpdateHeatValue(sqr.x, sqr.y, (i--) * value, owner->id);
@@ -94,7 +94,7 @@ void PathHeatMap::AddHeat(const CSolidObject* owner, const CPathManager* pm, uns
 void PathHeatMap::UpdateHeatValue(unsigned int x, unsigned int y, unsigned int value, unsigned int ownerID) {
 	const unsigned int idx = GetHeatMapIndex(x, y);
 
-	if (heatMap[idx].value < value + heatMapOffset) {
+	if (heatMap[idx].value < (value + heatMapOffset)) {
 		heatMap[idx].value = value + heatMapOffset;
 		heatMap[idx].ownerID = ownerID;
 	}
@@ -111,9 +111,8 @@ float PathHeatMap::GetHeatCost(unsigned int x, unsigned int z, const MoveDef& md
 	const unsigned int idx = GetHeatMapIndex(x, z);
 	const unsigned int val = (heatMapOffset >= heatMap[idx].value)? 0: (heatMap[idx].value - heatMapOffset);
 
-	if (heatMap[idx].ownerID != ownerID) {
+	if (heatMap[idx].ownerID != ownerID)
 		c = (md.heatMod * val);
-	}
 
 	return c;
 }
