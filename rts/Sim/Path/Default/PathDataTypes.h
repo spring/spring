@@ -64,6 +64,7 @@ struct PathNodeStateBuffer {
 		, ps(mapRes / bufRes)
 		, br(bufRes)
 		, mr(mapRes)
+		, er{int2(1, 1), int2(1, 1)}
 	{
 		fCost.resize(br.x * br.y, PATHCOST_INFINITY);
 		gCost.resize(br.x * br.y, PATHCOST_INFINITY);
@@ -73,10 +74,11 @@ struct PathNodeStateBuffer {
 		// extraCosts[ true].resize(br.x * br.y, 0.0f);
 		// extraCosts[false].resize(br.x * br.y, 0.0f);
 
-		if (bufRes != mapRes) {
-			// is done in PathEstimator, PF does not need these
-			// peNodeOffsets.resize();
-		}
+		#if 0
+		// is done in PathEstimator, PF does not need these
+		if (bufRes != mapRes)
+			peNodeOffsets.resize(numPathTypes);
+		#endif
 
 		maxCosts[NODE_COST_F] = 0.0f;
 		maxCosts[NODE_COST_G] = 0.0f;
