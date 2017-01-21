@@ -8,20 +8,6 @@
 /******************************************************************************/
 /******************************************************************************/
 
-LuaTextures::~LuaTextures()
-{
-	for (auto it = textures.begin(); it != textures.end(); ++it) {
-		const Texture& tex = it->second;
-		glDeleteTextures(1, &tex.id);
-		if (GLEW_EXT_framebuffer_object) {
-			glDeleteFramebuffersEXT(1, &tex.fbo);
-			glDeleteRenderbuffersEXT(1, &tex.fboDepth);
-		}
-	}
-	textures.clear();
-}
-
-
 std::string LuaTextures::Create(const Texture& tex)
 {	
 	GLint currentBinding;
@@ -61,11 +47,11 @@ std::string LuaTextures::Create(const Texture& tex)
 
 	if ((tex.aniso != 0.0f) && GLEW_EXT_texture_filter_anisotropic) {
 		static GLfloat maxAniso = -1.0f;
-		if (maxAniso == -1.0f) {
+
+		if (maxAniso == -1.0f)
 			glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxAniso);
-		}
-		const GLfloat aniso = std::max(1.0f, std::min(maxAniso, tex.aniso));
-		glTexParameterf(tex.target, GL_TEXTURE_MAX_ANISOTROPY_EXT, aniso);
+
+		glTexParameterf(tex.target, GL_TEXTURE_MAX_ANISOTROPY_EXT, std::max(1.0f, std::min(maxAniso, tex.aniso)));
 	}
 
 	glBindTexture(GL_TEXTURE_2D, currentBinding); // revert the current binding
@@ -108,15 +94,24 @@ std::string LuaTextures::Create(const Texture& tex)
 		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, currentFBO);
 	}
 
-	lastCode++;
 	char buf[64];
-	SNPRINTF(buf, sizeof(buf), "%c%i", prefix, lastCode);
+	SNPRINTF(buf, sizeof(buf), "%c%i", prefix, ++lastCode);
+
 	Texture newTex = tex;
 	newTex.id = texID;
 	newTex.name = buf;
 	newTex.fbo = fbo;
 	newTex.fboDepth = fboDepth;
-	textures[newTex.name] = newTex;
+
+	if (freeIndices.empty()) {
+		textureMap[newTex.name] = textureVec.size();
+		textureVec.push_back(newTex);
+	} else {
+		// recycle
+		textureMap[newTex.name] = freeIndices.back();
+		textureVec[freeIndices.back()] = newTex;
+		freeIndices.pop_back();
+	}
 
 	return newTex.name;
 }
@@ -124,9 +119,10 @@ std::string LuaTextures::Create(const Texture& tex)
 
 bool LuaTextures::Bind(const std::string& name) const
 {	
-	auto it = textures.find(name);
-	if (it != textures.end()) {
-		const Texture& tex = it->second;
+	const auto it = textureMap.find(name);
+
+	if (it != textureMap.end()) {
+		const Texture& tex = textureVec[it->second];
 		glBindTexture(tex.target, tex.id);
 		return true;
 	}
@@ -136,17 +132,22 @@ bool LuaTextures::Bind(const std::string& name) const
 
 bool LuaTextures::Free(const std::string& name)
 {
-	auto it = textures.find(name);
-	if (it != textures.end()) {
-		const Texture& tex = it->second;
+	const auto it = textureMap.find(name);
+
+	if (it != textureMap.end()) {
+		const Texture& tex = textureVec[it->second];
 		glDeleteTextures(1, &tex.id);
+
 		if (GLEW_EXT_framebuffer_object) {
 			glDeleteFramebuffersEXT(1, &tex.fbo);
 			glDeleteRenderbuffersEXT(1, &tex.fboDepth);
 		}
-		textures.erase(it);
+
+		freeIndices.push_back(it->second);
+		textureMap.erase(it);
 		return true;
 	}
+
 	return false;
 }
 
@@ -156,11 +157,12 @@ bool LuaTextures::FreeFBO(const std::string& name)
 	if (!GLEW_EXT_framebuffer_object)
 		return false;
 
-	auto it = textures.find(name);
-	if (it == textures.end())
+	const auto it = textureMap.find(name);
+
+	if (it == textureMap.end())
 		return false;
 
-	Texture& tex = it->second;
+	Texture& tex = textureVec[it->second];
 	glDeleteFramebuffersEXT(1, &tex.fbo);
 	glDeleteRenderbuffersEXT(1, &tex.fboDepth);
 	tex.fbo = 0;
@@ -171,25 +173,37 @@ bool LuaTextures::FreeFBO(const std::string& name)
 
 void LuaTextures::FreeAll()
 {
-	for (auto it = textures.begin(); it != textures.end(); ++it) {
-		const Texture& tex = it->second;
+	for (auto it = textureMap.begin(); it != textureMap.end(); ++it) {
+		const Texture& tex = textureVec[it->second];
 		glDeleteTextures(1, &tex.id);
 		if (GLEW_EXT_framebuffer_object) {
 			glDeleteFramebuffersEXT(1, &tex.fbo);
 			glDeleteRenderbuffersEXT(1, &tex.fboDepth);
 		}
 	}
-	textures.clear();
+
+	textureMap.clear();
+	textureVec.clear();
+	freeIndices.clear();
 }
 
 
+size_t LuaTextures::GetIdx(const std::string& name) const
+{
+	const auto it = textureMap.find(name);
+
+	if (it != textureMap.end())
+		return (it->second);
+
+	return (size_t(-1));
+}
+
 const LuaTextures::Texture* LuaTextures::GetInfo(const std::string& name) const
 {
-	auto it = textures.find(name);
+	const size_t idx = GetIdx(name);
 
-	// NOTE: only safe if pointers are not leaked
-	if (it != textures.end())
-		return &(it->second);
+	if (idx != size_t(-1))
+		return &textureVec[idx];
 
 	return nullptr;
 }

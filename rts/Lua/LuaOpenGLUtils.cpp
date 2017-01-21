@@ -354,6 +354,7 @@ bool LuaOpenGLUtils::ParseTextureImage(lua_State* L, LuaMatTexture& texUnit, con
 	texUnit.type   = LuaMatTexture::LUATEX_NONE;
 	texUnit.enable = false;
 	texUnit.data   = 0;
+	texUnit.state  = L; // can be NULL, but only for InfoTex shaders
 
 	if (image.empty())
 		return false;
@@ -371,7 +372,7 @@ bool LuaOpenGLUtils::ParseTextureImage(lua_State* L, LuaMatTexture& texUnit, con
 				return false;
 
 			texUnit.type = LuaMatTexture::LUATEX_LUATEXTURE;
-			texUnit.data = reinterpret_cast<const void*>(texInfo);
+			texUnit.data = reinterpret_cast<const void*>(textures.GetIdx(image));
 		} break;
 
 		case '%': {
@@ -460,7 +461,7 @@ bool LuaOpenGLUtils::ParseTextureImage(lua_State* L, LuaMatTexture& texUnit, con
 
 			if (texInfo != nullptr) {
 				texUnit.type = LuaMatTexture::LUATEX_NAMED;
-				texUnit.data = reinterpret_cast<const void*>(texInfo);
+				texUnit.data = reinterpret_cast<const void*>(CNamedTextures::GetInfoIndex(image));
 			} else {
 				LOG_L(L_WARNING, "Lua: Couldn't load texture named \"%s\"!", image.c_str());
 				return false;
@@ -484,11 +485,16 @@ GLuint LuaMatTexture::GetTextureID() const
 		case LUATEX_NONE: {
 		} break;
 		case LUATEX_NAMED: {
-			texID = reinterpret_cast<const CNamedTextures::TexInfo*>(data)->id;
+			texID = CNamedTextures::GetInfo(*reinterpret_cast<const size_t*>(&data))->id;
 		} break;
 
 		case LUATEX_LUATEXTURE: {
-			texID = reinterpret_cast<const LuaTextures::Texture*>(data)->id;
+			assert(state != nullptr);
+
+			const LuaTextures& luaTextures = CLuaHandle::GetActiveTextures(reinterpret_cast<lua_State*>(state));
+			const LuaTextures::Texture* luaTexture = luaTextures.GetInfo(*reinterpret_cast<const size_t*>(&data));
+
+			texID = luaTexture->id;
 		} break;
 
 		// object model-textures
@@ -633,7 +639,12 @@ GLuint LuaMatTexture::GetTextureTarget() const
 			texType = GL_TEXTURE_2D; //FIXME allow lua to load cubemaps!
 		} break;
 		case LUATEX_LUATEXTURE: {
-			texType = reinterpret_cast<const LuaTextures::Texture*>(data)->target;
+			assert(state != nullptr);
+
+			const LuaTextures& luaTextures = CLuaHandle::GetActiveTextures(reinterpret_cast<lua_State*>(state));
+			const LuaTextures::Texture* luaTexture = luaTextures.GetInfo(*reinterpret_cast<const size_t*>(&data));
+
+			texType = luaTexture->target;
 		} break;
 
 		case LUATEX_MAP_REFLECTION:
@@ -768,23 +779,28 @@ int2 LuaMatTexture::GetSize() const
 
 	switch (type) {
 		case LUATEX_NAMED: {
-			const auto namedTex = reinterpret_cast<const CNamedTextures::TexInfo*>(data);
-			return int2(namedTex->xsize, namedTex->ysize);
+			const CNamedTextures::TexInfo* namedTexInfo = CNamedTextures::GetInfo(*reinterpret_cast<const size_t*>(&data));
+
+			return int2(namedTexInfo->xsize, namedTexInfo->ysize);
 		} break;
 
 		case LUATEX_LUATEXTURE: {
-			const auto luaTex = reinterpret_cast<const LuaTextures::Texture*>(data);
-			return int2(luaTex->xsize, luaTex->ysize);
+			assert(state != nullptr);
+
+			const LuaTextures& luaTextures = CLuaHandle::GetActiveTextures(reinterpret_cast<lua_State*>(state));
+			const LuaTextures::Texture* luaTexture = luaTextures.GetInfo(*reinterpret_cast<const size_t*>(&data));
+
+			return int2(luaTexture->xsize, luaTexture->ysize);
 		} break;
 
 
 		case LUATEX_UNITTEXTURE1: {
-			const auto stex = texturehandlerS3O->GetTexture(*reinterpret_cast<const int*>(&data));
-			return int2(stex->tex1SizeX, stex->tex1SizeY);
+			const CS3OTextureHandler::S3OTexMat* texMat = texturehandlerS3O->GetTexture(*reinterpret_cast<const int*>(&data));
+			return int2(texMat->tex1SizeX, texMat->tex1SizeY);
 		} break;
 		case LUATEX_UNITTEXTURE2: {
-			const auto stex = texturehandlerS3O->GetTexture(*reinterpret_cast<const int*>(&data));
-			return int2(stex->tex2SizeX, stex->tex2SizeY);
+			const CS3OTextureHandler::S3OTexMat* texMat = texturehandlerS3O->GetTexture(*reinterpret_cast<const int*>(&data));
+			return int2(texMat->tex2SizeX, texMat->tex2SizeY);
 		} break;
 		case LUATEX_3DOTEXTURE: {
 			if (texturehandler3DO != nullptr) {
@@ -795,15 +811,15 @@ int2 LuaMatTexture::GetSize() const
 
 		case LUATEX_UNITBUILDPIC: {
 			if (unitDefHandler != nullptr) {
-				const auto ud = reinterpret_cast<const UnitDef*>(data);
+				const UnitDef* ud = reinterpret_cast<const UnitDef*>(data);
 				unitDefHandler->GetUnitDefImage(ud); // forced existance
-				const auto bp = ud->buildPic;
+				const UnitDefImage* bp = ud->buildPic;
 				return int2(bp->imageSizeX, bp->imageSizeY);
 			}
 		} break;
 		case LUATEX_UNITRADARICON: {
-			const auto ud = reinterpret_cast<const UnitDef*>(data);
-			const auto it = ud->iconType;
+			const UnitDef* ud = reinterpret_cast<const UnitDef*>(data);
+			const icon::CIcon it = ud->iconType;
 			return int2(it->GetSizeX(), it->GetSizeY());
 		} break;
 

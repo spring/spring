@@ -4,63 +4,77 @@
 #define LUA_TEXTURES_H
 
 #include <string>
+#include <vector>
 
 #include "Rendering/GL/myGL.h"
 #include "System/UnorderedMap.hpp"
 
 
 class LuaTextures {
-	public:
-		static const char prefix = '!';
+public:
+	static const char prefix = '!';
 
-		LuaTextures() { lastCode = 0; }
-		~LuaTextures();
+	~LuaTextures() { FreeAll(); }
+	LuaTextures() {
+		textureVec.reserve(128);
+		textureMap.reserve(128);
+		lastCode = 0;
+	}
 
-		struct Texture {
-			Texture()
-			: name(""), id(0), fbo(0), fboDepth(0),
-			  target(GL_TEXTURE_2D), format(GL_RGBA8),
-			  xsize(0), ysize(0), border(0),
-			  min_filter(GL_LINEAR), mag_filter(GL_LINEAR),
-			  wrap_s(GL_REPEAT), wrap_t(GL_REPEAT), wrap_r(GL_REPEAT),
-			  aniso(0.0f)
-			{}
+	struct Texture {
+		Texture()
+		: name(""), id(0), fbo(0), fboDepth(0),
+		  target(GL_TEXTURE_2D), format(GL_RGBA8),
+		  xsize(0), ysize(0), border(0),
+		  min_filter(GL_LINEAR), mag_filter(GL_LINEAR),
+		  wrap_s(GL_REPEAT), wrap_t(GL_REPEAT), wrap_r(GL_REPEAT),
+		  aniso(0.0f)
+		{}
 
-			std::string name;
+		std::string name;
 
-			GLuint id;
+		GLuint id;
 
-			// FIXME: obsolete, use raw FBO's
-			GLuint fbo;
-			GLuint fboDepth;
+		// FIXME: obsolete, use raw FBO's
+		GLuint fbo;
+		GLuint fboDepth;
 
-			GLenum target;
-			GLenum format;
+		GLenum target;
+		GLenum format;
 
-			GLsizei xsize;
-			GLsizei ysize;
-			GLint border;
+		GLsizei xsize;
+		GLsizei ysize;
+		GLint border;
 
-			GLenum min_filter;
-			GLenum mag_filter;
+		GLenum min_filter;
+		GLenum mag_filter;
 
-			GLenum wrap_s;
-			GLenum wrap_t;
-			GLenum wrap_r;
+		GLenum wrap_s;
+		GLenum wrap_t;
+		GLenum wrap_r;
 
-			GLfloat aniso;
-		};
+		GLfloat aniso;
+	};
 
-		std::string Create(const Texture& tex);
-		bool Bind(const std::string& name) const;
-		bool Free(const std::string& name);
-		bool FreeFBO(const std::string& name);
-		void FreeAll();
-		const Texture* GetInfo(const std::string& name) const;
+	std::string Create(const Texture& tex);
+	bool Bind(const std::string& name) const;
+	bool Free(const std::string& name);
+	bool FreeFBO(const std::string& name);
+	void FreeAll();
 
-	private:
-		int lastCode;
-		spring::unordered_map<std::string, Texture> textures;
+	size_t GetIdx(const std::string& name) const;
+
+	const Texture* GetInfo(size_t texIdx) const { return &textureVec[texIdx]; }
+	const Texture* GetInfo(const std::string& name) const;
+
+private:
+	int lastCode;
+
+	// maps names to textureVec indices
+	spring::unordered_map<std::string, size_t> textureMap;
+
+	std::vector<Texture> textureVec;
+	std::vector<size_t> freeIndices;
 };
 
 

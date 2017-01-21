@@ -30,7 +30,10 @@ namespace CNamedTextures {
 		bool persist;
 	};
 
+	size_t GetInfoIndex(const std::string& texName);
+
 	const TexInfo* GetInfo(const std::string& texName, bool forceLoad = false, bool persist = false);
+	const TexInfo* GetInfo(size_t texIdx);
 }
 
 #endif /* NAMED_TEXTURES_H */

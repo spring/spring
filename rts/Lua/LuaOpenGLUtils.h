@@ -86,7 +86,7 @@ class LuaMatTexture {
 
 	public:
 		LuaMatTexture()
-		: type(LUATEX_NONE), data(NULL), enable(false), enableTexParams(false) {}
+		: type(LUATEX_NONE), data(nullptr), state(nullptr), enable(false), enableTexParams(false) {}
 
 		void Finalize();
 
@@ -108,7 +108,10 @@ class LuaMatTexture {
 
 	public:
 		Type type;
+
 		const void* data;
+		      void* state;
+
 		bool enable;
 		bool enableTexParams;
 

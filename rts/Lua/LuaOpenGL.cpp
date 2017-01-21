@@ -3154,10 +3154,8 @@ int LuaOpenGL::Texture(lua_State* L)
 
 	CheckDrawingEnabled(L, __FUNCTION__);
 
-	const int args = lua_gettop(L); // number of arguments
-	if (args < 1) {
-		luaL_error(L, "Incorrect arguments to gl.Texture()");
-	}
+	if (lua_gettop(L) < 1)
+		luaL_error(L, "Incorrect [number of] arguments to gl.Texture()");
 
 	GLenum texUnit = GL_TEXTURE0;
 	int nextArg = 1;
@@ -3165,13 +3163,14 @@ int LuaOpenGL::Texture(lua_State* L)
 	if (lua_isnumber(L, 1)) {
 		nextArg = 2;
 		const int texNum = (GLenum)luaL_checknumber(L, 1);
-		if ((texNum < 0) || (texNum >= MAX_TEXTURE_UNITS)) {
+
+		if ((texNum < 0) || (texNum >= MAX_TEXTURE_UNITS))
 			luaL_error(L, "Bad texture unit given to gl.Texture()");
-		}
+
 		texUnit += texNum;
-		if (texUnit != GL_TEXTURE0) {
+
+		if (texUnit != GL_TEXTURE0)
 			glActiveTexture(texUnit);
-		}
 	}
 
 	if (lua_isboolean(L, nextArg)) {
@@ -3180,31 +3179,35 @@ int LuaOpenGL::Texture(lua_State* L)
 		} else {
 			glDisable(GL_TEXTURE_2D);
 		}
-		if (texUnit != GL_TEXTURE0) {
+
+		if (texUnit != GL_TEXTURE0)
 			glActiveTexture(GL_TEXTURE0);
-		}
+
 		lua_pushboolean(L, true);
 		return 1;
 	}
 
 	if (!lua_isstring(L, nextArg)) {
-		if (texUnit != GL_TEXTURE0) {
+		if (texUnit != GL_TEXTURE0)
 			glActiveTexture(GL_TEXTURE0);
-		}
+
 		luaL_error(L, "Incorrect arguments to gl.Texture()");
 	}
 
 	LuaMatTexture tex;
-	const bool loaded = LuaOpenGLUtils::ParseTextureImage(L, tex, lua_tostring(L, nextArg));
-	if (loaded) {
+
+	if (LuaOpenGLUtils::ParseTextureImage(L, tex, lua_tostring(L, nextArg))) {
+		lua_pushboolean(L, true);
+
 		tex.enable = true;
 		tex.Bind();
+	} else {
+		lua_pushboolean(L, false);
 	}
 
 	if (texUnit != GL_TEXTURE0)
 		glActiveTexture(GL_TEXTURE0);
 
-	lua_pushboolean(L, loaded);
 	return 1;
 }
 
@@ -3298,9 +3301,8 @@ int LuaOpenGL::TextureInfo(lua_State* L)
 {
 	LuaMatTexture tex;
 
-	if (!LuaOpenGLUtils::ParseTextureImage(L, tex, luaL_checkstring(L, 1))) {
+	if (!LuaOpenGLUtils::ParseTextureImage(L, tex, luaL_checkstring(L, 1)))
 		return 0;
-	}
 
 	lua_createtable(L, 0, 2);
 	HSTR_PUSH_NUMBER(L, "xsize", tex.GetSize().x);
