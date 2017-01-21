@@ -351,9 +351,8 @@ void LoadExtensions()
 		missingExts += " GL_ARB_texture_compression";
 
 	if (!missingExts.empty()) {
-		static const unsigned int errorMsg_maxSize = 2048;
-		char errorMsg[errorMsg_maxSize];
-		SNPRINTF(errorMsg, errorMsg_maxSize,
+		char errorMsg[2048];
+		SNPRINTF(errorMsg, sizeof(errorMsg),
 				"Needed OpenGL extension(s) not found:\n"
 				"  %s\n\n"
 				"Update your graphic-card driver!\n"

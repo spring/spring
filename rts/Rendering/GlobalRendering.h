@@ -213,6 +213,7 @@ public:
 	bool support24bitDepthBuffers;
 
 	bool supportRestartPrimitive;
+	bool supportClipControl;
 
 	/**
 	 * Shader capabilities

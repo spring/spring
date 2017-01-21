@@ -93,6 +93,7 @@ CR_REG_METADATA(CGlobalRendering, (
 	CR_IGNORED(supportNPOTs),
 	CR_IGNORED(support24bitDepthBuffers),
 	CR_IGNORED(supportRestartPrimitive),
+	CR_IGNORED(supportClipControl),
 	CR_IGNORED(haveARB),
 	CR_IGNORED(haveGLSL),
 	CR_IGNORED(maxSmoothPointSize),
@@ -166,6 +167,7 @@ CGlobalRendering::CGlobalRendering()
 	, supportNPOTs(false)
 	, support24bitDepthBuffers(false)
 	, supportRestartPrimitive(false)
+	, supportClipControl(false)
 	, haveARB(false)
 	, haveGLSL(false)
 	, maxSmoothPointSize(1.0f)
@@ -352,6 +354,9 @@ void CGlobalRendering::PostInit() {
 #ifdef GLEW_NV_primitive_restart
 	supportRestartPrimitive = !!(GLEW_NV_primitive_restart);
 #endif
+#ifdef GL_ARB_clip_control
+	supportClipControl = !!(GL_ARB_clip_control);
+#endif
 
 	// maximum 2D texture size
 	{
@@ -405,8 +410,9 @@ void CGlobalRendering::PostInit() {
 	LOG("[GR::%s]", __func__);
 	LOG("\tARB support: %i, GLSL support: %i, ATI hacks: %i", haveARB, haveGLSL, atiHacks);
 	LOG("\tFBO support: %i, NPOT-texture support: %i, 24bit Z-buffer support: %i", FBO::IsSupported(), supportNPOTs, support24bitDepthBuffers);
+	LOG("\tprimitive-restart support: %i, clip-control support: %i", supportRestartPrimitive, supportClipControl);
 	LOG("\tmax. FBO samples: %i, max. texture size: %i, compress MIP-map textures: %i", FBO::GetMaxSamples(), maxTextureSize, compressTextures);
-	LOG("\tmax. smooth point-size: %0.0f, max. vec4 varying/attributes: %i/%i", maxSmoothPointSize, glslMaxVaryings, glslMaxAttributes);
+	LOG("\tmax. smooth point-size: %0.0f, max. vec4 varyings/attributes: %i/%i", maxSmoothPointSize, glslMaxVaryings, glslMaxAttributes);
 	LOG("\tmax. draw-buffers: %i, max. recommended indices/vertices: %i/%i", glslMaxDrawBuffers, glslMaxRecommendedIndices, glslMaxRecommendedVertices);
 	LOG("\tmax. buffer-bindings: %i, max. block-size: %ikB", glslMaxUniformBufferBindings, glslMaxUniformBufferSize / 1024);
 
