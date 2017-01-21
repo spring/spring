@@ -144,6 +144,10 @@ void CShadowHandler::Init()
 
 	// same as glOrtho(0, 1,  0, 1,  0, -1); maps [0,1] to [-1,1]
 	projMatrix[SHADOWMAT_TYPE_DRAWING].LoadIdentity();
+	#ifdef GL_ARB_clip_control
+	projMatrix[SHADOWMAT_TYPE_DRAWING].Translate(FwdVector * 0.5f);
+	projMatrix[SHADOWMAT_TYPE_DRAWING].Scale(OnesVector - (FwdVector * 0.5f));
+	#endif
 	projMatrix[SHADOWMAT_TYPE_DRAWING].Translate(-OnesVector);
 	projMatrix[SHADOWMAT_TYPE_DRAWING].Scale(OnesVector * 2.0f);
 
