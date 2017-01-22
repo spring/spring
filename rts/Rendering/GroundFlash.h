@@ -26,7 +26,7 @@ public:
 	virtual bool Update() { return false; }
 	virtual void Init(const CUnit* owner, const float3& offset) {}
 
-	float3 CalcNormal(const float3 midPos, const float3 camDir, const float quadSize) const;
+	float3 CalcNormal(const float3 midPos, const float3 camDir, float quadSize) const;
 
 protected:
 	static bool GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo);

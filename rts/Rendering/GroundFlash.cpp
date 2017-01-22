@@ -90,10 +90,11 @@ CGroundFlash::CGroundFlash(const float3& _pos): CExpGenSpawnable()
 	pos = _pos;
 }
 
-float3 CGroundFlash::CalcNormal(const float3 midPos, const float3 camDir, const float quadSize) const
+float3 CGroundFlash::CalcNormal(const float3 midPos, const float3 camDir, float quadSize) const
 {
-	// else ANormalize() fails!
-	assert(quadSize > 1.0f);
+	// no degenerate quads, otherwise ANormalize() fails
+	// assert(quadSize > 1.0f);
+	quadSize = std::max(quadSize, 1.0f);
 
 	float3 p0 = float3(midPos.x + quadSize, 0.0f, midPos.z           );
 	float3 p1 = float3(midPos.x - quadSize, 0.0f, midPos.z           );
