@@ -5,7 +5,8 @@
 #include <ostream>
 #include <fstream>
 #include <memory>
-#include <string.h>
+#include <cstring>
+
 #include <IL/il.h>
 #include <SDL_video.h>
 
@@ -367,6 +368,10 @@ bool CBitmap::Save(std::string const& filename, bool opaque, bool logged) const
 	}
 
 	std::lock_guard<spring::mutex> lck(devilMutex);
+
+	// clear any previous errors
+	while (ilGetError() != IL_NO_ERROR);
+
 	ilOriginFunc(IL_ORIGIN_UPPER_LEFT);
 	ilEnable(IL_ORIGIN_SET);
 
@@ -382,8 +387,13 @@ bool CBitmap::Save(std::string const& filename, bool opaque, bool logged) const
 	const std::string& fullpath = dataDirsAccess.LocateFile(filename, FileQueryFlags::WRITE);
 	const bool success = ilSaveImage(fullpath.c_str());
 
-	if (logged)
-		LOG("[CBitmap::%s] saved{=%d} \"%s\" to \"%s\"", __func__, success, filename.c_str(), fullpath.c_str());
+	if (logged) {
+		if (!success) {
+			LOG("[CBitmap::%s] error 0x%x saving \"%s\" to \"%s\"", __func__, ilGetError(), filename.c_str(), fullpath.c_str());
+		} else {
+			LOG("[CBitmap::%s] saved \"%s\" to \"%s\"", __func__, filename.c_str(), fullpath.c_str());
+		}
+	}
 
 	ilDeleteImages(1, &ImageName);
 	ilDisable(IL_ORIGIN_SET);
