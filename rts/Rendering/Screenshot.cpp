@@ -58,7 +58,6 @@ void TakeScreenshot(std::string type)
 	ThreadPool::Enqueue([](const FunctionArgs& args) {
 		CBitmap bmp(&args.buf[0], args.x, args.y);
 		bmp.ReverseYAxis();
-		bmp.Save(args.filename);
-		LOG("Saved: %s", args.filename.c_str());
+		bmp.Save(args.filename, true, true);
 	}, args);
 }

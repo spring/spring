@@ -335,7 +335,7 @@ bool CBitmap::LoadGrayscale(const std::string& filename)
 }
 
 
-bool CBitmap::Save(std::string const& filename, bool opaque) const
+bool CBitmap::Save(std::string const& filename, bool opaque, bool logged) const
 {
 	if (compressed) {
 #ifndef BITMAP_NO_OPENGL
@@ -349,14 +349,16 @@ bool CBitmap::Save(std::string const& filename, bool opaque) const
 		return false;
 
 	std::unique_ptr<unsigned char[]> buf(new unsigned char[xsize * ysize * 4]);
-	const int ymax = (ysize - 1);
+
+	const int ymax = ysize - 1;
+
 	/* HACK Flip the image so it saves the right way up.
 		(Fiddling with ilOriginFunc didn't do anything?)
 		Duplicated with ReverseYAxis. */
 	for (int y = 0; y < ysize; ++y) {
 		for (int x = 0; x < xsize; ++x) {
 			const int bi = 4 * (x + (xsize * (ymax - y)));
-			const int mi = 4 * (x + (xsize * (y)));
+			const int mi = 4 * (x + (xsize * (       y)));
 			buf[bi + 0] = mem[mi + 0];
 			buf[bi + 1] = mem[mi + 1];
 			buf[bi + 2] = mem[mi + 2];
@@ -377,8 +379,11 @@ bool CBitmap::Save(std::string const& filename, bool opaque) const
 
 	ilTexImage(xsize, ysize, 1, 4, IL_RGBA, IL_UNSIGNED_BYTE, buf.get());
 
-	const std::string fullpath = dataDirsAccess.LocateFile(filename, FileQueryFlags::WRITE);
+	const std::string& fullpath = dataDirsAccess.LocateFile(filename, FileQueryFlags::WRITE);
 	const bool success = ilSaveImage(fullpath.c_str());
+
+	if (logged)
+		LOG("[CBitmap::%s] saved{=%d} \"%s\" to \"%s\"", __func__, success, filename.c_str(), fullpath.c_str());
 
 	ilDeleteImages(1, &ImageName);
 	ilDisable(IL_ORIGIN_SET);

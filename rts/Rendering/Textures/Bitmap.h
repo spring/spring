@@ -35,7 +35,7 @@ public:
 	bool Load(std::string const& filename, unsigned char defaultAlpha = 255);
 	/// Load data from a gray-scale file on the VFS
 	bool LoadGrayscale(std::string const& filename);
-	bool Save(std::string const& filename, bool opaque = true) const;
+	bool Save(std::string const& filename, bool opaque = true, bool logged = false) const;
 	bool SaveFloat(std::string const& filename) const;
 
 	unsigned int CreateTexture(float aniso = 0.0f, bool mipmaps = false) const;
