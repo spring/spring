@@ -274,7 +274,7 @@ class LuaMatBin : public LuaMaterial {
 			return dummy;
 		}
 
-		void Ref();
+		void Ref() { refCount++; }
 		void UnRef();
 
 		void AddUnit(CSolidObject* o) { units.push_back(o); }

@@ -775,18 +775,12 @@ void LuaMatRef::AddFeature(CSolidObject* o)
 //  LuaMatBin
 //
 
-void LuaMatBin::Ref()
-{
-	refCount++;
-}
-
-
 void LuaMatBin::UnRef()
 {
-	refCount--;
-	if (refCount <= 0) {
-		luaMatHandler.FreeBin(this);
-	}
+	if ((--refCount) > 0)
+		return;
+
+	luaMatHandler.FreeBin(this);
 }
 
 
@@ -840,7 +834,7 @@ LuaMatRef LuaMatHandler::GetRef(const LuaMaterial& mat)
 
 	if (it != binSet.end()) {
 		assert(*fakeBin == *(*it));
-		return LuaMatRef(*it);
+		return (LuaMatRef(*it));
 	}
 
 	binSet.push_back(new LuaMatBin(mat));
@@ -848,7 +842,14 @@ LuaMatRef LuaMatHandler::GetRef(const LuaMaterial& mat)
 	LuaMatBin* bin = binSet.back();
 	LuaMatRef ref(bin);
 
-	std::sort(binSet.begin(), binSet.end(), matBinCmp);
+	// swap new bin into place, faster than resorting
+	for (size_t n = binSet.size() - 1; n > 0; n--) {
+		if (matBinCmp(binSet[n - 1], binSet[n]))
+			break;
+
+		std::swap(binSet[n - 1], binSet[n]);
+	}
+
 	return ref;
 }
 
@@ -886,12 +887,17 @@ void LuaMatHandler::FreeBin(LuaMatBin* argBin)
 	if (it == binSet.end())
 		return;
 
-	delete argBin;
+	assert((*it) == argBin);
 
-	binSet[it - binSet.begin()] = binSet.back();
+	// swap to-be-deleted bin to the back, faster than resorting
+	for (size_t n = (it - binSet.begin()); n < (binSet.size() - 1); n++) {
+		std::swap(binSet[n], binSet[n + 1]);
+	}
+
+	assert(binSet.back() == argBin);
 	binSet.pop_back();
 
-	std::sort(binSet.begin(), binSet.end(), matBinCmp);
+	delete argBin;
 }
 
 
