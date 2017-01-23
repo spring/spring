@@ -45,14 +45,13 @@ spring::recursive_mutex soundMutex;
 
 CSound::CSound()
 	: listenerNeedsUpdate(false)
-	, soundThread(NULL)
+	, soundThread(nullptr)
 	, soundThreadQuit(false)
 	, canLoadDefs(false)
 {
 	std::lock_guard<spring::recursive_mutex> lck(soundMutex);
 	mute = false;
 	appIsIconified = false;
-	int maxSounds = configHandler->GetInt("MaxSounds");
 	pitchAdjust = configHandler->GetBool("PitchAdjust");
 
 	masterVolume = configHandler->GetInt("snd_volmaster") * 0.01f;
@@ -67,11 +66,10 @@ CSound::CSound()
 	SoundBuffer::Initialise();
 	soundItemDef temp;
 	temp["name"] = "EmptySource";
-	sounds.push_back(NULL);
+	sounds.push_back(nullptr);
 
-	assert(maxSounds>0);
 	soundThread = new spring::thread();
-	*soundThread = Threading::CreateNewThread(std::bind(&CSound::StartThread, this, maxSounds));
+	*soundThread = Threading::CreateNewThread(std::bind(&CSound::StartThread, this, configHandler->GetInt("MaxSounds")));
 
 	configHandler->NotifyOnChange(this);
 }
@@ -83,10 +81,9 @@ CSound::~CSound()
 
 	LOG_L(L_INFO, "[%s][1] soundThread=%p", __FUNCTION__, soundThread);
 
-	if (soundThread != NULL) {
+	if (soundThread != nullptr) {
 		soundThread->join();
-		delete soundThread;
-		soundThread = NULL;
+		SafeDelete(soundThread);
 	}
 
 	LOG_L(L_INFO, "[%s][2]", __FUNCTION__);
@@ -273,6 +270,8 @@ void CSound::Iconified(bool state)
 __FORCE_ALIGN_STACK__
 void CSound::StartThread(int maxSounds)
 {
+	assert(maxSounds > 0);
+
 	{
 		std::lock_guard<spring::recursive_mutex> lck(soundMutex);
 
@@ -497,29 +496,26 @@ bool CSound::LoadSoundDefsImpl(const std::string& fileName, const std::string& m
 
 	LuaParser parser(fileName, modes, modes);
 	parser.Execute();
-	if (!parser.IsValid())
-	{
-		LOG_L(L_WARNING, "Could not load %s: %s",
-				fileName.c_str(), parser.GetErrorLog().c_str());
+
+	if (!parser.IsValid()) {
+		LOG_L(L_WARNING, "Could not load %s: %s", fileName.c_str(), parser.GetErrorLog().c_str());
 		return false;
 	}
-	else
+
 	{
-		const LuaTable soundRoot = parser.GetRoot();
-		const LuaTable soundItemTable = soundRoot.SubTable("SoundItems");
-		if (!soundItemTable.IsValid())
-		{
+		const LuaTable& soundRoot = parser.GetRoot();
+		const LuaTable& soundItemTable = soundRoot.SubTable("SoundItems");
+
+		if (!soundItemTable.IsValid()) {
 			LOG_L(L_WARNING, "CSound(): could not parse SoundItems table in %s", fileName.c_str());
 			return false;
 		}
-		else
+
 		{
 			std::vector<std::string> keys;
 			soundItemTable.GetKeys(keys);
-			for (std::vector<std::string>::const_iterator it = keys.begin(); it != keys.end(); ++it)
-			{
-				std::string name(*it);
 
+			for (const std::string& name: keys) {
 				soundItemDef bufmap;
 				const LuaTable buf(soundItemTable.SubTable(name));
 				buf.GetMap(bufmap);
@@ -540,9 +536,9 @@ bool CSound::LoadSoundDefsImpl(const std::string& fileName, const std::string& m
 					// no file, drop
 					LOG_L(L_WARNING, "Sound %s is missing file tag (ignoring)", name.c_str());
 					continue;
-				} else {
-					soundItemDefs[name] = bufmap;
 				}
+
+				soundItemDefs[name] = bufmap;
 
 				if (buf.KeyExists("preload")) {
 					MakeItemFromDef(bufmap);

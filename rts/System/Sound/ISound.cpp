@@ -15,8 +15,9 @@
 #ifndef NO_SOUND
 #include "OpenAL/AudioChannel.h"
 #endif
-#include <list>
+
 #include "System/Misc/SpringTime.h" //FIXME: remove this
+#include "System/Util.h"
 
 CONFIG(bool, Sound).defaultValue(true).description("Select the Sound driver, true = OpenAL, false = NullAudio");
 
@@ -35,7 +36,7 @@ CONFIG(float, snd_airAbsorption).defaultValue(0.1f);
 CONFIG(bool, UseEFX).defaultValue(true).safemodeValue(false);
 
 
-ISound* ISound::singleton = NULL;
+ISound* ISound::singleton = nullptr;
 
 ISound::ISound()
 	: numEmptyPlayRequests(0)
@@ -45,7 +46,7 @@ ISound::ISound()
 
 void ISound::Initialize(bool forceNullSound)
 {
-	if (singleton == NULL) {
+	if (singleton == nullptr) {
 #ifndef NO_SOUND
 		if (!IsNullAudio() && !forceNullSound) {
 			Channels::BGMusic = new AudioChannel();
@@ -80,14 +81,10 @@ void ISound::Initialize(bool forceNullSound)
 	}
 }
 
-#define SafeDelete(var) \
-	delete var; \
-	var = NULL;
-
 void ISound::Shutdown()
 {
 	ISound* tmpSound = singleton;
-	singleton = NULL;
+	singleton = nullptr;
 	SafeDelete(tmpSound);
 
 	SafeDelete(Channels::BGMusic);

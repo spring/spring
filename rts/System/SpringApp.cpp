@@ -766,6 +766,9 @@ void SpringApp::Reload(const std::string& script)
 	// Lua shutdown functions need to access 'game' but SafeDelete sets it to NULL.
 	game->KillLua();
 
+	// kill sound here; thread might access readMap which is deleted by ~CGame
+	ISound::Shutdown();
+
 	SafeDelete(game);
 	SafeDelete(pregame);
 
@@ -792,8 +795,7 @@ void SpringApp::Reload(const std::string& script)
 	// normally not needed, but would allow switching fonts
 	// LoadFonts();
 
-	// reload sounds.lua in case we switch to a different game
-	ISound::Shutdown();
+	// reload sounds.lua in case we switched to a different game
 	ISound::Initialize();
 
 	// make sure all old EventClients are really gone (safety)
@@ -906,6 +908,9 @@ void SpringApp::ShutDown()
 	if (game != nullptr)
 		game->KillLua();
 
+	// see ::Reload
+	ISound::Shutdown();
+
 	SafeDelete(game);
 	SafeDelete(pregame);
 
@@ -919,7 +924,6 @@ void SpringApp::ShutDown()
 
 	LOG("[SpringApp::%s][4]", __FUNCTION__);
 	CLoadScreen::DeleteInstance();
-	ISound::Shutdown();
 	FreeJoystick();
 
 	LOG("[SpringApp::%s][5]", __FUNCTION__);
