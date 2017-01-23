@@ -297,7 +297,7 @@ void DefaultPathDrawer::Draw() const {
 	glLineWidth(3);
 
 	for (const auto& p: pm->pathMap) {
-		const CPathManager::MultiPath* path = p.second;
+		const CPathManager::MultiPath& multiPath = p.second;
 
 		glBegin(GL_LINE_STRIP);
 
@@ -305,26 +305,26 @@ void DefaultPathDrawer::Draw() const {
 
 			// draw low-res segments of <path> (green)
 			glColor4f(0.0f, 0.0f, 1.0f, 1.0f);
-			for (PathIt pvi = path->lowResPath.path.begin(); pvi != path->lowResPath.path.end(); ++pvi) {
+			for (PathIt pvi = multiPath.lowResPath.path.begin(); pvi != multiPath.lowResPath.path.end(); ++pvi) {
 				float3 pos = *pvi; pos.y += 5; glVertexf3(pos);
 			}
 
 			// draw med-res segments of <path> (blue)
 			glColor4f(0.0f, 1.0f, 0.0f, 1.0f);
-			for (PathIt pvi = path->medResPath.path.begin(); pvi != path->medResPath.path.end(); ++pvi) {
+			for (PathIt pvi = multiPath.medResPath.path.begin(); pvi != multiPath.medResPath.path.end(); ++pvi) {
 				float3 pos = *pvi; pos.y += 5; glVertexf3(pos);
 			}
 
 			// draw max-res segments of <path> (red)
 			glColor4f(1.0f, 0.0f, 0.0f, 1.0f);
-			for (PathIt pvi = path->maxResPath.path.begin(); pvi != path->maxResPath.path.end(); ++pvi) {
+			for (PathIt pvi = multiPath.maxResPath.path.begin(); pvi != multiPath.maxResPath.path.end(); ++pvi) {
 				float3 pos = *pvi; pos.y += 5; glVertexf3(pos);
 			}
 
 		glEnd();
 
 		// visualize the path definition (goal, radius)
-		Draw(path->peDef);
+		Draw(multiPath.peDef);
 	}
 
 	glLineWidth(1);

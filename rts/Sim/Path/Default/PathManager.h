@@ -30,7 +30,17 @@ public:
 
 	void Update() override;
 	void UpdatePath(const CSolidObject*, unsigned int) override;
-	void DeletePath(unsigned int pathID) override;
+	void DeletePath(unsigned int pathID) override {
+		if (pathID == 0)
+			return;
+
+		const auto pi = pathMap.find(pathID);
+
+		if (pi == pathMap.end())
+			return;
+
+		pathMap.erase(pi);
+	}
 
 
 	float3 NextWayPoint(
@@ -83,30 +93,55 @@ public:
 
 private:
 	struct MultiPath {
+		MultiPath(): peDef(nullptr), moveDef(nullptr), caller(nullptr) {}
 		MultiPath(const float3& pos, const CPathFinderDef* def, const MoveDef* moveDef)
 			: searchResult(IPath::Error)
 			, start(pos)
 			, peDef(def)
 			, moveDef(moveDef)
-			, finalGoal(ZeroVector)
 			, caller(nullptr)
 		{}
 
-		~MultiPath() { delete peDef; }
+		MultiPath(const MultiPath& mp) = delete;
+		MultiPath(MultiPath&& mp) { *this = std::move(mp); }
+		~MultiPath() { delete peDef; peDef = nullptr; }
 
-		// Paths
+		MultiPath& operator = (const MultiPath& mp) = delete;
+		MultiPath& operator = (MultiPath&& mp) {
+			lowResPath = std::move(mp.lowResPath);
+			medResPath = std::move(mp.medResPath);
+			maxResPath = std::move(mp.maxResPath);
+
+			searchResult = mp.searchResult;
+
+			start = mp.start;
+			finalGoal = mp.finalGoal;
+
+			peDef   = mp.peDef;
+			moveDef = mp.moveDef;
+			caller  = mp.caller;
+
+			mp.peDef   = nullptr;
+			mp.moveDef = nullptr;
+			mp.caller  = nullptr;
+			return *this;
+		}
+
+		// paths
 		IPath::Path lowResPath;
 		IPath::Path medResPath;
 		IPath::Path maxResPath;
+
 		IPath::SearchResult searchResult;
 
-		// Request definition
-		const float3 start;
+		// request definition; start is const after ctor
+		float3 start;
+		float3 finalGoal;
+
 		const CPathFinderDef* peDef;
 		const MoveDef* moveDef;
 
-		// Additional information.
-		float3 finalGoal;
+		// additional information
 		CSolidObject* caller;
 	};
 
@@ -120,19 +155,23 @@ private:
 		CSolidObject* caller
 	) const;
 
-	MultiPath* GetMultiPath(int pathID) const {
+	MultiPath* GetMultiPath(int pathID) { return (const_cast<MultiPath*>(GetMultiPathConst(pathID))); }
+
+	const MultiPath* GetMultiPathConst(int pathID) const {
 		const auto pi = pathMap.find(pathID);
 		if (pi == pathMap.end())
 			return nullptr;
-		return pi->second;
+		return &(pi->second);
 	}
 
-	unsigned int Store(MultiPath* path) {
-		pathMap[++nextPathID] = path;
+	unsigned int Store(MultiPath& path) {
+		pathMap[++nextPathID] = std::move(path);
 		return nextPathID;
 	}
 
+
 	static void FinalizePath(MultiPath* path, const float3 startPos, const float3 goalPos, const bool cantGetCloser);
+
 	void LowRes2MedRes(MultiPath& path, const float3& startPos, const CSolidObject* owner, bool synced) const;
 	void MedRes2MaxRes(MultiPath& path, const float3& startPos, const CSolidObject* owner, bool synced) const;
 
@@ -146,7 +185,8 @@ private:
 	PathFlowMap* pathFlowMap;
 	PathHeatMap* pathHeatMap;
 
-	spring::unordered_map<unsigned int, MultiPath*> pathMap;
+	spring::unordered_map<unsigned int, MultiPath> pathMap;
+
 	unsigned int nextPathID;
 };
 

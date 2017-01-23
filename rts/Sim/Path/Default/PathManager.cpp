@@ -32,8 +32,10 @@ CPathManager::CPathManager()
 	pathFlowMap = PathFlowMap::GetInstance();
 	pathHeatMap = PathHeatMap::GetInstance();
 
-	// PathNode::nodePos is ushort2, also PathNode::nodeNum is int
-	// so max map size is limited by 64k*64k
+	pathMap.reserve(1024);
+
+	// PathNode::nodePos is an ushort2, PathNode::nodeNum is an int
+	// therefore the maximum map size is limited to 64k*64k squares
 	assert(mapDims.mapx <= 0xFFFFU && mapDims.mapy <= 0xFFFFU);
 }
 
@@ -332,24 +334,23 @@ unsigned int CPathManager::RequestPath(
 	CCircularSearchConstraint* pfDef = new CCircularSearchConstraint(startPos, goalPos, goalRadius, 3.0f, 2000);
 	assert(moveDef == moveDefHandler->GetMoveDefByPathType(moveDef->pathType));
 
-	// Creates a new multipath.
-	MultiPath* newPath = new MultiPath(startPos, pfDef, moveDef); // deletes pfDef in dtor
-	newPath->finalGoal = goalPos;
-	newPath->caller = caller;
+	MultiPath newPath = MultiPath(startPos, pfDef, moveDef); // deletes pfDef in dtor
+	newPath.finalGoal = goalPos;
+	newPath.caller = caller;
 	pfDef->synced = synced;
 
 	if (caller != nullptr)
 		caller->UnBlock();
 
-	const IPath::SearchResult result = ArrangePath(newPath, moveDef, startPos, goalPos, pfDef, caller);
+	const IPath::SearchResult result = ArrangePath(&newPath, moveDef, startPos, goalPos, pfDef, caller);
 
 	unsigned int pathID = 0;
 
 	if (result != IPath::Error) {
-		if (newPath->maxResPath.path.empty()) {
+		if (newPath.maxResPath.path.empty()) {
 			if (result != IPath::CantGetCloser) {
-				LowRes2MedRes(*newPath, startPos, caller, synced);
-				MedRes2MaxRes(*newPath, startPos, caller, synced);
+				LowRes2MedRes(newPath, startPos, caller, synced);
+				MedRes2MaxRes(newPath, startPos, caller, synced);
 			} else {
 				// add one dummy waypoint so that the calling MoveType
 				// does not consider this request a failure, which can
@@ -358,16 +359,14 @@ unsigned int CPathManager::RequestPath(
 				// otherwise, code relying on MoveType::progressState
 				// (eg. BuilderCAI::MoveInBuildRange) would misbehave
 				// (eg. reject build orders)
-				newPath->maxResPath.path.push_back(startPos);
-				newPath->maxResPath.squares.push_back(int2(startPos.x / SQUARE_SIZE, startPos.z / SQUARE_SIZE));
+				newPath.maxResPath.path.push_back(startPos);
+				newPath.maxResPath.squares.push_back(int2(startPos.x / SQUARE_SIZE, startPos.z / SQUARE_SIZE));
 			}
 		}
 
-		FinalizePath(newPath, startPos, goalPos, result == IPath::CantGetCloser);
-		newPath->searchResult = result;
+		FinalizePath(&newPath, startPos, goalPos, result == IPath::CantGetCloser);
+		newPath.searchResult = result;
 		pathID = Store(newPath);
-	} else {
-		delete newPath;
 	}
 
 	if (caller != nullptr)
@@ -561,23 +560,6 @@ float3 CPathManager::NextWayPoint(
 }
 
 
-// Delete a given multipath from the collection.
-void CPathManager::DeletePath(unsigned int pathID) {
-	if (pathID == 0)
-		return;
-
-	const auto pi = pathMap.find(pathID);
-
-	if (pi == pathMap.end())
-		return;
-
-	MultiPath* multiPath = pi->second;
-	pathMap.erase(pi);
-	delete multiPath;
-}
-
-
-
 // Tells estimators about changes in or on the map.
 void CPathManager::TerrainChange(unsigned int x1, unsigned int z1, unsigned int x2, unsigned int z2, unsigned int /*type*/) {
 	if (!IsFinalized())
@@ -616,7 +598,7 @@ void CPathManager::UpdatePath(const CSolidObject* owner, unsigned int pathID)
 // get the waypoints in world-coordinates
 void CPathManager::GetDetailedPath(unsigned pathID, std::vector<float3>& points) const
 {
-	MultiPath* multiPath = GetMultiPath(pathID);
+	const MultiPath* multiPath = GetMultiPathConst(pathID);
 
 	if (multiPath == nullptr) {
 		points.clear();
@@ -636,7 +618,7 @@ void CPathManager::GetDetailedPath(unsigned pathID, std::vector<float3>& points)
 
 void CPathManager::GetDetailedPathSquares(unsigned pathID, std::vector<int2>& squares) const
 {
-	MultiPath* multiPath = GetMultiPath(pathID);
+	const MultiPath* multiPath = GetMultiPathConst(pathID);
 
 	if (multiPath == nullptr) {
 		squares.clear();
@@ -664,7 +646,7 @@ void CPathManager::GetPathWayPoints(
 	points.clear();
 	starts.clear();
 
-	MultiPath* multiPath = GetMultiPath(pathID);
+	const MultiPath* multiPath = GetMultiPathConst(pathID);
 
 	if (multiPath == nullptr)
 		return;
