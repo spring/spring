@@ -12,10 +12,12 @@
 // the code below is copied directly from GNU ISO C++ Library
 // it is available under the following license:
 
+// We include thread before the test to make sure that _GLIBCXX_HAS_GTHREADS is/isn't defined
+#include <thread>
+
 #if defined(__MINGW32__) && !defined(_GLIBCXX_HAS_GTHREADS)
 	#include <mutex>
 	#include <atomic>
-	#include <thread>
 	#include <condition_variable>
 
 	#include <mingw.thread.h>
