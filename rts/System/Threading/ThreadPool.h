@@ -640,6 +640,12 @@ namespace ThreadPool {
 		auto task = new SingleTask<F, Args...>(std::forward<F>(f), std::forward<Args>(args)...);
 		auto fut = task->GetFuture();
 
+		// minor hack: assume SingleTask's will cause (heavy) disk IO
+		// these should never block the main thread, so do not put any
+		// in the global queue which is serviced by it during calls to
+		// WaitForFinished
+		task->wantedThread.store(1 + task->GetId() % ThreadPool::GetNumThreads());
+
 		ThreadPool::PushTaskGroup(task);
 		return fut;
 	}
