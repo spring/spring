@@ -644,7 +644,7 @@ namespace ThreadPool {
 		// these should never block the main thread, so do not put any
 		// in the global queue which is serviced by it during calls to
 		// WaitForFinished
-		task->wantedThread.store(1 + task->GetId() % ThreadPool::GetNumThreads());
+		task->wantedThread.store(1 + task->GetId() % (ThreadPool::GetNumThreads() - 1));
 
 		ThreadPool::PushTaskGroup(task);
 		return fut;
