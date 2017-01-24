@@ -20,7 +20,7 @@ namespace ThreadPool {
 	static inline int GetThreadNum() { return 0; }
 	static inline int GetMaxThreads() { return 1; }
 	static inline int GetNumThreads() { return 1; }
-	static inline void NotifyWorkerThreads() {}
+	static inline void NotifyWorkerThreads(bool force, bool async) {}
 	static inline bool HasThreads() { return false; }
 
 	static constexpr int MAX_THREADS = 1;
@@ -176,7 +176,7 @@ namespace ThreadPool {
 	bool HasThreads();
 	int GetMaxThreads();
 	int GetNumThreads();
-	void NotifyWorkerThreads(const bool force = false);
+	void NotifyWorkerThreads(bool force, bool async);
 
 	static constexpr int MAX_THREADS = 16;
 }

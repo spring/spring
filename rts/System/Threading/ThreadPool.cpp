@@ -55,15 +55,15 @@ struct ThreadStats {
 // for tasks that want to execute on specific threads, e.g. parallel_reduce
 // note: std::shared_ptr<T> can not be made atomic, queues must store T*'s
 #ifdef USE_BOOST_LOCKFREE_QUEUE
-static std::array<boost::lockfree::queue<ITaskGroup*>, ThreadPool::MAX_THREADS> taskQueues;
+static std::array<boost::lockfree::queue<ITaskGroup*>, ThreadPool::MAX_THREADS> taskQueues[2];
 #else
-static std::array<moodycamel::ConcurrentQueue<ITaskGroup*>, ThreadPool::MAX_THREADS> taskQueues;
+static std::array<moodycamel::ConcurrentQueue<ITaskGroup*>, ThreadPool::MAX_THREADS> taskQueues[2];
 #endif
 
-static std::vector<void*> workerThreads;
+static std::vector<void*> workerThreads[2];
 static std::array<bool, ThreadPool::MAX_THREADS> exitFlags;
-static std::array<ThreadStats, ThreadPool::MAX_THREADS> threadStats;
-static spring::signal newTasksSignal;
+static std::array<ThreadStats, ThreadPool::MAX_THREADS> threadStats[2];
+static spring::signal newTasksSignal[2];
 
 static _threadlocal int threadnum(0);
 
@@ -88,14 +88,14 @@ static void SetThreadNum(const int idx) { threadnum = idx; }
 
 // FIXME: mutex/atomic?
 // NOTE: +1 because we also count the main thread, workers start at 1
-int GetNumThreads() { return (workerThreads.size() + 1); }
+int GetNumThreads() { return (workerThreads[false].size() + 1); }
 int GetMaxThreads() { return std::min(MAX_THREADS, Threading::GetPhysicalCpuCores()); }
 
-bool HasThreads() { return !workerThreads.empty(); }
+bool HasThreads() { return !workerThreads[false].empty(); }
 
 
 
-static bool DoTask(int tid)
+static bool DoTask(int tid, bool async)
 {
 	#ifndef UNIT_TEST
 	SCOPED_MT_TIMER("::ThreadWorkers (accumulated)");
@@ -106,7 +106,7 @@ static bool DoTask(int tid)
 	// any external thread calling WaitForFinished will have
 	// id=0 and *only* processes tasks from the global queue
 	for (int idx = 0; idx <= tid; idx += std::max(tid, 1)) {
-		auto& queue = taskQueues[idx];
+		auto& queue = taskQueues[async][idx];
 
 		#ifdef USE_BOOST_LOCKFREE_QUEUE
 		if (queue.pop(tg)) {
@@ -118,14 +118,16 @@ static bool DoTask(int tid)
 			// cost to the workers too (the main thread only wakes when ALL
 			// workers are sleeping)
 			if (idx == 0)
-				NotifyWorkerThreads(true);
+				NotifyWorkerThreads(true, async);
+
+			assert(!async || tg->IsSingleTask());
 
 			const spring_time dt = tg->ExecuteLoop(false);
 
-			threadStats[tid].numTasks += 1;
-			threadStats[tid].sumTime  += dt.toNanoSecsi();
-			threadStats[tid].minTime   = std::min(threadStats[tid].minTime, uint64_t(dt.toNanoSecsi()));
-			threadStats[tid].maxTime   = std::max(threadStats[tid].maxTime, uint64_t(dt.toNanoSecsi()));
+			threadStats[async][tid].numTasks += 1;
+			threadStats[async][tid].sumTime  += dt.toNanoSecsi();
+			threadStats[async][tid].minTime   = std::min(threadStats[async][tid].minTime, uint64_t(dt.toNanoSecsi()));
+			threadStats[async][tid].maxTime   = std::max(threadStats[async][tid].maxTime, uint64_t(dt.toNanoSecsi()));
 		}
 
 		#ifdef USE_BOOST_LOCKFREE_QUEUE
@@ -133,12 +135,14 @@ static bool DoTask(int tid)
 		#else
 		while (queue.try_dequeue(tg)) {
 		#endif
+			assert(!async || tg->IsSingleTask());
+
 			const spring_time dt = tg->ExecuteLoop(false);
 
-			threadStats[tid].numTasks += 1;
-			threadStats[tid].sumTime  += dt.toNanoSecsi();
-			threadStats[tid].minTime   = std::min(threadStats[tid].minTime, uint64_t(dt.toNanoSecsi()));
-			threadStats[tid].maxTime   = std::max(threadStats[tid].maxTime, uint64_t(dt.toNanoSecsi()));
+			threadStats[async][tid].numTasks += 1;
+			threadStats[async][tid].sumTime  += dt.toNanoSecsi();
+			threadStats[async][tid].minTime   = std::min(threadStats[async][tid].minTime, uint64_t(dt.toNanoSecsi()));
+			threadStats[async][tid].maxTime   = std::max(threadStats[async][tid].maxTime, uint64_t(dt.toNanoSecsi()));
 		}
 	}
 
@@ -148,7 +152,7 @@ static bool DoTask(int tid)
 
 
 __FORCE_ALIGN_STACK__
-static void WorkerLoop(int tid)
+static void WorkerLoop(int tid, bool async)
 {
 	assert(tid != 0);
 	SetThreadNum(tid);
@@ -168,12 +172,11 @@ static void WorkerLoop(int tid)
 		const auto spinlockEnd = spring_now() + ourSpinTime;
 		      auto sleepTime   = spring_time::fromMicroSecs(1);
 
-		while (!DoTask(tid) && !exitFlags[tid]) {
+		while (!DoTask(tid, async) && !exitFlags[tid]) {
 			if (spring_now() < spinlockEnd)
 				continue;
 
-			sleepTime = std::min(sleepTime * 1.25f, maxSleepTime);
-			newTasksSignal.wait_for(sleepTime);
+			newTasksSignal[async].wait_for(sleepTime = std::min(sleepTime * 1.25f, maxSleepTime));
 		}
 	}
 }
@@ -202,27 +205,30 @@ void WaitForFinished(std::shared_ptr<ITaskGroup>&& taskGroup)
 	//   entirely by the loop above, before any worker thread has
 	//   even had a chance to pop it from the queue (so returning
 	//   under that condition could cause the group to be deleted
-	//   prematurely) --> wait
+	//   prematurely if non-pooled) --> wait
 	if (taskGroup->IsFinished()) {
-		while (taskGroup->IsInQueue()) {
-			DoTask(tid);
+		if (!taskGroup->IsInPool()) {
+			while (taskGroup->IsInQueue()) {
+				DoTask(tid, false);
+			}
 		}
 
 		return;
 	}
 
+
 	// task hasn't completed yet, use waiting time to execute other tasks
-	NotifyWorkerThreads(true);
+	NotifyWorkerThreads(true, false);
 
 	do {
 		const auto spinlockEnd = spring_now() + spring_time::fromMilliSecs(500);
 
-		while (!DoTask(tid) && !taskGroup->IsFinished() && !exitFlags[tid]) {
+		while (!DoTask(tid, false) && !taskGroup->IsFinished() && !exitFlags[tid]) {
 			if (spring_now() < spinlockEnd)
 				continue;
 
 			// avoid a hang if the task is still not finished
-			NotifyWorkerThreads(true);
+			NotifyWorkerThreads(true, false);
 			break;
 		}
 	} while (!taskGroup->IsFinished() && !exitFlags[tid]);
@@ -231,8 +237,10 @@ void WaitForFinished(std::shared_ptr<ITaskGroup>&& taskGroup)
 	//for (auto& ep: taskGroup->GetExceptions())
 	//	std::rethrow_exception(ep);
 
-	while (taskGroup->IsInQueue()) {
-		DoTask(tid);
+	if (!taskGroup->IsInPool()) {
+		while (taskGroup->IsInQueue()) {
+			DoTask(tid, false);
+		}
 	}
 }
 
@@ -244,7 +252,7 @@ void WaitForFinished(std::shared_ptr<ITaskGroup>&& taskGroup)
 void PushTaskGroup(std::shared_ptr<ITaskGroup>&& taskGroup) { PushTaskGroup(taskGroup.get()); }
 void PushTaskGroup(ITaskGroup* taskGroup)
 {
-	auto& queue = taskQueues[ taskGroup->WantedThread() ];
+	auto& queue = taskQueues[ (!taskGroup->IsSingleTask()) ][ taskGroup->WantedThread() ];
 
 	#if 0
 	// fake single-task group, handled by WaitForFinished to
@@ -259,18 +267,22 @@ void PushTaskGroup(ITaskGroup* taskGroup)
 	while (!queue.enqueue(taskGroup));
 	#endif
 
-	NotifyWorkerThreads();
+	// SingleTask's do not care about wakeup-latency as much
+	if (taskGroup->IsSingleTask())
+		return;
+
+	NotifyWorkerThreads(false, false);
 }
 
-void NotifyWorkerThreads(const bool force)
+void NotifyWorkerThreads(bool force, bool async)
 {
 	// OPTIMIZATION
-	// if !force only wake up threads when _all_ are sleeping,
-	// this is an optimization cause wakeing up other threads
-	// is a kernel-syscall that costs a lot of time, we prefer
-	// to not do so on the thread that added the ThreadPool-Task
-	// and instead let the worker threads themselves inform each other.
-	newTasksSignal.notify_all((GetNumThreads() - 1) * (1 - force));
+	// if !force then only wake up threads when _all_ are sleeping
+	// this is an optimization; waking up other threads is a kernel
+	// syscall that costs a lot of time (up to 1000ms!) so we prefer
+	// not to block the thread that called PushTaskGroup and instead
+	// let the worker threads themselves inform each other
+	newTasksSignal[async].notify_all((GetNumThreads() - 1) * (1 - force));
 }
 
 
@@ -283,7 +295,9 @@ static void SpawnThreads(int wantedNumThreads, int curNumThreads)
 		try {
 			for (int i = curNumThreads; i < wantedNumThreads; ++i) {
 				exitFlags[i] = false;
-				workerThreads.push_back(new COffscreenGLThread(std::bind(&WorkerLoop, i)));
+
+				workerThreads[false].push_back(new COffscreenGLThread(std::bind(&WorkerLoop, i, false)));
+				workerThreads[ true].push_back(new COffscreenGLThread(std::bind(&WorkerLoop, i,  true)));
 			}
 		} catch (const opengl_error& gle) {
 			// shared gl context creation failed
@@ -297,7 +311,9 @@ static void SpawnThreads(int wantedNumThreads, int curNumThreads)
 	{
 		for (int i = curNumThreads; i < wantedNumThreads; ++i) {
 			exitFlags[i] = false;
-			workerThreads.push_back(new spring::thread(std::bind(&WorkerLoop, i)));
+
+			workerThreads[false].push_back(new spring::thread(std::bind(&WorkerLoop, i, false)));
+			workerThreads[ true].push_back(new spring::thread(std::bind(&WorkerLoop, i,  true)));
 		}
 	}
 }
@@ -308,23 +324,25 @@ static void KillThreads(int wantedNumThreads, int curNumThreads)
 		exitFlags[i] = true;
 	}
 
-	NotifyWorkerThreads(true);
+	NotifyWorkerThreads(true, false);
 
 	for (int i = curNumThreads - 1; i >= wantedNumThreads && i > 0; --i) {
-		assert(!workerThreads.empty());
+		assert(!workerThreads[false].empty());
+		assert(!workerThreads[ true].empty());
+
 	#ifndef UNITSYNC
 		if (hasOGLthreads) {
-			auto th = reinterpret_cast<COffscreenGLThread*>(workerThreads.back());
-			th->join();
-			delete th;
+			{ auto th = reinterpret_cast<COffscreenGLThread*>(workerThreads[false].back()); th->join(); delete th; }
+			{ auto th = reinterpret_cast<COffscreenGLThread*>(workerThreads[ true].back()); th->join(); delete th; }
 		} else
 	#endif
 		{
-			auto th = reinterpret_cast<spring::thread*>(workerThreads.back());
-			th->join();
-			delete th;
+			{ auto th = reinterpret_cast<spring::thread*>(workerThreads[false].back()); th->join(); delete th; }
+			{ auto th = reinterpret_cast<spring::thread*>(workerThreads[ true].back()); th->join(); delete th; }
 		}
-		workerThreads.pop_back();
+
+		workerThreads[false].pop_back();
+		workerThreads[ true].pop_back();
 	}
 
 	// play it safe
@@ -332,13 +350,15 @@ static void KillThreads(int wantedNumThreads, int curNumThreads)
 		ITaskGroup* tg = nullptr;
 
 		#ifdef USE_BOOST_LOCKFREE_QUEUE
-		while (taskQueues[i].pop(tg));
+		while (taskQueues[false][i].pop(tg));
+		while (taskQueues[ true][i].pop(tg));
 		#else
-		while (taskQueues[i].try_dequeue(tg));
+		while (taskQueues[false][i].try_dequeue(tg));
+		while (taskQueues[ true][i].try_dequeue(tg));
 		#endif
 	}
 
-	assert((wantedNumThreads != 0) || workerThreads.empty());
+	assert((wantedNumThreads != 0) || workerThreads[false].empty());
 }
 
 
@@ -385,26 +405,34 @@ void SetThreadCount(int wantedNumThreads)
 
 	const char* fmts[3] = {
 		"[ThreadPool::%s][1] wanted=%d current=%d maximum=%d",
-		"[ThreadPool::%s][2] workers=%u tasks=%lu {sum,avg}time={%.3f, %.3f}ms",
-		"\tthread=%d tasks=%lu (%3.3f%%) {sum,min,max,avg}time={%.3f, %.3f, %.3f, %.3f}ms",
+		"[ThreadPool::%s][2] workers=%lu async=%d tasks=%lu {sum,avg}time={%.3f, %.3f}ms",
+		"\tthread=%d async=%d tasks=%lu (%3.3f%%) {sum,min,max,avg}time={%.3f, %.3f, %.3f, %.3f}ms",
 	};
 
 	// total number of tasks executed by pool; total time spent in DoTask
-	uint64_t pNumTasks = 0lu;
-	uint64_t pSumTime  = 0lu;
+	uint64_t pNumTasks[2] = {0lu, 0lu};
+	uint64_t pSumTime[2]  = {0lu, 0lu};
 
 	LOG(fmts[0], __func__, wantedNumThreads, curNumThreads, GetMaxThreads());
 
-	if (workerThreads.empty()) {
+	if (workerThreads[false].empty()) {
+		assert(workerThreads[true].empty());
+
 		#ifdef USE_BOOST_LOCKFREE_QUEUE
-		taskQueues[0].reserve(1024);
+		taskQueues[false][0].reserve(1024);
+		taskQueues[ true][0].reserve(1024);
 		#endif
 
 		for (int i = 0; i < MAX_THREADS; i++) {
-			threadStats[i].numTasks =  0lu;
-			threadStats[i].sumTime  =  0lu;
-			threadStats[i].minTime  = -1lu;
-			threadStats[i].maxTime  =  0lu;
+			threadStats[false][i].numTasks =  0lu;
+			threadStats[false][i].sumTime  =  0lu;
+			threadStats[false][i].minTime  = -1lu;
+			threadStats[false][i].maxTime  =  0lu;
+
+			threadStats[ true][i].numTasks =  0lu;
+			threadStats[ true][i].sumTime  =  0lu;
+			threadStats[ true][i].minTime  = -1lu;
+			threadStats[ true][i].maxTime  =  0lu;
 		}
 	}
 
@@ -414,32 +442,41 @@ void SetThreadCount(int wantedNumThreads)
 		KillThreads(wtdNumThreads, curNumThreads);
 	}
 
-	if (workerThreads.empty()) {
+	if (workerThreads[false].empty()) {
+		assert(workerThreads[true].empty());
+
 		for (int i = 0; i < curNumThreads; i++) {
-			pNumTasks += threadStats[i].numTasks;
-			pSumTime  += threadStats[i].sumTime;
+			for (int async = 0; async < 2; async++) {
+				pNumTasks[async] += threadStats[async][i].numTasks;
+				pSumTime[async]  += threadStats[async][i].sumTime;
+			}
 		}
 
 		for (int i = 0; i < curNumThreads; i++) {
-			const ThreadStats& ts = threadStats[i];
+			for (int async = 0; async < 2; async++) {
+				const ThreadStats& ts = threadStats[async][i];
 
-			const float tSumTime = ts.sumTime * 1e-6f; // ms
-			const float tMinTime = ts.minTime * 1e-6f; // ms
-			const float tMaxTime = ts.maxTime * 1e-6f; // ms
-			const float tAvgTime = tSumTime / std::max(ts.numTasks, uint64_t(1));
-			const float tRelFrac = (ts.numTasks * 1e2f) / std::max(pNumTasks, uint64_t(1));
+				const float tSumTime = ts.sumTime * 1e-6f; // ms
+				const float tMinTime = ts.minTime * 1e-6f; // ms
+				const float tMaxTime = ts.maxTime * 1e-6f; // ms
+				const float tAvgTime = tSumTime / std::max(ts.numTasks, uint64_t(1));
+				const float tRelFrac = (ts.numTasks * 1e2f) / std::max(pNumTasks[async], uint64_t(1));
 
-			LOG(fmts[2], i, ts.numTasks, tRelFrac, tSumTime, tMinTime, tMaxTime, tAvgTime);
+				LOG(fmts[2], i, async, ts.numTasks, tRelFrac, tSumTime, tMinTime, tMaxTime, tAvgTime);
+			}
 		}
 	}
 
-	LOG(fmts[1], __func__, (unsigned) workerThreads.size(), pNumTasks, pSumTime * 1e-6f, (pSumTime * 1e-6f) / std::max(pNumTasks, uint64_t(1)));
+	for (int async = 0; async < 2; async++) {
+		LOG(fmts[1], __func__, workerThreads[async].size(), async, pNumTasks[async], pSumTime[async] * 1e-6f, (pSumTime[async] * 1e-6f) / std::max(pNumTasks[async], uint64_t(1)));
+	}
 }
 
 void SetMaxThreadCount()
 {
-	if (workerThreads.empty()) {
-		workerThreads.reserve(MAX_THREADS);
+	if (workerThreads[false].empty()) {
+		workerThreads[false].reserve(MAX_THREADS);
+		workerThreads[ true].reserve(MAX_THREADS);
 
 		// NOTE:
 		//   do *not* remove, this makes sure the profiler instance
