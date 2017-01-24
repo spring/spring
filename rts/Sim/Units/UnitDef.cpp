@@ -622,16 +622,11 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	ParseCollisionVolume(udTable);
 
 
-	LuaTable buildsTable = udTable.SubTable("buildOptions");
-	if (buildsTable.IsValid()) {
-		for (int bo = 1; true; bo++) {
-			const string order = buildsTable.GetString(bo, "");
-			if (order.empty()) {
-				break;
-			}
-			buildOptions[bo] = order;
-		}
-	}
+	const LuaTable& buildsTable = udTable.SubTable("buildOptions");
+
+	if (buildsTable.IsValid())
+		buildsTable.GetMap(buildOptions);
+
 
 	const LuaTable& sfxTable = udTable.SubTable("SFXTypes");
 	const LuaTable& modelCEGTable = sfxTable.SubTable(     "explosionGenerators");
