@@ -252,7 +252,7 @@ void WaitForFinished(std::shared_ptr<ITaskGroup>&& taskGroup)
 void PushTaskGroup(std::shared_ptr<ITaskGroup>&& taskGroup) { PushTaskGroup(taskGroup.get()); }
 void PushTaskGroup(ITaskGroup* taskGroup)
 {
-	auto& queue = taskQueues[ (!taskGroup->IsSingleTask()) ][ taskGroup->WantedThread() ];
+	auto& queue = taskQueues[ taskGroup->IsSingleTask() ][ taskGroup->WantedThread() ];
 
 	#if 0
 	// fake single-task group, handled by WaitForFinished to
