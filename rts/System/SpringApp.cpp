@@ -758,7 +758,7 @@ void SpringApp::Reload(const std::string& script)
 {
 	// get rid of any running worker threads
 	ThreadPool::SetThreadCount(0);
-	ThreadPool::SetThreadCount(ThreadPool::GetMaxThreads());
+	ThreadPool::SetDefaultThreadCount();
 
 	if (gameServer != nullptr)
 		gameServer->SetReloading(true);
