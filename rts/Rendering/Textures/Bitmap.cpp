@@ -336,6 +336,76 @@ bool CBitmap::LoadGrayscale(const std::string& filename)
 }
 
 
+
+
+
+
+ILuint ilStrLenDummy(ILconst_string Str)
+{
+	ILconst_string eos = Str;
+
+	if (Str == NULL)
+		return 0;
+
+	while (*eos++);
+	printf("\t[%s] eos=%p Str=%p len=%lu (%d)\n", __func__, eos, Str, (eos - Str - 1), int(eos - Str - 1));
+	return((int)(eos - Str - 1));
+}
+
+ILstring iGetExtensionDummy(ILconst_string FileName)
+{
+	ILboolean PeriodFound = IL_FALSE;
+	ILstring Ext = (ILstring)FileName;
+	ILint i, Len = ilStrLenDummy(FileName);
+
+	printf("\t[%s][1] FileName=\"%s\" Len=%d\n", __func__, FileName, Len);
+
+	if (FileName == NULL || !Len)  // if not a good filename/extension, exit early
+		return NULL;
+
+	Ext += Len;  // start at the end
+
+	for (i = Len; i >= 0; i--) {
+		if (*Ext == '.') {  // try to find a period 
+			PeriodFound = IL_TRUE;
+			break;
+		}
+		Ext--;
+	}
+
+	printf("\t[%s][2] PeriodFound=%d\n", __func__, PeriodFound);
+
+	if (!PeriodFound)  // if no period, no extension
+		return NULL;
+
+	printf("\t[%s][3] Ext=\"%s\"\n", __func__, Ext);
+	return Ext+1;
+}
+
+ILboolean ilSaveImageDummy(ILconst_string FileName)
+{
+	ILstring Ext;
+	ILboolean bRet = IL_FALSE;
+
+	printf("\t[%s][1] ilStrLenDummy(\"%s\")=%u (%lu)\n", __func__, FileName, ilStrLenDummy(FileName), strlen(FileName));
+
+	if (FileName == NULL || ilStrLenDummy(FileName) < 1) {
+		// ilSetError(IL_INVALID_PARAM);
+		return IL_FALSE;
+	}
+
+	Ext = iGetExtensionDummy(FileName);
+
+	printf("\t[%s][2] iGetExtensionDummy(\"%s\")=\"%s\"\n", __func__, FileName, Ext);
+
+	if (Ext == NULL) {
+		// ilSetError(IL_INVALID_PARAM);
+		return IL_FALSE;
+	}
+
+	return IL_TRUE;
+}
+
 bool CBitmap::Save(std::string const& filename, bool opaque, bool logged) const
 {
 	if (compressed) {
@@ -390,6 +460,7 @@ bool CBitmap::Save(std::string const& filename, bool opaque, bool logged) const
 	if (logged) {
 		if (!success) {
 			LOG("[CBitmap::%s] error 0x%x saving \"%s\" to \"%s\"", __func__, ilGetError(), filename.c_str(), fullpath.c_str());
+			ilSaveImageDummy(fullpath.c_str());
 		} else {
 			LOG("[CBitmap::%s] saved \"%s\" to \"%s\"", __func__, filename.c_str(), fullpath.c_str());
 		}
