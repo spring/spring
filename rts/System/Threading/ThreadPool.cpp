@@ -429,8 +429,8 @@ void SetThreadCount(int wantedNumThreads)
 	const char* fmts[4] = {
 		"[ThreadPool::%s][1] wanted=%d current=%d maximum=%d",
 		"[ThreadPool::%s][2] workers=%lu",
-		"\t[async=%d] threads=%d tasks=%lu {sum,avg}{e,w}time={{%.3f, %.3f},{%.3f, %.3f}}ms",
-		"\t\tthread=%d tasks=%lu (%3.3f%%) {sum,min,max,avg}{e,w}time={{%.3f, %.3f, %.3f, %.3f},{%.3f, %.3f, %.3f, %.3f}}ms",
+		"\t[async=%d] threads=%d tasks=%lu {sum,avg}{exec,wait}time={{%.3f, %.3f}, {%.3f, %.3f}}ms",
+		"\t\tthread=%d tasks=%lu (%3.3f%%) {sum,min,max,avg}{exec,wait}time={{%.3f, %.3f, %.3f, %.3f}, {%.3f, %.3f, %.3f, %.3f}}ms",
 	};
 
 	// total number of tasks executed by pool; total time spent in DoTask
@@ -483,8 +483,8 @@ void SetThreadCount(int wantedNumThreads)
 
 		for (bool async: {false, true}) {
 			const float pSumExecTime =  pSumExecTimes[async] * 1e-6f;
-			const float pAvgExecTime = (pSumExecTimes[async] * 1e-6f) / std::max(pNumTasksRun[async], uint64_t(1));
 			const float pSumWaitTime =  pSumWaitTimes[async] * 1e-6f;
+			const float pAvgExecTime = (pSumExecTimes[async] * 1e-6f) / std::max(pNumTasksRun[async], uint64_t(1));
 			const float pAvgWaitTime = (pSumWaitTimes[async] * 1e-6f) / std::max(pNumTasksRun[async], uint64_t(1));
 
 			LOG(fmts[2], async, curNumThreads, pNumTasksRun[async],  pSumExecTime, pAvgExecTime,  pSumWaitTime, pAvgWaitTime);
@@ -496,10 +496,10 @@ void SetThreadCount(int wantedNumThreads)
 					continue;
 
 				const float tSumExecTime = ts.sumExecTime * 1e-6f; // ms
-				const float tMinExecTime = ts.minExecTime * 1e-6f; // ms
-				const float tMaxExecTime = ts.maxExecTime * 1e-6f; // ms
 				const float tSumWaitTime = ts.sumWaitTime * 1e-6f; // ms
+				const float tMinExecTime = ts.minExecTime * 1e-6f; // ms
 				const float tMinWaitTime = ts.minWaitTime * 1e-6f; // ms
+				const float tMaxExecTime = ts.maxExecTime * 1e-6f; // ms
 				const float tMaxWaitTime = ts.maxWaitTime * 1e-6f; // ms
 				const float tAvgExecTime = tSumExecTime / std::max(ts.numTasksRun, uint64_t(1));
 				const float tAvgWaitTime = tSumWaitTime / std::max(ts.numTasksRun, uint64_t(1));
