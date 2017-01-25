@@ -403,15 +403,16 @@ void SetThreadCount(int wantedNumThreads)
 	const int curNumThreads = GetNumThreads();
 	const int wtdNumThreads = Clamp(wantedNumThreads, 1, GetMaxThreads());
 
-	const char* fmts[3] = {
+	const char* fmts[4] = {
 		"[ThreadPool::%s][1] wanted=%d current=%d maximum=%d",
-		"[ThreadPool::%s][2] workers=%lu async=%d tasks=%lu {sum,avg}time={%.3f, %.3f}ms",
-		"\tthread=%d async=%d tasks=%lu (%3.3f%%) {sum,min,max,avg}time={%.3f, %.3f, %.3f, %.3f}ms",
+		"[ThreadPool::%s][2] workers=%lu",
+		"\t[async=%d] threads=%d tasks=%lu {sum,avg}time={%.3f, %.3f}ms",
+		"\t\tthread=%d tasks=%lu (%3.3f%%) {sum,min,max,avg}time={%.3f, %.3f, %.3f, %.3f}ms",
 	};
 
 	// total number of tasks executed by pool; total time spent in DoTask
 	uint64_t pNumTasks[2] = {0lu, 0lu};
-	uint64_t pSumTime[2]  = {0lu, 0lu};
+	uint64_t pSumTime [2] = {0lu, 0lu};
 
 	LOG(fmts[0], __func__, wantedNumThreads, curNumThreads, GetMaxThreads());
 
@@ -445,16 +446,24 @@ void SetThreadCount(int wantedNumThreads)
 	if (workerThreads[false].empty()) {
 		assert(workerThreads[true].empty());
 
-		for (int i = 0; i < curNumThreads; i++) {
-			for (int async = 0; async < 2; async++) {
+		for (bool async: {false, true}) {
+			for (int i = 0; i < curNumThreads; i++) {
 				pNumTasks[async] += threadStats[async][i].numTasks;
-				pSumTime[async]  += threadStats[async][i].sumTime;
+				pSumTime [async] += threadStats[async][i].sumTime;
 			}
 		}
 
-		for (int i = 0; i < curNumThreads; i++) {
-			for (int async = 0; async < 2; async++) {
+		for (bool async: {false, true}) {
+			const float pSumTimeMS =  pSumTime[async] * 1e-6f;
+			const float pAvgTimeMS = (pSumTime[async] * 1e-6f) / std::max(pNumTasks[async], uint64_t(1));
+
+			LOG(fmts[2], async, curNumThreads, pNumTasks[async], pSumTimeMS, pAvgTimeMS);
+
+			for (int i = 0; i < curNumThreads; i++) {
 				const ThreadStats& ts = threadStats[async][i];
+
+				if (ts.numTasks == 0)
+					continue;
 
 				const float tSumTime = ts.sumTime * 1e-6f; // ms
 				const float tMinTime = ts.minTime * 1e-6f; // ms
@@ -462,14 +471,12 @@ void SetThreadCount(int wantedNumThreads)
 				const float tAvgTime = tSumTime / std::max(ts.numTasks, uint64_t(1));
 				const float tRelFrac = (ts.numTasks * 1e2f) / std::max(pNumTasks[async], uint64_t(1));
 
-				LOG(fmts[2], i, async, ts.numTasks, tRelFrac, tSumTime, tMinTime, tMaxTime, tAvgTime);
+				LOG(fmts[3], i, ts.numTasks, tRelFrac, tSumTime, tMinTime, tMaxTime, tAvgTime);
 			}
 		}
 	}
 
-	for (int async = 0; async < 2; async++) {
-		LOG(fmts[1], __func__, workerThreads[async].size(), async, pNumTasks[async], pSumTime[async] * 1e-6f, (pSumTime[async] * 1e-6f) / std::max(pNumTasks[async], uint64_t(1)));
-	}
+	LOG(fmts[1], __func__, workerThreads[false].size());
 }
 
 void SetMaxThreadCount()
