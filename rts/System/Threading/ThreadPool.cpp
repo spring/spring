@@ -25,6 +25,8 @@
 #include <utility>
 #include <functional>
 
+#define USE_TASK_STATS_TRACKING
+
 // not in mingwlibs
 // #define USE_BOOST_LOCKFREE_QUEUE
 
@@ -43,10 +45,13 @@ CONFIG(int, WorkerThreadCount).defaultValue(-1).safemodeValue(0).minimumValue(-1
 
 
 struct ThreadStats {
-	uint64_t numTasks;
-	uint64_t sumTime;
-	uint64_t minTime;
-	uint64_t maxTime;
+	uint64_t numTasksRun;
+	uint64_t sumExecTime;
+	uint64_t minExecTime;
+	uint64_t maxExecTime;
+	uint64_t sumWaitTime;
+	uint64_t minWaitTime;
+	uint64_t maxWaitTime;
 };
 
 
@@ -122,12 +127,20 @@ static bool DoTask(int tid, bool async)
 
 			assert(!async || tg->IsSingleTask());
 
-			const spring_time dt = tg->ExecuteLoop(false);
+			#ifdef USE_TASK_STATS_TRACKING
+			const uint64_t wdt = tg->GetDeltaTime(spring_now());
+			const uint64_t edt = tg->ExecuteLoop(false);
 
-			threadStats[async][tid].numTasks += 1;
-			threadStats[async][tid].sumTime  += dt.toNanoSecsi();
-			threadStats[async][tid].minTime   = std::min(threadStats[async][tid].minTime, uint64_t(dt.toNanoSecsi()));
-			threadStats[async][tid].maxTime   = std::max(threadStats[async][tid].maxTime, uint64_t(dt.toNanoSecsi()));
+			threadStats[async][tid].numTasksRun += 1;
+			threadStats[async][tid].sumExecTime += edt;
+			threadStats[async][tid].sumWaitTime += wdt;
+			threadStats[async][tid].minExecTime  = std::min(threadStats[async][tid].minExecTime, edt);
+			threadStats[async][tid].maxExecTime  = std::max(threadStats[async][tid].maxExecTime, edt);
+			threadStats[async][tid].minWaitTime  = std::min(threadStats[async][tid].minWaitTime, wdt);
+			threadStats[async][tid].maxWaitTime  = std::max(threadStats[async][tid].maxWaitTime, wdt);
+			#else
+			tg->ExecuteLoop(false);
+			#endif
 		}
 
 		#ifdef USE_BOOST_LOCKFREE_QUEUE
@@ -137,12 +150,20 @@ static bool DoTask(int tid, bool async)
 		#endif
 			assert(!async || tg->IsSingleTask());
 
-			const spring_time dt = tg->ExecuteLoop(false);
+			#ifdef USE_TASK_STATS_TRACKING
+			const uint64_t wdt = tg->GetDeltaTime(spring_now());
+			const uint64_t edt = tg->ExecuteLoop(false);
 
-			threadStats[async][tid].numTasks += 1;
-			threadStats[async][tid].sumTime  += dt.toNanoSecsi();
-			threadStats[async][tid].minTime   = std::min(threadStats[async][tid].minTime, uint64_t(dt.toNanoSecsi()));
-			threadStats[async][tid].maxTime   = std::max(threadStats[async][tid].maxTime, uint64_t(dt.toNanoSecsi()));
+			threadStats[async][tid].numTasksRun += 1;
+			threadStats[async][tid].sumExecTime += edt;
+			threadStats[async][tid].sumWaitTime += wdt;
+			threadStats[async][tid].minExecTime  = std::min(threadStats[async][tid].minExecTime, edt);
+			threadStats[async][tid].maxExecTime  = std::max(threadStats[async][tid].maxExecTime, edt);
+			threadStats[async][tid].minWaitTime  = std::min(threadStats[async][tid].minWaitTime, wdt);
+			threadStats[async][tid].maxWaitTime  = std::max(threadStats[async][tid].maxWaitTime, wdt);
+			#else
+			tg->ExecuteLoop(false);
+			#endif
 		}
 	}
 
@@ -260,6 +281,8 @@ void PushTaskGroup(ITaskGroup* taskGroup)
 	if (taskGroup->RemainingTasks() == 1 && !taskGroup->IsSingleTask())
 		return;
 	#endif
+
+	taskGroup->SetTimeStamp(spring_now());
 
 	#ifdef USE_BOOST_LOCKFREE_QUEUE
 	while (!queue.push(taskGroup));
@@ -406,13 +429,14 @@ void SetThreadCount(int wantedNumThreads)
 	const char* fmts[4] = {
 		"[ThreadPool::%s][1] wanted=%d current=%d maximum=%d",
 		"[ThreadPool::%s][2] workers=%lu",
-		"\t[async=%d] threads=%d tasks=%lu {sum,avg}time={%.3f, %.3f}ms",
-		"\t\tthread=%d tasks=%lu (%3.3f%%) {sum,min,max,avg}time={%.3f, %.3f, %.3f, %.3f}ms",
+		"\t[async=%d] threads=%d tasks=%lu {sum,avg}{e,w}time={{%.3f, %.3f},{%.3f, %.3f}}ms",
+		"\t\tthread=%d tasks=%lu (%3.3f%%) {sum,min,max,avg}{e,w}time={{%.3f, %.3f, %.3f, %.3f},{%.3f, %.3f, %.3f, %.3f}}ms",
 	};
 
 	// total number of tasks executed by pool; total time spent in DoTask
-	uint64_t pNumTasks[2] = {0lu, 0lu};
-	uint64_t pSumTime [2] = {0lu, 0lu};
+	uint64_t pNumTasksRun [2] = {0lu, 0lu};
+	uint64_t pSumExecTimes[2] = {0lu, 0lu};
+	uint64_t pSumWaitTimes[2] = {0lu, 0lu};
 
 	LOG(fmts[0], __func__, wantedNumThreads, curNumThreads, GetMaxThreads());
 
@@ -424,17 +448,19 @@ void SetThreadCount(int wantedNumThreads)
 		taskQueues[ true][0].reserve(1024);
 		#endif
 
-		for (int i = 0; i < MAX_THREADS; i++) {
-			threadStats[false][i].numTasks =  0lu;
-			threadStats[false][i].sumTime  =  0lu;
-			threadStats[false][i].minTime  = -1lu;
-			threadStats[false][i].maxTime  =  0lu;
-
-			threadStats[ true][i].numTasks =  0lu;
-			threadStats[ true][i].sumTime  =  0lu;
-			threadStats[ true][i].minTime  = -1lu;
-			threadStats[ true][i].maxTime  =  0lu;
+		#ifdef USE_TASK_STATS_TRACKING
+		for (bool async: {false, true}) {
+			for (int i = 0; i < MAX_THREADS; i++) {
+				threadStats[async][i].numTasksRun =  0lu;
+				threadStats[async][i].sumExecTime =  0lu;
+				threadStats[async][i].minExecTime = -1lu;
+				threadStats[async][i].maxExecTime =  0lu;
+				threadStats[async][i].sumWaitTime =  0lu;
+				threadStats[async][i].minWaitTime = -1lu;
+				threadStats[async][i].maxWaitTime =  0lu;
+			}
 		}
+		#endif
 	}
 
 	if (curNumThreads < wtdNumThreads) {
@@ -443,38 +469,47 @@ void SetThreadCount(int wantedNumThreads)
 		KillThreads(wtdNumThreads, curNumThreads);
 	}
 
+	#ifdef USE_TASK_STATS_TRACKING
 	if (workerThreads[false].empty()) {
 		assert(workerThreads[true].empty());
 
 		for (bool async: {false, true}) {
 			for (int i = 0; i < curNumThreads; i++) {
-				pNumTasks[async] += threadStats[async][i].numTasks;
-				pSumTime [async] += threadStats[async][i].sumTime;
+				pNumTasksRun [async] += threadStats[async][i].numTasksRun;
+				pSumExecTimes[async] += threadStats[async][i].sumExecTime;
+				pSumWaitTimes[async] += threadStats[async][i].sumWaitTime;
 			}
 		}
 
 		for (bool async: {false, true}) {
-			const float pSumTimeMS =  pSumTime[async] * 1e-6f;
-			const float pAvgTimeMS = (pSumTime[async] * 1e-6f) / std::max(pNumTasks[async], uint64_t(1));
+			const float pSumExecTime =  pSumExecTimes[async] * 1e-6f;
+			const float pAvgExecTime = (pSumExecTimes[async] * 1e-6f) / std::max(pNumTasksRun[async], uint64_t(1));
+			const float pSumWaitTime =  pSumWaitTimes[async] * 1e-6f;
+			const float pAvgWaitTime = (pSumWaitTimes[async] * 1e-6f) / std::max(pNumTasksRun[async], uint64_t(1));
 
-			LOG(fmts[2], async, curNumThreads, pNumTasks[async], pSumTimeMS, pAvgTimeMS);
+			LOG(fmts[2], async, curNumThreads, pNumTasksRun[async],  pSumExecTime, pAvgExecTime,  pSumWaitTime, pAvgWaitTime);
 
 			for (int i = 0; i < curNumThreads; i++) {
 				const ThreadStats& ts = threadStats[async][i];
 
-				if (ts.numTasks == 0)
+				if (ts.numTasksRun == 0)
 					continue;
 
-				const float tSumTime = ts.sumTime * 1e-6f; // ms
-				const float tMinTime = ts.minTime * 1e-6f; // ms
-				const float tMaxTime = ts.maxTime * 1e-6f; // ms
-				const float tAvgTime = tSumTime / std::max(ts.numTasks, uint64_t(1));
-				const float tRelFrac = (ts.numTasks * 1e2f) / std::max(pNumTasks[async], uint64_t(1));
+				const float tSumExecTime = ts.sumExecTime * 1e-6f; // ms
+				const float tMinExecTime = ts.minExecTime * 1e-6f; // ms
+				const float tMaxExecTime = ts.maxExecTime * 1e-6f; // ms
+				const float tSumWaitTime = ts.sumWaitTime * 1e-6f; // ms
+				const float tMinWaitTime = ts.minWaitTime * 1e-6f; // ms
+				const float tMaxWaitTime = ts.maxWaitTime * 1e-6f; // ms
+				const float tAvgExecTime = tSumExecTime / std::max(ts.numTasksRun, uint64_t(1));
+				const float tAvgWaitTime = tSumWaitTime / std::max(ts.numTasksRun, uint64_t(1));
+				const float tRelExecFrac = (ts.numTasksRun * 1e2f) / std::max(pNumTasksRun[async], uint64_t(1));
 
-				LOG(fmts[3], i, ts.numTasks, tRelFrac, tSumTime, tMinTime, tMaxTime, tAvgTime);
+				LOG(fmts[3], i, ts.numTasksRun, tRelExecFrac,  tSumExecTime, tMinExecTime, tMaxExecTime, tAvgExecTime,  tSumWaitTime, tMinWaitTime, tMaxWaitTime, tAvgWaitTime);
 			}
 		}
 	}
+	#endif
 
 	LOG(fmts[1], __func__, workerThreads[false].size());
 }

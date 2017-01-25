@@ -84,7 +84,7 @@ static inline auto parallel_reduce(F&& f, G&& g) -> typename std::result_of<F()>
 class ITaskGroup
 {
 public:
-	ITaskGroup(const bool getid = true, const bool pooled = false) : id(getid ? lastId.fetch_add(1) : -1) {
+	ITaskGroup(const bool getid = true, const bool pooled = false) : id(getid ? lastId.fetch_add(1) : -1u), ts(0) {
 		ResetState(pooled);
 	}
 
@@ -97,7 +97,7 @@ public:
 	virtual bool ExecuteStep() = 0;
 	virtual bool SelfDelete() const { return false; }
 
-	spring_time ExecuteLoop(bool wffCall) {
+	uint64_t ExecuteLoop(bool wffCall) {
 		const spring_time t0 = spring_now();
 
 		while (ExecuteStep());
@@ -114,7 +114,7 @@ public:
 		if (SelfDelete())
 			delete this;
 
-		return dt;
+		return (dt.toNanoSecsi());
 	}
 
 	bool IsFinished() const { assert(remainingTasks.load() >= 0); return (remainingTasks.load(std::memory_order_relaxed) == 0); }
@@ -124,14 +124,17 @@ public:
 	int RemainingTasks() const { return remainingTasks; }
 	int WantedThread() const { return wantedThread; }
 
-	bool wait_for(const spring_time& rel_time) const {
+	bool WaitFor(const spring_time& rel_time) const {
 		const auto end = spring_now() + rel_time;
 		while (!IsFinished() && (spring_now() < end));
 		return IsFinished();
 	}
 
-	unsigned GetId() const { return id; }
+	uint32_t GetId() const { return id; }
+	uint64_t GetDeltaTime(const spring_time t) const { return (t.toNanoSecsi() - ts); }
+
 	void UpdateId() { id = lastId.fetch_add(1); }
+	void SetTimeStamp(const spring_time t) { ts = t.toNanoSecsi(); }
 
 	void ResetState(bool pooled) {
 		remainingTasks = 0;
@@ -151,7 +154,9 @@ public:
 
 private:
 	static std::atomic_uint lastId;
-	unsigned id;
+
+	uint32_t id;
+	uint64_t ts; // timestamp (ns)
 };
 
 
