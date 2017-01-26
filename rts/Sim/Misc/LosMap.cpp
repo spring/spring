@@ -475,10 +475,6 @@ void CLosMap::LosAdd(SLosInstance* li) const
 		return ipos.y * mapDims.mapx + ipos.x;
 	};
 
-	// skip when unit is underground/underwater
-	if (li->baseHeight < 0.0f)
-		return;
-
 	const float* heightmapFull = readMap->GetCenterHeightMapSynced();
 	if (SRectangle(0,0,size.x,size.y).Inside(li->basePos) && li->baseHeight <= heightmapFull[MAP_SQUARE_FULLRES(li->basePos)])
 		return;

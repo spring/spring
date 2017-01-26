@@ -112,7 +112,7 @@ float ILosType::GetHeight(const CUnit* unit) const
 		return 0.f;
 	}
 	const float emitHeight = (type == LOS_TYPE_LOS || type == LOS_TYPE_AIRLOS) ? unit->unitDef->losHeight : unit->unitDef->radarHeight;
-	const float losHeight  = unit->midPos.y + emitHeight;
+	const float losHeight  = std::max(unit->midPos.y + emitHeight, 0.0f);
 	const int bucketSize   = 1 << (mipLevel + 2);
 	const float iLosHeight = (int(losHeight) / bucketSize + 0.5f) * bucketSize; // save losHeight in buckets
 	return iLosHeight;
