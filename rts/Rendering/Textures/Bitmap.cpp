@@ -372,26 +372,42 @@ bool CBitmap::Save(std::string const& filename, bool opaque, bool logged) const
 	// clear any previous errors
 	while (ilGetError() != IL_NO_ERROR);
 
-	ilOriginFunc(IL_ORIGIN_UPPER_LEFT);
-	ilEnable(IL_ORIGIN_SET);
+	ilOriginFunc(IL_ORIGIN_UPPER_LEFT); assert(ilGetError() == IL_NO_ERROR);
+	ilEnable(IL_ORIGIN_SET); assert(ilGetError() == IL_NO_ERROR);
 
-	ilHint(IL_COMPRESSION_HINT, IL_USE_COMPRESSION);
-	ilSetInteger(IL_JPG_QUALITY, 80);
+	ilHint(IL_COMPRESSION_HINT, IL_USE_COMPRESSION); assert(ilGetError() == IL_NO_ERROR);
+	ilSetInteger(IL_JPG_QUALITY, 80); assert(ilGetError() == IL_NO_ERROR);
 
 	ILuint ImageName = 0;
-	ilGenImages(1, &ImageName);
-	ilBindImage(ImageName);
+	ilGenImages(1, &ImageName); assert(ilGetError() == IL_NO_ERROR);
+	ilBindImage(ImageName); assert(ilGetError() == IL_NO_ERROR);
 
-	ilTexImage(xsize, ysize, 1, 4, IL_RGBA, IL_UNSIGNED_BYTE, buf.get());
+	ilTexImage(xsize, ysize, 1, 4, IL_RGBA, IL_UNSIGNED_BYTE, buf.get()); assert(ilGetError() == IL_NO_ERROR);
 
-	const std::string& fullpath = dataDirsAccess.LocateFile(filename, FileQueryFlags::WRITE);
-	const bool success = ilSaveImage(fullpath.c_str());
+	const std::string& fullPath = dataDirsAccess.LocateFile(filename, FileQueryFlags::WRITE);
+	const std::string& imageExt = FileSystem::GetExtension(filename);
+
+	bool success = ilSaveImage(fullPath.c_str());
+
+	if (!success) {
+		if (logged)
+			LOG("[CBitmap::%s] error 0x%x saving \"%s\" (ext. \"%s\") to \"%s\"", __func__, ilGetError(), filename.c_str(), imageExt.c_str(), fullPath.c_str());
+
+		// manual fallbacks
+		switch (int(imageExt[0])) {
+			case 'b': case 'B': { success = ilSave(IL_BMP, fullPath.c_str()); } break;
+			case 'j': case 'J': { success = ilSave(IL_JPG, fullPath.c_str()); } break;
+			case 'p': case 'P': { success = ilSave(IL_PNG, fullPath.c_str()); } break;
+			case 't': case 'T': { success = ilSave(IL_TGA, fullPath.c_str()); } break;
+			case 'd': case 'D': { success = ilSave(IL_DDS, fullPath.c_str()); } break;
+		}
+	}
 
 	if (logged) {
-		if (!success) {
-			LOG("[CBitmap::%s] error 0x%x saving \"%s\" to \"%s\"", __func__, ilGetError(), filename.c_str(), fullpath.c_str());
+		if (success) {
+			LOG("[CBitmap::%s] saved \"%s\" to \"%s\"", __func__, filename.c_str(), fullPath.c_str());
 		} else {
-			LOG("[CBitmap::%s] saved \"%s\" to \"%s\"", __func__, filename.c_str(), fullpath.c_str());
+			LOG("[CBitmap::%s] error 0x%x (re-)saving \"%s\" to \"%s\"", __func__, ilGetError(), filename.c_str(), fullPath.c_str());
 		}
 	}
 
