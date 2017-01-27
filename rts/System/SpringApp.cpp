@@ -261,7 +261,7 @@ bool SpringApp::Initialize()
 
 	// ArchiveScanner uses for_mt --> needs thread-count set
 	// (employ all available threads, then switch to default)
-	ThreadPool::SetMaxThreadCount();
+	ThreadPool::SetMaximumThreadCount();
 	FileSystemInitializer::Initialize();
 	ThreadPool::SetDefaultThreadCount();
 

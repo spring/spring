@@ -125,7 +125,7 @@ static bool DoTask(int tid, bool async)
 			if (idx == 0)
 				NotifyWorkerThreads(true, async);
 
-			assert(!async || tg->IsSingleTask());
+			assert(!async || tg->IsAsyncTask());
 
 			#ifdef USE_TASK_STATS_TRACKING
 			const uint64_t wdt = tg->GetDeltaTime(spring_now());
@@ -148,7 +148,7 @@ static bool DoTask(int tid, bool async)
 		#else
 		while (queue.try_dequeue(tg)) {
 		#endif
-			assert(!async || tg->IsSingleTask());
+			assert(!async || tg->IsAsyncTask());
 
 			#ifdef USE_TASK_STATS_TRACKING
 			const uint64_t wdt = tg->GetDeltaTime(spring_now());
@@ -216,7 +216,7 @@ void WaitForFinished(std::shared_ptr<ITaskGroup>&& taskGroup)
 		SCOPED_MT_TIMER("::ThreadWorkers (accumulated)");
 		#endif
 
-		assert(!taskGroup->IsSingleTask());
+		assert(!taskGroup->IsAsyncTask());
 		assert(!taskGroup->SelfDelete());
 		taskGroup->ExecuteLoop(true);
 	}
@@ -273,12 +273,12 @@ void WaitForFinished(std::shared_ptr<ITaskGroup>&& taskGroup)
 void PushTaskGroup(std::shared_ptr<ITaskGroup>&& taskGroup) { PushTaskGroup(taskGroup.get()); }
 void PushTaskGroup(ITaskGroup* taskGroup)
 {
-	auto& queue = taskQueues[ taskGroup->IsSingleTask() ][ taskGroup->WantedThread() ];
+	auto& queue = taskQueues[ taskGroup->IsAsyncTask() ][ taskGroup->WantedThread() ];
 
 	#if 0
 	// fake single-task group, handled by WaitForFinished to
 	// avoid a (delete) race-condition between it and DoTask
-	if (taskGroup->RemainingTasks() == 1 && !taskGroup->IsSingleTask())
+	if (taskGroup->RemainingTasks() == 1 && !taskGroup->IsAsyncTask())
 		return;
 	#endif
 
@@ -290,8 +290,8 @@ void PushTaskGroup(ITaskGroup* taskGroup)
 	while (!queue.enqueue(taskGroup));
 	#endif
 
-	// SingleTask's do not care about wakeup-latency as much
-	if (taskGroup->IsSingleTask())
+	// AsyncTask's do not care about wakeup-latency as much
+	if (taskGroup->IsAsyncTask())
 		return;
 
 	NotifyWorkerThreads(false, false);
@@ -514,7 +514,7 @@ void SetThreadCount(int wantedNumThreads)
 	LOG(fmts[1], __func__, workerThreads[false].size());
 }
 
-void SetMaxThreadCount()
+void SetMaximumThreadCount()
 {
 	if (workerThreads[false].empty()) {
 		workerThreads[false].reserve(MAX_THREADS);

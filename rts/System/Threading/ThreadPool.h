@@ -14,7 +14,7 @@ namespace ThreadPool {
 		f(args ...);
 	}
 
-	static inline void SetMaxThreadCount() {}
+	static inline void SetMaximumThreadCount() {}
 	static inline void SetDefaultThreadCount() {}
 	static inline void SetThreadCount(int num) {}
 	static inline int GetThreadNum() { return 0; }
@@ -93,7 +93,7 @@ public:
 		assert(IsFinished() && (!IsInQueue() || IsInPool()));
 	}
 
-	virtual bool IsSingleTask() const { return false; }
+	virtual bool IsAsyncTask() const { return false; }
 	virtual bool ExecuteStep() = 0;
 	virtual bool SelfDelete() const { return false; }
 
@@ -174,7 +174,7 @@ namespace ThreadPool {
 	template<typename T>
 	inline void WaitForFinished(std::shared_ptr<T>& taskGroup) { WaitForFinished(std::move(std::static_pointer_cast<ITaskGroup>(taskGroup))); }
 
-	void SetMaxThreadCount();
+	void SetMaximumThreadCount();
 	void SetDefaultThreadCount();
 	void SetThreadCount(int num);
 	int GetThreadNum();
@@ -188,19 +188,19 @@ namespace ThreadPool {
 
 
 template<class F, class... Args>
-class SingleTask : public ITaskGroup
+class AsyncTask : public ITaskGroup
 {
 public:
 	typedef typename std::result_of<F(Args...)>::type return_type;
 
-	SingleTask(F f, Args... args) : selfDelete(true) {
+	AsyncTask(F f, Args... args) : selfDelete(true) {
 		task = std::make_shared<std::packaged_task<return_type()>>(std::bind(f, std::forward<Args>(args)...));
 		result = std::make_shared<std::future<return_type>>(task->get_future());
 
 		remainingTasks += 1;
 	}
 
-	bool IsSingleTask() const override { return true; }
+	bool IsAsyncTask() const override { return true; }
 	bool SelfDelete() const { return (selfDelete.load()); }
 	bool ExecuteStep() override {
 		// note: *never* called from WaitForFinished
@@ -587,21 +587,21 @@ static inline auto parallel_reduce(F&& f, G&& g) -> typename std::result_of<F()>
 	SCOPED_MT_TIMER("::ThreadWorkers (real)");
 
 	typedef  typename std::result_of<F()>::type  RetType;
-	// typedef  typename std::shared_ptr< SingleTask<F> >  TaskType;
+	// typedef  typename std::shared_ptr< AsyncTask<F> >  TaskType;
 	typedef           std::shared_ptr< std::future<RetType> >  FoldType;
 
 	// std::vector<TaskType> tasks(ThreadPool::GetNumThreads());
-	std::vector<SingleTask<F>*> tasks(ThreadPool::GetNumThreads(), nullptr);
+	std::vector<AsyncTask<F>*> tasks(ThreadPool::GetNumThreads(), nullptr);
 	std::vector<FoldType> results(ThreadPool::GetNumThreads());
 
 	// NOTE:
-	//   results become available in SingleTask::ExecuteStep, and can allow
+	//   results become available in AsyncTask::ExecuteStep, and can allow
 	//   accumulate to return (followed by tasks going out of scope) before
 	//   ExecuteStep's themselves have returned --> premature task deletion
 	//   if shared_ptr were used (all tasks *must* have exited ExecuteLoop)
 	//
-	// tasks[0] = std::move(std::make_shared<SingleTask<F>>(std::forward<F>(f)));
-	tasks[0] = new SingleTask<F>(std::forward<F>(f));
+	// tasks[0] = std::move(std::make_shared<AsyncTask<F>>(std::forward<F>(f)));
+	tasks[0] = new AsyncTask<F>(std::forward<F>(f));
 	results[0] = std::move(tasks[0]->GetFuture());
 
 	// first job usually wants to run on the main thread
@@ -609,8 +609,8 @@ static inline auto parallel_reduce(F&& f, G&& g) -> typename std::result_of<F()>
 
 	// need to push N individual tasks; see NOTE in TParallelTaskGroup
 	for (size_t i = 1; i < results.size(); ++i) {
-		// tasks[i] = std::move(std::make_shared<SingleTask<F>>(std::forward<F>(f)));
-		tasks[i] = new SingleTask<F>(std::forward<F>(f));
+		// tasks[i] = std::move(std::make_shared<AsyncTask<F>>(std::forward<F>(f)));
+		tasks[i] = new AsyncTask<F>(std::forward<F>(f));
 		results[i] = std::move(tasks[i]->GetFuture());
 
 		// tasks[i]->selfDelete.store(false);
@@ -641,14 +641,13 @@ namespace ThreadPool {
 		}
 
 		// can not use shared_ptr here, make async tasks delete themselves instead
-		// auto task = std::make_shared<SingleTask<F, Args...>>(std::forward<F>(f), std::forward<Args>(args)...);
-		auto task = new SingleTask<F, Args...>(std::forward<F>(f), std::forward<Args>(args)...);
+		// auto task = std::make_shared<AsyncTask<F, Args...>>(std::forward<F>(f), std::forward<Args>(args)...);
+		auto task = new AsyncTask<F, Args...>(std::forward<F>(f), std::forward<Args>(args)...);
 		auto fut = task->GetFuture();
 
-		// minor hack: assume SingleTask's will cause (heavy) disk IO
-		// these should never block the main thread, so do not put any
-		// in the global queue which is serviced by it during calls to
-		// WaitForFinished
+		// minor hack: assume AsyncTask's will cause (heavy) disk IO
+		// although these can never block the main thread, the async
+		// workers might still be handed an uneven work distribution
 		task->wantedThread.store(1 + task->GetId() % (ThreadPool::GetNumThreads() - 1));
 
 		ThreadPool::PushTaskGroup(task);
