@@ -605,8 +605,13 @@ bool CFeature::Update()
 
 	if (smokeTime != 0) {
 		if (!((gs->frameNum + id) & 3) && projectileHandler->GetParticleSaturation() < 0.7f) {
-			new CSmokeProjectile(NULL, midPos + guRNG.NextVector() * radius * 0.3f,
-				guRNG.NextVector() * 0.3f + UpVector, smokeTime / 6 + 20, 6, 0.4f, 0.5f);
+			if (pos.y < 0) {
+				new CBubbleProjectile(NULL, midPos + guRNG.NextVector() * radius * 0.3f,
+					guRNG.NextVector() * 0.3f + UpVector, smokeTime / 6 + 20, 6, 0.4f, 0.5f);
+			} else {
+				new CSmokeProjectile (NULL, midPos + guRNG.NextVector() * radius * 0.3f,
+					guRNG.NextVector() * 0.3f + UpVector, smokeTime / 6 + 20, 6, 0.4f, 0.5f);
+			}
 		}
 	}
 	if (fireTime == 1)
