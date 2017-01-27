@@ -25,6 +25,7 @@
 #include "System/FileSystem/DataDirsAccess.h"
 #include "System/FileSystem/FileQueryFlags.h"
 #include "System/FileSystem/FileHandler.h"
+#include "System/FileSystem/FileSystem.h"
 #include "System/Threading/SpringThreading.h"
 
 
