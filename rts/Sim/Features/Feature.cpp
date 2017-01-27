@@ -16,6 +16,7 @@
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Projectiles/FireProjectile.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
+#include "Rendering/Env/Particles/Classes/BubbleProjectile.h"
 #include "Rendering/Env/Particles/Classes/GeoThermSmokeProjectile.h"
 #include "Rendering/Env/Particles/Classes/SmokeProjectile.h"
 #include "Sim/Units/UnitDef.h"
