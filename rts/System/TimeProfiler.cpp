@@ -19,8 +19,6 @@ static spring::unordered_map<int, int> refCounters;
 
 static CGlobalUnsyncedRNG profileColorRNG;
 
-static const void* specialTimerNames[] = {"Sim", "Draw", "Lua"};
-
 
 
 static unsigned HashString(const char* s, size_t n)
@@ -96,11 +94,11 @@ spring_time BasicTimer::GetDuration() const
 
 #if 0
 // unused
-ScopedTimer::ScopedTimer(const std::string& name, bool autoShow)
+ScopedTimer::ScopedTimer(const std::string& name, bool _autoShowGraph, bool _specialTimer)
 	: BasicTimer(name)
 
-	, autoShowGraph(autoShow)
-	, specialTimer(name == "Sim" || name == "Draw" || name == "Lua")
+	, autoShowGraph(_autoShowGraph)
+	, specialTimer(_specialTimer)
 {
 	auto iter = refCounters.find(nameHash);
 
@@ -111,13 +109,13 @@ ScopedTimer::ScopedTimer(const std::string& name, bool autoShow)
 }
 #endif
 
-ScopedTimer::ScopedTimer(const char* timerName, bool autoShow)
+ScopedTimer::ScopedTimer(const char* timerName, bool _autoShowGraph, bool _specialTimer)
 	: BasicTimer(timerName)
 
 	// Game::SendClientProcUsage depends on "Sim" and "Draw" percentages, BenchMark on "Lua"
 	// note that address-comparison is intended here, timer names are (and must be) literals
-	, autoShowGraph(autoShow)
-	, specialTimer(timerName == specialTimerNames[0] || timerName == specialTimerNames[1] || timerName == specialTimerNames[2])
+	, autoShowGraph(_autoShowGraph)
+	, specialTimer(_specialTimer)
 {
 	auto iter = refCounters.find(nameHash);
 
@@ -168,19 +166,19 @@ spring_time ScopedOnceTimer::GetDuration() const
 
 #if 0
 // unused
-ScopedMtTimer::ScopedMtTimer(const std::string& timerName, bool autoShow)
+ScopedMtTimer::ScopedMtTimer(const std::string& timerName, bool _autoShowGraph)
 	// can not call BasicTimer's other ctor, accesses global map
 	// collisions for MT timers do not need to be checked anyway
 	: BasicTimer(spring_gettime())
-	, autoShowGraph(autoShow)
+	, autoShowGraph(_autoShowGraph)
 {
 	name = timerName;
 }
 #endif
 
-ScopedMtTimer::ScopedMtTimer(const char* timerName, bool autoShow)
+ScopedMtTimer::ScopedMtTimer(const char* timerName, bool _autoShowGraph)
 	: BasicTimer(spring_gettime())
-	, autoShowGraph(autoShow)
+	, autoShowGraph(_autoShowGraph)
 {
 	name = timerName;
 }

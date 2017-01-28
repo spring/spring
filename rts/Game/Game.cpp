@@ -1175,7 +1175,8 @@ bool CGame::Draw() {
 	if (UpdateUnsynced(currentTimePreUpdate))
 		return false;
 
-	SCOPED_TIMER("Draw");
+	SCOPED_SPECIAL_TIMER("Draw");
+
 	const bool doDrawWorld = hideInterface || !minimap->GetMaximized() || minimap->GetMinimized();
 	const spring_time currentTimePreDraw = spring_gettime();
 
@@ -1488,7 +1489,7 @@ void CGame::SimFrame() {
 
 	// everything from here is simulation
 	{
-		SCOPED_TIMER("Sim");
+		SCOPED_SPECIAL_TIMER("Sim");
 		{
 			SCOPED_TIMER("Sim::GameFrame");
 			eventHandler.GameFrame(gs->frameNum);

@@ -16,8 +16,9 @@
 
 // disable this if you want minimal profiling
 // (sim time is still measured because of game slowdown)
-#define SCOPED_TIMER(name) ScopedTimer myScopedTimerFromMakro(name);
-#define SCOPED_MT_TIMER(name) ScopedMtTimer myScopedTimerFromMakro(name);
+#define SCOPED_TIMER(name) ScopedTimer __scopedTimer(name);
+#define SCOPED_SPECIAL_TIMER(name) ScopedTimer __scopedTimer(name, false, true)
+#define SCOPED_MT_TIMER(name) ScopedMtTimer __scopedTimer(name);
 
 
 class BasicTimer : public spring::noncopyable
@@ -47,8 +48,8 @@ protected:
 class ScopedTimer : public BasicTimer
 {
 public:
-	ScopedTimer(const std::string& timerName, bool autoShow = false);
-	ScopedTimer(const char* timerName, bool autoShow = false);
+	ScopedTimer(const std::string& timerName, bool _autoShowGraph = false, bool _specialTimer = false);
+	ScopedTimer(const char* timerName, bool _autoShowGraph = false, bool _specialTimer = false);
 	~ScopedTimer();
 
 private:
@@ -60,8 +61,8 @@ private:
 class ScopedMtTimer : public BasicTimer
 {
 public:
-	ScopedMtTimer(const std::string& timerName, bool autoShow = false);
-	ScopedMtTimer(const char* timerName, bool autoShow = false);
+	ScopedMtTimer(const std::string& timerName, bool _autoShowGraph = false);
+	ScopedMtTimer(const char* timerName, bool _autoShowGraph = false);
 	~ScopedMtTimer();
 
 private:
