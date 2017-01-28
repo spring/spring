@@ -389,36 +389,25 @@ CMatrix44f& CMatrix44f::operator<<= (const CMatrix44f& m2)
 }
 
 __FORCE_ALIGN_STACK__
-float3 CMatrix44f::operator* (const float3 v) const
-{
-	//SCOPED_TIMER("CMatrix44f::Mul");
-
-	/*return float3(
-		m[0] * v.x + m[4] * v.y + m[8 ] * v.z + m[12],
-		m[1] * v.x + m[5] * v.y + m[9 ] * v.z + m[13],
-		m[2] * v.x + m[6] * v.y + m[10] * v.z + m[14]);*/
-
-	__m128 out;
-	out =                 _mm_mul_ps(_mm_loadu_ps(&md[0][0]), _mm_load1_ps(&v.x));
-	out = _mm_add_ps(out, _mm_mul_ps(_mm_loadu_ps(&md[1][0]), _mm_load1_ps(&v.y)));
-	out = _mm_add_ps(out, _mm_mul_ps(_mm_loadu_ps(&md[2][0]), _mm_load1_ps(&v.z)));
-	out = _mm_add_ps(out, _mm_mul_ps(_mm_loadu_ps(&md[3][0]), _mm_set1_ps(1.0f)));
-
-	const float* fout = reinterpret_cast<float*>(&out);
-	return float3(fout[0], fout[1], fout[2]);
-}
-
-__FORCE_ALIGN_STACK__
 float4 CMatrix44f::operator* (const float4 v) const
 {
+	#if 0
+	float4 out;
+	out.x = m[0] * v.x + m[4] * v.y + m[8 ] * v.z + m[12] * v.w;
+	out.y = m[1] * v.x + m[5] * v.y + m[9 ] * v.z + m[13] * v.w;
+	out.z = m[2] * v.x + m[6] * v.y + m[10] * v.z + m[14] * v.w;
+	out.w = m[3] * v.x + m[7] * v.y + m[11] * v.z + m[15] * v.w;
+	return out;
+	#else
 	__m128 out;
-	out =                 _mm_mul_ps(_mm_loadu_ps(&md[0][0]), _mm_load1_ps(&v.x));
-	out = _mm_add_ps(out, _mm_mul_ps(_mm_loadu_ps(&md[1][0]), _mm_load1_ps(&v.y)));
-	out = _mm_add_ps(out, _mm_mul_ps(_mm_loadu_ps(&md[2][0]), _mm_load1_ps(&v.z)));
-	out = _mm_add_ps(out, _mm_mul_ps(_mm_loadu_ps(&md[3][0]), _mm_load1_ps(&v.w)));
+	out =                 _mm_mul_ps(_mm_loadu_ps(&md[0][0]), _mm_set1_ps(v.x)); // or _mm_load1_ps(&v.x)
+	out = _mm_add_ps(out, _mm_mul_ps(_mm_loadu_ps(&md[1][0]), _mm_set1_ps(v.y)); // or _mm_load1_ps(&v.y)
+	out = _mm_add_ps(out, _mm_mul_ps(_mm_loadu_ps(&md[2][0]), _mm_set1_ps(v.z)); // or _mm_load1_ps(&v.z)
+	out = _mm_add_ps(out, _mm_mul_ps(_mm_loadu_ps(&md[3][0]), _mm_set1_ps(v.w)); // or _mm_load1_ps(&v.w)
 
 	const float* fout = reinterpret_cast<float*>(&out);
 	return float4(fout[0], fout[1], fout[2], fout[3]);
+	#endif
 }
 
 
