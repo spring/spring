@@ -39,7 +39,7 @@
 
 
 #ifndef UNIT_TEST
-CONFIG(int, WorkerThreadCount).defaultValue(-1).safemodeValue(0).minimumValue(-1).description("Count of worker threads (including mainthread!) used in parallel sections.");
+CONFIG(int, WorkerThreadCount).defaultValue(-1).safemodeValue(0).minimumValue(-1).description("Number of workers (including the main thread!) used by ThreadPool.");
 #endif
 
 
@@ -89,6 +89,39 @@ namespace ThreadPool {
 
 int GetThreadNum() { return threadnum; }
 static void SetThreadNum(const int idx) { threadnum = idx; }
+
+
+static int GetConfigNumWorkers() {
+	#ifndef UNIT_TEST
+	return configHandler->GetInt("WorkerThreadCount");
+	#else
+	return -1;
+	#endif
+}
+
+static int GetDefaultNumWorkers() {
+	const int maxNumThreads = GetMaxThreads(); // min(MAX_THREADS, cpuCores)
+	const int cfgNumWorkers = GetConfigNumWorkers();
+
+	// for latency reasons our worker threads yield rarely (busy-looping)
+	// so we always leave 1 core free for our other threads, drivers & OS
+	// if the user has not set WorkerThreadCount
+	if (cfgNumWorkers < 0) {
+		if (maxNumThreads == 2)
+			return maxNumThreads;
+		if (maxNumThreads < 6)
+			return (maxNumThreads - 1);
+
+		return (maxNumThreads / 2);
+	}
+
+	if (cfgNumWorkers > maxNumThreads) {
+		LOG_L(L_WARNING, "[ThreadPool::%s] workers set to %i, but there are just %i cores!", __func__, cfgNumWorkers, maxNumThreads);
+		return maxNumThreads;
+	}
+
+	return cfgNumWorkers;
+}
 
 
 // FIXME: mutex/atomic?
@@ -177,9 +210,9 @@ static void WorkerLoop(int tid, bool async)
 {
 	assert(tid != 0);
 	SetThreadNum(tid);
-#ifndef UNIT_TEST
+	#ifndef UNIT_TEST
 	Threading::SetThreadName(IntToString(tid, "worker%i"));
-#endif
+	#endif
 
 	// make first worker spin a while before sleeping/waiting on the thread signal
 	// this increases the chance that at least one worker is awake when a new task
@@ -529,6 +562,9 @@ void SetMaximumThreadCount()
 		#endif
 	}
 
+	if (GetConfigNumWorkers() <= 0)
+		return;
+
 	SetThreadCount(GetMaxThreads());
 }
 
@@ -537,38 +573,13 @@ void SetDefaultThreadCount()
 	std::uint32_t systemCores  = Threading::GetAvailableCoresMask();
 	std::uint32_t mainAffinity = systemCores;
 
-#ifndef UNIT_TEST
+	#ifndef UNIT_TEST
 	mainAffinity &= configHandler->GetUnsigned("SetCoreAffinity");
-#endif
+	#endif
 
 	std::uint32_t workerAvailCores = systemCores & ~mainAffinity;
 
-	{
-#ifndef UNIT_TEST
-		int workerCount = configHandler->GetInt("WorkerThreadCount");
-#else
-		int workerCount = -1;
-#endif
-		const int numCores = GetMaxThreads();
-
-		// For latency reasons our worker threads yield rarely and so eat a lot cputime with idleing.
-		// So it's better we always leave 1 core free for our other threads, drivers & OS
-		if (workerCount < 0) {
-			if (numCores == 2) {
-				workerCount = numCores;
-			} else if (numCores < 6) {
-				workerCount = numCores - 1;
-			} else {
-				workerCount = numCores / 2;
-			}
-		}
-		if (workerCount > numCores) {
-			LOG_L(L_WARNING, "[ThreadPool::%s] workers set to %i, but there are just %i cores!", __func__, workerCount, numCores);
-			workerCount = numCores;
-		}
-
-		SetThreadCount(workerCount);
-	}
+	SetThreadCount(GetDefaultNumWorkers());
 
 	{
 		// parallel_reduce now folds over shared_ptrs to futures
@@ -588,13 +599,13 @@ void SetDefaultThreadCount()
 			return workerCore;
 		};
 
-		const std::uint32_t    workerCoreAffin = parallel_reduce(AffinityFunc, ReduceFunc);
-		const std::uint32_t nonWorkerCoreAffin = ~workerCoreAffin;
+		const std::uint32_t poolCoreAffinity = parallel_reduce(AffinityFunc, ReduceFunc);
+		const std::uint32_t mainCoreAffinity = ~poolCoreAffinity;
 
 		if (mainAffinity == 0)
 			mainAffinity = systemCores;
 
-		Threading::SetAffinityHelper("Main", mainAffinity & nonWorkerCoreAffin);
+		Threading::SetAffinityHelper("Main", mainAffinity & mainCoreAffinity);
 	}
 }
 
