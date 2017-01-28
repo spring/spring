@@ -400,10 +400,10 @@ float4 CMatrix44f::operator* (const float4 v) const
 	return out;
 	#else
 	__m128 out;
-	out =                 _mm_mul_ps(_mm_loadu_ps(&md[0][0]), _mm_set1_ps(v.x)); // or _mm_load1_ps(&v.x)
-	out = _mm_add_ps(out, _mm_mul_ps(_mm_loadu_ps(&md[1][0]), _mm_set1_ps(v.y)); // or _mm_load1_ps(&v.y)
-	out = _mm_add_ps(out, _mm_mul_ps(_mm_loadu_ps(&md[2][0]), _mm_set1_ps(v.z)); // or _mm_load1_ps(&v.z)
-	out = _mm_add_ps(out, _mm_mul_ps(_mm_loadu_ps(&md[3][0]), _mm_set1_ps(v.w)); // or _mm_load1_ps(&v.w)
+	out =                 _mm_mul_ps(_mm_loadu_ps(&md[0][0]), _mm_set1_ps(v.x)) ; // or _mm_load1_ps(&v.x)
+	out = _mm_add_ps(out, _mm_mul_ps(_mm_loadu_ps(&md[1][0]), _mm_set1_ps(v.y))); // or _mm_load1_ps(&v.y)
+	out = _mm_add_ps(out, _mm_mul_ps(_mm_loadu_ps(&md[2][0]), _mm_set1_ps(v.z))); // or _mm_load1_ps(&v.z)
+	out = _mm_add_ps(out, _mm_mul_ps(_mm_loadu_ps(&md[3][0]), _mm_set1_ps(v.w))); // or _mm_load1_ps(&v.w)
 
 	const float* fout = reinterpret_cast<float*>(&out);
 	return float4(fout[0], fout[1], fout[2], fout[3]);
