@@ -149,6 +149,7 @@ public:
 	// NOTE: movetypes call this directly
 	void UpdateDirVectors(bool useGroundNormal);
 
+	CMatrix44f ComposeMatrix(const float3& p) const { return (CMatrix44f(p, -rightdir, updir, frontdir)); }
 	virtual CMatrix44f GetTransformMatrix(const bool synced = false) const = 0;
 
 	const CollisionVolume* GetCollisionVolume(const LocalModelPiece* lmp) const {

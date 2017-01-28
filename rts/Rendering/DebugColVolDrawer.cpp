@@ -140,7 +140,7 @@ static inline void DrawObjectMidAndAimPos(const CSolidObject* o)
 	if (o->aimPos != o->midPos) {
 		// draw the aim-point
 		glPushMatrix();
-		glTranslatef3(o->relAimPos * WORLD_TO_OBJECT_SPACE);
+		glTranslatef3(o->relAimPos);
 		glColor4f(1.0f, 0.0f, 0.0f, 0.35f);
 		gluQuadricDrawStyle(q, GLU_FILL);
 		gluSphere(q, 2.0f, 5, 5);
@@ -149,7 +149,7 @@ static inline void DrawObjectMidAndAimPos(const CSolidObject* o)
 
 	{
 		// draw the mid-point, keep this transform on the stack
-		glTranslatef3(o->relMidPos * WORLD_TO_OBJECT_SPACE);
+		glTranslatef3(o->relMidPos);
 		glColor4f(1.0f, 0.0f, 1.0f, 0.35f);
 		gluQuadricDrawStyle(q, GLU_FILL);
 		gluSphere(q, 2.0f, 5, 5);
@@ -177,7 +177,7 @@ static inline void DrawFeatureColVol(const CFeature* f)
 	const bool vCustomDims = ((v->GetOffsets()).SqLength() >= 1.0f || std::fabs(v->GetBoundingRadius() - f->radius) >= 1.0f);
 
 	glPushMatrix();
-		glMultMatrixf(f->GetTransformMatrixRef());
+		glMultMatrixf(f->GetTransformMatrixRef(false));
 		DrawObjectMidAndAimPos(f);
 
 		if (v->DefaultToPieceTree()) {
@@ -185,9 +185,9 @@ static inline void DrawFeatureColVol(const CFeature* f)
 			// note: relMidPos transform is on the stack at this
 			// point but all piece-positions are relative to pos
 			// --> undo it
-			glTranslatef3(-f->relMidPos * WORLD_TO_OBJECT_SPACE);
+			glTranslatef3(-f->relMidPos);
 			DrawObjectDebugPieces(f);
-			glTranslatef3(f->relMidPos * WORLD_TO_OBJECT_SPACE);
+			glTranslatef3(f->relMidPos);
 		} else {
 			if (!v->IgnoreHits()) {
 				DrawCollisionVolume(v);
@@ -195,7 +195,7 @@ static inline void DrawFeatureColVol(const CFeature* f)
 		}
 
 		if (vCustomType || vCustomDims) {
-			// assume this is a custom volume
+			// assume this is a custom volume; draw radius-sphere next to it
 			glColor4f(0.5f, 0.5f, 0.5f, 0.35f);
 			glScalef(f->radius, f->radius, f->radius);
 			glWireSphere(&volumeDisplayListIDs[0], 20, 20);
@@ -252,7 +252,7 @@ static inline void DrawUnitColVol(const CUnit* u)
 
 
 	glPushMatrix();
-		glMultMatrixf(u->GetTransformMatrix());
+		glMultMatrixf(u->GetTransformMatrix(false));
 		DrawObjectMidAndAimPos(u);
 
 		if (v->DefaultToPieceTree()) {
@@ -260,9 +260,9 @@ static inline void DrawUnitColVol(const CUnit* u)
 			// note: relMidPos transform is on the stack at this
 			// point but all piece-positions are relative to pos
 			// --> undo it
-			glTranslatef3(-u->relMidPos * WORLD_TO_OBJECT_SPACE);
+			glTranslatef3(-u->relMidPos);
 			DrawObjectDebugPieces(u);
-			glTranslatef3(u->relMidPos * WORLD_TO_OBJECT_SPACE);
+			glTranslatef3(u->relMidPos);
 		} else {
 			if (!v->IgnoreHits()) {
 				// make it fade red under attack
@@ -286,7 +286,7 @@ static inline void DrawUnitColVol(const CUnit* u)
 		}
 
 		if (vCustomType || vCustomDims) {
-			// assume this is a custom volume
+			// assume this is a custom volume; draw radius-sphere next to it
 			glColor4f(0.5f, 0.5f, 0.5f, 0.35f);
 			glScalef(u->radius, u->radius, u->radius);
 			glWireSphere(&volumeDisplayListIDs[0], 20, 20);

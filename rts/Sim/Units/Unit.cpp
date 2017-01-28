@@ -1413,11 +1413,10 @@ CMatrix44f CUnit::GetTransformMatrix(const bool synced) const
 {
 	float3 interPos = synced ? pos : drawPos;
 
-	if (!synced && !gu->spectatingFullView) {
+	if (!synced && !gu->spectatingFullView)
 		interPos += GetErrorVector(gu->myAllyTeam);
-	}
 
-	return CMatrix44f(interPos, -rightdir, updir, frontdir);
+	return (ComposeMatrix(interPos));
 }
 
 /******************************************************************************/

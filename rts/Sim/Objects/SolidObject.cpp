@@ -292,7 +292,7 @@ YardMapStatus CSolidObject::GetGroundBlockingMaskAtPos(float3 gpos) const
 		gpos.z += SQUARE_SIZE / 2;
 
 		frontv =  frontdir;
-		rightv = -rightdir; //??? spring's unit-rightdir is in real the LEFT vector :x
+		rightv = -rightdir; // world-space is RH, unit-space is LH
 	#else
 		// use old fixed space (4 facing dirs & ints for unit positions)
 

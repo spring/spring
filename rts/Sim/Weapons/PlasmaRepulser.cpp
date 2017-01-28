@@ -114,7 +114,7 @@ void CPlasmaRepulser::Update()
 		hitFrames--;
 
 	UpdateWeaponVectors();
-	collisionVolume.SetOffsets((relWeaponMuzzlePos - owner->relMidPos) * WORLD_TO_OBJECT_SPACE);
+	collisionVolume.SetOffsets(relWeaponMuzzlePos - owner->relMidPos);
 	if (weaponMuzzlePos != lastPos)
 		quadField->MovedRepulser(this);
 

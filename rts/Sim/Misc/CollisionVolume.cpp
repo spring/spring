@@ -284,7 +284,7 @@ float CollisionVolume::GetPointSurfaceDistance(
 	} else {
 		// SObj::GetTransformMatrix does not include this
 		// (its translation component is pos, not midPos)
-		vm.Translate(obj->relMidPos * WORLD_TO_OBJECT_SPACE);
+		vm.Translate(obj->relMidPos);
 	}
 
 	vm.Translate(GetOffsets());

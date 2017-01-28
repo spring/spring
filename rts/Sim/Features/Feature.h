@@ -95,7 +95,7 @@ public:
 	bool UpdateVelocity(const float3& dragAccel, const float3& gravAccel, const float3& movMask, const float3& velMask);
 
 	void SetTransform(const CMatrix44f& m, bool synced) { transMatrix[synced] = m; }
-	void UpdateTransform(const float3& p, bool synced) { transMatrix[synced] = std::move(CMatrix44f(p, -rightdir, updir, frontdir)); }
+	void UpdateTransform(const float3& p, bool synced) { transMatrix[synced] = std::move(ComposeMatrix(p)); }
 	void UpdateTransformAndPhysState();
 	void UpdateQuadFieldPosition(const float3& moveVec);
 
