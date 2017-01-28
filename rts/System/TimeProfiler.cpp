@@ -19,6 +19,8 @@ static spring::unordered_map<int, int> refCounters;
 
 static CGlobalUnsyncedRNG profileColorRNG;
 
+static const void* specialTimerNames[] = {"Sim", "Draw", "Lua"};
+
 
 
 static unsigned HashString(const char* s, size_t n)
@@ -109,13 +111,13 @@ ScopedTimer::ScopedTimer(const std::string& name, bool autoShow)
 }
 #endif
 
-ScopedTimer::ScopedTimer(const char* name, bool autoShow)
-	: BasicTimer(name)
+ScopedTimer::ScopedTimer(const char* timerName, bool autoShow)
+	: BasicTimer(timerName)
 
 	// Game::SendClientProcUsage depends on "Sim" and "Draw" percentages, BenchMark on "Lua"
 	// note that address-comparison is intended here, timer names are (and must be) literals
 	, autoShowGraph(autoShow)
-	, specialTimer((name == (void*) "Sim") || (name == (void*) "Draw") || (name == (void*) "Lua"))
+	, specialTimer(timerName == specialTimerNames[0] || timerName == specialTimerNames[1] || timerName == specialTimerNames[2])
 {
 	auto iter = refCounters.find(nameHash);
 
@@ -123,6 +125,9 @@ ScopedTimer::ScopedTimer(const char* name, bool autoShow)
 		iter = refCounters.insert(std::pair<int, int>(nameHash, 0)).first;
 
 	++(iter->second);
+
+	if (specialTimer)
+		LOG("[%s] timerName=%s nameHash=%u specialTimer=%d refCount=%d", __func__, timerName, nameHash, specialTimer, iter->second);
 }
 
 ScopedTimer::~ScopedTimer()
@@ -164,6 +169,8 @@ spring_time ScopedOnceTimer::GetDuration() const
 
 
 
+#if 0
+// unused
 ScopedMtTimer::ScopedMtTimer(const std::string& timerName, bool autoShow)
 	// can not call BasicTimer's other ctor, accesses global map
 	// collisions for MT timers do not need to be checked anyway
@@ -172,6 +179,7 @@ ScopedMtTimer::ScopedMtTimer(const std::string& timerName, bool autoShow)
 {
 	name = timerName;
 }
+#endif
 
 ScopedMtTimer::ScopedMtTimer(const char* timerName, bool autoShow)
 	: BasicTimer(spring_gettime())
