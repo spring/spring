@@ -125,9 +125,6 @@ ScopedTimer::ScopedTimer(const char* timerName, bool autoShow)
 		iter = refCounters.insert(std::pair<int, int>(nameHash, 0)).first;
 
 	++(iter->second);
-
-	if (specialTimer)
-		LOG("[%s] timerName=%s nameHash=%u specialTimer=%d refCount=%d", __func__, timerName, nameHash, specialTimer, iter->second);
 }
 
 ScopedTimer::~ScopedTimer()
