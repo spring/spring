@@ -30,21 +30,16 @@ CONFIG(int, MaxDynamicMapLights)
 	.defaultValue(1)
 	.minimumValue(0);
 
-CONFIG(bool, AdvMapShading).defaultValue(true).safemodeValue(false).description("Enable shaders for terrain rendering and enable so more effects.");
+CONFIG(bool, AdvMapShading).defaultValue(true).safemodeValue(false).description("Enable shaders for terrain rendering.");
 CONFIG(bool, AllowDeferredMapRendering).defaultValue(false).safemodeValue(false);
 
 
 CONFIG(int, ROAM)
-	.defaultValue(1)
-	.safemodeValue(1)
-	.minimumValue(0)
-	.maximumValue(1)
-	.description("Use ROAM for terrain mesh rendering? 0=disable, 1=enable.");
-CONFIG(int, ROAMPatchMode)
 	.defaultValue(Patch::VBO)
 	.safemodeValue(Patch::DL)
 	.minimumValue(0)
-	.maximumValue(Patch::VA);
+	.maximumValue(Patch::VA)
+	.description("Use ROAM for terrain mesh rendering: 0 to disable, {1=VBO,2=DL,3=VA}-mode to enable.");
 
 
 CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
@@ -108,8 +103,8 @@ CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
 
 CSMFGroundDrawer::~CSMFGroundDrawer()
 {
-	// remember whether this drawer was enabled
-	configHandler->Set("ROAM", int(dynamic_cast<CRoamMeshDrawer*>(meshDrawer) != nullptr));
+	// remember which ROAM-mode was enabled (if any)
+	configHandler->Set("ROAM", (dynamic_cast<CRoamMeshDrawer*>(meshDrawer) != nullptr)? Patch::GetRenderMode(): 0);
 
 	smfRenderStates[RENDER_STATE_FFP]->Kill(); ISMFRenderState::FreeInstance(smfRenderStates[RENDER_STATE_FFP]);
 	smfRenderStates[RENDER_STATE_SSP]->Kill(); ISMFRenderState::FreeInstance(smfRenderStates[RENDER_STATE_SSP]);

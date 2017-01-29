@@ -45,8 +45,8 @@ CRoamMeshDrawer::CRoamMeshDrawer(CSMFReadMap* rm, CSMFGroundDrawer* gd)
 {
 	eventHandler.AddClient(this);
 
-	// set ROAM upload mode (VA,DL,VBO)
-	Patch::SwitchRenderMode(configHandler->GetInt("ROAMPatchMode"));
+	// set patch upload-mode (VA,DL,VBO)
+	Patch::SwitchRenderMode(configHandler->GetInt("ROAM"));
 
 	for (unsigned int i = MESH_NORMAL; i <= MESH_SHADOW; i++) {
 		CTriNodePool::InitPools(i);
@@ -109,7 +109,6 @@ CRoamMeshDrawer::~CRoamMeshDrawer()
 		CTriNodePool::FreePools(i);
 	}
 
-	configHandler->Set("ROAMPatchMode", int(Patch::renderMode));
 	eventHandler.RemoveClient(this);
 }
 

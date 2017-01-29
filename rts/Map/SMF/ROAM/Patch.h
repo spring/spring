@@ -131,8 +131,11 @@ public:
 
 public:
 	static void SwitchRenderMode(int mode = -1);
+	static int GetRenderMode() { return renderMode; }
 
+	#if 0
 	void UpdateVisibility(CCamera* cam);
+	#endif
 	static void UpdateVisibility(CCamera* cam, std::vector<Patch>& patches, const int numPatchesX);
 
 protected:
