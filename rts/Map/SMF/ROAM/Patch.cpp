@@ -725,9 +725,8 @@ void Patch::SwitchRenderMode(int mode)
 		mode %= 3;
 	}
 
-	if (!GLEW_ARB_vertex_buffer_object && mode == VBO) {
+	if (!GLEW_ARB_vertex_buffer_object && mode == VBO)
 		mode = DL;
-	}
 
 	if (mode == renderMode)
 		return;

@@ -237,28 +237,30 @@ public:
 
 
 
-class RoamActionExecutor : public IUnsyncedActionExecutor {
+class MapMeshDrawerActionExecutor : public IUnsyncedActionExecutor {
 public:
-	RoamActionExecutor() : IUnsyncedActionExecutor("roam",
-			"Disables/Enables ROAM mesh rendering: 0=off, 1=on") {}
+	MapMeshDrawerActionExecutor() : IUnsyncedActionExecutor("mapmeshdrawer", "Switch map-mesh rendering modes: 0=GCM, 1=HLOD, 2=ROAM") {}
 
 	bool Execute(const UnsyncedAction& action) const {
 		CSMFGroundDrawer* smfGD = dynamic_cast<CSMFGroundDrawer*>(readMap->GetGroundDrawer());
-		if (!smfGD)
+
+		if (smfGD == nullptr)
 			return false;
 
 		if (!action.GetArgs().empty()) {
-			int useRoam = -1;
-			int roamMode = -1;
-			sscanf((action.GetArgs()).c_str(), "%i %i", &useRoam, &roamMode);
+			int rendererMode = -1;
+			int roamPatchMode = -1;
+			sscanf((action.GetArgs()).c_str(), "%i %i", &rendererMode, &roamPatchMode);
 
-			smfGD->SwitchMeshDrawer(useRoam);
-			if (useRoam && roamMode >= 0) {
-				Patch::SwitchRenderMode(roamMode);
+			smfGD->SwitchMeshDrawer(rendererMode);
+
+			if (rendererMode == SMF_MESHDRAWER_ROAM && roamPatchMode >= 0) {
+				Patch::SwitchRenderMode(roamPatchMode);
 			}
 		} else {
 			smfGD->SwitchMeshDrawer();
 		}
+
 		return true;
 	}
 };
@@ -266,12 +268,12 @@ public:
 
 class MapBorderActionExecutor : public IUnsyncedActionExecutor {
 public:
-	MapBorderActionExecutor() : IUnsyncedActionExecutor("MapBorder",
-			"Set or toggle map border rendering") {}
+	MapBorderActionExecutor() : IUnsyncedActionExecutor("MapBorder", "Set or toggle map-border rendering") {}
 
 	bool Execute(const UnsyncedAction& action) const {
 		CSMFGroundDrawer* smfGD = dynamic_cast<CSMFGroundDrawer*>(readMap->GetGroundDrawer());
-		if (!smfGD)
+
+		if (smfGD == nullptr)
 			return false;
 
 		if (!action.GetArgs().empty()) {
@@ -284,6 +286,7 @@ public:
 		} else {
 			smfGD->ToggleMapBorder();
 		}
+
 		return true;
 	}
 };
@@ -3038,7 +3041,7 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new SelectCycleActionExecutor());
 	AddActionExecutor(new DeselectActionExecutor());
 	AddActionExecutor(new ShadowsActionExecutor());
-	AddActionExecutor(new RoamActionExecutor());
+	AddActionExecutor(new MapMeshDrawerActionExecutor());
 	AddActionExecutor(new MapBorderActionExecutor());
 	AddActionExecutor(new WaterActionExecutor());
 	AddActionExecutor(new AdvModelShadingActionExecutor());
