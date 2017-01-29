@@ -696,7 +696,7 @@ void CGameServer::CheckSync()
 			#ifdef SYNCDEBUG
 				CSyncDebugger::GetInstance()->ServerTriggerSyncErrorHandling(serverFrameNum);
 				if (demoReader) // pause is a synced message, thus demo spectators may not pause for real
-					Message(spring::format("%s paused the demo", players[gu->myPlayerNum].name));
+					Message(spring::format("%s paused the demo", players[gu->myPlayerNum].name.c_str()));
 				else
 					Broadcast(CBaseNetProtocol::Get().SendPause(gu->myPlayerNum, true));
 				isPaused = true;
