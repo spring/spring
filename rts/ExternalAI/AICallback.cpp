@@ -1635,7 +1635,7 @@ bool CAICallback::GetProperty(int unitId, int property, void* data)
 		myAllyTeamId = allyTeam;
 
 		// the unit does not exist or can not be seen
-		if (unit == nullptr || unit_IsInLos(unit))
+		if (unit == nullptr || !unit_IsInLos(unit))
 			return false;
 
 		switch (property) {
