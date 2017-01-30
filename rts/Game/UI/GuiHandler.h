@@ -26,7 +26,6 @@ struct SCommandDescription;
 class CGuiHandler : public CInputReceiver {
 public:
 	CGuiHandler();
-	virtual ~CGuiHandler();
 
 	void Update();
 
@@ -62,8 +61,8 @@ public:
 	/// startInfo.def has to be endInfo.def
 	std::vector<BuildInfo> GetBuildPos(const BuildInfo& startInfo, const BuildInfo& endInfo, const float3& cameraPos, const float3& mouseDir);
 
-	bool EnableLuaUI(bool);
-	bool DisableLuaUI();
+	bool EnableLuaUI(bool enableCommand);
+	bool DisableLuaUI(bool layoutIcons = true);
 
 	bool LoadConfig(const std::string& cfg);
 	bool LoadDefaultConfig() { return (LoadConfig(DEFAULT_GUI_CONFIG)); }
@@ -242,8 +241,6 @@ private:
 	std::vector<IconInfo> icons;
 	unsigned int iconsSize;
 	int iconsCount;
-
-	std::map<std::string, unsigned int> textureMap; // fileName, glTextureID
 
 	int failedSound;
 

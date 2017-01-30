@@ -107,13 +107,6 @@ CGuiHandler::CGuiHandler():
 }
 
 
-CGuiHandler::~CGuiHandler()
-{
-	for (auto& p: textureMap) {
-		glDeleteTextures(1, &p.second);
-	}
-}
-
 
 bool CGuiHandler::GetQueueKeystate() const
 {
@@ -204,7 +197,7 @@ bool CGuiHandler::EnableLuaUI(bool enableCommand)
 	return false;
 }
 
-bool CGuiHandler::DisableLuaUI()
+bool CGuiHandler::DisableLuaUI(bool layoutIcons)
 {
 	if (luaUI == nullptr) {
 		LOG_L(L_WARNING, "[GUIHandler] LuaUI is already disabled");
@@ -220,8 +213,11 @@ bool CGuiHandler::DisableLuaUI()
 
 	if (luaUI == nullptr) {
 		LoadDefaultConfig();
+
 		// needed; LoadDefaultConfig does not reach ReloadConfigFromString
-		LayoutIcons(false);
+		if (layoutIcons)
+			LayoutIcons(false);
+
 		return true;
 	}
 
@@ -235,10 +231,10 @@ bool CGuiHandler::LoadConfig(const std::string& cfg)
 {
 	CSimpleParser parser(cfg);
 
-	std::string deadStr = "";
-	std::string prevStr = "";
-	std::string nextStr = "";
-	std::string fillOrderStr = "";
+	std::string deadStr;
+	std::string prevStr;
+	std::string nextStr;
+	std::string fillOrderStr;
 
 	while (true) {
 		const std::string line = parser.GetCleanLine();
@@ -563,7 +559,7 @@ void CGuiHandler::RevertToCmdDesc(const SCommandDescription& cmdDesc,
 		if (samePage) {
 			for (int ii = 0; ii < iconsCount; ii++) {
 				if (inCommand == icons[ii].commandsID) {
-					activePage = std::min(maxPage, (ii / iconsPerPage));;
+					activePage = std::min(maxPage, (ii / iconsPerPage));
 					selectedUnitsHandler.SetCommandPage(activePage);
 				}
 			}
@@ -574,7 +570,10 @@ void CGuiHandler::RevertToCmdDesc(const SCommandDescription& cmdDesc,
 
 void CGuiHandler::LayoutIcons(bool useSelectionPage)
 {
-	bool defCmd, validInCommand, samePage;
+	bool defCmd;
+	bool validInCommand;
+	bool samePage;
+
 	SCommandDescription cmdDesc;
 	{
 		defCmd =
@@ -582,57 +581,70 @@ void CGuiHandler::LayoutIcons(bool useSelectionPage)
 			(defaultCmdMemory >= 0) && (inCommand < 0) &&
 			((activeReceiver == this) || (minimap->ProxyMode())));
 
-		const int activeCmd = defCmd ? defaultCmdMemory : inCommand;
+		const size_t activeCmd = defCmd ? defaultCmdMemory : inCommand;
 
 		// copy the current command state
-		validInCommand = (activeCmd >= 0) && ((size_t)activeCmd < commands.size());
-		if (validInCommand) {
+		if ((validInCommand = (activeCmd < commands.size())))
 			cmdDesc = commands[activeCmd];
-		}
+
 		samePage = validInCommand && (activePage == FindInCommandPage());
 		useSelectionPage = useSelectionPage && !samePage;
 
 		// reset some of our state
 		inCommand = -1;
 		defaultCmdMemory = -1;
-		commands.clear();
 		forceLayoutUpdate = false;
+
+		commands.clear();
 	}
 
-	if (luaUI && luaUI->WantsEvent("LayoutButtons")) {
+	if (luaUI != nullptr && luaUI->WantsEvent("LayoutButtons")) {
 		if (LayoutCustomIcons(useSelectionPage)) {
 			if (validInCommand)
 				RevertToCmdDesc(cmdDesc, defCmd, samePage);
 
-			return; // we're done here
-		} else {
-			CLuaUI::FreeHandler();
-			LoadDefaultConfig();
+			// LuaUI::LayoutButtons returned true, we are done
+			return;
 		}
+
+		// note: if inside a callin, this only queues up a disable-action
+		// we also want to load the default config, but doing that before
+		// the handler is freed would make little sense (need to defer it
+		// with ForceLayoutUpdate?) so just issue a warning
+		// DisableLuaUI(false);
+
+		if (luaUI->IsRunning()) {
+			LOG_L(L_WARNING, "[GUIHandler] can not load default GUI from a LuaUI callin");
+			return;
+		}
+
+		// otherwise revert to engine UI
+		CLuaUI::FreeHandler();
+		LoadDefaultConfig();
 	}
 
+
 	// get the commands to process
-	CSelectedUnitsHandler::AvailableCommandsStruct ac;
-	ac = selectedUnitsHandler.GetAvailableCommands();
+	CSelectedUnitsHandler::AvailableCommandsStruct ac = selectedUnitsHandler.GetAvailableCommands();
 	ConvertCommands(ac.commands);
 
 	std::vector<SCommandDescription> hidden;
-	std::vector<SCommandDescription>::const_iterator cdi;
+
+	hidden.reserve(ac.commands.size());
+	commands.reserve(ac.commands.size());
 
 	// separate the visible/hidden icons
-	for (cdi = ac.commands.begin(); cdi != ac.commands.end(); ++cdi){
-		if (cdi->hidden) {
-			hidden.push_back(*cdi);
+	for (const SCommandDescription& cd: ac.commands) {
+		if (cd.hidden) {
+			hidden.push_back(cd);
 		} else {
-			commands.push_back(*cdi);
+			commands.push_back(cd);
 		}
 	}
 
+
 	// assign extra icons for internal commands
-	int extraIcons = 0;
-	if (deadIconSlot >= 0) { extraIcons++; }
-	if (prevPageSlot >= 0) { extraIcons++; }
-	if (nextPageSlot >= 0) { extraIcons++; }
+	const int extraIcons = int(deadIconSlot >= 0) + int(prevPageSlot >= 0) + int(nextPageSlot >= 0);
 
 	const int cmdCount        = (int)commands.size();
 	const int cmdIconsPerPage = (iconsPerPage - extraIcons);
@@ -652,7 +664,6 @@ void CGuiHandler::LayoutIcons(bool useSelectionPage)
 	int ci = 0; // command index
 
 	for (int ii = 0; ii < iconsCount; ii++) {
-
 		// map the icon order
 		const int tmpSlot = (ii % iconsPerPage);
 		const int mii = ii - tmpSlot + fillOrder[tmpSlot]; // mapped icon index
@@ -693,8 +704,7 @@ void CGuiHandler::LayoutIcons(bool useSelectionPage)
 			icon.selection.x2 = icon.visual.x2 + noGap;
 			icon.selection.y1 = icon.visual.y1 + noGap;
 			icon.selection.y2 = icon.visual.y2 - noGap;
-		}
-		else {
+		} else {
 			// make sure this icon does not get selected
 			icon.selection.x1 = icon.selection.x2 = -1.0f;
 			icon.selection.y1 = icon.selection.y2 = -1.0f;
@@ -702,13 +712,12 @@ void CGuiHandler::LayoutIcons(bool useSelectionPage)
 	}
 
 	// append the Prev and Next commands  (if required)
-	if (multiPage) {
+	if (multiPage)
 		AppendPrevAndNext(commands);
-	}
 
 	// append the hidden commands
-	for (cdi = hidden.begin(); cdi != hidden.end(); ++cdi) {
-		commands.push_back(*cdi);
+	for (const SCommandDescription& cd: hidden) {
+		commands.push_back(cd);
 	}
 
 	// try to setup the old command state
@@ -718,19 +727,19 @@ void CGuiHandler::LayoutIcons(bool useSelectionPage)
 	} else if (useSelectionPage) {
 		activePage = std::min(maxPage, ac.commandPage);
 	}
+
 	activePage = std::min(maxPage, activePage);
 }
 
 
 bool CGuiHandler::LayoutCustomIcons(bool useSelectionPage)
 {
-	if (luaUI == nullptr)
-		return false;
+	assert(luaUI != nullptr);
 
 	// get the commands to process
-	CSelectedUnitsHandler::AvailableCommandsStruct ac;
-	ac = selectedUnitsHandler.GetAvailableCommands();
+	CSelectedUnitsHandler::AvailableCommandsStruct ac = selectedUnitsHandler.GetAvailableCommands();
 	std::vector<SCommandDescription> cmds = ac.commands;
+
 	if (!cmds.empty()) {
 		ConvertCommands(cmds);
 		AppendPrevAndNext(cmds);
@@ -749,40 +758,50 @@ bool CGuiHandler::LayoutCustomIcons(bool useSelectionPage)
 	std::vector<CLuaUI::ReParamsPair> reParamsCmds;
 	spring::unordered_map<int, int> iconMap;
 
-	if (!luaUI->LayoutButtons(tmpXicons, tmpYicons, cmds,
-	                          removeCmds, customCmds,
-	                          onlyTextureCmds, reTextureCmds,
-	                          reNamedCmds, reTooltipCmds, reParamsCmds,
-	                          iconMap, menuName)) {
+	if (!luaUI->LayoutButtons(
+		tmpXicons, tmpYicons,
+		cmds, removeCmds, customCmds,
+		onlyTextureCmds, reTextureCmds,
+		reNamedCmds, reTooltipCmds, reParamsCmds,
+		iconMap, menuName)
+	) {
 		return false;
 	}
 
 	if ((tmpXicons < 2) || (tmpYicons < 2)) {
-		LOG_L(L_ERROR, "LayoutCustomIcons() bad xIcons or yIcons (%i, %i)", tmpXicons, tmpYicons);
+		LOG_L(L_ERROR, "[GUIHandler::%s] bad xIcons or yIcons (%i, %i)", __func__, tmpXicons, tmpYicons);
 		return false;
 	}
 
-	const int tmpIconsPerPage = (tmpXicons * tmpYicons);
+
+	spring::unordered_set<int> removeIDs;
+	std::vector<SCommandDescription> tmpCmds;
+	std::vector<int> iconList;
+
+	removeIDs.reserve(removeCmds.size());
+	tmpCmds.reserve(cmds.size());
+	iconList.reserve(iconMap.size());
+
 
 	// build a set to better find unwanted commands
-	spring::unordered_set<int> removeIDs;
 	for (unsigned int i = 0; i < removeCmds.size(); i++) {
-		const int index = removeCmds[i];
-		if ((index >= 0) || ((size_t)index < cmds.size())) {
+		const size_t index = removeCmds[i];
+
+		if (index < cmds.size()) {
 			removeIDs.insert(index);
 		} else {
-			LOG_L(L_ERROR, "LayoutCustomIcons() skipping bad removeCmd (%i)",
-					index);
+			LOG_L(L_ERROR, "[GUIHandler::%s] skipping bad removeCmd (%i)", __func__, int(index));
 		}
 	}
+
 	// remove unwanted commands  (and mark all as hidden)
-	std::vector<SCommandDescription> tmpCmds;
 	for (unsigned int i = 0; i < cmds.size(); i++) {
 		if (removeIDs.find(i) == removeIDs.end()) {
 			cmds[i].hidden = true;
 			tmpCmds.push_back(cmds[i]);
 		}
 	}
+
 	cmds = tmpCmds;
 
 	// add the custom commands
@@ -790,109 +809,111 @@ bool CGuiHandler::LayoutCustomIcons(bool useSelectionPage)
 		customCmds[i].hidden = true;
 		cmds.push_back(customCmds[i]);
 	}
-	const int cmdCount = (int)cmds.size();
+	const size_t cmdCount = cmds.size();
 
 	// set commands to onlyTexture
 	for (unsigned int i = 0; i < onlyTextureCmds.size(); i++) {
-		const int index = onlyTextureCmds[i];
-		if ((index >= 0) && (index < cmdCount)) {
+		const size_t index = onlyTextureCmds[i];
+
+		if (index < cmdCount) {
 			cmds[index].onlyTexture = true;
 		} else {
-			LOG_L(L_ERROR, "LayoutCustomIcons() skipping bad onlyTexture (%i)",
-					index);
+			LOG_L(L_ERROR, "[GUIHandler::%s] skipping bad onlyTexture (%i)", __func__, int(index));
 		}
 	}
 
 	// retexture commands
 	for (unsigned int i = 0; i < reTextureCmds.size(); i++) {
-		const int index = reTextureCmds[i].cmdIndex;
-		if ((index >= 0) && (index < cmdCount)) {
+		const size_t index = reTextureCmds[i].cmdIndex;
+
+		if (index < cmdCount) {
 			cmds[index].iconname = reTextureCmds[i].texture;
 		} else {
-			LOG_L(L_ERROR, "LayoutCustomIcons() skipping bad reTexture (%i)",
-					index);
+			LOG_L(L_ERROR, "[GUIHandler::%s] skipping bad reTexture (%i)", __func__, int(index));
 		}
 	}
 
 	// reNamed commands
 	for (unsigned int i = 0; i < reNamedCmds.size(); i++) {
-		const int index = reNamedCmds[i].cmdIndex;
-		if ((index >= 0) && (index < cmdCount)) {
+		const size_t index = reNamedCmds[i].cmdIndex;
+
+		if (index < cmdCount) {
 			cmds[index].name = reNamedCmds[i].texture;
 		} else {
-			LOG_L(L_ERROR, "LayoutCustomIcons() skipping bad reNamed (%i)",
-					index);
+			LOG_L(L_ERROR, "[GUIHandler::%s] skipping bad reNamed (%i)", __func__, int(index));
 		}
 	}
 
 	// reTooltip commands
 	for (unsigned int i = 0; i < reTooltipCmds.size(); i++) {
-		const int index = reTooltipCmds[i].cmdIndex;
-		if ((index >= 0) && (index < cmdCount)) {
+		const size_t index = reTooltipCmds[i].cmdIndex;
+
+		if (index < cmdCount) {
 			cmds[index].tooltip = reTooltipCmds[i].texture;
 		} else {
-			LOG_L(L_ERROR, "LayoutCustomIcons() skipping bad reNamed (%i)",
-					index);
+			LOG_L(L_ERROR, "[GUIHandler::%s] skipping bad reNamed (%i)", __func__, int(index));
 		}
 	}
 
 	// reParams commands
 	for (unsigned int i = 0; i < reParamsCmds.size(); i++) {
-		const int index = reParamsCmds[i].cmdIndex;
-		if ((index >= 0) && (index < cmdCount)) {
+		const size_t index = reParamsCmds[i].cmdIndex;
+
+		if (index < cmdCount) {
 			const auto& params = reParamsCmds[i].params;
 
 			for (auto pit = params.cbegin(); pit != params.cend(); ++pit) {
-				const int p = pit->first;
+				const size_t p = pit->first;
 
-				if ((p >= 0) && (p < (int)cmds[index].params.size())) {
+				if (p < cmds[index].params.size()) {
 					cmds[index].params[p] = pit->second;
 				}
 			}
 		} else {
-			LOG_L(L_ERROR, "LayoutCustomIcons() skipping bad reParams (%i)",
-					index);
+			LOG_L(L_ERROR, "[GUIHandler::%s] skipping bad reParams (%i)", __func__, int(index));
 		}
 	}
 
-	// build the iconList from the map
-	std::vector<int> iconList;
-	int nextPos = 0;
 
+	int nextPos = 0;
+	// build the iconList from the map
 	for (auto mit = iconMap.cbegin(); mit != iconMap.cend(); ++mit) {
 		const int iconPos = mit->first;
 
 		if (iconPos < nextPos)
 			continue;
 
-		else if (iconPos > nextPos) {
+		if (iconPos > nextPos) {
 			// fill in the blanks
 			for (int p = nextPos; p < iconPos; p++) {
 				iconList.push_back(-1);
 			}
 		}
+
 		iconList.push_back(mit->second); // cmdIndex
 		nextPos = iconPos + 1;
 	}
 
-	const int iconListCount = (int)iconList.size();
-	const int pageCount = ((iconListCount + (tmpIconsPerPage - 1)) / tmpIconsPerPage);
-	const int tmpIconsCount = (pageCount * tmpIconsPerPage);
+
+	const size_t iconListCount = iconList.size();
+	const size_t tmpIconsPerPage = (tmpXicons * tmpYicons); // always at least 4
+	const size_t pageCount = ((iconListCount + (tmpIconsPerPage - 1)) / tmpIconsPerPage);
+	const size_t tmpIconsCount = (pageCount * tmpIconsPerPage);
 
 	// resize the icon array if required
 	ResizeIconArray(tmpIconsCount);
 
 	// build the iconList
-	for (int ii = 0; ii < tmpIconsCount; ii++) {
+	for (size_t ii = 0; ii < tmpIconsCount; ii++) {
 		IconInfo& icon = icons[ii];
 
-		const int index = (ii < (int)iconList.size()) ? iconList[ii] : -1;
+		const size_t index = (ii < iconList.size()) ? iconList[ii] : -1;
 
-		if ((index >= 0) && (index < cmdCount)) {
+		if (index < cmdCount) {
 			icon.commandsID = index;
 			cmds[index].hidden = false;
 
-			const int slot = (ii % tmpIconsPerPage);
+			const int slot = ii % tmpIconsPerPage;
 			const float fx = (float)(slot % tmpXicons);
 			const float fy = (float)(slot / tmpXicons);
 
@@ -922,7 +943,7 @@ bool CGuiHandler::LayoutCustomIcons(bool useSelectionPage)
 	iconsCount   = tmpIconsCount;
 	iconsPerPage = tmpIconsPerPage;
 
-	maxPage = std::max(0, pageCount - 1);
+	maxPage = std::max(size_t(0), pageCount - 1);
 	if (useSelectionPage) {
 		activePage = std::min(maxPage, ac.commandPage);
 	} else {
@@ -1014,20 +1035,19 @@ void CGuiHandler::Update()
 	{
 		if (!invertQueueKey && (needShift && !KeyInput::GetKeyModState(KMOD_SHIFT))) {
 			SetShowingMetal(false);
-			inCommand=-1;
-			needShift=false;
+			inCommand = -1;
+			needShift = false;
 		}
 	}
 
 	GiveCommandsNow();
 
-	const bool commandsChanged = selectedUnitsHandler.CommandsChanged();
-
-	if (commandsChanged) {
+	if (selectedUnitsHandler.CommandsChanged()) {
 		SetShowingMetal(false);
 		LayoutIcons(true);
+		return;
 	}
-	else if (forceLayoutUpdate) {
+	if (forceLayoutUpdate) {
 		LayoutIcons(false);
 	}
 }
@@ -2953,7 +2973,6 @@ void CGuiHandler::DrawButtons() // Only called by Draw
 	const int buttonEnd   = std::min(iconsCount, buttonStart + iconsPerPage);
 
 	for (int ii = buttonStart; ii < buttonEnd; ii++) {
-
 		const IconInfo& icon = icons[ii];
 
 		if (icon.commandsID < 0)
@@ -2968,8 +2987,7 @@ void CGuiHandler::DrawButtons() // Only called by Draw
 
 		if (customCommand) {
 			DrawCustomButton(icon, highlight);
-		}
-		else {
+		} else {
 			bool usedTexture = false;
 			bool onlyTexture = cmdDesc.onlyTexture;
 			const bool useLEDs = useOptionLEDs && (cmdDesc.type == CMDTYPE_ICON_MODE);

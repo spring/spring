@@ -2025,12 +2025,10 @@ public:
 
 class CmdColorsActionExecutor : public IUnsyncedActionExecutor {
 public:
-	CmdColorsActionExecutor() : IUnsyncedActionExecutor("CmdColors",
-			"Reloads cmdcolors.txt") {}
+	CmdColorsActionExecutor() : IUnsyncedActionExecutor("CmdColors", "Reloads cmdcolors.txt") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-
-		const std::string fileName = action.GetArgs().empty() ? "cmdcolors.txt" : action.GetArgs();
+		const std::string& fileName = action.GetArgs().empty() ? "cmdcolors.txt" : action.GetArgs();
 		cmdColors.LoadConfigFromFile(fileName);
 		LOG("Reloaded cmdcolors from file: %s", fileName.c_str());
 		return true;
