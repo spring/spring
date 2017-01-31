@@ -4,8 +4,7 @@
 #define GUI_HANDLER_H
 
 #include <vector>
-#include <map>
-#include <set>
+
 #include "KeySet.h"
 #include "InputReceiver.h"
 #include "MouseHandler.h"
