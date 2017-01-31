@@ -64,20 +64,6 @@ CDamageArrayHandler::CDamageArrayHandler(LuaParser* defsParser)
 			const LuaTable armorDefTable = rootTable.SubTable(armorDefKeys[armorDefIdx]);
 			const unsigned int numArmorDefEntries = armorDefTable.GetLength();
 
-			if (SpringVersion::GetMajor()[1] >= '4') {
-				std::vector<std::string> armorDefTableKeys;
-				armorDefTable.GetKeys(armorDefTableKeys);
-
-				// do not continue, table might ALSO have array-style entries
-				if (!armorDefTableKeys.empty()) {
-					LOG_L(L_WARNING,
-						"[%s] ArmorDefs contains sub-table \"%s\" in <key, value> "
-						"format which is deprecated as of Spring 95.0 and will not "
-						"be parsed anymore (UPDATE YOUR armordefs.lua ASAP)!\n",
-						__FUNCTION__, armorDefName.c_str());
-				}
-			}
-
 			for (unsigned int armorDefEntryIdx = 0; armorDefEntryIdx < numArmorDefEntries; armorDefEntryIdx++) {
 				const std::string& unitDefName = StringToLower(armorDefTable.GetString(armorDefEntryIdx + 1, ""));
 				const auto armorDefTableIt = armorDefNameIdxMap.find(unitDefName);
