@@ -4,7 +4,6 @@
 #include <utility>
 #include <ostream>
 #include <fstream>
-#include <memory>
 #include <cstring>
 
 #include <IL/il.h>
@@ -234,8 +233,8 @@ bool CBitmap::Load(std::string const& filename, unsigned char defaultAlpha)
 		return false;
 	}
 
-	unsigned char* buffer = new unsigned char[file.FileSize() + 2];
-	file.Read(buffer, file.FileSize());
+	std::vector<unsigned char> buffer(file.FileSize() + 2);
+	file.Read(buffer.data(), file.FileSize());
 
 	std::lock_guard<spring::mutex> lck(devilMutex);
 	ilOriginFunc(IL_ORIGIN_UPPER_LEFT);
@@ -249,13 +248,12 @@ bool CBitmap::Load(std::string const& filename, unsigned char defaultAlpha)
 		// do not signal floating point exceptions in devil library
 		ScopedDisableFpuExceptions fe;
 
-		const bool success = !!ilLoadL(IL_TYPE_UNKNOWN, buffer, file.FileSize());
+		const bool success = !!ilLoadL(IL_TYPE_UNKNOWN, buffer.data(), file.FileSize());
 
 		//FPU control word has to be restored as well
 		streflop::streflop_init<streflop::Simple>();
 
 		ilDisable(IL_ORIGIN_SET);
-		delete[] buffer;
 
 		if (success == false) {
 			AllocDummy();
@@ -300,12 +298,11 @@ bool CBitmap::LoadGrayscale(const std::string& filename)
 	channels = 1;
 
 	CFileHandler file(filename);
-	if (!file.FileExists()) {
+	if (!file.FileExists())
 		return false;
-	}
 
-	unsigned char* buffer = new unsigned char[file.FileSize() + 1];
-	file.Read(buffer, file.FileSize());
+	std::vector<unsigned char> buffer(file.FileSize() + 1);
+	file.Read(buffer.data(), file.FileSize());
 
 	std::lock_guard<spring::mutex> lck(devilMutex);
 	ilOriginFunc(IL_ORIGIN_UPPER_LEFT);
@@ -315,13 +312,11 @@ bool CBitmap::LoadGrayscale(const std::string& filename)
 	ilGenImages(1, &ImageName);
 	ilBindImage(ImageName);
 
-	const bool success = !!ilLoadL(IL_TYPE_UNKNOWN, buffer, file.FileSize());
+	const bool success = !!ilLoadL(IL_TYPE_UNKNOWN, buffer.data(), file.FileSize());
 	ilDisable(IL_ORIGIN_SET);
-	delete[] buffer;
 
-	if (success == false) {
+	if (!success)
 		return false;
-	}
 
 	ilConvertImage(IL_LUMINANCE, IL_UNSIGNED_BYTE);
 	xsize = ilGetInteger(IL_IMAGE_WIDTH);
@@ -350,7 +345,7 @@ bool CBitmap::Save(std::string const& filename, bool opaque, bool logged) const
 	if (mem.empty() || channels != 4)
 		return false;
 
-	std::unique_ptr<unsigned char[]> buf(new unsigned char[xsize * ysize * 4]);
+	std::vector<unsigned char> buf(xsize * ysize * 4);
 
 	const int ymax = ysize - 1;
 
@@ -383,32 +378,39 @@ bool CBitmap::Save(std::string const& filename, bool opaque, bool logged) const
 	ilGenImages(1, &ImageName); assert(ilGetError() == IL_NO_ERROR);
 	ilBindImage(ImageName); assert(ilGetError() == IL_NO_ERROR);
 
-	ilTexImage(xsize, ysize, 1, 4, IL_RGBA, IL_UNSIGNED_BYTE, buf.get()); assert(ilGetError() == IL_NO_ERROR);
+	ilTexImage(xsize, ysize, 1, 4, IL_RGBA, IL_UNSIGNED_BYTE, buf.data()); assert(ilGetError() == IL_NO_ERROR);
 
-	const std::string& fullPath = dataDirsAccess.LocateFile(filename, FileQueryFlags::WRITE);
-	const std::string& imageExt = FileSystem::GetExtension(filename);
 
-	bool success = ilSaveImage(fullPath.c_str());
+	// const std::string& imageExt = FileSystem::GetExtension(filename);
+	const std::string& fsFullPath = dataDirsAccess.LocateFile(filename, FileQueryFlags::WRITE);
 
+	// IL might be unicode-aware in which case it uses wchar_t{*}
+	const std::vector<ILchar> ilFullPath(fsFullPath.begin(), fsFullPath.end());
+
+
+	const bool success = ilSaveImage(ilFullPath.data());
+
+	#if 0
 	if (!success) {
 		if (logged)
-			LOG("[CBitmap::%s] error 0x%x saving \"%s\" (ext. \"%s\") to \"%s\"", __func__, ilGetError(), filename.c_str(), imageExt.c_str(), fullPath.c_str());
+			LOG("[CBitmap::%s] error 0x%x saving \"%s\" (ext. \"%s\"; sizeof(ILchar)=%lu) to \"%s\"", __func__, ilGetError(), filename.c_str(), imageExt.c_str(), sizeof(ILchar), fsFullPath.c_str());
 
 		// manual fallbacks
 		switch (int(imageExt[0])) {
-			case 'b': case 'B': { success = ilSave(IL_BMP, fullPath.c_str()); } break;
-			case 'j': case 'J': { success = ilSave(IL_JPG, fullPath.c_str()); } break;
-			case 'p': case 'P': { success = ilSave(IL_PNG, fullPath.c_str()); } break;
-			case 't': case 'T': { success = ilSave(IL_TGA, fullPath.c_str()); } break;
-			case 'd': case 'D': { success = ilSave(IL_DDS, fullPath.c_str()); } break;
+			case 'b': case 'B': { success = ilSave(IL_BMP, fsFullPath.c_str()); } break;
+			case 'j': case 'J': { success = ilSave(IL_JPG, fsFullPath.c_str()); } break;
+			case 'p': case 'P': { success = ilSave(IL_PNG, fsFullPath.c_str()); } break;
+			case 't': case 'T': { success = ilSave(IL_TGA, fsFullPath.c_str()); } break;
+			case 'd': case 'D': { success = ilSave(IL_DDS, fsFullPath.c_str()); } break;
 		}
 	}
+	#endif
 
 	if (logged) {
 		if (success) {
-			LOG("[CBitmap::%s] saved \"%s\" to \"%s\"", __func__, filename.c_str(), fullPath.c_str());
+			LOG("[CBitmap::%s] saved \"%s\" to \"%s\"", __func__, filename.c_str(), fsFullPath.c_str());
 		} else {
-			LOG("[CBitmap::%s] error 0x%x (re-)saving \"%s\" to \"%s\"", __func__, ilGetError(), filename.c_str(), fullPath.c_str());
+			LOG("[CBitmap::%s] error 0x%x (re-)saving \"%s\" to \"%s\"", __func__, ilGetError(), filename.c_str(), fsFullPath.c_str());
 		}
 	}
 
@@ -427,14 +429,16 @@ bool CBitmap::SaveFloat(std::string const& filename) const
 	// seems IL_ORIGIN_SET only works in ilLoad and not in ilTexImage nor in ilSaveImage
 	// so we need to flip the image ourself
 	const float* memf = reinterpret_cast<const float*>(&mem[0]);
-	typedef unsigned short uint16;
-	std::unique_ptr<uint16[]> buf(new uint16[xsize * ysize]);
-	const int ymax = (ysize - 1);
+
+	std::vector<uint16_t> buf(xsize * ysize);
+
+	const int ymax = ysize - 1;
+
 	for (int y = 0; y < ysize; ++y) {
 		for (int x = 0; x < xsize; ++x) {
 			const int bi = x + (xsize * (ymax - y));
-			const int mi = x + (xsize * (y));
-			uint16 us = memf[mi] * 0xFFFF; // convert float 0..1 to ushort
+			const int mi = x + (xsize * (       y));
+			uint16_t us = memf[mi] * 0xFFFF; // convert float 0..1 to ushort
 			buf[bi] = us;
 		}
 	}
@@ -449,10 +453,16 @@ bool CBitmap::SaveFloat(std::string const& filename) const
 
 	// note: DevIL only generates a 16bit grayscale PNG when format is IL_UNSIGNED_SHORT!
 	//       IL_FLOAT is converted to RGB with 8bit colordepth!
-	ilTexImage(xsize, ysize, 1, 1, IL_LUMINANCE, IL_UNSIGNED_SHORT, buf.get());
+	ilTexImage(xsize, ysize, 1, 1, IL_LUMINANCE, IL_UNSIGNED_SHORT, buf.data());
 
-	const std::string fullpath = dataDirsAccess.LocateFile(filename, FileQueryFlags::WRITE);
-	const bool success = ilSaveImage(fullpath.c_str());
+
+	// const std::string& imageExt = FileSystem::GetExtension(filename);
+	const std::string& fsFullPath = dataDirsAccess.LocateFile(filename, FileQueryFlags::WRITE);
+
+	const std::vector<ILchar> ilFullPath(fsFullPath.begin(), fsFullPath.end());
+
+
+	const bool success = ilSaveImage(ilFullPath.data());
 
 	ilDeleteImages(1, &ImageName);
 	return success;
@@ -785,16 +795,15 @@ SDL_Surface* CBitmap::CreateSDLSurface() const
 		return surface;
 	}
 
-	unsigned char* surfData = new unsigned char[xsize * ysize * channels];
-	memcpy(surfData, &mem[0], xsize * ysize * channels);
+	std::vector<unsigned char> surfData(xsize * ysize * channels);
+	memcpy(surfData.data(), &mem[0], xsize * ysize * channels);
 
 
 	// This will only work with 24bit RGB and 32bit RGBA pictures
-	surface = SDL_CreateRGBSurfaceFrom(surfData, xsize, ysize, 8 * channels, xsize * channels, 0x000000FF, 0x0000FF00, 0x00FF0000, (channels == 4) ? 0xFF000000 : 0);
-	if (surface == nullptr) {
+	surface = SDL_CreateRGBSurfaceFrom(surfData.data(), xsize, ysize, 8 * channels, xsize * channels, 0x000000FF, 0x0000FF00, 0x00FF0000, (channels == 4) ? 0xFF000000 : 0);
+
+	if (surface == nullptr)
 		LOG_L(L_WARNING, "CBitmap::CreateSDLSurface Failed!");
-		delete[] surfData;
-	}
 
 	return surface;
 }
@@ -942,16 +951,18 @@ void CBitmap::Tint(const float tint[3])
 
 void CBitmap::ReverseYAxis()
 {
-	if (compressed) return; // don't try to flip DDS
-	unsigned char* tmpLine = new unsigned char[channels * xsize];
-	for (int y=0; y < (ysize / 2); ++y) {
+	if (compressed)
+		return; // don't try to flip DDS
+
+	std::vector<unsigned char> tmpLine(channels * xsize);
+
+	for (int y = 0; y < (ysize / 2); ++y) {
 		const int pixelLow  = (((y            ) * xsize) + 0) * channels;
 		const int pixelHigh = (((ysize - 1 - y) * xsize) + 0) * channels;
 
 		// copy the whole line
-		std::copy(mem.begin() + pixelHigh, mem.begin() + pixelHigh + channels * xsize, tmpLine);
-		std::copy(mem.begin() + pixelLow,  mem.begin() + pixelLow + channels * xsize, mem.begin() + pixelHigh);
-		std::copy(tmpLine, tmpLine + channels * xsize, mem.begin() + pixelLow);
+		std::copy(mem.begin() + pixelHigh, mem.begin() + pixelHigh + channels * xsize, tmpLine.data());
+		std::copy(mem.begin() + pixelLow , mem.begin() + pixelLow  + channels * xsize, mem.begin() + pixelHigh);
+		std::copy(tmpLine.data(), tmpLine.data() + channels * xsize, mem.begin() + pixelLow);
 	}
-	delete[] tmpLine;
 }
