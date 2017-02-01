@@ -19,13 +19,19 @@ class COggStream;
  *
  * Construct some of them, and they can play SoundItems positioned anywhere in 3D-space for you.
  */
-class CSoundSource : spring::noncopyable
+class CSoundSource
 {
 public:
 	/// is ready after this
 	CSoundSource();
+	CSoundSource(CSoundSource&& src) { *this = std::move(src); }
+	CSoundSource(const CSoundSource& src) = delete;
 	/// will stop during deletion
 	~CSoundSource();
+
+	// don't ever need to actually move, just here to satisfy compiler
+	CSoundSource& operator = (CSoundSource&& src) { return *this; }
+	CSoundSource& operator = (const CSoundSource& src) = delete;
 
 	void Update();
 
@@ -45,21 +51,17 @@ public:
 	float GetStreamTime();
 	float GetStreamPlayTime();
 
-	static void SetPitch(const float& newPitch)
-	{
-		globalPitch = newPitch;
-	};
-	static void SetHeightRolloffModifer(const float& mod)
-	{
-		heightRolloffModifier = mod;
-	};
+	static void SetPitch(const float& newPitch) { globalPitch = newPitch; }
+	static void SetHeightRolloffModifer(const float& mod) { heightRolloffModifier = mod; }
 
 private:
 	struct AsyncSoundItemData {
 		IAudioChannel* channel;
 		SoundItem* buffer;
+
 		float3 pos;
 		float3 velocity;
+
 		float volume;
 		bool relative;
 
@@ -80,14 +82,17 @@ private:
 	static float heightRolloffModifier;
 
 	ALuint id;
+
 	SoundItem* curPlaying;
 	IAudioChannel* curChannel;
 	COggStream* curStream;
+
 	float curVolume;
 	spring_time loopStop;
 	bool in3D;
 	bool efxEnabled;
 	int efxUpdates;
+
 	ALfloat curHeightRolloffModifier;
 	AsyncSoundItemData asyncPlay;
 };

@@ -37,6 +37,7 @@ CSoundSource::CSoundSource()
 	, curHeightRolloffModifier(1)
 {
 	alGenSources(1, &id);
+
 	if (!CheckError("CSoundSource::CSoundSource")) {
 		id = 0;
 	} else {
@@ -225,11 +226,9 @@ void CSoundSource::Play(IAudioChannel* channel, SoundItem* item, float3 pos, flo
 	}
 	alSourcePlay(id);
 
-	if (item->buffer->GetId() == 0) {
-		LOG_L(L_WARNING,
-				"CSoundSource::Play: Empty buffer for item %s (file %s)",
-				item->name.c_str(), item->buffer->GetFilename().c_str());
-	}
+	if (item->buffer->GetId() == 0)
+		LOG_L(L_WARNING, "CSoundSource::Play: Empty buffer for item %s (file %s)", item->name.c_str(), item->buffer->GetFilename().c_str());
+
 	CheckError("CSoundSource::Play");
 }
 

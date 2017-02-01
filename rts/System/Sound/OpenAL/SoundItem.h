@@ -26,25 +26,17 @@ public:
 
 	bool PlayNow();
 	void StopPlay();
-	float MaxDistance() const
-	{
-		return maxDist;
-	};
-	const std::string& Name() const
-	{
-		return name;
-	};
-	const int GetPriority() const
-	{
-		return priority;
-	};
+
+	float MaxDistance() const { return maxDist; }
+	const std::string& Name() const { return name; }
+	const int GetPriority() const { return priority; }
 
 	float GetGain() const;
 	float GetPitch() const;
 
 private:
 	std::shared_ptr<SoundBuffer> buffer;
-	/// unique identifier (if no name is specified, this will be the filename
+	/// unique identifier (if no name is specified, this will be the filename)
 	std::string name;
 
 	/// volume gain, applied to this sound

@@ -53,8 +53,8 @@ public:
 	const float3& GetListenerPos() const { return myPos; }
 
 private:
-	typedef spring::unordered_map<std::string, std::string> soundItemDef;
-	typedef spring::unordered_map<std::string, soundItemDef> soundItemDefMap;
+	typedef spring::unordered_map<std::string, std::string> SoundItemNameMap;
+	typedef spring::unordered_map<std::string, SoundItemNameMap> SoundItemDefsMap;
 
 private:
 	void InitThread(int maxSounds);
@@ -64,7 +64,7 @@ private:
 	int GetMaxMonoSources(ALCdevice* device, int maxSounds);
 	void UpdateListenerReal();
 
-	size_t MakeItemFromDef(const soundItemDef& itemDef);
+	size_t MakeItemFromDef(const SoundItemNameMap& itemDef);
 	size_t LoadSoundBuffer(const std::string& filename);
 
 private:
@@ -76,10 +76,9 @@ private:
 	bool appIsIconified;
 	bool pitchAdjust;
 
-	typedef spring::unordered_map<std::string, size_t> soundMapT;
-	typedef std::vector<SoundItem*> soundVecT;
-	soundMapT soundMap;
-	soundVecT sounds;
+	spring::unordered_map<std::string, size_t> soundMap; // <name, id>
+	std::vector<SoundItem*> soundItems;
+	std::vector<CSoundSource> soundSources; // fixed-size
 
 	/// unscaled
 	float3 myPos;
@@ -88,11 +87,8 @@ private:
 	float3 prevVelocity;
 	bool listenerNeedsUpdate;
 
-	typedef std::vector<CSoundSource*> sourceVecT;
-	sourceVecT sources;
-
-	soundItemDef defaultItem;
-	soundItemDefMap soundItemDefs;
+	SoundItemNameMap defaultItemNameMap;
+	SoundItemDefsMap soundItemDefsMap;
 
 	spring::thread* soundThread;
 

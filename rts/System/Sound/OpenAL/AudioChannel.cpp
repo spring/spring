@@ -72,7 +72,8 @@ void AudioChannel::FindSourceAndPlay(size_t id, const float3& pos, const float3&
 
 	// generate the sound item
 	SoundItem* sndItem = sound->GetSoundItem(id);
-	if (!sndItem) {
+
+	if (sndItem == nullptr) {
 		sound->numEmptyPlayRequests++;
 		return;
 	}
