@@ -15,27 +15,21 @@
 
 extern spring::recursive_mutex soundMutex;
 
-const size_t AudioChannel::MAX_STREAM_QUEUESIZE = 10;
-
-
-AudioChannel::AudioChannel()
-	: curStreamSrc(NULL)
-{
-}
 
 
 void AudioChannel::SetVolume(float newVolume)
 {
-	volume = std::max(newVolume, 0.f);
+	volume = std::max(newVolume, 0.0f);
 
-	if (cur_sources.empty())
+	if (curSources.empty())
 		return;
 
 	std::lock_guard<spring::recursive_mutex> lck(soundMutex);
 
-	for (auto it = cur_sources.begin(); it != cur_sources.end(); ++it) {
-		it->first->UpdateVolume();
+	for (auto it = curSources.begin(); it != curSources.end(); ++it) {
+		(*it)->UpdateVolume();
 	}
+
 	CheckError("AudioChannel::SetVolume");
 }
 
@@ -44,11 +38,10 @@ void AudioChannel::Enable(bool newState)
 {
 	std::lock_guard<spring::recursive_mutex> lck(soundMutex);
 
-	enabled = newState;
+	if ((enabled = newState))
+		return;
 
-	if (!enabled) {
-		SetVolume(0.f);
-	}
+	SetVolume(0.0f);
 }
 
 
@@ -56,15 +49,14 @@ void AudioChannel::SoundSourceFinished(CSoundSource* sndSource)
 {
 	if (curStreamSrc == sndSource) {
 		if (!streamQueue.empty()) {
-			StreamQueueItem& next = streamQueue.back();
-			StreamPlay(next.fileName, next.volume, false);
+			StreamPlay(streamQueue.back(), false);
 			streamQueue.pop_back();
 		} else {
-			curStreamSrc = NULL;
+			curStreamSrc = nullptr;
 		}
 	}
 
-	cur_sources.erase(sndSource);
+	curSources.erase(sndSource);
 }
 
 
@@ -87,11 +79,10 @@ void AudioChannel::FindSourceAndPlay(size_t id, const float3& pos, const float3&
 
 	// check distance to listener
 	if (pos.distance(sound->GetListenerPos()) > sndItem->MaxDistance()) {
-		if (!relative) {
+		if (!relative)
 			return;
-		} else {
-			LOG("CSound::PlaySample: maxdist ignored for relative playback: %s", sndItem->Name().c_str());
-		}
+
+		LOG("CSound::PlaySample: maxdist ignored for relative playback: %s", sndItem->Name().c_str());
 	}
 
 	// don't spam to many sounds per frame
@@ -100,27 +91,30 @@ void AudioChannel::FindSourceAndPlay(size_t id, const float3& pos, const float3&
 	emmitsThisFrame++;
 
 	// check if the sound item is already played
-	if (cur_sources.size() >= maxConcurrentSources) {
-		CSoundSource* src = NULL;
+	if (curSources.size() >= maxConcurrentSources) {
+		CSoundSource* src = nullptr;
+
 		int prio = INT_MAX;
-		for (auto it = cur_sources.begin(); it != cur_sources.end(); ++it) {
-			if (it->first->GetCurrentPriority() < prio) {
-				src  = it->first;
-				prio = it->first->GetCurrentPriority();
+
+		for (auto it = curSources.begin(); it != curSources.end(); ++it) {
+			if ((*it)->GetCurrentPriority() < prio) {
+				src  = *it;
+				prio = src->GetCurrentPriority();
 			}
 		}
 
-		if (src && prio <= sndItem->GetPriority()) {
-			src->Stop();
-		} else {
+		if (src == nullptr || prio > sndItem->GetPriority()) {
 			LOG_L(L_DEBUG, "CSound::PlaySample: Max concurrent sounds in channel reached! Dropping playback!");
 			return;
 		}
+
+		src->Stop();
 	}
 
 	// find a sound source to play the item in
 	CSoundSource* sndSource = sound->GetNextBestSource();
-	if (!sndSource || (sndSource->GetCurrentPriority() >= sndItem->GetPriority())) {
+
+	if (sndSource == nullptr || (sndSource->GetCurrentPriority() >= sndItem->GetPriority())) {
 		LOG_L(L_DEBUG, "CSound::PlaySample: Max sounds reached! Dropping playback!");
 		return;
 	}
@@ -129,7 +123,7 @@ void AudioChannel::FindSourceAndPlay(size_t id, const float3& pos, const float3&
 
 	// play the sound item
 	sndSource->PlayAsync(this, sndItem, pos, velocity, volume, relative);
-	cur_sources[sndSource] = true;
+	curSources.insert(sndSource);
 }
 
 void AudioChannel::PlaySample(size_t id, float volume)
@@ -180,21 +174,21 @@ void AudioChannel::StreamPlay(const std::string& filepath, float volume, bool en
 	if (!enabled)
 		return;
 
-	if (curStreamSrc && enqueue) {
+	if (curStreamSrc != nullptr && enqueue) {
 		if (streamQueue.size() > MAX_STREAM_QUEUESIZE) {
 			streamQueue.resize(MAX_STREAM_QUEUESIZE);
 			streamQueue.pop_back(); //! make room for the new item
 		}
-		StreamQueueItem newItem(filepath, volume);
-		streamQueue.push_back(newItem);
+
+		streamQueue.emplace_back(filepath, volume);
 		return;
 	}
 
-	if (!curStreamSrc)
+	if (curStreamSrc == nullptr)
 		curStreamSrc = sound->GetNextBestSource(); //! may return 0 if no sources available
 
 	if (curStreamSrc) {
-		cur_sources[curStreamSrc] = true; //! This one first, PlayStream may invoke Stop immediately thus setting curStreamSrc to NULL
+		curSources.insert(curStreamSrc); //! This one first, PlayStream may invoke Stop immediately thus setting curStreamSrc to NULL
 		curStreamSrc->PlayStream(this, filepath, volume);
 	}
 }
@@ -203,7 +197,7 @@ void AudioChannel::StreamPause()
 {
 	std::lock_guard<spring::recursive_mutex> lck(soundMutex);
 
-	if (curStreamSrc)
+	if (curStreamSrc != nullptr)
 		curStreamSrc->StreamPause();
 }
 
@@ -211,7 +205,7 @@ void AudioChannel::StreamStop()
 {
 	std::lock_guard<spring::recursive_mutex> lck(soundMutex);
 
-	if (curStreamSrc)
+	if (curStreamSrc != nullptr)
 		curStreamSrc->StreamStop();
 }
 
@@ -219,18 +213,18 @@ float AudioChannel::StreamGetTime()
 {
 	std::lock_guard<spring::recursive_mutex> lck(soundMutex);
 
-	if (curStreamSrc)
+	if (curStreamSrc != nullptr)
 		return curStreamSrc->GetStreamTime();
-	else
-		return 0.0f;
+
+	return 0.0f;
 }
 
 float AudioChannel::StreamGetPlayTime()
 {
 	std::lock_guard<spring::recursive_mutex> lck(soundMutex);
 
-	if (curStreamSrc)
+	if (curStreamSrc != nullptr)
 		return curStreamSrc->GetStreamPlayTime();
-	else
-		return 0.0f;
+
+	return 0.0f;
 }

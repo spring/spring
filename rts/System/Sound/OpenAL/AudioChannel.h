@@ -7,7 +7,7 @@
 #include <cstring>
 
 #include "System/Sound/IAudioChannel.h"
-#include "System/UnorderedMap.hpp"
+#include "System/UnorderedSet.hpp"
 
 struct GuiSoundSet;
 class CSoundSource;
@@ -20,9 +20,11 @@ class CWorldObject;
  * Abstract base class.
  */
 class AudioChannel : public IAudioChannel {
+private:
+	typedef std::pair<std::string, float> StreamQueueItem;
+
 public:
-	AudioChannel();
-	~AudioChannel() {}
+	AudioChannel(): curStreamSrc(nullptr) {}
 
 	void Enable(bool newState);
 	void SetVolume(float newVolume);
@@ -36,6 +38,7 @@ public:
 	void PlayRandomSample(const GuiSoundSet& soundSet, const CWorldObject* obj);
 	void PlayRandomSample(const GuiSoundSet& soundSet, const float3& pos);
 
+	void StreamPlay(const StreamQueueItem& item, bool enqueue) { StreamPlay(item.first, item.second, enqueue); }
 	void StreamPlay(const std::string& path, float volume = 1.0f, bool enqueue = false);
 
 	/**
@@ -54,22 +57,12 @@ protected:
 	void SoundSourceFinished(CSoundSource* sndSource);
 
 private:
-	spring::unordered_map<CSoundSource*, bool> cur_sources;
-
-	//! streams
-	struct StreamQueueItem {
-		StreamQueueItem() : volume(0.f) {}
-		StreamQueueItem(const std::string& fileName, float& volume)
-			: fileName(fileName)
-			, volume(volume)
-		{}
-		std::string fileName;
-		float volume;
-	};
+	spring::unordered_set<CSoundSource*> curSources;
+	std::vector<StreamQueueItem> streamQueue;
 
 	CSoundSource* curStreamSrc;
-	std::vector<StreamQueueItem> streamQueue;
-	static const size_t MAX_STREAM_QUEUESIZE;
+
+	static constexpr size_t MAX_STREAM_QUEUESIZE = 10;
 };
 
 #endif // AUDIO_CHANNEL_H
