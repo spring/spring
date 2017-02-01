@@ -965,7 +965,7 @@ void SpringApp::ShutDown()
 
 	LOG("[SpringApp::%s][6]", __FUNCTION__);
 	SDL_SetWindowGrab(globalRendering->window, SDL_FALSE);
-	WindowManagerHelper::FreeIcon();
+	WindowManagerHelper::SetIconSurface();
 	globalRendering->DestroySDLWindow();
 	SDL_Quit();
 

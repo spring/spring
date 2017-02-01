@@ -7,6 +7,7 @@
 
 class CBitmap;
 struct SDL_Window;
+struct SDL_Surface;
 
 namespace WindowManagerHelper {
 	/**
@@ -18,8 +19,8 @@ namespace WindowManagerHelper {
 	 * @see SDL_WM_SetIcon()
 	 * Note: Must be called before the first call to SDL_SetVideoMode.
 	 */
-	void SetIcon(const CBitmap* icon);
-	void FreeIcon();
+	void SetIcon(CBitmap* bmp);
+	bool SetIconSurface(CBitmap* bmp = nullptr);
 
 	/**
 	 * Sets the window-manager caption/title for the running process.

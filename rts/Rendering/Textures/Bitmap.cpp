@@ -786,7 +786,7 @@ CBitmap CBitmap::CanvasResize(const int newx, const int newy, const bool center)
 }
 
 
-SDL_Surface* CBitmap::CreateSDLSurface() const
+SDL_Surface* CBitmap::CreateSDLSurface()
 {
 	SDL_Surface* surface = nullptr;
 
@@ -795,12 +795,9 @@ SDL_Surface* CBitmap::CreateSDLSurface() const
 		return surface;
 	}
 
-	std::vector<unsigned char> surfData(xsize * ysize * channels);
-	memcpy(surfData.data(), &mem[0], xsize * ysize * channels);
-
-
-	// This will only work with 24bit RGB and 32bit RGBA pictures
-	surface = SDL_CreateRGBSurfaceFrom(surfData.data(), xsize, ysize, 8 * channels, xsize * channels, 0x000000FF, 0x0000FF00, 0x00FF0000, (channels == 4) ? 0xFF000000 : 0);
+	// this will only work with 24bit RGB and 32bit RGBA pictures
+	// note: does NOT create a copy of mem, must keep this around
+	surface = SDL_CreateRGBSurfaceFrom(mem.data(), xsize, ysize, 8 * channels, xsize * channels, 0x000000FF, 0x0000FF00, 0x00FF0000, (channels == 4) ? 0xFF000000 : 0);
 
 	if (surface == nullptr)
 		LOG_L(L_WARNING, "CBitmap::CreateSDLSurface Failed!");

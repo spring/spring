@@ -25,7 +25,7 @@ public:
 	CBitmap& operator=(const CBitmap& bmp);
 	CBitmap& operator=(CBitmap&& bmp);
 
-	virtual ~CBitmap();
+	~CBitmap();
 
 	void Alloc(int w, int h, int c);
 	void Alloc(int w, int h);
@@ -53,18 +53,11 @@ public:
 
 	/**
 	 * Allocates a new SDL_Surface, and feeds it with the data of this bitmap.
-	 * @param newPixelData
-	 *        if false, the returned struct will have a pointer
-	 *        to the internal pixel data (mem), which means it is only valid
-	 *        as long as mem is not freed, which should only happen
-	 *        when the this bitmap is deleted.
-	 *        If true, an array is allocated with new, and has to be deleted
-	 *        after SDL_FreeSurface() is called.
 	 * Note:
 	 * - You have to free the surface with SDL_FreeSurface(surface)
 	 *   if you do not need it anymore!
 	 */
-	SDL_Surface* CreateSDLSurface() const;
+	SDL_Surface* CreateSDLSurface();
 
 	std::vector<unsigned char> mem;
 	int xsize;
