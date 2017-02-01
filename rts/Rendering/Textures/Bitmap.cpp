@@ -381,27 +381,27 @@ bool CBitmap::Save(std::string const& filename, bool opaque, bool logged) const
 	ilTexImage(xsize, ysize, 1, 4, IL_RGBA, IL_UNSIGNED_BYTE, buf.data()); assert(ilGetError() == IL_NO_ERROR);
 
 
-	// const std::string& imageExt = FileSystem::GetExtension(filename);
+	const std::string& imageExt = FileSystem::GetExtension(filename);
 	const std::string& fsFullPath = dataDirsAccess.LocateFile(filename, FileQueryFlags::WRITE);
 
 	// IL might be unicode-aware in which case it uses wchar_t{*}
 	const std::vector<ILchar> ilFullPath(fsFullPath.begin(), fsFullPath.end());
 
 
-	const bool success = ilSaveImage(ilFullPath.data());
+	bool success = ilSaveImage(ilFullPath.data());
 
-	#if 0
+	#if 1
 	if (!success) {
 		if (logged)
-			LOG("[CBitmap::%s] error 0x%x saving \"%s\" (ext. \"%s\"; sizeof(ILchar)=%lu) to \"%s\"", __func__, ilGetError(), filename.c_str(), imageExt.c_str(), sizeof(ILchar), fsFullPath.c_str());
+			LOG("[CBitmap::%s] error 0x%x saving \"%s\" (ext. \"%s\"; sizeof(ILchar)=%d) to \"%s\"", __func__, ilGetError(), filename.c_str(), imageExt.c_str(), int(sizeof(ILchar)), fsFullPath.c_str());
 
 		// manual fallbacks
 		switch (int(imageExt[0])) {
-			case 'b': case 'B': { success = ilSave(IL_BMP, fsFullPath.c_str()); } break;
-			case 'j': case 'J': { success = ilSave(IL_JPG, fsFullPath.c_str()); } break;
-			case 'p': case 'P': { success = ilSave(IL_PNG, fsFullPath.c_str()); } break;
-			case 't': case 'T': { success = ilSave(IL_TGA, fsFullPath.c_str()); } break;
-			case 'd': case 'D': { success = ilSave(IL_DDS, fsFullPath.c_str()); } break;
+			case 'b': case 'B': { success = ilSave(IL_BMP, ilFullPath.data()); } break;
+			case 'j': case 'J': { success = ilSave(IL_JPG, ilFullPath.data()); } break;
+			case 'p': case 'P': { success = ilSave(IL_PNG, ilFullPath.data()); } break;
+			case 't': case 'T': { success = ilSave(IL_TGA, ilFullPath.data()); } break;
+			case 'd': case 'D': { success = ilSave(IL_DDS, ilFullPath.data()); } break;
 		}
 	}
 	#endif
