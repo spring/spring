@@ -75,11 +75,11 @@ CPreGame::CPreGame(std::shared_ptr<ClientSetup> setup)
 
 	if (!clientSetup->isHost) {
 		//don't allow luasocket to connect to the host
-		LOG("Connecting to: %s:%i", clientSetup->hostIP.c_str(), clientSetup->hostPort);
+		LOG("[PreGame] connecting to: %s:%i", clientSetup->hostIP.c_str(), clientSetup->hostPort);
 		luaSocketRestrictions->addRule(CLuaSocketRestrictions::UDP_CONNECT, clientSetup->hostIP, clientSetup->hostPort, false);
 		clientNet->InitClient(clientSetup->hostIP.c_str(), clientSetup->hostPort, clientSetup->myPlayerName, clientSetup->myPasswd, SpringVersion::GetFull());
 	} else {
-		LOG("Hosting on: %s:%i", clientSetup->hostIP.c_str(), clientSetup->hostPort);
+		LOG("[PreGame] hosting on: %s:%i", clientSetup->hostIP.c_str(), clientSetup->hostPort);
 		clientNet->InitLocalClient();
 	}
 }
@@ -123,7 +123,7 @@ int CPreGame::KeyPressed(int k, bool isRepeat)
 {
 	if (k == SDLK_ESCAPE) {
 		if (KeyInput::GetKeyModState(KMOD_SHIFT)) {
-			LOG("[%s] user exited", __FUNCTION__);
+			LOG("[%s] user exited", __func__);
 			gu->globalQuit = true;
 		} else {
 			LOG("Use shift-esc to quit");
@@ -151,7 +151,6 @@ bool CPreGame::Draw()
 	}
 
 	font->glFormat(0.60f, 0.40f, 1.0f, FONT_SCALE | FONT_NORM, "Connecting to:   %s", clientNet->ConnectionStr().c_str());
-
 	font->glFormat(0.60f, 0.35f, 1.0f, FONT_SCALE | FONT_NORM, "User name: %s", clientSetup->myPlayerName.c_str());
 
 	font->glFormat(0.5f,0.25f,0.8f,FONT_CENTER | FONT_SCALE | FONT_NORM, "Press SHIFT + ESC to quit");
@@ -177,7 +176,7 @@ bool CPreGame::Update()
 
 void CPreGame::AddGameSetupArchivesToVFS(const CGameSetup* setup, bool mapOnly)
 {
-	LOG("[%s] using map: %s", __FUNCTION__, setup->mapName.c_str());
+	LOG("[%s] using map: %s", __func__, setup->mapName.c_str());
 	// Load Map archive
 	vfsHandler->AddArchiveWithDeps(setup->mapName, false);
 
@@ -186,7 +185,7 @@ void CPreGame::AddGameSetupArchivesToVFS(const CGameSetup* setup, bool mapOnly)
 
 	// Load Mutators (if any)
 	for (const std::string& mut: setup->GetMutatorsCont()) {
-		LOG("[%s] using mutator: %s", __FUNCTION__, mut.c_str());
+		LOG("[%s] using mutator: %s", __func__, mut.c_str());
 		vfsHandler->AddArchiveWithDeps(mut, false);
 	}
 
@@ -194,7 +193,7 @@ void CPreGame::AddGameSetupArchivesToVFS(const CGameSetup* setup, bool mapOnly)
 	vfsHandler->AddArchiveWithDeps(setup->modName, false);
 
 	modArchive = archiveScanner->ArchiveFromName(setup->modName);
-	LOG("[%s] using game: %s (archive: %s)", __FUNCTION__, setup->modName.c_str(), modArchive.c_str());
+	LOG("[%s] using game: %s (archive: %s)", __func__, setup->modName.c_str(), modArchive.c_str());
 }
 
 void CPreGame::StartServer(const std::string& setupscript)
@@ -262,7 +261,7 @@ void CPreGame::UpdateClientNet()
 		const unsigned char* inbuf = packet->data;
 
 		if (packet->length <= 0) {
-			LOG_L(L_WARNING, "[PreGame::%s] zero-length packet (header: %i)", __FUNCTION__, inbuf[0]);
+			LOG_L(L_WARNING, "[PreGame::%s] zero-length packet (header: %i)", __func__, inbuf[0]);
 			continue;
 		}
 
@@ -309,9 +308,9 @@ void CPreGame::UpdateClientNet()
 					// same values as here
 					playerHandler->AddPlayer(player);
 
-					LOG("[PreGame::%s] added new player %s with number %d to team %d", __FUNCTION__, name.c_str(), player.playerNum, player.team);
+					LOG("[PreGame::%s] added new player %s with number %d to team %d", __func__, name.c_str(), player.playerNum, player.team);
 				} catch (const netcode::UnpackPacketException& ex) {
-					LOG_L(L_ERROR, "[PreGame::%s] got invalid NETMSG_CREATE_NEWPLAYER: %s", __FUNCTION__, ex.what());
+					LOG_L(L_ERROR, "[PreGame::%s] got invalid NETMSG_CREATE_NEWPLAYER: %s", __func__, ex.what());
 				}
 				break;
 			}
@@ -338,7 +337,7 @@ void CPreGame::UpdateClientNet()
 
 				gu->SetMyPlayer(playerNum);
 
-				LOG("[PreGame::%s] user number %i (team %i, allyteam %i)", __FUNCTION__, gu->myPlayerNum, gu->myTeam, gu->myAllyTeam);
+				LOG("[PreGame::%s] received user number %i (team %i, allyteam %i), creating load-screen", __func__, gu->myPlayerNum, gu->myTeam, gu->myAllyTeam);
 
 				CLoadScreen::CreateInstance(gameSetup->MapFile(), modArchive, savefile);
 
@@ -348,7 +347,7 @@ void CPreGame::UpdateClientNet()
 			}
 
 			default: {
-				LOG_L(L_WARNING, "[PreGame::%s] unknown packet type (header: %i)", __FUNCTION__, inbuf[0]);
+				LOG_L(L_WARNING, "[PreGame::%s] unknown packet type (header: %i)", __func__, inbuf[0]);
 				break;
 			}
 		}
@@ -399,21 +398,21 @@ void CPreGame::StartServerForDemo(const std::string& demoName)
 	if (!demoGameSetup->Init(moddedDemoScript.str()))
 		throw content_error("Demo contains incorrect script");
 
-	LOG("[%s] starting GameServer", __FUNCTION__);
+	LOG("[%s] starting GameServer", __func__);
 	good_fpu_control_registers("before CGameServer creation");
 
 	gameServer = new CGameServer(clientSetup, gameData, demoGameSetup);
 	gameServer->AddLocalClient(clientSetup->myPlayerName, SpringVersion::GetFull());
 
 	good_fpu_control_registers("after CGameServer creation");
-	LOG("[%s] started GameServer", __FUNCTION__);
+	LOG("[%s] started GameServer", __func__);
 }
 
 void CPreGame::ReadDataFromDemo(const std::string& demoName)
 {
 	ScopedOnceTimer startserver("PreGame::ReadDataFromDemo");
 	assert(gameServer == nullptr);
-	LOG("[%s] pre-scanning demo file for game data...", __FUNCTION__);
+	LOG("[%s] pre-scanning demo file for game data...", __func__);
 	CDemoReader scanner(demoName, 0.0f);
 
 	{

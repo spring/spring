@@ -69,7 +69,7 @@ CSound::CSound()
 	sounds.push_back(nullptr);
 
 	soundThread = new spring::thread();
-	*soundThread = Threading::CreateNewThread(std::bind(&CSound::StartThread, this, configHandler->GetInt("MaxSounds")));
+	*soundThread = Threading::CreateNewThread(std::bind(&CSound::UpdateThread, this, configHandler->GetInt("MaxSounds")));
 
 	configHandler->NotifyOnChange(this);
 }
@@ -267,8 +267,8 @@ void CSound::Iconified(bool state)
 	appIsIconified = state;
 }
 
-__FORCE_ALIGN_STACK__
-void CSound::StartThread(int maxSounds)
+
+void CSound::InitThread(int maxSounds)
 {
 	assert(maxSounds > 0);
 
@@ -280,7 +280,7 @@ void CSound::StartThread(int maxSounds)
 		Threading::SetThreadName("openal");
 
 		// NULL -> default device
-		const ALchar* deviceName = NULL;
+		const ALchar* deviceName = nullptr;
 		std::string configDeviceName = "";
 
 		// we do not want to set a default for snd_device,
@@ -292,30 +292,28 @@ void CSound::StartThread(int maxSounds)
 
 		ALCdevice* device = alcOpenDevice(deviceName);
 
-		if ((device == NULL) && (deviceName != NULL)) {
-			LOG_L(L_WARNING,
-					"Could not open the sound device \"%s\", trying the default device ...",
-					deviceName);
+		if ((device == nullptr) && (deviceName != nullptr)) {
+			LOG_L(L_WARNING, "[Sound::%s] could not open the sound device \"%s\", trying the default device ...", __func__, deviceName);
 			configDeviceName = "";
-			deviceName = NULL;
+			deviceName = nullptr;
 			device = alcOpenDevice(deviceName);
 		}
 
-		if (device == NULL) {
-			LOG_L(L_ERROR, "Could not open a sound device, disabling sounds");
+		if (device == nullptr) {
+			LOG_L(L_ERROR, "[%s] could not open a sound device, disabling sounds", __func__);
 			CheckError("CSound::InitAL");
 			// fall back to NullSound
 			soundThreadQuit = true;
 			return;
 		} else {
-			ALCcontext* context = alcCreateContext(device, NULL);
+			ALCcontext* context = alcCreateContext(device, nullptr);
 
-			if (context != NULL) {
+			if (context != nullptr) {
 				alcMakeContextCurrent(context);
 				CheckError("CSound::CreateContext");
 			} else {
 				alcCloseDevice(device);
-				LOG_L(L_ERROR, "Could not create OpenAL audio context");
+				LOG_L(L_ERROR, "[Sound::%s] could not create OpenAL audio context", __func__);
 				// fall back to NullSound
 				soundThreadQuit = true;
 				return;
@@ -323,18 +321,23 @@ void CSound::StartThread(int maxSounds)
 		}
 		maxSounds = GetMaxMonoSources(device, maxSounds);
 
-		LOG("OpenAL info:");
-		const bool hasAllEnum = alcIsExtensionPresent(NULL, "ALC_ENUMERATE_ALL_EXT");
-		if (hasAllEnum || alcIsExtensionPresent(NULL, "ALC_ENUMERATION_EXT")) {
+		LOG("[Sound::%s] OpenAL info:", __func__);
+
+		const bool hasAllEnum = alcIsExtensionPresent(nullptr, "ALC_ENUMERATE_ALL_EXT");
+		const bool hasEnumExt = alcIsExtensionPresent(nullptr, "ALC_ENUMERATION_EXT");
+
+		if (hasAllEnum || hasEnumExt) {
 			LOG("  Available Devices:");
-			const char* deviceSpecifier = alcGetString(NULL, hasAllEnum ? ALC_ALL_DEVICES_SPECIFIER : ALC_DEVICE_SPECIFIER);
+			const char* deviceSpecifier = alcGetString(nullptr, hasAllEnum ? ALC_ALL_DEVICES_SPECIFIER : ALC_DEVICE_SPECIFIER);
+
 			while (*deviceSpecifier != '\0') {
 				LOG("              %s", deviceSpecifier);
-				while (*deviceSpecifier++ != '\0')
-					;
+				while (*deviceSpecifier++ != '\0');
 			}
+
 			LOG("  Device:     %s", (const char*)alcGetString(device, ALC_DEVICE_SPECIFIER));
 		}
+
 		LOG("  Vendor:         %s", (const char*)alGetString(AL_VENDOR));
 		LOG("  Version:        %s", (const char*)alGetString(AL_VERSION));
 		LOG("  Renderer:       %s", (const char*)alGetString(AL_RENDERER));
@@ -352,9 +355,7 @@ void CSound::StartThread(int maxSounds)
 				sources.push_back(thenewone);
 			} else {
 				maxSounds = std::max(i-1, 0);
-				LOG_L(L_WARNING,
-						"Your hardware/driver can not handle more than %i soundsources",
-						maxSounds);
+				LOG_L(L_WARNING, "[Sound::%s] your hardware/driver can not handle more than %i soundsources", __func__, maxSounds);
 				delete thenewone;
 				break;
 			}
@@ -369,9 +370,19 @@ void CSound::StartThread(int maxSounds)
 	}
 
 	canLoadDefs = true;
+}
+
+__FORCE_ALIGN_STACK__
+void CSound::UpdateThread(int maxSounds)
+{
+	InitThread(maxSounds);
+
+	LOG("[Sound::%s][1] maxSounds=%d", __func__, maxSounds);
 
 	Threading::SetThreadName("audio");
 	Watchdog::RegisterThread(WDT_AUDIO);
+
+	LOG("[Sound::%s][2]", __func__);
 
 	while (!soundThreadQuit) {
 		constexpr int FREQ_IN_HZ = 30;
@@ -382,14 +393,24 @@ void CSound::StartThread(int maxSounds)
 
 	Watchdog::DeregisterThread(WDT_AUDIO);
 
+	LOG("[Sound::%s][3]", __func__);
+
+	// delete all sources
 	for (CSoundSource* source: sources)
 		delete source;
-	sources.clear(); // delete all sources
-	delete efx; // must happen after sources and before context
-	efx = NULL;
+	sources.clear();
+
+	LOG("[Sound::%s][4] efx=%p", __func__, efx);
+
+	// must happen after sources and before context
+	SafeDelete(efx);
+
 	ALCcontext* curcontext = alcGetCurrentContext();
 	ALCdevice* curdevice = alcGetContextsDevice(curcontext);
-	alcMakeContextCurrent(NULL);
+
+	LOG("[Sound::%s][5]", __func__);
+
+	alcMakeContextCurrent(nullptr);
 	alcDestroyContext(curcontext);
 	alcCloseDevice(curdevice);
 }
@@ -611,7 +632,7 @@ void CSound::NewFrame()
 }
 
 
-// try to get the maximum number of supported sounds, this is similar to code CSound::StartThread
+// try to get the maximum number of supported sounds, this is similar to code CSound::UpdateThread
 // but should be more safe
 int CSound::GetMaxMonoSources(ALCdevice* device, int maxSounds)
 {

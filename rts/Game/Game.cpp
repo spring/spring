@@ -313,11 +313,11 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 CGame::~CGame()
 {
 #ifdef TRACE_SYNC
-	tracefile << "[" << __FUNCTION__ << "]";
+	tracefile << "[" << __func__ << "]";
 #endif
 
 	ENTER_SYNCED_CODE();
-	LOG("[%s]1]", __FUNCTION__);
+	LOG("[Game::%s][1]", __func__);
 
 	KillLua();
 	KillMisc();
@@ -325,11 +325,11 @@ CGame::~CGame()
 	KillInterface();
 	KillSimulation();
 
-	LOG("[%s][2]", __FUNCTION__);
+	LOG("[Game::%s][2]", __func__);
 	SafeDelete(saveFile); // ILoadSaveHandler, depends on vfsHandler via ~IArchive
 	SafeDelete(jobDispatcher);
 
-	LOG("[%s][3]", __FUNCTION__);
+	LOG("[Game::%s][3]", __func__);
 	CWordCompletion::DestroyInstance();
 	CCategoryHandler::RemoveInstance();
 	CResourceHandler::FreeInstance();
@@ -379,14 +379,28 @@ void CGame::LoadGame(const std::string& mapName, bool threaded)
 	Threading::SetGameLoadThread();
 	Watchdog::RegisterThread(WDT_LOAD);
 
+	LOG("[Game::%s][1] threaded=%d", __func__, threaded);
+
 	if (!gu->globalQuit) LoadMap(mapName);
 	if (!gu->globalQuit) LoadDefs();
+
+	LOG("[Game::%s][2]", __func__);
+
 	if (!gu->globalQuit) PreLoadSimulation();
 	if (!gu->globalQuit) PreLoadRendering();
+
+	LOG("[Game::%s][3]", __func__);
+
 	if (!gu->globalQuit) PostLoadSimulation();
 	if (!gu->globalQuit) PostLoadRendering();
+
+	LOG("[Game::%s][4]", __func__);
+
 	if (!gu->globalQuit) LoadInterface();
 	if (!gu->globalQuit) LoadLua();
+
+	LOG("[Game::%s][5]", __func__);
+
 	if (!gu->globalQuit) LoadFinalize();
 	if (!gu->globalQuit) LoadSkirmishAIs();
 
@@ -692,7 +706,7 @@ void CGame::LoadFinalize()
 	LEAVE_SYNCED_CODE();
 
 	{
-		loadscreen->SetLoadMessage("[" + std::string(__FUNCTION__) + "] finalizing PFS");
+		loadscreen->SetLoadMessage("[" + std::string(__func__) + "] finalizing PFS");
 
 		ENTER_SYNCED_CODE();
 		const std::uint64_t dt = pathManager->Finalize();
@@ -700,7 +714,7 @@ void CGame::LoadFinalize()
 		LEAVE_SYNCED_CODE();
 
 		loadscreen->SetLoadMessage(
-			"[" + std::string(__FUNCTION__) + "] finalized PFS " +
+			"[" + std::string(__func__) + "] finalized PFS " +
 			"(" + IntToString(dt, "%ld") + "ms, checksum " + IntToString(cs, "%08x") + ")"
 		);
 	}
@@ -734,31 +748,31 @@ void CGame::PostLoad()
 void CGame::KillLua()
 {
 	ENTER_SYNCED_CODE();
-	LOG("[%s][1]", __FUNCTION__);
+	LOG("[Game::%s][1] luaGaia=%p", __func__, luaGaia);
 	CLuaGaia::FreeHandler();
 
-	LOG("[%s][2]", __FUNCTION__);
+	LOG("[Game::%s][2] luaRules=%p", __func__, luaRules);
 	CLuaRules::FreeHandler();
 
 	CLuaHandleSynced::ClearGameParams();
 	LEAVE_SYNCED_CODE();
 
 	// kill LuaUI here, various handler pointers are invalid in ~GuiHandler
-	LOG("[%s][3]", __FUNCTION__);
+	LOG("[Game::%s][3] luaUI=%p", __func__, luaUI);
 	CLuaUI::FreeHandler();
 
-	LOG("[%s][4]", __FUNCTION__);
+	LOG("[Game::%s][4]", __func__);
 	LuaOpenGL::Free();
 }
 
 void CGame::KillMisc()
 {
-	LOG("[%s][1]", __FUNCTION__);
+	LOG("[Game::%s][1]", __func__);
 	CEndGameBox::Destroy();
 	CLoadScreen::DeleteInstance(); // make sure to halt loading, otherwise crash :)
 	IVideoCapturing::FreeInstance();
 
-	LOG("[%s][2]", __FUNCTION__);
+	LOG("[Game::%s][2]", __func__);
 	// delete this first since AI's might call back into sim-components in their dtors
 	// this means the simulation *should not* assume the EOH still exists on game exit
 	CEngineOutHandler::Destroy();
@@ -770,7 +784,7 @@ void CGame::KillMisc()
 
 void CGame::KillRendering()
 {
-	LOG("[%s][1]", __FUNCTION__);
+	LOG("[Game::%s][1]", __func__);
 	SafeDelete(infoTextureHandler);
 	SafeDelete(icon::iconHandler);
 	SafeDelete(geometricObjects);
@@ -779,7 +793,7 @@ void CGame::KillRendering()
 
 void CGame::KillInterface()
 {
-	LOG("[%s][1]", __FUNCTION__);
+	LOG("[Game::%s][1]", __func__);
 	ProfileDrawer::SetEnabled(false);
 	SafeDelete(guihandler);
 	SafeDelete(minimap);
@@ -793,7 +807,7 @@ void CGame::KillInterface()
 	SafeDelete(inMapDrawerModel);
 	SafeDelete(inMapDrawer);
 
-	LOG("[%s][2]", __FUNCTION__);
+	LOG("[Game::%s][2]", __func__);
 	SafeDelete(camHandler);
 
 	for (unsigned int i = 0; i < grouphandlers.size(); i++) {
@@ -805,7 +819,7 @@ void CGame::KillInterface()
 
 void CGame::KillSimulation()
 {
-	LOG("[%s][1]", __FUNCTION__);
+	LOG("[Game::%s][1]", __func__);
 
 	// Kill all teams that are still alive, in
 	// case the game did not do so through Lua.
@@ -817,13 +831,13 @@ void CGame::KillSimulation()
 		teamHandler->Team(t)->Died(false);
 	}
 
-	LOG("[%s][2]", __FUNCTION__);
+	LOG("[Game::%s][2]", __func__);
 	if (unitHandler) unitHandler->DeleteScripts();
 	SafeDelete(featureHandler); // depends on unitHandler (via ~CFeature)
 	SafeDelete(unitHandler);
 	SafeDelete(projectileHandler);
 
-	LOG("[%s][3]", __FUNCTION__);
+	LOG("[Game::%s][3]", __func__);
 	IPathManager::FreeInstance(pathManager);
 
 	SafeDelete(readMap);
@@ -842,7 +856,7 @@ void CGame::KillSimulation()
 	SafeDelete(helper);
 	SafeDelete((mapInfo = const_cast<CMapInfo*>(mapInfo)));
 
-	LOG("[%s][4]", __FUNCTION__);
+	LOG("[Game::%s][4]", __func__);
 	CCommandAI::KillCommandDescriptionCache();
 	CUnitScriptEngine::KillStatic();
 }
@@ -1589,15 +1603,15 @@ void CGame::GameEnd(const std::vector<unsigned char>& winningAllyTeams, bool tim
 		// client timed out, don't send anything (in theory the GAMEOVER
 		// message not be able to reach the server if connection is lost,
 		// but in practice it can get through --> timeout check needs work)
-		LOG_L(L_ERROR, "[%s] lost connection to gameserver", __FUNCTION__);
+		LOG_L(L_ERROR, "[%s] lost connection to gameserver", __func__);
 	}
 }
 
 void CGame::SendNetChat(std::string message, int destination)
 {
-	if (message.empty()) {
+	if (message.empty())
 		return;
-	}
+
 	if (destination == -1) // overwrite
 	{
 		destination = ChatMessage::TO_EVERYONE;
@@ -1825,7 +1839,7 @@ void CGame::ReloadCOB(const string& msg, int player)
 		unit->script = new CCobInstance(newScript, unit);
 		unit->script->Create();
 	}
-	LOG("Reloaded cob script for %i units", count);
+	LOG("[Game::%s] reloaded COB scripts for %i units", __func__, count);
 }
 
 
@@ -1854,7 +1868,7 @@ void CGame::SaveGame(const std::string& filename, bool overwrite, bool usecreg)
 {
 	if (FileSystem::CreateDirectory("Saves")) {
 		if (overwrite || !FileSystem::FileExists(filename)) {
-			LOG("Saving game to %s", filename.c_str());
+			LOG("[Game::%s] saving game to %s", __func__, filename.c_str());
 			ILoadSaveHandler* ls = ILoadSaveHandler::Create(usecreg);
 			ls->mapName = gameSetup->mapName;
 			ls->modName = gameSetup->modName;

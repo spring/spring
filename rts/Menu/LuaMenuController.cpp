@@ -43,7 +43,7 @@ void CLuaMenuController::Reset()
 	if (!Valid())
 		return;
 
-	LOG("[%s] using menu: %s", __func__, menuArchive.c_str());
+	LOG("[LuaMenuController::%s] using menu archive \"%s\"", __func__, menuArchive.c_str());
 	vfsHandler->AddArchiveWithDeps(menuArchive, false);
 
 	if (mouse == nullptr) {

@@ -57,7 +57,9 @@ private:
 	typedef spring::unordered_map<std::string, soundItemDef> soundItemDefMap;
 
 private:
-	void StartThread(int maxSounds);
+	void InitThread(int maxSounds);
+	void UpdateThread(int maxSounds);
+
 	void Update();
 	int GetMaxMonoSources(ALCdevice* device, int maxSounds);
 	void UpdateListenerReal();

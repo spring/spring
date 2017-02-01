@@ -756,35 +756,52 @@ void SpringApp::Startup()
 
 void SpringApp::Reload(const std::string& script)
 {
+	LOG("[SpringApp::%s][1]", __func__);
+
 	// get rid of any running worker threads
 	ThreadPool::SetThreadCount(0);
 	ThreadPool::SetDefaultThreadCount();
+
+	LOG("[SpringApp::%s][2]", __func__);
 
 	if (gameServer != nullptr)
 		gameServer->SetReloading(true);
 
 	// Lua shutdown functions need to access 'game' but SafeDelete sets it to NULL.
+	// ~CGame also calls this, which does not matter because handlers are gone by then
 	game->KillLua();
+
+	LOG("[SpringApp::%s][3]", __func__);
 
 	// kill sound here; thread might access readMap which is deleted by ~CGame
 	ISound::Shutdown();
 
+	LOG("[SpringApp::%s][4]", __func__);
+
 	SafeDelete(game);
 	SafeDelete(pregame);
+
+	LOG("[SpringApp::%s][5]", __func__);
 
 	// no-op if we are not the server
 	SafeDelete(gameServer);
 	// PreGame allocates clientNet, so we need to delete our old connection
 	SafeDelete(clientNet);
 
+	LOG("[SpringApp::%s][6]", __func__);
+
 	LuaVFSDownload::Free();
 	SafeDelete(battery);
 
 	clientSetup.reset(new ClientSetup());
 
+	LOG("[SpringApp::%s][7]", __func__);
+
 	// note: technically we only need to use RemoveArchive
 	FileSystemInitializer::Cleanup(false);
 	FileSystemInitializer::Initialize();
+
+	LOG("[SpringApp::%s][8]", __func__);
 
 	CNamedTextures::Kill();
 	CNamedTextures::Init();
@@ -795,6 +812,8 @@ void SpringApp::Reload(const std::string& script)
 	// normally not needed, but would allow switching fonts
 	// LoadFonts();
 
+	LOG("[SpringApp::%s][9]", __func__);
+
 	// reload sounds.lua in case we switched to a different game
 	ISound::Initialize();
 
@@ -804,19 +823,24 @@ void SpringApp::Reload(const std::string& script)
 	battery = new CBattery();
 	LuaVFSDownload::Init();
 
+	LOG("[SpringApp::%s][10]", __func__);
+
 	gu->ResetState();
 	gs->ResetState();
 
 	profiler.ResetState();
 	modInfo.ResetState();
 
+	LOG("[%s][11]", __func__);
+
 	// must hold or we would loop forever
 	assert(!gu->globalReload);
 
 	luaMenuController->Reset();
-
 	// clean changed configs
 	configHandler->Update();
+
+	LOG("[SpringApp::%s][12]", __func__);
 
 	if (script.empty()) {
 		// if no script, drop back to menu
@@ -824,6 +848,8 @@ void SpringApp::Reload(const std::string& script)
 	} else {
 		activeController = RunScript(script);
 	}
+
+	LOG("[SpringApp::%s][13]", __func__);
 }
 
 /**

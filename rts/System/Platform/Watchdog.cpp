@@ -162,7 +162,7 @@ namespace Watchdog
 		std::lock_guard<spring::mutex> lock(wdmutex);
 
 		if (num >= WDT_COUNT || registeredThreads[num]->numreg != 0) {
-			LOG_L(L_ERROR, "[Watchdog::%s] Invalid thread number %u", __FUNCTION__, num);
+			LOG_L(L_ERROR, "[Watchdog::%s] Invalid thread number %u", __func__, num);
 			return;
 		}
 
@@ -184,7 +184,7 @@ namespace Watchdog
 		if (i >= WDT_COUNT)
 			i = inact;
 		if (i >= WDT_COUNT) {
-			LOG_L(L_ERROR, "[Watchdog::%s] Internal error", __FUNCTION__);
+			LOG_L(L_ERROR, "[Watchdog::%s] Internal error", __func__);
 			return;
 		}
 
@@ -199,7 +199,7 @@ namespace Watchdog
 		threadInfo->timer = spring_gettime();
 
 		// note: WDT_MAIN and WDT_LOAD share the same controls if LoadingMT=0
-		LOG("[WatchDog] registering controls for thread [%s]", threadNames[num]);
+		LOG("[WatchDog::%s] registering controls for thread [%s]", __func__, threadNames[num]);
 		threadInfo->SetThreadControls();
 
 		++threadInfo->numreg;
@@ -217,7 +217,7 @@ namespace Watchdog
 		WatchDogThreadInfo* threadInfo = nullptr;
 
 		if (num >= WDT_COUNT || registeredThreads[num] == nullptr || (threadInfo = registeredThreads[num])->numreg == 0) {
-			LOG_L(L_ERROR, "[Watchdog::%s] Invalid thread number %u", __FUNCTION__, num);
+			LOG_L(L_ERROR, "[Watchdog::%s] Invalid thread number %u", __func__, num);
 			return;
 		}
 
@@ -228,7 +228,7 @@ namespace Watchdog
 		// reset the main thread's controls only if actually called from it;
 		// otherwise Load would act in place of Main in the LoadingMT=0 case
 		if (num == WDT_MAIN || !Threading::IsMainThread()) {
-			LOG("[WatchDog] deregistering controls for thread [%s]", threadNames[num]);
+			LOG("[WatchDog::%s] deregistering controls for thread [%s]", __func__, threadNames[num]);
 			threadInfo->ResetThreadControls();
 		}
 
