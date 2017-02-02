@@ -240,9 +240,9 @@ bool CBitmap::Load(std::string const& filename, unsigned char defaultAlpha)
 	ilOriginFunc(IL_ORIGIN_UPPER_LEFT);
 	ilEnable(IL_ORIGIN_SET);
 
-	ILuint ImageName = 0;
-	ilGenImages(1, &ImageName);
-	ilBindImage(ImageName);
+	ILuint imageID = 0;
+	ilGenImages(1, &imageID);
+	ilBindImage(imageID);
 
 	{
 		// do not signal floating point exceptions in devil library
@@ -273,12 +273,12 @@ bool CBitmap::Load(std::string const& filename, unsigned char defaultAlpha)
 	xsize = ilGetInteger(IL_IMAGE_WIDTH);
 	ysize = ilGetInteger(IL_IMAGE_HEIGHT);
 
-	mem.clear();
 	//ilCopyPixels(0, 0, 0, xsize, ysize, 0, IL_RGBA, IL_UNSIGNED_BYTE, mem);
 	const unsigned char* data = ilGetData();
+	mem.clear();
 	mem.insert(mem.begin(), data, data + xsize * ysize * 4);
 
-	ilDeleteImages(1, &ImageName);
+	ilDeleteImages(1, &imageID);
 
 	if (noAlpha) {
 		for (int y=0; y < ysize; ++y) {
@@ -308,9 +308,9 @@ bool CBitmap::LoadGrayscale(const std::string& filename)
 	ilOriginFunc(IL_ORIGIN_UPPER_LEFT);
 	ilEnable(IL_ORIGIN_SET);
 
-	ILuint ImageName = 0;
-	ilGenImages(1, &ImageName);
-	ilBindImage(ImageName);
+	ILuint imageID = 0;
+	ilGenImages(1, &imageID);
+	ilBindImage(imageID);
 
 	const bool success = !!ilLoadL(IL_TYPE_UNKNOWN, buffer.data(), file.FileSize());
 	ilDisable(IL_ORIGIN_SET);
@@ -322,11 +322,11 @@ bool CBitmap::LoadGrayscale(const std::string& filename)
 	xsize = ilGetInteger(IL_IMAGE_WIDTH);
 	ysize = ilGetInteger(IL_IMAGE_HEIGHT);
 
-	mem.clear();
 	const unsigned char* data = ilGetData();
+	mem.clear();
 	mem.insert(mem.begin(), data, data + xsize * ysize);
 
-	ilDeleteImages(1, &ImageName);
+	ilDeleteImages(1, &imageID);
 
 	return true;
 }
@@ -347,15 +347,13 @@ bool CBitmap::Save(std::string const& filename, bool opaque, bool logged) const
 
 	std::vector<unsigned char> buf(xsize * ysize * 4);
 
-	const int ymax = ysize - 1;
-
 	/* HACK Flip the image so it saves the right way up.
 		(Fiddling with ilOriginFunc didn't do anything?)
 		Duplicated with ReverseYAxis. */
 	for (int y = 0; y < ysize; ++y) {
 		for (int x = 0; x < xsize; ++x) {
-			const int bi = 4 * (x + (xsize * (ymax - y)));
-			const int mi = 4 * (x + (xsize * (       y)));
+			const int bi = 4 * (x + (xsize * ((ysize - 1) - y)));
+			const int mi = 4 * (x + (xsize * (              y)));
 			buf[bi + 0] = mem[mi + 0];
 			buf[bi + 1] = mem[mi + 1];
 			buf[bi + 2] = mem[mi + 2];
@@ -368,53 +366,50 @@ bool CBitmap::Save(std::string const& filename, bool opaque, bool logged) const
 	// clear any previous errors
 	while (ilGetError() != IL_NO_ERROR);
 
-	ilOriginFunc(IL_ORIGIN_UPPER_LEFT); assert(ilGetError() == IL_NO_ERROR);
-	ilEnable(IL_ORIGIN_SET); assert(ilGetError() == IL_NO_ERROR);
+	ilOriginFunc(IL_ORIGIN_UPPER_LEFT);
+	ilEnable(IL_ORIGIN_SET);
 
-	ilHint(IL_COMPRESSION_HINT, IL_USE_COMPRESSION); assert(ilGetError() == IL_NO_ERROR);
-	ilSetInteger(IL_JPG_QUALITY, 80); assert(ilGetError() == IL_NO_ERROR);
+	ilHint(IL_COMPRESSION_HINT, IL_USE_COMPRESSION);
+	ilSetInteger(IL_JPG_QUALITY, 80);
 
-	ILuint ImageName = 0;
-	ilGenImages(1, &ImageName); assert(ilGetError() == IL_NO_ERROR);
-	ilBindImage(ImageName); assert(ilGetError() == IL_NO_ERROR);
+	ILuint imageID = 0;
+	ilGenImages(1, &imageID);
+	ilBindImage(imageID);
+	ilTexImage(xsize, ysize, 1, 4, IL_RGBA, IL_UNSIGNED_BYTE, buf.data());
+	assert(ilGetError() == IL_NO_ERROR);
 
-	ilTexImage(xsize, ysize, 1, 4, IL_RGBA, IL_UNSIGNED_BYTE, buf.data()); assert(ilGetError() == IL_NO_ERROR);
 
-
-	const std::string& imageExt = FileSystem::GetExtension(filename);
+	const std::string& fsImageExt = FileSystem::GetExtension(filename);
 	const std::string& fsFullPath = dataDirsAccess.LocateFile(filename, FileQueryFlags::WRITE);
 
-	// IL might be unicode-aware in which case it uses wchar_t{*}
-	const std::vector<ILchar> ilFullPath(fsFullPath.begin(), fsFullPath.end());
+	// IL might be unicode-aware in which case it uses wchar_t{*} strings; just call
+	// ilSaveF since converting to wchar_t with std::mbstowcs is an unnecessary pain
+	// const std::vector<ILchar> ilFullPath(fsFullPath.begin(), fsFullPath.end());
 
+	FILE* file = fopen(fsFullPath.c_str(), "wb");
+	bool success = false;
 
-	bool success = ilSaveImage(ilFullPath.data());
-
-	#if 1
-	if (!success) {
-		if (logged)
-			LOG("[CBitmap::%s] error 0x%x saving \"%s\" (ext. \"%s\"; sizeof(ILchar)=%d) to \"%s\"", __func__, ilGetError(), filename.c_str(), imageExt.c_str(), int(sizeof(ILchar)), fsFullPath.c_str());
-
-		// manual fallbacks
-		switch (int(imageExt[0])) {
-			case 'b': case 'B': { success = ilSave(IL_BMP, ilFullPath.data()); } break;
-			case 'j': case 'J': { success = ilSave(IL_JPG, ilFullPath.data()); } break;
-			case 'p': case 'P': { success = ilSave(IL_PNG, ilFullPath.data()); } break;
-			case 't': case 'T': { success = ilSave(IL_TGA, ilFullPath.data()); } break;
-			case 'd': case 'D': { success = ilSave(IL_DDS, ilFullPath.data()); } break;
+	if (file != nullptr) {
+		switch (int(fsImageExt[0])) {
+			case 'b': case 'B': { success = ilSaveF(IL_BMP, file); } break;
+			case 'j': case 'J': { success = ilSaveF(IL_JPG, file); } break;
+			case 'p': case 'P': { success = ilSaveF(IL_PNG, file); } break;
+			case 't': case 'T': { success = ilSaveF(IL_TGA, file); } break;
+			case 'd': case 'D': { success = ilSaveF(IL_DDS, file); } break;
 		}
+
+		fclose(file);
 	}
-	#endif
 
 	if (logged) {
 		if (success) {
 			LOG("[CBitmap::%s] saved \"%s\" to \"%s\"", __func__, filename.c_str(), fsFullPath.c_str());
 		} else {
-			LOG("[CBitmap::%s] error 0x%x (re-)saving \"%s\" to \"%s\"", __func__, ilGetError(), filename.c_str(), fsFullPath.c_str());
+			LOG("[CBitmap::%s] error 0x%x saving \"%s\" to \"%s\"", __func__, ilGetError(), filename.c_str(), fsFullPath.c_str());
 		}
 	}
 
-	ilDeleteImages(1, &ImageName);
+	ilDeleteImages(1, &imageID);
 	ilDisable(IL_ORIGIN_SET);
 	return success;
 }
@@ -427,18 +422,16 @@ bool CBitmap::SaveFloat(std::string const& filename) const
 		return false;
 
 	// seems IL_ORIGIN_SET only works in ilLoad and not in ilTexImage nor in ilSaveImage
-	// so we need to flip the image ourself
+	// so we need to flip the image ourselves
 	const float* memf = reinterpret_cast<const float*>(&mem[0]);
 
 	std::vector<uint16_t> buf(xsize * ysize);
 
-	const int ymax = ysize - 1;
-
 	for (int y = 0; y < ysize; ++y) {
 		for (int x = 0; x < xsize; ++x) {
-			const int bi = x + (xsize * (ymax - y));
-			const int mi = x + (xsize * (       y));
-			uint16_t us = memf[mi] * 0xFFFF; // convert float 0..1 to ushort
+			const int bi = x + (xsize * ((ysize - 1) - y));
+			const int mi = x + (xsize * (              y));
+			const uint16_t us = memf[mi] * 0xFFFF; // convert float 0..1 to ushort
 			buf[bi] = us;
 		}
 	}
@@ -447,24 +440,33 @@ bool CBitmap::SaveFloat(std::string const& filename) const
 	ilHint(IL_COMPRESSION_HINT, IL_USE_COMPRESSION);
 	ilSetInteger(IL_JPG_QUALITY, 80);
 
-	ILuint ImageName = 0;
-	ilGenImages(1, &ImageName);
-	ilBindImage(ImageName);
-
+	ILuint imageID = 0;
+	ilGenImages(1, &imageID);
+	ilBindImage(imageID);
 	// note: DevIL only generates a 16bit grayscale PNG when format is IL_UNSIGNED_SHORT!
 	//       IL_FLOAT is converted to RGB with 8bit colordepth!
 	ilTexImage(xsize, ysize, 1, 1, IL_LUMINANCE, IL_UNSIGNED_SHORT, buf.data());
 
 
-	// const std::string& imageExt = FileSystem::GetExtension(filename);
+	const std::string& fsImageExt = FileSystem::GetExtension(filename);
 	const std::string& fsFullPath = dataDirsAccess.LocateFile(filename, FileQueryFlags::WRITE);
 
-	const std::vector<ILchar> ilFullPath(fsFullPath.begin(), fsFullPath.end());
+	FILE* file = fopen(fsFullPath.c_str(), "wb");
+	bool success = false;
 
+	if (file != nullptr) {
+		switch (int(fsImageExt[0])) {
+			case 'b': case 'B': { success = ilSaveF(IL_BMP, file); } break;
+			case 'j': case 'J': { success = ilSaveF(IL_JPG, file); } break;
+			case 'p': case 'P': { success = ilSaveF(IL_PNG, file); } break;
+			case 't': case 'T': { success = ilSaveF(IL_TGA, file); } break;
+			case 'd': case 'D': { success = ilSaveF(IL_DDS, file); } break;
+		}
 
-	const bool success = ilSaveImage(ilFullPath.data());
+		fclose(file);
+	}
 
-	ilDeleteImages(1, &ImageName);
+	ilDeleteImages(1, &imageID);
 	return success;
 }
 
