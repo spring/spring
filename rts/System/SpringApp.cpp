@@ -831,7 +831,7 @@ void SpringApp::Reload(const std::string& script)
 	profiler.ResetState();
 	modInfo.ResetState();
 
-	LOG("[%s][11]", __func__);
+	LOG("[SpringApp::%s][11]", __func__);
 
 	// must hold or we would loop forever
 	assert(!gu->globalReload);
