@@ -362,7 +362,7 @@ void CSound::InitThread(int maxSounds)
 			for (int i = 0; i < maxSounds; i++) {
 				soundSources.emplace_back();
 
-				if (!(soundSources.back()).IsValid()) {
+				if (!soundSources[i].IsValid()) {
 					soundSources.pop_back();
 					maxSounds = soundSources.size();
 

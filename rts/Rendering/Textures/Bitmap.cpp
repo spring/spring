@@ -382,23 +382,46 @@ bool CBitmap::Save(std::string const& filename, bool opaque, bool logged) const
 	const std::string& fsImageExt = FileSystem::GetExtension(filename);
 	const std::string& fsFullPath = dataDirsAccess.LocateFile(filename, FileQueryFlags::WRITE);
 
-	// IL might be unicode-aware in which case it uses wchar_t{*} strings; just call
-	// ilSaveF since converting to wchar_t with std::mbstowcs is an unnecessary pain
-	// const std::vector<ILchar> ilFullPath(fsFullPath.begin(), fsFullPath.end());
-
-	FILE* file = fopen(fsFullPath.c_str(), "wb");
 	bool success = false;
 
-	if (file != nullptr) {
-		switch (int(fsImageExt[0])) {
-			case 'b': case 'B': { success = ilSaveF(IL_BMP, file); } break;
-			case 'j': case 'J': { success = ilSaveF(IL_JPG, file); } break;
-			case 'p': case 'P': { success = ilSaveF(IL_PNG, file); } break;
-			case 't': case 'T': { success = ilSaveF(IL_TGA, file); } break;
-			case 'd': case 'D': { success = ilSaveF(IL_DDS, file); } break;
+	if (logged)
+		LOG("[CBitmap::%s] saving \"%s\" to \"%s\" (IL_VERSION=%d IL_UNICODE=%d)", __func__, filename.c_str(), fsFullPath.c_str(), IL_VERSION, sizeof(ILchar) != 1);
+
+	if (sizeof(void*) == 4) {
+		// NOTE:
+		//   64-bit Windows buildbot libIL has issues with ilSave{Image} (encoding)
+		//   32-bit Windows buildbot libIL has issues with ilSaveF (segfaults)
+		std::vector<ILchar> ilFullPath(fsFullPath.begin(), fsFullPath.end());
+
+		// IL might be unicode-aware in which case it uses wchar_t{*} strings, but
+		// this should not even be necessary because ASCII and UTFx are compatible
+		switch (sizeof(ILchar)) {
+			case (sizeof( char  )): {                                                                                                     } break;
+			case (sizeof(wchar_t)): { std::mbstowcs(reinterpret_cast<wchar_t*>(ilFullPath.data()), fsFullPath.data(), fsFullPath.size()); } break;
+			default: { assert(false); } break;
 		}
 
-		fclose(file);
+		switch (int(fsImageExt[0])) {
+			case 'b': case 'B': { success = ilSave(IL_BMP, ilFullPath.data()); } break;
+			case 'j': case 'J': { success = ilSave(IL_JPG, ilFullPath.data()); } break;
+			case 'p': case 'P': { success = ilSave(IL_PNG, ilFullPath.data()); } break;
+			case 't': case 'T': { success = ilSave(IL_TGA, ilFullPath.data()); } break;
+			case 'd': case 'D': { success = ilSave(IL_DDS, ilFullPath.data()); } break;
+		}
+	} else {
+		FILE* file = fopen(fsFullPath.c_str(), "wb");
+
+		if (file != nullptr) {
+			switch (int(fsImageExt[0])) {
+				case 'b': case 'B': { success = ilSaveF(IL_BMP, file); } break;
+				case 'j': case 'J': { success = ilSaveF(IL_JPG, file); } break;
+				case 'p': case 'P': { success = ilSaveF(IL_PNG, file); } break;
+				case 't': case 'T': { success = ilSaveF(IL_TGA, file); } break;
+				case 'd': case 'D': { success = ilSaveF(IL_DDS, file); } break;
+			}
+
+			fclose(file);
+		}
 	}
 
 	if (logged) {
