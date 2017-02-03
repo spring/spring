@@ -116,7 +116,7 @@ private:
 	void GiveCommand(Command& cmd, bool fromUser = true);
 	void GiveCommandsNow();
 	bool LayoutCustomIcons(bool useSelectionPage);
-	void ResizeIconArray(unsigned int size);
+	void ResizeIconArray(size_t size);
 	void AppendPrevAndNext(std::vector<SCommandDescription>& cmds);
 	void ConvertCommands(std::vector<SCommandDescription>& cmds);
 
@@ -238,7 +238,7 @@ private:
 		Box selection;
 	};
 	std::vector<IconInfo> icons;
-	unsigned int iconsSize;
+	// number of slots taken up in <icons>
 	int iconsCount;
 
 	int failedSound;

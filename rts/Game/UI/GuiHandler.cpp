@@ -85,7 +85,6 @@ CGuiHandler::CGuiHandler():
 	gatherMode(false)
 {
 	icons.resize(16);
-	iconsSize = icons.size();
 	iconsCount = 0;
 
 	LoadDefaults();
@@ -483,39 +482,41 @@ bool CGuiHandler::ReloadConfigFromString(const std::string& cfg)
 }
 
 
-void CGuiHandler::ResizeIconArray(unsigned int size)
+void CGuiHandler::ResizeIconArray(size_t size)
 {
-	unsigned int minIconsSize = iconsSize;
+	if (icons.size() < size)
+		icons.resize(std::max(icons.size() * 2, size));
 
-	while (minIconsSize < size)
-		minIconsSize *= 2;
-
-	if (iconsSize < minIconsSize) {
-		iconsSize = minIconsSize;
-
-		icons.clear();
-		icons.resize(iconsSize);
-	}
+	assert(iconsCount <= icons.size());
 }
 
 
 void CGuiHandler::AppendPrevAndNext(std::vector<SCommandDescription>& cmds)
 {
-	SCommandDescription cd;
+	{
+		cmds.emplace_back();
 
-	cd.id=CMD_INTERNAL;
-	cd.action="prevmenu";
-	cd.type=CMDTYPE_PREV;
-	cd.name="";
-	cd.tooltip = "Previous menu";
-	cmds.push_back(cd);
+		SCommandDescription& cd = cmds.back();
 
-	cd.id=CMD_INTERNAL;
-	cd.action="nextmenu";
-	cd.type=CMDTYPE_NEXT;
-	cd.name="";
-	cd.tooltip = "Next menu";
-	cmds.push_back(cd);
+		cd.id      = CMD_INTERNAL;
+		cd.type    = CMDTYPE_PREV;
+
+		cd.name    = "";
+		cd.action  = "prevmenu";
+		cd.tooltip = "Previous menu";
+	}
+	{
+		cmds.emplace_back();
+
+		SCommandDescription& cd = cmds.back();
+
+		cd.id      = CMD_INTERNAL;
+		cd.type    = CMDTYPE_NEXT;
+
+		cd.name    = "";
+		cd.action  = "nextmenu";
+		cd.tooltip = "Next menu";
+	}
 }
 
 
@@ -526,9 +527,10 @@ int CGuiHandler::FindInCommandPage()
 
 	for (int ii = 0; ii < iconsCount; ii++) {
 		const IconInfo& icon = icons[ii];
-		if (icon.commandsID == inCommand) {
+
+		if (icon.commandsID == inCommand)
 			return (ii / iconsPerPage);
-		}
+
 	}
 
 	return -1;
@@ -556,13 +558,15 @@ void CGuiHandler::RevertToCmdDesc(const SCommandDescription& cmdDesc,
 			SetShowingMetal(false);
 		}
 
-		if (samePage) {
-			for (int ii = 0; ii < iconsCount; ii++) {
-				if (inCommand == icons[ii].commandsID) {
-					activePage = std::min(maxPage, (ii / iconsPerPage));
-					selectedUnitsHandler.SetCommandPage(activePage);
-				}
-			}
+		if (!samePage)
+			continue;
+
+		for (int ii = 0; ii < iconsCount; ii++) {
+			if (inCommand != icons[ii].commandsID)
+				continue;
+
+			activePage = std::min(maxPage, (ii / iconsPerPage));
+			selectedUnitsHandler.SetCommandPage(activePage);
 		}
 	}
 }
@@ -1454,14 +1458,17 @@ int CGuiHandler::IconAtPos(int x, int y) // GetToolTip --> IconAtPos
 	ySlot = std::min(std::max(ySlot, 0), yIcons - 1);
 	const int ii = (activePage * iconsPerPage) + (ySlot * xIcons) + xSlot;
 
-	if ((ii >= 0) && (ii < iconsCount)) {
-		if ((fx > icons[ii].selection.x1) && (fx < icons[ii].selection.x2) &&
-				(fy > icons[ii].selection.y2) && (fy < icons[ii].selection.y1)) {
-			return ii;
-		}
-	}
+	if ((ii < 0) || (ii >= iconsCount))
+		return -1;
 
-	return -1;
+	const IconInfo& info = icons[ii];
+
+	if (fx <= info.selection.x1) return -1;
+	if (fx >= info.selection.x2) return -1;
+	if (fy <= info.selection.y2) return -1;
+	if (fy >= info.selection.y1) return -1;
+
+	return ii;
 }
 
 
@@ -1581,16 +1588,16 @@ void CGuiHandler::RunCustomCommands(const std::vector<std::string>& cmds, bool r
 
 bool CGuiHandler::AboveGui(int x, int y)
 {
-	if (iconsCount <= 0) {
+	if (iconsCount <= 0)
 		return false;
-	}
+
 	if (!selectThrough) {
 		const float fx = MouseX(x);
 		const float fy = MouseY(y);
-		if ((fx > buttonBox.x1) && (fx < buttonBox.x2) &&
-				(fy > buttonBox.y1) && (fy < buttonBox.y2)) {
+
+		if ((fx > buttonBox.x1) && (fx < buttonBox.x2) && (fy > buttonBox.y1) && (fy < buttonBox.y2))
 			return true;
-		}
+
 	}
 	return (IconAtPos(x,y) >= 0);
 }
@@ -1686,9 +1693,8 @@ int CGuiHandler::GetDefaultCommand(int x, int y, const float3& cameraPos, const 
 bool CGuiHandler::ProcessLocalActions(const Action& action)
 {
 	// do not process these actions if the control panel is not visible
-	if (iconsCount <= 0) {
+	if (iconsCount <= 0)
 		return false;
-	}
 
 	// only process the build options while building
 	// (conserve the keybinding space where we can)
@@ -1715,18 +1721,17 @@ bool CGuiHandler::ProcessLocalActions(const Action& action)
 	else if (action.command == "showcommands") {
 		// bonus command for debugging
 		LOG("Available Commands:");
-		for(size_t i = 0; i < commands.size(); ++i){
-			LOG("  command: " _STPF_ ", id = %i, action = %s",
-					i, commands[i].id, commands[i].action.c_str());
+		for (size_t i = 0; i < commands.size(); ++i) {
+			LOG("  command: " _STPF_ ", id = %i, action = %s", i, commands[i].id, commands[i].action.c_str());
 		}
 		// show the icon/command linkage
 		LOG("Icon Linkage:");
-		for(int ii = 0; ii < iconsCount; ++ii){
+		for (int ii = 0; ii < iconsCount; ++ii) {
 			LOG("  icon: %i, commandsID = %i", ii, icons[ii].commandsID);
 		}
 		LOG("maxPage         = %i", maxPage);
 		LOG("activePage      = %i", activePage);
-		LOG("iconsSize       = %u", iconsSize);
+		LOG("iconsSize       = %i", int(icons.size()));
 		LOG("iconsCount      = %i", iconsCount);
 		LOG("commands.size() = " _STPF_, commands.size());
 		return true;
@@ -1874,16 +1879,13 @@ bool CGuiHandler::SetActiveCommand(const Action& action,
 	}
 
 	for (size_t a = 0; a < commands.size(); ++a) {
-
 		SCommandDescription& cmdDesc = commands[a];
 
-		if ((static_cast<int>(a) != iconCmd) && (cmdDesc.action != action.command)) {
+		if ((static_cast<int>(a) != iconCmd) && (cmdDesc.action != action.command))
 			continue; // not a match
-		}
 
-		if (cmdDesc.disabled) {
+		if (cmdDesc.disabled)
 			continue; // can not use this command
-		}
 
 		const int cmdType = cmdDesc.type;
 
@@ -2979,11 +2981,9 @@ void CGuiHandler::DrawButtons() // Only called by Draw
 			continue; // inactive icon
 
 		const SCommandDescription& cmdDesc = commands[icon.commandsID];
-		const bool customCommand = (cmdDesc.id == CMD_INTERNAL) &&
-		                           (cmdDesc.type == CMDTYPE_CUSTOM);
-		const bool highlight = ((mouseIcon == ii) ||
-		                        (icon.commandsID == inCommand)) &&
-		                       (!customCommand || !cmdDesc.params.empty());
+
+		const bool customCommand = (cmdDesc.id == CMD_INTERNAL) && (cmdDesc.type == CMDTYPE_CUSTOM);
+		const bool highlight = ((mouseIcon == ii) || (icon.commandsID == inCommand)) && (!customCommand || !cmdDesc.params.empty());
 
 		if (customCommand) {
 			DrawCustomButton(icon, highlight);
@@ -2993,9 +2993,8 @@ void CGuiHandler::DrawButtons() // Only called by Draw
 			const bool useLEDs = useOptionLEDs && (cmdDesc.type == CMDTYPE_ICON_MODE);
 
 			// specified texture
-			if (DrawTexture(icon, cmdDesc.iconname)) {
+			if (DrawTexture(icon, cmdDesc.iconname))
 				usedTexture = true;
-			}
 
 			// unit buildpic
 			if (!usedTexture) {
@@ -3114,27 +3113,26 @@ void CGuiHandler::DrawButtons() // Only called by Draw
 
 void CGuiHandler::DrawMenuName() // Only called by drawbuttons
 {
-	if (!menuName.empty() && (iconsCount > 0)) {
-		const float fontScale = 1.0f;
-		const float xp = 0.5f * (buttonBox.x1 + buttonBox.x2);
-		const float yp = buttonBox.y2 + (yIconSize * 0.125f);
+	if (menuName.empty() || (iconsCount == 0))
+		return;
 
-		if (!outlineFonts) {
-			const float textHeight = fontScale * font->GetTextHeight(menuName) * globalRendering->pixelY;
-			glDisable(GL_TEXTURE_2D);
-			glColor4f(0.2f, 0.2f, 0.2f, guiAlpha);
-			glRectf(buttonBox.x1,
-			        buttonBox.y2,
-			        buttonBox.x2,
-			        buttonBox.y2 + textHeight + (yIconSize * 0.25f));
-			font->glPrint(xp, yp, fontScale, FONT_CENTER | FONT_SCALE | FONT_NORM, menuName);
-		}
-		else {
-			font->SetColors(); // default
-			font->glPrint(xp, yp, fontScale, FONT_CENTER | FONT_OUTLINE | FONT_SCALE | FONT_NORM, menuName);
-		}
+	const float fontScale = 1.0f;
+	const float xp = 0.5f * (buttonBox.x1 + buttonBox.x2);
+	const float yp = buttonBox.y2 + (yIconSize * 0.125f);
+
+	if (!outlineFonts) {
+		const float textHeight = fontScale * font->GetTextHeight(menuName) * globalRendering->pixelY;
+		glDisable(GL_TEXTURE_2D);
+		glColor4f(0.2f, 0.2f, 0.2f, guiAlpha);
+		glRectf(buttonBox.x1,
+		        buttonBox.y2,
+		        buttonBox.x2,
+		        buttonBox.y2 + textHeight + (yIconSize * 0.25f));
+		font->glPrint(xp, yp, fontScale, FONT_CENTER | FONT_SCALE | FONT_NORM, menuName);
+	} else {
+		font->SetColors(); // default
+		font->glPrint(xp, yp, fontScale, FONT_CENTER | FONT_OUTLINE | FONT_SCALE | FONT_NORM, menuName);
 	}
-
 }
 
 
