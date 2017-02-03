@@ -37,21 +37,15 @@ void TakeScreenshot(std::string type)
 	args.x  = globalRendering->dualScreenMode? globalRendering->viewSizeX << 1: globalRendering->viewSizeX;
 	args.y  = globalRendering->viewSizeY;
 	args.x += ((4 - (args.x % 4)) * int((args.x % 4) != 0));
+
+	const int shotCounter = configHandler->GetInt("ScreenshotCounter");
+
+	// note: we no longer increment the counter until a "file not found" occurs
+	// since that stalls the thread and might run concurrently with an IL write
+	args.filename.assign("screenshots/screen" + IntToString(shotCounter, "%05d") + "." + type);
 	args.buf.resize(args.x * args.y * 4);
 
-	char buf[512] = {0};
-
-	for (int a = configHandler->GetInt("ScreenshotCounter"); a <= 99999; ++a) {
-		snprintf(&buf[0], sizeof(buf), "screenshots/screen%05d.%s", a, type.c_str());
-
-		CFileHandler ifs(buf);
-
-		if (!ifs.FileExists()) {
-			configHandler->Set("ScreenshotCounter", a < 99999 ? a+1 : 0);
-			args.filename = buf;
-			break;
-		}
-	}
+	configHandler->Set("ScreenshotCounter", shotCounter + 1);
 
 	glReadPixels(0, 0, args.x, args.y, GL_RGBA, GL_UNSIGNED_BYTE, &args.buf[0]);
 

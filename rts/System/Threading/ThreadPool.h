@@ -235,9 +235,7 @@ public:
 
 	void Enqueue(F f, Args... args)
 	{
-		auto task = std::make_shared<std::packaged_task<return_type()>>(
-			std::bind(f, std::forward<Args>(args)...)
-		);
+		auto task = std::make_shared<std::packaged_task<return_type()>>(std::bind(f, std::forward<Args>(args)...));
 		results.emplace_back(task->get_future());
 		tasks.emplace_back(task);
 		remainingTasks.fetch_add(1, std::memory_order_release);
@@ -349,9 +347,7 @@ public:
 
 	void EnqueueUnique(const int threadNum, F& f, Args... args)
 	{
-		auto task = std::make_shared< std::packaged_task<return_type()> >(
-			std::bind(std::forward<F>(f), std::forward<Args>(args)...)
-		);
+		auto task = std::make_shared< std::packaged_task<return_type()> >(std::bind(std::forward<F>(f), std::forward<Args>(args)...));
 
 		this->results.emplace_back(task->get_future());
 		this->remainingTasks += 1;
