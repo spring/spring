@@ -1307,10 +1307,10 @@ void CGuiHandler::MouseRelease(int x, int y, int button, const float3& cameraPos
 
 bool CGuiHandler::SetActiveCommand(int cmdIndex, bool rightMouseButton)
 {
-	if (cmdIndex >= (int)commands.size()) {
+	if (cmdIndex >= (int)commands.size())
 		return false;
-	}
-	else if (cmdIndex < 0) {
+
+	if (cmdIndex < 0) {
 		// cancel the current command
 		inCommand = -1;
 		defaultCmdMemory = -1;
@@ -1321,9 +1321,8 @@ bool CGuiHandler::SetActiveCommand(int cmdIndex, bool rightMouseButton)
 	}
 
 	SCommandDescription& cd = commands[cmdIndex];
-	if (cd.disabled) {
+	if (cd.disabled)
 		return false;
-	}
 
 	lastKeySet.Reset();
 
@@ -2424,9 +2423,9 @@ static bool WouldCancelAnyQueued(const BuildInfo& b)
 	for (const int unitID: selectedUnitsHandler.selectedUnits) {
 		const CUnit* u = unitHandler->GetUnit(unitID);
 
-		if (u->commandAI->WillCancelQueued(c)) {
+		if (u->commandAI->WillCancelQueued(c))
 			return true;
-		}
+
 	}
 
 	return false;
@@ -2436,10 +2435,11 @@ static void FillRowOfBuildPos(const BuildInfo& startInfo, float x, float z, floa
 {
 	for (int i = 0; i < n; ++i) {
 		BuildInfo bi(startInfo.def, float3(x, 0.0f, z), (startInfo.buildFacing + facing) % NUM_FACINGS);
-		bi.pos=CGameHelper::Pos2BuildPos(bi, false);
-		if (!nocancel || !WouldCancelAnyQueued(bi)) {
+		bi.pos = CGameHelper::Pos2BuildPos(bi, false);
+
+		if (!nocancel || !WouldCancelAnyQueued(bi))
 			ret.push_back(bi);
-		}
+
 		x += xstep;
 		z += zstep;
 	}
@@ -2603,13 +2603,11 @@ void CGuiHandler::DrawCustomButton(const IconInfo& icon, bool highlight)
 	const bool usedTexture = DrawTexture(icon, cmdDesc.iconname);
 
 	// highlight overlay before text is applied
-	if (highlight) {
+	if (highlight)
 		DrawHilightQuad(icon);
-	}
 
-	if (!usedTexture || !cmdDesc.onlyTexture) {
+	if (!usedTexture || !cmdDesc.onlyTexture)
 		DrawName(icon, cmdDesc.name, false);
-	}
 
 	DrawNWtext(icon, FindCornerText("$nw$", cmdDesc.params));
 	DrawSWtext(icon, FindCornerText("$sw$", cmdDesc.params));
@@ -2849,9 +2847,9 @@ void CGuiHandler::DrawIconFrame(const IconInfo& icon)
 void CGuiHandler::DrawName(const IconInfo& icon, const std::string& text,
 		bool offsetForLEDs)
 {
-	if (text.empty()) {
+	if (text.empty())
 		return;
-	}
+
 	const Box& b = icon.visual;
 
 	const float yShrink = offsetForLEDs ? (0.125f * yIconSize) : 0.0f;
@@ -2873,9 +2871,9 @@ void CGuiHandler::DrawName(const IconInfo& icon, const std::string& text,
 
 void CGuiHandler::DrawNWtext(const IconInfo& icon, const std::string& text)
 {
-	if (text.empty()) {
+	if (text.empty())
 		return;
-	}
+
 	const Box& b = icon.visual;
 	const float tHeight = font->GetSize() * font->GetTextHeight(text) * globalRendering->pixelY;
 	const float fontScale = (yIconSize * 0.2f) / tHeight;
@@ -2888,9 +2886,9 @@ void CGuiHandler::DrawNWtext(const IconInfo& icon, const std::string& text)
 
 void CGuiHandler::DrawSWtext(const IconInfo& icon, const std::string& text)
 {
-	if (text.empty()) {
+	if (text.empty())
 		return;
-	}
+
 	const Box& b = icon.visual;
 	const float tHeight = font->GetSize() * font->GetTextHeight(text) * globalRendering->pixelY;
 	const float fontScale = (yIconSize * 0.2f) / tHeight;
@@ -2903,9 +2901,9 @@ void CGuiHandler::DrawSWtext(const IconInfo& icon, const std::string& text)
 
 void CGuiHandler::DrawNEtext(const IconInfo& icon, const std::string& text)
 {
-	if (text.empty()) {
+	if (text.empty())
 		return;
-	}
+
 	const Box& b = icon.visual;
 	const float tHeight = font->GetSize() * font->GetTextHeight(text) * globalRendering->pixelY;
 	const float fontScale = (yIconSize * 0.2f) / tHeight;
@@ -2918,9 +2916,9 @@ void CGuiHandler::DrawNEtext(const IconInfo& icon, const std::string& text)
 
 void CGuiHandler::DrawSEtext(const IconInfo& icon, const std::string& text)
 {
-	if (text.empty()) {
+	if (text.empty())
 		return;
-	}
+
 	const Box& b = icon.visual;
 	const float tHeight = font->GetSize() * font->GetTextHeight(text) * globalRendering->pixelY;
 	const float fontScale = (yIconSize * 0.2f) / tHeight;
@@ -2979,6 +2977,8 @@ void CGuiHandler::DrawButtons() // Only called by Draw
 
 		if (icon.commandsID < 0)
 			continue; // inactive icon
+		if (icon.commandsID >= commands.size())
+			continue;
 
 		const SCommandDescription& cmdDesc = commands[icon.commandsID];
 
