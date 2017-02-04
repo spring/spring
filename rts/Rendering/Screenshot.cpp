@@ -19,7 +19,7 @@ CONFIG(int, ScreenshotCounter).defaultValue(0);
 
 struct FunctionArgs
 {
-	std::vector<uint8_t> buf;
+	std::vector<uint8_t> pixelbuf;
 	std::string filename;
 	int x;
 	int y;
@@ -43,14 +43,14 @@ void TakeScreenshot(std::string type)
 	// note: we no longer increment the counter until a "file not found" occurs
 	// since that stalls the thread and might run concurrently with an IL write
 	args.filename.assign("screenshots/screen" + IntToString(shotCounter, "%05d") + "." + type);
-	args.buf.resize(args.x * args.y * 4);
+	args.pixelbuf.resize(args.x * args.y * 4);
 
 	configHandler->Set("ScreenshotCounter", shotCounter + 1);
 
-	glReadPixels(0, 0, args.x, args.y, GL_RGBA, GL_UNSIGNED_BYTE, &args.buf[0]);
+	glReadPixels(0, 0, args.x, args.y, GL_RGBA, GL_UNSIGNED_BYTE, &args.pixelbuf[0]);
 
 	ThreadPool::Enqueue([](const FunctionArgs& args) {
-		CBitmap bmp(&args.buf[0], args.x, args.y);
+		CBitmap bmp(&args.pixelbuf[0], args.x, args.y);
 		bmp.ReverseYAxis();
 		bmp.Save(args.filename, true, true);
 	}, args);
