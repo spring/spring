@@ -381,6 +381,7 @@ bool CBitmap::Save(std::string const& filename, bool opaque, bool logged) const
 
 	const std::string& fsImageExt = FileSystem::GetExtension(filename);
 	const std::string& fsFullPath = dataDirsAccess.LocateFile(filename, FileQueryFlags::WRITE);
+	const std::wstring& ilFullPath = std::wstring(fsFullPath.begin(), fsFullPath.end());
 
 	bool success = false;
 
@@ -388,8 +389,12 @@ bool CBitmap::Save(std::string const& filename, bool opaque, bool logged) const
 		LOG("[CBitmap::%s] saving \"%s\" to \"%s\" (IL_VERSION=%d IL_UNICODE=%d)", __func__, filename.c_str(), fsFullPath.c_str(), IL_VERSION, sizeof(ILchar) != 1);
 
 	if (sizeof(void*) >= 4) {
+		#if 0
 		// NOTE: all Windows buildbot libIL's crash in ilSaveF (!)
 		std::vector<ILchar> ilFullPath(fsFullPath.begin(), fsFullPath.end());
+
+		// null-terminate; vectors are not strings
+		ilFullPath.push_back(0);
 
 		// IL might be unicode-aware in which case it uses wchar_t{*} strings
 		// should not even be necessary because ASCII and UTFx are compatible
@@ -398,13 +403,18 @@ bool CBitmap::Save(std::string const& filename, bool opaque, bool logged) const
 			case (sizeof(wchar_t)): { std::mbstowcs(reinterpret_cast<wchar_t*>(ilFullPath.data()), fsFullPath.data(), fsFullPath.size()); } break;
 			default: { assert(false); } break;
 		}
+		#endif
+
+		const ILchar* p = (sizeof(ILchar) != 1)?
+			reinterpret_cast<const ILchar*>(ilFullPath.data()):
+			reinterpret_cast<const ILchar*>(fsFullPath.data());
 
 		switch (int(fsImageExt[0])) {
-			case 'b': case 'B': { success = ilSave(IL_BMP, ilFullPath.data()); } break;
-			case 'j': case 'J': { success = ilSave(IL_JPG, ilFullPath.data()); } break;
-			case 'p': case 'P': { success = ilSave(IL_PNG, ilFullPath.data()); } break;
-			case 't': case 'T': { success = ilSave(IL_TGA, ilFullPath.data()); } break;
-			case 'd': case 'D': { success = ilSave(IL_DDS, ilFullPath.data()); } break;
+			case 'b': case 'B': { success = ilSave(IL_BMP, p); } break;
+			case 'j': case 'J': { success = ilSave(IL_JPG, p); } break;
+			case 'p': case 'P': { success = ilSave(IL_PNG, p); } break;
+			case 't': case 'T': { success = ilSave(IL_TGA, p); } break;
+			case 'd': case 'D': { success = ilSave(IL_DDS, p); } break;
 		}
 	} else {
 		FILE* file = fopen(fsFullPath.c_str(), "wb");
