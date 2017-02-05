@@ -41,7 +41,7 @@
 
 #include <vector>
 
-CONFIG(int, LoadingMT).defaultValue(-1).safemodeValue(0);
+CONFIG(int, LoadingMT).defaultValue(0).safemodeValue(0);
 CONFIG(bool, ShowLoadMessages).defaultValue(true);
 
 CLoadScreen* CLoadScreen::singleton = nullptr;
