@@ -37,24 +37,26 @@ namespace springproc {
 	      (64-ia-32-architectures-software-developer-vol-2a-manual.pdf) */
 
 	class CpuId {
-	 private:
+	private:
 		void getIdsAmd();
 		void getIdsIntel();
 		void setDefault();
 
-		int nbProcessors;
-		int coreTotalNumber;
-		int packageTotalNumber;
+		int numProcessors;
+		int totalNumCores;
+		int totalNumPackages;
+
+		static constexpr int maxProcessors = 64;
 
 		/** Array of the size coreTotalNumber, containing for each
 		    core the affinity mask. */
-		uint64_t *affinityMaskOfCores;
-		uint64_t *affinityMaskOfPackages;
+		uint64_t affinityMaskOfCores[maxProcessors];
+		uint64_t affinityMaskOfPackages[maxProcessors];
 
 		////////////////////////
 		// Intel specific fields
 
-		uint32_t* processorApicIds;
+		uint32_t processorApicIds[maxProcessors];
 
 		void getIdsIntelEnumerate();
 
@@ -77,19 +79,18 @@ namespace springproc {
 		// AMD specific fields
 
 		////////////////////////
-	 public:
+	public:
 		CpuId();
-		~CpuId();
 
 		/** Total number of cores in the system. This excludes SMT/HT 
 		    cores. */
-		int getCoreTotalNumber();
+		int getCoreTotalNumber() const { return totalNumCores; }
 
 		/** Total number of physical processor dies in the system. */
-		int getPackageTotalNumber();
+		int getPackageTotalNumber() const { return totalNumPackages; }
 
-		uint64_t getAffinityMaskOfCore(int x);
-		uint64_t getAffinityMaskOfPackage(int x);
+		uint64_t getAffinityMaskOfCore(int x) const { return affinityMaskOfCores[x & (maxProcessors - 1)]; }
+		uint64_t getAffinityMaskOfPackage(int x) { return affinityMaskOfPackages[x & (maxProcessors - 1)]; }
 	};
 
 }

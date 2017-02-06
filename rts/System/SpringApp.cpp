@@ -73,7 +73,6 @@
 #include "System/Log/DefaultFilter.h"
 #include "System/LogOutput.h"
 #include "System/Platform/Battery.h"
-#include "System/Platform/Misc.h"
 #include "System/Platform/errorhandler.h"
 #include "System/Platform/CrashHandler.h"
 #include "System/Platform/Threading.h"
@@ -193,25 +192,12 @@ SpringApp::~SpringApp()
  */
 bool SpringApp::Initialize()
 {
-	assert(configHandler != NULL);
-
-	// list user's config
-	LOG("============== <User Config> ==============");
-	const std::map<std::string, std::string> settings = configHandler->GetDataWithoutDefaults();
-	for (auto& it: settings) {
-		// exclude non-engine configtags
-		if (ConfigVariable::GetMetaData(it.first) == nullptr)
-			continue;
-
-		LOG("%s = %s", it.first.c_str(), it.second.c_str());
-	}
-	LOG("============== </User Config> ==============");
-
+	assert(configHandler != nullptr);
 	FileSystemInitializer::InitializeLogOutput();
+
+	CLogOutput::LogConfigInfo();
 	CLogOutput::LogSystemInfo();
-	LOG("         CPU Clock: %s", spring_clock::GetName());
-	LOG("Physical CPU Cores: %d", Threading::GetPhysicalCpuCores());
-	LOG(" Logical CPU Cores: %d", Threading::GetLogicalCpuCores());
+
 	CMyMath::Init();
 
 	globalRendering = new CGlobalRendering();

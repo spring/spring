@@ -3,17 +3,25 @@
 #include "CpuID.h"
 #include "System/Platform/Threading.h"
 #include "System/Log/ILog.h"
-//#include <cstddef>
+
 #ifdef _MSC_VER
 	#include <intrin.h>
 #endif
 
 #include "System/Threading/SpringThreading.h"
-#include <assert.h>
-#include <set>
+#include "System/UnorderedSet.hpp"
+
+#include <cassert>
 
 
 namespace springproc {
+	enum {
+		REG_EAX = 0,
+		REG_EBX = 1,
+		REG_ECX = 2,
+		REG_EDX = 3,
+		REG_CNT = 4,
+	};
 
 #if defined(__GNUC__)
 	// function inlining breaks this
@@ -50,12 +58,12 @@ namespace springproc {
 #elif defined(_MSC_VER) && (_MSC_VER >= 1310)
 	void ExecCPUID(unsigned int* a, unsigned int* b, unsigned int* c, unsigned int* d)
 	{
-		int features[4];
+		int features[REG_CNT];
 		__cpuid(features, *a);
-		*a=features[0];
-		*b=features[1];
-		*c=features[2];
-		*d=features[3];
+		*a = features[0];
+		*b = features[1];
+		*c = features[2];
+		*d = features[3];
 	}
 #else
 	// no-op on other compilers
@@ -64,56 +72,52 @@ namespace springproc {
 	}
 #endif
 
-	CpuId::CpuId(): shiftCore(0), shiftPackage(0),
-	  maskVirtual(0),  maskCore(0), maskPackage(0),
-	  hasLeaf11(false)
-	{
-		nbProcessors = Threading::GetLogicalCpuCores();
-		// TODO: allocating a bit more than needed, maybe move
-		// this after determining the numbers.
+	CpuId::CpuId()
+		: shiftCore(0)
+		, shiftPackage(0)
 
-		affinityMaskOfCores = new uint64_t[nbProcessors];
-		affinityMaskOfPackages = new uint64_t[nbProcessors];
-		processorApicIds = new uint32_t[nbProcessors];
+		, maskVirtual(0)
+		, maskCore(0)
+		, maskPackage(0)
+
+		, hasLeaf11(false)
+	{
+		uint32_t regs[REG_CNT] = {0, 0, 0, 0};
 
 		setDefault();
+		ExecCPUID(&regs[REG_EAX], &regs[REG_EBX], &regs[REG_ECX], &regs[REG_EDX]);
 
-		unsigned int eax = 0, ebx = 0, ecx = 0, edx = 0;
-		eax = 0;
-		ExecCPUID(&eax, &ebx, &ecx, &edx);
-
-		// Check if it Intel
-		if (ebx == 0x756e6547) {	// "Genu", from "GenuineIntel"
-			getIdsIntel();
-		} else if (ebx == 0x68747541) {	// "htuA" from "AuthenticAMD"
-			// TODO: AMD has also something similar to SMT (called CMT) in Bulldozer
-			// microarchitecture (FX processors).
-			getIdsAmd();
+		switch (regs[REG_EBX]) {
+			case 0x756e6547: {
+				// "Genu", from "GenuineIntel"
+				getIdsIntel();
+			} break;
+			case 0x68747541: {
+				// "htuA" from "AuthenticAMD"
+				// TODO: AMD has also something similar to SMT (called CMT) in Bulldozer
+				// microarchitecture (FX processors).
+				getIdsAmd();
+			} break;
+			default: {
+			} break;
 		}
-	}
-	CpuId::~CpuId()
-	{
-		delete[] affinityMaskOfCores;
-		delete[] affinityMaskOfPackages;
-		delete[] processorApicIds;
 	}
 
 	// Function based on Figure 1 from Kuo_CpuTopology_rc1.rh1.final.pdf
 	void CpuId::getIdsIntel()
 	{
-		int maxLeaf;
-		unsigned int eax = 0, ebx = 0, ecx = 0, edx = 0;
-		eax = 0;
-		ExecCPUID(&eax, &ebx, &ecx, &edx);
+		int maxLeaf = 0;
+		uint32_t regs[REG_CNT] = {0, 0, 0, 0};
 
-		maxLeaf = eax;
-		if (maxLeaf >= 0xB) {
-			eax = 11;
-			ecx = 0;
-			ExecCPUID(&eax, &ebx, &ecx, &edx);
+		ExecCPUID(&regs[REG_EAX], &regs[REG_EBX], &regs[REG_ECX], &regs[REG_EDX]);
+
+		if ((maxLeaf = regs[REG_EAX]) >= 0xB) {
+			regs[REG_EAX] = 11;
+			regs[REG_ECX] = 0;
+			ExecCPUID(&regs[REG_EAX], &regs[REG_EBX], &regs[REG_ECX], &regs[REG_EDX]);
 
 			// Check if cpuid leaf 11 really exists
-			if (ebx != 0) {
+			if (regs[REG_EBX] != 0) {
 				hasLeaf11 = true;
 				LOG_L(L_DEBUG,"[CpuId] leaf 11 support");
 				getMasksIntelLeaf11();
@@ -128,44 +132,44 @@ namespace springproc {
 			getIdsIntelEnumerate();
 			return;
 		}
+
 		// Either it is a very old processor, or the cpuid instruction is disabled
-		// from BIOS. Print a warning an use processor number
-		LOG_L(L_WARNING,"[CpuId] Max cpuid leaf is less than 4! Using OS processor number.");
+		// from BIOS. Print a warning and use default processor number
+		LOG_L(L_WARNING,"[CpuId] max cpuid leaf is less than 4! Using OS processor number.");
 		setDefault();
 	}
 
 	void CpuId::getMasksIntelLeaf11Enumerate()
 	{
 		uint32_t currentLevel = 0;
-		unsigned int eax = 0, ebx = 0, ecx = 0, edx = 0;
-		eax = 1;
+		uint32_t regs[REG_CNT] = {1, 0, 0, 0};
 
-		ExecCPUID(&eax, &ebx, &ecx, &edx);
+		ExecCPUID(&regs[REG_EAX], &regs[REG_EBX], &regs[REG_ECX], &regs[REG_EDX]);
 
-		eax = 11;
-		ecx = currentLevel;
-		currentLevel++;
-		ExecCPUID(&eax, &ebx, &ecx, &edx);
+		regs[REG_EAX] = 11;
+		regs[REG_ECX] = currentLevel++;
 
-		if ((ebx & 0xFFFF) == 0)
+		ExecCPUID(&regs[REG_EAX], &regs[REG_EBX], &regs[REG_ECX], &regs[REG_EDX]);
+
+		if ((regs[REG_EBX] & 0xFFFF) == 0)
 			return;
 
-		if (((ecx >> 8) & 0xFF) == 1) {
+		if (((regs[REG_ECX] >> 8) & 0xFF) == 1) {
 			LOG_L(L_DEBUG,"[CpuId] SMT level found");
-			shiftCore = eax & 0xf;
+			shiftCore = regs[REG_EAX] & 0xf;
 		} else {
 			LOG_L(L_DEBUG,"[CpuId] No SMT level supported");
 		}
 
-		eax = 11;
-		ecx = currentLevel;
-		currentLevel++;
-		ExecCPUID(&eax, &ebx, &ecx, &edx);
+		regs[REG_EAX] = 11;
+		regs[REG_ECX] = currentLevel++;
 
-		if (((ecx >> 8) & 0xFF) == 2) {
+		ExecCPUID(&regs[REG_EAX], &regs[REG_EBX], &regs[REG_ECX], &regs[REG_EDX]);
+
+		if (((regs[REG_ECX] >> 8) & 0xFF) == 2) {
 			LOG_L(L_DEBUG,"[CpuId] Core level found");
-			    // Practically this is shiftCore + shitVirtual so it is shiftPackage
-			    shiftPackage = eax & 0xf;
+		    // Practically this is shiftCore + shiftVirtual so it is shiftPackage
+		    shiftPackage = regs[REG_EAX] & 0xf;
 		} else {
 			LOG_L(L_DEBUG,"[CpuId] NO Core level supported");
 		}
@@ -178,76 +182,74 @@ namespace springproc {
 	{
 		getMasksIntelLeaf11Enumerate();
 
-		// We determined the shifts now compute the masks
-		maskVirtual = ~((-1) << shiftCore);
-		maskCore = (~((-1) << shiftPackage)) ^ maskVirtual;
-		maskPackage = (-1) << shiftPackage;
+		// determined the shifts, now compute the masks
+		maskVirtual =  ~((-1u) << shiftCore    );
+		maskCore    = (~((-1u) << shiftPackage)) ^ maskVirtual;
+		maskPackage =   ((-1u) << shiftPackage );
 	}
 
 	void CpuId::getMasksIntelLeaf1and4()
 	{
-		int i;
-
-		unsigned int eax = 0, ebx = 0, ecx = 0, edx = 0;
+		uint32_t regs[REG_CNT] = {1, 0, 0, 0};
 
 		unsigned maxAddressableLogical;
 		unsigned maxAddressableCores;
 
-		eax = 1;
-		ExecCPUID(&eax, &ebx, &ecx, &edx);
+		ExecCPUID(&regs[REG_EAX], &regs[REG_EBX], &regs[REG_ECX], &regs[REG_EDX]);
 
-		maxAddressableLogical = (ebx >> 18) & 0xff;
+		maxAddressableLogical = (regs[REG_EBX] >> 18) & 0xff;
 
-		eax = 4;
-		ecx = 0;
-		ExecCPUID(&eax, &ebx, &ecx, &edx);
-		maxAddressableCores = ((eax >> 26) & 0x3f) + 1;
-
+		regs[REG_EAX] = 4;
+		regs[REG_ECX] = 0;
+		ExecCPUID(&regs[REG_EAX], &regs[REG_EBX], &regs[REG_ECX], &regs[REG_EDX]);
+		maxAddressableCores = ((regs[REG_EAX] >> 26) & 0x3f) + 1;
 		shiftCore = (maxAddressableLogical / maxAddressableCores);
-		// We compute the next power of 2 that is larger than shiftPackage
-		i = 0;
-		while ((1 << i) < shiftCore)
-			i++;
-		shiftCore = i;
 
-		i = 0;
-		while ((1 << i) < maxAddressableCores)
-			i++;
-		shiftPackage = i;
+		{
+			// compute the next power of 2 that is larger than shiftPackage
+			int i = 0;
+			while ((1 << i) < shiftCore)
+				i++;
+			shiftCore = i;
+		}
+		{
+			int i = 0;
+			while ((1 << i) < maxAddressableCores)
+				i++;
+			shiftPackage = i;
+		}
 
-		// We determined the shifts now compute the masks
-		maskVirtual = ~((-1) << shiftCore);
-		maskCore = (~((-1) << shiftPackage)) ^ maskVirtual;
-		maskPackage = (-1) << shiftPackage;
+		// determined the shifts, now compute the masks
+		maskVirtual =  ~((-1u) << shiftCore    );
+		maskCore    = (~((-1u) << shiftPackage)) ^ maskVirtual;
+		maskPackage =   ((-1u) << shiftPackage );
 	}
 
 	void CpuId::getIdsIntelEnumerate()
 	{
 		auto oldAffinity = Threading::GetAffinity();
 
-		int processorNumber = Threading::GetLogicalCpuCores();
-		assert(processorNumber <= 64); // as the affinity mask is a uint64_t
-		assert(processorNumber <= 32); // spring uses uint32_t
-		for (size_t processor = 0; processor < processorNumber; processor++) {
+		for (size_t processor = 0; processor < numProcessors; processor++) {
 			Threading::SetAffinity(((uint32_t) 1) << processor, true);
 			spring::this_thread::yield();
 			processorApicIds[processor] = getApicIdIntel();
 		}
 
-		// We determine the total numbers of cores
-		std::set< uint32_t> cores;
-		for (size_t processor = 0; processor < processorNumber; processor++) {
+		spring::unordered_set<uint32_t> cores;
+		spring::unordered_set<uint32_t> packages;
+
+		// determine the total number of cores
+		for (size_t processor = 0; processor < numProcessors; processor++) {
 			auto ret = cores.insert(processorApicIds[processor] >> shiftCore);
 			if (!ret.second)
 				continue;
 
 			affinityMaskOfCores[cores.size() - 1] = ((uint64_t) 1) << processor;
 		}
-		coreTotalNumber = cores.size();
+		totalNumCores = cores.size();
 
-		// We determine the total numbers of packages cores
-		std::set<uint32_t> packages;
-		for (size_t processor = 0; processor < processorNumber; processor++) {
+		// determine the total number of packages
+		for (size_t processor = 0; processor < numProcessors; processor++) {
 			auto ret = packages.insert(processorApicIds[processor] >> shiftPackage);
 			if (!ret.second)
 				continue;
@@ -255,58 +257,51 @@ namespace springproc {
 			affinityMaskOfPackages[packages.size() - 1] |= ((uint64_t) 1) << processor;
 		}
 
-		packageTotalNumber = packages.size();
+		totalNumPackages = packages.size();
 
 		Threading::SetAffinity(oldAffinity);
 	}
 
 	uint32_t CpuId::getApicIdIntel()
 	{
-		unsigned int eax = 0, ebx = 0, ecx = 0, edx = 0;
+		uint32_t regs[REG_CNT] = {0, 0, 0, 0};
 
 		if (hasLeaf11) {
-			eax = 11;
-			ExecCPUID(&eax, &ebx, &ecx, &edx);
-			return edx;
-		} else {
-			eax = 1;
-			ExecCPUID(&eax, &ebx, &ecx, &edx);
-			return (unsigned char)(ebx >> 24);
+			regs[REG_EAX] = 11;
+			ExecCPUID(&regs[REG_EAX], &regs[REG_EBX], &regs[REG_ECX], &regs[REG_EDX]);
+			return regs[REG_EDX];
 		}
+
+		regs[REG_EAX] = 1;
+		ExecCPUID(&regs[REG_EAX], &regs[REG_EBX], &regs[REG_ECX], &regs[REG_EDX]);
+		return (regs[REG_EBX] >> 24);
 	}
 
 	void CpuId::getIdsAmd()
 	{
-		LOG_L(L_DEBUG,"[CpuId] ht/smt/cmt detection for AMD is not implemented! Using processor number reported by OS.");
-	}
-
-	int CpuId::getCoreTotalNumber()
-	{
-		return coreTotalNumber;
-	}
-
-	int CpuId::getPackageTotalNumber()
-	{
-		return packageTotalNumber;
-	}
-
-	uint64_t CpuId::getAffinityMaskOfCore(int x)
-	{
-		return affinityMaskOfCores[x];
-	}
-
-	uint64_t CpuId::getAffinityMaskOfPackage(int x)
-	{
-		return affinityMaskOfPackages[x];
+		LOG_L(L_DEBUG,"[CpuId] ht/smt/cmt detection for AMD is not implemented! Using OS processor number.");
+		// already called
+		// setDefault();
 	}
 
 	void CpuId::setDefault()
 	{
-		coreTotalNumber = Threading::GetLogicalCpuCores();
-		packageTotalNumber = 1;
+		numProcessors = Threading::GetLogicalCpuCores();
+		totalNumCores = numProcessors;
+		totalNumPackages = 1;
 
-		// As we could not determine anything just set affinity mask to (-1)
-		for (int i = 0; i < Threading::GetLogicalCpuCores(); i++) {
+		// affinity mask is a uint64_t, but spring uses uint32_t
+		assert(numProcessors <= (maxProcessors >> 1));
+
+		assert(sizeof(affinityMaskOfCores   ) == (maxProcessors * sizeof(affinityMaskOfCores   [0])));
+		assert(sizeof(affinityMaskOfPackages) == (maxProcessors * sizeof(affinityMaskOfPackages[0])));
+
+		memset(affinityMaskOfCores   , 0, sizeof(affinityMaskOfCores   ));
+		memset(affinityMaskOfPackages, 0, sizeof(affinityMaskOfPackages));
+		memset(processorApicIds      , 0, sizeof(processorApicIds      ));
+
+		// failed to determine CPU anatomy, just set affinity mask to (-1)
+		for (int i = 0; i < numProcessors; i++) {
 			affinityMaskOfCores[i] = affinityMaskOfPackages[i] = -1;
 		}
 	}

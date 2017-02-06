@@ -12,6 +12,7 @@
 #include "System/Log/Level.h"
 #include "System/Log/LogUtil.h"
 #include "System/Platform/Misc.h"
+#include "System/Platform/Threading.h"
 #include "System/UnorderedMap.hpp"
 
 #include <string>
@@ -261,19 +262,40 @@ void CLogOutput::Initialize()
 
 
 
+void CLogOutput::LogConfigInfo()
+{
+	LOG("============== <User Config> ==============");
+	const auto& settings = configHandler->GetDataWithoutDefaults();
+
+	for (const auto& it: settings) {
+		// list user's config; exclude non-engine configtags
+		if (ConfigVariable::GetMetaData(it.first) == nullptr)
+			continue;
+
+		LOG("  %s = %s", it.first.c_str(), it.second.c_str());
+	}
+
+	LOG("============== </User Config> ==============");
+
+}
+
 void CLogOutput::LogSystemInfo()
 {
-	LOG("Spring %s", SpringVersion::GetFull().c_str());
-	LOG("Build Environment: %s", SpringVersion::GetBuildEnvironment().c_str());
-	LOG("Compiler Version:  %s", SpringVersion::GetCompiler().c_str());
-	LOG("Operating System:  %s", Platform::GetOS().c_str());
+	LOG("============== <User System> ==============");
+	LOG("  Spring %s", SpringVersion::GetFull().c_str());
+	LOG("  Build Environment: %s", SpringVersion::GetBuildEnvironment().c_str());
+	LOG("  Compiler Version:  %s", SpringVersion::GetCompiler().c_str());
+	LOG("  Operating System:  %s", Platform::GetOS().c_str());
 
 	if (Platform::Is64Bit()) {
-		LOG("Word Size:         64-bit (native mode)");
-	} else if (Platform::Is32BitEmulation()) {
-		LOG("Word Size:         32-bit (emulated)");
+		LOG("    Word Size:       64-bit (native)");
 	} else {
-		LOG("Word Size:         32-bit (native mode)");
+		LOG("    Word Size:       32-bit (%s)", ((Platform::Is32BitEmulation())? "emulated": "native"));
 	}
+
+	LOG("           CPU Clock: %s", spring_clock::GetName());
+	LOG("  Physical CPU Cores: %d", Threading::GetPhysicalCpuCores());
+	LOG("   Logical CPU Cores: %d", Threading::GetLogicalCpuCores());
+	LOG("============== </User System> ==============");
 }
 
