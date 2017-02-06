@@ -692,9 +692,8 @@ void CMouseHandler::ChangeCursor(const std::string& cmdName, const float& scale)
 
 void CMouseHandler::SetCursor(const std::string& cmdName, const bool& forceRebind)
 {
-	if ((cursorText == cmdName) && !forceRebind) {
+	if ((cursorText == cmdName) && !forceRebind)
 		return;
-	}
 
 	cursorText = cmdName;
 	const auto it = cursorCommandMap.find(cmdName);
@@ -816,7 +815,7 @@ void CMouseHandler::DrawFPSCursor()
 
 void CMouseHandler::DrawCursor()
 {
-	assert(currentCursor);
+	assert(currentCursor != nullptr);
 
 	if (guihandler != nullptr)
 		guihandler->DrawCentroidCursor();
@@ -909,7 +908,8 @@ bool CMouseHandler::AssignMouseCursor(
 	if (haveCmd) {
 		CMouseCursor& oldCursor = loadedCursors[cmdIt->second];
 
-		cursorFileMap.erase(cmdIt);
+		assert(haveFile);
+		cursorFileMap.erase(fileIt);
 		cursorCommandMap.erase(cmdIt);
 
 		if (currentCursor == &oldCursor)
