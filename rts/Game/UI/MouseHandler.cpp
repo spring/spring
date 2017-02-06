@@ -163,7 +163,7 @@ void CMouseHandler::ReloadCursors()
 	loadedCursors.emplace_back();
 
 	cursorCommandMap["none"] = loadedCursors.size() - 1;
-	// cursorFileMap["null"] = loadedCursors.size() - 1;
+	cursorFileMap["null"] = loadedCursors.size() - 1;
 
 	AssignMouseCursor("",             "cursornormal",     mTopLeft, false);
 
@@ -925,6 +925,7 @@ bool CMouseHandler::ReplaceMouseCursor(
 	CMouseCursor::HotSpot hotSpot
 ) {
 	const auto fileIt = cursorFileMap.find(oldName);
+
 	if (fileIt == cursorFileMap.end())
 		return false;
 
