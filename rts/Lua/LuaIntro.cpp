@@ -9,6 +9,7 @@
 #include "LuaConstGL.h"
 #include "LuaConstCMD.h"
 #include "LuaConstCMDTYPE.h"
+#include "LuaConstEngine.h"
 #include "LuaConstGame.h"
 #include "LuaInterCall.h"
 #include "LuaUnsyncedRead.h"
@@ -96,22 +97,23 @@ CLuaIntro::CLuaIntro()
 
 	// load the spring libraries
 	if (
-	    !AddEntriesToTable(L, "Spring",    LoadUnsyncedCtrlFunctions) ||
-	    !AddEntriesToTable(L, "Spring",    LoadUnsyncedReadFunctions) ||
-	    !AddEntriesToTable(L, "Spring",    LoadSyncedReadFunctions) ||
+	    !AddEntriesToTable(L, "Spring",    LoadUnsyncedCtrlFunctions)           ||
+	    !AddEntriesToTable(L, "Spring",    LoadUnsyncedReadFunctions)           ||
+	    !AddEntriesToTable(L, "Spring",    LoadSyncedReadFunctions  )           ||
 
-	    !AddEntriesToTable(L, "VFS",       LuaVFS::PushUnsynced)         ||
-	    !AddEntriesToTable(L, "VFS",       LuaZipFileReader::PushUnsynced) ||
-	    !AddEntriesToTable(L, "VFS",       LuaZipFileWriter::PushUnsynced) ||
-	    !AddEntriesToTable(L, "VFS",         LuaArchive::PushEntries)      ||
-	    !AddEntriesToTable(L, "Script",      LuaScream::PushEntries)       ||
-	    //!AddEntriesToTable(L, "Script",      LuaInterCall::PushEntriesUnsynced) ||
-	    //!AddEntriesToTable(L, "Script",      LuaLobby::PushEntries)        ||
-	    !AddEntriesToTable(L, "gl",          LuaOpenGL::PushEntries)       ||
-	    !AddEntriesToTable(L, "GL",          LuaConstGL::PushEntries)      ||
-	    !AddEntriesToTable(L, "Game",        LuaConstGame::PushEntries)    ||
-	    !AddEntriesToTable(L, "CMD",         LuaConstCMD::PushEntries)     ||
-	    !AddEntriesToTable(L, "CMDTYPE",     LuaConstCMDTYPE::PushEntries) ||
+	    !AddEntriesToTable(L, "VFS",       LuaVFS::PushUnsynced)                ||
+	    !AddEntriesToTable(L, "VFS",       LuaZipFileReader::PushUnsynced)      ||
+	    !AddEntriesToTable(L, "VFS",       LuaZipFileWriter::PushUnsynced)      ||
+	    !AddEntriesToTable(L, "VFS",         LuaArchive::PushEntries)           ||
+	    !AddEntriesToTable(L, "Script",      LuaScream::PushEntries)            ||
+	    // !AddEntriesToTable(L, "Script",      LuaInterCall::PushEntriesUnsynced) ||
+	    // !AddEntriesToTable(L, "Script",      LuaLobby::PushEntries)             ||
+	    !AddEntriesToTable(L, "gl",          LuaOpenGL::PushEntries)            ||
+	    !AddEntriesToTable(L, "GL",          LuaConstGL::PushEntries)           ||
+	    !AddEntriesToTable(L, "Engine",      LuaConstEngine::PushEntries)       ||
+	    !AddEntriesToTable(L, "Game",        LuaConstGame::PushEntries)         ||
+	    !AddEntriesToTable(L, "CMD",         LuaConstCMD::PushEntries)          ||
+	    !AddEntriesToTable(L, "CMDTYPE",     LuaConstCMDTYPE::PushEntries)      ||
 	    !AddEntriesToTable(L, "LOG",         LuaUtils::PushLogEntries)
 	) {
 		KillLua();

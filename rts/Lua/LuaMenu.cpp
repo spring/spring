@@ -3,9 +3,9 @@
 #include "LuaMenu.h"
 
 #include "LuaInclude.h"
-
 #include "LuaArchive.h"
 #include "LuaCallInCheck.h"
+#include "LuaConstEngine.h"
 #include "LuaConstGL.h"
 #include "LuaIO.h"
 #include "LuaOpenGL.h"
@@ -18,7 +18,6 @@
 #include "LuaVFSDownload.h"
 #include "LuaZip.h"
 
-#include "Game/GameVersion.h"
 #include "System/EventHandler.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/FileSystem/FileHandler.h"
@@ -105,7 +104,7 @@ CLuaMenu::CLuaMenu()
 		!AddEntriesToTable(L, "Spring",    LoadUnsyncedCtrlFunctions)      ||
 		!AddEntriesToTable(L, "Spring",    LoadUnsyncedReadFunctions)      ||
 		!AddEntriesToTable(L, "Spring",    LoadLuaMenuFunctions)           ||
-		!AddEntriesToTable(L, "Game",      PushGameVersion)                ||
+		!AddEntriesToTable(L, "Engine",    LuaConstEngine::PushEntries)    ||
 
 		!AddEntriesToTable(L, "Script",    LuaScream::PushEntries)         ||
 		!AddEntriesToTable(L, "VFS",       LuaVFS::PushUnsynced)           ||
@@ -124,6 +123,7 @@ CLuaMenu::CLuaMenu()
 	RemoveSomeOpenGLFunctions(L);
 
 	lua_settop(L, 0);
+	// note: this also runs the Initialize callin
 	if (!LoadCode(L, code, file)) {
 		KillLua();
 		return;
@@ -315,16 +315,6 @@ bool CLuaMenu::LoadUnsyncedReadFunctions(lua_State* L)
 	#undef REGISTER_LUA_CFUNC
 	return true;
 }
-
-bool CLuaMenu::PushGameVersion(lua_State* L)
-{
-	LuaPushNamedString(L, "version", SpringVersion::GetSync());
-	LuaPushNamedString(L, "versionFull", (!CLuaHandle::GetHandleSynced(L))? SpringVersion::GetFull(): "");
-	LuaPushNamedString(L, "versionPatchSet", (!CLuaHandle::GetHandleSynced(L))? SpringVersion::GetPatchSet(): "");
-	LuaPushNamedString(L, "buildFlags", (!CLuaHandle::GetHandleSynced(L))? SpringVersion::GetAdditional(): "");
-	return true;
-}
-
 
 /******************************************************************************/
 /******************************************************************************/
