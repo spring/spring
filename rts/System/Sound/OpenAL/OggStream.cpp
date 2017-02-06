@@ -53,7 +53,7 @@ namespace VorbisCallbacks {
 
 
 COggStream::COggStream(ALuint _source)
-	: vorbisInfo(NULL)
+	: vorbisInfo(nullptr)
 	, source(_source)
 	, format(AL_FORMAT_MONO16)
 	, stopped(true)
@@ -89,10 +89,9 @@ void COggStream::Play(const std::string& path, float volume)
 		vorbisCallbacks.tell_func  = VorbisCallbacks::VorbisStreamTell;
 
 	CFileHandler* buf = new CFileHandler(path);
-	const int result = ov_open_callbacks(buf, &oggStream, NULL, 0, vorbisCallbacks);
+	const int result = ov_open_callbacks(buf, &oggStream, nullptr, 0, vorbisCallbacks);
 	if (result < 0) {
-		LOG_L(L_WARNING, "Could not open Ogg stream (reason: %s).",
-				ErrorString(result).c_str());
+		LOG_L(L_WARNING, "Could not open Ogg stream (reason: %s).", ErrorString(result).c_str());
 		return;
 	}
 
@@ -217,21 +216,19 @@ bool COggStream::IsPlaying()
 // stops the currently playing stream
 void COggStream::Stop()
 {
-	if (stopped) {
+	if (stopped)
 		return;
-	}
 
 	ReleaseBuffers();
 	msecsPlayed = spring_nulltime;
-	vorbisInfo = NULL;
+	vorbisInfo = nullptr;
 	lastTick = spring_gettime();
 }
 
 bool COggStream::TogglePause()
 {
-	if (!stopped) {
+	if (!stopped)
 		paused = !paused;
-	}
 
 	return paused;
 }
@@ -264,9 +261,8 @@ bool COggStream::UpdateBuffers()
 
 void COggStream::Update()
 {
-	if (stopped) {
+	if (stopped)
 		return;
-	}
 
 	spring_time tick = spring_gettime();
 
@@ -300,17 +296,15 @@ bool COggStream::DecodeStream(ALuint buffer)
 			size += result;
 		} else {
 			if (result < 0) {
-				LOG_L(L_WARNING, "Error reading Ogg stream (%s)",
-						ErrorString(result).c_str());
+				LOG_L(L_WARNING, "Error reading Ogg stream (%s)", ErrorString(result).c_str());
 			} else {
 				break;
 			}
 		}
 	}
 
-	if (size == 0) {
+	if (size == 0)
 		return false;
-	}
 
 	alBufferData(buffer, format, pcmDecodeBuffer, size, vorbisInfo->rate);
 	CheckError("COggStream::DecodeStream");
@@ -330,3 +324,4 @@ void COggStream::EmptyBuffers()
 		alSourceUnqueueBuffers(source, 1, &buffer); CheckError("COggStream::EmptyBuffers");
 	}
 }
+

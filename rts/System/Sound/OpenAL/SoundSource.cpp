@@ -21,14 +21,14 @@
 #include "System/myMath.h"
 
 float CSoundSource::referenceDistance = 200.0f;
-float CSoundSource::globalPitch = 1.0;
+float CSoundSource::globalPitch = 1.0f;
 float CSoundSource::heightRolloffModifier = 1.0f;
-static const float ROLLOFF_FACTOR = 5.f;
+static const float ROLLOFF_FACTOR = 5.0f;
 
 CSoundSource::CSoundSource()
-	: curPlaying(NULL)
-	, curChannel(NULL)
-	, curStream(NULL)
+	: curPlaying(nullptr)
+	, curChannel(nullptr)
+	, curStream(nullptr)
 	, curVolume(1.f)
 	, loopStop(1e9)
 	, in3D(false)
@@ -83,7 +83,7 @@ void CSoundSource::Update()
 			Stop();
 	}
 
-	if (curStream) {
+	if (curStream != nullptr) {
 		if (curStream->IsFinished()) {
 			Stop();
 		}
@@ -103,21 +103,21 @@ void CSoundSource::Update()
 
 int CSoundSource::GetCurrentPriority() const
 {
-	if (asyncPlay.buffer != nullptr) {
+	if (asyncPlay.buffer != nullptr)
 		return asyncPlay.buffer->GetPriority();
-	}
-	else if (curStream) {
+
+	if (curStream != nullptr)
 		return INT_MAX;
-	}
-	else if (!curPlaying) {
+
+	if (!curPlaying)
 		return INT_MIN;
-	}
+
 	return curPlaying->GetPriority();
 }
 
 bool CSoundSource::IsPlaying(const bool checkOpenAl) const
 {
-	if (curStream)
+	if (curStream != nullptr)
 		return true;
 
 	if (asyncPlay.buffer != nullptr)
@@ -143,14 +143,14 @@ void CSoundSource::Stop()
 	alSourceStop(id);
 	if (curPlaying) {
 		curPlaying->StopPlay();
-		curPlaying = NULL;
+		curPlaying = nullptr;
 	}
-	if (curStream) {
+	if (curStream != nullptr)
 		SafeDelete(curStream);
-	}
+
 	if (curChannel) {
 		IAudioChannel* oldChannel = curChannel;
-		curChannel = NULL;
+		curChannel = nullptr;
 		oldChannel->SoundSourceFinished(this);
 	}
 	CheckError("CSoundSource::Stop");
@@ -249,7 +249,7 @@ void CSoundSource::PlayStream(IAudioChannel* channel, const std::string& file, f
 	//! stop any current playback
 	Stop();
 
-	if (!curStream)
+	if (curStream == nullptr)
 		curStream = new COggStream(id);
 
 	//! setup OpenAL params
@@ -263,6 +263,7 @@ void CSoundSource::PlayStream(IAudioChannel* channel, const std::string& file, f
 	}
 	alSource3f(id, AL_POSITION,       0.0f, 0.0f, 0.0f);
 	alSourcef(id, AL_GAIN,            volume);
+	alSourcef(id, AL_PITCH,           globalPitch);
 	alSource3f(id, AL_VELOCITY,       0.0f,  0.0f,  0.0f);
 	alSource3f(id, AL_DIRECTION,      0.0f,  0.0f,  0.0f);
 	alSourcef(id, AL_ROLLOFF_FACTOR,  0.0f);
@@ -277,39 +278,43 @@ void CSoundSource::PlayStream(IAudioChannel* channel, const std::string& file, f
 
 void CSoundSource::StreamStop()
 {
-	if (curStream)
+	if (curStream != nullptr)
 		Stop();
 }
 
 void CSoundSource::StreamPause()
 {
-	if (curStream) {
-		if (curStream->TogglePause())
-			alSourcePause(id);
-		else
-			alSourcePlay(id);
-	}
+	if (curStream == nullptr)
+		return;
+
+	if (curStream->TogglePause())
+		alSourcePause(id);
+	else
+		alSourcePlay(id);
 }
 
 float CSoundSource::GetStreamTime()
 {
-	return curStream ? curStream->GetTotalTime() : 0;
+	return (curStream != nullptr)? curStream->GetTotalTime() : 0;
 }
 
 float CSoundSource::GetStreamPlayTime()
 {
-	return curStream ? curStream->GetPlayTime() : 0;
+	return (curStream != nullptr)? curStream->GetPlayTime() : 0;
 }
 
 void CSoundSource::UpdateVolume()
 {
-	if (!curChannel)
+	if (curChannel == nullptr)
 		return;
 
-	if (curStream) {
+	if (curStream != nullptr) {
 		alSourcef(id, AL_GAIN, curVolume * curChannel->volume);
+		return;
 	}
-	else if (curPlaying) {
+	if (curPlaying != nullptr) {
 		alSourcef(id, AL_GAIN, curVolume * curPlaying->GetGain() * curChannel->volume);
+		return;
 	}
 }
+
