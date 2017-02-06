@@ -19,6 +19,7 @@ if (System == nil) then
     --
     Script = Script,
     Spring = Spring,
+    Engine = Engine,
     Game = Game,
     gl = gl,
     GL = GL,

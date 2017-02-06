@@ -27,6 +27,7 @@ if (System == nil) then
     VFS = VFS,
     Script = Script,
     Spring = Spring,
+    Engine = Engine,
     Game = Game,
     LuaLobby = LuaLobby,
     gl = gl,
