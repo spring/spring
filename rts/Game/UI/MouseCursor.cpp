@@ -23,24 +23,6 @@ using std::string;
 // CMouseCursor Class
 //////////////////////////////////////////////////////////////////////
 
-CMouseCursor* CMouseCursor::New(const string &name, HotSpot hs)
-{
-	CMouseCursor* c = new CMouseCursor(name, hs);
-	if (c->frames.empty()) {
-		delete c;
-		return NULL;
-	}
-	return c;
-}
-
-
-CMouseCursor* CMouseCursor::GetNullCursor()
-{
-	static CMouseCursor nullCursor("", Center);
-	return &nullCursor;
-}
-
-
 CMouseCursor::CMouseCursor(const string& name, HotSpot hs)
  : animated(false)
  , hwValid(false)
@@ -86,10 +68,9 @@ CMouseCursor::CMouseCursor(const string& name, HotSpot hs)
 
 CMouseCursor::~CMouseCursor()
 {
-	delete hwCursor;
+	SafeDelete(hwCursor);
 
-	std::vector<ImageData>::iterator it;
-	for (it = images.begin(); it != images.end(); ++it)
+	for (auto it = images.begin(); it != images.end(); ++it)
 		glDeleteTextures(1, &it->texture);
 }
 
@@ -159,12 +140,10 @@ bool CMouseCursor::BuildFromSpecFile(const string& name)
 		}
 	}
 
-	if (frames.empty()) {
+	if (frames.empty())
 		return BuildFromFileNames(name, lastFrame);
-	}
 
 	hwCursor->Finish();
-
 	return true;
 }
 
@@ -207,9 +186,8 @@ bool CMouseCursor::BuildFromFileNames(const string& name, int lastFrame)
 bool CMouseCursor::LoadCursorImage(const string& name, ImageData& image)
 {
 	CFileHandler f(name);
-	if (!f.FileExists()) {
+	if (!f.FileExists())
 		return false;
-	}
 
 	CBitmap b;
 	if (!b.Load(name)) {
@@ -218,15 +196,14 @@ bool CMouseCursor::LoadCursorImage(const string& name, ImageData& image)
 	}
 
 	// hardcoded bmp transparency mask
-	if (FileSystem::GetExtension(name) == "bmp") {
+	if (FileSystem::GetExtension(name) == "bmp")
 		b.SetTransparent(SColor(84, 84, 252));
-	}
 
 	if (hwCursor->NeedsYFlip()) {
 		//WINDOWS
 		b.ReverseYAxis();
 		hwCursor->PushImage(b.xsize,b.ysize,&b.mem[0]);
-	}else{
+	} else {
 		//X11
 		hwCursor->PushImage(b.xsize,b.ysize,&b.mem[0]);
 		b.ReverseYAxis();
@@ -260,11 +237,11 @@ bool CMouseCursor::LoadCursorImage(const string& name, ImageData& image)
 
 void CMouseCursor::Draw(int x, int y, float scale) const
 {
-	if (frames.empty()) {
+	if (frames.empty())
 		return;
-	}
 
-	if (scale<0) scale=-scale;
+	if (scale < 0.0f)
+		scale = -scale;
 
 	const FrameData& frame = frames[currentFrame];
 	const int xs = int(float(frame.image.xAlignedSize) * scale);
@@ -310,9 +287,8 @@ void CMouseCursor::Draw(int x, int y, float scale) const
 
 void CMouseCursor::DrawQuad(int x, int y) const
 {
-	if (frames.empty()) {
+	if (frames.empty())
 		return;
-	}
 
 	const float scale = cmdColors.QueueIconScale();
 
@@ -350,9 +326,8 @@ void CMouseCursor::DrawQuad(int x, int y) const
 
 void CMouseCursor::Update()
 {
-	if (frames.empty()) {
+	if (frames.empty())
 		return;
-	}
 
 	animTime = math::fmod(animTime + globalRendering->lastFrameTime * 0.001f, animPeriod);
 
@@ -372,9 +347,8 @@ void CMouseCursor::Update()
 
 void CMouseCursor::BindTexture() const
 {
-	if (frames.empty()) {
+	if (frames.empty())
 		return;
-	}
 
 	const FrameData& frame = frames[currentFrame];
 	glBindTexture(GL_TEXTURE_2D, frame.image.texture);
@@ -384,3 +358,4 @@ void CMouseCursor::BindHwCursor() const
 {
 	hwCursor->Bind();
 }
+

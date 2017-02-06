@@ -86,7 +86,8 @@ CMouseHandler::CMouseHandler()
 	, crossAlpha(0.0f)
 	, crossMoveScale(0.0f)
 	, cursorText("")
-	, currentCursor(NULL)
+	, currentCursor(nullptr)
+	, lastClicked(nullptr)
 	, cursorScale(1.0f)
 	, hide(true)
 	, hwHide(true)
@@ -95,7 +96,6 @@ CMouseHandler::CMouseHandler()
 	, dragScrollThreshold(0.0f)
 	, scrollx(0.0f)
 	, scrolly(0.0f)
-	, lastClicked(nullptr)
 {
 	const int2 mousepos = IMouseInput::GetInstance()->GetPos();
 	lastx = mousepos.x;
@@ -130,12 +130,9 @@ CMouseHandler::CMouseHandler()
 CMouseHandler::~CMouseHandler()
 {
 	configHandler->RemoveObserver(this);
+
 	if (hwHide)
 		SDL_ShowCursor(SDL_ENABLE);
-
-	for (auto& ci : cursorFileMap) {
-		delete ci.second;
-	}
 }
 
 CMouseHandler* CMouseHandler::GetOrReloadInstance()
@@ -155,18 +152,18 @@ void CMouseHandler::ReloadCursors()
 	const CMouseCursor::HotSpot mCenter  = CMouseCursor::Center;
 	const CMouseCursor::HotSpot mTopLeft = CMouseCursor::TopLeft;
 
+	loadedCursors.clear();
+	loadedCursors.reserve(32);
+
 	cursorCommandMap.clear();
-	for (auto& ci : cursorFileMap) {
-		delete ci.second;
-	}
 	cursorFileMap.clear();
 	currentCursor = nullptr;
 
-	CMouseCursor* nullCursor = CMouseCursor::GetNullCursor();
-	cursorCommandMap["none"] = nullCursor;
-	// Note: we intentionally don't add it there cause GetNullCursor() returns
-	//  a pointer to a static var, so it gets automatically deleted
-	//cursorFileMap["null"] = nullCursor;
+	// null-cursor; always lives at index 0
+	loadedCursors.emplace_back();
+
+	cursorCommandMap["none"] = loadedCursors.size() - 1;
+	// cursorFileMap["null"] = loadedCursors.size() - 1;
 
 	AssignMouseCursor("",             "cursornormal",     mTopLeft, false);
 
@@ -225,7 +222,7 @@ void CMouseHandler::ReloadCursors()
 			"content packages installed in your Spring \"base/\" directory.\n");
 	}
 
-	currentCursor = cursorCommandMap[""];
+	currentCursor = &loadedCursors[ cursorCommandMap[""] ];
 }
 
 
@@ -255,17 +252,14 @@ void CMouseHandler::MouseMove(int x, int y, int dx, int dy)
 	buttons[SDL_BUTTON_LEFT].movement  += movedPixels;
 	buttons[SDL_BUTTON_RIGHT].movement += movedPixels;
 
-	if (game != nullptr && !game->IsGameOver()) {
+	if (game != nullptr && !game->IsGameOver())
 		playerHandler->Player(gu->myPlayerNum)->currentStats.mousePixels += movedPixels;
-	}
 
-	if (activeReceiver) {
+	if (activeReceiver != nullptr)
 		activeReceiver->MouseMove(x, y, dx, dy, activeButton);
-	}
 
-	if (inMapDrawer && inMapDrawer->IsDrawMode()) {
+	if (inMapDrawer != nullptr && inMapDrawer->IsDrawMode())
 		inMapDrawer->MouseMove(x, y, dx, dy, activeButton);
-	}
 
 	if (buttons[SDL_BUTTON_MIDDLE].pressed && (activeReceiver == NULL) && camHandler != nullptr) {
 		camHandler->GetCurrentController().MouseMove(float3(dx, dy, invertMouse ? -1.0f : 1.0f));
@@ -705,9 +699,9 @@ void CMouseHandler::SetCursor(const std::string& cmdName, const bool& forceRebin
 	cursorText = cmdName;
 	const auto it = cursorCommandMap.find(cmdName);
 	if (it != cursorCommandMap.end()) {
-		currentCursor = it->second;
+		currentCursor = &loadedCursors[it->second];
 	} else {
-		currentCursor = cursorCommandMap[""];
+		currentCursor = &loadedCursors[ cursorCommandMap[""] ];
 	}
 
 	if (hardwareCursor && !hide) {
@@ -727,9 +721,7 @@ void CMouseHandler::UpdateCursors()
 {
 	// we update all cursors (for the command queue icons)
 	for (auto it = cursorFileMap.begin(); it != cursorFileMap.end(); ++it) {
-		if (it->second != nullptr) {
-			it->second->Update();
-		}
+		loadedCursors[it->second].Update();
 	}
 }
 
@@ -864,37 +856,37 @@ void CMouseHandler::DrawCursor()
 	}
 
 	// hovered minimap, show default cursor and draw `special` cursor scaled-down bottom right of the default one
-	CMouseCursor* nc = cursorFileMap["cursornormal"];
-	if (nc == nullptr) {
+	const size_t ncIndex = cursorFileMap["cursornormal"];
+
+	if (ncIndex == 0) {
 		currentCursor->Draw(lastx, lasty, -cursorScale);
 		return;
 	}
 
-	nc->Draw(lastx, lasty, 1.0f);
+	CMouseCursor& nc = loadedCursors[ncIndex];
+	nc.Draw(lastx, lasty, 1.0f);
 
-	if (currentCursor != nc) {
-		currentCursor->Draw(lastx + nc->GetMaxSizeX(), lasty + nc->GetMaxSizeY(), -cursorScale);
-	}
+	if (currentCursor == &nc)
+		return;
+
+	currentCursor->Draw(lastx + nc.GetMaxSizeX(), lasty + nc.GetMaxSizeY(), -cursorScale);
 }
 
 
-bool CMouseHandler::AssignMouseCursor(const std::string& cmdName,
-                                      const std::string& fileName,
-                                      CMouseCursor::HotSpot hotSpot,
-                                      bool overwrite)
-{
-	std::map<std::string, CMouseCursor*>::iterator cmdIt;
-	std::map<std::string, CMouseCursor*>::iterator fileIt;
-
-	cmdIt = cursorCommandMap.find(cmdName);
-	fileIt = cursorFileMap.find(fileName);
+bool CMouseHandler::AssignMouseCursor(
+	const std::string& cmdName,
+	const std::string& fileName,
+	CMouseCursor::HotSpot hotSpot,
+	bool overwrite
+) {
+	const auto cmdIt = cursorCommandMap.find(cmdName);
+	const auto fileIt = cursorFileMap.find(fileName);
 
 	const bool haveCmd = (cmdIt != cursorCommandMap.end());
 	const bool haveFile = (fileIt != cursorFileMap.end());
 
-	if (haveCmd && !overwrite) {
+	if (haveCmd && !overwrite)
 		return false; // already assigned
-	}
 
 	if (haveFile) {
 		// cursor is already loaded, reuse it
@@ -902,82 +894,52 @@ bool CMouseHandler::AssignMouseCursor(const std::string& cmdName,
 		return true;
 	}
 
-	CMouseCursor* oldCursor = haveCmd ? cmdIt->second : NULL;
-	CMouseCursor* newCursor = CMouseCursor::New(fileName, hotSpot);
+	CMouseCursor newCursor = std::move(CMouseCursor::New(fileName, hotSpot));
 
-	if (newCursor == NULL) {
-		return false; // invalid cursor
-	}
-
-	cursorFileMap[fileName] = newCursor;
+	if (!newCursor.IsValid())
+		return false;
 
 	// assign the new cursor
-	cursorCommandMap[cmdName] = newCursor;
+	loadedCursors.emplace_back();
+	loadedCursors.back() = std::move(newCursor);
 
-	SafeDeleteCursor(oldCursor);
+	cursorFileMap[fileName] = loadedCursors.size() - 1;
+	cursorCommandMap[cmdName] = loadedCursors.size() - 1;
+
+	if (haveCmd) {
+		CMouseCursor& oldCursor = loadedCursors[cmdIt->second];
+
+		cursorFileMap.erase(cmdIt);
+		cursorCommandMap.erase(cmdIt);
+
+		if (currentCursor == &oldCursor)
+			SetCursor("none", true);
+	}
+
 	return true;
 }
 
-
-bool CMouseHandler::ReplaceMouseCursor(const string& oldName,
-                                       const string& newName,
-                                       CMouseCursor::HotSpot hotSpot)
-{
-	std::map<std::string, CMouseCursor*>::iterator fileIt;
-	fileIt = cursorFileMap.find(oldName);
-	if (fileIt == cursorFileMap.end()) {
+bool CMouseHandler::ReplaceMouseCursor(
+	const string& oldName,
+	const string& newName,
+	CMouseCursor::HotSpot hotSpot
+) {
+	const auto fileIt = cursorFileMap.find(oldName);
+	if (fileIt == cursorFileMap.end())
 		return false;
-	}
 
-	CMouseCursor* newCursor = CMouseCursor::New(newName, hotSpot);
-	if (newCursor == NULL) {
+	CMouseCursor newCursor = std::move(CMouseCursor::New(newName, hotSpot));
+
+	if (!newCursor.IsValid())
 		return false; // leave the old one
-	}
 
-	CMouseCursor* oldCursor = fileIt->second;
+	loadedCursors[fileIt->second] = std::move(newCursor);
 
-	std::map<std::string, CMouseCursor*>& cmdMap = cursorCommandMap;
-	std::map<std::string, CMouseCursor*>::iterator cmdIt;
-	for (cmdIt = cmdMap.begin(); cmdIt != cmdMap.end(); ++cmdIt) {
-		if (cmdIt->second == oldCursor) {
-			cmdIt->second = newCursor;
-		}
-	}
-
-	fileIt->second = newCursor;
-
-	if (currentCursor == oldCursor) {
+	// update current cursor if necessary
+	if (currentCursor == &loadedCursors[fileIt->second])
 		SetCursor(cursorText, true);
-	}
 
-	delete oldCursor;
 	return true;
-}
-
-
-void CMouseHandler::SafeDeleteCursor(CMouseCursor* cursor)
-{
-	std::map<std::string, CMouseCursor*>::iterator it;
-
-	for (it = cursorCommandMap.begin(); it != cursorCommandMap.end(); ++it) {
-		if (it->second == cursor) {
-			return; // being used, can't delete
-		}
-	}
-
-	for (it = cursorFileMap.begin(); it != cursorFileMap.end(); ) {
-		if (it->second == cursor) {
-			it = cursorFileMap.erase(it);
-		} else {
-			++it;
-		}
-	}
-
-	if (currentCursor == cursor) {
-		SetCursor("none", true);
-	}
-
-	delete cursor;
 }
 
 
