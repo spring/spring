@@ -152,15 +152,17 @@ void CMouseHandler::ReloadCursors()
 	const CMouseCursor::HotSpot mCenter  = CMouseCursor::Center;
 	const CMouseCursor::HotSpot mTopLeft = CMouseCursor::TopLeft;
 
-	loadedCursors.clear();
-	loadedCursors.reserve(32);
-
-	cursorCommandMap.clear();
-	cursorFileMap.clear();
 	currentCursor = nullptr;
 
+	loadedCursors.clear();
+	loadedCursors.reserve(32);
 	// null-cursor; always lives at index 0
 	loadedCursors.emplace_back();
+
+	cursorCommandMap.clear();
+	cursorCommandMap.reserve(32);
+	cursorFileMap.clear();
+	cursorFileMap.reserve(32);
 
 	cursorCommandMap["none"] = loadedCursors.size() - 1;
 	cursorFileMap["null"] = loadedCursors.size() - 1;
