@@ -109,8 +109,6 @@ CMouseHandler::CMouseHandler()
 
 	ReloadCursors();
 
-	currentCursor = cursorCommandMap[""];
-
 #ifndef __APPLE__
 	hardwareCursor = configHandler->GetBool("HardwareCursor");
 #endif
@@ -135,10 +133,20 @@ CMouseHandler::~CMouseHandler()
 	if (hwHide)
 		SDL_ShowCursor(SDL_ENABLE);
 
-	std::map<std::string, CMouseCursor*>::iterator ci;
 	for (auto& ci : cursorFileMap) {
 		delete ci.second;
 	}
+}
+
+CMouseHandler* CMouseHandler::GetOrReloadInstance()
+{
+	if (mouse == nullptr) {
+		mouse = new CMouseHandler();
+	} else {
+		mouse->ReloadCursors();
+	}
+
+	return mouse;
 }
 
 
@@ -152,6 +160,7 @@ void CMouseHandler::ReloadCursors()
 		delete ci.second;
 	}
 	cursorFileMap.clear();
+	currentCursor = nullptr;
 
 	CMouseCursor* nullCursor = CMouseCursor::GetNullCursor();
 	cursorCommandMap["none"] = nullCursor;
@@ -215,6 +224,8 @@ void CMouseHandler::ReloadCursors()
 			"Unable to load default cursor. Check that you have the required\n"
 			"content packages installed in your Spring \"base/\" directory.\n");
 	}
+
+	currentCursor = cursorCommandMap[""];
 }
 
 
@@ -815,7 +826,7 @@ void CMouseHandler::DrawCursor()
 {
 	assert(currentCursor);
 
-	if (guihandler)
+	if (guihandler != nullptr)
 		guihandler->DrawCentroidCursor();
 
 	if (locked) {
@@ -849,20 +860,20 @@ void CMouseHandler::DrawCursor()
 	// draw the 'software' cursor
 	if (cursorScale >= 0.0f) {
 		currentCursor->Draw(lastx, lasty, cursorScale);
+		return;
 	}
-	else {
-		// hovered minimap, show default cursor and draw `special` cursor scaled-down bottom right of the default one
-		CMouseCursor* nc = cursorFileMap["cursornormal"];
-		if (nc == NULL) {
-			currentCursor->Draw(lastx, lasty, -cursorScale);
-		}
-		else {
-			nc->Draw(lastx, lasty, 1.0f);
-			if (currentCursor != nc) {
-				currentCursor->Draw(lastx + nc->GetMaxSizeX(),
-				                    lasty + nc->GetMaxSizeY(), -cursorScale);
-			}
-		}
+
+	// hovered minimap, show default cursor and draw `special` cursor scaled-down bottom right of the default one
+	CMouseCursor* nc = cursorFileMap["cursornormal"];
+	if (nc == nullptr) {
+		currentCursor->Draw(lastx, lasty, -cursorScale);
+		return;
+	}
+
+	nc->Draw(lastx, lasty, 1.0f);
+
+	if (currentCursor != nc) {
+		currentCursor->Draw(lastx + nc->GetMaxSizeX(), lasty + nc->GetMaxSizeY(), -cursorScale);
 	}
 }
 

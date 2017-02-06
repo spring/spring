@@ -46,11 +46,7 @@ void CLuaMenuController::Reset()
 	LOG("[LuaMenuController::%s] using menu archive \"%s\"", __func__, menuArchive.c_str());
 	vfsHandler->AddArchiveWithDeps(menuArchive, false);
 
-	if (mouse == nullptr) {
-		mouse = new CMouseHandler();
-	} else {
-		mouse->ReloadCursors();
-	}
+	mouse = CMouseHandler::GetOrReloadInstance();
 
 	if (infoConsole == nullptr)
 		infoConsole = new CInfoConsole();

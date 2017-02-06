@@ -21,7 +21,9 @@ class CMouseHandler
 {
 public:
 	CMouseHandler();
-	virtual ~CMouseHandler();
+	~CMouseHandler();
+
+	static CMouseHandler* GetOrReloadInstance();
 
 	void ChangeCursor(const std::string& cmdName, const float& scale = 1.0f);
 	void ReloadCursors();

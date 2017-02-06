@@ -588,11 +588,7 @@ void CGame::LoadInterface()
 		ScopedOnceTimer timer("Game::LoadInterface (Camera&Mouse)");
 
 		camHandler = new CCameraHandler();
-		if (mouse == nullptr) {
-			mouse = new CMouseHandler();
-		} else {
-			mouse->ReloadCursors();
-		}
+		mouse = CMouseHandler::GetOrReloadInstance();
 	}
 
 	selectedUnitsHandler.Init(playerHandler->ActivePlayers());
