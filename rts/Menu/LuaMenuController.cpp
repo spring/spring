@@ -56,16 +56,19 @@ void CLuaMenuController::Reset()
 		infoConsole = new CInfoConsole();
 }
 
-void CLuaMenuController::Activate()
+bool CLuaMenuController::Activate()
 {
+	LOG("[LuaMenuController::%s] luaMenu=%p", __func__, luaMenu);
+
 	// LuaMenu might have failed to load, making the controller deadweight
 	if (luaMenu == nullptr)
-		return;
+		return false;
 
 	assert(Valid());
 	activeController = luaMenuController;
 	mouse->ShowMouse();
 	luaMenu->ActivateMenu();
+	return true;
 }
 
 void CLuaMenuController::ResizeEvent()

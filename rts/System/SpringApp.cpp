@@ -668,11 +668,13 @@ void SpringApp::LoadSpringMenu()
 	const std::string  vfsScript = "defaultstartscript.txt";
 	const std::string& cfgScript = configHandler->GetString("DefaultStartScript");
 
-	const std::string& startScript = (cfgScript.empty() && CFileHandler(vfsScript, SPRING_VFS_PWD_ALL).FileExists())? vfsScript: cfgScript;
+	const std::string& startScript = (cfgScript.empty() && CFileHandler::FileExists(vfsScript, SPRING_VFS_PWD_ALL))? vfsScript: cfgScript;
 
-	if (luaMenuController->Valid()) {
-		luaMenuController->Activate();
-	} else if (FLAGS_oldmenu || startScript.empty()) {
+	// bypass default menu if we have a valid LuaMenu handler
+	if (luaMenuController->Valid() && luaMenuController->Activate())
+		return;
+
+	if (FLAGS_oldmenu || startScript.empty()) {
 		// old menu
 	#ifdef HEADLESS
 		handleerror(nullptr,

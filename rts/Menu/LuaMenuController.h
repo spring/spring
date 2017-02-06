@@ -14,7 +14,7 @@ public:
 
 	// Reloads the archives but not LuaMenu
 	void Reset();
-	void Activate();
+	bool Activate();
 
 	int KeyReleased(int k) override;
 	int KeyPressed(int k, bool isRepeat) override;

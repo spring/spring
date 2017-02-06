@@ -109,7 +109,7 @@ int CSoundSource::GetCurrentPriority() const
 	if (curStream != nullptr)
 		return INT_MAX;
 
-	if (!curPlaying)
+	if (curPlaying == nullptr)
 		return INT_MIN;
 
 	return curPlaying->GetPriority();
@@ -123,7 +123,7 @@ bool CSoundSource::IsPlaying(const bool checkOpenAl) const
 	if (asyncPlay.buffer != nullptr)
 		return true;
 
-	if (!curPlaying)
+	if (curPlaying == nullptr)
 		return false;
 
 	// Calling OpenAL does a 100% chance for a L2 cache miss
