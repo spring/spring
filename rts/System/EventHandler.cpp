@@ -291,9 +291,9 @@ bool CEventHandler::AllowBuilderHoldFire(const CUnit* unit, int action)
 }
 
 
-bool CEventHandler::AllowStartPosition(int playerID, unsigned char readyState, const float3& clampedPos, const float3& rawPickPos)
+bool CEventHandler::AllowStartPosition(int playerID, int teamID, unsigned char readyState, const float3& clampedPos, const float3& rawPickPos)
 {
-	CONTROL_ITERATE_DEF_TRUE(AllowStartPosition, playerID, readyState, clampedPos, rawPickPos)
+	CONTROL_ITERATE_DEF_TRUE(AllowStartPosition, playerID, teamID, readyState, clampedPos, rawPickPos)
 }
 
 
