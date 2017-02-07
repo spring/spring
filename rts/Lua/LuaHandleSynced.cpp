@@ -407,7 +407,7 @@ bool CSyncedLuaHandle::Init(const string& code, const string& file)
 		!AddEntriesToTable(L, "Spring",      LuaSyncedCtrl::PushEntries)   ||
 		!AddEntriesToTable(L, "Spring",      LuaSyncedRead::PushEntries)   ||
 		!AddEntriesToTable(L, "Spring",      LuaUICommand::PushEntries)    ||
-	    !AddEntriesToTable(L, "Engine",      LuaConstEngine::PushEntries)  ||
+		!AddEntriesToTable(L, "Engine",      LuaConstEngine::PushEntries)  ||
 		!AddEntriesToTable(L, "Game",        LuaConstGame::PushEntries)    ||
 		!AddEntriesToTable(L, "CMD",         LuaConstCMD::PushEntries)     ||
 		!AddEntriesToTable(L, "CMDTYPE",     LuaConstCMDTYPE::PushEntries) ||
