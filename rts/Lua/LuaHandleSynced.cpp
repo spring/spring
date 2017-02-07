@@ -114,7 +114,7 @@ bool CUnsyncedLuaHandle::Init(const string& code, const string& file)
 	// load our libraries
 	{
 		#define KILL { KillLua(); return false; }
-		if (!LuaSyncedTable::PushEntries(L)) { KILL; }
+		if (!LuaSyncedTable::PushEntries(L)) KILL
 
 		if (!AddEntriesToTable(L, "VFS",                   LuaVFS::PushUnsynced       )) KILL
 		if (!AddEntriesToTable(L, "VFS",         LuaZipFileReader::PushUnsynced       )) KILL

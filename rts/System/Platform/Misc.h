@@ -81,9 +81,14 @@ std::string GetModulePath(const std::string& moduleName = "");
 
 std::string GetOS();
 
+
 bool Is64Bit();
 bool Is32BitEmulation();
 bool IsRunningInGDB();
+
+int NativeWordSize(); // compiled process code
+int SystemWordSize(); // host operating system
+
 
 /**
  * Executes a native binary, file and args have to be not escaped!

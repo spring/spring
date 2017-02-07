@@ -373,10 +373,13 @@ std::string GetOS()
 #endif
 }
 
-bool Is64Bit()
-{
-	return (sizeof(void*) == 8);
-}
+
+int NativeWordSize() { return (sizeof(void*)); }
+int SystemWordSize() { return ((Is32BitEmulation())? 8: NativeWordSize()); }
+
+
+bool Is64Bit() { return (NativeWordSize() == 8); }
+
 
 #ifdef WIN32
 typedef BOOL (WINAPI *LPFN_ISWOW64PROCESS) (HANDLE, PBOOL);
@@ -390,23 +393,18 @@ bool Is32BitEmulation()
 	BOOL bIsWow64 = FALSE;
 
 	fnIsWow64Process = (LPFN_ISWOW64PROCESS)GetProcAddress(
-		GetModuleHandle(TEXT("kernel32")),"IsWow64Process");
+		GetModuleHandle(TEXT("kernel32")), "IsWow64Process");
 
-	if (NULL != fnIsWow64Process)
-	{
-		if (!fnIsWow64Process(GetCurrentProcess(),&bIsWow64))
-		{
+	if (nullptr != fnIsWow64Process) {
+		if (!fnIsWow64Process(GetCurrentProcess(), &bIsWow64))
 			return false;
-		}
 	}
+
 	return bIsWow64;
 }
 #else
-// simply assume other OS don't need 32bit emulation
-bool Is32BitEmulation()
-{
-	return false;
-}
+// simply assume Spring is never run in emulation-mode on other OS'es
+bool Is32BitEmulation() { return false; }
 #endif
 
 bool IsRunningInGDB() {
@@ -428,6 +426,7 @@ bool IsRunningInGDB() {
 	#endif
 }
 
+
 std::string GetShortFileName(const std::string& file) {
 #ifdef WIN32
 	std::vector<TCHAR> shortPathC(file.size() + 1, 0);
@@ -442,6 +441,7 @@ std::string GetShortFileName(const std::string& file) {
 
 	return file;
 }
+
 
 std::string ExecuteProcess(const std::string& file, std::vector<std::string> args, bool asSubprocess)
 {
