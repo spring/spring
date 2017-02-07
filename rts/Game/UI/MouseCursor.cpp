@@ -24,15 +24,19 @@ using std::string;
 //////////////////////////////////////////////////////////////////////
 
 CMouseCursor::CMouseCursor(const string& name, HotSpot hs)
- : animated(false)
- , hwValid(false)
+ : hwCursor(nullptr)
+
  , animTime(0.0f)
  , animPeriod(0.0f)
  , currentFrame(0)
+
  , xmaxsize(0)
  , ymaxsize(0)
+
  , xofs(0)
  , yofs(0)
+
+ , hwValid(false)
 {
 	hwCursor = GetNewHwCursor();
 	hwCursor->hotSpot = hs;
@@ -44,11 +48,9 @@ CMouseCursor::CMouseCursor(const string& name, HotSpot hs)
 	if (frames.empty())
 		return;
 
-	animated = !frames.empty();
-	hwValid  = hwCursor->IsValid();
+	hwValid = hwCursor->IsValid();
 
-	for (int f = 0; f < (int)frames.size(); f++) {
-		FrameData& frame = frames[f];
+	for (FrameData& frame: frames) {
 		frame.startTime = animPeriod;
 		animPeriod += frame.length;
 		frame.endTime = animPeriod;
@@ -79,34 +81,35 @@ bool CMouseCursor::BuildFromSpecFile(const string& name)
 {
 	const string specFile = "anims/" + name + ".txt";
 	CFileHandler specFH(specFile);
-	if (!specFH.FileExists()) {
+	if (!specFH.FileExists())
 		return false;
-	}
 
 	CSimpleParser parser(specFH);
 	int lastFrame = 123456789;
 	std::map<std::string, int> imageIndexMap;
 
 	while (true) {
-		const string line = parser.GetCleanLine();
-		if (line.empty()) {
+		const string& line = parser.GetCleanLine();
+		if (line.empty())
 			break;
-		}
-		const std::vector<std::string> &words = parser.Tokenize(line, 2);
-		const std::string command = StringToLower(words[0]);
+
+		const std::vector<std::string>& words = parser.Tokenize(line, 2);
+		const std::string& command = StringToLower(words[0]);
 
 		if ((command == "frame") && (words.size() >= 2)) {
 			const std::string imageName = words[1];
 			float length = minFrameLength;
+
 			if (words.size() >= 3)
 				length = std::max(length, (float)atof(words[2].c_str()));
-			std::map<std::string, int>::iterator iit = imageIndexMap.find(imageName);
+
+			const auto iit = imageIndexMap.find(imageName);
+
 			if (iit != imageIndexMap.end()) {
 				FrameData frame(images[iit->second], length);
 				frames.push_back(frame);
-				hwCursor->PushFrame(iit->second,length);
-			}
-			else {
+				hwCursor->PushFrame(iit->second, length);
+			} else {
 				ImageData image;
 				if (LoadCursorImage(imageName, image)) {
 					hwCursor->SetDelay(length);
@@ -127,16 +130,14 @@ bool CMouseCursor::BuildFromSpecFile(const string& name)
 				hwCursor->hotSpot = Center;
 			}
 			else {
-				LOG_L(L_ERROR, "%s: unknown hotspot (%s)",
-						specFile.c_str(), words[1].c_str());
+				LOG_L(L_ERROR, "%s: unknown hotspot (%s)", specFile.c_str(), words[1].c_str());
 			}
 		}
 		else if ((command == "lastframe") && (!words.empty())) {
 			lastFrame = atoi(words[1].c_str());
 		}
 		else {
-			LOG_L(L_ERROR, "%s: unknown command (%s)",
-					specFile.c_str(), command.c_str());
+			LOG_L(L_ERROR, "%s: unknown command (%s)", specFile.c_str(), command.c_str());
 		}
 	}
 
@@ -154,16 +155,12 @@ bool CMouseCursor::BuildFromFileNames(const string& name, int lastFrame)
 	const char* ext = "";
 	const char* exts[] = { "png", "tga", "bmp" };
 	const int extCount = sizeof(exts) / sizeof(exts[0]);
+
 	for (int e = 0; e < extCount; e++) {
 		ext = exts[e];
-		std::ostringstream namebuf;
-		namebuf << "anims/" << name << "_0." << ext;
-		CFileHandler* f = new CFileHandler(namebuf.str());
-		if (f->FileExists()) {
-			delete f;
+
+		if (CFileHandler::FileExists("anims/" + name + "_0." + std::string(ext), SPRING_VFS_RAW_FIRST))
 			break;
-		}
-		delete f;
 	}
 
 	while (int(frames.size()) < lastFrame) {
@@ -178,7 +175,6 @@ bool CMouseCursor::BuildFromFileNames(const string& name, int lastFrame)
 	}
 
 	hwCursor->Finish();
-
 	return true;
 }
 

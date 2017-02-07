@@ -23,13 +23,13 @@ public:
 
 	CMouseCursor& operator = (const CMouseCursor& mc) = delete;
 	CMouseCursor& operator = (CMouseCursor&& mc) {
-		hotSpot = mc.hotSpot;
-
 		images = std::move(mc.images);
 		frames = std::move(mc.frames);
 
 		hwCursor = mc.hwCursor;
 		mc.hwCursor = nullptr;
+
+		hotSpot = mc.hotSpot;
 
 		animTime = mc.animTime;
 		animPeriod = mc.animPeriod;
@@ -40,6 +40,8 @@ public:
 
 		xofs = mc.xofs;
 		yofs = mc.yofs;
+
+		hwValid = mc.hwValid;
 		return *this;
 	}
 
@@ -52,11 +54,8 @@ public:
 	int GetMaxSizeX() const { return xmaxsize; }
 	int GetMaxSizeY() const { return ymaxsize; }
 
+	bool IsHWValid() const { return hwValid; }
 	bool IsValid() const { return (!frames.empty()); }
-
-public:
-	bool animated;
-	bool hwValid; //if hardware cursor is valid
 
 protected:
 	struct ImageData {
@@ -82,12 +81,12 @@ protected:
 	bool BuildFromFileNames(const std::string& name, int lastFrame);
 
 protected:
-	HotSpot hotSpot;
-
 	std::vector<ImageData> images;
 	std::vector<FrameData> frames;
 
 	IHwCursor* hwCursor; // hardware cursor
+
+	HotSpot hotSpot;
 
 	float animTime;
 	float animPeriod;
@@ -98,6 +97,8 @@ protected:
 
 	int xofs; // describes where the center of the cursor is,
 	int yofs; // based on xmaxsize, ymaxsize, and the hotspot
+
+	bool hwValid; // if hardware cursor is valid
 };
 
 

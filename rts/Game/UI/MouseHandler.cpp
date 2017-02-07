@@ -706,13 +706,13 @@ void CMouseHandler::SetCursor(const std::string& cmdName, const bool& forceRebin
 	}
 
 	if (hardwareCursor && !hide) {
-		if (currentCursor->hwValid) {
+		if (currentCursor->IsHWValid()) {
 			hwHide = false;
 			currentCursor->BindHwCursor(); // calls SDL_ShowCursor(SDL_ENABLE);
 		} else {
 			hwHide = true;
 			SDL_ShowCursor(SDL_DISABLE);
-			mouseInput->SetWMMouseCursor(NULL);
+			mouseInput->SetWMMouseCursor(nullptr);
 		}
 	}
 }
@@ -847,7 +847,7 @@ void CMouseHandler::DrawCursor()
 	if (hide)
 		return;
 
-	if (hardwareCursor && currentCursor->hwValid)
+	if (hardwareCursor && currentCursor->IsHWValid())
 		return;
 
 	// draw the 'software' cursor
