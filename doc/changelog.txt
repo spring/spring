@@ -26,6 +26,7 @@ Lua:
    AllowDraw() if it returns false, the next draw call is skipped (only active when a game isn't running)
  - Add Spring.{Set,Get}VideoCapturingMode() - this doesn't actually record the game in any way,
    it just regulates the framerate and interpolations.
+ - AllowStartPosition now accepts 9th parameter teamID (useful for AIs who always report playerID 255)
 
 UI:
  - Add FPSClampPos config for whether the engine should verify the camera doesn't hit ground/go too far
