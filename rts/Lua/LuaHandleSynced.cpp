@@ -112,30 +112,31 @@ bool CUnsyncedLuaHandle::Init(const string& code, const string& file)
 	LuaPushNamedNumber(L, "COBSCALE",  COBSCALE);
 
 	// load our libraries
-	if (!LuaSyncedTable::PushEntries(L)                                    ||
-	    !AddEntriesToTable(L, "VFS",         LuaVFS::PushUnsynced)         ||
-	    !AddEntriesToTable(L, "VFS",         LuaZipFileReader::PushUnsynced) ||
-	    !AddEntriesToTable(L, "VFS",         LuaZipFileWriter::PushUnsynced) ||
-	    !AddEntriesToTable(L, "VFS",         LuaArchive::PushEntries)      ||
-	    !AddEntriesToTable(L, "UnitDefs",    LuaUnitDefs::PushEntries)     ||
-	    !AddEntriesToTable(L, "WeaponDefs",  LuaWeaponDefs::PushEntries)   ||
-	    !AddEntriesToTable(L, "FeatureDefs", LuaFeatureDefs::PushEntries)  ||
-	    !AddEntriesToTable(L, "Script",      LuaInterCall::PushEntriesUnsynced) ||
-	    !AddEntriesToTable(L, "Script",      LuaScream::PushEntries)       ||
-	    !AddEntriesToTable(L, "Spring",      LuaSyncedRead::PushEntries)   ||
-	    !AddEntriesToTable(L, "Spring",      LuaUnsyncedCtrl::PushEntries) ||
-	    !AddEntriesToTable(L, "Spring",      LuaUnsyncedRead::PushEntries) ||
-	    !AddEntriesToTable(L, "Spring",      LuaUICommand::PushEntries)    ||
-	    !AddEntriesToTable(L, "gl",          LuaOpenGL::PushEntries)       ||
-	    !AddEntriesToTable(L, "GL",          LuaConstGL::PushEntries)      ||
-	    !AddEntriesToTable(L, "Engine",      LuaConstEngine::PushEntries)  ||
-	    !AddEntriesToTable(L, "Game",        LuaConstGame::PushEntries)    ||
-	    !AddEntriesToTable(L, "CMD",         LuaConstCMD::PushEntries)     ||
-	    !AddEntriesToTable(L, "CMDTYPE",     LuaConstCMDTYPE::PushEntries) ||
-	    !AddEntriesToTable(L, "LOG",         LuaUtils::PushLogEntries)
-	) {
-		KillLua();
-		return false;
+	{
+		#define KILL { KillLua(); return false; }
+		if (!LuaSyncedTable::PushEntries(L)) { KILL; }
+
+		if (!AddEntriesToTable(L, "VFS",                   LuaVFS::PushUnsynced       )) KILL
+		if (!AddEntriesToTable(L, "VFS",         LuaZipFileReader::PushUnsynced       )) KILL
+		if (!AddEntriesToTable(L, "VFS",         LuaZipFileWriter::PushUnsynced       )) KILL
+		if (!AddEntriesToTable(L, "VFS",               LuaArchive::PushEntries        )) KILL
+		if (!AddEntriesToTable(L, "UnitDefs",         LuaUnitDefs::PushEntries        )) KILL
+		if (!AddEntriesToTable(L, "WeaponDefs",     LuaWeaponDefs::PushEntries        )) KILL
+		if (!AddEntriesToTable(L, "FeatureDefs",   LuaFeatureDefs::PushEntries        )) KILL
+		if (!AddEntriesToTable(L, "Script",          LuaInterCall::PushEntriesUnsynced)) KILL
+		if (!AddEntriesToTable(L, "Script",             LuaScream::PushEntries        )) KILL
+		if (!AddEntriesToTable(L, "Spring",         LuaSyncedRead::PushEntries        )) KILL
+		if (!AddEntriesToTable(L, "Spring",       LuaUnsyncedCtrl::PushEntries        )) KILL
+		if (!AddEntriesToTable(L, "Spring",       LuaUnsyncedRead::PushEntries        )) KILL
+		if (!AddEntriesToTable(L, "Spring",          LuaUICommand::PushEntries        )) KILL
+		if (!AddEntriesToTable(L, "gl",                 LuaOpenGL::PushEntries        )) KILL
+		if (!AddEntriesToTable(L, "GL",                LuaConstGL::PushEntries        )) KILL
+		if (!AddEntriesToTable(L, "Engine",        LuaConstEngine::PushEntries        )) KILL
+		if (!AddEntriesToTable(L, "Game",            LuaConstGame::PushEntries        )) KILL
+		if (!AddEntriesToTable(L, "CMD",              LuaConstCMD::PushEntries        )) KILL
+		if (!AddEntriesToTable(L, "CMDTYPE",      LuaConstCMDTYPE::PushEntries        )) KILL
+		if (!AddEntriesToTable(L, "LOG",                 LuaUtils::PushLogEntries     )) KILL
+		#undef KILL
 	}
 
 	lua_settop(L, 0);
@@ -395,28 +396,27 @@ bool CSyncedLuaHandle::Init(const string& code, const string& file)
 	LuaPushNamedNumber(L, "COBSCALE",      COBSCALE);
 
 	// load our libraries  (LuaSyncedCtrl overrides some LuaUnsyncedCtrl entries)
-	if (
-		!AddEntriesToTable(L, "VFS",         LuaVFS::PushSynced)           ||
-		!AddEntriesToTable(L, "VFS",         LuaZipFileReader::PushSynced) ||
-		!AddEntriesToTable(L, "VFS",         LuaZipFileWriter::PushSynced) ||
-		!AddEntriesToTable(L, "UnitDefs",    LuaUnitDefs::PushEntries)     ||
-		!AddEntriesToTable(L, "WeaponDefs",  LuaWeaponDefs::PushEntries)   ||
-		!AddEntriesToTable(L, "FeatureDefs", LuaFeatureDefs::PushEntries)  ||
-		!AddEntriesToTable(L, "Script",      LuaInterCall::PushEntriesSynced)   ||
-		!AddEntriesToTable(L, "Spring",      LuaUnsyncedCtrl::PushEntries) ||
-		!AddEntriesToTable(L, "Spring",      LuaSyncedCtrl::PushEntries)   ||
-		!AddEntriesToTable(L, "Spring",      LuaSyncedRead::PushEntries)   ||
-		!AddEntriesToTable(L, "Spring",      LuaUICommand::PushEntries)    ||
-	    !AddEntriesToTable(L, "Engine",      LuaConstEngine::PushEntries)  ||
-		!AddEntriesToTable(L, "Game",        LuaConstGame::PushEntries)    ||
-		!AddEntriesToTable(L, "CMD",         LuaConstCMD::PushEntries)     ||
-		!AddEntriesToTable(L, "CMDTYPE",     LuaConstCMDTYPE::PushEntries) ||
-		!AddEntriesToTable(L, "COB",         LuaConstCOB::PushEntries)     ||
-		!AddEntriesToTable(L, "SFX",         LuaConstSFX::PushEntries)     ||
-		!AddEntriesToTable(L, "LOG",         LuaUtils::PushLogEntries)
-	) {
-		KillLua();
-		return false;
+	{
+		#define KILL { KillLua(); return false; }
+		if (!AddEntriesToTable(L, "VFS",                   LuaVFS::PushSynced       )) KILL
+		if (!AddEntriesToTable(L, "VFS",         LuaZipFileReader::PushSynced       )) KILL
+		if (!AddEntriesToTable(L, "VFS",         LuaZipFileWriter::PushSynced       )) KILL
+		if (!AddEntriesToTable(L, "UnitDefs",         LuaUnitDefs::PushEntries      )) KILL
+		if (!AddEntriesToTable(L, "WeaponDefs",     LuaWeaponDefs::PushEntries      )) KILL
+		if (!AddEntriesToTable(L, "FeatureDefs",   LuaFeatureDefs::PushEntries      )) KILL
+		if (!AddEntriesToTable(L, "Script",          LuaInterCall::PushEntriesSynced)) KILL
+		if (!AddEntriesToTable(L, "Spring",       LuaUnsyncedCtrl::PushEntries      )) KILL
+		if (!AddEntriesToTable(L, "Spring",         LuaSyncedCtrl::PushEntries      )) KILL
+		if (!AddEntriesToTable(L, "Spring",         LuaSyncedRead::PushEntries      )) KILL
+		if (!AddEntriesToTable(L, "Spring",          LuaUICommand::PushEntries      )) KILL
+		if (!AddEntriesToTable(L, "Engine",        LuaConstEngine::PushEntries      )) KILL
+		if (!AddEntriesToTable(L, "Game",            LuaConstGame::PushEntries      )) KILL
+		if (!AddEntriesToTable(L, "CMD",              LuaConstCMD::PushEntries      )) KILL
+		if (!AddEntriesToTable(L, "CMDTYPE",      LuaConstCMDTYPE::PushEntries      )) KILL
+		if (!AddEntriesToTable(L, "COB",              LuaConstCOB::PushEntries      )) KILL
+		if (!AddEntriesToTable(L, "SFX",              LuaConstSFX::PushEntries      )) KILL
+		if (!AddEntriesToTable(L, "LOG",                 LuaUtils::PushLogEntries   )) KILL
+		#undef KILL
 	}
 
 	// add code from the sub-class
