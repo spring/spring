@@ -4,27 +4,35 @@
 #define _GAME_JOB_DISPATCHER_H
 
 #include <functional>
-#include <map>
+#include <queue>
 
 #include "System/Misc/SpringTime.h"
 
 class JobDispatcher {
 public:
 	struct Job {
-		Job()
-		: freq(0)
-		//, inSim(false)
-		//, inDraw(false)
+	public:
+		Job(const spring_time t = spring_notime)
+		: time(t.toMilliSecsf())
+		, freq(0.0f)
+
 		, startDirect(true)
 		, catchUp(false)
+
 		, name("")
 		{}
 
+		void UpdateTime(float msecs) { time = (catchUp? time: msecs) + (1000.0f / freq); }
+
+		bool operator < (const Job& j) const { return (time < j.time); }
+		bool operator > (const Job& j) const { return (time > j.time); }
+
+	public:
 		std::function<bool()> f; // allows us to use lambdas
 
+		float time;
 		float freq;
-		//bool inSim;
-		//bool inDraw;
+
 		bool startDirect;
 		bool catchUp;
 
@@ -32,42 +40,29 @@ public:
 	};
 
 public:
-	JobDispatcher() { jobs.clear(); }
-	~JobDispatcher() { jobs.clear(); }
-
-	void AddTimedJob(Job j, const spring_time t) {
-		spring_time jobTime = t;
-
-		// never overwrite one job by another (!)
-		while (jobs.find(jobTime) != jobs.end())
-			jobTime += spring_time(1);
-
-		jobs[jobTime] = j;
-	}
-
+	void AddTimedJob(const Job& j) { jobs.push(j); }
 	void Update() {
 		const spring_time now = spring_gettime();
 
-		auto it = jobs.begin();
+		while (!jobs.empty()) {
+			Job j = jobs.top();
 
-		while (it != jobs.end()) {
-			if (it->first > now) {
-				++it; continue;
-			}
+			if (j.time > now.toMilliSecsf())
+				break;
 
-			Job* j = &it->second;
+			jobs.pop();
 
-			if (j->f()) {
-				AddTimedJob(*j, (j->catchUp ? it->first : spring_gettime()) + spring_time(1000.0f / j->freq));
-			}
+			if (!j.f())
+				continue;
 
-			jobs.erase(it); //FIXME remove by range? (faster!)
-			it = jobs.begin();
+			j.UpdateTime(now.toMilliSecsf());
+			AddTimedJob(j);
 		}
 	}
 
 private:
-	std::map<spring_time, Job> jobs;
+	// job with smallest next-to-execute time goes at the top
+	std::priority_queue<Job, std::vector<Job>, std::greater<Job>> jobs;
 };
 
 #endif

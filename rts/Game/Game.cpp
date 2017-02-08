@@ -349,11 +349,12 @@ void CGame::AddTimedJobs()
 			CInputReceiver::CollectGarbage();
 			return true;
 		};
+
 		j.freq = GAME_SPEED;
+		j.time = j.startDirect ? 0.0f : (1000.0f / j.freq);
 		j.name = "EventHandler::CollectGarbage";
 
-		// static initialization is done BEFORE Spring's time-epoch is set, so use notime
-		jobDispatcher->AddTimedJob(j, spring_notime + spring_time(j.startDirect ? 0 : (1000.0f / j.freq)));
+		jobDispatcher->AddTimedJob(j);
 	}
 
 	{
@@ -363,10 +364,12 @@ void CGame::AddTimedJobs()
 			profiler.Update();
 			return true;
 		};
-		j.freq = 1;
+
+		j.freq = 1.0f;
+		j.time = j.startDirect ? 0.0f : (1000.0f / j.freq);
 		j.name = "Profiler::Update";
 
-		jobDispatcher->AddTimedJob(j, spring_notime + spring_time(j.startDirect ? 0 : (1000.0f / j.freq)));
+		jobDispatcher->AddTimedJob(j);
 	}
 }
 
