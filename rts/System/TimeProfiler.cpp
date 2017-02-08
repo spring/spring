@@ -341,7 +341,7 @@ void CTimeProfiler::RefreshProfilesRaw()
 }
 
 
-float CTimeProfiler::GetPercent(const char* name)
+float CTimeProfiler::GetPercent(const char* name) const
 {
 	// if disabled, only special timers can pass AddTime
 	// all of those are non-threaded, so no need to lock

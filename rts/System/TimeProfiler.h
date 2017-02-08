@@ -99,8 +99,14 @@ public:
 
 	static CTimeProfiler& GetInstance();
 
-	float GetPercent(const char* name);
-	float GetPercentRaw(const char* name) { return profile[name].percent; }
+	float GetPercent(const char* name) const;
+	float GetPercentRaw(const char* name) const {
+		// do not default-create keys, breaks resorting
+		const auto it = profile.find(name);
+		if (it != profile.end())
+			return ((it->second).percent);
+		return 0.0f;
+	}
 
 	void ResetState();
 
