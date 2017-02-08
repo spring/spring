@@ -215,8 +215,9 @@ void CollisionVolume::RescaleAxes(const float3& scales) {
 	fullAxisScales *= scales;
 	halfAxisScales *= scales;
 
+	// h*h --> h*h*s*s; 1/h --> 1/h/s = 1/(h*s)
 	halfAxisScalesSqr *= (scales * scales);
-	halfAxisScalesInv = OnesVector / scales;
+	halfAxisScalesInv /= scales;
 }
 
 void CollisionVolume::FixTypeAndScale(float3& scales) {

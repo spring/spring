@@ -399,8 +399,8 @@ bool CCollisionHandler::IntersectEllipsoid(const CollisionVolume* v, const float
 {
 	// transform the volume-space points into (unit) sphere-space (requires fewer
 	// float-ops than solving the surface equation for arbitrary ellipsoid volumes)
-	const float3 pii0 = float3(pi0.x * v->GetHIScales().x, pi0.y * v->GetHIScales().y, pi0.z * v->GetHIScales().z);
-	const float3 pii1 = float3(pi1.x * v->GetHIScales().x, pi1.y * v->GetHIScales().y, pi1.z * v->GetHIScales().z);
+	const float3 pii0 = pi0 * v->GetHIScales();
+	const float3 pii1 = pi1 * v->GetHIScales();
 	const float rSq = 1.0f;
 
 	if (pii0.dot(pii0) <= rSq) {
@@ -417,11 +417,14 @@ bool CCollisionHandler::IntersectEllipsoid(const CollisionVolume* v, const float
 	// get the ray direction in unit-sphere space
 	const float3 dir = (pii1 - pii0).SafeNormalize();
 
-	// solves [ x^2 + y^2 + z^2 == r^2 ] for t
-	// (<A> represents dir.dot(dir), equal to 1
-	// since ray direction already normalized)
+	// solves [ x^2 + y^2 + z^2 == r^2 ] for t; closest
+	// point on ray is p(t) = p0 + (p1-p0)*t = p0 + d*t
+	// (A represents dir.dot(dir), which equals 1 since
+	// the ray direction is already normalized)
+	// const float A = (pii1 - pii0).dot(pii1 - pii0);
+	// const float B = 2.0f * pii0.dot(pii1 - pii0);
 	const float A = 1.0f;
-	const float B = 2.0f * (pii0).dot(dir);
+	const float B = 2.0f * pii0.dot(dir);
 	const float C = pii0.dot(pii0) - rSq;
 	const float D = (B * B) - (4.0f * A * C);
 
@@ -524,7 +527,7 @@ bool CCollisionHandler::IntersectCylinder(const CollisionVolume* v, const float3
 	float3 n1 = ZeroVector;
 
 	// (unit) cylinder-space to volume-space transformation
-	float3 inv(1.0f, 1.0f, 1.0f);
+	float3 inv = OnesVector;
 
 	// unit-cylinder surface equation params
 	float a = 0.0f;
