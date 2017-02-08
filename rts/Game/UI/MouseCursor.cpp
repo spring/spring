@@ -264,14 +264,14 @@ void CMouseCursor::Draw(int x, int y, float scale) const
 
 	glViewport(xp, globalRendering->viewSizeY - yp, xs, ys);
 
-	static float vertices[] = {0.f, 0.f, 0.f,
-				   0.f, 1.f, 0.f,
-				   1.f, 1.f, 0.f,
-				   1.f, 0.f, 0.f};
-	static float texcoords[] = {0.f, 0.f,
-				    0.f, 1.f,
-				    1.f, 1.f,
-				    1.f, 0.f};
+	static const float vertices[] = {0.f, 0.f, 0.f,
+	                                 0.f, 1.f, 0.f,
+	                                 1.f, 1.f, 0.f,
+	                                 1.f, 0.f, 0.f};
+	static const float texcoords[] = {0.f, 0.f,
+	                                  0.f, 1.f,
+	                                  1.f, 1.f,
+	                                  1.f, 0.f};
 
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
