@@ -16,7 +16,7 @@ public:
 public:
 	static CMouseCursor New(const std::string& name, HotSpot hs) { return (CMouseCursor(name, hs)); }
 
-	CMouseCursor() { hwCursor = nullptr; }
+	CMouseCursor(); // null-cursor
 	CMouseCursor(const CMouseCursor& mc) = delete;
 	CMouseCursor(CMouseCursor&& mc) { *this = std::move(mc); }
 	~CMouseCursor();

@@ -23,7 +23,8 @@ using std::string;
 // CMouseCursor Class
 //////////////////////////////////////////////////////////////////////
 
-CMouseCursor::CMouseCursor(const string& name, HotSpot hs)
+
+CMouseCursor::CMouseCursor()
  : hwCursor(nullptr)
 
  , animTime(0.0f)
@@ -37,7 +38,13 @@ CMouseCursor::CMouseCursor(const string& name, HotSpot hs)
  , yofs(0)
 
  , hwValid(false)
+{}
+
+CMouseCursor::CMouseCursor(const string& name, HotSpot hs)
 {
+	// default-initialize
+	*this = std::move(CMouseCursor());
+
 	hwCursor = GetNewHwCursor();
 	hwCursor->hotSpot = hs;
 	hotSpot = hs;
@@ -79,6 +86,8 @@ CMouseCursor::~CMouseCursor()
 
 bool CMouseCursor::BuildFromSpecFile(const string& name)
 {
+	assert(hwCursor != nullptr);
+
 	const string specFile = "anims/" + name + ".txt";
 	CFileHandler specFH(specFile);
 	if (!specFH.FileExists())
@@ -164,10 +173,8 @@ bool CMouseCursor::BuildFromFileNames(const string& name, int lastFrame)
 	}
 
 	while (int(frames.size()) < lastFrame) {
-		std::ostringstream namebuf;
-		namebuf << "anims/" << name << "_" << frames.size() << "." << ext;
 		ImageData image;
-		if (!LoadCursorImage(namebuf.str(), image))
+		if (!LoadCursorImage("anims/" + name + "_" + IntToString(frames.size()) + "." + std::string(ext), image))
 			break;
 		images.push_back(image);
 		FrameData frame(image, defFrameLength);
@@ -352,6 +359,7 @@ void CMouseCursor::BindTexture() const
 
 void CMouseCursor::BindHwCursor() const
 {
+	assert(hwCursor != nullptr);
 	hwCursor->Bind();
 }
 

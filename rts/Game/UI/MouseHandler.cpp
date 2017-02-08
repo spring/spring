@@ -914,6 +914,7 @@ bool CMouseHandler::AssignMouseCursor(
 		cursorFileMap.erase(fileIt);
 		cursorCommandMap.erase(cmdIt);
 
+		// switch to the null-cursor
 		if (currentCursor == &oldCursor)
 			SetCursor("none", true);
 	}
