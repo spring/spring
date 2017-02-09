@@ -23,6 +23,7 @@
 #include "System/Platform/Threading.h"
 #include "System/type2.h"
 
+#define SDL_BPP(fmt) SDL_BITSPERPIXEL((fmt))
 
 CONFIG(bool, DisableCrappyGPUWarning).defaultValue(false).description("Disables the warning an user will receive if (s)he attempts to run Spring on an outdated and underpowered video card.");
 CONFIG(bool, DebugGL).defaultValue(false).description("Enables _driver_ debug feedback. (see GL_ARB_debug_output)");
@@ -60,25 +61,32 @@ void PrintAvailableResolutions()
 			continue;
 		}
 
-		SDL_Rect rect;
-		SDL_GetDisplayBounds(k, &rect);
+		SDL_DisplayMode pm = {0, 0, 0, 0, nullptr};
+		SDL_Rect db;
+		SDL_GetDisplayBounds(k, &db);
 
 		for (size_t i = 0; i < modes.size(); ++i) {
 			SDL_GetDisplayMode(k, i, &modes[i]);
 		}
 
-		LOG("\tdisplay: %d, bounds: {x=%d, y=%d, w=%d, h=%d}, FS modes:", k + 1, rect.x, rect.y, rect.w, rect.h);
+		LOG("\tdisplay: %d, bounds: {x=%d, y=%d, w=%d, h=%d}, FS modes:", k + 1, db.x, db.y, db.w, db.h);
 
 		for (size_t i = 0; i < modes.size(); ++i) {
-			// skip legacy (3:2, 4:3, 5:4, ...) and weird (10:6, ...) ratios
-			const float r0 = (modes[i].w *  9.0f) / modes[i].h;
-			const float r1 = (modes[i].w * 10.0f) / modes[i].h;
-			const float r2 = (modes[i].w * 16.0f) / modes[i].h;
+			const SDL_DisplayMode& cm = modes[i];
 
+			const float r0 = (cm.w *  9.0f) / cm.h;
+			const float r1 = (cm.w * 10.0f) / cm.h;
+			const float r2 = (cm.w * 16.0f) / cm.h;
+
+			// skip legacy (3:2, 4:3, 5:4, ...) and weird (10:6, ...) ratios
 			if (r0 != 16.0f && r1 != 16.0f && r2 != 25.0f)
 				continue;
+			// show only the largest refresh-rate and bit-depth per resolution
+			if (cm.w == pm.w && cm.h == pm.h && (SDL_BPP(cm.format) < SDL_BPP(pm.format) || cm.refresh_rate < pm.refresh_rate))
+				continue;
 
-			LOG("\t\t[%2i] %ix%ix%ibpp@%iHz", int(i + 1), modes[i].w, modes[i].h, SDL_BITSPERPIXEL(modes[i].format), modes[i].refresh_rate);
+			LOG("\t\t[%2i] %ix%ix%ibpp@%iHz", int(i + 1), cm.w, cm.h, SDL_BPP(cm.format), cm.refresh_rate);
+			pm = cm;
 		}
 	}
 }
@@ -568,9 +576,8 @@ bool ProgramStringIsNative(GLenum target, const char* filename)
 
 	const GLuint tempProg = LoadProgram(target, filename, (target == GL_VERTEX_PROGRAM_ARB? "vertex": "fragment"));
 
-	if (tempProg == 0) {
+	if (tempProg == 0)
 		return false;
-	}
 
 	glSafeDeleteProgram(tempProg);
 	return true;
@@ -629,21 +636,20 @@ static bool CheckParseErrors(GLenum target, const char* filename, const char* pr
 		glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_NATIVE_ALU_INSTRUCTIONS_ARB,     &nativeAluInstrs);
 		glGetProgramivARB(GL_FRAGMENT_PROGRAM_ARB, GL_MAX_PROGRAM_NATIVE_ALU_INSTRUCTIONS_ARB, &maxNativeAluInstrs);
 
-		if (aluInstrs > maxAluInstrs) {
+		if (aluInstrs > maxAluInstrs)
 			LOG_L(L_ERROR, "[%s] too many ALU instructions in %s (%d, max. %d)\n", __FUNCTION__, filename, aluInstrs, maxAluInstrs);
-		}
-		if (texInstrs > maxTexInstrs) {
+
+		if (texInstrs > maxTexInstrs)
 			LOG_L(L_ERROR, "[%s] too many texture instructions in %s (%d, max. %d)\n", __FUNCTION__, filename, texInstrs, maxTexInstrs);
-		}
-		if (texIndirs > maxTexIndirs) {
+
+		if (texIndirs > maxTexIndirs)
 			LOG_L(L_ERROR, "[%s] too many texture indirections in %s (%d, max. %d)\n", __FUNCTION__, filename, texIndirs, maxTexIndirs);
-		}
-		if (nativeTexIndirs > maxNativeTexIndirs) {
+
+		if (nativeTexIndirs > maxNativeTexIndirs)
 			LOG_L(L_ERROR, "[%s] too many native texture indirections in %s (%d, max. %d)\n", __FUNCTION__, filename, nativeTexIndirs, maxNativeTexIndirs);
-		}
-		if (nativeAluInstrs > maxNativeAluInstrs) {
+
+		if (nativeAluInstrs > maxNativeAluInstrs)
 			LOG_L(L_ERROR, "[%s] too many native ALU instructions in %s (%d, max. %d)\n", __FUNCTION__, filename, nativeAluInstrs, maxNativeAluInstrs);
-		}
 
 		return true;
 	}
@@ -656,12 +662,10 @@ static unsigned int LoadProgram(GLenum target, const char* filename, const char*
 {
 	GLuint ret = 0;
 
-	if (!GLEW_ARB_vertex_program) {
+	if (!GLEW_ARB_vertex_program)
 		return ret;
-	}
-	if (target == GL_FRAGMENT_PROGRAM_ARB && !GLEW_ARB_fragment_program) {
+	if (target == GL_FRAGMENT_PROGRAM_ARB && !GLEW_ARB_fragment_program)
 		return ret;
-	}
 
 	CFileHandler file(std::string("shaders/") + filename);
 	if (!file.FileExists ()) {
@@ -670,20 +674,18 @@ static unsigned int LoadProgram(GLenum target, const char* filename, const char*
 		throw content_error(c);
 	}
 
-	int fSize = file.FileSize();
-	char* fbuf = new char[fSize + 1];
-	file.Read(fbuf, fSize);
-	fbuf[fSize] = '\0';
+	std::vector<char> fbuf(file.FileSize() + 1);
+
+	file.Read(fbuf.data(), fbuf.size() - 1);
+	fbuf.back() = '\0';
 
 	glGenProgramsARB(1, &ret);
 	glBindProgramARB(target, ret);
-	glProgramStringARB(target, GL_PROGRAM_FORMAT_ASCII_ARB, fSize, fbuf);
+	glProgramStringARB(target, GL_PROGRAM_FORMAT_ASCII_ARB, fbuf.size() - 1, fbuf.data());
 
-	if (CheckParseErrors(target, filename, fbuf)) {
+	if (CheckParseErrors(target, filename, fbuf.data()))
 		ret = 0;
-	}
 
-	delete[] fbuf;
 	return ret;
 }
 
@@ -701,9 +703,9 @@ unsigned int LoadFragmentProgram(const char* filename)
 
 void glSafeDeleteProgram(GLuint program)
 {
-	if (!GLEW_ARB_vertex_program || (program == 0)) {
+	if (!GLEW_ARB_vertex_program || (program == 0))
 		return;
-	}
+
 	glDeleteProgramsARB(1, &program);
 }
 
