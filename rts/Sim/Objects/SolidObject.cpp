@@ -53,6 +53,7 @@ CR_REG_METADATA(CSolidObject,
 
 	CR_MEMBER(localModel),
 	CR_MEMBER(collisionVolume),
+	CR_MEMBER(selectionVolume), // unsynced, could also be ignored
 	CR_MEMBER(lastHitPiece),
 
 	CR_IGNORED(groundDecal), // loaded from render*Created
@@ -139,8 +140,7 @@ CSolidObject::CSolidObject():
 
 void CSolidObject::PostLoad()
 {
-	model = GetDef()->LoadModel();
-	if (model == nullptr)
+	if ((model = GetDef()->LoadModel()) == nullptr)
 		return;
 
 	localModel.SetModel(model, false);
