@@ -307,6 +307,7 @@ void CUnit::PreInit(const UnitLoadParams& params)
 	// copy the UnitDef volume instance
 	model = unitDef->LoadModel();
 	collisionVolume = unitDef->collisionVolume;
+	selectionVolume = unitDef->selectionVolume;
 
 	localModel.SetModel(model);
 

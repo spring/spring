@@ -320,6 +320,7 @@ public:
 
 	LocalModel localModel;
 	CollisionVolume collisionVolume;
+	CollisionVolume selectionVolume;
 
 	const LocalModelPiece* lastHitPiece;        ///< piece that was last hit by a projectile
 	      SolidObjectGroundDecal* groundDecal;

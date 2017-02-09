@@ -370,7 +370,7 @@ float GuiTraceRay(
 			if (!unitVisible)
 				continue;
 
-			CollisionVolume cv = u->collisionVolume;
+			CollisionVolume cv = u->selectionVolume;
 
 			if (u->isIcon || (!unitInSight && unitOnRadar && unitIsEnemy)) {
 				// for iconified units, just pretend the collision
@@ -411,7 +411,7 @@ float GuiTraceRay(
 			if (f->noSelect)
 				continue;
 
-			CollisionVolume cv = f->collisionVolume;
+			const CollisionVolume& cv = f->selectionVolume;
 
 			if (CCollisionHandler::MouseHit(f, f->GetTransformMatrix(false), start, start + dir * guiRayLength, &cv, &cq)) {
 				const float hitDist = cq.GetHitPosDist(start, dir);

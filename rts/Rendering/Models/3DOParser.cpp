@@ -329,7 +329,7 @@ S3DOPiece* C3DOParser::LoadPiece(S3DModel* model, int pos, S3DOPiece* parent, in
 	model->mins = float3::min(piece->goffset + piece->mins, model->mins);
 	model->maxs = float3::max(piece->goffset + piece->maxs, model->maxs);
 
-	piece->SetCollisionVolume(CollisionVolume("box", piece->maxs - piece->mins, (piece->maxs + piece->mins) * 0.5f));
+	piece->SetCollisionVolume(CollisionVolume('b', 'z', piece->maxs - piece->mins, (piece->maxs + piece->mins) * 0.5f));
 
 	if (me.OffsetToChildObject > 0) {
 		piece->children.push_back(LoadPiece(model, me.OffsetToChildObject, piece, numobj, fileBuf));

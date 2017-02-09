@@ -106,7 +106,7 @@ SS3OPiece* CS3OParser::LoadPiece(S3DModel* model, SS3OPiece* parent, unsigned ch
 		model->mins = float3::min(piece->goffset + piece->mins, model->mins);
 		model->maxs = float3::max(piece->goffset + piece->maxs, model->maxs);
 
-		piece->SetCollisionVolume(CollisionVolume("box", piece->maxs - piece->mins, (piece->maxs + piece->mins) * 0.5f));
+		piece->SetCollisionVolume(CollisionVolume('b', 'z', piece->maxs - piece->mins, (piece->maxs + piece->mins) * 0.5f));
 	}
 
 	// load children pieces

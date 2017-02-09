@@ -391,7 +391,7 @@ void COBJParser::BuildModelPieceTreeRec(
 	model->mins = float3::min(piece->goffset + piece->mins, model->mins);
 	model->maxs = float3::max(piece->goffset + piece->maxs, model->maxs);
 
-	piece->SetCollisionVolume(CollisionVolume("box", piece->maxs - piece->mins, (piece->maxs + piece->mins) * 0.5f));
+	piece->SetCollisionVolume(CollisionVolume('b', 'z', piece->maxs - piece->mins, (piece->maxs + piece->mins) * 0.5f));
 
 	std::vector<int> childPieceNumbers;
 	std::vector<std::string> childPieceNames;

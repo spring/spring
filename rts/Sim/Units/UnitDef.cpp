@@ -620,6 +620,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	// initialize the (per-unitdef) collision-volume
 	// all CUnit instances hold a copy of this object
 	ParseCollisionVolume(udTable);
+	ParseSelectionVolume(udTable);
 
 
 	const LuaTable& buildsTable = udTable.SubTable("buildOptions");

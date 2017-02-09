@@ -6,8 +6,6 @@
 #include "System/float3.h"
 #include "System/creg/creg_cond.h"
 
-#include <string>
-
 // the positive x-axis points to the "left" in object-space and to the "right" in world-space
 // converting between them means flipping the sign of x-components of positions and directions
 const float3 WORLD_TO_OBJECT_SPACE = float3(-1.0f, 1.0f, 1.0f);
@@ -25,7 +23,7 @@ struct CollisionVolume
 
 public:
 	enum {
-		COLVOL_TYPE_ELLIPSOID =  0, // dummy, these become spheres or boxes
+		COLVOL_TYPE_ELLIPSOID =  0,
 		COLVOL_TYPE_CYLINDER  =  1,
 		COLVOL_TYPE_BOX       =  2,
 		COLVOL_TYPE_SPHERE    =  3,
@@ -44,7 +42,8 @@ public:
 	CollisionVolume();
 	CollisionVolume(const CollisionVolume* v) { *this = *v; }
 	CollisionVolume(
-		const std::string& cvTypeStr,
+		const char cvTypeChar,
+		const char cvAxisChar,
 		const float3& cvScales,
 		const float3& cvOffsets
 	);

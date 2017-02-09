@@ -72,7 +72,8 @@ CollisionVolume& CollisionVolume::operator = (const CollisionVolume& v) {
 }
 
 CollisionVolume::CollisionVolume(
-	const std::string& cvTypeString,
+	const char cvTypeChar,
+	const char cvAxisChar,
 	const float3& cvScales,
 	const float3& cvOffsets
 ) {
@@ -82,24 +83,20 @@ CollisionVolume::CollisionVolume(
 	int cvType = COLVOL_TYPE_SPHERE;
 	int cvAxis = COLVOL_AXIS_Z;
 
-	if (!cvTypeString.empty()) {
-		const std::string& cvTypeStr = StringToLower(cvTypeString);
-		const std::string& cvTypePrefix = cvTypeStr.substr(0, 3);
+	switch (cvTypeChar) {
+		case 'E': case 'e': { cvType = COLVOL_TYPE_ELLIPSOID; } break; // "[E|e]ll..."
+		case 'C': case 'c': { cvType = COLVOL_TYPE_CYLINDER;  } break; // "[C|c]yl..."
+		case 'B': case 'b': { cvType = COLVOL_TYPE_BOX;       } break; // "[B|b]ox"
+		case 'S': case 's': { cvType = COLVOL_TYPE_SPHERE;    } break; // "[S|s]ph..."
+		default: {} break;
+	}
 
-		switch (cvTypePrefix[0]) {
-			case 'e': { cvType = COLVOL_TYPE_ELLIPSOID; } break; // "ell..."
-			case 'c': { cvType = COLVOL_TYPE_CYLINDER;  } break; // "cyl..."
-			case 'b': { cvType = COLVOL_TYPE_BOX;       } break; // "box"
-			case 's': { cvType = COLVOL_TYPE_SPHERE;    } break; // "sph..."
-		}
-
-		if (cvType == COLVOL_TYPE_CYLINDER) {
-			switch (cvTypeStr[cvTypeStr.size() - 1]) {
-				case 'x': { cvAxis = COLVOL_AXIS_X; } break;
-				case 'y': { cvAxis = COLVOL_AXIS_Y; } break;
-				case 'z': { cvAxis = COLVOL_AXIS_Z; } break;
-				default: {} break; // just use the z-axis
-			}
+	if (cvType == COLVOL_TYPE_CYLINDER) {
+		switch (cvAxisChar) {
+			case 'X': case 'x': { cvAxis = COLVOL_AXIS_X; } break;
+			case 'Y': case 'y': { cvAxis = COLVOL_AXIS_Y; } break;
+			case 'Z': case 'z': { cvAxis = COLVOL_AXIS_Z; } break;
+			default: {} break; // just use the z-axis
 		}
 	}
 

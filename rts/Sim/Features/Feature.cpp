@@ -231,6 +231,7 @@ void CFeature::Initialize(const FeatureLoadParams& params)
 	UpdateTransformAndPhysState();
 
 	collisionVolume = def->collisionVolume;
+	selectionVolume = def->selectionVolume;
 
 	if (collisionVolume.DefaultToSphere())
 		collisionVolume.InitSphere(radius);
