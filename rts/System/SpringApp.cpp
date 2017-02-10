@@ -846,7 +846,6 @@ void SpringApp::Reload(const std::string script)
 bool SpringApp::Update()
 {
 	bool retc = true;
-	bool swap = true;
 
 	configHandler->Update();
 
@@ -860,7 +859,7 @@ bool SpringApp::Update()
 	#else
 	if (activeController != nullptr) {
 		retc = retc && activeController->Update();
-		swap = retc && activeController->Draw();
+		if (retc) activeController->Draw();
 	}
 	#endif
 
