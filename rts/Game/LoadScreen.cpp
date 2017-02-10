@@ -138,8 +138,7 @@ void CLoadScreen::Init()
 
 CLoadScreen::~CLoadScreen()
 {
-	if (gameLoadThread != nullptr)
-	{
+	if (gameLoadThread != nullptr) {
 		// at this point, the thread running CGame::LoadGame
 		// has finished and deregistered itself from WatchDog
 		if (mtLoading)
@@ -158,6 +157,7 @@ CLoadScreen::~CLoadScreen()
 
 	if (!gu->globalQuit) {
 		activeController = game;
+
 		if (luaMenu != nullptr)
 			luaMenu->ActivateGame();
 	}

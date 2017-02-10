@@ -384,35 +384,46 @@ void CGame::LoadGame(const std::string& mapName, bool threaded)
 
 	LOG("[Game::%s][1] threaded=%d", __func__, threaded);
 
-	if (!gu->globalQuit) LoadMap(mapName);
-	if (!gu->globalQuit) LoadDefs();
+	bool forcedQuit = false;
 
-	LOG("[Game::%s][2]", __func__);
+	try {
+		if (!gu->globalQuit) LoadMap(mapName);
+		if (!gu->globalQuit) LoadDefs();
+	} catch (const content_error& e) {
+		// we can not (yet) do a clean early exit here because the dtor assumes
+		// all loading stages proceeded normally; just force automatic shutdown
+		forcedQuit = true;
+	}
+
+	LOG("[Game::%s][2] globalQuit=%d forcedQuit=%d", __func__, gu->globalQuit, forcedQuit);
 
 	if (!gu->globalQuit) PreLoadSimulation();
 	if (!gu->globalQuit) PreLoadRendering();
 
-	LOG("[Game::%s][3]", __func__);
+	LOG("[Game::%s][3] globalQuit=%d forcedQuit=%d", __func__, gu->globalQuit, forcedQuit);
 
 	if (!gu->globalQuit) PostLoadSimulation();
 	if (!gu->globalQuit) PostLoadRendering();
 
-	LOG("[Game::%s][4]", __func__);
+	LOG("[Game::%s][4] globalQuit=%d forcedQuit=%d", __func__, gu->globalQuit, forcedQuit);
 
 	if (!gu->globalQuit) LoadInterface();
 	if (!gu->globalQuit) LoadLua();
 
-	LOG("[Game::%s][5]", __func__);
+	LOG("[Game::%s][5] globalQuit=%d forcedQuit=%d", __func__, gu->globalQuit, forcedQuit);
 
 	if (!gu->globalQuit) LoadFinalize();
 	if (!gu->globalQuit) LoadSkirmishAIs();
 
-	if (!gu->globalQuit && saveFile) {
+	LOG("[Game::%s][6] globalQuit=%d forcedQuit=%d", __func__, gu->globalQuit, forcedQuit);
+
+	if (!gu->globalQuit && saveFile != nullptr) {
 		loadscreen->SetLoadMessage("Loading game");
 		saveFile->LoadGame();
 	}
 
 	finishedLoading = true;
+	gu->globalQuit = forcedQuit;
 
 	Watchdog::DeregisterThread(WDT_LOAD);
 	AddTimedJobs();

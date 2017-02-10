@@ -858,10 +858,8 @@ bool SpringApp::Update()
 	if (!activeController->Draw())
 		return true;
 	#else
-	if (activeController != nullptr) {
-		retc = retc && activeController->Update();
-		swap = retc && activeController->Draw();
-	}
+	retc = (activeController != nullptr && activeController->Update());
+	swap = (activeController != nullptr && activeController->Draw());
 	#endif
 
 	// always swap by default, seemingly upsets some drivers not to
