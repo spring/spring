@@ -24,6 +24,7 @@
 
 CONFIG(bool, CompressTextures).defaultValue(false).safemodeValue(true).description("Runtime compress most textures to save VideoRAM."); // in safemode enabled, cause it ways more likely the gpu runs out of memory than this extension cause crashes!
 CONFIG(int, ForceShaders).defaultValue(-1).minimumValue(-1).maximumValue(1);
+CONFIG(int, ForceSwapBuffers).defaultValue(1).minimumValue(-1).maximumValue(1);
 CONFIG(int, AtiHacks).defaultValue(-1).headlessValue(0).minimumValue(-1).maximumValue(1).description("Enables graphics drivers workarounds for users with ATI video cards.\n -1:=runtime detect, 0:=off, 1:=on");
 CONFIG(bool, DualScreenMode).defaultValue(false).description("Sets whether to split the screen in half, with one half for minimap and one for main screen. Right side is for minimap unless DualScreenMiniMapOnLeft is set.");
 CONFIG(bool, DualScreenMiniMapOnLeft).defaultValue(false).description("When set, will make the left half of the screen the minimap when DualScreenMode is set.");
@@ -64,7 +65,6 @@ CR_REG_METADATA(CGlobalRendering, (
 	CR_MEMBER(drawFrame),
 	CR_MEMBER(FPS),
 
-	CR_IGNORED(isVideoCapturing),
 	CR_IGNORED(winState),
 	CR_IGNORED(screenSizeX),
 	CR_IGNORED(screenSizeY),
@@ -81,9 +81,15 @@ CR_REG_METADATA(CGlobalRendering, (
 	CR_IGNORED(aspectRatio),
 	CR_IGNORED(zNear),
 	CR_IGNORED(viewRange),
+
+	CR_IGNORED(forceShaders),
+	CR_IGNORED(forceSwapBuffers),
+
 	CR_IGNORED(fsaaLevel),
 	CR_IGNORED(maxTextureSize),
+	CR_IGNORED(maxSmoothPointSize),
 	CR_IGNORED(active),
+	CR_IGNORED(isVideoCapturing),
 	CR_IGNORED(compressTextures),
 	CR_IGNORED(haveATI),
 	CR_IGNORED(haveMesa),
@@ -96,7 +102,6 @@ CR_REG_METADATA(CGlobalRendering, (
 	CR_IGNORED(supportClipControl),
 	CR_IGNORED(haveARB),
 	CR_IGNORED(haveGLSL),
-	CR_IGNORED(maxSmoothPointSize),
 	CR_IGNORED(glslMaxVaryings),
 	CR_IGNORED(glslMaxAttributes),
 	CR_IGNORED(glslMaxDrawBuffers),
@@ -119,7 +124,6 @@ CGlobalRendering::CGlobalRendering()
 	, drawFrame(1)
 	, FPS(GAME_SPEED)
 
-	, isVideoCapturing(false)
 	, winState(WINSTATE_DEFAULT)
 	, screenSizeX(1)
 	, screenSizeY(1)
@@ -145,8 +149,12 @@ CGlobalRendering::CGlobalRendering()
 	, zNear(NEAR_PLANE)
 	, viewRange(MAX_VIEW_RANGE)
 
+	, forceShaders(-1)
+	, forceSwapBuffers(1)
+
 	, fsaaLevel(0)
 	, maxTextureSize(2048)
+	, maxSmoothPointSize(1.0f)
 
 	, drawSky(true)
 	, drawWater(true)
@@ -158,6 +166,7 @@ CGlobalRendering::CGlobalRendering()
 
 	, teamNanospray(true)
 	, active(true)
+	, isVideoCapturing(false)
 	, compressTextures(false)
 	, haveATI(false)
 	, haveMesa(false)
@@ -170,7 +179,6 @@ CGlobalRendering::CGlobalRendering()
 	, supportClipControl(false)
 	, haveARB(false)
 	, haveGLSL(false)
-	, maxSmoothPointSize(1.0f)
 
 	, glslMaxVaryings(0)
 	, glslMaxAttributes(0)
@@ -282,9 +290,8 @@ bool CGlobalRendering::CreateSDLWindow(const char* title)
 	// (happens at 300fps, neither fullscreen nor vsync fixes it, so disable compositing)
 	// On Windows Aero often uses vsync, and so when Spring runs windowed it will run with
 	// vsync too, resulting in bad performance.
-	if (configHandler->GetBool("BlockCompositing")) {
+	if (configHandler->GetBool("BlockCompositing"))
 		WindowManagerHelper::BlockCompositing(globalRendering->window);
-	}
 #endif
 
 	return true;
@@ -313,23 +320,25 @@ void CGlobalRendering::PostInit() {
 	{
 		const char* glVendor = (const char*) glGetString(GL_VENDOR);
 		const char* glRenderer = (const char*) glGetString(GL_RENDERER);
-		const std::string vendor = (glVendor != nullptr)? StringToLower(std::string(glVendor)): "";
-		const std::string renderer = (glRenderer != nullptr)? StringToLower(std::string(glRenderer)): "";
+		const std::string& vendor = (glVendor != nullptr)? StringToLower(std::string(glVendor)): "";
+		const std::string& renderer = (glRenderer != nullptr)? StringToLower(std::string(glRenderer)): "";
 
 		haveATI    = (vendor.find("ati ") != std::string::npos) || (vendor.find("amd ") != std::string::npos);
 		haveMesa   = (renderer.find("mesa ") != std::string::npos) || (renderer.find("gallium ") != std::string::npos);
 		haveIntel  = (vendor.find("intel") != std::string::npos);
 		haveNvidia = (vendor.find("nvidia ") != std::string::npos);
 
-		const int useGlslShaders = configHandler->GetInt("ForceShaders");
-		if (useGlslShaders < 0) {
+		forceSwapBuffers = configHandler->GetInt("ForceSwapBuffers");
+		forceShaders = configHandler->GetInt("ForceShaders");
+
+		if (forceShaders < 0) {
 			// disable Shaders for Intel drivers
 			haveARB  &= !haveIntel;
 			haveGLSL &= !haveIntel;
-		} else if (useGlslShaders == 0) {
+		} else if (forceShaders == 0) {
 			haveARB  = false;
 			haveGLSL = false;
-		} else if (useGlslShaders > 0) {
+		} else if (forceShaders > 0) {
 			// rely on extension detection (don't force enable shaders, when the extensions aren't exposed!)
 		}
 
@@ -419,10 +428,13 @@ void CGlobalRendering::PostInit() {
 	teamNanospray = configHandler->GetBool("TeamNanoSpray");
 }
 
-void CGlobalRendering::SwapBuffers()
+void CGlobalRendering::SwapBuffers(bool allowSwapBuffers)
 {
 	SCOPED_TIMER("Misc::SwapBuffers");
 	assert(window != nullptr);
+
+	if (!allowSwapBuffers && !forceSwapBuffers)
+		return;
 
 	const spring_time pre = spring_now();
 

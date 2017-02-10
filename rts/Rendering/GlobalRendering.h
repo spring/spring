@@ -30,7 +30,7 @@ public:
 	bool CreateSDLWindow(const char* title);
 	void DestroySDLWindow();
 	void PostInit();
-	void SwapBuffers();
+	void SwapBuffers(bool allowSwapBuffers);
 	void SetFullScreen(bool configFullScreen, bool cmdLineWindowed, bool cmdLineFullScreen);
 	// Notify on Fullscreen/WindowBorderless change
 	void ConfigNotify(const std::string& key, const std::string& value);
@@ -42,6 +42,7 @@ public:
 
 	bool EnableFSAA() const;
 
+public:
 	/**
 	 * @brief time offset
 	 *
@@ -69,8 +70,6 @@ public:
 	/// Frames Per Second
 	float FPS;
 
-	/// whether we're capturing video - relevant for frame timing
-	bool isVideoCapturing;
 
 	/// the window state (0=normal,1=maximized,2=minimized)
 	enum {
@@ -120,6 +119,9 @@ public:
 	float viewRange;
 
 
+	int forceShaders;
+	int forceSwapBuffers;
+
 	/**
 	 * @brief FSAA
 	 *
@@ -133,6 +135,14 @@ public:
 	 * maximum 2D texture size
 	 */
 	int maxTextureSize;
+
+	/**
+	 * @brief maxSmoothPointSize
+	 *
+	 * maximum smooth point size (driver might fallback in software rendering if larger)
+	 */
+	float maxSmoothPointSize;
+
 
 	bool drawSky;
 	bool drawWater;
@@ -172,6 +182,9 @@ public:
 	 * Whether the graphics need to be drawn
 	 */
 	bool active;
+
+	/// whether we're capturing video - relevant for frame timing
+	bool isVideoCapturing;
 
 	/**
 	 * @brief compressTextures
@@ -222,13 +235,6 @@ public:
 	bool haveGLSL;
 
 	/**
-	 * @brief maxSmoothPointSize
-	 *
-	 * maximum smooth point size (driver might fallback in software rendering if larger)
-	 */
-	float maxSmoothPointSize;
-
-	/**
 	 * Shader capabilities
 	 */
 	int glslMaxVaryings;
@@ -258,9 +264,11 @@ public:
 	 */
 	bool fullScreen;
 
+public:
 	SDL_Window* window;
 	SDL_GLContext sdlGlCtx;
 
+public:
 	/**
 	* @brief max view range in elmos
 	*/
