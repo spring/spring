@@ -1663,10 +1663,6 @@ int LuaUnsyncedCtrl::SetFeatureNoDraw(lua_State* L)
 
 int LuaUnsyncedCtrl::SetFeatureFade(lua_State* L)
 {
-	// block LuaUI
-	if (CLuaHandle::GetHandleUserMode(L))
-		return 0;
-
 	CFeature* feature = ParseCtrlFeature(L, __FUNCTION__, 1);
 
 	if (feature == nullptr)
@@ -1679,9 +1675,6 @@ int LuaUnsyncedCtrl::SetFeatureFade(lua_State* L)
 
 int LuaUnsyncedCtrl::SetFeatureSelectionVolumeData(lua_State* L)
 {
-	if (CLuaHandle::GetHandleUserMode(L))
-		return 0;
-
 	CFeature* feature = ParseCtrlFeature(L, __FUNCTION__, 1);
 
 	if (feature == nullptr)
