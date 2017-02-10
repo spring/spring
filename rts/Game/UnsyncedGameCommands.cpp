@@ -2094,7 +2094,7 @@ public:
 
 	bool Execute(const UnsyncedAction& action) const {
 		if (action.GetArgs().empty()) {
-			VSync.SetInterval((VSync.GetInterval() <= 0) ? 1 : 0);
+			VSync.Toggle();
 		} else {
 			VSync.SetInterval(atoi(action.GetArgs().c_str()));
 		}

@@ -5,11 +5,13 @@
 
 class CVerticalSync {
 public:
-	CVerticalSync(): interval(-1) {}
+	CVerticalSync(): interval(0) {}
 
+	void SetInterval();
 	void SetInterval(int i);
 	int  GetInterval() const { return interval; }
 
+	void Toggle();
 	void Delay() const;
 	
 private:

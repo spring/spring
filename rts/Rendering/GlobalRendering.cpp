@@ -578,7 +578,8 @@ void CGlobalRendering::UpdateGLConfigs()
 	const int pointSmoothing = configHandler->GetInt("SmoothPoints");
 	const float lodBias = configHandler->GetFloat("TextureLODBias");
 
-	VSync.SetInterval(configHandler->GetInt("VSync"));
+	// re-read configuration value
+	VSync.SetInterval();
 
 	if (lineSmoothing > 0) {
 		GLenum hint = GL_FASTEST;
