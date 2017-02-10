@@ -19,8 +19,6 @@ namespace GL {
 
 class CFeatureDrawer: public CEventClient
 {
-	typedef std::vector<CFeature*> FeatureSet;
-
 public:
 	CFeatureDrawer();
 	~CFeatureDrawer();

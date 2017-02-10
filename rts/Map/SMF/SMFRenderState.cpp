@@ -230,6 +230,9 @@ void SMFRenderStateGLSL::Update(
 			glslShaders[n]->SetUniform  ("groundSpecularExponent", sunLighting->specularExponent);
 			glslShaders[n]->SetUniform  ("groundShadowDensity", sunLighting->groundShadowDensity);
 
+			glslShaders[n]->SetUniformMatrix4x4("shadowMat", false, shadowHandler->GetShadowMatrixRaw());
+			glslShaders[n]->SetUniform4v("shadowParams", &(shadowHandler->GetShadowParams().x));
+
 			glslShaders[n]->SetUniform3v("waterMinColor",    &mapInfo->water.minColor[0]);
 			glslShaders[n]->SetUniform3v("waterBaseColor",   &mapInfo->water.baseColor[0]);
 			glslShaders[n]->SetUniform3v("waterAbsorbColor", &mapInfo->water.absorb[0]);
