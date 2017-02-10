@@ -291,9 +291,8 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 	assert(mapInfo == nullptr);
 	mapInfo = new CMapInfo(gameSetup->MapFile(), gameSetup->mapName);
 
-	if (!sideParser.Load()) {
+	if (!sideParser.Load())
 		throw content_error(sideParser.GetErrorLog());
-	}
 
 
 	// after this, other components are able to register chat action-executors
@@ -382,48 +381,51 @@ void CGame::LoadGame(const std::string& mapName, bool threaded)
 	Threading::SetGameLoadThread();
 	Watchdog::RegisterThread(WDT_LOAD);
 
-	LOG("[Game::%s][1] threaded=%d", __func__, threaded);
-
-	bool forcedQuit = false;
+	auto& globalQuit = gu->globalQuit;
+	bool  forcedQuit = false;
 
 	try {
-		if (!gu->globalQuit) LoadMap(mapName);
-		if (!gu->globalQuit) LoadDefs();
+		LOG("[Game::%s][1] globalQuit=%d threaded=%d", __func__, globalQuit, threaded);
+
+		if (!globalQuit) LoadMap(mapName);
+		if (!globalQuit) LoadDefs();
 	} catch (const content_error& e) {
+		LOG("[Game::%s][1] forced quit with exception \"%s\"", __func__, e.what());
+
 		// we can not (yet) do a clean early exit here because the dtor assumes
 		// all loading stages proceeded normally; just force automatic shutdown
 		forcedQuit = true;
 	}
 
-	LOG("[Game::%s][2] globalQuit=%d forcedQuit=%d", __func__, gu->globalQuit, forcedQuit);
+	LOG("[Game::%s][2] globalQuit=%d forcedQuit=%d", __func__, globalQuit, forcedQuit);
 
-	if (!gu->globalQuit) PreLoadSimulation();
-	if (!gu->globalQuit) PreLoadRendering();
+	if (!globalQuit) PreLoadSimulation();
+	if (!globalQuit) PreLoadRendering();
 
-	LOG("[Game::%s][3] globalQuit=%d forcedQuit=%d", __func__, gu->globalQuit, forcedQuit);
+	LOG("[Game::%s][3] globalQuit=%d forcedQuit=%d", __func__, globalQuit, forcedQuit);
 
-	if (!gu->globalQuit) PostLoadSimulation();
-	if (!gu->globalQuit) PostLoadRendering();
+	if (!globalQuit) PostLoadSimulation();
+	if (!globalQuit) PostLoadRendering();
 
-	LOG("[Game::%s][4] globalQuit=%d forcedQuit=%d", __func__, gu->globalQuit, forcedQuit);
+	LOG("[Game::%s][4] globalQuit=%d forcedQuit=%d", __func__, globalQuit, forcedQuit);
 
-	if (!gu->globalQuit) LoadInterface();
-	if (!gu->globalQuit) LoadLua();
+	if (!globalQuit) LoadInterface();
+	if (!globalQuit) LoadLua();
 
-	LOG("[Game::%s][5] globalQuit=%d forcedQuit=%d", __func__, gu->globalQuit, forcedQuit);
+	LOG("[Game::%s][5] globalQuit=%d forcedQuit=%d", __func__, globalQuit, forcedQuit);
 
-	if (!gu->globalQuit) LoadFinalize();
-	if (!gu->globalQuit) LoadSkirmishAIs();
+	if (!globalQuit) LoadFinalize();
+	if (!globalQuit) LoadSkirmishAIs();
 
-	LOG("[Game::%s][6] globalQuit=%d forcedQuit=%d", __func__, gu->globalQuit, forcedQuit);
+	LOG("[Game::%s][6] globalQuit=%d forcedQuit=%d", __func__, globalQuit, forcedQuit);
 
-	if (!gu->globalQuit && saveFile != nullptr) {
+	if (!globalQuit && saveFile != nullptr) {
 		loadscreen->SetLoadMessage("Loading game");
 		saveFile->LoadGame();
 	}
 
 	finishedLoading = true;
-	gu->globalQuit = forcedQuit;
+	globalQuit = forcedQuit;
 
 	Watchdog::DeregisterThread(WDT_LOAD);
 	AddTimedJobs();
