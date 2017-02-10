@@ -23,7 +23,7 @@ public:
 	~SpringApp();
 
 	int Run();                                      //!< Run game loop
-	void Reload(const std::string& script);
+	void Reload(const std::string script);
 
 	static void ShutDown();                         //!< Shuts down application
 

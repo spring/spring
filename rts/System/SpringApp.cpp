@@ -742,7 +742,7 @@ void SpringApp::Startup()
 
 
 
-void SpringApp::Reload(const std::string& script)
+void SpringApp::Reload(const std::string script)
 {
 	LOG("[SpringApp::%s][1]", __func__);
 
@@ -841,24 +841,32 @@ void SpringApp::Reload(const std::string& script)
 }
 
 /**
- * @return return code of activecontroller draw function
- *
- * Draw function repeatedly called, it calls all the
- * other draw functions
+ * @return return code of ActiveController::Update
  */
 bool SpringApp::Update()
 {
+	bool retc = true;
+	bool swap = true;
+
 	configHandler->Update();
 
+	#if 0
 	if (activeController == nullptr)
 		return true;
 	if (!activeController->Update())
 		return false;
 	if (!activeController->Draw())
 		return true;
+	#else
+	if (activeController != nullptr) {
+		retc = retc && activeController->Update();
+		swap = retc && activeController->Draw();
+	}
+	#endif
 
+	// always swap, seemingly upsets some drivers not to
 	globalRendering->SwapBuffers();
-	return true;
+	return retc;
 }
 
 
@@ -879,9 +887,8 @@ int SpringApp::Run()
 		input.PushEvents();
 
 		if (gu->globalReload) {
-			std::string script = gu->reloadScript;
-			gu->reloadScript = "";
-			Reload(script);
+			// copy; reloadScript is cleared by ResetState
+			Reload(gu->reloadScript);
 		} else {
 			if (!Update()) {
 				break;

@@ -422,9 +422,13 @@ void CGlobalRendering::PostInit() {
 void CGlobalRendering::SwapBuffers()
 {
 	SCOPED_TIMER("Misc::SwapBuffers");
+	assert(window != nullptr);
+
 	const spring_time pre = spring_now();
+
 	VSync.Delay();
 	SDL_GL_SwapWindow(window);
+
 	eventHandler.DbgTimingInfo(TIMING_SWAP, pre, spring_now());
 }
 

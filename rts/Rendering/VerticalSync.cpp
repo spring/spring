@@ -22,51 +22,47 @@ void CVerticalSync::SetInterval(int i)
 	if ((i = std::max(0, i)) == interval)
 		return;
 
-	configHandler->Set("VSync", i);
-	interval = i;
+	configHandler->Set("VSync", interval = i);
 
-#if defined HEADLESS
+	#if defined HEADLESS
 
-#elif !defined(WIN32) && !defined(__APPLE__)
-	#ifdef GLXEW_EXT_swap_control
+	#elif !defined(WIN32) && !defined(__APPLE__)
+	{
+		#ifdef GLXEW_EXT_swap_control
 		if (GLXEW_EXT_swap_control) {
 			//System 1
 			// This is the prefered way cause glXSwapIntervalEXT won't lock the thread until the OGL cmd queue is full!
 			// And so we can process SimFrames while waiting for VSync.
 			Display* dpy = glXGetCurrentDisplay();
 			GLXDrawable drawable = glXGetCurrentDrawable();
-		#ifdef GLXEW_EXT_swap_control_tear
+
+			#ifdef GLXEW_EXT_swap_control_tear
 			// this enables so called `adaptive vsync` or also called late syncing (~ it won't vsync if FPS < monitor refresh rate)
 			if (GLXEW_EXT_swap_control_tear) {
-				if (interval != 0)
-					LOG("Using Adaptive VSync");
+				LOG("[VSync::%s(interval=%d)] using glXSwapIntervalEXT (Adaptive); %s", __func__, interval, (interval == 0)? "disabled": "enabled");
 				glXSwapIntervalEXT(dpy, drawable, -interval);
 			} else
-		#endif
+			#endif
 			{
-				if (interval != 0)
-					LOG("Using VSync");
+				LOG("[VSync::%s(interval=%d)] using glXSwapIntervalEXT (Standard); %s", __func__, interval, (interval == 0)? "disabled": "enabled");
 				glXSwapIntervalEXT(dpy, drawable, interval);
 			}
 		} else
-	#endif
-	if (!GLXEW_SGI_video_sync) {
-		interval = 0; // disable
-	} else {
-		if (interval != 0)
-			LOG("Using SGI VSync");
+		#endif
+		{
+			if (!GLXEW_SGI_video_sync)
+				interval = 0; // disable
+
+			LOG("[VSync::%s(interval=%d)] using GLXEW_SGI_video_sync; %s", __func__, interval, (interval == 0)? "disabled": "enabled");
+		}
 	}
 
-#elif defined WIN32
+	#elif defined WIN32
 	if (WGLEW_EXT_swap_control) {
-		if (interval != 0)
-			LOG("Using VSync");
+		LOG("[VSync::%s(interval=%d)] using wglSwapIntervalEXT; %s", __func__, interval, (interval == 0)? "disabled": "enabled");
 		wglSwapIntervalEXT(interval);
 	}
-#endif
-
-	if (interval == 0)
-		LOG("VSync disabled");
+	#endif
 }
 
 
