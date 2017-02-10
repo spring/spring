@@ -9,6 +9,8 @@ General:
  - Implement VFS modes - VFS.MOD, VFS.MAP & VFS.BASE now actually work. Added VFS.MENU
  ! base archives now have modtype of 4 and menu archive have modtype of 5
  ! one letter command line flags (e.g. -g instead of --game) are removed
+ - Added selection volumes, these can be defined through defs and also accessed through
+   Spring.{Set,Get}{Unit,Feature}SelectionVolumeData
 
 Sim:
  ! Sonar will now detect ships/hovers - this is since los can't raycast through water.

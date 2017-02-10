@@ -616,6 +616,7 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_FUNCTION("stockpileWeaponDef", ud.stockpileWeaponDef, WeaponDefToID);
 	ADD_FUNCTION("iconType",           ud.iconType,           SafeIconType);
 	ADD_FUNCTION("collisionVolume",    ud.collisionVolume,    ColVolTable);
+	ADD_FUNCTION("selectionVolume",    ud.selectionVolume,    ColVolTable);
 
 	ADD_FUNCTION("isTransport", ud, IsTransportUnit);
 	ADD_FUNCTION("isImmobile", ud, IsImmobileUnit);

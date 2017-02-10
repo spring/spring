@@ -840,6 +840,40 @@ int LuaUtils::PushColVolTable(lua_State* L, const CollisionVolume* vol) {
 	return 1;
 }
 
+int LuaUtils::PushColVolData(lua_State* L, const CollisionVolume* vol) {
+	lua_pushnumber(L, vol->GetScales().x);
+	lua_pushnumber(L, vol->GetScales().y);
+	lua_pushnumber(L, vol->GetScales().z);
+	lua_pushnumber(L, vol->GetOffsets().x);
+	lua_pushnumber(L, vol->GetOffsets().y);
+	lua_pushnumber(L, vol->GetOffsets().z);
+	lua_pushnumber(L, vol->GetVolumeType());
+	lua_pushnumber(L, int(vol->UseContHitTest()));
+	lua_pushnumber(L, vol->GetPrimaryAxis());
+	lua_pushboolean(L, vol->IgnoreHits());
+	return 10;
+}
+
+
+int LuaUtils::ParseColVolData(lua_State* L, int idx, CollisionVolume* vol)
+{
+	const float xs = luaL_checkfloat(L, idx++);
+	const float ys = luaL_checkfloat(L, idx++);
+	const float zs = luaL_checkfloat(L, idx++);
+	const float xo = luaL_checkfloat(L, idx++);
+	const float yo = luaL_checkfloat(L, idx++);
+	const float zo = luaL_checkfloat(L, idx++);
+	const int vType = luaL_checkint (L, idx++);
+	const int tType = luaL_checkint (L, idx++);
+	const int pAxis = luaL_checkint (L, idx++);
+
+	const float3 scales(xs, ys, zs);
+	const float3 offsets(xo, yo, zo);
+
+	vol->InitShape(scales, offsets, vType, tType, pAxis);
+	return 0;
+}
+
 
 #endif //!defined UNITSYNC && !defined DEDICATED && !defined BUILDING_AI
 

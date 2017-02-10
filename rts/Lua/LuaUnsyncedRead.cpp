@@ -124,8 +124,10 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetUnitNoDraw);
 	REGISTER_LUA_CFUNC(GetUnitNoMinimap);
 	REGISTER_LUA_CFUNC(GetUnitNoSelect);
+	REGISTER_LUA_CFUNC(GetUnitSelectionVolumeData);
 	REGISTER_LUA_CFUNC(GetFeatureLuaDraw);
 	REGISTER_LUA_CFUNC(GetFeatureNoDraw);
+	REGISTER_LUA_CFUNC(GetFeatureSelectionVolumeData);
 
 	REGISTER_LUA_CFUNC(GetUnitTransformMatrix);
 	REGISTER_LUA_CFUNC(GetUnitViewPosition);
@@ -315,6 +317,15 @@ static int GetSolidObjectNoDraw(lua_State* L, const CSolidObject* obj)
 	lua_pushboolean(L, obj->noDraw);
 	return 1;
 }
+
+static int GetSolidObjectSelectionVolume(lua_State* L, const CSolidObject* obj)
+{
+	if (obj == nullptr)
+		return 0;
+
+	return LuaUtils::PushColVolData(L, &obj->selectionVolume);
+}
+
 
 
 
@@ -632,6 +643,10 @@ int LuaUnsyncedRead::GetUnitNoSelect(lua_State* L)
 	return 1;
 }
 
+int LuaUnsyncedRead::GetUnitSelectionVolumeData(lua_State* L)
+{
+	return GetSolidObjectSelectionVolume(L, ParseUnit(L, __FUNCTION__, 1));
+}
 
 int LuaUnsyncedRead::GetFeatureLuaDraw(lua_State* L)
 {
@@ -643,6 +658,10 @@ int LuaUnsyncedRead::GetFeatureNoDraw(lua_State* L)
 	return (GetSolidObjectNoDraw(L, ParseFeature(L, __FUNCTION__, 1)));
 }
 
+int LuaUnsyncedRead::GetFeatureSelectionVolumeData(lua_State* L)
+{
+	return GetSolidObjectSelectionVolume(L, ParseFeature(L, __FUNCTION__, 1));
+}
 
 
 int LuaUnsyncedRead::GetUnitTransformMatrix(lua_State* L)

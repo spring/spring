@@ -333,6 +333,7 @@ static bool InitParamMap()
 
 	ADD_FUNCTION("model", fd, ModelTable);
 	ADD_FUNCTION("collisionVolume", fd.collisionVolume, ColVolTable);
+	ADD_FUNCTION("selectionVolume", fd.selectionVolume, ColVolTable);
 
 	ADD_FUNCTION("modelname", fd, ModelName);
 	ADD_FUNCTION("modeltype", fd, ModelType);

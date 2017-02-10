@@ -174,8 +174,10 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetUnitNoMinimap);
 	REGISTER_LUA_CFUNC(SetUnitNoSelect);
 	REGISTER_LUA_CFUNC(SetUnitLeaveTracks);
+	REGISTER_LUA_CFUNC(SetUnitSelectionVolumeData);
 	REGISTER_LUA_CFUNC(SetFeatureNoDraw);
 	REGISTER_LUA_CFUNC(SetFeatureFade);
+	REGISTER_LUA_CFUNC(SetFeatureSelectionVolumeData);
 
 	REGISTER_LUA_CFUNC(AddUnitIcon);
 	REGISTER_LUA_CFUNC(FreeUnitIcon);
@@ -1633,6 +1635,17 @@ int LuaUnsyncedCtrl::SetUnitLeaveTracks(lua_State* L)
 }
 
 
+int LuaUnsyncedCtrl::SetUnitSelectionVolumeData(lua_State* L)
+{
+	CUnit* unit = ParseCtrlUnit(L, __FUNCTION__, 1);
+
+	if (unit == nullptr)
+		return 0;
+
+	return LuaUtils::ParseColVolData(L, 2, &unit->selectionVolume);
+}
+
+
 int LuaUnsyncedCtrl::SetFeatureNoDraw(lua_State* L)
 {
 	if (CLuaHandle::GetHandleUserMode(L))
@@ -1663,6 +1676,20 @@ int LuaUnsyncedCtrl::SetFeatureFade(lua_State* L)
 	return 0;
 }
 
+
+int LuaUnsyncedCtrl::SetFeatureSelectionVolumeData(lua_State* L)
+{
+	if (CLuaHandle::GetHandleUserMode(L))
+		return 0;
+
+	CFeature* feature = ParseCtrlFeature(L, __FUNCTION__, 1);
+
+	if (feature == nullptr)
+		return 0;
+
+
+	return LuaUtils::ParseColVolData(L, 2, &feature->selectionVolume);
+}
 
 
 /******************************************************************************/

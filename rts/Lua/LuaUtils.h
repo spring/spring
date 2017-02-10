@@ -94,6 +94,8 @@ class LuaUtils {
 
 		static int PushModelTable(lua_State* L, const SolidObjectDef* def);
 		static int PushColVolTable(lua_State* L, const CollisionVolume* vol);
+		static int PushColVolData(lua_State* L, const CollisionVolume* vol);
+		static int ParseColVolData(lua_State* L, int idx, CollisionVolume* vol);
 
 		static void PushCommandParamsTable(lua_State* L, const Command& cmd, bool subtable);
 		static void PushCommandOptionsTable(lua_State* L, const Command& cmd, bool subtable);

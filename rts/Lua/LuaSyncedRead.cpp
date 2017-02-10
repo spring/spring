@@ -477,20 +477,6 @@ static int GetSolidObjectLastHitPiece(lua_State* L, const CSolidObject* o)
 	return 2;
 }
 
-static int PushCollisionVolumeData(lua_State* L, const CollisionVolume* vol) {
-	lua_pushnumber(L, vol->GetScales().x);
-	lua_pushnumber(L, vol->GetScales().y);
-	lua_pushnumber(L, vol->GetScales().z);
-	lua_pushnumber(L, vol->GetOffsets().x);
-	lua_pushnumber(L, vol->GetOffsets().y);
-	lua_pushnumber(L, vol->GetOffsets().z);
-	lua_pushnumber(L, vol->GetVolumeType());
-	lua_pushnumber(L, int(vol->UseContHitTest()));
-	lua_pushnumber(L, vol->GetPrimaryAxis());
-	lua_pushboolean(L, vol->IgnoreHits());
-	return 10;
-}
-
 static int PushPieceCollisionVolumeData(lua_State* L, const CSolidObject* o)
 {
 	if (o == nullptr)
@@ -501,7 +487,7 @@ static int PushPieceCollisionVolumeData(lua_State* L, const CSolidObject* o)
 	if (lmp == nullptr)
 		return 0;
 
-	return (PushCollisionVolumeData(L, lmp->GetCollisionVolume()));
+	return LuaUtils::PushColVolData(L, lmp->GetCollisionVolume());
 }
 
 
@@ -3673,7 +3659,7 @@ int LuaSyncedRead::GetUnitCollisionVolumeData(lua_State* L)
 	if (unit == NULL)
 		return 0;
 
-	return (PushCollisionVolumeData(L, &unit->collisionVolume));
+	return LuaUtils::PushColVolData(L, &unit->collisionVolume);
 }
 
 int LuaSyncedRead::GetUnitPieceCollisionVolumeData(lua_State* L)
@@ -4614,7 +4600,7 @@ int LuaSyncedRead::GetFeatureCollisionVolumeData(lua_State* L)
 	if (feature == nullptr)
 		return 0;
 
-	return (PushCollisionVolumeData(L, &feature->collisionVolume));
+	return LuaUtils::PushColVolData(L, &feature->collisionVolume);
 }
 
 int LuaSyncedRead::GetFeaturePieceCollisionVolumeData(lua_State* L)
@@ -5723,7 +5709,7 @@ int LuaSyncedRead::GetRadarErrorParams(lua_State* L)
 
 	if (IsAlliedAllyTeam(L, allyTeamID)) {
 		lua_pushnumber(L, losHandler->GetAllyTeamRadarErrorSize(allyTeamID));
-	} else { 
+	} else {
 		lua_pushnumber(L, losHandler->GetBaseRadarErrorSize());
 	}
 	lua_pushnumber(L, losHandler->GetBaseRadarErrorSize());

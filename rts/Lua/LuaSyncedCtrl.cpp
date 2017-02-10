@@ -479,21 +479,7 @@ static int SetSolidObjectCollisionVolumeData(lua_State* L, CSolidObject* o)
 	if (o == nullptr)
 		return 0;
 
-	const float xs = luaL_checkfloat(L, 2);
-	const float ys = luaL_checkfloat(L, 3);
-	const float zs = luaL_checkfloat(L, 4);
-	const float xo = luaL_checkfloat(L, 5);
-	const float yo = luaL_checkfloat(L, 6);
-	const float zo = luaL_checkfloat(L, 7);
-	const int vType = luaL_checkint(L,  8);
-	const int tType = luaL_checkint(L,  9);
-	const int pAxis = luaL_checkint(L, 10);
-
-	const float3 scales(xs, ys, zs);
-	const float3 offsets(xo, yo, zo);
-
-	o->collisionVolume.InitShape(scales, offsets, vType, tType, pAxis);
-	return 0;
+	return LuaUtils::ParseColVolData(L, 2, &o->collisionVolume);
 }
 
 static int SetSolidObjectBlocking(lua_State* L, CSolidObject* o)
