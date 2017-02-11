@@ -10,6 +10,8 @@ EndIf ()
 find_package(CURL REQUIRED)
 set(CMAKE_BUILD_TYPE "RELEASE")
 set(CLEAR_COMPILER_FLAGS true)
+set(PRD_BINDIR ${BINDIR} CACHE PATH "" FORCE)
+set(PRD_LIBDIR ${LIBDIR} CACHE PATH "" FORCE)
 Add_Subdirectory(pr-downloader)
 # add install-pr-downloader target
 Set(myInstallDeps pr-downloader)
