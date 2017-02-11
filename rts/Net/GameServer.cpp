@@ -60,7 +60,6 @@
 #endif
 
 #define ALLOW_DEMO_GODMODE
-#define PKTCACHE_VECSIZE 1000
 
 using netcode::RawPacket;
 
@@ -2685,9 +2684,8 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 
 	// after gamedata and playerNum, the player can start loading
 	// throw at him all stuff he missed until now
-	for (auto& pv: packetCache)
-		for (std::shared_ptr<const netcode::RawPacket>& p: pv)
-			newPlayer.SendData(p);
+	for (const std::shared_ptr<const netcode::RawPacket>& p: packetCache)
+		newPlayer.SendData(p);
 
 	if (demoReader == NULL || myGameSetup->demoName.empty()) {
 		// player wants to play -> join team
@@ -2763,7 +2761,6 @@ unsigned char CGameServer::ReserveNextAvailableSkirmishAIId()
 	return skirmishAIId;
 }
 
-
 void CGameServer::FreeSkirmishAIId(const unsigned char skirmishAIId)
 {
 	usedSkirmishAIIds.remove(skirmishAIId);
@@ -2772,9 +2769,5 @@ void CGameServer::FreeSkirmishAIId(const unsigned char skirmishAIId)
 
 void CGameServer::AddToPacketCache(std::shared_ptr<const netcode::RawPacket> &pckt)
 {
-	if (packetCache.empty() || packetCache.back().size() >= PKTCACHE_VECSIZE) {
-		packetCache.push_back(std::vector<std::shared_ptr<const netcode::RawPacket> >());
-		packetCache.back().reserve(PKTCACHE_VECSIZE);
-	}
-	packetCache.back().push_back(pckt);
+	packetCache.push_back(pckt);
 }

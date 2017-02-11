@@ -235,7 +235,7 @@ private:
 	bool logInfoMessages;
 	bool logDebugMessages;
 
-	std::list< std::vector<std::shared_ptr<const netcode::RawPacket> > > packetCache;
+	std::deque< std::shared_ptr<const netcode::RawPacket> > packetCache;
 
 	/////////////////// sync stuff ///////////////////
 #ifdef SYNCCHECK
