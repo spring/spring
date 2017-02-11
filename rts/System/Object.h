@@ -4,11 +4,11 @@
 #define OBJECT_H
 
 #include <atomic>
-#include <map>
-#include <set>
-#include <array>
+#include <vector>
+
 #include "ObjectDependenceTypes.h"
 #include "System/creg/creg_cond.h"
+#include "System/UnorderedMap.hpp"
 
 class CObject
 {
@@ -26,7 +26,10 @@ public:
 	/// Request to inform this when obj dies
 	virtual void AddDeathDependence(CObject* obj, DependenceType dep);
 	/// Called when an object died, that this is interested in
-	virtual void DependentDied(CObject* obj);
+	/// Any derived implementations should *NOT* modify listening
+	/// or listeners because we iterate over both within our dtor
+	/// when calling this
+	virtual void DependentDied(CObject* obj) {}
 
 /*
 	// Possible future replacement for dynamic_cast (10x faster)
@@ -64,40 +67,54 @@ public:
 #define INSTANCE_OF(type,obj) (obj->objType == type) // exact class only, saves one instruction yay :)
 */
 
+	std::int64_t GetSyncID() const { return sync_id; }
+
 private:
 	// Note, this has nothing to do with the UnitID, FeatureID, ...
-	// It's only purpose is to make the sorting in TSyncSafeSet syncsafe
+	// Its only purpose is to make the sorting in TSyncSafeSet syncsafe
 	std::int64_t sync_id;
 	static std::atomic<std::int64_t> cur_sync_id;
 
-	// makes std::set<T*> syncsafe (else iteration order depends on the pointer's address, which is not syncsafe)
-	struct syncsafe_compare
-	{
-		bool operator() (const CObject* const& a1, const CObject* const& a2) const
-		{
-			// I don't think the default less-op is sync-safe
-			//return a1 < a2;
-			return a1->sync_id < a2->sync_id;
-		}
-	};
-
 public:
-	typedef std::set<CObject*, syncsafe_compare> TSyncSafeSet;
-	typedef std::array<TSyncSafeSet*, DEPENDENCE_COUNT> TDependenceMap;
+	typedef std::vector<CObject*> TSyncSafeSet;
+	typedef std::vector<TSyncSafeSet> TDependenceMap;
+
 	bool detached;
 
 protected:
-	const TSyncSafeSet& GetListeners(const DependenceType dep) { return listeners[dep] ? *listeners[dep] : *(listeners[dep] = new TSyncSafeSet()); }
+	const TSyncSafeSet& GetListeners(const DependenceType dep) {
+		const auto it = listenersDepTbl.find(dep);
+
+		if (it == listenersDepTbl.end()) {
+			listeners.emplace_back();
+			listenersDepTbl[dep] = listeners.size() - 1;
+			return (listeners.back());
+		}
+
+		return (listeners[it->second]);
+	}
+	const TSyncSafeSet& GetListening(const DependenceType dep) {
+		const auto it = listeningDepTbl.find(dep);
+
+		if (it == listeningDepTbl.end()) {
+			listening.emplace_back();
+			listeningDepTbl[dep] = listening.size() - 1;
+			return (listening.back());
+		}
+
+		return (listening[it->second]);
+	}
+
 	const TDependenceMap& GetAllListeners() const { return listeners; }
-	const TSyncSafeSet& GetListening(const DependenceType dep)  { return listening[dep] ? *listening[dep] : *(listening[dep] = new TSyncSafeSet()); }
 	const TDependenceMap& GetAllListening() const { return listening; }
 
 protected:
+	spring::unordered_map<int, size_t> listenersDepTbl; // maps dependence-type to index into listeners
+	spring::unordered_map<int, size_t> listeningDepTbl; // maps dependence-type to index into listening
+
 	TDependenceMap listeners;
 	TDependenceMap listening;
 };
 
-
-
-
 #endif /* OBJECT_H */
+

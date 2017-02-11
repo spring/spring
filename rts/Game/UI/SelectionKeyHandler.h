@@ -9,8 +9,7 @@
 class CSelectionKeyHandler : public CInputReceiver
 {
 public:
-	CSelectionKeyHandler();
-	~CSelectionKeyHandler();
+	CSelectionKeyHandler(): selectNumber(0) {}
 
 	void DoSelection(std::string selectString);
 

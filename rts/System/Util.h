@@ -228,6 +228,24 @@ static bool VectorErase(std::vector<T>& v, T e)
 	return true;
 }
 
+template<typename T, typename C>
+static bool VectorEraseUniqueSorted(std::vector<T*>& v, T* o, const C& c)
+{
+	const auto iter = std::lower_bound(v.begin(), v.end(), o, c);
+
+	if ((iter == v.end()) || (*iter != o))
+		return false;
+
+	for (size_t n = (iter - v.begin()); n < (v.size() - 1); n++) {
+		std::swap(v[n], v[n + 1]);
+	}
+
+	v.pop_back();
+	return true;
+}
+
+
+
 template<typename T>
 static bool VectorInsertUnique(std::vector<T>& v, T e, bool b = false)
 {
@@ -238,6 +256,26 @@ static bool VectorInsertUnique(std::vector<T>& v, T e, bool b = false)
 	// assume caller knows best, skip the test
 	assert(b || std::find(v.begin(), v.end(), e) == v.end());
 	v.push_back(e);
+	return true;
+}
+
+template<typename T, typename C>
+static bool VectorInsertUniqueSorted(std::vector<T*>& v, T* o, const C& c)
+{
+	const auto iter = std::lower_bound(v.begin(), v.end(), o, c);
+
+	if ((iter != v.end()) && (*iter == o))
+		return false;
+
+	v.push_back(o);
+
+	for (size_t n = v.size() - 1; n > 0; n--) {
+		if (c(v[n - 1], v[n]))
+			break;
+
+		std::swap(v[n - 1], v[n]);
+	}
+
 	return true;
 }
 

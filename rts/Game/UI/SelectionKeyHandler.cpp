@@ -1,6 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include <fstream>
+#include <set>
 
 #include "Game/Camera/CameraController.h"
 #include "Game/Camera.h"
@@ -22,15 +23,6 @@
 #include "System/FileSystem/DataDirsAccess.h"
 
 CSelectionKeyHandler* selectionKeys;
-
-CSelectionKeyHandler::CSelectionKeyHandler()
-	: selectNumber(0)
-{
-}
-
-CSelectionKeyHandler::~CSelectionKeyHandler()
-{
-}
 
 std::string CSelectionKeyHandler::ReadToken(std::string& str)
 {

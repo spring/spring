@@ -2,6 +2,7 @@
 
 
 #include "System/Object.h"
+#include "System/Util.h"
 #include "System/creg/STL_Set.h"
 #include "System/Log/ILog.h"
 #include "System/Platform/CrashHandler.h"
@@ -14,18 +15,30 @@ CR_REG_METADATA(CObject, (
 
 	CR_MEMBER(detached),
 
-	CR_IGNORED(listening), //handled in Serialize
-	CR_IGNORED(listeners), //handled in Serialize
+	CR_IGNORED(listening), // handled in Serialize
+	CR_IGNORED(listeners), // handled in Serialize
+	CR_IGNORED(listenersDepTbl),
+	CR_IGNORED(listeningDepTbl),
 
 	CR_SERIALIZER(Serialize),
 	CR_POSTLOAD(PostLoad)
-	))
+))
 
 std::atomic<std::int64_t> CObject::cur_sync_id(0);
 
-//////////////////////////////////////////////////////////////////////
-// Construction/Destruction
-//////////////////////////////////////////////////////////////////////
+
+
+static bool VectorInsertSorted(std::vector<CObject*>& v, CObject* o)
+{
+	return (VectorInsertUniqueSorted(v, o, [](const CObject* a, const CObject* b) { return (a->GetSyncID() < b->GetSyncID()); }));
+}
+
+static bool VectorEraseSorted(std::vector<CObject*>& v, CObject* o)
+{
+	return (VectorEraseUniqueSorted(v, o, [](const CObject* a, const CObject* b) { return (a->GetSyncID() < b->GetSyncID()); }));
+}
+
+
 
 CObject::CObject() : detached(false), listeners(), listening()
 {
@@ -36,7 +49,7 @@ CObject::CObject() : detached(false), listeners(), listening()
 	// Use atomic fetch-and-add, so threads don't read half written data nor write old (= smaller) numbers
 	sync_id = ++cur_sync_id;
 
-	assert(sync_id + 1 > sync_id); // check for overflow
+	assert((sync_id + 1) > sync_id); // check for overflow
 }
 
 
@@ -44,33 +57,36 @@ CObject::~CObject()
 {
 	assert(!detached);
 	detached = true;
-	for (int depType = 0; depType < DEPENDENCE_COUNT; ++depType) {
-		if (!listeners[depType])
-			continue;
 
-		for (CObject* obj: *listeners[depType]) {
+	for (const auto& p: listenersDepTbl) {
+		for (CObject* obj: listeners[p.second]) {
 			obj->DependentDied(this);
 
-			assert(obj->listening[depType]);
-			obj->listening[depType]->erase(this);
-		}
-		delete listeners[depType];
-	}
-	for (int depType = 0; depType < DEPENDENCE_COUNT; ++depType) {
-		if (!listening[depType])
-			continue;
+			const auto jt = obj->listeningDepTbl.find(p.first);
 
-		for (CObject* obj: *listening[depType]) {
-			assert(obj->listeners[depType]);
-			obj->listeners[depType]->erase(this);
+			if (jt == obj->listeningDepTbl.end())
+				continue;
+
+			VectorEraseSorted(obj->listening[ jt->second ], this);
 		}
-		delete listening[depType];
+	}
+
+	for (const auto& p: listeningDepTbl) {
+		for (CObject* obj: listening[p.second]) {
+			const auto jt = obj->listenersDepTbl.find(p.first);
+
+			if (jt == obj->listenersDepTbl.end())
+				continue;
+
+			VectorEraseSorted(obj->listeners[ jt->second ], this);
+		}
 	}
 }
 
 #ifdef USING_CREG
 void CObject::Serialize(creg::ISerializer* ser)
 {
+	/*
 	if (ser->IsWriting()) {
 		int num = 0;
 		for (int dt = 0; dt < DEPENDENCE_COUNT; ++dt) {
@@ -122,28 +138,30 @@ void CObject::Serialize(creg::ISerializer* ser)
 		// since only order matters
 		cur_sync_id = std::max(sync_id, (std::int64_t) cur_sync_id);
 	}
+	*/
 }
 
 void CObject::PostLoad()
 {
 	for (int depType = 0; depType < DEPENDENCE_COUNT; ++depType) {
-		if (!listening[depType])
+		const auto it = listeningDepTbl.find(depType);
+
+		if (it == listeningDepTbl.end())
 			continue;
 
-		for (CObject* obj: *listening[depType]) {
-			if (!obj->listeners[depType])
-				obj->listeners[depType] = new TSyncSafeSet();
+		for (CObject* obj: listening[ it->second ]) {
+			const auto jt = obj->listenersDepTbl.find(depType);
 
-			obj->listeners[depType]->insert(this);
+			if (jt == obj->listenersDepTbl.end())
+				continue;
+
+			VectorInsertSorted(obj->listeners[ jt->second ], this);
 		}
 	}
 }
 
 #endif //USING_CREG
 
-void CObject::DependentDied(CObject* obj)
-{
-}
 
 // NOTE that we can be listening to a single object from several different places,
 // however objects are responsible for not adding the same dependence more than once,
@@ -151,15 +169,9 @@ void CObject::DependentDied(CObject* obj)
 void CObject::AddDeathDependence(CObject* obj, DependenceType dep)
 {
 	assert(!detached && !obj->detached);
-	if (!listening[dep])
-		listening[dep] = new TSyncSafeSet();
 
-	listening[dep]->insert(obj);
-
-	if (!obj->listeners[dep])
-		obj->listeners[dep] = new TSyncSafeSet();
-
-	obj->listeners[dep]->insert(this);
+	VectorInsertSorted(const_cast<TSyncSafeSet&>(     GetListening(dep)),  obj);
+	VectorInsertSorted(const_cast<TSyncSafeSet&>(obj->GetListeners(dep)), this);
 }
 
 
@@ -169,7 +181,10 @@ void CObject::DeleteDeathDependence(CObject* obj, DependenceType dep)
 	if (obj->detached)
 		return;
 
-	obj->listeners[dep]->erase(this);
+	const auto it =      listeningDepTbl.find(dep);
+	const auto jt = obj->listenersDepTbl.find(dep);
 
-	listening[dep]->erase(obj);
+	if (it !=      listeningDepTbl.end()) VectorEraseSorted(     listening[ it->second ],  obj);
+	if (jt != obj->listenersDepTbl.end()) VectorEraseSorted(obj->listeners[ jt->second ], this);
 }
+
