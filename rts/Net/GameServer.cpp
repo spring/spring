@@ -27,7 +27,6 @@
 #include "Game/Players/PlayerHandler.h"
 
 #include "Net/Protocol/BaseNetProtocol.h"
-#include "Sim/Misc/GlobalConstants.h"
 
 // This undef is needed, as somewhere there is a type interface specified,
 // which we need not!
@@ -222,6 +221,9 @@ void CGameServer::Initialize()
 
 	// initialize players, teams & ais
 	{
+		clientDrawFilter.fill({spring_notime, 0});
+		clientMuteFilter.fill({false, false});
+
 		const std::vector<PlayerBase>& playerStartData = myGameSetup->GetPlayerStartingDataCont();
 		const std::vector<TeamBase>&     teamStartData = myGameSetup->GetTeamStartingDataCont();
 		const std::vector<SkirmishAIData>& aiStartData = myGameSetup->GetAIStartingDataCont();
@@ -1051,10 +1053,10 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 					Message(spring::format(WrongPlayer, msgCode, a, (unsigned)msg.fromPlayer));
 					break;
 				}
-				if (a < mutedPlayersChat.size() && mutedPlayersChat[a] ) {
-					//this player is muted, drop his messages quietly
+				// if this player is chat-muted, drop his messages quietly
+				if (clientMuteFilter[a].first)
 					break;
-				}
+
 				GotChatMessage(msg);
 			} catch (const netcode::UnpackPacketException& ex) {
 				Message(spring::format("Player %s sent invalid ChatMessage: %s", players[a].name.c_str(), ex.what()));
@@ -1285,14 +1287,28 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 				netcode::UnpackPacket pckt(packet, 2);
 				unsigned char playerNum;
 				pckt >> playerNum;
+
 				if (playerNum != a) {
 					Message(spring::format(WrongPlayer, msgCode, a, (unsigned)playerNum));
 					break;
 				}
-				if (a < mutedPlayersDraw.size() && mutedPlayersDraw[a] ) {
-					//this player is muted, drop his messages quietly
+				// if this player is draw-muted, drop his messages quietly
+				if (clientMuteFilter[a].second)
 					break;
-				}
+
+
+				// also drop player commands if we received 25 or more and
+				// each followed the previous by less than 50 milliseconds
+				// this is impossible to reach manually, but (very) easily
+				// through Lua and would allow clients to be DOS'ed
+				clientDrawFilter[a].second += (spring_diffmsecs(spring_now(), clientDrawFilter[a].first) < 50);
+				clientDrawFilter[a].second *= (spring_diffmsecs(spring_now(), clientDrawFilter[a].first) < 50);
+				clientDrawFilter[a].first   = spring_now();
+
+				if (clientDrawFilter[a].second > 25)
+					break;
+
+
 				if (!players[playerNum].spectator || allowSpecDraw)
 					Broadcast(packet); //forward data
 			} catch (const netcode::UnpackPacketException& ex) {
@@ -2481,14 +2497,9 @@ void CGameServer::MutePlayer(const int playerNum, bool muteChat, bool muteDraw)
 		LOG_L(L_WARNING, "MutePlayer: invalid playerNum");
 		return;
 	}
-	if ( playerNum >= mutedPlayersChat.size() ) {
-		mutedPlayersChat.resize(playerNum+1);
-	}
-	if ( playerNum >= mutedPlayersDraw.size() ) {
-		mutedPlayersDraw.resize(playerNum+1);
-	}
-	mutedPlayersChat[playerNum] = muteChat;
-	mutedPlayersDraw[playerNum] = muteDraw;
+
+	clientMuteFilter[playerNum].first  = muteChat;
+	clientMuteFilter[playerNum].second = muteDraw;
 }
 
 

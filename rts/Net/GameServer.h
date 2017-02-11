@@ -14,6 +14,7 @@
 #include <list>
 
 #include "Game/GameData.h"
+#include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/TeamBase.h"
 #include "System/float3.h"
 #include "System/GlobalRNG.h"
@@ -212,8 +213,8 @@ private:
 	std::vector<GameTeam> teams;
 	std::vector<unsigned char> winningAllyTeams;
 
-	std::vector<bool> mutedPlayersChat;
-	std::vector<bool> mutedPlayersDraw;
+	std::array< std::pair<spring_time, uint32_t>, MAX_PLAYERS> clientDrawFilter;
+	std::array< std::pair<       bool,     bool>, MAX_PLAYERS> clientMuteFilter;
 
 	float medianCpu;
 	int medianPing;
