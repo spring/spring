@@ -303,7 +303,7 @@ function Debug()
     end
   end
 
-  print("Game.version               = " .. Game.version)
+  print("Game.version               = " .. Engine.version)
   print("Game.commEnds              = " .. tostring(Game.commEnds))
   print("Game.gravity               = " .. Game.gravity)
   print("Game.tidal                 = " .. Game.tidal)
