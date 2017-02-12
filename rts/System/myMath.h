@@ -15,11 +15,12 @@
 #endif 
 
 
-static const float INVPI  = 1.0f / PI;
-static const float TWOPI  = 2.0f * PI;
-static const float HALFPI = 0.5f * PI;
-static const int SHORTINT_MAXVALUE  = 32768;
-static const int SPRING_CIRCLE_DIVS = (SHORTINT_MAXVALUE << 1);
+static constexpr float  INVPI = 0.3183098861837907f; // sic (1.0f / PI is not a constexpr)
+static constexpr float  TWOPI = 2.0f * PI;
+static constexpr float HALFPI = 0.5f * PI;
+
+static constexpr int SHORTINT_MAXVALUE  = 32768;
+static constexpr int SPRING_CIRCLE_DIVS = (SHORTINT_MAXVALUE << 1);
 
 #define HEADING_CHECKSUM_1024 0x617a9968
 #define HEADING_CHECKSUM_4096 0x3d51b476

@@ -229,7 +229,7 @@ static bool VectorErase(std::vector<T>& v, T e)
 }
 
 template<typename T, typename C>
-static bool VectorEraseUniqueSorted(std::vector<T>& v, T e, const C& c)
+static bool VectorEraseUniqueSorted(std::vector<T>& v, const T& e, const C& c)
 {
 	const auto iter = std::lower_bound(v.begin(), v.end(), e, c);
 
@@ -260,7 +260,7 @@ static bool VectorInsertUnique(std::vector<T>& v, T e, bool b = false)
 }
 
 template<typename T, typename C>
-static bool VectorInsertUniqueSorted(std::vector<T>& v, T e, const C& c)
+static bool VectorInsertUniqueSorted(std::vector<T>& v, const T& e, const C& c)
 {
 	const auto iter = std::lower_bound(v.begin(), v.end(), e, c);
 

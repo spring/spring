@@ -40,27 +40,24 @@ inline float GetHeadingFromVectorF(const float dx, const float dz)
 	float h = 0.0f;
 
 	if (dz != 0.0f) {
-		float d = dx / dz;
+		// ensure a minimum distance between dz and 0 such that
+		// sqr(dx/dz) never exceeds abs(num_limits<float>::max)
+		const float sz = dz * 2.0f - 1.0f;
+		const float d  = dx / (dz + 0.000001f * sz);
+		const float dd = d * d;
 
 		if (d > 1.0f) {
-			h = HALFPI - d / (d * d + 0.28f);
+			h = HALFPI - d / (dd + 0.28f);
 		} else if (d < -1.0f) {
-			h = -HALFPI - d / (d * d + 0.28f);
+			h = -HALFPI - d / (dd + 0.28f);
 		} else {
-			h = d / (1.0f + 0.28f * d * d);
+			h = d / (1.0f + 0.28f * dd);
 		}
 
-		if (dz < 0.0f) {
-			if (dx > 0.0f)
-				h += PI;
-			else
-				h -= PI;
-		}
+		// add PI (if dx > 0) or -PI (if dx < 0) when dz < 0
+		h += ((PI * ((dx > 0.0f) * 2.0f - 1.0f)) * (dz < 0.0f));
 	} else {
-		if (dx > 0.0f)
-			h = HALFPI;
-		else
-			h = -HALFPI;
+		h = HALFPI * ((dx > 0.0f) * 2.0f - 1.0f);
 	}
 
 	return h;
@@ -68,23 +65,20 @@ inline float GetHeadingFromVectorF(const float dx, const float dz)
 
 inline short int GetHeadingFromVector(const float dx, const float dz)
 {
-	float h = GetHeadingFromVectorF(dx, dz);
-
-	h *= SHORTINT_MAXVALUE * INVPI;
+	constexpr float s = SHORTINT_MAXVALUE * INVPI;
+	const     float h = GetHeadingFromVectorF(dx, dz) * s;
 
 	// Prevents h from going beyond SHORTINT_MAXVALUE.
 	// If h goes beyond SHORTINT_MAXVALUE, the following
 	// conversion to a short int crashes.
 	// if (h > SHORTINT_MAXVALUE) h = SHORTINT_MAXVALUE;
 	// return (short int) h;
-
 	int ih = (int) h;
-	if (ih == -SHORTINT_MAXVALUE) {
-		// ih now represents due-north, but the modulo operation
-		// below would cause it to wrap around from -32768 to 0
-		// which means due-south, so add 1
-		ih += 1;
-	}
+
+	// if ih represents due-north the modulo operation
+	// below would cause it to wrap around from -32768
+	// to 0 (which means due-south), so add 1
+	ih += (ih == -SHORTINT_MAXVALUE);
 	ih %= SHORTINT_MAXVALUE;
 	return (short int) ih;
 }
