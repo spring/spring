@@ -9,6 +9,13 @@
 #define BOOST_TEST_MODULE RotationMatrix44f
 #include <boost/test/unit_test.hpp>
 
+namespace std {
+	ostream& operator<<(ostream& s, float3 const& f) {
+		s << "x:" << f.x << ", y:" << f.y << " z:" << f.z;
+		return s;
+	}
+}
+
 BOOST_AUTO_TEST_CASE( GetEulerAnglesRgtHand )
 {
 	const std::array<float3, 5> testAngles = {
