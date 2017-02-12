@@ -47,14 +47,14 @@ BOOST_AUTO_TEST_CASE( Ellipsoid )
 	srand( time(NULL) );
 	unsigned failCount = 0;
 
-	float error[MAX_ITERATIONS + 1] = {};
+	float relError[MAX_ITERATIONS + 1] = {};
 	float maxError[MAX_ITERATIONS + 1] = {};
 	float tempdist[MAX_ITERATIONS + 1] = {};
-	float errorsq[MAX_ITERATIONS + 1] = {};
+	float  errorsq[MAX_ITERATIONS + 1] = {};
 
 	unsigned finalIteration[MAX_ITERATIONS + 1] = {};
 
-	for (int j = 0;j < TEST_RUNS;++j) {
+	for (int j = 0; j < TEST_RUNS; ++j) {
 		float3 halfScales = randfloat3();
 		float3 pv = randfloat3();
 		const float& a = halfScales.x;
@@ -87,8 +87,7 @@ BOOST_AUTO_TEST_CASE( Ellipsoid )
 
 
 		//Iterations
-		int i = 0;
-		while (true) {
+		for (int i = 0; true; ) { 
 			const float cost = math::cos(theta);
 			const float sint = math::sin(theta);
 			const float sinp = math::sin(phi);
@@ -126,16 +125,20 @@ BOOST_AUTO_TEST_CASE( Ellipsoid )
 			const float invDet = 1.0f / (a11 * a22 - a21 * a12);
 
 			theta += (a12 * d2 - a22 * d1) * invDet;
-			theta = (theta < 0.0f) ? 0.0f : (theta > HALFPI) ? HALFPI : theta;
+			theta  = Clamp(theta, 0.0f, math::HALFPI);
 			phi += (a21 * d1 - a11 * d2) * invDet;
-			phi = (phi < 0.0f) ? 0.0f : (phi > HALFPI) ? HALFPI : phi;
+			phi  = Clamp(phi, 0.0f, math::HALFPI);
 		}
+
 		bool failed = false;
-		for (i=0;i<MAX_ITERATIONS;++i) {
+
+		for (int i = 0; i < MAX_ITERATIONS; ++i) {
 			//Relative error for every iteration
 			const float tempError = std::abs(tempdist[i] - tempdist[MAX_ITERATIONS]) / tempdist[MAX_ITERATIONS];
-			error[i] += tempError;
+
+			relError[i] += tempError;
 			maxError[i] = std::max(tempError, maxError[i]);
+
 			if (i > MAX_ITERATIONS / 2 && tempError > FAIL_THRESHOLD && !failed) {
 				failed = true;
 				++failCount;
@@ -145,9 +148,10 @@ BOOST_AUTO_TEST_CASE( Ellipsoid )
 			errorsq[i] += tempError * tempError;
 		}
 	}
-	for (int i=0;i<MAX_ITERATIONS;++i) {
-		const float meanError = error[i] / TEST_RUNS;
-		const float devError = math::sqrt(errorsq[i] / TEST_RUNS - meanError * meanError);
+
+	for (int i = 0; i < MAX_ITERATIONS; ++i) {
+		const float meanError = relError[i] / TEST_RUNS;
+		const float  devError = math::sqrt(errorsq[i] / TEST_RUNS - meanError * meanError);
 		const float pct = 100.0f * (1.0f - float(finalIteration[i]) / TEST_RUNS);
 
 		printf("Iteration %d:\n\tError: (Mean: %f, Dev: %f, Max: %f)\n\tPercent remaining: %.3f%%\n", i, meanError, devError, maxError[i], pct);

@@ -84,7 +84,7 @@ BOOST_AUTO_TEST_CASE( SpringFormat )
 
 	// printf & spring output should be equal when a precision is specified
 
-	LOG("");
+	LOG("\n");
 	LOG("--------------------");
 	LOG("-- spring_lua_format");
 	LOG("%40s %40s", "[spring]", "[printf]");
@@ -127,7 +127,7 @@ BOOST_AUTO_TEST_CASE( SpringFormat )
 
 BOOST_AUTO_TEST_CASE( Printf )
 {
-	LOG("");
+	LOG("\n");
 	LOG("----------------------");
 	LOG("-- printf comparisions");
 #ifdef _WIN32
@@ -165,7 +165,7 @@ BOOST_AUTO_TEST_CASE( Printf )
 
 BOOST_AUTO_TEST_CASE( Roundings )
 {
-	LOG("");
+	LOG("\n");
 	LOG("----------------");
 	LOG("-- roundings");
 
@@ -189,7 +189,7 @@ BOOST_AUTO_TEST_CASE( Roundings )
 
 BOOST_AUTO_TEST_CASE( Precision )
 {
-	LOG("");
+	LOG("\n");
 	LOG("----------------");
 	LOG("-- precision");
 
@@ -241,7 +241,7 @@ BOOST_AUTO_TEST_CASE( Precision )
 
 BOOST_AUTO_TEST_CASE( Performance )
 {
-	LOG("");
+	LOG("\n");
 	LOG("----------------");
 	LOG("-- performance");
 
