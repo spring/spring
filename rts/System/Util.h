@@ -229,11 +229,11 @@ static bool VectorErase(std::vector<T>& v, T e)
 }
 
 template<typename T, typename C>
-static bool VectorEraseUniqueSorted(std::vector<T*>& v, T* o, const C& c)
+static bool VectorEraseUniqueSorted(std::vector<T>& v, T e, const C& c)
 {
-	const auto iter = std::lower_bound(v.begin(), v.end(), o, c);
+	const auto iter = std::lower_bound(v.begin(), v.end(), e, c);
 
-	if ((iter == v.end()) || (*iter != o))
+	if ((iter == v.end()) || (*iter != e))
 		return false;
 
 	for (size_t n = (iter - v.begin()); n < (v.size() - 1); n++) {
@@ -260,14 +260,14 @@ static bool VectorInsertUnique(std::vector<T>& v, T e, bool b = false)
 }
 
 template<typename T, typename C>
-static bool VectorInsertUniqueSorted(std::vector<T*>& v, T* o, const C& c)
+static bool VectorInsertUniqueSorted(std::vector<T>& v, T e, const C& c)
 {
-	const auto iter = std::lower_bound(v.begin(), v.end(), o, c);
+	const auto iter = std::lower_bound(v.begin(), v.end(), e, c);
 
-	if ((iter != v.end()) && (*iter == o))
+	if ((iter != v.end()) && (*iter == e))
 		return false;
 
-	v.push_back(o);
+	v.push_back(e);
 
 	for (size_t n = v.size() - 1; n > 0; n--) {
 		if (c(v[n - 1], v[n]))
