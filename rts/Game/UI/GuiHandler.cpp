@@ -3934,7 +3934,7 @@ void CGuiHandler::DrawArea(float3 pos, float radius, const float* color)
 	glBegin(GL_TRIANGLE_FAN);
 		glVertexf3(pos);
 		for(int a=0;a<=40;++a){
-			float3 p(fastmath::cos(a * 2.0f * math::PI / 40.0f) * radius, 0.0f, fastmath::sin(a * 2.0f * math::PI / 40.0f) * radius);
+			float3 p(fastmath::cos(a * math::TWOPI / 40.0f) * radius, 0.0f, fastmath::sin(a * math::TWOPI / 40.0f) * radius);
 			p+=pos;
 			p.y=CGround::GetHeightAboveWater(p.x, p.z, false);
 			glVertexf3(p);
