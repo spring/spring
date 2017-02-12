@@ -319,7 +319,7 @@ void CCamera::SetVFOV(const float angle)
 float CCamera::GetHFOV() const {
 	const float hAspect = (viewport[2] * 1.0f) / viewport[3];
 	const float fovFact = math::tan(fov * 0.5f) * hAspect;
-	return (2.0f * math::atan(fovFact) * math::DEG_TO_RAD);
+	return (2.0f * math::atan(fovFact) * math::RAD_TO_DEG);
 }
 
 
