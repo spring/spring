@@ -43,7 +43,7 @@ void CSpringController::KeyMove(float3 move)
 	move *= math::sqrt(move.z);
 
 	if (KeyInput::GetKeyModState(KMOD_ALT)) {
-		rot.x = Clamp(rot.x + move.y, PI * 0.51f, PI * 0.99f);
+		rot.x = Clamp(rot.x + move.y, math::PI * 0.51f, math::PI * 0.99f);
 		MoveAzimuth(move.x);
 		Update();
 		return;
@@ -92,7 +92,7 @@ void CSpringController::MouseWheelMove(float move)
 
 	// tilt the camera if CTRL is pressed, otherwise zoom
 	if (KeyInput::GetKeyModState(KMOD_CTRL)) {
-		rot.x = Clamp(rot.x - (move * shiftSpeed * 0.005f), PI * 0.51f, PI * 0.99f);
+		rot.x = Clamp(rot.x - (move * shiftSpeed * 0.005f), math::PI * 0.51f, math::PI * 0.99f);
 		camHandler->CameraTransition(0.25f);
 	} else {
 		const float3 curCamPos = GetPos();
@@ -198,7 +198,7 @@ void CSpringController::Update()
 	pos.ClampInMap();
 	pos.y = CGround::GetHeightReal(pos.x, pos.z, false);
 
-	rot.x = Clamp(rot.x, PI * 0.51f, PI * 0.99f);
+	rot.x = Clamp(rot.x, math::PI * 0.51f, math::PI * 0.99f);
 	camera->SetRot(float3(rot.x, GetAzimuth(), rot.z));
 	dir = camera->GetDir();
 
@@ -214,7 +214,7 @@ static float GetRotationWithCardinalLock(float rot)
 {
 	static float cardinalDirLockWidth = 0.2f;
 
-	rot /= fastmath::HALFPI;
+	rot /= math::HALFPI;
 
 	const float rotMoved = std::abs(rot) - cardinalDirLockWidth * 0.5f;
 	const float numerator = std::trunc(rotMoved);
@@ -224,14 +224,14 @@ static float GetRotationWithCardinalLock(float rot)
 	const float c = 1.f - b;
 	const float fx = (fract > cardinalDirLockWidth) ? fract * b + c : 0.f;
 
-	return std::copysign(numerator + fx, rot) * fastmath::HALFPI;
+	return std::copysign(numerator + fx, rot) * math::HALFPI;
 }
 
 
 float CSpringController::MoveAzimuth(float move)
 {
-	const float minRot = std::floor(rot.y / fastmath::HALFPI) * fastmath::HALFPI;
-	const float maxRot = std::ceil(rot.y / fastmath::HALFPI) * fastmath::HALFPI;
+	const float minRot = std::floor(rot.y / math::HALFPI) * math::HALFPI;
+	const float maxRot = std::ceil(rot.y / math::HALFPI) * math::HALFPI;
 
 	rot.y -= move;
 

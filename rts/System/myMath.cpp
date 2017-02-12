@@ -20,7 +20,7 @@ void CMyMath::Init()
 	good_fpu_init();
 
 	for (int a = 0; a < NUM_HEADINGS; ++a) {
-		float ang = (a - (NUM_HEADINGS / 2)) * 2 * PI / NUM_HEADINGS;
+		float ang = (a - (NUM_HEADINGS / 2)) * math::TWOPI / NUM_HEADINGS;
 		float2 v;
 			v.x = math::sin(ang);
 			v.y = math::cos(ang);

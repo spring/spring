@@ -52,9 +52,9 @@ CSpherePartProjectile::CSpherePartProjectile(
 	checkCol = false;
 
 	for(int y = 0; y < 5; ++y) {
-		const float yp = (y + ypart) / 16.0f*PI - PI/2;
+		const float yp = (y + ypart) / 16.0f*math::PI - math::HALFPI;
 		for (int x = 0; x < 5; ++x) {
-			float xp = (x + xpart) / 32.0f*2*PI;
+			float xp = (x + xpart) / 32.0f*math::TWOPI;
 			vectors[y*5 + x] = float3(std::sin(xp)*std::cos(yp), std::sin(yp), std::cos(xp)*std::cos(yp));
 		}
 	}

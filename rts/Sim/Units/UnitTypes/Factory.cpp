@@ -312,8 +312,8 @@ void CFactory::SendToEmptySpot(CUnit* unit)
 	const float3 tempPos = foundPos;
 
 	for (int x = 0; x < numSteps; ++x) {
-		const float a = searchRadius * math::cos(x * PI / (numSteps * 0.5f));
-		const float b = searchRadius * math::sin(x * PI / (numSteps * 0.5f));
+		const float a = searchRadius * math::cos(x * math::PI / (numSteps * 0.5f));
+		const float b = searchRadius * math::sin(x * math::PI / (numSteps * 0.5f));
 
 		float3 testPos = pos + frontdir * a + rightdir * b;
 
@@ -340,8 +340,8 @@ void CFactory::SendToEmptySpot(CUnit* unit)
 
 		do {
 			const float x = ((gsRNG.NextInt() * 1.0f) / RANDINT_MAX) * numSteps;
-			const float a = searchRadius * math::cos(x * PI / (numSteps * 0.5f));
-			const float b = searchRadius * math::sin(x * PI / (numSteps * 0.5f));
+			const float a = searchRadius * math::cos(x * math::PI / (numSteps * 0.5f));
+			const float b = searchRadius * math::sin(x * math::PI / (numSteps * 0.5f));
 
 			foundPos.x = pos.x + frontdir.x * a + rightdir.x * b;
 			foundPos.z = pos.z + frontdir.z * a + rightdir.z * b;
@@ -427,8 +427,8 @@ void CFactory::AssignBuildeeOrders(CUnit* unit) {
 			c.options |= SHIFT_KEY;
 
 			if (c.GetID() == CMD_MOVE) {
-				float xjit = gsRNG.NextFloat() * TWOPI;
-				float zjit = gsRNG.NextFloat() * TWOPI;
+				float xjit = gsRNG.NextFloat() * math::TWOPI;
+				float zjit = gsRNG.NextFloat() * math::TWOPI;
 
 				const float3 p1 = c.GetPos(0);
 				const float3 p2 = float3(p1.x + xjit, p1.y, p1.z + zjit);

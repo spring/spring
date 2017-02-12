@@ -58,9 +58,9 @@ CFreeController::CFreeController()
 	slide       = configHandler->GetFloat("CamFreeSlide");
 	gndOffset   = configHandler->GetFloat("CamFreeGroundOffset");
 	tiltSpeed   = configHandler->GetFloat("CamFreeTiltSpeed");
-	tiltSpeed   = tiltSpeed * (PI / 180.0);
+	tiltSpeed   = tiltSpeed * math::DEG_TO_RAD;
 	autoTilt    = configHandler->GetFloat("CamFreeAutoTilt");
-	autoTilt    = autoTilt * (PI / 180.0);
+	autoTilt    = autoTilt * math::DEG_TO_RAD;
 	velTime     = configHandler->GetFloat("CamFreeVelTime");
 	velTime     = max(0.1f, velTime);
 	avelTime    = configHandler->GetFloat("CamFreeAngVelTime");
@@ -122,7 +122,7 @@ void CFreeController::Update()
 			const float3 hDir(std::sin(rot.y), 0.f, std::cos(rot.y));
 			const float3 gndNormal = CGround::GetSmoothNormal(pos.x, pos.z, false);
 			const float dot = gndNormal.dot(hDir);
-			const float gndRotX = (float)math::acos(dot) - (PI * 0.5f);
+			const float gndRotX = (float)math::acos(dot) - math::HALFPI;
 			const float rotXdiff = (gndRotX - rot.x);
 			autoTiltVel = (autoTilt * rotXdiff);
 		}
@@ -239,8 +239,8 @@ void CFreeController::Update()
 	}
 
 	// angular clamps
-	if (rot.x >= fastmath::PI || rot.x<=0) {
-		rot.x = Clamp(rot.x, 0.001f, fastmath::PI - 0.001f);
+	if (rot.x >= math::PI || rot.x<=0) {
+		rot.x = Clamp(rot.x, 0.001f, math::PI - 0.001f);
 		camera->SetRotX(rot.x);
 		avel.x = 0.0f;
 	}
@@ -402,8 +402,8 @@ void CFreeController::GetState(StateMap& sm) const
 	sm["invertAlt"]   = invertAlt ? +1.0f : -1.0f;
 	sm["gndLock"]     = gndLock   ? +1.0f : -1.0f;
 
-	sm["rx"] = fastmath::HALFPI - rot.x;
-	sm["ry"] = fastmath::PI - rot.y;
+	sm["rx"] = math::HALFPI - rot.x;
+	sm["ry"] = math::PI - rot.y;
 	sm["rz"] = rot.z;
 
 	sm["vx"] = prevVel.x;
@@ -437,8 +437,8 @@ bool CFreeController::SetState(const StateMap& sm)
 	SetStateFloat(sm, "rx", rot.x);
 	SetStateFloat(sm, "ry", rot.y);
 	SetStateFloat(sm, "rz", rot.z);
-	rot.x = fastmath::HALFPI - rot.x;
-	rot.y = fastmath::PI - rot.y;
+	rot.x = math::HALFPI - rot.x;
+	rot.y = math::PI - rot.y;
 
 	SetStateFloat(sm, "vx", prevVel.x);
 	SetStateFloat(sm, "vy", prevVel.y);

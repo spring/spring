@@ -179,7 +179,7 @@ void CSMFGroundDrawer::CreateWaterPlanes(bool camOufOfMap) {
 		 255
 	};
 
-	const float alphainc = fastmath::PI2 / 32;
+	const float alphainc = math::TWOPI / 32;
 	float alpha,r1,r2;
 
 	float3 p(0.0f, 0.0f, 0.0f);
@@ -198,7 +198,7 @@ void CSMFGroundDrawer::CreateWaterPlanes(bool camOufOfMap) {
 		} else {
 			r2 = (n+1)*(n+1) * size;
 		}
-		for (alpha = 0.0f; (alpha - fastmath::PI2) < alphainc ; alpha += alphainc) {
+		for (alpha = 0.0f; (alpha - math::TWOPI) < alphainc ; alpha += alphainc) {
 			p.x = r1 * fastmath::sin(alpha) + 2 * xsize;
 			p.z = r1 * fastmath::cos(alpha) + 2 * ysize;
 			va->AddVertexC(p, planeColor );

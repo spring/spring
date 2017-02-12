@@ -613,7 +613,7 @@ void CGroundMoveType::ChangeSpeed(float newWantedSpeed, bool wantReverse, bool f
 				if (atEndOfPath) {
 					// at this point, Update() will no longer call GetNextWayPoint()
 					// and we must slow down to prevent entering an infinite circle
-					targetSpeed = std::min(targetSpeed, (currWayPointDist * PI) / (SPRING_CIRCLE_DIVS / turnRate));
+					targetSpeed = std::min(targetSpeed, (currWayPointDist * math::PI) / (SPRING_CIRCLE_DIVS / turnRate));
 				}
 			}
 
@@ -772,7 +772,7 @@ void CGroundMoveType::UpdateSkid()
 
 			skidRotSpd = math::floor(skidRotSpeed + skidRotAccel + 0.5f);
 			skidRotAccel = (skidRotSpd - skidRotSpeed) * 0.5f;
-			skidRotAccel *= (PI / 180.0f);
+			skidRotAccel *= math::DEG_TO_RAD;
 
 			owner->ClearPhysicalStateBit(CSolidObject::PSTATE_BIT_SKIDDING);
 			// update wanted-heading after coming to a stop
@@ -796,7 +796,7 @@ void CGroundMoveType::UpdateSkid()
 
 			skidRotSpd = math::floor(skidRotSpeed + skidRotAccel * (remTime - 1.0f) + 0.5f);
 			skidRotAccel = (skidRotSpd - skidRotSpeed) / remTime;
-			skidRotAccel *= (PI / 180.0f);
+			skidRotAccel *= math::DEG_TO_RAD;
 
 			if (math::floor(skidRotSpeed) != math::floor(skidRotSpeed + skidRotAccel)) {
 				skidRotSpeed = 0.0f;
@@ -1011,7 +1011,7 @@ void CGroundMoveType::CalcSkidRot()
 	skidRotSpeed *= 0.999f;
 	skidRotAccel *= 0.95f;
 
-	const float angle = (skidRotSpeed / GAME_SPEED) * (PI * 2.0f);
+	const float angle = (skidRotSpeed / GAME_SPEED) * math::TWOPI;
 	const float cosp = math::cos(angle);
 	const float sinp = math::sin(angle);
 
@@ -1074,7 +1074,7 @@ float3 CGroundMoveType::GetObstacleAvoidanceDir(const float3& desiredDir) {
 
 	static const float AVOIDER_DIR_WEIGHT = 1.0f;
 	static const float DESIRED_DIR_WEIGHT = 0.5f;
-	static const float MAX_AVOIDEE_COSINE = math::cosf(120.0f * (PI / 180.0f));
+	static const float MAX_AVOIDEE_COSINE = math::cosf(120.0f * math::DEG_TO_RAD);
 	static const float LAST_DIR_MIX_ALPHA = 0.7f;
 
 	// now we do the obstacle avoidance proper
@@ -1327,7 +1327,7 @@ bool CGroundMoveType::CanGetNextWayPoint() {
 		// to prevent sine-like "snaking" trajectories
 		const int dirSign = Sign(int(!reversing));
 		const float turnFrames = SPRING_CIRCLE_DIVS / turnRate;
-		const float turnRadius = (owner->speed.w * turnFrames) / (PI + PI);
+		const float turnRadius = (owner->speed.w * turnFrames) / math::TWOPI;
 		const float waypointDot = Clamp(waypointDir.dot(flatFrontDir * dirSign), -1.0f, 1.0f);
 
 		#if 1
@@ -1344,7 +1344,7 @@ bool CGroundMoveType::CanGetNextWayPoint() {
 		if ((currWayPointDist > std::max(turnRadius * 1.0f, 1.0f * SQUARE_SIZE)) && (waypointDot <  0.0f)) {
 			return false;
 		}
-		if (math::acosf(waypointDot) < ((turnRate / SPRING_CIRCLE_DIVS) * (PI + PI))) {
+		if (math::acosf(waypointDot) < ((turnRate / SPRING_CIRCLE_DIVS) * math::TWOPI)) {
 			return false;
 		}
 		#endif
@@ -1867,7 +1867,7 @@ void CGroundMoveType::HandleUnitCollisions(
 		// positions of at most TWOPI elmos, use half as threshold
 		if (collideeMobile) {
 			const CGroundMoveType* gmt = static_cast<CGroundMoveType*>(collidee->moveType);
-			if (collider->moveType->goalPos.SqDistance2D(collidee->moveType->goalPos) < (PI * PI)) {
+			if (collider->moveType->goalPos.SqDistance2D(collidee->moveType->goalPos) < math::TWOPI) {
 				if (collider->IsMoving() && collider->moveType->progressState == AMoveType::Active) {
 					if (collidee->moveType->progressState == AMoveType::Done) {
 						if (!collidee->IsMoving() && UNIT_CMD_QUE_SIZE(collidee) == 0) {
@@ -2408,7 +2408,7 @@ bool CGroundMoveType::WantReverse(const float3& wpDir, const float3& ffDir) cons
 	const float goalRevETA = (goalDist / maxReverseSpeed);                       // in frames (simplistic)
 
 	const float waypointAngle = Clamp(wpDir.dot(owner->frontdir), -1.0f, 0.0f);  // clamp to prevent NaN's; [-1, 0]
-	const float turnAngleDeg  = math::acosf(waypointAngle) * (180.0f / PI);      // in degrees; [90.0, 180.0]
+	const float turnAngleDeg  = math::acosf(waypointAngle) * math::RAD_TO_DEG;   // in degrees; [90.0, 180.0]
 	const float fwdTurnAngle  = (turnAngleDeg / 360.0f) * SPRING_CIRCLE_DIVS;    // in "headings"
 	const float revTurnAngle  = SHORTINT_MAXVALUE - fwdTurnAngle;                // 180 deg - angle
 

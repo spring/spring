@@ -312,14 +312,14 @@ bool CCamera::InView(const float3& p, float radius) const
 void CCamera::SetVFOV(const float angle)
 {
 	fov = angle;
-	halfFov = (fov * 0.5f) * (PI / 180.f);
+	halfFov = (fov * 0.5f) * math::DEG_TO_RAD;
 	tanHalfFov = math::tan(halfFov);
 }
 
 float CCamera::GetHFOV() const {
 	const float hAspect = (viewport[2] * 1.0f) / viewport[3];
 	const float fovFact = math::tan(fov * 0.5f) * hAspect;
-	return (2.0f * math::atan(fovFact) * (180.0f / PI));
+	return (2.0f * math::atan(fovFact) * math::DEG_TO_RAD);
 }
 
 
@@ -360,9 +360,9 @@ float3 CCamera::GetRgtFromRot(const float3 r)
 	//   fwd=(0,-1,0) -> rot=GetRotFromDir(fwd)=( PI, PI, 0.0) -> GetRgtFromRot(rot)=(+1.0, 0.0, 0.0)
 	//
 	float3 rgt;
-	rgt.x = std::sin(HALFPI - r.z) *   std::sin(r.y + HALFPI);
-	rgt.z = std::sin(HALFPI - r.z) * (-std::cos(r.y + HALFPI));
-	rgt.y = std::cos(HALFPI - r.z);
+	rgt.x = std::sin(math::HALFPI - r.z) *   std::sin(r.y + math::HALFPI);
+	rgt.z = std::sin(math::HALFPI - r.z) * (-std::cos(r.y + math::HALFPI));
+	rgt.y = std::cos(math::HALFPI - r.z);
 	return rgt;
 }
 

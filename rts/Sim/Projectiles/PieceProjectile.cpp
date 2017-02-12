@@ -213,7 +213,7 @@ void CPieceProjectile::Update()
 		}
 
 		CMatrix44f m(pos);
-		m.Rotate(spinAngle * (PI / 180.0f), spinVec);
+		m.Rotate(spinAngle * math::DEG_TO_RAD, spinVec);
 		m.Translate(RandomVertexPos());
 
 		fireTrailPoints[0].pos  = m.GetPos();

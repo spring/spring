@@ -795,14 +795,14 @@ void CMouseHandler::DrawFPSCursor()
 {
 	glDisable(GL_TEXTURE_2D);
 
-	const float wingHalf = fastmath::PI / 9.0f;
+	const float wingHalf = math::PI / 9.0f;
 	const int stepNumHalf = 2;
 	const float step = wingHalf / stepNumHalf;
 
 	glBegin(GL_TRIANGLES);
 		glColor4f(1.0f, 1.0f, 1.0f, 0.5f);
 
-		for (float angle = 0.0f; angle < fastmath::PI2; angle += fastmath::PI2 / 3.f) {
+		for (float angle = 0.0f; angle < math::TWOPI; angle += math::TWOPI / 3.f) {
 			for (int i = -stepNumHalf; i < stepNumHalf; i++) {
 				glVertex2f(0.1f * fastmath::sin(angle),                0.1f * fastmath::cos(angle));
 				glVertex2f(0.8f * fastmath::sin(angle +     i * step), 0.8f * fastmath::cos(angle +     i * step));

@@ -47,7 +47,7 @@ UnitDefWeapon::UnitDefWeapon(const WeaponDef* weaponDef, const LuaTable& weaponT
 	//     <maxAngleDif> specifies the full-width arc,
 	//     but we want the half-width arc internally
 	//     (arcs are always symmetric around mainDir)
-	this->maxMainDirAngleDif = math::cos((weaponTable.GetFloat("maxAngleDif", 360.0f) * 0.5f) * (PI / 180.0f));
+	this->maxMainDirAngleDif = math::cos((weaponTable.GetFloat("maxAngleDif", 360.0f) * 0.5f) * math::DEG_TO_RAD);
 
 	const string& btcString = weaponTable.GetString("badTargetCategory", "");
 	const string& otcString = weaponTable.GetString("onlyTargetCategory", "");
@@ -352,7 +352,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	collide = udTable.GetBool("collide", true);
 
 	const float maxSlopeDeg = Clamp(udTable.GetFloat("maxSlope", 0.0f), 0.0f, 89.0f);
-	const float maxSlopeRad = maxSlopeDeg * (PI / 180.0f);
+	const float maxSlopeRad = maxSlopeDeg * math::DEG_TO_RAD;
 
 	// FIXME: kill the magic constant
 	maxHeightDif = 40.0f * math::tanf(maxSlopeRad);
@@ -440,7 +440,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	turnRate    = udTable.GetFloat("turnRate", 0.0f);
 	turnInPlace = udTable.GetBool("turnInPlace", true);
 	turnInPlaceSpeedLimit = turnRate / SPRING_CIRCLE_DIVS;
-	turnInPlaceSpeedLimit *= ((PI + PI) * SQUARE_SIZE);
+	turnInPlaceSpeedLimit *= (math::TWOPI * SQUARE_SIZE);
 	turnInPlaceSpeedLimit /= std::max(speed / GAME_SPEED, 1.0f);
 	turnInPlaceSpeedLimit = udTable.GetFloat("turnInPlaceSpeedLimit", std::min(speed, turnInPlaceSpeedLimit));
 	turnInPlaceAngleLimit = udTable.GetFloat("turnInPlaceAngleLimit", 0.0f);

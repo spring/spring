@@ -1476,7 +1476,7 @@ bool CMobileCAI::FindEmptySpot(const float3& center, float radius, float spread,
 
 		for (int b = 0; b < bmax; ++b) {
 			// FIXME: using a deterministic technique might be better, since it would allow an unload command to be tested for validity from unsynced (with predictable results)
-			const float ang = 2.0f * PI * (fromSynced ? gsRNG.NextFloat() : guRNG.NextFloat());
+			const float ang = math::TWOPI * (fromSynced ? gsRNG.NextFloat() : guRNG.NextFloat());
 			const float len = math::sqrt(fromSynced ? gsRNG.NextFloat() : guRNG.NextFloat());
 
 			delta.x = len * math::sin(ang);

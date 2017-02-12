@@ -116,7 +116,7 @@ bool CDecalsDrawerGL4::Decal::IsValid() const
 
 bool CDecalsDrawerGL4::Decal::InView() const
 {
-	return camera->InView(pos, std::max(size.x, size.y) * fastmath::SQRT2);
+	return camera->InView(pos, std::max(size.x, size.y) * math::SQRT2);
 }
 
 
@@ -925,8 +925,8 @@ static inline bool Overlap(const CDecalsDrawerGL4::SDecalGroup& g1, const CDecal
 
 static inline bool Overlap(const CDecalsDrawerGL4::Decal& d1, const CDecalsDrawerGL4::Decal& d2)
 {
-	const float hsize1 = std::max(d1.size.x, d1.size.y) * fastmath::SQRT2;
-	const float hsize2 = std::max(d2.size.x, d2.size.y) * fastmath::SQRT2;
+	const float hsize1 = std::max(d1.size.x, d1.size.y) * math::SQRT2;
+	const float hsize2 = std::max(d2.size.x, d2.size.y) * math::SQRT2;
 	const float3 diff  = d1.pos - d2.pos;
 
 	if (std::abs(diff.x) > (hsize1 + hsize2))
@@ -940,7 +940,7 @@ static inline bool Overlap(const CDecalsDrawerGL4::SDecalGroup& g, const CDecals
 {
 	const float3 hsize1 = (g.boundAABB[1] - g.boundAABB[0]) * 0.5f;
 	const float3 mid1   = g.boundAABB[0] + hsize1;
-	const float hsize2  = std::max(d.size.x, d.size.y) * fastmath::SQRT2;
+	const float hsize2  = std::max(d.size.x, d.size.y) * math::SQRT2;
 	const float3 diff   = mid1 - d.pos;
 
 	if (std::abs(diff.x) > (hsize1.x + hsize2))
@@ -1096,7 +1096,7 @@ static void DRAW_DECAL(CVertexArray* va, const CDecalsDrawerGL4::Decal* d)
 {
 	CMatrix44f m;
 	m.Translate(d->pos.x, d->pos.z, 0.0f);
-	m.RotateZ(d->rot * fastmath::DEG_TO_RAD);
+	m.RotateZ(d->rot * math::DEG_TO_RAD);
 	float2 dsize = d->size;
 	// make sure it is at least 1x1 pixels!
 	dsize.x = std::max(dsize.x, std::ceil( float(mapDims.mapx * SQUARE_SIZE) / CDecalsDrawerGL4::OVERLAP_TEST_TEXTURE_SIZE ));
@@ -1541,8 +1541,8 @@ void CDecalsDrawerGL4::AddExplosion(float3 pos, float damage, float radius)
 
 	Decal d;
 	d.pos    = pos;
-	d.rot    = guRNG.NextFloat() * fastmath::PI2;
-	d.size.x = radius * fastmath::SQRT2;
+	d.rot    = guRNG.NextFloat() * math::TWOPI;
+	d.size.x = radius * math::SQRT2;
 	d.size.y = d.size.x;
 	d.alpha  = Clamp(damage / 255.0f, 0.75f, 1.0f);
 	d.SetTexture(IntToString((guRNG.NextInt() & 3) + 1)); // pick one of 4 scar textures
@@ -1565,7 +1565,7 @@ void CDecalsDrawerGL4::CreateBuildingDecal(const CSolidObject* object)
 
 	Decal d;
 	d.pos   = object->pos;
-	d.rot   = GetRadFromXY(object->frontdir.x, object->frontdir.z) - fastmath::HALFPI;
+	d.rot   = GetRadFromXY(object->frontdir.x, object->frontdir.z) - math::HALFPI;
 	d.size  = float2(sizex * SQUARE_SIZE, sizey * SQUARE_SIZE);
 	d.alpha = 1.0f;
 	d.alphaFalloff = decalDef.groundDecalDecaySpeed;

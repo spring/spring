@@ -64,8 +64,8 @@ CBasicSky::CBasicSky()
 	rawClouds=newmat2<int>(CLOUD_SIZE,CLOUD_SIZE);
 	blendMatrix=newmat3<int>(CLOUD_DETAIL,32,32);
 
-	domeheight=std::cos(PI/16)*1.01f;
-	domeWidth=std::sin(PI/16)*400*1.7f;
+	domeheight=std::cos(math::PI/16)*1.01f;
+	domeWidth=std::sin(math::PI/16)*400*1.7f;
 
 	UpdateSkyDir();
 	InitSun();
@@ -257,8 +257,8 @@ void CBasicSky::Draw()
 
 float3 CBasicSky::GetCoord(int x, int y)
 {
-	float fy = ((float)y/Y_PART) * 2 * PI;
-	float fx = ((float)x/X_PART) * 2 * PI;
+	float fy = ((float)y/Y_PART) * math::TWOPI;
+	float fx = ((float)x/X_PART) * math::TWOPI;
 
 	return float3(
 		fastmath::sin(fy/32) * fastmath::sin(fx),
@@ -608,8 +608,8 @@ void CBasicSky::UpdateSunFlare() {
 		glBegin(GL_TRIANGLE_STRIP);
 
 		for (int x = 0; x < 257; ++x) {
-			const float dx = std::sin(x * 2.0f * PI / 256.0f);
-			const float dy = std::cos(x * 2.0f * PI / 256.0f);
+			const float dx = std::sin(x * math::TWOPI / 256.0f);
+			const float dy = std::cos(x * math::TWOPI / 256.0f);
 			const float dz = 5.0f;
 
 			glTexCoord2f(x / 256.0f, 0.25f); glVertexf3(zdir * dz + xdir * dx * 0.0014f + ydir * dy * 0.0014f);
@@ -712,7 +712,7 @@ void CBasicSky::UpdateSkyDir() {
 
 	skydir2.ANormalize();
 	skydir1 = skydir2.cross(UpVector);
-	skyAngle = GetRadFromXY(skydir2.x, skydir2.z) + PI / 2.0f; //FIXME Why the +PI/2???
+	skyAngle = GetRadFromXY(skydir2.x, skydir2.z) + math::HALFPI; //FIXME Why the +PI/2???
 }
 
 void CBasicSky::UpdateSkyTexture() {

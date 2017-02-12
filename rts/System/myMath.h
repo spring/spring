@@ -6,18 +6,10 @@
 #include "Sim/Misc/GlobalConstants.h"
 #include "System/type2.h"
 #include "System/float3.h"
+#include "System/MathConstants.h"
 
 #include <cmath> // std::fabs
 #include <algorithm> // std::{min,max}
-
-#ifndef M_PI
-    #define M_PI       3.14159265358979323846
-#endif 
-
-
-static constexpr float  INVPI = 0.3183098861837907f; // sic (1.0f / PI is not a constexpr)
-static constexpr float  TWOPI = 2.0f * PI;
-static constexpr float HALFPI = 0.5f * PI;
 
 static constexpr int SHORTINT_MAXVALUE  = 32768;
 static constexpr int SPRING_CIRCLE_DIVS = (SHORTINT_MAXVALUE << 1);

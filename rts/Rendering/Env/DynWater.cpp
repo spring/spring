@@ -80,9 +80,9 @@ CDynWater::CDynWater()
 
 	for (int y = 0; y < 64; ++y) {
 		for (int x = 0; x < 64; ++x) {
-			temp[(y*64 + x)*4 + 0] = std::sin(x*PI*2.0f/64.0f) + ((x < 32) ? -1 : 1)*0.3f;
+			temp[(y*64 + x)*4 + 0] = std::sin(x*math::TWOPI/64.0f) + ((x < 32) ? -1 : 1)*0.3f;
 			temp[(y*64 + x)*4 + 1] = temp[(y*64 + x)*4 + 0];
-			temp[(y*64 + x)*4 + 2] = std::cos(x*PI*2.0f/64.0f) + ((x < 32) ? (16 - x) : (x - 48))/16.0f*0.3f;
+			temp[(y*64 + x)*4 + 2] = std::cos(x*math::TWOPI/64.0f) + ((x < 32) ? (16 - x) : (x - 48))/16.0f*0.3f;
 			temp[(y*64 + x)*4 + 3] = 0;
 		}
 	}

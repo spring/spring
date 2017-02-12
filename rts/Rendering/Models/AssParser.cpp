@@ -29,8 +29,6 @@
 
 
 #define IS_QNAN(f) (f != f)
-static const float DEGTORAD = PI / 180.0f;
-static const float RADTODEG = 180.0f / PI;
 
 // triangulate guarantees the most complex mesh is a triangle
 // sortbytype ensure only 1 type of primitive type per mesh is used
@@ -320,13 +318,13 @@ void CAssParser::LoadPieceTransformations(
 	//   together with the (baked) aiRotateQuad they determine the
 	//   model's pose *before* any animations execute
 	//
-	// float3 bakedRotAngles = pieceTable.GetFloat3("rotate", aiQuaternionToRadianAngles(aiRotateQuat) * RADTODEG);
+	// float3 bakedRotAngles = pieceTable.GetFloat3("rotate", aiQuaternionToRadianAngles(aiRotateQuat) * math::RAD_TO_DEG);
 	float3 bakedRotAngles = pieceTable.GetFloat3("rotate", ZeroVector);
 
 	bakedRotAngles.x = pieceTable.GetFloat("rotatex", bakedRotAngles.x);
 	bakedRotAngles.y = pieceTable.GetFloat("rotatey", bakedRotAngles.y);
 	bakedRotAngles.z = pieceTable.GetFloat("rotatez", bakedRotAngles.z);
-	bakedRotAngles  *= DEGTORAD;
+	bakedRotAngles  *= math::DEG_TO_RAD;
 
 	LOG_SL(LOG_SECTION_PIECE, L_INFO,
 		"(%d:%s) Assimp offset (%f,%f,%f), rotate (%f,%f,%f,%f), scale (%f,%f,%f)",

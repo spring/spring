@@ -649,7 +649,7 @@ void CAdvTreeDrawer::Draw(float treeDistance)
 			if (!cam->InView(pos + (UpVector * (MAX_TREE_HEIGHT / 2.0f)), MAX_TREE_HEIGHT / 2.0f))
 				continue;
 
-			const float ang = fti->fallPos * PI;
+			const float ang = fti->fallPos * math::PI;
 
 			const float3 yvec(fti->dir.x * std::sin(ang), std::cos(ang), fti->dir.z * std::sin(ang));
 			const float3 zvec((yvec.cross(-RgtVector)).ANormalize());
@@ -1047,7 +1047,7 @@ void CAdvTreeDrawer::DrawShadowPass()
 			if (!cam->InView(pos + (UpVector * (MAX_TREE_HEIGHT / 2.0f)), MAX_TREE_HEIGHT / 2.0f))
 				continue;
 
-			const float ang = fti->fallPos * PI;
+			const float ang = fti->fallPos * math::PI;
 
 			const float3 yvec(fti->dir.x * std::sin(ang), std::cos(ang), fti->dir.z * std::sin(ang));
 			const float3 zvec((yvec.cross(RgtVector)).ANormalize());

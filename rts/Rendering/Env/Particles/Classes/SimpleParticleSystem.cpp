@@ -172,8 +172,8 @@ void CSimpleParticleSystem::Init(const CUnit* owner, const float3& offset)
 
 	particles.resize(numParticles);
 	for (auto& p: particles) {
-		float az = guRNG.NextFloat() * 2 * PI;
-		float ay = (emitRot + (emitRotSpread * guRNG.NextFloat())) * (PI / 180.0);
+		float az = guRNG.NextFloat() * math::TWOPI;
+		float ay = (emitRot + (emitRotSpread * guRNG.NextFloat())) * math::DEG_TO_RAD;
 
 		p.pos = offset;
 		p.speed = ((up * emitMul.y) * fastmath::cos(ay) - ((right * emitMul.x) * fastmath::cos(az) - (forward * emitMul.z) * fastmath::sin(az)) * fastmath::sin(ay)) * (particleSpeed + (guRNG.NextFloat() * particleSpeedSpread));
@@ -242,8 +242,8 @@ void CSphereParticleSpawner::Init(const CUnit* owner, const float3& offset)
 	}
 
 	for (int i = 0; i < numParticles; i++) {
-		const float az = guRNG.NextFloat() * 2 * PI;
-		const float ay = (emitRot + emitRotSpread*guRNG.NextFloat()) * (PI / 180.0);
+		const float az = guRNG.NextFloat() * math::TWOPI;
+		const float ay = (emitRot + emitRotSpread*guRNG.NextFloat()) * math::DEG_TO_RAD;
 
 		const float3 pspeed = ((up * emitMul.y) * std::cos(ay) - ((right * emitMul.x) * std::cos(az) - (forward * emitMul.z) * std::sin(az)) * std::sin(ay)) * (particleSpeed + (guRNG.NextFloat() * particleSpeedSpread));
 

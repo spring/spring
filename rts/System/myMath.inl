@@ -47,17 +47,17 @@ inline float GetHeadingFromVectorF(const float dx, const float dz)
 		const float dd = d * d;
 
 		if (d > 1.0f) {
-			h = HALFPI - d / (dd + 0.28f);
+			h = math::HALFPI - d / (dd + 0.28f);
 		} else if (d < -1.0f) {
-			h = -HALFPI - d / (dd + 0.28f);
+			h = -math::HALFPI - d / (dd + 0.28f);
 		} else {
 			h = d / (1.0f + 0.28f * dd);
 		}
 
 		// add PI (if dx > 0) or -PI (if dx < 0) when dz < 0
-		h += ((PI * ((dx > 0.0f) * 2.0f - 1.0f)) * (dz < 0.0f));
+		h += ((math::PI * ((dx > 0.0f) * 2.0f - 1.0f)) * (dz < 0.0f));
 	} else {
-		h = HALFPI * ((dx > 0.0f) * 2.0f - 1.0f);
+		h = math::HALFPI * ((dx > 0.0f) * 2.0f - 1.0f);
 	}
 
 	return h;
@@ -65,7 +65,7 @@ inline float GetHeadingFromVectorF(const float dx, const float dz)
 
 inline short int GetHeadingFromVector(const float dx, const float dz)
 {
-	constexpr float s = SHORTINT_MAXVALUE * INVPI;
+	constexpr float s = SHORTINT_MAXVALUE * math::INVPI;
 	const     float h = GetHeadingFromVectorF(dx, dz) * s;
 
 	// Prevents h from going beyond SHORTINT_MAXVALUE.
@@ -92,7 +92,7 @@ inline shortint2 GetHAndPFromVector(const float3 vec)
 	// If h goes beyond SHORTINT_MAXVALUE, the following
 	// conversion to a short int crashes.
 	// this change destroys the whole meaning with using short ints....
-	int iy = (int) (math::asin(vec.y) * (SHORTINT_MAXVALUE * INVPI));
+	int iy = (int) (math::asin(vec.y) * (SHORTINT_MAXVALUE * math::INVPI));
 	iy %= SHORTINT_MAXVALUE;
 	ret.y = (short int) iy;
 	ret.x = GetHeadingFromVector(vec.x, vec.z);
@@ -144,35 +144,32 @@ inline int2 IdxToCoord(unsigned x, unsigned array_width)
 
 inline float ClampRad(float f)
 {
-	f = math::fmod(f, TWOPI);
-	if (f < 0.0f) f += TWOPI;
+	f  = math::fmod(f, math::TWOPI);
+	f += (math::TWOPI * (f < 0.0f));
 	return f;
 }
 
-inline void ClampRad(float* f)
-{
-	*f = math::fmod(*f, TWOPI);
-	if (*f < 0.0f) *f += TWOPI;
-}
+inline void ClampRad(float* f) { *f = ClampRad(*f); }
+
 
 inline bool RadsAreEqual(const float f1, const float f2)
 {
-	return (math::fmod(f1 - f2, TWOPI) == 0.0f);
+	return (math::fmod(f1 - f2, math::TWOPI) == 0.0f);
 }
 
 inline float GetRadFromXY(const float dx, const float dy)
 {
 	float a;
-	if(dx != 0) {
+	if (dx != 0.0f) {
 		a = math::atan(dy / dx);
-		if(dx < 0)
-			a += PI;
-		else if(dy < 0)
-			a += 2.0f * PI;
+
+		if (dx < 0.0f)
+			a += math::PI;
+		else if (dy < 0.0f)
+
+			a += 2.0f * math::PI;
 		return a;
 	}
-	a = PI / 2.0f;
-	if(dy < 0)
-		a += PI;
-	return a;
+
+	return (math::HALFPI + (math::PI * (dy < 0.0f)));
 }

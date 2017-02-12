@@ -65,7 +65,7 @@ static float DegreesToMaxSlope(float degrees)
 {
 	// Prevent MSVC from inlining stuff that would break the
 	// PE checksum compatibility between debug and release
-	static const float degToRad = PI / 180.0f;
+	static constexpr float degToRad = math::DEG_TO_RAD;
 
 	const float deg = Clamp(degrees, 0.0f, 60.0f) * 1.5f;
 	const float rad = deg * degToRad;

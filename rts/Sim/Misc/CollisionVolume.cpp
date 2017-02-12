@@ -437,9 +437,9 @@ float CollisionVolume::GetEllipsoidDistance(const float3& pv) const
 		const float invDet = 1.0f / (a11 * a22 - a21 * a12);
 
 		theta += (a12 * d2 - a22 * d1) * invDet;
-		theta = Clamp(theta, 0.0f, HALFPI);
+		theta = Clamp(theta, 0.0f, math::HALFPI);
 		phi += (a21 * d1 - a11 * d2) * invDet;
-		phi = Clamp(phi, 0.0f, HALFPI);
+		phi = Clamp(phi, 0.0f, math::HALFPI);
 	}
 
 	return currDist;

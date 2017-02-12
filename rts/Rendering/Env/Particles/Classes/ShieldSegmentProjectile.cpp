@@ -232,13 +232,13 @@ const float3* ShieldSegmentProjectile::GetSegmentVertices(const int xpart, const
 			for (int xpart_ = 0; xpart_ < NUM_SEGMENTS_X; ++xpart_) {
 				const int segmentIdx = (xpart_ + ypart_ * NUM_SEGMENTS_X) * (NUM_VERTICES_X * NUM_VERTICES_Y);
 				for (int y = 0; y < NUM_VERTICES_Y; ++y) {
-					const float yp = (y + ypart_ * NUM_VERTICES_Y_M1) / float(NUM_SEGMENTS_Y * NUM_VERTICES_Y_M1) * PI - PI / 2;
+					const float yp = (y + ypart_ * NUM_VERTICES_Y_M1) / float(NUM_SEGMENTS_Y * NUM_VERTICES_Y_M1) * math::PI - math::HALFPI;
 					for (int x = 0; x < NUM_VERTICES_X; ++x) {
-						const float xp = (x + xpart_ * NUM_VERTICES_X_M1) / float(NUM_SEGMENTS_X * NUM_VERTICES_X_M1) * 2 * PI;
+						const float xp = (x + xpart_ * NUM_VERTICES_X_M1) / float(NUM_SEGMENTS_X * NUM_VERTICES_X_M1) * math::TWOPI;
 						const size_t vIdx = segmentIdx + y * NUM_VERTICES_X + x;
 
 						spherevertices[vIdx].x = std::sin(xp) * std::cos(yp);
-						spherevertices[vIdx].y =                 std::sin(yp);
+						spherevertices[vIdx].y =                std::sin(yp);
 						spherevertices[vIdx].z = std::cos(xp) * std::cos(yp);
 					}
 				}

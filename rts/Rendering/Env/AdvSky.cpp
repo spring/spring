@@ -64,8 +64,8 @@ CAdvSky::CAdvSky()
 	memset(thicknessTransform, 0, 1024);
 	memset(covers, 0, 4 * 32 * sizeof(float));
 
-	domeheight = std::cos(PI / 16) * 1.01f;
-	domeWidth = std::sin(2 * PI / 32) * 400 * 1.7f;
+	domeheight = std::cos(math::PI / 16) * 1.01f;
+	domeWidth = std::sin(math::TWOPI / 32) * 400 * 1.7f;
 
 	UpdateSkyDir();
 	InitSun();
@@ -234,8 +234,8 @@ void CAdvSky::Draw()
 
 float3 CAdvSky::GetCoord(int x, int y)
 {
-	float fy = ((float)y/Y_PART) * 2 * PI;
-	float fx = ((float)x/X_PART) * 2 * PI;
+	float fy = ((float)y/Y_PART) * math::TWOPI;
+	float fx = ((float)x/X_PART) * math::TWOPI;
 
 	return float3(
 		fastmath::sin(fy/32) * fastmath::sin(fx),
@@ -637,8 +637,8 @@ void CAdvSky::UpdateSunFlare() {
 		glBegin(GL_TRIANGLE_STRIP);
 
 		for (int x = 0; x < 257; ++x) {
-			const float dx = std::sin(x * 2.0f * PI / 256.0f);
-			const float dy = std::cos(x * 2.0f * PI / 256.0f);
+			const float dx = std::sin(x * math::TWOPI / 256.0f);
+			const float dy = std::cos(x * math::TWOPI / 256.0f);
 			const float dz = 5.0f;
 
 			glTexCoord2f(x / 256.0f, 0.125f); glVertexf3(zdir * dz + xdir * dx * 0.0014f + ydir * dy * 0.0014f);
@@ -831,7 +831,7 @@ void CAdvSky::UpdateSkyDir() {
 
 	skydir2.ANormalize();
 	skydir1 = skydir2.cross(UpVector);
-	skyAngle = GetRadFromXY(skydir2.x, skydir2.z) + PI / 2.0f;
+	skyAngle = GetRadFromXY(skydir2.x, skydir2.z) + math::HALFPI;
 }
 
 void CAdvSky::UpdateSkyTexture() {

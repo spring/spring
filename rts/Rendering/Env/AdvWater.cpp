@@ -40,7 +40,7 @@ CAdvWater::CAdvWater(bool loadShader)
 	for (int y = 0; y < 64; ++y) {
 		for (int x = 0; x < 64; ++x) {
 			scrap[(y*64 + x)*4 + 0] = 128;
-			scrap[(y*64 + x)*4 + 1] = (unsigned char)(std::sin(y*PI*2.0f/64.0f)*128 + 128);
+			scrap[(y*64 + x)*4 + 1] = (unsigned char)(std::sin(y*math::TWOPI/64.0f)*128 + 128);
 			scrap[(y*64 + x)*4 + 2] = 0;
 			scrap[(y*64 + x)*4 + 3] = 255;
 		}
@@ -52,10 +52,10 @@ CAdvWater::CAdvWater(bool loadShader)
 
 	for (int y = 0; y < 64; ++y) {
 		for (int x = 0; x < 64; ++x) {
-			const float ang = 26.5f*PI/180.0f;
+			const float ang = 26.5f*math::DEG_TO_RAD;
 			const float pos = y*2+x;
-			scrap[(y*64 + x)*4 + 0] = (unsigned char)((std::sin(pos*PI*2.0f/64.0f))*128*std::sin(ang)) + 128;
-			scrap[(y*64 + x)*4 + 1] = (unsigned char)((std::sin(pos*PI*2.0f/64.0f))*128*std::cos(ang)) + 128;
+			scrap[(y*64 + x)*4 + 0] = (unsigned char)((std::sin(pos*math::TWOPI/64.0f))*128*std::sin(ang)) + 128;
+			scrap[(y*64 + x)*4 + 1] = (unsigned char)((std::sin(pos*math::TWOPI/64.0f))*128*std::cos(ang)) + 128;
 		}
 	}
 	glBindTexture(GL_TEXTURE_2D, rawBumpTexture[1]);
@@ -65,10 +65,10 @@ CAdvWater::CAdvWater(bool loadShader)
 
 	for (int y = 0; y < 64; ++y) {
 		for (int x = 0; x < 64; ++x) {
-			const float ang = -19*PI/180.0f;
-			const float pos = 3*y - x;
-			scrap[(y*64 + x)*4 + 0] = (unsigned char)((std::sin(pos*PI*2.0f/64.0f))*128*std::sin(ang)) + 128;
-			scrap[(y*64 + x)*4 + 1] = (unsigned char)((std::sin(pos*PI*2.0f/64.0f))*128*std::cos(ang)) + 128;
+			const float ang = -19.0f * math::DEG_TO_RAD;
+			const float pos = 3.0f * y - x;
+			scrap[(y*64 + x)*4 + 0] = (unsigned char)((std::sin(pos*math::TWOPI/64.0f))*128*std::sin(ang)) + 128;
+			scrap[(y*64 + x)*4 + 1] = (unsigned char)((std::sin(pos*math::TWOPI/64.0f))*128*std::cos(ang)) + 128;
 		}
 	}
 	glBindTexture(GL_TEXTURE_2D, rawBumpTexture[2]);

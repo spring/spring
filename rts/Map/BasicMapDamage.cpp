@@ -22,8 +22,8 @@ CBasicMapDamage::CBasicMapDamage()
 
 	for (int a = 0; a <= CRATER_TABLE_SIZE; ++a) {
 		const float r  = a / float(CRATER_TABLE_SIZE);
-		const float c1 = math::cos((r - 0.1f) * (PI + 0.3f));
-		const float c2 = math::cos(std::max(0.0f, r * 3.0f - 2.0f) * PI);
+		const float c1 = math::cos((r - 0.1f) * (math::PI + 0.3f));
+		const float c2 = math::cos(std::max(0.0f, r * 3.0f - 2.0f) * math::PI);
 
 		// faked Sombrero hat, cut in half
 		craterTable[a] = c1 * (1.0f - r) * (0.5f + 0.5f * c2);

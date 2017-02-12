@@ -80,7 +80,7 @@ void AMoveType::KeepPointingTo(CUnit* unit, float distance, bool aggressive)
 float AMoveType::CalcStaticTurnRadius() const {
 	// calculate a rough turn radius (not based on current speed)
 	const float turnFrames = SPRING_CIRCLE_DIVS / std::max(owner->unitDef->turnRate, 1.0f);
-	const float turnRadius = (maxSpeedDef * turnFrames) / (PI + PI);
+	const float turnRadius = (maxSpeedDef * turnFrames) / math::TWOPI;
 
 	return turnRadius;
 }

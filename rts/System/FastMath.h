@@ -7,8 +7,10 @@
 #include <xmmintrin.h>
 #endif
 #include <cinttypes>
+
 #include "lib/streflop/streflop_cond.h"
 #include "System/maindefines.h"
+#include "System/MathConstants.h"
 
 #ifdef _MSC_VER
 #define __builtin_sqrtf sqrt_sse
@@ -159,77 +161,6 @@ namespace fastmath {
 	/****************** Trigonometric functions ******************/
 
 	/**
-	* @brief Pi
-	*
-	* Cherry flavored.
-	*/
-	static const float PI = 3.141592654f;
-
-	/**
-	* @brief Half of pi
-	*
-	* Pi divided by two
-	*/
-	static const float HALFPI = PI / 2.0f;
-
-	/**
-	* @brief Pi times two
-	*
-	* Pi times two
-	*/
-	static const float PI2 = PI * 2.0f;
-
-	/**
-	* @brief Four divided by pi
-	*
-	* Four over pi
-	*/
-	static const float PIU4 = 4.0f / PI;
-
-	/**
-	* @brief Negative four divided by pi squared
-	*
-	* Negative four over (pi squared)
-	*/
-	static const float PISUN4 = -4.0f / (PI * PI);
-
-	/**
-	* @brief reciprocal of pi
-	*
-	* One over (pi times two)
-	*/
-	static const float INVPI2 = 1.0f / PI2;
-
-	/**
-	* @brief negative half pi
-	*
-	* -pi / 2
-	*/
-	static const float NEGHALFPI = -HALFPI;
-
-	/**
-	* @brief square root of two
-	*
-	* sqrt(2)
-	*/
-	static const float SQRT2 = 1.41421356237f;
-
-	/**
-	* @brief Degree (360) to Radians (2pi)
-	*
-	* 360 / (2*PI)
-	*/
-	static const float DEG_TO_RAD = 180.f / PI;
-
-	/**
-	* @brief Radians (2pi) to Degrees (360)
-	*
-	* 360 / (2*PI)
-	*/
-	static const float RAD_TO_DEG = PI / 180.f;
-
-
-	/**
 	* @brief calculates the sine of x
 	*
 	* Range reduces x to -PI ... PI, and then uses the
@@ -242,14 +173,14 @@ namespace fastmath {
 	inline float sin(float x) {
 		/* range reduce to -PI ... PI, as the approximation
 		method only works well for that range. */
-		x = x - ((int)(x * INVPI2)) * PI2;
-		if (x > HALFPI) {
-			x = -x + PI;
-		} else if (x < NEGHALFPI ) {
-			x = -x - PI;
+		x = x - ((int)(x * math::INVPI2)) * math::TWOPI;
+		if (x > math::HALFPI) {
+			x = -x + math::PI;
+		} else if (x < math::NEGHALFPI ) {
+			x = -x - math::PI;
 		}
 		/* approximation */
-		x = (PIU4) * x + (PISUN4) * x * math::fabs(x);
+		x = (math::PIU4) * x + (math::PISUN4) * x * math::fabs(x);
 		x = 0.225f * (x * math::fabs(x) - x) + x;
 		return x;
 	}
@@ -260,7 +191,7 @@ namespace fastmath {
 	* Adds half of pi to x and then uses the sine method.
 	*/
 	inline float cos(float x) {
-		return fastmath::sin(x + HALFPI);
+		return fastmath::sin(x + math::HALFPI);
 	}
 
 
@@ -277,7 +208,7 @@ namespace fastmath {
 	}
 }
 
-using fastmath::PI;
+
 namespace math {
 	// override streflop with faster sqrt!
 	float sqrt(float x) _const;

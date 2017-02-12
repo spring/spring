@@ -607,8 +607,8 @@ float3 CMatrix44f::GetEulerAnglesRgtHand(float eps) const {
 
 	if (Square(eps) > math::fabs(m[0 * 4 + 2] + 1.0f)) {
 		// x.z == -1 (yaw=PI/2) means gimbal lock between X and Z
-		angles[0][ANGLE_R] = (     0.0f);
-		angles[0][ANGLE_Y] = (PI * 0.5f);
+		angles[0][ANGLE_R] =         0.0f;
+		angles[0][ANGLE_Y] = math::HALFPI;
 		angles[0][ANGLE_P] = (angles[0][ANGLE_R] + math::atan2(m[1 * 4 + 0], m[2 * 4 + 0]));
 
 		return angles[0];
@@ -616,8 +616,8 @@ float3 CMatrix44f::GetEulerAnglesRgtHand(float eps) const {
 
 	if (Square(eps) > math::fabs(m[0 * 4 + 2] - 1.0f)) {
 		// x.z == 1 (yaw=-PI/2) means gimbal lock between X and Z
-		angles[0][ANGLE_R] =  (     0.0f);
-		angles[0][ANGLE_Y] = -(PI * 0.5f);
+		angles[0][ANGLE_R] =            0.0f;
+		angles[0][ANGLE_Y] = math::NEGHALFPI;
 		angles[0][ANGLE_P] = (-angles[0][ANGLE_R] + math::atan2(-m[1 * 4 + 0], -m[2 * 4 + 0]));
 
 		return angles[0];
@@ -630,7 +630,7 @@ float3 CMatrix44f::GetEulerAnglesRgtHand(float eps) const {
 	//   angles[i][R] :=   phi :=  Roll := Z-angle
 	//
 	angles[0][ANGLE_Y] = -math::asin(m[0 * 4 + 2]);
-	angles[1][ANGLE_Y] = (PI - angles[0][ANGLE_Y]);
+	angles[1][ANGLE_Y] = (math::PI - angles[0][ANGLE_Y]);
 
 	// yaw cosines
 	cosYaw[0] = math::cos(angles[0][ANGLE_Y]);

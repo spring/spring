@@ -45,8 +45,8 @@ CWakeProjectile::CWakeProjectile(
 {
 	this->pos.y = 0.0f;
 	this->speed.y = 0.0f;
-	rotation = guRNG.NextFloat() * PI*2;
-	rotSpeed = (guRNG.NextFloat() - 0.5f) * PI*2*0.01f;
+	rotation = guRNG.NextFloat() * math::TWOPI;
+	rotSpeed = (guRNG.NextFloat() - 0.5f) * math::TWOPI * 0.01f;
 	checkCol = false;
 	if (water->BlockWakeProjectiles()) {
 		this->alpha = 0;

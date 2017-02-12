@@ -15,8 +15,8 @@
 static const int COBSCALE = 65536;
 static const int COBSCALEHALF = COBSCALE / 2;
 static const float CORDDIV   = 1.0f / COBSCALE;
-static const float RAD2TAANG = COBSCALEHALF / PI;
-static const float TAANG2RAD = PI / COBSCALEHALF;
+static const float RAD2TAANG = COBSCALEHALF / math::PI;
+static const float TAANG2RAD = math::PI / COBSCALEHALF;
 
 
 class CCobThread;

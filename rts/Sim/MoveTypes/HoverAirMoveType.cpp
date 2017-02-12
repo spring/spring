@@ -76,7 +76,7 @@ CHoverAirMoveType::CHoverAirMoveType(CUnit* owner) :
 
 	turnRate(1),
 	maxDrift(1.0f),
-	maxTurnAngle(math::cos((owner != nullptr ? owner->unitDef->turnInPlaceAngleLimit : 0.0f) * (PI / 180.0f)) * -1.0f),
+	maxTurnAngle(math::cos((owner != nullptr ? owner->unitDef->turnInPlaceAngleLimit : 0.0f) * math::DEG_TO_RAD) * -1.0f),
 
 	wantedSpeed(ZeroVector),
 	deltaSpeed(ZeroVector),
@@ -487,11 +487,10 @@ void CHoverAirMoveType::UpdateFlying()
 					if (airStrafe) {
 						float3 relPos = pos - circlingPos;
 
-						if (relPos.x < 0.0001f && relPos.x > -0.0001f) {
+						if (relPos.x < 0.0001f && relPos.x > -0.0001f)
 							relPos.x = 0.0001f;
-						}
 
-						static const CMatrix44f rot(0.0f, fastmath::PI / 4.0f, 0.0f);
+						static const CMatrix44f rot(0.0f, math::QUARTERPI, 0.0f);
 
 						// make sure the point is on the circle, go there in a straight line
 						goalPos = circlingPos + (rot.Mul(relPos.Normalize2D()) * goalDistance);
@@ -504,13 +503,12 @@ void CHoverAirMoveType::UpdateFlying()
 				if (airStrafe) {
 					float3 relPos = pos - circlingPos;
 
-					if (relPos.x < 0.0001f && relPos.x > -0.0001f) {
+					if (relPos.x < 0.0001f && relPos.x > -0.0001f)
 						relPos.x = 0.0001f;
-					}
 
-					float rotY = 0.6f + gsRNG.NextFloat() * 0.6f;
-					rotY *= (gsRNG.NextFloat() > 0.5f) ? 1.0f : -1.0f;
-					const CMatrix44f rot(0.0f, rotY, 0.0f);
+					const float rotY = 0.6f + gsRNG.NextFloat() * 0.6f;
+					const float sign = (gsRNG.NextFloat() > 0.5f) ? 1.0f : -1.0f;
+					const CMatrix44f rot(0.0f, rotY * sign, 0.0f);
 
 					// Go there in a straight line
 					goalPos = circlingPos + (rot.Mul(relPos.Normalize2D()) * goalDistance);

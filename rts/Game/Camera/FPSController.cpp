@@ -65,7 +65,7 @@ void CFPSController::KeyMove(float3 move)
 void CFPSController::MouseMove(float3 move)
 {
 	camera->SetRotY(camera->GetRot().y + mouseScale * move.x);
-	camera->SetRotX(Clamp(camera->GetRot().x + mouseScale * move.y * move.z, 0.01f, PI * 0.99f));
+	camera->SetRotX(Clamp(camera->GetRot().x + mouseScale * move.y * move.z, 0.01f, math::PI * 0.99f));
 	dir = camera->GetDir();
 	Update();
 }

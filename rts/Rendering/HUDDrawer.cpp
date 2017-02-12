@@ -230,7 +230,7 @@ void HUDDrawer::DrawTargetReticle(const CUnit* unit)
 				// draw the reticle
 				glBegin(GL_LINE_STRIP);
 				for (int b = 0; b <= 80; ++b) {
-					glVertexf3(pos + (v2 * fastmath::sin(b * 2 * PI / 80) + v3 * fastmath::cos(b * 2 * PI / 80)) * radius);
+					glVertexf3(pos + (v2 * fastmath::sin(b * math::TWOPI / 80) + v3 * fastmath::cos(b * math::TWOPI / 80)) * radius);
 				}
 				glEnd();
 
@@ -247,7 +247,7 @@ void HUDDrawer::DrawTargetReticle(const CUnit* unit)
 
 					glBegin(GL_LINE_STRIP);
 					for (int b = 0; b <= 80; ++b) {
-						glVertexf3(pos + (v2 * fastmath::sin(b * 2 * PI / 80) + v3 * fastmath::cos(b * 2 * PI / 80)) * radius);
+						glVertexf3(pos + (v2 * fastmath::sin(b * math::TWOPI / 80) + v3 * fastmath::cos(b *math::TWOPI / 80)) * radius);
 					}
 					glEnd();
 				}
@@ -257,11 +257,11 @@ void HUDDrawer::DrawTargetReticle(const CUnit* unit)
 					glVertexf3(pos);
 					glVertexf3(w->GetCurrentTargetPos());
 
-					glVertexf3(pos + (v2 * fastmath::sin(PI * 0.25f) + v3 * fastmath::cos(PI * 0.25f)) * radius);
-					glVertexf3(pos + (v2 * fastmath::sin(PI * 1.25f) + v3 * fastmath::cos(PI * 1.25f)) * radius);
+					glVertexf3(pos + (v2 * fastmath::sin(math::PI * 0.25f) + v3 * fastmath::cos(math::PI * 0.25f)) * radius);
+					glVertexf3(pos + (v2 * fastmath::sin(math::PI * 1.25f) + v3 * fastmath::cos(math::PI * 1.25f)) * radius);
 
-					glVertexf3(pos + (v2 * fastmath::sin(PI * -0.25f) + v3 * fastmath::cos(PI * -0.25f)) * radius);
-					glVertexf3(pos + (v2 * fastmath::sin(PI * -1.25f) + v3 * fastmath::cos(PI * -1.25f)) * radius);
+					glVertexf3(pos + (v2 * fastmath::sin(math::PI * -0.25f) + v3 * fastmath::cos(math::PI * -0.25f)) * radius);
+					glVertexf3(pos + (v2 * fastmath::sin(math::PI * -1.25f) + v3 * fastmath::cos(math::PI * -1.25f)) * radius);
 				}
 				if ((w->GetCurrentTargetPos() - camera->GetPos()).ANormalize().dot(camera->GetDir()) < 0.7f) {
 					glVertexf3(w->GetCurrentTargetPos());

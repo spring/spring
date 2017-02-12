@@ -454,7 +454,7 @@ void CUnitDrawer::DrawOpaqueAIUnit(const TempDrawUnit& unit)
 {
 	glPushMatrix();
 	glTranslatef3(unit.pos);
-	glRotatef(unit.rotation * (180.0f / PI), 0.0f, 1.0f, 0.0f);
+	glRotatef(unit.rotation * math::RAD_TO_DEG, 0.0f, 1.0f, 0.0f);
 
 	const UnitDef* def = unit.unitDef;
 	const S3DModel* mdl = def->model;
@@ -846,7 +846,7 @@ void CUnitDrawer::DrawAlphaAIUnit(const TempDrawUnit& unit)
 {
 	glPushMatrix();
 	glTranslatef3(unit.pos);
-	glRotatef(unit.rotation * (180.0f / PI), 0.0f, 1.0f, 0.0f);
+	glRotatef(unit.rotation * math::RAD_TO_DEG, 0.0f, 1.0f, 0.0f);
 
 	const UnitDef* def = unit.unitDef;
 	const S3DModel* mdl = def->model;

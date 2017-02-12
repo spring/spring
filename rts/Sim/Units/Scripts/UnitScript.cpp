@@ -131,10 +131,10 @@ bool CUnitScript::TurnToward(float& cur, float dest, float speed)
 	float delta = dest - cur;
 
 	// clamp: -pi .. 0 .. +pi (remainder(x,TWOPI) would do the same but is slower due to streflop)
-	if (delta > PI) {
-		delta -= TWOPI;
-	} else if (delta<=-PI) {
-		delta += TWOPI;
+	if (delta > math::PI) {
+		delta -= math::TWOPI;
+	} else if (delta <= -math::PI) {
+		delta += math::TWOPI;
 	}
 
 	if (math::fabsf(delta) <= speed) {

@@ -22,7 +22,7 @@ CONFIG(bool, OverheadEnabled).defaultValue(true).headlessValue(false);
 CONFIG(float, OverheadFOV).defaultValue(45.0f);
 
 
-static const float angleStep = fastmath::HALFPI / 14.f;
+static const float angleStep = math::HALFPI / 14.0f;
 
 
 COverheadController::COverheadController()
@@ -97,7 +97,7 @@ void COverheadController::MouseWheelMove(float move)
 	// from here to the end of the function (smoothed)
 	if (KeyInput::GetKeyModState(KMOD_CTRL)) {
 		angle += (move * tiltSpeed * shiftSpeed * 0.025f) * angleStep;
-		angle = Clamp(angle, 0.01f, fastmath::HALFPI);
+		angle = Clamp(angle, 0.01f, math::HALFPI);
 	} else {
 		if (move < 0.0f) {
 			// ZOOM IN to mouse cursor instead of mid screen
@@ -160,7 +160,7 @@ void COverheadController::Update()
 	pos.y = CGround::GetHeightAboveWater(pos.x, pos.z, false);
 	height = Clamp(height, 60.0f, maxHeight);
 
-	angle = Clamp(angle, 0.01f, fastmath::HALFPI);
+	angle = Clamp(angle, 0.01f, math::HALFPI);
 	dir = float3(0.0f, -fastmath::cos(angle), flipped ? fastmath::sin(angle) : -fastmath::sin(angle));
 	pixelSize = (camera->GetTanHalfFov() * 2.0f) / globalRendering->viewSizeY * height * 2.0f;
 }

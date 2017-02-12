@@ -3369,7 +3369,7 @@ static inline GLuint GetConeList()
 		const int divs = 64;
 		glVertex3f(0.0f, 0.0f, 0.0f);
 		for (int i = 0; i <= divs; i++) {
-			const float rad = (PI * 2.0) * (float)i / (float)divs;
+			const float rad = math::TWOPI * (float)i / (float)divs;
 			glVertex3f(1.0f, std::sin(rad), std::cos(rad));
 		}
 		glEnd();
@@ -3387,8 +3387,8 @@ static void DrawWeaponCone(const float3& pos,
 	const float xlen = len * std::cos(hrads);
 	const float yzlen = len * std::sin(hrads);
 	glTranslatef(pos.x, pos.y, pos.z);
-	glRotatef(heading * (180.0 / PI), 0.0f, 1.0f, 0.0f);
-	glRotatef(pitch   * (180.0 / PI), 0.0f, 0.0f, 1.0f);
+	glRotatef(heading * math::RAD_TO_DEG, 0.0f, 1.0f, 0.0f);
+	glRotatef(pitch   * math::RAD_TO_DEG, 0.0f, 0.0f, 1.0f);
 	glScalef(xlen, yzlen, yzlen);
 
 	glEnable(GL_CULL_FACE);
@@ -3540,7 +3540,7 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 							glBegin(GL_TRIANGLE_FAN);
 							const int divs = 256;
 							for (int i = 0; i <= divs; ++i) {
-								const float radians = (2 * PI) * (float)i / (float)divs;
+								const float radians = math::TWOPI * (float)i / (float)divs;
 								float3 p(pos.x, 0.0f, pos.z);
 								p.x += fastmath::sin(radians) * radius;
 								p.z += fastmath::cos(radians) * radius;
@@ -3934,7 +3934,7 @@ void CGuiHandler::DrawArea(float3 pos, float radius, const float* color)
 	glBegin(GL_TRIANGLE_FAN);
 		glVertexf3(pos);
 		for(int a=0;a<=40;++a){
-			float3 p(fastmath::cos(a*2*PI/40)*radius,0,fastmath::sin(a*2*PI/40)*radius);
+			float3 p(fastmath::cos(a * 2.0f * math::PI / 40.0f) * radius, 0.0f, fastmath::sin(a * 2.0f * math::PI / 40.0f) * radius);
 			p+=pos;
 			p.y=CGround::GetHeightAboveWater(p.x, p.z, false);
 			glVertexf3(p);
@@ -4220,7 +4220,7 @@ struct CylinderData {
 static void DrawCylinderShape(const void* data)
 {
 	const CylinderData& cyl = *static_cast<const CylinderData*>(data);
-	const float step = fastmath::PI2 / (float)cyl.divs;
+	const float step = math::TWOPI / cyl.divs;
 	int i;
 	glBegin(GL_QUAD_STRIP); // the sides
 	for (i = 0; i <= cyl.divs; i++) {

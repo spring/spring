@@ -160,7 +160,7 @@ void CFarTextureHandler::CreateFarTexture(const CSolidObject* obj)
 	// twice the radius is not quite far away enough for some models
 	viewMat.Translate(float3(0.0f, 0.0f, -obj->GetDrawRadius() * (2.0f + 1.0f)));
 	viewMat.Scale(float3(-1.0f, 1.0f, 1.0f));
-	viewMat.RotateX(-60.0f * (PI / 180.0f));
+	viewMat.RotateX(-60.0f * math::DEG_TO_RAD);
 
 	// overwrite the matrices set by SetupOpaqueDrawing
 	//
