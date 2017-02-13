@@ -429,7 +429,7 @@ void CGame::ClientReadNet()
 				CTeam* team = teamHandler->Team(teamID);
 				team->ClampStartPosInStartBox(&clampedPos);
 
-				if (eventHandler.AllowStartPosition(playerID, rdyState, clampedPos, rawPickPos)) {
+				if (eventHandler.AllowStartPosition(playerID, teamID, rdyState, clampedPos, rawPickPos)) {
 					team->SetStartPos(clampedPos);
 
 					if (playerID != SERVER_PLAYER) {

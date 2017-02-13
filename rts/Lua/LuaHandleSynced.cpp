@@ -740,7 +740,7 @@ bool CSyncedLuaHandle::AllowBuilderHoldFire(const CUnit* unit, int action)
 }
 
 
-bool CSyncedLuaHandle::AllowStartPosition(int playerID, unsigned char readyState, const float3& clampedPos, const float3& rawPickPos)
+bool CSyncedLuaHandle::AllowStartPosition(int playerID, int teamID, unsigned char readyState, const float3& clampedPos, const float3& rawPickPos)
 {
 	LUA_CALL_IN_CHECK(L, true);
 	luaL_checkstack(L, 13, __func__);
@@ -750,17 +750,18 @@ bool CSyncedLuaHandle::AllowStartPosition(int playerID, unsigned char readyState
 		return true; // the call is not defined
 
 	// push the start position and playerID
+	lua_pushnumber(L, playerID);
+	lua_pushnumber(L, teamID);
+	lua_pushnumber(L, readyState);
 	lua_pushnumber(L, clampedPos.x);
 	lua_pushnumber(L, clampedPos.y);
 	lua_pushnumber(L, clampedPos.z);
-	lua_pushnumber(L, playerID);
-	lua_pushnumber(L, readyState);
 	lua_pushnumber(L, rawPickPos.x);
 	lua_pushnumber(L, rawPickPos.y);
 	lua_pushnumber(L, rawPickPos.z);
 
 	// call the function
-	if (!RunCallIn(L, cmdStr, 8, 1))
+	if (!RunCallIn(L, cmdStr, 9, 1))
 		return true;
 
 	// get the results

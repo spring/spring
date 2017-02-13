@@ -204,7 +204,7 @@ class CEventClient
 		virtual bool AllowResourceTransfer(int oldTeam, int newTeam, const string& type, float amount);
 		virtual bool AllowDirectUnitControl(int playerID, const CUnit* unit);
 		virtual bool AllowBuilderHoldFire(const CUnit* unit, int action);
-		virtual bool AllowStartPosition(int playerID, unsigned char readyState, const float3& clampedPos, const float3& rawPickPos);
+		virtual bool AllowStartPosition(int playerID, int teamID, unsigned char readyState, const float3& clampedPos, const float3& rawPickPos);
 
 		virtual bool TerraformComplete(const CUnit* unit, const CUnit* build);
 		virtual bool MoveCtrlNotify(const CUnit* unit, int data);

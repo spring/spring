@@ -145,7 +145,7 @@ class CEventHandler
 		bool AllowResourceTransfer(int oldTeam, int newTeam, const string& type, float amount);
 		bool AllowDirectUnitControl(int playerID, const CUnit* unit);
 		bool AllowBuilderHoldFire(const CUnit* unit, int action);
-		bool AllowStartPosition(int playerID, unsigned char readyState, const float3& clampedPos, const float3& rawPickPos);
+		bool AllowStartPosition(int playerID, int teamID, unsigned char readyState, const float3& clampedPos, const float3& rawPickPos);
 
 		bool TerraformComplete(const CUnit* unit, const CUnit* build);
 		bool MoveCtrlNotify(const CUnit* unit, int data);
