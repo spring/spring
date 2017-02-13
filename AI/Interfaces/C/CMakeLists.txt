@@ -46,6 +46,7 @@ macro    (ConfigureNativeSkirmishAI mySourceDirRel_var additionalSources_var add
 
 		# Compile the library
 		add_library(${myTarget} MODULE ${mySources} ${additionalSources} ${myVersionDepFile})
+		set_target_properties(${myTarget} PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/data)
 		FixLibName(${myTarget})
 
 		Add_Dependencies(${myTarget} generateVersionFiles)
