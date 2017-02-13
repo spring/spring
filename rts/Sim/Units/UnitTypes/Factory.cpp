@@ -20,29 +20,22 @@
 #include "System/EventHandler.h"
 #include "System/Matrix44f.h"
 #include "System/myMath.h"
-#include "System/Sound/SoundChannels.h"
+#include "System/creg/DefTypes.h"
+#include "System/Sound/ISoundChannels.h"
 #include "System/Sync/SyncTracer.h"
 
-#define PLAY_SOUNDS 1
-#if (PLAY_SOUNDS == 1)
 #include "Game/GlobalUnsynced.h"
-#endif
 
-CR_BIND_DERIVED(CFactory, CBuilding, );
+CR_BIND_DERIVED(CFactory, CBuilding, )
 
 CR_REG_METADATA(CFactory, (
 	CR_MEMBER(buildSpeed),
-	CR_MEMBER(opening),
-	CR_MEMBER(curBuild),
-	CR_MEMBER(nextBuildUnitDefID),
 	CR_MEMBER(lastBuildUpdateFrame),
 	CR_MEMBER(curBuildDef),
 	CR_MEMBER(curBuild),
-	//CR_MEMBER(finishedBuildFunc), FIXME is pointer
 	CR_MEMBER(finishedBuildCommand),
-	CR_MEMBER(nanoPieceCache),
-	CR_POSTLOAD(PostLoad)
-));
+	CR_MEMBER(nanoPieceCache)
+))
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -50,34 +43,17 @@ CR_REG_METADATA(CFactory, (
 
 CFactory::CFactory():
 	buildSpeed(100.0f),
-	opening(false),
-	curBuildDef(NULL),
-	curBuild(NULL),
-	nextBuildUnitDefID(-1),
-	lastBuildUpdateFrame(-1),
-	finishedBuildFunc(NULL)
+	curBuild(nullptr),
+	curBuildDef(nullptr),
+	lastBuildUpdateFrame(-1)
 {
-}
-
-
-
-void CFactory::PostLoad()
-{
-	curBuildDef = unitDefHandler->GetUnitDefByID(nextBuildUnitDefID);
-
-	if (opening) {
-		script->Activate();
-	}
-	if (curBuild) {
-		script->StartBuilding();
-	}
 }
 
 void CFactory::KillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed, bool showDeathSequence)
 {
-	if (curBuild != NULL) {
-		curBuild->KillUnit(NULL, false, true);
-		curBuild = NULL;
+	if (curBuild != nullptr) {
+		curBuild->KillUnit(nullptr, false, true);
+		curBuild = nullptr;
 	}
 
 	CUnit::KillUnit(attacker, selfDestruct, reclaimed, showDeathSequence);
@@ -115,7 +91,7 @@ void CFactory::Update()
 		// unit, in which case our buildee can either be allowed to finish
 		// construction (by assisting builders) or has to be killed --> the
 		// latter is easier
-		if (curBuild != NULL) {
+		if (curBuild != nullptr) {
 			StopBuild();
 		}
 		#endif
@@ -124,12 +100,11 @@ void CFactory::Update()
 	}
 
 
-	if (curBuildDef != NULL) {
-		if (!opening && !IsStunned()) {
+	if (curBuildDef != nullptr) {
+		if (!yardOpen && !IsStunned()) {
 			if (groundBlockingObjectMap->CanOpenYard(this)) {
 				script->Activate();
 				groundBlockingObjectMap->OpenBlockingYard(this);
-				opening = true;
 
 				// make sure the idle-check does not immediately trigger
 				// (scripts have 7 seconds to set inBuildStance to true)
@@ -137,23 +112,22 @@ void CFactory::Update()
 			}
 		}
 
-		if (opening && inBuildStance && !IsStunned()) {
+		if (yardOpen && inBuildStance && !IsStunned()) {
 			StartBuild(curBuildDef);
 		}
 	}
 
-	if (curBuild != NULL) {
+	if (curBuild != nullptr) {
 		UpdateBuild(curBuild);
 		FinishBuild(curBuild);
 	}
 
-	const bool wantClose = (!IsStunned() && opening && (gs->frameNum >= (lastBuildUpdateFrame + GAME_SPEED * 7)));
-	const bool closeYard = (wantClose && curBuild == NULL && groundBlockingObjectMap->CanCloseYard(this));
+	const bool wantClose = (!IsStunned() && yardOpen && (gs->frameNum >= (lastBuildUpdateFrame + GAME_SPEED * 7)));
+	const bool closeYard = (wantClose && curBuild == nullptr && groundBlockingObjectMap->CanCloseYard(this));
 
 	if (closeYard) {
 		// close the factory after inactivity
 		groundBlockingObjectMap->CloseBlockingYard(this);
-		opening = false;
 		script->Deactivate();
 	}
 
@@ -204,13 +178,11 @@ void CFactory::StartBuild(const UnitDef* buildeeDef) {
 	// set curBuildDef to NULL to indicate construction
 	// has started, otherwise we would keep being called
 	curBuild = buildee;
-	curBuildDef = NULL;
+	curBuildDef = nullptr;
 
-	#if (PLAY_SOUNDS == 1)
 	if (losStatus[gu->myAllyTeam] & LOS_INLOS) {
-		Channels::General.PlayRandomSample(unitDef->sounds.build, buildPos);
+		Channels::General->PlayRandomSample(unitDef->sounds.build, buildPos);
 	}
-	#endif
 }
 
 void CFactory::UpdateBuild(CUnit* buildee) {
@@ -232,7 +204,7 @@ void CFactory::UpdateBuild(CUnit* buildee) {
 	// rotate unit nanoframe with platform
 	buildee->heading = (-buildPieceHeading + GetHeadingFromFacing(buildFacing)) & (SPRING_CIRCLE_DIVS - 1);
 
-	if (buildee->unitDef->floatOnWater && (buildeePos.y <= 0.0f))
+	if (buildee->FloatOnWater() && buildee->IsInWater())
 		buildeePos.y = -buildee->unitDef->waterline;
 
 	buildee->Move(buildeePos, false);
@@ -255,7 +227,7 @@ void CFactory::FinishBuild(CUnit* buildee) {
 	if (unitDef->fullHealthFactory && buildee->health < buildee->maxHealth) { return; }
 
 	{
-		if (group && buildee->group == 0) {
+		if (group && !buildee->group) {
 			buildee->SetGroup(group, true);
 		}
 	}
@@ -263,7 +235,7 @@ void CFactory::FinishBuild(CUnit* buildee) {
 	const CCommandAI* bcai = buildee->commandAI;
 	// if not idle, the buildee already has user orders
 	const bool buildeeIdle = (bcai->commandQue.empty());
-	const bool buildeeMobile = (dynamic_cast<const CMobileCAI*>(bcai) != NULL);
+	const bool buildeeMobile = (dynamic_cast<const CMobileCAI*>(bcai) != nullptr);
 
 	if (buildeeIdle || buildeeMobile) {
 		AssignBuildeeOrders(buildee);
@@ -271,8 +243,8 @@ void CFactory::FinishBuild(CUnit* buildee) {
 	}
 
 	// inform our commandAI
-	finishedBuildFunc(this, finishedBuildCommand);
-	finishedBuildFunc = NULL;
+	CFactoryCAI* factoryCAI = static_cast<CFactoryCAI*>(commandAI);
+	factoryCAI->FactoryFinishBuild(finishedBuildCommand);
 
 	eventHandler.UnitFromFactory(buildee, this, !buildeeIdle);
 	StopBuild();
@@ -280,26 +252,22 @@ void CFactory::FinishBuild(CUnit* buildee) {
 
 
 
-unsigned int CFactory::QueueBuild(const UnitDef* buildeeDef, const Command& buildCmd, FinishBuildCallBackFunc buildFunc)
+unsigned int CFactory::QueueBuild(const UnitDef* buildeeDef, const Command& buildCmd)
 {
 	assert(!beingBuilt);
-	assert(buildeeDef != NULL);
+	assert(buildeeDef != nullptr);
 
-	if (finishedBuildFunc != NULL)
-		return FACTORY_KEEP_BUILD_ORDER;
-	if (curBuild != NULL)
+	if (curBuild != nullptr)
 		return FACTORY_KEEP_BUILD_ORDER;
 	if (unitHandler->unitsByDefs[team][buildeeDef->id].size() >= buildeeDef->maxThisUnit)
 		return FACTORY_SKIP_BUILD_ORDER;
 	if (teamHandler->Team(team)->AtUnitLimit())
 		return FACTORY_KEEP_BUILD_ORDER;
-	if (!eventHandler.AllowUnitCreation(buildeeDef, this, NULL))
+	if (!eventHandler.AllowUnitCreation(buildeeDef, this, nullptr))
 		return FACTORY_SKIP_BUILD_ORDER;
 
-	finishedBuildFunc = buildFunc;
 	finishedBuildCommand = buildCmd;
 	curBuildDef = buildeeDef;
-	nextBuildUnitDefID = buildeeDef->id;
 
 	// signal that the build-order was accepted (queued)
 	return FACTORY_NEXT_BUILD_ORDER;
@@ -312,21 +280,20 @@ void CFactory::StopBuild()
 
 	if (curBuild) {
 		if (curBuild->beingBuilt) {
-			AddMetal(curBuild->metalCost * curBuild->buildProgress, false);
-			curBuild->KillUnit(NULL, false, true);
+			AddMetal(curBuild->cost.metal * curBuild->buildProgress, false);
+			curBuild->KillUnit(nullptr, false, true);
 		}
 		DeleteDeathDependence(curBuild, DEPENDENCE_BUILD);
 	}
 
-	curBuild = NULL;
-	curBuildDef = NULL;
-	finishedBuildFunc = NULL;
+	curBuild = nullptr;
+	curBuildDef = nullptr;
 }
 
 void CFactory::DependentDied(CObject* o)
 {
 	if (o == curBuild) {
-		curBuild = NULL;
+		curBuild = nullptr;
 		StopBuild();
 	}
 
@@ -345,8 +312,8 @@ void CFactory::SendToEmptySpot(CUnit* unit)
 	const float3 tempPos = foundPos;
 
 	for (int x = 0; x < numSteps; ++x) {
-		const float a = searchRadius * math::cos(x * PI / (numSteps * 0.5f));
-		const float b = searchRadius * math::sin(x * PI / (numSteps * 0.5f));
+		const float a = searchRadius * math::cos(x * math::PI / (numSteps * 0.5f));
+		const float b = searchRadius * math::sin(x * math::PI / (numSteps * 0.5f));
 
 		float3 testPos = pos + frontdir * a + rightdir * b;
 
@@ -360,8 +327,9 @@ void CFactory::SendToEmptySpot(CUnit* unit)
 
 		testPos.y = CGround::GetHeightAboveWater(testPos.x, testPos.z);
 
-		if (quadField->GetSolidsExact(testPos, unit->radius * 1.5f, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS).empty()) {
-			foundPos = testPos; break;
+		if (quadField->NoSolidsExact(testPos, unit->radius * 1.5f, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS)) {
+			foundPos = testPos;
+			break;
 		}
 	}
 
@@ -371,9 +339,9 @@ void CFactory::SendToEmptySpot(CUnit* unit)
 		foundPos.y = 0.0f;
 
 		do {
-			const float x = ((gs->randInt() * 1.0f) / RANDINT_MAX) * numSteps;
-			const float a = searchRadius * math::cos(x * PI / (numSteps * 0.5f));
-			const float b = searchRadius * math::sin(x * PI / (numSteps * 0.5f));
+			const float x = ((gsRNG.NextInt() * 1.0f) / RANDINT_MAX) * numSteps;
+			const float a = searchRadius * math::cos(x * math::PI / (numSteps * 0.5f));
+			const float b = searchRadius * math::sin(x * math::PI / (numSteps * 0.5f));
 
 			foundPos.x = pos.x + frontdir.x * a + rightdir.x * b;
 			foundPos.z = pos.z + frontdir.z * a + rightdir.z * b;
@@ -455,12 +423,16 @@ void CFactory::AssignBuildeeOrders(CUnit* unit) {
 
 		// copy factory orders for new unit
 		for (CCommandQueue::const_iterator ci = factoryCmdQue.begin(); ci != factoryCmdQue.end(); ++ci) {
-			c = *ci;
+			Command c = *ci;
 			c.options |= SHIFT_KEY;
 
 			if (c.GetID() == CMD_MOVE) {
+				float xjit = gsRNG.NextFloat() * math::TWOPI;
+				float zjit = gsRNG.NextFloat() * math::TWOPI;
+
 				const float3 p1 = c.GetPos(0);
-				const float3 p2 = float3(p1.x + gs->randFloat() * TWOPI, p1.y, p1.z + gs->randFloat() * TWOPI);
+				const float3 p2 = float3(p1.x + xjit, p1.y, p1.z + zjit);
+
 				// apply a small amount of random jitter to move commands
 				// such that new units do not all share the same goal-pos
 				// and start forming a "trail" back to the factory exit
@@ -487,10 +459,10 @@ void CFactory::CreateNanoParticle(bool highPriority)
 {
 	const int modelNanoPiece = nanoPieceCache.GetNanoPiece(script);
 
-	if (localModel == NULL || !localModel->HasPiece(modelNanoPiece))
+	if (!localModel.Initialized() || !localModel.HasPiece(modelNanoPiece))
 		return;
 
-	const float3 relNanoFirePos = localModel->GetRawPiecePos(modelNanoPiece);
+	const float3 relNanoFirePos = localModel.GetRawPiecePos(modelNanoPiece);
 	const float3 nanoPos = this->GetObjectSpacePos(relNanoFirePos);
 
 	// unsynced

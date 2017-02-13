@@ -4,6 +4,7 @@
 #include "SMFMapFile.h"
 #include "Map/ReadMap.h"
 #include "System/Exceptions.h"
+#include "System/Platform/byteorder.h"
 
 #include <cassert>
 #include <cstring>
@@ -20,7 +21,7 @@ CSMFMapFile::CSMFMapFile(const string& mapFileName)
 	if (!ifs.FileExists())
 		throw content_error("Couldn't open map file " + mapFileName);
 
-	READPTR_MAPHEADER(header, (&ifs));
+	ReadMapHeader(header, ifs);
 
 	if (strcmp(header.magic, "spring map file") != 0 ||
 	    header.version != 1 || header.tilesize != 32 ||
@@ -28,14 +29,13 @@ CSMFMapFile::CSMFMapFile(const string& mapFileName)
 		throw content_error("Incorrect map file " + mapFileName);
 }
 
-
 void CSMFMapFile::ReadMinimap(void* data)
 {
 	ifs.Seek(header.minimapPtr);
 	ifs.Read(data, MINIMAP_SIZE);
 }
 
-int CSMFMapFile::ReadMinimap(std::vector<boost::uint8_t>& data, unsigned miplevel)
+int CSMFMapFile::ReadMinimap(std::vector<std::uint8_t>& data, unsigned miplevel)
 {
 	int offset=0;
 	int mipsize = 1024;
@@ -48,7 +48,7 @@ int CSMFMapFile::ReadMinimap(std::vector<boost::uint8_t>& data, unsigned mipleve
 
 	const int size = ((mipsize+3)/4)*((mipsize+3)/4)*8;
 	data.resize(size);
-	
+
 	ifs.Seek(header.minimapPtr + offset);
 	ifs.Read(&data[0], size);
 	return mipsize;
@@ -93,7 +93,7 @@ void CSMFMapFile::ReadHeightmap(float* sHeightMap, float* uHeightMap, float base
 void CSMFMapFile::ReadFeatureInfo()
 {
 	ifs.Seek(header.featurePtr);
-	READ_MAPFEATUREHEADER(featureHeader, (&ifs));
+	ReadMapFeatureHeader(featureHeader, ifs);
 
 	featureTypes.resize(featureHeader.numFeatureType);
 
@@ -115,7 +115,7 @@ void CSMFMapFile::ReadFeatureInfo(MapFeatureInfo* f)
 	ifs.Seek(featureFileOffset);
 	for(int a = 0; a < featureHeader.numFeatures; ++a) {
 		MapFeatureStruct ffs;
-		READ_MAPFEATURESTRUCT(ffs, (&ifs));
+		ReadMapFeatureStruct(ffs, ifs);
 
 		f[a].featureType = ffs.featureType;
 		f[a].pos = float3(ffs.xpos, ffs.ypos, ffs.zpos);
@@ -158,8 +158,7 @@ bool CSMFMapFile::ReadInfoMap(const string& name, void* data)
 		return true;
 	}
 	else if (name == "grass") {
-		ReadGrassMap(data);
-		return true;
+		return ReadGrassMap(data);
 	}
 	else if(name == "metal") {
 		ifs.Seek(header.metalmapPtr);
@@ -175,7 +174,7 @@ bool CSMFMapFile::ReadInfoMap(const string& name, void* data)
 }
 
 
-void CSMFMapFile::ReadGrassMap(void *data)
+bool CSMFMapFile::ReadGrassMap(void *data)
 {
 	ifs.Seek(sizeof(SMFHeader));
 
@@ -193,7 +192,7 @@ void CSMFMapFile::ReadGrassMap(void *data)
 			ifs.Seek(pos);
 			ifs.Read(data, header.mapx / 4 * header.mapy / 4);
 			/* char; no swabbing. */
-			break; //we arent interested in other extensions anyway
+			return true; //we arent interested in other extensions anyway
 		}
 		else {
 			// assumes we can use data as scratch memory
@@ -201,4 +200,80 @@ void CSMFMapFile::ReadGrassMap(void *data)
 			ifs.Read(data, size - 8);
 		}
 	}
+	return false;
 }
+
+/// read a float from file (endian aware)
+static float ReadFloat(CFileHandler& file)
+{
+	float __tmpfloat = 0.0f;
+	file.Read(&__tmpfloat,sizeof(float));
+	return swabFloat(__tmpfloat);
+}
+
+/// read an int from file (endian aware)
+static int ReadInt(CFileHandler& file)
+{
+	unsigned int __tmpdw = 0;
+	file.Read(&__tmpdw,sizeof(unsigned int));
+	return (int)swabDWord(__tmpdw);
+}
+
+/// Read SMFHeader head from file
+void CSMFMapFile::ReadMapHeader(SMFHeader& head, CFileHandler& file)
+{
+	file.Read(head.magic,sizeof(head.magic));
+
+	head.version = ReadInt(file);
+	head.mapid = ReadInt(file);
+	head.mapx = ReadInt(file);
+	head.mapy = ReadInt(file);
+	head.squareSize = ReadInt(file);
+	head.texelPerSquare = ReadInt(file);
+	head.tilesize = ReadInt(file);
+	head.minHeight = ReadFloat(file);
+	head.maxHeight = ReadFloat(file);
+	head.heightmapPtr = ReadInt(file);
+	head.typeMapPtr = ReadInt(file);
+	head.tilesPtr = ReadInt(file);
+	head.minimapPtr = ReadInt(file);
+	head.metalmapPtr = ReadInt(file);
+	head.featurePtr = ReadInt(file);
+	head.numExtraHeaders = ReadInt(file);
+}
+
+/// Read MapFeatureHeader head from file
+void CSMFMapFile::ReadMapFeatureHeader(MapFeatureHeader& head, CFileHandler& file)
+{
+	head.numFeatureType = ReadInt(file);
+	head.numFeatures = ReadInt(file);
+}
+
+/// Read MapFeatureStruct head from file
+void CSMFMapFile::ReadMapFeatureStruct(MapFeatureStruct& head, CFileHandler& file)
+{
+	head.featureType = ReadInt(file);
+	head.xpos = ReadFloat(file);
+	head.ypos = ReadFloat(file);
+	head.zpos = ReadFloat(file);
+	head.rotation = ReadFloat(file);
+	head.relativeSize = ReadFloat(file);
+}
+
+/// Read MapTileHeader head from file
+void CSMFMapFile::ReadMapTileHeader(MapTileHeader& head, CFileHandler& file)
+{
+	head.numTileFiles = ReadInt(file);
+	head.numTiles = ReadInt(file);
+}
+
+/// Read TileFileHeader head from file src
+void CSMFMapFile::ReadMapTileFileHeader(TileFileHeader& head, CFileHandler& file)
+{
+	file.Read(&head.magic,sizeof(head.magic));
+	head.version = ReadInt(file);
+	head.numTiles = ReadInt(file);
+	head.tileSize = ReadInt(file);
+	head.compressionType = ReadInt(file);
+}
+

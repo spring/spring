@@ -1,7 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include <cassert>
-#include <list>
 #include <limits>
 
 #include "PathSearch.hpp"
@@ -102,7 +101,7 @@ bool QTPFS::PathSearch::Execute(
 	if (srcNode->GetMoveCost() == 0.0f) {
 		srcNode->SetMoveCost(QTPFS_POSITIVE_INFINITY);
 	}
-		
+
 
 	#ifdef QTPFS_SUPPORT_PARTIAL_SEARCHES
 	// adjust the target-point if we only got a partial result
@@ -169,7 +168,7 @@ void QTPFS::PathSearch::IterateNodes(const std::vector<INode*>& allNodes) {
 	openNodes.check_heap_property(0);
 
 	#ifdef QTPFS_TRACE_PATH_SEARCHES
-	searchIter.SetPoppedNodeIdx(curNode->zmin() * gs->mapx + curNode->xmin());
+	searchIter.SetPoppedNodeIdx(curNode->zmin() * mapDims.mapx + curNode->xmin());
 	#endif
 
 	if (curNode == tgtNode)
@@ -274,7 +273,7 @@ void QTPFS::PathSearch::IterateNodeNeighbors(const std::vector<INode*>& nxtNodes
 			openNodes.check_heap_property(0);
 
 			#ifdef QTPFS_TRACE_PATH_SEARCHES
-			searchIter.AddPushedNodeIdx(nxtNode->zmin() * gs->mapx + nxtNode->xmin());
+			searchIter.AddPushedNodeIdx(nxtNode->zmin() * mapDims.mapx + nxtNode->xmin());
 			#endif
 
 			continue;
@@ -309,8 +308,8 @@ void QTPFS::PathSearch::Finalize(IPath* path) {
 }
 
 void QTPFS::PathSearch::TracePath(IPath* path) {
-	std::list<float3> points;
-//	std::list<float3>::const_iterator pointsIt;
+	std::deque<float3> points;
+//	std::deque<float3>::const_iterator pointsIt;
 
 	if (srcNode != tgtNode) {
 		INode* tmpNode = tgtNode;
@@ -318,7 +317,7 @@ void QTPFS::PathSearch::TracePath(IPath* path) {
 
 		float3 prvPoint = tgtPoint;
 
-		while ((prvNode != NULL) && (tmpNode != srcNode)) {
+		while ((prvNode != nullptr) && (tmpNode != srcNode)) {
 			const float3& tmpPoint = tmpNode->GetNeighborEdgeTransitionPoint(0);
 
 			assert(!math::isinf(tmpPoint.x) && !math::isinf(tmpPoint.z));
@@ -365,22 +364,45 @@ void QTPFS::PathSearch::TracePath(IPath* path) {
 	path->SetTargetPoint(tgtPoint);
 }
 
-void QTPFS::PathSearch::SmoothPath(IPath* path) {
+void QTPFS::PathSearch::SmoothPath(IPath* path) const {
 	if (path->NumPoints() == 2)
 		return;
+
+	assert(srcNode->GetPrevNode() == NULL);
+
+	for (unsigned int k = 0; k < QTPFS_MAX_SMOOTHING_ITERATIONS; k++) {
+		if (!SmoothPathIter(path)) {
+			// all waypoints stopped moving
+			break;
+		}
+	}
 
 	INode* n0 = tgtNode;
 	INode* n1 = tgtNode;
 
-	assert(srcNode->GetPrevNode() == NULL);
+	while (n1 != srcNode) {
+		n0 = n1;
+		n1 = n0->GetPrevNode();
 
+		// reset back-pointers
+		n0->SetPrevNode(NULL);
+	}
+}
+
+bool QTPFS::PathSearch::SmoothPathIter(IPath* path) const {
 	// smooth in reverse order (target to source)
+	//
+	// should terminate when waypoints stop moving,
+	// or after a small fixed number of iterations
 	unsigned int ni = path->NumPoints();
+	unsigned int nm = 0;
+
+	INode* n0 = tgtNode;
+	INode* n1 = tgtNode;
 
 	while (n1 != srcNode) {
 		n0 = n1;
 		n1 = n0->GetPrevNode();
-		n0->SetPrevNode(NULL);
 		ni -= 1;
 
 		assert(n1->GetNeighborRelation(n0) != 0);
@@ -388,9 +410,12 @@ void QTPFS::PathSearch::SmoothPath(IPath* path) {
 		assert(ni < path->NumPoints());
 
 		const unsigned int ngbRel = n0->GetNeighborRelation(n1);
-		const float3& p0 = path->GetPoint(ni    );
-		      float3  p1 = path->GetPoint(ni - 1);
-		const float3& p2 = path->GetPoint(ni - 2);
+
+		const float3 p0 = path->GetPoint(ni    );
+		const float3 p1 = path->GetPoint(ni - 1);
+		const float3 p2 = path->GetPoint(ni - 2);
+
+		float3 pi = ZeroVector;
 
 		// check if we can reduce the angle between segments
 		// p0-p1 and p1-p2 (ideally to zero degrees, making
@@ -430,8 +455,7 @@ void QTPFS::PathSearch::SmoothPath(IPath* path) {
 			// cases:
 			//     A) p0-p1-p2 (p2p0.xz >= 0 -- p0 in n0, p2 in n1)
 			//     B) p2-p1-p0 (p2p0.xz <= 0 -- p2 in n1, p0 in n0)
-			float3 pi = ZeroVector;
-
+			//
 			// x- and z-distances to edge between n0 and n1
 			const float dfx = (p2p0.x > 0.0f)?
 				((n0->xmax() * SQUARE_SIZE) - p0.x): // A(x)
@@ -460,6 +484,8 @@ void QTPFS::PathSearch::SmoothPath(IPath* path) {
 			ok = ok && (pi.z >= (zmin * SQUARE_SIZE) && pi.z <= (zmax * SQUARE_SIZE));
 
 			if (ok) {
+				nm += ((pi - p1).SqLength2D() > Square(0.05f));
+
 				assert(!math::isinf(pi.x) && !math::isinf(pi.z));
 				assert(!math::isnan(pi.x) && !math::isnan(pi.z));
 				path->SetPoint(ni - 1, pi);
@@ -498,14 +524,18 @@ void QTPFS::PathSearch::SmoothPath(IPath* path) {
 			if (dot > std::max(dot0, dot1))
 				continue;
 
-			if (dot0 > std::max(dot1, dot)) { p1 = e0; }
-			if (dot1 > std::max(dot0, dot)) { p1 = e1; }
+			if (dot0 > std::max(dot1, dot)) { pi = e0; }
+			if (dot1 > std::max(dot0, dot)) { pi = e1; }
 
-			assert(!math::isinf(p1.x) && !math::isinf(p1.z));
-			assert(!math::isnan(p1.x) && !math::isnan(p1.z));
-			path->SetPoint(ni - 1, p1);
+			nm += ((pi - p1).SqLength2D() > Square(0.05f));
+
+			assert(!math::isinf(pi.x) && !math::isinf(pi.z));
+			assert(!math::isnan(pi.x) && !math::isnan(pi.z));
+			path->SetPoint(ni - 1, pi);
 		}
 	}
+
+	return (nm != 0);
 }
 
 
@@ -532,7 +562,7 @@ bool QTPFS::PathSearch::SharedFinalize(const IPath* srcPath, IPath* dstPath) {
 	return false;
 }
 
-const boost::uint64_t QTPFS::PathSearch::GetHash(boost::uint64_t N, boost::uint32_t k) const {
+const std::uint64_t QTPFS::PathSearch::GetHash(std::uint64_t N, std::uint32_t k) const {
 	return (srcNode->GetNodeNumber() + (tgtNode->GetNodeNumber() * N) + (k * N * N));
 }
 

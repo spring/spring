@@ -11,6 +11,9 @@ SET(BUILD_spring-headless  TRUE CACHE BOOL "")
 SET(BUILD_spring-dedicated TRUE CACHE BOOL "")
 #SET(AI_TYPES "NONE" CACHE STRING "")
 
+# fix a cmake relink bug during install
+set(CMAKE_EXECUTABLE_FORMAT "ELF")
+
 SET(CMAKE_INSTALL_PREFIX "" CACHE STRING "")
 SET(BINDIR  "./" CACHE STRING "")
 SET(LIBDIR  "./" CACHE STRING "")

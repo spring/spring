@@ -20,7 +20,7 @@
  * Used to uniquely identify a Skirmish AI within the engine.
  */
 class SkirmishAIKey {
-	CR_DECLARE_STRUCT(SkirmishAIKey);
+	CR_DECLARE_STRUCT(SkirmishAIKey)
 
 public:
 	SkirmishAIKey(

@@ -7,7 +7,7 @@ USERPASS=$2
 PAGE=$3
 SECTION=$4
 CONTENT=$5
-WIKIAPI="http://springrts.com/mediawiki/api.php"
+WIKIAPI="https://springrts.com/mediawiki/api.php"
 cookie_jar="wikicj"
 
 #########################

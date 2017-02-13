@@ -6,7 +6,7 @@
 #include "System/creg/STL_Map.h"
 
 
-CR_BIND(AllyTeam, );
+CR_BIND(AllyTeam, )
 
 CR_REG_METADATA(AllyTeam, (
 	CR_MEMBER(startRectTop),
@@ -15,7 +15,7 @@ CR_REG_METADATA(AllyTeam, (
 	CR_MEMBER(startRectRight),
 	CR_MEMBER(allies),
 	CR_MEMBER(customValues)
-));
+))
 
 
 AllyTeam::AllyTeam()

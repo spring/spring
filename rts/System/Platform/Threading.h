@@ -5,20 +5,28 @@
 
 #include <string>
 #ifndef WIN32
-	#include <pthread.h>
+#include <pthread.h>
+#include "System/Platform/Linux/ThreadSupport.h"
+#include <semaphore.h>
 #endif
 #ifdef __APPLE__
-	#include <libkern/OSAtomic.h> // OSAtomicIncrement64
+#include <libkern/OSAtomic.h> // OSAtomicIncrement64
 #endif
 
 #include "System/Platform/Win/win32.h"
-#include <boost/cstdint.hpp>
+#include "System/Threading/SpringThreading.h"
+#include <functional>
+#include <atomic>
+#include <cinttypes>
 
-
-class CGameController;
 
 
 namespace Threading {
+
+	class ThreadControls;
+
+	extern thread_local std::shared_ptr<Threading::ThreadControls> threadCtls;
+
 	/**
 	 * Generic types & functions to handle OS native threads
 	 */
@@ -32,6 +40,57 @@ namespace Threading {
 	NativeThreadHandle GetCurrentThread();
 	NativeThreadId GetCurrentThreadId();
 
+	/**
+	 * Used to indicate the result of a suspend or resume operation.
+	 */
+	enum SuspendResult {
+		THREADERR_NONE,
+		THREADERR_NOT_RUNNING,
+		THREADERR_MISC
+	};
+
+	/**
+	 * Creates a new spring::thread whose entry function is wrapped by some boilerplate code that allows for suspend/resume.
+	 * These suspend/resume controls are exposed via the ThreadControls object that is provided by the caller and initialized by the thread.
+	 * The thread is guaranteed to be in a running and initialized state when this function returns.
+	 *
+	 * The ppThreadCtls object is an optional return parameter that gives access to the Suspend/Resume controls under Linux.
+	 *
+	 */
+	spring::thread CreateNewThread(std::function<void()> taskFunc, std::shared_ptr<Threading::ThreadControls>* ppThreadCtls = nullptr);
+
+	/**
+	 * Retrieves a shared pointer to the current ThreadControls for the calling thread.
+	 */
+	std::shared_ptr<ThreadControls> GetCurrentThreadControls();
+
+#ifndef WIN32
+	void SetCurrentThreadControls(bool);
+#else
+	static inline void SetCurrentThreadControls(bool) {}
+#endif
+
+	/**
+	 * @brief Provides suspend/resume functionality for worker threads.
+	 */
+	class ThreadControls {
+	public:
+		ThreadControls();
+
+		/* These are implemented in System/Platform/<platform>/ThreadSupport.cpp */
+		SuspendResult Suspend();
+		SuspendResult Resume();
+
+		NativeThreadHandle      handle;
+		std::atomic<bool>       running;
+	#ifndef WIN32
+		spring::mutex            mutSuspend;
+		spring::condition_variable condInitialized;
+		ucontext_t              ucontext;
+		pid_t                   thread_id;
+	#endif
+	};
+
 	inline bool NativeThreadIdsEqual(const NativeThreadId thID1, const NativeThreadId thID2);
 
 
@@ -43,9 +102,10 @@ namespace Threading {
 	 * want to run. Note that this approach will fail when N > 32.
 	 */
 	void DetectCores();
-	boost::uint32_t SetAffinity(boost::uint32_t cores_bitmask, bool hard = true);
-	void SetAffinityHelper(const char* threadName, boost::uint32_t affinity);
-	boost::uint32_t GetAvailableCoresMask();
+	std::uint32_t GetAffinity();
+	std::uint32_t SetAffinity(std::uint32_t cores_bitmask, bool hard = true);
+	void SetAffinityHelper(const char* threadName, std::uint32_t affinity);
+	std::uint32_t GetAvailableCoresMask();
 
 	/**
 	 * returns count of cpu cores/ hyperthreadings cores
@@ -53,11 +113,6 @@ namespace Threading {
 	int GetPhysicalCpuCores(); /// physical cores only (excluding hyperthreading)
 	int GetLogicalCpuCores();  /// physical + hyperthreading
 	bool HasHyperThreading();
-
-	/**
-	 * threadpool related stuff
-	 */
-	void InitThreadPool();
 
 	/**
 	 * Inform the OS kernel that we are a cpu-intensive task
@@ -80,16 +135,6 @@ namespace Threading {
 	bool IsWatchDogThread(NativeThreadId threadID);
 
 	/**
-	 * GML Functions
-	 */
-	void SetSimThread(bool set);
-	bool IsSimThread();
-
-	void SetLuaBatchThread(bool set);
-	bool IsLuaBatchThread();
-
-
-	/**
 	 * Give the current thread a name (posix-only)
 	 */
 	void SetThreadName(const std::string& newname);
@@ -107,13 +152,7 @@ namespace Threading {
 	};
 	void SetThreadError(const Error& err);
 	Error* GetThreadError();
-
-
-	/**
-	 * A 64bit atomic counter
-	 */
-	struct AtomicCounterInt64;
-};
+}
 
 
 //
@@ -137,53 +176,6 @@ namespace Threading {
 
 		return (thID1 == thID2);
 	}
-
-
-	struct AtomicCounterInt64 {
-	public:
-		AtomicCounterInt64(boost::int64_t start = 0) : num(start) {}
-
-		boost::int64_t operator++() {
-	#ifdef _MSC_VER
-			return InterlockedIncrement64(&num);
-	#elif defined(__APPLE__)
-			return OSAtomicIncrement64(&num);
-	#else // assuming GCC (__sync_fetch_and_add is a builtin)
-			return __sync_fetch_and_add(&num, boost::int64_t(1));
-	#endif
-		}
-
-		boost::int64_t operator+=(int x) {
-	#ifdef _MSC_VER
-			return InterlockedExchangeAdd64(&num, boost::int64_t(x));
-	#elif defined(__APPLE__)
-			return OSAtomicAdd64(boost::int64_t(x), &num);
-	#else // assuming GCC (__sync_fetch_and_add is a builtin)
-			return __sync_fetch_and_add(&num, boost::int64_t(x));
-	#endif
-		}
-
-		boost::int64_t operator-=(int x) {
-	#ifdef _MSC_VER
-			return InterlockedExchangeAdd64(&num, boost::int64_t(-x));
-	#elif defined(__APPLE__)
-			return OSAtomicAdd64(boost::int64_t(-x), &num);
-	#else // assuming GCC (__sync_fetch_and_add is a builtin)
-			return __sync_fetch_and_add(&num, boost::int64_t(-x));
-	#endif
-		}
-
-		operator boost::int64_t() {
-			return num;
-		}
-
-	private:
-	#ifdef _MSC_VER
-		__declspec(align(8)) boost::int64_t num;
-	#else
-		__attribute__ ((aligned (8))) boost::int64_t num;
-	#endif
-	};
 }
 
 #endif // _THREADING_H_

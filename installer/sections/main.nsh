@@ -4,7 +4,7 @@
 	SetOverWrite on
 
 	${If} ${FileExists} "$INSTDIR\uninst.exe"
-		MessageBox MB_ICONINFORMATION|MB_YESNO "Spring is already installed in this directory, do you want to uninstall it before continueing?" /SD IDYES IDNO fail
+		MessageBox MB_ICONINFORMATION|MB_YESNO "Spring is already installed in this directory, do you want to uninstall it before continuing?" /SD IDYES IDNO fail
 		ExecWait '"$INSTDIR\uninst.exe" /S _?=$INSTDIR' $0
 		${If} $0 != 0
 			fail:
@@ -60,7 +60,6 @@
 		RmDir /r "$INSTDIR"
 		RmDir /r "$DOCUMENTS\My Games\Spring"
 		Delete "$LOCALAPPDATA\springsettings.cfg"
-		Delete "$APPDATA\springlobby.conf"
 	skip_purge:
 
 !endif

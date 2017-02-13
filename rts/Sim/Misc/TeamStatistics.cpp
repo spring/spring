@@ -5,7 +5,7 @@
 #include "System/Platform/byteorder.h"
 
 
-CR_BIND(TeamStatistics, );
+CR_BIND(TeamStatistics, )
 CR_REG_METADATA(TeamStatistics, (
 	CR_MEMBER(frame),
 	CR_MEMBER(metalUsed),
@@ -27,7 +27,7 @@ CR_REG_METADATA(TeamStatistics, (
 	CR_MEMBER(unitsCaptured),
 	CR_MEMBER(unitsOutCaptured),
 	CR_MEMBER(unitsKilled)
-));
+))
 
 TeamStatistics::TeamStatistics()
 	: frame(0)

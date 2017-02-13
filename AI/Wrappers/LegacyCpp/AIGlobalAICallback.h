@@ -3,6 +3,8 @@
 #ifndef _AI_GLOBAL_AI_CALLBACK_H
 #define _AI_GLOBAL_AI_CALLBACK_H
 
+#include <memory>
+
 #include "IGlobalAICallback.h"
 
 struct SSkirmishAICallback;
@@ -19,19 +21,19 @@ class CAIAICheats;
 class CAIGlobalAICallback : public IGlobalAICallback {
 public:
 	CAIGlobalAICallback();
-	CAIGlobalAICallback(const SSkirmishAICallback* sAICallback, int skirmishAIId);
-	~CAIGlobalAICallback();
+	CAIGlobalAICallback(const SSkirmishAICallback* _sAICallback, int _skirmishAIId);
 
 	virtual IAICheats* GetCheatInterface();
 	virtual IAICallback* GetAICallback();
 
-	const SSkirmishAICallback* GetInnerCallback() const;
+	const SSkirmishAICallback* GetInnerCallback() const { return sAICallback; }
 
 private:
 	const SSkirmishAICallback* sAICallback;
 	int skirmishAIId;
-	CAIAICallback* wrappedAICallback;
-	CAIAICheats* wrappedAICheats;
+
+	std::unique_ptr<CAIAICallback> wrappedAICallback;
+	std::unique_ptr<CAIAICheats> wrappedAICheats;
 };
 
 } // namespace springLegacyAI

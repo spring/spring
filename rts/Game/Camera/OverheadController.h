@@ -14,8 +14,6 @@ public:
 	const std::string GetName() const { return "ta"; }
 
 	void KeyMove(float3 move);
-	void MousePress(int x, int y, int button) { /* empty */ }
-	void MouseRelease(int x, int y, int button) { /* empty */ }
 	void MouseMove(float3 move);
 	void ScreenEdgeMove(float3 move);
 	void MouseWheelMove(float move);
@@ -25,7 +23,7 @@ public:
 	void SetPos(const float3& newPos);
 
 	float3 SwitchFrom() const;
-	void SwitchTo(bool showText);
+	void SwitchTo(const int oldCam, const bool showText);
 
 	void GetState(StateMap& sm) const;
 	bool SetState(const StateMap& sm);
@@ -33,16 +31,15 @@ public:
 	bool flipped;
 
 private:
-	void UpdateVectors();
-
-private:
 	float middleClickScrollSpeed;
-	float zscale;
 	float height;
 	float oldAltHeight;
 	bool changeAltHeight;
 	float maxHeight;
 	float tiltSpeed;
+	float angle;
+
+	static constexpr float DEFAULT_ANGLE = 0.464f;
 };
 
 #endif // _OVERHEAD_CONTROLLER_H

@@ -13,7 +13,7 @@ class IPathController;
 
 class CGroundMoveType : public AMoveType
 {
-	CR_DECLARE(CGroundMoveType);
+	CR_DECLARE_DERIVED(CGroundMoveType)
 
 public:
 	CGroundMoveType(CUnit* owner);
@@ -21,25 +21,28 @@ public:
 
 	void PostLoad();
 
-	bool Update();
-	void SlowUpdate();
+	bool Update() override;
+	void SlowUpdate() override;
 
-	void StartMovingRaw(const float3 moveGoalPos, float moveGoalRadius);
-	void StartMoving(float3 pos, float goalRadius);
-	void StartMoving(float3 pos, float goalRadius, float speed) { StartMoving(pos, goalRadius); }
-	void StopMoving(bool callScript = false, bool hardStop = false);
+	void StartMovingRaw(const float3 moveGoalPos, float moveGoalRadius) override;
+	void StartMoving(float3 pos, float goalRadius) override;
+	void StartMoving(float3 pos, float goalRadius, float speed) override { StartMoving(pos, goalRadius); }
+	void StopMoving(bool callScript = false, bool hardStop = false) override;
+	bool IsMovingTowards(const float3& pos, float radius, bool checkProgress) const override {
+		return (goalPos == pos * XZVector && goalRadius == radius && (!checkProgress || progressState == Active));
+	}
 
-	void KeepPointingTo(float3 pos, float distance, bool aggressive);
-	void KeepPointingTo(CUnit* unit, float distance, bool aggressive);
+	void KeepPointingTo(float3 pos, float distance, bool aggressive) override;
+	void KeepPointingTo(CUnit* unit, float distance, bool aggressive) override;
 
 	void TestNewTerrainSquare();
-	bool CanApplyImpulse(const float3&);
-	void LeaveTransport();
+	bool CanApplyImpulse(const float3&) override;
+	void LeaveTransport() override;
 
-	bool SetMemberValue(unsigned int memberHash, void* memberValue);
+	bool SetMemberValue(unsigned int memberHash, void* memberValue) override;
 
 	bool OnSlope(float minSlideTolerance);
-	bool IsReversing() const { return reversing; }
+	bool IsReversing() const override { return reversing;}
 	bool WantToStop() const { return (pathID == 0 && !useRawMovement); }
 
 
@@ -81,9 +84,8 @@ private:
 
 	void GetNextWayPoint();
 	bool CanGetNextWayPoint();
-	bool ReRequestPath(bool callScript, bool forceRequest);
+	void ReRequestPath(bool forceRequest);
 
-	float BrakingDistance(float speed, float rate) const;
 	float3 Here();
 
 	void StartEngine(bool callScript);
@@ -134,7 +136,7 @@ private:
 	void UpdateOwnerPos(const float3&, const float3&);
 	bool OwnerMoved(const short, const float3&, const float3&);
 	bool FollowPath();
-	bool WantReverse(const float3&) const;
+	bool WantReverse(const float3& wpDir, const float3& ffDir) const;
 
 private:
 	IPathController* pathController;
@@ -156,13 +158,17 @@ private:
 	float decRate;
 	float myGravity;
 
+	float maxReverseDist;
+	float minReverseAngle;
 	float maxReverseSpeed;
+
 	float wantedSpeed;
 	float currentSpeed;
 	float deltaSpeed;
 
 	bool atGoal;
 	bool atEndOfPath;
+	bool wantRepath;
 
 	float currWayPointDist;
 	float prevWayPointDist;
@@ -177,11 +183,8 @@ private:
 	float skidRotSpeed;    /// rotational speed when skidding (radians / (GAME_SPEED frames))
 	float skidRotAccel;    /// rotational acceleration when skidding (radians / (GAME_SPEED frames^2))
 
-
 	unsigned int pathID;
-
 	unsigned int nextObstacleAvoidanceFrame;
-	unsigned int lastPathRequestFrame;
 
 	/// {in, de}creased every Update if idling is true/false and pathId != 0
 	unsigned int numIdlingUpdates;

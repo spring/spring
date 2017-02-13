@@ -24,7 +24,7 @@
 CUnitDefHandler* unitDefHandler = NULL;
 
 
-#ifdef _MSC_VER
+#if defined(_MSC_VER) && (_MSC_VER < 1800)
 bool isblank(int c) {
 	return (c == ' ') || (c == '\t') || (c == '\r') || (c == '\n');
 }
@@ -33,17 +33,16 @@ bool isblank(int c) {
 
 CUnitDefHandler::CUnitDefHandler(LuaParser* defsParser) : noCost(false)
 {
-	const LuaTable rootTable = defsParser->GetRoot().SubTable("UnitDefs");
-	if (!rootTable.IsValid()) {
-		throw content_error("Error loading UnitDefs");
-	}
+	const LuaTable& rootTable = defsParser->GetRoot().SubTable("UnitDefs");
 
-	vector<string> unitDefNames;
+	if (!rootTable.IsValid())
+		throw content_error("Error loading UnitDefs");
+
+	std::vector<std::string> unitDefNames;
 	rootTable.GetKeys(unitDefNames);
 
 	unitDefs.reserve(unitDefNames.size() + 1);
-	UnitDef* nullDef = new UnitDef();
-	unitDefs.push_back(nullDef);
+	unitDefs.emplace_back();
 
 	for (unsigned int a = 0; a < unitDefNames.size(); ++a) {
 		const string& unitName = unitDefNames[a];
@@ -60,13 +59,6 @@ CUnitDefHandler::CUnitDefHandler(LuaParser* defsParser) : noCost(false)
 }
 
 
-CUnitDefHandler::~CUnitDefHandler()
-{
-	for (std::vector<UnitDef*>::iterator it = unitDefs.begin(); it != unitDefs.end(); ++it) {
-		delete *it;
-	}
-}
-
 
 int CUnitDefHandler::PushNewUnitDef(const std::string& unitName, const LuaTable& udTable)
 {
@@ -78,63 +70,54 @@ int CUnitDefHandler::PushNewUnitDef(const std::string& unitName, const LuaTable&
 				unitName.c_str());
 	}
 
-	UnitDef* newDef = NULL;
 	int defid = unitDefs.size();
 
 	try {
-		newDef = new UnitDef(udTable, unitName, defid);
-		UnitDefLoadSounds(newDef, udTable);
+		unitDefs.emplace_back(udTable, unitName, defid);
+		UnitDef& newDef = unitDefs.back();
+		UnitDefLoadSounds(&newDef, udTable);
 
-		if (!newDef->decoyName.empty()) {
-			decoyNameMap[unitName] = StringToLower(newDef->decoyName);
+		if (!newDef.decoyName.empty()) {
+			decoyNameMap[unitName] = StringToLower(newDef.decoyName);
 		}
 
 		// force-initialize the real* members
-		newDef->SetNoCost(true);
-		newDef->SetNoCost(noCost);
+		newDef.SetNoCost(true);
+		newDef.SetNoCost(noCost);
 	} catch (const content_error& err) {
 		LOG_L(L_ERROR, "%s", err.what());
-		delete newDef;
 		return 0;
 	}
 
 	unitDefIDsByName[unitName] = defid;
-	unitDefs.push_back(newDef);
 	return defid;
 }
 
 
 void CUnitDefHandler::CleanBuildOptions()
 {
+	std::vector<int> eraseOpts;
+
 	// remove invalid build options
 	for (int i = 1; i < unitDefs.size(); i++) {
-		UnitDef* ud = unitDefs[i];
-		map<int, string>& bo = ud->buildOptions;
-		map<int, string>::iterator it = bo.begin();
-		while (it != bo.end()) {
-			bool erase = false;
+		UnitDef& ud = unitDefs[i];
 
+		auto& buildOpts = ud.buildOptions;
+
+		eraseOpts.clear();
+		eraseOpts.reserve(buildOpts.size());
+
+		for (auto it = buildOpts.cbegin(); it != buildOpts.cend(); ++it) {
 			const UnitDef* bd = GetUnitDefByName(it->second);
-			if (bd == NULL) {
-				LOG_L(L_WARNING,
-						"removed the \"%s\" entry from the \"%s\" build menu",
-						it->second.c_str(), ud->name.c_str());
-				erase = true;
-			}
-			/*
-			else if (bd->maxThisUnit <= 0) {
-				// don't remove, just grey out the icon
-				erase = true; // silent removal
-			}
-			*/
 
-			if (erase) {
-				map<int, string>::iterator tmp = it;
-				++it;
-				bo.erase(tmp);
-			} else {
-				++it;
+			if (bd == nullptr /*|| bd->maxThisUnit <= 0*/) {
+				LOG_L(L_WARNING, "removed the \"%s\" entry from the \"%s\" build menu", it->second.c_str(), ud.name.c_str());
+				eraseOpts.push_back(it->first);
 			}
+		}
+
+		for (const int buildOptionID: eraseOpts) {
+			buildOpts.erase(buildOptionID);
 		}
 	}
 }
@@ -143,16 +126,15 @@ void CUnitDefHandler::CleanBuildOptions()
 void CUnitDefHandler::ProcessDecoys()
 {
 	// assign the decoy pointers, and build the decoy map
-	map<string, string>::const_iterator mit;
-	for (mit = decoyNameMap.begin(); mit != decoyNameMap.end(); ++mit) {
-		map<string, int>::iterator fakeIt, realIt;
-		fakeIt = unitDefIDsByName.find(mit->first);
-		realIt = unitDefIDsByName.find(mit->second);
+	for (auto mit = decoyNameMap.begin(); mit != decoyNameMap.end(); ++mit) {
+		auto fakeIt = unitDefIDsByName.find(mit->first);
+		auto realIt = unitDefIDsByName.find(mit->second);
+
 		if ((fakeIt != unitDefIDsByName.end()) && (realIt != unitDefIDsByName.end())) {
-			UnitDef* fake = unitDefs[fakeIt->second];
-			UnitDef* real = unitDefs[realIt->second];
-			fake->decoyDef = real;
-			decoyMap[real->id].insert(fake->id);
+			UnitDef& fake = unitDefs[fakeIt->second];
+			UnitDef& real = unitDefs[realIt->second];
+			fake.decoyDef = &real;
+			decoyMap[real.id].insert(fake.id);
 		}
 	}
 	decoyNameMap.clear();
@@ -163,11 +145,14 @@ void CUnitDefHandler::FindStartUnits()
 {
 	for (unsigned int i = 0; i < sideParser.GetCount(); i++) {
 		const std::string& startUnit = sideParser.GetStartUnit(i);
-		if (!startUnit.empty()) {
-			std::map<std::string, int>::iterator it = unitDefIDsByName.find(startUnit);
-			if (it != unitDefIDsByName.end()) {
-				startUnitIDs.insert(it->second);
-			}
+
+		if (startUnit.empty())
+			continue;
+
+		const auto it = unitDefIDsByName.find(startUnit);
+
+		if (it != unitDefIDsByName.end()) {
+			startUnitIDs.insert(it->second);
 		}
 	}
 }
@@ -233,23 +218,21 @@ const UnitDef* CUnitDefHandler::GetUnitDefByName(std::string name)
 {
 	StringToLowerInPlace(name);
 
-	std::map<std::string, int>::iterator it = unitDefIDsByName.find(name);
-	if (it == unitDefIDsByName.end()) {
-		return NULL;
-	}
+	const auto it = unitDefIDsByName.find(name);
 
-	const int defid = it->second;
-	return unitDefs[defid];
+	if (it == unitDefIDsByName.end())
+		return nullptr;
+
+	return &unitDefs[it->second];
 }
 
 
 const UnitDef* CUnitDefHandler::GetUnitDefByID(int defid)
 {
-	if ((defid <= 0) || (defid >= unitDefs.size())) {
-		return NULL;
-	}
-	const UnitDef* ud = unitDefs[defid];
-	return ud;
+	if ((defid <= 0) || (defid >= unitDefs.size()))
+		return nullptr;
+
+	return &unitDefs[defid];
 }
 
 
@@ -292,11 +275,11 @@ void CUnitDefHandler::SetUnitDefImage(const UnitDef* unitDef, const std::string&
 		    !LoadBuildPic("unitpics/" + unitDef->name + ".png", bitmap) &&
 		    !LoadBuildPic("unitpics/" + unitDef->name + ".pcx", bitmap) &&
 		    !LoadBuildPic("unitpics/" + unitDef->name + ".bmp", bitmap)) {
-			bitmap.Alloc(1, 1); // last resort
+			bitmap.AllocDummy(SColor(255, 0, 0, 255));
 		}
 	}
 
-	const unsigned int texID = bitmap.CreateTexture(false);
+	const unsigned int texID = bitmap.CreateTexture();
 
 	UnitDefImage* unitImage = unitDef->buildPic;
 	unitImage->textureID = texID;
@@ -326,7 +309,7 @@ bool CUnitDefHandler::ToggleNoCost()
 	noCost = !noCost;
 
 	for (int i = 1; i < unitDefs.size(); ++i) {
-		unitDefs[i]->SetNoCost(noCost);
+		unitDefs[i].SetNoCost(noCost);
 	}
 
 	return noCost;
@@ -335,26 +318,23 @@ bool CUnitDefHandler::ToggleNoCost()
 
 void CUnitDefHandler::AssignTechLevels()
 {
-	set<int>::iterator it;
-	for (it = startUnitIDs.begin(); it != startUnitIDs.end(); ++it) {
+	for (auto it = startUnitIDs.begin(); it != startUnitIDs.end(); ++it) {
 		AssignTechLevel(unitDefs[*it], 0);
 	}
 }
 
 
-void CUnitDefHandler::AssignTechLevel(UnitDef* ud, int level)
+void CUnitDefHandler::AssignTechLevel(UnitDef& ud, int level)
 {
-	if ((ud->techLevel >= 0) && (ud->techLevel <= level)) {
+	if ((ud.techLevel >= 0) && (ud.techLevel <= level))
 		return;
-	}
 
-	ud->techLevel = level;
+	ud.techLevel = level;
 
 	level++;
 
-	map<int, std::string>::const_iterator bo_it;
-	for (bo_it = ud->buildOptions.begin(); bo_it != ud->buildOptions.end(); ++bo_it) {
-		std::map<std::string, int>::const_iterator ud_it = unitDefIDsByName.find(bo_it->second);
+	for (auto bo_it = ud.buildOptions.begin(); bo_it != ud.buildOptions.end(); ++bo_it) {
+		const auto ud_it = unitDefIDsByName.find(bo_it->second);
 		if (ud_it != unitDefIDsByName.end()) {
 			AssignTechLevel(unitDefs[ud_it->second], level);
 		}

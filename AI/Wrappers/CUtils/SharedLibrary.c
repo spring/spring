@@ -52,11 +52,11 @@ sharedLib_t sharedLib_load(const char* libFilePath) {
 	if ((lib = LoadLibrary(libFilePath)) == NULL) {
 		fprintf(stderr, "[SharedLibrary.c::sharedLib_load(%s)] LoadLibrary() error %d\n", libFilePath, GetLastError());
 	}
-#else // defined _WIN32
+#else /* defined _WIN32 */
 	if ((lib = dlopen(libFilePath, RTLD_LAZY)) == NULL) {
 		fprintf(stderr, "[SharedLibrary.c::sharedLib_load(%s)] dlopen() error %s\n", libFilePath, dlerror());
 	}
-#endif // else defined _WIN32
+#endif /* else defined _WIN32 */
 	return lib;
 }
 
@@ -68,9 +68,9 @@ void sharedLib_unload(sharedLib_t sharedLib) {
 
 #if defined _WIN32
 	FreeLibrary(sharedLib);
-#else // defined _WIN32
+#else /* defined _WIN32 */
 	dlclose(sharedLib);
-#endif // else defined _WIN32
+#endif /* else defined _WIN32 */
 	sharedLib = NULL;
 }
 
@@ -86,7 +86,7 @@ void* sharedLib_findAddress(sharedLib_t sharedLib, const char* symbol) {
 
 #if defined _WIN32
 	return (void*) GetProcAddress(sharedLib, symbol);
-#else // defined _WIN32
+#else /* defined _WIN32 */
 	return dlsym(sharedLib, symbol);
-#endif // else defined _WIN32
+#endif /* else defined _WIN32 */
 }

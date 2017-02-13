@@ -3,9 +3,6 @@
 #ifndef I_GLOBAL_AI_CALLBACK_H
 #define I_GLOBAL_AI_CALLBACK_H
 
-#include <vector>
-#include <deque>
-
 namespace springLegacyAI {
 
 class IAICheats;

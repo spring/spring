@@ -19,6 +19,7 @@ namespace creg
 
 		/// Serialize integer value - char, short or int
 		virtual void SerializeInt(void* data, int byteSize) = 0;
+		template <typename T> void SerializeInt(T* data) { SerializeInt(data, sizeof(T)); }
 
 		/// Serialize a pointer to an instance of a creg registered class/struct
 		virtual void SerializeObjectPtr(void** ptr, Class* objectClass) = 0;

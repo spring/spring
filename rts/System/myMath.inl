@@ -40,27 +40,24 @@ inline float GetHeadingFromVectorF(const float dx, const float dz)
 	float h = 0.0f;
 
 	if (dz != 0.0f) {
-		float d = dx / dz;
+		// ensure a minimum distance between dz and 0 such that
+		// sqr(dx/dz) never exceeds abs(num_limits<float>::max)
+		const float sz = dz * 2.0f - 1.0f;
+		const float d  = dx / (dz + 0.000001f * sz);
+		const float dd = d * d;
 
 		if (d > 1.0f) {
-			h = HALFPI - d / (d * d + 0.28f);
+			h = math::HALFPI - d / (dd + 0.28f);
 		} else if (d < -1.0f) {
-			h = -HALFPI - d / (d * d + 0.28f);
+			h = -math::HALFPI - d / (dd + 0.28f);
 		} else {
-			h = d / (1.0f + 0.28f * d * d);
+			h = d / (1.0f + 0.28f * dd);
 		}
 
-		if (dz < 0.0f) {
-			if (dx > 0.0f)
-				h += PI;
-			else
-				h -= PI;
-		}
+		// add PI (if dx > 0) or -PI (if dx < 0) when dz < 0
+		h += ((math::PI * ((dx > 0.0f) * 2.0f - 1.0f)) * (dz < 0.0f));
 	} else {
-		if (dx > 0.0f)
-			h = HALFPI;
-		else
-			h = -HALFPI;
+		h = math::HALFPI * ((dx > 0.0f) * 2.0f - 1.0f);
 	}
 
 	return h;
@@ -68,23 +65,20 @@ inline float GetHeadingFromVectorF(const float dx, const float dz)
 
 inline short int GetHeadingFromVector(const float dx, const float dz)
 {
-	float h = GetHeadingFromVectorF(dx, dz);
-
-	h *= SHORTINT_MAXVALUE * INVPI;
+	constexpr float s = SHORTINT_MAXVALUE * math::INVPI;
+	const     float h = GetHeadingFromVectorF(dx, dz) * s;
 
 	// Prevents h from going beyond SHORTINT_MAXVALUE.
 	// If h goes beyond SHORTINT_MAXVALUE, the following
 	// conversion to a short int crashes.
 	// if (h > SHORTINT_MAXVALUE) h = SHORTINT_MAXVALUE;
 	// return (short int) h;
-
 	int ih = (int) h;
-	if (ih == -SHORTINT_MAXVALUE) {
-		// ih now represents due-north, but the modulo operation
-		// below would cause it to wrap around from -32768 to 0
-		// which means due-south, so add 1
-		ih += 1;
-	}
+
+	// if ih represents due-north the modulo operation
+	// below would cause it to wrap around from -32768
+	// to 0 (which means due-south), so add 1
+	ih += (ih == -SHORTINT_MAXVALUE);
 	ih %= SHORTINT_MAXVALUE;
 	return (short int) ih;
 }
@@ -98,7 +92,7 @@ inline shortint2 GetHAndPFromVector(const float3 vec)
 	// If h goes beyond SHORTINT_MAXVALUE, the following
 	// conversion to a short int crashes.
 	// this change destroys the whole meaning with using short ints....
-	int iy = (int) (math::asin(vec.y) * (SHORTINT_MAXVALUE * INVPI));
+	int iy = (int) (math::asin(vec.y) * (SHORTINT_MAXVALUE * math::INVPI));
 	iy %= SHORTINT_MAXVALUE;
 	ret.y = (short int) iy;
 	ret.x = GetHeadingFromVector(vec.x, vec.z);
@@ -138,37 +132,43 @@ inline int Round(const float f)
 	return math::floor(f + 0.5f);
 }
 
+
+inline int2 IdxToCoord(unsigned x, unsigned array_width)
+{
+	int2 r;
+	r.x = x % array_width;
+	r.y = x / array_width;
+	return r;
+}
+
+
 inline float ClampRad(float f)
 {
-	f = math::fmod(f, TWOPI);
-	if (f < 0.0f) f += TWOPI;
+	f  = math::fmod(f, math::TWOPI);
+	f += (math::TWOPI * (f < 0.0f));
 	return f;
 }
 
-inline void ClampRad(float* f)
-{
-	*f = math::fmod(*f, TWOPI);
-	if (*f < 0.0f) *f += TWOPI;
-}
+inline void ClampRad(float* f) { *f = ClampRad(*f); }
+
 
 inline bool RadsAreEqual(const float f1, const float f2)
 {
-	return (math::fmod(f1 - f2, TWOPI) == 0.0f);
+	return (math::fmod(f1 - f2, math::TWOPI) == 0.0f);
 }
 
 inline float GetRadFromXY(const float dx, const float dy)
 {
-	float a;
-	if(dx != 0) {
-		a = math::atan(dy / dx);
-		if(dx < 0)
-			a += PI;
-		else if(dy < 0)
-			a += 2.0f * PI;
+	if (dx != 0.0f) {
+		float a = math::atan(dy / dx);
+
+		if (dx < 0.0f)
+			a += math::PI;
+		else if (dy < 0.0f)
+			a += math::TWOPI;
+
 		return a;
 	}
-	a = PI / 2.0f;
-	if(dy < 0)
-		a += PI;
-	return a;
+
+	return (math::HALFPI + (math::PI * (dy < 0.0f)));
 }

@@ -1,10 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-
-#include <set>
 #include <string>
 #include <vector>
-#include <set>
 #include <map>
 #include <cctype>
 
@@ -58,50 +55,33 @@ static int GuiSoundSetTable(lua_State* L, const void* data);
 
 bool LuaWeaponDefs::PushEntries(lua_State* L)
 {
-	if (paramMap.empty()) {
-	  InitParamMap();
-	}
+	InitParamMap();
 
-	const map<string, int>& weaponMap = weaponDefHandler->weaponID;
-	map<string, int>::const_iterator wit;
-	for (wit = weaponMap.begin(); wit != weaponMap.end(); ++wit) {
-		const WeaponDef* wd = &weaponDefHandler->weaponDefs[wit->second];
-		if (wd == NULL) {
-	  	continue;
-		}
-		lua_pushnumber(L, wd->id);
-		lua_newtable(L); { // the proxy table
+	typedef int (*IndxFuncType)(lua_State*);
+	typedef int (*IterFuncType)(lua_State*);
 
-			lua_newtable(L); { // the metatable
+	const auto& defsMap = weaponDefHandler->weaponID;
 
-				HSTR_PUSH(L, "__index");
-				lua_pushlightuserdata(L, (void*)wd);
-				lua_pushcclosure(L, WeaponDefIndex, 1);
-				lua_rawset(L, -3); // closure
+	const std::array<const LuaHashString, 3> indxOpers = {{
+		LuaHashString("__index"),
+		LuaHashString("__newindex"),
+		LuaHashString("__metatable")
+	}};
+	const std::array<const LuaHashString, 2> iterOpers = {{
+		LuaHashString("pairs"),
+		LuaHashString("next")
+	}};
 
-				HSTR_PUSH(L, "__newindex");
-				lua_pushlightuserdata(L, (void*)wd);
-				lua_pushcclosure(L, WeaponDefNewIndex, 1);
-				lua_rawset(L, -3);
+	const std::array<const IndxFuncType, 3> indxFuncs = {WeaponDefIndex, WeaponDefNewIndex, WeaponDefMetatable};
+	const std::array<const IterFuncType, 2> iterFuncs = {Pairs, Next};
 
-				HSTR_PUSH(L, "__metatable");
-				lua_pushlightuserdata(L, (void*)wd);
-				lua_pushcclosure(L, WeaponDefMetatable, 1);
-				lua_rawset(L, -3);
-			}
+	for (auto it = defsMap.cbegin(); it != defsMap.cend(); ++it) {
+		const auto def = weaponDefHandler->GetWeaponDefByID(it->second);
 
-			lua_setmetatable(L, -2);
-		}
+		if (def == NULL)
+			continue;
 
-		HSTR_PUSH(L, "pairs");
-		lua_pushcfunction(L, Pairs);
-		lua_rawset(L, -3);
-
-		HSTR_PUSH(L, "next");
-		lua_pushcfunction(L, Next);
-		lua_rawset(L, -3);
-
-		lua_rawset(L, -3); // proxy table into WeaponDefs
+		PushObjectDefProxyTable(L, indxOpers, iterOpers, indxFuncs, iterFuncs, def);
 	}
 
 	return true;
@@ -272,7 +252,7 @@ static int DamagesArray(lua_State* L, const void* data)
 	const int typeCount = damageArrayHandler->GetNumTypes();
 	for (int i = 0; i < typeCount; i++) {
 		lua_pushnumber(L, i);
-		lua_pushnumber(L, d[i]);
+		lua_pushnumber(L, d.Get(i));
 		lua_rawset(L, -3);
 	}
 
@@ -284,7 +264,7 @@ static int VisualsTable(lua_State* L, const void* data)
 {
 	const struct WeaponDef::Visuals& v = *static_cast<const struct WeaponDef::Visuals*>(data);
 	lua_newtable(L);
-	HSTR_PUSH_STRING(L, "modelName",      modelParser->FindModelPath(v.modelName));
+	HSTR_PUSH_STRING(L, "modelName",      modelLoader.FindModelPath(v.modelName));
 	HSTR_PUSH_NUMBER(L, "colorR",         v.color.x);
 	HSTR_PUSH_NUMBER(L, "colorG",         v.color.y);
 	HSTR_PUSH_NUMBER(L, "colorB",         v.color.z);
@@ -388,10 +368,10 @@ static int CategorySetFromBits(lua_State* L, const void* data)
 
 static int CustomParamsTable(lua_State* L, const void* data)
 {
-	const map<string, string>& params = *((const map<string, string>*)data);
+	const spring::unordered_map<std::string, std::string>& params = *((const spring::unordered_map<std::string, std::string>*)data);
 	lua_newtable(L);
-	map<string, string>::const_iterator it;
-	for (it = params.begin(); it != params.end(); ++it) {
+
+	for (auto it = params.cbegin(); it != params.cend(); ++it) {
 		lua_pushsstring(L, it->first);
 		lua_pushsstring(L, it->second);
 		lua_rawset(L, -3);
@@ -426,6 +406,8 @@ static int GuiSoundSetTable(lua_State* L, const void* data)
 
 static bool InitParamMap()
 {
+	paramMap.clear();
+
 	paramMap["next"]  = DataElement(READONLY_TYPE);
 	paramMap["pairs"] = DataElement(READONLY_TYPE);
 
@@ -474,12 +456,17 @@ static bool InitParamMap()
 	ADD_FLOAT("predictBoost", wd.predictBoost);
 	ADD_INT("highTrajectory", wd.highTrajectory);
 
+	ADD_FLOAT("dynDamageExp", wd.damages.dynDamageExp);
+	ADD_FLOAT("dynDamageMin", wd.damages.dynDamageMin);
+	ADD_FLOAT("dynDamageRange", wd.damages.dynDamageRange);
+	ADD_BOOL("dynDamageInverted", wd.damages.dynDamageInverted);
+
 	ADD_BOOL("noSelfDamage",  wd.noSelfDamage);
 	ADD_BOOL("impactOnly",    wd.impactOnly);
 
-	ADD_FLOAT("craterAreaOfEffect", wd.craterAreaOfEffect);
-	ADD_FLOAT("damageAreaOfEffect", wd.damageAreaOfEffect);
-	ADD_FLOAT("edgeEffectiveness",  wd.edgeEffectiveness);
+	ADD_FLOAT("craterAreaOfEffect", wd.damages.craterAreaOfEffect);
+	ADD_FLOAT("damageAreaOfEffect", wd.damages.damageAreaOfEffect);
+	ADD_FLOAT("edgeEffectiveness",  wd.damages.edgeEffectiveness);
 	ADD_FLOAT("fireStarter",        wd.fireStarter);
 	ADD_FLOAT("size",               wd.size);
 	ADD_FLOAT("sizeGrowth",         wd.sizeGrowth);
@@ -536,12 +523,13 @@ static bool InitParamMap()
 	ADD_FLOAT("turnRate", wd.turnrate);
 
 	ADD_FLOAT("projectilespeed", wd.projectilespeed);
-	ADD_FLOAT("explosionSpeed", wd.explosionSpeed);
+	ADD_FLOAT("explosionSpeed", wd.damages.explosionSpeed);
 
 	ADD_FLOAT("wobble", wd.wobble);
 	ADD_FLOAT("dance",  wd.dance);
 
 	ADD_FLOAT("trajectoryHeight", wd.trajectoryHeight);
+	ADD_INT("flightTime", wd.flighttime);
 
 	ADD_BOOL("largeBeamLaser", wd.largeBeamLaser);
 	ADD_BOOL("laserHardStop", wd.laserHardStop);

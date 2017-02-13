@@ -3,21 +3,28 @@
 #ifndef COMMAND_DRAWER_H
 #define COMMAND_DRAWER_H
 
+#include "System/UnorderedSet.hpp"
+
 struct Command;
 class CCommandAI;
 class CAirCAI;
 class CBuilderCAI;
 class CFactoryCAI;
 class CMobileCAI;
-class CTransportCAI;
 class CUnit;
 
 struct CommandDrawer {
 public:
 	static CommandDrawer* GetInstance();
 
+	// clear the set after WorldDrawer and MiniMap have both used it
+	void Update() { luaQueuedUnitSet.clear(); }
+
 	void Draw(const CCommandAI*) const;
+	void DrawLuaQueuedUnitSetCommands() const;
 	void DrawQuedBuildingSquares(const CBuilderCAI*) const;
+
+	void AddLuaQueuedUnit(const CUnit* unit);
 
 private:
 	void DrawCommands(const CCommandAI*) const;
@@ -25,10 +32,12 @@ private:
 	void DrawBuilderCAICommands(const CBuilderCAI*) const;
 	void DrawFactoryCAICommands(const CFactoryCAI*) const;
 	void DrawMobileCAICommands(const CMobileCAI*) const;
-	void DrawTransportCAICommands(const CTransportCAI*) const;
 
 	void DrawWaitIcon(const Command&) const;
 	void DrawDefaultCommand(const Command&, const CUnit*) const;
+
+private:
+	spring::unordered_set<int> luaQueuedUnitSet;
 };
 
 #define commandDrawer (CommandDrawer::GetInstance())

@@ -50,8 +50,8 @@ void QTPFS::NodeLayer::Init(unsigned int layerNum) {
 	numLeafNodes = 1;
 	layerNumber = layerNum;
 
-	xsize = gs->mapx;
-	zsize = gs->mapy;
+	xsize = mapDims.mapx;
+	zsize = mapDims.mapy;
 
 	nodeGrid.resize(xsize * zsize, NULL);
 
@@ -128,8 +128,8 @@ bool QTPFS::NodeLayer::Update(
 	unsigned int numClosedSquares = 0;
 
 	const bool globalUpdate =
-		((r.x1 == 0 && r.x2 == gs->mapx) &&
-		 (r.z1 == 0 && r.z2 == gs->mapy));
+		((r.x1 == 0 && r.x2 == mapDims.mapx) &&
+		 (r.z1 == 0 && r.z2 == mapDims.mapy));
 
 	if (globalUpdate) {
 		maxRelSpeedMod = 0.0f;
@@ -240,74 +240,102 @@ QTPFS::NodeLayer::SpeedBinType QTPFS::NodeLayer::GetSpeedModBin(float absSpeedMo
 void QTPFS::NodeLayer::ExecNodeNeighborCacheUpdate(unsigned int currFrameNum, unsigned int currMagicNum) {
 	assert(!nodeGrid.empty());
 
-	const int xoff = (currFrameNum % ((gs->mapx >> 1) / SQUARE_SIZE)) * SQUARE_SIZE;
-	const int zoff = (currFrameNum / ((gs->mapy >> 1) / SQUARE_SIZE)) * SQUARE_SIZE;
+	const int xoff = (currFrameNum % ((mapDims.mapx >> 1) / SQUARE_SIZE)) * SQUARE_SIZE;
+	const int zoff = (currFrameNum / ((mapDims.mapy >> 1) / SQUARE_SIZE)) * SQUARE_SIZE;
 
 	INode* n = NULL;
 
 	{
-		// top-left quadrant: [0, gs->mapx >> 1) x [0, gs->mapy >> 1)
+		// top-left quadrant: [0, mapDims.mapx >> 1) x [0, mapDims.mapy >> 1)
 		//
 		// update an 8x8 block of squares per quadrant per frame
 		// in row-major order; every GetNeighbors() call invokes
 		// UpdateNeighborCache if the magic numbers do not match
 		// (nodes can be visited multiple times per block update)
-		const int xmin =         (xoff +           0               ), zmin =         (zoff +           0               );
-		const int xmax = std::min(xmin + SQUARE_SIZE, gs->mapx >> 1), zmax = std::min(zmin + SQUARE_SIZE, gs->mapy >> 1);
+		const int xmin =         (xoff +           0                   ), zmin =         (zoff +           0                   );
+		const int xmax = std::min(xmin + SQUARE_SIZE, mapDims.mapx >> 1), zmax = std::min(zmin + SQUARE_SIZE, mapDims.mapy >> 1);
 
-		for (int z = zmin; z < zmax; z++) {
+		for (int z = zmin; z < zmax; ) {
+			unsigned int zspan = zsize;
+
 			for (int x = xmin; x < xmax; ) {
 				n = nodeGrid[z * xsize + x];
 				x = n->xmax();
 
+				zspan = std::min(zspan, n->zmax() - z);
+				zspan = std::max(zspan, 1u);
+
 				n->SetMagicNumber(currMagicNum);
 				n->GetNeighbors(nodeGrid);
 			}
+
+			z += zspan;
 		}
 	}
 	{
-		// top-right quadrant: [gs->mapx >> 1, gs->mapx) x [0, gs->mapy >> 1)
-		const int xmin =         (xoff +              (gs->mapx >> 1)), zmin =         (zoff +           0               );
-		const int xmax = std::min(xmin + SQUARE_SIZE,  gs->mapx      ), zmax = std::min(zmin + SQUARE_SIZE, gs->mapy >> 1);
+		// top-right quadrant: [mapDims.mapx >> 1, mapDims.mapx) x [0, mapDims.mapy >> 1)
+		const int xmin =         (xoff +              (mapDims.mapx >> 1)), zmin =         (zoff +           0                   );
+		const int xmax = std::min(xmin + SQUARE_SIZE,  mapDims.mapx      ), zmax = std::min(zmin + SQUARE_SIZE, mapDims.mapy >> 1);
 
-		for (int z = zmin; z < zmax; z++) {
+		for (int z = zmin; z < zmax; ) {
+			unsigned int zspan = zsize;
+
 			for (int x = xmin; x < xmax; ) {
 				n = nodeGrid[z * xsize + x];
 				x = n->xmax();
 
+				zspan = std::min(zspan, n->zmax() - z);
+				zspan = std::max(zspan, 1u);
+
 				n->SetMagicNumber(currMagicNum);
 				n->GetNeighbors(nodeGrid);
 			}
+
+			z += zspan;
 		}
 	}
 	{
-		// bottom-right quadrant: [gs->mapx >> 1, gs->mapx) x [gs->mapy >> 1, gs->mapy)
-		const int xmin =         (xoff +              (gs->mapx >> 1)), zmin =         (zoff +              (gs->mapy >> 1));
-		const int xmax = std::min(xmin + SQUARE_SIZE,  gs->mapx      ), zmax = std::min(zmin + SQUARE_SIZE,  gs->mapy      );
+		// bottom-right quadrant: [mapDims.mapx >> 1, mapDims.mapx) x [mapDims.mapy >> 1, mapDims.mapy)
+		const int xmin =         (xoff +              (mapDims.mapx >> 1)), zmin =         (zoff +              (mapDims.mapy >> 1));
+		const int xmax = std::min(xmin + SQUARE_SIZE,  mapDims.mapx      ), zmax = std::min(zmin + SQUARE_SIZE,  mapDims.mapy      );
 
-		for (int z = zmin; z < zmax; z++) {
+		for (int z = zmin; z < zmax; ) {
+			unsigned int zspan = zsize;
+
 			for (int x = xmin; x < xmax; ) {
 				n = nodeGrid[z * xsize + x];
 				x = n->xmax();
 
+				zspan = std::min(zspan, n->zmax() - z);
+				zspan = std::max(zspan, 1u);
+
 				n->SetMagicNumber(currMagicNum);
 				n->GetNeighbors(nodeGrid);
 			}
+
+			z += zspan;
 		}
 	}
 	{
-		// bottom-left quadrant: [0, gs->mapx >> 1) x [gs->mapy >> 1, gs->mapy)
-		const int xmin =         (xoff +           0               ), zmin =         (zoff +              (gs->mapy >> 1));
-		const int xmax = std::min(xmin + SQUARE_SIZE, gs->mapx >> 1), zmax = std::min(zmin + SQUARE_SIZE,  gs->mapy      );
+		// bottom-left quadrant: [0, mapDims.mapx >> 1) x [mapDims.mapy >> 1, mapDims.mapy)
+		const int xmin =         (xoff +           0                   ), zmin =         (zoff +              (mapDims.mapy >> 1));
+		const int xmax = std::min(xmin + SQUARE_SIZE, mapDims.mapx >> 1), zmax = std::min(zmin + SQUARE_SIZE,  mapDims.mapy      );
 
-		for (int z = zmin; z < zmax; z++) {
+		for (int z = zmin; z < zmax; ) {
+			unsigned int zspan = zsize;
+
 			for (int x = xmin; x < xmax; ) {
 				n = nodeGrid[z * xsize + x];
 				x = n->xmax();
 
+				zspan = std::min(zspan, n->zmax() - z);
+				zspan = std::max(zspan, 1u);
+
 				n->SetMagicNumber(currMagicNum);
 				n->GetNeighbors(nodeGrid);
 			}
+
+			z += zspan;
 		}
 	}
 }
@@ -319,15 +347,21 @@ void QTPFS::NodeLayer::ExecNodeNeighborCacheUpdates(const SRectangle& ur, unsign
 
 	// account for the rim of nodes around the bounding box
 	// (whose neighbors also changed during re-tesselation)
-	const int xmin = std::max(ur.x1 - 1, 0), xmax = std::min(ur.x2 + 1, gs->mapx);
-	const int zmin = std::max(ur.z1 - 1, 0), zmax = std::min(ur.z2 + 1, gs->mapy);
+	const int xmin = std::max(ur.x1 - 1, 0), xmax = std::min(ur.x2 + 1, mapDims.mapx);
+	const int zmin = std::max(ur.z1 - 1, 0), zmax = std::min(ur.z2 + 1, mapDims.mapy);
 
 	INode* n = NULL;
 
-	for (int z = zmin; z < zmax; z++) {
+	for (int z = zmin; z < zmax; ) {
+		unsigned int zspan = zsize;
+
 		for (int x = xmin; x < xmax; ) {
 			n = nodeGrid[z * xsize + x];
 			x = n->xmax();
+
+			// calculate largest safe z-increment along this row
+			zspan = std::min(zspan, n->zmax() - z);
+			zspan = std::max(zspan, 1u);
 
 			// NOTE:
 			//   during initialization, currMagicNum == 0 which nodes start with already 
@@ -335,6 +369,8 @@ void QTPFS::NodeLayer::ExecNodeNeighborCacheUpdates(const SRectangle& ur, unsign
 			n->SetMagicNumber(currMagicNum);
 			n->UpdateNeighborCache(nodeGrid);
 		}
+
+		z += zspan;
 	}
 }
 

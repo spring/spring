@@ -12,15 +12,10 @@
 extern "C" {
 #endif
 
-// @see sdlstub_cppbit.cpp
-int stub_sdl_getSystemMilliSeconds();
-void stub_sdl_sleepMilliSeconds(int milliSeconds);
 
-
-static int startSystemMilliSeconds;
 static struct SDL_Surface stubSurface;
 static struct SDL_RWops stubRWops;
-static Uint8 stubKeyState[0];
+static Uint8 stubKeyState[1];
 static SDL_version stubVersion;
 static Uint32 stubSubSystemsInit = 0;
 
@@ -30,8 +25,6 @@ extern DECLSPEC void SDLCALL SDL_free(void* p) {
 }
 
 extern DECLSPEC int SDLCALL SDL_Init(Uint32 flags) {
-
-	startSystemMilliSeconds = stub_sdl_getSystemMilliSeconds();
 
 	stubSurface.w = 512;
 	stubSurface.h = 512;
@@ -48,6 +41,9 @@ extern DECLSPEC int SDLCALL SDL_InitSubSystem(Uint32 flags) {
 	return 0;
 }
 
+extern DECLSPEC void SDLCALL SDL_QuitSubSystem(Uint32 flags) {
+}
+
 extern DECLSPEC const char* SDLCALL SDL_GetError() {
 	return "using the SDL stub library";
 }
@@ -59,6 +55,17 @@ extern DECLSPEC int SDLCALL SDL_GL_SetAttribute(SDL_GLattr attr, int value) {
 extern DECLSPEC SDL_Window* SDLCALL SDL_CreateWindow(const char* title, int x, int y, int w, int h, Uint32 flags) {
 	static int foo;
 	return (SDL_Window*)(&foo);
+}
+
+extern DECLSPEC void SDLCALL SDL_DestroyWindow(SDL_Window * window){
+}
+
+extern DECLSPEC int SDLCALL SDL_GL_MakeCurrent(SDL_Window * window, SDL_GLContext context){
+	return 0;
+}
+
+extern DECLSPEC const char *SDLCALL SDL_GetWindowTitle(SDL_Window * window) {
+	return NULL;
 }
 
 extern DECLSPEC struct SDL_RWops* SDLCALL SDL_RWFromFile(const char* file, const char* mode) {
@@ -84,14 +91,6 @@ extern DECLSPEC void SDLCALL SDL_FreeSurface(SDL_Surface* surface) {
 }
 
 extern DECLSPEC void SDLCALL SDL_GL_SwapWindow(SDL_Window* window) {
-}
-
-extern DECLSPEC void SDLCALL SDL_Delay(Uint32 ms) {
-	stub_sdl_sleepMilliSeconds(ms);
-}
-
-extern DECLSPEC Uint32 SDLCALL SDL_GetTicks() {
-	return stub_sdl_getSystemMilliSeconds() - startSystemMilliSeconds;
 }
 
 extern DECLSPEC void SDLCALL SDL_WarpMouseInWindow(SDL_Window* window, int x, int y) {
@@ -153,6 +152,10 @@ extern DECLSPEC void SDLCALL SDL_SetWindowGrab(SDL_Window* window, SDL_bool grab
 }
 
 extern DECLSPEC SDL_bool SDLCALL SDL_GetWindowGrab(SDL_Window* window) {
+	return 0;
+}
+
+extern DECLSPEC Uint32 SDLCALL SDL_GetWindowFlags(SDL_Window* window) {
 	return 0;
 }
 
@@ -244,6 +247,39 @@ extern DECLSPEC int SDLCALL SDL_PeepEvents(SDL_Event* events, int numevents, SDL
 extern DECLSPEC Uint8 SDLCALL SDL_GetAppState() {
 	return 0;
 }
+
+extern DECLSPEC int SDL_GetNumVideoDisplays(void) {
+	return 0;
+}
+extern DECLSPEC int SDL_GetDisplayBounds(int displayIndex, SDL_Rect* rect) {
+	if (rect == 0) return -1;
+	rect->w = 640;
+	rect->h = 480;
+	rect->x = 0;
+	rect->y = 0;
+	return 0;
+}
+
+extern DECLSPEC int SDL_GL_GetSwapInterval() {
+	return 0;
+}
+
+extern DECLSPEC void SDL_SetWindowPosition(SDL_Window * window, int x, int y) {
+}
+
+extern DECLSPEC void SDL_SetWindowSize(SDL_Window * window, int w, int h) {
+}
+
+
+extern DECLSPEC SDL_PowerState SDL_GetPowerInfo(int *secs, int *pct) {
+	return SDL_POWERSTATE_UNKNOWN;
+}
+
+extern DECLSPEC SDL_bool SDL_SetHint(const char* name, const char* value) {
+	return SDL_TRUE;
+}
+
+
 
 #ifdef __cplusplus
 } // extern "C"

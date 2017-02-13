@@ -3,12 +3,11 @@
 #ifndef _WEAPON_DEF_H
 #define _WEAPON_DEF_H
 
-#include <map>
-
-#include "System/float3.h"
 #include "Sim/Misc/DamageArray.h"
 #include "Sim/Misc/GuiSoundSet.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileTypes.h"
+#include "System/float3.h"
+#include "System/UnorderedMap.hpp"
 
 struct AtlasedTexture;
 class CColorMap;
@@ -17,9 +16,6 @@ class LuaTable;
 
 struct WeaponDef
 {
-private:
-	CR_DECLARE_STRUCT(WeaponDef);
-
 public:
 	WeaponDef();
 	WeaponDef(const LuaTable& wdTable, const std::string& name, int id);
@@ -27,11 +23,21 @@ public:
 	S3DModel* LoadModel();
 	S3DModel* LoadModel() const;
 
+	bool IsAircraftWeapon() const {
+		switch (projectileType) {
+			case WEAPON_TORPEDO_PROJECTILE:   { return (                 true); } break;
+			case WEAPON_EXPLOSIVE_PROJECTILE: { return (defInterceptType == 8); } break;
+			default: {} break;
+		}
+		return false;
+	}
+
 	bool IsHitScanWeapon() const {
 		switch (projectileType) {
 			case WEAPON_BEAMLASER_PROJECTILE:      { return true; } break;
 			case WEAPON_LARGEBEAMLASER_PROJECTILE: { return true; } break;
 			case WEAPON_LIGHTNING_PROJECTILE:      { return true; } break;
+			default: {} break;
 		}
 
 		return false;
@@ -60,12 +66,10 @@ public:
 	float leadBonus;           ///< factor for increasing the leadLimit with experience
 	float predictBoost;        ///< replaces hardcoded behaviour for burnblow cannons
 
-	DamageArray damages;
-	float craterAreaOfEffect;
-	float damageAreaOfEffect;
-	bool noSelfDamage;
+	DynDamageArray damages;
+
 	float fireStarter;
-	float edgeEffectiveness;
+	bool noSelfDamage;
 	float size;
 	float sizeGrowth;
 	float collisionSize;
@@ -83,6 +87,7 @@ public:
 	int numBounce;
 
 	float maxAngle;
+	float maxFireAngle;
 
 	float uptime;
 	int flighttime;
@@ -97,6 +102,7 @@ public:
 
 	bool turret;
 	bool onlyForward;
+	bool allowNonBlockingAim;
 	bool fixedLauncher;
 	bool waterweapon;           ///< can target underwater objects/positions if true
 	bool fireSubmersed;         ///< can fire even when underwater if true
@@ -137,7 +143,6 @@ public:
 	float turnrate;
 
 	float projectilespeed;
-	float explosionSpeed;
 
 	float wobble;             ///< how much the missile will wobble around its course
 	float dance;              ///< how much the missile will dance
@@ -170,6 +175,7 @@ public:
 
 	unsigned int shieldInterceptType;      // type of shield (bitfield)
 	unsigned int interceptedByShieldType;  // weapon can be affected by shields where (shieldInterceptType & interceptedByShieldType) is not zero
+	unsigned int defInterceptType;
 
 	bool avoidFriendly;     // if true, try to avoid friendly units while aiming
 	bool avoidFeature;      // if true, try to avoid features while aiming
@@ -207,12 +213,7 @@ public:
 
 	float cameraShake;
 
-	float dynDamageExp;
-	float dynDamageMin;
-	float dynDamageRange;
-	bool dynDamageInverted;
-
-	std::map<std::string, std::string> customParams;
+	spring::unordered_map<std::string, std::string> customParams;
 
 	struct Visuals {
 		Visuals()

@@ -6,10 +6,8 @@
 #define DEFINTION_TAG_H
 
 #include <assert.h>
-#include <boost/utility.hpp>
-#include <boost/static_assert.hpp>
+#include "System/Misc/NonCopyable.h"
 #include <map>
-#include <list>
 #include <vector>
 #include <sstream>
 #include <string>
@@ -24,30 +22,19 @@
 struct table {};
 
 namespace {
-	template<typename T, typename T2>
-	static T scale(T v, T2 a)
-	{
-		return v * a;
-	}
-
-	static const std::string& scale(const std::string& v, float a)
-	{
-		return v;
-	}
-
-	static std::ostream& operator<<(std::ostream& os, const float3& point)
+	static inline std::ostream& operator<<(std::ostream& os, const float3& point)
 	{
 		return os << "[ " <<  point.x << ", " <<  point.y << ", " <<  point.z << " ]";
 	}
 
-	static std::ostream& operator<<(std::ostream& os, const table& t)
+	static inline std::ostream& operator<<(std::ostream& os, const table& t)
 	{
 		return os << "\"\"";
 	}
-};
+}
 
 // must be included after "std::ostream& operator<<" definitions for LLVM/Clang compilation
-#include "System/Util.h"
+#include "System/StringConvertibleOptionalValue.h"
 
 
 /**
@@ -56,7 +43,7 @@ namespace {
  * That is, meta data of a type that does not depend on the declared type
  * of the definition tag.
  */
-class DefTagMetaData : public boost::noncopyable
+class DefTagMetaData : public spring::noncopyable
 {
 public:
 	typedef TypedStringConvertibleOptionalValue<std::string> OptionalString;
@@ -76,11 +63,10 @@ public:
 	/// @brief Get the scale value of this definition tag.
 	virtual const StringConvertibleOptionalValue& GetScaleValue() const = 0;
 
+	/// @brief returns the tag name that is read from the LuaTable.
 	std::string GetKey() const {
-		// always return the external name
 		return (externalName.IsSet()) ? externalName.ToString() : key;
 	}
-	const std::type_info& GetTypeInfo() const { return *typeInfo; }
 
 	const OptionalString& GetDeclarationFile() const { return declarationFile; }
 	const OptionalInt&    GetDeclarationLine() const { return declarationLine; }
@@ -91,6 +77,7 @@ public:
 	const OptionalString& GetExternalName() const { return externalName; }
 	         std::string  GetInternalName() const { return key; }
 
+	const std::type_info& GetTypeInfo() const { return *typeInfo; }
 	static std::string GetTypeName(const std::type_info& typeInfo);
 
 protected:
@@ -120,6 +107,19 @@ class DefTagTypedMetaData : public DefTagMetaData
 public:
 	DefTagTypedMetaData(const char* k) { key = k; typeInfo = &typeid(T); }
 
+private:
+	template<typename T1, typename T2>
+	static T1 scale(T1 v, T2 a)
+	{
+		return v * a;
+	}
+
+	static const std::string& scale(const std::string& v, float a)
+	{
+		return v;
+	}
+
+public:
 	T GetData(const LuaTable& lt) const {
 		T defValue = defaultValue.Get();
 		if (fallbackName.IsSet()) {
@@ -193,7 +193,6 @@ public:
 	}
 
 	typedef T (*TagFunc)(T x);
-
 	MAKE_CHAIN_METHOD(declarationFile, const char*);
 	MAKE_CHAIN_METHOD(declarationLine, int);
 	MAKE_CHAIN_METHOD(externalName, std::string);
@@ -227,23 +226,21 @@ public:
 	DefType(const std::string& name);
 	virtual ~DefType();
 
+	const std::string& GetName() const { return name; }
+
 	template<typename T> DefTagBuilder<T> AddTag(const char* name) {
 		DefTagTypedMetaData<T>* meta = new DefTagTypedMetaData<T>(name);
-		AddMetaData(meta);
+		AddMetaData(meta); //FIXME
 		return DefTagBuilder<T>(meta);
 	}
 
 	template<typename T> T GetTag(const std::string& name) {
-		const DefTagMetaData* meta = GetMetaData(name);
+		const DefTagMetaData* meta = GetMetaDataByInternalKey(name);
 	#ifdef DEBUG
+		assert(meta != nullptr);
 		CheckType(meta, typeid(T));
 	#endif
 		return static_cast<const DefTagTypedMetaData<T>*>(meta)->GetData(*luaTable);
-	}
-
-	void SetLuaTable(const LuaTable& lt)
-	{
-		luaTable = &lt;
 	}
 
 	typedef void (*DefInitializer)(void*);
@@ -251,28 +248,27 @@ public:
 		inits.push_back(init);
 	}
 
-	void Load(void* def, const LuaTable& luaTable) {
-		SetLuaTable(luaTable);
-		for (std::list<DefInitializer>::const_iterator it = inits.begin(); it != inits.end(); ++it) {
-			(*it)(def);
-		}
-	}
+	void Load(void* instance, const LuaTable& luaTable);
+	void ReportUnknownTags(const std::string& instanceName, const LuaTable& luaTable, const std::string pre = "");
 
 public:
 	void OutputMetaDataMap() const;
 	static void OutputTagMap();
 
 private:
-	std::list<DefInitializer> inits;
-	typedef std::map<std::string, const DefTagMetaData*> MetaDataMap;
-	MetaDataMap map;
+	std::string name;
+	std::vector<DefInitializer> inits;
+	std::vector<const DefTagMetaData*> tags;
 
 	const LuaTable* luaTable;
 
 private:
-	static std::map<std::string, const DefType*>& GetTypes();
-	const DefTagMetaData* GetMetaData(const std::string& key);
+	static std::vector<const DefType*>& GetTypes();
+
 	void AddMetaData(const DefTagMetaData* data);
+	const DefTagMetaData* GetMetaDataByInternalKey(const std::string& key);
+	const DefTagMetaData* GetMetaDataByExternalKey(const std::string& key);
+
 	static void CheckType(const DefTagMetaData* meta, const std::type_info& want);
 };
 
@@ -287,12 +283,15 @@ private:
 #define GETSECONDARG( x, y, ... ) y
 
 #define DEFTAG_CNTER(Defs, DefClass, T, name, varname) \
-	static void MACRO_CONCAT(fnc_,name)(void* def) { \
-		T& staticCheckType = static_cast<DefClass*>(def)->varname; \
-		staticCheckType = Defs.GetTag<T>(#name); \
-	} \
-	void MACRO_CONCAT(add_,name)() { Defs.AddInitializer(&MACRO_CONCAT(fnc_,name)); } \
-	struct MACRO_CONCAT(do_once_,name) { MACRO_CONCAT(do_once_,name)() {MACRO_CONCAT(add_,name)();} }; static MACRO_CONCAT(do_once_,name) MACRO_CONCAT(do_once_,name); \
+	struct MACRO_CONCAT(do_once_,name) { \
+		MACRO_CONCAT(do_once_,name)() { \
+			Defs.AddInitializer(&MACRO_CONCAT(do_once_,name)::Initializer); \
+		} \
+		static void Initializer(void* instance) { \
+			T& staticCheckType = static_cast<DefClass*>(instance)->varname; \
+			staticCheckType = Defs.GetTag<T>(#name); \
+		} \
+	} static MACRO_CONCAT(do_once_,name); \
 	static DefTagBuilder<T> deftag_##name = Defs.AddTag<T>(#name)
 
 #define tagFunction(fname) \

@@ -7,16 +7,16 @@
 
 class CDGunWeapon: public CWeapon
 {
-	CR_DECLARE(CDGunWeapon);
+	CR_DECLARE_DERIVED(CDGunWeapon)
 public:
 	CDGunWeapon(CUnit* owner, const WeaponDef* def);
 
 	void Fire();
-	void Update();
-	void Init();
+	float GetPredictedImpactTime(float3 p) const override final;
+	void Init() override final;
 
 private:
-	void FireImpl(bool scriptCall);
+	void FireImpl(const bool scriptCall) override final;
 };
 
 #endif // _DGUN_WEAPON_H

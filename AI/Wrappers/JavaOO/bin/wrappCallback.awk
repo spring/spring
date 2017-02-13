@@ -746,6 +746,13 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 					declaredVarsCode = "\t\t" retParamType " " retVar_out_m ";" "\n" declaredVarsCode;
 					sub("(, )?short\\[\\] " paNa, "", params);
 					retType = retParamType;
+				} else if (match(paTy, /StringBuffer/)) {
+					retParamType = "String";
+					retVar_out_m = "_ret";
+					conversionCode_pre  = conversionCode_pre  "\t\t" "StringBuffer " paNa " = new StringBuffer();" "\n";
+					conversionCode_post = conversionCode_post "\t\t" retParamType " " retVar_out_m " = " paNa ".toString();" "\n";
+					sub("(, )?StringBuffer " paNa, "", params);
+					retType = retParamType;
 				} else {
 					print("FAILED converting return param: " paramTypeNames[prm] " / " fullName_m);
 					exit(1);
@@ -810,14 +817,15 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 			_retVar_out_new = retVar_out_m "_out";
 			_wrappGetInst_params = myWrapVar;
 			_hasRetInd = 0;
-			if (retType != "void") {
+			_inPa_size = split(innerParams, _, ",");
+			if (retType != "void" && (_inPa_size == addInds_size_m || _inPa_size == 0)) {
 				_hasRetInd = 1;
 			}
 			for (ai=1; ai <= (addInds_size_m-_hasRetInd); ai++) {
 				# Very hacky! too unmotivated for propper fix, sorry.
 				# propper fix would involve getting the parent of the wrapped
 				# class and using its additional indices
-				if (functionName_m != "UnitDef_WeaponMount_getWeaponDef") {
+				if ((functionName_m != "UnitDef_WeaponMount_getWeaponDef") && (functionName_m != "Unit_Weapon_getDef")) {
 					_wrappGetInst_params = _wrappGetInst_params ", " addInds_m[ai];
 				}
 			}
@@ -886,15 +894,15 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 			# convert to a HashMap
 			conversionCode_post = conversionCode_post "\t\t" _mapVar_oo " = new " _mapType_impl "();" "\n";
 			conversionCode_post = conversionCode_post "\t\t" "for (int i=0; i < " _mapVar_size "; i++) {" "\n";
-			if (_isObj) {
-				if (_isRetSize) {
+#			if (_isObj) {
+#				if (_isRetSize) {
 					conversionCode_post = conversionCode_post "\t\t\t" _mapVar_oo ".put(" _mapVar_keys "[i], " _mapVar_values "[i]);" "\n";
-				} else {
+#				} else {
 					#conversionCode_post = conversionCode_post "\t\t\t" _mapVar_oo ".put(" myPkgA ".Wrapp" _refObj ".getInstance(" myWrapVar _addWrappVars ", " _arrayPaNa "[i]));" "\n";
-				}
-			} else if (_isNative) {
+#				}
+#			} else if (_isNative) {
 				#conversionCode_post = conversionCode_post "\t\t\t" _arrayListVar ".add(" _arrayPaNa "[i]);" "\n";
-			}
+#			}
 			conversionCode_post = conversionCode_post "\t\t" "}" "\n";
 
 			retParamType = _mapType_int;
@@ -1146,7 +1154,7 @@ function doWrappOO(funcFullName_dw, params_dw, metaComment_dw) {
 
 	doWrapp_dw = 1;
 
-	doWrapp_dw = doWrapp_dw && !match(funcFullName_dw, /Lua_callRules/) && !match(funcFullName_dw, /Lua_callUI/);
+	#doWrapp_dw = doWrapp_dw && !match(funcFullName_dw, /Lua_callRules/) && !match(funcFullName_dw, /Lua_callUI/);
 
 	return doWrapp_dw;
 }

@@ -17,7 +17,7 @@ public:
 			"Show/Hide the smooth air-mesh map overlay") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		SetBoolArg(smoothHeightMeshDrawer->DrawEnabled(), action.GetArgs());
+		InverseOrSetBool(smoothHeightMeshDrawer->DrawEnabled(), action.GetArgs());
 		LogSystemStatus("smooth air-mesh map overlay", smoothHeightMeshDrawer->DrawEnabled());
 		return true;
 	}

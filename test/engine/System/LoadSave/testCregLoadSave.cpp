@@ -21,16 +21,24 @@ class EmbeddedObj {
 CR_BIND(EmbeddedObj, );
 CR_REG_METADATA(EmbeddedObj, CR_MEMBER(value));
 
+enum EnumClass {
+	A,
+	B,
+	C,
+	D
+};
+
 struct TestObj {
 	CR_DECLARE(TestObj);
 
 	TestObj() {
 		bvar = false;
 		intvar = 0;
+		fvar = 0.f;
+		enumVar = A;
 		for(int a=0;a<5;a++) sarray[a] = 0;
 		children[0] = children[1] = 0;
 		embeddedPtr = &embedded;
-
 	}
 	virtual ~TestObj() {
 		if (children[0]) delete children[0];
@@ -38,6 +46,8 @@ struct TestObj {
 
 	bool bvar;
 	int intvar;
+	float fvar;
+	EnumClass enumVar;
 	std::string str;
 	int sarray[5];
 	std::vector<int> darray;
@@ -55,6 +65,8 @@ CR_BIND(TestObj, );
 CR_REG_METADATA(TestObj, (
 	CR_MEMBER(bvar),
 	CR_MEMBER(intvar),
+	CR_MEMBER(fvar),
+	CR_MEMBER(enumVar),
 	CR_MEMBER(str),
 	CR_MEMBER(sarray),
 	CR_MEMBER(darray),
@@ -73,6 +85,8 @@ static void savetest(std::ostream* os)
 	o->darray.push_back(3);
 	o->bvar = true;
 	o->intvar = 1;
+	o->fvar = 666.666f;
+	o->enumVar = EnumClass::C;
 	o->str = "Hi!";
 	for (int a=0;a<5;a++) o->sarray[a]=a+10;
 	//o->embeddeds.resize(10);
@@ -114,7 +128,10 @@ static bool test_creg_members(TestObj* obj)
 	if (obj->darray.size() != 1 || obj->darray[0] != 3) return false;
 	if (!obj->bvar) return false;
 	if (obj->intvar != 1) return false;
+	if (obj->fvar != 666.666f) return false;
+	if (obj->enumVar != EnumClass::C) return false;
 	if (obj->str != "Hi!") return false;
+
 	for (int a=0; a<5; a++) if (obj->sarray[a] != a+10) return false;
 	return true;
 }
@@ -139,8 +156,6 @@ static bool test_creg_pointers(TestObj* obj)
 
 BOOST_AUTO_TEST_CASE( BOOST_TEST_MODULE )
 {
-	creg::System::InitializeClasses();
-
 	// save state
 	std::stringstream ss(std::ios::in | std::ios::out | std::ios::binary);
 	savetest(&ss);

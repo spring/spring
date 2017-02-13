@@ -3,11 +3,15 @@
 #ifndef SPRING_SHADER_HDR
 #define SPRING_SHADER_HDR
 
+#include <algorithm>
+#include <functional>
 #include <string>
+#include <memory>
 #include <vector>
-#include <map>
-#include <unordered_map>
+
 #include "ShaderStates.h"
+#include "Lua/LuaOpenGLUtils.h"
+#include "System/UnorderedMap.hpp"
 
 
 
@@ -18,10 +22,10 @@ constexpr size_t hashString(const char* str, size_t hash = 5381)
 
 struct fast_hash : public std::unary_function<int, size_t>
 {
-        size_t operator()(const int a) const
-        {
-                return a;
-        }
+	size_t operator()(const int a) const
+	{
+		return a;
+	}
 };
 
 namespace Shader {
@@ -33,11 +37,16 @@ namespace Shader {
 
 		virtual ~IShaderObject() {}
 
-		virtual void Compile(bool reloadFromDisk) {}
+		virtual void Compile() {}
 		virtual void Release() {}
+
+		bool ReloadFromDisk();
+		bool IsValid() const { return valid; }
+
 		unsigned int GetObjID() const { return objID; }
 		unsigned int GetType() const { return type; }
-		bool IsValid() const { return valid; }
+		unsigned int GetHash() const;
+
 		const std::string& GetLog() const { return log; }
 
 		void SetDefinitions(const std::string& defs) { modDefStrs = defs; }
@@ -49,9 +58,9 @@ namespace Shader {
 		bool valid;
 
 		std::string srcFile;
-		std::string curShaderSrc;
-		std::string modDefStrs;
-		std::string rawDefStrs;
+		std::string srcText;
+		std::string rawDefStrs; // set via constructor only, constant
+		std::string modDefStrs; // set on reload from changed flags
 		std::string log;
 	};
 
@@ -63,91 +72,96 @@ namespace Shader {
 	struct ARBShaderObject: public Shader::IShaderObject {
 	public:
 		ARBShaderObject(unsigned int, const std::string&, const std::string& shSrcDefs = "");
-		void Compile(bool reloadFromDisk);
+		void Compile();
 		void Release();
 	};
 
 	struct GLSLShaderObject: public Shader::IShaderObject {
 	public:
 		GLSLShaderObject(unsigned int, const std::string&, const std::string& shSrcDefs = "");
-		void Compile(bool reloadFromDisk);
-		void Release();
+
+		struct CompiledShaderObject {
+			CompiledShaderObject() : id(0), valid(false) {}
+
+			unsigned int id;
+			bool      valid;
+			std::string log;
+		};
+
+		/// @brief Returns a GLSL shader object in an unqiue pointer that auto deletes that instance.
+		///        Quote of GL docs: If a shader object is deleted while it is attached to a program object,
+		///        it will be flagged for deletion, and deletion will not occur until glDetachShader is called
+		///        to detach it from all program objects to which it is attached.
+		typedef std::unique_ptr<CompiledShaderObject, std::function<void(CompiledShaderObject* so)>> CompiledShaderObjectUniquePtr;
+		CompiledShaderObjectUniquePtr CompileShaderObject();
 	};
 
 
 
 
-	struct IProgramObject : public SShaderFlagState {
+	struct IProgramObject {
 	public:
 		IProgramObject(const std::string& poName);
 		virtual ~IProgramObject() {}
 
-		virtual void Enable();
-		virtual void Disable();
-		virtual void Link() {}
-		virtual void Validate() {}
-		virtual void Release() = 0;
-		virtual void Reload(bool reloadFromDisk) = 0;
+		void LoadFromID(unsigned int id) {
+			objID = id;
+			valid = (id != 0 && Validate());
+			bound = false;
 
-		void PrintInfo();
+			// not needed for pre-compiled programs
+			shaderObjs.clear();
+		}
+
+		/// create the whole shader from a lua file
+		bool LoadFromLua(const std::string& filename);
+
+		virtual void Enable() { bound = true; }
+		virtual void Disable() { bound = false; }
+		virtual void Link() = 0;
+		virtual bool Validate() = 0;
+		virtual void Release() = 0;
+		virtual void Reload(bool reloadFromDisk, bool validate) = 0;
+		/// attach single shader objects (vertex, frag, ...) to the program
+		virtual void AttachShaderObject(IShaderObject* so) { shaderObjs.push_back(so); }
+
+		bool IsBound() const { return bound; }
+		bool IsValid() const { return valid; }
+		bool IsShaderAttached(const IShaderObject* so) const {
+			return (std::find(shaderObjs.begin(), shaderObjs.end(), so) != shaderObjs.end());
+		}
+
+		unsigned int GetObjID() const { return objID; }
+
+		const std::string& GetName() const { return name; }
+		const std::string& GetLog() const { return log; }
+
+		const std::vector<IShaderObject*>& GetAttachedShaderObjs() const { return shaderObjs; }
+		      std::vector<IShaderObject*>& GetAttachedShaderObjs()       { return shaderObjs; }
+
+		void RecompileIfNeeded(bool validate);
+		void PrintDebugInfo();
 
 	public:
-		int GetUniformLocation(const std::string& name) {
-			return GetUniformState(name)->GetLocation();
-		}
-		UniformState* GetUniformState(const std::string& name) {
-			return GetUniformState(hashString(name.c_str()), name);
-		}
-		UniformState* GetUniformState(const size_t hash, const std::string& name) {
-			auto it = uniformStates.find(hash);
-			if (it != uniformStates.end())
-				return &it->second;
-			//UniformState* us = &uniformStates.emplace(h, name).first->second;
-			UniformState* us = &uniformStates.insert(std::pair<size_t, Shader::UniformState>(hash, Shader::UniformState(name))).first->second;
-			us->SetLocation(GetUniformLoc(name));
-			return us;
-		}
+		/// new interface
+		template<typename TK, typename TV> inline void SetUniform(const TK& name, TV v0) { SetUniform(GetUniformState(name), v0); }
+		template<typename TK, typename TV> inline void SetUniform(const TK& name, TV v0, TV v1)  { SetUniform(GetUniformState(name), v0, v1); }
+		template<typename TK, typename TV> inline void SetUniform(const TK& name, TV v0, TV v1, TV v2)  { SetUniform(GetUniformState(name), v0, v1, v2); }
+		template<typename TK, typename TV> inline void SetUniform(const TK& name, TV v0, TV v1, TV v2, TV v3)  { SetUniform(GetUniformState(name), v0, v1, v2, v3); }
 
-	//private:
-		virtual int GetUniformLoc(const std::string& name) = 0;
+		template<typename TK, typename TV> inline void SetUniform2v(const TK& name, const TV* v) { SetUniform2v(GetUniformState(name), v); }
+		template<typename TK, typename TV> inline void SetUniform3v(const TK& name, const TV* v) { SetUniform3v(GetUniformState(name), v); }
+		template<typename TK, typename TV> inline void SetUniform4v(const TK& name, const TV* v) { SetUniform4v(GetUniformState(name), v); }
 
-	//public:
-		template<typename TK, typename TV> inline void SetUniform(const TK& name, TV v0) { SetUniform(GetUniformState(hashString(name), name), v0); }
-		template<typename TK, typename TV> inline void SetUniform(const TK& name, TV v0, TV v1)  { SetUniform(GetUniformState(hashString(name), name), v0, v1); }
-		template<typename TK, typename TV> inline void SetUniform(const TK& name, TV v0, TV v1, TV v2)  { SetUniform(GetUniformState(hashString(name), name), v0, v1, v2); }
-		template<typename TK, typename TV> inline void SetUniform(const TK& name, TV v0, TV v1, TV v2, TV v3)  { SetUniform(GetUniformState(hashString(name), name), v0, v1, v2, v3); }
+		template<typename TK, typename TV> inline void SetUniformMatrix2x2(const TK& name, bool transp, const TV* v) { SetUniformMatrix2x2(GetUniformState(name), transp, v); }
+		template<typename TK, typename TV> inline void SetUniformMatrix3x3(const TK& name, bool transp, const TV* v) { SetUniformMatrix3x3(GetUniformState(name), transp, v); }
+		template<typename TK, typename TV> inline void SetUniformMatrix4x4(const TK& name, bool transp, const TV* v) { SetUniformMatrix4x4(GetUniformState(name), transp, v); }
 
-		template<typename TK, typename TV> inline void SetUniform2v(const TK& name, const TV* v) { SetUniform2v(GetUniformState(hashString(name), name), v); }
-		template<typename TK, typename TV> inline void SetUniform3v(const TK& name, const TV* v) { SetUniform3v(GetUniformState(hashString(name), name), v); }
-		template<typename TK, typename TV> inline void SetUniform4v(const TK& name, const TV* v) { SetUniform4v(GetUniformState(hashString(name), name), v); }
-
-		template<typename TK, typename TV> inline void SetUniformMatrix2x2(const TK& name, bool transp, const TV* v) { SetUniformMatrix2x2(GetUniformState(hashString(name), name), transp, v); }
-		template<typename TK, typename TV> inline void SetUniformMatrix3x3(const TK& name, bool transp, const TV* v) { SetUniformMatrix3x3(GetUniformState(hashString(name), name), transp, v); }
-		template<typename TK, typename TV> inline void SetUniformMatrix4x4(const TK& name, bool transp, const TV* v) { SetUniformMatrix4x4(GetUniformState(hashString(name), name), transp, v); }
+		template<typename TV> void SetFlag(const char* key, TV val) { shaderFlags.Set(key, val); }
 
 
-		virtual void SetUniform(UniformState* uState, int   v0) { SetUniform1i(uState->GetLocation(), v0); }
-		virtual void SetUniform(UniformState* uState, float v0) { SetUniform1f(uState->GetLocation(), v0); }
-		virtual void SetUniform(UniformState* uState, int   v0, int   v1) { SetUniform2i(uState->GetLocation(), v0, v1); }
-		virtual void SetUniform(UniformState* uState, float v0, float v1) { SetUniform2f(uState->GetLocation(), v0, v1); }
-		virtual void SetUniform(UniformState* uState, int   v0, int   v1, int   v2) { SetUniform3i(uState->GetLocation(), v0, v1, v2); }
-		virtual void SetUniform(UniformState* uState, float v0, float v1, float v2) { SetUniform3f(uState->GetLocation(), v0, v1, v2); }
-		virtual void SetUniform(UniformState* uState, int   v0, int   v1, int   v2, int   v3) { SetUniform4i(uState->GetLocation(), v0, v1, v2, v3); }
-		virtual void SetUniform(UniformState* uState, float v0, float v1, float v2, float v3) { SetUniform4f(uState->GetLocation(), v0, v1, v2, v3); }
-
-		virtual void SetUniform2v(UniformState* uState, const int*   v) { SetUniform2iv(uState->GetLocation(), v); }
-		virtual void SetUniform2v(UniformState* uState, const float* v) { SetUniform2fv(uState->GetLocation(), v); }
-		virtual void SetUniform3v(UniformState* uState, const int*   v) { SetUniform3iv(uState->GetLocation(), v); }
-		virtual void SetUniform3v(UniformState* uState, const float* v) { SetUniform3fv(uState->GetLocation(), v); }
-		virtual void SetUniform4v(UniformState* uState, const int*   v) { SetUniform4iv(uState->GetLocation(), v); }
-		virtual void SetUniform4v(UniformState* uState, const float* v) { SetUniform4fv(uState->GetLocation(), v); }
-
-		virtual void SetUniformMatrix2x2(UniformState* uState, bool transp, const float*  m) { SetUniformMatrix2fv(uState->GetLocation(), transp, m); }
-		virtual void SetUniformMatrix3x3(UniformState* uState, bool transp, const float*  m) { SetUniformMatrix3fv(uState->GetLocation(), transp, m); }
-		virtual void SetUniformMatrix4x4(UniformState* uState, bool transp, const float*  m) { SetUniformMatrix4fv(uState->GetLocation(), transp, m); }
-
-
-		virtual void SetUniformTarget(int) {}
+		/// old interface
+		virtual void SetUniformTarget(int) {} //< only needed for ARB, for GLSL uniforms of vertex & frag shader are accessed in the same space
 		virtual void SetUniformLocation(const std::string&) {}
 
 		virtual void SetUniform1i(int idx, int   v0) = 0;
@@ -169,53 +183,93 @@ namespace Shader {
 		virtual void SetUniformMatrix2fv(int idx, bool transp, const float* v) {}
 		virtual void SetUniformMatrix3fv(int idx, bool transp, const float* v) {}
 		virtual void SetUniformMatrix4fv(int idx, bool transp, const float* v) {}
-		//virtual void SetUniformMatrixArray4fv(int idx, int count, bool transp, const float* v) {}
 
-		//virtual void SetUniformMatrix2dv(int idx, bool transp, const double* v) {}
-		//virtual void SetUniformMatrix3dv(int idx, bool transp, const double* v) {}
-		//virtual void SetUniformMatrix4dv(int idx, bool transp, const double* v) {}
-		//virtual void SetUniformMatrixArray4dv(int idx, int count, bool transp, const double* v) {}
+	public:
+		/// interface to auto-bind textures with the shader
+		void AddTextureBinding(const int texUnit, const std::string& luaTexName);
+		void BindTextures() const;
 
-		typedef std::vector<IShaderObject*> SOVec;
-		typedef SOVec::iterator SOVecIt;
-		typedef SOVec::const_iterator SOVecConstIt;
+	protected:
+		/// internal
+		virtual void SetUniform(UniformState* uState, int   v0) { SetUniform1i(uState->GetLocation(), v0); }
+		virtual void SetUniform(UniformState* uState, float v0) { SetUniform1f(uState->GetLocation(), v0); }
+		virtual void SetUniform(UniformState* uState, int   v0, int   v1) { SetUniform2i(uState->GetLocation(), v0, v1); }
+		virtual void SetUniform(UniformState* uState, float v0, float v1) { SetUniform2f(uState->GetLocation(), v0, v1); }
+		virtual void SetUniform(UniformState* uState, int   v0, int   v1, int   v2) { SetUniform3i(uState->GetLocation(), v0, v1, v2); }
+		virtual void SetUniform(UniformState* uState, float v0, float v1, float v2) { SetUniform3f(uState->GetLocation(), v0, v1, v2); }
+		virtual void SetUniform(UniformState* uState, int   v0, int   v1, int   v2, int   v3) { SetUniform4i(uState->GetLocation(), v0, v1, v2, v3); }
+		virtual void SetUniform(UniformState* uState, float v0, float v1, float v2, float v3) { SetUniform4f(uState->GetLocation(), v0, v1, v2, v3); }
 
-		virtual void AttachShaderObject(IShaderObject* so) { shaderObjs.push_back(so); }
-		SOVec& GetAttachedShaderObjs() { return shaderObjs; }
+		virtual void SetUniform2v(UniformState* uState, const int*   v) { SetUniform2iv(uState->GetLocation(), v); }
+		virtual void SetUniform2v(UniformState* uState, const float* v) { SetUniform2fv(uState->GetLocation(), v); }
+		virtual void SetUniform3v(UniformState* uState, const int*   v) { SetUniform3iv(uState->GetLocation(), v); }
+		virtual void SetUniform3v(UniformState* uState, const float* v) { SetUniform3fv(uState->GetLocation(), v); }
+		virtual void SetUniform4v(UniformState* uState, const int*   v) { SetUniform4iv(uState->GetLocation(), v); }
+		virtual void SetUniform4v(UniformState* uState, const float* v) { SetUniform4fv(uState->GetLocation(), v); }
 
-		void RecompileIfNeeded();
+		virtual void SetUniformMatrix2x2(UniformState* uState, bool transp, const float* m) { SetUniformMatrix2fv(uState->GetLocation(), transp, m); }
+		virtual void SetUniformMatrix3x3(UniformState* uState, bool transp, const float* m) { SetUniformMatrix3fv(uState->GetLocation(), transp, m); }
+		virtual void SetUniformMatrix4x4(UniformState* uState, bool transp, const float* m) { SetUniformMatrix4fv(uState->GetLocation(), transp, m); }
 
-		bool IsBound() const;
-		bool IsShaderAttached(const IShaderObject* so) const;
-		bool IsValid() const { return valid; }
+	protected:
+		int GetUniformLocation(const std::string& name) { return GetUniformState(name)->GetLocation(); }
 
-		unsigned int GetObjID() const { return objID; }
+	private:
+		virtual int GetUniformLoc(const std::string& name) = 0;
+		virtual int GetUniformType(const int loc) = 0;
 
-		const std::string& GetLog() const { return log; }
+		UniformState* GetNewUniformState(const std::string name);
+		UniformState* GetUniformState(const std::string& name) {
+			const auto hash = hashString(name.c_str()); // never compiletime const (std::string is never a literal)
+			const auto iter = uniformStates.find(hash);
+			if (iter != uniformStates.end())
+				return &iter->second;
+			return GetNewUniformState(name);
+		}
+		UniformState* GetUniformState(const char* name) {
+			// (when inlined) hash might be compiletime const cause of constexpr of hashString
+			// WARNING: Cause of a bug in gcc, you _must_ assign the constexpr to a var before
+			//          passing it to a function. I.e. foo.find(hashString(name)) would always
+			//          be runtime evaluated (even when `name` is a literal)!
+			const auto hash = hashString(name);
+			const auto iter = uniformStates.find(hash);
+			if (iter != uniformStates.end())
+				return &iter->second;
+			return GetNewUniformState(name);
+		}
 
 	protected:
 		std::string name;
 		std::string log;
 
 		unsigned int objID;
-		unsigned int curHash;
 
 		bool valid;
 		bool bound;
-		SOVec shaderObjs;
+
+		std::vector<IShaderObject*> shaderObjs;
+
+		ShaderFlags shaderFlags;
+
 	public:
-		std::unordered_map<std::size_t, UniformState, fast_hash> uniformStates;
+		spring::unordered_map<std::size_t, UniformState, fast_hash> uniformStates;
+		spring::unordered_map<int, LuaMatTexture> luaTextures;
 	};
+
 
 	struct NullProgramObject: public Shader::IProgramObject {
 	public:
 		NullProgramObject(const std::string& poName): IProgramObject(poName) {}
+
 		void Enable() {}
 		void Disable() {}
 		void Release() {}
-		void Reload(bool reloadFromDisk) {}
+		void Reload(bool reloadFromDisk, bool validate) {}
+		bool Validate() { return true; }
+		void Link() {}
 
 		int GetUniformLoc(const std::string& name) { return -1; }
+		int GetUniformType(const int loc) { return -1; }
 
 		void SetUniform1i(int idx, int   v0) {}
 		void SetUniform2i(int idx, int   v0, int   v1) {}
@@ -234,16 +288,20 @@ namespace Shader {
 		void SetUniform4fv(int idx, const float* v) {}
 	};
 
+
 	struct ARBProgramObject: public Shader::IProgramObject {
 	public:
 		ARBProgramObject(const std::string& poName);
+
 		void Enable();
 		void Disable();
 		void Link();
-		void Release();
-		void Reload(bool reloadFromDisk);
+		void Release() { IProgramObject::Release(); }
+		void Reload(bool reloadFromDisk, bool validate);
+		bool Validate() { return true; }
 
-		int GetUniformLoc(const std::string& name);
+		int GetUniformLoc(const std::string& name) { return -1; } // FIXME
+		int GetUniformType(const int loc) { return -1; }
 		void SetUniformTarget(int target);
 		int GetUnitformTarget();
 
@@ -263,47 +321,25 @@ namespace Shader {
 		void SetUniform3fv(int idx, const float* v);
 		void SetUniform4fv(int idx, const float* v);
 
-		void AttachShaderObject(IShaderObject*);
-
 	private:
 		int uniformTarget;
 	};
 
+
 	struct GLSLProgramObject: public Shader::IProgramObject {
 	public:
 		GLSLProgramObject(const std::string& poName);
+		~GLSLProgramObject() { Release(); }
+
 		void Enable();
 		void Disable();
 		void Link();
-		void Validate();
+		bool Validate();
 		void Release();
-		void Reload(bool reloadFromDisk);
+		void Reload(bool reloadFromDisk, bool validate);
 
-		int GetUniformLoc(const std::string& name);
+	public:
 		void SetUniformLocation(const std::string&);
-
-		void SetUniform(UniformState* uState, int   v0);
-		void SetUniform(UniformState* uState, float v0);
-		void SetUniform(UniformState* uState, int   v0, int   v1);
-		void SetUniform(UniformState* uState, float v0, float v1);
-		void SetUniform(UniformState* uState, int   v0, int   v1, int   v2);
-		void SetUniform(UniformState* uState, float v0, float v1, float v2);
-		void SetUniform(UniformState* uState, int   v0, int   v1, int   v2, int   v3);
-		void SetUniform(UniformState* uState, float v0, float v1, float v2, float v3);
-
-		void SetUniform2v(UniformState* uState, const int*   v);
-		void SetUniform2v(UniformState* uState, const float* v);
-		void SetUniform3v(UniformState* uState, const int*   v);
-		void SetUniform3v(UniformState* uState, const float* v);
-		void SetUniform4v(UniformState* uState, const int*   v);
-		void SetUniform4v(UniformState* uState, const float* v);
-
-		void SetUniformMatrix2x2(UniformState* uState, bool transp, const float*  v);
-		//void SetUniformMatrix2x2(UniformState* uState, bool transp, const double* v);
-		void SetUniformMatrix3x3(UniformState* uState, bool transp, const float*  v);
-		//void SetUniformMatrix3x3(UniformState* uState, bool transp, const double* v);
-		void SetUniformMatrix4x4(UniformState* uState, bool transp, const float*  v);
-		//void SetUniformMatrix4x4(UniformState* uState, bool transp, const double* v);
 
 		void SetUniform1i(int idx, int   v0);
 		void SetUniform2i(int idx, int   v0, int   v1);
@@ -324,17 +360,34 @@ namespace Shader {
 		void SetUniformMatrix2fv(int idx, bool transp, const float* v);
 		void SetUniformMatrix3fv(int idx, bool transp, const float* v);
 		void SetUniformMatrix4fv(int idx, bool transp, const float* v);
-		void SetUniformMatrixArray4fv(int idx, int count, bool transp, const float* v);
 
-		void SetUniformMatrix2dv(int idx, bool transp, const double* v);
-		void SetUniformMatrix3dv(int idx, bool transp, const double* v);
-		void SetUniformMatrix4dv(int idx, bool transp, const double* v);
-		void SetUniformMatrixArray4dv(int idx, int count, bool transp, const double* v);
+	private:
+		int GetUniformType(const int loc);
+		int GetUniformLoc(const std::string& name);
 
-		void AttachShaderObject(IShaderObject*);
+		void SetUniform(UniformState* uState, int   v0);
+		void SetUniform(UniformState* uState, float v0);
+		void SetUniform(UniformState* uState, int   v0, int   v1);
+		void SetUniform(UniformState* uState, float v0, float v1);
+		void SetUniform(UniformState* uState, int   v0, int   v1, int   v2);
+		void SetUniform(UniformState* uState, float v0, float v1, float v2);
+		void SetUniform(UniformState* uState, int   v0, int   v1, int   v2, int   v3);
+		void SetUniform(UniformState* uState, float v0, float v1, float v2, float v3);
+
+		void SetUniform2v(UniformState* uState, const int*   v);
+		void SetUniform2v(UniformState* uState, const float* v);
+		void SetUniform3v(UniformState* uState, const int*   v);
+		void SetUniform3v(UniformState* uState, const float* v);
+		void SetUniform4v(UniformState* uState, const int*   v);
+		void SetUniform4v(UniformState* uState, const float* v);
+
+		void SetUniformMatrix2x2(UniformState* uState, bool transp, const float*  v);
+		void SetUniformMatrix3x3(UniformState* uState, bool transp, const float*  v);
+		void SetUniformMatrix4x4(UniformState* uState, bool transp, const float*  v);
 
 	private:
 		std::vector<size_t> uniformLocs;
+		unsigned int curSrcHash;
 	};
 
 	/*

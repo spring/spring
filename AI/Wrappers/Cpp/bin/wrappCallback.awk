@@ -305,7 +305,7 @@ function printTripleFunc(fRet_tr, fName_tr, fParams_tr, thrownExceptions_tr, out
 			fSetterName_tr = fName_tr;
 			sub(/^(Get|Is)/, "Set", fSetterName_tr);
 			print("private:") >> outFile_stb_h_tr;
-			print("\t" fRet_tr " " propName_tr ";/* = "  nullTypeValue_tr "*/; // TODO: FIXME: put this into a constructor") >> outFile_stb_h_tr;
+			print("\t" fRet_tr " " propName_tr ";/* = "  nullTypeValue_tr ";*/ // TODO: FIXME: put this into a constructor") >> outFile_stb_h_tr;
 			print("public:") >> outFile_stb_h_tr;
 
 			print("\t" "virtual " "void "                  fSetterName_tr "(" fRet_tr " " propName_tr ")" ";")  >> outFile_stb_h_tr;
@@ -935,7 +935,6 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 	hasRetParam = 0;
 	for (prm = 1; prm <= paramTypeNames_size; prm++) {
 		paNa = extractParamName(paramTypeNames[prm]);
-		paTy = extractParamType(paramTypeNames[prm]);
 		if (isRetParamName(paNa)) {
 			if (retType == "void") {
 				paTy = extractParamType(paramTypeNames[prm]);
@@ -959,12 +958,12 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 					conversionCode_post = conversionCode_post "\t\t" retParamType " " retVar_out_m "((unsigned char) " paNa "[0], (unsigned char) " paNa "[1], (unsigned char) " paNa "[2]);" "\n";
 					sub("(, )?short\\* " paNa, "", params);
 					retType = retParamType;
-				} else if (match(paTy, /const char\*/)) {
+				} else if (match(paTy, /char\*/)) {
 					retParamType = "std::string";
 					retVar_out_m = "internal_ret";
-					conversionCode_pre  = conversionCode_pre  "\t\t" "char " paNa "[10240];" "\n";
+					conversionCode_pre  = conversionCode_pre  "\t\t" "char " paNa "[MAX_RESPONSE_SIZE];" "\n";
 					conversionCode_post = conversionCode_post "\t\t" retParamType " " retVar_out_m "(" paNa ");" "\n";
-					sub("(, )?const char\\* " paNa, "", params);
+					sub("(, )?char\\* " paNa, "", params);
 					retType = retParamType;
 				} else {
 					print("FAILED converting return param: " paramTypeNames[prm] " / " fullName_m);
@@ -1023,19 +1022,19 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 
 			_retVar_out_new = retVar_out_m "_out";
 			_wrappGetInst_params = "";
-			if (clsName_m == myRootClass || (clsName_m == "WeaponMount" && _fullClsName == "WeaponDef")) {
+			if (clsName_m == myRootClass || (((clsName_m == "WeaponMount") || (clsName_m == "Weapon")) && _fullClsName == "WeaponDef")) {
 				_wrappGetInst_params = "skirmishAIId"; # FIXME: HACK; do not know why needed :/ (should use parents list of params instead of self,or vice-versa?)
 			}
 			_hasRetInd = 0;
 			_refObj = _refObj"*";
-			if (retType != "void") {
+			if (retType != "void" && split(innerParams, _, ",") == addInds_size_m) {
 				_hasRetInd = 1;
 			}
 			for (ai=1; ai <= (addInds_size_m-_hasRetInd); ai++) {
 				# Very hacky! too unmotivated for propper fix, sorry.
 				# propper fix would involve getting the parent of the wrapped
 				# class and using its additional indices
-				if (functionName_m != "UnitDef_WeaponMount_getWeaponDef") {
+				if ((functionName_m != "UnitDef_WeaponMount_getWeaponDef") && (functionName_m != "Unit_Weapon_getDef")) {
 					_wrappGetInst_params = _wrappGetInst_params ", " addInds_m[ai];
 				}
 			}

@@ -5,13 +5,14 @@
 
 #include <string>
 #include <vector>
-#include <map>
-#include <boost/noncopyable.hpp>
+
+#include "System/UnorderedMap.hpp"
+#include "System/Misc/NonCopyable.h"
 #include "System/creg/creg_cond.h"
 
-class CCategoryHandler : public boost::noncopyable
+class CCategoryHandler : public spring::noncopyable
 {
-	CR_DECLARE_STRUCT(CCategoryHandler);
+	CR_DECLARE_STRUCT(CCategoryHandler)
 
 public:
 	static inline unsigned int GetMaxCategories() {
@@ -20,14 +21,9 @@ public:
 		return (sizeof(unsigned int) * 8);
 	}
 
-	static CCategoryHandler* Instance() {
+	static CCategoryHandler* Instance();
 
-		if (instance == NULL) {
-			instance = new CCategoryHandler();
-		}
-
-		return instance;
-	}
+	static void CreateInstance();
 	static void RemoveInstance();
 
 	/**
@@ -50,12 +46,13 @@ public:
 	std::vector<std::string> GetCategoryNames(unsigned int bits) const;
 
 private:
+	CCategoryHandler(): firstUnused(0) {}
+	~CCategoryHandler() {}
+
+private:
 	static CCategoryHandler* instance;
 
-	CCategoryHandler();
-	~CCategoryHandler();
-
-	std::map<std::string, unsigned int> categories;
+	spring::unordered_map<std::string, unsigned int> categories;
 	unsigned int firstUnused;
 };
 

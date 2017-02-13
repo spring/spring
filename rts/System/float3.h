@@ -24,30 +24,8 @@
 class float3
 {
 public:
-	CR_DECLARE_STRUCT(float3);
-/*	void* operator new(size_t size) { return mempool.Alloc(size); }
-	void* operator new(size_t n, void* p) { return p; } // cp visual
-	void operator delete(void* p, size_t size) { mempool.Free(p, size); }
-*/
+	CR_DECLARE_STRUCT(float3)
 
-#if (__cplusplus > 199711L) || defined(__GXX_EXPERIMENTAL_CXX0X__)
-	static constexpr float CMP_EPS = 1e-4f;
-	static constexpr float NORMALIZE_EPS = 1e-12f;
-#elif defined(__GNUC__) && !defined (__clang__)  // optimization for gnu compilers, so it can be inlined
-	static constexpr float CMP_EPS = 1e-4f;
-	static constexpr float NORMALIZE_EPS = 1e-12f;
-#else
-	static const float CMP_EPS;
-	static const float NORMALIZE_EPS;
-#endif
-
-
-	/**
-	 * @brief Constructor
-	 *
-	 * With no parameters, x/y/z are just initialized to 0.
-	 */
-	float3() : x(0.0f), y(0.0f), z(0.0f) {}
 
 	/**
 	 * @brief Constructor
@@ -57,7 +35,7 @@ public:
 	 *
 	 * With parameters, initializes x/y/z to the given floats.
 	 */
-	float3(const float x,const float y,const float z)
+	float3(const float x = 0.0f, const float y = 0.0f, const float z = 0.0f)
 			: x(x), y(y), z(z) {}
 
 	/**
@@ -287,7 +265,7 @@ public:
 	/**
 	 * @brief operator ==
 	 * @param f float3 to test
-	 * @return whether float3s are equal under default CMP_EPS tolerance in x/y/z
+	 * @return whether float3s are equal under default cmp_eps tolerance in x/y/z
 	 *
 	 * Tests if this float3 is equal to another, by
 	 * checking each x/y/z component individually.
@@ -335,10 +313,17 @@ public:
 	/**
 	 * @see operator==
 	 */
-	bool equals(const float3& f, const float3& eps = float3(CMP_EPS, CMP_EPS, CMP_EPS)) const {
-		return math::fabs(x - f.x) <= math::fabs(eps.x * x)
-			&& math::fabs(y - f.y) <= math::fabs(eps.y * y)
-			&& math::fabs(z - f.z) <= math::fabs(eps.z * z);
+	bool equals(const float3& f, const float3& eps = float3(cmp_eps(), cmp_eps(), cmp_eps())) const;
+
+
+	/**
+	 * @brief binary float3 equality
+	 * @param f float3 to compare to
+	 * @return const whether the two float3 are binary same
+	 *
+	 */
+	bool same(const float3& f) const {
+		return x == f.x && y == f.y && z == f.z;
 	}
 
 	/**
@@ -447,7 +432,7 @@ public:
 	 */
 	float LengthNormalize() {
 		const float len = Length();
-		if (likely(len > NORMALIZE_EPS)) {
+		if (likely(len > nrm_eps())) {
 			(*this) *= (1.0f / len);
 		}
 		return len;
@@ -455,7 +440,7 @@ public:
 
 	float LengthNormalize2D() {
 		const float len = Length2D();
-		if (likely(len > NORMALIZE_EPS)) {
+		if (likely(len > nrm_eps())) {
 			y = 0.0f; (*this) *= (1.0f / len);
 		}
 		return len;
@@ -474,7 +459,7 @@ public:
 #ifndef BUILDING_AI
 		return SafeNormalize();
 #endif
-		assert(SqLength() > NORMALIZE_EPS);
+		assert(SqLength() > nrm_eps());
 		return UnsafeNormalize();
 #else
 		return SafeNormalize();
@@ -512,7 +497,7 @@ public:
 	 */
 	float3& SafeNormalize() {
 		const float sql = SqLength();
-		if (likely(sql > NORMALIZE_EPS)) {
+		if (likely(sql > nrm_eps())) {
 			(*this) *= math::isqrt(sql);
 		}
 
@@ -536,7 +521,7 @@ public:
 #ifndef BUILDING_AI
 		return SafeANormalize();
 #endif
-		assert(SqLength() > NORMALIZE_EPS);
+		assert(SqLength() > nrm_eps());
 		return UnsafeANormalize();
 #else
 		return SafeANormalize();
@@ -557,7 +542,7 @@ public:
 	 * the vector's approx. length.
 	 */
 	float3& UnsafeANormalize() {
-		(*this) *= fastmath::isqrt(SqLength());
+		(*this) *= math::isqrt(SqLength());
 		return *this;
 	}
 
@@ -576,8 +561,8 @@ public:
 	 */
 	float3& SafeANormalize() {
 		const float sql = SqLength();
-		if (likely(sql > NORMALIZE_EPS)) {
-			(*this) *= fastmath::isqrt(sql);
+		if (likely(sql > nrm_eps())) {
+			(*this) *= math::isqrt(sql);
 		}
 
 		return *this;
@@ -647,7 +632,7 @@ public:
 	/**
 	 * @brief max x pos
 	 *
-	 * Static value containing the maximum x position (:= gs->mapx-1)
+	 * Static value containing the maximum x position (:= mapDims.mapx-1)
 	 * @note maxxpos is set after loading the map.
 	 */
 	static float maxxpos;
@@ -655,7 +640,7 @@ public:
 	/**
 	 * @brief max z pos
 	 *
-	 * Static value containing the maximum z position (:= gs->mapy-1)
+	 * Static value containing the maximum z position (:= mapDims.mapy-1)
 	 * @note maxzpos is set after loading the map.
 	 */
 	static float maxzpos;
@@ -663,7 +648,7 @@ public:
 	/**
 	 * @brief Check against FaceHeightmap bounds
 	 *
-	 * Check if this vector is in bounds [0 .. gs->mapxy-1]
+	 * Check if this vector is in bounds [0 .. mapDims.mapxy-1]
 	 * @note THIS IS THE WRONG SPACE! _ALL_ WORLD SPACE POSITIONS SHOULD BE IN VertexHeightmap RESOLUTION!
 	 * @see #IsInMap
 	 */
@@ -671,7 +656,7 @@ public:
 	/**
 	 * @brief Check against FaceHeightmap bounds
 	 *
-	 * Check if this vector is in map [0 .. gs->mapxy]
+	 * Check if this vector is in map [0 .. mapDims.mapxy]
 	 * @note USE THIS!
 	 */
 	bool IsInMap() const;
@@ -679,7 +664,7 @@ public:
 	/**
 	 * @brief Clamps to FaceHeightmap
 	 *
-	 * Clamps to the `face heightmap` resolution [0 .. gs->mapxy-1]
+	 * Clamps to the `face heightmap` resolution [0 .. mapDims.mapxy-1] * SQUARE_SIZE
 	 * @note THIS IS THE WRONG SPACE! _ALL_ WORLD SPACE POSITIONS SHOULD BE IN VertexHeightmap RESOLUTION!
 	 * @deprecated  use ClampInMap instead, but see the note!
 	 * @see #ClampInMap
@@ -689,7 +674,7 @@ public:
 	/**
 	 * @brief Clamps to VertexHeightmap
 	 *
-	 * Clamps to the `vertex heightmap`/`opengl space` resolution [0 .. gs->mapxy]
+	 * Clamps to the `vertex heightmap`/`opengl space` resolution [0 .. mapDims.mapxy] * SQUARE_SIZE
 	 * @note USE THIS!
 	 */
 	void ClampInMap();
@@ -701,6 +686,14 @@ public:
 	static float3 max(const float3 v1, const float3 v2);
 	static float3 fabs(const float3 v);
 
+	#if (__cplusplus <= 199711L) && !defined(__GXX_EXPERIMENTAL_CXX0X__) && (!defined(__GNUC__) || defined (__clang__)) && !(_MSC_VER >= 1900)
+	static float cmp_eps() { return 1e-04f; }
+	static float nrm_eps() { return 1e-12f; }
+	#else
+	static constexpr float cmp_eps() { return 1e-04f; }
+	static constexpr float nrm_eps() { return 1e-12f; }
+	#endif
+
 public:
 	union {
 		struct { float x,y,z; };
@@ -708,6 +701,7 @@ public:
 		struct { float x1,y1,x2; };
 		struct { float s,t,p; };
 		struct { float xstart, ystart, xend; };
+		struct { float xyz[3]; };
 	};
 };
 

@@ -7,7 +7,8 @@
 // Released under GPL license: see LICENSE.html for more information.
 // -------------------------------------------------------------------------
 
-#pragma once
+#ifndef AAI_CONFIG_H
+#define AAI_CONFIG_H
 
 #include "LegacyCpp/IAICallback.h"
 
@@ -20,6 +21,11 @@ using std::list;
 using std::vector;
 
 class AAI;
+namespace springLegacyAI {
+	struct UnitDef;
+}
+
+using namespace springLegacyAI;
 
 struct CostMultiplier
 {
@@ -27,11 +33,13 @@ struct CostMultiplier
 	float multiplier;
 };
 
+/// Converts a string to one that can be used in a file name (eg. "Abc.123 $%^*" -> "Abc.123_____")
+std::string MakeFileSystemCompatible(const std::string& str);
+
 class AAIConfig
 {
 public:
 	AAIConfig(void);
-	~AAIConfig(void);
 
 	void LoadConfig(AAI *ai);
 
@@ -55,20 +63,18 @@ public:
 	int MAX_ANTI_AIR_GROUP_SIZE;
 	int MAX_ARTY_GROUP_SIZE;
 	float MIN_EFFICIENCY;
-	int MAX_BUILDERS;
+
 	int MAX_BUILDERS_PER_TYPE; // max builders of same unit type
 	int MAX_FACTORIES_PER_TYPE;
 	int MAX_BUILDQUE_SIZE;
 	int MAX_ASSISTANTS;
 	int MIN_ASSISTANCE_BUILDTIME;
-	int MIN_ASSISTANCE_BUILDSPEED;
 	int MAX_BASE_SIZE;
 	float SCOUT_SPEED;
 	float GROUND_ARTY_RANGE;
 	float SEA_ARTY_RANGE;
 	float HOVER_ARTY_RANGE;
 	float STATIONARY_ARTY_RANGE;
-	int AIR_DEFENCE;
 	int AIRCRAFT_RATE;
 	int HIGH_RANGE_UNITS_RATE;
 	int FAST_UNITS_RATE;
@@ -76,10 +82,9 @@ public:
 	int MIN_ENERGY_STORAGE;
 	int MIN_METAL_STORAGE;
 	int MAX_METAL_COST;
-	int MIN_AIR_ATTACK_COST;
 	int MAX_AIR_TARGETS;
-	char **START_UNITS;
-	char **SIDE_NAMES;
+	std::vector<std::string> START_UNITS;
+	std::vector<std::string> SIDE_NAMES;
 
 	list<int> SCOUTS;
 	list<int> ATTACKERS;
@@ -91,33 +96,22 @@ public:
 	//float VEHICLE_MAX_SLOPE;
 	//float HOVER_MAX_SLOPE;
 	float NON_AMPHIB_MAX_WATERDEPTH;
-	float SHIP_MIN_WATERDEPTH;
-
 	float METAL_ENERGY_RATIO;
 	int MAX_DEFENCES;
-	float MIN_SECTOR_THREAT;
 	int MAX_STAT_ARTY;
 	int MAX_AIR_BASE;
 	bool AIR_ONLY_MOD;
 	int MAX_STORAGE;
-	int MAX_METAL_MAKERS;
 	int MAX_MEX_DISTANCE;
 	int MAX_MEX_DEFENCE_DISTANCE;
-	int MAX_MEX_DEFENCE_COST;
 	float MIN_METAL_MAKER_ENERGY;
 	int MIN_FACTORIES_FOR_DEFENCES;
 	int MIN_FACTORIES_FOR_STORAGE;
-	int MIN_FACTORIES_FOR_RADAR_JAMMER;
 	float MIN_AIR_SUPPORT_EFFICIENCY;
 	int UNIT_SPEED_SUBGROUPS;
 	float MAX_COST_LIGHT_ASSAULT;
 	float MAX_COST_MEDIUM_ASSAULT;
 	float MAX_COST_HEAVY_ASSAULT;
-	float LIGHT_ASSAULT_RATIO;
-	float MEDIUM_ASSAULT_RATIO;
-	float HEAVY_ASSAULT_RATIO;
-	float SUPER_HEAVY_ASSAULT_RATIO;
-	int MIN_SUBMARINE_WATERLINE;
 	int MAX_ATTACKS;
 
 	vector<CostMultiplier> cost_multipliers;
@@ -130,7 +124,6 @@ public:
 
 	// internal
 	float CLIFF_SLOPE;  // cells with greater slope will be considered to be cliffs
-	int CONSTRUCTION_TIMEOUT;
 	int MAX_SECTOR_IMPORTANCE;
 
 	// game specific
@@ -138,7 +131,46 @@ public:
 	float SCOUTING_MEMORY_FACTOR;
 	float LEARN_SPEED;
 	int LEARN_RATE;
+	int GAME_PERIODS;
+
+	/**
+	 * open a file in springs data directory
+	 * @param filename relative path of the file in the spring data dir
+	 * @param mode mode file to open, see manpage of fopen
+	 */
+	std::string GetFileName(AAI* ai, const std::string& filename, const std::string& prefix = "", const std::string& suffix = "", bool write = false) const;
+	std::string getUniqueName(AAI* ai, bool game, bool gamehash, bool map, bool maphash) const;
+
+private:
+	~AAIConfig(void);
+
+	const UnitDef* GetUnitDef(AAI* ai, const std::string& name);
+	int GetInt(AAI* ai, FILE* file);
+	float GetFloat(AAI* ai, FILE* file);
+	std::string GetString(AAI* ai, FILE* file);
+
+	int CONSTRUCTION_TIMEOUT;
 	float WATER_MAP_RATIO;
 	float LAND_WATER_MAP_RATIO;
-	int GAME_PERIODS;
+	float LIGHT_ASSAULT_RATIO;
+	int MIN_FACTORIES_FOR_RADAR_JAMMER;
+//	int MAX_MEX_DEFENCE_COST;
+	int MAX_METAL_MAKERS;
+	float MIN_SECTOR_THREAT;
+//	float SHIP_MIN_WATERDEPTH;
+	int MIN_AIR_ATTACK_COST;
+	int MAX_BUILDERS;
+	int MIN_ASSISTANCE_BUILDSPEED;
+	int AIR_DEFENCE;
+	float MEDIUM_ASSAULT_RATIO;
+	float HEAVY_ASSAULT_RATIO;
+	float SUPER_HEAVY_ASSAULT_RATIO;
+	int MIN_SUBMARINE_WATERLINE;
+
 };
+
+extern AAIConfig *cfg;
+
+
+#endif
+

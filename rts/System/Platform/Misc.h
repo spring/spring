@@ -81,9 +81,14 @@ std::string GetModulePath(const std::string& moduleName = "");
 
 std::string GetOS();
 
+
 bool Is64Bit();
 bool Is32BitEmulation();
 bool IsRunningInGDB();
+
+int NativeWordSize(); // compiled process code
+int SystemWordSize(); // host operating system
+
 
 /**
  * Executes a native binary, file and args have to be not escaped!
@@ -92,7 +97,7 @@ bool IsRunningInGDB();
  * @param  args arguments to the executable, eg. {"-f". "/tmp/test.txt"}
  * @return error message, or "" on success
  */
-std::string ExecuteProcess(const std::string& file, std::vector<std::string> args);
+std::string ExecuteProcess(const std::string& file, std::vector<std::string> args, bool asSubprocess = false);
 }
 
 #endif // PLATFORM_MISC_H

@@ -10,7 +10,7 @@
 	// no hardware cursor support for mac's and headless build
 	// FIXME: duno how to create cursors at runtime on macs
 #elif defined(WIN32)
-	#include "windows.h"
+	#include <windows.h>
 	#include "System/Input/MouseInput.h"
 	typedef unsigned char byte;
 #else
@@ -76,9 +76,8 @@ class CHwWinCursor : public IHwCursor {
 		bool IsValid() {return (cursor!=NULL);};
 	protected:
 		HCURSOR cursor;
-#ifndef _MSC_VER
-	#pragma push(pack,1)
-#endif
+
+	#pragma pack(push,1)
 		struct CursorDirectoryHeader {
 			byte  xsize,ysize,ncolors,reserved1;
 			short hotx,hoty;
@@ -94,9 +93,7 @@ class CHwWinCursor : public IHwCursor {
 		struct AnihStructure {
 			DWORD size,images,frames,width,height,bpp,planes,rate,flags;
 		};
-#ifndef _MSC_VER
-	#pragma pop(pack)
-#endif
+	#pragma pack(pop)
 
 	protected:
 		struct ImageData {
@@ -300,6 +297,18 @@ void CHwWinCursor::buildIco(unsigned char* dst, ImageData &image)
 	fclose(pFile); */
 }
 
+
+static inline int GetBestCursorSize(const int minSize)
+{
+	auto stdSizes = {/*16,*/ 32, 48, 64, 96, 128};
+	for (const int s: stdSizes)
+		if (s >= minSize)
+			return s;
+
+	return next_power_of_2(minSize);
+}
+
+
 void CHwWinCursor::Finish()
 {
 	if (frames.empty())
@@ -308,8 +317,7 @@ void CHwWinCursor::Finish()
 	hotx = (hotSpot==CMouseCursor::TopLeft) ? 0 : (short)xmaxsize/2;
 	hoty = (hotSpot==CMouseCursor::TopLeft) ? 0 : (short)ymaxsize/2;
 
-	//note: windows only except 16x16,32x32,64x64,etc. (and some more not 2^n ones)
-	int squaresize =  next_power_of_2( std::max(xmaxsize,ymaxsize) );
+	int squaresize = GetBestCursorSize( std::max(xmaxsize,ymaxsize) );
 
 	//resize images
 	for (std::vector<ImageData>::iterator it=icons.begin(); it<icons.end(); ++it)

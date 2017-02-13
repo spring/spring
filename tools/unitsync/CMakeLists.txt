@@ -7,10 +7,8 @@
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "../..")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
 
-FIND_PACKAGE_STATIC(DevIL REQUIRED)
 FIND_PACKAGE_STATIC(ZLIB REQUIRED)
 
-LIST(APPEND unitsync_libs ${IL_IL_LIBRARY} ${JPEG_LIBRARY} ${PNG_LIBRARY} ${TIFF_LIBRARY} ${GIF_LIBRARY})
 LIST(APPEND unitsync_libs ${CMAKE_DL_LIBS})
 LIST(APPEND unitsync_libs ${Boost_REGEX_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY})
 LIST(APPEND unitsync_libs 7zip lua headlessStubs archives)
@@ -21,17 +19,17 @@ IF (WIN32)
 	LIST(APPEND unitsync_libs ${WINMM_LIBRARY})
 ENDIF (WIN32)
 
-IF    (MINGW)
+IF    (MINGW OR MSVC)
 	# We still need these header files,
 	# even if we are not going to link with SDL.
 	# We have them available anyway (mingwlibs).
 	FIND_PACKAGE(SDL2 REQUIRED)
 	INCLUDE_DIRECTORIES(${SDL2_INCLUDE_DIR})
-ELSE  (MINGW)
+ELSE  (MINGW OR MSVC)
 	# Use a direct copy of the GL and SDL headers,
 	# as these may not be available on headless systems.
 	INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/include/SDL2)
-ENDIF (MINGW)
+ENDIF (MINGW OR MSVC)
 
 
 ADD_DEFINITIONS(-DUNITSYNC)
@@ -40,11 +38,11 @@ ADD_DEFINITIONS(-DNOT_USING_CREG)
 ADD_DEFINITIONS(-DHEADLESS)
 ADD_DEFINITIONS(-DNO_SOUND)
 ADD_DEFINITIONS(-DBITMAP_NO_OPENGL)
+#ADD_DEFINITIONS(-DENABLE_DEPRECATED_FUNCTIONS)
 REMOVE_DEFINITIONS(-DTHREADPOOL)
 
 set(ENGINE_SRC_ROOT "../../rts")
 
-INCLUDE_DIRECTORIES(${DEVIL_INCLUDE_DIR})
 INCLUDE_DIRECTORIES(${SPRING_MINIZIP_INCLUDE_DIR})
 INCLUDE_DIRECTORIES(${ENGINE_SRC_ROOT}/lib/lua/include)
 INCLUDE_DIRECTORIES(${ENGINE_SRC_ROOT}/lib/7zip)
@@ -53,42 +51,45 @@ Include_Directories(${CMAKE_BINARY_DIR}/src-generated/engine)
 
 
 set(main_files
-	"${ENGINE_SRC_ROOT}/System/Config/ConfigHandler.cpp"
-	"${ENGINE_SRC_ROOT}/System/Config/ConfigLocater.cpp"
-	"${ENGINE_SRC_ROOT}/System/Config/ConfigSource.cpp"
-	"${ENGINE_SRC_ROOT}/System/Config/ConfigVariable.cpp"
-	"${ENGINE_SRC_ROOT}/System/Config/ConfigLocater.cpp"
-	"${ENGINE_SRC_ROOT}/System/CRC.cpp"
-	"${ENGINE_SRC_ROOT}/System/Misc/SpringTime.cpp"
-	"${ENGINE_SRC_ROOT}/System/Platform/CpuID.cpp"
-	"${ENGINE_SRC_ROOT}/System/Platform/Misc.cpp"
-	"${ENGINE_SRC_ROOT}/System/Platform/ScopedFileLock.cpp"
-	"${ENGINE_SRC_ROOT}/System/Platform/Threading.cpp"
-	"${ENGINE_SRC_ROOT}/System/LogOutput.cpp"
-	"${ENGINE_SRC_ROOT}/System/TdfParser.cpp"
-	"${ENGINE_SRC_ROOT}/System/ThreadPool.cpp"
-	"${ENGINE_SRC_ROOT}/System/Info.cpp"
-	"${ENGINE_SRC_ROOT}/System/Option.cpp"
-	"${ENGINE_SRC_ROOT}/System/SafeVector.cpp"
-	"${ENGINE_SRC_ROOT}/System/SafeCStrings.c"
-	"${ENGINE_SRC_ROOT}/System/Util.cpp"
-	"${ENGINE_SRC_ROOT}/System/float4.cpp"
-	"${ENGINE_SRC_ROOT}/Sim/Misc/SideParser.cpp"
-	"${ENGINE_SRC_ROOT}/Game/GameVersion.cpp"
 	"${ENGINE_SRC_ROOT}/ExternalAI/LuaAIImplHandler.cpp"
+	"${ENGINE_SRC_ROOT}/Game/GameVersion.cpp"
 	"${ENGINE_SRC_ROOT}/Lua/LuaParser.cpp"
 	"${ENGINE_SRC_ROOT}/Lua/LuaUtils.cpp"
 	"${ENGINE_SRC_ROOT}/Lua/LuaIO.cpp"
 	"${ENGINE_SRC_ROOT}/Map/MapParser.cpp"
 	"${ENGINE_SRC_ROOT}/Map/SMF/SMFMapFile.cpp"
-	"${ENGINE_SRC_ROOT}/Rendering/Textures/Bitmap.cpp"
+	"${ENGINE_SRC_ROOT}/Sim/Misc/SideParser.cpp"
+	"${ENGINE_SRC_ROOT}/System/Config/ConfigHandler.cpp"
+	"${ENGINE_SRC_ROOT}/System/Config/ConfigLocater.cpp"
+	"${ENGINE_SRC_ROOT}/System/Config/ConfigSource.cpp"
+	"${ENGINE_SRC_ROOT}/System/Config/ConfigVariable.cpp"
+	"${ENGINE_SRC_ROOT}/System/Config/ConfigLocater.cpp"
+	"${ENGINE_SRC_ROOT}/System/Misc/SpringTime.cpp"
+	"${ENGINE_SRC_ROOT}/System/Platform/CpuID.cpp"
+	"${ENGINE_SRC_ROOT}/System/Platform/Misc.cpp"
+	"${ENGINE_SRC_ROOT}/System/Platform/ScopedFileLock.cpp"
+	"${ENGINE_SRC_ROOT}/System/Platform/Threading.cpp"
+	"${ENGINE_SRC_ROOT}/System/float4.cpp"
+	"${ENGINE_SRC_ROOT}/System/CRC.cpp"
+	"${ENGINE_SRC_ROOT}/System/Info.cpp"
+	"${ENGINE_SRC_ROOT}/System/LogOutput.cpp"
+	"${ENGINE_SRC_ROOT}/System/Option.cpp"
+	"${ENGINE_SRC_ROOT}/System/SafeVector.cpp"
+	"${ENGINE_SRC_ROOT}/System/SafeCStrings.c"
+	"${ENGINE_SRC_ROOT}/System/TdfParser.cpp"
+	"${ENGINE_SRC_ROOT}/System/Threading/ThreadPool.cpp"
+	"${ENGINE_SRC_ROOT}/System/UriParser.cpp"
+	"${ENGINE_SRC_ROOT}/System/Util.cpp"
 	)
 if (WIN32)
 	LIST(APPEND main_files "${ENGINE_SRC_ROOT}/System/Platform/Win/WinVersion.cpp")
+else (WIN32)
+        LIST(APPEND main_files "${ENGINE_SRC_ROOT}/System/Platform/Linux/ThreadSupport.cpp")
 endif (WIN32)
 
 set(unitsync_files
 	${sources_engine_System_FileSystem}
+	${sources_engine_System_Threading}
 	${sources_engine_System_Log}
 	${sources_engine_System_Log_sinkFile}
 	${sources_engine_System_Log_sinkOutputDebugString}
@@ -96,6 +97,11 @@ set(unitsync_files
 	${CMAKE_CURRENT_SOURCE_DIR}/unitsync.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/LuaParserAPI.cpp
 	)
+
+# Add list of all exported functions to .def file to prevent decoration
+if (MSVC)
+	LIST(APPEND unitsync_files ${CMAKE_CURRENT_SOURCE_DIR}/exports.def)
+endif ()
 
 # HACK unitsync should actually be MODULE (not SHARED),
 #   but the python bindings need it as SHARED,
@@ -108,7 +114,9 @@ if (MINGW)
 endif (MINGW)
 FixLibName(unitsync)
 
-install (TARGETS unitsync DESTINATION ${LIBDIR})
+install (TARGETS unitsync
+	RUNTIME DESTINATION ${LIBDIR}
+	LIBRARY DESTINATION ${LIBDIR})
 
 Add_Subdirectory(test)
 

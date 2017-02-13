@@ -1,10 +1,11 @@
 ### builds
 #
-# Macros and fucntions defined in this file:
+# Macros and functions defined in this file:
 # * CreateEngineBuildAndInstallTarget
 #
 
 Include_Directories(${CMAKE_BINARY_DIR}/src-generated/engine)
+Include_Directories(${gflags_BINARY_DIR}/include)
 
 # Only install the given engine target executable & dependencies
 # example:
@@ -19,12 +20,17 @@ macro    (CreateEngineBuildAndInstallTarget targetName)
 	set(myBuildTarget spring-${targetName})
 	set(${targetName}-Deps
 			engine-${targetName}
-			manpages
-			userdocs
-			gamedata
+			basecontent
 			unitsync
 			${DEPS_AI_ALL}
 		)
+	if (CREATE_MAN_PAGES)
+		LIST(APPEND ${targetName}-Deps manpages)
+	endif()
+	if (userdoc_INSTALL_HTML)
+		LIST(APPEND ${targetName}-Deps userdocs)
+	endif()
+
 	# Create a custom meta build target
 	add_custom_target(${myBuildTarget}
 		WORKING_DIRECTORY
@@ -77,14 +83,17 @@ EndMacro (AddEngineBuild)
 add_custom_target(spring WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")
 add_custom_target(install-spring WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")
 
-if    (NOT HEADLESS_SYSTEM)
-	### Add icon and manifest to exe using windres
-	IF    (WIN32 AND MINGW)
-		SET(ENGINE_ICON "${ENGINE_SRC_ROOT_DIR}/icon.rc")
-	ENDIF (WIN32 AND MINGW)
-	AddEngineBuild(legacy)
-endif (NOT HEADLESS_SYSTEM)
+### Add icon and manifest to exe using windres
+IF    (WIN32)
+	SET(ENGINE_ICON "${ENGINE_SRC_ROOT_DIR}/icon.rc")
 
+	IF (MSVC)
+		# Make sure we disable the default manifest generation to prevent conflicts
+		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /MANIFEST:NO")
+	ENDIF()
+ENDIF (WIN32)
+
+# the build targets
+AddEngineBuild(legacy)
 AddEngineBuild(dedicated)
 AddEngineBuild(headless)
-

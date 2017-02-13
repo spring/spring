@@ -8,21 +8,24 @@
 #include "System/type2.h"
 #include "System/Rectangle.h"
 
+
 struct MoveDef;
+
+
 class CPathFinderDef {
 public:
 	CPathFinderDef(const float3& goalCenter, float goalRadius, float sqGoalDistance);
 	virtual ~CPathFinderDef() {}
 
-	virtual bool WithinConstraints(unsigned int xSquare, unsigned int zSquare) const { return true; }
-	virtual void DisableConstraint(bool b) { constraintDisabled = b; }
+	virtual bool WithinConstraints(unsigned int xSquare, unsigned int zSquare) const = 0;
+	void DisableConstraint(bool b) { constraintDisabled = b; }
 
 	bool IsGoal(unsigned int xSquare, unsigned int zSquare) const;
-	float Heuristic(unsigned int xSquare, unsigned int zSquare) const;
-	bool GoalIsBlocked(const MoveDef& moveDef, const CMoveMath::BlockType& blockMask, const CSolidObject* owner) const;
+	float Heuristic(unsigned int xSquare, unsigned int zSquare, unsigned int blockSize) const;
+	bool IsGoalBlocked(const MoveDef& moveDef, const CMoveMath::BlockType& blockMask, const CSolidObject* owner) const;
 	int2 GoalSquareOffset(unsigned int blockSize) const;
 
-
+public:
 	// world-space goal position
 	float3 goal;
 
@@ -31,6 +34,12 @@ public:
 	// if true, do not need to generate any waypoints
 	bool startInGoalRadius;
 	bool constraintDisabled;
+
+	bool testMobile;
+	bool needPath;
+	bool exactPath;
+	bool dirIndependent;
+	bool synced;
 
 	unsigned int goalSquareX;
 	unsigned int goalSquareZ;
@@ -72,18 +81,19 @@ public:
 	CRectangularSearchConstraint(
 		const float3 startPos,
 		const float3 goalPos,
+		float sqRadius,
 		unsigned int blockSize
 	);
 
 	bool WithinConstraints(unsigned int xSquare, unsigned int zSquare) const {
-		if (parentBlockRect.Inside(int2(xSquare, zSquare))) return true;
-		if ( childBlockRect.Inside(int2(xSquare, zSquare))) return true;
+		if (startBlockRect.Inside(int2(xSquare, zSquare))) return true;
+		if ( goalBlockRect.Inside(int2(xSquare, zSquare))) return true;
 		return (constraintDisabled);
 	}
 
 private:
-	SRectangle parentBlockRect;
-	SRectangle  childBlockRect;
+	SRectangle startBlockRect;
+	SRectangle  goalBlockRect;
 };
 
 #endif

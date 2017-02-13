@@ -4,8 +4,8 @@
 #define AUTOHOST_INTERFACE_H
 
 #include <string>
-#include <boost/cstdint.hpp>
-#include <boost/asio/ip/udp.hpp>
+#include <cinttypes>
+#include <asio/ip/udp.hpp>
 
 /**
  * API for engine <-> autohost (or similar) communication, using UDP over
@@ -46,8 +46,8 @@ public:
 	void Message(const std::string& message);
 	void Warning(const std::string& message);
 
-	void SendLuaMsg(const boost::uint8_t* msg, size_t msgSize);
-	void Send(const boost::uint8_t* msg, size_t msgSize);
+	void SendLuaMsg(const std::uint8_t* msg, size_t msgSize);
+	void Send(const std::uint8_t* msg, size_t msgSize);
 
 	/**
 	 * @brief Receive a chat message from the autohost
@@ -57,7 +57,7 @@ public:
 	std::string GetChatMessage();
 
 private:
-	void Send(boost::asio::mutable_buffers_1 sendBuffer);
+	void Send(asio::mutable_buffers_1 sendBuffer);
 
 	/**
 	 * Tries to bind a socket for communication with a UDP server.
@@ -71,11 +71,11 @@ private:
 	 *   use 0 for OS-select
 	 * @return "" if everything went OK, and error description otherwise
 	 */
-	static std::string TryBindSocket(boost::asio::ip::udp::socket& socket,
+	static std::string TryBindSocket(asio::ip::udp::socket& socket,
 			const std::string& remoteIP, int remotePort,
 			const std::string& localIP = "", int localPort = 0);
 
-	boost::asio::ip::udp::socket autohost;
+	asio::ip::udp::socket autohost;
 	bool initialized;
 };
 

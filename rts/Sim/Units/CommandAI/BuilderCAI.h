@@ -4,11 +4,10 @@
 #define _BUILDER_CAI_H_
 
 #include "MobileCAI.h"
-#include "Sim/Units/UnitSet.h"
 #include "Sim/Units/BuildInfo.h"
 #include "System/Misc/BitwiseEnum.h"
+#include "System/UnorderedSet.hpp"
 
-#include <map>
 #include <string>
 
 class CUnit;
@@ -23,10 +22,12 @@ struct UnitDef;
 class CBuilderCAI : public CMobileCAI
 {
 public:
-	CR_DECLARE(CBuilderCAI);
+	CR_DECLARE(CBuilderCAI)
 	CBuilderCAI(CUnit* owner);
 	CBuilderCAI();
 	~CBuilderCAI();
+
+	static void InitStatic();
 	void PostLoad();
 
 	int GetDefaultCmd(const CUnit* unit, const CFeature* feature);
@@ -62,11 +63,11 @@ public:
 	bool IsInBuildRange(const float3& pos, const float radius) const;
 
 public:
-	std::map<int, std::string> buildOptions;
+	spring::unordered_set<int> buildOptions;
 
-	static CUnitSet reclaimers;
-	static CUnitSet featureReclaimers;
-	static CUnitSet resurrecters;
+	static spring::unordered_set<int> reclaimers;
+	static spring::unordered_set<int> featureReclaimers;
+	static spring::unordered_set<int> resurrecters;
 
 private:
 	enum ReclaimOptions {
@@ -116,7 +117,7 @@ private:
 		return IsBuildPosBlocked(build, &u);
 	}
 
-	void CancelRestrictedUnit(const std::string& buildOption);
+	void CancelRestrictedUnit();
 	bool OutOfImmobileRange(const Command& cmd) const;
 	/// add a command to reclaim a feature that is blocking our build-site
 	void ReclaimFeature(CFeature* f);

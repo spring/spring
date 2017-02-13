@@ -270,15 +270,21 @@ BOOST_AUTO_TEST_CASE( UnitSync )
 //	BOOST_CHECK(mapcount>0);
 
 	for (int i=0; i<gamecount; i++) {
-		const std::string game = GetGameName(i);
-		const int primaryModIndex = us::GetPrimaryModIndex(game.c_str());
-		BOOST_CHECK_MESSAGE(primaryModIndex == i, game << ": " << primaryModIndex << "!=" << i);
+		const std::string name = GetGameName(i);
+		BOOST_CHECK_MESSAGE(!name.empty(), i);
+		const int primaryModIndex = us::GetPrimaryModIndex(name.c_str());
+		const size_t hash = us::GetPrimaryModChecksum(i);
+		BOOST_CHECK(hash != 0);
+		BOOST_CHECK_MESSAGE(primaryModIndex == i, name << ": " << primaryModIndex << "!=" << i);
+		BOOST_CHECK_MESSAGE(hash == us::GetPrimaryModChecksumFromName(name.c_str()), name.c_str());
 		BOOST_CHECK_MESSAGE((errmsg = us::GetNextError()) == NULL, errmsg);
 	}
 	for (int i=0; i<mapcount; i++) {
-		const std::string mapname = us::GetMapName(i);
-		BOOST_CHECK_MESSAGE(!mapname.empty(), i);
-		BOOST_CHECK_MESSAGE(us::GetMapChecksum(i) == us::GetMapChecksumFromName(mapname.c_str()), mapname.c_str());
+		const std::string name = us::GetMapName(i);
+		BOOST_CHECK_MESSAGE(!name.empty(), i);
+		const size_t hash = us::GetMapChecksum(i);
+		BOOST_CHECK(hash != 0);
+		BOOST_CHECK_MESSAGE(hash == us::GetMapChecksumFromName(name.c_str()), name.c_str());
 		BOOST_CHECK_MESSAGE((errmsg = us::GetNextError()) == NULL, errmsg);
 	}
 //	while (i > 0 && !us::GetMapName(i)) --i;

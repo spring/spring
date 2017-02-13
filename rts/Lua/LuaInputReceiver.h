@@ -8,11 +8,13 @@
 #include "Game/UI/InputReceiver.h"
 
 
-class LuaInputReceiver : public CInputReceiver
+class CLuaInputReceiver : public CInputReceiver
 {
 	public:
-		LuaInputReceiver();
-		~LuaInputReceiver();
+		CLuaInputReceiver();
+		~CLuaInputReceiver();
+
+		static CLuaInputReceiver* GetInstace();
 
 		bool KeyPressed(int key, bool isRepeat);
 		bool KeyReleased(int key);
@@ -26,9 +28,7 @@ class LuaInputReceiver : public CInputReceiver
 		void Draw();
 };
 
-
-extern LuaInputReceiver* luaInputReceiver;
-
+#define luaInputReceiver CLuaInputReceiver::GetInstace()
 
 #endif /* LUA_INPUT_RECEIVER */
 

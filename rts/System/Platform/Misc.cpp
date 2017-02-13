@@ -225,7 +225,8 @@ std::string GetProcessExecutableFile()
 	mib[1] = KERN_PROC;
 	mib[2] = KERN_PROC_PATHNAME;
 	mib[3] = -1;
-	char buf[PATH_MAX];
+	const long maxpath = pathconf("/", _PC_PATH_MAX);
+	char buf[maxpath];
 	size_t cb = sizeof(buf);
 	int err = sysctl(mib, 4, buf, &cb, NULL, 0);
 	if (err == 0) {
@@ -253,7 +254,7 @@ std::string GetModuleFile(std::string moduleName)
 	// this will only be used if moduleFilePath stays empty
 	const char* error = NULL;
 
-#if defined(linux) || defined(__APPLE__) || defined(__FreeBSD__)
+#if defined(__linux__) || defined(__APPLE__) || defined(__FreeBSD__)
 #ifdef __APPLE__
 	#define SHARED_LIBRARY_EXTENSION "dylib"
 #else
@@ -372,10 +373,13 @@ std::string GetOS()
 #endif
 }
 
-bool Is64Bit()
-{
-	return (sizeof(void*) == 8);
-}
+
+int NativeWordSize() { return (sizeof(void*)); }
+int SystemWordSize() { return ((Is32BitEmulation())? 8: NativeWordSize()); }
+
+
+bool Is64Bit() { return (NativeWordSize() == 8); }
+
 
 #ifdef WIN32
 typedef BOOL (WINAPI *LPFN_ISWOW64PROCESS) (HANDLE, PBOOL);
@@ -389,23 +393,18 @@ bool Is32BitEmulation()
 	BOOL bIsWow64 = FALSE;
 
 	fnIsWow64Process = (LPFN_ISWOW64PROCESS)GetProcAddress(
-		GetModuleHandle(TEXT("kernel32")),"IsWow64Process");
+		GetModuleHandle(TEXT("kernel32")), "IsWow64Process");
 
-	if (NULL != fnIsWow64Process)
-	{
-		if (!fnIsWow64Process(GetCurrentProcess(),&bIsWow64))
-		{
+	if (nullptr != fnIsWow64Process) {
+		if (!fnIsWow64Process(GetCurrentProcess(), &bIsWow64))
 			return false;
-		}
 	}
+
 	return bIsWow64;
 }
 #else
-// simply assume other OS don't need 32bit emulation
-bool Is32BitEmulation()
-{
-	return false;
-}
+// simply assume Spring is never run in emulation-mode on other OS'es
+bool Is32BitEmulation() { return false; }
 #endif
 
 bool IsRunningInGDB() {
@@ -423,9 +422,10 @@ bool IsRunningInGDB() {
 
 	return (strstr(buf, "gdb") != NULL);
 	#else
-	return false;
+	return IsDebuggerPresent();
 	#endif
 }
+
 
 std::string GetShortFileName(const std::string& file) {
 #ifdef WIN32
@@ -442,7 +442,8 @@ std::string GetShortFileName(const std::string& file) {
 	return file;
 }
 
-std::string ExecuteProcess(const std::string& file, std::vector<std::string> args)
+
+std::string ExecuteProcess(const std::string& file, std::vector<std::string> args, bool asSubprocess)
 {
 	// "The first argument, by convention, should point to
 	// the filename associated with the file being executed."
@@ -452,11 +453,48 @@ std::string ExecuteProcess(const std::string& file, std::vector<std::string> arg
 	//   to a short path there
 	args.insert(args.begin(), GetShortFileName(file));
 
+	std::string execError;
+
+	if (asSubprocess) {
+		#ifdef WIN32
+		    STARTUPINFO si;
+			PROCESS_INFORMATION pi;
+
+			ZeroMemory( &si, sizeof(si) );
+			si.cb = sizeof(si);
+			ZeroMemory( &pi, sizeof(pi) );
+
+			std::string argsStr;
+			for (size_t a = 0; a < args.size(); ++a) {
+				argsStr += args[a] + ' ';
+			}
+			char *argsCStr = new char[argsStr.size() + 1];
+			std::copy(argsStr.begin(), argsStr.end(), argsCStr);
+			argsCStr[argsStr.size()] = '\0';
+
+			LOG("[%s] Windows start process arguments: %s", __FUNCTION__, argsCStr);
+			if (!CreateProcess(NULL, argsCStr, NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi)) {
+				delete[] argsCStr;
+				LOG("[%s] Error creating subprocess (%lu)", __FUNCTION__, GetLastError());
+				return execError;
+			}
+			delete[] argsCStr;
+
+			return execError;
+		#else
+			int pid;
+			if ((pid = fork()) < 0) {
+				LOG("[%s] Error forking process", __FUNCTION__);
+			} else if (pid != 0) {
+				// TODO: Maybe useful to return the subprocess ID (pid)?
+				return execError;
+			}
+		#endif
+	}
+
 	// "The array of pointers must be terminated by a NULL pointer."
 	// --> include one extra argument string and leave it NULL
 	std::vector<char*> processArgs(args.size() + 1, NULL);
-	std::string execError;
-
 	for (size_t a = 0; a < args.size(); ++a) {
 		const std::string& arg = args[a];
 		const size_t argSize = arg.length() + 1;
@@ -464,13 +502,13 @@ std::string ExecuteProcess(const std::string& file, std::vector<std::string> arg
 		STRCPY_T(processArgs[a] = new char[argSize], argSize, arg.c_str());
 	}
 
-#ifdef WIN32
-	#define EXECVP _execvp
-#else
-	#define EXECVP execvp
-#endif
+	#ifdef WIN32
+		#define EXECVP _execvp
+	#else
+		#define EXECVP execvp
+	#endif
 	if (EXECVP(args[0].c_str(), &processArgs[0]) == -1) {
-		LOG("[%s] error: %s (%d)", __FUNCTION__, (execError = strerror(errno)).c_str(), errno);
+		LOG("[%s] error: \"%s\" %s (%d)", __FUNCTION__, args[0].c_str(), (execError = strerror(errno)).c_str(), errno);
 	}
 	#undef EXECVP
 

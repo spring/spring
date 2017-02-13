@@ -25,25 +25,9 @@ springai::AIFloat3::AIFloat3(const float3& f3)
 {
 }
 
-/*springai::AIFloat3::AIFloat3(Color color) {
 
-	this.x = color.getRed()   / 255.0F;
-	this.y = color.getGreen() / 255.0F;
-	this.z = color.getBlue()  / 255.0F;
-}*/
-
-/*Color springai::AIFloat3::ToColor() const {
-	return new Color(x, y, z);
-}*/
-/*float* springai::AIFloat3::ToNewFloatArray() const {
-
-	float* floatArr = new float[3];
-	loadInto(floatArr);
-	return floatArr;
-}*/
 
 void springai::AIFloat3::LoadInto(float* xyz) const {
-
 	xyz[0] = x;
 	xyz[1] = y;
 	xyz[2] = z;
@@ -57,12 +41,7 @@ std::string springai::AIFloat3::ToString() const {
 }
 
 
-/*static unsigned int ToIntBits(const float f) {
-	return ((unsigned int)f);
-}*/
-
 /*int springai::AIFloat3::HashCode() const {
-
 	static const int prime = 31;
 
 	int result = 0;
@@ -75,7 +54,6 @@ std::string springai::AIFloat3::ToString() const {
 }*/
 
 /*bool springai::AIFloat3::Equals(const void* obj) const {
-
 	if (this == obj) {
 		return true;
 	} else if (obj == NULL) {
@@ -99,3 +77,4 @@ std::string springai::AIFloat3::ToString() const {
 }*/
 
 const springai::AIFloat3 springai::AIFloat3::NULL_VALUE;
+

@@ -7,58 +7,60 @@
 
 class CNullUnitScript : public CUnitScript
 {
-private:
-	std::vector<LocalModelPiece*> pieces;
-
+	CR_DECLARE_DERIVED(CNullUnitScript)
 protected:
-	CNullUnitScript();
+	CNullUnitScript(CUnit* u);
 
-	virtual void ShowScriptError(const std::string& msg);
+	void ShowScriptError(const std::string& msg) override;
+	void PostLoad();
 
 public:
 	static CNullUnitScript value;
 
 	// callins
-	virtual void RawCall(int functionId);
-	virtual void Create();
-	virtual void Killed();
-	virtual void WindChanged(float heading, float speed);
-	virtual void ExtractionRateChanged(float speed);
-	virtual void RockUnit(const float3& rockDir);
-	virtual void HitByWeapon(const float3& hitDir, int weaponDefId, float& inout_damage);
-	virtual void SetSFXOccupy(int curTerrainType);
-	virtual void QueryLandingPads(std::vector<int>& out_pieces);
-	virtual void BeginTransport(const CUnit* unit);
-	virtual int  QueryTransport(const CUnit* unit);
-	virtual void TransportPickup(const CUnit* unit);
-	virtual void TransportDrop(const CUnit* unit, const float3& pos);
-	virtual void StartBuilding(float heading, float pitch);
-	virtual int  QueryNanoPiece();
-	virtual int  QueryBuildInfo();
+	void RawCall(int functionId) override {}
+	void Create() override {}
+	void Killed() override {}
+	void WindChanged(float heading, float speed) override {}
+	void ExtractionRateChanged(float speed) override {}
+	void WorldRockUnit(const float3& rockDir) override {}
+	void RockUnit(const float3& rockDir) override {}
+	void WorldHitByWeapon(const float3& hitDir, int weaponDefId, float& inoutDamage) override {}
+	void HitByWeapon(const float3& hitDir, int weaponDefId, float& inoutDamage) override {}
+	void SetSFXOccupy(int curTerrainType) override {}
+	void QueryLandingPads(std::vector<int>& out_pieces) override {}
+	void BeginTransport(const CUnit* unit) override {}
+	int  QueryTransport(const CUnit* unit) override { return -1; }
+	void TransportPickup(const CUnit* unit) override {}
+	void TransportDrop(const CUnit* unit, const float3& pos) override {}
+	void StartBuilding(float heading, float pitch) override {}
+	int  QueryNanoPiece() override { return -1; }
+	int  QueryBuildInfo() override { return -1; }
 
-	virtual void Destroy();
-	virtual void StartMoving(bool reversing);
-	virtual void StopMoving();
-	virtual void StartUnload();
-	virtual void EndTransport();
-	virtual void StartBuilding();
-	virtual void StopBuilding();
-	virtual void Falling();
-	virtual void Landed();
-	virtual void Activate();
-	virtual void Deactivate();
-	virtual void MoveRate(int curRate);
-	virtual void FireWeapon(int weaponNum);
-	virtual void EndBurst(int weaponNum);
+	void Destroy() override {}
+	void StartMoving(bool reversing) override {}
+	void StopMoving() override {}
+	void StartUnload() override {}
+	void EndTransport() override {}
+	void StartBuilding() override {}
+	void StopBuilding() override {}
+	void Falling() override {}
+	void Landed() override {}
+	void Activate() override {}
+	void Deactivate() override {}
+	void MoveRate(int curRate) override {}
+	void FireWeapon(int weaponNum) override {}
+	void EndBurst(int weaponNum) override {}
 
 	// weapon callins
-	virtual int   QueryWeapon(int weaponNum);
-	virtual void  AimWeapon(int weaponNum, float heading, float pitch);
-	virtual void  AimShieldWeapon(CPlasmaRepulser* weapon);
-	virtual int   AimFromWeapon(int weaponNum);
-	virtual void  Shot(int weaponNum);
-	virtual bool  BlockShot(int weaponNum, const CUnit* targetUnit, bool userTarget);
-	virtual float TargetWeight(int weaponNum, const CUnit* targetUnit);
+	int   QueryWeapon(int weaponNum) override { return -1; }
+	void  AimWeapon(int weaponNum, float heading, float pitch) override {}
+	void  AimShieldWeapon(CPlasmaRepulser* weapon) override {}
+	int   AimFromWeapon(int weaponNum) override { return -1; }
+	void  Shot(int weaponNum) override {}
+	bool  BlockShot(int weaponNum, const CUnit* targetUnit, bool userTarget) override { return false; }
+	float TargetWeight(int weaponNum, const CUnit* targetUnit) override { return 1.0f; }
+	void AnimFinished(AnimType type, int piece, int axis) override { };
 };
 
 #endif

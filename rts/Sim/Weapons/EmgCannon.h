@@ -7,14 +7,12 @@
 
 class CEmgCannon: public CWeapon
 {
-	CR_DECLARE(CEmgCannon);
+	CR_DECLARE_DERIVED(CEmgCannon)
 public:
 	CEmgCannon(CUnit* owner, const WeaponDef* def);
 
-	void Update();
-
 private:
-	void FireImpl(bool scriptCall);
+	void FireImpl(const bool scriptCall) override final;
 };
 
 #endif // _EMG_CANNON_H

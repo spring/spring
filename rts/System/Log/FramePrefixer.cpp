@@ -14,24 +14,25 @@
 extern "C" {
 #endif
 
-static int* frameNum = NULL;
+// GlobalSynced makes sure this can not be dangling
+static int* frameNumRef = NULL;
 
 void log_framePrefixer_setFrameNumReference(int* frameNumReference)
 {
-	frameNum = frameNumReference;
+	frameNumRef = frameNumReference;
 }
 
 size_t log_framePrefixer_createPrefix(char* result, size_t resultSize)
 {
-	if (frameNum == NULL) {
+	if (frameNumRef == NULL) {
 		if (resultSize > 0) {
 			result[0] = '\0';
 			return 1;
 		}
 		return 0;
-	} else {
-		return SNPRINTF(result, resultSize, "[f=%07d] ", *frameNum);
 	}
+
+	return (SNPRINTF(result, resultSize, "[f=%07d] ", *frameNumRef));
 }
 
 #ifdef __cplusplus

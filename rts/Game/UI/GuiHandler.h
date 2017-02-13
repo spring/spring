@@ -4,19 +4,20 @@
 #define GUI_HANDLER_H
 
 #include <vector>
-#include <map>
-#include <set>
+
 #include "KeySet.h"
 #include "InputReceiver.h"
 #include "MouseHandler.h"
 #include "Game/Camera.h"
 #include "Sim/Units/CommandAI/Command.h"
 
+#define DEFAULT_GUI_CONFIG "ctrlpanel.txt"
+
 class CUnit;
 struct UnitDef;
 struct BuildInfo;
 class Action;
-struct CommandDescription;
+struct SCommandDescription;
 
 /**
  * The C and part of the V in MVC (Model-View-Controller).
@@ -24,7 +25,6 @@ struct CommandDescription;
 class CGuiHandler : public CInputReceiver {
 public:
 	CGuiHandler();
-	virtual ~CGuiHandler();
 
 	void Update();
 
@@ -41,7 +41,7 @@ public:
 		// We can not use default params for this,
 		// because they get initialized at compile-time,
 		// where camera and mouse are still undefined.
-		MouseRelease(x, y, button, ::camera->GetPos(), ::mouse->dir);
+		MouseRelease(x, y, button, camera->GetPos(), mouse->dir);
 	}
 	void MouseRelease(int x, int y, int button, const float3& cameraPos, const float3& mouseDir);
 	bool IsAbove(int x, int y);
@@ -54,12 +54,17 @@ public:
 		// We can not use default params for this,
 		// because they get initialized at compile-time,
 		// where camera and mouse are still undefined.
-		return GetCommand(mouseX, mouseY, buttonHint, preview, ::camera->GetPos(), ::mouse->dir);
+		return GetCommand(mouseX, mouseY, buttonHint, preview, camera->GetPos(), mouse->dir);
 	}
 	Command GetCommand(int mouseX, int mouseY, int buttonHint, bool preview, const float3& cameraPos, const float3& mouseDir);
 	/// startInfo.def has to be endInfo.def
 	std::vector<BuildInfo> GetBuildPos(const BuildInfo& startInfo, const BuildInfo& endInfo, const float3& cameraPos, const float3& mouseDir);
 
+	bool EnableLuaUI(bool enableCommand);
+	bool DisableLuaUI(bool layoutIcons = true);
+
+	bool LoadConfig(const std::string& cfg);
+	bool LoadDefaultConfig() { return (LoadConfig(DEFAULT_GUI_CONFIG)); }
 	bool ReloadConfigFromFile(const std::string& fileName);
 	bool ReloadConfigFromString(const std::string& cfg);
 
@@ -85,7 +90,7 @@ public:
 		// We can not use default params for this,
 		// because they get initialized at compile-time,
 		// where camera and mouse are still undefined.
-		return GetDefaultCommand(x, y, ::camera->GetPos(), ::mouse->dir);
+		return GetDefaultCommand(x, y, camera->GetPos(), ::mouse->dir);
 	}
 	int  GetDefaultCommand(int x, int y, const float3& cameraPos, const float3& mouseDir) const;
 
@@ -100,10 +105,9 @@ public:
 	void SetBuildSpacing(int spacing);
 
 	void LayoutIcons(bool useSelectionPage);
-	bool LoadConfig(const std::string& cfg);
 
 public:
-	std::vector<CommandDescription> commands;
+	std::vector<SCommandDescription> commands;
 	int inCommand;
 	int buildFacing;
 	int buildSpacing;
@@ -112,18 +116,18 @@ private:
 	void GiveCommand(Command& cmd, bool fromUser = true);
 	void GiveCommandsNow();
 	bool LayoutCustomIcons(bool useSelectionPage);
-	void ResizeIconArray(unsigned int size);
-	void AppendPrevAndNext(std::vector<CommandDescription>& cmds);
-	void ConvertCommands(std::vector<CommandDescription>& cmds);
+	void ResizeIconArray(size_t size);
+	void AppendPrevAndNext(std::vector<SCommandDescription>& cmds);
+	void ConvertCommands(std::vector<SCommandDescription>& cmds);
 
 	int  FindInCommandPage();
-	void RevertToCmdDesc(const CommandDescription& cmdDesc, bool defaultCommand, bool samePage);
+	void RevertToCmdDesc(const SCommandDescription& cmdDesc, bool defaultCommand, bool samePage);
 
 	unsigned char CreateOptions(bool rightMouseButton);
 	unsigned char CreateOptions(int button);
 	void FinishCommand(int button);
 	void SetShowingMetal(bool show);
-	float GetNumberInput(const CommandDescription& cmdDesc) const;
+	float GetNumberInput(const SCommandDescription& cmdDesc) const;
 
 	void ProcessFrontPositions(float3& pos0, const float3& pos1);
 
@@ -158,7 +162,7 @@ private:
 
 	int  IconAtPos(int x, int y);
 	void SetCursorIcon() const;
-	bool TryTarget(const CommandDescription& cmdDesc) const;
+	bool TryTarget(const SCommandDescription& cmdDesc) const;
 
 	void LoadDefaults();
 	void SanitizeConfig();
@@ -233,11 +237,9 @@ private:
 		Box visual;
 		Box selection;
 	};
-	IconInfo* icons;
-	unsigned int iconsSize;
+	std::vector<IconInfo> icons;
+	// number of slots taken up in <icons>
 	int iconsCount;
-
-	std::map<std::string, unsigned int> textureMap; // fileName, glTextureID
 
 	int failedSound;
 

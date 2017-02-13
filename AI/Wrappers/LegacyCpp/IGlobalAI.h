@@ -7,7 +7,7 @@
 #include <cstring>
 
 #include "aibase.h"
-#include "Command.h"
+#include "Sim/Units/CommandAI/Command.h"
 #include "System/float3.h"
 
 #define GLOBAL_AI_INTERFACE_VERSION (19 + AI_INTERFACE_GENERATED_VERSION)

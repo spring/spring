@@ -7,26 +7,6 @@
 #include "System/EventHandler.h"
 #include "System/Log/ILog.h"
 
-CR_BIND(SolidObjectDecalDef, );
-CR_REG_METADATA(SolidObjectDecalDef,
-(
-	CR_MEMBER(groundDecalTypeName),
-	CR_MEMBER(trackDecalTypeName),
-
- 	CR_MEMBER(useGroundDecal),
-	CR_MEMBER(groundDecalType),
-	CR_MEMBER(groundDecalSizeX),
-	CR_MEMBER(groundDecalSizeY),
-	CR_MEMBER(groundDecalDecaySpeed),
-
-	CR_MEMBER(leaveTrackDecals),
-	CR_MEMBER(trackDecalType),
-	CR_MEMBER(trackDecalWidth),
-	CR_MEMBER(trackDecalOffset),
-	CR_MEMBER(trackDecalStrength),
-	CR_MEMBER(trackDecalStretch)
-));
-
 SolidObjectDecalDef::SolidObjectDecalDef()
 	: useGroundDecal(false)
 	, groundDecalType(-1)
@@ -60,36 +40,6 @@ void SolidObjectDecalDef::Parse(const LuaTable& table) {
 	trackDecalStretch  = table.GetFloat("trackStretch",  1.0f);
 }
 
-CR_BIND(SolidObjectDef, );
-CR_REG_METADATA(SolidObjectDef,
-(
-	CR_MEMBER(id),
-
-	CR_MEMBER(xsize),
-	CR_MEMBER(zsize),
-
-	CR_MEMBER(metal),
-	CR_MEMBER(energy),
-	CR_MEMBER(health),
-	CR_MEMBER(mass),
-	CR_MEMBER(crushResistance),
-
-	CR_MEMBER(collidable),
-	CR_MEMBER(selectable),
-	CR_MEMBER(upright),
-	CR_MEMBER(reclaimable),
-
-	CR_IGNORED(model),
-	CR_MEMBER(collisionVolume),
-
-	CR_MEMBER(decalDef),
-
-	CR_MEMBER(name),
-	CR_MEMBER(modelName),
-
-	CR_MEMBER(customParams)
-));
-
 SolidObjectDef::SolidObjectDef()
 	: id(-1)
 
@@ -107,27 +57,26 @@ SolidObjectDef::SolidObjectDef()
 	, upright(false)
 	, reclaimable(true)
 
-	, model(NULL)
-	, collisionVolume(NULL)
+	, model(nullptr)
 {
 }
 
-SolidObjectDef::~SolidObjectDef() {
-	delete collisionVolume;
-	collisionVolume = NULL;
+void SolidObjectDef::PreloadModel() const
+{
+	if (model == nullptr && !modelName.empty()) {
+		modelLoader.PreloadModel(modelName);
+	}
 }
 
 S3DModel* SolidObjectDef::LoadModel() const
 {
-	if (model == NULL) {
+	if (model == nullptr) {
 		if (!modelName.empty()) {
-			model = modelParser->Load3DModel(modelName);
+			model = modelLoader.LoadModel(modelName);
 		} else {
 			// not useful, too much spam
 			// LOG_L(L_WARNING, "[SolidObjectDef::%s] object \"%s\" has no model defined", __FUNCTION__, name.c_str());
 		}
-	} else {
-		eventHandler.LoadedModelRequested();
 	}
 
 	return model;
@@ -138,19 +87,59 @@ float SolidObjectDef::GetModelRadius() const
 	return (LoadModel()->radius);
 }
 
-void SolidObjectDef::ParseCollisionVolume(const LuaTable& table)
+
+void SolidObjectDef::ParseCollisionVolume(const LuaTable& odTable)
 {
-	collisionVolume = new CollisionVolume(
-		table.GetString("collisionVolumeType", ""),
-		table.GetFloat3("collisionVolumeScales", ZeroVector),
-		table.GetFloat3("collisionVolumeOffsets", ZeroVector)
-	);
+	const LuaTable& cvTable = odTable.SubTable("collisionVolume");
+	const std::string& cvType = odTable.GetString("collisionVolumeType", "");
+
+	if (cvTable.IsValid()) {
+		collisionVolume = CollisionVolume(
+			cvTable.GetInt("type", 's'),
+			cvTable.GetInt("axis", 'z'),
+			cvTable.GetFloat3("scales" , ZeroVector),
+			cvTable.GetFloat3("offsets", ZeroVector)
+		);
+	} else {
+		collisionVolume = CollisionVolume(
+			((cvType.empty())? 's': cvType.front()),
+			((cvType.empty())? 'z': cvType.back ()),
+			odTable.GetFloat3("collisionVolumeScales" , ZeroVector),
+			odTable.GetFloat3("collisionVolumeOffsets", ZeroVector)
+		);
+	}
 
 	// if this unit wants per-piece volumes, make
 	// its main collision volume deferent and let
 	// it ignore hits
-	collisionVolume->SetDefaultToPieceTree(table.GetBool("usePieceCollisionVolumes", false));
-	collisionVolume->SetDefaultToFootPrint(table.GetBool("useFootPrintCollisionVolume", false));
-	collisionVolume->SetIgnoreHits(collisionVolume->DefaultToPieceTree());
+	collisionVolume.SetDefaultToPieceTree(odTable.GetBool("usePieceCollisionVolumes", false));
+	collisionVolume.SetDefaultToFootPrint(odTable.GetBool("useFootPrintCollisionVolume", false));
+	collisionVolume.SetIgnoreHits(collisionVolume.DefaultToPieceTree());
+}
+
+void SolidObjectDef::ParseSelectionVolume(const LuaTable& odTable)
+{
+	const LuaTable& svTable = odTable.SubTable("selectionVolume");
+	const std::string& svType = odTable.GetString("selectionVolumeType", odTable.GetString("collisionVolumeType", ""));
+
+	if (svTable.IsValid()) {
+		selectionVolume = CollisionVolume(
+			svTable.GetInt("type", 's'),
+			svTable.GetInt("axis", 'z'),
+			svTable.GetFloat3("scales" , ZeroVector),
+			svTable.GetFloat3("offsets", ZeroVector)
+		);
+	} else {
+		selectionVolume = CollisionVolume(
+			((svType.empty())? 's': svType.front()),
+			((svType.empty())? 'z': svType.back ()),
+			odTable.GetFloat3("selectionVolumeScales" , odTable.GetFloat3("collisionVolumeScales" , ZeroVector)),
+			odTable.GetFloat3("selectionVolumeOffsets", odTable.GetFloat3("collisionVolumeOffsets", ZeroVector))
+		);
+	}
+
+	selectionVolume.SetDefaultToPieceTree(odTable.GetBool("usePieceSelectionVolumes", false));
+	selectionVolume.SetDefaultToFootPrint(odTable.GetBool("useFootPrintSelectionVolume", false));
+	selectionVolume.SetIgnoreHits(selectionVolume.DefaultToPieceTree());
 }
 

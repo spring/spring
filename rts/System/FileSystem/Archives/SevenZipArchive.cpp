@@ -3,7 +3,6 @@
 #include "SevenZipArchive.h"
 
 #include <algorithm>
-#include <boost/system/error_code.hpp>
 #include <stdexcept>
 #include <string.h> //memcpy
 
@@ -86,7 +85,7 @@ IArchive* CSevenZipArchiveFactory::DoCreateArchive(const std::string& filePath) 
 	return new CSevenZipArchive(filePath);
 }
 
-const char* CSevenZipArchive::GetErrorStr(int err)
+static inline const char* GetErrorStr(int err)
 {
 	switch(err) {
 	case SZ_OK:
@@ -108,6 +107,27 @@ const char* CSevenZipArchive::GetErrorStr(int err)
 }
 
 
+static inline std::string GetSystemErrorStr(WRes wres)
+{
+#ifdef USE_WINDOWS_FILE
+	LPSTR messageBuffer = nullptr;
+	size_t size = FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+								 NULL, wres, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&messageBuffer, 0, NULL);
+
+	std::string errorstr(messageBuffer, size);
+
+	//Free the buffer.
+	LocalFree(messageBuffer);
+#else
+	std::string errorstr(strerror(wres));
+#endif
+
+	return errorstr;
+}
+
+
+
+
 CSevenZipArchive::CSevenZipArchive(const std::string& name):
 	CBufferedArchive(name, false),
 	blockIndex(0xFFFFFFFF),
@@ -126,9 +146,8 @@ CSevenZipArchive::CSevenZipArchive(const std::string& name):
 
 	WRes wres = InFile_Open(&archiveStream.file, name.c_str());
 	if (wres) {
-		boost::system::error_code e(wres, boost::system::get_system_category());
-		LOG_L(L_ERROR, "Error opening %s: %s (%i)",
-				name.c_str(), e.message().c_str(), e.value());
+		LOG_L(L_ERROR, "Error opening \"%s\": %s (%i)",
+				name.c_str(), GetSystemErrorStr(wres).c_str(), (int) wres);
 		return;
 	}
 
@@ -145,7 +164,7 @@ CSevenZipArchive::CSevenZipArchive(const std::string& name):
 		isOpen = true;
 	} else {
 		isOpen = false;
-		LOG_L(L_ERROR, "Error opening %s: %s", name.c_str(), GetErrorStr(res));
+		LOG_L(L_ERROR, "Error opening \"%s\": %s", name.c_str(), GetErrorStr(res));
 		return;
 	}
 
@@ -222,10 +241,10 @@ unsigned int CSevenZipArchive::NumFiles() const
 	return fileData.size();
 }
 
-bool CSevenZipArchive::GetFileImpl(unsigned int fid, std::vector<boost::uint8_t>& buffer)
+bool CSevenZipArchive::GetFileImpl(unsigned int fid, std::vector<std::uint8_t>& buffer)
 {
 	assert(IsFileId(fid));
-	
+
 	// Get 7zip to decompress it
 	size_t offset;
 	size_t outSizeProcessed;

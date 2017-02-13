@@ -10,67 +10,95 @@ class CBitmap;
 class IHwCursor;
 
 class CMouseCursor {
-	public:
-		enum HotSpot {TopLeft, Center};
+public:
+	enum HotSpot {TopLeft, Center};
 
-	public:
-		static CMouseCursor* New(const std::string &name, HotSpot hs);
-		static CMouseCursor* GetNullCursor();
-		~CMouseCursor();
+public:
+	static CMouseCursor New(const std::string& name, HotSpot hs) { return (CMouseCursor(name, hs)); }
 
-		void Update();
-		void Draw(int x, int y, float scale) const;   // software cursor draw
-		void DrawQuad(int x, int y) const;            // draw command queue icon
-		void BindTexture() const;                     // software mouse cursor
-		void BindHwCursor() const;                    // hardware mouse cursor
+	CMouseCursor(); // null-cursor
+	CMouseCursor(const CMouseCursor& mc) = delete;
+	CMouseCursor(CMouseCursor&& mc) { *this = std::move(mc); }
+	~CMouseCursor();
 
-		int GetMaxSizeX() const { return xmaxsize; }
-		int GetMaxSizeY() const { return ymaxsize; }
+	CMouseCursor& operator = (const CMouseCursor& mc) = delete;
+	CMouseCursor& operator = (CMouseCursor&& mc) {
+		images = std::move(mc.images);
+		frames = std::move(mc.frames);
 
-	public:
-		bool animated;
-		bool hwValid; //if hardware cursor is valid
+		hwCursor = mc.hwCursor;
+		mc.hwCursor = nullptr;
 
-	protected:
-		struct ImageData {
-			unsigned int texture;
-			int xOrigSize;
-			int yOrigSize;
-			int xAlignedSize;
-			int yAlignedSize;
-		};
-		struct FrameData {
-			FrameData(const ImageData& _image, float time)
-				: image(_image), length(time), startTime(0.0f), endTime(0.0f) {}
-			ImageData image;
-			float length;
-			float startTime;
-			float endTime;
-		};
+		hotSpot = mc.hotSpot;
 
-	protected:
-		CMouseCursor(const std::string &name, HotSpot hs);
-		bool LoadCursorImage(const std::string& name, struct ImageData& image);
-		bool BuildFromSpecFile(const std::string& name);
-		bool BuildFromFileNames(const std::string& name, int lastFrame);
+		animTime = mc.animTime;
+		animPeriod = mc.animPeriod;
+		currentFrame = mc.currentFrame;
 
-	protected:
-		HotSpot hotSpot;
+		xmaxsize = mc.xmaxsize;
+		ymaxsize = mc.ymaxsize;
 
-		std::vector<ImageData> images;
-		std::vector<FrameData> frames;
+		xofs = mc.xofs;
+		yofs = mc.yofs;
 
-		IHwCursor* hwCursor; // hardware cursor
+		hwValid = mc.hwValid;
+		return *this;
+	}
 
-		float animTime;
-		float animPeriod;
-		int currentFrame;
+	void Update();
+	void Draw(int x, int y, float scale) const;   // software cursor draw
+	void DrawQuad(int x, int y) const;            // draw command queue icon
+	void BindTexture() const;                     // software mouse cursor
+	void BindHwCursor() const;                    // hardware mouse cursor
 
-		int xmaxsize;
-		int ymaxsize;
+	int GetMaxSizeX() const { return xmaxsize; }
+	int GetMaxSizeY() const { return ymaxsize; }
 
-		int xofs; // describes where the center of the cursor is,
-		int yofs; // based on xmaxsize, ymaxsize, and the hotspot
+	bool IsHWValid() const { return hwValid; }
+	bool IsValid() const { return (!frames.empty()); }
+
+protected:
+	struct ImageData {
+		unsigned int texture;
+		int xOrigSize;
+		int yOrigSize;
+		int xAlignedSize;
+		int yAlignedSize;
+	};
+	struct FrameData {
+		FrameData(const ImageData& _image, float time)
+			: image(_image), length(time), startTime(0.0f), endTime(0.0f) {}
+		ImageData image;
+		float length;
+		float startTime;
+		float endTime;
+	};
+
+protected:
+	CMouseCursor(const std::string& name, HotSpot hs);
+	bool LoadCursorImage(const std::string& name, struct ImageData& image);
+	bool BuildFromSpecFile(const std::string& name);
+	bool BuildFromFileNames(const std::string& name, int lastFrame);
+
+protected:
+	std::vector<ImageData> images;
+	std::vector<FrameData> frames;
+
+	IHwCursor* hwCursor; // hardware cursor
+
+	HotSpot hotSpot;
+
+	float animTime;
+	float animPeriod;
+	int currentFrame;
+
+	int xmaxsize;
+	int ymaxsize;
+
+	int xofs; // describes where the center of the cursor is,
+	int yofs; // based on xmaxsize, ymaxsize, and the hotspot
+
+	bool hwValid; // if hardware cursor is valid
 };
 
 

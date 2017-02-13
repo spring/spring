@@ -5,9 +5,9 @@
 
 #include <string>
 
-// All strings used by CGameServer, in a printf / boost::format compatible way
+// All strings used by CGameServer, in a printf / spring::format compatible way
 
-const std::string ServerStart = "Server started on port %d"; 
+const std::string ServerStart = "Server started on port %d";
 const std::string PlayingDemo = "Opening demofile %s";
 const std::string ConnectAutohost = "Connecting to autohost on port %d";
 const std::string ConnectAutohostFailed = "Failed connecting to autohost on IP %s, port %d";
@@ -20,7 +20,7 @@ const std::string NoSyncResponse = "Error: Player %s did not send sync checksum 
 const std::string SyncError = "Sync error for %s in frame %d (got %x, correct is %x)";
 const std::string NoSyncCheck = "Warning: Sync checking disabled!";
 
-const std::string ConnectionReject = "Connection attempt rejected: %s (Message ID: %d Network version: %d Datalength: %d)";
+const std::string ConnectionReject = "Connection attempt rejected: %s";
 const std::string WrongPlayer = "Got message %d from %d claiming to be from %d";
 const std::string PlayerJoined = "%s %s finished loading and is now ingame";
 const std::string PlayerLeft = "%s %s left the game: %s";

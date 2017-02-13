@@ -4,15 +4,14 @@ set -e
 
 
 DEST=${TMP_BASE}/inst
-#FIXME: remove hardcoded /usr/local
-INSTALLDIR=${DEST}/usr/local
+INSTALLDIR=${DEST}
+PLATFORM=$OUTPUTDIR
 
 echo "Installing into $DEST"
 
 #Ultra settings, max number of threads taken from commandline.
 SEVENZIP="nice -19 ionice -c3 7z a -t7z -m0=lzma -mx=9 -mfb=64 -md=32m -ms=on -mmt=${2:-on}"
 SEVENZIP_NONSOLID="nice -19 ionice -c3 7z a -t7z -m0=lzma -mx=9 -mfb=64 -md=32m -ms=off -mmt=${2:-on}"
-ZIP="zip -r9"
 
 if [ -z $MINGWLIBS_PATH ]; then
 	echo 'MINGWLIBS_PATH is not set'
@@ -60,26 +59,21 @@ wait
 mkdir -p ${TMP_PATH}
 
 #absolute path to the minimal portable (engine, unitsync + ais)
-MIN_PORTABLE_ARCHIVE=${TMP_PATH}/spring_${VERSION}_minimal-portable.7z
-MIN_PORTABLE_PLUS_DEDICATED_ARCHIVE=${TMP_PATH}/spring_${VERSION}_minimal-portable+dedicated.zip
+MIN_PORTABLE_ARCHIVE=${TMP_PATH}/spring_${VERSION}_${PLATFORM}-minimal-portable.7z
+INSTALLER_FILENAME=${TMP_PATH}/spring_${VERSION}_${PLATFORM}.exe
+DEBUG_ARCHIVE=${TMP_PATH}/${VERSION}_${PLATFORM}_spring_dbg.7z
+UNITTEST_ARCHIVE=${TMP_PATH}/${VERSION}_${PLATFORM}_UnitTests.7z
+MIN_PORTABLE_ZIP=${TMP_PATH}/spring_${VERSION}_${PLATFORM}_minimal-portable.zip
 
-#create portable spring excluding shard (ask AF why its excluded)
+#create portable spring
 touch ${INSTALLDIR}/springsettings.cfg
-${SEVENZIP} ${MIN_PORTABLE_ARCHIVE} ${INSTALLDIR}/* -x!spring-dedicated.exe -x!spring-headless.exe -xr!*.dbg &
-#for ZKL
-(cd ${INSTALLDIR} && ${ZIP} ${MIN_PORTABLE_PLUS_DEDICATED_ARCHIVE} * -x spring-headless.exe \*.dbg) &
-
-# compress files excluded from portable archive
-for file in spring-dedicated.exe spring-headless.exe; do
-	name=${file%.*}
-	${SEVENZIP} ${TMP_PATH}/${VERSION}_${name}.7z ${file} &
-done
+${SEVENZIP} ${MIN_PORTABLE_ARCHIVE} ${INSTALLDIR}/* -xr!*.dbg &
 
 # compress UnitTests
-${SEVENZIP} ${TMP_PATH}/${VERSION}_UnitTests.7z "${BUILDDIR}"/test/*.exe &
+${SEVENZIP} ${UNITTEST_ARCHIVE} "${BUILDDIR}"/test/*.exe &
 
 # create archive for translate_stacktrace.py
-${SEVENZIP_NONSOLID} ${TMP_PATH}/${VERSION}_spring_dbg.7z ${DEBUGFILES} &
+${SEVENZIP_NONSOLID} ${DEBUG_ARCHIVE} ${DEBUGFILES} &
 
 # wait for 7zip
 wait
@@ -95,17 +89,10 @@ ln -sv ${MIN_PORTABLE_ARCHIVE} ${SOURCEDIR}/installer/downloads/spring_testing_m
 ./installer/make_installer.sh
 
 # move installer to rsync-directory
-mv ./installer/spring*.exe ${TMP_PATH}
+mv ./installer/spring*.exe ${INSTALLER_FILENAME}
 
-./installer/make_portable_archive.sh ${TMP_PATH}/spring*.exe ${TMP_PATH}
-
-# create relative symbolic links to current files for rsyncing
-cd ${TMP_PATH}/../..
-ln -sfv ${REV}/$OUTPUTDIR/spring_${REV}.exe spring_testing.exe
-ln -sfv ${REV}/$OUTPUTDIR/spring_${REV}_portable.7z spring_testing-portable.7z
-ln -sfv ${REV}/$OUTPUTDIR/spring_${VERSION}_minimal-portable.7z spring_testing_minimal-portable.7z
-ln -sfv ${REV}/$OUTPUTDIR/spring_${VERSION}_minimal-portable+dedicated.zip spring_testing_minimal-portable+dedicated.zip
+./installer/make_portable_archive.sh ${INSTALLER_FILENAME} ${TMP_PATH}
 
 # create a file which contains the latest version of a branch
-echo ${VERSION} > LATEST
+echo ${VERSION} > ${TMP_BASE}/${CONFIG}/${BRANCH}/LATEST_${PLATFORM}
 

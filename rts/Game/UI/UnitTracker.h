@@ -3,8 +3,8 @@
 #ifndef UNIT_TRACKER_H
 #define UNIT_TRACKER_H
 
-#include <set>
 #include "System/float3.h"
+#include "System/UnorderedSet.hpp"
 
 class CUnit;
 
@@ -41,13 +41,13 @@ class CUnitTracker
 		
 	protected:
 		bool enabled;
-		bool doRoll;
 		bool firstUpdate;
 
 		int trackMode;
 		int trackUnit;
-		std::set<int> trackGroup;
-		
+
+		spring::unordered_set<int> trackGroup;
+
 		int timeOut;
 		int lastFollowUnit;
 		float lastUpdateTime;
@@ -55,7 +55,7 @@ class CUnitTracker
 		float3 trackPos;
 		float3 trackDir;
 
-		float3 oldUp[32];
+		float3 smoothedRight;
 		float3 oldCamDir;
 		float3 oldCamPos;
 		

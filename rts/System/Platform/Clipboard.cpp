@@ -13,4 +13,4 @@ std::string CClipboard::GetContents() const
 	std::string s = text;
 	SDL_free(text);
 	return s;
-};
+}

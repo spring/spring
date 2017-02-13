@@ -5,32 +5,25 @@
 #include "GeometricObjects.h"
 #include "Map/ReadMap.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "Sim/Projectiles/Unsynced/GeoSquareProjectile.h"
+#include "Rendering/Env/Particles/Classes/GeoSquareProjectile.h"
 
-CR_BIND(CGeometricObjects, );
-CR_BIND(CGeometricObjects::GeoGroup, );
+CR_BIND(CGeometricObjects, )
+CR_BIND(CGeometricObjects::GeoGroup, )
 
 CR_REG_METADATA(CGeometricObjects, (
-		CR_MEMBER(geoGroups),
-		CR_MEMBER(toBeDeleted),
-		CR_MEMBER(firstFreeGroup),
-		CR_RESERVED(16)
-		));
+	CR_MEMBER(geoGroups),
+	CR_MEMBER(timedGroups),
+	CR_MEMBER(firstFreeGroup)
+))
 
-CR_REG_METADATA_SUB(CGeometricObjects, GeoGroup, (CR_MEMBER(squares)));
+CR_REG_METADATA_SUB(CGeometricObjects, GeoGroup, (CR_MEMBER(squares)))
 
 
 CGeometricObjects* geometricObjects;
 
-CGeometricObjects::CGeometricObjects()
-	: firstFreeGroup(1)
-{
-}
-
-
 CGeometricObjects::~CGeometricObjects()
 {
-	toBeDeleted.clear();
+	timedGroups.clear();
 	while (!geoGroups.empty()) {
 		DeleteGroup(geoGroups.begin()->first);
 	}
@@ -38,13 +31,13 @@ CGeometricObjects::~CGeometricObjects()
 
 int CGeometricObjects::AddSpline(float3 b1, float3 b2, float3 b3, float3 b4, float width, int arrow, int lifeTime, int group)
 {
-	if (group == 0) {
+	if (group == 0)
 		group = firstFreeGroup++;
-	}
 
 	float3 old1, old2;
 	old1 = CalcSpline(0.00f, b1, b2, b3, b4);
 	old2 = CalcSpline(0.05f, b1, b2, b3, b4);
+
 	for (int a = 0; a < 20; ++a) {
 		const float3 np = CalcSpline(a*0.05f + 0.1f, b1, b2, b3, b4);
 		const float3 dir1 = (old2 - old1).ANormalize();
@@ -63,9 +56,9 @@ int CGeometricObjects::AddSpline(float3 b1, float3 b2, float3 b3, float3 b4, flo
 		old1 = old2;
 		old2 = np;
 	}
-	if (lifeTime > 0) {
-		toBeDeleted.insert(std::pair<int, int>(gs->frameNum + lifeTime, group));
-	}
+
+	if (lifeTime > 0)
+		timedGroups[gs->frameNum + lifeTime].push_back(group);
 
 	return group;
 }
@@ -75,9 +68,7 @@ void CGeometricObjects::DeleteGroup(int group)
 {
 	GeoGroup* gg = &geoGroups[group];
 
-	std::vector<CGeoSquareProjectile*>::iterator gi;
-
-	for (gi = gg->squares.begin(); gi != gg->squares.end(); ++gi) {
+	for (auto gi = gg->squares.begin(); gi != gg->squares.end(); ++gi) {
 		(*gi)->deleteMe = true;
 	}
 
@@ -89,9 +80,7 @@ void CGeometricObjects::SetColor(int group, float r, float g, float b, float a)
 {
 	GeoGroup* gg = &geoGroups[group];
 
-	std::vector<CGeoSquareProjectile*>::iterator gi;
-
-	for (gi = gg->squares.begin(); gi != gg->squares.end(); ++gi) {
+	for (auto gi = gg->squares.begin(); gi != gg->squares.end(); ++gi) {
 		(*gi)->SetColor(r, g, b, a);
 	}
 }
@@ -108,9 +97,8 @@ float3 CGeometricObjects::CalcSpline(float i, const float3& p1, const float3& p2
 
 int CGeometricObjects::AddLine(float3 start, float3 end, float width, int arrow, int lifetime, int group)
 {
-	if (group == 0) {
+	if (group == 0)
 		group = firstFreeGroup++;
-	}
 
 	float3 dir = (end - start).SafeANormalize();
 	if (arrow) {
@@ -125,9 +113,8 @@ int CGeometricObjects::AddLine(float3 start, float3 end, float width, int arrow,
 		geoGroups[group].squares.push_back(gsp);
 	}
 
-	if (lifetime > 0) {
-		toBeDeleted.insert(std::pair<int, int>(gs->frameNum + lifetime, group));
-	}
+	if (lifetime > 0)
+		timedGroups[gs->frameNum + lifetime].push_back(group);
 
 	return group;
 }
@@ -135,18 +122,24 @@ int CGeometricObjects::AddLine(float3 start, float3 end, float width, int arrow,
 
 void CGeometricObjects::Update()
 {
-	while(!toBeDeleted.empty() && (toBeDeleted.begin()->first <= gs->frameNum)) {
-		DeleteGroup(toBeDeleted.begin()->second);
-		toBeDeleted.erase(toBeDeleted.begin());
+	const auto iter = timedGroups.find(gs->frameNum);
+
+	if (iter == timedGroups.end())
+		return;
+
+	for (const int groupID: iter->second) {
+		DeleteGroup(groupID);
 	}
+
+	timedGroups.erase(iter->first);
 }
 
 
-void CGeometricObjects::MarkSquare(int mapSquare) {
-
+void CGeometricObjects::MarkSquare(int mapSquare)
+{
 	float3 startPos;
-	startPos.x = (int) (mapSquare * SQUARE_SIZE) % gs->mapx;
-	startPos.z = (int) (mapSquare * SQUARE_SIZE) / gs->mapx;
+	startPos.x = (int) (mapSquare * SQUARE_SIZE) % mapDims.mapx;
+	startPos.z = (int) (mapSquare * SQUARE_SIZE) / mapDims.mapx;
 	startPos.y = readMap->GetCenterHeightMapSynced()[mapSquare];
 
 	float3 endPos = startPos;

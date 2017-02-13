@@ -3,11 +3,10 @@
 #ifndef CONFIG_VALUE_H
 #define CONFIG_VALUE_H
 
-#include <boost/utility.hpp>
+#include "System/Misc/NonCopyable.h"
 #include <map>
-#include <sstream>
 #include <string>
-#include "System/Util.h"
+#include "System/StringConvertibleOptionalValue.h"
 
 
 
@@ -17,7 +16,7 @@
  * That is, meta data of a type that does not depend on the declared type
  * of the config variable.
  */
-class ConfigVariableMetaData : public boost::noncopyable
+class ConfigVariableMetaData : public spring::noncopyable
 {
 public:
 	typedef TypedStringConvertibleOptionalValue<std::string> OptionalString;
@@ -36,6 +35,12 @@ public:
 
 	/// @brief Get the safemode value of this config variable.
 	virtual const StringConvertibleOptionalValue& GetSafemodeValue() const = 0;
+
+	/// @brief Get the headless value of this config variable.
+	virtual const StringConvertibleOptionalValue& GetHeadlessValue() const = 0;
+
+	/// @brief Get the dedicated value of this config variable.
+	virtual const StringConvertibleOptionalValue& GetDedicatedValue() const = 0;
 
 	/// @brief Clamp a value using the declared minimum and maximum value.
 	virtual std::string Clamp(const std::string& value) const = 0;
@@ -75,6 +80,8 @@ public:
 	const StringConvertibleOptionalValue& GetMinimumValue() const { return minimumValue; }
 	const StringConvertibleOptionalValue& GetMaximumValue() const { return maximumValue; }
 	const StringConvertibleOptionalValue& GetSafemodeValue() const { return safemodeValue; }
+	const StringConvertibleOptionalValue& GetHeadlessValue() const { return headlessValue; }
+	const StringConvertibleOptionalValue& GetDedicatedValue() const { return dedicatedValue; }
 
 	/**
 	 * @brief Clamp a value using the declared minimum and maximum value.
@@ -107,6 +114,8 @@ protected:
 	TypedStringConvertibleOptionalValue<T> minimumValue;
 	TypedStringConvertibleOptionalValue<T> maximumValue;
 	TypedStringConvertibleOptionalValue<T> safemodeValue;
+	TypedStringConvertibleOptionalValue<T> headlessValue;
+	TypedStringConvertibleOptionalValue<T> dedicatedValue;
 
 	template<typename F> friend class ConfigVariableBuilder;
 };
@@ -124,7 +133,7 @@ protected:
  *   .readOnly(true);
  */
 template<typename T>
-class ConfigVariableBuilder : public boost::noncopyable
+class ConfigVariableBuilder : public spring::noncopyable
 {
 public:
 	ConfigVariableBuilder(ConfigVariableTypedMetaData<T>& data) : data(&data) {}
@@ -144,6 +153,8 @@ public:
 	MAKE_CHAIN_METHOD(minimumValue, T);
 	MAKE_CHAIN_METHOD(maximumValue, T);
 	MAKE_CHAIN_METHOD(safemodeValue, T);
+	MAKE_CHAIN_METHOD(headlessValue, T);
+	MAKE_CHAIN_METHOD(dedicatedValue, T);
 
 #undef MAKE_CHAIN_METHOD
 

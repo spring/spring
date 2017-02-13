@@ -4,7 +4,10 @@
 #include "Rendering/GlobalRendering.h"
 #include <cstring> //memset
 
-void GL::GeometryBuffer::Init() {
+void GL::GeometryBuffer::Init(bool ctor) {
+	// if dead, this must be a non-ctor reload
+	assert(!dead || !ctor);
+
 	memset(&bufferTextureIDs[0], 0, sizeof(bufferTextureIDs));
 	memset(&bufferAttachments[0], 0, sizeof(bufferAttachments));
 
@@ -14,23 +17,46 @@ void GL::GeometryBuffer::Init() {
 	//   be (0, 0) so prevSize != currSize (when !init)
 	prevBufferSize = GetWantedSize(false);
 	currBufferSize = GetWantedSize(true);
+
+	dead = false;
+	bound = false;
 }
 
-void GL::GeometryBuffer::Kill() {
-	if (buffer.IsValid()) {
-		DetachTextures(false);
-	}
-}
-
-void GL::GeometryBuffer::DetachTextures(const bool init) {
-	if (init) {
-		// nothing to detach yet during init
+void GL::GeometryBuffer::Kill(bool dtor) {
+	if (dead) {
+		// if already dead, this must be final cleanup
+		assert(dtor);
 		return;
 	}
 
+	if (buffer.IsValid())
+		DetachTextures(false);
+
+	dead = true;
+}
+
+void GL::GeometryBuffer::Clear() const {
+	assert(bound);
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+}
+
+void GL::GeometryBuffer::SetDepthRange(float nearDepth, float farDepth) const {
+	#ifdef GL_ARB_clip_control
+	glDepthRangef(nearDepth, farDepth); // the bad way
+	glClearDepth(farDepth);
+	glDepthFunc((nearDepth <= farDepth)? GL_LEQUAL: GL_GREATER);
+	#endif
+}
+
+void GL::GeometryBuffer::DetachTextures(const bool init) {
+	// nothing to detach yet during init
+	if (init)
+		return;
+
 	buffer.Bind();
 
-	// ATI drivers crash when detaching non-attached textures (?)
+	// detach only actually attached textures, ATI drivers might crash
 	for (unsigned int i = 0; i < (ATTACHMENT_COUNT - 1); ++i) {
 		buffer.Detach(GL_COLOR_ATTACHMENT0_EXT + i);
 	}
@@ -45,7 +71,7 @@ void GL::GeometryBuffer::DetachTextures(const bool init) {
 	memset(&bufferAttachments[0], 0, sizeof(bufferAttachments));
 }
 
-void GL::GeometryBuffer::DrawDebug(unsigned int texID) {
+void GL::GeometryBuffer::DrawDebug(const unsigned int texID, const float2 texMins, const float2 texMaxs) const {
 	glPushMatrix();
 	glLoadIdentity();
 	glMatrixMode(GL_PROJECTION);
@@ -56,11 +82,10 @@ void GL::GeometryBuffer::DrawDebug(unsigned int texID) {
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, texID);
 	glBegin(GL_QUADS);
-	glTexCoord2f(0.0f, 0.0f); glNormal3f(0.0f, 1.0f, 0.0f); glVertex2f(0.0f, 0.0f);
-	glTexCoord2f(1.0f, 0.0f); glNormal3f(0.0f, 1.0f, 0.0f); glVertex2f(1.0f, 0.0f);
-	glTexCoord2f(1.0f, 1.0f); glNormal3f(0.0f, 1.0f, 0.0f); glVertex2f(1.0f, 1.0f);
-	glTexCoord2f(0.0f, 1.0f); glNormal3f(0.0f, 1.0f, 0.0f); glVertex2f(0.0f, 1.0f);
-
+	glTexCoord2f(texMins.x, texMins.y); glNormal3fv(&UpVector.x); glVertex2f(texMins.x, texMins.y);
+	glTexCoord2f(texMaxs.x, texMins.y); glNormal3fv(&UpVector.x); glVertex2f(texMaxs.x, texMins.y);
+	glTexCoord2f(texMaxs.x, texMaxs.y); glNormal3fv(&UpVector.x); glVertex2f(texMaxs.x, texMaxs.y);
+	glTexCoord2f(texMins.x, texMaxs.y); glNormal3fv(&UpVector.x); glVertex2f(texMins.x, texMaxs.y);
 	glEnd();
 	glBindTexture(GL_TEXTURE_2D, 0);
 	glDisable(GL_TEXTURE_2D);
@@ -84,7 +109,7 @@ bool GL::GeometryBuffer::Create(const int2 size) {
 
 		if (n == ATTACHMENT_ZVALTEX) {
 			glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32, size.x, size.y, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, size.x, size.y, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 			bufferAttachments[n] = GL_DEPTH_ATTACHMENT_EXT;
 		} else {
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size.x, size.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
@@ -105,7 +130,7 @@ bool GL::GeometryBuffer::Create(const int2 size) {
 	// can still invalidate it
 	assert(buffer.IsValid());
 
-	const bool ret = buffer.CheckStatus(bufferName);
+	const bool ret = buffer.CheckStatus(name);
 
 	buffer.Unbind();
 	return ret;

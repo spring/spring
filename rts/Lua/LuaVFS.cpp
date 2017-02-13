@@ -3,7 +3,6 @@
 
 #include <cmath>
 #include <zlib.h>
-#include <boost/regex.hpp>
 
 #include "LuaVFS.h"
 
@@ -19,6 +18,7 @@
 #include "System/FileSystem/VFSHandler.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/Util.h"
+#include "../tools/pr-downloader/src/pr-downloader.h"
 
 using std::min;
 
@@ -32,6 +32,7 @@ bool LuaVFS::PushCommon(lua_State* L)
 	HSTR_PUSH_STRING(L, "MOD",       SPRING_VFS_MOD);
 	HSTR_PUSH_STRING(L, "MAP",       SPRING_VFS_MAP);
 	HSTR_PUSH_STRING(L, "BASE",      SPRING_VFS_BASE);
+	HSTR_PUSH_STRING(L, "MENU",      SPRING_VFS_MENU);
 	HSTR_PUSH_STRING(L, "ZIP",       SPRING_VFS_ZIP);
 	HSTR_PUSH_STRING(L, "RAW_FIRST", SPRING_VFS_RAW_FIRST);
 	HSTR_PUSH_STRING(L, "ZIP_FIRST", SPRING_VFS_ZIP_FIRST);
@@ -54,6 +55,7 @@ bool LuaVFS::PushCommon(lua_State* L)
 	HSTR_PUSH_CFUNC(L, "UnpackF32", UnpackF32);
 
 	HSTR_PUSH_CFUNC(L, "ZlibDecompress", ZlibDecompress);
+	HSTR_PUSH_CFUNC(L, "CalculateHash",        CalculateHash);
 
 	return true;
 }
@@ -105,7 +107,7 @@ const string LuaVFS::GetModes(lua_State* L, int index, bool synced)
 
 	string modes = luaL_optstring(L, index, defMode);
 	if (synced && !CLuaHandle::GetDevMode()) {
-		modes = CFileHandler::ForbidModes(modes, SPRING_VFS_RAW);
+		modes = CFileHandler::ForbidModes(modes, SPRING_VFS_RAW SPRING_VFS_MENU);
 	}
 
 	return modes;
@@ -134,10 +136,11 @@ static bool LoadFileWithModes(const string& filename, string& data,
 
 int LuaVFS::Include(lua_State* L, bool synced)
 {
-	const string filename = luaL_checkstring(L, 1);
+	const std::string& filename = luaL_checkstring(L, 1);
+
 	if (!LuaIO::IsSimplePath(filename)) {
 		// the path may point to a file or dir outside of any data-dir
-//FIXME		return 0;
+		//FIXME: return 0;
 	}
 
 	bool hasCustomEnv = false;
@@ -149,13 +152,10 @@ int LuaVFS::Include(lua_State* L, bool synced)
 		hasCustomEnv = true;
 	}
 
-	const string modes = GetModes(L, 3, synced);
-
-	string code;
-	if (!LoadFileWithModes(filename, code, modes)) {
+	std::string code;
+	if (!LoadFileWithModes(filename, code, GetModes(L, 3, synced))) {
 		char buf[1024];
-		SNPRINTF(buf, sizeof(buf),
-			 "Include() could not load '%s'", filename.c_str());
+		SNPRINTF(buf, sizeof(buf), "Include() could not load '%s'", filename.c_str());
 		lua_pushstring(L, buf);
  		lua_error(L);
 	}
@@ -163,8 +163,7 @@ int LuaVFS::Include(lua_State* L, bool synced)
 	int error = luaL_loadbuffer(L, code.c_str(), code.size(), filename.c_str());
 	if (error != 0) {
 		char buf[1024];
-		SNPRINTF(buf, sizeof(buf), "error = %i, %s, %s",
-		         error, filename.c_str(), lua_tostring(L, -1));
+		SNPRINTF(buf, sizeof(buf), "error = %i, %s, %s", error, filename.c_str(), lua_tostring(L, -1));
 		lua_pushstring(L, buf);
 		lua_error(L);
 	}
@@ -177,24 +176,19 @@ int LuaVFS::Include(lua_State* L, bool synced)
 	}
 
 	// set the include fenv to the current function's fenv
-	if (lua_setfenv(L, -2) == 0) {
+	if (lua_setfenv(L, -2) == 0)
 		luaL_error(L, "Include(): error with setfenv");
-	}
 
 	const int paramTop = lua_gettop(L) - 1;
 
-	error = lua_pcall(L, 0, LUA_MULTRET, 0);
-
-	if (error != 0) {
+	if ((error = lua_pcall(L, 0, LUA_MULTRET, 0)) != 0) {
 		char buf[1024];
-		SNPRINTF(buf, sizeof(buf), "error = %i, %s, %s",
-		         error, filename.c_str(), lua_tostring(L, -1));
+		SNPRINTF(buf, sizeof(buf), "error = %i, %s, %s", error, filename.c_str(), lua_tostring(L, -1));
 		lua_pushstring(L, buf);
 		lua_error(L);
 	}
 
 	// FIXME -- adjust stack?
-
 	return lua_gettop(L) - paramTop;
 }
 
@@ -507,8 +501,8 @@ int LuaVFS::ZlibCompress(lua_State* L)
 	const char* inData = luaL_checklstring(L, 1, &inLen);
 
 	long unsigned bufsize = compressBound(inLen);
-	std::vector<boost::uint8_t> compressed(bufsize, 0);
-	const int error = compress(&compressed[0], &bufsize, (const boost::uint8_t*)inData, inLen);
+	std::vector<std::uint8_t> compressed(bufsize, 0);
+	const int error = compress(&compressed[0], &bufsize, (const std::uint8_t*)inData, inLen);
 	if (error == Z_OK)
 	{
 		lua_pushlstring(L, (const char*)&compressed[0], bufsize);
@@ -528,8 +522,8 @@ int LuaVFS::ZlibDecompress(lua_State* L)
 
 	long unsigned bufsize = std::max(luaL_optint(L, 2, 65000), 0);
 
-	std::vector<boost::uint8_t> uncompressed(bufsize, 0);
-	const int error = uncompress(&uncompressed[0], &bufsize, (const boost::uint8_t*)inData, inLen);
+	std::vector<std::uint8_t> uncompressed(bufsize, 0);
+	const int error = uncompress(&uncompressed[0], &bufsize, (const std::uint8_t*)inData, inLen);
 	if (error == Z_OK)
 	{
 		lua_pushlstring(L, (const char*)&uncompressed[0], bufsize);
@@ -541,6 +535,18 @@ int LuaVFS::ZlibDecompress(lua_State* L)
 	}
 }
 
+int LuaVFS::CalculateHash(lua_State* L)
+{
+	const std::string sstr = luaL_checksstring(L, 1);
+	const unsigned int hashType = luaL_checkint(L, 2);
+	char* hash = CalcHash(sstr.c_str(), sstr.size(), hashType);
+	if (hash == NULL) {
+		return luaL_error(L, "Unsupported hash type");
+	}
+	lua_pushsstring(L, std::string(hash));
+	free(hash);
+	return 1;
+}
 
 /******************************************************************************/
 /******************************************************************************/
@@ -586,12 +592,12 @@ int PackType(lua_State* L)
 }
 
 
-int LuaVFS::PackU8(lua_State*  L) { return PackType<boost::uint8_t>(L);  }
-int LuaVFS::PackU16(lua_State* L) { return PackType<boost::uint16_t>(L); }
-int LuaVFS::PackU32(lua_State* L) { return PackType<boost::uint32_t>(L); }
-int LuaVFS::PackS8(lua_State*  L) { return PackType<boost::int8_t>(L);   }
-int LuaVFS::PackS16(lua_State* L) { return PackType<boost::int16_t>(L);  }
-int LuaVFS::PackS32(lua_State* L) { return PackType<boost::int32_t>(L);  }
+int LuaVFS::PackU8(lua_State*  L) { return PackType<std::uint8_t>(L);  }
+int LuaVFS::PackU16(lua_State* L) { return PackType<std::uint16_t>(L); }
+int LuaVFS::PackU32(lua_State* L) { return PackType<std::uint32_t>(L); }
+int LuaVFS::PackS8(lua_State*  L) { return PackType<std::int8_t>(L);   }
+int LuaVFS::PackS16(lua_State* L) { return PackType<std::int16_t>(L);  }
+int LuaVFS::PackS32(lua_State* L) { return PackType<std::int32_t>(L);  }
 int LuaVFS::PackF32(lua_State* L) { return PackType<float>(L);           }
 
 
@@ -646,12 +652,12 @@ int UnpackType(lua_State* L)
 }
 
 
-int LuaVFS::UnpackU8(lua_State*  L) { return UnpackType<boost::uint8_t>(L);  }
-int LuaVFS::UnpackU16(lua_State* L) { return UnpackType<boost::uint16_t>(L); }
-int LuaVFS::UnpackU32(lua_State* L) { return UnpackType<boost::uint32_t>(L); }
-int LuaVFS::UnpackS8(lua_State*  L) { return UnpackType<boost::int8_t>(L);   }
-int LuaVFS::UnpackS16(lua_State* L) { return UnpackType<boost::int16_t>(L);  }
-int LuaVFS::UnpackS32(lua_State* L) { return UnpackType<boost::int32_t>(L);  }
+int LuaVFS::UnpackU8(lua_State*  L) { return UnpackType<std::uint8_t>(L);  }
+int LuaVFS::UnpackU16(lua_State* L) { return UnpackType<std::uint16_t>(L); }
+int LuaVFS::UnpackU32(lua_State* L) { return UnpackType<std::uint32_t>(L); }
+int LuaVFS::UnpackS8(lua_State*  L) { return UnpackType<std::int8_t>(L);   }
+int LuaVFS::UnpackS16(lua_State* L) { return UnpackType<std::int16_t>(L);  }
+int LuaVFS::UnpackS32(lua_State* L) { return UnpackType<std::int32_t>(L);  }
 int LuaVFS::UnpackF32(lua_State* L) { return UnpackType<float>(L);           }
 
 

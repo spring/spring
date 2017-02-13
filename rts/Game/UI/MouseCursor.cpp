@@ -23,35 +23,28 @@ using std::string;
 // CMouseCursor Class
 //////////////////////////////////////////////////////////////////////
 
-CMouseCursor* CMouseCursor::New(const string &name, HotSpot hs)
-{
-	CMouseCursor* c = new CMouseCursor(name, hs);
-	if (c->frames.empty()) {
-		delete c;
-		return NULL;
-	}
-	return c;
-}
 
+CMouseCursor::CMouseCursor()
+ : hwCursor(nullptr)
 
-CMouseCursor* CMouseCursor::GetNullCursor()
-{
-	static CMouseCursor nullCursor("", Center);
-	return &nullCursor;
-}
-
-
-CMouseCursor::CMouseCursor(const string& name, HotSpot hs)
- : animated(false)
- , hwValid(false)
  , animTime(0.0f)
  , animPeriod(0.0f)
  , currentFrame(0)
+
  , xmaxsize(0)
  , ymaxsize(0)
+
  , xofs(0)
  , yofs(0)
+
+ , hwValid(false)
+{}
+
+CMouseCursor::CMouseCursor(const string& name, HotSpot hs)
 {
+	// default-initialize
+	*this = std::move(CMouseCursor());
+
 	hwCursor = GetNewHwCursor();
 	hwCursor->hotSpot = hs;
 	hotSpot = hs;
@@ -62,11 +55,9 @@ CMouseCursor::CMouseCursor(const string& name, HotSpot hs)
 	if (frames.empty())
 		return;
 
-	animated = !frames.empty();
-	hwValid  = hwCursor->IsValid();
+	hwValid = hwCursor->IsValid();
 
-	for (int f = 0; f < (int)frames.size(); f++) {
-		FrameData& frame = frames[f];
+	for (FrameData& frame: frames) {
 		frame.startTime = animPeriod;
 		animPeriod += frame.length;
 		frame.endTime = animPeriod;
@@ -86,46 +77,48 @@ CMouseCursor::CMouseCursor(const string& name, HotSpot hs)
 
 CMouseCursor::~CMouseCursor()
 {
-	delete hwCursor;
+	SafeDelete(hwCursor);
 
-	std::vector<ImageData>::iterator it;
-	for (it = images.begin(); it != images.end(); ++it)
+	for (auto it = images.begin(); it != images.end(); ++it)
 		glDeleteTextures(1, &it->texture);
 }
 
 
 bool CMouseCursor::BuildFromSpecFile(const string& name)
 {
+	assert(hwCursor != nullptr);
+
 	const string specFile = "anims/" + name + ".txt";
 	CFileHandler specFH(specFile);
-	if (!specFH.FileExists()) {
+	if (!specFH.FileExists())
 		return false;
-	}
 
 	CSimpleParser parser(specFH);
 	int lastFrame = 123456789;
 	std::map<std::string, int> imageIndexMap;
 
 	while (true) {
-		const string line = parser.GetCleanLine();
-		if (line.empty()) {
+		const string& line = parser.GetCleanLine();
+		if (line.empty())
 			break;
-		}
-		const std::vector<std::string> &words = parser.Tokenize(line, 2);
-		const std::string command = StringToLower(words[0]);
+
+		const std::vector<std::string>& words = parser.Tokenize(line, 2);
+		const std::string& command = StringToLower(words[0]);
 
 		if ((command == "frame") && (words.size() >= 2)) {
 			const std::string imageName = words[1];
 			float length = minFrameLength;
+
 			if (words.size() >= 3)
 				length = std::max(length, (float)atof(words[2].c_str()));
-			std::map<std::string, int>::iterator iit = imageIndexMap.find(imageName);
+
+			const auto iit = imageIndexMap.find(imageName);
+
 			if (iit != imageIndexMap.end()) {
 				FrameData frame(images[iit->second], length);
 				frames.push_back(frame);
-				hwCursor->PushFrame(iit->second,length);
-			}
-			else {
+				hwCursor->PushFrame(iit->second, length);
+			} else {
 				ImageData image;
 				if (LoadCursorImage(imageName, image)) {
 					hwCursor->SetDelay(length);
@@ -146,25 +139,21 @@ bool CMouseCursor::BuildFromSpecFile(const string& name)
 				hwCursor->hotSpot = Center;
 			}
 			else {
-				LOG_L(L_ERROR, "%s: unknown hotspot (%s)",
-						specFile.c_str(), words[1].c_str());
+				LOG_L(L_ERROR, "%s: unknown hotspot (%s)", specFile.c_str(), words[1].c_str());
 			}
 		}
 		else if ((command == "lastframe") && (!words.empty())) {
 			lastFrame = atoi(words[1].c_str());
 		}
 		else {
-			LOG_L(L_ERROR, "%s: unknown command (%s)",
-					specFile.c_str(), command.c_str());
+			LOG_L(L_ERROR, "%s: unknown command (%s)", specFile.c_str(), command.c_str());
 		}
 	}
 
-	if (frames.empty()) {
+	if (frames.empty())
 		return BuildFromFileNames(name, lastFrame);
-	}
 
 	hwCursor->Finish();
-
 	return true;
 }
 
@@ -175,23 +164,17 @@ bool CMouseCursor::BuildFromFileNames(const string& name, int lastFrame)
 	const char* ext = "";
 	const char* exts[] = { "png", "tga", "bmp" };
 	const int extCount = sizeof(exts) / sizeof(exts[0]);
+
 	for (int e = 0; e < extCount; e++) {
 		ext = exts[e];
-		std::ostringstream namebuf;
-		namebuf << "anims/" << name << "_0." << ext;
-		CFileHandler* f = new CFileHandler(namebuf.str());
-		if (f->FileExists()) {
-			delete f;
+
+		if (CFileHandler::FileExists("anims/" + name + "_0." + std::string(ext), SPRING_VFS_RAW_FIRST))
 			break;
-		}
-		delete f;
 	}
 
 	while (int(frames.size()) < lastFrame) {
-		std::ostringstream namebuf;
-		namebuf << "anims/" << name << "_" << frames.size() << "." << ext;
 		ImageData image;
-		if (!LoadCursorImage(namebuf.str(), image))
+		if (!LoadCursorImage("anims/" + name + "_" + IntToString(frames.size()) + "." + std::string(ext), image))
 			break;
 		images.push_back(image);
 		FrameData frame(image, defFrameLength);
@@ -199,7 +182,6 @@ bool CMouseCursor::BuildFromFileNames(const string& name, int lastFrame)
 	}
 
 	hwCursor->Finish();
-
 	return true;
 }
 
@@ -207,9 +189,8 @@ bool CMouseCursor::BuildFromFileNames(const string& name, int lastFrame)
 bool CMouseCursor::LoadCursorImage(const string& name, ImageData& image)
 {
 	CFileHandler f(name);
-	if (!f.FileExists()) {
+	if (!f.FileExists())
 		return false;
-	}
 
 	CBitmap b;
 	if (!b.Load(name)) {
@@ -218,17 +199,16 @@ bool CMouseCursor::LoadCursorImage(const string& name, ImageData& image)
 	}
 
 	// hardcoded bmp transparency mask
-	if (FileSystem::GetExtension(name) == "bmp") {
+	if (FileSystem::GetExtension(name) == "bmp")
 		b.SetTransparent(SColor(84, 84, 252));
-	}
 
 	if (hwCursor->NeedsYFlip()) {
 		//WINDOWS
 		b.ReverseYAxis();
-		hwCursor->PushImage(b.xsize,b.ysize,b.mem);
-	}else{
+		hwCursor->PushImage(b.xsize,b.ysize,&b.mem[0]);
+	} else {
 		//X11
-		hwCursor->PushImage(b.xsize,b.ysize,b.mem);
+		hwCursor->PushImage(b.xsize,b.ysize,&b.mem[0]);
 		b.ReverseYAxis();
 	}
 
@@ -241,13 +221,13 @@ bool CMouseCursor::LoadCursorImage(const string& name, ImageData& image)
 		bn.Alloc(nx, ny);
 		bn.CopySubImage(b, 0, ny - b.ysize);
 
-		image.texture = bn.CreateTexture(false);
+		image.texture = bn.CreateTexture();
 		image.xOrigSize = b.xsize;
 		image.yOrigSize = b.ysize;
 		image.xAlignedSize = bn.xsize;
 		image.yAlignedSize = bn.ysize;
 	} else {
-		image.texture = b.CreateTexture(false);
+		image.texture = b.CreateTexture();
 		image.xOrigSize = b.xsize;
 		image.yOrigSize = b.ysize;
 		image.xAlignedSize = b.xsize;
@@ -260,11 +240,11 @@ bool CMouseCursor::LoadCursorImage(const string& name, ImageData& image)
 
 void CMouseCursor::Draw(int x, int y, float scale) const
 {
-	if (frames.empty()) {
+	if (frames.empty())
 		return;
-	}
 
-	if (scale<0) scale=-scale;
+	if (scale < 0.0f)
+		scale = -scale;
 
 	const FrameData& frame = frames[currentFrame];
 	const int xs = int(float(frame.image.xAlignedSize) * scale);
@@ -284,14 +264,14 @@ void CMouseCursor::Draw(int x, int y, float scale) const
 
 	glViewport(xp, globalRendering->viewSizeY - yp, xs, ys);
 
-	static float vertices[] = {0.f, 0.f, 0.f,
-				   0.f, 1.f, 0.f,
-				   1.f, 1.f, 0.f,
-				   1.f, 0.f, 0.f};
-	static float texcoords[] = {0.f, 0.f,
-				    0.f, 1.f,
-				    1.f, 1.f,
-				    1.f, 0.f};
+	static const float vertices[] = {0.f, 0.f, 0.f,
+	                                 0.f, 1.f, 0.f,
+	                                 1.f, 1.f, 0.f,
+	                                 1.f, 0.f, 0.f};
+	static const float texcoords[] = {0.f, 0.f,
+	                                  0.f, 1.f,
+	                                  1.f, 1.f,
+	                                  1.f, 0.f};
 
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -310,9 +290,8 @@ void CMouseCursor::Draw(int x, int y, float scale) const
 
 void CMouseCursor::DrawQuad(int x, int y) const
 {
-	if (frames.empty()) {
+	if (frames.empty())
 		return;
-	}
 
 	const float scale = cmdColors.QueueIconScale();
 
@@ -350,9 +329,8 @@ void CMouseCursor::DrawQuad(int x, int y) const
 
 void CMouseCursor::Update()
 {
-	if (frames.empty()) {
+	if (frames.empty())
 		return;
-	}
 
 	animTime = math::fmod(animTime + globalRendering->lastFrameTime * 0.001f, animPeriod);
 
@@ -372,9 +350,8 @@ void CMouseCursor::Update()
 
 void CMouseCursor::BindTexture() const
 {
-	if (frames.empty()) {
+	if (frames.empty())
 		return;
-	}
 
 	const FrameData& frame = frames[currentFrame];
 	glBindTexture(GL_TEXTURE_2D, frame.image.texture);
@@ -382,5 +359,7 @@ void CMouseCursor::BindTexture() const
 
 void CMouseCursor::BindHwCursor() const
 {
+	assert(hwCursor != nullptr);
 	hwCursor->Bind();
 }
+

@@ -1,6 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "MoveMath.h"
+#include "Sim/Misc/ModInfo.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
 
 /*
@@ -26,27 +27,20 @@ float CMoveMath::GroundSpeedMod(const MoveDef& moveDef, float height, float slop
 
 float CMoveMath::GroundSpeedMod(const MoveDef& moveDef, float height, float slope, float dirSlopeMod)
 {
+	if (!modInfo.allowDirectionalPathing) {
+		return GroundSpeedMod(moveDef, height, slope);
+	}
+	// Directional speed is now equal to regular except when:
+	// 1) Climbing out of places which are below max depth.
+	// 2) Climbing hills is slower.
+
 	float speedMod = 0.0f;
 
-	// NOTE:
-	//    dirSlopeMod is always a value in [-1, 1], so <slope * mod>
-	//    is never greater than <slope> and never less than <-slope>
-	//
-	//    any slope > (tolerance * 2) is always non-navigable (up or down)
-	//    any slope < (tolerance    ) is always     navigable (up or down)
-	//    for any in-between slope it depends on the directional modifier
-	if (slope > (moveDef.maxSlope * 2.0f))
-		return speedMod;
-
-	// too steep downhill slope?
-	if (dirSlopeMod <= 0.0f && (slope * dirSlopeMod) < (-moveDef.maxSlope * 2.0f))
-		return speedMod;
-	// too steep uphill slope?
-	if (dirSlopeMod  > 0.0f && (slope * dirSlopeMod) > ( moveDef.maxSlope       ))
+	if (slope > moveDef.maxSlope)
 		return speedMod;
 
 	// is this square below our maxWaterDepth and are we going further downhill?
-	if ((dirSlopeMod < 0.0f) && (-height > moveDef.depth))
+	if ((dirSlopeMod <= 0.0f) && (-height > moveDef.depth))
 		return speedMod;
 
 	// slope-mod (speedMod is not increased or decreased by downhill slopes)

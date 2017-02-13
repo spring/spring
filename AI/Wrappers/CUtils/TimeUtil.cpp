@@ -20,6 +20,7 @@ using namespace std;
  
 #if defined(_MSC_VER) || defined(_MSC_EXTENSIONS)
 	#define DELTA_EPOCH_IN_MICROSECS  11644473600000000Ui64
+	#include <winsock2.h>
 #else
 	#define DELTA_EPOCH_IN_MICROSECS  11644473600000000ULL
 #endif

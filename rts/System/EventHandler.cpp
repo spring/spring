@@ -1,7 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "System/EventHandler.h"
-#include "System/EventBatchHandler.h"
 
 #include "Lua/LuaCallInCheck.h"
 #include "Lua/LuaOpenGL.h"  // FIXME -- should be moved
@@ -10,21 +9,16 @@
 #include "System/Platform/Threading.h"
 #include "System/GlobalConfig.h"
 
-using std::string;
-using std::vector;
-using std::map;
-
-
 CEventHandler eventHandler;
 
 
 /******************************************************************************/
 /******************************************************************************/
 
-void CEventHandler::SetupEvent(const string& eName,
-                               EventClientList* list, int props)
+void CEventHandler::SetupEvent(const std::string& eName, EventClientList* list, int props)
 {
-	eventMap[eName] = EventInfo(eName, list, props);
+	assert(std::find_if(eventMap.cbegin(), eventMap.cend(), [&](const EventPair& p) { return (p.first == eName); }) == eventMap.cend());
+	eventMap.push_back({eName, EventInfo(eName, list, props)});
 }
 
 /******************************************************************************/
@@ -32,19 +26,31 @@ void CEventHandler::SetupEvent(const string& eName,
 
 CEventHandler::CEventHandler()
 {
-	mouseOwner = NULL;
-
-	// Setup all events
-	#define SETUP_EVENT(name, props) SetupEvent(#name, &list ## name, props)
-	#define SETUP_UNMANAGED_EVENT(name, props) SetupEvent(#name, NULL, props)
-		#include "Events.def"
-	#undef SETUP_EVENT
-	#undef SETUP_UNMANAGED_EVENT
+	ResetState();
 }
 
-
-CEventHandler::~CEventHandler()
+void CEventHandler::ResetState()
 {
+	mouseOwner = nullptr;
+
+	eventMap.clear();
+	eventMap.reserve(64);
+	handles.clear();
+	handles.reserve(16);
+
+	SetupEvents();
+}
+
+void CEventHandler::SetupEvents()
+{
+	#define SETUP_EVENT(name, props) SetupEvent(#name, &list ## name, props);
+	#define SETUP_UNMANAGED_EVENT(name, props) SetupEvent(#name, NULL, props);
+		#include "Events.def"
+	#undef SETUP_UNMANAGED_EVENT
+	#undef SETUP_EVENT
+
+	// sort by name
+	std::stable_sort(eventMap.begin(), eventMap.end(), [](const EventPair& a, const EventPair& b) { return (a.first < b.first); });
 }
 
 
@@ -55,31 +61,28 @@ void CEventHandler::AddClient(CEventClient* ec)
 {
 	ListInsert(handles, ec);
 
-	EventMap::const_iterator it;
-	for (it = eventMap.begin(); it != eventMap.end(); ++it) {
+	for (auto it = eventMap.cbegin(); it != eventMap.cend(); ++it) {
 		const EventInfo& ei = it->second;
-		if (ei.HasPropBit(MANAGED_BIT) && (ei.GetList() != NULL)) {
+
+		if (ei.HasPropBit(MANAGED_BIT)) {
 			if (ec->WantsEvent(it->first)) {
-				ListInsert(*ei.GetList(), ec);
+				InsertEvent(ec, it->first);
 			}
 		}
 	}
 }
 
-
 void CEventHandler::RemoveClient(CEventClient* ec)
 {
-	if (mouseOwner == ec) {
-		mouseOwner = NULL;
-	}
+	if (mouseOwner == ec)
+		mouseOwner = nullptr;
 
 	ListRemove(handles, ec);
 
-	EventMap::const_iterator it;
-	for (it = eventMap.begin(); it != eventMap.end(); ++it) {
+	for (auto it = eventMap.cbegin(); it != eventMap.cend(); ++it) {
 		const EventInfo& ei = it->second;
-		if (ei.HasPropBit(MANAGED_BIT) && (ei.GetList() != NULL)) {
-			ListRemove(*ei.GetList(), ec);
+		if (ei.HasPropBit(MANAGED_BIT)) {
+			RemoveEvent(ec, it->first);
 		}
 	}
 }
@@ -88,66 +91,76 @@ void CEventHandler::RemoveClient(CEventClient* ec)
 /******************************************************************************/
 /******************************************************************************/
 
-void CEventHandler::GetEventList(vector<string>& list) const
+void CEventHandler::GetEventList(std::vector<std::string>& list) const
 {
 	list.clear();
-	EventMap::const_iterator it;
-	for (it = eventMap.begin(); it != eventMap.end(); ++it) {
+
+	for (auto it = eventMap.cbegin(); it != eventMap.cend(); ++it) {
 		list.push_back(it->first);
 	}
 }
 
 
-bool CEventHandler::IsKnown(const string& eName) const
+bool CEventHandler::IsKnown(const std::string& eName) const
 {
-	return (eventMap.find(eName) != eventMap.end());
+	// std::binary_search does not return an iterator
+	const auto comp = [](const EventPair& a, const EventPair& b) { return (a.first < b.first); };
+	const auto iter = std::lower_bound(eventMap.begin(), eventMap.end(), EventPair{eName, {}}, comp);
+	return (iter != eventMap.end() && iter->first == eName);
 }
 
 
-bool CEventHandler::IsManaged(const string& eName) const
+bool CEventHandler::IsManaged(const std::string& eName) const
 {
-	EventMap::const_iterator it = eventMap.find(eName);
-	return ((it != eventMap.end()) && (it->second.HasPropBit(MANAGED_BIT)));
+	const auto comp = [](const EventPair& a, const EventPair& b) { return (a.first < b.first); };
+	const auto iter = std::lower_bound(eventMap.begin(), eventMap.end(), EventPair{eName, {}}, comp);
+	return (iter != eventMap.end() && iter->first == eName && iter->second.HasPropBit(MANAGED_BIT));
 }
 
 
-bool CEventHandler::IsUnsynced(const string& eName) const
+bool CEventHandler::IsUnsynced(const std::string& eName) const
 {
-	EventMap::const_iterator it = eventMap.find(eName);
-	return ((it != eventMap.end()) && (it->second.HasPropBit(UNSYNCED_BIT)));
+	const auto comp = [](const EventPair& a, const EventPair& b) { return (a.first < b.first); };
+	const auto iter = std::lower_bound(eventMap.begin(), eventMap.end(), EventPair{eName, {}}, comp);
+	return (iter != eventMap.end() && iter->first == eName && iter->second.HasPropBit(UNSYNCED_BIT));
 }
 
 
-bool CEventHandler::IsController(const string& eName) const
+bool CEventHandler::IsController(const std::string& eName) const
 {
-	EventMap::const_iterator it = eventMap.find(eName);
-	return ((it != eventMap.end()) && (it->second.HasPropBit(CONTROL_BIT)));
+	const auto comp = [](const EventPair& a, const EventPair& b) { return (a.first < b.first); };
+	const auto iter = std::lower_bound(eventMap.begin(), eventMap.end(), EventPair{eName, {}}, comp);
+	return (iter != eventMap.end() && iter->first == eName && iter->second.HasPropBit(CONTROL_BIT));
 }
 
 
 /******************************************************************************/
 
-bool CEventHandler::InsertEvent(CEventClient* ec, const string& ciName)
+bool CEventHandler::InsertEvent(CEventClient* ec, const std::string& ciName)
 {
-	EventMap::iterator it = eventMap.find(ciName);
-	if ((it == eventMap.end()) || (it->second.GetList() == NULL)) {
+	const auto comp = [](const EventPair& a, const EventPair& b) { return (a.first < b.first); };
+	const auto iter = std::lower_bound(eventMap.begin(), eventMap.end(), EventPair{ciName, {}}, comp);
+
+	if ((iter == eventMap.end()) || (iter->first != ciName) || (iter->second.GetList() == nullptr))
 		return false;
-	}
-	if (ec->GetSynced() && it->second.HasPropBit(UNSYNCED_BIT)) {
+
+	if (ec->GetSynced() && iter->second.HasPropBit(UNSYNCED_BIT))
 		return false;
-	}
-	ListInsert(*it->second.GetList(), ec);
+
+	ListInsert(*iter->second.GetList(), ec);
 	return true;
 }
 
 
-bool CEventHandler::RemoveEvent(CEventClient* ec, const string& ciName)
+bool CEventHandler::RemoveEvent(CEventClient* ec, const std::string& ciName)
 {
-	EventMap::iterator it = eventMap.find(ciName);
-	if ((it == eventMap.end()) || (it->second.GetList() == NULL)) {
+	const auto comp = [](const EventPair& a, const EventPair& b) { return (a.first < b.first); };
+	const auto iter = std::lower_bound(eventMap.begin(), eventMap.end(), EventPair{ciName, {}}, comp);
+
+	if ((iter == eventMap.end()) || (iter->first != ciName) || (iter->second.GetList() == nullptr))
 		return false;
-	}
-	ListRemove(*it->second.GetList(), ec);
+
+	ListRemove(*(iter->second.GetList()), ec);
 	return true;
 }
 
@@ -156,19 +169,20 @@ bool CEventHandler::RemoveEvent(CEventClient* ec, const string& ciName)
 
 void CEventHandler::ListInsert(EventClientList& ecList, CEventClient* ec)
 {
-	EventClientList::iterator it;
-	for (it = ecList.begin(); it != ecList.end(); ++it) {
+	for (auto it = ecList.begin(); it != ecList.end(); ++it) {
 		const CEventClient* ecIt = *it;
-		if (ec == ecIt) {
+
+		if (ec == ecIt)
 			return; // already in the list
-		}
-		else if ((ec->GetOrder()  <  ecIt->GetOrder()) ||
+
+		if ((ec->GetOrder()  <  ecIt->GetOrder()) ||
 		         ((ec->GetOrder() == ecIt->GetOrder()) &&
 		          (ec->GetName()  <  ecIt->GetName()))) { // should not happen
 			ecList.insert(it, ec);
 			return;
 		}
 	}
+
 	ecList.push_back(ec);
 }
 
@@ -253,13 +267,13 @@ bool CEventHandler::AllowFeatureBuildStep(const CUnit* builder, const CFeature* 
 }
 
 
-bool CEventHandler::AllowResourceLevel(int teamID, const string& type, float level)
+bool CEventHandler::AllowResourceLevel(int teamID, const std::string& type, float level)
 {
 	CONTROL_ITERATE_DEF_TRUE(AllowResourceLevel, teamID, type, level)
 }
 
 
-bool CEventHandler::AllowResourceTransfer(int oldTeam, int newTeam, const string& type, float amount)
+bool CEventHandler::AllowResourceTransfer(int oldTeam, int newTeam, const std::string& type, float amount)
 {
 	CONTROL_ITERATE_DEF_TRUE(AllowResourceTransfer, oldTeam, newTeam, type, amount)
 }
@@ -354,13 +368,19 @@ bool CEventHandler::FeaturePreDamaged(
 }
 
 
-bool CEventHandler::ShieldPreDamaged(const CProjectile* proj, const CWeapon* w, const CUnit* u, bool repulsor)
-{
-	CONTROL_ITERATE_DEF_FALSE(ShieldPreDamaged, proj, w, u, repulsor)
+bool CEventHandler::ShieldPreDamaged(
+	const CProjectile* projectile,
+	const CWeapon* shieldEmitter,
+	const CUnit* shieldCarrier,
+	bool bounceProjectile,
+	const CWeapon* beamEmitter,
+	const CUnit* beamCarrier
+) {
+	CONTROL_ITERATE_DEF_FALSE(ShieldPreDamaged, projectile, shieldEmitter, shieldCarrier, bounceProjectile, beamEmitter, beamCarrier)
 }
 
 
-bool CEventHandler::SyncedActionFallback(const string& line, int playerID)
+bool CEventHandler::SyncedActionFallback(const std::string& line, int playerID)
 {
 	for (int i = 0; i < listSyncedActionFallback.size(); ) {
 		CEventClient* ec = listSyncedActionFallback[i];
@@ -500,36 +520,9 @@ void CEventHandler::Update()
 
 
 
-void CEventHandler::UpdateUnits() { eventBatchHandler->UpdateUnits(); }
-void CEventHandler::UpdateDrawUnits() { eventBatchHandler->UpdateDrawUnits(); }
-void CEventHandler::DeleteSyncedUnits() { eventBatchHandler->DeleteSyncedUnits(); }
-
-void CEventHandler::UpdateFeatures() { eventBatchHandler->UpdateFeatures(); }
-void CEventHandler::UpdateDrawFeatures() { eventBatchHandler->UpdateDrawFeatures(); }
-void CEventHandler::DeleteSyncedFeatures() { eventBatchHandler->DeleteSyncedFeatures(); }
-
-void CEventHandler::UpdateProjectiles() { eventBatchHandler->UpdateProjectiles(); }
-void CEventHandler::UpdateDrawProjectiles() { eventBatchHandler->UpdateDrawProjectiles(); }
-
-inline void ExecuteAllCallsFromSynced() { } //FIXME delete
-
-void CEventHandler::DeleteSyncedProjectiles() {
-	ExecuteAllCallsFromSynced();
-	eventBatchHandler->DeleteSyncedProjectiles();
-}
-
-void CEventHandler::UpdateObjects() {
-	eventBatchHandler->UpdateObjects();
-}
-void CEventHandler::DeleteSyncedObjects() {
-	ExecuteAllCallsFromSynced();
-}
-
-
-
-void CEventHandler::SunChanged(const float3& sunDir)
+void CEventHandler::SunChanged()
 {
-	ITERATE_EVENTCLIENTLIST(SunChanged, sunDir);
+	ITERATE_EVENTCLIENTLIST(SunChanged);
 }
 
 void CEventHandler::ViewResize()
@@ -544,23 +537,23 @@ void CEventHandler::GameProgress(int gameFrame)
 }
 
 
-#define DRAW_CALLIN(name)                         \
-  void CEventHandler:: Draw ## name ()            \
-  {                                               \
-    if (listDraw ## name.empty())                 \
-      return;                                     \
-    LuaOpenGL::EnableDraw ## name ();             \
-    listDraw ## name [0]->Draw ## name ();        \
-                                                  \
-    for (int i = 1; i < listDraw ## name.size(); ) { \
-      LuaOpenGL::ResetDraw ## name ();            \
-      CEventClient* ec = listDraw ## name [i];    \
-      ec-> Draw ## name ();                       \
+#define DRAW_CALLIN(name)                                            \
+  void CEventHandler:: Draw ## name ()                               \
+  {                                                                  \
+    if (listDraw ## name.empty())                                    \
+      return;                                                        \
+    LuaOpenGL::EnableDraw ## name ();                                \
+    listDraw ## name [0]->Draw ## name ();                           \
+                                                                     \
+    for (int i = 1; i < listDraw ## name.size(); ) {                 \
+      LuaOpenGL::ResetDraw ## name ();                               \
+      CEventClient* ec = listDraw ## name [i];                       \
+      ec-> Draw ## name ();                                          \
       if (i < listDraw ## name.size() && ec == listDraw ## name [i]) \
-	    ++i;                                      \
-    }                                             \
-                                                  \
-    LuaOpenGL::DisableDraw ## name ();            \
+	    ++i;                                                         \
+    }                                                                \
+                                                                     \
+    LuaOpenGL::DisableDraw ## name ();                               \
   }
 
 DRAW_CALLIN(Genesis)
@@ -569,9 +562,15 @@ DRAW_CALLIN(WorldPreUnit)
 DRAW_CALLIN(WorldShadow)
 DRAW_CALLIN(WorldReflection)
 DRAW_CALLIN(WorldRefraction)
+DRAW_CALLIN(GroundPreForward)
+DRAW_CALLIN(GroundPreDeferred)
+DRAW_CALLIN(GroundPostDeferred)
+DRAW_CALLIN(UnitsPostDeferred)
+DRAW_CALLIN(FeaturesPostDeferred)
 DRAW_CALLIN(ScreenEffects)
 DRAW_CALLIN(Screen)
 DRAW_CALLIN(InMiniMap)
+DRAW_CALLIN(InMiniMapBackground)
 
 
 #define DRAW_ENTITY_CALLIN(name, args, args2)     \
@@ -689,7 +688,7 @@ bool CEventHandler::IsAbove(int x, int y)
 	return false;
 }
 
-string CEventHandler::GetTooltip(int x, int y)
+std::string CEventHandler::GetTooltip(int x, int y)
 {
 	CONTROL_REVERSE_ITERATE_STRING(GetTooltip, x, y)
 	return "";
@@ -720,15 +719,39 @@ bool CEventHandler::GroupChanged(int groupID)
 
 
 
-bool CEventHandler::GameSetup(const string& state, bool& ready,
-                                  const map<int, string>& playerStates)
+bool CEventHandler::GameSetup(const std::string& state, bool& ready,
+                                  const std::vector< std::pair<int, std::string> >& playerStates)
 {
 	CONTROL_REVERSE_ITERATE_DEF_TRUE(GameSetup, state, ready, playerStates)
 	return false;
 }
 
+void CEventHandler::DownloadQueued(int ID, const std::string& archiveName, const std::string& archiveType)
+{
+	ITERATE_EVENTCLIENTLIST(DownloadQueued, ID, archiveName, archiveType);
+}
 
-string CEventHandler::WorldTooltip(const CUnit* unit,
+void CEventHandler::DownloadStarted(int ID)
+{
+	ITERATE_EVENTCLIENTLIST(DownloadStarted, ID);
+}
+
+void CEventHandler::DownloadFinished(int ID)
+{
+	ITERATE_EVENTCLIENTLIST(DownloadFinished, ID);
+}
+
+void CEventHandler::DownloadFailed(int ID, int errorID)
+{
+	ITERATE_EVENTCLIENTLIST(DownloadFailed, ID, errorID);
+}
+
+void CEventHandler::DownloadProgress(int ID, long downloaded, long total)
+{
+	ITERATE_EVENTCLIENTLIST(DownloadProgress, ID, downloaded, total);
+}
+
+std::string CEventHandler::WorldTooltip(const CUnit* unit,
                                    const CFeature* feature,
                                    const float3* groundPos)
 {
@@ -739,7 +762,7 @@ string CEventHandler::WorldTooltip(const CUnit* unit,
 
 bool CEventHandler::MapDrawCmd(int playerID, int type,
                                const float3* pos0, const float3* pos1,
-                                   const string* label)
+                               const std::string* label)
 {
 	CONTROL_REVERSE_ITERATE_DEF_TRUE(MapDrawCmd, playerID, type, pos0, pos1, label)
 	return false;
@@ -749,22 +772,8 @@ bool CEventHandler::MapDrawCmd(int playerID, int type,
 /******************************************************************************/
 /******************************************************************************/
 
-void CEventHandler::UnsyncedProjectileCreated(const CProjectile* proj) {
-	//FIXME no real event
-	(eventBatchHandler->GetUnsyncedProjectileCreatedDestroyedBatch()).insert(proj);
+void CEventHandler::MetalMapChanged(const int x, const int z)
+{
+	ITERATE_EVENTCLIENTLIST(MetalMapChanged, x, z);
 }
-
-void CEventHandler::UnsyncedProjectileDestroyed(const CProjectile* proj) {
-	//FIXME no real event
-	(eventBatchHandler->GetUnsyncedProjectileCreatedDestroyedBatch()).erase_delete(proj);
-}
-
-void CEventHandler::LoadedModelRequested() {
-	//FIXME no real event
-	eventBatchHandler->LoadedModelRequested();
-}
-
-
-/******************************************************************************/
-/******************************************************************************/
 

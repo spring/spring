@@ -3,8 +3,8 @@
 #ifndef _BASE_NET_PROTOCOL_H
 #define _BASE_NET_PROTOCOL_H
 
-#include <boost/shared_ptr.hpp>
-#include <boost/cstdint.hpp>
+#include <memory>
+#include <cinttypes>
 #include <vector>
 #include <string>
 #include <stdlib.h>
@@ -16,6 +16,7 @@ namespace netcode
 	class RawPacket;
 }
 struct PlayerStatistics;
+struct TeamStatistics;
 
 
 static const unsigned short NETWORK_VERSION = atoi(SpringVersion::GetMajor().c_str());
@@ -46,7 +47,7 @@ enum NETMSG {
 	NETMSG_CHAT             = 7,  // uchar from, dest; std::string message;
 	NETMSG_RANDSEED         = 8,  // uint randSeed;
 	NETMSG_GAMEID           = 9,  // uchar gameID[16];
-	NETMSG_PATH_CHECKSUM    = 10, // uchar myPlayerNum, boost::uint32_t checksum
+	NETMSG_PATH_CHECKSUM    = 10, // uchar myPlayerNum, std::uint32_t checksum
 	NETMSG_COMMAND          = 11, // uchar myPlayerNum; int id; uchar options; std::vector<float> params;
 	NETMSG_SELECT           = 12, // uchar myPlayerNum; std::vector<short> selectedUnitIDs;
 	NETMSG_PAUSE            = 13, // uchar playerNum, bPaused;
@@ -73,7 +74,7 @@ enum NETMSG {
 	NETMSG_SYNCRESPONSE     = 33, // uchar myPlayerNum; int frameNum; uint checksum;
 	NETMSG_SYSTEMMSG        = 35, // uchar myPlayerNum, std::string message;
 	NETMSG_STARTPOS         = 36, // uchar myPlayerNum, uchar myTeam, ready /*0: not ready, 1: ready, 2: don't update readiness*/; float x, y, z;
-	NETMSG_PLAYERINFO       = 38, // uchar myPlayerNum; float cpuUsage; int ping /*in frames*/;
+	NETMSG_PLAYERINFO       = 38, // uchar myPlayerNum; float cpuUsage; int ping /*in milliseconds*/;
 	NETMSG_PLAYERLEFT       = 39, // uchar myPlayerNum, bIntended /*0: lost connection, 1: left, 2: forced (kicked) */;
 
 #ifdef SYNCDEBUG
@@ -93,6 +94,7 @@ enum NETMSG {
 	NETMSG_TEAMSTAT         = 60, // uchar teamNum, struct TeamStatistics statistics      # used by LadderBot #
 
 	NETMSG_ATTEMPTCONNECT   = 65, // ushort msgsize, ushort netversion, string playername, string passwd, string VERSION_STRING_DETAILED
+	NETMSG_REJECT_CONNECT   = 66, // string reason
 
 	NETMSG_AI_CREATED       = 70, // /* uchar messageSize */, uchar myPlayerNum, uchar whichSkirmishAI, uchar team, std::string name (ends with \0)
 	NETMSG_AI_STATE_CHANGED = 71, // uchar myPlayerNum, uchar whichSkirmishAI, uchar newState
@@ -138,7 +140,7 @@ class CBaseNetProtocol
 public:
 	typedef unsigned char uchar;
 	typedef unsigned int uint;
-	typedef boost::shared_ptr<const netcode::RawPacket> PacketType;
+	typedef std::shared_ptr<const netcode::RawPacket> PacketType;
 
 	static CBaseNetProtocol& Get();
 
@@ -151,7 +153,7 @@ public:
 	PacketType SendPlayerName(uchar myPlayerNum, const std::string& playerName);
 	PacketType SendRandSeed(uint randSeed);
 	PacketType SendGameID(const uchar* buf);
-	PacketType SendPathCheckSum(uchar myPlayerNum, boost::uint32_t checksum);
+	PacketType SendPathCheckSum(uchar myPlayerNum, std::uint32_t checksum);
 	PacketType SendCommand(uchar myPlayerNum, int id, uchar options, const std::vector<float>& params);
 	PacketType SendSelect(uchar myPlayerNum, const std::vector<short>& selectedUnitIDs);
 	PacketType SendPause(uchar myPlayerNum, uchar bPaused);
@@ -167,9 +169,9 @@ public:
 	PacketType SendDirectControl(uchar myPlayerNum);
 	PacketType SendDirectControlUpdate(uchar myPlayerNum, uchar status, short heading, short pitch);
 	PacketType SendAttemptConnect(const std::string& name, const std::string& passwd, const std::string& version, int netloss, bool reconnect = false);
+	PacketType SendRejectConnect(const std::string& reason);
 	PacketType SendShare(uchar myPlayerNum, uchar shareTeam, uchar bShareUnits, float shareMetal, float shareEnergy);
 	PacketType SendSetShare(uchar myPlayerNum, uchar myTeam, float metalShareFraction, float energyShareFraction);
-	PacketType SendPlayerStat(uchar myPlayerNum, const PlayerStatistics& currentStats);
 	PacketType SendGameOver(uchar myPlayerNum, const std::vector<uchar>& winningAllyTeams);
 	PacketType SendMapErase(uchar myPlayerNum, short x, short z);
 	PacketType SendMapDrawLine(uchar myPlayerNum, short x1, short z1, short x2, short z2, bool);
@@ -179,8 +181,11 @@ public:
 	PacketType SendStartPos(uchar myPlayerNum, uchar teamNum, uchar readyState, float x, float y, float z);
 	PacketType SendPlayerInfo(uchar myPlayerNum, float cpuUsage, int ping);
 	PacketType SendPlayerLeft(uchar myPlayerNum, uchar bIntended);
-	PacketType SendLuaMsg(uchar myPlayerNum, unsigned short script, uchar mode, const std::vector<boost::uint8_t>& msg);
+	PacketType SendLuaMsg(uchar myPlayerNum, unsigned short script, uchar mode, const std::vector<std::uint8_t>& msg);
 	PacketType SendCurrentFrameProgress(int frameNum);
+
+	PacketType SendPlayerStat(uchar myPlayerNum, const PlayerStatistics& currentStats);
+	PacketType SendTeamStat(uchar teamNum, const TeamStatistics& currentStats);
 
 	PacketType SendGiveAwayEverything(uchar myPlayerNum, uchar giveToTeam);
 	/**
@@ -211,14 +216,15 @@ public:
 
 #ifdef SYNCDEBUG
 	PacketType SendSdCheckrequest(int frameNum);
-	PacketType SendSdCheckresponse(uchar myPlayerNum, boost::uint64_t flop, std::vector<unsigned> checksums);
+	PacketType SendSdCheckresponse(uchar myPlayerNum, std::uint64_t flop, std::vector<unsigned> checksums);
 	PacketType SendSdReset();
 	PacketType SendSdBlockrequest(unsigned short begin, unsigned short length, unsigned short requestSize);
 	PacketType SendSdBlockresponse(uchar myPlayerNum, std::vector<unsigned> checksums);
 #endif
+
 private:
 	CBaseNetProtocol();
-	~CBaseNetProtocol();
+
 };
 
 #endif // _BASE_NET_PROTOCOL_H

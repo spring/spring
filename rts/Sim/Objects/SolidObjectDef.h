@@ -4,17 +4,15 @@
 #define SOLID_OBJECT_DEF_H
 
 #include <string>
-#include <map>
 
-#include "System/creg/creg_cond.h"
+#include "Sim/Misc/CollisionVolume.h"
+#include <System/creg/STL_Map.h>
 
 struct S3DModel;
-struct CollisionVolume;
 class LuaTable;
 
 struct SolidObjectDecalDef {
 public:
-	CR_DECLARE_STRUCT(SolidObjectDecalDef)
 
 	SolidObjectDecalDef();
 	void Parse(const LuaTable&);
@@ -39,14 +37,16 @@ public:
 
 struct SolidObjectDef {
 public:
-	CR_DECLARE_STRUCT(SolidObjectDef)
 
 	SolidObjectDef();
-	virtual ~SolidObjectDef();
+	virtual ~SolidObjectDef() { }
 
 	S3DModel* LoadModel() const;
+	void PreloadModel() const;
 	float GetModelRadius() const;
-	void ParseCollisionVolume(const LuaTable& table);
+
+	void ParseCollisionVolume(const LuaTable& odTable);
+	void ParseSelectionVolume(const LuaTable& odTable);
 
 public:
 	int id;
@@ -71,14 +71,16 @@ public:
 
 	// must be mutable because models are lazy-loaded even for defs
 	mutable S3DModel* model;
-	CollisionVolume* collisionVolume;
+
+	CollisionVolume collisionVolume;
+	CollisionVolume selectionVolume;
 
 	SolidObjectDecalDef decalDef;
 
 	std::string name;      // eg. "arm_flash"
 	std::string modelName; // eg. "arm_flash.3do" (no path prefix)
 
-	std::map<std::string, std::string> customParams;
+	spring::unordered_map<std::string, std::string> customParams;
 };
 
 #endif

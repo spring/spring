@@ -3,12 +3,11 @@
 #ifndef EXPLOSION_GENERATOR_H
 #define EXPLOSION_GENERATOR_H
 
-#include <map>
 #include <string>
 #include <vector>
-#include <boost/shared_ptr.hpp>
 
-#include "Sim/Objects/WorldObject.h"
+#include "Rendering/GroundFlashInfo.h"
+#include "System/UnorderedMap.hpp"
 
 #define CEG_PREFIX_STRING "custom:"
 
@@ -18,19 +17,7 @@ class float3;
 class CUnit;
 class IExplosionGenerator;
 
-
-class CExpGenSpawnable: public CWorldObject
-{
-	CR_DECLARE(CExpGenSpawnable);
-public:
-	CExpGenSpawnable();
-	CExpGenSpawnable(const float3& pos, const float3& spd);
-
-	virtual ~CExpGenSpawnable() {}
-	virtual void Init(const CUnit* owner, const float3& offset) = 0;
-};
-
-
+struct SExpGenSpawnableMemberInfo;
 
 // Finds C++ classes with class aliases
 class ClassAliasList
@@ -39,11 +26,11 @@ public:
 	void Load(const LuaTable&);
 	void Clear() { aliases.clear(); }
 
-	creg::Class* GetClass(const std::string& name) const;
+	std::string ResolveAlias(const std::string& alias) const;
 	std::string FindAlias(const std::string& className) const;
 
 private:
-	std::map<std::string, std::string> aliases;
+	spring::unordered_map<std::string, std::string> aliases;
 };
 
 
@@ -80,11 +67,9 @@ public:
 
 	const LuaTable* GetExplosionTableRoot() const { return explTblRoot; }
 	const ClassAliasList& GetProjectileClasses() const { return projectileClasses; }
-	const ClassAliasList& GetGeneratorClasses() const { return generatorClasses; }
 
 protected:
 	ClassAliasList projectileClasses;
-	ClassAliasList generatorClasses;
 
 	LuaParser* exploParser;
 	LuaParser* aliasParser;
@@ -92,11 +77,11 @@ protected:
 
 	std::vector<IExplosionGenerator*> explosionGenerators;
 
-	std::map<std::string, unsigned int> expGenTagIdentMap;
-	std::map<unsigned int, std::string> expGenIdentTagMap;
+	spring::unordered_map<std::string, unsigned int> expGenTagIdentMap;
+	spring::unordered_map<unsigned int, std::string> expGenIdentTagMap;
 
-	typedef std::map<std::string, unsigned int>::const_iterator TagIdentMapConstIt;
-	typedef std::map<unsigned int, std::string>::const_iterator IdentTagMapConstIt;
+	typedef spring::unordered_map<std::string, unsigned int>::const_iterator TagIdentMapConstIt;
+	typedef spring::unordered_map<unsigned int, std::string>::const_iterator IdentTagMapConstIt;
 };
 
 
@@ -105,8 +90,8 @@ protected:
 // Base explosion generator class
 class IExplosionGenerator
 {
-	CR_DECLARE(IExplosionGenerator);
-
+	CR_DECLARE(IExplosionGenerator)
+public:
 	IExplosionGenerator(): generatorID(CExplosionGeneratorHandler::EXPGEN_ID_INVALID) {}
 	virtual ~IExplosionGenerator() {}
 
@@ -134,12 +119,12 @@ protected:
 // has no internal state so we never need to allocate instances
 class CStdExplosionGenerator: public IExplosionGenerator
 {
-	CR_DECLARE(CStdExplosionGenerator);
+	CR_DECLARE_DERIVED(CStdExplosionGenerator)
 
 public:
 	CStdExplosionGenerator(): IExplosionGenerator() {}
 
-	bool Load(CExplosionGeneratorHandler* handler, const std::string& tag) { return false; }
+	bool Load(CExplosionGeneratorHandler* handler, const std::string& tag) override { return false; }
 	bool Explosion(
 		const float3& pos,
 		const float3& dir,
@@ -148,7 +133,7 @@ public:
 		float gfxMod,
 		CUnit* owner,
 		CUnit* hit
-	);
+	) override;
 };
 
 
@@ -156,28 +141,27 @@ public:
 // result of an explosion as a series of new projectiles
 class CCustomExplosionGenerator: public IExplosionGenerator
 {
-	CR_DECLARE(CCustomExplosionGenerator);
-	CR_DECLARE_SUB(ProjectileSpawnInfo);
-	CR_DECLARE_SUB(GroundFlashInfo);
-	CR_DECLARE_SUB(ExpGenParams);
+	CR_DECLARE_DERIVED(CCustomExplosionGenerator)
+	CR_DECLARE_SUB(ProjectileSpawnInfo)
+	CR_DECLARE_SUB(ExpGenParams)
 
 protected:
 	struct ProjectileSpawnInfo {
-		CR_DECLARE_STRUCT(ProjectileSpawnInfo);
+		CR_DECLARE_STRUCT(ProjectileSpawnInfo)
 
 		ProjectileSpawnInfo()
-			: projectileClass(NULL)
+			: spawnableID(0)
 			, count(0)
 			, flags(0)
 		{}
 		ProjectileSpawnInfo(const ProjectileSpawnInfo& psi)
-			: projectileClass(psi.projectileClass)
+			: spawnableID(psi.spawnableID)
 			, code(psi.code)
 			, count(psi.count)
 			, flags(psi.flags)
 		{}
 
-		creg::Class* projectileClass;
+		unsigned int spawnableID;
 
 		/// parsed explosion script code
 		std::vector<char> code;
@@ -187,31 +171,8 @@ protected:
 		unsigned int flags;
 	};
 
-	// TODO: Handle ground flashes with more flexibility like the projectiles
-	struct GroundFlashInfo {
-		CR_DECLARE_STRUCT(GroundFlashInfo);
-
-		GroundFlashInfo()
-			: flashSize(0.0f)
-			, flashAlpha(0.0f)
-			, circleGrowth(0.0f)
-			, circleAlpha(0.0f)
-			, ttl(0)
-			, flags(0)
-			, color(ZeroVector)
-		{}
-
-		float flashSize;
-		float flashAlpha;
-		float circleGrowth;
-		float circleAlpha;
-		int ttl;
-		unsigned int flags;
-		float3 color;
-	};
-
 	struct ExpGenParams {
-		CR_DECLARE_STRUCT(ExpGenParams);
+		CR_DECLARE_STRUCT(ExpGenParams)
 
 		std::vector<ProjectileSpawnInfo> projectiles;
 
@@ -225,12 +186,12 @@ public:
 
 	static bool OutputProjectileClassInfo();
 	static unsigned int GetFlagsFromTable(const LuaTable& table);
-	static unsigned int GetFlagsFromHeight(float height, float altitude);
+	static unsigned int GetFlagsFromHeight(float height, float groundHeight);
 
 	/// @throws content_error/runtime_error on errors
-	bool Load(CExplosionGeneratorHandler* handler, const std::string& tag);
-	bool Reload(CExplosionGeneratorHandler* handler, const std::string& tag);
-	bool Explosion(const float3& pos, const float3& dir, float damage, float radius, float gfxMod, CUnit* owner, CUnit* hit);
+	bool Load(CExplosionGeneratorHandler* handler, const std::string& tag) override;
+	bool Reload(CExplosionGeneratorHandler* handler, const std::string& tag) override;
+	bool Explosion(const float3& pos, const float3& dir, float damage, float radius, float gfxMod, CUnit* owner, CUnit* hit) override;
 
 
 	enum {
@@ -246,7 +207,6 @@ public:
 		OP_END      =  0,
 		OP_STOREI   =  1, // int
 		OP_STOREF   =  2, // float
-		OP_STOREC   =  3, // char
 		OP_ADD      =  4,
 		OP_RAND     =  5,
 		OP_DAMAGE   =  6,
@@ -265,7 +225,7 @@ public:
 	};
 
 private:
-	void ParseExplosionCode(ProjectileSpawnInfo* psi, const int offset, const boost::shared_ptr<creg::IType> type, const std::string& script, std::string& code);
+	void ParseExplosionCode(ProjectileSpawnInfo* psi, const std::string& script, SExpGenSpawnableMemberInfo& memberInfo, std::string& code);
 	void ExecuteExplosionCode(const char* code, float damage, char* instance, int spawnIndex, const float3& dir);
 
 protected:

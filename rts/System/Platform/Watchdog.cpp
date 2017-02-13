@@ -7,10 +7,7 @@
 #endif
 
 #include <algorithm>
-#include <boost/thread.hpp>
-#include <boost/bind.hpp>
-#include <boost/function.hpp>
-#include <boost/thread/recursive_mutex.hpp>
+#include <functional>
 
 #include "Game/GameVersion.h"
 #include "System/Config/ConfigHandler.h"
@@ -20,6 +17,7 @@
 #include "System/Platform/CrashHandler.h"
 #include "System/Platform/Misc.h"
 #include "System/Platform/Threading.h"
+#include "System/Threading/SpringThreading.h"
 
 CONFIG(int, HangTimeout).defaultValue(10).minimumValue(-1).maximumValue(600)
 		.description("Number of seconds that, if spent in the same code segment, indicate a hang; -1 to disable.");
@@ -28,20 +26,42 @@ namespace Watchdog
 {
 	const char* threadNames[] = {"main", "sim", "load", "audio", "self"};
 
-	static boost::mutex wdmutex;
+	static spring::mutex wdmutex;
 
 	static unsigned int curorder = 0;
 
 	struct WatchDogThreadInfo {
 		WatchDogThreadInfo()
 			: threadid(0)
-			, timer(spring_notime)
 			, numreg(0)
+			, timer(spring_notime)
 		{}
+
+		void ResetThreadControls() {
+			#ifndef WIN32
+			// this is not auto-destructed (!)
+			ctls.reset();
+			#endif
+		}
+
+		void SetThreadControls()
+		{
+			#ifndef WIN32
+			const auto& c = Threading::GetCurrentThreadControls();
+			assert(c.get() != nullptr);
+			// copy shared_ptr object, not shared_ptr*
+			ctls = c;
+			#endif
+		}
+
 		volatile Threading::NativeThreadHandle thread;
 		volatile Threading::NativeThreadId threadid;
-		spring_time timer;
 		volatile unsigned int numreg;
+
+		spring_time timer;
+
+		// not used on Windows
+		std::shared_ptr<Threading::ThreadControls> ctls;
 	};
 
 	struct WatchDogThreadSlot {
@@ -64,7 +84,7 @@ namespace Watchdog
 
 	static std::map<std::string, unsigned int> threadNameToNum;
 
-	static boost::thread* hangDetectorThread = NULL;
+	static spring::thread* hangDetectorThread = NULL;
 	static spring_time hangTimeout = spring_msecs(0);
 	static volatile bool hangDetectorThreadInterrupted = false;
 
@@ -122,23 +142,27 @@ namespace Watchdog
 					if (!threadSlots[i].active)
 						continue;
 
+#ifdef WIN32
 					CrashHandler::Stacktrace(registeredThreads[i]->thread, threadNames[i], LOG_LEVEL_WARNING);
+#else
+					CrashHandler::SuspendedStacktrace(registeredThreads[i]->ctls.get(), std::string(threadNames[i]));
+#endif
 				}
 
 				CrashHandler::CleanupStacktrace(LOG_LEVEL_WARNING);
 			}
 
-			boost::this_thread::sleep(boost::posix_time::seconds(1));
+			spring::this_thread::sleep_for(std::chrono::seconds(1));
 		}
 	}
 
 
 	void RegisterThread(WatchdogThreadnum num, bool primary)
 	{
-		boost::mutex::scoped_lock lock(wdmutex);
+		std::lock_guard<spring::mutex> lock(wdmutex);
 
 		if (num >= WDT_COUNT || registeredThreads[num]->numreg != 0) {
-			LOG_L(L_ERROR, "[Watchdog::%s] Invalid thread number %u", __FUNCTION__, num);
+			LOG_L(L_ERROR, "[Watchdog::%s] Invalid thread number %u", __func__, num);
 			return;
 		}
 
@@ -160,7 +184,7 @@ namespace Watchdog
 		if (i >= WDT_COUNT)
 			i = inact;
 		if (i >= WDT_COUNT) {
-			LOG_L(L_ERROR, "[Watchdog::%s] Internal error", __FUNCTION__);
+			LOG_L(L_ERROR, "[Watchdog::%s] Internal error", __func__);
 			return;
 		}
 
@@ -173,6 +197,11 @@ namespace Watchdog
 		threadInfo->thread = thread;
 		threadInfo->threadid = threadId;
 		threadInfo->timer = spring_gettime();
+
+		// note: WDT_MAIN and WDT_LOAD share the same controls if LoadingMT=0
+		LOG("[WatchDog::%s] registering controls for thread [%s]", __func__, threadNames[num]);
+		threadInfo->SetThreadControls();
+
 		++threadInfo->numreg;
 
 		threadSlots[num].primary = primary;
@@ -183,18 +212,25 @@ namespace Watchdog
 
 	void DeregisterThread(WatchdogThreadnum num)
 	{
-		boost::mutex::scoped_lock lock(wdmutex);
+		std::lock_guard<spring::mutex> lock(wdmutex);
 
-		WatchDogThreadInfo* threadInfo;
+		WatchDogThreadInfo* threadInfo = nullptr;
 
-		if (num >= WDT_COUNT || (threadInfo = registeredThreads[num])->numreg == 0) {
-			LOG_L(L_ERROR, "[Watchdog::%s] Invalid thread number %u", __FUNCTION__, num);
+		if (num >= WDT_COUNT || registeredThreads[num] == nullptr || (threadInfo = registeredThreads[num])->numreg == 0) {
+			LOG_L(L_ERROR, "[Watchdog::%s] Invalid thread number %u", __func__, num);
 			return;
 		}
 
 		threadSlots[num].primary = false;
 		threadSlots[num].regorder = 0;
 		UpdateActiveThreads(threadInfo->threadid);
+
+		// reset the main thread's controls only if actually called from it;
+		// otherwise Load would act in place of Main in the LoadingMT=0 case
+		if (num == WDT_MAIN || !Threading::IsMainThread()) {
+			LOG("[WatchDog::%s] deregistering controls for thread [%s]", __func__, threadNames[num]);
+			threadInfo->ResetThreadControls();
+		}
 
 		if (0 == --(threadInfo->numreg))
 			memset(threadInfo, 0, sizeof(WatchDogThreadInfo));
@@ -291,7 +327,7 @@ namespace Watchdog
 
 	void Install()
 	{
-		boost::mutex::scoped_lock lock(wdmutex);
+		std::lock_guard<spring::mutex> lock(wdmutex);
 
 		memset(registeredThreadsData, 0, sizeof(registeredThreadsData));
 		for (unsigned int i = 0; i < WDT_COUNT; ++i) {
@@ -322,7 +358,7 @@ namespace Watchdog
 		hangTimeout = spring_secs(hangTimeoutSecs);
 
 		// start the watchdog thread
-		hangDetectorThread = new boost::thread(&HangDetectorLoop);
+		hangDetectorThread = new spring::thread(&HangDetectorLoop);
 
 		LOG("[WatchDog%s] Installed (HangTimeout: %isec)", __FUNCTION__, hangTimeoutSecs);
 	}
@@ -335,7 +371,7 @@ namespace Watchdog
 		if (hangDetectorThread == NULL)
 			return;
 
-		boost::mutex::scoped_lock lock(wdmutex);
+		std::lock_guard<spring::mutex> lock(wdmutex);
 
 		hangDetectorThreadInterrupted = true;
 

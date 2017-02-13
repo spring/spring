@@ -2,7 +2,6 @@
 
 #include "Game/Camera.h"
 #include "Game/GlobalUnsynced.h"
-#include "Map/BaseGroundDrawer.h"
 #include "Map/Ground.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/LosHandler.h"
@@ -25,6 +24,7 @@
 #include "Rendering/GL/glExtra.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
+#include "Rendering/Map/InfoTexture/Legacy/LegacyInfoTextureHandler.h"
 #include "System/Util.h"
 
 QTPFSPathDrawer::QTPFSPathDrawer(): IPathDrawer() {
@@ -55,8 +55,8 @@ void QTPFSPathDrawer::DrawNodeTree(const MoveDef* md) const {
 	QTPFS::QTNode* nt = pm->nodeTrees[md->pathType];
 	CVertexArray* va = GetVertexArray();
 
-	std::list<const QTPFS::QTNode*> nodes;
-	std::list<const QTPFS::QTNode*>::const_iterator nodesIt;
+	std::vector<const QTPFS::QTNode*> nodes;
+	std::vector<const QTPFS::QTNode*>::const_iterator nodesIt;
 
 	GetVisibleNodes(nt, nodes);
 
@@ -95,7 +95,7 @@ void QTPFSPathDrawer::DrawNodeTreeRec(
 	}
 }
 
-void QTPFSPathDrawer::GetVisibleNodes(const QTPFS::QTNode* nt, std::list<const QTPFS::QTNode*>& nodes) const {
+void QTPFSPathDrawer::GetVisibleNodes(const QTPFS::QTNode* nt, std::vector<const QTPFS::QTNode*>& nodes) const {
 	if (nt->IsLeaf()) {
 		nodes.push_back(nt);
 	} else {
@@ -187,8 +187,8 @@ void QTPFSPathDrawer::DrawPath(const QTPFS::IPath* path, CVertexArray* va) const
 
 void QTPFSPathDrawer::DrawSearchExecution(unsigned int pathType, const QTPFS::PathSearchTrace::Execution* searchExec) const {
 	// TODO: prevent overdraw so oft-visited nodes do not become darker
-	const std::list<QTPFS::PathSearchTrace::Iteration>& searchIters = searchExec->GetIterations();
-	      std::list<QTPFS::PathSearchTrace::Iteration>::const_iterator it;
+	const std::vector<QTPFS::PathSearchTrace::Iteration>& searchIters = searchExec->GetIterations();
+	      std::vector<QTPFS::PathSearchTrace::Iteration>::const_iterator it;
 	const unsigned searchFrame = searchExec->GetFrame();
 
 	// number of frames reserved to draw the entire trace
@@ -205,17 +205,17 @@ void QTPFSPathDrawer::DrawSearchExecution(unsigned int pathType, const QTPFS::Pa
 			break;
 
 		const QTPFS::PathSearchTrace::Iteration& searchIter = *it;
-		const std::list<unsigned int>& nodeIndices = searchIter.GetNodeIndices();
+		const std::vector<unsigned int>& nodeIndices = searchIter.GetNodeIndices();
 
 		DrawSearchIteration(pathType, nodeIndices, va);
 	}
 }
 
-void QTPFSPathDrawer::DrawSearchIteration(unsigned int pathType, const std::list<unsigned int>& nodeIndices, CVertexArray* va) const {
-	std::list<unsigned int>::const_iterator it = nodeIndices.begin();
+void QTPFSPathDrawer::DrawSearchIteration(unsigned int pathType, const std::vector<unsigned int>& nodeIndices, CVertexArray* va) const {
+	std::vector<unsigned int>::const_iterator it = nodeIndices.cbegin();
 
-	unsigned int hmx = (*it) % gs->mapx;
-	unsigned int hmz = (*it) / gs->mapx;
+	unsigned int hmx = (*it) % mapDims.mapx;
+	unsigned int hmz = (*it) / mapDims.mapx;
 
 	const QTPFS::NodeLayer& nodeLayer = pm->nodeLayers[pathType];
 	const QTPFS::QTNode* poppedNode = static_cast<const QTPFS::QTNode*>(nodeLayer.GetNode(hmx, hmz));
@@ -224,8 +224,8 @@ void QTPFSPathDrawer::DrawSearchIteration(unsigned int pathType, const std::list
 	DrawNode(poppedNode, NULL, va, true, false, false);
 
 	for (++it; it != nodeIndices.end(); ++it) {
-		hmx = (*it) % gs->mapx;
-		hmz = (*it) / gs->mapx;
+		hmx = (*it) % mapDims.mapx;
+		hmz = (*it) / mapDims.mapx;
 		pushedNode = static_cast<const QTPFS::QTNode*>(nodeLayer.GetNode(hmx, hmz));
 
 		DrawNode(pushedNode, NULL, va, true, false, false);
@@ -294,9 +294,9 @@ void QTPFSPathDrawer::DrawNode(
 		}
 	}
 
-	if (showCost && camera->GetPos().SqDistance(verts[4]) < (2000.0f * 2000.0f)) {
+	if (showCost && camera->GetPos().SqDistance(verts[4]) < (1000.0f * 1000.0f)) {
 		font->SetTextColor(0.0f, 0.0f, 0.0f, 1.0f);
-		font->glWorldPrint(verts[4], 4.0f, FloatToString(node->GetMoveCost(), "%8.2f"));
+		font->glWorldPrint(verts[4], 5.0f, FloatToString(node->GetMoveCost(), "%8.2f"));
 	}
 
 	#undef xminw
@@ -338,7 +338,7 @@ void QTPFSPathDrawer::DrawNodeLink(const QTPFS::QTNode* pushedNode, const QTPFS:
 
 void QTPFSPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, int offset, unsigned char* texMem) const {
 	switch (extraTex) {
-		case CBaseGroundDrawer::drawPathTrav: {
+		case CLegacyInfoTextureHandler::drawPathTrav: {
 			const MoveDef* md = GetSelectedMoveDef();
 
 			if (md != NULL) {
@@ -348,11 +348,11 @@ void QTPFSPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, int
 				const bool los = (gs->cheatEnabled || gu->spectating);
 
 				for (int ty = starty; ty < endy; ++ty) {
-					for (int tx = 0; tx < gs->hmapx; ++tx) {
+					for (int tx = 0; tx < mapDims.hmapx; ++tx) {
 						const int sqx = (tx << 1);
 						const int sqz = (ty << 1);
-						const int texIdx = ((ty * (gs->pwr2mapx >> 1)) + tx) * 4 - offset;
-						const bool losSqr = losHandler->InLos(sqx, sqz, gu->myAllyTeam);
+						const int texIdx = ((ty * (mapDims.pwr2mapx >> 1)) + tx) * 4 - offset;
+						const bool losSqr = losHandler->InLos(SquareToFloat3(sqx, sqz), gu->myAllyTeam);
 
 						#if 1
 						// use node-modifiers as baseline so visualisation is in sync with alt+B
@@ -374,28 +374,28 @@ void QTPFSPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, int
 						const SColor& smc = GetSpeedModColor(sm * scale);
 						#endif
 
-						texMem[texIdx + CBaseGroundDrawer::COLOR_R] = smc.r;
-						texMem[texIdx + CBaseGroundDrawer::COLOR_G] = smc.g;
-						texMem[texIdx + CBaseGroundDrawer::COLOR_B] = smc.b;
-						texMem[texIdx + CBaseGroundDrawer::COLOR_A] = smc.a;
+						texMem[texIdx + CLegacyInfoTextureHandler::COLOR_R] = smc.r;
+						texMem[texIdx + CLegacyInfoTextureHandler::COLOR_G] = smc.g;
+						texMem[texIdx + CLegacyInfoTextureHandler::COLOR_B] = smc.b;
+						texMem[texIdx + CLegacyInfoTextureHandler::COLOR_A] = smc.a;
 					}
 				}
 			} else {
 				// we have nothing to show -> draw a dark red overlay
 				for (int ty = starty; ty < endy; ++ty) {
-					for (int tx = 0; tx < gs->hmapx; ++tx) {
-						const int texIdx = ((ty * (gs->pwr2mapx >> 1)) + tx) * 4 - offset;
+					for (int tx = 0; tx < mapDims.hmapx; ++tx) {
+						const int texIdx = ((ty * (mapDims.pwr2mapx >> 1)) + tx) * 4 - offset;
 
-						texMem[texIdx + CBaseGroundDrawer::COLOR_R] = 100;
-						texMem[texIdx + CBaseGroundDrawer::COLOR_G] = 0;
-						texMem[texIdx + CBaseGroundDrawer::COLOR_B] = 0;
-						texMem[texIdx + CBaseGroundDrawer::COLOR_A] = 255;
+						texMem[texIdx + CLegacyInfoTextureHandler::COLOR_R] = 100;
+						texMem[texIdx + CLegacyInfoTextureHandler::COLOR_G] = 0;
+						texMem[texIdx + CLegacyInfoTextureHandler::COLOR_B] = 0;
+						texMem[texIdx + CLegacyInfoTextureHandler::COLOR_A] = 255;
 					}
 				}
 			}
 		} break;
 
-		case CBaseGroundDrawer::drawPathCost: {
+		case CLegacyInfoTextureHandler::drawPathCost: {
 		} break;
 	}
 }

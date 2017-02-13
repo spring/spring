@@ -23,7 +23,6 @@ public:
 
 private:
 	ProfileDrawer();
-	~ProfileDrawer();
 
 	static ProfileDrawer* instance;
 };

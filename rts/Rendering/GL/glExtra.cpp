@@ -5,7 +5,10 @@
 #include "VertexArray.h"
 #include "Map/Ground.h"
 #include "Sim/Weapons/Weapon.h"
-#include "System/ThreadPool.h"
+#include "Sim/Weapons/WeaponDef.h"
+#include "System/myMath.h"
+#include "System/Threading/ThreadPool.h"
+
 
 /**
  *  Draws a trigonometric circle in 'resolution' steps.
@@ -15,7 +18,7 @@ static void defSurfaceCircle(const float3& center, float radius, unsigned int re
 	CVertexArray* va=GetVertexArray();
 	va->Initialize();
 	for (unsigned int i = 0; i < res; ++i) {
-		const float radians = (2.0f * PI) * (float)i / (float)res;
+		const float radians = math::TWOPI * (float)i / (float)res;
 		float3 pos;
 		pos.x = center.x + (fastmath::sin(radians) * radius);
 		pos.z = center.z + (fastmath::cos(radians) * radius);
@@ -73,9 +76,10 @@ void glBallisticCircle(const float3& center, const float radius,
 	va->EnlargeArrays(resolution, 0, VA_SIZE_0);
 
 	float3* vertices = va->GetTypedVertexArray<float3>(resolution);
+	const float heightMod = weapon ? weapon->weaponDef->heightmod : 1.0f;
 
 	for_mt(0, resolution, [&](const int i) {
-		const float radians = (2.0f * PI) * (float)i / (float)resolution;
+		const float radians = math::TWOPI * (float)i / (float)resolution;
 		float rad = radius;
 		float sinR = fastmath::sin(radians);
 		float cosR = fastmath::cos(radians);
@@ -85,10 +89,10 @@ void glBallisticCircle(const float3& center, const float radius,
 		pos.y = CGround::GetHeightAboveWater(pos.x, pos.z, false);
 		float heightDiff = (pos.y - center.y) * 0.5f;
 		rad -= heightDiff * slope;
-		float adjRadius = weapon ? weapon->GetRange2D(heightDiff * weapon->heightMod) : rad;
+		float adjRadius = weapon ? weapon->GetRange2D(heightDiff * heightMod) : rad;
 		float adjustment = rad * 0.5f;
 		float ydiff = 0;
-		for(int j = 0; j < rdiv && math::fabs(adjRadius - rad) + ydiff > .01 * rad; j++){
+		for(int j = 0; j < rdiv && std::fabs(adjRadius - rad) + ydiff > .01 * rad; j++){
 			if (adjRadius > rad) {
 				rad += adjustment;
 			} else {
@@ -98,10 +102,10 @@ void glBallisticCircle(const float3& center, const float radius,
 			pos.x = center.x + (sinR * rad);
 			pos.z = center.z + (cosR * rad);
 			float newY = CGround::GetHeightAboveWater(pos.x, pos.z, false);
-			ydiff = math::fabs(pos.y - newY);
+			ydiff = std::fabs(pos.y - newY);
 			pos.y = newY;
 			heightDiff = (pos.y - center.y);
-			adjRadius = weapon ? weapon->GetRange2D(heightDiff * weapon->heightMod) : rad;
+			adjRadius = weapon ? weapon->GetRange2D(heightDiff * heightMod) : rad;
 		}
 		pos.x = center.x + (sinR * adjRadius);
 		pos.z = center.z + (cosR * adjRadius);
@@ -229,8 +233,8 @@ void glWireCylinder(unsigned int* listID, unsigned int numDivs, float zSize) {
 		for (unsigned int n = 0; n <= numDivs; n++) {
 			const unsigned int i = n % numDivs;
 
-			vertices[i].x = math::cosf(i * ((PI + PI) / numDivs));
-			vertices[i].y = math::sinf(i * ((PI + PI) / numDivs));
+			vertices[i].x = std::cos(i * (math::TWOPI / numDivs));
+			vertices[i].y = std::sin(i * (math::TWOPI / numDivs));
 			vertices[i].z = 0.0f;
 
 			glVertex3f(vertices[i].x, vertices[i].y, vertices[i].z);
@@ -279,14 +283,14 @@ void glWireSphere(unsigned int* listID, unsigned int numRows, unsigned int numCo
 
 	for (unsigned int row = 0; row <= numRows; row++) {
 		for (unsigned int col = 0; col < numCols; col++) {
-			const float a = (col * ((PI + PI) / numCols));
-			const float b = (row * ((PI     ) / numRows));
+			const float a = (col * (math::TWOPI / numCols));
+			const float b = (row * (math::PI    / numRows));
 
 			float3& v = vertices[row * numCols + col];
 
-			v.x = math::cosf(a) * math::sinf(b);
-			v.y = math::sinf(a) * math::sinf(b);
-			v.z = math::cosf(b);
+			v.x = std::cos(a) * std::sin(b);
+			v.y = std::sin(a) * std::sin(b);
+			v.z = std::cos(b);
 		}
 	}
 

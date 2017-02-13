@@ -6,6 +6,7 @@
 #include "Game/Camera.h"
 #include "Game/GlobalUnsynced.h"
 #include "Game/TraceRay.h"
+#include "Map/Ground.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Units/Unit.h"
@@ -111,13 +112,13 @@ void FPSUnitController::SendStateUpdate() {
 	state |= ((mouseButtons[SDL_BUTTON_LEFT ].pressed) * (1 << 4));
 	state |= ((mouseButtons[SDL_BUTTON_RIGHT].pressed) * (1 << 5));
 
-	shortint2 hp = GetHAndPFromVector(camera->forward);
+	shortint2 hp = GetHAndPFromVector(camera->GetDir());
 
 	if (hp.x != oldHeading || hp.y != oldPitch || state != oldState) {
 		oldHeading = hp.x;
 		oldPitch   = hp.y;
 		oldState   = state;
 
-		net->Send(CBaseNetProtocol::Get().SendDirectControlUpdate(gu->myPlayerNum, state, hp.x, hp.y));
+		clientNet->Send(CBaseNetProtocol::Get().SendDirectControlUpdate(gu->myPlayerNum, state, hp.x, hp.y));
 	}
 }

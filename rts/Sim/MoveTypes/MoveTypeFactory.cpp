@@ -3,7 +3,6 @@
 #include "MoveDefHandler.h"
 #include "StrafeAirMoveType.h"
 #include "HoverAirMoveType.h"
-#include "ClassicGroundMoveType.h"
 #include "GroundMoveType.h"
 #include "StaticMoveType.h"
 #include "Sim/Misc/GlobalSynced.h"
@@ -20,11 +19,7 @@ AMoveType* MoveTypeFactory::GetMoveType(CUnit* unit, const UnitDef* ud) {
 
 		unit->moveDef = moveDefHandler->GetMoveDefByPathType(ud->pathType);
 
-		if (modInfo.useClassicGroundMoveType) {
-			return (new CClassicGroundMoveType(unit));
-		} else {
-			return (new CGroundMoveType(unit));
-		}
+		return (new CGroundMoveType(unit));
 	}
 
 	if (ud->IsAirUnit()) {

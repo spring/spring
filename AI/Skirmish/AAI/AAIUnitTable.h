@@ -7,16 +7,19 @@
 // Released under GPL license: see LICENSE.html for more information.
 // -------------------------------------------------------------------------
 
-#pragma once
+#ifndef AAI_UNITTABLE_H
+#define AAI_UNITTABLE_H
 
 #include <set>
-#include "aidef.h"
 
 using std::set;
+
+#include "aidef.h"
 
 class AAI;
 class AAIBuildTable;
 class AAIExecute;
+class AAIConstructor;
 
 class AAIUnitTable
 {
@@ -68,7 +71,6 @@ public:
 	void AssignGroupToEnemy(int unit, AAIGroup *group);
 
 	// determine whether unit with specified def/unit id is commander/constrcutor
-	bool IsUnitCommander(int unit_id);
 	bool IsDefCommander(int def_id);
 	bool IsBuilder(int unit_id);
 
@@ -95,23 +97,26 @@ public:
 
 	// id of commander
 	int cmdr;
-
-	set<int> scouts;
 	set<int> constructors;
 	set<int> metal_makers;
 	set<int> jammers;
 	set<int> recon;
-	set<int> extractors;
-	set<int> power_plants;
-	set<int> stationary_arty;
 
 	// number of active/under construction units of all different types
 	int activeUnits[(int)MOBILE_CONSTRUCTOR+1];
 	int futureUnits[(int)MOBILE_CONSTRUCTOR+1];
 	int requestedUnits[(int)MOBILE_CONSTRUCTOR+1];
-
 	int activeBuilders, futureBuilders;
 	int activeFactories, futureFactories;
 private:
+	bool IsUnitCommander(int unit_id);
+	set<int> scouts;
+	set<int> extractors;
+	set<int> power_plants;
+	set<int> stationary_arty;
 	AAI *ai;
+
 };
+
+#endif
+

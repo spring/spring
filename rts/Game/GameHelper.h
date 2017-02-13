@@ -8,13 +8,10 @@
 #include "Sim/Units/CommandAI/Command.h"
 #include "System/float3.h"
 #include "System/type2.h"
-#include "System/MemPool.h"
 
-#include <list>
 #include <map>
 #include <vector>
 
-class CGame;
 class CUnit;
 class CWeapon;
 class CSolidObject;
@@ -23,8 +20,29 @@ class CMobileCAI;
 struct UnitDef;
 struct MoveDef;
 struct BuildInfo;
-class IExplosionGenerator;
-class CStdExplosionGenerator;
+
+struct CExplosionParams {
+	const float3 pos;
+	const float3 dir;
+	const DamageArray& damages;
+	const WeaponDef* weaponDef;
+
+	CUnit* owner;
+	CUnit* hitUnit;
+	CFeature* hitFeature;
+
+	float craterAreaOfEffect;
+	float damageAreaOfEffect; // radius
+	float edgeEffectiveness;
+	float explosionSpeed;
+	float gfxMod;
+
+	bool impactOnly;
+	bool ignoreOwner;
+	bool damageGround;
+
+	unsigned int projectileID;
+};
 
 class CGameHelper
 {
@@ -38,30 +56,6 @@ public:
 		BUILDSQUARE_OCCUPIED    = 1,
 		BUILDSQUARE_RECLAIMABLE = 2,
 		BUILDSQUARE_OPEN        = 3
-	};
-
-
-	struct ExplosionParams {
-		const float3& pos;
-		const float3& dir;
-		const DamageArray& damages;
-		const WeaponDef* weaponDef;
-
-		CUnit* owner;
-		CUnit* hitUnit;
-		CFeature* hitFeature;
-
-		float craterAreaOfEffect;
-		float damageAreaOfEffect; // radius
-		float edgeEffectiveness;
-		float explosionSpeed;
-		float gfxMod;
-
-		bool impactOnly;
-		bool ignoreOwner;
-		bool damageGround;
-
-		unsigned int projectileID;
 	};
 
 	CGameHelper();
@@ -95,7 +89,7 @@ public:
 		const int2& zrange,
 		const UnitDef* unitDef,
 		const MoveDef* moveDef,
-		CFeature *&feature,
+		CFeature*& feature,
 		int allyteam,
 		bool synced
 	);
@@ -119,7 +113,7 @@ public:
 	 */
 	static float3 ClosestBuildSite(int team, const UnitDef* unitDef, float3 pos, float searchRadius, int minDist, int facing = 0);
 
-	static void GenerateWeaponTargets(const CWeapon* weapon, const CUnit* lastTargetUnit, std::multimap<float, CUnit*>& targets);
+	static void GenerateWeaponTargets(const CWeapon* weapon, const CUnit* avoidUnit, std::multimap<float, CUnit*>& targets);
 
 	void Update();
 
@@ -148,21 +142,11 @@ public:
 		const int projectileID
 	);
 
-	void DamageObjectsInExplosionRadius(const ExplosionParams& params, const float expRad, const int weaponDefID);
-	void Explosion(const ExplosionParams& params);
+	void DamageObjectsInExplosionRadius(const CExplosionParams& params, const float expRad, const int weaponDefID);
+	void Explosion(const CExplosionParams& params);
 
 private:
-	CStdExplosionGenerator* stdExplosionGenerator;
-
 	struct WaitingDamage {
-#if !defined(SYNCIFY)
-		inline void* operator new(size_t size) {
-			return mempool.Alloc(size);
-		};
-		inline void operator delete(void* p, size_t size) {
-			mempool.Free(p, size);
-		};
-#endif
 		WaitingDamage(int attacker, int target, const DamageArray& damage, const float3& impulse, const int _weaponID, const int _projectileID)
 		: target(target)
 		, attacker(attacker)
@@ -181,44 +165,7 @@ private:
 		float3 impulse;
 	};
 
-	struct ObjectCache {
-	public:
-		ObjectCache() : numUnits(0), numFeatures(0) {}
-		bool Empty() const { return (units.empty() || features.empty()); }
-		void Init(unsigned int maxUnits, unsigned int maxFeatures) {
-			units.resize(maxUnits, NULL);
-			features.resize(maxFeatures, NULL);
-
-			numUnits = 0;
-			numFeatures = 0;
-		}
-		void Kill() {
-			units.clear();
-			features.clear();
-		}
-		void Reset(unsigned int _numUnits, unsigned int _numFeatures) {
-			numUnits = _numUnits;
-			numFeatures = _numFeatures;
-
-			units[numUnits] = NULL;
-			features[numFeatures] = NULL;
-		}
-
-		std::vector<CUnit*>& GetUnits() { return units; }
-		std::vector<CFeature*>& GetFeatures() { return features; }
-
-		unsigned int* GetNumUnitsPtr() { return &numUnits; }
-		unsigned int* GetNumFeaturesPtr() { return &numFeatures; }
-
-	private:
-		std::vector<CUnit*> units;
-		std::vector<CFeature*> features;
-
-		unsigned int numUnits;
-		unsigned int numFeatures;
-	};
-
-	std::vector< std::list<WaitingDamage*> > waitingDamageLists;
+	std::vector< std::vector<WaitingDamage> > waitingDamageLists;
 };
 
 extern CGameHelper* helper;

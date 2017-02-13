@@ -56,7 +56,7 @@ ResourceSiteExt::ResourceSiteExt(ResourceSite *RSite, IAICallback* callback)
 		searchRadius=48.0f;
 	}
 	disApart=3;
-};
+}
 
 void ResourceSiteExt::CheckBlocked()
 {

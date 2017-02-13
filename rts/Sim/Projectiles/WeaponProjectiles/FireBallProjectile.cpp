@@ -6,27 +6,27 @@
 #include "Map/Ground.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
-#include "Rendering/ProjectileDrawer.h"
+#include "Rendering/Env/Particles/ProjectileDrawer.h"
+#include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Weapons/WeaponDef.h"
 #include "System/creg/STL_Deque.h"
 
-CR_BIND_DERIVED(CFireBallProjectile, CWeaponProjectile, (ProjectileParams()));
-CR_BIND(CFireBallProjectile::Spark, );
+CR_BIND_DERIVED(CFireBallProjectile, CWeaponProjectile, )
+CR_BIND(CFireBallProjectile::Spark, )
 
 CR_REG_METADATA(CFireBallProjectile,(
 	CR_SETFLAG(CF_Synced),
-	CR_MEMBER(sparks),
-	CR_RESERVED(8)
-));
+	CR_MEMBER(sparks)
+))
 
 CR_REG_METADATA_SUB(CFireBallProjectile,Spark,(
 	CR_MEMBER(pos),
 	CR_MEMBER(speed),
 	CR_MEMBER(size),
-	CR_MEMBER(ttl),
-	CR_RESERVED(8)
-));
+	CR_MEMBER(ttl)
+))
+
 
 CFireBallProjectile::CFireBallProjectile(const ProjectileParams& params): CWeaponProjectile(params)
 {
@@ -57,10 +57,10 @@ void CFireBallProjectile::Draw()
 		col[2] = (numSparks - i) *  4;
 
 		#define ept projectileDrawer->explotex
-		va->AddVertexQTC(sparks[i].pos - camera->right * sparks[i].size - camera->up * sparks[i].size, ept->xstart, ept->ystart, col);
-		va->AddVertexQTC(sparks[i].pos + camera->right * sparks[i].size - camera->up * sparks[i].size, ept->xend,   ept->ystart, col);
-		va->AddVertexQTC(sparks[i].pos + camera->right * sparks[i].size + camera->up * sparks[i].size, ept->xend,   ept->yend,   col);
-		va->AddVertexQTC(sparks[i].pos - camera->right * sparks[i].size + camera->up * sparks[i].size, ept->xstart, ept->yend,   col);
+		va->AddVertexQTC(sparks[i].pos - camera->GetRight() * sparks[i].size - camera->GetUp() * sparks[i].size, ept->xstart, ept->ystart, col);
+		va->AddVertexQTC(sparks[i].pos + camera->GetRight() * sparks[i].size - camera->GetUp() * sparks[i].size, ept->xend,   ept->ystart, col);
+		va->AddVertexQTC(sparks[i].pos + camera->GetRight() * sparks[i].size + camera->GetUp() * sparks[i].size, ept->xend,   ept->yend,   col);
+		va->AddVertexQTC(sparks[i].pos - camera->GetRight() * sparks[i].size + camera->GetUp() * sparks[i].size, ept->xstart, ept->yend,   col);
 		#undef ept
 	}
 
@@ -75,10 +75,10 @@ void CFireBallProjectile::Draw()
 		col[1] = (maxCol - i) * 15;
 		col[2] = (maxCol - i) * 10;
 		#define dgt projectileDrawer->dguntex
-		va->AddVertexQTC(interPos - camera->right * size - camera->up * size, dgt->xstart, dgt->ystart, col);
-		va->AddVertexQTC(interPos + camera->right * size - camera->up * size, dgt->xend ,  dgt->ystart, col);
-		va->AddVertexQTC(interPos + camera->right * size + camera->up * size, dgt->xend ,  dgt->yend,   col);
-		va->AddVertexQTC(interPos  -camera->right * size + camera->up * size, dgt->xstart, dgt->yend,   col);
+		va->AddVertexQTC(interPos - camera->GetRight() * size - camera->GetUp() * size, dgt->xstart, dgt->ystart, col);
+		va->AddVertexQTC(interPos + camera->GetRight() * size - camera->GetUp() * size, dgt->xend ,  dgt->ystart, col);
+		va->AddVertexQTC(interPos + camera->GetRight() * size + camera->GetUp() * size, dgt->xend ,  dgt->yend,   col);
+		va->AddVertexQTC(interPos  -camera->GetRight() * size + camera->GetUp() * size, dgt->xstart, dgt->yend,   col);
 		#undef dgt
 		interPos = interPos - speed * 0.5f;
 	}
@@ -141,4 +141,11 @@ void CFireBallProjectile::Collision()
 {
 	CWeaponProjectile::Collision();
 	deleteMe = false;
+}
+
+int CFireBallProjectile::GetProjectilesCount() const
+{
+	int numSparks = sparks.size();
+	int numFire = std::min(10, numSparks);
+	return (numSparks + numFire);
 }

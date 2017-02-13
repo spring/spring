@@ -111,6 +111,7 @@ class LuaSyncedRead {
 		static int GetUnitPosErrorParams(lua_State* L);
 		static int GetUnitHeight(lua_State* L);
 		static int GetUnitRadius(lua_State* L);
+		static int GetUnitMass(lua_State* L);
 		static int GetUnitPosition(lua_State* L);
 		static int GetUnitBasePosition(lua_State* L);
 		static int GetUnitVectors(lua_State* L);
@@ -127,7 +128,9 @@ class LuaSyncedRead {
 		static int GetUnitIsTransporting(lua_State* L);
 		static int GetUnitShieldState(lua_State* L);
 		static int GetUnitFlanking(lua_State* L);
+		static int GetUnitMaxRange(lua_State* L);
 		static int GetUnitWeaponState(lua_State* L);
+		static int GetUnitWeaponDamages(lua_State* L);
 		static int GetUnitWeaponVectors(lua_State* L);
 		static int GetUnitWeaponTryTarget(lua_State* L);
 		static int GetUnitWeaponTestTarget(lua_State* L);
@@ -162,6 +165,7 @@ class LuaSyncedRead {
 
 		static int GetUnitLosState(lua_State* L);
 		static int GetUnitSeparation(lua_State* L);
+		static int GetUnitFeatureSeparation(lua_State* L);
 		static int GetUnitDefDimensions(lua_State* L);
 
 		static int GetAllFeatures(lua_State* L);
@@ -173,7 +177,10 @@ class LuaSyncedRead {
 		static int GetFeatureHealth(lua_State* L);
 		static int GetFeatureHeight(lua_State* L);
 		static int GetFeatureRadius(lua_State* L);
+		static int GetFeatureMass(lua_State* L);
 		static int GetFeaturePosition(lua_State* L);
+		static int GetFeatureSeparation(lua_State* L);
+		static int GetFeatureRotation(lua_State* L);
 		static int GetFeatureDirection(lua_State* L);
 		static int GetFeatureVelocity(lua_State* L);
 		static int GetFeatureHeading(lua_State* L);
@@ -181,7 +188,12 @@ class LuaSyncedRead {
 		static int GetFeatureBlocking(lua_State* L);
 		static int GetFeatureNoSelect(lua_State* L);
 		static int GetFeatureResurrect(lua_State* L);
+		static int GetFeatureLastAttackedPiece(lua_State* L);
 		static int GetFeatureCollisionVolumeData(lua_State* L);
+		static int GetFeaturePieceCollisionVolumeData(lua_State* L);
+
+		static int GetFeatureRulesParam(lua_State* L);
+		static int GetFeatureRulesParams(lua_State* L);
 
 		static int GetProjectilePosition(lua_State* L);
 		static int GetProjectileDirection(lua_State* L);
@@ -192,8 +204,13 @@ class LuaSyncedRead {
 		static int GetProjectileSpinVec(lua_State* L); // DEPRECATED
 		static int GetPieceProjectileParams(lua_State* L);
 		static int GetProjectileTarget(lua_State* L);
+		static int GetProjectileIsIntercepted(lua_State* L);
+		static int GetProjectileTimeToLive(lua_State* L);
+		static int GetProjectileOwnerID(lua_State* L);
+		static int GetProjectileTeamID(lua_State* L);
 		static int GetProjectileType(lua_State* L);
 		static int GetProjectileDefID(lua_State* L);
+		static int GetProjectileDamages(lua_State* L);
 		static int GetProjectileName(lua_State* L); // DEPRECATE ME?
 
 		static int GetGroundHeight(lua_State* L);
@@ -214,6 +231,10 @@ class LuaSyncedRead {
 		static int IsPosInLos(lua_State* L);
 		static int IsPosInRadar(lua_State* L);
 		static int IsPosInAirLos(lua_State* L);
+		static int IsUnitInLos(lua_State* L);
+		static int IsUnitInAirLos(lua_State* L);
+		static int IsUnitInRadar(lua_State* L);
+		static int IsUnitInJammer(lua_State* L);
 		static int GetClosestValidPosition(lua_State* L);
 
 		static int GetUnitPieceMap(lua_State* L);
@@ -223,20 +244,24 @@ class LuaSyncedRead {
 		static int GetUnitPieceDirection(lua_State* L);
 		static int GetUnitPiecePosDir(lua_State* L);
 		static int GetUnitPieceMatrix(lua_State* L);
+
 		static int GetUnitScriptPiece(lua_State* L);
 		static int GetUnitScriptNames(lua_State* L);
 
+		static int GetFeaturePieceMap(lua_State* L);
+		static int GetFeaturePieceList(lua_State* L);
+		static int GetFeaturePieceInfo(lua_State* L);
+		static int GetFeaturePiecePosition(lua_State* L);
+		static int GetFeaturePieceDirection(lua_State* L);
+		static int GetFeaturePiecePosDir(lua_State* L);
+		static int GetFeaturePieceMatrix(lua_State* L);
+
 		static int GetRadarErrorParams(lua_State* L);
 
-		static int TraceRay(lua_State* L);           // not implemented
-		static int TraceRayUnits(lua_State* L);      // not implemented
-		static int TraceRayFeatures(lua_State* L);   // not implemented
-		static int TraceRayGround(lua_State* L);     // not implemented
-
-		static int GetCOBUnitVar(lua_State* L);
-		static int GetCOBTeamVar(lua_State* L);
-		static int GetCOBAllyTeamVar(lua_State* L);
-		static int GetCOBGlobalVar(lua_State* L);
+		static int TraceRay(lua_State* L);           //TODO: not implemented
+		static int TraceRayUnits(lua_State* L);      //TODO: not implemented
+		static int TraceRayFeatures(lua_State* L);   //TODO: not implemented
+		static int TraceRayGround(lua_State* L);     //TODO: not implemented
 };
 
 #endif /* LUA_SYNCED_READ_H */

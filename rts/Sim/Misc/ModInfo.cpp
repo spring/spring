@@ -3,20 +3,85 @@
 
 #include "ModInfo.h"
 
-#include "Game/GameSetup.h"
 #include "Lua/LuaParser.h"
 #include "Lua/LuaSyncedRead.h"
-#include "Sim/Units/Unit.h"
-#include "Sim/Units/UnitTypes/Builder.h"
 #include "System/Log/ILog.h"
-#include "System/Config/ConfigHandler.h"
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/Exceptions.h"
-#include "System/GlobalConfig.h"
 #include "System/myMath.h"
 
 CModInfo modInfo;
 
+void CModInfo::ResetState()
+{
+	filename.clear();
+	humanName.clear();
+	humanNameVersioned.clear();
+	shortName.clear();
+	version.clear();
+	mutator.clear();
+	description.clear();
+
+	allowDirectionalPathing   = true;
+	allowAircraftToLeaveMap   = true;
+	allowAircraftToHitGround  = true;
+	allowPushingEnemyUnits    = false;
+	allowCrushingAlliedUnits  = false;
+	allowUnitCollisionDamage  = false;
+	allowUnitCollisionOverlap = true;
+	allowGroundUnitGravity    = true;
+	allowHoverUnitStrafing    = true;
+
+	constructionDecay      = true;
+	constructionDecayTime  = 1000;
+	constructionDecaySpeed = 1.0f;
+
+	multiReclaim                   = 1;
+	reclaimMethod                  = 1;
+	reclaimUnitMethod              = 1;
+	reclaimUnitEnergyCostFactor    = 0.0f;
+	reclaimUnitEfficiency          = 1.0f;
+	reclaimFeatureEnergyCostFactor = 0.0f;
+	reclaimAllowEnemies            = true;
+	reclaimAllowAllies             = true;
+
+	repairEnergyCostFactor    = 0.0f;
+	resurrectEnergyCostFactor = 0.5f;
+	captureEnergyCostFactor   = 0.0f;
+
+	unitExpMultiplier  = 0.0f;
+	unitExpPowerScale  = 0.0f;
+	unitExpHealthScale = 0.0f;
+	unitExpReloadScale = 0.0f;
+
+	paralyzeOnMaxHealth = true;
+
+	transportGround            = 1;
+	transportHover             = 0;
+	transportShip              = 0;
+	transportAir               = 0;
+	targetableTransportedUnits = 0;
+
+	fireAtKilled   = 1;
+	fireAtCrashing = 1;
+
+	flankingBonusModeDefault = 0;
+
+	losMipLevel = 0;
+	airMipLevel = 0;
+	radarMipLevel = 0;
+
+	requireSonarUnderWater = true;
+	alwaysVisibleOverridesCloaked = false;
+	separateJammers = true;
+
+	featureVisibility = FEATURELOS_NONE;
+
+	pathFinderSystem = PFS_TYPE_DEFAULT;
+	pfUpdateRate     = 0.0f;
+
+	allowTake = true;
+}
 
 void CModInfo::Init(const char* modArchive)
 {
@@ -49,14 +114,18 @@ void CModInfo::Init(const char* modArchive)
 	{
 		// system
 		const LuaTable& system = root.SubTable("system");
-		pathFinderSystem = system.GetInt("pathFinderSystem", PFS_TYPE_DEFAULT) % PFS_NUM_TYPES;
 
+		pathFinderSystem = system.GetInt("pathFinderSystem", PFS_TYPE_DEFAULT) % PFS_NUM_TYPES;
+		pfUpdateRate = system.GetFloat("pathFinderUpdateRate", 0.007f);
+
+		allowTake = system.GetBool("allowTake", true);
 	}
 
 	{
 		// movement
 		const LuaTable& movementTbl = root.SubTable("movement");
 
+		allowDirectionalPathing = movementTbl.GetBool("allowDirectionalPathing", true);
 		allowAircraftToLeaveMap = movementTbl.GetBool("allowAirPlanesToLeaveMap", true);
 		allowAircraftToHitGround = movementTbl.GetBool("allowAircraftToHitGround", true);
 		allowPushingEnemyUnits = movementTbl.GetBool("allowPushingEnemyUnits", false);
@@ -65,7 +134,6 @@ void CModInfo::Init(const char* modArchive)
 		allowUnitCollisionOverlap = movementTbl.GetBool("allowUnitCollisionOverlap", true);
 		allowGroundUnitGravity = movementTbl.GetBool("allowGroundUnitGravity", true);
 		allowHoverUnitStrafing = movementTbl.GetBool("allowHoverUnitStrafing", (pathFinderSystem == PFS_TYPE_QTPFS));
-		useClassicGroundMoveType = movementTbl.GetBool("useClassicGroundMoveType", false);
 	}
 
 	{
@@ -139,10 +207,10 @@ void CModInfo::Init(const char* modArchive)
 		// experience
 		const LuaTable& experienceTbl = root.SubTable("experience");
 
-		CUnit::SetExpMultiplier (experienceTbl.GetFloat("experienceMult", 1.0f));
-		CUnit::SetExpPowerScale (experienceTbl.GetFloat("powerScale",  1.0f));
-		CUnit::SetExpHealthScale(experienceTbl.GetFloat("healthScale", 0.7f));
-		CUnit::SetExpReloadScale(experienceTbl.GetFloat("reloadScale", 0.4f));
+		unitExpMultiplier  = experienceTbl.GetFloat("experienceMult", 1.0f);
+		unitExpPowerScale  = experienceTbl.GetFloat(    "powerScale", 1.0f);
+		unitExpHealthScale = experienceTbl.GetFloat(   "healthScale", 0.7f);
+		unitExpReloadScale = experienceTbl.GetFloat(   "reloadScale", 0.4f);
 	}
 
 	{
@@ -165,19 +233,27 @@ void CModInfo::Init(const char* modArchive)
 		const LuaTable& los = sensors.SubTable("los");
 
 		requireSonarUnderWater = sensors.GetBool("requireSonarUnderWater", true);
+		alwaysVisibleOverridesCloaked = sensors.GetBool("alwaysVisibleOverridesCloaked", false);
+		separateJammers = sensors.GetBool("separateJammers", true);
 
 		// losMipLevel is used as index to readMap->mipHeightmaps,
 		// so the max value is CReadMap::numHeightMipMaps - 1
 		losMipLevel = los.GetInt("losMipLevel", 1);
-		losMul = los.GetFloat("losMul", 1.0f);
+
 		// airLosMipLevel doesn't have such restrictions, it's just used in various
 		// bitshifts with signed integers
-		airMipLevel = los.GetInt("airMipLevel", 2);
-		airLosMul = los.GetFloat("airLosMul", 1.0f);
+		airMipLevel = los.GetInt("airMipLevel", 1);
+
+		radarMipLevel = los.GetInt("radarMipLevel", 2);
 
 		if ((losMipLevel < 0) || (losMipLevel > 6)) {
 			throw content_error("Sensors\\Los\\LosMipLevel out of bounds. "
 				                "The minimum value is 0. The maximum value is 6.");
+		}
+
+		if ((radarMipLevel < 0) || (radarMipLevel > 6)) {
+			throw content_error("Sensors\\Los\\RadarMipLevel out of bounds. "
+						"The minimum value is 0. The maximum value is 6.");
 		}
 
 		if ((airMipLevel < 0) || (airMipLevel > 30)) {

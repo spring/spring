@@ -7,8 +7,7 @@
 #include <sstream>
 #include <map>
 
-#include <boost/function.hpp>
-#include <boost/bind.hpp>
+#include <functional>
 
 #include "ConfigVariable.h"
 #include "System/Util.h"
@@ -51,7 +50,7 @@ public:
 	void NotifyOnChange(T* observer)
 	{
 		// issues: still needs to call configHandler->Get() on startup, automate it
-		AddObserver(boost::bind(&T::ConfigNotify, observer, _1, _2), (void*)observer);
+		AddObserver(std::bind(&T::ConfigNotify, observer, std::placeholders::_1, std::placeholders::_2), (void*)observer);
 	}
 
 	template<class T>
@@ -132,6 +131,12 @@ public:
 	virtual const std::map<std::string, std::string> GetData() const = 0;
 
 	/**
+	 * @brief Get a map containing all key value pairs, which aren't default values
+	 * @note This excludes default values!
+	 */
+	virtual std::map<std::string, std::string> GetDataWithoutDefaults() const = 0;
+
+	/**
 	 * @brief Calls observers if config values changed
 	 */
 	virtual void Update() = 0;
@@ -142,7 +147,7 @@ public:
 	virtual void EnableWriting(bool write) = 0;
 
 protected:
-	typedef boost::function<void(const std::string&, const std::string&)> ConfigNotifyCallback;
+	typedef std::function<void(const std::string&, const std::string&)> ConfigNotifyCallback;
 
 	virtual void AddObserver(ConfigNotifyCallback observer, void* holder) = 0;
 	virtual void RemoveObserver(void* holder) = 0;

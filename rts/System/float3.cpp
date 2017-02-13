@@ -3,19 +3,13 @@
 #include "System/float3.h"
 #include "System/creg/creg_cond.h"
 #include "System/myMath.h"
-#include <cmath> // std::min, std::max, std::fabs
 
-CR_BIND(float3, );
-CR_REG_METADATA(float3, (CR_MEMBER(x), CR_MEMBER(y), CR_MEMBER(z)));
+CR_BIND(float3, )
+CR_REG_METADATA(float3, (CR_MEMBER(x), CR_MEMBER(y), CR_MEMBER(z)))
 
 //! gets initialized later when the map is loaded
 float float3::maxxpos = -1.0f;
 float float3::maxzpos = -1.0f;
-
-#if (__cplusplus <= 199711L) && !defined(__GXX_EXPERIMENTAL_CXX0X__) && (!defined(__GNUC__) || defined (__clang__))
-const float float3::CMP_EPS = 1e-4f;
-const float float3::NORMALIZE_EPS = 1e-12f;
-#endif
 
 bool float3::IsInBounds() const
 {
@@ -64,5 +58,10 @@ float3 float3::max(const float3 v1, const float3 v2)
 float3 float3::fabs(const float3 v)
 {
 	return float3(std::fabs(v.x), std::fabs(v.y), std::fabs(v.z));
+}
+
+bool float3::equals(const float3& f, const float3& eps) const
+{
+	return (epscmp(x, f.x, eps.x) && epscmp(y, f.y, eps.y) && epscmp(z, f.z, eps.z));
 }
 

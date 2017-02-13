@@ -1,5 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include <cinttypes>
+
 #include "Game/Game.h"
 #include "GameServer.h"
 
@@ -22,8 +24,10 @@
 #include "Game/UI/MouseHandler.h"
 #include "Lua/LuaHandle.h"
 #include "Rendering/GlobalRendering.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Path/IPathManager.h"
+#include "Sim/Units/UnitHandler.h"
 #include "System/EventHandler.h"
 #include "System/GlobalConfig.h"
 #include "System/Log/ILog.h"
@@ -34,26 +38,24 @@
 #include "System/Net/UnpackPacket.h"
 #include "System/Sound/ISound.h"
 
-#include <boost/cstdint.hpp>
-
 #define LOG_SECTION_NET "Net"
 LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_NET)
 
-
-static std::map<int, unsigned int> mySyncChecksums;
+static spring::unordered_map<int, unsigned int> localSyncChecksums;
 
 
 void CGame::AddTraffic(int playerID, int packetCode, int length)
 {
-	std::map<int, PlayerTrafficInfo>::iterator it = playerTraffic.find(playerID);
+	auto it = playerTraffic.find(playerID);
 	if (it == playerTraffic.end()) {
 		playerTraffic[playerID] = PlayerTrafficInfo();
 		it = playerTraffic.find(playerID);
 	}
+
 	PlayerTrafficInfo& pti = it->second;
 	pti.total += length;
 
-	std::map<int, int>::iterator cit = pti.packets.find(packetCode);
+	auto cit = pti.packets.find(packetCode);
 	if (cit == pti.packets.end()) {
 		pti.packets[packetCode] = length;
 	} else {
@@ -69,15 +71,15 @@ void CGame::SendClientProcUsage()
 		lastProcUsageUpdateTime = spring_gettime();
 
 		if (playing) {
-			const float simProcUsage = (profiler.GetPercent("SimFrame"));
-			const float drawProcUsage = (profiler.GetPercent("GameController::Draw") / std::max(1.0f, globalRendering->FPS)) * gu->minFPS;
+			const float simProcUsage = (profiler.GetPercent("Sim"));
+			const float drawProcUsage = (profiler.GetPercent("Draw") / std::max(1.0f, globalRendering->FPS)) * gu->minFPS;
 			const float totalProcUsage = simProcUsage + drawProcUsage;
 
 			// take the minimum drawframes into account, too
-			net->Send(CBaseNetProtocol::Get().SendCPUUsage(totalProcUsage));
+			clientNet->Send(CBaseNetProtocol::Get().SendCPUUsage(totalProcUsage));
 		} else {
 			// the CPU-load percentage is undefined prior to SimFrame()
-			net->Send(CBaseNetProtocol::Get().SendCPUUsage(0.0f));
+			clientNet->Send(CBaseNetProtocol::Get().SendCPUUsage(0.0f));
 		}
 	}
 }
@@ -87,12 +89,12 @@ unsigned int CGame::GetNumQueuedSimFrameMessages(unsigned int maxFrames) const
 {
 	// read ahead to find number of NETMSG_XXXFRAMES we still have to process
 	// this number is effectively a measure of current user network conditions
-	boost::shared_ptr<const netcode::RawPacket> packet;
+	std::shared_ptr<const netcode::RawPacket> packet;
 
 	unsigned int numQueuedFrames = 0;
 	unsigned int packetPeekIndex = 0;
 
-	while ((packet = net->Peek(packetPeekIndex))) {
+	while ((packet = clientNet->Peek(packetPeekIndex))) {
 		switch (packet->data[0]) {
 			case NETMSG_GAME_FRAME_PROGRESS: {
 				// this special packet skips queue entirely, so gets processed here
@@ -103,7 +105,7 @@ unsigned int CGame::GetNumQueuedSimFrameMessages(unsigned int maxFrames) const
 				// send the event to lua call-in
 				eventHandler.GameProgress(*(int*)(packet->data + 1));
 				// pop it out of the net buffer
-				net->DeleteBufferPacketAt(packetPeekIndex);
+				clientNet->DeleteBufferPacketAt(packetPeekIndex);
 			} break;
 
 			case NETMSG_NEWFRAME:
@@ -231,7 +233,7 @@ void CGame::ClientReadNet()
 		lastNetPacketProcessTime = spring_gettime();
 
 		// get netpacket from the queue
-		boost::shared_ptr<const netcode::RawPacket> packet = net->GetData(gs->frameNum);
+		std::shared_ptr<const netcode::RawPacket> packet = clientNet->GetData(gs->frameNum);
 
 		if (!packet) {
 			// LOG_SL(LOG_SECTION_NET, L_DEBUG, "Run out of netpackets!");
@@ -255,7 +257,7 @@ void CGame::ClientReadNet()
 
 					GameEnd(std::vector<unsigned char>());
 					AddTraffic(-1, packetCode, dataLength);
-					net->Close(true);
+					clientNet->Close(true);
 				} catch (const netcode::UnpackPacketException& ex) {
 					LOG_L(L_ERROR, "Got invalid QuitMessage: %s", ex.what());
 				}
@@ -296,11 +298,9 @@ void CGame::ClientReadNet()
 				CPlayer* player = playerHandler->Player(playerNum);
 				player->currentStats = *reinterpret_cast<const PlayerStatistics*>(&inbuf[2]);
 
-				if (gameOver) {
-					CDemoRecorder* record = net->GetDemoRecorder();
-					if (record != NULL) {
-						record->SetPlayerStats(playerNum, player->currentStats);
-					}
+				CDemoRecorder* record = clientNet->GetDemoRecorder();
+				if (record != NULL) {
+					record->SetPlayerStats(playerNum, player->currentStats);
 				}
 				AddTraffic(playerNum, packetCode, dataLength);
 				break;
@@ -351,15 +351,16 @@ void CGame::ClientReadNet()
 			}
 
 			case NETMSG_PLAYERINFO: {
-				const unsigned char player = inbuf[1];
-				if (!playerHandler->IsValidPlayer(player)) {
-					LOG_L(L_ERROR, "Got invalid player num %i in playerinfo msg", player);
+				const unsigned char playerId = inbuf[1];
+				if (!playerHandler->IsValidPlayer(playerId)) {
+					LOG_L(L_ERROR, "Got invalid player num %i in playerinfo msg", playerId);
 					break;
 				}
-				playerHandler->Player(player)->cpuUsage = *(float*) &inbuf[2];
-				playerHandler->Player(player)->ping = *(boost::uint32_t*) &inbuf[6];
+				CPlayer* p  = playerHandler->Player(playerId);
+				p->cpuUsage =           *(float*) &inbuf[2];
+				p->ping     = *(std::uint32_t*) &inbuf[6];
 
-				AddTraffic(player, packetCode, dataLength);
+				AddTraffic(playerId, packetCode, dataLength);
 				break;
 			}
 
@@ -411,28 +412,28 @@ void CGame::ClientReadNet()
 			case NETMSG_STARTPOS: {
 				const unsigned char playerID = inbuf[1];
 				const unsigned int teamID = inbuf[2];
-				const unsigned char rdyState = inbuf[3];
 
 				if (!playerHandler->IsValidPlayer(playerID) && playerID != SERVER_PLAYER) {
 					LOG_L(L_ERROR, "Got invalid player num %i in start pos msg", playerID);
 					break;
 				}
-
 				if (!teamHandler->IsValidTeam(teamID)) {
 					LOG_L(L_ERROR, "Got invalid team num %i in startpos msg", teamID);
-				} else {
-					float3 rawPickPos(*(float*) &inbuf[4], *(float*) &inbuf[8], *(float*) &inbuf[12]);
-					float3 clampedPos(rawPickPos);
+					break;
+				}
 
-					CTeam* team = teamHandler->Team(teamID);
-					team->ClampStartPosInStartBox(&clampedPos);
+				const unsigned char rdyState = inbuf[3];
+				float3 rawPickPos(*(float*) &inbuf[4], *(float*) &inbuf[8], *(float*) &inbuf[12]);
+				float3 clampedPos(rawPickPos);
 
-					if (eventHandler.AllowStartPosition(playerID, rdyState, clampedPos, rawPickPos)) {
-						team->SetStartPos(clampedPos);
+				CTeam* team = teamHandler->Team(teamID);
+				team->ClampStartPosInStartBox(&clampedPos);
 
-						if (playerID != SERVER_PLAYER) {
-							playerHandler->Player(playerID)->SetReadyToStart(rdyState != CPlayer::PLAYER_RDYSTATE_UPDATED);
-						}
+				if (eventHandler.AllowStartPosition(playerID, rdyState, clampedPos, rawPickPos)) {
+					team->SetStartPos(clampedPos);
+
+					if (playerID != SERVER_PLAYER) {
+						playerHandler->Player(playerID)->SetReadyToStart(rdyState != CPlayer::PLAYER_RDYSTATE_UPDATED);
 					}
 				}
 
@@ -441,14 +442,14 @@ void CGame::ClientReadNet()
 			}
 
 			case NETMSG_RANDSEED: {
-				gs->SetRandSeed(*((unsigned int*)&inbuf[1]), true);
+				gsRNG.SetSeed(*((unsigned int*)&inbuf[1]), true);
 				AddTraffic(-1, packetCode, dataLength);
 				break;
 			}
 
 			case NETMSG_GAMEID: {
 				const unsigned char* p = &inbuf[1];
-				CDemoRecorder* record = net->GetDemoRecorder();
+				CDemoRecorder* record = clientNet->GetDemoRecorder();
 				if (record != NULL) {
 					record->SetGameID(p);
 				}
@@ -470,20 +471,24 @@ void CGame::ClientReadNet()
 					break;
 				}
 
-				const boost::uint32_t playerCheckSum = *(boost::uint32_t*) &inbuf[2];
-				const boost::uint32_t localCheckSum = pathManager->GetPathCheckSum();
+				const std::uint32_t playerCheckSum = *(std::uint32_t*) &inbuf[2];
+				const std::uint32_t localCheckSum = pathManager->GetPathCheckSum();
+
 				const CPlayer* player = playerHandler->Player(playerNum);
 
+				const char* pName = player->name.c_str();
+				const char* pType = player->IsSpectator()? "spectator": "player";
+				const char* fmtStrs[2] = {
+					"[DESYNC WARNING] path-checksum for %s %d (%s) is 0; non-writable PathEstimator-cache?",
+					"[DESYNC WARNING] path-checksum %08x for %s %d (%s) does not match local checksum %08x; stale PathEstimator-cache?",
+				};
+
+				// XXX maybe use a "Desync" section here?
 				if (playerCheckSum == 0) {
-					LOG_L(L_WARNING, // XXX maybe use a "Desync" section here?
-							"[DESYNC WARNING] path-checksum for player %d (%s) is 0; non-writable PathEstimator-cache?",
-							playerNum, player->name.c_str());
+					LOG_L(L_WARNING, fmtStrs[0], pType, playerNum, pName);
 				} else {
 					if (playerCheckSum != localCheckSum) {
-						LOG_L(L_WARNING, // XXX maybe use a "Desync" section here?
-								"[DESYNC WARNING] path-checksum %08x for player %d (%s)"
-								" does not match local checksum %08x; stale PathEstimator-cache?",
-								playerCheckSum, playerNum, player->name.c_str(), localCheckSum);
+						LOG_L(L_WARNING, fmtStrs[1], playerCheckSum, pType, playerNum, pName, localCheckSum);
 					}
 				}
 			} break;
@@ -497,7 +502,7 @@ void CGame::ClientReadNet()
 				}
 
 				// fall-through and run SimFrame() iff this message really came from the server
-				net->Send(CBaseNetProtocol::Get().SendKeyFrame(serverFrameNum));
+				clientNet->Send(CBaseNetProtocol::Get().SendKeyFrame(serverFrameNum));
 			}
 			case NETMSG_NEWFRAME: {
 				msgProcTimeLeft -= 1000.0f;
@@ -509,11 +514,11 @@ void CGame::ClientReadNet()
 				// both NETMSG_SYNCRESPONSE and NETMSG_NEWFRAME are used for ping calculation by server
 				ASSERT_SYNCED(gs->frameNum);
 				ASSERT_SYNCED(CSyncChecker::GetChecksum());
-				net->Send(CBaseNetProtocol::Get().SendSyncResponse(gu->myPlayerNum, gs->frameNum, CSyncChecker::GetChecksum()));
+				clientNet->Send(CBaseNetProtocol::Get().SendSyncResponse(gu->myPlayerNum, gs->frameNum, CSyncChecker::GetChecksum()));
 
 				if (gameServer != NULL && gameServer->GetDemoReader() != NULL) {
 					// buffer all checksums, so we can check sync later between demo & local
-					mySyncChecksums[gs->frameNum] = CSyncChecker::GetChecksum();
+					localSyncChecksums[gs->frameNum] = CSyncChecker::GetChecksum();
 				}
 
 				if ((gs->frameNum & 4095) == 0) {
@@ -523,14 +528,11 @@ void CGame::ClientReadNet()
 #endif
 				AddTraffic(-1, packetCode, dataLength);
 
-				if (videoCapturing->IsCapturing()) {
-					return;
-				}
 			} break;
 
 			case NETMSG_SYNCRESPONSE: {
 #if (defined(SYNCCHECK))
-				if (gameServer != NULL && gameServer->GetDemoReader() != NULL) {
+				if (gameServer != nullptr && gameServer->GetDemoReader() != nullptr) {
 					// NOTE:
 					//   this packet is also sent during live games,
 					//   during which we should just ignore it (the
@@ -538,14 +540,10 @@ void CGame::ClientReadNet()
 					netcode::UnpackPacket pckt(packet, 1);
 
 					unsigned char playerNum; pckt >> playerNum;
-						  int  frameNum; pckt >> frameNum;
+					          int  frameNum; pckt >> frameNum;
 					unsigned  int  checkSum; pckt >> checkSum;
 
-					const unsigned int ourCheckSum = mySyncChecksums[frameNum];
-
-					const char* fmtStr =
-						"[DESYNC_WARNING] checksum %x from player %d (%s)"
-						" does not match our checksum %x for frame-number %d";
+					const unsigned int ourCheckSum = localSyncChecksums[frameNum];
 					const CPlayer* player = playerHandler->Player(playerNum);
 
 					// check if our checksum for this frame matches what
@@ -554,7 +552,11 @@ void CGame::ClientReadNet()
 					if (playerNum == gu->myPlayerNum) { break; }
 					if (checkSum == ourCheckSum) { break; }
 
-					LOG_L(L_ERROR, fmtStr, checkSum, playerNum, player->name.c_str(), ourCheckSum, frameNum);
+					const char* pName = player->name.c_str();
+					const char* pType = player->IsSpectator()? "spectator": "player";
+					const char* fmtStr = "[DESYNC WARNING] checksum %x from demo %s %d (%s) does not match our checksum %x for frame-number %d";
+
+					LOG_L(L_ERROR, fmtStr, checkSum, pType, playerNum, pName, ourCheckSum, frameNum);
 				}
 #endif
 			} break;
@@ -770,38 +772,50 @@ void CGame::ClientReadNet()
 					const int fixedLen = (1 + sizeof(short) + 3 + (2 * sizeof(float)));
 					const int variableLen = numBytes - fixedLen;
 					const int numUnitIDs = variableLen / sizeof(short); // each unitID is two bytes
-					unsigned char srcTeam;
-					pckt >> srcTeam;
-					unsigned char dstTeam;
-					pckt >> dstTeam;
+					unsigned char srcTeamID;
+					pckt >> srcTeamID;
+					unsigned char dstTeamID;
+					pckt >> dstTeamID;
 					float metalShare;
 					pckt >> metalShare;
 					float energyShare;
 					pckt >> energyShare;
+					CTeam* srcTeam = teamHandler->Team(srcTeamID);
+					CTeam* dstTeam = teamHandler->Team(dstTeamID);
 
 					if (metalShare > 0.0f) {
-						if (eventHandler.AllowResourceTransfer(srcTeam, dstTeam, "m", metalShare)) {
-							teamHandler->Team(srcTeam)->metal -= metalShare;
-							teamHandler->Team(dstTeam)->metal += metalShare;
+						if (eventHandler.AllowResourceTransfer(srcTeamID, dstTeamID, "m", metalShare)) {
+							srcTeam->res.metal                       -= metalShare;
+							srcTeam->resSent.metal                   += metalShare;
+							srcTeam->GetCurrentStats().metalSent     += metalShare;
+							dstTeam->res.metal                       += metalShare;
+							dstTeam->resReceived.metal               += metalShare;
+							dstTeam->GetCurrentStats().metalReceived += metalShare;
 						}
 					}
 					if (energyShare > 0.0f) {
-						if (eventHandler.AllowResourceTransfer(srcTeam, dstTeam, "e", energyShare)) {
-							teamHandler->Team(srcTeam)->energy -= energyShare;
-							teamHandler->Team(dstTeam)->energy += energyShare;
+						if (eventHandler.AllowResourceTransfer(srcTeamID, dstTeamID, "e", energyShare)) {
+							srcTeam->res.energy                       -= energyShare;
+							srcTeam->resSent.energy                   += energyShare;
+							srcTeam->GetCurrentStats().energySent     += energyShare;
+							dstTeam->res.energy                       += energyShare;
+							dstTeam->resReceived.energy               += energyShare;
+							dstTeam->GetCurrentStats().energyReceived += energyShare;
 						}
 					}
 
 					for (int i = 0, j = fixedLen;  i < numUnitIDs;  i++, j += sizeof(short)) {
 						short int unitID;
 						pckt >> unitID;
-						if (unitID >= unitHandler->MaxUnits() || unitID < 0)
+
+						CUnit* u = unitHandler->GetUnit(unitID);
+
+						if (u == nullptr)
 							throw netcode::UnpackPacketException("Invalid unit ID");
 
-						CUnit* u = unitHandler->units[unitID];
 						// ChangeTeam() handles the AllowUnitTransfer() LuaRule
-						if (u && u->team == srcTeam && !u->beingBuilt) {
-							u->ChangeTeam(dstTeam, CUnit::ChangeGiven);
+						if (u && u->team == srcTeamID && !u->beingBuilt) {
+							u->ChangeTeam(dstTeamID, CUnit::ChangeGiven);
 						}
 					}
 				} catch (const netcode::UnpackPacketException& ex) {
@@ -813,19 +827,19 @@ void CGame::ClientReadNet()
 			case NETMSG_LUAMSG: {
 				try {
 					netcode::UnpackPacket unpack(packet, 1);
-					boost::uint16_t size;
+					std::uint16_t size;
 					unpack >> size;
 					if (size != packet->length)
 						throw netcode::UnpackPacketException("Invalid size");
-					boost::uint8_t playerNum;
+					std::uint8_t playerNum;
 					unpack >> playerNum;
 					if (!playerHandler->IsValidPlayer(playerNum))
 						throw netcode::UnpackPacketException("Invalid player number");
-					boost::uint16_t script;
+					std::uint16_t script;
 					unpack >> script;
-					boost::uint8_t mode;
+					std::uint8_t mode;
 					unpack >> mode;
-					std::vector<boost::uint8_t> data(size - 7);
+					std::vector<std::uint8_t> data(size - 7);
 					unpack >> data;
 
 					CLuaHandle::HandleLuaMsg(playerNum, script, mode, data);
@@ -847,27 +861,27 @@ void CGame::ClientReadNet()
 				const bool shareUnits = !!inbuf[3];
 				CTeam* srcTeam = teamHandler->Team(srcTeamID);
 				CTeam* dstTeam = teamHandler->Team(dstTeamID);
-				const float metalShare  = Clamp(*(float*)&inbuf[4], 0.0f, (float)srcTeam->metal);
-				const float energyShare = Clamp(*(float*)&inbuf[8], 0.0f, (float)srcTeam->energy);
+				const float metalShare  = Clamp(*(float*)&inbuf[4], 0.0f, (float)srcTeam->res.metal);
+				const float energyShare = Clamp(*(float*)&inbuf[8], 0.0f, (float)srcTeam->res.energy);
 
 				if (metalShare > 0.0f) {
 					if (eventHandler.AllowResourceTransfer(srcTeamID, dstTeamID, "m", metalShare)) {
-						srcTeam->metal                       -= metalShare;
-						srcTeam->metalSent                   += metalShare;
-						srcTeam->currentStats->metalSent     += metalShare;
-						dstTeam->metal                       += metalShare;
-						dstTeam->metalReceived               += metalShare;
-						dstTeam->currentStats->metalReceived += metalShare;
+						srcTeam->res.metal                       -= metalShare;
+						srcTeam->resSent.metal                   += metalShare;
+						srcTeam->GetCurrentStats().metalSent     += metalShare;
+						dstTeam->res.metal                       += metalShare;
+						dstTeam->resReceived.metal               += metalShare;
+						dstTeam->GetCurrentStats().metalReceived += metalShare;
 					}
 				}
 				if (energyShare > 0.0f) {
 					if (eventHandler.AllowResourceTransfer(srcTeamID, dstTeamID, "e", energyShare)) {
-						srcTeam->energy                       -= energyShare;
-						srcTeam->energySent                   += energyShare;
-						srcTeam->currentStats->energySent     += energyShare;
-						dstTeam->energy                       += energyShare;
-						dstTeam->energyReceived               += energyShare;
-						dstTeam->currentStats->energyReceived += energyShare;
+						srcTeam->res.energy                       -= energyShare;
+						srcTeam->resSent.energy                   += energyShare;
+						srcTeam->GetCurrentStats().energySent     += energyShare;
+						dstTeam->res.energy                       += energyShare;
+						dstTeam->resReceived.energy               += energyShare;
+						dstTeam->GetCurrentStats().energyReceived += energyShare;
 					}
 				}
 
@@ -889,8 +903,8 @@ void CGame::ClientReadNet()
 						if (unit->isDead)
 							continue;
 						if (unit->beingBuilt)
-							continue; // why?
-						if (unit->IsStunned() || unit->IsCrashing())
+							continue;
+						if (unit->IsCrashing())
 							continue;
 
 						unit->ChangeTeam(dstTeamID, CUnit::ChangeGiven);
@@ -917,10 +931,10 @@ void CGame::ClientReadNet()
 				float energyShare=*(float*)&inbuf[7];
 
 				if (eventHandler.AllowResourceLevel(team, "m", metalShare)) {
-					teamHandler->Team(team)->metalShare = metalShare;
+					teamHandler->Team(team)->resShare.metal = metalShare;
 				}
 				if (eventHandler.AllowResourceLevel(team, "e", energyShare)) {
-					teamHandler->Team(team)->energyShare = energyShare;
+					teamHandler->Team(team)->resShare.energy = energyShare;
 				}
 				AddTraffic(player, packetCode, dataLength);
 				break;
@@ -1273,8 +1287,8 @@ void CGame::ClientReadNet()
 					player.spectator = spectator;
 					player.team = team;
 					player.playerNum = playerNum;
+
 					// add the new player
-					// TODO NETMSG_CREATE_NEWPLAYER perhaps add a lua hook; hook should be able to reassign the player to a team and/or create a new team/allyteam
 					playerHandler->AddPlayer(player);
 					eventHandler.PlayerAdded(player.playerNum);
 
@@ -1284,6 +1298,10 @@ void CGame::ClientReadNet()
 						eventHandler.TeamChanged(player.team);
 					}
 
+					CDemoRecorder* record = clientNet->GetDemoRecorder();
+					if (record != NULL) {
+						record->AddNewPlayer(player.name, playerNum);
+					}
 					AddTraffic(-1, packetCode, dataLength);
 				} catch (const netcode::UnpackPacketException& ex) {
 					LOG_L(L_ERROR, "[Game::%s] invalid NETMSG_CREATE_NEWPLAYER: %s", __FUNCTION__, ex.what());

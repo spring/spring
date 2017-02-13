@@ -6,9 +6,16 @@
 #include <string>
 #include <climits> // for INT_MAX
 
+#ifdef BUILDING_AI
+#include <vector>
+#else
+#include "System/SafeVector.h"
+#endif
+
 #include "System/creg/creg_cond.h"
 #include "System/float3.h"
-#include "System/SafeVector.h"
+
+
 
 // ID's lower than 0 are reserved for build options (cmd -x = unitdefs[x])
 #define CMD_STOP                   0
@@ -96,6 +103,17 @@
 #define CONTROL_KEY     (1 << 6) //  64
 #define ALT_KEY         (1 << 7) // 128
 
+
+#ifdef __GNUC__
+	#define _deprecated __attribute__ ((deprecated))
+#else
+	#define _deprecated
+#endif
+
+#if defined(BUILDING_AI)
+#define CMD_DGUN CMD_MANUALFIRE
+#endif
+
 enum {
 	MOVESTATE_NONE     = -1,
 	MOVESTATE_HOLDPOS  =  0,
@@ -107,24 +125,53 @@ enum {
 	FIRESTATE_HOLDFIRE   =  0,
 	FIRESTATE_RETURNFIRE =  1,
 	FIRESTATE_FIREATWILL =  2,
+	FIRESTATE_FIREATNEUTRAL =  3,
 };
+
+
+
+
+#if (defined(__cplusplus))
+extern "C" {
+#endif
+
+	// this must have C linkage
+	struct RawCommand {
+		int id;
+		int aiCommandId;
+		int timeOut;
+
+		unsigned int numParams;
+
+		/// unique id within a CCommandQueue
+		unsigned int tag;
+
+		/// option bits (RIGHT_MOUSE_KEY, ...)
+		unsigned char options;
+
+		/// command parameters
+		float* params;
+	};
+
+#if (defined(__cplusplus))
+// extern "C"
+};
+#endif
+
+
 
 struct Command
 {
 private:
-	CR_DECLARE_STRUCT(Command);
-/*
-	TODO check if usage of System/MemPool.h for this struct improves performance
-*/
+	CR_DECLARE_STRUCT(Command)
 
 public:
 	Command()
-		: aiCommandId(-1)
-		, options(0)
-		, tag(0)
-		, timeOut(INT_MAX)
-		, id(0)
-	{}
+		: id(0)
+		, aiCommandId(-1)
+	{
+		SetFlags(INT_MAX, 0, 0);
+	}
 
 	Command(const Command& c) {
 		*this = c;
@@ -133,86 +180,100 @@ public:
 	Command& operator = (const Command& c) {
 		id = c.id;
 		aiCommandId = c.aiCommandId;
-		options = c.options;
-		tag = c.tag;
-		timeOut = c.timeOut;
+
+		SetFlags(c.timeOut, c.tag, c.options);
+
 		params = c.params;
 		return *this;
 	}
 
 	Command(const float3& pos)
-		: aiCommandId(-1)
-		, options(0)
-		, tag(0)
-		, timeOut(INT_MAX)
-		, id(0)
+		: id(0)
+		, aiCommandId(-1)
 	{
 		PushPos(pos);
+		SetFlags(INT_MAX, 0, 0);
 	}
 
 	Command(const int cmdID)
-		: aiCommandId(-1)
-		, options(0)
-		, tag(0)
-		, timeOut(INT_MAX)
-		, id(cmdID)
-	{}
+		: id(cmdID)
+		, aiCommandId(-1)
+	{
+		SetFlags(INT_MAX, 0, 0);
+	}
 
 	Command(const int cmdID, const float3& pos)
-		: aiCommandId(-1)
-		, options(0)
-		, tag(0)
-		, timeOut(INT_MAX)
-		, id(cmdID)
+		: id(cmdID)
+		, aiCommandId(-1)
 	{
 		PushPos(pos);
+		SetFlags(INT_MAX, 0, 0);
 	}
 
 	Command(const int cmdID, const unsigned char cmdOptions)
-		: aiCommandId(-1)
-		, options(cmdOptions)
-		, tag(0)
-		, timeOut(INT_MAX)
-		, id(cmdID)
-	{}
+		: id(cmdID)
+		, aiCommandId(-1)
+	{
+		SetFlags(INT_MAX, 0, cmdOptions);
+	}
 
 	Command(const int cmdID, const unsigned char cmdOptions, const float param)
-		: aiCommandId(-1)
-		, options(cmdOptions)
-		, tag(0)
-		, timeOut(INT_MAX)
-		, id(cmdID)
+		: id(cmdID)
+		, aiCommandId(-1)
 	{
 		PushParam(param);
+		SetFlags(INT_MAX, 0, cmdOptions);
 	}
 
 	Command(const int cmdID, const unsigned char cmdOptions, const float3& pos)
-		: aiCommandId(-1)
-		, options(cmdOptions)
-		, tag(0)
-		, timeOut(INT_MAX)
-		, id(cmdID)
+		: id(cmdID)
+		, aiCommandId(-1)
 	{
 		PushPos(pos);
+		SetFlags(INT_MAX, 0, cmdOptions);
 	}
 
 	Command(const int cmdID, const unsigned char cmdOptions, const float param, const float3& pos)
-		: aiCommandId(-1)
-		, options(cmdOptions)
-		, tag(0)
-		, timeOut(INT_MAX)
-		, id(cmdID)
+		: id(cmdID)
+		, aiCommandId(-1)
 	{
 		PushParam(param);
 		PushPos(pos);
+		SetFlags(INT_MAX, 0, cmdOptions);
 	}
 
-	~Command() { params.clear(); }
+
+
+	RawCommand ToRawCommand() {
+		RawCommand rc;
+		rc.id          = id;
+		rc.aiCommandId = aiCommandId;
+		rc.timeOut     = timeOut;
+
+		rc.numParams   = params.size();
+		rc.tag         = tag;
+		rc.options     = options;
+		rc.params      = &params[0];
+		return rc;
+	}
+
+	void FromRawCommand(const RawCommand& rc) {
+		id          = rc.id;
+		aiCommandId = rc.aiCommandId;
+
+		SetFlags(rc.timeOut, rc.tag, rc.options);
+		params.reserve(rc.numParams);
+
+		for (unsigned int n = 0; n < rc.numParams; n++) {
+			PushParam(rc.params[n]);
+		}
+	}
+
 
 	// returns true if the command references another object and
 	// in this case also returns the param index of the object in cpos
 	bool IsObjectCommand(int& cpos) const {
-		const int psize = params.size();
+		const unsigned int psize = params.size();
 
 		switch (id) {
 			case CMD_ATTACK:
@@ -240,7 +301,7 @@ public:
 
 				Command icmd((int)params[1], (unsigned char)params[2]);
 
-				for (int p = 3; p < (int)psize; p++)
+				for (int p = 3; p < psize; p++)
 					icmd.params.push_back(params[p]);
 
 				if (!icmd.IsObjectCommand(cpos))
@@ -251,6 +312,42 @@ public:
 			}
 		}
 		return false;
+	}
+
+	bool IsMoveCommand() const {
+		switch (id) {
+			case CMD_AREA_ATTACK:
+			case CMD_ATTACK:
+			case CMD_CAPTURE:
+			case CMD_FIGHT:
+			case CMD_GUARD:
+			case CMD_LOAD_UNITS:
+			case CMD_MANUALFIRE:
+			case CMD_MOVE:
+			case CMD_PATROL:
+			case CMD_RECLAIM:
+			case CMD_REPAIR:
+			case CMD_RESTORE:
+			case CMD_RESURRECT:
+			case CMD_UNLOAD_UNIT:
+			case CMD_UNLOAD_UNITS:
+				return true;
+
+			case CMD_DEATHWAIT:
+			case CMD_GATHERWAIT:
+			case CMD_SELFD:
+			case CMD_SQUADWAIT:
+			case CMD_STOP:
+			case CMD_TIMEWAIT:
+			case CMD_WAIT:
+				return false;
+
+			default:
+				// build commands are no different from reclaim or repair commands
+				// in that they can require a unit to move, so return true when we
+				// have one
+				return IsBuildCommand();
+		}
 	}
 
 	bool IsAreaCommand() const {
@@ -272,17 +369,13 @@ public:
 	bool IsBuildCommand() const { return (id < 0); }
 
 	void PushParam(float par) { params.push_back(par); }
-	const float& GetParam(size_t idx) const { return params[idx]; }
+	float GetParam(size_t idx) const { return params[idx]; }
 
 	/// const safe_vector<float>& GetParams() const { return params; }
 	const size_t GetParamsCount() const { return params.size(); }
 
-	void SetID(int id) 
-#ifndef _MSC_VER
-		__attribute__ ((deprecated)) 
-#endif
-		{ this->id = id; params.clear(); }
-	const int& GetID() const { return id; }
+	void SetID(int id) _deprecated { this->id = id; params.clear(); }
+	int GetID() const { return id; }
 
 	void PushPos(const float3& pos)
 	{
@@ -307,26 +400,28 @@ public:
 	}
 
 	void SetPos(const int idx, const float3& p) {
+		if (params.size() < 3)
+			params.resize(3);
 		params[idx    ] = p.x;
 		params[idx + 1] = p.y;
 		params[idx + 2] = p.z;
 	}
 
+	void SetFlags(int cmdTimeOut, int cmdTag, int cmdOpts) {
+		timeOut = cmdTimeOut;
+		tag     = cmdTag;
+		options = cmdOpts;
+	}
+
 public:
+	/// CMD_xxx code  (custom codes can also be used)
+	int id;
+
 	/**
 	 * AI Command callback id (passed in on handleCommand, returned
 	 * in CommandFinished event)
 	 */
 	int aiCommandId;
-
-	/// option bits (RIGHT_MOUSE_KEY, ...)
-	unsigned char options;
-
-	/// command parameters
-	safe_vector<float> params;
-
-	/// unique id within a CCommandQueue
-	unsigned int tag;
 
 	/**
 	 * Remove this command after this frame (absolute).
@@ -339,52 +434,18 @@ public:
 	 */
 	int timeOut;
 
-private:
-	/// CMD_xxx code  (custom codes can also be used)
-	int id;
+	/// unique id within a CCommandQueue
+	unsigned int tag;
+
+	/// option bits (RIGHT_MOUSE_KEY, ...)
+	unsigned char options;
+
+	/// command parameters
+	#ifdef BUILDING_AI
+	std::vector<float> params;
+	#else
+	safe_vector<float> params;
+	#endif
 };
-
-
-struct CommandDescription {
-private:
-	CR_DECLARE_STRUCT(CommandDescription);
-
-public:
-	CommandDescription():
-		id(0),
-		type(CMDTYPE_ICON),
-		hidden(false),
-		disabled(false),
-		showUnique(false),
-		onlyTexture(false) {}
-
-	/// CMD_xxx code (custom codes can also be used)
-	int id;
-	/// CMDTYPE_xxx code
-	int type;
-
-	/// command name
-	std::string name;
-	/// the associated command action binding name
-	std::string action;
-	/// button texture
-	std::string iconname;
-	/// mouse cursor
-	std::string mouseicon;
-	/// tooltip text
-	std::string tooltip;
-
-	/// if true dont show a button for the command
-	bool hidden;
-	/// for greying-out commands
-	bool disabled;
-	/// command only applies to single units
-	bool showUnique;
-	/// do not draw the name if the texture is available
-	bool onlyTexture;
-
-	std::vector<std::string> params;
-};
-
 
 #endif // COMMAND_H

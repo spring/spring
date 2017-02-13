@@ -9,15 +9,19 @@ class CWeapon;
 
 class CLightningProjectile : public CWeaponProjectile
 {
-	CR_DECLARE(CLightningProjectile);
+	CR_DECLARE_DERIVED(CLightningProjectile)
 public:
 	CLightningProjectile(const ProjectileParams& params);
 
-	void Update();
-	void Draw();
-	void DrawOnMinimap(CVertexArray& lines, CVertexArray& points);
+	void Update() override;
+	void Draw() override;
+	void DrawOnMinimap(CVertexArray& lines, CVertexArray& points) override;
+
+	virtual int GetProjectilesCount() const override;
 
 private:
+	CLightningProjectile() { }
+
 	float3 color;
 
 	#define displacements_size 10

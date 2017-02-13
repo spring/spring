@@ -1,6 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include <fstream>
+#include <set>
 
 #include "Game/Camera/CameraController.h"
 #include "Game/Camera.h"
@@ -20,18 +21,8 @@
 #include "System/Log/ILog.h"
 #include "System/myMath.h"
 #include "System/FileSystem/DataDirsAccess.h"
-#include <boost/cstdint.hpp>
 
 CSelectionKeyHandler* selectionKeys;
-
-CSelectionKeyHandler::CSelectionKeyHandler()
-	: selectNumber(0)
-{
-}
-
-CSelectionKeyHandler::~CSelectionKeyHandler()
-{
-}
 
 std::string CSelectionKeyHandler::ReadToken(std::string& str)
 {
@@ -112,17 +103,17 @@ namespace
 #define DECLARE_FILTER(name, condition) \
 	DECLARE_FILTER_EX(name, 0, condition, ,)
 
-	DECLARE_FILTER(Builder, unit->unitDef->buildSpeed > 0);
-	DECLARE_FILTER(Building, dynamic_cast<const CBuilding*>(unit) != NULL);
-	DECLARE_FILTER(Transport, unit->unitDef->transportCapacity > 0);
-	DECLARE_FILTER(Aircraft, unit->unitDef->canfly);
-	DECLARE_FILTER(Weapons, !unit->weapons.empty());
-	DECLARE_FILTER(Idle, unit->commandAI->commandQue.empty());
+	DECLARE_FILTER(Builder, unit->unitDef->buildSpeed > 0)
+	DECLARE_FILTER(Building, dynamic_cast<const CBuilding*>(unit) != NULL)
+	DECLARE_FILTER(Transport, unit->unitDef->transportCapacity > 0)
+	DECLARE_FILTER(Aircraft, unit->unitDef->canfly)
+	DECLARE_FILTER(Weapons, !unit->weapons.empty())
+	DECLARE_FILTER(Idle, unit->commandAI->commandQue.empty())
 	DECLARE_FILTER(Waiting, !unit->commandAI->commandQue.empty() &&
-	               (unit->commandAI->commandQue.front().GetID() == CMD_WAIT));
-	DECLARE_FILTER(InHotkeyGroup, unit->group != NULL);
-	DECLARE_FILTER(Radar, unit->radarRadius || unit->sonarRadius || unit->jammerRadius);
-	DECLARE_FILTER(ManualFireUnit, unit->unitDef->canManualFire);
+	               (unit->commandAI->commandQue.front().GetID() == CMD_WAIT))
+	DECLARE_FILTER(InHotkeyGroup, unit->group != NULL)
+	DECLARE_FILTER(Radar, unit->radarRadius || unit->sonarRadius || unit->jammerRadius)
+	DECLARE_FILTER(ManualFireUnit, unit->unitDef->canManualFire)
 
 	DECLARE_FILTER_EX(WeaponRange, 1, unit->maxRange > minRange,
 		float minRange;
@@ -130,7 +121,7 @@ namespace
 			minRange = atof(value.c_str());
 		},
 		minRange=0.0f;
-	);
+	)
 
 	DECLARE_FILTER_EX(AbsoluteHealth, 1, unit->health > minHealth,
 		float minHealth;
@@ -138,7 +129,7 @@ namespace
 			minHealth = atof(value.c_str());
 		},
 		minHealth=0.0f;
-	);
+	)
 
 	DECLARE_FILTER_EX(RelativeHealth, 1, unit->health / unit->maxHealth > minHealth,
 		float minHealth;
@@ -146,25 +137,29 @@ namespace
 			minHealth = atof(value.c_str()) * 0.01f; // convert from percent
 		},
 		minHealth=0.0f;
-	);
+	)
 
 	DECLARE_FILTER_EX(InPrevSel, 0, prevTypes.find(unit->unitDef->id) != prevTypes.end(),
 		std::set<int> prevTypes;
 		void Prepare() {
 			prevTypes.clear();
-			const CUnitSet& tu = selectedUnitsHandler.selectedUnits;
-			for (CUnitSet::const_iterator si = tu.begin(); si != tu.end(); ++si) {
-				prevTypes.insert((*si)->unitDef->id);
+
+			const auto& selUnits = selectedUnitsHandler.selectedUnits;
+
+			for (const int unitID: selUnits) {
+				const CUnit* u = unitHandler->GetUnit(unitID);
+				const UnitDef* ud = u->unitDef;
+				prevTypes.insert(ud->id);
 			}
 		},
-	);
+	)
 
 	DECLARE_FILTER_EX(NameContain, 1, unit->unitDef->humanName.find(name) != std::string::npos,
 		std::string name;
 		void SetParam(int index, const std::string& value) {
 			name = value;
 		},
-	);
+	)
 
 	DECLARE_FILTER_EX(Category, 1, unit->category == cat,
 		unsigned int cat;
@@ -172,7 +167,7 @@ namespace
 			cat = CCategoryHandler::Instance()->GetCategory(value);
 		},
 		cat=0;
-	);
+	)
 //FIXME: std::strtof is in C99 which M$ doesn't bother to support.
 #ifdef _MSC_VER
 	#define STRTOF strtod
@@ -180,9 +175,9 @@ namespace
 	#define STRTOF strtof
 #endif
 
-	DECLARE_FILTER_EX(RulesParamEquals, 2, unit->modParamsMap.find(param) != unit->modParamsMap.end() &&
-			((wantedValueStr.empty()) ? unit->modParams[unit->modParamsMap.find(param)->second].valueInt == wantedValue
-			: unit->modParams[unit->modParamsMap.find(param)->second].valueString == wantedValueStr),
+	DECLARE_FILTER_EX(RulesParamEquals, 2, unit->modParams.find(param) != unit->modParams.end() &&
+			((wantedValueStr.empty()) ? unit->modParams.find(param)->second.valueInt == wantedValue
+			: unit->modParams.find(param)->second.valueString == wantedValueStr),
 		std::string param;
 		float wantedValue;
 		std::string wantedValueStr;
@@ -200,12 +195,12 @@ namespace
 			}
 		},
 		wantedValue=0.0f;
-	);
+	)
 
 #undef DECLARE_FILTER_EX
 #undef DECLARE_FILTER
 #undef STRTOF
-};
+}
 
 
 
@@ -219,32 +214,28 @@ void CSelectionKeyHandler::DoSelection(std::string selectString)
 	if(s=="AllMap"){
 		if (!gu->spectatingFullSelect) {
 			// team units
-			CUnitSet* tu=&teamHandler->Team(gu->myTeam)->units;
-			for(CUnitSet::iterator ui=tu->begin();ui!=tu->end();++ui){
-				selection.push_back(*ui);
+			for(CUnit* unit: teamHandler->Team(gu->myTeam)->units){
+				selection.push_back(unit);
 			}
 		} else {
 			// all units
-			std::list<CUnit*>* au=&unitHandler->activeUnits;
-			for (std::list<CUnit*>::iterator ui=au->begin();ui!=au->end();++ui){
-				selection.push_back(*ui);
+			for (CUnit *unit: unitHandler->activeUnits){
+				selection.push_back(unit);
 			}
 		}
 	} else if(s=="Visible"){
 		if (!gu->spectatingFullSelect) {
 			// team units in viewport
-			CUnitSet* tu=&teamHandler->Team(gu->myTeam)->units;
-			for (CUnitSet::iterator ui=tu->begin();ui!=tu->end();++ui){
-				if (camera->InView((*ui)->midPos,(*ui)->radius)){
-					selection.push_back(*ui);
+			for(CUnit* unit: teamHandler->Team(gu->myTeam)->units){
+				if (camera->InView(unit->midPos,unit->radius)){
+					selection.push_back(unit);
 				}
 			}
 		} else {
 		  // all units in viewport
-			std::list<CUnit*>* au=&unitHandler->activeUnits;
-			for (std::list<CUnit*>::iterator ui=au->begin();ui!=au->end();++ui){
-				if (camera->InView((*ui)->midPos,(*ui)->radius)){
-					selection.push_back(*ui);
+			for (CUnit *unit: unitHandler->activeUnits){
+				if (camera->InView(unit->midPos,unit->radius)){
+					selection.push_back(unit);
 				}
 			}
 		}
@@ -265,33 +256,32 @@ void CSelectionKeyHandler::DoSelection(std::string selectString)
 
 		if (!gu->spectatingFullSelect) {
 		  // team units in mouse range
-			CUnitSet* tu=&teamHandler->Team(gu->myTeam)->units;
-			for(CUnitSet::iterator ui=tu->begin();ui!=tu->end();++ui){
-				float3 up = (*ui)->pos;
+			for(CUnit* unit: teamHandler->Team(gu->myTeam)->units){
+				float3 up = unit->pos;
 				if (cylindrical) {
 					up.y = 0;
 				}
 				if(mp.SqDistance(up) < Square(maxDist)){
-					selection.push_back(*ui);
+					selection.push_back(unit);
 				}
 			}
 		} else {
 		  // all units in mouse range
-			std::list<CUnit*>* au=&unitHandler->activeUnits;
-			for(std::list<CUnit*>::iterator ui=au->begin();ui!=au->end();++ui){
-				float3 up = (*ui)->pos;
+			for(CUnit *unit: unitHandler->activeUnits){
+				float3 up = unit->pos;
 				if (cylindrical) {
 					up.y = 0;
 				}
 				if(mp.SqDistance(up)<Square(maxDist)){
-					selection.push_back(*ui);
+					selection.push_back(unit);
 				}
 			}
 		}
 	} else if(s=="PrevSelection"){
-		CUnitSet* su=&selectedUnitsHandler.selectedUnits;
-		for(CUnitSet::iterator ui=su->begin();ui!=su->end();++ui){
-			selection.push_back(*ui);
+		const auto& selUnits = selectedUnitsHandler.selectedUnits;
+
+		for (const int unitID: selUnits) {
+			selection.push_back(unitHandler->GetUnit(unitID));
 		}
 	} else {
 		LOG_L(L_WARNING, "Unknown source token %s", s.c_str());
@@ -370,20 +360,14 @@ void CSelectionKeyHandler::DoSelection(std::string selectString)
 
 		selectedUnitsHandler.AddUnit(sel);
 		camHandler->CameraTransition(0.8f);
-		if(camHandler->GetCurrentControllerNum() != 0){
+		if (camHandler->GetCurrentControllerNum() != CCameraHandler::CAMERA_MODE_FIRSTPERSON) {
 			camHandler->GetCurrentController().SetPos(sel->pos);
-		} else {	//fps camera
+		} else {
+			//fps camera
+			if (camera->GetRot().x > -1.f)
+				camera->SetRotX(-1.f);
 
-			if(camera->rot.x>-1)
-				camera->rot.x=-1;
-
-			float3 wantedCamDir;
-			wantedCamDir.x=(float)(math::sin(camera->rot.y)*math::cos(camera->rot.x));
-			wantedCamDir.y=(float)(math::sin(camera->rot.x));
-			wantedCamDir.z=(float)(math::cos(camera->rot.y)*math::cos(camera->rot.x));
-			wantedCamDir.ANormalize();
-
-			camHandler->GetCurrentController().SetPos(sel->pos - wantedCamDir*800);
+			camHandler->GetCurrentController().SetPos(sel->pos - camera->GetDir() * 800);
 		}
 	} else if(s=="SelectNum"){
 		ReadDelimiter(selectString);

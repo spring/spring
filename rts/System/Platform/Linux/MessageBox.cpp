@@ -126,4 +126,4 @@ void MsgBox(const std::string& message, const std::string& caption, const unsign
 	}
 }
 
-}; //namespace Platform
+} //namespace Platform

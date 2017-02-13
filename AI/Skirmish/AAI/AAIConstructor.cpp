@@ -1,8 +1,28 @@
+// -------------------------------------------------------------------------
+// AAI
+//
+// A skirmish AI for the Spring engine.
+// Copyright Alexander Seizinger
+//
+// Released under GPL license: see LICENSE.html for more information.
+// -------------------------------------------------------------------------
 
-#include "aidef.h"
+#include <set>
+
 #include "AAI.h"
 #include "AAIConstructor.h"
 #include "AAIBuildTask.h"
+#include "AAIExecute.h"
+#include "AAIBuildTable.h"
+#include "AAIUnitTable.h"
+#include "AAIConfig.h"
+#include "AAIMap.h"
+#include "AAISector.h"
+
+#include "LegacyCpp/UnitDef.h"
+#include "LegacyCpp/CommandQueue.h"
+using namespace springLegacyAI;
+
 
 AAIConstructor::AAIConstructor(AAI *ai, int unit_id, int def_id, bool factory, bool builder, bool assistant)
 {
@@ -87,7 +107,7 @@ void AAIConstructor::Idle()
 
 void AAIConstructor::Update()
 {
-	if(factory)
+	if(factory && buildque != nullptr)
 	{
 		if(!ai->Getbt()->IsValidUnitDefID(construction_def_id) && !buildque->empty())
 		{
@@ -209,7 +229,7 @@ void AAIConstructor::Update()
 
 void AAIConstructor::CheckAssistance()
 {
-	if(factory)
+	if(factory && (buildque != nullptr))
 	{
 		// check if another factory of that type needed
 		if(buildque->size() >= cfg->MAX_BUILDQUE_SIZE - 2 && assistants.size() >= cfg->MAX_ASSISTANTS-2)
@@ -312,8 +332,10 @@ void AAIConstructor::CheckAssistance()
 
 double AAIConstructor::GetMyQueBuildtime()
 {
-	double buildtime = 0;
+	if (buildque == nullptr)
+		return 0;
 
+	double buildtime = 0;
 	for(list<int>::iterator unit = buildque->begin(); unit != buildque->end(); ++unit)
 		buildtime += ai->Getbt()->GetUnitDef((*unit)).buildTime;
 

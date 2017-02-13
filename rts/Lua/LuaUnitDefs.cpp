@@ -1,10 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-
-#include <set>
 #include <string>
 #include <vector>
-#include <set>
 #include <map>
 #include <cctype>
 
@@ -12,42 +9,21 @@
 #include "LuaUnitDefs.h"
 
 #include "LuaInclude.h"
-
 #include "LuaConfig.h"
 #include "LuaDefs.h"
 #include "LuaHandle.h"
 #include "LuaUtils.h"
-#include "Game/Game.h"
-#include "Game/GameHelper.h"
-#include "Sim/Misc/Team.h"
-#include "Map/Ground.h"
-#include "Map/MapDamage.h"
 #include "Map/MapInfo.h"
 #include "Rendering/IconHandler.h"
-#include "Rendering/Models/IModelParser.h"
-#include "Sim/Features/Feature.h"
-#include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/CategoryHandler.h"
 #include "Sim/Misc/CollisionVolume.h"
-#include "Sim/Misc/LosHandler.h"
-#include "Sim/Misc/QuadField.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/Wind.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
-#include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
-#include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitDefHandler.h"
-#include "Sim/Units/UnitDefImage.h"
-#include "Sim/Units/UnitTypes/Builder.h"
-#include "Sim/Units/UnitTypes/Factory.h"
-#include "Sim/Units/CommandAI/Command.h"
-#include "Sim/Units/CommandAI/CommandAI.h"
-#include "Sim/Units/CommandAI/FactoryCAI.h"
-#include "Sim/Weapons/Weapon.h"
-#include "Sim/Weapons/WeaponDefHandler.h"
-#include "System/FileSystem/FileHandler.h"
+#include "Sim/Weapons/WeaponDef.h"
 #include "System/FileSystem/SimpleParser.h"
-#include "System/FileSystem/FileSystem.h"
 #include "System/Log/ILog.h"
 #include "System/Util.h"
 
@@ -81,63 +57,38 @@ static int CategorySetFromString(lua_State* L, const void* data);
 
 bool LuaUnitDefs::PushEntries(lua_State* L)
 {
-	if (paramMap.empty()) {
-	  InitParamMap();
-	}
+	InitParamMap();
 
-	const map<string, int>& udMap = unitDefHandler->unitDefIDsByName;
-	map<string, int>::const_iterator udIt;
-	for (udIt = udMap.begin(); udIt != udMap.end(); ++udIt) {
-	  const UnitDef* ud = unitDefHandler->GetUnitDefByID(udIt->second);
-		if (ud == NULL) {
-	  	continue;
-		}
-		lua_pushnumber(L, ud->id);
-		lua_newtable(L); { // the proxy table
+	typedef int (*IndxFuncType)(lua_State*);
+	typedef int (*IterFuncType)(lua_State*);
 
-			lua_newtable(L); { // the metatable
+	const auto& defsMap = unitDefHandler->unitDefIDsByName;
 
-				HSTR_PUSH(L, "__index");
-				lua_pushlightuserdata(L, (void*)ud);
-				lua_pushcclosure(L, UnitDefIndex, 1);
-				lua_rawset(L, -3); // closure
+	const std::array<const LuaHashString, 3> indxOpers = {{
+		LuaHashString("__index"),
+		LuaHashString("__newindex"),
+		LuaHashString("__metatable")
+	}};
+	const std::array<const LuaHashString, 2> iterOpers = {{
+		LuaHashString("pairs"),
+		LuaHashString("next")
+	}};
 
-				HSTR_PUSH(L, "__newindex");
-				lua_pushlightuserdata(L, (void*)ud);
-				lua_pushcclosure(L, UnitDefNewIndex, 1);
-				lua_rawset(L, -3);
+	const std::array<const IndxFuncType, 3> indxFuncs = {UnitDefIndex, UnitDefNewIndex, UnitDefMetatable};
+	const std::array<const IterFuncType, 2> iterFuncs = {Pairs, Next};
 
-				HSTR_PUSH(L, "__metatable");
-				lua_pushlightuserdata(L, (void*)ud);
-				lua_pushcclosure(L, UnitDefMetatable, 1);
-				lua_rawset(L, -3);
-			}
+	for (auto it = defsMap.cbegin(); it != defsMap.cend(); ++it) {
+		const auto def = unitDefHandler->GetUnitDefByID(it->second);
 
-			lua_setmetatable(L, -2);
-		}
+		if (def == NULL)
+			continue;
 
-		HSTR_PUSH(L, "pairs");
-		lua_pushcfunction(L, Pairs);
-		lua_rawset(L, -3);
-
-		HSTR_PUSH(L, "next");
-		lua_pushcfunction(L, Next);
-		lua_rawset(L, -3);
-
-		lua_rawset(L, -3); // proxy table into UnitDefs
+		PushObjectDefProxyTable(L, indxOpers, iterOpers, indxFuncs, iterFuncs, def);
 	}
 
 	return true;
 }
 
-
-bool LuaUnitDefs::IsDefaultParam(const string& word)
-{
-	if (paramMap.empty()) {
-	  InitParamMap();
-	}
-	return (paramMap.find(word) != paramMap.end());
-}
 
 
 /******************************************************************************/
@@ -338,10 +289,10 @@ static int SafeIconType(lua_State* L, const void* data)
 
 static int CustomParamsTable(lua_State* L, const void* data)
 {
-	const map<string, string>& params = *((const map<string, string>*)data);
+	const spring::unordered_map<std::string, std::string>& params = *((const spring::unordered_map<std::string, std::string>*)data);
 	lua_newtable(L);
-	map<string, string>::const_iterator it;
-	for (it = params.begin(); it != params.end(); ++it) {
+
+	for (auto it = params.cbegin(); it != params.cend(); ++it) {
 		lua_pushsstring(L, it->first);
 		lua_pushsstring(L, it->second);
 		lua_rawset(L, -3);
@@ -352,14 +303,15 @@ static int CustomParamsTable(lua_State* L, const void* data)
 
 static int BuildOptions(lua_State* L, const void* data)
 {
-	const map<int, string>& buildOptions = *((const map<int, string>*)data);
-	const map<string, int>& unitMap = unitDefHandler->unitDefIDsByName;
+	const spring::unordered_map<int, std::string>& buildOptions = *((const spring::unordered_map<int, std::string>*)data);
+	const spring::unordered_map<std::string, int>& unitMap = unitDefHandler->unitDefIDsByName;
 
 	lua_newtable(L);
 	int count = 0;
-	map<int, string>::const_iterator it;
-	for (it = buildOptions.begin(); it != buildOptions.end(); ++it) {
-		map<string, int>::const_iterator fit = unitMap.find(it->second);
+
+	for (auto it = buildOptions.cbegin(); it != buildOptions.cend(); ++it) {
+		const auto fit = unitMap.find(it->second);
+
 		if (fit != unitMap.end()) {
 			count++;
 			lua_pushnumber(L, count);
@@ -416,7 +368,6 @@ static int WeaponsTable(lua_State* L, const void* data)
 		lua_newtable(L); {
 			HSTR_PUSH_NUMBER(L, "weaponDef",   weapon->id);
 			HSTR_PUSH_NUMBER(L, "slavedTo",    udw.slavedTo-1+LUA_WEAPON_BASE_INDEX);
-			HSTR_PUSH_NUMBER(L, "fuelUsage",   udw.fuelUsage);
 			HSTR_PUSH_NUMBER(L, "maxAngleDif", udw.maxMainDirAngleDif);
 			HSTR_PUSH_NUMBER(L, "mainDirX",    udw.mainDir.x);
 			HSTR_PUSH_NUMBER(L, "mainDirY",    udw.mainDir.y);
@@ -482,25 +433,27 @@ static int SoundsTable(lua_State* L, const void* data) {
 static int MoveDefTable(lua_State* L, const void* data)
 {
 	const unsigned int mdType = *static_cast<const unsigned int*>(data);
-	const MoveDef* md = NULL;
+	const MoveDef* md = nullptr;
 
 	lua_newtable(L);
-	if (mdType == -1U) {
+
+	if (mdType == -1u)
 		return 1;
-	}
-	if ((md = moveDefHandler->GetMoveDefByPathType(mdType)) == NULL) {
+
+	if ((md = moveDefHandler->GetMoveDefByPathType(mdType)) == nullptr)
 		return 1;
-	}
 
 	HSTR_PUSH_NUMBER(L, "id", md->pathType);
 
+	// TODO: remove after 102
 	switch (md->speedModClass) {
-		case MoveDef::Tank:  { HSTR_PUSH_STRING(L, "family", "tank");  HSTR_PUSH_STRING(L, "type", "ground"); break; }
-		case MoveDef::KBot:  { HSTR_PUSH_STRING(L, "family", "kbot");  HSTR_PUSH_STRING(L, "type", "ground"); break; }
+		case MoveDef::Tank:  { HSTR_PUSH_STRING(L, "family",  "tank"); HSTR_PUSH_STRING(L, "type", "ground"); break; }
+		case MoveDef::KBot:  { HSTR_PUSH_STRING(L, "family",  "kbot"); HSTR_PUSH_STRING(L, "type", "ground"); break; }
 		case MoveDef::Hover: { HSTR_PUSH_STRING(L, "family", "hover"); HSTR_PUSH_STRING(L, "type",  "hover"); break; }
-		case MoveDef::Ship:  { HSTR_PUSH_STRING(L, "family", "ship");  HSTR_PUSH_STRING(L, "type",   "ship"); break; }
+		case MoveDef::Ship:  { HSTR_PUSH_STRING(L, "family",  "ship"); HSTR_PUSH_STRING(L, "type",   "ship"); break; }
 	}
 
+	HSTR_PUSH_NUMBER(L, "smClass",       md->speedModClass);
 	HSTR_PUSH_NUMBER(L, "xsize",         md->xsize);
 	HSTR_PUSH_NUMBER(L, "zsize",         md->zsize);
 	HSTR_PUSH_NUMBER(L, "depth",         md->depth);
@@ -534,57 +487,6 @@ static int TotalEnergyOut(lua_State* L, const void* data)
 
 
 
-static int ModelTable(lua_State* L, const void* data) {
-	const UnitDef* ud = static_cast<const UnitDef*>(data);
-	const std::string modelFile = modelParser->FindModelPath(ud->modelName);
-
-	lua_newtable(L);
-	HSTR_PUSH_STRING(L, "type", StringToLower(FileSystem::GetExtension(modelFile)));
-	HSTR_PUSH_STRING(L, "path", modelFile);
-	HSTR_PUSH_STRING(L, "name", ud->modelName);
-	HSTR_PUSH(L, "textures");
-
-	lua_newtable(L);
-	if (ud->model != NULL) {
-		LuaPushNamedString(L, "tex1", ud->model->tex1);
-		LuaPushNamedString(L, "tex2", ud->model->tex2);
-	}
-	lua_rawset(L, -3);
-	return 1;
-}
-
-
-static int ColVolTable(lua_State* L, const void* data) {
-	auto cv = static_cast<const CollisionVolume*>(data);
-	assert(cv != NULL);
-
-	lua_newtable(L);
-	switch (cv->GetVolumeType()) {
-		case CollisionVolume::COLVOL_TYPE_ELLIPSOID:
-			HSTR_PUSH_STRING(L, "type", "ellipsoid");
-			break;
-		case CollisionVolume::COLVOL_TYPE_CYLINDER:
-			HSTR_PUSH_STRING(L, "type", "cylinder");
-			break;
-		case CollisionVolume::COLVOL_TYPE_BOX:
-			HSTR_PUSH_STRING(L, "type", "box");
-			break;
-	}
-
-	LuaPushNamedNumber(L, "scaleX", cv->GetScales().x);
-	LuaPushNamedNumber(L, "scaleY", cv->GetScales().y);
-	LuaPushNamedNumber(L, "scaleZ", cv->GetScales().z);
-	LuaPushNamedNumber(L, "offsetX", cv->GetOffsets().x);
-	LuaPushNamedNumber(L, "offsetY", cv->GetOffsets().y);
-	LuaPushNamedNumber(L, "offsetZ", cv->GetOffsets().z);
-	LuaPushNamedNumber(L, "boundingRadius", cv->GetBoundingRadius());
-	LuaPushNamedBool(L, "defaultToSphere",    cv->DefaultToSphere());
-	LuaPushNamedBool(L, "defaultToFootPrint", cv->DefaultToFootPrint());
-	LuaPushNamedBool(L, "defaultToPieceTree", cv->DefaultToPieceTree());
-	return 1;
-}
-
-
 #define TYPE_FUNC(FuncName, LuaType)                           \
 	static int FuncName(lua_State* L, const void* data)        \
 	{                                                          \
@@ -593,64 +495,74 @@ static int ColVolTable(lua_State* L, const void* data) {
 		return 1;                                              \
 	}
 
-#define TYPE_MODEL_FUNC(name, param)                           \
-	static int name(lua_State* L, const void* data)            \
-	{                                                          \
-		const UnitDef* ud = static_cast<const UnitDef*>(data); \
-		const S3DModel* model = ud->LoadModel();               \
-		lua_pushnumber(L, model->param);                       \
-		return 1;                                              \
-	}
 
-TYPE_FUNC(IsTransportUnit, boolean);
-TYPE_FUNC(IsImmobileUnit, boolean);
-TYPE_FUNC(IsBuildingUnit, boolean);
-TYPE_FUNC(IsBuilderUnit, boolean);
-TYPE_FUNC(IsMobileBuilderUnit, boolean);
-TYPE_FUNC(IsStaticBuilderUnit, boolean);
-TYPE_FUNC(IsFactoryUnit, boolean);
-TYPE_FUNC(IsExtractorUnit, boolean);
-TYPE_FUNC(IsGroundUnit, boolean);
-TYPE_FUNC(IsAirUnit, boolean);
-TYPE_FUNC(IsStrafingAirUnit, boolean);
-TYPE_FUNC(IsHoveringAirUnit, boolean);
-TYPE_FUNC(IsFighterAirUnit, boolean);
-TYPE_FUNC(IsBomberAirUnit, boolean);
 
-TYPE_MODEL_FUNC(ModelHeight, height);
-TYPE_MODEL_FUNC(ModelRadius, radius);
-TYPE_MODEL_FUNC(ModelMinx,   mins.x);
-TYPE_MODEL_FUNC(ModelMidx,   relMidPos.x);
-TYPE_MODEL_FUNC(ModelMaxx,   maxs.x);
-TYPE_MODEL_FUNC(ModelMiny,   mins.y);
-TYPE_MODEL_FUNC(ModelMidy,   relMidPos.y);
-TYPE_MODEL_FUNC(ModelMaxy,   maxs.y);
-TYPE_MODEL_FUNC(ModelMinz,   mins.z);
-TYPE_MODEL_FUNC(ModelMidz,   relMidPos.z);
-TYPE_MODEL_FUNC(ModelMaxz,   maxs.z);
+static int ModelTable(lua_State* L, const void* data) {
+	return (LuaUtils::PushModelTable(L, static_cast<const SolidObjectDef*>(data)));
+}
+
+static int ModelName(lua_State* L, const void* data) {
+	return (LuaUtils::PushModelName(L, static_cast<const SolidObjectDef*>(data)));
+}
+
+static int ModelType(lua_State* L, const void* data) {
+	return (LuaUtils::PushModelType(L, static_cast<const SolidObjectDef*>(data)));
+}
+
+static int ModelPath(lua_State* L, const void* data) {
+	return (LuaUtils::PushModelPath(L, static_cast<const SolidObjectDef*>(data)));
+}
+
+static int ModelHeight(lua_State* L, const void* data) {
+	return (LuaUtils::PushModelHeight(L, static_cast<const SolidObjectDef*>(data), true));
+}
+
+static int ModelRadius(lua_State* L, const void* data) {
+	return (LuaUtils::PushModelRadius(L, static_cast<const SolidObjectDef*>(data), true));
+}
+
+static int ColVolTable(lua_State* L, const void* data) {
+	return (LuaUtils::PushColVolTable(L, static_cast<const CollisionVolume*>(data)));
+}
+
+
+TYPE_FUNC(IsTransportUnit, boolean)
+TYPE_FUNC(IsImmobileUnit, boolean)
+TYPE_FUNC(IsBuildingUnit, boolean)
+TYPE_FUNC(IsBuilderUnit, boolean)
+TYPE_FUNC(IsMobileBuilderUnit, boolean)
+TYPE_FUNC(IsStaticBuilderUnit, boolean)
+TYPE_FUNC(IsFactoryUnit, boolean)
+TYPE_FUNC(IsExtractorUnit, boolean)
+TYPE_FUNC(IsGroundUnit, boolean)
+TYPE_FUNC(IsAirUnit, boolean)
+TYPE_FUNC(IsStrafingAirUnit, boolean)
+TYPE_FUNC(IsHoveringAirUnit, boolean)
+TYPE_FUNC(IsFighterAirUnit, boolean)
+TYPE_FUNC(IsBomberAirUnit, boolean)
 
 
 
 static int ReturnEmptyString(lua_State* L, const void* data) {
-	LOG_L(L_WARNING, "[%s] %s - deprecated field!", __FUNCTION__, lua_tostring(L, 2));
+	LOG_L(L_WARNING, "%s - deprecated field!", lua_tostring(L, 2));
 	lua_pushstring(L, "");
 	return 1;
 }
 
 static int ReturnFalse(lua_State* L, const void* data) {
-	LOG_L(L_WARNING, "[%s] %s - deprecated field!", __FUNCTION__, lua_tostring(L, 2));
+	LOG_L(L_WARNING, "%s - deprecated field!", lua_tostring(L, 2));
 	lua_pushboolean(L, false);
 	return 1;
 }
 
 static int ReturnMinusOne(lua_State* L, const void* data) {
-	LOG_L(L_WARNING, "[%s] %s - deprecated field!", __FUNCTION__, lua_tostring(L, 2));
+	LOG_L(L_WARNING, "%s - deprecated field!", lua_tostring(L, 2));
 	lua_pushnumber(L, -1);
 	return 1;
 }
 
 static int ReturnNil(lua_State* L, const void* data) {
-	LOG_L(L_WARNING, "[%s] %s - deprecated field!", __FUNCTION__, lua_tostring(L, 2));
+	LOG_L(L_WARNING, "%s - deprecated field!", lua_tostring(L, 2));
 	lua_pushnil(L);
 	return 1;
 }
@@ -660,11 +572,13 @@ static int ReturnNil(lua_State* L, const void* data) {
 
 static bool InitParamMap()
 {
+	paramMap.clear();
+
 	paramMap["next"]  = DataElement(READONLY_TYPE);
 	paramMap["pairs"] = DataElement(READONLY_TYPE);
 
 	// dummy UnitDef for address lookups
-	const UnitDef& ud = *unitDefHandler->unitDefs[0];
+	const UnitDef& ud = unitDefHandler->unitDefs[0];
 	const char* start = ADDRESS(ud);
 
 /*
@@ -676,14 +590,14 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 */
 // ADD_INT("buildOptionsCount", ud.buildOptions.size(")); // CUSTOM
 
-	ADD_FUNCTION("builder", ud, ReturnFalse); // DEPRECATED
-	ADD_FUNCTION("floater", ud, ReturnFalse); // DEPRECATED
-	ADD_FUNCTION("canDGun", ud, ReturnFalse); // DEPRECATED
-	ADD_FUNCTION("canCrash", ud, ReturnFalse); // DEPRECATED
-	ADD_FUNCTION("isCommander", ud, ReturnFalse); // DEPRECATED
-	ADD_FUNCTION("moveData", ud.pathType, ReturnNil); // DEPRECATED
-	ADD_FUNCTION("type", ud, ReturnEmptyString); // DEPRECATED
-	ADD_FUNCTION("maxSlope", ud, ReturnMinusOne); // DEPRECATED
+	ADD_DEPRECATED_FUNCTION("builder", ud, ReturnFalse);
+	ADD_DEPRECATED_FUNCTION("floater", ud, ReturnFalse);
+	ADD_DEPRECATED_FUNCTION("canDGun", ud, ReturnFalse);
+	ADD_DEPRECATED_FUNCTION("canCrash", ud, ReturnFalse);
+	ADD_DEPRECATED_FUNCTION("isCommander", ud, ReturnFalse);
+	ADD_DEPRECATED_FUNCTION("moveData", ud.pathType, ReturnNil);
+	ADD_DEPRECATED_FUNCTION("type", ud, ReturnEmptyString);
+	ADD_DEPRECATED_FUNCTION("maxSlope", ud, ReturnMinusOne);
 
 	ADD_FUNCTION("totalEnergyOut", ud, TotalEnergyOut);
 
@@ -702,6 +616,7 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_FUNCTION("stockpileWeaponDef", ud.stockpileWeaponDef, WeaponDefToID);
 	ADD_FUNCTION("iconType",           ud.iconType,           SafeIconType);
 	ADD_FUNCTION("collisionVolume",    ud.collisionVolume,    ColVolTable);
+	ADD_FUNCTION("selectionVolume",    ud.selectionVolume,    ColVolTable);
 
 	ADD_FUNCTION("isTransport", ud, IsTransportUnit);
 	ADD_FUNCTION("isImmobile", ud, IsImmobileUnit);
@@ -718,18 +633,21 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_FUNCTION("isFighterAirUnit", ud, IsFighterAirUnit);
 	ADD_FUNCTION("isBomberAirUnit", ud, IsBomberAirUnit);
 
-	ADD_FUNCTION("height",  ud, ModelHeight);
-	ADD_FUNCTION("radius",  ud, ModelRadius);
-	ADD_FUNCTION("minx",    ud, ModelMinx);
-	ADD_FUNCTION("midx",    ud, ModelMidx);
-	ADD_FUNCTION("maxx",    ud, ModelMaxx);
-	ADD_FUNCTION("miny",    ud, ModelMiny);
-	ADD_FUNCTION("midy",    ud, ModelMidy);
-	ADD_FUNCTION("maxy",    ud, ModelMaxy);
-	ADD_FUNCTION("minz",    ud, ModelMinz);
-	ADD_FUNCTION("midz",    ud, ModelMidz);
-	ADD_FUNCTION("maxz",    ud, ModelMaxz);
+	ADD_FUNCTION("modelname", ud, ModelName);
+	ADD_FUNCTION("modeltype", ud, ModelType);
+	ADD_FUNCTION("modelpath", ud, ModelPath);
+	ADD_FUNCTION("height", ud, ModelHeight);
+	ADD_FUNCTION("radius", ud, ModelRadius);
 
+	ADD_DEPRECATED_LUADEF_KEY("minx");
+	ADD_DEPRECATED_LUADEF_KEY("miny");
+	ADD_DEPRECATED_LUADEF_KEY("minz");
+	ADD_DEPRECATED_LUADEF_KEY("maxx");
+	ADD_DEPRECATED_LUADEF_KEY("maxy");
+	ADD_DEPRECATED_LUADEF_KEY("maxz");
+	ADD_DEPRECATED_LUADEF_KEY("midx");
+	ADD_DEPRECATED_LUADEF_KEY("midy");
+	ADD_DEPRECATED_LUADEF_KEY("midz");
 
 
 	ADD_INT("id", ud.id);
@@ -779,6 +697,7 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_INT("selfDCountdown", ud.selfDCountdown);
 
 	ADD_FLOAT("speed",    ud.speed);
+	ADD_FLOAT("rSpeed",    ud.rSpeed);
 	ADD_FLOAT("turnRate", ud.turnRate);
 	ADD_BOOL("turnInPlace", ud.turnInPlace);
 	ADD_FLOAT("turnInPlaceSpeedLimit", ud.turnInPlaceSpeedLimit);
@@ -893,7 +812,7 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	// >= 0 indicates how much the unit will move during hovering on the spot
 	ADD_FLOAT("dlHoverFactor", ud.dlHoverFactor);
 
-//	bool DontLand (") { return dlHoverFactor >= 0.0f; }
+	//	bool DontLand (") { return dlHoverFactor >= 0.0f; }
 
 	ADD_FLOAT("maxAcc",      ud.maxAcc);
 	ADD_FLOAT("maxDec",      ud.maxDec);
@@ -901,13 +820,8 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_FLOAT("maxElevator", ud.maxElevator);
 	ADD_FLOAT("maxRudder",   ud.maxRudder);
 
-	ADD_FLOAT("maxFuel",    ud.maxFuel);
-	ADD_FLOAT("refuelTime", ud.refuelTime);
-
-	ADD_FLOAT("minAirBasePower", ud.minAirBasePower);
-
-//	unsigned char* yardmapLevels[6];
-//	unsigned char* yardmaps[4];			//Iterations of the Ymap for building rotation
+	//	unsigned char* yardmapLevels[6];
+	//	unsigned char* yardmaps[4];			//Iterations of the Ymap for building rotation
 
 	ADD_INT("xsize", ud.xsize);
 	ADD_INT("zsize", ud.zsize);

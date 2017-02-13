@@ -7,10 +7,9 @@
 // Released under GPL license: see LICENSE.html for more information.
 // -------------------------------------------------------------------------
 
+#ifndef AAI_ATTACK_H
+#define AAI_ATTACK_H
 
-#pragma once
-
-#include "aidef.h"
 #include <set>
 using namespace std;
 
@@ -49,9 +48,10 @@ public:
 
 	// groups participating
 	set<AAIGroup*> combat_groups;
+private:
 	set<AAIGroup*> aa_groups;
 	set<AAIGroup*> arty_groups;
-
-private:
 	AAI *ai;
 };
+
+#endif

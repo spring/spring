@@ -7,10 +7,12 @@
 
 #ifdef WIN32
 	#include <io.h>
+#else
+	#include <unistd.h>
 #endif
 #include <string.h>
 #include <stdexcept>
-#include <boost/bind.hpp>
+#include <functional>
 
 /******************************************************************************/
 
@@ -74,7 +76,7 @@ void FileConfigSource::SetStringInternal(const std::string& key, const std::stri
 
 void FileConfigSource::SetString(const string& key, const string& value)
 {
-	ReadModifyWrite(boost::bind(&FileConfigSource::SetStringInternal, this, key, value));
+	ReadModifyWrite(std::bind(&FileConfigSource::SetStringInternal, this, key, value));
 }
 
 void FileConfigSource::DeleteInternal(const string& key)
@@ -86,10 +88,10 @@ void FileConfigSource::DeleteInternal(const string& key)
 
 void FileConfigSource::Delete(const string& key)
 {
-	ReadModifyWrite(boost::bind(&FileConfigSource::DeleteInternal, this, key));
+	ReadModifyWrite(std::bind(&FileConfigSource::DeleteInternal, this, key));
 }
 
-void FileConfigSource::ReadModifyWrite(boost::function<void ()> modify) {
+void FileConfigSource::ReadModifyWrite(std::function<void ()> modify) {
 	FILE* file = fopen(filename.c_str(), "r+");
 
 	if (file) {
@@ -232,6 +234,37 @@ SafemodeConfigSource::SafemodeConfigSource()
 		const ConfigVariableMetaData* metadata = it->second;
 		if (metadata->GetSafemodeValue().IsSet()) {
 			data[metadata->GetKey()] = metadata->GetSafemodeValue().ToString();
+		}
+	}
+}
+
+/**
+ * @brief Fill with dedicated values of declared configuration variables.
+ */
+DedicatedConfigSource::DedicatedConfigSource()
+{
+	const ConfigVariable::MetaDataMap& vars = ConfigVariable::GetMetaDataMap();
+
+	for (ConfigVariable::MetaDataMap::const_iterator it = vars.begin(); it != vars.end(); ++it) {
+		const ConfigVariableMetaData* metadata = it->second;
+		if (metadata->GetDedicatedValue().IsSet()) {
+			data[metadata->GetKey()] = metadata->GetDedicatedValue().ToString();
+		}
+	}
+}
+
+
+/**
+ * @brief Fill with headless values of declared configuration variables.
+ */
+HeadlessConfigSource::HeadlessConfigSource()
+{
+	const ConfigVariable::MetaDataMap& vars = ConfigVariable::GetMetaDataMap();
+
+	for (ConfigVariable::MetaDataMap::const_iterator it = vars.begin(); it != vars.end(); ++it) {
+		const ConfigVariableMetaData* metadata = it->second;
+		if (metadata->GetHeadlessValue().IsSet()) {
+			data[metadata->GetKey()] = metadata->GetHeadlessValue().ToString();
 		}
 	}
 }

@@ -3,8 +3,6 @@
 #ifndef TEAMHIGHLIGHT_H
 #define TEAMHIGHLIGHT_H
 
-#include <map>
-
 class CTeamHighlight
 {
 public:
@@ -13,7 +11,6 @@ public:
 	static void Disable();
 	static void Update(int frameNum);
 	static bool highlight;
-	static std::map<int, int> oldColors;
 };
 
 

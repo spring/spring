@@ -13,16 +13,13 @@ CEventClient::CEventClient(const std::string& _name, int _order, bool _synced)
 	, synced_(_synced)
 	, autoLinkEvents(false)
 {
-	// Note: virtual functions aren't available in the ctor!
+	// note: virtual functions aren't available in the ctor, can't autobind here
+	// eventHandler.AddClient() calls CEventClient::WantsEvent() which is virtual
 	//RegisterLinkedEvents(this);
 }
 
-
 CEventClient::~CEventClient()
 {
-	// No, we can't autobind all clients in the ctor.
-	// eventHandler.AddClient() calls CEventClient::WantsEvent() that is
-	// virtual and so not available during the initialization.
 	eventHandler.RemoveClient(this);
 }
 
@@ -34,12 +31,10 @@ bool CEventClient::WantsEvent(const std::string& eventName)
 
 	assert(!autoLinkedEvents.empty());
 
-	if (autoLinkedEvents[eventName]) {
-		//LOG("\"%s\" autolinks \"%s\"", GetName().c_str(), eventName.c_str());
-		return true;
-	}
+	const auto comp = [](const LinkPair& a, const LinkPair& b) { return (a.first < b.first); };
+	const auto iter = std::lower_bound(autoLinkedEvents.begin(), autoLinkedEvents.end(), LinkPair{eventName, false}, comp);
 
-	return false;
+	return (iter != autoLinkedEvents.end() && iter->second && iter->first == eventName);
 }
 
 
@@ -92,7 +87,15 @@ bool CEventClient::FeaturePreDamaged(
 	int projectileID,
 	float* newDamage,
 	float* impulseMult) { return false; }
-bool CEventClient::ShieldPreDamaged(const CProjectile*, const CWeapon*, const CUnit*, bool) { return false; }
+bool CEventClient::ShieldPreDamaged(
+	const CProjectile* projectile,
+	const CWeapon* shieldEmitter,
+	const CUnit* shieldCarrier,
+	bool bounceProjectile,
+	const CWeapon* beamEmitter,
+	const CUnit* beamCarrier)  { return false; }
+
+
 bool CEventClient::SyncedActionFallback(const string& line, int playerID) { return false; }
 
 /******************************************************************************/
@@ -106,21 +109,11 @@ void CEventClient::Save(zipFile archive) {}
 void CEventClient::Update() {}
 void CEventClient::UnsyncedHeightMapUpdate(const SRectangle& rect) {}
 
-void CEventClient::SunChanged(const float3& sunDir) {}
+void CEventClient::SunChanged() {}
 
 void CEventClient::ViewResize() {}
 
 bool CEventClient::DefaultCommand(const CUnit* unit, const CFeature* feature, int& cmd) { return false; }
-
-void CEventClient::DrawGenesis() {}
-void CEventClient::DrawWorld() {}
-void CEventClient::DrawWorldPreUnit() {}
-void CEventClient::DrawWorldShadow() {}
-void CEventClient::DrawWorldReflection() {}
-void CEventClient::DrawWorldRefraction() {}
-void CEventClient::DrawScreenEffects() {}
-void CEventClient::DrawScreen() {}
-void CEventClient::DrawInMiniMap() {}
 
 bool CEventClient::DrawUnit(const CUnit* unit) { return false; }
 bool CEventClient::DrawFeature(const CFeature* feature) { return false; }
@@ -134,6 +127,7 @@ void CEventClient::LoadProgress(const std::string& msg, const bool replace_lastl
 
 void CEventClient::CollectGarbage() {}
 void CEventClient::DbgTimingInfo(DbgTimingInfoType type, const spring_time start, const spring_time end) {}
+void CEventClient::MetalMapChanged(const int x, const int z) {}
 
 // from LuaUI
 bool CEventClient::KeyPress(int key, bool isRepeat) { return false; }
@@ -144,6 +138,13 @@ bool CEventClient::MousePress(int x, int y, int button) { return false; }
 void CEventClient::MouseRelease(int x, int y, int button) { }
 bool CEventClient::MouseWheel(bool up, float value) { return false; }
 bool CEventClient::JoystickEvent(const std::string& event, int val1, int val2) { return false; }
+
+void CEventClient::DownloadQueued(int ID, const string& archiveName, const string& archiveType) {}
+void CEventClient::DownloadStarted(int ID) {}
+void CEventClient::DownloadFinished(int ID) {}
+void CEventClient::DownloadFailed(int ID, int errorID) {}
+void CEventClient::DownloadProgress(int ID, long downloaded, long total) {}
+
 bool CEventClient::IsAbove(int x, int y) { return false; }
 std::string CEventClient::GetTooltip(int x, int y) { return ""; }
 
@@ -156,7 +157,7 @@ void CEventClient::LastMessagePosition(const float3& pos) {}
 bool CEventClient::GroupChanged(int groupID) { return false; }
 
 bool CEventClient::GameSetup(const std::string& state, bool& ready,
-                             const map<int, std::string>& playerStates) { return false; }
+                             const std::vector< std::pair<int, std::string> >& playerStates) { return false; }
 
 std::string CEventClient::WorldTooltip(const CUnit* unit,
                                  const CFeature* feature,

@@ -13,6 +13,7 @@
 
 #include "System/FileSystem/DataDirsAccess.h"
 #include "System/FileSystem/FileSystem.h"
+#include "System/Exceptions.h"
 #include "System/Util.h"
 #include "System/Log/ILog.h"
 
@@ -55,8 +56,7 @@ CPoolArchive::CPoolArchive(const std::string& name)
 
 	gzFile in = gzopen(name.c_str(), "rb");
 	if (in == NULL) {
-		LOG_L(L_ERROR, "couldn't open %s", name.c_str());
-		return;
+		throw content_error(std::string("couldn't open ") + name);
 	}
 
 	while (true) {
@@ -116,7 +116,7 @@ unsigned int CPoolArchive::GetCrc32(unsigned int fid)
 }
 
 
-bool CPoolArchive::GetFileImpl(unsigned int fid, std::vector<boost::uint8_t>& buffer)
+bool CPoolArchive::GetFileImpl(unsigned int fid, std::vector<std::uint8_t>& buffer)
 {
 	assert(IsFileId(fid));
 
@@ -139,7 +139,6 @@ bool CPoolArchive::GetFileImpl(unsigned int fid, std::vector<boost::uint8_t>& bu
 	std::string path = dataDirsAccess.LocateFile(rpath);
 	gzFile in = gzopen(path.c_str(), "rb");
 	if (in == NULL){
-		LOG_L(L_ERROR, "couldn't open %s", path.c_str());
 		return false;
 	}
 

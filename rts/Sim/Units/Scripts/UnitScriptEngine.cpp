@@ -3,29 +3,42 @@
 /* heavily based on CobEngine.cpp */
 
 #include "UnitScriptEngine.h"
-#include "UnitScript.h"
-#include "UnitScriptLog.h"
 
+#include "CobEngine.h"
+#include "UnitScript.h"
+#include "System/Util.h"
 #include "System/FileSystem/FileHandler.h"
 
-#ifndef _CONSOLE
-	#include "System/TimeProfiler.h"
-#else
-	#define START_TIME_PROFILE(a) {}
-	#define END_TIME_PROFILE(a) {}
-	#define SCOPED_TIMER(a) {}
-#endif
+CUnitScriptEngine* unitScriptEngine = nullptr;
 
 
+CR_BIND(CUnitScriptEngine, )
 
-CUnitScriptEngine GUnitScriptEngine;
+CR_REG_METADATA(CUnitScriptEngine, (
+	CR_MEMBER(animating),
+
+	//always null when saving
+	CR_IGNORED(currentScript)
+))
+
+
+void CUnitScriptEngine::InitStatic() {
+	cobEngine = new CCobEngine();
+	cobFileHandler = new CCobFileHandler();
+	unitScriptEngine = new CUnitScriptEngine();
+}
+void CUnitScriptEngine::KillStatic() {
+	SafeDelete(cobEngine);
+	SafeDelete(cobFileHandler);
+	SafeDelete(unitScriptEngine);
+}
 
 
 /******************************************************************************/
 /******************************************************************************/
 
 
-CUnitScriptEngine::CUnitScriptEngine() : currentScript(NULL)
+CUnitScriptEngine::CUnitScriptEngine() : currentScript(nullptr)
 {
 }
 
@@ -35,12 +48,12 @@ CUnitScriptEngine::~CUnitScriptEngine()
 }
 
 
-void CUnitScriptEngine::CheckForDuplicates(const char* name, CUnitScript* instance)
+void CUnitScriptEngine::CheckForDuplicates(const char* name, const CUnitScript* instance)
 {
 	int found = 0;
 
-	for (std::list<CUnitScript*>::iterator i = animating.begin(); i != animating.end(); ++i) {
-		if (*i == instance)
+	for (const CUnitScript* us: animating) {
+		if (us == instance)
 			found++;
 	}
 
@@ -52,12 +65,7 @@ void CUnitScriptEngine::CheckForDuplicates(const char* name, CUnitScript* instan
 void CUnitScriptEngine::AddInstance(CUnitScript *instance)
 {
 	if (instance != currentScript)
-		animating.push_front(instance);
-
-	// Error checking
-#ifdef _DEBUG
-	CheckForDuplicates(__FUNCTION__, instance);
-#endif
+		VectorInsertUnique(animating, instance);
 }
 
 
@@ -70,26 +78,26 @@ void CUnitScriptEngine::RemoveInstance(CUnitScript *instance)
 
 	//This is slow. would be better if instance was a hashlist perhaps
 	if (instance != currentScript)
-		animating.remove(instance);
+		VectorErase(animating, instance);
 }
 
 
 void CUnitScriptEngine::Tick(int deltaTime)
 {
-	SCOPED_TIMER("UnitScriptEngine::Tick");
-
 	// Tick all instances that have registered themselves as animating
-	for (std::list<CUnitScript*>::iterator it = animating.begin(); it != animating.end(); ) {
-		currentScript = *it;
+	int i = 0;
+	while (i < animating.size()) {
+		currentScript = animating[i];
 
 		if (currentScript->Tick(deltaTime)) {
-			++it;
+			++i;
 		} else {
-			it = animating.erase(it);
+			animating[i] = animating.back();
+			animating.pop_back();
 		}
 	}
 
-	currentScript = NULL;
+	currentScript = nullptr;
 }
 
 

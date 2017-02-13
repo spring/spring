@@ -86,7 +86,6 @@
 #define COB_ID                   100 // get
 #define PLAY_SOUND               101 // get, so multiple args can be passed
 #define KILL_UNIT                102 // get KILL_UNIT(unitId, SelfDestruct=true, Reclaimed=false)
-#define ALPHA_THRESHOLD          103 // set or get
 #define SET_WEAPON_UNIT_TARGET   106 // get (fake set)
 #define SET_WEAPON_GROUND_TARGET 107 // get (fake set)
 #define SONAR_STEALTH            108 // set or get

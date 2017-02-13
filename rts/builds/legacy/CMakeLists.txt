@@ -12,6 +12,9 @@ SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
 FIND_PACKAGE(SDL2 REQUIRED)
 SET(engineIncludes ${SDL2_INCLUDE_DIR})
 SET(engineLibraries ${SDL2_LIBRARY})
+if("${SDL2_VERSION_STRING}" VERSION_LESS "2")
+	message(FATAL_ERROR "Found SDL v${SDL2_VERSION_STRING} while 2 is required!")
+endif()
 
 
 FIND_PACKAGE_STATIC(OpenGL REQUIRED)
@@ -70,17 +73,16 @@ LIST(APPEND engineLibraries engineSystemNet)
 LIST(APPEND engineLibraries ${engineCommonLibraries})
 LIST(APPEND engineLibraries engineaGui)
 LIST(APPEND engineLibraries ${Boost_THREAD_LIBRARY})
+LIST(APPEND engineLibraries ${SPRING_SIM_LIBRARIES})
+LIST(APPEND engineLibraries engineSim)
+LIST(APPEND engineLibraries pr-downloader_static)
 
 ### Assemble external incude dirs
 LIST(APPEND engineIncludes ${OPENAL_INCLUDE_DIR})
+LIST(APPEND engineIncludes ${ENGINE_SRC_ROOT_DIR}/lib/asio/include)
+LIST(APPEND engineIncludes ${ENGINE_SRC_ROOT_DIR}/lib/slimsig/include)
 
 INCLUDE_DIRECTORIES(${engineIncludes})
-
-if   (MSVC)
-	# set vmg flag to work around small pointer-to-member bug in spring
-	# and enable multi-processor compiling
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /vmg /MP")
-endif(MSVC)
 
 ### Build the executable
 ADD_EXECUTABLE(engine-legacy ${EXE_FLAGS} ${engineSources} ${ENGINE_ICON} ${engineHeaders})

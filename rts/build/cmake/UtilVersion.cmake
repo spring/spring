@@ -31,7 +31,7 @@ Set(VERSION_REGEX_PATCH "${D10}+")
 Set(VERSION_REGEX_PATCH_MATCH_EXAMPLES "\"0\", \"5\", \"999\"")
 
 # Matches the engine dev version postfix (".1-<#commits>-g<SHA1> <branch>")
-Set(VERSION_REGEX_DEV_POSTFIX "[.]1-(${D10}+)-g(${D16}${D16}${D16}${D16}${D16}${D16}${D16}) ([^ ]+)")
+Set(VERSION_REGEX_DEV_POSTFIX "[.]1-(${D10}+)-g(${D16}+) ([^ ]+)")
 Set(VERSION_REGEX_DEV_POSTFIX_MATCH_EXAMPLES "\".1-13-g1234aaf develop\", \".1-1354-g1234567 release\"")
 
 
@@ -47,7 +47,7 @@ Set(VERSION_REGEX_RELEASE_MATCH_EXAMPLES "\"83.0\", \"84.1\"")
 Set(VERSION_REGEX_DEV "${VERSION_REGEX_RELEASE}${VERSION_REGEX_DEV_POSTFIX}")
 Set(VERSION_REGEX_DEV_MATCH_EXAMPLES "\"83.0.1-13-g1234aaf develop\", \"84.1.1-1354-g1234567 release\"")
 Set(VERSION_REGEX_ANY "${VERSION_REGEX_RELEASE}(${VERSION_REGEX_DEV_POSTFIX})?")
-Set(VERSION_REGEX_ANY_MATCH_EXAMPLES "\"83.0\", \"84.1\", \"83.0.1-13-g1234aaf develop\", \"84.1.1-1354-g1234567 release\"")
+Set(VERSION_REGEX_ANY_MATCH_EXAMPLES "83.0" "84.1" "83.0.1-13-g1234aaf develop" "84.1.1-1354-g1234567 release" "98.0.1-847-g61dee311 develop")
 
 
 # Parses a Spring version string into one var for each part of the version.
@@ -197,4 +197,15 @@ Macro    (FetchSpringVersion dir prefix)
 		endif()
 	endif()
 EndMacro (FetchSpringVersion)
+
+Macro (TestVersion)
+	foreach(version ${VERSION_REGEX_ANY_MATCH_EXAMPLES})
+		if(NOT "${version}" MATCHES "^${VERSION_REGEX_ANY}$")
+			message(STATUS "^${VERSION_REGEX_ANY}$")
+			Message(FATAL_ERROR "Invalid version format: ${version}")
+		endif()
+	endforeach()
+EndMacro()
+
+#TestVersion()
 

@@ -2,47 +2,28 @@
 
 #include "LaserCannon.h"
 #include "WeaponDef.h"
-#include "Game/TraceRay.h"
 #include "Map/Ground.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "System/myMath.h"
 
-CR_BIND_DERIVED(CLaserCannon, CWeapon, (NULL, NULL));
+CR_BIND_DERIVED(CLaserCannon, CWeapon, (NULL, NULL))
 
 CR_REG_METADATA(CLaserCannon,(
-	CR_MEMBER(color),
-	CR_RESERVED(8)
-));
+	CR_MEMBER(color)
+))
 
-CLaserCannon::CLaserCannon(CUnit* owner, const WeaponDef* def): CWeapon(owner, def)
+CLaserCannon::CLaserCannon(CUnit* owner, const WeaponDef* def)
+	: CWeapon(owner, def)
 {
-	color = def->visuals.color;
+	//happens when loading
+	if (def != nullptr)
+		color = def->visuals.color;
 }
 
 
-
-void CLaserCannon::Update()
-{
-	if (targetType != Target_None) {
-		weaponPos = owner->GetObjectSpacePos(relWeaponPos);
-		weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
-
-		float3 wantedDirTemp = targetPos - weaponPos;
-		const float targetDist = wantedDirTemp.LengthNormalize();
-
-		if (!onlyForward && targetDist != 0.0f) {
-			wantedDir = wantedDirTemp;
-		}
-
-		predict = targetDist / projectileSpeed;
-	}
-
-	CWeapon::Update();
-}
-
-void CLaserCannon::UpdateRange(float val)
+void CLaserCannon::UpdateRange(const float val)
 {
 	// round range *DOWN* to integer multiple of projectile speed
 	//
@@ -53,9 +34,9 @@ void CLaserCannon::UpdateRange(float val)
 }
 
 
-void CLaserCannon::FireImpl(bool scriptCall)
+void CLaserCannon::FireImpl(const bool scriptCall)
 {
-	float3 dir = targetPos - weaponMuzzlePos;
+	float3 dir = currentTargetPos - weaponMuzzlePos;
 
 	const float dist = dir.LengthNormalize();
 	const int ttlreq = std::ceil(dist / weaponDef->projectilespeed);
@@ -66,7 +47,7 @@ void CLaserCannon::FireImpl(bool scriptCall)
 		dir = owner->frontdir;
 	}
 
-	dir += (gs->randVector() * SprayAngleExperience() + SalvoErrorExperience());
+	dir += (gsRNG.NextVector() * SprayAngleExperience() + SalvoErrorExperience());
 	dir.Normalize();
 
 	ProjectileParams params = GetProjectileParams();

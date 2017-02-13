@@ -12,7 +12,6 @@
 # * GetFirstSubDirName
 # * CreateClasspath
 # * ConcatClasspaths
-# * IsMavenProject
 # * FindManifestFile
 #
 
@@ -73,18 +72,6 @@ function    (ConcatClasspaths resultingCP_var)
 	string(REGEX REPLACE "${PATH_DELIM_H}\$" "" ${resultingCP_var} "${${resultingCP_var}}")
 	set(${resultingCP_var} "${${resultingCP_var}}" PARENT_SCOPE)
 endfunction (ConcatClasspaths)
-
-
-# Checks if a given directory is the root of a Maven project.
-# The result variable will be set to TRUE or FALSE
-function    (IsMavenProject dirToCheck result_var)
-	set(${result_var} FALSE)
-	if    (EXISTS "${dirToCheck}/pom.xml")
-		set(${result_var} TRUE)
-	endif (EXISTS "${dirToCheck}/pom.xml")
-	set(${result_var} "${${result_var}}" PARENT_SCOPE)
-endfunction (IsMavenProject)
-
 
 # Look for a manifest.mf file in a few specific sub-dirs.
 # This could be done with a simple find_file call,

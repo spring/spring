@@ -25,74 +25,37 @@
 #include <stdio.h>	// for file IO
 #include <stdlib.h>	// calloc(), exit()
 #include <string.h>	// strlen(), strcpy()
-#include <time.h>	// for fetching current time
 #include <stdarg.h>	// var-arg support
 
 #define SIMPLELOG_OUTPUTBUFFER_SIZE 2048
 
-#define     logFileName_sizeMax 2048
-static bool logFileInitialized = false;
-static char logFileName[logFileName_sizeMax];
-static bool useTimeStamps;
-static int logLevel;
-
-static char* simpleLog_createTimeStamp() {
-
-	time_t now;
-	now = time(&now);
-	struct tm* myTime = localtime(&now);
-	unsigned int maxTimeStampSize = 32;
-	char* timeStamp = (char*) calloc(maxTimeStampSize + 1, sizeof(char));
-	strftime(timeStamp, maxTimeStampSize, "%c", myTime);
-
-	return timeStamp;
-}
+static int logLevel = LOG_LEVEL_INFO;
+static logfunction logFunction = NULL;
+static char logSection[32] = "";
+static int interfaceid = 0;
 
 static void simpleLog_out(int level, const char* msg) {
 
-	if (level > logLevel) {
+	if (level < logLevel) {
 		return;
 	}
 
-	static char outBuffer[SIMPLELOG_OUTPUTBUFFER_SIZE];
-
-	// format the message
-	const char* logLevel_str = simpleLog_levelToStr(level);
-	if (useTimeStamps) {
-		char* timeStamp = simpleLog_createTimeStamp();
-		SNPRINTF(outBuffer, SIMPLELOG_OUTPUTBUFFER_SIZE, "%s / %s(%i): %s\n",
-				timeStamp, logLevel_str, level, msg);
-		free(timeStamp);
-		timeStamp = NULL;
-	} else {
-		SNPRINTF(outBuffer, SIMPLELOG_OUTPUTBUFFER_SIZE, "%s(%i): %s\n",
-				logLevel_str, level, msg);
+	if (logFunction != NULL) {
+		logFunction(interfaceid, logSection, level, msg);
+		return;
 	}
 
-	// try to open the log file
-	FILE* file = NULL;
-	if (logFileInitialized) {
-		file = FOPEN(logFileName, "a");
-	}
-
-	// print the message
-	if (file != NULL) {
-		FPRINTF(file, "%s", outBuffer);
-		fclose(file);
-		file = NULL;
+	// fallback method: write to stdout
+	if (level < LOG_LEVEL_WARNING || level == LOG_LEVEL_NONE) {
+		FPRINTF(stdout, "%s", msg);
 	} else {
-		// fallback method: write to stdout
-		if (level > SIMPLELOG_LEVEL_WARNING || level < 0) {
-			FPRINTF(stdout, "%s", outBuffer);
-		} else {
-			FPRINTF(stderr, "%s", outBuffer);
-		}
+		FPRINTF(stderr, "%s", msg);
 	}
 }
 
 static void simpleLog_logv(int level, const char* fmt, va_list argp) {
 
-	if (level > logLevel) {
+	if (level < logLevel) {
 		return;
 	}
 
@@ -102,68 +65,9 @@ static void simpleLog_logv(int level, const char* fmt, va_list argp) {
 	simpleLog_out(level, outBuffer);
 }
 
-void simpleLog_init(const char* _logFileName, bool _useTimeStamps,
-		int _logLevel, bool append) {
-
-	if (_logFileName != NULL) {
-		logFileInitialized = false;
-		bool initOk = true;
-		STRCPY_T(logFileName, logFileName_sizeMax, _logFileName);
-
-		// make sure the dir of the log file exists
-		char* logFileDir = util_allocStrCpy(logFileName);
-		if (initOk && !util_getParentDir(logFileDir)) {
-			simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
-					"Failed to evaluate the parent dir of the config file: %s",
-					logFileName);
-			initOk = false;
-		}
-
-		if (initOk && !util_makeDir(logFileDir, true)) {
-			simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
-					"Failed to create the parent dir of the config file: %s",
-					logFileDir);
-			initOk = false;
-		}
-
-		free(logFileDir);
-
-		// delete the logFile, and try writing to it
-		FILE* file = NULL;
-		if (initOk) {
-			if (append) {
-				file = FOPEN(logFileName, "a");
-			} else {
-				file = FOPEN(logFileName, "w");
-			}
-		}
-		if (file != NULL) {
-			// make the file empty
-			FPRINTF(file, "%s", "");
-			fclose(file);
-			file = NULL;
-		} else {
-			// report the error to stderr
-			FPRINTF(stderr, "Failed writing to the log file \"%s\".\n%s",
-					logFileName, "We will continue logging to stdout.");
-		}
-
-		useTimeStamps = _useTimeStamps;
-		logLevel = _logLevel;
-		logFileInitialized = initOk;
-	} else {
-		simpleLog_logL(-1, "No log file name supplied -> logging to stdout and stderr",
-			useTimeStamps ? "yes" : "no", logLevel);
-		logFileInitialized = false;
-	}
-
-	simpleLog_logL(-1, "[logging started (time-stamps: %s / logLevel: %i)]",
-			useTimeStamps ? "yes" : "no", logLevel);
-}
-
 void simpleLog_logL(int level, const char* fmt, ...) {
 
-	if (level > logLevel) {
+	if (level < logLevel) {
 		return;
 	}
 
@@ -176,9 +80,9 @@ void simpleLog_logL(int level, const char* fmt, ...) {
 
 void simpleLog_log(const char* fmt, ...) {
 
-	static const int level = SIMPLELOG_LEVEL_NORMAL;
+	static const int level = LOG_LEVEL_INFO;
 
-	if (level > logLevel) {
+	if (level < logLevel) {
 		return;
 	}
 
@@ -189,22 +93,11 @@ void simpleLog_log(const char* fmt, ...) {
 	va_end(argp);
 }
 
-const char* simpleLog_levelToStr(int logLevel) {
-
-	switch (logLevel) {
-		case SIMPLELOG_LEVEL_ERROR:
-			return "ERROR";
-		case SIMPLELOG_LEVEL_WARNING:
-			return "WARNING";
-		case SIMPLELOG_LEVEL_NORMAL:
-			return "NORMAL";
-		case SIMPLELOG_LEVEL_FINE:
-			return "FINE";
-		case SIMPLELOG_LEVEL_FINER:
-			return "FINER";
-		case SIMPLELOG_LEVEL_FINEST:
-			return "FINEST";
-		default:
-			return "CUSTOM";
-	}
+void simpleLog_initcallback(int id, const char* section, logfunction func, int _logLevel)
+{
+	strncpy(logSection, section, 32);
+	logFunction = func;
+	interfaceid = id;
+	logLevel = _logLevel;
 }
+

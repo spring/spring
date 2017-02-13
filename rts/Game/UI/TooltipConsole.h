@@ -10,6 +10,25 @@ class CUnit;
 class CFeature;
 class float3;
 
+struct SUnitStats {
+	SUnitStats();
+
+	void AddUnit(const CUnit* u, bool enemy);
+
+public:
+	float health, maxHealth;
+	float experience;
+	float cost;
+	float maxRange;
+	float metalMake,  metalUse;
+	float energyMake, energyUse;
+	float harvestMetal,  harvestMetalMax;
+	float harvestEnergy, harvestEnergyMax;
+
+	int count;
+};
+
+
 class CTooltipConsole : public CInputReceiver {
 	public:
 		CTooltipConsole();
@@ -22,12 +41,7 @@ class CTooltipConsole : public CInputReceiver {
 		static std::string MakeUnitString(const CUnit* unit);
 		static std::string MakeFeatureString(const CFeature* feature);
 		static std::string MakeGroundString(const float3& pos);
-		static std::string MakeUnitStatsString(
-			float health, float maxHealth,
-			float currentFuel, float maxFuel,
-			float experience, float cost, float maxRange,
-			float metalMake,  float metalUse,
-			float energyMake, float energyUse);
+		static std::string MakeUnitStatsString(const SUnitStats& stats);
 
 		bool enabled;
 

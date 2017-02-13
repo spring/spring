@@ -79,4 +79,7 @@
 
 #define SKIRMISH_AI_DATA_DIR "AI/Skirmish"
 
+// Size of buffer for response from lua UI/Rules, including '\0'
+#define MAX_RESPONSE_SIZE 10240
+
 #endif // AI_DEFINES_H

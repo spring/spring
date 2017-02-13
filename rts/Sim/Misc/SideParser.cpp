@@ -2,13 +2,12 @@
 
 
 #include <string>
-#include <set>
-
 
 #include "SideParser.h"
 #include "Lua/LuaParser.h"
 #include "Lua/LuaSyncedRead.h"
 #include "System/Log/ILog.h"
+#include "System/UnorderedSet.hpp"
 #include "System/Util.h"
 
 
@@ -19,16 +18,6 @@ const std::string SideParser::emptyStr = "";
 
 
 /******************************************************************************/
-
-SideParser::SideParser()
-{
-}
-
-
-SideParser::~SideParser()
-{
-}
-
 
 bool SideParser::Load()
 {
@@ -50,14 +39,13 @@ bool SideParser::Load()
 		return false;
 	}
 
-	std::set<std::string> sideSet;
+	spring::unordered_set<std::string> sideSet;
 
 	const LuaTable root = parser.GetRoot();
 	for (int i = 1; /* no-op */; i++) {
 		const LuaTable sideTable = root.SubTable(i);
-		if (!sideTable.IsValid()) {
+		if (!sideTable.IsValid())
 			break;
-		}
 
 		Data data;
 		data.caseName  = sideTable.GetString("name", "");

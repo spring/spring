@@ -4,71 +4,74 @@
 #define COB_INSTANCE_H
 
 #include "UnitScript.h"
+#include "Sim/Units/Unit.h"
 
 
 #define PACKXZ(x,z) (((int)(x) << 16)+((int)(z) & 0xffff))
-#define UNPACKX(xz) ((signed short)((boost::uint32_t)(xz) >> 16))
-#define UNPACKZ(xz) ((signed short)((boost::uint32_t)(xz) & 0xffff))
+#define UNPACKX(xz) ((signed short)((std::uint32_t)(xz) >> 16))
+#define UNPACKZ(xz) ((signed short)((std::uint32_t)(xz) & 0xffff))
 
 
 static const int COBSCALE = 65536;
 static const int COBSCALEHALF = COBSCALE / 2;
 static const float CORDDIV   = 1.0f / COBSCALE;
-static const float RAD2TAANG = COBSCALEHALF / PI;
-static const float TAANG2RAD = PI / COBSCALEHALF;
+static const float RAD2TAANG = COBSCALEHALF / math::PI;
+static const float TAANG2RAD = math::PI / COBSCALEHALF;
 
 
 class CCobThread;
 class CCobFile;
-class CCobInstance;
-
-
-typedef void (*CBCobThreadFinish) (int retCode, void *p1, void *p2);
 
 
 class CCobInstance : public CUnitScript
 {
+	CR_DECLARE_DERIVED(CCobInstance)
+
+public:
+	enum ThreadCallbackType { CBNone, CBKilled, CBAimWeapon, CBAimShield };
+
 protected:
-	CCobFile& script;
-
-	// because COB has a set of "script pieces", which isn't necessarily equal
-	// to the set of all LocalModelPieces, we need to map script piece -> LMP.
-	std::vector<LocalModelPiece*> pieces;
-
 	void MapScriptToModelPieces(LocalModel* lmodel);
 
-	int RealCall(int functionId, std::vector<int> &args, CBCobThreadFinish cb, void *p1, void *p2);
+	int RealCall(int functionId, std::vector<int> &args, ThreadCallbackType cb, int cbParam, int* retCode);
 
-	virtual void ShowScriptError(const std::string& msg);
+	void ShowScriptError(const std::string& msg) override;
 
 public:
+	CCobFile* script;
 	std::vector<int> staticVars;
-	std::list<CCobThread *> threads;
-	const CCobFile* GetScriptAddr() const { return &script; }
+	std::vector<CCobThread *> threads;
+	const CCobFile* GetScriptAddr() const { return script; }
 
 public:
-	CCobInstance(CCobFile &script, CUnit *unit);
+	//creg only
+	CCobInstance();
+	CCobInstance(CCobFile *script, CUnit *unit);
 	virtual ~CCobInstance();
+
+	void Init();
+	void PostLoad();
 
 	// takes COBFN_* constant as argument
 	bool HasFunction(int id) const;
 
-	virtual bool HasBlockShot(int weaponNum) const;
-	virtual bool HasTargetWeight(int weaponNum) const;
+	bool HasBlockShot(int weaponNum) const override;
+	bool HasTargetWeight(int weaponNum) const override;
 
 	// call overloads, they all call RealCall
 	int Call(const std::string &fname);
-	int Call(const std::string &fname, int p1);
+	int Call(const std::string &fname, int arg1);
 	int Call(const std::string &fname, std::vector<int> &args);
-	int Call(const std::string &fname, std::vector<int> &args, CBCobThreadFinish cb, void *p1, void *p2);
+	int Call(const std::string &fname, std::vector<int> &args, ThreadCallbackType cb, int cbParam, int* retCode);
 	// these take a COBFN_* constant as argument, which is then translated to the actual function number
 	int Call(int id);
 	int Call(int id, std::vector<int> &args);
-	int Call(int id, int p1);
-	int Call(int id, std::vector<int> &args, CBCobThreadFinish cb, void *p1, void *p2);
+	int Call(int id, int arg1);
+	int Call(int id, std::vector<int> &args, ThreadCallbackType cb, int cbParam, int* retCode);
 	// these take the raw function number
 	int RawCall(int fn, std::vector<int> &args);
 
+	void ThreadCallback(ThreadCallbackType type, int retCode, int cbParam);
 	// returns function number as expected by RawCall, but not Call
 	// returns -1 if the function does not exist
 	int GetFunctionId(const std::string& fname) const;
@@ -113,46 +116,53 @@ public:
 	}
 
 	// callins, called throughout sim
-	virtual void RawCall(int functionId);
-	virtual void Create();
-	virtual void Killed();
-	virtual void WindChanged(float heading, float speed);
-	virtual void ExtractionRateChanged(float speed);
-	virtual void RockUnit(const float3& rockDir);
-	virtual void HitByWeapon(const float3& hitDir, int weaponDefId, float& inout_damage);
-	virtual void SetSFXOccupy(int curTerrainType);
-	virtual void QueryLandingPads(std::vector<int>& out_pieces);
-	virtual void BeginTransport(const CUnit* unit);
-	virtual int  QueryTransport(const CUnit* unit);
-	virtual void TransportPickup(const CUnit* unit);
-	virtual void TransportDrop(const CUnit* unit, const float3& pos);
-	virtual void StartBuilding(float heading, float pitch);
-	virtual int  QueryNanoPiece();
-	virtual int  QueryBuildInfo();
+	void RawCall(int functionId) override;
+	void Create() override;
+	void Killed() override;
+	void WindChanged(float heading, float speed) override;
+	void ExtractionRateChanged(float speed) override;
+	void WorldRockUnit(const float3& rockDir) override {
+		RockUnit(unit->GetObjectSpaceVec(rockDir) * 500.f);
+	}
+	void RockUnit(const float3& rockDir) override;
+	void WorldHitByWeapon(const float3& hitDir, int weaponDefId, float& inoutDamage) override {
+		HitByWeapon(unit->GetObjectSpaceVec(hitDir) * 500.f, weaponDefId, inoutDamage);
+	}
+	void HitByWeapon(const float3& hitDir, int weaponDefId, float& inoutDamage) override;
+	void SetSFXOccupy(int curTerrainType) override;
+	void QueryLandingPads(std::vector<int>& out_pieces) override;
+	void BeginTransport(const CUnit* unit) override;
+	int  QueryTransport(const CUnit* unit) override;
+	void TransportPickup(const CUnit* unit) override;
+	void TransportDrop(const CUnit* unit, const float3& pos) override;
+	void StartBuilding(float heading, float pitch) override;
+	int  QueryNanoPiece() override;
+	int  QueryBuildInfo() override;
 
-	virtual void Destroy();
-	virtual void StartMoving(bool reversing);
-	virtual void StopMoving();
-	virtual void StartUnload();
-	virtual void EndTransport();
-	virtual void StartBuilding();
-	virtual void StopBuilding();
-	virtual void Falling();
-	virtual void Landed();
-	virtual void Activate();
-	virtual void Deactivate();
-	virtual void MoveRate(int curRate);
-	virtual void FireWeapon(int weaponNum);
-	virtual void EndBurst(int weaponNum);
+	void Destroy() override;
+	void StartMoving(bool reversing) override;
+	void StopMoving() override;
+	void StartUnload() override;
+	void EndTransport() override;
+	void StartBuilding() override;
+	void StopBuilding() override;
+	void Falling() override;
+	void Landed() override;
+	void Activate() override;
+	void Deactivate() override;
+	void MoveRate(int curRate) override;
+	void FireWeapon(int weaponNum) override;
+	void EndBurst(int weaponNum) override;
 
 	// weapon callins
-	virtual int   QueryWeapon(int weaponNum);
-	virtual void  AimWeapon(int weaponNum, float heading, float pitch);
-	virtual void  AimShieldWeapon(CPlasmaRepulser* weapon);
-	virtual int   AimFromWeapon(int weaponNum);
-	virtual void  Shot(int weaponNum);
-	virtual bool  BlockShot(int weaponNum, const CUnit* targetUnit, bool userTarget);
-	virtual float TargetWeight(int weaponNum, const CUnit* targetUnit);
+	int   QueryWeapon(int weaponNum) override;
+	void  AimWeapon(int weaponNum, float heading, float pitch) override;
+	void  AimShieldWeapon(CPlasmaRepulser* weapon) override;
+	int   AimFromWeapon(int weaponNum) override;
+	void  Shot(int weaponNum) override;
+	bool  BlockShot(int weaponNum, const CUnit* targetUnit, bool userTarget) override;
+	float TargetWeight(int weaponNum, const CUnit* targetUnit) override;
+	void AnimFinished(AnimType type, int piece, int axis) override;
 };
 
 #endif // COB_INSTANCE_H

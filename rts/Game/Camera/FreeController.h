@@ -14,8 +14,6 @@ public:
 	void Move(const float3& move, bool tilt, bool strafe, bool upDown);
 
 	void KeyMove(float3 move);
-	void MousePress(int x, int y, int button) { /* empty */ }
-	void MouseRelease(int x, int y, int button) { /* empty */ }
 	void MouseMove(float3 move);
 	void ScreenEdgeMove(float3 move);
 	void MouseWheelMove(float move);
@@ -28,7 +26,7 @@ public:
 	void SetPos(const float3& newPos);
 	void SetTrackingInfo(const float3& pos, float radius);
 	float3 SwitchFrom() const;
-	void SwitchTo(bool showText);
+	void SwitchTo(const int oldCam, const bool showText);
 
 	void GetState(StateMap& sm) const;
 	bool SetState(const StateMap& sm);
@@ -39,10 +37,9 @@ private:
 	float3 prevVel;  // previous velocity
 	float3 prevAvel; // previous angular velocity
 
-	bool tracking;
+	float3 rot;
 	float3 trackPos;
 	float trackRadius;
-	bool gndLock;
 
 	float tiltSpeed; // time it takes to max
 	float velTime;   // time it takes to max
@@ -55,6 +52,8 @@ private:
 	float autoTilt;  // <=0: disabled
 	float slide;     // <=0; disabled
 
+	bool tracking;
+	bool gndLock;
 	bool invertAlt;
 	bool goForward;
 };

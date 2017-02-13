@@ -3,12 +3,12 @@
 #ifndef S3O_TEXTURE_HANDLER_H
 #define S3O_TEXTURE_HANDLER_H
 
-#include <boost/unordered_map.hpp>
 #include <string>
 #include <vector>
 
-#include "Rendering/GL/myGL.h"
-#include "System/Platform/Threading.h"
+#include "Bitmap.h"
+#include "System/Threading/SpringThreading.h"
+#include "System/UnorderedMap.hpp"
 
 struct S3DModel;
 class CBitmap;
@@ -35,42 +35,42 @@ public:
 		unsigned int ysize;
 	};
 
-	typedef S3OTexMat S3oTex;
-
-
 	CS3OTextureHandler();
 	~CS3OTextureHandler();
 
-	void LoadS3OTexture(S3DModel* model);
-	int LoadS3OTextureNow(const S3DModel* model);
-	void SetS3oTexture(int num);
+	void LoadTexture(S3DModel* model);
+	void PreloadTexture(S3DModel* model, bool invertAxis = false, bool invertAlpha = false);
 
 public:
-	const S3OTexMat* GetS3oTex(unsigned int num) {
-		S3OTexMat* texMat = NULL;
-		texMat = (num < textures.size())? textures[num]: NULL;
-		return texMat;
-	}
+	const S3OTexMat* GetTexture(unsigned int num) {
+		if (num < textures.size())
+			return &textures[num];
 
-	void UpdateDraw();
-
-private:
-	S3OTexMat* InsertTextureMat(const S3DModel* model);
-
-	inline void DoUpdateDraw() {
+		return nullptr;
 	}
 
 private:
-	typedef boost::unordered_map<std::string, CachedS3OTex> TextureCache;
-	typedef boost::unordered_map<std::string, CachedS3OTex>::const_iterator TextureCacheIt;
-	typedef boost::unordered_map<boost::uint64_t, S3OTexMat*> TextureTable;
-	typedef boost::unordered_map<boost::uint64_t, S3OTexMat*>::const_iterator TextureTableIt;
+	unsigned int LoadAndCacheTexture(
+		const S3DModel* model,
+		unsigned int texNum,
+		bool invertAxis,
+		bool invertAlpha,
+		bool preloadCall
+	);
+	unsigned int InsertTextureMat(const S3DModel* model);
+
+private:
+	typedef spring::unordered_map<std::string, CachedS3OTex> TextureCache;
+	typedef spring::unordered_map<std::string, CBitmap> BitmapCache;
+	typedef spring::unordered_map<std::uint64_t, unsigned int> TextureTable;
 
 	TextureCache textureCache; // stores individual primary- and secondary-textures by name
 	TextureTable textureTable; // stores (primary, secondary) texture-pairs by unique ident
+	BitmapCache bitmapCache;
 
-	std::vector<S3OTexMat*> textures;
-	std::vector<S3OTexMat*> texturesDraw;
+	spring::mutex cacheMutex;
+
+	std::vector<S3OTexMat> textures;
 };
 
 extern CS3OTextureHandler* texturehandlerS3O;

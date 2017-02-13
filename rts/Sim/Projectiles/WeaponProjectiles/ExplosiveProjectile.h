@@ -7,18 +7,20 @@
 
 class CExplosiveProjectile : public CWeaponProjectile
 {
-	CR_DECLARE(CExplosiveProjectile);
+	CR_DECLARE_DERIVED(CExplosiveProjectile)
 public:
 	CExplosiveProjectile(const ProjectileParams& params);
 
-	void Update();
-	void Draw();
+	void Update() override;
+	void Draw() override;
 
-	int ShieldRepulse(CPlasmaRepulser* shield, float3 shieldPos,
-			float shieldForce, float shieldMaxSpeed);
+	virtual int GetProjectilesCount() const override;
+
+	int ShieldRepulse(const float3& shieldPos, float shieldForce, float shieldMaxSpeed) override;
 
 private:
-	float areaOfEffect;
+	CExplosiveProjectile() { }
+
 	float invttl;
 	float curTime;
 };

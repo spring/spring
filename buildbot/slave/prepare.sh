@@ -2,7 +2,7 @@
 # Each of the scripts (including this) gets 2 arguments: <config> <branch>
 
 # It sets the following variables:
-# - CONFIG   : configuration (default, debug2, syncdebug, etc.)
+# - CONFIG   : configuration (default, debug, syncdebug, etc.)
 # - BRANCH   : branch (master, etc.)
 # - CONFIG_  : $CONFIG wrapped in [] or empty if CONFIG=default
 # - BRANCH_  : $BRANCH wrapped in {} or empty if BRANCH=master

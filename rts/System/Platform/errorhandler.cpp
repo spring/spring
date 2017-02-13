@@ -10,12 +10,12 @@
 
 #include <string>
 #include <sstream>
-#include <boost/bind.hpp>
-#include <boost/thread.hpp>
+#include <functional>
 #include "Game/GlobalUnsynced.h"
 #include "System/Log/ILog.h"
 #include "System/Log/LogSinkHandler.h"
 #include "System/Util.h"
+#include "System/Threading/SpringThreading.h"
 
 #if !defined(DEDICATED) || defined(_MSC_VER)
 	#include "System/SpringApp.h"
@@ -59,7 +59,7 @@ __FORCE_ALIGN_STACK__
 void ForcedExit(const std::string& msg, const std::string& caption, unsigned int flags) {
 
 	for (unsigned int n = 0; !shutdownSucceeded && (n < 10); ++n) {
-		boost::this_thread::sleep(boost::posix_time::seconds(1));
+		spring::this_thread::sleep_for(std::chrono::seconds(1));
 	}
 
 	if (!shutdownSucceeded) {
@@ -79,7 +79,7 @@ void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigne
 
 	// SpringApp::Shutdown is extremely likely to deadlock or end up waiting indefinitely if any
 	// MT thread has crashed or deviated from its normal execution path by throwing an exception
-	boost::thread* forcedExitThread = new boost::thread(boost::bind(&ForcedExit, msg, caption, flags));
+	spring::thread* forcedExitThread = new spring::thread(std::bind(&ForcedExit, msg, caption, flags));
 
 	// not the main thread (ie. not called from main::Run)
 	// --> leave a message for main and then interrupt it
@@ -96,7 +96,7 @@ void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigne
 
 		// terminate thread
 		// FIXME: only the (separate) loading thread can catch thread_interrupted
-		throw boost::thread_interrupted();
+		throw std::runtime_error("thread interrupted");
 	}
 
 	LOG_L(L_ERROR, "[%s][2]", __FUNCTION__);

@@ -4,7 +4,10 @@
 
 #include <SDL.h>
 
+#include <functional>
 #include <iostream>
+
+#include <gflags/gflags.h>
 
 #ifdef WIN32
 //windows workarrounds
@@ -26,46 +29,50 @@
 #include "Game/GlobalUnsynced.h"
 #include "Game/PreGame.h"
 #include "Game/LoadScreen.h"
-#include "Net/GameServer.h"
 #include "Game/UI/KeyBindings.h"
+#include "Game/UI/KeyCodes.h"
 #include "Game/UI/MouseHandler.h"
+#include "Lua/LuaMenu.h"
 #include "Lua/LuaOpenGL.h"
+#include "Lua/LuaVFSDownload.h"
+#include "Menu/LuaMenuController.h"
 #include "Menu/SelectMenu.h"
+#include "Net/GameServer.h"
+#include "Net/Protocol/NetProtocol.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Fonts/glFont.h"
-#include "Rendering/GLContext.h"
-#include "Rendering/VerticalSync.h"
 #include "Rendering/GL/FBO.h"
 #include "Rendering/Textures/NamedTextures.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Misc/DefinitionTag.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/GlobalSynced.h"
+#include "Sim/Misc/ModInfo.h"
+#include "Sim/Projectiles/ExplosionGenerator.h"
 #include "System/bitops.h"
-#include "System/Config/ConfigHandler.h"
 #include "System/Exceptions.h"
 #include "System/GlobalConfig.h"
-#include "System/Log/ConsoleSink.h"
-#include "System/Log/ILog.h"
-#include "System/Log/DefaultFilter.h"
-#include "System/LogOutput.h"
 #include "System/myMath.h"
 #include "System/MsgStrings.h"
-#include "Net/Protocol/NetProtocol.h"
 #include "System/StartScriptGen.h"
 #include "System/TimeProfiler.h"
-#include "System/ThreadPool.h"
+#include "System/UriParser.h"
 #include "System/Util.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/creg/creg_runtime_tests.h"
-#include "System/Input/KeyInput.h"
-#include "System/Input/MouseInput.h"
-#include "System/Input/Joystick.h"
+#include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/DataDirLocater.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/FileSystem/FileSystemInitializer.h"
-#include "System/Platform/CmdLineParams.h"
-#include "System/Platform/Misc.h"
+#include "System/Input/KeyInput.h"
+#include "System/Input/MouseInput.h"
+#include "System/Input/Joystick.h"
+#include "System/Log/ConsoleSink.h"
+#include "System/Log/ILog.h"
+#include "System/Log/DefaultFilter.h"
+#include "System/LogOutput.h"
+#include "System/Platform/Battery.h"
 #include "System/Platform/errorhandler.h"
 #include "System/Platform/CrashHandler.h"
 #include "System/Platform/Threading.h"
@@ -73,28 +80,25 @@
 #include "System/Platform/WindowManagerHelper.h"
 #include "System/Sound/ISound.h"
 #include "System/Sync/FPUCheck.h"
-#include "System/UriParser.h"
-
-#ifdef WIN32
-	#include <winuser.h> //GetWindowPlacement
-	#include <SDL_syswm.h>
-	#include "System/Platform/Win/WinVersion.h"
-#elif defined(__APPLE__)
-#elif defined(HEADLESS)
-#else
-	#include <X11/Xlib.h>
-	#include "System/Platform/Linux/myX11.h"
-#endif
+#include "System/Threading/ThreadPool.h"
 
 #include "lib/luasocket/src/restrictions.h"
 
+#ifdef WIN32
+	#include "System/Platform/Win/WinVersion.h"
+#else
+	#include <unistd.h>
+#endif
+
+
+
 CONFIG(unsigned, SetCoreAffinity).defaultValue(0).safemodeValue(1).description("Defines a bitmask indicating which CPU cores the main-thread should use.");
 CONFIG(unsigned, SetCoreAffinitySim).defaultValue(0).safemodeValue(1).description("Defines a bitmask indicating which CPU cores the sim-thread should use.");
+CONFIG(bool, UseHighResTimer).defaultValue(false).description("On Windows, sets whether Spring will use low- or high-resolution timer functions for tasks like graphical interpolation between game frames.");
+CONFIG(int, PathingThreadCount).defaultValue(0).safemodeValue(1).minimumValue(0);
+
 CONFIG(int, FSAALevel).defaultValue(0).minimumValue(0).maximumValue(8).description("If >0 enables FullScreen AntiAliasing.");
-CONFIG(int, SmoothLines).defaultValue(2).safemodeValue(0).minimumValue(0).maximumValue(3).description("Smooth lines.\n 0 := off\n 1 := fastest\n 2 := don't care\n 3 := nicest");
-CONFIG(int, SmoothPoints).defaultValue(2).safemodeValue(0).minimumValue(0).maximumValue(3).description("Smooth points.\n 0 := off\n 1 := fastest\n 2 := don't care\n 3 := nicest");
-CONFIG(float, TextureLODBias).defaultValue(0.0f).minimumValue(-4.0f).maximumValue(4.0f);
-CONFIG(bool, FixAltTab).defaultValue(false);
+
 CONFIG(std::string, FontFile).defaultValue("fonts/FreeSansBold.otf").description("Sets the font of Spring engine text.");
 CONFIG(std::string, SmallFontFile).defaultValue("fonts/FreeSansBold.otf").description("Sets the font of Spring engine small text.");
 CONFIG(int, FontSize).defaultValue(23).description("Sets the font size (in pixels) of the MainMenu and more.");
@@ -103,45 +107,50 @@ CONFIG(int, FontOutlineWidth).defaultValue(3).description("Sets the width of the
 CONFIG(float, FontOutlineWeight).defaultValue(25.0f).description("Sets the opacity of Spring engine text, such as the title screen version number, clock, and basic UI. Does not affect LuaUI elements.");
 CONFIG(int, SmallFontOutlineWidth).defaultValue(2).description("see FontOutlineWidth");
 CONFIG(float, SmallFontOutlineWeight).defaultValue(10.0f).description("see FontOutlineWeight");
-CONFIG(bool, Fullscreen).defaultValue(true).description("Sets whether the game will run in fullscreen, as opposed to a window. For Windowed Fullscreen of Borderless Window, set this to 0, WindowBorderless to 1, and WindowPosX and WindowPosY to 0.");
-CONFIG(bool, UseHighResTimer).defaultValue(false).description("On Windows, sets whether Spring will use low- or high-resolution timer functions for tasks like graphical interpolation between game frames.");
-CONFIG(int, XResolution).defaultValue(0).minimumValue(0).description("Sets the width of the game screen. If set to 0 Spring will autodetect the current resolution of your desktop.");
-CONFIG(int, YResolution).defaultValue(0).minimumValue(0).description("Sets the height of the game screen. If set to 0 Spring will autodetect the current resolution of your desktop.");
+
+CONFIG(bool, Fullscreen).defaultValue(true).headlessValue(false).description("Sets whether the game will run in fullscreen, as opposed to a window. For Windowed Fullscreen of Borderless Window, set this to 0, WindowBorderless to 1, and WindowPosX and WindowPosY to 0.");
+CONFIG(int, XResolution).defaultValue(0).headlessValue(8).minimumValue(0).description("Sets the width of the game screen. If set to 0 Spring will autodetect the current resolution of your desktop.");
+CONFIG(int, YResolution).defaultValue(0).headlessValue(8).minimumValue(0).description("Sets the height of the game screen. If set to 0 Spring will autodetect the current resolution of your desktop.");
+CONFIG(int, XResolutionWindowed).defaultValue(0).headlessValue(8).minimumValue(0).description("See XResolution, just for windowed.");
+CONFIG(int, YResolutionWindowed).defaultValue(0).headlessValue(8).minimumValue(0).description("See YResolution, just for windowed.");
 CONFIG(int, WindowPosX).defaultValue(32).description("Sets the horizontal position of the game window, if Fullscreen is 0. When WindowBorderless is set, this should usually be 0.");
 CONFIG(int, WindowPosY).defaultValue(32).description("Sets the vertical position of the game window, if Fullscreen is 0. When WindowBorderless is set, this should usually be 0.");
 CONFIG(int, WindowState).defaultValue(CGlobalRendering::WINSTATE_MAXIMIZED);
 CONFIG(bool, WindowBorderless).defaultValue(false).description("When set and Fullscreen is 0, will put the game in Borderless Window mode, also known as Windowed Fullscreen. When using this, it is generally best to also set WindowPosX and WindowPosY to 0");
-CONFIG(int, PathingThreadCount).defaultValue(0).safemodeValue(1).minimumValue(0);
+CONFIG(bool, BlockCompositing).defaultValue(false).safemodeValue(true).description("Disables kwin compositing to fix tearing, possible fixes low FPS in windowed mode, too.");
+
 CONFIG(std::string, name).defaultValue(UnnamedPlayerName).description("Sets your name in the game. Since this is overridden by lobbies with your lobby username when playing, it usually only comes up when viewing replays or starting the engine directly for testing purposes.");
-#ifdef __linux
-CONFIG(bool, BlockCompositing).defaultValue(true).description("Disables kwin compositing to fix tearing.");
-#endif
-
-static SDL_GLContext sdlGlCtx;
-static SDL_Window* window;
+CONFIG(std::string, DefaultStartScript).defaultValue("").description("filename of script.txt to use when no command line parameters are specified.");
 
 
-/**
- * @brief multisample verify
- * @return whether verification passed
- *
- * Tests whether FSAA was actually enabled
- */
-static bool MultisampleVerify()
-{
-	if (!GLEW_ARB_multisample)
-		return false;
-	GLint buffers = 0;
-	GLint samples = 0;
-	glGetIntegerv(GL_SAMPLE_BUFFERS_ARB, &buffers);
-	glGetIntegerv(GL_SAMPLES_ARB, &samples);
-	if (buffers && samples) {
-		return true;
-	}
-	return false;
-}
+DEFINE_bool_EX  (sync_version,       "sync-version",       false, "Display program sync version (for online gaming)");
+DEFINE_bool     (fullscreen,                               false, "Run in fullscreen mode");
+DEFINE_bool     (window,                                   false, "Run in windowed mode");
+DEFINE_bool     (minimise,                                 false, "Start in background (minimised)");
+DEFINE_bool     (nocolor,                                  false, "Disables colorized stdout");
+DEFINE_string   (server,                                   "",    "Set listening IP for server");
+DEFINE_bool     (textureatlas,                             false, "Dump each finalized textureatlas in textureatlasN.tga");
+DEFINE_int32    (benchmark,                                -1,    "Enable benchmark mode (writes a benchmark.data file). The given number specifies the timespan to test.");
+DEFINE_int32    (benchmarkstart,                           -1,    "Benchmark start time in minutes.");
 
+DEFINE_bool_EX  (list_ai_interfaces, "list-ai-interfaces", false, "Dump a list of available AI Interfaces to stdout");
+DEFINE_bool_EX  (list_skirmish_ais,  "list-skirmish-ais",  false, "Dump a list of available Skirmish AIs to stdout");
+DEFINE_bool_EX  (list_config_vars,   "list-config-vars",   false, "Dump a list of config vars and meta data to stdout");
+DEFINE_bool_EX  (list_def_tags,      "list-def-tags",      false, "Dump a list of all unitdef-, weapondef-, ... tags and meta data to stdout");
+DEFINE_bool_EX  (list_ceg_classes,   "list-ceg-classes",   false, "Dump a list of available projectile classes to stdout");
+DEFINE_bool_EX  (test_creg,          "test-creg",          false, "Test if all CREG classes are completed");
 
+DEFINE_bool     (safemode,                                 false, "Turns off many things that are known to cause problems (i.e. on PC/Mac's with lower-end graphic cards)");
+
+DEFINE_string   (config,                                   "",    "Exclusive configuration file");
+DEFINE_bool     (isolation,                                false, "Limit the data-dir (games & maps) scanner to one directory");
+DEFINE_string_EX(isolation_dir,      "isolation-dir",      "",    "Specify the isolation-mode data-dir (see --isolation)");
+DEFINE_string_EX(write_dir,          "write-dir",          "",    "Specify where Spring writes to.");
+DEFINE_string   (game,                                     "",    "Specify the game that will be instantly loaded");
+DEFINE_string   (map,                                      "",    "Specify the map that will be instantly loaded");
+DEFINE_string   (menu,                                     "",    "Specify a lua menu archive to be used by spring");
+DEFINE_string   (name,                                     "",    "Set your player name");
+DEFINE_bool     (oldmenu,                                  false, "Start the old menu");
 
 
 
@@ -151,12 +160,17 @@ static bool MultisampleVerify()
  * @param argc argument count
  * @param argv array of argument strings
  */
-SpringApp::SpringApp(int argc, char** argv): cmdline(new CmdLineParams(argc, argv))
+SpringApp::SpringApp(int argc, char** argv)
 {
 	// initializes configHandler which we need
-	ParseCmdLine(argv[0]);
+	std::string binaryName = argv[0];
 
-	spring_clock::PushTickRate(configHandler->GetBool("UseHighResTimer") || cmdline->IsSet("useHighResTimer"));
+	gflags::SetUsageMessage("Usage: " + binaryName + " [options] [path_to_script.txt or demo.sdfz]");
+	gflags::SetVersionString(SpringVersion::GetFull());
+	gflags::ParseCommandLineFlags(&argc, &argv, true);
+	ParseCmdLine(argc, argv);
+
+	spring_clock::PushTickRate(configHandler->GetBool("UseHighResTimer"));
 	// set the Spring "epoch" to be whatever value the first
 	// call to gettime() returns, should not be 0 (can safely
 	// be done before SDL_Init, we are not using SDL_GetTicks
@@ -170,8 +184,6 @@ SpringApp::SpringApp(int argc, char** argv): cmdline(new CmdLineParams(argc, arg
 SpringApp::~SpringApp()
 {
 	spring_clock::PopTickRate();
-	creg::System::FreeClasses();
-	delete cmdline;
 }
 
 /**
@@ -180,19 +192,16 @@ SpringApp::~SpringApp()
  */
 bool SpringApp::Initialize()
 {
-	assert(cmdline != NULL);
-	assert(configHandler != NULL);
-
+	assert(configHandler != nullptr);
 	FileSystemInitializer::InitializeLogOutput();
+
+	CLogOutput::LogConfigInfo();
 	CLogOutput::LogSystemInfo();
-	LOG("         CPU Clock: %s", spring_clock::GetName());
-	LOG("Physical CPU Cores: %d", Threading::GetPhysicalCpuCores());
-	LOG(" Logical CPU Cores: %d", Threading::GetLogicalCpuCores());
+
 	CMyMath::Init();
 
 	globalRendering = new CGlobalRendering();
-	globalRendering->SetFullScreen(configHandler->GetBool("Fullscreen"), cmdline->IsSet("window"), cmdline->IsSet("fullscreen"));
-	globalRendering->SetViewSize(configHandler->GetInt("XResolution"), configHandler->GetInt("YResolution"));
+	globalRendering->SetFullScreen(configHandler->GetBool("Fullscreen"), FLAGS_window, FLAGS_fullscreen);
 
 #if !(defined(WIN32) || defined(__APPLE__) || defined(HEADLESS))
 	// this MUST run before any other X11 call (esp. those by SDL!)
@@ -218,9 +227,9 @@ bool SpringApp::Initialize()
 	CrashHandler::Install();
 	good_fpu_control_registers(__FUNCTION__);
 
-	// CREG & GlobalConfig
-	creg::System::InitializeClasses();
+	// GlobalConfig
 	GlobalConfig::Instantiate();
+
 
 	// Create Window
 	if (!InitWindow(("Spring " + SpringVersion::GetSync()).c_str())) {
@@ -229,7 +238,6 @@ bool SpringApp::Initialize()
 	}
 
 	// Init OpenGL
-	LoadExtensions(); // Initialize GLEW
 	globalRendering->PostInit();
 	InitOpenGL();
 
@@ -238,12 +246,17 @@ bool SpringApp::Initialize()
 	Watchdog::RegisterThread(WDT_MAIN, true);
 
 	// ArchiveScanner uses for_mt --> needs thread-count set
-	// (use all threads available, later switch to less)
-	ThreadPool::SetThreadCount(ThreadPool::GetMaxThreads());
+	// (employ all available threads, then switch to default)
+	ThreadPool::SetMaximumThreadCount();
 	FileSystemInitializer::Initialize();
+	ThreadPool::SetDefaultThreadCount();
+
+	// Multithreading & Affinity
+	Threading::SetThreadName("spring-main"); // set default threadname for pstree
+	Threading::SetThreadScheduler();
 
 	mouseInput = IMouseInput::GetInstance();
-	input.AddHandler(boost::bind(&SpringApp::MainEventHandler, this, _1));
+	input.AddHandler(std::bind(&SpringApp::MainEventHandler, this, std::placeholders::_1));
 
 	// Global structures
 	gs = new CGlobalSynced();
@@ -252,6 +265,8 @@ bool SpringApp::Initialize()
 	// GUIs
 	agui::InitGui();
 	LoadFonts();
+	keyCodes = new CKeyCodes();
+
 	CNamedTextures::Init();
 	LuaOpenGL::Init();
 	ISound::Initialize();
@@ -260,9 +275,8 @@ bool SpringApp::Initialize()
 	// Lua socket restrictions
 	luaSocketRestrictions = new CLuaSocketRestrictions();
 
-	// Multithreading & Affinity
-	Threading::SetThreadName("unknown"); // set default threadname
-	Threading::InitThreadPool();
+	battery = new CBattery();
+	LuaVFSDownload::Init();
 
 	// Create CGameSetup and CPreGame objects
 	Startup();
@@ -291,121 +305,21 @@ bool SpringApp::InitWindow(const char* title)
 	PrintAvailableResolutions();
 	SDL_DisableScreenSaver();
 
-	if (!CreateSDLWindow(title)) {
+	if (!globalRendering->CreateSDLWindow(title)) {
 		LOG_L(L_FATAL, "Failed to set SDL video mode: %s", SDL_GetError());
 		return false;
 	}
 
-	if (cmdline->IsSet("minimise")) {
-		SDL_HideWindow(window);
-	}
-
-	// anyone other thread spawned from the main-process should be `unknown`
-	Threading::SetThreadName("unknown");
-	return true;
-}
-
-/**
- * @return whether setting the video mode was successful
- *
- * Sets SDL video mode options/settings
- */
-bool SpringApp::CreateSDLWindow(const char* title)
-{
-	int sdlflags = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE;
-
-	// use standard: 24bit color + 24bit depth + 8bit stencil & doublebuffered
-	SDL_GL_SetAttribute(SDL_GL_RED_SIZE,   8);
-	SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
-	SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE,  8);
-	//SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
-	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE,  24);
-	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
-	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-
-	// Create GL debug context when wanted (allows further GL verbose informations, but runs slower)
-	if (configHandler->GetBool("DebugGL")) {
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
-	}
-
-	// FullScreen AntiAliasing
-	globalRendering->FSAA = configHandler->GetInt("FSAALevel");
-	if (globalRendering->FSAA > 0) {
-		make_even_number(globalRendering->FSAA);
-		SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
-		SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, globalRendering->FSAA);
-	}
-
-	// Use Native Desktop Resolution
-	// and yes SDL2 can do this itself when sizeX & sizeY are set to zero, but
-	// oh wonder SDL2 failes then when you use Display Cloneing and similar
-	//  -> i.e. DVI monitor runs then at 640x400 and HDMI at full-HD (yes with display _cloning_!)
-	SDL_DisplayMode dmode;
-	SDL_GetDesktopDisplayMode(0, &dmode);
-	if (globalRendering->viewSizeX<=0) globalRendering->viewSizeX = dmode.w;
-	if (globalRendering->viewSizeY<=0) globalRendering->viewSizeY = dmode.h;
-
-	// In Windowed Mode Limit Minimum Window Size
-	static const int minViewSizeX = 400;
-	static const int minViewSizeY = 300;
-	if (!globalRendering->fullScreen) {
-		globalRendering->viewSizeX = std::max(globalRendering->viewSizeX, minViewSizeX);
-		globalRendering->viewSizeY = std::max(globalRendering->viewSizeY, minViewSizeY);
-	}
-
-	// Borderless
-	const bool borderless = configHandler->GetBool("WindowBorderless");
-	if (globalRendering->fullScreen) {
-		sdlflags |= borderless ? SDL_WINDOW_FULLSCREEN_DESKTOP : SDL_WINDOW_FULLSCREEN;
-	}
-	sdlflags |= borderless ? SDL_WINDOW_BORDERLESS : 0;
-
-#if defined(WIN32)
-	if (borderless && !globalRendering->fullScreen) {
-		sdlflags &= ~SDL_WINDOW_RESIZABLE;
-	}
-#endif
-
-	// Window Pos & State
-	globalRendering->winPosX  = configHandler->GetInt("WindowPosX");
-	globalRendering->winPosY  = configHandler->GetInt("WindowPosY");
-	globalRendering->winState = configHandler->GetInt("WindowState");
-	switch (globalRendering->winState) {
-		case CGlobalRendering::WINSTATE_MAXIMIZED: sdlflags |= SDL_WINDOW_MAXIMIZED; break;
-		case CGlobalRendering::WINSTATE_MINIMIZED: sdlflags |= SDL_WINDOW_MINIMIZED; break;
-	}
-
-	// Create Window
-	window = SDL_CreateWindow(title,
-		globalRendering->winPosX, globalRendering->winPosY,
-		globalRendering->viewSizeX, globalRendering->viewSizeY,
-		sdlflags);
-	if (!window) {
-		char buf[1024];
-		SNPRINTF(buf, sizeof(buf), "Could not set video mode:\n%s", SDL_GetError());
-		handleerror(NULL, buf, "ERROR", MBF_OK|MBF_EXCL);
-		return false;
-	}
-
-	// Create GL Context
-	SDL_SetWindowMinimumSize(window, minViewSizeX, minViewSizeY);
-	sdlGlCtx = SDL_GL_CreateContext(window);
-	globalRendering->window = window;
-
-#ifdef STREFLOP_H
 	// Something in SDL_SetVideoMode (OpenGL drivers?) messes with the FPU control word.
 	// Set single precision floating point math.
 	streflop::streflop_init<streflop::Simple>();
-#endif
 
-#if defined(__linux) && !defined(HEADLESS)
-	// disable kwin compositing to fix tearing
-	// (happens at 300fps, neither fullscreen nor vsync fixes it, so disable compositing)
-	if (configHandler->GetBool("BlockCompositing")) {
-		MyX11BlockCompositing(window);
+	if (FLAGS_minimise) {
+		SDL_HideWindow(globalRendering->window);
 	}
-#endif
 
+	// any other thread spawned from the main-process should be `unknown`
+	Threading::SetThreadName("unknown");
 	return true;
 }
 
@@ -425,12 +339,12 @@ void SpringApp::GetDisplayGeometry()
 
 #else
 	SDL_Rect screenSize;
-	SDL_GetDisplayBounds(SDL_GetWindowDisplayIndex(window), &screenSize);
+	SDL_GetDisplayBounds(SDL_GetWindowDisplayIndex(globalRendering->window), &screenSize);
 	globalRendering->screenSizeX = screenSize.w;
 	globalRendering->screenSizeY = screenSize.h;
 
-	SDL_GetWindowSize(window, &globalRendering->winSizeX, &globalRendering->winSizeY);
-	SDL_GetWindowPosition(window, &globalRendering->winPosX, &globalRendering->winPosY);
+	SDL_GetWindowSize(globalRendering->window, &globalRendering->winSizeX, &globalRendering->winSizeY);
+	SDL_GetWindowPosition(globalRendering->window, &globalRendering->winPosX, &globalRendering->winPosY);
 
 	globalRendering->UpdateViewPortGeometry();
 
@@ -438,26 +352,7 @@ void SpringApp::GetDisplayGeometry()
 	// Reading window state fails if it is changed via the window manager, like clicking on the titlebar (2013)
 	// https://bugzilla.libsdl.org/show_bug.cgi?id=1508 & https://bugzilla.libsdl.org/show_bug.cgi?id=2282
 	// happens on linux too!
-  #ifdef __APPLE__
-	auto state = SDL_GetWindowFlags(window);
-  #elif defined(WIN32)
-	int state = 0;
-	WINDOWPLACEMENT wp;
-	wp.length = sizeof(WINDOWPLACEMENT);
-
-	struct SDL_SysWMinfo info;
-	SDL_VERSION(&info.version);
-	SDL_GetWindowWMInfo(globalRendering->window, &info);
-
-	if (GetWindowPlacement(info.info.win.window, &wp)) {
-		if (wp.showCmd == SW_SHOWMAXIMIZED)
-			state = SDL_WINDOW_MAXIMIZED;
-		if (wp.showCmd == SW_SHOWMINIMIZED)
-			state = SDL_WINDOW_MINIMIZED;
-	}
-  #else
-	auto state = MyX11GetWindowState(window);
-  #endif
+	const int state = WindowManagerHelper::GetWindowState(globalRendering->window);
 
 	globalRendering->winState = CGlobalRendering::WINSTATE_DEFAULT;
 	if (state & SDL_WINDOW_MAXIMIZED) {
@@ -476,19 +371,22 @@ void SpringApp::GetDisplayGeometry()
 void SpringApp::SaveWindowPosition()
 {
 #ifndef HEADLESS
-	configHandler->Set("Fullscreen", globalRendering->fullScreen);
-	if (!globalRendering->fullScreen) {
-		GetDisplayGeometry();
-		if (globalRendering->winState == CGlobalRendering::WINSTATE_DEFAULT) {
-			configHandler->Set("WindowPosX",  globalRendering->winPosX);
-			configHandler->Set("WindowPosY",  globalRendering->winPosY);
-			configHandler->Set("WindowState", globalRendering->winState);
-		} else
-		if (globalRendering->winState == CGlobalRendering::WINSTATE_MINIMIZED) {
-			// don't automatically save minimized states
-		} else {
-			configHandler->Set("WindowState", globalRendering->winState);
-		}
+	if (globalRendering->fullScreen) {
+		return;
+	}
+
+	GetDisplayGeometry();
+	if (globalRendering->winState == CGlobalRendering::WINSTATE_DEFAULT) {
+		configHandler->Set("WindowPosX",  globalRendering->winPosX);
+		configHandler->Set("WindowPosY",  globalRendering->winPosY);
+		configHandler->Set("WindowState", globalRendering->winState);
+		configHandler->Set("XResolutionWindowed", globalRendering->winSizeX);
+		configHandler->Set("YResolutionWindowed", globalRendering->winSizeY);
+	} else
+	if (globalRendering->winState == CGlobalRendering::WINSTATE_MINIMIZED) {
+		// don't automatically save minimized states
+	} else {
+		configHandler->Set("WindowState", globalRendering->winState);
 	}
 #endif
 }
@@ -505,7 +403,12 @@ void SpringApp::SetupViewportGeometry()
 	const int vpx = globalRendering->viewPosX;
 	const int vpy = globalRendering->winSizeY - globalRendering->viewSizeY - globalRendering->viewPosY;
 
-	agui::gui->UpdateScreenGeometry(globalRendering->viewSizeX, globalRendering->viewSizeY, vpx, vpy);
+	if (agui::gui != nullptr) {
+		agui::gui->UpdateScreenGeometry(globalRendering->viewSizeX, globalRendering->viewSizeY, vpx, vpy);
+	}
+
+	glViewport(globalRendering->viewPosX, globalRendering->viewPosY, globalRendering->viewSizeX, globalRendering->viewSizeY);
+	gluPerspective(45.0f, globalRendering->aspectRatio, 2.8f, CGlobalRendering::MAX_VIEW_RANGE);
 }
 
 
@@ -514,72 +417,41 @@ void SpringApp::SetupViewportGeometry()
  */
 void SpringApp::InitOpenGL()
 {
-	// reinit vsync
-	VSync.Init();
-
-	// check if FSAA init worked fine
-	if (globalRendering->FSAA && !MultisampleVerify())
-		globalRendering->FSAA = 0;
-
-	// setup GL smoothing
-	const int lineSmoothing = configHandler->GetInt("SmoothLines");
-	if (lineSmoothing > 0) {
-		GLenum hint = GL_FASTEST;
-		if (lineSmoothing >= 3) {
-			hint = GL_NICEST;
-		} else if (lineSmoothing >= 2) {
-			hint = GL_DONT_CARE;
-		}
-		glEnable(GL_LINE_SMOOTH);
-		glHint(GL_LINE_SMOOTH_HINT, hint);
-	}
-	const int pointSmoothing = configHandler->GetInt("SmoothPoints");
-	if (pointSmoothing > 0) {
-		GLenum hint = GL_FASTEST;
-		if (pointSmoothing >= 3) {
-			hint = GL_NICEST;
-		} else if (pointSmoothing >= 2) {
-			hint = GL_DONT_CARE;
-		}
-		glEnable(GL_POINT_SMOOTH);
-		glHint(GL_POINT_SMOOTH_HINT, hint);
-	}
-
-	// setup LOD bias factor
-	const float lodBias = configHandler->GetFloat("TextureLODBias");
-	if (math::fabs(lodBias) > 0.01f) {
-		glTexEnvf(GL_TEXTURE_FILTER_CONTROL, GL_TEXTURE_LOD_BIAS, lodBias );
-	}
-
-	//FIXME not needed anymore with SDL2?
-	if (configHandler->GetBool("FixAltTab")) {
-		// free GL resources
-		GLContext::Free();
-
-		// initialize any GL resources that were lost
-		GLContext::Init();
-	}
+	globalRendering->UpdateGLConfigs();
 
 	// setup viewport
 	SetupViewportGeometry();
-	glViewport(globalRendering->viewPosX, globalRendering->viewPosY, globalRendering->viewSizeX, globalRendering->viewSizeY);
-	gluPerspective(45.0f, globalRendering->aspectRatio, 2.8f, CGlobalRendering::MAX_VIEW_RANGE);
 
 	// Initialize some GL states
 	glShadeModel(GL_SMOOTH);
 	glClearDepth(1.0f);
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LEQUAL);
+	#ifdef GL_ARB_clip_control
+	// avoid precision loss with default DR transform
+	glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE);
+	#endif
+
+	if (globalRendering->EnableFSAA()) {
+		glEnable(GL_MULTISAMPLE);
+	} else {
+		glDisable(GL_MULTISAMPLE);
+	}
+
+	// FFP model lighting
+	glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 0.0f);
+	glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, 0);
 
 	// Clear Window
-	glClearColor(0.0f,0.0f,0.0f,0.0f);
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	SDL_GL_SwapWindow(window);
+	SDL_GL_SwapWindow(globalRendering->window);
 
 	// Print Final Mode (call after SetupViewportGeometry, which updates viewSizeX/Y)
 	SDL_DisplayMode dmode;
-	SDL_GetWindowDisplayMode(window, &dmode);
-	LOG("[%s] video mode set to %ix%i:%ibit @%iHz %s", __FUNCTION__, globalRendering->viewSizeX, globalRendering->viewSizeY, SDL_BITSPERPIXEL(dmode.format), dmode.refresh_rate, globalRendering->fullScreen ? "" : "(windowed)");
+	SDL_GetWindowDisplayMode(globalRendering->window, &dmode);
+	bool isBorderless = (SDL_GetWindowFlags(globalRendering->window) & SDL_WINDOW_BORDERLESS) != 0;
+	LOG("[%s] video mode set to %ix%i:%ibit @%iHz %s", __FUNCTION__, globalRendering->viewSizeX, globalRendering->viewSizeY, SDL_BITSPERPIXEL(dmode.format), dmode.refresh_rate, globalRendering->fullScreen ? (isBorderless ? "(borderless)" : "") : "(windowed)");
 }
 
 
@@ -609,6 +481,16 @@ void SpringApp::LoadFonts()
 	}
 }
 
+// initialize basic systems for command line help / output
+static void ConsolePrintInitialize(const std::string& configSource, bool safemode)
+{
+	spring_clock::PushTickRate(false);
+	spring_time::setstarttime(spring_time::gettime(true));
+	LOG_DISABLE();
+	FileSystemInitializer::PreInitializeConfigHandler(configSource, safemode);
+	FileSystemInitializer::InitializeLogOutput();
+	LOG_ENABLE();
+}
 
 
 /**
@@ -616,163 +498,196 @@ void SpringApp::LoadFonts()
  *
  * Parse command line arguments
  */
-void SpringApp::ParseCmdLine(const std::string& binaryName)
+void SpringApp::ParseCmdLine(int argc, char* argv[])
 {
-	cmdline->SetUsageDescription("Usage: " + binaryName + " [options] [path_to_script.txt or demo.sdf]");
-	cmdline->AddSwitch(0,   "sync-version",       "Display program sync version (for online gaming)");
-	cmdline->AddSwitch('f', "fullscreen",         "Run in fullscreen mode");
-	cmdline->AddSwitch('w', "window",             "Run in windowed mode");
-	cmdline->AddInt(   'x', "xresolution",        "Set X resolution");
-	cmdline->AddInt(   'y', "yresolution",        "Set Y resolution");
-	cmdline->AddSwitch('b', "minimise",           "Start in background (minimised)");
-	cmdline->AddSwitch(0,   "nocolor",            "Disables colorized stdout");
-	cmdline->AddSwitch('q', "quiet",              "Ignore unrecognized arguments");
-	cmdline->AddString('s', "server",             "Run as a server");
-
-	cmdline->AddSwitch('t', "textureatlas",       "Dump each finalized textureatlas in textureatlasN.tga");
-	cmdline->AddInt(   0,   "benchmark",          "Enable benchmark mode (writes a benchmark.data file). The given number specifies the timespan to test.");
-	cmdline->AddInt(   0,   "benchmarkstart",     "Benchmark start time in minutes.");
-
-	cmdline->AddSwitch(0,   "list-ai-interfaces", "Dump a list of available AI Interfaces to stdout");
-	cmdline->AddSwitch(0,   "list-skirmish-ais",  "Dump a list of available Skirmish AIs to stdout");
-	cmdline->AddSwitch(0,   "list-config-vars",   "Dump a list of config vars and meta data to stdout");
-	cmdline->AddSwitch(0,   "list-def-tags",      "Dump a list of all unitdef-, weapondef-, ... tags and meta data to stdout");
-	cmdline->AddSwitch(0,   "list-ceg-classes",   "Dump a list of available projectile classes to stdout");
-	cmdline->AddSwitch(0,   "test-creg",          "Test if all CREG classes are completed");
-
-	cmdline->AddSwitch(0,   "safemode",           "Turns off many things that are known to cause problems (i.e. on PC/Mac's with lower-end graphic cards)");
-
-	cmdline->AddString('C', "config",             "Exclusive configuration file");
-	cmdline->AddSwitch('i', "isolation",          "Limit the data-dir (games & maps) scanner to one directory");
-	cmdline->AddString(0,   "isolation-dir",      "Specify the isolation-mode data-dir (see --isolation)");
-	cmdline->AddString('d', "write-dir",          "Specify where Spring writes to.");
-	cmdline->AddString('g', "game",               "Specify the game that will be instantly loaded");
-	cmdline->AddString('m', "map",                "Specify the map that will be instantly loaded");
-	cmdline->AddString('n', "name",               "Set your player name");
-
-	try {
-		cmdline->Parse();
-	} catch (const CmdLineParams::unrecognized_option& err) {
-		LOG_L(L_ERROR, "%s\n", err.what());
-		if (!cmdline->IsSet("quiet")) {
-			cmdline->PrintUsage();
-			exit(EXIT_FAILURE);
-		}
-	}
-
 #ifndef WIN32
-	if (!cmdline->IsSet("nocolor") && (getenv("SPRING_NOCOLOR") == NULL)) {
+	if (!FLAGS_nocolor && (getenv("SPRING_NOCOLOR") == NULL)) {
 		// don't colorize, if our output is piped to a diff tool or file
 		if (isatty(fileno(stdout)))
 			log_console_colorizedOutput(true);
 	}
 #endif
 
-	// mutually exclusive options that cause spring to quit immediately
-	if (cmdline->IsSet("help")) {
-		cmdline->PrintUsage();
-		exit(EXIT_SUCCESS);
-	}
-	if (cmdline->IsSet("version")) {
-		std::cout << "Spring " << SpringVersion::GetFull() << std::endl;
-		exit(EXIT_SUCCESS);
-	}
-	if (cmdline->IsSet("sync-version")) {
+	if (FLAGS_sync_version) {
 		// Note, the missing "Spring " is intentionally to make it compatible with `spring-dedicated --sync-version`
 		std::cout << SpringVersion::GetSync() << std::endl;
 		exit(EXIT_SUCCESS);
 	}
 
-	if (cmdline->IsSet("isolation")) {
+	if (FLAGS_isolation) {
 		dataDirLocater.SetIsolationMode(true);
 	}
 
-	if (cmdline->IsSet("isolation-dir")) {
+	if (!FLAGS_isolation_dir.empty()) {
 		dataDirLocater.SetIsolationMode(true);
-		dataDirLocater.SetIsolationModeDir(cmdline->GetString("isolation-dir"));
+		dataDirLocater.SetIsolationModeDir(FLAGS_isolation_dir);
 	}
 
-	if (cmdline->IsSet("write-dir")) {
-		dataDirLocater.SetWriteDir(cmdline->GetString("write-dir"));
+	if (!FLAGS_write_dir.empty()) {
+		dataDirLocater.SetWriteDir(FLAGS_write_dir);
 	}
 
 	// Interface Documentations in JSON-Format
-	if (cmdline->IsSet("list-config-vars")) {
+	if (FLAGS_list_config_vars) {
 		ConfigVariable::OutputMetaDataMap();
 		exit(EXIT_SUCCESS);
 	}
-	else if (cmdline->IsSet("list-def-tags")) {
+	if (FLAGS_list_def_tags) {
 		DefType::OutputTagMap();
-		exit(0);
+		exit(EXIT_SUCCESS);
 	}
-	else if (cmdline->IsSet("list-ceg-classes")) {
+	if (FLAGS_list_ceg_classes) {
 		const int res = CCustomExplosionGenerator::OutputProjectileClassInfo() ? EXIT_SUCCESS : EXIT_FAILURE;
 		exit(res);
 	}
 
 	// Runtime Tests
-	if (cmdline->IsSet("test-creg")) {
-		const int res = creg::RuntimeTest() ? EXIT_SUCCESS : EXIT_FAILURE;
-		exit(res);
+	if (FLAGS_test_creg) {
+#ifdef USING_CREG
+		exit(creg::RuntimeTest() ? EXIT_SUCCESS : EXIT_FAILURE);
+#else
+		LOG_L(L_ERROR, "Creg is not enabled!\n");
+		exit(EXIT_FAILURE); //Do not fail tests
+#endif
 	}
-
-	const string configSource = (cmdline->IsSet("config") ? cmdline->GetString("config") : "");
-	const bool safemode = cmdline->IsSet("safemode");
 
 	// mutually exclusive options that cause spring to quit immediately
-	if (cmdline->IsSet("list-ai-interfaces")) {
-		LOG_DISABLE();
-		FileSystemInitializer::PreInitializeConfigHandler(configSource, safemode);
-		FileSystemInitializer::InitializeLogOutput();
-		LOG_ENABLE();
+	if (FLAGS_list_ai_interfaces) {
+		ConsolePrintInitialize(FLAGS_config, FLAGS_safemode);
 		IAILibraryManager::OutputAIInterfacesInfo();
-		exit(0);
+		exit(EXIT_SUCCESS);
 	}
-	else if (cmdline->IsSet("list-skirmish-ais")) {
-		LOG_DISABLE();
-		FileSystemInitializer::PreInitializeConfigHandler(configSource, safemode);
-		FileSystemInitializer::InitializeLogOutput();
-		LOG_ENABLE();
+	else if (FLAGS_list_skirmish_ais) {
+		ConsolePrintInitialize(FLAGS_config, FLAGS_safemode);
 		IAILibraryManager::OutputSkirmishAIInfo();
-		exit(0);
+		exit(EXIT_SUCCESS);
 	}
 
-	LOG("[%s] command-line args: \"%s\"", __FUNCTION__, cmdline->GetCmdLine().c_str());
-	FileSystemInitializer::PreInitializeConfigHandler(configSource, safemode);
+	//LOG("[%s] command-line args: \"%s\"", __FUNCTION__, cmdline->GetCmdLine().c_str());
+	FileSystemInitializer::PreInitializeConfigHandler(FLAGS_config, FLAGS_safemode);
 
-	if (cmdline->IsSet("textureatlas")) {
+	if (FLAGS_textureatlas) {
 		CTextureAtlas::SetDebug(true);
 	}
 
-	if (cmdline->IsSet("name")) {
-		const string name = cmdline->GetString("name");
-		if (!name.empty()) {
-			configHandler->SetString("name", StringReplace(name, " ", "_"));
+	if (!FLAGS_name.empty())
+		configHandler->SetString("name", StringReplace(FLAGS_name, " ", "_"));
+
+	if (FLAGS_benchmark > 0) {
+		CBenchmark::enabled = true;
+		if (FLAGS_benchmarkstart > 0) {
+			CBenchmark::startFrame = FLAGS_benchmarkstart * 60 * GAME_SPEED;
 		}
+		CBenchmark::endFrame = CBenchmark::startFrame + FLAGS_benchmark * 60 * GAME_SPEED;
 	}
 
-	if (cmdline->IsSet("benchmark")) {
-		CBenchmark::enabled = true;
-		if (cmdline->IsSet("benchmarkstart")) {
-			CBenchmark::startFrame = cmdline->GetInt("benchmarkstart") * 60 * GAME_SPEED;
-		}
-		CBenchmark::endFrame = CBenchmark::startFrame + cmdline->GetInt("benchmark") * 60 * GAME_SPEED;
+	if (argc >= 2) {
+		inputFile = argv[1];
 	}
 }
 
 
-void SpringApp::RunScript(boost::shared_ptr<ClientSetup> clientSetup, const std::string& buf)
+CGameController* SpringApp::LoadSaveFile(const std::string& saveFile)
 {
-	clientSetup->LoadFromStartScript(buf);
+	const std::string ext = FileSystem::GetExtension(saveFile);
+
+	if (ext != "ssf" && ext != "slsf")
+		throw content_error(std::string("Unknown save extension: ") + ext);
+
+	clientSetup->isHost = true;
+
+	pregame = new CPreGame(clientSetup);
+	pregame->LoadSavefile(saveFile, ext == "ssf");
+	return pregame;
+}
+
+
+CGameController* SpringApp::LoadDemoFile(const std::string& demoFile)
+{
+	const std::string ext = FileSystem::GetExtension(demoFile);
+
+	if (ext != "sdfz")
+		throw content_error(std::string("Unknown demo extension: ") + ext);
+
+	clientSetup->isHost        = true;
+	clientSetup->myPlayerName += " (spec)";
+
+	pregame = new CPreGame(clientSetup);
+	pregame->LoadDemo(demoFile);
+	return pregame;
+}
+
+
+CGameController* SpringApp::RunScript(const std::string& buf)
+{
+	try {
+		clientSetup->LoadFromStartScript(buf);
+	} catch (const content_error& err) {
+		throw content_error(std::string("Invalid script file\n") + err.what());
+	}
+
+	if (!clientSetup->demoFile.empty())
+		return LoadDemoFile(clientSetup->demoFile);
+
+	if (!clientSetup->saveFile.empty())
+		return LoadSaveFile(clientSetup->saveFile);
+
 	// LoadFromStartScript overrides all values so reset cmdline defined ones
-	if (cmdline->IsSet("server")) { clientSetup->hostIP = cmdline->GetString("server"); clientSetup->isHost = true; }
+	if (!FLAGS_server.empty()) {
+		clientSetup->hostIP = FLAGS_server;
+		clientSetup->isHost = true;
+	}
+
 	clientSetup->SanityCheck();
 
 	pregame = new CPreGame(clientSetup);
+
 	if (clientSetup->isHost)
 		pregame->LoadSetupscript(buf);
+
+	return pregame;
 }
 
+void SpringApp::StartScript(const std::string& script)
+{
+	// startscript
+	LOG("[%s] Loading StartScript from: %s", __FUNCTION__, script.c_str());
+	CFileHandler fh(script, SPRING_VFS_PWD_ALL);
+	if (!fh.FileExists())
+		throw content_error("Setup-script does not exist in given location: " + script);
+
+	std::string buf;
+	if (!fh.LoadStringData(buf))
+		throw content_error("Setup-script cannot be read: " + script);
+
+	activeController = RunScript(buf);
+}
+
+void SpringApp::LoadSpringMenu()
+{
+	const std::string  vfsScript = "defaultstartscript.txt";
+	const std::string& cfgScript = configHandler->GetString("DefaultStartScript");
+
+	const std::string& startScript = (cfgScript.empty() && CFileHandler::FileExists(vfsScript, SPRING_VFS_PWD_ALL))? vfsScript: cfgScript;
+
+	// bypass default menu if we have a valid LuaMenu handler
+	if (luaMenuController->Valid() && luaMenuController->Activate())
+		return;
+
+	if (FLAGS_oldmenu || startScript.empty()) {
+		// old menu
+	#ifdef HEADLESS
+		handleerror(nullptr,
+			"The headless version of the engine can not be run in interactive mode.\n"
+			"Please supply a start-script, save- or demo-file.", "ERROR", MBF_OK|MBF_EXCL);
+	#endif
+		// not a memory-leak: SelectMenu deletes itself on start
+		activeController = new SelectMenu(clientSetup);
+	} else {
+		// run custom menu from game and map
+		StartScript(startScript);
+	}
+}
 
 /**
  * Initializes instance of GameSetup
@@ -780,94 +695,177 @@ void SpringApp::RunScript(boost::shared_ptr<ClientSetup> clientSetup, const std:
 void SpringApp::Startup()
 {
 	// bash input
-	const std::string inputFile = cmdline->GetInputFile();
 	const std::string extension = FileSystem::GetExtension(inputFile);
 
-	// create base clientsetup
-	boost::shared_ptr<ClientSetup> startsetup(new ClientSetup());
-	if (cmdline->IsSet("server")) { startsetup->hostIP = cmdline->GetString("server"); startsetup->isHost = true; }
-	startsetup->myPlayerName = configHandler->GetString("name");
-	startsetup->SanityCheck();
+	// note: avoid any .get() leaks between here and GameServer!
+	clientSetup.reset(new ClientSetup());
+
+	// create base client-setup
+	if (!FLAGS_server.empty()) {
+		clientSetup->hostIP = FLAGS_server;
+		clientSetup->isHost = true;
+	}
+
+	clientSetup->myPlayerName = configHandler->GetString("name");
+	clientSetup->SanityCheck();
+
+	luaMenuController = new CLuaMenuController(FLAGS_menu);
 
 	// no argument (either game is given or show selectmenu)
 	if (inputFile.empty()) {
-		startsetup->isHost = true;
-		if (cmdline->IsSet("game") && cmdline->IsSet("map")) {
+		clientSetup->isHost = true;
+		if ((!FLAGS_game.empty()) && (!FLAGS_map.empty())) {
 			// --game and --map directly specified, try to run them
-			std::string buf = StartScriptGen::CreateMinimalSetup(cmdline->GetString("game"), cmdline->GetString("map"));
-			RunScript(startsetup, buf);
-		} else {
-			// menu
-		#ifdef HEADLESS
-			handleerror(NULL,
-				"The headless version of the engine can not be run in interactive mode.\n"
-				"Please supply a start-script, save- or demo-file.", "ERROR", MBF_OK|MBF_EXCL);
-		#endif
-			activeController = new SelectMenu(startsetup);
+			activeController = RunScript(StartScriptGen::CreateMinimalSetup(FLAGS_game, FLAGS_map));
+			return;
 		}
+		LoadSpringMenu();
 		return;
 	}
 
 	// process given argument
 	if (inputFile.find("spring://") == 0) {
 		// url (syntax: spring://username:password@host:port)
-		if (!ParseSpringUri(inputFile, startsetup->myPlayerName, startsetup->myPasswd, startsetup->hostIP, startsetup->hostPort))
+		if (!ParseSpringUri(inputFile, clientSetup->myPlayerName, clientSetup->myPasswd, clientSetup->hostIP, clientSetup->hostPort))
 			throw content_error("invalid url specified: " + inputFile);
-		startsetup->isHost = false;
-		pregame = new CPreGame(startsetup);
-	} else if (extension == "sdf") {
-		// demo
-		startsetup->isHost        = true;
-		startsetup->myPlayerName += " (spec)";
-		pregame = new CPreGame(startsetup);
-		pregame->LoadDemo(inputFile);
-	} else if (extension == "ssf") {
-		// savegame
-		startsetup->isHost = true;
-		pregame = new CPreGame(startsetup);
-		pregame->LoadSavefile(inputFile);
+
+		clientSetup->isHost = false;
+		pregame = new CPreGame(clientSetup);
+	} else if (extension == "sdfz") {
+		LoadDemoFile(inputFile);
+	} else if (extension == "slsf" || extension == "ssf") {
+		LoadSaveFile(inputFile);
 	} else {
-		// startscript
-		LOG("[%s] Loading StartScript from: %s", __FUNCTION__, inputFile.c_str());
-		CFileHandler fh(inputFile, SPRING_VFS_PWD_ALL);
-		if (!fh.FileExists())
-			throw content_error("Setup-script does not exist in given location: " + inputFile);
-
-		std::string buf;
-		if (!fh.LoadStringData(buf))
-			throw content_error("Setup-script cannot be read: " + inputFile);
-
-		RunScript(startsetup, buf);
+		StartScript(inputFile);
 	}
 }
 
 
-/**
- * @return return code of activecontroller draw function
- *
- * Draw function repeatedly called, it calls all the
- * other draw functions
- */
-int SpringApp::Update()
-{
-	if (globalRendering->FSAA)
-		glEnable(GL_MULTISAMPLE_ARB);
 
-	int ret = 1;
-	if (activeController) {
-		ret = activeController->Update();
-		if (ret) {
-			ScopedTimer cputimer("GameController::Draw");
-			ret = activeController->Draw();
-		}
+void SpringApp::Reload(const std::string script)
+{
+	LOG("[SpringApp::%s][1]", __func__);
+
+	// get rid of any running worker threads
+	ThreadPool::SetThreadCount(0);
+	ThreadPool::SetDefaultThreadCount();
+
+	LOG("[SpringApp::%s][2]", __func__);
+
+	if (gameServer != nullptr)
+		gameServer->SetReloading(true);
+
+	// Lua shutdown functions need to access 'game' but SafeDelete sets it to NULL.
+	// ~CGame also calls this, which does not matter because handlers are gone by then
+	game->KillLua();
+
+	LOG("[SpringApp::%s][3]", __func__);
+
+	// kill sound here; thread might access readMap which is deleted by ~CGame
+	ISound::Shutdown();
+
+	LOG("[SpringApp::%s][4]", __func__);
+
+	SafeDelete(game);
+	SafeDelete(pregame);
+
+	LOG("[SpringApp::%s][5]", __func__);
+
+	// no-op if we are not the server
+	SafeDelete(gameServer);
+	// PreGame allocates clientNet, so we need to delete our old connection
+	SafeDelete(clientNet);
+
+	LOG("[SpringApp::%s][6]", __func__);
+
+	LuaVFSDownload::Free();
+	SafeDelete(battery);
+
+	clientSetup.reset(new ClientSetup());
+
+	LOG("[SpringApp::%s][7]", __func__);
+
+	// note: technically we only need to use RemoveArchive
+	FileSystemInitializer::Cleanup(false);
+	FileSystemInitializer::Initialize();
+
+	LOG("[SpringApp::%s][8]", __func__);
+
+	CNamedTextures::Kill();
+	CNamedTextures::Init();
+
+	LuaOpenGL::Free();
+	LuaOpenGL::Init();
+
+	// normally not needed, but would allow switching fonts
+	// LoadFonts();
+
+	LOG("[SpringApp::%s][9]", __func__);
+
+	// reload sounds.lua in case we switched to a different game
+	ISound::Initialize();
+
+	// make sure all old EventClients are really gone (safety)
+	eventHandler.ResetState();
+
+	battery = new CBattery();
+	LuaVFSDownload::Init();
+
+	LOG("[SpringApp::%s][10]", __func__);
+
+	gu->ResetState();
+	gs->ResetState();
+
+	profiler.ResetState();
+	modInfo.ResetState();
+
+	LOG("[SpringApp::%s][11]", __func__);
+
+	// must hold or we would loop forever
+	assert(!gu->globalReload);
+
+	luaMenuController->Reset();
+	// clean changed configs
+	configHandler->Update();
+
+	LOG("[SpringApp::%s][12]", __func__);
+
+	if (script.empty()) {
+		// if no script, drop back to menu
+		LoadSpringMenu();
+	} else {
+		activeController = RunScript(script);
 	}
 
-	ScopedTimer cputimer("SwapBuffers");
-	spring_time pre = spring_now();
-	VSync.Delay();
-	SDL_GL_SwapWindow(window);
-	eventHandler.DbgTimingInfo(TIMING_SWAP, pre, spring_now());
-	return ret;
+	LOG("[SpringApp::%s][13]", __func__);
+}
+
+/**
+ * @return return code of ActiveController::Update
+ */
+bool SpringApp::Update()
+{
+	bool retc = true;
+	bool swap = true;
+
+	configHandler->Update();
+
+	#if 0
+	if (activeController == nullptr)
+		return true;
+	if (!activeController->Update())
+		return false;
+	if (!activeController->Draw())
+		return true;
+	#else
+	// sic; Update can set the controller to null
+	retc = (        activeController == nullptr || activeController->Update());
+	swap = (retc && activeController != nullptr && activeController->Draw());
+	#endif
+
+	// always swap by default, seemingly upsets some drivers not to
+	globalRendering->SwapBuffers(swap);
+	return retc;
 }
 
 
@@ -886,9 +884,17 @@ int SpringApp::Run()
 	while (!gu->globalQuit) {
 		Watchdog::ClearTimer(WDT_MAIN);
 		input.PushEvents();
-		if (!Update())
-			break;
+
+		if (gu->globalReload) {
+			// copy; reloadScript is cleared by ResetState
+			Reload(gu->reloadScript);
+		} else {
+			if (!Update()) {
+				break;
+			}
+		}
 	}
+
 	SaveWindowPosition();
 	ShutDown();
 
@@ -916,41 +922,45 @@ void SpringApp::ShutDown()
 	LOG("[SpringApp::%s][1]", __FUNCTION__);
 	ThreadPool::SetThreadCount(0);
 	LOG("[SpringApp::%s][2]", __FUNCTION__);
+	LuaVFSDownload::Free(true);
 
+	// see ::Reload
+	if (game != nullptr)
+		game->KillLua();
+
+	// see ::Reload
+	ISound::Shutdown();
+
+	SafeDelete(game);
 	SafeDelete(pregame);
-	// don't use SafeDelete: many components in ~CGame
-	// expect game-pointer to remain valid during call
-	delete game; game = NULL;
 
-	agui::FreeGui();
+	CLuaMenu::FreeHandler();
+	SafeDelete(luaMenuController);
 
 	LOG("[SpringApp::%s][3]", __FUNCTION__);
-	SafeDelete(net);
+	SafeDelete(clientNet);
 	SafeDelete(gameServer);
 	SafeDelete(gameSetup);
 
 	LOG("[SpringApp::%s][4]", __FUNCTION__);
 	CLoadScreen::DeleteInstance();
-	ISound::Shutdown();
 	FreeJoystick();
 
 	LOG("[SpringApp::%s][5]", __FUNCTION__);
+	SafeDelete(keyCodes);
+	agui::FreeGui();
 	SafeDelete(font);
 	SafeDelete(smallFont);
-	CNamedTextures::Kill();
-	GLContext::Free();
+
+	CNamedTextures::Kill(true);
 	GlobalConfig::Deallocate();
-	UnloadExtensions();
 
 	IMouseInput::FreeInstance(mouseInput);
 
 	LOG("[SpringApp::%s][6]", __FUNCTION__);
-	SDL_SetWindowGrab(window, SDL_FALSE);
-	WindowManagerHelper::FreeIcon();
-#if !defined(HEADLESS)
-	SDL_GL_DeleteContext(sdlGlCtx);
-	SDL_QuitSubSystem(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK);
-#endif
+	SDL_SetWindowGrab(globalRendering->window, SDL_FALSE);
+	WindowManagerHelper::SetIconSurface();
+	globalRendering->DestroySDLWindow();
 	SDL_Quit();
 
 	LOG("[SpringApp::%s][7]", __FUNCTION__);
@@ -960,8 +970,10 @@ void SpringApp::ShutDown()
 	SafeDelete(luaSocketRestrictions);
 
 	FileSystemInitializer::Cleanup();
+	DataDirLocater::FreeInstance();
 
 	LOG("[SpringApp::%s][8]", __FUNCTION__);
+	Watchdog::DeregisterThread(WDT_MAIN);
 	Watchdog::Uninstall();
 	LOG("[SpringApp::%s][9]", __FUNCTION__);
 }
@@ -972,12 +984,19 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 	switch (event.type) {
 		case SDL_WINDOWEVENT: {
 			switch (event.window.event) {
-				case SDL_WINDOWEVENT_RESIZED: {
+				case SDL_WINDOWEVENT_MOVED: {
+					SaveWindowPosition();
+				} break;
+				//case SDL_WINDOWEVENT_RESIZED: //this is event is always preceded by:
+				case SDL_WINDOWEVENT_SIZE_CHANGED: {
 					Watchdog::ClearTimer(WDT_MAIN, true);
+					SaveWindowPosition();
 					InitOpenGL();
 					activeController->ResizeEvent();
 					mouseInput->InstallWndCallback();
 				} break;
+				case SDL_WINDOWEVENT_MAXIMIZED:
+				case SDL_WINDOWEVENT_RESTORED:
 				case SDL_WINDOWEVENT_SHOWN: {
 					// reactivate sounds and other
 					globalRendering->active = true;
@@ -988,6 +1007,7 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 						FBO::GLContextReinit();
 					}
 				} break;
+				case SDL_WINDOWEVENT_MINIMIZED:
 				case SDL_WINDOWEVENT_HIDDEN: {
 					// deactivate sounds and other
 					globalRendering->active = false;
@@ -1036,8 +1056,8 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 					}
 
 					// and make sure to un-capture mouse
-					if (SDL_GetWindowGrab(window))
-						SDL_SetWindowGrab(window, SDL_FALSE);
+					if (SDL_GetWindowGrab(globalRendering->window))
+						SDL_SetWindowGrab(globalRendering->window, SDL_FALSE);
 
 					break;
 				}
@@ -1054,22 +1074,9 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 			//FIXME don't known when this is called
 		} break;
 		case SDL_TEXTINPUT: {
-			if (!activeController) {
-				break;
-			}
-
-			std::string utf8Text = event.text.text;
-
-			const bool catched = eventHandler.TextInput(utf8Text);
-
-			if (activeController->userWriting && !catched){
-				auto ac = activeController;
-				if (ac->ignoreNextChar) {
-					utf8Text = utf8Text.substr(Utf8NextChar(utf8Text, 0));
-				}
-				ac->writingPos = Clamp<int>(ac->writingPos, 0, ac->userInput.length());
-				ac->userInput.insert(ac->writingPos, utf8Text);
-				ac->writingPos += utf8Text.length();
+			if (activeController) {
+				std::string utf8Text = event.text.text;
+				activeController->TextInput(utf8Text);
 			}
 		} break;
 		case SDL_KEYDOWN: {

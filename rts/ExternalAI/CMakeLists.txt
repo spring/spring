@@ -14,13 +14,12 @@ SET(sources_engine_ExternalAI
 		"${CMAKE_CURRENT_SOURCE_DIR}/LuaAIImplHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/SAIInterfaceCallbackImpl.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/SSkirmishAICallbackImpl.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/SkirmishAI.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/SkirmishAIData.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/SkirmishAIHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/SkirmishAIKey.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/SkirmishAILibrary.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/SkirmishAILibraryInfo.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/SkirmishAIWrapper.cpp"
+		PARENT_SCOPE
 	)
 
-MakeGlobal(sources_engine_ExternalAI)

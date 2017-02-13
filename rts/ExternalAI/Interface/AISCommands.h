@@ -408,8 +408,8 @@ struct SCallLuaRulesCommand {
 	const char* inData;
 	/// If this is less than 0, the data size is calculated using strlen()
 	int inSize;
-	/// this is subject to Lua garbage collection, copy it if you wish to continue using it
-	const char* ret_outData;
+	/// Buffer for response, must be const size of MAX_RESPONSE_SIZE bytes
+	char* ret_outData;
 }; //$ COMMAND_CALL_LUA_RULES Lua_callRules
 
 struct SCallLuaUICommand {
@@ -417,8 +417,8 @@ struct SCallLuaUICommand {
 	const char* inData;
 	/// If this is less than 0, the data size is calculated using strlen()
 	int inSize;
-	/// this is subject to Lua garbage collection, copy it if you wish to continue using it
-	const char* ret_outData;
+	/// Buffer for response, must be const size of MAX_RESPONSE_SIZE bytes
+	char* ret_outData;
 }; //$ COMMAND_CALL_LUA_UI Lua_callUI
 
 struct SSendStartPosCommand {
@@ -1576,39 +1576,17 @@ struct SSetLabelOverlayTextureDrawerDebugCommand {
 
 
 
-/**
- * @brief Sets default values
- */
-void initSUnitCommand(void* sUnitCommand);
-
 #ifdef	__cplusplus
 }	// extern "C"
 #endif
 
 
+
 #ifdef	__cplusplus
-#ifdef    BUILDING_AI
-namespace springLegacyAI {
-	struct Command;
-}
-using namespace springLegacyAI;
-#else  // BUILDING_AI
 struct Command;
-#endif // BUILDING_AI
+
 
 // legacy support functions
-
-/**
- * @brief Allocates memory for a C Command struct
- * @param  maxUnits  should be the value returned by unitHandler->MaxUnits()
- *                   -> max units per team for the current game
- */
-void* mallocSUnitCommand(int unitId, int groupId, const Command* c, int* sCommandId, int maxUnits);
-
-/**
- * @brief Frees memory of a C Command struct
- */
-void freeSUnitCommand(void* sCommandData, int sCommandId);
 
 /**
  * Returns the engine internal C++ unit command (topic) ID
@@ -1627,11 +1605,12 @@ int toInternalUnitCommandTopic(int aiCmdTopic, void* sUnitCommandData);
 int extractAICommandTopic(const Command* internalUnitCmd, int maxUnits);
 
 /**
- * @brief creates - with new - an engine C++ Command struct
+ * @brief fills an engine C++ Command struct
  */
-Command* newCommand(void* sUnitCommandData, int sCommandId, int maxUnits);
+bool newCommand(void* sUnitCommandData, int sCommandId, int maxUnits, Command* c);
 
 #endif	// __cplusplus
+
 
 
 #endif	// AI_S_COMMANDS_H

@@ -6,48 +6,31 @@
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
 #include "Sim/Units/Unit.h"
 
-CR_BIND_DERIVED(CDGunWeapon, CWeapon, (NULL, NULL));
-
-CR_REG_METADATA(CDGunWeapon,(
-	CR_RESERVED(8)
-));
+CR_BIND_DERIVED(CDGunWeapon, CWeapon, (NULL, NULL))
+CR_REG_METADATA(CDGunWeapon, )
 
 CDGunWeapon::CDGunWeapon(CUnit* owner, const WeaponDef* def): CWeapon(owner, def)
 {
 }
 
 
-void CDGunWeapon::Update()
+float CDGunWeapon::GetPredictedImpactTime(float3 p) const
 {
-	if (targetType != Target_None) {
-		weaponPos = owner->GetObjectSpacePos(relWeaponPos);
-		weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
-
-		if (!onlyForward) {
-			wantedDir = (targetPos - weaponPos).Normalize();
-		}
-
-		// user has to manually predict
-		predict = 0;
-	}
-
-	CWeapon::Update();
+	// user has to manually predict
+	return 0;
 }
 
-void CDGunWeapon::FireImpl(bool scriptCall)
+
+void CDGunWeapon::FireImpl(const bool scriptCall)
 {
-	float3 dir = owner->frontdir;
+	float3 dir = wantedDir;
 
-	if (!onlyForward) {
-		dir = (targetPos - weaponMuzzlePos).Normalize(); 
-	}
-
-	dir += (gs->randVector() * SprayAngleExperience() + SalvoErrorExperience());
+	dir += (gsRNG.NextVector() * SprayAngleExperience() + SalvoErrorExperience());
 	dir.Normalize();
 
 	ProjectileParams params = GetProjectileParams();
 	params.pos = weaponMuzzlePos;
-	params.end = targetPos;
+	params.end = currentTargetPos;
 	params.speed = dir * projectileSpeed;
 	params.ttl = 1;
 

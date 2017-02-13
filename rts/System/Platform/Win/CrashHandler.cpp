@@ -24,6 +24,7 @@
 namespace CrashHandler {
 
 CRITICAL_SECTION stackLock;
+bool imageHelpInitialised = false;
 int stackLockInit() { InitializeCriticalSection(&stackLock); return 0; }
 int dummyStackLock = stackLockInit();
 
@@ -68,16 +69,23 @@ static const char* ExceptionName(DWORD exceptionCode)
 }
 
 
-static bool InitImageHlpDll()
+bool InitImageHlpDll()
 {
+	if (imageHelpInitialised)
+		return true;
+
 	char userSearchPath[8];
 	STRCPY_T(userSearchPath, 8, ".");
 	// Initialize IMAGEHLP.DLL
 	// Note: For some strange reason it doesn't work ~4 times after it was loaded&unloaded the first time.
 	int i = 0;
 	do {
-		if (SymInitialize(GetCurrentProcess(), userSearchPath, TRUE))
+		if (SymInitialize(GetCurrentProcess(), userSearchPath, TRUE)) {
+			SymSetOptions(SYMOPT_LOAD_LINES);
+
+			imageHelpInitialised = true;
 			return true;
+		}
 		SymCleanup(GetCurrentProcess());
 		i++;
 	} while (i<20);
@@ -108,10 +116,10 @@ static DWORD __stdcall AllocTest(void *param) {
 /** Print out a stacktrace. */
 inline static void StacktraceInline(const char *threadName, LPEXCEPTION_POINTERS e, HANDLE hThread = INVALID_HANDLE_VALUE, const int logLevel = LOG_LEVEL_ERROR)
 {
-	PIMAGEHLP_SYMBOL pSym;
-	STACKFRAME sf;
+	STACKFRAME64 sf;
 	HANDLE process, thread;
-	DWORD dwModBase, Disp, dwModAddrToPrint;
+	DWORD64 dwModBase;
+	DWORD dwModAddrToPrint;
 	BOOL more = FALSE;
 	int count = 0;
 	char modname[MAX_PATH];
@@ -207,27 +215,26 @@ inline static void StacktraceInline(const char *threadName, LPEXCEPTION_POINTERS
 	sf.AddrFrame.Mode = AddrModeFlat;
 
 	// use globalalloc to reduce risk for allocator related deadlock
-	pSym = (PIMAGEHLP_SYMBOL)GlobalAlloc(GMEM_FIXED, 16384);
 	char* printstrings = (char*)GlobalAlloc(GMEM_FIXED, 0);
 
 	bool containsOglDll = false;
 	while (true) {
-		more = StackWalk(
+		more = StackWalk64(
 			MachineType,
 			process,
 			thread,
 			&sf,
 			&c,
 			NULL,
-			SymFunctionTableAccess,
-			SymGetModuleBase,
+			SymFunctionTableAccess64,
+			SymGetModuleBase64,
 			NULL
 		);
 		if (!more || /*sf.AddrFrame.Offset == 0 ||*/ count > MAX_STACK_DEPTH) {
 			break;
 		}
 
-		dwModBase = SymGetModuleBase(process, sf.AddrPC.Offset);
+		dwModBase = SymGetModuleBase64(process, sf.AddrPC.Offset);
 
 		if (dwModBase) {
 			GetModuleFileName((HINSTANCE)dwModBase, modname, MAX_PATH);
@@ -235,18 +242,31 @@ inline static void StacktraceInline(const char *threadName, LPEXCEPTION_POINTERS
 			strcpy(modname, "Unknown");
 		}
 
-		pSym->SizeOfStruct = sizeof(IMAGEHLP_SYMBOL);
-		pSym->MaxNameLength = MAX_PATH;
-
 		char* printstringsnew = (char*) GlobalAlloc(GMEM_FIXED, (count + 1) * BUFFER_SIZE);
 		memcpy(printstringsnew, printstrings, count * BUFFER_SIZE);
 		GlobalFree(printstrings);
 		printstrings = printstringsnew;
 
-		if (SymGetSymFromAddr(process, sf.AddrPC.Offset, &Disp, pSym)) {
-			// This is the code path taken on VC if debugging syms are found.
-			SNPRINTF(printstrings + count * BUFFER_SIZE, BUFFER_SIZE, "(%d) %s(%.*s+%#0lx) [0x%08lX]", count, modname, pSym->MaxNameLength, pSym->Name, Disp, sf.AddrPC.Offset);
-		} else {
+#ifdef _MSC_VER
+		const int SYMLENGTH = 4096;
+		char symbuf[sizeof(SYMBOL_INFO) + SYMLENGTH];
+		PSYMBOL_INFO pSym = reinterpret_cast<SYMBOL_INFO*>(symbuf);
+
+		pSym->SizeOfStruct = sizeof(SYMBOL_INFO);
+		pSym->MaxNameLen = SYMLENGTH;
+
+		// Check if we have symbols, only works on VC (mingw doesn't have a compatible file format)
+		if (SymFromAddr(process, sf.AddrPC.Offset, nullptr, pSym)) {
+			IMAGEHLP_LINE64 line = { 0 };
+			line.SizeOfStruct = sizeof(line);
+
+			DWORD displacement;
+			SymGetLineFromAddr64(GetCurrentProcess(), sf.AddrPC.Offset, &displacement, &line);
+
+			SNPRINTF(printstrings + count * BUFFER_SIZE, BUFFER_SIZE, "(%d) %s:%u %s [0x%08llX]", count , line.FileName ? line.FileName : "<unknown>", line.LineNumber, pSym->Name, sf.AddrPC.Offset);
+		} else 
+#endif
+		{
 			// This is the code path taken on MinGW, and VC if no debugging syms are found.
 			if (strstr(modname, ".exe")) {
 				// for the .exe, we need the absolute address
@@ -259,11 +279,13 @@ inline static void StacktraceInline(const char *threadName, LPEXCEPTION_POINTERS
 		}
 
 		// OpenGL lib names (ATI): "atioglxx.dll" "atioglx2.dll"
-		containsOglDll = containsOglDll || strstr(modname, "atiogl");
+		containsOglDll |= strstr(modname, "atiogl") != nullptr;
 		// OpenGL lib names (Nvidia): "nvoglnt.dll" "nvoglv32.dll" "nvoglv64.dll" (last one is a guess)
-		containsOglDll = containsOglDll || strstr(modname, "nvogl");
+		containsOglDll |= strstr(modname, "nvogl") != nullptr;
 		// OpenGL lib names (Intel): "ig4dev32.dll" "ig4dev64.dll" "ig4icd32.dll"
-		containsOglDll = containsOglDll || strstr(modname, "ig4");
+		containsOglDll |= strstr(modname, "ig4") != nullptr;
+		// OpenGL lib names (Intel)
+		containsOglDll |= strstr(modname, "ig75icd32.dll") != nullptr;
 
 		++count;
 	}
@@ -284,7 +306,6 @@ inline static void StacktraceInline(const char *threadName, LPEXCEPTION_POINTERS
 	}
 
 	GlobalFree(printstrings);
-	GlobalFree(pSym);
 }
 
 static void Stacktrace(const char *threadName, LPEXCEPTION_POINTERS e, HANDLE hThread = INVALID_HANDLE_VALUE, const int logLevel = LOG_LEVEL_ERROR) {
@@ -311,6 +332,7 @@ void CleanupStacktrace(const int logLevel) {
 	LOG_CLEANUP();
 	// Unintialize IMAGEHLP.DLL
 	SymCleanup(GetCurrentProcess());
+	imageHelpInitialised = false;
 
 	LeaveCriticalSection( &stackLock );
 }
@@ -345,7 +367,7 @@ LONG CALLBACK ExceptionHandler(LPEXCEPTION_POINTERS e)
 
 	// Print exception info.
 	LOG_L(L_ERROR, "Exception: %s (0x%08lx)", error.c_str(), e->ExceptionRecord->ExceptionCode);
-	LOG_L(L_ERROR, "Exception Address: 0x%08lx", (unsigned long int) (PVOID) e->ExceptionRecord->ExceptionAddress);
+	LOG_L(L_ERROR, "Exception Address: 0x%p", (PVOID) e->ExceptionRecord->ExceptionAddress);
 
 	// Print stacktrace.
 	StacktraceInline(NULL, e); // inline: avoid modifying the stack, it might confuse StackWalk when using the context record passed to ExceptionHandler

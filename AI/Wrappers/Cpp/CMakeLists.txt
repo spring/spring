@@ -54,6 +54,7 @@ if    (BUILD_${myName}_AIWRAPPER)
 	set(mySources
 		"${mySourceDir}/AIEvent.cpp"
 		"${mySourceDir}/AIFloat3.cpp"
+		"${CMAKE_SOURCE_DIR}/rts/System/float3.cpp"
 		"${mySourceDir}/AIColor.cpp"
 		"${mySourceDir}/AIException.cpp"
 		"${mySourceDir}/CallbackAIException.cpp"
@@ -86,7 +87,6 @@ if    (BUILD_${myName}_AIWRAPPER)
 		${myGeneratedSourceDir}/AbstractLua.cpp
 		${myGeneratedSourceDir}/AbstractMap.cpp
 		${myGeneratedSourceDir}/AbstractMod.cpp
-		${myGeneratedSourceDir}/AbstractModParam.cpp
 		${myGeneratedSourceDir}/AbstractMoveData.cpp
 		${myGeneratedSourceDir}/AbstractOOAICallback.cpp
 		${myGeneratedSourceDir}/AbstractOptionValues.cpp
@@ -100,12 +100,14 @@ if    (BUILD_${myName}_AIWRAPPER)
 		${myGeneratedSourceDir}/AbstractShield.cpp
 		${myGeneratedSourceDir}/AbstractSkirmishAI.cpp
 		${myGeneratedSourceDir}/AbstractSkirmishAIs.cpp
+		${myGeneratedSourceDir}/AbstractTeam.cpp
 		${myGeneratedSourceDir}/AbstractTeams.cpp
 		${myGeneratedSourceDir}/AbstractUnit.cpp
 		${myGeneratedSourceDir}/AbstractUnitDef.cpp
 		${myGeneratedSourceDir}/AbstractVersion.cpp
 		${myGeneratedSourceDir}/AbstractWeaponDef.cpp
 		${myGeneratedSourceDir}/AbstractWeaponMount.cpp
+		${myGeneratedSourceDir}/AbstractWeapon.cpp
 		${myGeneratedSourceDir}/StubCamera.cpp
 		${myGeneratedSourceDir}/StubCheats.cpp
 		${myGeneratedSourceDir}/StubCommand.cpp
@@ -129,7 +131,6 @@ if    (BUILD_${myName}_AIWRAPPER)
 		${myGeneratedSourceDir}/StubLua.cpp
 		${myGeneratedSourceDir}/StubMap.cpp
 		${myGeneratedSourceDir}/StubMod.cpp
-		${myGeneratedSourceDir}/StubModParam.cpp
 		${myGeneratedSourceDir}/StubMoveData.cpp
 		${myGeneratedSourceDir}/StubOOAICallback.cpp
 		${myGeneratedSourceDir}/StubOptionValues.cpp
@@ -143,12 +144,14 @@ if    (BUILD_${myName}_AIWRAPPER)
 		${myGeneratedSourceDir}/StubShield.cpp
 		${myGeneratedSourceDir}/StubSkirmishAI.cpp
 		${myGeneratedSourceDir}/StubSkirmishAIs.cpp
+		${myGeneratedSourceDir}/StubTeam.cpp
 		${myGeneratedSourceDir}/StubTeams.cpp
 		${myGeneratedSourceDir}/StubUnit.cpp
 		${myGeneratedSourceDir}/StubUnitDef.cpp
 		${myGeneratedSourceDir}/StubVersion.cpp
 		${myGeneratedSourceDir}/StubWeaponDef.cpp
 		${myGeneratedSourceDir}/StubWeaponMount.cpp
+		${myGeneratedSourceDir}/StubWeapon.cpp
 		${myGeneratedSourceDir}/WrappCamera.cpp
 		${myGeneratedSourceDir}/WrappCheats.cpp
 		${myGeneratedSourceDir}/WrappCurrentCommand.cpp
@@ -175,7 +178,6 @@ if    (BUILD_${myName}_AIWRAPPER)
 		${myGeneratedSourceDir}/WrappLua.cpp
 		${myGeneratedSourceDir}/WrappMap.cpp
 		${myGeneratedSourceDir}/WrappMod.cpp
-		${myGeneratedSourceDir}/WrappModParam.cpp
 		${myGeneratedSourceDir}/WrappMoveData.cpp
 		${myGeneratedSourceDir}/WrappOOAICallback.cpp
 		${myGeneratedSourceDir}/WrappOptionValues.cpp
@@ -189,13 +191,15 @@ if    (BUILD_${myName}_AIWRAPPER)
 		${myGeneratedSourceDir}/WrappShield.cpp
 		${myGeneratedSourceDir}/WrappSkirmishAI.cpp
 		${myGeneratedSourceDir}/WrappSkirmishAIs.cpp
+		${myGeneratedSourceDir}/WrappTeam.cpp
 		${myGeneratedSourceDir}/WrappTeams.cpp
 		${myGeneratedSourceDir}/WrappUnit.cpp
 		${myGeneratedSourceDir}/WrappUnitDef.cpp
 		${myGeneratedSourceDir}/WrappUnitSupportedCommand.cpp
 		${myGeneratedSourceDir}/WrappVersion.cpp
 		${myGeneratedSourceDir}/WrappWeaponDef.cpp
-		${myGeneratedSourceDir}/WrappWeaponMount.cpp)
+		${myGeneratedSourceDir}/WrappWeaponMount.cpp
+		${myGeneratedSourceDir}/WrappWeapon.cpp)
 	set(myGeneratedSources
 		${myGeneratedCombineSources}
 		${myGeneratedWrapperSources})

@@ -24,8 +24,6 @@ TileFileHeader for details.
 #ifndef SMF_MAPFORMAT_H
 #define SMF_MAPFORMAT_H
 
-#include "System/Platform/byteorder.h"
-
 /// Size in bytes of a single tile in the .smt
 #define SMALL_TILE_SIZE 680
 /// Size in bytes of the minimap (all 9 mipmap levels) in the .smf
@@ -68,47 +66,6 @@ struct SMFHeader {
 
 	int numExtraHeaders; ///< Numbers of extra headers following main header
 };
-
-/// Read SMFHeader mh from CFileHandler srcptr (endian aware)
-#define READPTR_MAPHEADER(mh,srcptr)			\
-do {							\
-	unsigned int __tmpdw;				\
-	float __tmpfloat;				\
-	(srcptr)->Read((mh).magic,sizeof((mh).magic));	\
-	(srcptr)->Read(&__tmpdw,sizeof(unsigned int));	\
-	(mh).version = (int)swabdword(__tmpdw);		\
-	(srcptr)->Read(&__tmpdw,sizeof(unsigned int));	\
-	(mh).mapid = (int)swabdword(__tmpdw);		\
-	(srcptr)->Read(&__tmpdw,sizeof(unsigned int));	\
-	(mh).mapx = (int)swabdword(__tmpdw);		\
-	(srcptr)->Read(&__tmpdw,sizeof(unsigned int));	\
-	(mh).mapy = (int)swabdword(__tmpdw);		\
-	(srcptr)->Read(&__tmpdw,sizeof(unsigned int));	\
-	(mh).squareSize = (int)swabdword(__tmpdw);	\
-	(srcptr)->Read(&__tmpdw,sizeof(unsigned int));	\
-	(mh).texelPerSquare = (int)swabdword(__tmpdw);	\
-	(srcptr)->Read(&__tmpdw,sizeof(unsigned int));	\
-	(mh).tilesize = (int)swabdword(__tmpdw);	\
-	(srcptr)->Read(&__tmpfloat,sizeof(float));	\
-	(mh).minHeight = swabfloat(__tmpfloat);		\
-	(srcptr)->Read(&__tmpfloat,sizeof(float));	\
-	(mh).maxHeight = swabfloat(__tmpfloat);		\
-	(srcptr)->Read(&__tmpdw,sizeof(unsigned int));	\
-	(mh).heightmapPtr = (int)swabdword(__tmpdw);	\
-	(srcptr)->Read(&__tmpdw,sizeof(unsigned int));	\
-	(mh).typeMapPtr = (int)swabdword(__tmpdw);	\
-	(srcptr)->Read(&__tmpdw,sizeof(unsigned int));	\
-	(mh).tilesPtr = (int)swabdword(__tmpdw);	\
-	(srcptr)->Read(&__tmpdw,sizeof(unsigned int));	\
-	(mh).minimapPtr = (int)swabdword(__tmpdw);	\
-	(srcptr)->Read(&__tmpdw,sizeof(unsigned int));	\
-	(mh).metalmapPtr = (int)swabdword(__tmpdw);	\
-	(srcptr)->Read(&__tmpdw,sizeof(unsigned int));	\
-	(mh).featurePtr = (int)swabdword(__tmpdw);	\
-	(srcptr)->Read(&__tmpdw,sizeof(unsigned int));	\
-	(mh).numExtraHeaders = (int)swabdword(__tmpdw);	\
-} while (0)
-	
 
 /**
 @brief Header for extensions in .smf file
@@ -167,16 +124,6 @@ struct MapTileHeader
 	int numTiles;     ///< Total number of tiles
 };
 
-/// Read MapTileHeader mth from CFileHandler (endian aware)
-#define READPTR_MAPTILEHEADER(mth,src)			\
-do {							\
-	unsigned int __tmpdw;				\
-	(src)->Read(&__tmpdw,sizeof(unsigned int));	\
-	(mth).numTileFiles = swabdword(__tmpdw);	\
-	(src)->Read(&__tmpdw,sizeof(unsigned int));	\
-	(mth).numTiles = swabdword(__tmpdw);		\
-} while (0)
-
 /**
 @brief The header at offset SMFHeader.featurePtr in the .smf
 
@@ -188,16 +135,6 @@ struct MapFeatureHeader
 	int numFeatureType;
 	int numFeatures;
 };
-
-/// Read MapFeatureHeader mfh from CFileHandler src (endian aware)
-#define READ_MAPFEATUREHEADER(mfh,src)			\
-do {							\
-	unsigned int __tmpdw;				\
-	(src)->Read(&__tmpdw,sizeof(unsigned int));	\
-	(mfh).numFeatureType = (int)swabdword(__tmpdw);	\
-	(src)->Read(&__tmpdw,sizeof(unsigned int));	\
-	(mfh).numFeatures = (int)swabdword(__tmpdw);	\
-} while (0)
 
 /**
 @brief Structure defining how features are stored in .smf
@@ -217,24 +154,6 @@ struct MapFeatureStruct
 	float relativeSize; ///< Not used at the moment keep 1
 };
 
-/// Read MapFeatureStruct mfs from CFileHandler src (endian aware)
-#define READ_MAPFEATURESTRUCT(mfs,src)			\
-do {							\
-	unsigned int __tmpdw;				\
-	float __tmpfloat;				\
-	(src)->Read(&__tmpdw,sizeof(unsigned int));	\
-	(mfs).featureType = (int)swabdword(__tmpdw);	\
-	(src)->Read(&__tmpfloat,sizeof(float));		\
-	(mfs).xpos = swabfloat(__tmpfloat);		\
-	(src)->Read(&__tmpfloat,sizeof(float));		\
-	(mfs).ypos = swabfloat(__tmpfloat);		\
-	(src)->Read(&__tmpfloat,sizeof(float));		\
-	(mfs).zpos = swabfloat(__tmpfloat);		\
-	(src)->Read(&__tmpfloat,sizeof(float));		\
-	(mfs).rotation = swabfloat(__tmpfloat);		\
-	(src)->Read(&__tmpfloat,sizeof(float));		\
-	(mfs).relativeSize = swabfloat(__tmpfloat);	\
-} while (0)
 
 /**
 @brief Spring Tile File (.smt) main header
@@ -261,19 +180,5 @@ struct TileFileHeader
 	int compressionType; ///< Must be 1 (= dxt1) for now
 };
 
-/// Read TileFileHeader tfh from CFileHandler src (endian aware)
-#define READ_TILEFILEHEADER(tfh,src)			\
-do {							\
-	unsigned int __tmpdw;				\
-	(src).Read(&(tfh).magic,sizeof((tfh).magic));	\
-	(src).Read(&__tmpdw,sizeof(unsigned int));	\
-	(tfh).version = (int)swabdword(__tmpdw);	\
-	(src).Read(&__tmpdw,sizeof(unsigned int));	\
-	(tfh).numTiles = (int)swabdword(__tmpdw);	\
-	(src).Read(&__tmpdw,sizeof(unsigned int));	\
-	(tfh).tileSize = (int)swabdword(__tmpdw);	\
-	(src).Read(&__tmpdw,sizeof(unsigned int));	\
-	(tfh).compressionType = (int)swabdword(__tmpdw);\
-} while (0)
-
 #endif //ndef _MAPFILE_H
+

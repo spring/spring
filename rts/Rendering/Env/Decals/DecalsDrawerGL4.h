@@ -3,32 +3,60 @@
 #ifndef SHADER_GROUND_DECAL_DRAWER_H
 #define SHADER_GROUND_DECAL_DRAWER_H
 
-#include <list>
 #include <vector>
+#include <array>
 
 #include "Rendering/Env/IGroundDecalDrawer.h"
+#include "Rendering/Env/Decals/LegacyTrackHandler.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VBO.h"
+#include "Rendering/GL/FBO.h"
 #include "System/EventClient.h"
 #include "Sim/Projectiles/ExplosionListener.h"
+#include "System/type2.h"
 #include "System/float3.h"
 #include "System/float4.h"
-#include "System/type2.h"
 
-#if !defined(GL_VERSION_4_0) || HEADLESS
+
+#if !defined(GL_VERSION_4_3) || HEADLESS
 	class CDecalsDrawerGL4: public IGroundDecalDrawer
 	{
 	public:
+		struct Decal {
+			Decal()
+				: rot(0.0f)
+				, alpha(0.0f)
+				, owner(nullptr)
+				, type(EXPLOSION)
+			{}
+			void Free() const {};
+			bool IsValid() const { return false; }
+			void Invalidate() const {}
+			bool InvalidateExtents() const { return false; }
+			void SetTexture(const std::string& name) {}
+			int GetIdx() const { return -1; }
+			std::string GetTexture() const { return ""; }
+
+			float3 pos;
+			float2 size;
+			float rot;
+			float alpha;
+			const void* owner;
+			enum { EXPLOSION, BUILDING, LUA } type;
+		};
 		CDecalsDrawerGL4();
-		virtual ~CDecalsDrawerGL4() {}
 
-		virtual void Draw() {}
-		virtual void Update() {}
+		void Draw() override {}
+		void OnDecalLevelChanged() override {}
 
-		virtual void ForceRemoveSolidObject(CSolidObject* object) {}
-		virtual void RemoveSolidObject(CSolidObject* object, GhostSolidObject* gb) {}
-		virtual void GhostDestroyed(GhostSolidObject* gb) {}
-		virtual void GhostCreated(CSolidObject* object, GhostSolidObject* gb) {}
+		void ForceRemoveSolidObject(CSolidObject* object) override {}
+		void GhostDestroyed(GhostSolidObject* gb) override {}
+		void GhostCreated(CSolidObject* object, GhostSolidObject* gb) override {}
+		int CreateLuaDecal() { return 0;}
+		const std::vector<Decal>& GetAllDecals() const { return decals; }
+		Decal& GetDecalByIdx(unsigned idx) { assert(false); static Decal tmp; return tmp; }
+	private:
+		std::vector<Decal> decals;
 	};
 #else
 
@@ -37,118 +65,205 @@ namespace Shader {
 }
 
 
+
 class CDecalsDrawerGL4: public IGroundDecalDrawer, public CEventClient, public IExplosionListener
 {
 public:
 	CDecalsDrawerGL4();
-	virtual ~CDecalsDrawerGL4();
+	~CDecalsDrawerGL4();
 
-	virtual void Draw();
-	virtual void Update() {}
+	void Draw() override;
 
-	virtual void ForceRemoveSolidObject(CSolidObject* object) {/*FIXME*/}
-	virtual void RemoveSolidObject(CSolidObject* object, GhostSolidObject* gb) {/*FIXME*/}
-	virtual void GhostDestroyed(GhostSolidObject* gb) {/*FIXME*/}
-	virtual void GhostCreated(CSolidObject* object, GhostSolidObject* gb) {/*FIXME*/}
+	//FIXME make eventClient!!!
+	void GhostDestroyed(GhostSolidObject* gb) override;
+	void GhostCreated(CSolidObject* object, GhostSolidObject* gb) override;
+	void ForceRemoveSolidObject(CSolidObject* object) override;
+	void OnDecalLevelChanged() override;
 
-	virtual void ExplosionOccurred(const CExplosionEvent&);
-
-private:
-	void AddExplosion(float3 pos, float damage, float radius, bool addScar);
+	void ExplosionOccurred(const CExplosionParams&) override;
 
 public:
-	bool WantsEvent(const std::string& eventName) {
+	bool WantsEvent(const std::string& eventName) override {
 		return
-			   (eventName == "UnitCreated")
-			|| (eventName == "UnitDestroyed")
+			   (eventName == "RenderUnitCreated")
+			|| (eventName == "RenderUnitDestroyed")
+			|| (eventName == "RenderFeatureCreated")
+			|| (eventName == "RenderFeatureDestroyed")
 			|| (eventName == "ViewResize")
+			|| (eventName == "Update")
+			|| (eventName == "GameFrame")
+			|| (eventName == "SunChanged");
 		;
 		/*return
-			(eventName == "UnitMoved") ||
-			(eventName == "SunChanged");*/
+			(eventName == "UnitMoved")*/
 	}
-	bool GetFullRead() const { return true; }
-	int GetReadAllyTeam() const { return AllAccessTeam; }
+	bool GetFullRead() const override { return true; }
+	int GetReadAllyTeam() const override { return AllAccessTeam; }
 
-	void UnitCreated(const CUnit* unit, const CUnit* builder);
-	void UnitDestroyed(const CUnit* unit, const CUnit* attacker);
+	void RenderUnitCreated(const CUnit* unit, int cloaked) override;
+	void RenderUnitDestroyed(const CUnit* unit) override;
+	void RenderFeatureCreated(const CFeature* feature) override;
+	void RenderFeatureDestroyed(const CFeature* feature) override;
 
-	void ViewResize();
+	//FIXME
+	/*void FeatureMoved(const CFeature* feature, const float3& oldpos);
+	void UnitMoved(const CUnit* unit);
+	void UnitLoaded(const CUnit* unit, const CUnit* transport);
+	void UnitUnloaded(const CUnit* unit, const CUnit* transport);*/
 
-	//void SunChanged(const float3& sunDir);
-	//void UnitMoved(const CUnit*);
+	void SunChanged() override;
+	void ViewResize() override;
+	void Update() override;
+	void GameFrame(int n) override;
 
-private:
+public:
+	static constexpr int MAX_DECALS_PER_GROUP = 4;
+	static constexpr int MAX_OVERLAP = 3;
+	static constexpr int OVERLAP_TEST_TEXTURE_SIZE = 256;
+
 	struct Decal {
+	public:
 		Decal()
-			: pos(ZeroVector)
-			, size(0.0f, 0.0f)
-			, rot(0.0f)
-			, alpha(1.0f)
-			, texOffsets(0.0f, 0.0f, 0.0f, 0.0f)
+		: pos(-1e6, -1e6, -1e6)
+		, size(-1.0f, -1.0f)
+		, rot(0.0f)
+		, alpha(0.0f)
+		, alphaFalloff(0.0f)
+		, texOffsets(0.0f, 0.0f, 0.0f, 0.0f)
+		, texNormalOffsets(0.0f, 0.0f, 0.0f, 0.0f)
+		, owner(nullptr)
+		, generation(0)
+		, type(EXPLOSION)
 		{}
 
+		void Free() const;
+		void Invalidate() const; ///< call after alpha & texture changes (to upload changes to GPU)
+		bool InvalidateExtents() const; ///< call after pos, size, rot changes (does same as Invalidate() + searches a new `DecalGroup`), returns true whena  group was found (else it isn't rendered)
+
+		int GetIdx() const;
+		bool IsValid() const;
+		bool InView() const;
+		float GetRating(bool inview_test) const;
+		void SetOwner(const void* owner);
+		void SetTexture(const std::string& name);
+		std::string GetTexture() const;
+
+	public:
 		float3 pos;
 		float2 size;
 		float rot;
 		float alpha;
-		float4 texOffsets;
-	};
-
-	struct BuildingGroundDecal { //FIXME
-		BuildingGroundDecal()
-			: owner(NULL)
-			, gbOwner(NULL)
-			, size(0,0)
-			, facing(-1)
-			, pos(ZeroVector)
-			, radius(0.0f)
-			, alpha(1.0f)
-			, alphaFalloff(1.0f)
-		{}
-
-		const CUnit* owner;
-		const GhostSolidObject* gbOwner;
-		int2 size;
-		int facing;
-		float3 pos;
-		float radius;
-		float alpha;
 		float alphaFalloff;
+		float4 texOffsets;
+		float4 texNormalOffsets;
+		const void* owner;
+		int generation;
+		enum { EXPLOSION, BUILDING, LUA } type; //FIXME merge with owner?
 	};
+
+	struct SDecalGroup {
+		std::array<float4, 2> boundAABB;
+		std::array<int, MAX_DECALS_PER_GROUP> ids;
+
+		int size() const {
+			for (int i = 0; i < MAX_DECALS_PER_GROUP; ++i) {
+				if (ids[i] == 0) {
+					return i;
+				}
+			}
+			return MAX_DECALS_PER_GROUP;
+		}
+	};
+
+	friend Decal;
+
+public:
+	int CreateLuaDecal();
+	int NewDecal(const Decal& d);
+	void FreeDecal(int idx);
+
+	Decal& GetDecalOwnedBy(const void* owner);
+	const std::vector<Decal>& GetAllDecals() const { return decals; }
+	Decal& GetDecalByIdx(unsigned idx) {
+		if (idx < decals.size()) {
+			return decals[idx];
+		}
+		return decals.front();
+	}
 
 private:
+	void AddExplosion(float3 pos, float damage, float radius);
+	void CreateBuildingDecal(const CSolidObject* unit);
+	void DeownBuildingDecal(const CSolidObject* object);
+
+	bool FindAndAddToGroup(int decalIdx);
+	void RemoveFromGroup(int decalIdx);
+	bool AddDecalToGroup(SDecalGroup& g, const Decal& d, const int decalIdx);
+	bool TryToCombineDecalGroups(SDecalGroup& g1, SDecalGroup& g2);
+	void UpdateBoundingBox(SDecalGroup& g);
+
+	void GetWorstRatedDecal(int* idx, float* rating, const bool inview_test) const;
+	bool AnyDecalsInView() const;
+	void DetectMaxDecals();
+
 	void LoadShaders();
 	void GenerateAtlasTexture();
-
 	void CreateBoundingBoxVBOs();
 	void CreateStructureVBOs();
 
-	void UpdateVisibilityVBO();
 	void UpdateDecalsVBO();
+
+	void OptimizeGroups();
+
+	void UpdateOverlap();
+	std::vector<int> UpdateOverlap_PreCheck();
+	void UpdateOverlap_Initialize();
+	std::vector<int> UpdateOverlap_CheckQueries();
+	void UpdateOverlap_GenerateQueries(const std::vector<int>& candidatesForOverlap);
+	std::vector<int> CandidatesForOverlap() const;
 
 	void DrawDecals();
 	//void DrawTracks();
 
 private:
+	std::vector<Decal> decals;
+	std::vector<SDecalGroup> groups;
+
+	int curWorstDecalIdx;
+	float curWorstDecalRating;
+	std::vector<int> freeIds;
+	std::vector<int> decalsToUpdate;
+	std::vector<int> alphaDecayingDecals;
+
+	int maxDecals;
+	int maxDecalGroups;
+
+	bool useSSBO;
+
+	// used to turn off parallax mapping when fps drops too low
+	int laggedFrames;
+
+	// used to remove decals that are totally overlapped by others
+	int overlapStage;
+	std::vector<std::pair<int,GLuint>> waitingOverlapGlQueries;
+	std::vector<int> waitingDecalsForOverlapTest;
+	FBO fboOverlap;
+
 	VBO vboVertices;
 	VBO vboIndices;
-	VBO uboDecalsStructures;
+
 	VBO uboGroundLighting;
-	VBO vboVisibilityFeeback;
 
-	std::vector<Decal*> decals; //FIXME use mt-safe container!
-	size_t lastUpdate;
+	VBO uboDecalsStructures;
+	VBO uboDecalGroups;
 
-	size_t maxDecals;
-
-	GLuint tbo;
 	GLuint depthTex;
 	GLuint atlasTex;
-	//GLuint decalShader;
 	Shader::IProgramObject* decalShader;
+
+	LegacyTrackHandler trackHandler;
 };
 
 #endif // !defined(GL_VERSION_4_0) || HEADLESS
 
-#endif // SHADER_GROUND_DECAL_DRAWER_H 
+#endif // SHADER_GROUND_DECAL_DRAWER_H

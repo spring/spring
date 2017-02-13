@@ -1,5 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include <cctype>
+
 #include <SDL_keyboard.h>
 #include <SDL_keycode.h>
 #include <SDL_events.h>
@@ -98,4 +100,4 @@ namespace KeyInput {
 			SDL_PushEvent(&event);
 		}
 	}
-}; // namespace KeyInput
+} // namespace KeyInput

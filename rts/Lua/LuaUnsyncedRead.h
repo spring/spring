@@ -12,15 +12,18 @@ class LuaUnsyncedRead {
 	public:
 		static bool PushEntries(lua_State* L);
 
-	private:
+	public:
 		static int IsReplay(lua_State* L);
 		static int GetReplayLength(lua_State* L);
-		static int GetModUICtrl(lua_State* L);
+
+		static int GetGameName(lua_State* L);
+		static int GetMenuName(lua_State* L);
 
 		static int GetDrawFrame(lua_State* L);
 		static int GetFrameTimeOffset(lua_State* L);
 		static int GetLastUpdateSeconds(lua_State* L);
 		static int GetHasLag(lua_State* L);
+		static int GetVideoCapturingMode(lua_State* L);
 
 		static int GetViewGeometry(lua_State* L);
 		static int GetWindowGeometry(lua_State* L);
@@ -42,7 +45,10 @@ class LuaUnsyncedRead {
 		static int GetUnitNoDraw(lua_State* L);
 		static int GetUnitNoMinimap(lua_State* L);
 		static int GetUnitNoSelect(lua_State* L);
+		static int GetUnitSelectionVolumeData(lua_State* L);
 		static int GetFeatureLuaDraw(lua_State* L);
+		static int GetFeatureNoDraw(lua_State* L);
+		static int GetFeatureSelectionVolumeData(lua_State* L);
 
 		static int GetUnitTransformMatrix(lua_State* L);
 		static int GetUnitViewPosition(lua_State* L);
@@ -71,6 +77,8 @@ class LuaUnsyncedRead {
 		static int GetMapDrawMode(lua_State* L);
 		static int GetMapSquareTexture(lua_State* L);
 
+		static int GetLosViewColors(lua_State* L);
+
 		static int GetCameraNames(lua_State* L);
 		static int GetCameraState(lua_State* L);
 		static int GetCameraPosition(lua_State* L);
@@ -82,6 +90,7 @@ class LuaUnsyncedRead {
 		static int GetPixelDir(lua_State* L);
 
 		static int GetTimer(lua_State* L);
+		static int GetFrameTimer(lua_State* L);
 		static int DiffTimers(lua_State* L);
 
 		static int GetSoundStreamTime(lua_State* L);
@@ -143,6 +152,15 @@ class LuaUnsyncedRead {
 		static int GetConfigParams(lua_State* L);
 
 		static int GetLogSections(lua_State* L);
+
+		static int GetAllDecals(lua_State* L);
+		static int GetDecalPos(lua_State* L);
+		static int GetDecalSize(lua_State* L);
+		static int GetDecalRotation(lua_State* L);
+		static int GetDecalTexture(lua_State* L);
+		static int GetDecalAlpha(lua_State* L);
+		static int GetDecalType(lua_State* L);
+		static int GetDecalOwner(lua_State* L);
 };
 
 

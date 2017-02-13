@@ -2,16 +2,20 @@
 
 //#include "System/Platform/Win/win32.h"
 
-#include <boost/cstdint.hpp>
-#include <string.h>
-#include <map>
+#include <cstring>
 
 #include "LuaUtils.h"
-
-#include "System/Log/ILog.h"
-#include "System/Util.h"
 #include "LuaConfig.h"
-#include <boost/thread/recursive_mutex.hpp>
+
+#include "Rendering/Models/IModelParser.h"
+#include "Sim/Features/FeatureDef.h"
+#include "Sim/Objects/SolidObjectDef.h"
+#include "Sim/Units/UnitDef.h"
+#include "Sim/Units/CommandAI/CommandDescription.h"
+#include "System/FileSystem/FileSystem.h"
+#include "System/Log/ILog.h"
+#include "System/UnorderedMap.hpp"
+#include "System/Util.h"
 
 #if !defined UNITSYNC && !defined DEDICATED && !defined BUILDING_AI
 	#include "System/TimeProfiler.h"
@@ -28,21 +32,20 @@ int LuaUtils::exportedDataSize = 0;
 /******************************************************************************/
 
 
-static bool CopyPushData(lua_State* dst, lua_State* src, int index, int depth, std::map<const void*, int>& alreadyCopied);
-static bool CopyPushTable(lua_State* dst, lua_State* src, int index, int depth, std::map<const void*, int>& alreadyCopied);
+static bool CopyPushData(lua_State* dst, lua_State* src, int index, int depth, spring::unordered_map<const void*, int>& alreadyCopied);
+static bool CopyPushTable(lua_State* dst, lua_State* src, int index, int depth, spring::unordered_map<const void*, int>& alreadyCopied);
 
 
 static inline int PosAbsLuaIndex(lua_State* src, int index)
 {
-	if (index > 0) {
+	if (index > 0)
 		return index;
-	} else {
-		return (lua_gettop(src) + index + 1);
-	}
+
+	return (lua_gettop(src) + index + 1);
 }
 
 
-static bool CopyPushData(lua_State* dst, lua_State* src, int index, int depth, std::map<const void*, int>& alreadyCopied)
+static bool CopyPushData(lua_State* dst, lua_State* src, int index, int depth, spring::unordered_map<const void*, int>& alreadyCopied)
 {
 	const int type = lua_type(src, index);
 	switch (type) {
@@ -88,7 +91,7 @@ static bool CopyPushData(lua_State* dst, lua_State* src, int index, int depth, s
 }
 
 
-static bool CopyPushTable(lua_State* dst, lua_State* src, int index, int depth, std::map<const void*, int>& alreadyCopied)
+static bool CopyPushTable(lua_State* dst, lua_State* src, int index, int depth, spring::unordered_map<const void*, int>& alreadyCopied)
 {
 	const int table = PosAbsLuaIndex(src, index);
 
@@ -129,7 +132,7 @@ static bool CopyPushTable(lua_State* dst, lua_State* src, int index, int depth, 
 
 int LuaUtils::CopyData(lua_State* dst, lua_State* src, int count)
 {
-	SCOPED_TIMER("::CopyData");
+	SCOPED_TIMER("Lua::CopyData");
 
 	const int srcTop = lua_gettop(src);
 	const int dstTop = lua_gettop(dst);
@@ -142,7 +145,7 @@ int LuaUtils::CopyData(lua_State* dst, lua_State* src, int count)
 
 	// hold a map of all already copied tables in the lua's registry table
 	// needed for recursive tables, i.e. "local t = {}; t[t] = t"
-	std::map<const void*, int> alreadyCopied;
+	spring::unordered_map<const void*, int> alreadyCopied;
 
 	const int startIndex = (srcTop - count + 1);
 	const int endIndex   = srcTop;
@@ -533,15 +536,16 @@ void LuaUtils::PrintStack(lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 
-// from LuaShaders.cpp
 int LuaUtils::ParseIntArray(lua_State* L, int index, int* array, int size)
 {
-	if (!lua_istable(L, -1)) {
+	if (!lua_istable(L, index))
 		return -1;
-	}
-	const int table = lua_gettop(L);
+
+	const int absIdx = PosAbsLuaIndex(L, index);
+
 	for (int i = 0; i < size; i++) {
-		lua_rawgeti(L, table, (i + 1));
+		lua_rawgeti(L, absIdx, (i + 1));
+
 		if (lua_isnumber(L, -1)) {
 			array[i] = lua_toint(L, -1);
 			lua_pop(L, 1);
@@ -553,15 +557,16 @@ int LuaUtils::ParseIntArray(lua_State* L, int index, int* array, int size)
 	return size;
 }
 
-
 int LuaUtils::ParseFloatArray(lua_State* L, int index, float* array, int size)
 {
-	if (!lua_istable(L, index)) {
+	if (!lua_istable(L, index))
 		return -1;
-	}
-	const int table = (index > 0) ? index : (lua_gettop(L) + index + 1);
+
+	const int absIdx = PosAbsLuaIndex(L, index);
+
 	for (int i = 0; i < size; i++) {
-		lua_rawgeti(L, table, (i + 1));
+		lua_rawgeti(L, absIdx, (i + 1));
+
 		if (lua_isnumber(L, -1)) {
 			array[i] = lua_tofloat(L, -1);
 			lua_pop(L, 1);
@@ -570,9 +575,307 @@ int LuaUtils::ParseFloatArray(lua_State* L, int index, float* array, int size)
 			return i;
 		}
 	}
+
 	return size;
 }
 
+int LuaUtils::ParseStringArray(lua_State* L, int index, string* array, int size)
+{
+	if (!lua_istable(L, index))
+		return -1;
+
+	const int absIdx = PosAbsLuaIndex(L, index);
+
+	for (int i = 0; i < size; i++) {
+		lua_rawgeti(L, absIdx, (i + 1));
+
+		if (lua_isstring(L, -1)) {
+			array[i] = lua_tostring(L, -1);
+			lua_pop(L, 1);
+		} else {
+			lua_pop(L, 1);
+			return i;
+		}
+	}
+
+	return size;
+}
+
+int LuaUtils::ParseIntVector(lua_State* L, int index, vector<int>& vec)
+{
+	if (!lua_istable(L, index))
+		return -1;
+
+	vec.clear();
+	const int absIdx = PosAbsLuaIndex(L, index);
+
+	for (int i = 0; ; i++) {
+		lua_rawgeti(L, absIdx, (i + 1));
+
+		if (lua_isnumber(L, -1)) {
+			vec.push_back(lua_toint(L, -1));
+			lua_pop(L, 1);
+		} else {
+			lua_pop(L, 1);
+			return i;
+		}
+	}
+}
+
+int LuaUtils::ParseFloatVector(lua_State* L, int index, vector<float>& vec)
+{
+	if (!lua_istable(L, index))
+		return -1;
+
+	vec.clear();
+	const int absIdx = PosAbsLuaIndex(L, index);
+
+	for (int i = 0; ; i++) {
+		lua_rawgeti(L, absIdx, (i + 1));
+
+		if (lua_isnumber(L, -1)) {
+			vec.push_back(lua_tofloat(L, -1));
+			lua_pop(L, 1);
+		} else {
+			lua_pop(L, 1);
+			return i;
+		}
+	}
+}
+
+int LuaUtils::ParseStringVector(lua_State* L, int index, vector<string>& vec)
+{
+	if (!lua_istable(L, index))
+		return -1;
+
+	vec.clear();
+	const int absIdx = PosAbsLuaIndex(L, index);
+
+	for (int i = 0; ; i++) {
+		lua_rawgeti(L, absIdx, (i + 1));
+
+		if (lua_isstring(L, -1)) {
+			vec.push_back(lua_tostring(L, -1));
+			lua_pop(L, 1);
+		} else {
+			lua_pop(L, 1);
+			return i;
+		}
+	}
+}
+
+
+#if !defined UNITSYNC && !defined DEDICATED && !defined BUILDING_AI
+
+
+int LuaUtils::PushModelHeight(lua_State* L, const SolidObjectDef* def, bool isUnitDef)
+{
+	const S3DModel* model = nullptr;
+	float height = 0.0f;
+
+	if (isUnitDef) {
+		model = def->LoadModel();
+	} else {
+		switch (static_cast<const FeatureDef*>(def)->drawType) {
+			case DRAWTYPE_NONE: {
+			} break;
+
+			case DRAWTYPE_MODEL: {
+				model = def->LoadModel();
+			} break;
+
+			default: {
+				// always >= DRAWTYPE_TREE here
+				height = TREE_RADIUS * 2.0f;
+			} break;
+		}
+	}
+
+	if (model != nullptr)
+		height = model->height;
+
+	lua_pushnumber(L, height);
+	return 1;
+}
+
+int LuaUtils::PushModelRadius(lua_State* L, const SolidObjectDef* def, bool isUnitDef)
+{
+	const S3DModel* model = nullptr;
+	float radius = 0.0f;
+
+	if (isUnitDef) {
+		model = def->LoadModel();
+	} else {
+		switch (static_cast<const FeatureDef*>(def)->drawType) {
+			case DRAWTYPE_NONE: {
+			} break;
+
+			case DRAWTYPE_MODEL: {
+				model = def->LoadModel();
+			} break;
+
+			default: {
+				// always >= DRAWTYPE_TREE here
+				radius = TREE_RADIUS;
+			} break;
+		}
+	}
+
+	if (model != nullptr)
+		radius = model->radius;
+
+	lua_pushnumber(L, radius);
+	return 1;
+}
+
+int LuaUtils::PushFeatureModelDrawType(lua_State* L, const FeatureDef* def)
+{
+	switch (def->drawType) {
+		case DRAWTYPE_NONE:  { HSTR_PUSH(L,  "none"); } break;
+		case DRAWTYPE_MODEL: { HSTR_PUSH(L, "model"); } break;
+		default:             { HSTR_PUSH(L,  "tree"); } break;
+	}
+
+	return 1;
+}
+
+int LuaUtils::PushModelName(lua_State* L, const SolidObjectDef* def)
+{
+	lua_pushsstring(L, def->modelName);
+	return 1;
+}
+
+int LuaUtils::PushModelType(lua_State* L, const SolidObjectDef* def)
+{
+	const std::string& modelPath = modelLoader.FindModelPath(def->modelName);
+	const std::string& modelType = StringToLower(FileSystem::GetExtension(modelPath));
+	lua_pushsstring(L, modelType);
+	return 1;
+}
+
+int LuaUtils::PushModelPath(lua_State* L, const SolidObjectDef* def)
+{
+	const std::string& modelPath = modelLoader.FindModelPath(def->modelName);
+	lua_pushsstring(L, modelPath);
+	return 1;
+}
+
+
+int LuaUtils::PushModelTable(lua_State* L, const SolidObjectDef* def) {
+
+	const S3DModel* model = def->LoadModel();
+
+	lua_newtable(L);
+
+	if (model != nullptr) {
+		// unit, or non-tree feature
+		HSTR_PUSH_NUMBER(L, "minx", model->mins.x);
+		HSTR_PUSH_NUMBER(L, "miny", model->mins.y);
+		HSTR_PUSH_NUMBER(L, "minz", model->mins.z);
+		HSTR_PUSH_NUMBER(L, "maxx", model->maxs.x);
+		HSTR_PUSH_NUMBER(L, "maxy", model->maxs.y);
+		HSTR_PUSH_NUMBER(L, "maxz", model->maxs.z);
+
+		HSTR_PUSH_NUMBER(L, "midx", model->relMidPos.x);
+		HSTR_PUSH_NUMBER(L, "midy", model->relMidPos.y);
+		HSTR_PUSH_NUMBER(L, "midz", model->relMidPos.z);
+	} else {
+		HSTR_PUSH_NUMBER(L, "minx", 0.0f);
+		HSTR_PUSH_NUMBER(L, "miny", 0.0f);
+		HSTR_PUSH_NUMBER(L, "minz", 0.0f);
+		HSTR_PUSH_NUMBER(L, "maxx", 0.0f);
+		HSTR_PUSH_NUMBER(L, "maxy", 0.0f);
+		HSTR_PUSH_NUMBER(L, "maxz", 0.0f);
+
+		HSTR_PUSH_NUMBER(L, "midx", 0.0f);
+		HSTR_PUSH_NUMBER(L, "midy", 0.0f);
+		HSTR_PUSH_NUMBER(L, "midz", 0.0f);
+	}
+
+	HSTR_PUSH(L, "textures");
+	lua_newtable(L);
+
+	if (model != nullptr) {
+		LuaPushNamedString(L, "tex1", model->texs[0]);
+		LuaPushNamedString(L, "tex2", model->texs[1]);
+	} else {
+		// just leave these nil
+	}
+
+	// model["textures"] = {}
+	lua_rawset(L, -3);
+
+	return 1;
+}
+
+int LuaUtils::PushColVolTable(lua_State* L, const CollisionVolume* vol) {
+	assert(vol != nullptr);
+
+	lua_newtable(L);
+	switch (vol->GetVolumeType()) {
+		case CollisionVolume::COLVOL_TYPE_ELLIPSOID:
+			HSTR_PUSH_STRING(L, "type", "ellipsoid");
+			break;
+		case CollisionVolume::COLVOL_TYPE_CYLINDER:
+			HSTR_PUSH_STRING(L, "type", "cylinder");
+			break;
+		case CollisionVolume::COLVOL_TYPE_BOX:
+			HSTR_PUSH_STRING(L, "type", "box");
+			break;
+		case CollisionVolume::COLVOL_TYPE_SPHERE:
+			HSTR_PUSH_STRING(L, "type", "sphere");
+			break;
+	}
+
+	LuaPushNamedNumber(L, "scaleX", vol->GetScales().x);
+	LuaPushNamedNumber(L, "scaleY", vol->GetScales().y);
+	LuaPushNamedNumber(L, "scaleZ", vol->GetScales().z);
+	LuaPushNamedNumber(L, "offsetX", vol->GetOffsets().x);
+	LuaPushNamedNumber(L, "offsetY", vol->GetOffsets().y);
+	LuaPushNamedNumber(L, "offsetZ", vol->GetOffsets().z);
+	LuaPushNamedNumber(L, "boundingRadius", vol->GetBoundingRadius());
+	LuaPushNamedBool(L, "defaultToSphere",    vol->DefaultToSphere());
+	LuaPushNamedBool(L, "defaultToFootPrint", vol->DefaultToFootPrint());
+	LuaPushNamedBool(L, "defaultToPieceTree", vol->DefaultToPieceTree());
+	return 1;
+}
+
+int LuaUtils::PushColVolData(lua_State* L, const CollisionVolume* vol) {
+	lua_pushnumber(L, vol->GetScales().x);
+	lua_pushnumber(L, vol->GetScales().y);
+	lua_pushnumber(L, vol->GetScales().z);
+	lua_pushnumber(L, vol->GetOffsets().x);
+	lua_pushnumber(L, vol->GetOffsets().y);
+	lua_pushnumber(L, vol->GetOffsets().z);
+	lua_pushnumber(L, vol->GetVolumeType());
+	lua_pushnumber(L, int(vol->UseContHitTest()));
+	lua_pushnumber(L, vol->GetPrimaryAxis());
+	lua_pushboolean(L, vol->IgnoreHits());
+	return 10;
+}
+
+
+int LuaUtils::ParseColVolData(lua_State* L, int idx, CollisionVolume* vol)
+{
+	const float xs = luaL_checkfloat(L, idx++);
+	const float ys = luaL_checkfloat(L, idx++);
+	const float zs = luaL_checkfloat(L, idx++);
+	const float xo = luaL_checkfloat(L, idx++);
+	const float yo = luaL_checkfloat(L, idx++);
+	const float zo = luaL_checkfloat(L, idx++);
+	const int vType = luaL_checkint (L, idx++);
+	const int tType = luaL_checkint (L, idx++);
+	const int pAxis = luaL_checkint (L, idx++);
+
+	const float3 scales(xs, ys, zs);
+	const float3 offsets(xo, yo, zo);
+
+	vol->InitShape(scales, offsets, vType, tType, pAxis);
+	return 0;
+}
+
+
+#endif //!defined UNITSYNC && !defined DEDICATED && !defined BUILDING_AI
 
 
 void LuaUtils::PushCommandParamsTable(lua_State* L, const Command& cmd, bool subtable)
@@ -611,6 +914,20 @@ void LuaUtils::PushCommandOptionsTable(lua_State* L, const Command& cmd, bool su
 	if (subtable) {
 		lua_rawset(L, -3);
 	}
+}
+
+void LuaUtils::PushUnitAndCommand(lua_State* L, const CUnit* unit, const Command& cmd)
+{
+	lua_pushnumber(L, unit->id);
+	lua_pushnumber(L, unit->unitDef->id);
+	lua_pushnumber(L, unit->team);
+
+	lua_pushnumber(L, cmd.GetID());
+
+	PushCommandParamsTable(L, cmd, false);
+	PushCommandOptionsTable(L, cmd, false);
+
+	lua_pushnumber(L, cmd.tag);
 }
 
 void LuaUtils::ParseCommandOptions(
@@ -812,8 +1129,8 @@ int LuaUtils::Next(const ParamMap& paramMap, lua_State* L)
 		if ((it != paramMap.end()) && (it->second.type != READONLY_TYPE)) {
 			// last key was an internal parameter
 			++it;
-			while ((it != paramMap.end()) && (it->second.type == READONLY_TYPE)) {
-				++it; // skip read-only parameters
+			while ((it != paramMap.end()) && (it->second.type == READONLY_TYPE || it->second.deprecated)) {
+				++it; // skip read-only and deprecated/error parameters
 			}
 			if ((it != paramMap.end()) && (it->second.type != READONLY_TYPE)) {
 				// next key is an internal parameter
@@ -1044,7 +1361,7 @@ void LuaUtils::PushStringVector(lua_State* L, const vector<string>& vec)
 /******************************************************************************/
 /******************************************************************************/
 
-void LuaUtils::PushCommandDesc(lua_State* L, const CommandDescription& cd)
+void LuaUtils::PushCommandDesc(lua_State* L, const SCommandDescription& cd)
 {
 	const int numParams = cd.params.size();
 	const int numTblKeys = 12;
@@ -1059,6 +1376,7 @@ void LuaUtils::PushCommandDesc(lua_State* L, const CommandDescription& cd)
 	HSTR_PUSH_STRING(L, "tooltip",     cd.tooltip);
 	HSTR_PUSH_STRING(L, "texture",     cd.iconname);
 	HSTR_PUSH_STRING(L, "cursor",      cd.mouseicon);
+	HSTR_PUSH_BOOL(L,   "queueing",    cd.queueing);
 	HSTR_PUSH_BOOL(L,   "hidden",      cd.hidden);
 	HSTR_PUSH_BOOL(L,   "disabled",    cd.disabled);
 	HSTR_PUSH_BOOL(L,   "showUnique",  cd.showUnique);

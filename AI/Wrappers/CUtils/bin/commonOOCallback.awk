@@ -28,7 +28,7 @@ BEGIN {
 	# cls_name_id["Line"]  = 2
 	#
 	# cls_implName_name["CurrentCommand"] = "Command"
-	# cls_implName_name["SupportedCommand"] = "CommandDescription"
+	# cls_implName_name["SupportedCommand"] = "SCommandDescription"
 	#
 	# cls_name_implIds["Command,*"] = 2
 	# cls_name_implIds["Command,0"] = "OOAICallback,Unit,SupportedCommand"
@@ -385,7 +385,7 @@ function store_mem(clsName_s, memName_s, retType_s, params_s, isFetcher_s, metaC
 		if (!(_cls_sizeInd in cls_name_members)) {
 			cls_name_members[_cls_sizeInd] = 0;
 		}
-	
+
 		_cls_size = cls_name_members[_cls_sizeInd];
 		cls_name_members[clsName_s "," _cls_size] = memName_s;
 		_cls_size++;
@@ -652,7 +652,7 @@ if (1 == 0) {
 		clsName         = myClass;
 		clsId           = ancestorsP "-" clsName;
 		last_clsId      = "";
-		
+
 		lastP = nameParts[size_nameParts];
 
 		if (part_isFetcher(metaComment)) {
@@ -679,7 +679,7 @@ if (1 == 0) {
 				parentNumInd = additionalClsIndices[last_clsId "*"];
 				additionalClsIndices[clsId "*"] = parentNumInd + 1;
 			}
-			
+
 			secondLast_clsName = last_clsName;
 			last_ancestorsP = ancestorsP;
 			ancestorsP = ancestorsP "_" nameP;
@@ -766,7 +766,7 @@ if (1 == 0) {
 				fullName = ownerOfFunc[ancCls "#" f];
 				interfaceOwnerOfFunc[clsName "#" interfaceOwnerOfFunc[clsName "*"]] = fullName;
 				interfaceOwnerOfFunc[clsName "*"]++;
-				
+
 				funcBelongsToInterface[fullName] = clsName;
 			}
 			# assign member classes of the first implementation to the interface as reference

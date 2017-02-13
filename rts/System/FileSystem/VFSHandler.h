@@ -3,10 +3,11 @@
 #ifndef _VFS_HANDLER_H
 #define _VFS_HANDLER_H
 
+#include <array>
 #include <map>
 #include <string>
 #include <vector>
-#include <boost/cstdint.hpp>
+#include <cinttypes>
 
 class IArchive;
 
@@ -21,6 +22,19 @@ public:
 	CVFSHandler();
 	~CVFSHandler();
 
+	enum Section {
+		Mod,
+		Map,
+		Base,
+		Menu,
+		Count,
+		Error
+	};
+
+	static Section GetModeSection(char mode);
+
+	static Section GetModTypeSection(int modtype);
+
 	/**
 	 * Checks whether a file exists in the VFS (does not work for dirs).
 	 * This is cheaper then calling LoadFile, if you do not require the contents
@@ -29,14 +43,14 @@ public:
 	 *   case-insensitive
 	 * @return true if the file exists in the VFS, false otherwise
 	 */
-	bool FileExists(const std::string& filePath);
+	bool FileExists(const std::string& filePath, Section section);
 	/**
 	 * Reads the contents of a file from within the VFS.
 	 * @param filePath raw file path, for example "maps/myMap.smf",
 	 *   case-insensitive
 	 * @return true if the file exists in the VFS and was successfully read
 	 */
-	bool LoadFile(const std::string& filePath, std::vector<boost::uint8_t>& buffer);
+	bool LoadFile(const std::string& filePath, std::vector<std::uint8_t>& buffer, Section section);
 
 	/**
 	 * Returns all the files in the given (virtual) directory without the
@@ -44,31 +58,31 @@ public:
 	 * @param dir raw directory path, for example "maps/" or "maps",
 	 *   case-insensitive
 	 */
-	std::vector<std::string> GetFilesInDir(const std::string& dir);
+	std::vector<std::string> GetFilesInDir(const std::string& dir, Section section);
 	/**
 	 * Returns all the sub-directories in the given (virtual) directory without
 	 * the preceeding pathname.
 	 * @param dir raw directory path, for example "maps/" or "maps",
 	 *   case-insensitive
 	 */
-	std::vector<std::string> GetDirsInDir(const std::string& dir);
+	std::vector<std::string> GetDirsInDir(const std::string& dir, Section section);
 
 	/**
 	 * Adds an archive to the VFS.
 	 * @param override determines whether in case of a  conflict, the existing
 	 *   entry in the VFS is overwritten or not.
 	 */
-	bool AddArchive(const std::string& archiveName, bool override, const std::string& type = "");
+	bool AddArchive(const std::string& archiveName, bool overwrite);
 	/**
 	 * Adds an archive and all of its dependencies to the VFS.
 	 * @param override determines whether in case of a  conflict, the existing
 	 *   entry in the VFS is overwritten or not.
 	 */
-	bool AddArchiveWithDeps(const std::string& archiveName, bool override, const std::string& type = "");
+	bool AddArchiveWithDeps(const std::string& archiveName, bool overwrite);
 
 	/**
 	 * Removes an archive from the VFS.
-	 * @return true if the archive is not loaded anymore; it may was not loaded
+	 * @return true if the archive is not loaded anymore; it was not loaded
 	 *   in the first place, or was unloaded successfully.
 	 */
 	bool RemoveArchive(const std::string& archiveName);
@@ -78,12 +92,12 @@ protected:
 		IArchive* ar;
 		int size;
 	};
-	std::map<std::string, FileData> files; 
+	std::array<std::map<std::string, FileData>, Section::Count> files;
 	std::map<std::string, IArchive*> archives;
 
 private:
 	std::string GetNormalizedPath(const std::string& rawPath);
-	const FileData* GetFileData(const std::string& normalizedFilePath);
+	const FileData* GetFileData(const std::string& normalizedFilePath, Section section);
 };
 
 extern CVFSHandler* vfsHandler;

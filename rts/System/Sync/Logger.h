@@ -6,9 +6,9 @@
 #ifdef SYNCDEBUG
 
 #include <stdio.h>
-#include <boost/thread/mutex.hpp>
 #include <string>
 #include <vector>
+#include "System/Threading/SpringThreading.h"
 
 /**
  * @brief logging class for sync debugger
@@ -42,7 +42,7 @@ class CLogger {
 
 		static void CppFilt(char* sym, int size);
 
-		boost::mutex logmutex;
+		spring::recursive_mutex logmutex;
 		const char* filename;
 		FILE* logfile;
 		std::vector<std::string> buffer;

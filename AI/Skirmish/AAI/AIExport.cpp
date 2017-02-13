@@ -24,7 +24,7 @@
 #include "ExternalAI/Interface/SSkirmishAILibrary.h"
 #include "ExternalAI/Interface/SSkirmishAICallback.h"
 #include "LegacyCpp/AIAI.h"
-#include "Game/GameVersion.h"
+//#include "Game/GameVersion.h"
 #include "CUtils/Util.h"
 
 // AAI stuff

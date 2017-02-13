@@ -2,9 +2,11 @@
 
 #include "System/Util.h"
 #if defined(_MSC_VER) && (_MSC_VER >= 1310)
-#include <intrin.h>
+	#include <intrin.h>
 #endif
 #include <cstring>
+#include <cinttypes>
+
 
 std::string StringReplace(const std::string& text,
                           const std::string& from,
@@ -108,10 +110,31 @@ bool StringEndsWith(const std::string& str, const char* postfix)
 }
 
 
-static inline unsigned count_leading_ones(uint8_t x)
+void InverseOrSetBool(bool& container, const std::string& argValue, const bool inverseArg)
 {
-	uint32_t i = ~x;
-	return __builtin_clz((i<<24) | 0x00FFFFFF);
+	if (argValue.empty()) {
+		// toggle
+		container = !container;
+	} else {
+		// set
+		const bool value = StringToBool(argValue);
+		container = inverseArg ? (!value) : (value);
+	}
+}
+
+
+
+static inline unsigned count_leading_ones(std::uint8_t x)
+{
+	std::uint32_t i = ~x;
+	i = (i<<24) | 0x00FFFFFF;
+#ifdef _MSC_VER
+	unsigned long r;
+	_BitScanReverse(&r, (unsigned long)i);
+	return 31 - r;
+#else
+	return __builtin_clz(i);
+#endif
 }
 
 
@@ -129,15 +152,16 @@ char32_t Utf8GetNextChar(const std::string& text, int& pos)
 	static const auto UTF8_CONT_OKAY = 0x80; // 10xxxxxx
 
 	union UTF8_4Byte {
-		uint32_t i;
-		uint8_t  c[4];
+		std::uint32_t i;
+		std::uint8_t  c[4];
 	};
 
 	// read next 4bytes and check if it is an utf8 sequence
 	UTF8_4Byte utf8 = { 0 };
 	const int remainingChars = text.length() - pos;
 	if (remainingChars >= 4) {
-		utf8.i = *(uint32_t*)(&text[pos]);
+		// we need to use memcpy cause text[pos] isn't memory aligned as ints need to be
+		memcpy(&utf8.i, &text[pos], sizeof(std::uint32_t));
 	} else {
 		// read ahead of end of string
 		if (remainingChars <= 0)
@@ -145,9 +169,10 @@ char32_t Utf8GetNextChar(const std::string& text, int& pos)
 
 		// end of string reached, only read till end
 		switch (remainingChars) {
-			case 3: utf8.c[2] = uint8_t(text[pos + 2]);
-			case 2: utf8.c[1] = uint8_t(text[pos + 1]);
-			case 1: utf8.c[0] = uint8_t(text[pos    ]);
+			case 3: utf8.c[2] = std::uint8_t(text[pos + 2]);
+			case 2: utf8.c[1] = std::uint8_t(text[pos + 1]);
+			case 1: utf8.c[0] = std::uint8_t(text[pos    ]);
+			default: {}
 		};
 	}
 

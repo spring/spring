@@ -3,7 +3,7 @@ return {
 	name    = "Test-Widget",
 	desc    = "Sets Speed + tries to keep framerate + autoexit",
 	author  = "abma",
-	date    = "Jul. 2011",
+	date    = "Jan. 2015",
 	license = "GNU GPL, v2 or later",
 	layer   = 0,
 	enabled = true,
@@ -32,14 +32,14 @@ local function ShowStats()
 end
 
 function widget:GameOver()
-	Spring.SendCommands("quit")
+	Spring.SendCommands("quitforce")
 	ShowStats()
 end
 
 function widget:Update()
 	if (Spring.DiffTimers(Spring.GetTimer(), timer)) > maxruntime then
 		Spring.Log("test.lua", LOG.WARNING, string.format("Tests run longer than %i seconds, aborting!", maxruntime ))
-		Spring.SendCommands("pause 1", "quit")
+		Spring.SendCommands("pause 1", "quitforce")
 	end
 end
 
@@ -53,7 +53,7 @@ end
 function widget:GameFrame(n)
 	if n==maxframes then
 		ShowStats()
-		Spring.SendCommands("quit")
+		Spring.SendCommands("quitforce")
 	end
 end
 

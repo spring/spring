@@ -7,24 +7,24 @@
 
 class CBeamLaser: public CWeapon
 {
-	CR_DECLARE(CBeamLaser);
-	CR_DECLARE_SUB(SweepFireState);
+	CR_DECLARE_DERIVED(CBeamLaser)
+	CR_DECLARE_SUB(SweepFireState)
 
 public:
 	CBeamLaser(CUnit* owner, const WeaponDef* def);
 
-	void Update();
-	void Init();
+	void Update() override final;
+	void Init() override final;
 
 private:
 	float3 GetFireDir(bool sweepFire, bool scriptCall);
 
 	void UpdatePosAndMuzzlePos();
-	void UpdateWantedDir();
+	float GetPredictedImpactTime(float3 p) const override final;
 	void UpdateSweep();
 
 	void FireInternal(float3 curDir);
-	void FireImpl(bool scriptCall);
+	void FireImpl(const bool scriptCall) override final;
 
 private:
 	float3 color;
@@ -34,7 +34,7 @@ private:
 
 	struct SweepFireState {
 	public:
-		CR_DECLARE_STRUCT(SweepFireState);
+		CR_DECLARE_STRUCT(SweepFireState)
 	
 		SweepFireState() {
 			sweepInitDst = 0.0f;

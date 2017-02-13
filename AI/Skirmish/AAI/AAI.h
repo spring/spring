@@ -7,27 +7,30 @@
 // Released under GPL license: see LICENSE.html for more information.
 // -------------------------------------------------------------------------
 
+#ifndef AAI_H
+#define AAI_H
 
-#pragma once
+#include "LegacyCpp/IGlobalAI.h"
+#include <list>
+#include <vector>
 
-#include "aidef.h"
-#include "AAIBrain.h"
-#include "AAIExecute.h"
-#include "AAISector.h"
-#include "AAIBuildTable.h"
-#include "AAIGroup.h"
-#include "AAIBuildTask.h"
-#include "AAIUnitTable.h"
-#include "AAIMap.h"
-#include "AAIAirForceManager.h"
-#include "AAIAttackManager.h"
-#include "AAIConstructor.h"
-#include <math.h>
+namespace springLegacyAI {
+	class IAICallback;
+}
 
+using namespace springLegacyAI;
 using namespace std;
 
 class AAIExecute;
 class Profiler;
+class AAIBrain;
+class AAIBuildTask;
+class AAIAirForceManager;
+class AAIAttackManager;
+class AAIBuildTable;
+class AAIUnitTable;
+class AAIMap;
+class AAIGroup;
 
 class AAI : public IGlobalAI
 {
@@ -114,3 +117,6 @@ private:
 	static int aai_instance;
 
 };
+
+#endif
+

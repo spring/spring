@@ -86,15 +86,16 @@ bool LuaSyncedMoveCtrl::PushMoveCtrl(lua_State* L)
 }
 
 
+
+
 static inline CUnit* ParseUnit(lua_State* L, const char* caller, int index)
 {
-	// handles negative and out-of-bound ID's
 	CUnit* unit = unitHandler->GetUnit(luaL_checkint(L, index));
 
-	if (unit == NULL)
-		return NULL;
+	if (unit == nullptr)
+		return nullptr;
 	if (!CanControlUnit(L, unit))
-		return NULL;
+		return nullptr;
 
 	return unit;
 }
@@ -104,10 +105,10 @@ static inline CScriptMoveType* ParseScriptMoveType(lua_State* L, const char* cal
 {
 	CUnit* unit = ParseUnit(L, caller, index);
 
-	if (unit == NULL)
-		return NULL;
+	if (unit == nullptr)
+		return nullptr;
 	if (!unit->UsingScriptMoveType())
-		return NULL;
+		return nullptr;
 
 	return (static_cast<CScriptMoveType*>(unit->moveType));
 }
@@ -117,8 +118,11 @@ static inline DerivedMoveType* ParseDerivedMoveType(lua_State* L, const char* ca
 {
 	CUnit* unit = ParseUnit(L, caller, index);
 
-	if (unit == NULL)
-		return NULL;
+	if (unit == nullptr)
+		return nullptr;
+
+	if (unit->moveType == nullptr)
+		return nullptr;
 
 	return (dynamic_cast<DerivedMoveType*>(unit->moveType));
 }
@@ -544,8 +548,8 @@ static int SetMoveTypeData(lua_State* L, AMoveType* moveType, const char* caller
 {
 	int numAssignedValues = 0;
 
-	if (moveType == NULL) {
-		luaL_error(L, "[%s] unit %d has incompatible movetype for %s", __FUNCTION__, caller, lua_tonumber(L, 1));
+	if (moveType == nullptr) {
+		luaL_error(L, "[%s] unit %d has incompatible movetype for %s", __FUNCTION__, lua_tointeger(L, 1), caller);
 		return numAssignedValues;
 	}
 
@@ -603,27 +607,28 @@ int LuaSyncedMoveCtrl::SetGroundMoveTypeData(lua_State* L)
 int LuaSyncedMoveCtrl::SetMoveDef(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	MoveDef* moveDef = NULL;
+	MoveDef* moveDef = nullptr;
 
-	if (unit == NULL) {
+	if (unit == nullptr) {
 		lua_pushboolean(L, false);
 		return 1;
 	}
-	if (unit->moveDef == NULL) {
+	if (unit->moveDef == nullptr) {
 		// aircraft or structure, not supported
 		lua_pushboolean(L, false);
 		return 1;
 	}
 
 	// MoveType instance must already have been assigned
-	assert(unit->moveType != NULL);
+	assert(unit->moveType != nullptr);
 
+	// parse a MoveDef by number *or* by string (mutually exclusive)
 	if (lua_isnumber(L, 2))
 		moveDef = moveDefHandler->GetMoveDefByPathType(Clamp(luaL_checkint(L, 2), 0, int(moveDefHandler->GetNumMoveDefs()) - 1));
 	if (lua_isstring(L, 2))
 		moveDef = moveDefHandler->GetMoveDefByName(lua_tostring(L, 2));
 
-	if (moveDef == NULL) {
+	if (moveDef == nullptr) {
 		lua_pushboolean(L, false);
 		return 1;
 	}
@@ -631,6 +636,7 @@ int LuaSyncedMoveCtrl::SetMoveDef(lua_State* L)
 	if (moveDef->udRefCount == 0) {
 		// pathfinders contain optimizations that
 		// make unreferenced movedef's non-usable
+		LOG_L(L_ERROR, "SetMoveDef: Tried to use an unreferenced (:=disabled) MoveDef!");
 		lua_pushboolean(L, false);
 		return 1;
 	}

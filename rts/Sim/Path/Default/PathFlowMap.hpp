@@ -3,11 +3,11 @@
 #ifndef PATH_FLOWMAP_HDR
 #define PATH_FLOWMAP_HDR
 
-#include <set>
 #include <vector>
 
 #include "System/type2.h"
 #include "System/float3.h"
+#include "System/UnorderedSet.hpp"
 
 struct MoveDef;
 class CSolidObject;
@@ -46,7 +46,7 @@ private:
 	unsigned int GetCellIdx(const CSolidObject*) const;
 
 	std::vector<FlowCell> buffers[2];
-	std::set<unsigned int> indices[2];
+	spring::unordered_set<unsigned int> indices[2];
 
 	std::vector<float3> pathOptDirs;
 

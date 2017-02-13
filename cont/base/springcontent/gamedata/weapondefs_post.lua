@@ -150,9 +150,26 @@ local function BackwardCompability(wdName, wd)
     end
   end
 
+  if (not wd.craterareaofeffect) then
+    wd.craterareaofeffect = tonumber(wd.areaofeffect or 0) * 1.5
+  end
+
   if (tobool(wd.ballistic) or tobool(wd.dropped)) then
     wd.gravityaffected = true
   end
+
+  -- remove the legacy tags (so engine doesn't print warnings)
+  wd.rendertype = nil
+  wd.dropped = nil
+  wd.vlaunch = nil
+  wd.beamlaser = nil
+  wd.isshield = nil
+  wd.lineofsight = nil
+  wd.beamweapon = nil
+  wd.manualbombsettings = nil
+  wd.color = nil
+  wd.color2 = nil
+  wd.ballistic = nil
 end
 
 --------------------------------------------------------------------------------

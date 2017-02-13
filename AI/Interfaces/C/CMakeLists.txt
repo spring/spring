@@ -46,6 +46,7 @@ macro    (ConfigureNativeSkirmishAI mySourceDirRel_var additionalSources_var add
 
 		# Compile the library
 		add_library(${myTarget} MODULE ${mySources} ${additionalSources} ${myVersionDepFile})
+		set_target_properties(${myTarget} PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/data)
 		FixLibName(${myTarget})
 
 		Add_Dependencies(${myTarget} generateVersionFiles)
@@ -107,8 +108,11 @@ if    (BUILD_${myName}_AIINTERFACE)
 	set(mySources
 			"${mySourceDir}/Interface.cpp"
 			"${mySourceDir}/InterfaceExport.cpp"
+			"${mySourceDir}/SSkirmishAISpecifier.cpp"
 		)
-	add_library(${myTarget} MODULE ${mySources} ${ai_common_SRC} ${CUtils_SRC} ${myVersionDepFile})
+	add_library(${myTarget} MODULE ${mySources} ${ai_common_SRC} ${myVersionDepFile})
+	set_target_properties(${myTarget} PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/data)
+	target_link_libraries(${myTarget} CUtils)
 	FixLibName(${myTarget})
 
 	Add_Dependencies(${myTarget} generateVersionFiles)

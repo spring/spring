@@ -1,14 +1,16 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-
 #include "MetalMap.h"
 #include "ReadMap.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/myMath.h"
+#include "System/EventHandler.h"
+
+#include <cstring>
 
 CONFIG(bool, MetalMapPalette).defaultValue(false);
 
-CR_BIND(CMetalMap,(NULL, 0, 0, 0.0f));
+CR_BIND(CMetalMap,(NULL, 0, 0, 0.0f))
 
 CR_REG_METADATA(CMetalMap,(
 	CR_MEMBER(metalScale),
@@ -17,7 +19,7 @@ CR_REG_METADATA(CMetalMap,(
 	CR_MEMBER(metalPal),
 	CR_MEMBER(distributionMap),
 	CR_MEMBER(extractionMap)
-));
+))
 
 CMetalMap::CMetalMap(const unsigned char* map, int _sizeX, int _sizeZ, float _metalScale)
 	: metalScale(_metalScale)
@@ -98,6 +100,8 @@ void CMetalMap::SetMetalAmount(int x, int z, float m)
 	ClampInt(z, 0, sizeZ);
 
 	distributionMap[(z * sizeX) + x] = (metalScale == 0.0f) ? 0 : Clamp((int)(m / metalScale), 0, 255);
+
+	eventHandler.MetalMapChanged(x, z);
 }
 
 

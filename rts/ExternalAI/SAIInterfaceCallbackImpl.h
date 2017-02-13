@@ -36,6 +36,7 @@ EXPORT(int              ) aiInterfaceCallback_SkirmishAIs_getMax(int UNUSED_inte
 EXPORT(const char*      ) aiInterfaceCallback_SkirmishAIs_Info_getValueByKey(int UNUSED_interfaceId, const char* const shortName, const char* const version, const char* const key);
 
 EXPORT(void             ) aiInterfaceCallback_Log_log(int interfaceId, const char* const msg);
+EXPORT(void             ) aiInterfaceCallback_Log_logsl(int interfaceId, const char* section, int loglevel, const char* const msg);
 EXPORT(void             ) aiInterfaceCallback_Log_exception(int interfaceId, const char* const msg, int severety, bool die);
 
 EXPORT(char             ) aiInterfaceCallback_DataDirs_getPathSeparator(int UNUSED_interfaceId);

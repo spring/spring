@@ -4,13 +4,13 @@
 #define FIRE_PROJECTILE_H
 
 #include "Projectile.h"
-#include <list>
+#include <deque>
 
 
 class CFireProjectile : public CProjectile
 {
-	CR_DECLARE(CFireProjectile);
-	CR_DECLARE_SUB(SubParticle);
+	CR_DECLARE_DERIVED(CFireProjectile)
+	CR_DECLARE_SUB(SubParticle)
 public:
 	CFireProjectile(
 		const float3& pos,
@@ -22,10 +22,13 @@ public:
 		float particleSize
 	);
 
-	void Draw();
-	void Update();
-	void StopFire();
+	void Draw() override;
+	void Update() override;
+	void StopFire() { ttl = 0; }
 
+	virtual int GetProjectilesCount() const override;
+
+public:
 	int ttl;
 	float3 emitPos;
 	float emitRadius;
@@ -35,7 +38,7 @@ public:
 	float ageSpeed;
 
 	struct SubParticle {
-		CR_DECLARE_STRUCT(SubParticle);
+		CR_DECLARE_STRUCT(SubParticle)
 
 		float3 pos;
 		float3 posDif;
@@ -45,13 +48,12 @@ public:
 		int smokeType;
 	};
 
-	typedef std::list<SubParticle> part_list_type;
-
-	part_list_type subParticles;
-	part_list_type subParticles2;
+	std::deque<SubParticle> subParticles;
+	std::deque<SubParticle> subParticles2;
 
 private:
-	virtual void FireImpl() {};
+	CFireProjectile() { }
+
 };
 
 #endif // FIRE_PROJECTILE_H

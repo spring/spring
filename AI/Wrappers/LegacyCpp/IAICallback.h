@@ -5,6 +5,7 @@
 
 #include "ExternalAI/AILegacySupport.h"
 #include "Sim/Misc/GlobalConstants.h" // needed for MAX_UNITS
+#include "Sim/Units/CommandAI/Command.h"
 #include "System/float3.h"
 
 #include <string>
@@ -12,14 +13,14 @@
 #include <map>
 
 
+struct SCommandDescription;
+
 namespace springLegacyAI {
 
-struct Command;
+class CCommandQueue;
 struct UnitDef;
 struct FeatureDef;
 struct WeaponDef;
-struct CommandDescription;
-class CCommandQueue;
 
 /// Generalized callback interface, used by Global AIs
 class IAICallback
@@ -131,7 +132,7 @@ public:
 	 * The commands that this group can understand, other commands will be
 	 * ignored.
 	 */
-	virtual const std::vector<CommandDescription>* GetGroupCommands(int groupId) = 0;
+	virtual const std::vector<SCommandDescription>* GetGroupCommands(int groupId) = 0;
 	virtual int GiveGroupOrder(int unitId, Command* c) = 0;
 
 	virtual int GiveOrder(int unitId, Command* c) = 0;
@@ -140,7 +141,7 @@ public:
 	 * The commands that this unit can understand, other commands will be
 	 * ignored.
 	 */
-	virtual const std::vector<CommandDescription>* GetUnitCommands(int unitId) = 0;
+	virtual const std::vector<SCommandDescription>* GetUnitCommands(int unitId) = 0;
 	virtual const CCommandQueue* GetCurrentUnitCommands(int unitId) = 0;
 
 	/*
@@ -517,11 +518,9 @@ public:
 	/**
 	 * 1. 'inData' can be setup to NULL to skip passing in a string
 	 * 2. if inSize is less than 0, the data size is calculated using strlen()
-	 * 3. the return data is subject to lua garbage collection,
-	 *    copy it if you wish to continue using it
 	 */
-	virtual const char* CallLuaRules(const char* inData, int inSize = -1, int* outSize = NULL) = 0;
-	virtual const char* CallLuaUI(const char* inData, int inSize = -1, int* outSize = NULL) = 0;
+	virtual std::string CallLuaRules(const char* inData, int inSize = -1) = 0;
+	virtual std::string CallLuaUI(const char* inData, int inSize = -1) = 0;
 
 	virtual std::map<std::string, std::string> GetMyInfo() = 0;
 	virtual std::map<std::string, std::string> GetMyOptionValues() = 0;

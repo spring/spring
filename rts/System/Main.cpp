@@ -3,7 +3,7 @@
 /**
 	\mainpage
 	This is the documentation of the Spring RTS Engine.
-	http://springrts.com/
+	https://springrts.com/
 */
 
 
@@ -63,6 +63,7 @@ int Run(int argc, char* argv[])
  * Always run on dedicated GPU
  * @return true when restart is required with new env vars
  */
+#if !defined(PROFILE) && !defined(HEADLESS)
 static bool SetNvOptimusProfile(const std::string& processFileName)
 {
 #ifdef WIN32
@@ -76,6 +77,7 @@ static bool SetNvOptimusProfile(const std::string& processFileName)
 #endif
 	return false;
 }
+#endif
 
 
 

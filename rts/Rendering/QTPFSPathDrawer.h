@@ -3,7 +3,8 @@
 #ifndef QTPFS_PATHDRAWER_HDR
 #define QTPFS_PATHDRAWER_HDR
 
-#include <list>
+#include <vector>
+
 #include "IPathDrawer.h"
 
 struct MoveDef;
@@ -18,8 +19,8 @@ namespace QTPFS {
 
 	namespace PathSearchTrace {
 		struct Execution;
-	};
-};
+	}
+}
 
 struct QTPFSPathDrawer: public IPathDrawer {
 public:
@@ -42,12 +43,12 @@ private:
 		CVertexArray* va
 	) const;
 
-	void GetVisibleNodes(const QTPFS::QTNode* nt, std::list<const QTPFS::QTNode*>& nodes) const;
+	void GetVisibleNodes(const QTPFS::QTNode* nt, std::vector<const QTPFS::QTNode*>& nodes) const;
 
 	void DrawPaths(const MoveDef* md) const;
 	void DrawPath(const QTPFS::IPath* path, CVertexArray* va) const;
 	void DrawSearchExecution(unsigned int pathType, const QTPFS::PathSearchTrace::Execution* searchExec) const;
-	void DrawSearchIteration(unsigned int pathType, const std::list<unsigned int>& nodeIndices, CVertexArray* va) const;
+	void DrawSearchIteration(unsigned int pathType, const std::vector<unsigned int>& nodeIndices, CVertexArray* va) const;
 	void DrawNode(
 		const QTPFS::QTNode* node,
 		const MoveDef* md,

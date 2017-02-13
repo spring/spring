@@ -11,7 +11,6 @@
 class CLineDrawer {
 	public:
 		CLineDrawer();
-		~CLineDrawer() {};
 
 		void Configure(bool useColorRestarts, bool useRestartColor,
 		               const float* restartColor, float restartAlpha);

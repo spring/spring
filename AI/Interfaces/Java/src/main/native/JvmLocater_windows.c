@@ -162,7 +162,7 @@ static bool GetJREPathFromRegistry(char* path, size_t pathSize, const char* arch
 	RegCloseKey(key);
 	RegCloseKey(subkey);
 
-	simpleLog_logL(SIMPLELOG_LEVEL_FINER, "JRE found in registry!");
+	simpleLog_logL(LOG_LEVEL_NOTICE, "JRE found in registry!");
 	return true;
 }
 

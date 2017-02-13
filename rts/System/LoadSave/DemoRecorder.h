@@ -4,13 +4,13 @@
 #define DEMO_RECORDER
 
 #include <vector>
-#include <fstream>
 #include <sstream>
-#include <list>
+#include <zlib.h>
 
 #include "Demo.h"
 #include "Game/Players/PlayerStatistics.h"
 #include "Sim/Misc/TeamStatistics.h"
+
 
 /**
  * @brief Used to record demos
@@ -33,9 +33,10 @@ public:
 	void SetGameID(const unsigned char* buf);
 	void SetTime(int gameTime, int wallclockTime);
 
-	void InitializeStats(int numPlayers, int numTeams );
+	void AddNewPlayer(const std::string& name, int playerNum);
+	void InitializeStats(int numPlayers, int numTeams);
 	void SetPlayerStats(int playerNum, const PlayerStatistics& stats);
-	void SetTeamStats(int teamNum, const std::list< TeamStatistics >& stats);
+	void SetTeamStats(int teamNum, const std::vector<TeamStatistics>& stats);
 	void SetWinningAllyTeams(const std::vector<unsigned char>& winningAllyTeams);
 
 private:
@@ -47,7 +48,7 @@ private:
 	void WriteDemoFile();
 
 private:
-	std::ofstream file;
+	gzFile file;
 	std::stringstream demoStream;
 	std::vector<PlayerStatistics> playerStats;
 	std::vector< std::vector<TeamStatistics> > teamStats;

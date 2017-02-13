@@ -4,13 +4,15 @@
 #include "TorpedoProjectile.h"
 #include "Game/Camera.h"
 #include "Game/GameHelper.h"
+#include "Game/GlobalUnsynced.h"
 #include "Map/Ground.h"
-#include "Rendering/ProjectileDrawer.h"
+#include "Rendering/Env/Particles/ProjectileDrawer.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
+#include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "Sim/Projectiles/Unsynced/BubbleProjectile.h"
-#include "Sim/Projectiles/Unsynced/SmokeTrailProjectile.h"
+#include "Rendering/Env/Particles/Classes/BubbleProjectile.h"
+#include "Rendering/Env/Particles/Classes/SmokeTrailProjectile.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Weapons/WeaponDef.h"
 #include "System/myMath.h"
@@ -19,22 +21,23 @@
 	#include "System/Sync/SyncTracer.h"
 #endif
 
-CR_BIND_DERIVED(CTorpedoProjectile, CWeaponProjectile, (ProjectileParams()));
+CR_BIND_DERIVED(CTorpedoProjectile, CWeaponProjectile, )
 
 CR_REG_METADATA(CTorpedoProjectile,(
 	CR_SETFLAG(CF_Synced),
 	CR_MEMBER(tracking),
+	CR_MEMBER(ignoreError),
 	CR_MEMBER(maxSpeed),
-	CR_MEMBER(areaOfEffect),
 	CR_MEMBER(nextBubble),
 	CR_MEMBER(texx),
 	CR_MEMBER(texy)
-));
+))
+
 
 CTorpedoProjectile::CTorpedoProjectile(const ProjectileParams& params): CWeaponProjectile(params)
 	, tracking(0.0f)
+	, ignoreError(false)
 	, maxSpeed(0.0f)
-	, areaOfEffect(0.0f)
 
 	, nextBubble(4)
 	, texx(0.0f)
@@ -46,7 +49,6 @@ CTorpedoProjectile::CTorpedoProjectile(const ProjectileParams& params): CWeaponP
 
 	if (weaponDef != NULL) {
 		maxSpeed = weaponDef->projectilespeed;
-		areaOfEffect = weaponDef->damageAreaOfEffect;
 	}
 
 	drawRadius = maxSpeed * 8;
@@ -76,26 +78,27 @@ void CTorpedoProjectile::Update()
 				if (speed.w < maxSpeed)
 					speed.w += std::max(0.2f, tracking);
 
-				if (target != NULL) {
+				if (target != nullptr) {
 					const CSolidObject* so = dynamic_cast<const CSolidObject*>(target);
-					const CWeaponProjectile* po = dynamic_cast<const CWeaponProjectile*>(target);
 
-					targetPos = target->pos;
-
-					if (so != NULL) {
+					if (so != nullptr) {
 						targetPos = so->aimPos;
 						targetVel = so->speed;
 
-						if (owner() != NULL && pos.SqDistance(so->aimPos) > Square(150.0f)) {
+
+						if (allyteamID != -1 && !ignoreError) {
 							const CUnit* u = dynamic_cast<const CUnit*>(so);
 
-							if (u != NULL) {
-								targetPos = u->GetErrorPos(owner()->allyteam, true);
-							}
+							if (u != nullptr)
+								targetPos = u->GetErrorPos(allyteamID, true);
+
 						}
-					}
-					if (po != NULL) {
-						targetVel = po->speed;
+					} else {
+						targetPos = target->pos;
+						const CWeaponProjectile* po = dynamic_cast<const CWeaponProjectile*>(target);
+						if (po != nullptr)
+							targetVel = po->speed;
+
 					}
 				}
 
@@ -120,7 +123,7 @@ void CTorpedoProjectile::Update()
 				CWorldObject::SetVelocity(dir * speed.w);
 			}
 
-			explGenHandler->GenExplosion(cegID, pos, speed, ttl, areaOfEffect, 0.0f, NULL, NULL);
+			explGenHandler->GenExplosion(cegID, pos, speed, ttl, damages->damageAreaOfEffect, 0.0f, NULL, NULL);
 		} else {
 			if (!luaMoveCtrl) {
 				// must update dir and speed.w here
@@ -137,14 +140,15 @@ void CTorpedoProjectile::Update()
 		--nextBubble;
 
 		if (nextBubble == 0) {
-			nextBubble = 1 + (int) (gs->randFloat() * 1.5f);
+			nextBubble = 1 + (int) (gsRNG.NextFloat() * 1.5f);
 
-			const float3 pspeed = (gs->randVector() * 0.1f) + float3(0.0f, 0.2f, 0.0f);
+			const float3 pspeed = (guRNG.NextVector() * 0.1f) + float3(0.0f, 0.2f, 0.0f);
 
+			// Spawn unsynced bubble projectile
 			new CBubbleProjectile(
 				owner(),
-				pos + gs->randVector(), pspeed, 40 + gs->randFloat() * GAME_SPEED,
-				1 + gs->randFloat() * 2, 0.01f, 0.3f + gs->randFloat() * 0.3f
+				pos + guRNG.NextVector(), pspeed, 40 + guRNG.NextFloat() * GAME_SPEED,
+				1 + guRNG.NextFloat() * 2, 0.01f, 0.3f + guRNG.NextFloat() * 0.3f
 			);
 		}
 	}
@@ -160,16 +164,9 @@ void CTorpedoProjectile::Draw()
 		return;
 	}
 
-	inArray = true;
-
-	unsigned char col[4];
-	col[0] = 60;
-	col[1] = 60;
-	col[2] = 100;
-	col[3] = 255;
-
+	SColor col(60, 60, 100, 255);
 	float3 r = dir.cross(UpVector);
-	if (r.Length() < 0.001f) {
+	if (r.SqLength() < 0.001f) {
 		r = float3(RgtVector);
 	}
 	r.Normalize();
@@ -177,6 +174,7 @@ void CTorpedoProjectile::Draw()
 	const float h = 12;
 	const float w = 2;
 
+	inArray = true;
 	va->EnlargeArrays(32, 0, VA_SIZE_TC);
 
 	va->AddVertexQTC(drawPos + (r * w),             texx, texy, col);
@@ -219,4 +217,9 @@ void CTorpedoProjectile::Draw()
 	va->AddVertexQTC(drawPos + (r * w) + (dir * h), texx, texy, col);
 	va->AddVertexQTC(drawPos + (dir * h * 1.2f),    texx, texy, col);
 	va->AddVertexQTC(drawPos + (dir * h * 1.2f),    texx, texy, col);
+}
+
+int CTorpedoProjectile::GetProjectilesCount() const
+{
+	return 8;
 }

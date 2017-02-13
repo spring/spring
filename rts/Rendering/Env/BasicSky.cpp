@@ -37,7 +37,6 @@ CBasicSky::CBasicSky()
 	, skyTex(0)
 	, skyDot3Tex(0)
 	, cloudDot3Tex(0)
-	, sunTex(0)
 	, sunFlareTex(0)
 	, skyTexUpdateIter(0)
 	, skyDomeList(0)
@@ -65,18 +64,15 @@ CBasicSky::CBasicSky()
 	rawClouds=newmat2<int>(CLOUD_SIZE,CLOUD_SIZE);
 	blendMatrix=newmat3<int>(CLOUD_DETAIL,32,32);
 
-	domeheight=math::cos(PI/16)*1.01f;
-	domeWidth=math::sin(PI/16)*400*1.7f;
+	domeheight=std::cos(math::PI/16)*1.01f;
+	domeWidth=std::sin(math::PI/16)*400*1.7f;
 
 	UpdateSkyDir();
 	InitSun();
 	UpdateSunDir();
 
+	// FIXME: why do this hack?
 	cloudDensity = 0.25f + mapInfo->atmosphere.cloudDensity * 0.5f;
-	cloudColor = mapInfo->atmosphere.cloudColor;
-	skyColor = mapInfo->atmosphere.skyColor;
-	sunColor = mapInfo->atmosphere.sunColor;
-	fogStart = mapInfo->atmosphere.fogStart;
 
 	if (fogStart > 0.99f)
 		globalRendering->drawFog = false; //FIXME wrong place?!
@@ -210,7 +206,6 @@ CBasicSky::~CBasicSky()
 	glDeleteTextures(1, &cloudDot3Tex);
 	glDeleteLists(skyDomeList, 1);
 
-	glDeleteTextures(1, &sunTex);
 	glDeleteTextures(1, &sunFlareTex);
 	glDeleteLists(sunFlareList,1);
 
@@ -225,9 +220,15 @@ CBasicSky::~CBasicSky()
 
 void CBasicSky::Draw()
 {
+	SCOPED_GMARKER("CBasicSky::Draw");
+
+	if (!globalRendering->drawSky)
+		return;
+
 	glDisable(GL_DEPTH_TEST);
 
-	if (wireframe) glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	if (wireframe)
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	float3 modCamera=skydir1*camera->GetPos().x+skydir2*camera->GetPos().z;
 
@@ -236,8 +237,8 @@ void CBasicSky::Draw()
 		glTranslatef((gs->frameNum%20000)*0.00005f+modCamera.x*0.000025f,modCamera.z*0.000025f,0);
 	glMatrixMode(GL_MODELVIEW);
 		glPushMatrix();
-		CMatrix44f m(camera->GetPos(),skydir1,UpVector,skydir2);
-		glMultMatrixf(m.m);
+		// glTranslatef3(camera->GetPos());
+		glMultMatrixf(CMatrix44f(camera->GetPos(), skydir1, UpVector, skydir2));
 
 	glCallList(skyDomeList);
 
@@ -246,17 +247,18 @@ void CBasicSky::Draw()
 	glMatrixMode(GL_MODELVIEW);
 		glPopMatrix();
 
-	if (wireframe) glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	if (wireframe)
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 	glEnable(GL_DEPTH_TEST);
 
-	ISky::SetupFog();
+	sky->SetupFog();
 }
 
 float3 CBasicSky::GetCoord(int x, int y)
 {
-	float fy = ((float)y/Y_PART) * 2 * PI;
-	float fx = ((float)x/X_PART) * 2 * PI;
+	float fy = ((float)y/Y_PART) * math::TWOPI;
+	float fx = ((float)x/X_PART) * math::TWOPI;
 
 	return float3(
 		fastmath::sin(fy/32) * fastmath::sin(fx),
@@ -359,7 +361,7 @@ void CBasicSky::Update()
 	if (!dynamicSky)
 		return;
 
-	SCOPED_TIMER("BasicSky::Update");
+	SCOPED_TIMER("Update::WorldDrawer::BasicSky");
 
 	static int kernel[CLOUD_SIZE/4*CLOUD_SIZE/4];
 
@@ -369,7 +371,7 @@ void CBasicSky::Update()
 	case 0: {
 		for(int a=0; a<CLOUD_DETAIL; a++) {
 			float fade = gs->frameNum / (70.0f * (2<<(CLOUD_DETAIL-1-a)));
-			fade -= math::floor(fade/2)*2;
+			fade -= std::floor(fade/2)*2;
 			if(fade>1) {
 				fade = 2 - fade;
 				if(!cloudDown[a]) {
@@ -403,11 +405,11 @@ void CBasicSky::Update()
 		int qcda=(4<<CLOUD_DETAIL)>>a;
 		int *pkernel=kernel;
 		for(int y=0; y<cs4a; ++y, pkernel+=CLOUD_SIZE/4) {
-			float ydist=math::fabs(1.0f+y-cs8a)/cs8a;
+			float ydist=std::fabs(1.0f+y-cs8a)/cs8a;
 			ydist=ydist*ydist*(3-2*ydist);
 			int *pkrn=pkernel;
 			for(int x=0; x<cs4a; ++x) {
-				float xdist=math::fabs(1.0f+x-cs8a)/cs8a;
+				float xdist=std::fabs(1.0f+x-cs8a)/cs8a;
 				xdist=xdist*xdist*(3-2*xdist);
 
 				float contrib=(1-xdist)*(1-ydist);
@@ -506,7 +508,7 @@ void CBasicSky::CreateTransformVectors()
 	unsigned char *tt=thicknessTransform;
 	for(int a=0;a<1024;++a){
 		float f=(1023.0f-(a+cloudDensity*1024-512))/1023.0f;
-		float alpha=math::pow(f*2,3);
+		float alpha=std::pow(f*2,3);
 		if(alpha>1)
 			alpha=1;
 		*at=(unsigned char)(alpha*255);
@@ -518,12 +520,16 @@ void CBasicSky::CreateTransformVectors()
 
 void CBasicSky::DrawSun()
 {
+	SCOPED_GMARKER("CBasicSky::DrawSun");
+
+	if (!globalRendering->drawSky)
+		return;
 	if (!SunVisible(camera->GetPos()))
 		return;
 
 	const float3 xzSunCameraPos =
-		sundir1 * camera->GetPos().x +
-		sundir2 * camera->GetPos().z;
+		skyLight->GetLightDirX() * camera->GetPos().x +
+		skyLight->GetLightDirZ() * camera->GetPos().z;
 	const float3 modSunColor = sunColor * skyLight->GetLightIntensity();
 
 	// sun-disc vertices might be clipped against the
@@ -541,8 +547,8 @@ void CBasicSky::DrawSun()
 	const float ymod = (sunTexCoordY - 0.5f) * domeWidth * 0.025f * 256;
 	const float fx = gs->frameNum * 0.00005f * CLOUD_SIZE + xzSunCameraPos.x * CLOUD_SIZE * 0.000025f;
 	const float fy = ymod + xzSunCameraPos.z * CLOUD_SIZE * 0.000025f;
-	const float ffx = fx - math::floor(fx);
-	const float ffy = fy - math::floor(fy);
+	const float ffx = fx - std::floor(fx);
+	const float ffy = fy - std::floor(fy);
 	const int baseX = int(fx) & CLOUD_MASK;
 	const int baseY = int(fy) & CLOUD_MASK;
 
@@ -591,7 +597,7 @@ void CBasicSky::UpdateSunFlare() {
 		glDeleteLists(sunFlareList, 1);
 
 	const float3 zdir = skyLight->GetLightDir();
-	const float3 xdir = zdir.cross(UpVector);
+	const float3 xdir = zdir.cross(UpVector).ANormalize();
 	const float3 ydir = zdir.cross(xdir);
 
 	sunFlareList = glGenLists(1);
@@ -602,12 +608,12 @@ void CBasicSky::UpdateSunFlare() {
 		glBegin(GL_TRIANGLE_STRIP);
 
 		for (int x = 0; x < 257; ++x) {
-			const float dx = math::sin(x * 2.0f * PI / 256.0f);
-			const float dy = math::cos(x * 2.0f * PI / 256.0f);
+			const float dx = std::sin(x * math::TWOPI / 256.0f);
+			const float dy = std::cos(x * math::TWOPI / 256.0f);
 			const float dz = 5.0f;
 
 			glTexCoord2f(x / 256.0f, 0.25f); glVertexf3(zdir * dz + xdir * dx * 0.0014f + ydir * dy * 0.0014f);
-			glTexCoord2f(x / 256.0f, 0.75f); glVertexf3(zdir * dz + xdir * dx * 4.0000f + ydir * dy * 4.0000f);
+			glTexCoord2f(x / 256.0f, 0.75f); glVertexf3(zdir * dz + xdir * dx * 1.0000f + ydir * dy * 1.0000f);
 		}
 		glEnd();
 
@@ -621,29 +627,7 @@ void CBasicSky::UpdateSunFlare() {
 
 void CBasicSky::InitSun()
 {
-	unsigned char* mem = new unsigned char[128*128*4];
-
-	for(int y=0;y<128;++y){
-		for(int x=0;x<128;++x){
-			mem[(y*128+x)*4+0]=255;
-			mem[(y*128+x)*4+1]=255;
-			mem[(y*128+x)*4+2]=255;
-			float dist=math::sqrt((float)(y-64)*(y-64)+(x-64)*(x-64));
-			if(dist>60)
-				mem[(y*128+x)*4+3]=0;
-			else
-				mem[(y*128+x)*4+3]=255;
-		}
-	}
-
-	glGenTextures(1, &sunTex);
-	glBindTexture(GL_TEXTURE_2D, sunTex);
-	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP);
-	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP);
-	glBuildMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,128, 128, GL_RGBA, GL_UNSIGNED_BYTE, mem);
-
+	unsigned char mem[32*2];
 	for(int y=0;y<2;++y){
 		for(int x=0;x<32;++x){
 			if(y==0 && x%2)
@@ -658,9 +642,7 @@ void CBasicSky::InitSun()
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE ,32, 2, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, mem);
-
-	delete[] mem;
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, 32, 2, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, mem);
 }
 
 inline unsigned char CBasicSky::GetCloudThickness(int x,int y)
@@ -714,24 +696,8 @@ void CBasicSky::CreateCover(int baseX, int baseY, float *buf)
 }
 
 void CBasicSky::UpdateSunDir() {
-	const float3& L = skyLight->GetLightDir();
-
-	sundir2 = L;
-	sundir2.y = 0.0f;
-
-	if (sundir2.SqLength() == 0.0f)
-		sundir2.x = 1.0f;
-
-	sundir2.ANormalize();
-	sundir1 = sundir2.cross(UpVector);
-
-	// polar-coordinate direction in yz-plane (sin(zenith-angle), radius)
-	modSunDir.x = 0.0f;
-	modSunDir.y = L.y;
-	modSunDir.z = math::sqrt(L.x * L.x + L.z * L.z);
-
 	sunTexCoordX = 0.5f;
-	sunTexCoordY = GetTexCoordFromDir(modSunDir);
+	sunTexCoordY = GetTexCoordFromDir(skyLight->CalcPolarLightDir());
 
 	// FIXME: expensive with dynamic sun
 	UpdateSunFlare();
@@ -746,7 +712,7 @@ void CBasicSky::UpdateSkyDir() {
 
 	skydir2.ANormalize();
 	skydir1 = skydir2.cross(UpVector);
-	skyAngle = GetRadFromXY(skydir2.x, skydir2.z) + PI / 2.0f; //FIXME Why the +PI/2???
+	skyAngle = GetRadFromXY(skydir2.x, skydir2.z) + math::HALFPI; //FIXME Why the +PI/2???
 }
 
 void CBasicSky::UpdateSkyTexture() {
@@ -779,12 +745,12 @@ float3 CBasicSky::GetDirFromTexCoord(float x, float y)
 	dir.x = (x - 0.5f) * domeWidth;
 	dir.z = (y - 0.5f) * domeWidth;
 
-	const float hdist = math::sqrt(dir.x * dir.x + dir.z * dir.z);
+	const float hdist = std::sqrt(dir.x * dir.x + dir.z * dir.z);
 	const float ang = GetRadFromXY(dir.x, dir.z) + skyAngle;
-	const float fy = math::asin(hdist / 400);
+	const float fy = std::asin(hdist / 400);
 
-	dir.x = hdist * math::cos(ang);
-	dir.z = hdist * math::sin(ang);
+	dir.x = hdist * std::cos(ang);
+	dir.z = hdist * std::sin(ang);
 	dir.y = (fastmath::cos(fy) - domeheight) * 400;
 
 	dir.ANormalize();
@@ -817,8 +783,8 @@ void CBasicSky::UpdateTexPartDot3(int x, int y, unsigned char (*texp)[4]) {
 	const float3& dir = GetDirFromTexCoord(x / 256.0f, (255.0f - y) / 256.0f);
 
 	const float sunInt = skyLight->GetLightIntensity();
-	const float sunDist = math::acos(dir.dot(skyLight->GetLightDir())) * 50;
-	const float sunMod = sunInt * (0.3f / math::sqrt(sunDist) + 2.0f / sunDist);
+	const float sunDist = std::acos(dir.dot(skyLight->GetLightDir())) * 50;
+	const float sunMod = sunInt * (0.3f / std::sqrt(sunDist) + 2.0f / sunDist);
 
 	const float green = std::min(1.0f, (0.55f + sunMod));
 
@@ -831,7 +797,7 @@ void CBasicSky::UpdateTexPartDot3(int x, int y, unsigned char (*texp)[4]) {
 void CBasicSky::UpdateTexPart(int x, int y, unsigned char (*texp)[4]) {
 	const float3& dir = GetDirFromTexCoord(x / 512.0f, (511.0f - y) / 512.0f);
 
-	const float sunDist = math::acos(dir.dot(skyLight->GetLightDir())) * 70;
+	const float sunDist = std::acos(dir.dot(skyLight->GetLightDir())) * 70;
 	const float sunMod = skyLight->GetLightIntensity() * 12.0f / (12 + sunDist);
 
 	const float red   = std::min(skyColor.x + sunMod * sunColor.x, 1.0f);

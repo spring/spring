@@ -123,9 +123,4 @@
 	#define swabFloatInPlace(w)
 #endif // defined(swabFloat)
 
-// backwards compatibility (used until 19. July 2011)
-#define swabword(w)  swabWord(w)
-#define swabdword(w) swabDWord(w)
-#define swabfloat(w) swabFloat(w)
-
 #endif // BYTE_ORDER_H

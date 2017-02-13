@@ -48,8 +48,6 @@ if    (BUILD_${myName}_AIWRAPPER)
 		"${mySourceDir}/AIAICallback"
 		"${mySourceDir}/AIAICheats"
 		"${mySourceDir}/AIGlobalAICallback"
-		"${mySourceDir}/Command"
-		"${mySourceDir}/CommandQueue"
 		"${mySourceDir}/DamageArray"
 		"${mySourceDir}/MoveData"
 		"${mySourceDir}/UnitDef"

@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include <SDL.h>
-#include <boost/thread.hpp>
+#include <functional>
 
 #include "Rendering/GL/myGL.h"
 #include "LoadScreen.h"
@@ -14,6 +14,7 @@
 #include "Game/UI/InputReceiver.h"
 #include "ExternalAI/SkirmishAIHandler.h"
 #include "Lua/LuaIntro.h"
+#include "Lua/LuaMenu.h"
 #include "Map/MapInfo.h"
 #include "Rendering/Fonts/glFont.h"
 #include "Rendering/GlobalRendering.h"
@@ -29,20 +30,21 @@
 #include "Net/Protocol/NetProtocol.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/Platform/Watchdog.h"
+#include "System/Platform/Threading.h"
 #include "System/Sound/ISound.h"
-#include "System/Sound/SoundChannels.h"
+#include "System/Sound/ISoundChannels.h"
 
 #if !defined(HEADLESS) && !defined(NO_SOUND)
-	#include "System/Sound/EFX.h"
-	#include "System/Sound/EFXPresets.h"
+#include "System/Sound/OpenAL/EFX.h"
+#include "System/Sound/OpenAL/EFXPresets.h"
 #endif
 
 #include <vector>
 
-CONFIG(int, LoadingMT).defaultValue(-1).safemodeValue(0);
+CONFIG(int, LoadingMT).defaultValue(0).safemodeValue(0);
 CONFIG(bool, ShowLoadMessages).defaultValue(true);
 
-CLoadScreen* CLoadScreen::singleton = NULL;
+CLoadScreen* CLoadScreen::singleton = nullptr;
 
 /******************************************************************************/
 
@@ -50,8 +52,8 @@ CLoadScreen::CLoadScreen(const std::string& _mapName, const std::string& _modNam
 	mapName(_mapName),
 	modName(_modName),
 	saveFile(_saveFile),
-	netHeartbeatThread(NULL),
-	gameLoadThread(NULL),
+	netHeartbeatThread(nullptr),
+	gameLoadThread(nullptr),
 	mtLoading(true),
 	showMessages(true),
 	startupTexture(0),
@@ -84,20 +86,24 @@ void CLoadScreen::Init()
 #endif
 
 	//! Create a thread during the loading that pings the host/server, so it knows that this client is still alive/loading
-	net->KeepUpdating(true);
-	netHeartbeatThread = new boost::thread(boost::bind<void, CNetProtocol, CNetProtocol*>(&CNetProtocol::UpdateLoop, net));
+	clientNet->KeepUpdating(true);
+
+	netHeartbeatThread = new spring::thread();
+	*netHeartbeatThread = Threading::CreateNewThread(std::bind(&CNetProtocol::UpdateLoop, clientNet));
 
 	game = new CGame(mapName, modName, saveFile);
 
 	// new stuff
-	CLuaIntro::LoadHandler();
+	CLuaIntro::LoadFreeHandler();
 
 	// old stuff
-	if (!LuaIntro) {
+	if (luaIntro == nullptr) {
 		const CTeam* team = teamHandler->Team(gu->myTeam);
-		const std::string mapStartPic(mapInfo->GetStringValue("Startpic"));
 
-		assert(team != NULL);
+		const std::string mapStartPic(mapInfo->GetStringValue("Startpic"));
+		const std::string mapStartMusic(mapInfo->GetStringValue("Startmusic"));
+
+		assert(team != nullptr);
 
 		if (mapStartPic.empty()) {
 			RandomStartPicture(team->GetSide());
@@ -105,15 +111,16 @@ void CLoadScreen::Init()
 			LoadStartPicture(mapStartPic);
 		}
 
-		const std::string mapStartMusic(mapInfo->GetStringValue("Startmusic"));
 		if (!mapStartMusic.empty())
-			Channels::BGMusic.StreamPlay(mapStartMusic);
+			Channels::BGMusic->StreamPlay(mapStartMusic);
 	}
 
 	try {
 		//! Create the Game Loading Thread
-		if (mtLoading)
-			gameLoadThread = new COffscreenGLThread(boost::bind(&CGame::LoadGame, game, mapName, true));
+		if (mtLoading) {
+			CglFont::threadSafety = true;
+			gameLoadThread = new COffscreenGLThread(std::bind(&CGame::LoadGame, game, mapName, true));
+		}
 
 	} catch (const opengl_error& gle) {
 		LOG_L(L_WARNING, "Offscreen GL Context creation failed, "
@@ -131,53 +138,61 @@ void CLoadScreen::Init()
 
 CLoadScreen::~CLoadScreen()
 {
-	// at this point, the thread running CGame::LoadGame
-	// has finished and deregistered itself from WatchDog
-	if (mtLoading && gameLoadThread)
-		gameLoadThread->Join();
-	delete gameLoadThread; gameLoadThread = NULL;
+	if (gameLoadThread != nullptr) {
+		// at this point, the thread running CGame::LoadGame
+		// has finished and deregistered itself from WatchDog
+		if (mtLoading)
+			gameLoadThread->Join();
 
-	if (net)
-		net->KeepUpdating(false);
-	if (netHeartbeatThread)
+		CglFont::threadSafety = false;
+		SafeDelete(gameLoadThread);
+	}
+
+	if (clientNet != nullptr)
+		clientNet->KeepUpdating(false);
+	if (netHeartbeatThread != nullptr)
 		netHeartbeatThread->join();
-	delete netHeartbeatThread; netHeartbeatThread = NULL;
 
-	if (!gu->globalQuit)
+	SafeDelete(netHeartbeatThread);
+
+	if (!gu->globalQuit) {
 		activeController = game;
 
-	if (activeController == this)
-		activeController = NULL;
+		if (luaMenu != nullptr)
+			luaMenu->ActivateGame();
+	}
 
-	if (LuaIntro) {
+	if (activeController == this)
+		activeController = nullptr;
+
+	if (luaIntro != nullptr) {
 		Draw(); // one last frame
-		LuaIntro->Shutdown();
+		luaIntro->Shutdown();
 	}
 	CLuaIntro::FreeHandler();
 
 	if (!gu->globalQuit) {
 		//! sending your playername to the server indicates that you are finished loading
 		const CPlayer* p = playerHandler->Player(gu->myPlayerNum);
-		net->Send(CBaseNetProtocol::Get().SendPlayerName(gu->myPlayerNum, p->name));
+		clientNet->Send(CBaseNetProtocol::Get().SendPlayerName(gu->myPlayerNum, p->name));
 #ifdef SYNCCHECK
-		net->Send(CBaseNetProtocol::Get().SendPathCheckSum(gu->myPlayerNum, pathManager->GetPathCheckSum()));
+		clientNet->Send(CBaseNetProtocol::Get().SendPathCheckSum(gu->myPlayerNum, pathManager->GetPathCheckSum()));
 #endif
 		mouse->ShowMouse();
 
 #if !defined(HEADLESS) && !defined(NO_SOUND)
 		// sound is initialized at this point,
 		// but EFX support is *not* guaranteed
-		if (efx != NULL) {
-			*(efx->sfxProperties) = *(mapInfo->efxprops);
+		if (efx != nullptr) {
+			efx->sfxProperties = *(mapInfo->efxprops);
 			efx->CommitEffects();
 		}
 #endif
-		game->SetupRenderingParams();
 	}
 
 	UnloadStartPicture();
 
-	singleton = NULL;
+	singleton = nullptr;
 }
 
 
@@ -185,13 +200,13 @@ CLoadScreen::~CLoadScreen()
 
 void CLoadScreen::CreateInstance(const std::string& mapName, const std::string& modName, ILoadSaveHandler* saveFile)
 {
-	assert(singleton == NULL);
-
+	assert(singleton == nullptr);
 	singleton = new CLoadScreen(mapName, modName, saveFile);
+
 	// Init() already requires GetInstance() to work.
 	singleton->Init();
+
 	if (!singleton->mtLoading) {
-		game->SetupRenderingParams();
 		CLoadScreen::DeleteInstance();
 	}
 }
@@ -199,8 +214,7 @@ void CLoadScreen::CreateInstance(const std::string& mapName, const std::string& 
 
 void CLoadScreen::DeleteInstance()
 {
-	delete singleton;
-	singleton = NULL;
+	SafeDelete(singleton);
 }
 
 
@@ -208,16 +222,16 @@ void CLoadScreen::DeleteInstance()
 
 void CLoadScreen::ResizeEvent()
 {
-	if (LuaIntro)
-		LuaIntro->ViewResize();
+	if (luaIntro != nullptr)
+		luaIntro->ViewResize();
 }
 
 
 int CLoadScreen::KeyPressed(int k, bool isRepeat)
 {
 	//FIXME add mouse events
-	if (LuaIntro)
-		LuaIntro->KeyPress(k, isRepeat);
+	if (luaIntro != nullptr)
+		luaIntro->KeyPress(k, isRepeat);
 
 	return 0;
 }
@@ -225,8 +239,8 @@ int CLoadScreen::KeyPressed(int k, bool isRepeat)
 
 int CLoadScreen::KeyReleased(int k)
 {
-	if (LuaIntro)
-		LuaIntro->KeyRelease(k);
+	if (luaIntro != nullptr)
+		luaIntro->KeyRelease(k);
 
 	return 0;
 }
@@ -236,7 +250,7 @@ bool CLoadScreen::Update()
 {
 	{
 		//! cause of `curLoadMessage`
-		boost::recursive_mutex::scoped_lock lck(mutex);
+		std::lock_guard<spring::recursive_mutex> lck(mutex);
 		//! Stuff that needs to be done regularly while loading.
 		good_fpu_control_registers(curLoadMessage.c_str());
 	}
@@ -248,7 +262,7 @@ bool CLoadScreen::Update()
 
 	if (!mtLoading) {
 		// without this call the window manager would think the window is unresponsive and thus asks for hard kill
-		SDL_PollEvent(NULL);
+		SDL_PollEvent(nullptr);
 	}
 
 	CNamedTextures::Update();
@@ -272,13 +286,17 @@ bool CLoadScreen::Draw()
 	}
 
 	//! cause of `curLoadMessage`
-	boost::recursive_mutex::scoped_lock lck(mutex);
+	std::lock_guard<spring::recursive_mutex> lck(mutex);
 
-	if (LuaIntro) {
-		LuaIntro->Update();
-		LuaIntro->DrawGenesis();
+	// let LuaMenu keep the lobby connection alive
+	if (luaMenu != nullptr)
+		luaMenu->Update();
+
+	if (luaIntro != nullptr) {
+		luaIntro->Update();
+		luaIntro->DrawGenesis();
 		ClearScreen();
-		LuaIntro->DrawLoadScreen();
+		luaIntro->DrawLoadScreen();
 	} else {
 		ClearScreen();
 
@@ -328,7 +346,7 @@ bool CLoadScreen::Draw()
 		font->glFormat(0.5f,0.06f, globalRendering->viewSizeY / 35.0f, FONT_OUTLINE | FONT_CENTER | FONT_NORM,
 				"Spring %s", SpringVersion::GetFull().c_str());
 		font->glFormat(0.5f,0.02f, globalRendering->viewSizeY / 50.0f, FONT_OUTLINE | FONT_CENTER | FONT_NORM,
-			"This program is distributed under the GNU General Public License, see license.html for more info");
+			"This program is distributed under the GNU General Public License, see doc/LICENSE for more info");
 	font->End();
 
 	if (!mtLoading)
@@ -345,7 +363,7 @@ void CLoadScreen::SetLoadMessage(const std::string& text, bool replace_lastline)
 {
 	Watchdog::ClearTimer(WDT_LOAD);
 
-	boost::recursive_mutex::scoped_lock lck(mutex);
+	std::lock_guard<spring::recursive_mutex> lck(mutex);
 
 	if (!replace_lastline) {
 		if (oldLoadMessages.empty()) {
@@ -359,8 +377,8 @@ void CLoadScreen::SetLoadMessage(const std::string& text, bool replace_lastline)
 	LOG("%s", text.c_str());
 	LOG_CLEANUP();
 
-	if (LuaIntro)
-		LuaIntro->LoadProgress(text, replace_lastline);
+	if (luaIntro != nullptr)
+		luaIntro->LoadProgress(text, replace_lastline);
 
 	//! Check the FPU state (needed for synced computations),
 	//! some external libraries which get linked during loading might reset those.
@@ -376,30 +394,21 @@ void CLoadScreen::SetLoadMessage(const std::string& text, bool replace_lastline)
 
 /******************************************************************************/
 
-static void AppendStringVec(vector<string>& dst, const vector<string>& src)
-{
-	for (int i = 0; i < (int)src.size(); i++) {
-		dst.push_back(src[i]);
-	}
-}
-
-
 static string SelectPicture(const std::string& dir, const std::string& prefix)
 {
-	std::vector<string> pics;
-
-	AppendStringVec(pics, CFileHandler::FindFiles(dir, prefix + "*"));
+	std::vector<std::string> prefPics = std::move(CFileHandler::FindFiles(dir, prefix + "*"));
+	std::vector<std::string> sidePics;
 
 	//! add 'allside_' pictures if we don't have a prefix
 	if (!prefix.empty()) {
-		AppendStringVec(pics, CFileHandler::FindFiles(dir, "allside_*"));
+		sidePics = std::move(CFileHandler::FindFiles(dir, "allside_*"));
+		prefPics.insert(prefPics.end(), sidePics.begin(), sidePics.end());
 	}
 
-	if (pics.empty()) {
+	if (prefPics.empty())
 		return "";
-	}
 
-	return pics[gu->RandInt() % pics.size()];
+	return prefPics[guRNG.NextInt() % prefPics.size()];
 }
 
 
@@ -410,16 +419,17 @@ void CLoadScreen::RandomStartPicture(const std::string& sidePref)
 
 	const std::string picDir = "bitmaps/loadpictures/";
 
-	std::string name = "";
-	if (!sidePref.empty()) {
+	std::string name;
+
+	if (!sidePref.empty())
 		name = SelectPicture(picDir, sidePref + "_");
-	}
-	if (name.empty()) {
+
+	if (name.empty())
 		name = SelectPicture(picDir, "");
-	}
-	if (name.empty() || (name.rfind(".db") == name.size() - 3)) {
+
+	if (name.empty() || (name.rfind(".db") == name.size() - 3))
 		return; // no valid pictures
-	}
+
 	LoadStartPicture(name);
 }
 
@@ -453,15 +463,15 @@ void CLoadScreen::LoadStartPicture(const std::string& name)
 		bm = bm.CreateRescaled((int) newX, (int) newY);
 	}
 
-	startupTexture = bm.CreateTexture(false);
+	startupTexture = bm.CreateTexture();
 }
 
 
 void CLoadScreen::UnloadStartPicture()
 {
-	if (startupTexture) {
+	if (startupTexture)
 		glDeleteTextures(1, &startupTexture);
-	}
+
 	startupTexture = 0;
 }
 

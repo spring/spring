@@ -10,9 +10,6 @@
 class SideParser
 {
 	public:
-		SideParser();
-		~SideParser();
-
 		bool Load();
 		const std::string& GetErrorLog() const { return errorLog; }
 

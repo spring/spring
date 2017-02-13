@@ -4,6 +4,9 @@
 #define SOLID_OBJECT_H
 
 #include "WorldObject.h"
+#include "Lua/LuaRulesParams.h"
+#include "Rendering/Models/3DModel.h"
+#include "Sim/Misc/CollisionVolume.h"
 #include "System/bitops.h"
 #include "System/Matrix44f.h"
 #include "System/type2.h"
@@ -12,12 +15,11 @@
 #include "System/Sync/SyncedPrimitive.h"
 
 struct MoveDef;
-struct CollisionVolume;
 struct LocalModelPiece;
 struct SolidObjectDef;
 struct SolidObjectGroundDecal;
 
-struct DamageArray;
+class DamageArray;
 class CUnit;
 
 enum TerrainChangeTypes {
@@ -31,7 +33,7 @@ enum TerrainChangeTypes {
 
 enum YardmapStates {
 	YARDMAP_OPEN        = 0,    // always free      (    walkable      buildable)
-//  YARDMAP_WALKABLE    = 4,    // open for walk    (    walkable, not buildable)
+//	YARDMAP_WALKABLE    = 4,    // open for walk    (    walkable, not buildable)
 	YARDMAP_YARD        = 1,    // walkable when yard is open
 	YARDMAP_YARDINV     = 2,    // walkable when yard is closed
 	YARDMAP_BLOCKED     = 0xFF & ~YARDMAP_YARDINV, // always block     (not walkable, not buildable)
@@ -47,7 +49,10 @@ typedef Bitwise::BitwiseEnum<YardmapStates> YardMapStatus;
 
 class CSolidObject: public CWorldObject {
 public:
-	CR_DECLARE(CSolidObject)
+	CR_DECLARE_DERIVED(CSolidObject)
+
+
+	virtual const SolidObjectDef* GetDef() const = 0;
 
 	enum PhysicalState {
 		// NOTE:
@@ -92,7 +97,9 @@ public:
 	};
 
 	CSolidObject();
-	virtual ~CSolidObject();
+	virtual ~CSolidObject() {}
+
+	void PostLoad();
 
 	virtual bool AddBuildPower(CUnit* builder, float amount) { return false; }
 	virtual void DoDamage(const DamageArray& damages, const float3& impulse, CUnit* attacker, int weaponDefID, int projectileID) {}
@@ -128,6 +135,7 @@ public:
 	}
 
 
+	void SetDirVectorsEuler(const float3 angles);
 	void SetDirVectors(const CMatrix44f& matrix) {
 		rightdir.x = -matrix[0]; updir.x = matrix[4]; frontdir.x = matrix[ 8];
 		rightdir.y = -matrix[1]; updir.y = matrix[5]; frontdir.y = matrix[ 9];
@@ -141,13 +149,34 @@ public:
 	// NOTE: movetypes call this directly
 	void UpdateDirVectors(bool useGroundNormal);
 
-	virtual CMatrix44f GetTransformMatrix(const bool synced = false, const bool error = false) const {
-		// should never get called (should be pure virtual, but cause of CREG we cannot use it)
-		assert(false);
-		return CMatrix44f();
+	CMatrix44f ComposeMatrix(const float3& p) const { return (CMatrix44f(p, -rightdir, updir, frontdir)); }
+	virtual CMatrix44f GetTransformMatrix(const bool synced = false) const = 0;
+
+	const CollisionVolume* GetCollisionVolume(const LocalModelPiece* lmp) const {
+		if (lmp == nullptr)
+			return &collisionVolume;
+		if (!collisionVolume.DefaultToPieceTree())
+			return &collisionVolume;
+
+		return (lmp->GetCollisionVolume());
 	}
 
-	virtual const CollisionVolume* GetCollisionVolume(const LocalModelPiece* lmp) const { return collisionVolume; }
+	const LuaObjectMaterialData* GetLuaMaterialData() const { return (localModel.GetLuaMaterialData()); }
+	      LuaObjectMaterialData* GetLuaMaterialData()       { return (localModel.GetLuaMaterialData()); }
+
+	const LocalModelPiece* GetLastHitPiece(int frame) const {
+		if (frame < 0)
+			return lastHitPiece;
+		if (frame == lastHitPieceFrame)
+			return lastHitPiece;
+
+		return nullptr;
+	}
+
+	void SetLastHitPiece(const LocalModelPiece* p, int f) {
+		lastHitPiece      = p;
+		lastHitPieceFrame = f;
+	}
 
 
 	/**
@@ -162,16 +191,28 @@ public:
 	 */
 	void UnBlock();
 
+
 	// these transform a point or vector to object-space
 	float3 GetObjectSpaceVec(const float3& v) const { return (      (frontdir * v.z) + (rightdir * v.x) + (updir * v.y)); }
 	float3 GetObjectSpacePos(const float3& p) const { return (pos + (frontdir * p.z) + (rightdir * p.x) + (updir * p.y)); }
-	float3 GetObjectSpacePosUnsynced(const float3& p) const { return (drawPos + GetObjectSpaceVec(p)); }
+
+	// note: requires drawPos to have been set first
+	float3 GetObjectSpaceDrawPos(const float3& p) const { return (drawPos + GetObjectSpaceVec(p)); }
+
+	// unsynced mid-{position,vector}s
+	float3 GetMdlDrawMidPos() const { return (GetObjectSpaceDrawPos(localModel.GetRelMidPos())); }
+	float3 GetObjDrawMidPos() const { return (GetObjectSpaceDrawPos(              relMidPos  )); }
+	float3 GetMdlDrawRelMidPos() const { return (GetObjectSpaceVec(localModel.GetRelMidPos())); }
+	float3 GetObjDrawRelMidPos() const { return (GetObjectSpaceVec(              relMidPos  )); }
+
 
 	int2 GetMapPos() const { return (GetMapPos(pos)); }
 	int2 GetMapPos(const float3& position) const;
 
 	float3 GetDragAccelerationVec(const float4& params) const;
 	float3 GetWantedUpDir(bool useGroundNormal) const;
+
+	float GetDrawRadius() const override { return (localModel.GetDrawRadius()); }
 
 	YardMapStatus GetGroundBlockingMaskAtPos(float3 gpos) const;
 
@@ -194,8 +235,8 @@ public:
 	bool    HasPhysicalStateBit(unsigned int bit) const { return ((physicalState & bit) != 0); }
 	void    SetPhysicalStateBit(unsigned int bit) { unsigned int ps = physicalState; ps |= ( bit); physicalState = static_cast<PhysicalState>(ps); }
 	void  ClearPhysicalStateBit(unsigned int bit) { unsigned int ps = physicalState; ps &= (~bit); physicalState = static_cast<PhysicalState>(ps); }
-	void   PushPhysicalStateBit(unsigned int bit) { UpdatePhysicalStateBit(1u << (32u - (bits_ffs(bit) - 1u)), HasPhysicalStateBit(bit)); }
-	void    PopPhysicalStateBit(unsigned int bit) { UpdatePhysicalStateBit(bit, HasPhysicalStateBit(1u << (32u - (bits_ffs(bit) - 1u)))); }
+	void   PushPhysicalStateBit(unsigned int bit) { UpdatePhysicalStateBit(1u << (32u - bits_ffs(bit)), HasPhysicalStateBit(bit)); }
+	void    PopPhysicalStateBit(unsigned int bit) { UpdatePhysicalStateBit(bit, HasPhysicalStateBit(1u << (32u - bits_ffs(bit)))); }
 	bool UpdatePhysicalStateBit(unsigned int bit, bool set) {
 		if (set) {
 			SetPhysicalStateBit(bit);
@@ -207,9 +248,9 @@ public:
 
 	bool    HasCollidableStateBit(unsigned int bit) const { return ((collidableState & bit) != 0); }
 	void    SetCollidableStateBit(unsigned int bit) { unsigned int cs = collidableState; cs |= ( bit); collidableState = static_cast<CollidableState>(cs); }
-	void  ClearCollidableStateBit(unsigned int bit) { unsigned int cs = collidableState; cs &= (~bit); collidableState = static_cast<CollidableState>(cs); } 
-	void   PushCollidableStateBit(unsigned int bit) { UpdateCollidableStateBit(1u << (32u - (bits_ffs(bit) - 1u)), HasCollidableStateBit(bit)); }
-	void    PopCollidableStateBit(unsigned int bit) { UpdateCollidableStateBit(bit, HasCollidableStateBit(1u << (32u - (bits_ffs(bit) - 1u)))); }
+	void  ClearCollidableStateBit(unsigned int bit) { unsigned int cs = collidableState; cs &= (~bit); collidableState = static_cast<CollidableState>(cs); }
+	void   PushCollidableStateBit(unsigned int bit) { UpdateCollidableStateBit(1u << (32u - bits_ffs(bit)), HasCollidableStateBit(bit)); }
+	void    PopCollidableStateBit(unsigned int bit) { UpdateCollidableStateBit(bit, HasCollidableStateBit(1u << (32u - bits_ffs(bit)))); }
 	bool UpdateCollidableStateBit(unsigned int bit, bool set) {
 		if (set) {
 			SetCollidableStateBit(bit);
@@ -222,6 +263,8 @@ public:
 	bool SetVoidState();
 	bool ClearVoidState();
 	void UpdateVoidState(bool set);
+
+	virtual void SetMass(float newMass);
 
 private:
 	void SetMidPos(const float3& mp, bool relative) {
@@ -244,6 +287,8 @@ private:
 
 public:
 	float health;
+	float maxHealth;
+
 	float mass;                                 ///< the physical mass of this object (run-time constant)
 	float crushResistance;                      ///< how much MoveDef::crushStrength is required to crush this object (run-time constant)
 
@@ -252,6 +297,7 @@ public:
 	bool blockEnemyPushing;                     ///< if false, object can be pushed during enemy collisions even when modrules forbid it
 	bool blockHeightChanges;                    ///< if true, map height cannot change under this object (through explosions, etc.)
 
+	bool noDraw;                                ///< if true, object will not be drawn at all (neither as model nor as icon/fartex)
 	bool luaDraw;                               ///< if true, LuaRules::Draw{Unit, Feature} will be called for this object (UNSYNCED)
 	bool noSelect;                              ///< if true, unit/feature can not be selected/mouse-picked by a player (UNSYNCED)
 
@@ -267,12 +313,17 @@ public:
 	int allyteam;                               ///< allyteam that this->team is part of
 
 	int tempNum;                                ///< used to check if object has already been processed (in QuadField queries, etc)
+	int lastHitPieceFrame;                      ///< frame in which lastHitPiece was hit
 
-	const SolidObjectDef* objectDef;            ///< points to a UnitDef or to a FeatureDef instance
 
 	MoveDef* moveDef;                           ///< mobility information about this object (if NULL, object is either static or aircraft)
-	CollisionVolume* collisionVolume;
-	SolidObjectGroundDecal* groundDecal;
+
+	LocalModel localModel;
+	CollisionVolume collisionVolume;
+	CollisionVolume selectionVolume;
+
+	const LocalModelPiece* lastHitPiece;        ///< piece that was last hit by a projectile
+	      SolidObjectGroundDecal* groundDecal;
 
 	SyncedFloat3 frontdir;                      ///< object-local z-axis (in WS)
 	SyncedFloat3 rightdir;                      ///< object-local x-axis (in WS)
@@ -292,8 +343,20 @@ public:
 	float3 drawMidPos;                          ///< = drawPos + relMidPos (unsynced)
 
 	const YardMapStatus* blockMap;              ///< Current (unrotated!) blockmap/yardmap of this object. 0 means no active yardmap => all blocked.
+	bool yardOpen;
 	short int buildFacing;                      ///< Orientation of footprint, 4 different states
 
+	/**
+	 * @brief mod controlled parameters
+	 * This is a set of parameters that is initialized
+	 * in CreateUnitRulesParams() and may change during the game.
+	 * Each parameter is uniquely identified only by its id
+	 * (which is the index in the vector).
+	 * Parameters may or may not have a name.
+	 */
+	LuaRulesParams::Params  modParams;
+
+public:
 	static const float DEFAULT_MASS;
 	static const float MINIMUM_MASS;
 	static const float MAXIMUM_MASS;

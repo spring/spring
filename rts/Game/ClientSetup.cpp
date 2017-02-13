@@ -13,14 +13,14 @@
 #endif
 
 
-CONFIG(std::string, HostIPDefault).defaultValue("localhost").description("Default IP to use for hosting if not specified in script.txt");
+CONFIG(std::string, HostIPDefault).defaultValue("localhost").dedicatedValue("").description("Default IP to use for hosting if not specified in script.txt");
 CONFIG(int, HostPortDefault).defaultValue(8452).minimumValue(0).maximumValue(65535).description("Default Port to use for hosting if not specified in script.txt");
 
 ClientSetup::ClientSetup()
-	: isHost(false)
+	: hostIP(configHandler->GetString("HostIPDefault"))
+	, hostPort(configHandler->GetInt("HostPortDefault"))
+	, isHost(false)
 {
-	hostIP = configHandler->GetString("HostIPDefault");
-	hostPort = configHandler->GetInt("HostPortDefault");
 }
 
 
@@ -70,4 +70,7 @@ void ClientSetup::LoadFromStartScript(const std::string& setup)
 	if (file.SGetValue(autohostport, "GAME\\AutohostPort")) {
 		configHandler->SetString("AutohostPort", autohostport, true);
 	}
+
+	file.GetDef(saveFile, "", "GAME\\SaveFile");
+	file.GetDef(demoFile, "", "GAME\\DemoFile");
 }

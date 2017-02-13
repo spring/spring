@@ -67,6 +67,7 @@ MapParser::MapParser(const std::string& mapFileName) : parser(NULL)
 MapParser::~MapParser()
 {
 	delete parser;
+	parser = NULL;
 }
 
 

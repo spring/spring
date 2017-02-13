@@ -2,6 +2,7 @@
 
 #include "SelectionWidget.h"
 
+#include <functional>
 #include <set>
 
 #include "System/FileSystem/ArchiveScanner.h"
@@ -23,6 +24,18 @@ CONFIG(std::string, LastSelectedMod).defaultValue(SelectionWidget::NoModSelect).
 CONFIG(std::string, LastSelectedMap).defaultValue(SelectionWidget::NoMapSelect).description("Stores the previously played map.");
 CONFIG(std::string, LastSelectedScript).defaultValue(SelectionWidget::NoScriptSelect).description("Stores the previously played AI.");
 
+// returns absolute filename for given archive name, empty if not found
+static const std::string GetFileName(const std::string& name){
+	if (name.empty())
+		return name;
+	const std::string& filename = archiveScanner->ArchiveFromName(name);
+	if (filename == name)
+		return "";
+	const std::string& path = archiveScanner->GetArchivePath(filename);
+	return path + filename;
+}
+
+
 SelectionWidget::SelectionWidget(agui::GuiElement* parent) : agui::GuiElement(parent)
 {
 	SetPos(0.5f, 0.2f);
@@ -33,26 +46,27 @@ SelectionWidget::SelectionWidget(agui::GuiElement* parent) : agui::GuiElement(pa
 	vl->SetBorder(1.2f);
 	agui::HorizontalLayout* modL = new agui::HorizontalLayout(vl);
 	mod = new agui::Button("Select", modL);
-	mod->Clicked.connect(boost::bind(&SelectionWidget::ShowModList, this));
+	mod->Clicked.connect(std::bind(&SelectionWidget::ShowModList, this));
 	mod->SetSize(0.1f, 0.00f, true);
 	userMod = configHandler->GetString("LastSelectedMod");
-	if (archiveScanner->GetSingleArchiveChecksum(archiveScanner->ArchiveFromName(userMod)) == 0)
+	if (GetFileName(userMod).empty())
 		userMod = NoModSelect;
 	modT = new agui::TextElement(userMod, modL);
 	agui::HorizontalLayout* mapL = new agui::HorizontalLayout(vl);
 	map = new agui::Button("Select", mapL);
-	map->Clicked.connect(boost::bind(&SelectionWidget::ShowMapList, this));
+	map->Clicked.connect(std::bind(&SelectionWidget::ShowMapList, this));
 	map->SetSize(0.1f, 0.00f, true);
 	userMap = configHandler->GetString("LastSelectedMap");
-	if (archiveScanner->GetSingleArchiveChecksum(archiveScanner->ArchiveFromName(userMap)) == 0)
+	if (GetFileName(userMap).empty())
 		userMap = NoMapSelect;
 	mapT = new agui::TextElement(userMap, mapL);
 	agui::HorizontalLayout* scriptL = new agui::HorizontalLayout(vl);
 	script = new agui::Button("Select", scriptL);
-	script->Clicked.connect(boost::bind(&SelectionWidget::ShowScriptList, this));
+	script->Clicked.connect(std::bind(&SelectionWidget::ShowScriptList, this));
 	script->SetSize(0.1f, 0.00f, true);
 	userScript = configHandler->GetString("LastSelectedScript");
 	scriptT = new agui::TextElement(userScript, scriptL);
+	UpdateAvailableScripts();
 }
 
 SelectionWidget::~SelectionWidget()
@@ -65,8 +79,8 @@ void SelectionWidget::ShowModList()
 	if (curSelect)
 		return;
 	curSelect = new ListSelectWnd("Select game");
-	curSelect->Selected.connect(boost::bind(&SelectionWidget::SelectMod, this, _1));
-	curSelect->WantClose.connect(boost::bind(&SelectionWidget::CleanWindow, this));
+	curSelect->Selected.connect(std::bind(&SelectionWidget::SelectMod, this, std::placeholders::_1));
+	curSelect->WantClose.connect(std::bind(&SelectionWidget::CleanWindow, this));
 
 	const std::vector<CArchiveScanner::ArchiveData> &found = archiveScanner->GetPrimaryMods();
 
@@ -87,8 +101,8 @@ void SelectionWidget::ShowMapList()
 	if (curSelect)
 		return;
 	curSelect = new ListSelectWnd("Select map");
-	curSelect->Selected.connect(boost::bind(&SelectionWidget::SelectMap, this, _1));
-	curSelect->WantClose.connect(boost::bind(&SelectionWidget::CleanWindow, this));
+	curSelect->Selected.connect(std::bind(&SelectionWidget::SelectMap, this, std::placeholders::_1));
+	curSelect->WantClose.connect(std::bind(&SelectionWidget::CleanWindow, this));
 
 	const std::vector<std::string> &arFound = archiveScanner->GetMaps();
 
@@ -104,37 +118,24 @@ void SelectionWidget::ShowMapList()
 }
 
 
-static const std::string GetFileName(const std::string& name){
-	if (name.empty())
-		return name;
-	const std::string filename = archiveScanner->ArchiveFromName(name);
-	const std::string path = archiveScanner->GetArchivePath(filename);
-	return path + filename;
-}
-
 static void AddArchive(const std::string& name) {
-	if (!name.empty()) {
-		vfsHandler->AddArchive(GetFileName(name), true);
-	}
+	if (name.empty())
+		return;
+	vfsHandler->AddArchive(name, true);
 }
 
 static void RemoveArchive(const std::string& name) {
-	if (!name.empty()) {
-		vfsHandler->RemoveArchive(GetFileName(name));
-	}
+	if (name.empty())
+		return;
+	vfsHandler->RemoveArchive(name);
 }
 
-void SelectionWidget::ShowScriptList()
+void SelectionWidget::UpdateAvailableScripts()
 {
-	if (curSelect)
-		return;
-	curSelect = new ListSelectWnd("Select script");
-	curSelect->Selected.connect(boost::bind(&SelectionWidget::SelectScript, this, _1));
-	curSelect->WantClose.connect(boost::bind(&SelectionWidget::CleanWindow, this));
-
 	//FIXME: lua ai's should be handled in AIScriptHandler.cpp, too respecting the selected game and map
 	// maybe also merge it with StartScriptGen.cpp
 
+	availableScripts.clear();
 	// load selected archives to get lua ais
 	AddArchive(userMod);
 	AddArchive(userMap);
@@ -143,7 +144,7 @@ void SelectionWidget::ShowScriptList()
 	for(int i=0; i<luaAIInfos.size(); i++) {
 		for (int j=0; j<luaAIInfos[i].size(); j++) {
 			if (luaAIInfos[i][j].key==SKIRMISH_AI_PROPERTY_SHORT_NAME)
-				curSelect->list->AddItem(info_getValueAsString(&luaAIInfos[i][j]), "");
+				availableScripts.push_back(luaAIInfos[i][j].GetValueAsString());
 		}
 	}
 
@@ -152,41 +153,69 @@ void SelectionWidget::ShowScriptList()
 	RemoveArchive(userMod);
 
 	// add sandbox script to list
-	curSelect->list->AddItem(SandboxAI, "");
+	availableScripts.push_back(SandboxAI);
 
 	// add native ai's to the list, too (but second, lua ai's are prefered)
 	CAIScriptHandler::ScriptList scriptList = CAIScriptHandler::Instance().GetScriptList();
 	for (CAIScriptHandler::ScriptList::iterator it = scriptList.begin(); it != scriptList.end(); ++it) {
-		curSelect->list->AddItem(*it, "");
+		availableScripts.push_back(*it);
 	}
+
+	for (std::string &scriptName: availableScripts) {
+		if (scriptName == userScript) {
+			return;
+		}
+	}
+	SelectScript(SelectionWidget::NoScriptSelect);
+}
+
+void SelectionWidget::ShowScriptList()
+{
+	if (curSelect)
+		return;
+	curSelect = new ListSelectWnd("Select script");
+	curSelect->Selected.connect(std::bind(&SelectionWidget::SelectScript, this, std::placeholders::_1));
+	curSelect->WantClose.connect(std::bind(&SelectionWidget::CleanWindow, this));
+
+	for (std::string &scriptName: availableScripts) {
+		curSelect->list->AddItem(scriptName, "");
+	}
+
 
 	curSelect->list->SetCurrentItem(userScript);
 }
 
-void SelectionWidget::SelectMod(std::string mod)
+void SelectionWidget::SelectMod(const std::string& mod)
 {
+	if (mod == userMod) {
+		CleanWindow();
+		return;
+	}
 	userMod = mod;
 	configHandler->SetString("LastSelectedMod", userMod);
 	modT->SetText(userMod);
 
+	//SelectScript(SelectionWidget::NoScriptSelect); //reset AI as LuaAI maybe doesn't exist in this game
+	UpdateAvailableScripts();
 	CleanWindow();
 }
 
-void SelectionWidget::SelectScript(std::string map)
+void SelectionWidget::SelectScript(const std::string& script)
 {
-	userScript = map;
+	userScript = script;
 	configHandler->SetString("LastSelectedScript", userScript);
 	scriptT->SetText(userScript);
 
 	CleanWindow();
 }
 
-void SelectionWidget::SelectMap(std::string script)
+void SelectionWidget::SelectMap(const std::string& map)
 {
-	userMap = script;
+	userMap = map;
 	configHandler->SetString("LastSelectedMap", userMap);
 	mapT->SetText(userMap);
 
+	UpdateAvailableScripts();
 	CleanWindow();
 }
 

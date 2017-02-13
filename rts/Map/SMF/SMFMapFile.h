@@ -20,7 +20,7 @@ public:
 
 	void ReadMinimap(void* data);
 	/// @return mip size
-	int ReadMinimap(std::vector<boost::uint8_t>& data, unsigned miplevel);
+	int ReadMinimap(std::vector<std::uint8_t>& data, unsigned miplevel);
 	void ReadHeightmap(unsigned short* heightmap);
 	void ReadHeightmap(float* sHeightMap, float* uHeightMap, float base, float mod);
 	void ReadFeatureInfo();
@@ -40,9 +40,14 @@ public:
 	 *   with SMFGroundTextures.cpp
 	 */
 	CFileHandler* GetFileHandler() { return &ifs; }
+	static void ReadMapTileHeader(MapTileHeader& head, CFileHandler& file);
+	static void ReadMapTileFileHeader(TileFileHeader& head, CFileHandler& file);
 
 private:
-	void ReadGrassMap(void* data);
+	bool ReadGrassMap(void* data);
+	void ReadMapHeader(SMFHeader& head, CFileHandler& file);
+	void ReadMapFeatureHeader(MapFeatureHeader& head, CFileHandler& file);
+	void ReadMapFeatureStruct(MapFeatureStruct& head, CFileHandler& file);
 
 	SMFHeader header;
 	CFileHandler ifs;

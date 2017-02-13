@@ -6,6 +6,7 @@
 #include "System/creg/creg_cond.h"
 
 #include <cassert>
+#include <string>
 #include <vector>
 
 class CGameSetup;
@@ -15,10 +16,11 @@ class CPlayer;
 class CPlayerHandler
 {
 public:
-	CR_DECLARE_STRUCT(CPlayerHandler);
+	CR_DECLARE_STRUCT(CPlayerHandler)
 
 	~CPlayerHandler();
 
+	void ResetState();
 	void LoadFromSetup(const CGameSetup* setup);
 
 	/**
@@ -43,14 +45,14 @@ public:
 
 	/**
 	 * @brief Number of players the game was created for
-	 * 
+	 *
 	 * Will change at runtime, for example if a new spectator joins
 	 */
 	int ActivePlayers() const { return players.size(); }
 
 	/**
 	 * @brief Number of players in a team
-	 * 
+	 *
 	 * Will change during runtime (Connection lost, died, ...).
 	 * This excludes spectators and AIs.
 	 */
@@ -58,11 +60,11 @@ public:
 
 	/**
 	 * @brief is the supplied id a valid playerId?
-	 * 
+	 *
 	 * Will change during at runtime when a new spectator joins
 	 */
-	bool IsValidPlayer(int id) const {
-		return ((id >= 0) && (id < ActivePlayers()));
+	bool IsValidPlayer(unsigned id) const {
+		return (id < ActivePlayers());
 	}
 
 	void GameFrame(int frameNum);

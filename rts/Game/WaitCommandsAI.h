@@ -3,13 +3,13 @@
 #ifndef WAIT_COMMANDS_AI_H
 #define WAIT_COMMANDS_AI_H
 
-#include <map>
-#include <set>
 #include <deque>
 #include <string>
+
 #include "System/Object.h"
 #include "System/Misc/SpringTime.h"
-#include "Sim/Units/UnitSet.h"
+#include "System/UnorderedMap.hpp"
+#include "System/UnorderedSet.hpp"
 
 class float3;
 class CObject;
@@ -17,15 +17,17 @@ class CUnit;
 struct Command;
 class CCommandQueue;
 
-
 class CWaitCommandsAI {
-	CR_DECLARE_STRUCT(CWaitCommandsAI);
-	CR_DECLARE_SUB(Wait);
-	CR_DECLARE_SUB(TimeWait);
-	CR_DECLARE_SUB(DeathWait);
-	CR_DECLARE_SUB(SquadWait);
-	CR_DECLARE_SUB(GatherWait);
+	CR_DECLARE_STRUCT(CWaitCommandsAI)
+	CR_DECLARE_SUB(Wait)
+	CR_DECLARE_SUB(TimeWait)
+	CR_DECLARE_SUB(DeathWait)
+	CR_DECLARE_SUB(SquadWait)
+	CR_DECLARE_SUB(GatherWait)
+
 	public:
+		typedef spring::unordered_set<int> CUnitSet;
+
 		CWaitCommandsAI();
 		~CWaitCommandsAI();
 
@@ -56,14 +58,14 @@ class CWaitCommandsAI {
 
 	private:
 		typedef int KeyType;
-		typedef std::map<KeyType, Wait*> WaitMap;
+		typedef spring::unordered_map<KeyType, Wait*> WaitMap;
 		WaitMap waitMap;
 		WaitMap unackedMap;
 
 	private:
 		// Wait Base Class
 		class Wait : public CObject {
-			CR_DECLARE(Wait);
+			CR_DECLARE(Wait)
 			public:
 				virtual ~Wait();
 				virtual void DependentDied(CObject* o) = 0; // from CObject
@@ -89,8 +91,7 @@ class CWaitCommandsAI {
 				bool IsWaitingOn(const CUnit* unit) const;
 				void SendCommand(const Command& cmd, const CUnitSet& unitSet);
 				void SendWaitCommand(const CUnitSet& unitSet);
-				/// removes the pointed at unit and returns an iterator to the next unit in the set
-				CUnitSet::iterator RemoveUnitFromSet(CUnitSet::iterator it, CUnitSet& unitSet);
+
 			protected:
 				float code;
 				KeyType key;
@@ -106,7 +107,7 @@ class CWaitCommandsAI {
 
 		// TimeWait
 		class TimeWait : public Wait {
-			CR_DECLARE(TimeWait);
+			CR_DECLARE(TimeWait)
 			public:
 				static TimeWait* New(const Command& cmd, CUnit* unit);
 				static TimeWait* New(int duration, CUnit* unit);
@@ -131,7 +132,7 @@ class CWaitCommandsAI {
 
 		// DeathWait
 		class DeathWait : public Wait {
-			CR_DECLARE(DeathWait);
+			CR_DECLARE(DeathWait)
 			public:
 				static DeathWait* New(const Command& cmd);
 				~DeathWait();
@@ -153,7 +154,7 @@ class CWaitCommandsAI {
 
 		// SquadWait
 		class SquadWait : public Wait {
-			CR_DECLARE(SquadWait);
+			CR_DECLARE(SquadWait)
 			public:
 				static SquadWait* New(const Command& cmd);
 				~SquadWait();
@@ -175,7 +176,7 @@ class CWaitCommandsAI {
 
 		// GatherWait
 		class GatherWait : public Wait {
-			CR_DECLARE(GatherWait);
+			CR_DECLARE(GatherWait)
 			public:
 				static GatherWait* New(const Command& cmd);
 				~GatherWait();

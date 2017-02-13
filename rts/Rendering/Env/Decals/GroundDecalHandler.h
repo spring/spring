@@ -3,12 +3,12 @@
 #ifndef GROUND_DECAL_HANDLER_H
 #define GROUND_DECAL_HANDLER_H
 
-#include <set>
-#include <list>
 #include <vector>
 #include <string>
 
 #include "Rendering/Env/IGroundDecalDrawer.h"
+#include "Rendering/Env/Decals/LegacyTrackHandler.h"
+#include "Rendering/GL/VertexArray.h"
 #include "System/float3.h"
 #include "System/EventClient.h"
 #include "Sim/Projectiles/ExplosionListener.h"
@@ -18,77 +18,18 @@ class CUnit;
 class CVertexArray;
 struct SolidObjectGroundDecal;
 struct SolidObjectDecalType;
-struct S3DModel;
 
 namespace Shader {
 	struct IProgramObject;
 }
 
-struct TrackPart {
-	TrackPart()
-		: pos1(ZeroVector)
-		, pos2(ZeroVector)
-		, texPos(0.0f)
-		, connected(false)
-		, creationTime(0)
-	{}
-	float3 pos1;
-	float3 pos2;
-	float texPos;
-	bool connected;
-	unsigned int creationTime;
-};
-
-struct UnitTrackStruct {
-	UnitTrackStruct(CUnit* owner)
-		: owner(owner)
-		, lastUpdate(0)
-		, lifeTime(0)
-		, alphaFalloff(0.0f)
-		, lastAdded(NULL)
-	{}
-
-	CUnit* owner;
-
-	unsigned int lastUpdate;
-	unsigned int lifeTime;
-
-	float alphaFalloff;
-
-	TrackPart* lastAdded;
-	std::list<TrackPart*> parts;
-};
-
-struct TrackToAdd {
-	TrackToAdd()
-		: tp(NULL)
-		, unit(NULL)
-		, ts(NULL)
-	{}
-	TrackPart* tp;
-	CUnit* unit;
-	UnitTrackStruct* ts;
-};
-
-struct TrackToClean {
-	TrackToClean()
-		: track(NULL)
-		, tracks(NULL)
-	{}
-	TrackToClean(UnitTrackStruct* t, std::set<UnitTrackStruct*>* ts)
-		: track(t)
-		, tracks(ts)
-	{}
-	UnitTrackStruct* track;
-	std::set<UnitTrackStruct*>* tracks;
-};
 
 
 struct SolidObjectGroundDecal {
+public:
 	SolidObjectGroundDecal()
-		: va(NULL)
-		, owner(NULL)
-		, gbOwner(NULL)
+		: owner(nullptr)
+		, gbOwner(nullptr)
 		, posx(0)
 		, posy(0)
 		, xsize(0)
@@ -99,9 +40,33 @@ struct SolidObjectGroundDecal {
 		, alpha(1.0f)
 		, alphaFalloff(1.0f)
 	{}
-	~SolidObjectGroundDecal();
+	SolidObjectGroundDecal(const SolidObjectGroundDecal& d) = delete;
+	SolidObjectGroundDecal(SolidObjectGroundDecal&& d) { *this = std::move(d); }
 
-	CVertexArray* va;
+	SolidObjectGroundDecal& operator = (const SolidObjectGroundDecal& d) = delete;
+	SolidObjectGroundDecal& operator = (SolidObjectGroundDecal&& d) {
+		va = std::move(d.va);
+
+		owner   = d.owner;   d.owner   = nullptr;
+		gbOwner = d.gbOwner; d.gbOwner = nullptr;
+
+		posx   = d.posx;
+		posy   = d.posy;
+		xsize  = d.xsize;
+		ysize  = d.ysize;
+		facing = d.facing;
+
+		pos = d.pos;
+
+		radius       = d.radius;
+		alpha        = d.alpha;
+		alphaFalloff = d.alphaFalloff;
+		return *this;
+	}
+
+public:
+	CVertexArray va;
+
 	CSolidObject* owner;
 	GhostSolidObject* gbOwner;
 
@@ -112,11 +77,13 @@ struct SolidObjectGroundDecal {
 	int facing;
 
 	float3 pos;
-	float radius;
 
+	float radius;
 	float alpha;
 	float alphaFalloff;
 };
+
+
 
 
 class CGroundDecalHandler: public IGroundDecalDrawer, public CEventClient, public IExplosionListener
@@ -126,124 +93,170 @@ public:
 	virtual ~CGroundDecalHandler();
 
 	virtual void Draw();
-	virtual void Update() {}
 
 	virtual void GhostCreated(CSolidObject* object, GhostSolidObject* gb);
 	virtual void GhostDestroyed(GhostSolidObject* gb);
 
 	virtual void RemoveSolidObject(CSolidObject* object, GhostSolidObject* gb);
-	virtual void ForceRemoveSolidObject(CSolidObject* object);
+	void ForceRemoveSolidObject(CSolidObject* object);
+	static void RemoveTrack(CUnit* unit);
+
+	void OnDecalLevelChanged() override {}
 
 private:
-	void AddExplosion(float3 pos, float damage, float radius, bool);
+	void BindTextures();
+	void KillTextures();
+	void BindShader(const float3& ambientColor);
+	void DrawDecals();
+
+	void AddExplosion(float3 pos, float damage, float radius);
 	void MoveSolidObject(CSolidObject* object, const float3& pos);
 	int GetSolidObjectDecalType(const std::string& name);
-	int GetTrackType(const std::string& name);
 
 public:
 	//CEventClient
 	bool WantsEvent(const std::string& eventName) {
-		return 
+		return
 			(eventName == "SunChanged") ||
 			(eventName == "RenderUnitCreated") ||
 			(eventName == "RenderUnitDestroyed") ||
-			(eventName == "RenderUnitMoved") ||
+			(eventName == "UnitMoved") ||
 			(eventName == "RenderFeatureCreated") ||
-			(eventName == "RenderFeatureMoved") ||
+			(eventName == "RenderFeatureDestroyed") ||
+			(eventName == "FeatureMoved") ||
 			(eventName == "UnitLoaded") ||
 			(eventName == "UnitUnloaded");
 	}
 	bool GetFullRead() const { return true; }
 	int GetReadAllyTeam() const { return AllAccessTeam; }
 
-	void SunChanged(const float3& sunDir);
+	void SunChanged();
 	void RenderUnitCreated(const CUnit*, int cloaked);
 	void RenderUnitDestroyed(const CUnit*);
 	void RenderFeatureCreated(const CFeature* feature);
-	void RenderFeatureMoved(const CFeature* feature, const float3& oldpos, const float3& newpos);
-	void RenderUnitMoved(const CUnit* unit, const float3& newpos);
+	void RenderFeatureDestroyed(const CFeature* feature);
+	void FeatureMoved(const CFeature* feature, const float3& oldpos);
+	void UnitMoved(const CUnit* unit);
 	void UnitLoaded(const CUnit* unit, const CUnit* transport);
 	void UnitUnloaded(const CUnit* unit, const CUnit* transport);
 
 	//IExplosionListener
-	void ExplosionOccurred(const CExplosionEvent& event);
+	void ExplosionOccurred(const CExplosionParams& event);
 
 private:
-	struct TrackType {
-		TrackType()
-			: texture(0)
-		{}
-		std::string name;
-		std::set<UnitTrackStruct*> tracks;
-		unsigned int texture;
-	};
-
 	struct SolidObjectDecalType {
 		SolidObjectDecalType(): texture(0) {}
 
 		std::string name;
-		std::set<SolidObjectGroundDecal*> objectDecals;
+		std::vector<SolidObjectGroundDecal*> objectDecals;
 
 		unsigned int texture;
 	};
 
 	struct Scar {
+	public:
 		Scar()
-			: pos(ZeroVector)
-			, radius(0.0f)
+			: id(-1)
 			, creationTime(0)
 			, lifeTime(0)
+
+			, x1(0), x2(0)
+			, y1(0), y2(0)
+
+			, lastTest(0)
+			, lastDraw(-1)
+
+			, pos(ZeroVector)
+
+			, radius(0.0f)
+			, basesize(0.0f)
+			, overdrawn(0.0f)
+
 			, alphaFalloff(0.0f)
 			, startAlpha(1.0f)
 			, texOffsetX(0.0f)
 			, texOffsetY(0.0f)
-			, x1(0), x2(0)
-			, y1(0), y2(0)
-			, basesize(0.0f)
-			, overdrawn(0.0f)
-			, lastTest(0)
-			, va(NULL)
-		{}
-		~Scar();
 
-		float3 pos;
-		float radius;
+			, va(2048)
+		{}
+
+		Scar(const Scar& s) = delete;
+		Scar(Scar&& s) { *this = std::move(s); }
+
+		Scar& operator = (const Scar& s) = delete;
+		Scar& operator = (Scar&& s) {
+			id = s.id;
+
+			creationTime = s.creationTime;
+			lifeTime     = s.lifeTime;
+
+			x1 = s.x1; x2 = s.x2;
+			y1 = s.y1; y2 = s.y2;
+
+			lastTest = s.lastTest;
+			lastDraw = s.lastDraw;
+
+			pos = s.pos;
+
+			radius    = s.radius;
+			basesize  = s.basesize;
+			overdrawn = s.overdrawn;
+
+			alphaFalloff = s.alphaFalloff;
+			startAlpha   = s.startAlpha;
+			texOffsetX   = s.texOffsetX;
+			texOffsetY   = s.texOffsetY;
+
+			va = std::move(s.va);
+			return *this;
+		}
+
+	public:
+		int id;
 		int creationTime;
 		int lifeTime;
+
+		int x1, x2;
+		int y1, y2;
+
+		int lastTest;
+		int lastDraw;
+
+		float3 pos;
+
+		float radius;
+		float basesize;
+		float overdrawn;
+
 		float alphaFalloff;
 		float startAlpha;
 		float texOffsetX;
 		float texOffsetY;
 
-		int x1, x2;
-		int y1, y2;
-
-		float basesize;
-		float overdrawn;
-
-		int lastTest;
-		CVertexArray* va;
+		CVertexArray va;
 	};
 
 	void LoadDecalShaders();
 	void DrawObjectDecals();
 
-	void AddTracks();
-	void DrawTracks();
-	void CleanTracks();
-
 	void AddScars();
 	void DrawScars();
 
-	void GatherDecalsForType(SolidObjectDecalType* decalType);
-	void AddDecalAndTrack(CUnit* unit, const float3& newPos);
+	void GatherDecalsForType(SolidObjectDecalType& decalType);
+	void AddDecal(CUnit* unit, const float3& newPos);
+
+	void DrawObjectDecal(SolidObjectGroundDecal* decal);
+	void DrawGroundScar(Scar& scar, bool fade);
+
+	int GetScarID();
+	int OverlapSize(const Scar& s1, const Scar& s2);
+	void TestOverlaps(const Scar& scar);
+	void RemoveScar(Scar& scar);
+	void LoadScar(const std::string& file, std::vector<unsigned char>& buf, int xoffset, int yoffset);
 
 private:
 	unsigned int scarTex;
 	bool groundScarAlphaFade;
-
-	std::vector<SolidObjectDecalType*> objectDecalTypes;
-	std::vector<TrackType*> trackTypes;
 
 	enum DecalShaderProgram {
 		DECAL_SHADER_ARB,
@@ -252,34 +265,26 @@ private:
 		DECAL_SHADER_LAST
 	};
 
+	std::vector<SolidObjectDecalType> objectDecalTypes;
+
 	std::vector<Shader::IProgramObject*> decalShaders;
 	std::vector<SolidObjectGroundDecal*> decalsToDraw;
 
-	std::list<Scar*> scars;
-	std::vector<Scar*> scarsToBeAdded;
-	std::vector<Scar*> scarsToBeChecked;
+	std::vector<Scar> scars;
+	std::vector<Scar> scarsToBeAdded;
+	// stores the free slots in <scars>
+	std::vector< int> scarIndices;
 
-	std::vector<TrackToAdd> tracksToBeAdded;
-	std::vector<TrackToClean> tracksToBeCleaned;
-	std::vector<UnitTrackStruct*> tracksToBeDeleted;
+	// stores indices into <scars>
+	std::vector< std::vector<int> > scarField;
+
+	int scarFieldX;
+	int scarFieldY;
 
 	int lastTest;
 	float maxOverlap;
 
-	std::set<Scar*>* scarField;
-	int scarFieldX;
-	int scarFieldY;
-
-	void DrawObjectDecal(SolidObjectGroundDecal* decal);
-	void DrawGroundScar(Scar* scar, bool fade);
-
-	int OverlapSize(Scar* s1, Scar* s2);
-	void TestOverlaps(Scar* scar);
-	void RemoveScar(Scar* scar, bool removeFromScars);
-	unsigned int LoadTexture(const std::string& name);
-	void LoadScar(const std::string& file, unsigned char* buf, int xoffset, int yoffset);
+	LegacyTrackHandler trackHandler;
 };
-
-extern CGroundDecalHandler* groundDecals_;
 
 #endif // GROUND_DECAL_HANDLER_H

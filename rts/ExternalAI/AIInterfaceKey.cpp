@@ -6,12 +6,12 @@
 #include <string>
 
 
-CR_BIND(AIInterfaceKey, );
+CR_BIND(AIInterfaceKey, )
 
 CR_REG_METADATA(AIInterfaceKey, (
 		CR_MEMBER(shortName),
 		CR_MEMBER(version)
-		));
+		))
 
 AIInterfaceKey::AIInterfaceKey(
 		const std::string& shortName,

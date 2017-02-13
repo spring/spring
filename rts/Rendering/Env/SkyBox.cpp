@@ -24,23 +24,18 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_SKY_BOX)
 
 CSkyBox::CSkyBox(const std::string& texture)
 {
-	tex = 0;
 #ifndef HEADLESS
 	CBitmap btex;
 	if (!btex.Load(texture) || btex.textype != GL_TEXTURE_CUBE_MAP) {
 		LOG_L(L_WARNING, "could not load skybox texture from file %s", texture.c_str());
 	} else {
-		tex = btex.CreateTexture(false);
-		glBindTexture(GL_TEXTURE_CUBE_MAP, tex);
+		skyTex.SetRawTexID(btex.CreateTexture());
+		skyTex.SetRawSize(int2(btex.xsize, btex.ysize));
+		glBindTexture(GL_TEXTURE_CUBE_MAP, skyTex.GetID());
 		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	}
 #endif
-	cloudDensity = mapInfo->atmosphere.cloudDensity;
-	cloudColor = mapInfo->atmosphere.cloudColor;
-	skyColor = mapInfo->atmosphere.skyColor;
-	sunColor = mapInfo->atmosphere.sunColor;
-	fogStart = mapInfo->atmosphere.fogStart;
 	globalRendering->drawFog = (fogStart <= 0.99f);
 }
 
@@ -50,6 +45,11 @@ CSkyBox::~CSkyBox()
 
 void CSkyBox::Draw()
 {
+	SCOPED_GMARKER("CSkyBox::Draw");
+
+	if (!globalRendering->drawSky)
+		return;
+
 	glColor3f(1,1,1);
 	glDisable(GL_FOG);
 	glDisable(GL_BLEND);
@@ -57,7 +57,7 @@ void CSkyBox::Draw()
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_ALPHA_TEST);
 	glEnable(GL_TEXTURE_CUBE_MAP);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, tex);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, skyTex.GetID());
 
 	glMatrixMode(GL_MODELVIEW);
 		glPushMatrix();
@@ -101,5 +101,5 @@ void CSkyBox::Draw()
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_BLEND);
 
-	ISky::SetupFog();
+	sky->SetupFog();
 }

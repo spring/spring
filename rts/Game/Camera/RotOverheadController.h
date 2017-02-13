@@ -13,8 +13,6 @@ public:
 	const std::string GetName() const { return "rot"; }
 
 	void KeyMove(float3 move);
-	void MousePress(int x, int y, int button) { /* empty */ }
-	void MouseRelease(int x, int y, int button) { /* empty */ }
 	void MouseMove(float3 move);
 	void ScreenEdgeMove(float3 move);
 	void MouseWheelMove(float move);
@@ -22,13 +20,12 @@ public:
 	void SetPos(const float3& newPos);
 
 	float3 SwitchFrom() const;
-	void SwitchTo(bool showText);
+	void SwitchTo(const int oldCam, const bool showText);
 
 	void GetState(StateMap& sm) const;
 	bool SetState(const StateMap& sm);
 
-private:
-	void UpdateVectors();
+	void Update();
 
 private:
 	float mouseScale;

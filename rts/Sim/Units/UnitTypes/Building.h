@@ -11,11 +11,10 @@ struct SolidObjectGroundDecal;
 class CBuilding : public CUnit
 {
 public:
-	CR_DECLARE(CBuilding);
+	CR_DECLARE(CBuilding)
 
 	CBuilding();
 	virtual ~CBuilding() {}
-	void PostLoad() {}
 
 	void PreInit(const UnitLoadParams& params);
 	void PostInit(const CUnit* builder);

@@ -5,6 +5,8 @@
 
 */
 
+/*
+// disabled because its called by cron
 $allowed = array(
 	'37.187.92.174', # springfiles.com
 );
@@ -13,6 +15,7 @@ $ip = $_SERVER['REMOTE_ADDR'];
 if (array_search($ip, $allowed) === FALSE) {
 	die("Sorry, $ip isn't allowed to access this page");
 }
+*/
 
 $dirs = array(".");
 $db = new SQLite3("fileattributes.sqlite3");
@@ -59,7 +62,8 @@ $res = array();
 $regex_path = "([^\/]+)";
 $regex_prefix = "$regex_path\/$regex_path\/$regex_path";
 $regexes = array(
-	"windows" => "/$regex_prefix\/win32\/spring_(.*)_minimal-portable.7z$/",
+	"windows" => "/$regex_prefix\/win32\/spring_(.*)minimal-portable.7z$/",
+	"windows64" => "/$regex_prefix\/win64\/spring_(.*)minimal-portable.7z$/",
 	"macosx" =>  "/$regex_prefix\/osx64\/[sS]pring_(.*)[_-]MacOSX-.*.zip$/",
 	"linux" =>   "/$regex_prefix\/linux32\/spring_(.*)_minimal-portable-linux32-static.7z$/",
 	"linux64" => "/$regex_prefix\/linux64\/spring_(.*)_minimal-portable-linux64-static.7z$/"

@@ -9,49 +9,9 @@
 class CModInfo
 {
 public:
-	CModInfo()
-		: allowAircraftToLeaveMap(true)
-		, allowAircraftToHitGround(true)
-		, allowPushingEnemyUnits(false)
-		, allowCrushingAlliedUnits(false)
-		, allowUnitCollisionDamage(false)
-		, allowUnitCollisionOverlap(true)
-		, allowGroundUnitGravity(true)
-		, allowHoverUnitStrafing(true)
-		, useClassicGroundMoveType(false)
-		, constructionDecay(true)
-		, constructionDecayTime(1000)
-		, constructionDecaySpeed(1.0f)
-		, multiReclaim(1)
-		, reclaimMethod(1)
-		, reclaimUnitMethod(1)
-		, reclaimUnitEnergyCostFactor(0.0f)
-		, reclaimUnitEfficiency(1.0f)
-		, reclaimFeatureEnergyCostFactor(0.0f)
-		, reclaimAllowEnemies(true)
-		, reclaimAllowAllies(true)
-		, repairEnergyCostFactor(0.0f)
-		, resurrectEnergyCostFactor(0.5f)
-		, captureEnergyCostFactor(0.0f)
-		, paralyzeOnMaxHealth(true)
-		, transportGround(1)
-		, transportHover(0)
-		, transportShip(0)
-		, transportAir(0)
-		, targetableTransportedUnits(0)
-		, fireAtKilled(1)
-		, fireAtCrashing(1)
-		, flankingBonusModeDefault(0)
-		, losMipLevel(0)
-		, airMipLevel(0)
-		, losMul(1.0f)
-		, airLosMul(1.0f)
-		, requireSonarUnderWater(true)
-		, featureVisibility(FEATURELOS_NONE)
-		, pathFinderSystem(PFS_TYPE_DEFAULT)
-	{}
+	CModInfo() { ResetState(); }
 
-
+	void ResetState();
 	void Init(const char* modArchive);
 
 	/**
@@ -81,15 +41,15 @@ public:
 	std::string description;
 
 	// Movement behaviour
-	bool allowAircraftToLeaveMap;    // determines if gunships are allowed to leave map boundaries
-	bool allowAircraftToHitGround;   // determines if aircraft (both types) can collide with terrain
-	bool allowPushingEnemyUnits;     // determines if enemy (ground-)units can be pushed during collisions
-	bool allowCrushingAlliedUnits;   // determines if allied (ground-)units can be crushed during collisions
-	bool allowUnitCollisionDamage;   // determines if units take damage from (skidding) collisions
-	bool allowUnitCollisionOverlap;  // determines if unit footprints are allowed to semi-overlap during collisions
-	bool allowGroundUnitGravity;     // determines if (ground-)units experience gravity during regular movement
-	bool allowHoverUnitStrafing;     // determines if (hover-)units carry their momentum sideways when turning
-	bool useClassicGroundMoveType;   // determines if (ground-)units use the CClassicGroundMoveType path-follower
+	bool allowDirectionalPathing;    //< determines if ground speed going downhill != going uphill
+	bool allowAircraftToLeaveMap;    //< determines if gunships are allowed to leave map boundaries
+	bool allowAircraftToHitGround;   //< determines if aircraft (both types) can collide with terrain
+	bool allowPushingEnemyUnits;     //< determines if enemy (ground-)units can be pushed during collisions
+	bool allowCrushingAlliedUnits;   //< determines if allied (ground-)units can be crushed during collisions
+	bool allowUnitCollisionDamage;   //< determines if units take damage from (skidding) collisions
+	bool allowUnitCollisionOverlap;  //< determines if unit footprints are allowed to semi-overlap during collisions
+	bool allowGroundUnitGravity;     //< determines if (ground-)units experience gravity during regular movement
+	bool allowHoverUnitStrafing;     //< determines if (hover-)units carry their momentum sideways when turning
 
 	// Build behaviour
 	/// Should constructions without builders decay?
@@ -129,6 +89,11 @@ public:
 	/// How much should energy should capture cost, default 0.0
 	float captureEnergyCostFactor;
 
+	float unitExpMultiplier;
+	float unitExpPowerScale;
+	float unitExpHealthScale;
+	float unitExpReloadScale;
+
 	// Paralyze behaviour
 	/// paralyze unit depending on maxHealth? if not depending on current health, default true
 	bool paralyzeOnMaxHealth;
@@ -159,12 +124,16 @@ public:
 	int losMipLevel;
 	/// miplevel to use for airlos
 	int airMipLevel;
-	/// units sightdistance will be multiplied with this, for testing purposes
-	float losMul;
-	/// units airsightdistance will be multiplied with this, for testing purposes
-	float airLosMul;
+	/// miplevel to use for radar, sonar, seismic, jammer, ...
+	int radarMipLevel;
+
 	/// when underwater, units are not in LOS unless also in sonar
 	bool requireSonarUnderWater;
+	///
+	bool alwaysVisibleOverridesCloaked;
+	/// should _all_ allyteams share the same jammermap
+	bool separateJammers;
+
 
 	enum {
 		FEATURELOS_NONE = 0, FEATURELOS_GAIAONLY, FEATURELOS_GAIAALLIED, FEATURELOS_ALL,
@@ -173,8 +142,12 @@ public:
 	/// 2 - gaia/allied features visible, 3 - all features visible
 	int featureVisibility;
 
-	// which pathfinder system (DEFAULT/legacy or QTPFS) the mod will use
+	// Path Finder
+	/// which pathfinder system (DEFAULT/legacy or QTPFS) the mod will use
 	int pathFinderSystem;
+	float pfUpdateRate;
+
+	bool allowTake;
 };
 
 extern CModInfo modInfo;

@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-
 #include "HeightMapTexture.h"
 
 #include "ReadMap.h"
@@ -8,6 +7,7 @@
 #include "System/Rectangle.h"
 #include "System/Config/ConfigHandler.h"
 
+#include <cstring>
 
 CONFIG(bool, HeightMapTexture).defaultValue(true);
 
@@ -46,8 +46,8 @@ void HeightMapTexture::Init()
 		return;
 	}
 
-	xSize = gs->mapxp1;
-	ySize = gs->mapyp1;
+	xSize = mapDims.mapxp1;
+	ySize = mapDims.mapyp1;
 
 	glGenTextures(1, &texID);
 	glBindTexture(GL_TEXTURE_2D, texID);

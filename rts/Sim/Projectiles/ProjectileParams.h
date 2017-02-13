@@ -20,13 +20,14 @@ struct ProjectileParams {
 
 		, ownerID(-1u)
 		, teamID(-1u)
-		, weaponID(-1u)
+		, weaponNum(-1u)
 		, cegID(-1u)
 
 		, ttl(0)
 		, gravity(0.0f)
 		, tracking(0.0f)
 		, maxRange(0.0f)
+		, upTime(-1.0f)
 
 		, startAlpha(0.0f)
 		, endAlpha(1.0f)
@@ -48,13 +49,14 @@ struct ProjectileParams {
 
 	unsigned int ownerID;
 	unsigned int teamID;
-	unsigned int weaponID;
+	unsigned int weaponNum;
 	unsigned int cegID;
 
 	int ttl;
 	float gravity;
 	float tracking;
 	float maxRange;
+	float upTime;
 
 	// BeamLaser-specific junk
 	float startAlpha;

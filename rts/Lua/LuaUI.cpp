@@ -3,16 +3,18 @@
 #include "LuaUI.h"
 
 #include "LuaInclude.h"
-
 #include "LuaUnsyncedCtrl.h"
+#include "LuaArchive.h"
 #include "LuaCallInCheck.h"
 #include "LuaConstGL.h"
 #include "LuaConstCMD.h"
 #include "LuaConstCMDTYPE.h"
+#include "LuaConstEngine.h"
 #include "LuaConstGame.h"
 #include "LuaSyncedRead.h"
 #include "LuaInterCall.h"
 #include "LuaUnsyncedRead.h"
+#include "LuaUICommand.h"
 #include "LuaFeatureDefs.h"
 #include "LuaUnitDefs.h"
 #include "LuaWeaponDefs.h"
@@ -20,6 +22,7 @@
 #include "LuaOpenGL.h"
 #include "LuaUtils.h"
 #include "LuaVFS.h"
+#include "LuaVFSDownload.h"
 #include "LuaIO.h"
 #include "LuaZip.h"
 #include "Game/Camera.h"
@@ -29,8 +32,6 @@
 #include "Game/GlobalUnsynced.h"
 #include "Game/SelectedUnitsHandler.h"
 #include "Game/UI/CommandColors.h"
-#include "Game/UI/CursorIcons.h"
-#include "Game/UI/GuiHandler.h"
 #include "Game/UI/InfoConsole.h"
 #include "Game/UI/KeyCodes.h"
 #include "Game/UI/KeySet.h"
@@ -39,19 +40,18 @@
 #include "Game/UI/MouseHandler.h"
 #include "Map/ReadMap.h"
 #include "Rendering/IconHandler.h"
+#include "Sim/Misc/LosHandler.h"
+#include "Sim/Units/CommandAI/CommandDescription.h"
 #include "System/EventHandler.h"
 #include "System/Log/ILog.h"
 #include "System/FileSystem/FileHandler.h"
-#include "System/FileSystem/VFSHandler.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/Util.h"
+#include "System/Threading/SpringThreading.h"
 #include "lib/luasocket/src/luasocket.h"
 
-#include <mutex>
-#include <boost/thread/mutex.hpp>
-#include <stdio.h>
-#include <set>
+#include <cstdio>
 #include <cctype>
 
 CONFIG(bool, LuaSocketEnabled)
@@ -67,79 +67,60 @@ CLuaUI* luaUI = NULL;
 
 const int CMD_INDEX_OFFSET = 1; // starting index for command descriptions
 
-static const char* GetVFSMode()
+static const char* GetVFSMode(bool lockedAccess)
 {
 	const char* accessMode = SPRING_VFS_RAW;
-	if (CFileHandler::FileExists("gamedata/LockLuaUI.txt", SPRING_VFS_MOD)) {
+
+	if (lockedAccess) {
 		if (!CLuaHandle::GetDevMode()) {
-			LOG("This game has locked LuaUI access");
 			accessMode = SPRING_VFS_MOD;
 		} else {
-			LOG("Bypassing this game's LuaUI access lock");
-			accessMode = SPRING_VFS_RAW SPRING_VFS_MOD;
+			accessMode = SPRING_VFS_RAW SPRING_VFS_ZIP;
 		}
 	}
+
 	return accessMode;
 }
 
 /******************************************************************************/
 /******************************************************************************/
 
-static boost::mutex m_singleton;
+static spring::mutex m_singleton;
 
-
-void CLuaUI::LoadHandler()
-{
-	{
-		std::lock_guard<boost::mutex> lk(m_singleton);
-		if (luaUI) return;
-
-		luaUI = new CLuaUI();
-	}
-
-	if (!luaUI->IsValid()) {
-		FreeHandler();
-	}
-}
-
-
-void CLuaUI::FreeHandler()
-{
-	std::lock_guard<boost::mutex> lk(m_singleton);
-	if (!luaUI) return;
-
-	auto* inst = luaUI;
-	luaUI = NULL;
-	inst->KillLua();
-	delete inst;
-}
+DECL_LOAD_HANDLER(CLuaUI, luaUI)
+DECL_FREE_HANDLER(CLuaUI, luaUI)
 
 
 /******************************************************************************/
 
 CLuaUI::CLuaUI()
-: CLuaHandle("LuaUI", LUA_HANDLE_ORDER_UI, true)
+: CLuaHandle("LuaUI", LUA_HANDLE_ORDER_UI, true, false)
 {
 	luaUI = this;
 
-	if (!IsValid()) {
+	if (!IsValid())
 		return;
-	}
 
 	UpdateTeams();
+
+	queuedAction = ACTION_NOVALUE;
 
 	haveShockFront = false;
 	shockFrontMinArea  = 0.0f;
 	shockFrontMinPower = 0.0f;
 	shockFrontDistAdj  = 100.0f;
 
+	const bool luaLockedAccess = CFileHandler::FileExists("gamedata/LockLuaUI.txt", SPRING_VFS_MOD);
 	const bool luaSocketEnabled = configHandler->GetBool("LuaSocketEnabled");
-	LOG("LuaSocketEnabled: %s", (luaSocketEnabled ? "yes": "no" ));
 
-	const char* vfsMode = GetVFSMode();
-	const std::string file = (CFileHandler::FileExists("luaui.lua", vfsMode) ? "luaui.lua" : "LuaUI/main.lua");
+	const std::string mode = GetVFSMode(luaLockedAccess);
+	const std::string file = (CFileHandler::FileExists("luaui.lua", mode) ? "luaui.lua": "LuaUI/main.lua");
+	const std::string code = LoadFile(file, mode);
 
-	const string code = LoadFile(file);
+	LOG("LuaUI Entry Point: \"%s\"", file.c_str());
+	LOG("LuaUI Access Lock: %s", (luaLockedAccess ? ((!CLuaHandle::GetDevMode()) ? "enabled": "bypassed"): "disabled" ));
+	LOG("LuaSocket Enabled: %s", (luaSocketEnabled ? "yes": "no" ));
+
 	if (code.empty()) {
 		KillLua();
 		return;
@@ -186,24 +167,28 @@ CLuaUI::CLuaUI()
 	AddBasicCalls(L); // into Global
 
 	// load the spring libraries
-	if (!LoadCFunctions(L)                                                 ||
-	    !AddEntriesToTable(L, "VFS",         LuaVFS::PushUnsynced)         ||
-	    !AddEntriesToTable(L, "VFS",       LuaZipFileReader::PushUnsynced) ||
-	    !AddEntriesToTable(L, "VFS",       LuaZipFileWriter::PushUnsynced) ||
-	    !AddEntriesToTable(L, "UnitDefs",    LuaUnitDefs::PushEntries)     ||
-	    !AddEntriesToTable(L, "WeaponDefs",  LuaWeaponDefs::PushEntries)   ||
-	    !AddEntriesToTable(L, "FeatureDefs", LuaFeatureDefs::PushEntries)  ||
+	if (!LoadCFunctions(L)                                                      ||
+	    !AddEntriesToTable(L, "VFS",         LuaVFS::PushUnsynced)              ||
+	    !AddEntriesToTable(L, "VFS",         LuaZipFileReader::PushUnsynced)    ||
+	    !AddEntriesToTable(L, "VFS",         LuaZipFileWriter::PushUnsynced)    ||
+	    !AddEntriesToTable(L, "VFS",         LuaArchive::PushEntries)           ||
+	    !AddEntriesToTable(L, "UnitDefs",    LuaUnitDefs::PushEntries)          ||
+	    !AddEntriesToTable(L, "WeaponDefs",  LuaWeaponDefs::PushEntries)        ||
+	    !AddEntriesToTable(L, "FeatureDefs", LuaFeatureDefs::PushEntries)       ||
 	    !AddEntriesToTable(L, "Script",      LuaInterCall::PushEntriesUnsynced) ||
-	    !AddEntriesToTable(L, "Script",      LuaScream::PushEntries)       ||
-	    !AddEntriesToTable(L, "Spring",      LuaSyncedRead::PushEntries)   ||
-	    !AddEntriesToTable(L, "Spring",      LuaUnsyncedCtrl::PushEntries) ||
-	    !AddEntriesToTable(L, "Spring",      LuaUnsyncedRead::PushEntries) ||
-	    !AddEntriesToTable(L, "gl",          LuaOpenGL::PushEntries)       ||
-	    !AddEntriesToTable(L, "GL",          LuaConstGL::PushEntries)      ||
-	    !AddEntriesToTable(L, "Game",        LuaConstGame::PushEntries)    ||
-	    !AddEntriesToTable(L, "CMD",         LuaConstCMD::PushEntries)     ||
-	    !AddEntriesToTable(L, "CMDTYPE",     LuaConstCMDTYPE::PushEntries) ||
-	    !AddEntriesToTable(L, "LOG",         LuaUtils::PushLogEntries)
+	    !AddEntriesToTable(L, "Script",      LuaScream::PushEntries)            ||
+	    !AddEntriesToTable(L, "Spring",      LuaSyncedRead::PushEntries)        ||
+	    !AddEntriesToTable(L, "Spring",      LuaUnsyncedCtrl::PushEntries)      ||
+	    !AddEntriesToTable(L, "Spring",      LuaUnsyncedRead::PushEntries)      ||
+	    !AddEntriesToTable(L, "Spring",      LuaUICommand::PushEntries)         ||
+	    !AddEntriesToTable(L, "gl",          LuaOpenGL::PushEntries)            ||
+	    !AddEntriesToTable(L, "GL",          LuaConstGL::PushEntries)           ||
+	    !AddEntriesToTable(L, "Engine",      LuaConstEngine::PushEntries)       ||
+	    !AddEntriesToTable(L, "Game",        LuaConstGame::PushEntries)         ||
+	    !AddEntriesToTable(L, "CMD",         LuaConstCMD::PushEntries)          ||
+	    !AddEntriesToTable(L, "CMDTYPE",     LuaConstCMDTYPE::PushEntries)      ||
+	    !AddEntriesToTable(L, "LOG",         LuaUtils::PushLogEntries)          ||
+	    !AddEntriesToTable(L, "VFS",         LuaVFSDownload::PushEntries)
 	) {
 		KillLua();
 		return;
@@ -228,33 +213,31 @@ CLuaUI::CLuaUI()
 
 CLuaUI::~CLuaUI()
 {
-	luaUI = NULL;
-	if (guihandler) guihandler->LoadConfig("ctrlpanel.txt");
+	luaUI = nullptr;
 }
 
 void CLuaUI::InitLuaSocket(lua_State* L) {
 	std::string code;
-	std::string filename="socket.lua";
+	std::string filename = "socket.lua";
 	CFileHandler f(filename);
 
-	LUA_OPEN_LIB(L,luaopen_socket_core);
+	LUA_OPEN_LIB(L, luaopen_socket_core);
 
-	if (f.LoadStringData(code)){
+	if (f.LoadStringData(code)) {
 		LoadCode(L, code, filename);
 	} else {
 		LOG_L(L_ERROR, "Error loading %s", filename.c_str());
 	}
 }
 
-string CLuaUI::LoadFile(const string& filename) const
+string CLuaUI::LoadFile(const string& name, const std::string& mode) const
 {
-	const char* vfsMode = GetVFSMode();
-	CFileHandler f(filename, vfsMode);
+	CFileHandler f(name, mode.c_str());
 
 	string code;
-	if (!f.LoadStringData(code)) {
+	if (!f.LoadStringData(code))
 		code.clear();
-	}
+
 	return code;
 }
 
@@ -394,15 +377,15 @@ void CLuaUI::ShockFront(const float3& pos, float power, float areaOfEffect, cons
 /******************************************************************************/
 
 bool CLuaUI::LayoutButtons(int& xButtons, int& yButtons,
-                           const vector<CommandDescription>& cmds,
+                           const vector<SCommandDescription>& cmds,
                            vector<int>& removeCmds,
-                           vector<CommandDescription>& customCmds,
+                           vector<SCommandDescription>& customCmds,
                            vector<int>& onlyTextureCmds,
                            vector<ReStringPair>& reTextureCmds,
                            vector<ReStringPair>& reNamedCmds,
                            vector<ReStringPair>& reTooltipCmds,
                            vector<ReParamsPair>& reParamsCmds,
-                           map<int, int>& buttonList,
+                           spring::unordered_map<int, int>& buttonList,
                            string& menuName)
 {
 	customCmds.clear();
@@ -522,7 +505,7 @@ bool CLuaUI::LayoutButtons(int& xButtons, int& yButtons,
 
 
 bool CLuaUI::BuildCmdDescTable(lua_State* L,
-                               const vector<CommandDescription>& cmds)
+                               const vector<SCommandDescription>& cmds)
 {
 	lua_newtable(L);
 
@@ -536,12 +519,12 @@ bool CLuaUI::BuildCmdDescTable(lua_State* L,
 }
 
 
-bool CLuaUI::GetLuaIntMap(lua_State* L, int index, map<int, int>& intMap)
+bool CLuaUI::GetLuaIntMap(lua_State* L, int index, spring::unordered_map<int, int>& intMap)
 {
 	const int table = index;
-	if (!lua_istable(L, table)) {
+	if (!lua_istable(L, table))
 		return false;
-	}
+
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 		if (!lua_isnumber(L, -1) || !lua_israwnumber(L, -2)) {
 			lua_pop(L, 2);
@@ -631,7 +614,7 @@ bool CLuaUI::GetLuaReParamsList(lua_State* L, int index,
 
 
 bool CLuaUI::GetLuaCmdDescList(lua_State* L, int index,
-                               vector<CommandDescription>& cmdDescs)
+                               vector<SCommandDescription>& cmdDescs)
 {
 	const int table = index;
 	if (!lua_istable(L, table)) {
@@ -641,7 +624,7 @@ bool CLuaUI::GetLuaCmdDescList(lua_State* L, int index,
 	for (lua_rawgeti(L, table, paramIndex);
 	     lua_istable(L, -1);
 	     lua_pop(L, 1), paramIndex++, lua_rawgeti(L, table, paramIndex)) {
-		CommandDescription cd;
+		SCommandDescription cd;
 		cd.id   = CMD_INTERNAL;
 		cd.type = CMDTYPE_CUSTOM;
 		const int cmdDescTable = lua_gettop(L);

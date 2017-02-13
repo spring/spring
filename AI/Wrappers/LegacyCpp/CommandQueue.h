@@ -4,7 +4,7 @@
 #define _COMMAND_QUEUE_H_
 
 #include <deque>
-#include "Command.h"
+#include "Sim/Units/CommandAI/Command.h"
 
 
 namespace springLegacyAI {
@@ -15,7 +15,7 @@ class CCommandQueue {
 	friend class CAIAICallback; // the C++ AI interface wrapper
 
 	// see CommandAI.cpp for further creg stuff for this class
-	CR_DECLARE_STRUCT(CCommandQueue);
+	CR_DECLARE_STRUCT(CCommandQueue)
 
 	public:
 		enum QueueType {

@@ -10,7 +10,7 @@
 struct WeaponDef;
 struct ProjectileParams;
 class CVertexArray;
-class CPlasmaRepulser;
+class DynDamageArray;
 
 
 
@@ -20,23 +20,22 @@ class CPlasmaRepulser;
  */
 class CWeaponProjectile : public CProjectile
 {
-	CR_DECLARE(CWeaponProjectile);
+	CR_DECLARE_DERIVED(CWeaponProjectile)
 public:
-	CWeaponProjectile();
 	CWeaponProjectile(const ProjectileParams& params);
-	virtual ~CWeaponProjectile() {}
+	virtual ~CWeaponProjectile();
 
 	virtual void Explode(CUnit* hitUnit, CFeature* hitFeature, float3 impactPos, float3 impactDir);
-	virtual void Collision();
-	virtual void Collision(CFeature* feature);
-	virtual void Collision(CUnit* unit);
-	virtual void Update();
+	virtual void Collision() override;
+	virtual void Collision(CFeature* feature) override;
+	virtual void Collision(CUnit* unit) override;
+	virtual void Update() override;
 	/// @return 0=unaffected, 1=instant repulse, 2=gradual repulse
-	virtual int ShieldRepulse(CPlasmaRepulser* shield, float3 shieldPos, float shieldForce, float shieldMaxSpeed) { return 0; }
+	virtual int ShieldRepulse(const float3& shieldPos, float shieldForce, float shieldMaxSpeed) { return 0; }
 
-	virtual void DrawOnMinimap(CVertexArray& lines, CVertexArray& points);
+	virtual void DrawOnMinimap(CVertexArray& lines, CVertexArray& points) override;
 
-	void DependentDied(CObject* o);
+	void DependentDied(CObject* o) override;
 	void PostLoad();
 
 	void SetTargetObject(CWorldObject* newTarget) {
@@ -52,6 +51,8 @@ public:
 
 	const WeaponDef* GetWeaponDef() const { return weaponDef; }
 
+	int GetTimeToLive() const { return ttl; }
+
 	void SetStartPos(const float3& newStartPos) { startPos = newStartPos; }
 	void SetTargetPos(const float3& newTargetPos) { targetPos = newTargetPos; }
 
@@ -60,10 +61,14 @@ public:
 
 	void SetBeingIntercepted(bool b) { targeted = b; }
 	bool IsBeingIntercepted() const { return targeted; }
+	bool CanBeInterceptedBy(const WeaponDef*) const;
 
 	bool TraveledRange() const;
 
+	const DynDamageArray* damages;
+
 protected:
+	CWeaponProjectile() { }
 	void UpdateInterception();
 	virtual void UpdateGroundBounce();
 
@@ -72,7 +77,7 @@ protected:
 
 	CWorldObject* target;
 
-	unsigned int weaponDefID;
+	unsigned int weaponNum;
 
 	int ttl;
 	int bounces;

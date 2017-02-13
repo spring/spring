@@ -70,11 +70,11 @@
 	#endif // defined _WIN64 ...
 #endif // CALLING_CONV
 
-// Intel Compiler compatibility fix
+// Intel Compiler compatibility fix for non-Windows
 // Is used when assigning function pointers, for example in:
 // ExternalAI/AIInterfaceLibrary.cpp
 #ifndef CALLING_CONV_FUNC_POINTER
-	#ifdef __INTEL_COMPILER
+	#if !defined(_WIN32) && defined(__INTEL_COMPILER)
 		#define CALLING_CONV_FUNC_POINTER
 	#else
 		#define CALLING_CONV_FUNC_POINTER CALLING_CONV

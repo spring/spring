@@ -4,20 +4,26 @@
 #include "System/maindefines.h"
 #include "System/myMath.h"
 
-#include <boost/thread/mutex.hpp>
+#define FORCE_CHRONO_TIMERS
 
+#include <chrono>
+#include <atomic>
 
-#ifndef UNIT_TEST
-#ifdef USING_CREG
-#include "System/creg/Serializer.h"
+#if defined(USING_CREG) && !defined(UNIT_TEST)
+	#include "System/creg/Serializer.h"
 
-//FIXME always use class even in non-debug! for creg!
-CR_BIND(spring_time, );
-CR_REG_METADATA(spring_time,(
-	CR_IGNORED(x),
-	CR_SERIALIZER(Serialize)
-));
+	//FIXME always use class even in non-debug! for creg!
+	CR_BIND(spring_time, )
+	CR_REG_METADATA(spring_time,(
+		CR_IGNORED(x),
+		CR_SERIALIZER(Serialize)
+	))
 #endif
+
+
+#define USE_NATIVE_WINDOWS_CLOCK (defined(WIN32) && !defined(FORCE_CHRONO_TIMERS))
+#if USE_NATIVE_WINDOWS_CLOCK
+	#include <windows.h>
 #endif
 
 
@@ -33,15 +39,8 @@ CR_REG_METADATA(spring_time,(
 	#endif
 	#define _GLIBCXX_USE_SCHED_YIELD // workaround a gcc <4.8 bug
 	#include <thread>
-	#include <mutex>
-	namespace this_thread { using namespace std::this_thread; };
+	namespace this_thread { using namespace std::this_thread; }
 #endif
-
-#define USE_NATIVE_WINDOWS_CLOCK (defined(WIN32) && !defined(FORCE_CHRONO_TIMERS))
-#if USE_NATIVE_WINDOWS_CLOCK
-#include <windows.h>
-#endif
-
 
 
 namespace spring_clock {
@@ -76,7 +75,7 @@ namespace spring_clock {
 	#if USE_NATIVE_WINDOWS_CLOCK
 	// QPC wants the LARGE_INTEGER's to be qword-aligned
 	__FORCE_ALIGN_STACK__
-	boost::int64_t GetTicksNative() {
+	std::int64_t GetTicksNative() {
 		assert(timerInited);
 
 		if (highResMode) {
@@ -111,7 +110,7 @@ namespace spring_clock {
 			LARGE_INTEGER currTick;
 
 			if (!QueryPerformanceFrequency(&tickFreq))
-				return (FromMilliSecs<boost::int64_t>(0));
+				return (FromMilliSecs<std::int64_t>(0));
 
 			QueryPerformanceCounter(&currTick);
 
@@ -127,11 +126,11 @@ namespace spring_clock {
 			//
 			// currTick.QuadPart /= tickFreq.QuadPart;
 
-			if (tickFreq.QuadPart >= boost::int64_t(1e9)) return (FromNanoSecs <boost::uint64_t>(std::max(0.0, currTick.QuadPart / (tickFreq.QuadPart * 1e-9))));
-			if (tickFreq.QuadPart >= boost::int64_t(1e6)) return (FromMicroSecs<boost::uint64_t>(std::max(0.0, currTick.QuadPart / (tickFreq.QuadPart * 1e-6))));
-			if (tickFreq.QuadPart >= boost::int64_t(1e3)) return (FromMilliSecs<boost::uint64_t>(std::max(0.0, currTick.QuadPart / (tickFreq.QuadPart * 1e-3))));
+			if (tickFreq.QuadPart >= std::int64_t(double(1e9))) return (FromNanoSecs <std::uint64_t>(std::max(double(0.0), currTick.QuadPart / (tickFreq.QuadPart * double(1e-9)))));
+			if (tickFreq.QuadPart >= std::int64_t(double(1e6))) return (FromMicroSecs<std::uint64_t>(std::max(double(0.0), currTick.QuadPart / (tickFreq.QuadPart * double(1e-6)))));
+			if (tickFreq.QuadPart >= std::int64_t(double(1e3))) return (FromMilliSecs<std::uint64_t>(std::max(double(0.0), currTick.QuadPart / (tickFreq.QuadPart * double(1e-3)))));
 
-			return (FromSecs<boost::int64_t>(std::max(0LL, currTick.QuadPart)));
+			return (FromSecs<std::int64_t>(std::max(0LL, currTick.QuadPart)));
 		} else {
 			// timeGetTime is affected by time{Begin,End}Period whereas
 			// GetTickCount is not ---> resolution of the former can be
@@ -143,12 +142,12 @@ namespace spring_clock {
 			// risk of overflowing)
 			//
 			// note: there is a GetTickCount64 but no timeGetTime64
-			return (FromMilliSecs<boost::uint32_t>(timeGetTime()));
+			return (FromMilliSecs<std::uint32_t>(timeGetTime()));
 		}
 	}
 	#endif
 
-	boost::int64_t GetTicks() {
+	std::int64_t GetTicks() {
 		assert(timerInited);
 
 		#if USE_NATIVE_WINDOWS_CLOCK
@@ -184,13 +183,11 @@ namespace spring_clock {
 
 
 
-boost::int64_t spring_time::xs = 0;
+std::int64_t spring_time::xs = 0;
 
-static float avgThreadYieldTimeMilliSecs = 0.0f;
-static float avgThreadSleepTimeMilliSecs = 0.0f;
+static std::atomic_int avgThreadYieldTimeMicroSecs = {0};
+static std::atomic_int avgThreadSleepTimeMicroSecs = {0};
 
-static boost::mutex yieldTimeMutex;
-static boost::mutex sleepTimeMutex;
 
 static void thread_yield()
 {
@@ -200,16 +197,28 @@ static void thread_yield()
 	const spring_time dt = t1 - t0;
 
 	if (t1 >= t0) {
-		boost::mutex::scoped_lock lock(yieldTimeMutex);
-		avgThreadYieldTimeMilliSecs = mix(avgThreadYieldTimeMilliSecs, dt.toMilliSecsf(), 0.1f);
+		// yes, it's not 100% thread correct, but it's okay when 1 of 1 million writes is dropped
+		int avg = avgThreadYieldTimeMicroSecs.load();
+		int newAvg = mix<float>(avg, dt.toMicroSecsf(), 0.1f);
+		avgThreadYieldTimeMicroSecs.store(newAvg);
 	}
 }
 
 
-void spring_time::sleep()
+void spring_time::sleep(bool forceThreadSleep)
 {
+	if (forceThreadSleep) {
+#if defined(SPRINGTIME_USING_STD_SLEEP)
+		this_thread::sleep_for(chrono::nanoseconds(toNanoSecsi()));
+#else
+		boost::this_thread::sleep(boost::posix_time::microseconds(std::ceil(toNanoSecsf() * 1e-3)));
+#endif
+		return;
+	}
+
+
 	// for very short time intervals use a yielding loop (yield is ~5x more accurate than sleep(), check the UnitTest)
-	if (toMilliSecsf() < (avgThreadSleepTimeMilliSecs + avgThreadYieldTimeMilliSecs * 5.0f)) {
+	if (toMicroSecsi() < (avgThreadSleepTimeMicroSecs + avgThreadYieldTimeMicroSecs * 5)) {
 		const spring_time s = gettime();
 
 		while ((gettime() - s) < *this)
@@ -231,8 +240,10 @@ void spring_time::sleep()
 	const spring_time dt = t1 - t0;
 
 	if (t1 >= t0) {
-		boost::mutex::scoped_lock lock(sleepTimeMutex);
-		avgThreadSleepTimeMilliSecs = mix(avgThreadSleepTimeMilliSecs, dt.toMilliSecsf(), 0.1f);
+		// yes, it's not 100% thread correct, but it's okay when 1 of 1 million writes is dropped
+		int avg = avgThreadSleepTimeMicroSecs.load();
+		int newAvg = mix<float>(avg, dt.toMicroSecsf(), 0.1f);
+		avgThreadSleepTimeMicroSecs.store(newAvg);
 	}
 }
 
@@ -244,7 +255,7 @@ void spring_time::sleep_until()
 #else
 	spring_time napTime = gettime() - *this;
 
-	if (napTime.toMilliSecsf() < avgThreadYieldTimeMilliSecs) {
+	if (napTime.toMicroSecsi() < avgThreadYieldTimeMicroSecs) {
 		while (napTime.isTime()) {
 			thread_yield();
 			napTime = gettime() - *this;
@@ -256,15 +267,15 @@ void spring_time::sleep_until()
 #endif
 }
 
-#ifndef UNIT_TEST
-void spring_time::Serialize(creg::ISerializer& s)
+#if defined USING_CREG && !defined UNIT_TEST
+void spring_time::Serialize(creg::ISerializer* s)
 {
-	if (s.IsWriting()) {
+	if (s->IsWriting()) {
 		int y = spring_tomsecs(*this - spring_gettime());
-		s.SerializeInt(&y, 4);
+		s->SerializeInt(&y, 4);
 	} else {
 		int y;
-		s.SerializeInt(&y, 4);
+		s->SerializeInt(&y, 4);
 		*this = *this + spring_msecs(y);
 	}
 }

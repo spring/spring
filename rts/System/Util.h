@@ -3,10 +3,11 @@
 #ifndef UTIL_H
 #define UTIL_H
 
+#include <assert.h>
 #include <string>
 #include <sstream>
+#include <vector>
 #include <algorithm>
-#include <boost/utility.hpp>
 
 #include "System/maindefines.h"
 
@@ -164,14 +165,121 @@ static inline void EnsureEndsWith(std::string* str, const char* postfix)
 }
 
 
+/**
+ * Sets a bool according to the value encoded in a string.
+ * The conversion works like this:
+ * - ""  -> toggle-value
+ * - "0" -> false
+ * - "1" -> true
+ */
+void InverseOrSetBool(bool& container, const std::string& argValue, const bool inverseArg = false);
+
+
 /// Helper function to avoid division by Zero
 static inline float SafeDivide(const float a, const float b)
 {
-	if (b==0)
+	if (b == 0.0f)
 		return a;
-	else
-		return a/b;
+
+	return (a / b);
 }
+
+namespace spring {
+	template<typename T, typename TV>
+	static auto find(T& c, const TV& v) -> decltype(c.end())
+	{
+		return std::find(c.begin(), c.end(), v);
+	}
+
+	template<typename T, typename UnaryPredicate>
+	static void map_erase_if(T& c, UnaryPredicate p)
+	{
+		for(auto it = c.begin(); it != c.end(); ) {
+			if( p(*it) ) it = c.erase(it);
+			else ++it;
+		}
+	}
+}
+
+
+template<typename T, typename P>
+static bool VectorEraseIf(std::vector<T>& v, const P& p)
+{
+	auto it = std::find_if(v.begin(), v.end(), p);
+
+	if (it == v.end())
+		return false;
+
+	*it = v.back();
+	v.pop_back();
+	return true;
+}
+
+template<typename T>
+static bool VectorErase(std::vector<T>& v, T e)
+{
+	auto it = std::find(v.begin(), v.end(), e);
+
+	if (it == v.end())
+		return false;
+
+	*it = v.back();
+	v.pop_back();
+	return true;
+}
+
+template<typename T, typename C>
+static bool VectorEraseUniqueSorted(std::vector<T>& v, const T& e, const C& c)
+{
+	const auto iter = std::lower_bound(v.begin(), v.end(), e, c);
+
+	if ((iter == v.end()) || (*iter != e))
+		return false;
+
+	for (size_t n = (iter - v.begin()); n < (v.size() - 1); n++) {
+		std::swap(v[n], v[n + 1]);
+	}
+
+	v.pop_back();
+	return true;
+}
+
+
+
+template<typename T>
+static bool VectorInsertUnique(std::vector<T>& v, T e, bool b = false)
+{
+	// do not assume uniqueness, test for it
+	if (b && std::find(v.begin(), v.end(), e) != v.end())
+		return false;
+
+	// assume caller knows best, skip the test
+	assert(b || std::find(v.begin(), v.end(), e) == v.end());
+	v.push_back(e);
+	return true;
+}
+
+template<typename T, typename C>
+static bool VectorInsertUniqueSorted(std::vector<T>& v, const T& e, const C& c)
+{
+	const auto iter = std::lower_bound(v.begin(), v.end(), e, c);
+
+	if ((iter != v.end()) && (*iter == e))
+		return false;
+
+	v.push_back(e);
+
+	for (size_t n = v.size() - 1; n > 0; n--) {
+		if (c(v[n - 1], v[n]))
+			break;
+
+		std::swap(v[n - 1], v[n]);
+	}
+
+	return true;
+}
+
+
 
 /**
  * @brief Safe alternative to "delete obj;"
@@ -200,92 +308,6 @@ template<class T> void SafeDeleteArray(T*& a)
 	a = NULL;
 	delete [] tmp;
 }
-
-// set.erase(iterator++) is prone to crash with MSVC
-template <class S, class I>
-inline I set_erase(S &s, I i) {
-#ifdef _MSC_VER
-		return s.erase(i);
-#else
-		s.erase(i++);
-		return i;
-#endif
-}
-
-
-
-
-/**
- * @brief Untyped base class for TypedStringConvertibleOptionalValue.
- */
-class StringConvertibleOptionalValue : public boost::noncopyable
-{
-public:
-	StringConvertibleOptionalValue() : isSet(false) {}
-	virtual ~StringConvertibleOptionalValue() {}
-	virtual std::string ToString() const = 0;
-	bool IsSet() const { return isSet; }
-
-protected:
-	bool isSet;
-};
-
-/**
- * @brief Wraps a value and detects whether it has been assigned to.
- */
-template<typename T>
-class TypedStringConvertibleOptionalValue : public StringConvertibleOptionalValue
-{
-public:
-	TypedStringConvertibleOptionalValue<T>& operator=(const T& x) {
-		value = x;
-		isSet = true;
-		return *this;
-	}
-	const T& Get() const { return value; }
-
-	std::string ToString() const
-	{
-		std::ostringstream buf;
-		buf << value;
-		return buf.str();
-	}
-
-	static T FromString(const std::string& value)
-	{
-		std::istringstream buf(value);
-		T temp;
-		buf >> temp;
-		return temp;
-	}
-
-protected:
-	T value;
-};
-
-/**
- * @brief Specialization for std::string
- *
- * This exists because 1) converting from std::string to std::string is a no-op
- * and 2) converting from std::string to std::string using std::istringstream
- * will treat spaces as word boundaries, which we do not want.
- */
-template<>
-class TypedStringConvertibleOptionalValue<std::string> : public StringConvertibleOptionalValue
-{
-	typedef std::string T;
-
-public:
-	void operator=(const T& x) { value = x; isSet = true; }
-	const T& Get() const { return value; }
-
-	std::string ToString() const { return value; }
-	static T FromString(const std::string& value) { return value; }
-
-protected:
-	T value;
-};
-
 
 
 

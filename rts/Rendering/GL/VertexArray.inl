@@ -7,8 +7,8 @@ void CVertexArray::CheckInitSize(const unsigned int vertexes, const unsigned int
 	}
 }
 
-void CVertexArray::CheckEnlargeDrawArray() {
-	if ((char*) drawArrayPos > ((char*) drawArraySize - 10 * sizeof(float)))
+void CVertexArray::CheckEnlargeDrawArray(size_t bytesNeeded) {
+	if ((char*) drawArrayPos > ((char*) drawArraySize - bytesNeeded))
 		EnlargeDrawArray();
 }
 
@@ -115,7 +115,7 @@ void CVertexArray::AddVertexQ2dT(float x, float y, float tx, float ty) {
 }
 
 void CVertexArray::AddVertexQ2dTC(float x, float y, float tx, float ty, const unsigned char* c) {
-	ASSERT_SIZE(VA_SIZE_2DT)
+	ASSERT_SIZE(VA_SIZE_2DTC)
 	VA_TYPE_2dTC* vat = GetTypedVertexArrayQ<VA_TYPE_2dTC>(1);
 	vat->x = x;
 	vat->y = y;
@@ -131,57 +131,57 @@ void CVertexArray::AddVertexQ2dTC(float x, float y, float tx, float ty, const un
 //////////////////////////////////////////////////////////////////////
 
 void CVertexArray::AddVertex0(const float3& pos) {
-	CheckEnlargeDrawArray();
+	CheckEnlargeDrawArray(VA_SIZE_0 * sizeof(float)); // sizeof(VA_TYPE_0)
 	AddVertexQ0(pos);
 }
 
 void CVertexArray::AddVertex0(float x, float y, float z) {
-	CheckEnlargeDrawArray();
+	CheckEnlargeDrawArray(VA_SIZE_0 * sizeof(float)); // sizeof(VA_TYPE_0)
 	AddVertexQ0(x,y,z);
 }
 
 void CVertexArray::AddVertexN(const float3& pos, const float3& normal) {
-	CheckEnlargeDrawArray();
+	CheckEnlargeDrawArray(VA_SIZE_N * sizeof(float)); // sizeof(VA_TYPE_N)
 	AddVertexQN(pos, normal);
 }
 
 void CVertexArray::AddVertexC(const float3& pos, const unsigned char* color) {
-	CheckEnlargeDrawArray();
+	CheckEnlargeDrawArray(VA_SIZE_C * sizeof(float)); // sizeof(VA_TYPE_C)
 	AddVertexQC(pos, color);
 }
 
 void CVertexArray::AddVertexT(const float3& pos, float tx, float ty) {
-	CheckEnlargeDrawArray();
+	CheckEnlargeDrawArray(VA_SIZE_T * sizeof(float)); // sizeof(VA_TYPE_T)
 	AddVertexQT(pos, tx, ty);
 }
 
 void CVertexArray::AddVertexTN(const float3& pos, float tx, float ty, const float3& norm) {
-	CheckEnlargeDrawArray();
+	CheckEnlargeDrawArray(VA_SIZE_TN * sizeof(float)); // sizeof(VA_TYPE_TN)
 	AddVertexQTN(pos, tx, ty, norm);
 }
 
 void CVertexArray::AddVertexTNT(const float3& p, float tx, float ty, const float3& n, const float3& st, const float3& tt) {
-	CheckEnlargeDrawArray();
+	CheckEnlargeDrawArray(VA_SIZE_TNT * sizeof(float)); // sizeof(VA_TYPE_TNT)
 	AddVertexQTNT(p, tx, ty, n, st, tt);
 }
 
 void CVertexArray::AddVertexTC(const float3& pos, float tx, float ty, const unsigned char* col) {
-	CheckEnlargeDrawArray();
+	CheckEnlargeDrawArray(VA_SIZE_TC * sizeof(float)); // sizeof(VA_TYPE_TC)
 	AddVertexQTC(pos, tx, ty, col);
 }
 
 void CVertexArray::AddVertex2d0(float x, float z) {
-	CheckEnlargeDrawArray();
+	CheckEnlargeDrawArray(VA_SIZE_2D0 * sizeof(float)); // sizeof(VA_TYPE_2D0)
 	AddVertexQ2d0(x,z);
 }
 
 void CVertexArray::AddVertex2dT(float x, float y, float tx, float ty) {
-	CheckEnlargeDrawArray();
+	CheckEnlargeDrawArray(VA_SIZE_2DT * sizeof(float)); // sizeof(VA_TYPE_2DT)
 	AddVertexQ2dT(x, y, tx, ty);
 }
 
 void CVertexArray::AddVertex2dTC(float x, float y, float tx, float ty, const unsigned char* col) {
-	CheckEnlargeDrawArray();
+	CheckEnlargeDrawArray(VA_SIZE_2DTC * sizeof(float)); // sizeof(VA_TYPE_2DTC)
 	AddVertexQ2dTC(x, y, tx, ty, col);
 }
 

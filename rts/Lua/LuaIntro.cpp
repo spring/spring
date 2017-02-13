@@ -1,16 +1,15 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include <mutex>
-#include <boost/thread/mutex.hpp>
-
 #include "LuaIntro.h"
 
 #include "LuaInclude.h"
+#include "LuaArchive.h"
 #include "LuaUnsyncedCtrl.h"
 #include "LuaCallInCheck.h"
 #include "LuaConstGL.h"
 #include "LuaConstCMD.h"
 #include "LuaConstCMDTYPE.h"
+#include "LuaConstEngine.h"
 #include "LuaConstGame.h"
 #include "LuaInterCall.h"
 #include "LuaUnsyncedRead.h"
@@ -22,56 +21,32 @@
 #include "LuaIO.h"
 #include "LuaZip.h"
 #include "Rendering/IconHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
 #include "System/Log/ILog.h"
 #include "System/FileSystem/FileHandler.h"
-#include "System/FileSystem/VFSHandler.h"
-#include "System/Config/ConfigHandler.h"
 #include "System/FileSystem/FileSystem.h"
+#include "System/Threading/SpringThreading.h"
 #include "System/Util.h"
 
 
-CLuaIntro* LuaIntro = NULL;
+CLuaIntro* luaIntro = NULL;
 
 /******************************************************************************/
 /******************************************************************************/
 
-static boost::mutex m_singleton;
+static spring::mutex m_singleton;
 
-
-void CLuaIntro::LoadHandler()
-{
-	{
-		std::lock_guard<boost::mutex> lk(m_singleton);
-		if (LuaIntro) return;
-
-		LuaIntro = new CLuaIntro();
-	}
-
-	if (!LuaIntro->IsValid()) {
-		FreeHandler();
-	}
-}
-
-
-void CLuaIntro::FreeHandler()
-{
-	std::lock_guard<boost::mutex> lk(m_singleton);
-	if (!LuaIntro) return;
-
-	auto* inst = LuaIntro;
-	LuaIntro = NULL;
-	inst->KillLua();
-	delete inst;
-}
+DECL_LOAD_HANDLER(CLuaIntro, luaIntro)
+DECL_FREE_HANDLER(CLuaIntro, luaIntro)
 
 
 /******************************************************************************/
 
 CLuaIntro::CLuaIntro()
-: CLuaHandle("LuaIntro", LUA_HANDLE_ORDER_INTRO, true)
+: CLuaHandle("LuaIntro", LUA_HANDLE_ORDER_INTRO, true, false)
 {
-	LuaIntro = this;
+	luaIntro = this;
 
 	if (!IsValid()) {
 		return;
@@ -122,21 +97,23 @@ CLuaIntro::CLuaIntro()
 
 	// load the spring libraries
 	if (
-	    !AddEntriesToTable(L, "Spring",    LoadUnsyncedCtrlFunctions) ||
-	    !AddEntriesToTable(L, "Spring",    LoadUnsyncedReadFunctions) ||
-	    !AddEntriesToTable(L, "Spring",    LoadSyncedReadFunctions) ||
+	    !AddEntriesToTable(L, "Spring",    LoadUnsyncedCtrlFunctions)           ||
+	    !AddEntriesToTable(L, "Spring",    LoadUnsyncedReadFunctions)           ||
+	    !AddEntriesToTable(L, "Spring",    LoadSyncedReadFunctions  )           ||
 
-	    !AddEntriesToTable(L, "VFS",       LuaVFS::PushUnsynced)         ||
-	    !AddEntriesToTable(L, "VFS",       LuaZipFileReader::PushUnsynced) ||
-	    !AddEntriesToTable(L, "VFS",       LuaZipFileWriter::PushUnsynced) ||
-	    !AddEntriesToTable(L, "Script",      LuaScream::PushEntries)       ||
-	    //!AddEntriesToTable(L, "Script",      LuaInterCall::PushEntriesUnsynced) ||
-	    //!AddEntriesToTable(L, "Script",      LuaLobby::PushEntries)        ||
-	    !AddEntriesToTable(L, "gl",          LuaOpenGL::PushEntries)       ||
-	    !AddEntriesToTable(L, "GL",          LuaConstGL::PushEntries)      ||
-	    !AddEntriesToTable(L, "Game",        LuaConstGame::PushEntries)    ||
-	    !AddEntriesToTable(L, "CMD",         LuaConstCMD::PushEntries)     ||
-	    !AddEntriesToTable(L, "CMDTYPE",     LuaConstCMDTYPE::PushEntries) ||
+	    !AddEntriesToTable(L, "VFS",       LuaVFS::PushUnsynced)                ||
+	    !AddEntriesToTable(L, "VFS",       LuaZipFileReader::PushUnsynced)      ||
+	    !AddEntriesToTable(L, "VFS",       LuaZipFileWriter::PushUnsynced)      ||
+	    !AddEntriesToTable(L, "VFS",         LuaArchive::PushEntries)           ||
+	    !AddEntriesToTable(L, "Script",      LuaScream::PushEntries)            ||
+	    // !AddEntriesToTable(L, "Script",      LuaInterCall::PushEntriesUnsynced) ||
+	    // !AddEntriesToTable(L, "Script",      LuaLobby::PushEntries)             ||
+	    !AddEntriesToTable(L, "gl",          LuaOpenGL::PushEntries)            ||
+	    !AddEntriesToTable(L, "GL",          LuaConstGL::PushEntries)           ||
+	    !AddEntriesToTable(L, "Engine",      LuaConstEngine::PushEntries)       ||
+	    !AddEntriesToTable(L, "Game",        LuaConstGame::PushEntries)         ||
+	    !AddEntriesToTable(L, "CMD",         LuaConstCMD::PushEntries)          ||
+	    !AddEntriesToTable(L, "CMDTYPE",     LuaConstCMDTYPE::PushEntries)      ||
 	    !AddEntriesToTable(L, "LOG",         LuaUtils::PushLogEntries)
 	) {
 		KillLua();
@@ -160,11 +137,11 @@ CLuaIntro::CLuaIntro()
 
 CLuaIntro::~CLuaIntro()
 {
-	LuaIntro = NULL;
+	luaIntro = NULL;
 }
 
 
-bool CLuaIntro::RemoveSomeOpenGLFunctions(lua_State *L)
+bool CLuaIntro::RemoveSomeOpenGLFunctions(lua_State* L)
 {
 	// remove some spring opengl functions that don't work preloading
 	lua_getglobal(L, "gl"); {
@@ -197,7 +174,7 @@ bool CLuaIntro::RemoveSomeOpenGLFunctions(lua_State *L)
 }
 
 
-bool CLuaIntro::LoadUnsyncedCtrlFunctions(lua_State *L)
+bool CLuaIntro::LoadUnsyncedCtrlFunctions(lua_State* L)
 {
 	#define REGISTER_LUA_CFUNC(x) \
 		lua_pushstring(L, #x);      \
@@ -243,7 +220,7 @@ bool CLuaIntro::LoadUnsyncedCtrlFunctions(lua_State *L)
 }
 
 
-bool CLuaIntro::LoadUnsyncedReadFunctions(lua_State *L)
+bool CLuaIntro::LoadUnsyncedReadFunctions(lua_State* L)
 {
 	#define REGISTER_LUA_CFUNC(x) \
 		lua_pushstring(L, #x);      \
@@ -291,7 +268,7 @@ bool CLuaIntro::LoadUnsyncedReadFunctions(lua_State *L)
 }
 
 
-bool CLuaIntro::LoadSyncedReadFunctions(lua_State *L)
+bool CLuaIntro::LoadSyncedReadFunctions(lua_State* L)
 {
 	#define REGISTER_LUA_CFUNC(x) \
 		lua_pushstring(L, #x);      \
@@ -387,6 +364,12 @@ void CLuaIntro::LoadProgress(const std::string& msg, const bool replace_lastline
 	// call the routine
 	RunCallIn(L, cmdStr, 2, 0);
 }
+
+
+// Don't call GamePreload since it may be called concurrent
+// with other callins during loading.
+void CLuaIntro::GamePreload()
+{ }
 
 /******************************************************************************/
 /******************************************************************************/

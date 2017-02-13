@@ -6,6 +6,8 @@
 #include "myGL.h"
 #include "System/Platform/errorhandler.h"
 #include "System/Color.h"
+#include "System/float3.h"
+#include "System/type2.h"
 
 #define VA_INIT_VERTEXES 1000 // please don't change this, some files rely on specific initial sizes
 #define VA_INIT_STRIPS 100
@@ -79,7 +81,24 @@ public:
 
 public:
 	CVertexArray(unsigned int maxVerts = 1 << 16);
+	CVertexArray(const CVertexArray& va) = delete;
+	CVertexArray(CVertexArray&& va) { *this = std::move(va); }
+
 	virtual ~CVertexArray();
+
+	CVertexArray& operator = (const CVertexArray& va) = delete;
+	CVertexArray& operator = (CVertexArray&& va) {
+		drawArray     = va.drawArray;     va.drawArray     = nullptr;
+		drawArrayPos  = va.drawArrayPos;  va.drawArrayPos  = nullptr;
+		drawArraySize = va.drawArraySize; va.drawArraySize = nullptr;
+
+		stripArray     = va.stripArray;     va.stripArray     = nullptr;
+		stripArrayPos  = va.stripArrayPos;  va.stripArrayPos  = nullptr;
+		stripArraySize = va.stripArraySize; va.stripArraySize = nullptr;
+
+		maxVertices = va.maxVertices;
+		return *this;
+	}
 
 	bool IsReady() const;
 	void Initialize();
@@ -99,6 +118,7 @@ public:
 	inline void AddVertexTNT(const float3& p, float tx, float ty, const float3& n, const float3& st, const float3& tt); 
 	inline void AddVertex2d0(float x, float z);
 	inline void AddVertex2dT(float x, float y, float tx, float ty);
+	inline void AddVertex2dT(const float2 p, const float2 tc) { AddVertex2dT(p.x,p.y, tc.x,tc.y); }
 	inline void AddVertex2dTC(float x, float y, float tx, float ty, const unsigned char* c);
 
 	// same as the AddVertex... functions just without automated CheckEnlargeDrawArray
@@ -112,6 +132,7 @@ public:
 	inline void AddVertexQTC(const float3& p, float tx, float ty, const unsigned char* c);
 	inline void AddVertexQ2d0(float x, float z);
 	inline void AddVertexQ2dT(float x, float y, float tx, float ty);
+	inline void AddVertexQ2dT(const float2 p, const float2 tc) { AddVertexQ2dT(p.x,p.y, tc.x,tc.y); }
 	inline void AddVertexQ2dTC(float x, float y, float tx, float ty, const unsigned char* c);
 
 	// 3rd and newest API
@@ -146,7 +167,7 @@ public:
 protected:
 	void DrawArrays(const GLenum mode, const unsigned int stride);
 	void DrawArraysCallback(const GLenum mode, const unsigned int stride, StripCallback callback, void* data);
-	inline void CheckEnlargeDrawArray();
+	inline void CheckEnlargeDrawArray(size_t bytesNeeded);
 	void EnlargeStripArray();
 	void EnlargeDrawArray();
 	inline void CheckEndStrip();

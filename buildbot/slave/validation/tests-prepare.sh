@@ -9,7 +9,7 @@ mkdir -p "${DOWNLOADDIR}" "${CONTENT_DIR}/LuaUI/Widgets" "${CONTENT_DIR}/LuaUI/C
 
 PRDL="time ${TESTDIR}/usr/local/bin/pr-downloader --filesystem-writepath=$DOWNLOADDIR"
 # get the name of the latest versions
-GAME1=$($PRDL --download-game "$GAME" |egrep -o '\[Download\] (.*)' |cut -b 12-)
+GAME1=$($PRDL --download-game "$GAME" |egrep -o '\[Download\] (.*)' |head -n 1 |cut -b 12-)
 $PRDL --download-map "$MAP"
 
 echo "Creating script: test/validation/prepare.sh \"$GAME1\" \"$MAP\" \"$AI\" \"$AIVER\""
@@ -31,9 +31,6 @@ done
 cp -suv ${SOURCEDIR}/test/validation/LuaUI/Widgets/test.lua ${CONTENT_DIR}/LuaUI/Widgets/test.lua
 cp -v ${SOURCEDIR}/test/validation/LuaUI/Config/ZK_data.lua ${CONTENT_DIR}/LuaUI/Config/ZK_data.lua
 
-#copy default config for spring-headless
-cp -v ${SOURCEDIR}/cont/springrc-template-headless.txt ${CONTENT_DIR}/springsettings.cfg
-
 # adjust springsettings.cfg
 (
         # set datadir
@@ -44,5 +41,5 @@ cp -v ${SOURCEDIR}/cont/springrc-template-headless.txt ${CONTENT_DIR}/springsett
         echo "LinkIncomingPeakBandwidth = 0"
         echo "LinkIncomingSustainedBandwidth = 0"
         echo "LinkOutgoingBandwidth = 0"
-) >> ${CONTENT_DIR}/springsettings.cfg
+) > ${CONTENT_DIR}/springsettings.cfg
 

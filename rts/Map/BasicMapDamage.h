@@ -14,15 +14,12 @@ class CBasicMapDamage : public IMapDamage
 {
 public:
 	CBasicMapDamage();
-	~CBasicMapDamage();
 
 	void Explosion(const float3& pos, float strength, float radius);
 	void RecalcArea(int x1, int x2, int y1, int y2);
 	void Update();
 
 private:
-	void UpdateLos();
-
 	struct ExploBuilding {
 		/**
 		 * Searching for building pointers inside these on DependentDied
@@ -36,35 +33,26 @@ private:
 
 	struct Explo {
 		float3 pos;
+
 		float strength;
 		float radius;
-		std::vector<float> squares;
-		std::vector<ExploBuilding> buildings;
+
 		int ttl;
 		int x1, x2, y1, y2;
+
+		std::vector<float> squares;
+		std::vector<ExploBuilding> buildings;
 	};
 
-	std::deque<Explo*> explosions;
-
-	struct RelosSquare {
-		int x;
-		int y;
-		/// frame number
-		int neededUpdate;
-		int numUnits;
-	};
-	std::deque<RelosSquare> relosQue;
-
-	bool* inRelosQue;
-	int relosSize;
-	/// frame number when LOS-update-required was triggered
-	int neededLosUpdate;
-	std::deque<int> relosUnits;
+	std::deque<Explo> explosions;
 
 	static const unsigned int CRATER_TABLE_SIZE = 200;
+	static const unsigned int EXPLOSION_LIFETIME = 10;
 
 	float craterTable[CRATER_TABLE_SIZE + 1];
+	float rawHardness[/*CMapInfo::NUM_TERRAIN_TYPES*/ 256];
 	float invHardness[/*CMapInfo::NUM_TERRAIN_TYPES*/ 256];
+	float weightTable[9];
 };
 
 #endif /* _BASIC_MAP_DAMAGE_H */

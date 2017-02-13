@@ -117,17 +117,15 @@ public:
 
 	/** settings read from "MAP\LIGHT" section */
 	struct light_t {
-		float4 sunDir;     ///< Holds vector for the direction of the sun
-		float sunOrbitTime;
-		float sunStartAngle;
+		float4 sunDir;     ///< .xyz is direction vector; .w is intensity
 		float3 groundAmbientColor;
-		float3 groundSunColor;
+		float3 groundDiffuseColor;
 		float3 groundSpecularColor;
 		float  groundShadowDensity;
-		float4 unitAmbientColor;
-		float4 unitSunColor;
-		float  unitShadowDensity;
-		float3 unitSpecularColor;
+		float4 modelAmbientColor;
+		float4 modelDiffuseColor;
+		float  modelShadowDensity;
+		float3 modelSpecularColor;
 		float  specularExponent;
 	} light;
 
@@ -137,7 +135,7 @@ public:
 		float  fluidDensity;      ///< in kg/m^3
 		float  repeatX;           ///< (calculated default is in IWater)
 		float  repeatY;           ///< (calculated default is in IWater)
-		float  damage;
+		float  damage;            ///< scaled by (UNIT_SLOWUPDATE_RATE / GAME_SPEED)
 		float3 absorb;
 		float3 baseColor;
 		float3 minColor;
@@ -178,16 +176,29 @@ public:
 		std::string splatDetailTexName;
 		std::string grassShadingTexName;  // defaults to minimap texture
 		std::string skyReflectModTexName;
-		std::string detailNormalTexName;
+		std::string blendNormalsTexName;
 		std::string lightEmissionTexName;
 		std::string parallaxHeightTexName;
 
-		float minHeight;
-		bool  minHeightOverride;
-		float maxHeight;
-		bool  maxHeightOverride;
+		// Contains the splatted detail normal textures
+		std::vector<std::string> splatDetailNormalTexNames;
+
+		// SMF overrides
+		std::string minimapTexName;
+		std::string typemapTexName;
+		std::string metalmapTexName;
+		std::string grassmapTexName;
 
 		std::vector<std::string> smtFileNames;
+
+		float minHeight;
+		float maxHeight;
+		bool  minHeightOverride;
+		bool  maxHeightOverride;
+
+		// Controls whether the alpha channel of each splatted detail normal texture
+		// contains a diffuse channel, which behaves like the old splatted detail textures
+		bool splatDetailNormalDiffuseAlpha;
 	} smf;
 
 	/** SM3 specific settings
@@ -214,6 +225,7 @@ public:
 	} pfs;
 
 
+	//If this struct is changed, please fix CReadMap::CalcTypemapChecksum accordingly
 	struct TerrainType {
 		std::string name;
 		float hardness;

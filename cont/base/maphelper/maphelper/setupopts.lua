@@ -60,7 +60,7 @@ end
 local function CreateWantedOpts(optSel)
   local wantedOpts = {}
   if (type(optSel) == 'string') then
-    if (string
+	-- FIXME
   elseif (type(optSel) == 'boolean') then
     if (optSet) then
       AddBasic(wantedOpts)
@@ -135,7 +135,7 @@ local function ParseFloat3(value)
     else
       return nil
     end
-  elseif (t = 'string') then
+  elseif (t == 'string') then
     local s, e, v1, v2, v3 = value:find('^%s*(%S+)%s+(%S+)%s+(%S+)%s*')
     v1 = tonumber(v1)
     v2 = tonumber(v2)
@@ -176,7 +176,7 @@ end
 --   8: max
 --   9: step
 
-local function CreateOptionDefs(mapInfo, defaultVals)
+local function CreateOptionDefs(mapInfo, defValues)
 
   local optionDefs = {
 

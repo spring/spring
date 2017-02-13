@@ -9,10 +9,10 @@
 class ILoadSaveHandler
 {
 public:
-	static ILoadSaveHandler* Create();
+	static ILoadSaveHandler* Create(bool usecreg);
 
 protected:
-	std::string FindSaveFile(const std::string& file);
+	static std::string FindSaveFile(const std::string& file);
 
 public:
 	virtual ~ILoadSaveHandler();

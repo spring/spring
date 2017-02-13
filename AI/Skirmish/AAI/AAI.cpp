@@ -7,12 +7,33 @@
 // Released under GPL license: see LICENSE.html for more information.
 // -------------------------------------------------------------------------
 
-#include <set>
 #include <math.h>
-#include <stdio.h>
 #include <stdarg.h>
+#include <time.h>
 
 #include "AAI.h"
+#include "AAIBuildTable.h"
+#include "AAIAirForceManager.h"
+#include "AAIExecute.h"
+#include "AAIUnitTable.h"
+#include "AAIBuildTask.h"
+#include "AAIBrain.h"
+#include "AAIConstructor.h"
+#include "AAIAttackManager.h"
+#include "AIExport.h"
+#include "AAIConfig.h"
+#include "AAIMap.h"
+#include "AAIGroup.h"
+#include "AAISector.h"
+
+
+#include "System/Util.h"
+
+#include "LegacyCpp/IGlobalAICallback.h"
+#include "LegacyCpp/UnitDef.h"
+using namespace springLegacyAI;
+
+
 
 #include "CUtils/SimpleProfiler.h"
 #define AAI_SCOPED_TIMER(part) SCOPED_TIMER(part, profiler);
@@ -97,6 +118,9 @@ AAI::~AAI()
 	// save mod learning data
 	bt->SaveBuildTable(brain->GetGamePeriod(), map->map_type);
 
+	SafeDelete(am);
+	SafeDelete(af);
+
 	// delete unit groups
 	for(int i = 0; i <= MOBILE_CONSTRUCTOR; i++)
 	{
@@ -109,11 +133,9 @@ AAI::~AAI()
 	}
 
 
-	SafeDelete(am);
 	SafeDelete(brain);
 	SafeDelete(execute);
 	SafeDelete(ut);
-	SafeDelete(af);
 	SafeDelete(map);
 	SafeDelete(bt);
 	SafeDelete(profiler);
@@ -141,17 +163,7 @@ void AAI::InitAI(IGlobalAICallback* callback, int team)
 	// open log file
 	// this size equals the one used in "AIAICallback::GetValue(AIVAL_LOCATE_FILE_..."
 	char filename[2048];
-	char buffer[500];
-	char team_number[3];
-
-	SNPRINTF(team_number, 3, "%d", team);
-
-	STRCPY(buffer, MAIN_PATH);
-	STRCAT(buffer, AILOG_PATH);
-	STRCAT(buffer, "AAI_log_team_");
-	STRCAT(buffer, team_number);
-	STRCAT(buffer, ".txt");
-	ReplaceExtension (buffer, filename, sizeof(filename), ".txt");
+	SNPRINTF(filename, 2048, "%sAAI_log_team_%d.txt", AILOG_PATH, team);
 
 	cb->GetValue(AIVAL_LOCATE_FILE_W, filename);
 

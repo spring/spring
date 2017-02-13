@@ -16,20 +16,18 @@ end
 require "savetable.lua"
 
 local startTime = -1
-local cachedLoadTimes = VFS.FileExists("loadprogress_cached.lua") and VFS.Include("loadprogress_cached.lua") or { }
-local cachedTotalTime = (cachedLoadTimes[Game.mapName] or -1) * 0.97 --*0.97 cause else last rendered frame would show 99%
-
-
-local function mix(x,y,a)
-	return x * (1-a) + y * a
+local cachedLoadTimes = VFS.FileExists("loadprogress_cached.lua") and VFS.Include("loadprogress_cached.lua") or { [Game.modShortName]={} }
+if (cachedLoadTimes[Game.modShortName] == nil) then
+	cachedLoadTimes[Game.modShortName] = {}
 end
+local cachedTotalTime = (cachedLoadTimes[Game.modShortName][Game.mapName] or -1) * 0.97 --*0.97 cause else last rendered frame would show 99%
 
 
 function SG.GetLoadProgress()
 	if (startTime < 0) then startTime = os.clock() end
 
 	if cachedTotalTime > 0 then
-		return math.max(0.0, math.min(1.0, (os.clock() - startTime) / cachedTotalTime))
+		return math.clamp((os.clock() - startTime) / cachedTotalTime, 0.0, 1.0)
 	else
 		return -1
 	end
@@ -37,7 +35,7 @@ end
 
 
 function addon.Shutdown()
-	cachedLoadTimes[Game.mapName] = os.clock() - startTime
+	cachedLoadTimes[Game.modShortName][Game.mapName] = os.clock() - startTime
 	table.save(cachedLoadTimes, "loadprogress_cached.lua")
 end
 

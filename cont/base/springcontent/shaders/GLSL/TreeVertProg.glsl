@@ -14,9 +14,6 @@ uniform vec4 invMapSizePO2;
 #endif
 
 #if (defined(TREE_NEAR_SHADOW) || defined(TREE_DIST_SHADOW))
-uniform mat4 shadowMatrix;
-uniform vec4 shadowParams;
-
 varying float fogFactor;
 #endif
 
@@ -33,27 +30,21 @@ void main() {
 	gl_FrontColor.rgb = (gl_Normal.z * groundDiffuseColor.rgb) + groundAmbientColor.rgb;
 	gl_FrontColor.a = (gl_Vertex.y * alphaModifiers.x) + alphaModifiers.y;
 	#endif
+
 	#if (defined(TREE_DIST_SHADOW))
 	gl_FrontColor = gl_Color;
-	#endif
-
-	#if (defined(TREE_NEAR_SHADOW) || defined(TREE_DIST_SHADOW))
-	vec2 p17 = shadowParams.zz;
-	vec2 p18 = shadowParams.ww;
-
-	vec4 vertexShadowPos = shadowMatrix * vertexPos;
-		vertexShadowPos.st *= (inversesqrt(abs(vertexShadowPos.st) + p17) + p18);
-		vertexShadowPos.st += shadowParams.xy;
 	#endif
 
 	#if (defined(TREE_NEAR_BASIC))
 	gl_TexCoord[0] = gl_MultiTexCoord0;
 	gl_TexCoord[1] = vertexPos.xzyw * invMapSizePO2;
 	#endif
+
 	#if (defined(TREE_NEAR_SHADOW) || defined(TREE_DIST_SHADOW))
-	gl_TexCoord[0] = vertexShadowPos;
+	gl_TexCoord[2] = vertexPos;
 	gl_TexCoord[1] = gl_MultiTexCoord0;
 	#endif
+
 
 	gl_FogFragCoord = length((gl_ModelViewMatrix * vertexPos).xyz);
 	gl_Position = gl_ModelViewProjectionMatrix * vertexPos;

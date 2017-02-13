@@ -8,15 +8,19 @@
 
 class CLargeBeamLaserProjectile : public CWeaponProjectile
 {
-	CR_DECLARE(CLargeBeamLaserProjectile);
+	CR_DECLARE_DERIVED(CLargeBeamLaserProjectile)
 public:
 	CLargeBeamLaserProjectile(const ProjectileParams& params);
 
-	void Update();
-	void Draw();
-	void DrawOnMinimap(CVertexArray& lines, CVertexArray& points);
+	void Update() override;
+	void Draw() override;
+	void DrawOnMinimap(CVertexArray& lines, CVertexArray& points) override;
+
+	virtual int GetProjectilesCount() const override;
 
 private:
+	CLargeBeamLaserProjectile() { }
+
 	unsigned char coreColStart[4];
 	unsigned char edgeColStart[4];
 

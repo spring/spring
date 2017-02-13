@@ -1,6 +1,14 @@
 How to make a spring release
 ============================
 
+Prerequisite
+-----------
+
+1) Create at least two release candidates for testing and wait at least a week for feedback.
+https://springrts.com/wiki/Download_Testing
+
+2) Check if the bug tracker contains no cricitical bugs, especially
+https://springrts.com/mantis/roadmap_page.php
 
 Preparation
 -----------
@@ -10,57 +18,43 @@ Preparation
 2) check if all git submodules are up to date:
 	git submodule foreach git pull
    commit if needed.
-3) Create the release branch:
-		git checkout -b release
-		git push origin release
-   From now on, EVERYTHING that should to be in the release,
-   has to be commited on this branch.
-4) Write & update the change-log (doc/changelog.txt)
-5) Possibly add fixes
-~) You may want to merge the release branch into develop from time to time:
-		git checkout develop
-		git merge release --no-ff
+3) Write & update the change-log (doc/changelog.txt)
+4) Possibly add fixes
 
-For every month of development the release (and feature-freeze) branch should kept about one week.
-So if last release was 5 months ago, the release branch should stay for 5 weeks of feature-freeze / fixing bugs.
 
 Release Time
 ------------
 
-1) Merge the release branch into master:
+1) Merge the develop branch into master:
 		git checkout master
 		git reset --hard origin/master
-		git merge release --no-ff
+		git merge develop --no-ff
 2) Tag the release:
-		export REL_VERS=96.0
+		export REL_VERS=103.0
 		git tag -a -m "${REL_VERS} release [changed APIs: Lua, unitsync, AI]" ${REL_VERS}
-   Make sure it looks correct:
-		gitk master develop release &
-3) Merge the release branch into develop:
+3) switch back your local branch to develop so you don't commit into the master branch by accident:
 		git checkout develop
-		git fetch
-		git stash
-		# Do not forget this, somewhen later:
-		#git stash pop
-		git rebase origin/develop
-		git merge release --no-ff
 4) Tag the develop branch:
 		git tag -a -m "dev version after the ${REL_VERS} release" ${REL_VERS}.1
-5) POINT OF NO RETURN: Push to the main repo (and delete the release branch):
-		git push --tags origin develop :release master
-6) The Buildbot should automaticly start build the release on the buildslaves, wait for it until all builds are done,
+5) Make sure it looks correct:
+		gitk master develop
+6) POINT OF NO RETURN: Push to the main repo:
+		git push --tags origin develop master
+7) The Buildbot should automaticly start build the release on the buildslaves, wait for it until all builds are done,
    the OS-X buildslave will take about one hour or more!
-7) Write the news post for the springrts.com frontpage, while waiting for the
+8) Write the news post for the springrts.com frontpage, while waiting for the
    buildbot to compile the master branch.
-8) Check if everything went fine on http://buildbot.springrts.com/waterfall and fetch these archives:
-		wget http://springrts.com/dl/buildbot/default/master/${REL_VERS}/win32/spring_${REL_VERS}.exe
-		wget http://springrts.com/dl/buildbot/default/master/${REL_VERS}/win32/spring_${REL_VERS}_portable.7z
-		wget http://springrts.com/dl/buildbot/default/master/${REL_VERS}/osx64/spring_${REL_VERS}_MacOSX-10.6-SnowLeopard.zip
-		wget http://springrts.com/dl/buildbot/default/master/${REL_VERS}/linux32/spring_${REL_VERS}_minimal-portable-linux32-static.7z
-		wget http://springrts.com/dl/buildbot/default/master/${REL_VERS}/linux64/spring_${REL_VERS}_minimal-portable-linux64-static.7z
-		wget http://springrts.com/dl/buildbot/default/master/${REL_VERS}/source/spring_${REL_VERS}_src.tar.gz
-		wget http://springrts.com/dl/buildbot/default/master/${REL_VERS}/source/spring_${REL_VERS}_src.tar.lzma
-9) you should now have these files:
+9) Check if everything went fine on http://buildbot.springrts.com/waterfall and fetch these archives:
+		wget https://springrts.com/dl/buildbot/default/master/${REL_VERS}/win32/spring_${REL_VERS}_win32.exe
+		wget https://springrts.com/dl/buildbot/default/master/${REL_VERS}/win32/spring_${REL_VERS}_win32_portable.7z
+		wget https://springrts.com/dl/buildbot/default/master/${REL_VERS}/win32/spring_${REL_VERS}_win32-minimal-portable.7z
+		wget https://springrts.com/dl/buildbot/default/master/${REL_VERS}/win64/spring_${REL_VERS}_win64-minimal-portable.7z
+		wget https://springrts.com/dl/buildbot/default/master/${REL_VERS}/osx64/spring_${REL_VERS}_MacOSX-10.6-SnowLeopard.zip
+		wget https://springrts.com/dl/buildbot/default/master/${REL_VERS}/linux32/spring_${REL_VERS}_minimal-portable-linux32-static.7z
+		wget https://springrts.com/dl/buildbot/default/master/${REL_VERS}/linux64/spring_${REL_VERS}_minimal-portable-linux64-static.7z
+		wget https://springrts.com/dl/buildbot/default/master/${REL_VERS}/source/spring_${REL_VERS}_src.tar.gz
+		wget https://springrts.com/dl/buildbot/default/master/${REL_VERS}/source/spring_${REL_VERS}_src.tar.lzma
+10) you should now have these files:
 	* spring_${REL_VERS}.exe
 	* spring_${REL_VERS}_MacOSX-10.6-SnowLeopard.zip
 	* spring_${REL_VERS}_portable.7z
@@ -68,17 +62,37 @@ Release Time
 	* spring_${REL_VERS}_src.tar.lzma
 	Upload them to SF (replace USER with your SF account name):
 		rsync --progress -h spring_${REL_VERS}* USER,springrts@frs.sourceforge.net:/home/frs/project/s/sp/springrts/springrts/spring-${REL_VERS}/
-10) Post the news post.
-
-11) After a week, set it as default version on the server:
+11) Post the news post.
+12) add the release to mantis: ( ${REL_VERS}+git and ${REL_VERS + 1}) and mark old stable versions as obsolete.
+	https://springrts.com/mantis/manage_proj_page.php
+13) After a week, set it as default version on the server:
 	Ask a lobby admin to set the default version on the lobby server:
-		http://springrts.com/wiki/Uberserver#set_spring_version
+		https://springrts.com/wiki/Uberserver#set_spring_version
 	Update download page by chaning the version templates on the Wiki.
-		http://springrts.com/mediawiki/index.php?title=Template:EngineVersion:Stable:Major&action=edit
-		http://springrts.com/mediawiki/index.php?title=Template:EngineVersion:Stable:Minor&action=edit
-		http://springrts.com/mediawiki/index.php?title=Template:EngineVersion:Stable:ReleaseDate&action=edit
+		https://springrts.com/mediawiki/index.php?title=Template:EngineVersion:Stable:Major&action=edit
+		https://springrts.com/mediawiki/index.php?title=Template:EngineVersion:Stable:Minor&action=edit
+		https://springrts.com/mediawiki/index.php?title=Template:EngineVersion:Stable:ReleaseDate&action=edit
 	Update the default downloads for each platform on SF.
 		Installer .exe for Windows, .tar.gz for all other platforms.
 		Do so through the file(s) properties on this page:
 			https://sourceforge.net/projects/springrts/files/springrts/spring-${REL_VERS}/
 
+
+Windows reference
+-----------------
+git checkout master
+git reset --hard origin/master
+git merge develop --no-ff
+SET REL_VERS=103.0
+git tag -a -m "%REL_VERS% release" %REL_VERS%
+git checkout develop
+git tag -a -m "dev version after the %REL_VERS% release" %REL_VERS%.1
+wget https://springrts.com/dl/buildbot/default/master/%REL_VERS%/win32/spring_%REL_VERS%_win32.exe
+wget https://springrts.com/dl/buildbot/default/master/%REL_VERS%/win32/spring_%REL_VERS%_win32-minimal-portable.7z
+wget https://springrts.com/dl/buildbot/default/master/%REL_VERS%/win64/spring_%REL_VERS%_win64-minimal-portable.7z
+wget https://springrts.com/dl/buildbot/default/master/%REL_VERS%/linux32/spring_%REL_VERS%_minimal-portable-linux32-static.7z
+wget https://springrts.com/dl/buildbot/default/master/%REL_VERS%/linux64/spring_%REL_VERS%_minimal-portable-linux64-static.7z
+wget https://springrts.com/dl/buildbot/default/master/%REL_VERS%/source/spring_%REL_VERS%_src.tar.gz
+wget https://springrts.com/dl/buildbot/default/master/%REL_VERS%/source/spring_%REL_VERS%_src.tar.lzma
+
+rsync --progress -h spring_%REL_VERS%* ashdnazg,springrts@frs.sourceforge.net:/home/frs/project/s/sp/springrts/springrts/spring-%REL_VERS%/

@@ -12,7 +12,7 @@ ifdef::DEDICATED[{BINARY} - An open source RTS game engine - Dedicated Server]
 
 Synopsis
 --------
-ifndef::GUILESS[*{BINARY}* [-f|--fullscreen] [-w|--window] [-x|--xresolution 'SIZE'] [-y|--yresolution 'SIZE'] [-m|--minimise] [--safemode] [-s|--server 'IP_OR_HOSTNAME'] [-p|--projectiledump] [-t|--textureatlas] [--benchmark 'TIME' [--benchmarkstart 'TIME']] [-i|--isolation] [--isolation-dir 'PATH'] [-n|--name 'STRING'] [-C|--config 'FILE'] ['SCRIPT']]
+ifndef::GUILESS[*{BINARY}* [-f|--fullscreen] [-w|--window] [-m|--minimise] [--safemode] [-s|--server 'IP_OR_HOSTNAME'] [-p|--projectiledump] [-t|--textureatlas] [--benchmark 'TIME' [--benchmarkstart 'TIME']] [-i|--isolation] [--isolation-dir 'PATH'] [-n|--name 'STRING'] [-C|--config 'FILE'] ['SCRIPT']]
 ifdef::HEADLESS[*{BINARY}* [--safemode] [-s|--server 'IP_OR_HOSTNAME'] [-p|--projectiledump] [--benchmark 'TIME' [--benchmarkstart 'TIME']] [-i|--isolation] [--isolation-dir 'PATH'] [-n|--name 'STRING'] [-C|--config 'FILE'] SCRIPT]
 ifdef::DEDICATED[*{BINARY}* [-i|--isolation] [--isolation-dir 'PATH'] [-C|--config 'FILE'] SCRIPT]
 ifndef::DEDICATED[]
@@ -89,12 +89,6 @@ ifndef::GUILESS[  Run in fullscreen mode]
 ifndef::GUILESS[ ]
 ifndef::GUILESS[*-w, --window*::]
 ifndef::GUILESS[  Run in windowed mode]
-ifndef::GUILESS[ ]
-ifndef::GUILESS[*-x, --xresolution*::'SIZE'::]
-ifndef::GUILESS[  Set X resolution]
-ifndef::GUILESS[ ]
-ifndef::GUILESS[*-y, --yresolution*::'SIZE'::]
-ifndef::GUILESS[  Set Y resolution]
 ifndef::GUILESS[ ]
 ifndef::GUILESS[*-b, --minimise*::]
 ifndef::GUILESS[  Start in background (minimised)]
@@ -187,6 +181,15 @@ Enviroment Variables
 *SPRING_NOCOLOR*
   Same as `spring --nocolor`.
 
+Script
+------
+Can either be a:
+
+- Spring URL (spring://[username[:password]@]host[:port])
+- start script (often named script.txt)
+- replay file (*.sdfz)
+- save game (*.ssf)
+
 Portable Mode
 -------------
 An all-in-one-folder setup, which allows to run Spring without installation.
@@ -198,7 +201,8 @@ but it may open other files & directories for reading.
 Isolation Mode
 --------------
 Not to confuse with Portable Mode, this mode disables all automatic Data Dir scanning and limit reading & writing to a single folder.
-This is very usefull when games want to run separate from other Spring games.
+This is very useful when games want to run separate from other Spring games.
+Isolation mode can be enabled by placing an empty isolated.txt next to the spring executable or by setting SPRING_ISOLATED env var.
 
 Data Dirs
 --------
@@ -292,7 +296,7 @@ ifndef::DEDICATED[spring-dedicated(6)]
 Homepage
 --------
 More information about Spring can be found at
-link: http://springrts.com
+link: https://springrts.com
 
 Author
 ------

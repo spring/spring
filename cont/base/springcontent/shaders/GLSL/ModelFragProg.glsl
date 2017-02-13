@@ -14,10 +14,18 @@
 
 #if (USE_SHADOWS == 1)
   uniform sampler2DShadow shadowTex;
+  uniform mat4 shadowMatrix;
+  uniform vec4 shadowParams;
   uniform float shadowDensity;
 #endif
 
-  uniform vec4 teamColor; // alpha contains `far distance fading factor`
+  // in opaque passes tc.a is always 1.0 [all objects], and alphaPass is 0.0
+  // in alpha passes tc.a is either one of alphaValues.xyzw [for units] *or*
+  // contains a distance fading factor [for features], and alphaPass is 1.0
+  // texture alpha-masking is done in both passes
+  uniform vec4 teamColor;
+  uniform vec4 nanoColor;
+  // uniform float alphaPass;
 
   varying vec4 vertexWorldPos;
   varying vec3 cameraDir;
@@ -30,56 +38,31 @@
   varying vec3 normalv;
 #endif
 
-uniform int numModelDynLights;
 
 
-void main(void)
-{
-#ifdef use_normalmapping
-	vec2 tc = gl_TexCoord[0].st;
-	#ifdef flip_normalmap
-		tc.t = 1.0 - tc.t;
+float GetShadowCoeff(float zBias) {
+	#if (USE_SHADOWS == 1)
+	vec4 vertexShadowPos = shadowMatrix * vertexWorldPos;
+		vertexShadowPos.xy *= (inversesqrt(abs(vertexShadowPos.xy) + shadowParams.zz) + shadowParams.ww);
+		vertexShadowPos.xy += shadowParams.xy;
+		vertexShadowPos.z  += zBias;
+
+	return mix(1.0, shadow2DProj(shadowTex, vertexShadowPos).r, shadowDensity);
 	#endif
-	vec3 nvTS  = normalize((texture2D(normalMap, tc).xyz - 0.5) * 2.0);
-	vec3 normal = tbnMatrix * nvTS;
-#else
-	vec3 normal = normalize(normalv);
-#endif
-	vec3 light = max(dot(normal, sunDir), 0.0) * sunDiffuse + sunAmbient;
+	return 1.0;
+}
 
-	vec4 diffuse     = texture2D(textureS3o1, gl_TexCoord[0].st);
-	vec4 extraColor  = texture2D(textureS3o2, gl_TexCoord[0].st);
+vec3 DynamicLighting(vec3 normal, vec3 diffuse, vec3 specular) {
+	vec3 rgb = vec3(0.0);
 
-	vec3 reflectDir = reflect(cameraDir, normal);
-	vec3 specular   = textureCube(specularTex, reflectDir).rgb * extraColor.g * 4.0;
-	vec3 reflection = textureCube(reflectTex,  reflectDir).rgb;
-
-#if (USE_SHADOWS == 1)
-	float shadow = shadow2DProj(shadowTex, gl_TexCoord[1]).r;
-	shadow      = 1.0 - (1.0 - shadow) * shadowDensity;
-	vec3 shade  = mix(sunAmbient, light, shadow);
-	reflection  = mix(shade, reflection, extraColor.g); // reflection
-	reflection += extraColor.rrr; // self-illum
-	specular   *= shadow;
-#else
-	reflection  = mix(light, reflection, extraColor.g); // reflection
-	reflection += extraColor.rrr; // self-illum
-#endif
-
-	#if (DEFERRED_MODE == 0)
-	gl_FragColor     = diffuse;
-	gl_FragColor.rgb = mix(gl_FragColor.rgb, teamColor.rgb, gl_FragColor.a); // teamcolor
-	gl_FragColor.rgb = gl_FragColor.rgb * reflection + specular;
-	#endif
-
-	#if (DEFERRED_MODE == 0 && MAX_DYNAMIC_MODEL_LIGHTS > 0)
 	for (int i = 0; i < MAX_DYNAMIC_MODEL_LIGHTS; i++) {
 		vec3 lightVec = gl_LightSource[BASE_DYNAMIC_MODEL_LIGHT + i].position.xyz - vertexWorldPos.xyz;
 		vec3 halfVec = gl_LightSource[BASE_DYNAMIC_MODEL_LIGHT + i].halfVector.xyz;
 
-		float lightRadius = gl_LightSource[BASE_DYNAMIC_MODEL_LIGHT + i].constantAttenuation;
+		float lightRadius   = gl_LightSource[BASE_DYNAMIC_MODEL_LIGHT + i].constantAttenuation;
 		float lightDistance = length(lightVec);
-		float lightScale = (lightDistance > lightRadius)? 0.0: 1.0;
+		float lightScale    = float(lightDistance <= lightRadius);
+
 		float lightCosAngDiff = clamp(dot(normal, lightVec / lightDistance), 0.0, 1.0);
 		float lightCosAngSpec = clamp(dot(normal, normalize(halfVec)), 0.0, 1.0);
 		#ifdef OGL_SPEC_ATTENUATION
@@ -96,24 +79,74 @@ void main(void)
 		float vectorDot = dot((-lightVec / lightDistance), gl_LightSource[BASE_DYNAMIC_MODEL_LIGHT + i].spotDirection);
 		float cutoffDot = gl_LightSource[BASE_DYNAMIC_MODEL_LIGHT + i].spotCosCutoff;
 
-		lightScale *= ((vectorDot < cutoffDot)? 0.0: 1.0);
+		lightScale *= float(vectorDot >= cutoffDot);
 
-		gl_FragColor.rgb += (lightScale *                                  gl_LightSource[BASE_DYNAMIC_MODEL_LIGHT + i].ambient.rgb);
-		gl_FragColor.rgb += (lightScale * lightAttenuation * (diffuse.rgb * gl_LightSource[BASE_DYNAMIC_MODEL_LIGHT + i].diffuse.rgb * lightCosAngDiff));
-		gl_FragColor.rgb += (lightScale * lightAttenuation * (specular.rgb * gl_LightSource[BASE_DYNAMIC_MODEL_LIGHT + i].specular.rgb * pow(lightCosAngSpec, 4.0)));
+		rgb += (lightScale *                                  gl_LightSource[BASE_DYNAMIC_MODEL_LIGHT + i].ambient.rgb);
+		rgb += (lightScale * lightAttenuation * (diffuse.rgb * gl_LightSource[BASE_DYNAMIC_MODEL_LIGHT + i].diffuse.rgb * lightCosAngDiff));
+		rgb += (lightScale * lightAttenuation * (specular.rgb * gl_LightSource[BASE_DYNAMIC_MODEL_LIGHT + i].specular.rgb * pow(lightCosAngSpec, 4.0)));
 	}
+
+	return rgb;
+}
+
+void main(void)
+{
+#ifdef use_normalmapping
+	vec2 tc = gl_TexCoord[0].st;
+	#ifdef flip_normalmap
+		tc.t = 1.0 - tc.t;
+	#endif
+	vec3 nvTS  = normalize((texture2D(normalMap, tc).xyz - 0.5) * 2.0);
+	vec3 normal = tbnMatrix * nvTS;
+#else
+	vec3 normal = normalize(normalv);
+#endif
+
+	vec3 light = max(dot(normal, sunDir), 0.0) * sunDiffuse + sunAmbient;
+
+	vec4 diffuse     = texture2D(textureS3o1, gl_TexCoord[0].st);
+	vec4 extraColor  = texture2D(textureS3o2, gl_TexCoord[0].st);
+
+	vec3 reflectDir = reflect(cameraDir, normal);
+	vec3 specular   = textureCube(specularTex, reflectDir).rgb * extraColor.g * 4.0;
+	vec3 reflection = textureCube(reflectTex,  reflectDir).rgb;
+
+
+	float shadow = GetShadowCoeff(-0.00005);
+	float alpha = teamColor.a * extraColor.a; // apply one-bit mask
+
+	// no highlights if in shadow; decrease light to ambient level
+	specular *= shadow;
+	light = mix(sunAmbient, light, shadow);
+
+
+	reflection  = mix(light, reflection, extraColor.g); // reflection
+	reflection += extraColor.rrr; // self-illum
+
+	#if (DEFERRED_MODE == 0)
+	gl_FragColor     = diffuse;
+	gl_FragColor.rgb = mix(gl_FragColor.rgb, teamColor.rgb, gl_FragColor.a); // teamcolor
+	gl_FragColor.rgb = gl_FragColor.rgb * reflection + specular;
+	#endif
+
+	#if (DEFERRED_MODE == 0 && MAX_DYNAMIC_MODEL_LIGHTS > 0)
+	gl_FragColor.rgb += DynamicLighting(normal, diffuse.rgb, specular);
 	#endif
 
 	#if (DEFERRED_MODE == 1)
-	gl_FragData[GBUFFER_NORMTEX_IDX] = vec4(normal, 1.0);
-	gl_FragData[GBUFFER_DIFFTEX_IDX] = vec4(mix(diffuse.rgb, teamColor.rgb, diffuse.a), extraColor.a * teamColor.a);
+	gl_FragData[GBUFFER_NORMTEX_IDX] = vec4((normal + vec3(1.0, 1.0, 1.0)) * 0.5, 1.0);
+	gl_FragData[GBUFFER_DIFFTEX_IDX] = vec4(mix(                         diffuse.rgb, teamColor.rgb,   diffuse.a), alpha);
+	gl_FragData[GBUFFER_DIFFTEX_IDX] = vec4(mix(gl_FragData[GBUFFER_DIFFTEX_IDX].rgb, nanoColor.rgb, nanoColor.a), alpha);
 	// do not premultiply reflection, leave it to the deferred lighting pass
-	// gl_FragData[GBUFFER_DIFFTEX_IDX] = vec4(mix(diffuse.rgb, teamColor.rgb, diffuse.a) * reflection, extraColor.a * teamColor.a);
-	gl_FragData[GBUFFER_SPECTEX_IDX] = vec4(specular, 1.0);
-	gl_FragData[GBUFFER_EMITTEX_IDX] = vec4(extraColor.r, extraColor.r, extraColor.r, 1.0);
+	// gl_FragData[GBUFFER_DIFFTEX_IDX] = vec4(mix(diffuse.rgb, teamColor.rgb, diffuse.a) * reflection, alpha);
+	// allows standard-lighting reconstruction by lazy LuaMaterials using us
+	gl_FragData[GBUFFER_SPECTEX_IDX] = vec4(extraColor.rgb, alpha);
+	gl_FragData[GBUFFER_EMITTEX_IDX] = vec4(0.0, 0.0, 0.0, 0.0);
 	gl_FragData[GBUFFER_MISCTEX_IDX] = vec4(0.0, 0.0, 0.0, 0.0);
 	#else
 	gl_FragColor.rgb = mix(gl_Fog.color.rgb, gl_FragColor.rgb, fogFactor); // fog
-	gl_FragColor.a   = extraColor.a * teamColor.a;
+	gl_FragColor.rgb = mix(gl_FragColor.rgb, nanoColor.rgb, nanoColor.a); // wireframe or polygon color
+	gl_FragColor.a   = alpha;
 	#endif
 }
+

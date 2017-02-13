@@ -52,10 +52,10 @@ bool GetJREPathFromConfig(char* path, size_t pathSize, const char* configFile)
 			JRE_PATH_PROPERTY);
 
 	if (jvmLocation == NULL) {
-		simpleLog_logL(SIMPLELOG_LEVEL_FINEST, "JRE not found in config file!");
+		simpleLog_logL(LOG_LEVEL_DEBUG, "JRE not found in config file!");
 		return false;
 	} else {
-		simpleLog_logL(SIMPLELOG_LEVEL_FINER, "JRE found in config file!");
+		simpleLog_logL(LOG_LEVEL_NOTICE, "JRE found in config file!");
 		STRCPY_T(path, pathSize, jvmLocation);
 		return true;
 	}
@@ -81,7 +81,7 @@ bool GetJREPathFromConfig(char* path, size_t pathSize, const char* configFile)
 			line_size--;
 		}
 
-		simpleLog_logL(SIMPLELOG_LEVEL_FINER,
+		simpleLog_logL(LOG_LEVEL_NOTICE,
 				"Fetched JRE location from \"%s\"!", configFile);
 
 		if (line_size > 0 && *line == '/') {
@@ -115,8 +115,10 @@ bool GetJREPathFromEnvVars(char* path, size_t pathSize, const char* arch)
 		if (envPath != NULL) {
 			found = GetJREPathFromBase(path, pathSize, envPath, arch);
 			if (found) {
-				simpleLog_logL(SIMPLELOG_LEVEL_FINER, "JRE found in env var \"%s\"!", possLoc[l]);
+				simpleLog_logL(LOG_LEVEL_NOTICE, "JRE found in env var \"%s\"!", possLoc[l]);
 				goto locSearchEnd;
+			} else {
+				simpleLog_logL(LOG_LEVEL_WARNING, "Unusable JRE from env var \"%s\"=\"%s\"!", possLoc[l], envPath);
 			}
 		}
 	}
@@ -162,7 +164,7 @@ bool GetJREPath(char* path, size_t pathSize, const char* configFile,
 
 int main(int argc, const char* argv[]) {
 
-	simpleLog_init(NULL, false, SIMPLELOG_LEVEL_FINEST, false);
+	//simpleLog_init(NULL, false, LOG_LEVEL_DEBUG, false);
 
 	static const size_t path_sizeMax = 1024;
 	char path[path_sizeMax];

@@ -8,18 +8,20 @@
 
 class CFireBallProjectile : public CWeaponProjectile
 {
-	CR_DECLARE(CFireBallProjectile);
-	CR_DECLARE_SUB(Spark);
+	CR_DECLARE_DERIVED(CFireBallProjectile)
+	CR_DECLARE_SUB(Spark)
 public:
 	CFireBallProjectile(const ProjectileParams& params);
 
-	void Draw();
-	void Update();
+	void Draw() override;
+	void Update() override;
 
-	void Collision();
+	virtual int GetProjectilesCount() const override;
+
+	void Collision() override;
 
 	struct Spark {
-		CR_DECLARE_STRUCT(Spark);
+		CR_DECLARE_STRUCT(Spark)
 		float3 pos;
 		float3 speed;
 		float size;
@@ -29,6 +31,8 @@ public:
 	typedef std::deque<Spark> spark_list_type;
 
 private:
+	CFireBallProjectile() { }
+
 	spark_list_type sparks;
 
 	void EmitSpark();

@@ -12,31 +12,21 @@ namespace springLegacyAI {
 
 class CAIInitEvent : public CAIEvent {
 public:
-	CAIInitEvent(const SInitEvent& event)
-		: event(event)
-		, wrappedClb(new CAIGlobalAICallback(event.callback, event.skirmishAIId))
-		{}
+	CAIInitEvent(const SInitEvent& event): event(event) {}
 
-	~CAIInitEvent() {
-		// do not delete wrappedClb here.
-		// it should be deleted in AIAI.cpp
-	}
-
+	#if 0
 	void Run(IGlobalAI& ai, IGlobalAICallback* globalAICallback = NULL) {
-
-		const int teamId = wrappedClb->GetInnerCallback()->SkirmishAI_getTeamId(event.skirmishAIId);
-		ai.InitAI(wrappedClb, teamId);
+		ai.InitAI(wrappedClb, wrappedClb->GetInnerCallback()->SkirmishAI_getTeamId(event.skirmishAIId));
 	}
-
-	IGlobalAICallback* GetWrappedGlobalAICallback() {
-		return wrappedClb;
-	}
+	#else
+	// done in AIAI::handleEvent (cleaner)
+	void Run(IGlobalAI& ai, IGlobalAICallback* globalAICallback = NULL) {}
+	#endif
 
 private:
 	SInitEvent event;
-	CAIGlobalAICallback* wrappedClb;
 };
 
-} // namespace springLegacyAI
+}; // namespace springLegacyAI
 
 #endif // _AI_INIT_EVENT_H

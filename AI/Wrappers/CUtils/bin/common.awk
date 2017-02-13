@@ -300,7 +300,7 @@ function convertJNIToSignatureType(jniType__common) {
 	signatureType__common = jniType__common;
 
 	isArray = sub(/Array/, "", signatureType__common);
-	
+
 	sub(/void/, "V", signatureType__common);
 
 	sub(/jboolean/, "Z", signatureType__common);
@@ -323,7 +323,7 @@ function convertJNIToSignatureType(jniType__common) {
 
 # Awaits this format:	int / float / bool[] / char*
 # Returns this format:	jint / jfloat / jbooleanArray / jstring
-function convertCToJNIType(cType__common) {
+function convertCToJNIType(cType__common, cName) {
 
 	jniType__common = cType__common;
 
@@ -335,7 +335,11 @@ function convertCToJNIType(cType__common) {
 	jniType__common = trim(jniType__common);
 
 	isComplex__common = 0;
-	isComplex__common += sub(/^char\*/,  "jstring",   jniType__common);
+	if (match(cName, /^ret_/)) {
+		isComplex__common += sub(/^char\*/, "jobject",  jniType__common);
+	} else {
+		isComplex__common += sub(/^char\*/, "jstring",  jniType__common);
+	}
 
 	isPrimitive__common = 0;
 	isPrimitive__common += sub(/bool/,          "jboolean", jniType__common);
@@ -367,7 +371,7 @@ function convertJNIToJavaType(jniType__common) {
 	javaType__common = jniType__common;
 
 	sub(/Array/, "[]", javaType__common);
-	
+
 	sub(/void/, "void", javaType__common);
 
 	sub(/jboolean/, "boolean", javaType__common);
@@ -379,8 +383,9 @@ function convertJNIToJavaType(jniType__common) {
 	sub(/jlong/,    "long",    javaType__common);
 	sub(/jshort/,   "short",   javaType__common);
 
-	sub(/jstring/, "String", javaType__common);
-	sub(/jobject/, "String", javaType__common);
+	sub(/jstring/,    "String",       javaType__common);
+	sub(/jobject\[]/, "String[]",     javaType__common);
+	sub(/jobject/,    "StringBuffer", javaType__common);
 
 	return javaType__common;
 }

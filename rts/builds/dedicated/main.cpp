@@ -11,6 +11,10 @@
 #include "Game/GameData.h"
 #include "Game/GameVersion.h"
 #include "Net/GameServer.h"
+#include "System/Exceptions.h"
+#include "System/GlobalConfig.h"
+#include "System/GlobalRNG.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/FileSystem/DataDirLocater.h"
 #include "System/FileSystem/FileSystemInitializer.h"
 #include "System/FileSystem/ArchiveScanner.h"
@@ -21,16 +25,12 @@
 #include "System/Log/ILog.h"
 #include "System/Log/DefaultFilter.h"
 #include "System/LogOutput.h"
-#include "System/Platform/CmdLineParams.h"
+#include "System/Misc/SpringTime.h"
 #include "System/Platform/CrashHandler.h"
 #include "System/Platform/errorhandler.h"
-#include "System/Config/ConfigHandler.h"
-#include "System/Misc/SpringTime.h"
-#include "System/GlobalConfig.h"
-#include "System/Exceptions.h"
-#include "System/UnsyncedRNG.h"
+#include "System/Platform/Threading.h"
 
-
+#include <gflags/gflags.h>
 
 #define LOG_SECTION_DEDICATED_SERVER "DedicatedServer"
 LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_DEDICATED_SERVER)
@@ -41,89 +41,66 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_DEDICATED_SERVER)
 #endif
 #define LOG_SECTION_CURRENT LOG_SECTION_DEDICATED_SERVER
 
+DEFINE_bool_EX  (sync_version,     "sync-version",     false, "Display program sync version (for online gaming)");
+DEFINE_string   (config,                               "",    "Exclusive configuration file");
+DEFINE_bool_EX  (list_config_vars, "list-config-vars", false, "Dump a list of config vars and meta data to stdout");
+DEFINE_bool     (isolation,                            false, "Limit the data-dir (games & maps) scanner to one directory");
+DEFINE_string_EX(isolation_dir,    "isolation-dir",    "",    "Specify the isolation-mode data-dir (see --isolation)");
+DEFINE_bool     (nocolor,                              false, "Disables colorized stdout");
+DEFINE_uint32   (sleeptime,                            1,     "Number of seconds to sleep between game-over checks");
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
-void ParseCmdLine(int argc, char* argv[], std::string* script_txt)
+void ParseCmdLine(int argc, char* argv[], std::string& scriptName)
 {
 	#undef  LOG_SECTION_CURRENT
 	#define LOG_SECTION_CURRENT LOG_SECTION_DEFAULT
 
-	std::string binaryname = argv[0];
-
-	CmdLineParams cmdline(argc, argv);
-	cmdline.SetUsageDescription("Usage: " + binaryname + " [options] path_to_script.txt");
-	cmdline.AddSwitch(0,   "sync-version",       "Display program sync version (for online gaming)");
-	cmdline.AddString('C', "config",             "Exclusive configuration file");
-	cmdline.AddSwitch(0,   "list-config-vars",   "Dump a list of config vars and meta data to stdout");
-	cmdline.AddSwitch('i', "isolation",          "Limit the data-dir (games & maps) scanner to one directory");
-	cmdline.AddString(0,   "isolation-dir",      "Specify the isolation-mode data-dir (see --isolation)");
-	cmdline.AddSwitch(0,   "nocolor",            "Disables colorized stdout");
-	cmdline.AddSwitch('q', "quiet",              "Ignore unrecognized arguments");
-
-	try {
-		cmdline.Parse();
-	} catch (const CmdLineParams::unrecognized_option& err) {
-		LOG_L(L_ERROR, "%s\n", err.what());
-		if (!cmdline.IsSet("quiet")) {
-			cmdline.PrintUsage();
-			exit(EXIT_FAILURE);
-		}
-	}
-
 #ifndef WIN32
-	if (!cmdline.IsSet("nocolor") && (getenv("SPRING_NOCOLOR") == NULL)) {
+	if (!FLAGS_nocolor && (getenv("SPRING_NOCOLOR") == NULL)) {
 		// don't colorize, if our output is piped to a diff tool or file
 		if (isatty(fileno(stdout)))
 			log_console_colorizedOutput(true);
 	}
 #endif
-
-	if (cmdline.IsSet("help")) {
-		cmdline.PrintUsage();
-		exit(0);
-	}
-	if (cmdline.IsSet("version")) {
-		LOG("%s", (SpringVersion::GetFull()).c_str());
-		exit(0);
-	}
-	if (cmdline.IsSet("sync-version")) {
+	if (FLAGS_sync_version) {
 		LOG("%s", (SpringVersion::GetSync()).c_str());
 		exit(0);
 	}
 
+	if (argc >= 2) {
+		scriptName = argv[1];
+	}
 
-	*script_txt = cmdline.GetInputFile();
-	if (script_txt->empty() && !cmdline.IsSet("list-config-vars")) {
-		cmdline.PrintUsage();
+	if (scriptName.empty() && !FLAGS_list_config_vars) {
+		gflags::ShowUsageWithFlags(argv[0]);
 		exit(1);
 	}
 
-	if (cmdline.IsSet("isolation")) {
+	if (FLAGS_isolation) {
 		dataDirLocater.SetIsolationMode(true);
 	}
 
-	if (cmdline.IsSet("isolation-dir")) {
+	if (!FLAGS_isolation_dir.empty()) {
 		dataDirLocater.SetIsolationMode(true);
-		dataDirLocater.SetIsolationModeDir(cmdline.GetString("isolation-dir"));
+		dataDirLocater.SetIsolationModeDir(FLAGS_isolation_dir);
 	}
 
-	const std::string configSource = cmdline.IsSet("config") ? cmdline.GetString("config") : "";
 
-	if (cmdline.IsSet("list-config-vars")) {
+	if (FLAGS_list_config_vars) {
 		LOG_DISABLE();
-		FileSystemInitializer::PreInitializeConfigHandler(configSource);
+		FileSystemInitializer::PreInitializeConfigHandler(FLAGS_config);
 		FileSystemInitializer::InitializeLogOutput();
 		LOG_ENABLE();
 		ConfigVariable::OutputMetaDataMap();
 		exit(0);
 	}
 
-	LOG("Run: %s", cmdline.GetCmdLine().c_str());
-	FileSystemInitializer::PreInitializeConfigHandler(configSource);
+	//LOG("Run: %s", cmdLine.GetCmdLine().c_str());
+	FileSystemInitializer::PreInitializeConfigHandler(FLAGS_config);
 
 	#undef  LOG_SECTION_CURRENT
 	#define LOG_SECTION_CURRENT LOG_SECTION_DEDICATED_SERVER
@@ -133,6 +110,7 @@ void ParseCmdLine(int argc, char* argv[], std::string* script_txt)
 
 int main(int argc, char* argv[])
 {
+	Threading::SetMainThread();
 	try {
 		spring_clock::PushTickRate();
 		// initialize start time (can safely be done before SDL_Init
@@ -143,8 +121,12 @@ int main(int argc, char* argv[])
 
 		std::string scriptName;
 		std::string scriptText;
+		std::string binaryName = argv[0];
 
-		ParseCmdLine(argc, argv, &scriptName);
+		gflags::SetUsageMessage("Usage: " + binaryName + " [options] path_to_script.txt");
+		gflags::SetVersionString(SpringVersion::GetFull());
+		gflags::ParseCommandLineFlags(&argc, &argv, true);
+		ParseCmdLine(argc, argv, scriptName);
 
 		GlobalConfig::Instantiate();
 		FileSystemInitializer::InitializeLogOutput();
@@ -157,7 +139,12 @@ int main(int argc, char* argv[])
 		LOG("loading script from file: %s", scriptName.c_str());
 
 		CGameServer* server = NULL;
-		ClientSetup settings;
+
+		// server will take ownership of these
+		std::shared_ptr<ClientSetup> dsClientSetup(new ClientSetup());
+		std::shared_ptr<GameData> dsGameData(new GameData());
+		std::shared_ptr<CGameSetup> dsGameSetup(new CGameSetup());
+
 		CFileHandler fh(scriptName);
 
 		if (!fh.FileExists())
@@ -166,49 +153,49 @@ int main(int argc, char* argv[])
 		if (!fh.LoadStringData(scriptText))
 			throw content_error("script cannot be read: " + scriptName);
 
-		settings.LoadFromStartScript(scriptText);
-		gameSetup = new CGameSetup(); // to store the gamedata inside
+		dsClientSetup->LoadFromStartScript(scriptText);
 
-		if (!gameSetup->Init(scriptText)) {
+		if (!dsGameSetup->Init(scriptText)) {
 			// read the script provided by cmdline
 			LOG_L(L_ERROR, "failed to load script %s", scriptName.c_str());
 			return 1;
 		}
 
 		// Create the server, it will run in a separate thread
-		GameData data;
-		UnsyncedRNG rng;
+		CGlobalUnsyncedRNG rng;
 
-		const unsigned seed = time(NULL) % ((spring_gettime().toNanoSecsi() + 1) * 9007);
-		rng.Seed(seed);
-		data.SetRandomSeed(rng.RandInt());
+		const unsigned sleepTime = FLAGS_sleeptime;
+		const unsigned randSeed = time(NULL) % ((spring_gettime().toNanoSecsi() + 1) * 9007);
+
+		rng.Seed(randSeed);
+		dsGameData->SetRandomSeed(rng.NextInt());
 
 		//  Use script provided hashes if they exist
-		if (gameSetup->mapHash != 0) {
-			data.SetMapChecksum(gameSetup->mapHash);
-			gameSetup->LoadStartPositions(false); // reduced mode
+		if (dsGameSetup->mapHash != 0) {
+			dsGameData->SetMapChecksum(dsGameSetup->mapHash);
+			dsGameSetup->LoadStartPositions(false); // reduced mode
 		} else {
-			data.SetMapChecksum(archiveScanner->GetArchiveCompleteChecksum(gameSetup->mapName));
+			dsGameData->SetMapChecksum(archiveScanner->GetArchiveCompleteChecksum(dsGameSetup->mapName));
 
-			CFileHandler f("maps/" + gameSetup->mapName);
+			CFileHandler f("maps/" + dsGameSetup->mapName);
 			if (!f.FileExists()) {
-				vfsHandler->AddArchiveWithDeps(gameSetup->mapName, false);
+				vfsHandler->AddArchiveWithDeps(dsGameSetup->mapName, false);
 			}
-			gameSetup->LoadStartPositions(); // full mode
+			dsGameSetup->LoadStartPositions(); // full mode
 		}
 
-		if (gameSetup->modHash != 0) {
-			data.SetModChecksum(gameSetup->modHash);
+		if (dsGameSetup->modHash != 0) {
+			dsGameData->SetModChecksum(dsGameSetup->modHash);
 		} else {
-			const std::string& modArchive = archiveScanner->ArchiveFromName(gameSetup->modName);
+			const std::string& modArchive = archiveScanner->ArchiveFromName(dsGameSetup->modName);
 			const unsigned int modCheckSum = archiveScanner->GetArchiveCompleteChecksum(modArchive);
-			data.SetModChecksum(modCheckSum);
+			dsGameData->SetModChecksum(modCheckSum);
 		}
 
 		LOG("starting server...");
 
-		data.SetSetup(gameSetup->gameSetupText);
-		server = new CGameServer(settings.hostIP, settings.hostPort, &data, gameSetup);
+		dsGameData->SetSetupText(dsGameSetup->setupText);
+		server = new CGameServer(dsClientSetup, dsGameData, dsGameSetup);
 
 		while (!server->HasGameID()) {
 			// wait until gameID has been generated or
@@ -217,7 +204,7 @@ int main(int argc, char* argv[])
 				break;
 			}
 
-			spring_secs(1).sleep();
+			spring_sleep(spring_secs(sleepTime));
 		}
 
 		while (!server->HasFinished()) {
@@ -226,17 +213,16 @@ int main(int argc, char* argv[])
 			if (printData) {
 				printData = false;
 
-				const boost::scoped_ptr<CDemoRecorder>& demoRec = server->GetDemoRecorder();
-				const boost::uint8_t* gameID = (demoRec->GetFileHeader()).gameID;
+				const std::unique_ptr<CDemoRecorder>& demoRec = server->GetDemoRecorder();
+				const std::uint8_t* gameID = (demoRec->GetFileHeader()).gameID;
 
 				LOG("recording demo: %s", (demoRec->GetName()).c_str());
-				LOG("using mod: %s", (gameSetup->modName).c_str());
-				LOG("using map: %s", (gameSetup->mapName).c_str());
+				LOG("using mod: %s", (dsGameSetup->modName).c_str());
+				LOG("using map: %s", (dsGameSetup->mapName).c_str());
 				LOG("GameID: %02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x", gameID[0], gameID[1], gameID[2], gameID[3], gameID[4], gameID[5], gameID[6], gameID[7], gameID[8], gameID[9], gameID[10], gameID[11], gameID[12], gameID[13], gameID[14], gameID[15]);
 			}
 
-			// wait 1 second between checks
-			spring_secs(1).sleep();
+			spring_secs(sleepTime).sleep(true);
 		}
 
 		LOG("exiting");
@@ -245,6 +231,7 @@ int main(int argc, char* argv[])
 
 		FileSystemInitializer::Cleanup();
 		GlobalConfig::Deallocate();
+		DataDirLocater::FreeInstance();
 
 		spring_clock::PopTickRate();
 		LOG("exited");

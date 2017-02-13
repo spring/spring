@@ -7,18 +7,24 @@
 // Released under GPL license: see LICENSE.html for more information.
 // -------------------------------------------------------------------------
 
-#include "AAIBrain.h"
 #include "AAI.h"
+#include "AAIBrain.h"
+#include "AAIBuildTable.h"
+#include "AAIExecute.h"
+#include "AAIUnitTable.h"
+#include "AAIConfig.h"
 #include "AAIMap.h"
+#include "AAIGroup.h"
+#include "AAISector.h"
+
+#include "LegacyCpp/UnitDef.h"
+using namespace springLegacyAI;
 
 AAIBrain::AAIBrain(AAI *ai)
 {
 	this->ai = ai;
 	freeBaseSpots = false;
 	expandable = true;
-
-	// initialize random numbers generator
-	srand ( time(NULL) );
 
 	max_distance = ai->Getmap()->xSectors + ai->Getmap()->ySectors - 2;
 	sectors.resize(max_distance);
@@ -67,10 +73,11 @@ AAISector* AAIBrain::GetAttackDest(bool land, bool water)
 				{
 					def_power = sector->GetEnemyDefencePower(ground, air, hover, sea, submarine);
 
-					if(def_power)
-					my_rating = sector->enemy_structures / sector->GetEnemyDefencePower(ground, air, hover, sea, submarine);
-
-					my_rating = sector->enemy_structures / (2 * sector->GetEnemyDefencePower(ground, air, hover, sea, submarine) + pow(sector->GetLostUnits(ground, air, hover, sea, submarine) + 1, 1.5f) + 1);
+					if(def_power) {
+						my_rating = sector->enemy_structures / sector->GetEnemyDefencePower(ground, air, hover, sea, submarine);
+					} else {
+						my_rating = sector->enemy_structures / (2 * sector->GetEnemyDefencePower(ground, air, hover, sea, submarine) + pow(sector->GetLostUnits(ground, air, hover, sea, submarine) + 1, 1.5f) + 1);
+					}
 					my_rating /= (8 + sector->distance_to_base);
 				}
 				else if(water && sector->water_ratio > 0.6)
@@ -120,6 +127,7 @@ AAISector* AAIBrain::GetNextAttackDest(AAISector *current_sector, bool land, boo
 					dist = sqrt( pow((float)sector->x - current_sector->x, 2) + pow((float)sector->y - current_sector->y , 2) );
 
 					my_rating = 1.0f / (1.0f + pow(sector->GetEnemyDefencePower(ground, air, hover, sea, submarine), 2.0f) + pow(sector->GetLostUnits(ground, air, hover, sea, submarine) + 1, 1.5f));
+					my_rating /= (1.0f + dist);
 
 				}
 				else if(water && sector->water_ratio > 0.65)

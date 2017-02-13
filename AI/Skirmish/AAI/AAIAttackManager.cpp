@@ -11,9 +11,11 @@
 #include "AAI.h"
 #include "AAIBrain.h"
 #include "AAIBuildTable.h"
+#include "AAIAttack.h"
+#include "AAIConfig.h"
 #include "AAIGroup.h"
 #include "AAIMap.h"
-#include "AAIAttack.h"
+#include "AAISector.h"
 
 AAIAttackManager::AAIAttackManager(AAI *ai, int continents)
 {
@@ -293,7 +295,7 @@ void AAIAttackManager::GetNextDest(AAIAttack *attack)
 
 bool AAIAttackManager::SufficientAttackPowerVS(AAISector *dest, set<AAIGroup*> *combat_groups, float aggressiveness)
 {
-	if(dest && combat_groups->size() > 0)
+	if(dest && !combat_groups->empty())
 	{
 		// check attack power
 		float attack_power = 0.5;
@@ -330,7 +332,7 @@ bool AAIAttackManager::SufficientAttackPowerVS(AAISector *dest, set<AAIGroup*> *
 
 bool AAIAttackManager::SufficientCombatPowerAt(AAISector *dest, set<AAIGroup*> *combat_groups, float aggressiveness)
 {
-	if(dest && combat_groups->size() > 0)
+	if(dest && !combat_groups->empty())
 	{
 		// store ammount and category of involved groups;
 		double my_power = 0, enemy_power = 0;

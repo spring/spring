@@ -12,9 +12,10 @@
 #include "System/Log/Level.h"
 #include "System/Log/LogUtil.h"
 #include "System/Platform/Misc.h"
+#include "System/Platform/Threading.h"
+#include "System/UnorderedMap.hpp"
 
 #include <string>
-#include <set>
 #include <vector>
 #include <iostream>
 #include <fstream>
@@ -22,8 +23,6 @@
 
 #include <cassert>
 #include <cstring>
-
-#include <boost/thread/recursive_mutex.hpp>
 
 
 /******************************************************************************/
@@ -35,20 +34,14 @@ CONFIG(bool, RotateLogFiles).defaultValue(false)
 CONFIG(std::string, LogSections).defaultValue("")
 		.description("Comma seperated list of enabled logsections, see infolog.txt / console output for possible values");
 
-/*
-LogFlush defaults to true, because there should be pretty low performance gains as most
-fwrite implementations cache on their own. Also disabling this causes stack-traces to
-be cut off. BEFORE letting it default to false again, verify that it really increases
-performance as the drawbacks really suck.
-*/
-CONFIG(bool, LogFlush).defaultValue(true)
-		.description("Instantly write to the logfile, use only for debugging as it will cause a slowdown");
+CONFIG(int, LogFlushLevel).defaultValue(LOG_LEVEL_ERROR)
+		.description("Flush the logfile when level of message is above LogFlushLevel. i.e. ERROR is flushed as default, WARNING isn't.");
 
 /******************************************************************************/
 /******************************************************************************/
 
-static std::map<std::string, int> GetEnabledSections() {
-	std::map<std::string, int> sectionLevelMap;
+static spring::unordered_map<std::string, int> GetEnabledSections() {
+	spring::unordered_map<std::string, int> sectionLevelMap;
 
 	std::string enabledSections = ",";
 	std::string envSections = ",";
@@ -139,11 +132,11 @@ static std::map<std::string, int> GetEnabledSections() {
 static void InitializeLogSections()
 {
 	// the new systems (ILog.h) log-sub-systems are called sections
-	const std::set<const char*>& registeredSections = log_filter_section_getRegisteredSet();
+	const auto& registeredSections = log_filter_section_getRegisteredSet();
 
 	// enabled sections is a superset of the ones specified in the
 	// environment and the ones specified in the configuration file.
-	const std::map<std::string, int>& enabledSections = GetEnabledSections();
+	const auto& enabledSections = GetEnabledSections();
 
 	std::stringstream availableLogSectionsStr;
 	std::stringstream enabledLogSectionsStr;
@@ -183,7 +176,7 @@ static void InitializeLogSections()
 		log_filter_section_setMinLevel(*si, logLevel);
 
 		enabledLogSectionsStr << ((numEnabledSections > 0)? ", ": "");
-		enabledLogSectionsStr << *si << "(" << log_util_levelToChar(logLevel) << ")";
+		enabledLogSectionsStr << *si << "(" << log_util_levelToString(logLevel) << ")";
 
 		numEnabledSections++;
 	}
@@ -261,7 +254,7 @@ void CLogOutput::Initialize()
 	if (configHandler->GetBool("RotateLogFiles"))
 		RotateLogFile();
 
-	log_file_addLogFile(filePath.c_str(), NULL, LOG_LEVEL_ALL, configHandler->GetBool("LogFlush"));
+	log_file_addLogFile(filePath.c_str(), NULL, LOG_LEVEL_ALL, configHandler->GetInt("LogFlushLevel"));
 	InitializeLogSections();
 
 	LOG("LogOutput initialized.");
@@ -269,20 +262,40 @@ void CLogOutput::Initialize()
 
 
 
+void CLogOutput::LogConfigInfo()
+{
+	LOG("============== <User Config> ==============");
+	const auto& settings = configHandler->GetDataWithoutDefaults();
+
+	for (const auto& it: settings) {
+		// list user's config; exclude non-engine configtags
+		if (ConfigVariable::GetMetaData(it.first) == nullptr)
+			continue;
+
+		LOG("  %s = %s", it.first.c_str(), it.second.c_str());
+	}
+
+	LOG("============== </User Config> ==============");
+
+}
+
 void CLogOutput::LogSystemInfo()
 {
-	LOG("Spring %s", SpringVersion::GetFull().c_str());
-	LOG("Build Date & Time: %s", SpringVersion::GetBuildTime().c_str());
-	LOG("Build Environment: %s", SpringVersion::GetBuildEnvironment().c_str());
-	LOG("Compiler Version:  %s", SpringVersion::GetCompiler().c_str());
-	LOG("Operating System:  %s", Platform::GetOS().c_str());
+	LOG("============== <User System> ==============");
+	LOG("  Spring %s", SpringVersion::GetFull().c_str());
+	LOG("  Build Environment: %s", SpringVersion::GetBuildEnvironment().c_str());
+	LOG("  Compiler Version:  %s", SpringVersion::GetCompiler().c_str());
+	LOG("  Operating System:  %s", Platform::GetOS().c_str());
 
 	if (Platform::Is64Bit()) {
-		LOG("Word Size:         64-bit (native mode)");
-	} else if (Platform::Is32BitEmulation()) {
-		LOG("Word Size:         32-bit (emulated)");
+		LOG("    Word Size:       64-bit (native)");
 	} else {
-		LOG("Word Size:         32-bit (native mode)");
+		LOG("    Word Size:       32-bit (%s)", ((Platform::Is32BitEmulation())? "emulated": "native"));
 	}
+
+	LOG("           CPU Clock: %s", spring_clock::GetName());
+	LOG("  Physical CPU Cores: %d", Threading::GetPhysicalCpuCores());
+	LOG("   Logical CPU Cores: %d", Threading::GetLogicalCpuCores());
+	LOG("============== </User System> ==============");
 }
 

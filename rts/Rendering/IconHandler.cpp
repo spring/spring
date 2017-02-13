@@ -1,16 +1,16 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include "IconHandler.h"
+
 #include <algorithm>
 #include <assert.h>
 #include <locale>
 #include <cctype>
-#include <vector>
-#include <string>
+#include <cmath>
 
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
 #include "System/Log/ILog.h"
-#include "IconHandler.h"
 #include "Lua/LuaParser.h"
 #include "Textures/Bitmap.h"
 #include "System/Exceptions.h"
@@ -18,7 +18,7 @@
 namespace icon {
 using std::string;
 
-CIconHandler* iconHandler = NULL;
+CIconHandler* iconHandler = nullptr;
 CIconData CIconHandler::safetyData;
 
 
@@ -30,15 +30,15 @@ CIconData CIconHandler::safetyData;
 CIconHandler::CIconHandler()
 {
 	defTexID = 0;
-	defIconData = NULL;
+	defIconData = nullptr;
 
 	LoadIcons("gamedata/icontypes.lua");
 
-	IconMap::iterator it = iconMap.find("default");
+	auto it = iconMap.find("default");
+
 	if (it != iconMap.end()) {
 		defIconData = it->second.data;
-	}
-	else {
+	} else {
 		defIconData = new CIconData("default", GetDefaultTexture(), 1.0f, 1.0f, false, false, 128, 128);
 		iconMap["default"] = CIcon(defIconData);
 	}
@@ -91,7 +91,7 @@ bool CIconHandler::AddIcon(const string& iconName, const string& textureName,
 	try {
 		CBitmap bitmap;
 		if (!textureName.empty() && bitmap.Load(textureName)) {
-			texID = bitmap.CreateTexture(true);
+			texID = bitmap.CreateMipMapTexture();
 			
 			glBindTexture(GL_TEXTURE_2D, texID);
 			const GLenum wrapMode = GLEW_EXT_texture_edge_clamp ?
@@ -112,19 +112,18 @@ bool CIconHandler::AddIcon(const string& iconName, const string& textureName,
 		return false;
 	}
 
-	IconMap::iterator it = iconMap.find(iconName);
-	if (it != iconMap.end()) {
+	auto it = iconMap.find(iconName);
+
+	if (it != iconMap.end())
 		FreeIcon(iconName);
-	}
 
 	CIconData* iconData = new CIconData(iconName, texID,  size, distance,
 	                                         radAdj, ownTexture, xsize, ysize);
 
 	iconMap[iconName] = CIcon(iconData);
 
-	if (iconName == "default") {
+	if (iconName == "default")
 		defIconData = iconData;
-	}
 
 	return true;
 }
@@ -132,31 +131,28 @@ bool CIconHandler::AddIcon(const string& iconName, const string& textureName,
 
 bool CIconHandler::FreeIcon(const string& iconName)
 {
-	IconMap::iterator it = iconMap.find(iconName);
-	if (it == iconMap.end()) {
+	auto it = iconMap.find(iconName);
+	if (it == iconMap.end())
 		return false;
-	}
-	if (iconName == "default") {
+	if (iconName == "default")
 		return false;
-	}
 
 	CIconData* iconData = it->second.data;
 	iconData->CopyData(defIconData);
 
 	iconMap.erase(iconName);
-
 	return true;
 }
 
 
 CIcon CIconHandler::GetIcon(const string& iconName) const
 {
-	IconMap::const_iterator it = iconMap.find(iconName);
-	if (it == iconMap.end()) {
+	auto it = iconMap.find(iconName);
+
+	if (it == iconMap.end())
 		return CIcon(defIconData);
-	} else {
-		return it->second;
-	}
+
+	return it->second;
 }
 
 
@@ -164,9 +160,8 @@ unsigned int CIconHandler::GetDefaultTexture()
 {
 	// FIXME: just use a PNG ?
 
-	if (defTexID != 0) {
+	if (defTexID != 0)
 		return defTexID;
-	}
 
 	unsigned char si[128 * 128 * 4];
 	for (int y = 0; y < 128; ++y) {
@@ -174,7 +169,7 @@ unsigned int CIconHandler::GetDefaultTexture()
 			const int index = ((y * 128) + x) * 4;
 			const int dx = (x - 64);
 			const int dy = (y - 64);
-			const float r = math::sqrt((dx * dx) + (dy * dy)) / 64.0f;
+			const float r = std::sqrt((dx * dx) + (dy * dy)) / 64.0f;
 			if (r > 1.0f) {
 				si[index + 0] = 0;
 				si[index + 1] = 0;
@@ -191,7 +186,7 @@ unsigned int CIconHandler::GetDefaultTexture()
 	}
 
 	CBitmap bitmap(si, 128, 128);
-	defTexID = bitmap.CreateTexture(false);
+	defTexID = bitmap.CreateTexture();
 
 	glBindTexture(GL_TEXTURE_2D, defTexID);
 
@@ -248,6 +243,7 @@ CIcon& CIcon::operator=(const CIcon& icon)
 CIcon::~CIcon()
 {
 	data->UnRef();
+	data = nullptr;
 }
 
 
@@ -289,6 +285,7 @@ CIconData::~CIconData()
 {
 	if (ownTexture) {
 		glDeleteTextures(1, &texID);
+		texID = 0;
 	}
 }
 
@@ -300,8 +297,7 @@ void CIconData::Ref()
 
 void CIconData::UnRef()
 {
-	refCount--;
-	if (refCount <= 0) {
+	if ((--refCount) <= 0) {
 		delete this;
 	}
 }
@@ -358,4 +354,4 @@ void CIconData::Draw(const float3& botLeft, const float3& botRight,
 
 /******************************************************************************/
 
-};
+}

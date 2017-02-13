@@ -38,7 +38,7 @@ static std::string FloatToSmallString(float num, float mul = 1) {
 	}
 
 	return c;
-};
+}
 
 
 bool CEndGameBox::enabled = true;
@@ -278,9 +278,8 @@ void CEndGameBox::Draw()
 		}
 	}
 
-	if (gs->frameNum <= 0) {
+	if (gs->PreSimFrame())
 		return;
-	}
 
 	if (dispMode == 0) {
 		float xpos = 0.01f;
@@ -511,7 +510,7 @@ void CEndGameBox::FillTeamStats()
 			continue;
 		}
 
-		for (std::list<CTeam::Statistics>::const_iterator si = pteam->statHistory.begin(); si != pteam->statHistory.end(); ++si) {
+		for (auto si = pteam->statHistory.cbegin(); si != pteam->statHistory.cend(); ++si) {
 			stats[0].AddStat(team, 0);
 
 			stats[1].AddStat(team, si->metalUsed);

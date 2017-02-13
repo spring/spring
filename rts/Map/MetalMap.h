@@ -14,7 +14,7 @@ static const float METAL_MAP_SQUARE_SIZE = SQUARE_SIZE * 2;
 
 class CMetalMap
 {
-	CR_DECLARE_STRUCT(CMetalMap);
+	CR_DECLARE_STRUCT(CMetalMap)
 
 public:
 	/** Receiving a map over all metal, and creating a map over extraction. */

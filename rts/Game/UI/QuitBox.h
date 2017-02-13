@@ -5,13 +5,10 @@
 
 #include "InputReceiver.h"
 
-//TOD add support for resigning without selfdestruction
-class CQuitBox :
-	public CInputReceiver
+class CQuitBox: public CInputReceiver
 {
 public:
 	CQuitBox();
-	~CQuitBox();
 
 	void Draw();
 
@@ -19,18 +16,19 @@ public:
 	std::string GetTooltip(int x, int y);
 
 	bool MousePress(int x, int y, int button);
-	void MouseRelease(int x,int y,int button);
-	void MouseMove(int x, int y, int dx,int dy, int button);
+	void MouseRelease(int x, int y, int button);
+	void MouseMove(int x, int y, int dx, int dy, int button);
 	bool KeyPressed(int key, bool isRepeat);
 
 private:
 	ContainerBox box;
 
-	// in order of appereance ...
+	// in order of appearance
 	ContainerBox resignBox;
 	ContainerBox saveBox;
 	ContainerBox giveAwayBox;
 	ContainerBox teamBox;
+	ContainerBox menuBox;
 	ContainerBox quitBox;
 	ContainerBox cancelBox;
 	ContainerBox scrollbarBox;

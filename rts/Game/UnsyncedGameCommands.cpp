@@ -23,11 +23,11 @@
 #endif
 #include "ExternalAI/IAILibraryManager.h"
 #include "ExternalAI/SkirmishAIHandler.h"
-#include "Game/GUI/PlayerRoster.h"
 #include "Game/Players/Player.h"
 #include "Game/Players/PlayerHandler.h"
+#include "Game/UI/PlayerRoster.h"
 #include "Net/GameServer.h"
-#include "Map/BaseGroundDrawer.h"
+#include "Map/Ground.h"
 #include "Map/MetalMap.h"
 #include "Map/ReadMap.h"
 #include "Map/SMF/SMFGroundDrawer.h"
@@ -47,13 +47,20 @@
 #include "Rendering/Screenshot.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/TeamHighlight.h"
+#include "Rendering/LuaObjectDrawer.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/VerticalSync.h"
+#include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
+#include "Rendering/Map/InfoTexture/Modern/Path.h"
 #include "Lua/LuaOpenGL.h"
 #include "Lua/LuaUI.h"
+#include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "Sim/Units/Scripts/UnitScript.h"
-#include "Sim/Units/Groups/GroupHandler.h"
+#include "Sim/Misc/ModInfo.h"
+#include "Sim/Units/UnitHandler.h"
+#include "Sim/Units/UnitDef.h"
+#include "Sim/Units/UnitDefHandler.h"
+#include "Game/UI/Groups/GroupHandler.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "UI/CommandColors.h"
 #include "UI/EndGameBox.h"
@@ -78,12 +85,13 @@
 #include "Net/Protocol/NetProtocol.h"
 #include "System/FileSystem/SimpleParser.h"
 #include "System/Sound/ISound.h"
-#include "System/Sound/SoundChannels.h"
+#include "System/Sound/ISoundChannels.h"
 #include "System/Sync/DumpState.h"
 #include "System/Util.h"
 #include "System/EventHandler.h"
 
 #include <SDL_events.h>
+#include <SDL_video.h>
 
 
 static std::vector<std::string> _local_strSpaceTokenize(const std::string& text) {
@@ -108,201 +116,6 @@ static std::vector<std::string> _local_strSpaceTokenize(const std::string& text)
 	return tokens;
 }
 
-
-
-// TODO CGame stuff in UnsyncedGameCommands: refactor (or move)
-bool CGame::ProcessCommandText(unsigned int key, const std::string& command) {
-	if (command.size() <= 2)
-		return false;
-
-	if ((command[0] == '/') && (command[1] != '/')) {
-		const string actionLine = command.substr(1); // strip the '/'
-
-		Action fakeAction(actionLine);
-		ProcessAction(fakeAction, key, false);
-		return true;
-	}
-
-	return false;
-}
-
-// TODO CGame stuff in UnsyncedGameCommands: refactor (or move)
-bool CGame::ProcessKeyPressAction(unsigned int key, const Action& action) {
-	if (!userWriting)
-		return false;
-
-	if (action.command == "edit_return") {
-		userWriting = false;
-		writingPos = 0;
-
-		if (chatting) {
-			string command;
-
-			if ((userInput.find_first_of("aAsS") == 0) && (userInput[1] == ':')) {
-				command = userInput.substr(2);
-			} else {
-				command = userInput;
-			}
-
-			if (ProcessCommandText(key, command)) {
-				// execute an action
-				consoleHistory->AddLine(command);
-				LOG_L(L_DEBUG, "%s", command.c_str());
-
-				chatting = false;
-				userInput = "";
-				writingPos = 0;
-			}
-		}
-		return true;
-	}
-	else if ((action.command == "edit_escape") && (chatting || inMapDrawer->IsWantLabel())) {
-		if (chatting) {
-			consoleHistory->AddLine(userInput);
-		}
-		userWriting = false;
-		chatting = false;
-		inMapDrawer->SetWantLabel(false);
-		userInput = "";
-		writingPos = 0;
-		return true;
-	}
-	else if (action.command == "edit_complete") {
-		string head = userInput.substr(0, writingPos);
-		string tail = userInput.substr(writingPos);
-		const vector<string>& partials = wordCompletion->Complete(head);
-		userInput = head + tail;
-		writingPos = (int)head.length();
-
-		if (!partials.empty()) {
-			string msg;
-			for (unsigned int i = 0; i < partials.size(); i++) {
-				msg += "  ";
-				msg += partials[i];
-			}
-			LOG("%s", msg.c_str());
-		}
-		return true;
-	}
-	else if (action.command == "chatswitchall") {
-		if ((userInput.find_first_of("aAsS") == 0) && (userInput[1] == ':')) {
-			userInput = userInput.substr(2);
-			writingPos = std::max(0, writingPos - 2);
-		}
-
-		userInputPrefix = "";
-		return true;
-	}
-	else if (action.command == "chatswitchally") {
-		if ((userInput.find_first_of("aA") == 0) && (userInput[1] == ':')) {
-			// already are in ally chat -> toggle it off
-			userInput = userInput.substr(2);
-			writingPos = std::max(0, writingPos - 2);
-			userInputPrefix = "";
-		}
-		else if ((userInput.find_first_of("sS") == 0) && (userInput[1] == ':')) {
-			// are in spec chat -> switch it to ally chat
-			userInput[0] = 'a';
-			userInputPrefix = "a:";
-		} else {
-			userInput = "a:" + userInput;
-			writingPos += 2;
-			userInputPrefix = "a:";
-		}
-		return true;
-	}
-	else if (action.command == "chatswitchspec") {
-		if ((userInput.find_first_of("sS") == 0) && (userInput[1] == ':')) {
-			// already are in spec chat -> toggle it off
-			userInput = userInput.substr(2);
-			writingPos = std::max(0, writingPos - 2);
-			userInputPrefix = "";
-		}
-		else if ((userInput.find_first_of("aA") == 0) && (userInput[1] == ':')) {
-			// are in ally chat -> switch it to spec chat
-			userInput[0] = 's';
-			userInputPrefix = "s:";
-		} else {
-			userInput = "s:" + userInput;
-			writingPos += 2;
-			userInputPrefix = "s:";
-		}
-		return true;
-	}
-	else if (action.command == "pastetext") {
-		//we cannot use extra commands because tokenization strips multiple spaces
-		//or even trailing spaces, the text should be copied verbatim
-		const std::string pastecommand = "pastetext ";
-		if (action.rawline.length() > pastecommand.length()) {
-			userInput.insert(writingPos, action.rawline.substr(pastecommand.length(), action.rawline.length()-pastecommand.length()));
-			writingPos += action.rawline.length()-pastecommand.length();
-		} else {
-			PasteClipboard();
-		}
-		return true;
-	}
-
-	else if (action.command == "edit_backspace") {
-		if (!userInput.empty() && (writingPos > 0)) {
-			int prev=Utf8PrevChar(userInput,writingPos);
-			userInput.erase(prev, writingPos-prev);
-			writingPos=prev;
-		}
-		return true;
-	}
-	else if (action.command == "edit_delete") {
-		if (!userInput.empty() && (writingPos < (int)userInput.size())) {
-			userInput.erase(writingPos, Utf8CharLen(userInput,writingPos));
-		}
-		return true;
-	}
-	else if (action.command == "edit_home") {
-		writingPos = 0;
-		return true;
-	}
-	else if (action.command == "edit_end") {
-		writingPos = (int)userInput.length();
-		return true;
-	}
-	else if (action.command == "edit_prev_char") {
-		writingPos = Utf8PrevChar(userInput,writingPos);
-		return true;
-	}
-	else if (action.command == "edit_next_char") {
-		writingPos = Utf8NextChar(userInput,writingPos);
-		return true;
-	}
-	else if (action.command == "edit_prev_word") { //TODO It don't seems to work correctly with utf-8
-		// prev word
-		const char* s = userInput.c_str();
-		int p = writingPos;
-		while ((p > 0) && !isalnum(s[p - 1])) { p--; }
-		while ((p > 0) &&  isalnum(s[p - 1])) { p--; }
-		writingPos = p;
-		return true;
-	}
-	else if (action.command == "edit_next_word") { //TODO It don't seems to work correctly with utf-8
-		const int len = (int)userInput.length();
-		const char* s = userInput.c_str();
-		int p = writingPos;
-		while ((p < len) && !isalnum(s[p])) { p++; }
-		while ((p < len) &&  isalnum(s[p])) { p++; }
-		writingPos = p;
-		return true;
-	}
-	else if ((action.command == "edit_prev_line") && chatting) {
-		userInput = consoleHistory->PrevLine(userInput);
-		writingPos = (int)userInput.length();
-		return true;
-	}
-	else if ((action.command == "edit_next_line") && chatting) {
-		userInput = consoleHistory->NextLine(userInput);
-		writingPos = (int)userInput.length();
-		return true;
-	}
-
-	return false;
-}
 
 
 namespace { // prevents linking problems in case of duplicate symbols
@@ -424,28 +237,30 @@ public:
 
 
 
-class RoamActionExecutor : public IUnsyncedActionExecutor {
+class MapMeshDrawerActionExecutor : public IUnsyncedActionExecutor {
 public:
-	RoamActionExecutor() : IUnsyncedActionExecutor("roam",
-			"Disables/Enables ROAM mesh rendering: 0=off, 1=on") {}
+	MapMeshDrawerActionExecutor() : IUnsyncedActionExecutor("mapmeshdrawer", "Switch map-mesh rendering modes: 0=GCM, 1=HLOD, 2=ROAM") {}
 
 	bool Execute(const UnsyncedAction& action) const {
 		CSMFGroundDrawer* smfGD = dynamic_cast<CSMFGroundDrawer*>(readMap->GetGroundDrawer());
-		if (!smfGD)
+
+		if (smfGD == nullptr)
 			return false;
 
 		if (!action.GetArgs().empty()) {
-			int useRoam = -1;
-			int roamMode = -1;
-			sscanf((action.GetArgs()).c_str(), "%i %i", &useRoam, &roamMode);
+			int rendererMode = -1;
+			int roamPatchMode = -1;
+			sscanf((action.GetArgs()).c_str(), "%i %i", &rendererMode, &roamPatchMode);
 
-			smfGD->SwitchMeshDrawer(useRoam);
-			if (useRoam && roamMode >= 0) {
-				Patch::SwitchRenderMode(roamMode);
+			smfGD->SwitchMeshDrawer(rendererMode);
+
+			if (rendererMode == SMF_MESHDRAWER_ROAM && roamPatchMode >= 0) {
+				Patch::SwitchRenderMode(roamPatchMode);
 			}
 		} else {
 			smfGD->SwitchMeshDrawer();
 		}
+
 		return true;
 	}
 };
@@ -453,17 +268,17 @@ public:
 
 class MapBorderActionExecutor : public IUnsyncedActionExecutor {
 public:
-	MapBorderActionExecutor() : IUnsyncedActionExecutor("MapBorder",
-			"Set or toggle map border rendering") {}
+	MapBorderActionExecutor() : IUnsyncedActionExecutor("MapBorder", "Set or toggle map-border rendering") {}
 
 	bool Execute(const UnsyncedAction& action) const {
 		CSMFGroundDrawer* smfGD = dynamic_cast<CSMFGroundDrawer*>(readMap->GetGroundDrawer());
-		if (!smfGD)
+
+		if (smfGD == nullptr)
 			return false;
 
 		if (!action.GetArgs().empty()) {
 			bool enable = true;
-			SetBoolArg(enable, action.GetArgs());
+			InverseOrSetBool(enable, action.GetArgs());
 
 			if (enable != smfGD->ToggleMapBorder())
 				smfGD->ToggleMapBorder();
@@ -471,6 +286,7 @@ public:
 		} else {
 			smfGD->ToggleMapBorder();
 		}
+
 		return true;
 	}
 };
@@ -487,7 +303,7 @@ public:
 			LOG_L(L_WARNING, "Shadows are disabled; change your configuration and restart to use them");
 			return true;
 		}
-		if (!shadowHandler->shadowsSupported) {
+		if (!CShadowHandler::ShadowsSupported()) {
 			LOG_L(L_WARNING, "Your hardware/driver setup does not support shadows");
 			return true;
 		}
@@ -503,14 +319,15 @@ public:
 class WaterActionExecutor : public IUnsyncedActionExecutor {
 public:
 	WaterActionExecutor() : IUnsyncedActionExecutor("Water",
-			"Set water rendering mode: 0=basic, 1=reflective, 2=dynamic"
-			", 3=reflective&refractive?, 4=bump-mapped") {}
+		"Set water rendering mode: 0=basic, 1=reflective, 2=dynamic"
+		", 3=reflective&refractive, 4=bump-mapped") {}
 
-	bool Execute(const UnsyncedAction& action) const {
-
+	bool Execute(const UnsyncedAction& action) const
+	{
 		int nextWaterRendererMode = 0;
-		if (!action.GetArgs().empty()) {
-			nextWaterRendererMode = std::max(0, atoi(action.GetArgs().c_str()) % IWater::NUM_WATER_RENDERERS);
+
+		if (!(action.GetArgs()).empty()) {
+			nextWaterRendererMode = atoi((action.GetArgs()).c_str());
 		} else {
 			nextWaterRendererMode = -1;
 		}
@@ -533,7 +350,7 @@ public:
 		if (!canUseShaders)
 			return false;
 
-		SetBoolArg(unitDrawer->UseAdvShadingRef(), action.GetArgs());
+		InverseOrSetBool(unitDrawer->UseAdvShadingRef(), action.GetArgs());
 		LogSystemStatus("model shaders", unitDrawer->UseAdvShading());
 		return true;
 	}
@@ -554,7 +371,7 @@ public:
 		if (!canUseShaders)
 			return false;
 
-		SetBoolArg(gd->UseAdvShadingRef(), action.GetArgs());
+		InverseOrSetBool(gd->UseAdvShadingRef(), action.GetArgs());
 		LogSystemStatus("map shaders", gd->UseAdvShading());
 		return true;
 	}
@@ -735,15 +552,16 @@ public:
 			"Moves the camera to the center of the currently selected units") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		const CUnitSet& selUnits = selectedUnitsHandler.selectedUnits;
+		const auto& selUnits = selectedUnitsHandler.selectedUnits;
+
 		if (selUnits.empty())
 			return false;
 
-		// XXX this code is duplicated in CGroup::CalculateCenter(), move to CUnitSet maybe
+		// XXX this code is duplicated in CGroup::CalculateCenter()
 		float3 pos;
-		CUnitSet::const_iterator ui;
-		for (ui = selUnits.begin(); ui != selUnits.end(); ++ui) {
-			pos += (*ui)->midPos;
+
+		for (const int unitID: selUnits) {
+			pos += (unitHandler->GetUnit(unitID))->midPos;
 		}
 		pos /= (float)selUnits.size();
 		camHandler->CameraTransition(0.6f);
@@ -778,11 +596,11 @@ public:
 	 * @param kill whether this executor should function as the kill-
 	 * or the reload-AI command
 	 */
-	AIKillReloadActionExecutor(bool kill)
-		: IUnsyncedActionExecutor((kill ? "AIKill" : "AIReload"),
-			std::string(kill ? "Kills" : "Reloads")
+	AIKillReloadActionExecutor(bool kill_)
+		: IUnsyncedActionExecutor((kill_ ? "AIKill" : "AIReload"),
+			std::string(kill_ ? "Kills" : "Reloads")
 				+ " the Skirmish AI controlling a specified team")
-		, kill(kill)
+		, kill(kill_)
 	{}
 
 	bool Execute(const UnsyncedAction& action) const {
@@ -852,7 +670,7 @@ public:
 			if (!badArgs) {
 				if (kill) {
 					if (share) {
-						net->Send(CBaseNetProtocol::Get().SendGiveAwayEverything(gu->myPlayerNum, teamToReceiveUnitsId, teamToKillId));
+						clientNet->Send(CBaseNetProtocol::Get().SendGiveAwayEverything(gu->myPlayerNum, teamToReceiveUnitsId, teamToKillId));
 						// when the AIs team has no units left,
 						// the AI will be destroyed automatically
 					} else {
@@ -864,7 +682,7 @@ public:
 					}
 				} else {
 					// reload
-					net->Send(CBaseNetProtocol::Get().SendAIStateChanged(gu->myPlayerNum, skirmishAIId, SKIRMAISTATE_RELOADING));
+					clientNet->Send(CBaseNetProtocol::Get().SendAIStateChanged(gu->myPlayerNum, skirmishAIId, SKIRMAISTATE_RELOADING));
 				}
 
 				LOG("Skirmish AI controlling team %i is beeing %sed ...", teamToKillId, actionName.c_str());
@@ -920,23 +738,23 @@ public:
 			std::string aiShortName;
 			std::string aiVersion;
 			std::string aiName;
-			std::map<std::string, std::string> aiOptions;
+			spring::unordered_map<std::string, std::string> aiOptions;
 
 			const int teamToControlId = atoi(args[0].c_str());
 			const CTeam* teamToControl = teamHandler->IsActiveTeam(teamToControlId) ?
-				teamHandler->Team(teamToControlId) : NULL;
+				teamHandler->Team(teamToControlId) : nullptr;
 
 			if (args.size() >= 2) {
 				aiShortName = args[1];
 			} else {
 				LOG_L(L_WARNING, "/%s: missing mandatory argument \"aiShortName\"", GetCommand().c_str());
 			}
-			if (args.size() >= 3) {
+
+			if (args.size() >= 3)
 				aiVersion = args[2];
-			}
-			if (args.size() >= 4) {
+
+			if (args.size() >= 4)
 				aiName = args[3];
-			}
 
 			if (teamToControl == NULL) {
 				LOG_L(L_WARNING, "Team to control: not a valid team number: \"%s\"", args[0].c_str());
@@ -983,7 +801,7 @@ public:
 							aiShortName.c_str(), aiVersion.c_str());
 					badArgs = true;
 				} else {
-					const CSkirmishAILibraryInfo* aiLibInfo = aiLibManager->GetSkirmishAIInfos().find(aiKey)->second;
+					const CSkirmishAILibraryInfo& aiLibInfo = aiLibManager->GetSkirmishAIInfos().find(aiKey)->second;
 
 					SkirmishAIData aiData;
 					aiData.name       = (aiName != "") ? aiName : aiShortName;
@@ -991,12 +809,12 @@ public:
 					aiData.hostPlayer = gu->myPlayerNum;
 					aiData.shortName  = aiShortName;
 					aiData.version    = aiVersion;
-					std::map<std::string, std::string>::const_iterator o;
-					for (o = aiOptions.begin(); o != aiOptions.end(); ++o) {
+
+					for (auto o = aiOptions.cbegin(); o != aiOptions.cend(); ++o)
 						aiData.optionKeys.push_back(o->first);
-					}
-					aiData.options    = aiOptions;
-					aiData.isLuaAI    = aiLibInfo->IsLuaAI();
+
+					aiData.options = aiOptions;
+					aiData.isLuaAI = aiLibInfo.IsLuaAI();
 
 					skirmishAIHandler.CreateLocalSkirmishAI(aiData);
 				}
@@ -1072,7 +890,7 @@ public:
 	bool Execute(const UnsyncedAction& action) const {
 		const int teamId = atoi(action.GetArgs().c_str());
 		if (teamHandler->IsValidTeam(teamId)) {
-			net->Send(CBaseNetProtocol::Get().SendJoinTeam(gu->myPlayerNum, teamId));
+			clientNet->Send(CBaseNetProtocol::Get().SendJoinTeam(gu->myPlayerNum, teamId));
 		} else {
 			LOG_L(L_WARNING, "/Team: wrong syntax (which is '/Team %%teamid')");
 		}
@@ -1091,7 +909,7 @@ public:
 		if (gu->spectating)
 			return false;
 
-		net->Send(CBaseNetProtocol::Get().SendResign(gu->myPlayerNum));
+		clientNet->Send(CBaseNetProtocol::Get().SendResign(gu->myPlayerNum));
 		return true;
 	}
 };
@@ -1164,7 +982,7 @@ public:
 				int state = -1;
 				is >> state;
 				if (state >= 0 && state < 2 && otherAllyTeam >= 0 && otherAllyTeam != gu->myAllyTeam)
-					net->Send(CBaseNetProtocol::Get().SendSetAllied(gu->myPlayerNum, otherAllyTeam, state));
+					clientNet->Send(CBaseNetProtocol::Get().SendSetAllied(gu->myPlayerNum, otherAllyTeam, state));
 				else
 					LOG_L(L_WARNING, "/%s: wrong parameters (usage: /%s <other team> [0|1])", GetCommand().c_str(), GetCommand().c_str());
 			}
@@ -1233,12 +1051,12 @@ public:
 			"Moves the camera to show the position of the last message") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		if (game->infoConsole->GetMsgPosCount() == 0)
+		if (infoConsole->GetMsgPosCount() == 0)
 			return false;
 
 		// cycle through the positions
 		camHandler->CameraTransition(0.6f);
-		camHandler->GetCurrentController().SetPos(game->infoConsole->GetMsgPos());
+		camHandler->GetCurrentController().SetPos(infoConsole->GetMsgPos());
 		return true;
 	}
 };
@@ -1264,8 +1082,10 @@ public:
 		game->userInput = game->userInputPrefix;
 		game->writingPos = (int)game->userInput.length();
 		game->chatting = true;
-		game->ignoreNextChar = true;
+		game->ignoreNextChar = false;
 		game->consoleHistory->ResetPosition();
+		inMapDrawer->SetDrawMode(false);
+
 		return true;
 	}
 
@@ -1337,8 +1157,8 @@ public:
 		// do not need to update lastReadNetTime, gets
 		// done when NETMSG_PAUSE makes the round-trip
 		bool newPause = gs->paused;
-		SetBoolArg(newPause, action.GetArgs());
-		net->Send(CBaseNetProtocol::Get().SendPause(gu->myPlayerNum, newPause));
+		InverseOrSetBool(newPause, action.GetArgs());
+		clientNet->Send(CBaseNetProtocol::Get().SendPause(gu->myPlayerNum, newPause));
 		return true;
 	}
 
@@ -1356,27 +1176,41 @@ public:
 		globalRendering->drawdebug = !globalRendering->drawdebug;
 
 		ProfileDrawer::SetEnabled(globalRendering->drawdebug);
+		profiler.SetEnabled(globalRendering->drawdebug);
+
 		LogSystemStatus("debug-info rendering mode", globalRendering->drawdebug);
 		return true;
 	}
 };
 
 
-
-// XXX unlucky name; maybe make this "Sound {0|1}" instead (bool arg or toggle)
-class NoSoundActionExecutor : public IUnsyncedActionExecutor {
+class MuteActionExecutor : public IUnsyncedActionExecutor {
 public:
-	NoSoundActionExecutor() : IUnsyncedActionExecutor("NoSound",
-			"Enable/Disable the sound system") {}
+	MuteActionExecutor() : IUnsyncedActionExecutor("MuteSound",
+			"Mute/Unmute the current sound system") {}
 
 	bool Execute(const UnsyncedAction& action) const {
 
 		// toggle
 		sound->Mute();
-		LogSystemStatus("Sound", !sound->IsMuted());
+		LogSystemStatus("Mute", sound->IsMuted());
 		return true;
 	}
 };
+
+class SoundActionExecutor : public IUnsyncedActionExecutor {
+public:
+	SoundActionExecutor() : IUnsyncedActionExecutor("SoundDevice",
+			"Switch the sound output system (currently only OpenAL / NullAudio)") {}
+
+	bool Execute(const UnsyncedAction& action) const {
+
+		// toggle
+		LogSystemStatus("Sound", !sound->ChangeOutput());
+		return true;
+	}
+};
+
 
 
 
@@ -1398,15 +1232,15 @@ public:
 			enable = true;
 
 		if (channel == "UnitReply")
-			Channels::UnitReply.Enable(enable);
+			Channels::UnitReply->Enable(enable);
 		else if (channel == "General")
-			Channels::General.Enable(enable);
+			Channels::General->Enable(enable);
 		else if (channel == "Battle")
-			Channels::Battle.Enable(enable);
+			Channels::Battle->Enable(enable);
 		else if (channel == "UserInterface")
-			Channels::UserInterface.Enable(enable);
+			Channels::UserInterface->Enable(enable);
 		else if (channel == "Music")
-			Channels::BGMusic.Enable(enable);
+			Channels::BGMusic->Enable(enable);
 		else
 			LOG_L(L_WARNING, "/%s: wrong channel name \"%s\"", GetCommand().c_str(), channel.c_str());
 
@@ -1439,7 +1273,7 @@ public:
 
 	bool Execute(const UnsyncedAction& action) const {
 
-		SetBoolArg(treeDrawer->drawTrees, action.GetArgs());
+		InverseOrSetBool(treeDrawer->drawTrees, action.GetArgs());
 		LogSystemStatus("rendering of engine trees", treeDrawer->drawTrees);
 		return true;
 	}
@@ -1453,26 +1287,9 @@ public:
 			"Enable/Disable dynamic-sky rendering") {}
 
 	bool Execute(const UnsyncedAction& action) const {
+		sky->DynamicSkyRef() = !sky->DynamicSkyRef();
 
-		SetBoolArg(sky->dynamicSky, action.GetArgs());
-		LogSystemStatus("dynamic-sky rendering", sky->dynamicSky);
-		return true;
-	}
-};
-
-
-
-class DynamicSunActionExecutor : public IUnsyncedActionExecutor {
-public:
-	DynamicSunActionExecutor() : IUnsyncedActionExecutor("DynamicSun",
-			"Enable/Disable dynamic-sun rendering") {}
-
-	bool Execute(const UnsyncedAction& action) const {
-
-		bool dynamicSun = sky->GetLight()->IsDynamic();
-		SetBoolArg(dynamicSun, action.GetArgs());
-		sky->SetLight(dynamicSun);
-		LogSystemStatus("dynamic-sun rendering", sky->GetLight()->IsDynamic());
+		LogSystemStatus("dynamic-sky rendering", sky->DynamicSkyRef());
 		return true;
 	}
 };
@@ -1532,7 +1349,7 @@ public:
 			"Hide/Show the GUI controlls") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		SetBoolArg(game->hideInterface, action.GetArgs());
+		InverseOrSetBool(game->hideInterface, action.GetArgs());
 		return true;
 	}
 };
@@ -1561,23 +1378,13 @@ public:
 			"Switches fullscreen mode") {}
 
 	bool Execute(const UnsyncedAction& action) const {
+		bool b;
 		if (!action.GetArgs().empty()) {
-			globalRendering->fullScreen = (atoi(action.GetArgs().c_str()) != 0);
+			b = (atoi(action.GetArgs().c_str()) != 0);
 		} else {
-			globalRendering->fullScreen = !globalRendering->fullScreen;
+			b = !globalRendering->fullScreen;
 		}
-
-		const bool borderless = configHandler->GetBool("WindowBorderless");
-		if (globalRendering->fullScreen) {
-			if (borderless) {
-				SDL_SetWindowFullscreen(globalRendering->window, SDL_WINDOW_FULLSCREEN_DESKTOP);
-			} else {
-				SDL_SetWindowFullscreen(globalRendering->window, SDL_WINDOW_FULLSCREEN);
-			}
-		} else {
-			SDL_SetWindowFullscreen(globalRendering->window, 0);
-			SDL_SetWindowBordered(globalRendering->window, borderless ? SDL_FALSE : SDL_TRUE);
-		}
+		configHandler->Set("Fullscreen", b);
 		return true;
 	}
 };
@@ -1606,6 +1413,27 @@ public:
 		readMap->GetGroundDrawer()->DecreaseDetail();
 		return true;
 	}
+};
+
+
+
+class GroundDetailActionExecutor : public IUnsyncedActionExecutor {
+public:
+	GroundDetailActionExecutor() : IUnsyncedActionExecutor("GroundDetail",
+			"Set the level of ground detail") {}
+
+	bool Execute(const UnsyncedAction& action) const {
+		int detail;
+		if (action.GetArgs().empty()) {
+			LOG_L(L_WARNING, "/%s: missing argument", GetCommand().c_str());
+			return false;
+		}
+		detail = atoi((action.GetArgs()).c_str());
+
+		readMap->GetGroundDrawer()->SetDetail(detail);
+		return true;
+	}
+
 };
 
 
@@ -1698,7 +1526,7 @@ public:
 		} else {
 			speed += 1.0f;
 		}
-		net->Send(CBaseNetProtocol::Get().SendUserSpeed(gu->myPlayerNum, speed));
+		clientNet->Send(CBaseNetProtocol::Get().SendUserSpeed(gu->myPlayerNum, speed));
 		return true;
 	}
 };
@@ -1725,7 +1553,7 @@ public:
 		} else {
 			speed -= 1.0f;
 		}
-		net->Send(CBaseNetProtocol::Get().SendUserSpeed(gu->myPlayerNum, speed));
+		clientNet->Send(CBaseNetProtocol::Get().SendUserSpeed(gu->myPlayerNum, speed));
 		return true;
 	}
 };
@@ -1744,7 +1572,7 @@ public:
 		// we must cause the to-be-controllee to be put in
 		// netSelected[myPlayerNum] by giving it an order
 		selectedUnitsHandler.SendCommand(Command(CMD_STOP));
-		net->Send(CBaseNetProtocol::Get().SendDirectControl(gu->myPlayerNum));
+		clientNet->Send(CBaseNetProtocol::Get().SendDirectControl(gu->myPlayerNum));
 		return true;
 	}
 };
@@ -1757,7 +1585,7 @@ public:
 			"Disable rendering of all auxiliary map overlays") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		readMap->GetGroundDrawer()->DisableExtraTexture();
+		infoTextureHandler->SetMode("");
 		return true;
 	}
 };
@@ -1770,20 +1598,7 @@ public:
 			"Enable rendering of the auxiliary height-map overlay") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		readMap->GetGroundDrawer()->SetHeightTexture();
-		return true;
-	}
-};
-
-
-
-class ToggleRadarAndJammerActionExecutor : public IUnsyncedActionExecutor {
-public:
-	ToggleRadarAndJammerActionExecutor() : IUnsyncedActionExecutor("ToggleRadarAndJammer",
-			"Enable/Disable rendering of the auxiliary radar- & jammer-map overlay") {}
-
-	bool Execute(const UnsyncedAction& action) const {
-		readMap->GetGroundDrawer()->ToggleRadarAndJammer();
+		infoTextureHandler->ToggleMode("height");
 		return true;
 	}
 };
@@ -1796,7 +1611,7 @@ public:
 			"Enable rendering of the auxiliary metal-map overlay") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		readMap->GetGroundDrawer()->SetMetalTexture();
+		infoTextureHandler->ToggleMode("metal");
 		return true;
 	}
 };
@@ -1809,7 +1624,9 @@ public:
 			"Enable rendering of the path traversability-map overlay") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		readMap->GetGroundDrawer()->TogglePathTexture(CBaseGroundDrawer::drawPathTrav);
+		CPathTexture* pathTexInfo = dynamic_cast<CPathTexture*>(infoTextureHandler->GetInfoTexture("path"));
+		if (pathTexInfo) pathTexInfo->ShowMoveDef(-1);
+		infoTextureHandler->ToggleMode("path");
 		return true;
 	}
 };
@@ -1820,7 +1637,7 @@ public:
 			"Enable/Disable rendering of the path heat-map overlay", true) {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		readMap->GetGroundDrawer()->TogglePathTexture(CBaseGroundDrawer::drawPathHeat);
+		infoTextureHandler->ToggleMode("heat");
 		return true;
 	}
 };
@@ -1831,7 +1648,7 @@ public:
 			"Enable/Disable rendering of the path flow-map overlay", true) {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		readMap->GetGroundDrawer()->TogglePathTexture(CBaseGroundDrawer::drawPathFlow);
+		infoTextureHandler->ToggleMode("flow");
 		return true;
 	}
 };
@@ -1842,12 +1659,10 @@ public:
 			"Enable rendering of the path cost-map overlay", true) {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		readMap->GetGroundDrawer()->TogglePathTexture(CBaseGroundDrawer::drawPathCost);
+		infoTextureHandler->ToggleMode("pathcost");
 		return true;
 	}
 };
-
-
 
 class ToggleLOSActionExecutor : public IUnsyncedActionExecutor {
 public:
@@ -1855,7 +1670,65 @@ public:
 			"Enable rendering of the auxiliary LOS-map overlay") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		readMap->GetGroundDrawer()->ToggleLosTexture();
+		infoTextureHandler->ToggleMode("los");
+		return true;
+	}
+};
+
+class ToggleInfoActionExecutor : public IUnsyncedActionExecutor {
+public:
+	ToggleInfoActionExecutor() : IUnsyncedActionExecutor("ToggleInfo",
+			"Toggles current info texture view") {}
+
+	bool Execute(const UnsyncedAction& action) const {
+		infoTextureHandler->ToggleMode(action.GetArgs());
+		return true;
+	}
+};
+
+
+class ShowPathTypeActionExecutor : public IUnsyncedActionExecutor {
+public:
+	ShowPathTypeActionExecutor() : IUnsyncedActionExecutor("ShowPathType",
+			"Shows path traversability for a given MoveDefName, MoveDefID or UnitDefName") {}
+
+	bool Execute(const UnsyncedAction& action) const {
+		CPathTexture* pathTexInfo = dynamic_cast<CPathTexture*>(infoTextureHandler->GetInfoTexture("path"));
+		if (pathTexInfo) {
+			bool set = false;
+
+			if (!action.GetArgs().empty()) {
+				if (!set) {
+					bool failed = false;
+					unsigned int i = StringToInt(action.GetArgs(), &failed);
+					if (failed) i = -1;
+					const MoveDef* md = moveDefHandler->GetMoveDefByName(action.GetArgs());
+					if (!md && i<moveDefHandler->GetNumMoveDefs()) md = moveDefHandler->GetMoveDefByPathType(i);
+					if (md) {
+						set = true;
+						pathTexInfo->ShowMoveDef(md->pathType);
+						LOG("Showing PathView for MoveDef: %s", md->name.c_str());
+					}
+				}
+
+				if (!set) {
+					const UnitDef* ud = unitDefHandler->GetUnitDefByName(action.GetArgs());
+					if (ud) {
+						set = true;
+						pathTexInfo->ShowUnitDef(ud->id);
+						LOG("Showing BuildView for UnitDef: %s", ud->name.c_str());
+					}
+				}
+			}
+
+			if (!set) {
+				pathTexInfo->ShowMoveDef(-1);
+				LOG("Switching back to automatic PathView");
+			}
+
+			if (set && infoTextureHandler->GetMode() != "path")
+				infoTextureHandler->ToggleMode("path");
+		}
 		return true;
 	}
 };
@@ -1873,8 +1746,9 @@ public:
 			return false;
 
 		// already shown?
-		const std::list<CInputReceiver*>& inputReceivers = GetInputReceivers();
-		if (inputReceivers.empty() || (dynamic_cast<CShareBox*>(inputReceivers.front()) != NULL))
+		const auto& inputReceivers = CInputReceiver::GetReceivers();
+
+		if (inputReceivers.empty() || (dynamic_cast<CShareBox*>(inputReceivers.front()) != nullptr))
 			return false;
 
 		new CShareBox();
@@ -1891,12 +1765,14 @@ public:
 
 	bool Execute(const UnsyncedAction& action) const {
 		// already shown?
-		std::list<CInputReceiver*>& inputReceivers = GetInputReceivers();
-		if  (inputReceivers.empty() || dynamic_cast<CQuitBox*>(inputReceivers.front()))
+		const auto& inputReceivers = CInputReceiver::GetReceivers();
+
+		if (inputReceivers.empty() || dynamic_cast<CQuitBox*>(inputReceivers.front()) != nullptr)
 			return false;
 
 		const CKeyBindings::HotkeyList& quitList = keyBindings->GetHotkeys("quitmenu");
-		const std::string quitKey = quitList.empty() ? "<none>" : *quitList.begin();
+		const std::string& quitKey = quitList.empty() ? "<none>" : *quitList.begin();
+
 		LOG("Press %s to access the quit menu", quitKey.c_str());
 		return true;
 	}
@@ -1911,8 +1787,9 @@ public:
 
 	bool Execute(const UnsyncedAction& action) const {
 		// already shown?
-		std::list<CInputReceiver*>& inputReceivers = GetInputReceivers();
-		if (inputReceivers.empty() || dynamic_cast<CQuitBox*>(inputReceivers.front()))
+		const auto& inputReceivers = CInputReceiver::GetReceivers();
+
+		if (inputReceivers.empty() || dynamic_cast<CQuitBox*>(inputReceivers.front()) != nullptr)
 			return false;
 
 		new CQuitBox();
@@ -1924,16 +1801,28 @@ public:
 
 class QuitActionExecutor : public IUnsyncedActionExecutor {
 public:
-	QuitActionExecutor() : IUnsyncedActionExecutor("Quit",
-			"Exits the game immediately") {}
+	QuitActionExecutor() : IUnsyncedActionExecutor("QuitForce", "Exits game to system") {
+	}
 
 	bool Execute(const UnsyncedAction& action) const {
-		Exit();
+		LOG("[QuitAction] user exited to system");
+
+		gu->globalQuit = true;
 		return true;
 	}
-	static void Exit() {
-		LOG("User exited");
-		gu->globalQuit = true;
+};
+
+class ReloadActionExecutor : public IUnsyncedActionExecutor {
+public:
+	ReloadActionExecutor() : IUnsyncedActionExecutor("ReloadForce", "Exits game to menu") {
+	}
+
+	bool Execute(const UnsyncedAction& action) const {
+		LOG("[ReloadAction] user exited to menu");
+
+		gu->reloadScript = "";
+		gu->globalReload = true;
+		return true;
 	}
 };
 
@@ -2013,7 +1902,7 @@ public:
 
 	bool Execute(const UnsyncedAction& action) const {
 
-		SetBoolArg(game->showClock, action.GetArgs());
+		InverseOrSetBool(game->showClock, action.GetArgs());
 		configHandler->Set("ShowClock", game->showClock ? 1 : 0);
 		LogSystemStatus("small digital clock", game->showClock);
 		return true;
@@ -2063,7 +1952,7 @@ public:
 
 	bool Execute(const UnsyncedAction& action) const {
 
-		SetBoolArg(game->showFPS, action.GetArgs());
+		InverseOrSetBool(game->showFPS, action.GetArgs());
 		configHandler->Set("ShowFPS", game->showFPS ? 1 : 0);
 		LogSystemStatus("frames-per-second indicator", game->showFPS);
 		return true;
@@ -2079,7 +1968,7 @@ public:
 
 	bool Execute(const UnsyncedAction& action) const {
 
-		SetBoolArg(game->showSpeed, action.GetArgs());
+		InverseOrSetBool(game->showSpeed, action.GetArgs());
 		configHandler->Set("ShowSpeed", game->showSpeed ? 1 : 0);
 		LogSystemStatus("simulation speed indicator", game->showSpeed);
 		return true;
@@ -2136,12 +2025,10 @@ public:
 
 class CmdColorsActionExecutor : public IUnsyncedActionExecutor {
 public:
-	CmdColorsActionExecutor() : IUnsyncedActionExecutor("CmdColors",
-			"Reloads cmdcolors.txt") {}
+	CmdColorsActionExecutor() : IUnsyncedActionExecutor("CmdColors", "Reloads cmdcolors.txt") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-
-		const std::string fileName = action.GetArgs().empty() ? "cmdcolors.txt" : action.GetArgs();
+		const std::string& fileName = action.GetArgs().empty() ? "cmdcolors.txt" : action.GetArgs();
 		cmdColors.LoadConfigFromFile(fileName);
 		LOG("Reloaded cmdcolors from file: %s", fileName.c_str());
 		return true;
@@ -2152,14 +2039,10 @@ public:
 
 class CtrlPanelActionExecutor : public IUnsyncedActionExecutor {
 public:
-	CtrlPanelActionExecutor() : IUnsyncedActionExecutor("CtrlPanel",
-			"Reloads ctrlpanel.txt") {}
+	CtrlPanelActionExecutor() : IUnsyncedActionExecutor("CtrlPanel", "Reloads GUI config") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-
-		const std::string fileName = action.GetArgs().empty() ? "ctrlpanel.txt" : action.GetArgs();
-		guihandler->ReloadConfigFromFile(fileName);
-		LOG("Reloaded ctrlpanel from file: %s", fileName.c_str());
+		guihandler->ReloadConfigFromFile(action.GetArgs());
 		return true;
 	}
 };
@@ -2211,7 +2094,7 @@ public:
 
 	bool Execute(const UnsyncedAction& action) const {
 		if (action.GetArgs().empty()) {
-			VSync.SetInterval((VSync.GetInterval() <= 0) ? 1 : 0);
+			VSync.Toggle();
 		} else {
 			VSync.SetInterval(atoi(action.GetArgs().c_str()));
 		}
@@ -2229,7 +2112,7 @@ public:
 	bool Execute(const UnsyncedAction& action) const {
 
 		bool safeMode = LuaOpenGL::GetSafeMode();
-		SetBoolArg(safeMode, action.GetArgs());
+		InverseOrSetBool(safeMode, action.GetArgs());
 		LuaOpenGL::SetSafeMode(safeMode);
 		LogSystemStatus("OpenGL safe-mode", LuaOpenGL::GetSafeMode());
 		return true;
@@ -2247,7 +2130,7 @@ public:
 		if (!resourceBar)
 			return false;
 
-		SetBoolArg(resourceBar->enabled, action.GetArgs());
+		InverseOrSetBool(resourceBar->enabled, action.GetArgs());
 		return true;
 	}
 };
@@ -2264,7 +2147,7 @@ public:
 		if (!tooltip)
 			return false;
 
-		SetBoolArg(tooltip->enabled, action.GetArgs());
+		InverseOrSetBool(tooltip->enabled, action.GetArgs());
 		return true;
 	}
 };
@@ -2277,10 +2160,10 @@ public:
 			"Enables/Disables the in-game console") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		if (!game->infoConsole)
+		if (infoConsole == nullptr)
 			return false;
 
-		SetBoolArg(game->infoConsole->enabled, action.GetArgs());
+		InverseOrSetBool(infoConsole->enabled, action.GetArgs());
 		return true;
 	}
 };
@@ -2293,7 +2176,7 @@ public:
 			"Enables/Disables the statistics graphs shown at the end of the game") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		SetBoolArg(CEndGameBox::enabled, action.GetArgs());
+		InverseOrSetBool(CEndGameBox::enabled, action.GetArgs());
 		return true;
 	}
 };
@@ -2308,7 +2191,7 @@ public:
 	bool Execute(const UnsyncedAction& action) const {
 
 		bool drawHUD = hudDrawer->GetDraw();
-		SetBoolArg(drawHUD, action.GetArgs());
+		InverseOrSetBool(drawHUD, action.GetArgs());
 		hudDrawer->SetDraw(drawHUD);
 		return true;
 	}
@@ -2324,7 +2207,7 @@ public:
 	bool Execute(const UnsyncedAction& action) const {
 
 		bool aiDebugDraw = debugDrawerAI->GetDraw();
-		SetBoolArg(aiDebugDraw, action.GetArgs());
+		InverseOrSetBool(aiDebugDraw, action.GetArgs());
 		debugDrawerAI->SetDraw(aiDebugDraw);
 		LogSystemStatus("SkirmishAI debug drawing", debugDrawerAI->GetDraw());
 		return true;
@@ -2340,7 +2223,7 @@ public:
 
 	bool Execute(const UnsyncedAction& action) const {
 
-		SetBoolArg(globalRendering->drawMapMarks, action.GetArgs());
+		InverseOrSetBool(globalRendering->drawMapMarks, action.GetArgs());
 		LogSystemStatus("map marks rendering", globalRendering->drawMapMarks);
 		return true;
 	}
@@ -2356,7 +2239,7 @@ public:
 	bool Execute(const UnsyncedAction& action) const {
 
 		bool allMarksVisible = inMapDrawerModel->GetAllMarksVisible();
-		SetBoolArg(allMarksVisible, action.GetArgs());
+		InverseOrSetBool(allMarksVisible, action.GetArgs());
 		inMapDrawerModel->SetAllMarksVisible(allMarksVisible);
 		return true;
 	}
@@ -2386,7 +2269,7 @@ public:
 	bool Execute(const UnsyncedAction& action) const {
 
 		bool luaMapDrawingAllowed = inMapDrawer->GetLuaMapDrawingAllowed();
-		SetBoolArg(luaMapDrawingAllowed, action.GetArgs());
+		InverseOrSetBool(luaMapDrawingAllowed, action.GetArgs());
 		inMapDrawer->SetLuaMapDrawingAllowed(luaMapDrawingAllowed);
 		return true;
 	}
@@ -2401,85 +2284,34 @@ public:
 			" a chat message to LuaUI") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		if (!guihandler)
+		if (guihandler == nullptr)
 			return false;
 
 		const std::string& command = action.GetArgs();
 
 		if (command == "reload" || command == "enable") {
-			if (luaUI && luaUI->IsRunning()) {
-				// NOTE: causes a SEGV through RunCallIn()
-				LOG_L(L_WARNING, "Can not reload from within LuaUI, yet");
-				return true;
-			}
-			if (luaUI == NULL) {
-				LOG("Loading: \"%s\"", "luaui.lua"); // FIXME duplicate of below
-				CLuaUI::LoadHandler();
-				if (luaUI == NULL) {
-					guihandler->LoadConfig("ctrlpanel.txt");
-					LOG_L(L_WARNING, "Loading failed");
-				}
-			} else {
-				if (command == "enable") {
-					LOG_L(L_WARNING, "LuaUI is already enabled");
-				} else {
-					LOG("Reloading: \"%s\"", "luaui.lua"); // FIXME
-					CLuaUI::FreeHandler();
-					CLuaUI::LoadHandler();
-					if (luaUI == NULL) {
-						guihandler->LoadConfig("ctrlpanel.txt");
-						LOG_L(L_WARNING, "Reloading failed");
-					}
-				}
-			}
-			guihandler->LayoutIcons(false);
+			guihandler->EnableLuaUI(command == "enable");
+			return true;
 		}
-		else if (command == "disable") {
-			if (luaUI && luaUI->IsRunning()) {
-				// NOTE: might cause a SEGV through RunCallIn()
-				LOG_L(L_WARNING, "Can not disable from within LuaUI, yet");
-				return true;
-			}
-			if (luaUI != NULL) {
-				CLuaUI::FreeHandler();
-				LOG("Disabled LuaUI");
-			}
-			guihandler->LayoutIcons(false);
+		if (command == "disable") {
+			guihandler->DisableLuaUI();
+			return true;
 		}
-		else if (luaUI) {
+		if (luaUI != nullptr) {
 			luaUI->GotChatMsg(command, 0);
-		} else {
-			LOG_L(L_DEBUG, "LuaUI is not loaded");
+			return true;
 		}
 
+		LOG_L(L_DEBUG, "LuaUI is not loaded");
 		return true;
 	}
 };
-
-
-
-class LuaModUICtrlActionExecutor : public IUnsyncedActionExecutor {
-public:
-	LuaModUICtrlActionExecutor() : IUnsyncedActionExecutor("LuaModUICtrl",
-			"Allow/Disallow Lua to receive UI control events, like mouse-,"
-			" keyboard- and joystick-events") {}
-
-	bool Execute(const UnsyncedAction& action) const {
-
-		bool modUICtrl = CLuaHandle::GetModUICtrl();
-		SetBoolArg(modUICtrl, action.GetArgs());
-		CLuaHandle::SetModUICtrl(modUICtrl);
-		configHandler->Set("LuaModUICtrl", modUICtrl ? 1 : 0);
-		return true;
-	}
-};
-
 
 
 class MiniMapActionExecutor : public IUnsyncedActionExecutor {
 public:
 	MiniMapActionExecutor() : IUnsyncedActionExecutor("MiniMap",
-			"Show/Hide the mini-map provided by the engine") {}
+			"FIXME document subcommands") {}
 
 	bool Execute(const UnsyncedAction& action) const {
 		if (!minimap)
@@ -2501,7 +2333,7 @@ public:
 
 	bool Execute(const UnsyncedAction& action) const {
 		bool drawDecals = IGroundDecalDrawer::GetDrawDecals();
-		SetBoolArg(drawDecals, action.GetArgs());
+		InverseOrSetBool(drawDecals, action.GetArgs());
 		IGroundDecalDrawer::SetDrawDecals(drawDecals);
 
 		LogSystemStatus("Ground-decals rendering", IGroundDecalDrawer::GetDrawDecals());
@@ -2565,7 +2397,7 @@ public:
 			return false;
 
 		bool gatherMode = guihandler->GetGatherMode();
-		SetBoolArg(gatherMode, action.GetArgs());
+		InverseOrSetBool(gatherMode, action.GetArgs());
 		guihandler->SetGatherMode(gatherMode);
 		LogSystemStatus("Gather-Mode", guihandler->GetGatherMode());
 		return true;
@@ -2687,18 +2519,23 @@ public:
 	bool Execute(const UnsyncedAction& action) const {
 		if (!action.GetArgs().empty()) {
 			const vector<string> &args = CSimpleParser::Tokenize(action.GetArgs(), 0);
-			if (args.size() == 1) {
-				const float value = (float)atof(args[0].c_str());
-				unitDrawer->LODScale = value;
+
+			if (args.size() == 2) {
+				const int objType = Clamp(atoi(args[0].c_str()), int(LUAOBJ_UNIT), int(LUAOBJ_FEATURE));
+				const float lodScale = atof(args[1].c_str());
+
+				LuaObjectDrawer::SetLODScale(objType, lodScale);
 			}
-			else if (args.size() == 2) {
-				const float value = (float)atof(args[1].c_str());
+			else if (args.size() == 3) {
+				const int objType = Clamp(atoi(args[1].c_str()), int(LUAOBJ_UNIT), int(LUAOBJ_FEATURE));
+				const float lodScale = atof(args[2].c_str());
+
 				if (args[0] == "shadow") {
-					unitDrawer->LODScaleShadow = value;
+					LuaObjectDrawer::SetLODScaleShadow(objType, lodScale);
 				} else if (args[0] == "reflection") {
-					unitDrawer->LODScaleReflection = value;
+					LuaObjectDrawer::SetLODScaleReflection(objType, lodScale);
 				} else if (args[0] == "refraction") {
-					unitDrawer->LODScaleRefraction = value;
+					LuaObjectDrawer::SetLODScaleRefraction(objType, lodScale);
 				}
 			} else {
 				LOG_L(L_WARNING, "/%s: wrong syntax", GetCommand().c_str());
@@ -2712,17 +2549,38 @@ public:
 
 
 
-class WireMapActionExecutor : public IUnsyncedActionExecutor {
+class WireModelActionExecutor: public IUnsyncedActionExecutor {
 public:
-	WireMapActionExecutor() : IUnsyncedActionExecutor("WireMap",
-			"Enable/Disable drawing of the map as wire-frame (no textures) (Graphic setting)") {}
+	WireModelActionExecutor(): IUnsyncedActionExecutor("WireModel", "Toggle wireframe-mode drawing of model geometry") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
-		SetBoolArg(gd->WireFrameModeRef(), action.GetArgs());
-		// TODO: make this a separate action
-		// sky->wireframe = gd->WireFrameMode();
-		LogSystemStatus("wireframe map-drawing mode", gd->WireFrameMode());
+		unitDrawer->WireFrameModeRef() = !unitDrawer->WireFrameModeRef();
+
+		LogSystemStatus("wireframe model-drawing mode", unitDrawer->WireFrameModeRef());
+		return true;
+	}
+};
+
+class WireMapActionExecutor: public IUnsyncedActionExecutor {
+public:
+	WireMapActionExecutor(): IUnsyncedActionExecutor("WireMap", "Toggle wireframe-mode drawing of map geometry") {}
+
+	bool Execute(const UnsyncedAction& action) const {
+		(readMap->GetGroundDrawer())->WireFrameModeRef() = !(readMap->GetGroundDrawer())->WireFrameModeRef();
+
+		LogSystemStatus("wireframe map-drawing mode", (readMap->GetGroundDrawer())->WireFrameMode());
+		return true;
+	}
+};
+
+class WireSkyActionExecutor: public IUnsyncedActionExecutor {
+public:
+	WireSkyActionExecutor(): IUnsyncedActionExecutor("WireSky", "Toggle wireframe-mode drawing of skydome geometry") {}
+
+	bool Execute(const UnsyncedAction& action) const {
+		sky->WireFrameModeRef() = !sky->WireFrameModeRef();
+
+		LogSystemStatus("wireframe sky-drawing mode", sky->WireFrameModeRef());
 		return true;
 	}
 };
@@ -2735,7 +2593,7 @@ public:
 	}
 
 	bool Execute(const UnsyncedAction& action) const {
-		SetBoolArg(DebugColVolDrawer::enable, action.GetArgs());
+		InverseOrSetBool(DebugColVolDrawer::enable, action.GetArgs());
 		return true;
 	}
 };
@@ -2838,11 +2696,11 @@ public:
 					givePos.x, givePos.y, givePos.z);
 
 			CommandMessage pckt(message, gu->myPlayerNum);
-			net->Send(pckt.Pack());
+			clientNet->Send(pckt.Pack());
 		} else {
 			// forward (as synced command)
 			CommandMessage pckt(action.GetInnerAction(), gu->myPlayerNum);
-			net->Send(pckt.Pack());
+			clientNet->Send(pckt.Pack());
 		}
 		return true;
 	}
@@ -2862,13 +2720,13 @@ public:
 		// kill selected units
 		std::stringstream ss;
 		ss << GetCommand();
-		for (CUnitSet::iterator it = selectedUnitsHandler.selectedUnits.begin();
-				it != selectedUnitsHandler.selectedUnits.end(); ++it)
-		{
-			ss << " " << (*it)->id;
+
+		for (const int unitID: selectedUnitsHandler.selectedUnits) {
+			ss << " " << unitID;
 		}
+
 		CommandMessage pckt(ss.str(), gu->myPlayerNum);
-		net->Send(pckt.Pack());
+		clientNet->Send(pckt.Pack());
 		return true;
 	}
 };
@@ -2882,7 +2740,7 @@ public:
 
 	bool Execute(const UnsyncedAction& action) const {
 		CommandMessage pckt(Action(action.GetArgs()), gu->myPlayerNum);
-		net->Send(pckt.Pack());
+		clientNet->Send(pckt.Pack());
 		return true;
 	}
 };
@@ -2895,7 +2753,7 @@ public:
 			"Save the game state to QuickSave.ssf (BROKEN)") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		game->SaveGame("Saves/QuickSave.ssf", true);
+		game->SaveGame("Saves/QuickSave.ssf", true, true);
 		return true;
 	}
 };
@@ -2924,17 +2782,33 @@ public:
 /// /save [-y ]<savename>
 class SaveActionExecutor : public IUnsyncedActionExecutor {
 public:
-	SaveActionExecutor() : IUnsyncedActionExecutor("Save",
-			"Save the game state to a specific file (BROKEN)") {}
+	SaveActionExecutor(bool _usecreg) : IUnsyncedActionExecutor((_usecreg ? "Save" : "LuaSave"),
+			"Save the game state to a specific file, add -y to overwrite when file is already present"),
+			usecreg(_usecreg) {}
 
 	bool Execute(const UnsyncedAction& action) const {
-
-		const bool saveOverride = action.GetArgs().find("-y ") == 0;
-		const std::string saveName(action.GetArgs().c_str() + (saveOverride ? 3 : 0));
-		const std::string saveFileName = "Saves/" + saveName + ".ssf";
-		game->SaveGame(saveFileName, saveOverride);
+		const std::vector<std::string>& args = _local_strSpaceTokenize(action.GetArgs());
+		bool overwrite = false;
+		std::string saveFileName;
+		switch (args.size()) {
+			case 2:
+				overwrite = args[1] == "-y";
+				//no break, fall through
+			case 1:
+				saveFileName = "Saves/" + args[0];
+				if (usecreg)
+					saveFileName += ".ssf";
+				else
+					saveFileName += ".slsf";
+				break;
+			default:
+				return false;
+		}
+		game->SaveGame(saveFileName, overwrite, usecreg);
 		return true;
 	}
+private:
+	bool usecreg;
 };
 
 
@@ -2997,7 +2871,7 @@ public:
 	bool Execute(const UnsyncedAction& action) const {
 		// redirect as a synced command
 		CommandMessage pckt(action.GetInnerAction(), gu->myPlayerNum);
-		net->Send(pckt.Pack());
+		clientNet->Send(pckt.Pack());
 		return true;
 	}
 };
@@ -3165,7 +3039,7 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new SelectCycleActionExecutor());
 	AddActionExecutor(new DeselectActionExecutor());
 	AddActionExecutor(new ShadowsActionExecutor());
-	AddActionExecutor(new RoamActionExecutor());
+	AddActionExecutor(new MapMeshDrawerActionExecutor());
 	AddActionExecutor(new MapBorderActionExecutor());
 	AddActionExecutor(new WaterActionExecutor());
 	AddActionExecutor(new AdvModelShadingActionExecutor());
@@ -3222,12 +3096,12 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new DebugColVolDrawerActionExecutor());
 	AddActionExecutor(new DebugPathDrawerActionExecutor());
 	AddActionExecutor(new DebugTraceRayDrawerActionExecutor());
-	AddActionExecutor(new NoSoundActionExecutor());
+	AddActionExecutor(new MuteActionExecutor());
+	AddActionExecutor(new SoundActionExecutor());
 	AddActionExecutor(new SoundChannelEnableActionExecutor());
 	AddActionExecutor(new CreateVideoActionExecutor());
 	AddActionExecutor(new DrawTreesActionExecutor());
 	AddActionExecutor(new DynamicSkyActionExecutor());
-	AddActionExecutor(new DynamicSunActionExecutor());
 	AddActionExecutor(new SpeedControlActionExecutor());
 	AddActionExecutor(new GameInfoActionExecutor());
 	AddActionExecutor(new HideInterfaceActionExecutor());
@@ -3235,6 +3109,7 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new FullscreenActionExecutor());
 	AddActionExecutor(new IncreaseViewRadiusActionExecutor());
 	AddActionExecutor(new DecreaseViewRadiusActionExecutor());
+	AddActionExecutor(new GroundDetailActionExecutor());
 	AddActionExecutor(new MoreTreesActionExecutor());
 	AddActionExecutor(new LessTreesActionExecutor());
 	AddActionExecutor(new MoreCloudsActionExecutor());
@@ -3244,18 +3119,19 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new ControlUnitActionExecutor());
 	AddActionExecutor(new ShowStandardActionExecutor());
 	AddActionExecutor(new ShowElevationActionExecutor());
-	AddActionExecutor(new ToggleRadarAndJammerActionExecutor());
 	AddActionExecutor(new ShowMetalMapActionExecutor());
 	AddActionExecutor(new ShowPathTravActionExecutor());
 	AddActionExecutor(new ShowPathHeatActionExecutor());
 	AddActionExecutor(new ShowPathFlowActionExecutor());
 	AddActionExecutor(new ShowPathCostActionExecutor());
 	AddActionExecutor(new ToggleLOSActionExecutor());
+	AddActionExecutor(new ToggleInfoActionExecutor());
+	AddActionExecutor(new ShowPathTypeActionExecutor());
 	AddActionExecutor(new ShareDialogActionExecutor());
 	AddActionExecutor(new QuitMessageActionExecutor());
 	AddActionExecutor(new QuitMenuActionExecutor());
 	AddActionExecutor(new QuitActionExecutor());
-	AddActionExecutor(new AliasActionExecutor(new QuitActionExecutor(), "QuitForce"));
+	AddActionExecutor(new ReloadActionExecutor());
 	AddActionExecutor(new IncreaseGUIOpacityActionExecutor());
 	AddActionExecutor(new DecreaseGUIOpacityActionExecutor());
 	AddActionExecutor(new ScreenShotActionExecutor());
@@ -3282,7 +3158,6 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new ClearMapMarksActionExecutor());
 	AddActionExecutor(new NoLuaDrawActionExecutor());
 	AddActionExecutor(new LuaUIActionExecutor());
-	AddActionExecutor(new LuaModUICtrlActionExecutor());
 	AddActionExecutor(new MiniMapActionExecutor());
 	AddActionExecutor(new GroundDecalsActionExecutor());
 	AddActionExecutor(new MaxParticlesActionExecutor());
@@ -3294,7 +3169,9 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new DistIconActionExecutor());
 	AddActionExecutor(new DistDrawActionExecutor());
 	AddActionExecutor(new LODScaleActionExecutor());
+	AddActionExecutor(new WireModelActionExecutor());
 	AddActionExecutor(new WireMapActionExecutor());
+	AddActionExecutor(new WireSkyActionExecutor());
 	AddActionExecutor(new CrashActionExecutor());
 	AddActionExecutor(new ExceptionActionExecutor());
 	AddActionExecutor(new DivByZeroActionExecutor());
@@ -3303,7 +3180,8 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new SendActionExecutor());
 	AddActionExecutor(new SaveGameActionExecutor());
 	AddActionExecutor(new DumpStateActionExecutor());
-	AddActionExecutor(new SaveActionExecutor());
+	AddActionExecutor(new SaveActionExecutor(true));
+	AddActionExecutor(new SaveActionExecutor(false));
 	AddActionExecutor(new ReloadGameActionExecutor());
 	AddActionExecutor(new ReloadShadersActionExecutor());
 	AddActionExecutor(new DebugInfoActionExecutor());
@@ -3314,7 +3192,9 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new RedirectToSyncedActionExecutor("Desync"));
 #endif
 	AddActionExecutor(new RedirectToSyncedActionExecutor("Resync"));
-	AddActionExecutor(new RedirectToSyncedActionExecutor("Take"));
+	if (modInfo.allowTake) {
+		AddActionExecutor(new RedirectToSyncedActionExecutor("Take"));
+	}
 	AddActionExecutor(new RedirectToSyncedActionExecutor("LuaRules"));
 	AddActionExecutor(new RedirectToSyncedActionExecutor("LuaGaia"));
 	AddActionExecutor(new CommandListActionExecutor());
@@ -3325,7 +3205,6 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 UnsyncedGameCommands* UnsyncedGameCommands::singleton = NULL;
 
 void UnsyncedGameCommands::CreateInstance() {
-
 	if (singleton == NULL) {
 		singleton = new UnsyncedGameCommands();
 	} else {
@@ -3334,12 +3213,8 @@ void UnsyncedGameCommands::CreateInstance() {
 }
 
 void UnsyncedGameCommands::DestroyInstance() {
-
 	if (singleton != NULL) {
-		// SafeDelete
-		UnsyncedGameCommands* tmp = singleton;
-		singleton = NULL;
-		delete tmp;
+		SafeDelete(singleton);
 	} else {
 		// this might happen during shutdown after an unclean init
 		LOG_L(L_WARNING, "UnsyncedGameCommands singleton was not initialized or is already destroyed");

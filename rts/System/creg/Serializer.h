@@ -5,9 +5,12 @@
 
 #include "ISerializer.h"
 #include "creg_cond.h"
+
+#ifdef USING_CREG
+
 #include <map>
 #include <vector>
-#include <list>
+#include <deque>
 #include <istream>
 
 namespace creg {
@@ -63,11 +66,11 @@ namespace creg {
 				if (class_ == objClass) return true;
 				if (isEmbedded && objEmbedded) return false;
 				if (!objEmbedded) {
-					for (Class* base=class_->base; base; base=base->base)
+					for (Class* base=class_->base(); base; base=base->base())
 						if (base == objClass) return true;
 				}
 				if (!isEmbedded) {
-					for (Class* base=objClass->base; base; base=base->base)
+					for (Class* base=objClass->base(); base; base=base->base())
 						if (base == class_) return true;
 				}
 				return false;
@@ -79,8 +82,10 @@ namespace creg {
 
 		std::ostream* stream;
 		std::map<void*,std::vector<ObjectRef*> > ptrToId;
-		std::list<ObjectRef> objects;
+		std::deque<ObjectRef> objects;
 		std::vector<ObjectRef*> pendingObjects; // these objects still have to be saved
+		std::map<Class*, int> classSizes;
+		std::map<Class*, int> classCounts;
 
 		// Serialize all class names
 		void WriteObjectInfo();
@@ -183,7 +188,9 @@ namespace creg {
 		void LoadPackage(std::istream* s, void*& root, Class*& rootCls);
 	};
 
-};
+}
+
+#endif //USING_CREG
 
 
-#endif
+#endif //SERIALIZER_IMPL_H

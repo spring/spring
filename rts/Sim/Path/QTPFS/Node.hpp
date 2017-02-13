@@ -3,9 +3,10 @@
 #ifndef QTPFS_NODE_HDR
 #define QTPFS_NODE_HDR
 
+#include <array>
 #include <vector>
 #include <fstream>
-#include <boost/cstdint.hpp>
+#include <cinttypes>
 
 #include "PathEnums.hpp"
 #include "PathDefines.hpp"
@@ -16,6 +17,8 @@
 #ifndef QTPFS_VIRTUAL_NODE_FUNCTIONS
 #define QTNode INode
 #endif
+
+#define QTNODE_CHILD_COUNT 4
 
 namespace QTPFS {
 	struct NodeLayer;
@@ -111,7 +114,6 @@ namespace QTPFS {
 			unsigned int x1, unsigned int z1,
 			unsigned int x2, unsigned int z2
 		);
-		~QTNode();
 
 		static void InitStatic();
 
@@ -121,8 +123,8 @@ namespace QTPFS {
 		unsigned int GetChildID(unsigned int i) const { return (nodeNumber << 2) + (i + 1); }
 		unsigned int GetParentID() const { return ((nodeNumber - 1) >> 2); }
 
-		boost::uint64_t GetMemFootPrint() const;
-		boost::uint64_t GetCheckSum() const;
+		std::uint64_t GetMemFootPrint() const;
+		std::uint64_t GetCheckSum() const;
 
 		void Delete();
 		void PreTesselate(NodeLayer& nl, const SRectangle& r, SRectangle& ur);
@@ -197,7 +199,7 @@ namespace QTPFS {
 		unsigned int currMagicNum;
 		unsigned int prevMagicNum;
 
-		std::vector<QTNode*> children;
+		std::array<QTNode*, QTNODE_CHILD_COUNT> children;
 		std::vector<INode*> neighbors;
 
 		// NOTE:
@@ -205,7 +207,7 @@ namespace QTPFS {
 		//   float3's are also more convenient to work with (so we take the memory hit)
 		std::vector<float3> netpoints;
 	};
-};
+}
 
 #endif
 

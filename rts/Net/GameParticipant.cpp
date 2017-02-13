@@ -8,7 +8,8 @@
 #include "System/Misc/SpringTime.h"
 
 GameParticipant::GameParticipant()
-: myState(UNCONNECTED)
+: id(-1)
+, myState(UNCONNECTED)
 , lastFrameResponse(0)
 , speedControl(0)
 , isLocal(false)
@@ -18,13 +19,13 @@ GameParticipant::GameParticipant()
 	linkData[MAX_AIS] = PlayerLinkData(false);
 }
 
-void GameParticipant::SendData(boost::shared_ptr<const netcode::RawPacket> packet)
+void GameParticipant::SendData(std::shared_ptr<const netcode::RawPacket> packet)
 {
 	if (link)
 		link->SendData(packet);
 }
 
-void GameParticipant::Connected(boost::shared_ptr<netcode::CConnection> _link, bool local)
+void GameParticipant::Connected(std::shared_ptr<netcode::CConnection> _link, bool local)
 {
 	link = _link;
 	linkData[MAX_AIS].link.reset(new netcode::CLoopbackConnection());
@@ -35,12 +36,15 @@ void GameParticipant::Connected(boost::shared_ptr<netcode::CConnection> _link, b
 
 void GameParticipant::Kill(const std::string& reason, const bool flush)
 {
-	if (link)
-	{
+	if (link) {
 		link->SendData(CBaseNetProtocol::Get().SendQuit(reason));
-		if (flush) // make sure the Flush() performed by Close() has any effect (forced flushes are undesirable)
-			spring_sleep(spring_msecs(1000)); // it will cause a slight lag in the game server during kick, but not a big deal
-		link->Close();
+
+		// make sure the Flush() performed by Close() has effect (forced flushes are undesirable)
+		// it will cause a slight lag in the game server during kick, but not a big deal
+		if (flush)
+			spring_sleep(spring_msecs(1000));
+
+		link->Close(flush);
 		link.reset();
 	}
 	linkData[MAX_AIS].link.reset();

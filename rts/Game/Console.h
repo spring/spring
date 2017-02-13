@@ -33,13 +33,14 @@ protected:
 	void RegisterAction(const std::string& name);
 };
 
+
 /**
  * @brief handles and forwards commands
  */
-class Console
+class CommandConsole
 {
 public:
-	static Console& Instance();
+	static CommandConsole& Instance();
 	
 	/**
 	 * @brief register a command
@@ -53,11 +54,12 @@ public:
 	 */
 	bool ExecuteAction(const Action&);
 
-private:
-	Console();
-	~Console();
+	void ResetState() { commandMap.clear(); }
 
+private:
 	std::map<const std::string, CommandReceiver*> commandMap;
 };
 
+#define commandConsole (CommandConsole::Instance())
 #endif // CONSOLE_H
+

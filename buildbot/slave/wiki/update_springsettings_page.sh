@@ -2,7 +2,7 @@
 
 #########################
 # Config
-SPRING="spring"
+SPRING="spring-headless"
 PAGE="Springsettings.cfg"
 SECTIONNAME="Available Options"
 

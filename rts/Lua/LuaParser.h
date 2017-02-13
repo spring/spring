@@ -3,12 +3,11 @@
 #ifndef LUA_PARSER_H
 #define LUA_PARSER_H
 
-#include "System/FileSystem/VFSModes.h"
-
 #include <string>
 #include <vector>
-#include <map>
-#include <set>
+
+#include "System/FileSystem/VFSModes.h"
+#include "System/UnorderedMap.hpp"
 
 class float3;
 struct float4;
@@ -17,9 +16,6 @@ class LuaParser;
 struct lua_State;
 
 using std::string;
-using std::vector;
-using std::map;
-using std::set;
 
 
 /******************************************************************************/
@@ -38,7 +34,7 @@ class LuaTable {
 		LuaTable SubTable(const string& key) const;
 		LuaTable SubTableExpr(const string& expr) const;
 
-		bool IsValid() const { return (parser != NULL); }
+		bool IsValid() const { return (parser != nullptr); }
 
 		const string& GetPath() const { return path; }
 
@@ -46,13 +42,13 @@ class LuaTable {
 		int GetLength(int key) const;           // lua '#' operator
 		int GetLength(const string& key) const; // lua '#' operator
 
-		bool GetKeys(vector<int>& data) const;
-		bool GetKeys(vector<string>& data) const;
+		bool GetKeys(std::vector<int>& data) const;
+		bool GetKeys(std::vector<string>& data) const;
 
-		bool GetMap(map<int, float>& data) const;
-		bool GetMap(map<int, string>& data) const;
-		bool GetMap(map<string, float>& data) const;
-		bool GetMap(map<string, string>& data) const;
+		bool GetMap(spring::unordered_map<int, float>& data) const;
+		bool GetMap(spring::unordered_map<int, string>& data) const;
+		bool GetMap(spring::unordered_map<string, float>& data) const;
+		bool GetMap(spring::unordered_map<string, string>& data) const;
 
 		bool KeyExists(int key) const;
 		bool KeyExists(const string& key) const;
@@ -118,94 +114,96 @@ class LuaTable {
 /******************************************************************************/
 
 class LuaParser {
-
+private:
 	friend class LuaTable;
+	// prevent implicit bool-to-string conversion
+	struct boolean { bool b; };
 
-	public:
-		LuaParser(const string& fileName,
-		          const string& fileModes,
-		          const string& accessModes);
-		LuaParser(const string& textChunk,
-		          const string& accessModes);
-		~LuaParser();
+public:
+	LuaParser(const string& fileName, const string& fileModes, const string& accessModes, const boolean& synced = {false});
+	LuaParser(const string& textChunk, const string& accessModes, const boolean& synced = {false});
+	~LuaParser();
 
-		bool Execute();
+	bool Execute();
+	bool IsValid() const { return (L != nullptr); }
 
-		bool IsValid() const { return (L != NULL); }
+	LuaTable GetRoot();
 
-		LuaTable GetRoot();
+	LuaTable SubTableExpr(const string& expr) {
+		return GetRoot().SubTableExpr(expr);
+	}
 
-		LuaTable SubTableExpr(const string& expr) {
-			return GetRoot().SubTableExpr(expr);
-		}
+	const string& GetErrorLog() const { return errorLog; }
 
-		const string& GetErrorLog() const { return errorLog; }
+	// for setting up the initial params table
+	void GetTable(int index,          bool overwrite = false);
+	void GetTable(const string& name, bool overwrite = false);
+	void EndTable();
+	void AddFunc(int key, int (*func)(lua_State*));
+	void AddInt(int key, int value);
+	void AddBool(int key, bool value);
+	void AddFloat(int key, float value);
+	void AddString(int key, const string& value);
+	void AddFunc(const string& key, int (*func)(lua_State*));
+	void AddInt(const string& key, int value);
+	void AddBool(const string& key, bool value);
+	void AddFloat(const string& key, float value);
+	void AddString(const string& key, const string& value);
 
-		const set<string>& GetAccessedFiles() const { return accessedFiles; }
+	void SetLowerKeys(bool state) { lowerKeys = state; }
+	void SetLowerCppKeys(bool state) { lowerCppKeys = state; }
 
-		// for setting up the initial params table
-		void GetTable(int index,          bool overwrite = false);
-		void GetTable(const string& name, bool overwrite = false);
-		void EndTable();
-		void AddFunc(int key, int (*func)(lua_State*));
-		void AddInt(int key, int value);
-		void AddBool(int key, bool value);
-		void AddFloat(int key, float value);
-		void AddString(int key, const string& value);
-		void AddFunc(const string& key, int (*func)(lua_State*));
-		void AddInt(const string& key, int value);
-		void AddBool(const string& key, bool value);
-		void AddFloat(const string& key, float value);
-		void AddString(const string& key, const string& value);
+public:
+	const string fileName;
+	const string fileModes;
+	const string textChunk;
+	const string accessModes;
 
-		void SetLowerKeys(bool state) { lowerKeys = state; }
-		void SetLowerCppKeys(bool state) { lowerCppKeys = state; }
+private:
+	void SetupEnv(bool synced);
+	void PushParam();
 
-	public:
-		const string fileName;
-		const string fileModes;
-		const string textChunk;
-		const string accessModes;
+	void AddTable(LuaTable* tbl);
+	void RemoveTable(LuaTable* tbl);
 
-	private:
-		void SetupEnv();
+private:
+	lua_State* L;
 
-		void PushParam();
+	// NOTE: holds *stack* pointers
+	std::vector<LuaTable*> tables;
+	// unused
+	std::vector<string> accessedFiles;
 
-		void AddTable(LuaTable* tbl);
-		void RemoveTable(LuaTable* tbl);
+	int initDepth;
+	int rootRef;
+	int currentRef;
 
-	private:
-		bool valid;
-		int initDepth;
+	bool valid;
+	bool lowerKeys; // convert all returned keys to lower case
+	bool lowerCppKeys; // convert strings in arguments keys to lower case
 
-		lua_State* L;
-		set<LuaTable*> tables;
-		int rootRef;
-		int currentRef;
+	string errorLog;
 
-		bool lowerKeys; // convert all returned keys to lower case
-		bool lowerCppKeys; // convert strings in arguments keys to lower case
+private:
+	// Weird call-outs
+	static int DontMessWithMyCase(lua_State* L);
 
-		string errorLog;
-		set<string> accessedFiles;
+	// Spring call-outs
+	static int RandomSeed(lua_State* L);
+	static int Random(lua_State* L);
+	static int DummyRandomSeed(lua_State* L);
+	static int DummyRandom(lua_State* L);
+	static int TimeCheck(lua_State* L);
 
-	private:
-		// Weird call-outs
-		static int DontMessWithMyCase(lua_State* L);
+	// VFS call-outs
+	static int DirList(lua_State* L);
+	static int SubDirs(lua_State* L);
+	static int Include(lua_State* L);
+	static int LoadFile(lua_State* L);
+	static int FileExists(lua_State* L);
 
-		// Spring call-outs
-		static int TimeCheck(lua_State* L);
-
-		// VFS call-outs
-		static int DirList(lua_State* L);
-		static int SubDirs(lua_State* L);
-		static int Include(lua_State* L);
-		static int LoadFile(lua_State* L);
-		static int FileExists(lua_State* L);
-
-	private:
-		static LuaParser* currentParser;
+private:
+	static LuaParser* currentParser;
 };
 
 

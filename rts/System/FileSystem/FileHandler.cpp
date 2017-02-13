@@ -89,7 +89,7 @@ bool CFileHandler::TryReadFromRawFS(const string& fileName)
 }
 
 
-bool CFileHandler::TryReadFromModFS(const string& fileName)
+bool CFileHandler::TryReadFromVFS(const string& fileName, int section)
 {
 #ifndef TOOLS
 	if (vfsHandler == NULL) {
@@ -97,7 +97,7 @@ bool CFileHandler::TryReadFromModFS(const string& fileName)
 	}
 
 	const string file = StringToLower(fileName);
-	if (vfsHandler->LoadFile(file, fileBuffer)) {
+	if (vfsHandler->LoadFile(file, fileBuffer, (CVFSHandler::Section) section)) {
 		// did we allocated more mem than needed
 		// (e.g. because of incorrect usage of std::vector)?
 		assert(fileBuffer.size() == fileBuffer.capacity());
@@ -110,29 +110,21 @@ bool CFileHandler::TryReadFromModFS(const string& fileName)
 }
 
 
-bool CFileHandler::TryReadFromMapFS(const string& fileName)
-{
-	return TryReadFromModFS(fileName); // FIXME
-}
-
-
-bool CFileHandler::TryReadFromBaseFS(const string& fileName)
-{
-	return TryReadFromModFS(fileName); // FIXME
-}
-
-
 void CFileHandler::Open(const string& fileName, const string& modes)
 {
 	this->fileName = fileName;
-	const char* c = modes.c_str();
-	while (c[0] != 0) {
-		if ((c[0] == SPRING_VFS_RAW[0])  && TryReadFromRawFS(fileName))  break;
-		if ((c[0] == SPRING_VFS_MOD[0])  && TryReadFromModFS(fileName))  break;
-		if ((c[0] == SPRING_VFS_MAP[0])  && TryReadFromMapFS(fileName))  break;
-		if ((c[0] == SPRING_VFS_BASE[0]) && TryReadFromBaseFS(fileName)) break;
-		if ((c[0] == SPRING_VFS_PWD[0])  && TryReadFromPWD(fileName)) break;
-		c++;
+	for (char c: modes) {
+#ifndef TOOLS
+		CVFSHandler::Section section = CVFSHandler::GetModeSection(c);
+		if ((section != CVFSHandler::Section::Error) && TryReadFromVFS(fileName, section))
+			break;
+
+		if ((c == SPRING_VFS_RAW[0]) && TryReadFromRawFS(fileName))
+			break;
+
+#endif
+		if ((c == SPRING_VFS_PWD[0]) && TryReadFromPWD(fileName))
+			break;
 	}
 }
 
@@ -141,34 +133,31 @@ void CFileHandler::Open(const string& fileName, const string& modes)
 
 bool CFileHandler::FileExists(const std::string& filePath, const std::string& modes)
 {
-	bool fileExists = false;
-
+	for (char c: modes) {
 #ifndef TOOLS
-	// VFS
-	if (modes.find_first_of(SPRING_VFS_ZIP) != string::npos) {
-		fileExists = fileExists || vfsHandler->FileExists(filePath);
-	}
+		CVFSHandler::Section section = CVFSHandler::GetModeSection(c);
+		if ((section != CVFSHandler::Section::Error) && vfsHandler->FileExists(filePath, section))
+			return true;
 
-	// Raw
-	if (modes.find(SPRING_VFS_RAW) != string::npos) {
-		const std::string rawpath = dataDirsAccess.LocateFile(filePath);
-		fileExists = fileExists || FileSystem::FileExists(rawpath);
-	}
+		if ((c == SPRING_VFS_RAW[0]) && FileSystem::FileExists(dataDirsAccess.LocateFile(filePath)))
+			return true;
 #endif
-
-	// PWD
-	if (modes.find(SPRING_VFS_PWD) != string::npos) {
-	#ifndef TOOLS
-		if (FileSystem::IsAbsolutePath(filePath))
-			return false;
-		const std::string fullpath(Platform::GetOrigCWD() + filePath);
-	#else
-		const std::string fullpath(filePath);
-	#endif
-		fileExists = fileExists || FileSystem::FileExists(fullpath);
+		if (c == SPRING_VFS_PWD[0]) {
+#ifndef TOOLS
+			if (!FileSystem::IsAbsolutePath(filePath)) {
+				const std::string fullpath(Platform::GetOrigCWD() + filePath);
+				if (FileSystem::FileExists(fullpath))
+					return true;
+			}
+#else
+			const std::string fullpath(filePath);
+			if (FileSystem::FileExists(fullpath))
+				return true;
+#endif
+		}
 	}
 
-	return fileExists;
+	return false;
 }
 
 
@@ -184,10 +173,11 @@ int CFileHandler::Read(void* buf, int length)
 		ifs.read(static_cast<char*>(buf), length);
 		return ifs.gcount();
 	}
-	else if (!fileBuffer.empty()) {
-		if ((length + filePos) > fileSize) {
+
+	if (!fileBuffer.empty()) {
+		if ((length + filePos) > fileSize)
 			length = fileSize - filePos;
-		}
+
 		if (length > 0) {
 			assert(fileBuffer.size() >= (filePos + length));
 			memcpy(buf, &fileBuffer[filePos], length);
@@ -294,21 +284,7 @@ std::vector<string> CFileHandler::FindFiles(const string& path,
 		const string& pattern)
 {
 #ifndef TOOLS
-	std::vector<string> found = dataDirsAccess.FindFiles(path, pattern);
-	boost::regex regexpattern(FileSystem::ConvertGlobToRegex(pattern),
-			boost::regex::icase);
-	std::vector<string> f;
-
-	if (vfsHandler) {
-		f = vfsHandler->GetFilesInDir(path);
-	}
-
-	for (std::vector<string>::iterator fi = f.begin(); fi != f.end(); ++fi) {
-		if (boost::regex_match(*fi, regexpattern)) {
-			found.push_back(path + *fi);
-		}
-	}
-	return found;
+	return DirList(path, pattern, SPRING_VFS_ALL);
 #else
 	return std::vector<std::string>();
 #endif
@@ -320,22 +296,24 @@ std::vector<string> CFileHandler::FindFiles(const string& path,
 std::vector<string> CFileHandler::DirList(const string& path,
 		const string& pattern, const string& modes)
 {
-	const string pat = pattern.empty() ? "*" : pattern;
 
-	std::set<string> fileSet;
-	const char* c = modes.c_str();
-	while (c[0] != 0) {
-		if (c[0] == SPRING_VFS_RAW[0])  { InsertRawFiles(fileSet, path, pat);  }
-		if (c[0] == SPRING_VFS_MOD[0])  { InsertModFiles(fileSet, path, pat);  }
-		if (c[0] == SPRING_VFS_MAP[0])  { InsertMapFiles(fileSet, path, pat);  }
-		if (c[0] == SPRING_VFS_BASE[0]) { InsertBaseFiles(fileSet, path, pat); }
-		c++;
-	}
 	std::vector<string> fileVec;
+#ifndef TOOLS
+	const string pat = pattern.empty() ? "*" : pattern;
+	std::set<string> fileSet;
+	for (char c: modes) {
+		CVFSHandler::Section section = CVFSHandler::GetModeSection(c);
+		if (section != CVFSHandler::Section::Error)
+			InsertVFSFiles(fileSet, path, pat, section);
+
+		if (c == SPRING_VFS_RAW[0])
+			InsertRawFiles(fileSet, path, pat);
+	}
 	std::set<string>::const_iterator it;
 	for (it = fileSet.begin(); it != fileSet.end(); ++it) {
 		fileVec.push_back(*it);
 	}
+#endif
 	return fileVec;
 }
 
@@ -344,23 +322,18 @@ bool CFileHandler::InsertRawFiles(std::set<string>& fileSet,
 		const string& path, const string& pattern)
 {
 #ifndef TOOLS
-	boost::regex regexpattern(FileSystem::ConvertGlobToRegex(pattern),
-	                          boost::regex::icase);
-
 	const std::vector<string> &found = dataDirsAccess.FindFiles(path, pattern);
 	std::vector<string>::const_iterator fi;
 	for (fi = found.begin(); fi != found.end(); ++fi) {
-		if (boost::regex_match(*fi, regexpattern)) {
-			fileSet.insert(fi->c_str());
-		}
+		fileSet.insert(fi->c_str());
 	}
 #endif
 	return true;
 }
 
 
-bool CFileHandler::InsertModFiles(std::set<string>& fileSet,
-		const string& path, const string& pattern)
+bool CFileHandler::InsertVFSFiles(std::set<string>& fileSet,
+		const string& path, const string& pattern, int section)
 {
 #ifndef TOOLS
 	if (!vfsHandler) {
@@ -375,7 +348,7 @@ bool CFileHandler::InsertModFiles(std::set<string>& fileSet,
 	boost::regex regexpattern(FileSystem::ConvertGlobToRegex(pattern),
 			boost::regex::icase);
 
-	const std::vector<string> &found = vfsHandler->GetFilesInDir(path);
+	const std::vector<string> &found = vfsHandler->GetFilesInDir(path, (CVFSHandler::Section) section);
 	std::vector<string>::const_iterator fi;
 	for (fi = found.begin(); fi != found.end(); ++fi) {
 		if (boost::regex_match(*fi, regexpattern)) {
@@ -387,41 +360,29 @@ bool CFileHandler::InsertModFiles(std::set<string>& fileSet,
 }
 
 
-bool CFileHandler::InsertMapFiles(std::set<string>& fileSet,
-		const string& path, const string& pattern)
-{
-	return InsertModFiles(fileSet, path, pattern); // FIXME
-}
-
-
-bool CFileHandler::InsertBaseFiles(std::set<string>& fileSet,
-		const string& path, const string& pattern)
-{
-	return InsertModFiles(fileSet, path, pattern); // FIXME
-}
-
-
 /******************************************************************************/
 
 std::vector<string> CFileHandler::SubDirs(const string& path,
 		const string& pattern, const string& modes)
 {
+	std::vector<string> dirVec;
+#ifndef TOOLS
 	const string pat = pattern.empty() ? "*" : pattern;
 
 	std::set<string> dirSet;
-	const char* c = modes.c_str();
-	while (c[0] != 0) {
-		if (c[0] == SPRING_VFS_RAW[0])  { InsertRawDirs(dirSet, path, pat);  }
-		if (c[0] == SPRING_VFS_MOD[0])  { InsertModDirs(dirSet, path, pat);  }
-		if (c[0] == SPRING_VFS_MAP[0])  { InsertMapDirs(dirSet, path, pat);  }
-		if (c[0] == SPRING_VFS_BASE[0]) { InsertBaseDirs(dirSet, path, pat); }
-		c++;
+	for (char c: modes) {
+		CVFSHandler::Section section = CVFSHandler::GetModeSection(c);
+		if (section != CVFSHandler::Section::Error)
+			InsertVFSDirs(dirSet, path, pat, section);
+
+		if (c == SPRING_VFS_RAW[0])
+			InsertRawDirs(dirSet, path, pat);
 	}
-	std::vector<string> dirVec;
 	std::set<string>::const_iterator it;
 	for (it = dirSet.begin(); it != dirSet.end(); ++it) {
 		dirVec.push_back(*it);
 	}
+#endif
 	return dirVec;
 }
 
@@ -447,8 +408,8 @@ bool CFileHandler::InsertRawDirs(std::set<string>& dirSet,
 }
 
 
-bool CFileHandler::InsertModDirs(std::set<string>& dirSet,
-		const string& path, const string& pattern)
+bool CFileHandler::InsertVFSDirs(std::set<string>& dirSet,
+		const string& path, const string& pattern, int section)
 {
 #ifndef TOOLS
 	if (!vfsHandler) {
@@ -463,7 +424,7 @@ bool CFileHandler::InsertModDirs(std::set<string>& dirSet,
 	boost::regex regexpattern(FileSystem::ConvertGlobToRegex(pattern),
 			boost::regex::icase);
 
-	const std::vector<string> &found = vfsHandler->GetDirsInDir(path);
+	const std::vector<string> &found = vfsHandler->GetDirsInDir(path, (CVFSHandler::Section) section);
 	std::vector<string>::const_iterator fi;
 	for (fi = found.begin(); fi != found.end(); ++fi) {
 		if (boost::regex_match(*fi, regexpattern)) {
@@ -472,20 +433,6 @@ bool CFileHandler::InsertModDirs(std::set<string>& dirSet,
 	}
 #endif
 	return true;
-}
-
-
-bool CFileHandler::InsertMapDirs(std::set<string>& dirSet,
-		const string& path, const string& pattern)
-{
-	return InsertModDirs(dirSet, path, pattern); // FIXME
-}
-
-
-bool CFileHandler::InsertBaseDirs(std::set<string>& dirSet,
-		const string& path, const string& pattern)
-{
-	return InsertModDirs(dirSet, path, pattern); // FIXME
 }
 
 

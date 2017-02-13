@@ -12,6 +12,7 @@
 #include "Rendering/Env/IGroundDecalDrawer.h"
 #include "Rendering/ProjectileDrawer.h"
 #include "Rendering/Env/ISky.h"
+#include "Rendering/Env/SunLighting.h"
 #include "Rendering/Shaders/Shader.h"
 #include "Rendering/GL/myGL.h"
 #include "System/Config/ConfigHandler.h"
@@ -29,7 +30,7 @@ CSM3GroundDrawer::CSM3GroundDrawer(CSM3ReadMap* m)
 
 	tr->config.detailMod = configHandler->GetInt("SM3TerrainDetail") / 100.0f;
 
-	if (shadowHandler->shadowsSupported) {
+	if (CShadowHandler::ShadowsSupported()) {
 		shadowrc = tr->AddRenderContext(&shadowCam, false);
 	} else  {
 		shadowrc = 0;
@@ -45,7 +46,7 @@ CSM3GroundDrawer::~CSM3GroundDrawer()
 static void SpringCamToTerrainCam(CCamera &sc, terrain::Camera& tc)
 {
 	// Copy camera settings
-	tc.fov = sc.GetFov();
+	tc.fov = sc.GetVFOV();
 	tc.front = sc.forward;
 	tc.right = sc.right;
 	tc.up = sc.up;
@@ -77,17 +78,17 @@ void CSM3GroundDrawer::Draw(const DrawPass::e& drawPass)
 
 	tr->SetShaderParams(sky->GetLight()->GetLightDir(), currc->cam->pos);
 
-	if (shadowHandler->shadowsLoaded) {
+	if (shadowHandler->ShadowsLoaded()) {
 		terrain::ShadowMapParams params;
 
 		params.mid[0] = shadowHandler->GetShadowParams().x;
 		params.mid[1] = shadowHandler->GetShadowParams().y;
 		params.f_a    = shadowHandler->GetShadowParams().z;
 		params.f_b    = shadowHandler->GetShadowParams().w;
-		params.shadowMap = shadowHandler->shadowTexture;
+		params.shadowMap = shadowHandler->GetShadowTextureID();
 
 		for (int a = 0; a < 16; a++)
-			params.shadowMatrix[a] = shadowHandler->shadowMatrix[a];
+			params.shadowMatrix[a] = shadowHandler->GetShadowMatrixRaw()[a];
 
 		tr->SetShadowParams(&params);
 	}
@@ -105,15 +106,15 @@ void CSM3GroundDrawer::Draw(const DrawPass::e& drawPass)
 	const float z[] = {0.0f, 0.0f, 0.0f, 1.0f};
 
 	for (int a = 0; a < 3; a++)
-		d[a] = mapInfo->light.groundSunColor[a];
+		d[a] = sunLighting->groundDiffuseColor[a];
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, d);
 
 	for (int a = 0; a < 3; a++)
-		d[a] = mapInfo->light.groundAmbientColor[a];
+		d[a] = sunLighting->groundAmbientColor[a];
 	glLightfv(GL_LIGHT0, GL_AMBIENT, d);
 
 	for (int a = 0; a < 3; a++)
-		d[a] = mapInfo->light.groundSpecularColor[a];
+		d[a] = sunLighting->groundSpecularColor[a];
 	glLightfv(GL_LIGHT0, GL_SPECULAR, d);
 
 	for (int a = 0; a < 4; a++)
@@ -232,6 +233,8 @@ void CSM3GroundDrawer::IncreaseDetail()
 	tr->config.detailMod *= 1.1f;
 	if (tr->config.detailMod > 12.0f)
 		tr->config.detailMod = 12.0f;
+
+	configHandler->Set("GroundDetail", 100 * tr->config.detailMod);
 	LOG("Terrain detail changed to: %2.2f", tr->config.detailMod);
 }
 
@@ -241,6 +244,18 @@ void CSM3GroundDrawer::DecreaseDetail()
 	if (tr->config.detailMod < 0.25f)
 		tr->config.detailMod = 0.25f;
 
+	configHandler->Set("GroundDetail", 100 * tr->config.detailMod);
+	LOG("Terrain detail changed to: %2.2f", tr->config.detailMod);
+}
+
+void CSM3GroundDrawer::SetDetail(int newGroundDetail)
+{
+	tr->config.detailMod = (float)newGroundDetail / 100.0f;
+
+	if (tr->config.detailMod < 0.25f)
+		tr->config.detailMod = 0.25f;
+
+	configHandler->Set("GroundDetail", 100 * tr->config.detailMod);
 	LOG("Terrain detail changed to: %2.2f", tr->config.detailMod);
 }
 

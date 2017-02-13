@@ -7,44 +7,16 @@
 // Released under GPL license: see LICENSE.html for more information.
 // -------------------------------------------------------------------------
 
-#ifndef AIDEF_H
-#define AIDEF_H
+#ifndef AAI_DEF_H
+#define AAI_DEF_H
 
-#include <list>
-#include <vector>
-#include <stdio.h>
-#include <time.h>
 #include <string>
 
-#include "LegacyCpp/IAICheats.h"
-#include "LegacyCpp/IGlobalAI.h"
-#include "LegacyCpp/IGlobalAICallback.h"
-#include "LegacyCpp/IAICallback.h"
-#include "LegacyCpp/aibase.h"
-#include "LegacyCpp/UnitDef.h"
-#include "LegacyCpp/MoveData.h"
-#include "LegacyCpp/WeaponDef.h"
-#include "LegacyCpp/CommandQueue.h"
-#include "Sim/Misc/GlobalConstants.h"
-#include "System/type2.h"
-#include "System/maindefines.h"
-#include "System/SafeCStrings.h"
-#include "System/Util.h"
-#include "AAIConfig.h"
-#include "AIExport.h"
-
-using namespace springLegacyAI;
-
+#include "System/float3.h"
 
 #ifdef _MSC_VER
 #pragma warning(disable: 4244 4018) // signed/unsigned and loss of precision...
 #endif
-
-// The following two helper functions implementations are in AAIBuildTable.cpp
-
-void ReplaceExtension(const char *n, char *dst, int s, const char *ext);
-/// Converts a string to one that can be used in a file name (eg. "Abc.123 $%^*" -> "Abc.123_____")
-std::string MakeFileSystemCompatible(const std::string& str);
 
 #define AAI_VERSION aiexport_getVersion()
 #define MAP_CACHE_VERSION "MAP_DATA_0_89"
@@ -52,23 +24,28 @@ std::string MakeFileSystemCompatible(const std::string& str);
 #define MOD_LEARN_VERSION "MOD_LEARN_0_90"
 #define CONTINENT_DATA_VERSION "MOVEMENT_MAPS_0_87"
 
-// all paths
-#define MAIN_PATH ""
 #define AILOG_PATH "log/"
-#define MOD_CFG_PATH "cfg/mod/"
-#define GENERAL_CFG_FILE "cfg/general.cfg"
+#define MAP_LEARN_PATH "learn/mod/"
 #define MOD_LEARN_PATH "learn/mod/"
-#define MAP_CACHE_PATH "cache/"
-#define MAP_LEARN_PATH "learn/map/"
 
-
-extern AAIConfig *cfg;
 
 class AAIMetalSpot
 {
 public:
-	AAIMetalSpot(float3 pos, float amount) {this->pos = pos; this->amount = amount; occupied = false; extractor = -1; extractor_def = -1;}
-	AAIMetalSpot() {pos = ZeroVector; amount = 0; occupied = false; extractor = -1; extractor_def = -1;}
+	AAIMetalSpot(float3 _pos, float _amount):
+		pos(_pos),
+		occupied(false),
+		extractor(-1),
+		extractor_def(-1),
+		amount(_amount)
+	{}
+	AAIMetalSpot():
+		pos(ZeroVector),
+		occupied(false),
+		extractor(-1),
+		extractor_def(-1),
+		amount(0)
+	{}
 
 	float3 pos;
 	bool occupied;
@@ -107,64 +84,17 @@ public:
 #define UNIT_TYPE_BOMBER (unsigned int) 512
 #define UNIT_TYPE_GUNSHIP (unsigned int) 1024
 
-enum Direction {WEST, EAST, SOUTH, NORTH, CENTER, NO_DIRECTION};
-
-enum MapType {LAND_MAP, LAND_WATER_MAP, WATER_MAP, UNKNOWN_MAP};
-
-enum SectorType {UNKNOWN_SECTOR, LAND_SECTOR, LAND_WATER_SECTOR, WATER_SECTOR};
 
 enum UnitCategory {UNKNOWN, STATIONARY_DEF, STATIONARY_ARTY, STORAGE, STATIONARY_CONSTRUCTOR, AIR_BASE,
 STATIONARY_RECON, STATIONARY_JAMMER, STATIONARY_LAUNCHER, DEFLECTION_SHIELD, POWER_PLANT, EXTRACTOR, METAL_MAKER,
 COMMANDER, GROUND_ASSAULT, AIR_ASSAULT, HOVER_ASSAULT, SEA_ASSAULT, SUBMARINE_ASSAULT, GROUND_ARTY, SEA_ARTY, HOVER_ARTY,
 SCOUT, MOBILE_TRANSPORT, MOBILE_JAMMER, MOBILE_LAUNCHER, MOBILE_CONSTRUCTOR};
 
-enum GroupTask {GROUP_IDLE, GROUP_ATTACKING, GROUP_DEFENDING, GROUP_PATROLING, GROUP_BOMBING, GROUP_RETREATING};
-
 enum UnitType {UNKNOWN_UNIT, ASSAULT_UNIT, ANTI_AIR_UNIT, BOMBER_UNIT, ARTY_UNIT};
-
 enum UnitTask {UNIT_IDLE, UNIT_ATTACKING, DEFENDING, GUARDING, MOVING, BUILDING, SCOUTING, ASSISTING, RECLAIMING, HEADING_TO_RALLYPOINT, UNIT_KILLED, ENEMY_UNIT, BOMB_TARGET};
-
-enum BuildOrderStatus {BUILDORDER_FAILED, BUILDORDER_NOBUILDPOS, BUILDORDER_NOBUILDER, BUILDORDER_SUCCESFUL};
-
-struct AAIAirTarget
-{
-	float3 pos;
-	int def_id;
-	int unit_id;
-	float cost;
-	float health;
-	UnitCategory category;
-};
-
-struct UnitTypeDynamic
-{
-	int under_construction;	// how many units of that type are under construction
-	int requested;			// how many units of that type have been requested
-	int active;				// how many units of that type are currently alive
-	int constructorsAvailable;	// how many factories/builders available being able to build that unit
-	int constructorsRequested;	// how many factories/builders requested being able to build that unit
-};
-
-struct UnitTypeStatic
-{
-	int def_id;
-	int side;				// 0 if side has not been set
-	list<int> canBuildList;
-	list<int> builtByList;
-	vector<float> efficiency;		// 0 -> ground assault, 1 -> air assault, 2 -> hover assault
-									// 3 -> sea assault, 4 -> submarine , 5 -> stat. defences
-	float range;              // max weapon range (0 for unarmed units)
-	float cost;
-	float builder_cost;
-	UnitCategory category;
-
-	unsigned int unit_type;
-	unsigned int movement_type;
-};
+enum MapType {LAND_MAP, LAND_WATER_MAP, WATER_MAP, UNKNOWN_MAP};
 
 class AAIGroup;
-class AAIBuilder;
-class AAIFactory;
 class AAIConstructor;
 
 struct AAIUnit
@@ -177,13 +107,5 @@ struct AAIUnit
 	int last_order;
 };
 
-struct AAIContinent
-{
-	int id;
-	int size;			// number of cells
-	bool water;
-};
-
-typedef unsigned char uchar;
-
 #endif
+

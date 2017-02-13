@@ -9,7 +9,7 @@
 	url = git://github.com/spring/Python.git
 [submodule "AI/Skirmish/Shard"]
 	path = AI/Skirmish/Shard
-	url = git://github.com/Tarendai/Shard.git
+	url = git://github.com/spring/Shard.git
 [submodule "AI/Skirmish/KAIK"]
 	path = AI/Skirmish/KAIK
 	url = git://github.com/spring/KAIK.git

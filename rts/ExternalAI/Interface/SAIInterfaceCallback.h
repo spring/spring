@@ -146,6 +146,9 @@ struct SAIInterfaceCallback {
 	/// This will end up in infolog
 	void              (CALLING_CONV *Log_log)(int interfaceId, const char* const msg);
 
+	/// This will end up in infolog
+	void              (CALLING_CONV *Log_logsl)(int interfaceId, const char* section, int loglevel, const char* const msg);
+
 	/**
 	 * Inform the engine of an error that happend in the interface.
 	 * @param   msg       error message

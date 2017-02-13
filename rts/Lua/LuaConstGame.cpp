@@ -1,15 +1,11 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-
 #include "LuaConstGame.h"
 
 #include "LuaInclude.h"
-
 #include "LuaHandle.h"
 #include "LuaUtils.h"
-#include "Game/Game.h"
 #include "Game/GameSetup.h"
-#include "Game/GameVersion.h"
 #include "Map/MapDamage.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
@@ -18,7 +14,6 @@
 #include "Sim/Misc/DamageArrayHandler.h"
 #include "Sim/Misc/Wind.h"
 #include "Sim/Units/UnitHandler.h"
-#include "Sim/Units/CommandAI/Command.h"
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/Util.h"
 
@@ -40,18 +35,13 @@ static void LuaPushNamedColor(lua_State* L,
 
 bool LuaConstGame::PushEntries(lua_State* L)
 {
-	assert(mapInfo);
-	assert(gameSetup);
+	assert(mapInfo != nullptr);
+	assert(gameSetup != nullptr);
 
 	// FIXME  --  this is getting silly, convert to userdata?
-	LuaPushNamedString(L, "version", SpringVersion::GetSync());
-	LuaPushNamedString(L, "versionFull", (!CLuaHandle::GetHandleSynced(L))? SpringVersion::GetFull(): "");
-	LuaPushNamedString(L, "versionPatchSet", (!CLuaHandle::GetHandleSynced(L))? SpringVersion::GetPatchSet(): "");
-	LuaPushNamedString(L, "buildFlags", (!CLuaHandle::GetHandleSynced(L))? SpringVersion::GetAdditional(): "");
-
-	if (unitHandler != NULL) {
+	if (unitHandler != nullptr)
 		LuaPushNamedNumber(L, "maxUnits",      unitHandler->MaxUnits());
-	}
+
 	LuaPushNamedNumber(L, "maxTeams",      MAX_TEAMS);
 	LuaPushNamedNumber(L, "maxPlayers",    MAX_PLAYERS);
 	LuaPushNamedNumber(L, "gameSpeed",     GAME_SPEED);
@@ -68,18 +58,17 @@ bool LuaConstGame::PushEntries(lua_State* L)
 	LuaPushNamedString(L, "mapDescription",      mapInfo->map.description);
 	LuaPushNamedNumber(L, "mapHardness",         mapInfo->map.hardness);
 
-	if (mapDamage) {
-		// damage is enabled iff !mapInfo->map.notDeformable
+	// damage is enabled iff !mapInfo->map.notDeformable
+	if (mapDamage != nullptr)
 		LuaPushNamedBool(L, "mapDamage", !mapDamage->disabled);
-	}
 
 
-	if (readMap) {
+	if (readMap != nullptr) {
 		//FIXME make this available in LoadScreen already!
-		LuaPushNamedNumber(L, "mapX",            gs->mapx / 64);
-		LuaPushNamedNumber(L, "mapY",            gs->mapy / 64);
-		LuaPushNamedNumber(L, "mapSizeX",        gs->mapx * SQUARE_SIZE);
-		LuaPushNamedNumber(L, "mapSizeZ",        gs->mapy * SQUARE_SIZE);
+		LuaPushNamedNumber(L, "mapX",            mapDims.mapx / 64);
+		LuaPushNamedNumber(L, "mapY",            mapDims.mapy / 64);
+		LuaPushNamedNumber(L, "mapSizeX",        mapDims.mapx * SQUARE_SIZE);
+		LuaPushNamedNumber(L, "mapSizeZ",        mapDims.mapy * SQUARE_SIZE);
 	}
 	LuaPushNamedNumber(L, "extractorRadius",     mapInfo->map.extractorRadius);
 	LuaPushNamedNumber(L, "tidal",               mapInfo->map.tidalStrength);
@@ -111,15 +100,10 @@ bool LuaConstGame::PushEntries(lua_State* L)
 	LuaPushNamedNumber(L, "waterFresnelPower",   mapInfo->water.fresnelPower);
 	LuaPushNamedNumber(L, "waterReflectionDistortion", mapInfo->water.reflDistortion);
 
-	LuaPushNamedColor(L,  "fogColor",            mapInfo->atmosphere.fogColor);
-	LuaPushNamedColor(L,  "groundAmbientColor",  mapInfo->light.groundAmbientColor);
-	LuaPushNamedColor(L,  "groundSpecularColor", mapInfo->light.groundSpecularColor);
-	LuaPushNamedColor(L,  "groundSunColor",      mapInfo->light.groundSunColor);
-
-	const vector<string>& causticTexs = mapInfo->water.causticTextures;
+	const std::vector<string>& causticTexs = mapInfo->water.causticTextures;
 	lua_pushliteral(L, "waterCausticTextures");
 	lua_newtable(L);
-	for (int i = 0; i < (int)causticTexs.size(); i++) {
+	for (size_t i = 0; i < causticTexs.size(); i++) {
 		lua_pushsstring(L, causticTexs[i]);
 		lua_rawseti(L, -2, i + 1);
 	}
@@ -165,28 +149,33 @@ bool LuaConstGame::PushEntries(lua_State* L)
 	LuaPushNamedNumber(L, "requireSonarUnderWater", modInfo.requireSonarUnderWater);
 
 	char buf[64];
-	SNPRINTF(buf, sizeof(buf), "0x%08X",
-	         archiveScanner->GetArchiveCompleteChecksum(mapInfo->map.name));
-	LuaPushNamedString(L, "mapChecksum", buf);
-	SNPRINTF(buf, sizeof(buf), "0x%08X",
-	         archiveScanner->GetArchiveCompleteChecksum(modInfo.filename));
-	LuaPushNamedString(L, "modChecksum", buf);
+	SNPRINTF(buf, sizeof(buf), "0x%08X", archiveScanner->GetArchiveCompleteChecksum(mapInfo->map.name)); LuaPushNamedString(L, "mapChecksum", buf);
+	SNPRINTF(buf, sizeof(buf), "0x%08X", archiveScanner->GetArchiveCompleteChecksum(modInfo.filename)); LuaPushNamedString(L, "modChecksum", buf);
 
-	const vector<string> &cats =
-		CCategoryHandler::Instance()->GetCategoryNames(~0);
-	lua_pushliteral(L, "springCategories");
-	lua_newtable(L);
-	for (int i = 0; i < (int)cats.size(); i++) {
-		LuaPushNamedNumber(L, StringToLower(cats[i]), i);
+	// needed for LuaIntro which also pushes ConstGame entries
+	// (but it probably doesn't need to know about categories)
+	if (CCategoryHandler::Instance() != nullptr) {
+		const std::vector<string>& cats = CCategoryHandler::Instance()->GetCategoryNames(~0);
+
+		lua_pushliteral(L, "springCategories");
+		lua_newtable(L);
+
+		for (unsigned int i = 0; i < cats.size(); i++) {
+			LuaPushNamedNumber(L, StringToLower(cats[i]), i);
+		}
+
+		lua_rawset(L, -3);
 	}
-	lua_rawset(L, -3);
 
-	lua_pushliteral(L, "armorTypes");
-	lua_newtable(L);
-	if (damageArrayHandler) {
+	// needed for LuaIntro which also pushes ConstGame entries
+	// (but it probably doesn't need to know about armor-types)
+	if (damageArrayHandler != nullptr) {
+		lua_pushliteral(L, "armorTypes");
+		lua_newtable(L);
+
 		const std::vector<std::string>& typeList = damageArrayHandler->GetTypeList();
-		const int typeCount = (int)typeList.size();
-		for (int i = 0; i < typeCount; i++) {
+
+		for (size_t i = 0; i < typeList.size(); i++) {
 			// bidirectional map
 			lua_pushsstring(L, typeList[i]);
 			lua_pushnumber(L, i);
@@ -194,8 +183,9 @@ bool LuaConstGame::PushEntries(lua_State* L)
 			lua_pushsstring(L, typeList[i]);
 			lua_rawseti(L, -2, i);
 		}
+
+		lua_rawset(L, -3);
 	}
-	lua_rawset(L, -3);
 
 	return true;
 }

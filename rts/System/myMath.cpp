@@ -10,6 +10,9 @@
 #include "System/Log/ILog.h"
 #include "Sim/Units/Scripts/CobInstance.h" // for TAANG2RAD (ugh)
 
+#undef far
+#undef near
+
 float2 CMyMath::headingToVectorTable[NUM_HEADINGS];
 
 void CMyMath::Init()
@@ -17,7 +20,7 @@ void CMyMath::Init()
 	good_fpu_init();
 
 	for (int a = 0; a < NUM_HEADINGS; ++a) {
-		float ang = (a - (NUM_HEADINGS / 2)) * 2 * PI / NUM_HEADINGS;
+		float ang = (a - (NUM_HEADINGS / 2)) * math::TWOPI / NUM_HEADINGS;
 		float2 v;
 			v.x = math::sin(ang);
 			v.y = math::cos(ang);
@@ -39,7 +42,7 @@ void CMyMath::Init()
 	}
 #endif
 
-#ifdef STREFLOP_H
+#if STREFLOP_ENABLED
 	if (checksum != HEADING_CHECKSUM) {
 		throw unsupported_error(
 			"Invalid headingToVectorTable checksum. Most likely"
@@ -110,25 +113,28 @@ std::pair<float, float> GetMapBoundaryIntersectionPoints(const float3 start, con
 {
 	const float rcpdirx = (dir.x != 0.0f)? (1.0f / dir.x): 10000.0f;
 	const float rcpdirz = (dir.z != 0.0f)? (1.0f / dir.z): 10000.0f;
-	float l1, l2, far, near;
 
 	const float& mapwidth  = float3::maxxpos + 1;
 	const float& mapheight = float3::maxzpos + 1;
 
-	//! x component
-	l1 = (    0.0f - start.x) * rcpdirx;
-	l2 = (mapwidth - start.x) * rcpdirx;
-	near = std::min(l1, l2);
-	far  = std::max(l1, l2);
+	// x component
+	float xl1 = (    0.0f - start.x) * rcpdirx;
+	float xl2 = (mapwidth - start.x) * rcpdirx;
+	float xnear = std::min(xl1, xl2);
+	float xfar  = std::max(xl1, xl2);
 
-	//! z component
-	l1 = (     0.0f - start.z) * rcpdirz;
-	l2 = (mapheight - start.z) * rcpdirz;
-	near = std::max(std::min(l1, l2), near);
-	far  = std::min(std::max(l1, l2), far);
+	// z component
+	float zl1 = (     0.0f - start.z) * rcpdirz;
+	float zl2 = (mapheight - start.z) * rcpdirz;
+	float znear = std::min(zl1, zl2);
+	float zfar  = std::max(zl1, zl2);
+
+	// both
+	float near = std::max(xnear, znear);
+	float far  = std::min(xfar, zfar);
 
 	if (far < 0.0f || far < near) {
-		//! outside of boundary
+		// outside of boundary
 		near = -1.0f;
 		far = -1.0f;
 	}

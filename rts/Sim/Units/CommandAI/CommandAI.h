@@ -4,11 +4,12 @@
 #define _COMMAND_AI_H
 
 #include <vector>
-#include <set>
 
 #include "System/Object.h"
+#include "CommandDescription.h"
 #include "CommandQueue.h"
 #include "System/float3.h"
+#include "System/UnorderedSet.hpp"
 
 class CUnit;
 class CFeature;
@@ -17,14 +18,18 @@ struct Command;
 
 class CCommandAI : public CObject
 {
-	CR_DECLARE(CCommandAI);
+	CR_DECLARE(CCommandAI)
 
 public:
 	CCommandAI(CUnit* owner);
 	CCommandAI();
 	virtual ~CCommandAI();
-	void PostLoad() {}
+
 	void DependentDied(CObject* o);
+
+	static void InitCommandDescriptionCache();
+	static void KillCommandDescriptionCache();
+
 	inline void SetOrderTarget(CUnit* o);
 
 	void SetScriptMaxSpeed(float speed, bool persistent);
@@ -37,29 +42,28 @@ public:
 	/// feeds into GiveCommandReal()
 	void GiveCommand(const Command& c, bool fromSynced = true);
 	void ClearTargetLock(const Command& fc);
-	virtual bool CanWeaponAutoTarget() const { return true; }
+	virtual bool CanWeaponAutoTarget(const CWeapon* weapon) const { return true; }
 	virtual int GetDefaultCmd(const CUnit* pointed, const CFeature* feature);
 	virtual void SlowUpdate();
 	virtual void GiveCommandReal(const Command& c, bool fromSynced = true);
-	virtual std::vector<CommandDescription>& GetPossibleCommands();
 	virtual void FinishCommand();
-	virtual void WeaponFired(CWeapon* weapon, bool mainWeapon, bool lastSalvo);
+	void WeaponFired(CWeapon* weapon, const bool searchForNewTarget);
 	virtual void BuggerOff(const float3& pos, float radius) {}
 	/**
 	 * @brief Determines if c will cancel a queued command
 	 * @return true if c will cancel a queued command
 	 */
-	virtual bool WillCancelQueued(const Command& c);
+		bool WillCancelQueued(const Command& c);
 	virtual bool CanSetMaxSpeed() const { return false; }
 	virtual void StopMove() { return; }
 
 	/**
 	 * Removes attack commands targeted at our new ally.
 	 */
-	virtual void StopAttackingAllyTeam(int ally);
+	void StopAttackingAllyTeam(int ally);
 
 	bool HasCommand(int cmdID) const;
-	bool HasMoreMoveCommands() const;
+	bool HasMoreMoveCommands(bool skipFirstCmd = true) const;
 
 	int CancelCommands(const Command& c, CCommandQueue& queue, bool& first);
 	/**
@@ -73,9 +77,11 @@ public:
 	 * @brief Returns commands that overlap c, but will not be canceled by c
 	 * @return a vector containing commands that overlap c
 	 */
-	std::vector<Command> GetOverlapQueued(const Command& c);
-	std::vector<Command> GetOverlapQueued(const Command& c,
-	                                      CCommandQueue& queue);
+	std::vector<Command> GetOverlapQueued(const Command& c) const;
+	std::vector<Command> GetOverlapQueued(const Command& c, const CCommandQueue& queue) const;
+
+	const std::vector<const SCommandDescription*>& GetPossibleCommands() const { return possibleCommands; }
+
 	/**
 	 * @brief Causes this CommandAI to execute the attack order c
 	 */
@@ -85,6 +91,13 @@ public:
 	 * @brief executes the stop command c
 	 */
 	virtual void ExecuteStop(Command& c);
+
+	void UpdateCommandDescription(unsigned int cmdDescIdx, const Command& cmd);
+	void UpdateCommandDescription(unsigned int cmdDescIdx, const SCommandDescription& modCmdDesc);
+	void InsertCommandDescription(unsigned int cmdDescIdx, const SCommandDescription& cmdDesc);
+	bool RemoveCommandDescription(unsigned int cmdDescIdx);
+
+	void UpdateNonQueueingCommands();
 
 	void SetCommandDescParam0(const Command& c);
 	bool ExecuteStateCommand(const Command& c);
@@ -101,13 +114,11 @@ public:
 
 	CWeapon* stockpileWeapon;
 
-	std::vector<CommandDescription> possibleCommands;
+	std::vector<const SCommandDescription*> possibleCommands;
+	spring::unordered_set<int> nonQueingCommands;
+
 	CCommandQueue commandQue;
-	/**
-	 * commands that will not go into the command queue
-	 * (and therefore not reseting it if given without shift
-	 */
-	std::set<int> nonQueingCommands;
+
 	int lastUserCommand;
 	int selfDCountdown;
 	int lastFinishCommand;
@@ -140,7 +151,7 @@ protected:
 	void DrawDefaultCommand(const Command& c) const;
 
 private:
-	std::set<CObject*> commandDeathDependences;
+	spring::unordered_set<CObject*> commandDeathDependences;
 	/**
 	 * continuously set to some non-zero value while target is in radar
 	 * decremented by 1 every SlowUpdate (!), command is canceled when

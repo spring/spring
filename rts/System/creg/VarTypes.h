@@ -12,27 +12,14 @@
 
 namespace creg
 {
-	class BasicType : public IType
-	{
-	public:
-		BasicType(BasicTypeID ID) : id(ID) {}
-		~BasicType() {}
-
-		void Serialize(ISerializer* s, void* instance);
-		std::string GetName();
-		size_t GetSize();
-
-		BasicTypeID id;
-	};
-
 	class ObjectInstanceType : public IType
 	{
 	public:
 		ObjectInstanceType(Class* objc) : objectClass(objc) {}
 		~ObjectInstanceType() {}
 		void Serialize(ISerializer* s, void* instance);
-		std::string GetName();
-		size_t GetSize();
+		std::string GetName() const;
+		size_t GetSize() const;
 
 		Class* objectClass;
 	};
@@ -40,12 +27,12 @@ namespace creg
 	class StringType : public DynamicArrayType<std::string>
 	{
 	public:
-		StringType(boost::shared_ptr<IType> charType);
-		std::string GetName();
-		size_t GetSize();
+		StringType(std::shared_ptr<IType> charType);
+		std::string GetName() const;
+		size_t GetSize() const;
 	};
 
-};
+}
 
 #endif
 

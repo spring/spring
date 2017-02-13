@@ -5,9 +5,21 @@
 
 #undef GL_GLEXT_LEGACY
 #define GL_GLEXT_PROTOTYPES
-#define _GDI32_
-#include <GL/glu.h>
-#include <GL/glext.h>
+#ifdef _WIN32
+# define _GDI32_
+# ifdef _DLL
+#  undef _DLL
+# endif
+# include <windows.h>
+#endif
+
+#if defined(__APPLE__)
+	#include <OpenGL/glu.h>
+	#include <OpenGL/glext.h>
+#else
+	#include <GL/glu.h>
+	#include <GL/glext.h>
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -18,6 +30,7 @@ extern "C" {
 #define GLEW_VERSION 1
 #define GLEW_VERSION_1_4 GL_TRUE
 #define GLEW_VERSION_2_0 GL_FALSE
+#define GLEW_VERSION_3_0 GL_FALSE
 
 #define GLEW_NV_vertex_program2 GL_FALSE
 #define GLEW_NV_depth_clamp GL_FALSE
@@ -37,6 +50,7 @@ extern "C" {
 #define GLEW_EXT_texture_edge_clamp GL_FALSE
 #define GLEW_ARB_texture_border_clamp GL_TRUE
 #define GLEW_EXT_texture_rectangle GL_TRUE
+#define GLEW_ARB_texture_query_lod GL_TRUE
 #define GLEW_ARB_multisample GL_FALSE
 #define GLEW_ARB_multitexture GL_TRUE
 #define GLEW_ARB_depth_texture GL_TRUE

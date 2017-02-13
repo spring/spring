@@ -14,7 +14,6 @@
 #include "Rendering/Fonts/glFont.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureDef.h"
-#include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/Wind.h"
 #include "Sim/Units/Unit.h"
@@ -23,8 +22,9 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/Util.h"
 
+
 CONFIG(std::string, TooltipGeometry).defaultValue("0.0 0.0 0.41 0.1");
-CONFIG(bool, TooltipOutlineFont).defaultValue(true);
+CONFIG(bool, TooltipOutlineFont).defaultValue(true).headlessValue(false);
 
 CTooltipConsole* tooltip = NULL;
 
@@ -126,11 +126,9 @@ static void GetDecoyResources(const CUnit* unit,
 		eMake += (ud->tidalGenerator * mapInfo->map.tidalStrength);
 	}
 
-	bool active;
+	bool active = ud->activateWhenBuilt;
 	if (rd->onoffable && ud->onoffable) {
 		active = unit->activated;
-	} else {
-		active = ud->activateWhenBuilt;
 	}
 
 	if (active) {
@@ -162,14 +160,14 @@ std::string CTooltipConsole::MakeUnitString(const CUnit* unit)
 	}
 
 	std::string s;
+	s.reserve(512);
 
 	const bool enemyUnit = (teamHandler->AllyTeam(unit->team) != gu->myAllyTeam) &&
 	                       !gu->spectatingFullView;
 
 	const UnitDef* unitDef = unit->unitDef;
 	const UnitDef* decoyDef = enemyUnit ? unitDef->decoyDef : NULL;
-	const UnitDef* effectiveDef =
-		!enemyUnit ? unitDef : (decoyDef ? decoyDef : unitDef);
+	const UnitDef* effectiveDef = !enemyUnit ? unitDef : (decoyDef ? decoyDef : unitDef);
 	const CTeam* team = NULL;
 
 	// don't show the unit type if it is not known
@@ -181,94 +179,70 @@ std::string CTooltipConsole::MakeUnitString(const CUnit* unit)
 		return "Enemy unit";
 	}
 
-
 	// show the player name instead of unit name if it has FBI tag showPlayerName
 	if (effectiveDef->showPlayerName) {
 		team = teamHandler->Team(unit->team);
 		s = team->GetControllerName();
 	} else {
-		if (!decoyDef) {
-			s = unit->tooltip;
-		} else {
+		s = unit->tooltip;
+		if (decoyDef) {
 			s = decoyDef->humanName + " - " + decoyDef->tooltip;
 		}
 	}
-
 
 	// don't show the unit health and other info if it has
 	// the FBI tag hideDamage and is not on our ally team or
 	// is not in LOS
 	if (!enemyUnit || (!effectiveDef->hideDamage && (losStatus & LOS_INLOS))) {
-		if (!decoyDef) {
-			const float cost = unit->metalCost + (unit->energyCost / 60.0f);
-			s += MakeUnitStatsString(
-						 unit->health, unit->maxHealth,
-						 unit->currentFuel, unitDef->maxFuel,
-						 unit->experience, cost, unit->maxRange,
-						 unit->metalMake,  unit->metalUse,
-						 unit->energyMake, unit->energyUse);
-		} else {
-			// display adjusted decoy stats
-			const float cost = decoyDef->metal + (decoyDef->energy / 60.0f);
-			const float healthScale = (decoyDef->health / unitDef->health);
-			float fuelScale;
-			if (unitDef->maxFuel > 0.0f) {
-				fuelScale = (decoyDef->maxFuel / unitDef->maxFuel);
-			} else {
-				fuelScale = 0.0f;
-			}
-
-			// get the adjusted resource stats
-			float metalMake, energyMake, metalUse, energyUse;
-			GetDecoyResources(unit, metalMake, metalUse, energyMake, energyUse);
-
-			s += MakeUnitStatsString(
-						 unit->health * healthScale, unit->maxHealth * healthScale,
-						 unit->currentFuel * fuelScale, decoyDef->maxFuel,
-						 unit->experience, cost, decoyDef->maxWeaponRange,
-						 metalMake,  metalUse,
-						 energyMake, energyUse);
-		}
+		SUnitStats stats;
+		stats.AddUnit(unit, enemyUnit);
+		s += MakeUnitStatsString(stats);
 	}
 
 	if (gs->cheatEnabled) {
-		char buf[32];
-		SNPRINTF(buf, 32, DARKBLUE "  [TechLevel %i]", unit->unitDef->techLevel);
-		s += buf;
+		s += IntToString(unit->unitDef->techLevel, DARKBLUE "  [TechLevel %i]");
 	}
 
-	s += "\n\xff\xff\xff\xff" + teamHandler->Team(unit->team)->GetControllerName();
+	s += "\n" + teamHandler->Team(unit->team)->GetControllerName();
 
 	return s;
 }
 
 
-std::string CTooltipConsole::MakeUnitStatsString(
-	float health, float maxHealth,
-	float currentFuel, float maxFuel,
-	float experience, float cost, float maxRange,
-	float metalMake,  float metalUse,
-	float energyMake, float energyUse)
+std::string CTooltipConsole::MakeUnitStatsString(const SUnitStats& stats)
 {
 	string s;
+	s.resize(512);
+	size_t charsPrinted = 0;
 
-	char tmp[512];
-	sprintf(tmp,"\nHealth %.0f/%.0f", health, maxHealth);
-	s += tmp;
+	charsPrinted += SNPRINTF(&s[charsPrinted], 512 - charsPrinted, "\nHealth %.0f/%.0f", stats.health, stats.maxHealth);
+	charsPrinted = std::min<size_t>(512, charsPrinted);
 
-	if (maxFuel > 0.0f) {
-		sprintf(tmp," Fuel %.0f/%.0f", currentFuel, maxFuel);
-		s += tmp;
+	if (stats.harvestMetalMax > 0.0f || stats.harvestEnergyMax > 0.0f) {
+		charsPrinted += SNPRINTF(&s[charsPrinted], 512 - charsPrinted,
+			"\nExperience %.2f Cost %.0f Range %.0f\n"
+			BLUE "Metal: "  GREEN "%.1f" GREY "/" RED "-%.1f"
+			GREY " ("  GREEN "%.1f" GREY "/" BLUE "%.1f" GREY ") "
+			BLUE "Energy: " GREEN "%.1f" GREY "/" RED "-%.1f"
+			GREY " ("  GREEN "%.1f" GREY "/" BLUE "%.1f" GREY ")\x08",
+			stats.experience, stats.cost, stats.maxRange,
+			stats.metalMake,     stats.metalUse,
+			stats.harvestMetal,  stats.harvestMetalMax,
+			stats.energyMake,    stats.energyUse,
+			stats.harvestEnergy, stats.harvestEnergyMax);
+		charsPrinted = std::min<size_t>(512, charsPrinted);
+	} else {
+		charsPrinted += SNPRINTF(&s[charsPrinted], 512 - charsPrinted,
+			"\nExperience %.2f Cost %.0f Range %.0f\n"
+			BLUE "Metal: "  GREEN "%.1f" GREY "/" RED "-%.1f "
+			BLUE "Energy: " GREEN "%.1f" GREY "/" RED "-%.1f\x08",
+			stats.experience, stats.cost, stats.maxRange,
+			stats.metalMake,  stats.metalUse,
+			stats.energyMake, stats.energyUse);
+		charsPrinted = std::min<size_t>(512, charsPrinted);
 	}
 
-	sprintf(tmp, "\nExperience %.2f Cost %.0f Range %.0f\n"
-							 BLUE "Metal: "  GREEN "%.1f" GREY "/" RED "-%.1f "
-							 BLUE "Energy: " GREEN "%.1f" GREY "/" RED "-%.1f",
-					experience, cost, maxRange,
-					metalMake,  metalUse,
-					energyMake, energyUse);
-	s += tmp;
-
+	s.resize(charsPrinted);
 	return s;
 }
 
@@ -280,24 +254,21 @@ std::string CTooltipConsole::MakeFeatureString(const CFeature* feature)
 		return custom;
 	}
 
-	std::string s;
-
-	if (feature->def->description == "") {
+	std::string s = feature->def->description;
+	if (s.empty()) {
 		s = "Feature";
-	} else {
-		s = feature->def->description;
 	}
 
-	const float remainingMetal  = feature->RemainingMetal();
-	const float remainingEnergy = feature->RemainingEnergy();
+	const float remainingMetal  = feature->resources.metal;
+	const float remainingEnergy = feature->resources.energy;
 
-	const std::string metalColor  = (remainingMetal  > 0) ? GREEN : RED;
-	const std::string energyColor = (remainingEnergy > 0) ? GREEN : RED;
+	const char* metalColor  = (remainingMetal  > 0) ? GREEN : RED;
+	const char* energyColor = (remainingEnergy > 0) ? GREEN : RED;
 
 	char tmp[512];
-	sprintf(tmp,"\n" BLUE "Metal: %s%.0f  " BLUE "Energy: %s%.0f",
-	        metalColor.c_str(),  remainingMetal,
-          energyColor.c_str(), remainingEnergy);
+	sprintf(tmp,"\n" BLUE "Metal: %s%.0f  " BLUE "Energy: %s%.0f\x08",
+		metalColor,  remainingMetal,
+		energyColor, remainingEnergy);
 
 	s += tmp;
 
@@ -312,13 +283,13 @@ std::string CTooltipConsole::MakeGroundString(const float3& pos)
 		return custom;
 	}
 
-	char tmp[512];
 	const int px = pos.x / 16;
 	const int pz = pos.z / 16;
-	const int typeMapIdx = std::min(gs->hmapx * gs->hmapy - 1, std::max(0, pz * gs->hmapx + px));
+	const int typeMapIdx = Clamp(pz * mapDims.hmapx + px, 0, mapDims.hmapx * mapDims.hmapy - 1);
 	const unsigned char* typeMap = readMap->GetTypeMapSynced();
 	const CMapInfo::TerrainType* tt = &mapInfo->terrainTypes[typeMap[typeMapIdx]];
 
+	char tmp[512];
 	sprintf(tmp,
 		"Pos %.0f %.0f Elevation %.0f\n"
 		"Terrain type: %s\n"
@@ -330,4 +301,69 @@ std::string CTooltipConsole::MakeGroundString(const float3& pos)
 		readMap->metalMap->GetMetalAmount(px, pz)
 	);
 	return tmp;
+}
+
+
+/***********************************************************************/
+/***********************************************************************/
+
+SUnitStats::SUnitStats()
+: health(0.0f)
+, maxHealth(0.0f)
+, experience(0.0f)
+, cost(0.0f)
+, maxRange(0.0f)
+, metalMake(0.0f)
+, metalUse(0.0f)
+, energyMake(0.0f)
+, energyUse(0.0f)
+, harvestMetal(0.0f)
+, harvestMetalMax(0.0f)
+, harvestEnergy(0.0f)
+, harvestEnergyMax(0.0f)
+, count(0)
+{}
+
+
+void SUnitStats::AddUnit(const CUnit* unit, bool enemy)
+{
+	const UnitDef* decoyDef = enemy ? unit->unitDef->decoyDef : nullptr;
+
+	++count;
+
+	if (!decoyDef) {
+		health           += unit->health;
+		maxHealth        += unit->maxHealth;
+		experience        = (experience * (count - 1) + unit->experience) / count; // average xp
+		cost             += unit->cost.metal + (unit->cost.energy / 60.0f);
+		maxRange          = std::max(maxRange, unit->maxRange);
+		metalMake        += unit->resourcesMake.metal;
+		metalUse         += unit->resourcesUse.metal;
+		energyMake       += unit->resourcesMake.energy;
+		energyUse        += unit->resourcesUse.energy;
+		harvestMetal     += unit->harvested.metal;
+		harvestMetalMax  += unit->harvestStorage.metal;
+		harvestEnergy    += unit->harvested.energy;
+		harvestEnergyMax += unit->harvestStorage.energy;
+	} else {
+		// display adjusted decoy stats
+		const float healthScale = (decoyDef->health / unit->unitDef->health);
+
+		float metalMake_, metalUse_, energyMake_, energyUse_;
+		GetDecoyResources(unit, metalMake_, metalUse_, energyMake_, energyUse_);
+
+		health           += unit->health * healthScale;
+		maxHealth        += unit->maxHealth * healthScale;
+		experience        = (experience * (count - 1) + unit->experience) / count;
+		cost             += decoyDef->metal + (decoyDef->energy / 60.0f);
+		maxRange          = std::max(maxRange, decoyDef->maxWeaponRange);
+		metalMake        += metalMake_;
+		metalUse         += metalUse_;
+		energyMake       += energyMake_;
+		energyUse        += energyUse_;
+		//harvestMetal     += unit->harvested.metal;
+		//harvestMetalMax  += unit->harvestStorage.metal;
+		//harvestEnergy    += unit->harvested.energy;
+		//harvestEnergyMax += unit->harvestStorage.energy;
+	}
 }

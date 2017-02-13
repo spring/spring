@@ -23,14 +23,7 @@ struct SyncedFloat3
 {
 public:
 	// value type -> _STRUCT (because no virtual dtor or vtable is required)
-	CR_DECLARE_STRUCT(SyncedFloat3);
-
-	/**
-	 * @brief Constructor
-	 *
-	 * With no parameters, x/y/z are just initialized to 0.
-	 */
-	SyncedFloat3() : x(0.0f), y(0.0f), z(0.0f) {}
+	CR_DECLARE_STRUCT(SyncedFloat3)
 
 	/**
 	 * @brief Copy constructor
@@ -50,7 +43,7 @@ public:
 	 *
 	 * With parameters, initializes x/y/z to the given floats.
 	 */
-	SyncedFloat3(const float x,const float y,const float z)
+	SyncedFloat3(const float x = 0.0f, const float y = 0.0f, const float z = 0.0f)
 			: x(x), y(y), z(z) {}
 
 	/**
@@ -284,7 +277,7 @@ public:
 	/**
 	 * @brief operator ==
 	 * @param f float3 to test
-	 * @return whether float3s are equal under default CMP_EPS tolerance in x/y/z
+	 * @return whether float3s are equal under default cmp_eps tolerance in x/y/z
 	 *
 	 * Tests if this float3 is equal to another, by
 	 * checking each x/y/z component individually.
@@ -332,7 +325,7 @@ public:
 	/**
 	 * @see operator==
 	 */
-	bool equals(const float3& f, const float3& eps = float3(float3::CMP_EPS, float3::CMP_EPS, float3::CMP_EPS)) const {
+	bool equals(const float3& f, const float3& eps = float3(float3::cmp_eps(), float3::cmp_eps(), float3::cmp_eps())) const {
 		return math::fabs(x - f.x) <= math::fabs(eps.x * x)
 			&& math::fabs(y - f.y) <= math::fabs(eps.y * y)
 			&& math::fabs(z - f.z) <= math::fabs(eps.z * z);
@@ -438,7 +431,7 @@ public:
 	SyncedFloat3& Normalize() {
 #if defined(__SUPPORT_SNAN__)
 		// this can only be invoked by sim thread
-		assert(SqLength() > float3::NORMALIZE_EPS);
+		assert(SqLength() > float3::nrm_eps());
 		return UnsafeNormalize();
 #else
 		return SafeNormalize();
@@ -468,7 +461,7 @@ public:
 	SyncedFloat3& SafeNormalize() {
 
 		const float sql = SqLength();
-		if (likely(sql > float3::NORMALIZE_EPS)) {
+		if (likely(sql > float3::nrm_eps())) {
 			*this *= math::isqrt(sql);
 		}
 
@@ -486,7 +479,7 @@ public:
 	SyncedFloat3& ANormalize() {
 #if defined(__SUPPORT_SNAN__)
 		// this can only be invoked by sim thread
-		assert(SqLength() > float3::NORMALIZE_EPS);
+		assert(SqLength() > float3::nrm_eps());
 		return UnsafeANormalize();
 #else
 		return SafeANormalize();
@@ -503,7 +496,7 @@ public:
 	 * the vector's approx. length.
 	 */
 	SyncedFloat3& UnsafeANormalize() {
-		*this *= fastmath::isqrt(SqLength());
+		*this *= math::isqrt(SqLength());
 		return *this;
 	}
 
@@ -519,8 +512,8 @@ public:
 	SyncedFloat3& SafeANormalize() {
 
 		const float sql = SqLength();
-		if (likely(sql > float3::NORMALIZE_EPS)) {
-			*this *= fastmath::isqrt(sql);
+		if (likely(sql > float3::nrm_eps())) {
+			*this *= math::isqrt(sql);
 		}
 
 		return *this;
@@ -583,7 +576,7 @@ public:
 	/**
 	 * @brief Check against FaceHeightmap bounds
 	 *
-	 * Check if this vector is in bounds [0 .. gs->mapxy-1]
+	 * Check if this vector is in bounds [0 .. mapDims.mapxy-1]
 	 * @note THIS IS THE WRONG SPACE! _ALL_ WORLD SPACE POSITIONS SHOULD BE IN VertexHeightmap RESOLUTION!
 	 */
 	bool IsInBounds() const;
@@ -591,7 +584,7 @@ public:
 	/**
 	 * @brief Clamps to FaceHeightmap
 	 *
-	 * Clamps to the `face heightmap` resolution [0 .. gs->mapxy-1]
+	 * Clamps to the `face heightmap` resolution [0 .. mapDims.mapxy-1]
 	 * @note THIS IS THE WRONG SPACE! _ALL_ WORLD SPACE POSITIONS SHOULD BE IN VertexHeightmap RESOLUTION!
 	 */
 	void ClampInBounds();
@@ -599,7 +592,7 @@ public:
 	/**
 	 * @brief Clamps to VertexHeightmap
 	 *
-	 * Clamps to the `vertex heightmap`/`opengl space` resolution [0 .. gs->mapxy]
+	 * Clamps to the `vertex heightmap`/`opengl space` resolution [0 .. mapDims.mapxy]
 	 * @note USE THIS!
 	 */
 	void ClampInMap();

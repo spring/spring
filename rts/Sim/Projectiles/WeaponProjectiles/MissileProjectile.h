@@ -6,35 +6,38 @@
 #include "WeaponProjectile.h"
 
 class CUnit;
+class CSmokeTrailProjectile;
+
 
 class CMissileProjectile : public CWeaponProjectile
 {
-	CR_DECLARE(CMissileProjectile);
+	CR_DECLARE_DERIVED(CMissileProjectile)
 protected:
-	void UpdateGroundBounce();
+	void UpdateGroundBounce() override;
 public:
 	CMissileProjectile(const ProjectileParams& params);
 
-	void Collision(CUnit* unit);
-	void Collision(CFeature* feature);
-	void Collision();
+	void Collision(CUnit* unit) override;
+	void Collision(CFeature* feature) override;
+	void Collision() override;
 
-	void Update();
-	void Draw();
+	void Update() override;
+	void Draw() override;
 
-	int ShieldRepulse(
-		CPlasmaRepulser* shield,
-		float3 shieldPos,
-		float shieldForce,
-		float shieldMaxSpeed
-	);
+	virtual int GetProjectilesCount() const override;
 
+	int ShieldRepulse(const float3& shieldPos, float shieldForce, float shieldMaxSpeed) override;
+
+	void SetIgnoreError(bool b) { ignoreError = b; }
 private:
+	CMissileProjectile() { }
+
 	void UpdateWobble();
 	void UpdateDance();
 
+	bool ignoreError;
+
 	float maxSpeed;
-	float areaOfEffect;
 	float extraHeight;
 	float extraHeightDecay;
 
@@ -42,7 +45,6 @@ private:
 	int numParts;
 	int extraHeightTime;
 
-	bool drawTrail;
 	bool isDancing;
 	bool isWobbling;
 
@@ -56,7 +58,8 @@ private:
 
 	float3 oldSmoke;
 	float3 oldDir;
-	
+	CSmokeTrailProjectile* smokeTrail;
+
 	/// the smokes life-time in frames
 	static const float SMOKE_TIME;
 };

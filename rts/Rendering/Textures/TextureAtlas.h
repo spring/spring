@@ -5,11 +5,11 @@
 
 #include <string>
 #include <vector>
-#include <map>
 
 #include "System/creg/creg_cond.h"
 #include "System/float4.h"
 #include "System/type2.h"
+#include "System/UnorderedMap.hpp"
 
 
 class IAtlasAllocator;
@@ -22,19 +22,9 @@ struct AtlasedTexture : public float4
 	AtlasedTexture() : float4() {}
 	AtlasedTexture(const float4& f) : float4(f) {}
 
-	CR_DECLARE_STRUCT(AtlasedTexture);
+	CR_DECLARE_STRUCT(AtlasedTexture)
 };
 
-
-
-/**
- * @brief Same as AtlasedTexture, but with a different name,
- * so the explosiongenerator can differentiate between different atlases.
- */
-struct GroundFXTexture : public AtlasedTexture
-{
-	CR_DECLARE_STRUCT(GroundFXTexture);
-};
 
 
 /** @brief Class for combining multiple bitmaps into one large single bitmap. */
@@ -82,7 +72,10 @@ public:
 
 	//! @return reference to the Texture struct of the specified texture
 	AtlasedTexture& GetTexture(const std::string& name);
-	
+
+	// NOTE: safe with unordered_map after atlas has been finalized
+	AtlasedTexture* GetTexturePtr(const std::string& name) { return &GetTexture(name); }
+
 	/**
 	 * @return a Texture struct of the specified texture if it exists,
 	 *         otherwise return a backup texture.
@@ -123,9 +116,9 @@ protected:
 
 	// temporary storage of all textures
 	std::vector<MemTex*> memtextures;
-	std::map<std::string, MemTex*> files;
 
-	std::map<std::string, AtlasedTexture> textures;
+	spring::unordered_map<std::string, MemTex*> files;
+	spring::unordered_map<std::string, AtlasedTexture> textures;
 
 	unsigned int atlasTexID;
 

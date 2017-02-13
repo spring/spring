@@ -5,8 +5,8 @@
 
 #if defined(SYNCDEBUG) || defined(SYNCCHECK)
 
-CR_BIND(SyncedFloat3, );
-CR_REG_METADATA(SyncedFloat3, (CR_MEMBER(x), CR_MEMBER(y), CR_MEMBER(z)));
+CR_BIND(SyncedFloat3, )
+CR_REG_METADATA(SyncedFloat3, (CR_MEMBER(x), CR_MEMBER(y), CR_MEMBER(z)))
 
 
 bool SyncedFloat3::IsInBounds() const

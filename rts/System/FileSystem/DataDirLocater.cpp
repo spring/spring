@@ -34,9 +34,7 @@ CONFIG(std::string, SpringData).defaultValue("")
 		.readOnly(true);
 
 
-DataDirLocater dataDirLocater;
-
-static std::string GetSpringBinaryName()
+static inline std::string GetSpringBinaryName()
 {
 #if defined(WIN32)
 	return "spring.exe";
@@ -45,7 +43,7 @@ static std::string GetSpringBinaryName()
 #endif
 }
 
-static std::string GetUnitsyncLibName()
+static inline std::string GetUnitsyncLibName()
 {
 #if   defined(WIN32)
 	return "unitsync.dll";
@@ -91,6 +89,13 @@ void DataDirLocater::UpdateIsolationModeByEnvVar()
 	if (envIsolation != NULL) {
 		SetIsolationMode(true);
 		SetIsolationModeDir(envIsolation);
+		return;
+	}
+
+	const std::string dir = GetBinaryLocation();
+	if (FileSystem::FileExists(dir + "/isolated.txt")) {
+		SetIsolationMode(true);
+		SetIsolationModeDir(dir);
 	}
 }
 
@@ -561,3 +566,20 @@ std::vector<std::string> DataDirLocater::GetDataDirPaths() const
 
 	return dataDirPaths;
 }
+
+static DataDirLocater* instance = nullptr;
+DataDirLocater& DataDirLocater::GetInstance()
+{
+	if (instance == nullptr) {
+		instance = new DataDirLocater();
+	}
+	return *instance;
+}
+
+void DataDirLocater::FreeInstance()
+{
+	assert(instance != nullptr); //don't free twice
+	delete instance;
+	instance = nullptr;
+}
+

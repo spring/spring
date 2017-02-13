@@ -3,9 +3,8 @@
 #ifndef MINIMAP_H
 #define MINIMAP_H
 
-#include <vector>
 #include <string>
-#include <list>
+#include <deque>
 #include "InputReceiver.h"
 #include "Rendering/GL/FBO.h"
 #include "System/Color.h"
@@ -77,9 +76,17 @@ class CMiniMap : public CInputReceiver {
 		void ToggleMaximized(bool maxspect);
 		void SetMaximizedGeometry();
 
-		void SelectUnits(int x, int y) const;
+		void SelectUnits(int x, int y);
 		void ProxyMousePress(int x, int y, int button);
 		void ProxyMouseRelease(int x, int y, int button);
+
+		bool RenderCachedTexture(const bool use_geo);
+		void DrawBackground() const;
+		void DrawUnitIcons() const;
+		void DrawUnitRanges() const;
+		void DrawWorldStuff() const;
+		void DrawCameraFrustumAndMouseSelection();
+		void SetClipPlanes(const bool lua) const;
 
 		void DrawFrame();
 		void DrawNotes();
@@ -87,11 +94,12 @@ class CMiniMap : public CInputReceiver {
 		void DrawMinimizedButton();
 
 		void DrawUnitHighlight(const CUnit* unit);
-		void DrawCircle(const float3& pos, float radius);
-		void DrawSquare(const float3& pos, float xsize, float zsize);
+		void DrawCircle(const float3& pos, float radius) const;
+		void DrawSquare(const float3& pos, float xsize, float zsize) const;
 		const icon::CIconData* GetUnitIcon(const CUnit* unit, float& scale) const;
 
-		void DrawCameraFrustumAndMouseSelection();
+		void UpdateTextureCache();
+		void ResizeTextureCache();
 
 	protected:
 		static void DrawSurfaceCircle(const float3& pos, float radius, unsigned int resolution);
@@ -171,7 +179,9 @@ class CMiniMap : public CInputReceiver {
 			float3 pos;
 			float color[4];
 		};
-		std::list<Notification> notes;
+		std::deque<Notification> notes;
+		
+		CUnit* lastClicked;
 };
 
 

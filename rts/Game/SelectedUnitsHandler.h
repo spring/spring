@@ -3,14 +3,17 @@
 #ifndef SELECTED_UNITS_H
 #define SELECTED_UNITS_H
 
-#include "Sim/Units/UnitSet.h"
-#include "Sim/Units/CommandAI/Command.h"
-#include "System/float4.h"
-#include "System/Object.h"
 #include <vector>
 #include <string>
 
+#include "Sim/Units/CommandAI/Command.h"
+#include "System/float4.h"
+#include "System/Object.h"
+#include "System/UnorderedSet.hpp"
+
+class CUnit;
 class CFeature;
+struct SCommandDescription;
 
 class CSelectedUnitsHandler : public CObject
 {
@@ -29,7 +32,7 @@ public:
 	void Draw();
 
 	struct AvailableCommandsStruct {
-		std::vector<CommandDescription> commands;
+		std::vector<SCommandDescription> commands;
 		int commandPage;
 	};
 	AvailableCommandsStruct GetAvailableCommands();
@@ -40,7 +43,7 @@ public:
 
 	/// used by MouseHandler.cpp & MiniMap.cpp
 	void HandleUnitBoxSelection(const float4& planeRight, const float4& planeLeft, const float4& planeTop, const float4& planeBottom);
-	void HandleSingleUnitClickSelection(CUnit* unit, bool doInViewTest);
+	void HandleSingleUnitClickSelection(CUnit* unit, bool doInViewTest, bool selectType);
 
 	void ToggleBuildIconsFirst();
 	bool BuildIconsFirst() const { return buildIconsFirst; }
@@ -63,11 +66,10 @@ public:
 	void SelectCycle(const std::string& command);
 
 public:
-	CUnitSet selectedUnits;
-
 	bool selectionChanged;
 	bool possibleCommandsChanged;
 
+	spring::unordered_set<int> selectedUnits;
 	std::vector< std::vector<int> > netSelected;
 
 private:

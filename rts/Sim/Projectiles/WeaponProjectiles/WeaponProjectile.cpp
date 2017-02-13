@@ -3,54 +3,49 @@
 #include "Game/GameHelper.h"
 #include "Rendering/Colors.h"
 #include "Rendering/GL/VertexArray.h"
+#include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Projectiles/ProjectileParams.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
+#include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Features/Feature.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "Sim/Units/Unit.h"
+#include "Sim/Units/UnitHandler.h"
+#include "Sim/Misc/DamageArray.h"
 #include "Sim/Misc/InterceptHandler.h"
 #include "Sim/Misc/QuadField.h"
 #include "Map/Ground.h"
 #include "System/Matrix44f.h"
+#include "System/myMath.h"
+#include "System/creg/DefTypes.h"
 
-CR_BIND_DERIVED(CWeaponProjectile, CProjectile, );
+
+CR_BIND_DERIVED_INTERFACE(CWeaponProjectile, CProjectile)
 
 CR_REG_METADATA(CWeaponProjectile,(
 	CR_SETFLAG(CF_Synced),
+	CR_MEMBER(damages),
 	CR_MEMBER(targeted),
-	CR_IGNORED(weaponDef), //PostLoad
+	CR_MEMBER(weaponDef),
 	CR_MEMBER(target),
 	CR_MEMBER(targetPos),
 	CR_MEMBER(startPos),
 	CR_MEMBER(ttl),
 	CR_MEMBER(bounces),
-	CR_MEMBER(weaponDefID),
+	CR_MEMBER(weaponNum),
+
 	CR_POSTLOAD(PostLoad)
-));
+))
 
-
-
-CWeaponProjectile::CWeaponProjectile(): CProjectile()
-	, weaponDef(NULL)
-	, target(NULL)
-
-	, weaponDefID(0)
-
-	, ttl(0)
-	, bounces(0)
-
-	, targeted(false)
-{
-}
 
 CWeaponProjectile::CWeaponProjectile(const ProjectileParams& params)
-	: CProjectile(params.pos, params.speed, params.owner, true, true, false, (params.weaponDef)->IsHitScanWeapon())
+	: CProjectile(params.pos, params.speed, params.owner, true, true, false, false)
 
+	, damages(nullptr)
 	, weaponDef(params.weaponDef)
 	, target(params.target)
-
-	, weaponDefID(-1u)
 
 	, ttl(params.ttl)
 	, bounces(0)
@@ -62,7 +57,10 @@ CWeaponProjectile::CWeaponProjectile(const ProjectileParams& params)
 {
 	projectileType = WEAPON_BASE_PROJECTILE;
 
+	assert(weaponDef != nullptr);
+
 	if (weaponDef->IsHitScanWeapon()) {
+		hitscan = true;
 		// the else-case (default) is handled in CProjectile::Init
 		//
 		// ray projectiles must all set this to false because their collision
@@ -89,7 +87,7 @@ CWeaponProjectile::CWeaponProjectile(const ProjectileParams& params)
 	}
 
 	collisionFlags = weaponDef->collisionFlags;
-	weaponDefID = params.weaponDef->id;
+	weaponNum = params.weaponNum;
 	alwaysVisible = weaponDef->visuals.alwaysVisible;
 	ignoreWater = weaponDef->waterweapon;
 
@@ -114,7 +112,17 @@ CWeaponProjectile::CWeaponProjectile(const ProjectileParams& params)
 		// the else-case (default) is handled in CProjectile::Init
 		ownerID = params.ownerID;
 		teamID = params.teamID;
+		allyteamID = teamHandler->IsValidTeam(teamID)? teamHandler->AllyTeam(teamID): -1;
 	}
+
+	if (ownerID != -1u && weaponNum != -1u) {
+		const CUnit* owner = unitHandler->GetUnit(ownerID);
+		if (owner != nullptr && weaponNum < owner->weapons.size()) {
+			damages = DynDamageArray::IncRef(owner->weapons[weaponNum]->damages);
+		}
+	}
+	if (damages == nullptr)
+		damages = DynDamageArray::IncRef(&weaponDef->damages);
 
 	if (params.cegID != -1u) {
 		cegID = params.cegID;
@@ -128,17 +136,16 @@ CWeaponProjectile::CWeaponProjectile(const ProjectileParams& params)
 
 	ASSERT_SYNCED(id);
 
-	if (weaponDef->interceptedByShieldType) {
-		// this needs a valid projectile id set
-		assert(id >= 0);
-		interceptHandler.AddShieldInterceptableProjectile(this);
-	}
-
 	if (weaponDef->targetable) {
 		interceptHandler.AddInterceptTarget(this, targetPos);
 	}
 }
 
+
+CWeaponProjectile::~CWeaponProjectile()
+{
+	DynDamageArray::DecRef(damages);
+}
 
 
 void CWeaponProjectile::Explode(
@@ -147,8 +154,8 @@ void CWeaponProjectile::Explode(
 	float3 impactPos,
 	float3 impactDir
 ) {
-	const DamageArray& damageArray = CWeaponDefHandler::DynamicDamages(weaponDef, startPos, impactPos);
-	const CGameHelper::ExplosionParams params = {
+	const DamageArray& damageArray = damages->GetDynamicDamages(startPos, impactPos);
+	const CExplosionParams params = {
 		impactPos,
 		impactDir.SafeNormalize(),
 		damageArray,
@@ -156,10 +163,10 @@ void CWeaponProjectile::Explode(
 		owner(),
 		hitUnit,
 		hitFeature,
-		weaponDef->craterAreaOfEffect,
-		weaponDef->damageAreaOfEffect,
-		weaponDef->edgeEffectiveness,
-		weaponDef->explosionSpeed,
+		damages->craterAreaOfEffect,
+		damages->damageAreaOfEffect,
+		damages->edgeEffectiveness,
+		damages->explosionSpeed,
 		weaponDef->noExplode? 0.3f: 1.0f,                 // gfxMod
 		weaponDef->impactOnly,
 		weaponDef->noExplode || weaponDef->noSelfDamage,  // ignoreOwner
@@ -192,7 +199,7 @@ void CWeaponProjectile::Collision(CFeature* feature)
 			impactDir = targetPos - startPos;
 		}
 
-		if (gs->randFloat() < weaponDef->fireStarter) {
+		if (gsRNG.NextFloat() < weaponDef->fireStarter) {
 			feature->StartFire();
 		}
 	} else {
@@ -254,7 +261,7 @@ void CWeaponProjectile::UpdateInterception()
 		}
 	} else {
 		// FIXME: if (pos.SqDistance(po->pos) < Square(weaponDef->collisionSize)) {
-		if (pos.SqDistance(po->pos) < Square(weaponDef->damageAreaOfEffect)) {
+		if (pos.SqDistance(po->pos) < Square(damages->damageAreaOfEffect)) {
 			po->Collision();
 			Collision();
 		}
@@ -264,48 +271,51 @@ void CWeaponProjectile::UpdateInterception()
 
 void CWeaponProjectile::UpdateGroundBounce()
 {
+	// projectile is not allowed to bounce on either surface
+	if (!weaponDef->groundBounce && !weaponDef->waterBounce)
+		return;
+	// max bounce already reached?
+	if ((bounces + 1) > weaponDef->numBounce)
+		return;
 	if (luaMoveCtrl)
 		return;
 	if (ttl <= 0)
 		return;
 
-	// projectile is not allowed to bounce even once
-	if (weaponDef->numBounce < 0)
-		return;
-	// projectile is not allowed to bounce on either surface
-	if (!weaponDef->groundBounce && !weaponDef->waterBounce)
-		return;
+	// water or ground bounce?
+	float3 normal;
+	bool bounced = false;
+	const float distWaterHit  = (pos.y > 0.0f && speed.y < 0.0f) ? (pos.y / -speed.y) : -1.0f;
+	const bool intersectWater = (distWaterHit >= 0.0f) && (distWaterHit <= 1.0f);
+	if (intersectWater && weaponDef->waterBounce) {
+		pos += speed * distWaterHit;
+		pos.y = 0.5f;
+		normal = CGround::GetNormalAboveWater(pos.x, pos.z);
+		bounced = true;
+	} else {
+		const float distGroundHit  = CGround::LineGroundCol(pos, pos + speed); //TODO use traj one for traj weapons?
+		const bool intersectGround = (distGroundHit >= 0.0f);
+		if (intersectGround && weaponDef->groundBounce) {
+			static const float dontTouchSurface = 0.99f;
+			pos += dir * distGroundHit * dontTouchSurface;
+			normal = CGround::GetNormal(pos.x, pos.z);
+			bounced = true;
+		}
+	}
 
-	#define INTERSECT_SURFACE(lvl, py, vy) ((py) > (lvl) && ((py) + (vy)) <= (lvl))
-	const bool intersectGround = INTERSECT_SURFACE(CGround::GetHeightReal(pos.x, pos.z), pos.y, speed.y);
-	const bool intersectWater = INTERSECT_SURFACE(0.0f, pos.y, speed.y);
-	#undef INTERSECT_SURFACE
-
-	if (!intersectGround && !intersectWater)
+	if (!bounced)
 		return;
-
-	// if close to water but not allowed to bounce on it, bail
-	if (intersectWater && !weaponDef->waterBounce)
-		return;
-	// if close to ground but not allowed to bounce on it, bail
-	if (intersectGround && !weaponDef->groundBounce)
-		return;
-
-	if ((bounces += 1) > weaponDef->numBounce)
-		return;
-
-	const float3& normal = CGround::GetNormal(pos.x, pos.z);
-	const float dot = math::fabs(speed.dot(normal));
 
 	// spawn CEG before bouncing, otherwise we might be too
 	// far up in the air if it has the (under)water flag set
 	explGenHandler->GenExplosion(weaponDef->bounceExplosionGeneratorID, pos, normal, speed.w, 1.0f, 1.0f, owner(), NULL);
 
+	++bounces;
+	const float dot = math::fabs(speed.dot(normal));
 	CWorldObject::SetVelocity(speed - (speed + normal * dot) * (1 - weaponDef->bounceSlip   ));
 	CWorldObject::SetVelocity(         speed + normal * dot  * (1 + weaponDef->bounceRebound));
 	SetVelocityAndSpeed(speed);
 }
-
 
 
 bool CWeaponProjectile::TraveledRange() const
@@ -314,11 +324,17 @@ bool CWeaponProjectile::TraveledRange() const
 }
 
 
-
 void CWeaponProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
 {
 	points.AddVertexQC(pos, color4::yellow);
 }
+
+
+bool CWeaponProjectile::CanBeInterceptedBy(const WeaponDef* wd) const
+{
+	return ((weaponDef->targetable & wd->interceptor) != 0);
+}
+
 
 void CWeaponProjectile::DependentDied(CObject* o)
 {
@@ -327,8 +343,9 @@ void CWeaponProjectile::DependentDied(CObject* o)
 	}
 }
 
+
 void CWeaponProjectile::PostLoad()
 {
-	weaponDef = weaponDefHandler->GetWeaponDefByID(weaponDefID);
+	assert(weaponDef != nullptr);
 	model = weaponDef->LoadModel();
 }

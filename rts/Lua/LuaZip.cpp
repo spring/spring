@@ -343,7 +343,7 @@ int LuaZipFileReader::meta_open(lua_State* L)
 		luaL_error(L, "zip not open");
 	}
 
-	std::vector<boost::uint8_t> buf;
+	std::vector<std::uint8_t> buf;
 	const bool result = f->archive->GetFile(name, buf);
 
 	f->stream = new std::stringstream(std::string((char*) &*buf.begin(), buf.size()), std::ios_base::in);
@@ -352,7 +352,7 @@ int LuaZipFileReader::meta_open(lua_State* L)
 }
 
 
-static int test_eof (lua_State *L, ZipFileReaderUserdata* f)
+static int test_eof (lua_State* L, ZipFileReaderUserdata* f)
 {
 	// based on liolib.cpp test_eof
 	int c = f->stream->peek();
@@ -361,7 +361,7 @@ static int test_eof (lua_State *L, ZipFileReaderUserdata* f)
 }
 
 
-static int read_chars(lua_State *L, ZipFileReaderUserdata* f, size_t n)
+static int read_chars(lua_State* L, ZipFileReaderUserdata* f, size_t n)
 {
 	// based on liolib.cpp read_chars
 	size_t rlen; /* how much to read */

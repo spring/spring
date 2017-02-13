@@ -1,9 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "Rendering/GL/myGL.h"
-#include <algorithm>
-#include <cctype>
-
 #include "IModelParser.h"
 #include "3DModel.h"
 #include "3DModelLog.h"
@@ -11,28 +7,21 @@
 #include "S3OParser.h"
 #include "OBJParser.h"
 #include "AssParser.h"
+#include "Rendering/Textures/S3OTextureHandler.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
-#include "System/Util.h"
 #include "System/Log/ILog.h"
+#include "System/Util.h"
 #include "System/Exceptions.h"
+#include "System/maindefines.h"
+#include "System/Threading/ThreadPool.h"
 #include "lib/assimp/include/assimp/Importer.hpp"
 
-C3DModelLoader* modelParser = NULL;
 
+static void RegisterAssimpModelFormats(CModelLoader::FormatMap& formats) {
+	spring::unordered_set<std::string> whitelist;
 
-static inline S3DModelPiece* ModelTypeToModelPiece(const ModelType& type) {
-	if (type == MODELTYPE_3DO) { return (new S3DOPiece()); }
-	if (type == MODELTYPE_S3O) { return (new SS3OPiece()); }
-	if (type == MODELTYPE_OBJ) { return (new SOBJPiece()); }
-	// NOTE: SAssPiece is not yet fully implemented
-	if (type == MODELTYPE_ASS) { return (new SAssPiece()); }
-	return NULL;
-}
-
-static void RegisterAssimpModelFormats(C3DModelLoader::FormatMap& formats) {
-	std::set<std::string> whitelist;
 	std::string extension;
 	std::string extensions;
 	std::string enabledExtensions;
@@ -72,9 +61,47 @@ static void RegisterAssimpModelFormats(C3DModelLoader::FormatMap& formats) {
 	LOG("[%s] supported Assimp model formats: %s", __FUNCTION__, enabledExtensions.c_str());
 }
 
+static S3DModel* CreateDummyModel()
+{
+	// create a crash-dummy
+	S3DModel* model = new S3DModel();
+	model->type = MODELTYPE_3DO;
+	model->numPieces = 1;
+	// give it one empty piece
+	model->SetRootPiece(new S3DOPiece());
+	model->GetRootPiece()->SetCollisionVolume(CollisionVolume('b', 'z', -UpVector, ZeroVector));
+	return model;
+}
+
+static void CheckPieceNormals(const S3DModel* model, const S3DModelPiece* modelPiece)
+{
+	if (modelPiece->GetVertexCount() >= 3) {
+		// do not check pseudo-pieces
+		unsigned int numNullNormals = 0;
+
+		for (unsigned int n = 0; n < modelPiece->GetVertexCount(); n++) {
+			numNullNormals += (modelPiece->GetNormal(n).SqLength() < 0.5f);
+		}
+
+		if (numNullNormals > 0) {
+			const char* formatStr =
+				"[%s] piece \"%s\" of model \"%s\" has %u (of %u) null-normals! "
+				"It will either be rendered fully black or with black splotches!";
+
+			const char* modelName = model->name.c_str();
+			const char* pieceName = modelPiece->name.c_str();
+
+			LOG_L(L_DEBUG, formatStr, __FUNCTION__, pieceName, modelName, numNullNormals, modelPiece->GetVertexCount());
+		}
+	}
+
+	for (const S3DModelPiece* childPiece: modelPiece->children) {
+		CheckPieceNormals(model, childPiece);
+	}
+}
 
 
-C3DModelLoader::C3DModelLoader()
+void CModelLoader::Init()
 {
 	// file-extension should be lowercase
 	formats["3do"] = MODELTYPE_3DO;
@@ -91,73 +118,62 @@ C3DModelLoader::C3DModelLoader()
 
 	// dummy first model, model IDs start at 1
 	models.reserve(32);
-	models.push_back(NULL);
+	models.push_back(nullptr);
 }
 
-
-C3DModelLoader::~C3DModelLoader()
+void CModelLoader::Kill()
 {
-	// delete model cache
+	KillModels();
+	KillParsers();
+
+	cache.clear();
+	formats.clear();
+}
+
+void CModelLoader::KillModels()
+{
 	for (unsigned int n = 1; n < models.size(); n++) {
 		S3DModel* model = models[n];
 
-		assert(model != NULL);
-		assert(model->GetRootPiece() != NULL);
+		assert(model != nullptr);
+		assert(model->GetRootPiece() != nullptr);
 
 		model->DeletePieces(model->GetRootPiece());
-		model->SetRootPiece(NULL);
+		model->SetRootPiece(nullptr);
 
-		delete model;
-	}
-
-	for (ParserMap::const_iterator it = parsers.begin(); it != parsers.end(); ++it) {
-		delete (it->second);
+		SafeDelete(model);
 	}
 
 	models.clear();
-	cache.clear();
-	parsers.clear();
-
 }
 
-
-
-void CheckModelNormals(const S3DModel* model) {
-	const char* modelName = model->name.c_str();
-	const char* formatStr =
-		"[%s] piece \"%s\" of model \"%s\" has %u (of %u) null-normals!"
-		"It will either be rendered fully black or with black splotches!";
-
-	// Warn about models with null normals (they break lighting and appear black)
-	for (ModelPieceMap::const_iterator it = model->pieceMap.begin(); it != model->pieceMap.end(); ++it) {
-		const S3DModelPiece* modelPiece = it->second;
-		const char* pieceName = it->first.c_str();
-
-		if (modelPiece->GetVertexCount() == 0)
-			continue;
-
-		unsigned int numNullNormals = 0;
-
-		for (unsigned int n = 0; n < modelPiece->GetVertexCount(); n++) {
-			numNullNormals += (modelPiece->GetNormal(n).SqLength() < 0.5f);
-		}
-
-		if (numNullNormals > 0) {
-			LOG_L(L_WARNING, formatStr, __FUNCTION__, pieceName, modelName, numNullNormals, modelPiece->GetVertexCount());
-		}
+void CModelLoader::KillParsers()
+{
+	for (auto it = parsers.cbegin(); it != parsers.cend(); ++it) {
+		delete (it->second);
 	}
+
+	parsers.clear();
+}
+
+CModelLoader& CModelLoader::GetInstance()
+{
+	static CModelLoader instance;
+	return instance;
 }
 
 
-std::string C3DModelLoader::FindModelPath(std::string name) const
+
+std::string CModelLoader::FindModelPath(std::string name) const
 {
 	// check for empty string because we can be called
 	// from Lua*Defs and certain features have no models
 	if (!name.empty()) {
+		const std::string vfsPath = "objects3d/";
 		const std::string& fileExt = FileSystem::GetExtension(name);
 
 		if (fileExt.empty()) {
-			for (FormatMap::const_iterator it = formats.begin(); it != formats.end(); ++it) {
+			for (auto it = formats.cbegin(); it != formats.cend(); ++it) {
 				const std::string& formatExt = it->first;
 
 				if (CFileHandler::FileExists(name + "." + formatExt, SPRING_VFS_ZIP)) {
@@ -167,8 +183,8 @@ std::string C3DModelLoader::FindModelPath(std::string name) const
 		}
 
 		if (!CFileHandler::FileExists(name, SPRING_VFS_ZIP)) {
-			if (name.find("objects3d/") == std::string::npos) {
-				return FindModelPath("objects3d/" + name);
+			if (name.find(vfsPath) == std::string::npos) {
+				return (FindModelPath(vfsPath + name));
 			}
 		}
 	}
@@ -177,117 +193,162 @@ std::string C3DModelLoader::FindModelPath(std::string name) const
 }
 
 
-S3DModel* C3DModelLoader::Load3DModel(std::string modelName)
+void CModelLoader::PreloadModel(const std::string& modelName)
+{
+	if (!ThreadPool::HasThreads())
+		return;
+
+	if (cache.find(StringToLower(modelName)) != cache.end())
+		return;
+
+	ThreadPool::Enqueue([modelName]() {
+		modelLoader.LoadModel(modelName, true);
+	});
+}
+
+
+S3DModel* CModelLoader::LoadModel(std::string name, bool preload)
 {
 	// cannot happen except through SpawnProjectile
-	if (modelName.empty())
-		return NULL;
+	if (name.empty())
+		return nullptr;
 
-	StringToLowerInPlace(modelName);
+	std::lock_guard<spring::mutex> lock(mutex);
+
+	StringToLowerInPlace(name);
+
+	std::string  path;
+	std::string* refs[2] = {&name, &path};
 
 	// search in cache first
-	ModelMap::iterator ci;
-	FormatMap::iterator fi;
+	for (unsigned int n = 0; n < 2; n++) {
+		S3DModel* cachedModel = LoadCachedModel(*refs[n], preload);
 
-	if ((ci = cache.find(modelName)) != cache.end()) {
-		return models[ci->second];
+		if (cachedModel != nullptr)
+			return cachedModel;
+
+		// expensive, delay until needed
+		path = FindModelPath(name);
 	}
-
-	const std::string modelPath = FindModelPath(modelName);
-
-	if ((ci = cache.find(modelPath)) != cache.end()) {
-		return models[ci->second];
-	}
-
 
 	// not found in cache, create the model and cache it
-	const std::string& fileExt = StringToLower(FileSystem::GetExtension(modelPath));
+	return (CreateModel(name, path, preload));
+}
 
-	if ((fi = formats.find(fileExt)) != formats.end()) {
-		IModelParser* p = parsers[fi->second];
-		S3DModel* model = NULL;
-		S3DModelPiece* root = NULL;
+S3DModel* CModelLoader::LoadCachedModel(const std::string& name, bool preload)
+{
+	S3DModel* cachedModel = nullptr;
 
-		try {
-			model = p->Load(modelPath);
-		} catch (const content_error& ex) {
-			LOG_L(L_WARNING, "could not load model \"%s\" (reason: %s)", modelName.c_str(), ex.what());
-			goto dummy;
+	const auto ci = cache.find(name);
+	if (ci != cache.end()) {
+		cachedModel = models[ci->second];
+
+		if (!preload) {
+			CreateLists(cachedModel);
 		}
-
-		if ((root = model->GetRootPiece()) != NULL) {
-			CreateLists(root);
-		}
-
-		AddModelToCache(model, modelName, modelPath);
-		CheckModelNormals(model);
-		return model;
 	}
 
-	LOG_L(L_ERROR, "could not find a parser for model \"%s\" (unknown format?)", modelName.c_str());
+	return cachedModel;
+}
 
-dummy:
-	// crash-dummy
-	S3DModel* model = new S3DModel();
-	model->type = MODELTYPE_3DO;
-	model->numPieces = 1;
-	// give it one dummy piece
-	model->SetRootPiece(ModelTypeToModelPiece(MODELTYPE_3DO));
-	model->GetRootPiece()->SetCollisionVolume(new CollisionVolume("box", -UpVector, ZeroVector));
 
-	if (model->GetRootPiece() != NULL) {
-		CreateLists(model->GetRootPiece());
-	}
 
-	AddModelToCache(model, modelName, modelPath);
+S3DModel* CModelLoader::CreateModel(
+	const std::string& name,
+	const std::string& path,
+	bool preload
+) {
+	S3DModel* model = ParseModel(name, path);
+
+	if (model == nullptr)
+		model = CreateDummyModel();
+
+	assert(model->GetRootPiece() != nullptr);
+
+	if (!preload)
+		CreateLists(model);
+
+	AddModelToCache(model, name, path);
 	return model;
 }
 
-void C3DModelLoader::AddModelToCache(S3DModel* model, const std::string& modelName, const std::string& modelPath) {
+
+
+IModelParser* CModelLoader::GetFormatParser(const std::string& pathExt)
+{
+	const auto fi = formats.find(StringToLower(pathExt));
+
+	if (fi == formats.end())
+		return nullptr;
+
+	return parsers[fi->second];
+}
+
+S3DModel* CModelLoader::ParseModel(const std::string& name, const std::string& path)
+{
+	S3DModel* model = nullptr;
+	IModelParser* parser = GetFormatParser(FileSystem::GetExtension(path));
+
+	if (parser != nullptr) {
+		try {
+			model = parser->Load(path);
+		} catch (const content_error& ex) {
+			LOG_L(L_ERROR, "could not load model \"%s\" (reason: %s)", name.c_str(), ex.what());
+		}
+	} else {
+		LOG_L(L_ERROR, "could not find a parser for model \"%s\" (unknown format?)", name.c_str());
+	}
+
+	return model;
+}
+
+
+
+void CModelLoader::AddModelToCache(
+	S3DModel* model,
+	const std::string& name,
+	const std::string& path
+) {
 	model->id = models.size(); // IDs start at 1
 	models.push_back(model);
 
 	assert(models[model->id] == model);
 
-	cache[modelName] = model->id;
-	cache[modelPath] = model->id;
+	cache[name] = model->id;
+	cache[path] = model->id;
 }
 
 
 
-void C3DModelLoader::CreateLocalModel(LocalModel* localModel)
-{
-	const LocalModelPiece* lmpRoot = localModel->GetRoot();
-	const S3DModelPiece* ompRoot = lmpRoot->original;
-
-	if (ompRoot->GetDisplayListID() != 0)
-		return;
-}
-
-void C3DModelLoader::DeleteLocalModel(LocalModel* localModel)
-{
-	delete localModel;
-}
-
-
-void C3DModelLoader::CreateListsNow(S3DModelPiece* o)
+void CModelLoader::CreateListsNow(S3DModelPiece* o)
 {
 	o->UploadGeometryVBOs();
-
-	const unsigned int dlistID = o->CreateDrawForList();
+	o->CreateShatterPieces();
+	o->CreateDispList();
 
 	for (unsigned int n = 0; n < o->GetChildCount(); n++) {
 		CreateListsNow(o->GetChild(n));
 	}
-
-	// bind when everything is ready, should be more safe in multithreaded scenarios
-	// TODO: still for 100% safety it should use GL_SYNC
-	o->SetDisplayListID(dlistID);
 }
 
 
-void C3DModelLoader::CreateLists(S3DModelPiece* o) {
-	CreateListsNow(o);
+void CModelLoader::CreateLists(S3DModel* model) {
+	S3DModelPiece* rootPiece = model->GetRootPiece();
+
+	if (rootPiece->GetDisplayListID() != 0)
+		return;
+
+	CreateListsNow(rootPiece);
+
+	if (model->type == MODELTYPE_3DO)
+		return;
+
+	// make sure textures (already preloaded) are fully loaded
+	texturehandlerS3O->LoadTexture(model);
+
+	// warn about models with bad normals (they break lighting)
+	// skip for 3DO's since they are auto-calculated there
+	CheckPieceNormals(model, model->GetRootPiece());
 }
 
 /******************************************************************************/

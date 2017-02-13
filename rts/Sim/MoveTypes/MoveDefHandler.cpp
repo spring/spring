@@ -6,21 +6,20 @@
 #include "Map/MapInfo.h"
 #include "MoveMath/MoveMath.h"
 #include "Sim/Misc/GlobalConstants.h"
-#include "System/creg/STL_Deque.h"
 #include "System/creg/STL_Map.h"
 #include "System/Exceptions.h"
 #include "System/CRC.h"
 #include "System/myMath.h"
 #include "System/Util.h"
 
-CR_BIND(MoveDef, ());
-CR_BIND(MoveDefHandler, (NULL));
+CR_BIND(MoveDef, ())
+CR_BIND(MoveDefHandler, (nullptr))
 
 CR_REG_METADATA(MoveDef, (
 	CR_MEMBER(name),
 
-	CR_ENUM_MEMBER(speedModClass),
-	CR_ENUM_MEMBER(terrainClass),
+	CR_MEMBER(speedModClass),
+	CR_MEMBER(terrainClass),
 
 	CR_MEMBER(xsize),
 	CR_MEMBER(xsizeh),
@@ -47,13 +46,13 @@ CR_REG_METADATA(MoveDef, (
 	CR_MEMBER(heatMod),
 	CR_MEMBER(flowMod),
 	CR_MEMBER(heatProduced)
-));
+))
 
 CR_REG_METADATA(MoveDefHandler, (
 	CR_MEMBER(moveDefs),
 	CR_MEMBER(moveDefNames),
 	CR_MEMBER(checksum)
-));
+))
 
 
 MoveDefHandler* moveDefHandler;
@@ -66,7 +65,7 @@ static float DegreesToMaxSlope(float degrees)
 {
 	// Prevent MSVC from inlining stuff that would break the
 	// PE checksum compatibility between debug and release
-	static const float degToRad = PI / 180.0f;
+	static constexpr float degToRad = math::DEG_TO_RAD;
 
 	const float deg = Clamp(degrees, 0.0f, 60.0f) * 1.5f;
 	const float rad = deg * degToRad;
@@ -98,7 +97,7 @@ static MoveDef::SpeedModClass ParseSpeedModClass(const std::string& moveDefName,
 
 MoveDefHandler::MoveDefHandler(LuaParser* defsParser)
 {
-	const LuaTable rootTable = defsParser->GetRoot().SubTable("MoveDefs");
+	const LuaTable& rootTable = defsParser->GetRoot().SubTable("MoveDefs");
 
 	if (!rootTable.IsValid())
 		throw content_error("Error loading movement definitions");
@@ -114,11 +113,10 @@ MoveDefHandler::MoveDefHandler(LuaParser* defsParser)
 
 	moveDefs.reserve(rootTable.GetLength());
 	for (size_t num = 1; /* no test */; num++) {
-		const LuaTable moveDefTable = rootTable.SubTable(num);
+		const LuaTable& moveDefTable = rootTable.SubTable(num);
 
-		if (!moveDefTable.IsValid()) {
+		if (!moveDefTable.IsValid())
 			break;
-		}
 
 		moveDefs.emplace_back(moveDefTable, num);
 		const MoveDef& md = moveDefs.back();
@@ -140,10 +138,11 @@ MoveDefHandler::MoveDefHandler(LuaParser* defsParser)
 
 MoveDef* MoveDefHandler::GetMoveDefByName(const std::string& name)
 {
-	map<string, int>::const_iterator it = moveDefNames.find(name);
-	if (it == moveDefNames.end()) {
-		return NULL;
-	}
+	auto it = moveDefNames.find(name);
+
+	if (it == moveDefNames.end())
+		return nullptr;
+
 	return &moveDefs[it->second];
 }
 
@@ -314,48 +313,59 @@ MoveDef::MoveDef(const LuaTable& moveDefTable, int moveDefID) {
 	assert((zsize & 1) == 1);
 }
 
+
 bool MoveDef::TestMoveSquare(
 	const CSolidObject* collider,
 	const int xTestMoveSqr,
 	const int zTestMoveSqr,
-	const float3& testMoveDir,
+	const float3 testMoveDir,
 	bool testTerrain,
 	bool testObjects,
 	bool centerOnly,
-	float* minSpeedMod,
-	int* maxBlockBit
+	float* minSpeedModPtr,
+	int* maxBlockBitPtr
 ) const {
-	bool ret = true;
+	bool retTestMove = true;
 
-	if (testTerrain || testObjects) {
-		const int jMin = -zsizeh * (1 - centerOnly), jMax = zsizeh * (1 - centerOnly);
-		const int iMin = -xsizeh * (1 - centerOnly), iMax = xsizeh * (1 - centerOnly);
+	assert(testTerrain || testObjects);
 
-		for (int j = jMin; (j <= jMax) && ret; j++) {
-			for (int i = iMin; (i <= iMax) && ret; i++) {
-				// GetPosSpeedMod only checks *one* square of terrain
-				// (heightmap/slopemap/typemap), not the blocking-map
-				const float speedMod = (testMoveDir != ZeroVector)?
-					CMoveMath::GetPosSpeedMod(*this, xTestMoveSqr + i, zTestMoveSqr + j, testMoveDir):
-					CMoveMath::GetPosSpeedMod(*this, xTestMoveSqr + i, zTestMoveSqr + j);
-				const CMoveMath::BlockType blockBits = CMoveMath::SquareIsBlocked(*this, xTestMoveSqr + i, zTestMoveSqr + j, collider);
+	float                minSpeedMod = std::numeric_limits<float>::max();;
+	CMoveMath::BlockType maxBlockBit = CMoveMath::BLOCK_NONE;
 
-				if (testTerrain) { ret &= (speedMod > 0.0f); }
-				if (testObjects) { ret &= ((blockBits & CMoveMath::BLOCK_STRUCTURE) == 0); }
+	const int zMin = -zsizeh * (1 - centerOnly), zMax = zsizeh * (1 - centerOnly);
+	const int xMin = -xsizeh * (1 - centerOnly), xMax = xsizeh * (1 - centerOnly);
 
-				if (minSpeedMod != NULL) { *minSpeedMod = std::min(*minSpeedMod,    (speedMod )); }
-				if (maxBlockBit != NULL) { *maxBlockBit = std::max(*maxBlockBit, int(blockBits)); }
-			}
+	float3 testMoveDir2D = testMoveDir;
+	testMoveDir2D.SafeNormalize2D();
+
+	for (int z = zMin; (z <= zMax) && retTestMove; z++) {
+		for (int x = xMin; (x <= xMax) && retTestMove; x++) {
+			const float speedMod = CMoveMath::GetPosSpeedMod(*this, xTestMoveSqr + x, zTestMoveSqr + z, testMoveDir2D);
+
+			minSpeedMod = std::min(minSpeedMod, speedMod);
+			retTestMove &= (!testTerrain || (speedMod > 0.0f));
 		}
 	}
 
-	return ret;
+	// GetPosSpeedMod only checks *one* square of terrain
+	// (heightmap/slopemap/typemap), not the blocking-map
+	if (retTestMove) {
+		const CMoveMath::BlockType blockBits = CMoveMath::RangeIsBlocked(*this, xTestMoveSqr + xMin, xTestMoveSqr + xMax, zTestMoveSqr + zMin, zTestMoveSqr + zMax, collider);
+		maxBlockBit |= blockBits;
+		retTestMove &= (!testObjects || (blockBits & CMoveMath::BLOCK_STRUCTURE) == 0);
+	}
+
+	// don't use std::min or |= because the values might be garbage
+	if (minSpeedModPtr != nullptr) *minSpeedModPtr = minSpeedMod;
+	if (maxBlockBitPtr != nullptr) *maxBlockBitPtr = maxBlockBit;
+	return retTestMove;
 }
+
 
 bool MoveDef::TestMoveSquare(
 	const CSolidObject* collider,
-	const float3& testMovePos,
-	const float3& testMoveDir,
+	const float3 testMovePos,
+	const float3 testMoveDir,
 	bool testTerrain,
 	bool testObjects,
 	bool centerOnly,

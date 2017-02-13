@@ -13,7 +13,6 @@
 
 extern void good_fpu_control_registers(const char* text);
 extern void good_fpu_init();
-extern void streflop_init_omp();
 
 namespace springproc {
 	unsigned int GetProcMaxStandardLevel();

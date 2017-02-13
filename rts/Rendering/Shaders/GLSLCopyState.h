@@ -3,9 +3,10 @@
 #ifndef _GLSL_COPY_STATE_H
 #define _GLSL_COPY_STATE_H
 
-#include <unordered_map>
+#include "System/UnorderedMap.hpp"
 #include "Shader.h"
 #include "ShaderStates.h"
+
 typedef unsigned int GLuint;
 
 namespace Shader {
@@ -19,7 +20,7 @@ namespace Shader {
 	 * Very useful when you want to recompile an uber-shader
 	 * with a different #define-flagset.
 	 */
-	void GLSLCopyState(GLuint newProgID, GLuint oldProgID, std::unordered_map<std::size_t, UniformState, fast_hash>* uniformStates);
+	void GLSLCopyState(GLuint newProgID, GLuint oldProgID, spring::unordered_map<std::size_t, UniformState, fast_hash>* uniformStates);
 }
 
 #endif //_GLSL_COPY_STATE_H

@@ -8,7 +8,7 @@
 #include "System/creg/creg_cond.h"
 
 struct SRectangle {
-	CR_DECLARE_STRUCT(SRectangle);
+	CR_DECLARE_STRUCT(SRectangle)
 
 	SRectangle()
 		: x1(0)

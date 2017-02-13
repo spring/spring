@@ -5,25 +5,28 @@
 
 #include <string>
 #include <vector>
-#include <map>
 
 #include "System/float3.h"
 #include "System/type2.h"
+#include "System/UnorderedMap.hpp"
 #include "MouseCursor.h"
 
 static const int NUM_BUTTONS = 10;
 
 class CInputReceiver;
 class CCameraController;
-
+class CUnit;
 
 class CMouseHandler
 {
 public:
 	CMouseHandler();
-	virtual ~CMouseHandler();
+	~CMouseHandler();
+
+	static CMouseHandler* GetOrReloadInstance();
 
 	void ChangeCursor(const std::string& cmdName, const float& scale = 1.0f);
+	void ReloadCursors();
 
 	void Update();
 	void UpdateCursors();
@@ -51,11 +54,12 @@ public:
 	                        CMouseCursor::HotSpot hotSpot);
 
 	const CMouseCursor* FindCursor(const std::string& cursorName) const {
-		std::map<std::string, CMouseCursor*>::const_iterator it = cursorCommandMap.find(cursorName);
-		if (it != cursorCommandMap.end()) {
-			return it->second;
-		}
-		return NULL;
+		const auto it = cursorCommandMap.find(cursorName);
+
+		if (it != cursorCommandMap.end())
+			return &loadedCursors[it->second];
+
+		return nullptr;
 	}
 
 	const std::string& GetCurrentCursor() const { return newCursor; }
@@ -103,9 +107,6 @@ public:
 private:
 	void SetCursor(const std::string& cmdName, const bool& forceRebind = false);
 
-	void SafeDeleteCursor(CMouseCursor* cursor);
-	void LoadCursors();
-
 	static void GetSelectionBoxCoeff(const float3& pos1, const float3& dir1, const float3& pos2, const float3& dir2, float2& topright, float2& btmleft);
 
 	void DrawScrollCursor();
@@ -114,7 +115,9 @@ private:
 private:
 	std::string newCursor; /// cursor changes are delayed
 	std::string cursorText; /// current cursor name
+
 	CMouseCursor* currentCursor;
+	const CUnit* lastClicked;
 
 	float cursorScale;
 
@@ -128,8 +131,9 @@ private:
 	float scrollx;
 	float scrolly;
 
-	std::map<std::string, CMouseCursor*> cursorFileMap;
-	std::map<std::string, CMouseCursor*> cursorCommandMap;
+	std::vector<CMouseCursor> loadedCursors;
+	spring::unordered_map<std::string, size_t> cursorFileMap;
+	spring::unordered_map<std::string, size_t> cursorCommandMap;
 };
 
 extern CMouseHandler* mouse;

@@ -3,10 +3,10 @@
 #ifndef CONFIG_SOURCE_H
 #define CONFIG_SOURCE_H
 
+#include <functional>
 #include <map>
 #include <string>
 #include <stdio.h>
-#include <boost/function.hpp>
 
 /**
  * @brief Abstraction of a read-only configuration source
@@ -62,7 +62,7 @@ public:
 private:
 	void SetStringInternal(const std::string& key, const std::string& value);
 	void DeleteInternal(const std::string& key);
-	void ReadModifyWrite(boost::function<void ()> modify);
+	void ReadModifyWrite(std::function<void ()> modify);
 
 	std::string filename;
 	std::map<std::string, std::string> comments;
@@ -94,6 +94,28 @@ class SafemodeConfigSource : public ReadOnlyConfigSource
 {
 public:
 	SafemodeConfigSource();
+};
+
+/**
+ * @brief Configuration source that holds safemode values
+ *
+ * Used when spring was started with "--safemode" param
+ */
+class HeadlessConfigSource : public ReadOnlyConfigSource
+{
+public:
+	HeadlessConfigSource();
+};
+
+/**
+ * @brief Configuration source that holds safemode values
+ *
+ * Used when spring was started with "--safemode" param
+ */
+class DedicatedConfigSource : public ReadOnlyConfigSource
+{
+public:
+	DedicatedConfigSource();
 };
 
 #endif // CONFIG_SOURCE_H

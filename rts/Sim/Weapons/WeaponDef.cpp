@@ -9,14 +9,12 @@
 #include "Sim/Misc/DamageArrayHandler.h"
 #include "Sim/Misc/DefinitionTag.h"
 #include "Sim/Misc/GlobalConstants.h"
+#include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileTypes.h"
 #include "Sim/Units/Scripts/CobInstance.h"
 #include "System/EventHandler.h"
 #include "System/myMath.h"
 #include "System/Log/ILog.h"
-
-CR_BIND(WeaponDef, );
-
 
 
 static DefType WeaponDefs("WeaponDefs");
@@ -50,14 +48,14 @@ WEAPONTAG(bool, impactOnly).defaultValue(false);
 WEAPONTAG(bool, noSelfDamage).defaultValue(false);
 WEAPONTAG(bool, noExplode).defaultValue(false);
 WEAPONTAG(bool, selfExplode).externalName("burnblow").defaultValue(false);
-WEAPONTAG(float, damageAreaOfEffect).externalName("areaOfEffect").defaultValue(8.0f).scaleValue(0.5f);
-WEAPONTAG(float, edgeEffectiveness).defaultValue(0.0f).maximumValue(0.999f);
+WEAPONTAG(float, damageAreaOfEffect, damages.damageAreaOfEffect).fallbackName("areaOfEffect").defaultValue(8.0f).scaleValue(0.5f);
+WEAPONTAG(float, edgeEffectiveness, damages.edgeEffectiveness).defaultValue(0.0f).maximumValue(0.999f);
 WEAPONTAG(float, collisionSize).defaultValue(0.05f);
 
 // Projectile Properties
-WEAPONTAG(float, projectilespeed).externalName("weaponVelocity").defaultValue(0.0f).minimumValue(0.01f).scaleValue(1.0f / GAME_SPEED);
+WEAPONTAG(float, projectilespeed).externalName("weaponVelocity").fallbackName("maxVelocity").defaultValue(0.0f).minimumValue(0.01f).scaleValue(1.0f / GAME_SPEED);
 WEAPONTAG(float, startvelocity).defaultValue(0.0f).minimumValue(0.01f).scaleValue(1.0f / GAME_SPEED);
-WEAPONTAG(float, weaponacceleration).defaultValue(0.0f).scaleValue(1.0f / (GAME_SPEED * GAME_SPEED));
+WEAPONTAG(float, weaponacceleration).fallbackName("acceleration").defaultValue(0.0f).scaleValue(1.0f / (GAME_SPEED * GAME_SPEED));
 WEAPONTAG(float, reload).externalName("reloadTime").defaultValue(1.0f);
 WEAPONTAG(float, salvodelay).externalName("burstRate").defaultValue(0.1f);
 WEAPONTAG(int, salvosize).externalName("burst").defaultValue(1);
@@ -75,7 +73,7 @@ WEAPONTAG(float, impulseFactor, damages.impulseFactor).defaultValue(1.0f);
 WEAPONTAG(float, impulseBoost, damages.impulseBoost).defaultValue(0.0f);
 WEAPONTAG(float, craterMult, damages.craterMult).fallbackName("impulseFactor").defaultValue(1.0f);
 WEAPONTAG(float, craterBoost, damages.craterBoost).defaultValue(0.0f);
-WEAPONTAG(float, craterAreaOfEffect).externalName("areaOfEffect").defaultValue(8.0f).scaleValue(0.5f);
+WEAPONTAG(float, craterAreaOfEffect, damages.craterAreaOfEffect).fallbackName("areaOfEffect").defaultValue(8.0f).scaleValue(0.5f);
 
 // Water
 WEAPONTAG(bool, waterweapon).defaultValue(false);
@@ -90,7 +88,8 @@ WEAPONTAG(float, targetBorder).defaultValue(0.0f).minimumValue(-1.0f).maximumVal
 WEAPONTAG(float, cylinderTargeting).fallbackName("cylinderTargetting").defaultValue(0.0f).minimumValue(0.0f).maximumValue(128.0f);
 WEAPONTAG(bool, turret).defaultValue(false).description("Does the unit aim within an arc (up-to and including full 360° turret traverse) or always aim along the owner's heading?");
 WEAPONTAG(bool, fixedLauncher).defaultValue(false);
-WEAPONTAG(float, maxAngle).externalName("tolerance").defaultValue(3000.0f).scaleValue(180.0f / COBSCALEHALF);
+WEAPONTAG(float, maxAngle).externalName("tolerance").defaultValue(3000.0f).scaleValue(TAANG2RAD);
+WEAPONDUMMYTAG(float, maxFireAngle).externalName("firetolerance").defaultValue(3640.0f).scaleValue(TAANG2RAD); // default value is 20degree
 WEAPONTAG(int, highTrajectory).defaultValue(2);
 WEAPONTAG(float, trajectoryHeight).defaultValue(0.0f);
 WEAPONTAG(bool, tracks).defaultValue(false);
@@ -100,16 +99,17 @@ WEAPONTAG(bool, gravityAffected).defaultValue(false);
 WEAPONTAG(float, myGravity).defaultValue(0.0f);
 WEAPONTAG(bool, canAttackGround).defaultValue(true);
 WEAPONTAG(float, uptime).externalName("weaponTimer").defaultValue(0.0f);
-WEAPONDUMMYTAG(float, flighttime).defaultValue(0).scaleValue(32); // needs to be written as int and read as float
+WEAPONDUMMYTAG(float, flighttime).defaultValue(0).scaleValue(GAME_SPEED).description("Flighttime of missiles in seconds."); // needs to be written as int and read as float
 WEAPONTAG(float, turnrate).defaultValue(0.0f).scaleValue(float(TAANG2RAD) / GAME_SPEED);
 WEAPONTAG(float, heightBoostFactor).defaultValue(-1.0f);
 WEAPONTAG(float, proximityPriority).defaultValue(1.0f);
+WEAPONTAG(bool, allowNonBlockingAim).defaultValue(false).description("When false, the weapon is blocked from fireing till AimWeapon() returns.");
 
 // Target Error
-TAGFUNCTION(AccuracyToSin, float, math::sin(x * PI / 0xafff)); // should really be tan but TA seem to cap it somehow, should also be 7fff or ffff theoretically but neither seems good
+TAGFUNCTION(AccuracyToSin, float, math::sin(x * math::PI / 0xafff)) // should really be tan but TA seem to cap it somehow, should also be 7fff or ffff theoretically but neither seems good
 WEAPONTAG(float, accuracy).defaultValue(0.0f).tagFunction(AccuracyToSin);
 WEAPONTAG(float, sprayAngle).defaultValue(0.0f).tagFunction(AccuracyToSin);
-WEAPONTAG(float, movingAccuracy).externalName("accuracy").defaultValue(0.0f).tagFunction(AccuracyToSin);
+WEAPONTAG(float, movingAccuracy).fallbackName("accuracy").defaultValue(0.0f).tagFunction(AccuracyToSin);
 WEAPONTAG(float, targetMoveError).defaultValue(0.0f);
 WEAPONTAG(float, leadLimit).defaultValue(-1.0f);
 WEAPONTAG(float, leadBonus).defaultValue(0.0f);
@@ -139,7 +139,7 @@ WEAPONTAG(float, fireStarter).defaultValue(0.0f).minimumValue(0.0f).maximumValue
 WEAPONTAG(bool, paralyzer).defaultValue(false).description("Is the weapon a paralyzer? If true the weapon only stuns enemy units and does not cause damage in the form of lost hit-points.");
 WEAPONTAG(int, paralyzeTime,  damages.paralyzeDamageTime).defaultValue(10).minimumValue(0).description("Determines the maximum length of time in seconds that the target will be paralyzed. The timer is restarted every time the target is hit by the weapon. Cannot be less than 0.");
 WEAPONTAG(bool, stockpile).defaultValue(false).description("Does each round of the weapon have to be built and stockpiled by the player? Will only correctly function for the first of each stockpiled weapons a unit has.");
-WEAPONTAG(float, stockpileTime).fallbackName("reload").defaultValue(1.0f).description("The time in seconds taken to stockpile one round of the weapon.");
+WEAPONTAG(float, stockpileTime).fallbackName("reload").defaultValue(1.0f).scaleValue(GAME_SPEED).description("The time in seconds taken to stockpile one round of the weapon.");
 
 // Interceptor
 WEAPONTAG(int, targetable).defaultValue(0).description("Bitmask representing the types of weapon that can intercept this weapon. Each digit of binary that is set to one means that a weapon with the corresponding digit in its interceptor tag will intercept this weapon. Instant-hitting weapons such as [#BeamLaser], [#LightningCannon] and [#Rifle] cannot be targeted.");
@@ -149,10 +149,10 @@ WEAPONTAG(float, coverageRange).externalName("coverage").defaultValue(0.0f).desc
 WEAPONTAG(bool, interceptSolo).defaultValue(true).description("If true no other interceptors may target the same projectile.");
 
 // Dynamic Damage
-WEAPONTAG(bool, dynDamageInverted).defaultValue(false).description("If true the damage curve is inverted i.e. the weapon does more damage at greater ranges as opposed to less.");
-WEAPONTAG(float, dynDamageExp).defaultValue(0.0f).description("Exponent of the range-dependent damage formula, the default of 0.0 disables dynamic damage, 1.0 means linear scaling, 2.0 quadratic and so on.");
-WEAPONTAG(float, dynDamageMin).defaultValue(0.0f).description("The minimum floor value that range-dependent damage can drop to.");
-WEAPONTAG(float, dynDamageRange).defaultValue(0.0f).description("If set to non-zero values the weapon will use this value in the range-dependant damage formula instead of the actual range.");
+WEAPONTAG(bool, dynDamageInverted, damages.dynDamageInverted).defaultValue(false).description("If true the damage curve is inverted i.e. the weapon does more damage at greater ranges as opposed to less.");
+WEAPONTAG(float, dynDamageExp, damages.dynDamageExp).defaultValue(0.0f).description("Exponent of the range-dependent damage formula, the default of 0.0 disables dynamic damage, 1.0 means linear scaling, 2.0 quadratic and so on.");
+WEAPONTAG(float, dynDamageMin, damages.dynDamageMin).defaultValue(0.0f).description("The minimum floor value that range-dependent damage can drop to.");
+WEAPONTAG(float, dynDamageRange, damages.dynDamageRange).defaultValue(0.0f).description("If set to non-zero values the weapon will use this value in the range-dependant damage formula instead of the actual range.");
 
 // Shield
 WEAPONTAG(bool, shieldRepulser).externalName("shield.repulser").fallbackName("shieldRepulser")
@@ -187,7 +187,7 @@ WEAPONTAG(bool, visibleShield).externalName("shield.visible").fallbackName("visi
 	.defaultValue(false).description("Is the shield visible or not?");
 WEAPONTAG(bool, visibleShieldRepulse).externalName("shield.visibleRepulse").fallbackName("visibleShieldRepulse")
 	.defaultValue(false).description("Is the (hard-coded) repulse effect rendered or not?");
-WEAPONTAG(int, visibleShieldHitFrames).externalName("visibleHitFrames").fallbackName("visibleShieldHitFrames")
+WEAPONTAG(int, visibleShieldHitFrames).externalName("shield.visibleHitFrames").fallbackName("visibleShieldHitFrames")
 	.defaultValue(0).description("The number of frames a shield becomes visible for when hit.");
 WEAPONTAG(float3, shieldBadColor).externalName("shield.badColor").fallbackName("shieldBadColor")
 	.defaultValue(float3(1.0f, 0.5f, 0.5f)).description("The RGB colour the shield transitions to as its hit-points are reduced towards 0.");
@@ -266,6 +266,8 @@ WeaponDef::WeaponDef()
 	noAutoTarget = false;
 	onlyForward = false;
 
+	damages.fromDef = true;
+
 	const LuaTable wdTable;
 	WeaponDefs.Load(this, wdTable);
 }
@@ -282,6 +284,7 @@ WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 	, collisionFlags(0)
 {
 	WeaponDefs.Load(this, wdTable);
+	WeaponDefs.ReportUnknownTags(name, wdTable);
 
 	if (wdTable.KeyExists("cylinderTargetting"))
 		LOG_L(L_WARNING, "WeaponDef (%s) cylinderTargetting is deprecated and will be removed in the next release (use cylinderTargeting).", name.c_str());
@@ -294,7 +297,8 @@ WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 
 	shieldRechargeDelay = int(wdTable.GetFloat("rechargeDelay", 0) * GAME_SPEED);
 	shieldArmorType = damageArrayHandler->GetTypeFromName(shieldArmorTypeName);
-	flighttime = int(wdTable.GetFloat("flighttime", 0.0f) * 32);
+	flighttime = int(wdTable.GetFloat("flighttime", 0.0f) * GAME_SPEED);
+	maxFireAngle = math::cos(wdTable.GetFloat("firetolerance", 3640.0f) * TAANG2RAD);
 
 	//FIXME may be smarter to merge the collideXYZ tags with avoidXYZ and removing the collisionFlags tag (and move the code into CWeapon)?
 	collisionFlags = 0;
@@ -348,33 +352,31 @@ WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 			defDamage = 1.0f;
 
 		damages.SetDefaultDamage(defDamage);
+		damages.fromDef = true;
 
 		if (!paralyzer)
 			damages.paralyzeDamageTime = 0;
 
-		std::map<string, float> dmgs;
-		std::map<string, float>::const_iterator di;
+		spring::unordered_map<string, float> dmgs;
+		spring::unordered_map<string, float>::const_iterator di;
 
 		dmgTable.GetMap(dmgs);
 
-		for (di = dmgs.begin(); di != dmgs.end(); ++di) {
+		for (di = dmgs.cbegin(); di != dmgs.cend(); ++di) {
 			const int type = damageArrayHandler->GetTypeFromName(di->first);
 			if (type != 0) {
-				float dmg = di->second;
-				if (dmg != 0.0f) {
-					damages[type] = dmg;
-				} else {
-					damages[type] = 1.0f;
-				}
+				damages.Set(type, std::max(0.0001f, di->second));
 			}
 		}
 
-		const float tempsize = 2.0f + std::min(defDamage * 0.0025f, damageAreaOfEffect * 0.1f);
+		const float tempsize = 2.0f + std::min(defDamage * 0.0025f, damages.damageAreaOfEffect * 0.1f);
 		const float gd = std::max(30.0f, defDamage / 20.0f);
 		const float defExpSpeed = (8.0f + (gd * 2.5f)) / (9.0f + (math::sqrt(gd) * 0.7f)) * 0.5f;
 
 		size = wdTable.GetFloat("size", tempsize);
-		explosionSpeed = wdTable.GetFloat("explosionSpeed", defExpSpeed);
+		damages.explosionSpeed = wdTable.GetFloat("explosionSpeed", defExpSpeed);
+		if (damages.dynDamageRange <= 0.0f)
+			damages.dynDamageRange = range;
 	}
 
 	{
@@ -386,102 +388,113 @@ WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 		soundTrigger = wdTable.GetBool("soundTrigger", singleSampleShot || singleShotWeapon);
 	}
 
-	// get some weapon specific defaults
-	int defInterceptType = 0;
+	{
+		// get some weapon specific defaults
+		defInterceptType = 0;
 
-	if (type == "Cannon") {
-		// CExplosiveProjectile
-		defInterceptType = 1;
-		projectileType = WEAPON_EXPLOSIVE_PROJECTILE;
+		ownerExpAccWeight = -1.0f;
+		if (type == "Cannon") {
+			// CExplosiveProjectile
+			defInterceptType = 1;
+			projectileType = WEAPON_EXPLOSIVE_PROJECTILE;
 
-		ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.9f);
-		intensity = wdTable.GetFloat("intensity", 0.2f);
-	} else if (type == "Rifle") {
-		// no projectile or intercept type
-		defInterceptType = 128;
+			ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.9f);
+			intensity = wdTable.GetFloat("intensity", 0.2f);
+		} else if (type == "Rifle") {
+			// no projectile or intercept type
+			defInterceptType = 128;
 
-		ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.9f);
-	} else if (type == "Melee") {
-		// no projectile or intercept type
-		defInterceptType = 256;
-	} else if (type == "Flame") {
-		// CFlameProjectile
-		projectileType = WEAPON_FLAME_PROJECTILE;
-		defInterceptType = 16;
+			ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.9f);
+		} else if (type == "Melee") {
+			// no projectile or intercept type
+			defInterceptType = 256;
 
-		ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.2f);
-		collisionSize     = wdTable.GetFloat("collisionSize", 0.5f);
-	} else if (type == "MissileLauncher") {
-		// CMissileProjectile
-		projectileType = WEAPON_MISSILE_PROJECTILE;
-		defInterceptType = 4;
+			ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.9f);
+		} else if (type == "Flame") {
+			// CFlameProjectile
+			projectileType = WEAPON_FLAME_PROJECTILE;
+			defInterceptType = 16;
 
-		ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.5f);
-	} else if (type == "LaserCannon") {
-		// CLaserProjectile
-		projectileType = WEAPON_LASER_PROJECTILE;
-		defInterceptType = 2;
+			ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.2f);
+			collisionSize     = wdTable.GetFloat("collisionSize", 0.5f);
+		} else if (type == "MissileLauncher") {
+			// CMissileProjectile
+			projectileType = WEAPON_MISSILE_PROJECTILE;
+			defInterceptType = 4;
 
-		ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.7f);
-		collisionSize = wdTable.GetFloat("collisionSize", 0.5f);
-	} else if (type == "BeamLaser") {
-		projectileType = largeBeamLaser? WEAPON_LARGEBEAMLASER_PROJECTILE: WEAPON_BEAMLASER_PROJECTILE;
-		defInterceptType = 2;
+			ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.5f);
+		} else if (type == "LaserCannon") {
+			// CLaserProjectile
+			projectileType = WEAPON_LASER_PROJECTILE;
+			defInterceptType = 2;
 
-		ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.7f);
-	} else if (type == "LightningCannon") {
-		projectileType = WEAPON_LIGHTNING_PROJECTILE;
-		defInterceptType = 64;
+			ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.7f);
+			collisionSize = wdTable.GetFloat("collisionSize", 0.5f);
+		} else if (type == "BeamLaser") {
+			projectileType = largeBeamLaser? WEAPON_LARGEBEAMLASER_PROJECTILE: WEAPON_BEAMLASER_PROJECTILE;
+			defInterceptType = 2;
 
-		ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.5f);
-	} else if (type == "EmgCannon") {
-		// CEmgProjectile
-		projectileType = WEAPON_EMG_PROJECTILE;
-		defInterceptType = 1;
+			ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.7f);
+		} else if (type == "LightningCannon") {
+			projectileType = WEAPON_LIGHTNING_PROJECTILE;
+			defInterceptType = 64;
 
-		ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.5f);
-		size = wdTable.GetFloat("size", 3.0f);
-	} else if (type == "TorpedoLauncher") {
-		// WeaponLoader will create either BombDropper with dropTorpedoes = true
-		// (owner->unitDef->canfly && !weaponDef->submissile) or TorpedoLauncher
-		// (both types of weapons will spawn TorpedoProjectile's)
-		//
-		projectileType = WEAPON_TORPEDO_PROJECTILE;
-		defInterceptType = 32;
+			ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.5f);
+		} else if (type == "EmgCannon") {
+			// CEmgProjectile
+			projectileType = WEAPON_EMG_PROJECTILE;
+			defInterceptType = 1;
 
-		waterweapon = true;
-	} else if (type == "DGun") {
-		// CFireBallProjectile
-		projectileType = WEAPON_FIREBALL_PROJECTILE;
+			ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.5f);
+			size = wdTable.GetFloat("size", 3.0f);
+		} else if (type == "TorpedoLauncher") {
+			// WeaponLoader will create either BombDropper with dropTorpedoes = true
+			// (owner->unitDef->canfly && !weaponDef->submissile) or TorpedoLauncher
+			// (both types of weapons will spawn TorpedoProjectile's)
+			//
+			projectileType = WEAPON_TORPEDO_PROJECTILE;
+			defInterceptType = 32;
 
-		ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.5f);
-		collisionSize = wdTable.GetFloat("collisionSize", 10.0f);
-	} else if (type == "StarburstLauncher") {
-		// CStarburstProjectile
-		projectileType = WEAPON_STARBURST_PROJECTILE;
-		defInterceptType = 4;
+			ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.5f);
+			waterweapon = true;
+		} else if (type == "DGun") {
+			// CFireBallProjectile
+			projectileType = WEAPON_FIREBALL_PROJECTILE;
 
-		ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.7f);
-	} else if (type == "AircraftBomb") {
-		// WeaponLoader will create BombDropper with dropTorpedoes = false
-		// BombDropper with dropTorpedoes=false spawns ExplosiveProjectile's
-		//
-		projectileType = WEAPON_EXPLOSIVE_PROJECTILE;
-		defInterceptType = 8;
+			ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.5f);
+			collisionSize = wdTable.GetFloat("collisionSize", 10.0f);
+		} else if (type == "StarburstLauncher") {
+			// CStarburstProjectile
+			projectileType = WEAPON_STARBURST_PROJECTILE;
+			defInterceptType = 4;
 
-		ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.9f);
-	} else {
-		ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.0f);
+			ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.7f);
+		} else if (type == "AircraftBomb") {
+			// WeaponLoader will create BombDropper with dropTorpedoes = false
+			// BombDropper with dropTorpedoes=false spawns ExplosiveProjectile's
+			//
+			projectileType = WEAPON_EXPLOSIVE_PROJECTILE;
+			defInterceptType = 8;
+
+			ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.9f);
+		} else {
+			ownerExpAccWeight = wdTable.GetFloat("ownerExpAccWeight", 0.0f);
+		}
+
+		if (ownerExpAccWeight < 0.0f)
+			LOG_L(L_ERROR, "ownerExpAccWeight is negative in weaponDef %s", name.c_str());
+
+		interceptedByShieldType = wdTable.GetInt("interceptedByShieldType", defInterceptType);
 	}
 
-	interceptedByShieldType = wdTable.GetInt("interceptedByShieldType", defInterceptType);
+	{
+		const std::string& colormap = wdTable.GetString("colormap", "");
 
-	const std::string& colormap = wdTable.GetString("colormap", "");
+		visuals.colorMap = nullptr;
 
-	if (!colormap.empty()) {
-		visuals.colorMap = CColorMap::LoadFromDefString(colormap);
-	} else {
-		visuals.colorMap = NULL;
+		if (!colormap.empty()) {
+			visuals.colorMap = CColorMap::LoadFromDefString(colormap);
+		}
 	}
 
 	ParseWeaponSounds(wdTable);
@@ -511,12 +524,12 @@ void WeaponDef::ParseWeaponSounds(const LuaTable& wdTable) {
 	if (!forceSetVolume)
 		return;
 
-	if (damages[0] <= 50.0f) {
+	if (damages.GetDefault() <= 50.0f) {
 		fireSound.setVolume(0, 5.0f);
 		hitSound.setVolume(0, 5.0f);
 		hitSound.setVolume(1, 5.0f);
 	} else {
-		float fireSoundVolume = math::sqrt(damages[0] * 0.5f) * ((type == "LaserCannon")? 0.5f: 1.0f);
+		float fireSoundVolume = math::sqrt(damages.GetDefault() * 0.5f) * ((type == "LaserCannon")? 0.5f: 1.0f);
 		float hitSoundVolume = fireSoundVolume;
 
 		if (fireSoundVolume > 100.0f) {
@@ -525,7 +538,7 @@ void WeaponDef::ParseWeaponSounds(const LuaTable& wdTable) {
 			}
 		}
 
-		if (damageAreaOfEffect > 8.0f) {
+		if (damages.damageAreaOfEffect > 8.0f) {
 			hitSoundVolume *= 2.0f;
 		}
 		if (type == "DGun") {
@@ -581,13 +594,11 @@ S3DModel* WeaponDef::LoadModel()
 {
 	if (visuals.model == NULL) {
 		if (!visuals.modelName.empty()) {
-			visuals.model = modelParser->Load3DModel(visuals.modelName);
+			visuals.model = modelLoader.LoadModel(visuals.modelName);
 		} else {
 			// not useful, too much spam
 			// LOG_L(L_WARNING, "[WeaponDef::%s] weapon \"%s\" has no model defined", __FUNCTION__, name.c_str());
 		}
-	} else {
-		eventHandler.LoadedModelRequested();
 	}
 
 	return visuals.model;

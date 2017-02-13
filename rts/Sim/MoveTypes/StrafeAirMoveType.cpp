@@ -11,7 +11,7 @@
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/SmoothHeightMesh.h"
-#include "Sim/Projectiles/Unsynced/SmokeProjectile.h"
+#include "Rendering/Env/Particles/Classes/SmokeProjectile.h"
 #include "Sim/Units/Scripts/UnitScript.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
@@ -20,7 +20,7 @@
 #include "System/myMath.h"
 #include "System/Sync/HsiehHash.h"
 
-CR_BIND_DERIVED(CStrafeAirMoveType, AAirMoveType, (NULL));
+CR_BIND_DERIVED(CStrafeAirMoveType, AAirMoveType, (nullptr))
 
 CR_REG_METADATA(CStrafeAirMoveType, (
 	CR_MEMBER(maneuverState),
@@ -44,6 +44,7 @@ CR_REG_METADATA(CStrafeAirMoveType, (
 	CR_MEMBER(maxAileron),
 	CR_MEMBER(maxElevator),
 	CR_MEMBER(maxRudder),
+	CR_MEMBER(attackSafetyDistance),
 
 	CR_MEMBER(crashAileron),
 	CR_MEMBER(crashElevator),
@@ -51,10 +52,8 @@ CR_REG_METADATA(CStrafeAirMoveType, (
 
 	CR_MEMBER(lastRudderPos),
 	CR_MEMBER(lastElevatorPos),
-	CR_MEMBER(lastAileronPos),
-
-	CR_RESERVED(63)
-));
+	CR_MEMBER(lastAileronPos)
+))
 
 
 
@@ -330,11 +329,11 @@ static int SelectLoopBackManeuver(
 		return CStrafeAirMoveType::MANEUVER_FLY_STRAIGHT;
 
 	if (groundDist > TurnRadius(turnRadius, spd.w)) {
-		if (math::fabs(frontdir.y) <= 0.2f && gs->randFloat() > 0.3f) {
+		if (math::fabs(frontdir.y) <= 0.2f && gsRNG.NextFloat() > 0.3f) {
 			return CStrafeAirMoveType::MANEUVER_IMMELMAN_INV;
 		}
 	} else {
-		if (frontdir.y > -0.2f && gs->randFloat() > 0.7f) {
+		if (frontdir.y > -0.2f && gsRNG.NextFloat() > 0.7f) {
 			return CStrafeAirMoveType::MANEUVER_IMMELMAN;
 		}
 	}
@@ -364,11 +363,11 @@ CStrafeAirMoveType::CStrafeAirMoveType(CUnit* owner):
 	maxElevator(0.02f),
 	maxRudder(0.01f)
 {
-	assert(owner != NULL);
-	assert(owner->unitDef != NULL);
+	// creg
+	if (owner == nullptr)
+		return;
 
-	// force LOS recalculation
-	owner->mapSquare += 1;
+	assert(owner->unitDef != nullptr);
 
 	isFighter = owner->unitDef->IsFighterAirUnit();
 	loopbackAttack = owner->unitDef->canLoopbackAttack && isFighter;
@@ -376,11 +375,6 @@ CStrafeAirMoveType::CStrafeAirMoveType(CUnit* owner):
 
 	wingAngle = owner->unitDef->wingAngle;
 	crashDrag = 1.0f - owner->unitDef->crashDrag;
-
-	if (accRate != 0.0f && maxSpeedDef != 0.0f) {
-		invDrag = (1.0f / (maxSpeedDef * 1.1f / accRate)) - (wingAngle * wingAngle * wingDrag);
-		invDrag = 1.0f - Clamp(invDrag, 0.0f, 1.0f);
-	}
 
 	frontToSpeed = owner->unitDef->frontToSpeed;
 	speedToFront = owner->unitDef->speedToFront;
@@ -392,28 +386,33 @@ CStrafeAirMoveType::CStrafeAirMoveType(CUnit* owner):
 
 	wantedHeight =
 		(owner->unitDef->wantedHeight * 1.5f) +
-		((gs->randFloat() - 0.3f) * 15.0f * (isFighter? 2.0f: 1.0f));
+		((gsRNG.NextFloat() - 0.3f) * 15.0f * (isFighter? 2.0f: 1.0f));
+
+	orgWantedHeight = wantedHeight;
 
 	maxAileron = owner->unitDef->maxAileron;
 	maxElevator = owner->unitDef->maxElevator;
 	maxRudder = owner->unitDef->maxRudder;
+	attackSafetyDistance = 0.0f;
 
 	useSmoothMesh = owner->unitDef->useSmoothMesh;
 
 	// FIXME: WHY ARE THESE RANDOMIZED?
-	maxRudder   *= (0.99f + gs->randFloat() * 0.02f);
-	maxElevator *= (0.99f + gs->randFloat() * 0.02f);
-	maxAileron  *= (0.99f + gs->randFloat() * 0.02f);
-	accRate     *= (0.99f + gs->randFloat() * 0.02f);
+	maxRudder   *= (0.99f + gsRNG.NextFloat() * 0.02f);
+	maxElevator *= (0.99f + gsRNG.NextFloat() * 0.02f);
+	maxAileron  *= (0.99f + gsRNG.NextFloat() * 0.02f);
+	accRate     *= (0.99f + gsRNG.NextFloat() * 0.02f);
 
-	crashAileron = 1.0f - (gs->randFloat() * gs->randFloat());
-	crashAileron *= ((gs->randInt() & 1)? -1.0f: 1.0f);
-	crashElevator = gs->randFloat();
-	crashRudder = gs->randFloat() - 0.5f;
+	crashAileron = 1.0f - (gsRNG.NextFloat() * gsRNG.NextFloat());
+	crashAileron *= ((gsRNG.NextInt() & 1)? -1.0f: 1.0f);
+	crashElevator = gsRNG.NextFloat();
+	crashRudder = gsRNG.NextFloat() - 0.5f;
 
 	lastRudderPos = 0.0f;
 	lastElevatorPos = 0.0f;
 	lastAileronPos = 0.0f;
+
+	SetMaxSpeed(maxSpeedDef);
 }
 
 
@@ -430,14 +429,8 @@ bool CStrafeAirMoveType::Update()
 	// (the kill-on-impact code is not reached in that case)
 	if ((owner->IsStunned() && !owner->IsCrashing()) || owner->beingBuilt) {
 		UpdateAirPhysics(0.0f * lastRudderPos, lastAileronPos, lastElevatorPos, 0.0f, ZeroVector);
-		return (HandleCollisions(collide && !owner->beingBuilt && (padStatus == PAD_STATUS_FLYING) && (aircraftState != AIRCRAFT_TAKEOFF)));
+		return (HandleCollisions(collide && !owner->beingBuilt && (aircraftState != AIRCRAFT_TAKEOFF)));
 	}
-
-	// somewhat hackish, but planes that have attack orders
-	// while no pad is available would otherwise continue
-	// attacking even if out of fuel
-	const bool outOfFuel = (owner->currentFuel <= 0.0f && owner->unitDef->maxFuel > 0.0f);
-	const bool allowAttack = (reservedPad == NULL && !outOfFuel);
 
 	if (aircraftState != AIRCRAFT_CRASHING) {
 		if (owner->UnderFirstPersonControl()) {
@@ -445,48 +438,29 @@ bool CStrafeAirMoveType::Update()
 
 			const FPSUnitController& con = owner->fpsControlPlayer->fpsController;
 
-			if (con.forward || con.back || con.left || con.right) {
-				float aileron = 0.0f;
-				float elevator = 0.0f;
+			float aileron = 0.0f;
+			float elevator = 0.0f;
 
-				if (con.forward) { elevator -= 1.0f; }
-				if (con.back   ) { elevator += 1.0f; }
-				if (con.right  ) { aileron  += 1.0f; }
-				if (con.left   ) { aileron  -= 1.0f; }
+			if (con.forward) elevator -= 1.0f;
+			if (con.back   ) elevator += 1.0f;
+			if (con.right  ) aileron  += 1.0f;
+			if (con.left   ) aileron  -= 1.0f;
 
-				UpdateAirPhysics(0.0f, aileron, elevator, 1.0f, owner->frontdir);
-				maneuverState = MANEUVER_FLY_STRAIGHT;
+			UpdateAirPhysics(0.0f, aileron, elevator, 1.0f, owner->frontdir);
+			maneuverState = MANEUVER_FLY_STRAIGHT;
 
-				return (HandleCollisions(collide && !owner->beingBuilt && (padStatus == PAD_STATUS_FLYING) && (aircraftState != AIRCRAFT_TAKEOFF)));
-			}
-		}
+			return (HandleCollisions(collide && !owner->beingBuilt && (aircraftState != AIRCRAFT_TAKEOFF)));
 
-		if (reservedPad != NULL) {
-			MoveToRepairPad();
-		} else {
-			if (outOfFuel && airBaseHandler->HaveAirBase(owner->allyteam)) {
-				// out of fuel, keep us in the air to reach our landing
-				// goalPos (which is/will be set to a pad's position by
-				// MobileCAI) so long as there is at least one friendly
-				// base
-				//
-				// NOTE:
-				//   technically need to pass minAirBasePower as well,
-				//   otherwise aircraft might keep flying and never be
-				//   serviced
-				SetState(AIRCRAFT_FLYING);
-			}
 		}
 	}
 
 	switch (aircraftState) {
 		case AIRCRAFT_FLYING: {
-			owner->restTime = 0;
 
 			const CCommandQueue& cmdQue = owner->commandAI->commandQue;
 
 			const bool isAttacking = (!cmdQue.empty() && (cmdQue.front()).GetID() == CMD_ATTACK);
-			const bool keepAttacking = ((owner->attackTarget != NULL && !owner->attackTarget->isDead) || owner->userAttackGround);
+			const bool keepAttacking = ((owner->curTarget.type == Target_Unit && !owner->curTarget.unit->isDead) || owner->curTarget.type == Target_Pos);
 
 			/*
 			const float brakeDistSq = Square(0.5f * lastSpd.SqLength2D() / decRate);
@@ -497,11 +471,12 @@ bool CStrafeAirMoveType::Update()
 			} else
 			*/
 			{
-				if (isAttacking && allowAttack && keepAttacking) {
-					if (owner->attackTarget != NULL) {
-						SetGoal(owner->attackTarget->pos);
-					} else {
-						SetGoal(owner->attackPos);
+				if (isAttacking && keepAttacking) {
+					switch (owner->curTarget.type) {
+						case Target_None: { } break;
+						case Target_Unit: { SetGoal(owner->curTarget.unit->pos); } break;
+						case Target_Pos:  { SetGoal(owner->curTarget.groundPos); } break;
+						case Target_Intercept: { } break;
 					}
 
 					const bool goalInFront = ((goalPos - lastPos).dot(owner->frontdir) > 0.0f);
@@ -545,10 +520,10 @@ bool CStrafeAirMoveType::Update()
 				owner->KillUnit(NULL, true, false);
 			}
 
-			new CSmokeProjectile(owner, owner->midPos, gs->randVector() * 0.08f, 100 + gs->randFloat() * 50, 5, 0.2f, 0.4f);
+			new CSmokeProjectile(owner, owner->midPos, gsRNG.NextVector() * 0.08f, 100 + gsRNG.NextFloat() * 50, 5, 0.2f, 0.4f);
 		} break;
 		case AIRCRAFT_TAKEOFF:
-			UpdateTakeOff(wantedHeight);
+			UpdateTakeOff();
 			break;
 		default:
 			break;
@@ -557,7 +532,7 @@ bool CStrafeAirMoveType::Update()
 	if (lastSpd == ZeroVector && owner->speed != ZeroVector) { owner->script->StartMoving(false); }
 	if (lastSpd != ZeroVector && owner->speed == ZeroVector) { owner->script->StopMoving(); }
 
-	return (HandleCollisions(collide && !owner->beingBuilt && (padStatus == PAD_STATUS_FLYING) && (aircraftState != AIRCRAFT_TAKEOFF)));
+	return (HandleCollisions(collide && !owner->beingBuilt && (aircraftState != AIRCRAFT_TAKEOFF)));
 }
 
 
@@ -585,18 +560,43 @@ bool CStrafeAirMoveType::HandleCollisions(bool checkCollisions) {
 
 		bool hitBuilding = false;
 
-		// check for collisions if not on a pad, not being built, or not taking off
+		// check for collisions if not being built or not taking off
 		if (checkCollisions) {
-			const vector<CUnit*>& nearUnits = quadField->GetUnitsExact(pos, owner->radius + 6);
+			// copy on purpose, since the below can call Lua
+			const std::vector<CUnit*> nearUnits = quadField->GetUnitsExact(pos, owner->radius + 6);
 
-			for (vector<CUnit*>::const_iterator ui = nearUnits.begin(); ui != nearUnits.end(); ++ui) {
-				CUnit* unit = *ui;
+			for (CUnit* unit: nearUnits) {
+				const bool unloadingUnit = (unit->unloadingTransportId == owner->id);
+				const bool unloadingOwner = (owner->unloadingTransportId == unit->id);
+
+				if (unloadingUnit)
+					unit->unloadingTransportId = -1;
+
+				if (unloadingOwner)
+					owner->unloadingTransportId = -1;
+
+				if (unit->id == owner->loadingTransportId || owner->id == unit->loadingTransportId ||
+				    unit == owner->transporter || unit->transporter != NULL) {
+					continue;
+				}
 
 				const float sqDist = (pos - unit->pos).SqLength();
 				const float totRad = owner->radius + unit->radius;
 
 				if (sqDist <= 0.1f || sqDist >= (totRad * totRad))
 					continue;
+
+
+				if (unloadingUnit) {
+					unit->unloadingTransportId = owner->id;
+					continue;
+				}
+
+				if (unloadingOwner) {
+					owner->unloadingTransportId = unit->id;
+					continue;
+				}
+
 
 				const float dist = math::sqrt(sqDist);
 				const float3 dif = (pos - unit->pos).Normalize();
@@ -665,8 +665,6 @@ bool CStrafeAirMoveType::HandleCollisions(bool checkCollisions) {
 
 void CStrafeAirMoveType::SlowUpdate()
 {
-	UpdateFuel();
-
 	// note: NOT AAirMoveType::SlowUpdate
 	AMoveType::SlowUpdate();
 }
@@ -773,6 +771,13 @@ void CStrafeAirMoveType::UpdateAttack()
 		(goalPos - pos) / goalDist:
 		ZeroVector;
 
+	// if goal too close, stop dive and resume flying at normal desired height
+	// to avoid colliding with target, evade blast, friendly and enemy fire, etc.
+	if (goalDist < attackSafetyDistance) {
+		UpdateFlying(wantedHeight, 1.0f);
+		return;
+	}
+
 	float goalDotRight = goalDir.dot(rightDir2D.Normalize2D());
 
 	const float aGoalDotFront = goalDir.dot(frontdir);
@@ -783,7 +788,7 @@ void CStrafeAirMoveType::UpdateAttack()
 	}
 
 	{
-		const CUnit* attackee = owner->attackTarget;
+		const CUnit* attackee = owner->curTarget.unit;
 
 		const float aileron  = GetAileronDeflection (owner, lastColWarning, pos, spd, rightdir, updir, frontdir, goalDir, gHeightAW, wantedHeight,  maxAileron,  maxBank, goalDotRight, aGoalDotFront, lastColWarningType == 2, true); // roll
 		const float rudder   = GetRudderDeflection  (owner, lastColWarning, pos, spd, rightdir, updir, frontdir, goalDir, gHeightAW, wantedHeight,   maxRudder,     0.0f, goalDotRight, aGoalDotFront, lastColWarningType == 2, true); // yaw
@@ -809,16 +814,7 @@ bool CStrafeAirMoveType::UpdateFlying(float wantedHeight, float engine)
 	//   turnRadius is often way too small, but cannot calculate one
 	//   because we have no turnRate (and unitDef->turnRate can be 0)
 	//   --> would lead to infinite circling without adjusting goal
-	if (reservedPad != NULL) {
-		const float3& padPos = (reservedPad->GetUnit())->pos;
-		const float3  padVec = padPos - pos;
 
-		if (padVec.dot(frontdir) < -0.1f && padVec.SqLength2D() < Square(TurnRadius(turnRadius, spd.w))) {
-			SetGoal(pos + frontdir * TurnRadius(turnRadius, spd.w));
-		} else {
-			SetGoal(padPos);
-		}
-	}
 
 	const float3 goalVec = goalPos - pos;
 
@@ -830,12 +826,9 @@ bool CStrafeAirMoveType::UpdateFlying(float wantedHeight, float engine)
 
 	// do not check if the plane can be submerged here,
 	// since it'll cause ground collisions later on (?)
-	float gHeight = 0.0f;
-
+	float gHeight = CGround::GetHeightAboveWater(pos.x, pos.z);
 	if (UseSmoothMesh()) {
-		gHeight = std::max(smoothGround->GetHeight(pos.x, pos.z), CGround::GetApproximateHeight(pos.x, pos.z));
-	} else {
-		gHeight = CGround::GetHeightAboveWater(pos.x, pos.z);
+		gHeight = std::max(smoothGround->GetHeight(pos.x, pos.z), gHeight);
 	}
 
 	if (((gs->frameNum + owner->id) & 3) == 0) {
@@ -843,34 +836,29 @@ bool CStrafeAirMoveType::UpdateFlying(float wantedHeight, float engine)
 	}
 
 	// RHS is needed for moving targets (when called by UpdateAttack)
-	const bool allowUnlockYR = (goalDist2D >= TurnRadius(turnRadius, spd.w) || goalVec.dot(owner->frontdir) > 0.0f);
-	const bool forceUnlockYR = ((gs->frameNum - owner->lastFireWeapon) >= GAME_SPEED * 3);
+	const bool allowUnlockYawRoll = (goalDist2D >= TurnRadius(turnRadius, spd.w) || goalVec.dot(owner->frontdir) > 0.0f);
+	const bool forceUnlockYawRoll = ((gs->frameNum - owner->lastFireWeapon) >= GAME_SPEED * 3);
 
 	// yaw and roll have to be unblocked after a certain time or aircraft
 	// can fly straight forever if their target is another chasing aircraft
 	float3 rightDir2D = rightdir;
-	float3 yprMults = (XZVector * float(allowUnlockYR || forceUnlockYR)) + UpVector;
+	float3 yprMults = (XZVector * float(allowUnlockYawRoll || forceUnlockYawRoll)) + UpVector;
 
 	float goalDotRight = goalDir2D.dot(rightDir2D.Normalize2D());
 
 	const float aGoalDotFront = goalDir2D.dot(frontdir);
-	const float goalDotFront = aGoalDotFront * 0.5f + 0.501f;
 
-	if (goalDotFront != 0.0f) {
-		goalDotRight /= goalDotFront;
-	}
-
-	// if goal-position is behind us and goal-distance
-	// is less than our turning radius, turn the other
-	// way --> often insufficient for small turn radii,
-	// also need to fly straight for some distance
-	#if 1
-	if (goalDir2D.dot(frontdir) < -0.1f && goalDist2D < TurnRadius(turnRadius, spd.w)) {
+	// If goal-position is behind us and goal-distance is less
+	// than our turning radius, turn the other way.
+	// If goal-distance is half turn radius then turn if
+	// goal-position is not in front within a 45 degree arc.
+	// This is to prevent becoming stuck in a small circle
+	// around goal-position.
+	if ((goalDist2D < turnRadius * 0.5f && goalDir2D.dot(frontdir) < 0.7f) || (goalDist2D < turnRadius && goalDir2D.dot(frontdir) < -0.1f)) {
 		if (!owner->UnderFirstPersonControl() || owner->fpsControlPlayer->fpsController.mouse2) {
 			goalDotRight *= -1.0f;
 		}
 	}
-	#endif
 
 	if (lastColWarning != NULL) {
 		const float3 otherDif = lastColWarning->pos - pos;
@@ -891,16 +879,8 @@ bool CStrafeAirMoveType::UpdateFlying(float wantedHeight, float engine)
 	const float elevator = GetElevatorDeflection(owner, lastColWarning, pos, spd, rightdir, updir, frontdir, goalDir2D, gHeight, wantedHeight, maxElevator, maxPitch, goalDotRight, aGoalDotFront, lastColWarningType == 2, false); // pitch
 
 	UpdateAirPhysics(rudder * yprMults.x, aileron * yprMults.z, elevator * yprMults.y, engine, owner->frontdir);
-	return (allowUnlockYR || forceUnlockYR);
+	return (allowUnlockYawRoll || forceUnlockYawRoll);
 }
-
-
-
-void CStrafeAirMoveType::UpdateLanded()
-{
-	AAirMoveType::UpdateLanded();
-}
-
 
 
 static float GetVTOLAccelerationSign(float h, float wh, float speedy, bool ascending) {
@@ -914,10 +894,12 @@ static float GetVTOLAccelerationSign(float h, float wh, float speedy, bool ascen
 	}
 }
 
-void CStrafeAirMoveType::UpdateTakeOff(float wantedHeight)
+void CStrafeAirMoveType::UpdateTakeOff()
 {
 	const float3& pos = owner->pos;
 	const float4& spd = owner->speed;
+
+	wantedHeight = orgWantedHeight;
 
 	SyncedFloat3& rightdir = owner->rightdir;
 	SyncedFloat3& frontdir = owner->frontdir;
@@ -949,59 +931,21 @@ void CStrafeAirMoveType::UpdateTakeOff(float wantedHeight)
 }
 
 
-
-float3 GetWantedLandingVelocity(
-	const float3& curVelocity,
-	const float3& curDirection,
-	float3 landingPosVec,
-	float brakeRate,
-	float descendRate
-) {
-	const float landPosDistXZ = landingPosVec.Length2D() + 0.1f;
-	const float landPosDistY = landingPosVec.y;
-	const float brakeDistXZ = 0.5f * curVelocity.SqLength2D() / brakeRate;
-
-	landingPosVec.Normalize2D();
-
-	const float curSpeedXZ = curVelocity.Length2D();
-	const float newSpeedXZ = curSpeedXZ - brakeRate * (brakeDistXZ >= landPosDistXZ || landingPosVec.dot(curDirection) < 0.0f);
-
-	// maxSpeed is set to 0 (when landing) before we are fully
-	// on the ground, so make sure to not get stuck in mid-air
-	// note: assume losing altitude is easier than gaining it?
-	float3 wantedVel;
-	wantedVel.x = landingPosVec.x * std::max(0.0f, newSpeedXZ);
-	wantedVel.z = landingPosVec.z * std::max(0.0f, newSpeedXZ);
-	wantedVel.y = -descendRate;
-
-	if (landPosDistXZ > 0.1f && curSpeedXZ > 0.1f) {
-		wantedVel.y = std::max(wantedVel.y, landPosDistY / (landPosDistXZ / curSpeedXZ));
-	}
-
-	return wantedVel;
-}
-
-
 void CStrafeAirMoveType::UpdateLanding()
 {
 	const float3& pos = owner->pos;
-
-	// if not landing on a pad, use higher brake-rate
-	// to overshoot less (see the fixme comment below)
-	const float modDecRate = decRate * (1 + (reservedPad == NULL));
-
 	SyncedFloat3& rightdir = owner->rightdir;
 	SyncedFloat3& frontdir = owner->frontdir;
 	SyncedFloat3& updir    = owner->updir;
 
-	// find a landing spot if we do not have one yet
-	if (reservedLandingPos.x < 0.0f) {
-		reservedLandingPos = FindLandingPos(modDecRate);
+	if (!HaveLandingPos()) {
+		reservedLandingPos = FindLandingPos();
 
 		// if spot is valid, mark it on the blocking-map
 		// so other aircraft can not claim the same spot
-		if (reservedLandingPos.x >= 0.0f) {
+		if (HaveLandingPos()) {
 			const float3 originalPos = pos;
+			wantedHeight = 0;
 
 			owner->Move(reservedLandingPos, false);
 			owner->Block();
@@ -1012,8 +956,6 @@ void CStrafeAirMoveType::UpdateLanding()
 			// --> we cannot block in one part of the map *and*
 			// unblock in another
 			// owner->UnBlock();
-
-			owner->Deactivate();
 		} else {
 			goalPos.ClampInBounds();
 			UpdateFlying(wantedHeight, 1.0f);
@@ -1021,16 +963,22 @@ void CStrafeAirMoveType::UpdateLanding()
 		}
 	}
 
-	// FIXME:
-	//   only gets called AFTER we have already passed our goal (see ::StopMoving)
-	//   this means we will always overshoot any landing position (or repair-pad)
-	//   FindLandingPos() picks the spot at (pos + dir * brakingDistance) for us
+	SetGoal(reservedLandingPos);
+	UpdateLandingHeight();
+
 	const float3 reservedLandingPosDir = reservedLandingPos - pos;
-	const float3 wantedVelocity = GetWantedLandingVelocity(owner->speed, owner->frontdir, reservedLandingPosDir, modDecRate, altitudeRate);
+	const float3 brakeSpot = pos + frontdir * BrakingDistance(owner->speed.Length2D(), decRate);
 
-	owner->SetVelocityAndSpeed(wantedVelocity);
+	if (brakeSpot.SqDistance2D(reservedLandingPos) > landRadiusSq) {
+		// If we're not going to land inside the landRadius, keep flying.
+		float tempWantedHeight = wantedHeight;
+		wantedHeight = orgWantedHeight;
 
-	// make the aircraft right itself up and turn toward goal
+		UpdateFlying(wantedHeight, 1.0f);
+		wantedHeight = tempWantedHeight;
+		return;
+	}
+
 	     if (rightdir.y < -0.01f) { updir -= (rightdir * 0.02f); }
 	else if (rightdir.y >  0.01f) { updir += (rightdir * 0.02f); }
 
@@ -1040,30 +988,48 @@ void CStrafeAirMoveType::UpdateLanding()
 	     if (rightdir.dot(reservedLandingPosDir) >  0.01f) { frontdir += (rightdir * 0.02f); }
 	else if (rightdir.dot(reservedLandingPosDir) < -0.01f) { frontdir -= (rightdir * 0.02f); }
 
-	owner->Move(owner->speed, true);
-	owner->UpdateDirVectors(owner->IsOnGround());
-	owner->UpdateMidAndAimPos();
+	{
+		//A Mangled UpdateAirPhysics
+		float4& spd = owner->speed;
 
-	// see if we are at the reserved (not user-clicked) landing spot
-	const float gh = CGround::GetHeightAboveWater(pos.x, pos.z);
-	const float gah = CGround::GetHeightReal(pos.x, pos.z);
-	float altitude = 0.0f;
+		float frontSpeed = spd.dot2D(frontdir);
 
-	// can we submerge and are we still above water?
-	if ((owner->unitDef->canSubmerge) && (gah < 0.0f)) {
-		altitude = pos.y - gah;
-		reservedLandingPos.y = gah;
-	} else {
-		altitude = pos.y - gh;
-		reservedLandingPos.y = gh;
+		if (frontSpeed > 0.0f) {
+			//Slow down before vertical landing
+			owner->SetVelocity(frontdir * (spd.Length2D() * invDrag - decRate));
+
+			//Calculate again for next check
+			frontSpeed = spd.dot2D(frontdir);
+		}
+
+		if (frontSpeed < 0.0f) {
+			owner->SetVelocityAndSpeed(UpVector * owner->speed);
+		}
+
+		const float landPosDistXZ = reservedLandingPosDir.Length2D() + 0.1f;
+		const float landPosDistY = reservedLandingPosDir.y;
+		const float curSpeedXZ = spd.Length2D();
+		owner->SetVelocity(spd - UpVector * spd.y);
+
+		if (landPosDistXZ > curSpeedXZ && curSpeedXZ > 0.1f) {
+			owner->SetVelocity(spd + UpVector * std::max(-altitudeRate, landPosDistY * curSpeedXZ / landPosDistXZ));
+		} else {
+			const float localAltitude = pos.y - (owner->unitDef->canSubmerge ?
+				CGround::GetHeightReal(owner->pos.x, owner->pos.z):
+				CGround::GetHeightAboveWater(owner->pos.x, owner->pos.z));
+			if (localAltitude > wantedHeight) {
+				owner->SetVelocity(spd + UpVector * std::max(-altitudeRate, wantedHeight - localAltitude));
+			}
+		}
+
+		owner->SetSpeed(spd);
+
+		owner->Move(owner->speed, true);
+		owner->UpdateDirVectors(owner->IsOnGround());
+		owner->UpdateMidAndAimPos();
 	}
 
-	// collision detection does not let us get
-	// closer to the ground than <radius> elmos
-	// (wrt. midPos.y)
-	if (altitude <= owner->radius) {
-		SetState(AIRCRAFT_LANDED);
-	}
+	AAirMoveType::UpdateLanding();
 }
 
 
@@ -1137,7 +1103,7 @@ void CStrafeAirMoveType::UpdateAirPhysics(float rudder, float aileron, float ele
 	//   stunned, so the same applies there
 	if (modInfo.allowAircraftToHitGround) {
 		const bool groundContact = (gHeight > (owner->midPos.y - owner->radius));
-		const bool handleContact = (aircraftState != AIRCRAFT_LANDED && aircraftState != AIRCRAFT_TAKEOFF && padStatus == PAD_STATUS_FLYING);
+		const bool handleContact = (aircraftState != AIRCRAFT_LANDED && aircraftState != AIRCRAFT_TAKEOFF);
 
 		if (groundContact && handleContact) {
 			owner->Move(UpVector * (gHeight - (owner->midPos.y - owner->radius) + 0.01f), true);
@@ -1205,13 +1171,10 @@ void CStrafeAirMoveType::SetState(AAirMoveType::AircraftState newState)
 			owner->SetPhysicalStateBit(CSolidObject::PSTATE_BIT_CRASHING);
 			break;
 
-		case AIRCRAFT_FLYING:
-			owner->Activate();
-			// fall-through
-
 		case AIRCRAFT_TAKEOFF:
 			// should be in the STATE_FLYING case, but these aircraft
 			// take forever to reach it reducing factory cycle-times
+			owner->Activate();
 			owner->UnBlock();
 			owner->SetPhysicalStateBit(CSolidObject::PSTATE_BIT_FLYING);
 			break;
@@ -1221,27 +1184,33 @@ void CStrafeAirMoveType::SetState(AAirMoveType::AircraftState newState)
 
 			// FIXME already inform commandAI in AIRCRAFT_LANDING!
 			owner->commandAI->StopMove();
-			owner->Block();
+			owner->Deactivate();
+			// missing? not really
+			// owner->Block();
 			owner->ClearPhysicalStateBit(CSolidObject::PSTATE_BIT_FLYING);
 			break;
+
 		default:
 			break;
 	}
 
 	if (aircraftState != AIRCRAFT_LANDING) {
 		// don't need a reserved position anymore
-		reservedLandingPos.x = -1.0f;
+		ClearLandingPos();
+		wantedHeight = orgWantedHeight;
 	}
 }
 
 
 
-float3 CStrafeAirMoveType::FindLandingPos(float brakeRate) const
+float3 CStrafeAirMoveType::FindLandingPos()
 {
 	const float3 ret = -OnesVector;
 	const UnitDef* ud = owner->unitDef;
+	const float brDist = BrakingDistance(maxSpeed, decRate);
+	landRadiusSq = Square(brDist);
 
-	float3 tryPos = owner->pos + owner->frontdir * ((Square(owner->speed.w) * 0.5f) / brakeRate);
+	float3 tryPos = owner->pos + owner->frontdir * brDist;
 	tryPos.y = CGround::GetHeightReal(tryPos.x, tryPos.z);
 
 	if ((tryPos.y < 0.0f) && !(ud->floatOnWater || ud->canSubmerge))
@@ -1267,6 +1236,36 @@ float3 CStrafeAirMoveType::FindLandingPos(float brakeRate) const
 }
 
 
+float CStrafeAirMoveType::BrakingDistance(float speed, float rate) const
+{
+	// Denote:
+	//		a_i: Speed after i frames
+	//		s_i: Distance passed after i frames
+	//		d: decRate
+	//		r: invDrag
+	//
+	// Braking is done according to the formula:
+	//		a_i = a_i-1 * r - d
+	// Which is equivalent to:
+	//		a_i = a_0 * r^i - d * (r^i - 1) / (r - 1)
+	// Distance is the sum of a_j for 0<j<=i and is equal to:
+	//		s_i = a_0 * r * (r^i - 1) / (r - 1) - d * (r * (r^i - 1) / (r - 1) - i) / (r - 1)
+	// The number of frames until speed is 0 can be calculated with:
+	//		n = floor(log(d / (d - a_0 * (r - 1))) / math::log(r))
+	//
+	// Using all these you can know how much distance your plane will move
+	// until it is stopped
+	const float d = rate;
+	const float r = invDrag;
+
+	const int n = math::floor(math::log(d / (d - speed * (r - 1))) / math::log(r));
+	const float r_n = math::pow(r, n);
+
+	const float dist = speed * r * (r_n - 1) / (r - 1) - d * (r * (r_n - 1) / (r - 1) - n) / (r - 1);
+
+	return dist;
+}
+
 
 void CStrafeAirMoveType::SetMaxSpeed(float speed)
 {
@@ -1291,24 +1290,26 @@ void CStrafeAirMoveType::StartMoving(float3 gpos, float goalRadius)
 void CStrafeAirMoveType::StartMoving(float3 pos, float goalRadius, float speed)
 {
 	SetWantedMaxSpeed(speed);
+
+	if (aircraftState == AIRCRAFT_LANDED || aircraftState == AIRCRAFT_LANDING)
+		SetState(AIRCRAFT_TAKEOFF);
+
 	SetGoal(pos);
 }
 
 void CStrafeAirMoveType::StopMoving(bool callScript, bool hardStop)
 {
 	SetGoal(owner->pos);
+	ClearLandingPos();
 	SetWantedMaxSpeed(0.0f);
 
-	if (aircraftState != AAirMoveType::AIRCRAFT_FLYING)
+	if (aircraftState != AAirMoveType::AIRCRAFT_FLYING && aircraftState != AAirMoveType::AIRCRAFT_LANDING)
 		return;
 
-	if (owner->unitDef->maxFuel <= 0.0f || owner->currentFuel > 0.0f) {
-		// if not using fuel or not out of fuel, allow disregarding stop
-		if (owner->unitDef->DontLand() || !autoLand) {
-			return;
-		}
+	if (owner->unitDef->DontLand() || !autoLand) {
+		SetState(AIRCRAFT_FLYING);
+		return;
 	}
-
 	SetState(AIRCRAFT_LANDING);
 }
 
@@ -1317,13 +1318,11 @@ void CStrafeAirMoveType::StopMoving(bool callScript, bool hardStop)
 void CStrafeAirMoveType::Takeoff()
 {
 	if (aircraftState != AAirMoveType::AIRCRAFT_FLYING) {
-		if ((owner->currentFuel > 0.0f) || owner->unitDef->maxFuel <= 0.0f) {
-			if (aircraftState == AAirMoveType::AIRCRAFT_LANDED) {
-				SetState(AAirMoveType::AIRCRAFT_TAKEOFF);
-			}
-			if (aircraftState == AAirMoveType::AIRCRAFT_LANDING) {
-				SetState(AAirMoveType::AIRCRAFT_FLYING);
-			}
+		if (aircraftState == AAirMoveType::AIRCRAFT_LANDED) {
+			SetState(AAirMoveType::AIRCRAFT_TAKEOFF);
+		}
+		if (aircraftState == AAirMoveType::AIRCRAFT_LANDING) {
+			SetState(AAirMoveType::AIRCRAFT_FLYING);
 		}
 	}
 }
@@ -1338,24 +1337,27 @@ bool CStrafeAirMoveType::SetMemberValue(unsigned int memberHash, void* memberVal
 	#define MEMBER_CHARPTR_HASH(memberName) HsiehHash(memberName, strlen(memberName),     0)
 	#define MEMBER_LITERAL_HASH(memberName) HsiehHash(memberName, sizeof(memberName) - 1, 0)
 
+	#define WANTEDHEIGHT_MEMBER_IDX 0
+
 	static const unsigned int boolMemberHashes[] = {
 		MEMBER_LITERAL_HASH(       "collide"),
 		MEMBER_LITERAL_HASH( "useSmoothMesh"),
 		MEMBER_LITERAL_HASH("loopbackAttack"),
 	};
 	static const unsigned int floatMemberHashes[] = {
-		MEMBER_LITERAL_HASH( "wantedHeight"),
-		MEMBER_LITERAL_HASH(   "turnRadius"),
-		MEMBER_LITERAL_HASH(      "accRate"),
-		MEMBER_LITERAL_HASH(      "decRate"),
-		MEMBER_LITERAL_HASH(       "maxAcc"), // synonym for accRate
-		MEMBER_LITERAL_HASH(       "maxDec"), // synonym for decRate
-		MEMBER_LITERAL_HASH(      "maxBank"),
-		MEMBER_LITERAL_HASH(     "maxPitch"),
-		MEMBER_LITERAL_HASH(   "maxAileron"),
-		MEMBER_LITERAL_HASH(  "maxElevator"),
-		MEMBER_LITERAL_HASH(    "maxRudder"),
-		MEMBER_LITERAL_HASH(    "myGravity"),
+		MEMBER_LITERAL_HASH(        "wantedHeight"),
+		MEMBER_LITERAL_HASH(          "turnRadius"),
+		MEMBER_LITERAL_HASH(             "accRate"),
+		MEMBER_LITERAL_HASH(             "decRate"),
+		MEMBER_LITERAL_HASH(              "maxAcc"), // synonym for accRate
+		MEMBER_LITERAL_HASH(              "maxDec"), // synonym for decRate
+		MEMBER_LITERAL_HASH(             "maxBank"),
+		MEMBER_LITERAL_HASH(            "maxPitch"),
+		MEMBER_LITERAL_HASH(          "maxAileron"),
+		MEMBER_LITERAL_HASH(         "maxElevator"),
+		MEMBER_LITERAL_HASH(           "maxRudder"),
+		MEMBER_LITERAL_HASH("attackSafetyDistance"),
+		MEMBER_LITERAL_HASH(           "myGravity"),
 	};
 
 	#undef MEMBER_CHARPTR_HASH
@@ -1383,9 +1385,16 @@ bool CStrafeAirMoveType::SetMemberValue(unsigned int memberHash, void* memberVal
 		&maxAileron,
 		&maxElevator,
 		&maxRudder,
+		&attackSafetyDistance,
 
 		&myGravity,
 	};
+
+	// special cases
+	if (memberHash == floatMemberHashes[WANTEDHEIGHT_MEMBER_IDX]) {
+		SetDefaultAltitude(*(reinterpret_cast<float*>(memberValue)));
+		return true;
+	}
 
 	// note: <memberHash> should be calculated via HsiehHash
 	for (unsigned int n = 0; n < sizeof(boolMemberPtrs) / sizeof(boolMemberPtrs[0]); n++) {

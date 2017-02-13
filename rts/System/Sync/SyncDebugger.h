@@ -8,7 +8,7 @@
 #include <assert.h>
 #include <deque>
 #include <vector>
-#include <boost/cstdint.hpp>
+#include <cinttypes>
 
 /**
  * @brief sync debugger class
@@ -95,14 +95,14 @@ class CSyncDebugger {
 		unsigned historyIndex;         ///< Where are we in the history buffer?
 		volatile bool disable_history; ///< Volatile because it is read by server thread and written by client thread.
 		bool may_enable_history;       ///< Is it safe already to set disable_history = false?
-		boost::uint64_t flop;          ///< Current (local) operation number.
+		std::uint64_t flop;          ///< Current (local) operation number.
 
 		// server thread
 
 		struct PlayerStruct
 		{
 			std::vector<unsigned> checksumResponses;
-			boost::uint64_t remoteFlop;
+			std::uint64_t remoteFlop;
 			std::vector<unsigned> remoteHistory;
 			PlayerStruct() : remoteFlop(0) {}
 		};

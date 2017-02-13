@@ -11,10 +11,8 @@
 #include "PathManager.hpp"
 
 #include "Map/MapInfo.h"
+#include "Map/ReadMap.h"
 #include "Sim/Misc/GlobalConstants.h"
-#include "Sim/Misc/GlobalSynced.h"
-
-#define QTNODE_CHILD_COUNT 4
 
 unsigned int QTPFS::QTNode::MIN_SIZE_X;
 unsigned int QTPFS::QTNode::MIN_SIZE_Z;
@@ -226,12 +224,7 @@ QTPFS::QTNode::QTNode(
 	prevNode = NULL;
 
 	// for leafs, all children remain NULL
-	children.resize(QTNODE_CHILD_COUNT, NULL);
-}
-
-QTPFS::QTNode::~QTNode() {
-	children.clear();
-	neighbors.clear();
+	children.fill(NULL);
 }
 
 void QTPFS::QTNode::Delete() {
@@ -241,18 +234,18 @@ void QTPFS::QTNode::Delete() {
 		}
 	}
 
-	neighbors.clear();
 	delete this;
 }
 
 
 
-boost::uint64_t QTPFS::QTNode::GetMemFootPrint() const {
-	boost::uint64_t memFootPrint = sizeof(QTNode);
+std::uint64_t QTPFS::QTNode::GetMemFootPrint() const {
+	std::uint64_t memFootPrint = sizeof(QTNode);
 
 	if (IsLeaf()) {
 		memFootPrint += (neighbors.size() * sizeof(INode*));
-		memFootPrint += (children.size() * sizeof(QTNode*));
+		// already counted; std::array<> statically allocates
+		// memFootPrint += (children.size() * sizeof(QTNode*));
 		memFootPrint += (netpoints.size() * sizeof(float3));
 	} else {
 		for (unsigned int i = 0; i < children.size(); i++) {
@@ -263,8 +256,8 @@ boost::uint64_t QTPFS::QTNode::GetMemFootPrint() const {
 	return memFootPrint;
 }
 
-boost::uint64_t QTPFS::QTNode::GetCheckSum() const {
-	boost::uint64_t sum = 0;
+std::uint64_t QTPFS::QTNode::GetCheckSum() const {
+	std::uint64_t sum = 0;
 
 	{
 		const unsigned char* minByte = reinterpret_cast<const unsigned char*>(&nodeNumber);
@@ -522,7 +515,7 @@ bool QTPFS::QTNode::UpdateMoveCost(
 	const std::vector<NodeLayer::SpeedModType>& oldSpeedMods = nl.GetOldSpeedMods();
 	const std::vector<NodeLayer::SpeedModType>& curSpeedMods = nl.GetCurSpeedMods();
 
-	const NodeLayer::SpeedBinType refSpeedBin = curSpeedBins[zmin() * gs->mapx + xmin()];
+	const NodeLayer::SpeedBinType refSpeedBin = curSpeedBins[zmin() * mapDims.mapx + xmin()];
 
 	// <this> can either just have been merged or added as
 	// new child of split parent; in the former case we can
@@ -548,7 +541,7 @@ bool QTPFS::QTNode::UpdateMoveCost(
 
 		for (unsigned int hmz = minz; hmz < maxz; hmz++) {
 			for (unsigned int hmx = minx; hmx < maxx; hmx++) {
-				const unsigned int sqrIdx = hmz * gs->mapx + hmx;
+				const unsigned int sqrIdx = hmz * mapDims.mapx + hmx;
 
 				const NodeLayer::SpeedBinType oldSpeedBin = oldSpeedBins[sqrIdx];
 				const NodeLayer::SpeedBinType curSpeedBin = curSpeedBins[sqrIdx];
@@ -568,7 +561,7 @@ bool QTPFS::QTNode::UpdateMoveCost(
 
 		for (unsigned int hmz = zmin(); hmz < zmax(); hmz++) {
 			for (unsigned int hmx = xmin(); hmx < xmax(); hmx++) {
-				const unsigned int sqrIdx = hmz * gs->mapx + hmx;
+				const unsigned int sqrIdx = hmz * mapDims.mapx + hmx;
 
 				const NodeLayer::SpeedBinType oldSpeedBin = oldSpeedBins[sqrIdx];
 				const NodeLayer::SpeedBinType curSpeedBin = curSpeedBins[sqrIdx];
@@ -636,10 +629,10 @@ bool QTPFS::QTNode::UpdateMoveCost(
 unsigned int QTPFS::QTNode::GetMaxNumNeighbors() const {
 	unsigned int n = 0;
 
-	if (xmin() > (           0)) { n += zsize(); } // count EDGE_L ngbs
-	if (xmax() < (gs->mapx - 1)) { n += zsize(); } // count EDGE_R ngbs
-	if (zmin() > (           0)) { n += xsize(); } // count EDGE_T ngbs
-	if (zmax() < (gs->mapy - 1)) { n += xsize(); } // count EDGE_B ngbs
+	if (xmin() > (               0)) { n += zsize(); } // count EDGE_L ngbs
+	if (xmax() < (mapDims.mapx - 1)) { n += zsize(); } // count EDGE_R ngbs
+	if (zmin() > (               0)) { n += xsize(); } // count EDGE_T ngbs
+	if (zmax() < (mapDims.mapy - 1)) { n += xsize(); } // count EDGE_B ngbs
 
 	return n;
 }
@@ -738,7 +731,7 @@ bool QTPFS::QTNode::UpdateNeighborCache(const std::vector<INode*>& nodes) {
 
 				// walk along EDGE_L (west) neighbors
 				for (unsigned int hmz = zmin(); hmz < zmax(); ) {
-					ngb = nodes[hmz * gs->mapx + hmx];
+					ngb = nodes[hmz * mapDims.mapx + hmx];
 					hmz = ngb->zmax();
 
 					neighbors.push_back(ngb);
@@ -750,12 +743,12 @@ bool QTPFS::QTNode::UpdateNeighborCache(const std::vector<INode*>& nodes) {
 
 				ngbRels |= REL_NGB_EDGE_L;
 			}
-			if (xmax() < static_cast<unsigned int>(gs->mapx)) {
+			if (xmax() < static_cast<unsigned int>(mapDims.mapx)) {
 				const unsigned int hmx = xmax() + 0;
 
 				// walk along EDGE_R (east) neighbors
 				for (unsigned int hmz = zmin(); hmz < zmax(); ) {
-					ngb = nodes[hmz * gs->mapx + hmx];
+					ngb = nodes[hmz * mapDims.mapx + hmx];
 					hmz = ngb->zmax();
 
 					neighbors.push_back(ngb);
@@ -773,7 +766,7 @@ bool QTPFS::QTNode::UpdateNeighborCache(const std::vector<INode*>& nodes) {
 
 				// walk along EDGE_T (north) neighbors
 				for (unsigned int hmx = xmin(); hmx < xmax(); ) {
-					ngb = nodes[hmz * gs->mapx + hmx];
+					ngb = nodes[hmz * mapDims.mapx + hmx];
 					hmx = ngb->xmax();
 
 					neighbors.push_back(ngb);
@@ -785,12 +778,12 @@ bool QTPFS::QTNode::UpdateNeighborCache(const std::vector<INode*>& nodes) {
 
 				ngbRels |= REL_NGB_EDGE_T;
 			}
-			if (zmax() < static_cast<unsigned int>(gs->mapy)) {
+			if (zmax() < static_cast<unsigned int>(mapDims.mapy)) {
 				const unsigned int hmz = zmax() + 0;
 
 				// walk along EDGE_B (south) neighbors
 				for (unsigned int hmx = xmin(); hmx < xmax(); ) {
-					ngb = nodes[hmz * gs->mapx + hmx];
+					ngb = nodes[hmz * mapDims.mapx + hmx];
 					hmx = ngb->xmax();
 
 					neighbors.push_back(ngb);
@@ -807,9 +800,9 @@ bool QTPFS::QTNode::UpdateNeighborCache(const std::vector<INode*>& nodes) {
 			// top- and bottom-left corners
 			if ((ngbRels & REL_NGB_EDGE_L) != 0) {
 				if ((ngbRels & REL_NGB_EDGE_T) != 0) {
-					const INode* ngbL = nodes[(zmin() + 0) * gs->mapx + (xmin() - 1)];
-					const INode* ngbT = nodes[(zmin() - 1) * gs->mapx + (xmin() + 0)];
-						  INode* ngbC = nodes[(zmin() - 1) * gs->mapx + (xmin() - 1)];
+					const INode* ngbL = nodes[(zmin() + 0) * mapDims.mapx + (xmin() - 1)];
+					const INode* ngbT = nodes[(zmin() - 1) * mapDims.mapx + (xmin() + 0)];
+						  INode* ngbC = nodes[(zmin() - 1) * mapDims.mapx + (xmin() - 1)];
 
 					// VERT_TL ngb must be distinct from EDGE_L and EDGE_T ngbs
 					if (ngbC != ngbL && ngbC != ngbT) {
@@ -823,9 +816,9 @@ bool QTPFS::QTNode::UpdateNeighborCache(const std::vector<INode*>& nodes) {
 					}
 				}
 				if ((ngbRels & REL_NGB_EDGE_B) != 0) {
-					const INode* ngbL = nodes[(zmax() - 1) * gs->mapx + (xmin() - 1)];
-					const INode* ngbB = nodes[(zmax() + 0) * gs->mapx + (xmin() + 0)];
-						  INode* ngbC = nodes[(zmax() + 0) * gs->mapx + (xmin() - 1)];
+					const INode* ngbL = nodes[(zmax() - 1) * mapDims.mapx + (xmin() - 1)];
+					const INode* ngbB = nodes[(zmax() + 0) * mapDims.mapx + (xmin() + 0)];
+						  INode* ngbC = nodes[(zmax() + 0) * mapDims.mapx + (xmin() - 1)];
 
 					// VERT_BL ngb must be distinct from EDGE_L and EDGE_B ngbs
 					if (ngbC != ngbL && ngbC != ngbB) {
@@ -843,9 +836,9 @@ bool QTPFS::QTNode::UpdateNeighborCache(const std::vector<INode*>& nodes) {
 			// top- and bottom-right corners
 			if ((ngbRels & REL_NGB_EDGE_R) != 0) {
 				if ((ngbRels & REL_NGB_EDGE_T) != 0) {
-					const INode* ngbR = nodes[(zmin() + 0) * gs->mapx + (xmax() + 0)];
-					const INode* ngbT = nodes[(zmin() - 1) * gs->mapx + (xmax() - 1)];
-						  INode* ngbC = nodes[(zmin() - 1) * gs->mapx + (xmax() + 0)];
+					const INode* ngbR = nodes[(zmin() + 0) * mapDims.mapx + (xmax() + 0)];
+					const INode* ngbT = nodes[(zmin() - 1) * mapDims.mapx + (xmax() - 1)];
+						  INode* ngbC = nodes[(zmin() - 1) * mapDims.mapx + (xmax() + 0)];
 
 					// VERT_TR ngb must be distinct from EDGE_R and EDGE_T ngbs
 					if (ngbC != ngbR && ngbC != ngbT) {
@@ -859,9 +852,9 @@ bool QTPFS::QTNode::UpdateNeighborCache(const std::vector<INode*>& nodes) {
 					}
 				}
 				if ((ngbRels & REL_NGB_EDGE_B) != 0) {
-					const INode* ngbR = nodes[(zmax() - 1) * gs->mapx + (xmax() + 0)];
-					const INode* ngbB = nodes[(zmax() + 0) * gs->mapx + (xmax() - 1)];
-						  INode* ngbC = nodes[(zmax() + 0) * gs->mapx + (xmax() + 0)];
+					const INode* ngbR = nodes[(zmax() - 1) * mapDims.mapx + (xmax() + 0)];
+					const INode* ngbB = nodes[(zmax() + 0) * mapDims.mapx + (xmax() - 1)];
+						  INode* ngbC = nodes[(zmax() + 0) * mapDims.mapx + (xmax() + 0)];
 
 					// VERT_BR ngb must be distinct from EDGE_R and EDGE_B ngbs
 					if (ngbC != ngbR && ngbC != ngbB) {

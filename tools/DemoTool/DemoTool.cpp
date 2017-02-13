@@ -1,8 +1,9 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include <string>
+#include <map>
 #include <iostream>
-#include <boost/program_options.hpp>
+#include <gflags/gflags.h>
 #include <iomanip> //hex
 
 #include "StringSerializer.h"
@@ -11,8 +12,6 @@
 #include "System/LoadSave/DemoReader.h"
 #include "System/Net/RawPacket.h"
 #include "Sim/Units/CommandAI/Command.h"
-
-namespace po = boost::program_options;
 
 /*
 Usage:
@@ -25,75 +24,58 @@ When compiling for windows with MinGW, make sure to use the
 no console output (you still could use this.exe > z.tzt though).
 */
 
+	DEFINE_string(demofile,     "",    "Path to demo file");
+	DEFINE_bool  (dump,         false, "Only dump networc traffic saved in demo");
+	DEFINE_bool  (stats,        false, "Print all game, player and team stats");
+	DEFINE_bool  (header,       false, "Print demoheader content");
+	DEFINE_bool  (playerstats,  false, "Print playerstats");
+	DEFINE_bool  (teamstats,    false, "Print teamstats");
+	DEFINE_int32 (team,         -1,    "Select team");
+	DEFINE_string(teamsstatcsv, "",    "Write teamstats in a csv file");
+
+
 void TrafficDump(CDemoReader& reader, bool trafficStats);
 void WriteTeamstatHistory(CDemoReader& reader, unsigned team, const std::string& file);
 
 int main (int argc, char* argv[])
 {
 	std::string filename;
-	po::variables_map vm;
 
-	po::options_description all;
-	all.add_options()("demofile,f", po::value<std::string>(), "Path to demo file");
-	po::positional_options_description p;
-	p.add("demofile", 1);
-	all.add_options()("help,h", "This one");
-	all.add_options()("dump,d", "Only dump networc traffic saved in demo");
-	all.add_options()("stats,s", "Print all game, player and team stats");
-	all.add_options()("header,H", "Print demoheader content");
-	all.add_options()("playerstats,p", "Print playerstats");
-	all.add_options()("teamstats,t", "Print teamstats");
-	all.add_options()("team", po::value<unsigned>(), "Select team");
-	all.add_options()("teamsstatcsv", po::value<std::string>(), "Write teamstats in a csv file");
-
-	po::store(po::command_line_parser(argc, argv).options(all).positional(p).run(), vm);
-	po::notify(vm);
-
-	if (vm.count("help"))
-	{
-		std::cout << "demotool Usage: " << std::endl;
-		all.print(std::cout);
-		std::cout << "example: demotool myReplay.sdf -d > myReplay_sdf_demotool.txt" << std::endl;
-		return 0;
-	}
-	if (vm.count("demofile"))
-	{
-		filename = vm["demofile"].as<std::string>();
-	}
-	else
-	{
+	gflags::SetUsageMessage(std::string("Usage: ") + argv[0] + " [options] path_to_demo.sdfz");
+	gflags::ParseCommandLineFlags(&argc, &argv, true);
+	if (!FLAGS_demofile.empty()) {
+		filename = FLAGS_demofile;
+	} else if (argc >= 2) {
+		filename = argv[1];
+	} else {
 		std::cout << "No demofile given" << std::endl;
-		all.print(std::cout);
-		return 1;
+		gflags::ShowUsageWithFlags(argv[0]);
 	}
 
-	const bool printStats = vm.count("stats");
 	CDemoReader reader(filename, 0.0f);
 	reader.LoadStats();
-	if (vm.count("dump"))
+	if (FLAGS_dump)
 	{
 		TrafficDump(reader, true);
 		return 0;
 	}
-	if (vm.count("teamsstatcsv"))
+	if (!FLAGS_teamsstatcsv.empty())
 	{
-		const std::string outfile = vm["teamsstatcsv"].as<std::string>();
-		if (!vm.count("team"))
+		if (FLAGS_team < 0)
 		{
 			std::cout << "teamsstatcsv requires a team to select" << std::endl;
 			exit(1);
 		}
-		unsigned team = vm["team"].as<unsigned>();
-		WriteTeamstatHistory(reader, team, outfile);
+		WriteTeamstatHistory(reader, (unsigned) FLAGS_team, FLAGS_teamsstatcsv);
 	}
 
-	if (vm.count("header") || printStats)
+	if (FLAGS_header || FLAGS_stats)
 	{
 		wstringstream buf;
 		buf << reader.GetFileHeader();
 		std::wcout << buf.str();
 	}
-	if (vm.count("playerstats") || printStats)
+	if (FLAGS_playerstats || FLAGS_stats)
 	{
 		const std::vector<PlayerStatistics> statvec = reader.GetPlayerStats();
 		for (unsigned i = 0; i < statvec.size(); ++i)
@@ -104,7 +86,7 @@ int main (int argc, char* argv[])
 			std::wcout << buf.str();
 		}
 	}
-	if (vm.count("teamstats") || printStats)
+	if (FLAGS_teamstats || FLAGS_stats)
 	{
 		const DemoFileHeader header = reader.GetFileHeader();
 		const std::vector< std::vector<TeamStatistics> > statvec = reader.GetTeamStats();
@@ -120,6 +102,13 @@ int main (int argc, char* argv[])
 				std::wcout << buf.str();
 			}
 		}
+		const std::vector<unsigned char>& winningAllyTeams = reader.GetWinningAllyTeams();
+		std::wcout << L"Winning Allyteams:";
+		wstringstream buf;
+		for (unsigned char allyteam: winningAllyTeams){
+			buf << " " << (unsigned) allyteam;
+		}
+		std::wcout << buf.str();
 	}
 	return 0;
 }
@@ -195,10 +184,10 @@ const std::string& GetCommandName(int commandId)
 	return CMD_NAME_UNKNOWN;
 }
 
-void PrintBinary(void* buf, int len)
+void PrintBinary(const unsigned char* const buf, int len)
 {
 	for(int i=0; i<len; i++) {
-		std::cout << std::hex << (int)((char*)buf)[i];
+		std::cout << std::setw(2) << std::setfill('0') << std::hex << (int)buf[i];
 	}
 	std::cout << std::dec; //reset to decimal
 }
@@ -207,7 +196,7 @@ void TrafficDump(CDemoReader& reader, bool trafficStats)
 {
 	InitCommandNames();
 	std::vector<unsigned> trafficCounter(NETMSG_LAST, 0);
-	int frame = 0;
+	int frame = -1;
 	int cmdId = 0;
 	while (!reader.ReachedEnd())
 	{
@@ -220,8 +209,12 @@ void TrafficDump(CDemoReader& reader, bool trafficStats)
 		const unsigned char* buffer = packet->data;
 		char buf[16]; // FIXME: cba to look up how to format numbers with iostreams
 		sprintf(buf, "%06d ", frame);
-		std::cout << buf;
 		const int cmd = (unsigned char)buffer[0];
+		if (cmd == NETMSG_GAME_FRAME_PROGRESS) { //ignore as its unsynced (TODO: why is this recorded in demo?)
+			delete packet;
+			continue;
+		}
+		std::cout << buf;
 		switch (cmd)
 		{
 			case NETMSG_AICOMMAND:
@@ -233,7 +226,7 @@ void TrafficDump(CDemoReader& reader, bool trafficStats)
 				std::cout << " CommandId: " << GetCommandName(cmdId) << "(" << cmdId << ")";
 				std::cout << " Options: " << (unsigned)buffer[11];
 				std::cout << " Parameters:";
-				for (unsigned short i = 12; i < packet->length; i += 4) {
+				for (unsigned short i = 12; i < packet->length; i += sizeof(float)) {
 					std::cout << " " << *((float*)(buffer + i));
 				}
 				std::cout << std::endl;
@@ -312,12 +305,12 @@ void TrafficDump(CDemoReader& reader, bool trafficStats)
 			case NETMSG_LUAMSG:
 				{
 				std::cout << "LUAMSG length:" << packet->length << " Player:" << (unsigned)buffer[3] << " Script: " << *(uint16_t*)&buffer[4] << " Mode: " << (unsigned)buffer[6] << " Msg: ";
-				PrintBinary(&packet->data[7], packet->length);
+				PrintBinary(&packet->data[7], packet->length - 7);
 				std::cout << std::endl;
 				break;
 				}
 			case NETMSG_TEAM:
-				std::cout << "TEAM Playernum:" << (int)buffer[1] << " Action:";
+				std::cout << "TEAM Playernum: " << (int)buffer[1] << " Action:";
 				switch (buffer[2]) {
 					case TEAMMSG_GIVEAWAY: std::cout << "GIVEAWAY"; break;
 					case TEAMMSG_RESIGN: std::cout << "RESIGN"; break;
@@ -328,7 +321,16 @@ void TrafficDump(CDemoReader& reader, bool trafficStats)
 				std::cout << " Parameter:" << (int)buffer[3] << std::endl;
 				break;
 			case NETMSG_COMMAND:
-				std::cout << "COMMAND Playernum:" << (int)buffer[3] << " Size: " << *(unsigned short*)(buffer+1) << std::endl;
+				std::cout << "COMMAND Playernum: " << (int)buffer[3];
+				std::cout << " Size: " << *(unsigned short*)(buffer+1);
+				cmdId = *((int*)(buffer + 4));
+				std::cout << " CommandId: " << GetCommandName(cmdId) << "(" << cmdId << ")";
+				std::cout << " Options: " << (unsigned)buffer[8];
+				std::cout << " Parameters:";
+				for (unsigned short i = 9; i < packet->length; i += sizeof(float)) {
+					std::cout << " " << *((float*)(buffer + i));
+				}
+				std::cout << std::endl;
 				if (*(unsigned short*)(buffer+1) != packet->length)
 					std::cout << "      packet length error: expected: " <<  *(unsigned short*)(buffer+1) << " got: " << packet->length << std::endl;
 				break;
@@ -342,7 +344,14 @@ void TrafficDump(CDemoReader& reader, bool trafficStats)
 				std::cout << std::endl;
 				break;
 			case NETMSG_GAMEOVER:
-				std::cout << "NETMSG_GAMEOVER" << std::endl;
+				std::cout << "NETMSG_GAMEOVER";
+				std::cout << " Length: " << (unsigned)packet->length;
+				std::cout << " Player: " << (unsigned)buffer[2];
+				std::cout << " Winning ids:";
+				for (unsigned short i = 3; i < packet->length; i += 1) {
+					std::cout << " " << (unsigned) *((char*)(buffer + i));
+				}
+				std::cout << std::endl;
 				break;
 			case NETMSG_MAPDRAW:
 				std::cout << "NETMSG_MAPDRAW" << std::endl;
@@ -360,13 +369,22 @@ void TrafficDump(CDemoReader& reader, bool trafficStats)
 				std::cout << "NETMSG_GAMEDATA" << std::endl;
 				break;
 			case NETMSG_CREATE_NEWPLAYER:
-				std::cout << "NETMSG_CREATE_NEWPLAYER" << std::endl;
+				// uchar myPlayerNum, uchar spectator, uchar teamNum, std::string playerName
+				std::cout << "NETMSG_CREATE_NEWPLAYER: Playernum: " << (unsigned)buffer[3];
+				std::cout << " Spectator: " << (unsigned)buffer[4];
+				std::cout << " Team: " << (unsigned) buffer[5];
+				std::cout << " PlayerName: " << (char*) (buffer + 6);
+				std::cout << std::endl;
 				break;
 			case NETMSG_GAMEID:
-				std::cout << "NETMSG_GAMEID" << std::endl;
+				std::cout << "NETMSG_GAMEID: ";
+				PrintBinary(&packet->data[1], packet->length - 1);
+				std::cout << std::endl;
 				break;
 			case NETMSG_RANDSEED:
-				std::cout << "NETMSG_RANDSEED" << std::endl;
+				std::cout << "NETMSG_RANDSEED: ";
+				PrintBinary(&packet->data[1], packet->length - 1);
+				std::cout << std::endl;
 				break;
 			case NETMSG_SHARE:
 				std::cout << "NETMSG_SHARE: Playernum: " << (unsigned)buffer[1];
@@ -383,7 +401,11 @@ void TrafficDump(CDemoReader& reader, bool trafficStats)
 				std::cout << "NETMSG_PAUSE: Player " << (unsigned)buffer[1] << " paused: " << (unsigned)buffer[2] << std::endl;
 				break;
 			case NETMSG_SYNCRESPONSE:
-				std::cout << "NETMSG_SYNCRESPONSE: " << std::endl;
+				//uchar myPlayerNum; int frameNum; uint checksum;
+				std::cout << "NETMSG_SYNCRESPONSE: Playernum: "<< (unsigned)buffer[1];
+				std::cout << " Framenum: " << *(int*)(buffer+2);
+				std::cout << " Checksum: " << (unsigned)buffer[6];
+				std::cout << std::endl;
 				break;
 			case NETMSG_DIRECT_CONTROL:
 				std::cout << "NETMSG_DIRECT_CONTROL: " << std::endl;

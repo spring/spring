@@ -9,7 +9,15 @@
 
 #include "AAISector.h"
 #include "AAI.h"
+#include "AAIBuildTable.h"
+#include "AAIBrain.h"
+#include "AAIConfig.h"
 #include "AAIMap.h"
+
+#include "LegacyCpp/IGlobalAICallback.h"
+#include "LegacyCpp/UnitDef.h"
+using namespace springLegacyAI;
+
 
 AAISector::AAISector()
 {
@@ -169,7 +177,7 @@ void AAISector::Update()
 AAIMetalSpot* AAISector::GetFreeMetalSpot()
 {
 	// look for the first unoccupied metalspot
-	for(list<AAIMetalSpot*>::iterator i = metalSpots.begin(); i != metalSpots.end(); i++)
+	for(list<AAIMetalSpot*>::iterator i = metalSpots.begin(); i != metalSpots.end(); ++i)
 	{
 		// if metalspot is occupied, try next one
 		if(!(*i)->occupied)

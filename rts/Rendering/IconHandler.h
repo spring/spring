@@ -3,12 +3,12 @@
 #ifndef ICON_HANDLER_H
 #define ICON_HANDLER_H
 
-#include <map>
 #include <string>
 #include <vector>
 
 #include "Icon.h"
 #include "System/float3.h"
+#include "System/UnorderedMap.hpp"
 
 class CVertexArray;
 
@@ -36,6 +36,7 @@ namespace icon {
 			inline const float        GetSize()         const { return size;         }
 			inline const float        GetDistance()     const { return distance;     }
 			inline const float        GetDistanceSqr()  const { return distSqr;      }
+			inline const float        GetRadiusScale()  const { return 30.0f;        }
 			inline const bool         GetRadiusAdjust() const { return radiusAdjust; }
 			inline const int          GetSizeX()        const { return xsize;        }
 			inline const int          GetSizeY()        const { return ysize;        }
@@ -85,7 +86,7 @@ namespace icon {
 			unsigned int defTexID;
 			CIconData* defIconData;
 
-			typedef std::map<std::string, CIcon> IconMap;
+			typedef spring::unordered_map<std::string, CIcon> IconMap;
 			IconMap iconMap;
 
 		private:
@@ -93,6 +94,6 @@ namespace icon {
 	};
 
 	extern CIconHandler* iconHandler;
-};
+}
 
 #endif // ICON_HANDLER_H

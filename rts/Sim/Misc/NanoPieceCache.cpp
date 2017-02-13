@@ -4,23 +4,22 @@
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Units/Scripts/UnitScript.h"
 
-CR_BIND(NanoPieceCache, );
+CR_BIND(NanoPieceCache, )
 
 CR_REG_METADATA(NanoPieceCache, (
 	CR_MEMBER(nanoPieces),
 	CR_MEMBER(lastNanoPieceCnt),
 	CR_MEMBER(curBuildPowerMask)
-));
+))
 
 int NanoPieceCache::GetNanoPiece(CUnitScript* ownerScript) {
-	assert(UNIT_SLOWUPDATE_RATE == 16);
 	curBuildPowerMask |= (1 << (UNIT_SLOWUPDATE_RATE - 1));
 
 	int nanoPiece = -1;
 
 	if (!nanoPieces.empty()) {
 		const unsigned cnt = nanoPieces.size();
-		const unsigned rnd = gs->randInt();
+		const unsigned rnd = gsRNG.NextInt();
 		nanoPiece = nanoPieces[rnd % cnt];
 	}
 

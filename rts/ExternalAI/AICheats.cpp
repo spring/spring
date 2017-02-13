@@ -23,15 +23,12 @@
 #define CHECK_UNITID(id) ((unsigned)(id) < (unsigned)unitHandler->MaxUnits())
 #define CHECK_GROUPID(id) ((unsigned)(id) < (unsigned)gh->groups.size())
 
-CUnit* CAICheats::GetUnit(int unitId) const {
+CUnit* CAICheats::GetUnit(int unitId) const
+{
+	if (CHECK_UNITID(unitId))
+		return unitHandler->GetUnit(unitId);
 
-	CUnit* unit = NULL;
-
-	if (CHECK_UNITID(unitId)) {
-		unit = unitHandler->units[unitId];
-	}
-
-	return unit;
+	return nullptr;
 }
 
 
@@ -78,13 +75,13 @@ void CAICheats::SetMyIncomeMultiplier(float incomeMultiplier)
 void CAICheats::GiveMeMetal(float amount)
 {
 	if (!OnlyPassiveCheats())
-		teamHandler->Team(ai->GetTeamId())->metal += amount;
+		teamHandler->Team(ai->GetTeamId())->res.metal += amount;
 }
 
 void CAICheats::GiveMeEnergy(float amount)
 {
 	if (!OnlyPassiveCheats())
-		teamHandler->Team(ai->GetTeamId())->energy += amount;
+		teamHandler->Team(ai->GetTeamId())->res.energy += amount;
 }
 
 int CAICheats::CreateUnit(const char* name, const float3& pos)
@@ -121,7 +118,7 @@ float3 CAICheats::GetUnitPos(int unitId) const
 {
 	const CUnit* unit = GetUnit(unitId);
 	if (unit) {
-		return unit->pos;
+		return unit->midPos;
 	}
 
 	return ZeroVector;
@@ -161,29 +158,6 @@ static int FilterUnitsVector(const std::vector<CUnit*>& units, int* unitIds, int
 
 	return a;
 }
-static int FilterUnitsList(const std::list<CUnit*>& units, int* unitIds, int unitIds_max, bool (*includeUnit)(CUnit*) = NULL)
-{
-	int a = 0;
-
-	if (unitIds_max < 0) {
-		unitIds = NULL;
-		unitIds_max = MAX_UNITS;
-	}
-
-	std::list<CUnit*>::const_iterator ui;
-	for (ui = units.begin(); (ui != units.end()) && (a < unitIds_max); ++ui) {
-		CUnit* u = *ui;
-
-		if ((includeUnit == NULL) || (*includeUnit)(u)) {
-			if (unitIds != NULL) {
-				unitIds[a] = u->id;
-			}
-			a++;
-		}
-	}
-
-	return a;
-}
 
 static inline bool unit_IsNeutral(CUnit* unit) {
 	return unit->IsNeutral();
@@ -201,7 +175,7 @@ static inline bool unit_IsEnemy(CUnit* unit) {
 int CAICheats::GetEnemyUnits(int* unitIds, int unitIds_max)
 {
 	myAllyTeamId = teamHandler->AllyTeam(ai->GetTeamId());
-	return FilterUnitsList(unitHandler->activeUnits, unitIds, unitIds_max, &unit_IsEnemy);
+	return FilterUnitsVector(unitHandler->activeUnits, unitIds, unitIds_max, &unit_IsEnemy);
 }
 
 int CAICheats::GetEnemyUnits(int* unitIds, const float3& pos, float radius, int unitIds_max)
@@ -213,7 +187,7 @@ int CAICheats::GetEnemyUnits(int* unitIds, const float3& pos, float radius, int 
 
 int CAICheats::GetNeutralUnits(int* unitIds, int unitIds_max)
 {
-	return FilterUnitsList(unitHandler->activeUnits, unitIds, unitIds_max, &unit_IsNeutral);
+	return FilterUnitsVector(unitHandler->activeUnits, unitIds, unitIds_max, &unit_IsNeutral);
 }
 
 int CAICheats::GetNeutralUnits(int* unitIds, const float3& pos, float radius, int unitIds_max)
@@ -336,10 +310,10 @@ bool CAICheats::GetUnitResourceInfo(int unitId, UnitResourceInfo* unitResInf) co
 
 	const CUnit* unit = GetUnit(unitId);
 	if (unit) {
-		unitResInf->energyMake = unit->energyMake;
-		unitResInf->energyUse  = unit->energyUse;
-		unitResInf->metalMake  = unit->metalMake;
-		unitResInf->metalUse   = unit->metalUse;
+		unitResInf->energyMake = unit->resourcesMake.energy;
+		unitResInf->energyUse  = unit->resourcesUse.energy;
+		unitResInf->metalMake  = unit->resourcesMake.metal;
+		unitResInf->metalUse   = unit->resourcesUse.metal;
 		fetchOk = true;
 	}
 
@@ -447,14 +421,15 @@ int CAICheats::HandleCommand(int commandId, void* data)
 			AIHCTraceRay* cmdData = static_cast<AIHCTraceRay*>(data);
 
 			if (CHECK_UNITID(cmdData->srcUID)) {
-				const CUnit* srcUnit = unitHandler->units[cmdData->srcUID];
-				CUnit* hitUnit = NULL;
-				CFeature* hitFeature = NULL;
+				const CUnit* srcUnit = unitHandler->GetUnit(cmdData->srcUID);
 
-				if (srcUnit != NULL) {
+				CUnit* hitUnit = nullptr;
+				CFeature* hitFeature = nullptr;
+
+				if (srcUnit != nullptr) {
 					//FIXME ignore features?
 					cmdData->rayLen = TraceRay::TraceRay(cmdData->rayPos, cmdData->rayDir, cmdData->rayLen, cmdData->flags, srcUnit, hitUnit, hitFeature);
-					cmdData->hitUID = (hitUnit != NULL)? hitUnit->id: -1;
+					cmdData->hitUID = (hitUnit != nullptr)? hitUnit->id: -1;
 				}
 			}
 
@@ -465,14 +440,15 @@ int CAICheats::HandleCommand(int commandId, void* data)
 			AIHCFeatureTraceRay* cmdData = static_cast<AIHCFeatureTraceRay*>(data);
 
 			if (CHECK_UNITID(cmdData->srcUID)) {
-				const CUnit* srcUnit = unitHandler->units[cmdData->srcUID];
-				CUnit* hitUnit = NULL;
-				CFeature* hitFeature = NULL;
+				const CUnit* srcUnit = unitHandler->GetUnit(cmdData->srcUID);
 
-				if (srcUnit != NULL) {
+				CUnit* hitUnit = nullptr;
+				CFeature* hitFeature = nullptr;
+
+				if (srcUnit != nullptr) {
 					//FIXME ignore units?
 					cmdData->rayLen = TraceRay::TraceRay(cmdData->rayPos, cmdData->rayDir, cmdData->rayLen, cmdData->flags, srcUnit, hitUnit, hitFeature);
-					cmdData->hitFID = (hitFeature != NULL)? hitFeature->id: -1;
+					cmdData->hitFID = (hitFeature != nullptr)? hitFeature->id: -1;
 				}
 			}
 

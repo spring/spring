@@ -57,7 +57,7 @@ unsigned int CDirArchive::NumFiles() const
 	return searchFiles.size();
 }
 
-bool CDirArchive::GetFile(unsigned int fid, std::vector<boost::uint8_t>& buffer)
+bool CDirArchive::GetFile(unsigned int fid, std::vector<std::uint8_t>& buffer)
 {
 	assert(IsFileId(fid));
 

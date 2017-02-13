@@ -1,46 +1,36 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "MissileLauncher.h"
+
 #include "WeaponDef.h"
 #include "Game/TraceRay.h"
 #include "Map/Ground.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
+#include "System/myMath.h"
 
-CR_BIND_DERIVED(CMissileLauncher, CWeapon, (NULL, NULL));
-
-CR_REG_METADATA(CMissileLauncher,(
-	CR_RESERVED(8)
-));
+CR_BIND_DERIVED(CMissileLauncher, CWeapon, (NULL, NULL))
+CR_REG_METADATA(CMissileLauncher, )
 
 CMissileLauncher::CMissileLauncher(CUnit* owner, const WeaponDef* def): CWeapon(owner, def)
 {
 }
 
 
-void CMissileLauncher::Update()
+void CMissileLauncher::UpdateWantedDir()
 {
-	if (targetType != Target_None) {
-		weaponPos = owner->GetObjectSpacePos(relWeaponPos);
-		weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
+	CWeapon::UpdateWantedDir();
 
-		if (!onlyForward) {
-			wantedDir = targetPos - weaponPos;
-			predict = wantedDir.LengthNormalize() / projectileSpeed;
-
-			if (weaponDef->trajectoryHeight > 0.0f) {
-				wantedDir.y += weaponDef->trajectoryHeight;
-				wantedDir.Normalize();
-			}
-		}
+	if (weaponDef->trajectoryHeight > 0.0f) {
+		wantedDir.y += weaponDef->trajectoryHeight;
+		wantedDir.Normalize();
 	}
-	CWeapon::Update();
 }
 
-void CMissileLauncher::FireImpl(bool scriptCall)
+void CMissileLauncher::FireImpl(const bool scriptCall)
 {
-	float3 dir = targetPos - weaponMuzzlePos;
+	float3 dir = currentTargetPos - weaponMuzzlePos;
 	const float dist = dir.LengthNormalize();
 
 	if (onlyForward) {
@@ -52,7 +42,7 @@ void CMissileLauncher::FireImpl(bool scriptCall)
 		dir.Normalize();
 	}
 
-	dir += (gs->randVector() * SprayAngleExperience() + SalvoErrorExperience());
+	dir += (gsRNG.NextVector() * SprayAngleExperience() + SalvoErrorExperience());
 	dir.Normalize();
 
 	float3 startSpeed = dir * weaponDef->startvelocity;
@@ -63,19 +53,19 @@ void CMissileLauncher::FireImpl(bool scriptCall)
 
 	ProjectileParams params = GetProjectileParams();
 	params.pos = weaponMuzzlePos;
-	params.end = targetPos;
+	params.end = currentTargetPos;
 	params.speed = startSpeed;
-	params.ttl = weaponDef->flighttime == 0? std::ceil(std::max(dist, range) / projectileSpeed + 25 * weaponDef->selfExplode): weaponDef->flighttime;
+	params.ttl = weaponDef->flighttime == 0? math::ceil(std::max(dist, range) / projectileSpeed + 25 * weaponDef->selfExplode): weaponDef->flighttime;
 
 	WeaponProjectileFactory::LoadProjectile(params);
 }
 
-bool CMissileLauncher::HaveFreeLineOfFire(const float3& pos, bool userTarget, const CUnit* unit) const
+bool CMissileLauncher::HaveFreeLineOfFire(const float3 pos, const SWeaponTarget& trg, bool useMuzzle) const
 {
 	// do a different test depending on if the missile has high
 	// trajectory (parabolic vs. linear ground intersection)
 	if (weaponDef->trajectoryHeight <= 0.0f)
-		return CWeapon::HaveFreeLineOfFire(pos, userTarget, unit);
+		return CWeapon::HaveFreeLineOfFire(pos, trg);
 
 	float3 dir(pos - weaponMuzzlePos);
 

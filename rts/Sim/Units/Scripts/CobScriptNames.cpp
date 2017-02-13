@@ -2,24 +2,17 @@
 
 #include "CobScriptNames.h"
 #include "Sim/Misc/GlobalConstants.h"
+#include "System/Util.h"
 
-#include <cstdio>
-
-using std::sprintf;
-
-using std::map;
-using std::pair;
-using std::string;
-using std::vector;
+// script function-indices never change, so this is fine wrt. reloading
+static std::vector<std::string> scriptNames;
+static spring::unordered_map<std::string, int> scriptMap;
 
 
-const vector<string>& CCobUnitScriptNames::GetScriptNames()
+const std::vector<std::string>& CCobUnitScriptNames::GetScriptNames()
 {
-	static vector<string> scriptNames;
-
-	if (!scriptNames.empty()) {
+	if (!scriptNames.empty())
 		return scriptNames;
-	}
 
 	scriptNames.resize(COBFN_Last + (MAX_WEAPONS_PER_UNIT * COBFN_Weapon_Funcs));
 
@@ -60,20 +53,17 @@ const vector<string>& CCobUnitScriptNames::GetScriptNames()
 
 	// Also add the weapon aiming stuff
 	for (int i = 0; i < MAX_WEAPONS_PER_UNIT; ++i) {
-		char buf[15];
-		sprintf(buf, "Weapon%d", i + 1);
-		string weapon(buf);
-		sprintf(buf, "%d", i + 1);
-		string weapnum(buf);
+		const std::string wn = IntToString(i + 1, "%d");
 		const int n = COBFN_Weapon_Funcs * i;
-		scriptNames[COBFN_QueryPrimary   + n] = "Query"   + weapon;
-		scriptNames[COBFN_AimPrimary     + n] = "Aim"     + weapon;
-		scriptNames[COBFN_AimFromPrimary + n] = "AimFrom" + weapon;
-		scriptNames[COBFN_FirePrimary    + n] = "Fire"    + weapon;
-		scriptNames[COBFN_EndBurst       + n] = "EndBurst"     + weapnum;
-		scriptNames[COBFN_Shot           + n] = "Shot"         + weapnum;
-		scriptNames[COBFN_BlockShot      + n] = "BlockShot"    + weapnum;
-		scriptNames[COBFN_TargetWeight   + n] = "TargetWeight" + weapnum;
+
+		scriptNames[COBFN_QueryPrimary   + n] = "QueryWeapon"   + wn;
+		scriptNames[COBFN_AimPrimary     + n] = "AimWeapon"     + wn;
+		scriptNames[COBFN_AimFromPrimary + n] = "AimFromWeapon" + wn;
+		scriptNames[COBFN_FirePrimary    + n] = "FireWeapon"    + wn;
+		scriptNames[COBFN_EndBurst       + n] = "EndBurst"     + wn;
+		scriptNames[COBFN_Shot           + n] = "Shot"         + wn;
+		scriptNames[COBFN_BlockShot      + n] = "BlockShot"    + wn;
+		scriptNames[COBFN_TargetWeight   + n] = "TargetWeight" + wn;
 	}
 
 	//for (size_t i = 0; i < scriptNames.size(); ++i) {
@@ -84,33 +74,32 @@ const vector<string>& CCobUnitScriptNames::GetScriptNames()
 }
 
 
-const std::map<std::string, int>& CCobUnitScriptNames::GetScriptMap()
+const spring::unordered_map<std::string, int>& CCobUnitScriptNames::GetScriptMap()
 {
-	static map<string, int> scriptMap;
-
-	if (!scriptMap.empty()) {
+	if (!scriptMap.empty())
 		return scriptMap;
-	}
 
-	const vector<string>& n = GetScriptNames();
+	const std::vector<std::string>& n = GetScriptNames();
+
 	for (size_t i = 0; i < n.size(); ++i) {
-		scriptMap.insert(pair<string, int>(n[i], i));
+		scriptMap.insert(std::pair<std::string, int>(n[i], i));
 	}
-	// support the old naming scheme
-	scriptMap.insert(pair<string, int>("QueryPrimary",     COBFN_QueryPrimary));
-	scriptMap.insert(pair<string, int>("QuerySecondary",   COBFN_QueryPrimary + COBFN_Weapon_Funcs * 1));
-	scriptMap.insert(pair<string, int>("QueryTertiary",    COBFN_QueryPrimary + COBFN_Weapon_Funcs * 2));
-	scriptMap.insert(pair<string, int>("AimPrimary",       COBFN_AimPrimary));
-	scriptMap.insert(pair<string, int>("AimSecondary",     COBFN_AimPrimary + COBFN_Weapon_Funcs * 1));
-	scriptMap.insert(pair<string, int>("AimTertiary",      COBFN_AimPrimary + COBFN_Weapon_Funcs * 2));
-	scriptMap.insert(pair<string, int>("AimFromPrimary",   COBFN_AimFromPrimary));
-	scriptMap.insert(pair<string, int>("AimFromSecondary", COBFN_AimFromPrimary + COBFN_Weapon_Funcs * 1));
-	scriptMap.insert(pair<string, int>("AimFromTertiary",  COBFN_AimFromPrimary + COBFN_Weapon_Funcs * 2));
-	scriptMap.insert(pair<string, int>("FirePrimary",      COBFN_FirePrimary));
-	scriptMap.insert(pair<string, int>("FireSecondary",    COBFN_FirePrimary + COBFN_Weapon_Funcs * 1));
-	scriptMap.insert(pair<string, int>("FireTertiary",     COBFN_FirePrimary + COBFN_Weapon_Funcs * 2));
 
-	//for (std::map<string, int>::const_iterator it = scriptMap.begin(); it != scriptMap.end(); ++it) {
+	// support the old naming scheme
+	scriptMap.insert(std::pair<std::string, int>("QueryPrimary",     COBFN_QueryPrimary));
+	scriptMap.insert(std::pair<std::string, int>("QuerySecondary",   COBFN_QueryPrimary + COBFN_Weapon_Funcs * 1));
+	scriptMap.insert(std::pair<std::string, int>("QueryTertiary",    COBFN_QueryPrimary + COBFN_Weapon_Funcs * 2));
+	scriptMap.insert(std::pair<std::string, int>("AimPrimary",       COBFN_AimPrimary));
+	scriptMap.insert(std::pair<std::string, int>("AimSecondary",     COBFN_AimPrimary + COBFN_Weapon_Funcs * 1));
+	scriptMap.insert(std::pair<std::string, int>("AimTertiary",      COBFN_AimPrimary + COBFN_Weapon_Funcs * 2));
+	scriptMap.insert(std::pair<std::string, int>("AimFromPrimary",   COBFN_AimFromPrimary));
+	scriptMap.insert(std::pair<std::string, int>("AimFromSecondary", COBFN_AimFromPrimary + COBFN_Weapon_Funcs * 1));
+	scriptMap.insert(std::pair<std::string, int>("AimFromTertiary",  COBFN_AimFromPrimary + COBFN_Weapon_Funcs * 2));
+	scriptMap.insert(std::pair<std::string, int>("FirePrimary",      COBFN_FirePrimary));
+	scriptMap.insert(std::pair<std::string, int>("FireSecondary",    COBFN_FirePrimary + COBFN_Weapon_Funcs * 1));
+	scriptMap.insert(std::pair<std::string, int>("FireTertiary",     COBFN_FirePrimary + COBFN_Weapon_Funcs * 2));
+
+	//for (auto it = scriptMap.cbegin(); it != scriptMap.cend(); ++it) {
 	//	LOG_L(L_DEBUG, "COBFN: %s -> %3d", it->first.c_str(), it->second);
 	//}
 
@@ -120,22 +109,23 @@ const std::map<std::string, int>& CCobUnitScriptNames::GetScriptMap()
 
 int CCobUnitScriptNames::GetScriptNumber(const std::string& fname)
 {
-	const map<string, int>& scriptMap = GetScriptMap();
-	map<string, int>::const_iterator it = scriptMap.find(fname);
+	const auto& scriptMap = GetScriptMap();
+	const auto it = scriptMap.find(fname);
 
-	if (it != scriptMap.end()) {
+	if (it != scriptMap.end())
 		return it->second;
-	}
+
 	return -1;
 }
 
-
-
-const string& CCobUnitScriptNames::GetScriptName(int num)
+const std::string& CCobUnitScriptNames::GetScriptName(int num)
 {
-	static string empty;
+	const static std::string empty;
 	const std::vector<std::string>& n = GetScriptNames();
+
 	if (num >= 0 && num < int(n.size()))
 		return n[num];
+
 	return empty;
 }
+

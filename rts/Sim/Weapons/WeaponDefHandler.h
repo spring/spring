@@ -5,7 +5,6 @@
 
 #include <string>
 #include <vector>
-#include <map>
 
 #include "Sim/Misc/CommonDefHandler.h"
 #include "Sim/Misc/GuiSoundSet.h"
@@ -19,16 +18,14 @@ class CWeaponDefHandler : CommonDefHandler
 {
 public:
 	CWeaponDefHandler(LuaParser* defsParser);
-	~CWeaponDefHandler();
 
+	// NOTE: safe with unordered_map after ctor
 	const WeaponDef* GetWeaponDef(std::string weaponname) const;
 	const WeaponDef* GetWeaponDefByID(int weaponDefId) const;
 
-	static DamageArray DynamicDamages(const WeaponDef* weaponDef, const float3 startPos, const float3 curPos);
-
 public:
 	std::vector<WeaponDef> weaponDefs;
-	std::map<std::string, int> weaponID;
+	spring::unordered_map<std::string, int> weaponID;
 };
 
 

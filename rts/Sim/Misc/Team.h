@@ -5,32 +5,34 @@
 
 #include <string>
 #include <vector>
-#include <map>
 #include <list>
-#include <boost/utility.hpp> //! boost::noncopyable
 
 #include "TeamBase.h"
 #include "TeamStatistics.h"
-#include "Sim/Units/UnitSet.h"
+#include "Sim/Misc/Resource.h"
+#include "System/Color.h"
 #include "ExternalAI/SkirmishAIKey.h"
 #include "Lua/LuaRulesParams.h"
-#include "System/Sync/SyncedPrimitive.h" //! SyncedFloat
 
+class CUnit;
 
-class CTeam : public TeamBase, private boost::noncopyable //! cannot allow shallow copying of Teams, contains pointers
+class CTeam : public TeamBase
 {
-	CR_DECLARE(CTeam);
+	CR_DECLARE_DERIVED(CTeam)
 public:
-	CTeam(int _teamNum);
+	CTeam();
 
 	void ResetResourceState();
 	void SlowUpdate();
+
+	bool HaveResources(const SResourcePack& amount) const;
+	void AddResources(SResourcePack res, bool useIncomeMultiplier = true);
+	bool UseResources(const SResourcePack& res);
 
 	void AddMetal(float amount, bool useIncomeMultiplier = true);
 	void AddEnergy(float amount, bool useIncomeMultiplier = true);
 	bool UseEnergy(float amount);
 	bool UseMetal(float amount);
-	bool AtUnitLimit() const { return (units.size() >= maxUnits); }
 
 	void GiveEverythingTo(const unsigned toTeam);
 
@@ -43,6 +45,10 @@ public:
 
 	void SetMaxUnits(unsigned int n) { maxUnits = n; }
 	unsigned int GetMaxUnits() const { return maxUnits; }
+	bool AtUnitLimit() const { return (units.size() >= maxUnits); }
+
+	TeamStatistics& GetCurrentStats() { return statHistory.back(); }
+	const TeamStatistics& GetCurrentStats() const { return statHistory.back(); }
 
 	CTeam& operator = (const TeamBase& base) {
 		TeamBase::operator = (base);
@@ -66,51 +72,36 @@ public:
 	void AddUnit(CUnit* unit, AddType type);
 	void RemoveUnit(CUnit* unit, RemoveType type);
 
-
+public:
 	int teamNum;
 	unsigned int maxUnits;
 
 	bool isDead;
 	bool gaia;
+	bool removeUnits;
 
-	/// color info is unsynced
-	unsigned char origColor[4];
+	std::vector<CUnit*> units;
 
-	CUnitSet units;
+	SResourcePack res;
+	SResourcePack resStorage;
 
-	SyncedFloat metal;
-	SyncedFloat energy;
-
-	float metalPull,    prevMetalPull;
-	float metalIncome,  prevMetalIncome;
-	float metalExpense, prevMetalExpense;
-
-	float energyPull,    prevEnergyPull;
-	float energyIncome,  prevEnergyIncome;
-	float energyExpense, prevEnergyExpense;
-
-	SyncedFloat metalStorage, energyStorage;
-
-	float metalShare, energyShare;
-	SyncedFloat delayedMetalShare, delayedEnergyShare; // excess that might be shared next SlowUpdate
-
-	float metalSent,      prevMetalSent;
-	float metalReceived,  prevMetalReceived;
-	float energySent,     prevEnergySent;
-	float energyReceived, prevEnergyReceived;
-
-	float prevMetalExcess;
-	float prevEnergyExcess;
+	SResourcePack resPull,    resPrevPull;
+	SResourcePack resIncome,  resPrevIncome;
+	SResourcePack resExpense, resPrevExpense;
+	SResourcePack resShare;
+	SResourcePack resDelayedShare; //< excess that might be shared next SlowUpdate
+	SResourcePack resSent,     resPrevSent;
+	SResourcePack resReceived, resPrevReceived;
+	SResourcePack resPrevExcess;
 
 	int nextHistoryEntry;
-	TeamStatistics* currentStats;
-	std::list<TeamStatistics> statHistory;
-	typedef TeamStatistics Statistics; //! for easier access via CTeam::Statistics
+	std::vector<TeamStatistics> statHistory;
 
 	/// mod controlled parameters
 	LuaRulesParams::Params  modParams;
-	LuaRulesParams::HashMap modParamsMap; /// name map for mod parameters
 
+	/// unsynced
+	SColor origColor;
 	float highlight;
 };
 

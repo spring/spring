@@ -4,45 +4,56 @@
 #define PLASMAREPULSER_H
 
 #include "Weapon.h"
-#include <list>
-#include <set>
+#include "Sim/Misc/CollisionVolume.h"
 
-class ShieldProjectile;
+#include <vector>
+
+class ShieldSegmentCollection;
 class CRepulseGfx;
 
 class CPlasmaRepulser: public CWeapon
 {
-	CR_DECLARE(CPlasmaRepulser);
+	CR_DECLARE_DERIVED(CPlasmaRepulser)
 public:
 	CPlasmaRepulser(CUnit* owner, const WeaponDef* def);
 	~CPlasmaRepulser();
 
-	void Init();
-	void DependentDied(CObject* o);
-	bool HaveFreeLineOfFire(const float3& pos, bool userTarget, const CUnit* unit) const;
+	void Init() override final;
+	void DependentDied(CObject* o) override final;
+	bool HaveFreeLineOfFire(const float3 pos, const SWeaponTarget& trg, bool useMuzzle = false) const override final;
 
-	void Update();
-	void SlowUpdate();
+	void Update() override final;
+	void SlowUpdate() override final;
 
-	void NewProjectile(CWeaponProjectile* p);
-	float NewBeam(CWeapon* emitter, float3 start, float3 dir, float length, float3& newDir);
-	bool BeamIntercepted(CWeapon* emitter, float damageMultiplier = 1.0f); // returns true if we are a repulsing shield
+	bool IncomingBeam(const CWeapon* emitter, const float3& start, float damageMultiplier = 1.0f);
 
 	void SetEnabled(bool b) { isEnabled = b; }
 	void SetCurPower(float p) { curPower = p; }
 
 	bool IsEnabled() const { return isEnabled; }
+	bool IsActive() const;
+	bool IsRepulsing(CWeaponProjectile* p) const;
 	float GetCurPower() const { return curPower; }
+	float GetRadius() const { return radius; }
 	int GetHitFrames() const { return hitFrames; }
+	bool CanIntercept(unsigned interceptedType, int allyTeam) const;
+
+	bool IncomingProjectile(CWeaponProjectile* p);
+
+	//collisions
+	std::vector<int> quads;
+	CollisionVolume collisionVolume;
+	int tempNum;
 
 private:
-	void FireImpl(bool scriptCall) {}
+	void FireImpl(const bool scriptCall) override final {}
 
-private:
 	// these are strictly unsynced
-	ShieldProjectile* shieldProjectile;
-	std::set<CWeaponProjectile*> repulsedProjectiles;
+	ShieldSegmentCollection* segmentCollection;
+	std::vector<CWeaponProjectile*> repulsedProjectiles;
 
+
+	float3 lastPos;
 	float curPower;
 
 	float radius;

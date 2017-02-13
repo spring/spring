@@ -21,9 +21,9 @@ public:
 	ISound();
 	virtual ~ISound() {};
 
-	static void Initialize();
+	static void Initialize(bool forceNullSound = false);
 	static void Shutdown();
-	static bool IsInitialized();
+	static bool IsInitialized() { return (singleton != NULL); }
 	static inline ISound* GetInstance() {
 		return singleton;
 	}
@@ -38,7 +38,7 @@ public:
 	 */
 	virtual CSoundSource* GetNextBestSource(bool lock = true) = 0;
 
-	virtual void UpdateListener(const float3& camPos, const float3& camDir, const float3& camUp, float lastFrameTime) = 0;
+	virtual void UpdateListener(const float3& camPos, const float3& camDir, const float3& camUp) = 0;
 	virtual void NewFrame() = 0;
 
 	virtual void ConfigNotify(const std::string& key, const std::string& value) = 0;
@@ -48,16 +48,26 @@ public:
 	virtual bool Mute() = 0;
 	virtual bool IsMuted() const = 0;
 
+	///change current output device
+	static bool ChangeOutput(bool forceNullSound = false);
+
 	virtual void Iconified(bool state) = 0;
 
 	virtual void PrintDebugInfo() = 0;
-	virtual bool LoadSoundDefs(const std::string& fileName) = 0;
-	
+
+	virtual bool SoundThreadQuit() const = 0;
+	virtual bool CanLoadSoundDefs() const = 0;
+
+	bool LoadSoundDefs(const std::string& fileName, const std::string& modes);
+
 	virtual const float3& GetListenerPos() const = 0;
 
 public:
 	unsigned numEmptyPlayRequests;
 	unsigned numAbortedPlays;
+private:
+	virtual bool LoadSoundDefsImpl(const std::string& fileName, const std::string& modes) = 0;
+	static bool IsNullAudio();
 };
 
 #define sound ISound::GetInstance()

@@ -5,7 +5,6 @@
 
 #include <string>
 #include <vector>
-#include <map>
 
 #include "System/EventClient.h"
 #include "Sim/Units/Unit.h"
@@ -21,10 +20,15 @@ class CEventHandler
 {
 	public:
 		CEventHandler();
-		~CEventHandler();
+
+		void ResetState();
+		void SetupEvents();
 
 		void AddClient(CEventClient* ec);
 		void RemoveClient(CEventClient* ec);
+		bool HasClient(CEventClient* ec) const {
+			return (std::find(handles.begin(), handles.end(), ec) != handles.end());
+		}
 
 		bool InsertEvent(CEventClient* ec, const std::string& ciName);
 		bool RemoveEvent(CEventClient* ec, const std::string& ciName);
@@ -36,18 +40,7 @@ class CEventHandler
 		bool IsUnsynced(const std::string& ciName) const;
 		bool IsController(const std::string& ciName) const;
 
-	public: // EventBatchHandler
-		void UpdateUnits();
-		void UpdateDrawUnits();
-		void DeleteSyncedUnits();
-		void UpdateFeatures();
-		void UpdateDrawFeatures();
-		void DeleteSyncedFeatures();
-		void UpdateProjectiles();
-		void UpdateDrawProjectiles();
-		void DeleteSyncedProjectiles();
-		void UpdateObjects();
-		void DeleteSyncedObjects();
+
 	public:
 		/**
 		 * @name Synced_events
@@ -70,25 +63,20 @@ class CEventHandler
 
 		void UnitCreated(const CUnit* unit, const CUnit* builder);
 		void UnitFinished(const CUnit* unit);
-		void UnitFromFactory(const CUnit* unit, const CUnit* factory,
-		                     bool userOrders);
+		void UnitReverseBuilt(const CUnit* unit);
+		void UnitFromFactory(const CUnit* unit, const CUnit* factory, bool userOrders);
 		void UnitDestroyed(const CUnit* unit, const CUnit* attacker);
 		void UnitTaken(const CUnit* unit, int oldTeam, int newTeam);
 		void UnitGiven(const CUnit* unit, int oldTeam, int newTeam);
 
+
 		//FIXME no events
 		void RenderUnitCreated(const CUnit* unit, int cloaked);
 		void RenderUnitDestroyed(const CUnit* unit);
-		void RenderUnitCloakChanged(const CUnit* unit, int cloaked);
-		void RenderUnitLOSChanged(const CUnit* unit, int allyTeam, int newStatus);
-		void RenderUnitMoved(const CUnit* unit, const float3& newpos);
 		void RenderFeatureCreated(const CFeature* feature);
 		void RenderFeatureDestroyed(const CFeature* feature);
-		void RenderFeatureMoved(const CFeature* feature, const float3& oldpos, const float3& newpos);
 		void RenderProjectileCreated(const CProjectile* proj);
 		void RenderProjectileDestroyed(const CProjectile* proj);
-		void UnsyncedProjectileCreated(const CProjectile* proj);
-		void UnsyncedProjectileDestroyed(const CProjectile* proj);
 
 		void UnitIdle(const CUnit* unit);
 		void UnitCommand(const CUnit* unit, const Command& command);
@@ -100,6 +88,7 @@ class CEventHandler
 			int weaponDefID,
 			int projectileID,
 			bool paralyzer);
+		void UnitStunned(const CUnit* unit, bool stunned);
 		void UnitExperience(const CUnit* unit, float oldExperience);
 		void UnitHarvestStorageFull(const CUnit* unit);
 
@@ -190,7 +179,13 @@ class CEventHandler
 			float* newDamage,
 			float* impulseMult);
 
-		bool ShieldPreDamaged(const CProjectile*, const CWeapon*, const CUnit*, bool);
+		bool ShieldPreDamaged(
+			const CProjectile* projectile,
+			const CWeapon* shieldEmitter,
+			const CUnit* shieldCarrier,
+			bool bounceProjectile,
+			const CWeapon* beamEmitter,
+			const CUnit* beamCarrier);
 
 		bool SyncedActionFallback(const string& line, int playerID);
 		/// @}
@@ -228,7 +223,12 @@ class CEventHandler
 		bool GroupChanged(int groupID);
 
 		bool GameSetup(const std::string& state, bool& ready,
-		               const map<int, std::string>& playerStates);
+		               const std::vector< std::pair<int, std::string> >& playerStates);
+		void DownloadQueued(int ID, const string& archiveName, const string& archiveType);
+		void DownloadStarted(int ID);
+		void DownloadFinished(int ID);
+		void DownloadFailed(int ID, int errorID);
+		void DownloadProgress(int ID, long downloaded, long total);
 
 		std::string WorldTooltip(const CUnit* unit,
 		                         const CFeature* feature,
@@ -239,7 +239,7 @@ class CEventHandler
 		                const float3* pos1,
 		                const std::string* label);
 
-		void SunChanged(const float3& sunDir);
+		void SunChanged();
 
 		void ViewResize();
 
@@ -249,9 +249,15 @@ class CEventHandler
 		void DrawWorldShadow();
 		void DrawWorldReflection();
 		void DrawWorldRefraction();
+		void DrawGroundPreForward();
+		void DrawGroundPreDeferred();
+		void DrawGroundPostDeferred();
+		void DrawUnitsPostDeferred();
+		void DrawFeaturesPostDeferred();
 		void DrawScreenEffects();
 		void DrawScreen();
 		void DrawInMiniMap();
+		void DrawInMiniMapBackground();
 
 		bool DrawUnit(const CUnit* unit);
 		bool DrawFeature(const CFeature* feature);
@@ -265,13 +271,11 @@ class CEventHandler
 
 		void CollectGarbage();
 		void DbgTimingInfo(DbgTimingInfoType type, const spring_time start, const spring_time end);
+		void MetalMapChanged(const int x, const int z);
 		/// @}
 
-		//FIXME no real event
-		void LoadedModelRequested();
-
 	private:
-		typedef vector<CEventClient*> EventClientList;
+		typedef std::vector<CEventClient*> EventClientList;
 
 		enum EventPropertyBits {
 			MANAGED_BIT  = (1 << 0), // managed by eventHandler
@@ -297,7 +301,8 @@ class CEventHandler
 				int propBits;
 		};
 
-		typedef map<std::string, EventInfo> EventMap;
+		typedef std::pair<std::string, EventInfo> EventPair;
+		typedef std::vector<EventPair> EventMap;
 
 	private:
 		void SetupEvent(const std::string& ciName,
@@ -330,32 +335,32 @@ extern CEventHandler eventHandler;
 // Inlined call-in loops
 //
 
-#define ITERATE_EVENTCLIENTLIST(name, ...) \
-	for (int i = 0; i < list##name.size(); ) { \
-		CEventClient* ec = list##name[i]; \
-		ec->name(__VA_ARGS__); \
-		if (i < list##name.size() && ec == list##name[i]) \
+#define ITERATE_EVENTCLIENTLIST(name, ...)                         \
+	for (int i = 0; i < list##name.size(); ) {                     \
+		CEventClient* ec = list##name[i];                          \
+		ec->name(__VA_ARGS__);                                     \
+		if (i < list##name.size() && ec == list##name[i])          \
 			++i; /* the call-in may remove itself from the list */ \
 	}
 
-#define ITERATE_ALLYTEAM_EVENTCLIENTLIST(name, allyTeam, ...) \
-	for (int i = 0; i < list##name.size(); ) { \
-		CEventClient* ec = list##name[i]; \
-		if (ec->CanReadAllyTeam(allyTeam)) { \
-			ec->name(__VA_ARGS__); \
-		} \
-		if (i < list##name.size() && ec == list##name[i]) \
+#define ITERATE_ALLYTEAM_EVENTCLIENTLIST(name, allyTeam, ...)      \
+	for (int i = 0; i < list##name.size(); ) {                     \
+		CEventClient* ec = list##name[i];                          \
+		if (ec->CanReadAllyTeam(allyTeam)) {                       \
+			ec->name(__VA_ARGS__);                                 \
+		}                                                          \
+		if (i < list##name.size() && ec == list##name[i])          \
 			++i; /* the call-in may remove itself from the list */ \
 	}
 
-#define ITERATE_UNIT_ALLYTEAM_EVENTCLIENTLIST(name, unit, ...) \
-	const auto unitAllyTeam = unit->allyteam; \
-	for (int i = 0; i < list##name.size(); ) { \
-		CEventClient* ec = list##name[i]; \
-		if (ec->CanReadAllyTeam(unitAllyTeam)) { \
-			ec->name(unit, __VA_ARGS__); \
-		} \
-		if (i < list##name.size() && ec == list##name[i]) \
+#define ITERATE_UNIT_ALLYTEAM_EVENTCLIENTLIST(name, unit, ...)     \
+	const auto unitAllyTeam = unit->allyteam;                      \
+	for (int i = 0; i < list##name.size(); ) {                     \
+		CEventClient* ec = list##name[i];                          \
+		if (ec->CanReadAllyTeam(unitAllyTeam)) {                   \
+			ec->name(unit, __VA_ARGS__);                           \
+		}                                                          \
+		if (i < list##name.size() && ec == list##name[i])          \
 			++i; /* the call-in may remove itself from the list */ \
 	}
 
@@ -365,8 +370,7 @@ inline void CEventHandler::UnitCreated(const CUnit* unit, const CUnit* builder)
 }
 
 
-inline void CEventHandler::UnitDestroyed(const CUnit* unit,
-                                             const CUnit* attacker)
+inline void CEventHandler::UnitDestroyed(const CUnit* unit, const CUnit* attacker)
 {
 	ITERATE_UNIT_ALLYTEAM_EVENTCLIENTLIST(UnitDestroyed, unit, attacker)
 }
@@ -385,6 +389,7 @@ inline void CEventHandler::UnitDestroyed(const CUnit* unit,
 		} \
 	}
 
+UNIT_CALLIN_NO_PARAM(UnitReverseBuilt);
 UNIT_CALLIN_NO_PARAM(UnitFinished)
 UNIT_CALLIN_NO_PARAM(UnitIdle)
 UNIT_CALLIN_NO_PARAM(UnitMoveFailed)
@@ -465,6 +470,13 @@ inline void CEventHandler::UnitDamaged(
 	bool paralyzer)
 {
 	ITERATE_UNIT_ALLYTEAM_EVENTCLIENTLIST(UnitDamaged, unit, attacker, damage, weaponDefID, projectileID, paralyzer)
+}
+
+inline void CEventHandler::UnitStunned(
+	const CUnit* unit,
+	bool stunned)
+{
+	ITERATE_UNIT_ALLYTEAM_EVENTCLIENTLIST(UnitStunned, unit, stunned)
 }
 
 
@@ -648,25 +660,7 @@ inline void CEventHandler::RenderUnitCreated(const CUnit* unit, int cloaked)
 	ITERATE_EVENTCLIENTLIST(RenderUnitCreated, unit, cloaked)
 }
 
-inline void CEventHandler::RenderUnitDestroyed(const CUnit* unit)
-{
-	ITERATE_EVENTCLIENTLIST(RenderUnitDestroyed, unit)
-}
-
-inline void CEventHandler::RenderUnitCloakChanged(const CUnit* unit, int cloaked)
-{
-	ITERATE_EVENTCLIENTLIST(RenderUnitCloakChanged, unit, cloaked)
-}
-
-inline void CEventHandler::RenderUnitLOSChanged(const CUnit* unit, int allyTeam, int newStatus)
-{
-	ITERATE_EVENTCLIENTLIST(RenderUnitLOSChanged, unit, allyTeam, newStatus)
-}
-
-inline void CEventHandler::RenderUnitMoved(const CUnit* unit, const float3& newpos)
-{
-	ITERATE_EVENTCLIENTLIST(RenderUnitMoved, unit, newpos)
-}
+UNIT_CALLIN_NO_PARAM(RenderUnitDestroyed)
 
 inline void CEventHandler::RenderFeatureCreated(const CFeature* feature)
 {
@@ -678,10 +672,6 @@ inline void CEventHandler::RenderFeatureDestroyed(const CFeature* feature)
 	ITERATE_EVENTCLIENTLIST(RenderFeatureDestroyed, feature)
 }
 
-inline void CEventHandler::RenderFeatureMoved(const CFeature* feature, const float3& oldpos, const float3& newpos)
-{
-	ITERATE_EVENTCLIENTLIST(RenderFeatureMoved, feature, oldpos, newpos)
-}
 
 inline void CEventHandler::RenderProjectileCreated(const CProjectile* proj)
 {

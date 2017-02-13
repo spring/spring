@@ -6,10 +6,10 @@
 #include <string>
 
 class CBitmap;
+struct SDL_Window;
 struct SDL_Surface;
 
-struct WindowManagerHelper {
-public:
+namespace WindowManagerHelper {
 	/**
 	 * Sets the window-manager icon for the running process.
 	 * It will be displayed in the OS task-bar, for example.
@@ -19,8 +19,8 @@ public:
 	 * @see SDL_WM_SetIcon()
 	 * Note: Must be called before the first call to SDL_SetVideoMode.
 	 */
-	static void SetIcon(const CBitmap* icon);
-	static void FreeIcon();
+	void SetIcon(CBitmap* bmp);
+	bool SetIconSurface(CBitmap* bmp = nullptr);
 
 	/**
 	 * Sets the window-manager caption/title for the running process.
@@ -29,10 +29,23 @@ public:
 	 *   example: "MyGame"
 	 * @see #SetCaption(const std::string&, const std::string&)
 	 */
-	static void SetCaption(const std::string& title);
+	void SetCaption(const std::string& title);
 
-private:
-	static SDL_Surface* currentIcon;
+
+	/**
+	 * @brief disables desktop compositing (kwin, aero, compiz, ...) to fix tearing & vsync problems
+	 */
+	void BlockCompositing(SDL_Window* window);
+
+	/**
+	 * @brief returns the window-state of the given window in SDL_GetWindowFlags() format
+	 */
+	int GetWindowState(SDL_Window* window);
+
+	/**
+	 * @brief returns the window-state of the given window in SDL_GetWindowFlags() format
+	 */
+	void SetWindowResizable(SDL_Window* window, bool resizable);
 };
 
 #endif // WINDOW_MANAGER_HELPER_H

@@ -7,16 +7,15 @@
 
 class CStarburstLauncher: public CWeapon
 {
-	CR_DECLARE(CStarburstLauncher);
+	CR_DECLARE_DERIVED(CStarburstLauncher)
 public:
 	CStarburstLauncher(CUnit* owner, const WeaponDef* def);
 
-	void Update();
-	float GetRange2D(float yDiff) const;
+	float GetRange2D(const float yDiff) const override final;
 
 private:
-	bool HaveFreeLineOfFire(const float3& pos, bool userTarget, const CUnit* unit) const;
-	void FireImpl(bool scriptCall);
+	bool HaveFreeLineOfFire(const float3 pos, const SWeaponTarget& trg, bool useMuzzle = false) const override final;
+	void FireImpl(const bool scriptCall) override final;
 
 private:
 	float tracking;

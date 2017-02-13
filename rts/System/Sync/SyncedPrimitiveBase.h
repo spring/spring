@@ -17,6 +17,21 @@
 // NOTE: lowercase sync clashes with extern void sync(...) from unistd.h
 namespace Sync {
 
+	static inline void AssertDebugger(const void* p, unsigned size, const char* msg) {
+	#ifdef SYNCDEBUG
+		CSyncDebugger::GetInstance()->Sync(p, size, msg);
+	#endif
+	}
+
+	/**
+	 * @brief Check sync of the argument x.
+	 */
+	template<typename T>
+	static inline void AssertDebugger(const T& x, const char* msg = "assert") {
+		AssertDebugger(&x, sizeof(T), msg);
+	}
+
+
 	/**
 	 * @brief Assert a contiguous memory area is still synchronized.
 	 * @param p    Start of the memory area
@@ -27,9 +42,7 @@ namespace Sync {
 	 * or the CSyncChecker, depending on the enabled @code #defines @endcode.
 	 */
 	static inline void Assert(const void* p, unsigned size, const char* msg) {
-#ifdef SYNCDEBUG
-		CSyncDebugger::GetInstance()->Sync(p, size, msg);
-#endif
+		AssertDebugger(p, size, msg);
 #ifdef SYNCCHECK
 		assert(CSyncChecker::InSyncedCode());
 		CSyncChecker::Sync(p, size);
@@ -49,7 +62,7 @@ namespace Sync {
 
 }
 
-#ifndef NDEBUG
+#if !defined(NDEBUG) && defined(SYNCCHECK)
 #  define ENTER_SYNCED_CODE() CSyncChecker::EnterSyncedCode()
 #  define LEAVE_SYNCED_CODE() CSyncChecker::LeaveSyncedCode()
 #else
@@ -58,7 +71,7 @@ namespace Sync {
 #endif
 
 #ifdef SYNCDEBUG
-#  define ASSERT_SYNCED(x) Sync::Assert(x)
+#  define ASSERT_SYNCED(x) Sync::AssertDebugger(x, "assert(" #x ")")
 #else
 #  define ASSERT_SYNCED(x)
 #endif

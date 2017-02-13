@@ -4,18 +4,19 @@
 #define _FEATURE_HANDLER_H
 
 #include <string>
-#include <list>
 #include <vector>
-#include <boost/noncopyable.hpp>
-#include "System/creg/creg_cond.h"
 
-#include "FeatureDef.h"
-#include "FeatureSet.h"
+#include "System/float3.h"
+#include "System/Misc/NonCopyable.h"
+#include "System/creg/creg_cond.h"
+#include "System/UnorderedSet.hpp"
 #include "Sim/Misc/SimObjectIDPool.h"
 
 
+class CFeature;
 struct UnitDef;
 class LuaTable;
+struct FeatureDef;
 
 struct FeatureLoadParams {
 	const FeatureDef* featureDef;
@@ -35,12 +36,12 @@ struct FeatureLoadParams {
 };
 
 class LuaParser;
-class CFeatureHandler : public boost::noncopyable
+class CFeatureHandler : public spring::noncopyable
 {
-	CR_DECLARE_STRUCT(CFeatureHandler);
+	CR_DECLARE_STRUCT(CFeatureHandler)
 
 public:
-	CFeatureHandler(LuaParser* defsParser);
+	CFeatureHandler() { activeFeatureIDs.reserve(128); }
 	~CFeatureHandler();
 
 	CFeature* LoadFeature(const FeatureLoadParams& params);
@@ -48,19 +49,18 @@ public:
 
 	void Update();
 
+	bool UpdateFeature(CFeature* feature);
+	bool TryFreeFeatureID(int id);
 	bool AddFeature(CFeature* feature);
 	void DeleteFeature(CFeature* feature);
 	CFeature* GetFeature(int id);
 
-	void LoadFeaturesFromMap(bool onlyCreateDefs);
-	const FeatureDef* GetFeatureDef(std::string name, const bool showError = true);
-	const FeatureDef* GetFeatureDefByID(int id);
+	void LoadFeaturesFromMap();
 
-	void SetFeatureUpdateable(CFeature* feature, bool updateable);
+	void SetFeatureUpdateable(CFeature* feature);
 	void TerrainChanged(int x1, int y1, int x2, int y2);
 
-	const std::map<std::string, const FeatureDef*>& GetFeatureDefs() const { return featureDefs; }
-	const CFeatureSet& GetActiveFeatures() const { return activeFeatures; }
+	const spring::unordered_set<int>& GetActiveFeatureIDs() const { return activeFeatureIDs; }
 
 private:
 	bool CanAddFeature(int id) const {
@@ -79,24 +79,14 @@ private:
 	void AllocateNewFeatureIDs(const CFeature* feature);
 	void InsertActiveFeature(CFeature* feature);
 
-	FeatureDef* CreateDefaultTreeFeatureDef(const std::string& name) const;
-	FeatureDef* CreateDefaultGeoFeatureDef(const std::string& name) const;
-	FeatureDef* CreateFeatureDef(const LuaTable& luaTable, const std::string& name) const;
-
-	void AddFeatureDef(const std::string& name, FeatureDef* feature);
-
 private:
 	SimObjectIDPool idPool;
 
-	std::map<std::string, const FeatureDef*> featureDefs;
-	std::vector<const FeatureDef*> featureDefsVector;
-
-	std::list<int> toBeFreedFeatureIDs;
-	CFeatureSet activeFeatures;
+	spring::unordered_set<int> activeFeatureIDs;
+	std::vector<int> toBeFreedFeatureIDs;
 	std::vector<CFeature*> features;
 
-	std::list<int> toBeRemoved;
-	CFeatureSet updateFeatures;
+	std::vector<CFeature*> updateFeatures;
 };
 
 extern CFeatureHandler* featureHandler;

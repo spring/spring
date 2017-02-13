@@ -14,7 +14,7 @@ class AAirMoveType;
 class CAirCAI : public CMobileCAI
 {
 public:
-	CR_DECLARE(CAirCAI);
+	CR_DECLARE(CAirCAI)
 	CAirCAI(CUnit* owner);
 	CAirCAI();
 
@@ -25,14 +25,12 @@ public:
 	void FinishCommand();
 	void BuggerOff(const float3& pos, float radius);
 //	void StopMove();
-	
-	void SetGoal(const float3& pos, const float3& curPos, float goalRadius = SQUARE_SIZE);
-	
+
 	void ExecuteGuard(Command& c);
 	void ExecuteAreaAttack(Command& c);
 	void ExecuteAttack(Command& c);
 	void ExecuteFight(Command& c);
-//	void ExecuteMove(Command& c);
+	void ExecuteMove(Command& c);
 
 	bool IsValidTarget(const CUnit* enemy) const;
 

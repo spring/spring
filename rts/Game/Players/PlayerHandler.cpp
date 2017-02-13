@@ -9,23 +9,29 @@
 #include "Game/GameSetup.h"
 #include "Game/SelectedUnitsHandler.h"
 
-CR_BIND(CPlayerHandler,);
+CR_BIND(CPlayerHandler,)
 
 CR_REG_METADATA(CPlayerHandler, (
-	CR_MEMBER(players),
-	CR_RESERVED(64)
-));
+	CR_MEMBER(players)
+))
 
 
-CPlayerHandler* playerHandler;
+CPlayerHandler* playerHandler = NULL;
 
 CPlayerHandler::~CPlayerHandler()
+{
+	ResetState();
+}
+
+
+void CPlayerHandler::ResetState()
 {
 	for (playerVec::iterator pi = players.begin(); pi != players.end(); ++pi) {
 		delete *pi;
 	}
-}
 
+	players.clear();
+}
 
 void CPlayerHandler::LoadFromSetup(const CGameSetup* setup)
 {
@@ -50,12 +56,12 @@ void CPlayerHandler::LoadFromSetup(const CGameSetup* setup)
 
 int CPlayerHandler::Player(const std::string& name) const
 {
-	playerVec::const_iterator pi;
-	for (pi = players.begin(); pi != players.end(); ++pi) {
+	for (auto pi = players.cbegin(); pi != players.cend(); ++pi) {
 		if ((*pi)->name == name) {
 			return (*pi)->playerNum;
 		}
 	}
+
 	return -1;
 }
 
@@ -70,8 +76,8 @@ std::vector<int> CPlayerHandler::ActivePlayersInTeam(int teamId) const
 	std::vector<int> playersInTeam;
 
 	size_t p = 0;
-	playerVec::const_iterator pi;
-	for (pi = players.begin(); pi != players.end(); ++pi, ++p) {
+
+	for (auto pi = players.cbegin(); pi != players.cend(); ++pi, ++p) {
 		// do not count spectators, or demos will desync
 		if ((*pi)->active && !(*pi)->spectator && ((*pi)->team == teamId)) {
 			playersInTeam.push_back(p);
@@ -91,7 +97,7 @@ void CPlayerHandler::GameFrame(int frameNum)
 void CPlayerHandler::AddPlayer(const CPlayer& player)
 {
 	const int oldSize = players.size();
-	const int newSize = std::max((int)players.size(), player.playerNum + 1);
+	const int newSize = std::max(oldSize, player.playerNum + 1);
 
 	{
 		for (unsigned int i = oldSize; i < newSize; ++i) {
@@ -110,5 +116,5 @@ void CPlayerHandler::AddPlayer(const CPlayer& player)
 		*newPlayer = player;
 		newPlayer->fpsController.SetControllerPlayer(newPlayer);
 	}
-
 }
+

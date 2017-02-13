@@ -3,8 +3,8 @@
 #ifndef _LOCAL_CONNECTION_H
 #define _LOCAL_CONNECTION_H
 
-#include <boost/thread/mutex.hpp>
 #include <deque>
+#include "System/Threading/SpringThreading.h"
 
 #include "Connection.h"
 
@@ -30,10 +30,10 @@ public:
 
 	// START overriding CConnection
 
-	void SendData(boost::shared_ptr<const RawPacket> packet);
+	void SendData(std::shared_ptr<const RawPacket> packet);
 	bool HasIncomingData() const;
-	boost::shared_ptr<const RawPacket> Peek(unsigned ahead) const;
-	boost::shared_ptr<const RawPacket> GetData();
+	std::shared_ptr<const RawPacket> Peek(unsigned ahead) const;
+	std::shared_ptr<const RawPacket> GetData();
 	void DeleteBufferPacketAt(unsigned index);
 	void Flush(const bool forced) {}
 	bool CheckTimeout(int seconds, bool initial) const { return false; }
@@ -42,7 +42,7 @@ public:
 	bool CanReconnect() const { return false; }
 	bool NeedsReconnect() { return false; }
 	void Unmute() {}
-	void Close(bool flush) {}
+	void Close(bool flush);
 	void SetLossFactor(int factor) {}
 
 	unsigned int GetPacketQueueSize() const;
@@ -53,8 +53,8 @@ public:
 	// END overriding CConnection
 
 private:
-	static std::deque< boost::shared_ptr<const RawPacket> > pqueues[2];
-	static boost::mutex mutexes[2];
+	static std::deque< std::shared_ptr<const RawPacket> > pqueues[2];
+	static spring::mutex mutexes[2];
 
 	unsigned int OtherInstance() const { return ((instance + 1) % 2); }
 

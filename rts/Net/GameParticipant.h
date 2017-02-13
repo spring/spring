@@ -3,7 +3,7 @@
 #ifndef _GAME_PARTICIPANT_H
 #define _GAME_PARTICIPANT_H
 
-#include <boost/shared_ptr.hpp>
+#include <memory>
 
 #include "Game/Players/PlayerBase.h"
 #include "Game/Players/PlayerStatistics.h"
@@ -19,12 +19,15 @@ class GameParticipant : public PlayerBase
 {
 public:
 	GameParticipant();
-	void SendData(boost::shared_ptr<const netcode::RawPacket> packet);
+	void SendData(std::shared_ptr<const netcode::RawPacket> packet);
 
-	void Connected(boost::shared_ptr<netcode::CConnection> link, bool local);
+	void Connected(std::shared_ptr<netcode::CConnection> link, bool local);
 	void Kill(const std::string& reason, const bool flush = false);
 
 	GameParticipant& operator=(const PlayerBase& base) { PlayerBase::operator=(base); return *this; };
+
+public:
+	int id;
 
 	enum State
 	{
@@ -41,12 +44,12 @@ public:
 	bool isLocal;
 	bool isReconn;
 	bool isMidgameJoin;
-	boost::shared_ptr<netcode::CConnection> link;
+	std::shared_ptr<netcode::CConnection> link;
 	PlayerStatistics lastStats;
 
 	struct PlayerLinkData {
 		PlayerLinkData(bool connect = true) : bandwidthUsage(0) { if (connect) link.reset(new netcode::CLoopbackConnection()); }
-		boost::shared_ptr<netcode::CConnection> link;
+		std::shared_ptr<netcode::CConnection> link;
 		int bandwidthUsage;
 	};
 	std::map<unsigned char, PlayerLinkData> linkData;

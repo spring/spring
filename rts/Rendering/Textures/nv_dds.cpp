@@ -187,10 +187,6 @@ CDDSImage::CDDSImage()
 {
 }
 
-CDDSImage::~CDDSImage()
-{
-}
-
 void CDDSImage::create_textureFlat(unsigned int format, unsigned int components, const CTexture &baseImage)
 {
     assert(format != 0);
@@ -325,23 +321,23 @@ bool CDDSImage::load(string filename, bool flipImage)
     file.Read(&ddsh.dwCaps2, tmp);
     file.Read(&ddsh.dwReserved2, tmp*3);
 
-    ddsh.dwSize = swabdword(ddsh.dwSize);
-    ddsh.dwFlags = swabdword(ddsh.dwFlags);
-    ddsh.dwHeight = swabdword(ddsh.dwHeight);
-    ddsh.dwWidth = swabdword(ddsh.dwWidth);
-    ddsh.dwPitchOrLinearSize = swabdword(ddsh.dwPitchOrLinearSize);
-    ddsh.dwDepth = swabdword(ddsh.dwDepth);
-    ddsh.dwMipMapCount = swabdword(ddsh.dwMipMapCount);
-    ddsh.ddspf.dwSize = swabdword(ddsh.ddspf.dwSize);
-    ddsh.ddspf.dwFlags = swabdword(ddsh.ddspf.dwFlags);
-    ddsh.ddspf.dwFourCC = swabdword(ddsh.ddspf.dwFourCC);
-    ddsh.ddspf.dwRGBBitCount = swabdword(ddsh.ddspf.dwRGBBitCount);
-    ddsh.ddspf.dwRBitMask = swabdword(ddsh.ddspf.dwRBitMask);
-    ddsh.ddspf.dwGBitMask = swabdword(ddsh.ddspf.dwGBitMask);
-    ddsh.ddspf.dwBBitMask = swabdword(ddsh.ddspf.dwBBitMask);
-    ddsh.ddspf.dwABitMask = swabdword(ddsh.ddspf.dwABitMask);
-    ddsh.dwCaps1 = swabdword(ddsh.dwCaps1);
-    ddsh.dwCaps2 = swabdword(ddsh.dwCaps2);
+    ddsh.dwSize = swabDWord(ddsh.dwSize);
+    ddsh.dwFlags = swabDWord(ddsh.dwFlags);
+    ddsh.dwHeight = swabDWord(ddsh.dwHeight);
+    ddsh.dwWidth = swabDWord(ddsh.dwWidth);
+    ddsh.dwPitchOrLinearSize = swabDWord(ddsh.dwPitchOrLinearSize);
+    ddsh.dwDepth = swabDWord(ddsh.dwDepth);
+    ddsh.dwMipMapCount = swabDWord(ddsh.dwMipMapCount);
+    ddsh.ddspf.dwSize = swabDWord(ddsh.ddspf.dwSize);
+    ddsh.ddspf.dwFlags = swabDWord(ddsh.ddspf.dwFlags);
+    ddsh.ddspf.dwFourCC = swabDWord(ddsh.ddspf.dwFourCC);
+    ddsh.ddspf.dwRGBBitCount = swabDWord(ddsh.ddspf.dwRGBBitCount);
+    ddsh.ddspf.dwRBitMask = swabDWord(ddsh.ddspf.dwRBitMask);
+    ddsh.ddspf.dwGBitMask = swabDWord(ddsh.ddspf.dwGBitMask);
+    ddsh.ddspf.dwBBitMask = swabDWord(ddsh.ddspf.dwBBitMask);
+    ddsh.ddspf.dwABitMask = swabDWord(ddsh.ddspf.dwABitMask);
+    ddsh.dwCaps1 = swabDWord(ddsh.dwCaps1);
+    ddsh.dwCaps2 = swabDWord(ddsh.dwCaps2);
 
     // default to flat texture type (1D, 2D, or rectangle)
     m_type = TextureFlat;
@@ -452,7 +448,7 @@ bool CDDSImage::load(string filename, bool flipImage)
         for (unsigned int i = 0; i < numMipmaps && (w || h); i++)
         {
             // add empty surface
-            img.add_mipmap(CSurface());
+            img.add_mipmap();
 
             // get reference to newly added mipmap
             CSurface &mipmap = img.get_mipmap(i);
@@ -1149,46 +1145,44 @@ void CDDSImage::flip_blocks_dxtc5(DXTColBlock *line, unsigned int numBlocks)
 ///////////////////////////////////////////////////////////////////////////////
 
 ///////////////////////////////////////////////////////////////////////////////
-// default constructor
-CTexture::CTexture()
-  : CSurface()  // initialize base class part
-{
-}
-
-///////////////////////////////////////////////////////////////////////////////
 // creates an empty texture
 CTexture::CTexture(unsigned int w, unsigned int h, unsigned int d, unsigned int imgsize, const unsigned char *pixels)
   : CSurface(w, h, d, imgsize, pixels)  // initialize base class part
 {
 }
 
-CTexture::~CTexture()
-{
-}
-
-///////////////////////////////////////////////////////////////////////////////
-// copy constructor
-CTexture::CTexture(const CTexture &copy)
-  : CSurface(copy)
-{
-    for (unsigned int i = 0; i < copy.get_num_mipmaps(); i++)
-        m_mipmaps.push_back(copy.get_mipmap(i));
-}
-
 ///////////////////////////////////////////////////////////////////////////////
 // assignment operator
 CTexture &CTexture::operator= (const CTexture &rhs)
 {
-    if (this != &rhs)
-    {
-        CSurface::operator = (rhs);
+	if (this != &rhs) {
+		CSurface::operator = (rhs);
 
-        m_mipmaps.clear();
-        for (unsigned int i = 0; i < rhs.get_num_mipmaps(); i++)
-            m_mipmaps.push_back(rhs.get_mipmap(i));
-    }
+		m_mipmaps.clear();
+		m_mipmaps.resize(rhs.get_num_mipmaps());
+
+		for (unsigned int i = 0; i < rhs.get_num_mipmaps(); i++)
+			m_mipmaps[i] = rhs.m_mipmaps[i];
+	}
 
     return *this;
+}
+
+CTexture &CTexture::operator= (CTexture &&rhs)
+{
+	if (this != &rhs) {
+		CSurface::operator = (rhs);
+
+		m_mipmaps.clear();
+		m_mipmaps.resize(rhs.get_num_mipmaps());
+
+		for (unsigned int i = 0; i < rhs.get_num_mipmaps(); i++)
+			m_mipmaps[i] = std::move(rhs.m_mipmaps[i]);
+
+		rhs.m_mipmaps.clear();
+	}
+
+	return *this;
 }
 
 void CTexture::create(unsigned int w, unsigned int h, unsigned int d, unsigned int imgsize, const unsigned char *pixels)
@@ -1233,54 +1227,41 @@ CSurface::CSurface(unsigned int w, unsigned int h, unsigned int d, unsigned int 
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-// copy constructor
-CSurface::CSurface(const CSurface &copy)
-  : m_width(0),
-    m_height(0),
-    m_depth(0),
-    m_size(0),
-    m_pixels(NULL)
-{
-    if (copy.get_size() != 0)
-    {
-        m_size = copy.get_size();
-        m_width = copy.get_width();
-        m_height = copy.get_height();
-        m_depth = copy.get_depth();
-
-        m_pixels = new unsigned char[m_size];
-        memcpy(m_pixels, copy, m_size);
-    }
-}
-
-///////////////////////////////////////////////////////////////////////////////
 // assignment operator
 CSurface &CSurface::operator= (const CSurface &rhs)
 {
-    if (this != &rhs)
-    {
-        clear();
+	if (this != &rhs) {
+		clear();
 
-        if (rhs.get_size())
-        {
-            m_size = rhs.get_size();
-            m_width = rhs.get_width();
-            m_height = rhs.get_height();
-            m_depth = rhs.get_depth();
+		m_size = rhs.get_size();
+		m_width = rhs.get_width();
+		m_height = rhs.get_height();
+		m_depth = rhs.get_depth();
 
-            m_pixels = new unsigned char[m_size];
-            memcpy(m_pixels, rhs, m_size);
-        }
-    }
+		if (m_size != 0) {
+			m_pixels = new unsigned char[m_size];
+			memcpy(m_pixels, rhs, m_size);
+		}
+	}
 
-    return *this;
+	return *this;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-// clean up image memory
-CSurface::~CSurface()
+CSurface &CSurface::operator= (CSurface &&rhs)
 {
-    clear();
+	if (this != &rhs) {
+		clear();
+
+		m_size = rhs.get_size();
+		m_width = rhs.get_width();
+		m_height = rhs.get_height();
+		m_depth = rhs.get_depth();
+
+		m_pixels = rhs.m_pixels;
+		rhs.m_pixels = nullptr;
+	}
+
+	return *this;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1314,9 +1295,6 @@ void CSurface::create(unsigned int w, unsigned int h, unsigned int d, unsigned i
 // free surface memory
 void CSurface::clear()
 {
-    if (m_pixels != NULL)
-    {
-        delete [] m_pixels;
-        m_pixels = NULL;
-    }
+	delete [] m_pixels;
+	m_pixels = NULL;
 }

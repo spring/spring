@@ -4,13 +4,11 @@
 #define SPRING_APP
 
 #include <string>
-#include <boost/cstdint.hpp>
-#include <boost/shared_ptr.hpp>
-
+#include <memory>
 
 class ClientSetup;
-class CmdLineParams;
 class CGameController;
+
 union SDL_Event;
 
 /**
@@ -25,33 +23,39 @@ public:
 	~SpringApp();
 
 	int Run();                                      //!< Run game loop
+	void Reload(const std::string script);
+
 	static void ShutDown();                         //!< Shuts down application
 
-protected:
+private:
 	bool Initialize();                              //!< Initialize app
-	void ParseCmdLine(const std::string&);          //!< Parse command line
+	void ParseCmdLine(int argc, char* argv[]);      //!< Parse command line
 	void Startup();                                 //!< Parses startup data (script etc.) and starts SelectMenu or PreGame
+	void StartScript(const std::string& script);    //!< Starts game from specified script.txt
+	void LoadSpringMenu();                          //!< Load menu (old or luaified depending on start parameters)
 	bool InitWindow(const char* title);             //!< Initializes window
+
+	bool Update();                                  //!< Run simulation and draw
+
 	static void InitOpenGL();                       //!< Initializes OpenGL
 	static void LoadFonts();                        //!< Initialize glFonts (font & smallFont)
-	static bool CreateSDLWindow(const char* title);    //!< Creates a SDL window
-	int Update();                                   //!< Run simulation and draw
-	bool UpdateSim(CGameController *ac);
 
 	static void GetDisplayGeometry();
 	static void SetupViewportGeometry();
 	static void SaveWindowPosition();
 
-	/**
-	 * @brief command line
-	 *
-	 * Pointer to instance of commandline parser
-	 */
-	CmdLineParams* cmdline;
+	std::string inputFile;
+
+	// this gets passed along to PreGame (or SelectMenu then PreGame),
+	// and from thereon to GameServer if this client is also the host
+	std::shared_ptr<ClientSetup> clientSetup;
 
 private:
 	bool MainEventHandler(const SDL_Event& ev);
-	void RunScript(boost::shared_ptr<ClientSetup> clientSetup, const std::string& buf);
+
+	CGameController* RunScript(const std::string& buf);
+	CGameController* LoadSaveFile(const std::string& saveName); //!< Starts game from a specified save
+	CGameController* LoadDemoFile(const std::string& demoName); //!< Starts game from a specified save
 };
 
 /**

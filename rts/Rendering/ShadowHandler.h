@@ -11,7 +11,7 @@
 
 namespace Shader {
 	struct IProgramObject;
-};
+}
 
 class CCamera;
 class CShadowHandler
@@ -21,9 +21,12 @@ public:
 	~CShadowHandler() { Kill(); }
 
 	void Reload(const char* argv);
-	void CreateShadows();
 
-	const float4& GetShadowParams() const { return shadowTexProjCenter; }
+	void SetupShadowTexSampler(unsigned int texUnit, bool enable = false) const;
+	void SetupShadowTexSamplerRaw() const;
+	void ResetShadowTexSampler(unsigned int texUnit, bool disable = false) const;
+	void ResetShadowTexSamplerRaw() const;
+	void CreateShadows();
 
 	enum ShadowGenerationBits {
 		SHADOWGEN_BIT_NONE  = 0,
@@ -52,9 +55,28 @@ public:
 		SHADOWGEN_PROGRAM_LAST       = 5,
 	};
 
+	enum ShadowMatrixType {
+		SHADOWMAT_TYPE_CULLING = 0,
+		SHADOWMAT_TYPE_DRAWING = 1,
+	};
+
 	Shader::IProgramObject* GetShadowGenProg(ShadowGenProgram p) {
 		return shadowGenProgs[p];
 	}
+
+	const CMatrix44f& GetShadowMatrix   (unsigned int idx = SHADOWMAT_TYPE_DRAWING) const { return  viewMatrix[idx];      }
+	const      float* GetShadowMatrixRaw(unsigned int idx = SHADOWMAT_TYPE_DRAWING) const { return &viewMatrix[idx].m[0]; }
+
+	const float4& GetShadowParams() const { return shadowTexProjCenter; }
+
+	unsigned int GetShadowTextureID() const { return shadowTexture; }
+	unsigned int GetColorTextureID() const { return dummyColorTexture; }
+
+	static bool ShadowsInitialized() { return firstInit; }
+	static bool ShadowsSupported() { return shadowsSupported; }
+
+	bool ShadowsLoaded() const { return shadowsLoaded; }
+	bool InShadowPass() const { return inShadowPass; }
 
 private:
 	void Init();
@@ -63,12 +85,18 @@ private:
 
 	bool InitDepthTarget();
 	bool WorkaroundUnsupportedFboRenderTargets();
+
 	void DrawShadowPasses();
 	void LoadShadowGenShaderProgs();
+
 	void SetShadowMapSizeFactors();
-	float GetShadowProjectionRadius(CCamera*, float3&, const float3&) const;
-	float GetOrthoProjectedMapRadius(const float3&, float3&) const;
-	float GetOrthoProjectedFrustumRadius(CCamera*, float3&) const;
+	void SetShadowMatrix(CCamera* playerCam, CCamera* shadowCam);
+	void SetShadowCamera(CCamera* shadowCam);
+
+	float4 GetShadowProjectionScales(CCamera*, const float3&);
+
+	float GetOrthoProjectedMapRadius(const float3&, float3&);
+	float GetOrthoProjectedFrustumRadius(CCamera*, float3&);
 
 public:
 	int shadowConfig;
@@ -76,34 +104,34 @@ public:
 	int shadowGenBits;
 	int shadowProMode;
 
+private:
 	unsigned int shadowTexture;
 	unsigned int dummyColorTexture;
-
-	static bool shadowsSupported;
 
 	bool shadowsLoaded;
 	bool inShadowPass;
 
-	float3 centerPos;
-	float3 sunDirX;
-	float3 sunDirY;
-	float3 sunDirZ;
-
-	CMatrix44f shadowMatrix;
-
-private:
-	FBO fb;
-
 	static bool firstInit;
+	static bool shadowsSupported;
 
-	/// these project geometry into light-space
-	/// to write the (FBO) depth-buffer texture
+	// these project geometry into light-space
+	// to write the (FBO) depth-buffer texture
 	std::vector<Shader::IProgramObject*> shadowGenProgs;
 
-	/// x1, x2, y1, y2
+	float3 projMidPos[2 + 1];
+	float3 sunProjDir;
+
+	float4 shadowProjScales;
+	/// frustum bounding-rectangle corners; x1, x2, y1, y2
 	float4 shadowProjMinMax;
 	/// xmid, ymid, p17, p18
 	float4 shadowTexProjCenter;
+
+	// culling and drawing versions of both matrices
+	CMatrix44f projMatrix[2];
+	CMatrix44f viewMatrix[2];
+
+	FBO fb;
 };
 
 extern CShadowHandler* shadowHandler;

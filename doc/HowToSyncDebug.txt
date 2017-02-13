@@ -1,4 +1,4 @@
 How to use the sync debugger (for testers)
 
-See http://springrts.com/wiki/Debugging_sync_errors
+See https://springrts.com/wiki/Debugging_sync_errors
 

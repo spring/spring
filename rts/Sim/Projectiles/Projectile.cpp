@@ -4,13 +4,15 @@
 #include "Map/MapInfo.h"
 #include "Rendering/Colors.h"
 #include "Rendering/GL/VertexArray.h"
+#include "Sim/Projectiles/ExpGenSpawnableMemberInfo.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Misc/QuadField.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "System/Matrix44f.h"
 
-CR_BIND_DERIVED(CProjectile, CExpGenSpawnable, );
+CR_BIND_DERIVED_INTERFACE(CProjectile, CExpGenSpawnable)
 
 CR_REG_METADATA(CProjectile,
 (
@@ -23,6 +25,7 @@ CR_REG_METADATA(CProjectile,
 	CR_MEMBER(checkCol),
 	CR_MEMBER(ignoreWater),
 	CR_MEMBER(deleteMe),
+	CR_IGNORED(callEvent), //we want the render event called for all projectiles
 
 	CR_MEMBER(castShadow),
 	CR_MEMBER(drawSorted),
@@ -34,18 +37,19 @@ CR_REG_METADATA(CProjectile,
 
 	CR_MEMBER(mygravity),
 	CR_IGNORED(sortDist),
+	CR_MEMBER(sortDistOffset),
+	CR_MEMBER(tempNum),
 
 	CR_MEMBER(ownerID),
 	CR_MEMBER(teamID),
+	CR_MEMBER(allyteamID),
 	CR_MEMBER(cegID),
 
 	CR_MEMBER(projectileType),
 	CR_MEMBER(collisionFlags),
 
-	CR_MEMBER(qfCellData)
-));
-
-CR_BIND(CProjectile::QuadFieldCellData, )
+	CR_MEMBER(quads)
+))
 
 
 
@@ -66,14 +70,18 @@ CProjectile::CProjectile()
 	, checkCol(true)
 	, ignoreWater(false)
 	, deleteMe(false)
-
+	, callEvent(true)
 	, castShadow(false)
 	, drawSorted(true)
 
 	, mygravity(mapInfo? mapInfo->map.gravity: 0.0f)
+	, sortDist(0.0f)
+	, sortDistOffset(0.0f)
+	, tempNum(0)
 
 	, ownerID(-1u)
 	, teamID(-1u)
+	, allyteamID(-1)
 	, cegID(-1u)
 
 	, projectileType(-1u)
@@ -100,15 +108,17 @@ CProjectile::CProjectile(
 	, checkCol(true)
 	, ignoreWater(false)
 	, deleteMe(false)
-
+	, callEvent(true)
 	, castShadow(false)
 	, drawSorted(true)
 
 	, dir(ZeroVector) // set via Init()
 	, mygravity(mapInfo? mapInfo->map.gravity: 0.0f)
+	, sortDistOffset(0.f)
 
 	, ownerID(-1u)
 	, teamID(-1u)
+	, allyteamID(-1)
 	, cegID(-1u)
 
 	, projectileType(-1u)
@@ -118,17 +128,15 @@ CProjectile::CProjectile(
 	Init(owner, ZeroVector);
 }
 
-void CProjectile::Detach() {
-	// SYNCED
+
+CProjectile::~CProjectile()
+{
 	if (synced) {
 		quadField->RemoveProjectile(this);
+#ifdef TRACE_SYNC
+		tracefile << "Projectile died id: " << id << ", pos: <" << pos.x << ", " << pos.y << ", " << pos.z << ">\n";
+#endif
 	}
-	CExpGenSpawnable::Detach();
-}
-
-CProjectile::~CProjectile() {
-	// UNSYNCED
-	assert(!synced || detached);
 }
 
 void CProjectile::Init(const CUnit* owner, const float3& offset)
@@ -137,6 +145,7 @@ void CProjectile::Init(const CUnit* owner, const float3& offset)
 		// must be set before the AddProjectile call
 		ownerID = owner->id;
 		teamID = owner->team;
+		allyteamID =  teamHandler->IsValidTeam(teamID)? teamHandler->AllyTeam(teamID): -1;
 	}
 	if (!hitscan) {
 		SetPosition(pos + offset);
@@ -166,20 +175,10 @@ void CProjectile::Update()
 }
 
 
-void CProjectile::Collision()
+void CProjectile::Delete()
 {
 	deleteMe = true;
 	checkCol = false;
-}
-
-void CProjectile::Collision(CUnit* unit)
-{
-	Collision();
-}
-
-void CProjectile::Collision(CFeature* feature)
-{
-	Collision();
 }
 
 
@@ -188,31 +187,24 @@ void CProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
 	points.AddVertexQC(pos, color4::whiteA);
 }
 
-int CProjectile::DrawArray()
+
+void CProjectile::DrawArray()
 {
 	va->DrawArrayTC(GL_QUADS);
-
-	// draw-index gets divided by 24 because each element is
-	// 12 + 4 + 4 + 4 = 24 bytes in size (pos + u + v + color)
-	// for each type of "projectile"
-	const int idx = (va->drawIndex() / 24);
-
 	va = GetVertexArray();
 	va->Initialize();
 	inArray = false;
-
-	return idx;
 }
+
 
 CUnit* CProjectile::owner() const {
 	// NOTE:
 	//   this death dependency optimization using "ownerID" is logically flawed:
 	//   because ID's are reused it could return a unit that is not the original
 	//   owner (unlikely however unless ID's get recycled very rapidly)
-	CUnit* unit = unitHandler->GetUnit(ownerID);
-
-	return unit;
+	return (unitHandler->GetUnit(ownerID));
 }
+
 
 CMatrix44f CProjectile::GetTransformMatrix(bool offsetPos) const {
 	float3 xdir;
@@ -230,3 +222,13 @@ CMatrix44f CProjectile::GetTransformMatrix(bool offsetPos) const {
 	return (CMatrix44f(drawPos + (dir * radius * 0.9f * offsetPos), -xdir, ydir, dir));
 }
 
+
+bool CProjectile::GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo)
+{
+	if (CExpGenSpawnable::GetMemberInfo(memberInfo))
+		return true;
+
+	CHECK_MEMBER_INFO_FLOAT3(CProjectile, dir)
+
+	return false;
+}

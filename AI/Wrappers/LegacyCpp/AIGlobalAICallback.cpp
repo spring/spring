@@ -4,43 +4,38 @@
 #include "AIAICallback.h"
 #include "AIAICheats.h"
 
-springLegacyAI::CAIGlobalAICallback::CAIGlobalAICallback()
-	: IGlobalAICallback(), sAICallback(NULL), skirmishAIId(-1),
-		wrappedAICallback(NULL), wrappedAICheats(NULL) {}
-
-springLegacyAI::CAIGlobalAICallback::CAIGlobalAICallback(const SSkirmishAICallback* sAICallback,
-		int skirmishAIId) :
-		IGlobalAICallback(), sAICallback(sAICallback), skirmishAIId(skirmishAIId),
-		wrappedAICallback(NULL), wrappedAICheats(NULL) {}
-
-springLegacyAI::CAIGlobalAICallback::~CAIGlobalAICallback() {
-
-	delete wrappedAICallback;
-	delete wrappedAICheats;
+springLegacyAI::CAIGlobalAICallback::CAIGlobalAICallback():
+	IGlobalAICallback(),
+	sAICallback(nullptr),
+	skirmishAIId(-1)
+{
 }
+
+springLegacyAI::CAIGlobalAICallback::CAIGlobalAICallback(const SSkirmishAICallback* _sAICallback, int _skirmishAIId):
+	IGlobalAICallback(),
+	sAICallback(_sAICallback),
+	skirmishAIId(_skirmishAIId)
+{
+}
+
 
 
 springLegacyAI::IAICallback* springLegacyAI::CAIGlobalAICallback::GetAICallback() {
-
-	if (wrappedAICallback == NULL) {
-		wrappedAICallback = new CAIAICallback(skirmishAIId, sAICallback);
+	if (wrappedAICallback.get() == nullptr) {
+		wrappedAICallback.reset(new CAIAICallback(skirmishAIId, sAICallback));
 	}
 
-	return wrappedAICallback;
+	return (wrappedAICallback.get());
 }
 
 springLegacyAI::IAICheats* springLegacyAI::CAIGlobalAICallback::GetCheatInterface() {
-
-	if (wrappedAICheats == NULL) {
+	if (wrappedAICheats.get() == nullptr) {
 		// to initialize
-		this->GetAICallback();
-		wrappedAICheats =
-				new CAIAICheats(skirmishAIId, sAICallback, wrappedAICallback);
+		GetAICallback();
+
+		wrappedAICheats.reset(new CAIAICheats(skirmishAIId, sAICallback, wrappedAICallback.get()));
 	}
 
-	return wrappedAICheats;
+	return (wrappedAICheats.get());
 }
 
-const SSkirmishAICallback* springLegacyAI::CAIGlobalAICallback::GetInnerCallback() const {
-	return sAICallback;
-}

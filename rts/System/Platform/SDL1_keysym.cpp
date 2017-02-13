@@ -2,36 +2,11 @@
 
 #include "SDL1_keysym.h"
 #include <SDL_keycode.h>
-#include <unordered_map>
 
+#include "System/Log/ILog.h"
+#include "System/UnorderedMap.hpp"
 
-template<typename First, typename Second>
-class unordered_bimap {
-public:
-	typedef std::unordered_map<First, Second> first_type;
-	typedef std::unordered_map<Second, First> second_type;
-
-	first_type const& first() const { return first_; }
-	second_type const& second() const { return second_; }
-
-	unordered_bimap(const std::initializer_list<std::pair<const First, Second>> list)
-		: first_(list)
-	{
-		second_.reserve(list.size());
-		for (const auto& pair: list) {
-			if (second_.find(pair.second) == second_.end()) {
-				second_[pair.second] = pair.first;
-			}
-		}
-	}
-
-private:
-	const first_type first_;
-	      second_type second_;
-};
-
-
-static const unordered_bimap<int, int> SDL_keysym_bimap = {
+static const spring::unordered_bimap<int, int> SDL_keysym_bimap = {
 	{SDLK_UNKNOWN, 0},
 
 	{SDLK_RETURN, 13},
@@ -288,6 +263,7 @@ int SDL21_keysyms(const int SDL2_keycode)
 	auto it = SDL_keysym_bimap.first().find(SDL2_keycode);
 	if (it != SDL_keysym_bimap.first().end())
 		return it->second;
+	LOG_L(L_DEBUG, "Cannot translate SDL2 keycode to SDL1 keycode: %d", SDL2_keycode);
 	return 0;
 }
 
@@ -297,6 +273,7 @@ int SDL12_keysyms(const int SDL1_keycode)
 	auto it = SDL_keysym_bimap.second().find(SDL1_keycode);
 	if (it != SDL_keysym_bimap.second().end())
 		return it->second;
+	LOG_L(L_DEBUG, "Cannot translate SDL1 keycode to SDL2 keycode: %d", SDL1_keycode);
 	return 0;
 }
 

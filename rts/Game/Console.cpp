@@ -6,56 +6,49 @@
 #include "System/Log/ILog.h"
 #include "Action.h"
 
-#include <assert.h>
+#include <cassert>
 
 
 void CommandReceiver::RegisterAction(const std::string& name)
 {
-	Console::Instance().AddCommandReceiver(name, this);
+	commandConsole.AddCommandReceiver(name, this);
 }
 
-Console& Console::Instance()
+
+CommandConsole& CommandConsole::Instance()
 {
-	static Console myInstance;
+	// commandMap gets cleared by CGame, so this is fine wrt. reloading
+	static CommandConsole myInstance;
 	return myInstance;
 }
 
-void Console::AddCommandReceiver(const std::string& name, CommandReceiver* rec)
+void CommandConsole::AddCommandReceiver(const std::string& name, CommandReceiver* rec)
 {
 	if (commandMap.find(name) != commandMap.end()) {
 		LOG_L(L_WARNING, "Overwriting command: %s", name.c_str());
 	}
+
 	commandMap[name] = rec;
 }
 
-bool Console::ExecuteAction(const Action& action)
+bool CommandConsole::ExecuteAction(const Action& action)
 {
-	if (action.command == "commands")
-	{
+	if (action.command == "commands") {
 		LOG("Registered commands:");
-		std::map<const std::string, CommandReceiver*>::const_iterator cri;
-		for (cri = commandMap.begin(); cri != commandMap.end(); ++cri)
-		{
+
+		for (auto cri = commandMap.cbegin(); cri != commandMap.cend(); ++cri) {
 			LOG("%s", cri->first.c_str());
 		}
+
 		return true;
 	}
 
-	std::map<const std::string, CommandReceiver*>::iterator cri = commandMap.find(action.command);
-	if (cri == commandMap.end()) {
+	const auto cri = commandMap.find(action.command);
+
+	if (cri == commandMap.end())
 		return false;
-	} else {
-		cri->second->PushAction(action);
-		return true;
-	}
-}
 
-
-Console::Console()
-{
-}
-
-Console::~Console()
-{
+	cri->second->PushAction(action);
+	return true;
 }
 

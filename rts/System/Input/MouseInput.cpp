@@ -28,7 +28,7 @@
 #include "Rendering/GL/FBO.h"
 #include "System/maindefines.h"
 
-#include <boost/bind.hpp>
+#include <functional>
 #include <SDL_events.h>
 #include <SDL_syswm.h>
 
@@ -38,7 +38,13 @@ IMouseInput* mouseInput = NULL;
 
 IMouseInput::IMouseInput()
 {
-	inputCon = input.AddHandler(boost::bind(&IMouseInput::HandleSDLMouseEvent, this, _1));
+	inputCon = input.AddHandler(std::bind(&IMouseInput::HandleSDLMouseEvent, this, std::placeholders::_1));
+}
+
+
+IMouseInput::~IMouseInput()
+{
+	inputCon.disconnect();
 }
 
 

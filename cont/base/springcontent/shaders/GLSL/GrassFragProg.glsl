@@ -53,7 +53,8 @@ void main() {
 	gl_FragColor.a   = matColor.a * gl_Color.a;
 
 #ifdef HAVE_SHADOWS
-	float shadowCoeff = clamp(shadow2DProj(shadowMap, shadowTexCoords).a + groundShadowDensity, 0., 1.);
+	float shadowCoeff = mix(1.0, shadow2DProj(shadowMap, shadowTexCoords).r, groundShadowDensity);
+
 	gl_FragColor.rgb *= mix(ambientLightColor, vec3(1.0), shadowCoeff);
 #endif
 

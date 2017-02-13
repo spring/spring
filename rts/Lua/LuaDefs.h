@@ -3,9 +3,10 @@
 #ifndef LUA_DEFS_H
 #define LUA_DEFS_H
 
-#include <map>
+#include <cassert>
 #include <string>
-#include <assert.h>
+
+#include "System/UnorderedMap.hpp"
 
 enum DataType {
 	INT_TYPE,
@@ -23,21 +24,23 @@ typedef int (*AccessFunc)(lua_State* L, const void* data);
 
 struct DataElement {
 	public:
-		DataElement() : type(ERROR_TYPE), offset(0), func(NULL) {}
+		DataElement()
+		: type(ERROR_TYPE), offset(0), func(NULL), deprecated(true) {}
 		DataElement(DataType t)
-		: type(t), offset(0), func(NULL) {}
+		: type(t), offset(0), func(NULL), deprecated(false) {}
 		DataElement(DataType t, int o)
-		: type(t), offset(o), func(NULL) {}
-		DataElement(DataType t, int o, AccessFunc f)
-		: type(t), offset(o), func(f) {}
+		: type(t), offset(o), func(NULL), deprecated(false) {}
+		DataElement(DataType t, int o, AccessFunc f, bool d=false)
+		: type(t), offset(o), func(f), deprecated(d) {}
 	public:
 		DataType type;
 		int offset;
 		AccessFunc func;
+		bool deprecated;
 };
 
 
-typedef std::map<std::string, DataElement> ParamMap;
+typedef spring::unordered_map<std::string, DataElement> ParamMap;
 
 
 namespace {
@@ -46,12 +49,12 @@ namespace {
 		assert(valid_type);
 		return ERROR_TYPE;
 	}
-	DataType GetDataType(unsigned)    { return INT_TYPE; }
-	DataType GetDataType(int)         { return INT_TYPE; }
-	DataType GetDataType(bool)        { return BOOL_TYPE; }
-	DataType GetDataType(float)       { return FLOAT_TYPE; }
-	DataType GetDataType(const std::string&) { return STRING_TYPE; }
-};
+	template<> DataType GetDataType(unsigned)           { return INT_TYPE; }
+	template<> DataType GetDataType(int)                { return INT_TYPE; }
+	template<> DataType GetDataType(bool)               { return BOOL_TYPE; }
+	template<> DataType GetDataType(float)              { return FLOAT_TYPE; }
+	template<> DataType GetDataType(std::string)        { return STRING_TYPE; }
+}
 
 #define ADDRESS(name) ((const char *)&name)
 
@@ -71,9 +74,43 @@ namespace {
 #define ADD_FUNCTION(lua, cpp, func) \
 	paramMap[lua] = DataElement(FUNCTION_TYPE, ADDRESS(cpp) - start, func)
 
+#define ADD_DEPRECATED_FUNCTION(lua, cpp, func) \
+	paramMap[lua] = DataElement(FUNCTION_TYPE, ADDRESS(cpp) - start, func, true)
+
 // keys added through this macro will generate
 // (non-fatal) ERROR_TYPE warnings if indexed
 #define ADD_DEPRECATED_LUADEF_KEY(lua) \
 	paramMap[lua] = DataElement();
+
+
+
+
+#define DECL_LOAD_HANDLER(HandlerType, HandlerInstance)     \
+	bool HandlerType::LoadHandler() {                       \
+		{                                                   \
+			std::lock_guard<spring::mutex> lk(m_singleton);  \
+                                                            \
+			if (HandlerInstance != NULL)                    \
+				return (HandlerInstance->IsValid());        \
+                                                            \
+			HandlerInstance = new HandlerType();            \
+			return (HandlerInstance->IsValid());            \
+		}                                                   \
+	}
+
+#define DECL_FREE_HANDLER(HandlerType, HandlerInstance)  \
+	bool HandlerType::FreeHandler() {                    \
+		std::lock_guard<spring::mutex> lk(m_singleton);   \
+                                                         \
+		if (HandlerInstance == NULL)                     \
+			return false;                                \
+                                                         \
+		auto* inst = HandlerInstance;                    \
+		HandlerInstance = NULL;                          \
+		inst->KillLua(true);                             \
+		delete inst;                                     \
+		return true;                                     \
+	}
+
 
 #endif // LUA_DEFS_H

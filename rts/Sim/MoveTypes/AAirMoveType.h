@@ -4,7 +4,6 @@
 #define A_AIR_MOVE_TYPE_H_
 
 #include "MoveType.h"
-#include "Sim/Misc/AirBaseHandler.h"
 
 /**
  * Supposed to be an abstract class.
@@ -13,7 +12,7 @@
  */
 class AAirMoveType : public AMoveType
 {
-	CR_DECLARE(AAirMoveType);
+	CR_DECLARE(AAirMoveType)
 public:
 
 	enum AircraftState {
@@ -26,12 +25,6 @@ public:
 		AIRCRAFT_HOVERING
 	} aircraftState;
 
-	enum LandingPadState {
-		PAD_STATUS_FLYING  = 0,
-		PAD_STATUS_LANDING = 1,
-		PAD_STATUS_ARRIVED = 2,
-	} padStatus;
-
 	AAirMoveType(CUnit* unit);
 	virtual ~AAirMoveType();
 
@@ -42,20 +35,26 @@ public:
 	virtual void SetState(AircraftState state) {}
 	virtual AircraftState GetLandingState() const { return AIRCRAFT_LANDING; }
 
+	void SetWantedAltitude(float altitude);
+	void SetDefaultAltitude(float altitude);
+
+	bool HaveLandingPos() const { return (reservedLandingPos.x != -1.0f); }
+
+	void LandAt(float3 pos, float distanceSq);
+	void ClearLandingPos() { reservedLandingPos = -OnesVector; }
+	void UpdateLandingHeight();
+	void UpdateLanding();
+
 	bool CanApplyImpulse(const float3&) { return true; }
 	bool UseSmoothMesh() const;
-	int GetPadStatus() const { return padStatus; }
 
-	void ReservePad(CAirBaseHandler::LandingPad* lp);
-	void UnreservePad(CAirBaseHandler::LandingPad* lp);
 	void DependentDied(CObject* o);
-
-	CAirBaseHandler::LandingPad* GetReservedPad() { return reservedPad; }
 
 public:
 	/// goalpos to resume flying to after landing
 	float3 oldGoalPos;
 	float3 reservedLandingPos;
+	float landRadiusSq;
 
 	float wantedHeight;
 	/// to reset altitude back
@@ -73,18 +72,12 @@ public:
 
 protected:
 	void CheckForCollision();
-	bool CanLandOnPad(const float3& padPos) const;
-	bool HaveLandedOnPad(const float3& padPos);
-	bool MoveToRepairPad();
-	void UpdateFuel(bool slowUpdate = true);
 
 	/// unit found to be dangerously close to our path
 	CUnit* lastColWarning;
-	CAirBaseHandler::LandingPad* reservedPad;
 
 	/// 1=generally forward of us, 2=directly in path
 	int lastColWarningType;
-	int lastFuelUpdateFrame;
 };
 
 #endif // A_AIR_MOVE_TYPE_H_

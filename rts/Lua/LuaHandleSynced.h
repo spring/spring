@@ -3,13 +3,13 @@
 #ifndef LUA_HANDLE_SYNCED
 #define LUA_HANDLE_SYNCED
 
-#include <map>
 #include <string>
-using std::map;
+
 using std::string;
 
 #include "LuaHandle.h"
 #include "LuaRulesParams.h"
+#include "System/UnorderedMap.hpp"
 
 struct lua_State;
 class LuaSyncedCtrl;
@@ -98,7 +98,13 @@ class CSyncedLuaHandle : public CLuaHandle
 			float* newDamage,
 			float* impulseMult);
 
-		bool ShieldPreDamaged(const CProjectile*, const CWeapon*, const CUnit*, bool);
+		bool ShieldPreDamaged(
+			const CProjectile* projectile,
+			const CWeapon* shieldEmitter,
+			const CUnit* shieldCarrier,
+			bool bounceProjectile,
+			const CWeapon* beamEmitter,
+			const CUnit* beamCarrier);
 
 		bool SyncedActionFallback(const string& line, int playerID);
 
@@ -116,7 +122,7 @@ class CSyncedLuaHandle : public CLuaHandle
 	protected:
 		CLuaHandleSynced& base;
 
-		map<string, string> textCommands; // name, help
+		spring::unordered_map<string, string> textCommands; // name, help
 
 	private:
 		int origNextRef;
@@ -161,21 +167,19 @@ class CLuaHandleSynced
 		}
 
 		static CUnsyncedLuaHandle* GetUnsyncedHandle(lua_State* L) {
-			if (CLuaHandle::GetHandleSynced(L)) {
-				auto slh = CSyncedLuaHandle::GetSyncedHandle(L);
-				return &slh->base.unsyncedLuaHandle;
-			} else {
+			if (!CLuaHandle::GetHandleSynced(L))
 				return CUnsyncedLuaHandle::GetUnsyncedHandle(L);
-			}
+
+			auto slh = CSyncedLuaHandle::GetSyncedHandle(L);
+			return &slh->base.unsyncedLuaHandle;
 		}
 
 		static CSyncedLuaHandle* GetSyncedHandle(lua_State* L) {
-			if (CLuaHandle::GetHandleSynced(L)) {
+			if (CLuaHandle::GetHandleSynced(L))
 				return CSyncedLuaHandle::GetSyncedHandle(L);
-			} else {
-				auto ulh = CUnsyncedLuaHandle::GetUnsyncedHandle(L);
-				return &ulh->base.syncedLuaHandle;
-			}
+
+			auto ulh = CUnsyncedLuaHandle::GetUnsyncedHandle(L);
+			return &ulh->base.syncedLuaHandle;
 		}
 
 	protected:
@@ -186,11 +190,11 @@ class CLuaHandleSynced
 		void Init(const string& syncedFile, const string& unsyncedFile, const string& modes);
 
 		bool IsValid() const {
-			return syncedLuaHandle.IsValid() && unsyncedLuaHandle.IsValid();
+			return (syncedLuaHandle.IsValid() && unsyncedLuaHandle.IsValid());
 		}
-		void KillLua() {
-			syncedLuaHandle.KillLua();
-			unsyncedLuaHandle.KillLua();
+		void KillLua(bool inFreeHandler = false) {
+			syncedLuaHandle.KillLua(inFreeHandler);
+			unsyncedLuaHandle.KillLua(inFreeHandler);
 		}
 
 	#define SET_PERMISSION(name, type) \
@@ -225,13 +229,12 @@ class CLuaHandleSynced
 		CUnsyncedLuaHandle unsyncedLuaHandle;
 
 	public:
-		static const LuaRulesParams::Params&  GetGameParams() { return gameParams; }
-		static const LuaRulesParams::HashMap& GetGameParamsMap() { return gameParamsMap; }
+		static void ClearGameParams() { gameParams.clear(); }
+		static const LuaRulesParams::Params& GetGameParams() { return gameParams; }
 
 	private:
 		//FIXME: add to CREG?
 		static LuaRulesParams::Params  gameParams;
-		static LuaRulesParams::HashMap gameParamsMap;
 		friend class LuaSyncedCtrl;
 };
 

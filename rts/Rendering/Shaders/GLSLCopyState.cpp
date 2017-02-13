@@ -5,7 +5,6 @@
 #include "Rendering/GL/myGL.h"
 #include "System/Log/ILog.h"
 #include "System/Util.h"
-#include <map>
 
 
 #define LOG_SECTION_SHADER "Shader"
@@ -38,7 +37,7 @@ enum {
 	FLOAT_MAT4,
 	ATOMIC
 };
-std::map<GLenum, int> bindingType;
+spring::unordered_map<GLenum, int> bindingType;
 
 static void CreateBindingTypeMap()
 {
@@ -166,9 +165,9 @@ static void CreateBindingTypeMap()
 DO_ONCE(CreateBindingTypeMap)
 
 
-static void CopyShaderState_Uniforms(GLuint newProgID, GLuint oldProgID, std::unordered_map<std::size_t, Shader::UniformState, fast_hash>* uniformStates)
+static void CopyShaderState_Uniforms(GLuint newProgID, GLuint oldProgID, spring::unordered_map<std::size_t, Shader::UniformState, fast_hash>* uniformStates)
 {
-	GLsizei numUniforms, maxUniformNameLength;
+	GLsizei numUniforms, maxUniformNameLength = 0;
 	glGetProgramiv(newProgID, GL_ACTIVE_UNIFORMS, &numUniforms);
 	glGetProgramiv(newProgID, GL_ACTIVE_UNIFORM_MAX_LENGTH, &maxUniformNameLength);
 
@@ -202,19 +201,23 @@ static void CopyShaderState_Uniforms(GLuint newProgID, GLuint oldProgID, std::un
 			oldUniformState = &it->second;
 		} else {
 			// Uniform not found in state tracker, try to read it from old shader object
-			//oldUniformState = &(uniformStates->emplace(hash, name).first->second);
-			oldUniformState = &(uniformStates->insert(std::pair<size_t, Shader::UniformState>(hash, Shader::UniformState(name))).first->second);
+			oldUniformState = &(uniformStates->emplace(hash, name).first->second);
 		}
 		oldUniformState->SetLocation(newLoc);
 
 		// Check if we got data we can use to initialize the uniform
 		if (oldUniformState->IsUninit()) {
+			if (oldProgID == 0) {
+				oldLoc = -1;
+				continue;
+			}
 			oldLoc = glGetUniformLocation(oldProgID, &name[0]);
 
 			// No old data found, so we cannot initialize the uniform
 			if (oldLoc < 0)
 				continue;
-			//FIXME read data from old shader save data _in new uniformState_?
+
+			//FIXME read data from old shader & save data in _new_ uniformState?
 		}
 
 		// Initialize the uniform with previous data
@@ -257,11 +260,12 @@ static void CopyShaderState_Uniforms(GLuint newProgID, GLuint oldProgID, std::un
 			HANDLE_MATTYPE(FLOAT_MAT, 3, fv, GLfloat)
 			HANDLE_MATTYPE(FLOAT_MAT, 4, fv, GLfloat)
 
-			/*case ATOMIC: {
-				GLint binding;
+			case ATOMIC: {
+				assert(false);
+				/*GLint binding;
 				glGetActiveAtomicCounterBufferiv(oldProgID, i, GL_ATOMIC_COUNTER_BUFFER_BINDING, &binding);
-				glUniform1f(newLoc, 1, binding);
-			} break;*/
+				glUniform1f(newLoc, 1, binding);*/
+			} break;
 
 			default:
 				LOG_L(L_WARNING, "Unknown GLSL uniform \"%s\" has unknown vartype \"%X\"", name.c_str(), type);
@@ -277,7 +281,7 @@ static void CopyShaderState_UniformBlocks(GLuint newProgID, GLuint oldProgID)
 	if (!GLEW_ARB_uniform_buffer_object)
 		return;
 
-	GLsizei numUniformBlocks, maxNameLength;
+	GLint numUniformBlocks, maxNameLength = 0;
 	glGetProgramiv(oldProgID, GL_ACTIVE_UNIFORM_BLOCKS, &numUniformBlocks);
 	glGetProgramiv(oldProgID, GL_ACTIVE_UNIFORM_BLOCK_MAX_NAME_LENGTH, &maxNameLength);
 
@@ -306,9 +310,49 @@ static void CopyShaderState_UniformBlocks(GLuint newProgID, GLuint oldProgID)
 }
 
 
+static void CopyShaderState_ShaderStorage(GLuint newProgID, GLuint oldProgID)
+{
+#ifdef GL_ARB_program_interface_query
+	if (!GLEW_ARB_program_interface_query)
+		return;
+
+	GLint numUniformBlocks, maxNameLength = 0;
+	glGetProgramInterfaceiv(oldProgID, GL_SHADER_STORAGE_BLOCK, GL_ACTIVE_RESOURCES, &numUniformBlocks);
+	glGetProgramInterfaceiv(oldProgID, GL_SHADER_STORAGE_BLOCK, GL_MAX_NAME_LENGTH, &maxNameLength);
+
+	if (maxNameLength <= 0)
+		return;
+
+	std::string name(maxNameLength, 0);
+	for (int i = 0; i < numUniformBlocks; ++i) {
+		GLsizei nameLength = 0;
+		glGetProgramResourceName(oldProgID, GL_SHADER_STORAGE_BLOCK, i, maxNameLength, &nameLength, &name[0]);
+		name[maxNameLength - 1] = 0;
+
+		if (nameLength == 0)
+			continue;
+
+		GLuint oldLoc = glGetProgramResourceIndex(oldProgID, GL_SHADER_STORAGE_BLOCK, &name[0]);
+		GLuint newLoc = glGetProgramResourceIndex(newProgID, GL_SHADER_STORAGE_BLOCK, &name[0]);
+
+		if (oldLoc == GL_INVALID_INDEX || newLoc == GL_INVALID_INDEX)
+			continue;
+
+		GLint value;
+		constexpr GLenum props[] = {GL_BUFFER_BINDING};
+		glGetProgramResourceiv(oldProgID,
+			GL_SHADER_STORAGE_BLOCK, oldLoc,
+			1, props,
+			1, nullptr, &value);
+		glShaderStorageBlockBinding(newProgID, newLoc, value);
+	}
+#endif
+}
+
+
 static void CopyShaderState_Attributes(GLuint newProgID, GLuint oldProgID)
 {
-	GLsizei numAttributes, maxNameLength;
+	GLsizei numAttributes, maxNameLength = 0;
 	glGetProgramiv(oldProgID, GL_ACTIVE_ATTRIBUTES, &numAttributes);
 	glGetProgramiv(oldProgID, GL_ACTIVE_ATTRIBUTE_MAX_LENGTH, &maxNameLength);
 
@@ -343,12 +387,12 @@ static void CopyShaderState_TransformFeedback(GLuint newProgID, GLuint oldProgID
 	if (!GLEW_ARB_transform_feedback3)
 		return;
 
-	GLint bufferMode, numVaryings, maxNameLength;
+	GLint bufferMode, numVaryings = 0, maxNameLength = 0;
 	glGetProgramiv(oldProgID, GL_TRANSFORM_FEEDBACK_BUFFER_MODE, &bufferMode);
 	glGetProgramiv(oldProgID, GL_TRANSFORM_FEEDBACK_VARYINGS, &numVaryings);
 	glGetProgramiv(oldProgID, GL_TRANSFORM_FEEDBACK_VARYING_MAX_LENGTH, &maxNameLength);
 
-	if(!numVaryings)
+	if(!numVaryings || maxNameLength <= 0)
 		return;
 
 	std::vector<std::string> varyings(numVaryings);
@@ -421,14 +465,18 @@ static void CopyShaderState_Geometry(GLuint newProgID, GLuint oldProgID)
 #endif
 
 namespace Shader {
-	void GLSLCopyState(GLuint newProgID, GLuint oldProgID, std::unordered_map<std::size_t, UniformState, fast_hash>* uniformStates)
+	void GLSLCopyState(GLuint newProgID, GLuint oldProgID, spring::unordered_map<std::size_t, UniformState, fast_hash>* uniformStates)
 	{
 	#if !defined(HEADLESS)
 		CopyShaderState_Uniforms(newProgID, oldProgID, uniformStates);
-		CopyShaderState_UniformBlocks(newProgID, oldProgID);
-		CopyShaderState_Attributes(newProgID, oldProgID);
-		CopyShaderState_TransformFeedback(newProgID, oldProgID);
-		CopyShaderState_Geometry(newProgID, oldProgID);
+
+		if (oldProgID != 0) {
+			CopyShaderState_UniformBlocks(newProgID, oldProgID);
+			CopyShaderState_ShaderStorage(newProgID, oldProgID);
+			CopyShaderState_Attributes(newProgID, oldProgID);
+			CopyShaderState_TransformFeedback(newProgID, oldProgID);
+			CopyShaderState_Geometry(newProgID, oldProgID);
+		}
 	#endif
 	}
 }

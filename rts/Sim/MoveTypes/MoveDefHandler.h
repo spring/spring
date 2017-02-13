@@ -4,19 +4,19 @@
 #define MOVEDEF_HANDLER_H
 
 #include <vector>
-#include <map>
 #include <string>
 
 #include "System/float3.h"
+#include "System/UnorderedMap.hpp"
 #include "System/creg/creg_cond.h"
 
 class MoveDefHandler;
 class CSolidObject;
 class LuaTable;
 
-#pragma pack(push, 1)
+
 struct MoveDef {
-	CR_DECLARE_STRUCT(MoveDef);
+	CR_DECLARE_STRUCT(MoveDef)
 
 	MoveDef();
 	MoveDef(const LuaTable& moveDefTable, int moveDefID);
@@ -25,7 +25,7 @@ struct MoveDef {
 		const CSolidObject* collider,
 		const int xTestMoveSqr,
 		const int zTestMoveSqr,
-		const float3& testMoveDir = ZeroVector,
+		const float3 testMoveDir,
 		bool testTerrain = true,
 		bool testObjects = true,
 		bool centerOnly = false,
@@ -34,14 +34,18 @@ struct MoveDef {
 	) const;
 	bool TestMoveSquare(
 		const CSolidObject* collider,
-		const float3& testMovePos,
-		const float3& testMoveDir = ZeroVector,
+		const float3 testMovePos,
+		const float3 testMoveDir,
 		bool testTerrain = true,
 		bool testObjects = true,
 		bool centerOnly = false,
 		float* minSpeedMod = NULL,
 		int* maxBlockBit = NULL
 	) const;
+
+	// aircraft and buildings defer to UnitDef::floatOnWater
+	bool FloatOnWater() const { return (speedModClass == MoveDef::Hover || speedModClass == MoveDef::Ship); }
+
 	float GetDepthMod(const float height) const;
 	unsigned int GetCheckSum() const;
 
@@ -79,6 +83,7 @@ struct MoveDef {
 
 	std::string name;
 
+#pragma pack(push, 1)
 	SpeedModClass speedModClass;
 	TerrainClass terrainClass;
 
@@ -129,14 +134,15 @@ struct MoveDef {
 	/// do we leave heat and avoid any left by others?
 	bool heatMapping;
 	bool flowMapping;
-};
 #pragma pack(pop)
+};
+
 
 
 class LuaParser;
 class MoveDefHandler
 {
-	CR_DECLARE_STRUCT(MoveDefHandler);
+	CR_DECLARE_STRUCT(MoveDefHandler)
 public:
 	MoveDefHandler(LuaParser* defsParser);
 
@@ -148,7 +154,7 @@ public:
 
 private:
 	std::vector<MoveDef> moveDefs;
-	std::map<std::string, int> moveDefNames;
+	spring::unordered_map<std::string, int> moveDefNames;
 
 	unsigned int checksum;
 };

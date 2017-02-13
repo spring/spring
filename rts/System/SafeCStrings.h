@@ -28,7 +28,7 @@ int safe_strcat(char* destination, size_t destinationSize, const char* source);
 ///@}
 
 #ifdef	__cplusplus
-} // extern "C"
+} /* extern "C" */
 #endif
 
-#endif // SAFE_C_STRINGS_H
+#endif /* SAFE_C_STRINGS_H */

@@ -4,20 +4,21 @@
 #define LASER_PROJECTILE_H
 
 #include "WeaponProjectile.h"
-#include "Sim/Misc/DamageArray.h"
 
 class CLaserProjectile : public CWeaponProjectile
 {
-	CR_DECLARE(CLaserProjectile);
+	CR_DECLARE_DERIVED(CLaserProjectile)
 public:
 	CLaserProjectile(const ProjectileParams& params);
 
-	void Draw();
-	void Update();
-	void Collision(CUnit* unit);
-	void Collision(CFeature* feature);
-	void Collision();
-	int ShieldRepulse(CPlasmaRepulser* shield, float3 shieldPos, float shieldForce, float shieldMaxSpeed);
+	void Draw() override;
+	void Update() override;
+	void Collision(CUnit* unit) override;
+	void Collision(CFeature* feature) override;
+	void Collision() override;
+	int ShieldRepulse(const float3& shieldPos, float shieldForce, float shieldMaxSpeed) override;
+
+	virtual int GetProjectilesCount() const override;
 
 private:
 	void UpdateIntensity();
@@ -26,6 +27,8 @@ private:
 	void CollisionCommon(const float3& oldPos);
 
 private:
+	CLaserProjectile() { }
+
 	float speedf;
 
 	float maxLength;

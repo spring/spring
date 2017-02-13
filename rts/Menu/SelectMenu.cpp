@@ -3,10 +3,9 @@
 #include "SelectMenu.h"
 
 #include <SDL_keycode.h>
-#include <boost/bind.hpp>
+#include <functional>
 #include <sstream>
 #include <stack>
-#include <boost/cstdint.hpp>
 
 #include "SelectionWidget.h"
 #include "System/AIScriptHandler.h"
@@ -58,27 +57,27 @@ public:
 		HorizontalLayout* input = new HorizontalLayout(wndLayout);
 		/*agui::TextElement* label = */new agui::TextElement("Address:", input); // will be deleted in input
 		address = new agui::LineEdit(input);
-		address->DefaultAction.connect(boost::bind(&ConnectWindow::Finish, this, true));
+		address->DefaultAction.connect(std::bind(&ConnectWindow::Finish, this, true));
 		address->SetFocus(true);
 		address->SetContent(configHandler->GetString("address"));
 		HorizontalLayout* buttons = new HorizontalLayout(wndLayout);
 		Button* connect = new Button("Connect", buttons);
-		connect->Clicked.connect(boost::bind(&ConnectWindow::Finish, this, true));
+		connect->Clicked.connect(std::bind(&ConnectWindow::Finish, this, true));
 		Button* close = new Button("Close", buttons);
-		close->Clicked.connect(boost::bind(&ConnectWindow::Finish, this, false));
+		close->Clicked.connect(std::bind(&ConnectWindow::Finish, this, false));
 		GeometryChange();
 	}
 
-	boost::signals2::signal<void (std::string)> Connect;
+	slimsig::signal<void (std::string)> Connect;
 	agui::LineEdit* address;
 
 private:
 	void Finish(bool connect)
 	{
 		if (connect)
-			Connect(address->GetContent());
+			Connect.emit(address->GetContent());
 		else
-			WantClose();
+			WantClose.emit();
 	};
 };
 
@@ -95,32 +94,32 @@ public:
 		HorizontalLayout* input = new HorizontalLayout(wndLayout);
 		/*agui::TextElement* value_label = */new agui::TextElement("Value:", input); // will be deleted in input
 		value = new agui::LineEdit(input);
-		value->DefaultAction.connect(boost::bind(&SettingsWindow::Finish, this, true));
+		value->DefaultAction.connect(std::bind(&SettingsWindow::Finish, this, true));
 		value->SetFocus(true);
 		if (configHandler->IsSet(name))
 			value->SetContent(configHandler->GetString(name));
 		HorizontalLayout* buttons = new HorizontalLayout(wndLayout);
 		Button* ok = new Button("OK", buttons);
-		ok->Clicked.connect(boost::bind(&SettingsWindow::Finish, this, true));
+		ok->Clicked.connect(std::bind(&SettingsWindow::Finish, this, true));
 		Button* close = new Button("Cancel", buttons);
-		close->Clicked.connect(boost::bind(&SettingsWindow::Finish, this, false));
+		close->Clicked.connect(std::bind(&SettingsWindow::Finish, this, false));
 		GeometryChange();
 	}
 
-	boost::signals2::signal<void (std::string)> OK;
+	slimsig::signal<void (std::string)> OK;
 	agui::LineEdit* value;
 
 private:
 	void Finish(bool set)
 	{
 		if (set)
-			OK(title + " = " + value->GetContent());
+			OK.emit(title + " = " + value->GetContent());
 		else
-			WantClose();
+			WantClose.emit();
 	};
 };
 
-SelectMenu::SelectMenu(boost::shared_ptr<ClientSetup> setup)
+SelectMenu::SelectMenu(std::shared_ptr<ClientSetup> setup)
 : GuiElement(NULL)
 , clientSetup(setup)
 , conWindow(NULL)
@@ -134,15 +133,14 @@ SelectMenu::SelectMenu(boost::shared_ptr<ClientSetup> setup)
 	{ // GUI stuff
 		agui::Picture* background = new agui::Picture(this);;
 		{
-			const std::string archive = archiveScanner->ArchiveFromName(configHandler->GetString("MenuArchive"));
-			const std::string archivePath = archiveScanner->GetArchivePath(archive)+archive;
-			vfsHandler->AddArchive(archivePath, false);
+			const std::string archiveName = configHandler->GetString("MenuArchive");
+			vfsHandler->AddArchive(archiveName, false);
 			const std::vector<std::string> files = CFileHandler::FindFiles("bitmaps/ui/background/", "*");
 			if (!files.empty()) {
 				//TODO: select by resolution / aspect ratio with fallback image
-				background->Load(files[gu->RandInt() % files.size()]);
+				background->Load(files[guRNG.NextInt() % files.size()]);
 			}
-			vfsHandler->RemoveArchive(archivePath);
+			vfsHandler->RemoveArchive(archiveName);
 		}
 		selw = new SelectionWidget(this);
 		agui::VerticalLayout* menu = new agui::VerticalLayout(this);
@@ -151,17 +149,17 @@ SelectMenu::SelectMenu(boost::shared_ptr<ClientSetup> setup)
 		menu->SetBorder(1.2f);
 		/*agui::TextElement* title = */new agui::TextElement("Spring", menu); // will be deleted in menu
 		Button* single = new Button("Test the Game", menu);
-		single->Clicked.connect(boost::bind(&SelectMenu::Single, this));
+		single->Clicked.connect(std::bind(&SelectMenu::Single, this));
 
 		userSetting = configHandler->GetString("LastSelectedSetting");
 		Button* editsettings = new Button("Edit settings", menu);
-		editsettings->Clicked.connect(boost::bind(&SelectMenu::ShowSettingsList, this));
+		editsettings->Clicked.connect(std::bind(&SelectMenu::ShowSettingsList, this));
 
 		Button* direct = new Button("Direct connect", menu);
-		direct->Clicked.connect(boost::bind(&SelectMenu::ShowConnectWindow, this, true));
+		direct->Clicked.connect(std::bind(&SelectMenu::ShowConnectWindow, this, true));
 
 		Button* quit = new Button("Quit", menu);
-		quit->Clicked.connect(boost::bind(&SelectMenu::Quit, this));
+		quit->Clicked.connect(std::bind(&SelectMenu::Quit, this));
 		background->GeometryChange();
 	}
 
@@ -179,7 +177,7 @@ SelectMenu::~SelectMenu()
 
 bool SelectMenu::Draw()
 {
-	spring_msecs(10).sleep();
+	spring_msecs(10).sleep(true);
 	ClearScreen();
 	agui::gui->Draw();
 
@@ -188,38 +186,29 @@ bool SelectMenu::Draw()
 
 void SelectMenu::Single()
 {
-	static bool once = false;
-	if (selw->userMod == SelectionWidget::NoModSelect)
-	{
+	if (selw->userMod == SelectionWidget::NoModSelect) {
 		selw->ShowModList();
-	}
-	else if (selw->userMap == SelectionWidget::NoMapSelect)
-	{
+	} else if (selw->userMap == SelectionWidget::NoMapSelect) {
 		selw->ShowMapList();
-	}
-	else if (selw->userScript == SelectionWidget::NoScriptSelect)
-	{
+	} else if (selw->userScript == SelectionWidget::NoScriptSelect) {
 		selw->ShowScriptList();
 	}
-	else if (!once) // in case of double-click
-	{
+	else if (pregame == NULL) {
+		// in case of double-click
 		if (selw->userScript == SelectionWidget::SandboxAI) {
 			selw->userScript.clear();
 		}
-		once = true;
 
 		pregame = new CPreGame(clientSetup);
 		pregame->LoadSetupscript(StartScriptGen::CreateDefaultSetup(selw->userMap, selw->userMod, selw->userScript, clientSetup->myPlayerName));
-		return agui::gui->RmElement(this);
-		//delete this;
+		return (agui::gui->RmElement(this));
 	}
 }
 
 void SelectMenu::Quit()
 {
 	gu->globalQuit = true;
-	return agui::gui->RmElement(this);
-	//delete this;
+	return (agui::gui->RmElement(this));
 }
 
 void SelectMenu::ShowConnectWindow(bool show)
@@ -227,8 +216,8 @@ void SelectMenu::ShowConnectWindow(bool show)
 	if (show && !conWindow)
 	{
 		conWindow = new ConnectWindow();
-		conWindow->Connect.connect(boost::bind(&SelectMenu::DirectConnect, this, _1));
-		conWindow->WantClose.connect(boost::bind(&SelectMenu::ShowConnectWindow, this, false));
+		conWindow->Connect.connect(std::bind(&SelectMenu::DirectConnect, this, std::placeholders::_1));
+		conWindow->WantClose.connect(std::bind(&SelectMenu::ShowConnectWindow, this, false));
 	}
 	else if (!show && conWindow)
 	{
@@ -246,8 +235,8 @@ void SelectMenu::ShowSettingsWindow(bool show, std::string name)
 			settingsWindow = NULL;
 		}
 		settingsWindow = new SettingsWindow(name);
-		settingsWindow->OK.connect(boost::bind(&SelectMenu::ShowSettingsWindow, this, false, _1));
-		settingsWindow->WantClose.connect(boost::bind(&SelectMenu::ShowSettingsWindow, this, false, ""));
+		settingsWindow->OK.connect(std::bind(&SelectMenu::ShowSettingsWindow, this, false, std::placeholders::_1));
+		settingsWindow->WantClose.connect(std::bind(&SelectMenu::ShowSettingsWindow, this, false, ""));
 	}
 	else if (!show && settingsWindow)
 	{
@@ -267,8 +256,8 @@ void SelectMenu::ShowSettingsList()
 {
 	if (!curSelect) {
 		curSelect = new ListSelectWnd("Select setting");
-		curSelect->Selected.connect(boost::bind(&SelectMenu::SelectSetting, this, _1));
-		curSelect->WantClose.connect(boost::bind(&SelectMenu::CleanWindow, this));
+		curSelect->Selected.connect(std::bind(&SelectMenu::SelectSetting, this, std::placeholders::_1));
+		curSelect->WantClose.connect(std::bind(&SelectMenu::CleanWindow, this));
 	}
 	curSelect->list->RemoveAllItems();
 	const std::map<std::string, std::string> &data = configHandler->GetData();
@@ -301,11 +290,12 @@ void SelectMenu::CleanWindow() {
 void SelectMenu::DirectConnect(const std::string& addr)
 {
 	configHandler->SetString("address", addr);
+
 	clientSetup->hostIP = addr;
 	clientSetup->isHost = false;
+
 	pregame = new CPreGame(clientSetup);
-	return agui::gui->RmElement(this);
-	//delete this;
+	return (agui::gui->RmElement(this));
 }
 
 bool SelectMenu::HandleEventSelf(const SDL_Event& ev)
@@ -313,7 +303,7 @@ bool SelectMenu::HandleEventSelf(const SDL_Event& ev)
 	switch (ev.type) {
 		case SDL_KEYDOWN: {
 			if (ev.key.keysym.sym == SDLK_ESCAPE) {
-				LOG("User exited");
+				LOG("[SelectMenu] user exited");
 				Quit();
 			} else if (ev.key.keysym.sym == SDLK_RETURN) {
 				Single();

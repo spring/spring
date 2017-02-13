@@ -4,7 +4,6 @@
 #define MOVETYPE_H
 
 #include "System/creg/creg_cond.h"
-#include "Sim/Misc/AirBaseHandler.h"
 #include "System/Object.h"
 #include "System/float3.h"
 
@@ -12,7 +11,7 @@ class CUnit;
 
 class AMoveType : public CObject
 {
-	CR_DECLARE(AMoveType);
+	CR_DECLARE(AMoveType)
 
 public:
 	AMoveType(CUnit* owner);
@@ -31,6 +30,7 @@ public:
 	virtual bool SetMemberValue(unsigned int memberHash, void* memberValue);
 
 	virtual void SetGoal(const float3& pos, float distance = 0.0f) { goalPos = pos; }
+	virtual bool IsMovingTowards(const float3& pos, float, bool) const { return (goalPos == pos && progressState == Active); }
 
 	// NOTE:
 	//     SetMaxSpeed is ONLY called by LuaSyncedMoveCtrl now
@@ -51,21 +51,19 @@ public:
 	virtual bool IsFlying() const { return false; }
 	virtual bool IsReversing() const { return false; }
 
-	virtual void ReservePad(CAirBaseHandler::LandingPad* lp) { /* AAirMoveType only */ }
-	virtual void UnreservePad(CAirBaseHandler::LandingPad* lp) { /* AAirMoveType only */ }
-	virtual CAirBaseHandler::LandingPad* GetReservedPad() { return NULL; }
-
-	bool WantsRepair() const;
-	bool WantsRefuel() const;
-
-	void SetRepairBelowHealth(float rbHealth) { repairBelowHealth = rbHealth; }
-
 	float GetMaxSpeed() const { return maxSpeed; }
 	float GetMaxSpeedDef() const { return maxSpeedDef; }
 	float GetMaxWantedSpeed() const { return maxWantedSpeed; }
-	float GetRepairBelowHealth() const { return repairBelowHealth; }
 	float GetManeuverLeash() const { return maneuverLeash; }
 
+	// The distance the unit will move before stopping,
+	// starting from given speed and applying maximum
+	// brake rate.
+	virtual float BrakingDistance(float speed, float rate) const {
+		const float time = speed / std::max(rate, 0.001f);
+		const float dist = 0.5f * rate * time * time;
+		return dist;
+	}
 	float CalcStaticTurnRadius() const;
 
 public:
@@ -90,7 +88,6 @@ protected:
 	float maxSpeedDef;         // default maximum speed owner can reach (as defined by its UnitDef, never changes)
 	float maxWantedSpeed;      // maximum speed (temporarily) set by a CMD_SET_WANTED_MAX_SPEED modifier command
 
-	float repairBelowHealth;
 	float maneuverLeash;       // maximum distance away a target can be and still be chased
 };
 

@@ -5,7 +5,6 @@
 
 #include <algorithm>
 #include <limits.h>
-#include <boost/regex.hpp>
 
 #include "lib/streflop/streflop_cond.h"
 
@@ -17,15 +16,14 @@
 #include "LuaUtils.h"
 
 #include "Game/GameVersion.h"
+#include "Sim/Misc/GlobalSynced.h" // gsRNG
 #include "System/Log/ILog.h"
 #include "System/FileSystem/FileHandler.h"
-#include "System/FileSystem/VFSHandler.h"
-#include "System/FileSystem/FileSystem.h"
 #include "System/Misc/SpringTime.h"
 #include "System/ScopedFPUSettings.h"
 #include "System/Util.h"
 
-LuaParser* LuaParser::currentParser = NULL;
+LuaParser* LuaParser::currentParser = nullptr;
 
 
 /******************************************************************************/
@@ -34,66 +32,60 @@ LuaParser* LuaParser::currentParser = NULL;
 //  LuaParser
 //
 
-LuaParser::LuaParser(const string& _fileName,
-                     const string& _fileModes,
-                     const string& _accessModes)
+LuaParser::LuaParser(const string& _fileName, const string& _fileModes, const string& _accessModes, const boolean& synced)
 : fileName(_fileName),
   fileModes(_fileModes),
-  textChunk(""),
   accessModes(_accessModes),
-  valid(false),
+
   initDepth(0),
   rootRef(LUA_NOREF),
   currentRef(LUA_NOREF),
+
+  valid(false),
   lowerKeys(true),
   lowerCppKeys(true)
 {
-	L = LUA_OPEN();
-
-	if (L != NULL) {
-		SetupEnv();
+	if ((L = LUA_OPEN()) != nullptr) {
+		SetupEnv(synced.b);
 	}
 }
 
-
-LuaParser::LuaParser(const string& _textChunk,
-                     const string& _accessModes)
+LuaParser::LuaParser(const string& _textChunk, const string& _accessModes, const boolean& synced)
 : fileName(""),
   fileModes(""),
   textChunk(_textChunk),
   accessModes(_accessModes),
-  valid(false),
+
   initDepth(0),
   rootRef(LUA_NOREF),
   currentRef(LUA_NOREF),
+
+  valid(false),
   lowerKeys(true),
   lowerCppKeys(true)
 {
-	L = LUA_OPEN();
-
-	if (L != NULL) {
-		SetupEnv();
+	if ((L = LUA_OPEN()) != nullptr) {
+		SetupEnv(synced.b);
 	}
 }
 
 
 LuaParser::~LuaParser()
 {
-	if (L != NULL) {
-		LUA_CLOSE(L); L = NULL;
-	}
-	set<LuaTable*>::iterator it;
-	for (it = tables.begin(); it != tables.end(); ++it) {
-		LuaTable& table = **it;
-		table.parser  = NULL;
-		table.L       = NULL;
-		table.isValid = false;
-		table.refnum  = LUA_NOREF;
+	if (L != nullptr)
+		LUA_CLOSE(&L);
+
+	// invalidate leftover tables if parser is destroyed first
+	for (LuaTable* table: tables) {
+		table->parser  = nullptr;
+		table->L       = nullptr;
+		table->isValid = false;
+		table->refnum  = LUA_NOREF;
 	}
 }
 
 
-void LuaParser::SetupEnv()
+void LuaParser::SetupEnv(bool synced)
 {
 	LUA_OPEN_LIB(L, luaopen_base);
 	LUA_OPEN_LIB(L, luaopen_math);
@@ -113,12 +105,17 @@ void LuaParser::SetupEnv()
 	lua_pushnil(L); lua_setglobal(L, "collectgarbage");
 	lua_pushnil(L); lua_setglobal(L, "newproxy"); // not sync-safe cause of __gc
 
-	// FIXME: replace "random" _as in_ LuaHandleSynced (can write your own for now), we cannot use the LHS one cause gs-> is not valid in LuaParser
-	//        using streflop's RNG is possible
-	lua_getglobal(L, "math");
-	lua_pushliteral(L, "random");     lua_pushnil(L); lua_rawset(L, -3);
-	lua_pushliteral(L, "randomseed"); lua_pushnil(L); lua_rawset(L, -3);
-	lua_pop(L, 1); // pop "math"
+	{
+		lua_getglobal(L, "math");
+		if (synced) {
+			LuaPushNamedCFunc(L, "random", Random);
+			LuaPushNamedCFunc(L, "randomseed", RandomSeed);
+		} else {
+			LuaPushNamedCFunc(L, "random", DummyRandom);
+			LuaPushNamedCFunc(L, "randomseed", DummyRandomSeed);
+		}
+		lua_pop(L, 1); // pop "math"
+	}
 
 	AddFunc("DontMessWithMyCase", DontMessWithMyCase);
 
@@ -162,6 +159,7 @@ bool LuaParser::Execute()
 
 	string code;
 	string codeLabel;
+
 	if (!textChunk.empty()) {
 		code = textChunk;
 		codeLabel = "text chunk";
@@ -171,26 +169,22 @@ bool LuaParser::Execute()
 		CFileHandler fh(fileName, fileModes);
 		if (!fh.LoadStringData(code)) {
 			errorLog = "could not open file: " + fileName;
-			LUA_CLOSE(L);
-			L = NULL;
+			LUA_CLOSE(&L);
 			return false;
 		}
 	}
 	else {
 		errorLog = "invalid format or empty file";
-		LUA_CLOSE(L);
-		L = NULL;
+		LUA_CLOSE(&L);
 		return false;
 	}
 
-	int error;
-	error = luaL_loadbuffer(L, code.c_str(), code.size(), codeLabel.c_str());
+	int error = luaL_loadbuffer(L, code.c_str(), code.size(), codeLabel.c_str());
+
 	if (error != 0) {
 		errorLog = lua_tostring(L, -1);
-		LOG_L(L_ERROR, "%i, %s, %s",
-		                error, codeLabel.c_str(), errorLog.c_str());
-		LUA_CLOSE(L);
-		L = NULL;
+		LOG_L(L_ERROR, "%i, %s, %s", error, codeLabel.c_str(), errorLog.c_str());
+		LUA_CLOSE(&L);
 		return false;
 	}
 
@@ -206,22 +200,19 @@ bool LuaParser::Execute()
 		errorLog = lua_tostring(L, -1);
 		LOG_L(L_ERROR, "%i, %s, %s",
 		                error, fileName.c_str(), errorLog.c_str());
-		LUA_CLOSE(L);
-		L = NULL;
+		LUA_CLOSE(&L);
 		return false;
 	}
 
 	if (!lua_istable(L, 1)) {
 		errorLog = "missing return table from " + fileName;
 		LOG_L(L_ERROR, "missing return table from %s", fileName.c_str());
-		LUA_CLOSE(L);
-		L = NULL;
+		LUA_CLOSE(&L);
 		return false;
 	}
 
-	if (lowerKeys) {
+	if (lowerKeys)
 		LuaUtils::LowerKeys(L, 1);
-	}
 
 	LuaUtils::CheckTableForNaNs(L, 1, fileName);
 
@@ -232,16 +223,8 @@ bool LuaParser::Execute()
 }
 
 
-void LuaParser::AddTable(LuaTable* tbl)
-{
-	tables.insert(tbl);
-}
-
-
-void LuaParser::RemoveTable(LuaTable* tbl)
-{
-	tables.erase(tbl);
-}
+void LuaParser::AddTable(LuaTable* tbl) { VectorInsertUnique(tables, tbl); }
+void LuaParser::RemoveTable(LuaTable* tbl) { VectorErase(tables, tbl); }
 
 
 LuaTable LuaParser::GetRoot()
@@ -254,7 +237,8 @@ LuaTable LuaParser::GetRoot()
 
 void LuaParser::PushParam()
 {
-	if (!IsValid() || (initDepth < 0)) { return; }
+	if (!IsValid() || (initDepth < 0))
+		return;
 	if (initDepth > 0) {
 		lua_rawset(L, -3);
 	} else {
@@ -265,7 +249,8 @@ void LuaParser::PushParam()
 
 void LuaParser::GetTable(const string& name, bool overwrite)
 {
-	if (!IsValid() || (initDepth < 0)) { return; }
+	if (!IsValid() || (initDepth < 0))
+		return;
 
 	lua_pushsstring(L, name);
 
@@ -287,14 +272,14 @@ void LuaParser::GetTable(const string& name, bool overwrite)
 
 void LuaParser::GetTable(int index, bool overwrite)
 {
-	if (!IsValid() || (initDepth < 0)) { return; }
+	if (!IsValid() || (initDepth < 0))
+		return;
 
 	lua_pushnumber(L, index);
 
 	if (overwrite) {
 		lua_newtable(L);
-	}
-	else {
+	} else {
 		lua_pushnumber(L, index);
 		lua_gettable(L, (initDepth == 0) ? LUA_GLOBALSINDEX : -3);
 		if (!lua_istable(L, -1)) {
@@ -309,7 +294,8 @@ void LuaParser::GetTable(int index, bool overwrite)
 
 void LuaParser::EndTable()
 {
-	if (!IsValid() || (initDepth < 0)) { return; }
+	if (!IsValid() || (initDepth < 0))
+		return;
 	assert(initDepth > 0);
 	initDepth--;
 	PushParam();
@@ -320,8 +306,13 @@ void LuaParser::EndTable()
 
 void LuaParser::AddFunc(const string& key, int (*func)(lua_State*))
 {
-	if (!IsValid() || (initDepth < 0)) { return; }
-	if (func == NULL) { return; }
+	if (!IsValid() || (initDepth < 0))
+		return;
+	if (func == nullptr)
+		return;
+
+	// can not use this; initDepth check in PushParam
+	// LuaPushNamedCFunc(L, key, func);
 	lua_pushsstring(L, key);
 	lua_pushcfunction(L, func);
 	PushParam();
@@ -330,7 +321,8 @@ void LuaParser::AddFunc(const string& key, int (*func)(lua_State*))
 
 void LuaParser::AddInt(const string& key, int value)
 {
-	if (!IsValid() || (initDepth < 0)) { return; }
+	if (!IsValid() || (initDepth < 0))
+		return;
 	lua_pushsstring(L, key);
 	lua_pushnumber(L, value);
 	PushParam();
@@ -339,7 +331,8 @@ void LuaParser::AddInt(const string& key, int value)
 
 void LuaParser::AddBool(const string& key, bool value)
 {
-	if (!IsValid() || (initDepth < 0)) { return; }
+	if (!IsValid() || (initDepth < 0))
+		return;
 	lua_pushsstring(L, key);
 	lua_pushboolean(L, value);
 	PushParam();
@@ -348,7 +341,8 @@ void LuaParser::AddBool(const string& key, bool value)
 
 void LuaParser::AddFloat(const string& key, float value)
 {
-	if (!IsValid() || (initDepth < 0)) { return; }
+	if (!IsValid() || (initDepth < 0))
+		return;
 	lua_pushsstring(L, key);
 	lua_pushnumber(L, value);
 	PushParam();
@@ -357,7 +351,8 @@ void LuaParser::AddFloat(const string& key, float value)
 
 void LuaParser::AddString(const string& key, const string& value)
 {
-	if (!IsValid() || (initDepth < 0)) { return; }
+	if (!IsValid() || (initDepth < 0))
+		return;
 	lua_pushsstring(L, key);
 	lua_pushsstring(L, value);
 	PushParam();
@@ -368,8 +363,11 @@ void LuaParser::AddString(const string& key, const string& value)
 
 void LuaParser::AddFunc(int key, int (*func)(lua_State*))
 {
-	if (!IsValid() || (initDepth < 0)) { return; }
-	if (func == NULL) { return; }
+	if (!IsValid() || (initDepth < 0))
+		return;
+	if (func == nullptr)
+		return;
+
 	lua_pushnumber(L, key);
 	lua_pushcfunction(L, func);
 	PushParam();
@@ -378,7 +376,8 @@ void LuaParser::AddFunc(int key, int (*func)(lua_State*))
 
 void LuaParser::AddInt(int key, int value)
 {
-	if (!IsValid() || (initDepth < 0)) { return; }
+	if (!IsValid() || (initDepth < 0))
+		return;
 	lua_pushnumber(L, key);
 	lua_pushnumber(L, value);
 	PushParam();
@@ -387,7 +386,8 @@ void LuaParser::AddInt(int key, int value)
 
 void LuaParser::AddBool(int key, bool value)
 {
-	if (!IsValid() || (initDepth < 0)) { return; }
+	if (!IsValid() || (initDepth < 0))
+		return;
 	lua_pushnumber(L, key);
 	lua_pushboolean(L, value);
 	PushParam();
@@ -396,7 +396,8 @@ void LuaParser::AddBool(int key, bool value)
 
 void LuaParser::AddFloat(int key, float value)
 {
-	if (!IsValid() || (initDepth < 0)) { return; }
+	if (!IsValid() || (initDepth < 0))
+		return;
 	lua_pushnumber(L, key);
 	lua_pushnumber(L, value);
 	PushParam();
@@ -405,7 +406,8 @@ void LuaParser::AddFloat(int key, float value)
 
 void LuaParser::AddString(int key, const string& value)
 {
-	if (!IsValid() || (initDepth < 0)) { return; }
+	if (!IsValid() || (initDepth < 0))
+		return;
 	lua_pushnumber(L, key);
 	lua_pushsstring(L, value);
 	PushParam();
@@ -420,37 +422,57 @@ void LuaParser::AddString(int key, const string& value)
 
 int LuaParser::TimeCheck(lua_State* L)
 {
-	if (!lua_isstring(L, 1) || !lua_isfunction(L, 2)) {
+	if (!lua_isstring(L, 1) || !lua_isfunction(L, 2))
 		luaL_error(L, "Invalid arguments to TimeCheck('string', func, ...)");
-	}
+
 	const string name = lua_tostring(L, 1);
 	lua_remove(L, 1);
+
 	const spring_time startTime = spring_gettime();
-	const int error = lua_pcall(L, lua_gettop(L) - 1, LUA_MULTRET, 0);
-	if (error != 0) {
+
+	if (lua_pcall(L, lua_gettop(L) - 1, LUA_MULTRET, 0) != 0) {
 		const string errmsg = lua_tostring(L, -1);
 		lua_pop(L, 1);
 		luaL_error(L, errmsg.c_str());
 	}
+
 	const spring_time endTime = spring_gettime();
-	const float elapsed = 1.0e-3f * (float)(spring_tomsecs(endTime - startTime));
-	LOG("%s %f", name.c_str(), elapsed);
+
+	LOG("%s %ldms", name.c_str(), (long int) spring_tomsecs(endTime - startTime));
 	return lua_gettop(L);
 }
 
 
 /******************************************************************************/
 
+// seeding makes little sense inside LuaParser execution
+int LuaParser::RandomSeed(lua_State* L) { return (DummyRandomSeed(L)); }
+int LuaParser::Random(lua_State* L)
+{
+	// both US and DS depend on LuaParser via MapParser, etc
+	#if (!defined(UNITSYNC) && !defined(DEDICATED))
+	lua_pushnumber(L, gsRNG.NextFloat());
+	return 1;
+	#else
+	return (DummyRandom(L));
+	#endif
+}
+
+int LuaParser::DummyRandomSeed(lua_State* L) { return 0; }
+int LuaParser::DummyRandom(lua_State* L) { return 0; }
+
+/******************************************************************************/
+
 int LuaParser::DirList(lua_State* L)
 {
-	if (currentParser == NULL) {
+	if (currentParser == nullptr)
 		luaL_error(L, "invalid call to DirList() after execution");
-	}
 
 	const string dir = luaL_checkstring(L, 1);
-	if (!LuaIO::IsSimplePath(dir)) {
+
+	if (!LuaIO::IsSimplePath(dir))
 		return 0;
-	}
+
 	const string pat = luaL_optstring(L, 2, "*");
 	string modes = luaL_optstring(L, 3, currentParser->accessModes.c_str());
 	modes = CFileHandler::AllowModes(modes, currentParser->accessModes);
@@ -462,9 +484,8 @@ int LuaParser::DirList(lua_State* L)
 
 int LuaParser::SubDirs(lua_State* L)
 {
-	if (currentParser == NULL) {
+	if (currentParser == nullptr)
 		luaL_error(L, "invalid call to SubDirs() after execution");
-	}
 
 	const string dir = luaL_checkstring(L, 1);
 	if (!LuaIO::IsSimplePath(dir)) {
@@ -482,15 +503,15 @@ int LuaParser::SubDirs(lua_State* L)
 
 int LuaParser::Include(lua_State* L)
 {
-	if (currentParser == NULL) {
+	if (currentParser == nullptr)
 		luaL_error(L, "invalid call to Include() after execution");
-	}
 
 	// filename [, fenv]
 	const string filename = luaL_checkstring(L, 1);
-	if (!LuaIO::IsSimplePath(filename)) {
+
+	if (!LuaIO::IsSimplePath(filename))
 		luaL_error(L, "bad pathname");
-	}
+
 	string modes = luaL_optstring(L, 3, currentParser->accessModes.c_str());
 	modes = CFileHandler::AllowModes(modes, currentParser->accessModes);
 
@@ -545,9 +566,10 @@ int LuaParser::Include(lua_State* L)
 		lua_error(L);
 	}
 
-	currentParser->accessedFiles.insert(StringToLower(filename));
-
-	return lua_gettop(L) - paramTop;
+	#if 0
+	VectorInsertUnique(currentParser->accessedFiles, StringToLower(filename), true);
+	#endif
+	return (lua_gettop(L) - paramTop);
 }
 
 
@@ -555,14 +577,14 @@ int LuaParser::Include(lua_State* L)
 
 int LuaParser::LoadFile(lua_State* L)
 {
-	if (currentParser == NULL) {
+	if (currentParser == nullptr)
 		luaL_error(L, "invalid call to LoadFile() after execution");
-	}
 
 	const string filename = luaL_checkstring(L, 1);
-	if (!LuaIO::IsSimplePath(filename)) {
+
+	if (!LuaIO::IsSimplePath(filename))
 		return 0;
-	}
+
 	string modes = luaL_optstring(L, 2, currentParser->accessModes.c_str());
 	modes = CFileHandler::AllowModes(modes, currentParser->accessModes);
 
@@ -580,21 +602,23 @@ int LuaParser::LoadFile(lua_State* L)
 	}
 	lua_pushstring(L, data.c_str());
 
-	currentParser->accessedFiles.insert(StringToLower(filename));
-
+	#if 0
+	VectorInsertUnique(currentParser->accessedFiles, StringToLower(filename), true);
+	#endif
 	return 1;
 }
 
 
 int LuaParser::FileExists(lua_State* L)
 {
-	if (currentParser == NULL) {
+	if (currentParser == nullptr)
 		luaL_error(L, "invalid call to FileExists() after execution");
-	}
+
 	const string filename = luaL_checkstring(L, 1);
-	if (!LuaIO::IsSimplePath(filename)) {
+
+	if (!LuaIO::IsSimplePath(filename))
 		return 0;
-	}
+
 	lua_pushboolean(L, CFileHandler::FileExists(filename, currentParser->accessModes));
 	return 1;
 }
@@ -602,9 +626,9 @@ int LuaParser::FileExists(lua_State* L)
 
 int LuaParser::DontMessWithMyCase(lua_State* L)
 {
-	if (currentParser == NULL) {
+	if (currentParser == nullptr)
 		luaL_error(L, "invalid call to DontMessWithMyCase() after execution");
-	}
+
 	currentParser->SetLowerKeys(lua_toboolean(L, 1));
 	return 0;
 }
@@ -636,6 +660,8 @@ LuaTable::LuaTable(LuaParser* _parser)
 	L       = parser->L;
 	refnum  = parser->rootRef;
 
+	parser->AddTable(this);
+
 	if (PushTable()) {
 		lua_pushvalue(L, -1); // copy
 		refnum = luaL_ref(L, LUA_REGISTRYINDEX);
@@ -643,8 +669,6 @@ LuaTable::LuaTable(LuaParser* _parser)
 	 	refnum = LUA_NOREF;
 	}
 	isValid = (refnum != LUA_NOREF);
-
-	parser->AddTable(this);
 }
 
 
@@ -654,6 +678,9 @@ LuaTable::LuaTable(const LuaTable& tbl)
 	L      = tbl.L;
 	path   = tbl.path;
 
+	if (parser != nullptr)
+		parser->AddTable(this);
+
 	if (tbl.PushTable()) {
 		lua_pushvalue(L, -1); // copy
 		refnum = luaL_ref(L, LUA_REGISTRYINDEX);
@@ -661,31 +688,27 @@ LuaTable::LuaTable(const LuaTable& tbl)
 		refnum = LUA_NOREF;
 	}
 	isValid = (refnum != LUA_NOREF);
-
-	if (parser) {
-		parser->AddTable(this);
-	}
 }
 
 
 LuaTable& LuaTable::operator=(const LuaTable& tbl)
 {
-	if (parser && (refnum != LUA_NOREF) && (parser->currentRef == refnum)) {
+	if (parser != nullptr && (refnum != LUA_NOREF) && (parser->currentRef == refnum)) {
 		lua_settop(L, 0);
 		parser->currentRef = LUA_NOREF;
 	}
 
 	if (parser != tbl.parser) {
-		if (parser != NULL) {
+		if (parser != nullptr)
 			parser->RemoveTable(this);
-		}
-		if (L && (refnum != LUA_NOREF)) {
+
+		if (L != nullptr && (refnum != LUA_NOREF))
 			luaL_unref(L, LUA_REGISTRYINDEX, refnum);
-		}
+
+		if (tbl.parser != nullptr)
+			tbl.parser->AddTable(this);
+
 		parser = tbl.parser;
-		if (parser != NULL) {
-			parser->AddTable(this);
-		}
 	}
 
 	L    = tbl.L;
@@ -711,9 +734,8 @@ LuaTable LuaTable::SubTable(int key) const
 	SNPRINTF(buf, 32, "[%i]", key);
 	subTable.path = path + buf;
 
-	if (!PushTable()) {
+	if (!PushTable())
 		return subTable;
-	}
 
 	lua_pushnumber(L, key);
 	lua_gettable(L, -2);
@@ -728,22 +750,19 @@ LuaTable LuaTable::SubTable(int key) const
 	subTable.isValid = (subTable.refnum != LUA_NOREF);
 
 	parser->AddTable(&subTable);
-
 	return subTable;
 }
 
 
 LuaTable LuaTable::SubTable(const string& mixedKey) const
 {
-
 	const string key = !(parser ? parser->lowerCppKeys : true) ? mixedKey : StringToLower(mixedKey);
 
 	LuaTable subTable;
 	subTable.path = path + "." + key;
 
-	if (!PushTable()) {
+	if (!PushTable())
 		return subTable;
-	}
 
 	lua_pushstring(L, key.c_str());
 	lua_gettable(L, -2);
@@ -758,7 +777,6 @@ LuaTable LuaTable::SubTable(const string& mixedKey) const
 	subTable.isValid = (subTable.refnum != LUA_NOREF);
 
 	parser->AddTable(&subTable);
-
 	return subTable;
 }
 
@@ -806,15 +824,16 @@ LuaTable LuaTable::SubTableExpr(const string& expr) const
 
 LuaTable::~LuaTable()
 {
-	if (L && (refnum != LUA_NOREF)) {
+	if (parser != nullptr)
+		parser->RemoveTable(this);
+
+	if (L != nullptr && (refnum != LUA_NOREF)) {
 		luaL_unref(L, LUA_REGISTRYINDEX, refnum);
-		if (parser && (parser->currentRef == refnum)) {
+
+		if (parser != nullptr && (parser->currentRef == refnum)) {
 			lua_settop(L, 0);
 			parser->currentRef = LUA_NOREF;
 		}
-	}
-	if (parser) {
-		parser->RemoveTable(this);
 	}
 }
 
@@ -823,14 +842,12 @@ LuaTable::~LuaTable()
 
 bool LuaTable::PushTable() const
 {
-	if (!isValid) {
+	if (!isValid)
 		return false;
-	}
 
 	if ((refnum != LUA_NOREF) && (parser->currentRef == refnum)) {
 		if (!lua_istable(L, -1)) {
-			LOG_L(L_ERROR, "Internal Error: LuaTable::PushTable() = %s",
-					path.c_str());
+			LOG_L(L_ERROR, "Internal Error: LuaTable::PushTable() = %s", path.c_str());
 			parser->currentRef = LUA_NOREF;
 			lua_settop(L, 0);
 			return false;
@@ -1061,11 +1078,11 @@ int LuaTable::GetLength(const string& key) const
 //  Key list functions
 //
 
-bool LuaTable::GetKeys(vector<int>& data) const
+bool LuaTable::GetKeys(std::vector<int>& data) const
 {
-	if (!PushTable()) {
+	if (!PushTable())
 		return false;
-	}
+
 	const int table = lua_gettop(L);
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 		if (lua_israwnumber(L, -2)) {
@@ -1073,16 +1090,16 @@ bool LuaTable::GetKeys(vector<int>& data) const
 			data.push_back(value);
 		}
 	}
-	std::sort(data.begin(), data.end());
+	std::stable_sort(data.begin(), data.end());
 	return true;
 }
 
 
-bool LuaTable::GetKeys(vector<string>& data) const
+bool LuaTable::GetKeys(std::vector<string>& data) const
 {
-	if (!PushTable()) {
+	if (!PushTable())
 		return false;
-	}
+
 	const int table = lua_gettop(L);
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 		if (lua_israwstring(L, -2)) {
@@ -1090,7 +1107,7 @@ bool LuaTable::GetKeys(vector<string>& data) const
 			data.push_back(value);
 		}
 	}
-	std::sort(data.begin(), data.end());
+	std::stable_sort(data.begin(), data.end());
 	return true;
 }
 
@@ -1101,11 +1118,11 @@ bool LuaTable::GetKeys(vector<string>& data) const
 //  Map functions
 //
 
-bool LuaTable::GetMap(map<int, float>& data) const
+bool LuaTable::GetMap(spring::unordered_map<int, float>& data) const
 {
-	if (!PushTable()) {
+	if (!PushTable())
 		return false;
-	}
+
 	const int table = lua_gettop(L);
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 		if (lua_israwnumber(L, -2) && lua_isnumber(L, -1)) {
@@ -1118,11 +1135,11 @@ bool LuaTable::GetMap(map<int, float>& data) const
 }
 
 
-bool LuaTable::GetMap(map<int, string>& data) const
+bool LuaTable::GetMap(spring::unordered_map<int, string>& data) const
 {
-	if (!PushTable()) {
+	if (!PushTable())
 		return false;
-	}
+
 	const int table = lua_gettop(L);
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 		if (lua_israwnumber(L, -2) && lua_isstring(L, -1)) {
@@ -1141,11 +1158,11 @@ bool LuaTable::GetMap(map<int, string>& data) const
 }
 
 
-bool LuaTable::GetMap(map<string, float>& data) const
+bool LuaTable::GetMap(spring::unordered_map<string, float>& data) const
 {
-	if (!PushTable()) {
+	if (!PushTable())
 		return false;
-	}
+
 	const int table = lua_gettop(L);
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 		if (lua_israwstring(L, -2) && lua_isnumber(L, -1)) {
@@ -1158,15 +1175,15 @@ bool LuaTable::GetMap(map<string, float>& data) const
 }
 
 
-bool LuaTable::GetMap(map<string, string>& data) const
+bool LuaTable::GetMap(spring::unordered_map<string, string>& data) const
 {
-	if (!PushTable()) {
+	if (!PushTable())
 		return false;
-	}
+
 	const int table = lua_gettop(L);
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 		if (lua_israwstring(L, -2)) {
-			if (lua_isstring(L, -1)) {
+			if (lua_isstring(L, -1)) { // includes numbers
 				const string key   = lua_tostring(L, -2);
 				const string value = lua_tostring(L, -1);
 				data[key] = value;

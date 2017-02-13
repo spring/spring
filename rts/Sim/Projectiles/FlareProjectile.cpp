@@ -4,7 +4,7 @@
 #include "FlareProjectile.h"
 #include "Game/Camera.h"
 #include "Rendering/GlobalRendering.h"
-#include "Rendering/ProjectileDrawer.h"
+#include "Rendering/Env/Particles/ProjectileDrawer.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Misc/GlobalSynced.h"
@@ -12,20 +12,19 @@
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/Unit.h"
 
-CR_BIND_DERIVED(CFlareProjectile, CProjectile, (ZeroVector, ZeroVector, 0, 0));
+CR_BIND_DERIVED(CFlareProjectile, CProjectile, )
 
 CR_REG_METADATA(CFlareProjectile,(
-				CR_SETFLAG(CF_Synced),
-				CR_MEMBER(activateFrame),
-				CR_MEMBER(deathFrame),
+	CR_SETFLAG(CF_Synced),
+	CR_MEMBER(activateFrame),
+	CR_MEMBER(deathFrame),
 
-				CR_MEMBER(numSub),
-				CR_MEMBER(lastSub),
-				CR_MEMBER(subPos),
-				CR_MEMBER(subSpeed),
-				CR_MEMBER(alphaFalloff),
-				CR_RESERVED(8)
-				));
+	CR_MEMBER(numSub),
+	CR_MEMBER(lastSub),
+	CR_MEMBER(subPos),
+	CR_MEMBER(subSpeed),
+	CR_MEMBER(alphaFalloff)
+))
 
 CFlareProjectile::CFlareProjectile(const float3& pos, const float3& speed, CUnit* owner, int activateFrame):
 	//! these are synced, but neither weapon nor piece
@@ -82,9 +81,8 @@ void CFlareProjectile::Update()
 			++numSub;
 			lastSub = gs->frameNum;
 
-			for (std::list<CMissileProjectile*>::iterator mi = owner->incomingMissiles.begin(); mi != owner->incomingMissiles.end(); ++mi) {
-				if (gs->randFloat() < owner->unitDef->flareEfficiency) {
-					CMissileProjectile* missile = *mi;
+			for (CMissileProjectile* missile: owner->incomingMissiles) {
+				if (gsRNG.NextFloat() < owner->unitDef->flareEfficiency) {
 					missile->SetTargetObject(this);
 					missile->AddDeathDependence(this, DEPENDENCE_DECOYTARGET);
 				}
@@ -123,10 +121,16 @@ void CFlareProjectile::Draw()
 		const float3 interPos = subPos[a] + subSpeed[a] * globalRendering->timeOffset;
 
 		#define fpt projectileDrawer->flareprojectiletex
-		va->AddVertexQTC(interPos - camera->right * rad - camera->up * rad, fpt->xstart, fpt->ystart, col);
-		va->AddVertexQTC(interPos + camera->right * rad - camera->up * rad, fpt->xend,   fpt->ystart, col);
-		va->AddVertexQTC(interPos + camera->right * rad + camera->up * rad, fpt->xend,   fpt->yend,   col);
-		va->AddVertexQTC(interPos - camera->right * rad + camera->up * rad, fpt->xstart, fpt->yend,   col);
+		va->AddVertexQTC(interPos - camera->GetRight() * rad - camera->GetUp() * rad, fpt->xstart, fpt->ystart, col);
+		va->AddVertexQTC(interPos + camera->GetRight() * rad - camera->GetUp() * rad, fpt->xend,   fpt->ystart, col);
+		va->AddVertexQTC(interPos + camera->GetRight() * rad + camera->GetUp() * rad, fpt->xend,   fpt->yend,   col);
+		va->AddVertexQTC(interPos - camera->GetRight() * rad + camera->GetUp() * rad, fpt->xstart, fpt->yend,   col);
 		#undef fpt
 	}
+}
+
+
+int CFlareProjectile::GetProjectilesCount() const
+{
+	return subPos.size();
 }

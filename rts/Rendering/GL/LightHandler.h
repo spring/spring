@@ -3,8 +3,8 @@
 #ifndef _GL_LIGHTHANDLER_H
 #define _GL_LIGHTHANDLER_H
 
-#include <list>
-#include <map>
+#include <vector>
+
 #include "Light.h"
 
 namespace Shader {
@@ -22,23 +22,21 @@ namespace GL {
 		void Update(Shader::IProgramObject*);
 
 		unsigned int AddLight(const GL::Light&);
-		GL::Light* GetLight(unsigned int);
+		unsigned int SetLight(unsigned int lgtIndex, const GL::Light&);
+
+		GL::Light* GetLight(unsigned int lgtHandle);
 
 		unsigned int GetBaseLight() const { return baseLight; }
 		unsigned int GetMaxLights() const { return maxLights; }
 
 	private:
-		std::map<unsigned int, GL::Light> lights;
-		std::list<unsigned int> lightIDs;
-
-		// sum of intensity weights for all active lights
-		float3 lightIntensityWeight;
+		std::vector<GL::Light> lights;
 
 		unsigned int baseLight;
 		unsigned int maxLights;
 		unsigned int numLights;
 		unsigned int lightHandle;
 	};
-};
+}
 
 #endif // _GL_LIGHTHANDLER_H

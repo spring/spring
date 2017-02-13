@@ -2,7 +2,6 @@
 
 #include "GuiHandler.h"
 
-
 #include "CommandColors.h"
 #include "KeyBindings.h"
 #include "KeyCodes.h"
@@ -19,7 +18,6 @@
 #include "Lua/LuaGaia.h"
 #include "Lua/LuaRules.h"
 #include "Lua/LuaUI.h"
-#include "Map/BaseGroundDrawer.h"
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
 #include "Map/MetalMap.h"
@@ -28,6 +26,7 @@
 #include "Rendering/IconHandler.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/GL/glExtra.h"
+#include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/Textures/NamedTextures.h"
 #include "Sim/Features/Feature.h"
@@ -45,21 +44,19 @@
 #include "System/GlobalConfig.h"
 #include "System/Log/ILog.h"
 #include "System/myMath.h"
+#include "System/UnorderedMap.hpp"
+#include "System/UnorderedSet.hpp"
 #include "System/Util.h"
 #include "System/Input/KeyInput.h"
 #include "System/Sound/ISound.h"
-#include "System/Sound/SoundChannels.h"
+#include "System/Sound/ISoundChannels.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/SimpleParser.h"
-
-#include <map>
-#include <set>
-#include <list>
 
 #include <SDL_keycode.h>
 #include <SDL_mouse.h>
 
-CONFIG(bool, MiniMapMarker).defaultValue(true);
+CONFIG(bool, MiniMapMarker).defaultValue(true).headlessValue(false);
 CONFIG(bool, InvertQueueKey).defaultValue(false);
 
 //////////////////////////////////////////////////////////////////////
@@ -87,12 +84,11 @@ CGuiHandler::CGuiHandler():
 	drawSelectionInfo(true),
 	gatherMode(false)
 {
-	icons = new IconInfo[16];
-	iconsSize = 16;
+	icons.resize(16);
 	iconsCount = 0;
 
 	LoadDefaults();
-	LoadConfig("ctrlpanel.txt");
+	LoadDefaultConfig();
 
 	miniMapMarker = configHandler->GetBool("MiniMapMarker");
 	invertQueueKey = configHandler->GetBool("InvertQueueKey");
@@ -109,17 +105,6 @@ CGuiHandler::CGuiHandler():
 	failedSound = sound->GetSoundId("FailedCommand");
 }
 
-
-CGuiHandler::~CGuiHandler()
-{
-	CLuaUI::FreeHandler();
-
-	delete[] icons;
-
-	for (auto& p: textureMap) {
-		glDeleteTextures(1, &p.second);
-	}
-}
 
 
 bool CGuiHandler::GetQueueKeystate() const
@@ -170,28 +155,91 @@ static bool SafeAtoF(float& var, const std::string& value)
 	char* endPtr;
 	const char* startPtr = value.c_str();
 	const float tmp = (float)strtod(startPtr, &endPtr);
-	if (endPtr == startPtr) {
+
+	if (endPtr == startPtr)
 		return false;
-	}
+
 	var = tmp;
 	return true;
 }
+
+
+
+bool CGuiHandler::EnableLuaUI(bool enableCommand)
+{
+	if (luaUI != nullptr) {
+		if (enableCommand) {
+			LOG_L(L_WARNING, "[GUIHandler] LuaUI is already enabled");
+			return false;
+		}
+
+		if (luaUI->IsRunning()) {
+			// has to be queued, corrupts the Lua VM if done inside a pcall
+			// (LuaRules can reload itself inside callins because the action
+			// SendCommands("luarules reload") goes over the network, and is
+			// not when received)
+			luaUI->QueueAction(CLuaUI::ACTION_RELOAD);
+			return true;
+		}
+	}
+
+	CLuaUI::ReloadHandler();
+
+	if (luaUI != nullptr) {
+		LayoutIcons(false);
+		return true;
+	}
+
+	LOG_L(L_WARNING, "[GUIHandler] loading LuaUI failed; using default config");
+
+	LoadDefaultConfig();
+	return false;
+}
+
+bool CGuiHandler::DisableLuaUI(bool layoutIcons)
+{
+	if (luaUI == nullptr) {
+		LOG_L(L_WARNING, "[GUIHandler] LuaUI is already disabled");
+		return false;
+	}
+
+	if (luaUI->IsRunning()) {
+		luaUI->QueueAction(CLuaUI::ACTION_DISABLE);
+		return true;
+	}
+
+	CLuaUI::FreeHandler();
+
+	if (luaUI == nullptr) {
+		LoadDefaultConfig();
+
+		// needed; LoadDefaultConfig does not reach ReloadConfigFromString
+		if (layoutIcons)
+			LayoutIcons(false);
+
+		return true;
+	}
+
+	LOG_L(L_WARNING, "[GUIHandler] disabling LuaUI failed");
+	return false;
+}
+
 
 
 bool CGuiHandler::LoadConfig(const std::string& cfg)
 {
 	CSimpleParser parser(cfg);
 
-	std::string deadStr = "";
-	std::string prevStr = "";
-	std::string nextStr = "";
-	std::string fillOrderStr = "";
+	std::string deadStr;
+	std::string prevStr;
+	std::string nextStr;
+	std::string fillOrderStr;
 
 	while (true) {
 		const std::string line = parser.GetCleanLine();
-		if (line.empty()) {
+
+		if (line.empty())
 			break;
-		}
 
 		const std::vector<std::string> &words = parser.Tokenize(line, 1);
 
@@ -297,7 +345,7 @@ bool CGuiHandler::LoadConfig(const std::string& cfg)
 
 	if (!deadStr.empty()) {
 		deadIconSlot = ParseIconSlot(deadStr);
-	}	else {
+	} else {
 		deadIconSlot = -1;
 	}
 
@@ -307,7 +355,7 @@ bool CGuiHandler::LoadConfig(const std::string& cfg)
 		} else {
 			prevPageSlot = ParseIconSlot(prevStr);
 		}
-	}	else {
+	} else {
 		prevPageSlot = iconsPerPage - 2;
 	}
 
@@ -317,7 +365,7 @@ bool CGuiHandler::LoadConfig(const std::string& cfg)
 		} else {
 			nextPageSlot = ParseIconSlot(nextStr);
 		}
-	}	else {
+	} else {
 		nextPageSlot = iconsPerPage - 1;
 	}
 
@@ -341,17 +389,14 @@ bool CGuiHandler::LoadConfig(const std::string& cfg)
 			const float fy = 0.5f * (fyp + fyn);
 			xBpos = buttonBox.x1 + (fullBorder + (0.5 * xIconSize) + (fx * xIconStep));
 			yBpos = buttonBox.y2 - (fullBorder + (0.5 * yIconSize) + (fy * yIconStep));
-		}
-		else {
+		} else {
 			xBpos = yBpos = -1.0f; // off screen
 		}
-	}
-	else {
+	} else {
 		xBpos = yBpos = -1.0f; // off screen
 	}
 
 	ParseFillOrder(fillOrderStr);
-
 	return true;
 }
 
@@ -360,18 +405,20 @@ void CGuiHandler::ParseFillOrder(const std::string& text)
 {
 	// setup the default order
 	fillOrder.clear();
-	for (int i = 0; i < iconsPerPage; i++) {
+	fillOrder.reserve(iconsPerPage);
+
+	for (int i = 0; i < iconsPerPage; i++)
 		fillOrder.push_back(i);
-	}
 
 	// split the std::string into slot names
 	const std::vector<std::string> &slotNames = CSimpleParser::Tokenize(text, 0);
-	if ((int)slotNames.size() != iconsPerPage) {
-		return;
-	}
 
-	std::set<int>    slotSet;
+	if ((int)slotNames.size() != iconsPerPage)
+		return;
+
+	spring::unordered_set<int> slotSet;
 	std::vector<int> slotVec;
+
 	for (int s = 0; s < iconsPerPage; s++) {
 		const int slotNumber = ParseIconSlot(slotNames[s]);
 		if ((slotNumber < 0) || (slotNumber >= iconsPerPage) ||
@@ -389,20 +436,22 @@ void CGuiHandler::ParseFillOrder(const std::string& text)
 int CGuiHandler::ParseIconSlot(const std::string& text) const
 {
 	const char rowLetter = tolower(text[0]);
-	if ((rowLetter < 'a') || (rowLetter > 'z')) {
+
+	if ((rowLetter < 'a') || (rowLetter > 'z'))
 		return -1;
-	}
+
 	const int row = rowLetter - 'a';
-	if (row >= yIcons) {
+
+	if (row >= yIcons)
 		return -1;
-	}
+
 
 	char* endPtr;
 	const char* startPtr = text.c_str() + 1;
 	int column = strtol(startPtr, &endPtr, 10);
-	if ((endPtr == startPtr) || (column < 0) || (column >= xIcons)) {
+
+	if ((endPtr == startPtr) || (column < 0) || (column >= xIcons))
 		return -1;
-	}
 
 	return (row * xIcons) + column;
 }
@@ -410,10 +459,16 @@ int CGuiHandler::ParseIconSlot(const std::string& text) const
 
 bool CGuiHandler::ReloadConfigFromFile(const std::string& fileName)
 {
-	CFileHandler ifs(fileName);
+	if (fileName.empty())
+		return (ReloadConfigFromFile(DEFAULT_GUI_CONFIG));
+
 	std::string cfg;
+
+	CFileHandler ifs(fileName);
 	ifs.LoadStringData(cfg);
-	return ReloadConfigFromString(cfg);
+
+	LOG("Reloading GUI config from file: %s", fileName.c_str());
+	return (ReloadConfigFromString(cfg));
 }
 
 
@@ -427,81 +482,91 @@ bool CGuiHandler::ReloadConfigFromString(const std::string& cfg)
 }
 
 
-void CGuiHandler::ResizeIconArray(unsigned int size)
+void CGuiHandler::ResizeIconArray(size_t size)
 {
-	unsigned int minIconsSize = iconsSize;
-	while (minIconsSize < size) {
-		minIconsSize *= 2;
-	}
-	if (iconsSize < minIconsSize) {
-		iconsSize = minIconsSize;
-		delete[] icons;
-		icons = NULL; // to prevent a dead-pointer in case of an out-of-memory exception on the next line
-		icons = new IconInfo[iconsSize];
-	}
+	if (icons.size() < size)
+		icons.resize(std::max(icons.size() * 2, size));
+
+	assert(iconsCount <= icons.size());
 }
 
 
-void CGuiHandler::AppendPrevAndNext(std::vector<CommandDescription>& cmds)
+void CGuiHandler::AppendPrevAndNext(std::vector<SCommandDescription>& cmds)
 {
-	CommandDescription cd;
+	{
+		cmds.emplace_back();
 
-	cd.id=CMD_INTERNAL;
-	cd.action="prevmenu";
-	cd.type=CMDTYPE_PREV;
-	cd.name="";
-	cd.tooltip = "Previous menu";
-	cmds.push_back(cd);
+		SCommandDescription& cd = cmds.back();
 
-	cd.id=CMD_INTERNAL;
-	cd.action="nextmenu";
-	cd.type=CMDTYPE_NEXT;
-	cd.name="";
-	cd.tooltip = "Next menu";
-	cmds.push_back(cd);
+		cd.id      = CMD_INTERNAL;
+		cd.type    = CMDTYPE_PREV;
+
+		cd.name    = "";
+		cd.action  = "prevmenu";
+		cd.tooltip = "Previous menu";
+	}
+	{
+		cmds.emplace_back();
+
+		SCommandDescription& cd = cmds.back();
+
+		cd.id      = CMD_INTERNAL;
+		cd.type    = CMDTYPE_NEXT;
+
+		cd.name    = "";
+		cd.action  = "nextmenu";
+		cd.tooltip = "Next menu";
+	}
 }
 
 
 int CGuiHandler::FindInCommandPage()
 {
-	if ((inCommand < 0) || ((size_t)inCommand >= commands.size())) {
+	if ((inCommand < 0) || ((size_t)inCommand >= commands.size()))
 		return -1;
-	}
+
 	for (int ii = 0; ii < iconsCount; ii++) {
 		const IconInfo& icon = icons[ii];
-		if (icon.commandsID == inCommand) {
+
+		if (icon.commandsID == inCommand)
 			return (ii / iconsPerPage);
-		}
+
 	}
+
 	return -1;
 }
 
 
-void CGuiHandler::RevertToCmdDesc(const CommandDescription& cmdDesc,
+void CGuiHandler::RevertToCmdDesc(const SCommandDescription& cmdDesc,
                                   bool defaultCommand, bool samePage)
 {
 	for (size_t a = 0; a < commands.size(); ++a) {
-		if (commands[a].id == cmdDesc.id) {
-			if (defaultCommand) {
-				defaultCmdMemory = a;
-				return;
-			}
-			inCommand = a;
-			if (commands[a].type == CMDTYPE_ICON_BUILDING) {
-				const UnitDef* ud = unitDefHandler->GetUnitDefByID(-commands[a].id);
-				SetShowingMetal(ud->extractsMetal > 0);
-			} else {
-				SetShowingMetal(false);
-			}
-			if (samePage) {
-				for (int ii = 0; ii < iconsCount; ii++) {
-					if (inCommand == icons[ii].commandsID) {
-						activePage = std::min(maxPage, (ii / iconsPerPage));;
-						selectedUnitsHandler.SetCommandPage(activePage);
-					}
-				}
-			}
+		if (commands[a].id != cmdDesc.id)
+			continue;
+
+		if (defaultCommand) {
+			defaultCmdMemory = a;
 			return;
+		}
+
+		inCommand = a;
+
+		if (commands[a].type == CMDTYPE_ICON_BUILDING) {
+			const UnitDef* ud = unitDefHandler->GetUnitDefByID(-commands[a].id);
+			SetShowingMetal(ud->extractsMetal > 0);
+		} else {
+			SetShowingMetal(false);
+		}
+
+		if (!samePage)
+			continue;
+
+		for (int ii = 0; ii < iconsCount; ii++) {
+			if (inCommand != icons[ii].commandsID)
+				continue;
+
+			activePage = std::min(maxPage, (ii / iconsPerPage));
+			selectedUnitsHandler.SetCommandPage(activePage);
 		}
 	}
 }
@@ -509,65 +574,81 @@ void CGuiHandler::RevertToCmdDesc(const CommandDescription& cmdDesc,
 
 void CGuiHandler::LayoutIcons(bool useSelectionPage)
 {
-	bool defCmd, validInCommand, samePage;
-	CommandDescription cmdDesc;
+	bool defCmd;
+	bool validInCommand;
+	bool samePage;
+
+	SCommandDescription cmdDesc;
 	{
 		defCmd =
 			(mouse->buttons[SDL_BUTTON_RIGHT].pressed &&
 			(defaultCmdMemory >= 0) && (inCommand < 0) &&
 			((activeReceiver == this) || (minimap->ProxyMode())));
 
-		const int activeCmd = defCmd ? defaultCmdMemory : inCommand;
+		const size_t activeCmd = defCmd ? defaultCmdMemory : inCommand;
 
 		// copy the current command state
-		validInCommand = (activeCmd >= 0) && ((size_t)activeCmd < commands.size());
-		if (validInCommand) {
+		if ((validInCommand = (activeCmd < commands.size())))
 			cmdDesc = commands[activeCmd];
-		}
+
 		samePage = validInCommand && (activePage == FindInCommandPage());
 		useSelectionPage = useSelectionPage && !samePage;
 
 		// reset some of our state
 		inCommand = -1;
 		defaultCmdMemory = -1;
-		commands.clear();
 		forceLayoutUpdate = false;
+
+		commands.clear();
 	}
 
-	if (luaUI && luaUI->WantsEvent("LayoutButtons")) {
+	if (luaUI != nullptr && luaUI->WantsEvent("LayoutButtons")) {
 		if (LayoutCustomIcons(useSelectionPage)) {
-			if (validInCommand) {
+			if (validInCommand)
 				RevertToCmdDesc(cmdDesc, defCmd, samePage);
-			}
-			return; // we're done here
+
+			// LuaUI::LayoutButtons returned true, we are done
+			return;
 		}
-		else {
-			CLuaUI::FreeHandler();
+
+		// note: if inside a callin, this only queues up a disable-action
+		// we also want to load the default config, but doing that before
+		// the handler is freed would make little sense (need to defer it
+		// with ForceLayoutUpdate?) so just issue a warning
+		// DisableLuaUI(false);
+
+		if (luaUI->IsRunning()) {
+			LOG_L(L_WARNING, "[GUIHandler] can not load default GUI from a LuaUI callin");
+			return;
 		}
+
+		// otherwise revert to engine UI
+		CLuaUI::FreeHandler();
+		LoadDefaultConfig();
 	}
+
 
 	// get the commands to process
-	CSelectedUnitsHandler::AvailableCommandsStruct ac;
-	ac = selectedUnitsHandler.GetAvailableCommands();
+	CSelectedUnitsHandler::AvailableCommandsStruct ac = selectedUnitsHandler.GetAvailableCommands();
 	ConvertCommands(ac.commands);
 
-	std::vector<CommandDescription> hidden;
-	std::vector<CommandDescription>::const_iterator cdi;
+	std::vector<SCommandDescription> hidden;
+
+	hidden.reserve(ac.commands.size());
+	commands.reserve(ac.commands.size());
 
 	// separate the visible/hidden icons
-	for (cdi = ac.commands.begin(); cdi != ac.commands.end(); ++cdi){
-		if (cdi->hidden) {
-			hidden.push_back(*cdi);
+	for (const SCommandDescription& cd: ac.commands) {
+		if (cd.hidden) {
+			hidden.push_back(cd);
 		} else {
-			commands.push_back(*cdi);
+			commands.push_back(cd);
 		}
 	}
 
+
 	// assign extra icons for internal commands
-	int extraIcons = 0;
-	if (deadIconSlot >= 0) { extraIcons++; }
-	if (prevPageSlot >= 0) { extraIcons++; }
-	if (nextPageSlot >= 0) { extraIcons++; }
+	const int extraIcons = int(deadIconSlot >= 0) + int(prevPageSlot >= 0) + int(nextPageSlot >= 0);
 
 	const int cmdCount        = (int)commands.size();
 	const int cmdIconsPerPage = (iconsPerPage - extraIcons);
@@ -587,7 +668,6 @@ void CGuiHandler::LayoutIcons(bool useSelectionPage)
 	int ci = 0; // command index
 
 	for (int ii = 0; ii < iconsCount; ii++) {
-
 		// map the icon order
 		const int tmpSlot = (ii % iconsPerPage);
 		const int mii = ii - tmpSlot + fillOrder[tmpSlot]; // mapped icon index
@@ -628,8 +708,7 @@ void CGuiHandler::LayoutIcons(bool useSelectionPage)
 			icon.selection.x2 = icon.visual.x2 + noGap;
 			icon.selection.y1 = icon.visual.y1 + noGap;
 			icon.selection.y2 = icon.visual.y2 - noGap;
-		}
-		else {
+		} else {
 			// make sure this icon does not get selected
 			icon.selection.x1 = icon.selection.x2 = -1.0f;
 			icon.selection.y1 = icon.selection.y2 = -1.0f;
@@ -637,13 +716,12 @@ void CGuiHandler::LayoutIcons(bool useSelectionPage)
 	}
 
 	// append the Prev and Next commands  (if required)
-	if (multiPage) {
+	if (multiPage)
 		AppendPrevAndNext(commands);
-	}
 
 	// append the hidden commands
-	for (cdi = hidden.begin(); cdi != hidden.end(); ++cdi) {
-		commands.push_back(*cdi);
+	for (const SCommandDescription& cd: hidden) {
+		commands.push_back(cd);
 	}
 
 	// try to setup the old command state
@@ -653,20 +731,19 @@ void CGuiHandler::LayoutIcons(bool useSelectionPage)
 	} else if (useSelectionPage) {
 		activePage = std::min(maxPage, ac.commandPage);
 	}
+
 	activePage = std::min(maxPage, activePage);
 }
 
 
 bool CGuiHandler::LayoutCustomIcons(bool useSelectionPage)
 {
-	if (luaUI == NULL) {
-		return false;
-	}
+	assert(luaUI != nullptr);
 
 	// get the commands to process
-	CSelectedUnitsHandler::AvailableCommandsStruct ac;
-	ac = selectedUnitsHandler.GetAvailableCommands();
-	std::vector<CommandDescription> cmds = ac.commands;
+	CSelectedUnitsHandler::AvailableCommandsStruct ac = selectedUnitsHandler.GetAvailableCommands();
+	std::vector<SCommandDescription> cmds = ac.commands;
+
 	if (!cmds.empty()) {
 		ConvertCommands(cmds);
 		AppendPrevAndNext(cmds);
@@ -675,160 +752,172 @@ bool CGuiHandler::LayoutCustomIcons(bool useSelectionPage)
 	// call for a custom layout
 	int tmpXicons = xIcons;
 	int tmpYicons = yIcons;
+
 	std::vector<int> removeCmds;
-	std::vector<CommandDescription> customCmds;
+	std::vector<SCommandDescription> customCmds;
 	std::vector<int> onlyTextureCmds;
 	std::vector<CLuaUI::ReStringPair> reTextureCmds;
 	std::vector<CLuaUI::ReStringPair> reNamedCmds;
 	std::vector<CLuaUI::ReStringPair> reTooltipCmds;
 	std::vector<CLuaUI::ReParamsPair> reParamsCmds;
-	std::map<int, int> iconMap;
+	spring::unordered_map<int, int> iconMap;
 
-	if (!luaUI->LayoutButtons(tmpXicons, tmpYicons, cmds,
-	                          removeCmds, customCmds,
-	                          onlyTextureCmds, reTextureCmds,
-	                          reNamedCmds, reTooltipCmds, reParamsCmds,
-	                          iconMap, menuName)) {
+	if (!luaUI->LayoutButtons(
+		tmpXicons, tmpYicons,
+		cmds, removeCmds, customCmds,
+		onlyTextureCmds, reTextureCmds,
+		reNamedCmds, reTooltipCmds, reParamsCmds,
+		iconMap, menuName)
+	) {
 		return false;
 	}
 
 	if ((tmpXicons < 2) || (tmpYicons < 2)) {
-		LOG_L(L_ERROR, "LayoutCustomIcons() bad xIcons or yIcons (%i, %i)",
-				tmpXicons, tmpYicons);
+		LOG_L(L_ERROR, "[GUIHandler::%s] bad xIcons or yIcons (%i, %i)", __func__, tmpXicons, tmpYicons);
 		return false;
 	}
 
-	unsigned int i;
-	const int tmpIconsPerPage = (tmpXicons * tmpYicons);
+
+	spring::unordered_set<int> removeIDs;
+	std::vector<SCommandDescription> tmpCmds;
+	std::vector<int> iconList;
+
+	removeIDs.reserve(removeCmds.size());
+	tmpCmds.reserve(cmds.size());
+	iconList.reserve(iconMap.size());
+
 
 	// build a set to better find unwanted commands
-	set<int> removeIDs;
-	for (i = 0; i < removeCmds.size(); i++) {
-		const int index = removeCmds[i];
-		if ((index >= 0) || ((size_t)index < cmds.size())) {
+	for (unsigned int i = 0; i < removeCmds.size(); i++) {
+		const size_t index = removeCmds[i];
+
+		if (index < cmds.size()) {
 			removeIDs.insert(index);
 		} else {
-			LOG_L(L_ERROR, "LayoutCustomIcons() skipping bad removeCmd (%i)",
-					index);
+			LOG_L(L_ERROR, "[GUIHandler::%s] skipping bad removeCmd (%i)", __func__, int(index));
 		}
 	}
+
 	// remove unwanted commands  (and mark all as hidden)
-	std::vector<CommandDescription> tmpCmds;
-	for (i = 0; i < cmds.size(); i++) {
+	for (unsigned int i = 0; i < cmds.size(); i++) {
 		if (removeIDs.find(i) == removeIDs.end()) {
 			cmds[i].hidden = true;
 			tmpCmds.push_back(cmds[i]);
 		}
 	}
+
 	cmds = tmpCmds;
 
 	// add the custom commands
-	for (i = 0; i < customCmds.size(); i++) {
+	for (unsigned int i = 0; i < customCmds.size(); i++) {
 		customCmds[i].hidden = true;
 		cmds.push_back(customCmds[i]);
 	}
-	const int cmdCount = (int)cmds.size();
+	const size_t cmdCount = cmds.size();
 
 	// set commands to onlyTexture
-	for (i = 0; i < onlyTextureCmds.size(); i++) {
-		const int index = onlyTextureCmds[i];
-		if ((index >= 0) && (index < cmdCount)) {
+	for (unsigned int i = 0; i < onlyTextureCmds.size(); i++) {
+		const size_t index = onlyTextureCmds[i];
+
+		if (index < cmdCount) {
 			cmds[index].onlyTexture = true;
 		} else {
-			LOG_L(L_ERROR, "LayoutCustomIcons() skipping bad onlyTexture (%i)",
-					index);
+			LOG_L(L_ERROR, "[GUIHandler::%s] skipping bad onlyTexture (%i)", __func__, int(index));
 		}
 	}
 
 	// retexture commands
-	for (i = 0; i < reTextureCmds.size(); i++) {
-		const int index = reTextureCmds[i].cmdIndex;
-		if ((index >= 0) && (index < cmdCount)) {
+	for (unsigned int i = 0; i < reTextureCmds.size(); i++) {
+		const size_t index = reTextureCmds[i].cmdIndex;
+
+		if (index < cmdCount) {
 			cmds[index].iconname = reTextureCmds[i].texture;
 		} else {
-			LOG_L(L_ERROR, "LayoutCustomIcons() skipping bad reTexture (%i)",
-					index);
+			LOG_L(L_ERROR, "[GUIHandler::%s] skipping bad reTexture (%i)", __func__, int(index));
 		}
 	}
 
 	// reNamed commands
-	for (i = 0; i < reNamedCmds.size(); i++) {
-		const int index = reNamedCmds[i].cmdIndex;
-		if ((index >= 0) && (index < cmdCount)) {
+	for (unsigned int i = 0; i < reNamedCmds.size(); i++) {
+		const size_t index = reNamedCmds[i].cmdIndex;
+
+		if (index < cmdCount) {
 			cmds[index].name = reNamedCmds[i].texture;
 		} else {
-			LOG_L(L_ERROR, "LayoutCustomIcons() skipping bad reNamed (%i)",
-					index);
+			LOG_L(L_ERROR, "[GUIHandler::%s] skipping bad reNamed (%i)", __func__, int(index));
 		}
 	}
 
 	// reTooltip commands
-	for (i = 0; i < reTooltipCmds.size(); i++) {
-		const int index = reTooltipCmds[i].cmdIndex;
-		if ((index >= 0) && (index < cmdCount)) {
+	for (unsigned int i = 0; i < reTooltipCmds.size(); i++) {
+		const size_t index = reTooltipCmds[i].cmdIndex;
+
+		if (index < cmdCount) {
 			cmds[index].tooltip = reTooltipCmds[i].texture;
 		} else {
-			LOG_L(L_ERROR, "LayoutCustomIcons() skipping bad reNamed (%i)",
-					index);
+			LOG_L(L_ERROR, "[GUIHandler::%s] skipping bad reNamed (%i)", __func__, int(index));
 		}
 	}
 
 	// reParams commands
-	for (i = 0; i < reParamsCmds.size(); i++) {
-		const int index = reParamsCmds[i].cmdIndex;
-		if ((index >= 0) && (index < cmdCount)) {
-			const map<int, std::string>& params = reParamsCmds[i].params;
-			map<int, std::string>::const_iterator pit;
-			for (pit = params.begin(); pit != params.end(); ++pit) {
-				const int p = pit->first;
-				if ((p >= 0) && (p < (int)cmds[index].params.size())) {
+	for (unsigned int i = 0; i < reParamsCmds.size(); i++) {
+		const size_t index = reParamsCmds[i].cmdIndex;
+
+		if (index < cmdCount) {
+			const auto& params = reParamsCmds[i].params;
+
+			for (auto pit = params.cbegin(); pit != params.cend(); ++pit) {
+				const size_t p = pit->first;
+
+				if (p < cmds[index].params.size()) {
 					cmds[index].params[p] = pit->second;
 				}
 			}
 		} else {
-			LOG_L(L_ERROR, "LayoutCustomIcons() skipping bad reParams (%i)",
-					index);
+			LOG_L(L_ERROR, "[GUIHandler::%s] skipping bad reParams (%i)", __func__, int(index));
 		}
 	}
 
-	// build the iconList from the map
-	std::vector<int> iconList;
+
 	int nextPos = 0;
-	map<int, int>::iterator mit;
-	for (mit = iconMap.begin(); mit != iconMap.end(); ++mit) {
+	// build the iconList from the map
+	for (auto mit = iconMap.cbegin(); mit != iconMap.cend(); ++mit) {
 		const int iconPos = mit->first;
-		if (iconPos < nextPos) {
+
+		if (iconPos < nextPos)
 			continue;
-		}
-		else if (iconPos > nextPos) {
+
+		if (iconPos > nextPos) {
 			// fill in the blanks
 			for (int p = nextPos; p < iconPos; p++) {
 				iconList.push_back(-1);
 			}
 		}
+
 		iconList.push_back(mit->second); // cmdIndex
 		nextPos = iconPos + 1;
 	}
 
-	const int iconListCount = (int)iconList.size();
-	const int pageCount = ((iconListCount + (tmpIconsPerPage - 1)) / tmpIconsPerPage);
-	const int tmpIconsCount = (pageCount * tmpIconsPerPage);
+
+	const size_t iconListCount = iconList.size();
+	const size_t tmpIconsPerPage = (tmpXicons * tmpYicons); // always at least 4
+	const size_t pageCount = ((iconListCount + (tmpIconsPerPage - 1)) / tmpIconsPerPage);
+	const size_t tmpIconsCount = (pageCount * tmpIconsPerPage);
 
 	// resize the icon array if required
 	ResizeIconArray(tmpIconsCount);
 
 	// build the iconList
-	for (int ii = 0; ii < tmpIconsCount; ii++) {
+	for (size_t ii = 0; ii < tmpIconsCount; ii++) {
 		IconInfo& icon = icons[ii];
 
-		const int index = (ii < (int)iconList.size()) ? iconList[ii] : -1;
+		const size_t index = (ii < iconList.size()) ? iconList[ii] : -1;
 
-		if ((index >= 0) && (index < cmdCount)) {
-
+		if (index < cmdCount) {
 			icon.commandsID = index;
 			cmds[index].hidden = false;
 
-			const int slot = (ii % tmpIconsPerPage);
+			const int slot = ii % tmpIconsPerPage;
 			const float fx = (float)(slot % tmpXicons);
 			const float fy = (float)(slot / tmpXicons);
 
@@ -843,8 +932,7 @@ bool CGuiHandler::LayoutCustomIcons(bool useSelectionPage)
 			icon.selection.x2 = icon.visual.x2 + noGap;
 			icon.selection.y1 = icon.visual.y1 + noGap;
 			icon.selection.y2 = icon.visual.y2 - noGap;
-		}
-		else {
+		} else {
 			// make sure this icon does not get selected
 			icon.commandsID = -1;
 			icon.selection.x1 = icon.selection.x2 = -1.0f;
@@ -859,7 +947,7 @@ bool CGuiHandler::LayoutCustomIcons(bool useSelectionPage)
 	iconsCount   = tmpIconsCount;
 	iconsPerPage = tmpIconsPerPage;
 
-	maxPage = std::max(0, pageCount - 1);
+	maxPage = std::max(size_t(0), pageCount - 1);
 	if (useSelectionPage) {
 		activePage = std::min(maxPage, ac.commandPage);
 	} else {
@@ -905,19 +993,22 @@ void CGuiHandler::GiveCommandsNow() {
 }
 
 
-void CGuiHandler::ConvertCommands(std::vector<CommandDescription>& cmds)
+void CGuiHandler::ConvertCommands(std::vector<SCommandDescription>& cmds)
 {
-	if (newAttackMode) {
-		const int count = (int)cmds.size();
-		for (int i = 0; i < count; i++) {
-			CommandDescription& cd = cmds[i];
-			if ((cd.id == CMD_ATTACK) && (cd.type == CMDTYPE_ICON_UNIT_OR_MAP)) {
-				if (attackRect) {
-					cd.type = CMDTYPE_ICON_UNIT_OR_RECTANGLE;
-				} else {
-					cd.type = CMDTYPE_ICON_UNIT_OR_AREA;
-				}
-			}
+	if (!newAttackMode)
+		return;
+
+	const int count = (int)cmds.size();
+	for (int i = 0; i < count; i++) {
+		SCommandDescription& cd = cmds[i];
+
+		if ((cd.id != CMD_ATTACK) || (cd.type != CMDTYPE_ICON_UNIT_OR_MAP))
+			continue;
+
+		if (attackRect) {
+			cd.type = CMDTYPE_ICON_UNIT_OR_RECTANGLE;
+		} else {
+			cd.type = CMDTYPE_ICON_UNIT_OR_AREA;
 		}
 	}
 }
@@ -925,17 +1016,15 @@ void CGuiHandler::ConvertCommands(std::vector<CommandDescription>& cmds)
 
 void CGuiHandler::SetShowingMetal(bool show)
 {
-	CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
-
 	if (!show) {
 		if (showingMetal) {
-			gd->DisableExtraTexture();
+			infoTextureHandler->DisableCurrentMode();
 			showingMetal = false;
 		}
 	} else {
 		if (autoShowMetal) {
-			if (gd->GetDrawMode() != CBaseGroundDrawer::drawMetal) {
-				gd->SetMetalTexture();
+			if (infoTextureHandler->GetMode() != "metal") {
+				infoTextureHandler->SetMode("metal");
 				showingMetal = true;
 			}
 		}
@@ -950,20 +1039,19 @@ void CGuiHandler::Update()
 	{
 		if (!invertQueueKey && (needShift && !KeyInput::GetKeyModState(KMOD_SHIFT))) {
 			SetShowingMetal(false);
-			inCommand=-1;
-			needShift=false;
+			inCommand = -1;
+			needShift = false;
 		}
 	}
 
 	GiveCommandsNow();
 
-	const bool commandsChanged = selectedUnitsHandler.CommandsChanged();
-
-	if (commandsChanged) {
+	if (selectedUnitsHandler.CommandsChanged()) {
 		SetShowingMetal(false);
 		LayoutIcons(true);
+		return;
 	}
-	else if (forceLayoutUpdate) {
+	if (forceLayoutUpdate) {
 		LayoutIcons(false);
 	}
 }
@@ -992,7 +1080,7 @@ void CGuiHandler::SetCursorIcon() const
 	const bool useMinimap = (minimap->ProxyMode() || ((activeReceiver != this) && (ir == minimap)));
 
 	if ((inCommand >= 0) && ((size_t)inCommand<commands.size())) {
-		const CommandDescription& cmdDesc = commands[inCommand];
+		const SCommandDescription& cmdDesc = commands[inCommand];
 
 		if (!cmdDesc.mouseicon.empty()) {
 			newCursor=cmdDesc.mouseicon;
@@ -1029,7 +1117,7 @@ void CGuiHandler::SetCursorIcon() const
 			defcmd = GetDefaultCommand(mouse->lastx, mouse->lasty);
 		}
 		if ((defcmd >= 0) && ((size_t)defcmd < commands.size())) {
-			const CommandDescription& cmdDesc = commands[defcmd];
+			const SCommandDescription& cmdDesc = commands[defcmd];
 			if (!cmdDesc.mouseicon.empty()) {
 				newCursor=cmdDesc.mouseicon;
 			} else {
@@ -1048,7 +1136,7 @@ void CGuiHandler::SetCursorIcon() const
 }
 
 
-bool CGuiHandler::TryTarget(const CommandDescription& cmdDesc) const
+bool CGuiHandler::TryTarget(const SCommandDescription& cmdDesc) const
 {
 	if (cmdDesc.id != CMD_ATTACK)
 		return true;
@@ -1057,37 +1145,39 @@ bool CGuiHandler::TryTarget(const CommandDescription& cmdDesc) const
 		return true;
 
 	// get mouse-hovered map pos
-	CUnit* targetUnit = NULL;
-	CFeature* targetFeature = NULL;
+	const CUnit* targetUnit = nullptr;
+	const CFeature* targetFeature = nullptr;
 
 	const float viewRange = globalRendering->viewRange * 1.4f;
 	const float dist = TraceRay::GuiTraceRay(camera->GetPos(), mouse->dir, viewRange, NULL, targetUnit, targetFeature, true);
 	const float3 groundPos = camera->GetPos() + mouse->dir * dist;
 
-	float3 modGroundPos;
-
 	if (dist <= 0.0f)
 		return false;
 
-	for (const CUnit* u: selectedUnitsHandler.selectedUnits) {
+	for (const int unitID: selectedUnitsHandler.selectedUnits) {
+		const CUnit* u = unitHandler->GetUnit(unitID);
+
 		// mobile kamikaze can always move into range
 		//FIXME do a range check in case of immobile kamikaze (-> mines)
 		if (u->unitDef->canKamikaze && !u->immobile)
 			return true;
 
 		for (const CWeapon* w: u->weapons) {
-			w->AdjustTargetPosToWater(modGroundPos = groundPos, targetUnit == NULL);
+			float3 modGroundPos = groundPos;
+			w->AdjustTargetPosToWater(modGroundPos, targetUnit == NULL);
+			const SWeaponTarget wtrg = SWeaponTarget(targetUnit, modGroundPos);
 
 			if (u->immobile) {
 				// immobile unit
 				// check range and weapon target properties
-				if (w->TryTarget(modGroundPos, false, targetUnit)) {
+				if (w->TryTarget(wtrg)) {
 					return true;
 				}
 			} else {
 				// mobile units can always move into range
 				// only check if we got a weapon that can shot the target (i.e. anti-air/anti-sub)
-				if (w->TestTarget(modGroundPos, false, targetUnit)) {
+				if (w->TestTarget(w->GetLeadTargetPos(wtrg), wtrg)) {
 					return true;
 				}
 			}
@@ -1107,7 +1197,7 @@ bool CGuiHandler::MousePress(int x, int y, int button)
 		if (button < 0) {
 			// proxied click from the minimap
 			button = -button;
-			activeMousePress=true;
+			activeMousePress = true;
 		}
 		else if (AboveGui(x,y)) {
 			activeMousePress = true;
@@ -1200,7 +1290,7 @@ void CGuiHandler::MouseRelease(int x, int y, int button, const float3& cameraPos
 	Command c = GetCommand(x, y, button, false, cameraPos, mouseDir);
 
 	if (c.GetID() == CMD_FAILED) { // indicates we should not finish the current command
-		Channels::UserInterface.PlaySample(failedSound, 5);
+		Channels::UserInterface->PlaySample(failedSound, 5);
 		return;
 	}
 
@@ -1217,10 +1307,10 @@ void CGuiHandler::MouseRelease(int x, int y, int button, const float3& cameraPos
 
 bool CGuiHandler::SetActiveCommand(int cmdIndex, bool rightMouseButton)
 {
-	if (cmdIndex >= (int)commands.size()) {
+	if (cmdIndex >= (int)commands.size())
 		return false;
-	}
-	else if (cmdIndex < 0) {
+
+	if (cmdIndex < 0) {
 		// cancel the current command
 		inCommand = -1;
 		defaultCmdMemory = -1;
@@ -1230,10 +1320,9 @@ bool CGuiHandler::SetActiveCommand(int cmdIndex, bool rightMouseButton)
 		return true;
 	}
 
-	CommandDescription& cd = commands[cmdIndex];
-	if (cd.disabled) {
+	SCommandDescription& cd = commands[cmdIndex];
+	if (cd.disabled)
 		return false;
-	}
 
 	lastKeySet.Reset();
 
@@ -1324,10 +1413,10 @@ bool CGuiHandler::SetActiveCommand(int cmdIndex, int button,
 	// setup the mouse and key states
 	const bool  prevLMB   = mouse->buttons[SDL_BUTTON_LEFT].pressed;
 	const bool  prevRMB   = mouse->buttons[SDL_BUTTON_RIGHT].pressed;
-	const boost::uint8_t prevAlt   = KeyInput::GetKeyModState(KMOD_ALT);
-	const boost::uint8_t prevCtrl  = KeyInput::GetKeyModState(KMOD_CTRL);
-	const boost::uint8_t prevMeta  = KeyInput::GetKeyModState(KMOD_GUI);
-	const boost::uint8_t prevShift = KeyInput::GetKeyModState(KMOD_SHIFT);
+	const std::uint8_t prevAlt   = KeyInput::GetKeyModState(KMOD_ALT);
+	const std::uint8_t prevCtrl  = KeyInput::GetKeyModState(KMOD_CTRL);
+	const std::uint8_t prevMeta  = KeyInput::GetKeyModState(KMOD_GUI);
+	const std::uint8_t prevShift = KeyInput::GetKeyModState(KMOD_SHIFT);
 
 	mouse->buttons[SDL_BUTTON_LEFT].pressed  = leftMouseButton;
 	mouse->buttons[SDL_BUTTON_RIGHT].pressed = rightMouseButton;
@@ -1366,15 +1455,19 @@ int CGuiHandler::IconAtPos(int x, int y) // GetToolTip --> IconAtPos
 	int ySlot = int(((buttonBox.y2 - frameBorder) - fy) / yIconStep);
 	xSlot = std::min(std::max(xSlot, 0), xIcons - 1);
 	ySlot = std::min(std::max(ySlot, 0), yIcons - 1);
-  const int ii = (activePage * iconsPerPage) + (ySlot * xIcons) + xSlot;
-  if ((ii >= 0) && (ii < iconsCount)) {
-		if ((fx > icons[ii].selection.x1) && (fx < icons[ii].selection.x2) &&
-				(fy > icons[ii].selection.y2) && (fy < icons[ii].selection.y1)) {
-			return ii;
-		}
-	}
+	const int ii = (activePage * iconsPerPage) + (ySlot * xIcons) + xSlot;
 
-	return -1;
+	if ((ii < 0) || (ii >= iconsCount))
+		return -1;
+
+	const IconInfo& info = icons[ii];
+
+	if (fx <= info.selection.x1) return -1;
+	if (fx >= info.selection.x2) return -1;
+	if (fy <= info.selection.y2) return -1;
+	if (fy >= info.selection.y1) return -1;
+
+	return ii;
 }
 
 
@@ -1494,16 +1587,16 @@ void CGuiHandler::RunCustomCommands(const std::vector<std::string>& cmds, bool r
 
 bool CGuiHandler::AboveGui(int x, int y)
 {
-	if (iconsCount <= 0) {
+	if (iconsCount <= 0)
 		return false;
-	}
+
 	if (!selectThrough) {
 		const float fx = MouseX(x);
 		const float fy = MouseY(y);
-		if ((fx > buttonBox.x1) && (fx < buttonBox.x2) &&
-				(fy > buttonBox.y1) && (fy < buttonBox.y2)) {
+
+		if ((fx > buttonBox.x1) && (fx < buttonBox.x2) && (fy > buttonBox.y1) && (fy < buttonBox.y2))
 			return true;
-		}
+
 	}
 	return (IconAtPos(x,y) >= 0);
 }
@@ -1537,7 +1630,7 @@ unsigned char CGuiHandler::CreateOptions(int button)
 }
 
 
-float CGuiHandler::GetNumberInput(const CommandDescription& cd) const
+float CGuiHandler::GetNumberInput(const SCommandDescription& cd) const
 {
 	float minV = 0.0f;
 	float maxV = 100.0f;
@@ -1557,24 +1650,23 @@ float CGuiHandler::GetNumberInput(const CommandDescription& cd) const
 // LuaUnsyncedRead::GetDefaultCommand --> GetDefaultCommand
 int CGuiHandler::GetDefaultCommand(int x, int y, const float3& cameraPos, const float3& mouseDir) const
 {
-	CInputReceiver* ir = NULL;
-	if (!game->hideInterface) {
-		ir = GetReceiverAt(x, y);
-	}
+	CInputReceiver* ir = nullptr;
 
-	if ((ir != NULL) && (ir != minimap)) {
+	if (!game->hideInterface)
+		ir = GetReceiverAt(x, y);
+
+	if ((ir != nullptr) && (ir != minimap))
 		return -1;
-	}
 
 	int cmdID = -1;
 
 	{
-		CUnit* unit = NULL;
-		CFeature* feature = NULL;
+		const CUnit* unit = nullptr;
+		const CFeature* feature = nullptr;
+
 		if ((ir == minimap) && (minimap->FullProxy())) {
 			unit = minimap->GetSelectUnit(minimap->GetMapPosition(x, y));
-		}
-		else {
+		} else {
 			const float viewRange = globalRendering->viewRange * 1.4f;
 			const float dist = TraceRay::GuiTraceRay(cameraPos, mouseDir, viewRange, NULL, unit, feature, true);
 			const float3 hit = cameraPos + mouseDir * dist;
@@ -1600,9 +1692,8 @@ int CGuiHandler::GetDefaultCommand(int x, int y, const float3& cameraPos, const 
 bool CGuiHandler::ProcessLocalActions(const Action& action)
 {
 	// do not process these actions if the control panel is not visible
-	if (iconsCount <= 0) {
+	if (iconsCount <= 0)
 		return false;
-	}
 
 	// only process the build options while building
 	// (conserve the keybinding space where we can)
@@ -1629,18 +1720,17 @@ bool CGuiHandler::ProcessLocalActions(const Action& action)
 	else if (action.command == "showcommands") {
 		// bonus command for debugging
 		LOG("Available Commands:");
-		for(size_t i = 0; i < commands.size(); ++i){
-			LOG("  command: " _STPF_ ", id = %i, action = %s",
-					i, commands[i].id, commands[i].action.c_str());
+		for (size_t i = 0; i < commands.size(); ++i) {
+			LOG("  command: " _STPF_ ", id = %i, action = %s", i, commands[i].id, commands[i].action.c_str());
 		}
 		// show the icon/command linkage
 		LOG("Icon Linkage:");
-		for(int ii = 0; ii < iconsCount; ++ii){
+		for (int ii = 0; ii < iconsCount; ++ii) {
 			LOG("  icon: %i, commandsID = %i", ii, icons[ii].commandsID);
 		}
 		LOG("maxPage         = %i", maxPage);
 		LOG("activePage      = %i", activePage);
-		LOG("iconsSize       = %u", iconsSize);
+		LOG("iconsSize       = %i", int(icons.size()));
 		LOG("iconsCount      = %i", iconsCount);
 		LOG("commands.size() = " _STPF_, commands.size());
 		return true;
@@ -1714,13 +1804,14 @@ bool CGuiHandler::ProcessBuildActions(const Action& action)
 
 int CGuiHandler::GetIconPosCommand(int slot) const // only called by SetActiveCommand
 {
-	if (slot < 0) {
+	if (slot < 0)
 		return -1;
-	}
+
 	const int iconPos = slot + (activePage * iconsPerPage);
-	if (iconPos < iconsCount) {
+
+	if (iconPos < iconsCount)
 		return icons[iconPos].commandsID;
-	}
+
 	return -1;
 }
 
@@ -1787,16 +1878,13 @@ bool CGuiHandler::SetActiveCommand(const Action& action,
 	}
 
 	for (size_t a = 0; a < commands.size(); ++a) {
+		SCommandDescription& cmdDesc = commands[a];
 
-		CommandDescription& cmdDesc = commands[a];
-
-		if ((static_cast<int>(a) != iconCmd) && (cmdDesc.action != action.command)) {
+		if ((static_cast<int>(a) != iconCmd) && (cmdDesc.action != action.command))
 			continue; // not a match
-		}
 
-		if (cmdDesc.disabled) {
+		if (cmdDesc.disabled)
 			continue; // can not use this command
-		}
 
 		const int cmdType = cmdDesc.type;
 
@@ -1866,7 +1954,7 @@ bool CGuiHandler::SetActiveCommand(const Action& action,
 			}
 			case CMDTYPE_NUMBER:{
 				if (!action.extra.empty()) {
-					const CommandDescription& cd = cmdDesc;
+					const SCommandDescription& cd = cmdDesc;
 					float value = atof(action.extra.c_str());
 					float minV = 0.0f;
 					float maxV = 100.0f;
@@ -2007,10 +2095,14 @@ Command CGuiHandler::GetOrderPreview()
 inline Command CheckCommand(Command c) {
 	if (selectedUnitsHandler.selectedUnits.empty() || (c.options & SHIFT_KEY))
 		return c; // always allow queued commands, since conditions may change so the command becomes valid
-	for (CUnitSet::iterator ui = selectedUnitsHandler.selectedUnits.begin(); ui != selectedUnitsHandler.selectedUnits.end(); ++ui) {
-		if((*ui)->commandAI->AllowedCommand(c, false))
+
+	for (const int unitID: selectedUnitsHandler.selectedUnits) {
+		const CUnit* u = unitHandler->GetUnit(unitID);
+
+		if (u->commandAI->AllowedCommand(c, false))
 			return c;
 	}
+
 	Command failedRet(CMD_FAILED);
 	return failedRet;
 }
@@ -2034,6 +2126,7 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 	Command defaultRet(CMD_FAILED);
 
 	int button;
+
 	if (buttonHint >= SDL_BUTTON_LEFT) {
 		button = buttonHint;
 	} else if (inCommand != -1) {
@@ -2056,9 +2149,14 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 		}
 	}
 
-	if ((tempInCommand >= 0) && ((size_t)tempInCommand < commands.size())) {
-		switch(commands[tempInCommand].type) {
+	if ((size_t)tempInCommand >= commands.size()) {
+		if (!preview)
+			inCommand = -1;
 
+		return Command(CMD_STOP);
+	}
+
+	switch (commands[tempInCommand].type) {
 		case CMDTYPE_NUMBER: {
 			const float value = GetNumberInput(commands[tempInCommand]);
 			Command c(commands[tempInCommand].id, CreateOptions(button), value);
@@ -2075,57 +2173,56 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 
 		case CMDTYPE_ICON_MAP: {
 			const float dist = CGround::LineGroundCol(cameraPos, cameraPos + (mouseDir * globalRendering->viewRange * 1.4f), false);
-			if (dist < 0) {
+
+			if (dist < 0.0f)
 				return defaultRet;
-			}
+
 			const float3 pos = cameraPos + (mouseDir * dist);
 			Command c(commands[tempInCommand].id, CreateOptions(button), pos);
 			return CheckCommand(c);
 		}
 
 		case CMDTYPE_ICON_BUILDING: {
-			const float dist = CGround::LineGroundCol(cameraPos, cameraPos + mouseDir * globalRendering->viewRange * 1.4f, false);
-			if (dist < 0) {
-				return defaultRet;
-			}
 			const UnitDef* unitdef = unitDefHandler->GetUnitDefByID(-commands[inCommand].id);
+			const float dist = CGround::LineGroundWaterCol(cameraPos, mouseDir, globalRendering->viewRange * 1.4f, unitdef->floatOnWater, false);
 
-			if(!unitdef){
+			if (dist < 0.0f)
+				return defaultRet;
+
+
+			if (unitdef == nullptr)
 				return Command(CMD_STOP);
-			}
 
-			const float3 pos = cameraPos + mouseDir * dist;
 			std::vector<BuildInfo> buildPos;
-			BuildInfo bi(unitdef, pos, buildFacing);
+			BuildInfo bi(unitdef, cameraPos + mouseDir * dist, buildFacing);
+
 			if (GetQueueKeystate() && (button == SDL_BUTTON_LEFT)) {
-				const float dist = CGround::LineGroundCol(
+				const float dist2 = CGround::LineGroundWaterCol(
 					mouse->buttons[SDL_BUTTON_LEFT].camPos,
-					mouse->buttons[SDL_BUTTON_LEFT].camPos +
-					mouse->buttons[SDL_BUTTON_LEFT].dir * globalRendering->viewRange * 1.4f,
+					mouse->buttons[SDL_BUTTON_LEFT].dir,
+					globalRendering->viewRange * 1.4f,
+					unitdef->floatOnWater,
 					false
 				);
-				const float3 pos2 = mouse->buttons[SDL_BUTTON_LEFT].camPos + mouse->buttons[SDL_BUTTON_LEFT].dir * dist;
+				const float3 pos2 = mouse->buttons[SDL_BUTTON_LEFT].camPos + mouse->buttons[SDL_BUTTON_LEFT].dir * dist2;
 				buildPos = GetBuildPos(BuildInfo(unitdef, pos2, buildFacing), bi, cameraPos, mouseDir);
 			} else
 				buildPos = GetBuildPos(bi, bi, cameraPos, mouseDir);
 
-			if (buildPos.empty()) {
+			if (buildPos.empty())
 				return Command(CMD_STOP);
-			}
 
 			if (buildPos.size() == 1) {
-				CFeature* feature = NULL;
+				CFeature* feature = nullptr;
 				// TODO Maybe also check out-of-range for immobile builder?
 				if (!CGameHelper::TestUnitBuildSquare(buildPos[0], feature, gu->myAllyTeam, false)) {
 					return defaultRet;
 				}
 			}
 
-			int a = 0; // limit the number of max commands possible to send to avoid overflowing the network buffer
-			for (std::vector<BuildInfo>::iterator bpi = buildPos.begin(); bpi != --buildPos.end() && a < 200; ++bpi) {
-				++a;
-				Command c = bpi->CreateCommand(CreateOptions(button));
-				if (!preview) {
+			if (!preview) {
+				for (auto bpi = buildPos.cbegin(); bpi != --buildPos.cend(); ++bpi) {
+					Command c = bpi->CreateCommand(CreateOptions(button));
 					GiveCommand(c);
 				}
 			}
@@ -2134,8 +2231,8 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 		}
 
 		case CMDTYPE_ICON_UNIT: {
-			CUnit* unit = NULL;
-			CFeature* feature = NULL;
+			const CUnit* unit = nullptr;
+			const CFeature* feature = nullptr;
 			Command c(commands[tempInCommand].id, CreateOptions(button));
 
 			TraceRay::GuiTraceRay(cameraPos, mouseDir, globalRendering->viewRange * 1.4f, NULL, unit, feature, true);
@@ -2149,14 +2246,14 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 		case CMDTYPE_ICON_UNIT_OR_MAP: {
 			Command c(commands[tempInCommand].id, CreateOptions(button));
 
-			CUnit* unit = NULL;
-			CFeature* feature = NULL;
+			const CUnit* unit = nullptr;
+			const CFeature* feature = nullptr;
 			const float dist2 = TraceRay::GuiTraceRay(cameraPos, mouseDir, globalRendering->viewRange * 1.4f, NULL, unit, feature, true);
-			if (dist2 > (globalRendering->viewRange * 1.4f - 300)) {
-				return defaultRet;
-			}
 
-			if (unit) {
+			if (dist2 > (globalRendering->viewRange * 1.4f - 300))
+				return defaultRet;
+
+			if (unit != nullptr) {
 				// clicked on unit
 				c.PushParam(unit->id);
 			} else {
@@ -2167,35 +2264,34 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 		}
 
 		case CMDTYPE_ICON_FRONT: {
-			float dist = CGround::LineGroundCol(
+			const float dist = CGround::LineGroundCol(
 				mouse->buttons[button].camPos,
 				mouse->buttons[button].camPos +
 				mouse->buttons[button].dir * globalRendering->viewRange * 1.4f,
 				false
 			);
-			if (dist < 0) {
+
+			if (dist < 0.0f)
 				return defaultRet;
-			}
 
 			float3 pos = mouse->buttons[button].camPos + (mouse->buttons[button].dir * dist);
 
 			Command c(commands[tempInCommand].id, CreateOptions(button), pos);
 
 			if (mouse->buttons[button].movement > 30) { // only create the front if the mouse has moved enough
-				dist = CGround::LineGroundCol(cameraPos, cameraPos + mouseDir * globalRendering->viewRange * 1.4f, false);
-				if (dist < 0) {
+				const float dist2 = CGround::LineGroundCol(cameraPos, cameraPos + mouseDir * globalRendering->viewRange * 1.4f, false);
+
+				if (dist2 < 0.0f)
 					return defaultRet;
-				}
-				float3 pos2 = cameraPos + (mouseDir * dist);
+
+				float3 pos2 = cameraPos + (mouseDir * dist2);
 
 				ProcessFrontPositions(pos, pos2);
-
 				c.SetPos(0, pos);
 
 				if (!commands[tempInCommand].params.empty() &&
 				    pos.SqDistance2D(pos2) > Square(atof(commands[tempInCommand].params[0].c_str()))) {
-					float3 dif = pos2 - pos;
-					dif.ANormalize();
+					const float3 dif = (pos2 - pos).ANormalize();
 					pos2 = pos + dif * atoi(commands[tempInCommand].params[0].c_str());
 				}
 
@@ -2207,21 +2303,20 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 		case CMDTYPE_ICON_UNIT_OR_AREA:
 		case CMDTYPE_ICON_UNIT_FEATURE_OR_AREA:
 		case CMDTYPE_ICON_AREA: {
-			float maxRadius = 100000;
-			if (commands[tempInCommand].params.size() == 1) {
-				maxRadius=atof(commands[tempInCommand].params[0].c_str());
-			}
+			float maxRadius = 100000.0f;
+
+			if (commands[tempInCommand].params.size() == 1)
+				maxRadius = atof(commands[tempInCommand].params[0].c_str());
 
 			Command c(commands[tempInCommand].id, CreateOptions(button));
 
 			if (mouse->buttons[button].movement < 4) {
-				CUnit* unit = NULL;
-				CFeature* feature = NULL;
+				const CUnit* unit = nullptr;
+				const CFeature* feature = nullptr;
 				const float dist2 = TraceRay::GuiTraceRay(cameraPos, mouseDir, globalRendering->viewRange * 1.4f, NULL, unit, feature, true);
 
-				if (dist2 > (globalRendering->viewRange * 1.4f - 300) && (commands[tempInCommand].type != CMDTYPE_ICON_UNIT_FEATURE_OR_AREA)) {
+				if (dist2 > (globalRendering->viewRange * 1.4f - 300) && (commands[tempInCommand].type != CMDTYPE_ICON_UNIT_FEATURE_OR_AREA))
 					return defaultRet;
-				}
 
 				if (feature && commands[tempInCommand].type == CMDTYPE_ICON_UNIT_FEATURE_OR_AREA) { // clicked on feature
 					c.PushParam(unitHandler->MaxUnits() + feature->id);
@@ -2239,24 +2334,28 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 					}
 				}
 			} else { // created area
-				float dist = CGround::LineGroundCol(
+				const float dist = CGround::LineGroundCol(
 					mouse->buttons[button].camPos,
 					mouse->buttons[button].camPos +
 					mouse->buttons[button].dir * globalRendering->viewRange * 1.4f,
 					false
 				);
 
-				if (dist < 0) {
+				if (dist < 0.0f)
 					return defaultRet;
-				}
+
 				const float3 pos = mouse->buttons[button].camPos + mouse->buttons[button].dir * dist;
+
 				c.PushPos(pos);
-				dist = CGround::LineGroundCol(cameraPos, cameraPos + mouseDir * globalRendering->viewRange * 1.4f, false);
-				if (dist < 0) {
+
+				const float dist2 = CGround::LineGroundCol(cameraPos, cameraPos + mouseDir * globalRendering->viewRange * 1.4f, false);
+
+				if (dist2 < 0.0f)
 					return defaultRet;
-				}
-				const float3 pos2 = cameraPos + mouseDir * dist;
+
+				const float3 pos2 = cameraPos + mouseDir * dist2;
 				c.PushParam(std::min(maxRadius, pos.distance2D(pos2)));
+
 				if (c.GetID() == CMD_UNLOAD_UNITS) {
 					c.PushParam((float)buildFacing);
 				}
@@ -2268,55 +2367,50 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 			Command c(commands[tempInCommand].id, CreateOptions(button));
 
 			if (mouse->buttons[button].movement < 16) {
-				CUnit* unit;
-				CFeature* feature;
+				const CUnit* unit = nullptr;
+				const CFeature* feature = nullptr;
 				const float dist2 = TraceRay::GuiTraceRay(cameraPos, mouseDir, globalRendering->viewRange * 1.4f, NULL, unit, feature, true);
 
-				if (dist2 > (globalRendering->viewRange * 1.4f - 300)) {
+				if (dist2 > (globalRendering->viewRange * 1.4f - 300))
 					return defaultRet;
-				}
 
-				if (unit) {
+				if (unit != nullptr) {
 					// clicked on unit
 					c.PushParam(unit->id);
 				} else {
-					// clicked in map
-					if (explicitCommand < 0) { // only attack ground if explicitly set the command
+					// clicked in map; only attack ground if explicitly set the command
+					if (explicitCommand < 0.0f)
 						return defaultRet;
-					}
+
 					c.PushPos(cameraPos + (mouseDir * dist2));
 				}
 			} else {
 				// created rectangle
-				float dist = CGround::LineGroundCol(
+				const float dist = CGround::LineGroundCol(
 					mouse->buttons[button].camPos,
 					mouse->buttons[button].camPos +
 					mouse->buttons[button].dir * globalRendering->viewRange * 1.4f,
 					false
 				);
-				if (dist < 0) {
+
+				if (dist < 0.0f)
 					return defaultRet;
-				}
+
+				const float dist2 = CGround::LineGroundCol(cameraPos, cameraPos + mouseDir * globalRendering->viewRange * 1.4f, false);
+
+				if (dist2 < 0.0f)
+					return defaultRet;
+
 				const float3 startPos = mouse->buttons[button].camPos + mouse->buttons[button].dir * dist;
-				dist = CGround::LineGroundCol(cameraPos, cameraPos + mouseDir * globalRendering->viewRange * 1.4f, false);
-				if (dist < 0) {
-					return defaultRet;
-				}
-				const float3 endPos = cameraPos + (mouseDir * dist);
+				const float3 endPos = cameraPos + (mouseDir * dist2);
+
 				c.PushPos(startPos);
 				c.PushPos(endPos);
 			}
 			return CheckCommand(c);
 		}
-
-		default:
-			return Command(CMD_STOP);
-		}
-	} else {
-		if (!preview) {
-			inCommand = -1;
-		}
 	}
+
 	return Command(CMD_STOP);
 }
 
@@ -2324,13 +2418,16 @@ Command CGuiHandler::GetCommand(int mouseX, int mouseY, int buttonHint, bool pre
 
 static bool WouldCancelAnyQueued(const BuildInfo& b)
 {
-	Command c = b.CreateCommand();
-	CUnitSet::iterator ui = selectedUnitsHandler.selectedUnits.begin();
-	for (; ui != selectedUnitsHandler.selectedUnits.end(); ++ui) {
-		if ((*ui)->commandAI->WillCancelQueued(c)) {
+	const Command c = b.CreateCommand();
+
+	for (const int unitID: selectedUnitsHandler.selectedUnits) {
+		const CUnit* u = unitHandler->GetUnit(unitID);
+
+		if (u->commandAI->WillCancelQueued(c))
 			return true;
-		}
+
 	}
+
 	return false;
 }
 
@@ -2338,10 +2435,11 @@ static void FillRowOfBuildPos(const BuildInfo& startInfo, float x, float z, floa
 {
 	for (int i = 0; i < n; ++i) {
 		BuildInfo bi(startInfo.def, float3(x, 0.0f, z), (startInfo.buildFacing + facing) % NUM_FACINGS);
-		bi.pos=CGameHelper::Pos2BuildPos(bi, false);
-		if (!nocancel || !WouldCancelAnyQueued(bi)) {
+		bi.pos = CGameHelper::Pos2BuildPos(bi, false);
+
+		if (!nocancel || !WouldCancelAnyQueued(bi))
 			ret.push_back(bi);
-		}
+
 		x += xstep;
 		z += zstep;
 	}
@@ -2358,11 +2456,11 @@ std::vector<BuildInfo> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, cons
 	BuildInfo other; // the unit around which buildings can be circled
 
 	if (GetQueueKeystate() && KeyInput::GetKeyModState(KMOD_CTRL)) {
-		CUnit* unit;
-		CFeature* feature;
-		TraceRay::GuiTraceRay(cameraPos, mouseDir, globalRendering->viewRange * 1.4f, NULL, unit, feature, true);
+		const CUnit* unit = nullptr;
+		const CFeature* feature = nullptr;
+		TraceRay::GuiTraceRay(cameraPos, mouseDir, globalRendering->viewRange * 1.4f, NULL, unit, feature, startInfo.def->floatOnWater);
 
-		if (unit) {
+		if (unit != nullptr) {
 			other.def = unit->unitDef;
 			other.pos = unit->pos;
 			other.buildFacing = unit->buildFacing;
@@ -2466,9 +2564,8 @@ void CGuiHandler::ProcessFrontPositions(float3& pos0, const float3& pos1)
 
 void CGuiHandler::Draw()
 {
-	if ((iconsCount <= 0) && (luaUI == NULL)) {
+	if ((iconsCount <= 0) && (luaUI == nullptr))
 		return;
-	}
 
 	glPushAttrib(GL_ENABLE_BIT);
 
@@ -2481,9 +2578,8 @@ void CGuiHandler::Draw()
 	glEnable(GL_ALPHA_TEST);
 	glAlphaFunc(GL_GEQUAL, 0.01f);
 
-	if (iconsCount > 0) {
+	if (iconsCount > 0)
 		DrawButtons();
-	}
 
 	glPopAttrib();
 }
@@ -2502,18 +2598,16 @@ static std::string FindCornerText(const std::string& corner, const vector<std::s
 
 void CGuiHandler::DrawCustomButton(const IconInfo& icon, bool highlight)
 {
-	const CommandDescription& cmdDesc = commands[icon.commandsID];
+	const SCommandDescription& cmdDesc = commands[icon.commandsID];
 
 	const bool usedTexture = DrawTexture(icon, cmdDesc.iconname);
 
 	// highlight overlay before text is applied
-	if (highlight) {
+	if (highlight)
 		DrawHilightQuad(icon);
-	}
 
-	if (!usedTexture || !cmdDesc.onlyTexture) {
+	if (!usedTexture || !cmdDesc.onlyTexture)
 		DrawName(icon, cmdDesc.name, false);
-	}
 
 	DrawNWtext(icon, FindCornerText("$nw$", cmdDesc.params));
 	DrawSWtext(icon, FindCornerText("$sw$", cmdDesc.params));
@@ -2753,9 +2847,9 @@ void CGuiHandler::DrawIconFrame(const IconInfo& icon)
 void CGuiHandler::DrawName(const IconInfo& icon, const std::string& text,
 		bool offsetForLEDs)
 {
-	if (text.empty()) {
+	if (text.empty())
 		return;
-	}
+
 	const Box& b = icon.visual;
 
 	const float yShrink = offsetForLEDs ? (0.125f * yIconSize) : 0.0f;
@@ -2777,9 +2871,9 @@ void CGuiHandler::DrawName(const IconInfo& icon, const std::string& text,
 
 void CGuiHandler::DrawNWtext(const IconInfo& icon, const std::string& text)
 {
-	if (text.empty()) {
+	if (text.empty())
 		return;
-	}
+
 	const Box& b = icon.visual;
 	const float tHeight = font->GetSize() * font->GetTextHeight(text) * globalRendering->pixelY;
 	const float fontScale = (yIconSize * 0.2f) / tHeight;
@@ -2792,9 +2886,9 @@ void CGuiHandler::DrawNWtext(const IconInfo& icon, const std::string& text)
 
 void CGuiHandler::DrawSWtext(const IconInfo& icon, const std::string& text)
 {
-	if (text.empty()) {
+	if (text.empty())
 		return;
-	}
+
 	const Box& b = icon.visual;
 	const float tHeight = font->GetSize() * font->GetTextHeight(text) * globalRendering->pixelY;
 	const float fontScale = (yIconSize * 0.2f) / tHeight;
@@ -2807,9 +2901,9 @@ void CGuiHandler::DrawSWtext(const IconInfo& icon, const std::string& text)
 
 void CGuiHandler::DrawNEtext(const IconInfo& icon, const std::string& text)
 {
-	if (text.empty()) {
+	if (text.empty())
 		return;
-	}
+
 	const Box& b = icon.visual;
 	const float tHeight = font->GetSize() * font->GetTextHeight(text) * globalRendering->pixelY;
 	const float fontScale = (yIconSize * 0.2f) / tHeight;
@@ -2822,9 +2916,9 @@ void CGuiHandler::DrawNEtext(const IconInfo& icon, const std::string& text)
 
 void CGuiHandler::DrawSEtext(const IconInfo& icon, const std::string& text)
 {
-	if (text.empty()) {
+	if (text.empty())
 		return;
-	}
+
 	const Box& b = icon.visual;
 	const float tHeight = font->GetSize() * font->GetTextHeight(text) * globalRendering->pixelY;
 	const float fontScale = (yIconSize * 0.2f) / tHeight;
@@ -2879,30 +2973,28 @@ void CGuiHandler::DrawButtons() // Only called by Draw
 	const int buttonEnd   = std::min(iconsCount, buttonStart + iconsPerPage);
 
 	for (int ii = buttonStart; ii < buttonEnd; ii++) {
+		const IconInfo& icon = icons.at(ii);
 
-		const IconInfo& icon = icons[ii];
-		if (icon.commandsID < 0) {
+		if (icon.commandsID < 0)
 			continue; // inactive icon
-		}
-		const CommandDescription& cmdDesc = commands[icon.commandsID];
-		const bool customCommand = (cmdDesc.id == CMD_INTERNAL) &&
-		                           (cmdDesc.type == CMDTYPE_CUSTOM);
-		const bool highlight = ((mouseIcon == ii) ||
-		                        (icon.commandsID == inCommand)) &&
-		                       (!customCommand || !cmdDesc.params.empty());
+		if (icon.commandsID >= commands.size())
+			continue;
+
+		const SCommandDescription& cmdDesc = commands[icon.commandsID];
+
+		const bool customCommand = (cmdDesc.id == CMD_INTERNAL) && (cmdDesc.type == CMDTYPE_CUSTOM);
+		const bool highlight = ((mouseIcon == ii) || (icon.commandsID == inCommand)) && (!customCommand || !cmdDesc.params.empty());
 
 		if (customCommand) {
 			DrawCustomButton(icon, highlight);
-		}
-		else {
+		} else {
 			bool usedTexture = false;
 			bool onlyTexture = cmdDesc.onlyTexture;
 			const bool useLEDs = useOptionLEDs && (cmdDesc.type == CMDTYPE_ICON_MODE);
 
 			// specified texture
-			if (DrawTexture(icon, cmdDesc.iconname)) {
+			if (DrawTexture(icon, cmdDesc.iconname))
 				usedTexture = true;
-			}
 
 			// unit buildpic
 			if (!usedTexture) {
@@ -3021,27 +3113,26 @@ void CGuiHandler::DrawButtons() // Only called by Draw
 
 void CGuiHandler::DrawMenuName() // Only called by drawbuttons
 {
-	if (!menuName.empty() && (iconsCount > 0)) {
-		const float fontScale = 1.0f;
-		const float xp = 0.5f * (buttonBox.x1 + buttonBox.x2);
-		const float yp = buttonBox.y2 + (yIconSize * 0.125f);
+	if (menuName.empty() || (iconsCount == 0))
+		return;
 
-		if (!outlineFonts) {
-			const float textHeight = fontScale * font->GetTextHeight(menuName) * globalRendering->pixelY;
-			glDisable(GL_TEXTURE_2D);
-			glColor4f(0.2f, 0.2f, 0.2f, guiAlpha);
-			glRectf(buttonBox.x1,
-			        buttonBox.y2,
-			        buttonBox.x2,
-			        buttonBox.y2 + textHeight + (yIconSize * 0.25f));
-			font->glPrint(xp, yp, fontScale, FONT_CENTER | FONT_SCALE | FONT_NORM, menuName);
-		}
-		else {
-			font->SetColors(); // default
-			font->glPrint(xp, yp, fontScale, FONT_CENTER | FONT_OUTLINE | FONT_SCALE | FONT_NORM, menuName);
-		}
+	const float fontScale = 1.0f;
+	const float xp = 0.5f * (buttonBox.x1 + buttonBox.x2);
+	const float yp = buttonBox.y2 + (yIconSize * 0.125f);
+
+	if (!outlineFonts) {
+		const float textHeight = fontScale * font->GetTextHeight(menuName) * globalRendering->pixelY;
+		glDisable(GL_TEXTURE_2D);
+		glColor4f(0.2f, 0.2f, 0.2f, guiAlpha);
+		glRectf(buttonBox.x1,
+		        buttonBox.y2,
+		        buttonBox.x2,
+		        buttonBox.y2 + textHeight + (yIconSize * 0.25f));
+		font->glPrint(xp, yp, fontScale, FONT_CENTER | FONT_SCALE | FONT_NORM, menuName);
+	} else {
+		font->SetColors(); // default
+		font->glPrint(xp, yp, fontScale, FONT_CENTER | FONT_OUTLINE | FONT_SCALE | FONT_NORM, menuName);
 	}
-
 }
 
 
@@ -3086,7 +3177,7 @@ void CGuiHandler::DrawNumberInput() // Only called by drawbuttons
 {
 	// draw the value for CMDTYPE_NUMBER commands
 	if ((inCommand >= 0) && ((size_t)inCommand < commands.size())) {
-		const CommandDescription& cd = commands[inCommand];
+		const SCommandDescription& cd = commands[inCommand];
 		if (cd.type == CMDTYPE_NUMBER) {
 			const float value = GetNumberInput(cd);
 			glDisable(GL_TEXTURE_2D);
@@ -3153,7 +3244,7 @@ void CGuiHandler::DrawNextArrow(const IconInfo& icon)
 
 void CGuiHandler::DrawOptionLEDs(const IconInfo& icon)
 {
-	const CommandDescription& cmdDesc = commands[icon.commandsID];
+	const SCommandDescription& cmdDesc = commands[icon.commandsID];
 
 	const int pCount = (int)cmdDesc.params.size() - 1;
 	if (pCount < 2) {
@@ -3210,16 +3301,60 @@ void CGuiHandler::DrawOptionLEDs(const IconInfo& icon)
 /******************************************************************************/
 /******************************************************************************/
 
-static inline void DrawSensorRange(int radius,
-                                   const float* color, const float3& pos)
+static inline void DrawSensorRange(int radius, const float* color, const float3& pos)
 {
-	const int sensorScale = radarHandler->radarDiv;
-	const int realRadius = ((radius / sensorScale) * sensorScale);
-	if (realRadius > 0) {
+	if (radius > 0) {
 		glColor4fv(color);
-		glSurfaceCircle(pos, (float)realRadius, 40);
+		glSurfaceCircle(pos, (float)radius, 40);
 	}
 }
+
+
+static void DrawUnitDefRanges(const CUnit* unit, const UnitDef* unitdef, const float3 pos)
+{
+	// draw build range for immobile builders
+	if (unitdef->builder) {
+		const float radius = unitdef->buildDistance;
+		if (radius > 0.0f) {
+			glColor4fv(cmdColors.rangeBuild);
+			glSurfaceCircle(pos, radius, 40);
+		}
+	}
+	// draw shield range for immobile units
+	if (unitdef->shieldWeaponDef) {
+		glColor4fv(cmdColors.rangeShield);
+		glSurfaceCircle(pos, unitdef->shieldWeaponDef->shieldRadius, 40);
+	}
+	// draw sensor and jammer ranges
+	if (unitdef->onoffable || unitdef->activateWhenBuilt) {
+		if (unit != nullptr && unitdef == unit->unitDef) { // test if it's a decoy
+			DrawSensorRange(unit->radarRadius   , cmdColors.rangeRadar,       pos);
+			DrawSensorRange(unit->sonarRadius   , cmdColors.rangeSonar,       pos);
+			DrawSensorRange(unit->seismicRadius , cmdColors.rangeSeismic,     pos);
+			DrawSensorRange(unit->jammerRadius  , cmdColors.rangeJammer,      pos);
+			DrawSensorRange(unit->sonarJamRadius, cmdColors.rangeSonarJammer, pos);
+		} else {
+			DrawSensorRange(unitdef->radarRadius   , cmdColors.rangeRadar,       pos);
+			DrawSensorRange(unitdef->sonarRadius   , cmdColors.rangeSonar,       pos);
+			DrawSensorRange(unitdef->seismicRadius , cmdColors.rangeSeismic,     pos);
+			DrawSensorRange(unitdef->jammerRadius  , cmdColors.rangeJammer,      pos);
+			DrawSensorRange(unitdef->sonarJamRadius, cmdColors.rangeSonarJammer, pos);
+		}
+	}
+	// draw self destruct and damage distance
+	if (unitdef->kamikazeDist > 0) {
+		glColor4fv(cmdColors.rangeKamikaze);
+		glSurfaceCircle(pos, unitdef->kamikazeDist, 40);
+
+		const WeaponDef* wd = unitdef->selfdExpWeaponDef;
+		if (wd != NULL) {
+			glColor4fv(cmdColors.rangeSelfDestruct);
+			glSurfaceCircle(pos, wd->damages.damageAreaOfEffect, 40);
+		}
+	}
+
+}
+
 
 
 static inline GLuint GetConeList()
@@ -3234,8 +3369,8 @@ static inline GLuint GetConeList()
 		const int divs = 64;
 		glVertex3f(0.0f, 0.0f, 0.0f);
 		for (int i = 0; i <= divs; i++) {
-			const float rad = (PI * 2.0) * (float)i / (float)divs;
-			glVertex3f(1.0f, math::sin(rad), math::cos(rad));
+			const float rad = math::TWOPI * (float)i / (float)divs;
+			glVertex3f(1.0f, std::sin(rad), std::cos(rad));
 		}
 		glEnd();
 	}
@@ -3249,11 +3384,11 @@ static void DrawWeaponCone(const float3& pos,
 {
 	glPushMatrix();
 
-	const float xlen = len * math::cos(hrads);
-	const float yzlen = len * math::sin(hrads);
+	const float xlen = len * std::cos(hrads);
+	const float yzlen = len * std::sin(hrads);
 	glTranslatef(pos.x, pos.y, pos.z);
-	glRotatef(heading * (180.0 / PI), 0.0f, 1.0f, 0.0f);
-	glRotatef(pitch   * (180.0 / PI), 0.0f, 0.0f, 1.0f);
+	glRotatef(heading * math::RAD_TO_DEG, 0.0f, 1.0f, 0.0f);
+	glRotatef(pitch   * math::RAD_TO_DEG, 0.0f, 0.0f, 1.0f);
 	glScalef(xlen, yzlen, yzlen);
 
 	glEnable(GL_CULL_FACE);
@@ -3274,20 +3409,16 @@ static void DrawWeaponCone(const float3& pos,
 
 static inline void DrawWeaponArc(const CUnit* unit)
 {
-	for (unsigned int n = 0; n < unit->weapons.size(); n++) {
-		const CWeapon* w = unit->weapons[n];
-
+	for (const CWeapon* w: unit->weapons) {
 		// attack order needs to have been issued or wantedDir is undefined
-		if (w->targetType == Target_None)
+		if (!w->HaveTarget())
 			continue;
 		if (w->weaponDef->projectileType == WEAPON_BASE_PROJECTILE)
 			continue;
 
-		const float3 weaponDir = (unit->frontdir * w->onlyForward) + (w->wantedDir * (1 - w->onlyForward));
-
 		const float hrads   = math::acos(w->maxForwardAngleDif);
-		const float heading = math::atan2(-weaponDir.z, weaponDir.x);
-		const float pitch   = math::asin(weaponDir.y);
+		const float heading = math::atan2(-w->wantedDir.z, w->wantedDir.x);
+		const float pitch   = math::asin(w->wantedDir.y);
 
 		// note: cone visualization is invalid for ballistic weapons
 		DrawWeaponCone(w->weaponMuzzlePos, w->range, hrads, heading, pitch);
@@ -3338,7 +3469,7 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 		}
 
 		if (mouse->buttons[button].pressed && (cmdIndex >= 0) && ((size_t)cmdIndex < commands.size())) {
-			const CommandDescription& cmdDesc = commands[cmdIndex];
+			const SCommandDescription& cmdDesc = commands[cmdIndex];
 			switch (cmdDesc.type) {
 				case CMDTYPE_ICON_FRONT: {
 					if (mouse->buttons[button].movement > 30) {
@@ -3357,27 +3488,32 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 				case CMDTYPE_ICON_UNIT_OR_AREA:
 				case CMDTYPE_ICON_UNIT_FEATURE_OR_AREA:
 				case CMDTYPE_ICON_AREA: {
-					float maxRadius=100000;
-					if (cmdDesc.params.size() == 1) {
+					float maxRadius = 100000.0f;
+
+					if (cmdDesc.params.size() == 1)
 						maxRadius = atof(cmdDesc.params[0].c_str());
-					}
+
 					if (mouse->buttons[button].movement > 4) {
-						float dist = CGround::LineGroundCol(
+						const float dist = CGround::LineGroundCol(
 							mouse->buttons[button].camPos,
 							mouse->buttons[button].camPos +
 							mouse->buttons[button].dir * globalRendering->viewRange * 1.4f,
 							false
 						);
-						if(dist<0){
+
+						if (dist < 0.0f)
 							break;
-						}
-						float3 pos=mouse->buttons[button].camPos+mouse->buttons[button].dir*dist;
-						dist = CGround::LineGroundCol(cameraPos, cameraPos + mouseDir * globalRendering->viewRange * 1.4f, false);
-						if (dist < 0) {
+
+						const float dist2 = CGround::LineGroundCol(cameraPos, cameraPos + mouseDir * globalRendering->viewRange * 1.4f, false);
+
+						if (dist2 < 0.0f)
 							break;
-						}
-						float3 pos2 = cameraPos + mouseDir * dist;
+
+						const float3 pos = mouse->buttons[button].camPos + mouse->buttons[button].dir * dist;
+						const float3 pos2 = cameraPos + mouseDir * dist2;
+
 						const float* color;
+
 						switch (cmdDesc.id) {
 							case CMD_ATTACK:
 							case CMD_AREA_ATTACK:  { color = cmdColors.attack;      break; }
@@ -3394,16 +3530,17 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 								color = grey;
 							}
 						}
+
 						const float radius = std::min(maxRadius, pos.distance2D(pos2));
+
 						if (!onMinimap) {
 							DrawArea(pos, radius, color);
-						}
-						else {
+						} else {
 							glColor4f(color[0], color[1], color[2], 0.5f);
 							glBegin(GL_TRIANGLE_FAN);
 							const int divs = 256;
-							for(int i = 0; i <= divs; ++i) {
-								const float radians = (2 * PI) * (float)i / (float)divs;
+							for (int i = 0; i <= divs; ++i) {
+								const float radians = math::TWOPI * (float)i / (float)divs;
 								float3 p(pos.x, 0.0f, pos.z);
 								p.x += fastmath::sin(radians) * radius;
 								p.z += fastmath::cos(radians) * radius;
@@ -3416,21 +3553,24 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 				}
 				case CMDTYPE_ICON_UNIT_OR_RECTANGLE:{
 					if (mouse->buttons[button].movement >= 16) {
-						float dist = CGround::LineGroundCol(
+						const float dist1 = CGround::LineGroundCol(
 							mouse->buttons[button].camPos,
 							mouse->buttons[button].camPos +
 							mouse->buttons[button].dir * globalRendering->viewRange * 1.4f,
 							false
 						);
-						if (dist < 0) {
+
+						if (dist1 < 0.0f)
 							break;
-						}
-						const float3 pos1 = mouse->buttons[button].camPos+mouse->buttons[button].dir*dist;
-						dist = CGround::LineGroundCol(cameraPos, cameraPos + mouseDir * globalRendering->viewRange * 1.4f, false);
-						if (dist < 0) {
+
+						const float dist2 = CGround::LineGroundCol(cameraPos, cameraPos + mouseDir * globalRendering->viewRange * 1.4f, false);
+
+						if (dist2 < 0.0f)
 							break;
-						}
-						const float3 pos2 = cameraPos+mouseDir*dist;
+
+						const float3 pos1 = mouse->buttons[button].camPos+mouse->buttons[button].dir * dist1;
+						const float3 pos2 = cameraPos + mouseDir * dist2;
+
 						if (!onMinimap) {
 							DrawSelectBox(pos1, pos2, cameraPos);
 						} else {
@@ -3461,8 +3601,8 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 	const CUnit* pointedAt = NULL;
 
 	if (GetQueueKeystate()) {
-		CUnit* unit = NULL;
-		CFeature* feature = NULL;
+		const CUnit* unit = nullptr;
+		const CFeature* feature = nullptr;
 
 		if (minimapCoords) {
 			unit = minimap->GetSelectUnit(cameraPos);
@@ -3478,6 +3618,8 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 			if (enemyUnit && unitdef->decoyDef) {
 				unitdef = unitdef->decoyDef;
 			}
+
+			DrawUnitDefRanges(unit, unitdef, unit->pos);
 
 			// draw weapon range
 			if (unitdef->maxWeaponRange > 0) {
@@ -3503,40 +3645,6 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 					glSurfaceCircle(unit->pos, unit->decloakDistance, 40);
 				}
 			}
-			// draw self destruct and damage distance
-			if (unitdef->kamikazeDist > 0) {
-				glColor4fv(cmdColors.rangeKamikaze);
-				glSurfaceCircle(unit->pos, unitdef->kamikazeDist, 40);
-
-				const WeaponDef* wd = unitdef->selfdExpWeaponDef;
-
-				if (wd != NULL) {
-					glColor4fv(cmdColors.rangeSelfDestruct);
-					glSurfaceCircle(unit->pos, wd->damageAreaOfEffect, 40);
-				}
-			}
-			// draw build distance for immobile builders
-			if (unitdef->builder) {
-				const float radius = unitdef->buildDistance;
-				if (radius > 0.0f) {
-					glColor4fv(cmdColors.rangeBuild);
-					glSurfaceCircle(unit->pos, radius, 40);
-				}
-			}
-			// draw shield range for immobile units
-			if (unitdef->shieldWeaponDef) {
-				glColor4fv(cmdColors.rangeShield);
-				glSurfaceCircle(unit->pos, unitdef->shieldWeaponDef->shieldRadius, 40);
-			}
-			// draw sensor and jammer ranges
-			if (unitdef->onoffable || unitdef->activateWhenBuilt) {
-				const float3& p = unit->pos;
-				DrawSensorRange(unitdef->radarRadius,    cmdColors.rangeRadar, p);
-				DrawSensorRange(unitdef->sonarRadius,    cmdColors.rangeSonar, p);
-				DrawSensorRange(unitdef->seismicRadius,  cmdColors.rangeSeismic, p);
-				DrawSensorRange(unitdef->jammerRadius,   cmdColors.rangeJammer, p);
-				DrawSensorRange(unitdef->sonarJamRadius, cmdColors.rangeSonarJammer, p);
-			}
 			// draw interceptor range
 			if (unitdef->maxCoverage > 0.0f) {
 				const CWeapon* w = NULL; //will be checked if any missiles are ready
@@ -3561,19 +3669,17 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 	    (commands[inCommand].type == CMDTYPE_ICON_BUILDING)) {
 		{ // limit the locking scope to avoid deadlock
 			// draw build distance for all immobile builders during build commands
-			const std::map<unsigned int, CBuilderCAI*>& builderCAIs = unitHandler->builderCAIs;
-			      std::map<unsigned int, CBuilderCAI*>::const_iterator bi;
-
-			for (bi = builderCAIs.begin(); bi != builderCAIs.end(); ++bi) {
-				const CBuilderCAI* builderCAI = bi->second;
+			for (const auto bi: unitHandler->GetBuilderCAIs()) {
+				const CBuilderCAI* builderCAI = bi.second;
 				const CUnit* builder = builderCAI->owner;
 				const UnitDef* builderDef = builder->unitDef;
 
-				if ((builder == pointedAt) || (builder->team != gu->myTeam)) {
+				if (builder == pointedAt || builder->team != gu->myTeam)
 					continue;
-				}
+				if (!builderDef->builder)
+					continue;
 
-				if (builderDef->builder && (!builderDef->canmove || selectedUnitsHandler.IsUnitSelected(builder))) {
+				if (!builderDef->canmove || selectedUnitsHandler.IsUnitSelected(builder)) {
 					const float radius = builderDef->buildDistance;
 					if (radius > 0.0f) {
 						glDisable(GL_TEXTURE_2D);
@@ -3585,82 +3691,70 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 			}
 		}
 
-		float dist = CGround::LineGroundCol(cameraPos, cameraPos + mouseDir * globalRendering->viewRange * 1.4f, false);
-		if (dist > 0) {
-			const UnitDef* unitdef = unitDefHandler->GetUnitDefByID(-commands[inCommand].id);
-			if (unitdef) {
-				// get the build information
-				float3 pos = cameraPos+mouseDir*dist;
-				std::vector<BuildInfo> buildPos;
+		const UnitDef* unitdef = unitDefHandler->GetUnitDefByID(-commands[inCommand].id);
+
+		if (unitdef != nullptr) {
+			const float dist = CGround::LineGroundWaterCol(cameraPos, mouseDir, globalRendering->viewRange * 1.4f, unitdef->floatOnWater, false);
+
+			if (dist > 0.0f) {
 				const CMouseHandler::ButtonPressEvt& bp = mouse->buttons[SDL_BUTTON_LEFT];
+				const float bpDist = CGround::LineGroundWaterCol(bp.camPos, bp.dir, globalRendering->viewRange * 1.4f, unitdef->floatOnWater, false);
+
+				// get the build information
+				const float3 cPos = cameraPos + mouseDir * dist;
+				const float3 bPos = bp.camPos + bp.dir * bpDist;
+
+				std::vector<BuildInfo> buildInfos;
+
 				if (GetQueueKeystate() && bp.pressed) {
-					const float dist = CGround::LineGroundCol(bp.camPos, bp.camPos + bp.dir * globalRendering->viewRange * 1.4f, false);
-					const float3 pos2 = bp.camPos + bp.dir * dist;
-					buildPos = GetBuildPos(BuildInfo(unitdef, pos2, buildFacing),
-					                       BuildInfo(unitdef, pos, buildFacing), cameraPos, mouseDir);
+					const BuildInfo cInfo = BuildInfo(unitdef, cPos, buildFacing);
+					const BuildInfo bInfo = BuildInfo(unitdef, bPos, buildFacing);
+
+					buildInfos = std::move(GetBuildPos(bInfo, cInfo, cameraPos, mouseDir));
 				} else {
-					BuildInfo bi(unitdef, pos, buildFacing);
-					buildPos = GetBuildPos(bi, bi, cameraPos, mouseDir);
+					const BuildInfo bi(unitdef, cPos, buildFacing);
+
+					buildInfos = std::move(GetBuildPos(bi, bi, cameraPos, mouseDir));
 				}
 
-				for (std::vector<BuildInfo>::iterator bpi = buildPos.begin(); bpi != buildPos.end(); ++bpi) {
-					const float3& buildpos = bpi->pos;
+				for (auto bpi = buildInfos.cbegin(); bpi != buildInfos.cend(); ++bpi) {
+					const float3& buildPos = bpi->pos;
+
+					DrawUnitDefRanges(nullptr, unitdef, buildPos);
+
 					// draw weapon range
 					if (!unitdef->weapons.empty()) {
 						glDisable(GL_DEPTH_TEST);
 						glColor4fv(cmdColors.rangeAttack);
-						glBallisticCircle(buildpos, unitdef->weapons[0].def->range,
+						glBallisticCircle(buildPos, unitdef->weapons[0].def->range,
 						                  NULL, 40, unitdef->weapons[0].def->heightmod);
 						glEnable(GL_DEPTH_TEST);
 					}
 					// draw extraction range
 					if (unitdef->extractRange > 0) {
 						glColor4fv(cmdColors.rangeExtract);
-						glSurfaceCircle(buildpos, unitdef->extractRange, 40);
-					}
-					// draw build range for immobile builders
-					if (unitdef->builder) {
-						const float radius = unitdef->buildDistance;
-						if (radius > 0.0f) {
-							glColor4fv(cmdColors.rangeBuild);
-							glSurfaceCircle(buildpos, radius, 40);
-						}
-					}
-					// draw shield range for immobile units
-					if (unitdef->shieldWeaponDef) {
-						glColor4fv(cmdColors.rangeShield);
-						glSurfaceCircle(buildpos, unitdef->shieldWeaponDef->shieldRadius, 40);
+						glSurfaceCircle(buildPos, unitdef->extractRange, 40);
 					}
 					// draw interceptor range
 					const WeaponDef* wd = unitdef->stockpileWeaponDef;
 					if ((wd != NULL) && wd->interceptor) {
 						glColor4fv(cmdColors.rangeInterceptorOn);
-						glSurfaceCircle(buildpos, wd->coverageRange, 40);
-					}
-					// draw sensor and jammer ranges
-					if (unitdef->onoffable || unitdef->activateWhenBuilt) {
-						const float3& p = buildpos;
-						DrawSensorRange(unitdef->radarRadius,    cmdColors.rangeRadar, p);
-						DrawSensorRange(unitdef->sonarRadius,    cmdColors.rangeSonar, p);
-						DrawSensorRange(unitdef->seismicRadius,  cmdColors.rangeSeismic, p);
-						DrawSensorRange(unitdef->jammerRadius,   cmdColors.rangeJammer, p);
-						DrawSensorRange(unitdef->sonarJamRadius, cmdColors.rangeSonarJammer, p);
+						glSurfaceCircle(buildPos, wd->coverageRange, 40);
 					}
 
 					std::vector<Command> cv;
-					if (GetQueueKeystate()) {
 
-						Command c = bpi->CreateCommand();
-						std::vector<Command> temp;
-						CUnitSet::iterator ui = selectedUnitsHandler.selectedUnits.begin();
-						for (; ui != selectedUnitsHandler.selectedUnits.end(); ++ui) {
-							temp = (*ui)->commandAI->GetOverlapQueued(c);
-							std::vector<Command>::iterator ti = temp.begin();
-							for (; ti != temp.end(); ++ti) {
-								cv.insert(cv.end(),*ti);
+					if (GetQueueKeystate()) {
+						const Command c = bpi->CreateCommand();
+						for (const int unitID: selectedUnitsHandler.selectedUnits) {
+							const CUnit* su = unitHandler->GetUnit(unitID);
+							const CCommandAI* cai = su->commandAI;
+							for (const Command& cmd: cai->GetOverlapQueued(c)) {
+								cv.push_back(cmd);
 							}
 						}
 					}
+
 					if (unitDrawer->ShowUnitBuildSquare(*bpi, cv)) {
 						glColor4f(0.7f,1,1,0.4f);
 					} else {
@@ -3668,8 +3762,14 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 					}
 
 					if (!onMinimap) {
-						CUnitDrawer::DrawBuildingSample(bpi->def, gu->myTeam, buildpos, bpi->buildFacing);
+						glPushMatrix();
+						glLoadIdentity();
+						glTranslatef3(buildPos);
+						glRotatef(bpi->buildFacing * 90.0f, 0.0f, 1.0f, 0.0f);
 
+						CUnitDrawer::DrawIndividualDefAlpha(bpi->def, gu->myTeam, false);
+
+						glPopMatrix();
 						glBlendFunc((GLenum)cmdColors.SelectedBlendSrc(), (GLenum)cmdColors.SelectedBlendDst());
 					}
 				}
@@ -3679,22 +3779,22 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 
 	// draw range circles if attack orders are imminent
 	int defcmd = GetDefaultCommand(mouse->lastx, mouse->lasty, cameraPos, mouseDir);
-	if ((inCommand>=0 && (size_t)inCommand<commands.size() && commands[inCommand].id==CMD_ATTACK) ||
-		(inCommand==-1 && defcmd>0 && commands[defcmd].id==CMD_ATTACK)
+	if ((inCommand >= 0 && (size_t)inCommand<commands.size() && commands[inCommand].id == CMD_ATTACK) ||
+		(inCommand == -1 && defcmd > 0 && commands[defcmd].id == CMD_ATTACK)
 	) {
-		for(CUnitSet::iterator si=selectedUnitsHandler.selectedUnits.begin(); si!=selectedUnitsHandler.selectedUnits.end(); ++si) {
-			CUnit* unit = *si;
-			if (unit == pointedAt) {
+		for (const int unitID: selectedUnitsHandler.selectedUnits) {
+			const CUnit* unit = unitHandler->GetUnit(unitID);
+
+			if (unit == pointedAt)
 				continue;
-			}
-			if (onMinimap && (unit->unitDef->speed > 0.0f)) {
+
+			if (onMinimap && (unit->unitDef->speed > 0.0f))
 				continue;
-			}
-			if(unit->maxRange>0 && ((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectatingFullView)) {
+
+			if (unit->maxRange > 0.0f && ((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectatingFullView)) {
 				glDisable(GL_DEPTH_TEST);
 				glColor4fv(cmdColors.rangeAttack);
-				glBallisticCircle(unit->pos, unit->maxRange,
-				                  unit->weapons.front(), 40);
+				glBallisticCircle(unit->pos, unit->maxRange, unit->weapons.front(), 40);
 				glEnable(GL_DEPTH_TEST);
 				if (!onMinimap && gs->cheatEnabled && globalRendering->drawdebug) {
 					DrawWeaponArc(unit);
@@ -3794,17 +3894,17 @@ void CGuiHandler::DrawCentroidCursor()
 		return;
 	}
 
-	const CUnitSet& selUnits = selectedUnitsHandler.selectedUnits;
-	if (selUnits.size() < 2) {
+	const auto& selUnits = selectedUnitsHandler.selectedUnits;
+	if (selUnits.size() < 2)
 		return;
-	}
 
 	float3 pos;
-	CUnitSet::const_iterator it;
-	for (it = selUnits.begin(); it != selUnits.end(); ++it) {
-		pos += (*it)->midPos;
+
+	for (const int unitID: selUnits) {
+		pos += (unitHandler->GetUnit(unitID))->midPos;
 	}
 	pos /= (float)selUnits.size();
+
 	const float3 winPos = camera->CalcWindowCoordinates(pos);
 	if (winPos.z <= 1.0f) {
 		const CMouseCursor* mc = mouse->FindCursor("Centroid");
@@ -3834,7 +3934,7 @@ void CGuiHandler::DrawArea(float3 pos, float radius, const float* color)
 	glBegin(GL_TRIANGLE_FAN);
 		glVertexf3(pos);
 		for(int a=0;a<=40;++a){
-			float3 p(fastmath::cos(a*2*PI/40)*radius,0,fastmath::sin(a*2*PI/40)*radius);
+			float3 p(fastmath::cos(a * math::TWOPI / 40.0f) * radius, 0.0f, fastmath::sin(a * math::TWOPI / 40.0f) * radius);
 			p+=pos;
 			p.y=CGround::GetHeightAboveWater(p.x, p.z, false);
 			glVertexf3(p);
@@ -3848,28 +3948,30 @@ void CGuiHandler::DrawArea(float3 pos, float radius, const float* color)
 void CGuiHandler::DrawFront(int button, float maxSize, float sizeDiv, bool onMinimap, const float3& cameraPos, const float3& mouseDir)
 {
 	CMouseHandler::ButtonPressEvt& bp = mouse->buttons[button];
-	if(bp.movement<5){
+	if (bp.movement < 5)
 		return;
-	}
+
 	float dist = CGround::LineGroundCol(bp.camPos, bp.camPos + bp.dir * globalRendering->viewRange * 1.4f, false);
-	if(dist<0){
+
+	if (dist < 0.0f)
 		return;
-	}
-	float3 pos1=bp.camPos+bp.dir*dist;
+
 	dist = CGround::LineGroundCol(cameraPos, cameraPos + mouseDir * globalRendering->viewRange * 1.4f, false);
-	if(dist<0){
+
+	if (dist < 0.0f)
 		return;
-	}
+
+	float3 pos1 = bp.camPos + (  bp.dir * dist);
 	float3 pos2 = cameraPos + (mouseDir * dist);
 
 	ProcessFrontPositions(pos1, pos2);
 
-	float3 forward=(pos1-pos2).cross(UpVector);
-	forward.ANormalize();
-	float3 side=forward.cross(UpVector);
-	if(pos1.SqDistance2D(pos2)>maxSize*maxSize){
-		pos2=pos1+side*maxSize;
-		pos2.y=CGround::GetHeightAboveWater(pos2.x, pos2.z, false);
+	const float3 forward = ((pos1 - pos2).cross(UpVector)).ANormalize();
+	const float3 side = forward.cross(UpVector);
+
+	if (pos1.SqDistance2D(pos2) > maxSize * maxSize) {
+		pos2 = pos1 + side * maxSize;
+		pos2.y = CGround::GetHeightAboveWater(pos2.x, pos2.z, false);
 	}
 
 	glColor4f(0.5f, 1.0f, 0.5f, 0.5f);
@@ -4118,7 +4220,7 @@ struct CylinderData {
 static void DrawCylinderShape(const void* data)
 {
 	const CylinderData& cyl = *static_cast<const CylinderData*>(data);
-	const float step = fastmath::PI2 / (float)cyl.divs;
+	const float step = math::TWOPI / cyl.divs;
 	int i;
 	glBegin(GL_QUAD_STRIP); // the sides
 	for (i = 0; i <= cyl.divs; i++) {

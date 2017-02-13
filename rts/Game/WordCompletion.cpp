@@ -8,48 +8,36 @@
 
 
 #include "WordCompletion.h"
-
 #include "System/Log/ILog.h"
+#include "System/Util.h"
 
 #include <stdexcept>
+#include <algorithm>
+
+CWordCompletion* CWordCompletion::singleton = NULL;
+
+void CWordCompletion::CreateInstance() {
+	if (singleton == NULL) {
+		singleton = new CWordCompletion();
+	} else {
+		throw std::logic_error("WordCompletion singleton is already initialized");
+	}
+}
+
+void CWordCompletion::DestroyInstance() {
+	if (singleton != NULL) {
+		SafeDelete(singleton);
+	} else {
+		throw std::logic_error("WordCompletion singleton was not initialized or is already destroyed");
+	}
+}
+
 
 
 CWordCompletion::CWordCompletion()
 {
 	Reset();
 }
-
-CWordCompletion::~CWordCompletion()
-{
-}
-
-
-CWordCompletion* CWordCompletion::singleton = NULL;
-
-void CWordCompletion::CreateInstance() {
-
-	if (singleton == NULL) {
-		singleton = new CWordCompletion();
-	} else {
-		throw std::logic_error(
-				"CWordCompletion singleton is already initialized");
-	}
-}
-
-void CWordCompletion::DestroyInstance() {
-
-	if (singleton != NULL) {
-		// SafeDelete
-		CWordCompletion* tmp = singleton;
-		singleton = NULL;
-		delete tmp;
-	} else {
-		// this might happen during shutdown after an unclean init
-		LOG_L(L_WARNING, "CWordCompletion singleton was not initialized"
-				" or is already destroyed");
-	}
-}
-
 
 void CWordCompletion::Reset()
 {
@@ -118,6 +106,8 @@ void CWordCompletion::Reset()
 	words["/setminspeed "] = sl;
 	words["/kick "] = sl;
 	words["/kickbynum "] = sl;
+	words["/mute "] = sl;
+	words["/mutebynum "] = sl;
 }
 
 

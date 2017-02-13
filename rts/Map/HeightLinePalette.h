@@ -3,25 +3,24 @@
 #ifndef HEIGHT_LINE_PALETTE_H
 #define HEIGHT_LINE_PALETTE_H
 
+#include "System/Color.h"
+#include <array>
+
+
 /** @brief The palette used in height-map rendering mode (F1). */
 class CHeightLinePalette
 {
 public:
 	/**
-	 * @brief Generates the height line palette.
+	 * @brief Returns the palette.
 	 * Based on the configuration variable "ColorElev" (default: 1), it either
 	 * generates a colored palette or a grayscale palette.
-	 */
-	CHeightLinePalette();
-
-	/**
-	 * @brief Returns the palette.
 	 * The palette data consists of 256 RGB triplets with range 0-255.
 	 */
-	const unsigned char* GetData() const { return heightLinePal; }
+	static const SColor* GetData();
 
-private:
-	unsigned char heightLinePal[3*256];
+	static std::array<SColor, 256> paletteColored;
+	static std::array<SColor, 256> paletteBlackAndWhite;
 };
 
 #endif // HEIGHT_LINE_PALETTE

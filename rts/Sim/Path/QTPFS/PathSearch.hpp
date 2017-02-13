@@ -3,7 +3,6 @@
 #ifndef QTPFS_PATHSEARCH_HDR
 #define QTPFS_PATHSEARCH_HDR
 
-#include <map>
 #include <vector>
 
 #include "PathDefines.hpp"
@@ -20,7 +19,11 @@ namespace QTPFS {
 	namespace PathSearchTrace {
 		struct Iteration {
 			Iteration() { nodeIndices.push_back(-1u); }
-			~Iteration() { nodeIndices.clear(); }
+			Iteration(const Iteration& i) { *this = i; }
+			Iteration(Iteration&& i) { *this = std::move(i); }
+
+			Iteration& operator = (const Iteration& i) { nodeIndices = i.nodeIndices; return *this; }
+			Iteration& operator = (Iteration&& i) { nodeIndices = std::move(i.nodeIndices); return *this; }
 
 			void Clear() {
 				nodeIndices.clear();
@@ -29,28 +32,37 @@ namespace QTPFS {
 			void SetPoppedNodeIdx(unsigned int i) { (nodeIndices.front()) = i; }
 			void AddPushedNodeIdx(unsigned int i) { (nodeIndices.push_back(i)); }
 
-			const std::list<unsigned int>& GetNodeIndices() const { return nodeIndices; }
+			const std::vector<unsigned int>& GetNodeIndices() const { return nodeIndices; }
 
 		private:
 			// NOTE: indices are only valid so long as tree is not re-tesselated
-			std::list<unsigned int> nodeIndices;
+			std::vector<unsigned int> nodeIndices;
 		};
 
 		struct Execution {
 			Execution(unsigned int f): searchFrame(f) {}
-			~Execution() { iterations.clear(); }
+			Execution(const Execution& e) = delete;
+			Execution(Execution&& e) { *this = std::move(e); }
+
+			Execution& operator = (const Execution& e) = delete;
+			Execution& operator = (Execution&& e) {
+				searchFrame = e.GetFrame();
+				iterations = std::move(e.iterations);
+				return *this;
+			}
 
 			void AddIteration(const Iteration& iter) { iterations.push_back(iter); }
-			const std::list<Iteration>& GetIterations() const { return iterations; }
+			const std::vector<Iteration>& GetIterations() const { return iterations; }
 
 			unsigned int GetFrame() const { return searchFrame; }
+
 		private:
-			std::list<Iteration> iterations;
+			std::vector<Iteration> iterations;
 
 			// sim-frame at which the search was executed
 			unsigned int searchFrame;
 		};
-	};
+	}
 
 
 	// NOTE:
@@ -87,7 +99,7 @@ namespace QTPFS {
 		virtual bool SharedFinalize(const IPath* srcPath, IPath* dstPath) { return false; }
 		virtual PathSearchTrace::Execution* GetExecutionTrace() { return NULL; }
 
-		virtual const boost::uint64_t GetHash(boost::uint64_t N, boost::uint32_t k) const = 0;
+		virtual const std::uint64_t GetHash(std::uint64_t N, std::uint32_t k) const = 0;
 
 		void SetID(unsigned int n) { searchID = n; }
 		void SetTeam(unsigned int n) { searchTeam = n; }
@@ -137,7 +149,7 @@ namespace QTPFS {
 		bool SharedFinalize(const IPath* srcPath, IPath* dstPath);
 		PathSearchTrace::Execution* GetExecutionTrace() { return searchExec; }
 
-		const boost::uint64_t GetHash(boost::uint64_t N, boost::uint32_t k) const;
+		const std::uint64_t GetHash(std::uint64_t N, std::uint32_t k) const;
 
 		static void InitGlobalQueue(unsigned int n) { openNodes.reserve(n); }
 		static void FreeGlobalQueue() { openNodes.clear(); }
@@ -150,7 +162,8 @@ namespace QTPFS {
 		void IterateNodeNeighbors(const std::vector<INode*>& nxtNodes);
 
 		void TracePath(IPath* path);
-		void SmoothPath(IPath* path);
+		void SmoothPath(IPath* path) const;
+		bool SmoothPathIter(IPath* path) const;
 
 		// global queue: allocated once, re-used by all searches without clear()'s
 		// this relies on INode::operator< to sort the INode*'s by increasing f-cost
@@ -184,7 +197,7 @@ namespace QTPFS {
 		bool haveFullPath;
 		bool havePartPath;
 	};
-};
+}
 
 #endif
 

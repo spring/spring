@@ -38,7 +38,7 @@ private:
 	unsigned int specularTexIter;
 	bool mapSkyReflections;
 
-	unsigned char* specTexBuf;
+	std::vector<unsigned char> specTexBuf;
 
 	FBO reflectionCubeFBO;
 };

@@ -4,6 +4,7 @@
 #define SKIRMISH_AI_HANDLER_H
 
 #include "ExternalAI/SkirmishAIData.h"
+#include "ExternalAI/SkirmishAIKey.h"
 
 #include "System/creg/creg_cond.h"
 
@@ -12,7 +13,6 @@
 
 
 class CGameSetup;
-class SkirmishAIKey;
 
 /**
  * Handles all Skirmish AI instance relevant data, which includes,
@@ -20,21 +20,25 @@ class SkirmishAIKey;
  */
 class CSkirmishAIHandler
 {
-	CR_DECLARE_STRUCT(CSkirmishAIHandler);
+	CR_DECLARE_STRUCT(CSkirmishAIHandler)
 
-	CSkirmishAIHandler();
-	~CSkirmishAIHandler();
+	CSkirmishAIHandler() { ResetState(); }
+	~CSkirmishAIHandler() { ResetState(); }
 
 public:
 	typedef std::vector<unsigned char> ids_t;
 	typedef std::map<unsigned char, SkirmishAIData> id_ai_t;
+	typedef std::map<unsigned int, SkirmishAIKey> id_libKey_t;
 
 	/**
 	 * Fetcher for the singleton.
 	 */
-	static CSkirmishAIHandler& GetInstance();
+	static CSkirmishAIHandler* GetInstance();
+	static void FreeInstance(CSkirmishAIHandler*);
 
+	void ResetState();
 	void LoadFromSetup(const CGameSetup& setup);
+
 	/**
 	 * Will be called when the Mods archives were loaded into the VFS,
 	 * and we received our player number (gu->myPlayerNum is set).
@@ -87,7 +91,7 @@ public:
 	 *
 	 * Will change during runtime (Connection lost, died, killed, created, ...).
 	 */
-	const id_ai_t& GetAllSkirmishAIs() const;
+	const id_ai_t& GetAllSkirmishAIs() const { return id_ai; }
 
 	/**
 	 * @brief Adds a Skirmish AI
@@ -109,7 +113,7 @@ public:
 	 *
 	 * Constant at runtime
 	 */
-	size_t GetNumSkirmishAIs() const;
+	size_t GetNumSkirmishAIs() const { return id_ai.size(); }
 
 	/**
 	 * Starts the initialization process of a locally running Skirmish AI,
@@ -155,13 +159,18 @@ public:
 	 * @return for a list of values, see SReleaseEvent in ExternalAI/Interface/AISEvents.h
 	 * @see IsSkirmishAIDieing()
 	 */
-	int GetLocalSkirmishAIDieReason(const size_t skirmishAIId) const;
+	int GetLocalSkirmishAIDieReason(const size_t skirmishAIId) const {
+		return (id_dieReason.find(skirmishAIId) != id_dieReason.end())? id_dieReason.find(skirmishAIId)->second : -1;
+	}
+
 	/**
 	 * Reports true even before the DIEING state was received
 	 * from the server, but only for local AIs.
 	 * @param skirmishAIId index of the AI in question
 	 */
-	bool IsLocalSkirmishAIDieing(const size_t skirmishAIId) const;
+	bool IsLocalSkirmishAIDieing(const size_t skirmishAIId) const {
+		return (id_dieReason.find(skirmishAIId) != id_dieReason.end());
+	}
 
 	/**
 	 * Returns the library key for a local Skirmish AI, or NULL.
@@ -170,14 +179,18 @@ public:
 
 	bool IsLocalSkirmishAI(const size_t skirmishAIId) const;
 
-	const std::set<std::string>& GetLuaAIImplShortNames() const;
+	const std::set<std::string>& GetLuaAIImplShortNames() const { return luaAIShortNames; }
 
 	unsigned char GetCurrentAIID() { return currentAIId; }
 	void SetCurrentAIID(unsigned char id) { currentAIId = id; }
 
 private:
 	static bool IsLocalSkirmishAI(const SkirmishAIData& aiData);
-	bool IsLuaAI(const SkirmishAIData& aiData) const;
+
+	bool IsLuaAI(const SkirmishAIData& aiData) const {
+		return (luaAIShortNames.find(aiData.shortName) != luaAIShortNames.end());
+	}
+
 	void CompleteWithDefaultOptionValues(const size_t skirmishAIId);
 	void CompleteSkirmishAI(const size_t skirmishAIId);
 
@@ -185,22 +198,24 @@ private:
 	/// Id -> AI instance
 	id_ai_t id_ai;
 
+	/// Id -> AI instance library key
+	id_libKey_t id_libKey;
+
 	/// Temporarly stores detailed info of local Skirmish AIs waiting for initialization
 	std::map<int, SkirmishAIData> team_localAIsInCreation;
 
 	/// Temporarly stores reason for killing a Skirmish AI
-	std::map<size_t, int> id_dieReason;
+	std::map<unsigned int, int> id_dieReason;
 
-	typedef std::map<size_t, SkirmishAIKey> id_libKey_t;
-	/// Id -> AI instance library key
-	id_libKey_t id_libKey;
-
-	bool gameInitialized;
 	std::set<std::string> luaAIShortNames;
+
 	// the current local AI ID that is executing, MAX_AIS if none (e.g. LuaUI)
 	unsigned char currentAIId;
+
+	bool gameInitialized;
 };
 
-#define skirmishAIHandler CSkirmishAIHandler::GetInstance()
+#define skirmishAIHandler (*CSkirmishAIHandler::GetInstance())
 
 #endif // SKIRMISH_AI_HANDLER_H
+

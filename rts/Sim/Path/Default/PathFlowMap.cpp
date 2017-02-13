@@ -2,7 +2,7 @@
 
 #include "PathFlowMap.hpp"
 #include "PathConstants.h"
-#include "Sim/Misc/GlobalSynced.h"
+#include "Map/ReadMap.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/Objects/SolidObject.h"
 #include "System/myMath.h"
@@ -13,18 +13,20 @@
 #define FLOW_COST_MULT      32.00f
 #define FLOW_NGB_PROJECTION  0
 
+// not extern'ed, so static
+static PathFlowMap* gPathFlowMap = NULL;
+
 PathFlowMap* PathFlowMap::GetInstance() {
-	static PathFlowMap* pfm = NULL;
+	if (gPathFlowMap == NULL)
+		gPathFlowMap = new PathFlowMap(PATH_FLOWMAP_XSCALE, PATH_FLOWMAP_ZSCALE);
 
-	if (pfm == NULL) {
-		pfm = new PathFlowMap(PATH_FLOWMAP_XSCALE, PATH_FLOWMAP_ZSCALE);
-	}
-
-	return pfm;
+	return gPathFlowMap;
 }
 
 void PathFlowMap::FreeInstance(PathFlowMap* pfm) {
+	assert(pfm == gPathFlowMap);
 	delete pfm;
+	gPathFlowMap = NULL;
 }
 
 
@@ -35,10 +37,10 @@ PathFlowMap::PathFlowMap(unsigned int scalex, unsigned int scalez) {
 	fBufferIdx = 0;
 	bBufferIdx = 1;
 
-	xscale = std::max(1, std::min(gs->mapx, int(scalex)));
-	zscale = std::max(1, std::min(gs->mapy, int(scalez)));
-	xsize  = gs->mapx / xscale;
-	zsize  = gs->mapy / zscale;
+	xscale = Clamp(int(scalex), 1, mapDims.mapx);
+	zscale = Clamp(int(scalez), 1, mapDims.mapy);
+	xsize  = mapDims.mapx / xscale;
+	zsize  = mapDims.mapy / zscale;
 	xfact  = SQUARE_SIZE * xscale;
 	zfact  = SQUARE_SIZE * zscale;
 
@@ -80,14 +82,15 @@ PathFlowMap::~PathFlowMap() {
 
 void PathFlowMap::Update() {
 	return;
-
+/*
 	std::vector<FlowCell>& fCells = buffers[fBufferIdx];
 	std::vector<FlowCell>& bCells = buffers[bBufferIdx];
-	std::set<unsigned int>& fIndices = indices[fBufferIdx];
-	std::set<unsigned int>& bIndices = indices[bBufferIdx];
 
-	std::set<unsigned int>::iterator it;
-	std::set<unsigned int>::iterator nit;
+	spring::unordered_set<unsigned int>& fIndices = indices[fBufferIdx];
+	spring::unordered_set<unsigned int>& bIndices = indices[bBufferIdx];
+
+	spring::unordered_set<unsigned int>::iterator it;
+	spring::unordered_set<unsigned int>::iterator nit;
 
 	#if (FLOW_DECAY_ENABLED == 0)
 		for (it = fIndices.begin(); it != fIndices.end(); ++it) {
@@ -155,11 +158,12 @@ void PathFlowMap::Update() {
 	bBufferIdx = (bBufferIdx + 1) & 1;
 
 	maxFlow[bBufferIdx] = 0.0f;
+*/
 }
 
 void PathFlowMap::AddFlow(const CSolidObject* o) {
 	return;
-
+/*
 	if (!o->HasCollidableStateBit(CSolidObject::CSTATE_BIT_SOLIDOBJECTS)) {
 		return;
 	}
@@ -175,7 +179,7 @@ void PathFlowMap::AddFlow(const CSolidObject* o) {
 	const unsigned int cellIdx = GetCellIdx(o);
 
 	std::vector<FlowCell>& bCells = buffers[bBufferIdx];
-	std::set<unsigned int>& bIndices = indices[bBufferIdx];
+	spring::unordered_set<unsigned int>& bIndices = indices[bBufferIdx];
 
 	FlowCell& bCell = bCells[cellIdx];
 
@@ -218,6 +222,7 @@ void PathFlowMap::AddFlow(const CSolidObject* o) {
 	#endif
 
 	maxFlow[bBufferIdx] = std::max(maxFlow[bBufferIdx], bCell.flowVector.y);
+*/
 }
 
 
@@ -231,16 +236,17 @@ unsigned int PathFlowMap::GetCellIdx(const CSolidObject* o) const {
 
 const float3& PathFlowMap::GetFlowVec(unsigned int hmx, unsigned int hmz) const {
 	return ZeroVector;
-
+/*
 	const std::vector<FlowCell>& fCells = buffers[fBufferIdx];
 	const unsigned int fCellIdx = (hmz / zscale) * xsize + (hmx / xscale);
 
 	return (fCells[fCellIdx].flowVector);
+*/
 }
 
 float PathFlowMap::GetFlowCost(unsigned int x, unsigned int z, const MoveDef& md, unsigned int pathOpt) const {
 	return 0.0f;
-
+/*
 	const float3& flowVec = GetFlowVec(x, z);
 	const float3& pathDir = pathOptDirs[pathOpt];
 
@@ -248,4 +254,5 @@ float PathFlowMap::GetFlowCost(unsigned int x, unsigned int z, const MoveDef& md
 	const float flowCost = (flowVec.y * FLOW_COST_MULT) * flowScale;
 
 	return flowCost;
+*/
 }

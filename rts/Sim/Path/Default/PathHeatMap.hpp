@@ -4,6 +4,7 @@
 #define PATH_HEATMAP_HDR
 
 #include <vector>
+#include "System/type2.h"
 
 class CPathManager;
 class CSolidObject;
@@ -33,7 +34,7 @@ public:
 		const unsigned int idx = GetHeatMapIndex(x, y);
 		const unsigned int val = heatMap[idx].value;
 
-		return (heatMapOffset >= val)? 0: (val - heatMapOffset);
+		return ((val - heatMapOffset) * (heatMapOffset < val));
 	}
 
 	float GetHeatCost(unsigned int x, unsigned int z, const MoveDef&, unsigned int ownerID) const;
@@ -48,13 +49,14 @@ private:
 
 
 	bool enabled;
-	unsigned int heatMapOffset;      //! heatmap values are relative to this
 
-	std::vector<HeatCell> heatMap;   //! resolution is hmapx*hmapy
+	std::vector<HeatCell> heatMap;   // resolution is hmapx*hmapy
+	std::vector<int2> pathSquares;
 
 	unsigned int xscale, xsize;
 	unsigned int zscale, zsize;
 
+	unsigned int heatMapOffset;      // heatmap values are relative to this
 };
 
 #endif

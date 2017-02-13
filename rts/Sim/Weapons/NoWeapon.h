@@ -7,17 +7,17 @@
 
 class CNoWeapon: public CWeapon
 {
-	CR_DECLARE(CNoWeapon);
+	CR_DECLARE_DERIVED(CNoWeapon)
 public:
 	CNoWeapon(CUnit* owner, const WeaponDef* def);
 
-	void Update() {}
-	void SlowUpdate() {}
-	void Init() {}
+	void Update() override final {}
+	void SlowUpdate() override final {}
+	void Init() override final {}
 
 private:
-	bool TestTarget(const float3& pos, bool userTarget, const CUnit* unit) const { return false; }
-	void FireImpl() {}
+	bool TestTarget(const float3 pos, const SWeaponTarget& trg) const override final { return false; }
+	void FireImpl(const bool scriptCall) override final {}
 };
 
 

@@ -20,13 +20,13 @@
 #include <string.h>   // strlen(), strcat(), strcpy()
 #include <stdlib.h>   // malloc(), calloc(), free()
 
-#define INTERFACE_PROPERTIES_FILE "interface.properties"
-
 static int interfaceId = -1;
 static const struct SAIInterfaceCallback* callback = NULL;
 
 EXPORT(int) initStatic(int _interfaceId,
 		const struct SAIInterfaceCallback* _callback) {
+
+	simpleLog_initcallback(_interfaceId, "Java Interface", _callback->Log_logsl, LOG_LEVEL_INFO);
 
 	bool success = false;
 
@@ -38,125 +38,23 @@ EXPORT(int) initStatic(int _interfaceId,
 			AI_INTERFACE_PROPERTY_SHORT_NAME);
 	const char* const myVersion = callback->AIInterface_Info_getValueByKey(interfaceId,
 			AI_INTERFACE_PROPERTY_VERSION);
-
-	static const int maxProps = 64;
-	const char* propKeys[maxProps];
-	char* propValues[maxProps];
-	int numProps = 0;
-
-	// ### read the interface config file (optional) ###
-	static const unsigned int propFilePath_sizeMax = 1024;
-	char propFilePath[propFilePath_sizeMax];
-	// eg: "~/.spring/AI/Interfaces/Java/${INTERFACE_PROPERTIES_FILE}"
-	bool propFileFetched = callback->DataDirs_locatePath(interfaceId,
-			propFilePath, propFilePath_sizeMax,
-			INTERFACE_PROPERTIES_FILE, false, false, false, false);
-	if (!propFileFetched) {
-		// if the version specific file does not exist,
-		// try to get the common one
-		propFileFetched = callback->DataDirs_locatePath(interfaceId,
-				propFilePath, propFilePath_sizeMax,
-				INTERFACE_PROPERTIES_FILE, false, false, false, true);
-	}
-	if (propFileFetched) {
-		numProps = util_parsePropertiesFile(propFilePath,
-				propKeys, (const char**)propValues, maxProps);
-
-		static const unsigned int ddw_sizeMax = 1024;
-		char ddw[ddw_sizeMax];
-		// eg: "~/.spring/AI/Interfaces/Java/${INTERFACE_PROPERTIES_FILE}"
-		bool ddwFetched = callback->DataDirs_locatePath(interfaceId,
-				ddw, ddw_sizeMax,
-				"", true, true, true, false);
-		if (!ddwFetched) {
-			simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
-					"Failed locating writable data-dir \"%s\"", ddw);
-		}
-		int p;
-		for (p=0; p < numProps; ++p) {
-			char* propValue_tmp = util_allocStrReplaceStr(propValues[p],
-					"${home-dir}", ddw);
-// 			char* propValue_tmp = util_allocStrReplaceStr(propValues[p],
-// 					"${home-dir}/", "");
-			free(propValues[p]);
-			propValues[p] = propValue_tmp;
-		}
+	if (myShortName == NULL || myVersion == NULL) {
+		simpleLog_logL(LOG_LEVEL_ERROR,
+				"Couldn't fetch AI Name / Version \"%d\"", _interfaceId);
+		return -1;
 	}
 
-	// ### try to fetch the log-level from the properties ###
-	int logLevel = SIMPLELOG_LEVEL_NORMAL;
-	const char* logLevel_str =
-			util_map_getValueByKey(numProps, propKeys, (const char**)propValues,
-			"log.level");
-	if (logLevel_str != NULL) {
-		int logLevel_tmp = atoi(logLevel_str);
-		if (logLevel_tmp >= SIMPLELOG_LEVEL_ERROR
-				&& logLevel_tmp <= SIMPLELOG_LEVEL_FINEST) {
-			logLevel = logLevel_tmp;
-		}
-	}
-
-	// ### try to fetch whether to use time-stamps from the properties ###
-	bool useTimeStamps = true;
-	const char* useTimeStamps_str =
-			util_map_getValueByKey(numProps, propKeys, (const char**)propValues,
-			"log.useTimeStamps");
-	if (useTimeStamps_str != NULL) {
-		useTimeStamps = util_strToBool(useTimeStamps_str);
-	}
-
-	// ### init the log file ###
-	char* logFile = util_allocStrCpy(
-			util_map_getValueByKey(numProps, propKeys, (const char**)propValues,
-			"log.file"));
-	if (logFile == NULL) {
-		logFile = util_allocStrCatFSPath(2, "log", MY_LOG_FILE);
-	}
-
-	static const unsigned int logFilePath_sizeMax = 1024;
-	char logFilePath[logFilePath_sizeMax];
-	// eg: "~/.spring/AI/Interfaces/Java/${INTERFACE_PROPERTIES_FILE}"
-	bool logFileFetched = callback->DataDirs_locatePath(interfaceId,
-			logFilePath, logFilePath_sizeMax,
-			logFile, true, true, false, false);
-
-	if (logFileFetched) {
-		simpleLog_init(logFilePath, useTimeStamps, logLevel, false);
-	} else {
-		simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
-				"Failed initializing log-file \"%s\"", logFileFetched);
-	}
-
-	// log settings loaded from interface config file
-	if (propFileFetched) {
-		simpleLog_logL(SIMPLELOG_LEVEL_FINE, "settings loaded from: %s",
-				propFilePath);
-		int p;
-		for (p=0; p < numProps; ++p) {
-			simpleLog_logL(SIMPLELOG_LEVEL_FINE, "\t%i: %s = %s",
-					p, propKeys[p], propValues[p]);
-		}
-	} else {
-		simpleLog_logL(SIMPLELOG_LEVEL_FINE, "settings NOT loaded from: %s",
-				propFilePath);
-	}
-
-	simpleLog_log("This is the log-file of the %s v%s AI Interface",
+	simpleLog_log("Initialized %s v%s AI Interface",
 			myShortName, myVersion);
-	simpleLog_log("Using read/write data-directory: %s",
-			callback->DataDirs_getWriteableDir(interfaceId));
-	simpleLog_log("Using config-file: %s", propFilePath);
-
-	FREE(logFile);
 
 	// initialize Java part of the interface
 	success = java_initStatic(interfaceId, callback);
 	// load the JVM
 	success = success && java_preloadJNIEnv();
 	if (success) {
-		simpleLog_logL(SIMPLELOG_LEVEL_FINE, "Initialization successfull.");
+		simpleLog_logL(LOG_LEVEL_NOTICE, "Initialization successfull.");
 	} else {
-		simpleLog_logL(SIMPLELOG_LEVEL_ERROR, "Initialization failed.");
+		simpleLog_logL(LOG_LEVEL_ERROR, "Initialization failed.");
 	}
 
 	return success ? 0 : -1;

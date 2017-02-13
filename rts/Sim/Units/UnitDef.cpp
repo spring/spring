@@ -25,7 +25,6 @@
 UnitDefWeapon::UnitDefWeapon()
 : def(NULL)
 , slavedTo(0)
-, fuelUsage(0.0f)
 , maxMainDirAngleDif(-1.0f)
 , badTargetCat(0)
 , onlyTargetCat(0)
@@ -43,13 +42,12 @@ UnitDefWeapon::UnitDefWeapon(const WeaponDef* weaponDef, const LuaTable& weaponT
 	this->def = weaponDef;
 
 	this->slavedTo = weaponTable.GetInt("slaveTo", 0);
-	this->fuelUsage = weaponTable.GetFloat("fuelUsage", 0.0f);
 
 	// NOTE:
 	//     <maxAngleDif> specifies the full-width arc,
 	//     but we want the half-width arc internally
 	//     (arcs are always symmetric around mainDir)
-	this->maxMainDirAngleDif = math::cos((weaponTable.GetFloat("maxAngleDif", 360.0f) * 0.5f) * (PI / 180.0f));
+	this->maxMainDirAngleDif = math::cos((weaponTable.GetFloat("maxAngleDif", 360.0f) * 0.5f) * math::DEG_TO_RAD);
 
 	const string& btcString = weaponTable.GetString("badTargetCategory", "");
 	const string& otcString = weaponTable.GetString("onlyTargetCategory", "");
@@ -66,7 +64,8 @@ UnitDefWeapon::UnitDefWeapon(const WeaponDef* weaponDef, const LuaTable& weaponT
 /******************************************************************************/
 
 UnitDef::UnitDef()
-	: cobID(-1)
+	: SolidObjectDef()
+	, cobID(-1)
 	, decoyDef(NULL)
 	, techLevel(-1)
 	, metalUpkeep(0.0f)
@@ -81,7 +80,8 @@ UnitDef::UnitDef()
 	, tidalGenerator(0.0f)
 	, metalStorage(0.0f)
 	, energyStorage(0.0f)
-	, harvestStorage(0.0f)
+	, harvestMetalStorage(0.0f)
+	, harvestEnergyStorage(0.0f)
 	, autoHeal(0.0f)
 	, idleAutoHeal(0.0f)
 	, idleTime(0)
@@ -242,9 +242,6 @@ UnitDef::UnitDef()
 	, showNanoFrame(false)
 	, showNanoSpray(false)
 	, nanoColor(ZeroVector)
-	, maxFuel(0.0f)
-	, refuelTime(0.0f)
-	, minAirBasePower(0.0f)
 	, maxThisUnit(0)
 	, realMetalCost(0.0f)
 	, realEnergyCost(0.0f)
@@ -270,7 +267,8 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 
 	metalStorage  = udTable.GetFloat("metalStorage",  0.0f);
 	energyStorage = udTable.GetFloat("energyStorage", 0.0f);
-	harvestStorage = udTable.GetFloat("harvestStorage", 0.0f);
+	harvestMetalStorage  = udTable.GetFloat("harvestMetalStorage", udTable.GetFloat("harvestStorage", 0.0f));
+	harvestEnergyStorage = udTable.GetFloat("harvestEnergyStorage", 0.0f);
 
 	extractsMetal  = udTable.GetFloat("extractsMetal",  0.0f);
 	windGenerator  = udTable.GetFloat("windGenerator",  0.0f);
@@ -297,15 +295,6 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	buildTime = std::max(0.1f, udTable.GetFloat("buildTime", 0.0f)); //avoid some nasty divide by 0
 
 	cobID = udTable.GetInt("cobID", -1);
-
-	losRadius = udTable.GetFloat("sightDistance", 0.0f) * modInfo.losMul / (SQUARE_SIZE * (1 << modInfo.losMipLevel));
-	airLosRadius = udTable.GetFloat("airSightDistance", -1.0f);
-	if (airLosRadius == -1.0f) {
-		airLosRadius = udTable.GetFloat("sightDistance", 0.0f) * modInfo.airLosMul * 1.5f / (SQUARE_SIZE * (1 << modInfo.airMipLevel));
-	} else {
-		airLosRadius = airLosRadius * modInfo.airLosMul / (SQUARE_SIZE * (1 << modInfo.airMipLevel));
-	}
-
 
 	buildRange3D = udTable.GetBool("buildRange3D", false);
 	// 128.0f is the ancient default
@@ -363,7 +352,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	collide = udTable.GetBool("collide", true);
 
 	const float maxSlopeDeg = Clamp(udTable.GetFloat("maxSlope", 0.0f), 0.0f, 89.0f);
-	const float maxSlopeRad = maxSlopeDeg * (PI / 180.0f);
+	const float maxSlopeRad = maxSlopeDeg * math::DEG_TO_RAD;
 
 	// FIXME: kill the magic constant
 	maxHeightDif = 40.0f * math::tanf(maxSlopeRad);
@@ -388,7 +377,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 
 	flankingBonusMode = udTable.GetInt("flankingBonusMode", modInfo.flankingBonusModeDefault);
 	flankingBonusMax  = udTable.GetFloat("flankingBonusMax", 1.9f);
-	flankingBonusMin  = udTable.GetFloat("flankingBonusMin", 0.9);
+	flankingBonusMin  = udTable.GetFloat("flankingBonusMin", 0.9f);
 	flankingBonusDir  = udTable.GetFloat3("flankingBonusDir", FwdVector);
 	flankingBonusMobilityAdd = udTable.GetFloat("flankingBonusMobilityAdd", 0.01f);
 
@@ -398,6 +387,8 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	losHeight = udTable.GetFloat("losEmitHeight", 20.0f);
 	radarHeight = udTable.GetFloat("radarEmitHeight", losHeight);
 
+	losRadius = udTable.GetFloat("sightDistance", 0.0f);
+	airLosRadius = udTable.GetFloat("airSightDistance", 1.5f * losRadius);
 	radarRadius    = udTable.GetInt("radarDistance",    0);
 	sonarRadius    = udTable.GetInt("sonarDistance",    0);
 	jammerRadius   = udTable.GetInt("radarDistanceJam", 0);
@@ -449,7 +440,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	turnRate    = udTable.GetFloat("turnRate", 0.0f);
 	turnInPlace = udTable.GetBool("turnInPlace", true);
 	turnInPlaceSpeedLimit = turnRate / SPRING_CIRCLE_DIVS;
-	turnInPlaceSpeedLimit *= ((PI + PI) * SQUARE_SIZE);
+	turnInPlaceSpeedLimit *= (math::TWOPI * SQUARE_SIZE);
 	turnInPlaceSpeedLimit /= std::max(speed / GAME_SPEED, 1.0f);
 	turnInPlaceSpeedLimit = udTable.GetFloat("turnInPlaceSpeedLimit", std::min(speed, turnInPlaceSpeedLimit));
 	turnInPlaceAngleLimit = udTable.GetFloat("turnInPlaceAngleLimit", 0.0f);
@@ -468,7 +459,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	releaseHeld       = udTable.GetBool("releaseHeld",       false);
 	cantBeTransported = udTable.GetBool("cantBeTransported", !RequireMoveDef());
 	transportByEnemy  = udTable.GetBool("transportByEnemy",  true);
-	fallSpeed         = udTable.GetFloat("fallSpeed",    0.2);
+	fallSpeed         = udTable.GetFloat("fallSpeed",    0.2f);
 	unitFallSpeed     = udTable.GetFloat("unitFallSpeed",  0);
 	transportUnloadMethod = udTable.GetInt("transportUnloadMethod" , 0);
 
@@ -490,9 +481,6 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	maxElevator = udTable.GetFloat("maxElevator", 0.01f);  // turn speed around pitch axis
 	maxRudder   = udTable.GetFloat("maxRudder",   0.004f); // turn speed around yaw axis
 
-	maxFuel = udTable.GetFloat("maxFuel", 0.0f); //max flight time in seconds before aircraft must return to base
-	refuelTime = udTable.GetFloat("refuelTime", 5.0f);
-	minAirBasePower = udTable.GetFloat("minAirBasePower", 0.0f);
 	maxThisUnit = udTable.GetInt("unitRestricted", MAX_UNITS);
 	maxThisUnit = std::min(maxThisUnit, gameSetup->GetRestrictedUnitLimit(name, MAX_UNITS));
 
@@ -516,7 +504,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	extractRange = mapInfo->map.extractorRadius * int(extractsMetal > 0.0f);
 
 	{
-		MoveDef* moveDef = NULL;
+		MoveDef* moveDef = nullptr;
 
 		// aircraft have MoveTypes but no MoveDef;
 		// static structures have no use for either
@@ -525,15 +513,15 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 			const std::string& moveClass = StringToLower(udTable.GetString("movementClass", ""));
 			const std::string errMsg = "WARNING: Couldn't find a MoveClass named " + moveClass + " (used in UnitDef: " + unitName + ")";
 
-			if ((moveDef = moveDefHandler->GetMoveDefByName(moveClass)) == NULL) {
-				throw content_error(errMsg); //! invalidate unitDef (this gets catched in ParseUnitDef!)
-			}
+			// invalidate this unitDef; caught in ParseUnitDef
+			if ((moveDef = moveDefHandler->GetMoveDefByName(moveClass)) == nullptr)
+				throw content_error(errMsg);
 
 			moveDef->udRefCount += 1;
 			this->pathType = moveDef->pathType;
 		}
 
-		if (moveDef == NULL) {
+		if (moveDef == nullptr) {
 			upright           |= !canfly;
 			floatOnWater      |= udTable.GetBool("floater", udTable.KeyExists("WaterLine"));
 
@@ -542,8 +530,6 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 		} else {
 			upright           |= (moveDef->speedModClass == MoveDef::Hover);
 			upright           |= (moveDef->speedModClass == MoveDef::Ship );
-			floatOnWater      |= (moveDef->speedModClass == MoveDef::Hover);
-			floatOnWater      |= (moveDef->speedModClass == MoveDef::Ship );
 
 			// we have a MoveDef, so pathType != -1 and IsGroundUnit() MUST be true
 			cantBeTransported |= (!modInfo.transportGround && moveDef->speedModClass == MoveDef::Tank );
@@ -578,7 +564,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 
 
 	modelName = udTable.GetString("objectName", "");
-	scriptName = udTable.GetString("script", unitName + ".cob");
+	scriptName = "scripts/" + udTable.GetString("script", unitName + ".cob");
 
 	deathExpWeaponDef = weaponDefHandler->GetWeaponDef(udTable.GetString("explodeAs", ""));
 	selfdExpWeaponDef = weaponDefHandler->GetWeaponDef(udTable.GetString("selfDestructAs", udTable.GetString("explodeAs", "")));
@@ -610,6 +596,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	xsize = std::max(1 * SPRING_FOOTPRINT_SCALE, (udTable.GetInt("footprintX", 1) * SPRING_FOOTPRINT_SCALE));
 	zsize = std::max(1 * SPRING_FOOTPRINT_SCALE, (udTable.GetInt("footprintZ", 1) * SPRING_FOOTPRINT_SCALE));
 
+	buildingMask = (std::uint16_t)udTable.GetInt("buildingMask", 1); //1st bit set to 1 constitutes for "normal building"
 	if (IsImmobileUnit()) {
 		CreateYardMap(udTable.GetString("yardMap", ""));
 	}
@@ -633,18 +620,14 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	// initialize the (per-unitdef) collision-volume
 	// all CUnit instances hold a copy of this object
 	ParseCollisionVolume(udTable);
+	ParseSelectionVolume(udTable);
 
 
-	LuaTable buildsTable = udTable.SubTable("buildOptions");
-	if (buildsTable.IsValid()) {
-		for (int bo = 1; true; bo++) {
-			const string order = buildsTable.GetString(bo, "");
-			if (order.empty()) {
-				break;
-			}
-			buildOptions[bo] = order;
-		}
-	}
+	const LuaTable& buildsTable = udTable.SubTable("buildOptions");
+
+	if (buildsTable.IsValid())
+		buildsTable.GetMap(buildOptions);
+
 
 	const LuaTable& sfxTable = udTable.SubTable("SFXTypes");
 	const LuaTable& modelCEGTable = sfxTable.SubTable(     "explosionGenerators");
@@ -671,10 +654,9 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 
 UnitDef::~UnitDef()
 {
-	if (buildPic) {
+	if (buildPic != nullptr) {
 		buildPic->Free();
-		delete buildPic;
-		buildPic = NULL;
+		SafeDelete(buildPic);
 	}
 }
 
@@ -851,7 +833,7 @@ bool UnitDef::CheckTerrainConstraints(const MoveDef* moveDef, float rawHeight, f
 	float minDepth = MoveDef::GetDefaultMinWaterDepth();
 	float maxDepth = MoveDef::GetDefaultMaxWaterDepth();
 
-	if (moveDef != NULL) {
+	if (moveDef != nullptr) {
 		// we are a mobile ground-unit, use MoveDef limits
 		if (moveDef->speedModClass == MoveDef::Ship) {
 			minDepth = moveDef->depth;
@@ -864,25 +846,26 @@ bool UnitDef::CheckTerrainConstraints(const MoveDef* moveDef, float rawHeight, f
 			minDepth = this->minWaterDepth;
 			maxDepth = this->maxWaterDepth;
 		} else {
+			// submerging or floating aircraft
 			maxDepth *= canSubmerge;
 			maxDepth *= (1 - floatOnWater);
 		}
 	}
 
-	if (clampedHeight != NULL) {
+	if (clampedHeight != nullptr)
 		*clampedHeight = Clamp(rawHeight, -maxDepth, -minDepth);
-	}
 
 	// <rawHeight> must lie in the range [-maxDepth, -minDepth]
 	return (rawHeight >= -maxDepth && rawHeight <= -minDepth);
 }
 
 bool UnitDef::HasBomberWeapon() const {
-	if (weapons.empty()) { return false; }
-	if (weapons[0].def == NULL) { return false; }
-	return
-		weapons[0].def->type == "AircraftBomb" ||
-		weapons[0].def->type == "TorpedoLauncher";
+	if (weapons.empty())
+		return false;
+	if (weapons[0].def == nullptr)
+		return false;
+
+	return (weapons[0].def->IsAircraftWeapon());
 }
 
 /******************************************************************************/

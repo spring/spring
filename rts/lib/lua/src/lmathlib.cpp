@@ -19,8 +19,8 @@
 
 
 #undef PI
-#define PI (3.14159265358979323846)
-#define RADIANS_PER_DEGREE (PI/180.0)
+#define PI math::PI //SPRING(3.14159265358979323846)
+#define RADIANS_PER_DEGREE math::DEG_TO_RAD //SPRING(PI/180.0)
 
 
 static int math_abs (lua_State *L) {
@@ -266,7 +266,7 @@ LUALIB_API int luaopen_math (lua_State *L) {
   luaL_register(L, LUA_MATHLIBNAME, mathlib);
   lua_pushnumber(L, PI);
   lua_setfield(L, -2, "pi");
-#ifdef STREFLOP_H
+#if STREFLOP_ENABLED
   lua_pushnumber(L, math::SimplePositiveInfinity); // streflop
 #else
   lua_pushnumber(L, HUGE_VAL);

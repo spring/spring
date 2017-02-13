@@ -32,13 +32,12 @@ public:
 	inline float f3SqLen(const float3& a) const {
 		return range3D ? a.SqLength() : a.SqLength2D();
 	}
-	
+
 public:
-	CR_DECLARE(CBuilder);
+	CR_DECLARE(CBuilder)
 
 	CBuilder();
 	virtual ~CBuilder();
-	void PostLoad();
 
 	void Update();
 	void SlowUpdate();

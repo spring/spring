@@ -20,9 +20,11 @@ SET(ENGINE_SRC_ROOT_DIR "${CMAKE_SOURCE_DIR}/rts")
 
 
 ### Assemble libraries
-LIST(APPEND engineDedicatedLibraries ${Boost_REGEX_LIBRARY} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY})
-LIST(APPEND engineDedicatedLibraries lua archives 7zip ${SPRING_MINIZIP_LIBRARY} ${ZLIB_LIBRARY})
+LIST(APPEND engineDedicatedLibraries ${Boost_REGEX_LIBRARY})
+LIST(APPEND engineDedicatedLibraries ${Boost_SYSTEM_LIBRARY} ${Boost_CHRONO_LIBRARY_WITH_RT})
+LIST(APPEND engineDedicatedLibraries lua archives 7zip ${SPRING_MINIZIP_LIBRARY} ${ZLIB_LIBRARY} gflags)
 LIST(APPEND engineDedicatedLibraries headlessStubs engineSystemNet)
+LIST(APPEND engineDedicatedLibraries ${LIBUNWIND_LIBRARIES})
 
 IF (WIN32)
 	LIST(APPEND engineDedicatedLibraries ${WINMM_LIBRARY})
@@ -52,6 +54,9 @@ IF    (MINGW OR APPLE)
 	# due to some #define magic, which is practically impossible to workaround.
 	FIND_PACKAGE(SDL2 REQUIRED)
 	INCLUDE_DIRECTORIES(${SDL2_INCLUDE_DIR})
+	if("${SDL2_VERSION_STRING}" VERSION_LESS "2")
+		message(FATAL_ERROR "Found SDL v${SDL2_VERSION_STRING} while 2 is required!")
+	endif()
 ELSE  (MINGW OR APPLE)
 	# Use a direct copy of the GL and SDL headers,
 	# as these may not be available on headless systems.
@@ -61,8 +66,9 @@ ENDIF (MINGW OR APPLE)
 
 ### Assemble the incude dirs
 INCLUDE_DIRECTORIES(${ENGINE_SRC_ROOT_DIR}/)
-INCLUDE_DIRECTORIES(${ENGINE_SRC_ROOT_DIR}/lib/lua/include/)
+INCLUDE_DIRECTORIES(${ENGINE_SRC_ROOT_DIR}/lib/lua/include)
 INCLUDE_DIRECTORIES(${ENGINE_SRC_ROOT_DIR}/lib/7zip)
+INCLUDE_DIRECTORIES(${ENGINE_SRC_ROOT_DIR}/lib/asio/include)
 
 
 
@@ -71,8 +77,8 @@ IF	(UNIX)
 	SET(sources_engine_Platform_CrashHandler
 		${ENGINE_SRC_ROOT_DIR}/System/Platform/CpuID.cpp
 		${ENGINE_SRC_ROOT_DIR}/System/Platform/Threading.cpp
-		${ENGINE_SRC_ROOT_DIR}/System/Platform/Linux/thread_backtrace.cpp
-		${ENGINE_SRC_ROOT_DIR}/System/Platform/Linux/CrashHandler.cpp)
+		${ENGINE_SRC_ROOT_DIR}/System/Platform/Linux/CrashHandler.cpp
+		${ENGINE_SRC_ROOT_DIR}/System/Platform/Linux/ThreadSupport.cpp)
 ELSEIF	(WIN32)
 	SET(sources_engine_Platform_CrashHandler
 		${ENGINE_SRC_ROOT_DIR}/System/Platform/Win/seh.cpp
@@ -86,6 +92,7 @@ ENDIF	()
 
 SET(system_files
 	${sources_engine_System_FileSystem}
+	${sources_engine_System_Threading}
 	${sources_engine_System_Log}
 	${sources_engine_Platform_CrashHandler}
 	${ENGINE_SRC_ROOT_DIR}/Net/AutohostInterface.cpp
@@ -95,7 +102,6 @@ SET(system_files
 	${ENGINE_SRC_ROOT_DIR}/System/Config/ConfigVariable.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/CRC.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/Platform/errorhandler.cpp
-	${ENGINE_SRC_ROOT_DIR}/System/Platform/CmdLineParams.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/Platform/CpuID.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/Platform/Misc.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/Platform/ScopedFileLock.cpp
@@ -110,7 +116,7 @@ SET(system_files
 	${ENGINE_SRC_ROOT_DIR}/System/LoadSave/DemoRecorder.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/SafeCStrings.c
 	${ENGINE_SRC_ROOT_DIR}/System/SafeVector.cpp
-	${ENGINE_SRC_ROOT_DIR}/System/UnsyncedRNG.cpp
+	${ENGINE_SRC_ROOT_DIR}/System/UriParser.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/Util.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/float4.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/Log/Backend.cpp
@@ -151,24 +157,24 @@ SET(engineDedicatedSources
 	)
 
 
-# Compile dedicated server shared library
-ADD_LIBRARY(springserver-static STATIC EXCLUDE_FROM_ALL ${engineDedicatedSources})
-Add_Dependencies(springserver-static generateVersionFiles)
-TARGET_LINK_LIBRARIES(springserver-static ${engineDedicatedLibraries})
-IF    (MINGW)
-	TARGET_LINK_LIBRARIES(springserver-static ${WS2_32_LIBRARY} ${IMAGEHLP_LIBRARY} ${WINMM_LIBRARY})
-ENDIF (MINGW)
-
 # Compile dedicated server executable
 ADD_EXECUTABLE(engine-dedicated
 		${ENGINE_SRC_ROOT_DIR}/Map/MapParser.cpp
+		${engineDedicatedSources}
 		${sources_engine_System_Log_sinkConsole}
 		${sources_engine_System_Log_sinkFile}
 		${sources_engine_System_Log_sinkOutputDebugString}
 		${ENGINE_ICON}
 		main
 	)
-TARGET_LINK_LIBRARIES(engine-dedicated springserver-static)
+TARGET_LINK_LIBRARIES(engine-dedicated ${engineDedicatedLibraries})
+IF    (MINGW)
+	TARGET_LINK_LIBRARIES(engine-dedicated ${WS2_32_LIBRARY} ${IMAGEHLP_LIBRARY} ${WINMM_LIBRARY})
+ENDIF (MINGW)
+IF    (MSVC)
+	TARGET_LINK_LIBRARIES(engine-dedicated ${DBGHELP_LIBRARY})
+ENDIF (MSVC)
+Add_Dependencies(engine-dedicated generateVersionFiles)
 
 INSTALL(TARGETS engine-dedicated DESTINATION ${BINDIR})
 
@@ -176,16 +182,5 @@ INSTALL(TARGETS engine-dedicated DESTINATION ${BINDIR})
 # use cases:
 # * make spring-dedicated
 # * make install-spring-dedicated
-set(springDsDeps
-		engine-dedicated
-		springserver
-		gamedata
-		unitsync
-	)
-set(springDsInstallDirs
-		"rts/builds/dedicated"
-		"tools/unitsync"
-		"cont"
-	)
 CreateEngineBuildAndInstallTarget(dedicated)
-add_dependencies(spring-dedicated springDsDeps springDsInstallDirs)
+

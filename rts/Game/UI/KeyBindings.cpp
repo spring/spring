@@ -39,6 +39,7 @@ static const std::vector<DefaultBinding> defaultBindings = {
 	{            "esc", "quitmessage" },
 	{      "Shift+esc", "quitmenu"    },
 	{ "Ctrl+Shift+esc", "quitforce"   },
+	{  "Alt+Shift+esc", "reloadforce" },
 	{      "Any+pause", "pause"       },
 
 	{ "c", "controlunit"      },
@@ -177,7 +178,7 @@ static const std::vector<DefaultBinding> defaultBindings = {
 
 	{ "Ctrl+f1", "viewfps"  },
 	{ "Ctrl+f2", "viewta"   },
-	{ "Ctrl+f3", "viewtw"   },
+	{ "Ctrl+f3", "viewspring" },
 	{ "Ctrl+f4", "viewrot"  },
 	{ "Ctrl+f5", "viewfree" },
 
@@ -186,10 +187,9 @@ static const std::vector<DefaultBinding> defaultBindings = {
 	{ "Any+f3",  "LastMsgPos"            },
 	{ "Any+f4",  "ShowMetalMap"          },
 	{ "Any+f5",  "HideInterface"         },
-	{ "Any+f6",  "NoSound"               },
+	{ "Any+f6",  "MuteSound"             },
 	{ "Any+f7",  "DynamicSky"            },
-	{  "Any+l",  "togglelos"             },
-	{  "Any+;",  "toggleradarandjammer"  },
+	{ "Any+l",   "togglelos"             },
 
 	{ "Ctrl+Shift+f8",  "savegame" },
 	{ "Ctrl+Shift+f10", "createvideo" },
@@ -204,6 +204,7 @@ static const std::vector<DefaultBinding> defaultBindings = {
 	{ "Any+\\,Any+\\",  "drawlabel" },
 	{ "Any+~,Any+~",    "drawlabel" },
 	{ "Any+§,Any+§",    "drawlabel" },
+	{ "Any+^,Any+^",    "drawlabel" },
 
 	{    "Any+`",    "drawinmap"  },
 	{ "Up+Any+`",    "drawinmap"  },
@@ -213,6 +214,8 @@ static const std::vector<DefaultBinding> defaultBindings = {
 	{ "Up+Any+~",    "drawinmap"  },
 	{    "Any+§",    "drawinmap"  },
 	{ "Up+Any+§",    "drawinmap"  },
+	{    "Any+^",    "drawinmap"  },
+	{ "Up+Any+^",    "drawinmap"  },
 
 	{    "Any+up",       "moveforward"  },
 	{ "Up+Any+up",       "moveforward"  },
@@ -285,6 +288,7 @@ CKeyBindings::CKeyBindings()
 
 CKeyBindings::~CKeyBindings()
 {
+	configHandler->RemoveObserver(this);
 }
 
 
@@ -370,40 +374,46 @@ const CKeyBindings::HotkeyList& CKeyBindings::GetHotkeys(const std::string& acti
 
 /******************************************************************************/
 
-static bool ParseKeyChain_kernel(const std::string& keystr, CKeyChain* kc)
+static bool ParseSingleChain(const std::string& keystr, CKeyChain* kc)
 {
 	kc->clear();
 	CKeySet ks;
+
+	// note: this will fail if keystr contains spaces
 	std::stringstream ss(keystr);
+
 	while (ss.good()) {
 		char kcstr[256];
 		ss.getline(kcstr, 256, ',');
 		std::string kstr(kcstr);
-		if (!ks.Parse(kstr, false)) {
+
+		if (!ks.Parse(kstr, false))
 			return false;
-		}
+
 		kc->emplace_back(ks);
 	}
+
 	return true;
 }
 
-
 static bool ParseKeyChain(std::string keystr, CKeyChain* kc, const size_t pos = std::string::npos)
 {
-	// recursive function to allow "," as seperator-char & as shortcut
+	// recursive function to allow "," as separator-char & as shortcut
 	// -> when parsing fails, this functions replaces one by one all "," by their hexcode
 	//    and tries then to reparse it
 	// -> i.e. ",,," will at the end parsed as "0x2c,0x2c"
 
 	const size_t cpos = keystr.rfind(',', pos);
 
-	if (ParseKeyChain_kernel(keystr, kc))
+	if (ParseSingleChain(keystr, kc))
 		return true;
 
 	if (cpos == std::string::npos)
 		return false;
 
-	const size_t nextpos = (cpos > 0) ? cpos - 1 : std::string::npos;
+	// if cpos is 0, cpos - 1 will equal std::string::npos (size_t::max)
+	const size_t nextpos = cpos - 1;
+
 	if ((nextpos != std::string::npos) && ParseKeyChain(keystr, kc, nextpos))
 		return true;
 

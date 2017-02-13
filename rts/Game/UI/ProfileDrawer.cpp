@@ -1,15 +1,11 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include <assert.h>
+#include <cassert>
 #include <deque>
 
 #include "ProfileDrawer.h"
 #include "InputReceiver.h"
 #include "Game/GlobalUnsynced.h"
-#include "System/EventHandler.h"
-#include "System/Rectangle.h"
-#include "System/ThreadPool.h"
-#include "System/TimeProfiler.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Fonts/glFont.h"
 #include "Rendering/GlobalRendering.h"
@@ -18,9 +14,13 @@
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Path/IPathManager.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
+#include "System/EventHandler.h"
+#include "System/Rectangle.h"
+#include "System/TimeProfiler.h"
+#include "System/Util.h"
 #include "lib/lua/include/LuaUser.h"
 
-ProfileDrawer* ProfileDrawer::instance = NULL;
+ProfileDrawer* ProfileDrawer::instance = nullptr;
 
 static const float start_x = 0.6f;
 static const float end_x   = 0.99f;
@@ -45,31 +45,23 @@ ProfileDrawer::ProfileDrawer()
 	eventHandler.AddClient(this);
 }
 
-
-ProfileDrawer::~ProfileDrawer()
-{
-}
-
-
 void ProfileDrawer::SetEnabled(bool enable)
 {
 	if (enable) {
-		assert(instance == NULL);
+		assert(instance == nullptr);
 		instance = new ProfileDrawer();
+
 		// reset peak indicators each time the drawer is restarted
 		for (auto& p: profiler.profile)
 			p.second.peak = 0.0f;
 	} else {
-		ProfileDrawer* tmpInstance = instance;
-		instance = NULL;
-		delete tmpInstance;
+		SafeDelete(instance);
 	}
 }
 
-
 bool ProfileDrawer::IsEnabled()
 {
-	return (instance != NULL);
+	return (instance != nullptr);
 }
 
 
@@ -235,14 +227,18 @@ static void DrawProfiler()
 {
 	font->SetTextColor(1,1,1,1);
 
+	// this locks a mutex, so don't call it every frame
+	if ((globalRendering->drawFrame % 10) == 0)
+		profiler.RefreshProfiles();
+
 	// draw the background of the window
 	{
 		CVertexArray* va  = GetVertexArray();
 		va->Initialize();
-			va->AddVertex0(start_x, start_y + lineHeight + 0.005f,                          0);
-			va->AddVertex0(end_x,   start_y + lineHeight + 0.005f,                          0);
-			va->AddVertex0(start_x, start_y - profiler.profile.size() * lineHeight - 0.01f, 0);
-			va->AddVertex0(end_x,   start_y - profiler.profile.size() * lineHeight - 0.01f, 0);
+			va->AddVertex0(start_x, start_y +                                 lineHeight + 0.005f, 0);
+			va->AddVertex0(end_x,   start_y +                                 lineHeight + 0.005f, 0);
+			va->AddVertex0(start_x, start_y - profiler.sortedProfile.size() * lineHeight - 0.010f, 0);
+			va->AddVertex0(end_x,   start_y - profiler.sortedProfile.size() * lineHeight - 0.010f, 0);
 		glColor4f(0.0f, 0.0f, 0.5f, 0.5f);
 		va->DrawArray0(GL_TRIANGLE_STRIP);
 	}
@@ -255,45 +251,36 @@ static void DrawProfiler()
 		float fStartX = start_x + 0.005f + 0.015f + 0.005f;
 
 		// print total-time running since application start
-		fStartX += 0.04f;
-		font->glFormat(fStartX, fStartY, textSize, FONT_SHADOW | FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "totaltime");
+		fStartX += 0.04f; font->glPrint(fStartX, fStartY, textSize, FONT_SHADOW | FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "totaltime");
 
 		// print percent of CPU time used within the last 500ms
-		fStartX += 0.06f;
-		font->glFormat(fStartX, fStartY, textSize, FONT_SHADOW | FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "cur-%%usage");
-		fStartX += 0.04f;
-		font->glFormat(fStartX, fStartY, textSize, FONT_SHADOW | FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "max-%%usage");
-		fStartX += 0.04f;
-		font->glFormat(fStartX, fStartY, textSize, FONT_SHADOW | FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "lag");
+		fStartX += 0.06f; font->glPrint(fStartX, fStartY, textSize, FONT_SHADOW | FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "cur-%usage");
+		fStartX += 0.04f; font->glPrint(fStartX, fStartY, textSize, FONT_SHADOW | FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "max-%usage");
+		fStartX += 0.04f; font->glPrint(fStartX, fStartY, textSize, FONT_SHADOW | FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "lag");
 
 		// print timer name
 		fStartX += 0.01f;
-		font->glFormat(fStartX, fStartY, textSize, FONT_SHADOW | FONT_DESCENDER | FONT_SCALE | FONT_NORM, "title");
+		font->glPrint(fStartX, fStartY, textSize, FONT_SHADOW | FONT_DESCENDER | FONT_SCALE | FONT_NORM, "title");
 	}
 
 	// draw the textual info (total-time, short-time percentual time, timer-name)
 	int y = 1;
-	for (auto pi = profiler.profile.begin(); pi != profiler.profile.end(); ++pi, ++y) {
+	for (auto pi = profiler.sortedProfile.begin(); pi != profiler.sortedProfile.end(); ++pi, ++y) {
 		const auto& profileData = pi->second;
 
 		const float fStartY = start_y - y * lineHeight;
 		float fStartX = start_x + 0.005f + 0.015f + 0.005f;
 
 		// print total-time running since application start
-		fStartX += 0.04f;
-		font->glFormat(fStartX, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "%.2fs", profileData.total.toSecsf());
+		fStartX += 0.04f; font->glFormat(fStartX, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "%.2fs", profileData.total.toSecsf());
 
 		// print percent of CPU time used within the last 500ms
-		fStartX += 0.06f;
-		font->glFormat(fStartX, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "%.2f%%", profileData.percent * 100);
-		fStartX += 0.04f;
-		font->glFormat(fStartX, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "\xff\xff%c%c%.2f%%", profileData.newPeak?1:255, profileData.newPeak?1:255, profileData.peak * 100);
-		fStartX += 0.04f;
-		font->glFormat(fStartX, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "\xff\xff%c%c%.0fms", profileData.newLagPeak?1:255, profileData.newLagPeak?1:255, profileData.maxLag);
+		fStartX += 0.06f; font->glFormat(fStartX, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "%.2f%%", profileData.percent * 100);
+		fStartX += 0.04f; font->glFormat(fStartX, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "\xff\xff%c%c%.2f%%", profileData.newPeak?1:255, profileData.newPeak?1:255, profileData.peak * 100);
+		fStartX += 0.04f; font->glFormat(fStartX, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "\xff\xff%c%c%.0fms", profileData.newLagPeak?1:255, profileData.newLagPeak?1:255, profileData.maxLag);
 
 		// print timer name
-		fStartX += 0.01f;
-		font->glFormat(fStartX, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM, pi->first);
+		fStartX += 0.01f; font->glPrint(fStartX, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM, pi->first);
 	}
 
 
@@ -307,7 +294,7 @@ static void DrawProfiler()
 		va->Initialize();
 		va2->Initialize();
 			int i = 1;
-			for (auto pi = profiler.profile.begin(); pi != profiler.profile.end(); ++pi, ++i){
+			for (auto pi = profiler.sortedProfile.begin(); pi != profiler.sortedProfile.end(); ++pi, ++i){
 				auto& fc = pi->second.color;
 				SColor c(fc[0], fc[1], fc[2]);
 				va->AddVertexC(float3(0, -i*lineHeight, 0), c); // upper left
@@ -331,14 +318,14 @@ static void DrawProfiler()
 
 	// draw the graph
 	glLineWidth(3.0f);
-	for (auto pi = profiler.profile.begin(); pi != profiler.profile.end(); ++pi) {
-		if (!pi->second.showGraph) {
+	for (auto pi = profiler.sortedProfile.begin(); pi != profiler.sortedProfile.end(); ++pi) {
+		if (!pi->second.showGraph)
 			continue;
-		}
+
 		CVertexArray* va = GetVertexArray();
 		va->Initialize();
-		const float steps_x = (end_x - start_x) / CTimeProfiler::TimeRecord::frames_size;
-		for (size_t a=0; a < CTimeProfiler::TimeRecord::frames_size; ++a) {
+		const float steps_x = (end_x - start_x) / CTimeProfiler::TimeRecord::numFrames;
+		for (size_t a=0; a < CTimeProfiler::TimeRecord::numFrames; ++a) {
 			// profile runtime; eg 0.5f means: uses 50% of a CPU (during that frame)
 			// This may be more then 1.0f, in case an operation
 			// which ran over many frames, ended in this one.
@@ -370,8 +357,8 @@ static void DrawInfoText()
 	//print some infos (fps,gameframe,particles)
 	font->SetTextColor(1,1,0.5f,0.8f);
 
-	font->glFormat(0.01f, 0.02f, 1.0f, DBG_FONT_FLAGS, "FPS: %0.1f SimFPS: %0.1f SimFrame: %d Speed: %2.2f (%2.2f) Particles: %d (%d)",
-	    globalRendering->FPS, gu->simFPS, gs->frameNum, gs->speedFactor, gs->wantedSpeedFactor, projectileHandler->syncedProjectiles.size() + projectileHandler->unsyncedProjectiles.size(), projectileHandler->currentParticles);
+	font->glFormat(0.01f, 0.02f, 1.0f, DBG_FONT_FLAGS, "FPS: %0.1f SimFPS: %0.1f SimFrame: %d Speed: %2.2f (%2.2f) Particles: %d (%d : %0.1f)",
+	    globalRendering->FPS, gu->simFPS, gs->frameNum, gs->speedFactor, gs->wantedSpeedFactor, projectileHandler->syncedProjectiles.size() + projectileHandler->unsyncedProjectiles.size(), projectileHandler->GetCurrentParticles(), projectileHandler->GetParticleSaturation(true));
 
 	// 16ms := 60fps := 30simFPS + 30drawFPS
 	font->glFormat(0.01f, 0.07f, 0.7f, DBG_FONT_FLAGS, "avgFrame: %s%2.1fms\b avgDrawFrame: %s%2.1fms\b avgSimFrame: %s%2.1fms\b",
@@ -409,7 +396,7 @@ static void DrawInfoText()
 
 void ProfileDrawer::DrawScreen()
 {
-	SCOPED_TIMER("ProfileDrawer");
+	SCOPED_TIMER("Draw::Screen::DrawScreen::Profile");
 
 	glMatrixMode(GL_MODELVIEW);
 	glPushMatrix();
@@ -445,15 +432,15 @@ bool ProfileDrawer::MousePress(int x, int y, int button)
 	const float my = CInputReceiver::MouseY(y);
 	const int selIndex = (int) ((start_y - my) / lineHeight);
 
-	// switch the selected Timers showGraph value
-	if ((selIndex >= 0) && (selIndex < profiler.profile.size())) {
-		auto pi = profiler.profile.begin();
-		std::advance(pi, selIndex);
-		pi->second.showGraph = !pi->second.showGraph;
-		return true;
-	}
+	if (selIndex < 0)
+		return false;
+	if (selIndex >= profiler.sortedProfile.size())
+		return false;
 
-	return false;
+	// switch the selected Timers showGraph value
+	// this reverts when the profile is re-sorted
+	profiler.sortedProfile[selIndex].second.showGraph = !profiler.sortedProfile[selIndex].second.showGraph;
+	return true;
 }
 
 bool ProfileDrawer::IsAbove(int x, int y)
@@ -462,9 +449,8 @@ bool ProfileDrawer::IsAbove(int x, int y)
 	const float my = CInputReceiver::MouseY(y);
 
 	// check if a Timer selection box was hit
-	if (mx<start_x || mx>end_x || my<start_y - profiler.profile.size()*lineHeight || my>start_y) {
+	if (mx<start_x || mx>end_x || my<start_y - profiler.sortedProfile.size()*lineHeight || my>start_y)
 		return false;
-	}
 
 	return true;
 }
@@ -493,3 +479,4 @@ void ProfileDrawer::DbgTimingInfo(DbgTimingInfoType type, const spring_time star
 		} break;
 	}
 }
+

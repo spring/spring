@@ -8,30 +8,31 @@
 #include "Sim/Path/Default/PathManager.h"
 #include "Sim/Path/QTPFS/PathManager.hpp"
 #include "Sim/Units/Unit.h"
+#include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitDef.h"
 #include "System/EventHandler.h"
 
 IPathDrawer* pathDrawer = NULL;
 
 IPathDrawer* IPathDrawer::GetInstance() {
-	static IPathDrawer* pd = NULL;
-
-	if (pd == NULL) {
+	if (pathDrawer == NULL) {
 		if (dynamic_cast<QTPFS::PathManager*>(pathManager) != NULL) {
-			return (pd = new QTPFSPathDrawer());
+			return (pathDrawer = new QTPFSPathDrawer());
 		}
 		if (dynamic_cast<CPathManager*>(pathManager) != NULL) {
-			return (pd = new DefaultPathDrawer());
+			return (pathDrawer = new DefaultPathDrawer());
 		}
 
-		pd = new IPathDrawer();
+		pathDrawer = new IPathDrawer();
 	}
 
-	return pd;
+	return pathDrawer;
 }
 
 void IPathDrawer::FreeInstance(IPathDrawer* pd) {
+	assert(pd == pathDrawer);
 	delete pd;
+	pathDrawer = NULL;
 }
 
 
@@ -44,14 +45,12 @@ IPathDrawer::~IPathDrawer() {
 }
 
 const MoveDef* IPathDrawer::GetSelectedMoveDef() {
-	const MoveDef* md = NULL;
-	const CUnitSet& unitSet = selectedUnitsHandler.selectedUnits;
+	const MoveDef* md = nullptr;
+	const auto& unitSet = selectedUnitsHandler.selectedUnits;
 
 	if (!unitSet.empty()) {
-		const CUnit* unit = *(unitSet.begin());
-		const MoveDef* moveDef = unit->moveDef;
-
-		md = moveDef;
+		const CUnit* unit = unitHandler->GetUnit(*unitSet.begin());
+		md = unit->moveDef;
 	}
 
 	return md;
@@ -73,8 +72,8 @@ SColor IPathDrawer::GetSpeedModColor(const float sm) {
 float IPathDrawer::GetSpeedModNoObstacles(const MoveDef* md, int sqx, int sqz) {
 	float m = 0.0f;
 
-	const int hmIdx = sqz * gs->mapxp1 + sqx;
-	const int cnIdx = sqz * gs->mapx   + sqx;
+	const int hmIdx = sqz * mapDims.mapxp1 + sqx;
+	const int cnIdx = sqz * mapDims.mapx   + sqx;
 
 	const float height = hm[hmIdx];
 	const float slope = 1.0f - cn[cnIdx].y;

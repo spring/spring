@@ -8,16 +8,17 @@
 #define NOMINMAX
 #endif
 
-#include <string>
 #if       defined(HEADLESS)
 	#include "lib/headlessStubs/glewstub.h"
 #else
 	#include <GL/glew.h>
 #endif // defined(HEADLESS)
 
-// includes boost now!
 #include "System/float3.h"
+#include "System/float4.h"
 
+#include "glStateDebug.h"
+#include "glMarkers.h"
 
 #if       defined(HEADLESS)
 	// All OpenGL functions should always exists on HEADLESS.
@@ -31,22 +32,52 @@
 	#define IS_GL_FUNCTION_AVAILABLE(functionName) (functionName != NULL)
 #endif // defined(HEADLESS)
 
+#ifndef GL_INVALID_INDEX
+	#define GL_INVALID_INDEX -1
+#endif
 
-inline void glVertexf3(const float3& v)    { glVertex3f(v.x, v.y, v.z); }
-inline void glColorf3(const float3& v)     { glColor3f(v.x, v.y, v.z); }
-inline void glNormalf3(const float3& v)    { glNormal3f(v.x, v.y, v.z); }
-inline void glTranslatef3(const float3& v) { glTranslatef(v.x, v.y, v.z); }
-inline void glSecondaryColorf3(const float3& v) { glSecondaryColor3f(v.x, v.y, v.z); }
-inline void glColorf4(const float3& v, const float alpha) { glColor4f(v.x, v.y, v.z, alpha); }
-inline void glUniformf3(const GLint location, const float3& v) { glUniform3f(location, v.x, v.y, v.z); }
 
+static inline void glVertexf3(const float3& v)    { glVertex3f(v.r, v.g, v.b); }
+static inline void glColorf3(const float3& v)     { glColor3f(v.r, v.g, v.b); }
+static inline void glColorf4(const float4& v)     { glColor4f(v.r, v.g, v.b, v.a); }
+static inline void glNormalf3(const float3& v)    { glNormal3f(v.r, v.g, v.b); }
+static inline void glTranslatef3(const float3& v) { glTranslatef(v.r, v.g, v.b); }
+static inline void glSecondaryColorf3(const float3& v) { glSecondaryColor3f(v.r, v.g, v.b); }
+static inline void glColorf4(const float3& v, const float alpha) { glColor4f(v.r, v.g, v.b, alpha); }
+static inline void glUniformf3(const GLint location, const float3& v) { glUniform3f(location, v.r, v.g, v.b); }
+
+#if defined(GL_ARB_clip_control) && !defined(HEADLESS)
+#undef glOrtho
+#undef gluOrtho2D
+#undef glFrustum
+
+static inline void __spring_glOrtho(GLdouble l, GLdouble r,  GLdouble b, GLdouble t,  GLdouble n, GLdouble f) {
+	glTranslatef(0.0f, 0.0f, 0.5f);
+	glScalef(1.0f, 1.0f, 0.5f);
+	glOrtho(l, r,  b, t,  n, f);
+}
+static inline void __spring_gluOrtho2D(GLdouble l, GLdouble r,  GLdouble b, GLdouble t) { __spring_glOrtho(l, r, b, t, -1.0, 1.0); }
+static inline void __spring_glFrustum(GLdouble l, GLdouble r,  GLdouble b, GLdouble t,  GLdouble n, GLdouble f) {
+	glTranslatef(0.0f, 0.0f, 0.5f);
+	glScalef(1.0f, 1.0f, 0.5f);
+	glFrustum(l, r,  b, t,  n, f);
+}
+
+#define glOrtho __spring_glOrtho
+#define gluOrtho2D __spring_gluOrtho2D
+#define glFrustum __spring_glFrustum
+
+#endif
 
 void WorkaroundATIPointSizeBug();
-void SetTexGen(const float& scaleX, const float& scaleZ, const float& offsetX, const float& offsetZ);
+void SetTexGen(const float scaleX, const float scaleZ, const float offsetX, const float offsetZ);
 
-void glSaveTexture(const GLuint textureID, const std::string& filename);
+void glSaveTexture(const GLuint textureID, const char* filename);
+void glSpringBindTextures(GLuint first, GLsizei count, const GLuint* textures);
 void glSpringTexStorage2D(const GLenum target, GLint levels, const GLint internalFormat, const GLsizei width, const GLsizei height);
 void glBuildMipmaps(const GLenum target, GLint internalFormat, const GLsizei width, const GLsizei height, const GLenum format, const GLenum type, const void* data);
+
+void glSpringMatrix2dProj(const int sizex, const int sizey);
 
 void ClearScreen();
 

@@ -8,11 +8,11 @@
 #include "System/EventClient.h"
 #include "System/Log/LogSinkHandler.h"
 #include "System/Misc/SpringTime.h"
+#include "System/Threading/SpringThreading.h"
 
 #include <deque>
 #include <string>
 #include <list>
-#include <boost/thread/recursive_mutex.hpp>
 
 class CInfoConsole: public CInputReceiver, public CEventClient, public ILogSink
 {
@@ -71,7 +71,7 @@ private:
 	size_t newLines;
 	int rawId;
 
-	mutable boost::recursive_mutex infoConsoleMutex;
+	mutable spring::recursive_mutex infoConsoleMutex;
 
 	int lifetime;
 	float xpos;
@@ -83,5 +83,7 @@ private:
 
 	size_t maxLines;
 };
+
+extern CInfoConsole* infoConsole;
 
 #endif /* INFO_CONSOLE_H */

@@ -10,12 +10,16 @@ class IExplosionGenerator;
 //! spawns a given explosion-generator after \<delay\> frames
 class CExpGenSpawner : public CProjectile
 {
-	CR_DECLARE(CExpGenSpawner);
+	CR_DECLARE_DERIVED(CExpGenSpawner)
 public:
 	CExpGenSpawner();
 	~CExpGenSpawner() {}
 
-	void Update();
+	virtual void Update() override;
+
+	virtual int GetProjectilesCount() const override;
+
+	static bool GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo);
 
 private:
 	int delay;

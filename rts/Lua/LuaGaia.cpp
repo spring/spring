@@ -1,10 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-
-#include <set>
-#include <mutex>
-#include <boost/thread/mutex.hpp>
-
 #include "LuaGaia.h"
 
 #include "LuaInclude.h"
@@ -25,6 +20,7 @@
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/Util.h"
+#include "System/Threading/SpringThreading.h"
 
 
 CLuaGaia* luaGaia = NULL;
@@ -36,34 +32,11 @@ static const char* LuaGaiaUnsyncedFilename = "LuaGaia/draw.lua";
 /******************************************************************************/
 /******************************************************************************/
 
-static boost::mutex m_singleton;
+static spring::mutex m_singleton;
 
+DECL_LOAD_HANDLER(CLuaGaia, luaGaia)
+DECL_FREE_HANDLER(CLuaGaia, luaGaia)
 
-void CLuaGaia::LoadHandler()
-{
-	{
-		std::lock_guard<boost::mutex> lk(m_singleton);
-		if (luaGaia) return;
-
-		luaGaia = new CLuaGaia();
-	}
-
-	if (!luaGaia->IsValid()) {
-		FreeHandler();
-	}
-}
-
-
-void CLuaGaia::FreeHandler()
-{
-	std::lock_guard<boost::mutex> lk(m_singleton);
-	if (!luaGaia) return;
-
-	auto* inst = luaGaia;
-	luaGaia = NULL;
-	inst->KillLua();
-	delete inst;
-}
 
 /******************************************************************************/
 /******************************************************************************/
@@ -71,9 +44,8 @@ void CLuaGaia::FreeHandler()
 CLuaGaia::CLuaGaia()
 : CLuaHandleSynced("LuaGaia", LUA_HANDLE_ORDER_GAIA)
 {
-	if (!IsValid()) {
+	if (!IsValid())
 		return;
-	}
 
 	SetFullCtrl(true);
 	SetFullRead(true);
@@ -82,7 +54,7 @@ CLuaGaia::CLuaGaia()
 	SetReadAllyTeam(CEventClient::AllAccessTeam);
 	SetSelectTeam(teamHandler->GaiaTeamID());
 
-	Init(LuaGaiaSyncedFilename, LuaGaiaUnsyncedFilename, SPRING_VFS_MAP);
+	Init(LuaGaiaSyncedFilename, LuaGaiaUnsyncedFilename, SPRING_VFS_MAP_BASE);
 }
 
 
@@ -92,13 +64,13 @@ CLuaGaia::~CLuaGaia()
 }
 
 
-bool CLuaGaia::AddSyncedCode(lua_State *L)
+bool CLuaGaia::AddSyncedCode(lua_State* L)
 {
 	return true;
 }
 
 
-bool CLuaGaia::AddUnsyncedCode(lua_State *L)
+bool CLuaGaia::AddUnsyncedCode(lua_State* L)
 {
 	return true;
 }

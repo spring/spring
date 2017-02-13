@@ -7,6 +7,7 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/ColorMap.h"
 #include "Rendering/Textures/TextureAtlas.h"
+#include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Weapons/WeaponDef.h"
 
@@ -14,22 +15,16 @@
 	#include "System/Sync/SyncTracer.h"
 #endif
 
-CR_BIND_DERIVED(CExplosiveProjectile, CWeaponProjectile, (ProjectileParams()));
+CR_BIND_DERIVED(CExplosiveProjectile, CWeaponProjectile, )
 
 CR_REG_METADATA(CExplosiveProjectile, (
 	CR_SETFLAG(CF_Synced),
-	CR_MEMBER(areaOfEffect),
 	CR_MEMBER(invttl),
 	CR_MEMBER(curTime)
-));
-
-//////////////////////////////////////////////////////////////////////
-// Construction/Destruction
-//////////////////////////////////////////////////////////////////////
+))
 
 
 CExplosiveProjectile::CExplosiveProjectile(const ProjectileParams& params): CWeaponProjectile(params)
-	, areaOfEffect(0.0f)
 	, invttl(0.0f)
 	, curTime(0.0f)
 {
@@ -41,7 +36,6 @@ CExplosiveProjectile::CExplosiveProjectile(const ProjectileParams& params): CWea
 	if (weaponDef != NULL) {
 		SetRadiusAndHeight(weaponDef->collisionSize, 0.0f);
 		drawRadius = weaponDef->size;
-		areaOfEffect = weaponDef->damageAreaOfEffect;
 	}
 
 	if (ttl <= 0) {
@@ -64,7 +58,7 @@ void CExplosiveProjectile::Update()
 		Collision();
 	} else {
 		if (ttl > 0) {
-			explGenHandler->GenExplosion(cegID, pos, speed, ttl, areaOfEffect, 0.0f, NULL, NULL);
+			explGenHandler->GenExplosion(cegID, pos, speed, ttl, damages->damageAreaOfEffect, 0.0f, NULL, NULL);
 		}
 	}
 
@@ -116,8 +110,8 @@ void CExplosiveProjectile::Draw()
 		const float stageDecay = (stages - (stage * alphaDecay)) * invStages;
 		const float stageSize  = drawRadius * (1.0f - (stage * sizeDecay));
 
-		const float3 ydirCam  = camera->up    * stageSize;
-		const float3 xdirCam  = camera->right * stageSize;
+		const float3 ydirCam  = camera->GetUp()    * stageSize;
+		const float3 xdirCam  = camera->GetRight() * stageSize;
 		const float3 stageGap = (noGap)? (ndir * stageSize * stage): (ndir * drawRadius * stage);
 		const float3 stagePos = drawPos - stageGap;
 
@@ -133,7 +127,7 @@ void CExplosiveProjectile::Draw()
 	}
 }
 
-int CExplosiveProjectile::ShieldRepulse(CPlasmaRepulser* shield, float3 shieldPos, float shieldForce, float shieldMaxSpeed)
+int CExplosiveProjectile::ShieldRepulse(const float3& shieldPos, float shieldForce, float shieldMaxSpeed)
 {
 	if (luaMoveCtrl)
 		return 0;
@@ -146,4 +140,9 @@ int CExplosiveProjectile::ShieldRepulse(CPlasmaRepulser* shield, float3 shieldPo
 	}
 
 	return 0;
+}
+
+int CExplosiveProjectile::GetProjectilesCount() const
+{
+	return weaponDef->visuals.stages;
 }

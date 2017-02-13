@@ -4,35 +4,32 @@
 #define _GAME_H
 
 #include <string>
-#include <map>
+#include <vector>
 
 #include "GameController.h"
 #include "Game/UI/KeySet.h"
+#include "System/UnorderedMap.hpp"
 #include "System/creg/creg_cond.h"
 #include "System/Misc/SpringTime.h"
 
-class IWater;
+class JobDispatcher;
 class CConsoleHistory;
-class CInfoConsole;
 class LuaParser;
-class LuaInputReceiver;
 class ILoadSaveHandler;
 class Action;
-class ISyncedActionExecutor;
-class IUnsyncedActionExecutor;
 class ChatMessage;
-class SkirmishAIData;
 class CWorldDrawer;
 
 
 class CGame : public CGameController
 {
 private:
-	CR_DECLARE_STRUCT(CGame);
+	CR_DECLARE_STRUCT(CGame)
 
 public:
 	CGame(const std::string& mapName, const std::string& modName, ILoadSaveHandler* saveFile);
 	virtual ~CGame();
+	void KillLua();
 
 public:
 	enum GameDrawMode {
@@ -40,13 +37,16 @@ public:
 		gameNormalDraw     = 1,
 		gameShadowDraw     = 2,
 		gameReflectionDraw = 3,
-		gameRefractionDraw = 4
+		gameRefractionDraw = 4,
+		gameDeferredDraw   = 5,
 	};
 
 	struct PlayerTrafficInfo {
 		PlayerTrafficInfo() : total(0) {}
+
 		int total;
-		std::map<int, int> packets;
+
+		spring::unordered_map<int, int> packets;
 	};
 
 public:
@@ -56,6 +56,8 @@ public:
 	void GameEnd(const std::vector<unsigned char>& winningAllyTeams, bool timeout = false);
 
 private:
+	void AddTimedJobs();
+
 	void LoadMap(const std::string& mapName);
 	void LoadDefs();
 	void PreLoadSimulation();
@@ -64,15 +66,21 @@ private:
 	void PostLoadRendering();
 	void LoadInterface();
 	void LoadLua();
+	void LoadSkirmishAIs();
 	void LoadFinalize();
 	void PostLoad();
+
+	void KillMisc();
+	void KillRendering();
+	void KillInterface();
+	void KillSimulation();
 
 public:
 	volatile bool IsFinishedLoading() const { return finishedLoading; }
 	bool IsGameOver() const { return gameOver; }
 	bool IsLagging(float maxLatency = 500.0f) const;
 
-	const std::map<int, PlayerTrafficInfo>& GetPlayerTraffic() const {
+	const spring::unordered_map<int, PlayerTrafficInfo>& GetPlayerTraffic() const {
 		return playerTraffic;
 	}
 	void AddTraffic(int playerID, int packetCode, int length);
@@ -93,32 +101,32 @@ public:
 	void ParseInputTextGeometry(const std::string& geo);
 
 	void ReloadGame();
-	void SaveGame(const std::string& filename, bool overwrite);
+	void SaveGame(const std::string& filename, bool overwrite, bool usecreg);
 
-	void ResizeEvent();
-	void SetupRenderingParams();
+	void ResizeEvent() override;
 
 	void SetDrawMode(GameDrawMode mode) { gameDrawMode = mode; }
 	GameDrawMode GetDrawMode() const { return gameDrawMode; }
 
 private:
-	bool Draw();
-	bool DrawMT();
-
-	static void DrawMTcb(void* c) { static_cast<CGame*>(c)->DrawMT(); }
+	bool Draw() override;
+	bool Update() override;
 	bool UpdateUnsynced(const spring_time currentTime);
 
 	void DrawSkip(bool blackscreen = true);
+	void DrawInputReceivers();
 	void DrawInputText();
-	void UpdateCam();
+	void DrawInterfaceWidgets();
 
 	/// Format and display a chat message received over network
 	void HandleChatMsg(const ChatMessage& msg);
 
 	/// Called when a key is released by the user
-	int KeyReleased(int k);
+	int KeyReleased(int k) override;
 	/// Called when the key is pressed by the user (can be called several times due to key repeat)
-	int KeyPressed(int k, bool isRepeat);
+	int KeyPressed(int k, bool isRepeat) override;
+	///
+	int TextInput(const std::string& utf8Text) override;
 
 	bool ActionPressed(unsigned int key, const Action& action, bool isRepeat);
 	bool ActionReleased(const Action& action);
@@ -136,7 +144,6 @@ private:
 	void UpdateNetMessageProcessingTimeLeft();
 	void SimFrame();
 	void StartPlaying();
-	bool Update();
 
 public:
 	GameDrawMode gameDrawMode;
@@ -171,7 +178,6 @@ public:
 	bool showFPS;
 	bool showClock;
 	bool showSpeed;
-	int showMTInfo;
 
 	float inputTextPosX;
 	float inputTextPosY;
@@ -189,7 +195,7 @@ public:
 	std::string userInputPrefix;
 
 	/// <playerID, <packetCode, total bytes> >
-	std::map<int, PlayerTrafficInfo> playerTraffic;
+	spring::unordered_map<int, PlayerTrafficInfo> playerTraffic;
 
 	// to smooth out SimFrame calls
 	float msgProcTimeLeft;  ///< How many SimFrame() calls we still may do.
@@ -209,10 +215,11 @@ public:
 	 */
 	int speedControl;
 
-	CInfoConsole* infoConsole;
 	CConsoleHistory* consoleHistory;
 
 private:
+	JobDispatcher* jobDispatcher;
+
 	CWorldDrawer* worldDrawer;
 
 	LuaParser* defsParser;

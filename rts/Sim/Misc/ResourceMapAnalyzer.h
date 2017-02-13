@@ -12,7 +12,6 @@ struct UnitDef;
 class CResourceMapAnalyzer {
 	public:
 		CResourceMapAnalyzer(int resourceId);
-		~CResourceMapAnalyzer();
 
 		float3 GetNearestSpot(float3 fromPos, int team, const UnitDef* extractor = NULL) const;
 		float3 GetNearestSpot(int builderUnitId, const UnitDef* extractor = NULL) const;
@@ -55,10 +54,11 @@ class CResourceMapAnalyzer {
 		int minIncomeForSpot;
 		int xtractorRadius;
 		int doubleRadius;
-		unsigned char* rexArrayA;
-		unsigned char* rexArrayB;
-		unsigned char* rexArrayC;
-		int* tempAverage;
+
+		std::vector<unsigned char> rexArrayA;
+		std::vector<unsigned char> rexArrayB;
+		std::vector<unsigned char> rexArrayC;
+		std::vector<int> tempAverage;
 };
 
 #endif // _RESOURCE_MAP_ANALYZER_H

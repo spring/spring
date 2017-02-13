@@ -6,6 +6,7 @@
 #include "System/float3.h"
 
 #include <string>
+#include <vector>
 
 class CUnit;
 class CWeapon;

@@ -5,9 +5,9 @@
 
 #include "creg_cond.h"
 
-#ifdef USING_CREG
-
 #include <list>
+
+#ifdef USING_CREG
 
 namespace creg {
 
@@ -15,7 +15,7 @@ namespace creg {
 	template<typename T>
 	struct ListType : public IType
 	{
-		ListType(boost::shared_ptr<IType> t):elemType(t) {}
+		ListType(std::shared_ptr<IType> t):elemType(t) {}
 		~ListType() {}
 
 		void Serialize(ISerializer* s, void* inst) {
@@ -28,6 +28,7 @@ namespace creg {
 					elemType->Serialize(s, &*it);
 				}
 			} else {
+				ct.clear();
 				int size;
 				s->SerializeInt(&size, sizeof(int));
 				ct.resize(size);
@@ -37,22 +38,21 @@ namespace creg {
 				}
 			}
 		}
-		std::string GetName() { return "list<" + elemType->GetName() + ">"; }
-		size_t GetSize() { return sizeof(T); }
+		std::string GetName() const { return "list<" + elemType->GetName() + ">"; }
+		size_t GetSize() const { return sizeof(T); }
 
-		boost::shared_ptr<IType> elemType;
+		std::shared_ptr<IType> elemType;
 	};
 
 
 	// List type
 	template<typename T>
 	struct DeduceType< std::list<T> > {
-		boost::shared_ptr<IType> Get() {
-			DeduceType<T> elemtype;
-			return boost::shared_ptr<IType>(new ListType< std::list<T> >(elemtype.Get()));
+		static std::shared_ptr<IType> Get() {
+			return std::shared_ptr<IType>(new ListType< std::list<T> >(DeduceType<T>::Get()));
 		}
 	};
-};
+}
 
 #endif // USING_CREG
 

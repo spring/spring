@@ -1,49 +1,27 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "EmgCannon.h"
+
 #include "WeaponDef.h"
-#include "Game/TraceRay.h"
 #include "Sim/Misc/Team.h"
 #include "Map/Ground.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "System/Sync/SyncTracer.h"
+#include "System/myMath.h"
 
-CR_BIND_DERIVED(CEmgCannon, CWeapon, (NULL, NULL));
-
-CR_REG_METADATA(CEmgCannon,(
-	CR_RESERVED(8)
-));
+CR_BIND_DERIVED(CEmgCannon, CWeapon, (NULL, NULL))
+CR_REG_METADATA(CEmgCannon, )
 
 CEmgCannon::CEmgCannon(CUnit* owner, const WeaponDef* def): CWeapon(owner, def)
 {
 }
 
 
-void CEmgCannon::Update()
+void CEmgCannon::FireImpl(const bool scriptCall)
 {
-	if (targetType != Target_None) {
-		weaponPos = owner->GetObjectSpacePos(relWeaponPos);
-		weaponMuzzlePos = owner->GetObjectSpacePos(relWeaponMuzzlePos);
-
-		float3 wantedDirTemp = targetPos - weaponPos;
-		const float targetDist = wantedDirTemp.LengthNormalize();
-
-		if (!onlyForward && targetDist != 0.0f) {
-			wantedDir = wantedDirTemp;
-		}
-
-		predict = targetDist / projectileSpeed;
-	}
-	CWeapon::Update();
-}
-
-
-
-void CEmgCannon::FireImpl(bool scriptCall)
-{
-	float3 dir = targetPos - weaponMuzzlePos;
+	float3 dir = currentTargetPos - weaponMuzzlePos;
 	const float dist = dir.LengthNormalize();
 
 	if (onlyForward && owner->unitDef->IsStrafingAirUnit()) {
@@ -51,13 +29,13 @@ void CEmgCannon::FireImpl(bool scriptCall)
 		dir = owner->frontdir;
 	}
 
-	dir += (gs->randVector() * SprayAngleExperience() + SalvoErrorExperience());
+	dir += (gsRNG.NextVector() * SprayAngleExperience() + SalvoErrorExperience());
 	dir.Normalize();
 
 	ProjectileParams params = GetProjectileParams();
 	params.pos = weaponMuzzlePos;
 	params.speed = dir * projectileSpeed;
-	params.ttl = std::ceil(std::max(dist, range) / projectileSpeed);
+	params.ttl = weaponDef->flighttime > 0 ? weaponDef->flighttime : math::ceil(std::max(dist, range) / projectileSpeed);
 
 	WeaponProjectileFactory::LoadProjectile(params);
 }

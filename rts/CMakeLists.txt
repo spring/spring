@@ -18,8 +18,8 @@ endif (TRACE_SYNC)
 option(SYNCDEBUG "Enable sync debugger (needs SYNCCHECK=true)" FALSE)
 if (SYNCDEBUG)
 	ADD_DEFINITIONS(-DSYNCDEBUG)
-	If     (NOT "${CMAKE_BUILD_TYPE}" STREQUAL "DEBUG2" AND NOT "${CMAKE_BUILD_TYPE}" STREQUAL "DEBUG3")
-		Message(FATAL_ERROR "You need CMAKE_BUILD_TYPE set to either DEBUG2 or DEBUG3 for a SYNCDEBUG build")
+	If     (NOT "${CMAKE_BUILD_TYPE}" STREQUAL "DEBUG")
+		Message(WARNING "It is recommended to set CMAKE_BUILD_TYPE to DEBUG for a SYNCDEBUG build")
 	EndIf  ()
 	If     (NOT SYNCCHECK)
 		Message(FATAL_ERROR "You need SYNCCHECK=TRUE for a SYNCDEBUG build")
@@ -28,6 +28,11 @@ if (SYNCDEBUG)
 		Message(WARNING "It is recommended to use TRACE_SYNC=TRUE for a SYNCDEBUG build")
 	EndIf  ()
 endif (SYNCDEBUG)
+
+option(DEBUG_GLSTATE "enable GL_STATE_CHECKER" FALSE)
+if(DEBUG_GLSTATE)
+	add_definitions(-DDEBUG_GLSTATE)
+endif()
 
 ### give error when not found
 FIND_PACKAGE_STATIC(DevIL REQUIRED)
@@ -70,22 +75,44 @@ ENDIF (UNIX AND NOT MINGW)
 
 FIND_PACKAGE_STATIC(ZLIB REQUIRED)
 LIST(APPEND engineCommonLibraries ${IL_LIBRARIES} ${JPEG_LIBRARY} ${PNG_LIBRARY} ${TIFF_LIBRARY} ${GIF_LIBRARY})
-LIST(APPEND engineCommonLibraries ${Boost_REGEX_LIBRARY} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${Boost_SIGNALS_LIBRARY})
-LIST(APPEND engineCommonLibraries ${Boost_SYSTEM_LIBRARY} ${Boost_CHRONO_LIBRARY_WITH_RT} ${Boost_FILESYSTEM_LIBRARY})
+LIST(APPEND engineCommonLibraries ${Boost_REGEX_LIBRARY})
+LIST(APPEND engineCommonLibraries ${Boost_SYSTEM_LIBRARY} ${Boost_CHRONO_LIBRARY_WITH_RT})
 LIST(APPEND engineCommonLibraries 7zip ${SPRING_MINIZIP_LIBRARY} ${ZLIB_LIBRARY})
-LIST(APPEND engineCommonLibraries lua luasocket archives streflop assimp)
+LIST(APPEND engineCommonLibraries lua luasocket archives assimp gflags)
+if (ENABLE_STREFLOP)
+LIST(APPEND engineCommonLibraries streflop)
+endif ()
+
 include_directories(${ZLIB_INCLUDE_DIR})
 
 IF (WIN32)
 	LIST(APPEND engineCommonLibraries ${WIN32_LIBRARIES})
 ENDIF (WIN32)
 
+if(${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
+	#tcmalloc on freebsd is broken, default disable it (#4754)
+	set(USE_TCMALLOC_DEFAULT FALSE)
+else()
+	set(USE_TCMALLOC_DEFAULT TRUE)
+endif()
+
 FIND_PACKAGE_STATIC(TCMalloc)
-option(USE_TCMALLOC "use tcmalloc (part of google's perftools)" TRUE)
+option(USE_TCMALLOC "use tcmalloc (part of google's perftools)" ${USE_TCMALLOC_DEFAULT})
 if    (USE_TCMALLOC AND TCMALLOC_LIBRARY)
 	MESSAGE(STATUS "Using tcmalloc")
 	LIST(APPEND engineCommonLibraries ${TCMALLOC_LIBRARY})
 endif (USE_TCMALLOC AND TCMALLOC_LIBRARY)
+
+
+if(UNIX)
+	FIND_PACKAGE_STATIC(Libunwind REQUIRED)
+	LIST(APPEND engineCommonLibraries ${LIBUNWIND_LIBRARIES})
+	if(LIBUNWIND_FOUND)
+		message(STATUS "Found libunwind libraries at ${LIBUNWIND_LIBRARIES}")
+	else()
+		message(FATAL_ERROR "Couldn't find libunwind")
+	endif()
+endif()
 
 
 
@@ -101,20 +128,20 @@ Add_Subdirectory(Net)
 Add_Subdirectory(Sim)
 #Add_Subdirectory(System) # this is already added in ../
 
-SET(engineSources
+MakeGlobalVar(engineSources
 		${sources_engine_Game}
 		${sources_engine_Net}
 		${sources_engine_Lua}
 		${sources_engine_Map}
 		${sources_engine_Rendering}
 		${sources_engine_Menu}
-		${sources_engine_Sim}
 		${sources_engine_System}
 		${sources_engine_ExternalAI}
 	)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/lib/assimp/include) #FIXME: hack for rts/Rendering/Models/IModelParser.cpp
 
 ### Add headers for generated project files (e.g. Code::Blocks)
-file(GLOB_RECURSE engineHeaders "*.h" "*.hpp")
+file(GLOB_RECURSE engineHeaders "*.h" "*.hpp" "*.inl")
 
 
 Add_Subdirectory(builds)

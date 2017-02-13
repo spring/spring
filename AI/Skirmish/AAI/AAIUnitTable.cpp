@@ -7,10 +7,20 @@
 // Released under GPL license: see LICENSE.html for more information.
 // -------------------------------------------------------------------------
 
-#include "AAIUnitTable.h"
 #include "AAI.h"
+#include "AAIUnitTable.h"
 #include "AAIExecute.h"
-#include "System/FastMath.h"
+#include "AAIConstructor.h"
+#include "AAIBuildTable.h"
+#include "AAIAirForceManager.h"
+#include "AAIConfig.h"
+#include "AAIMap.h"
+#include "AAIGroup.h"
+#include "AAIConstructor.h"
+
+#include "LegacyCpp/UnitDef.h"
+using namespace springLegacyAI;
+
 
 AAIUnitTable::AAIUnitTable(AAI *ai)
 {

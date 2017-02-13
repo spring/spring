@@ -5,7 +5,6 @@
 
 #include <string>
 #include <vector>
-#include <list>
 
 #include "System/float3.h"
 #include "System/creg/creg_cond.h"
@@ -20,18 +19,12 @@ class TeamController;
  */
 class CInMapDrawModel
 {
-	CR_DECLARE_STRUCT(CInMapDrawModel);
-	CR_DECLARE_SUB(MapDrawPrimitive);
-	CR_DECLARE_SUB(MapPoint);
-	CR_DECLARE_SUB(MapLine);
-	CR_DECLARE_SUB(DrawQuad);
 
 public:
 	static const size_t DRAW_QUAD_SIZE;
 	static const float QUAD_SCALE;
 
 	CInMapDrawModel();
-	~CInMapDrawModel();
 
 	void PostLoad();
 
@@ -43,13 +36,11 @@ public:
 	void EraseNear(const float3& pos, int playerID);
 	void EraseAll();
 
-	int GetNumPoints() const { return numPoints; }
-	int GetNumLines() const { return numLines; }
+	size_t GetNumPoints() const { return numPoints; }
+	size_t GetNumLines() const { return numLines; }
 
 
 	struct MapDrawPrimitive {
-		CR_DECLARE(MapDrawPrimitive);
-
 	public:
 		MapDrawPrimitive(bool spectator, int teamID, const TeamController* teamController)
 			: spectator(spectator)
@@ -57,7 +48,7 @@ public:
 			, teamController(teamController)
 		{}
 
-		bool IsLocalPlayerAllowedToSee(const CInMapDrawModel* inMapDraw) const;
+		bool IsVisibleToPlayer(bool drawAllMarks) const;
 
 		/**
 		 * Was the creator of this map-drawing spectator at the time it was
@@ -83,7 +74,6 @@ public:
 	};
 
 	struct MapPoint : public MapDrawPrimitive {
-		CR_DECLARE(MapPoint);
 
 	public:
 		MapPoint(bool spectator, int teamID, const TeamController* teamController, const float3& pos, const std::string& label)
@@ -101,7 +91,6 @@ public:
 	};
 
 	struct MapLine : public MapDrawPrimitive {
-		CR_DECLARE(MapLine);
 
 	public:
 		MapLine(bool spectator, int teamID, const TeamController* teamController, const float3& pos1, const float3& pos2)
@@ -129,9 +118,8 @@ public:
 	 * cell of a grid structure.
 	 */
 	struct DrawQuad {
-		CR_DECLARE_STRUCT(DrawQuad);
-		std::list<CInMapDrawModel::MapPoint> points;
-		std::list<CInMapDrawModel::MapLine> lines;
+		std::vector<CInMapDrawModel::MapPoint> points;
+		std::vector<CInMapDrawModel::MapLine> lines;
 	};
 
 	int GetDrawQuadX() const { return drawQuadsX; }
@@ -148,9 +136,9 @@ private:
 	bool drawAllMarks;
 
 	/// total number of points
-	int numPoints;
+	size_t numPoints;
 	/// total number of lines
-	int numLines;
+	size_t numLines;
 };
 
 extern CInMapDrawModel* inMapDrawerModel;

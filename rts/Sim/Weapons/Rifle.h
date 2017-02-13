@@ -7,14 +7,13 @@
 
 class CRifle: public CWeapon
 {
-	CR_DECLARE(CRifle);
+	CR_DECLARE_DERIVED(CRifle)
 public:
 	CRifle(CUnit* owner, const WeaponDef* def);
 
-	void Update();
-
 private:
-	void FireImpl(bool scriptCall);
+	void FireImpl(const bool scriptCall) override final;
+	float GetPredictedImpactTime(float3 p) const override final;
 };
 
 #endif /* RIFLE_H */

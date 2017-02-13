@@ -4,6 +4,7 @@
 #define _BITMAP_H
 
 #include <string>
+#include <vector>
 #ifndef BITMAP_NO_OPENGL
 	#include "nv_dds.h"
 #endif // !BITMAP_NO_OPENGL
@@ -17,29 +18,33 @@ struct SDL_Surface;
 class CBitmap
 {
 public:
-	CBitmap(const unsigned char* data, int xsize, int ysize, int channels = 4);
 	CBitmap();
-	CBitmap(const CBitmap& old);
-	CBitmap& operator=(const CBitmap& bm);
-	CBitmap(CBitmap&& bm);
-	CBitmap& operator=(CBitmap&& bm);
+	CBitmap(const unsigned char* data, int xsize, int ysize, int channels = 4);
+	CBitmap(const CBitmap& bmp): CBitmap() { *this = bmp; }
+	CBitmap(CBitmap&& bmp): CBitmap() { *this = std::move(bmp); }
+	CBitmap& operator=(const CBitmap& bmp);
+	CBitmap& operator=(CBitmap&& bmp);
 
-	virtual ~CBitmap();
+	~CBitmap();
 
 	void Alloc(int w, int h, int c);
 	void Alloc(int w, int h);
+	void AllocDummy(const SColor fill = SColor(255,0,0,255));
 
 	/// Load data from a file on the VFS
 	bool Load(std::string const& filename, unsigned char defaultAlpha = 255);
 	/// Load data from a gray-scale file on the VFS
 	bool LoadGrayscale(std::string const& filename);
-	bool Save(std::string const& filename, bool opaque = true) const;
+	bool Save(std::string const& filename, bool opaque = true, bool logged = false) const;
+	bool SaveFloat(std::string const& filename) const;
 
-	const unsigned int CreateTexture(bool mipmaps = false) const;
-	const unsigned int CreateDDSTexture(unsigned int texID = 0, bool mipmaps = false) const;
+	unsigned int CreateTexture(float aniso = 0.0f, bool mipmaps = false) const;
+	unsigned int CreateMipMapTexture(float aniso = 0.0f) const { return (CreateTexture(aniso, true)); }
+	unsigned int CreateAnisoTexture(float aniso = 0.0f) const { return (CreateTexture(aniso, false)); }
+	unsigned int CreateDDSTexture(unsigned int texID = 0, float aniso = 0.0f, bool mipmaps = false) const;
 
 	void CreateAlpha(unsigned char red, unsigned char green, unsigned char blue);
-	void SetTransparent(const SColor& c, const SColor& trans = SColor(0,0,0,0));
+	void SetTransparent(const SColor& c, const SColor trans = SColor(0,0,0,0));
 
 	void Renormalize(float3 newCol);
 	void Blur(int iterations = 1, float weight = 1.0f);
@@ -48,20 +53,13 @@ public:
 
 	/**
 	 * Allocates a new SDL_Surface, and feeds it with the data of this bitmap.
-	 * @param newPixelData
-	 *        if false, the returned struct will have a pointer
-	 *        to the internal pixel data (mem), which means it is only valid
-	 *        as long as mem is not freed, which should only happen
-	 *        when the this bitmap is deleted.
-	 *        If true, an array is allocated with new, and has to be deleted
-	 *        after SDL_FreeSurface() is called.
 	 * Note:
 	 * - You have to free the surface with SDL_FreeSurface(surface)
 	 *   if you do not need it anymore!
 	 */
-	SDL_Surface* CreateSDLSurface(bool newPixelData = false) const;
+	SDL_Surface* CreateSDLSurface();
 
-	unsigned char* mem;
+	std::vector<unsigned char> mem;
 	int xsize;
 	int ysize;
 	int channels;
@@ -80,12 +78,6 @@ public:
 	void InvertAlpha();
 	void GrayScale();
 	void Tint(const float tint[3]);
-
-private:
-	/**
-	 * Allocates a red 1x1, 4-channel bitmap
-	 */
-	void AllocDummy();
 };
 
 #endif // _BITMAP_H

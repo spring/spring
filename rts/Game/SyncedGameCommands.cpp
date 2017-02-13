@@ -18,7 +18,9 @@
 #include "Lua/LuaRules.h"
 #include "Lua/LuaUI.h"
 #include "Sim/Misc/GlobalSynced.h"
+#include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/TeamHandler.h"
+#include "Sim/Misc/ModInfo.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/UnitHandler.h"
@@ -42,7 +44,7 @@ public:
 			" commands to be usable") {}
 
 	bool Execute(const SyncedAction& action) const {
-		SetBoolArg(gs->cheatEnabled, action.GetArgs());
+		InverseOrSetBool(gs->cheatEnabled, action.GetArgs());
 		LogSystemStatus("Cheating", gs->cheatEnabled);
 		return true;
 	}
@@ -55,7 +57,7 @@ public:
 			"Enables/Disables widgets (LuaUI control)") {}
 
 	bool Execute(const SyncedAction& action) const {
-		SetBoolArg(gs->noHelperAIs, action.GetArgs());
+		InverseOrSetBool(gs->noHelperAIs, action.GetArgs());
 		selectedUnitsHandler.PossibleCommandChange(NULL);
 		LogSystemStatus("LuaUI control", gs->noHelperAIs);
 		return true;
@@ -69,9 +71,9 @@ public:
 			"Allows/Disallows spectators to draw on the map") {}
 
 	bool Execute(const SyncedAction& action) const {
-		bool disabled;
-		SetBoolArg(disabled, action.GetArgs());
-		inMapDrawer->SetSpecMapDrawingAllowed(!disabled);
+		bool allowSpecMapDrawing = inMapDrawer->GetSpecMapDrawingAllowed();
+		InverseOrSetBool(allowSpecMapDrawing, action.GetArgs(), true);
+		inMapDrawer->SetSpecMapDrawingAllowed(allowSpecMapDrawing);
 		return true;
 	}
 };
@@ -85,7 +87,7 @@ public:
 			"replays, which will DESYNC them)", true) {}
 
 	bool Execute(const SyncedAction& action) const {
-		SetBoolArg(gs->godMode, action.GetArgs());
+		InverseOrSetBool(gs->godMode, action.GetArgs());
 		CLuaUI::UpdateTeams();
 		LogSystemStatus("God-Mode", gs->godMode);
 		CPlayer::UpdateControlledTeams();
@@ -104,18 +106,17 @@ public:
 		const std::string& args = action.GetArgs();
 		const unsigned int argAllyTeam = atoi(args.c_str());
 		const unsigned int maxAllyTeam = teamHandler->ActiveAllyTeams();
-		// const unsigned int maxAllyTeams = sizeof(gs->globalLOS) / sizeof(gs->globalLOS[0]);
 
 		if (args.empty()) {
 			for (unsigned int n = 0; n < maxAllyTeam; n++) {
-				gs->globalLOS[n] = !gs->globalLOS[n];
+				losHandler->globalLOS[n] = !losHandler->globalLOS[n];
 			}
 
 			LOG("[GlobalLosActionExecutor] global LOS toggled for all allyteams");
 			return true;
 		}
 		if (argAllyTeam < maxAllyTeam) {
-			gs->globalLOS[argAllyTeam] = !gs->globalLOS[argAllyTeam];
+			losHandler->globalLOS[argAllyTeam] = !losHandler->globalLOS[argAllyTeam];
 
 			LOG("[GlobalLosActionExecutor] global LOS toggled for allyteam %u", argAllyTeam);
 			return true;
@@ -149,8 +150,10 @@ public:
 			" map, instantly; by default to your own team", true) {}
 
 	bool Execute(const SyncedAction& action) const {
-		const std::vector<std::string>& parsedArgs = CSimpleParser::Tokenize(action.GetArgs(), 0);
-		unitLoader->ParseAndExecuteGiveUnitsCommand(parsedArgs, playerHandler->Player(action.GetPlayerID())->team);
+		// not for autohosts
+		if (!playerHandler->IsValidPlayer(action.GetPlayerID()))
+			return false;
+		unitLoader->ParseAndExecuteGiveUnitsCommand(CSimpleParser::Tokenize(action.GetArgs(), 0), playerHandler->Player(action.GetPlayerID())->team);
 		return true;
 	}
 };
@@ -193,7 +196,7 @@ public:
 			"Enables/Disables spectators to use the chat") {}
 
 	bool Execute(const SyncedAction& action) const {
-		SetBoolArg(game->noSpectatorChat, action.GetArgs());
+		InverseOrSetBool(game->noSpectatorChat, action.GetArgs());
 		LogSystemStatus("Spectators chat", !game->noSpectatorChat);
 		return true;
 	}
@@ -232,7 +235,7 @@ public:
 
 	bool Execute(const SyncedAction& action) const {
 		bool devMode = CLuaHandle::GetDevMode();
-		SetBoolArg(devMode, action.GetArgs());
+		InverseOrSetBool(devMode, action.GetArgs());
 		CLuaHandle::SetDevMode(devMode);
 		LogSystemStatus("Lua dev-mode (can cause desyncs if enabled)", devMode);
 		return true;
@@ -247,7 +250,7 @@ public:
 			" through Lua", true) {}
 
 	bool Execute(const SyncedAction& action) const {
-		SetBoolArg(gs->editDefsEnabled, action.GetArgs());
+		InverseOrSetBool(gs->editDefsEnabled, action.GetArgs());
 		LogSystemStatus("Unit-, Feature- & Weapon-Def editing",
 				gs->editDefsEnabled);
 		return true;
@@ -255,58 +258,74 @@ public:
 };
 
 
+
+template<class LuaSyncedHandler> static void ExecuteSyncedLuaAction(
+	CLuaHandleSynced* handler,
+	const SyncedAction& action,
+	const char* luaName
+) {
+	const std::string& cmd = action.GetCmd();
+	const std::string& arg = action.GetArgs();
+
+	const char* msgs[] = {
+		"synced %s scripts require cheating to %s",
+		"cannot execute /%s %s before first gameframe",
+	};
+
+	if (arg == "reload" || arg == "enable") {
+		if (!gs->cheatEnabled || gs->PreSimFrame()) {
+			LOG_L(L_WARNING, msgs[gs->cheatEnabled], cmd.c_str(), arg.c_str());
+		} else {
+			if (handler != nullptr && arg == "enable") {
+				LOG_L(L_WARNING, "%s is already loaded", luaName);
+			} else {
+				LuaSyncedHandler::ReloadHandler();
+
+				if (handler != nullptr) {
+					LOG("%s loaded", luaName);
+				} else {
+					LOG_L(L_ERROR, "%s loading failed", luaName);
+				}
+			}
+		}
+
+		return;
+	}
+
+	if (arg == "disable") {
+		if (!gs->cheatEnabled || gs->PreSimFrame()) {
+			LOG_L(L_WARNING, msgs[gs->cheatEnabled], cmd.c_str(), arg.c_str());
+		} else {
+			LuaSyncedHandler::FreeHandler();
+
+			LOG("%s disabled", luaName);
+		}
+
+		return;
+	}
+
+	if (handler != nullptr) {
+		handler->GotChatMsg(arg, action.GetPlayerID());
+	} else {
+		LOG("%s is not loaded", luaName);
+	}
+}
+
 class LuaRulesActionExecutor : public ISyncedActionExecutor {
 public:
 	LuaRulesActionExecutor() : ISyncedActionExecutor("LuaRules",
-			"Allows one to reload or disable Lua-rules, or alternatively to send"
-			" a chat message to Lua-rules") {}
+		"Allows reloading or disabling LuaRules, and"
+		" to send a chat message to LuaRules scripts"
+	) {}
 
 	bool Execute(const SyncedAction& action) const {
-		const std::string& arg = action.GetArgs();
-
-		if (gs->frameNum <= 1) {
-			// TODO still needed???
-			LOG_L(L_WARNING, "/%s %s: cannot execute before gameframe #2", GetCommand().c_str(), arg.c_str());
-			return false;
-		}
-
 		// NOTE:
-		//     previously only the host player (ID == 0) was allowed to issue these actions
-		//     prior to some server changes they worked even in demos with that restriction,
-		//     but this is no longer the case so we now let any player execute them (for MP
-		//     it does not matter who does so since they are not meant to be used there ITFP
-		//     and no less sync-safe)
-		if (arg == "reload" || arg == "enable") {
-			if (!gs->cheatEnabled) {
-				LOG_L(L_WARNING, "Cheating required to load synced scripts");
-			} else {
-				if (luaRules != NULL && arg == "enable") {
-					LOG_L(L_WARNING, "LuaRules is already loaded");
-				} else {
-					CLuaRules::FreeHandler();
-					CLuaRules::LoadHandler();
-
-					if (luaRules) {
-						LOG("LuaRules loaded");
-					} else {
-						LOG_L(L_ERROR, "LuaRules loading failed");
-					}
-				}
-			}
-		} else if (arg == "disable") {
-			if (!gs->cheatEnabled) {
-				LOG_L(L_WARNING, "Cheating required to disable synced scripts");
-			} else {
-				CLuaRules::FreeHandler();
-
-				LOG("LuaRules disabled");
-			}
-		} else if (luaRules) {
-			luaRules->GotChatMsg(arg, action.GetPlayerID());
-		} else {
-			LOG("LuaRules is not loaded");
-		}
-
+		//   previously only the host player (ID == 0) was allowed to issue these actions
+		//   prior to some server changes they worked even in demos with that restriction,
+		//   but this is no longer the case so we now let any player execute them (for MP
+		//   it does not matter who does so since they are not meant to be used there ITFP
+		//   and no less sync-safe)
+		ExecuteSyncedLuaAction<CLuaRules>(luaRules, action, "LuaRules");
 		return true;
 	}
 };
@@ -315,52 +334,15 @@ public:
 class LuaGaiaActionExecutor : public ISyncedActionExecutor {
 public:
 	LuaGaiaActionExecutor() : ISyncedActionExecutor("LuaGaia",
-			"Allows one to reload or disable Lua-Gaia, or alternatively to send"
-			" a chat message to Lua-Gaia") {}
+		"Allows reloading or disabling LuaGaia, and"
+		" to send a chat message to LuaGaia scripts"
+	) {}
 
 	bool Execute(const SyncedAction& action) const {
-		const std::string& arg = action.GetArgs();
-
-		if (gs->frameNum <= 1) {
-			// TODO still needed???
-			LOG_L(L_WARNING, "/%s %s: cannot execute before gameframe #2", GetCommand().c_str(), arg.c_str());
+		if (!gs->useLuaGaia)
 			return false;
-		}
 
-		if (!gs->useLuaGaia) {
-			return false;
-		}
-
-		if (arg == "reload" || arg == "enable") {
-			if (!gs->cheatEnabled) {
-				LOG_L(L_WARNING, "Cheating required to load synced scripts");
-			} else {
-				if (luaGaia != NULL && arg == "enable") {
-					LOG_L(L_WARNING, "LuaGaia is already loaded");
-				} else {
-					CLuaGaia::FreeHandler();
-					CLuaGaia::LoadHandler();
-
-					if (luaGaia) {
-						LOG("LuaGaia loaded");
-					} else {
-						LOG_L(L_ERROR, "LuaGaia loading failed");
-					}
-				}
-			}
-		} else if (arg == "disable") {
-			if (!gs->cheatEnabled) {
-				LOG_L(L_WARNING, "Cheating required to disable synced scripts");
-			} else {
-				CLuaGaia::FreeHandler();
-				LOG("LuaGaia disabled");
-			}
-		} else if (luaGaia) {
-			luaGaia->GotChatMsg(arg, action.GetPlayerID());
-		} else {
-			LOG("LuaGaia is not loaded");
-		}
-
+		ExecuteSyncedLuaAction<CLuaGaia>(luaGaia, action, "LuaGaia");
 		return true;
 	}
 };
@@ -380,18 +362,21 @@ public:
 		//ASSERT_SYNCED(float3(gu->myPlayerNum, gu->myPlayerNum, gu->myPlayerNum));
 
 		for (int i = unitHandler->MaxUnits() - 1; i >= 0; --i) {
-			if (unitHandler->units[i]) {
-				if (action.GetPlayerID() == gu->myPlayerNum) {
-					++unitHandler->units[i]->midPos.x; // and desync...
-					++unitHandler->units[i]->midPos.x;
-				} else {
-					// execute the same amount of flops on any other player,
-					// but do not desync (it is a NOP)
-					++unitHandler->units[i]->midPos.x;
-					--unitHandler->units[i]->midPos.x;
-				}
-				break;
+			CUnit* u = unitHandler->GetUnit(i);
+
+			if (u == nullptr)
+				continue;
+
+			if (action.GetPlayerID() == gu->myPlayerNum) {
+				++u->midPos.x; // and desync...
+				++u->midPos.x;
+			} else {
+				// execute the same amount of flops on any other player,
+				// but do not desync (it is a NOP)
+				++u->midPos.x;
+				--u->midPos.x;
 			}
+			break;
 		}
 		LOG_L(L_ERROR, "Desyncing in frame %d.", gs->frameNum);
 		return true;
@@ -471,9 +456,11 @@ public:
 			int targetFrame;
 			buf >> targetFrame;
 			game->StartSkip(targetFrame);
+			LOG("Skipping to frame %i", targetFrame);
 		}
 		else if (action.GetArgs() == "end") {
 			game->EndSkip();
+			LOG("Skip finished");
 		} else {
 			LOG_L(L_WARNING, "/%s: wrong syntax", GetCommand().c_str());
 		}
@@ -507,7 +494,9 @@ void SyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new DesyncActionExecutor());
 #endif // defined DEBUG
 	AddActionExecutor(new AtmActionExecutor());
-	AddActionExecutor(new TakeActionExecutor());
+	if (modInfo.allowTake) {
+		AddActionExecutor(new TakeActionExecutor());
+	}
 	AddActionExecutor(new SkipActionExecutor());
 }
 
@@ -515,7 +504,6 @@ void SyncedGameCommands::AddDefaultActionExecutors() {
 SyncedGameCommands* SyncedGameCommands::singleton = NULL;
 
 void SyncedGameCommands::CreateInstance() {
-
 	if (singleton == NULL) {
 		singleton = new SyncedGameCommands();
 	} else {
@@ -524,12 +512,8 @@ void SyncedGameCommands::CreateInstance() {
 }
 
 void SyncedGameCommands::DestroyInstance() {
-
 	if (singleton != NULL) {
-		// SafeDelete
-		SyncedGameCommands* tmp = singleton;
-		singleton = NULL;
-		delete tmp;
+		SafeDelete(singleton);
 	} else {
 		// this might happen during shutdown after an unclean init
 		LOG_L(L_WARNING, "SyncedGameCommands singleton was not initialized or is already destroyed");

@@ -1,22 +1,53 @@
+os:
+  - linux
+#  - osx
+
+sudo: required
+dist: trusty
+cache: ccache
+
+addons:
+  coverity_scan:
+    project:
+      name: "spring/spring"
+    notification_email: ashdnazg.springrts@gmail.com
+    build_command:   make engine-headless
+    branch_pattern: coverity_scan
 language: cpp
 compiler:
-#  - clang
   - gcc
+  - clang
+env:
+  global:
+    - SPRING_DATADIR=~/build/spring/spring
+     # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
+     #   via the "travis encrypt" command using the project repo's public key
+     #   also note that forks don't get access to secure keys
+     #   you have to test using a branch in the main repo
+    - secure: "QSZUdSH72Y+X73FBy6cDdhlMH3ppMewbU/LquXe/sIUdJE0LmcCFHnPayI91TTRgS8r6YXKh3DIhE9XTs1OUxmV+RUL84z85byAtotb+ukHSzlSLSGGZfrqey+/vrCXbYykfaxhazlVDfk5vx63lRYiD5lp5KLL24+PIdK6Qd5E="
+  matrix:
+    - TARGET="AAI CppTestAI E323AI HughAI KAIK NullAI NullJavaAI NullOOJavaAI RAI demotool"
+    - TARGET="engine-headless tests check"
+matrix:
+  fast_finish: true
+
+before_install:
+  - test "${TRAVIS_BRANCH}" != "coverity_scan" -o "${TRAVIS_JOB_NUMBER##*.}" = "1" || exit 0
+  - tools/scripts/travis_before_install.sh
+
+install:
+  - tools/scripts/travis_install.sh
+
 before_script:
-  - sudo add-apt-repository ppa:bartbes/love-stable --yes
-  - sudo apt-get update -qq
-  - sudo apt-get install libglew-dev libsdl2-dev libdevil-dev libopenal-dev libogg-dev libvorbis-dev libfreetype6-dev p7zip-full libxcursor-dev
-  - sudo apt-get install libboost-thread1.48-dev libboost-regex1.48-dev libboost-system1.48-dev libboost-program-options1.48-dev libboost-signals1.48-dev libboost-chrono1.48-dev libboost-filesystem1.48-dev libboost-test1.48-dev
+  - tools/scripts/travis_before_script.sh
+
 script:
-  - cmake .
-  - make spring-headless tests -k
-# disabled because "make check" needs installed spring and gcc 4.6 fails
-# with creg it seems: https://travis-ci.org/spring/spring/builds/17682923#L2664
-#  - make check
+  - test "${TRAVIS_BRANCH}" != "coverity_scan" || exit 0
+  - make -k $TARGET
+
 notifications:
   irc:
     channels:
-      - "chat.freenode.net#taspring"
+      - chat.freenode.net#taspring
     on_success: change
     on_failure: change
-

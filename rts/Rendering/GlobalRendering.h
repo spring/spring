@@ -5,8 +5,10 @@
 
 #include "System/creg/creg_cond.h"
 #include "System/Misc/SpringTime.h"
+#include "System/type2.h"
 
 struct SDL_Window;
+typedef void* SDL_GLContext;
 
 /**
  * @brief Globally accessible unsynced, rendering related data
@@ -15,19 +17,32 @@ struct SDL_Window;
  * that does not remain synced.
  */
 class CGlobalRendering {
-	CR_DECLARE_STRUCT(CGlobalRendering);
-
-	CGlobalRendering();
+	CR_DECLARE_STRUCT(CGlobalRendering)
 
 public:
+	CGlobalRendering();
+	~CGlobalRendering();
+	/**
+	 * @return whether setting the video mode was successful
+	 *
+	 * Sets SDL video mode options/settings
+	 */
+	bool CreateSDLWindow(const char* title);
+	void DestroySDLWindow();
 	void PostInit();
+	void SwapBuffers(bool allowSwapBuffers);
 	void SetFullScreen(bool configFullScreen, bool cmdLineWindowed, bool cmdLineFullScreen);
-	void SetViewSize(int vsx, int vsy);
+	// Notify on Fullscreen/WindowBorderless change
+	void ConfigNotify(const std::string& key, const std::string& value);
 	void SetDualScreenParams();
 	void UpdateViewPortGeometry();
 	void UpdatePixelGeometry();
+	void UpdateGLConfigs();
+	int2 GetWantedViewSize(const bool fullscreen);
 
+	bool EnableFSAA() const;
 
+public:
 	/**
 	 * @brief time offset
 	 *
@@ -55,8 +70,8 @@ public:
 	/// Frames Per Second
 	float FPS;
 
+
 	/// the window state (0=normal,1=maximized,2=minimized)
-	/// note don't change values without updating MyX11SetWindowState()!!!
 	enum {
 		WINSTATE_DEFAULT   = 0,
 		WINSTATE_MAXIMIZED = 1,
@@ -71,7 +86,7 @@ public:
 	/// the window position relative to the screen's bottom-left corner
 	int winPosX;
 	int winPosY;
-	
+
 	/// the window size in pixels
 	int winSizeX;
 	int winSizeY;
@@ -104,12 +119,15 @@ public:
 	float viewRange;
 
 
+	int forceShaders;
+	int forceSwapBuffers;
+
 	/**
 	 * @brief FSAA
 	 *
 	 * Level of full-screen anti-aliasing
 	 */
-	int FSAA;
+	int fsaaLevel;
 
 	/**
 	 * @brief maxTextureSize
@@ -117,6 +135,14 @@ public:
 	 * maximum 2D texture size
 	 */
 	int maxTextureSize;
+
+	/**
+	 * @brief maxSmoothPointSize
+	 *
+	 * maximum smooth point size (driver might fallback in software rendering if larger)
+	 */
+	float maxSmoothPointSize;
+
 
 	bool drawSky;
 	bool drawWater;
@@ -156,6 +182,9 @@ public:
 	 * Whether the graphics need to be drawn
 	 */
 	bool active;
+
+	/// whether we're capturing video - relevant for frame timing
+	bool isVideoCapturing;
 
 	/**
 	 * @brief compressTextures
@@ -197,19 +226,13 @@ public:
 	bool support24bitDepthBuffers;
 
 	bool supportRestartPrimitive;
+	bool supportClipControl;
 
 	/**
 	 * Shader capabilities
 	 */
 	bool haveARB;
 	bool haveGLSL;
-
-	/**
-	 * @brief maxSmoothPointSize
-	 *
-	 * maximum smooth point size (driver might fallback in software rendering if larger)
-	 */
-	float maxSmoothPointSize;
 
 	/**
 	 * Shader capabilities
@@ -241,8 +264,11 @@ public:
 	 */
 	bool fullScreen;
 
+public:
 	SDL_Window* window;
+	SDL_GLContext sdlGlCtx;
 
+public:
 	/**
 	* @brief max view range in elmos
 	*/
@@ -257,6 +283,10 @@ public:
 	/// magic constant to reduce overblending on SMF maps
 	/// (scales the MapInfo::light_t::ground*Color values)
 	static const float SMF_INTENSITY_MULT;
+
+
+	static const int minWinSizeX;
+	static const int minWinSizeY;
 };
 
 extern CGlobalRendering* globalRendering;

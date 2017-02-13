@@ -11,7 +11,7 @@ public:
 	static void PreInitializeConfigHandler(const std::string& configSource = "", const bool safemode = false);
 	static void InitializeLogOutput(const std::string& filename = "");
 	static void Initialize();
-	static void Cleanup();
+	static void Cleanup(bool deallocConfigHandler = true);
 
 private:
 	static bool initialized;

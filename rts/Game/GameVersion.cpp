@@ -56,10 +56,9 @@ const std::string& GetBranch()
 	return patchSet;
 }
 
-std::string GetAdditional()
+inline const std::string CreateAdditionalVersion()
 {
 	std::string additional = SPRING_VERSION_ENGINE_ADDITIONAL;
-
 	additional += additional.empty() ? "" : " ";
 
 	additional += ""
@@ -95,6 +94,12 @@ std::string GetAdditional()
 	#define GV_ADD_SPACE " "
 #endif
 
+#if defined  __SUPPORT_SNAN__
+	GV_ADD_SPACE "Signal-NaNs"
+	#undef  GV_ADD_SPACE
+	#define GV_ADD_SPACE " "
+#endif
+
 #if defined HEADLESS && !defined DEDICATED
 	GV_ADD_SPACE "Headless"
 	#undef  GV_ADD_SPACE
@@ -117,10 +122,11 @@ std::string GetAdditional()
 	return additional;
 }
 
-const std::string& GetBuildTime()
+const std::string& GetAdditional()
 {
-	static const std::string buildTime = __DATE__ " " __TIME__;
-	return buildTime;
+	const static std::string additional(CreateAdditionalVersion());
+
+	return additional;
 }
 
 #define QUOTEME_(x) #x
@@ -172,6 +178,15 @@ bool IsRelease()
 bool IsHeadless()
 {
 #ifdef HEADLESS
+	return true;
+#else
+	return false;
+#endif
+}
+
+bool IsUnitsync()
+{
+#ifdef UNITSYNC
 	return true;
 #else
 	return false;

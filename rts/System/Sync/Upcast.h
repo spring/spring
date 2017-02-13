@@ -71,6 +71,6 @@ namespace upcast {
 
 #define UPCAST(U, V) \
 	typename upcast::Upcast< U, V >::type
-};
+}
 
 #endif // UPCAST_H

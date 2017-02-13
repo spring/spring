@@ -18,6 +18,7 @@
 #undef GetCharWidth // winapi.h
 
 
+bool CglFont::threadSafety = false;
 
 /*******************************************************************************/
 /*******************************************************************************/
@@ -31,9 +32,9 @@ static const float4  darkOutline(0.05f, 0.05f, 0.05f, 0.95f);
 static const float4 lightOutline(0.95f, 0.95f, 0.95f, 0.8f);
 
 static const float darkLuminosity = 0.05 +
-	0.2126f * math::powf(darkOutline[0], 2.2) +
-	0.7152f * math::powf(darkOutline[1], 2.2) +
-	0.0722f * math::powf(darkOutline[2], 2.2);
+	0.2126f * std::pow(darkOutline[0], 2.2) +
+	0.7152f * std::pow(darkOutline[1], 2.2) +
+	0.0722f * std::pow(darkOutline[2], 2.2);
 
 /*******************************************************************************/
 /*******************************************************************************/
@@ -45,9 +46,6 @@ CglFont::CglFont(const std::string& fontfile, int size, int _outlinewidth, float
 , autoOutlineColor(true)
 , setColor(false)
 {
-	va  = new CVertexArray();
-	va2 = new CVertexArray();
-
 	textColor    = white;
 	outlineColor = darkOutline;
 }
@@ -65,10 +63,7 @@ CglFont* CglFont::LoadFont(const std::string& fontFile, int size, int outlinewid
 
 
 CglFont::~CglFont()
-{
-	delete va;
-	delete va2;
-}
+{ }
 
 
 /*******************************************************************************/
@@ -313,15 +308,16 @@ int CglFont::GetTextNumLines_(const std::u8string& text)
 }
 
 
-std::list<std::string> CglFont::SplitIntoLines(const std::u8string& text)
+std::deque<std::string> CglFont::SplitIntoLines(const std::u8string& text)
 {
-	std::list<std::string> lines;
+	std::deque<std::string> lines;
+	std::deque<std::string> colorCodeStack;
 
 	if (text.empty())
 		return lines;
 
 	lines.push_back("");
-	std::list<std::string> colorCodeStack;
+
 	for (int pos = 0 ; pos < text.length(); pos++) {
 		const char8_t& c = text[pos];
 		switch(c) {
@@ -364,7 +360,11 @@ std::list<std::string> CglFont::SplitIntoLines(const std::u8string& text)
 
 void CglFont::SetAutoOutlineColor(bool enable)
 {
+	if (threadSafety)
+		vaMutex.lock();
 	autoOutlineColor = enable;
+	if (threadSafety)
+		vaMutex.unlock();
 }
 
 
@@ -372,16 +372,20 @@ void CglFont::SetTextColor(const float4* color)
 {
 	if (color == NULL) color = &white;
 
+	if (threadSafety)
+		vaMutex.lock();
 	if (inBeginEnd && !(*color==textColor)) {
-		if (va->drawIndex() == 0 && !stripTextColors.empty()) {
+		if (va.drawIndex() == 0 && !stripTextColors.empty()) {
 			stripTextColors.back() = *color;
 		} else {
 			stripTextColors.push_back(*color);
-			va->EndStrip();
+			va.EndStrip();
 		}
 	}
 
 	textColor = *color;
+	if (threadSafety)
+		vaMutex.unlock();
 }
 
 
@@ -389,16 +393,20 @@ void CglFont::SetOutlineColor(const float4* color)
 {
 	if (color == NULL) color = ChooseOutlineColor(textColor);
 
+	if (threadSafety)
+		vaMutex.lock();
 	if (inBeginEnd && !(*color==outlineColor)) {
-		if (va2->drawIndex() == 0 && !stripOutlineColors.empty()) {
+		if (va2.drawIndex() == 0 && !stripOutlineColors.empty()) {
 			stripOutlineColors.back() = *color;
 		} else {
 			stripOutlineColors.push_back(*color);
-			va2->EndStrip();
+			va2.EndStrip();
 		}
 	}
 
 	outlineColor = *color;
+	if (threadSafety)
+		vaMutex.unlock();
 }
 
 
@@ -412,9 +420,9 @@ void CglFont::SetColors(const float4* _textColor, const float4* _outlineColor)
 const float4* CglFont::ChooseOutlineColor(const float4& textColor)
 {
 	const float luminosity = 0.05 +
-				 0.2126f * math::powf(textColor[0], 2.2) +
-				 0.7152f * math::powf(textColor[1], 2.2) +
-				 0.0722f * math::powf(textColor[2], 2.2);
+				 0.2126f * std::pow(textColor[0], 2.2) +
+				 0.7152f * std::pow(textColor[1], 2.2) +
+				 0.0722f * std::pow(textColor[2], 2.2);
 
 	const float lumdiff = std::max(luminosity,darkLuminosity) / std::min(luminosity,darkLuminosity);
 	if (lumdiff > 5.0f) {
@@ -430,10 +438,16 @@ const float4* CglFont::ChooseOutlineColor(const float4& textColor)
 
 void CglFont::Begin(const bool immediate, const bool resetColors)
 {
+	if (threadSafety)
+		vaMutex.lock();
+
 	if (inBeginEnd) {
 		LOG_L(L_ERROR, "called Begin() multiple times");
+		if (threadSafety)
+			vaMutex.unlock();
 		return;
 	}
+
 
 	autoOutlineColor = true;
 
@@ -444,8 +458,8 @@ void CglFont::Begin(const bool immediate, const bool resetColors)
 
 	inBeginEnd = true;
 
-	va->Initialize();
-	va2->Initialize();
+	va.Initialize();
+	va2.Initialize();
 	stripTextColors.clear();
 	stripOutlineColors.clear();
 	stripTextColors.push_back(textColor);
@@ -467,8 +481,10 @@ void CglFont::End()
 	}
 	inBeginEnd = false;
 
-	if (va->drawIndex() == 0) {
+	if (va.drawIndex() == 0) {
 		glPopAttrib();
+		if (threadSafety)
+			vaMutex.unlock();
 		return;
 	}
 
@@ -489,22 +505,22 @@ void CglFont::End()
 	glCallList(textureSpaceMatrix);
 	glMatrixMode(GL_MODELVIEW);
 
-	if (va2->drawIndex() > 0) {
+	if (va2.drawIndex() > 0) {
 		if (stripOutlineColors.size() > 1) {
 			ColorMap::iterator sci = stripOutlineColors.begin();
-			va2->DrawArray2dT(GL_QUADS,TextStripCallback,&sci);
+			va2.DrawArray2dT(GL_QUADS,TextStripCallback,&sci);
 		} else {
 			glColor4fv(outlineColor);
-			va2->DrawArray2dT(GL_QUADS);
+			va2.DrawArray2dT(GL_QUADS);
 		}
 	}
 
 	if (stripTextColors.size() > 1) {
 		ColorMap::iterator sci = stripTextColors.begin();
-		va->DrawArray2dT(GL_QUADS,TextStripCallback,&sci);//FIXME calls a 0 length strip!
+		va.DrawArray2dT(GL_QUADS,TextStripCallback,&sci);//FIXME calls a 0 length strip!
 	} else {
 		if (setColor) glColor4fv(textColor);
-		va->DrawArray2dT(GL_QUADS);
+		va.DrawArray2dT(GL_QUADS);
 	}
 
 	// pop texture matrix
@@ -513,6 +529,8 @@ void CglFont::End()
 	glMatrixMode(GL_MODELVIEW);
 
 	glPopAttrib();
+	if (threadSafety)
+		vaMutex.unlock();
 }
 
 
@@ -538,13 +556,12 @@ void CglFont::RenderString(float x, float y, const float& scaleX, const float& s
 	unsigned int length = (unsigned int)str.length();
 	const std::u8string& ustr = toustring(str);
 
-	va->EnlargeArrays(length * 4, 0, VA_SIZE_2DT);
+	va.EnlargeArrays(length * 4, 0, VA_SIZE_2DT);
 
 	int skippedLines;
 	bool colorChanged;
 	const GlyphInfo* g = NULL;
-	float4 newColor;
-	newColor[3] = 1.0f;
+	float4 newColor = textColor;
 	char32_t c;
 	int i = 0;
 
@@ -577,10 +594,10 @@ void CglFont::RenderString(float x, float y, const float& scaleX, const float& s
 		const float dx0 = (scaleX * g->size.x0()) + x, dy0 = (scaleY * g->size.y0()) + y;
 		const float dx1 = (scaleX * g->size.x1()) + x, dy1 = (scaleY * g->size.y1()) + y;
 
-		va->AddVertexQ2dT(dx0, dy1, tc.x0(), tc.y1());
-		va->AddVertexQ2dT(dx0, dy0, tc.x0(), tc.y0());
-		va->AddVertexQ2dT(dx1, dy0, tc.x1(), tc.y0());
-		va->AddVertexQ2dT(dx1, dy1, tc.x1(), tc.y1());
+		va.AddVertexQ2dT(dx0, dy1, tc.x0(), tc.y1());
+		va.AddVertexQ2dT(dx0, dy0, tc.x0(), tc.y0());
+		va.AddVertexQ2dT(dx1, dy0, tc.x1(), tc.y0());
+		va.AddVertexQ2dT(dx1, dy1, tc.x1(), tc.y1());
 	} while(true);
 }
 
@@ -595,14 +612,13 @@ void CglFont::RenderStringShadow(float x, float y, const float& scaleX, const fl
 	unsigned int length = (unsigned int)str.length();
 	const std::u8string& ustr = toustring(str);
 
-	va->EnlargeArrays(length * 4, 0, VA_SIZE_2DT);
-	va2->EnlargeArrays(length * 4, 0, VA_SIZE_2DT);
+	va.EnlargeArrays(length * 4, 0, VA_SIZE_2DT);
+	va2.EnlargeArrays(length * 4, 0, VA_SIZE_2DT);
 
 	int skippedLines;
 	bool colorChanged;
 	const GlyphInfo* g = NULL;
-	float4 newColor;
-	newColor[3] = 1.0f;
+	float4 newColor = textColor;
 	char32_t c;
 	int i = 0;
 
@@ -638,16 +654,16 @@ void CglFont::RenderStringShadow(float x, float y, const float& scaleX, const fl
 		const float dx1 = (scaleX * g->size.x1()) + x, dy1 = (scaleY * g->size.y1()) + y;
 
 		// draw shadow
-		va2->AddVertexQ2dT(dx0+shiftX-ssX, dy1-shiftY-ssY, stc.x0(), stc.y1());
-		va2->AddVertexQ2dT(dx0+shiftX-ssX, dy0-shiftY+ssY, stc.x0(), stc.y0());
-		va2->AddVertexQ2dT(dx1+shiftX+ssX, dy0-shiftY+ssY, stc.x1(), stc.y0());
-		va2->AddVertexQ2dT(dx1+shiftX+ssX, dy1-shiftY-ssY, stc.x1(), stc.y1());
+		va2.AddVertexQ2dT(dx0+shiftX-ssX, dy1-shiftY-ssY, stc.x0(), stc.y1());
+		va2.AddVertexQ2dT(dx0+shiftX-ssX, dy0-shiftY+ssY, stc.x0(), stc.y0());
+		va2.AddVertexQ2dT(dx1+shiftX+ssX, dy0-shiftY+ssY, stc.x1(), stc.y0());
+		va2.AddVertexQ2dT(dx1+shiftX+ssX, dy1-shiftY-ssY, stc.x1(), stc.y1());
 
 		// draw the actual character
-		va->AddVertexQ2dT(dx0, dy1, tc.x0(), tc.y1());
-		va->AddVertexQ2dT(dx0, dy0, tc.x0(), tc.y0());
-		va->AddVertexQ2dT(dx1, dy0, tc.x1(), tc.y0());
-		va->AddVertexQ2dT(dx1, dy1, tc.x1(), tc.y1());
+		va.AddVertexQ2dT(dx0, dy1, tc.x0(), tc.y1());
+		va.AddVertexQ2dT(dx0, dy0, tc.x0(), tc.y0());
+		va.AddVertexQ2dT(dx1, dy0, tc.x1(), tc.y0());
+		va.AddVertexQ2dT(dx1, dy1, tc.x1(), tc.y1());
 	} while(true);
 }
 
@@ -660,13 +676,13 @@ void CglFont::RenderStringOutlined(float x, float y, const float& scaleX, const 
 	const std::u8string& ustr = toustring(str);
 	const size_t length = str.length();
 
-	va->EnlargeArrays(length * 4, 0, VA_SIZE_2DT);
-	va2->EnlargeArrays(length * 4, 0, VA_SIZE_2DT);
+	va.EnlargeArrays(length * 4, 0, VA_SIZE_2DT);
+	va2.EnlargeArrays(length * 4, 0, VA_SIZE_2DT);
 
 	int skippedLines;
 	bool colorChanged;
 	const GlyphInfo* g = NULL;
-	float4 newColor(0.f, 0.f, 0.f, 1.f);
+	float4 newColor = textColor;
 	char32_t c;
 	int i = 0;
 
@@ -702,16 +718,16 @@ void CglFont::RenderStringOutlined(float x, float y, const float& scaleX, const 
 		const float dx1 = (scaleX * g->size.x1()) + x, dy1 = (scaleY * g->size.y1()) + y;
 
 		// draw outline
-		va2->AddVertexQ2dT(dx0-shiftX, dy1-shiftY, stc.x0(), stc.y1());
-		va2->AddVertexQ2dT(dx0-shiftX, dy0+shiftY, stc.x0(), stc.y0());
-		va2->AddVertexQ2dT(dx1+shiftX, dy0+shiftY, stc.x1(), stc.y0());
-		va2->AddVertexQ2dT(dx1+shiftX, dy1-shiftY, stc.x1(), stc.y1());
+		va2.AddVertexQ2dT(dx0-shiftX, dy1-shiftY, stc.x0(), stc.y1());
+		va2.AddVertexQ2dT(dx0-shiftX, dy0+shiftY, stc.x0(), stc.y0());
+		va2.AddVertexQ2dT(dx1+shiftX, dy0+shiftY, stc.x1(), stc.y0());
+		va2.AddVertexQ2dT(dx1+shiftX, dy1-shiftY, stc.x1(), stc.y1());
 
 		// draw the actual character
-		va->AddVertexQ2dT(dx0, dy1, tc.x0(), tc.y1());
-		va->AddVertexQ2dT(dx0, dy0, tc.x0(), tc.y0());
-		va->AddVertexQ2dT(dx1, dy0, tc.x1(), tc.y0());
-		va->AddVertexQ2dT(dx1, dy1, tc.x1(), tc.y1());
+		va.AddVertexQ2dT(dx0, dy1, tc.x0(), tc.y1());
+		va.AddVertexQ2dT(dx0, dy0, tc.x0(), tc.y0());
+		va.AddVertexQ2dT(dx1, dy0, tc.x1(), tc.y0());
+		va.AddVertexQ2dT(dx1, dy1, tc.x1(), tc.y1());
 	} while(true);
 }
 
@@ -933,25 +949,15 @@ void CglFont::glPrintTable(float x, float y, float s, const int options, const s
 	}
 }
 
-
-// macro for formatting printf-style
-#define FORMAT_STRING(lastarg,fmt,out)                         \
-		char out[512];                         \
-		va_list ap;                            \
-		if (fmt == NULL) return;               \
-		va_start(ap, lastarg);                 \
-		VSNPRINTF(out, sizeof(out), fmt, ap);  \
-		va_end(ap);
-
 void CglFont::glFormat(float x, float y, float s, const int options, const char* fmt, ...)
 {
-	FORMAT_STRING(fmt,fmt,text);
-	glPrint(x, y, s, options, std::string(text));
+	char out[512];
+	va_list ap;
+	if (fmt == NULL) return;
+	va_start(ap, fmt);
+	VSNPRINTF(out, sizeof(out), fmt, ap);
+	va_end(ap);
+	glPrint(x, y, s, options, std::string(out));
 }
 
 
-void CglFont::glFormat(float x, float y, float s, const int options, const std::string& fmt, ...)
-{
-	FORMAT_STRING(fmt,fmt.c_str(),text);
-	glPrint(x, y, s, options, std::string(text));
-}

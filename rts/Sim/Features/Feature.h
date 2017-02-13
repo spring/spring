@@ -6,31 +6,69 @@
 #include <vector>
 #include <list>
 #include <string>
-#include <boost/noncopyable.hpp>
+#include "System/Misc/NonCopyable.h"
 
 #include "Sim/Objects/SolidObject.h"
-#include "Sim/Units/UnitHandler.h"
 #include "System/Matrix44f.h"
-#include "Sim/Misc/LosHandler.h"
-#include "Sim/Misc/ModInfo.h"
+#include "Sim/Misc/Resource.h"
 
 #define TREE_RADIUS 20
 
+struct SolidObjectDef;
 struct FeatureDef;
 struct FeatureLoadParams;
 class CUnit;
-struct DamageArray;
+struct UnitDef;
+class DamageArray;
 class CFireProjectile;
 
 
 
-class CFeature: public CSolidObject, public boost::noncopyable
+class CFeature: public CSolidObject, public spring::noncopyable
 {
-	CR_DECLARE(CFeature);
+	CR_DECLARE(CFeature)
 
 public:
 	CFeature();
 	~CFeature();
+
+	CR_DECLARE_SUB(MoveCtrl)
+	struct MoveCtrl {
+		CR_DECLARE_STRUCT(MoveCtrl)
+	public:
+		MoveCtrl(): enabled(false) {
+			movementMask = OnesVector;
+			velocityMask = OnesVector;
+			 impulseMask = OnesVector;
+		}
+
+		void SetMovementMask(const float3& movMask) { movementMask = movMask; }
+		void SetVelocityMask(const float3& velMask) { velocityMask = velMask; }
+
+	public:
+		// if true, feature will not apply any unwanted position
+		// updates (but is still considered moving so long as its
+		// velocity is non-zero, so it stays in the UQ)
+		bool enabled;
+
+		// dimensions in which feature can move or receive impulse
+		// note: these should always be binary vectors (.xyz={0,1})
+		float3 movementMask;
+		float3 velocityMask;
+		float3 impulseMask;
+
+		float3 velVector;
+		float3 accVector;
+	};
+
+	enum {
+		FD_NODRAW_FLAG = 0, // must be 0
+		FD_OPAQUE_FLAG = 1,
+		FD_ALPHAF_FLAG = 2,
+		FD_SHADOW_FLAG = 3,
+		FD_FARTEX_FLAG = 4,
+	};
+
 
 	/**
 	 * Pos of quad must not change after this.
@@ -38,7 +76,9 @@ public:
 	 */
 	void Initialize(const FeatureLoadParams& params);
 
-	int GetBlockingMapID() const { return id + (10 * unitHandler->MaxUnits()); }
+	const SolidObjectDef* GetDef() const { return ((const SolidObjectDef*) def); }
+
+	int GetBlockingMapID() const;
 
 	/**
 	 * Negative amount = reclaim
@@ -49,16 +89,19 @@ public:
 	void SetVelocity(const float3& v);
 	void ForcedMove(const float3& newPos);
 	void ForcedSpin(const float3& newDir);
+
 	bool Update();
 	bool UpdatePosition();
-	void UpdateFinalHeight(bool useGroundHeight);
+	bool UpdateVelocity(const float3& dragAccel, const float3& gravAccel, const float3& movMask, const float3& velMask);
+
+	void SetTransform(const CMatrix44f& m, bool synced) { transMatrix[synced] = m; }
+	void UpdateTransform(const float3& p, bool synced) { transMatrix[synced] = std::move(ComposeMatrix(p)); }
+	void UpdateTransformAndPhysState();
+	void UpdateQuadFieldPosition(const float3& moveVec);
+
 	void StartFire();
 	void EmitGeoSmoke();
-	float RemainingResource(float res) const;
-	float RemainingMetal() const;
-	float RemainingEnergy() const;
-	int ChunkNumber(float f) const;
-	void CalculateTransform();
+
 	void DependentDied(CObject *o);
 	void ChangeTeam(int newTeam);
 
@@ -67,12 +110,13 @@ public:
 	// NOTE:
 	//   unlike CUnit which recalculates the matrix on each call
 	//   (and uses the synced and error args) CFeature caches it
-	//   this matrix is identical in synced and unsynced context!
-	CMatrix44f GetTransformMatrix(const bool synced = false, const bool error = false) const { return transMatrix; }
-	const CMatrix44f& GetTransformMatrixRef() const { return transMatrix; }
+	CMatrix44f GetTransformMatrix(const bool synced = false) const final { return transMatrix[synced]; }
+	const CMatrix44f& GetTransformMatrixRef(const bool synced = false) const { return transMatrix[synced]; }
+
+private:
+	static int ChunkNumber(float f);
 
 public:
-	int defID;
 
 	/**
 	 * This flag is used to stop a potential exploit involving tripping
@@ -82,32 +126,41 @@ public:
 	 * until the corpse has been fully 'repaired'.
 	 */
 	bool isRepairingBeforeResurrect;
-	bool isAtFinalHeight;
 	bool inUpdateQue;
+	bool deleteMe;
 
 	float resurrectProgress;
 	float reclaimLeft;
-	float finalHeight;
-
 	int lastReclaim;
+	SResourcePack resources;
 
 	/// which drawQuad we are part of
 	int drawQuad;
+	/// one of FD_*_FLAG
+	int drawFlag;
+
+	float drawAlpha;
+	bool alphaFade;
+
 	int fireTime;
 	int smokeTime;
 
 	const FeatureDef* def;
 	const UnitDef* udef; /// type of unit this feature should be resurrected to
 
+	MoveCtrl moveCtrl;
+
 	CFireProjectile* myFire;
 
 	/// the solid object that is on top of the geothermal
 	CSolidObject* solidOnTop;
 
+
 private:
 	void PostLoad();
 
-	CMatrix44f transMatrix;
+	// [0] := unsynced, [1] := synced
+	CMatrix44f transMatrix[2];
 };
 
 #endif // _FEATURE_H

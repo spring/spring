@@ -27,8 +27,6 @@ include_directories(
 
 # Set these for Interfaces and AIs with C sources
 set(CMAKE_C_FLAGS_DEBUG          "${CMAKE_CXX_FLAGS_DEBUG}")
-set(CMAKE_C_FLAGS_DEBUG2         "${CMAKE_CXX_FLAGS_DEBUG2}")
-set(CMAKE_C_FLAGS_DEBUG3         "${CMAKE_CXX_FLAGS_DEBUG3}")
 set(CMAKE_C_FLAGS_RELEASE        "${CMAKE_CXX_FLAGS_RELEASE}")
 set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
 set(CMAKE_C_FLAGS_PROFILE        "${CMAKE_CXX_FLAGS_PROFILE}")
@@ -42,7 +40,7 @@ endif (MINGW)
 
 
 # Assemble common additional native AI sources
-list(APPEND ai_common_SRC "${rts}/Game/GameVersion.cpp")
+#list(APPEND ai_common_SRC "${rts}/Game/GameVersion.cpp")
 list(APPEND ai_common_SRC "${rts}/System/SafeCStrings.c")
 
 
@@ -70,9 +68,7 @@ endmacro (AIMessage type msg)
 find_package(AWK)
 
 # CUtils has to come first, because the Interfaces use it too
-if    (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/Wrappers/CUtils)
-	Add_Subdirectory(Wrappers/CUtils)
-endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/Wrappers/CUtils)
+Add_Subdirectory(Wrappers/CUtils)
 Add_Subdirectory(Interfaces)
 Add_Subdirectory(Wrappers)
 Add_Subdirectory(Skirmish)

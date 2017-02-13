@@ -12,7 +12,7 @@
 #define DEMO_FILE_H
 
 #include "System/Platform/byteorder.h"
-#include <boost/cstdint.hpp>
+#include <cinttypes>
 
 /** The first 16 bytes of each demofile. */
 #define DEMOFILE_MAGIC "spring demofile"
@@ -56,13 +56,13 @@ struct DemoFileHeader
 	int version;                  ///< DEMOFILE_VERSION
 	int headerSize;               ///< Size of the DemoFileHeader, minor version number.
 	char versionString[256];      ///< Spring version string, e.g. "0.75b2", "0.75b2+svn4123"
-	boost::uint8_t gameID[16];    ///< Unique game identifier. Identical for each player of the game.
-	boost::uint64_t unixTime;     ///< Unix time when game was started.
+	std::uint8_t gameID[16];    ///< Unique game identifier. Identical for each player of the game.
+	std::uint64_t unixTime;     ///< Unix time when game was started.
 	int scriptSize;               ///< Size of startscript.
 	int demoStreamSize;           ///< Size of the demo stream.
 	int gameTime;                 ///< Total number of seconds game time.
 	int wallclockTime;            ///< Total number of seconds wallclock time.
-	int numPlayers;               ///< Number of players for which stats are saved.
+	int numPlayers;               ///< Number of players for which stats are saved. (this contains also later joined spectators!)
 	int playerStatSize;           ///< Size of the entire player statistics chunk.
 	int playerStatElemSize;       ///< sizeof(CPlayer::Statistics)
 	int numTeams;                 ///< Number of teams for which stats are saved.
@@ -106,7 +106,7 @@ struct DemoFileHeader
 struct DemoStreamChunkHeader
 {
 	float modGameTime;      ///< Gametime at which this chunk was written/should be read.
-	boost::uint32_t length; ///< Length of the chunk of data following this header.
+	std::uint32_t length; ///< Length of the chunk of data following this header.
 
 	/// Change structure from host endian to little endian or vice versa.
 	void swab() {

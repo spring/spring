@@ -38,6 +38,7 @@ bool AviVideoCapturing::IsCapturing() const {
 void AviVideoCapturing::StopCapturing() {
 	if (IsCapturing()) {
 		capturing = false;
+		globalRendering->isVideoCapturing = false;
 		SafeDelete(aviGenerator);
 		//delete aviGenerator;
 		//aviGenerator = NULL;
@@ -47,7 +48,7 @@ void AviVideoCapturing::StopCapturing() {
 
 void AviVideoCapturing::StartCapturing() {
 
-	if (IsCapturing()) {
+	if (globalRendering->isVideoCapturing) {
 		LOG_L(L_WARNING, "Video capturing is already running.");
 		return;
 	}
@@ -69,6 +70,7 @@ void AviVideoCapturing::StartCapturing() {
 		LOG_L(L_ERROR, "Not creating video!");
 	} else {
 		capturing = true;
+		globalRendering->isVideoCapturing = true;
 		const int videoSizeX = (globalRendering->viewSizeX / 4) * 4;
 		const int videoSizeY = (globalRendering->viewSizeY / 4) * 4;
 		aviGenerator = new CAVIGenerator(fileName, videoSizeX, videoSizeY, 30);
@@ -78,6 +80,7 @@ void AviVideoCapturing::StartCapturing() {
 
 		if (!aviGenerator->InitEngine()) {
 			capturing = false;
+			globalRendering->isVideoCapturing = false;
 			LOG_L(L_ERROR, "%s", aviGenerator->GetLastErrorMessage().c_str());
 			delete aviGenerator;
 			aviGenerator = NULL;
@@ -96,8 +99,6 @@ void AviVideoCapturing::StartCapturing() {
 
 void AviVideoCapturing::RenderFrame() {
 	if (IsCapturing()) {
-		globalRendering->lastFrameTime = 1000.0f / GAME_SPEED;
-
 		if (!aviGenerator->readOpenglPixelDataThreaded()) {
 			StopCapturing();
 		}

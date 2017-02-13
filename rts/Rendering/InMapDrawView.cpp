@@ -37,7 +37,7 @@ CInMapDrawView::CInMapDrawView()
 	for (int y = 0; y < 64; y++) {
 		// circular thingy
 		for (int x = 0; x < 64; x++) {
-			float dist = math::sqrt((float)(x - 32) * (x - 32) + (y - 32) * (y - 32));
+			float dist = std::sqrt((float)(x - 32) * (x - 32) + (y - 32) * (y - 32));
 			if (dist > 31.0f) {
 				// do nothing - leave transparent
 			} else if (dist > 30.0f) {
@@ -113,6 +113,10 @@ struct InMapDraw_QuadDrawer: public CReadMap::IQuadDrawer
 	CVertexArray* linesVa;
 	std::vector<const CInMapDrawModel::MapPoint*>* visibleLabels;
 
+	void ResetState() {
+		pointsVa = nullptr;
+		linesVa = nullptr;
+	}
 	void DrawQuad(int x, int y);
 
 private:
@@ -173,17 +177,17 @@ void InMapDraw_QuadDrawer::DrawQuad(int x, int y)
 
 	pointsVa->EnlargeArrays(dq->points.size() * 12, 0, VA_SIZE_TC);
 	//! draw point markers
-	for (std::list<CInMapDrawModel::MapPoint>::const_iterator pi = dq->points.begin(); pi != dq->points.end(); ++pi) {
-		if (pi->IsLocalPlayerAllowedToSee(inMapDrawerModel)) {
-			DrawPoint(&*pi);
+	for (const CInMapDrawModel::MapPoint& pi: dq->points) {
+		if (pi.IsVisibleToPlayer(inMapDrawerModel->GetAllMarksVisible())) {
+			DrawPoint(&pi);
 		}
 	}
 
 	linesVa->EnlargeArrays(dq->lines.size() * 2, 0, VA_SIZE_C);
 	//! draw line markers
-	for (std::list<CInMapDrawModel::MapLine>::const_iterator li = dq->lines.begin(); li != dq->lines.end(); ++li) {
-		if (li->IsLocalPlayerAllowedToSee(inMapDrawerModel)) {
-			DrawLine(&*li);
+	for (const CInMapDrawModel::MapLine& li: dq->lines) {
+		if (li.IsVisibleToPlayer(inMapDrawerModel->GetAllMarksVisible())) {
+			DrawLine(&li);
 		}
 	}
 }
@@ -207,7 +211,7 @@ void CInMapDrawView::Draw()
 	glEnable(GL_BLEND);
 	glBindTexture(GL_TEXTURE_2D, texture);
 
-	readMap->GridVisibility(camera, CInMapDrawModel::DRAW_QUAD_SIZE, 1e9, &drawer);
+	readMap->GridVisibility(nullptr, &drawer, 1e9, CInMapDrawModel::DRAW_QUAD_SIZE);
 
 	glDisable(GL_TEXTURE_2D);
 	glLineWidth(3.f);

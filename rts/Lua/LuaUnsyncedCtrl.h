@@ -3,8 +3,6 @@
 #ifndef LUA_UNSYNCED_CTRL_H
 #define LUA_UNSYNCED_CTRL_H
 
-#include "Sim/Units/UnitSet.h"
-
 struct lua_State;
 
 // MinGW defines this for a WINAPI function
@@ -16,12 +14,7 @@ class LuaUnsyncedCtrl {
 	public:
 		static bool PushEntries(lua_State* L);
 
-		static void DrawUnitCommandQueues();
-		static void ClearUnitCommandQueues();
-
-	private:
-
-	private:
+	public:
 		static int Echo(lua_State* L);
 		static int Log(lua_State* L);
 		static int SendMessage(lua_State* L);
@@ -61,6 +54,7 @@ class LuaUnsyncedCtrl {
 		static int SetDrawGround(lua_State* L);
 		static int SetDrawGroundDeferred(lua_State* L);
 		static int SetDrawModelsDeferred(lua_State* L);
+		static int SetVideoCapturingMode(lua_State* L);
 
 		static int SetWaterParams(lua_State* L);
 		static int SetSoundEffectParams(lua_State* L);
@@ -71,12 +65,19 @@ class LuaUnsyncedCtrl {
 		static int UpdateModelLight(lua_State* L);
 		static int SetMapLightTrackingState(lua_State* L);
 		static int SetModelLightTrackingState(lua_State* L);
+		static int SetMapShader(lua_State* L);
 		static int SetMapSquareTexture(lua_State* L);
+		static int SetMapShadingTexture(lua_State* L);
+		static int SetSkyBoxTexture(lua_State* L);
 
 		static int SetUnitNoDraw(lua_State* L);
 		static int SetUnitNoMinimap(lua_State* L);
 		static int SetUnitNoSelect(lua_State* L);
 		static int SetUnitLeaveTracks(lua_State* L);
+		static int SetUnitSelectionVolumeData(lua_State* L);
+		static int SetFeatureNoDraw(lua_State* L);
+		static int SetFeatureFade(lua_State* L);
+		static int SetFeatureSelectionVolumeData(lua_State* L);
 
 		static int AddUnitIcon(lua_State* L);
 		static int FreeUnitIcon(lua_State* L);
@@ -95,7 +96,11 @@ class LuaUnsyncedCtrl {
 
 		static int CreateDir(lua_State* L);
 
+		static int Reload(lua_State* L);
 		static int Restart(lua_State* L);
+		static int Start(lua_State* L);
+		static int Quit(lua_State* L);
+
 		static int SetWMIcon(lua_State* L);
 		static int SetWMCaption(lua_State* L);
 
@@ -108,7 +113,6 @@ class LuaUnsyncedCtrl {
 		static int LoadCtrlPanelConfig(lua_State* L);
 		static int ForceLayoutUpdate(lua_State* L);
 
-		static int UpdateInfoTexture(lua_State* L);
 		static int SetLosViewColors(lua_State* L);
 
 		static int WarpMouse(lua_State* L);
@@ -135,6 +139,7 @@ class LuaUnsyncedCtrl {
 		static int SendLuaUIMsg(lua_State* L);
 		static int SendLuaGaiaMsg(lua_State* L);
 		static int SendLuaRulesMsg(lua_State* L);
+		static int SendLuaMenuMsg(lua_State* L);
 
 		static int SetLastMessagePosition(lua_State* L);
 
@@ -147,8 +152,8 @@ class LuaUnsyncedCtrl {
 		static int SetBuildSpacing(lua_State* L);
 		static int SetBuildFacing(lua_State* L);
 
-		static int SetSunParameters(lua_State* L);
-		static int SetSunManualControl(lua_State* L);
+		static int SetAtmosphere(lua_State* L);
+		static int SetSunLighting(lua_State* L);
 		static int SetSunDirection(lua_State* L);
 
 		static int SendSkirmishAIMessage(lua_State* L);
@@ -156,7 +161,17 @@ class LuaUnsyncedCtrl {
 		static int SetLogSectionFilterLevel(lua_State* L);
 
 		static int ClearWatchDogTimer(lua_State* L);
-};
 
+		static int PreloadUnitDefModel(lua_State* L);
+		static int PreloadFeatureDefModel(lua_State* L);
+
+		static int CreateDecal(lua_State* L);
+		static int DestroyDecal(lua_State* L);
+		static int SetDecalPos(lua_State* L);
+		static int SetDecalSize(lua_State* L);
+		static int SetDecalRotation(lua_State* L);
+		static int SetDecalTexture(lua_State* L);
+		static int SetDecalAlpha(lua_State* L);
+};
 
 #endif /* LUA_UNSYNCED_CTRL_H */

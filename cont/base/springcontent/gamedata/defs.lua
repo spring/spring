@@ -35,18 +35,12 @@ end
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
-Spring.TimeCheck('Loading all definitions: ', function()
-
+Spring.TimeCheck('[defs.lua] loading all *Defs tables:', function()
   DEFS.unitDefs    = LoadDefs('unitDefs')
-
   DEFS.featureDefs = LoadDefs('featureDefs')
-
   DEFS.weaponDefs  = LoadDefs('weaponDefs')
-
   DEFS.armorDefs   = LoadDefs('armorDefs')
-
   DEFS.moveDefs    = LoadDefs('moveDefs')
-
 end)
 
 

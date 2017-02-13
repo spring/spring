@@ -4,18 +4,18 @@
 #define VSYNC_H
 
 class CVerticalSync {
-	public:
-		CVerticalSync();
-		~CVerticalSync();
+public:
+	CVerticalSync(): interval(0) {}
 
-		void Init();
-		void SetInterval(int interval);
-		int  GetInterval() const { return interval; }
+	void SetInterval();
+	void SetInterval(int i);
+	int  GetInterval() const { return interval; }
 
-		void Delay() const;
-		
-	private:
-		int interval;
+	void Toggle();
+	void Delay() const;
+	
+private:
+	int interval;
 };
 
 extern CVerticalSync VSync;

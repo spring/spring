@@ -24,26 +24,31 @@ public:
 	void Draw();
 
 private:
-	int texSizeX;
-	int texSizeY;
-
-	static const int iconSizeX;
-	static const int iconSizeY;
-	static const int numOrientations;
-
-	std::vector<const CSolidObject*> queuedForRender;
-	std::vector< std::vector<int> > cache;
-
-	FBO fbo;
-	unsigned int farTextureID;
-	unsigned int usedFarTextures;
-
 	bool HaveFarIcon(const CSolidObject* obj) const;
 	bool CheckResizeAtlas();
 	float2 GetTextureCoords(const int farTextureNum, const int orientation) const;
 	void DrawFarTexture(const CSolidObject* obj, CVertexArray*);
 	int2 GetTextureCoordsInt(const int farTextureNum, const int orientation) const;
 	void CreateFarTexture(const CSolidObject* obj);
+
+private:
+	int2 texSize;
+	int2 iconSize;
+
+	struct CachedIcon {
+		unsigned int farTexNum;
+
+		float2 texScales;
+		float3 texOffset;
+	};
+
+	std::vector<const CSolidObject*> drawQueue;
+	std::vector< std::vector<CachedIcon> > iconCache;
+
+	FBO fbo;
+
+	unsigned int farTextureID;
+	unsigned int usedFarTextures;
 };
 
 extern CFarTextureHandler* farTextureHandler;

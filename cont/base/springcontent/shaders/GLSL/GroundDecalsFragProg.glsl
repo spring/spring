@@ -11,14 +11,11 @@ uniform float shadowDensity;
 varying vec4 vertexPos;
 
 void main() {
-	vec2 p17 = vec2(shadowParams.z, shadowParams.z);
-	vec2 p18 = vec2(shadowParams.w, shadowParams.w);
-
 	vec4 vertexShadowPos = shadowMatrix * vertexPos;
-		vertexShadowPos.st *= (inversesqrt(abs(vertexShadowPos.st) + p17) + p18);
-		vertexShadowPos.st += shadowParams.xy;
+		vertexShadowPos.xy *= (inversesqrt(abs(vertexShadowPos.xy) + shadowParams.zz) + shadowParams.ww);
+		vertexShadowPos.xy += shadowParams.xy;
 
-	float shadowInt = (1.0 - shadow2DProj(shadowTex, vertexShadowPos).r) * shadowDensity;
+	float shadowCoeff = mix(1.0, shadow2DProj(shadowTex, vertexShadowPos).r, shadowDensity);
 
 	vec4 shadeInt;
 	vec4 decalInt;
@@ -30,9 +27,8 @@ void main() {
 	shadeInt = vec4(1.0, 1.0, 1.0, 1.0);
 	#endif
 
-	shadowInt = 1.0 - (shadowInt * shadeInt.a);
 	decalInt = texture2D(decalTex, gl_TexCoord[0].st);
-	shadeCol = mix(groundAmbientColor, shadeInt, shadowInt);
+	shadeCol = mix(groundAmbientColor, shadeInt, shadowCoeff * shadeInt.a);
 
 	gl_FragColor = decalInt * shadeCol;
 	gl_FragColor.a = decalInt.a * gl_Color.a;

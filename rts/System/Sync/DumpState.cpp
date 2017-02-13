@@ -11,12 +11,17 @@
 #include "Game/GlobalUnsynced.h"
 #include "Net/GameServer.h"
 #include "Rendering/Models/3DModel.h"
+#include "Sim/Features/Feature.h"
+#include "Sim/Features/FeatureDef.h"
 #include "Sim/Features/FeatureHandler.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/MoveTypes/MoveType.h"
 #include "Sim/Projectiles/Projectile.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
+#include "Sim/Units/Unit.h"
+#include "Sim/Units/UnitHandler.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "System/Util.h"
@@ -56,7 +61,7 @@ void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod)
 
 		std::string name = (gameServer != NULL)? "Server": "Client";
 		name += "GameState-";
-		name += IntToString(gu->RandInt());
+		name += IntToString(guRNG.NextInt());
 		name += "-[";
 		name += IntToString(gMinFrameNum);
 		name += "-";
@@ -69,8 +74,8 @@ void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod)
 			file << "map name: " << gameSetup->mapName << "\n";
 			file << "mod name: " << gameSetup->modName << "\n";
 			file << "minFrame: " << gMinFrameNum << ", maxFrame: " << gMaxFrameNum << "\n";
-			file << "randSeed: " << gs->GetRandSeed() << "\n";
-			file << "initSeed: " << gs->GetInitRandSeed() << "\n";
+			file << "randSeed: " << gsRNG.GetSeed() << "\n";
+			file << "initSeed: " << gsRNG.GetInitSeed() << "\n";
 		}
 
 		LOG("[DumpState] using dump-file \"%s\"", name.c_str());
@@ -83,18 +88,15 @@ void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod)
 	if ((gs->frameNum % gFramePeriod) != 0) { return; }
 
 	// we only care about the synced projectile data here
-	const std::list<CUnit*>& units = unitHandler->activeUnits;
-	const CFeatureSet& features = featureHandler->GetActiveFeatures();
-	      ProjectileContainer& projectiles = projectileHandler->syncedProjectiles;
+	const std::vector<CUnit*>& units = unitHandler->activeUnits;
+	const auto& activeFeatureIDs = featureHandler->GetActiveFeatureIDs();
+	ProjectileContainer& projectiles = projectileHandler->syncedProjectiles;
 
-	std::list<CUnit*>::const_iterator unitsIt;
-	CFeatureSet::const_iterator featuresIt;
 	ProjectileContainer::iterator projectilesIt;
-	std::vector<LocalModelPiece*>::const_iterator piecesIt;
 	std::vector<CWeapon*>::const_iterator weaponsIt;
 
-	file << "frame: " << gs->frameNum << ", seed: " << gs->GetRandSeed() << "\n";
-	file << "\tunits: " << units.size() << "\n";
+	file << "frame: " << gs->frameNum << ", seed: " << gsRNG.GetSeed() << "\n";
+	file << "\tunits: " << unitHandler->activeUnits.size() << "\n";
 
 	#define DUMP_UNIT_DATA
 	#define DUMP_UNIT_PIECE_DATA
@@ -107,11 +109,10 @@ void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod)
 	// #define DUMP_ALLYTEAM_DATA
 
 	#ifdef DUMP_UNIT_DATA
-	for (unitsIt = units.begin(); unitsIt != units.end(); ++unitsIt) {
-		const CUnit* u = *unitsIt;
+	for (CUnit* u: units) {
 		const std::vector<CWeapon*>& weapons = u->weapons;
-		const LocalModel* lm = u->localModel;
-		const std::vector<LocalModelPiece*>& pieces = lm->pieces;
+		const LocalModel& lm = u->localModel;
+		const std::vector<LocalModelPiece>& pieces = lm.pieces;
 		const float3& pos = u->pos;
 		const float3& xdir = u->rightdir;
 		const float3& ydir = u->updir;
@@ -130,16 +131,16 @@ void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod)
 		file << "\t\t\tpieces: " << pieces.size() << "\n";
 
 		#ifdef DUMP_UNIT_PIECE_DATA
-		for (piecesIt = pieces.begin(); piecesIt != pieces.end(); ++piecesIt) {
-			const LocalModelPiece* lmp = *piecesIt;
-			const S3DModelPiece* omp = lmp->original;
-			const float3& ppos = lmp->GetPosition();
-			const float3& prot = lmp->GetRotation();
+		for (const LocalModelPiece& lmp: pieces) {
+			const S3DModelPiece* omp = lmp.original;
+			const S3DModelPiece* par = omp->parent;
+			const float3& ppos = lmp.GetPosition();
+			const float3& prot = lmp.GetRotation();
 
-			file << "\t\t\t\tname: " << omp->name << " (parentName: " << omp->parentName << ")\n";
+			file << "\t\t\t\tname: " << omp->name << " (parentName: " << ((par != nullptr)? par->name: "[null]") << ")\n";
 			file << "\t\t\t\tpos: <" << ppos.x << ", " << ppos.y << ", " << ppos.z << ">\n";
 			file << "\t\t\t\trot: <" << prot.x << ", " << prot.y << ", " << prot.z << ">\n";
-			file << "\t\t\t\tvisible: " << lmp->scriptSetVisible << "\n";
+			file << "\t\t\t\tvisible: " << lmp.scriptSetVisible << "\n";
 			file << "\n";
 		}
 		#endif
@@ -149,15 +150,15 @@ void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod)
 		#ifdef DUMP_UNIT_WEAPON_DATA
 		for (weaponsIt = weapons.begin(); weaponsIt != weapons.end(); ++weaponsIt) {
 			const CWeapon* w = *weaponsIt;
-			const float3& awp = w->weaponPos;
-			const float3& rwp = w->relWeaponPos;
+			const float3& awp = w->aimFromPos;
+			const float3& rwp = w->relAimFromPos;
 			const float3& amp = w->weaponMuzzlePos;
 			const float3& rmp = w->relWeaponMuzzlePos;
 
 			file << "\t\t\t\tweaponID: " << w->weaponNum << " (name: " << w->weaponDef->name << ")\n";
 			file << "\t\t\t\tweaponDir: <" << w->weaponDir.x << ", " << w->weaponDir.y << ", " << w->weaponDir.z << ">\n";
 			file << "\t\t\t\tabsWeaponPos: <" << awp.x << ", " << awp.y << ", " << awp.z << ">\n";
-			file << "\t\t\t\trelWeaponPos: <" << rwp.x << ", " << rwp.y << ", " << rwp.z << ">\n";
+			file << "\t\t\t\trelAimFromPos: <" << rwp.x << ", " << rwp.y << ", " << rwp.z << ">\n";
 			file << "\t\t\t\tabsWeaponMuzzlePos: <" << amp.x << ", " << amp.y << ", " << amp.z << ">\n";
 			file << "\t\t\t\trelWeaponMuzzlePos: <" << rmp.x << ", " << rmp.y << ", " << rmp.z << ">\n";
 			file << "\n";
@@ -201,11 +202,11 @@ void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod)
 	}
 	#endif
 
-	file << "\tfeatures: " << features.size() << "\n";
+	file << "\tfeatures: " << activeFeatureIDs.size() << "\n";
 
 	#ifdef DUMP_FEATURE_DATA
-	for (featuresIt = features.begin(); featuresIt != features.end(); ++featuresIt) {
-		const CFeature* f = *featuresIt;
+	for (const int featureID: activeFeatureIDs) {
+		const CFeature* f = featureHandler->GetFeature(featureID);
 
 		file << "\t\tfeatureID: " << f->id << " (name: " << f->def->name << ")\n";
 		file << "\t\t\tpos: <" << f->pos.x << ", " << f->pos.y << ", " << f->pos.z << ">\n";
@@ -235,10 +236,10 @@ void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod)
 		const CTeam* t = teamHandler->Team(a);
 
 		file << "\t\tteamID: " << t->teamNum << " (controller: " << t->GetControllerName() << ")\n";
-		file << "\t\t\tmetal: " << float(t->metal) << ", energy: " << float(t->energy) << "\n";
-		file << "\t\t\tmetalPull: " << t->metalPull << ", energyPull: " << t->energyPull << "\n";
-		file << "\t\t\tmetalIncome: " << t->metalIncome << ", energyIncome: " << t->energyIncome << "\n";
-		file << "\t\t\tmetalExpense: " << t->metalExpense << ", energyExpense: " << t->energyExpense << "\n";
+		file << "\t\t\tmetal: " << float(t->res.metal) << ", energy: " << float(t->res.energy) << "\n";
+		file << "\t\t\tmetalPull: " << t->resPull.metal << ", energyPull: " << t->resPull.energy << "\n";
+		file << "\t\t\tmetalIncome: " << t->resIncome.metal << ", energyIncome: " << t->resIncome.energy << "\n";
+		file << "\t\t\tmetalExpense: " << t->resExpense.metal << ", energyExpense: " << t->resExpense.energy << "\n";
 	}
 	#endif
 

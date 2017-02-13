@@ -7,7 +7,7 @@
 
 class CScriptMoveType : public AMoveType
 {
-	CR_DECLARE(CScriptMoveType);
+	CR_DECLARE(CScriptMoveType)
 
 	public:
 		CScriptMoveType(CUnit* owner);
@@ -25,7 +25,7 @@ class CScriptMoveType : public AMoveType
 		void SetRotationVelocity(const float3& rvel);
 		void SetHeading(short heading);
 		void SetNoBlocking(bool state);
-		
+
 	public: // null'ed virtuals
 		void StartMoving(float3, float goalRadius) {}
 		void StartMoving(float3, float goalRadius, float speed) {}
@@ -39,13 +39,12 @@ class CScriptMoveType : public AMoveType
 		void LeaveTransport() {}
 
 	protected:
-		void CalcDirections();
 		void CheckLimits();
 		void CheckNotify();
 
 	public:
 		int tag;
-		
+
 		bool extrapolate;
 		bool useRelVel;
 		bool useRotVel;

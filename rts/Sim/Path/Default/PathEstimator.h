@@ -3,30 +3,27 @@
 #ifndef PATHESTIMATOR_H
 #define PATHESTIMATOR_H
 
+#include <atomic>
+#include <cinttypes>
+#include <deque>
 #include <string>
-#include <list>
-#include <queue>
+#include <vector>
 
 #include "IPath.h"
+#include "IPathFinder.h"
 #include "PathConstants.h"
 #include "PathDataTypes.h"
 #include "System/float3.h"
-
-#include <boost/detail/atomic_count.hpp>
-#include <boost/cstdint.hpp>
+#include "System/Threading/SpringThreading.h"
 
 struct MoveDef;
 class CPathFinder;
 class CPathEstimatorDef;
 class CPathFinderDef;
 class CPathCache;
+class CSolidObject;
 
-namespace boost {
-	class thread;
-	class barrier;
-}
-
-class CPathEstimator {
+class CPathEstimator: public IPathFinder {
 public:
 	/**
 	 * Creates a new estimator based on a couple of parameters
@@ -42,48 +39,8 @@ public:
 	 *   name of the corresponding map.
 	 *   Ex. PE-name "pe" + Mapname "Desert" => "Desert.pe"
 	 */
-	CPathEstimator(CPathFinder*, unsigned int BSIZE, const std::string& cacheFileName, const std::string& mapFileName);
+	CPathEstimator(IPathFinder*, unsigned int BSIZE, const std::string& cacheFileName, const std::string& mapFileName);
 	~CPathEstimator();
-
-	void* operator new(size_t size);
-	void operator delete(void* p, size_t size);
-
-
-
-	/**
-	 * Returns an aproximate, low-resolution path from the starting location to
-	 * the goal defined in CPathEstimatorDef, whenever any such are available.
-	 * If no complete paths are found, then a path leading as "close" as
-	 * possible to the goal is returned instead, together with
-	 * SearchResult::OutOfRange.
-	 * Only if no position closer to the goal than the starting location itself
-	 * could be found, no path and SearchResult::CantGetCloser is returned.
-	 * @param moveDef
-	 *   Defining the footprint of the unit to use the path.
-	 *
-	 * @param start
-	 *   The starting location of the search.
-	 *
-	 * @param peDef
-	 *   Object defining the goal of the search.
-	 *   Could also be used to add constraints to the search.
-	 *
-	 * @param path
-	 *   If a path could be found, it's generated and put into this structure.
-	 *
-	 * @param maxSearchedBlocks
-	 *   The maximum number of nodes/blocks the search is allowed to analyze.
-	 *   This restriction could be used in cases where CPU-consumption is
-	 *   critical.
-	 */
-	IPath::SearchResult GetPath(
-		const MoveDef& moveDef,
-		const CPathFinderDef& peDef,
-		float3 start,
-		IPath::Path& path,
-		unsigned int maxSearchedBlocks,
-		bool synced = true
-	);
 
 
 	/**
@@ -94,7 +51,6 @@ public:
 	 */
 	void MapChanged(unsigned int x1, unsigned int z1, unsigned int x2, unsigned int z2);
 
-
 	/**
 	 * called every frame
 	 */
@@ -104,16 +60,39 @@ public:
 	 * Returns a checksum that can be used to check if every player has the same
 	 * path data.
 	 */
-	boost::uint32_t GetPathChecksum() const { return pathChecksum; }
+	std::uint32_t GetPathChecksum() const { return pathChecksum; }
 
-	unsigned int GetBlockSize() const { return BLOCK_SIZE; }
-	unsigned int GetNumBlocksX() const { return nbrOfBlocksX; }
-	unsigned int GetNumBlocksZ() const { return nbrOfBlocksZ; }
-
-	PathNodeStateBuffer& GetNodeStateBuffer() { return blockStates; }
-
-	static void InitDirectionVectorsTable();
 	static const int2* GetDirectionVectorsTable();
+
+protected: // IPathFinder impl
+	IPath::SearchResult DoSearch(const MoveDef&, const CPathFinderDef&, const CSolidObject* owner);
+	bool TestBlock(
+		const MoveDef& moveDef,
+		const CPathFinderDef& pfDef,
+		const PathNode* parentSquare,
+		const CSolidObject* owner,
+		const unsigned int pathOptDir,
+		const unsigned int blockStatus,
+		float speedMod);
+	IPath::SearchResult FinishSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, IPath::Path& path) const;
+
+	const CPathCache::CacheItem& GetCache(
+		const int2 strtBlock,
+		const int2 goalBlock,
+		float goalRadius,
+		int pathType,
+		const bool synced
+	) const;
+
+	void AddCache(
+		const IPath::Path* path,
+		const IPath::SearchResult result,
+		const int2 strtBlock,
+		const int2 goalBlock,
+		float goalRadius,
+		int pathType,
+		const bool synced
+	);
 
 private:
 	void InitEstimator(const std::string& cacheFileName, const std::string& map);
@@ -123,71 +102,51 @@ private:
 	void CalculateBlockOffsets(unsigned int, unsigned int);
 	void EstimatePathCosts(unsigned int, unsigned int);
 
-	int2 FindOffset(const MoveDef&, unsigned int, unsigned int);
-	void CalculateVertices(const MoveDef&, unsigned int, unsigned int, unsigned int threadNum = 0);
-	void CalculateVertex(const MoveDef&, unsigned int, unsigned int, unsigned int, unsigned int threadNum = 0);
-
-	IPath::SearchResult InitSearch(const MoveDef&, const CPathFinderDef&, bool);
-	IPath::SearchResult DoSearch(const MoveDef&, const CPathFinderDef&, bool);
-	void TestBlock(const MoveDef&, const CPathFinderDef&, PathNode&, unsigned int pathDir, bool synced);
-	void FinishSearch(const MoveDef& moveDef, IPath::Path& path);
-	void ResetSearch();
+	int2 FindOffset(const MoveDef&, unsigned int, unsigned int) const;
+	void CalculateVertices(const MoveDef&, int2, unsigned int threadNum = 0);
+	void CalculateVertex(const MoveDef&, int2, unsigned int, unsigned int threadNum = 0);
 
 	bool ReadFile(const std::string& cacheFileName, const std::string& map);
 	void WriteFile(const std::string& cacheFileName, const std::string& map);
+	std::uint32_t CalcChecksum() const;
 	unsigned int Hash() const;
 
 private:
 	friend class CPathManager;
 	friend class CDefaultPathDrawer;
 
-	struct SingleBlock {
-		int2 blockPos;
-		const MoveDef* moveDef;
-	};
-
-	const unsigned int BLOCK_SIZE;
-	const unsigned int BLOCK_PIXEL_SIZE;
 	const unsigned int BLOCKS_TO_UPDATE;
-
-	unsigned int nbrOfBlocksX;                  /// Number of blocks on the X axis of the map.
-	unsigned int nbrOfBlocksZ;                  /// Number of blocks on the Z axis of the map.
-	unsigned int moveMathOptions;
-
-	unsigned int maxBlocksToBeSearched;
-	unsigned int testedBlocks;
 
 	unsigned int nextOffsetMessageIdx;
 	unsigned int nextCostMessageIdx;
 
-	boost::uint32_t pathChecksum;               ///< currently crc from the zip
+	std::uint32_t pathChecksum;               ///< currently crc from the zip
 
-	boost::detail::atomic_count offsetBlockNum;
-	boost::detail::atomic_count costBlockNum;
-	boost::barrier* pathBarrier;
+	std::atomic<std::int64_t> offsetBlockNum;
+	std::atomic<std::int64_t> costBlockNum;
+	spring::barrier* pathBarrier;
 
-	CPathFinder* pathFinder;
+	IPathFinder* pathFinder;
 	CPathCache* pathCache[2];                   /// [0] = !synced, [1] = synced
 
-	PathNodeBuffer openBlockBuffer;
-	PathNodeStateBuffer blockStates;
-	PathPriorityQueue openBlocks;               /// The priority-queue used to select next block to be searched.
+	std::vector<IPathFinder*> pathFinders;
+	std::vector<spring::thread*> threads;
 
-	std::vector<CPathFinder*> pathFinders;
-	std::vector<boost::thread*> threads;
+	// next lower-resolution estimator
+	CPathEstimator* nextPathEstimator;
 
+	std::vector<float> maxSpeedMods;
 	std::vector<float> vertexCosts;
-	std::list<unsigned int> dirtyBlocks;        /// List of blocks changed in last search.
-	std::list<SingleBlock> updatedBlocks;       /// Blocks that may need an update due to map changes.
-
-	int2 mStartBlock;
-	int2 mGoalBlock;
-	int2 mGoalSqrOffset;
-
-	unsigned int mStartBlockIdx;
-	float mGoalHeuristic;
+	std::deque<int2> updatedBlocks;       /// Blocks that may need an update due to map changes.
 
 	int blockUpdatePenalty;
+
+	struct SOffsetBlock {
+		float cost;
+		int2 offset;
+		SOffsetBlock(const float _cost, const int x, const int y) : cost(_cost), offset(x,y) {}
+	};
+	std::vector<SOffsetBlock> offsetBlocksSortedByCost;
 };
 
 #endif

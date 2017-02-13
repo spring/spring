@@ -135,10 +135,11 @@ function printNativeJNI() {
 				pType_c   = params[p];
 				sub(/ [^ ]+$/, "", pType_c);
 				pType_c = trim(pType_c);
-				pType_jni = convertCToJNIType(pType_c);
 
 				pName = params[p];
 				sub(/^.* /, "", pName);
+
+				pType_jni = convertCToJNIType(pType_c, pName);
 
 				# these are later used for conversion
 				c_paramTypes[p] = pType_c;
@@ -173,6 +174,7 @@ function printNativeJNI() {
 				retTypeConv = 1;
 			}
 
+			hasRetParam = 0;
 			# Params conversion - pre call
 			for (p=1; p <= size_params; p++) {
 				pType_jni = jni_paramTypes[p];
@@ -201,35 +203,37 @@ function printNativeJNI() {
 						print("\t\t" c_paramNames[p] " = (" c_paramTypes[p] ") (*__env)->Get" capArrType "ArrayElements(__env, " jni_paramNames[p] ", NULL);") >> outFile_nc;
 					} else if (_isString) {
 						print("\t\t" "const int " c_paramNames[p] "_size = (int) (*__env)->GetArrayLength(__env, " jni_paramNames[p] ");") >> outFile_nc;
-						print("\t\t" c_paramNames[p] " = (" c_paramTypes[p] ") calloc(sizeof(char*), " c_paramNames[p] "_size);") >> outFile_nc;
-						print("\t\t" "int " c_paramNames[p] "_i;") >> outFile_nc;
-						print("\t\t" "jstring " c_paramNames[p] "_jStr;") >> outFile_nc;
-						print("\t\t" "for (" c_paramNames[p] "_i=0; " c_paramNames[p] "_i < " c_paramNames[p] "_size; ++" c_paramNames[p] "_i) {") >> outFile_nc;
-						print("\t\t\t" c_paramNames[p] "_jStr = (jstring) (*__env)->GetObjectArrayElement(__env, " jni_paramNames[p] ", " c_paramNames[p] "_i);") >> outFile_nc;
-						print("\t\t\t" c_paramNames[p] "[" c_paramNames[p] "_i] = (const char*) (*__env)->GetStringUTFChars(__env, " c_paramNames[p] "_jStr, NULL);") >> outFile_nc;
-						print("\t\t" "}") >> outFile_nc;
+						print("\t\t" c_paramNames[p] " = (" c_paramTypes[p] ") malloc(sizeof(char*) * " c_paramNames[p] "_size);") >> outFile_nc;
 					} else {
 						print("ERROR: do not know how to convert parameter type: " pType_jni);
 						exit(1);
 					}
 					print("\t" "}") >> outFile_nc;
+				} else if (pType_jni == "jobject") {
+					# StringBuffer
+					hasRetParam = 1;
+					cPaNa = c_paramNames[p];
+					c_paramNames[p] = cPaNa "_native";
+					sub(" " jni_paramNames[p], " " c_paramNames[p], paramListNoTypes);
+					print("\t" "char " c_paramNames[p] "[MAX_RESPONSE_SIZE];") >> outFile_nc;
+					retParamConversion = "\t" "jclass clazz = (*__env)->GetObjectClass(__env, " cPaNa ");" "\n";
+					retParamConversion = retParamConversion "\t" "jmethodID mid = (*__env)->GetMethodID(__env, clazz, \"append\", \"(Ljava/lang/String;)Ljava/lang/StringBuffer;\");" "\n"
+					retParamConversion = retParamConversion "\t" "jstring " cPaNa "_jStr = (*__env)->NewStringUTF(__env, " c_paramNames[p] ");" "\n";
+					retParamConversion = retParamConversion "\t" "(*__env)->CallObjectMethod(__env, " cPaNa ", mid, " cPaNa "_jStr);"
 				}
 			}
 
-			if (hasRetParam) {
-				# TODO: remove, as its unused; hasRetParam is never true
-				print("\t" retParamType " " retNameTmp " = " fullName "(" paramListNoTypes ");") >> outFile_nc;
-				print(retParamConversion) >> outFile_nc;
-			} else {
-				condRet = "";
-				if (!isVoidRet) {
-					if (retTypeConv) {
-						condRet = "_retNative = ";
-					} else {
-						condRet = "_ret = (" jni_retType ") ";
-					}
+			condRet = "";
+			if (!isVoidRet) {
+				if (retTypeConv) {
+					condRet = "_retNative = ";
+				} else {
+					condRet = "_ret = (" jni_retType ") ";
 				}
-				print("\t" condRet fullName "(" paramListNoTypes ");") >> outFile_nc;
+			}
+			print("\t" condRet fullName "(" paramListNoTypes ");") >> outFile_nc;
+			if (hasRetParam) {
+				print(retParamConversion) >> outFile_nc;
 			}
 
 			# Params conversion - post call
@@ -247,7 +251,7 @@ function printNativeJNI() {
 					capArrType = capitalize(capArrType);
 
 					_isPrimitive = (capArrType != "Object");
-					_isString    = !_isPrimitive && (c_paramTypes[p] == "char**");
+					_isString    = !_isPrimitive && match(c_paramTypes[p], /(const )?char\*\*/);
 
 					print("\t" "if (" jni_paramNames[p] " != NULL) {") >> outFile_nc;
 					if (_isPrimitive) {
@@ -256,17 +260,19 @@ function printNativeJNI() {
 						print("\t\t" "(*__env)->Release" capArrType "ArrayElements(__env, " jni_paramNames[p] ", (" _elementJNativeType "*) " c_paramNames[p] ", 0 /* copy back changes and release */);") >> outFile_nc;
 					} else if (_isString) {
 						print("\t\t" "const int " c_paramNames[p] "_size = (int) (*__env)->GetArrayLength(__env, " jni_paramNames[p] ");") >> outFile_nc;
-						print("\t\t" c_paramNames[p] " = (" c_paramTypes[p] ") calloc(sizeof(char*), " c_paramNames[p] "_size);") >> outFile_nc;
 						print("\t\t" "int " c_paramNames[p] "_i;") >> outFile_nc;
 						print("\t\t" "jstring " c_paramNames[p] "_jStr;") >> outFile_nc;
 						print("\t\t" "for (" c_paramNames[p] "_i=0; " c_paramNames[p] "_i < " c_paramNames[p] "_size; ++" c_paramNames[p] "_i) {") >> outFile_nc;
-						print("\t\t\t" c_paramNames[p] "_jStr = (jstring) (*__env)->GetObjectArrayElement(__env, " jni_paramNames[p] ", " c_paramNames[p] "_i);") >> outFile_nc;
-						print("\t\t\t" "(*__env)->ReleaseStringUTFChars(__env, " c_paramNames[p] "_jStr, " c_paramNames[p] "[" c_paramNames[p] "_i]);") >> outFile_nc;
+						print("\t\t\t" c_paramNames[p] "_jStr = (jstring) (*__env)->NewStringUTF(__env, " c_paramNames[p] "[" c_paramNames[p] "_i]);") >> outFile_nc;
+						print("\t\t\t" "(*__env)->SetObjectArrayElement(__env, " jni_paramNames[p] ", " c_paramNames[p] "_i, " c_paramNames[p] "_jStr);") >> outFile_nc;
+						print("\t\t\t" "(*__env)->DeleteLocalRef(__env, " c_paramNames[p] "_jStr);") >> outFile_nc;
 						print("\t\t" "}") >> outFile_nc;
 						print("\t\t" "free(" c_paramNames[p] ");") >> outFile_nc;
-						print("\t\t" c_paramNames[p] " = NULL;") >> outFile_nc;
 					}
 					print("\t" "}") >> outFile_nc;
+				} else if (pType_jni == "jobject" ) {
+					# StringBuffer
+					print("\t" "(*__env)->DeleteLocalRef(__env, " cPaNa "_jStr);") >> outFile_nc;
 				}
 			}
 
@@ -434,8 +440,8 @@ function wrappFunction(funcDef, commentEol) {
 		for (i=4; i<=size_funcParts && !match(funcParts[i], /.*\/\/.*/); i++) {
 			type_c = extractParamType(funcParts[i]);
 			type_c = cleanupCType(type_c);
-			type_j = convertJNIToJavaType(convertCToJNIType(type_c));
 			name   = extractParamName(funcParts[i]);
+			type_j = convertJNIToJavaType(convertCToJNIType(type_c, name));
 			if (i == 4) {
 				cond_comma   = "";
 			} else {

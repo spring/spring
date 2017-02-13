@@ -3,13 +3,15 @@
 #include "SimObjectIDPool.h"
 #include "GlobalSynced.h"
 #include "Sim/Objects/SolidObject.h"
+#include "System/creg/STL_Map.h"
 
-CR_BIND(SimObjectIDPool, );
+
+CR_BIND(SimObjectIDPool, )
 CR_REG_METADATA(SimObjectIDPool, (
-	CR_MEMBER(liveIdentIndexMap),
-	CR_MEMBER(liveIndexIdentMap),
-	CR_MEMBER(tempIndexIdentMap)
-));
+	CR_MEMBER(liveIdentToIndexMap),
+	CR_MEMBER(liveIndexToIdentMap),
+	CR_MEMBER(tempIndexToIdentMap)
+))
 
 void SimObjectIDPool::Expand(unsigned int baseID, unsigned int numIDs) {
 	// allocate new batch of (randomly shuffled) id's
@@ -20,24 +22,23 @@ void SimObjectIDPool::Expand(unsigned int baseID, unsigned int numIDs) {
 	}
 
 	// randomize so that Lua widgets can not easily determine counts
-	SyncedRNG rng;
-	std::random_shuffle(newIDs.begin(), newIDs.end(), rng);
-	std::random_shuffle(newIDs.begin(), newIDs.end(), rng);
+	std::random_shuffle(newIDs.begin(), newIDs.end(), gsRNG);
+	std::random_shuffle(newIDs.begin(), newIDs.end(), gsRNG);
 
 	// NOTE:
-	//   any randomization would be undone by using a std::set as-is
+	//   any randomization would be undone by a sorted std::container
 	//   instead create a bi-directional mapping from indices to ID's
 	//   (where the ID's are a random permutation of the index range)
 	//   such that ID's can be assigned and returned to the pool with
 	//   their original index
 	//
-	//     indexIdentMap = {<0, 13>, < 1, 27>, < 2, 54>, < 3, 1>, ...}
-	//     identIndexMap = {<1,  3>, <13,  0>, <27,  1>, <54, 2>, ...}
+	//     indexToIdentMap = {<0, 13>, < 1, 27>, < 2, 54>, < 3, 1>, ...}
+	//     identToIndexMap = {<1,  3>, <13,  0>, <27,  1>, <54, 2>, ...}
 	//
 	//   (the ID --> index map is never changed at runtime!)
 	for (unsigned int offsetID = 0; offsetID < numIDs; offsetID++) {
-		liveIndexIdentMap.insert(IDPair(baseID + offsetID, newIDs[offsetID]));
-		liveIdentIndexMap.insert(IDPair(newIDs[offsetID], baseID + offsetID));
+		liveIndexToIdentMap.insert(IDPair(baseID + offsetID, newIDs[offsetID]));
+		liveIdentToIndexMap.insert(IDPair(newIDs[offsetID], baseID + offsetID));
 	}
 }
 
@@ -58,10 +59,10 @@ unsigned int SimObjectIDPool::ExtractID() {
 	// and FeatureHandler have safeguards
 	assert(!IsEmpty());
 
-	const IDMap::iterator it = liveIndexIdentMap.begin();
+	const IDMap::iterator it = liveIndexToIdentMap.begin();
 	const unsigned int id = it->second;
 
-	liveIndexIdentMap.erase(it);
+	liveIndexToIdentMap.erase(it);
 
 	if (IsEmpty()) {
 		RecycleIDs();
@@ -75,10 +76,10 @@ void SimObjectIDPool::ReserveID(unsigned int id) {
 	assert(HasID(id));
 	assert(!IsEmpty());
 
-	const IDMap::iterator it = liveIdentIndexMap.find(id);
+	const IDMap::iterator it = liveIdentToIndexMap.find(id);
 	const unsigned int idx = it->second;
 
-	liveIndexIdentMap.erase(idx);
+	liveIndexToIdentMap.erase(idx);
 
 	if (IsEmpty()) {
 		RecycleIDs();
@@ -93,25 +94,25 @@ void SimObjectIDPool::FreeID(unsigned int id, bool delayed) {
 	assert(!HasID(id));
 
 	if (delayed) {
-		tempIndexIdentMap.insert(IDPair(liveIdentIndexMap[id], id));
+		tempIndexToIdentMap.insert(IDPair(liveIdentToIndexMap[id], id));
 	} else {
-		liveIndexIdentMap.insert(IDPair(liveIdentIndexMap[id], id));
+		liveIndexToIdentMap.insert(IDPair(liveIdentToIndexMap[id], id));
 	}
 }
 
 void SimObjectIDPool::RecycleIDs() {
 	// throw each ID recycled up until now back into the pool
-	liveIndexIdentMap.insert(tempIndexIdentMap.begin(), tempIndexIdentMap.end());
-	tempIndexIdentMap.clear();
+	liveIndexToIdentMap.insert(tempIndexToIdentMap.begin(), tempIndexToIdentMap.end());
+	tempIndexToIdentMap.clear();
 }
 
 bool SimObjectIDPool::HasID(unsigned int id) const {
-	assert(liveIdentIndexMap.find(id) != liveIdentIndexMap.end());
+	assert(liveIdentToIndexMap.find(id) != liveIdentToIndexMap.end());
 
 	// check if given ID is available in this pool
-	const IDMap::const_iterator it = liveIdentIndexMap.find(id);
+	const IDMap::const_iterator it = liveIdentToIndexMap.find(id);
 	const unsigned int idx = it->second;
 
-	return (liveIndexIdentMap.find(idx) != liveIndexIdentMap.end());
+	return (liveIndexToIdentMap.find(idx) != liveIndexToIdentMap.end());
 }
 

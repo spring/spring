@@ -2,6 +2,7 @@
 
 #include "ConfigVariable.h"
 #include "System/Log/ILog.h"
+#include "System/Util.h"
 #include <iostream>
 
 using std::cout;
@@ -108,6 +109,12 @@ static std::ostream& operator<< (std::ostream& out, const ConfigVariableMetaData
 	}
 	if (d->GetSafemodeValue().IsSet()) {
 		KV(safemodeValue, Quote(d->GetType(), d->GetSafemodeValue().ToString()));
+	}
+	if (d->GetHeadlessValue().IsSet()) {
+		KV(headlessValue, Quote(d->GetType(), d->GetHeadlessValue().ToString()));
+	}
+	if (d->GetDedicatedValue().IsSet()) {
+		KV(dedicatedValue, Quote(d->GetType(), d->GetDedicatedValue().ToString()));
 	}
 	// Type is required.
 	// Easiest to do this last because of the trailing comma that isn't there.

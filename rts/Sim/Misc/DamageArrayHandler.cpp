@@ -15,13 +15,12 @@
 #include "System/Util.h"
 
 
-CR_BIND(CDamageArrayHandler, (NULL));
+CR_BIND(CDamageArrayHandler, (NULL))
 
 CR_REG_METADATA(CDamageArrayHandler, (
 	CR_MEMBER(armorDefNameIdxMap),
-	CR_MEMBER(armorDefKeys),
-	CR_RESERVED(16)
-));
+	CR_MEMBER(armorDefKeys)
+))
 
 
 CDamageArrayHandler* damageArrayHandler;
@@ -65,23 +64,9 @@ CDamageArrayHandler::CDamageArrayHandler(LuaParser* defsParser)
 			const LuaTable armorDefTable = rootTable.SubTable(armorDefKeys[armorDefIdx]);
 			const unsigned int numArmorDefEntries = armorDefTable.GetLength();
 
-			if (SpringVersion::GetMajor()[1] >= '4') {
-				std::vector<std::string> armorDefTableKeys;
-				armorDefTable.GetKeys(armorDefTableKeys);
-
-				// do not continue, table might ALSO have array-style entries
-				if (!armorDefTableKeys.empty()) {
-					LOG_L(L_WARNING,
-						"[%s] ArmorDefs contains sub-table \"%s\" in <key, value> "
-						"format which is deprecated as of Spring 95.0 and will not "
-						"be parsed anymore (UPDATE YOUR armordefs.lua ASAP)!\n",
-						__FUNCTION__, armorDefName.c_str());
-				}
-			}
-
 			for (unsigned int armorDefEntryIdx = 0; armorDefEntryIdx < numArmorDefEntries; armorDefEntryIdx++) {
-				const std::string unitDefName = StringToLower(armorDefTable.GetString(armorDefEntryIdx + 1, ""));
-				const std::map<std::string, int>::const_iterator armorDefTableIt = armorDefNameIdxMap.find(unitDefName);
+				const std::string& unitDefName = StringToLower(armorDefTable.GetString(armorDefEntryIdx + 1, ""));
+				const auto armorDefTableIt = armorDefNameIdxMap.find(unitDefName);
 
 				if (armorDefTableIt == armorDefNameIdxMap.end()) {
 					armorDefNameIdxMap[unitDefName] = armorDefIdx;
@@ -106,11 +91,10 @@ CDamageArrayHandler::CDamageArrayHandler(LuaParser* defsParser)
 
 int CDamageArrayHandler::GetTypeFromName(const std::string& name) const
 {
-	const std::map<std::string, int>::const_iterator it = armorDefNameIdxMap.find(StringToLower(name));
+	const auto it = armorDefNameIdxMap.find(StringToLower(name));
 
-	if (it != armorDefNameIdxMap.end()) {
+	if (it != armorDefNameIdxMap.end())
 		return it->second;
-	}
 
 	return 0; // 'default' armor index
 }

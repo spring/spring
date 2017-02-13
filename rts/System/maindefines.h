@@ -12,21 +12,17 @@
 #include <stdio.h>
 
 #if       !defined __cplusplus && !defined bool
-// include the bool type (defines: bool, true, false)
-#if defined _MSC_VER
-#include "System/booldefines.h"
-#else
+/* include the bool type (defines: bool, true, false) */
 #include <stdbool.h>
-#endif
-#endif // !defined __cplusplus && !defined bool
+#endif /* !defined __cplusplus && !defined bool */
 
-// define if we have a X11 enviroment (:= linux/freebsd)
+/* define if we have a X11 enviroment (:= linux/freebsd) */
 #if !defined(__APPLE__) && !defined(_WIN32)
 	//FIXME move this check to cmake, which has FindX11.cmake?
 	#define _X11
 #endif
 
-// define a common indicator for 32bit or 64bit-ness
+/* define a common indicator for 32bit or 64bit-ness */
 #if defined _WIN64 || defined __LP64__ || defined __ppc64__ || defined __ILP64__ || defined __SILP64__ || defined __LLP64__ || defined(__sparcv9)
 #define __arch64__
 #define __archBits__ 64
@@ -35,26 +31,40 @@
 #define __archBits__ 32
 #endif
 
-// define a cross-platform/-compiler compatible "%z" format replacement for
-// printf() style functions.
-// "%z" being the propper way for size_t typed values,
-// but support for it has not yet spread wide enough.
+/*
+  define a cross-platform/-compiler compatible "%z" format replacement for
+  printf() style functions.
+  "%z" being the propper way for size_t typed values,
+  but support for it has not yet spread wide enough.
+*/
 #if defined __arch64__
-#define __SIZE_T_PRINTF_FORMAT__ "%lu"
+	#if defined _WIN64
+		#define __SIZE_T_PRINTF_FORMAT__ "%I64u"
+	#else
+		#define __SIZE_T_PRINTF_FORMAT__ "%lu"
+	#endif
 #else
-#define __SIZE_T_PRINTF_FORMAT__ "%u"
+	#define __SIZE_T_PRINTF_FORMAT__ "%u"
 #endif
-// a shorter form
+/* a shorter form */
 #define _STPF_ __SIZE_T_PRINTF_FORMAT__
 
+
+#if defined(_MSC_VER)
+	#define _threadlocal __declspec(thread)
+#else
+	#define _threadlocal __thread
+#endif
+
+
 #ifdef _MSC_VER
-	// Microsoft Visual C++ 7.0: MSC_VER = 1300
-	// Microsoft Visual C++ 7.1: MSC_VER = 1310
+	/* Microsoft Visual C++ 7.0: MSC_VER = 1300
+	   Microsoft Visual C++ 7.1: MSC_VER = 1310 */
 	#if _MSC_VER > 1310 // >= Visual Studio 2005
 		#define PRINTF    printf_s
 		#define FPRINTF   fprintf_s
-		#define SNPRINTF  _snprintf // sprintf_s misbehaves in debug mode, triggering breakpoints
-		#define VSNPRINTF _vsnprintf // vsprintf_s misbehaves in debug mode, triggering breakpoints
+		#define SNPRINTF  _snprintf /* sprintf_s misbehaves in debug mode, triggering breakpoints */
+		#define VSNPRINTF _vsnprintf /* vsprintf_s misbehaves in debug mode, triggering breakpoints */
 		#define STRCPY    strcpy
 		#define STRCPYS   strcpy_s
 		#define STRNCPY   strncpy
@@ -62,7 +72,7 @@
 		#define STRCATS   strcat_s
 		#define STRNCAT   strncat
 		#define FOPEN     fopen_s
-	#else              // Visual Studio 2003
+	#else              /* Visual Studio 2003 */
 		#define PRINTF    _printf
 		#define FPRINTF   _fprintf
 		#define SNPRINTF  _snprintf
@@ -76,8 +86,8 @@
 		#define FOPEN     _fopen
 	#endif
 	#define STRCASECMP    stricmp
-#else // _MSC_VER
-	// assuming GCC
+#else /* _MSC_VER */
+	/* assuming GCC */
 	#define PRINTF     printf
 	#define FPRINTF    fprintf
 	#define SNPRINTF   snprintf
@@ -90,11 +100,11 @@
 	#define STRNCAT    strncat
 	#define FOPEN      fopen
 	#define STRCASECMP strcasecmp
-#endif // _MSC_VER
+#endif /* _MSC_VER */
 
-#define FREE(x) free(x); x = NULL;
+#define FREE(x) do { free(x); x = NULL; } while(false);
 
-// define a platform independent path separator C-string and char
+/* define a platform independent path separator C-string and char */
 #ifndef sPS
 	#define sPS_WIN32 "\\"
 	#define sPS_POSIX "/"
@@ -104,49 +114,49 @@
 	#else  // _WIN32
 	#define sPS sPS_POSIX
 	#endif // _WIN32
-#endif // sPS
+#endif /* sPS */
 #ifndef cPS
 	#define cPS_WIN32 '\\'
 	#define cPS_POSIX '/'
 
 	#ifdef    _WIN32
 	#define cPS cPS_WIN32
-	#else  // _WIN32
+	#else  /* _WIN32 */
 	#define cPS cPS_POSIX
-	#endif // _WIN32
-#endif // cPS
+	#endif /* _WIN32 */
+#endif /* cPS */
 
-// define a platform independent path delimitter C-string and char
+/* define a platform independent path delimitter C-string and char */
 #ifndef sPD
 	#define sPD_WIN32 ";"
 	#define sPD_POSIX ":"
 
 	#ifdef    _WIN32
 	#define sPD sPD_WIN32
-	#else  // _WIN32
+	#else  /* _WIN32 */
 	#define sPD sPD_POSIX
-	#endif // _WIN32
-#endif // sPD
+	#endif /* _WIN32 */
+#endif /* sPD */
 #ifndef cPD
 	#define cPD_WIN32 ';'
 	#define cPD_POSIX ':'
 
 	#ifdef    _WIN32
 	#define cPD cPD_WIN32
-	#else  // _WIN32
+	#else  /* _WIN32 */
 	#define cPD cPD_POSIX
-	#endif // _WIN32
-#endif // cPD
+	#endif /* _WIN32 */
+#endif /* cPD */
 
-// WORKAROUND (2013) a pthread stack alignment problem, else SSE code would crash
-// more info: http://www.peterstock.co.uk/games/mingw_sse/ (TLDR: mingw-32 aligns
-// thread stacks to 4 bytes but we want 16-byte alignment)
-//
+/* WORKAROUND (2013) a pthread stack alignment problem, else SSE code would crash
+   more info: http://www.peterstock.co.uk/games/mingw_sse/ (TLDR: mingw-32 aligns
+   thread stacks to 4 bytes but we want 16-byte alignment)
+*/
 #if (defined(__MINGW32__) && defined(__GNUC__) && (__GNUC__ == 4))
 #define __FORCE_ALIGN_STACK__ __attribute__ ((force_align_arg_pointer))
 #else
 #define __FORCE_ALIGN_STACK__
 #endif
 
-#endif // MAIN_DEFINES_H
+#endif /* MAIN_DEFINES_H */
 

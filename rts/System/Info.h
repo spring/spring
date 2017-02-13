@@ -21,6 +21,43 @@ enum InfoValueType {
 };
 
 struct InfoItem {
+	InfoItem()
+		: valueType(INFO_VALUE_TYPE_STRING)
+	{
+	}
+	InfoItem(const std::string& _key, const std::string& _desc, const std::string _value)
+		: key(_key)
+		, desc(_desc)
+		, valueType(INFO_VALUE_TYPE_STRING)
+		, valueTypeString(_value)
+	{}
+
+	InfoItem(const std::string& _key, const std::string& _desc, int _value)
+		: key(_key)
+		, desc(_desc)
+
+		, valueType(INFO_VALUE_TYPE_INTEGER)
+	{
+		value.typeInteger = _value;
+	}
+
+	InfoItem(const std::string& _key, const std::string& _desc, float _value)
+		: key(_key)
+		, desc(_desc)
+		, valueType(INFO_VALUE_TYPE_FLOAT)
+	{
+		value.typeFloat = _value;
+	}
+
+	InfoItem(const std::string& _key, const std::string& _desc, bool _value)
+		: key(_key)
+		, desc(_desc)
+		, valueType(INFO_VALUE_TYPE_BOOL)
+	{
+		value.typeBool = _value;
+	}
+
+public:
 	std::string key;
 	std::string desc;
 	InfoValueType valueType;
@@ -31,9 +68,10 @@ struct InfoItem {
 	} value;
 	/** It is not possible to use a type with destructor in a union */
 	std::string valueTypeString;
-};
 
-std::string info_getValueAsString(const InfoItem* infoItem);
+public:
+	std::string GetValueAsString(const bool convBooltoInt = true) const;
+};
 
 void info_convertToStringValue(InfoItem* infoItem);
 

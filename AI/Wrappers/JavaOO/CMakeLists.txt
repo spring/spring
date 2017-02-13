@@ -39,7 +39,6 @@ if    (BUILD_${myName}_AIWRAPPER)
 	set(myGenTarget  "${myTarget}-generateSources")
 	set(myJavaTarget "${myTarget}-java")
 	set(myPomTarget  "${myTarget}-pom")
-	set(myMavenInstallTarget "${myTarget}-mavenInstall")
 	set(mySourceDirRel     "src/main/java")
 	MakeAbsolute(mySourceDir "${myDir}" "${mySourceDirRel}")
 
@@ -69,7 +68,6 @@ if    (BUILD_${myName}_AIWRAPPER)
 	SetGlobal(${myName}_AIWRAPPER_JAR_SRC       "${myBuildDir}/${mySrcJarFile}")
 	SetGlobal(${myName}_AIWRAPPER_JAR_CLASSPATH "${myJLibs}${PATH_DELIM_H}${${myName}_AIWRAPPER_JAR_BIN}")
 	SetGlobal(${myName}_AIWRAPPER_TARGET        "${myTarget}")
-	SetGlobal(${myName}_AIWRAPPER_TARGET_MVN_INSTALL "${myMavenInstallTarget}")
 	SetGlobal(SOURCE_ROOT_${myName}_AIWRAPPER   "${myDir}")
 	SetGlobal(BUILD_ROOT_${myName}_AIWRAPPER    "${CMAKE_CURRENT_BINARY_DIR}")
 
@@ -128,10 +126,9 @@ if    (BUILD_${myName}_AIWRAPPER)
 		"Info"
 		"Line"
 		"Log"
-#		"Lua"
+		"Lua"
 		"Map"
 		"Mod"
-		"ModParam"
 		"MoveData"
 		"OOAICallback"
 		"OptionValues"
@@ -144,6 +141,7 @@ if    (BUILD_${myName}_AIWRAPPER)
 		"Shield"
 		"SkirmishAI"
 		"SkirmishAIs"
+		"Team"
 		"Teams"
 		"OverlayTexture"
 		"UnitDef"
@@ -151,6 +149,7 @@ if    (BUILD_${myName}_AIWRAPPER)
 		"Version"
 		"WeaponDef"
 		"WeaponMount"
+		"Weapon"
 		)
 	set(myGeneratedCallbackSources )
 	foreach    (className ${myGenClbClasses})
@@ -314,13 +313,13 @@ if    (BUILD_${myName}_AIWRAPPER)
 			"-E" "remove_directory" "${myJavaBuildDir}"
 		COMMAND "${CMAKE_COMMAND}"
 			"-E" "make_directory" "${myJavaBuildDir}"
-		COMMAND "${JAVA_COMPILE}"
+		COMMAND "${Java_JAVAC_EXECUTABLE}"
 			"${JAVA_COMPILE_FLAG_CONDITIONAL}"
 			"-Xlint:deprecation"
 			"-cp" "${myClassPath}"
 			"-d" "${myJavaBuildDir}"
 			"@${mySrcArgFile}"
-		COMMAND "${JAVA_ARCHIVE}" ARGS
+		COMMAND "${Java_JAR_EXECUTABLE}" ARGS
 			${myBinJarArgs} "${myBuildDir}/${myBinJarFile}"
 			"-C" "${myJavaBuildDir}" "${myPkgFirstPart}"
 		DEPENDS
@@ -337,10 +336,10 @@ if    (BUILD_${myName}_AIWRAPPER)
 	add_custom_command(
 		OUTPUT
 			"${myBuildDir}/${mySrcJarFile}"
-		COMMAND "${JAVA_ARCHIVE}" ARGS
+		COMMAND "${Java_JAR_EXECUTABLE}" ARGS
 			"cf" "${${myName}_AIWRAPPER_JAR_SRC}"
 			"-C" "${mySourceDir}"          "${myPkgFirstPart}"
-		COMMAND "${JAVA_ARCHIVE}" ARGS
+		COMMAND "${Java_JAR_EXECUTABLE}" ARGS
 			"uf" "${${myName}_AIWRAPPER_JAR_SRC}"
 			"-C" "${myGeneratedSourceDir}" "${myPkgFirstPart}"
 		DEPENDS
@@ -379,44 +378,6 @@ if    (BUILD_${myName}_AIWRAPPER)
 
 	add_custom_target(${myTarget} ALL)
 
-	Find_Package(Maven)
-	if    (MAVEN_FOUND)
-		# This is required because the local Maven install does not create a
-		# file (whichs path we could know), and thus we would not be able to
-		# create a nice dependency chain without this.
-		set(myMavenInstallStubFile "${myBuildDir}/mavenInstallStub.txt")
-		set_source_files_properties("${myMavenInstallStubFile}" PROPERTIES GENERATED TRUE)
-		add_custom_command(
-			OUTPUT
-				"${myMavenInstallStubFile}"
-			COMMAND "${MVN_BIN}"
-				${MVN_ATTRIBUTES_DEFAULT}
-				"-DpomFile=${myBuildDir}/pom-generated.xml"
-				"-Dfile=${myBuildDir}/${myBinJarFile}"
-				"-Dsources=${myBuildDir}/${mySrcJarFile}"
-				"install:install-file"
-			COMMAND "${CMAKE_COMMAND}"
-				"-E" "touch" "${myMavenInstallStubFile}"
-			DEPENDS
-				# We have to handle these through target level dependencies, or
-				# else their generating custom commands may be executed multiple
-				# times.
-				#"${myBuildDir}/pom-generated.xml"
-				#"${myBuildDir}/${myBinJarFile}"
-				#"${myBuildDir}/${mySrcJarFile}"
-			WORKING_DIRECTORY
-				"${myDir}"
-			COMMENT
-				"  ${myTarget}: Installing to local maven repository" VERBATIM
-			)
-		add_custom_target(${myMavenInstallTarget}
-			DEPENDS
-				"${myMavenInstallStubFile}"
-			)
-		add_dependencies(${myMavenInstallTarget} ${myJavaTarget} ${myPomTarget} ${Java_AIINTERFACE_TARGET_MVN_INSTALL})
-		add_dependencies(${myTarget} ${myMavenInstallTarget})
-	else  (MAVEN_FOUND)
-		add_dependencies(${myTarget} ${myJavaTarget})
-	endif (MAVEN_FOUND)
+	add_dependencies(${myTarget} ${myJavaTarget})
 
 endif (BUILD_${myName}_AIWRAPPER)

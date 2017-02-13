@@ -3,12 +3,12 @@
 #ifndef DEBUG_DRAWER_AI_HDR
 #define DEBUG_DRAWER_AI_HDR
 
-#include <list>
-#include <map>
+#include <deque>
 #include <vector>
 
-#include "System/type2.h"
 #include "System/float3.h"
+#include "System/type2.h"
+#include "System/UnorderedMap.hpp"
 
 class DebugDrawerAI {
 public:
@@ -63,7 +63,7 @@ private:
 				lineLabelHeight(0.0f) {
 			}
 
-			std::list<float3> lineData;
+			std::deque<float3> lineData;
 
 			float3 lineMin;
 			float3 lineMax;
@@ -77,7 +77,7 @@ private:
 			float lineLabelHeight;
 		};
 
-		std::map<int, GraphLine> lines;
+		spring::unordered_map<int, GraphLine> lines;
 
 		float3 pos;
 		float3 size;
@@ -141,7 +141,7 @@ private:
 			float labelHeight;
 		};
 
-		std::map<int, Texture*> textures;
+		spring::unordered_map<int, Texture> textures;
 		int curTexHandle;
 	};
 

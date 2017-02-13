@@ -14,7 +14,7 @@ struct Command;
 struct UnitDef;
 struct FeatureDef;
 struct WeaponDef;
-struct CommandDescription;
+struct SCommandDescription;
 class CCommandQueue;
 class CGroupHandler;
 class CGroup;
@@ -68,11 +68,11 @@ public:
 	bool AddUnitToGroup(int unitId, int groupId);
 	bool RemoveUnitFromGroup(int unitId);
 	int GetUnitGroup(int unitId);
-	const std::vector<CommandDescription>* GetGroupCommands(int groupId);
+	const std::vector<const SCommandDescription*>* GetGroupCommands(int groupId);
 	int GiveGroupOrder(int unitId, Command* c);
 
 	int GiveOrder(int unitId,Command* c);
-	const std::vector<CommandDescription>* GetUnitCommands(int unitId);
+	const std::vector<const SCommandDescription*>* GetUnitCommands(int unitId);
 	const CCommandQueue* GetCurrentUnitCommands(int unitId);
 
 	int GetUnitAiHint(int unitId);

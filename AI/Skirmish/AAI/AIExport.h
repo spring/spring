@@ -18,8 +18,8 @@
 	@author Robin Vobruba <hoijui.quaero@gmail.com>
 */
 
-#ifndef _AIEXPORT_H
-#define _AIEXPORT_H
+#ifndef AAI_AIEXPORT_H
+#define AAI_AIEXPORT_H
 
 // check if the correct defines are set by the build system
 #if !defined BUILDING_SKIRMISH_AI
@@ -59,3 +59,4 @@ EXPORT(int) handleEvent(int skirmishAIId, int topic, const void* data);
 const char* aiexport_getVersion();
 
 #endif // _AIEXPORT_H
+

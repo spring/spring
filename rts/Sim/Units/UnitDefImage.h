@@ -8,7 +8,7 @@
 
 struct UnitDefImage
 {
-	CR_DECLARE_STRUCT(UnitDefImage);
+	CR_DECLARE_STRUCT(UnitDefImage)
 
 	UnitDefImage(): imageSizeX(-1), imageSizeY(-1), textureID(0) {
 	}

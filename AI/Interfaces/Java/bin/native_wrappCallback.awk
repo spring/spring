@@ -63,6 +63,10 @@ function doWrapp(funcIndex_dw) {
 		if (fullName_dw == "Engine_handleCommand") {
 			doWrapp_dw = 0;
 		}
+		# not wrapped, legacy C++ only
+		if (fullName_dw == "Engine_executeCommand") {
+			doWrapp_dw = 0;
+		}
 	} else {
 		print("Java-AIInterface: NOTE: native level: Callback: intentionally not wrapped: " fullName_dw);
 	}

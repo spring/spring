@@ -45,7 +45,7 @@ namespace QTPFS {
 		PATH_TYPE_LIVE = 1,
 		PATH_TYPE_DEAD = 2,
 	};
-};
+}
 
 #endif
 

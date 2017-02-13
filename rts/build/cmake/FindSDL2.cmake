@@ -3,6 +3,7 @@
 # SDL2_LIBRARY, the name of the library to link against
 # SDL2_FOUND, if false, do not try to link to SDL2
 # SDL2_INCLUDE_DIR, where to find SDL.h
+# SDL2_VERSION_STRING the version found
 #
 # This module responds to the the flag:
 # SDL2_BUILDING_LIBRARY
@@ -87,6 +88,23 @@ FIND_PATH(SDL2_INCLUDE_DIR SDL.h
   /opt
 )
 
+if(SDL2_INCLUDE_DIR AND EXISTS "${SDL2_INCLUDE_DIR}/SDL_version.h")
+  file(STRINGS "${SDL2_INCLUDE_DIR}/SDL_version.h" SDL2_VERSION_MAJOR_LINE REGEX "^#define[ \t]+SDL_MAJOR_VERSION[ \t]+[0-9]+$")
+  file(STRINGS "${SDL2_INCLUDE_DIR}/SDL_version.h" SDL2_VERSION_MINOR_LINE REGEX "^#define[ \t]+SDL_MINOR_VERSION[ \t]+[0-9]+$")
+  file(STRINGS "${SDL2_INCLUDE_DIR}/SDL_version.h" SDL2_VERSION_PATCH_LINE REGEX "^#define[ \t]+SDL_PATCHLEVEL[ \t]+[0-9]+$")
+  string(REGEX REPLACE "^#define[ \t]+SDL_MAJOR_VERSION[ \t]+([0-9]+)$" "\\1" SDL_VERSION_MAJOR "${SDL2_VERSION_MAJOR_LINE}")
+  string(REGEX REPLACE "^#define[ \t]+SDL_MINOR_VERSION[ \t]+([0-9]+)$" "\\1" SDL_VERSION_MINOR "${SDL2_VERSION_MINOR_LINE}")
+  string(REGEX REPLACE "^#define[ \t]+SDL_PATCHLEVEL[ \t]+([0-9]+)$" "\\1" SDL_VERSION_PATCH "${SDL2_VERSION_PATCH_LINE}")
+  set(SDL2_VERSION_STRING ${SDL_VERSION_MAJOR}.${SDL_VERSION_MINOR}.${SDL_VERSION_PATCH})
+  unset(SDL2_VERSION_MAJOR_LINE)
+  unset(SDL2_VERSION_MINOR_LINE)
+  unset(SDL2_VERSION_PATCH_LINE)
+  unset(SDL2_VERSION_MAJOR)
+  unset(SDL2_VERSION_MINOR)
+  unset(SDL2_VERSION_PATCH)
+endif()
+
+
 
 FIND_LIBRARY(SDL2_LIBRARY_TEMP
   NAMES SDL2
@@ -128,15 +146,6 @@ ENDIF(NOT SDL2_BUILDING_LIBRARY)
 IF(NOT APPLE)
   FIND_PACKAGE(Threads)
 ENDIF(NOT APPLE)
-
-
-# MinGW needs an additional library, mwindows
-# It's total link flags should look like -lmingw32 -lSDL2main -lSDL2 -lmwindows
-# (Actually on second look, I think it only needs one of the m* libraries.)
-IF(MINGW)
-  SET(MINGW32_LIBRARY mingw32 CACHE STRING "mwindows for MinGW")
-ENDIF(MINGW)
-
 
 SET(SDL2_FOUND "NO")
 IF(SDL2_LIBRARY_TEMP)
@@ -183,4 +192,5 @@ INCLUDE(FindPackageHandleStandardArgs)
 
 
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(SDL2
-				  REQUIRED_VARS SDL2_LIBRARY SDL2_INCLUDE_DIR)
+				  REQUIRED_VARS SDL2_LIBRARY SDL2_INCLUDE_DIR
+				  VERSION_VAR SDL2_VERSION_STRING)

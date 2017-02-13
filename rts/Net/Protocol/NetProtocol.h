@@ -4,8 +4,7 @@
 #define NET_PROTOCOL_H
 
 #include <string>
-#include <boost/scoped_ptr.hpp>
-#include <boost/shared_ptr.hpp>
+#include <memory>
 
 #include "BaseNetProtocol.h" // not used in here, but in all files including this one
 
@@ -56,9 +55,9 @@ public:
 	 * @brief Take a look at the messages in the recieve buffer (read-only)
 	 * @return A RawPacket holding the data, or 0 if no data
 	 * @param ahead How many packets to look ahead. A typical usage would be:
-	 * for (int ahead = 0; (packet = net->Peek(ahead)) != NULL; ++ahead) {}
+	 * for (int ahead = 0; (packet = clientNet->Peek(ahead)) != NULL; ++ahead) {}
 	 */
-	boost::shared_ptr<const netcode::RawPacket> Peek(unsigned ahead) const;
+	std::shared_ptr<const netcode::RawPacket> Peek(unsigned ahead) const;
 
 	/**
 	 * @brief Deletes a packet from the buffer
@@ -78,12 +77,12 @@ public:
 	 * so call this until you get a 0 in return.
 	 * When a demo recorder is present it will be recorded.
 	 */
-	boost::shared_ptr<const netcode::RawPacket> GetData(int framenum);
+	std::shared_ptr<const netcode::RawPacket> GetData(int framenum);
 
 	/**
 	 * @brief Send a message to the server
 	 */
-	void Send(boost::shared_ptr<const netcode::RawPacket> pkt);
+	void Send(std::shared_ptr<const netcode::RawPacket> pkt);
 	/// @overload
 	void Send(const netcode::RawPacket* pkt);
 
@@ -109,14 +108,14 @@ public:
 private:
 	volatile bool keepUpdating;
 
-	boost::scoped_ptr<netcode::CConnection> serverConn;
-	boost::scoped_ptr<CDemoRecorder> demoRecorder;
+	std::unique_ptr<netcode::CConnection> serverConn;
+	std::unique_ptr<CDemoRecorder> demoRecorder;
 
 	std::string userName;
 	std::string userPasswd;
 };
 
-extern CNetProtocol* net;
+extern CNetProtocol* clientNet;
 
 #endif // NET_PROTOCOL_H
 

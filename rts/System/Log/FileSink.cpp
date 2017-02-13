@@ -20,11 +20,11 @@ namespace {
 
 	struct LogFileDetails {
 		LogFileDetails(FILE* outStream = NULL, const std::string& sections = "",
-				int minLevel = LOG_LEVEL_ALL, bool flush = true)
+				int minLevel = LOG_LEVEL_ALL, int flushLevel = LOG_LEVEL_ERROR)
 			: outStream(outStream)
 			, sections(sections)
 			, minLevel(minLevel)
-			, flush(flush)
+			, flushLevel(flushLevel)
 		{}
 
 		FILE* GetOutStream() const {
@@ -36,15 +36,15 @@ namespace {
 					|| (sections.find("," + std::string(section) + ",")
 					!= std::string::npos)));
 		}
-		bool FlushOnWrite() const {
-			return flush;
+		bool FlushOnWrite(int level) const {
+			return (level >= flushLevel);
 		}
 
 	private:
 		FILE* outStream;
 		std::string sections;
 		int minLevel;
-		bool flush;
+		int flushLevel;
 	};
 	typedef std::map<std::string, LogFileDetails> logFiles_t;
 
@@ -131,16 +131,9 @@ namespace {
 
 		for (auto lfi = logFiles.begin(); lfi != logFiles.end(); ++lfi) {
 			if (lfi->second.IsLogging(section, level) && (lfi->second.GetOutStream() != NULL)) {
-				log_file_writeToFile(lfi->second.GetOutStream(), record, lfi->second.FlushOnWrite());
+				log_file_writeToFile(lfi->second.GetOutStream(), record, lfi->second.FlushOnWrite(level));
 			}
 		}
-	}
-
-	/**
-	 * Flushes the buffer of a single log file.
-	 */
-	void log_file_flushFile(FILE* outStream) {
-		fflush(outStream);
 	}
 
 	/**
@@ -151,7 +144,7 @@ namespace {
 
 		for (auto lfi = logFiles.begin(); lfi != logFiles.end(); ++lfi) {
 			if (lfi->second.GetOutStream() != NULL) {
-				log_file_flushFile(lfi->second.GetOutStream());
+				fflush(lfi->second.GetOutStream());
 			}
 		}
 	}
@@ -182,7 +175,7 @@ namespace {
 extern "C" {
 #endif
 
-void log_file_addLogFile(const char* filePath, const char* sections, int minLevel, bool flush) {
+void log_file_addLogFile(const char* filePath, const char* sections, int minLevel, int flushLevel) {
 	assert(filePath != NULL);
 
 	logFiles_t& logFiles = log_file_getLogFiles();
@@ -202,7 +195,7 @@ void log_file_addLogFile(const char* filePath, const char* sections, int minLeve
 	setvbuf(tmpStream, NULL, _IOFBF, (BUFSIZ < 8192) ? BUFSIZ : 8192); // limit buffer to 8kB
 
 	const std::string sectionsStr = (sections == NULL) ? "" : sections;
-	logFiles[filePathStr] = LogFileDetails(tmpStream, sectionsStr, minLevel, flush);
+	logFiles[filePathStr] = LogFileDetails(tmpStream, sectionsStr, minLevel, flushLevel);
 }
 
 void log_file_removeLogFile(const char* filePath) {

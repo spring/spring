@@ -1,33 +1,50 @@
 
 #include "System/Net/UDPListener.h"
+#include "System/Log/ILog.h"
+
 
 #define BOOST_TEST_MODULE UDPListener
 #include <boost/test/unit_test.hpp>
 
-static inline bool TryBindAddr(netcode::SocketPtr& socket, const char* address) {
-	return netcode::UDPListener::TryBindSocket(11111, &socket, address).empty();
-}
+class SocketTest {
+public:
+	SocketTest(){
+	}
+	void TestPort(int port, bool result = true)
+	{
+		const std::string& err = netcode::UDPListener::TryBindSocket(port, &socket, "::");
+		BOOST_CHECK_MESSAGE(err.empty() == result, err.c_str());
 
-static inline bool TryBindPort(netcode::SocketPtr& socket, int port) {
-	return netcode::UDPListener::TryBindSocket(port, &socket, "::").empty();
-}
+	}
+	void TestHost(const char* address, bool result = true)
+	{
+		const std::string& err = netcode::UDPListener::TryBindSocket(11111, &socket, address);
+		BOOST_CHECK_MESSAGE(err.empty() == result, err.c_str());
+	}
+private:
+	netcode::SocketPtr socket;
+};
 
 BOOST_AUTO_TEST_CASE(TryBindSocket)
 {
-	netcode::SocketPtr socket;
+	SocketTest t;
 
 	// IP v4 & v6 addresses
-	BOOST_CHECK(TryBindAddr(socket, "127.0.0.1"));
-	BOOST_CHECK(TryBindAddr(socket, "0.0.0.0"));
-	BOOST_CHECK(TryBindAddr(socket, "::"));
-	BOOST_CHECK(TryBindAddr(socket, "::1"));
+	LOG("\nIP v4 & v6 addresses");
+	t.TestHost("127.0.0.1");
+	t.TestHost("0.0.0.0");
+	t.TestHost("::");
+	t.TestHost("::1");
+
 
 	// badly named invalid IP v6 addresses
-	BOOST_CHECK(!TryBindAddr(socket, "::2"));
-	BOOST_CHECK(!TryBindAddr(socket, "fe80::224:1dff:fecf:df44/64"));
-	BOOST_CHECK(!TryBindAddr(socket, "fe80::224:1dff:fecf:df44"));
-	BOOST_CHECK(!TryBindAddr(socket, "::224:1dff:fecf:df44/64"));
-	BOOST_CHECK(!TryBindAddr(socket, "fe80::"));
+	LOG("\nbadly named invalid IP v6 addresses");
+	t.TestHost("::2", false);
+	t.TestHost("fe80::224:1dff:fecf:df44/64", false);
+	t.TestHost("fe80::224:1dff:fecf:df44", false);
+	t.TestHost("::224:1dff:fecf:df44/64", false);
+	t.TestHost("fe80::", false);
+	t.TestHost("fe80", false);
 	/*
 		FIXME: for some reason this test works on windows (binds to ipv4 0.0.0.224) and fails on linux/osx
 
@@ -36,29 +53,33 @@ BOOST_AUTO_TEST_CASE(TryBindSocket)
 		::ffff:x:y/96 is new IPv4-Mapped IPv6 Address
 		http://tools.ietf.org/html/rfc4291 sections 2.5.5.1 and 2.5.5.2
 	*/
-	//	BOOST_CHECK(!TryBindAddr(socket, "224:1dff:fecf:df44/64"));
+	//	TestHost("224:1dff:fecf:df44/64", false);
 
-	BOOST_CHECK(!TryBindAddr(socket, "fe80"));
 
 	// host-names
-	BOOST_CHECK(TryBindAddr(socket, "localhost"));
-	BOOST_CHECK(!TryBindAddr(socket, "local.lan"));
-	BOOST_CHECK(!TryBindAddr(socket, "google.com"));
+	LOG("\nhost-names");
+	t.TestHost("localhost");
+	t.TestHost("local.lan", false);
+	t.TestHost("google.com", false);
 
 	// normal ports
-	BOOST_CHECK(TryBindPort(socket, 1024));
-	BOOST_CHECK(TryBindPort(socket, 11111));
-	BOOST_CHECK(TryBindPort(socket, 32000));
-	BOOST_CHECK(TryBindPort(socket, 65535));
+	LOG("\nnormal ports");
+	t.TestPort(1024);
+	t.TestPort(11111);
+	t.TestPort(32000);
+	t.TestPort(65535);
 
 	// special ports (reserved for core services)
-	BOOST_WARN(!TryBindPort(socket, 0));
-	BOOST_WARN(!TryBindPort(socket, 1));
-	BOOST_WARN(!TryBindPort(socket, 128));
-	BOOST_WARN(!TryBindPort(socket, 1023));
-
+/*
+	t.TestPort(0, false); //port 0 binds to a random port
+	t.TestPort(1, false); // <1024 usally requires root permissions
+	t.TestPort(128, false);
+	t.TestPort(1023, false);
+*/
 	// out-of-range ports
-	BOOST_CHECK(!TryBindPort(socket, 65536));
-	BOOST_CHECK(!TryBindPort(socket, 65537));
-	BOOST_CHECK(!TryBindPort(socket, -1));
+	LOG("\nout-of-range ports");
+	t.TestPort(65536, false);
+	t.TestPort(65537, false);
+	t.TestPort(-1, false);
 }
+

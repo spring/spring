@@ -13,7 +13,7 @@ class CUnitScript;
 
 struct NanoPieceCache
 {
-	CR_DECLARE_STRUCT(NanoPieceCache);
+	CR_DECLARE_STRUCT(NanoPieceCache)
 
 public:
 	NanoPieceCache(): lastNanoPieceCnt(0), curBuildPowerMask(0) {

@@ -37,8 +37,6 @@
 
 #ifdef __cplusplus
 extern "C" {
-#else
-	#include "System/booldefines.h"
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -117,9 +115,9 @@ extern void log_frontend_cleanup();
  * Pre-processor trickery, useful to create unique identifiers.
  * see http://stackoverflow.com/questions/461062/c-anonymous-variables
  */
-#define _CONCAT_SUB(start, end)   start##end
-#define _CONCAT(start, end)   _CONCAT_SUB(start, end)
-#define _UNIQUE_IDENT(prefix)   _CONCAT(prefix##__, _CONCAT(_CONCAT(__COUNTER__, __), __LINE__))
+#define _STR_CONCAT_SUB(start, end)   start##end
+#define _STR_CONCAT(start, end)   _STR_CONCAT_SUB(start, end)
+#define _UNIQUE_IDENT(prefix)   _STR_CONCAT(prefix##__, _STR_CONCAT(_STR_CONCAT(__COUNTER__, __), __LINE__))
 
 // Register a section (only the first time the code is run)
 #if       defined(__cplusplus)
@@ -140,7 +138,7 @@ extern void log_frontend_cleanup();
 		_LOG_REGISTER_SECTION_SUB(section, _UNIQUE_IDENT(SectionRegistrator))
 	#define _LOG_REGISTER_SECTION_GLOBAL(section) \
 		namespace { \
-			_LOG_REGISTER_SECTION(section); \
+			_LOG_REGISTER_SECTION(section) \
 		} // namespace
 #else  // defined(__cplusplus)
 	/*
@@ -240,7 +238,7 @@ extern void log_frontend_cleanup();
  * NOTE: This is supported in C++ only, not in C.
  */
 #define LOG_REGISTER_SECTION_GLOBAL(section) \
-	_LOG_REGISTER_SECTION_GLOBAL(section);
+	_LOG_REGISTER_SECTION_GLOBAL(section)
 
 /**
  * Returns whether logging for the current section and the supplied level is

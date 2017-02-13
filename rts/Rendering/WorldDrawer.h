@@ -9,8 +9,23 @@ public:
 	CWorldDrawer();
 	~CWorldDrawer();
 
-	void Update();
-	void Draw();
+	void LoadPre() const;
+	void LoadPost() const;
+
+	void Update(bool newSimFrame);
+	void Draw() const;
+
+	void GenerateIBLTextures() const;
+	void ResetMVPMatrices() const;
+
+private:
+	void DrawOpaqueObjects() const;
+	void DrawAlphaObjects() const;
+	void DrawMiscObjects() const;
+	void DrawBelowWaterOverlay() const;
+
+private:
+	unsigned int numUpdates;
 };
 
 #endif // _WORLD_DRAWER_H

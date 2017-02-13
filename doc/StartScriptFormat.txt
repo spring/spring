@@ -26,15 +26,16 @@
 [GAME]
 {
 	MapName=;           // with .smf extension
-	GameType=Balanced Annihilation V6.81; // the primary mod NAME (archive works too, but name is prefered)
+	GameType=Balanced Annihilation V6.81; // either primary mod NAME, rapid tag name or archive name
 	GameStartDelay=4;   // optional, in seconds (unsigned int), default: 4
 	                    // The number of seconds till the game starts,
 	                    // counting from the moment when all players are connected and ready.
 	ScriptName=Commanders;
 	StartPosType=x;     // 0 fixed, 1 random, 2 choose in game, 3 choose before game (see StartPosX)
 
-	DemoFile=demo.sdf;  // if set this game is a multiplayer demo replay
+	DemoFile=demo.sdfz; // if set this game is a multiplayer demo replay
 	SaveFile=save.ssf;  // if set this game is a continuation of a saved game
+	RecordDemo=1;       // set to 0 to disable demo file recording
 
 	HostIP=xxx.xxx.xxx.xxx; // (optional) which IP to host on. omit or use an empty value to host on any local IP. see "IP Support" at the start of this document.
 	HostPort=xxx;       // (optional) default is 8452. where clients are going to connect to.

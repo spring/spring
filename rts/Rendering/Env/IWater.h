@@ -30,21 +30,26 @@ public:
 	virtual int  GetID() const { return -1; }
 	virtual const char* GetName() const { return ""; }
 
-	virtual void ExplosionOccurred(const CExplosionEvent& event);
+	void ExplosionOccurred(const CExplosionParams& event) override;
 
 	bool DrawReflectionPass() const { return drawReflection; }
 	bool DrawRefractionPass() const { return drawRefraction; }
-	bool DrawSolid() const { return drawSolid; }
 	bool BlockWakeProjectiles() const { return (GetID() == WATER_RENDERER_DYNAMIC); }
 
-	static IWater* GetWater(IWater* currWaterRenderer, int nextWaterRenderMode);
+	static IWater* GetWater(IWater* curRenderer, int nxtRendererMode);
+
 	static void ApplyPushedChanges(CGame* game);
-	static void PushWaterMode(int nextWaterRenderMode);
+	static void PushWaterMode(int nxtRendererMode);
+
+	static void SetModelClippingPlane(const double* planeEq);
+
+protected:
+	void DrawReflections(const double* clipPlaneEqs, bool drawGround, bool drawSky);
+	void DrawRefractions(const double* clipPlaneEqs, bool drawGround, bool drawSky);
 
 protected:
 	bool drawReflection;
 	bool drawRefraction;
- 	bool drawSolid;
 };
 
 extern IWater* water;

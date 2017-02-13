@@ -3,54 +3,72 @@
 #ifndef IMODELPARSER_H
 #define IMODELPARSER_H
 
-#include <map>
+#include <vector>
 #include <string>
-#include <list>
 
-#include "System/Matrix44f.h"
-#include "3DModel.h"
+#include "System/UnorderedMap.hpp"
+#include "System/Threading/SpringThreading.h"
 
+
+struct S3DModel;
+struct S3DModelPiece;
 
 class IModelParser
 {
 public:
 	virtual ~IModelParser() {}
 	virtual S3DModel* Load(const std::string& name) = 0;
-	virtual ModelType GetType() const = 0;
 };
 
-class C3DModelLoader
+
+
+
+
+class CModelLoader
 {
 public:
-	C3DModelLoader();
-	~C3DModelLoader();
+	static CModelLoader& GetInstance();
 
-	void CreateLocalModel(LocalModel* model);
-	void DeleteLocalModel(LocalModel* model);
+	void Init();
+	void Kill();
 
+	S3DModel* LoadModel(std::string name, bool preload = false);
 	std::string FindModelPath(std::string name) const;
-	S3DModel* Load3DModel(std::string modelName);
 
-	typedef std::map<std::string, unsigned int> ModelMap; // "armflash.3do" --> id
-	typedef std::map<std::string, unsigned int> FormatMap; // "3do" --> MODELTYPE_3DO
-	typedef std::map<unsigned int, IModelParser*> ParserMap; // MODELTYPE_3DO --> parser
+	bool IsValid() const { return (!formats.empty()); }
+	void PreloadModel(const std::string& name);
+
+public:
+	typedef spring::unordered_map<std::string, unsigned int> ModelMap; // "armflash.3do" --> id
+	typedef spring::unordered_map<std::string, unsigned int> FormatMap; // "3do" --> MODELTYPE_3DO
+	typedef spring::unordered_map<unsigned int, IModelParser*> ParserMap; // MODELTYPE_3DO --> parser
 
 private:
-	void AddModelToCache(S3DModel* model, const std::string& modelName, const std::string& modelPath);
-	void CreateLists(S3DModelPiece* o);
+	S3DModel* LoadCachedModel(const std::string& name, bool preload);
+	S3DModel* CreateModel(const std::string& name, const std::string& path, bool preload);
+	S3DModel* ParseModel(const std::string& name, const std::string& path);
+
+	IModelParser* GetFormatParser(const std::string& pathExt);
+
+	void KillModels();
+	void KillParsers();
+
+	void AddModelToCache(S3DModel* model, const std::string& name, const std::string& path);
+
+	void CreateLists(S3DModel* o);
 	void CreateListsNow(S3DModelPiece* o);
 
+private:
 	ModelMap cache;
 	FormatMap formats;
 	ParserMap parsers;
 
-	std::vector<S3DModel*> models;
-	std::list<S3DModelPiece*> createLists;
+	spring::mutex mutex;
 
-	std::list<LocalModel*> fixLocalModels;
-	std::list<LocalModel*> deleteLocalModels;
+	// all unique models loaded so far
+	std::vector<S3DModel*> models;
 };
 
-extern C3DModelLoader* modelParser;
+#define modelLoader (CModelLoader::GetInstance())
 
 #endif /* IMODELPARSER_H */

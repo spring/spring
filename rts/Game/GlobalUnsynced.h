@@ -4,8 +4,7 @@
 #define _GLOBAL_UNSYNCED_H
 
 #include "System/creg/creg_cond.h"
-#include "System/float3.h"
-#include "System/UnsyncedRNG.h"
+#include "System/GlobalRNG.h"
 
 class CPlayer;
 class CGameSetup;
@@ -16,22 +15,19 @@ class CGameSetup;
  * Contains globally accessible data that does not remain synced
  */
 class CGlobalUnsynced {
-	CR_DECLARE_STRUCT(CGlobalUnsynced);
+public:
+	CR_DECLARE_STRUCT(CGlobalUnsynced)
 
 	CGlobalUnsynced();
 	~CGlobalUnsynced();
 
-	static UnsyncedRNG rng;
-
-public:
-	int    RandInt()    { return rng.RandInt(); }    //!< random int [0, (INT_MAX & 0x7FFF))
-	float  RandFloat()  { return rng.RandFloat(); }  //!< random float [0, 1)
-	float3 RandVector() { return rng.RandVector(); } //!< random vector with length = [0, 1)
-
+	void ResetState();
 	void LoadFromSetup(const CGameSetup* setup);
+
 	void SetMyPlayer(const int myNumber);
 	CPlayer* GetMyPlayer();
 
+public:
 	/**
 	 * @brief minimum FramesPerSecond
 	 *
@@ -56,7 +52,7 @@ public:
 
 	/**
 	 * @brief simulation frames per second
-	 * 
+	 *
 	 * Should normally be:
 	 * simFPS ~= GAME_SPEED * gs->wantedSpeedFactor;
 	 * Only differs if the client lags or reconnects.
@@ -172,8 +168,12 @@ public:
 	* wants to quit
 	*/
 	volatile bool globalQuit;
+	volatile bool globalReload;
+	std::string reloadScript;
 };
 
+
 extern CGlobalUnsynced* gu;
+extern CGlobalUnsyncedRNG guRNG;
 
 #endif /* _GLOBAL_UNSYNCED_H */

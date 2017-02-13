@@ -229,20 +229,15 @@ function printNativeFP2F() {
 			print("\t" "internal_ret = id_clb[skirmishAIId]->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, " topicName ", &commandData);") >> outFile_nc;
 			print("") >> outFile_nc;
 
-			if (retParam != "") {
-				print("\t" "internal_ret = commandData." retParam ";") >> outFile_nc;
-			}
-
 			if (hasRetType) {
-				# this is unused, delete
 				print("\t" "if (internal_ret == 0) {") >> outFile_nc;
-				print("\t\t" "internal_ret = commandData." retParam ";") >> outFile_nc;
+				print("\t\t" "return commandData." retParam ";") >> outFile_nc;
 				print("\t" "} else {") >> outFile_nc;
-				print("\t\t" "internal_ret = 0;") >> outFile_nc;
+				print("\t\t" "return (" retType ")0;") >> outFile_nc;
 				print("\t" "}") >> outFile_nc;
+			} else {
+				print("\t" "return internal_ret;") >> outFile_nc;
 			}
-
-			print("\t" "return internal_ret;") >> outFile_nc;
 			print("}") >> outFile_nc;
 
 			if (match(fullName, /^Unit_/)) {

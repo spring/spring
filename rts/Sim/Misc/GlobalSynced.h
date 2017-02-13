@@ -3,11 +3,8 @@
 #ifndef _GLOBAL_SYNCED_H
 #define _GLOBAL_SYNCED_H
 
-#include <string>
-
-#include "System/float3.h"
 #include "System/creg/creg_cond.h"
-#include "GlobalConstants.h"
+#include "System/GlobalRNG.h"
 
 
 class CGameSetup;
@@ -23,22 +20,20 @@ class CPlayer;
 class CGlobalSynced
 {
 public:
-	CR_DECLARE_STRUCT(CGlobalSynced);
+	CR_DECLARE_STRUCT(CGlobalSynced)
 
 	CGlobalSynced();  //!< Constructor
 	~CGlobalSynced(); //!< Destructor
+
+	void ResetState();
 	void LoadFromSetup(const CGameSetup*);
 
-	int    randInt();    //!< synced random int
-	float  randFloat();  //!< synced random float
-	float3 randVector(); //!< synced random vector
+	// Lua should never see the pre-simframe value
+	int GetLuaSimFrame() { return (frameNum > 0) ? frameNum : 0; }
+	int GetTempNum() { return tempNum++; }
 
-	void SetRandSeed(unsigned int seed, bool init = false) {
-		randSeed = seed;
-		if (init) { initRandSeed = randSeed; }
-	}
-	unsigned int GetRandSeed()     const { return randSeed; }
-	unsigned int GetInitRandSeed() const { return initRandSeed; }
+	// remains true until first SimFrame call
+	bool PreSimFrame() const { return (frameNum == -1); }
 
 public:
 	/**
@@ -47,6 +42,7 @@ public:
 	* Stores the current frame number
 	*/
 	int frameNum;
+
 
 	/**
 	* @brief speed factor
@@ -68,6 +64,7 @@ public:
 	*/
 	float wantedSpeedFactor;
 
+
 	/**
 	* @brief paused
 	*
@@ -76,84 +73,12 @@ public:
 	bool paused;
 
 	/**
-	* @brief map x
-	*
-	* The map's number of squares in the x direction
-	* (note that the number of vertices is one more)
-	*/
-	int mapx;
-	int mapxm1; // mapx minus one
-	int mapxp1; // mapx plus one
-
-	/**
-	* @brief map y
-	*
-	* The map's number of squares in the y direction
-	*/
-	int mapy;
-	int mapym1; // mapy minus one
-	int mapyp1; // mapy plus one
-
-	/**
-	* @brief map squares
-	*
-	* Total number of squares on the map
-	*/
-	int mapSquares;
-
-	/**
-	* @brief half map x
-	*
-	* Contains half of the number of squares in the x direction
-	*/
-	int hmapx;
-
-	/**
-	* @brief half map y
-	*
-	* Contains half of the number of squares in the y direction
-	*/
-	int hmapy;
-
-	/**
-	* @brief map x power of 2
-	*
-	* Map's size in the x direction rounded
-	* up to the next power of 2
-	*/
-	int pwr2mapx;
-
-	/**
-	* @brief map y power of 2
-	*
-	* Map's size in the y direction rounded
-	* up to the next power of 2
-	*/
-	int pwr2mapy;
-
-	/**
-	* @brief temp num
-	*
-	* Used for getting temporary but unique numbers
-	* (increase after each use)
-	*/
-	int tempNum;
-
-	/**
 	* @brief god mode
 	*
 	* Whether god-mode is enabled, which allows all players (even spectators)
 	* to control all units.
 	*/
 	bool godMode;
-
-	/**
-	* @brief global line-of-sight
-	*
-	* Whether everything on the map is visible at all times to a given ALLYteam
-	* There can never be more allyteams than teams, hence the size is MAX_TEAMS
-	*/
-	bool globalLOS[MAX_TEAMS];
 
 	/**
 	* @brief cheat enabled
@@ -185,30 +110,17 @@ public:
 
 private:
 	/**
-	* @brief random seed
+	* @brief temp num
 	*
-	* Holds the synced random seed
+	* Used for getting temporary but unique numbers
+	* (increase after each use)
 	*/
-	int randSeed;
-
-	/**
-	* @brief initial random seed
-	*
-	* Holds the synced initial random seed
-	*/
-	int initRandSeed;
+	int tempNum;
 };
+
 
 extern CGlobalSynced* gs;
-
-
-class SyncedRNG
-{
-public:
-	int operator()(unsigned N)
-	{
-		return gs->randInt()%N;
-	};
-};
+extern CGlobalSyncedRNG gsRNG;
 
 #endif // _GLOBAL_SYNCED_H
+

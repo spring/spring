@@ -21,6 +21,9 @@ public:
 	static CStartPosSelecter* GetSelector() { return selector; }
 
 private:
+	void DrawStartBox() const;
+
+private:
 	ContainerBox readyBox;
 	float3 setStartPos;
 

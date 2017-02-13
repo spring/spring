@@ -9,8 +9,16 @@
 
 #include "AAIMap.h"
 #include "AAI.h"
-#include "AAISector.h"
 #include "AAIBuildTable.h"
+#include "AAIBrain.h"
+#include "AAIConfig.h"
+#include "AAISector.h"
+
+#include "System/Util.h"
+#include "LegacyCpp/UnitDef.h"
+using namespace springLegacyAI;
+
+#define MAP_CACHE_PATH "cache/"
 
 int AAIMap::xSize;
 int AAIMap::ySize;
@@ -62,9 +70,6 @@ list<int> AAIMap::map_categories_id;
 
 AAIMap::AAIMap(AAI *ai)
 {
-	// initialize random numbers generator
-	srand ( time(NULL) );
-
 	this->ai = ai;
 	initialized = false;
 }
@@ -76,7 +81,7 @@ AAIMap::~AAIMap(void)
 	{
 		Learn();
 
-		const std::string mapLearn_filename = LocateMapLearnFile(true);
+		const std::string mapLearn_filename = LocateMapLearnFile();
 
 		// save map data
 		FILE *save_file = fopen(mapLearn_filename.c_str(), "w+");
@@ -251,7 +256,7 @@ void AAIMap::ReadMapCacheFile()
 	const size_t buffer_sizeMax = 512;
 	char buffer[buffer_sizeMax];
 
-	const std::string mapCache_filename = LocateMapCacheFile(false);
+	const std::string mapCache_filename = LocateMapCacheFile();
 
 	FILE *file;
 
@@ -340,7 +345,7 @@ void AAIMap::ReadMapCacheFile()
 
 		//////////////////////////////////////////////////////////////////////////////////////////////////////
 		// save mod independent map data
-		const std::string mapCache_filename = LocateMapCacheFile(true);
+		const std::string mapCache_filename = LocateMapCacheFile();
 
 		file = fopen(mapCache_filename.c_str(), "w+");
 
@@ -451,37 +456,16 @@ void AAIMap::ReadMapCacheFile()
 	}
 }
 
+
+
 void AAIMap::ReadContinentFile()
 {
-	// this size equals the one used in "AIAICallback::GetValue(AIVAL_LOCATE_FILE_..."
-	static const size_t buffer_sizeMax = 2048;
-	char buffer[buffer_sizeMax];
-	STRCPY(buffer, MAIN_PATH);
-	STRCAT(buffer, MAP_CACHE_PATH);
-	std::string mapName = MakeFileSystemCompatible(ai->Getcb()->GetMapName());
-	mapName.resize(mapName.size() - 4); // cut off extension
-	STRCAT(buffer, mapName.c_str());
-	STRCAT(buffer, "-");
-	const std::string mapHash = IntToString(ai->Getcb()->GetMapHash(), "%x");
-	STRCAT(buffer, mapHash.c_str());
-	STRCAT(buffer, "_");
-	const std::string modHumanName = MakeFileSystemCompatible(ai->Getcb()->GetModHumanName());
-	STRCAT(buffer, modHumanName.c_str());
-	STRCAT(buffer, "-");
-	const std::string modHash = IntToString(ai->Getcb()->GetModHash(), "%x");
-	STRCAT(buffer, modHash.c_str());
-	STRCAT(buffer, ".dat");
-	char filename[buffer_sizeMax];
-	STRCPY(filename, buffer);
-
-	// as we will have to write to the file later on anyway,
-	// we want it writable
-	ai->Getcb()->GetValue(AIVAL_LOCATE_FILE_W, filename);
-
-	FILE* file = fopen(filename, "r");
+	const std::string filename = cfg->GetFileName(ai, cfg->getUniqueName(ai, true, true, true, true), MAP_CACHE_PATH, "_continent.dat", true);
+	FILE* file = fopen(filename.c_str(), "r");
 
 	if(file != NULL)
 	{
+		char buffer[4096];
 		// check if correct version
 		fscanf(file, "%s ", buffer);
 
@@ -538,17 +522,8 @@ void AAIMap::ReadContinentFile()
 
 	//////////////////////////////////////////////////////////////////////////////////////////////////////
 	// save movement maps
-	STRCPY(buffer, MAIN_PATH);
-	STRCAT(buffer, MAP_CACHE_PATH);
-	STRCAT(buffer, mapName.c_str());
-	STRCAT(buffer, "_");
-	STRCAT(buffer, modHumanName.c_str());
-	STRCAT(buffer, ".dat");
-	STRCPY(filename, buffer);
-
-	ai->Getcb()->GetValue(AIVAL_LOCATE_FILE_W, filename);
-
-	file = fopen(filename, "w+");
+	const std::string movementfile = cfg->GetFileName(ai, cfg->getUniqueName(ai, true, false, true, false), MAP_CACHE_PATH, "_movement.dat", true);
+	file = fopen(movementfile.c_str(), "w+");
 
 	fprintf(file, "%s\n",  CONTINENT_DATA_VERSION);
 
@@ -575,67 +550,20 @@ void AAIMap::ReadContinentFile()
 	fclose(file);
 }
 
-std::string AAIMap::LocateMapLearnFile(const bool forWriting) const {
-
-	// this size equals the one used in "AIAICallback::GetValue(AIVAL_LOCATE_FILE_..."
-	const size_t buffer_sizeMax = 2048;
-	char buffer[buffer_sizeMax];
-
-	STRCPY(buffer, MAIN_PATH);
-	STRCAT(buffer, MAP_LEARN_PATH);
-	std::string mapName = MakeFileSystemCompatible(ai->Getcb()->GetMapName());
-	mapName.resize(mapName.size() - 4); // cut off extension
-	STRCAT(buffer, mapName.c_str());
-	STRCAT(buffer, "-");
-	const std::string mapHash = IntToString(ai->Getcb()->GetMapHash(), "%x");
-	STRCAT(buffer, mapHash.c_str());
-	STRCAT(buffer, "_");
-	const std::string modHumanName = MakeFileSystemCompatible(ai->Getcb()->GetModHumanName());
-	STRCAT(buffer, modHumanName.c_str());
-	STRCAT(buffer, "-");
-	const std::string modHash = IntToString(ai->Getcb()->GetModHash(), "%x");
-	STRCAT(buffer, modHash.c_str());
-	STRCAT(buffer, ".dat");
-
-	if (forWriting) {
-		ai->Getcb()->GetValue(AIVAL_LOCATE_FILE_W, buffer);
-	} else {
-		ai->Getcb()->GetValue(AIVAL_LOCATE_FILE_R, buffer);
-	}
-
-	return std::string(buffer);
+std::string AAIMap::LocateMapLearnFile() const
+{
+	return cfg->GetFileName(ai, cfg->getUniqueName(ai, true, true, true, true), MAP_LEARN_PATH, "_maplearn.dat", true);
 }
 
-std::string AAIMap::LocateMapCacheFile(const bool forWriting) const {
-
-	// this size equals the one used in "AIAICallback::GetValue(AIVAL_LOCATE_FILE_..."
-	const size_t buffer_sizeMax = 2048;
-	char buffer[buffer_sizeMax];
-
-	STRCPY(buffer, MAIN_PATH);
-	STRCAT(buffer, MAP_CACHE_PATH);
-	std::string mapName = MakeFileSystemCompatible(ai->Getcb()->GetMapName());
-	mapName.resize(mapName.size() - 4); // cut off extension
-	STRCAT(buffer, mapName.c_str());
-	STRCAT(buffer, "-");
-	const std::string mapHash = IntToString(ai->Getcb()->GetMapHash(), "%x");
-	STRCAT(buffer, mapHash.c_str());
-	STRCAT(buffer, ".dat");
-
-	if (forWriting) {
-		ai->Getcb()->GetValue(AIVAL_LOCATE_FILE_W, buffer);
-	} else {
-		ai->Getcb()->GetValue(AIVAL_LOCATE_FILE_R, buffer);
-	}
-
-	return std::string(buffer);
+std::string AAIMap::LocateMapCacheFile() const
+{
+	return cfg->GetFileName(ai, cfg->getUniqueName(ai, false, false, true, true), MAP_LEARN_PATH, "_mapcache.dat", true);
 }
 
 void AAIMap::ReadMapLearnFile(bool auto_set)
 {
-	const std::string mapLearn_filename = LocateMapLearnFile(false);
+	const std::string mapLearn_filename = LocateMapLearnFile();
 
-	// this size equals the one used in "AIAICallback::GetValue(AIVAL_LOCATE_FILE_..."
 	const size_t buffer_sizeMax = 2048;
 	char buffer[buffer_sizeMax];
 
@@ -1987,7 +1915,12 @@ void AAIMap::CalculateContinentMaps()
 // algorithm more or less by krogothe - thx very much
 void AAIMap::SearchMetalSpots()
 {
-	const UnitDef* def = &ai->Getbt()->GetUnitDef(ai->Getbt()->GetBiggestMex()-1);
+	const int unitid = ai->Getbt()->GetBiggestMex()-1; //WTF, why -1?
+	if (unitid <= 0) {
+		ai->Log("No metal extractor unit known!");
+		return;
+	}
+	const UnitDef* def = &ai->Getbt()->GetUnitDef(unitid);
 
 	metalMap = false;
 	bool Stopme = false;
@@ -2021,7 +1954,6 @@ void AAIMap::SearchMetalSpots()
 	// clear variables, just in case!
 	TotalMetal = 0;
 	MaxMetal = 0;
-	Stopme = 0;
 	SpotsFound = 0;
 
 	//Load up the metal Values in each pixel
@@ -2059,7 +1991,7 @@ void AAIMap::SearchMetalSpots()
 	}
 	for (int i = 0; i != TotalCells; i++) // this will get the total metal a mex placed at each spot would make
 	{
-		MexArrayB[i] = TempAverage[i] * 255 / MaxMetal;  //scale the metal so any map will have values 0-255, no matter how much metal it has
+		MexArrayB[i] = SafeDivide(TempAverage[i] * 255,  MaxMetal);  //scale the metal so any map will have values 0-255, no matter how much metal it has
 	}
 
 
@@ -2077,7 +2009,7 @@ void AAIMap::SearchMetalSpots()
 			}
 		}
 		if (TempMetal < MinMetalForSpot)
-			Stopme = 1; // if the spots get too crappy it will stop running the loops to speed it all up
+			Stopme = true; // if the spots get too crappy it will stop running the loops to speed it all up
 
 		if (!Stopme)
 		{
@@ -2148,7 +2080,7 @@ void AAIMap::SearchMetalSpots()
 									}
 								}
 							}
-							MexArrayB[y * MetalMapWidth + x] = TotalMetal * 255 / MaxMetal;; //set that spots metal amount
+							MexArrayB[y * MetalMapWidth + x] = SafeDivide(TotalMetal * 255, MaxMetal); //set that spots metal amount
 						}
 					}
 				}
@@ -2532,12 +2464,8 @@ void AAIMap::AddDefence(float3 *pos, int defence)
 		}
 	}
 
-	// this size equals the one used in "AIAICallback::GetValue(AIVAL_LOCATE_FILE_..."
-	static const size_t filename_sizeMax = 2048;
-	char filename[filename_sizeMax];
-	STRCPY(filename, "AAIDefMap.txt");
-	ai->Getcb()->GetValue(AIVAL_LOCATE_FILE_W, filename);
-	FILE* file = fopen(filename, "w+");
+	const std::string filename = cfg->GetFileName(ai, "AAIDefMap.txt", "", "", true);
+	FILE* file = fopen(filename.c_str(), "w+");
 	for(int y = 0; y < yDefMapSize; ++y)
 	{
 		for(int x = 0; x < xDefMapSize; ++x)
@@ -2677,12 +2605,8 @@ float AAIMap::GetDefenceBuildsite(float3 *best_pos, const UnitDef *def, int xSta
 
 	float range =  ai->Getbt()->units_static[def->id].range / 8.0;
 
-	// this size equals the one used in "AIAICallback::GetValue(AIVAL_LOCATE_FILE_..."
-	static const size_t filename_sizeMax = 2048;
-	char filename[filename_sizeMax];
-	STRCPY(filename, "AAIDebug.txt");
-	ai->Getcb()->GetValue(AIVAL_LOCATE_FILE_W, filename);
-	FILE* file = fopen(filename, "w+");
+	const std::string filename = cfg->GetFileName(ai, "AAIDebug.txt", "", "", true);
+	FILE* file = fopen(filename.c_str(), "w+");
 	fprintf(file, "Search area: (%i, %i) x (%i, %i)\n", xStart, yStart, xEnd, yEnd);
 	fprintf(file, "Range: %g\n", range);
 

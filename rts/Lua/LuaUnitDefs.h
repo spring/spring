@@ -8,10 +8,8 @@
 struct lua_State;
 
 class LuaUnitDefs {
-	public:
-		static bool PushEntries(lua_State* L);
-
-		static bool IsDefaultParam(const std::string& word);
+public:
+	static bool PushEntries(lua_State* L);
 };
 
 #endif /* LUA_UNITDEFS_H */

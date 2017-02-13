@@ -3,7 +3,7 @@
 #ifndef RAW_PACKET_H
 #define RAW_PACKET_H
 
-#include <boost/noncopyable.hpp>
+#include "System/Misc/NonCopyable.h"
 
 namespace netcode
 {
@@ -11,7 +11,7 @@ namespace netcode
 /**
  * @brief simple structure to hold some data
  */
-class RawPacket : public boost::noncopyable
+class RawPacket : public spring::noncopyable
 {
 public:
 	/**

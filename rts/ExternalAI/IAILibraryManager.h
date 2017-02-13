@@ -29,10 +29,8 @@ public:
 	virtual const T_interfaceSpecs& GetInterfaceKeys() const = 0;
 	virtual const T_skirmishAIKeys& GetSkirmishAIKeys() const = 0;
 
-	typedef std::map<const AIInterfaceKey, CAIInterfaceLibraryInfo*>
-			T_interfaceInfos;
-	typedef std::map<const SkirmishAIKey, CSkirmishAILibraryInfo*>
-			T_skirmishAIInfos;
+	typedef std::map<const AIInterfaceKey, CAIInterfaceLibraryInfo> T_interfaceInfos;
+	typedef std::map<const SkirmishAIKey, CSkirmishAILibraryInfo> T_skirmishAIInfos;
 
 	virtual const T_interfaceInfos& GetInterfaceInfos() const = 0;
 	virtual const T_skirmishAIInfos& GetSkirmishAIInfos() const = 0;
@@ -106,7 +104,7 @@ protected:
 			const std::string& version2);
 
 private:
-	static IAILibraryManager* myAILibraryManager;
+	static IAILibraryManager* gAILibraryManager;
 };
 
 #define aiLibManager IAILibraryManager::GetInstance()

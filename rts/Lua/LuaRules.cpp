@@ -5,7 +5,7 @@
 #include "LuaInclude.h"
 
 #include "LuaUtils.h"
-#include "LuaUnitRendering.h"
+#include "LuaObjectRendering.h"
 #include "LuaCallInCheck.h"
 
 #include "Sim/Misc/GlobalSynced.h"
@@ -14,10 +14,9 @@
 #include "Sim/Units/Scripts/CobInstance.h" // for UNPACK{X,Z}
 #include "System/Log/ILog.h"
 #include "System/FileSystem/VFSModes.h" // for SPRING_VFS_*
+#include "System/Threading/SpringThreading.h"
 
 #include <assert.h>
-#include <mutex>
-#include <boost/thread/mutex.hpp>
 
 CLuaRules* luaRules = NULL;
 
@@ -30,34 +29,10 @@ const int* CLuaRules::currentCobArgs = NULL;
 /******************************************************************************/
 /******************************************************************************/
 
-static boost::mutex m_singleton;
+static spring::mutex m_singleton;
 
-
-void CLuaRules::LoadHandler()
-{
-	{
-		std::lock_guard<boost::mutex> lk(m_singleton);
-		if (luaRules) return;
-
-		luaRules = new CLuaRules();
-	}
-
-	if (!luaRules->IsValid()) {
-		FreeHandler();
-	}
-}
-
-
-void CLuaRules::FreeHandler()
-{
-	std::lock_guard<boost::mutex> lk(m_singleton);
-	if (!luaRules) return;
-
-	auto* inst = luaRules;
-	luaRules = NULL;
-	inst->KillLua();
-	delete inst;
-}
+DECL_LOAD_HANDLER(CLuaRules, luaRules)
+DECL_FREE_HANDLER(CLuaRules, luaRules)
 
 
 /******************************************************************************/
@@ -66,9 +41,10 @@ void CLuaRules::FreeHandler()
 CLuaRules::CLuaRules()
 : CLuaHandleSynced("LuaRules", LUA_HANDLE_ORDER_RULES)
 {
-	if (!IsValid()) {
+	currentCobArgs = NULL;
+
+	if (!IsValid())
 		return;
-	}
 
 	SetFullCtrl(true);
 	SetFullRead(true);
@@ -77,21 +53,18 @@ CLuaRules::CLuaRules()
 	SetReadAllyTeam(CEventClient::AllAccessTeam);
 	SetSelectTeam(CEventClient::AllAccessTeam);
 
-	Init(LuaRulesSyncedFilename, LuaRulesUnsyncedFilename, SPRING_VFS_MOD);
-
-	if (!IsValid()) {
-		return;
-	}
+	Init(LuaRulesSyncedFilename, LuaRulesUnsyncedFilename, SPRING_VFS_MOD_BASE);
 }
 
 CLuaRules::~CLuaRules()
 {
 	luaRules = NULL;
+	currentCobArgs = NULL;
 }
 
 
 
-bool CLuaRules::AddSyncedCode(lua_State *L)
+bool CLuaRules::AddSyncedCode(lua_State* L)
 {
 	lua_getglobal(L, "Script");
 	LuaPushNamedCFunc(L, "PermitHelperAIs", PermitHelperAIs);
@@ -101,13 +74,20 @@ bool CLuaRules::AddSyncedCode(lua_State *L)
 }
 
 
-bool CLuaRules::AddUnsyncedCode(lua_State *L)
+bool CLuaRules::AddUnsyncedCode(lua_State* L)
 {
 	lua_getglobal(L, "Spring");
+
 	lua_pushliteral(L, "UnitRendering");
 	lua_newtable(L);
-	LuaUnitRendering::PushEntries(L);
+	LuaObjectRendering<LUAOBJ_UNIT>::PushEntries(L);
 	lua_rawset(L, -3);
+
+	lua_pushliteral(L, "FeatureRendering");
+	lua_newtable(L);
+	LuaObjectRendering<LUAOBJ_FEATURE>::PushEntries(L);
+	lua_rawset(L, -3);
+
 	lua_pop(L, 1); // Spring
 
 	return true;

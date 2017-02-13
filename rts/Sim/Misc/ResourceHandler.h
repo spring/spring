@@ -5,18 +5,20 @@
 
 #include <vector>
 #include <map>
-#include <boost/noncopyable.hpp>
+#include "System/Misc/NonCopyable.h"
 #include "System/creg/creg_cond.h"
 #include "Resource.h"
 
 class CResourceMapAnalyzer;
 
-class CResourceHandler : public boost::noncopyable
+class CResourceHandler : public spring::noncopyable
 {
-	CR_DECLARE_STRUCT(CResourceHandler);
+	CR_DECLARE_STRUCT(CResourceHandler)
 
 public:
 	static CResourceHandler* GetInstance();
+
+	static void CreateInstance();
 	static void FreeInstance();
 
 	/**
@@ -26,7 +28,7 @@ public:
 	 *
 	 * Adds a CResource to the pool and retun its resourceId.
 	 */
-	int AddResource(const CResource& resource);
+	int AddResource(const CResourceDescription& resource);
 	/**
 	 * @brief	resource
 	 * @param	resourceId index to fetch
@@ -34,7 +36,7 @@ public:
 	 *
 	 * Accesses a CResource instance at a given index
 	 */
-	const CResource* GetResource(int resourceId) const;
+	const CResourceDescription* GetResource(int resourceId) const;
 	/**
 	 * @brief	resource by name
 	 * @param	resourceName name of the resource to fetch
@@ -42,7 +44,7 @@ public:
 	 *
 	 * Accesses a CResource instance by name
 	 */
-	const CResource* GetResourceByName(const std::string& resourceName) const;
+	const CResourceDescription* GetResourceByName(const std::string& resourceName) const;
 	/**
 	 * @brief	resource index by name
 	 * @param	resourceName name of the resource to fetch
@@ -93,23 +95,23 @@ public:
 	 */
 	const CResourceMapAnalyzer* GetResourceMapAnalyzer(int resourceId);
 
-	size_t GetNumResources() const;
+	size_t GetNumResources() const { return resources.size(); }
 
-//	bool IsMetal(int resourceId) const;
-//	bool IsEnergy(int resourceId) const;
-	int GetMetalId() const;
-	int GetEnergyId() const;
+	int GetMetalId() const { return metalResourceId; }
+	int GetEnergyId() const { return energyResourceId; }
 
 	bool IsValidId(int resourceId) const;
+
+	void PostLoad();
 
 private:
 	static CResourceHandler* instance;
 
 	CResourceHandler();
-	~CResourceHandler();
+	~CResourceHandler() {}
 
-	std::vector<CResource> resources;
-	std::map<int, CResourceMapAnalyzer*> resourceMapAnalyzers;
+	std::vector<CResourceDescription> resources;
+	std::vector<CResourceMapAnalyzer*> resourceMapAnalyzers;
 
 	int metalResourceId;
 	int energyResourceId;

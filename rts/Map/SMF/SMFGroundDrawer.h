@@ -14,8 +14,9 @@ struct ISMFRenderState;
 
 enum {
 	SMF_MESHDRAWER_LEGACY = 0,
-	SMF_MESHDRAWER_ROAM,
-	SMF_MESHDRAWER_LAST,
+	SMF_MESHDRAWER_BASIC  = 1,
+	SMF_MESHDRAWER_ROAM   = 2,
+	SMF_MESHDRAWER_LAST   = 3,
 };
 
 
@@ -31,27 +32,27 @@ public:
 	friend class CSMFReadMap;
 
 	void Draw(const DrawPass::e& drawPass);
+	void DrawDeferredPass(const DrawPass::e& drawPass, bool alphaTest);
+	void DrawForwardPass(const DrawPass::e& drawPass, bool alphaTest);
 	void DrawShadowPass();
-	void DrawDeferredPass(const DrawPass::e& drawPass);
 
 	void Update();
-	void UpdateSunDir();
+	void UpdateRenderState();
+	void SunChanged();
 
-	void SetupBigSquare(const int bigSquareX, const int bigSquareY);
-
-	// for ARB-only clients
-	void SetupBaseDrawPass();
-	void SetupReflDrawPass();
-	void SetupRefrDrawPass();
-
+	void SetLuaShader(const LuaMapShaderData*);
 	void SetDrawDeferredPass(bool b) {
 		if ((drawDeferred = b)) {
 			drawDeferred &= UpdateGeometryBuffer(false);
 		}
 	}
 
+	void SetupBigSquare(const int bigSquareX, const int bigSquareY);
+
+
 	void IncreaseDetail();
 	void DecreaseDetail();
+	void SetDetail(int newGroundDetail);
 	int GetGroundDetail(const DrawPass::e& drawPass = DrawPass::Normal) const;
 
 	const CSMFReadMap* GetReadMap() const { return smfMap; }
@@ -62,31 +63,32 @@ public:
 	const GL::GeometryBuffer* GetGeometryBuffer() const { return &geomBuffer; }
 	      GL::GeometryBuffer* GetGeometryBuffer()       { return &geomBuffer; }
 
-	IMeshDrawer* SwitchMeshDrawer(int mode = -1);
+	IMeshDrawer* SwitchMeshDrawer(int wantedMode = -1);
 
 private:
-	void SelectRenderState(bool shaderPath) {
-		smfRenderState = shaderPath? smfRenderStateSSP: smfRenderStateFFP;
-	}
+	ISMFRenderState* SelectRenderState(const DrawPass::e& drawPass);
 
 	void CreateWaterPlanes(bool camOufOfMap);
 	inline void DrawWaterPlane(bool drawWaterReflection);
 	inline void DrawBorder(const DrawPass::e drawPass);
 
+	bool HaveLuaRenderState() const;
 	bool UpdateGeometryBuffer(bool init);
 
 protected:
 	CSMFReadMap* smfMap;
 	IMeshDrawer* meshDrawer;
 
+	int drawerMode;
 	int groundDetail;
 
-	GLuint waterPlaneCamOutDispList;
-	GLuint waterPlaneCamInDispList;
+	GLuint waterPlaneDispLists[2];
 
-	ISMFRenderState* smfRenderStateSSP; // default shader-driven rendering path
-	ISMFRenderState* smfRenderStateFFP; // fallback shader-less rendering path
-	ISMFRenderState* smfRenderState;
+	// [0] := fallback shader-less rendering path
+	// [1] := default shader-driven rendering path
+	// [2] := custom shader-driven rendering path (via Lua)
+	// [3] := currently selected state (shared by deferred pass)
+	std::vector<ISMFRenderState*> smfRenderStates;
 
 	GL::LightHandler lightHandler;
 	GL::GeometryBuffer geomBuffer;
