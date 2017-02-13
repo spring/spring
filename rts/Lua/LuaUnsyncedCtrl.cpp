@@ -2102,66 +2102,61 @@ int LuaUnsyncedCtrl::CreateDir(lua_State* L)
 
 /******************************************************************************/
 
-static int ReloadOrRestart(const std::string& springArgs, const std::string& scriptText, bool isStart=false) {
-	if (springArgs.empty() && !isStart) {
+static int ReloadOrRestart(const std::string& springArgs, const std::string& scriptText, bool newProcess) {
+	const std::string springFullName = Platform::GetProcessExecutableFile();
+	const std::string scriptFullName = dataDirLocater.GetWriteDirPath() + "script.txt";
+
+	if (!newProcess) {
 		// signal SpringApp
 		gu->reloadScript = scriptText;
 		gu->globalReload = true;
 
-		LOG("[%s] Spring \"%s\" should be reloading", __FUNCTION__, (Platform::GetProcessExecutableFile()).c_str());
-	} else {
-		const std::string springFullName = Platform::GetProcessExecutableFile();
-		const std::string scriptFullName = dataDirLocater.GetWriteDirPath() + "script.txt";
-
-		std::vector<std::string> processArgs;
-
-		// arguments to Spring binary given by Lua code, if any
-		if (!springArgs.empty()) {
-			processArgs.push_back(springArgs);
-		}
-
-		if (!scriptText.empty()) {
-			// create file 'script.txt' with contents given by Lua code
-			std::ofstream scriptFile(scriptFullName.c_str());
-
-			scriptFile.write(scriptText.c_str(), scriptText.size());
-			scriptFile.close();
-
-			processArgs.push_back(scriptFullName);
-		}
-		if (!isStart) {
-			#ifdef _WIN32
-				// else OpenAL crashes when using execvp
-				ISound::Shutdown();
-			#endif
-			// close local socket to avoid "bind: Address already in use"
-			SafeDelete(gameServer);
-		}
-
-		LOG("[%s] Spring \"%s\" should be restarting", __FUNCTION__, springFullName.c_str());
-		Platform::ExecuteProcess(springFullName, processArgs, isStart);
-
-		// only reached on failure
-		return 1;
+		LOG("[%s] Spring \"%s\" should be reloading", __func__, springFullName.c_str());
+		return 0;
 	}
 
-	return 0;
+	std::vector<std::string> processArgs;
+
+	#if 0
+	// arguments to Spring binary given by Lua code, if any
+	if (!springArgs.empty())
+		processArgs.push_back(springArgs);
+	#endif
+
+	if (!scriptText.empty()) {
+		// create file 'script.txt' with contents given by Lua code
+		std::ofstream scriptFile(scriptFullName.c_str());
+
+		scriptFile.write(scriptText.c_str(), scriptText.size());
+		scriptFile.close();
+
+		processArgs.push_back(scriptFullName);
+	}
+
+	#ifdef _WIN32
+	// else OpenAL crashes when using execvp
+	ISound::Shutdown();
+	#endif
+	// close local socket to avoid "bind: Address already in use"
+	SafeDelete(gameServer);
+
+	LOG("[%s] Spring \"%s\" should be restarting", __func__, springFullName.c_str());
+	Platform::ExecuteProcess(springFullName, processArgs, newProcess);
+
+	// only reached on execvp failure
+	return 1;
 }
 
 
 int LuaUnsyncedCtrl::Reload(lua_State* L)
 {
-	return (ReloadOrRestart("", luaL_checkstring(L, 1)));
+	return (ReloadOrRestart("", luaL_checkstring(L, 1), false));
 }
 
 int LuaUnsyncedCtrl::Restart(lua_State* L)
 {
-	if (ReloadOrRestart(luaL_checkstring(L, 1), luaL_checkstring(L, 2)) != 0) {
-		lua_pushboolean(L, false);
-		return 1;
-	}
-
-	return 0;
+	// same as Reload now, cl-args are always ignored
+	return (ReloadOrRestart(luaL_checkstring(L, 1), luaL_checkstring(L, 2), false));
 }
 
 int LuaUnsyncedCtrl::Start(lua_State* L)
