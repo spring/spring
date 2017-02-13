@@ -23,28 +23,37 @@ void FileSystemInitializer::PreInitializeConfigHandler(const std::string& config
 
 void FileSystemInitializer::InitializeLogOutput(const std::string& filename)
 {
-	if (!filename.empty() && !logOutput.IsInitialized()) logOutput.SetFileName(filename);
+	if (!filename.empty() && !logOutput.IsInitialized())
+		logOutput.SetFileName(filename);
+
 	logOutput.Initialize();
 }
 
 
 void FileSystemInitializer::Initialize()
 {
-	if (!initialized) {
-		try {
-			Platform::SetOrigCWD();
-			dataDirLocater.LocateDataDirs();
-			dataDirLocater.Check();
-			archiveScanner = new CArchiveScanner();
-			vfsHandler = new CVFSHandler();
-			initialized = true;
-		} catch (const std::exception& ex) {
-			Cleanup();
-			throw;
-		} catch (...) {
-			Cleanup();
-			throw;
-		}
+	if (initialized)
+		return;
+
+	try {
+		Platform::SetOrigCWD();
+
+		dataDirLocater.LocateDataDirs();
+		dataDirLocater.Check();
+
+		archiveScanner = new CArchiveScanner();
+		vfsHandler = new CVFSHandler();
+
+		initialized = true;
+	} catch (const std::exception& ex) {
+		// even if we end up here, do not clean up configHandler yet
+		// since it can already have early observers registered that
+		// do not remove themselves until exit
+		Cleanup(false);
+		throw;
+	} catch (...) {
+		Cleanup(false);
+		throw;
 	}
 }
 

@@ -137,6 +137,7 @@ ConfigHandlerImpl::ConfigHandlerImpl(const vector<string>& locations, const bool
 ConfigHandlerImpl::~ConfigHandlerImpl()
 {
 	assert(observers.empty()); //all observers have to be deregistered by RemoveObserver()
+
 	for_each_source(it) {
 		delete (*it);
 	}
@@ -341,6 +342,7 @@ const StringMap ConfigHandlerImpl::GetData() const {
 	return data;
 }
 
+
 void ConfigHandlerImpl::AddObserver(ConfigNotifyCallback observer, void* holder) {
 	std::lock_guard<spring::mutex> lck(observerMutex);
 	observers.emplace_back(observer, holder);
@@ -348,6 +350,7 @@ void ConfigHandlerImpl::AddObserver(ConfigNotifyCallback observer, void* holder)
 
 void ConfigHandlerImpl::RemoveObserver(void* holder) {
 	std::lock_guard<spring::mutex> lck(observerMutex);
+
 	for (list<NamedConfigNotifyCallback>::iterator it = observers.begin(); it != observers.end(); ++it) {
 		if (it->holder == holder) {
 			observers.erase(it);

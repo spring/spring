@@ -514,18 +514,18 @@ void SpringApp::ParseCmdLine(int argc, char* argv[])
 		exit(EXIT_SUCCESS);
 	}
 
-	if (FLAGS_isolation) {
+	if (FLAGS_isolation)
 		dataDirLocater.SetIsolationMode(true);
-	}
+
 
 	if (!FLAGS_isolation_dir.empty()) {
 		dataDirLocater.SetIsolationMode(true);
 		dataDirLocater.SetIsolationModeDir(FLAGS_isolation_dir);
 	}
 
-	if (!FLAGS_write_dir.empty()) {
+	if (!FLAGS_write_dir.empty())
 		dataDirLocater.SetWriteDir(FLAGS_write_dir);
-	}
+
 
 	// Interface Documentations in JSON-Format
 	if (FLAGS_list_config_vars) {
@@ -566,9 +566,8 @@ void SpringApp::ParseCmdLine(int argc, char* argv[])
 	//LOG("[%s] command-line args: \"%s\"", __FUNCTION__, cmdline->GetCmdLine().c_str());
 	FileSystemInitializer::PreInitializeConfigHandler(FLAGS_config, FLAGS_safemode);
 
-	if (FLAGS_textureatlas) {
+	if (FLAGS_textureatlas)
 		CTextureAtlas::SetDebug(true);
-	}
 
 	if (!FLAGS_name.empty())
 		configHandler->SetString("name", StringReplace(FLAGS_name, " ", "_"));
@@ -969,6 +968,7 @@ void SpringApp::ShutDown()
 	SafeDelete(globalRendering);
 	SafeDelete(luaSocketRestrictions);
 
+	// also gets rid of configHandler
 	FileSystemInitializer::Cleanup();
 	DataDirLocater::FreeInstance();
 
