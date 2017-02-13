@@ -111,6 +111,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 			"${mySourceDir}/SSkirmishAISpecifier.cpp"
 		)
 	add_library(${myTarget} MODULE ${mySources} ${ai_common_SRC} ${myVersionDepFile})
+	set_target_properties(${myTarget} PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/data)
 	target_link_libraries(${myTarget} CUtils)
 	FixLibName(${myTarget})
 
