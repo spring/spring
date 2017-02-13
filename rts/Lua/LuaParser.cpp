@@ -395,7 +395,6 @@ void LuaParser::AddFunc(int key, int (*func)(lua_State*))
 	lua_pushcfunction(L, func);
 
 	PushParam();
-	// PushThis(this);
 }
 
 
