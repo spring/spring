@@ -91,13 +91,20 @@ bool CGroupHandler::GroupCommand(int num, const std::string& cmd)
 	CGroup* group = groups[num];
 
 	if ((cmd == "set") || (cmd == "add")) {
-		if (cmd == "set") {
+		if (cmd == "set")
 			group->ClearUnits();
-		}
+
 		const auto& selUnits = selectedUnitsHandler.selectedUnits;
 
 		for (const int unitID: selUnits) {
-			(unitHandler->GetUnit(unitID))->SetGroup(group);
+			CUnit* u = unitHandler->GetUnit(unitID);
+
+			if (u == nullptr) {
+				assert(false);
+				continue;
+			}
+
+			u->SetGroup(group);
 		}
 	}
 	else if (cmd == "selectadd")  {
@@ -164,9 +171,10 @@ void CGroupHandler::RemoveGroup(CGroup* group)
 		LOG_L(L_WARNING, "Trying to remove hot-key group %i", group->id);
 		return;
 	}
-	if (selectedUnitsHandler.IsGroupSelected(group->id)) {
+
+	if (selectedUnitsHandler.IsGroupSelected(group->id))
 		selectedUnitsHandler.ClearSelected();
-	}
+
 	groups[group->id] = NULL;
 	freeGroups.push_back(group->id);
 	delete group;

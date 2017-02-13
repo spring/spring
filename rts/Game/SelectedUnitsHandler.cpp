@@ -344,16 +344,13 @@ void CSelectedUnitsHandler::HandleSingleUnitClickSelection(CUnit* unit, bool doI
 
 void CSelectedUnitsHandler::AddUnit(CUnit* unit)
 {
-	// if unit is being transported by eg. Hulk or Atlas
-	// then we should not be able to select it
+	// if unit is being transported, we should not be able to select it
 	const CUnit* trans = unit->GetTransporter();
-	if (trans != NULL && trans->unitDef->IsTransportUnit() && !trans->unitDef->isFirePlatform) {
+	if (trans != nullptr && trans->unitDef->IsTransportUnit() && !trans->unitDef->isFirePlatform)
 		return;
-	}
 
-	if (unit->noSelect) {
+	if (unit->noSelect)
 		return;
-	}
 
 	if (selectedUnits.insert(unit->id).second)
 		AddDeathDependence(unit, DEPENDENCE_SELECTED);
@@ -361,9 +358,8 @@ void CSelectedUnitsHandler::AddUnit(CUnit* unit)
 	selectionChanged = true;
 	possibleCommandsChanged = true;
 
-	if (!(unit->group) || unit->group->id != selectedGroup) {
+	if (!(unit->group) || unit->group->id != selectedGroup)
 		selectedGroup = -1;
-	}
 
 	unit->isSelected = true;
 }
@@ -385,6 +381,13 @@ void CSelectedUnitsHandler::ClearSelected()
 {
 	for (const int unitID: selectedUnits) {
 		CUnit* u = unitHandler->GetUnit(unitID);
+
+		// not possible unless ::RemoveUnit is not called when it should
+		if (u == nullptr) {
+			assert(false);
+			continue;
+		}
+
 		u->isSelected = false;
 		DeleteDeathDependence(u, DEPENDENCE_SELECTED);
 	}

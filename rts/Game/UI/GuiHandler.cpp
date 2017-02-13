@@ -2973,7 +2973,7 @@ void CGuiHandler::DrawButtons() // Only called by Draw
 	const int buttonEnd   = std::min(iconsCount, buttonStart + iconsPerPage);
 
 	for (int ii = buttonStart; ii < buttonEnd; ii++) {
-		const IconInfo& icon = icons[ii];
+		const IconInfo& icon = icons.at(ii);
 
 		if (icon.commandsID < 0)
 			continue; // inactive icon
