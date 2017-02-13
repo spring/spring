@@ -20,10 +20,28 @@
 #include "System/Log/ILog.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/Misc/SpringTime.h"
+#include "System/Platform/Threading.h"
 #include "System/ScopedFPUSettings.h"
+#include "System/Threading/SpringThreading.h"
 #include "System/Util.h"
 
-LuaParser* LuaParser::currentParser = nullptr;
+
+
+static spring::mutex parserMutex;
+static spring::unordered_map<Threading::NativeThreadId, LuaParser*> currentParsers;
+
+static void SetCurrentParser(LuaParser* p)
+{
+	std::unique_lock<spring::mutex> ulk(parserMutex);
+	currentParsers[ Threading::GetCurrentThreadId() ] = p;
+}
+
+static LuaParser* GetCurrentParser()
+{
+	std::unique_lock<spring::mutex> ulk(parserMutex);
+	return (currentParsers[ Threading::GetCurrentThreadId() ]);
+}
+
 
 
 /******************************************************************************/
@@ -33,17 +51,17 @@ LuaParser* LuaParser::currentParser = nullptr;
 //
 
 LuaParser::LuaParser(const string& _fileName, const string& _fileModes, const string& _accessModes, const boolean& synced)
-: fileName(_fileName),
-  fileModes(_fileModes),
-  accessModes(_accessModes),
+	: fileName(_fileName)
+	, fileModes(_fileModes)
+	, accessModes(_accessModes)
 
-  initDepth(0),
-  rootRef(LUA_NOREF),
-  currentRef(LUA_NOREF),
+	, initDepth(0)
+	, rootRef(LUA_NOREF)
+	, currentRef(LUA_NOREF)
 
-  valid(false),
-  lowerKeys(true),
-  lowerCppKeys(true)
+	, valid(false)
+	, lowerKeys(true)
+	, lowerCppKeys(true)
 {
 	if ((L = LUA_OPEN()) != nullptr) {
 		SetupEnv(synced.b);
@@ -51,18 +69,18 @@ LuaParser::LuaParser(const string& _fileName, const string& _fileModes, const st
 }
 
 LuaParser::LuaParser(const string& _textChunk, const string& _accessModes, const boolean& synced)
-: fileName(""),
-  fileModes(""),
-  textChunk(_textChunk),
-  accessModes(_accessModes),
+	: fileName("")
+	, fileModes("")
+	, textChunk(_textChunk)
+	, accessModes(_accessModes)
 
-  initDepth(0),
-  rootRef(LUA_NOREF),
-  currentRef(LUA_NOREF),
+	, initDepth(0)
+	, rootRef(LUA_NOREF)
+	, currentRef(LUA_NOREF)
 
-  valid(false),
-  lowerKeys(true),
-  lowerCppKeys(true)
+	, valid(false)
+	, lowerKeys(true)
+	, lowerCppKeys(true)
 {
 	if ((L = LUA_OPEN()) != nullptr) {
 		SetupEnv(synced.b);
@@ -83,7 +101,6 @@ LuaParser::~LuaParser()
 		table->refnum  = LUA_NOREF;
 	}
 }
-
 
 void LuaParser::SetupEnv(bool synced)
 {
@@ -188,18 +205,21 @@ bool LuaParser::Execute()
 		return false;
 	}
 
-	currentParser = this;
+	{
+		// LuaParser::Execute can be called concurrently by the
+		// game-load and (e.g.) assimp model preloading threads
+		SetCurrentParser(this);
 
-	// do not signal floating point exceptions in user Lua code
-	ScopedDisableFpuExceptions fe;
-	error = lua_pcall(L, 0, 1, 0);
+		// do not signal floating point exceptions in user Lua code
+		ScopedDisableFpuExceptions fe;
+		error = lua_pcall(L, 0, 1, 0);
 
-	currentParser = NULL;
+		SetCurrentParser(nullptr);
+	}
 
 	if (error != 0) {
 		errorLog = lua_tostring(L, -1);
-		LOG_L(L_ERROR, "%i, %s, %s",
-		                error, fileName.c_str(), errorLog.c_str());
+		LOG_L(L_ERROR, "%i, %s, %s", error, fileName.c_str(), errorLog.c_str());
 		LUA_CLOSE(&L);
 		return false;
 	}
@@ -239,6 +259,7 @@ void LuaParser::PushParam()
 {
 	if (!IsValid() || (initDepth < 0))
 		return;
+
 	if (initDepth > 0) {
 		lua_rawset(L, -3);
 	} else {
@@ -315,6 +336,8 @@ void LuaParser::AddFunc(const string& key, int (*func)(lua_State*))
 	// LuaPushNamedCFunc(L, key, func);
 	lua_pushsstring(L, key);
 	lua_pushcfunction(L, func);
+
+	// t[k] = v
 	PushParam();
 }
 
@@ -370,7 +393,9 @@ void LuaParser::AddFunc(int key, int (*func)(lua_State*))
 
 	lua_pushnumber(L, key);
 	lua_pushcfunction(L, func);
+
 	PushParam();
+	// PushThis(this);
 }
 
 
@@ -465,17 +490,18 @@ int LuaParser::DummyRandom(lua_State* L) { return 0; }
 
 int LuaParser::DirList(lua_State* L)
 {
+	const LuaParser* currentParser = GetCurrentParser();
+
 	if (currentParser == nullptr)
 		luaL_error(L, "invalid call to DirList() after execution");
 
-	const string dir = luaL_checkstring(L, 1);
+	const std::string& dir = luaL_checkstring(L, 1);
 
 	if (!LuaIO::IsSimplePath(dir))
 		return 0;
 
-	const string pat = luaL_optstring(L, 2, "*");
-	string modes = luaL_optstring(L, 3, currentParser->accessModes.c_str());
-	modes = CFileHandler::AllowModes(modes, currentParser->accessModes);
+	const std::string& pat = luaL_optstring(L, 2, "*");
+	const std::string& modes = CFileHandler::AllowModes(luaL_optstring(L, 3, currentParser->accessModes.c_str()), currentParser->accessModes);
 
 	LuaUtils::PushStringVector(L, CFileHandler::DirList(dir, pat, modes));
 	return 1;
@@ -484,16 +510,18 @@ int LuaParser::DirList(lua_State* L)
 
 int LuaParser::SubDirs(lua_State* L)
 {
+	const LuaParser* currentParser = GetCurrentParser();
+
 	if (currentParser == nullptr)
 		luaL_error(L, "invalid call to SubDirs() after execution");
 
-	const string dir = luaL_checkstring(L, 1);
-	if (!LuaIO::IsSimplePath(dir)) {
+	const std::string& dir = luaL_checkstring(L, 1);
+
+	if (!LuaIO::IsSimplePath(dir))
 		return 0;
-	}
-	const string pat = luaL_optstring(L, 2, "*");
-	string modes = luaL_optstring(L, 3, currentParser->accessModes.c_str());
-	modes = CFileHandler::AllowModes(modes, currentParser->accessModes);
+
+	const std::string& pat = luaL_optstring(L, 2, "*");
+	const std::string& modes = CFileHandler::AllowModes(luaL_optstring(L, 3, currentParser->accessModes.c_str()), currentParser->accessModes);
 
 	LuaUtils::PushStringVector(L, CFileHandler::SubDirs(dir, pat, modes));
 	return 1;
@@ -503,23 +531,23 @@ int LuaParser::SubDirs(lua_State* L)
 
 int LuaParser::Include(lua_State* L)
 {
+	const LuaParser* currentParser = GetCurrentParser();
+
 	if (currentParser == nullptr)
 		luaL_error(L, "invalid call to Include() after execution");
 
 	// filename [, fenv]
-	const string filename = luaL_checkstring(L, 1);
+	const std::string& filename = luaL_checkstring(L, 1);
 
 	if (!LuaIO::IsSimplePath(filename))
 		luaL_error(L, "bad pathname");
 
-	string modes = luaL_optstring(L, 3, currentParser->accessModes.c_str());
-	modes = CFileHandler::AllowModes(modes, currentParser->accessModes);
+	const std::string& modes = CFileHandler::AllowModes(luaL_optstring(L, 3, currentParser->accessModes.c_str()), currentParser->accessModes);
 
 	CFileHandler fh(filename, modes);
 	if (!fh.FileExists()) {
 		char buf[1024];
-		SNPRINTF(buf, sizeof(buf),
-		         "Include() file missing '%s'\n", filename.c_str());
+		SNPRINTF(buf, sizeof(buf), "Include() file missing '%s'\n", filename.c_str());
 		lua_pushstring(L, buf);
  		lua_error(L);
 	}
@@ -527,8 +555,7 @@ int LuaParser::Include(lua_State* L)
 	string code;
 	if (!fh.LoadStringData(code)) {
 		char buf[1024];
-		SNPRINTF(buf, sizeof(buf),
-		         "Include() could not load '%s'\n", filename.c_str());
+		SNPRINTF(buf, sizeof(buf), "Include() could not load '%s'\n", filename.c_str());
 		lua_pushstring(L, buf);
  		lua_error(L);
 	}
@@ -536,8 +563,7 @@ int LuaParser::Include(lua_State* L)
 	int error = luaL_loadbuffer(L, code.c_str(), code.size(), filename.c_str());
 	if (error != 0) {
 		char buf[1024];
-		SNPRINTF(buf, sizeof(buf), "error = %i, %s, %s\n",
-		         error, filename.c_str(), lua_tostring(L, -1));
+		SNPRINTF(buf, sizeof(buf), "error = %i, %s, %s\n", error, filename.c_str(), lua_tostring(L, -1));
 		lua_pushstring(L, buf);
 		lua_error(L);
 	}
@@ -560,8 +586,7 @@ int LuaParser::Include(lua_State* L)
 
 	if (error != 0) {
 		char buf[1024];
-		SNPRINTF(buf, sizeof(buf), "error = %i, %s, %s\n",
-		         error, filename.c_str(), lua_tostring(L, -1));
+		SNPRINTF(buf, sizeof(buf), "error = %i, %s, %s\n", error, filename.c_str(), lua_tostring(L, -1));
 		lua_pushstring(L, buf);
 		lua_error(L);
 	}
@@ -577,16 +602,17 @@ int LuaParser::Include(lua_State* L)
 
 int LuaParser::LoadFile(lua_State* L)
 {
+	const LuaParser* currentParser = GetCurrentParser();
+
 	if (currentParser == nullptr)
 		luaL_error(L, "invalid call to LoadFile() after execution");
 
-	const string filename = luaL_checkstring(L, 1);
+	const std::string&  filename = luaL_checkstring(L, 1);
 
 	if (!LuaIO::IsSimplePath(filename))
 		return 0;
 
-	string modes = luaL_optstring(L, 2, currentParser->accessModes.c_str());
-	modes = CFileHandler::AllowModes(modes, currentParser->accessModes);
+	const std::string& modes = CFileHandler::AllowModes(luaL_optstring(L, 2, currentParser->accessModes.c_str()), currentParser->accessModes);
 
 	CFileHandler fh(filename, modes);
 	if (!fh.FileExists()) {
@@ -611,10 +637,12 @@ int LuaParser::LoadFile(lua_State* L)
 
 int LuaParser::FileExists(lua_State* L)
 {
+	const LuaParser* currentParser = GetCurrentParser();
+
 	if (currentParser == nullptr)
 		luaL_error(L, "invalid call to FileExists() after execution");
 
-	const string filename = luaL_checkstring(L, 1);
+	const std::string&  filename = luaL_checkstring(L, 1);
 
 	if (!LuaIO::IsSimplePath(filename))
 		return 0;
@@ -626,6 +654,8 @@ int LuaParser::FileExists(lua_State* L)
 
 int LuaParser::DontMessWithMyCase(lua_State* L)
 {
+	LuaParser* currentParser = GetCurrentParser();
+
 	if (currentParser == nullptr)
 		luaL_error(L, "invalid call to DontMessWithMyCase() after execution");
 

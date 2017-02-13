@@ -21,93 +21,92 @@ using std::string;
 /******************************************************************************/
 
 class LuaTable {
+friend class LuaParser;
 
-	friend class LuaParser;
+public:
+	LuaTable();
+	LuaTable(const LuaTable& tbl);
+	LuaTable& operator=(const LuaTable& tbl);
+	~LuaTable();
 
-	public:
-		LuaTable();
-		LuaTable(const LuaTable& tbl);
-		LuaTable& operator=(const LuaTable& tbl);
-		~LuaTable();
+	LuaTable SubTable(int key) const;
+	LuaTable SubTable(const string& key) const;
+	LuaTable SubTableExpr(const string& expr) const;
 
-		LuaTable SubTable(int key) const;
-		LuaTable SubTable(const string& key) const;
-		LuaTable SubTableExpr(const string& expr) const;
+	bool IsValid() const { return (parser != nullptr); }
 
-		bool IsValid() const { return (parser != nullptr); }
+	const string& GetPath() const { return path; }
 
-		const string& GetPath() const { return path; }
+	int GetLength() const;                  // lua '#' operator
+	int GetLength(int key) const;           // lua '#' operator
+	int GetLength(const string& key) const; // lua '#' operator
 
-		int GetLength() const;                  // lua '#' operator
-		int GetLength(int key) const;           // lua '#' operator
-		int GetLength(const string& key) const; // lua '#' operator
+	bool GetKeys(std::vector<int>& data) const;
+	bool GetKeys(std::vector<string>& data) const;
 
-		bool GetKeys(std::vector<int>& data) const;
-		bool GetKeys(std::vector<string>& data) const;
+	bool GetMap(spring::unordered_map<int, float>& data) const;
+	bool GetMap(spring::unordered_map<int, string>& data) const;
+	bool GetMap(spring::unordered_map<string, float>& data) const;
+	bool GetMap(spring::unordered_map<string, string>& data) const;
 
-		bool GetMap(spring::unordered_map<int, float>& data) const;
-		bool GetMap(spring::unordered_map<int, string>& data) const;
-		bool GetMap(spring::unordered_map<string, float>& data) const;
-		bool GetMap(spring::unordered_map<string, string>& data) const;
+	bool KeyExists(int key) const;
+	bool KeyExists(const string& key) const;
 
-		bool KeyExists(int key) const;
-		bool KeyExists(const string& key) const;
+	enum DataType {
+		NIL     = -1,
+		NUMBER  = 1,
+		STRING  = 2,
+		BOOLEAN = 3,
+		TABLE   = 4
+	};
+	DataType GetType(int key) const;
+	DataType GetType(const string& key) const;
 
-		enum DataType {
-			NIL     = -1,
-			NUMBER  = 1,
-			STRING  = 2,
-			BOOLEAN = 3,
-			TABLE   = 4
-		};
-		DataType GetType(int key) const;
-		DataType GetType(const string& key) const;
+	// numeric keys
+	template<typename T> T Get(int key, T def) const;
+	int    Get(int key, int def) const;
+	bool   Get(int key, bool def) const;
+	float  Get(int key, float def) const;
+	float3 Get(int key, const float3& def) const;
+	float4 Get(int key, const float4& def) const;
+	string Get(int key, const string& def) const;
+	unsigned int Get(int key, unsigned int def) const { return (unsigned int)Get(key, (int)def); }
 
-		// numeric keys
-		template<typename T> T Get(int key, T def) const;
-		int    Get(int key, int def) const;
-		bool   Get(int key, bool def) const;
-		float  Get(int key, float def) const;
-		float3 Get(int key, const float3& def) const;
-		float4 Get(int key, const float4& def) const;
-		string Get(int key, const string& def) const;
-		unsigned int Get(int key, unsigned int def) const { return (unsigned int)Get(key, (int)def); }
+	// string keys  (always lowercase)
+	template<typename T> T Get(const string& key, T def) const;
+	int    Get(const string& key, int def) const;
+	bool   Get(const string& key, bool def) const;
+	float  Get(const string& key, float def) const;
+	float3 Get(const string& key, const float3& def) const;
+	float4 Get(const string& key, const float4& def) const;
+	string Get(const string& key, const string& def) const;
+	unsigned int Get(const string& key, unsigned int def) const { return (unsigned int)Get(key, (int)def); }
 
-		// string keys  (always lowercase)
-		template<typename T> T Get(const string& key, T def) const;
-		int    Get(const string& key, int def) const;
-		bool   Get(const string& key, bool def) const;
-		float  Get(const string& key, float def) const;
-		float3 Get(const string& key, const float3& def) const;
-		float4 Get(const string& key, const float4& def) const;
-		string Get(const string& key, const string& def) const;
-		unsigned int Get(const string& key, unsigned int def) const { return (unsigned int)Get(key, (int)def); }
+	template<typename T> int    GetInt(T key, int def) const { return Get(key, def); }
+	template<typename T> bool   GetBool(T key, bool def) const { return Get(key, def); }
+	template<typename T> float  GetFloat(T key, float def) const { return Get(key, def); }
+	template<typename T> string GetString(T key, const string& def) const { return Get(key, def); }
+	// we cannot use templates for float3/4 cause then we would need to #include "float3.h" in this header
+	//template<typename T> float3 GetFloat3(T key, const float3& def) const { return Get(key, def); }
+	//template<typename T> float4 GetFloat4(T key, const float4& def) const { return Get(key, def); }
+	float3 GetFloat3(int key, const float3& def) const;
+	float4 GetFloat4(int key, const float4& def) const;
+	float3 GetFloat3(const string& key, const float3& def) const;
+	float4 GetFloat4(const string& key, const float4& def) const;
 
-		template<typename T> int    GetInt(T key, int def) const { return Get(key, def); }
-		template<typename T> bool   GetBool(T key, bool def) const { return Get(key, def); }
-		template<typename T> float  GetFloat(T key, float def) const { return Get(key, def); }
-		template<typename T> string GetString(T key, const string& def) const { return Get(key, def); }
-		// we cannot use templates for float3/4 cause then we would need to #include "float3.h" in this header
-		//template<typename T> float3 GetFloat3(T key, const float3& def) const { return Get(key, def); }
-		//template<typename T> float4 GetFloat4(T key, const float4& def) const { return Get(key, def); }
-		float3 GetFloat3(int key, const float3& def) const;
-		float4 GetFloat4(int key, const float4& def) const;
-		float3 GetFloat3(const string& key, const float3& def) const;
-		float4 GetFloat4(const string& key, const float4& def) const;
+private:
+	LuaTable(LuaParser* parser); // for LuaParser::GetRoot()
 
-	private:
-		LuaTable(LuaParser* parser); // for LuaParser::GetRoot()
+	bool PushTable() const;
+	bool PushValue(int key) const;
+	bool PushValue(const string& key) const;
 
-		bool PushTable() const;
-		bool PushValue(int key) const;
-		bool PushValue(const string& key) const;
-
-	private:
-		string path;
-		mutable bool isValid;
-		LuaParser* parser;
-		lua_State* L;
-		int refnum;
+private:
+	string path;
+	mutable bool isValid;
+	LuaParser* parser;
+	lua_State* L;
+	int refnum;
 };
 
 
@@ -128,7 +127,6 @@ public:
 	bool IsValid() const { return (L != nullptr); }
 
 	LuaTable GetRoot();
-
 	LuaTable SubTableExpr(const string& expr) {
 		return GetRoot().SubTableExpr(expr);
 	}
@@ -201,9 +199,6 @@ private:
 	static int Include(lua_State* L);
 	static int LoadFile(lua_State* L);
 	static int FileExists(lua_State* L);
-
-private:
-	static LuaParser* currentParser;
 };
 
 
