@@ -20,7 +20,7 @@
 
 #undef PI
 #define PI math::PI //SPRING(3.14159265358979323846)
-#define RADIANS_PER_DEGREE math::RAD_TO_DEG //SPRING(PI/180.0)
+#define RADIANS_PER_DEGREE math::DEG_TO_RAD //SPRING(PI/180.0)
 
 
 static int math_abs (lua_State *L) {
