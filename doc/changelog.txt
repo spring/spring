@@ -18,6 +18,9 @@ Lua:
  ! Undeprecate {unit,feature}def.modelname and add .modeltype and .modelpath to
    allow reading these without loading the model. Removed def.model.{name,type,path}
    so they aren't used accidentally.
+ ! Changed the order of AllowStartPosition parameters and added a new one:
+   Old: clampedX, clampedY, clampedZ, playerID, readyState, rawX, rawY, rawZ
+   New: playerID, teamID, readyState, clampedX, clampedY, clampedZ, rawX, rawY, rawZ
  - Add VFS.AbortDownload(id) - returns whether the download was found&removed from the queue
  - Add Spring.Get{Game,Menu}Name to LuaUnsyncedRead, so LuaMenu and unsynced Lua handles know about each other
  - Add new callins (LuaMenu only):
@@ -26,7 +29,6 @@ Lua:
    AllowDraw() if it returns false, the next draw call is skipped (only active when a game isn't running)
  - Add Spring.{Set,Get}VideoCapturingMode() - this doesn't actually record the game in any way,
    it just regulates the framerate and interpolations.
- - AllowStartPosition now accepts 9th parameter teamID (useful for AIs who always report playerID 255)
 
 UI:
  - Add FPSClampPos config for whether the engine should verify the camera doesn't hit ground/go too far

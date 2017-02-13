@@ -750,15 +750,15 @@ bool CSyncedLuaHandle::AllowStartPosition(int playerID, int teamID, unsigned cha
 		return true; // the call is not defined
 
 	// push the start position and playerID
+	lua_pushnumber(L, playerID);
+	lua_pushnumber(L, teamID);
+	lua_pushnumber(L, readyState);
 	lua_pushnumber(L, clampedPos.x);
 	lua_pushnumber(L, clampedPos.y);
 	lua_pushnumber(L, clampedPos.z);
-	lua_pushnumber(L, playerID);
-	lua_pushnumber(L, readyState);
 	lua_pushnumber(L, rawPickPos.x);
 	lua_pushnumber(L, rawPickPos.y);
 	lua_pushnumber(L, rawPickPos.z);
-	lua_pushnumber(L, teamID);
 
 	// call the function
 	if (!RunCallIn(L, cmdStr, 9, 1))
