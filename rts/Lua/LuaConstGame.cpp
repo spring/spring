@@ -187,6 +187,18 @@ bool LuaConstGame::PushEntries(lua_State* L)
 		lua_rawset(L, -3);
 	}
 
+	// environmental damage types
+	lua_pushliteral(L, "damageTypes");
+	lua_newtable(L);
+		LuaPushNamedNumber(L, "Debris",          -CSolidObject::DAMAGE_EXPLOSION_DEBRIS );
+		LuaPushNamedNumber(L, "GroundCollision", -CSolidObject::DAMAGE_COLLISION_GROUND );
+		LuaPushNamedNumber(L, "ObjectCollision", -CSolidObject::DAMAGE_COLLISION_OBJECT );
+		LuaPushNamedNumber(L, "Fire",            -CSolidObject::DAMAGE_EXTSOURCE_FIRE   );
+		LuaPushNamedNumber(L, "Water",           -CSolidObject::DAMAGE_EXTSOURCE_WATER  );
+		LuaPushNamedNumber(L, "Killed",          -CSolidObject::DAMAGE_EXTSOURCE_KILLED );
+		LuaPushNamedNumber(L, "Crushed",         -CSolidObject::DAMAGE_EXTSOURCE_CRUSHED);
+	lua_rawset(L, -3);
+
 	return true;
 }
 
