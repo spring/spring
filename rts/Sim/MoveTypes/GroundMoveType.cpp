@@ -1867,7 +1867,7 @@ void CGroundMoveType::HandleUnitCollisions(
 		// positions of at most TWOPI elmos, use half as threshold
 		if (collideeMobile) {
 			const CGroundMoveType* gmt = static_cast<CGroundMoveType*>(collidee->moveType);
-			if (collider->moveType->goalPos.SqDistance2D(collidee->moveType->goalPos) < math::TWOPI) {
+			if (collider->moveType->goalPos.SqDistance2D(collidee->moveType->goalPos) < math::SQRPI) {
 				if (collider->IsMoving() && collider->moveType->progressState == AMoveType::Active) {
 					if (collidee->moveType->progressState == AMoveType::Done) {
 						if (!collidee->IsMoving() && UNIT_CMD_QUE_SIZE(collidee) == 0) {

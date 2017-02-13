@@ -8,13 +8,14 @@
 #endif 
 
 namespace math {
-	static constexpr float     PI = 3.14159265358979323846f;
-	static constexpr float  INVPI = 0.3183098861837907f;          // sic (1.0f / PI is not a constexpr)
-	static constexpr float  TWOPI = PI * 2.0f;
+	static constexpr float    PI  = 3.14159265358979323846f;
+	static constexpr float INVPI  = 0.3183098861837907f;          // sic ( 1.0f /  PI       is not a constexpr)
+	static constexpr float INVPI2 =  0.15915494309189535f;        // sic ( 1.0f / (PI *  2) is not a constexpr)
+	static constexpr float TWOPI  = PI * 2.0f;
+	static constexpr float SQRPI  = PI * PI;
 
 	static constexpr float PIU4   =  1.2732395447351628f;         // sic ( 4.0f /       PI  is not a constexpr)
 	static constexpr float PISUN4 = -0.4052847345693511f;         // sic (-4.0f / (PI * PI) is not a constexpr)
-	static constexpr float INVPI2 =  0.15915494309189535f;        // sic ( 1.0f / (PI *  2) is not a constexpr)
 
 	static constexpr float    HALFPI = PI * 0.5f;
 	static constexpr float QUARTERPI = PI * 0.25f;
