@@ -36,6 +36,11 @@ namespace GL {
 
 
 struct GhostSolidObject {
+public:
+	void IncRef() {        ( refCount++     ); }
+	bool DecRef() { return ((refCount--) > 1); }
+
+public:
 	SolidObjectGroundDecal* decal; //FIXME defined in legacy decal handler with a lot legacy stuff
 	S3DModel* model;
 

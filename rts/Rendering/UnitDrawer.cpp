@@ -290,14 +290,22 @@ CUnitDrawer::~CUnitDrawer()
 
 	for (int allyTeam = 0; allyTeam < deadGhostBuildings.size(); ++allyTeam) {
 		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-			for (GhostSolidObject* ghost: deadGhostBuildings[allyTeam][modelType]) {
+			auto& lgb = liveGhostBuildings[allyTeam][modelType];
+			auto& dgb = deadGhostBuildings[allyTeam][modelType];
+
+			for (auto it = dgb.begin(); it != dgb.end(); ++it) {
+				GhostSolidObject* gso = *it;
+
+				if (gso->DecRef())
+					continue;
+
 				// <ghost> might be the gbOwner of a decal; groundDecals is deleted after us
-				groundDecals->GhostDestroyed(ghost);
-				delete ghost;
+				groundDecals->GhostDestroyed(gso);
+				SafeDelete(*it);
 			}
 
-			deadGhostBuildings[allyTeam][modelType].clear();
-			liveGhostBuildings[allyTeam][modelType].clear();
+			dgb.clear();
+			lgb.clear();
 		}
 	}
 	deadGhostBuildings.clear();
@@ -893,19 +901,21 @@ void CUnitDrawer::UpdateGhostedBuildings()
 			auto& dgb = deadGhostBuildings[allyTeam][modelType];
 
 			for (auto it = dgb.begin(); it != dgb.end(); ) {
-				if (losHandler->InLos((*it)->pos, allyTeam)) {
-					// obtained LOS on the ghost of a dead building
-					if ((*it)->refCount <= 1) {
-						groundDecals->GhostDestroyed(*it);
-						delete *it;
-					} else {
-						(*it)->refCount -= 1;
-					}
-					*it = dgb.back();
-					dgb.pop_back();
-				} else {
+				GhostSolidObject* gso = *it;
+
+				if (!losHandler->InLos(gso->pos, allyTeam)) {
 					++it;
+					continue;
 				}
+
+				// obtained LOS on the ghost of a dead building
+				if (!gso->DecRef()) {
+					groundDecals->GhostDestroyed(gso);
+					SafeDelete(*it);
+				}
+
+				*it = dgb.back();
+				dgb.pop_back();
 			}
 		}
 	}
@@ -914,6 +924,7 @@ void CUnitDrawer::UpdateGhostedBuildings()
 void CUnitDrawer::DrawGhostedBuildings(int modelType)
 {
 	assert((unsigned) gu->myAllyTeam < deadGhostBuildings.size());
+
 	std::vector<GhostSolidObject*>& deadGhostedBuildings = deadGhostBuildings[gu->myAllyTeam][modelType];
 	std::vector<CUnit*>& liveGhostedBuildings = liveGhostBuildings[gu->myAllyTeam][modelType];
 
@@ -1765,33 +1776,38 @@ void CUnitDrawer::RenderUnitDestroyed(const CUnit* unit) {
 	const UnitDef* unitDef = unit->unitDef;
 	const UnitDef* decoyDef = unitDef->decoyDef;
 
+	const bool addNewGhost = unitDef->IsBuildingUnit() && gameSetup->ghostedBuildings;
+
 	// TODO - make ghosted buildings per allyTeam - so they are correctly dealt with
 	// when spectating
-	GhostSolidObject* gb = nullptr;
-	for (int allyTeam = 0; allyTeam < deadGhostBuildings.size(); ++allyTeam) {
-		if (unitDef->IsBuildingUnit() && gameSetup->ghostedBuildings &&
-			!(u->losStatus[allyTeam] & (LOS_INLOS | LOS_CONTRADAR)) &&
-			(u->losStatus[allyTeam] & (LOS_PREVLOS))
-		) {
-			// FIXME -- adjust decals for decoys? gets weird?
-			S3DModel* gbModel = (decoyDef == nullptr)? u->model: decoyDef->LoadModel();
-			if (gb == nullptr) {
-				gb = new GhostSolidObject();
-				gb->pos    = u->pos;
-				gb->model  = gbModel;
-				gb->decal  = nullptr;
-				gb->facing = u->buildFacing;
-				gb->dir    = u->frontdir;
-				gb->team   = u->team;
-				gb->refCount = 0;
-				gb->lastDrawFrame = 0;
+	GhostSolidObject* gso = nullptr;
+	// FIXME -- adjust decals for decoys? gets weird?
+	S3DModel* gsoModel = (decoyDef == nullptr)? u->model: decoyDef->LoadModel();
 
-				groundDecals->GhostCreated(u, gb);
+	for (int allyTeam = 0; allyTeam < deadGhostBuildings.size(); ++allyTeam) {
+		const bool canSeeGhost = !(u->losStatus[allyTeam] & (LOS_INLOS | LOS_CONTRADAR)) && (u->losStatus[allyTeam] & (LOS_PREVLOS));
+
+		if (addNewGhost && canSeeGhost) {
+			if (gso == nullptr) {
+				gso = new GhostSolidObject();
+				gso->pos    = u->pos;
+				gso->model  = gsoModel;
+				gso->decal  = nullptr;
+				gso->facing = u->buildFacing;
+				gso->dir    = u->frontdir;
+				gso->team   = u->team;
+				gso->refCount = 0;
+				gso->lastDrawFrame = 0;
+
+				groundDecals->GhostCreated(u, gso);
 			}
 
-			deadGhostBuildings[allyTeam][gbModel->type].push_back(gb);
-			gb->refCount += 1;
+			// <gso> can be inserted for multiple allyteams
+			// (the ref-counter saves us come deletion time)
+			deadGhostBuildings[allyTeam][gsoModel->type].push_back(gso);
+			gso->IncRef();
 		}
+
 		VectorErase(liveGhostBuildings[allyTeam][MDL_TYPE(u)], u);
 	}
 
