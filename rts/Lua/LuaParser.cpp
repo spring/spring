@@ -142,7 +142,7 @@ void LuaParser::SetupEnv(bool synced)
 	AddFunc("TimeCheck", TimeCheck);
 	EndTable();
 
-	GetTable("Game");
+	GetTable("Engine");
 	LuaPushNamedString(L, "version", SpringVersion::GetSync());
 	EndTable();
 
