@@ -435,11 +435,9 @@ void CSMFReadMap::UpdateFaceNormalsUnsynced(const SRectangle& update)
 {
 	#ifdef USE_UNSYNCED_HEIGHTMAP
 	const float3* sfn = &faceNormalsSynced[0];
-		  float3* ufn = &faceNormalsUnsynced[0];
+	      float3* ufn = &faceNormalsUnsynced[0];
 	const float3* scn = &centerNormalsSynced[0];
-		  float3* ucn = &centerNormalsUnsynced[0];
-	const float3* scn2d = &centerNormals2DSynced[0];
-		  float3* ucn2d = &centerNormals2DUnsynced[0];
+	      float3* ucn = &centerNormalsUnsynced[0];
 
 	// a heightmap update over (x1, y1) - (x2, y2) implies the
 	// normals change over (x1 - 1, y1 - 1) - (x2 + 1, y2 + 1)
@@ -457,7 +455,6 @@ void CSMFReadMap::UpdateFaceNormalsUnsynced(const SRectangle& update)
 		idx0  = (z * mapDims.mapx + minx);
 		idx1  = (z * mapDims.mapx + maxx);
 		memcpy(&ucn[idx0], &scn[idx0], (idx1 - idx0 + 1) * sizeof(float3));
-		memcpy(&ucn2d[idx0], &scn2d[idx0], (idx1 - idx0 + 1) * sizeof(float3));
 	}
 	#endif
 }

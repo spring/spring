@@ -82,14 +82,12 @@ CR_REG_METADATA(CReadMap, (
 	CR_IGNORED(faceNormalsUnsynced),
 	CR_IGNORED(centerNormalsSynced),
 	CR_IGNORED(centerNormalsUnsynced),
-	CR_IGNORED(centerNormals2DSynced),
-	CR_IGNORED(centerNormals2DUnsynced),
+	CR_IGNORED(centerNormals2D),
 	CR_IGNORED(slopeMap),
 	CR_IGNORED(sharedCornerHeightMaps),
 	CR_IGNORED(sharedCenterHeightMaps),
 	CR_IGNORED(sharedFaceNormals),
 	CR_IGNORED(sharedCenterNormals),
-	CR_IGNORED(sharedCenterNormals2D),
 	CR_IGNORED(sharedSlopeMaps),
 	CR_MEMBER(typeMap),
 	CR_MEMBER(unsyncedHeightMapUpdates),
@@ -197,9 +195,6 @@ void CReadMap::PostLoad()
 	sharedCenterNormals[0] = &centerNormalsUnsynced[0];
 	sharedCenterNormals[1] = &centerNormalsSynced[0];
 
-	sharedCenterNormals2D[0] = &centerNormals2DUnsynced[0];
-	sharedCenterNormals2D[1] = &centerNormals2DSynced[0];
-
 	sharedSlopeMaps[0] = &slopeMap[0]; // NO UNSYNCED VARIANT
 	sharedSlopeMaps[1] = &slopeMap[0];
 
@@ -267,8 +262,7 @@ void CReadMap::Initialize()
 	faceNormalsUnsynced.resize(mapDims.mapx * mapDims.mapy * 2);
 	centerNormalsSynced.resize(mapDims.mapx * mapDims.mapy);
 	centerNormalsUnsynced.resize(mapDims.mapx * mapDims.mapy);
-	centerNormals2DSynced.resize(mapDims.mapx * mapDims.mapy);
-	centerNormals2DUnsynced.resize(mapDims.mapx * mapDims.mapy);
+	centerNormals2D.resize(mapDims.mapx * mapDims.mapy);
 	centerHeightMap.resize(mapDims.mapx * mapDims.mapy);
 
 	mipCenterHeightMaps.resize(numHeightMipMaps - 1);
@@ -305,9 +299,6 @@ void CReadMap::Initialize()
 
 		sharedCenterNormals[0] = &centerNormalsUnsynced[0];
 		sharedCenterNormals[1] = &centerNormalsSynced[0];
-
-		sharedCenterNormals2D[0] = &centerNormals2DUnsynced[0];
-		sharedCenterNormals2D[1] = &centerNormals2DSynced[0];
 
 		sharedSlopeMaps[0] = &slopeMap[0]; // NO UNSYNCED VARIANT
 		sharedSlopeMaps[1] = &slopeMap[0];
@@ -561,14 +552,13 @@ void CReadMap::UpdateFaceNormals(const SRectangle& rect, bool initialize)
 			faceNormalsSynced[(y * mapDims.mapx + x) * 2 + 1] = fnBR;
 			// square-normal
 			centerNormalsSynced[y * mapDims.mapx + x] = (fnTL + fnBR).Normalize();
-			centerNormals2DSynced[y * mapDims.mapx + x] = (fnTL + fnBR).Normalize2D();
+			centerNormals2D[y * mapDims.mapx + x] = (fnTL + fnBR).Normalize2D();
 
 			#ifdef USE_UNSYNCED_HEIGHTMAP
 			if (initialize) {
 				faceNormalsUnsynced[(y * mapDims.mapx + x) * 2    ] = faceNormalsSynced[(y * mapDims.mapx + x) * 2    ];
 				faceNormalsUnsynced[(y * mapDims.mapx + x) * 2 + 1] = faceNormalsSynced[(y * mapDims.mapx + x) * 2 + 1];
 				centerNormalsUnsynced[y * mapDims.mapx + x] = centerNormalsSynced[y * mapDims.mapx + x];
-				centerNormals2DUnsynced[y * mapDims.mapx + x] = centerNormals2DSynced[y * mapDims.mapx + x];
 			}
 			#endif
 		}

@@ -163,6 +163,7 @@ public:
 	const float* GetSlopeMapSynced() const { return &slopeMap[0]; }
 	const uint8_t* GetTypeMapSynced() const { return &typeMap[0]; }
 	      uint8_t* GetTypeMapSynced()       { return &typeMap[0]; }
+	const float3* GetCenterNormals2DSynced()  const { return &centerNormals2D[0]; }
 
 	/// unsynced only
 	const float3* GetVisVertexNormalsUnsynced() const { return &visVertexNormals[0]; }
@@ -171,12 +172,10 @@ public:
 	const float* GetCornerHeightMapSynced() const { return sharedCornerHeightMaps[true]; }
 	const float3* GetFaceNormalsSynced()    const { return sharedFaceNormals[true]; }
 	const float3* GetCenterNormalsSynced()  const { return sharedCenterNormals[true]; }
-	const float3* GetCenterNormals2DSynced()  const { return sharedCenterNormals2D[true]; }
 	/// unsynced versions
 	const float* GetCornerHeightMapUnsynced() const { return sharedCornerHeightMaps[false]; }
 	const float3* GetFaceNormalsUnsynced()    const { return sharedFaceNormals[false]; }
 	const float3* GetCenterNormalsUnsynced()  const { return sharedCenterNormals[false]; }
-	const float3* GetCenterNormals2DUnsynced()  const { return sharedCenterNormals2D[false]; }
 
 
 	/// shared interface
@@ -184,7 +183,6 @@ public:
 	const float* GetSharedCenterHeightMap(bool synced) const { return sharedCenterHeightMaps[synced]; }
 	const float3* GetSharedFaceNormals(bool synced) const { return sharedFaceNormals[synced]; }
 	const float3* GetSharedCenterNormals(bool synced) const { return sharedCenterNormals[synced]; }
-	const float3* GetSharedCenterNormals2D(bool synced) const { return sharedCenterNormals2D[synced]; }
 	const float* GetSharedSlopeMap(bool synced) const { return sharedSlopeMaps[synced]; }
 
 	/// if you modify the heightmap through these, call UpdateHeightMapSynced
@@ -246,11 +244,10 @@ protected:
 	std::vector<float3> faceNormalsUnsynced;   //< size: 2*mapx      *  mapy     , contains 2 normals per quad -> triangle strip [UNSYNCED]
 	std::vector<float3> centerNormalsSynced;   //< size:   mapx      *  mapy     , contains 1 interpolated normal per quad, same as (facenormal0+facenormal1).Normalize()) [SYNCED]
 	std::vector<float3> centerNormalsUnsynced;
-	std::vector<float3> centerNormals2DSynced;
-	std::vector<float3> centerNormals2DUnsynced;
 
 	std::vector<float> slopeMap;               //< size: (mapx/2)    * (mapy/2)  , same as 1.0 - interpolate(centernomal[i]).y [SYNCED]
 	std::vector<uint8_t> typeMap;
+	std::vector<float3> centerNormals2D;
 
 	CRectangleOptimizer unsyncedHeightMapUpdates;
 	CRectangleOptimizer unsyncedHeightMapUpdatesTemp;
@@ -262,7 +259,6 @@ private:
 	const float* sharedCenterHeightMaps[2];
 	const float3* sharedFaceNormals[2];
 	const float3* sharedCenterNormals[2];
-	const float3* sharedCenterNormals2D[2];
 	const float* sharedSlopeMaps[2];
 
 #ifdef USE_UNSYNCED_HEIGHTMAP
