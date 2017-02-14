@@ -14,6 +14,7 @@
 
 #include "LuaIO.h"
 #include "LuaUtils.h"
+#include "LuaConstEngine.h"
 
 #include "Game/GameVersion.h"
 #include "Sim/Misc/GlobalSynced.h" // gsRNG
@@ -143,7 +144,7 @@ void LuaParser::SetupEnv(bool synced)
 	EndTable();
 
 	GetTable("Engine");
-	LuaPushNamedString(L, "version", SpringVersion::GetSync());
+	LuaConstEngine::PushEntries(L);
 	EndTable();
 
 	GetTable("VFS");
