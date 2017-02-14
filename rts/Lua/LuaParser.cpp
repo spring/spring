@@ -215,26 +215,26 @@ bool LuaParser::Execute()
 		error = lua_pcall(L, 0, 1, 0);
 
 		SetCurrentParser(nullptr);
+
+		if (error != 0) {
+			errorLog = lua_tostring(L, -1);
+			LOG_L(L_ERROR, "%i, %s, %s", error, fileName.c_str(), errorLog.c_str());
+			LUA_CLOSE(&L);
+			return false;
+		}
+
+		if (!lua_istable(L, 1)) {
+			errorLog = "missing return table from " + fileName;
+			LOG_L(L_ERROR, "missing return table from %s", fileName.c_str());
+			LUA_CLOSE(&L);
+			return false;
+		}
+
+		if (lowerKeys)
+			LuaUtils::LowerKeys(L, 1);
+
+		LuaUtils::CheckTableForNaNs(L, 1, fileName);
 	}
-
-	if (error != 0) {
-		errorLog = lua_tostring(L, -1);
-		LOG_L(L_ERROR, "%i, %s, %s", error, fileName.c_str(), errorLog.c_str());
-		LUA_CLOSE(&L);
-		return false;
-	}
-
-	if (!lua_istable(L, 1)) {
-		errorLog = "missing return table from " + fileName;
-		LOG_L(L_ERROR, "missing return table from %s", fileName.c_str());
-		LUA_CLOSE(&L);
-		return false;
-	}
-
-	if (lowerKeys)
-		LuaUtils::LowerKeys(L, 1);
-
-	LuaUtils::CheckTableForNaNs(L, 1, fileName);
 
 	rootRef = luaL_ref(L, LUA_REGISTRYINDEX);
 	lua_settop(L, 0);
