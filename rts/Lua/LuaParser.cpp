@@ -28,18 +28,20 @@
 
 
 static spring::mutex parserMutex;
-static spring::unordered_map<Threading::NativeThreadId, LuaParser*> currentParsers;
+static LuaParser* currentParser = nullptr;
 
-static void SetCurrentParser(LuaParser* p)
+static void PushCurrentParser(LuaParser* p)
 {
-	std::unique_lock<spring::mutex> ulk(parserMutex);
-	currentParsers[ Threading::GetCurrentThreadId() ] = p;
+	parserMutex.lock();
+	assert(currentParser == nullptr);
+	currentParser = p;
 }
 
-static LuaParser* GetCurrentParser()
+static void PopCurrentParser(LuaParser* p)
 {
-	std::unique_lock<spring::mutex> ulk(parserMutex);
-	return (currentParsers[ Threading::GetCurrentThreadId() ]);
+	assert(currentParser == p);
+	currentParser = nullptr;
+	parserMutex.unlock();
 }
 
 
@@ -208,13 +210,13 @@ bool LuaParser::Execute()
 	{
 		// LuaParser::Execute can be called concurrently by the
 		// game-load and (e.g.) assimp model preloading threads
-		SetCurrentParser(this);
+		PushCurrentParser(this);
 
 		// do not signal floating point exceptions in user Lua code
 		ScopedDisableFpuExceptions fe;
 		error = lua_pcall(L, 0, 1, 0);
 
-		SetCurrentParser(nullptr);
+		PopCurrentParser(this);
 
 		if (error != 0) {
 			errorLog = lua_tostring(L, -1);
@@ -489,8 +491,6 @@ int LuaParser::DummyRandom(lua_State* L) { return 0; }
 
 int LuaParser::DirList(lua_State* L)
 {
-	const LuaParser* currentParser = GetCurrentParser();
-
 	if (currentParser == nullptr)
 		luaL_error(L, "invalid call to DirList() after execution");
 
@@ -509,8 +509,6 @@ int LuaParser::DirList(lua_State* L)
 
 int LuaParser::SubDirs(lua_State* L)
 {
-	const LuaParser* currentParser = GetCurrentParser();
-
 	if (currentParser == nullptr)
 		luaL_error(L, "invalid call to SubDirs() after execution");
 
@@ -530,8 +528,6 @@ int LuaParser::SubDirs(lua_State* L)
 
 int LuaParser::Include(lua_State* L)
 {
-	const LuaParser* currentParser = GetCurrentParser();
-
 	if (currentParser == nullptr)
 		luaL_error(L, "invalid call to Include() after execution");
 
@@ -601,8 +597,6 @@ int LuaParser::Include(lua_State* L)
 
 int LuaParser::LoadFile(lua_State* L)
 {
-	const LuaParser* currentParser = GetCurrentParser();
-
 	if (currentParser == nullptr)
 		luaL_error(L, "invalid call to LoadFile() after execution");
 
@@ -636,8 +630,6 @@ int LuaParser::LoadFile(lua_State* L)
 
 int LuaParser::FileExists(lua_State* L)
 {
-	const LuaParser* currentParser = GetCurrentParser();
-
 	if (currentParser == nullptr)
 		luaL_error(L, "invalid call to FileExists() after execution");
 
@@ -653,8 +645,6 @@ int LuaParser::FileExists(lua_State* L)
 
 int LuaParser::DontMessWithMyCase(lua_State* L)
 {
-	LuaParser* currentParser = GetCurrentParser();
-
 	if (currentParser == nullptr)
 		luaL_error(L, "invalid call to DontMessWithMyCase() after execution");
 
