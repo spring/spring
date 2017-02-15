@@ -466,7 +466,7 @@ void CSelectedUnitsHandler::SelectUnits(const std::string& line)
 
 void CSelectedUnitsHandler::SelectCycle(const std::string& command)
 {
-	static std::unordered_set<int> unitIDs;
+	static spring::unordered_set<int> unitIDs;
 	static int lastID = -1;
 
 	if (command == "restore") {
@@ -494,7 +494,7 @@ void CSelectedUnitsHandler::SelectCycle(const std::string& command)
 	}
 
 	// clean the list
-	std::unordered_set<int> tmpSet;
+	spring::unordered_set<int> tmpSet;
 	for (const int unitID: unitIDs) {
 		if (unitHandler->GetUnit(unitID) != nullptr) {
 			tmpSet.insert(unitID);
@@ -509,7 +509,7 @@ void CSelectedUnitsHandler::SelectCycle(const std::string& command)
 	// selectedUnits size is 0 or 1
 	ClearSelected();
 	if (!unitIDs.empty()) {
-		std::set<int>::const_iterator fit = unitIDs.find(lastID);
+		auto fit = unitIDs.find(lastID);
 		if (fit == unitIDs.end()) {
 			lastID = *unitIDs.begin();
 		} else {

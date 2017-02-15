@@ -1860,7 +1860,7 @@ bool CUnit::SetGroup(CGroup* newGroup, bool fromFactory, bool autoSelect)
 	if ((group = newGroup) == nullptr)
 		return true;
 
-	if (!newGroup->AddUnit(this)){
+	if (!newGroup->AddUnit(this)) {
 		// group did not accept us
 		group = nullptr;
 		return false;
