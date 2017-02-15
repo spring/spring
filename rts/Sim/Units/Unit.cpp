@@ -304,17 +304,14 @@ void CUnit::PreInit(const UnitLoadParams& params)
 	zsize = ((buildFacing & 1) == 1) ? unitDef->xsize : unitDef->zsize;
 
 
-	// copy the UnitDef volume instance
-	model = unitDef->LoadModel();
+	localModel.SetModel(model = unitDef->LoadModel());
+
 	collisionVolume = unitDef->collisionVolume;
 	selectionVolume = unitDef->selectionVolume;
 
-	localModel.SetModel(model);
-
-	if (collisionVolume.DefaultToSphere())
-		collisionVolume.InitSphere(model->radius);
-	if (collisionVolume.DefaultToFootPrint())
-		collisionVolume.InitBox(float3(xsize * SQUARE_SIZE, model->height, zsize * SQUARE_SIZE));
+	// specialize defaults if non-custom sphere or footprint-box
+	collisionVolume.InitDefault(float4(model->radius, model->height,  xsize * SQUARE_SIZE, zsize * SQUARE_SIZE));
+	selectionVolume.InitDefault(float4(model->radius, model->height,  xsize * SQUARE_SIZE, zsize * SQUARE_SIZE));
 
 
 	mapSquare = CGround::GetSquare((params.pos).cClampInMap());

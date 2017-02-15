@@ -204,7 +204,7 @@ void CFeature::Initialize(const FeatureLoadParams& params)
 		} break;
 
 		case DRAWTYPE_MODEL: {
-			if ((model = def->LoadModel()) != NULL) {
+			if ((model = def->LoadModel()) != nullptr) {
 				SetMidAndAimPos(model->relMidPos, model->relMidPos, true);
 				SetRadiusAndHeight(model);
 
@@ -230,13 +230,12 @@ void CFeature::Initialize(const FeatureLoadParams& params)
 	UpdateMidAndAimPos();
 	UpdateTransformAndPhysState();
 
+
 	collisionVolume = def->collisionVolume;
 	selectionVolume = def->selectionVolume;
 
-	if (collisionVolume.DefaultToSphere())
-		collisionVolume.InitSphere(radius);
-	if (collisionVolume.DefaultToFootPrint())
-		collisionVolume.InitBox(float3(xsize * SQUARE_SIZE, height, zsize * SQUARE_SIZE));
+	collisionVolume.InitDefault(float4(radius, height,  xsize * SQUARE_SIZE, zsize * SQUARE_SIZE));
+	selectionVolume.InitDefault(float4(radius, height,  xsize * SQUARE_SIZE, zsize * SQUARE_SIZE));
 
 
 	// feature does not have an assigned ID yet

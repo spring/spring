@@ -111,18 +111,6 @@ void CollisionVolume::PostLoad()
 }
 
 
-void CollisionVolume::InitSphere(float radius)
-{
-	// <r> is the object's default RADIUS (not its diameter),
-	// so we need to double it to get the full-length scales
-	InitShape(OnesVector * radius * 2.0f, ZeroVector, COLVOL_TYPE_SPHERE, COLVOL_HITTEST_CONT, COLVOL_AXIS_Z);
-}
-
-void CollisionVolume::InitBox(const float3& scales, const float3& offsets)
-{
-	InitShape(scales, offsets, COLVOL_TYPE_BOX, COLVOL_HITTEST_CONT, COLVOL_AXIS_Z);
-}
-
 void CollisionVolume::InitShape(
 	const float3& scales,
 	const float3& offsets,
