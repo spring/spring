@@ -94,9 +94,7 @@ bool CGroupHandler::GroupCommand(int num, const std::string& cmd)
 		if (cmd == "set")
 			group->ClearUnits();
 
-		const auto& selUnits = selectedUnitsHandler.selectedUnits;
-
-		for (const int unitID: selUnits) {
+		for (const int unitID: selectedUnitsHandler.selectedUnits) {
 			CUnit* u = unitHandler->GetUnit(unitID);
 
 			if (u == nullptr) {
@@ -104,7 +102,8 @@ bool CGroupHandler::GroupCommand(int num, const std::string& cmd)
 				continue;
 			}
 
-			u->SetGroup(group);
+			// change group, but do not call SUH::AddUnit while iterating
+			u->SetGroup(group, false, false);
 		}
 	}
 	else if (cmd == "selectadd")  {

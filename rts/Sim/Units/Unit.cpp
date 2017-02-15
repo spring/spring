@@ -1848,32 +1848,31 @@ void CUnit::CalculateTerrainType()
 }
 
 
-bool CUnit::SetGroup(CGroup* newGroup, bool fromFactory)
+bool CUnit::SetGroup(CGroup* newGroup, bool fromFactory, bool autoSelect)
 {
 	// factory is not necessarily selected
 	if (fromFactory && !selectedUnitsHandler.AutoAddBuiltUnitsToFactoryGroup())
 		return false;
 
-	if (group != nullptr) {
+	if (group != nullptr)
 		group->RemoveUnit(this);
-	}
 
-	group = newGroup;
-
-	if (newGroup == nullptr)
+	if ((group = newGroup) == nullptr)
 		return true;
 
 	if (!newGroup->AddUnit(this)){
 		// group did not accept us
 		group = nullptr;
 		return false;
-	} else {
-		// add unit to the set of selected units iff its new group is already selected
-		// and (user wants the unit to be auto-selected or the unit is not newly built)
-		if (selectedUnitsHandler.IsGroupSelected(newGroup->id) && (selectedUnitsHandler.AutoAddBuiltUnitsToSelectedGroup() || !fromFactory)) {
-			selectedUnitsHandler.AddUnit(this);
-		}
 	}
+
+	if (!autoSelect)
+		return true;
+
+	// add unit to the set of selected units iff its new group is already selected
+	// and (user wants the unit to be auto-selected or the unit is not newly built)
+	if (selectedUnitsHandler.IsGroupSelected(newGroup->id) && (selectedUnitsHandler.AutoAddBuiltUnitsToSelectedGroup() || !fromFactory))
+		selectedUnitsHandler.AddUnit(this);
 
 	return true;
 }

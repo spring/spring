@@ -197,8 +197,9 @@ void CSelectedUnitsHandler::GiveCommand(Command c, bool fromUser)
 	if (cmd_id == CMD_GROUPCLEAR) {
 		for (const int unitID: selectedUnits) {
 			CUnit* u = unitHandler->GetUnit(unitID);
+
 			if (u->group != nullptr) {
-				u->SetGroup(0);
+				u->SetGroup(nullptr);
 				possibleCommandsChanged = true;
 			}
 		}
@@ -220,14 +221,22 @@ void CSelectedUnitsHandler::GiveCommand(Command c, bool fromUser)
 				break;
 			}
 		}
-		if (group) {
+		if (group != nullptr) {
 			for (const int unitID: selectedUnits) {
 				CUnit* u = unitHandler->GetUnit(unitID);
 
-				if (u->group == nullptr) {
-					u->SetGroup(group);
+				if (u == nullptr) {
+					assert(false);
+					continue;
 				}
+				if (u->group != nullptr)
+					continue;
+
+				// change group, but do not call SUH::AddUnit while iterating
+				// (the unit's id is already present in selectedUnits anyway)
+				u->SetGroup(group, false, false);
 			}
+
 			SelectGroup(group->id);
 		}
 		return;
@@ -457,7 +466,7 @@ void CSelectedUnitsHandler::SelectUnits(const std::string& line)
 
 void CSelectedUnitsHandler::SelectCycle(const std::string& command)
 {
-	static std::set<int> unitIDs;
+	static std::unordered_set<int> unitIDs;
 	static int lastID = -1;
 
 	if (command == "restore") {
@@ -475,7 +484,7 @@ void CSelectedUnitsHandler::SelectCycle(const std::string& command)
 		// assign the cycle units
 		unitIDs.clear();
 		for (const int unitID: selectedUnits) {
-			CUnit* u = unitHandler->GetUnit(unitID);
+			const CUnit* u = unitHandler->GetUnit(unitID);
 			unitIDs.insert(u->id);
 		}
 		ClearSelected();
@@ -485,8 +494,8 @@ void CSelectedUnitsHandler::SelectCycle(const std::string& command)
 	}
 
 	// clean the list
-	std::set<int> tmpSet;
-	for (const int& unitID: unitIDs) {
+	std::unordered_set<int> tmpSet;
+	for (const int unitID: unitIDs) {
 		if (unitHandler->GetUnit(unitID) != nullptr) {
 			tmpSet.insert(unitID);
 		}
@@ -782,12 +791,14 @@ int CSelectedUnitsHandler::GetDefaultCmd(const CUnit* unit, const CFeature* feat
 		const CUnit* testUnit = unitHandler->GetUnit(unitID);
 		const UnitDef* testDef = testUnit->unitDef;
 
-		if (testDef != leaderDef) {
-			if (IsBetterLeader(testDef, leaderDef)) {
-				leaderDef = testDef;
-				leaderUnit = testUnit;
-			}
-		}
+		if (testDef == leaderDef)
+			continue;
+
+		if (!IsBetterLeader(testDef, leaderDef))
+			continue;
+
+		leaderDef = testDef;
+		leaderUnit = testUnit;
 	}
 
 	return (leaderUnit->commandAI->GetDefaultCmd(unit, feature));

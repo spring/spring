@@ -225,7 +225,7 @@ protected:
 	float GetFlankingDamageBonus(const float3& attackDir);
 
 public: // unsynced methods
-	bool SetGroup(CGroup* newGroup, bool fromFactory = false);
+	bool SetGroup(CGroup* newGroup, bool fromFactory = false, bool autoSelect = true);
 
 public:
 	static void  SetExpMultiplier(float value) { expMultiplier = value; }
