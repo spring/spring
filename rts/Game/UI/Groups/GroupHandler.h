@@ -5,10 +5,8 @@
 
 #include "System/creg/creg_cond.h"
 
-#include <map>
 #include <string>
 #include <vector>
-#include <set>
 
 class CGroup;
 

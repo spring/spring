@@ -61,8 +61,9 @@ void CGroupHandler::Update()
 
 		std::vector<int> grpChg;
 
-		changedGroups.swap(grpChg);
 		// swap containers to prevent recursion through lua
+		changedGroups.swap(grpChg);
+
 		for (int i: grpChg) {
 			eventHandler.GroupChanged(i);
 		}

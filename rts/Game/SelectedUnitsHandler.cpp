@@ -946,10 +946,8 @@ void CSelectedUnitsHandler::SendCommand(const Command& c)
 		std::vector<short> selectedUnitIDs(selectedUnits.size());
 		std::vector<short>::iterator i = selectedUnitIDs.begin();
 
-		auto ui = selectedUnits.begin();
-
-		for(; ui != selectedUnits.end(); ++i, ++ui) {
-			*i = (unitHandler->GetUnit(*ui))->id;
+		for (auto ui = selectedUnits.begin(); ui != selectedUnits.end(); ++i, ++ui) {
+			*i = *ui;
 		}
 
 		clientNet->Send(CBaseNetProtocol::Get().SendSelect(gu->myPlayerNum, selectedUnitIDs));
