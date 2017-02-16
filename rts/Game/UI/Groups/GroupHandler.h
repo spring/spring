@@ -49,7 +49,7 @@ protected:
 	 * This is always greater or equal FIRST_SPECIAL_GROUP.
 	 */
 	int firstUnusedGroup;
-	std::set<int> changedGroups;
+	std::vector<int> changedGroups;
 };
 
 extern std::vector<CGroupHandler*> grouphandlers;

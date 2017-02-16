@@ -11,6 +11,7 @@
 #include "System/Log/ILog.h"
 #include "System/Input/KeyInput.h"
 #include "System/EventHandler.h"
+#include "System/Util.h"
 
 std::vector<CGroupHandler*> grouphandlers;
 
@@ -46,24 +47,25 @@ CGroupHandler::~CGroupHandler()
 void CGroupHandler::Update()
 {
 	{
-		for (std::vector<CGroup*>::iterator gi = groups.begin(); gi != groups.end(); ++gi) {
-			if ((*gi) != NULL) {
+		for (CGroup* g: groups) {
+			if (g != nullptr) {
 				// Update may invoke RemoveGroup, but this will only NULL the element, so there will be no iterator invalidation here
-				(*gi)->Update();
+				g->Update();
 			}
 		}
 	}
 
-	std::set<int> grpChg;
 	{
 		if (changedGroups.empty())
 			return;
 
+		std::vector<int> grpChg;
+
 		changedGroups.swap(grpChg);
-	}
-	// this batching mechanism is to prevent lua related readlocks for MT
-	for (std::set<int>::iterator i = grpChg.begin(); i != grpChg.end(); ++i) {
-		eventHandler.GroupChanged(*i);
+		// swap containers to prevent recursion through lua
+		for (int i: grpChg) {
+			eventHandler.GroupChanged(i);
+		}
 	}
 }
 
@@ -181,5 +183,5 @@ void CGroupHandler::RemoveGroup(CGroup* group)
 
 void CGroupHandler::PushGroupChange(int id)
 {
-	changedGroups.insert(id);
+	VectorInsertUnique(changedGroups, id, true);
 }
