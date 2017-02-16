@@ -201,7 +201,7 @@ struct luaContextData {
 	int  readTeam;
 	int  readAllyTeam;
 	int  selectTeam;
-
+#if (!defined(UNITSYNC) && !defined(DEDICATED))
 	LuaShaders shaders;
 	LuaTextures textures;
 	LuaFBOs fbos;
@@ -209,7 +209,7 @@ struct luaContextData {
 	CLuaDisplayLists displayLists;
 
 	GLMatrixStateTracker glMatrixTracker;
-
+#endif
 	LuaParser* parser;
 };
 

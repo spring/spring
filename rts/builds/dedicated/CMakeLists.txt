@@ -150,6 +150,7 @@ SET(engineDedicatedSources
 	${ENGINE_SRC_ROOT_DIR}/Sim/Misc/TeamBase.cpp
 	${ENGINE_SRC_ROOT_DIR}/Sim/Misc/TeamStatistics.cpp
 	${ENGINE_SRC_ROOT_DIR}/Sim/Misc/AllyTeam.cpp
+	${ENGINE_SRC_ROOT_DIR}/Lua/LuaConstEngine.cpp
 	${ENGINE_SRC_ROOT_DIR}/Lua/LuaIO.cpp
 	${ENGINE_SRC_ROOT_DIR}/Lua/LuaParser.cpp
 	${ENGINE_SRC_ROOT_DIR}/Lua/LuaUtils.cpp

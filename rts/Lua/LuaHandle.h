@@ -93,11 +93,13 @@ class CLuaHandle : public CEventClient
 		//FIXME needed by LuaSyncedTable (can be solved cleaner?)
 		lua_State* GetLuaState() const { return L; }
 
+#if (!defined(UNITSYNC) && !defined(DEDICATED))
 		LuaShaders& GetShaders(const lua_State* L = NULL) { return GetLuaContextData(L)->shaders; }
 		LuaTextures& GetTextures(const lua_State* L = NULL) { return GetLuaContextData(L)->textures; }
 		LuaFBOs& GetFBOs(const lua_State* L = NULL) { return GetLuaContextData(L)->fbos; }
 		LuaRBOs& GetRBOs(const lua_State* L = NULL) { return GetLuaContextData(L)->rbos; }
 		CLuaDisplayLists& GetDisplayLists(const lua_State* L = NULL) { return GetLuaContextData(L)->displayLists; }
+#endif
 
 	public: // call-ins
 		bool WantsEvent(const string& name) override { return HasCallIn(L, name); }
@@ -317,11 +319,13 @@ class CLuaHandle : public CEventClient
 		static int CallOutIsEngineMinVersion(lua_State* L);
 
 	public: // static
+#if (!defined(UNITSYNC) && !defined(DEDICATED))
 		static inline LuaShaders& GetActiveShaders(lua_State* L) { return GetLuaContextData(L)->shaders; }
 		static inline LuaTextures& GetActiveTextures(lua_State* L) { return GetLuaContextData(L)->textures; }
 		static inline LuaFBOs& GetActiveFBOs(lua_State* L) { return GetLuaContextData(L)->fbos; }
 		static inline LuaRBOs& GetActiveRBOs(lua_State* L) { return GetLuaContextData(L)->rbos; }
 		static inline CLuaDisplayLists& GetActiveDisplayLists(lua_State* L) { return GetLuaContextData(L)->displayLists; }
+#endif
 
 		static void SetDevMode(bool value) { devMode = value; }
 		static bool GetDevMode() { return devMode; }
