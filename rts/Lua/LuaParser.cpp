@@ -12,6 +12,7 @@
 #include "System/float4.h"
 #include "LuaInclude.h"
 
+#include "LuaConstEngine.h"
 #include "LuaIO.h"
 #include "LuaUtils.h"
 
@@ -20,37 +21,14 @@
 #include "System/Log/ILog.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/Misc/SpringTime.h"
-#include "System/Platform/Threading.h"
 #include "System/ScopedFPUSettings.h"
-#include "System/Threading/SpringThreading.h"
 #include "System/Util.h"
 
 
-
-static spring::recursive_mutex parserMutex;
-static spring::unordered_map<Threading::NativeThreadId, LuaParser*> currentParsers;
-
-static void SetCurrentParser(LuaParser* p)
-{
-	// pre-execute, lock is free
-	if (p != nullptr)
-		parserMutex.lock();
-
-	currentParsers[ Threading::GetCurrentThreadId() ] = p;
-
-	// post-execute, lock is held
-	if (p == nullptr)
-		parserMutex.unlock();
+LuaParser* GetLuaParser(lua_State* L) {
+	assert(GetLuaContextData(L)->parser != nullptr);
+	return GetLuaContextData(L)->parser;
 }
-
-static LuaParser* GetCurrentParser()
-{
-	parserMutex.lock();
-	LuaParser* p = currentParsers[ Threading::GetCurrentThreadId() ];
-	parserMutex.unlock();
-	return p;
-}
-
 
 
 /******************************************************************************/
@@ -72,7 +50,11 @@ LuaParser::LuaParser(const string& _fileName, const string& _fileModes, const st
 	, lowerKeys(true)
 	, lowerCppKeys(true)
 {
-	if ((L = LUA_OPEN()) != nullptr) {
+	// be on the safe side
+	D.synced = true;
+	D.parser = this;
+
+	if ((L = LUA_OPEN(&D)) != nullptr) {
 		SetupEnv(synced.b);
 	}
 }
@@ -91,7 +73,11 @@ LuaParser::LuaParser(const string& _textChunk, const string& _accessModes, const
 	, lowerKeys(true)
 	, lowerCppKeys(true)
 {
-	if ((L = LUA_OPEN()) != nullptr) {
+	// be on the safe side
+	D.synced = true;
+	D.parser = this;
+
+	if ((L = LUA_OPEN(&D)) != nullptr) {
 		SetupEnv(synced.b);
 	}
 }
@@ -152,7 +138,7 @@ void LuaParser::SetupEnv(bool synced)
 	EndTable();
 
 	GetTable("Engine");
-	LuaPushNamedString(L, "version", SpringVersion::GetSync());
+	LuaConstEngine::PushEntries(L);
 	EndTable();
 
 	GetTable("VFS");
@@ -217,13 +203,10 @@ bool LuaParser::Execute()
 	{
 		// LuaParser::Execute can be called concurrently by the
 		// game-load and (e.g.) assimp model preloading threads
-		SetCurrentParser(this);
 
 		// do not signal floating point exceptions in user Lua code
 		ScopedDisableFpuExceptions fe;
 		error = lua_pcall(L, 0, 1, 0);
-
-		SetCurrentParser(nullptr);
 
 		if (error != 0) {
 			errorLog = lua_tostring(L, -1);
@@ -498,10 +481,7 @@ int LuaParser::DummyRandom(lua_State* L) { return 0; }
 
 int LuaParser::DirList(lua_State* L)
 {
-	const LuaParser* currentParser = GetCurrentParser();
-
-	if (currentParser == nullptr)
-		luaL_error(L, "invalid call to DirList() after execution");
+	const LuaParser* currentParser = GetLuaParser(L);
 
 	const std::string& dir = luaL_checkstring(L, 1);
 
@@ -518,10 +498,7 @@ int LuaParser::DirList(lua_State* L)
 
 int LuaParser::SubDirs(lua_State* L)
 {
-	const LuaParser* currentParser = GetCurrentParser();
-
-	if (currentParser == nullptr)
-		luaL_error(L, "invalid call to SubDirs() after execution");
+	const LuaParser* currentParser = GetLuaParser(L);
 
 	const std::string& dir = luaL_checkstring(L, 1);
 
@@ -539,10 +516,7 @@ int LuaParser::SubDirs(lua_State* L)
 
 int LuaParser::Include(lua_State* L)
 {
-	const LuaParser* currentParser = GetCurrentParser();
-
-	if (currentParser == nullptr)
-		luaL_error(L, "invalid call to Include() after execution");
+	const LuaParser* currentParser = GetLuaParser(L);
 
 	// filename [, fenv]
 	const std::string& filename = luaL_checkstring(L, 1);
@@ -610,10 +584,7 @@ int LuaParser::Include(lua_State* L)
 
 int LuaParser::LoadFile(lua_State* L)
 {
-	const LuaParser* currentParser = GetCurrentParser();
-
-	if (currentParser == nullptr)
-		luaL_error(L, "invalid call to LoadFile() after execution");
+	const LuaParser* currentParser = GetLuaParser(L);
 
 	const std::string&  filename = luaL_checkstring(L, 1);
 
@@ -645,10 +616,7 @@ int LuaParser::LoadFile(lua_State* L)
 
 int LuaParser::FileExists(lua_State* L)
 {
-	const LuaParser* currentParser = GetCurrentParser();
-
-	if (currentParser == nullptr)
-		luaL_error(L, "invalid call to FileExists() after execution");
+	const LuaParser* currentParser = GetLuaParser(L);
 
 	const std::string&  filename = luaL_checkstring(L, 1);
 
@@ -662,10 +630,7 @@ int LuaParser::FileExists(lua_State* L)
 
 int LuaParser::DontMessWithMyCase(lua_State* L)
 {
-	LuaParser* currentParser = GetCurrentParser();
-
-	if (currentParser == nullptr)
-		luaL_error(L, "invalid call to DontMessWithMyCase() after execution");
+	LuaParser* currentParser = GetLuaParser(L);
 
 	currentParser->SetLowerKeys(lua_toboolean(L, 1));
 	return 0;

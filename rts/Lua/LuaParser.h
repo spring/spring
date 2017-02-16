@@ -6,6 +6,8 @@
 #include <string>
 #include <vector>
 
+#include "LuaContextData.h"
+
 #include "System/FileSystem/VFSModes.h"
 #include "System/UnorderedMap.hpp"
 
@@ -166,6 +168,7 @@ private:
 
 private:
 	lua_State* L;
+	luaContextData D;
 
 	// NOTE: holds *stack* pointers
 	std::vector<LuaTable*> tables;

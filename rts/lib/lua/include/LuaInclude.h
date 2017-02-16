@@ -223,7 +223,7 @@ static inline luaContextData* GetLuaContextData(const lua_State* L)
 	return reinterpret_cast<luaContextData*>(G(L)->ud);
 }
 
-static inline lua_State* LUA_OPEN(luaContextData* lcd = NULL) {
+static inline lua_State* LUA_OPEN(luaContextData* lcd) {
 	return lua_newstate(spring_lua_alloc, lcd); // we want to use our own memory allocator
 }
 

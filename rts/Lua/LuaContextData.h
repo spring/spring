@@ -13,6 +13,7 @@
 #include "System/Threading/SpringThreading.h"
 
 class CLuaHandle;
+class LuaParser;
 
 
 //FIXME move to diff file
@@ -49,16 +50,16 @@ public:
 	}
 
 	int &GetDepth(unsigned int mode) {
-        switch (mode) {
-            case GL_MODELVIEW: return matrixData.modelView;
-            case GL_PROJECTION: return matrixData.projection;
-            case GL_TEXTURE: return matrixData.texture;
-            default:
-                LOG_L(L_ERROR, "unknown matrix mode = %u", mode);
-                abort();
-                break;
-        }
-    }
+		switch (mode) {
+			case GL_MODELVIEW: return matrixData.modelView;
+			case GL_PROJECTION: return matrixData.projection;
+			case GL_TEXTURE: return matrixData.texture;
+			default:
+				LOG_L(L_ERROR, "unknown matrix mode = %u", mode);
+				abort();
+				break;
+		}
+	}
 
 	bool PushMatrix() {
 		unsigned int mode = GetMode();
@@ -90,7 +91,7 @@ public:
 		return false;
 	}
 
-	
+
 	int ApplyMatrixState(SMatrixStateData& m) {
 		// validate
 #define VALIDATE(modeName) \
@@ -101,19 +102,19 @@ public:
 			if (newDepth >= 255) \
 				return 1; \
 		}
-			
+
 		VALIDATE(modelView)
 		VALIDATE(projection)
 		VALIDATE(texture)
-		
+
 #undef VALIDATE
-		
+
 		// apply
 		matrixData.mode = m.mode;
 		matrixData.modelView += m.modelView;
 		matrixData.projection += m.projection;
 		matrixData.texture += m.texture;
-		
+
 		return 0;
 	}
 
@@ -136,7 +137,7 @@ public:
 		if (error == 0 && mode != GL_MODELVIEW)
 			LOG_L(L_ERROR, "%s: OpenGL state check error, matrix mode = %d, please restore mode to GL.MODELVIEW before end", errsrc, mode);
 
-		
+
 #define CHECK_MODE(modeName, glMode) \
 		assert(matrixData.modeName >= 0); \
 		if (matrixData.modeName != 0) {\
@@ -149,13 +150,13 @@ public:
 			} \
 			matrixData.modeName = 0;\
 		}
-			
+
 		CHECK_MODE(modelView, GL_MODELVIEW)
 		CHECK_MODE(projection, GL_PROJECTION)
 		CHECK_MODE(texture, GL_TEXTURE)
-		
+
 #undef CHECK_MODE
-		
+
 		glMatrixMode(GL_MODELVIEW);
 	}
 };
@@ -165,16 +166,14 @@ public:
 
 struct luaContextData {
 	luaContextData()
-	: owner(NULL)
-	, luamutex(NULL)
+	: owner(nullptr)
+	, luamutex(nullptr)
 
 	, synced(false)
 	, allowChanges(false)
 	, drawingEnabled(false)
 
 	, running(0)
-	, curAllocedBytes(0)
-	, maxAllocedBytes(0)
 
 	, fullCtrl(false)
 	, fullRead(false)
@@ -182,7 +181,8 @@ struct luaContextData {
 	, ctrlTeam(CEventClient::NoAccessTeam)
 	, readTeam(0)
 	, readAllyTeam(0)
-	, selectTeam(CEventClient::NoAccessTeam) {}
+	, selectTeam(CEventClient::NoAccessTeam)
+	, parser(nullptr) {}
 
 	CLuaHandle* owner;
 	spring::recursive_mutex* luamutex;
@@ -192,9 +192,6 @@ struct luaContextData {
 	bool drawingEnabled;
 
 	int running; //< is currently running? (0: not running; >0: is running)
-
-	unsigned int curAllocedBytes;
-	unsigned int maxAllocedBytes;
 
 	// permission rights
 	bool fullCtrl;
@@ -212,6 +209,8 @@ struct luaContextData {
 	CLuaDisplayLists displayLists;
 
 	GLMatrixStateTracker glMatrixTracker;
+
+	LuaParser* parser;
 };
 
 
