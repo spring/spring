@@ -20,7 +20,7 @@ CONFIG(int, OverheadScrollSpeed).defaultValue(10);
 CONFIG(float, OverheadTiltSpeed).defaultValue(1.0f);
 CONFIG(bool, OverheadEnabled).defaultValue(true).headlessValue(false);
 CONFIG(float, OverheadFOV).defaultValue(45.0f);
-
+CONFIG(float, OverheadMaxHeightFactor).defaultValue(1.0f);
 
 static const float angleStep = math::HALFPI / 14.0f;
 
@@ -33,11 +33,8 @@ COverheadController::COverheadController()
 	, maxHeight(10000)
 	, angle(DEFAULT_ANGLE)
 {
-	middleClickScrollSpeed = configHandler->GetFloat("MiddleClickScrollSpeed");
-	scrollSpeed = configHandler->GetInt("OverheadScrollSpeed") * 0.1f;
-	tiltSpeed = configHandler->GetFloat("OverheadTiltSpeed");
-	enabled = configHandler->GetBool("OverheadEnabled");
-	fov = configHandler->GetFloat("OverheadFOV");
+	configHandler->NotifyOnChange(this);
+	ConfigUpdate();
 
 	if (globalRendering) {
 		// make whole map visible
@@ -45,8 +42,35 @@ COverheadController::COverheadController()
 		height = CGround::GetHeightAboveWater(pos.x, pos.z, false) + (2.5f * h);
 	}
 
-	maxHeight = 9.5f * std::max(mapDims.mapx, mapDims.mapy);
 	Update();
+}
+
+COverheadController::~COverheadController()
+{
+	configHandler->RemoveObserver(this);
+}
+
+void COverheadController::ConfigUpdate()
+{
+	middleClickScrollSpeed = configHandler->GetFloat("MiddleClickScrollSpeed");
+	scrollSpeed = configHandler->GetInt("OverheadScrollSpeed") * 0.1f;
+	tiltSpeed = configHandler->GetFloat("OverheadTiltSpeed");
+	enabled = configHandler->GetBool("OverheadEnabled");
+	fov = configHandler->GetFloat("OverheadFOV");
+	maxHeight = 9.5f * std::max(mapDims.mapx, mapDims.mapy) * configHandler->GetFloat("OverheadMaxHeightFactor");
+}
+
+void COverheadController::ConfigNotify(const std::string & key, const std::string & value)
+{
+	if (key != "MiddleClickScrollSpeed"
+	&&  key != "OverheadScrollSpeed"
+	&&  key != "OverheadTiltSpeed"
+	&&  key != "OverheadEnabled"
+	&&  key != "OverheadFOV"
+	&&  key != "OverheadMaxHeightFactor")
+		return;
+
+	ConfigUpdate();
 }
 
 void COverheadController::KeyMove(float3 move)
