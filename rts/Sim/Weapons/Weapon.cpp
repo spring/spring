@@ -639,13 +639,15 @@ bool CWeapon::AutoTarget()
 	//   sorts by INCREASING order of priority, so lower equals better
 	//   <targets> is normally sorted such that all bad TargetCategory units are at the
 	//   end, but Lua can mess with the ordering arbitrarily
-	std::multimap<float, CUnit*> targets;
+	static std::vector<std::pair<float, CUnit*>> targets;
+	targets.clear();
+
 	CGameHelper::GenerateWeaponTargets(this, avoidUnit, targets);
 
 	CUnit* goodTargetUnit = nullptr;
 	CUnit* badTargetUnit = nullptr;
 
-	for (auto targetsPair: targets) {
+	for (const auto& targetsPair: targets) {
 		CUnit* unit = targetsPair.second;
 
 		// save the "best" bad target in case we have no other

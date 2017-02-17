@@ -617,7 +617,7 @@ namespace {
 } // end of namespace
 
 
-void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* avoidUnit, std::multimap<float, CUnit*>& targets)
+void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* avoidUnit, std::vector<std::pair<float, CUnit*>>& targets)
 {
 	const CUnit* owner    = weapon->owner;
 	const float radius    = weapon->range;
@@ -713,17 +713,19 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* avoi
 				if (!allow)
 					continue;
 
-				targets.insert(std::pair<float, CUnit*>(targetPriority, targetUnit));
+				targets.push_back(std::pair<float, CUnit*>(targetPriority, targetUnit));
 			}
 		}
 	}
+	std::stable_sort(targets.begin(), targets.end(), [](const std::pair<float, CUnit*>& a, const std::pair<float, CUnit*>& b) { return (a.first < b.first); });
 
 #ifdef TRACE_SYNC
 	{
 		tracefile << "[GenerateWeaponTargets] ownerID, attackRadius: " << owner->id << ", " << radius << " ";
 
-		for (std::multimap<float, CUnit*>::const_iterator ti = targets.begin(); ti != targets.end(); ++ti)
-			tracefile << "\tpriority: " << (ti->first) <<  ", targetID: " << (ti->second)->id <<  " ";
+		for (const auto& ti: targets) {
+			tracefile << "\tpriority: " << (ti.first) <<  ", targetID: " << (ti.second)->id <<  " ";
+		}
 
 		tracefile << "\n";
 	}
