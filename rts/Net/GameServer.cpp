@@ -620,7 +620,7 @@ void CGameServer::CheckSync()
 			chkList checksums;
 			unsigned checkMaxCount = 0;
 			for (GameParticipant& p: players) {
-				if (!p.link)
+				if (!p.link || p.spectator)
 					continue;
 
 				std::map<int, unsigned>::const_iterator it = p.syncResponse.find(*f);
