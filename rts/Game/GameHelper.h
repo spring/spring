@@ -9,7 +9,6 @@
 #include "System/float3.h"
 #include "System/type2.h"
 
-#include <map>
 #include <vector>
 
 class CUnit;
