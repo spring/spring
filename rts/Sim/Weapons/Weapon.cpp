@@ -626,9 +626,8 @@ bool CWeapon::AllowWeaponAutoTarget() const
 
 bool CWeapon::AutoTarget()
 {
-	if (!AllowWeaponAutoTarget()) {
+	if (!AllowWeaponAutoTarget())
 		return false;
-	}
 
 	// search for other in range targets
 	lastTargetRetry = gs->frameNum;
@@ -636,11 +635,13 @@ bool CWeapon::AutoTarget()
 	const CUnit* avoidUnit = (avoidTarget && currentTarget.type == Target_Unit) ? currentTarget.unit : nullptr;
 
 	// NOTE:
-	//   sorts by INCREASING order of priority, so lower equals better
-	//   <targets> is normally sorted such that all bad TargetCategory units are at the
-	//   end, but Lua can mess with the ordering arbitrarily
+	//   GenerateWeaponTargets sorts by INCREASING order of priority, so lower equals better
+	//   <targets> is normally sorted such that all bad TargetCategory units are at the end,
+	//   but Lua can mess with the ordering arbitrarily
 	static std::vector<std::pair<float, CUnit*>> targets;
+
 	targets.clear();
+	targets.reserve(16);
 
 	CGameHelper::GenerateWeaponTargets(this, avoidUnit, targets);
 
