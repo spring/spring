@@ -188,7 +188,7 @@ bool LuaConstGame::PushEntries(lua_State* L)
 	}
 
 	// environmental damage types
-	lua_pushliteral(L, "damageTypes");
+	lua_pushliteral(L, "envDamageTypes");
 	lua_newtable(L);
 		LuaPushNamedNumber(L, "Debris",          -CSolidObject::DAMAGE_EXPLOSION_DEBRIS );
 		LuaPushNamedNumber(L, "GroundCollision", -CSolidObject::DAMAGE_COLLISION_GROUND );
