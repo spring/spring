@@ -27,7 +27,7 @@ public:
 	void StartMovingRaw(const float3 moveGoalPos, float moveGoalRadius) override;
 	void StartMoving(float3 pos, float goalRadius) override;
 	void StartMoving(float3 pos, float goalRadius, float speed) override { StartMoving(pos, goalRadius); }
-	void StopMoving(bool callScript = false, bool hardStop = false) override;
+	void StopMoving(bool callScript = false, bool hardStop = false, bool cancelRaw = false) override;
 	bool IsMovingTowards(const float3& pos, float radius, bool checkProgress) const override {
 		return (goalPos == pos * XZVector && goalRadius == radius && (!checkProgress || progressState == Active));
 	}

@@ -1297,7 +1297,7 @@ void CStrafeAirMoveType::StartMoving(float3 pos, float goalRadius, float speed)
 	SetGoal(pos);
 }
 
-void CStrafeAirMoveType::StopMoving(bool callScript, bool hardStop)
+void CStrafeAirMoveType::StopMoving(bool callScript, bool hardStop, bool)
 {
 	SetGoal(owner->pos);
 	ClearLandingPos();

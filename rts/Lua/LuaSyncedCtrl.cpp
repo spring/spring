@@ -2409,7 +2409,7 @@ int LuaSyncedCtrl::ClearUnitGoal(lua_State* L)
 	if (unit == nullptr)
 		return 0;
 
-	unit->moveType->StopMoving();
+	unit->moveType->StopMoving(false, false, luaL_optboolean(L, 2, true));
 	return 0;
 }
 

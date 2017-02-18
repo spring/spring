@@ -346,9 +346,7 @@ void CGroundMoveType::SlowUpdate()
 
 				if (numIdlingUpdates > (SHORTINT_MAXVALUE / turnRate)) {
 					// case A: we have a path but are not moving
-					LOG_L(L_DEBUG,
-							"SlowUpdate: unit %i has pathID %i but %i ETA failures",
-							owner->id, pathID, numIdlingUpdates);
+					LOG_L(L_DEBUG, "SlowUpdate: unit %i has pathID %i but %i ETA failures", owner->id, pathID, numIdlingUpdates);
 
 					if (numIdlingSlowUpdates < MAX_IDLING_SLOWUPDATES) {
 						ReRequestPath(true);
@@ -417,6 +415,7 @@ void CGroundMoveType::StartMoving(float3 moveGoalPos, float moveGoalRadius) {
 
 	useMainHeading = false;
 	useRawMovement = false;
+
 	progressState = Active;
 
 	numIdlingUpdates = 0;
@@ -442,7 +441,7 @@ void CGroundMoveType::StartMoving(float3 moveGoalPos, float moveGoalRadius) {
 	}
 }
 
-void CGroundMoveType::StopMoving(bool callScript, bool hardStop) {
+void CGroundMoveType::StopMoving(bool callScript, bool hardStop, bool cancelRaw) {
 #ifdef TRACE_SYNC
 	tracefile << "[" << __FUNCTION__ << "] ";
 	tracefile << owner->pos.x << " " << owner->pos.y << " " << owner->pos.z << " " << owner->id << "\n";
@@ -461,8 +460,9 @@ void CGroundMoveType::StopMoving(bool callScript, bool hardStop) {
 	StopEngine(callScript, hardStop);
 
 	useMainHeading = false;
-	// only a new StartMoving call can reset this
-	// useRawMovement = false;
+	// only a new StartMoving call can normally reset this
+	useRawMovement &= (!cancelRaw);
+
 	progressState = Done;
 }
 

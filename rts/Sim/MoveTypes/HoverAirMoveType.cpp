@@ -319,7 +319,7 @@ void CHoverAirMoveType::ExecuteStop()
 	}
 }
 
-void CHoverAirMoveType::StopMoving(bool callScript, bool hardStop)
+void CHoverAirMoveType::StopMoving(bool callScript, bool hardStop, bool)
 {
 	// transports switch to landed state (via SetState which calls
 	// us) during pickup but must *not* be allowed to change their

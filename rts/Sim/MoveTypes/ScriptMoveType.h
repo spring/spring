@@ -14,7 +14,7 @@ class CScriptMoveType : public AMoveType
 		virtual ~CScriptMoveType();
 
 	public:
-		bool Update();
+		bool Update() override;
 		void ForceUpdates();
 
 		void SetPhysics(const float3& pos, const float3& vel, const float3& rot);
@@ -27,16 +27,16 @@ class CScriptMoveType : public AMoveType
 		void SetNoBlocking(bool state);
 
 	public: // null'ed virtuals
-		void StartMoving(float3, float goalRadius) {}
-		void StartMoving(float3, float goalRadius, float speed) {}
-		void KeepPointingTo(float3, float distance, bool aggressive) {}
-		void KeepPointingTo(CUnit* unit, float distance, bool aggressive) {}
-		void StopMoving(bool callScript = false, bool hardStop = false) {}
+		void StartMoving(float3, float goalRadius) override {}
+		void StartMoving(float3, float goalRadius, float speed) override {}
+		void KeepPointingTo(float3, float distance, bool aggressive) override {}
+		void KeepPointingTo(CUnit* unit, float distance, bool aggressive) override {}
+		void StopMoving(bool callScript = false, bool hardStop = false, bool cancelRaw = false) override {}
 
-		void SetGoal(const float3& pos, float distance = 0.0f) {}
-		void SetMaxSpeed(float speed) {}
-		void SetWantedMaxSpeed(float speed) {}
-		void LeaveTransport() {}
+		void SetGoal(const float3& pos, float distance = 0.0f) override {}
+		void SetMaxSpeed(float speed) override {}
+		void SetWantedMaxSpeed(float speed) override {}
+		void LeaveTransport() override {}
 
 	protected:
 		void CheckLimits();

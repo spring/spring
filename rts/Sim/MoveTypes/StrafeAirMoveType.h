@@ -50,7 +50,7 @@ public:
 	void KeepPointingTo(float3 pos, float distance, bool aggressive) override {}
 	void StartMoving(float3 pos, float goalRadius) override;
 	void StartMoving(float3 pos, float goalRadius, float speed) override;
-	void StopMoving(bool callScript = false, bool hardStop = false) override;
+	void StopMoving(bool callScript = false, bool hardStop = false, bool cancelRaw = false) override;
 
 	void Takeoff() override;
 

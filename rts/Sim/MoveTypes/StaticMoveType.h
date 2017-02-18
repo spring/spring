@@ -11,15 +11,16 @@ class CStaticMoveType : public AMoveType
 
 public:
 	CStaticMoveType(CUnit* unit) : AMoveType(unit) {}
-	void StartMoving(float3 pos, float goalRadius) {}
-	void StartMoving(float3 pos, float goalRadius, float speed) {}
-	void StopMoving(bool callScript = false, bool hardStop = false) {}
 
-	void SetMaxSpeed(float speed) { /* override AMoveType (our maxSpeed IS allowed to be 0) */ }
-	void KeepPointingTo(float3 pos, float distance, bool aggressive) {}
+	void StartMoving(float3 pos, float goalRadius) override {}
+	void StartMoving(float3 pos, float goalRadius, float speed) override {}
+	void StopMoving(bool callScript = false, bool hardStop = false, bool cancelRaw = false) override {}
 
-	bool Update() { return false; }
-	void SlowUpdate();
+	void SetMaxSpeed(float speed) override { /* override AMoveType (our maxSpeed IS allowed to be 0) */ }
+	void KeepPointingTo(float3 pos, float distance, bool aggressive) override {}
+
+	bool Update() override { return false; }
+	void SlowUpdate() override;
 };
 
 #endif // STATICMOVETYPE_H

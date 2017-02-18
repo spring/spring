@@ -14,17 +14,18 @@ public:
 	CHoverAirMoveType(CUnit* owner);
 
 	// MoveType interface
-	bool Update();
-	void SlowUpdate();
-	void StartMoving(float3 pos, float goalRadius);
-	void StartMoving(float3 pos, float goalRadius, float speed);
-	void KeepPointingTo(float3 pos, float distance, bool aggressive);
-	void StopMoving(bool callScript = false, bool hardStop = false);
+	bool Update() override;
+	void SlowUpdate() override;
+
+	void StartMoving(float3 pos, float goalRadius) override;
+	void StartMoving(float3 pos, float goalRadius, float speed) override;
+	void KeepPointingTo(float3 pos, float distance, bool aggressive) override;
+	void StopMoving(bool callScript = false, bool hardStop = false, bool cancelRaw = false) override;
 
 	bool SetMemberValue(unsigned int memberHash, void* memberValue);
 
 	void ForceHeading(short h);
-	void SetGoal(const float3& pos, float distance = 0.0f);
+	void SetGoal(const float3& pos, float distance = 0.0f) override;
 	void SetState(AircraftState newState);
 	void SetAllowLanding(bool b);
 
