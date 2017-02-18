@@ -186,11 +186,13 @@ public:
 	, parser(nullptr) {}
 
 	void Clear() {
+		#if (!defined(UNITSYNC) && !defined(DEDICATED))
 		shaders.Clear();
 		textures.Clear();
 		fbos.Clear();
 		rbos.Clear();
 		displayLists.Clear();
+		#endif
 	}
 
 public:
