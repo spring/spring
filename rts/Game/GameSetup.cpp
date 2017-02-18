@@ -210,12 +210,9 @@ void CGameSetup::ResetState()
 	demoName.clear();
 	saveName.clear();
 
-	// Synced unordered maps must be reconstructed since clearing
-	// may keep the container resized which will lead to
-	// difference in iteration and then desyncs
-	playerRemap = spring::unordered_map<int, int>();
-	teamRemap = spring::unordered_map<int, int>();
-	allyteamRemap = spring::unordered_map<int, int>();
+	spring::clear_unordered_map(playerRemap);
+	spring::clear_unordered_map(teamRemap);
+	spring::clear_unordered_map(allyteamRemap);
 
 	playerStartingData.clear();
 	teamStartingData.clear();
@@ -223,10 +220,10 @@ void CGameSetup::ResetState()
 	skirmishAIStartingData.clear();
 	mutatorsList.clear();
 
-	restrictedUnits = spring::unordered_map<std::string, int>();
+	spring::clear_unordered_map(restrictedUnits);
 
-	mapOptions = spring::unordered_map<std::string, std::string>();
-	modOptions = spring::unordered_map<std::string, std::string>();
+	spring::clear_unordered_map(mapOptions);
+	spring::clear_unordered_map(modOptions);
 }
 
 void CGameSetup::PostLoad()

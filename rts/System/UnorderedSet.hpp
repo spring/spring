@@ -36,5 +36,13 @@
 #endif
 
 
+namespace spring {
+	// Synced unordered sets must be reconstructed (on reload)
+	// since clear() may keep the container resized which will
+	// lead to differences in iteration order and then desyncs
+	template<typename C> void clear_unordered_set(C& cont) { cont = C(); }
+};
+
+
 #endif
 

@@ -229,10 +229,7 @@ class CLuaHandleSynced
 		CUnsyncedLuaHandle unsyncedLuaHandle;
 
 	public:
-		// Synced unordered maps must be reconstructed since clearing
-		// may keep the container resized which will lead to
-		// difference in iteration and then desyncs
-		static void ClearGameParams() { gameParams = LuaRulesParams::Params(); }
+		static void ClearGameParams() { spring::clear_unordered_map(gameParams); }
 		static const LuaRulesParams::Params& GetGameParams() { return gameParams; }
 
 	private:

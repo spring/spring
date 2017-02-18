@@ -214,23 +214,21 @@ CBuilderCAI::CBuilderCAI(CUnit* owner):
 
 CBuilderCAI::~CBuilderCAI()
 {
-	// if uh == NULL then all pointers to units should be considered dangling pointers
-	if (unitHandler != NULL) {
-		RemoveUnitFromReclaimers(owner);
-		RemoveUnitFromFeatureReclaimers(owner);
-		RemoveUnitFromResurrecters(owner);
-		unitHandler->RemoveBuilderCAI(this);
-	}
+	// if uh == NULL then all pointers to units should be considered dangling
+	if (unitHandler == nullptr)
+		return;
+
+	RemoveUnitFromReclaimers(owner);
+	RemoveUnitFromFeatureReclaimers(owner);
+	RemoveUnitFromResurrecters(owner);
+	unitHandler->RemoveBuilderCAI(this);
 }
 
 void CBuilderCAI::InitStatic()
 {
-	// Synced unordered sets must be reconstructed since clearing
-	// may keep the container resized which will lead to
-	// difference in iteration and then desyncs
-	reclaimers = spring::unordered_set<int>();
-	featureReclaimers = spring::unordered_set<int>();
-	resurrecters = spring::unordered_set<int>();
+	spring::clear_unordered_set(reclaimers);
+	spring::clear_unordered_set(featureReclaimers);
+	spring::clear_unordered_set(resurrecters);
 }
 
 void CBuilderCAI::PostLoad()

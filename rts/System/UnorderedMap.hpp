@@ -39,6 +39,11 @@
 
 
 namespace spring {
+	// Synced unordered maps must be reconstructed (on reload)
+	// since clear() may keep the container resized which will
+	// lead to differences in iteration order and then desyncs
+	template<typename C> void clear_unordered_map(C& cont) { cont = C(); }
+
 	template<typename K, typename V>
 	class unordered_bimap {
 	public:
