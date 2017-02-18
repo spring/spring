@@ -225,9 +225,12 @@ CBuilderCAI::~CBuilderCAI()
 
 void CBuilderCAI::InitStatic()
 {
-	reclaimers.clear();
-	featureReclaimers.clear();
-	resurrecters.clear();
+	// Synced unordered sets must be reconstructed since clearing
+	// may keep the container resized which will lead to
+	// difference in iteration and then desyncs
+	reclaimers = spring::unordered_set<int>();
+	featureReclaimers = spring::unordered_set<int>();
+	resurrecters = spring::unordered_set<int>();
 }
 
 void CBuilderCAI::PostLoad()

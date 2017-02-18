@@ -322,7 +322,10 @@ static int ColVolTable(lua_State* L, const void* data) {
 
 static bool InitParamMap()
 {
-	paramMap.clear();
+	// Synced unordered maps must be reconstructed since clearing
+	// may keep the container resized which will lead to
+	// difference in iteration and then desyncs
+	paramMap = ParamMap();
 
 	paramMap["next"]  = DataElement(READONLY_TYPE);
 	paramMap["pairs"] = DataElement(READONLY_TYPE);

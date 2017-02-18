@@ -229,7 +229,10 @@ class CLuaHandleSynced
 		CUnsyncedLuaHandle unsyncedLuaHandle;
 
 	public:
-		static void ClearGameParams() { gameParams.clear(); }
+		// Synced unordered maps must be reconstructed since clearing
+		// may keep the container resized which will lead to
+		// difference in iteration and then desyncs
+		static void ClearGameParams() { gameParams = LuaRulesParams::Params(); }
 		static const LuaRulesParams::Params& GetGameParams() { return gameParams; }
 
 	private:
