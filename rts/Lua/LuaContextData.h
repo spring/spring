@@ -49,7 +49,7 @@ public:
 		return matrixData.mode;
 	}
 
-	int &GetDepth(unsigned int mode) {
+	int& GetDepth(unsigned int mode) {
 		switch (mode) {
 			case GL_MODELVIEW: return matrixData.modelView;
 			case GL_PROJECTION: return matrixData.projection;
@@ -63,7 +63,7 @@ public:
 
 	bool PushMatrix() {
 		unsigned int mode = GetMode();
-		int &depth = GetDepth(mode);
+		int& depth = GetDepth(mode);
 		if (!listMode && depth >= 255)
 			return false;
 		depth += 1;
@@ -72,7 +72,7 @@ public:
 
 	bool PopMatrix() {
 		unsigned int mode = GetMode();
-		int &depth = GetDepth(mode);
+		int& depth = GetDepth(mode);
 		if (listMode) {
 			depth -= 1;
 			return true;
@@ -165,6 +165,7 @@ public:
 
 
 struct luaContextData {
+public:
 	luaContextData()
 	: owner(nullptr)
 	, luamutex(nullptr)
@@ -184,6 +185,15 @@ struct luaContextData {
 	, selectTeam(CEventClient::NoAccessTeam)
 	, parser(nullptr) {}
 
+	void Clear() {
+		shaders.Clear();
+		textures.Clear();
+		fbos.Clear();
+		rbos.Clear();
+		displayLists.Clear();
+	}
+
+public:
 	CLuaHandle* owner;
 	spring::recursive_mutex* luamutex;
 

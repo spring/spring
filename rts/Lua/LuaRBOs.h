@@ -16,6 +16,8 @@ class LuaRBOs {
 		LuaRBOs() { rbos.reserve(8); }
 		~LuaRBOs();
 
+		void Clear() { rbos.clear(); }
+
 		static bool PushEntries(lua_State* L);
 
 		struct RBO;

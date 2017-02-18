@@ -85,6 +85,10 @@ LuaParser::LuaParser(const string& _textChunk, const string& _accessModes, const
 
 LuaParser::~LuaParser()
 {
+	// prevent crashes in glDelete* calls since LuaParser
+	// might be constructed by multiple different threads
+	D.Clear();
+
 	if (L != nullptr)
 		LUA_CLOSE(&L);
 

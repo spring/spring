@@ -21,6 +21,12 @@ public:
 		lastCode = 0;
 	}
 
+	void Clear() {
+		textureVec.clear();
+		textureMap.clear();
+		freeIndices.clear();
+	}
+
 	struct Texture {
 		Texture()
 		: name(""), id(0), fbo(0), fboDepth(0),

@@ -16,6 +16,8 @@ public:
 	LuaFBOs() { fbos.reserve(8); }
 	~LuaFBOs();
 
+	void Clear() { fbos.clear(); }
+
 	struct FBO {
 		void Init(lua_State* L);
 		void Free(lua_State* L);

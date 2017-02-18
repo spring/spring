@@ -20,21 +20,20 @@ struct SMatrixStateData {
 
 class CLuaDisplayLists {
 	public:
-		CLuaDisplayLists()
-		{
-			active.push_back(DLdata(0));
-		}
-		
+		CLuaDisplayLists() { Clear(); }
 		~CLuaDisplayLists()
 		{
 			// free the display lists
-			for (int i = 0; i < (int)active.size(); i++) {
+			// NOTE:
+			//   it is not an error to delete a list with id=0, but we might
+			//   be called from ~LuaParser which can run in multiple threads
+			//   and the null-list is always present (even after Clear())
+			for (size_t i = 1; i < active.size(); i++) {
 				glDeleteLists(active[i].id, 1);
 			}
 		}
 
-		void Clear()
-		{
+		void Clear() {
 			unused.clear();
 			active.clear();
 			active.push_back(DLdata(0));
@@ -44,27 +43,25 @@ class CLuaDisplayLists {
 		
 		GLuint GetDList(unsigned int index) const
 		{
-			if (index < active.size()) {
+			if (index < active.size())
 				return active[index].id;
-			} else {
-				return 0;
-			}
+
+			return 0;
 		}
 
 		SMatrixStateData GetMatrixState(unsigned int index) const
 		{
-			if (index < active.size()) {
+			if (index < active.size())
 				return active[index].matData;
-			} else {
-				return SMatrixStateData();
-			}
+
+			return SMatrixStateData();
 		}
 
 		unsigned int NewDList(GLuint dlist, SMatrixStateData& m)
 		{
-			if (dlist == 0) {
+			if (dlist == 0)
 				return 0;
-			}
+
 			if (!unused.empty()) {
 				const unsigned int index = unused[unused.size() - 1];
 				active[index] = DLdata(dlist, m);
