@@ -490,10 +490,15 @@ void CHoverAirMoveType::UpdateFlying()
 						if (relPos.x < 0.0001f && relPos.x > -0.0001f)
 							relPos.x = 0.0001f;
 
-						static const CMatrix44f rot(0.0f, math::QUARTERPI, 0.0f);
+						static const CMatrix44f rotCCW(0.0f, math::QUARTERPI, 0.0f);
+						static const CMatrix44f rotCW(0.0f, -math::QUARTERPI, 0.0f);
 
 						// make sure the point is on the circle, go there in a straight line
-						goalPos = circlingPos + (rot.Mul(relPos.Normalize2D()) * goalDistance);
+						if (gsRNG.NextFloat() > 0.5f) {
+							goalPos = circlingPos + (rotCCW.Mul(relPos.Normalize2D()) * goalDistance);
+						} else {
+							goalPos = circlingPos + (rotCW.Mul(relPos.Normalize2D()) * goalDistance);
+						}
 					}
 					waitCounter = 0;
 				}
