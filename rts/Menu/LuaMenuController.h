@@ -14,7 +14,7 @@ public:
 
 	// Reloads the archives but not LuaMenu
 	void Reset();
-	bool Activate();
+	bool Activate(const std::string& msg);
 
 	int KeyReleased(int k) override;
 	int KeyPressed(int k, bool isRepeat) override;

@@ -17,24 +17,25 @@
 #include "LoadScreen.h"
 #include "Game/Players/Player.h"
 #include "Game/Players/PlayerHandler.h"
-#include "Net/GameServer.h"
-#include "System/TimeProfiler.h"
 #include "UI/InfoConsole.h"
+#include "ExternalAI/SkirmishAIHandler.h"
 #include "Map/Generation/SimpleMapGenerator.h"
+#include "Menu/LuaMenuController.h"
+#include "Net/GameServer.h"
+#include "Net/Protocol/NetProtocol.h"
 
 #include "aGui/Gui.h"
-#include "ExternalAI/SkirmishAIHandler.h"
+
 #include "Rendering/Fonts/glFont.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Exceptions.h"
-#include "Net/Protocol/NetProtocol.h"
+#include "System/TimeProfiler.h"
 #include "System/TdfParser.h"
 #include "System/Input/KeyInput.h"
 #include "System/FileSystem/ArchiveScanner.h"
-//// #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/FileSystem/VFSHandler.h"
 #include "System/LoadSave/DemoRecorder.h"
@@ -75,11 +76,11 @@ CPreGame::CPreGame(std::shared_ptr<ClientSetup> setup)
 
 	if (!clientSetup->isHost) {
 		//don't allow luasocket to connect to the host
-		LOG("[PreGame] connecting to: %s:%i", clientSetup->hostIP.c_str(), clientSetup->hostPort);
+		LOG("[%s] connecting to: %s:%i", __func__, clientSetup->hostIP.c_str(), clientSetup->hostPort);
 		luaSocketRestrictions->addRule(CLuaSocketRestrictions::UDP_CONNECT, clientSetup->hostIP, clientSetup->hostPort, false);
 		clientNet->InitClient(clientSetup->hostIP.c_str(), clientSetup->hostPort, clientSetup->myPlayerName, clientSetup->myPasswd, SpringVersion::GetFull());
 	} else {
-		LOG("[PreGame] hosting on: %s:%i", clientSetup->hostIP.c_str(), clientSetup->hostPort);
+		LOG("[%s] hosting on: %s:%i", __func__, clientSetup->hostIP.c_str(), clientSetup->hostPort);
 		clientNet->InitLocalClient();
 	}
 }
@@ -126,7 +127,7 @@ int CPreGame::KeyPressed(int k, bool isRepeat)
 			LOG("[%s] user exited", __func__);
 			gu->globalQuit = true;
 		} else {
-			LOG("Use shift-esc to quit");
+			LOG("[%s] Use shift-esc to quit", __func__);
 		}
 	}
 	return 0;
@@ -176,7 +177,7 @@ bool CPreGame::Update()
 
 void CPreGame::AddGameSetupArchivesToVFS(const CGameSetup* setup, bool mapOnly)
 {
-	LOG("[%s] using map: %s", __func__, setup->mapName.c_str());
+	LOG("[PreGame::%s] using map: %s", __func__, setup->mapName.c_str());
 	// Load Map archive
 	vfsHandler->AddArchiveWithDeps(setup->mapName, false);
 
@@ -185,7 +186,7 @@ void CPreGame::AddGameSetupArchivesToVFS(const CGameSetup* setup, bool mapOnly)
 
 	// Load Mutators (if any)
 	for (const std::string& mut: setup->GetMutatorsCont()) {
-		LOG("[%s] using mutator: %s", __func__, mut.c_str());
+		LOG("[PreGame::%s] using mutator: %s", __func__, mut.c_str());
 		vfsHandler->AddArchiveWithDeps(mut, false);
 	}
 
@@ -193,7 +194,7 @@ void CPreGame::AddGameSetupArchivesToVFS(const CGameSetup* setup, bool mapOnly)
 	vfsHandler->AddArchiveWithDeps(setup->modName, false);
 
 	modArchive = archiveScanner->ArchiveFromName(setup->modName);
-	LOG("[%s] using game: %s (archive: %s)", __func__, setup->modName.c_str(), modArchive.c_str());
+	LOG("[PreGame::%s] using game: %s (archive: %s)", __func__, setup->modName.c_str(), modArchive.c_str());
 }
 
 void CPreGame::StartServer(const std::string& setupscript)
@@ -231,7 +232,7 @@ void CPreGame::StartServer(const std::string& setupscript)
 	const auto mapChecksum = archiveScanner->GetArchiveCompleteChecksum(mapArchive);
 	startGameData->SetModChecksum(modChecksum);
 	startGameData->SetMapChecksum(mapChecksum);
-	LOG("Checksums: game=0x%X map=0x%X", modChecksum, mapChecksum);
+	LOG("[PreGame::%s] checksums: game=0x%X map=0x%X", __func__, modChecksum, mapChecksum);
 
 	good_fpu_control_registers("before CGameServer creation");
 	startGameData->SetSetupText(startGameSetup->setupText);
@@ -271,11 +272,20 @@ void CPreGame::UpdateClientNet()
 				try {
 					netcode::UnpackPacket pckt(packet, 3);
 					std::string message;
+
 					pckt >> message;
-					LOG("%s", message.c_str());
-					handleerror(nullptr, "Remote requested quit: " + message, "Quit message", MBF_OK | MBF_EXCL);
+
+					// (re)activate LuaMenu if user failed to connect
+					if (luaMenuController->Valid() && luaMenuController->Activate(message)) {
+						delete this;
+						return;
+					}
+
+					// force exit to system if no menu
+					LOG("[PreGame::%s] server requested quit or rejected connection (reason \"%s\")", __func__, message.c_str());
+					handleerror(nullptr, "server requested quit or rejected connection: " + message, "Quit message", MBF_OK | MBF_EXCL);
 				} catch (const netcode::UnpackPacketException& ex) {
-					LOG_L(L_ERROR, "Got invalid QuitMessage: %s", ex.what());
+					LOG_L(L_ERROR, "[PreGame::%s] invalid NETMSG_{QUIT,REJECT_CONNECT} packet (exception \"%s\")", __func__, ex.what());
 				}
 				break;
 			}
@@ -286,8 +296,12 @@ void CPreGame::UpdateClientNet()
 				// gamedata), otherwise skip to gamedata
 				try {
 					netcode::UnpackPacket pckt(packet, 3);
-					unsigned char spectator, team, playerNum;
 					std::string name;
+
+					unsigned char playerNum;
+					unsigned char spectator;
+					unsigned char team;
+
 					// since the >> operator uses dest size to extract data from
 					// the packet, we need to use temp variables of the same
 					// size of the packet, before converting to dest variable
@@ -341,7 +355,6 @@ void CPreGame::UpdateClientNet()
 
 				CLoadScreen::CreateInstance(gameSetup->MapFile(), modArchive, savefile);
 
-				pregame = nullptr;
 				delete this;
 				return;
 			}
@@ -493,9 +506,9 @@ void CPreGame::GameDataReceived(std::shared_ptr<const netcode::RawPacket> packet
 		LOG_L(L_WARNING, "Incompatible game-checksum: %s", ex.what());
 	}
 
-	if (clientSetup->isHost && !gameSetup->recordDemo) { //script.txt allows to disable demo file recording (host only, used for menu)
+	// script.txt allows to disable demo file recording (host only, used for menu)
+	if (clientSetup->isHost && !gameSetup->recordDemo)
 		wantDemo = false;
-	}
 
 	if (clientNet != nullptr && wantDemo) {
 		assert(clientNet->GetDemoRecorder() == nullptr);

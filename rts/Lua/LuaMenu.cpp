@@ -320,16 +320,19 @@ bool CLuaMenu::LoadUnsyncedReadFunctions(lua_State* L)
 /******************************************************************************/
 
 
-void CLuaMenu::ActivateMenu()
+void CLuaMenu::ActivateMenu(const std::string& msg)
 {
 	LUA_CALL_IN_CHECK(L);
-	luaL_checkstack(L, 2, __func__);
+	luaL_checkstack(L, 3, __func__);
+
 	static const LuaHashString cmdStr(__func__);
+
 	if (!cmdStr.GetGlobalFunc(L))
 		return; // the call is not defined
 
 	// call the routine
-	RunCallIn(L, cmdStr, 0, 0);
+	lua_pushsstring(L, msg);
+	RunCallIn(L, cmdStr, 1, 0);
 }
 
 
@@ -337,7 +340,9 @@ void CLuaMenu::ActivateGame()
 {
 	LUA_CALL_IN_CHECK(L);
 	luaL_checkstack(L, 2, __func__);
+
 	static const LuaHashString cmdStr(__func__);
+
 	if (!cmdStr.GetGlobalFunc(L))
 		return; // the call is not defined
 
@@ -350,7 +355,9 @@ bool CLuaMenu::AllowDraw()
 {
 	LUA_CALL_IN_CHECK(L);
 	luaL_checkstack(L, 2, __func__);
+
 	static const LuaHashString cmdStr(__func__);
+
 	if (!cmdStr.GetGlobalFunc(L))
 		return true; // the call is not defined, allow draw
 

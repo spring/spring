@@ -235,10 +235,8 @@ void CGame::ClientReadNet()
 		// get netpacket from the queue
 		std::shared_ptr<const netcode::RawPacket> packet = clientNet->GetData(gs->frameNum);
 
-		if (!packet) {
-			// LOG_SL(LOG_SECTION_NET, L_DEBUG, "Run out of netpackets!");
+		if (!packet)
 			break;
-		}
 
 		lastReceivedNetPacketTime = spring_gettime();
 
@@ -251,6 +249,7 @@ void CGame::ClientReadNet()
 				try {
 					netcode::UnpackPacket pckt(packet, 3);
 					std::string message;
+
 					pckt >> message;
 
 					LOG("%s", message.c_str());

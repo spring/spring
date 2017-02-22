@@ -16,7 +16,7 @@ public:
 	static bool FreeHandler();
 
 	// callin called when LuaMenu is active with no game
-	void ActivateMenu();
+	void ActivateMenu(const std::string& msg);
 
 	// callin called when LuaMenu is active with a game
 	void ActivateGame();

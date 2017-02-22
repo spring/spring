@@ -52,7 +52,7 @@ void CLuaMenuController::Reset()
 		infoConsole = new CInfoConsole();
 }
 
-bool CLuaMenuController::Activate()
+bool CLuaMenuController::Activate(const std::string& msg)
 {
 	LOG("[LuaMenuController::%s] luaMenu=%p", __func__, luaMenu);
 
@@ -62,8 +62,9 @@ bool CLuaMenuController::Activate()
 
 	assert(Valid());
 	activeController = luaMenuController;
+
 	mouse->ShowMouse();
-	luaMenu->ActivateMenu();
+	luaMenu->ActivateMenu(msg);
 	return true;
 }
 
