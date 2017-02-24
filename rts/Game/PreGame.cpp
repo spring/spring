@@ -250,8 +250,14 @@ void CPreGame::UpdateClientNet()
 	clientNet->Update();
 
 	if (clientNet->CheckTimeout(0, true)) {
-		LOG_L(L_WARNING, "Server not reachable");
+		if (CLuaMenuController::ActivateInstance("[PreGame] Server Connection Timeout")) {
+			delete this;
+			return;
+		}
+
+		LOG_L(L_WARNING, "[PreGame] Server Connection Timeout");
 		SetExitCode(1);
+
 		gu->globalQuit = true;
 		return;
 	}
@@ -276,7 +282,7 @@ void CPreGame::UpdateClientNet()
 					pckt >> message;
 
 					// (re)activate LuaMenu if user failed to connect
-					if (luaMenuController->Valid() && luaMenuController->Activate(message)) {
+					if (CLuaMenuController::ActivateInstance(message)) {
 						delete this;
 						return;
 					}

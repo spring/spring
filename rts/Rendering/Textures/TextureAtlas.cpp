@@ -81,8 +81,9 @@ int CTextureAtlas::AddTexFromFile(std::string name, std::string file)
 	StringToLowerInPlace(name);
 
 	// if the file is already loaded, use that instead
-	std::string lcFile = StringToLower(file);
+	const std::string& lcFile = StringToLower(file);
 	const auto it = files.find(lcFile);
+
 	if (it != files.end()) {
 		MemTex* memtex = it->second;
 		memtex->names.push_back(name);

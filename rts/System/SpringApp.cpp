@@ -670,7 +670,7 @@ void SpringApp::LoadSpringMenu()
 	const std::string& startScript = (cfgScript.empty() && CFileHandler::FileExists(vfsScript, SPRING_VFS_PWD_ALL))? vfsScript: cfgScript;
 
 	// bypass default menu if we have a valid LuaMenu handler
-	if (luaMenuController->Valid() && luaMenuController->Activate(""))
+	if (CLuaMenuController::ActivateInstance(""))
 		return;
 
 	if (FLAGS_oldmenu || startScript.empty()) {

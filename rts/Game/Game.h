@@ -50,7 +50,7 @@ public:
 	};
 
 public:
-	void LoadGame(const std::string& mapName, bool threaded);
+	void LoadGame(const std::string& mapName);
 
 	/// show GameEnd-window, calculate mouse movement etc.
 	void GameEnd(const std::vector<unsigned char>& winningAllyTeams, bool timeout = false);

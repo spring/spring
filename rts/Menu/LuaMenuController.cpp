@@ -54,7 +54,7 @@ void CLuaMenuController::Reset()
 
 bool CLuaMenuController::Activate(const std::string& msg)
 {
-	LOG("[LuaMenuController::%s] luaMenu=%p", __func__, luaMenu);
+	LOG("[LuaMenuController::%s(msg=\"%s\")] luaMenu=%p", __func__, msg.c_str(), luaMenu);
 
 	// LuaMenu might have failed to load, making the controller deadweight
 	if (luaMenu == nullptr)
@@ -66,6 +66,11 @@ bool CLuaMenuController::Activate(const std::string& msg)
 	mouse->ShowMouse();
 	luaMenu->ActivateMenu(msg);
 	return true;
+}
+
+bool CLuaMenuController::ActivateInstance(const std::string& msg)
+{
+	return (luaMenuController->Valid() && luaMenuController->Activate(msg));
 }
 
 void CLuaMenuController::ResizeEvent()

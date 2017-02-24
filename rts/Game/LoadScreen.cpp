@@ -119,7 +119,7 @@ void CLoadScreen::Init()
 		//! Create the Game Loading Thread
 		if (mtLoading) {
 			CglFont::threadSafety = true;
-			gameLoadThread = new COffscreenGLThread(std::bind(&CGame::LoadGame, game, mapName, true));
+			gameLoadThread = new COffscreenGLThread(std::bind(&CGame::LoadGame, game, mapName));
 		}
 
 	} catch (const opengl_error& gle) {
@@ -131,7 +131,7 @@ void CLoadScreen::Init()
 
 	if (!mtLoading) {
 		LOG("LoadingScreen: single-threaded");
-		game->LoadGame(mapName, false);
+		game->LoadGame(mapName);
 	}
 }
 

@@ -41,14 +41,12 @@
 #include "Rendering/CommandDrawer.h"
 #include "Rendering/LineDrawer.h"
 #include "Rendering/GlobalRendering.h"
-#include "Rendering/Env/Particles/ProjectileDrawer.h"
 #include "Rendering/DebugDrawerAI.h"
 #include "Rendering/HUDDrawer.h"
 #include "Rendering/IconHandler.h"
 #include "Rendering/TeamHighlight.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
-#include "Rendering/Textures/ColorMap.h"
 #include "Rendering/Textures/NamedTextures.h"
 #include "Lua/LuaGaia.h"
 #include "Lua/LuaHandle.h"
@@ -93,7 +91,6 @@
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "UI/CommandColors.h"
 #include "UI/EndGameBox.h"
-#include "UI/GameInfo.h"
 #include "UI/GameSetupDrawer.h"
 #include "UI/GuiHandler.h"
 #include "UI/InfoConsole.h"
@@ -101,10 +98,8 @@
 #include "UI/KeyCodes.h"
 #include "UI/MiniMap.h"
 #include "UI/MouseHandler.h"
-#include "UI/QuitBox.h"
 #include "UI/ResourceBar.h"
 #include "UI/SelectionKeyHandler.h"
-#include "UI/ShareBox.h"
 #include "UI/TooltipConsole.h"
 #include "UI/ProfileDrawer.h"
 #include "UI/Groups/GroupHandler.h"
@@ -116,9 +111,7 @@
 #include "System/myMath.h"
 #include "Net/GameServer.h"
 #include "Net/Protocol/NetProtocol.h"
-#include "System/SpringApp.h"
 #include "System/Util.h"
-#include "System/Input/KeyInput.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/LoadSave/LoadSaveHandler.h"
 #include "System/LoadSave/DemoRecorder.h"
@@ -372,7 +365,7 @@ void CGame::AddTimedJobs()
 	}
 }
 
-void CGame::LoadGame(const std::string& mapName, bool threaded)
+void CGame::LoadGame(const std::string& mapName)
 {
 	// NOTE:
 	//   this is needed for LuaHandle::CallOut*UpdateCallIn
@@ -385,43 +378,68 @@ void CGame::LoadGame(const std::string& mapName, bool threaded)
 	bool  forcedQuit = false;
 
 	try {
-		LOG("[Game::%s][1] globalQuit=%d threaded=%d", __func__, globalQuit, threaded);
+		LOG("[Game::%s][1] globalQuit=%d threaded=%d", __func__, globalQuit, !Threading::IsMainThread());
 
 		if (!globalQuit) LoadMap(mapName);
 		if (!globalQuit) LoadDefs();
 	} catch (const content_error& e) {
-		LOG("[Game::%s][1] forced quit with exception \"%s\"", __func__, e.what());
+		LOG_L(L_WARNING, "[Game::%s][1] forced quit with exception \"%s\"", __func__, e.what());
 
 		// we can not (yet) do a clean early exit here because the dtor assumes
 		// all loading stages proceeded normally; just force automatic shutdown
 		forcedQuit = true;
 	}
 
-	LOG("[Game::%s][2] globalQuit=%d forcedQuit=%d", __func__, globalQuit, forcedQuit);
+	try {
+		LOG("[Game::%s][2] globalQuit=%d forcedQuit=%d", __func__, globalQuit, forcedQuit);
 
-	if (!globalQuit) PreLoadSimulation();
-	if (!globalQuit) PreLoadRendering();
+		if (!globalQuit) PreLoadSimulation();
+		if (!globalQuit) PreLoadRendering();
+	} catch (const content_error& e) {
+		LOG_L(L_WARNING, "[Game::%s][2] forced quit with exception \"%s\"", __func__, e.what());
+		forcedQuit = true;
+	}
 
-	LOG("[Game::%s][3] globalQuit=%d forcedQuit=%d", __func__, globalQuit, forcedQuit);
+	try {
+		LOG("[Game::%s][3] globalQuit=%d forcedQuit=%d", __func__, globalQuit, forcedQuit);
 
-	if (!globalQuit) PostLoadSimulation();
-	if (!globalQuit) PostLoadRendering();
+		if (!globalQuit) PostLoadSimulation();
+		if (!globalQuit) PostLoadRendering();
+	} catch (const content_error& e) {
+		LOG_L(L_WARNING, "[Game::%s][3] forced quit with exception \"%s\"", __func__, e.what());
+		forcedQuit = true;
+	}
 
-	LOG("[Game::%s][4] globalQuit=%d forcedQuit=%d", __func__, globalQuit, forcedQuit);
+	try {
+		LOG("[Game::%s][4] globalQuit=%d forcedQuit=%d", __func__, globalQuit, forcedQuit);
 
-	if (!globalQuit) LoadInterface();
-	if (!globalQuit) LoadLua();
+		if (!globalQuit) LoadInterface();
+		if (!globalQuit) LoadLua();
+	} catch (const content_error& e) {
+		LOG_L(L_WARNING, "[Game::%s][4] forced quit with exception \"%s\"", __func__, e.what());
+		forcedQuit = true;
+	}
 
-	LOG("[Game::%s][5] globalQuit=%d forcedQuit=%d", __func__, globalQuit, forcedQuit);
+	try {
+		LOG("[Game::%s][5] globalQuit=%d forcedQuit=%d", __func__, globalQuit, forcedQuit);
 
-	if (!globalQuit) LoadFinalize();
-	if (!globalQuit) LoadSkirmishAIs();
+		if (!globalQuit) LoadFinalize();
+		if (!globalQuit) LoadSkirmishAIs();
+	} catch (const content_error& e) {
+		LOG_L(L_WARNING, "[Game::%s][5] forced quit with exception \"%s\"", __func__, e.what());
+		forcedQuit = true;
+	}
 
-	LOG("[Game::%s][6] globalQuit=%d forcedQuit=%d", __func__, globalQuit, forcedQuit);
+	try {
+		LOG("[Game::%s][6] globalQuit=%d forcedQuit=%d", __func__, globalQuit, forcedQuit);
 
-	if (!globalQuit && saveFile != nullptr) {
-		loadscreen->SetLoadMessage("Loading game");
-		saveFile->LoadGame();
+		if (!globalQuit && saveFile != nullptr) {
+			loadscreen->SetLoadMessage("Loading Saved Game");
+			saveFile->LoadGame();
+		}
+	} catch (const content_error& e) {
+		LOG_L(L_WARNING, "[Game::%s][6] forced quit with exception \"%s\"", __func__, e.what());
+		forcedQuit = true;
 	}
 
 	finishedLoading = true;
@@ -751,7 +769,7 @@ void CGame::PostLoad()
 {
 	GameSetupDrawer::Disable();
 
-	if (gameServer) {
+	if (gameServer != nullptr) {
 		gameServer->PostLoad(gs->frameNum);
 	}
 }
