@@ -4,12 +4,12 @@
 #define _RESOURCEHANDLER_H
 
 #include <vector>
-#include <map>
+
 #include "System/Misc/NonCopyable.h"
 #include "System/creg/creg_cond.h"
 #include "Resource.h"
+#include "ResourceMapAnalyzer.h"
 
-class CResourceMapAnalyzer;
 
 class CResourceHandler : public spring::noncopyable
 {
@@ -20,6 +20,8 @@ public:
 
 	static void CreateInstance();
 	static void FreeInstance();
+
+	void AddResources();
 
 	/**
 	 * @brief	add a resource
@@ -95,23 +97,22 @@ public:
 	 */
 	const CResourceMapAnalyzer* GetResourceMapAnalyzer(int resourceId);
 
-	size_t GetNumResources() const { return resources.size(); }
+	size_t GetNumResources() const { return resourceDescriptions.size(); }
 
 	int GetMetalId() const { return metalResourceId; }
 	int GetEnergyId() const { return energyResourceId; }
 
 	bool IsValidId(int resourceId) const;
 
-	void PostLoad();
+	void PostLoad() { AddResources(); }
 
 private:
 	static CResourceHandler* instance;
 
-	CResourceHandler();
-	~CResourceHandler();
+	CResourceHandler() { AddResources(); }
 
-	std::vector<CResourceDescription> resources;
-	std::vector<CResourceMapAnalyzer*> resourceMapAnalyzers;
+	std::vector<CResourceDescription> resourceDescriptions;
+	std::vector<CResourceMapAnalyzer> resourceMapAnalyzers;
 
 	int metalResourceId;
 	int energyResourceId;
