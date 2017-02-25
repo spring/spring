@@ -61,6 +61,13 @@ CResourceHandler::CResourceHandler()
 	energyResourceId = AddResource(rEnergy);
 }
 
+CResourceHandler::~CResourceHandler()
+{
+	for (CResourceMapAnalyzer* rma : resourceMapAnalyzers) {
+		delete rma;
+	}
+}
+
 
 int CResourceHandler::AddResource(const CResourceDescription& resource)
 {

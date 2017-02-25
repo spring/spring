@@ -108,7 +108,7 @@ private:
 	static CResourceHandler* instance;
 
 	CResourceHandler();
-	~CResourceHandler() {}
+	~CResourceHandler();
 
 	std::vector<CResourceDescription> resources;
 	std::vector<CResourceMapAnalyzer*> resourceMapAnalyzers;
