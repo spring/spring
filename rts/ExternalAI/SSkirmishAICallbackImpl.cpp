@@ -232,7 +232,7 @@ static inline const UnitDef* getUnitDefById(int skirmishAIId, int unitDefId) {
 
 static inline const MoveDef* getUnitDefMoveDefById(int skirmishAIId, int unitDefId) {
 	const unsigned int mdType = getUnitDefById(skirmishAIId, unitDefId)->pathType;
-	const MoveDef* moveDef = (mdType != -1U)? moveDefHandler->GetMoveDefByPathType(mdType): NULL;
+	const MoveDef* moveDef = (mdType != -1U)? moveDefHandler->GetMoveDefByPathType(mdType): nullptr;
 
 	// NOTE There is a callback method to check whether MoveData is available, use it.
 	return moveDef;
@@ -2950,14 +2950,16 @@ EXPORT(bool) skirmishAiCallback_UnitDef_isAbleToMove(int skirmishAIId, int unitD
 }
 
 EXPORT(bool) skirmishAiCallback_UnitDef_isAbleToHover(int skirmishAIId, int unitDefId) {
-	const UnitDef* ud = getUnitDefById(skirmishAIId, unitDefId);
-	const MoveDef* md = (ud->pathType != -1U)? moveDefHandler->GetMoveDefByPathType(ud->pathType): NULL;
+	const MoveDef* md = getUnitDefMoveDefById(skirmishAIId, unitDefId);
 
-	return ((md != NULL)? (md->speedModClass == MoveDef::Hover): false);
+	return ((md != nullptr) ? (md->speedModClass == MoveDef::Hover) : false);
 }
 
 EXPORT(bool) skirmishAiCallback_UnitDef_isFloater(int skirmishAIId, int unitDefId) {
-	return getUnitDefById(skirmishAIId, unitDefId)->floatOnWater;
+	const UnitDef* ud = getUnitDefById(skirmishAIId, unitDefId);
+	const MoveDef* md = (ud->pathType != -1U)? moveDefHandler->GetMoveDefByPathType(ud->pathType): nullptr;
+
+	return ((md != nullptr) ? md->FloatOnWater() : ud->floatOnWater);
 }
 
 EXPORT(bool) skirmishAiCallback_UnitDef_isBuilder(int skirmishAIId, int unitDefId) {
