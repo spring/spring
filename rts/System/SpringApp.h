@@ -25,7 +25,7 @@ public:
 	int Run();                                      //!< Run game loop
 	void Reload(const std::string script);
 
-	static void ShutDown();                         //!< Shuts down application
+	static void ShutDown(bool fromRun);             //!< Shuts down application
 
 private:
 	bool Initialize();                              //!< Initialize app

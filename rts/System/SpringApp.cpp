@@ -123,6 +123,7 @@ CONFIG(std::string, name).defaultValue(UnnamedPlayerName).description("Sets your
 CONFIG(std::string, DefaultStartScript).defaultValue("").description("filename of script.txt to use when no command line parameters are specified.");
 
 
+
 DEFINE_bool_EX  (sync_version,       "sync-version",       false, "Display program sync version (for online gaming)");
 DEFINE_bool     (fullscreen,                               false, "Run in fullscreen mode");
 DEFINE_bool     (window,                                   false, "Run in windowed mode");
@@ -151,6 +152,10 @@ DEFINE_string   (map,                                      "",    "Specify the m
 DEFINE_string   (menu,                                     "",    "Specify a lua menu archive to be used by spring");
 DEFINE_string   (name,                                     "",    "Set your player name");
 DEFINE_bool     (oldmenu,                                  false, "Start the old menu");
+
+
+
+static bool inShutDown = false;
 
 
 
@@ -225,7 +230,7 @@ bool SpringApp::Initialize()
 #endif
 	// Initialize crash reporting
 	CrashHandler::Install();
-	good_fpu_control_registers(__FUNCTION__);
+	good_fpu_control_registers(__func__);
 
 	// GlobalConfig
 	GlobalConfig::Instantiate();
@@ -451,7 +456,7 @@ void SpringApp::InitOpenGL()
 	SDL_DisplayMode dmode;
 	SDL_GetWindowDisplayMode(globalRendering->window, &dmode);
 	bool isBorderless = (SDL_GetWindowFlags(globalRendering->window) & SDL_WINDOW_BORDERLESS) != 0;
-	LOG("[%s] video mode set to %ix%i:%ibit @%iHz %s", __FUNCTION__, globalRendering->viewSizeX, globalRendering->viewSizeY, SDL_BITSPERPIXEL(dmode.format), dmode.refresh_rate, globalRendering->fullScreen ? (isBorderless ? "(borderless)" : "") : "(windowed)");
+	LOG("[%s] video mode set to %ix%i:%ibit @%iHz %s", __func__, globalRendering->viewSizeX, globalRendering->viewSizeY, SDL_BITSPERPIXEL(dmode.format), dmode.refresh_rate, globalRendering->fullScreen ? (isBorderless ? "(borderless)" : "") : "(windowed)");
 }
 
 
@@ -563,7 +568,7 @@ void SpringApp::ParseCmdLine(int argc, char* argv[])
 		exit(EXIT_SUCCESS);
 	}
 
-	//LOG("[%s] command-line args: \"%s\"", __FUNCTION__, cmdline->GetCmdLine().c_str());
+	//LOG("[%s] command-line args: \"%s\"", __func__, cmdline->GetCmdLine().c_str());
 	FileSystemInitializer::PreInitializeConfigHandler(FLAGS_config, FLAGS_safemode);
 
 	if (FLAGS_textureatlas)
@@ -650,7 +655,7 @@ CGameController* SpringApp::RunScript(const std::string& buf)
 void SpringApp::StartScript(const std::string& script)
 {
 	// startscript
-	LOG("[%s] Loading StartScript from: %s", __FUNCTION__, script.c_str());
+	LOG("[%s] Loading StartScript from: %s", __func__, script.c_str());
 	CFileHandler fh(script, SPRING_VFS_PWD_ALL);
 	if (!fh.FileExists())
 		throw content_error("Setup-script does not exist in given location: " + script);
@@ -874,53 +879,65 @@ bool SpringApp::Update()
  */
 int SpringApp::Run()
 {
+	Threading::Error* thrErr = nullptr;
+
+	// note: exceptions thrown by other threads are *not* caught here
 	try {
 		if (!Initialize())
 			return -1;
-	}
-	CATCH_SPRING_ERRORS
 
-	while (!gu->globalQuit) {
-		Watchdog::ClearTimer(WDT_MAIN);
-		input.PushEvents();
+		while (!gu->globalQuit) {
+			Watchdog::ClearTimer(WDT_MAIN);
+			input.PushEvents();
 
-		if (gu->globalReload) {
-			// copy; reloadScript is cleared by ResetState
-			Reload(gu->reloadScript);
-		} else {
-			if (!Update()) {
-				break;
+			if (gu->globalReload) {
+				// copy; reloadScript is cleared by ResetState
+				Reload(gu->reloadScript);
+			} else {
+				if (!Update()) {
+					break;
+				}
 			}
 		}
-	}
+	} CATCH_SPRING_ERRORS
 
-	SaveWindowPosition();
-	ShutDown();
+	// no exception from main, check if some other thread interrupted our regular loop
+	// in case one did, ErrorMessageBox will call ShutDown and forcibly exit the process
+	if ((thrErr = Threading::GetThreadError()) != nullptr)
+		ErrorMessageBox("  [thread] " + thrErr->message, thrErr->caption, thrErr->flags);
 
-	LOG("[SpringApp::%s] exitCode=%d", __FUNCTION__, GetExitCode());
+	try {
+		SaveWindowPosition();
+		ShutDown(true);
+	} CATCH_SPRING_ERRORS
+
+	// no exception from main, but a thread might have thrown *during* ShutDown
+	if ((thrErr = Threading::GetThreadError()) != nullptr)
+		ErrorMessageBox("  [thread] " + thrErr->message, thrErr->caption, thrErr->flags);
+
+	LOG("[SpringApp::%s] exitCode=%d", __func__, GetExitCode());
 	return (GetExitCode());
 }
 
 
 
 /**
- * Deallocates and shuts down game
+ * Deallocates and shuts down engine
  */
-void SpringApp::ShutDown()
+void SpringApp::ShutDown(bool fromRun)
 {
-	// if a thread crashes *during* first SA::Run-->SA::ShutDown
-	// then main::Run will call us again via ErrorMessageBox (not
-	// a good idea)
-	static unsigned int numCalls = 0;
+	assert(Threading::IsMainThread());
 
-	if ((numCalls++) != 0)
+	if (inShutDown) {
+		assert(!fromRun);
 		return;
-	if (gu != NULL)
-		gu->globalQuit = true;
+	}
 
-	LOG("[SpringApp::%s][1]", __FUNCTION__);
+	inShutDown = true;
+
+	LOG("[SpringApp::%s][1] fromRun=%d", __func__, fromRun);
 	ThreadPool::SetThreadCount(0);
-	LOG("[SpringApp::%s][2]", __FUNCTION__);
+	LOG("[SpringApp::%s][2]", __func__);
 	LuaVFSDownload::Free(true);
 
 	// see ::Reload
@@ -936,16 +953,16 @@ void SpringApp::ShutDown()
 	CLuaMenu::FreeHandler();
 	SafeDelete(luaMenuController);
 
-	LOG("[SpringApp::%s][3]", __FUNCTION__);
+	LOG("[SpringApp::%s][3]", __func__);
 	SafeDelete(clientNet);
 	SafeDelete(gameServer);
 	SafeDelete(gameSetup);
 
-	LOG("[SpringApp::%s][4]", __FUNCTION__);
+	LOG("[SpringApp::%s][4]", __func__);
 	CLoadScreen::DeleteInstance();
 	FreeJoystick();
 
-	LOG("[SpringApp::%s][5]", __FUNCTION__);
+	LOG("[SpringApp::%s][5]", __func__);
 	SafeDelete(keyCodes);
 	agui::FreeGui();
 	SafeDelete(font);
@@ -956,13 +973,13 @@ void SpringApp::ShutDown()
 
 	IMouseInput::FreeInstance(mouseInput);
 
-	LOG("[SpringApp::%s][6]", __FUNCTION__);
+	LOG("[SpringApp::%s][6]", __func__);
 	SDL_SetWindowGrab(globalRendering->window, SDL_FALSE);
 	WindowManagerHelper::SetIconSurface();
 	globalRendering->DestroySDLWindow();
 	SDL_Quit();
 
-	LOG("[SpringApp::%s][7]", __FUNCTION__);
+	LOG("[SpringApp::%s][7]", __func__);
 	SafeDelete(gs);
 	SafeDelete(gu);
 	SafeDelete(globalRendering);
@@ -972,10 +989,12 @@ void SpringApp::ShutDown()
 	FileSystemInitializer::Cleanup();
 	DataDirLocater::FreeInstance();
 
-	LOG("[SpringApp::%s][8]", __FUNCTION__);
+	LOG("[SpringApp::%s][8]", __func__);
 	Watchdog::DeregisterThread(WDT_MAIN);
 	Watchdog::Uninstall();
-	LOG("[SpringApp::%s][9]", __FUNCTION__);
+	LOG("[SpringApp::%s][9]", __func__);
+
+	inShutDown = false;
 }
 
 

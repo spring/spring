@@ -11,6 +11,7 @@
 #include <string>
 #include <sstream>
 #include <functional>
+
 #include "Game/GlobalUnsynced.h"
 #include "System/Log/ILog.h"
 #include "System/Log/LogSinkHandler.h"
@@ -29,15 +30,24 @@
 	#include "Net/GameServer.h"
 #endif
 
-static void ExitMessage(const std::string& msg, const std::string& caption, unsigned int flags, bool forced)
-{
-	logSinkHandler.SetSinking(false);
-	if (forced) {
-		LOG_L(L_ERROR, "[%s] failed to shutdown normally, exit forced", __FUNCTION__);
-	}
-	LOG_L(L_FATAL, "%s\n%s", caption.c_str(), msg.c_str());
 
-	if (!forced) {
+volatile bool waitForExit = true;
+volatile bool exitSuccess = false;
+
+
+__FORCE_ALIGN_STACK__
+void ExitProcess(const std::string& msg, const std::string& caption, unsigned int flags)
+{
+	// wait 10 seconds before forcing the kill
+	for (unsigned int n = 0; waitForExit && !exitSuccess && (n < 10); ++n) {
+		spring::this_thread::sleep_for(std::chrono::seconds(1));
+	}
+
+	logSinkHandler.SetSinking(false);
+
+	LOG_L(L_FATAL, "[%s] msg=\"%s\" cap=\"%s\" (forced=%d)", __func__, msg.c_str(), caption.c_str(), !exitSuccess);
+
+	if (exitSuccess) {
 	#if !defined(DEDICATED) && !defined(HEADLESS)
 		Platform::MsgBox(msg, caption, flags);
 	#else
@@ -46,79 +56,66 @@ static void ExitMessage(const std::string& msg, const std::string& caption, unsi
 	}
 
 #ifdef _MSC_VER
-	if (forced)
+	if (!exitSuccess)
 		TerminateProcess(GetCurrentProcess(), -1);
 #endif
+
 	exit(-1);
 }
 
 
-volatile bool shutdownSucceeded = false;
-
-__FORCE_ALIGN_STACK__
-void ForcedExit(const std::string& msg, const std::string& caption, unsigned int flags) {
-
-	for (unsigned int n = 0; !shutdownSucceeded && (n < 10); ++n) {
-		spring::this_thread::sleep_for(std::chrono::seconds(1));
-	}
-
-	if (!shutdownSucceeded) {
-		ExitMessage(msg, caption, flags, true);
-	}
-}
-
-void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigned int flags, bool fromMain)
+void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigned int flags)
 {
 #ifdef DEDICATED
+	waitForExit = false;
+	exitSuccess = true;
+
 	SafeDelete(gameServer);
-	ExitMessage(msg, caption, flags, false);
-	return;
+	ExitProcess(msg, caption, flags);
+
 #else
-	LOG_L(L_ERROR, "[%s][1] msg=\"%s\" IsMainThread()=%d fromMain=%d", __FUNCTION__, msg.c_str(), Threading::IsMainThread(), fromMain);
 
+	LOG_L(L_ERROR, "[%s][1] msg=\"%s\" cap=\"%s\" mainThread=%d", __func__, msg.c_str(), caption.c_str(), Threading::IsMainThread());
 
-	// SpringApp::Shutdown is extremely likely to deadlock or end up waiting indefinitely if any
-	// MT thread has crashed or deviated from its normal execution path by throwing an exception
-	spring::thread* forcedExitThread = new spring::thread(std::bind(&ForcedExit, msg, caption, flags));
-
-	// not the main thread (ie. not called from main::Run)
-	// --> leave a message for main and then interrupt it
 	if (!Threading::IsMainThread()) {
-		assert(!fromMain);
-
-		if (gu != NULL) {
-			// gu can be already deleted or not yet created!
+		// thread threw an exception which was caught, try to organize
+		// a clean exit if possible and "interrupt" the main thread so
+		// it can run SpringApp::ShutDown
+		if (gu != nullptr) {
 			gu->globalQuit = true;
+
+			Threading::SetThreadError(Threading::Error(caption, msg, flags));
+			return;
 		}
 
-		Threading::Error err(caption, msg, flags);
-		Threading::SetThreadError(err);
+		waitForExit = false;
+		exitSuccess = false;
 
-		// terminate thread
-		// FIXME: only the (separate) loading thread can catch thread_interrupted
-		throw std::runtime_error("thread interrupted");
+		ExitProcess(msg, caption, flags);
+	} else {
+		// SpringApp::Shutdown is extremely likely to deadlock or end up waiting indefinitely if any
+		// MT thread has crashed or deviated from its normal execution path by throwing an exception
+		spring::thread forcedExitThread = spring::thread(std::bind(&ExitProcess, msg, caption, flags));
+
+		LOG_L(L_ERROR, "[%s][2]", __func__);
+
+		// exit any possibly threads (otherwise they would
+		// still run while the error message-box is shown)
+		Watchdog::ClearTimer();
+		SpringApp::ShutDown(false);
+
+		LOG_L(L_ERROR, "[%s][3]", __func__);
+
+		exitSuccess = true;
+		forcedExitThread.join();
 	}
-
-	LOG_L(L_ERROR, "[%s][2]", __FUNCTION__);
-
-	// exit any possibly threads (otherwise they would
-	// still run while the error messagebox is shown)
-	Watchdog::ClearTimer();
-	SpringApp::ShutDown();
-
-	LOG_L(L_ERROR, "[%s][3]", __FUNCTION__);
-
-	shutdownSucceeded = true;
-	forcedExitThread->join();
-	delete forcedExitThread;
-
-	LOG_L(L_ERROR, "[%s][4]", __FUNCTION__);
-
-	ExitMessage(msg, caption, flags, false);
 #endif
 }
 
+
+
 static int exitcode = 0;
+
 void SetExitCode(int code) { exitcode = code; }
 int GetExitCode() { return exitcode; }
 

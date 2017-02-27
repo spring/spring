@@ -28,8 +28,6 @@
 
 int Run(int argc, char* argv[])
 {
-	int ret = -1;
-
 #ifdef __MINGW32__
 	// For the MinGW backtrace() implementation we need to know the stack end.
 	{
@@ -42,20 +40,8 @@ int Run(int argc, char* argv[])
 	Threading::DetectCores();
 	Threading::SetMainThread();
 
-	// run
-	try {
-		SpringApp app(argc, argv);
-		ret = app.Run();
-	} CATCH_SPRING_ERRORS
-
-	// check if (a thread in) Spring crashed, if so display an error message
-	Threading::Error* err = Threading::GetThreadError();
-
-	if (err != NULL) {
-		ErrorMessageBox(" error: " + err->message, err->caption, err->flags, true);
-	}
-
-	return ret;
+	SpringApp app(argc, argv);
+	return (app.Run());
 }
 
 

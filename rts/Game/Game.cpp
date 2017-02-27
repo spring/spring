@@ -380,8 +380,8 @@ void CGame::LoadGame(const std::string& mapName)
 	try {
 		LOG("[Game::%s][1] globalQuit=%d threaded=%d", __func__, globalQuit, !Threading::IsMainThread());
 
-		if (!globalQuit) LoadMap(mapName);
-		if (!globalQuit) LoadDefs();
+		LoadMap(mapName);
+		LoadDefs();
 	} catch (const content_error& e) {
 		LOG_L(L_WARNING, "[Game::%s][1] forced quit with exception \"%s\"", __func__, e.what());
 
@@ -393,8 +393,8 @@ void CGame::LoadGame(const std::string& mapName)
 	try {
 		LOG("[Game::%s][2] globalQuit=%d forcedQuit=%d", __func__, globalQuit, forcedQuit);
 
-		if (!globalQuit) PreLoadSimulation();
-		if (!globalQuit) PreLoadRendering();
+		PreLoadSimulation();
+		PreLoadRendering();
 	} catch (const content_error& e) {
 		LOG_L(L_WARNING, "[Game::%s][2] forced quit with exception \"%s\"", __func__, e.what());
 		forcedQuit = true;
@@ -403,8 +403,8 @@ void CGame::LoadGame(const std::string& mapName)
 	try {
 		LOG("[Game::%s][3] globalQuit=%d forcedQuit=%d", __func__, globalQuit, forcedQuit);
 
-		if (!globalQuit) PostLoadSimulation();
-		if (!globalQuit) PostLoadRendering();
+		PostLoadSimulation();
+		PostLoadRendering();
 	} catch (const content_error& e) {
 		LOG_L(L_WARNING, "[Game::%s][3] forced quit with exception \"%s\"", __func__, e.what());
 		forcedQuit = true;
@@ -413,8 +413,8 @@ void CGame::LoadGame(const std::string& mapName)
 	try {
 		LOG("[Game::%s][4] globalQuit=%d forcedQuit=%d", __func__, globalQuit, forcedQuit);
 
-		if (!globalQuit) LoadInterface();
-		if (!globalQuit) LoadLua();
+		LoadInterface();
+		LoadLua();
 	} catch (const content_error& e) {
 		LOG_L(L_WARNING, "[Game::%s][4] forced quit with exception \"%s\"", __func__, e.what());
 		forcedQuit = true;
@@ -423,8 +423,8 @@ void CGame::LoadGame(const std::string& mapName)
 	try {
 		LOG("[Game::%s][5] globalQuit=%d forcedQuit=%d", __func__, globalQuit, forcedQuit);
 
-		if (!globalQuit) LoadFinalize();
-		if (!globalQuit) LoadSkirmishAIs();
+		LoadFinalize();
+		LoadSkirmishAIs();
 	} catch (const content_error& e) {
 		LOG_L(L_WARNING, "[Game::%s][5] forced quit with exception \"%s\"", __func__, e.what());
 		forcedQuit = true;
@@ -443,7 +443,7 @@ void CGame::LoadGame(const std::string& mapName)
 	}
 
 	finishedLoading = true;
-	globalQuit = forcedQuit;
+	globalQuit |= forcedQuit;
 
 	Watchdog::DeregisterThread(WDT_LOAD);
 	AddTimedJobs();
@@ -793,13 +793,15 @@ void CGame::KillLua()
 
 	LOG("[Game::%s][4]", __func__);
 	LuaOpenGL::Free();
+
+	// belongs here; destructs LuaIntro (which might access sound, etc)
+	CLoadScreen::DeleteInstance();
 }
 
 void CGame::KillMisc()
 {
 	LOG("[Game::%s][1]", __func__);
 	CEndGameBox::Destroy();
-	CLoadScreen::DeleteInstance(); // make sure to halt loading, otherwise crash :)
 	IVideoCapturing::FreeInstance();
 
 	LOG("[Game::%s][2]", __func__);

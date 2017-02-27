@@ -165,10 +165,9 @@ CLoadScreen::~CLoadScreen()
 	if (activeController == this)
 		activeController = nullptr;
 
-	if (luaIntro != nullptr) {
-		Draw(); // one last frame
+	if (luaIntro != nullptr)
 		luaIntro->Shutdown();
-	}
+
 	CLuaIntro::FreeHandler();
 
 	if (!gu->globalQuit) {
