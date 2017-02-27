@@ -50,8 +50,8 @@ public:
 	void SetupBigSquare(const int bigSquareX, const int bigSquareY);
 
 
-	void IncreaseDetail();
-	void DecreaseDetail();
+	void IncreaseDetail() { SetDetail(groundDetail + 1); }
+	void DecreaseDetail() { SetDetail(groundDetail - 1); }
 	void SetDetail(int newGroundDetail);
 	int GetGroundDetail(const DrawPass::e& drawPass = DrawPass::Normal) const;
 

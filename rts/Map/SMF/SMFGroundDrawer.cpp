@@ -22,7 +22,15 @@
 #include "System/Log/ILog.h"
 #include "System/myMath.h"
 
-CONFIG(int, GroundDetail).defaultValue(60).headlessValue(0).minimumValue(0).maximumValue(200).description("Controls how detailed the map geometry will be. On lowered settings, cliffs may appear to be jagged or \"melting\".");
+static constexpr int MIN_GROUND_DETAIL[] = {                               0,   4};
+static constexpr int MAX_GROUND_DETAIL[] = {CBasicMeshDrawer::LOD_LEVELS - 1, 200};
+
+CONFIG(int, GroundDetail)
+	.defaultValue(60)
+	.headlessValue(0)
+	.minimumValue(MIN_GROUND_DETAIL[1])
+	.maximumValue(MAX_GROUND_DETAIL[1])
+	.description("Controls how detailed the map geometry will be. On lowered settings, cliffs may appear to be jagged or \"melting\".");
 CONFIG(bool, MapBorder).defaultValue(true).description("Draws a solid border at the edges of the map.");
 
 
@@ -218,7 +226,7 @@ inline void CSMFGroundDrawer::DrawWaterPlane(bool drawWaterReflection) {
 		return;
 
 	glPushMatrix();
-	glTranslatef(0.f, std::min(-200.0f, smfMap->GetCurrMinHeight() - 400.0f), 0.f);
+	glTranslatef(0.0f, std::min(-200.0f, smfMap->GetCurrMinHeight() - 400.0f), 0.0f);
 	glCallList(waterPlaneDispLists[camera->GetPos().IsInBounds() && !mapInfo->map.voidWater]);
 	glPopMatrix();
 }
@@ -533,37 +541,13 @@ bool CSMFGroundDrawer::UpdateGeometryBuffer(bool init)
 
 
 
-void CSMFGroundDrawer::IncreaseDetail()
-{
-	configHandler->Set("GroundDetail", groundDetail = std::min(groundDetail + 1, 400));
-
-	if (drawerMode != SMF_MESHDRAWER_BASIC) {
-		LOG("GroundDetail is now %i", groundDetail);
-	} else {
-		LOG("GroundDetailBias is now %i", (groundDetail % CBasicMeshDrawer::LOD_LEVELS));
-	}
-}
-
-void CSMFGroundDrawer::DecreaseDetail()
-{
-	configHandler->Set("GroundDetail", groundDetail = std::max(groundDetail - 1, 4));
-
-	if (drawerMode != SMF_MESHDRAWER_BASIC) {
-		LOG("GroundDetail is now %i", groundDetail);
-	} else {
-		LOG("GroundDetailBias is now %i", (groundDetail % CBasicMeshDrawer::LOD_LEVELS));
-	}
-}
-
 void CSMFGroundDrawer::SetDetail(int newGroundDetail)
 {
-	configHandler->Set("GroundDetail", groundDetail = Clamp(newGroundDetail, 4, 400));
+	const int minGroundDetail = MIN_GROUND_DETAIL[drawerMode != SMF_MESHDRAWER_BASIC];
+	const int maxGroundDetail = MAX_GROUND_DETAIL[drawerMode != SMF_MESHDRAWER_BASIC];
 
-	if (drawerMode != SMF_MESHDRAWER_BASIC) {
-		LOG("GroundDetail is now %i", groundDetail);
-	} else {
-		LOG("GroundDetailBias is now %i", (groundDetail % CBasicMeshDrawer::LOD_LEVELS));
-	}
+	configHandler->Set("GroundDetail", groundDetail = Clamp(newGroundDetail, minGroundDetail, maxGroundDetail));
+	LOG("GroundDetail%s set to %i", ((drawerMode == SMF_MESHDRAWER_BASIC)? "[Bias]": ""), groundDetail);
 }
 
 
