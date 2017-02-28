@@ -36,7 +36,7 @@ volatile bool exitSuccess = false;
 
 
 __FORCE_ALIGN_STACK__
-void ExitProcess(const std::string& msg, const std::string& caption, unsigned int flags)
+void ExitSpringProcess(const std::string& msg, const std::string& caption, unsigned int flags)
 {
 	// wait 10 seconds before forcing the kill
 	for (unsigned int n = 0; waitForExit && !exitSuccess && (n < 10); ++n) {
@@ -71,7 +71,7 @@ void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigne
 	exitSuccess = true;
 
 	SafeDelete(gameServer);
-	ExitProcess(msg, caption, flags);
+	ExitSpringProcess(msg, caption, flags);
 
 #else
 
@@ -91,11 +91,11 @@ void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigne
 		waitForExit = false;
 		exitSuccess = false;
 
-		ExitProcess(msg, caption, flags);
+		ExitSpringProcess(msg, caption, flags);
 	} else {
 		// SpringApp::Shutdown is extremely likely to deadlock or end up waiting indefinitely if any
 		// MT thread has crashed or deviated from its normal execution path by throwing an exception
-		spring::thread forcedExitThread = spring::thread(std::bind(&ExitProcess, msg, caption, flags));
+		spring::thread forcedExitThread = spring::thread(std::bind(&ExitSpringProcess, msg, caption, flags));
 
 		LOG_L(L_ERROR, "[%s][2]", __func__);
 
