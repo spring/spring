@@ -28,7 +28,7 @@ static CCamera cameras[CCamera::CAMTYPE_COUNT];
 void CCamera::SetActiveCamera(unsigned int camType) { cameras[CAMTYPE_ACTIVE].SetCamType(camType); }
 void CCamera::InitializeStatic() {
 	// initialize all global cameras
-	for (CCamera& cam: cameras) {
+	for (unsigned int i = CAMTYPE_PLAYER; i < CAMTYPE_COUNT; i++) {
 		cam.SetCamType(i);
 	}
 
@@ -161,7 +161,7 @@ void CCamera::UpdateFrustum()
 		// VC
 		//
 		// note that this is the only place where VISCUL is updated!
-		camTypes[CAMTYPE_VISCUL].CopyState(&camTypes[camType]);
+		cameras[CAMTYPE_VISCUL].CopyState(&cameras[camType]);
 	}
 }
 
