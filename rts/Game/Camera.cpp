@@ -29,7 +29,7 @@ void CCamera::SetActiveCamera(unsigned int camType) { cameras[CAMTYPE_ACTIVE].Se
 void CCamera::InitializeStatic() {
 	// initialize all global cameras
 	for (unsigned int i = CAMTYPE_PLAYER; i < CAMTYPE_COUNT; i++) {
-		cam.SetCamType(i);
+		cameras[i].SetCamType(i);
 	}
 
 	SetActiveCamera(CAMTYPE_PLAYER);
