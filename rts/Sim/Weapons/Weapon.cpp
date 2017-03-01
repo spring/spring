@@ -343,7 +343,7 @@ void CWeapon::ReAimWeapon()
 
 	// check max FireAngle
 	reAim |= (wantedDir.dot(lastRequestedDir) <= weaponDef->maxFireAngle);
-	reAim |= (wantedDir.dot(lastRequestedDir) <= math::cos(20.f));
+	reAim |= (wantedDir.dot(lastRequestedDir) <= math::cos(20.f * math::DEG_TO_RAD));
 
 	//note: angleGood checks unit/maindir, not the weapon's current aim dir!!!
 	//reAim |= (!angleGood);
