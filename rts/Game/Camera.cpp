@@ -1,6 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include <string.h>
+#include <cstring>
 
 #include "Camera.h"
 #include "UI/MouseHandler.h"
@@ -21,12 +21,24 @@ CONFIG(bool, EdgeMoveDynamic)
 	.description("If EdgeMove scrolling speed should fade with edge distance.");
 
 
-CCamera* CCamera::camTypes[CCamera::CAMTYPE_COUNT] = {nullptr};
+
+// cameras[ACTIVE] just stores which of the others is active
+static CCamera cameras[CCamera::CAMTYPE_COUNT];
+
+void CCamera::SetActiveCamera(unsigned int camType) { cameras[CAMTYPE_ACTIVE].SetCamType(camType); }
+void CCamera::InitializeStatic() {
+	// initialize all global cameras
+	for (CCamera& cam: cameras) {
+		cam.SetCamType(i);
+	}
+
+	SetActiveCamera(CAMTYPE_PLAYER);
+}
+
+CCamera* CCamera::GetCamera(unsigned int camType) { return &cameras[camType]; }
+CCamera* CCamera::GetActiveCamera() { return (GetCamera(cameras[CAMTYPE_ACTIVE].GetCamType())); }
 
 
-//////////////////////////////////////////////////////////////////////
-// Construction/Destruction
-//////////////////////////////////////////////////////////////////////
 
 CCamera::CCamera(unsigned int cameraType)
 	: pos(ZeroVector)
@@ -44,7 +56,7 @@ CCamera::CCamera(unsigned int cameraType)
 	, camType(cameraType)
 	, projType((cameraType == CAMTYPE_SHADOW)? PROJTYPE_ORTHO: PROJTYPE_PERSP)
 {
-	assert(cameraType < CAMTYPE_ACTIVE);
+	assert(cameraType < CAMTYPE_COUNT);
 
 	memset(viewport, 0, 4 * sizeof(int));
 	memset(movState, 0, sizeof(movState));
@@ -149,7 +161,7 @@ void CCamera::UpdateFrustum()
 		// VC
 		//
 		// note that this is the only place where VISCUL is updated!
-		camTypes[CAMTYPE_VISCUL]->CopyState(camTypes[camType]);
+		camTypes[CAMTYPE_VISCUL].CopyState(&camTypes[camType]);
 	}
 }
 

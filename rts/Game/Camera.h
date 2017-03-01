@@ -63,7 +63,7 @@ public:
 	};
 
 public:
-	CCamera(unsigned int cameraType);
+	CCamera(unsigned int cameraType = CAMTYPE_PLAYER);
 
 	void CopyState(const CCamera*);
 	void CopyStateReflect(const CCamera*);
@@ -169,19 +169,18 @@ public:
 	*/
 
 	unsigned int GetCamType() const { return camType; }
+	unsigned int SetCamType(unsigned int ct) { return (camType = ct); }
 
 
-	static void SetCamera(unsigned int camType, CCamera* cam) { camTypes[camType] = cam; }
-	static void SetActiveCamera(unsigned int camType) { SetCamera(CAMTYPE_ACTIVE, GetCamera(camType)); }
+	static void InitializeStatic();
+	static void SetActiveCamera(unsigned int camType);
 
-	static CCamera* GetCamera(unsigned int camType) { return camTypes[camType]; }
-	static CCamera* GetActiveCamera() { return (GetCamera(CAMTYPE_ACTIVE)); }
+	static CCamera* GetCamera(unsigned int camType);
+	static CCamera* GetActiveCamera();
 
 	// sets the current active camera, returns the previous
 	static CCamera* GetSetActiveCamera(unsigned int camType) {
-		CCamera* cam = GetActiveCamera();
-		SetActiveCamera(camType);
-		return cam;
+		CCamera* cam = GetActiveCamera(); SetActiveCamera(camType); return cam;
 	}
 
 public:
@@ -235,8 +234,6 @@ private:
 	// positive sides [0], negative sides [1]
 	std::vector<FrustumLine> frustumLines[2];
 
-	static CCamera* camTypes[CAMTYPE_COUNT];
-
 	// CAMTYPE_*
 	unsigned int camType;
 	// PROJTYPE_*
@@ -246,6 +243,6 @@ private:
 	bool rotState[4]; // unused
 };
 
-#define camera (CCamera::GetCamera(CCamera::CAMTYPE_ACTIVE))
+#define camera (CCamera::GetActiveCamera())
 #endif // _CAMERA_H
 
