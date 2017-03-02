@@ -43,7 +43,7 @@ CCamera* CCamera::GetActiveCamera() { return (GetCamera(cameras[CAMTYPE_ACTIVE].
 CCamera::CCamera(unsigned int cameraType)
 	: pos(ZeroVector)
 	, rot(ZeroVector)
-	, forward(RgtVector)
+	, forward(FwdVector)
 	, up(UpVector)
 	, fov(0.0f)
 	, halfFov(0.0f)

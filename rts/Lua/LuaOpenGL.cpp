@@ -814,15 +814,9 @@ void LuaOpenGL::ResetDrawScreen()
 
 void LuaOpenGL::EnableDrawInMiniMap()
 {
-	glMatrixMode(GL_TEXTURE); {
-		glPushMatrix();
-	}
-	glMatrixMode(GL_PROJECTION); {
-		glPushMatrix();
-	}
-	glMatrixMode(GL_MODELVIEW); {
-		glPushMatrix();
-	}
+	glMatrixMode(GL_TEXTURE   ); glPushMatrix();
+	glMatrixMode(GL_PROJECTION); glPushMatrix();
+	glMatrixMode(GL_MODELVIEW ); glPushMatrix();
 
 	if (drawMode == DRAW_SCREEN) {
 		prevDrawMode = DRAW_SCREEN;
@@ -838,8 +832,7 @@ void LuaOpenGL::DisableDrawInMiniMap()
 {
 	if (prevDrawMode != DRAW_SCREEN) {
 		DisableCommon(DRAW_MINIMAP);
-	}
-	else {
+	} else {
 		if (safeMode) {
 			glPopAttrib();
 		} else {
@@ -851,15 +844,9 @@ void LuaOpenGL::DisableDrawInMiniMap()
 		drawMode = DRAW_SCREEN;
 	}
 
-	glMatrixMode(GL_TEXTURE); {
-		glPopMatrix();
-	}
-	glMatrixMode(GL_PROJECTION); {
-		glPopMatrix();
-	}
-	glMatrixMode(GL_MODELVIEW); {
-		glPopMatrix();
-	}
+	glMatrixMode(GL_TEXTURE   ); glPopMatrix();
+	glMatrixMode(GL_PROJECTION); glPopMatrix();
+	glMatrixMode(GL_MODELVIEW ); glPopMatrix();
 }
 
 
@@ -879,15 +866,9 @@ void LuaOpenGL::ResetDrawInMiniMap()
 
 void LuaOpenGL::EnableDrawInMiniMapBackground()
 {
-	glMatrixMode(GL_TEXTURE); {
-		glPushMatrix();
-	}
-	glMatrixMode(GL_PROJECTION); {
-		glPushMatrix();
-	}
-	glMatrixMode(GL_MODELVIEW); {
-		glPushMatrix();
-	}
+	glMatrixMode(GL_TEXTURE   ); glPushMatrix();
+	glMatrixMode(GL_PROJECTION); glPushMatrix();
+	glMatrixMode(GL_MODELVIEW ); glPushMatrix();
 
 	if (drawMode == DRAW_SCREEN) {
 		prevDrawMode = DRAW_SCREEN;
@@ -903,8 +884,7 @@ void LuaOpenGL::DisableDrawInMiniMapBackground()
 {
 	if (prevDrawMode != DRAW_SCREEN) {
 		DisableCommon(DRAW_MINIMAP_BACKGROUND);
-	}
-	else {
+	} else {
 		if (safeMode) {
 			glPopAttrib();
 		} else {
@@ -916,15 +896,9 @@ void LuaOpenGL::DisableDrawInMiniMapBackground()
 		drawMode = DRAW_SCREEN;
 	}
 
-	glMatrixMode(GL_TEXTURE); {
-		glPopMatrix();
-	}
-	glMatrixMode(GL_PROJECTION); {
-		glPopMatrix();
-	}
-	glMatrixMode(GL_MODELVIEW); {
-		glPopMatrix();
-	}
+	glMatrixMode(GL_TEXTURE   ); glPopMatrix();
+	glMatrixMode(GL_PROJECTION); glPopMatrix();
+	glMatrixMode(GL_MODELVIEW ); glPopMatrix();
 }
 
 
@@ -950,7 +924,6 @@ void LuaOpenGL::SetupWorldLighting()
 	glEnable(GL_LIGHT1);
 }
 
-
 void LuaOpenGL::RevertWorldLighting()
 {
 	glDisable(GL_LIGHT1);
@@ -963,6 +936,7 @@ void LuaOpenGL::SetupScreenMatrices()
 	glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
+
 	const int winPosY_bl = globalRendering->screenSizeY - globalRendering->winSizeY - globalRendering->winPosY; //! origin BOTTOMLEFT
 	const float dist   = screenDistance;         // eye-to-screen (meters)
 	const float width  = screenWidth;            // screen width (meters)
@@ -993,25 +967,17 @@ void LuaOpenGL::SetupScreenMatrices()
 	glTranslatef(left * distAdj, bottom * distAdj, -zplane);
 }
 
-
 void LuaOpenGL::RevertScreenMatrices()
 {
-	glMatrixMode(GL_TEXTURE); {
-		glLoadIdentity();
-	}
-	glMatrixMode(GL_PROJECTION); {
-		glLoadIdentity();
-		gluOrtho2D(0.0, 1.0, 0.0, 1.0);
-	}
-	glMatrixMode(GL_MODELVIEW); {
-		glLoadIdentity();
-	}
+	glMatrixMode(GL_TEXTURE   ); glLoadIdentity();
+	glMatrixMode(GL_PROJECTION); glLoadIdentity(); gluOrtho2D(0.0f, 1.0f, 0.0f, 1.0f);
+	glMatrixMode(GL_MODELVIEW ); glLoadIdentity();
 }
 
 
 void LuaOpenGL::SetupScreenLighting()
 {
-	if (camera == nullptr)
+	if (sky == nullptr)
 		return;
 
 	// back light
@@ -1019,12 +985,14 @@ void LuaOpenGL::SetupScreenLighting()
 	const float backLightAmbt[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
 	const float backLightDiff[4] = { 0.5f, 0.5f, 0.5f, 1.0f };
 	const float backLightSpec[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+
 	glLightfv(GL_LIGHT0, GL_POSITION, backLightPos);
 	glLightfv(GL_LIGHT0, GL_AMBIENT,  backLightAmbt);
 	glLightfv(GL_LIGHT0, GL_DIFFUSE,  backLightDiff);
 	glLightfv(GL_LIGHT0, GL_SPECULAR, backLightSpec);
 
 	// sun light -- needs the camera transformation
+	// FIXME: nobody needs FFP crap anymore, but EventHandler forces it
 	glPushMatrix();
 	glLoadMatrixf(camera->GetViewMatrix());
 	glLightfv(GL_LIGHT1, GL_POSITION, sky->GetLight()->GetLightDir());
@@ -1037,6 +1005,7 @@ void LuaOpenGL::SetupScreenLighting()
 	const float sunLightAmbt[4] = { la[0]*sf, la[1]*sf, la[2]*sf, la[3]*sf };
 	const float sunLightDiff[4] = { ld[0]*sf, ld[1]*sf, ld[2]*sf, ld[3]*sf };
 	const float sunLightSpec[4] = { la[0]*sf, la[1]*sf, la[2]*sf, la[3]*sf };
+
 	glLightfv(GL_LIGHT1, GL_AMBIENT,  sunLightAmbt);
 	glLightfv(GL_LIGHT1, GL_DIFFUSE,  sunLightDiff);
 	glLightfv(GL_LIGHT1, GL_SPECULAR, sunLightSpec);
@@ -1048,7 +1017,6 @@ void LuaOpenGL::SetupScreenLighting()
 	glEnable(GL_LIGHT1);
 	glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
 }
-
 
 void LuaOpenGL::RevertScreenLighting()
 {
@@ -1063,79 +1031,45 @@ void LuaOpenGL::RevertScreenLighting()
 
 void LuaOpenGL::ResetGenesisMatrices()
 {
-	glMatrixMode(GL_TEXTURE); {
-		glLoadIdentity();
-	}
-	glMatrixMode(GL_PROJECTION); {
-		glLoadIdentity();
-	}
-	glMatrixMode(GL_MODELVIEW); {
-		glLoadIdentity();
-	}
+	glMatrixMode(GL_TEXTURE   ); glLoadIdentity();
+	glMatrixMode(GL_PROJECTION); glLoadIdentity();
+	glMatrixMode(GL_MODELVIEW ); glLoadIdentity();
 }
 
 
 void LuaOpenGL::ResetWorldMatrices()
 {
-	glMatrixMode(GL_TEXTURE); {
-		glLoadIdentity();
-	}
-	glMatrixMode(GL_PROJECTION); {
-		glLoadMatrixf(camera->GetProjectionMatrix());
-	}
-	glMatrixMode(GL_MODELVIEW); {
-		glLoadMatrixf(camera->GetViewMatrix());
-	}
+	glMatrixMode(GL_TEXTURE   ); glLoadIdentity();
+	glMatrixMode(GL_PROJECTION); glLoadMatrixf(camera->GetProjectionMatrix());
+	glMatrixMode(GL_MODELVIEW ); glLoadMatrixf(camera->GetViewMatrix());
 }
-
 
 void LuaOpenGL::ResetWorldShadowMatrices()
 {
-	glMatrixMode(GL_TEXTURE); {
-		glLoadIdentity();
-	}
-	glMatrixMode(GL_PROJECTION); {
-		glLoadIdentity();
-		glOrtho(0.0, 1.0, 0.0, 1.0, 0.0, -1.0);
-	}
-	glMatrixMode(GL_MODELVIEW); {
-		glLoadMatrixf(shadowHandler->GetShadowMatrixRaw());
-	}
+	glMatrixMode(GL_TEXTURE   ); glLoadIdentity();
+	glMatrixMode(GL_PROJECTION); glLoadIdentity(); glOrtho(0.0f, 1.0f, 0.0f, 1.0f, 0.0f, -1.0f);
+	glMatrixMode(GL_MODELVIEW ); glLoadMatrixf(shadowHandler->GetShadowMatrixRaw());
 }
 
 
 void LuaOpenGL::ResetScreenMatrices()
 {
-	glMatrixMode(GL_TEXTURE); {
-		glLoadIdentity();
-	}
-	glMatrixMode(GL_PROJECTION); {
-		glLoadIdentity();
-	}
-	glMatrixMode(GL_MODELVIEW); {
-		glLoadIdentity();
-	}
+	glMatrixMode(GL_TEXTURE   ); glLoadIdentity();
+	glMatrixMode(GL_PROJECTION); glLoadIdentity();
+	glMatrixMode(GL_MODELVIEW ); glLoadIdentity();
+
 	SetupScreenMatrices();
 }
 
 
 void LuaOpenGL::ResetMiniMapMatrices()
 {
-	glMatrixMode(GL_TEXTURE); {
-		glLoadIdentity();
-	}
-	glMatrixMode(GL_PROJECTION); {
-		glLoadIdentity();
-		assert(minimap);
-		glOrtho(0.0f, 1.0f, 0.0f, 1.0f, 0.0, -1.0);
-		minimap->ApplyConstraintsMatrix();
-	}
-	glMatrixMode(GL_MODELVIEW); {
-		glLoadIdentity();
-		// engine draw minimap in 0..1 range, lua uses 0..minimapSizeX
-		glScalef(1.0f / (float)minimap->GetSizeX(),
-		         1.0f / (float)minimap->GetSizeY(), 1.0f);
-	}
+	assert(minimap != nullptr);
+
+	// engine draws minimap in 0..1 range, lua uses 0..minimapSize{X,Y}
+	glMatrixMode(GL_TEXTURE   ); glLoadIdentity();
+	glMatrixMode(GL_PROJECTION); glLoadIdentity(); glOrtho(0.0f, 1.0f, 0.0f, 1.0f, 0.0f, -1.0f); minimap->ApplyConstraintsMatrix();
+	glMatrixMode(GL_MODELVIEW ); glLoadIdentity(); glScalef(1.0f / minimap->GetSizeX(), 1.0f / minimap->GetSizeY(), 1.0f);
 }
 
 
@@ -1156,8 +1090,7 @@ inline void LuaOpenGL::CheckDrawingEnabled(lua_State* L, const char* caller)
 
 int LuaOpenGL::HasExtension(lua_State* L)
 {
-	const char* extName = luaL_checkstring(L, 1);
-	lua_pushboolean(L, glewIsSupported(extName));
+	lua_pushboolean(L, glewIsSupported(luaL_checkstring(L, 1)));
 	return 1;
 }
 
@@ -1166,9 +1099,10 @@ int LuaOpenGL::GetNumber(lua_State* L)
 {
 	const GLenum pname = (GLenum) luaL_checknumber(L, 1);
 	const GLuint count = (GLuint) luaL_optnumber(L, 2, 1);
-	if (count > 64) {
+
+	if (count > 64)
 		return 0;
-	}
+
 	GLfloat values[64];
 	glGetFloatv(pname, values);
 	for (GLuint i = 0; i < count; i++) {

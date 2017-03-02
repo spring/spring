@@ -242,8 +242,7 @@ void CMouseHandler::MouseMove(int x, int y, int dx, int dy)
 	scrollx += lastx - screenCenterX;
 	scrolly += lasty - screenCenterY;
 
-	if (camera != nullptr)
-		dir = hide ? camera->GetDir() : camera->CalcPixelDir(x,y);
+	dir = hide ? camera->GetDir() : camera->CalcPixelDir(x, y);
 
 	if (locked && camHandler != nullptr) {
 		camHandler->GetCurrentController().MouseMove(float3(dx, dy, invertMouse ? -1.0f : 1.0f));
@@ -276,8 +275,7 @@ void CMouseHandler::MousePress(int x, int y, int button)
 	if (button > NUM_BUTTONS)
 		return;
 
-	if (camera != nullptr)
-		dir = hide ? camera->GetDir() : camera->CalcPixelDir(x, y);
+	dir = hide ? camera->GetDir() : camera->CalcPixelDir(x, y);
 
 	if (game != nullptr && !game->IsGameOver())
 		playerHandler->Player(gu->myPlayerNum)->currentStats.mouseClicks++;
@@ -288,7 +286,7 @@ void CMouseHandler::MousePress(int x, int y, int button)
 	bp.time     = gu->gameTime;
 	bp.x        = x;
 	bp.y        = y;
-	bp.camPos   = (camera == nullptr)? ZeroVector : camera->GetPos();
+	bp.camPos   = camera->GetPos();
 	bp.dir      = dir;
 	bp.movement = 0;
 
@@ -388,8 +386,7 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 	if (button > NUM_BUTTONS)
 		return;
 
-	if (camera != nullptr)
-		dir = hide ? camera->GetDir() : camera->CalcPixelDir(x, y);
+	dir = hide ? camera->GetDir() : camera->CalcPixelDir(x, y);
 
 	buttons[button].pressed = false;
 
@@ -398,10 +395,12 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 		return;
 	}
 
-	if (activeReceiver) {
+	if (activeReceiver != nullptr) {
 		activeReceiver->MouseRelease(x, y, button);
-		if(!buttons[SDL_BUTTON_LEFT].pressed && !buttons[SDL_BUTTON_MIDDLE].pressed && !buttons[SDL_BUTTON_RIGHT].pressed)
-			activeReceiver = NULL;
+
+		if (!buttons[SDL_BUTTON_LEFT].pressed && !buttons[SDL_BUTTON_MIDDLE].pressed && !buttons[SDL_BUTTON_RIGHT].pressed)
+			activeReceiver = nullptr;
+
 		return;
 	}
 
@@ -416,16 +415,17 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 		return;
 	}
 
-	if (gu->fpsMode) {
+	if (gu->fpsMode)
 		return;
-	}
+	// outside game, neither guiHandler nor quadField exist and TraceRay would crash
+	if (guihandler == nullptr)
+		return;
 
-	if ((button == SDL_BUTTON_LEFT) && !buttons[button].chorded && camera != nullptr) {
+	if ((button == SDL_BUTTON_LEFT) && !buttons[button].chorded) {
 		ButtonPressEvt& bp = buttons[SDL_BUTTON_LEFT];
 
-		if (!KeyInput::GetKeyModState(KMOD_SHIFT) && !KeyInput::GetKeyModState(KMOD_CTRL)) {
+		if (!KeyInput::GetKeyModState(KMOD_SHIFT) && !KeyInput::GetKeyModState(KMOD_CTRL))
 			selectedUnitsHandler.ClearSelected();
-		}
 
 		if (bp.movement > 4) {
 			// select box
@@ -470,10 +470,11 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 
 void CMouseHandler::MouseWheel(float delta)
 {
-	if (eventHandler.MouseWheel(delta>0.0f, delta)) {
+	if (eventHandler.MouseWheel(delta > 0.0f, delta))
 		return;
-	}
+
 	delta *= scrollWheelSpeed;
+
 	if (camHandler != nullptr)
 		camHandler->GetCurrentController().MouseWheelMove(delta);
 }
@@ -482,13 +483,12 @@ void CMouseHandler::MouseWheel(float delta)
 void CMouseHandler::DrawSelectionBox()
 {
 	dir = hide ? camera->GetDir() : camera->CalcPixelDir(lastx, lasty);
-	if (activeReceiver) {
-		return;
-	}
 
-	if (gu->fpsMode) {
+	if (activeReceiver)
 		return;
-	}
+
+	if (gu->fpsMode)
+		return;
 
 	ButtonPressEvt& bp = buttons[SDL_BUTTON_LEFT];
 
@@ -546,25 +546,25 @@ std::string CMouseHandler::GetCurrentTooltip()
 	if (luaInputReceiver->IsAbove(lastx, lasty)) {
 		s = std::move(luaInputReceiver->GetTooltip(lastx, lasty));
 
-		if (!s.empty()) {
+		if (!s.empty())
 			return s;
-		}
 	}
 
 	for (CInputReceiver* recv: CInputReceiver::GetReceivers()) {
 		if (recv != nullptr && recv->IsAbove(lastx, lasty)) {
 			s = std::move(recv->GetTooltip(lastx, lasty));
 
-			if (!s.empty()) {
+			if (!s.empty())
 				return s;
-			}
 		}
 	}
 
-	if (guihandler == nullptr || camera == nullptr)
+	// outside game, neither guiHandler nor quadField exist and TraceRay would crash
+	if (guihandler == nullptr)
 		return "";
 
 	const std::string& buildTip = guihandler->GetBuildTooltip();
+
 	if (!buildTip.empty())
 		return buildTip;
 
@@ -582,9 +582,9 @@ std::string CMouseHandler::GetCurrentTooltip()
 	}
 
 	const string selTip = selectedUnitsHandler.GetTooltip();
-	if (selTip != "") {
+
+	if (selTip != "")
 		return selTip;
-	}
 
 	if (dist <= range) {
 		const float3 pos = camera->GetPos() + (dir * dist);
@@ -599,9 +599,8 @@ void CMouseHandler::Update()
 {
 	SetCursor(newCursor);
 
-	if (!hide) {
+	if (!hide)
 		return;
-	}
 
 	// Update MiddleClickScrolling
 	scrollx *= 0.5f;

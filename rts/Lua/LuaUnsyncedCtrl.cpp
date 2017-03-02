@@ -1961,10 +1961,6 @@ int LuaUnsyncedCtrl::SetClipboard(lua_State* L)
 
 int LuaUnsyncedCtrl::SetCameraOffset(lua_State* L)
 {
-	if (camera == NULL) {
-		return 0;
-	}
-
 	camera->posOffset.x = luaL_optfloat(L, 1, 0.0f);
 	camera->posOffset.y = luaL_optfloat(L, 2, 0.0f);
 	camera->posOffset.z = luaL_optfloat(L, 3, 0.0f);
