@@ -46,7 +46,7 @@ CR_REG_METADATA(CHoverAirMoveType, (
 	CR_MEMBER(dontLand),
 
 	CR_MEMBER(wantedHeading),
-	CR_MEMBER(forceHeadingTo),
+	CR_MEMBER(forcedHeading),
 
 	CR_MEMBER(waitCounter),
 	CR_MEMBER(lastMoveRate)
@@ -87,7 +87,7 @@ CHoverAirMoveType::CHoverAirMoveType(CUnit* owner) :
 	dontLand(false),
 
 	wantedHeading(owner != nullptr ? GetHeadingFromFacing(owner->buildFacing) : 0),
-	forceHeadingTo(wantedHeading),
+	forcedHeading(wantedHeading),
 
 	waitCounter(0),
 	lastMoveRate(0)
@@ -655,19 +655,14 @@ void CHoverAirMoveType::UpdateHeading()
 	// if (aircraftState == AIRCRAFT_LANDING)
 	//     return;
 
-	SyncedSshort& heading = owner->heading;
-	const short deltaHeading = forceHeading?
-		(forceHeadingTo - heading):
-		(wantedHeading - heading);
+	const short refHeading = mix(wantedHeading, forcedHeading, forceHeading);
+	const short deltaHeading = refHeading - owner->heading;
 
 	if (deltaHeading > 0) {
-		heading += std::min(deltaHeading, short(turnRate));
+		owner->AddHeading(std::min(deltaHeading, short(turnRate)), owner->IsOnGround());
 	} else {
-		heading += std::max(deltaHeading, short(-turnRate));
+		owner->AddHeading(std::max(deltaHeading, short(-turnRate)), owner->IsOnGround());
 	}
-
-	owner->UpdateDirVectors(owner->IsOnGround());
-	owner->UpdateMidAndAimPos();
 }
 
 void CHoverAirMoveType::UpdateBanking(bool noBanking)
@@ -1021,7 +1016,7 @@ bool CHoverAirMoveType::CanLandAt(const float3& pos) const
 void CHoverAirMoveType::ForceHeading(short h)
 {
 	forceHeading = true;
-	forceHeadingTo = h;
+	forcedHeading = h;
 }
 
 void CHoverAirMoveType::Takeoff()

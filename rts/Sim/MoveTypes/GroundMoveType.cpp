@@ -112,6 +112,7 @@ CR_REG_METADATA(CGroundMoveType, (
 	CR_MEMBER(numIdlingUpdates),
 	CR_MEMBER(numIdlingSlowUpdates),
 	CR_MEMBER(wantedHeading),
+	CR_MEMBER(minScriptChangeHeading),
 
 	CR_MEMBER(pathID),
 
@@ -183,8 +184,12 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	numIdlingUpdates(0),
 	numIdlingSlowUpdates(0),
 
-	wantedHeading(0)
+	wantedHeading(0),
+	minScriptChangeHeading(SPRING_CIRCLE_DIVS >> 1)
 {
+	// initialize member hashes and pointers needed by SyncedMoveCtrl
+	InitMemberData();
+
 	// creg
 	if (owner == nullptr)
 		return;
@@ -207,9 +212,8 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 
 CGroundMoveType::~CGroundMoveType()
 {
-	if (pathID != 0) {
+	if (pathID != 0)
 		pathManager->DeletePath(pathID);
-	}
 
 	IPathController::FreeInstance(pathController);
 }
@@ -656,18 +660,23 @@ void CGroundMoveType::ChangeSpeed(float newWantedSpeed, bool wantReverse, bool f
  * FIXME near-duplicate of HoverAirMoveType::UpdateHeading
  */
 void CGroundMoveType::ChangeHeading(short newHeading) {
-	if (owner->IsFlying()) return;
-	if (owner->GetTransporter() != NULL) return;
+	if (owner->IsFlying())
+		return;
+	if (owner->GetTransporter() != nullptr)
+		return;
 
 	#if 0
-	owner->heading += pathController->GetDeltaHeading(pathID, (wantedHeading = newHeading), owner->heading, turnRate);
+	const short rawDeltaHeading = pathController->GetDeltaHeading(pathID, (wantedHeading = newHeading), owner->heading, turnRate);
 	#else
 	// model rotational inertia (more realistic for ships)
-	owner->heading += pathController->GetDeltaHeading(pathID, (wantedHeading = newHeading), owner->heading, turnRate, turnAccel, BrakingDistance(turnSpeed, turnAccel), &turnSpeed);
+	const short rawDeltaHeading = pathController->GetDeltaHeading(pathID, (wantedHeading = newHeading), owner->heading, turnRate, turnAccel, BrakingDistance(turnSpeed, turnAccel), &turnSpeed);
 	#endif
+	const short absDeltaHeading = deltaHeading * Sign(deltaHeading);
 
-	owner->UpdateDirVectors(!owner->upright);
-	owner->UpdateMidAndAimPos();
+	if (absDeltaHeading >= minScriptChangeHeading)
+		owner->script->ChangeHeading(rawDeltaHeading);
+
+	owner->AddHeading(rawDeltaHeading, !owner->upright);
 
 	flatFrontDir = owner->frontdir;
 	flatFrontDir.Normalize2D();
@@ -2437,73 +2446,71 @@ bool CGroundMoveType::WantReverse(const float3& wpDir, const float3& ffDir) cons
 
 
 
-bool CGroundMoveType::SetMemberValue(unsigned int memberHash, void* memberValue) {
+void CGroundMoveType::InitMemberData()
+{
+	#define MEMBER_CHARPTR_HASH(memberName) HsiehHash(memberName, strlen(memberName),     0)
+	#define MEMBER_LITERAL_HASH(memberName) HsiehHash(memberName, sizeof(memberName) - 1, 0)
+	boolMemberData[0].first = MEMBER_LITERAL_HASH(     "atGoal");
+	boolMemberData[1].first = MEMBER_LITERAL_HASH("atEndOfPath");
+
+	shortMemberData[0].first = MEMBER_LITERAL_HASH("minScriptChangeHeading");
+
+	floatMemberData[0].first = MEMBER_LITERAL_HASH(       "turnRate");
+	floatMemberData[1].first = MEMBER_LITERAL_HASH(      "turnAccel");
+	floatMemberData[2].first = MEMBER_LITERAL_HASH(        "accRate");
+	floatMemberData[3].first = MEMBER_LITERAL_HASH(        "decRate");
+	floatMemberData[4].first = MEMBER_LITERAL_HASH(      "myGravity");
+	floatMemberData[5].first = MEMBER_LITERAL_HASH( "maxReverseDist");
+	floatMemberData[6].first = MEMBER_LITERAL_HASH("minReverseAngle");
+	floatMemberData[7].first = MEMBER_LITERAL_HASH("maxReverseSpeed");
+	#undef MEMBER_CHARPTR_HASH
+	#undef MEMBER_LITERAL_HASH
+
+	boolMemberData[0].second = &atGoal;
+	boolMemberData[1].second = &atEndOfPath;
+
+	shortMemberData[0].second = &minScriptChangeHeading;
+
+	floatMemberData[0].second = &turnRate;
+	floatMemberData[1].second = &turnAccel;
+	floatMemberData[2].second = &accRate;
+	floatMemberData[3].second = &decRate;
+	floatMemberData[4].second = &myGravity;
+	floatMemberData[5].second = &maxReverseDist,
+	floatMemberData[6].second = &minReverseAngle;
+	floatMemberData[7].second = &maxReverseSpeed;
+}
+
+bool CGroundMoveType::SetMemberValue(unsigned int memberHash, void* memberValue)
+{
 	// try the generic members first
 	if (AMoveType::SetMemberValue(memberHash, memberValue))
 		return true;
 
-	#define MEMBER_CHARPTR_HASH(memberName) HsiehHash(memberName, strlen(memberName),     0)
-	#define MEMBER_LITERAL_HASH(memberName) HsiehHash(memberName, sizeof(memberName) - 1, 0)
-
 	#define MAXREVERSESPEED_MEMBER_IDX 7
 
-	static const unsigned int boolMemberHashes[] = {
-		MEMBER_LITERAL_HASH(     "atGoal"),
-		MEMBER_LITERAL_HASH("atEndOfPath"),
-	};
-	static const unsigned int floatMemberHashes[] = {
-		MEMBER_LITERAL_HASH(       "turnRate"),
-		MEMBER_LITERAL_HASH(      "turnAccel"),
-		MEMBER_LITERAL_HASH(        "accRate"),
-		MEMBER_LITERAL_HASH(        "decRate"),
-		MEMBER_LITERAL_HASH(      "myGravity"),
-		MEMBER_LITERAL_HASH( "maxReverseDist"),
-		MEMBER_LITERAL_HASH("minReverseAngle"),
-		MEMBER_LITERAL_HASH("maxReverseSpeed"),
-	};
-
-	#undef MEMBER_CHARPTR_HASH
-	#undef MEMBER_LITERAL_HASH
-
-
-	// unordered_map etc. perform dynallocs, so KISS here
-	bool* boolMemberPtrs[] = {
-		&atGoal,
-		&atEndOfPath,
-	};
-	float* floatMemberPtrs[] = {
-		&turnRate,
-		&turnAccel,
-
-		&accRate,
-		&decRate,
-
-		&myGravity,
-
-		&maxReverseDist,
-		&minReverseAngle,
-		&maxReverseSpeed,
-	};
-
 	// special cases
-	if (memberHash == floatMemberHashes[MAXREVERSESPEED_MEMBER_IDX]) {
-		*(floatMemberPtrs[MAXREVERSESPEED_MEMBER_IDX]) = *(reinterpret_cast<float*>(memberValue)) / GAME_SPEED;
+	if (memberHash == floatMemberData[MAXREVERSESPEED_MEMBER_IDX].first) {
+		*(floatMemberData[MAXREVERSESPEED_MEMBER_IDX].second) = *(reinterpret_cast<float*>(memberValue)) / GAME_SPEED;
 		return true;
 	}
 
 	// note: <memberHash> should be calculated via HsiehHash
-	for (unsigned int n = 0; n < sizeof(boolMemberPtrs) / sizeof(boolMemberPtrs[0]); n++) {
-		if (memberHash == boolMemberHashes[n]) {
-			*(boolMemberPtrs[n]) = *(reinterpret_cast<bool*>(memberValue));
-			return true;
-		}
+	// todo: use template lambdas in C++14
+	{
+		const auto pred = [memberHash](const std::pair<unsigned int, bool*>& p) { return (memberHash == p.first); };
+		const auto iter = std::find_if(boolMemberData.begin(), boolMemberData.end(), pred);
+		if (iter != boolMemberData.end()) { *(iter->second) = *(reinterpret_cast<bool*>(memberValue)); return true; }
 	}
-
-	for (unsigned int n = 0; n < sizeof(floatMemberPtrs) / sizeof(floatMemberPtrs[0]); n++) {
-		if (memberHash == floatMemberHashes[n]) {
-			*(floatMemberPtrs[n]) = *(reinterpret_cast<float*>(memberValue));
-			return true;
-		}
+	{
+		const auto pred = [memberHash](const std::pair<unsigned int, short*>& p) { return (memberHash == p.first); };
+		const auto iter = std::find_if(shortMemberData.begin(), shortMemberData.end(), pred);
+		if (iter != shortMemberData.end()) { *(iter->second) = *(reinterpret_cast<short*>(memberValue)); return true; }
+	}
+	{
+		const auto pred = [memberHash](const std::pair<unsigned int, float*>& p) { return (memberHash == p.first); };
+		const auto iter = std::find_if(floatMemberData.begin(), floatMemberData.end(), pred);
+		if (iter != floatMemberData.end()) { *(iter->second) = *(reinterpret_cast<float*>(memberValue)); return true; }
 	}
 
 	return false;

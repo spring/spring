@@ -40,7 +40,7 @@ public:
 	void UpdateHovering();
 
 	short GetWantedHeading() const { return wantedHeading; }
-	short GetForcedHeading() const { return forceHeadingTo; }
+	short GetForcedHeading() const { return forcedHeading; }
 
 	bool GetAllowLanding() const { return !dontLand; }
 
@@ -102,7 +102,7 @@ private:
 
 	/// TODO: Seems odd to use heading in unit, since we have toggled useHeading to false..
 	short wantedHeading;
-	short forceHeadingTo;
+	short forcedHeading;
 
 	/// need to pause between circling steps
 	int waitCounter;

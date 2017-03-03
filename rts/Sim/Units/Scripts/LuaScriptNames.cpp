@@ -18,6 +18,7 @@ const std::vector<std::string>& CLuaUnitScriptNames::GetScriptNames()
 	scriptNames[LUAFN_Destroy]       = "Destroy";
 	scriptNames[LUAFN_StartMoving]   = "StartMoving";
 	scriptNames[LUAFN_StopMoving]    = "StopMoving";
+	scriptNames[LUAFN_ChangeHeading] = "ChangeHeading";
 	scriptNames[LUAFN_Activate]      = "Activate";
 	scriptNames[LUAFN_Killed]        = "Killed";
 	scriptNames[LUAFN_Deactivate]    = "Deactivate";

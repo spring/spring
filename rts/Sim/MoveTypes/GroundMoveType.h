@@ -3,6 +3,8 @@
 #ifndef GROUNDMOVETYPE_H
 #define GROUNDMOVETYPE_H
 
+#include <array>
+
 #include "MoveType.h"
 #include "System/Sync/SyncedFloat3.h"
 
@@ -39,6 +41,7 @@ public:
 	bool CanApplyImpulse(const float3&) override;
 	void LeaveTransport() override;
 
+	void InitMemberData();
 	bool SetMemberValue(unsigned int memberHash, void* memberValue) override;
 
 	bool OnSlope(float minSlideTolerance);
@@ -139,6 +142,11 @@ private:
 	bool WantReverse(const float3& wpDir, const float3& ffDir) const;
 
 private:
+	std::array<std::pair<unsigned int,  bool*>, 2>  boolMemberData;
+	std::array<std::pair<unsigned int, short*>, 1> shortMemberData;
+	std::array<std::pair<unsigned int, float*>, 8> floatMemberData;
+
+private:
 	IPathController* pathController;
 
 	SyncedFloat3 currWayPoint;
@@ -148,11 +156,11 @@ private:
 	float3 flatFrontDir;
 	float3 lastAvoidanceDir;
 	float3 mainHeadingPos;
-	float3 skidRotVector;  /// vector orthogonal to skidDir
+	float3 skidRotVector;               /// vector orthogonal to skidDir
 
-	float turnRate; // maximum angular speed (angular units/frame)
-	float turnSpeed; // current angular speed (angular units/frame)
-	float turnAccel; // angular acceleration (angular units/frame^2)
+	float turnRate;                     /// maximum angular speed (angular units/frame)
+	float turnSpeed;                    /// current angular speed (angular units/frame)
+	float turnAccel;                    /// angular acceleration (angular units/frame^2)
 
 	float accRate;
 	float decRate;
@@ -177,21 +185,20 @@ private:
 	bool reversing;
 	bool idling;
 	bool canReverse;
-	bool useMainHeading;   /// if true, turn toward mainHeadingPos until weapons[0] can TryTarget() it
-	bool useRawMovement;   /// if true, move towards goal without invoking PFS
+	bool useMainHeading;                /// if true, turn toward mainHeadingPos until weapons[0] can TryTarget() it
+	bool useRawMovement;                /// if true, move towards goal without invoking PFS
 
-	float skidRotSpeed;    /// rotational speed when skidding (radians / (GAME_SPEED frames))
-	float skidRotAccel;    /// rotational acceleration when skidding (radians / (GAME_SPEED frames^2))
+	float skidRotSpeed;                 /// rotational speed when skidding (radians / (GAME_SPEED frames))
+	float skidRotAccel;                 /// rotational acceleration when skidding (radians / (GAME_SPEED frames^2))
 
 	unsigned int pathID;
 	unsigned int nextObstacleAvoidanceFrame;
 
-	/// {in, de}creased every Update if idling is true/false and pathId != 0
-	unsigned int numIdlingUpdates;
-	/// {in, de}creased every SlowUpdate if idling is true/false and pathId != 0
-	unsigned int numIdlingSlowUpdates;
+	unsigned int numIdlingUpdates;      /// {in, de}creased every Update if idling is true/false and pathId != 0
+	unsigned int numIdlingSlowUpdates;  /// {in, de}creased every SlowUpdate if idling is true/false and pathId != 0
 
 	short wantedHeading;
+	short minScriptChangeHeading;       /// minimum required turn-angle before script->ChangeHeading is called
 };
 
 #endif // GROUNDMOVETYPE_H

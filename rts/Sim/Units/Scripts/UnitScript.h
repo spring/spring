@@ -185,6 +185,7 @@ public:
 	virtual void Destroy() = 0;
 	virtual void StartMoving(bool reversing) = 0;
 	virtual void StopMoving() = 0;
+	virtual void ChangeHeading(short deltaHeading) = 0;
 	virtual void StartUnload() = 0;
 	virtual void EndTransport() = 0;
 	virtual void StartBuilding() = 0;

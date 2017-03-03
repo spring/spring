@@ -40,6 +40,7 @@ public:
 	void Destroy() override {}
 	void StartMoving(bool reversing) override {}
 	void StopMoving() override {}
+	void ChangeHeading(short deltaHeading) override {}
 	void StartUnload() override {}
 	void EndTransport() override {}
 	void StartBuilding() override {}

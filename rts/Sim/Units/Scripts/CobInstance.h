@@ -122,11 +122,11 @@ public:
 	void WindChanged(float heading, float speed) override;
 	void ExtractionRateChanged(float speed) override;
 	void WorldRockUnit(const float3& rockDir) override {
-		RockUnit(unit->GetObjectSpaceVec(rockDir) * 500.f);
+		RockUnit(unit->GetObjectSpaceVec(rockDir) * 500.0f);
 	}
 	void RockUnit(const float3& rockDir) override;
 	void WorldHitByWeapon(const float3& hitDir, int weaponDefId, float& inoutDamage) override {
-		HitByWeapon(unit->GetObjectSpaceVec(hitDir) * 500.f, weaponDefId, inoutDamage);
+		HitByWeapon(unit->GetObjectSpaceVec(hitDir) * 500.0f, weaponDefId, inoutDamage);
 	}
 	void HitByWeapon(const float3& hitDir, int weaponDefId, float& inoutDamage) override;
 	void SetSFXOccupy(int curTerrainType) override;
@@ -142,6 +142,7 @@ public:
 	void Destroy() override;
 	void StartMoving(bool reversing) override;
 	void StopMoving() override;
+	void ChangeHeading(short deltaHeading) override {}
 	void StartUnload() override;
 	void EndTransport() override;
 	void StartBuilding() override;
