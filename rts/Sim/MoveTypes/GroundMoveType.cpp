@@ -671,7 +671,7 @@ void CGroundMoveType::ChangeHeading(short newHeading) {
 	// model rotational inertia (more realistic for ships)
 	const short rawDeltaHeading = pathController->GetDeltaHeading(pathID, (wantedHeading = newHeading), owner->heading, turnRate, turnAccel, BrakingDistance(turnSpeed, turnAccel), &turnSpeed);
 	#endif
-	const short absDeltaHeading = deltaHeading * Sign(deltaHeading);
+	const short absDeltaHeading = rawDeltaHeading * Sign(rawDeltaHeading);
 
 	if (absDeltaHeading >= minScriptChangeHeading)
 		owner->script->ChangeHeading(rawDeltaHeading);
