@@ -151,7 +151,8 @@ protected:
 	void DrawDefaultCommand(const Command& c) const;
 
 private:
-	spring::unordered_set<CObject*> commandDeathDependences;
+	// FIXME make synced?
+	spring::unsynced_set<CObject*> commandDeathDependences;
 	/**
 	 * continuously set to some non-zero value while target is in radar
 	 * decremented by 1 every SlowUpdate (!), command is canceled when

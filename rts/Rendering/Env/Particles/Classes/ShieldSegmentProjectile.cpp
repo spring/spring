@@ -37,7 +37,7 @@ CR_REG_METADATA(ShieldSegmentProjectile, (
 
 
 static std::vector<float3> spherevertices;
-static spring::unordered_map<const AtlasedTexture*, std::vector<float2> > spheretexcoords;
+static spring::unsynced_map<const AtlasedTexture*, std::vector<float2> > spheretexcoords;
 
 
 

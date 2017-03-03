@@ -68,6 +68,13 @@ namespace creg
 			return std::shared_ptr<IType>(new SetType<spring::unordered_set<T> >(DeduceType<T>::Get()));
 		}
 	};
+	// Unsynced Hash set
+	template<typename T>
+	struct DeduceType<spring::unsynced_set<T> > {
+		static std::shared_ptr<IType> Get() {
+			return std::shared_ptr<IType>(new SetType<spring::unsynced_set<T> >(DeduceType<T>::Get()));
+		}
+	};
 }
 
 #endif // USING_CREG

@@ -60,9 +60,9 @@ private:
 	unsigned int InsertTextureMat(const S3DModel* model);
 
 private:
-	typedef spring::unordered_map<std::string, CachedS3OTex> TextureCache;
-	typedef spring::unordered_map<std::string, CBitmap> BitmapCache;
-	typedef spring::unordered_map<std::uint64_t, unsigned int> TextureTable;
+	typedef spring::unsynced_map<std::string, CachedS3OTex> TextureCache;
+	typedef spring::unsynced_map<std::string, CBitmap> BitmapCache;
+	typedef spring::unsynced_map<std::uint64_t, unsigned int> TextureTable;
 
 	TextureCache textureCache; // stores individual primary- and secondary-textures by name
 	TextureTable textureTable; // stores (primary, secondary) texture-pairs by unique ident

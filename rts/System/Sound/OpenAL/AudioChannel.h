@@ -57,7 +57,7 @@ protected:
 	void SoundSourceFinished(CSoundSource* sndSource);
 
 private:
-	spring::unordered_set<CSoundSource*> curSources;
+	spring::unsynced_set<CSoundSource*> curSources;
 	std::vector<StreamQueueItem> streamQueue;
 
 	CSoundSource* curStreamSrc;

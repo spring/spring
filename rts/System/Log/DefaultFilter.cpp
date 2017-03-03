@@ -271,9 +271,9 @@ void log_frontend_cleanup() {
 
 
 
-spring::unordered_set<const char*> log_filter_section_getRegisteredSet()
+spring::unsynced_set<const char*> log_filter_section_getRegisteredSet()
 {
-	spring::unordered_set<const char*> outSet;
+	spring::unsynced_set<const char*> outSet;
 
 	for (const auto& key: log_filter_getRegisteredSections()) {
 		outSet.insert(key);

@@ -3,13 +3,13 @@
 #include "EFXPresets.h"
 #include "System/Util.h"
 
-spring::unordered_map<std::string, EAXSfxProps> eaxPresets;
+spring::unsynced_map<std::string, EAXSfxProps> eaxPresets;
 
-spring::unordered_map<ALuint, unsigned> alParamType;
-spring::unordered_map<std::string, ALuint> nameToALParam;
-spring::unordered_map<ALuint, std::string> alParamToName;
-spring::unordered_map<std::string, ALuint> nameToALFilterParam;
-spring::unordered_map<ALuint, std::string> alFilterParamToName;
+spring::unsynced_map<ALuint, unsigned> alParamType;
+spring::unsynced_map<std::string, ALuint> nameToALParam;
+spring::unsynced_map<ALuint, std::string> alParamToName;
+spring::unsynced_map<std::string, ALuint> nameToALFilterParam;
+spring::unsynced_map<ALuint, std::string> alFilterParamToName;
 
 static void InitPresets()
 {

@@ -394,7 +394,7 @@ void CAssParser::SetPieceParentName(
 ) {
 	// Get parent name from metadata or model
 	if (pieceTable.KeyExists("parent")) {
-		parentMap[piece] = pieceTable.GetString("parent", "");
+		parentMap[piece->name] = pieceTable.GetString("parent", "");
 		return;
 	}
 
@@ -403,11 +403,11 @@ void CAssParser::SetPieceParentName(
 
 	if (pieceNode->mParent->mParent != nullptr) {
 		// parent is not the root
-		parentMap[piece] = std::string(pieceNode->mParent->mName.data);
+		parentMap[piece->name] = std::string(pieceNode->mParent->mName.data);
 	} else {
 		// parent is the root (which must already exist)
 		assert(model->GetRootPiece() != nullptr);
-		parentMap[piece] = (model->GetRootPiece())->name;
+		parentMap[piece->name] = (model->GetRootPiece())->name;
 	}
 }
 
@@ -545,7 +545,7 @@ SAssPiece* CAssParser::LoadPiece(
 
 	{
 		// operator[] creates an empty string if piece is not in map
-		const auto parentNameIt = parentMap.find(piece);
+		const auto parentNameIt = parentMap.find(piece->name);
 		const std::string& parentName = (parentNameIt != parentMap.end())? (parentNameIt->second).c_str(): "[null]";
 
 		// Verbose logging of piece properties
@@ -580,7 +580,7 @@ void CAssParser::BuildPieceHierarchy(S3DModel* model, ModelPieceMap& pieceMap, c
 			continue;
 		}
 
-		const auto parentNameIt = parentMap.find(piece);
+		const auto parentNameIt = parentMap.find(piece->name);
 
 		if (parentNameIt != parentMap.end()) {
 			const std::string& parentName = parentNameIt->second;

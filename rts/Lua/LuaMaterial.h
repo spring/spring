@@ -167,8 +167,8 @@ private:
 	};
 
 private:
-	spring::unordered_map<IUniform*, std::string> GetUniformsAndStandardName();
-	spring::unordered_map<std::string, IUniform*> GetUniformsAndPossibleNames();
+	spring::unsynced_map<IUniform*, std::string> GetUniformsAndStandardName();
+	spring::unsynced_map<std::string, IUniform*> GetUniformsAndPossibleNames();
 
 public:
 	UniformMat<CMatrix44f> viewMatrix;

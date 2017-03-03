@@ -14,6 +14,7 @@
 	namespace spring {
 		using boost::unordered_set;
 		using boost::unordered_multiset;
+		using unsynced_set = boost::unordered_set;
 	};
 
 	#else
@@ -22,16 +23,20 @@
 	namespace spring {
 		using std::unordered_set;
 		using std::unordered_multiset;
+		using unsynced_set = std::unordered_set;
 	};
 
 	#endif
 #else
 	#include "SpringHashSet.hpp"
+	#include "SpringHash.h"
 
 	// NOTE: no multiset
 	namespace spring {
-		template<typename K, typename H = std::hash<K>, typename C = emilib::HashSetEqualTo<K>>
+		template<typename K, typename H = spring::synced_hash<K>, typename C = emilib::HashSetEqualTo<K>>
 		using unordered_set = emilib::HashSet<K, H, C>;
+		template<typename K, typename H = std::hash<K>, typename C = emilib::HashSetEqualTo<K>>
+		using unsynced_set = emilib::HashSet<K, H, C>;
 	};
 #endif
 

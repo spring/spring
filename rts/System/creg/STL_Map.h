@@ -96,6 +96,12 @@ namespace creg
 			return std::shared_ptr<IType>(new MapType<spring::unordered_map<TKey, TValue> >(DeduceType<TKey>::Get(), DeduceType<TValue>::Get()));
 		}
 	};
+	template<typename TKey, typename TValue>
+	struct DeduceType<spring::unsynced_map<TKey, TValue> > {
+		static std::shared_ptr<IType> Get() {
+			return std::shared_ptr<IType>(new MapType<spring::unsynced_map<TKey, TValue> >(DeduceType<TKey>::Get(), DeduceType<TValue>::Get()));
+		}
+	};
 
 	template<typename T>
 	struct PairType : public IType

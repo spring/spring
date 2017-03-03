@@ -56,8 +56,8 @@ private:
 
 private:
 	// information about the supported features
-	spring::unordered_map<ALuint, bool> effectsSupported;
-	spring::unordered_map<ALuint, bool> filtersSupported;
+	spring::unsynced_map<ALuint, bool> effectsSupported;
+	spring::unsynced_map<ALuint, bool> filtersSupported;
 };
 
 //! init in Sound.cpp

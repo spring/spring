@@ -84,9 +84,9 @@ struct FontFace {
 	std::shared_ptr<SP_Byte> memory;
 };
 
-static spring::unordered_set<CFontTexture*> allFonts;
-static spring::unordered_map<std::string, std::weak_ptr<FontFace>> fontCache;
-static spring::unordered_map<std::string, std::weak_ptr<SP_Byte>> fontMemCache;
+static spring::unsynced_set<CFontTexture*> allFonts;
+static spring::unsynced_map<std::string, std::weak_ptr<FontFace>> fontCache;
+static spring::unsynced_map<std::string, std::weak_ptr<SP_Byte>> fontMemCache;
 static spring::recursive_mutex m;
 
 
@@ -471,7 +471,7 @@ void CFontTexture::LoadBlock(char32_t start, char32_t end)
 	// load glyphs from different fonts (using fontconfig)
 	std::shared_ptr<FontFace> f = shFace;
 
-	spring::unordered_set<std::shared_ptr<FontFace>> alreadyCheckedFonts;
+	spring::unsynced_set<std::shared_ptr<FontFace>> alreadyCheckedFonts;
 
 	// generate list of wanted glyphs
 	std::vector<char32_t> map(end - start, 0);

@@ -32,8 +32,8 @@ int LuaUtils::exportedDataSize = 0;
 /******************************************************************************/
 
 
-static bool CopyPushData(lua_State* dst, lua_State* src, int index, int depth, spring::unordered_map<const void*, int>& alreadyCopied);
-static bool CopyPushTable(lua_State* dst, lua_State* src, int index, int depth, spring::unordered_map<const void*, int>& alreadyCopied);
+static bool CopyPushData(lua_State* dst, lua_State* src, int index, int depth, spring::unsynced_map<const void*, int>& alreadyCopied);
+static bool CopyPushTable(lua_State* dst, lua_State* src, int index, int depth, spring::unsynced_map<const void*, int>& alreadyCopied);
 
 
 static inline int PosAbsLuaIndex(lua_State* src, int index)
@@ -45,7 +45,7 @@ static inline int PosAbsLuaIndex(lua_State* src, int index)
 }
 
 
-static bool CopyPushData(lua_State* dst, lua_State* src, int index, int depth, spring::unordered_map<const void*, int>& alreadyCopied)
+static bool CopyPushData(lua_State* dst, lua_State* src, int index, int depth, spring::unsynced_map<const void*, int>& alreadyCopied)
 {
 	const int type = lua_type(src, index);
 	switch (type) {
@@ -91,7 +91,7 @@ static bool CopyPushData(lua_State* dst, lua_State* src, int index, int depth, s
 }
 
 
-static bool CopyPushTable(lua_State* dst, lua_State* src, int index, int depth, spring::unordered_map<const void*, int>& alreadyCopied)
+static bool CopyPushTable(lua_State* dst, lua_State* src, int index, int depth, spring::unsynced_map<const void*, int>& alreadyCopied)
 {
 	const int table = PosAbsLuaIndex(src, index);
 
@@ -145,7 +145,8 @@ int LuaUtils::CopyData(lua_State* dst, lua_State* src, int count)
 
 	// hold a map of all already copied tables in the lua's registry table
 	// needed for recursive tables, i.e. "local t = {}; t[t] = t"
-	spring::unordered_map<const void*, int> alreadyCopied;
+	// the order of traversal doesn't matter so we can use an unsynced map
+	spring::unsynced_map<const void*, int> alreadyCopied;
 
 	const int startIndex = (srcTop - count + 1);
 	const int endIndex   = srcTop;

@@ -283,7 +283,7 @@ private:
 	/// units that are only rendered as icons this frame
 	std::vector<CUnit*> iconUnits;
 
-	spring::unordered_map<icon::CIconData*, std::vector<const CUnit*> > unitsByIcon;
+	spring::unsynced_map<icon::CIconData*, std::vector<const CUnit*> > unitsByIcon;
 
 	// [0] := fallback shader-less rendering path
 	// [1] := default shader-driven rendering path

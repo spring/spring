@@ -16,6 +16,7 @@
 	namespace spring {
 		using boost::unordered_map;
 		using boost::unordered_multimap;
+		using unsynced_map = boost::unordered_map;
 	};
 
 	#else
@@ -24,16 +25,20 @@
 	namespace spring {
 		using std::unordered_map;
 		using std::unordered_multimap;
+		using unsynced_map = std::unordered_map;
 	};
 
 	#endif
 #else
 	#include "SpringHashMap.hpp"
+	#include "SpringHash.h"
 
 	// NOTE: no multimap, no emplace
 	namespace spring {
-		template<typename K, typename V, typename H = std::hash<K>, typename C = emilib::HashMapEqualTo<K>>
+		template<typename K, typename V, typename H = spring::synced_hash<K>, typename C = emilib::HashMapEqualTo<K>>
 		using unordered_map = emilib::HashMap<K, V, H, C>;
+		template<typename K, typename V, typename H = std::hash<K>, typename C = emilib::HashMapEqualTo<K>>
+		using unsynced_map = emilib::HashMap<K, V, H, C>;
 	};
 #endif
 

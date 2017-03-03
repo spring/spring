@@ -501,7 +501,7 @@ void LuaMaterial::Print(const string& indent) const
 //  LuaMatUniforms
 //
 
-spring::unordered_map<LuaMatUniforms::IUniform*, std::string> LuaMatUniforms::GetUniformsAndStandardName()
+spring::unsynced_map<LuaMatUniforms::IUniform*, std::string> LuaMatUniforms::GetUniformsAndStandardName()
 {
 	return {
 		{&viewMatrix,    "ViewMatrix"},
@@ -523,7 +523,7 @@ spring::unordered_map<LuaMatUniforms::IUniform*, std::string> LuaMatUniforms::Ge
 }
 
 
-spring::unordered_map<std::string, LuaMatUniforms::IUniform*> LuaMatUniforms::GetUniformsAndPossibleNames()
+spring::unsynced_map<std::string, LuaMatUniforms::IUniform*> LuaMatUniforms::GetUniformsAndPossibleNames()
 {
 	return {
 		{"Camera",                  &viewMatrix},

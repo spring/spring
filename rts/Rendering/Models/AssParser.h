@@ -51,7 +51,7 @@ class CAssParser: public IModelParser
 {
 public:
 	typedef spring::unordered_map<std::string, S3DModelPiece*> ModelPieceMap;
-	typedef spring::unordered_map<SAssPiece*, std::string> ParentNameMap;
+	typedef spring::unordered_map<std::string, std::string> ParentNameMap;
 
 	CAssParser();
 	~CAssParser();

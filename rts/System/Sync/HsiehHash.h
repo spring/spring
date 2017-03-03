@@ -3,6 +3,7 @@
 #ifndef HSIEH_HASH_H
 #define HSIEH_HASH_H
 
+#include <cassert>
 #include <cinttypes>
 
 #undef get16bits

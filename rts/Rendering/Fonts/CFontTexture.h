@@ -107,8 +107,8 @@ private:
 	void LoadGlyph(std::shared_ptr<FontFace>& f, char32_t ch, unsigned index);
 
 protected:
-	spring::unordered_map<char32_t, GlyphInfo> glyphs; // UTF16 -> GlyphInfo (boost::unordered_map does not compile)
-	spring::unordered_map<uint32_t, float> kerningDynamic; // contains unicode kerning
+	spring::unsynced_map<char32_t, GlyphInfo> glyphs; // UTF16 -> GlyphInfo (boost::unordered_map does not compile)
+	spring::unsynced_map<uint32_t, float> kerningDynamic; // contains unicode kerning
 
 	float kerningPrecached[128 * 128]; // contains ASCII kerning
 
@@ -138,7 +138,7 @@ private:
 
 
 	std::shared_ptr<FontFace> shFace;
-	spring::unordered_set<std::shared_ptr<FontFace>> usedFallbackFonts;
+	spring::unsynced_set<std::shared_ptr<FontFace>> usedFallbackFonts;
 
 	CRowAtlasAlloc atlasAlloc;
 };

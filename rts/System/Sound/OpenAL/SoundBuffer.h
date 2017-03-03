@@ -71,7 +71,7 @@ private:
 	ALuint channels;
 	ALfloat length;
 
-	typedef spring::unordered_map<std::string, size_t> bufferMapT;
+	typedef spring::unsynced_map<std::string, size_t> bufferMapT;
 	typedef std::vector< std::shared_ptr<SoundBuffer> > bufferVecT;
 
 	static bufferMapT bufferMap; // filename, index into Buffers

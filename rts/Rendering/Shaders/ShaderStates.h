@@ -282,9 +282,9 @@ namespace Shader {
 
 	private:
 		// NOTE: *only* pointers to constant addresses are allowed (literals, globals)
-		spring::unordered_map<const void*, std::pair<unsigned int,  bool> > bitFlags;
-		spring::unordered_map<const void*, std::pair<unsigned int,   int> > intFlags;
-		spring::unordered_map<const void*, std::pair<unsigned int, float> > fltFlags;
+		spring::unsynced_map<const void*, std::pair<unsigned int,  bool> > bitFlags;
+		spring::unsynced_map<const void*, std::pair<unsigned int,   int> > intFlags;
+		spring::unsynced_map<const void*, std::pair<unsigned int, float> > fltFlags;
 
 		unsigned int numValUpdates;
 		unsigned int prvValUpdates;
