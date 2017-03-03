@@ -75,6 +75,10 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_GMT)
 
 CR_BIND_DERIVED(CGroundMoveType, AMoveType, (nullptr))
 CR_REG_METADATA(CGroundMoveType, (
+	CR_IGNORED( boolMemberData),
+	CR_IGNORED(shortMemberData),
+	CR_IGNORED(floatMemberData),
+
 	CR_IGNORED(pathController),
 
 	CR_MEMBER(currWayPoint),
