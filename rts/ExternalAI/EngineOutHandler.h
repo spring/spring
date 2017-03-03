@@ -25,12 +25,12 @@ struct SSkirmishAICallback;
 void handleAIException(const char* description);
 
 class CEngineOutHandler {
-	CR_DECLARE(CEngineOutHandler)
+	CR_DECLARE_STRUCT(CEngineOutHandler)
 
 
 public:
 	static CEngineOutHandler* GetInstance();
-	virtual ~CEngineOutHandler();
+	~CEngineOutHandler();
 
 	static void Create();
 	static void Destroy();

@@ -27,7 +27,7 @@ class float3;
  */
 class CSkirmishAIWrapper {
 private:
-	CR_DECLARE(CSkirmishAIWrapper)
+	CR_DECLARE_STRUCT(CSkirmishAIWrapper)
 
 	void CreateCallback();
 
@@ -36,7 +36,7 @@ public:
 	CSkirmishAIWrapper();
 
 	CSkirmishAIWrapper(const int skirmishAIId);
-	virtual ~CSkirmishAIWrapper();
+	~CSkirmishAIWrapper();
 
 	void Serialize(creg::ISerializer *s);
 	void PostLoad();
