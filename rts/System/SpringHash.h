@@ -17,7 +17,7 @@ namespace spring {
 	template<>                                            \
 	struct synced_hash<T>                                 \
 	{                                                     \
-		std::uint32_t operator()(const T& t) const {            \
+		std::uint32_t operator()(const T& t) const {      \
 			return static_cast<std::uint32_t>(t);         \
 		}                                                 \
 	};
