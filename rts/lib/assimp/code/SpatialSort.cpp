@@ -90,7 +90,7 @@ void SpatialSort::Fill( const aiVector3D* pPositions, unsigned int pNumPositions
 // ------------------------------------------------------------------------------------------------
 void SpatialSort :: Finalize()
 {
-    std::sort( mPositions.begin(), mPositions.end());
+    std::stable_sort( mPositions.begin(), mPositions.end());
 }
 
 // ------------------------------------------------------------------------------------------------

@@ -290,7 +290,7 @@ void BlenderImporter::ParseBlendFile(FileDatabase& out, std::shared_ptr<IOStream
         ThrowException("SDNA not found");
     }
 
-    std::sort(out.entries.begin(),out.entries.end());
+    std::stable_sort(out.entries.begin(),out.entries.end());
 }
 
 // ------------------------------------------------------------------------------------------------

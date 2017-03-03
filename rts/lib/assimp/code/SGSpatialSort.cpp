@@ -75,7 +75,7 @@ void SGSpatialSort::Add(const aiVector3D& vPosition, unsigned int index,
 void SGSpatialSort::Prepare()
 {
     // now sort the array ascending by distance.
-    std::sort( this->mPositions.begin(), this->mPositions.end());
+    std::stable_sort( this->mPositions.begin(), this->mPositions.end());
 }
 // ------------------------------------------------------------------------------------------------
 // Returns an iterator for all positions close to the given position.

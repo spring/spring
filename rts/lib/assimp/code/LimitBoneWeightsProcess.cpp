@@ -126,7 +126,7 @@ void LimitBoneWeightsProcess::ProcessMesh( aiMesh* pMesh)
 
         // more than the defined maximum -> first sort by weight in descending order. That's
         // why we defined the < operator in such a weird way.
-        std::sort( vit->begin(), vit->end());
+        std::stable_sort( vit->begin(), vit->end());
 
         // now kill everything beyond the maximum count
         unsigned int m = vit->size();
