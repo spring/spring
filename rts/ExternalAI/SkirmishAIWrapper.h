@@ -25,7 +25,7 @@ class float3;
  * Basically converts function calls to AIEvents,
  * which are then sent ot the AI.
  */
-class CSkirmishAIWrapper : public CObject {
+class CSkirmishAIWrapper {
 private:
 	CR_DECLARE(CSkirmishAIWrapper)
 
@@ -36,7 +36,7 @@ public:
 	CSkirmishAIWrapper();
 
 	CSkirmishAIWrapper(const int skirmishAIId);
-	~CSkirmishAIWrapper();
+	virtual ~CSkirmishAIWrapper();
 
 	void Serialize(creg::ISerializer *s);
 	void PostLoad();

@@ -25,7 +25,7 @@
 
 #include "System/creg/STL_Map.h"
 
-CR_BIND_DERIVED(CEngineOutHandler, CObject, )
+CR_BIND(CEngineOutHandler, )
 CR_REG_METADATA(CEngineOutHandler, (
 	// FIXME:
 	//   "constexpr std::pair<_T1, _T2>::pair(const std::pair<_T1, _T2>&)

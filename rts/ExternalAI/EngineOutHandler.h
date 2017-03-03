@@ -24,13 +24,13 @@ struct SSkirmishAICallback;
 
 void handleAIException(const char* description);
 
-class CEngineOutHandler : public CObject {
+class CEngineOutHandler {
 	CR_DECLARE(CEngineOutHandler)
 
 
 public:
 	static CEngineOutHandler* GetInstance();
-	~CEngineOutHandler();
+	virtual ~CEngineOutHandler();
 
 	static void Create();
 	static void Destroy();

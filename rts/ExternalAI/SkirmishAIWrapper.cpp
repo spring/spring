@@ -34,7 +34,7 @@
 
 #undef DeleteFile
 
-CR_BIND_DERIVED(CSkirmishAIWrapper, CObject, )
+CR_BIND(CSkirmishAIWrapper, )
 CR_REG_METADATA(CSkirmishAIWrapper, (
 	CR_MEMBER(key),
 
