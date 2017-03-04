@@ -444,6 +444,25 @@ void CGlobalRendering::SwapBuffers(bool allowSwapBuffers)
 	eventHandler.DbgTimingInfo(TIMING_SWAP, pre, spring_now());
 }
 
+void CGlobalRendering::LogDisplayMode()
+{
+	// print final mode (call after SetupViewportGeometry, which updates viewSizeX/Y)
+	SDL_DisplayMode dmode;
+	SDL_GetWindowDisplayMode(window, &dmode);
+
+	constexpr const char* names[] = {
+		"windowed::decorated",
+		"windowed::borderless",
+		"fullscreen::decorated",
+		"fullscreen::borderless",
+	};
+
+	const int fs = fullScreen;
+	const int bl = ((SDL_GetWindowFlags(window) & SDL_WINDOW_BORDERLESS) != 0);
+
+	LOG("[%s] display-mode set to %ix%ix%ibpp@%iHz (%s)", __func__, viewSizeX, viewSizeY, SDL_BITSPERPIXEL(dmode.format), dmode.refresh_rate, names[fs * 2 + bl]);
+}
+
 void CGlobalRendering::SetFullScreen(bool configFullScreen, bool cmdLineWindowed, bool cmdLineFullScreen)
 {
 	fullScreen = configFullScreen;

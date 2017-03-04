@@ -31,6 +31,7 @@ public:
 	void DestroySDLWindow();
 	void PostInit();
 	void SwapBuffers(bool allowSwapBuffers);
+	void LogDisplayMode();
 	void SetFullScreen(bool configFullScreen, bool cmdLineWindowed, bool cmdLineFullScreen);
 	// Notify on Fullscreen/WindowBorderless change
 	void ConfigNotify(const std::string& key, const std::string& value);

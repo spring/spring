@@ -62,15 +62,15 @@ CLoadScreen::CLoadScreen(const std::string& _mapName, const std::string& _modNam
 {
 }
 
-void CLoadScreen::Init()
+bool CLoadScreen::Init()
 {
 	activeController = this;
 
-	//! hide the cursor until we are ingame
+	// hide the cursor until we are ingame
 	SDL_ShowCursor(SDL_DISABLE);
 
-	//! When calling this function, mod archives have to be loaded
-	//! and gu->myPlayerNum has to be set.
+	// When calling this function, mod archives have to be loaded
+	// and gu->myPlayerNum has to be set.
 	skirmishAIHandler.LoadPreGame();
 
 #ifdef HEADLESS
@@ -85,12 +85,10 @@ void CLoadScreen::Init()
 	showMessages = configHandler->GetBool("ShowLoadMessages");
 #endif
 
-	//! Create a thread during the loading that pings the host/server, so it knows that this client is still alive/loading
+	// Create a thread during the loading that pings the host/server, so it knows that this client is still alive/loading
 	clientNet->KeepUpdating(true);
 
-	netHeartbeatThread = new spring::thread();
-	*netHeartbeatThread = Threading::CreateNewThread(std::bind(&CNetProtocol::UpdateLoop, clientNet));
-
+	netHeartbeatThread = new spring::thread(Threading::CreateNewThread(std::bind(&CNetProtocol::UpdateLoop, clientNet)));
 	game = new CGame(mapName, modName, saveFile);
 
 	// new stuff
@@ -100,8 +98,8 @@ void CLoadScreen::Init()
 	if (luaIntro == nullptr) {
 		const CTeam* team = teamHandler->Team(gu->myTeam);
 
-		const std::string mapStartPic(mapInfo->GetStringValue("Startpic"));
-		const std::string mapStartMusic(mapInfo->GetStringValue("Startmusic"));
+		const std::string& mapStartPic = mapInfo->GetStringValue("Startpic");
+		const std::string& mapStartMusic = mapInfo->GetStringValue("Startmusic");
 
 		assert(team != nullptr);
 
@@ -115,24 +113,24 @@ void CLoadScreen::Init()
 			Channels::BGMusic->StreamPlay(mapStartMusic);
 	}
 
-	try {
-		//! Create the Game Loading Thread
-		if (mtLoading) {
+	if (mtLoading) {
+		try {
+			// create the game-loading thread
 			CglFont::threadSafety = true;
 			gameLoadThread = new COffscreenGLThread(std::bind(&CGame::LoadGame, game, mapName));
+			return true;
+		} catch (const opengl_error& gle) {
+			SafeDelete(gameLoadThread);
+			LOG_L(L_WARNING, "[LoadScreen::%s] offscreen GL context creation failed (error: \"%s\")", __func__, gle.what());
+
+			mtLoading = false;
 		}
-
-	} catch (const opengl_error& gle) {
-		LOG_L(L_WARNING, "Offscreen GL Context creation failed, "
-				"falling back to single-threaded loading. The problem was: %s",
-				gle.what());
-		mtLoading = false;
 	}
 
-	if (!mtLoading) {
-		LOG("LoadingScreen: single-threaded");
-		game->LoadGame(mapName);
-	}
+	assert(!mtLoading);
+	LOG("[LoadScreen::%s] single-threaded", __func__);
+	game->LoadGame(mapName);
+	return false;
 }
 
 
@@ -141,11 +139,10 @@ CLoadScreen::~CLoadScreen()
 	if (gameLoadThread != nullptr) {
 		// at this point, the thread running CGame::LoadGame
 		// has finished and deregistered itself from WatchDog
-		if (mtLoading)
-			gameLoadThread->Join();
+		gameLoadThread->Join();
+		SafeDelete(gameLoadThread);
 
 		CglFont::threadSafety = false;
-		SafeDelete(gameLoadThread);
 	}
 
 	if (clientNet != nullptr)
@@ -171,7 +168,7 @@ CLoadScreen::~CLoadScreen()
 	CLuaIntro::FreeHandler();
 
 	if (!gu->globalQuit) {
-		//! sending your playername to the server indicates that you are finished loading
+		// send our playername to the server to indicate we finished loading
 		const CPlayer* p = playerHandler->Player(gu->myPlayerNum);
 		clientNet->Send(CBaseNetProtocol::Get().SendPlayerName(gu->myPlayerNum, p->name));
 #ifdef SYNCCHECK
@@ -203,13 +200,11 @@ void CLoadScreen::CreateInstance(const std::string& mapName, const std::string& 
 	singleton = new CLoadScreen(mapName, modName, saveFile);
 
 	// Init() already requires GetInstance() to work.
-	singleton->Init();
+	if (singleton->Init())
+		return;
 
-	if (!singleton->mtLoading) {
-		CLoadScreen::DeleteInstance();
-	}
+	DeleteInstance();
 }
-
 
 void CLoadScreen::DeleteInstance()
 {
@@ -235,7 +230,6 @@ int CLoadScreen::KeyPressed(int k, bool isRepeat)
 	return 0;
 }
 
-
 int CLoadScreen::KeyReleased(int k)
 {
 	if (luaIntro != nullptr)
@@ -248,9 +242,8 @@ int CLoadScreen::KeyReleased(int k)
 bool CLoadScreen::Update()
 {
 	{
-		//! cause of `curLoadMessage`
+		// keep checking this while we are the active controller
 		std::lock_guard<spring::recursive_mutex> lck(mutex);
-		//! Stuff that needs to be done regularly while loading.
 		good_fpu_control_registers(curLoadMessage.c_str());
 	}
 
@@ -259,10 +252,9 @@ bool CLoadScreen::Update()
 		return true;
 	}
 
-	if (!mtLoading) {
-		// without this call the window manager would think the window is unresponsive and thus asks for hard kill
+	// without this call the window manager would think the window is unresponsive and thus ask for hard kill
+	if (!mtLoading)
 		SDL_PollEvent(nullptr);
-	}
 
 	CNamedTextures::Update();
 	return true;
@@ -271,20 +263,21 @@ bool CLoadScreen::Update()
 
 bool CLoadScreen::Draw()
 {
-	//! Limit the Frames Per Second to not lock a singlethreaded CPU from loading the game
+	// limit FPS via sleep to not lock a singlethreaded CPU from loading the game
 	if (mtLoading) {
-		spring_time now = spring_gettime();
-		unsigned diff_ms = spring_tomsecs(now - last_draw);
-		static const unsigned wantedFPS = 50;
-		static const unsigned min_frame_time = 1000 / wantedFPS;
-		if (diff_ms < min_frame_time) {
-			spring_time nap = spring_msecs(min_frame_time - diff_ms);
-			spring_sleep(nap);
-		}
+		const spring_time now = spring_gettime();
+		const unsigned diffTime = spring_tomsecs(now - last_draw);
+
+		constexpr unsigned wantedFPS = 50;
+		constexpr unsigned minFrameTime = 1000 / wantedFPS;
+
+		if (diffTime < minFrameTime)
+			spring_sleep(spring_msecs(minFrameTime - diffTime));
+
 		last_draw = now;
 	}
 
-	//! cause of `curLoadMessage`
+	// cause of `curLoadMessage`
 	std::lock_guard<spring::recursive_mutex> lck(mutex);
 
 	// let LuaMenu keep the lobby connection alive
@@ -302,18 +295,17 @@ bool CLoadScreen::Draw()
 		float xDiv = 0.0f;
 		float yDiv = 0.0f;
 		const float ratioComp = globalRendering->aspectRatio / aspectRatio;
-		if (math::fabs(ratioComp - 1.0f) < 0.01f) { //! ~= 1
-			//! show Load-Screen full screen
-			//! nothing to do
+		if (math::fabs(ratioComp - 1.0f) < 0.01f) { // ~= 1
+			// show Load-Screen full screen; nothing to do
 		} else if (ratioComp > 1.0f) {
-			//! show Load-Screen on part of the screens X-Axis only
+			// show Load-Screen on part of the screens X-Axis only
 			xDiv = (1.0f - (1.0f / ratioComp)) * 0.5f;
 		} else {
-			//! show Load-Screen on part of the screens Y-Axis only
+			// show Load-Screen on part of the screens Y-Axis only
 			yDiv = (1.0f - ratioComp) * 0.5f;
 		}
 
-		//! Draw loading screen & print load msg.
+		// Draw loading screen & print load msg.
 		if (startupTexture) {
 			glBindTexture(GL_TEXTURE_2D,startupTexture);
 			glBegin(GL_QUADS);
@@ -349,7 +341,7 @@ bool CLoadScreen::Draw()
 	font->End();
 
 	if (!mtLoading)
-		SDL_GL_SwapWindow(globalRendering->window);
+		globalRendering->SwapBuffers(true);
 
 	return true;
 }
@@ -379,9 +371,9 @@ void CLoadScreen::SetLoadMessage(const std::string& text, bool replace_lastline)
 	if (luaIntro != nullptr)
 		luaIntro->LoadProgress(text, replace_lastline);
 
-	//! Check the FPU state (needed for synced computations),
-	//! some external libraries which get linked during loading might reset those.
-	//! Here it is done for the loading thread, for the mainthread it is done in CLoadScreen::Update()
+	// Check the FPU state (needed for synced computations),
+	// some external libraries which get linked during loading might reset those.
+	// Here it is done for the loading thread, for the mainthread it is done in CLoadScreen::Update()
 	good_fpu_control_registers(curLoadMessage.c_str());
 
 	if (!mtLoading) {
@@ -398,7 +390,7 @@ static string SelectPicture(const std::string& dir, const std::string& prefix)
 	std::vector<std::string> prefPics = std::move(CFileHandler::FindFiles(dir, prefix + "*"));
 	std::vector<std::string> sidePics;
 
-	//! add 'allside_' pictures if we don't have a prefix
+	// add 'allside_' pictures if we don't have a prefix
 	if (!prefix.empty()) {
 		sidePics = std::move(CFileHandler::FindFiles(dir, "allside_*"));
 		prefPics.insert(prefPics.end(), sidePics.begin(), sidePics.end());

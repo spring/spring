@@ -442,11 +442,11 @@ void CGame::LoadGame(const std::string& mapName)
 		forcedQuit = true;
 	}
 
-	finishedLoading = true;
-	globalQuit |= forcedQuit;
-
 	Watchdog::DeregisterThread(WDT_LOAD);
 	AddTimedJobs();
+
+	finishedLoading = true;
+	globalQuit |= forcedQuit;
 }
 
 

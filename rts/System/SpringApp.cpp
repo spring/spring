@@ -450,13 +450,9 @@ void SpringApp::InitOpenGL()
 	// Clear Window
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	SDL_GL_SwapWindow(globalRendering->window);
 
-	// Print Final Mode (call after SetupViewportGeometry, which updates viewSizeX/Y)
-	SDL_DisplayMode dmode;
-	SDL_GetWindowDisplayMode(globalRendering->window, &dmode);
-	bool isBorderless = (SDL_GetWindowFlags(globalRendering->window) & SDL_WINDOW_BORDERLESS) != 0;
-	LOG("[%s] video mode set to %ix%i:%ibit @%iHz %s", __func__, globalRendering->viewSizeX, globalRendering->viewSizeY, SDL_BITSPERPIXEL(dmode.format), dmode.refresh_rate, globalRendering->fullScreen ? (isBorderless ? "(borderless)" : "") : "(windowed)");
+	globalRendering->SwapBuffers(true);
+	globalRendering->LogDisplayMode();
 }
 
 
@@ -959,18 +955,16 @@ void SpringApp::ShutDown(bool fromRun)
 	SafeDelete(gameSetup);
 
 	LOG("[SpringApp::%s][4]", __func__);
-	CLoadScreen::DeleteInstance();
-	FreeJoystick();
-
-	LOG("[SpringApp::%s][5]", __func__);
 	SafeDelete(keyCodes);
 	agui::FreeGui();
 	SafeDelete(font);
 	SafeDelete(smallFont);
 
+	LOG("[SpringApp::%s][5]", __func__);
 	CNamedTextures::Kill(true);
 	GlobalConfig::Deallocate();
 
+	FreeJoystick();
 	IMouseInput::FreeInstance(mouseInput);
 
 	LOG("[SpringApp::%s][6]", __func__);

@@ -19,8 +19,8 @@ public:
 	CLoadScreen(const std::string& mapName, const std::string& modName, ILoadSaveHandler* saveFile);
 	virtual ~CLoadScreen();
 
-	/// Splitt off from the ctor, casue this already uses GetInstance().
-	void Init();
+	/// Split off from the ctor, casue this already uses GetInstance().
+	bool Init();
 
 public:
 	static CLoadScreen* GetInstance() {
