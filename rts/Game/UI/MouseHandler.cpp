@@ -776,8 +776,6 @@ void CMouseHandler::DrawScrollCursor()
 			glVertex2f(   0.f,    0.f);
 	glEnd();
 
-	glEnable(GL_POINT_SMOOTH);
-
 	WorkaroundATIPointSizeBug();
 	glPointSize(crossSize * 0.6f);
 	glBegin(GL_POINTS);

@@ -243,7 +243,6 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(Culling);
 	REGISTER_LUA_CFUNC(LogicOp);
 	REGISTER_LUA_CFUNC(Fog);
-	REGISTER_LUA_CFUNC(Smoothing);
 	REGISTER_LUA_CFUNC(AlphaTest);
 	REGISTER_LUA_CFUNC(LineStipple);
 	REGISTER_LUA_CFUNC(Blending);
@@ -2767,45 +2766,6 @@ int LuaOpenGL::BlendFuncSeparate(lua_State* L)
 	return 0;
 }
 
-
-int LuaOpenGL::Smoothing(lua_State* L)
-{
-	CheckDrawingEnabled(L, __FUNCTION__);
-
-	const static struct {
-		const char* name;
-		GLenum hintEnum;
-		GLenum enableEnum;
-	} smoothTypes[3] = {
-		{ "point",   GL_POINT_SMOOTH_HINT,   GL_POINT_SMOOTH   },
-		{ "line",    GL_LINE_SMOOTH_HINT,    GL_LINE_SMOOTH    },
-		{ "polygon", GL_POLYGON_SMOOTH_HINT, GL_POLYGON_SMOOTH }
-	};
-
-	for (int i = 0; i < 3; i++) {
-		const GLenum hintEnum   = smoothTypes[i].hintEnum;
-		const GLenum enableEnum = smoothTypes[i].enableEnum;
-		const int luaIndex = (i + 1);
-		const int type = lua_type(L, luaIndex);
-		if (type == LUA_TBOOLEAN) {
-			if (lua_toboolean(L, luaIndex)) {
-				glEnable(enableEnum);
-			} else {
-				glDisable(enableEnum);
-			}
-		}
-		else if (type == LUA_TNUMBER) {
-			const GLenum hint = (GLenum)lua_tonumber(L, luaIndex);
-			if ((hint == GL_FASTEST) || (hint == GL_NICEST) || (hint == GL_DONT_CARE)) {
-				glHint(hintEnum, hint);
-				glEnable(enableEnum);
-			} else {
-				luaL_error(L, "Bad %s hint in gl.Smoothing()", smoothTypes[i].name);
-			}
-		}
-	}
-	return 0;
-}
 
 
 int LuaOpenGL::AlphaTest(lua_State* L)

@@ -169,7 +169,6 @@ class LuaOpenGL {
 		static int Culling(lua_State* L);
 		static int LogicOp(lua_State* L);
 		static int Fog(lua_State* L);
-		static int Smoothing(lua_State* L);
 		static int AlphaTest(lua_State* L);
 		static int LineStipple(lua_State* L);
 		static int Blending(lua_State* L);
