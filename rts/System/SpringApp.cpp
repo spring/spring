@@ -2,11 +2,10 @@
 
 #include "System/Input/InputHandler.h"
 
-#include <SDL.h>
-
 #include <functional>
 #include <iostream>
 
+#include <SDL.h>
 #include <gflags/gflags.h>
 
 #ifdef WIN32
@@ -750,15 +749,10 @@ void SpringApp::Reload(const std::string script)
 	ThreadPool::SetThreadCount(0);
 	ThreadPool::SetDefaultThreadCount();
 
-	LOG("[SpringApp::%s][2] loadscreen=%p", __func__, loadscreen);
+	LOG("[SpringApp::%s][2]", __func__);
 
 	if (gameServer != nullptr)
 		gameServer->SetReloading(true);
-
-	// if LoadingMT=1, a reload-request might be seen
-	// by Run while the loading thread is still alive
-	while (loadscreen != nullptr)
-		continue;
 
 	// Lua shutdown functions need to access 'game' but SafeDelete sets it to NULL.
 	// ~CGame also calls this, which does not matter because handlers are gone by then

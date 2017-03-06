@@ -777,6 +777,14 @@ void CGame::PostLoad()
 
 void CGame::KillLua(bool dtor)
 {
+	// belongs here; destructs LuaIntro (which might access sound, etc)
+	// if LoadingMT=1, a reload-request might be seen by SpringApp::Run
+	// while the loading thread is still alive so this must go first
+	assert((!dtor) || (loadscreen == nullptr));
+
+	LOG("[Game::%s][0] dtor=%d loadscreen=%p", __func__, dtor, loadscreen);
+	CLoadScreen::DeleteInstance();
+
 	ENTER_SYNCED_CODE();
 	LOG("[Game::%s][1] dtor=%d luaGaia=%p", __func__, dtor, luaGaia);
 	CLuaGaia::FreeHandler();
@@ -793,9 +801,6 @@ void CGame::KillLua(bool dtor)
 
 	LOG("[Game::%s][4] dtor=%d", __func__, dtor);
 	LuaOpenGL::Free();
-
-	// belongs here; destructs LuaIntro (which might access sound, etc)
-	CLoadScreen::DeleteInstance();
 }
 
 void CGame::KillMisc()

@@ -187,8 +187,6 @@ CLoadScreen::~CLoadScreen()
 	}
 
 	UnloadStartPicture();
-
-	singleton = nullptr;
 }
 
 
