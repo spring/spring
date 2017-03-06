@@ -27,8 +27,8 @@
 #include "Game/GameController.h"
 #include "Game/Game.h"
 #include "Game/GlobalUnsynced.h"
-#include "Game/PreGame.h"
 #include "Game/LoadScreen.h"
+#include "Game/PreGame.h"
 #include "Game/UI/KeyBindings.h"
 #include "Game/UI/KeyCodes.h"
 #include "Game/UI/MouseHandler.h"
@@ -750,14 +750,19 @@ void SpringApp::Reload(const std::string script)
 	ThreadPool::SetThreadCount(0);
 	ThreadPool::SetDefaultThreadCount();
 
-	LOG("[SpringApp::%s][2]", __func__);
+	LOG("[SpringApp::%s][2] loadscreen=%p", __func__, loadscreen);
 
 	if (gameServer != nullptr)
 		gameServer->SetReloading(true);
 
+	// if LoadingMT=1, a reload-request might be seen
+	// by Run while the loading thread is still alive
+	while (loadscreen != nullptr)
+		continue;
+
 	// Lua shutdown functions need to access 'game' but SafeDelete sets it to NULL.
 	// ~CGame also calls this, which does not matter because handlers are gone by then
-	game->KillLua();
+	game->KillLua(false);
 
 	LOG("[SpringApp::%s][3]", __func__);
 
@@ -938,7 +943,7 @@ void SpringApp::ShutDown(bool fromRun)
 
 	// see ::Reload
 	if (game != nullptr)
-		game->KillLua();
+		game->KillLua(false);
 
 	// see ::Reload
 	ISound::Shutdown();

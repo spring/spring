@@ -208,7 +208,9 @@ void CLoadScreen::CreateInstance(const std::string& mapName, const std::string& 
 
 void CLoadScreen::DeleteInstance()
 {
-	SafeDelete(singleton);
+	// no SafeDelete; SpringApp::Reload needs non-null pointer until end of dtor
+	delete singleton;
+	singleton = nullptr;
 }
 
 

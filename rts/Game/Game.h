@@ -29,7 +29,7 @@ private:
 public:
 	CGame(const std::string& mapName, const std::string& modName, ILoadSaveHandler* saveFile);
 	virtual ~CGame();
-	void KillLua();
+	void KillLua(bool dtor);
 
 public:
 	enum GameDrawMode {

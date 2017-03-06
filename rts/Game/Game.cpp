@@ -311,7 +311,7 @@ CGame::~CGame()
 	ENTER_SYNCED_CODE();
 	LOG("[Game::%s][1]", __func__);
 
-	KillLua();
+	KillLua(true);
 	KillMisc();
 	KillRendering();
 	KillInterface();
@@ -775,23 +775,23 @@ void CGame::PostLoad()
 }
 
 
-void CGame::KillLua()
+void CGame::KillLua(bool dtor)
 {
 	ENTER_SYNCED_CODE();
-	LOG("[Game::%s][1] luaGaia=%p", __func__, luaGaia);
+	LOG("[Game::%s][1] dtor=%d luaGaia=%p", __func__, dtor, luaGaia);
 	CLuaGaia::FreeHandler();
 
-	LOG("[Game::%s][2] luaRules=%p", __func__, luaRules);
+	LOG("[Game::%s][2] dtor=%d luaRules=%p", __func__, dtor, luaRules);
 	CLuaRules::FreeHandler();
 
 	CLuaHandleSynced::ClearGameParams();
 	LEAVE_SYNCED_CODE();
 
 	// kill LuaUI here, various handler pointers are invalid in ~GuiHandler
-	LOG("[Game::%s][3] luaUI=%p", __func__, luaUI);
+	LOG("[Game::%s][3] dtor=%d luaUI=%p", __func__, dtor, luaUI);
 	CLuaUI::FreeHandler();
 
-	LOG("[Game::%s][4]", __func__);
+	LOG("[Game::%s][4] dtor=%d", __func__, dtor);
 	LuaOpenGL::Free();
 
 	// belongs here; destructs LuaIntro (which might access sound, etc)
