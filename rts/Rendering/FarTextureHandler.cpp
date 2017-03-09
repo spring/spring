@@ -23,6 +23,7 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_FAR_TEXTURE_HANDLER)
 #define LOG_SECTION_CURRENT LOG_SECTION_FAR_TEXTURE_HANDLER
 
 #define NUM_ICON_ORIENTATIONS 8
+#define MAX_CREATE_QUEUE_SIZE 8
 
 
 CFarTextureHandler* farTextureHandler = nullptr;
@@ -32,13 +33,17 @@ CFarTextureHandler::CFarTextureHandler()
 	farTextureID = 0;
 	usedFarTextures = 0;
 
-	// ATI supports 16K textures, but that might be a bit too much
-	// for this purpose so limit the atlas to 4K (still sufficient)
-	iconSize.x = 32 * 4;
-	iconSize.y = 32 * 4;
-	texSize.x = std::min(globalRendering->maxTextureSize, 4096);
-	texSize.y = std::max(iconSize.y, 4 * NUM_ICON_ORIENTATIONS * iconSize.x * iconSize.y / texSize.x); // minimum space for 4 icons
-	texSize.y = next_power_of_2(texSize.y);
+	// assuming a maxTextureSize of 16384, we can fit at most 128
+	// (128-pixel) sprites or 16 far-textures into each row since
+	// each FT is rendered from 8 different orientations
+	// such an atlas would only allow 16*16=256 FT's but consume
+	// 16384*16384*4=1024MB when fully allocated, which is not a
+	// good tradeoff and necessitates limiting iconSize to 64
+	iconSize.x = 32 * 2;
+	iconSize.y = 32 * 2;
+
+	texSize.x = globalRendering->maxTextureSize;
+	texSize.y = iconSize.y;
 
 #ifndef HEADLESS
 	if (!fbo.IsValid()) {
@@ -71,7 +76,7 @@ CFarTextureHandler::CFarTextureHandler()
 CFarTextureHandler::~CFarTextureHandler()
 {
 	glDeleteTextures(1, &farTextureID);
-	drawQueue.clear();
+	renderQueue.clear();
 }
 
 
@@ -112,18 +117,18 @@ bool CFarTextureHandler::HaveFarIcon(const CSolidObject* obj) const
 
 
 /**
- * @brief Really create the far texture for the given model.
+ * @brief Really create the far-texture for the given model.
  */
 void CFarTextureHandler::CreateFarTexture(const CSolidObject* obj)
 {
 	const S3DModel* model = obj->model;
 
-	// make space in the std::vectors
-	if (obj->team >= (int)iconCache.size())
-		iconCache.resize(obj->team + 1);
+	// make space
+	if (obj->team >= iconCache.size())
+		iconCache.resize(std::max(iconCache.size() * 2, size_t(obj->team + 1)), {});
 
-	if (model->id >= (int)iconCache[obj->team].size())
-		iconCache[obj->team].resize(model->id + 1, {0});
+	if (model->id >= iconCache[obj->team].size())
+		iconCache[obj->team].resize(std::max(iconCache[obj->team].size() * 2, size_t(model->id + 1)), {0});
 
 	assert(iconCache[obj->team][model->id].farTexNum == 0);
 
@@ -238,29 +243,34 @@ void CFarTextureHandler::DrawFarTexture(const CSolidObject* obj, CVertexArray* v
 
 void CFarTextureHandler::Queue(const CSolidObject* obj)
 {
-	drawQueue.push_back(obj);
+	renderQueue.push_back(obj);
+
+	if (HaveFarIcon(obj))
+		return;
+
+	if (createQueue.size() == MAX_CREATE_QUEUE_SIZE)
+		return;
+
+	createQueue.push_back(obj);
 }
 
 
 void CFarTextureHandler::Draw()
 {
-	if (drawQueue.empty())
-		return;
-
 	if (!fbo.IsValid()) {
-		drawQueue.clear();
+		renderQueue.clear();
+		createQueue.clear();
 		return;
 	}
 
-	// create new far-icons
-	for (const CSolidObject* obj: drawQueue) {
-		if (!HaveFarIcon(obj)) {
+	{
+		for (const CSolidObject* obj: createQueue) {
 			CreateFarTexture(obj);
 		}
 	}
 
 	// render current queued far icons on the screen
-	{
+	if (!renderQueue.empty()) {
 		const float3 camNorm = ((camera->GetDir() * XZVector) - (UpVector * 0.1f)).ANormalize();
 
 		glEnable(GL_ALPHA_TEST);
@@ -275,9 +285,9 @@ void CFarTextureHandler::Draw()
 
 		CVertexArray* va = GetVertexArray();
 		va->Initialize();
-		va->EnlargeArrays(drawQueue.size() * 4, 0, VA_SIZE_T);
+		va->EnlargeArrays(renderQueue.size() * 4, 0, VA_SIZE_T);
 
-		for (const CSolidObject* obj: drawQueue) {
+		for (const CSolidObject* obj: renderQueue) {
 			DrawFarTexture(obj, va);
 		}
 
@@ -285,37 +295,46 @@ void CFarTextureHandler::Draw()
 		glDisable(GL_ALPHA_TEST);
 	}
 
-	drawQueue.clear();
+	renderQueue.clear();
+	createQueue.clear();
 }
 
 
 
 bool CFarTextureHandler::CheckResizeAtlas()
 {
-	const unsigned int maxSprites = ((texSize.x / iconSize.x) * (texSize.y / iconSize.y) / NUM_ICON_ORIENTATIONS) - 1;
-
-	if (usedFarTextures + 1 <= maxSprites)
-		return true;
-
 	const int oldTexSizeY = texSize.y;
+	const int maxTexSizeY = globalRendering->maxTextureSize;
 
-	if (globalRendering->supportNPOTs) {
-		// make space for minimum 4 additional icons
-		texSize.y += std::max(iconSize.y,  4 * NUM_ICON_ORIENTATIONS * iconSize.x * iconSize.y / texSize.x);
-	} else {
+	while (texSize.y <= maxTexSizeY) {
+		const int maxSpritesX = texSize.x / iconSize.x;
+		const int maxSpritesY = texSize.y / iconSize.y;
+		const int maxSprites  = maxSpritesX * maxSpritesY;
+		const int numSprites  = usedFarTextures * NUM_ICON_ORIENTATIONS;
+
+		if ((numSprites + NUM_ICON_ORIENTATIONS) <= maxSprites)
+			break;
+
 		texSize.y <<= 1;
 	}
 
-	if (texSize.y > globalRendering->maxTextureSize) {
-		LOG_L(L_DEBUG, "Out of farTextures");
-		texSize.y = oldTexSizeY;
+	if (texSize.y == oldTexSizeY)
+		return true;
+
+	if (texSize.y > maxTexSizeY) {
+		LOG_L(L_DEBUG, "[FTH::%s] out of far-texture atlas space", __func__);
 		return false;
 	}
 
-	std::vector<unsigned char> oldPixels(texSize.x * texSize.y * 4);
+
+	std::vector<unsigned char> atlasPixels(texSize.x * texSize.y * 4, 0);
+
 	glBindTexture(GL_TEXTURE_2D, farTextureID);
-	glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, &oldPixels[0]); //TODO use the FBO?
-	memset(&oldPixels[0] + texSize.x*oldTexSizeY*4, 0, texSize.x*(texSize.y - oldTexSizeY)*4);
+	glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, &atlasPixels[0]); //TODO use the FBO?
+	glDeleteTextures(1, &farTextureID);
+
+	// zero out the newly added atlas region
+	memset(&atlasPixels[0] + texSize.x * oldTexSizeY * 4, 0, texSize.x * (texSize.y - oldTexSizeY) * 4);
 
 	GLuint newFarTextureID;
 	glGenTextures(1, &newFarTextureID);
@@ -324,15 +343,11 @@ bool CFarTextureHandler::CheckResizeAtlas()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, texSize.x, texSize.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, &oldPixels[0]);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, texSize.x, texSize.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, &atlasPixels[0]);
 
 	fbo.Bind();
 	fbo.DetachAll();
-
-	glDeleteTextures(1, &farTextureID);
-	farTextureID = newFarTextureID;
-
-	fbo.AttachTexture(farTextureID);
+	fbo.AttachTexture(farTextureID = newFarTextureID);
 	fbo.CheckStatus("FARTEXTURE");
 	fbo.Unbind();
 
