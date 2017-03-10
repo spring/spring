@@ -6,6 +6,7 @@
 #include "System/creg/creg_cond.h"
 #include "System/Object.h"
 #include "System/float3.h"
+#include <algorithm>
 
 class CUnit;
 

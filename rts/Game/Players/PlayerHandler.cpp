@@ -8,6 +8,7 @@
 #include "Sim/Misc/GlobalConstants.h"
 #include "Game/GameSetup.h"
 #include "Game/SelectedUnitsHandler.h"
+#include <algorithm>
 
 CR_BIND(CPlayerHandler,)
 

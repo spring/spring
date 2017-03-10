@@ -6,6 +6,7 @@
 #include "System/Object.h"
 #include "System/float3.h"
 #include "System/float4.h"
+#include <algorithm>
 
 namespace GL {
 	struct Light: public CObject {
