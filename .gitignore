@@ -62,6 +62,7 @@ progress.make
 /rts/build/vstudio10/Release with error catching
 /rts/build/vstudio10/Release+MT with error catching
 /rts/build/vstudio10/Syncdebug
+/_ReSharper.Caches
 
 # Windows libraries used by spring when compiling with MinGW
 # recommended: place the dir somewhere else, and specify with
