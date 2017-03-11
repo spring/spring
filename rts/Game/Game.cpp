@@ -1311,6 +1311,9 @@ bool CGame::Draw() {
 		DrawInputText();
 		DrawInterfaceWidgets();
 		mouse->DrawCursor();
+
+		if (doDrawWorld)
+			eventHandler.DrawScreenFinal();
 	}
 
 	glEnable(GL_DEPTH_TEST);

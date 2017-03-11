@@ -314,6 +314,7 @@ class CEventClient
 		virtual void DrawUnitsPostDeferred() {}
 		virtual void DrawFeaturesPostDeferred() {}
 		virtual void DrawScreenEffects() {}
+		virtual void DrawScreenFinal() {}
 		virtual void DrawScreen() {}
 		virtual void DrawInMiniMap() {}
 		virtual void DrawInMiniMapBackground() {}

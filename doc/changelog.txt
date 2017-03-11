@@ -31,6 +31,8 @@ Lua:
    AllowDraw() if it returns false, the next draw call is skipped (only active when a game isn't running)
  - Add Spring.{Set,Get}VideoCapturingMode() - this doesn't actually record the game in any way,
    it just regulates the framerate and interpolations.
+ - Add DrawScreenFinal(vsx, vsy) unsynced callin. It's used to alter content of the frame after it's been completely rendered (i.e. World, MiniMap, Menu, UI).   
+   Basically the frame you would get if you /screenshot it. Use it similarly to DrawScreenEffects (by ivand)
 
 UI:
  - Add FPSClampPos config for whether the engine should verify the camera doesn't hit ground/go too far

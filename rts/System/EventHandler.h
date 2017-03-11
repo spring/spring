@@ -254,6 +254,7 @@ class CEventHandler
 		void DrawGroundPostDeferred();
 		void DrawUnitsPostDeferred();
 		void DrawFeaturesPostDeferred();
+		void DrawScreenFinal();
 		void DrawScreenEffects();
 		void DrawScreen();
 		void DrawInMiniMap();

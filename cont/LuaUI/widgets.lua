@@ -153,6 +153,7 @@ local flexCallIns = {
   'DrawWorldReflection',
   'DrawWorldRefraction',
   'DrawScreenEffects',
+  'DrawScreenFinal',
   'DrawInMiniMap',
   'RecvSkirmishAIMessage',
 }
@@ -1301,6 +1302,14 @@ end
 function widgetHandler:DrawScreenEffects(vsx, vsy)
   for _,w in ripairs(self.DrawScreenEffectsList) do
     w:DrawScreenEffects(vsx, vsy)
+  end
+  return
+end
+
+
+function widgetHandler:DrawScreenFinal(vsx, vsy)
+  for _,w in ripairs(self.DrawScreenFinalList) do
+    w:DrawScreenFinal(vsx, vsy)
   end
   return
 end

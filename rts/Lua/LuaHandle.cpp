@@ -1795,6 +1795,26 @@ void CLuaHandle::DrawScreenEffects()
 	LuaOpenGL::SetDrawingEnabled(L, false);
 }
 
+void CLuaHandle::DrawScreenFinal()
+{
+	LUA_CALL_IN_CHECK(L);
+	luaL_checkstack(L, 4, __func__);
+	static const LuaHashString cmdStr(__func__);
+	if (!cmdStr.GetGlobalFunc(L)) {
+		return;
+	}
+
+	lua_pushnumber(L, globalRendering->viewSizeX);
+	lua_pushnumber(L, globalRendering->viewSizeY);
+
+	LuaOpenGL::SetDrawingEnabled(L, true);
+
+	// call the routine
+	RunCallIn(L, cmdStr, 2, 0);
+
+	LuaOpenGL::SetDrawingEnabled(L, false);
+}
+
 
 void CLuaHandle::DrawInMiniMap()
 {
