@@ -1313,7 +1313,7 @@ bool CGame::Draw() {
 		mouse->DrawCursor();
 
 		if (doDrawWorld)
-			eventHandler.DrawScreenFinal();
+			eventHandler.DrawScreenPost();
 	}
 
 	glEnable(GL_DEPTH_TEST);

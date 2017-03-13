@@ -133,7 +133,7 @@ CALLIN_LIST = {
 	"DrawUnitsPostDeferred",
 	"DrawFeaturesPostDeferred",
 	"DrawScreenEffects",
-	"DrawScreenFinal",
+	"DrawScreenPost",
 	"DrawScreen",
 	"DrawInMiniMap",
 

@@ -72,7 +72,7 @@ CallInsList = {
   "DrawWorldReflection",
   "DrawWorldRefraction",
   "DrawScreenEffects",
-  "DrawScreenFinal",
+  "DrawScreenPost",
   "DrawScreen",
   "DrawInMiniMap",
 

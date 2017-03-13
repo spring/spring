@@ -87,9 +87,9 @@ class LuaOpenGL {
 		static void ResetDrawScreenEffects();
 		static void DisableDrawScreenEffects();
 
-		static void EnableDrawScreenFinal();
-		static void ResetDrawScreenFinal();
-		static void DisableDrawScreenFinal();
+		static void EnableDrawScreenPost();
+		static void ResetDrawScreenPost();
+		static void DisableDrawScreenPost();
 
 		static void EnableDrawScreen();
 		static void ResetDrawScreen();

@@ -773,10 +773,10 @@ void LuaOpenGL::ResetDrawScreenEffects()
 
 /******************************************************************************/
 //
-//  ScreenFinal -- same as Screen
+//  ScreenPost -- same as Screen
 //
 
-void LuaOpenGL::EnableDrawScreenFinal()
+void LuaOpenGL::EnableDrawScreenPost()
 {
 	EnableCommon(DRAW_SCREEN);
 	resetMatrixFunc = ResetScreenMatrices;
@@ -788,7 +788,7 @@ void LuaOpenGL::EnableDrawScreenFinal()
 }
 
 
-void LuaOpenGL::DisableDrawScreenFinal()
+void LuaOpenGL::DisableDrawScreenPost()
 {
 	RevertScreenLighting();
 	RevertScreenMatrices();
@@ -796,7 +796,7 @@ void LuaOpenGL::DisableDrawScreenFinal()
 }
 
 
-void LuaOpenGL::ResetDrawScreenFinal()
+void LuaOpenGL::ResetDrawScreenPost()
 {
 	if (safeMode) {
 		ResetScreenMatrices();

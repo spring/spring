@@ -1795,7 +1795,7 @@ void CLuaHandle::DrawScreenEffects()
 	LuaOpenGL::SetDrawingEnabled(L, false);
 }
 
-void CLuaHandle::DrawScreenFinal()
+void CLuaHandle::DrawScreenPost()
 {
 	LUA_CALL_IN_CHECK(L);
 	luaL_checkstack(L, 4, __func__);
