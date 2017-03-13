@@ -83,17 +83,22 @@ class LuaOpenGL {
 
 		#undef NOOP_STATE_FUNCS
 
-		static void EnableDrawScreenEffects();
-		static void ResetDrawScreenEffects();
-		static void DisableDrawScreenEffects();
+		static void EnableDrawScreenCommon();
+		static void ResetDrawScreenCommon();
+		static void DisableDrawScreenCommon();
 
-		static void EnableDrawScreenPost();
-		static void ResetDrawScreenPost();
-		static void DisableDrawScreenPost();
+		inline static void EnableDrawScreen() { EnableDrawScreenCommon(); }
+		inline static void ResetDrawScreen() { ResetDrawScreenCommon(); }
+		inline static void DisableDrawScreen() { DisableDrawScreenCommon(); }
 
-		static void EnableDrawScreen();
-		static void ResetDrawScreen();
-		static void DisableDrawScreen();
+		inline static void EnableDrawScreenEffects() { EnableDrawScreenCommon(); }
+		inline static void ResetDrawScreenEffects() { ResetDrawScreenCommon(); }
+		inline static void DisableDrawScreenEffects() { DisableDrawScreenCommon(); }
+
+		inline static void EnableDrawScreenPost() { EnableDrawScreenCommon(); }
+		inline static void ResetDrawScreenPost() { ResetDrawScreenCommon(); }
+		inline static void DisableDrawScreenPost() { DisableDrawScreenCommon(); }
+
 
 		static void EnableDrawInMiniMap();
 		static void ResetDrawInMiniMap();

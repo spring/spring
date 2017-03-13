@@ -1753,12 +1753,8 @@ DRAW_CALLIN(DrawGroundPostDeferred)
 DRAW_CALLIN(DrawUnitsPostDeferred)
 DRAW_CALLIN(DrawFeaturesPostDeferred)
 
-
-void CLuaHandle::DrawScreen()
+inline void CLuaHandle::DrawScreenCommon(const LuaHashString& cmdStr)
 {
-	LUA_CALL_IN_CHECK(L);
-	luaL_checkstack(L, 4, __func__);
-	static const LuaHashString cmdStr(__func__);
 	if (!cmdStr.GetGlobalFunc(L)) {
 		return;
 	}
@@ -1772,6 +1768,15 @@ void CLuaHandle::DrawScreen()
 	RunCallIn(L, cmdStr, 2, 0);
 
 	LuaOpenGL::SetDrawingEnabled(L, false);
+}
+
+void CLuaHandle::DrawScreen()
+{
+	LUA_CALL_IN_CHECK(L);
+	luaL_checkstack(L, 4, __func__);
+	static const LuaHashString cmdStr(__func__);
+
+	DrawScreenCommon(cmdStr);
 }
 
 
@@ -1780,19 +1785,8 @@ void CLuaHandle::DrawScreenEffects()
 	LUA_CALL_IN_CHECK(L);
 	luaL_checkstack(L, 4, __func__);
 	static const LuaHashString cmdStr(__func__);
-	if (!cmdStr.GetGlobalFunc(L)) {
-		return;
-	}
 
-	lua_pushnumber(L, globalRendering->viewSizeX);
-	lua_pushnumber(L, globalRendering->viewSizeY);
-
-	LuaOpenGL::SetDrawingEnabled(L, true);
-
-	// call the routine
-	RunCallIn(L, cmdStr, 2, 0);
-
-	LuaOpenGL::SetDrawingEnabled(L, false);
+	DrawScreenCommon(cmdStr);
 }
 
 void CLuaHandle::DrawScreenPost()
@@ -1800,19 +1794,8 @@ void CLuaHandle::DrawScreenPost()
 	LUA_CALL_IN_CHECK(L);
 	luaL_checkstack(L, 4, __func__);
 	static const LuaHashString cmdStr(__func__);
-	if (!cmdStr.GetGlobalFunc(L)) {
-		return;
-	}
 
-	lua_pushnumber(L, globalRendering->viewSizeX);
-	lua_pushnumber(L, globalRendering->viewSizeY);
-
-	LuaOpenGL::SetDrawingEnabled(L, true);
-
-	// call the routine
-	RunCallIn(L, cmdStr, 2, 0);
-
-	LuaOpenGL::SetDrawingEnabled(L, false);
+	DrawScreenCommon(cmdStr);
 }
 
 
