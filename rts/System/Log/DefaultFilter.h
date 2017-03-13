@@ -61,7 +61,7 @@ int log_filter_global_getMinLevel();
  * CAUTION: you may only use strings defined at compile-time.
  * @see #log_filter_section_getMinLevel
  */
-void log_filter_section_setMinLevel(const char* section, int level);
+void log_filter_section_setMinLevel(int level, const char* section);
 
 /**
  * Returns the minimum level to log for a certain section.

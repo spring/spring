@@ -173,7 +173,7 @@ static void InitializeLogSections()
 		if (logLevel < 0)
 			continue;
 
-		log_filter_section_setMinLevel(*si, logLevel);
+		log_filter_section_setMinLevel(logLevel, *si);
 
 		enabledLogSectionsStr << ((numEnabledSections > 0)? ", ": "");
 		enabledLogSectionsStr << *si << "(" << log_util_levelToString(logLevel) << ")";

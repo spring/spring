@@ -8,41 +8,50 @@
 
 
 
-/// Records a log entry
-static void log_sink_record_logSinkHandler(const char* section, int level,
-		const char* record)
+// forwards a log entry to all ILogSinks (e.g. InfoConsole) added to the handler
+static void log_sink_record_logSinkHandler(int level, const char* section, const char* record)
 {
-	logSinkHandler.RecordLogMessage((section == NULL) ? "" : section, level, record);
+	logSinkHandler.RecordLogMessage(level, (section == nullptr) ? "" : section, record);
 }
 
 
 
 void LogSinkHandler::AddSink(ILogSink* logSink) {
-	assert(logSink != NULL);
+	assert(logSink != nullptr);
 
-	if (sinks.empty()) {
+	if (sinks.empty())
 		log_backend_registerSink(&log_sink_record_logSinkHandler);
-	}
 
 	sinks.insert(logSink);
 }
 
 void LogSinkHandler::RemoveSink(ILogSink* logSink) {
-	assert(logSink != NULL);
+	assert(logSink != nullptr);
 	sinks.erase(logSink);
 
-	if (sinks.empty()) {
-		log_backend_unregisterSink(&log_sink_record_logSinkHandler);
-	}
+	if (!sinks.empty())
+		return;
+
+	log_backend_unregisterSink(&log_sink_record_logSinkHandler);
 }
 
-void LogSinkHandler::RecordLogMessage(const std::string& section, int level,
-			const std::string& text) const
-{
+void LogSinkHandler::RecordLogMessage(
+	int level,
+	const std::string& section,
+	const std::string& message
+) {
 	if (!sinking)
 		return;
 
-	for (auto lsi = sinks.begin(); lsi != sinks.end(); ++lsi) {
-		(*lsi)->RecordLogMessage(section, level, text);
+	if (section == prvSection && message == prvMessage)
+		return;
+
+	prvSection = section;
+	prvMessage = message;
+
+	// forward to clients
+	for (ILogSink* sink: sinks) {
+		sink->RecordLogMessage(level, section, message);
 	}
 }
+

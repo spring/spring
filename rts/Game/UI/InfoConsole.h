@@ -24,8 +24,7 @@ public:
 	void Draw();
 	void PushNewLinesToEventHandler();
 
-	void RecordLogMessage(const std::string& section, int level,
-			const std::string& text);
+	void RecordLogMessage(int level, const std::string& section, const std::string& text) override;
 
 	bool WantsEvent(const std::string& eventName) {
 		return (eventName == "LastMessagePosition");

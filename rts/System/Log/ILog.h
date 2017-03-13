@@ -6,7 +6,7 @@
 /*
  * Logging API
  * -----------
- * Leight-weight & flexible logging API.
+ * Light-weight & flexible logging API.
  *
  * Aims:
  * - Support a fixed set of severities levels:
@@ -50,14 +50,14 @@ extern "C" {
  * during compile-time (_LOG_LEVEL_MIN), and if the section is not already
  * disabled during compile-time.
  */
-extern bool log_frontend_isEnabled(const char* section, int level);
+extern bool log_frontend_isEnabled(int level, const char* section);
 
 /**
  * Allows the global filter to maintain a set of all setions used in the binary.
  * This will be called once per each LOG*() line in the source.
  */
 extern void log_frontend_register_section(const char* section);
-extern void log_frontend_register_runtime_section(const char* section, int level);
+extern void log_frontend_register_runtime_section(int level, const char* section);
 
 
 // format string error checking
@@ -74,8 +74,7 @@ extern void log_frontend_register_runtime_section(const char* section, int level
  * already, so it has to check internally, whether the criteria for logging
  * are really met, so it will have to call log_frontend_isEnabled() internally.
  */
-extern void log_frontend_record(const char* section, int level, const char* fmt,
-		...) FORMAT_STRING(3);
+extern void log_frontend_record(int level, const char* section, const char* fmt, ...) FORMAT_STRING(3);
 
 #undef FORMAT_STRING
 
@@ -106,7 +105,7 @@ extern void log_frontend_cleanup();
 
 
 #define _LOG_IS_ENABLED_RUNTIME(section, level) \
-	log_frontend_isEnabled(section, LOG_LEVE##level)
+	log_frontend_isEnabled(LOG_LEVE##level, section)
 
 #define _LOG_REGISTER_SECTION_RAW(section) \
 	log_frontend_register_section(section);
@@ -179,7 +178,7 @@ extern void log_frontend_cleanup();
  */
 
 /// Redirect to runtime processing
-#define _LOG_RECORD(section, level, fmt, ...)   log_frontend_record(section, LOG_LEVE##level, fmt, ##__VA_ARGS__)
+#define _LOG_RECORD(section, level, fmt, ...)   log_frontend_record(LOG_LEVE##level, section, fmt, ##__VA_ARGS__)
 
 /// per level compile-time filter
 #define _LOG_FILTER(section, level, fmt, ...) if (_LOG_IS_ENABLED_LEVEL_STATIC(level)) _LOG_RECORD(section, level, fmt, ##__VA_ARGS__)
@@ -358,7 +357,7 @@ extern void log_frontend_cleanup();
 #define LOG_I(level, fmt, ...) \
 { \
 	if (level >= _LOG_LEVEL_MIN) { \
-		log_frontend_record(LOG_SECTION_CURRENT, level, fmt, ##__VA_ARGS__); \
+		log_frontend_record(level, LOG_SECTION_CURRENT, fmt, ##__VA_ARGS__); \
 	} \
 }
 
@@ -376,7 +375,7 @@ extern void log_frontend_cleanup();
 #define LOG_SI(section, level, fmt, ...) \
 { \
 	if (level >= _LOG_LEVEL_MIN) { \
-		log_frontend_record(section, level, fmt, ##__VA_ARGS__); \
+		log_frontend_record(level, section, fmt, ##__VA_ARGS__); \
 	} \
 }
 

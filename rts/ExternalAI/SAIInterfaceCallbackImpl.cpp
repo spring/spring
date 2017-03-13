@@ -174,7 +174,7 @@ EXPORT(void) aiInterfaceCallback_Log_log(int interfaceId, const char* const msg)
 EXPORT(void) aiInterfaceCallback_Log_logsl(int interfaceId, const char* section, int loglevel, const char* const msg) {
 	CHECK_INTERFACE_ID(interfaceId);
 
-	log_frontend_record(section, loglevel, "%s", msg);
+	log_frontend_record(loglevel, section, "%s", msg);
 }
 
 

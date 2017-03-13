@@ -18,6 +18,16 @@ int log_util_getNearestLevel(int level);
  */
 const char* log_util_prepareSection(const char* section);
 
+
+struct log_record_t {
+	char* msg;
+	const char* sec;
+	const char* fmt;
+	int len;
+	int lvl;
+};
+
+
 #ifdef __cplusplus
 } // extern "C"
 #endif

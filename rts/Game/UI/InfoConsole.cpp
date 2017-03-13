@@ -165,8 +165,7 @@ int CInfoConsole::GetRawLines(std::deque<RawLine>& lines)
 }
 
 
-void CInfoConsole::RecordLogMessage(const std::string& section, int level,
-			const std::string& text)
+void CInfoConsole::RecordLogMessage(int level, const std::string& section, const std::string& text)
 {
 	std::lock_guard<spring::recursive_mutex> scoped_lock(infoConsoleMutex);
 

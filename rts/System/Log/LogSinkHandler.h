@@ -13,8 +13,7 @@
  */
 class ILogSink {
 public:
-	virtual void RecordLogMessage(const std::string& section, int level,
-			const std::string& text) = 0;
+	virtual void RecordLogMessage(int level, const std::string& section, const std::string& text) = 0;
 protected:
 	~ILogSink() {}
 };
@@ -24,8 +23,7 @@ protected:
  */
 class LogSinkHandler {
 public:
-	LogSinkHandler(): sinking(true) {
-	}
+	LogSinkHandler(): sinking(true) {}
 
 	static LogSinkHandler& GetInstance() {
 		static LogSinkHandler lsh;
@@ -51,11 +49,14 @@ public:
 	 */
 	bool IsSinking() const { return sinking; }
 
-	void RecordLogMessage(const std::string& section, int level,
-			const std::string& text) const;
+	void RecordLogMessage(int level, const std::string& section, const std::string& text);
 
 private:
 	std::set<ILogSink*> sinks;
+
+	std::string prvSection;
+	std::string prvMessage;
+
 	/**
 	 * Whether log records are passed on to registered sinks, or dismissed.
 	 */

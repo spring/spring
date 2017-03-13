@@ -25,8 +25,7 @@ extern "C" {
 ///@{
 
 /// Records a log entry
-static void log_sink_record_outputDebugString(const char* section, int level,
-		const char* record)
+static void log_sink_record_outputDebugString(int level, const char* section, const char* record)
 {
 	char framePrefix[128] = {'\0'};
 	log_framePrefixer_createPrefix(framePrefix, sizeof(framePrefix));

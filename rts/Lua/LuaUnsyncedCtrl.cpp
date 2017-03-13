@@ -2896,7 +2896,7 @@ int LuaUnsyncedCtrl::SetLogSectionFilterLevel(lua_State* L) {
 		}
 	}
 
-	log_frontend_register_runtime_section(luaL_checkstring(L, 1), logLevel);
+	log_frontend_register_runtime_section(logLevel, luaL_checkstring(L, 1));
 	return 0;
 }
 

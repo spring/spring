@@ -31,10 +31,8 @@ namespace {
 			return outStream;
 		}
 
-		bool IsLogging(const char* section, int level) const {
-			return ((level >= minLevel) && (sections.empty()
-					|| (sections.find("," + std::string(section) + ",")
-					!= std::string::npos)));
+		bool IsLogging(int level, const char* section) const {
+			return ((level >= minLevel) && (sections.empty() || (sections.find("," + std::string(section) + ",") != std::string::npos)));
 		}
 		bool FlushOnWrite(int level) const {
 			return (level >= flushLevel);
@@ -83,20 +81,19 @@ namespace {
 	 * and while the container is still valid (not deleted yet).
 	 */
 	struct LogRecord {
-		LogRecord(const std::string& section, int level,
-				const std::string& record)
+		LogRecord(int level, const std::string& section, const std::string& record)
 			: section(section)
 			, level(level)
 			, record(record)
 		{}
 
-		const std::string& GetSection() const { return section; }
 		int GetLevel() const { return level; }
+		const std::string& GetSection() const { return section; }
 		const std::string& GetRecord() const { return record; }
 
 	private:
-		std::string section;
 		int level;
+		std::string section;
 		std::string record;
 	};
 	typedef std::list<LogRecord> logRecords_t;
@@ -111,7 +108,6 @@ namespace {
 	}
 
 	void log_file_writeToFile(FILE* outStream, const char* record, bool flush) {
-
 		char framePrefix[128] = {'\0'};
 		log_framePrefixer_createPrefix(framePrefix, sizeof(framePrefix));
 
@@ -124,13 +120,12 @@ namespace {
 	/**
 	 * Writes to the individual log files, if they do want to log the section.
 	 */
-	void log_file_writeToFiles(const char* section, int level,
-			const char* record)
+	void log_file_writeToFiles(int level, const char* section, const char* record)
 	{
 		const logFiles_t& logFiles = log_file_getLogFiles();
 
 		for (auto lfi = logFiles.begin(); lfi != logFiles.end(); ++lfi) {
-			if (lfi->second.IsLogging(section, level) && (lfi->second.GetOutStream() != NULL)) {
+			if (lfi->second.IsLogging(level, section) && (lfi->second.GetOutStream() != NULL)) {
 				log_file_writeToFile(lfi->second.GetOutStream(), record, lfi->second.FlushOnWrite(level));
 			}
 		}
@@ -157,16 +152,14 @@ namespace {
 		while (!log_file_getRecordBuffer().empty()) {
 			logRecords_t& logRecords = log_file_getRecordBuffer();
 			const logRecords_t::iterator lri = logRecords.begin();
-			log_file_writeToFiles(lri->GetSection().c_str(), lri->GetLevel(),
-					lri->GetRecord().c_str());
+			log_file_writeToFiles(lri->GetLevel(), lri->GetSection().c_str(), lri->GetRecord().c_str());
 			logRecords.erase(lri);
 		}
 	}
 
-	inline void log_file_writeToBuffer(const std::string& section, int level,
-			const std::string& record)
+	inline void log_file_writeToBuffer(int level, const std::string& section, const std::string& record)
 	{
-		log_file_getRecordBuffer().push_back(LogRecord(section, level, record));
+		log_file_getRecordBuffer().push_back(LogRecord(level, section, record));
 	}
 }
 
@@ -218,7 +211,7 @@ void log_file_removeLogFile(const char* filePath) {
 
 void log_file_removeAllLogFiles() {
 	while (!log_file_getLogFiles().empty()) {
-		const logFiles_t::const_iterator lfi = log_file_getLogFiles().begin();
+		const auto lfi = log_file_getLogFiles().begin();
 		log_file_removeLogFile(lfi->first.c_str());
 	}
 }
@@ -230,18 +223,17 @@ void log_file_removeAllLogFiles() {
 ///@{
 
 /// Records a log entry
-static void log_sink_record_file(const char* section, int level,
-		const char* record)
+static void log_sink_record_file(int level, const char* section, const char* record)
 {
 	if (logFilesValidTracker && log_file_isActivelyLogging()) {
 		// write buffer to log file
 		log_file_writeBufferToFiles();
 
 		// write current record to log file
-		log_file_writeToFiles(section, level, record);
+		log_file_writeToFiles(level, section, record);
 	} else {
 		// buffer until a log file is ready for output
-		log_file_writeToBuffer(section, level, record);
+		log_file_writeToBuffer(level, section, record);
 	}
 }
 

@@ -24,10 +24,10 @@ extern "C" {
 #endif
 
 
-bool log_frontend_isEnabled(const char* section, int level);
+bool log_frontend_isEnabled(int level, const char* section);
 
 
-extern void log_backend_record(const char* section, int level, const char* fmt, va_list arguments);
+extern void log_backend_record(int level, const char* section, const char* fmt, va_list arguments);
 extern void log_backend_cleanup();
 
 
@@ -128,7 +128,7 @@ int log_filter_section_getMinLevel(const char* section)
 
 // called by LogOutput for each ENABLED section
 // also by LuaUnsyncedCtrl::SetLogSectionFilterLevel
-void log_filter_section_setMinLevel(const char* section, int level)
+void log_filter_section_setMinLevel(int level, const char* section)
 {
 	log_filter_checkCompileTimeMinLevel(level);
 
@@ -199,16 +199,16 @@ const char* log_filter_section_getRegisteredIndex(int index) {
 	return (*si);
 }
 
-static void log_filter_record(const char* section, int level, const char* fmt, va_list arguments)
+static void log_filter_record(int level, const char* section, const char* fmt, va_list arguments)
 {
 	assert(level > LOG_LEVEL_ALL);
 	assert(level < LOG_LEVEL_NONE);
 
-	if (!log_frontend_isEnabled(section, level))
+	if (!log_frontend_isEnabled(level, section))
 		return;
 
 	// format (and later store) the log record
-	log_backend_record(section, level, fmt, arguments);
+	log_backend_record(level, section, fmt, arguments);
 }
 
 
@@ -218,7 +218,7 @@ static void log_filter_record(const char* section, int level, const char* fmt, v
  */
 ///@{
 
-bool log_frontend_isEnabled(const char* section, int level) {
+bool log_frontend_isEnabled(int level, const char* section) {
 	if (level < log_filter_global_getMinLevel())
 		return false;
 	if (level < log_filter_section_getMinLevel(section))
@@ -239,15 +239,15 @@ void log_frontend_register_section(const char* section) {
 	}
 }
 
-void log_frontend_register_runtime_section(const char* section_cstr_tmp, int level) {
+void log_frontend_register_runtime_section(int level, const char* section_cstr_tmp) {
 	const char* section_cstr = log_filter_section_getSectionCString(section_cstr_tmp);
 
 	log_frontend_register_section(section_cstr);
-	log_filter_section_setMinLevel(section_cstr, level);
+	log_filter_section_setMinLevel(level, section_cstr);
 
 }
 
-void log_frontend_record(const char* section, int level, const char* fmt, ...)
+void log_frontend_record(int level, const char* section, const char* fmt, ...)
 {
 	assert(level > LOG_LEVEL_ALL);
 	assert(level < LOG_LEVEL_NONE);
@@ -255,7 +255,7 @@ void log_frontend_record(const char* section, int level, const char* fmt, ...)
 	// pass the log record on to the filter
 	va_list arguments;
 	va_start(arguments, fmt);
-	log_filter_record(section, level, fmt, arguments);
+	log_filter_record(level, section, fmt, arguments);
 	va_end(arguments);
 }
 
