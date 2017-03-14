@@ -737,13 +737,12 @@ void LuaOpenGL::ResetDrawWorldRefraction()
 	}
 }
 
-
 /******************************************************************************/
 //
-//  ScreenEffects -- same as Screen
+//  Screen, ScreenEffects, ScreenPost
 //
 
-void LuaOpenGL::EnableDrawScreenEffects()
+void LuaOpenGL::EnableDrawScreenCommon()
 {
 	EnableCommon(DRAW_SCREEN);
 	resetMatrixFunc = ResetScreenMatrices;
@@ -755,7 +754,7 @@ void LuaOpenGL::EnableDrawScreenEffects()
 }
 
 
-void LuaOpenGL::DisableDrawScreenEffects()
+void LuaOpenGL::DisableDrawScreenCommon()
 {
 	RevertScreenLighting();
 	RevertScreenMatrices();
@@ -763,48 +762,13 @@ void LuaOpenGL::DisableDrawScreenEffects()
 }
 
 
-void LuaOpenGL::ResetDrawScreenEffects()
+void LuaOpenGL::ResetDrawScreenCommon()
 {
 	if (safeMode) {
 		ResetScreenMatrices();
 		glCallList(resetStateList);
 	}
 }
-
-
-/******************************************************************************/
-//
-//  Screen
-//
-
-void LuaOpenGL::EnableDrawScreen()
-{
-	EnableCommon(DRAW_SCREEN);
-	resetMatrixFunc = ResetScreenMatrices;
-
-	SetupScreenMatrices();
-	SetupScreenLighting();
-	glCallList(resetStateList);
-	//glEnable(GL_NORMALIZE);
-}
-
-
-void LuaOpenGL::DisableDrawScreen()
-{
-	RevertScreenLighting();
-	RevertScreenMatrices();
-	DisableCommon(DRAW_SCREEN);
-}
-
-
-void LuaOpenGL::ResetDrawScreen()
-{
-	if (safeMode) {
-		ResetScreenMatrices();
-		glCallList(resetStateList);
-	}
-}
-
 
 /******************************************************************************/
 //

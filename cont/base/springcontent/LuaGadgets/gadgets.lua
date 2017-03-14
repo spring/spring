@@ -1780,6 +1780,12 @@ function gadgetHandler:DrawScreenEffects(vsx, vsy)
   return
 end
 
+function gadgetHandler:DrawScreenPost(vsx, vsy)
+  for _,g in r_ipairs(self.DrawScreenPostList) do
+    g:DrawScreenPost(vsx, vsy)
+  end
+  return
+end
 
 function gadgetHandler:DrawScreen(vsx, vsy)
   for _,g in r_ipairs(self.DrawScreenList) do
