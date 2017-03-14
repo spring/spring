@@ -377,7 +377,7 @@ EXPORT(int) Init(bool isServer, int id)
 		CLogOutput::LogSystemInfo();
 
 #ifndef DEBUG
-		log_filter_section_setMinLevel(LOG_SECTION_UNITSYNC, LOG_LEVEL_INFO);
+		log_filter_section_setMinLevel(LOG_LEVEL_INFO, LOG_SECTION_UNITSYNC);
 #endif
 
 		if (CheckInit(false)) {
