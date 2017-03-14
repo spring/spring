@@ -82,8 +82,8 @@ namespace {
 	 */
 	struct LogRecord {
 		LogRecord(int level, const std::string& section, const std::string& record)
-			: section(section)
-			, level(level)
+			: level(level)
+			, section(section)
 			, record(record)
 		{}
 
