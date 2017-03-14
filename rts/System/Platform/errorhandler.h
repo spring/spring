@@ -73,11 +73,11 @@ int GetExitCode();
 	catch (const std::bad_alloc& e) {                                                         \
 		ErrorMessageBox(e.what(), "Spring: caught std::bad_alloc", MBF_OK | MBF_CRASH);       \
 	}                                                                                         \
-	catch (const std::runtime_error& e) {                                                     \
-		ErrorMessageBox(e.what(), "Spring: caught std::runtime_error", MBF_OK | MBF_CRASH);   \
-	}                                                                                         \
 	catch (const std::system_error& e) {                                                      \
 		ErrorMessageBox(e.what(), "Spring: caught std::system_error", MBF_OK | MBF_CRASH);    \
+	}                                                                                         \
+	catch (const std::runtime_error& e) {                                                     \
+		ErrorMessageBox(e.what(), "Spring: caught std::runtime_error", MBF_OK | MBF_CRASH);   \
 	}                                                                                         \
 	catch (const std::exception& e) {                                                         \
 		ErrorMessageBox(e.what(), "Spring: caught std::exception", MBF_OK | MBF_CRASH);       \
