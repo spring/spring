@@ -21,6 +21,8 @@ extern "C" {
  */
 
 
+void log_filter_setRepeatLimit(int limit);
+int log_filter_getRepeatLimit();
 
 /**
  * Sets the minimum level to log for all sections, including the default one.
@@ -42,7 +44,6 @@ void log_filter_global_setMinLevel(int level);
  * @see #log_filter_section_getMinLevel
  */
 int log_filter_global_getMinLevel();
-
 
 
 /**

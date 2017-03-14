@@ -18,7 +18,6 @@
 #include <string>
 #include <vector>
 #include <iostream>
-#include <fstream>
 #include <sstream>
 
 #include <cassert>
@@ -28,14 +27,22 @@
 /******************************************************************************/
 /******************************************************************************/
 
-CONFIG(bool, RotateLogFiles).defaultValue(false)
-		.description("rotate logfiles, old logfiles will be moved into the subfolder \"log\".");
+CONFIG(bool, RotateLogFiles)
+	.defaultValue(false)
+	.description("Rotate logfiles, old logfiles will be moved into the subfolder \"log\".");
 
-CONFIG(std::string, LogSections).defaultValue("")
-		.description("Comma seperated list of enabled logsections, see infolog.txt / console output for possible values");
+CONFIG(std::string, LogSections)
+	.defaultValue("")
+	.description("Comma-separated list of enabled logsections, see infolog.txt / console output for possible values.");
 
-CONFIG(int, LogFlushLevel).defaultValue(LOG_LEVEL_ERROR)
-		.description("Flush the logfile when level of message is above LogFlushLevel. i.e. ERROR is flushed as default, WARNING isn't.");
+
+CONFIG(int, LogFlushLevel)
+	.defaultValue(LOG_LEVEL_ERROR)
+	.description("Flush the logfile when a message's level exceeds this value. ERROR is flushed by default, WARNING is not.");
+
+CONFIG(int, LogRepeatLimit)
+	.defaultValue(10)
+	.description("Allow at most this many consecutive identical messages to be logged.");
 
 /******************************************************************************/
 /******************************************************************************/
@@ -254,6 +261,7 @@ void CLogOutput::Initialize()
 	if (configHandler->GetBool("RotateLogFiles"))
 		RotateLogFile();
 
+	log_filter_setRepeatLimit(configHandler->GetInt("LogRepeatLimit")); // all sinks
 	log_file_addLogFile(filePath.c_str(), NULL, LOG_LEVEL_ALL, configHandler->GetInt("LogFlushLevel"));
 	InitializeLogSections();
 

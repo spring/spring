@@ -23,8 +23,10 @@ struct log_record_t {
 	char* msg;
 	const char* sec;
 	const char* fmt;
-	int len;
+
+	int len; // size of msg-buffer, not strlen(msg)
 	int lvl;
+	int cnt; // number of repeats
 };
 
 

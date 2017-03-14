@@ -12,7 +12,6 @@
 #include <set>
 
 #include "DefaultFilter.h"
-
 #include "Level.h"
 #include "Section.h"
 #include "ILog.h"
@@ -43,28 +42,24 @@ struct log_filter_section_compare {
 
 
 namespace {
-	typedef std::set<const char*, log_filter_section_compare> secSet_t;
-	typedef std::map<const char*, int, log_filter_section_compare> secIntMap_t;
+	static int minLogLevel = LOG_LEVEL_ALL;
+	static int repeatLimit = 1;
 
-	int minLogLevel = LOG_LEVEL_ALL;
-
-	secIntMap_t& log_filter_getSectionMinLevels() {
-		static secIntMap_t sectionMinLevels;
+	std::map<const char*, int, log_filter_section_compare>& log_filter_getSectionMinLevels() {
+		static std::map<const char*, int, log_filter_section_compare> sectionMinLevels;
 		return sectionMinLevels;
 	}
 
-	secSet_t& log_filter_getRegisteredSections() {
-		static secSet_t sections;
+	std::set<const char*, log_filter_section_compare>& log_filter_getRegisteredSections() {
+		static std::set<const char*, log_filter_section_compare> sections;
 		return sections;
 	}
 
 	void inline log_filter_printSectionMinLevels(const char* func) {
-		printf("[%s][caller=%s]\n", __FUNCTION__, func);
+		printf("[%s][caller=%s]\n", __func__, func);
 
-		const auto& secLevels = log_filter_getSectionMinLevels();
-
-		for (auto it = secLevels.begin(); it != secLevels.end(); ++it) {
-			printf("\tsectionName=\"%s\" minLevel=%d\n", it->first, it->second);
+		for (const auto& p: log_filter_getSectionMinLevels()) {
+			printf("\tsectionName=\"%s\" minLevel=%d\n", p.first, p.second);
 		}
 	}
 }
@@ -106,16 +101,21 @@ static inline void log_filter_checkCompileTimeMinLevel(int level) {
 }
 
 
+
 int log_filter_global_getMinLevel() { return minLogLevel; }
 void log_filter_global_setMinLevel(int level) { log_filter_checkCompileTimeMinLevel(level); minLogLevel = level; }
+
+int log_filter_getRepeatLimit() { return repeatLimit; }
+void log_filter_setRepeatLimit(int limit) { repeatLimit = limit; }
+
 
 
 int log_filter_section_getMinLevel(const char* section)
 {
 	int level = -1;
 
-	const secIntMap_t& sectionMinLevels = log_filter_getSectionMinLevels();
-	const secIntMap_t::const_iterator sectionMinLevel = sectionMinLevels.find(section);
+	const auto& sectionMinLevels = log_filter_getSectionMinLevels();
+	const auto sectionMinLevel = sectionMinLevels.find(section);
 
 	if (sectionMinLevel == sectionMinLevels.end()) {
 		level = log_filter_section_getDefaultMinLevel(section);
@@ -132,8 +132,8 @@ void log_filter_section_setMinLevel(int level, const char* section)
 {
 	log_filter_checkCompileTimeMinLevel(level);
 
-	secSet_t& registeredSections = log_filter_getRegisteredSections();
-	secIntMap_t& sectionMinLevels = log_filter_getSectionMinLevels();
+	auto& registeredSections = log_filter_getRegisteredSections();
+	auto& sectionMinLevels = log_filter_getSectionMinLevels();
 
 	// NOTE:
 	//   <section> might not be in the registered set if called from Lua
@@ -145,7 +145,7 @@ void log_filter_section_setMinLevel(int level, const char* section)
 	const auto it = registeredSections.find(section);
 
 	if (it == registeredSections.end()) {
-		LOG_L(L_WARNING, "[%s] section \"%s\" is not registered", __FUNCTION__, section);
+		LOG_L(L_WARNING, "[%s] section \"%s\" is not registered", __func__, section);
 		return;
 	}
 
@@ -183,19 +183,16 @@ int log_filter_section_getNumRegisteredSections() {
 }
 
 const char* log_filter_section_getRegisteredIndex(int index) {
-	const secSet_t& registeredSections = log_filter_getRegisteredSections();
+	const auto& registeredSections = log_filter_getRegisteredSections();
 
 	if (index < 0)
 		return NULL;
 	if (index >= static_cast<int>(registeredSections.size()))
 		return NULL;
 
-	secSet_t::const_iterator si = registeredSections.begin();
+	auto si = registeredSections.begin();
 
-	for (int curIndex = 0; curIndex < index; ++curIndex) {
-		++si;
-	}
-
+	std::advance(si, index);
 	return (*si);
 }
 
@@ -229,14 +226,16 @@ bool log_frontend_isEnabled(int level, const char* section) {
 
 // see the LOG_REGISTER_SECTION_RAW macro in ILog.h
 void log_frontend_register_section(const char* section) {
-	if (!LOG_SECTION_IS_DEFAULT(section)) {
-		secSet_t& registeredSections = log_filter_getRegisteredSections();
-		secSet_t::const_iterator si = registeredSections.find(section);
+	if (LOG_SECTION_IS_DEFAULT(section))
+		return;
 
-		if (si == registeredSections.end()) {
-			registeredSections.insert(section);
-		}
-	}
+	auto& registeredSections = log_filter_getRegisteredSections();
+	auto si = registeredSections.find(section);
+
+	if (si != registeredSections.end())
+		return;
+
+	registeredSections.insert(section);
 }
 
 void log_frontend_register_runtime_section(int level, const char* section_cstr_tmp) {
@@ -262,6 +261,7 @@ void log_frontend_record(int level, const char* section, const char* fmt, ...)
 void log_frontend_cleanup() {
 	log_backend_cleanup();
 }
+
 
 ///@}
 
@@ -300,3 +300,4 @@ const char* log_filter_section_getSectionCString(const char* section_cstr_tmp)
 	cache[str].reset(const_cast<const char*>(section_cstr));
 	return section_cstr;
 }
+
