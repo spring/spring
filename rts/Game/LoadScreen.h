@@ -17,16 +17,16 @@ public:
 	void SetLoadMessage(const std::string& text, bool replace_lastline = false);
 
 	CLoadScreen(const std::string& mapName, const std::string& modName, ILoadSaveHandler* saveFile);
-	virtual ~CLoadScreen();
+	~CLoadScreen();
 
-	/// Split off from the ctor, casue this already uses GetInstance().
-	bool Init();
+	bool Init(); /// split from ctor; uses GetInstance()
+	void Kill(); /// split from dtor
 
 public:
-	static CLoadScreen* GetInstance() {
-		assert(singleton);
-		return singleton;
-	}
+	// singleton can potentially be null, but only when
+	// accessed from Game::KillLua where we do not care
+	static CLoadScreen* GetInstance() { return singleton; }
+
 	static void CreateInstance(const std::string& mapName, const std::string& modName, ILoadSaveHandler* saveFile);
 	static void DeleteInstance();
 
@@ -35,10 +35,8 @@ public:
 
 	void ResizeEvent();
 
-	/// Called when a key is released by the user
-	int KeyReleased(int k);
-	/// Called when the key is pressed by the user (can be called several times due to key repeat)
-	int KeyPressed(int k,bool isRepeat);
+	int KeyReleased(int k) override;
+	int KeyPressed(int k, bool isRepeat) override;
 
 
 private:

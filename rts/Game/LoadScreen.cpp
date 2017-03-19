@@ -62,6 +62,57 @@ CLoadScreen::CLoadScreen(const std::string& _mapName, const std::string& _modNam
 {
 }
 
+CLoadScreen::~CLoadScreen()
+{
+	// Kill() must have been called first, such that the loading
+	// thread can not access singleton while its dtor is running
+	assert(gameLoadThread == nullptr);
+
+	if (clientNet != nullptr)
+		clientNet->KeepUpdating(false);
+	if (netHeartbeatThread != nullptr)
+		netHeartbeatThread->join();
+
+	SafeDelete(netHeartbeatThread);
+
+	if (!gu->globalQuit) {
+		activeController = game;
+
+		if (luaMenu != nullptr)
+			luaMenu->ActivateGame();
+	}
+
+	if (activeController == this)
+		activeController = nullptr;
+
+	if (luaIntro != nullptr)
+		luaIntro->Shutdown();
+
+	CLuaIntro::FreeHandler();
+
+	if (!gu->globalQuit) {
+		// send our playername to the server to indicate we finished loading
+		const CPlayer* p = playerHandler->Player(gu->myPlayerNum);
+		clientNet->Send(CBaseNetProtocol::Get().SendPlayerName(gu->myPlayerNum, p->name));
+#ifdef SYNCCHECK
+		clientNet->Send(CBaseNetProtocol::Get().SendPathCheckSum(gu->myPlayerNum, pathManager->GetPathCheckSum()));
+#endif
+		mouse->ShowMouse();
+
+#if !defined(HEADLESS) && !defined(NO_SOUND)
+		// sound is initialized at this point,
+		// but EFX support is *not* guaranteed
+		if (efx != nullptr) {
+			efx->sfxProperties = *(mapInfo->efxprops);
+			efx->CommitEffects();
+		}
+#endif
+	}
+
+	UnloadStartPicture();
+}
+
+
 bool CLoadScreen::Init()
 {
 	activeController = this;
@@ -133,60 +184,17 @@ bool CLoadScreen::Init()
 	return false;
 }
 
-
-CLoadScreen::~CLoadScreen()
+void CLoadScreen::Kill()
 {
-	if (gameLoadThread != nullptr) {
-		// at this point, the thread running CGame::LoadGame
-		// has finished and deregistered itself from WatchDog
-		gameLoadThread->Join();
-		SafeDelete(gameLoadThread);
+	if (gameLoadThread == nullptr)
+		return;
 
-		CglFont::threadSafety = false;
-	}
+	// at this point, the thread running CGame::LoadGame
+	// has finished and deregistered itself from WatchDog
+	gameLoadThread->Join();
+	SafeDelete(gameLoadThread);
 
-	if (clientNet != nullptr)
-		clientNet->KeepUpdating(false);
-	if (netHeartbeatThread != nullptr)
-		netHeartbeatThread->join();
-
-	SafeDelete(netHeartbeatThread);
-
-	if (!gu->globalQuit) {
-		activeController = game;
-
-		if (luaMenu != nullptr)
-			luaMenu->ActivateGame();
-	}
-
-	if (activeController == this)
-		activeController = nullptr;
-
-	if (luaIntro != nullptr)
-		luaIntro->Shutdown();
-
-	CLuaIntro::FreeHandler();
-
-	if (!gu->globalQuit) {
-		// send our playername to the server to indicate we finished loading
-		const CPlayer* p = playerHandler->Player(gu->myPlayerNum);
-		clientNet->Send(CBaseNetProtocol::Get().SendPlayerName(gu->myPlayerNum, p->name));
-#ifdef SYNCCHECK
-		clientNet->Send(CBaseNetProtocol::Get().SendPathCheckSum(gu->myPlayerNum, pathManager->GetPathCheckSum()));
-#endif
-		mouse->ShowMouse();
-
-#if !defined(HEADLESS) && !defined(NO_SOUND)
-		// sound is initialized at this point,
-		// but EFX support is *not* guaranteed
-		if (efx != nullptr) {
-			efx->sfxProperties = *(mapInfo->efxprops);
-			efx->CommitEffects();
-		}
-#endif
-	}
-
-	UnloadStartPicture();
+	CglFont::threadSafety = false;
 }
 
 
@@ -206,9 +214,8 @@ void CLoadScreen::CreateInstance(const std::string& mapName, const std::string& 
 
 void CLoadScreen::DeleteInstance()
 {
-	// no SafeDelete; SpringApp::Reload needs non-null pointer until end of dtor
-	delete singleton;
-	singleton = nullptr;
+	singleton->Kill();
+	SafeDelete(singleton);
 }
 
 
@@ -430,7 +437,7 @@ void CLoadScreen::LoadStartPicture(const std::string& name)
 	CBitmap bm;
 
 	if (!bm.Load(name)) {
-		LOG_L(L_WARNING, "[%s] could not load \"%s\" (wrong format?)", __FUNCTION__, name.c_str());
+		LOG_L(L_WARNING, "[%s] could not load \"%s\" (wrong format?)", __func__, name.c_str());
 		return;
 	}
 
