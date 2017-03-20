@@ -214,6 +214,9 @@ void CLoadScreen::CreateInstance(const std::string& mapName, const std::string& 
 
 void CLoadScreen::DeleteInstance()
 {
+	if (singleton == nullptr)
+		return;
+
 	singleton->Kill();
 	SafeDelete(singleton);
 }
