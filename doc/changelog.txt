@@ -37,9 +37,22 @@ Lua:
     System.gpu: string, full GPU device name
     System.gpuVendor: string, one of "Nvidia", "Intel", "ATI", "Mesa", "Unknown"
     System.gpuMemorySize: number, size of total GPU memory in MBs; only available for "Nvidia", (rest are 0)
+    System.glVersionShort: string, major.minor.buildNumber
+	System.glslVersionShort: string, major.minor
+	System.glVersion: string, full version
+	System.glVendor: string
+	System.glRenderer: string
+	System.glslVersion: string, full version
+	System.glewVersion: string
+	System.sdlVersionCompiledMajor: number
+	System.sdlVersionCompiledMinor: number
+	System.sdlVersionCompiledPatch: number
+	System.sdlVersionLinkedMajor: number
+	System.sdlVersionLinkedMinor: number
+	System.sdlVersionLinkedPatch: number
     System.os: string, full name of the OS
     System.osFamily: string, one of "Windows", "Linux", "MacOSX", "FreeBSD", "Unknown"
-    System.osWordSize: int, usually 32 or 64 for 32bit and 64bit OS
+    System.osWordSize: number, usually 32 or 64 for 32bit and 64bit OS
 
 UI:
  - Add FPSClampPos config for whether the engine should verify the camera doesn't hit ground/go too far

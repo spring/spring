@@ -96,13 +96,15 @@ CR_REG_METADATA(CGlobalRendering, (
 	CR_IGNORED(gpu),
 	CR_IGNORED(gpuVendor),
 	CR_IGNORED(gpuMemorySize),
-	CR_IGNORED(glslShaderLevel),
-	CR_IGNORED(glVersionFull),
+	CR_IGNORED(glVersionShort),
+	CR_IGNORED(glslVersionShort),
 	CR_IGNORED(glVersion),
 	CR_IGNORED(glVendor),
 	CR_IGNORED(glRenderer),
 	CR_IGNORED(glslVersion),
 	CR_IGNORED(glewVersion),
+	CR_IGNORED(sdlVersionCompiled),
+	CR_IGNORED(sdlVersionLinked),
 	CR_IGNORED(atiHacks),
 	CR_IGNORED(supportNPOTs),
 	CR_IGNORED(support24bitDepthBuffers),
@@ -210,6 +212,8 @@ CGlobalRendering::~CGlobalRendering()
 {
 	configHandler->RemoveObserver(this);
 	UnloadExtensions();
+	delete sdlVersionCompiled;
+	delete sdlVersionLinked;
 }
 
 
@@ -322,11 +326,10 @@ void CGlobalRendering::PostInit() {
 	#endif
 	glewInit();
 
-	SDL_version sdlVersionCompiled;
-	SDL_version sdlVersionLinked;
-
-	SDL_VERSION(&sdlVersionCompiled);
-	SDL_GetVersion(&sdlVersionLinked);
+	sdlVersionCompiled = new SDL_version();
+	sdlVersionLinked = new SDL_version();
+	SDL_VERSION(sdlVersionCompiled);
+	SDL_GetVersion(sdlVersionLinked);
 	const char* glVersion_ = (const char*) glGetString(GL_VERSION);
 	const char* glVendor_ = (const char*) glGetString(GL_VENDOR);
 	const char* glRenderer_ = (const char*) glGetString(GL_RENDERER);
@@ -349,7 +352,7 @@ void CGlobalRendering::PostInit() {
 
 	// log some useful version info
 	LOG("[GL::%s]", __func__);
-	LOG("\tSDL version:  linked %d.%d.%d; compiled %d.%d.%d", sdlVersionLinked.major, sdlVersionLinked.minor, sdlVersionLinked.patch, sdlVersionCompiled.major, sdlVersionCompiled.minor, sdlVersionCompiled.patch);
+	LOG("\tSDL version:  linked %d.%d.%d; compiled %d.%d.%d", sdlVersionLinked->major, sdlVersionLinked->minor, sdlVersionLinked->patch, sdlVersionCompiled->major, sdlVersionCompiled->minor, sdlVersionCompiled->patch);
 	LOG("\tGL version:   %s", glVersion_);
 	LOG("\tGL vendor:    %s", glVendor_);
 	LOG("\tGL renderer:  %s", glRenderer_);
@@ -393,12 +396,12 @@ void CGlobalRendering::PostInit() {
 	haveGLSL &= GLEW_ARB_vertex_shader && GLEW_ARB_fragment_shader;
 	haveGLSL &= !!GLEW_VERSION_2_0; // we want OpenGL 2.0 core functions
 
-	glVersionFull = (glVersion_ != nullptr)?std::string(glVersion_): "";
-	glVersion = "";
-	if (glVersionFull != "") {
-		const size_t q = glVersionFull.find(" ");
+	glVersion = (glVersion_ != nullptr)?std::string(glVersion_): "";
+	glVersionShort = "";
+	if (glVersion != "") {
+		const size_t q = glVersion.find(" ");
 		if (q != std::string::npos) {
-			glVersion = glVersionFull.substr(0, q);
+			glVersionShort = glVersion.substr(0, q);
 		}
 	}
 	glVendor = (glVendor_ != nullptr)?std::string(glVendor_): "" ;
@@ -443,10 +446,10 @@ void CGlobalRendering::PostInit() {
 		}
 
 		if (haveGLSL) {
-			glslShaderLevel = glslVersion_;
-			const size_t q = glslShaderLevel.find(" ");
+			glslVersionShort = glslVersion;
+			const size_t q = glslVersion.find(" ");
 			if (q != std::string::npos) {
-				glslShaderLevel = glslShaderLevel.substr(0, q);
+				glslVersionShort = glslVersion.substr(0, q);
 			}
 		}
 

@@ -7,6 +7,7 @@
 #include "System/Misc/SpringTime.h"
 #include "System/type2.h"
 
+struct SDL_version;
 struct SDL_Window;
 typedef void* SDL_GLContext;
 
@@ -208,14 +209,17 @@ public:
 	std::string gpu;
 	std::string gpuVendor;
 	int gpuMemorySize;
-	std::string glslShaderLevel;
-	std::string glVersion;
+	std::string glVersionShort;
+	std::string glslVersionShort;
 
-	std::string glVersionFull;
+	std::string glVersion;
 	std::string glVendor;
 	std::string glRenderer;
 	std::string glslVersion;
 	std::string glewVersion;
+
+	SDL_version* sdlVersionCompiled;
+	SDL_version* sdlVersionLinked;
 
 	/**
 	 * @brief collection of some ATI bugfixes
