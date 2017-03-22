@@ -408,7 +408,6 @@ void CGlobalRendering::PostInit() {
 		haveNvidia = (vendor.find("nvidia ") != std::string::npos);
 
 		gpu = glRenderer; //redundant
-		gpuMemorySize = 0;
 		if (haveATI) {
 			gpuVendor = "ATI";
 		} else if (haveIntel) {
