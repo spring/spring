@@ -14,6 +14,7 @@
 #include "LuaConstCOB.h"
 #include "LuaConstEngine.h"
 #include "LuaConstGame.h"
+#include "LuaConstSystem.h"
 #include "LuaInterCall.h"
 #include "LuaSyncedCtrl.h"
 #include "LuaSyncedRead.h"
@@ -132,6 +133,7 @@ bool CUnsyncedLuaHandle::Init(const string& code, const string& file)
 		if (!AddEntriesToTable(L, "gl",                 LuaOpenGL::PushEntries        )) KILL
 		if (!AddEntriesToTable(L, "GL",                LuaConstGL::PushEntries        )) KILL
 		if (!AddEntriesToTable(L, "Engine",        LuaConstEngine::PushEntries        )) KILL
+		if (!AddEntriesToTable(L, "System",        LuaConstSystem::PushEntries        )) KILL
 		if (!AddEntriesToTable(L, "Game",            LuaConstGame::PushEntries        )) KILL
 		if (!AddEntriesToTable(L, "CMD",              LuaConstCMD::PushEntries        )) KILL
 		if (!AddEntriesToTable(L, "CMDTYPE",      LuaConstCMDTYPE::PushEntries        )) KILL
