@@ -326,6 +326,24 @@ void CGlobalRendering::PostInit() {
 		haveIntel  = (vendor.find("intel") != std::string::npos);
 		haveNvidia = (vendor.find("nvidia ") != std::string::npos);
 
+		gpu = (glRenderer != nullptr)? std::string(glRenderer): "";
+		gpuMemorySize = 0;
+		if (haveATI) {
+			gpuVendor = "ATI";
+		} else if (globalRendering->haveIntel) {
+			gpuVendor = "Intel";
+		} else if (globalRendering->haveNvidia) {
+			gpuVendor = "Nvidia";
+
+			//#define GL_GPU_MEM_INFO_TOTAL_AVAILABLE_MEM_NVX 0x9048
+			glGetIntegerv(0x9048, &gpuMemorySize);
+		} else if (globalRendering->haveMesa) {
+			gpuVendor = "Mesa";
+		} else {
+			gpuVendor = "Unknown";
+		}
+		gpuMemorySize = gpuMemorySize / 1024;
+
 		forceSwapBuffers = configHandler->GetInt("ForceSwapBuffers");
 		forceShaders = configHandler->GetInt("ForceShaders");
 
@@ -621,4 +639,3 @@ bool CGlobalRendering::EnableFSAA() const
 	glGetIntegerv(GL_SAMPLES_ARB, &samples);
 	return (buffers != 0 && samples != 0);
 }
-

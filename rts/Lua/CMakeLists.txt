@@ -9,6 +9,7 @@ SET(sources_engine_Lua
 		"${CMAKE_CURRENT_SOURCE_DIR}/LuaConstCOB.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/LuaConstGL.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/LuaConstEngine.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/LuaConstSystem.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/LuaConstGame.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/LuaVFSDownload.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/LuaFBOs.cpp"
@@ -51,4 +52,3 @@ SET(sources_engine_Lua
 		"${CMAKE_CURRENT_SOURCE_DIR}/LuaZip.cpp"
 		PARENT_SCOPE
 	)
-

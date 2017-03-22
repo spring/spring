@@ -205,6 +205,10 @@ public:
 	bool haveIntel;
 	bool haveNvidia;
 
+	std::string gpu;
+	std::string gpuVendor;
+	int gpuMemorySize; // only available for Nvidia atm
+
 	/**
 	 * @brief collection of some ATI bugfixes
 	 *

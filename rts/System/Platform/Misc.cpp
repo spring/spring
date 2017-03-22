@@ -373,6 +373,23 @@ std::string GetOS()
 #endif
 }
 
+std::string GetOSFamily()
+{
+#if defined(WIN32)
+	return "Windows";
+#else
+#if defined(__linux__)
+		return "Linux";
+#elif defined(__FreeBSD__)
+		return "FreeBSD";
+#elif defined(__APPLE__)
+		return "MacOSX";
+#else
+		return "Unknown";
+#endif
+#endif
+}
+
 
 int NativeWordSize() { return (sizeof(void*)); }
 int SystemWordSize() { return ((Is32BitEmulation())? 8: NativeWordSize()); }

@@ -80,6 +80,7 @@ std::string GetModuleFile(std::string moduleName = "");
 std::string GetModulePath(const std::string& moduleName = "");
 
 std::string GetOS();
+std::string GetOSFamily();
 
 
 bool Is64Bit();
