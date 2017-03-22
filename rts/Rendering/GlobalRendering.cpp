@@ -97,6 +97,7 @@ CR_REG_METADATA(CGlobalRendering, (
 	CR_IGNORED(gpuVendor),
 	CR_IGNORED(gpuMemorySize),
 	CR_IGNORED(glslShaderLevel),
+	CR_IGNORED(glVersionFull),
 	CR_IGNORED(glVersion),
 	CR_IGNORED(glVendor),
 	CR_IGNORED(glRenderer),
@@ -392,7 +393,14 @@ void CGlobalRendering::PostInit() {
 	haveGLSL &= GLEW_ARB_vertex_shader && GLEW_ARB_fragment_shader;
 	haveGLSL &= !!GLEW_VERSION_2_0; // we want OpenGL 2.0 core functions
 
-	glVersion = (glVersion_ != nullptr)?std::string(glVersion_): "";
+	glVersionFull = (glVersion_ != nullptr)?std::string(glVersion_): "";
+	glVersion = "";
+	if (glVersionFull != "") {
+		const size_t q = glVersionFull.find(" ");
+		if (q != std::string::npos) {
+			glVersion = glVersionFull.substr(0, q);
+		}
+	}
 	glVendor = (glVendor_ != nullptr)?std::string(glVendor_): "" ;
 	glRenderer = (glRenderer_ != nullptr)?std::string(glRenderer_): "";
 	glslVersion = (glslVersion_ != nullptr)?std::string(glslVersion_): "";

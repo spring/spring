@@ -11,8 +11,9 @@ bool LuaConstSystem::PushEntries(lua_State* L)
 	LuaPushNamedString(L, "gpuVendor", globalRendering->gpuVendor);
 	LuaPushNamedNumber(L, "gpuMemorySize", globalRendering->gpuMemorySize);
 	LuaPushNamedString(L, "glslShaderLevel", globalRendering->glslShaderLevel);
-
 	LuaPushNamedString(L, "glVersion", globalRendering->glVersion);
+
+	LuaPushNamedString(L, "glVersionFull", globalRendering->glVersionFull);
 	LuaPushNamedString(L, "glVendor", globalRendering->glVendor);
 	LuaPushNamedString(L, "glRenderer", globalRendering->glRenderer);
 	LuaPushNamedString(L, "glslVersion", globalRendering->glslVersion);

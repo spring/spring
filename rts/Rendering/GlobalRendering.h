@@ -209,8 +209,9 @@ public:
 	std::string gpuVendor;
 	int gpuMemorySize;
 	std::string glslShaderLevel;
-
 	std::string glVersion;
+
+	std::string glVersionFull;
 	std::string glVendor;
 	std::string glRenderer;
 	std::string glslVersion;
