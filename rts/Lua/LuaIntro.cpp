@@ -112,7 +112,7 @@ CLuaIntro::CLuaIntro()
 	    !AddEntriesToTable(L, "gl",          LuaOpenGL::PushEntries)            ||
 	    !AddEntriesToTable(L, "GL",          LuaConstGL::PushEntries)           ||
 	    !AddEntriesToTable(L, "Engine",      LuaConstEngine::PushEntries)       ||
-		!AddEntriesToTable(L, "System",      LuaConstSystem::PushEntries)       ||
+	    !AddEntriesToTable(L, "System",      LuaConstSystem::PushEntries)       ||
 	    !AddEntriesToTable(L, "Game",        LuaConstGame::PushEntries)         ||
 	    !AddEntriesToTable(L, "CMD",         LuaConstCMD::PushEntries)          ||
 	    !AddEntriesToTable(L, "CMDTYPE",     LuaConstCMDTYPE::PushEntries)      ||
