@@ -93,6 +93,15 @@ CR_REG_METADATA(CGlobalRendering, (
 	CR_IGNORED(haveMesa),
 	CR_IGNORED(haveIntel),
 	CR_IGNORED(haveNvidia),
+	CR_IGNORED(gpu),
+	CR_IGNORED(gpuVendor),
+	CR_IGNORED(gpuMemorySize),
+	CR_IGNORED(glslShaderLevel),
+	CR_IGNORED(glVersion),
+	CR_IGNORED(glVendor),
+	CR_IGNORED(glRenderer),
+	CR_IGNORED(glslVersion),
+	CR_IGNORED(glewVersion),
 	CR_IGNORED(atiHacks),
 	CR_IGNORED(supportNPOTs),
 	CR_IGNORED(support24bitDepthBuffers),
@@ -307,42 +316,110 @@ void CGlobalRendering::DestroySDLWindow() {
 
 
 void CGlobalRendering::PostInit() {
+	#ifndef HEADLESS
+	glewExperimental = true;
+	#endif
+	glewInit();
+
+	SDL_version sdlVersionCompiled;
+	SDL_version sdlVersionLinked;
+
+	SDL_VERSION(&sdlVersionCompiled);
+	SDL_GetVersion(&sdlVersionLinked);
+	const char* glVersion_ = (const char*) glGetString(GL_VERSION);
+	const char* glVendor_ = (const char*) glGetString(GL_VENDOR);
+	const char* glRenderer_ = (const char*) glGetString(GL_RENDERER);
+	const char* glslVersion_ = (const char*) glGetString(GL_SHADING_LANGUAGE_VERSION);
+	const char* glewVersion_ = (const char*) glewGetString(GLEW_VERSION);
+
+	char glVidMemStr[64] = "unknown";
+	GLint vidMemBuffer[2] = {0, 0};
+
+	if (GetAvailableVideoRAM(vidMemBuffer)) {
+		const GLint totalMemMB = vidMemBuffer[0] / 1024;
+		gpuMemorySize = totalMemMB;
+		const GLint availMemMB = vidMemBuffer[1] / 1024;
+
+		if (totalMemMB > 0 && availMemMB > 0) {
+			const char* memFmtStr = "total %iMB, available %iMB";
+			SNPRINTF(glVidMemStr, sizeof(glVidMemStr), memFmtStr, totalMemMB, availMemMB);
+		}
+	}
+
+	// log some useful version info
+	LOG("[GL::%s]", __func__);
+	LOG("\tSDL version:  linked %d.%d.%d; compiled %d.%d.%d", sdlVersionLinked.major, sdlVersionLinked.minor, sdlVersionLinked.patch, sdlVersionCompiled.major, sdlVersionCompiled.minor, sdlVersionCompiled.patch);
+	LOG("\tGL version:   %s", glVersion_);
+	LOG("\tGL vendor:    %s", glVendor_);
+	LOG("\tGL renderer:  %s", glRenderer_);
+	LOG("\tGLSL version: %s", glslVersion_);
+	LOG("\tGLEW version: %s", glewVersion_);
+	LOG("\tVideo RAM:    %s", glVidMemStr);
+	LOG("\tSwapInterval: %d", SDL_GL_GetSwapInterval());
+
+	ShowCrappyGpuWarning(glVendor_, glRenderer_);
+
+	std::string missingExts = "";
+
+	if (!GLEW_ARB_multitexture)
+		missingExts += " GL_ARB_multitexture";
+
+	if (!GLEW_ARB_texture_env_combine)
+		missingExts += " GL_ARB_texture_env_combine";
+
+	if (!GLEW_ARB_texture_compression)
+		missingExts += " GL_ARB_texture_compression";
+
+	if (!missingExts.empty()) {
+		char errorMsg[2048];
+		SNPRINTF(errorMsg, sizeof(errorMsg),
+				"Needed OpenGL extension(s) not found:\n"
+				"  %s\n\n"
+				"Update your graphic-card driver!\n"
+				"  Graphic card:   %s\n"
+				"  OpenGL version: %s\n",
+				missingExts.c_str(),
+				glRenderer_,
+				glVersion_);
+		throw unsupported_error(errorMsg);
+	}
+
 	LoadExtensions(); // initialize GLEW
 
 	supportNPOTs = GLEW_ARB_texture_non_power_of_two;
 	haveARB   = GLEW_ARB_vertex_program && GLEW_ARB_fragment_program;
-	haveGLSL  = (glGetString(GL_SHADING_LANGUAGE_VERSION) != nullptr);
+	haveGLSL  = glslVersion_ != nullptr;
 	haveGLSL &= GLEW_ARB_vertex_shader && GLEW_ARB_fragment_shader;
 	haveGLSL &= !!GLEW_VERSION_2_0; // we want OpenGL 2.0 core functions
 
+	glVersion = (glVersion_ != nullptr)?std::string(glVersion_): "";
+	glVendor = (glVendor_ != nullptr)?std::string(glVendor_): "" ;
+	glRenderer = (glRenderer_ != nullptr)?std::string(glRenderer_): "";
+	glslVersion = (glslVersion_ != nullptr)?std::string(glslVersion_): "";
+	glewVersion = (glewVersion_ != nullptr)?std::string(glewVersion_): "";
+
 	{
-		const char* glVendor = (const char*) glGetString(GL_VENDOR);
-		const char* glRenderer = (const char*) glGetString(GL_RENDERER);
-		const std::string& vendor = (glVendor != nullptr)? StringToLower(std::string(glVendor)): "";
-		const std::string& renderer = (glRenderer != nullptr)? StringToLower(std::string(glRenderer)): "";
+		const std::string& vendor = StringToLower(glVendor);
+		const std::string& renderer = StringToLower(glRenderer);
 
 		haveATI    = (vendor.find("ati ") != std::string::npos) || (vendor.find("amd ") != std::string::npos);
 		haveMesa   = (renderer.find("mesa ") != std::string::npos) || (renderer.find("gallium ") != std::string::npos);
 		haveIntel  = (vendor.find("intel") != std::string::npos);
 		haveNvidia = (vendor.find("nvidia ") != std::string::npos);
 
-		gpu = (glRenderer != nullptr)? std::string(glRenderer): "";
+		gpu = glRenderer; //redundant
 		gpuMemorySize = 0;
 		if (haveATI) {
 			gpuVendor = "ATI";
-		} else if (globalRendering->haveIntel) {
+		} else if (haveIntel) {
 			gpuVendor = "Intel";
-		} else if (globalRendering->haveNvidia) {
+		} else if (haveNvidia) {
 			gpuVendor = "Nvidia";
-
-			//#define GL_GPU_MEM_INFO_TOTAL_AVAILABLE_MEM_NVX 0x9048
-			glGetIntegerv(0x9048, &gpuMemorySize);
-		} else if (globalRendering->haveMesa) {
+		} else if (haveMesa) {
 			gpuVendor = "Mesa";
 		} else {
 			gpuVendor = "Unknown";
 		}
-		gpuMemorySize = gpuMemorySize / 1024;
 
 		forceSwapBuffers = configHandler->GetInt("ForceSwapBuffers");
 		forceShaders = configHandler->GetInt("ForceShaders");
@@ -356,6 +433,14 @@ void CGlobalRendering::PostInit() {
 			haveGLSL = false;
 		} else if (forceShaders > 0) {
 			// rely on extension detection (don't force enable shaders, when the extensions aren't exposed!)
+		}
+
+		if (haveGLSL) {
+			glslShaderLevel = glslVersion_;
+			const size_t q = glslShaderLevel.find(" ");
+			if (q != std::string::npos) {
+				glslShaderLevel = glslShaderLevel.substr(0, q);
+			}
 		}
 
 		if (haveATI) {

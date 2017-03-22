@@ -187,7 +187,7 @@ void _APIENTRY OpenGLDebugMessageCallback(GLenum source, GLenum type, GLuint id,
 #endif // GL_ARB_debug_output
 
 
-static bool GetAvailableVideoRAM(GLint* memory)
+bool GetAvailableVideoRAM(GLint* memory)
 {
 #if defined(HEADLESS) || !defined(GL_GPU_MEMORY_INFO_TOTAL_AVAILABLE_MEMORY_NVX) || !defined(GL_TEXTURE_FREE_MEMORY_ATI)
 	return false;
@@ -220,7 +220,7 @@ static bool GetAvailableVideoRAM(GLint* memory)
 }
 
 
-static void ShowCrappyGpuWarning(const char* glVendor, const char* glRenderer)
+void ShowCrappyGpuWarning(const char* glVendor, const char* glRenderer)
 {
 #ifndef DEBUG
 
@@ -301,77 +301,8 @@ static void ShowCrappyGpuWarning(const char* glVendor, const char* glRenderer)
 #endif
 }
 
-
-//FIXME move most of this to globalRendering's ctor?
 void LoadExtensions()
 {
-	#ifndef HEADLESS
-	glewExperimental = true;
-	#endif
-	glewInit();
-
-	SDL_version sdlVersionCompiled;
-	SDL_version sdlVersionLinked;
-
-	SDL_VERSION(&sdlVersionCompiled);
-	SDL_GetVersion(&sdlVersionLinked);
-	const char* glVersion = (const char*) glGetString(GL_VERSION);
-	const char* glVendor = (const char*) glGetString(GL_VENDOR);
-	const char* glRenderer = (const char*) glGetString(GL_RENDERER);
-	const char* glslVersion = (const char*) glGetString(GL_SHADING_LANGUAGE_VERSION);
-	const char* glewVersion = (const char*) glewGetString(GLEW_VERSION);
-
-	char glVidMemStr[64] = "unknown";
-	GLint vidMemBuffer[2] = {0, 0};
-
-	if (GetAvailableVideoRAM(vidMemBuffer)) {
-		const GLint totalMemMB = vidMemBuffer[0] / 1024;
-		const GLint availMemMB = vidMemBuffer[1] / 1024;
-
-		if (totalMemMB > 0 && availMemMB > 0) {
-			const char* memFmtStr = "total %iMB, available %iMB";
-			SNPRINTF(glVidMemStr, sizeof(glVidMemStr), memFmtStr, totalMemMB, availMemMB);
-		}
-	}
-
-	// log some useful version info
-	LOG("[GL::%s]", __func__);
-	LOG("\tSDL version:  linked %d.%d.%d; compiled %d.%d.%d", sdlVersionLinked.major, sdlVersionLinked.minor, sdlVersionLinked.patch, sdlVersionCompiled.major, sdlVersionCompiled.minor, sdlVersionCompiled.patch);
-	LOG("\tGL version:   %s", glVersion);
-	LOG("\tGL vendor:    %s", glVendor);
-	LOG("\tGL renderer:  %s", glRenderer);
-	LOG("\tGLSL version: %s", glslVersion);
-	LOG("\tGLEW version: %s", glewVersion);
-	LOG("\tVideo RAM:    %s", glVidMemStr);
-	LOG("\tSwapInterval: %d", SDL_GL_GetSwapInterval());
-
-	ShowCrappyGpuWarning(glVendor, glRenderer);
-
-	std::string missingExts = "";
-
-	if (!GLEW_ARB_multitexture)
-		missingExts += " GL_ARB_multitexture";
-
-	if (!GLEW_ARB_texture_env_combine)
-		missingExts += " GL_ARB_texture_env_combine";
-
-	if (!GLEW_ARB_texture_compression)
-		missingExts += " GL_ARB_texture_compression";
-
-	if (!missingExts.empty()) {
-		char errorMsg[2048];
-		SNPRINTF(errorMsg, sizeof(errorMsg),
-				"Needed OpenGL extension(s) not found:\n"
-				"  %s\n\n"
-				"Update your graphic-card driver!\n"
-				"  Graphic card:   %s\n"
-				"  OpenGL version: %s\n",
-				missingExts.c_str(),
-				glRenderer,
-				glVersion);
-		throw unsupported_error(errorMsg);
-	}
-
 	// install OpenGL DebugMessageCallback
 #if defined(GL_ARB_debug_output) && !defined(HEADLESS)
 	if (GLEW_ARB_debug_output && configHandler->GetBool("DebugGL")) {
@@ -742,4 +673,3 @@ void SetTexGen(const float scaleX, const float scaleZ, const float offsetX, cons
 }
 
 /******************************************************************************/
-

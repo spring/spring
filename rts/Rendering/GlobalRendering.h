@@ -207,7 +207,14 @@ public:
 
 	std::string gpu;
 	std::string gpuVendor;
-	int gpuMemorySize; // only available for Nvidia atm
+	int gpuMemorySize;
+	std::string glslShaderLevel;
+
+	std::string glVersion;
+	std::string glVendor;
+	std::string glRenderer;
+	std::string glslVersion;
+	std::string glewVersion;
 
 	/**
 	 * @brief collection of some ATI bugfixes

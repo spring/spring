@@ -90,6 +90,8 @@ void glSafeDeleteProgram(GLuint program);
 
 void PrintAvailableResolutions();
 
+bool GetAvailableVideoRAM(GLint* memory);
+void ShowCrappyGpuWarning(const char* glVendor, const char* glRenderer);
 void LoadExtensions();
 void UnloadExtensions();
 
