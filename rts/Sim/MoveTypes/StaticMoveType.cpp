@@ -20,7 +20,7 @@ void CStaticMoveType::SlowUpdate()
 	//   to get the ground height instead of calling CMoveMath::yLevel()
 	// FIXME: intercept heightmapUpdate events and update buildings y-pos only on-demand!
 	if (owner->FloatOnWater() && owner->IsInWater()) {
-		owner->Move(UpVector * (-owner->unitDef->waterline - owner->pos.y), true);
+		owner->Move(UpVector * (-owner->waterline - owner->pos.y), true);
 	} else {
 		owner->Move(UpVector * (CGround::GetHeightReal(owner->pos.x, owner->pos.z) - owner->pos.y), true);
 	}

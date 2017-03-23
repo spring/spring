@@ -192,6 +192,8 @@ CUnit::CUnit()
 , myIcon(nullptr)
 
 , stunned(false)
+
+, waterline(0.f)
 {
 }
 
@@ -399,6 +401,8 @@ void CUnit::PreInit(const UnitLoadParams& params)
 		selfdExpDamages = DynDamageArray::IncRef(&unitDef->selfdExpWeaponDef->damages);
 	if (unitDef->deathExpWeaponDef != nullptr)
 		deathExpDamages = DynDamageArray::IncRef(&unitDef->deathExpWeaponDef->damages);
+
+    waterline = unitDef->waterline;
 }
 
 
@@ -426,7 +430,7 @@ void CUnit::PostInit(const CUnit* builder)
 	UpdatePosErrorParams(true, true);
 
 	if (FloatOnWater() && IsInWater())
-		Move(UpVector * (std::max(CGround::GetHeightReal(pos.x, pos.z), -unitDef->waterline) - pos.y), true);
+		Move(UpVector * (std::max(CGround::GetHeightReal(pos.x, pos.z), -waterline) - pos.y), true);
 
 	if (unitDef->canmove || unitDef->builder) {
 		if (unitDef->moveState <= MOVESTATE_NONE) {
@@ -2695,7 +2699,7 @@ float CUnit::GetTransporteeWantedHeight(const float3& wantedPos, const CUnit* un
 				// transportee is a mobile ground unit
 				switch (transporteeMoveDef->speedModClass) {
 					case MoveDef::Ship: {
-						wantedHeight = std::max(-transporteeUnitDef->waterline, wantedHeight);
+						wantedHeight = std::max(-unit->waterline, wantedHeight);
 						clampedHeight = wantedHeight;
 					} break;
 					case MoveDef::Hover: {

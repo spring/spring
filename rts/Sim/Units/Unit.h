@@ -518,6 +518,9 @@ public:
 	UnitTrackStruct* myTrack;
 	icon::CIconData* myIcon;
 
+    // Used to allow LUA to modify per-object waterline parameter
+    float waterline;
+
 private:
 	/// if we are stunned by a weapon or for other reason, access via IsStunned/SetStunned(bool)
 	bool stunned;

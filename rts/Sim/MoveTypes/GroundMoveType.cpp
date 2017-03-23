@@ -2214,7 +2214,7 @@ float CGroundMoveType::GetGroundHeight(const float3& p) const
 {
 	// in [minHeight, maxHeight]
 	const float gh = CGround::GetHeightReal(p.x, p.z);
-	const float wh = -owner->unitDef->waterline * (gh <= 0.0f);
+	const float wh = -owner->waterline * (gh <= 0.0f);
 
 	if (owner->FloatOnWater()) {
 		// in [-waterline, maxHeight], note that waterline
@@ -2234,9 +2234,9 @@ void CGroundMoveType::AdjustPosToWaterLine()
 
 	if (modInfo.allowGroundUnitGravity) {
 		if (owner->FloatOnWater()) {
-			owner->Move(UpVector * (std::max(CGround::GetHeightReal(owner->pos.x, owner->pos.z), -owner->unitDef->waterline) - owner->pos.y), true);
+			owner->Move(UpVector * (std::max(CGround::GetHeightReal(owner->pos.x, owner->pos.z), -owner->waterline) - owner->pos.y), true);
 		} else {
-			owner->Move(UpVector * (std::max(CGround::GetHeightReal(owner->pos.x, owner->pos.z),               owner->pos.y) - owner->pos.y), true);
+			owner->Move(UpVector * (std::max(CGround::GetHeightReal(owner->pos.x, owner->pos.z),      owner->pos.y) - owner->pos.y), true);
 		}
 	} else {
 		owner->Move(UpVector * (GetGroundHeight(owner->pos) - owner->pos.y), true);
