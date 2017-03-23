@@ -377,16 +377,14 @@ std::string GetOSFamily()
 {
 #if defined(WIN32)
 	return "Windows";
-#else
-#if defined(__linux__)
-		return "Linux";
+#elif defined(__linux__)
+	return "Linux";
 #elif defined(__FreeBSD__)
-		return "FreeBSD";
+	return "FreeBSD";
 #elif defined(__APPLE__)
-		return "MacOSX";
+	return "MacOSX";
 #else
-		return "Unknown";
-#endif
+	return "Unknown";
 #endif
 }
 
