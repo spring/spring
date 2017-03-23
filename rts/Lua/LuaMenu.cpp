@@ -106,7 +106,7 @@ CLuaMenu::CLuaMenu()
 		!AddEntriesToTable(L, "Spring",    LoadUnsyncedReadFunctions)      ||
 		!AddEntriesToTable(L, "Spring",    LoadLuaMenuFunctions)           ||
 		!AddEntriesToTable(L, "Engine",    LuaConstEngine::PushEntries)    ||
-		!AddEntriesToTable(L, "System",    LuaConstSystem::PushEntries)    ||
+		!AddEntriesToTable(L, "Platform",  LuaConstSystem::PushEntries)    ||
 
 		!AddEntriesToTable(L, "Script",    LuaScream::PushEntries)         ||
 		!AddEntriesToTable(L, "VFS",       LuaVFS::PushUnsynced)           ||
