@@ -191,9 +191,9 @@ CUnit::CUnit()
 , myTrack(nullptr)
 , myIcon(nullptr)
 
-, stunned(false)
-
 , waterline(0.f)
+
+, stunned(false)
 {
 }
 
@@ -2937,6 +2937,8 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(lastUnitUpdate),
 
 	CR_MEMBER_UN(tooltip),
+
+	CR_MEMBER(waterline),
 
 	CR_MEMBER(stunned),
 
