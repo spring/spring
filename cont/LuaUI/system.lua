@@ -28,6 +28,7 @@ if (System == nil) then
     Script = Script,
     Spring = Spring,
     Engine = Engine,
+    Platform = Platform,
     Game = Game,
     LuaLobby = LuaLobby,
     gl = gl,
