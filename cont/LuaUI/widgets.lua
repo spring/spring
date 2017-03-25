@@ -505,6 +505,7 @@ function widgetHandler:NewWidget()
       __metatable = true,
     })
   end
+  widget._G = _G         -- the global table
   widget.WG = self.WG    -- the shared table
   widget.widget = widget -- easy self referencing
 
