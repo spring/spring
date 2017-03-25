@@ -106,13 +106,14 @@ unsigned int CCustomExplosionGenerator::GetFlagsFromHeight(float height, float g
 	const float waterDist = math::fabsf(height);
 	const float altitude  = height - groundHeight;
 
+	const float groundLenience = 20.0f;
 	// note: ranges do not overlap, although code in
 	// *ExplosionGenerator::Explosion assumes they can
-	if (altitude  < -1.0f) {
+	if (altitude < -groundLenience) {
 		/* underground! don't spawn CEG! */
 	} else
 	if (height   >= 5.0f) { // above water
-		if (altitude >= 20.0f) {
+		if (altitude >= groundLenience) {
 			flags |= CCustomExplosionGenerator::SPW_AIR;    // air
 		} else {
 			flags |= CCustomExplosionGenerator::SPW_GROUND; // ground
