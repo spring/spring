@@ -129,6 +129,9 @@ setmetatable(handler, {
 			return actionHandler.oldSyntax
 		end
 
+		if type(key) ~= "string" then
+			return nil
+		end
 		local firstChar = key:sub(1,1)
 		if (firstChar == firstChar:upper() and self.knownCallIns[key]) then
 			return function(_, ...)
