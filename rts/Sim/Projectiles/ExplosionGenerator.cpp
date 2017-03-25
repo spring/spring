@@ -93,6 +93,7 @@ unsigned int CCustomExplosionGenerator::GetFlagsFromTable(const LuaTable& table)
 	if (table.GetBool("water",      false)) { flags |= CCustomExplosionGenerator::SPW_WATER;      }
 	if (table.GetBool("air",        false)) { flags |= CCustomExplosionGenerator::SPW_AIR;        }
 	if (table.GetBool("underwater", false)) { flags |= CCustomExplosionGenerator::SPW_UNDERWATER; }
+	if (table.GetBool("underground",false)) { flags |= CCustomExplosionGenerator::SPW_UNDERGROUND;}
 	if (table.GetBool("unit",       false)) { flags |= CCustomExplosionGenerator::SPW_UNIT;       }
 	if (table.GetBool("nounit",     false)) { flags |= CCustomExplosionGenerator::SPW_NO_UNIT;    }
 
@@ -109,7 +110,7 @@ unsigned int CCustomExplosionGenerator::GetFlagsFromHeight(float height, float g
 	// note: ranges do not overlap, although code in
 	// *ExplosionGenerator::Explosion assumes they can
 	if (altitude  < -1.0f) {
-		/* underground! don't spawn CEG! */
+		flags |= CCustomExplosionGenerator::SPW_UNDERGROUND;
 	} else
 	if (height   >= 5.0f) { // above water
 		if (altitude >= 20.0f) {

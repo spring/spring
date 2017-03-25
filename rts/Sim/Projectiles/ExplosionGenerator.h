@@ -195,12 +195,13 @@ public:
 
 
 	enum {
-		SPW_WATER      =  1,
-		SPW_GROUND     =  2,
-		SPW_AIR        =  4,
-		SPW_UNDERWATER =  8,
-		SPW_UNIT       = 16,  // only execute when the explosion hits a unit
-		SPW_NO_UNIT    = 32,  // only execute when the explosion doesn't hit a unit (environment)
+		SPW_WATER       = (1 << 0),
+		SPW_GROUND      = (1 << 1),
+		SPW_AIR         = (1 << 2),
+		SPW_UNDERWATER  = (1 << 3),
+		SPW_UNDERGROUND = (1 << 4),
+		SPW_UNIT        = (1 << 5),  // only execute when the explosion hits a unit
+		SPW_NO_UNIT     = (1 << 6),  // only execute when the explosion doesn't hit a unit (environment)
 	};
 
 	enum {
