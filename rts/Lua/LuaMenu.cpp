@@ -7,7 +7,7 @@
 #include "LuaCallInCheck.h"
 #include "LuaConstEngine.h"
 #include "LuaConstGL.h"
-#include "LuaConstSystem.h"
+#include "LuaConstPlatform.h"
 #include "LuaIO.h"
 #include "LuaOpenGL.h"
 #include "LuaScream.h"
@@ -106,8 +106,7 @@ CLuaMenu::CLuaMenu()
 		!AddEntriesToTable(L, "Spring",    LoadUnsyncedReadFunctions)      ||
 		!AddEntriesToTable(L, "Spring",    LoadLuaMenuFunctions)           ||
 		!AddEntriesToTable(L, "Engine",    LuaConstEngine::PushEntries)    ||
-		!AddEntriesToTable(L, "Platform",  LuaConstSystem::PushEntries)    ||
-
+		!AddEntriesToTable(L, "Platform",  LuaConstPlatform::PushEntries)  ||
 		!AddEntriesToTable(L, "Script",    LuaScream::PushEntries)         ||
 		!AddEntriesToTable(L, "VFS",       LuaVFS::PushUnsynced)           ||
 		!AddEntriesToTable(L, "VFS",       LuaZipFileReader::PushUnsynced) ||

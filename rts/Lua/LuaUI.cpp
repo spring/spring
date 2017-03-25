@@ -10,8 +10,8 @@
 #include "LuaConstCMD.h"
 #include "LuaConstCMDTYPE.h"
 #include "LuaConstEngine.h"
-#include "LuaConstSystem.h"
 #include "LuaConstGame.h"
+#include "LuaConstPlatform.h"
 #include "LuaSyncedRead.h"
 #include "LuaInterCall.h"
 #include "LuaUnsyncedRead.h"
@@ -185,7 +185,7 @@ CLuaUI::CLuaUI()
 	    !AddEntriesToTable(L, "gl",          LuaOpenGL::PushEntries)            ||
 	    !AddEntriesToTable(L, "GL",          LuaConstGL::PushEntries)           ||
 	    !AddEntriesToTable(L, "Engine",      LuaConstEngine::PushEntries)       ||
-	    !AddEntriesToTable(L, "Platform",    LuaConstSystem::PushEntries)       ||
+	    !AddEntriesToTable(L, "Platform",    LuaConstPlatform::PushEntries)     ||
 	    !AddEntriesToTable(L, "Game",        LuaConstGame::PushEntries)         ||
 	    !AddEntriesToTable(L, "CMD",         LuaConstCMD::PushEntries)          ||
 	    !AddEntriesToTable(L, "CMDTYPE",     LuaConstCMDTYPE::PushEntries)      ||

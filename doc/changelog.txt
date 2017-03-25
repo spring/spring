@@ -33,26 +33,26 @@ Lua:
    it just regulates the framerate and interpolations.
  - Add DrawScreenPost(vsx, vsy) unsynced callin. It's used to alter content of the frame after it's been completely rendered (i.e. World, MiniMap, Menu, UI).
    Basically the frame you would get if you /screenshot it. Use it similarly to DrawScreenEffects (by ivand)
- - Add LuaConstSystem that exposes the System table with following keys:
-    System.gpu: string, full GPU device name
-    System.gpuVendor: string, one of "Nvidia", "Intel", "ATI", "Mesa", "Unknown"
-    System.gpuMemorySize: number, size of total GPU memory in MBs; only available for "Nvidia", (rest are 0)
-    System.glVersionShort: string, major.minor.buildNumber
-	System.glslVersionShort: string, major.minor
-	System.glVersion: string, full version
-	System.glVendor: string
-	System.glRenderer: string
-	System.glslVersion: string, full version
-	System.glewVersion: string
-	System.sdlVersionCompiledMajor: number
-	System.sdlVersionCompiledMinor: number
-	System.sdlVersionCompiledPatch: number
-	System.sdlVersionLinkedMajor: number
-	System.sdlVersionLinkedMinor: number
-	System.sdlVersionLinkedPatch: number
-    System.os: string, full name of the OS
-    System.osFamily: string, one of "Windows", "Linux", "MacOSX", "FreeBSD", "Unknown"
-    System.osWordSize: number, usually 32 or 64 for 32bit and 64bit OS
+ - Add LuaConstPlatform that exposes the Platform table with following keys:
+    Platform.gpu: string, full GPU device name
+    Platform.gpuVendor: string, one of "Nvidia", "Intel", "ATI", "Mesa", "Unknown"
+    Platform.gpuMemorySize: number, size of total GPU memory in MBs; only available for "Nvidia", (rest are 0)
+    Platform.glVersionShort: string, major.minor.buildNumber
+    Platform.glslVersionShort: string, major.minor
+    Platform.glVersion: string, full version
+    Platform.glVendor: string
+    Platform.glRenderer: string
+    Platform.glslVersion: string, full version
+    Platform.glewVersion: string
+    Platform.sdlVersionCompiledMajor: number
+    Platform.sdlVersionCompiledMinor: number
+    Platform.sdlVersionCompiledPatch: number
+    Platform.sdlVersionLinkedMajor: number
+    Platform.sdlVersionLinkedMinor: number
+    Platform.sdlVersionLinkedPatch: number
+    Platform.os: string, full name of the OS
+    Platform.osFamily: string, one of "Windows", "Linux", "MacOSX", "FreeBSD", "Unknown"
+    Platform.osWordSize: number, usually 32 or 64 for 32bit and 64bit OS
 
 UI:
  - Add FPSClampPos config for whether the engine should verify the camera doesn't hit ground/go too far

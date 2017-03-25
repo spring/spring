@@ -1,13 +1,13 @@
 /* This file is part of the Spring System (GPL v2 or later), see LICENSE.html */
 
-#include "LuaConstSystem.h"
+#include "LuaConstPlatform.h"
 #include "LuaUtils.h"
 #include "System/Platform/Misc.h"
 #include "Rendering/GlobalRendering.h"
 
 #include <SDL.h>
 
-bool LuaConstSystem::PushEntries(lua_State* L)
+bool LuaConstPlatform::PushEntries(lua_State* L)
 {
 	LuaPushNamedString(L, "gpu", globalRendering->gpu);
 	LuaPushNamedString(L, "gpuVendor", globalRendering->gpuVendor);
