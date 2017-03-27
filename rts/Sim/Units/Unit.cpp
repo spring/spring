@@ -402,7 +402,7 @@ void CUnit::PreInit(const UnitLoadParams& params)
 	if (unitDef->deathExpWeaponDef != nullptr)
 		deathExpDamages = DynDamageArray::IncRef(&unitDef->deathExpWeaponDef->damages);
 
-    waterline = unitDef->waterline;
+	waterline = unitDef->waterline;
 }
 
 
