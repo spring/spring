@@ -201,6 +201,7 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetUnitSelfDTime);
 	REGISTER_LUA_CFUNC(GetUnitStockpile);
 	REGISTER_LUA_CFUNC(GetUnitSensorRadius);
+	REGISTER_LUA_CFUNC(GetUnitWaterline);
 	REGISTER_LUA_CFUNC(GetUnitPosErrorParams);
 	REGISTER_LUA_CFUNC(GetUnitHeight);
 	REGISTER_LUA_CFUNC(GetUnitRadius);
@@ -2688,6 +2689,18 @@ int LuaSyncedRead::GetUnitPosErrorParams(lua_State* L)
 	lua_pushnumber(L, unit->posErrorDelta.z);
 	lua_pushnumber(L, unit->nextPosErrorUpdate);
 	return (3 + 3 + 1);
+}
+
+int LuaSyncedRead::GetUnitWaterline(lua_State* L)
+{
+	CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+
+	lua_pushnumber(L, unit->waterline);
+
+	return 1;
 }
 
 
