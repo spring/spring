@@ -57,6 +57,7 @@ Lua:
 UI:
  - Add FPSClampPos config for whether the engine should verify the camera doesn't hit ground/go too far
    this and other FPS camera configs can be changed midgame and will affect the next frame drawn.
+ - Add OverheadMaxHeightFactor config - a float multiplier for maximum overhead camera height.
 
 -- 103.0 --------------------------------------------------------
 General:
