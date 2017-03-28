@@ -191,8 +191,6 @@ CUnit::CUnit()
 , myTrack(nullptr)
 , myIcon(nullptr)
 
-, waterline(0.f)
-
 , stunned(false)
 {
 }
@@ -401,8 +399,6 @@ void CUnit::PreInit(const UnitLoadParams& params)
 		selfdExpDamages = DynDamageArray::IncRef(&unitDef->selfdExpWeaponDef->damages);
 	if (unitDef->deathExpWeaponDef != nullptr)
 		deathExpDamages = DynDamageArray::IncRef(&unitDef->deathExpWeaponDef->damages);
-
-	waterline = unitDef->waterline;
 }
 
 
@@ -430,7 +426,7 @@ void CUnit::PostInit(const CUnit* builder)
 	UpdatePosErrorParams(true, true);
 
 	if (FloatOnWater() && IsInWater())
-		Move(UpVector * (std::max(CGround::GetHeightReal(pos.x, pos.z), -waterline) - pos.y), true);
+		Move(UpVector * (std::max(CGround::GetHeightReal(pos.x, pos.z), -Waterline()) - pos.y), true);
 
 	if (unitDef->canmove || unitDef->builder) {
 		if (unitDef->moveState <= MOVESTATE_NONE) {
@@ -1666,6 +1662,15 @@ bool CUnit::FloatOnWater(bool onlyDef) const {
 	return (unitDef->floatOnWater);
 }
 
+float CUnit::Waterline() const {
+	// Check if a move type is already in charge
+	if (moveType != nullptr)
+		return moveType->Waterline();
+
+	// aircraft or building
+	return (unitDef->waterline);
+}
+
 bool CUnit::IsIdle() const
 {
 	if (beingBuilt)
@@ -2703,7 +2708,7 @@ float CUnit::GetTransporteeWantedHeight(const float3& wantedPos, const CUnit* un
 				// transportee is a mobile ground unit
 				switch (transporteeMoveDef->speedModClass) {
 					case MoveDef::Ship: {
-						wantedHeight = std::max(-unit->waterline, wantedHeight);
+						wantedHeight = std::max(-unit->Waterline(), wantedHeight);
 						clampedHeight = wantedHeight;
 					} break;
 					case MoveDef::Hover: {
@@ -2941,8 +2946,6 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(lastUnitUpdate),
 
 	CR_MEMBER_UN(tooltip),
-
-	CR_MEMBER(waterline),
 
 	CR_MEMBER(stunned),
 

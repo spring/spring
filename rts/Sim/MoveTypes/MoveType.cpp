@@ -129,3 +129,11 @@ bool AMoveType::SetMemberValue(unsigned int memberHash, void* memberValue) {
 	return false;
 }
 
+
+float AMoveType::Waterline() const {
+	// creg
+	if (owner == nullptr)
+		return 0.0f;
+
+	return (owner->unitDef->waterline);
+}

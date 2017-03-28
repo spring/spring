@@ -23,15 +23,18 @@ public:
 	void SlowUpdate() override;
 
 	bool FloatOnWater() const override { return floatOnWater; }
+	float Waterline() const override { return waterline; }
 
 	void InitMemberData();
 	bool SetMemberValue(unsigned int memberHash, void* memberValue) override;
 
 private:
 	std::array<std::pair<unsigned int,  bool*>, 1>  boolMemberData;
+	std::array<std::pair<unsigned int, float*>, 1> floatMemberData;
 
 private:
 	bool floatOnWater;
+	float waterline;
 };
 
 #endif // STATICMOVETYPE_H

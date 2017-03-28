@@ -155,7 +155,9 @@ public:
 
 	bool UsingScriptMoveType() const { return (prevMoveType != NULL); }
 	bool UnderFirstPersonControl() const { return (fpsControlPlayer != NULL); }
+
 	bool FloatOnWater(bool onlyDef=false) const;
+	float Waterline() const;
 
 	bool IsNeutral() const { return neutral; }
 	bool IsCloaked() const { return isCloaked; }
@@ -517,9 +519,6 @@ public:
 
 	UnitTrackStruct* myTrack;
 	icon::CIconData* myIcon;
-
-	// Used to allow LUA to modify per-object waterline parameter
-	float waterline;
 
 private:
 	/// if we are stunned by a weapon or for other reason, access via IsStunned/SetStunned(bool)

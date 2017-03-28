@@ -207,7 +207,6 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetUnitPieceParent);
 	REGISTER_LUA_CFUNC(SetUnitSensorRadius);
 	REGISTER_LUA_CFUNC(SetUnitPosErrorParams);
-	REGISTER_LUA_CFUNC(SetUnitWaterline);
 
 	REGISTER_LUA_CFUNC(SetUnitPhysics);
 	REGISTER_LUA_CFUNC(SetUnitMass);
@@ -2355,19 +2354,6 @@ int LuaSyncedCtrl::SetUnitPosErrorParams(lua_State* L)
 	unit->posErrorDelta = float3(luaL_checkfloat(L, 5), luaL_checkfloat(L, 6), luaL_checkfloat(L, 7));
 	unit->nextPosErrorUpdate = luaL_optint(L, 8, unit->nextPosErrorUpdate);
 	return 0;
-}
-
-
-int LuaSyncedCtrl::SetUnitWaterline(lua_State* L)
-{
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-
-	if (unit == nullptr)
-		return 0;
-
-	unit->waterline = luaL_checkfloat(L, 2);
-
-	return 1;
 }
 
 

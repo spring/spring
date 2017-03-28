@@ -51,7 +51,9 @@ public:
 	virtual bool IsSkidding() const { return false; }
 	virtual bool IsFlying() const { return false; }
 	virtual bool IsReversing() const { return false; }
+
 	virtual bool FloatOnWater() const { return false; }
+	virtual float Waterline() const;
 
 	float GetMaxSpeed() const { return maxSpeed; }
 	float GetMaxSpeedDef() const { return maxSpeedDef; }
