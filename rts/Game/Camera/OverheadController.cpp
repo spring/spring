@@ -20,6 +20,7 @@ CONFIG(int, OverheadScrollSpeed).defaultValue(10);
 CONFIG(float, OverheadTiltSpeed).defaultValue(1.0f);
 CONFIG(bool, OverheadEnabled).defaultValue(true).headlessValue(false);
 CONFIG(float, OverheadFOV).defaultValue(45.0f);
+CONFIG(float, OverheadMaxHeightFactor).defaultValue(1.0f);
 
 
 static const float angleStep = math::HALFPI / 14.0f;
@@ -45,7 +46,7 @@ COverheadController::COverheadController()
 		height = CGround::GetHeightAboveWater(pos.x, pos.z, false) + (2.5f * h);
 	}
 
-	maxHeight = 9.5f * std::max(mapDims.mapx, mapDims.mapy);
+	maxHeight = 9.5f * std::max(mapDims.mapx, mapDims.mapy) * configHandler->GetFloat("OverheadMaxHeightFactor");
 	Update();
 }
 
