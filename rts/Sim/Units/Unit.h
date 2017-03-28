@@ -156,7 +156,7 @@ public:
 	bool UsingScriptMoveType() const { return (prevMoveType != NULL); }
 	bool UnderFirstPersonControl() const { return (fpsControlPlayer != NULL); }
 
-	bool FloatOnWater(bool onlyDef=false) const;
+	bool FloatOnWater() const;
 	float Waterline() const;
 
 	bool IsNeutral() const { return neutral; }

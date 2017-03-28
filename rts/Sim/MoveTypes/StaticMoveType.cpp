@@ -5,19 +5,15 @@
 #include "Map/Ground.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
-#include "System/Sync/HsiehHash.h"
 
 CR_BIND_DERIVED(CStaticMoveType, AMoveType, (nullptr))
 CR_REG_METADATA(CStaticMoveType, (
-	CR_IGNORED(boolMemberData),
 	CR_IGNORED(floatMemberData),
-	CR_MEMBER(floatOnWater),
 	CR_MEMBER(waterline)
 ))
 
 CStaticMoveType::CStaticMoveType(CUnit* owner):
 	AMoveType(owner),
-	floatOnWater(false),
 	waterline(0.0f)
 {
 	// initialize member hashes and pointers needed by SyncedMoveCtrl
@@ -27,7 +23,6 @@ CStaticMoveType::CStaticMoveType(CUnit* owner):
 	if (owner == nullptr)
 		return;
 
-	floatOnWater = owner->FloatOnWater(true);
 	waterline = owner->unitDef->waterline;
 }
 
@@ -41,7 +36,7 @@ void CStaticMoveType::SlowUpdate()
 	//   static buildings don't have any MoveDef instance, hence we need
 	//   to get the ground height instead of calling CMoveMath::yLevel()
 	// FIXME: intercept heightmapUpdate events and update buildings y-pos only on-demand!
-	if (FloatOnWater() && owner->IsInWater()) {
+	if (owner->FloatOnWater() && owner->IsInWater()) {
 		owner->Move(UpVector * (-waterline - owner->pos.y), true);
 	} else {
 		owner->Move(UpVector * (CGround::GetHeightReal(owner->pos.x, owner->pos.z) - owner->pos.y), true);
@@ -52,13 +47,9 @@ void CStaticMoveType::InitMemberData()
 {
 	#define MEMBER_CHARPTR_HASH(memberName) HsiehHash(memberName, strlen(memberName),     0)
 	#define MEMBER_LITERAL_HASH(memberName) HsiehHash(memberName, sizeof(memberName) - 1, 0)
-	boolMemberData[0].first = MEMBER_LITERAL_HASH("floatOnWater");
-
 	floatMemberData[0].first = MEMBER_LITERAL_HASH("waterline");
 	#undef MEMBER_CHARPTR_HASH
 	#undef MEMBER_LITERAL_HASH
-
-	boolMemberData[0].second = &floatOnWater;
 
 	floatMemberData[0].second = &waterline;
 }
@@ -71,12 +62,12 @@ bool CStaticMoveType::SetMemberValue(unsigned int memberHash, void* memberValue)
 
 	// note: <memberHash> should be calculated via HsiehHash
 	// todo: use template lambdas in C++14
+	/*
 	{
 		const auto pred = [memberHash](const std::pair<unsigned int, bool*>& p) { return (memberHash == p.first); };
 		const auto iter = std::find_if(boolMemberData.begin(), boolMemberData.end(), pred);
 		if (iter != boolMemberData.end()) { *(iter->second) = *(reinterpret_cast<bool*>(memberValue)); return true; }
 	}
-	/*
 	{
 		const auto pred = [memberHash](const std::pair<unsigned int, short*>& p) { return (memberHash == p.first); };
 		const auto iter = std::find_if(shortMemberData.begin(), shortMemberData.end(), pred);
