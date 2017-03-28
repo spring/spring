@@ -17,7 +17,6 @@
 struct MoveDef;
 class CPathFinderDef;
 
-
 class CPathFinder: public IPathFinder {
 public:
 	CPathFinder(bool threadSafe = true);
@@ -27,6 +26,8 @@ public:
 
 	static const   int2* GetDirectionVectorsTable2D();
 	static const float3* GetDirectionVectorsTable3D();
+
+	typedef CMoveMath::BlockType (*BlockCheckFunc)(const MoveDef&, int, int, const CSolidObject*);
 
 protected: // IPathFinder impl
 	/// Performs the actual search.
@@ -98,8 +99,6 @@ private:
 		const MoveDef& moveDef,
 		IPath::Path& foundPath
 	) const;
-
-	typedef CMoveMath::BlockType (*BlockCheckFunc)(const MoveDef&, int, int, const CSolidObject*);
 
 	BlockCheckFunc blockCheckFunc;
 	CPathCache::CacheItem dummyCacheItem;
