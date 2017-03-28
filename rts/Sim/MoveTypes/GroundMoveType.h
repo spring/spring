@@ -41,8 +41,6 @@ public:
 	bool CanApplyImpulse(const float3&) override;
 	void LeaveTransport() override;
 
-	float Waterline() const override { return waterline; }
-
 	void InitMemberData();
 	bool SetMemberValue(unsigned int memberHash, void* memberValue) override;
 
@@ -189,7 +187,6 @@ private:
 	bool canReverse;
 	bool useMainHeading;                /// if true, turn toward mainHeadingPos until weapons[0] can TryTarget() it
 	bool useRawMovement;                /// if true, move towards goal without invoking PFS
-	float waterline;
 
 	float skidRotSpeed;                 /// rotational speed when skidding (radians / (GAME_SPEED frames))
 	float skidRotAccel;                 /// rotational acceleration when skidding (radians / (GAME_SPEED frames^2))

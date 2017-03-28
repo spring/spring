@@ -42,7 +42,8 @@ AMoveType::AMoveType(CUnit* owner):
 	maxSpeedDef(owner? owner->unitDef->speed / GAME_SPEED : 0.0f),
 	maxWantedSpeed(owner? owner->unitDef->speed / GAME_SPEED : 0.0f),
 
-	maneuverLeash(500.0f)
+	maneuverLeash(500.0f),
+	waterline(owner->unitDef->waterline)
 {
 }
 
@@ -127,13 +128,4 @@ bool AMoveType::SetMemberValue(unsigned int memberHash, void* memberValue) {
 	}
 
 	return false;
-}
-
-
-float AMoveType::Waterline() const {
-	// creg
-	if (owner == nullptr)
-		return 0.0f;
-
-	return (owner->unitDef->waterline);
 }

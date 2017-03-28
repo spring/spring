@@ -8,22 +8,14 @@
 
 CR_BIND_DERIVED(CStaticMoveType, AMoveType, (nullptr))
 CR_REG_METADATA(CStaticMoveType, (
-	CR_IGNORED(floatMemberData),
-	CR_MEMBER(waterline)
+	CR_IGNORED(floatMemberData)
 ))
 
 CStaticMoveType::CStaticMoveType(CUnit* owner):
-	AMoveType(owner),
-	waterline(0.0f)
+	AMoveType(owner)
 {
 	// initialize member hashes and pointers needed by SyncedMoveCtrl
 	InitMemberData();
-
-	// creg
-	if (owner == nullptr)
-		return;
-
-	waterline = owner->unitDef->waterline;
 }
 
 void CStaticMoveType::SlowUpdate()

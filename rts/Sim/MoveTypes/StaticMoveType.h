@@ -22,16 +22,11 @@ public:
 	bool Update() override { return false; }
 	void SlowUpdate() override;
 
-	float Waterline() const override { return waterline; }
-
 	void InitMemberData();
 	bool SetMemberValue(unsigned int memberHash, void* memberValue) override;
 
 private:
 	std::array<std::pair<unsigned int, float*>, 1> floatMemberData;
-
-private:
-	float waterline;
 };
 
 #endif // STATICMOVETYPE_H

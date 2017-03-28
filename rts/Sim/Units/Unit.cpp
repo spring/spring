@@ -426,7 +426,7 @@ void CUnit::PostInit(const CUnit* builder)
 	UpdatePosErrorParams(true, true);
 
 	if (FloatOnWater() && IsInWater())
-		Move(UpVector * (std::max(CGround::GetHeightReal(pos.x, pos.z), -Waterline()) - pos.y), true);
+		Move(UpVector * (std::max(CGround::GetHeightReal(pos.x, pos.z), -moveType->GetWaterline()) - pos.y), true);
 
 	if (unitDef->canmove || unitDef->builder) {
 		if (unitDef->moveState <= MOVESTATE_NONE) {
@@ -1658,15 +1658,6 @@ bool CUnit::FloatOnWater() const {
 	return (unitDef->floatOnWater);
 }
 
-float CUnit::Waterline() const {
-	// Check if a move type is already in charge
-	if (moveType != nullptr)
-		return moveType->Waterline();
-
-	// aircraft or building
-	return (unitDef->waterline);
-}
-
 bool CUnit::IsIdle() const
 {
 	if (beingBuilt)
@@ -2704,7 +2695,7 @@ float CUnit::GetTransporteeWantedHeight(const float3& wantedPos, const CUnit* un
 				// transportee is a mobile ground unit
 				switch (transporteeMoveDef->speedModClass) {
 					case MoveDef::Ship: {
-						wantedHeight = std::max(-unit->Waterline(), wantedHeight);
+						wantedHeight = std::max(-unit->moveType->GetWaterline(), wantedHeight);
 						clampedHeight = wantedHeight;
 					} break;
 					case MoveDef::Hover: {

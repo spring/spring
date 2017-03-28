@@ -52,7 +52,7 @@ public:
 	virtual bool IsFlying() const { return false; }
 	virtual bool IsReversing() const { return false; }
 
-	virtual float Waterline() const;
+	float GetWaterline() const { return waterline; }
 
 	float GetMaxSpeed() const { return maxSpeed; }
 	float GetMaxSpeedDef() const { return maxSpeedDef; }
@@ -92,6 +92,7 @@ protected:
 	float maxWantedSpeed;      // maximum speed (temporarily) set by a CMD_SET_WANTED_MAX_SPEED modifier command
 
 	float maneuverLeash;       // maximum distance away a target can be and still be chased
+	float waterline;
 };
 
 #endif // MOVETYPE_H

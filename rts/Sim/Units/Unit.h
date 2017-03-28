@@ -157,7 +157,6 @@ public:
 	bool UnderFirstPersonControl() const { return (fpsControlPlayer != NULL); }
 
 	bool FloatOnWater() const;
-	float Waterline() const;
 
 	bool IsNeutral() const { return neutral; }
 	bool IsCloaked() const { return isCloaked; }

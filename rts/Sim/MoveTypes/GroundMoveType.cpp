@@ -127,7 +127,6 @@ CR_REG_METADATA(CGroundMoveType, (
 	CR_MEMBER(canReverse),
 	CR_MEMBER(useMainHeading),
 	CR_MEMBER(useRawMovement),
-	CR_MEMBER(waterline),
 
 	CR_MEMBER(skidRotSpeed),
 	CR_MEMBER(skidRotAccel),
@@ -178,7 +177,6 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	canReverse((owner != nullptr) && (owner->unitDef->rSpeed > 0.0f)),
 	useMainHeading(false),
 	useRawMovement(false),
-	waterline(0.0f),
 
 	skidRotSpeed(0.0f),
 	skidRotAccel(0.0f),
@@ -214,8 +212,6 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 
 	// unit-gravity must always be negative
 	myGravity = mix(-math::fabs(owner->unitDef->myGravity), mapInfo->map.gravity, owner->unitDef->myGravity == 0.0f);
-
-	waterline = owner->unitDef->waterline;
 }
 
 CGroundMoveType::~CGroundMoveType()
