@@ -41,6 +41,8 @@ public:
 	bool CanApplyImpulse(const float3&) override;
 	void LeaveTransport() override;
 
+	bool FloatOnWater() const override { return floatOnWater; }
+
 	void InitMemberData();
 	bool SetMemberValue(unsigned int memberHash, void* memberValue) override;
 
@@ -142,7 +144,7 @@ private:
 	bool WantReverse(const float3& wpDir, const float3& ffDir) const;
 
 private:
-	std::array<std::pair<unsigned int,  bool*>, 2>  boolMemberData;
+	std::array<std::pair<unsigned int,  bool*>, 3>  boolMemberData;
 	std::array<std::pair<unsigned int, short*>, 1> shortMemberData;
 	std::array<std::pair<unsigned int, float*>, 8> floatMemberData;
 
@@ -187,6 +189,7 @@ private:
 	bool canReverse;
 	bool useMainHeading;                /// if true, turn toward mainHeadingPos until weapons[0] can TryTarget() it
 	bool useRawMovement;                /// if true, move towards goal without invoking PFS
+	bool floatOnWater;
 
 	float skidRotSpeed;                 /// rotational speed when skidding (radians / (GAME_SPEED frames))
 	float skidRotAccel;                 /// rotational acceleration when skidding (radians / (GAME_SPEED frames^2))

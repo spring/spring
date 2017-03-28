@@ -127,6 +127,7 @@ CR_REG_METADATA(CGroundMoveType, (
 	CR_MEMBER(canReverse),
 	CR_MEMBER(useMainHeading),
 	CR_MEMBER(useRawMovement),
+	CR_MEMBER(floatOnWater),
 
 	CR_MEMBER(skidRotSpeed),
 	CR_MEMBER(skidRotAccel),
@@ -177,6 +178,7 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	canReverse((owner != nullptr) && (owner->unitDef->rSpeed > 0.0f)),
 	useMainHeading(false),
 	useRawMovement(false),
+	floatOnWater(false),
 
 	skidRotSpeed(0.0f),
 	skidRotAccel(0.0f),
@@ -212,6 +214,8 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 
 	// unit-gravity must always be negative
 	myGravity = mix(-math::fabs(owner->unitDef->myGravity), mapInfo->map.gravity, owner->unitDef->myGravity == 0.0f);
+
+	floatOnWater = owner->FloatOnWater(true);
 }
 
 CGroundMoveType::~CGroundMoveType()
@@ -2183,7 +2187,7 @@ bool CGroundMoveType::OnSlope(float minSlideTolerance) {
 
 	if (ud->slideTolerance < minSlideTolerance)
 		return false;
-	if (owner->FloatOnWater() && owner->IsInWater())
+	if (FloatOnWater() && owner->IsInWater())
 		return false;
 	if (!pos.IsInBounds())
 		return false;
@@ -2216,7 +2220,7 @@ float CGroundMoveType::GetGroundHeight(const float3& p) const
 	const float gh = CGround::GetHeightReal(p.x, p.z);
 	const float wh = -owner->waterline * (gh <= 0.0f);
 
-	if (owner->FloatOnWater()) {
+	if (FloatOnWater()) {
 		// in [-waterline, maxHeight], note that waterline
 		// can be much deeper than ground in shallow water
 		return (std::max(gh, wh));
@@ -2233,7 +2237,7 @@ void CGroundMoveType::AdjustPosToWaterLine()
 		return;
 
 	if (modInfo.allowGroundUnitGravity) {
-		if (owner->FloatOnWater()) {
+		if (FloatOnWater()) {
 			owner->Move(UpVector * (std::max(CGround::GetHeightReal(owner->pos.x, owner->pos.z), -owner->waterline) - owner->pos.y), true);
 		} else {
 			owner->Move(UpVector * (std::max(CGround::GetHeightReal(owner->pos.x, owner->pos.z),      owner->pos.y) - owner->pos.y), true);
@@ -2454,8 +2458,9 @@ void CGroundMoveType::InitMemberData()
 {
 	#define MEMBER_CHARPTR_HASH(memberName) HsiehHash(memberName, strlen(memberName),     0)
 	#define MEMBER_LITERAL_HASH(memberName) HsiehHash(memberName, sizeof(memberName) - 1, 0)
-	boolMemberData[0].first = MEMBER_LITERAL_HASH(     "atGoal");
-	boolMemberData[1].first = MEMBER_LITERAL_HASH("atEndOfPath");
+	boolMemberData[0].first = MEMBER_LITERAL_HASH(      "atGoal");
+	boolMemberData[1].first = MEMBER_LITERAL_HASH( "atEndOfPath");
+	boolMemberData[2].first = MEMBER_LITERAL_HASH("floatOnWater");
 
 	shortMemberData[0].first = MEMBER_LITERAL_HASH("minScriptChangeHeading");
 
@@ -2472,6 +2477,7 @@ void CGroundMoveType::InitMemberData()
 
 	boolMemberData[0].second = &atGoal;
 	boolMemberData[1].second = &atEndOfPath;
+	boolMemberData[2].second = &floatOnWater;
 
 	shortMemberData[0].second = &minScriptChangeHeading;
 

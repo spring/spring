@@ -1654,7 +1654,11 @@ void CUnit::ChangeTeamReset()
 	}
 }
 
-bool CUnit::FloatOnWater() const {
+bool CUnit::FloatOnWater(bool onlyDef) const {
+	// Check if a move type is already in charge
+	if (!onlyDef && moveType != nullptr)
+		return moveType->FloatOnWater();
+
 	if (moveDef != nullptr)
 		return (moveDef->FloatOnWater());
 
