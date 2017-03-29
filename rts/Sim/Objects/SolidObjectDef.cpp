@@ -63,28 +63,27 @@ SolidObjectDef::SolidObjectDef()
 
 void SolidObjectDef::PreloadModel() const
 {
-	if (model == nullptr && !modelName.empty()) {
-		modelLoader.PreloadModel(modelName);
-	}
+	if (model != nullptr)
+		return;
+	if (modelName.empty())
+		return;
+
+	modelLoader.PreloadModel(modelName);
 }
 
 S3DModel* SolidObjectDef::LoadModel() const
 {
-	if (model == nullptr) {
-		if (!modelName.empty()) {
-			model = modelLoader.LoadModel(modelName);
-		} else {
-			// not useful, too much spam
-			// LOG_L(L_WARNING, "[SolidObjectDef::%s] object \"%s\" has no model defined", __FUNCTION__, name.c_str());
-		}
-	}
+	if (model != nullptr)
+		return model;
+	if (modelName.empty())
+		return nullptr;
 
-	return model;
+	return (model = modelLoader.LoadModel(modelName));
 }
 
 float SolidObjectDef::GetModelRadius() const
 {
-	return (LoadModel()->radius);
+	return ((LoadModel() != nullptr)? model->GetDrawRadius(): 0.0f);
 }
 
 

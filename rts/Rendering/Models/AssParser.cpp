@@ -635,10 +635,10 @@ void CAssParser::CalculateModelProperties(S3DModel* model, const LuaTable& model
 	model->mins = modelTable.GetFloat3("mins", model->mins);
 	model->maxs = modelTable.GetFloat3("maxs", model->maxs);
 
-	model->radius = modelTable.GetFloat("radius", (model->maxs   - model->mins  ).Length() * 0.5f);
-	model->height = modelTable.GetFloat("height", (model->maxs.y - model->mins.y)                );
+	model->radius = modelTable.GetFloat("radius", model->CalcDrawRadius());
+	model->height = modelTable.GetFloat("height", model->CalcDrawHeight());
 
-	model->relMidPos = modelTable.GetFloat3("midpos", (model->maxs + model->mins) * 0.5f);
+	model->relMidPos = modelTable.GetFloat3("midpos", model->CalcDrawMidPos());
 }
 
 

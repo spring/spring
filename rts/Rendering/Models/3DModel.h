@@ -213,8 +213,14 @@ struct S3DModel
 	void DrawStatic() const { rootPiece->DrawStatic(); }
 	void DeletePieces(S3DModelPiece* piece);
 
-	// default value; gets cached in WorldObject (projectiles use this)
-	float GetDrawRadius() const { return ((maxs - mins).Length() * 0.5f); }
+	// default values set by parsers; radius is also cached in WorldObject::drawRadius (used by projectiles)
+	float CalcDrawRadius() const { return ((maxs - mins).Length() * 0.5f); }
+	float CalcDrawHeight() const { return (maxs.y - mins.y); }
+	float GetDrawRadius() const { return radius; }
+	float GetDrawHeight() const { return height; }
+
+	float3 CalcDrawMidPos() const { return ((maxs + mins) * 0.5f); }
+	float3 GetDrawMidPos() const { return relMidPos; }
 
 public:
 	std::string name;

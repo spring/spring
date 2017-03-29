@@ -46,8 +46,8 @@ S3DModel* CS3OParser::Load(const std::string& name)
 	model->SetRootPiece(rootPiece);
 
 	// set after the extrema are known
-	model->radius = (header.radius <= 0.01f)? (model->maxs   - model->mins  ).Length() * 0.5f: header.radius;
-	model->height = (header.height <= 0.01f)? (model->maxs.y - model->mins.y)                : header.height;
+	model->radius = (header.radius <= 0.01f)? model->CalcDrawRadius(): header.radius;
+	model->height = (header.height <= 0.01f)? model->CalcDrawHeight(): header.height;
 	model->relMidPos = float3(header.midx, header.midy, header.midz);
 
 	return model;
