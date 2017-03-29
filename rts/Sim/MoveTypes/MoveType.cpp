@@ -22,6 +22,7 @@ CR_REG_METADATA(AMoveType, (
 	CR_MEMBER(maxSpeedDef),
 	CR_MEMBER(maxWantedSpeed),
 	CR_MEMBER(maneuverLeash),
+	CR_MEMBER(waterline),
 
 	CR_MEMBER(useHeading),
 	CR_MEMBER(progressState)
