@@ -144,7 +144,7 @@ private:
 private:
 	std::array<std::pair<unsigned int,  bool*>, 2>  boolMemberData;
 	std::array<std::pair<unsigned int, short*>, 1> shortMemberData;
-	std::array<std::pair<unsigned int, float*>, 9> floatMemberData;
+	std::array<std::pair<unsigned int, float*>, 8> floatMemberData;
 
 private:
 	IPathController* pathController;

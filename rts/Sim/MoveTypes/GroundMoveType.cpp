@@ -2467,7 +2467,6 @@ void CGroundMoveType::InitMemberData()
 	floatMemberData[5].first = MEMBER_LITERAL_HASH( "maxReverseDist");
 	floatMemberData[6].first = MEMBER_LITERAL_HASH("minReverseAngle");
 	floatMemberData[7].first = MEMBER_LITERAL_HASH("maxReverseSpeed");
-	floatMemberData[8].first = MEMBER_LITERAL_HASH(      "waterline");
 	#undef MEMBER_CHARPTR_HASH
 	#undef MEMBER_LITERAL_HASH
 
@@ -2484,7 +2483,6 @@ void CGroundMoveType::InitMemberData()
 	floatMemberData[5].second = &maxReverseDist,
 	floatMemberData[6].second = &minReverseAngle;
 	floatMemberData[7].second = &maxReverseSpeed;
-	floatMemberData[8].second = &waterline;
 }
 
 bool CGroundMoveType::SetMemberValue(unsigned int memberHash, void* memberValue)

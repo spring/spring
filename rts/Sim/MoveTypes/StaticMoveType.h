@@ -10,7 +10,7 @@ class CStaticMoveType : public AMoveType
 	CR_DECLARE(CStaticMoveType)
 
 public:
-	CStaticMoveType(CUnit* unit);
+	CStaticMoveType(CUnit* unit) : AMoveType(unit) {}
 
 	void StartMoving(float3 pos, float goalRadius) override {}
 	void StartMoving(float3 pos, float goalRadius, float speed) override {}
@@ -21,12 +21,6 @@ public:
 
 	bool Update() override { return false; }
 	void SlowUpdate() override;
-
-	void InitMemberData();
-	bool SetMemberValue(unsigned int memberHash, void* memberValue) override;
-
-private:
-	std::array<std::pair<unsigned int, float*>, 1> floatMemberData;
 };
 
 #endif // STATICMOVETYPE_H
