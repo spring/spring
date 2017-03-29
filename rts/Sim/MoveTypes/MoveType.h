@@ -44,6 +44,7 @@ public:
 	virtual void SetMaxSpeed(float speed) { maxSpeed = std::max(0.001f, speed); }
 	virtual void SetWantedMaxSpeed(float speed) { maxWantedSpeed = speed; }
 	virtual void SetManeuverLeash(float leashLength) { maneuverLeash = leashLength; }
+	virtual void SetWaterline(float depth) { waterline = depth; }
 
 	virtual bool Update() = 0;
 	virtual void SlowUpdate();
@@ -52,12 +53,11 @@ public:
 	virtual bool IsFlying() const { return false; }
 	virtual bool IsReversing() const { return false; }
 
-	float GetWaterline() const { return waterline; }
-
 	float GetMaxSpeed() const { return maxSpeed; }
 	float GetMaxSpeedDef() const { return maxSpeedDef; }
 	float GetMaxWantedSpeed() const { return maxWantedSpeed; }
 	float GetManeuverLeash() const { return maneuverLeash; }
+	float GetWaterline() const { return waterline; }
 
 	// The distance the unit will move before stopping,
 	// starting from given speed and applying maximum
