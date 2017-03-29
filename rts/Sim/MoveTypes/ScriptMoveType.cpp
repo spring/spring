@@ -83,22 +83,22 @@ CScriptMoveType::~CScriptMoveType()
 
 void CScriptMoveType::CheckNotify()
 {
-	if (scriptNotify) {
-		if (eventHandler.MoveCtrlNotify(owner, scriptNotify)) {
-			// NOTE: deletes \<this\>
-			owner->DisableScriptMoveType();
-		} else {
-			scriptNotify = 0;
-		}
+	if (!scriptNotify)
+		return;
+
+	if (eventHandler.MoveCtrlNotify(owner, scriptNotify)) {
+		// NOTE: deletes \<this\>
+		owner->DisableScriptMoveType();
+	} else {
+		scriptNotify = 0;
 	}
 }
 
 
 bool CScriptMoveType::Update()
 {
-	if (useRotVel) {
+	if (useRotVel)
 		owner->SetDirVectorsEuler(rot += rotVel);
-	}
 
 	if (extrapolate) {
 		// NOTE: only gravitational acc. is allowed to build up velocity
@@ -154,9 +154,8 @@ bool CScriptMoveType::Update()
 
 	oldPos = owner->pos;
 
-	if (!noBlocking) {
+	if (!noBlocking)
 		owner->Block();
-	}
 
 	CheckNotify();
 	return true;
@@ -211,12 +210,7 @@ void CScriptMoveType::SetRotationVelocity(const float3& _rotVel)
 
 void CScriptMoveType::SetHeading(short heading)
 {
-	owner->heading = heading;
-
-	if (!trackSlope) {
-		owner->UpdateDirVectors(false);
-		owner->UpdateMidAndAimPos();
-	}
+	owner->SetHeading(heading, trackSlope);
 }
 
 

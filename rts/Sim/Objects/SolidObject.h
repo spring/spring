@@ -142,12 +142,14 @@ public:
 		rightdir.z = -matrix[2]; updir.z = matrix[6]; frontdir.z = matrix[10];
 	}
 
-	void AddHeading(short deltaHeading, bool useGroundNormal) {
-		heading += deltaHeading;
+	void AddHeading(short deltaHeading, bool useGroundNormal) { SetHeading(heading + deltaHeading, useGroundNormal); }
+	void SetHeading(short worldHeading, bool useGroundNormal) {
+		heading = worldHeading;
 
 		UpdateDirVectors(useGroundNormal);
 		UpdateMidAndAimPos();
 	}
+
 	// update object's <heading> from current frontdir
 	// should always be called after a SetDirVectors()
 	void SetHeadingFromDirection();

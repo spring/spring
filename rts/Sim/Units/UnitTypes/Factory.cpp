@@ -9,6 +9,7 @@
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/TeamHandler.h"
+#include "Sim/MoveTypes/MoveType.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Units/Scripts/UnitScript.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
@@ -16,7 +17,6 @@
 #include "Sim/Units/CommandAI/MobileCAI.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitLoader.h"
-#include "Sim/Units/UnitDefHandler.h"
 #include "System/EventHandler.h"
 #include "System/Matrix44f.h"
 #include "System/myMath.h"
@@ -195,42 +195,44 @@ void CFactory::UpdateBuild(CUnit* buildee) {
 
 	// buildPiece is the rotating platform
 	const int buildPiece = script->QueryBuildInfo();
+
 	const float3& buildPos = CalcBuildPos(buildPiece);
 	const CMatrix44f& buildPieceMat = script->GetPieceMatrix(buildPiece);
+
 	const int buildPieceHeading = GetHeadingFromVector(buildPieceMat[2], buildPieceMat[10]); //! x.z, z.z
+	const int buildFaceHeading = GetHeadingFromFacing(buildFacing);
 
 	float3 buildeePos = buildPos;
 
-	// rotate unit nanoframe with platform
-	buildee->heading = (-buildPieceHeading + GetHeadingFromFacing(buildFacing)) & (SPRING_CIRCLE_DIVS - 1);
-
+	// note: basically StaticMoveType::SlowUpdate()
 	if (buildee->FloatOnWater() && buildee->IsInWater())
-		buildeePos.y = -buildee->unitDef->waterline;
+		buildeePos.y = -buildee->moveType->GetWaterline();
 
+	// rotate unit nanoframe with platform
 	buildee->Move(buildeePos, false);
-	buildee->UpdateDirVectors(false);
-	buildee->UpdateMidAndAimPos();
+	buildee->SetHeading((-buildPieceHeading + buildFaceHeading) & (SPRING_CIRCLE_DIVS - 1), false);
 
 	const CCommandQueue& queue = commandAI->commandQue;
 
 	if (!queue.empty() && (queue.front().GetID() == CMD_WAIT)) {
 		buildee->AddBuildPower(this, 0.0f);
-	} else {
-		if (buildee->AddBuildPower(this, buildSpeed)) {
-			CreateNanoParticle();
-		}
+		return;
 	}
+
+	if (!buildee->AddBuildPower(this, buildSpeed))
+		return;
+
+	CreateNanoParticle();
 }
 
 void CFactory::FinishBuild(CUnit* buildee) {
-	if (buildee->beingBuilt) { return; }
-	if (unitDef->fullHealthFactory && buildee->health < buildee->maxHealth) { return; }
+	if (buildee->beingBuilt)
+		return;
+	if (unitDef->fullHealthFactory && buildee->health < buildee->maxHealth)
+		return;
 
-	{
-		if (group && !buildee->group) {
-			buildee->SetGroup(group, true);
-		}
-	}
+	if (group != nullptr && buildee->group == nullptr)
+		buildee->SetGroup(group, true);
 
 	const CCommandAI* bcai = buildee->commandAI;
 	// if not idle, the buildee already has user orders
