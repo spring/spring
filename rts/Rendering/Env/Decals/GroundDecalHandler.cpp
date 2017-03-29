@@ -38,7 +38,7 @@
 #include "System/FileSystem/FileSystem.h"
 
 #define TEX_QUAD_SIZE 16
-
+#define MAX_SCAR_COUNT 4096
 
 using std::min;
 using std::max;
@@ -675,7 +675,7 @@ void CGroundDecalHandler::AddExplosion(float3 pos, float damage, float radius)
 	const int id = GetScarID();
 	const int ttl = std::max(1.0f, decalLevel * damage * 3.0f);
 
-	// decal limit reached; currently never happens
+	// decal limit reached
 	if (id == -1)
 		return;
 
@@ -748,7 +748,10 @@ int CGroundDecalHandler::GetScarID() {
 
 	if (scarIndices.empty()) {
 		const size_t prevSize = scars.size();
-		const size_t nextSize = std::max(scars.size() * 2, size_t(64));
+		const size_t nextSize = Clamp(prevSize * 2, size_t(64), size_t(MAX_SCAR_COUNT));
+
+		if (prevSize == nextSize)
+			return id;
 
 		scars.resize(nextSize);
 
