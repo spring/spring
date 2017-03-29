@@ -15,6 +15,7 @@ General:
 Sim:
  ! Sonar will now detect ships/hovers - this is since los can't raycast through water.
    note that wobble still exists without LoS.
+ - make waterline configurable via Spring.Set*MoveTypeData
 
 Lua:
  ! Undeprecate {unit,feature}def.modelname and add .modeltype and .modelpath to
