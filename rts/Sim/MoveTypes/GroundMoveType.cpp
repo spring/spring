@@ -2214,7 +2214,7 @@ float CGroundMoveType::GetGroundHeight(const float3& p) const
 {
 	// in [minHeight, maxHeight]
 	const float gh = CGround::GetHeightReal(p.x, p.z);
-	const float wh = -owner->unitDef->waterline * (gh <= 0.0f);
+	const float wh = -waterline * (gh <= 0.0f);
 
 	if (owner->FloatOnWater()) {
 		// in [-waterline, maxHeight], note that waterline
@@ -2234,9 +2234,9 @@ void CGroundMoveType::AdjustPosToWaterLine()
 
 	if (modInfo.allowGroundUnitGravity) {
 		if (owner->FloatOnWater()) {
-			owner->Move(UpVector * (std::max(CGround::GetHeightReal(owner->pos.x, owner->pos.z), -owner->unitDef->waterline) - owner->pos.y), true);
+			owner->Move(UpVector * (std::max(CGround::GetHeightReal(owner->pos.x, owner->pos.z),   -waterline) - owner->pos.y), true);
 		} else {
-			owner->Move(UpVector * (std::max(CGround::GetHeightReal(owner->pos.x, owner->pos.z),               owner->pos.y) - owner->pos.y), true);
+			owner->Move(UpVector * (std::max(CGround::GetHeightReal(owner->pos.x, owner->pos.z), owner->pos.y) - owner->pos.y), true);
 		}
 	} else {
 		owner->Move(UpVector * (GetGroundHeight(owner->pos) - owner->pos.y), true);
@@ -2454,8 +2454,8 @@ void CGroundMoveType::InitMemberData()
 {
 	#define MEMBER_CHARPTR_HASH(memberName) HsiehHash(memberName, strlen(memberName),     0)
 	#define MEMBER_LITERAL_HASH(memberName) HsiehHash(memberName, sizeof(memberName) - 1, 0)
-	boolMemberData[0].first = MEMBER_LITERAL_HASH(     "atGoal");
-	boolMemberData[1].first = MEMBER_LITERAL_HASH("atEndOfPath");
+	boolMemberData[0].first = MEMBER_LITERAL_HASH(      "atGoal");
+	boolMemberData[1].first = MEMBER_LITERAL_HASH( "atEndOfPath");
 
 	shortMemberData[0].first = MEMBER_LITERAL_HASH("minScriptChangeHeading");
 

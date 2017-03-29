@@ -44,6 +44,7 @@ public:
 	virtual void SetMaxSpeed(float speed) { maxSpeed = std::max(0.001f, speed); }
 	virtual void SetWantedMaxSpeed(float speed) { maxWantedSpeed = speed; }
 	virtual void SetManeuverLeash(float leashLength) { maneuverLeash = leashLength; }
+	virtual void SetWaterline(float depth) { waterline = depth; }
 
 	virtual bool Update() = 0;
 	virtual void SlowUpdate();
@@ -56,6 +57,7 @@ public:
 	float GetMaxSpeedDef() const { return maxSpeedDef; }
 	float GetMaxWantedSpeed() const { return maxWantedSpeed; }
 	float GetManeuverLeash() const { return maneuverLeash; }
+	float GetWaterline() const { return waterline; }
 
 	// The distance the unit will move before stopping,
 	// starting from given speed and applying maximum
@@ -90,6 +92,7 @@ protected:
 	float maxWantedSpeed;      // maximum speed (temporarily) set by a CMD_SET_WANTED_MAX_SPEED modifier command
 
 	float maneuverLeash;       // maximum distance away a target can be and still be chased
+	float waterline;
 };
 
 #endif // MOVETYPE_H
