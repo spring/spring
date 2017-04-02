@@ -38,12 +38,15 @@ CFarTextureHandler::CFarTextureHandler()
 	// each FT is rendered from 8 different orientations
 	// such an atlas would only allow 16*16=256 FT's but consume
 	// 16384*16384*4=1024MB when fully allocated, which is not a
-	// good tradeoff and necessitates limiting iconSize to 64
+	// good tradeoff and necessitates limiting iconSize to 64x64
 	iconSize.x = 32 * 2;
 	iconSize.y = 32 * 2;
 
 	texSize.x = globalRendering->maxTextureSize;
 	texSize.y = iconSize.y;
+
+	createQueue.reserve(MAX_CREATE_QUEUE_SIZE);
+	renderQueue.reserve(128);
 
 #ifndef HEADLESS
 	if (!fbo.IsValid()) {
@@ -76,7 +79,6 @@ CFarTextureHandler::CFarTextureHandler()
 CFarTextureHandler::~CFarTextureHandler()
 {
 	glDeleteTextures(1, &farTextureID);
-	renderQueue.clear();
 }
 
 
@@ -243,33 +245,30 @@ void CFarTextureHandler::DrawFarTexture(const CSolidObject* obj, CVertexArray* v
 
 void CFarTextureHandler::Queue(const CSolidObject* obj)
 {
-	renderQueue.push_back(obj);
-
-	if (HaveFarIcon(obj))
+	if (!fbo.IsValid())
 		return;
 
+	if (HaveFarIcon(obj)) {
+		renderQueue.push_back(obj);
+		return;
+	}
+
+	// limit the number of objects batch-processed this frame
 	if (createQueue.size() == MAX_CREATE_QUEUE_SIZE)
 		return;
 
 	createQueue.push_back(obj);
+	renderQueue.push_back(obj);
 }
 
 
 void CFarTextureHandler::Draw()
 {
-	if (!fbo.IsValid()) {
-		renderQueue.clear();
-		createQueue.clear();
-		return;
+	for (const CSolidObject* obj: createQueue) {
+		CreateFarTexture(obj);
 	}
 
-	{
-		for (const CSolidObject* obj: createQueue) {
-			CreateFarTexture(obj);
-		}
-	}
-
-	// render current queued far icons on the screen
+	// render currently queued far-icons
 	if (!renderQueue.empty()) {
 		const float3 camNorm = ((camera->GetDir() * XZVector) - (UpVector * 0.1f)).ANormalize();
 
