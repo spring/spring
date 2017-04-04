@@ -1220,9 +1220,12 @@ int LuaSyncedCtrl::CreateUnit(lua_State* L)
 	ASSERT_SYNCED(facing);
 
 	inCreateUnit = true;
+
+	CUnit* builder = unitHandler->GetUnit(luaL_optint(L, 10, -1));
+
 	UnitLoadParams params;
 	params.unitDef = unitDef; /// must be non-NULL
-	params.builder = unitHandler->GetUnit(luaL_optint(L, 10, -1)); /// may be NULL
+	params.builder = builder; /// may be NULL
 	params.pos     = pos;
 	params.speed   = ZeroVector;
 	params.unitID  = luaL_optint(L, 9, -1);
@@ -1234,12 +1237,16 @@ int LuaSyncedCtrl::CreateUnit(lua_State* L)
 	CUnit* unit = unitLoader->LoadUnit(params);
 	inCreateUnit = false;
 
-	if (unit != NULL) {
-		lua_pushnumber(L, unit->id);
-		return 1;
+	if (unit == nullptr)
+		return 0;
+
+	if (!unitDef->canBeAssisted && (builder != nullptr)) {
+		unit->soloBuilder = builder;
+		unit->AddDeathDependence(builder, DEPENDENCE_BUILDER);
 	}
 
-	return 0;
+	lua_pushnumber(L, unit->id);
+	return 1;
 }
 
 
