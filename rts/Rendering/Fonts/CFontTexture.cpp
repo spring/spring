@@ -483,7 +483,7 @@ void CFontTexture::LoadBlock(char32_t start, char32_t end)
 	do {
 		alreadyCheckedFonts.insert(f);
 
-		for (auto it = map.begin(); it != map.end(); ) {
+		for (auto it = map.begin(); !map.empty() && it != map.end(); ) {
 			FT_UInt index = FT_Get_Char_Index(*f, *it);
 
 			if (index != 0) {

@@ -940,7 +940,7 @@ void CPathEstimator::WriteFile(const std::string& cacheFileName, const std::stri
 	}
 
 	// Write vertices.
-	zipWriteInFileInZip(file, &vertexCosts[0], vertexCosts.size() * sizeof(float));
+	zipWriteInFileInZip(file, vertexCosts.data(), vertexCosts.size() * sizeof(float));
 
 	zipCloseFileInZip(file);
 	zipClose(file, NULL);
@@ -966,10 +966,10 @@ std::uint32_t CPathEstimator::CalcChecksum() const
 	std::uint32_t pathChecksum = 0;
 
 	for (auto& pathTypeOffsets: blockStates.peNodeOffsets) {
-		pathChecksum = HsiehHash(&pathTypeOffsets[0], pathTypeOffsets.size() * sizeof(short2), pathChecksum);
+		pathChecksum = HsiehHash(pathTypeOffsets.data(), pathTypeOffsets.size() * sizeof(short2), pathChecksum);
 	}
 
-	pathChecksum = HsiehHash(&vertexCosts[0], vertexCosts.size() * sizeof(float), pathChecksum);
+	pathChecksum = HsiehHash(vertexCosts.data(), vertexCosts.size() * sizeof(float), pathChecksum);
 
 	return pathChecksum;
 }
