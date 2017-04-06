@@ -1212,9 +1212,8 @@ int LuaSyncedCtrl::CreateUnit(lua_State* L)
 		luaL_error(L, "[%s()]: not a controllable team (%d)", __FUNCTION__, teamID);
 		return 0;
 	}
-	if (!unitHandler->CanBuildUnit(unitDef, teamID)) {
+	if (!unitHandler->CanBuildUnit(unitDef, teamID))
 		return 0; // unit limit reached
-	}
 
 	ASSERT_SYNCED(pos);
 	ASSERT_SYNCED(facing);
@@ -1240,10 +1239,7 @@ int LuaSyncedCtrl::CreateUnit(lua_State* L)
 	if (unit == nullptr)
 		return 0;
 
-	if (!unitDef->canBeAssisted && (builder != nullptr)) {
-		unit->soloBuilder = builder;
-		unit->AddDeathDependence(builder, DEPENDENCE_BUILDER);
-	}
+	unit->SetSoloBuilder(builder);
 
 	lua_pushnumber(L, unit->id);
 	return 1;
@@ -1254,22 +1250,21 @@ int LuaSyncedCtrl::DestroyUnit(lua_State* L)
 {
 	CheckAllowGameChanges(L); // FIXME -- recursion protection
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+	if (unit == nullptr)
 		return 0;
-	}
+
 	const int args = lua_gettop(L); // number of arguments
 
 	bool selfd = luaL_optboolean(L, 2, false);
 	bool reclaimed = luaL_optboolean(L, 3, false);
 
-	CUnit* attacker = NULL;
-	if (args >= 4) {
+	CUnit* attacker = nullptr;
+	if (args >= 4)
 		attacker = ParseUnit(L, __FUNCTION__, 4);
-	}
 
-	if (inDestroyUnit) {
+	if (inDestroyUnit)
 		luaL_error(L, "DestroyUnit() recursion is not permitted");
-	}
+
 	inDestroyUnit = true;
 	ASSERT_SYNCED(unit->id);
 	unit->ForcedKillUnit(attacker, selfd, reclaimed);
@@ -1283,27 +1278,24 @@ int LuaSyncedCtrl::TransferUnit(lua_State* L)
 {
 	CheckAllowGameChanges(L);
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+	if (unit == nullptr)
 		return 0;
-	}
 
 	const int newTeam = luaL_checkint(L, 2);
-	if (!teamHandler->IsValidTeam(newTeam)) {
+	if (!teamHandler->IsValidTeam(newTeam))
 		return 0;
-	}
+
 	const CTeam* team = teamHandler->Team(newTeam);
-	if (team == NULL) {
+	if (team == nullptr)
 		return 0;
-	}
 
 	bool given = true;
-	if (FullCtrl(L) && lua_isboolean(L, 3)) {
+	if (FullCtrl(L) && lua_isboolean(L, 3))
 		given = lua_toboolean(L, 3);
-	}
 
-	if (inTransferUnit) {
+	if (inTransferUnit)
 		luaL_error(L, "TransferUnit() recursion is not permitted");
-	}
+
 	inTransferUnit = true;
 	ASSERT_SYNCED(unit->id);
 	ASSERT_SYNCED((int)newTeam);
@@ -1311,7 +1303,6 @@ int LuaSyncedCtrl::TransferUnit(lua_State* L)
 	unit->ChangeTeam(newTeam, given ? CUnit::ChangeGiven
 	                                : CUnit::ChangeCaptured);
 	inTransferUnit = false;
-
 	return 0;
 }
 

@@ -380,10 +380,7 @@ void CBuilder::Update()
 
 								assert(ud == resurrectee->unitDef);
 
-								if (!ud->canBeAssisted) {
-									resurrectee->soloBuilder = this;
-									resurrectee->AddDeathDependence(this, DEPENDENCE_BUILDER);
-								}
+								resurrectee->SetSoloBuilder(this);
 
 								// TODO: make configurable if this should happen
 								resurrectee->health *= 0.05f;
@@ -673,9 +670,8 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo, CFeature*& feature, bool& waitSt
 			return false;
 	}
 
-	if ((waitStance = !ScriptStartBuilding(buildInfo.pos, true))) {
+	if ((waitStance = !ScriptStartBuilding(buildInfo.pos, true)))
 		return false;
-	}
 
 	const UnitDef* buildeeDef = buildInfo.def;
 	const UnitLoadParams buildeeParams = {buildeeDef, this, buildInfo.pos, ZeroVector, -1, team, buildInfo.buildFacing, true, false};
@@ -706,10 +702,7 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo, CFeature*& feature, bool& waitSt
 		terraformCenter = buildee->pos;
 	}
 
-	if (!this->unitDef->canBeAssisted) {
-		buildee->soloBuilder = this;
-		buildee->AddDeathDependence(this, DEPENDENCE_BUILDER);
-	}
+	buildee->SetSoloBuilder(this);
 
 	AddDeathDependence(buildee, DEPENDENCE_BUILD);
 	curBuild = buildee;

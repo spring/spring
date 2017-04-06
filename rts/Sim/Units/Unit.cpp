@@ -1718,9 +1718,8 @@ bool CUnit::AttackGround(const float3& pos, bool isUserTarget, bool wantManualFi
 
 void CUnit::DropCurrentAttackTarget()
 {
-	if (curTarget.type == Target_Unit) {
+	if (curTarget.type == Target_Unit)
 		DeleteDeathDependence(curTarget.unit, DEPENDENCE_TARGET);
-	}
 
 	for (CWeapon* w: weapons) {
 		if (w->GetCurrentTarget() == curTarget)
@@ -1731,16 +1730,26 @@ void CUnit::DropCurrentAttackTarget()
 }
 
 
+void CUnit::SetSoloBuilder(CUnit* builder)
+{
+	if (builder == nullptr)
+		return;
+	if (unitDef->canBeAssisted)
+		return;
+
+	soloBuilder = builder;
+	AddDeathDependence(builder, DEPENDENCE_BUILDER);
+}
+
 void CUnit::SetLastAttacker(CUnit* attacker)
 {
-	assert(attacker != NULL);
+	assert(attacker != nullptr);
 
-	if (teamHandler->AlliedTeams(team, attacker->team)) {
+	if (teamHandler->AlliedTeams(team, attacker->team))
 		return;
-	}
-	if (lastAttacker) {
+
+	if (lastAttacker != nullptr)
 		DeleteDeathDependence(lastAttacker, DEPENDENCE_ATTACKER);
-	}
 
 	lastAttackFrame = gs->frameNum;
 	lastAttacker = attacker;
