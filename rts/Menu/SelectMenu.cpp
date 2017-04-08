@@ -163,9 +163,7 @@ SelectMenu::SelectMenu(std::shared_ptr<ClientSetup> setup)
 		background->GeometryChange();
 	}
 
-	if (!clientSetup->isHost) {
-		ShowConnectWindow(true);
-	}
+	ShowConnectWindow(!clientSetup->isHost);
 }
 
 SelectMenu::~SelectMenu()

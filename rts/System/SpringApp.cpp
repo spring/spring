@@ -588,7 +588,7 @@ void SpringApp::ParseCmdLine(int argc, char* argv[])
 
 CGameController* SpringApp::LoadSaveFile(const std::string& saveFile)
 {
-	const std::string ext = FileSystem::GetExtension(saveFile);
+	const std::string& ext = FileSystem::GetExtension(saveFile);
 
 	if (ext != "ssf" && ext != "slsf")
 		throw content_error(std::string("Unknown save extension: ") + ext);
@@ -603,12 +603,12 @@ CGameController* SpringApp::LoadSaveFile(const std::string& saveFile)
 
 CGameController* SpringApp::LoadDemoFile(const std::string& demoFile)
 {
-	const std::string ext = FileSystem::GetExtension(demoFile);
+	const std::string& ext = FileSystem::GetExtension(demoFile);
 
 	if (ext != "sdfz")
 		throw content_error(std::string("Unknown demo extension: ") + ext);
 
-	clientSetup->isHost        = true;
+	clientSetup->isHost = true;
 	clientSetup->myPlayerName += " (spec)";
 
 	pregame = new CPreGame(clientSetup);
@@ -620,6 +620,7 @@ CGameController* SpringApp::LoadDemoFile(const std::string& demoFile)
 CGameController* SpringApp::RunScript(const std::string& buf)
 {
 	try {
+		clientSetup.reset(new ClientSetup());
 		clientSetup->LoadFromStartScript(buf);
 	} catch (const content_error& err) {
 		throw content_error(std::string("Invalid script file\n") + err.what());
@@ -713,11 +714,13 @@ void SpringApp::Startup()
 	// no argument (either game is given or show selectmenu)
 	if (inputFile.empty()) {
 		clientSetup->isHost = true;
+
 		if ((!FLAGS_game.empty()) && (!FLAGS_map.empty())) {
 			// --game and --map directly specified, try to run them
 			activeController = RunScript(StartScriptGen::CreateMinimalSetup(FLAGS_game, FLAGS_map));
 			return;
 		}
+
 		LoadSpringMenu();
 		return;
 	}
@@ -780,8 +783,6 @@ void SpringApp::Reload(const std::string script)
 	LuaVFSDownload::Free();
 	SafeDelete(battery);
 
-	clientSetup.reset(new ClientSetup());
-
 	LOG("[SpringApp::%s][7]", __func__);
 
 	// note: technically we only need to use RemoveArchive
@@ -827,7 +828,7 @@ void SpringApp::Reload(const std::string script)
 	// clean changed configs
 	configHandler->Update();
 
-	LOG("[SpringApp::%s][12]", __func__);
+	LOG("[SpringApp::%s][12] #script=%lu", __func__, script.size());
 
 	if (script.empty()) {
 		// if no script, drop back to menu
