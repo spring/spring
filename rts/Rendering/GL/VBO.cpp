@@ -130,21 +130,23 @@ void VBO::Unbind() const
 }
 
 
-void VBO::Resize(GLsizeiptr _size, GLenum usage)
+void VBO::Resize(GLsizeiptr _size, GLenum _usage)
 {
 	assert(bound);
 	assert(!mapped);
 
-	if (_size == size && usage == this->usage) // no size change -> nothing to do
+	// no size change -> nothing to do
+	if (_size == size && _usage == usage)
 		return;
 
-	if (size == 0) // first call: none *BO there yet to copy old data from, so use ::New() (faster)
+	// first call: no *BO exists yet to copy old data from, so use ::New() (faster)
+	if (size == 0)
 		return New(_size, usage, nullptr);
 
 	assert(_size > size);
 	auto osize = size;
 	size = _size;
-	this->usage = usage;
+	usage = _usage;
 
 	if (VBOused) {
 		glClearErrors();
@@ -157,7 +159,8 @@ void VBO::Resize(GLsizeiptr _size, GLenum usage)
 			vbo.New(size, GL_STREAM_DRAW);
 
 			// gpu internal copy (fast)
-			if (osize > 0) glCopyBufferSubData(curBoundTarget, GL_COPY_WRITE_BUFFER, 0, 0, osize);
+			if (osize > 0)
+				glCopyBufferSubData(curBoundTarget, GL_COPY_WRITE_BUFFER, 0, 0, osize);
 
 			vbo.Unbind();
 			Unbind();
@@ -185,39 +188,49 @@ void VBO::Resize(GLsizeiptr _size, GLenum usage)
 
 		const GLenum err = glGetError();
 		if (err != GL_NO_ERROR) {
-			LOG_L(L_ERROR, "VBO/PBO: out of memory");
+			LOG_L(L_ERROR, "[VBO::%s(size=%lu,usage=%u)] id=%u tgt=0x%x err=0x%x", __func__, size, usage, vboId, curBoundTarget, err);
 			Unbind();
+
 			VBOused = false; // disable VBO and fallback to VA/sysmem
 			immutableStorage = false;
+
 			Bind();
 			Resize(_size, usage); //FIXME copy old vbo data to new sysram one
 		}
-	} else {
+
+		return;
+	}
+
+	{
 		auto newdata = new GLubyte[size];
-		assert(newdata);
-		if (data) memcpy(newdata, data, osize);
-		delete[] data;
+		assert(newdata != nullptr);
+
+		if (data != nullptr) {
+			memcpy(newdata, data, osize);
+			delete[] data;
+		}
+
 		data = newdata;
 	}
 }
 
 
-void VBO::New(GLsizeiptr _size, GLenum usage, const void* data_)
+void VBO::New(GLsizeiptr _size, GLenum _usage, const void* data_)
 {
 	assert(bound);
-	assert(!mapped || (data_ == nullptr && _size == size && usage == this->usage));
+	assert(!mapped || (data_ == nullptr && _size == size && _usage == usage));
 
 	// no-op new, allows e.g. repeated Bind+New with persistent buffers
-	if (data_ == nullptr && _size == size && usage == this->usage)
+	if (data_ == nullptr && _size == size && _usage == usage)
 		return;
 
 	if (immutableStorage && size != 0) {
-		LOG_L(L_ERROR, "VBO/PBO: cannot recreate already existing persistent storage buffer");
+		LOG_L(L_ERROR, "[VBO::%s(size=%lu,usage=0x%x,data=%p)] cannot recreate persistent storage buffer", __func__, size, usage, data);
 		return;
 	}
 
 	size = _size;
-	this->usage = usage;
+	usage = _usage;
 
 	if (VBOused) {
 		glClearErrors();
@@ -234,21 +247,30 @@ void VBO::New(GLsizeiptr _size, GLenum usage, const void* data_)
 
 		const GLenum err = glGetError();
 		if (err != GL_NO_ERROR) {
-			LOG_L(L_ERROR, "VBO/PBO: out of memory");
+			LOG_L(L_ERROR, "[VBO::%s(size=%lu,usage=0x%x,data=%p)] id=%u tgt=0x%x err=0x%x", __func__, size, usage, data, vboId, curBoundTarget, err);
 			Unbind();
+
 			VBOused = false; // disable VBO and fallback to VA/sysmem
 			immutableStorage = false;
+
 			Bind(curBoundTarget);
 			New(_size, usage, data_);
 		}
-	} else {
+
+		return;
+	}
+
+	{
 		delete[] data;
-		data = nullptr; // to prevent a dead-pointer in case of an out-of-memory exception on the next line
+
+		data = nullptr; // prevent a dead-pointer in case of an out-of-memory exception on the next line
 		data = new GLubyte[size];
-		assert(data);
-		if (data_) {
-			memcpy(data, data_, size);
-		}
+
+		if (data_ == nullptr)
+			return;
+
+		assert(data != nullptr);
+		memcpy(data, data_, size);
 	}
 }
 
