@@ -112,10 +112,3 @@ void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigne
 #endif
 }
 
-
-
-static int exitcode = 0;
-
-void SetExitCode(int code) { exitcode = code; }
-int GetExitCode() { return exitcode; }
-

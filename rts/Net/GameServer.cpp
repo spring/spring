@@ -4,7 +4,7 @@
 #include "System/Net/UDPConnection.h"
 
 #include <functional>
-#include <deque>
+
 #if defined DEDICATED || defined DEBUG
 	#include <iostream>
 #endif
@@ -109,7 +109,7 @@ static const unsigned syncResponseEchoInterval = GAME_SPEED * 2;
 
 
 //FIXME remodularize server commands, so they get registered in word completion etc.
-static const std::string SERVER_COMMANDS[] = {
+static const std::array<std::string, 23> SERVER_COMMANDS = {
 	"kick", "kickbynum",
 	"mute", "mutebynum",
 	"setminspeed", "setmaxspeed",
@@ -224,6 +224,8 @@ void CGameServer::Initialize()
 		clientDrawFilter.fill({spring_notime, 0});
 		clientMuteFilter.fill({false, false});
 
+		usedSkirmishAIIds.fill(false);
+
 		const std::vector<PlayerBase>& playerStartData = myGameSetup->GetPlayerStartingDataCont();
 		const std::vector<TeamBase>&     teamStartData = myGameSetup->GetTeamStartingDataCont();
 		const std::vector<SkirmishAIData>& aiStartData = myGameSetup->GetAIStartingDataCont();
@@ -244,13 +246,11 @@ void CGameServer::Initialize()
 		std::copy(teamStartData.begin(), teamStartData.end(), teams.begin());
 
 		//FIXME move playerID to PlayerBase, so it gets copied from playerStartData
-		int playerID = 0;
-		for (GameParticipant& p: players) {
-			p.id = playerID++;
-		}
+		for (size_t n = 0; n < players.size(); n++)
+			players[n].id = n;
 
 		for (const SkirmishAIData& skd: aiStartData) {
-			const unsigned char skirmishAIId = ReserveNextAvailableSkirmishAIId();
+			const uint8_t skirmishAIId = ReserveSkirmishAIId();
 			if (skirmishAIId == MAX_AIS) {
 				Message(spring::format("Too many AIs (%d) in game setup", aiStartData.size()));
 				break;
@@ -265,7 +265,7 @@ void CGameServer::Initialize()
 		}
 	}
 
-	for (unsigned int n = 0; n < (sizeof(SERVER_COMMANDS) / sizeof(std::string)); n++) {
+	for (unsigned int n = 0; n < SERVER_COMMANDS.size(); n++) {
 		commandBlacklist.insert(SERVER_COMMANDS[n]);
 	}
 
@@ -492,6 +492,7 @@ bool CGameServer::SendDemoData(int targetFrameNum)
 				// we can't use CreateNewFrame() here
 				lastNewFrameTick = spring_gettime();
 				serverFrameNum++;
+
 #ifdef SYNCCHECK
 				if (targetFrameNum == -1) {
 					// not skipping
@@ -499,6 +500,7 @@ bool CGameServer::SendDemoData(int targetFrameNum)
 				}
 				CheckSync();
 #endif
+
 				Broadcast(rpkt);
 				break;
 			}
@@ -598,145 +600,188 @@ void CGameServer::PrivateMessage(int playerNum, const std::string& message) {
 	players[playerNum].SendData(CBaseNetProtocol::Get().SendSystemMessage(SERVER_PLAYER, message));
 }
 
+
+
 void CGameServer::CheckSync()
 {
 #ifdef SYNCCHECK
-	// Check sync
-	std::set<int>::iterator f = outstandingSyncFrames.begin();
-	while (f != outstandingSyncFrames.end()) {
+	std::vector< std::pair<unsigned, unsigned> > checksums; // <response checkum, #clients matching checksum>
+	std::vector<int> noSyncResponsePlayers;
+
+	std::map<unsigned, std::vector<int> > desyncGroups; // <desync-checksum, [desynced players]>
+	std::map<int, unsigned> desyncSpecs; // <playerNum, desync-checksum>
+
+	auto outstandingSyncFrameIt = outstandingSyncFrames.begin();
+
+	while (outstandingSyncFrameIt != outstandingSyncFrames.end()) {
+		const unsigned outstandingSyncFrame = *outstandingSyncFrameIt;
+
 		unsigned correctChecksum = 0;
-		bool bGotCorrectChecksum = false;
+		// maximum number of matched checksums
+		unsigned maxChecksumCount = 0;
+
+		bool haveCorrectChecksum = false;
+		bool completeResponseSet =  true;
+
+
 		if (HasLocalClient()) {
-			// dictatorship
-			std::map<int, unsigned>::iterator it = players[localClientNumber].syncResponse.find(*f);
+			// dictatorship; all player checksums must match the local client's for this frame
+			const auto it = players[localClientNumber].syncResponse.find(outstandingSyncFrame);
+
 			if (it != players[localClientNumber].syncResponse.end()) {
 				correctChecksum = it->second;
-				bGotCorrectChecksum = true;
+				haveCorrectChecksum = true;
 			}
-		}
-		else {
-			// democracy
-			typedef std::vector< std::pair<unsigned, unsigned> > chkList;
-			chkList checksums;
-			unsigned checkMaxCount = 0;
-			for (GameParticipant& p: players) {
+		} else {
+			// democracy; use the checksum that most players agree on as baseline
+			checksums.clear();
+			checksums.reserve(players.size());
+
+			for (const GameParticipant& p: players) {
 				if (!p.link)
 					continue;
 
-				std::map<int, unsigned>::const_iterator it = p.syncResponse.find(*f);
-				if (it != p.syncResponse.end()) {
-					bool found = false;
-					for (chkList::iterator it2 = checksums.begin(); it2 != checksums.end(); ++it2) {
-						if (it2->first == it->second) {
-							found = true;
-							it2->second++;
-							if (checkMaxCount < it2->second) {
-								checkMaxCount = it2->second;
-								correctChecksum = it2->first;
-							}
-						}
-					}
-					if (!found) {
-						checksums.push_back(std::pair<unsigned, unsigned>(it->second, 1));
-						if (checkMaxCount == 0) {
-							checkMaxCount = 1;
-							correctChecksum = it->second;
-						}
+				const auto pChecksumIt = p.syncResponse.find(outstandingSyncFrame);
+
+				if (pChecksumIt == p.syncResponse.end())
+					continue;
+
+				const unsigned pChecksum = pChecksumIt->second;
+				// const unsigned cChecksum = checksums[0].first;
+
+				bool checksumFound = false;
+
+				// compare player <p>'s sync-response checksum for the
+				// outstanding frame to all others we have seen so far
+				for (auto& checksumPair: checksums) {
+					const unsigned  cChecksum      = checksumPair.first;
+					      unsigned& cChecksumCount = checksumPair.second;
+
+					if (cChecksum != pChecksum)
+						continue;
+
+					checksumFound = true;
+
+					if (maxChecksumCount < (++cChecksumCount)) {
+						maxChecksumCount = cChecksumCount;
+						correctChecksum = cChecksum;
 					}
 				}
+
+				if (checksumFound)
+					continue;
+
+				// first time we have seen this checksum
+				checksums.push_back(std::pair<unsigned, unsigned>(pChecksum, 1));
+
+				if (maxChecksumCount == 0) {
+					maxChecksumCount = 1;
+					correctChecksum = pChecksum;
+				}
 			}
-			bGotCorrectChecksum = (checkMaxCount > 0);
+
+			haveCorrectChecksum = (maxChecksumCount > 0);
 		}
 
-		std::vector<int> noSyncResponse;
-		// maps incorrect checksum to players with that checksum
-		std::map<unsigned, std::vector<int> > desyncGroups;
-		std::map<int, unsigned> desyncSpecs;
-		bool bComplete = true;
+
+		noSyncResponsePlayers.clear();
+		noSyncResponsePlayers.reserve(players.size());
+		desyncGroups.clear();
+		desyncSpecs.clear();
+
 		for (GameParticipant& p: players) {
-			if (!p.link) {
+			if (!p.link)
+				continue;
+
+			const auto pChecksumIt = p.syncResponse.find(outstandingSyncFrame);
+
+			if (pChecksumIt == p.syncResponse.end()) {
+				if (outstandingSyncFrame >= (serverFrameNum - static_cast<int>(SYNCCHECK_TIMEOUT)))
+					completeResponseSet = false;
+				else if (outstandingSyncFrame < p.lastFrameResponse)
+					noSyncResponsePlayers.push_back(p.id);
+
 				continue;
 			}
-			std::map<int, unsigned>::iterator it = p.syncResponse.find(*f);
-			if (it == p.syncResponse.end()) {
-				if (*f >= serverFrameNum - static_cast<int>(SYNCCHECK_TIMEOUT))
-					bComplete = false;
-				else if (*f < p.lastFrameResponse)
-					noSyncResponse.push_back(p.id);
-			} else {
-				if (bGotCorrectChecksum && it->second != correctChecksum) {
-					p.desynced = true;
-					if (demoReader || !p.spectator)
-						desyncGroups[it->second].push_back(p.id);
-					else
-						desyncSpecs[p.id] = it->second;
+
+			const unsigned pChecksum = pChecksumIt->second;
+
+			if ((p.desynced = (haveCorrectChecksum && pChecksum != correctChecksum))) {
+				if (demoReader || !p.spectator) {
+					desyncGroups[pChecksum].push_back(p.id);
+				} else {
+					desyncSpecs[p.id] = pChecksum;
 				}
-				else
-					p.desynced = false;
 			}
 		}
 
-		if (!noSyncResponse.empty()) {
-			if (!syncWarningFrame || (*f - syncWarningFrame > static_cast<int>(SYNCCHECK_MSG_TIMEOUT))) {
-				syncWarningFrame = *f;
 
-				std::string playernames = GetPlayerNames(noSyncResponse);
-				Message(spring::format(NoSyncResponse, playernames.c_str(), *f));
+
+		// warn about clients that failed to provide a sync-response checksum in time
+		if (!noSyncResponsePlayers.empty()) {
+			if (!syncWarningFrame || ((outstandingSyncFrame - syncWarningFrame) > static_cast<int>(SYNCCHECK_MSG_TIMEOUT))) {
+				syncWarningFrame = outstandingSyncFrame;
+
+				const std::string& playerNames = GetPlayerNames(noSyncResponsePlayers);
+				Message(spring::format(NoSyncResponse, playerNames.c_str(), outstandingSyncFrame));
 			}
 		}
+
+
 
 		// If anything's in it, we have a desync.
-		// TODO take care of !bComplete case?
+		// TODO take care of !completeResponseSet case?
 		// Should we start resync then immediately or wait for the missing packets (while paused)?
-		if (/*bComplete && */ (!desyncGroups.empty() || !desyncSpecs.empty())) {
-			if (!syncErrorFrame || (*f - syncErrorFrame > static_cast<int>(SYNCCHECK_MSG_TIMEOUT))) {
-				syncErrorFrame = *f;
+		if (/*completeResponseSet && */ (!desyncGroups.empty() || !desyncSpecs.empty())) {
+			if (!syncErrorFrame || (outstandingSyncFrame - syncErrorFrame > static_cast<int>(SYNCCHECK_MSG_TIMEOUT))) {
+				syncErrorFrame = outstandingSyncFrame;
 
-				// TODO enable this when we have resync
-				//serverNet->SendPause(SERVER_PLAYER, true);
 			#ifdef SYNCDEBUG
 				CSyncDebugger::GetInstance()->ServerTriggerSyncErrorHandling(serverFrameNum);
+
 				if (demoReader) // pause is a synced message, thus demo spectators may not pause for real
 					Message(spring::format("%s paused the demo", players[gu->myPlayerNum].name.c_str()));
 				else
 					Broadcast(CBaseNetProtocol::Get().SendPause(gu->myPlayerNum, true));
+
 				isPaused = true;
 				Broadcast(CBaseNetProtocol::Get().SendSdCheckrequest(serverFrameNum));
 			#endif
+
 				// For each group, output a message with list of player names in it.
 				// TODO this should be linked to the resync system so it can roundrobin
 				// the resync checksum request packets to multiple clients in the same group.
-				std::map<unsigned, std::vector<int> >::const_iterator g = desyncGroups.begin();
-				for (; g != desyncGroups.end(); ++g) {
-					std::string playernames = GetPlayerNames(g->second);
-					Message(spring::format(SyncError, playernames.c_str(), (*f), g->first, correctChecksum));
+				for (auto g = desyncGroups.begin(); g != desyncGroups.end(); ++g) {
+					const std::string& playerNames = GetPlayerNames(g->second);
+					Message(spring::format(SyncError, playerNames.c_str(), outstandingSyncFrame, g->first, correctChecksum));
 				}
 
 				// send spectator desyncs as private messages to reduce spam
-				for (std::map<int, unsigned>::const_iterator s = desyncSpecs.begin(); s != desyncSpecs.end(); ++s) {
-					int playerNum = s->first;
+				for (const auto& p: desyncSpecs) {
+					LOG_L(L_ERROR, "%s", spring::format(SyncError, players[p.first].name.c_str(), outstandingSyncFrame, p.second, correctChecksum).c_str());
+					Message(spring::format(SyncError, players[p.first].name.c_str(), outstandingSyncFrame, p.second, correctChecksum));
 
-					LOG_L(L_ERROR, "%s", spring::format(SyncError, players[playerNum].name.c_str(), (*f), s->second, correctChecksum).c_str());
-					Message(spring::format(SyncError, players[playerNum].name.c_str(), (*f), s->second, correctChecksum));
-
-					PrivateMessage(playerNum, spring::format(SyncError, players[playerNum].name.c_str(), (*f), s->second, correctChecksum));
+					PrivateMessage(p.first, spring::format(SyncError, players[p.first].name.c_str(), outstandingSyncFrame, p.second, correctChecksum));
 				}
 			}
-			SetExitCode(-1);
 		}
 
 		// Remove complete sets (for which all player's checksums have been received).
-		if (bComplete) {
-			// Message(str (format("Succesfully purged outstanding sync frame %d from the deque") %(*f)));
+		if (completeResponseSet) {
 			for (GameParticipant& p: players) {
 				if (p.myState < GameParticipant::DISCONNECTED)
-					p.syncResponse.erase(*f);
+					p.syncResponse.erase(outstandingSyncFrame);
 			}
-			f = outstandingSyncFrames.erase(f);
-		} else
-			++f;
+
+			outstandingSyncFrameIt = outstandingSyncFrames.erase(outstandingSyncFrameIt);
+			continue;
+		}
+
+		++outstandingSyncFrameIt;
 	}
+
 #else
+
 	// Make it clear this build isn't suitable for release.
 	if (!syncErrorFrame || (serverFrameNum - syncErrorFrame > SYNCCHECK_MSG_TIMEOUT)) {
 		syncErrorFrame = serverFrameNum;
@@ -1536,7 +1581,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 					Message(spring::format(NoAICreated, players[playerId].name.c_str(), (int)playerId, (int)aiTeamId));
 					break;
 				}
-				const unsigned char skirmishAIId = ReserveNextAvailableSkirmishAIId();
+				const uint8_t skirmishAIId = ReserveSkirmishAIId();
 				if (skirmishAIId == MAX_AIS) {
 					Message(spring::format("Unable to create AI, limit reached (%d)", (int)MAX_AIS));
 					break;
@@ -2732,9 +2777,9 @@ void CGameServer::GotChatMessage(const ChatMessage& msg)
 
 void CGameServer::InternalSpeedChange(float newSpeed)
 {
-	if (internalSpeed == newSpeed) {
-		// TODO some error here
-	}
+	if (internalSpeed == newSpeed)
+		return;
+
 	Broadcast(CBaseNetProtocol::Get().SendInternalSpeed(newSpeed));
 	internalSpeed = newSpeed;
 }
@@ -2742,39 +2787,28 @@ void CGameServer::InternalSpeedChange(float newSpeed)
 
 void CGameServer::UserSpeedChange(float newSpeed, int player)
 {
-	newSpeed = Clamp(newSpeed, minUserSpeed, maxUserSpeed);
+	if (userSpeedFactor == (newSpeed = Clamp(newSpeed, minUserSpeed, maxUserSpeed)))
+		return;
 
-	if (userSpeedFactor != newSpeed) {
-		if (internalSpeed > newSpeed || internalSpeed == userSpeedFactor) // insta-raise speed when not slowed down
-			InternalSpeedChange(newSpeed);
+	if (internalSpeed > newSpeed || internalSpeed == userSpeedFactor) // insta-raise speed when not slowed down
+		InternalSpeedChange(newSpeed);
 
-		Broadcast(CBaseNetProtocol::Get().SendUserSpeed(player, newSpeed));
-		userSpeedFactor = newSpeed;
-	}
+	Broadcast(CBaseNetProtocol::Get().SendUserSpeed(player, newSpeed));
+	userSpeedFactor = newSpeed;
 }
 
 
-unsigned char CGameServer::ReserveNextAvailableSkirmishAIId()
+uint8_t CGameServer::ReserveSkirmishAIId()
 {
-	if (usedSkirmishAIIds.size() >= MAX_AIS)
-		return MAX_AIS; // no available IDs
-
-	unsigned char skirmishAIId = 0;
-	// find a free id
-	std::list<unsigned char>::iterator it;
-	for (it = usedSkirmishAIIds.begin(); it != usedSkirmishAIIds.end(); ++it, skirmishAIId++) {
-		if (*it != skirmishAIId)
-			break;
+	// find the first free id
+	for (uint8_t n = 0; n < MAX_AIS; n++) {
+		if (!usedSkirmishAIIds[n]) {
+			usedSkirmishAIIds[n] = true;
+			return n;
+		}
 	}
 
-	usedSkirmishAIIds.insert(it, skirmishAIId);
-
-	return skirmishAIId;
-}
-
-void CGameServer::FreeSkirmishAIId(const unsigned char skirmishAIId)
-{
-	usedSkirmishAIIds.remove(skirmishAIId);
+	return MAX_AIS;
 }
 
 

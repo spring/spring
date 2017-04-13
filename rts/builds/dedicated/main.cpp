@@ -60,7 +60,7 @@ void ParseCmdLine(int argc, char* argv[], std::string& scriptName)
 	#define LOG_SECTION_CURRENT LOG_SECTION_DEFAULT
 
 #ifndef WIN32
-	if (!FLAGS_nocolor && (getenv("SPRING_NOCOLOR") == NULL)) {
+	if (!FLAGS_nocolor && (getenv("SPRING_NOCOLOR") == nullptr)) {
 		// don't colorize, if our output is piped to a diff tool or file
 		if (isatty(fileno(stdout)))
 			log_console_colorizedOutput(true);
@@ -71,18 +71,16 @@ void ParseCmdLine(int argc, char* argv[], std::string& scriptName)
 		exit(0);
 	}
 
-	if (argc >= 2) {
+	if (argc >= 2)
 		scriptName = argv[1];
-	}
 
 	if (scriptName.empty() && !FLAGS_list_config_vars) {
 		gflags::ShowUsageWithFlags(argv[0]);
 		exit(1);
 	}
 
-	if (FLAGS_isolation) {
+	if (FLAGS_isolation)
 		dataDirLocater.SetIsolationMode(true);
-	}
 
 	if (!FLAGS_isolation_dir.empty()) {
 		dataDirLocater.SetIsolationMode(true);
@@ -138,8 +136,6 @@ int main(int argc, char* argv[])
 		LOG("report any errors to Mantis or the forums.");
 		LOG("loading script from file: %s", scriptName.c_str());
 
-		CGameServer* server = NULL;
-
 		// server will take ownership of these
 		std::shared_ptr<ClientSetup> dsClientSetup(new ClientSetup());
 		std::shared_ptr<GameData> dsGameData(new GameData());
@@ -165,7 +161,7 @@ int main(int argc, char* argv[])
 		CGlobalUnsyncedRNG rng;
 
 		const unsigned sleepTime = FLAGS_sleeptime;
-		const unsigned randSeed = time(NULL) % ((spring_gettime().toNanoSecsi() + 1) * 9007);
+		const unsigned randSeed = time(nullptr) % ((spring_gettime().toNanoSecsi() + 1) * 9007);
 
 		rng.Seed(randSeed);
 		dsGameData->SetRandomSeed(rng.NextInt());
@@ -178,9 +174,9 @@ int main(int argc, char* argv[])
 			dsGameData->SetMapChecksum(archiveScanner->GetArchiveCompleteChecksum(dsGameSetup->mapName));
 
 			CFileHandler f("maps/" + dsGameSetup->mapName);
-			if (!f.FileExists()) {
+			if (!f.FileExists())
 				vfsHandler->AddArchiveWithDeps(dsGameSetup->mapName, false);
-			}
+
 			dsGameSetup->LoadStartPositions(); // full mode
 		}
 
@@ -194,41 +190,39 @@ int main(int argc, char* argv[])
 
 		LOG("starting server...");
 
-		dsGameData->SetSetupText(dsGameSetup->setupText);
-		server = new CGameServer(dsClientSetup, dsGameData, dsGameSetup);
+		{
+			dsGameData->SetSetupText(dsGameSetup->setupText);
+			CGameServer server(dsClientSetup, dsGameData, dsGameSetup);
 
-		while (!server->HasGameID()) {
-			// wait until gameID has been generated or
-			// a timeout occurs (if no clients connect)
-			if (server->HasFinished()) {
-				break;
+			while (!server.HasGameID()) {
+				// wait until gameID has been generated or
+				// a timeout occurs (if no clients connect)
+				if (server.HasFinished())
+					break;
+
+				spring_sleep(spring_secs(sleepTime));
 			}
 
-			spring_sleep(spring_secs(sleepTime));
-		}
+			while (!server.HasFinished()) {
+				static bool printData = (server.GetDemoRecorder() != nullptr);
 
-		while (!server->HasFinished()) {
-			static bool printData = (server->GetDemoRecorder() != NULL);
+				if (printData) {
+					printData = false;
 
-			if (printData) {
-				printData = false;
+					const std::unique_ptr<CDemoRecorder>& demoRec = server.GetDemoRecorder();
+					const std::uint8_t* gameID = (demoRec->GetFileHeader()).gameID;
 
-				const std::unique_ptr<CDemoRecorder>& demoRec = server->GetDemoRecorder();
-				const std::uint8_t* gameID = (demoRec->GetFileHeader()).gameID;
+					LOG("recording demo: %s", (demoRec->GetName()).c_str());
+					LOG("using mod: %s", (dsGameSetup->modName).c_str());
+					LOG("using map: %s", (dsGameSetup->mapName).c_str());
+					LOG("GameID: %02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x", gameID[0], gameID[1], gameID[2], gameID[3], gameID[4], gameID[5], gameID[6], gameID[7], gameID[8], gameID[9], gameID[10], gameID[11], gameID[12], gameID[13], gameID[14], gameID[15]);
+				}
 
-				LOG("recording demo: %s", (demoRec->GetName()).c_str());
-				LOG("using mod: %s", (dsGameSetup->modName).c_str());
-				LOG("using map: %s", (dsGameSetup->mapName).c_str());
-				LOG("GameID: %02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x", gameID[0], gameID[1], gameID[2], gameID[3], gameID[4], gameID[5], gameID[6], gameID[7], gameID[8], gameID[9], gameID[10], gameID[11], gameID[12], gameID[13], gameID[14], gameID[15]);
+				spring_secs(sleepTime).sleep(true);
 			}
-
-			spring_secs(sleepTime).sleep(true);
 		}
 
 		LOG("exiting");
-
-		delete server;
-
 		FileSystemInitializer::Cleanup();
 		GlobalConfig::Deallocate();
 		DataDirLocater::FreeInstance();
@@ -238,7 +232,7 @@ int main(int argc, char* argv[])
 	}
 	CATCH_SPRING_ERRORS
 
-	return GetExitCode();
+	return 0;
 }
 
 #if defined(WIN32) && !defined(_MSC_VER)

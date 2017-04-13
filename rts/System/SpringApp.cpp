@@ -911,8 +911,7 @@ int SpringApp::Run()
 	if ((thrErr = Threading::GetThreadError()) != nullptr)
 		ErrorMessageBox("  [thread] " + thrErr->message, thrErr->caption, thrErr->flags);
 
-	LOG("[SpringApp::%s] exitCode=%d", __func__, GetExitCode());
-	return (GetExitCode());
+	return 0;
 }
 
 

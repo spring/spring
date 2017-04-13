@@ -256,7 +256,6 @@ void CPreGame::UpdateClientNet()
 		}
 
 		LOG_L(L_WARNING, "[PreGame] Server Connection Timeout");
-		SetExitCode(1);
 
 		gu->globalQuit = true;
 		return;

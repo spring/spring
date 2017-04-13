@@ -208,7 +208,7 @@ private:
 	float internalSpeed;
 
 	std::map<unsigned char, GameSkirmishAI> ais;
-	std::list<unsigned char> usedSkirmishAIIds;
+	std::array<bool, MAX_AIS> usedSkirmishAIIds;
 
 	std::vector<GameParticipant> players;
 	std::vector<GameTeam> teams;
@@ -251,8 +251,9 @@ private:
 	void UserSpeedChange(float newSpeed, int player);
 
 	void AddAdditionalUser( const std::string& name, const std::string& passwd, bool fromDemo = false, bool spectator = true, int team = 0, int playerNum = -1);
-	unsigned char ReserveNextAvailableSkirmishAIId();
-	void FreeSkirmishAIId(const unsigned char skirmishAIId);
+
+	uint8_t ReserveSkirmishAIId();
+	void FreeSkirmishAIId(uint8_t skirmishAIId) { usedSkirmishAIIds[skirmishAIId] = false; }
 
 	unsigned localClientNumber;
 
