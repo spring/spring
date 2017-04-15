@@ -39,44 +39,47 @@ CTextureAtlas::CTextureAtlas(unsigned int allocType)
 
 	atlasAllocator->SetNonPowerOfTwo(globalRendering->supportNPOTs);
 	// atlasAllocator->SetMaxSize(globalRendering->maxTextureSize, globalRendering->maxTextureSize);
+
+	memTextures.reserve(128);
 }
 
 CTextureAtlas::~CTextureAtlas()
 {
-	if (freeTexture) {
+	if (freeTexture)
 		glDeleteTextures(1, &atlasTexID);
-	}
+
 	delete atlasAllocator;
 }
 
-void* CTextureAtlas::AddTex(std::string name, int xsize, int ysize, TextureType texType)
+size_t CTextureAtlas::AddTex(std::string name, int xsize, int ysize, TextureType texType)
 {
-	const int gpp = GetBPP(texType);
-	const size_t data_size = xsize * ysize * gpp / 8;
-	MemTex* memtex = new MemTex;
-	memtex->xsize = xsize;
-	memtex->ysize = ysize;
-	memtex->texType = texType;
-	memtex->data = new char[data_size];
+	memTextures.emplace_back();
+	MemTex& tex = memTextures.back();
+
+	tex.xsize = xsize;
+	tex.ysize = ysize;
+	tex.texType = texType;
+	tex.mem.resize((xsize * ysize * GetBPP(texType)) / 8, 0);
+
 	StringToLowerInPlace(name);
-	memtex->names.push_back(name);
-	memtextures.push_back(memtex);
+	tex.names.push_back(name);
 
 	atlasAllocator->AddEntry(name, int2(xsize, ysize));
 
-	return memtex->data;
+	return (memTextures.size() - 1);
 }
 
-int CTextureAtlas::AddTexFromMem(std::string name, int xsize, int ysize, TextureType texType, void* data)
+size_t CTextureAtlas::AddTexFromMem(std::string name, int xsize, int ysize, TextureType texType, void* data)
 {
-	void* memdata = AddTex(name, xsize, ysize, texType);
-	const int gpp = GetBPP(texType);
-	const size_t data_size = xsize * ysize * gpp / 8;
-	std::memcpy(memdata, data, data_size);
-	return 1;
+	const size_t texIdx = AddTex(name, xsize, ysize, texType);
+
+	MemTex& tex = memTextures[texIdx];
+
+	std::memcpy(tex.mem.data(), data, tex.mem.size());
+	return texIdx;
 }
 
-int CTextureAtlas::AddTexFromFile(std::string name, std::string file)
+size_t CTextureAtlas::AddTexFromFile(std::string name, std::string file)
 {
 	StringToLowerInPlace(name);
 
@@ -85,9 +88,8 @@ int CTextureAtlas::AddTexFromFile(std::string name, std::string file)
 	const auto it = files.find(lcFile);
 
 	if (it != files.end()) {
-		MemTex* memtex = it->second;
-		memtex->names.push_back(name);
-		return 1;
+		memTextures[it->second].names.push_back(name);
+		return (it->second);
 	}
 
 
@@ -95,17 +97,11 @@ int CTextureAtlas::AddTexFromFile(std::string name, std::string file)
 	if (!bitmap.Load(file))
 		throw content_error("Could not load texture from file " + file);
 
-	if (bitmap.channels != 4 || bitmap.compressed) {
-		// only suport RGBA for now
+	// only suport RGBA for now
+	if (bitmap.channels != 4 || bitmap.compressed)
 		throw content_error("Unsupported bitmap format in file " + file);
-	}
 
-	const int ret = AddTexFromMem(name, bitmap.xsize, bitmap.ysize, RGBA32, &bitmap.mem[0]);
-
-	if (ret == 1)
-		files[lcFile] = memtextures.back();
-
-	return ret;
+	return (files[lcFile] = AddTexFromMem(name, bitmap.xsize, bitmap.ysize, RGBA32, &bitmap.mem[0]));
 }
 
 bool CTextureAtlas::Finalize()
@@ -115,12 +111,7 @@ bool CTextureAtlas::Finalize()
 	if (success)
 		CreateTexture();
 
-	for (auto it = memtextures.begin(); it != memtextures.end(); ++it) {
-		delete[] (char*)(*it)->data;
-		delete (*it);
-	}
-	memtextures.clear();
-
+	memTextures.clear();
 	return success;
 }
 
@@ -138,21 +129,24 @@ void CTextureAtlas::CreateTexture()
 		// make spacing between textures black transparent to avoid ugly lines with linear filtering
 		std::memset(data, 0, atlasSize.x * atlasSize.y * 4);
 
-		for (auto it = memtextures.begin(); it != memtextures.end(); ++it) {
-			const float4 texCoords = atlasAllocator->GetTexCoords((*it)->names[0]);
-			const float4 absCoords = atlasAllocator->GetEntry((*it)->names[0]);
+		for (const MemTex& memTex: memTextures) {
+			const float4 texCoords = atlasAllocator->GetTexCoords(memTex.names[0]);
+			const float4 absCoords = atlasAllocator->GetEntry(memTex.names[0]);
+
 			const int xpos = absCoords.x;
 			const int ypos = absCoords.y;
 
-			AtlasedTexture tex(texCoords);
-			for (size_t n = 0; n < (*it)->names.size(); ++n) {
-				textures[(*it)->names[n]] = tex;
+			const AtlasedTexture tex(texCoords);
+
+			for (size_t n = 0; n < memTex.names.size(); ++n) {
+				textures[memTex.names[n]] = tex;
 			}
 
-			for (int y = 0; y < (*it)->ysize; ++y) {
-				int* dst = ((int*)data) + xpos + (ypos + y) * atlasSize.x;
-				int* src = ((int*)(*it)->data) + y * (*it)->xsize;
-				memcpy(dst, src, (*it)->xsize * 4);
+			for (int y = 0; y < memTex.ysize; ++y) {
+				int* dst = ((int*)           data  ) + xpos + (ypos + y) * atlasSize.x;
+				int* src = ((int*)memTex.mem.data()) +        (       y) * memTex.xsize;
+
+				memcpy(dst, src, memTex.xsize * 4);
 			}
 		}
 

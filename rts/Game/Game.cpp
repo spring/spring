@@ -814,6 +814,7 @@ void CGame::KillMisc()
 	// this means the simulation *should not* assume the EOH still exists on game exit
 	CEngineOutHandler::Destroy();
 
+	LOG("[Game::%s][3]", __func__);
 	// TODO move these to the end of this dtor, once all action-executors are registered by their respective engine sub-parts
 	UnsyncedGameCommands::DestroyInstance();
 	SyncedGameCommands::DestroyInstance();

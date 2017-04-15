@@ -43,17 +43,13 @@ public:
 	CTextureAtlas(unsigned int allocType = ATLAS_ALLOC_LEGACY);
 	~CTextureAtlas();
 
-	//! Add a texture from a memory pointer returns -1 if failed.
-	int AddTexFromMem(std::string name, int xsize, int ysize, TextureType texType, void* data);
+	// add a texture from a memory pointer
+	size_t AddTexFromMem(std::string name, int xsize, int ysize, TextureType texType, void* data);
 
-	/**
-	 * Returns a memory pointer to the texture pixel data array.
-	 * (reduces redundant memcpy in contrast to AddTexFromMem())
-	 */
-	void* AddTex(std::string name, int xsize, int ysize, TextureType texType = RGBA32);
+	size_t AddTex(std::string name, int xsize, int ysize, TextureType texType = RGBA32);
 
-	//! Add a texture from a file, returns -1 if failed.
-	int AddTexFromFile(std::string name, std::string file);
+	// add a texture from a file
+	size_t AddTexFromFile(std::string name, std::string file);
 
 
 	/**
@@ -104,20 +100,39 @@ protected:
 protected:
 	IAtlasAllocator* atlasAllocator;
 
-	struct MemTex
-	{
-		std::vector<std::string> names;
-		int xsize, ysize;
+	struct MemTex {
+	public:
+		MemTex(): xsize(0), ysize(0), texType(RGBA32) {}
+		MemTex(const MemTex&) = delete;
+		MemTex(MemTex&& t) { *this = std::move(t); }
+
+		MemTex& operator = (const MemTex&) = delete;
+		MemTex& operator = (MemTex&& t) {
+			xsize = t.xsize;
+			ysize = t.ysize;
+			texType = t.texType;
+
+			names = std::move(t.names);
+			mem = std::move(t.mem);
+			return *this;
+		}
+
+	public:
+		int xsize;
+		int ysize;
+
 		TextureType texType;
-		void* data;
+
+		std::vector<std::string> names;
+		std::vector<char> mem;
 	};
 
 	std::string name;
 
 	// temporary storage of all textures
-	std::vector<MemTex*> memtextures;
+	std::vector<MemTex> memTextures;
 
-	spring::unordered_map<std::string, MemTex*> files;
+	spring::unordered_map<std::string, size_t> files;
 	spring::unordered_map<std::string, AtlasedTexture> textures;
 
 	unsigned int atlasTexID;
