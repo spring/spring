@@ -399,9 +399,6 @@ void CFeature::DoDamage(
 	int weaponDefID,
 	int projectileID
 ) {
-	// paralyzers do not damage features
-	if (damages.paralyzeDamageTime)
-		return;
 	if (IsInVoid())
 		return;
 
