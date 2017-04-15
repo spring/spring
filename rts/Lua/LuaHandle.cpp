@@ -1350,18 +1350,17 @@ void CLuaHandle::FeatureDamaged(
 	const CFeature* feature,
 	const CUnit* attacker,
 	float damage,
+	bool paralyzer,
 	int weaponDefID,
 	int projectileID)
 {
 	LUA_CALL_IN_CHECK(L);
-	luaL_checkstack(L, 11, __func__);
+	luaL_checkstack(L, 12, __func__);
 	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
 	static const LuaHashString cmdStr(__func__);
 	if (!cmdStr.GetGlobalFunc(L))
 		return;
-
-	int argCount = 4;
 
 	lua_pushnumber(L, feature->id);
 	lua_pushnumber(L, feature->def->id);
@@ -1369,19 +1368,24 @@ void CLuaHandle::FeatureDamaged(
 	lua_pushnumber(L, damage);
 
 	if (GetHandleFullRead(L)) {
-		lua_pushnumber(L, weaponDefID); argCount += 1;
-		lua_pushnumber(L, projectileID); argCount += 1;
+		lua_pushnumber(L, weaponDefID);
+		lua_pushnumber(L, projectileID);
 
 		if (attacker != nullptr) {
 			lua_pushnumber(L, attacker->id);
 			lua_pushnumber(L, attacker->unitDef->id);
 			lua_pushnumber(L, attacker->team);
-			argCount += 3;
+		} else {
+			for (int i = 0; i < 3; ++i) lua_pushnil(L);
 		}
+	} else {
+		for (int i = 0; i < 5; ++i) lua_pushnil(L);
 	}
 
+	lua_pushboolean(L, paralyzer);
+
 	// call the routine
-	RunCallInTraceback(L, cmdStr, argCount, 0, traceBack.GetErrFuncIdx(), false);
+	RunCallInTraceback(L, cmdStr, 10, 0, traceBack.GetErrFuncIdx(), false);
 }
 
 

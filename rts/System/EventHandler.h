@@ -121,6 +121,7 @@ class CEventHandler
 			const CFeature* feature,
 			const CUnit* attacker,
 			float damage,
+			bool paralyzer,
 			int weaponDefID,
 			int projectileID);
 		void FeatureMoved(const CFeature* feature, const float3& oldpos);
@@ -175,6 +176,7 @@ class CEventHandler
 			const CFeature* feature,
 			const CUnit* attacker,
 			float damage,
+			bool paralyzer,
 			int weaponDefID,
 			int projectileID,
 			float* newDamage,
@@ -605,6 +607,7 @@ inline void CEventHandler::FeatureDamaged(
 	const CFeature* feature,
 	const CUnit* attacker,
 	float damage,
+	bool paralyzer,
 	int weaponDefID,
 	int projectileID)
 {
@@ -615,7 +618,7 @@ inline void CEventHandler::FeatureDamaged(
 		CEventClient* ec = listFeatureDamaged[i];
 
 		if (featureAllyTeam < 0 || ec->CanReadAllyTeam(featureAllyTeam))
-			ec->FeatureDamaged(feature, attacker, damage, weaponDefID, projectileID);
+			ec->FeatureDamaged(feature, attacker, damage, paralyzer, weaponDefID, projectileID);
 	}
 }
 

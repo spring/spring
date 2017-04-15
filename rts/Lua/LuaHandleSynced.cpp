@@ -912,6 +912,7 @@ bool CSyncedLuaHandle::FeaturePreDamaged(
 	const CFeature* feature,
 	const CUnit* attacker,
 	float damage,
+	bool paralyzer,
 	int weaponDefID,
 	int projectileID,
 	float* newDamage,
@@ -921,7 +922,7 @@ bool CSyncedLuaHandle::FeaturePreDamaged(
 	assert(impulseMult != nullptr);
 
 	LUA_CALL_IN_CHECK(L, false);
-	luaL_checkstack(L, 2 + 9 + 2, __func__);
+	luaL_checkstack(L, 2 + 10 + 2, __func__);
 
 	static const LuaHashString cmdStr(__func__);
 	const LuaUtils::ScopedDebugTraceBack traceBack(L);
@@ -929,7 +930,7 @@ bool CSyncedLuaHandle::FeaturePreDamaged(
 	if (!cmdStr.GetGlobalFunc(L))
 		return false;
 
-	int inArgCount = 4;
+	int inArgCount = 10;
 	int outArgCount = 2;
 
 	lua_pushnumber(L, feature->id);
@@ -938,16 +939,21 @@ bool CSyncedLuaHandle::FeaturePreDamaged(
 	lua_pushnumber(L, damage);
 
 	if (GetHandleFullRead(L)) {
-		lua_pushnumber(L, weaponDefID); inArgCount += 1;
-		lua_pushnumber(L, projectileID); inArgCount += 1;
+		lua_pushnumber(L, weaponDefID);
+		lua_pushnumber(L, projectileID);
 
 		if (attacker != NULL) {
 			lua_pushnumber(L, attacker->id);
 			lua_pushnumber(L, attacker->unitDef->id);
 			lua_pushnumber(L, attacker->team);
-			inArgCount += 3;
+		} else {
+			for (int i = 0; i < 3; ++i) lua_pushnil(L);
 		}
+	} else {
+		for (int i = 0; i < 5; ++i) lua_pushnil(L);
 	}
+
+	lua_pushboolean(L, paralyzer);
 
 	// call the routine
 	if (!RunCallInTraceback(L, cmdStr, inArgCount, outArgCount, traceBack.GetErrFuncIdx(), false))

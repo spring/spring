@@ -410,9 +410,6 @@ void CFeature::DoDamage(
 	int weaponDefID,
 	int projectileID
 ) {
-	// paralyzers do not damage features
-	if (damages.paralyzeDamageTime)
-		return;
 	if (IsInVoid())
 		return;
 
@@ -420,7 +417,9 @@ void CFeature::DoDamage(
 	float baseDamage = damages.GetDefault();
 	float impulseMult = float((def->drawType >= DRAWTYPE_TREE) || (udef != nullptr && !udef->IsImmobileUnit()));
 
-	if (eventHandler.FeaturePreDamaged(this, attacker, baseDamage, weaponDefID, projectileID, &baseDamage, &impulseMult))
+	const bool paralyzer = !!damages.paralyzeDamageTime;
+
+	if (eventHandler.FeaturePreDamaged(this, attacker, baseDamage, paralyzer, weaponDefID, projectileID, &baseDamage, &impulseMult))
 		return;
 
 	// NOTE:
@@ -429,11 +428,12 @@ void CFeature::DoDamage(
 	//   queue
 	ApplyImpulse((impulse * moveCtrl.impulseMask * impulseMult) / mass);
 
-	// clamp in case Lua-modified damage is negative
-	health -= baseDamage;
-	health = std::min(health, def->health);
+	if (!paralyzer) {
+		health -= baseDamage;
+		health = std::min(health, def->health); // clamp in case Lua-modified damage is negative
+	}
 
-	eventHandler.FeatureDamaged(this, attacker, baseDamage, weaponDefID, projectileID);
+	eventHandler.FeatureDamaged(this, attacker, baseDamage, paralyzer, weaponDefID, projectileID);
 
 	if (health <= 0.0f && def->destructable) {
 		FeatureLoadParams params = {featureDefHandler->GetFeatureDefByID(def->deathFeatureDefID), nullptr, pos, speed, -1, team, -1, heading, buildFacing, 0, 0};

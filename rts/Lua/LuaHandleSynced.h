@@ -94,6 +94,7 @@ class CSyncedLuaHandle : public CLuaHandle
 			const CFeature* feature,
 			const CUnit* attacker,
 			float damage,
+			bool paralyzer,
 			int weaponDefID,
 			int projectileID,
 			float* newDamage,

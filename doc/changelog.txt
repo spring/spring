@@ -21,6 +21,7 @@ Lua:
  ! change DefaultCommand call order
     previously widgets were called first, and if they returned anything, gadgets weren't called at all
     now gadgets are called first, then widgets are always called and can override
+ ! Feature[Pre]Damaged now called for paralyzers (new 10th boolean argument)
  - add a 3rd param to DefaultCommand callin: the current default command
     works with the above: gadgets receive the default engine cmd,
     widgets then receive what gadgets returned (possibly engine default)
