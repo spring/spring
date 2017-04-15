@@ -785,7 +785,7 @@ void CBumpWater::UploadCoastline(const bool forceFull)
 		CoastAtlasRect& caRect = coastmapAtlasRects[i];
 
 		unsigned int a = 0;
-		unsigned char* texpixels = (unsigned char*) atlas.AddTex(IntToString(i), caRect.xsize, caRect.ysize);
+		unsigned char* texpixels = (unsigned char*) atlas.AddGetTex(IntToString(i), caRect.xsize, caRect.ysize);
 
 		for (int y = 0; y < caRect.ysize; ++y) {
 			const int yindex  = (y + caRect.iy1) * (mapDims.mapx+1) + caRect.ix1;

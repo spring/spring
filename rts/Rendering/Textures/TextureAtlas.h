@@ -45,11 +45,18 @@ public:
 
 	// add a texture from a memory pointer
 	size_t AddTexFromMem(std::string name, int xsize, int ysize, TextureType texType, void* data);
-
-	size_t AddTex(std::string name, int xsize, int ysize, TextureType texType = RGBA32);
-
 	// add a texture from a file
 	size_t AddTexFromFile(std::string name, std::string file);
+	// add a blank texture
+	size_t AddTex(std::string name, int xsize, int ysize, TextureType texType = RGBA32);
+
+	void* AddGetTex(std::string name, int xsize, int ysize, TextureType texType = RGBA32) {
+		const size_t idx = AddTex(std::move(name), xsize, ysize, texType);
+
+		MemTex& tex = memTextures[idx];
+		auto& mem = tex.mem;
+		return (mem.data());
+	}
 
 
 	/**
