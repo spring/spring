@@ -156,7 +156,7 @@ void CTextureAtlas::CreateTexture()
 			tex.Save(name + "-" + IntToString(atlasSize.x) + "x" + IntToString(atlasSize.y) + ".png");
 		}
 	} else {
-		LOG_L(L_ERROR, "[TextureAtlas::%s] failed to map PBO (atlasSize=<%d,%d>)", __func__, atlasSize.x, atlasSize.y);
+		LOG_L(L_ERROR, "[TextureAtlas::%s] failed to map PBO for atlas \"%s\" (size=<%d,%d>)", __func__, name.c_str(), atlasSize.x, atlasSize.y);
 	}
 
 	pbo.UnmapBuffer();
