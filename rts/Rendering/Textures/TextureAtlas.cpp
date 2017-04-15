@@ -112,6 +112,7 @@ bool CTextureAtlas::Finalize()
 		CreateTexture();
 
 	memTextures.clear();
+	files.clear();
 	return success;
 }
 
@@ -207,11 +208,10 @@ AtlasedTexture& CTextureAtlas::GetTexture(const std::string& name)
 
 AtlasedTexture& CTextureAtlas::GetTextureWithBackup(const std::string& name, const std::string& backupName)
 {
-	if (textures.find(StringToLower(name)) != textures.end()) {
+	if (textures.find(StringToLower(name)) != textures.end())
 		return textures[StringToLower(name)];
-	} else {
-		return textures[StringToLower(backupName)];
-	}
+
+	return textures[StringToLower(backupName)];
 }
 
 int2 CTextureAtlas::GetSize() const {
