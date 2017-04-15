@@ -126,7 +126,7 @@ void CTextureAtlas::CreateTexture()
 
 	unsigned char* data = (unsigned char*)pbo.MapBuffer(GL_WRITE_ONLY);
 
-	{
+	if (data != nullptr) {
 		// make spacing between textures black transparent to avoid ugly lines with linear filtering
 		std::memset(data, 0, atlasSize.x * atlasSize.y * 4);
 
@@ -155,6 +155,8 @@ void CTextureAtlas::CreateTexture()
 			CBitmap tex(data, atlasSize.x, atlasSize.y);
 			tex.Save(name + "-" + IntToString(atlasSize.x) + "x" + IntToString(atlasSize.y) + ".png");
 		}
+	} else {
+		LOG_L(L_ERROR, "[TextureAtlas::%s] failed to map PBO (atlasSize=<%d,%d>)", __func__, atlasSize.x, atlasSize.y);
 	}
 
 	pbo.UnmapBuffer();
