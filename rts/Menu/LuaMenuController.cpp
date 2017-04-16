@@ -33,6 +33,8 @@ CLuaMenuController::CLuaMenuController(const std::string& menuName)
 
 CLuaMenuController::~CLuaMenuController()
 {
+	CLuaMenu::FreeHandler();
+
 	SafeDelete(mouse);
 	SafeDelete(infoConsole);
 }

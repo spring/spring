@@ -945,7 +945,6 @@ void SpringApp::ShutDown(bool fromRun)
 	SafeDelete(game);
 	SafeDelete(pregame);
 
-	CLuaMenu::FreeHandler();
 	SafeDelete(luaMenuController);
 
 	LOG("[SpringApp::%s][3]", __func__);
