@@ -31,7 +31,6 @@
 #include "Game/UI/KeyBindings.h"
 #include "Game/UI/KeyCodes.h"
 #include "Game/UI/MouseHandler.h"
-#include "Lua/LuaMenu.h"
 #include "Lua/LuaOpenGL.h"
 #include "Lua/LuaVFSDownload.h"
 #include "Menu/LuaMenuController.h"
