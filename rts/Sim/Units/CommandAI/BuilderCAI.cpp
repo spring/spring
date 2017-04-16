@@ -259,9 +259,8 @@ inline float CBuilderCAI::GetBuildRange(const float targetRadius) const
 	// and so it would be impossible to get in buildrange (collision detection with units/features)
 	//
 	// what does this even mean?? IMMOBILE units cannot "get in range" of anything
-	if (owner->immobile) {
+	if (owner->immobile)
 		return (ownerBuilder->buildDistance + std::max(targetRadius - ownerBuilder->buildDistance, 0.0f));
-	}
 
 	return (ownerBuilder->buildDistance + targetRadius);
 }
@@ -578,6 +577,11 @@ void CBuilderCAI::ExecuteBuildCmd(Command& c)
 
 	if (!inCommand) {
 		BuildInfo bi;
+
+		// note:
+		//   need at least 3 parameters or BuildInfo will fail to parse
+		//   this usually indicates a malformed command inserted by Lua
+		//   (most common with patrolling pseudo-factory hubs)
 		bi.pos.x = math::floor(c.params[0] / SQUARE_SIZE + 0.5f) * SQUARE_SIZE;
 		bi.pos.z = math::floor(c.params[2] / SQUARE_SIZE + 0.5f) * SQUARE_SIZE;
 		bi.pos.y = c.params[1];
@@ -587,10 +591,10 @@ void CBuilderCAI::ExecuteBuildCmd(Command& c)
 
 		bi.def = unitDefHandler->GetUnitDefByID(-c.GetID());
 
-		CFeature* f = NULL;
+		CFeature* f = nullptr;
 		CGameHelper::TestUnitBuildSquare(bi, f, owner->allyteam, true);
 
-		if (f != NULL) {
+		if (f != nullptr) {
 			if (!bi.def->isFeature || bi.def->wreckName != f->def->name) {
 				ReclaimFeature(f);
 			} else {
@@ -600,10 +604,16 @@ void CBuilderCAI::ExecuteBuildCmd(Command& c)
 		}
 
 		inCommand = true;
-		build.Parse(c);
+
+		if (!build.Parse(c)) {
+			StopMoveAndFinishCommand();
+			return;
+		}
 	}
 
+	assert(build.def != nullptr);
 	assert(build.def->id == -c.GetID() && build.def->id != 0);
+
 	const float buildeeRadius = GetBuildOptionRadius(build.def, c.GetID());
 
 	if (building) {
@@ -617,7 +627,6 @@ void CBuilderCAI::ExecuteBuildCmd(Command& c)
 		// This can only be true if two builders started building
 		// the restricted unit in the same simulation frame
 		else if (unitHandler->unitsByDefs[owner->team][build.def->id].size() > build.def->maxThisUnit) {
-			// unit restricted
 			building = false;
 			ownerBuilder->StopBuild();
 			CancelRestrictedUnit();
@@ -628,7 +637,8 @@ void CBuilderCAI::ExecuteBuildCmd(Command& c)
 			// to the construction site first before telling us
 			// (since greyed-out icons can still be clicked etc,
 			// would be better to prevent that but doesn't cover
-			// case where limit reached while builder en-route)
+			// cases where the limit is reached while a builder
+			// is en-route)
 			CancelRestrictedUnit();
 			StopMove();
 			return;
@@ -648,17 +658,16 @@ void CBuilderCAI::ExecuteBuildCmd(Command& c)
 				return;
 			}
 
-			if (teamHandler->Team(owner->team)->AtUnitLimit()) {
+			if (teamHandler->Team(owner->team)->AtUnitLimit())
 				return;
-			}
 
-			CFeature* f = NULL;
+			CFeature* f = nullptr;
 
 			bool waitstance = false;
 			if (ownerBuilder->StartBuild(build, f, waitstance) || (++buildRetries > 30)) {
 				building = true;
 			}
-			else if (f != NULL && (!build.def->isFeature || build.def->wreckName != f->def->name)) {
+			else if (f != nullptr && (!build.def->isFeature || build.def->wreckName != f->def->name)) {
 				inCommand = false;
 				ReclaimFeature(f);
 			}
@@ -669,7 +678,7 @@ void CBuilderCAI::ExecuteBuildCmd(Command& c)
 				// tell everything within the radius of the soon-to-be buildee
 				// to get out of the way; using the model radius is not correct
 				// because this can be shorter than half the footprint diagonal
-				CGameHelper::BuggerOff(build.pos, std::max(buildeeRadius, fpRadius), false, true, owner->team, NULL);
+				CGameHelper::BuggerOff(build.pos, std::max(buildeeRadius, fpRadius), false, true, owner->team, nullptr);
 				NonMoving();
 			}
 		} else {
@@ -1174,10 +1183,8 @@ void CBuilderCAI::ExecuteFight(Command& c)
 		tempOrder = false;
 		inCommand = true;
 	}
-	if (c.params.size() < 3) { // this shouldnt happen but anyway ...
-		LOG_L(L_ERROR,
-				"Received a Fight command with less than 3 params on %s in BuilderCAI",
-				owner->unitDef->humanName.c_str());
+	if (c.params.size() < 3) {
+		LOG_L(L_ERROR, "[BuilderCAI::%s] invalid CMD_FIGHT for builder %d (%s)", __func__, owner->id, owner->unitDef->humanName.c_str());
 		return;
 	}
 
