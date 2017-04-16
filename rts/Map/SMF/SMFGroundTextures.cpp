@@ -76,7 +76,7 @@ void CSMFGroundTextures::LoadTiles(CSMFMapFile& file)
 		throw content_error("Error loading map: count of tiles is 0.");
 	}
 	tileMap.resize(smfMap->tileCount);
-	tiles.resize(tileHeader.numTiles * SMALL_TILE_SIZE);
+	tiles.resize( (tileHeader.numTiles + 1) * SMALL_TILE_SIZE);
 	squares.resize(smfMap->numBigTexX * smfMap->numBigTexY);
 
 	bool smtHeaderOverride = false;
@@ -144,10 +144,14 @@ void CSMFGroundTextures::LoadTiles(CSMFMapFile& file)
 		}
 	}
 
+	// set the last tile to be red, so missed index's will draw this.
+	memset( &tiles[ tiles.size() - SMALL_TILE_SIZE ], 0xaa, SMALL_TILE_SIZE );
+
 	ifs->Read(&tileMap[0], smfMap->tileCount * sizeof(int));
 
 	for (int i = 0; i < smfMap->tileCount; i++) {
 		swabDWordInPlace(tileMap[i]);
+		tileMap[i] = std::min( tileMap[i], (unsigned int)tileHeader.numTiles );
 	}
 
 #if defined(USE_LIBSQUISH) && !defined(HEADLESS) && defined(GLEW_ARB_ES3_compatibility)
@@ -445,7 +449,7 @@ void CSMFGroundTextures::ExtractSquareTiles(
 		for (int x1 = 0; x1 < BLOCK_SIZE; x1++) {
 			const int tileX = tileOffsetX + x1;
 			const int tileY = tileOffsetY + y1;
-			const int tileIdx = tileMap[tileY * smfMap->tileMapSizeX + tileX];
+			const unsigned int tileIdx = tileMap[tileY * smfMap->tileMapSizeX + tileX];
 			const GLint* tile = (GLint*) &tiles[tileIdx * SMALL_TILE_SIZE + mipOffset];
 
 			const int doff = (x1 * numBlocks) + (y1 * numBlocks * numBlocks) * BLOCK_SIZE;
