@@ -10,6 +10,7 @@
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/MoveTypes/MoveType.h"
+#include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Units/Scripts/UnitScript.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
@@ -306,33 +307,39 @@ void CFactory::DependentDied(CObject* o)
 
 void CFactory::SendToEmptySpot(CUnit* unit)
 {
+	constexpr int numSteps = 100;
+
 	const float searchRadius = radius * 4.0f + unit->radius * 4.0f;
-	const int numSteps = 36;
+	const float searchAngle = math::PI / (numSteps * 0.5f);
 
-	const float3 exitPos = pos + frontdir*(radius + unit->radius);
-	float3 foundPos = pos + frontdir * searchRadius;
-	const float3 tempPos = foundPos;
+	const float3 exitPos = pos + frontdir * (radius + unit->radius);
+	const float3 tempPos = pos + frontdir * searchRadius;
 
-	for (int x = 0; x < numSteps; ++x) {
-		const float a = searchRadius * math::cos(x * math::PI / (numSteps * 0.5f));
-		const float b = searchRadius * math::sin(x * math::PI / (numSteps * 0.5f));
+	float3 foundPos = tempPos;
+
+	for (int i = 0; i < numSteps; ++i) {
+		const float a = searchRadius * math::cos(i * searchAngle);
+		const float b = searchRadius * math::sin(i * searchAngle);
 
 		float3 testPos = pos + frontdir * a + rightdir * b;
 
 		if (!testPos.IsInBounds())
 			continue;
-		// don't pick spots behind the factory (because
+		// don't pick spots behind the factory, because
 		// units will want to path through it when open
-		// which slows down production)
+		// (which slows down production)
 		if ((testPos - pos).dot(frontdir) < 0.0f)
 			continue;
 
 		testPos.y = CGround::GetHeightAboveWater(testPos.x, testPos.z);
 
-		if (quadField->NoSolidsExact(testPos, unit->radius * 1.5f, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS)) {
-			foundPos = testPos;
-			break;
-		}
+		if (!quadField->NoSolidsExact(testPos, unit->radius * 1.5f, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS))
+			continue;
+		if (unit->moveDef != nullptr && !unit->moveDef->TestMoveSquare(nullptr, testPos, ZeroVector, true, true))
+			continue;
+
+		foundPos = testPos;
+		break;
 	}
 
 	if (foundPos == tempPos) {
@@ -340,15 +347,24 @@ void CFactory::SendToEmptySpot(CUnit* unit)
 		// also make sure not to loop forever if we happen to be facing a map border
 		foundPos.y = 0.0f;
 
-		do {
+		for (int i = 0; i < numSteps; ++i) {
 			const float x = ((gsRNG.NextInt() * 1.0f) / RANDINT_MAX) * numSteps;
-			const float a = searchRadius * math::cos(x * math::PI / (numSteps * 0.5f));
-			const float b = searchRadius * math::sin(x * math::PI / (numSteps * 0.5f));
+			const float a = searchRadius * math::cos(x * searchAngle);
+			const float b = searchRadius * math::sin(x * searchAngle);
 
 			foundPos.x = pos.x + frontdir.x * a + rightdir.x * b;
 			foundPos.z = pos.z + frontdir.z * a + rightdir.z * b;
-			foundPos.y += 1.0f;
-		} while ((!foundPos.IsInBounds() || (foundPos - pos).dot(frontdir) < 0.0f) && (foundPos.y < 100.0f));
+
+			if (!foundPos.IsInBounds())
+				continue;
+			if ((foundPos - pos).dot(frontdir) < 0.0f)
+				continue;
+
+			if (unit->moveDef != nullptr && !unit->moveDef->TestMoveSquare(nullptr, foundPos, ZeroVector, true, true))
+				continue;
+
+			break;
+		}
 
 		foundPos.y = CGround::GetHeightAboveWater(foundPos.x, foundPos.z);
 	}
@@ -356,7 +372,8 @@ void CFactory::SendToEmptySpot(CUnit* unit)
 	// first queue a temporary waypoint outside the factory
 	// (otherwise units will try to turn before exiting when
 	// foundPos lies behind exit and cause jams / get stuck)
-	// we assume this temporary point is not itself blocked
+	// we assume this temporary point is not itself blocked,
+	// unlike the second for which we do call TestMoveSquare
 	//
 	// NOTE:
 	//   MobileCAI::AutoGenerateTarget inserts a _third_
@@ -371,6 +388,8 @@ void CFactory::SendToEmptySpot(CUnit* unit)
 		Command c0(CMD_MOVE, SHIFT_KEY, exitPos);
 		unit->commandAI->GiveCommand(c0);
 	}
+
+	// second actual empty-spot waypoint
 	Command c1(CMD_MOVE, SHIFT_KEY, foundPos);
 	unit->commandAI->GiveCommand(c1);
 }
@@ -403,12 +422,12 @@ void CFactory::AssignBuildeeOrders(CUnit* unit) {
 		float3 tmpPos = unit->pos + (frontdir * this->radius * tmpDst);
 
 		if (buildFacing == FACING_NORTH || buildFacing == FACING_SOUTH) {
-			while ((tmpPos.z >= unit->pos.z - zs && tmpPos.z <= unit->pos.z + zs)) {
+			while ((tmpPos.z >= unit->pos.z - zs) && (tmpPos.z <= unit->pos.z + zs)) {
 				tmpDst += 0.5f;
 				tmpPos = unit->pos + (frontdir * this->radius * tmpDst);
 			}
 		} else {
-			while ((tmpPos.x >= unit->pos.x - xs && tmpPos.x <= unit->pos.x + xs)) {
+			while ((tmpPos.x >= unit->pos.x - xs) && (tmpPos.x <= unit->pos.x + xs)) {
 				tmpDst += 0.5f;
 				tmpPos = unit->pos + (frontdir * this->radius * tmpDst);
 			}
@@ -424,7 +443,7 @@ void CFactory::AssignBuildeeOrders(CUnit* unit) {
 		unitCAI->GiveCommand(c);
 
 		// copy factory orders for new unit
-		for (CCommandQueue::const_iterator ci = factoryCmdQue.begin(); ci != factoryCmdQue.end(); ++ci) {
+		for (auto ci = factoryCmdQue.begin(); ci != factoryCmdQue.end(); ++ci) {
 			Command c = *ci;
 			c.options |= SHIFT_KEY;
 
