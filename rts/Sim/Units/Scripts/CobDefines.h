@@ -112,6 +112,7 @@
 #define KCOS                     136 // get (kiloCosine  : 1024*cos(x))
 #define KTAN                     137 // get (kiloTangent : 1024*tan(x))
 #define SQRT                     138 // get (square root)
+#define MAX_RANGE                139 // set or get
 
 // NOTE: shared variables use codes [1024 - 5119]
 

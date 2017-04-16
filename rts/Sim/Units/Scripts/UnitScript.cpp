@@ -985,6 +985,8 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 	case MAX_SPEED: {
 		return int(unit->moveType->GetMaxSpeed() * COBSCALE);
 	} break;
+	case MAX_RANGE:
+		return unit->maxRange;
 	case REVERSING: {
 		CGroundMoveType* gmt = dynamic_cast<CGroundMoveType*>(unit->moveType);
 		return ((gmt != NULL)? int(gmt->IsReversing()): 0);
@@ -1468,6 +1470,10 @@ void CUnitScript::SetUnitVal(int val, int param)
 		case MAX_SPEED: {
 			// interpret negative values as non-persistent changes
 			unit->commandAI->SetScriptMaxSpeed(std::max(param, -param) / float(COBSCALE), (param >= 0));
+			break;
+		}
+		case MAX_RANGE: {
+			unit->maxRange = param;
 			break;
 		}
 		case CLOAKED: {
