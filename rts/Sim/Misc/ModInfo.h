@@ -90,6 +90,7 @@ public:
 	float captureEnergyCostFactor;
 
 	float unitExpMultiplier;
+	float unitExpLastHitMult;
 	float unitExpPowerScale;
 	float unitExpHealthScale;
 	float unitExpReloadScale;

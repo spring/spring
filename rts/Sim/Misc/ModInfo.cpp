@@ -50,6 +50,7 @@ void CModInfo::ResetState()
 	captureEnergyCostFactor   = 0.0f;
 
 	unitExpMultiplier  = 0.0f;
+	unitExpLastHitMult = 0.0f;
 	unitExpPowerScale  = 0.0f;
 	unitExpHealthScale = 0.0f;
 	unitExpReloadScale = 0.0f;
@@ -208,6 +209,7 @@ void CModInfo::Init(const char* modArchive)
 		const LuaTable& experienceTbl = root.SubTable("experience");
 
 		unitExpMultiplier  = experienceTbl.GetFloat("experienceMult", 1.0f);
+		unitExpLastHitMult = experienceTbl.GetFloat(   "lastHitMult", 1.0f);
 		unitExpPowerScale  = experienceTbl.GetFloat(    "powerScale", 1.0f);
 		unitExpHealthScale = experienceTbl.GetFloat(   "healthScale", 0.7f);
 		unitExpReloadScale = experienceTbl.GetFloat(   "reloadScale", 0.4f);

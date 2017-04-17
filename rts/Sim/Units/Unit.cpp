@@ -74,6 +74,7 @@ bool  CUnit::spawnFeature = true;
 
 float CUnit::empDeclineRate = 0.0f;
 float CUnit::expMultiplier  = 0.0f;
+float CUnit::expLastHitMult = 0.0f;
 float CUnit::expPowerScale  = 0.0f;
 float CUnit::expHealthScale = 0.0f;
 float CUnit::expReloadScale = 0.0f;
@@ -263,6 +264,7 @@ void CUnit::InitStatic()
 	expGrade       = 0.0f;
 
 	SetExpMultiplier(modInfo.unitExpMultiplier);
+	SetExpLastHitMult(modInfo.unitExpLastHitMult);
 	SetExpPowerScale(modInfo.unitExpPowerScale);
 	SetExpHealthScale(modInfo.unitExpHealthScale);
 	SetExpReloadScale(modInfo.unitExpReloadScale);
@@ -1377,7 +1379,7 @@ void CUnit::DoDamage(
 			return;
 
 		if (!teamHandler->Ally(allyteam, attacker->allyteam)) {
-			attacker->AddExperience(expMultiplier * 0.1f * (power / attacker->power));
+			attacker->AddExperience(expMultiplier * 0.1f * (power / attacker->power) * expLastHitMult);
 			teamHandler->Team(attacker->team)->GetCurrentStats().unitsKilled++;
 		}
 	}

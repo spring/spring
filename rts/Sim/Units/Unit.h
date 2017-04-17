@@ -231,12 +231,14 @@ public: // unsynced methods
 
 public:
 	static void  SetExpMultiplier(float value) { expMultiplier = value; }
+	static void  SetExpLastHitMult(float value) { expLastHitMult = value; }
 	static void  SetExpPowerScale(float value) { expPowerScale = value; }
 	static void  SetExpHealthScale(float value) { expHealthScale = value; }
 	static void  SetExpReloadScale(float value) { expReloadScale = value; }
 	static void  SetExpGrade(float value) { expGrade = value; }
 
 	static float GetExpMultiplier() { return expMultiplier; }
+	static float GetExpLastHitMult() { return expLastHitMult; }
 	static float GetExpPowerScale() { return expPowerScale; }
 	static float GetExpHealthScale() { return expHealthScale; }
 	static float GetExpReloadScale() { return expReloadScale; }
@@ -526,6 +528,7 @@ private:
 
 	static float empDeclineRate;
 	static float expMultiplier;
+	static float expLastHitMult;
 	static float expPowerScale;
 	static float expHealthScale;
 	static float expReloadScale;
