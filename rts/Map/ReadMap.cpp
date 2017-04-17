@@ -33,14 +33,6 @@
 //////////////////////////////////////////////////////////////////////
 
 
-#ifdef USE_UNSYNCED_HEIGHTMAP
-	#define	HEIGHTMAP_DIGESTS \
-		CR_IGNORED(  syncedHeightMapDigests), \
-		CR_IGNORED(unsyncedHeightMapDigests),
-#else
-	#define HEIGHTMAP_DIGESTS
-#endif
-
 
 CR_BIND(MapDimensions, ())
 CR_REG_METADATA(MapDimensions, (
@@ -67,12 +59,17 @@ CR_REG_METADATA(CReadMap, (
 	CR_IGNORED(currHeightBounds),
 	CR_IGNORED(boundingRadius),
 	CR_IGNORED(mapChecksum),
+
 	CR_IGNORED(heightMapSyncedPtr),
 	CR_IGNORED(heightMapUnsyncedPtr),
+
+	#if 0
 	CR_IGNORED(originalHeightMap),
 	CR_IGNORED(centerHeightMap),
 	CR_IGNORED(mipCenterHeightMaps),
+	#endif
 	CR_IGNORED(mipPointerHeightMaps),
+	#if 0
 	CR_IGNORED(visVertexNormals),
 	CR_IGNORED(faceNormalsSynced),
 	CR_IGNORED(faceNormalsUnsynced),
@@ -80,15 +77,25 @@ CR_REG_METADATA(CReadMap, (
 	CR_IGNORED(centerNormalsUnsynced),
 	CR_IGNORED(centerNormals2D),
 	CR_IGNORED(slopeMap),
+	CR_IGNORED(typeMap),
+	#endif
+
 	CR_IGNORED(sharedCornerHeightMaps),
 	CR_IGNORED(sharedCenterHeightMaps),
 	CR_IGNORED(sharedFaceNormals),
 	CR_IGNORED(sharedCenterNormals),
 	CR_IGNORED(sharedSlopeMaps),
-	CR_IGNORED(typeMap),
+
 	CR_IGNORED(unsyncedHeightMapUpdates),
 	CR_IGNORED(unsyncedHeightMapUpdatesTemp),
-	HEIGHTMAP_DIGESTS
+
+	#if 0
+		#ifdef USE_UNSYNCED_HEIGHTMAP
+		CR_IGNORED(  syncedHeightMapDigests),
+		CR_IGNORED(unsyncedHeightMapDigests),
+		#endif
+	#endif
+
 	CR_POSTLOAD(PostLoad),
 	CR_SERIALIZER(Serialize)
 ))
