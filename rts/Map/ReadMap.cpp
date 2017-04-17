@@ -33,11 +33,6 @@
 //////////////////////////////////////////////////////////////////////
 
 
-// assigned to in CGame::CGame ("readMap = CReadMap::LoadMap(mapname)")
-CReadMap* readMap = nullptr;
-MapDimensions mapDims;
-
-
 #ifdef USE_UNSYNCED_HEIGHTMAP
 	#define	HEIGHTMAP_DIGESTS \
 		CR_MEMBER(syncedHeightMapDigests), \
@@ -45,6 +40,7 @@ MapDimensions mapDims;
 #else
 	#define HEIGHTMAP_DIGESTS
 #endif
+
 
 CR_BIND(MapDimensions, ())
 CR_REG_METADATA(MapDimensions, (
@@ -99,6 +95,32 @@ CR_REG_METADATA(CReadMap, (
 
 
 
+// initialized in CGame::LoadMap
+CReadMap* readMap = nullptr;
+
+MapDimensions mapDims;
+
+std::vector<float> CReadMap::originalHeightMap;
+std::vector<float> CReadMap::centerHeightMap;
+std::array<std::vector<float>, CReadMap::numHeightMipMaps - 1> CReadMap::mipCenterHeightMaps;
+
+std::vector<float3> CReadMap::visVertexNormals;
+std::vector<float3> CReadMap::faceNormalsSynced;
+std::vector<float3> CReadMap::faceNormalsUnsynced;
+std::vector<float3> CReadMap::centerNormalsSynced;
+std::vector<float3> CReadMap::centerNormalsUnsynced;
+
+std::vector<float> CReadMap::slopeMap;
+std::vector<uint8_t> CReadMap::typeMap;
+std::vector<float3> CReadMap::centerNormals2D;
+
+#ifdef USE_UNSYNCED_HEIGHTMAP
+std::vector<uint8_t> CReadMap::  syncedHeightMapDigests;
+std::vector<uint8_t> CReadMap::unsyncedHeightMapDigests;
+#endif
+
+
+
 MapTexture::~MapTexture() {
 	// do NOT delete a Lua-set texture here!
 	glDeleteTextures(1, &texIDs[RAW_TEX_IDX]);
@@ -141,6 +163,7 @@ CReadMap* CReadMap::LoadMap(const std::string& mapname)
 
 	if (typemapPtr && tbi.width == (mapDims.mapx >> 1) && tbi.height == (mapDims.mapy >> 1)) {
 		assert(mapDims.hmapx == tbi.width && mapDims.hmapy == tbi.height);
+		rm->typeMap.clear();
 		rm->typeMap.resize(tbi.width * tbi.height);
 		memcpy(&rm->typeMap[0], typemapPtr, tbi.width * tbi.height);
 	} else
@@ -199,11 +222,13 @@ void CReadMap::PostLoad()
 	sharedSlopeMaps[1] = &slopeMap[0];
 
 	//FIXME reconstruct
-	/*mipPointerHeightMaps.resize(numHeightMipMaps, nullptr);
+	/*
+	mipPointerHeightMaps.fill(nullptr);
 	mipPointerHeightMaps[0] = &centerHeightMap[0];
 	for (int i = 1; i < numHeightMipMaps; i++) {
 		mipPointerHeightMaps[i] = &mipCenterHeightMaps[i - 1][0];
-	}*/
+	}
+	*/
 }
 #endif //USING_CREG
 
@@ -257,24 +282,34 @@ void CReadMap::Initialize()
 	float3::maxxpos = mapDims.mapx * SQUARE_SIZE - 1;
 	float3::maxzpos = mapDims.mapy * SQUARE_SIZE - 1;
 
+	originalHeightMap.clear();
 	originalHeightMap.resize(mapDims.mapxp1 * mapDims.mapyp1);
+	faceNormalsSynced.clear();
 	faceNormalsSynced.resize(mapDims.mapx * mapDims.mapy * 2);
+	faceNormalsUnsynced.clear();
 	faceNormalsUnsynced.resize(mapDims.mapx * mapDims.mapy * 2);
+	centerNormalsSynced.clear();
 	centerNormalsSynced.resize(mapDims.mapx * mapDims.mapy);
+	centerNormalsUnsynced.clear();
 	centerNormalsUnsynced.resize(mapDims.mapx * mapDims.mapy);
+	centerNormals2D.clear();
 	centerNormals2D.resize(mapDims.mapx * mapDims.mapy);
+	centerHeightMap.clear();
 	centerHeightMap.resize(mapDims.mapx * mapDims.mapy);
 
-	mipCenterHeightMaps.resize(numHeightMipMaps - 1);
-	mipPointerHeightMaps.resize(numHeightMipMaps, nullptr);
+	mipPointerHeightMaps.fill(nullptr);
 	mipPointerHeightMaps[0] = &centerHeightMap[0];
 
 	for (int i = 1; i < numHeightMipMaps; i++) {
+		mipCenterHeightMaps[i - 1].clear();
 		mipCenterHeightMaps[i - 1].resize((mapDims.mapx >> i) * (mapDims.mapy >> i));
+
 		mipPointerHeightMaps[i] = &mipCenterHeightMaps[i - 1][0];
 	}
 
+	slopeMap.clear();
 	slopeMap.resize(mapDims.hmapx * mapDims.hmapy);
+	visVertexNormals.clear();
 	visVertexNormals.resize(mapDims.mapxp1 * mapDims.mapyp1);
 
 	// note: if USE_UNSYNCED_HEIGHTMAP is false, then
@@ -665,7 +700,9 @@ void CReadMap::InitHeightMapDigestVectors(const int2 losMapSize)
 	const int xsize = losMapSize.x + 1;
 	const int ysize = losMapSize.y + 1;
 
+	syncedHeightMapDigests.clear();
 	syncedHeightMapDigests.resize(xsize * ysize, 0);
+	unsyncedHeightMapDigests.clear();
 	unsyncedHeightMapDigests.resize(xsize * ysize, 0);
 #endif
 }

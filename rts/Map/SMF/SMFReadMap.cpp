@@ -32,6 +32,16 @@ CONFIG(bool, GroundNormalTextureHighPrecision).defaultValue(false);
 CONFIG(float, SMFTexAniso).defaultValue(4.0f).minimumValue(0.0f);
 CONFIG(float, SSMFTexAniso).defaultValue(4.0f).minimumValue(0.0f);
 
+
+
+std::vector<float> CSMFReadMap::cornerHeightMapSynced;
+std::vector<float> CSMFReadMap::cornerHeightMapUnsynced;
+
+std::vector<unsigned char> CSMFReadMap::shadingTexBuffer;
+std::vector<unsigned char> CSMFReadMap::waterHeightColors;
+
+
+
 CSMFReadMap::CSMFReadMap(std::string mapname)
 	: CEventClient("[CSMFReadMap]", 271950, false)
 	, file(mapname)
@@ -99,8 +109,10 @@ void CSMFReadMap::LoadHeightMap()
 {
 	const SMFHeader& header = file.GetHeader();
 
+	cornerHeightMapSynced.clear();
 	cornerHeightMapSynced.resize((mapDims.mapx + 1) * (mapDims.mapy + 1));
 	#ifdef USE_UNSYNCED_HEIGHTMAP
+	cornerHeightMapUnsynced.clear();
 	cornerHeightMapUnsynced.resize((mapDims.mapx + 1) * (mapDims.mapy + 1));
 	#endif
 
@@ -109,8 +121,8 @@ void CSMFReadMap::LoadHeightMap()
 
 	const float minHgt = mapInfo->smf.minHeightOverride ? mapInfo->smf.minHeight : header.minHeight;
 	const float maxHgt = mapInfo->smf.maxHeightOverride ? mapInfo->smf.maxHeight : header.maxHeight;
-	float* cornerHeightMapSyncedData = (cornerHeightMapSynced.empty())? NULL: &cornerHeightMapSynced[0];
-	float* cornerHeightMapUnsyncedData = (cornerHeightMapUnsynced.empty())? NULL: &cornerHeightMapUnsynced[0];
+	float* cornerHeightMapSyncedData = (cornerHeightMapSynced.empty())? nullptr: &cornerHeightMapSynced[0];
+	float* cornerHeightMapUnsyncedData = (cornerHeightMapUnsynced.empty())? nullptr: &cornerHeightMapUnsynced[0];
 
 	// FIXME:
 	//     callchain CReadMap::Initialize --> CReadMap::UpdateHeightMapSynced(0, 0, mapDims.mapx, mapDims.mapy) -->
@@ -154,6 +166,7 @@ void CSMFReadMap::LoadMinimap()
 
 void CSMFReadMap::InitializeWaterHeightColors()
 {
+	waterHeightColors.clear();
 	waterHeightColors.resize(1024 * 4, 0);
 
 	for (int a = 0; a < 1024; ++a) {
@@ -306,6 +319,7 @@ void CSMFReadMap::CreateShadingTex()
 
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, mapDims.pwr2mapx, mapDims.pwr2mapy, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 
+	shadingTexBuffer.clear();
 	shadingTexBuffer.resize(mapDims.mapx * mapDims.mapy * 4, 0);
 	shadingTexUpdateNeeded   = false;
 	shadingTexUpdateProgress = -1;

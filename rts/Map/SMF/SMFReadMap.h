@@ -191,11 +191,12 @@ private:
 	CSMFGroundDrawer* groundDrawer;
 
 private:
-	std::vector<float> cornerHeightMapSynced;
-	std::vector<float> cornerHeightMapUnsynced;
+	// note: intentionally declared static (see ReadMap)
+	static std::vector<float> cornerHeightMapSynced;
+	static std::vector<float> cornerHeightMapUnsynced;
 
-	std::vector<unsigned char> shadingTexBuffer;
-	std::vector<unsigned char> waterHeightColors;
+	static std::vector<unsigned char> shadingTexBuffer;
+	static std::vector<unsigned char> waterHeightColors;
 
 private:
 	MapTexture grassShadingTex;       // specifies grass-blade modulation color (defaults to minimapTex)
