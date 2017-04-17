@@ -20,7 +20,7 @@ CONFIG(int, OverheadScrollSpeed).defaultValue(10);
 CONFIG(float, OverheadTiltSpeed).defaultValue(1.0f);
 CONFIG(bool, OverheadEnabled).defaultValue(true).headlessValue(false);
 CONFIG(float, OverheadFOV).defaultValue(45.0f);
-CONFIG(float, OverheadMaxHeightFactor).defaultValue(1.0f);
+CONFIG(float, OverheadMaxHeightFactor).defaultValue(1.0f).description("float multiplier for maximum overhead camera height");
 
 static const float angleStep = math::HALFPI / 14.0f;
 
