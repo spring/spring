@@ -64,7 +64,7 @@ CGlobalUnsynced::CGlobalUnsynced()
 
 CGlobalUnsynced::~CGlobalUnsynced()
 {
-	SafeDelete(playerHandler);
+	spring::SafeDelete(playerHandler);
 	assert(playerHandler == nullptr);
 }
 

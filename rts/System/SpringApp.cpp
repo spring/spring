@@ -466,8 +466,8 @@ void SpringApp::LoadFonts()
 	const int smallOutlineWidth = configHandler->GetInt("SmallFontOutlineWidth");
 	const float smallOutlineWeight = configHandler->GetFloat("SmallFontOutlineWeight");
 
-	SafeDelete(font);
-	SafeDelete(smallFont);
+	spring::SafeDelete(font);
+	spring::SafeDelete(smallFont);
 	font = CglFont::LoadFont(fontFile, fontSize, outlineWidth, outlineWeight);
 	smallFont = CglFont::LoadFont(smallFontFile, smallFontSize, smallOutlineWidth, smallOutlineWeight);
 
@@ -756,7 +756,7 @@ void SpringApp::Reload(const std::string script)
 	if (gameServer != nullptr)
 		gameServer->SetReloading(true);
 
-	// Lua shutdown functions need to access 'game' but SafeDelete sets it to NULL.
+	// Lua shutdown functions need to access 'game' but spring::SafeDelete sets it to NULL.
 	// ~CGame also calls this, which does not matter because handlers are gone by then
 	game->KillLua(false);
 
@@ -767,20 +767,20 @@ void SpringApp::Reload(const std::string script)
 
 	LOG("[SpringApp::%s][4]", __func__);
 
-	SafeDelete(game);
-	SafeDelete(pregame);
+	spring::SafeDelete(game);
+	spring::SafeDelete(pregame);
 
 	LOG("[SpringApp::%s][5]", __func__);
 
 	// no-op if we are not the server
-	SafeDelete(gameServer);
+	spring::SafeDelete(gameServer);
 	// PreGame allocates clientNet, so we need to delete our old connection
-	SafeDelete(clientNet);
+	spring::SafeDelete(clientNet);
 
 	LOG("[SpringApp::%s][6]", __func__);
 
 	LuaVFSDownload::Free();
-	SafeDelete(battery);
+	spring::SafeDelete(battery);
 
 	LOG("[SpringApp::%s][7]", __func__);
 
@@ -910,7 +910,7 @@ int SpringApp::Run()
 	if ((thrErr = Threading::GetThreadError()) != nullptr)
 		ErrorMessageBox("  [thread] " + thrErr->message, thrErr->caption, thrErr->flags);
 
-	return 0;
+	return spring::exitCode;
 }
 
 
@@ -941,21 +941,21 @@ void SpringApp::ShutDown(bool fromRun)
 	// see ::Reload
 	ISound::Shutdown();
 
-	SafeDelete(game);
-	SafeDelete(pregame);
+	spring::SafeDelete(game);
+	spring::SafeDelete(pregame);
 
-	SafeDelete(luaMenuController);
+	spring::SafeDelete(luaMenuController);
 
 	LOG("[SpringApp::%s][3]", __func__);
-	SafeDelete(clientNet);
-	SafeDelete(gameServer);
-	SafeDelete(gameSetup);
+	spring::SafeDelete(clientNet);
+	spring::SafeDelete(gameServer);
+	spring::SafeDelete(gameSetup);
 
 	LOG("[SpringApp::%s][4]", __func__);
-	SafeDelete(keyCodes);
+	spring::SafeDelete(keyCodes);
 	agui::FreeGui();
-	SafeDelete(font);
-	SafeDelete(smallFont);
+	spring::SafeDelete(font);
+	spring::SafeDelete(smallFont);
 
 	LOG("[SpringApp::%s][5]", __func__);
 	CNamedTextures::Kill(true);
@@ -971,10 +971,10 @@ void SpringApp::ShutDown(bool fromRun)
 	SDL_Quit();
 
 	LOG("[SpringApp::%s][7]", __func__);
-	SafeDelete(gs);
-	SafeDelete(gu);
-	SafeDelete(globalRendering);
-	SafeDelete(luaSocketRestrictions);
+	spring::SafeDelete(gs);
+	spring::SafeDelete(gu);
+	spring::SafeDelete(globalRendering);
+	spring::SafeDelete(luaSocketRestrictions);
 
 	// also gets rid of configHandler
 	FileSystemInitializer::Cleanup();

@@ -485,7 +485,7 @@ void CArchiveScanner::ScanDir(const std::string& curPath, std::deque<std::string
 
 static void AddDependency(std::vector<std::string>& deps, const std::string& dependency)
 {
-	VectorInsertUnique(deps, dependency, true);
+	spring::VectorInsertUnique(deps, dependency, true);
 }
 
 bool CArchiveScanner::CheckCompression(const IArchive* ar, const std::string& fullName, std::string& error)
@@ -1062,7 +1062,7 @@ std::vector<std::string> CArchiveScanner::GetAllArchivesUsedBy(const std::string
 {
 	LOG_S(LOG_SECTION_ARCHIVESCANNER, "GetArchives: %s", rootArchive.c_str());
 
-	// VectorInsertUnique'ing via AddDependency can become a performance hog
+	// spring::VectorInsertUnique'ing via AddDependency can become a performance hog
 	// for very long dependency chains, prefer to sort and remove duplicates
 	std::vector<std::string> retArchives;
 	std::vector<std::string> tmpArchives;

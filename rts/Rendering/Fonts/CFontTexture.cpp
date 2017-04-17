@@ -402,8 +402,8 @@ CFontTexture::~CFontTexture()
 	texture = 0;
 	textureSpaceMatrix = 0;
 
-	SafeDelete(atlasUpdate);
-	SafeDelete(atlasUpdateShadow);
+	spring::SafeDelete(atlasUpdate);
+	spring::SafeDelete(atlasUpdateShadow);
 #endif
 }
 

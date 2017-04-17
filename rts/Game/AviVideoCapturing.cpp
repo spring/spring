@@ -39,7 +39,7 @@ void AviVideoCapturing::StopCapturing() {
 	if (IsCapturing()) {
 		capturing = false;
 		globalRendering->isVideoCapturing = false;
-		SafeDelete(aviGenerator);
+		spring::SafeDelete(aviGenerator);
 		//delete aviGenerator;
 		//aviGenerator = NULL;
 	}

@@ -944,7 +944,7 @@ bool CSMFReadMap::SetLuaTexture(const MapTextureData& td) {
 }
 
 void CSMFReadMap::InitGroundDrawer() { groundDrawer = new CSMFGroundDrawer(this); }
-void CSMFReadMap::KillGroundDrawer() { SafeDelete(groundDrawer); }
+void CSMFReadMap::KillGroundDrawer() { spring::SafeDelete(groundDrawer); }
 
 inline CBaseGroundDrawer* CSMFReadMap::GetGroundDrawer() { return groundDrawer; }
 

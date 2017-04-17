@@ -141,15 +141,16 @@ static inline int_type StringToInt(std::string str, bool* failed = NULL)
  */
 bool StringToBool(std::string str);
 
-/// Returns true if str starts with prefix
 bool StringStartsWith(const std::string& str, const char* prefix);
+bool StringEndsWith(const std::string& str, const char* postfix);
+
+/// Returns true if str starts with prefix
 static inline bool StringStartsWith(const std::string& str, const std::string& prefix)
 {
 	return StringStartsWith(str, prefix.c_str());
 }
 
 /// Returns true if str ends with postfix
-bool StringEndsWith(const std::string& str, const char* postfix);
 static inline bool StringEndsWith(const std::string& str, const std::string& postfix)
 {
 	return StringEndsWith(str, postfix.c_str());
@@ -172,19 +173,14 @@ static inline void EnsureEndsWith(std::string* str, const char* postfix)
  * - "0" -> false
  * - "1" -> true
  */
-void InverseOrSetBool(bool& container, const std::string& argValue, const bool inverseArg = false);
+void InverseOrSetBool(bool& b, const std::string& argValue, const bool inverseArg = false);
 
-
-/// Helper function to avoid division by Zero
-static inline float SafeDivide(const float a, const float b)
-{
-	if (b == 0.0f)
-		return a;
-
-	return (a / b);
-}
 
 namespace spring {
+	// only here for validation tests
+	extern int exitCode;
+
+
 	template<typename T, typename TV>
 	static auto find(T& c, const TV& v) -> decltype(c.end())
 	{
@@ -199,143 +195,153 @@ namespace spring {
 			else ++it;
 		}
 	}
-}
 
 
-template<typename T, typename P>
-static bool VectorEraseIf(std::vector<T>& v, const P& p)
-{
-	auto it = std::find_if(v.begin(), v.end(), p);
+	template<typename T, typename P>
+	static bool VectorEraseIf(std::vector<T>& v, const P& p)
+	{
+		auto it = std::find_if(v.begin(), v.end(), p);
 
-	if (it == v.end())
-		return false;
+		if (it == v.end())
+			return false;
 
-	*it = v.back();
-	v.pop_back();
-	return true;
-}
-
-template<typename T>
-static bool VectorErase(std::vector<T>& v, T e)
-{
-	auto it = std::find(v.begin(), v.end(), e);
-
-	if (it == v.end())
-		return false;
-
-	*it = v.back();
-	v.pop_back();
-	return true;
-}
-
-template<typename T, typename C>
-static bool VectorEraseUniqueSorted(std::vector<T>& v, const T& e, const C& c)
-{
-	const auto iter = std::lower_bound(v.begin(), v.end(), e, c);
-
-	if ((iter == v.end()) || (*iter != e))
-		return false;
-
-	for (size_t n = (iter - v.begin()); n < (v.size() - 1); n++) {
-		std::swap(v[n], v[n + 1]);
+		*it = v.back();
+		v.pop_back();
+		return true;
 	}
 
-	v.pop_back();
-	return true;
-}
+	template<typename T>
+	static bool VectorErase(std::vector<T>& v, T e)
+	{
+		auto it = std::find(v.begin(), v.end(), e);
 
+		if (it == v.end())
+			return false;
 
-
-template<typename T>
-static bool VectorInsertUnique(std::vector<T>& v, T e, bool b = false)
-{
-	// do not assume uniqueness, test for it
-	if (b && std::find(v.begin(), v.end(), e) != v.end())
-		return false;
-
-	// assume caller knows best, skip the test
-	assert(b || std::find(v.begin(), v.end(), e) == v.end());
-	v.push_back(e);
-	return true;
-}
-
-template<typename T, typename C>
-static bool VectorInsertUniqueSorted(std::vector<T>& v, const T& e, const C& c)
-{
-	const auto iter = std::lower_bound(v.begin(), v.end(), e, c);
-
-	if ((iter != v.end()) && (*iter == e))
-		return false;
-
-	v.push_back(e);
-
-	for (size_t n = v.size() - 1; n > 0; n--) {
-		if (c(v[n - 1], v[n]))
-			break;
-
-		std::swap(v[n - 1], v[n]);
+		*it = v.back();
+		v.pop_back();
+		return true;
 	}
 
-	return true;
-}
+	template<typename T, typename C>
+	static bool VectorEraseUniqueSorted(std::vector<T>& v, const T& e, const C& c)
+	{
+		const auto iter = std::lower_bound(v.begin(), v.end(), e, c);
 
+		if ((iter == v.end()) || (*iter != e))
+			return false;
 
+		for (size_t n = (iter - v.begin()); n < (v.size() - 1); n++) {
+			std::swap(v[n], v[n + 1]);
+		}
 
-/**
- * @brief Safe alternative to "delete obj;"
- * Safely deletes an object, by first setting the pointer to NULL and then
- * deleting.
- * This way, it is guaranteed that other objects can not access the object
- * through the pointer while the object is running its destructor.
- */
-template<class T> void SafeDelete(T& a)
-{
-	T tmp = a;
-	a = NULL;
-	delete tmp;
-}
-
-/**
- * @brief Safe alternative to "delete [] obj;"
- * Safely deletes an array object, by first setting the pointer to NULL and then
- * deleting.
- * This way, it is guaranteed that other objects can not access the object
- * through the pointer while the object is running its destructor.
- */
-template<class T> void SafeDeleteArray(T*& a)
-{
-	T* tmp = a;
-	a = NULL;
-	delete [] tmp;
-}
-
-
-
-char32_t Utf8GetNextChar(const std::string& text, int& pos);
-std::string UnicodeToUtf8(char32_t ch);
-
-
-static inline int Utf8CharLen(const std::string& str, int pos)
-{
-	const auto oldPos = pos;
-	Utf8GetNextChar(str, pos);
-	return pos - oldPos;
-}
-
-static inline int Utf8NextChar(const std::string& str, int pos)
-{
-	Utf8GetNextChar(str, pos);
-	return pos;
-}
-
-static inline int Utf8PrevChar(const std::string& str, int pos)
-{
-	int startPos = std::max(pos - 4, 0);
-	int oldPos   = startPos;
-	while (startPos < pos) {
-		oldPos = startPos;
-		Utf8GetNextChar(str, startPos);
+		v.pop_back();
+		return true;
 	}
-	return oldPos;
-}
+
+
+
+	template<typename T>
+	static bool VectorInsertUnique(std::vector<T>& v, T e, bool b = false)
+	{
+		// do not assume uniqueness, test for it
+		if (b && std::find(v.begin(), v.end(), e) != v.end())
+			return false;
+
+		// assume caller knows best, skip the test
+		assert(b || std::find(v.begin(), v.end(), e) == v.end());
+		v.push_back(e);
+		return true;
+	}
+
+	template<typename T, typename C>
+	static bool VectorInsertUniqueSorted(std::vector<T>& v, const T& e, const C& c)
+	{
+		const auto iter = std::lower_bound(v.begin(), v.end(), e, c);
+
+		if ((iter != v.end()) && (*iter == e))
+			return false;
+
+		v.push_back(e);
+
+		for (size_t n = v.size() - 1; n > 0; n--) {
+			if (c(v[n - 1], v[n]))
+				break;
+
+			std::swap(v[n - 1], v[n]);
+		}
+
+		return true;
+	}
+
+
+	/**
+	 * @brief Safe alternative to "delete obj;"
+	 * Safely deletes an object, by first setting the pointer to NULL and then
+	 * deleting.
+	 * This way, it is guaranteed that other objects can not access the object
+	 * through the pointer while the object is running its destructor.
+	 */
+	template<class T> void SafeDelete(T& a)
+	{
+		T tmp = a;
+		a = NULL;
+		delete tmp;
+	}
+
+	/**
+	 * @brief Safe alternative to "delete [] obj;"
+	 * Safely deletes an array object, by first setting the pointer to NULL and then
+	 * deleting.
+	 * This way, it is guaranteed that other objects can not access the object
+	 * through the pointer while the object is running its destructor.
+	 */
+	template<class T> void SafeDeleteArray(T*& a)
+	{
+		T* tmp = a;
+		a = NULL;
+		delete [] tmp;
+	}
+
+
+	static inline float SafeDivide(const float a, const float b)
+	{
+		if (b == 0.0f)
+			return a;
+
+		return (a / b);
+	}
+};
+
+
+namespace utf8 {
+	char32_t GetNextChar(const std::string& text, int& pos);
+	std::string FromUnicode(char32_t ch);
+
+
+	static inline int CharLen(const std::string& str, int pos)
+	{
+		const auto oldPos = pos;
+		utf8::GetNextChar(str, pos);
+		return pos - oldPos;
+	}
+
+	static inline int NextChar(const std::string& str, int pos)
+	{
+		utf8::GetNextChar(str, pos);
+		return pos;
+	}
+
+	static inline int PrevChar(const std::string& str, int pos)
+	{
+		int startPos = std::max(pos - 4, 0);
+		int oldPos   = startPos;
+		while (startPos < pos) {
+			oldPos = startPos;
+			utf8::GetNextChar(str, startPos);
+		}
+		return oldPos;
+	}
+};
+
 #endif // UTIL_H

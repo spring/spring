@@ -137,14 +137,14 @@ void CExtractorBuilding::SetExtractionRangeAndDepth(float range, float depth)
 void CExtractorBuilding::AddNeighbour(CExtractorBuilding* neighbour)
 {
 	assert(neighbour != this);
-	VectorInsertUnique(neighbours, neighbour, true);
+	spring::VectorInsertUnique(neighbours, neighbour, true);
 }
 
 /* removes a neighbour for this extractor */
 void CExtractorBuilding::RemoveNeighbour(CExtractorBuilding* neighbour)
 {
 	assert(neighbour != this);
-	VectorErase(neighbours, neighbour);
+	spring::VectorErase(neighbours, neighbour);
 }
 
 

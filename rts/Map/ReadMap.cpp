@@ -275,7 +275,7 @@ CReadMap::CReadMap()
 
 CReadMap::~CReadMap()
 {
-	SafeDelete(metalMap);
+	spring::SafeDelete(metalMap);
 }
 
 

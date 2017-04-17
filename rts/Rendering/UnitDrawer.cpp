@@ -301,7 +301,7 @@ CUnitDrawer::~CUnitDrawer()
 
 				// <ghost> might be the gbOwner of a decal; groundDecals is deleted after us
 				groundDecals->GhostDestroyed(gso);
-				SafeDelete(*it);
+				spring::SafeDelete(*it);
 			}
 
 			dgb.clear();
@@ -911,7 +911,7 @@ void CUnitDrawer::UpdateGhostedBuildings()
 				// obtained LOS on the ghost of a dead building
 				if (!gso->DecRef()) {
 					groundDecals->GhostDestroyed(gso);
-					SafeDelete(*it);
+					spring::SafeDelete(*it);
 				}
 
 				*it = dgb.back();
@@ -1742,7 +1742,7 @@ void CUnitDrawer::UpdateUnitMiniMapIcon(const CUnit* unit, bool forced, bool kil
 
 	if (!killed) {
 		if ((oldIcon != newIcon) || forced) {
-			VectorErase(unitsByIcon[oldIcon], unit);
+			spring::VectorErase(unitsByIcon[oldIcon], unit);
 			unitsByIcon[newIcon].push_back(unit);
 		}
 
@@ -1750,7 +1750,7 @@ void CUnitDrawer::UpdateUnitMiniMapIcon(const CUnit* unit, bool forced, bool kil
 		return;
 	}
 
-	VectorErase(unitsByIcon[oldIcon], unit);
+	spring::VectorErase(unitsByIcon[oldIcon], unit);
 }
 
 
@@ -1808,7 +1808,7 @@ void CUnitDrawer::RenderUnitDestroyed(const CUnit* unit) {
 			gso->IncRef();
 		}
 
-		VectorErase(liveGhostBuildings[allyTeam][MDL_TYPE(u)], u);
+		spring::VectorErase(liveGhostBuildings[allyTeam][MDL_TYPE(u)], u);
 	}
 
 	if (u->model != nullptr) {
@@ -1817,7 +1817,7 @@ void CUnitDrawer::RenderUnitDestroyed(const CUnit* unit) {
 		opaqueModelRenderers[MDL_TYPE(u)]->DelUnit(u);
 	}
 
-	VectorErase(unsortedUnits, u);
+	spring::VectorErase(unsortedUnits, u);
 
 	UpdateUnitMiniMapIcon(unit, false, true);
 	LuaObjectDrawer::SetObjectLOD(u, LUAOBJ_UNIT, 0);
@@ -1846,7 +1846,7 @@ void CUnitDrawer::UnitEnteredLos(const CUnit* unit, int allyTeam) {
 	CUnit* u = const_cast<CUnit*>(unit); //cleanup
 
 	if (gameSetup->ghostedBuildings && unit->unitDef->IsImmobileUnit())
-		VectorErase(liveGhostBuildings[allyTeam][MDL_TYPE(unit)], u);
+		spring::VectorErase(liveGhostBuildings[allyTeam][MDL_TYPE(unit)], u);
 
 	if (allyTeam != gu->myAllyTeam)
 		return;
@@ -1858,7 +1858,7 @@ void CUnitDrawer::UnitLeftLos(const CUnit* unit, int allyTeam) {
 	CUnit* u = const_cast<CUnit*>(unit); //cleanup
 
 	if (gameSetup->ghostedBuildings && unit->unitDef->IsImmobileUnit())
-		VectorInsertUnique(liveGhostBuildings[allyTeam][MDL_TYPE(unit)], u, true);
+		spring::VectorInsertUnique(liveGhostBuildings[allyTeam][MDL_TYPE(unit)], u, true);
 
 	if (allyTeam != gu->myAllyTeam)
 		return;
@@ -1933,7 +1933,7 @@ void CUnitDrawer::UpdateTempDrawUnits(std::vector<TempDrawUnit>& tempDrawUnits)
 {
 	for (unsigned int n = 0; n < tempDrawUnits.size(); /*no-op*/) {
 		if (tempDrawUnits[n].timeout <= gs->frameNum) {
-			// do not use VectorErase; we already know the index
+			// do not use spring::VectorErase; we already know the index
 			tempDrawUnits[n] = tempDrawUnits.back();
 			tempDrawUnits.pop_back();
 			continue;

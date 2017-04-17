@@ -184,5 +184,5 @@ void CGroupHandler::RemoveGroup(CGroup* group)
 
 void CGroupHandler::PushGroupChange(int id)
 {
-	VectorInsertUnique(changedGroups, id, true);
+	spring::VectorInsertUnique(changedGroups, id, true);
 }

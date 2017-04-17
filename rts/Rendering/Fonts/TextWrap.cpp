@@ -10,7 +10,7 @@
 
 static const char32_t spaceUTF16    = 0x20;
 static const char32_t ellipsisUTF16 = 0x2026;
-static const std::string ellipsisUTF8 = UnicodeToUtf8(ellipsisUTF16);
+static const std::string ellipsisUTF8 = utf8::FromUnicode(ellipsisUTF16);
 
 static constexpr const char* spaceStringTable[1 + 10] = {
 	"",
@@ -150,7 +150,7 @@ CTextWrap::word CTextWrap::SplitWord(CTextWrap::word& w, float wantedWidth, bool
 		int i = 0;
 		float min_penalty = 1e9;
 		unsigned int goodbreak = 0;
-		char32_t c = Utf8GetNextChar(w.text,i);
+		char32_t c = utf8::GetNextChar(w.text,i);
 		const GlyphInfo* curGlyph = &GetGlyph(c);
 		const GlyphInfo* nextGlyph = curGlyph;
 
@@ -158,7 +158,7 @@ CTextWrap::word CTextWrap::SplitWord(CTextWrap::word& w, float wantedWidth, bool
 			const int lastCharPos = i;
 			const char32_t co     = c;
 			curGlyph = nextGlyph;
-			c = Utf8GetNextChar(w.text,i);
+			c = utf8::GetNextChar(w.text,i);
 			nextGlyph = &GetGlyph(c);
 			width += GetKerning(*curGlyph, *nextGlyph);
 

@@ -2134,7 +2134,7 @@ static int ReloadOrRestart(const std::string& springArgs, const std::string& scr
 	ISound::Shutdown();
 	#endif
 	// close local socket to avoid "bind: Address already in use"
-	SafeDelete(gameServer);
+	spring::SafeDelete(gameServer);
 
 	LOG("[%s] Spring \"%s\" should be restarting", __func__, springFullName.c_str());
 	Platform::ExecuteProcess(springFullName, processArgs, newProcess);

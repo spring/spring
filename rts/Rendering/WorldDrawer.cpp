@@ -49,27 +49,27 @@ CWorldDrawer::CWorldDrawer(): numUpdates(0)
 
 CWorldDrawer::~CWorldDrawer()
 {
-	SafeDelete(water);
-	SafeDelete(sky);
-	SafeDelete(treeDrawer);
-	SafeDelete(grassDrawer);
-	SafeDelete(pathDrawer);
-	SafeDelete(shadowHandler);
-	SafeDelete(inMapDrawerView);
+	spring::SafeDelete(water);
+	spring::SafeDelete(sky);
+	spring::SafeDelete(treeDrawer);
+	spring::SafeDelete(grassDrawer);
+	spring::SafeDelete(pathDrawer);
+	spring::SafeDelete(shadowHandler);
+	spring::SafeDelete(inMapDrawerView);
 
-	SafeDelete(featureDrawer);
-	SafeDelete(unitDrawer); // depends on unitHandler, cubeMapHandler
-	SafeDelete(projectileDrawer);
+	spring::SafeDelete(featureDrawer);
+	spring::SafeDelete(unitDrawer); // depends on unitHandler, cubeMapHandler
+	spring::SafeDelete(projectileDrawer);
 
 	modelLoader.Kill();
 
-	SafeDelete(farTextureHandler);
-	SafeDelete(heightMapTexture);
+	spring::SafeDelete(farTextureHandler);
+	spring::SafeDelete(heightMapTexture);
 
-	SafeDelete(texturehandler3DO);
-	SafeDelete(texturehandlerS3O);
+	spring::SafeDelete(texturehandler3DO);
+	spring::SafeDelete(texturehandlerS3O);
 
-	SafeDelete(cubeMapHandler);
+	spring::SafeDelete(cubeMapHandler);
 
 	readMap->KillGroundDrawer();
 	IGroundDecalDrawer::FreeInstance();

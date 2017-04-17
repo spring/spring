@@ -55,7 +55,7 @@ void IGroundDecalDrawer::Init()
 void IGroundDecalDrawer::FreeInstance()
 {
 	if (singleton != &nullDecalDrawer)
-		SafeDelete(singleton);
+		spring::SafeDelete(singleton);
 }
 
 

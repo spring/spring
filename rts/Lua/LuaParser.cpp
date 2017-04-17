@@ -239,8 +239,8 @@ bool LuaParser::Execute()
 }
 
 
-void LuaParser::AddTable(LuaTable* tbl) { VectorInsertUnique(tables, tbl); }
-void LuaParser::RemoveTable(LuaTable* tbl) { VectorErase(tables, tbl); }
+void LuaParser::AddTable(LuaTable* tbl) { spring::VectorInsertUnique(tables, tbl); }
+void LuaParser::RemoveTable(LuaTable* tbl) { spring::VectorErase(tables, tbl); }
 
 
 LuaTable LuaParser::GetRoot()
@@ -578,7 +578,7 @@ int LuaParser::Include(lua_State* L)
 	}
 
 	#if 0
-	VectorInsertUnique(currentParser->accessedFiles, StringToLower(filename), true);
+	spring::VectorInsertUnique(currentParser->accessedFiles, StringToLower(filename), true);
 	#endif
 	return (lua_gettop(L) - paramTop);
 }
@@ -612,7 +612,7 @@ int LuaParser::LoadFile(lua_State* L)
 	lua_pushstring(L, data.c_str());
 
 	#if 0
-	VectorInsertUnique(currentParser->accessedFiles, StringToLower(filename), true);
+	spring::VectorInsertUnique(currentParser->accessedFiles, StringToLower(filename), true);
 	#endif
 	return 1;
 }

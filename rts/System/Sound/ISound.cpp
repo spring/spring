@@ -85,13 +85,13 @@ void ISound::Shutdown()
 {
 	ISound* tmpSound = singleton;
 	singleton = nullptr;
-	SafeDelete(tmpSound);
+	spring::SafeDelete(tmpSound);
 
-	SafeDelete(Channels::BGMusic);
-	SafeDelete(Channels::General);
-	SafeDelete(Channels::Battle);
-	SafeDelete(Channels::UnitReply);
-	SafeDelete(Channels::UserInterface);
+	spring::SafeDelete(Channels::BGMusic);
+	spring::SafeDelete(Channels::General);
+	spring::SafeDelete(Channels::Battle);
+	spring::SafeDelete(Channels::UnitReply);
+	spring::SafeDelete(Channels::UserInterface);
 }
 
 

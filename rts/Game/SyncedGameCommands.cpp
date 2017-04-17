@@ -513,7 +513,7 @@ void SyncedGameCommands::CreateInstance() {
 
 void SyncedGameCommands::DestroyInstance() {
 	if (singleton != NULL) {
-		SafeDelete(singleton);
+		spring::SafeDelete(singleton);
 	} else {
 		// this might happen during shutdown after an unclean init
 		LOG_L(L_WARNING, "SyncedGameCommands singleton was not initialized or is already destroyed");

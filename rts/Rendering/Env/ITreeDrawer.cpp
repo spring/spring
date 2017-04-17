@@ -72,7 +72,7 @@ void ITreeDrawer::AddTree(int treeID, int treeType, const float3& pos, float siz
 		(((int)pos.x) / (treeSquareSize)) +
 		(((int)pos.z) / (treeSquareSize) * treesX);
 
-	VectorInsertUnique(treeSquares[treeSquareIdx].trees, ts, true);
+	spring::VectorInsertUnique(treeSquares[treeSquareIdx].trees, ts, true);
 	ResetPos(pos);
 }
 
@@ -83,7 +83,7 @@ void ITreeDrawer::DeleteTree(int treeID, const float3& pos)
 		(((int)pos.x / (treeSquareSize))) +
 		(((int)pos.z / (treeSquareSize) * treesX));
 
-	VectorEraseIf(treeSquares[treeSquareIdx].trees, [treeID](const TreeStruct& ts) { return (treeID == ts.id); });
+	spring::VectorEraseIf(treeSquares[treeSquareIdx].trees, [treeID](const TreeStruct& ts) { return (treeID == ts.id); });
 	ResetPos(pos);
 }
 

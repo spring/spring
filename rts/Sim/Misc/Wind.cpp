@@ -55,7 +55,7 @@ void CWind::ResetState()
 
 bool CWind::AddUnit(CUnit* u) {
 	// duplicates should never happen, no need to check
-	VectorInsertUnique(windGenIDs, u->id);
+	spring::VectorInsertUnique(windGenIDs, u->id);
 
 	// start pointing in direction of wind
 	u->UpdateWind(curDir.x, curDir.z, curStrength);
@@ -63,7 +63,7 @@ bool CWind::AddUnit(CUnit* u) {
 }
 
 bool CWind::DelUnit(CUnit* u) {
-	return (VectorErase(windGenIDs, u->id));
+	return (spring::VectorErase(windGenIDs, u->id));
 }
 
 

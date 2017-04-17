@@ -55,7 +55,7 @@ void ProfileDrawer::SetEnabled(bool enable)
 		for (auto& p: profiler.profile)
 			p.second.peak = 0.0f;
 	} else {
-		SafeDelete(instance);
+		spring::SafeDelete(instance);
 	}
 }
 

@@ -113,7 +113,7 @@ static float GetLODFloat(const std::string& name)
 {
 	// NOTE: the inverse of the value is used
 	const float value = std::max(0.0f, configHandler->GetFloat(name));
-	const float recip = SafeDivide(1.0f, value);
+	const float recip = spring::SafeDivide(1.0f, value);
 	return recip;
 }
 
@@ -250,7 +250,7 @@ void LuaObjectDrawer::Kill()
 	featureDrawFuncs[ true] = nullptr;
 
 	assert(geomBuffer != nullptr);
-	SafeDelete(geomBuffer);
+	spring::SafeDelete(geomBuffer);
 }
 
 

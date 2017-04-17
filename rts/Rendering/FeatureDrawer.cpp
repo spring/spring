@@ -188,7 +188,7 @@ void CFeatureDrawer::RenderFeatureDestroyed(const CFeature* feature)
 	CFeature* f = const_cast<CFeature*>(feature);
 
 	if (f->def->drawType == DRAWTYPE_MODEL) {
-		VectorErase(unsortedFeatures, f);
+		spring::VectorErase(unsortedFeatures, f);
 	}
 	if (f->model && f->drawQuad >= 0) {
 		modelRenderers[f->drawQuad].GetRenderer(MDL_TYPE(f))->DelFeature(f);

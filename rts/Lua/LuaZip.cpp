@@ -321,11 +321,11 @@ int LuaZipFileReader::meta_gc(lua_State* L)
 	ZipFileReaderUserdata* f = toreader(L);
 
 	if (f->stream) {
-		SafeDelete(f->stream);
+		spring::SafeDelete(f->stream);
 	}
 
 	if (f->archive && !f->dontClose) {
-		SafeDelete(f->archive);
+		spring::SafeDelete(f->archive);
 		lua_pushboolean(L, 1);
 		return 1;
 	}

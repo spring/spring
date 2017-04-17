@@ -55,7 +55,7 @@ CGlobalSynced::CGlobalSynced()
 
 CGlobalSynced::~CGlobalSynced()
 {
-	SafeDelete(teamHandler);
+	spring::SafeDelete(teamHandler);
 	assert(teamHandler == nullptr);
 
 	log_framePrefixer_setFrameNumReference(nullptr);

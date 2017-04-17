@@ -28,9 +28,9 @@ void CUnitScriptEngine::InitStatic() {
 	unitScriptEngine = new CUnitScriptEngine();
 }
 void CUnitScriptEngine::KillStatic() {
-	SafeDelete(cobEngine);
-	SafeDelete(cobFileHandler);
-	SafeDelete(unitScriptEngine);
+	spring::SafeDelete(cobEngine);
+	spring::SafeDelete(cobFileHandler);
+	spring::SafeDelete(unitScriptEngine);
 }
 
 
@@ -65,7 +65,7 @@ void CUnitScriptEngine::CheckForDuplicates(const char* name, const CUnitScript* 
 void CUnitScriptEngine::AddInstance(CUnitScript *instance)
 {
 	if (instance != currentScript)
-		VectorInsertUnique(animating, instance);
+		spring::VectorInsertUnique(animating, instance);
 }
 
 
@@ -78,7 +78,7 @@ void CUnitScriptEngine::RemoveInstance(CUnitScript *instance)
 
 	//This is slow. would be better if instance was a hashlist perhaps
 	if (instance != currentScript)
-		VectorErase(animating, instance);
+		spring::VectorErase(animating, instance);
 }
 
 

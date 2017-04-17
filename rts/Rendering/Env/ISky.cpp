@@ -34,7 +34,7 @@ ISky::ISky()
 
 ISky::~ISky()
 {
-	SafeDelete(skyLight);
+	spring::SafeDelete(skyLight);
 }
 
 
@@ -69,7 +69,7 @@ ISky* ISky::GetSky()
 	} catch (const content_error& ex) {
 		LOG_L(L_ERROR, "[%s] error: %s (falling back to BasicSky)", __FUNCTION__, ex.what());
 
-		SafeDelete(sky);
+		spring::SafeDelete(sky);
 	}
 
 	if (sky == nullptr)

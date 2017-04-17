@@ -68,7 +68,7 @@ void CEngineOutHandler::Destroy() {
 	if (singleton != NULL) {
 		singleton->PreDestroy();
 
-		SafeDelete(singleton);
+		spring::SafeDelete(singleton);
 		IAILibraryManager::Destroy();
 
 		numInstances -= 1;

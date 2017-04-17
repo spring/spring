@@ -733,7 +733,7 @@ void CGameServer::CheckSync()
 		// TODO take care of !completeResponseSet case?
 		// Should we start resync then immediately or wait for the missing packets (while paused)?
 		if (/*completeResponseSet && */ (!desyncGroups.empty() || !desyncSpecs.empty())) {
-			if (!syncErrorFrame || (outstandingSyncFrame - syncErrorFrame > static_cast<int>(SYNCCHECK_MSG_TIMEOUT))) {
+			if (syncErrorFrame == 0 || (outstandingSyncFrame - syncErrorFrame > static_cast<int>(SYNCCHECK_MSG_TIMEOUT))) {
 				syncErrorFrame = outstandingSyncFrame;
 
 			#ifdef SYNCDEBUG
@@ -747,6 +747,8 @@ void CGameServer::CheckSync()
 				isPaused = true;
 				Broadcast(CBaseNetProtocol::Get().SendSdCheckrequest(serverFrameNum));
 			#endif
+
+				spring::exitCode = SPRING_EXIT_CODE_DESYNC;
 
 				// For each group, output a message with list of player names in it.
 				// TODO this should be linked to the resync system so it can roundrobin

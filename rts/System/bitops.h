@@ -60,6 +60,19 @@ static inline unsigned int count_bits_set(unsigned int w)
 #endif
 }
 
+static inline unsigned count_leading_ones(unsigned int x)
+{
+	unsigned int i = ((~x) << 24) | 0x00FFFFFF;
+#ifdef _MSC_VER
+	unsigned long r;
+	_BitScanReverse(&r, (unsigned long)i);
+	return 31 - r;
+#else
+	return __builtin_clz(i);
+#endif
+}
+
+
 /**
  * quote from GCC doc "Returns one plus the index of the least significant 1-bit of x, or if x is zero, returns zero."
  */

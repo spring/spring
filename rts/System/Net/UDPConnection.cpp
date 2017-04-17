@@ -731,11 +731,11 @@ std::string UDPConnection::Statistics() const
 {
 	std::string msg = "Statistics for UDP connection:\n";
 	msg += spring::format("Received: %u bytes in %u packets (%f bytes/package)\n",
-			dataRecv, recvPackets, SafeDivide(dataRecv, recvPackets));
+			dataRecv, recvPackets, spring::SafeDivide(dataRecv, recvPackets));
 	msg += spring::format("Sent: %u bytes in %u packets (%f bytes/package)\n",
-			dataSent, sentPackets, SafeDivide(dataSent, sentPackets));
+			dataSent, sentPackets, spring::SafeDivide(dataSent, sentPackets));
 	msg += spring::format("Relative protocol overhead: %f up, %f down\n",
-			SafeDivide(sentOverhead, dataSent), SafeDivide(recvOverhead, dataRecv) );
+			spring::SafeDivide(sentOverhead, dataSent), spring::SafeDivide(recvOverhead, dataRecv) );
 	msg += spring::format("%u incoming chunks dropped, %u outgoing chunks resent\n",
 			droppedChunks, resentChunks);
 	return msg;

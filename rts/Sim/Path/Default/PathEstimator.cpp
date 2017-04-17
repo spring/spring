@@ -117,8 +117,8 @@ CPathEstimator::CPathEstimator(IPathFinder* pf, unsigned int BLOCK_SIZE, const s
 
 CPathEstimator::~CPathEstimator()
 {
-	SafeDelete(pathCache[0]);
-	SafeDelete(pathCache[1]);
+	spring::SafeDelete(pathCache[0]);
+	spring::SafeDelete(pathCache[1]);
 }
 
 

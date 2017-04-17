@@ -164,7 +164,7 @@ void DownloadQueue::Join()
 	breakLoop = true;
 	if (thread != nullptr) {
 		thread->join();
-		SafeDelete(thread);
+		spring::SafeDelete(thread);
 	}
 	breakLoop = false;
 }
@@ -211,7 +211,7 @@ void DownloadQueue::Push(const DownloadItem& downloadItem)
 			lck.unlock();
 
 			thread->join();
-			SafeDelete(thread);
+			spring::SafeDelete(thread);
 
 			lck.lock();
 		}
@@ -338,7 +338,7 @@ void LuaVFSDownload::Update()
 		{
 			dlEventQueueMutex.unlock();
 			ev->processEvent();
-			SafeDelete(ev);
+			spring::SafeDelete(ev);
 			dlEventQueueMutex.lock();
 		}
 	}

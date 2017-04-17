@@ -388,7 +388,7 @@ void ConfigHandler::Instantiate(const std::string configSource, const bool safem
 
 void ConfigHandler::Deallocate()
 {
-	SafeDelete(configHandler);
+	spring::SafeDelete(configHandler);
 }
 
 /******************************************************************************/

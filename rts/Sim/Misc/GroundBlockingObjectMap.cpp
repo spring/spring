@@ -39,7 +39,7 @@ void CGroundBlockingObjectMap::AddGroundBlockingObject(CSolidObject* object)
 
 	for (int zSqr = minZSqr; zSqr < maxZSqr; zSqr++) {
 		for (int xSqr = minXSqr; xSqr < maxXSqr; xSqr++) {
-			VectorInsertUnique(GetCellUnsafe(xSqr + zSqr * mapDims.mapx), object, true);
+			spring::VectorInsertUnique(GetCellUnsafe(xSqr + zSqr * mapDims.mapx), object, true);
 		}
 	}
 
@@ -67,7 +67,7 @@ void CGroundBlockingObjectMap::AddGroundBlockingObject(CSolidObject* object, con
 			const float3 testPos = float3(x, 0.0f, z) * SQUARE_SIZE;
 
 			if (object->GetGroundBlockingMaskAtPos(testPos) & mask) {
-				VectorInsertUnique(GetCellUnsafe(x + (z) * mapDims.mapx), object, true);
+				spring::VectorInsertUnique(GetCellUnsafe(x + (z) * mapDims.mapx), object, true);
 			}
 		}
 	}
@@ -90,7 +90,7 @@ void CGroundBlockingObjectMap::RemoveGroundBlockingObject(CSolidObject* object)
 
 	for (int z = bz; z < bz + sz; ++z) {
 		for (int x = bx; x < bx + sx; ++x) {
-			VectorErase(GetCellUnsafe(z * mapDims.mapx + x), object);
+			spring::VectorErase(GetCellUnsafe(z * mapDims.mapx + x), object);
 		}
 	}
 

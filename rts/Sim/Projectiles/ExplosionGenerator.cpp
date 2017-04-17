@@ -190,15 +190,15 @@ CExplosionGeneratorHandler::CExplosionGeneratorHandler()
 
 CExplosionGeneratorHandler::~CExplosionGeneratorHandler()
 {
-	SafeDelete(exploParser);
-	SafeDelete(aliasParser);
-	SafeDelete(explTblRoot);
+	spring::SafeDelete(exploParser);
+	spring::SafeDelete(aliasParser);
+	spring::SafeDelete(explTblRoot);
 
 	// delete CStdExplGen
-	SafeDelete(explosionGenerators[0]);
+	spring::SafeDelete(explosionGenerators[0]);
 
 	for (unsigned int n = 1; n < explosionGenerators.size(); n++) {
-		SafeDelete(explosionGenerators[n]);
+		spring::SafeDelete(explosionGenerators[n]);
 	}
 
 	explosionGenerators.clear();
@@ -677,7 +677,7 @@ void CCustomExplosionGenerator::ExecuteExplosionCode(const char* code, float dam
 				break;
 			}
 			case OP_DISCRETE: {
-				val = (*(float*) code) * math::floor(SafeDivide(val, (*(float*) code)));
+				val = (*(float*) code) * math::floor(spring::SafeDivide(val, (*(float*) code)));
 				code += 4;
 				break;
 			}

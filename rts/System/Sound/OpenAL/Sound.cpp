@@ -81,7 +81,7 @@ CSound::~CSound()
 
 	if (soundThread != nullptr) {
 		soundThread->join();
-		SafeDelete(soundThread);
+		spring::SafeDelete(soundThread);
 	}
 
 	LOG_L(L_INFO, "[%s][2]", __FUNCTION__);
@@ -412,7 +412,7 @@ void CSound::UpdateThread(int maxSounds)
 	soundSources.clear();
 
 	// must happen after sources and before context
-	SafeDelete(efx);
+	spring::SafeDelete(efx);
 
 	ALCcontext* curContext = alcGetCurrentContext();
 	ALCdevice* curDevice = alcGetContextsDevice(curContext);

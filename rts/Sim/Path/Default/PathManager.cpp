@@ -41,9 +41,9 @@ CPathManager::CPathManager()
 
 CPathManager::~CPathManager()
 {
-	SafeDelete(lowResPE);
-	SafeDelete(medResPE);
-	SafeDelete(maxResPF);
+	spring::SafeDelete(lowResPE);
+	spring::SafeDelete(medResPE);
+	spring::SafeDelete(maxResPF);
 
 	PathHeatMap::FreeInstance(pathHeatMap);
 	PathFlowMap::FreeInstance(pathFlowMap);

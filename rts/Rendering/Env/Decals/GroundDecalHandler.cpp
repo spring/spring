@@ -474,7 +474,7 @@ void CGroundDecalHandler::AddScars()
 
 		for (int y = y1; y <= y2; ++y) {
 			for (int x = x1; x <= x2; ++x) {
-				VectorInsertUnique(scarField[y * scarFieldX + x], s.id);
+				spring::VectorInsertUnique(scarField[y * scarFieldX + x], s.id);
 			}
 		}
 
@@ -826,7 +826,7 @@ void CGroundDecalHandler::RemoveScar(Scar& scar)
 
 	for (int y = y1;y <= y2; ++y) {
 		for (int x = x1; x <= x2; ++x) {
-			VectorErase(scarField[y * scarFieldX + x], scar.id);
+			spring::VectorErase(scarField[y * scarFieldX + x], scar.id);
 		}
 	}
 

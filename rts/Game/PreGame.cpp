@@ -257,6 +257,7 @@ void CPreGame::UpdateClientNet()
 
 		LOG_L(L_WARNING, "[PreGame] Server Connection Timeout");
 
+		spring::exitCode = SPRING_EXIT_CODE_TIMEOUT;
 		gu->globalQuit = true;
 		return;
 	}
@@ -470,7 +471,7 @@ void CPreGame::GameDataReceived(std::shared_ptr<const netcode::RawPacket> packet
 	// modified version (cf StartServerForDemo) which the server already has that
 	// contains an extra player
 	if (gameSetup != nullptr)
-		SafeDelete(gameSetup);
+		spring::SafeDelete(gameSetup);
 
 	if (CGameSetup::LoadReceivedScript(gameData->GetSetupText(), clientSetup->isHost)) {
 		assert(gameSetup != nullptr);

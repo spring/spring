@@ -21,7 +21,7 @@ IAILibraryManager* IAILibraryManager::GetInstance() {
 }
 
 void IAILibraryManager::Destroy() {
-	// SafeDelete
+	// spring::SafeDelete
 	IAILibraryManager* tmp = gAILibraryManager;
 	gAILibraryManager = NULL;
 	delete tmp;

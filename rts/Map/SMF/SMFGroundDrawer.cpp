@@ -119,8 +119,8 @@ CSMFGroundDrawer::~CSMFGroundDrawer()
 	smfRenderStates[RENDER_STATE_LUA]->Kill(); ISMFRenderState::FreeInstance(smfRenderStates[RENDER_STATE_LUA]);
 	smfRenderStates.clear();
 
-	SafeDelete(groundTextures);
-	SafeDelete(meshDrawer);
+	spring::SafeDelete(groundTextures);
+	spring::SafeDelete(meshDrawer);
 
 	// individually generated, individually deleted
 	glDeleteLists(waterPlaneDispLists[0], 1);
@@ -140,7 +140,7 @@ IMeshDrawer* CSMFGroundDrawer::SwitchMeshDrawer(int wantedMode)
 	if ((wantedMode == drawerMode) && (meshDrawer != nullptr))
 		return meshDrawer;
 
-	SafeDelete(meshDrawer);
+	spring::SafeDelete(meshDrawer);
 
 	switch ((drawerMode = wantedMode)) {
 		case SMF_MESHDRAWER_LEGACY: {

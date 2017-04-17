@@ -60,8 +60,8 @@ void FileSystemInitializer::Initialize()
 void FileSystemInitializer::Cleanup(bool deallocConfigHandler)
 {
 	if (initialized) {
-		SafeDelete(archiveScanner);
-		SafeDelete(vfsHandler);
+		spring::SafeDelete(archiveScanner);
+		spring::SafeDelete(vfsHandler);
 		initialized = false;
 	}
 

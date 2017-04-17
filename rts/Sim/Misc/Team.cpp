@@ -387,7 +387,7 @@ void CTeam::SlowUpdate()
 
 void CTeam::AddUnit(CUnit* unit, AddType type)
 {
-	VectorInsertUnique(units, unit, false);
+	spring::VectorInsertUnique(units, unit, false);
 	switch (type) {
 		case AddBuilt: {
 			GetCurrentStats().unitsProduced++;
@@ -408,7 +408,7 @@ void CTeam::AddUnit(CUnit* unit, AddType type)
 void CTeam::RemoveUnit(CUnit* unit, RemoveType type)
 {
 	if (removeUnits)
-		VectorErase(units, unit);
+		spring::VectorErase(units, unit);
 
 	switch (type) {
 		case RemoveDied: {

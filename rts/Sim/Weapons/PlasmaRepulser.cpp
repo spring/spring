@@ -173,7 +173,7 @@ bool CPlasmaRepulser::IncomingProjectile(CWeaponProjectile* p)
 				curPower -= shieldDamage / GAME_SPEED;
 			}
 		}
-		const bool newRepulsed = VectorInsertUnique(repulsedProjectiles, p, true);
+		const bool newRepulsed = spring::VectorInsertUnique(repulsedProjectiles, p, true);
 		if (newRepulsed) {
 			AddDeathDependence(p, DEPENDENCE_REPULSED);
 			if (weaponDef->visibleShieldRepulse) {
@@ -242,6 +242,6 @@ bool CPlasmaRepulser::IncomingBeam(const CWeapon* emitter, const float3& start, 
 
 void CPlasmaRepulser::DependentDied(CObject* o)
 {
-	VectorErase(repulsedProjectiles, static_cast<CWeaponProjectile*>(o));
+	spring::VectorErase(repulsedProjectiles, static_cast<CWeaponProjectile*>(o));
 	CWeapon::DependentDied(o);
 }

@@ -119,7 +119,7 @@ bool CUnitHandler::AddUnit(CUnit* unit)
 	InsertActiveUnit(unit);
 
 	teamHandler->Team(unit->team)->AddUnit(unit, CTeam::AddBuilt);
-	VectorInsertUnique(unitsByDefs[unit->team][unit->unitDef->id], unit, false);
+	spring::VectorInsertUnique(unitsByDefs[unit->team][unit->unitDef->id], unit, false);
 
 	maxUnitRadius = std::max(unit->radius, maxUnitRadius);
 	return true;
@@ -160,7 +160,7 @@ void CUnitHandler::DeleteUnitNow(CUnit* delUnit)
 		}
 
 		activeUnits.erase(it);
-		VectorErase(unitsByDefs[delTeam][delType], delUnit);
+		spring::VectorErase(unitsByDefs[delTeam][delType], delUnit);
 		idPool.FreeID(delUnit->id, true);
 		units[delUnit->id] = nullptr;
 

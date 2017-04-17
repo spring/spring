@@ -241,9 +241,9 @@ CUnit::~CUnit()
 	// delete script first so any callouts still see valid ptrs
 	DeleteScript();
 
-	SafeDelete(commandAI);
-	SafeDelete(moveType);
-	SafeDelete(prevMoveType);
+	spring::SafeDelete(commandAI);
+	spring::SafeDelete(moveType);
+	spring::SafeDelete(prevMoveType);
 
 	// ScriptCallback may reference weapons, so delete the script first
 	for (auto wi = weapons.cbegin(); wi != weapons.cend(); ++wi) {
@@ -770,7 +770,7 @@ void CUnit::Drop(const float3& parentPos, const float3& parentDir, CUnit* parent
 void CUnit::DeleteScript()
 {
 	if (script != &CNullUnitScript::value)
-		SafeDelete(script);
+		spring::SafeDelete(script);
 
 	script = &CNullUnitScript::value;
 }
@@ -1545,8 +1545,8 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 	allyteam = teamHandler->AllyTeam(newteam);
 	neutral = false;
 
-	VectorErase(unitHandler->unitsByDefs[oldteam][unitDef->id], this);
-	VectorInsertUnique(unitHandler->unitsByDefs[newteam][unitDef->id], this, false);
+	spring::VectorErase(unitHandler->unitsByDefs[oldteam][unitDef->id], this);
+	spring::VectorInsertUnique(unitHandler->unitsByDefs[newteam][unitDef->id], this, false);
 
 	for (int at = 0; at < teamHandler->ActiveAllyTeams(); ++at) {
 		if (teamHandler->Ally(at, allyteam)) {
@@ -1779,7 +1779,7 @@ void CUnit::DependentDied(CObject* o)
 	if (o == transporter)    { transporter  = NULL; }
 	if (o == lastAttacker)   { lastAttacker = NULL; }
 
-	VectorErase(incomingMissiles, static_cast<CMissileProjectile*>(o));
+	spring::VectorErase(incomingMissiles, static_cast<CMissileProjectile*>(o));
 
 	CSolidObject::DependentDied(o);
 }
@@ -2355,7 +2355,7 @@ void CUnit::IncomingMissile(CMissileProjectile* missile)
 	if (!unitDef->canDropFlare)
 		return;
 
-	VectorInsertUnique(incomingMissiles, missile);
+	spring::VectorInsertUnique(incomingMissiles, missile);
 	AddDeathDependence(missile, DEPENDENCE_INCOMING);
 
 	if (lastFlareDrop >= (gs->frameNum - unitDef->flareReloadTime * GAME_SPEED))

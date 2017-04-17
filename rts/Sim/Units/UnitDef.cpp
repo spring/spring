@@ -656,7 +656,7 @@ UnitDef::~UnitDef()
 {
 	if (buildPic != nullptr) {
 		buildPic->Free();
-		SafeDelete(buildPic);
+		spring::SafeDelete(buildPic);
 	}
 }
 

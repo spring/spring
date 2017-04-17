@@ -141,7 +141,7 @@ void CModelLoader::KillModels()
 		model->DeletePieces(model->GetRootPiece());
 		model->SetRootPiece(nullptr);
 
-		SafeDelete(model);
+		spring::SafeDelete(model);
 	}
 
 	models.clear();

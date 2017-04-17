@@ -167,7 +167,7 @@ void CSM3ReadMap::InitGroundDrawer() {
 }
 
 void CSM3ReadMap::KillGroundDrawer() {
-	SafeDelete(groundDrawer);
+	spring::SafeDelete(groundDrawer);
 }
 
 

@@ -1,11 +1,16 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "System/Util.h"
+#include "System/bitops.h"
+
 #if defined(_MSC_VER) && (_MSC_VER >= 1310)
 	#include <intrin.h>
 #endif
 #include <cstring>
 #include <cinttypes>
+
+
+int spring::exitCode = SPRING_EXIT_CODE_NORMAL;
 
 
 std::string StringReplace(const std::string& text,
@@ -15,10 +20,9 @@ std::string StringReplace(const std::string& text,
 	std::string working = text;
 	std::string::size_type pos = 0;
 	while (true) {
-		pos = working.find(from, pos);
-		if (pos == std::string::npos) {
+		if ((pos = working.find(from, pos)) == std::string::npos)
 			break;
-		}
+
 		std::string tmp = working.substr(0, pos);
 		tmp += to;
 		tmp += working.substr(pos + from.size(), std::string::npos);
@@ -51,13 +55,14 @@ void StringTrimInPlace(std::string& str, const std::string& ws)
 	std::string::size_type pos = str.find_last_not_of(ws);
 	if (pos != std::string::npos) {
 		str.erase(pos + 1);
-		pos = str.find_first_not_of(ws);
-		if (pos != std::string::npos) {
+
+		if ((pos = str.find_first_not_of(ws)) != std::string::npos)
 			str.erase(0, pos);
-		}
-	} else {
-		str.erase(str.begin(), str.end());
+
+		return;
 	}
+
+	str.erase(str.begin(), str.end());
 }
 
 std::string StringTrim(const std::string& str, const std::string& ws)
@@ -69,76 +74,53 @@ std::string StringTrim(const std::string& str, const std::string& ws)
 
 bool StringToBool(std::string str)
 {
-	bool value = true;
-
 	StringTrimInPlace(str);
 	StringToLowerInPlace(str);
 
 	// regex would probably be more appropriate,
 	// but it is better not to rely on any external lib here
-	if (
-			(str.empty())    ||
-			(str == "0")     ||
-			(str == "n")     ||
-			(str == "no")    ||
-			(str == "f")     ||
-			(str == "false") ||
-			(str == "off")
-		) {
-		value = false;
-	}
+	if (str.empty()) return false;
+	if (str ==     "0") return false;
+	if (str ==     "n") return false;
+	if (str ==    "no") return false;
+	if (str ==     "f") return false;
+	if (str == "false") return false;
+	if (str ==   "off") return false;
 
-	return value;
+	return true;
 }
+
 
 bool StringStartsWith(const std::string& str, const char* prefix)
 {
-	if ((prefix == NULL) || (str.size() < strlen(prefix))) {
+	if ((prefix == nullptr) || (str.size() < strlen(prefix)))
 		return false;
-	} else {
-		return (str.compare(0, strlen(prefix), prefix) == 0);
-	}
+
+	return (str.compare(0, strlen(prefix), prefix) == 0);
 }
 
 bool StringEndsWith(const std::string& str, const char* postfix)
 {
-	if ((postfix == NULL) || (str.size() < strlen(postfix))) {
+	if ((postfix == nullptr) || (str.size() < strlen(postfix)))
 		return false;
-	} else {
-		return (str.compare(str.size() - strlen(postfix), str.size(), postfix) == 0);
-	}
+
+	return (str.compare(str.size() - strlen(postfix), str.size(), postfix) == 0);
 }
 
 
-void InverseOrSetBool(bool& container, const std::string& argValue, const bool inverseArg)
+void InverseOrSetBool(bool& b, const std::string& argValue, const bool inverseArg)
 {
 	if (argValue.empty()) {
 		// toggle
-		container = !container;
+		b = !b;
 	} else {
 		// set
-		const bool value = StringToBool(argValue);
-		container = inverseArg ? (!value) : (value);
+		b = inverseArg? (!StringToBool(argValue)) : (StringToBool(argValue));
 	}
 }
 
 
-
-static inline unsigned count_leading_ones(std::uint8_t x)
-{
-	std::uint32_t i = ~x;
-	i = (i<<24) | 0x00FFFFFF;
-#ifdef _MSC_VER
-	unsigned long r;
-	_BitScanReverse(&r, (unsigned long)i);
-	return 31 - r;
-#else
-	return __builtin_clz(i);
-#endif
-}
-
-
-char32_t Utf8GetNextChar(const std::string& text, int& pos)
+char32_t utf8::GetNextChar(const std::string& text, int& pos)
 {
 	// UTF8 looks like this
 	// 1Byte == ASCII:      0xxxxxxxxx
@@ -148,12 +130,12 @@ char32_t Utf8GetNextChar(const std::string& text, int& pos)
 	// Originaly there were 5&6 byte versions too, but they were dropped in RFC 3629.
 	// So UTF8 maps to UTF16 range only.
 
-	static const auto UTF8_CONT_MASK = 0xC0; // 11xxxxxx
-	static const auto UTF8_CONT_OKAY = 0x80; // 10xxxxxx
+	static constexpr auto UTF8_CONT_MASK = 0xC0; // 11xxxxxx
+	static constexpr auto UTF8_CONT_OKAY = 0x80; // 10xxxxxx
 
 	union UTF8_4Byte {
 		std::uint32_t i;
-		std::uint8_t  c[4];
+		std::uint8_t c[4];
 	};
 
 	// read next 4bytes and check if it is an utf8 sequence
@@ -204,13 +186,13 @@ char32_t Utf8GetNextChar(const std::string& text, int& pos)
 		} break;
 		case 3: {
 			u  = (char32_t(utf8.c[0] & 0x0F)) << 12;
-			u |= (char32_t(utf8.c[1] & 0x3F)) << 6;
+			u |= (char32_t(utf8.c[1] & 0x3F)) <<  6;
 			u |= (char32_t(utf8.c[2] & 0x3F));
 		} break;
 		case 4: {
 			u  = (char32_t(utf8.c[0] & 0x07)) << 18;
 			u |= (char32_t(utf8.c[1] & 0x3F)) << 12;
-			u |= (char32_t(utf8.c[2] & 0x3F)) << 6;
+			u |= (char32_t(utf8.c[2] & 0x3F)) <<  6;
 			u |= (char32_t(utf8.c[3] & 0x3F));
 			//TODO limit range to UTF16!
 		} break;
@@ -225,39 +207,38 @@ char32_t Utf8GetNextChar(const std::string& text, int& pos)
 }
 
 
-std::string UnicodeToUtf8(char32_t ch)
+std::string utf8::FromUnicode(char32_t ch)
 {
 	std::string str;
 
 	// in:  0000 0000  0000 0000  0000 0000  0aaa aaaa
 	// out:                                  0aaa aaaa
-	if(ch<(1<<7))
-	{
+	if (ch < (1 << 7)) {
 		str += (char)ch;
 	}
+
 	// in:  0000 0000  0000 0000  0000 0bbb  bbaa aaaa
 	// out:                       110b bbbb  10aa aaaa
-	else if(ch<(1<<11))
-	{
-		str += 0xC0 | (char)(ch>>6);
-		str += 0x80 | (char)(ch&0x3F);
+	else if (ch < (1 << 11)) {
+		str += 0xC0 | (char)(ch >> 6);
+		str += 0x80 | (char)(ch & 0x3F);
 	}
+
 	// in:  0000 0000  0000 0000  cccc bbbb  bbaa aaaa
 	// out:            1110 cccc  10bb bbbb  10aa aaaa
-	else if(ch<(1<<16))
-	{
-		str += 0xE0 | (char)(ch>>12);
-		str += 0x80 | (char)((ch>>6)&0x3F);
-		str += 0x80 | (char)(ch&0x3F);
+	else if (ch < (1 << 16)) {
+		str += 0xE0 | (char) (ch >> 12        );
+		str += 0x80 | (char)((ch >>  6) & 0x3F);
+		str += 0x80 | (char)( ch        & 0x3F);
 	}
+
 	// in:  0000 0000  000d ddcc  cccc bbbb  bbaa aaaa
 	// out: 1111 0ddd  10cc cccc  10bb bbbb  10aa aaaa
-	else if(ch<(1<<21))
-	{
-		str += 0xF0 | (char)(ch>>18);
-		str += 0x80 | (char)((ch>>12)&0x3F);
-		str += 0x80 | (char)((ch>>6)&0x3F);
-		str += 0x80 | (char)(ch&0x3F);
+	else if (ch < (1 << 21)) {
+		str += 0xF0 | (char) (ch >> 18        );
+		str += 0x80 | (char)((ch >> 12) & 0x3F);
+		str += 0x80 | (char)((ch >>  6) & 0x3F);
+		str += 0x80 | (char)( ch        & 0x3F);
 	}
 
 	return str;

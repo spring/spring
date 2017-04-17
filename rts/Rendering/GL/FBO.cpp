@@ -275,7 +275,7 @@ FBO::~FBO()
 	if (fboId)
 		glDeleteFramebuffersEXT(1, &fboId);
 
-	VectorErase(activeFBOs, this);
+	spring::VectorErase(activeFBOs, this);
 
 	if (!activeFBOs.empty())
 		return;
@@ -420,7 +420,7 @@ void FBO::Detach(const GLenum attachment)
 	glGetFramebufferAttachmentParameterivEXT(GL_FRAMEBUFFER_EXT, attachment, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME_EXT, (GLint*) &attID);
 	glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, attachment, GL_RENDERBUFFER_EXT, 0);
 
-	VectorEraseIf(rboIDs, [&](GLuint& rboID) {
+	spring::VectorEraseIf(rboIDs, [&](GLuint& rboID) {
 		if (rboID != attID) return false;
 		glDeleteRenderbuffersEXT(1, &rboID); return true;
 	});

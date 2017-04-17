@@ -44,13 +44,13 @@ LegacyTrackHandler::~LegacyTrackHandler()
 
 	for (TrackType& tt: trackTypes) {
 		for (UnitTrackStruct* uts: tt.tracks)
-			VectorInsertUnique(tracksToBeDeleted, uts, true);
+			spring::VectorInsertUnique(tracksToBeDeleted, uts, true);
 
 		glDeleteTextures(1, &tt.texture);
 	}
 
 	for (auto ti = tracksToBeAdded.cbegin(); ti != tracksToBeAdded.cend(); ++ti)
-		VectorInsertUnique(tracksToBeDeleted, *ti, true);
+		spring::VectorInsertUnique(tracksToBeDeleted, *ti, true);
 
 	for (auto ti = tracksToBeDeleted.cbegin(); ti != tracksToBeDeleted.cend(); ++ti)
 		delete *ti;
@@ -243,7 +243,7 @@ void LegacyTrackHandler::CleanTracks()
 				track->owner = nullptr;
 			}
 
-			VectorErase(*ttc.tracks, track);
+			spring::VectorErase(*ttc.tracks, track);
 			tracksToBeDeleted.push_back(track);
 		}
 	}
@@ -472,7 +472,7 @@ void LegacyTrackHandler::AddTrack(CUnit* unit, const float3& newPos)
 		auto& decDef = unit->unitDef->decalDef;
 		auto& trType = trackTypes[decDef.trackDecalType];
 
-		VectorInsertUnique(trType.tracks, *unitTrack);
+		spring::VectorInsertUnique(trType.tracks, *unitTrack);
 	}
 
 	(*unitTrack)->lastUpdate = gs->frameNum;

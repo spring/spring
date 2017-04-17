@@ -87,7 +87,7 @@ CBitmap::CBitmap()
 CBitmap::~CBitmap()
 {
 #ifndef BITMAP_NO_OPENGL
-	SafeDelete(ddsimage);
+	spring::SafeDelete(ddsimage);
 #endif // !BITMAP_NO_OPENGL
 }
 
@@ -118,7 +118,7 @@ CBitmap& CBitmap::operator=(const CBitmap& bmp)
 #ifndef BITMAP_NO_OPENGL
 		textype = bmp.textype;
 
-		SafeDelete(ddsimage);
+		spring::SafeDelete(ddsimage);
 
 		if (bmp.ddsimage != nullptr)
 			ddsimage = new nv_dds::CDDSImage(*bmp.ddsimage);
@@ -142,7 +142,7 @@ CBitmap& CBitmap::operator=(CBitmap&& bmp)
 #ifndef BITMAP_NO_OPENGL
 		textype = bmp.textype;
 
-		SafeDelete(ddsimage);
+		spring::SafeDelete(ddsimage);
 
 		ddsimage = bmp.ddsimage;
 		bmp.ddsimage = nullptr;

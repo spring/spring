@@ -255,7 +255,7 @@ void CFeatureHandler::SetFeatureUpdateable(CFeature* feature)
 	}
 
 	// always true
-	feature->inUpdateQue = VectorInsertUnique(updateFeatures, feature);
+	feature->inUpdateQue = spring::VectorInsertUnique(updateFeatures, feature);
 }
 
 

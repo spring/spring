@@ -146,7 +146,7 @@ void CSoundSource::Stop()
 		curPlaying = nullptr;
 	}
 	if (curStream != nullptr)
-		SafeDelete(curStream);
+		spring::SafeDelete(curStream);
 
 	if (curChannel) {
 		IAudioChannel* oldChannel = curChannel;

@@ -109,7 +109,7 @@ void CQuadField::Quad::PostLoad()
 {
 #ifndef UNIT_TEST
 	for (CUnit* unit: units) {
-		VectorInsertUnique(teamUnits[unit->allyteam], unit, false);
+		spring::VectorInsertUnique(teamUnits[unit->allyteam], unit, false);
 	}
 #endif
 }
@@ -295,13 +295,13 @@ void CQuadField::MovedUnit(CUnit* unit)
 	}
 
 	for (const int qi: unit->quads) {
-		VectorErase(baseQuads[qi].units, unit);
-		VectorErase(baseQuads[qi].teamUnits[unit->allyteam], unit);
+		spring::VectorErase(baseQuads[qi].units, unit);
+		spring::VectorErase(baseQuads[qi].teamUnits[unit->allyteam], unit);
 	}
 
 	for (const int qi: newQuads) {
-		VectorInsertUnique(baseQuads[qi].units, unit, false);
-		VectorInsertUnique(baseQuads[qi].teamUnits[unit->allyteam], unit, false);
+		spring::VectorInsertUnique(baseQuads[qi].units, unit, false);
+		spring::VectorInsertUnique(baseQuads[qi].teamUnits[unit->allyteam], unit, false);
 	}
 
 	unit->quads = std::move(newQuads);
@@ -310,8 +310,8 @@ void CQuadField::MovedUnit(CUnit* unit)
 void CQuadField::RemoveUnit(CUnit* unit)
 {
 	for (const int qi: unit->quads) {
-		VectorErase(baseQuads[qi].units, unit);
-		VectorErase(baseQuads[qi].teamUnits[unit->allyteam], unit);
+		spring::VectorErase(baseQuads[qi].units, unit);
+		spring::VectorErase(baseQuads[qi].teamUnits[unit->allyteam], unit);
 	}
 
 	unit->quads.clear();
@@ -340,11 +340,11 @@ void CQuadField::MovedRepulser(CPlasmaRepulser* repulser)
 	}
 
 	for (const int qi: repulser->quads) {
-		VectorErase(baseQuads[qi].repulsers, repulser);
+		spring::VectorErase(baseQuads[qi].repulsers, repulser);
 	}
 
 	for (const int qi: newQuads) {
-		VectorInsertUnique(baseQuads[qi].repulsers, repulser, false);
+		spring::VectorInsertUnique(baseQuads[qi].repulsers, repulser, false);
 	}
 
 	repulser->quads = std::move(newQuads);
@@ -353,7 +353,7 @@ void CQuadField::MovedRepulser(CPlasmaRepulser* repulser)
 void CQuadField::RemoveRepulser(CPlasmaRepulser* repulser)
 {
 	for (const int qi: repulser->quads) {
-		VectorErase(baseQuads[qi].repulsers, repulser);
+		spring::VectorErase(baseQuads[qi].repulsers, repulser);
 	}
 
 	repulser->quads.clear();
@@ -373,7 +373,7 @@ void CQuadField::AddFeature(CFeature* feature)
 	const auto& newQuads = GetQuads(feature->pos, feature->radius);
 
 	for (const int qi: newQuads) {
-		VectorInsertUnique(baseQuads[qi].features, feature, false);
+		spring::VectorInsertUnique(baseQuads[qi].features, feature, false);
 	}
 }
 
@@ -382,7 +382,7 @@ void CQuadField::RemoveFeature(CFeature* feature)
 	const auto& quads = GetQuads(feature->pos, feature->radius);
 
 	for (const int qi: quads) {
-		VectorErase(baseQuads[qi].features, feature);
+		spring::VectorErase(baseQuads[qi].features, feature);
 	}
 
 	#ifdef DEBUG_QUADFIELD
@@ -419,13 +419,13 @@ void CQuadField::AddProjectile(CProjectile* p)
 		auto newQuads = std::move(GetQuadsOnRay(p->pos, p->dir, p->speed.w));
 
 		for (const int qi: newQuads) {
-			VectorInsertUnique(baseQuads[qi].projectiles, p, false);
+			spring::VectorInsertUnique(baseQuads[qi].projectiles, p, false);
 		}
 
 		p->quads = std::move(newQuads);
 	} else {
 		int newQuad = WorldPosToQuadFieldIdx(p->pos);
-		VectorInsertUnique(baseQuads[newQuad].projectiles, p, false);
+		spring::VectorInsertUnique(baseQuads[newQuad].projectiles, p, false);
 		p->quads.clear();
 		p->quads.push_back(newQuad);
 	}
@@ -436,7 +436,7 @@ void CQuadField::RemoveProjectile(CProjectile* p)
 	assert(p->synced);
 
 	for (const int qi: p->quads) {
-		VectorErase(baseQuads[qi].projectiles, p);
+		spring::VectorErase(baseQuads[qi].projectiles, p);
 	}
 
 	p->quads.clear();

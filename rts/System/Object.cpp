@@ -30,12 +30,12 @@ std::atomic<std::int64_t> CObject::cur_sync_id(0);
 
 static bool VectorInsertSorted(std::vector<CObject*>& v, CObject* o)
 {
-	return (VectorInsertUniqueSorted(v, o, [](const CObject* a, const CObject* b) { return (a->GetSyncID() < b->GetSyncID()); }));
+	return (spring::VectorInsertUniqueSorted(v, o, [](const CObject* a, const CObject* b) { return (a->GetSyncID() < b->GetSyncID()); }));
 }
 
 static bool VectorEraseSorted(std::vector<CObject*>& v, CObject* o)
 {
-	return (VectorEraseUniqueSorted(v, o, [](const CObject* a, const CObject* b) { return (a->GetSyncID() < b->GetSyncID()); }));
+	return (spring::VectorEraseUniqueSorted(v, o, [](const CObject* a, const CObject* b) { return (a->GetSyncID() < b->GetSyncID()); }));
 }
 
 

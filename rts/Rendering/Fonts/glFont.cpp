@@ -171,7 +171,7 @@ float CglFont::GetTextWidth_(const std::u8string& text)
 
 	int pos = 0;
 	while (pos < text.length()) {
-		const char32_t u = Utf8GetNextChar(text, pos);
+		const char32_t u = utf8::GetNextChar(text, pos);
 
 		switch (u) {
 			// inlined colorcode
@@ -229,7 +229,7 @@ float CglFont::GetTextHeight_(const std::u8string& text, float* descender, int* 
 
 	int pos = 0;
 	while (pos < text.length()) {
-		const char32_t u = Utf8GetNextChar(text, pos);
+		const char32_t u = utf8::GetNextChar(text, pos);
 		switch(u) {
 			// inlined colorcode
 			case ColorCodeIndicator:
@@ -571,7 +571,7 @@ void CglFont::RenderString(float x, float y, const float& scaleX, const float& s
 		if (endOfString)
 			return;
 
-		c = Utf8GetNextChar(str,i);
+		c = utf8::GetNextChar(str,i);
 
 		if (colorChanged) {
 			if (autoOutlineColor) {
@@ -628,7 +628,7 @@ void CglFont::RenderStringShadow(float x, float y, const float& scaleX, const fl
 		if (endOfString)
 			return;
 
-		c = Utf8GetNextChar(str,i);
+		c = utf8::GetNextChar(str,i);
 
 		if (colorChanged) {
 			if (autoOutlineColor) {
@@ -692,7 +692,7 @@ void CglFont::RenderStringOutlined(float x, float y, const float& scaleX, const 
 		if (endOfString)
 			return;
 
-		c = Utf8GetNextChar(str,i);
+		c = utf8::GetNextChar(str,i);
 
 		if (colorChanged) {
 			if (autoOutlineColor) {

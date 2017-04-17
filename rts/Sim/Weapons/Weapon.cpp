@@ -741,7 +741,7 @@ void CWeapon::DependentDied(CObject* o)
 
 	// NOTE: DependentDied is called from ~CObject-->Detach, object is just barely valid
 	if (weaponDef->interceptor || weaponDef->isShield) {
-		VectorErase(incomingProjectileIDs, static_cast<CWeaponProjectile*>(o)->id);
+		spring::VectorErase(incomingProjectileIDs, static_cast<CWeaponProjectile*>(o)->id);
 	}
 }
 

@@ -120,7 +120,7 @@ CAVIGenerator::~CAVIGenerator()
 			AVICondition.notify_all();
 		}
 		AVIThread->join();
-		SafeDelete(AVIThread);
+		spring::SafeDelete(AVIThread);
 	}
 
 	while (!freeImageBuffers.empty()) {
@@ -132,7 +132,7 @@ CAVIGenerator::~CAVIGenerator()
 		imageBuffers.pop_front();
 	}
 
-	SafeDelete(readBuf);
+	spring::SafeDelete(readBuf);
 	ReleaseAVICompressionEngine();
 	LOG("Finished writing avi file %s", fileName.c_str());
 

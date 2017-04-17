@@ -70,7 +70,7 @@ void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigne
 	waitForExit = false;
 	exitSuccess = true;
 
-	SafeDelete(gameServer);
+	spring::SafeDelete(gameServer);
 	ExitSpringProcess(msg, caption, flags);
 
 #else

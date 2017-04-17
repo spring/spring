@@ -77,7 +77,7 @@ CMouseCursor::CMouseCursor(const string& name, HotSpot hs)
 
 CMouseCursor::~CMouseCursor()
 {
-	SafeDelete(hwCursor);
+	spring::SafeDelete(hwCursor);
 
 	for (auto it = images.begin(); it != images.end(); ++it)
 		glDeleteTextures(1, &it->texture);

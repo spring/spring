@@ -318,8 +318,8 @@ CGame::~CGame()
 	KillSimulation();
 
 	LOG("[Game::%s][2]", __func__);
-	SafeDelete(saveFile); // ILoadSaveHandler, depends on vfsHandler via ~IArchive
-	SafeDelete(jobDispatcher);
+	spring::SafeDelete(saveFile); // ILoadSaveHandler, depends on vfsHandler via ~IArchive
+	spring::SafeDelete(jobDispatcher);
 
 	LOG("[Game::%s][3]", __func__);
 	CWordCompletion::DestroyInstance();
@@ -709,7 +709,7 @@ void CGame::LoadLua()
 	loadscreen->SetLoadMessage("Loading LuaUI");
 	CLuaUI::LoadFreeHandler();
 
-	SafeDelete(defsParser);
+	spring::SafeDelete(defsParser);
 }
 
 void CGame::LoadSkirmishAIs()
@@ -823,33 +823,33 @@ void CGame::KillMisc()
 void CGame::KillRendering()
 {
 	LOG("[Game::%s][1]", __func__);
-	SafeDelete(infoTextureHandler);
-	SafeDelete(icon::iconHandler);
-	SafeDelete(geometricObjects);
-	SafeDelete(worldDrawer);
+	spring::SafeDelete(infoTextureHandler);
+	spring::SafeDelete(icon::iconHandler);
+	spring::SafeDelete(geometricObjects);
+	spring::SafeDelete(worldDrawer);
 }
 
 void CGame::KillInterface()
 {
 	LOG("[Game::%s][1]", __func__);
 	ProfileDrawer::SetEnabled(false);
-	SafeDelete(guihandler);
-	SafeDelete(minimap);
-	SafeDelete(resourceBar);
-	SafeDelete(tooltip); // CTooltipConsole*
-	SafeDelete(infoConsole);
-	SafeDelete(consoleHistory);
-	SafeDelete(keyBindings);
-	SafeDelete(selectionKeys); // CSelectionKeyHandler*
-	SafeDelete(mouse); // CMouseHandler*
-	SafeDelete(inMapDrawerModel);
-	SafeDelete(inMapDrawer);
+	spring::SafeDelete(guihandler);
+	spring::SafeDelete(minimap);
+	spring::SafeDelete(resourceBar);
+	spring::SafeDelete(tooltip); // CTooltipConsole*
+	spring::SafeDelete(infoConsole);
+	spring::SafeDelete(consoleHistory);
+	spring::SafeDelete(keyBindings);
+	spring::SafeDelete(selectionKeys); // CSelectionKeyHandler*
+	spring::SafeDelete(mouse); // CMouseHandler*
+	spring::SafeDelete(inMapDrawerModel);
+	spring::SafeDelete(inMapDrawer);
 
 	LOG("[Game::%s][2]", __func__);
-	SafeDelete(camHandler);
+	spring::SafeDelete(camHandler);
 
 	for (unsigned int i = 0; i < grouphandlers.size(); i++) {
-		SafeDelete(grouphandlers[i]);
+		spring::SafeDelete(grouphandlers[i]);
 	}
 
 	grouphandlers.clear();
@@ -871,28 +871,28 @@ void CGame::KillSimulation()
 
 	LOG("[Game::%s][2]", __func__);
 	if (unitHandler) unitHandler->DeleteScripts();
-	SafeDelete(featureHandler); // depends on unitHandler (via ~CFeature)
-	SafeDelete(unitHandler);
-	SafeDelete(projectileHandler);
+	spring::SafeDelete(featureHandler); // depends on unitHandler (via ~CFeature)
+	spring::SafeDelete(unitHandler);
+	spring::SafeDelete(projectileHandler);
 
 	LOG("[Game::%s][3]", __func__);
 	IPathManager::FreeInstance(pathManager);
 
-	SafeDelete(readMap);
-	SafeDelete(smoothGround);
-	SafeDelete(groundBlockingObjectMap);
-	SafeDelete(buildingMaskMap);
-	SafeDelete(losHandler);
-	SafeDelete(mapDamage);
-	SafeDelete(quadField);
-	SafeDelete(moveDefHandler);
-	SafeDelete(unitDefHandler);
-	SafeDelete(featureDefHandler);
-	SafeDelete(weaponDefHandler);
-	SafeDelete(damageArrayHandler);
-	SafeDelete(explGenHandler);
-	SafeDelete(helper);
-	SafeDelete((mapInfo = const_cast<CMapInfo*>(mapInfo)));
+	spring::SafeDelete(readMap);
+	spring::SafeDelete(smoothGround);
+	spring::SafeDelete(groundBlockingObjectMap);
+	spring::SafeDelete(buildingMaskMap);
+	spring::SafeDelete(losHandler);
+	spring::SafeDelete(mapDamage);
+	spring::SafeDelete(quadField);
+	spring::SafeDelete(moveDefHandler);
+	spring::SafeDelete(unitDefHandler);
+	spring::SafeDelete(featureDefHandler);
+	spring::SafeDelete(weaponDefHandler);
+	spring::SafeDelete(damageArrayHandler);
+	spring::SafeDelete(explGenHandler);
+	spring::SafeDelete(helper);
+	spring::SafeDelete((mapInfo = const_cast<CMapInfo*>(mapInfo)));
 
 	LOG("[Game::%s][4]", __func__);
 	CCommandAI::KillCommandDescriptionCache();
@@ -1015,7 +1015,7 @@ int CGame::TextInput(const std::string& utf8Text)
 	const bool caught = eventHandler.TextInput(utf8Text);
 
 	if (userWriting && !caught){
-		std::string text = ignoreNextChar ? utf8Text.substr(Utf8NextChar(utf8Text, 0)) : utf8Text;
+		std::string text = ignoreNextChar ? utf8Text.substr(utf8::NextChar(utf8Text, 0)) : utf8Text;
 		writingPos = Clamp<int>(writingPos, 0, userInput.length());
 		userInput.insert(writingPos, text);
 		writingPos += text.length();
@@ -1435,7 +1435,7 @@ void CGame::DrawInputText()
 		const float caretPos    = fontSize * font->GetTextWidth(caretStr) * globalRendering->pixelX;
 		const float caretHeight = fontSize * font->GetLineHeight() * globalRendering->pixelY;
 		int cpos = writingPos;
-		char32_t c = Utf8GetNextChar(userInput, cpos);
+		char32_t c = utf8::GetNextChar(userInput, cpos);
 		if (c == 0) c = ' '; // make caret always visible
 		const float cw = fontSize * font->GetCharacterWidth(c) * globalRendering->pixelX;
 		const float csx = inputTextPosX + caretPos;
@@ -2039,7 +2039,7 @@ bool CGame::ProcessKeyPressAction(unsigned int key, const Action& action) {
 
 		if (action.command == "edit_backspace") {
 			if (!userInput.empty() && (writingPos > 0)) {
-				const int prev = Utf8PrevChar(userInput, writingPos);
+				const int prev = utf8::PrevChar(userInput, writingPos);
 				userInput.erase(prev, writingPos - prev);
 				writingPos = prev;
 			}
@@ -2049,7 +2049,7 @@ bool CGame::ProcessKeyPressAction(unsigned int key, const Action& action) {
 
 		if (action.command == "edit_delete") {
 			if (!userInput.empty() && (writingPos < (int)userInput.size())) {
-				userInput.erase(writingPos, Utf8CharLen(userInput, writingPos));
+				userInput.erase(writingPos, utf8::CharLen(userInput, writingPos));
 			}
 
 			return true;
@@ -2068,12 +2068,12 @@ bool CGame::ProcessKeyPressAction(unsigned int key, const Action& action) {
 
 
 		if (action.command == "edit_prev_char") {
-			writingPos = Utf8PrevChar(userInput, writingPos);
+			writingPos = utf8::PrevChar(userInput, writingPos);
 			return true;
 		}
 
 		if (action.command == "edit_next_char") {
-			writingPos = Utf8NextChar(userInput, writingPos);
+			writingPos = utf8::NextChar(userInput, writingPos);
 			return true;
 		}
 

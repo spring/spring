@@ -14,12 +14,12 @@ IExplosionListener::~IExplosionListener()
 
 void CExplosionCreator::AddExplosionListener(IExplosionListener* listener)
 {
-	VectorInsertUnique(explosionListeners, listener, true);
+	spring::VectorInsertUnique(explosionListeners, listener, true);
 }
 
 void CExplosionCreator::RemoveExplosionListener(IExplosionListener* listener)
 {
-	VectorErase(explosionListeners, listener);
+	spring::VectorErase(explosionListeners, listener);
 }
 
 void CExplosionCreator::FireExplosionEvent(const CExplosionParams& event)

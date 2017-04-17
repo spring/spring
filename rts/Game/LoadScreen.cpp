@@ -73,7 +73,7 @@ CLoadScreen::~CLoadScreen()
 	if (netHeartbeatThread != nullptr)
 		netHeartbeatThread->join();
 
-	SafeDelete(netHeartbeatThread);
+	spring::SafeDelete(netHeartbeatThread);
 
 	if (!gu->globalQuit) {
 		activeController = game;
@@ -171,7 +171,7 @@ bool CLoadScreen::Init()
 			gameLoadThread = new COffscreenGLThread(std::bind(&CGame::LoadGame, game, mapName));
 			return true;
 		} catch (const opengl_error& gle) {
-			SafeDelete(gameLoadThread);
+			spring::SafeDelete(gameLoadThread);
 			LOG_L(L_WARNING, "[LoadScreen::%s] offscreen GL context creation failed (error: \"%s\")", __func__, gle.what());
 
 			mtLoading = false;
@@ -192,7 +192,7 @@ void CLoadScreen::Kill()
 	// at this point, the thread running CGame::LoadGame
 	// has finished and deregistered itself from WatchDog
 	gameLoadThread->Join();
-	SafeDelete(gameLoadThread);
+	spring::SafeDelete(gameLoadThread);
 
 	CglFont::threadSafety = false;
 }
@@ -218,7 +218,7 @@ void CLoadScreen::DeleteInstance()
 		return;
 
 	singleton->Kill();
-	SafeDelete(singleton);
+	spring::SafeDelete(singleton);
 }
 
 

@@ -36,7 +36,7 @@ CAIInterfaceLibrary::CAIInterfaceLibrary(const CAIInterfaceLibraryInfo& _info)
 
 CAIInterfaceLibrary::~CAIInterfaceLibrary() {
 	ReleaseStatic();
-	SafeDelete(sharedLib);
+	spring::SafeDelete(sharedLib);
 }
 
 void CAIInterfaceLibrary::InitStatic() {

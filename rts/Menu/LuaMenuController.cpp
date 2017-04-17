@@ -35,8 +35,8 @@ CLuaMenuController::~CLuaMenuController()
 {
 	CLuaMenu::FreeHandler();
 
-	SafeDelete(mouse);
-	SafeDelete(infoConsole);
+	spring::SafeDelete(mouse);
+	spring::SafeDelete(infoConsole);
 }
 
 

@@ -288,7 +288,7 @@ void COffscreenGLThread::Join()
 {
 	if (thread)
 		thread->join();
-	SafeDelete(thread);
+	spring::SafeDelete(thread);
 }
 
 
