@@ -53,6 +53,7 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_GMT)
 #endif
 #define LOG_SECTION_CURRENT LOG_SECTION_GMT
 
+
 // speeds near (MAX_UNIT_SPEED * 1e1) elmos / frame can be caused by explosion impulses
 // CUnitHandler removes units with speeds > MAX_UNIT_SPEED as soon as they exit the map,
 // so the assertion can be less strict
@@ -72,13 +73,15 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_GMT)
 
 #define FOOTPRINT_RADIUS(xs, zs, s) ((math::sqrt((xs * xs + zs * zs)) * 0.5f * SQUARE_SIZE) * s)
 
+#define MAXREVERSESPEED_MEMBER_IDX 7
+
+#define MEMBER_CHARPTR_HASH(memberName) HsiehHash(memberName, strlen(memberName),     0)
+#define MEMBER_LITERAL_HASH(memberName) HsiehHash(memberName, sizeof(memberName) - 1, 0)
+
+
 
 CR_BIND_DERIVED(CGroundMoveType, AMoveType, (nullptr))
 CR_REG_METADATA(CGroundMoveType, (
-	CR_IGNORED( boolMemberData),
-	CR_IGNORED(shortMemberData),
-	CR_IGNORED(floatMemberData),
-
 	CR_IGNORED(pathController),
 
 	CR_MEMBER(currWayPoint),
@@ -133,6 +136,28 @@ CR_REG_METADATA(CGroundMoveType, (
 
 	CR_POSTLOAD(PostLoad)
 ))
+
+
+
+static CGroundMoveType::MemberData gmtMemberData = {
+	{
+		std::pair<unsigned int,  bool*>{MEMBER_LITERAL_HASH(      "atGoal"), nullptr},
+		std::pair<unsigned int,  bool*>{MEMBER_LITERAL_HASH( "atEndOfPath"), nullptr},
+	},
+	{
+		std::pair<unsigned int, short*>{MEMBER_LITERAL_HASH("minScriptChangeHeading"), nullptr},
+	},
+	{
+		std::pair<unsigned int, float*>{MEMBER_LITERAL_HASH(       "turnRate"), nullptr},
+		std::pair<unsigned int, float*>{MEMBER_LITERAL_HASH(      "turnAccel"), nullptr},
+		std::pair<unsigned int, float*>{MEMBER_LITERAL_HASH(        "accRate"), nullptr},
+		std::pair<unsigned int, float*>{MEMBER_LITERAL_HASH(        "decRate"), nullptr},
+		std::pair<unsigned int, float*>{MEMBER_LITERAL_HASH(      "myGravity"), nullptr},
+		std::pair<unsigned int, float*>{MEMBER_LITERAL_HASH( "maxReverseDist"), nullptr},
+		std::pair<unsigned int, float*>{MEMBER_LITERAL_HASH("minReverseAngle"), nullptr},
+		std::pair<unsigned int, float*>{MEMBER_LITERAL_HASH("maxReverseSpeed"), nullptr},
+	},
+};
 
 
 
@@ -191,9 +216,6 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	wantedHeading(0),
 	minScriptChangeHeading(SPRING_CIRCLE_DIVS >> 1)
 {
-	// initialize member hashes and pointers needed by SyncedMoveCtrl
-	InitMemberData();
-
 	// creg
 	if (owner == nullptr)
 		return;
@@ -2450,39 +2472,21 @@ bool CGroundMoveType::WantReverse(const float3& wpDir, const float3& ffDir) cons
 
 
 
-void CGroundMoveType::InitMemberData()
+void CGroundMoveType::InitMemberPtrs(MemberData* memberData)
 {
-	#define MEMBER_CHARPTR_HASH(memberName) HsiehHash(memberName, strlen(memberName),     0)
-	#define MEMBER_LITERAL_HASH(memberName) HsiehHash(memberName, sizeof(memberName) - 1, 0)
-	boolMemberData[0].first = MEMBER_LITERAL_HASH(      "atGoal");
-	boolMemberData[1].first = MEMBER_LITERAL_HASH( "atEndOfPath");
+	memberData->bools[0].second = &atGoal;
+	memberData->bools[1].second = &atEndOfPath;
 
-	shortMemberData[0].first = MEMBER_LITERAL_HASH("minScriptChangeHeading");
+	memberData->shorts[0].second = &minScriptChangeHeading;
 
-	floatMemberData[0].first = MEMBER_LITERAL_HASH(       "turnRate");
-	floatMemberData[1].first = MEMBER_LITERAL_HASH(      "turnAccel");
-	floatMemberData[2].first = MEMBER_LITERAL_HASH(        "accRate");
-	floatMemberData[3].first = MEMBER_LITERAL_HASH(        "decRate");
-	floatMemberData[4].first = MEMBER_LITERAL_HASH(      "myGravity");
-	floatMemberData[5].first = MEMBER_LITERAL_HASH( "maxReverseDist");
-	floatMemberData[6].first = MEMBER_LITERAL_HASH("minReverseAngle");
-	floatMemberData[7].first = MEMBER_LITERAL_HASH("maxReverseSpeed");
-	#undef MEMBER_CHARPTR_HASH
-	#undef MEMBER_LITERAL_HASH
-
-	boolMemberData[0].second = &atGoal;
-	boolMemberData[1].second = &atEndOfPath;
-
-	shortMemberData[0].second = &minScriptChangeHeading;
-
-	floatMemberData[0].second = &turnRate;
-	floatMemberData[1].second = &turnAccel;
-	floatMemberData[2].second = &accRate;
-	floatMemberData[3].second = &decRate;
-	floatMemberData[4].second = &myGravity;
-	floatMemberData[5].second = &maxReverseDist,
-	floatMemberData[6].second = &minReverseAngle;
-	floatMemberData[7].second = &maxReverseSpeed;
+	memberData->floats[0].second = &turnRate;
+	memberData->floats[1].second = &turnAccel;
+	memberData->floats[2].second = &accRate;
+	memberData->floats[3].second = &decRate;
+	memberData->floats[4].second = &myGravity;
+	memberData->floats[5].second = &maxReverseDist,
+	memberData->floats[6].second = &minReverseAngle;
+	memberData->floats[7].second = &maxReverseSpeed;
 }
 
 bool CGroundMoveType::SetMemberValue(unsigned int memberHash, void* memberValue)
@@ -2491,11 +2495,12 @@ bool CGroundMoveType::SetMemberValue(unsigned int memberHash, void* memberValue)
 	if (AMoveType::SetMemberValue(memberHash, memberValue))
 		return true;
 
-	#define MAXREVERSESPEED_MEMBER_IDX 7
+	// set pointers for this GMT instance
+	InitMemberPtrs(&gmtMemberData);
 
 	// special cases
-	if (memberHash == floatMemberData[MAXREVERSESPEED_MEMBER_IDX].first) {
-		*(floatMemberData[MAXREVERSESPEED_MEMBER_IDX].second) = *(reinterpret_cast<float*>(memberValue)) / GAME_SPEED;
+	if (memberHash == gmtMemberData.floats[MAXREVERSESPEED_MEMBER_IDX].first) {
+		*(gmtMemberData.floats[MAXREVERSESPEED_MEMBER_IDX].second) = *(reinterpret_cast<float*>(memberValue)) / GAME_SPEED;
 		return true;
 	}
 
@@ -2503,18 +2508,18 @@ bool CGroundMoveType::SetMemberValue(unsigned int memberHash, void* memberValue)
 	// todo: use template lambdas in C++14
 	{
 		const auto pred = [memberHash](const std::pair<unsigned int, bool*>& p) { return (memberHash == p.first); };
-		const auto iter = std::find_if(boolMemberData.begin(), boolMemberData.end(), pred);
-		if (iter != boolMemberData.end()) { *(iter->second) = *(reinterpret_cast<bool*>(memberValue)); return true; }
+		const auto iter = std::find_if(gmtMemberData.bools.begin(), gmtMemberData.bools.end(), pred);
+		if (iter != gmtMemberData.bools.end()) { *(iter->second) = *(reinterpret_cast<bool*>(memberValue)); return true; }
 	}
 	{
 		const auto pred = [memberHash](const std::pair<unsigned int, short*>& p) { return (memberHash == p.first); };
-		const auto iter = std::find_if(shortMemberData.begin(), shortMemberData.end(), pred);
-		if (iter != shortMemberData.end()) { *(iter->second) = *(reinterpret_cast<short*>(memberValue)); return true; }
+		const auto iter = std::find_if(gmtMemberData.shorts.begin(), gmtMemberData.shorts.end(), pred);
+		if (iter != gmtMemberData.shorts.end()) { *(iter->second) = *(reinterpret_cast<short*>(memberValue)); return true; }
 	}
 	{
 		const auto pred = [memberHash](const std::pair<unsigned int, float*>& p) { return (memberHash == p.first); };
-		const auto iter = std::find_if(floatMemberData.begin(), floatMemberData.end(), pred);
-		if (iter != floatMemberData.end()) { *(iter->second) = *(reinterpret_cast<float*>(memberValue)); return true; }
+		const auto iter = std::find_if(gmtMemberData.floats.begin(), gmtMemberData.floats.end(), pred);
+		if (iter != gmtMemberData.floats.end()) { *(iter->second) = *(reinterpret_cast<float*>(memberValue)); return true; }
 	}
 
 	return false;

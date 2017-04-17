@@ -21,6 +21,12 @@ public:
 	CGroundMoveType(CUnit* owner);
 	~CGroundMoveType();
 
+	struct MemberData {
+		std::array<std::pair<unsigned int,  bool*>, 2>  bools;
+		std::array<std::pair<unsigned int, short*>, 1> shorts;
+		std::array<std::pair<unsigned int, float*>, 8> floats;
+	};
+
 	void PostLoad();
 
 	bool Update() override;
@@ -41,7 +47,7 @@ public:
 	bool CanApplyImpulse(const float3&) override;
 	void LeaveTransport() override;
 
-	void InitMemberData();
+	void InitMemberPtrs(MemberData* memberData);
 	bool SetMemberValue(unsigned int memberHash, void* memberValue) override;
 
 	bool OnSlope(float minSlideTolerance);
@@ -140,11 +146,6 @@ private:
 	bool OwnerMoved(const short, const float3&, const float3&);
 	bool FollowPath();
 	bool WantReverse(const float3& wpDir, const float3& ffDir) const;
-
-private:
-	std::array<std::pair<unsigned int,  bool*>, 2>  boolMemberData;
-	std::array<std::pair<unsigned int, short*>, 1> shortMemberData;
-	std::array<std::pair<unsigned int, float*>, 8> floatMemberData;
 
 private:
 	IPathController* pathController;
