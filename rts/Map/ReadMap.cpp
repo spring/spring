@@ -146,14 +146,14 @@ CReadMap* CReadMap::LoadMap(const std::string& mapname)
 		throw content_error("[CReadMap::LoadMap] SM3 maps are no longer supported as of Spring 95.0");
 		// rm = new CSM3ReadMap(mapname);
 	} else {
-		// assume SMF format by default
+		// assume SMF format by default; calls ::Initialize
 		rm = new CSMFReadMap(mapname);
 	}
 
 	if (rm == nullptr)
 		return nullptr;
 
-	/* read metal- and type-map */
+	// read metal- and type-map
 	MapBitmapInfo mbi;
 	MapBitmapInfo tbi;
 
@@ -186,21 +186,44 @@ CReadMap* CReadMap::LoadMap(const std::string& mapname)
 void CReadMap::Serialize(creg::ISerializer* s)
 {
 	// using integers so we can xor the original heightmap with the
-	// current one - should compress significantly better.
-	      int*  ishm = reinterpret_cast<int*>(const_cast<float*>(GetCornerHeightMapSynced()));
-	const int* ioshm = reinterpret_cast<const int*>(GetOriginalHeightMapSynced());
+	// current one (affected by Lua, explosions, etc) - long runs of
+	// zeros for unchanged squares should compress significantly better.
+	      int32_t*  ichms = reinterpret_cast<      int32_t*>(const_cast<float*>(GetCornerHeightMapSynced()));
+	const int32_t* iochms = reinterpret_cast<const int32_t*>(GetOriginalHeightMapSynced());
 
-	int height;
+	// LuaSynced can also touch the typemap, serialize it (manually)
+	MapBitmapInfo tbi;
+
+	      uint8_t*  itm = typeMap.data();
+	const uint8_t* iotm = GetInfoMap("type", &tbi);
+
+	assert(!typeMap.empty());
+	assert(typeMap.size() == (tbi.width * tbi.height));
+
+	int32_t height;
+	uint8_t type;
+
 	if (s->IsWriting()) {
-		for (unsigned int i = 0; i < mapDims.mapxp1 * mapDims.mapyp1; i++) {
-			height = ishm[i] ^ ioshm[i];
-			s->Serialize(&height, sizeof(int));
+		for (unsigned int i = 0; i < (mapDims.mapxp1 * mapDims.mapyp1); i++) {
+			height = ichms[i] ^ iochms[i];
+			s->Serialize(&height, sizeof(int32_t));
+		}
+
+		for (unsigned int i = 0; i < ((mapDims.mapx >> 1) * (mapDims.mapy >> 1)); i++) {
+			type = itm[i] ^ iotm[i];
+			s->Serialize(&type, sizeof(uint8_t));
 		}
 	} else {
-		for (unsigned int i = 0; i < mapDims.mapxp1 * mapDims.mapyp1; i++) {
-			s->Serialize(&height, sizeof(int));
-			ishm[i] = height ^ ioshm[i];
+		for (unsigned int i = 0; i < (mapDims.mapxp1 * mapDims.mapyp1); i++) {
+			s->Serialize(&height, sizeof(int32_t));
+			ichms[i] = height ^ iochms[i];
 		}
+
+		for (unsigned int i = 0; i < ((mapDims.mapx >> 1) * (mapDims.mapy >> 1)); i++) {
+			s->Serialize(&type, sizeof(uint8_t));
+			itm[i] = type ^ iotm[i];
+		}
+
 		mapDamage->RecalcArea(2, mapDims.mapx - 3, 2, mapDims.mapy - 3);
 	}
 
