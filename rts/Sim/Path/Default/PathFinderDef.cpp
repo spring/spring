@@ -12,7 +12,15 @@ CPathFinderDef::CPathFinderDef(const float3& goalCenter, float goalRadius, float
 , constraintDisabled(false)
 , testMobile(true)
 , needPath(true)
-, exactPath(true)
+// if true, units will not even try to move if their max-res
+// PF goal is inside (or surrounded by) an impassable region
+// if false, units will get as close as possible and may end
+// up stuck or flip-flop between waypoints from backtracking
+//
+// false mirrors the PE behavior when requesting (not while
+// regenerating after a terrain change) paths, so prefer to
+// keep PF and PE in sync
+, exactPath(false)
 , dirIndependent(false)
 , synced(true)
 {
