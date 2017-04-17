@@ -35,8 +35,8 @@
 
 #ifdef USE_UNSYNCED_HEIGHTMAP
 	#define	HEIGHTMAP_DIGESTS \
-		CR_MEMBER(syncedHeightMapDigests), \
-		CR_MEMBER(unsyncedHeightMapDigests),
+		CR_IGNORED(  syncedHeightMapDigests), \
+		CR_IGNORED(unsyncedHeightMapDigests),
 #else
 	#define HEIGHTMAP_DIGESTS
 #endif
@@ -85,9 +85,9 @@ CR_REG_METADATA(CReadMap, (
 	CR_IGNORED(sharedFaceNormals),
 	CR_IGNORED(sharedCenterNormals),
 	CR_IGNORED(sharedSlopeMaps),
-	CR_MEMBER(typeMap),
-	CR_MEMBER(unsyncedHeightMapUpdates),
-	CR_MEMBER(unsyncedHeightMapUpdatesTemp),
+	CR_IGNORED(typeMap),
+	CR_IGNORED(unsyncedHeightMapUpdates),
+	CR_IGNORED(unsyncedHeightMapUpdatesTemp),
 	HEIGHTMAP_DIGESTS
 	CR_POSTLOAD(PostLoad),
 	CR_SERIALIZER(Serialize)
@@ -161,7 +161,7 @@ CReadMap* CReadMap::LoadMap(const std::string& mapname)
 	if (metalmapPtr != nullptr)
 		rm->FreeInfoMap("metal", metalmapPtr);
 
-	if (typemapPtr && tbi.width == (mapDims.mapx >> 1) && tbi.height == (mapDims.mapy >> 1)) {
+	if (typemapPtr != nullptr && tbi.width == (mapDims.mapx >> 1) && tbi.height == (mapDims.mapy >> 1)) {
 		assert(mapDims.hmapx == tbi.width && mapDims.hmapy == tbi.height);
 		rm->typeMap.clear();
 		rm->typeMap.resize(tbi.width * tbi.height);
