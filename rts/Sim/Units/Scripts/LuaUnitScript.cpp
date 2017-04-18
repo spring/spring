@@ -846,22 +846,21 @@ bool CLuaUnitScript::RawRunCallIn(int functionId, int inArgs, int outArgs)
 	activeScript = this;
 
 	std::string err;
-	const int error = handle->RunCallIn(L, inArgs, outArgs, err);
+	const int error = handle->RunCallInLUS(L, &err, inArgs, outArgs);
 
 	activeUnit = oldActiveUnit;
 	activeScript = oldActiveScript;
 
-	if (error != 0) {
-		const std::string& fname = GetScriptName(functionId);
+	if (error == 0)
+		return true;
 
-		LOG_L(L_ERROR, "%s::RunCallIn: error = %i, %s::%s, %s",
-				handle->GetName().c_str(), error, "CLuaUnitScript",
-				fname.c_str(), err.c_str());
-		RemoveCallIn(fname);
+	const std::string& hname = handle->GetName();
+	const std::string& fname = GetScriptName(functionId);
 
-		return false;
-	}
-	return true;
+	LOG_L(L_ERROR, "[LuaUnitScript::%s][%s::%s] error=%i trace=%s", __func__, hname.c_str(), fname.c_str(), error, err.c_str());
+	RemoveCallIn(fname);
+
+	return false;
 }
 
 

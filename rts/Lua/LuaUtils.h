@@ -237,6 +237,24 @@ static inline void LuaInsertDualMapPair(lua_State* L, const string& name, int nu
 }
 
 
+
+static inline const char* LuaErrorString(int error)
+{
+	const char* ret = "";
+
+	switch (error) {
+		case LUA_ERRMEM   : { ret = "LUA_ERRMEM"   ; } break;
+		case LUA_ERRRUN   : { ret = "LUA_ERRRUN"   ; } break;
+		case LUA_ERRERR   : { ret = "LUA_ERRERR"   ; } break;
+		case LUA_ERRSYNTAX: { ret = "LUA_ERRSYNTAX"; } break;
+		default           : { ret = "LUA_ERRNOIDEA"; } break;
+	}
+
+	return ret;
+}
+
+
+
 static inline bool FullCtrl(const lua_State* L)
 {
 	return CLuaHandle::GetHandleFullCtrl(L);

@@ -139,11 +139,9 @@ int CLuaHandle::KillActiveHandle(lua_State* L)
 {
 	CLuaHandle* ah = GetHandle(L);
 
-	if (ah != NULL) {
-		const int args = lua_gettop(L);
-		if ((args >= 1) && lua_isstring(L, 1)) {
+	if (ah != nullptr) {
+		if ((lua_gettop(L) >= 1) && lua_isstring(L, 1))
 			ah->killMsg = lua_tostring(L, 1);
-		}
 
 		// get rid of us next GameFrame call
 		ah->killMe = true;
@@ -257,10 +255,10 @@ int CLuaHandle::XCall(lua_State* srcState, const string& funcName)
 int CLuaHandle::RunCallInTraceback(
 	lua_State* L,
 	const LuaHashString* hs,
+	std::string* ts,
 	int inArgs,
 	int outArgs,
 	int errFuncIndex,
-	std::string& tracebackMsg,
 	bool popErrorFunc
 ) {
 	// do not signal floating point exceptions in user Lua code
@@ -271,7 +269,7 @@ int CLuaHandle::RunCallInTraceback(
 		ScopedLuaCall(
 			CLuaHandle* handle,
 			lua_State* state,
-			const LuaHashString* func,
+			const char* func,
 			int _nInArgs,
 			int _nOutArgs,
 			int _errFuncIdx,
@@ -279,6 +277,7 @@ int CLuaHandle::RunCallInTraceback(
 		)
 			: luaState(state)
 			, luaHandle(handle)
+			, luaFunc(func)
 
 			, nInArgs(_nInArgs)
 			, nOutArgs(_nOutArgs)
@@ -287,11 +286,13 @@ int CLuaHandle::RunCallInTraceback(
 		{
 			handle->SetHandleRunning(state, true); // inc
 			const bool canDraw = LuaOpenGL::IsDrawingEnabled(state);
+
 			SMatrixStateData prevMatState;
 			GLMatrixStateTracker& matTracker = GetLuaContextData(state)->glMatrixTracker;
+
 			if (canDraw) {
 				prevMatState = matTracker.PushMatrixState();
-				LuaOpenGL::InitMatrixState(state, func);
+				LuaOpenGL::InitMatrixState(state, luaFunc);
 			}
 
 			top = lua_gettop(state);
@@ -301,8 +302,9 @@ int CLuaHandle::RunCallInTraceback(
 			error = lua_pcall(state, nInArgs, nOutArgs, errFuncIdx);
 			// only run GC inside of "SetHandleRunning(L, true) ... SetHandleRunning(L, false)"!
 			lua_gc(state, LUA_GCSTOP, 0);
+
 			if (canDraw) {
-				LuaOpenGL::CheckMatrixState(state, func, error);
+				LuaOpenGL::CheckMatrixState(state, luaFunc, error);
 				matTracker.PopMatrixState(prevMatState);
 			}
 
@@ -316,36 +318,45 @@ int CLuaHandle::RunCallInTraceback(
 			}
 		}
 
-		void CheckFixStack(std::string& trace) {
+		void CheckFixStack(std::string& traceStr) {
 			// note: assumes error-handler has not been popped yet (!)
-			const int outArgs = (lua_gettop(luaState) - (GetTop() - 1)) + nInArgs;
+			const int curTop = lua_gettop(luaState);
+			const int outArgs = (curTop - (GetTop() - 1)) + nInArgs;
 
 			if (GetError() == 0) {
 				if (nOutArgs != LUA_MULTRET) {
 					if (outArgs != nOutArgs) {
-						LOG_L(L_ERROR, "Internal Lua error: %d return values, %d expected", outArgs, nOutArgs);
+						LOG_L(L_ERROR, "[SLC::%s] %d ret-vals but %d expected for callin %s", __func__, outArgs, nOutArgs, luaFunc);
+
 						if (outArgs > nOutArgs)
 							lua_pop(luaState, outArgs - nOutArgs);
 					}
 				} else {
+					// should not be reachable without getting a LUA_ERR*
 					if (outArgs < 0) {
-						LOG_L(L_ERROR, "Internal Lua error: stack corrupted");
+						LOG_L(L_ERROR, "[SLC::%s] %d ret-vals (top={%d,%d} args=%d) for callin %s, corrupt stack", __func__, outArgs, curTop, GetTop(), nInArgs, luaFunc);
 					}
 				}
 			} else {
-				const int dbgOutArgs = 1; // the traceback string
+				// traceback string is optionally left on the stack
+				// might also have been popped in case of underflow
+				constexpr int dbgOutArgs = 1;
 
 				if (outArgs > dbgOutArgs) {
-					LOG_L(L_ERROR, "Internal Lua error: %i too many elements on the stack", outArgs - dbgOutArgs);
-					lua_pop(luaState, outArgs - dbgOutArgs); // only leave traceback str on the stack
+					LOG_L(L_ERROR, "[SLC::%s] %i excess values on stack for callin %s", __func__, outArgs - dbgOutArgs, luaFunc);
+					// only leave traceback string on the stack, popped below
+					lua_pop(luaState, outArgs - dbgOutArgs);
 				} else if (outArgs < dbgOutArgs) {
-					LOG_L(L_ERROR, "Internal Lua error: stack corrupted");
-					lua_pushnil(luaState); // to make the code below valid
+					LOG_L(L_ERROR, "[SLC::%s] %d ret-vals (top={%d,%d} args=%d) for callin %s, corrupt stack", __func__, outArgs, curTop, GetTop(), nInArgs, luaFunc);
+					// make the pop() below valid
+					lua_pushnil(luaState);
 				}
 
-				trace += "[Internal Lua error: Call failure] ";
-				trace += luaL_optstring(luaState, -1, "[No traceback returned]");
-				lua_pop(luaState, 1); // pop traceback string
+				traceStr.append("[Internal Lua error: Call failure] ");
+				traceStr.append(luaL_optstring(luaState, -1, "[No traceback returned]"));
+
+				// pop traceback string
+				lua_pop(luaState, dbgOutArgs);
 
 				// log only errors that lead to a crash
 				luaHandle->callinErrors += (GetError() == LUA_ERRRUN);
@@ -358,6 +369,7 @@ int CLuaHandle::RunCallInTraceback(
 	private:
 		lua_State* luaState;
 		CLuaHandle* luaHandle;
+		const char* luaFunc;
 
 		int nInArgs;
 		int nOutArgs;
@@ -369,8 +381,8 @@ int CLuaHandle::RunCallInTraceback(
 	};
 
 	// TODO: use closure so we do not need to copy args
-	ScopedLuaCall call(this, L, hs, inArgs, outArgs, errFuncIndex, popErrorFunc);
-	call.CheckFixStack(tracebackMsg);
+	ScopedLuaCall call(this, L, (hs != nullptr)? (hs->GetString()).c_str(): "LUS::?", inArgs, outArgs, errFuncIndex, popErrorFunc);
+	call.CheckFixStack(*ts);
 
 	return (call.GetError());
 }
@@ -378,25 +390,29 @@ int CLuaHandle::RunCallInTraceback(
 
 bool CLuaHandle::RunCallInTraceback(lua_State* L, const LuaHashString& hs, int inArgs, int outArgs, int errFuncIndex, bool popErrFunc)
 {
-	std::string traceback;
-	const int error = RunCallInTraceback(L, &hs, inArgs, outArgs, errFuncIndex, traceback, popErrFunc);
+	std::string traceStr;
+	const int error = RunCallInTraceback(L, &hs, &traceStr, inArgs, outArgs, errFuncIndex, popErrFunc);
 
-	if (error != 0) {
-		LOG_L(L_ERROR, "%s::RunCallIn: error = %i, %s, %s", GetName().c_str(),
-				error, hs.GetString().c_str(), traceback.c_str());
+	if (error == 0)
+		return true;
 
-		if (error == LUA_ERRMEM) {
-			// try to free some memory so other lua states can alloc again
-			for (int i=0; i<20; ++i) {
-				CollectGarbage();
-			}
+	const auto& hn = GetName();
+	const auto& hsn = hs.GetString();
+	const char* es = LuaErrorString(error);
 
-			// Kill
-			KillActiveHandle(L);
+	LOG_L(L_ERROR, "[%s::%s] error=%i (%s) callin=%s trace=%s", hn.c_str(), __func__, error, es, hsn.c_str(), traceStr.c_str());
+
+	if (error == LUA_ERRMEM) {
+		// try to free some memory so other lua states can alloc again
+		for (int i = 0; i < 20; ++i) {
+			CollectGarbage();
 		}
-		return false;
+
+		// kill the entire handle next frame
+		KillActiveHandle(L);
 	}
-	return true;
+
+	return false;
 }
 
 /******************************************************************************/
@@ -408,21 +424,18 @@ bool CLuaHandle::LoadCode(lua_State* L, const string& code, const string& debug)
 
 	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
-	const int loadError = luaL_loadbuffer(L, code.c_str(), code.size(), debug.c_str());
-	bool ret = true;
+	const int error = luaL_loadbuffer(L, code.c_str(), code.size(), debug.c_str());
 
-	if (loadError == 0) {
-		static const LuaHashString cmdStr("Initialize");
-
-		// call the routine
-		ret = RunCallInTraceback(L, cmdStr, 0, 0, traceBack.GetErrFuncIdx(), false);
-	} else {
-		LOG_L(L_ERROR, "Lua LoadCode loadbuffer error = %i, %s, %s", loadError, debug.c_str(), lua_tostring(L, -1));
+	if (error != 0) {
+		LOG_L(L_ERROR, "[%s::%s] error=%i (%s) debug=%s msg=%s", name.c_str(), __func__, error, LuaErrorString(error), debug.c_str(), lua_tostring(L, -1));
 		lua_pop(L, 1);
-		ret = false;
+		return false;
 	}
 
-	return ret;
+	static const LuaHashString cmdStr("Initialize");
+
+	// call Initialize immediately after load
+	return (RunCallInTraceback(L, cmdStr, 0, 0, traceBack.GetErrFuncIdx(), false));
 }
 
 /******************************************************************************/

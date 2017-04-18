@@ -275,11 +275,11 @@ class CLuaHandle : public CEventClient
 		static bool AddEntriesToTable(lua_State* L, const char* name, bool (*entriesFunc)(lua_State*));
 
 		/// returns error code and sets traceback on error
-		int  RunCallInTraceback(lua_State* L, const LuaHashString* hs, int inArgs, int outArgs, int errFuncIndex, std::string& tracebackMsg, bool popErrFunc);
+		int  RunCallInTraceback(lua_State* L, const LuaHashString* hs, std::string* ts, int inArgs, int outArgs, int errFuncIndex, bool popErrFunc);
 		/// returns false and prints message to log on error
 		bool RunCallInTraceback(lua_State* L, const LuaHashString& hs, int inArgs, int outArgs, int errFuncIndex, bool popErrFunc = true);
 		/// returns false and and sets errormessage on error
-		bool RunCallIn(lua_State* L, int inArgs, int outArgs, std::string& errormessage);
+		bool RunCallInLUS(lua_State* L, std::string* ts, int inArgs, int outArgs);
 		/// returns false and prints message to log on error
 		bool RunCallIn(lua_State* L, const LuaHashString& hs, int inArgs, int outArgs);
 
@@ -350,10 +350,9 @@ inline bool CLuaHandle::RunCallIn(lua_State* L, const LuaHashString& hs, int inA
 	return RunCallInTraceback(L, hs, inArgs, outArgs, 0, false);
 }
 
-
-inline bool CLuaHandle::RunCallIn(lua_State* L, int inArgs, int outArgs, std::string& errorMsg)
+inline bool CLuaHandle::RunCallInLUS(lua_State* L, std::string* ts, int inArgs, int outArgs)
 {
-	return RunCallInTraceback(L, NULL, inArgs, outArgs, 0, errorMsg, false);
+	return RunCallInTraceback(L, nullptr, ts, inArgs, outArgs, 0, false);
 }
 
 

@@ -108,8 +108,8 @@ class LuaOpenGL {
 		static void ResetDrawInMiniMapBackground();
 		static void DisableDrawInMiniMapBackground();
 
-		inline static void InitMatrixState(lua_State* L, const LuaHashString* hs);
-		inline static void CheckMatrixState(lua_State* L, const LuaHashString* hs, int error);
+		inline static void InitMatrixState(lua_State* L, const char* fn);
+		inline static void CheckMatrixState(lua_State* L, const char* fn, int error);
 
 	protected:
 		static void ResetGLState();
@@ -315,22 +315,22 @@ class LuaOpenGL {
 		static int GetAtmosphere(lua_State* L);
 };
 
-inline void LuaOpenGL::InitMatrixState(lua_State* L, const LuaHashString* hs) {
+inline void LuaOpenGL::InitMatrixState(lua_State* L, const char* fn) {
 #if !defined(NDEBUG) && !defined(HEADLESS)
 	if (IsDrawingEnabled(L)) {
 		GLint curmode; // the matrix mode should be set to GL_MODELVIEW before calling any lua code
 		glGetIntegerv(GL_MATRIX_MODE, &curmode);
 		if (curmode != GL_MODELVIEW)
-			LOG_L(L_ERROR, "%s: Current matrix mode is not GL_MODELVIEW", (hs == NULL) ? "Unknown" : hs->GetString().c_str());
+			LOG_L(L_ERROR, "%s: Current matrix mode is not GL_MODELVIEW", fn);
 		glMatrixMode(GL_MODELVIEW);
 	}
 #endif
 }
 
-inline void LuaOpenGL::CheckMatrixState(lua_State* L, const LuaHashString* hs, int error) {
+inline void LuaOpenGL::CheckMatrixState(lua_State* L, const char* fn, int error) {
 	if (!GetLuaContextData(L)->glMatrixTracker.HasMatrixStateError())
 		return;
-	GetLuaContextData(L)->glMatrixTracker.HandleMatrixStateError(error, (hs == NULL) ? "Unknown" : hs->GetString().c_str());
+	GetLuaContextData(L)->glMatrixTracker.HandleMatrixStateError(error, fn);
 }
 
 #endif /* LUA_UNITDEFS_H */
