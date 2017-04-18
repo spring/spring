@@ -13,7 +13,6 @@
 
 #include "Patch.h"
 #include "RoamMeshDrawer.h"
-#include "Game/Camera.h"
 #include "Map/ReadMap.h"
 #include "Map/SMF/SMFGroundDrawer.h"
 #include "Rendering/GlobalRendering.h"
@@ -28,42 +27,33 @@
 // STATICS
 
 
-static int MAX_POOL_SIZE = 8000000;
-
 Patch::RenderMode Patch::renderMode = Patch::VBO;
 
-// one pool per thread
-static size_t poolSize = 0;
+static size_t CUR_POOL_SIZE =                 0; // split over all threads
+static size_t MAX_POOL_SIZE = NEW_POOL_SIZE * 2;
+
 static std::vector<CTriNodePool> pools[CRoamMeshDrawer::MESH_COUNT];
+
 
 void CTriNodePool::InitPools(bool shadowPass, size_t newPoolSize)
 {
-	if (!pools[shadowPass].empty())
-		return;
-
-	// int numThreads = GetNumThreads();
-	int numThreads = ThreadPool::GetMaxThreads();
-	const size_t allocPerThread = std::max(newPoolSize / numThreads, newPoolSize / 3) & (~(size_t)0x1);
+	const int numThreads = ThreadPool::GetMaxThreads();
+	const size_t thrPoolSize = std::max((CUR_POOL_SIZE = newPoolSize) / numThreads, newPoolSize / 3);
 
 	try {
-		poolSize = newPoolSize;
+		pools[shadowPass].clear();
 		pools[shadowPass].reserve(numThreads);
-		for (; numThreads > 0; --numThreads) {
-			pools[shadowPass].emplace_back(allocPerThread);
+
+		for (int i = 0; i < numThreads; i++) {
+			pools[shadowPass].emplace_back(thrPoolSize + (thrPoolSize & 1));
 		}
-	} catch(const std::bad_alloc& e) {
-		LOG_L(L_FATAL, "Failed to allocate memory for ROAM (reducing pool size): %s", e.what());
-		MAX_POOL_SIZE = newPoolSize * 0.75f;
-		FreePools(shadowPass);
-		InitPools(shadowPass, MAX_POOL_SIZE);
+	} catch (const std::bad_alloc& e) {
+		LOG_L(L_FATAL, "[TriNodePool::%s] bad_alloc exception \"%s\" (numThreads=%d newPoolSize=%lu)", __func__, e.what(), numThreads, newPoolSize);
+
+		// try again after reducing the wanted pool-size by a quarter
+		InitPools(shadowPass, MAX_POOL_SIZE = (newPoolSize - (newPoolSize >> 2)));
 	}
 }
-
-void CTriNodePool::FreePools(bool shadowPass)
-{
-	pools[shadowPass].clear();
-}
-
 
 void CTriNodePool::ResetAll(bool shadowPass)
 {
@@ -74,10 +64,12 @@ void CTriNodePool::ResetAll(bool shadowPass)
 		pool.Reset();
 	}
 
-	if (outOfNodes && (poolSize < MAX_POOL_SIZE)) {
-		FreePools(shadowPass);
-		InitPools(shadowPass, std::min<size_t>(poolSize * 2, MAX_POOL_SIZE));
-	}
+	if (!outOfNodes)
+		return;
+	if (CUR_POOL_SIZE >= MAX_POOL_SIZE)
+		return;
+
+	InitPools(shadowPass, std::min<size_t>(CUR_POOL_SIZE * 2, MAX_POOL_SIZE));
 }
 
 
@@ -91,33 +83,39 @@ CTriNodePool* CTriNodePool::GetPool(bool shadowPass)
 // -------------------------------------------------------------------------------------------------
 // CTriNodePool Class
 
-CTriNodePool::CTriNodePool(const size_t poolSize)
+CTriNodePool::CTriNodePool(const size_t poolSize): nextTriNodeIdx(0)
 {
-	assert((poolSize & 0x1) == 0); // we always allocate left & right, so we need an even pool
-	m_NextTriNode = 0;
+	// child nodes are always allocated in pairs, so poolSize must be even
+	// (it does not technically need to be non-zero since patch root nodes
+	// live outside the pool, but KISS)
+	assert((poolSize & 0x1) == 0);
+	assert(poolSize > 0);
+
 	pool.resize(poolSize);
 }
 
 
 void CTriNodePool::Reset()
 {
-	// reinit all entries to NULL
-	// this saves use calling TriTreeNode's ctor which is slower than a memset
-	if (m_NextTriNode > 0)
-		memset(&pool[0], 0, sizeof(TriTreeNode) * m_NextTriNode);
+	// reinit all entries; faster than calling TriTreeNode's ctor
+	if (nextTriNodeIdx > 0)
+		memset(&pool[0], 0, sizeof(TriTreeNode) * nextTriNodeIdx);
 
-	m_NextTriNode = 0;
+	nextTriNodeIdx = 0;
 }
 
-
-void CTriNodePool::Allocate(TriTreeNode*& left, TriTreeNode*& right)
+bool CTriNodePool::Allocate(TriTreeNode*& left, TriTreeNode*& right)
 {
-	// IF we've run out of TriTreeNodes, just return NULL (this is handled gracefully)
-	if (OutOfNodes())
-		return;
+	// pool exhausted, make sure both child nodes are NULL
+	if (OutOfNodes()) {
+		left  = nullptr;
+		right = nullptr;
+		return false;
+	}
 
-	left  = &(pool[m_NextTriNode++]);
-	right = &(pool[m_NextTriNode++]);
+	left  = &(pool[nextTriNodeIdx++]);
+	right = &(pool[nextTriNodeIdx++]);
+	return true;
 }
 
 
@@ -141,11 +139,6 @@ Patch::Patch()
 {
 	varianceLeft.resize(1 << VARIANCE_DEPTH);
 	varianceRight.resize(1 << VARIANCE_DEPTH);
-
-	// NOTE:
-	//   shadow-mesh patches are only ever viewed by one camera
-	//   normal-mesh patches can be viewed by *multiple* types!
-	lastDrawFrames.resize(CCamera::CAMTYPE_VISCUL);
 }
 
 Patch::~Patch()
@@ -153,8 +146,8 @@ Patch::~Patch()
 	glDeleteLists(triList, 1);
 
 	if (GLEW_ARB_vertex_buffer_object) {
-		glDeleteBuffersARB(1, &vertexBuffer);
-		glDeleteBuffersARB(1, &vertexIndexBuffer);
+		glDeleteBuffers(1, &vertexBuffer);
+		glDeleteBuffers(1, &vertexIndexBuffer);
 	}
 
 	triList = 0;
@@ -169,19 +162,16 @@ void Patch::Init(CSMFGroundDrawer* _drawer, int patchX, int patchZ)
 
 	smfGroundDrawer = _drawer;
 
-	// Store pointer to first byte of the height data for this patch.
-
-
-	// Attach the two m_Base triangles together
+	// attach the two base-triangles together
 	baseLeft.BaseNeighbor  = &baseRight;
 	baseRight.BaseNeighbor = &baseLeft;
 
-	// Create used OpenGL objects
+	// create used OpenGL objects
 	triList = glGenLists(1);
 
 	if (GLEW_ARB_vertex_buffer_object) {
-		glGenBuffersARB(1, &vertexBuffer);
-		glGenBuffersARB(1, &vertexIndexBuffer);
+		glGenBuffers(1, &vertexBuffer);
+		glGenBuffers(1, &vertexIndexBuffer);
 	}
 
 
@@ -202,11 +192,11 @@ void Patch::Init(CSMFGroundDrawer* _drawer, int patchX, int patchZ)
 
 void Patch::Reset()
 {
-	// Reset the important relationships
+	// reset the important relationships
 	baseLeft  = TriTreeNode();
 	baseRight = TriTreeNode();
 
-	// Attach the two m_Base triangles together
+	// attach the two base-triangles together
 	baseLeft.BaseNeighbor  = &baseRight;
 	baseRight.BaseNeighbor = &baseLeft;
 }
@@ -237,9 +227,9 @@ void Patch::VBOUploadVertices()
 {
 	if (renderMode == VBO) {
 		// Upload vertexBuffer
-		glBindBufferARB(GL_ARRAY_BUFFER_ARB, vertexBuffer);
-		glBufferDataARB(GL_ARRAY_BUFFER_ARB, vertices.size() * sizeof(float), &vertices[0], GL_STATIC_DRAW_ARB);
-		glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
+		glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
+		glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), &vertices[0], GL_STATIC_DRAW);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 		vboVerticesUploaded = true;
 	} else {
@@ -252,36 +242,30 @@ void Patch::VBOUploadVertices()
 // Split a single Triangle and link it into the mesh.
 // Will correctly force-split diamonds.
 //
-void Patch::Split(TriTreeNode* tri)
+bool Patch::Split(TriTreeNode* tri)
 {
-	// We are already split, no need to do it again.
+	// we are already split, no need to do it again
 	if (!tri->IsLeaf())
-		return;
+		return true;
 
-	// If this triangle is not in a proper diamond, force split our base neighbor
-	if (tri->BaseNeighbor && (tri->BaseNeighbor->BaseNeighbor != tri))
+	// if this triangle is not in a proper diamond, force split our base neighbor
+	if (tri->BaseNeighbor != nullptr && (tri->BaseNeighbor->BaseNeighbor != tri))
 		Split(tri->BaseNeighbor);
 
-	// Create children and link into mesh
-	currentPool->Allocate(tri->LeftChild, tri->RightChild);
+	// create children and link into mesh, or make this triangle a leaf
+	if (!currentPool->Allocate(tri->LeftChild, tri->RightChild))
+		return false;
 
-	// If creation failed, just exit.
-	if (!tri->IsBranch()) {
-		// make sure both nodes are NULL if just the right one failed
-		// special handling the cause that only one of them is NULL wouldn't make sense (only less performance)
-		tri->LeftChild  = nullptr;
-		tri->RightChild = nullptr;
-		return;
-	}
+	assert(tri->IsBranch());
 
-	// Fill in the information we can get from the parent (neighbor pointers)
+	// fill in the information we can get from the parent (neighbor pointers)
 	tri->LeftChild->BaseNeighbor = tri->LeftNeighbor;
 	tri->LeftChild->LeftNeighbor = tri->RightChild;
 
 	tri->RightChild->BaseNeighbor = tri->RightNeighbor;
 	tri->RightChild->RightNeighbor = tri->LeftChild;
 
-	// Link our Left Neighbor to the new children
+	// link our left-neighbor to the new children
 	if (tri->LeftNeighbor != nullptr) {
 		if (tri->LeftNeighbor->BaseNeighbor == tri)
 			tri->LeftNeighbor->BaseNeighbor = tri->LeftChild;
@@ -290,10 +274,10 @@ void Patch::Split(TriTreeNode* tri)
 		else if (tri->LeftNeighbor->RightNeighbor == tri)
 			tri->LeftNeighbor->RightNeighbor = tri->LeftChild;
 		else
-			;// Illegal Left Neighbor!
+			;// illegal Left neighbor
 	}
 
-	// Link our Right Neighbor to the new children
+	// link our right-neighbor to the new children
 	if (tri->RightNeighbor != nullptr) {
 		if (tri->RightNeighbor->BaseNeighbor == tri)
 			tri->RightNeighbor->BaseNeighbor = tri->RightChild;
@@ -302,25 +286,28 @@ void Patch::Split(TriTreeNode* tri)
 		else if (tri->RightNeighbor->LeftNeighbor == tri)
 			tri->RightNeighbor->LeftNeighbor = tri->RightChild;
 		else
-			;// Illegal Right Neighbor!
+			;// illegal Right neighbor
 	}
 
-	// Link our Base Neighbor to the new children
+	// link our base-neighbor to the new children
 	if (tri->BaseNeighbor != nullptr) {
 		if (tri->BaseNeighbor->IsBranch()) {
 			tri->BaseNeighbor->LeftChild->RightNeighbor = tri->RightChild;
 			tri->BaseNeighbor->RightChild->LeftNeighbor = tri->LeftChild;
+
 			tri->LeftChild->RightNeighbor = tri->BaseNeighbor->RightChild;
 			tri->RightChild->LeftNeighbor = tri->BaseNeighbor->LeftChild;
 		} else {
-			// Base Neighbor (in a diamond with us) was not split yet, so do that now.
+			// base Neighbor (in a diamond with us) was not split yet, do so now
 			Split(tri->BaseNeighbor);
 		}
 	} else {
-		// An edge triangle, trivial case.
+		// edge triangle, trivial case
 		tri->LeftChild->RightNeighbor = nullptr;
 		tri->RightChild->LeftNeighbor = nullptr;
 	}
+
+	return true;
 }
 
 
@@ -335,24 +322,22 @@ void Patch::RecursTessellate(TriTreeNode* tri, const int2 left, const int2 right
 		return;
 
 	// default > 1; when variance isn't saved this issues further tessellation
-	float TriVariance = 10.0f;
+	float triVariance = 10.0f;
 
 	if (node < (1 << VARIANCE_DEPTH)) {
-		// make max tessellation viewRadius dependent
-		// w/o this huge cliffs cause huge variances and will always tessellate
-		// fully independent of camdist (-> huge/distfromcam ~= huge)
-		const float myVariance = std::min(currentVariance[node], varianceMaxLimit);
-
+		// make maximum tessellation-level dependent on camDistLODFactor
+		// huge cliffs cause huge variances and would otherwise always tessellate
+		// regardless of the actual camera distance (-> huge/distfromcam ~= huge)
 		const int sizeX = std::max(left.x - right.x, right.x - left.x);
 		const int sizeY = std::max(left.y - right.y, right.y - left.y);
 		const int size  = std::max(sizeX, sizeY);
 
 		// take distance, variance and patch size into consideration
-		TriVariance = (myVariance * PATCH_SIZE * size) * camDistLODFactor;
+		triVariance = (std::min(currentVariance[node], varianceMaxLimit) * PATCH_SIZE * size) * camDistLODFactor;
 	}
 
 	// stop tesselation
-	if (TriVariance <= 1.0f)
+	if (triVariance <= 1.0f)
 		return;
 
 	Split(tri);
@@ -423,7 +408,6 @@ float Patch::RecursComputeVariance(
 	const int2 mpos = {(left.x + rght.x) >> 1, (left.y + rght.y) >> 1};
 
 	// get the height value at M
-
 	const float mhgt = GetHeight(mpos);
 
 	// variance of this triangle is the actual height at its hypotenuse
@@ -506,17 +490,18 @@ void Patch::ComputeVariance()
 // ---------------------------------------------------------------------
 // Create an approximate mesh.
 //
-bool Patch::Tessellate(const float3& campos, int groundDetail, bool shadowPass)
+bool Patch::Tessellate(const float3& camPos, int viewRadius, bool shadowPass)
 {
 	// Set/Update LOD params (FIXME: wrong height?)
-	const float myx = (coors.x + PATCH_SIZE / 2) * SQUARE_SIZE;
-	const float myz = (coors.y + PATCH_SIZE / 2) * SQUARE_SIZE;
-	const float myy = (readMap->GetCurrMinHeight() + readMap->GetCurrMaxHeight()) * 0.5f;
-	const float3 myPos(myx, myy, myz);
+	float3 midPos;
+	midPos.x = (coors.x + PATCH_SIZE / 2) * SQUARE_SIZE;
+	midPos.z = (coors.y + PATCH_SIZE / 2) * SQUARE_SIZE;
+	midPos.y = (readMap->GetCurrMinHeight() + readMap->GetCurrMaxHeight()) * 0.5f;
+
 	currentPool = CTriNodePool::GetPool(shadowPass);
 
-	camDistLODFactor  = myPos.distance(campos);
-	camDistLODFactor *= 300.0f / groundDetail; // MAGIC NUMBER 1: increase the dividend to reduce LOD in camera distance
+	camDistLODFactor  = midPos.distance(camPos);
+	camDistLODFactor *= (300.0f / viewRadius); // MAGIC NUMBER 1: increase the dividend to reduce LOD in camera distance
 	camDistLODFactor  = std::max(1.0f, camDistLODFactor);
 	camDistLODFactor  = 1.0f / camDistLODFactor;
 
@@ -524,7 +509,7 @@ bool Patch::Tessellate(const float3& campos, int groundDetail, bool shadowPass)
 	//   variances are clamped by it, so it regulates how strong areas are tessellated.
 	//   Note, the maximum tessellation is untouched by it. Instead it reduces the maximum
 	//   LOD in distance, while the param above defines the overall FallOff rate.
-	varianceMaxLimit = groundDetail * 0.35f;
+	varianceMaxLimit = viewRadius * 0.35f;
 
 	{
 		// Split each of the base triangles
@@ -570,8 +555,8 @@ void Patch::Draw()
 
 		case VBO: {
 			// enable VBOs
-			glBindBufferARB(GL_ARRAY_BUFFER_ARB, vertexBuffer); // coors
-			glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, vertexIndexBuffer); // indices
+			glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer); // coors
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vertexIndexBuffer); // indices
 
 				glEnableClientState(GL_VERTEX_ARRAY);
 					glVertexPointer(3, GL_FLOAT, 0, 0); // last param is offset, not ptr
@@ -579,8 +564,8 @@ void Patch::Draw()
 				glDisableClientState(GL_VERTEX_ARRAY);
 
 			// disable VBO mode
-			glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
-			glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
+			glBindBuffer(GL_ARRAY_BUFFER, 0);
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 		} break;
 
 		default: {
@@ -692,19 +677,19 @@ void Patch::Upload()
 
 		case VBO: {
 			if (!vboVerticesUploaded) VBOUploadVertices();
-			glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, vertexIndexBuffer);
-			glBufferDataARB(GL_ELEMENT_ARRAY_BUFFER_ARB, indices.size() * sizeof(unsigned), &indices[0], GL_DYNAMIC_DRAW_ARB);
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vertexIndexBuffer);
+			glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned), &indices[0], GL_DYNAMIC_DRAW);
 
 			/*
 			int bufferSize = 0;
-			glGetBufferParameterivARB(GL_ELEMENT_ARRAY_BUFFER_ARB, GL_BUFFER_SIZE_ARB, &bufferSize);
-			if(rend != bufferSize) {
-				glDeleteBuffersARB(1, &vertexIndexBuffer);
+			glGetBufferParameteriv(GL_ELEMENT_ARRAY_BUFFER, GL_BUFFER_SIZE, &bufferSize);
+			if (rend != bufferSize) {
+				glDeleteBuffers(1, &vertexIndexBuffer);
 				LOG( "[createVBO()] Data size is mismatch with input array\n" );
 			}
 			*/
 
-			glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 		} break;
 
 		default: {

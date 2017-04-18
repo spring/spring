@@ -49,7 +49,7 @@ CRoamMeshDrawer::CRoamMeshDrawer(CSMFReadMap* rm, CSMFGroundDrawer* gd)
 	Patch::SwitchRenderMode(configHandler->GetInt("ROAM"));
 
 	for (unsigned int i = MESH_NORMAL; i <= MESH_SHADOW; i++) {
-		CTriNodePool::InitPools(i);
+		CTriNodePool::InitPools(i == MESH_SHADOW);
 	}
 
 	numPatchesX = mapDims.mapx / PATCH_SIZE;
@@ -105,10 +105,6 @@ CRoamMeshDrawer::CRoamMeshDrawer(CSMFReadMap* rm, CSMFGroundDrawer* gd)
 
 CRoamMeshDrawer::~CRoamMeshDrawer()
 {
-	for (unsigned int i = MESH_NORMAL; i <= MESH_SHADOW; i++) {
-		CTriNodePool::FreePools(i);
-	}
-
 	eventHandler.RemoveClient(this);
 }
 
