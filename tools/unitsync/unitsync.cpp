@@ -336,7 +336,7 @@ static UnitsyncConfigObserver* unitsyncConfigObserver = nullptr;
 
 static void _Cleanup()
 {
-	SafeDelete(unitsyncConfigObserver);
+	spring::SafeDelete(unitsyncConfigObserver);
 	internal_deleteMapInfos();
 
 	lpClose();
@@ -540,7 +540,7 @@ EXPORT(void) RemoveAllArchives()
 		CheckInit();
 
 		LOG_L(L_DEBUG, "removing all archives");
-		SafeDelete(vfsHandler);
+		spring::SafeDelete(vfsHandler);
 		vfsHandler = new CVFSHandler();
 	}
 	UNITSYNC_CATCH_BLOCKS;
