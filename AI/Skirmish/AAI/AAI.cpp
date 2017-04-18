@@ -118,8 +118,8 @@ AAI::~AAI()
 	// save mod learning data
 	bt->SaveBuildTable(brain->GetGamePeriod(), map->map_type);
 
-	SafeDelete(am);
-	SafeDelete(af);
+	spring::SafeDelete(am);
+	spring::SafeDelete(af);
 
 	// delete unit groups
 	for(int i = 0; i <= MOBILE_CONSTRUCTOR; i++)
@@ -133,12 +133,12 @@ AAI::~AAI()
 	}
 
 
-	SafeDelete(brain);
-	SafeDelete(execute);
-	SafeDelete(ut);
-	SafeDelete(map);
-	SafeDelete(bt);
-	SafeDelete(profiler);
+	spring::SafeDelete(brain);
+	spring::SafeDelete(execute);
+	spring::SafeDelete(ut);
+	spring::SafeDelete(map);
+	spring::SafeDelete(bt);
+	spring::SafeDelete(profiler);
 
 	initialized = false;
 	fclose(file);
@@ -408,7 +408,7 @@ void AAI::UnitFinished(int unit)
 					ut->units[(*task)->builder_id].cons->ConstructionFinished();
 
 				build_tasks.erase(task);
-				SafeDelete(build_task);
+				spring::SafeDelete(build_task);
 				break;
 			}
 		}

@@ -186,9 +186,9 @@ AAIBuildTable::~AAIBuildTable(void)
 		min_buildtime.clear();
 		min_value.clear();
 
-		/*SafeDeleteArray(max_builder_buildtime);
-		SafeDeleteArray(max_builder_cost);
-		SafeDeleteArray(max_builder_buildspeed);*/
+		/*spring::SafeDeleteArray(max_builder_buildtime);
+		spring::SafeDeleteArray(max_builder_cost);
+		spring::SafeDeleteArray(max_builder_buildspeed);*/
 
 		avg_speed.clear();
 		max_speed.clear();
@@ -2299,7 +2299,7 @@ int AAIBuildTable::GetSubmarineAssault(int side, float power, float sea_eff, flo
 		{
 			my_ranking = power * combat_eff[c] / max_power;
 			my_ranking -= cost * unit->cost / max_cost;
-			my_ranking += SafeDivide(efficiency * (SafeDivide(combat_eff[c], unit->cost)), max_efficiency);
+			my_ranking += spring::SafeDivide(efficiency * (spring::SafeDivide(combat_eff[c], unit->cost)), max_efficiency);
 			my_ranking += range * unit->range / max_range;
 			my_ranking += speed * GetUnitDef(*i).speed / max_speed;
 			my_ranking += 0.1f * ((float)(rand()%randomness));
@@ -2308,7 +2308,7 @@ int AAIBuildTable::GetSubmarineAssault(int side, float power, float sea_eff, flo
 		{
 			my_ranking = power * combat_eff[c] / max_power;
 			my_ranking -= cost * unit->cost / max_cost;
-			my_ranking += SafeDivide(efficiency * (SafeDivide(combat_eff[c], unit->cost)), max_efficiency);
+			my_ranking += spring::SafeDivide(efficiency * (spring::SafeDivide(combat_eff[c], unit->cost)), max_efficiency);
 			my_ranking += range * unit->range / max_range;
 			my_ranking += speed * GetUnitDef(*i).speed / max_speed;
 			my_ranking += 0.1f * ((float)(rand()%randomness));
@@ -3300,9 +3300,9 @@ void AAIBuildTable::BuildBuilderFor(int building_def_id)
 		// prevent ai from ordering too many builders of the same type/commanders/builders that cant be built atm
 		if(units_dynamic[*builder].active + units_dynamic[*builder].under_construction + units_dynamic[*builder].requested < cfg->MAX_BUILDERS_PER_TYPE)
 		{
-			my_rating = buildspeed * SafeDivide(GetUnitDef(*builder).buildSpeed, max_buildspeed)
-				- SafeDivide(GetUnitDef(*builder).buildTime, max_buildtime)
-				- cost * SafeDivide(units_static[*builder].cost, max_cost);
+			my_rating = buildspeed * spring::SafeDivide(GetUnitDef(*builder).buildSpeed, max_buildspeed)
+				- spring::SafeDivide(GetUnitDef(*builder).buildTime, max_buildtime)
+				- cost * spring::SafeDivide(units_static[*builder].cost, max_cost);
 
 			// prefer builders that can be built atm
 			if(units_dynamic[*builder].constructorsAvailable > 0)
