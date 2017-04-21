@@ -1,5 +1,10 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include <string>
+
+#include <SDL.h>
+#include <SDL_video.h>
+
 
 #include "GlobalRendering.h"
 #include "GlobalRenderingInfo.h"
@@ -19,14 +24,12 @@
 #include "System/Platform/errorhandler.h"
 #include "System/creg/creg_cond.h"
 
-#include <string>
-#include <SDL.h>
-#include <SDL_video.h>
 
 CONFIG(bool, DebugGL).defaultValue(false).description("Enables _driver_ debug feedback. (see GL_ARB_debug_output)");
 CONFIG(bool, DebugGLStacktraces).defaultValue(false).description("Create a stacktrace when an OpenGL error occurs");
 
-CONFIG(bool, CompressTextures).defaultValue(false).safemodeValue(true).description("Runtime compress most textures to save VideoRAM."); // in safemode enabled, cause it ways more likely the gpu runs out of memory than this extension cause crashes!
+// enabled in safemode, far more likely the gpu runs out of memory than this extension causes crashes!
+CONFIG(bool, CompressTextures).defaultValue(false).safemodeValue(true).description("Runtime compress most textures to save VideoRAM.");
 CONFIG(int, ForceShaders).defaultValue(-1).minimumValue(-1).maximumValue(1);
 CONFIG(int, ForceSwapBuffers).defaultValue(1).minimumValue(-1).maximumValue(1);
 CONFIG(int, AtiHacks).defaultValue(-1).headlessValue(0).minimumValue(-1).maximumValue(1).description("Enables graphics drivers workarounds for users with ATI video cards.\n -1:=runtime detect, 0:=off, 1:=on");
