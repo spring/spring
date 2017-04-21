@@ -92,8 +92,6 @@ void PrintAvailableResolutions();
 
 bool GetAvailableVideoRAM(GLint* memory);
 void ShowCrappyGpuWarning(const char* glVendor, const char* glRenderer);
-void LoadExtensions();
-void UnloadExtensions();
 
 
 #if defined(WIN32) && !defined(HEADLESS)

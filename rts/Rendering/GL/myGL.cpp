@@ -1,8 +1,10 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include <array>
 #include <vector>
 #include <string>
 #include <cmath>
+
 #include <SDL.h>
 
 #if defined(WIN32) && !defined(HEADLESS) && !defined(_MSC_VER)
@@ -25,10 +27,7 @@
 
 #define SDL_BPP(fmt) SDL_BITSPERPIXEL((fmt))
 
-CONFIG(bool, DisableCrappyGPUWarning).defaultValue(false).description("Disables the warning an user will receive if (s)he attempts to run Spring on an outdated and underpowered video card.");
-
-
-static std::vector<CVertexArray> vertexArrays;
+static std::array<CVertexArray, 2> vertexArrays;
 static int currentVertexArray = 0;
 
 
@@ -177,86 +176,55 @@ bool GetAvailableVideoRAM(GLint* memory)
 void ShowCrappyGpuWarning(const char* glVendor, const char* glRenderer)
 {
 #ifndef DEBUG
+	assert(glVendor != nullptr);
+	assert(glRenderer != nullptr);
 
 	// Print out warnings for really crappy graphic cards/drivers
-	const std::string gfxCardVendor = (glVendor != NULL)? glVendor: "UNKNOWN";
-	const std::string gfxCardModel  = (glRenderer != NULL)? glRenderer: "UNKNOWN";
-	bool gfxCardIsCrap = false;
+	const std::string& gpuVendor = glVendor;
+	const std::string& gpuModel  = glRenderer;
+
+	bool gpuIsCrap = false;
 	bool msDrivers = false;
 
-	if (gfxCardVendor == "SiS") {
-		gfxCardIsCrap = true;
-	} else if (gfxCardModel.find("Intel") != std::string::npos) {
+	if (gpuVendor == "SiS") {
+		gpuIsCrap = true;
+	} else if (gpuModel.find("Intel") != std::string::npos) {
 		// the vendor does not have to be Intel
-		if (gfxCardModel.find(" 945G") != std::string::npos) {
-			gfxCardIsCrap = true;
-		} else if (gfxCardModel.find(" 915G") != std::string::npos) {
-			gfxCardIsCrap = true;
-		}
-	} else if (gfxCardVendor.find("Microsoft") != std::string::npos) {
+		gpuIsCrap = (gpuModel.find(" 945G") != std::string::npos || gpuModel.find(" 915G") != std::string::npos);
+	} else if (gpuVendor.find("Microsoft") != std::string::npos) {
 		msDrivers = true;
 	}
 
-	if (gfxCardIsCrap) {
-		LOG_L(L_WARNING, "WW     WWW     WW    AAA     RRRRR   NNN  NN  II  NNN  NN   GGGGG ");
-		LOG_L(L_WARNING, " WW   WW WW   WW    AA AA    RR  RR  NNNN NN  II  NNNN NN  GG     ");
-		LOG_L(L_WARNING, "  WW WW   WW WW    AAAAAAA   RRRRR   NN NNNN  II  NN NNNN  GG   GG");
-		LOG_L(L_WARNING, "   WWW     WWW    AA     AA  RR  RR  NN  NNN  II  NN  NNN   GGGGG ");
-		LOG_L(L_WARNING, "(warning)");
-		LOG_L(L_WARNING, "Your graphic card is ...");
-		LOG_L(L_WARNING, "well, you know ...");
-		LOG_L(L_WARNING, "insufficient");
-		LOG_L(L_WARNING, "(in case you are not using a horribly wrong driver).");
-		LOG_L(L_WARNING, "If the game crashes, looks ugly or runs slow, buy a better card!");
-		LOG_L(L_WARNING, ".");
-	}
-	if (msDrivers) {
-		LOG_L(L_WARNING, "WW     WWW     WW    AAA     RRRRR   NNN  NN  II  NNN  NN   GGGGG ");
-		LOG_L(L_WARNING, " WW   WW WW   WW    AA AA    RR  RR  NNNN NN  II  NNNN NN  GG     ");
-		LOG_L(L_WARNING, "  WW WW   WW WW    AAAAAAA   RRRRR   NN NNNN  II  NN NNNN  GG   GG");
-		LOG_L(L_WARNING, "   WWW     WWW    AA     AA  RR  RR  NN  NNN  II  NN  NNN   GGGGG ");
-		LOG_L(L_WARNING, "(warning)");
-		LOG_L(L_WARNING, "No OpenGL drivers installed.");
-		LOG_L(L_WARNING, "Please go to your GPU vendor's website and download their drivers.");
-		LOG_L(L_WARNING, ".");
-	}
-
-	if (!configHandler->GetBool("DisableCrappyGPUWarning")) {
-		if (gfxCardIsCrap) {
-			const std::string msg =
-				"Warning!\n"
-				"Your graphics card is insufficient to play Spring.\n\n"
-				"If the game crashes, looks ugly or runs slow, buy a better card!\n"
-				"You may try \"spring --safemode\" to test if some of your issues are related to wrong settings.\n"
-				"\nHint: You can disable this MessageBox by appending \"DisableCrappyGPUWarning = 1\" to \"" + configHandler->GetConfigFile() + "\".";
-			LOG_L(L_WARNING, "%s", msg.c_str());
-			Platform::MsgBox(msg, "Warning: Your GPU is not supported", MBF_EXCL);
-		} else if (globalRendering->haveMesa) {
-			const std::string mesa_msg =
-				"Warning!\n"
-				"OpenSource graphics card drivers detected.\n"
-				"MesaGL/Gallium drivers don't work well with Spring. Try to switch to proprietary drivers.\n\n"
-				"You may try \"spring --safemode\".\n"
-				"\nHint: You can disable this MessageBox by appending \"DisableCrappyGPUWarning = 1\" to \"" + configHandler->GetConfigFile() + "\".";
-			LOG_L(L_WARNING, "%s", mesa_msg.c_str());
-			Platform::MsgBox(mesa_msg, "Warning: Your GPU driver is not supported", MBF_EXCL);
-		} else if (msDrivers) {
-			const std::string mesa_msg =
-				"Warning!\n"
-				"No OpenGL drivers installed.\n"
-				"Please go to your GPU vendor's website and download their drivers:\n"
-				" * Nvidia: http://www.nvidia.com\n"
-				" * AMD: http://support.amd.com\n"
-				" * Intel: http://downloadcenter.intel.com";
-			LOG_L(L_WARNING, "%s", mesa_msg.c_str());
-			Platform::MsgBox(mesa_msg, "Warning: No OpenGL drivers found", MBF_EXCL);
-		}
+	if (gpuIsCrap) {
+		const char* msg =
+			"Warning!\n"
+			"Your graphics card is insufficient to run the Spring engine.\n\n"
+			"If you experience crashes or poor performance, buy a better card!\n"
+			"You may try \"spring --safemode\" to test if some of your issues are related to wrong settings.\n";
+		LOG_L(L_WARNING, "%s", msg);
+		Platform::MsgBox(msg, "Warning: Your GPU is not supported", MBF_EXCL);
+	} else if (globalRendering->haveMesa) {
+		const char* msg =
+			"Warning!\n"
+			"OpenSource graphics card drivers detected.\n"
+			"MesaGL/Gallium drivers don't work well with Spring. Try to switch to proprietary drivers.\n\n"
+			"You may try \"spring --safemode\".\n";
+		LOG_L(L_WARNING, "%s", msg);
+		Platform::MsgBox(msg, "Warning: Your GPU driver is not supported", MBF_EXCL);
+	} else if (msDrivers) {
+		const char* msg =
+			"Warning!\n"
+			"No OpenGL drivers installed.\n"
+			"Please go to your GPU vendor's website and download their drivers:\n"
+			" * Nvidia: http://www.nvidia.com\n"
+			" * AMD: http://support.amd.com\n"
+			" * Intel: http://downloadcenter.intel.com";
+		LOG_L(L_WARNING, "%s", msg);
+		Platform::MsgBox(msg, "Warning: No OpenGL drivers found", MBF_EXCL);
 	}
 #endif
 }
 
-void LoadExtensions() { vertexArrays.resize(2); }
-void UnloadExtensions() { vertexArrays.clear(); }
 
 /******************************************************************************/
 

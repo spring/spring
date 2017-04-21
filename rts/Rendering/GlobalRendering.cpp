@@ -2,6 +2,7 @@
 
 
 #include "GlobalRendering.h"
+#include "GlobalRenderingInfo.h"
 
 #include "Rendering/VerticalSync.h"
 #include "Rendering/GL/myGL.h"
@@ -41,6 +42,7 @@ CONFIG(int, MinimizeOnFocusLoss).defaultValue(0).minimumValue(0).maximumValue(1)
  * Global instance of CGlobalRendering
  */
 CGlobalRendering* globalRendering;
+GlobalRenderingInfo globalRenderingInfo;
 
 const float CGlobalRendering::MAX_VIEW_RANGE     = 8000.0f;
 const float CGlobalRendering::NEAR_PLANE         =    2.8f;
@@ -89,25 +91,16 @@ CR_REG_METADATA(CGlobalRendering, (
 
 	CR_IGNORED(fsaaLevel),
 	CR_IGNORED(maxTextureSize),
+	CR_IGNORED(gpuMemorySize),
 	CR_IGNORED(active),
 	CR_IGNORED(isVideoCapturing),
 	CR_IGNORED(compressTextures),
+
 	CR_IGNORED(haveATI),
 	CR_IGNORED(haveMesa),
 	CR_IGNORED(haveIntel),
 	CR_IGNORED(haveNvidia),
-	CR_IGNORED(gpu),
-	CR_IGNORED(gpuVendor),
-	CR_IGNORED(gpuMemorySize),
-	CR_IGNORED(glVersionShort),
-	CR_IGNORED(glslVersionShort),
-	CR_IGNORED(glVersion),
-	CR_IGNORED(glVendor),
-	CR_IGNORED(glRenderer),
-	CR_IGNORED(glslVersion),
-	CR_IGNORED(glewVersion),
-	CR_IGNORED(sdlVersionCompiled),
-	CR_IGNORED(sdlVersionLinked),
+
 	CR_IGNORED(atiHacks),
 	CR_IGNORED(supportNPOTs),
 	CR_IGNORED(support24bitDepthBuffers),
@@ -125,6 +118,7 @@ CR_REG_METADATA(CGlobalRendering, (
 	CR_IGNORED(dualScreenMode),
 	CR_IGNORED(dualScreenMiniMapOnLeft),
 	CR_IGNORED(fullScreen),
+
 	CR_IGNORED(window),
 	CR_IGNORED(sdlGlCtx)
 ))
@@ -167,6 +161,7 @@ CGlobalRendering::CGlobalRendering()
 
 	, fsaaLevel(0)
 	, maxTextureSize(2048)
+	, gpuMemorySize(0)
 
 	, drawSky(true)
 	, drawWater(true)
@@ -214,9 +209,6 @@ CGlobalRendering::CGlobalRendering()
 CGlobalRendering::~CGlobalRendering()
 {
 	configHandler->RemoveObserver(this);
-	UnloadExtensions();
-	delete sdlVersionCompiled;
-	delete sdlVersionLinked;
 }
 
 
@@ -331,117 +323,107 @@ void CGlobalRendering::PostInit() {
 	glGetError();
 
 
-	sdlVersionCompiled = new SDL_version();
-	sdlVersionLinked = new SDL_version();
-	SDL_VERSION(sdlVersionCompiled);
-	SDL_GetVersion(sdlVersionLinked);
+	{
+		SDL_VERSION(&globalRenderingInfo.sdlVersionCompiled);
+		SDL_GetVersion(&globalRenderingInfo.sdlVersionLinked);
 
-	const char* glVersion_ = (const char*) glGetString(GL_VERSION);
-	const char* glVendor_ = (const char*) glGetString(GL_VENDOR);
-	const char* glRenderer_ = (const char*) glGetString(GL_RENDERER);
-	const char* glslVersion_ = (const char*) glGetString(GL_SHADING_LANGUAGE_VERSION);
-	const char* glewVersion_ = (const char*) glewGetString(GLEW_VERSION);
+		if ((globalRenderingInfo.glVersion   = (const char*) glGetString(GL_VERSION                 )) == nullptr) globalRenderingInfo.glVersion   = "unknown";
+		if ((globalRenderingInfo.glVendor    = (const char*) glGetString(GL_VENDOR                  )) == nullptr) globalRenderingInfo.glVendor    = "unknown";
+		if ((globalRenderingInfo.glRenderer  = (const char*) glGetString(GL_RENDERER                )) == nullptr) globalRenderingInfo.glRenderer  = "unknown";
+		if ((globalRenderingInfo.glslVersion = (const char*) glGetString(GL_SHADING_LANGUAGE_VERSION)) == nullptr) globalRenderingInfo.glslVersion = "unknown";
+		if ((globalRenderingInfo.glewVersion = (const char*) glewGetString(GLEW_VERSION             )) == nullptr) globalRenderingInfo.glewVersion = "unknown";
 
-	char glVidMemStr[64] = "unknown";
-	GLint vidMemBuffer[2] = {0, 0};
+		memset(globalRenderingInfo.glVersionShort, 0, sizeof(globalRenderingInfo.glVersionShort));
+		memset(globalRenderingInfo.glslVersionShort, 0, sizeof(globalRenderingInfo.glslVersionShort));
 
-	if (GetAvailableVideoRAM(vidMemBuffer)) {
-		const GLint totalMemMB = vidMemBuffer[0] / 1024;
-		const GLint availMemMB = vidMemBuffer[1] / 1024;
+		char glVidMemStr[64] = "unknown";
+		GLint vidMemBuffer[2] = {0, 0};
 
-		if (totalMemMB > 0 && availMemMB > 0) {
-			const char* memFmtStr = "total %iMB, available %iMB";
-			SNPRINTF(glVidMemStr, sizeof(glVidMemStr), memFmtStr, totalMemMB, availMemMB);
+		if (GetAvailableVideoRAM(vidMemBuffer)) {
+			const GLint totalMemMB = vidMemBuffer[0] / 1024;
+			const GLint availMemMB = vidMemBuffer[1] / 1024;
+
+			if (totalMemMB > 0 && availMemMB > 0) {
+				const char* memFmtStr = "total %iMB, available %iMB";
+				SNPRINTF(glVidMemStr, sizeof(glVidMemStr), memFmtStr, totalMemMB, availMemMB);
+			}
+
+			gpuMemorySize = totalMemMB;
 		}
 
-		gpuMemorySize = totalMemMB;
+		// log some useful version info
+		LOG("[GR::%s]", __func__);
+		LOG("\tSDL version:  linked %d.%d.%d; compiled %d.%d.%d",
+			globalRenderingInfo.sdlVersionLinked.major, globalRenderingInfo.sdlVersionLinked.minor, globalRenderingInfo.sdlVersionLinked.patch,
+			globalRenderingInfo.sdlVersionCompiled.major, globalRenderingInfo.sdlVersionCompiled.minor, globalRenderingInfo.sdlVersionCompiled.patch);
+		LOG("\tGL version:   %s", globalRenderingInfo.glVersion);
+		LOG("\tGL vendor:    %s", globalRenderingInfo.glVendor);
+		LOG("\tGL renderer:  %s", globalRenderingInfo.glRenderer);
+		LOG("\tGLSL version: %s", globalRenderingInfo.glslVersion);
+		LOG("\tGLEW version: %s", globalRenderingInfo.glewVersion);
+		LOG("\tVideo RAM:    %s", glVidMemStr);
+		LOG("\tSwapInterval: %d", SDL_GL_GetSwapInterval());
 	}
+	{
+		char extMsg[2048] = {0};
+		char errMsg[2048] = {0};
+		char* ptr = &extMsg[0];
+ 
+		if (!GLEW_ARB_multitexture       ) ptr += snprintf(ptr, sizeof(extMsg) - (ptr - extMsg), " GL_ARB_multitexture");
+		if (!GLEW_ARB_texture_env_combine) ptr += snprintf(ptr, sizeof(extMsg) - (ptr - extMsg), " GL_ARB_texture_env_combine");
+		if (!GLEW_ARB_texture_compression) ptr += snprintf(ptr, sizeof(extMsg) - (ptr - extMsg), " GL_ARB_texture_compression");
 
-	// log some useful version info
-	LOG("[GR::%s]", __func__);
-	LOG("\tSDL version:  linked %d.%d.%d; compiled %d.%d.%d", sdlVersionLinked->major, sdlVersionLinked->minor, sdlVersionLinked->patch, sdlVersionCompiled->major, sdlVersionCompiled->minor, sdlVersionCompiled->patch);
-	LOG("\tGL version:   %s", glVersion_);
-	LOG("\tGL vendor:    %s", glVendor_);
-	LOG("\tGL renderer:  %s", glRenderer_);
-	LOG("\tGLSL version: %s", glslVersion_);
-	LOG("\tGLEW version: %s", glewVersion_);
-	LOG("\tVideo RAM:    %s", glVidMemStr);
-	LOG("\tSwapInterval: %d", SDL_GL_GetSwapInterval());
-
-	ShowCrappyGpuWarning(glVendor_, glRenderer_);
+		if (extMsg[0] != 0) {
+			SNPRINTF(errMsg, sizeof(errMsg),
+				"Needed OpenGL extension(s) not found:\n"
+				"  %s\n\n"
+				"Update your graphics-card drivers!\n"
+				"  Graphics card:  %s\n"
+				"  OpenGL version: %s\n",
+				extMsg,
+				globalRenderingInfo.glRenderer,
+				globalRenderingInfo.glVersion);
+			throw unsupported_error(errMsg);
+		}
+	}
 
 	{
-		std::string missingExts;
+		const std::string& glVendor = StringToLower(globalRenderingInfo.glVendor);
+		const std::string& glRenderer = StringToLower(globalRenderingInfo.glRenderer);
 
-		if (!GLEW_ARB_multitexture       ) missingExts += " GL_ARB_multitexture";
-		if (!GLEW_ARB_texture_env_combine) missingExts += " GL_ARB_texture_env_combine";
-		if (!GLEW_ARB_texture_compression) missingExts += " GL_ARB_texture_compression";
+		supportNPOTs = GLEW_ARB_texture_non_power_of_two;
+		haveARB   = GLEW_ARB_vertex_program && GLEW_ARB_fragment_program;
+		haveGLSL  = (glGetString(GL_SHADING_LANGUAGE_VERSION) != nullptr);
+		haveGLSL &= GLEW_ARB_vertex_shader && GLEW_ARB_fragment_shader;
+		haveGLSL &= !!GLEW_VERSION_2_0; // we want OpenGL 2.0 core functions
 
-		if (!missingExts.empty()) {
-			char errorMsg[2048];
-			SNPRINTF(errorMsg, sizeof(errorMsg),
-					"Needed OpenGL extension(s) not found:\n"
-					"  %s\n\n"
-					"Update your graphics-card driver!\n"
-					"  Graphics card:   %s\n"
-					"  OpenGL version: %s\n",
-					missingExts.c_str(),
-					glRenderer_,
-					glVersion_);
-			throw unsupported_error(errorMsg);
-		}
+		haveATI    = (  glVendor.find(   "ati ") != std::string::npos) || (glVendor.find("amd ") != std::string::npos);
+		haveIntel  = (  glVendor.find(  "intel") != std::string::npos);
+		haveNvidia = (  glVendor.find("nvidia ") != std::string::npos);
+		haveMesa   = (glRenderer.find(  "mesa ") != std::string::npos) || (glRenderer.find("gallium ") != std::string::npos);
 
-		LoadExtensions(); // initialize GLEW
-	}
-
-	supportNPOTs = GLEW_ARB_texture_non_power_of_two;
-	haveARB   = GLEW_ARB_vertex_program && GLEW_ARB_fragment_program;
-	haveGLSL  = glslVersion_ != nullptr;
-	haveGLSL &= GLEW_ARB_vertex_shader && GLEW_ARB_fragment_shader;
-	haveGLSL &= !!GLEW_VERSION_2_0; // we want OpenGL 2.0 core functions
-
-
-	glVersion = (glVersion_ != nullptr)?std::string(glVersion_): "";
-	glVersionShort = "";
-	if (glVersion != "") {
-		const size_t q = glVersion.find(" ");
-		if (q != std::string::npos) {
-			glVersionShort = glVersion.substr(0, q);
-		}
-	}
-	glVendor = (glVendor_ != nullptr)?std::string(glVendor_): "" ;
-	glRenderer = (glRenderer_ != nullptr)?std::string(glRenderer_): "";
-	glslVersion = (glslVersion_ != nullptr)?std::string(glslVersion_): "";
-	glewVersion = (glewVersion_ != nullptr)?std::string(glewVersion_): "";
-
-
-	{
-		const std::string& vendor = StringToLower(glVendor);
-		const std::string& renderer = StringToLower(glRenderer);
-
-		haveATI    = (vendor.find("ati ") != std::string::npos) || (vendor.find("amd ") != std::string::npos);
-		haveMesa   = (renderer.find("mesa ") != std::string::npos) || (renderer.find("gallium ") != std::string::npos);
-		haveIntel  = (vendor.find("intel") != std::string::npos);
-		haveNvidia = (vendor.find("nvidia ") != std::string::npos);
-
-		gpu = glRenderer; //redundant
 		if (haveATI) {
-			gpuVendor = "ATI";
+			globalRenderingInfo.gpuName   = globalRenderingInfo.glRenderer;
+			globalRenderingInfo.gpuVendor = "ATI";
 		} else if (haveIntel) {
-			gpuVendor = "Intel";
+			globalRenderingInfo.gpuName   = globalRenderingInfo.glRenderer;
+			globalRenderingInfo.gpuVendor = "Intel";
 		} else if (haveNvidia) {
-			gpuVendor = "Nvidia";
+			globalRenderingInfo.gpuName   = globalRenderingInfo.glRenderer;
+			globalRenderingInfo.gpuVendor = "Nvidia";
 		} else if (haveMesa) {
-			gpuVendor = "Mesa";
+			globalRenderingInfo.gpuName   = globalRenderingInfo.glRenderer;
+			globalRenderingInfo.gpuVendor = globalRenderingInfo.glVendor;
 		} else {
-			gpuVendor = "Unknown";
+			globalRenderingInfo.gpuName   = "Unknown";
+			globalRenderingInfo.gpuVendor = "Unknown";
 		}
 
 		forceSwapBuffers = configHandler->GetInt("ForceSwapBuffers");
 		forceShaders = configHandler->GetInt("ForceShaders");
 
 		if (forceShaders < 0) {
-			// disable Shaders for Intel drivers
+			// disable shaders for Intel drivers
 			haveARB  &= !haveIntel;
 			haveGLSL &= !haveIntel;
 		} else if (forceShaders == 0) {
@@ -451,24 +433,33 @@ void CGlobalRendering::PostInit() {
 			// rely on extension detection (don't force enable shaders, when the extensions aren't exposed!)
 		}
 
-		if (haveGLSL) {
-			glslVersionShort = glslVersion;
-			const size_t q = glslVersion.find(" ");
-			if (q != std::string::npos) {
-				glslVersionShort = glslVersion.substr(0, q);
+		// x-series doesn't support NPOTs (but hd-series does)
+		if (haveATI)
+			supportNPOTs = (glRenderer.find(" x") == std::string::npos && glRenderer.find(" 9") == std::string::npos);
+
+
+		for (size_t n = 0; (n < sizeof(globalRenderingInfo.glVersionShort) && globalRenderingInfo.glVersion[n] != 0); n++) {
+			if ((globalRenderingInfo.glVersionShort[n] = globalRenderingInfo.glVersion[n]) == ' ') {
+				globalRenderingInfo.glVersionShort[n] = 0;
+				break;
 			}
 		}
 
-		if (haveATI) {
-			// x-series doesn't support NPOTs (but hd-series does)
-			supportNPOTs = (renderer.find(" x") == std::string::npos && renderer.find(" 9") == std::string::npos);
+		for (size_t n = 0; (n < sizeof(globalRenderingInfo.glslVersionShort) && globalRenderingInfo.glslVersion[n] != 0); n++) {
+			if ((globalRenderingInfo.glslVersionShort[n] = globalRenderingInfo.glslVersion[n]) == ' ') {
+				globalRenderingInfo.glslVersionShort[n] = 0;
+				break;
+			}
 		}
+
+		ShowCrappyGpuWarning(globalRenderingInfo.glVendor, globalRenderingInfo.glRenderer);
 	}
 
 	{
 		// use some ATI bugfixes?
 		const int atiHacksCfg = configHandler->GetInt("AtiHacks");
-		atiHacks = haveATI && (atiHacksCfg < 0); // runtime detect
+		atiHacks = haveATI;
+		atiHacks &= (atiHacksCfg < 0); // runtime detect
 		atiHacks |= (atiHacksCfg > 0); // user override
 	}
 

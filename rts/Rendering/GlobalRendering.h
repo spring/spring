@@ -122,6 +122,7 @@ public:
 	float viewRange;
 
 
+
 	int forceShaders;
 	int forceSwapBuffers;
 
@@ -138,6 +139,8 @@ public:
 	 * maximum 2D texture size
 	 */
 	int maxTextureSize;
+
+	int gpuMemorySize;
 
 
 	bool drawSky;
@@ -196,20 +199,6 @@ public:
 	bool haveIntel;
 	bool haveNvidia;
 
-	std::string gpu;
-	std::string gpuVendor;
-	int gpuMemorySize;
-	std::string glVersionShort;
-	std::string glslVersionShort;
-
-	std::string glVersion;
-	std::string glVendor;
-	std::string glRenderer;
-	std::string glslVersion;
-	std::string glewVersion;
-
-	SDL_version* sdlVersionCompiled;
-	SDL_version* sdlVersionLinked;
 
 	/**
 	 * @brief collection of some ATI bugfixes
@@ -299,3 +288,4 @@ public:
 extern CGlobalRendering* globalRendering;
 
 #endif /* _GLOBAL_RENDERING_H */
+

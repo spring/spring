@@ -4,33 +4,32 @@
 #include "LuaUtils.h"
 #include "System/Platform/Misc.h"
 #include "Rendering/GlobalRendering.h"
-
-#include <SDL.h>
+#include "Rendering/GlobalRenderingInfo.h"
 
 bool LuaConstPlatform::PushEntries(lua_State* L)
 {
-	LuaPushNamedString(L, "gpu", globalRendering->gpu);
-	LuaPushNamedString(L, "gpuVendor", globalRendering->gpuVendor);
+	LuaPushNamedString(L, "gpu", globalRenderingInfo.gpuName);
+	LuaPushNamedString(L, "gpuVendor", globalRenderingInfo.gpuVendor);
 	LuaPushNamedNumber(L, "gpuMemorySize", globalRendering->gpuMemorySize);
-	LuaPushNamedString(L, "glVersionShort", globalRendering->glVersionShort);
-	LuaPushNamedString(L, "glslVersionShort", globalRendering->glslVersionShort);
+	LuaPushNamedString(L, "glVersionShort", globalRenderingInfo.glVersionShort);
+	LuaPushNamedString(L, "glslVersionShort", globalRenderingInfo.glslVersionShort);
 
-	LuaPushNamedString(L, "glVersion", globalRendering->glVersion);
-	LuaPushNamedString(L, "glVendor", globalRendering->glVendor);
-	LuaPushNamedString(L, "glRenderer", globalRendering->glRenderer);
-	LuaPushNamedString(L, "glslVersion", globalRendering->glslVersion);
-	LuaPushNamedString(L, "glewVersion", globalRendering->glewVersion);
+	LuaPushNamedString(L, "glVersion", globalRenderingInfo.glVersion);
+	LuaPushNamedString(L, "glVendor", globalRenderingInfo.glVendor);
+	LuaPushNamedString(L, "glRenderer", globalRenderingInfo.glRenderer);
+	LuaPushNamedString(L, "glslVersion", globalRenderingInfo.glslVersion);
+	LuaPushNamedString(L, "glewVersion", globalRenderingInfo.glewVersion);
 
-	LuaPushNamedNumber(L, "sdlVersionCompiledMajor", globalRendering->sdlVersionCompiled->major);
-	LuaPushNamedNumber(L, "sdlVersionCompiledMinor", globalRendering->sdlVersionCompiled->minor);
-	LuaPushNamedNumber(L, "sdlVersionCompiledPatch", globalRendering->sdlVersionCompiled->patch);
-	LuaPushNamedNumber(L, "sdlVersionLinkedMajor", globalRendering->sdlVersionLinked->major);
-	LuaPushNamedNumber(L, "sdlVersionLinkedMinor", globalRendering->sdlVersionLinked->minor);
-	LuaPushNamedNumber(L, "sdlVersionLinkedPatch", globalRendering->sdlVersionLinked->patch);
+	LuaPushNamedNumber(L, "sdlVersionCompiledMajor", globalRenderingInfo.sdlVersionCompiled.major);
+	LuaPushNamedNumber(L, "sdlVersionCompiledMinor", globalRenderingInfo.sdlVersionCompiled.minor);
+	LuaPushNamedNumber(L, "sdlVersionCompiledPatch", globalRenderingInfo.sdlVersionCompiled.patch);
+	LuaPushNamedNumber(L, "sdlVersionLinkedMajor", globalRenderingInfo.sdlVersionLinked.major);
+	LuaPushNamedNumber(L, "sdlVersionLinkedMinor", globalRenderingInfo.sdlVersionLinked.minor);
+	LuaPushNamedNumber(L, "sdlVersionLinkedPatch", globalRenderingInfo.sdlVersionLinked.patch);
 
 	LuaPushNamedString(L, "os", Platform::GetOS());
 	LuaPushNamedString(L, "osFamily", Platform::GetOSFamily());
-	LuaPushNamedNumber(L, "osWordSize", Platform::NativeWordSize()*8);
+	LuaPushNamedNumber(L, "osWordSize", Platform::SystemWordSize() * 8);
 
 	return true;
 }
