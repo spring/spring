@@ -1168,14 +1168,11 @@ public:
 
 class DebugActionExecutor : public IUnsyncedActionExecutor {
 public:
-	DebugActionExecutor() : IUnsyncedActionExecutor("Debug",
-			"Enable/Disable debug info rendering mode") {}
+	DebugActionExecutor() : IUnsyncedActionExecutor("Debug", "Enable/Disable debug rendering mode") {}
 
 	bool Execute(const UnsyncedAction& action) const {
 		// toggle
-		globalRendering->drawdebug = !globalRendering->drawdebug;
-
-		ProfileDrawer::SetEnabled(globalRendering->drawdebug);
+		ProfileDrawer::SetEnabled(globalRendering->drawdebug = !globalRendering->drawdebug);
 		profiler.SetEnabled(globalRendering->drawdebug);
 
 		LogSystemStatus("debug-info rendering mode", globalRendering->drawdebug);
@@ -1183,14 +1180,22 @@ public:
 	}
 };
 
+class DebugGLActionExecutor : public IUnsyncedActionExecutor {
+public:
+	DebugGLActionExecutor() : IUnsyncedActionExecutor("DebugGL", "Enable/Disable OpenGL debug messages") {}
+
+	bool Execute(const UnsyncedAction& action) const {
+		globalRendering->ToggleGLDebugOutput();
+		return true;
+	}
+};
+
 
 class MuteActionExecutor : public IUnsyncedActionExecutor {
 public:
-	MuteActionExecutor() : IUnsyncedActionExecutor("MuteSound",
-			"Mute/Unmute the current sound system") {}
+	MuteActionExecutor() : IUnsyncedActionExecutor("MuteSound", "Mute/Unmute the current sound system") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-
 		// toggle
 		sound->Mute();
 		LogSystemStatus("Mute", sound->IsMuted());
@@ -3093,6 +3098,7 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new TrackModeActionExecutor());
 	AddActionExecutor(new PauseActionExecutor());
 	AddActionExecutor(new DebugActionExecutor());
+	AddActionExecutor(new DebugGLActionExecutor());
 	AddActionExecutor(new DebugColVolDrawerActionExecutor());
 	AddActionExecutor(new DebugPathDrawerActionExecutor());
 	AddActionExecutor(new DebugTraceRayDrawerActionExecutor());

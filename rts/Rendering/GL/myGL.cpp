@@ -26,8 +26,6 @@
 #define SDL_BPP(fmt) SDL_BITSPERPIXEL((fmt))
 
 CONFIG(bool, DisableCrappyGPUWarning).defaultValue(false).description("Disables the warning an user will receive if (s)he attempts to run Spring on an outdated and underpowered video card.");
-CONFIG(bool, DebugGL).defaultValue(false).description("Enables _driver_ debug feedback. (see GL_ARB_debug_output)");
-CONFIG(bool, DebugGLStacktraces).defaultValue(false).description("Create a stacktrace when an OpenGL error occurs");
 
 
 static std::vector<CVertexArray> vertexArrays;
@@ -91,100 +89,56 @@ void PrintAvailableResolutions()
 	}
 }
 
-#ifdef GL_ARB_debug_output
-#if defined(WIN32) && !defined(HEADLESS)
-	#if defined(_MSC_VER) && _MSC_VER >= 1600
-		#define _APIENTRY __stdcall
-	#else
-		#define _APIENTRY APIENTRY
-	#endif
-#else
-	#define _APIENTRY
-#endif
 
-void _APIENTRY OpenGLDebugMessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const GLvoid* userParam)
+
+void _GL_APIENTRY glDebugMessageCallbackFunc(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const GLvoid* userParam)
 {
-	if (id == 131185) {
-		// nvidia
-		// Gives detail about BufferObject's memory location
-		// example: "Buffer detailed info: Buffer object 260 (bound to GL_PIXEL_UNPACK_BUFFER_ARB, usage hint is GL_STREAM_DRAW) has been mapped in DMA CACHED memory."
-		return;
+	#if (defined(GL_ARB_debug_output) && !defined(HEADLESS))
+	switch (id) {
+		case 131185: { return; } break; // "Buffer detailed info: Buffer object 260 (bound to GL_PIXEL_UNPACK_BUFFER_ARB, usage hint is GL_STREAM_DRAW) has been mapped in DMA CACHED memory."
+		default: {} break;
 	}
 
-	std::string sourceStr;
-	std::string typeStr;
-	std::string severityStr;
-	std::string messageStr(message, length);
+	const char*   sourceStr = "";
+	const char*     typeStr = "";
+	const char* severityStr = "";
+	const char*  messageStr = message;
 
 	switch (source) {
-		case GL_DEBUG_SOURCE_API_ARB:
-			sourceStr = "API";
-			break;
-		case GL_DEBUG_SOURCE_WINDOW_SYSTEM_ARB:
-			sourceStr = "WindowSystem";
-			break;
-		case GL_DEBUG_SOURCE_SHADER_COMPILER_ARB:
-			sourceStr = "Shader";
-			break;
-		case GL_DEBUG_SOURCE_THIRD_PARTY_ARB:
-			sourceStr = "3rd Party";
-			break;
-		case GL_DEBUG_SOURCE_APPLICATION_ARB:
-			sourceStr = "Application";
-			break;
-		case GL_DEBUG_SOURCE_OTHER_ARB:
-			sourceStr = "other";
-			break;
-		default:
-			sourceStr = "unknown";
+		case GL_DEBUG_SOURCE_API_ARB            : sourceStr =          "API"; break;
+		case GL_DEBUG_SOURCE_WINDOW_SYSTEM_ARB  : sourceStr = "WindowSystem"; break;
+		case GL_DEBUG_SOURCE_SHADER_COMPILER_ARB: sourceStr =       "Shader"; break;
+		case GL_DEBUG_SOURCE_THIRD_PARTY_ARB    : sourceStr =    "3rd Party"; break;
+		case GL_DEBUG_SOURCE_APPLICATION_ARB    : sourceStr =  "Application"; break;
+		case GL_DEBUG_SOURCE_OTHER_ARB          : sourceStr =        "other"; break;
+		default                                 : sourceStr =      "unknown";
 	}
 
 	switch (type) {
-		case GL_DEBUG_TYPE_ERROR_ARB:
-			typeStr = "error";
-			break;
-		case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR_ARB:
-			typeStr = "deprecated";
-			break;
-		case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR_ARB:
-			typeStr = "undefined";
-			break;
-		case GL_DEBUG_TYPE_PORTABILITY_ARB:
-			typeStr = "portability";
-			break;
-		case GL_DEBUG_TYPE_PERFORMANCE_ARB:
-			typeStr = "peformance";
-			break;
-		case GL_DEBUG_TYPE_OTHER_ARB:
-			typeStr = "other";
-			break;
-		default:
-			typeStr = "unknown";
+		case GL_DEBUG_TYPE_ERROR_ARB              : typeStr =       "error"; break;
+		case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR_ARB: typeStr =  "deprecated"; break;
+		case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR_ARB : typeStr =   "undefined"; break;
+		case GL_DEBUG_TYPE_PORTABILITY_ARB        : typeStr = "portability"; break;
+		case GL_DEBUG_TYPE_PERFORMANCE_ARB        : typeStr =  "peformance"; break;
+		case GL_DEBUG_TYPE_OTHER_ARB              : typeStr =       "other"; break;
+		default                                   : typeStr =     "unknown";
 	}
 
 	switch (severity) {
-		case GL_DEBUG_SEVERITY_HIGH_ARB:
-			severityStr = "high";
-			break;
-		case GL_DEBUG_SEVERITY_MEDIUM_ARB:
-			severityStr = "medium";
-			break;
-		case GL_DEBUG_SEVERITY_LOW_ARB:
-			severityStr = "low";
-			break;
-		default:
-			severityStr = "unknown";
+		case GL_DEBUG_SEVERITY_HIGH_ARB  : severityStr =    "high"; break;
+		case GL_DEBUG_SEVERITY_MEDIUM_ARB: severityStr =  "medium"; break;
+		case GL_DEBUG_SEVERITY_LOW_ARB   : severityStr =     "low"; break;
+		default                          : severityStr = "unknown";
 	}
 
-	LOG_L(L_ERROR, "OpenGL: source<%s> type<%s> id<%u> severity<%s>:\n%s",
-			sourceStr.c_str(), typeStr.c_str(), id, severityStr.c_str(),
-			messageStr.c_str());
+	LOG_L(L_INFO, "OpenGL: source<%s> type<%s> id<%u> severity<%s>:\n%s", sourceStr, typeStr, id, severityStr, messageStr);
 
-	if (configHandler->GetBool("DebugGLStacktraces")) {
+	if (*reinterpret_cast<const bool*>(userParam))
 		CrashHandler::Stacktrace(Threading::GetCurrentThread(), "rendering", LOG_LEVEL_WARNING);
-	}
+
+	#endif
 }
-#endif // GL_ARB_debug_output
+
 
 
 bool GetAvailableVideoRAM(GLint* memory)
@@ -301,46 +255,26 @@ void ShowCrappyGpuWarning(const char* glVendor, const char* glRenderer)
 #endif
 }
 
-void LoadExtensions()
-{
-	// install OpenGL DebugMessageCallback
-#if defined(GL_ARB_debug_output) && !defined(HEADLESS)
-	if (GLEW_ARB_debug_output && configHandler->GetBool("DebugGL")) {
-		LOG("Installing OpenGL-DebugMessageHandler");
-		//typecast is a workarround for #4510, signature of the callback message changed :-|
-		glDebugMessageCallbackARB((GLDEBUGPROCARB)&OpenGLDebugMessageCallback, NULL);
-
-		if (configHandler->GetBool("DebugGLStacktraces")) {
-			// The callback should happen in the thread that made the gl call
-			// so we get proper stacktraces.
-			glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
-		}
-	}
-#endif
-
-	vertexArrays.resize(2);
-}
-
-
-void UnloadExtensions()
-{
-	vertexArrays.clear();
-}
+void LoadExtensions() { vertexArrays.resize(2); }
+void UnloadExtensions() { vertexArrays.clear(); }
 
 /******************************************************************************/
 
 void WorkaroundATIPointSizeBug()
 {
-	if (globalRendering->atiHacks && globalRendering->haveGLSL) {
-		GLboolean pointSpritesEnabled = false;
-		glGetBooleanv(GL_POINT_SPRITE, &pointSpritesEnabled);
-		if (pointSpritesEnabled)
-			return;
+	if (!globalRendering->atiHacks)
+		return;
+	if (!globalRendering->haveGLSL)
+		return;
 
-		GLfloat atten[3] = { 1.0f, 0.0f, 0.0f };
-		glPointParameterfv(GL_POINT_DISTANCE_ATTENUATION, atten);
-		glPointParameterf(GL_POINT_FADE_THRESHOLD_SIZE, 1.0f);
-	}
+	GLboolean pointSpritesEnabled = false;
+	glGetBooleanv(GL_POINT_SPRITE, &pointSpritesEnabled);
+	if (pointSpritesEnabled)
+		return;
+
+	GLfloat atten[3] = {1.0f, 0.0f, 0.0f};
+	glPointParameterfv(GL_POINT_DISTANCE_ATTENUATION, atten);
+	glPointParameterf(GL_POINT_FADE_THRESHOLD_SIZE, 1.0f);
 }
 
 /******************************************************************************/

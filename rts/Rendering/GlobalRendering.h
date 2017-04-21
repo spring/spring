@@ -43,6 +43,7 @@ public:
 	int2 GetWantedViewSize(const bool fullscreen);
 
 	bool EnableFSAA() const;
+	bool ToggleGLDebugOutput();
 
 public:
 	/**
@@ -138,13 +139,6 @@ public:
 	 */
 	int maxTextureSize;
 
-	/**
-	 * @brief maxSmoothPointSize
-	 *
-	 * maximum smooth point size (driver might fallback in software rendering if larger)
-	 */
-	float maxSmoothPointSize;
-
 
 	bool drawSky;
 	bool drawWater;
@@ -164,13 +158,9 @@ public:
 	 * Whether debugging info is drawn
 	 */
 	bool drawdebug;
-
-	/**
-	 * @brief draw debug
-	 *
-	 * Whether debugging info is drawn
-	 */
 	bool drawdebugtraceray;
+
+	bool gldebug;
 
 	/**
 	 * Does the user want team colored nanospray?

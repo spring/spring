@@ -22,6 +22,9 @@
 #include <SDL.h>
 #include <SDL_video.h>
 
+CONFIG(bool, DebugGL).defaultValue(false).description("Enables _driver_ debug feedback. (see GL_ARB_debug_output)");
+CONFIG(bool, DebugGLStacktraces).defaultValue(false).description("Create a stacktrace when an OpenGL error occurs");
+
 CONFIG(bool, CompressTextures).defaultValue(false).safemodeValue(true).description("Runtime compress most textures to save VideoRAM."); // in safemode enabled, cause it ways more likely the gpu runs out of memory than this extension cause crashes!
 CONFIG(int, ForceShaders).defaultValue(-1).minimumValue(-1).maximumValue(1);
 CONFIG(int, ForceSwapBuffers).defaultValue(1).minimumValue(-1).maximumValue(1);
@@ -56,6 +59,7 @@ CR_REG_METADATA(CGlobalRendering, (
 	CR_MEMBER(drawFog),
 	CR_MEMBER(drawdebug),
 	CR_MEMBER(drawdebugtraceray),
+	CR_MEMBER(gldebug),
 	CR_MEMBER(timeOffset),
 	CR_MEMBER(lastFrameTime),
 	CR_MEMBER(lastFrameStart),
@@ -85,7 +89,6 @@ CR_REG_METADATA(CGlobalRendering, (
 
 	CR_IGNORED(fsaaLevel),
 	CR_IGNORED(maxTextureSize),
-	CR_IGNORED(maxSmoothPointSize),
 	CR_IGNORED(active),
 	CR_IGNORED(isVideoCapturing),
 	CR_IGNORED(compressTextures),
@@ -164,7 +167,6 @@ CGlobalRendering::CGlobalRendering()
 
 	, fsaaLevel(0)
 	, maxTextureSize(2048)
-	, maxSmoothPointSize(1.0f)
 
 	, drawSky(true)
 	, drawWater(true)
@@ -173,8 +175,9 @@ CGlobalRendering::CGlobalRendering()
 	, drawFog(true)
 	, drawdebug(false)
 	, drawdebugtraceray(false)
+	, gldebug(false)
 
-	, teamNanospray(true)
+	, teamNanospray(configHandler->GetBool("TeamNanoSpray"))
 	, active(true)
 	, isVideoCapturing(false)
 	, compressTextures(false)
@@ -230,9 +233,8 @@ bool CGlobalRendering::CreateSDLWindow(const char* title)
 	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
-	// Create GL debug context when wanted (allows further GL verbose informations, but runs slower)
-	if (configHandler->GetBool("DebugGL"))
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
+	// Create GL debug context when wanted (more verbose GL messages, but runs slower)
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG * configHandler->GetBool("DebugGL"));
 
 	// FullScreen AntiAliasing
 	if ((fsaaLevel = configHandler->GetInt("FSAALevel")) > 0) {
@@ -325,11 +327,15 @@ void CGlobalRendering::PostInit() {
 	glewExperimental = true;
 	#endif
 	glewInit();
+	// glewInit sets GL_INVALID_ENUM, get rid of it
+	glGetError();
+
 
 	sdlVersionCompiled = new SDL_version();
 	sdlVersionLinked = new SDL_version();
 	SDL_VERSION(sdlVersionCompiled);
 	SDL_GetVersion(sdlVersionLinked);
+
 	const char* glVersion_ = (const char*) glGetString(GL_VERSION);
 	const char* glVendor_ = (const char*) glGetString(GL_VENDOR);
 	const char* glRenderer_ = (const char*) glGetString(GL_RENDERER);
@@ -341,17 +347,18 @@ void CGlobalRendering::PostInit() {
 
 	if (GetAvailableVideoRAM(vidMemBuffer)) {
 		const GLint totalMemMB = vidMemBuffer[0] / 1024;
-		gpuMemorySize = totalMemMB;
 		const GLint availMemMB = vidMemBuffer[1] / 1024;
 
 		if (totalMemMB > 0 && availMemMB > 0) {
 			const char* memFmtStr = "total %iMB, available %iMB";
 			SNPRINTF(glVidMemStr, sizeof(glVidMemStr), memFmtStr, totalMemMB, availMemMB);
 		}
+
+		gpuMemorySize = totalMemMB;
 	}
 
 	// log some useful version info
-	LOG("[GL::%s]", __func__);
+	LOG("[GR::%s]", __func__);
 	LOG("\tSDL version:  linked %d.%d.%d; compiled %d.%d.%d", sdlVersionLinked->major, sdlVersionLinked->minor, sdlVersionLinked->patch, sdlVersionCompiled->major, sdlVersionCompiled->minor, sdlVersionCompiled->patch);
 	LOG("\tGL version:   %s", glVersion_);
 	LOG("\tGL vendor:    %s", glVendor_);
@@ -363,38 +370,36 @@ void CGlobalRendering::PostInit() {
 
 	ShowCrappyGpuWarning(glVendor_, glRenderer_);
 
-	std::string missingExts = "";
+	{
+		std::string missingExts;
 
-	if (!GLEW_ARB_multitexture)
-		missingExts += " GL_ARB_multitexture";
+		if (!GLEW_ARB_multitexture       ) missingExts += " GL_ARB_multitexture";
+		if (!GLEW_ARB_texture_env_combine) missingExts += " GL_ARB_texture_env_combine";
+		if (!GLEW_ARB_texture_compression) missingExts += " GL_ARB_texture_compression";
 
-	if (!GLEW_ARB_texture_env_combine)
-		missingExts += " GL_ARB_texture_env_combine";
+		if (!missingExts.empty()) {
+			char errorMsg[2048];
+			SNPRINTF(errorMsg, sizeof(errorMsg),
+					"Needed OpenGL extension(s) not found:\n"
+					"  %s\n\n"
+					"Update your graphics-card driver!\n"
+					"  Graphics card:   %s\n"
+					"  OpenGL version: %s\n",
+					missingExts.c_str(),
+					glRenderer_,
+					glVersion_);
+			throw unsupported_error(errorMsg);
+		}
 
-	if (!GLEW_ARB_texture_compression)
-		missingExts += " GL_ARB_texture_compression";
-
-	if (!missingExts.empty()) {
-		char errorMsg[2048];
-		SNPRINTF(errorMsg, sizeof(errorMsg),
-				"Needed OpenGL extension(s) not found:\n"
-				"  %s\n\n"
-				"Update your graphic-card driver!\n"
-				"  Graphic card:   %s\n"
-				"  OpenGL version: %s\n",
-				missingExts.c_str(),
-				glRenderer_,
-				glVersion_);
-		throw unsupported_error(errorMsg);
+		LoadExtensions(); // initialize GLEW
 	}
-
-	LoadExtensions(); // initialize GLEW
 
 	supportNPOTs = GLEW_ARB_texture_non_power_of_two;
 	haveARB   = GLEW_ARB_vertex_program && GLEW_ARB_fragment_program;
 	haveGLSL  = glslVersion_ != nullptr;
 	haveGLSL &= GLEW_ARB_vertex_shader && GLEW_ARB_fragment_shader;
 	haveGLSL &= !!GLEW_VERSION_2_0; // we want OpenGL 2.0 core functions
+
 
 	glVersion = (glVersion_ != nullptr)?std::string(glVersion_): "";
 	glVersionShort = "";
@@ -408,6 +413,7 @@ void CGlobalRendering::PostInit() {
 	glRenderer = (glRenderer_ != nullptr)?std::string(glRenderer_): "";
 	glslVersion = (glslVersion_ != nullptr)?std::string(glslVersion_): "";
 	glewVersion = (glewVersion_ != nullptr)?std::string(glewVersion_): "";
+
 
 	{
 		const std::string& vendor = StringToLower(glVendor);
@@ -459,17 +465,17 @@ void CGlobalRendering::PostInit() {
 		}
 	}
 
-	// use some ATI bugfixes?
-	const int atiHacksCfg = configHandler->GetInt("AtiHacks");
-	atiHacks = haveATI && (atiHacksCfg < 0); // runtime detect
-	atiHacks |= (atiHacksCfg > 0); // user override
-
-	// Runtime compress textures?
-	if (GLEW_ARB_texture_compression) {
-		// we don't even need to check it, 'cos groundtextures must have that extension
-		// default to off because it reduces quality (smallest mipmap level is bigger)
-		compressTextures = configHandler->GetBool("CompressTextures");
+	{
+		// use some ATI bugfixes?
+		const int atiHacksCfg = configHandler->GetInt("AtiHacks");
+		atiHacks = haveATI && (atiHacksCfg < 0); // runtime detect
+		atiHacks |= (atiHacksCfg > 0); // user override
 	}
+
+	// runtime-compress textures? (also already required for SMF ground textures)
+	// default to off because it reduces quality (smallest mipmap level is bigger)
+	if (GLEW_ARB_texture_compression)
+		compressTextures = configHandler->GetBool("CompressTextures");
 
 #ifdef GLEW_NV_primitive_restart
 	supportRestartPrimitive = !!(GLEW_NV_primitive_restart);
@@ -478,16 +484,11 @@ void CGlobalRendering::PostInit() {
 	supportClipControl = !!(GL_ARB_clip_control);
 #endif
 
+
 	// maximum 2D texture size
 	{
 		glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTextureSize);
 	}
-
-	// retrieve maximum smoothed PointSize
-	float2 aliasedPointSizeRange, smoothPointSizeRange;
-	glGetFloatv(GL_ALIASED_POINT_SIZE_RANGE, (GLfloat*)&aliasedPointSizeRange);
-	glGetFloatv(GL_SMOOTH_POINT_SIZE_RANGE,  (GLfloat*)&smoothPointSizeRange);
-	maxSmoothPointSize = std::min(aliasedPointSizeRange.y, smoothPointSizeRange.y);
 
 	// some GLSL relevant information
 	{
@@ -501,7 +502,7 @@ void CGlobalRendering::PostInit() {
 		glslMaxVaryings /= 4; // GL_MAX_VARYING_FLOATS returns max individual floats, we want float4
 	}
 
-	// detect if GL_DEPTH_COMPONENT24 is supported (many ATIs don't do so)
+	// detect if GL_DEPTH_COMPONENT24 is supported (many ATIs don't)
 	{
 		// ATI seems to support GL_DEPTH_COMPONENT24 for static textures, but you can't render to them
 		/*
@@ -513,12 +514,10 @@ void CGlobalRendering::PostInit() {
 
 		support24bitDepthBuffers = false;
 		if (FBO::IsSupported() && !atiHacks) {
-			const int fboSizeX = 16, fboSizeY = 16;
-
 			FBO fbo;
 			fbo.Bind();
-			fbo.CreateRenderBuffer(GL_COLOR_ATTACHMENT0_EXT, GL_RGBA8, fboSizeX, fboSizeY);
-			fbo.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT,  GL_DEPTH_COMPONENT24, fboSizeX, fboSizeY);
+			fbo.CreateRenderBuffer(GL_COLOR_ATTACHMENT0_EXT, GL_RGBA8, 16, 16);
+			fbo.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT,  GL_DEPTH_COMPONENT24, 16, 16);
 			const GLenum status = fbo.GetStatus();
 			fbo.Unbind();
 
@@ -532,11 +531,11 @@ void CGlobalRendering::PostInit() {
 	LOG("\tFBO support: %i, NPOT-texture support: %i, 24bit Z-buffer support: %i", FBO::IsSupported(), supportNPOTs, support24bitDepthBuffers);
 	LOG("\tprimitive-restart support: %i, clip-control support: %i", supportRestartPrimitive, supportClipControl);
 	LOG("\tmax. FBO samples: %i, max. texture size: %i, compress MIP-map textures: %i", FBO::GetMaxSamples(), maxTextureSize, compressTextures);
-	LOG("\tmax. smooth point-size: %0.0f, max. vec4 varyings/attributes: %i/%i", maxSmoothPointSize, glslMaxVaryings, glslMaxAttributes);
+	LOG("\tmax. vec4 varyings/attributes: %i/%i", glslMaxVaryings, glslMaxAttributes);
 	LOG("\tmax. draw-buffers: %i, max. recommended indices/vertices: %i/%i", glslMaxDrawBuffers, glslMaxRecommendedIndices, glslMaxRecommendedVertices);
 	LOG("\tmax. buffer-bindings: %i, max. block-size: %ikB", glslMaxUniformBufferBindings, glslMaxUniformBufferSize / 1024);
 
-	teamNanospray = configHandler->GetBool("TeamNanoSpray");
+	ToggleGLDebugOutput();
 }
 
 void CGlobalRendering::SwapBuffers(bool allowSwapBuffers)
@@ -602,18 +601,9 @@ void CGlobalRendering::ConfigNotify(const std::string& key, const std::string& v
 	if (key != "Fullscreen" && key != "WindowBorderless")
 		return;
 
-	fullScreen = configHandler->GetBool("Fullscreen");
-
-	if (window == nullptr)
-		return;
-
-	if (key != "Fullscreen" && key != "WindowBorderless")
-		return;
-
-	fullScreen = configHandler->GetBool("Fullscreen");
-
 	const bool borderless = configHandler->GetBool("WindowBorderless");
-	const int2 res = GetWantedViewSize(fullScreen);
+	const int2 res = GetWantedViewSize(fullScreen = configHandler->GetBool("Fullscreen"));
+
 	SDL_SetWindowSize(window, res.x, res.y);
 	if (fullScreen) {
 		if (borderless) {
@@ -734,3 +724,34 @@ bool CGlobalRendering::EnableFSAA() const
 	glGetIntegerv(GL_SAMPLES_ARB, &samples);
 	return (buffers != 0 && samples != 0);
 }
+
+bool CGlobalRendering::ToggleGLDebugOutput()
+{
+	const static bool dbgOutput = configHandler->GetBool("DebugGL");
+	const static bool dbgTraces = configHandler->GetBool("DebugGLStacktraces");
+
+	if (!dbgOutput)
+		return false;
+
+	#if (defined(GL_ARB_debug_output) && !defined(HEADLESS))
+	if ((gldebug = !gldebug)) {
+		// install OpenGL debug message callback; typecast is a workaround
+		// for #4510 (change in callback function signature with GLEW 1.11)
+		// use SYNCHRONOUS output, we want our callback to run in the same
+		// thread as the bugged GL call (for proper stacktraces)
+		glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
+		glDebugMessageCallbackARB((GLDEBUGPROCARB) &glDebugMessageCallbackFunc, &dbgTraces);
+		glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
+
+		LOG("[GR::%s] OpenGL debug-message callback enabled", __func__);
+	} else {
+		glDebugMessageCallbackARB(nullptr, nullptr);
+		glDisable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
+
+		LOG("[GR::%s] OpenGL debug-message callback disabled", __func__);
+	}
+	#endif
+
+	return true;
+}
+
