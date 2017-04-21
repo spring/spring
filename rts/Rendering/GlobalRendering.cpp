@@ -721,8 +721,10 @@ bool CGlobalRendering::ToggleGLDebugOutput()
 	const static bool dbgOutput = configHandler->GetBool("DebugGL");
 	const static bool dbgTraces = configHandler->GetBool("DebugGLStacktraces");
 
-	if (!dbgOutput)
+	if (!dbgOutput) {
+		LOG("[GR::%s] OpenGL debug context required", __func__);
 		return false;
+	}
 
 	#if (defined(GL_ARB_debug_output) && !defined(HEADLESS))
 	if ((gldebug = !gldebug)) {
