@@ -25,9 +25,10 @@ class CFileHandler
 public:
 	CFileHandler(const char* fileName, const char* modes = SPRING_VFS_RAW_FIRST);
 	CFileHandler(const std::string& fileName, const std::string& modes = SPRING_VFS_RAW_FIRST);
-	virtual ~CFileHandler();
+	virtual ~CFileHandler() { Close(); }
 
 	void Open(const std::string& fileName, const std::string& modes = SPRING_VFS_RAW_FIRST);
+	void Close();
 
 	int Read(void* buf, int length);
 	int ReadString(void* buf, int length); //< stops after the first 0 char
@@ -55,7 +56,7 @@ public:
 
 
 protected:
-	CFileHandler() : filePos(0), fileSize(-1) {} // for CGZFileHandler
+	CFileHandler() { Close(); } // for CGZFileHandler
 
 	virtual bool TryReadFromPWD(const std::string& fileName);
 	virtual bool TryReadFromRawFS(const std::string& fileName);

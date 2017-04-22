@@ -28,7 +28,6 @@ static const float ROLLOFF_FACTOR = 5.0f;
 CSoundSource::CSoundSource()
 	: curPlaying(nullptr)
 	, curChannel(nullptr)
-	, curStream(nullptr)
 	, curVolume(1.f)
 	, loopStop(1e9)
 	, in3D(false)
@@ -65,7 +64,7 @@ void CSoundSource::Update()
 		asyncPlay = AsyncSoundItemData();
 	}
 
-	if (curPlaying) {
+	if (curPlaying != nullptr) {
 		if (in3D && (efxEnabled != efx->enabled)) {
 			alSourcef(id, AL_AIR_ABSORPTION_FACTOR, (efx->enabled) ? efx->GetAirAbsorptionFactor() : 0);
 			alSource3i(id, AL_AUXILIARY_SEND_FILTER, (efx->enabled) ? efx->sfxSlot : AL_EFFECTSLOT_NULL, 0, AL_FILTER_NULL);
@@ -83,12 +82,11 @@ void CSoundSource::Update()
 			Stop();
 	}
 
-	if (curStream != nullptr) {
-		if (curStream->IsFinished()) {
+	if (curStream.Valid()) {
+		if (curStream.IsFinished()) {
 			Stop();
-		}
-		else {
-			curStream->Update();
+		} else {
+			curStream.Update();
 			CheckError("CSoundSource::Update");
 		}
 	}
@@ -106,18 +104,18 @@ int CSoundSource::GetCurrentPriority() const
 	if (asyncPlay.buffer != nullptr)
 		return asyncPlay.buffer->GetPriority();
 
-	if (curStream != nullptr)
+	if (curStream.Valid())
 		return INT_MAX;
 
 	if (curPlaying == nullptr)
 		return INT_MIN;
 
-	return curPlaying->GetPriority();
+	return (curPlaying->GetPriority());
 }
 
 bool CSoundSource::IsPlaying(const bool checkOpenAl) const
 {
-	if (curStream != nullptr)
+	if (curStream.Valid())
 		return true;
 
 	if (asyncPlay.buffer != nullptr)
@@ -141,12 +139,13 @@ bool CSoundSource::IsPlaying(const bool checkOpenAl) const
 void CSoundSource::Stop()
 {
 	alSourceStop(id);
-	if (curPlaying) {
+	if (curPlaying != nullptr) {
 		curPlaying->StopPlay();
 		curPlaying = nullptr;
 	}
-	if (curStream != nullptr)
-		spring::SafeDelete(curStream);
+
+	if (curStream.Valid())
+		curStream.Stop();
 
 	if (curChannel) {
 		IAudioChannel* oldChannel = curChannel;
@@ -158,10 +157,12 @@ void CSoundSource::Stop()
 
 void CSoundSource::Play(IAudioChannel* channel, SoundItem* item, float3 pos, float3 velocity, float volume, bool relative)
 {
-	assert(!curStream);
+	assert(!curStream.Valid());
 	assert(channel);
+
 	if (!item->PlayNow())
 		return;
+
 	Stop();
 	curVolume = volume;
 	curPlaying = item;
@@ -249,8 +250,8 @@ void CSoundSource::PlayStream(IAudioChannel* channel, const std::string& file, f
 	//! stop any current playback
 	Stop();
 
-	if (curStream == nullptr)
-		curStream = new COggStream(id);
+	if (!curStream.Valid())
+		curStream = COggStream(id);
 
 	//! setup OpenAL params
 	curChannel = channel;
@@ -269,25 +270,25 @@ void CSoundSource::PlayStream(IAudioChannel* channel, const std::string& file, f
 	alSourcef(id, AL_ROLLOFF_FACTOR,  0.0f);
 	alSourcei(id, AL_SOURCE_RELATIVE, AL_TRUE);
 
-	//! COggStreams only appends buffers, giving errors when a buffer of another format is still assigned
+	// COggStreams only appends buffers, giving errors when a buffer of another format is still assigned
 	alSourcei(id, AL_BUFFER, AL_NONE);
-	curStream->Play(file, volume);
-	curStream->Update();
+	curStream.Play(file, volume);
+	curStream.Update();
 	CheckError("CSoundSource::Update");
 }
 
 void CSoundSource::StreamStop()
 {
-	if (curStream != nullptr)
+	if (curStream.Valid())
 		Stop();
 }
 
 void CSoundSource::StreamPause()
 {
-	if (curStream == nullptr)
+	if (!curStream.Valid())
 		return;
 
-	if (curStream->TogglePause())
+	if (curStream.TogglePause())
 		alSourcePause(id);
 	else
 		alSourcePlay(id);
@@ -295,12 +296,12 @@ void CSoundSource::StreamPause()
 
 float CSoundSource::GetStreamTime()
 {
-	return (curStream != nullptr)? curStream->GetTotalTime() : 0;
+	return (curStream.Valid())? curStream.GetTotalTime() : 0.0f;
 }
 
 float CSoundSource::GetStreamPlayTime()
 {
-	return (curStream != nullptr)? curStream->GetPlayTime() : 0;
+	return (curStream.Valid())? curStream.GetPlayTime() : 0.0f;
 }
 
 void CSoundSource::UpdateVolume()
@@ -308,7 +309,7 @@ void CSoundSource::UpdateVolume()
 	if (curChannel == nullptr)
 		return;
 
-	if (curStream != nullptr) {
+	if (curStream.Valid()) {
 		alSourcef(id, AL_GAIN, curVolume * curChannel->volume);
 		return;
 	}

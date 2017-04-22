@@ -6,13 +6,14 @@
 #include <string>
 
 #include <al.h>
+
 #include "System/Misc/NonCopyable.h"
 #include "System/Misc/SpringTime.h"
 #include "System/float3.h"
+#include "OggStream.h"
 
 class IAudioChannel;
 class SoundItem;
-class COggStream;
 
 /**
  * @brief One soundsource wich can play some sounds
@@ -73,6 +74,7 @@ private:
 		{}
 	};
 
+private:
 	static float referenceDistance;
 
 	//! used to adjust the pitch to the GameSpeed (optional)
@@ -81,11 +83,12 @@ private:
 	//! reduce the rolloff when the camera is height above the ground (so we still hear something in tab mode or far zoom)
 	static float heightRolloffModifier;
 
+private:
 	ALuint id;
 
 	SoundItem* curPlaying;
 	IAudioChannel* curChannel;
-	COggStream* curStream;
+	COggStream curStream;
 
 	float curVolume;
 	spring_time loopStop;

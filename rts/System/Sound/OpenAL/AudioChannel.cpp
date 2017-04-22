@@ -87,9 +87,9 @@ void AudioChannel::FindSourceAndPlay(size_t id, const float3& pos, const float3&
 	}
 
 	// don't spam to many sounds per frame
-	if (emmitsThisFrame >= emmitsPerFrame)
+	if (emitsThisFrame >= emitsPerFrame)
 		return;
-	emmitsThisFrame++;
+	emitsThisFrame++;
 
 	// check if the sound item is already played
 	if (curSources.size() >= maxConcurrentSources) {
@@ -178,7 +178,7 @@ void AudioChannel::StreamPlay(const std::string& filepath, float volume, bool en
 	if (curStreamSrc != nullptr && enqueue) {
 		if (streamQueue.size() > MAX_STREAM_QUEUESIZE) {
 			streamQueue.resize(MAX_STREAM_QUEUESIZE);
-			streamQueue.pop_back(); //! make room for the new item
+			streamQueue.pop_back(); // make room for the new item
 		}
 
 		streamQueue.emplace_back(filepath, volume);
@@ -186,10 +186,11 @@ void AudioChannel::StreamPlay(const std::string& filepath, float volume, bool en
 	}
 
 	if (curStreamSrc == nullptr)
-		curStreamSrc = sound->GetNextBestSource(); //! may return 0 if no sources available
+		curStreamSrc = sound->GetNextBestSource(); // may return 0 if no sources available
 
 	if (curStreamSrc) {
-		curSources.insert(curStreamSrc); //! This one first, PlayStream may invoke Stop immediately thus setting curStreamSrc to NULL
+		// insert first, PlayStream may invoke Stop immediately thus setting curStreamSrc to NULL
+		curSources.insert(curStreamSrc);
 		curStreamSrc->PlayStream(this, filepath, volume);
 	}
 }

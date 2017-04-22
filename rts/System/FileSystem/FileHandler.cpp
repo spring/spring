@@ -30,23 +30,18 @@ using std::string;
 /******************************************************************************/
 
 CFileHandler::CFileHandler(const char* fileName, const char* modes)
-	: filePos(0), fileSize(-1)
 {
+	Close();
 	Open(fileName, modes);
 }
 
 
 CFileHandler::CFileHandler(const string& fileName, const string& modes)
-	: filePos(0), fileSize(-1)
 {
+	Close();
 	Open(fileName, modes);
 }
 
-
-CFileHandler::~CFileHandler()
-{
-	ifs.close();
-}
 
 
 /******************************************************************************/
@@ -92,9 +87,8 @@ bool CFileHandler::TryReadFromRawFS(const string& fileName)
 bool CFileHandler::TryReadFromVFS(const string& fileName, int section)
 {
 #ifndef TOOLS
-	if (vfsHandler == NULL) {
+	if (vfsHandler == nullptr)
 		return false;
-	}
 
 	const string file = StringToLower(fileName);
 	if (vfsHandler->LoadFile(file, fileBuffer, (CVFSHandler::Section) section)) {
@@ -127,6 +121,16 @@ void CFileHandler::Open(const string& fileName, const string& modes)
 			break;
 	}
 }
+
+void CFileHandler::Close()
+{
+	filePos = 0;
+	fileSize = -1;
+
+	ifs.close();
+	fileBuffer.clear();
+}
+
 
 
 /******************************************************************************/
@@ -174,19 +178,19 @@ int CFileHandler::Read(void* buf, int length)
 		return ifs.gcount();
 	}
 
-	if (!fileBuffer.empty()) {
-		if ((length + filePos) > fileSize)
-			length = fileSize - filePos;
+	if (fileBuffer.empty())
+		return 0;
 
-		if (length > 0) {
-			assert(fileBuffer.size() >= (filePos + length));
-			memcpy(buf, &fileBuffer[filePos], length);
-			filePos += length;
-		}
-		return length;
+	if ((length + filePos) > fileSize)
+		length = fileSize - filePos;
+
+	if (length > 0) {
+		assert(fileBuffer.size() >= (filePos + length));
+		memcpy(buf, &fileBuffer[filePos], length);
+		filePos += length;
 	}
 
-	return 0;
+	return length;
 }
 
 
@@ -208,39 +212,33 @@ int CFileHandler::ReadString(void* buf, int length)
 
 void CFileHandler::Seek(int length, std::ios_base::seekdir where)
 {
-	if (ifs.is_open())
-	{
+	if (ifs.is_open()) {
 		// Status bits must be cleared before seeking, otherwise it might fail
 		// in the common case of EOF
 		// http://en.cppreference.com/w/cpp/io/basic_istream/seekg
 		ifs.clear();
 		ifs.seekg(length, where);
+		return;
 	}
-	else if (!fileBuffer.empty())
-	{
-		if (where == std::ios_base::beg)
-		{
-			filePos = length;
-		}
-		else if (where == std::ios_base::cur)
-		{
-			filePos += length;
-		}
-		else if (where == std::ios_base::end)
-		{
-			filePos = fileSize + length;
-		}
+	if (fileBuffer.empty())
+		return;
+
+	switch (where) {
+		case std::ios_base::beg: { filePos = length; } break;
+		case std::ios_base::cur: { filePos += length; } break;
+		case std::ios_base::end: { filePos = fileSize + length; } break;
+		default: {} break;
 	}
 }
 
 bool CFileHandler::Eof() const
 {
-	if (ifs.is_open()) {
+	if (ifs.is_open())
 		return ifs.eof();
-	}
-	if (!fileBuffer.empty()) {
+
+	if (!fileBuffer.empty())
 		return (filePos >= fileSize);
-	}
+
 	return true;
 }
 
@@ -253,19 +251,18 @@ int CFileHandler::FileSize() const
 
 int CFileHandler::GetPos()
 {
-	if (ifs.is_open()) {
+	if (ifs.is_open())
 		return ifs.tellg();
-	} else {
-		return filePos;
-	}
+
+	return filePos;
 }
 
 
 bool CFileHandler::LoadStringData(string& data)
 {
-	if (!FileExists()) {
+	if (!FileExists())
 		return false;
-	}
+
 	char* buf = new char[fileSize];
 	Read(buf, fileSize);
 	data.append(buf, fileSize);

@@ -58,7 +58,7 @@ CSound::CSound()
 	Channels::General->SetVolume(configHandler->GetInt("snd_volgeneral") * 0.01f);
 	Channels::UnitReply->SetVolume(configHandler->GetInt("snd_volunitreply") * 0.01f);
 	Channels::UnitReply->SetMaxConcurrent(1);
-	Channels::UnitReply->SetMaxEmmits(1);
+	Channels::UnitReply->SetMaxEmits(1);
 	Channels::Battle->SetVolume(configHandler->GetInt("snd_volbattle") * 0.01f);
 	Channels::UserInterface->SetVolume(configHandler->GetInt("snd_volui") * 0.01f);
 	Channels::BGMusic->SetVolume(configHandler->GetInt("snd_volmusic") * 0.01f);
