@@ -55,7 +55,8 @@ public:
 
 	CAssParser();
 	~CAssParser();
-	S3DModel* Load(const std::string& modelFileName);
+
+	S3DModel Load(const std::string& modelFileName);
 	ModelType GetType() const { return MODELTYPE_ASS; }
 private:
 #ifndef BITMAP_NO_OPENGL

@@ -24,7 +24,7 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_OBJ_PARSER)
 #endif
 #define LOG_SECTION_CURRENT LOG_SECTION_OBJ_PARSER
 
-S3DModel* COBJParser::Load(const std::string& modelFileName)
+S3DModel COBJParser::Load(const std::string& modelFileName)
 {
 	std::string metaFileName = modelFileName.substr(0, modelFileName.find_last_of('.')) + ".lua";
 
@@ -48,36 +48,34 @@ S3DModel* COBJParser::Load(const std::string& modelFileName)
 	// get the (root-level) model table
 	const LuaTable& modelTable = metaFileParser.GetRoot();
 
-	S3DModel* model = new S3DModel();
-		model->name = modelFileName;
-		model->type = MODELTYPE_OBJ;
-		model->textureType = 0;
-		model->numPieces = 0;
-		model->mins = DEF_MIN_SIZE;
-		model->maxs = DEF_MAX_SIZE;
-		model->texs[0] = modelTable.GetString("tex1", "");
-		model->texs[1] = modelTable.GetString("tex2", "");
+	S3DModel model;
+		model.name = modelFileName;
+		model.type = MODELTYPE_OBJ;
+		model.textureType = 0;
+		model.numPieces = 0;
+		model.mins = DEF_MIN_SIZE;
+		model.maxs = DEF_MAX_SIZE;
+		model.texs[0] = modelTable.GetString("tex1", "");
+		model.texs[1] = modelTable.GetString("tex2", "");
 
 	// basic S3O-style texturing
-	texturehandlerS3O->PreloadTexture(model);
+	texturehandlerS3O->PreloadTexture(&model);
 
 	std::string modelData;
 	modelFile.LoadStringData(modelData);
 
-	if (ParseModelData(model, modelData, modelTable)) {
-		// set after the extrema are known
-		model->radius = modelTable.GetFloat("radius", model->CalcDrawRadius());
-		model->height = modelTable.GetFloat("height", model->CalcDrawHeight());
-		model->relMidPos = modelTable.GetFloat3("midpos", model->CalcDrawMidPos());
-
-		assert(model->numPieces == modelTable.GetInt("numpieces", 0));
-		return model;
-	} else {
-		delete model;
+	if (!ParseModelData(&model, modelData, modelTable)) {
 		throw content_error("[OBJParser] failed to parse model-data \"" + modelFileName + "\"");
+		return model; // unreachable
 	}
 
-	return nullptr;
+	// set after the extrema are known
+	model.radius = modelTable.GetFloat("radius", model.CalcDrawRadius());
+	model.height = modelTable.GetFloat("height", model.CalcDrawHeight());
+	model.relMidPos = modelTable.GetFloat3("midpos", model.CalcDrawMidPos());
+
+	assert(model.numPieces == modelTable.GetInt("numpieces", 0));
+	return model;
 }
 
 bool COBJParser::ParseModelData(S3DModel* model, const std::string& modelData, const LuaTable& metaData)

@@ -77,7 +77,7 @@ private:
 class LuaTable;
 class COBJParser: public IModelParser {
 public:
-	S3DModel* Load(const std::string& modelFileName);
+	S3DModel Load(const std::string& modelFileName);
 
 private:
 	typedef spring::unordered_map<std::string, SOBJPiece*> PieceMap;

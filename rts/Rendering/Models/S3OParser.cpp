@@ -17,7 +17,7 @@
 
 
 
-S3DModel* CS3OParser::Load(const std::string& name)
+S3DModel CS3OParser::Load(const std::string& name)
 {
 	CFileHandler file(name);
 	if (!file.FileExists()) {
@@ -31,24 +31,24 @@ S3DModel* CS3OParser::Load(const std::string& name)
 	memcpy(&header, &fileBuf[0], sizeof(header));
 	header.swap();
 
-	S3DModel* model = new S3DModel();
-		model->name = name;
-		model->type = MODELTYPE_S3O;
-		model->numPieces = 0;
-		model->texs[0] = header.texture1 == 0 ? "" : (char*) &fileBuf[header.texture1];
-		model->texs[1] = header.texture2 == 0 ? "" : (char*) &fileBuf[header.texture2];
-		model->mins = DEF_MIN_SIZE;
-		model->maxs = DEF_MAX_SIZE;
+	S3DModel model;
+		model.name = name;
+		model.type = MODELTYPE_S3O;
+		model.numPieces = 0;
+		model.texs[0] = header.texture1 == 0 ? "" : (char*) &fileBuf[header.texture1];
+		model.texs[1] = header.texture2 == 0 ? "" : (char*) &fileBuf[header.texture2];
+		model.mins = DEF_MIN_SIZE;
+		model.maxs = DEF_MAX_SIZE;
 
-	texturehandlerS3O->PreloadTexture(model);
+	texturehandlerS3O->PreloadTexture(&model);
 
-	SS3OPiece* rootPiece = LoadPiece(model, NULL, &fileBuf[0], header.rootPiece);
-	model->SetRootPiece(rootPiece);
+	SS3OPiece* rootPiece = LoadPiece(&model, nullptr, &fileBuf[0], header.rootPiece);
+	model.SetRootPiece(rootPiece);
 
 	// set after the extrema are known
-	model->radius = (header.radius <= 0.01f)? model->CalcDrawRadius(): header.radius;
-	model->height = (header.height <= 0.01f)? model->CalcDrawHeight(): header.height;
-	model->relMidPos = float3(header.midx, header.midy, header.midz);
+	model.radius = (header.radius <= 0.01f)? model.CalcDrawRadius(): header.radius;
+	model.height = (header.height <= 0.01f)? model.CalcDrawHeight(): header.height;
+	model.relMidPos = float3(header.midx, header.midy, header.midz);
 
 	return model;
 }

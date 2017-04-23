@@ -107,7 +107,7 @@ public:
 public:
 	C3DOParser();
 
-	S3DModel* Load(const std::string& name);
+	S3DModel Load(const std::string& name);
 
 private:
 	S3DOPiece* LoadPiece(S3DModel* model, int pos, S3DOPiece* parent, int* numobj, const std::vector<unsigned char>& fileBuf);

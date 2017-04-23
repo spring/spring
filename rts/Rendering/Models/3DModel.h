@@ -207,6 +207,33 @@ struct S3DModel
 	{
 	}
 
+	S3DModel(const S3DModel& m) = delete;
+	S3DModel(S3DModel&& m) { *this = std::move(m); }
+
+	S3DModel& operator = (const S3DModel& m) = delete;
+	S3DModel& operator = (S3DModel&& m) {
+		name = std::move(m.name);
+		texs[0] = std::move(m.texs[0]);
+		texs[1] = std::move(m.texs[1]);
+
+		id = m.id;
+		numPieces = m.numPieces;
+		textureType = m.textureType;
+
+		type = m.type;
+
+		radius = m.radius;
+		height = m.height;
+
+		mins = m.mins;
+		maxs = m.maxs;
+		relMidPos = m.relMidPos;
+
+		rootPiece = m.rootPiece;
+		m.rootPiece = nullptr;
+		return *this;
+	}
+
 	S3DModelPiece* GetRootPiece() const { return rootPiece; }
 
 	void SetRootPiece(S3DModelPiece* p) { rootPiece = p; }

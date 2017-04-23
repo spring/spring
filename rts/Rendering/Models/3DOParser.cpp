@@ -133,7 +133,7 @@ C3DOParser::C3DOParser()
 }
 
 
-S3DModel* C3DOParser::Load(const std::string& name)
+S3DModel C3DOParser::Load(const std::string& name)
 {
 	CFileHandler file(name);
 	std::vector<unsigned char> fileBuf;
@@ -144,25 +144,24 @@ S3DModel* C3DOParser::Load(const std::string& name)
 
 	fileBuf.resize(file.FileSize(), 0);
 
-	if (file.Read(&fileBuf[0], file.FileSize()) == 0) {
+	if (file.Read(&fileBuf[0], file.FileSize()) == 0)
 		throw content_error("[3DOParser] failed to read model-file " + name);
-	}
 
-	S3DModel* model = new S3DModel();
-		model->name = name;
-		model->type = MODELTYPE_3DO;
-		model->textureType = 0;
-		model->numPieces  = 0;
-		model->mins = DEF_MIN_SIZE;
-		model->maxs = DEF_MAX_SIZE;
+	S3DModel model;
+		model.name = name;
+		model.type = MODELTYPE_3DO;
+		model.textureType = 0;
+		model.numPieces  = 0;
+		model.mins = DEF_MIN_SIZE;
+		model.maxs = DEF_MAX_SIZE;
 
-	S3DOPiece* rootPiece = LoadPiece(model, 0, NULL, &model->numPieces, fileBuf);
-	model->SetRootPiece(rootPiece);
+	S3DOPiece* rootPiece = LoadPiece(&model, 0, NULL, &model.numPieces, fileBuf);
+	model.SetRootPiece(rootPiece);
 
 	// set after the extrema are known
-	model->radius = model->CalcDrawRadius();
-	model->height = model->CalcDrawHeight();
-	model->relMidPos = model->CalcDrawMidPos();
+	model.radius = model.CalcDrawRadius();
+	model.height = model.CalcDrawHeight();
+	model.relMidPos = model.CalcDrawMidPos();
 
 	return model;
 }

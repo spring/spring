@@ -145,45 +145,42 @@ CAssParser::~CAssParser()
 }
 
 
-S3DModel* CAssParser::Load(const std::string& modelFilePath)
+S3DModel CAssParser::Load(const std::string& modelFilePath)
 {
 	LOG_SL(LOG_SECTION_MODEL, L_INFO, "Loading model: %s", modelFilePath.c_str());
 
 	const std::string& modelPath = FileSystem::GetDirectory(modelFilePath);
 	const std::string& modelName = FileSystem::GetBasename(modelFilePath);
 
-	// Load the lua metafile. This contains properties unique to Spring models and must return a table
+	// load the lua metafile containing properties unique to Spring models (must return a table)
 	std::string metaFileName = modelFilePath + ".lua";
 
-	if (!CFileHandler::FileExists(metaFileName, SPRING_VFS_ZIP)) {
-		// Try again without the model file extension
+	// try again without the model file extension
+	if (!CFileHandler::FileExists(metaFileName, SPRING_VFS_ZIP))
 		metaFileName = modelPath + '/' + modelName + ".lua";
-	}
-	if (!CFileHandler::FileExists(metaFileName, SPRING_VFS_ZIP)) {
+
+	if (!CFileHandler::FileExists(metaFileName, SPRING_VFS_ZIP))
 		LOG_SL(LOG_SECTION_MODEL, L_INFO, "No meta-file '%s'. Using defaults.", metaFileName.c_str());
-	}
 
 	LuaParser metaFileParser(metaFileName, SPRING_VFS_ZIP, SPRING_VFS_ZIP);
 
-	if (!metaFileParser.Execute()) {
+	if (!metaFileParser.Execute())
 		LOG_SL(LOG_SECTION_MODEL, L_INFO, "'%s': %s. Using defaults.", metaFileName.c_str(), metaFileParser.GetErrorLog().c_str());
-	}
 
-	// Get the (root-level) model table
+	// get the (root-level) model table
 	const LuaTable& modelTable = metaFileParser.GetRoot();
 
-	if (!modelTable.IsValid()) {
+	if (!modelTable.IsValid())
 		LOG_SL(LOG_SECTION_MODEL, L_INFO, "No valid model metadata in '%s' or no meta-file", metaFileName.c_str());
-	}
 
 
-	// Create a model importer instance
+	// create a model importer instance
 	Assimp::Importer importer;
 
 
-	// Give the importer an IO class that handles Spring's VFS
+	// give the importer an IO class that handles Spring's VFS
 	importer.SetIOHandler(new AssVFSSystem());
-	// Speed-up processing by skipping things we don't need
+	// speed-up processing by skipping things we don't need
 	importer.SetPropertyInteger(AI_CONFIG_PP_RVC_FLAGS, ASS_IMPORTER_OPTIONS);
 
 #ifndef BITMAP_NO_OPENGL
@@ -216,32 +213,32 @@ S3DModel* CAssParser::Load(const std::string& modelFilePath)
 	ModelPieceMap pieceMap;
 	ParentNameMap parentMap;
 
-	S3DModel* model = new S3DModel();
-	model->name = modelFilePath;
-	model->type = MODELTYPE_ASS;
+	S3DModel model;
+	model.name = modelFilePath;
+	model.type = MODELTYPE_ASS;
 
 	// Load textures
-	FindTextures(model, scene, modelTable, modelPath, modelName);
-	LOG_SL(LOG_SECTION_MODEL, L_INFO, "Loading textures. Tex1: '%s' Tex2: '%s'", model->texs[0].c_str(), model->texs[1].c_str());
+	FindTextures(&model, scene, modelTable, modelPath, modelName);
+	LOG_SL(LOG_SECTION_MODEL, L_INFO, "Loading textures. Tex1: '%s' Tex2: '%s'", model.texs[0].c_str(), model.texs[1].c_str());
 
-	texturehandlerS3O->PreloadTexture(model, modelTable.GetBool("fliptextures", true), modelTable.GetBool("invertteamcolor", true));
+	texturehandlerS3O->PreloadTexture(&model, modelTable.GetBool("fliptextures", true), modelTable.GetBool("invertteamcolor", true));
 
 	// Load all pieces in the model
 	LOG_SL(LOG_SECTION_MODEL, L_INFO, "Loading pieces from root node '%s'", scene->mRootNode->mName.data);
-	LoadPiece(model, scene->mRootNode, scene, modelTable, pieceMap, parentMap);
+	LoadPiece(&model, scene->mRootNode, scene, modelTable, pieceMap, parentMap);
 
 	// Update piece hierarchy based on metadata
-	BuildPieceHierarchy(model, pieceMap, parentMap);
-	CalculateModelProperties(model, modelTable);
+	BuildPieceHierarchy(&model, pieceMap, parentMap);
+	CalculateModelProperties(&model, modelTable);
 
 	// Verbose logging of model properties
-	LOG_SL(LOG_SECTION_MODEL, L_DEBUG, "model->name: %s", model->name.c_str());
-	LOG_SL(LOG_SECTION_MODEL, L_DEBUG, "model->numobjects: %d", model->numPieces);
-	LOG_SL(LOG_SECTION_MODEL, L_DEBUG, "model->radius: %f", model->radius);
-	LOG_SL(LOG_SECTION_MODEL, L_DEBUG, "model->height: %f", model->height);
-	LOG_SL(LOG_SECTION_MODEL, L_DEBUG, "model->mins: (%f,%f,%f)", model->mins[0], model->mins[1], model->mins[2]);
-	LOG_SL(LOG_SECTION_MODEL, L_DEBUG, "model->maxs: (%f,%f,%f)", model->maxs[0], model->maxs[1], model->maxs[2]);
-	LOG_SL(LOG_SECTION_MODEL, L_INFO, "Model %s Imported.", model->name.c_str());
+	LOG_SL(LOG_SECTION_MODEL, L_DEBUG, "model->name: %s", model.name.c_str());
+	LOG_SL(LOG_SECTION_MODEL, L_DEBUG, "model->numobjects: %d", model.numPieces);
+	LOG_SL(LOG_SECTION_MODEL, L_DEBUG, "model->radius: %f", model.radius);
+	LOG_SL(LOG_SECTION_MODEL, L_DEBUG, "model->height: %f", model.height);
+	LOG_SL(LOG_SECTION_MODEL, L_DEBUG, "model->mins: (%f,%f,%f)", model.mins[0], model.mins[1], model.mins[2]);
+	LOG_SL(LOG_SECTION_MODEL, L_DEBUG, "model->maxs: (%f,%f,%f)", model.maxs[0], model.maxs[1], model.maxs[2]);
+	LOG_SL(LOG_SECTION_MODEL, L_INFO, "Model %s Imported.", model.name.c_str());
 	return model;
 }
 
