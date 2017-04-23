@@ -20,11 +20,11 @@ const char* log_util_prepareSection(const char* section);
 
 
 struct log_record_t {
-	char* msg;
+	char msg[32768];
+
 	const char* sec;
 	const char* fmt;
 
-	int len; // size of msg-buffer, not strlen(msg)
 	int lvl;
 	int cnt; // number of repeats
 };

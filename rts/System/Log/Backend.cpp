@@ -30,8 +30,8 @@ extern "C" {
 
 
 // note: no real point to TLS, sinks themselves are not thread-safe
-static _threadlocal log_record_t cur_record = {NULL, "", "",  0, 0, 0};
-static _threadlocal log_record_t prv_record = {NULL, "", "",  0, 0, 0};
+static _threadlocal log_record_t cur_record = {{0}, "", "",  0, 0};
+static _threadlocal log_record_t prv_record = {{0}, "", "",  0, 0};
 
 
 extern void log_formatter_format(log_record_t* log, va_list arguments);
@@ -83,14 +83,7 @@ void log_backend_record(int level, const char* section, const char* fmt, va_list
 	if (cur_record.cnt > 0)
 		return;
 
-	// reallocate buffer for copy if current is larger
-	if (cur_record.len > prv_record.len) {
-		delete[] prv_record.msg;
-		prv_record.msg = NULL;
-		prv_record.msg = new char[prv_record.len = cur_record.len];
-	}
-
-	strncpy(prv_record.msg, cur_record.msg, cur_record.len);
+	memcpy(prv_record.msg, cur_record.msg, sizeof(cur_record.msg));
 }
 
 /// Passes on a cleanup request to all sinks
@@ -98,9 +91,6 @@ void log_backend_cleanup() {
 	for (log_cleanup_ptr fptr: log_formatter_getCleanupFuncs()) {
 		fptr();
 	}
-
-	delete[] prv_record.msg; prv_record.msg = NULL; prv_record.len = 0;
-	delete[] cur_record.msg; cur_record.msg = NULL; cur_record.len = 0;
 }
 
 ///@}

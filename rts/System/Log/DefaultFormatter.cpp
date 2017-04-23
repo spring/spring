@@ -26,86 +26,44 @@ extern "C" {
 #define va_copy(dst, src) ((dst) = (src))
 #endif
 
-static const int SECTION_SIZE_MIN = 10;
-static const int SECTION_SIZE_MAX = 20;
 
-
-// *******************************************************************************************
-// Helpers
-static inline void resize_buffer(log_record_t* log, const bool copy = false)
+static inline bool printf_append(log_record_t* log, va_list arguments)
 {
-	char** buffer = &log->msg;
-	char* old = *buffer;
-	int* bufferSize = &log->len;
+	const size_t bufferPos = strlen(log->msg);
+	const size_t bufferSize = sizeof(log->msg);
 
-	*bufferSize <<= 2; // `2` to increase it faster
-	*buffer = new char[*bufferSize];
+	if (bufferPos >= (bufferSize - 1))
+		return false;
 
-	if (copy)
-		memcpy(*buffer, old, (*bufferSize) >> 2);
+	// printf will move the internal pointer of va_list so we need to make a copy
+	va_list arguments_;
+	va_copy(arguments_, arguments); 
+	const int writtenChars = VSNPRINTF(&log->msg[bufferPos], bufferSize - bufferPos, log->fmt, arguments_);
+	va_end(arguments_);
 
-	delete[] old;
-}
-
-
-static inline void printf_append(log_record_t* log, va_list arguments)
-{
-	// dynamically adjust the buffer size until VSNPRINTF returns fine
-	size_t bufferPos = strlen(log->msg);
-
-	do {
-		const size_t freeBufferSize = log->len - bufferPos;
-		char* bufAppendPos = &log->msg[bufferPos];
-
-		// printf will move the internal pointer of va_list.
-		// So we need to make a copy, if want to run it again.
-		va_list arguments_;
-		va_copy(arguments_, arguments); 
-		const int writtenChars = VSNPRINTF(bufAppendPos, freeBufferSize, log->fmt, arguments_);
-		va_end(arguments_);
-
-		// since writtenChars excludes the null terminator (if any was written),
-		// writtenChars >= freeBufferSize always means buffer was too small
-		// NOTE: earlier glibc versions and MSVC will return -1 when buffer is too small
-		// const bool bufferTooSmall = writtenChars >= freeBufferSize || writtenChars < 0;
-
-		if (writtenChars >= 0 && writtenChars < freeBufferSize)
-			break;
-
-		resize_buffer(log, true);
-	} while (true);
+	// since writtenChars excludes the null terminator (if any was written),
+	// writtenChars >= freeBufferSize always means the buffer was too small
+	// NOTE: earlier glibc versions and MSVC will return -1 in this case
+	return (writtenChars >= 0 && writtenChars < (bufferSize - bufferPos));
 }
 
 
 // *******************************************************************************************
 
-static void log_formatter_createPrefix_default(log_record_t* log) {
-	log->msg[0] = '\0';
+static void log_formatter_createPrefix(log_record_t* log) {
+	char* bufEndPtr = &log->msg[0];
 
 	if (!LOG_SECTION_IS_DEFAULT(log->sec)) {
-		const char* prepSection = log_util_prepareSection(log->sec);
-		STRCAT_T(log->msg, log->len, "[");
-		STRCAT_T(log->msg, log->len, prepSection);
-		STRCAT_T(log->msg, log->len, "] ");
+		bufEndPtr = STRCAT_T(bufEndPtr, sizeof(log->msg), "[");
+		bufEndPtr = STRCAT_T(bufEndPtr, sizeof(log->msg), log_util_prepareSection(log->sec));
+		bufEndPtr = STRCAT_T(bufEndPtr, sizeof(log->msg), "] ");
 	}
 	if (log->lvl != LOG_LEVEL_INFO && log->lvl != LOG_LEVEL_NOTICE) {
-		const char* levelStr = log_util_levelToString(log->lvl);
-		STRCAT_T(log->msg, log->len, levelStr);
-		STRCAT_T(log->msg, log->len, ": ");
+		bufEndPtr = STRCAT_T(bufEndPtr, sizeof(log->msg), log_util_levelToString(log->lvl));
+		bufEndPtr = STRCAT_T(bufEndPtr, sizeof(log->msg), ": ");
 	}
 }
 
-
-static inline void log_formatter_createPrefix(log_record_t* log) {
-	log_formatter_createPrefix_default(log);
-
-	// check if the buffer was large enough, if not resize it and try again
-	if ((strlen(log->msg) + 1) < log->len)
-		return;
-
-	resize_buffer(log);
-	log_formatter_createPrefix(log);
-}
 
 // *******************************************************************************************
 
@@ -117,14 +75,10 @@ static inline void log_formatter_createPrefix(log_record_t* log) {
 
 /**
  * Formats a log entry into its final string form.
- * @return a string buffer, allocated with new[] -> you have to delete[] it
  */
 void log_formatter_format(log_record_t* log, va_list arguments)
 {
-	if (log->len == 0)
-		log->msg = new char[log->len = 1024];
-
-	memset(&log->msg[0], 0, log->len);
+	memset(&log->msg[0], 0, sizeof(log->msg));
 
 	log_formatter_createPrefix(log);
 	printf_append(log, arguments);
