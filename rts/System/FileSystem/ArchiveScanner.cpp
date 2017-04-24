@@ -1058,18 +1058,24 @@ std::vector<CArchiveScanner::ArchiveData> CArchiveScanner::GetAllArchives() cons
 	return ret;
 }
 
+
 std::vector<std::string> CArchiveScanner::GetAllArchivesUsedBy(const std::string& rootArchive) const
 {
 	LOG_S(LOG_SECTION_ARCHIVESCANNER, "GetArchives: %s", rootArchive.c_str());
 
-	// spring::VectorInsertUnique'ing via AddDependency can become a performance hog
+	// VectorInsertUnique'ing via AddDependency can become a performance hog
 	// for very long dependency chains, prefer to sort and remove duplicates
-	std::vector<std::string> retArchives;
-	std::vector<std::string> tmpArchives;
+	const auto& NameCmp = [](const std::pair<std::string, size_t>& a, const std::pair<std::string, size_t>& b) { return (a.first  < b.first ); };
+	const auto& IndxCmp = [](const std::pair<std::string, size_t>& a, const std::pair<std::string, size_t>& b) { return (a.second < b.second); };
+
+	std::vector<          std::string         > retArchives;
+	std::vector<std::pair<std::string, size_t>> tmpArchives[2];
+
 	std::deque<std::string> archiveQueue = {rootArchive};
 
 	retArchives.reserve(8);
-	tmpArchives.reserve(8);
+	tmpArchives[0].reserve(8);
+	tmpArchives[1].reserve(8);
 
 	while (!archiveQueue.empty()) {
 		// protect against circular dependencies; worst case is if all archives form one huge chain
@@ -1086,7 +1092,7 @@ std::vector<std::string> CArchiveScanner::GetAllArchivesUsedBy(const std::string
 		const auto CanAddSubDependencies = [&](const std::string& lwrCaseName) -> const ArchiveInfo* {
 			#ifdef UNITSYNC
 			// add unresolved deps for unitsync so it still shows this file
-			const auto HandleUnresolvedDep = [&tmpArchives](const std::string& archName) { tmpArchives.push_back(archName); return true; };
+			const auto HandleUnresolvedDep = [&tmpArchives](const std::string& archName) { tmpArchives[0].emplace_back(archName, tmpArchives[0].size()); return true; };
 			#else
 			const auto HandleUnresolvedDep = [&tmpArchives](const std::string& archName) { (void) archName; return false; };
 			#endif
@@ -1125,22 +1131,30 @@ std::vector<std::string> CArchiveScanner::GetAllArchivesUsedBy(const std::string
 		if ((archiveInfo = CanAddSubDependencies(lowerCaseName)) == nullptr)
 			continue;
 
-		tmpArchives.push_back(archiveInfo->archiveData.GetNameVersioned());
+		tmpArchives[0].emplace_back(archiveInfo->archiveData.GetNameVersioned(), tmpArchives[0].size());
 
 		// expand dependencies in depth-first order
 		for (const std::string& archiveDep: archiveInfo->archiveData.GetDependencies()) {
 			assert(archiveDep != rootArchive);
-			assert(archiveDep != tmpArchives.back());
+			assert(archiveDep != tmpArchives[0][tmpArchives[0].size() - 1].first);
 			archiveQueue.push_front(archiveDep);
 		}
 	}
 
-	std::stable_sort(tmpArchives.begin(), tmpArchives.end());
+	std::stable_sort(tmpArchives[0].begin(), tmpArchives[0].end(), NameCmp);
 
-	for (std::string& archiveName: tmpArchives) {
-		if (retArchives.empty() || archiveName != retArchives.back()) {
-			retArchives.emplace_back(std::move(archiveName));
+	// filter out any duplicate dependencies
+	for (auto& archiveEntry: tmpArchives[0]) {
+		if (tmpArchives[1].empty() || archiveEntry.first != tmpArchives[1][tmpArchives[1].size() - 1].first) {
+			tmpArchives[1].emplace_back(std::move(archiveEntry.first), archiveEntry.second);
 		}
+	}
+
+	// resort in original traversal order so overrides work as expected
+	std::stable_sort(tmpArchives[1].begin(), tmpArchives[1].end(), IndxCmp);
+
+	for (auto& archiveEntry: tmpArchives[1]) {
+		retArchives.emplace_back(std::move(archiveEntry.first));
 	}
 
 	return retArchives;
