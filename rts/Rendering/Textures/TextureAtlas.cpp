@@ -104,27 +104,32 @@ size_t CTextureAtlas::AddTexFromFile(std::string name, std::string file)
 	return (files[lcFile] = AddTexFromMem(name, bitmap.xsize, bitmap.ysize, RGBA32, &bitmap.mem[0]));
 }
 
+
 bool CTextureAtlas::Finalize()
 {
-	const bool success = atlasAllocator->Allocate();
-
-	if (success)
-		CreateTexture();
+	const bool success = atlasAllocator->Allocate() && (initialized = CreateTexture());
 
 	memTextures.clear();
 	files.clear();
 	return success;
 }
 
-void CTextureAtlas::CreateTexture()
+bool CTextureAtlas::CreateTexture()
 {
 	const int2 atlasSize = atlasAllocator->GetAtlasSize();
+	const int maxMipMaps = atlasAllocator->GetMaxMipMaps();
+
+	// ATI drivers like to *crash* in glTexImage if x=0 or y=0
+	if (atlasSize.x <= 0 || atlasSize.y <= 0) {
+		LOG_L(L_ERROR, "[TextureAtlas::%s] bad allocation for atlas \"%s\" (size=<%d,%d>)", __func__, name.c_str(), atlasSize.x, atlasSize.y);
+		return false;
+	}
 
 	PBO pbo;
 	pbo.Bind();
 	pbo.New(atlasSize.x * atlasSize.y * 4);
 
-	unsigned char* data = (unsigned char*)pbo.MapBuffer(GL_WRITE_ONLY);
+	unsigned char* data = reinterpret_cast<unsigned char*>(pbo.MapBuffer(GL_WRITE_ONLY));
 
 	if (data != nullptr) {
 		// make spacing between textures black transparent to avoid ugly lines with linear filtering
@@ -161,35 +166,26 @@ void CTextureAtlas::CreateTexture()
 
 	pbo.UnmapBuffer();
 
-	const int maxMipMaps = atlasAllocator->GetMaxMipMaps();
+
 	glGenTextures(1, &atlasTexID);
-		glBindTexture(GL_TEXTURE_2D, atlasTexID);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, (maxMipMaps > 0) ? GL_LINEAR_MIPMAP_NEAREST : GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,     GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,     GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL,  maxMipMaps);
-		if (maxMipMaps > 0) {
-			glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, atlasSize.x, atlasSize.y, GL_RGBA, GL_UNSIGNED_BYTE, pbo.GetPtr()); //FIXME disable texcompression //FIXME 2 PBO!!!!
-		} else {
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, atlasSize.x, atlasSize.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, pbo.GetPtr());
-		}
+	glBindTexture(GL_TEXTURE_2D, atlasTexID);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, (maxMipMaps > 0) ? GL_LINEAR_MIPMAP_NEAREST : GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,     GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,     GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL,  maxMipMaps);
+	if (maxMipMaps > 0) {
+		glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, atlasSize.x, atlasSize.y, GL_RGBA, GL_UNSIGNED_BYTE, pbo.GetPtr()); //FIXME disable texcompression, PBO
+	} else {
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, atlasSize.x, atlasSize.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, pbo.GetPtr());
+	}
 
 	pbo.Invalidate();
 	pbo.Unbind();
 
-	initialized = true;
+	return (data != nullptr);
 }
 
-int CTextureAtlas::GetBPP(TextureType texType)
-{
-	switch(texType) {
-		case RGBA32:
-			return 32;
-		default:
-			return 32;
-	}
-}
 
 void CTextureAtlas::BindTexture()
 {

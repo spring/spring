@@ -101,8 +101,13 @@ public:
 	static bool GetDebug() { return debug; }
 
 protected:
-	int GetBPP(TextureType tetxType);
-	void CreateTexture();
+	int GetBPP(TextureType texType) const {
+		switch (texType) {
+			case RGBA32: return 32;
+			default: return 32;
+		}
+	}
+	bool CreateTexture();
 
 protected:
 	IAtlasAllocator* atlasAllocator;
