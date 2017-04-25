@@ -759,7 +759,7 @@ void _GL_APIENTRY glDebugMessageCallbackFunc(GLenum source, GLenum type, GLuint 
 		case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR_ARB: typeStr =  "deprecated"; break;
 		case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR_ARB : typeStr =   "undefined"; break;
 		case GL_DEBUG_TYPE_PORTABILITY_ARB        : typeStr = "portability"; break;
-		case GL_DEBUG_TYPE_PERFORMANCE_ARB        : typeStr =  "peformance"; break;
+		case GL_DEBUG_TYPE_PERFORMANCE_ARB        : typeStr = "performance"; break;
 		case GL_DEBUG_TYPE_OTHER_ARB              : typeStr =       "other"; break;
 		default                                   : typeStr =     "unknown";
 	}
@@ -773,9 +773,10 @@ void _GL_APIENTRY glDebugMessageCallbackFunc(GLenum source, GLenum type, GLuint 
 
 	LOG_L(L_INFO, "OpenGL: source<%s> type<%s> id<%u> severity<%s>:\n%s", sourceStr, typeStr, id, severityStr, messageStr);
 
-	if (*reinterpret_cast<const bool*>(userParam))
-		CrashHandler::Stacktrace(Threading::GetCurrentThread(), "rendering", LOG_LEVEL_WARNING);
+	if ((userParam == nullptr) || !(*reinterpret_cast<const bool*>(userParam)))
+		return;
 
+	CrashHandler::Stacktrace(Threading::GetCurrentThread(), "rendering", LOG_LEVEL_WARNING);
 	#endif
 }
 
@@ -783,7 +784,7 @@ void _GL_APIENTRY glDebugMessageCallbackFunc(GLenum source, GLenum type, GLuint 
 bool CGlobalRendering::ToggleGLDebugOutput()
 {
 	const static bool dbgOutput = configHandler->GetBool("DebugGL");
-	static bool dbgTraces = configHandler->GetBool("DebugGLStacktraces");
+	const static bool dbgTraces = configHandler->GetBool("DebugGLStacktraces");
 
 	if (!dbgOutput) {
 		LOG("[GR::%s] OpenGL debug context required", __func__);
@@ -796,8 +797,9 @@ bool CGlobalRendering::ToggleGLDebugOutput()
 		// for #4510 (change in callback function signature with GLEW 1.11)
 		// use SYNCHRONOUS output, we want our callback to run in the same
 		// thread as the bugged GL call (for proper stacktraces)
+		// CB userParam is const, but has to be specified sans qualifiers
 		glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
-		glDebugMessageCallbackARB((GLDEBUGPROCARB) &glDebugMessageCallbackFunc, &dbgTraces);
+		glDebugMessageCallbackARB((GLDEBUGPROCARB) &glDebugMessageCallbackFunc, (void*) &dbgTraces);
 		glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
 
 		LOG("[GR::%s] OpenGL debug-message callback enabled", __func__);
@@ -811,4 +813,3 @@ bool CGlobalRendering::ToggleGLDebugOutput()
 
 	return true;
 }
-
