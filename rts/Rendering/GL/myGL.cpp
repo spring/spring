@@ -7,11 +7,6 @@
 
 #include <SDL.h>
 
-#if defined(WIN32) && !defined(HEADLESS) && !defined(_MSC_VER)
-// for APIENTRY
-#include <windef.h>
-#endif
-
 #include "myGL.h"
 #include "VertexArray.h"
 #include "Rendering/GlobalRendering.h"

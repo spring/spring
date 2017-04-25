@@ -8,11 +8,19 @@
 #define NOMINMAX
 #endif
 
+
+#if defined(WIN32) && !defined(HEADLESS) && !defined(_MSC_VER)
+// for APIENTRY
+#include <windef.h>
+#endif
+
+
 #if       defined(HEADLESS)
 	#include "lib/headlessStubs/glewstub.h"
 #else
 	#include <GL/glew.h>
 #endif // defined(HEADLESS)
+
 
 #include "System/float3.h"
 #include "System/float4.h"
