@@ -131,7 +131,7 @@ static bool TestCregClasses3()
 				const size_t typeSize = m.type->GetSize();
 
 				if ((memberOffset + typeSize) > classSize) {
-					LOG_L(L_WARNING, "  Member %s of class %s (typeSize=%lu) has offset=%lu greater than classSize=%lu", m.name, className.c_str(), typeSize, memberOffset, classSize);
+					LOG_L(L_WARNING, "  Member %s of class %s (typeSize=%lu) has offset=%lu greater than classSize=%lu", m.name, className.c_str(), (unsigned long) typeSize, (unsigned long) memberOffset, (unsigned long) classSize);
 				} else {
 					for (int i = 0; i < typeSize; ++i) {
 						memberMap[memberOffset + i] = &m;

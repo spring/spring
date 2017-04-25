@@ -16,6 +16,7 @@
 #include "LuaSyncedMoveCtrl.h"
 #include "LuaUtils.h"
 #include "Game/Game.h"
+#include "Game/GameSetup.h"
 #include "Game/Camera.h"
 #include "Game/GameHelper.h"
 #include "Game/SelectedUnitsHandler.h"
@@ -634,7 +635,14 @@ static int SetWorldObjectAlwaysVisible(lua_State* L, CWorldObject* o, const char
 }
 
 
+/******************************************************************************/
+/******************************************************************************/
 
+static inline bool IsPlayerSynced(const CPlayer* player)
+{
+	const bool onlyFromDemo = (gameSetup != nullptr) && gameSetup->hostDemo;
+	return (!onlyFromDemo || player->isFromDemo);
+}
 
 /******************************************************************************/
 /******************************************************************************/
@@ -682,8 +690,14 @@ int LuaSyncedCtrl::AssignPlayerToTeam(lua_State* L)
 	const int playerID = luaL_checkint(L, 1);
 	const int teamID = luaL_checkint(L, 2);
 
-	if (!playerHandler->IsValidPlayer(playerID))
+	const CPlayer* player = playerHandler->Player(playerID);
+
+	if (player == nullptr)
 		return 0;
+
+	if (!IsPlayerSynced(player))
+		return 0;
+
 	if (!teamHandler->IsValidTeam(teamID))
 		return 0;
 

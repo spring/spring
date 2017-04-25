@@ -441,6 +441,7 @@ static inline bool IsFeatureVisible(lua_State* L, const CFeature* feature)
 	return feature->IsInLosForAllyTeam(CLuaHandle::GetHandleReadAllyTeam(L));
 }
 
+
 static inline bool IsProjectileVisible(lua_State* L, const CProjectile* pro)
 {
 	if (CLuaHandle::GetHandleReadAllyTeam(L) < 0)
@@ -452,6 +453,14 @@ static inline bool IsProjectileVisible(lua_State* L, const CProjectile* pro)
 	}
 	return true;
 }
+
+
+static inline bool IsPlayerSynced(lua_State* L, const CPlayer* player)
+{
+	const bool onlyFromDemo = CLuaHandle::GetHandleSynced(L) && (gameSetup != nullptr) && gameSetup->hostDemo;
+	return (!onlyFromDemo || player->isFromDemo);
+}
+
 
 
 /******************************************************************************/
@@ -817,7 +826,7 @@ int LuaSyncedRead::FixedAllies(lua_State* L)
 	if (!game) {
 		return 0;
 	}
-	lua_pushboolean(L, !(gameSetup != NULL && !gameSetup->fixedAllies));
+	lua_pushboolean(L, !(gameSetup != nullptr && !gameSetup->fixedAllies));
 	return 1;
 }
 
@@ -1107,14 +1116,20 @@ int LuaSyncedRead::GetPlayerList(lua_State* L)
 
 	lua_newtable(L);
 	int count = 1;
+
 	for (int p = 0; p < playerHandler->ActivePlayers(); p++) {
 		const CPlayer* player = playerHandler->Player(p);
-		if (player == NULL) {
+
+		if (player == nullptr)
 			continue;
-		}
-		if (active && !player->active) {
+
+		if (!IsPlayerSynced(L, player))
 			continue;
-		}
+
+		if (active && !player->active)
+			continue;
+
+
 		if ((teamID < 0) || (player->team == teamID)) {
 			lua_pushnumber(L, p);
 			lua_rawseti(L, -2, count++);
@@ -1413,14 +1428,15 @@ int LuaSyncedRead::GetTeamLuaAI(lua_State* L)
 int LuaSyncedRead::GetPlayerInfo(lua_State* L)
 {
 	const int playerID = luaL_checkint(L, 1);
-	if (!playerHandler->IsValidPlayer(playerID)) {
+	if (!playerHandler->IsValidPlayer(playerID))
 		return 0;
-	}
 
 	const CPlayer* player = playerHandler->Player(playerID);
-	if (player == NULL) {
+	if (player == nullptr)
 		return 0;
-	}
+
+	if (!IsPlayerSynced(L, player))
+		return 0;
 
 	lua_pushsstring(L, player->name);
 	lua_pushboolean(L, player->active);
@@ -1446,19 +1462,21 @@ int LuaSyncedRead::GetPlayerInfo(lua_State* L)
 int LuaSyncedRead::GetPlayerControlledUnit(lua_State* L)
 {
 	const int playerID = luaL_checkint(L, 1);
-	if (!playerHandler->IsValidPlayer(playerID)) {
+	if (!playerHandler->IsValidPlayer(playerID))
 		return 0;
-	}
 
 	const CPlayer* player = playerHandler->Player(playerID);
-	if (player == NULL) {
+	if (player == nullptr)
 		return 0;
-	}
+
+	if (!IsPlayerSynced(L, player))
+		return 0;
+
 
 	const FPSUnitController& con = player->fpsController;
 	const CUnit* unit = con.GetControllee();
 
-	if (unit == NULL) {
+	if (unit == nullptr) {
 		return 0;
 	}
 
@@ -1560,9 +1578,12 @@ int LuaSyncedRead::ArePlayersAllied(lua_State* L)
 	}
 	const CPlayer* p1 = playerHandler->Player(player1);
 	const CPlayer* p2 = playerHandler->Player(player2);
-	if ((p1 == NULL) || (p2 == NULL)) {
+	if ((p1 == nullptr) || (p2 == nullptr))
 		return 0;
-	}
+
+	if ((!IsPlayerSynced(L, p1)) || (!IsPlayerSynced(L, p2)))
+		return 0;
+
 	lua_pushboolean(L, teamHandler->AlliedTeams(p1->team, p2->team));
 	return 1;
 }
