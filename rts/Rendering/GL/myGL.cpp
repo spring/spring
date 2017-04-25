@@ -15,9 +15,7 @@
 #include "System/Exceptions.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/FileSystem/FileHandler.h"
-#include "System/Platform/CrashHandler.h"
 #include "System/Platform/MessageBox.h"
-#include "System/Platform/Threading.h"
 #include "System/type2.h"
 
 #define SDL_BPP(fmt) SDL_BITSPERPIXEL((fmt))
@@ -81,56 +79,6 @@ void PrintAvailableResolutions()
 			pm = cm;
 		}
 	}
-}
-
-
-
-void _GL_APIENTRY glDebugMessageCallbackFunc(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const GLvoid* userParam)
-{
-	#if (defined(GL_ARB_debug_output) && !defined(HEADLESS))
-	switch (id) {
-		case 131185: { return; } break; // "Buffer detailed info: Buffer object 260 (bound to GL_PIXEL_UNPACK_BUFFER_ARB, usage hint is GL_STREAM_DRAW) has been mapped in DMA CACHED memory."
-		default: {} break;
-	}
-
-	const char*   sourceStr = "";
-	const char*     typeStr = "";
-	const char* severityStr = "";
-	const char*  messageStr = message;
-
-	switch (source) {
-		case GL_DEBUG_SOURCE_API_ARB            : sourceStr =          "API"; break;
-		case GL_DEBUG_SOURCE_WINDOW_SYSTEM_ARB  : sourceStr = "WindowSystem"; break;
-		case GL_DEBUG_SOURCE_SHADER_COMPILER_ARB: sourceStr =       "Shader"; break;
-		case GL_DEBUG_SOURCE_THIRD_PARTY_ARB    : sourceStr =    "3rd Party"; break;
-		case GL_DEBUG_SOURCE_APPLICATION_ARB    : sourceStr =  "Application"; break;
-		case GL_DEBUG_SOURCE_OTHER_ARB          : sourceStr =        "other"; break;
-		default                                 : sourceStr =      "unknown";
-	}
-
-	switch (type) {
-		case GL_DEBUG_TYPE_ERROR_ARB              : typeStr =       "error"; break;
-		case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR_ARB: typeStr =  "deprecated"; break;
-		case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR_ARB : typeStr =   "undefined"; break;
-		case GL_DEBUG_TYPE_PORTABILITY_ARB        : typeStr = "portability"; break;
-		case GL_DEBUG_TYPE_PERFORMANCE_ARB        : typeStr =  "peformance"; break;
-		case GL_DEBUG_TYPE_OTHER_ARB              : typeStr =       "other"; break;
-		default                                   : typeStr =     "unknown";
-	}
-
-	switch (severity) {
-		case GL_DEBUG_SEVERITY_HIGH_ARB  : severityStr =    "high"; break;
-		case GL_DEBUG_SEVERITY_MEDIUM_ARB: severityStr =  "medium"; break;
-		case GL_DEBUG_SEVERITY_LOW_ARB   : severityStr =     "low"; break;
-		default                          : severityStr = "unknown";
-	}
-
-	LOG_L(L_INFO, "OpenGL: source<%s> type<%s> id<%u> severity<%s>:\n%s", sourceStr, typeStr, id, severityStr, messageStr);
-
-	if (*reinterpret_cast<const bool*>(userParam))
-		CrashHandler::Stacktrace(Threading::GetCurrentThread(), "rendering", LOG_LEVEL_WARNING);
-
-	#endif
 }
 
 

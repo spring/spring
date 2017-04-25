@@ -19,6 +19,8 @@
 #include "System/Util.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
+#include "System/Platform/CrashHandler.h"
+#include "System/Platform/Threading.h"
 #include "System/Platform/WindowManagerHelper.h"
 #include "System/Platform/errorhandler.h"
 #include "System/creg/creg_cond.h"
@@ -370,7 +372,7 @@ void CGlobalRendering::PostInit() {
 		char extMsg[2048] = {0};
 		char errMsg[2048] = {0};
 		char* ptr = &extMsg[0];
- 
+
 		if (!GLEW_ARB_multitexture       ) ptr += snprintf(ptr, sizeof(extMsg) - (ptr - extMsg), " GL_ARB_multitexture");
 		if (!GLEW_ARB_texture_env_combine) ptr += snprintf(ptr, sizeof(extMsg) - (ptr - extMsg), " GL_ARB_texture_env_combine");
 		if (!GLEW_ARB_texture_compression) ptr += snprintf(ptr, sizeof(extMsg) - (ptr - extMsg), " GL_ARB_texture_compression");
@@ -718,10 +720,70 @@ bool CGlobalRendering::EnableFSAA() const
 	return (buffers != 0 && samples != 0);
 }
 
+#if defined(WIN32) && !defined(HEADLESS)
+	#if defined(_MSC_VER) && _MSC_VER >= 1600
+		#define _GL_APIENTRY __stdcall
+	#else
+		#include <windef.h>
+		#define _GL_APIENTRY APIENTRY
+	#endif
+#else
+	#define _GL_APIENTRY
+#endif
+
+void GLAPIENTRY glDebugMessageCallbackFunc(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const GLvoid* userParam)
+{
+	#if (defined(GL_ARB_debug_output) && !defined(HEADLESS))
+	switch (id) {
+		case 131185: { return; } break; // "Buffer detailed info: Buffer object 260 (bound to GL_PIXEL_UNPACK_BUFFER_ARB, usage hint is GL_STREAM_DRAW) has been mapped in DMA CACHED memory."
+		default: {} break;
+	}
+
+	const char*   sourceStr = "";
+	const char*     typeStr = "";
+	const char* severityStr = "";
+	const char*  messageStr = message;
+
+	switch (source) {
+		case GL_DEBUG_SOURCE_API_ARB            : sourceStr =          "API"; break;
+		case GL_DEBUG_SOURCE_WINDOW_SYSTEM_ARB  : sourceStr = "WindowSystem"; break;
+		case GL_DEBUG_SOURCE_SHADER_COMPILER_ARB: sourceStr =       "Shader"; break;
+		case GL_DEBUG_SOURCE_THIRD_PARTY_ARB    : sourceStr =    "3rd Party"; break;
+		case GL_DEBUG_SOURCE_APPLICATION_ARB    : sourceStr =  "Application"; break;
+		case GL_DEBUG_SOURCE_OTHER_ARB          : sourceStr =        "other"; break;
+		default                                 : sourceStr =      "unknown";
+	}
+
+	switch (type) {
+		case GL_DEBUG_TYPE_ERROR_ARB              : typeStr =       "error"; break;
+		case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR_ARB: typeStr =  "deprecated"; break;
+		case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR_ARB : typeStr =   "undefined"; break;
+		case GL_DEBUG_TYPE_PORTABILITY_ARB        : typeStr = "portability"; break;
+		case GL_DEBUG_TYPE_PERFORMANCE_ARB        : typeStr =  "peformance"; break;
+		case GL_DEBUG_TYPE_OTHER_ARB              : typeStr =       "other"; break;
+		default                                   : typeStr =     "unknown";
+	}
+
+	switch (severity) {
+		case GL_DEBUG_SEVERITY_HIGH_ARB  : severityStr =    "high"; break;
+		case GL_DEBUG_SEVERITY_MEDIUM_ARB: severityStr =  "medium"; break;
+		case GL_DEBUG_SEVERITY_LOW_ARB   : severityStr =     "low"; break;
+		default                          : severityStr = "unknown";
+	}
+
+	LOG_L(L_INFO, "OpenGL: source<%s> type<%s> id<%u> severity<%s>:\n%s", sourceStr, typeStr, id, severityStr, messageStr);
+
+	if (*reinterpret_cast<const bool*>(userParam))
+		CrashHandler::Stacktrace(Threading::GetCurrentThread(), "rendering", LOG_LEVEL_WARNING);
+
+	#endif
+}
+
+
 bool CGlobalRendering::ToggleGLDebugOutput()
 {
 	const static bool dbgOutput = configHandler->GetBool("DebugGL");
-	const static bool dbgTraces = configHandler->GetBool("DebugGLStacktraces");
+	static bool dbgTraces = configHandler->GetBool("DebugGLStacktraces");
 
 	if (!dbgOutput) {
 		LOG("[GR::%s] OpenGL debug context required", __func__);

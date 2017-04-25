@@ -9,11 +9,6 @@
 #endif
 
 
-#if defined(WIN32) && !defined(HEADLESS) && !defined(_MSC_VER)
-// for APIENTRY
-#include <windef.h>
-#endif
-
 
 #if       defined(HEADLESS)
 	#include "lib/headlessStubs/glewstub.h"
@@ -100,19 +95,6 @@ void PrintAvailableResolutions();
 
 bool GetAvailableVideoRAM(GLint* memory);
 void ShowCrappyGpuWarning(const char* glVendor, const char* glRenderer);
-
-
-#if defined(WIN32) && !defined(HEADLESS)
-	#if defined(_MSC_VER) && _MSC_VER >= 1600
-		#define _GL_APIENTRY __stdcall
-	#else
-		#define _GL_APIENTRY APIENTRY
-	#endif
-#else
-	#define _GL_APIENTRY
-#endif
-
-void _GL_APIENTRY glDebugMessageCallbackFunc(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const GLvoid* userParam);
 
 
 class CVertexArray;
