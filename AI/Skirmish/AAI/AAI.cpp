@@ -115,7 +115,7 @@ AAI::~AAI()
 	}
 	build_tasks.clear();
 
-	// save mod learning data
+	// save game learning data
 	bt->SaveBuildTable(brain->GetGamePeriod(), map->map_type);
 
 	spring::SafeDelete(am);
@@ -169,7 +169,7 @@ void AAI::InitAI(IGlobalAICallback* callback, int team)
 
 	file = fopen(filename,"w");
 
-	Log("AAI %s running mod %s\n \n", AAI_VERSION, cb->GetModHumanName());
+	Log("AAI %s running game %s\n \n", AAI_VERSION, cb->GetModHumanName());
 
 	// load config file first
 	cfg->LoadConfig(this);
@@ -177,11 +177,11 @@ void AAI::InitAI(IGlobalAICallback* callback, int team)
 	if (!cfg->initialized)
 	{
 		std::string errorMsg =
-				std::string("Error: Could not load mod and/or general config file."
+				std::string("Error: Could not load game and/or general config file."
 					" For further information see the config file under: ") +
 				filename;
 		LogConsole("%s", errorMsg.c_str());
-		throw 1;
+		return;
 	}
 
 	// create buildtable
@@ -801,7 +801,7 @@ void AAI::Update()
 	{
 		if (!(tick % 450))
 		{
-			LogConsole("Failed to initialize AAI! Please view ai log for further information and check if AAI supports this mod");
+			LogConsole("Failed to initialize AAI! Please view ai log for further information and check if AAI supports this game");
 		}
 
 		return;
