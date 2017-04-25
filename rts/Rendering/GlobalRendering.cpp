@@ -731,7 +731,7 @@ bool CGlobalRendering::EnableFSAA() const
 	#define _GL_APIENTRY
 #endif
 
-void GLAPIENTRY glDebugMessageCallbackFunc(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const GLvoid* userParam)
+void _GL_APIENTRY glDebugMessageCallbackFunc(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const GLvoid* userParam)
 {
 	#if (defined(GL_ARB_debug_output) && !defined(HEADLESS))
 	switch (id) {
