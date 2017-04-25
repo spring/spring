@@ -22,6 +22,7 @@
 #include "Rendering/SmoothHeightMeshDrawer.h"
 #include "Rendering/InMapDrawView.h"
 #include "Rendering/ShadowHandler.h"
+#include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Rendering/Models/IModelParser.h"
 #include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/Textures/3DOTextureHandler.h"
@@ -49,6 +50,8 @@ CWorldDrawer::CWorldDrawer(): numUpdates(0)
 
 CWorldDrawer::~CWorldDrawer()
 {
+	spring::SafeDelete(infoTextureHandler);
+
 	spring::SafeDelete(water);
 	spring::SafeDelete(sky);
 	spring::SafeDelete(treeDrawer);
@@ -102,6 +105,10 @@ void CWorldDrawer::LoadPost() const
 	cubeMapHandler = new CubeMapHandler();
 	shadowHandler = new CShadowHandler();
 
+	// SMFGroundDrawer accesses InfoTextureHandler, create it first
+	loadscreen->SetLoadMessage("Creating InfoTextureHandler");
+	IInfoTextureHandler::Create();
+
 	loadscreen->SetLoadMessage("Creating GroundDrawer");
 	readMap->InitGroundDrawer();
 
@@ -112,8 +119,8 @@ void CWorldDrawer::LoadPost() const
 	inMapDrawerView = new CInMapDrawView();
 	pathDrawer = IPathDrawer::GetInstance();
 
-	farTextureHandler = new CFarTextureHandler();
 	heightMapTexture = new HeightMapTexture();
+	farTextureHandler = new CFarTextureHandler();
 
 	IGroundDecalDrawer::Init();
 

@@ -17,7 +17,7 @@ CInfoTextureHandler::CInfoTextureHandler()
 : returnToLOS(false)
 , infoTex(nullptr)
 {
-	if (!infoTextureHandler)
+	if (infoTextureHandler == nullptr)
 		infoTextureHandler = this;
 
 	AddInfoTexture(new CInfoTextureCombiner());
@@ -30,9 +30,12 @@ CInfoTextureHandler::CInfoTextureHandler()
 	AddInfoTexture(new CPathTexture());
 
 	infoTex = dynamic_cast<CInfoTextureCombiner*>(GetInfoTexture("info"));
-	assert(infoTex);
+	assert(infoTex != nullptr);
 
-	Update();
+	// avoid calling this here, it introduces dependencies
+	// on engine components that have not been created yet
+	// (HeightMapTexture, GuiHandler, ...)
+	// Update();
 }
 
 

@@ -153,6 +153,7 @@ CR_REG_METADATA(CGame, (
 	CR_IGNORED(lastNetPacketProcessTime),
 	CR_IGNORED(lastReceivedNetPacketTime),
 	CR_IGNORED(lastSimFrameNetPacketTime),
+	CR_IGNORED(lastUnsyncedUpdateTime),
 	CR_IGNORED(updateDeltaSeconds),
 	CR_MEMBER(totalGameTime),
 	CR_MEMBER(userInputPrefix),
@@ -223,6 +224,7 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 	, lastNetPacketProcessTime(spring_gettime())
 	, lastReceivedNetPacketTime(spring_gettime())
 	, lastSimFrameNetPacketTime(spring_gettime())
+	, lastUnsyncedUpdateTime(spring_gettime())
 	, updateDeltaSeconds(0.0f)
 	, totalGameTime(0)
 	, hideInterface(false)
@@ -680,7 +682,6 @@ void CGame::LoadInterface()
 	keyBindings = new CKeyBindings();
 	keyBindings->Load("uikeys.txt");
 	selectionKeys = new CSelectionKeyHandler();
-	IInfoTextureHandler::Create();
 
 	for (int t = 0; t < teamHandler->ActiveTeams(); ++t) {
 		grouphandlers.push_back(new CGroupHandler(t));
@@ -823,7 +824,6 @@ void CGame::KillMisc()
 void CGame::KillRendering()
 {
 	LOG("[Game::%s][1]", __func__);
-	spring::SafeDelete(infoTextureHandler);
 	spring::SafeDelete(icon::iconHandler);
 	spring::SafeDelete(geometricObjects);
 	spring::SafeDelete(worldDrawer);
@@ -1061,17 +1061,20 @@ bool CGame::Update()
 bool CGame::UpdateUnsynced(const spring_time currentTime)
 {
 	SCOPED_TIMER("Update");
+
 	// timings and frame interpolation
 	const spring_time deltaDrawFrameTime = currentTime - lastDrawFrameTime;
+
 	const float modGameDeltaTimeSecs = mix(deltaDrawFrameTime.toMilliSecsf() * 0.001f, 0.01f, skipping);
+	const float unsyncedUpdateDeltaTime = (currentTime - lastUnsyncedUpdateTime).toSecsf();
 
 	lastDrawFrameTime = currentTime;
 
-	globalRendering->lastFrameTime = deltaDrawFrameTime.toMilliSecsf();
-	gu->avgFrameTime = mix(gu->avgFrameTime, deltaDrawFrameTime.toMilliSecsf(), 0.05f);
-
 	{
 		// update game timings
+		globalRendering->lastFrameTime = deltaDrawFrameTime.toMilliSecsf();
+
+		gu->avgFrameTime = mix(gu->avgFrameTime, deltaDrawFrameTime.toMilliSecsf(), 0.05f);
 		gu->gameTime += modGameDeltaTimeSecs;
 		gu->modGameTime += (modGameDeltaTimeSecs * gs->speedFactor * (1 - gs->paused));
 
@@ -1083,7 +1086,7 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 	}
 
 	{
-		// update simFPS counter (once per second)
+		// update sim-FPS counter once per second
 		static int lsf = gs->frameNum;
 		static spring_time lsft = currentTime;
 
@@ -1124,7 +1127,7 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 	if ((currentTime - frameStartTime).toMilliSecsf() >= 1000.0f) {
 		globalRendering->FPS = (numDrawFrames * 1000.0f) / std::max(0.01f, (currentTime - frameStartTime).toMilliSecsf());
 
-		// update FPS counter once every second
+		// update draw-FPS counter once every second
 		frameStartTime = currentTime;
 		numDrawFrames = 0;
 
@@ -1132,6 +1135,8 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 
 	const bool doDrawWorld = hideInterface || !minimap->GetMaximized() || minimap->GetMinimized();
 	const bool newSimFrame = (lastSimFrame != gs->frameNum);
+	const bool forceUpdate = (unsyncedUpdateDeltaTime >= (1.0f / GAME_SPEED));
+
 	lastSimFrame = gs->frameNum;
 
 	// set camera
@@ -1143,21 +1148,20 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 	}
 	lineDrawer.UpdateLineStipple();
 
+
 	if (doDrawWorld) {
 		worldDrawer->Update(newSimFrame);
+
 		CNamedTextures::Update();
 		CFontTexture::Update();
 	}
-
-	static spring_time lastUnsyncedUpdateTime = spring_gettime();
-	const float unsyncedUpdateDeltaTime = (currentTime - lastUnsyncedUpdateTime).toSecsf();
-
-	// always update ExtraTexture & SoundListener with <= 30Hz (even when paused)
+	// always update InfoTexture and SoundListener at <= 30Hz (even when paused)
 	// garbage collection event must also run regularly because of unsynced code
-	if (newSimFrame || unsyncedUpdateDeltaTime >= (1.0f / GAME_SPEED)) {
+	if (newSimFrame || forceUpdate) {
 		lastUnsyncedUpdateTime = currentTime;
 
 		{
+			// TODO: should be moved to WorldDrawer::Update
 			SCOPED_TIMER("Update::InfoTexture");
 			infoTextureHandler->Update();
 		}

@@ -164,6 +164,7 @@ public:
 	spring_time lastNetPacketProcessTime;
 	spring_time lastReceivedNetPacketTime;
 	spring_time lastSimFrameNetPacketTime;
+	spring_time lastUnsyncedUpdateTime;
 
 	float updateDeltaSeconds;
 	/// Time in seconds, stops at game end
