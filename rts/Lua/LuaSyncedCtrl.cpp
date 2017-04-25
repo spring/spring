@@ -678,7 +678,7 @@ int LuaSyncedCtrl::KillTeam(lua_State* L)
 
 	CTeam* team = teamHandler->Team(teamID);
 
-	if (team == NULL)
+	if (team == nullptr)
 		return 0;
 
 	team->Died();
@@ -690,7 +690,7 @@ int LuaSyncedCtrl::AssignPlayerToTeam(lua_State* L)
 	const int playerID = luaL_checkint(L, 1);
 	const int teamID = luaL_checkint(L, 2);
 
-	const CPlayer* player = playerHandler->Player(playerID);
+	const CPlayer* player = playerHandler->IsValidPlayer(playerID)? playerHandler->Player(playerID): nullptr;
 
 	if (player == nullptr)
 		return 0;
