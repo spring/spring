@@ -32,7 +32,8 @@ CONFIG(bool, DebugGLStacktraces).defaultValue(false).description("Create a stack
 // enabled in safemode, far more likely the gpu runs out of memory than this extension causes crashes!
 CONFIG(bool, CompressTextures).defaultValue(false).safemodeValue(true).description("Runtime compress most textures to save VideoRAM.");
 CONFIG(int, ForceShaders).defaultValue(-1).minimumValue(-1).maximumValue(1);
-CONFIG(int, ForceSwapBuffers).defaultValue(1).minimumValue(-1).maximumValue(1);
+CONFIG(int, ForceCoreContext).defaultValue(0).minimumValue(0).maximumValue(1);
+CONFIG(int, ForceSwapBuffers).defaultValue(1).minimumValue(0).maximumValue(1);
 CONFIG(int, AtiHacks).defaultValue(-1).headlessValue(0).minimumValue(-1).maximumValue(1).description("Enables graphics drivers workarounds for users with ATI video cards.\n -1:=runtime detect, 0:=off, 1:=on");
 CONFIG(bool, DualScreenMode).defaultValue(false).description("Sets whether to split the screen in half, with one half for minimap and one for main screen. Right side is for minimap unless DualScreenMiniMapOnLeft is set.");
 CONFIG(bool, DualScreenMiniMapOnLeft).defaultValue(false).description("When set, will make the left half of the screen the minimap when DualScreenMode is set.");
@@ -91,6 +92,7 @@ CR_REG_METADATA(CGlobalRendering, (
 	CR_IGNORED(viewRange),
 
 	CR_IGNORED(forceShaders),
+	CR_IGNORED(forceCoreContext),
 	CR_IGNORED(forceSwapBuffers),
 
 	CR_IGNORED(fsaaLevel),
@@ -121,7 +123,9 @@ CR_REG_METADATA(CGlobalRendering, (
 	CR_IGNORED(glslMaxUniformBufferSize),
 	CR_IGNORED(dualScreenMode),
 	CR_IGNORED(dualScreenMiniMapOnLeft),
+
 	CR_IGNORED(fullScreen),
+	CR_IGNORED(borderless),
 
 	CR_IGNORED(window),
 	CR_IGNORED(sdlGlCtx)
@@ -160,10 +164,11 @@ CGlobalRendering::CGlobalRendering()
 	, zNear(NEAR_PLANE)
 	, viewRange(MAX_VIEW_RANGE)
 
-	, forceShaders(-1)
-	, forceSwapBuffers(1)
+	, forceShaders(configHandler->GetInt("ForceShaders"))
+	, forceCoreContext(configHandler->GetInt("ForceCoreContext"))
+	, forceSwapBuffers(configHandler->GetInt("ForceSwapBuffers"))
 
-	, fsaaLevel(0)
+	, fsaaLevel(configHandler->GetInt("FSAALevel"))
 	, maxTextureSize(2048)
 	, gpuMemorySize(0)
 
@@ -202,7 +207,8 @@ CGlobalRendering::CGlobalRendering()
 
 	, dualScreenMode(false)
 	, dualScreenMiniMapOnLeft(false)
-	, fullScreen(true)
+	, fullScreen(configHandler->GetBool("Fullscreen"))
+	, borderless(configHandler->GetBool("WindowBorderless"))
 
 	, window(nullptr)
 	, sdlGlCtx(nullptr)
@@ -220,6 +226,9 @@ bool CGlobalRendering::CreateSDLWindow(const char* title)
 {
 	int sdlflags = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE;
 
+	sdlflags |= (borderless? SDL_WINDOW_FULLSCREEN_DESKTOP: SDL_WINDOW_FULLSCREEN) * fullScreen;
+	sdlflags |= (SDL_WINDOW_BORDERLESS * borderless);
+
 	// use standard: 24bit color + 24bit depth + 8bit stencil & doublebuffered
 	SDL_GL_SetAttribute(SDL_GL_RED_SIZE,   8);
 	SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
@@ -229,11 +238,15 @@ bool CGlobalRendering::CreateSDLWindow(const char* title)
 	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
-	// Create GL debug context when wanted (more verbose GL messages, but runs slower)
+	// create GL debug-context if wanted (more verbose GL messages, but runs slower)
+	// for Mesa requesting a core profile explicitly is needed to get versions later
+	// than 3.0/1.30, although this still suffices for most of Spring
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, forceCoreContext? SDL_GL_CONTEXT_PROFILE_CORE: SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG * configHandler->GetBool("DebugGL"));
 
+
 	// FullScreen AntiAliasing
-	if ((fsaaLevel = configHandler->GetInt("FSAALevel")) > 0) {
+	if (fsaaLevel > 0) {
 		if (getenv("LIBGL_ALWAYS_SOFTWARE") != nullptr)
 			LOG_L(L_WARNING, "FSAALevel > 0 and LIBGL_ALWAYS_SOFTWARE set, this will very likely crash!");
 
@@ -244,13 +257,6 @@ bool CGlobalRendering::CreateSDLWindow(const char* title)
 
 	// Get wanted resolution
 	const int2 res = GetWantedViewSize(fullScreen);
-
-	// Borderless
-	const bool borderless = configHandler->GetBool("WindowBorderless");
-
-	sdlflags |= (borderless ? SDL_WINDOW_FULLSCREEN_DESKTOP : SDL_WINDOW_FULLSCREEN) * fullScreen;
-	sdlflags |= (SDL_WINDOW_BORDERLESS * borderless);
-
 
 	// Window Pos & State
 	winPosX  = configHandler->GetInt("WindowPosX");
@@ -423,9 +429,6 @@ void CGlobalRendering::PostInit() {
 			globalRenderingInfo.gpuVendor = "Unknown";
 		}
 
-		forceSwapBuffers = configHandler->GetInt("ForceSwapBuffers");
-		forceShaders = configHandler->GetInt("ForceShaders");
-
 		if (forceShaders < 0) {
 			// disable shaders for Intel drivers
 			haveARB  &= !haveIntel;
@@ -563,52 +566,39 @@ void CGlobalRendering::LogDisplayMode()
 	};
 
 	const int fs = fullScreen;
-	const int bl = ((SDL_GetWindowFlags(window) & SDL_WINDOW_BORDERLESS) != 0);
+	const int bl = borderless;
 
 	LOG("[%s] display-mode set to %ix%ix%ibpp@%iHz (%s)", __func__, viewSizeX, viewSizeY, SDL_BITSPERPIXEL(dmode.format), dmode.refresh_rate, names[fs * 2 + bl]);
 }
 
 void CGlobalRendering::SetFullScreen(bool configFullScreen, bool cmdLineWindowed, bool cmdLineFullScreen)
 {
-	fullScreen = configFullScreen;
-
-	// flags
-	if (cmdLineWindowed) {
-		fullScreen = false;
-	} else if (cmdLineFullScreen) {
-		fullScreen = true;
-	}
+	fullScreen = (configFullScreen && !cmdLineWindowed  );
+	fullScreen = (configFullScreen ||  cmdLineFullScreen);
 
 	configHandler->Set("Fullscreen", fullScreen);
 }
 
 void CGlobalRendering::ConfigNotify(const std::string& key, const std::string& value)
 {
+	if (window == nullptr)
+		return;
+
 	if (key == "TextureLODBias") {
 		UpdateGLConfigs();
 		return;
 	}
 
-
-	if (window == nullptr)
-		return;
-
 	if (key != "Fullscreen" && key != "WindowBorderless")
 		return;
 
-	const bool borderless = configHandler->GetBool("WindowBorderless");
-	const int2 res = GetWantedViewSize(fullScreen = configHandler->GetBool("Fullscreen"));
+	borderless = configHandler->GetBool("WindowBorderless");
+	fullScreen = configHandler->GetBool("Fullscreen");
+
+	const int2 res = GetWantedViewSize(fullScreen);
 
 	SDL_SetWindowSize(window, res.x, res.y);
-	if (fullScreen) {
-		if (borderless) {
-			SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
-		} else {
-			SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
-		}
-	} else {
-		SDL_SetWindowFullscreen(window, 0);
-	}
+	SDL_SetWindowFullscreen(window, (borderless? SDL_WINDOW_FULLSCREEN_DESKTOP: SDL_WINDOW_FULLSCREEN) * fullScreen);
 	SDL_SetWindowPosition(window, configHandler->GetInt("WindowPosX"), configHandler->GetInt("WindowPosY"));
 	SDL_SetWindowBordered(window, borderless ? SDL_FALSE : SDL_TRUE);
 	WindowManagerHelper::SetWindowResizable(window, !borderless && !fullScreen);
@@ -619,24 +609,24 @@ void CGlobalRendering::ConfigNotify(const std::string& key, const std::string& v
 
 int2 CGlobalRendering::GetWantedViewSize(const bool fullscreen)
 {
-	int2 res = int2(configHandler->GetInt("XResolution"), configHandler->GetInt("YResolution"));
+	static const char* xsKeys[2] = {"XResolutionWindowed", "XResolution"};
+	static const char* ysKeys[2] = {"YResolutionWindowed", "YResolution"};
 
-	if (!fullscreen) {
-		res = int2(configHandler->GetInt("XResolutionWindowed"), configHandler->GetInt("YResolutionWindowed"));
-	}
+	int2 res = {configHandler->GetInt(xsKeys[fullscreen]), configHandler->GetInt(ysKeys[fullscreen])};
 
-	// Use Native Desktop Resolution
-	// and yes SDL2 can do this itself when sizeX & sizeY are set to zero, but
-	// oh wonder SDL2 fails then when you use Display Cloneing and similar
-	//  -> i.e. DVI monitor runs then at 640x400 and HDMI at full-HD (yes with display _cloning_!)
 	{
+		// use Native Desktop Resolution
+		// SDL2 can do this itself when size{X,Y} are set to
+		// zero, but fails with Display Cloneing and similar
+		//  -> DVI monitor will run at 640x400 and HDMI at full-HD
 		SDL_DisplayMode dmode;
 		SDL_GetDesktopDisplayMode(0, &dmode); //TODO make screen configurable?
-		if (res.x<=0) res.x = dmode.w;
-		if (res.y<=0) res.y = dmode.h;
+
+		if (res.x <= 0) res.x = dmode.w;
+		if (res.y <= 0) res.y = dmode.h;
 	}
 
-	// In Windowed Mode Limit Minimum Window Size
+	// limit minimum window size in windowed mode
 	if (!fullscreen) {
 		res.x = std::max(res.x, minWinSizeX);
 		res.y = std::max(res.y, minWinSizeY);

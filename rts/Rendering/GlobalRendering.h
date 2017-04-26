@@ -124,6 +124,7 @@ public:
 
 
 	int forceShaders;
+	int forceCoreContext;
 	int forceSwapBuffers;
 
 	/**
@@ -259,6 +260,7 @@ public:
 	 * @brief full-screen or windowed rendering
 	 */
 	bool fullScreen;
+	bool borderless;
 
 public:
 	SDL_Window* window;
