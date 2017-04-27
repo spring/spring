@@ -17,8 +17,7 @@
 #include <cstring>
 
 CR_BIND(AtlasedTexture, )
-CR_REG_METADATA(AtlasedTexture,
-		(CR_MEMBER(x), CR_MEMBER(y), CR_MEMBER(z), CR_MEMBER(w)))
+CR_REG_METADATA(AtlasedTexture, (CR_MEMBER(x), CR_MEMBER(y), CR_MEMBER(z), CR_MEMBER(w)))
 
 // texture spacing in the atlas (in pixels)
 #define TEXMARGIN 2
@@ -62,16 +61,16 @@ size_t CTextureAtlas::AddTex(std::string name, int xsize, int ysize, TextureType
 	tex.mem.resize((xsize * ysize * GetBPP(texType)) / 8, 0);
 
 	StringToLowerInPlace(name);
-	tex.names.push_back(name);
+	tex.names.emplace_back(std::move(name));
 
-	atlasAllocator->AddEntry(name, int2(xsize, ysize));
+	atlasAllocator->AddEntry(tex.names.back(), int2(xsize, ysize));
 
 	return (memTextures.size() - 1);
 }
 
 size_t CTextureAtlas::AddTexFromMem(std::string name, int xsize, int ysize, TextureType texType, void* data)
 {
-	const size_t texIdx = AddTex(name, xsize, ysize, texType);
+	const size_t texIdx = AddTex(std::move(name), xsize, ysize, texType);
 
 	MemTex& tex = memTextures[texIdx];
 
@@ -88,7 +87,7 @@ size_t CTextureAtlas::AddTexFromFile(std::string name, std::string file)
 	const auto it = files.find(lcFile);
 
 	if (it != files.end()) {
-		memTextures[it->second].names.push_back(name);
+		memTextures[it->second].names.emplace_back(std::move(name));
 		return (it->second);
 	}
 
@@ -101,7 +100,7 @@ size_t CTextureAtlas::AddTexFromFile(std::string name, std::string file)
 	if (bitmap.channels != 4 || bitmap.compressed)
 		throw content_error("Unsupported bitmap format in file " + file);
 
-	return (files[lcFile] = AddTexFromMem(name, bitmap.xsize, bitmap.ysize, RGBA32, &bitmap.mem[0]));
+	return (files[lcFile] = AddTexFromMem(std::move(name), bitmap.xsize, bitmap.ysize, RGBA32, &bitmap.mem[0]));
 }
 
 
