@@ -4,6 +4,7 @@
 #define _ADV_TREE_DRAWER_H_
 
 #include "ITreeDrawer.h"
+#include "AdvTreeGenerator.h"
 
 class CVertexArray;
 
@@ -15,7 +16,7 @@ class CAdvTreeDrawer: public ITreeDrawer
 {
 public:
 	CAdvTreeDrawer();
-	virtual ~CAdvTreeDrawer();
+	~CAdvTreeDrawer();
 
 	void LoadTreeShaders();
 	void Draw(float treeDistance);
@@ -57,6 +58,8 @@ private:
 
 	std::vector<Shader::IProgramObject*> treeShaders;
 	std::vector<FallingTree> fallingTrees;
+
+	CAdvTreeGenerator treeGen;
 };
 
 #endif // _ADV_TREE_DRAWER_H_

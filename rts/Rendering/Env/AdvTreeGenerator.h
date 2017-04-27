@@ -5,7 +5,7 @@
 
 #include "Rendering/GL/myGL.h"
 
-// XXX This has a duplicate in ITreeDrawer.h
+// XXX This has a duplicate in BasicTreeDrawer.h
 #define MAX_TREE_HEIGHT 60
 
 class CVertexArray;
@@ -14,12 +14,12 @@ namespace Shader {
 	struct IProgramObject;
 }
 
-class CAdvTreeGenerator  
+class CAdvTreeGenerator
 {
 public:
-	CAdvTreeGenerator();
-	virtual ~CAdvTreeGenerator();
+	~CAdvTreeGenerator();
 
+	void Init();
 	void Draw() const;
 
 	GLuint barkTex;

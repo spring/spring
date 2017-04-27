@@ -1,7 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "AdvTreeDrawer.h"
-#include "AdvTreeGenerator.h"
 #include "Game/Camera.h"
 #include "Game/GlobalUnsynced.h"
 #include "Map/BaseGroundDrawer.h"
@@ -45,13 +44,16 @@ static const float HALF_MAX_TREE_HEIGHT   = MAX_TREE_HEIGHT * 0.5f;
 
 CAdvTreeDrawer::CAdvTreeDrawer(): ITreeDrawer()
 {
-	if (!GLEW_ARB_vertex_program || !FBO::IsSupported())
-		throw content_error("ADVTREE: missing OpenGL features!");
+	if (!FBO::IsSupported())
+		throw content_error("[AdvTreeDrawer] missing FBO support");
+
+	if (!globalRendering->haveARB && !globalRendering->haveGLSL)
+		throw content_error("[AdvTreeDrawer] missing shader support");
 
 	LoadTreeShaders();
 
-	treeGen = new CAdvTreeGenerator();
-	treeGen->CreateFarTex(treeShaders[TREE_PROGRAM_NEAR_BASIC]);
+	treeGen.Init();
+	treeGen.CreateFarTex(treeShaders[TREE_PROGRAM_NEAR_BASIC]);
 
 	oldTreeDistance = 4;
 	lastListClean = 0;
@@ -69,8 +71,6 @@ CAdvTreeDrawer::~CAdvTreeDrawer()
 			glDeleteLists(tss.farDispList, 1);
 		}
 	}
-
-	delete treeGen;
 
 	shaderHandler->ReleaseProgramObjects("[TreeDrawer]");
 	treeShaders.clear();
@@ -461,7 +461,7 @@ void CAdvTreeDrawer::Draw(float treeDistance)
 	CCamera* cam = CCamera::GetCamera(CCamera::CAMTYPE_PLAYER);
 	Shader::IProgramObject* treeShader = nullptr;
 
-	const int activeFarTex = treeGen->farTex[cam->GetDir().z >= 0.0f];
+	const int activeFarTex = treeGen.farTex[cam->GetDir().z >= 0.0f];
 	const bool drawDetailed = (treeDistance >= 4.0f);
 
 	glEnable(GL_TEXTURE_2D);
@@ -525,10 +525,10 @@ void CAdvTreeDrawer::Draw(float treeDistance)
 
 			glActiveTexture(GL_TEXTURE1);
 			glEnable(GL_TEXTURE_2D);
-			glBindTexture(GL_TEXTURE_2D, treeGen->barkTex);
+			glBindTexture(GL_TEXTURE_2D, treeGen.barkTex);
 			glActiveTexture(GL_TEXTURE0);
 		} else {
-			glBindTexture(GL_TEXTURE_2D, treeGen->barkTex);
+			glBindTexture(GL_TEXTURE_2D, treeGen.barkTex);
 
 			treeShader = treeShaders[TREE_PROGRAM_NEAR_BASIC];
 			treeShader->Enable();
@@ -592,11 +592,11 @@ void CAdvTreeDrawer::Draw(float treeDistance)
 
 					if (type < 8) {
 						dy = 0.5f;
-						dispList = treeGen->pineDL + type;
+						dispList = treeGen.pineDL + type;
 					} else {
 						type -= 8;
 						dy = 0.0f;
-						dispList = treeGen->leafDL + type;
+						dispList = treeGen.leafDL + type;
 					}
 
 					if (camDist < (SQUARE_SIZE * SQUARE_SIZE * 110 * 110)) {
@@ -664,10 +664,10 @@ void CAdvTreeDrawer::Draw(float treeDistance)
 			int dispList = 0;
 
 			if (type < 8) {
-				dispList = treeGen->pineDL + type;
+				dispList = treeGen.pineDL + type;
 			} else {
 				type -= 8;
-				dispList = treeGen->leafDL + type;
+				dispList = treeGen.leafDL + type;
 			}
 
 			glCallList(dispList);
@@ -914,7 +914,7 @@ void CAdvTreeDrawer::DrawShadowPass()
 	Shader::IProgramObject* po = nullptr;
 
 	const float treeDistance = oldTreeDistance;
-	const int activeFarTex = (cam->GetDir().z < 0.0f)? treeGen->farTex[0] : treeGen->farTex[1];
+	const int activeFarTex = (cam->GetDir().z < 0.0f)? treeGen.farTex[0] : treeGen.farTex[1];
 	const bool drawDetailed = (treeDistance >= 4.0f);
 
 	glActiveTexture(GL_TEXTURE0);
@@ -943,7 +943,7 @@ void CAdvTreeDrawer::DrawShadowPass()
 		const int ystart = Clamp(cy - 2, 0, mapDims.mapy / TREE_SQUARE_SIZE - 1);
 		const int yend   = Clamp(cy + 2, 0, mapDims.mapy / TREE_SQUARE_SIZE - 1);
 
-		glBindTexture(GL_TEXTURE_2D, treeGen->barkTex);
+		glBindTexture(GL_TEXTURE_2D, treeGen.barkTex);
 		glEnable(GL_TEXTURE_2D);
 
 		po = shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_TREE_NEAR);
@@ -996,11 +996,11 @@ void CAdvTreeDrawer::DrawShadowPass()
 
 					if (type < 8) {
 						dy = 0.5f;
-						dispList = treeGen->pineDL + type;
+						dispList = treeGen.pineDL + type;
 					} else {
 						type -= 8;
 						dy = 0;
-						dispList = treeGen->leafDL + type;
+						dispList = treeGen.leafDL + type;
 					}
 
 					if (camDist < SQUARE_SIZE * SQUARE_SIZE * 110 * 110) {
@@ -1062,10 +1062,10 @@ void CAdvTreeDrawer::DrawShadowPass()
 			int dispList;
 
 			if (type < 8) {
-				dispList = treeGen->pineDL + type;
+				dispList = treeGen.pineDL + type;
 			} else {
 				type -= 8;
-				dispList = treeGen->leafDL + type;
+				dispList = treeGen.leafDL + type;
 			}
 
 			glCallList(dispList);

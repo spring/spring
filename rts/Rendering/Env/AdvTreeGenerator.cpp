@@ -31,12 +31,12 @@ using std::min;
 
 CAdvTreeGenerator* treeGen;
 
-CAdvTreeGenerator::CAdvTreeGenerator()
+void CAdvTreeGenerator::Init()
 {
 	LuaParser resourcesParser("gamedata/resources.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
-	if (!resourcesParser.Execute()) {
+
+	if (!resourcesParser.Execute())
 		LOG_L(L_ERROR, "%s", resourcesParser.GetErrorLog().c_str());
-	}
 
 	const LuaTable treesTable = resourcesParser.GetRoot().SubTable("graphics").SubTable("trees");
 

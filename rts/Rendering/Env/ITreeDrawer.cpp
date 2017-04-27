@@ -95,11 +95,11 @@ void ITreeDrawer::ResetPos(const float3& pos)
 
 	TreeSquareStruct& tss = treeSquares[y * treesX + x];
 
-	if (tss.dispList) {
+	if (tss.dispList != 0) {
 		delDispLists.push_back(tss.dispList);
 		tss.dispList = 0;
 	}
-	if (tss.farDispList) {
+	if (tss.farDispList != 0) {
 		delDispLists.push_back(tss.farDispList);
 		tss.farDispList = 0;
 	}
@@ -111,14 +111,11 @@ ITreeDrawer* ITreeDrawer::GetTreeDrawer()
 	ITreeDrawer* td = nullptr;
 
 	try {
-		if (configHandler->GetBool("3DTrees")) {
+		if (configHandler->GetBool("3DTrees"))
 			td = new CAdvTreeDrawer();
-		}
-	} catch (const content_error& e) {
-		if (e.what()[0] != '\0')
-			LOG_L(L_ERROR, "%s", e.what());
 
-		LOG("TreeDrawer: Fallback to BasicTreeDrawer.");
+	} catch (const content_error& e) {
+		LOG_L(L_ERROR, "[ITreeDrawer] exception \"%s\"; falling back to BasicTreeDrawer", e.what());
 		assert(td == nullptr);
 	}
 
@@ -203,25 +200,29 @@ void ITreeDrawer::Update()
 
 void ITreeDrawer::RenderFeatureCreated(const CFeature* feature) {
 	// support /give'ing tree objects
-	if (feature->def->drawType >= DRAWTYPE_TREE) {
-		AddTree(feature->id, feature->def->drawType - 1, feature->pos, 1.0f);
-	}
+	if (feature->def->drawType < DRAWTYPE_TREE)
+		return;
+
+	AddTree(feature->id, feature->def->drawType - 1, feature->pos, 1.0f);
 }
 
 void ITreeDrawer::FeatureMoved(const CFeature* feature, const float3& oldpos) {
-	if (feature->def->drawType >= DRAWTYPE_TREE) {
-		DeleteTree(feature->id, oldpos);
-		AddTree(feature->id, feature->def->drawType - 1, feature->pos, 1.0f);
-	}
+	if (feature->def->drawType < DRAWTYPE_TREE)
+		return;
+
+	DeleteTree(feature->id, oldpos);
+	AddTree(feature->id, feature->def->drawType - 1, feature->pos, 1.0f);
 }
 
 void ITreeDrawer::RenderFeatureDestroyed(const CFeature* feature) {
-	if (feature->def->drawType >= DRAWTYPE_TREE) {
-		DeleteTree(feature->id, feature->pos);
+	if (feature->def->drawType < DRAWTYPE_TREE)
+		return;
 
-		if (feature->speed.SqLength2D() > 0.25f) {
-			AddFallingTree(feature->id, feature->def->drawType - 1, feature->pos, feature->speed * XZVector);
-		}
-	}
+	DeleteTree(feature->id, feature->pos);
+
+	if (feature->speed.SqLength2D() <= 0.25f)
+		return;
+
+	AddFallingTree(feature->id, feature->def->drawType - 1, feature->pos, feature->speed * XZVector);
 }
 
