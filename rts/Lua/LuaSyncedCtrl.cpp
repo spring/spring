@@ -4225,7 +4225,7 @@ int LuaSyncedCtrl::SpawnExplosion(lua_State* L)
 	params.ignoreOwner  = luaL_optboolean(L, 14, false);
 	params.damageGround = luaL_optboolean(L, 15, false);
 
-	params.projectileID = static_cast<unsigned int>(luaL_optint(L, 17, -1)),
+	params.projectileID = static_cast<unsigned int>(luaL_optint(L, 17, -1));
 
 	helper->Explosion(params);
 	return 0;
