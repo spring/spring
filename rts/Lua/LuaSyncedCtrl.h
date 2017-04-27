@@ -185,6 +185,7 @@ class LuaSyncedCtrl
 
 		static int SpawnProjectile(lua_State* L);
 		static int DeleteProjectile(lua_State* L);
+		static int SpawnExplosion(lua_State* L);
 		static int SpawnCEG(lua_State* L);
 
 		// LuaRules  (fullCtrl)
