@@ -4204,8 +4204,8 @@ int LuaSyncedCtrl::DeleteProjectile(lua_State* L)
 
 int LuaSyncedCtrl::SpawnExplosion(lua_State* L)
 {
-	const float3 pos = {luaL_optfloat(L, 1, 0.0f), luaL_optfloat(L, 2, 0.0f), luaL_optfloat(L, 3, 0.0f)};
-	const float3 dir = {luaL_optfloat(L, 4, 0.0f), luaL_optfloat(L, 5, 0.0f), luaL_optfloat(L, 6, 0.0f)};
+	const float3 pos = {luaL_checkfloat(L, 1      ), luaL_checkfloat(L, 2      ), luaL_checkfloat(L, 3      )};
+	const float3 dir = {luaL_optfloat  (L, 4, 0.0f), luaL_optfloat  (L, 5, 0.0f), luaL_optfloat  (L, 6, 0.0f)};
 
 	CExplosionParams params = {pos, dir, {luaL_optfloat(L, 7, 1.0f)}};
 
