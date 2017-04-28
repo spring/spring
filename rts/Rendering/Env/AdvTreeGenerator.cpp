@@ -29,8 +29,6 @@ using std::min;
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CAdvTreeGenerator* treeGen;
-
 void CAdvTreeGenerator::Init()
 {
 	LuaParser resourcesParser("gamedata/resources.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);

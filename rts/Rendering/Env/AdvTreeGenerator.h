@@ -46,7 +46,5 @@ private:
 	void CreateLeafTex(unsigned int baseTex, int xpos, int ypos, unsigned char buf[256][2048][4]);
 };
 
-extern CAdvTreeGenerator* treeGen;
-
 #endif // _ADV_TREE_GENERATOR_H
 
