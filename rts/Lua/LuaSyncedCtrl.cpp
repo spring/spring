@@ -1,7 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include <vector>
-#include <list>
 #include <cctype>
 
 #include "LuaSyncedCtrl.h"
@@ -312,6 +311,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(DeleteProjectile);
 	REGISTER_LUA_CFUNC(SpawnExplosion);
 	REGISTER_LUA_CFUNC(SpawnCEG);
+	REGISTER_LUA_CFUNC(SpawnSFX);
 
 	REGISTER_LUA_CFUNC(EditUnitCmdDesc);
 	REGISTER_LUA_CFUNC(InsertUnitCmdDesc);
@@ -4253,6 +4253,25 @@ int LuaSyncedCtrl::SpawnCEG(lua_State* L)
 	lua_pushboolean(L, explGenHandler->GenExplosion(cegID, pos, dir, damage, radius, dmgMod, nullptr, nullptr));
 	lua_pushnumber(L, cegID);
 	return 2;
+}
+
+int LuaSyncedCtrl::SpawnSFX(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __func__, 1);
+
+	if (unit == nullptr)
+		return 0;
+
+	const float3 pos = {luaL_checkfloat(L, 3), luaL_checkfloat(L, 4), luaL_checkfloat(L, 5)};
+	const float3 dir = {luaL_checkfloat(L, 6), luaL_checkfloat(L, 7), luaL_checkfloat(L, 8)};
+
+	if (luaL_optboolean(L, 9, true)) {
+		lua_pushboolean(L, unit->script->EmitAbsSFX(luaL_checkint(L, 2), pos, dir));
+	} else {
+		lua_pushboolean(L, unit->script->EmitRelSFX(luaL_checkint(L, 2), pos, dir));
+	}
+
+	return 1;
 }
 
 /******************************************************************************/

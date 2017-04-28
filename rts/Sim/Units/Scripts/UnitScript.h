@@ -134,7 +134,11 @@ public:
 
 	// misc, used by CCobThread and callouts for Lua unitscripts
 	void SetVisibility(int piece, bool visible);
-	void EmitSfx(int type, int piece);
+
+	bool EmitSfx(int sfxType, int sfxPiece);
+	bool EmitRelSFX(int sfxType, const float3& relPos, const float3& relDir);
+	bool EmitAbsSFX(int sfxType, const float3& absPos, const float3& absDir, const float3& relDir = FwdVector);
+
 	void AttachUnit(int piece, int unit);
 	void DropUnit(int unit);
 	void Explode(int piece, int flags);
