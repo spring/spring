@@ -11,12 +11,18 @@
 // crappy but fast LCG
 class CGlobalSyncedRNG {
 public:
+	typedef unsigned int result_type;
+
 	CGlobalSyncedRNG() { SetSeed(0, true); }
 
-	// needed for random_shuffle
-	int operator()(unsigned int N) { return (NextInt() % N); }
+	// needed for std::{random_}shuffle
+	result_type operator()(              ) { return (NextInt()    ); }
+	result_type operator()(unsigned int N) { return (NextInt() % N); }
 
-	int NextInt() { return (((randSeed = (randSeed * 214013L + 2531011L)) >> 16) & RANDINT_MAX); }
+	result_type min() const { return           0; }
+	result_type max() const { return RANDINT_MAX; }
+
+	result_type NextInt() { return (((randSeed = (randSeed * 214013L + 2531011L)) >> 16) & RANDINT_MAX); }
 	float NextFloat() { return ((NextInt() * 1.0f) / RANDINT_MAX); }
 
 	float3 NextVector() {
@@ -45,28 +51,35 @@ private:
 	*
 	* Holds the synced random seed
 	*/
-	int randSeed;
+	unsigned int randSeed;
 
 	/**
 	* @brief initial random seed
 	*
 	* Holds the synced initial random seed
 	*/
-	int initRandSeed;
+	unsigned int initRandSeed;
 };
 
 
 class CGlobalUnsyncedRNG {
 public:
+	typedef unsigned int result_type;
+
 	CGlobalUnsyncedRNG(): randSeed(0) {}
 
 	void Seed(unsigned int seed) { randSeed = seed; }
+	void operator = (const CGlobalUnsyncedRNG& urng) { Seed(urng.randSeed); }
 
-	/** @brief returns a random unsigned integer in the range [0, (UINT_MAX & 0x7FFF)) */
-	unsigned int operator()() { int r = NextInt(); return *reinterpret_cast<unsigned*>(&r); }
+	/** @brief returns a random integer in either the range [0, UINT_MAX & 0x7FFF) or in [0, n) */
+	result_type operator()(              ) { return (NextInt()                                    ); }
+	result_type operator()(unsigned int n) { return (NextInt() * n / ((INT_MAX & RANDINT_MAX) + 1)); }
 
-	/** @brief returns a random integer in the range [0, (INT_MAX & 0x7FFF)) */
-	int NextInt() { return (((randSeed = (randSeed * 214013L + 2531011L)) >> 16) & RANDINT_MAX); }
+	result_type min() const { return           0; }
+	result_type max() const { return RANDINT_MAX; }
+
+	/** @brief returns a random integer in the range [0, INT_MAX & 0x7FFF) */
+	result_type NextInt() { return (((randSeed = (randSeed * 214013L + 2531011L)) >> 16) & RANDINT_MAX); }
 
 	/** @brief returns a random float in the range [0, 1) */
 	float NextFloat() { return ((NextInt() * 1.0f) / RANDINT_MAX); }
@@ -84,11 +97,6 @@ public:
 
 		return ret;
 	}
-
-	/** @brief returns a random number in the range [0, n) */
-	// (the range of RandInt() is limited to (INT_MAX & 0x7FFF))
-	int operator()(int n) { return (NextInt() * n / ((INT_MAX & RANDINT_MAX) + 1)); }
-	void operator = (const CGlobalUnsyncedRNG& urng) { Seed(urng.randSeed); }
 
 private:
 	unsigned int randSeed;
