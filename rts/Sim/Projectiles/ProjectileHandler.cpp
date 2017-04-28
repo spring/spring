@@ -90,12 +90,12 @@ CProjectileHandler::CProjectileHandler()
 	for (int i = 0; i < syncedProjectileIDs.size(); i++) {
 		freeSyncedIDs.push_back(i);
 	}
-	std::shuffle(freeSyncedIDs.begin(), freeSyncedIDs.end(), gsRNG);
+	std::random_shuffle(freeSyncedIDs.begin(), freeSyncedIDs.end(), gsRNG);
 
 	for (int i = 0; i < unsyncedProjectileIDs.size(); i++) {
 		freeUnsyncedIDs.push_back(i);
 	}
-	std::shuffle(freeUnsyncedIDs.begin(), freeUnsyncedIDs.end(), guRNG);
+	std::random_shuffle(freeUnsyncedIDs.begin(), freeUnsyncedIDs.end(), guRNG);
 
 	for (int modelType = 0; modelType < MODELTYPE_OTHER; ++modelType) {
 		flyingPieces[modelType].reserve(1000);
@@ -361,9 +361,9 @@ void CProjectileHandler::AddProjectile(CProjectile* p)
 			freeIDs->push_back(i);
 		}
 		if (p->synced) {
-			std::shuffle(freeIDs->begin(), freeIDs->end(), gsRNG);
+			std::random_shuffle(freeIDs->begin(), freeIDs->end(), gsRNG);
 		} else{
-			std::shuffle(freeIDs->begin(), freeIDs->end(), guRNG);
+			std::random_shuffle(freeIDs->begin(), freeIDs->end(), guRNG);
 		}
 		proIDs->resize(newSize, nullptr);
 	}

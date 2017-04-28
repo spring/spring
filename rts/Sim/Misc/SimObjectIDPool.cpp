@@ -22,8 +22,8 @@ void SimObjectIDPool::Expand(unsigned int baseID, unsigned int numIDs) {
 	}
 
 	// randomize so that Lua widgets can not easily determine counts
-	std::shuffle(newIDs.begin(), newIDs.end(), gsRNG);
-	std::shuffle(newIDs.begin(), newIDs.end(), gsRNG);
+	std::random_shuffle(newIDs.begin(), newIDs.end(), gsRNG);
+	std::random_shuffle(newIDs.begin(), newIDs.end(), gsRNG);
 
 	// NOTE:
 	//   any randomization would be undone by a sorted std::container

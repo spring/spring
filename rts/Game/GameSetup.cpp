@@ -280,7 +280,7 @@ void CGameSetup::LoadStartPositions(bool withoutMap)
 		// Server syncs these later, so we can use unsynced rng
 		CGlobalUnsyncedRNG rng;
 		rng.Seed(HsiehHash(setupText.c_str(), setupText.length(), 1234567));
-		std::shuffle(teamStartNum.begin(), teamStartNum.end(), rng);
+		std::random_shuffle(teamStartNum.begin(), teamStartNum.end(), rng);
 	}
 
 	for (size_t i = 0; i < teamStartingData.size(); ++i)

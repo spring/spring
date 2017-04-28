@@ -338,7 +338,7 @@ void CDecalsDrawerGL4::DetectMaxDecals()
 	decals.resize(maxDecals);
 	freeIds.resize(maxDecals - 1); // idx = 0 is invalid, so -1
 	std::iota(freeIds.begin(), freeIds.end(), 1); // start with 1, 0 is illegal
-	std::shuffle(freeIds.begin(), freeIds.end(), guRNG);
+	std::random_shuffle(freeIds.begin(), freeIds.end(), guRNG);
 	groups.reserve(maxDecalGroups);
 }
 
