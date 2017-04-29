@@ -16,12 +16,11 @@
 #include "System/Platform/Misc.h"
 #include "System/Log/ILog.h"
 
+#include <clocale>
+#include <cstdlib>
+
 #ifdef WIN32
 	#include "lib/SOP/SOP.hpp" // NvOptimus
-
-	#include <stdlib.h>
-	#include <process.h>
-	#define setenv(k,v,o) SetEnvironmentVariable(k,v)
 #endif
 
 
@@ -36,6 +35,9 @@ int Run(int argc, char* argv[])
 		stack_end = (void*) &here;
 	}
 #endif
+
+	// already the default, but be explicit for locale-dependent functions (atof,strtof,...)
+	setlocale(LC_NUMERIC, "C");
 
 	Threading::DetectCores();
 	Threading::SetMainThread();
@@ -56,10 +58,8 @@ static bool SetNvOptimusProfile(const std::string& processFileName)
 	if (SOP_CheckProfile("Spring"))
 		return false;
 
-	const bool profileChanged = (SOP_SetProfile("Spring", processFileName) == SOP_RESULT_CHANGE);
-
 	// on Windows execvp breaks lobbies (new process: new PID)
-	return (false && profileChanged);
+	return (false && (SOP_SetProfile("Spring", processFileName) == SOP_RESULT_CHANGE));
 #endif
 	return false;
 }
