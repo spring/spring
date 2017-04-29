@@ -115,23 +115,18 @@ unsigned int CS3OTextureHandler::LoadAndCacheTexture(
 		// preloaded)
 		assert(preloadCall);
 
-		auto pair = bitmapCache.emplace(textureName, CBitmap());
+		auto pair = bitmapCache.emplace(textureName, {});
 		auto iter = pair.first;
-		bool found = false;
 
 		bitmap = &(iter->second);
 
-		if (!textureName.empty()) {
-			if (bitmap->Load(textureName) || bitmap->Load("unittextures/" + textureName)) {
-				found = true;
-			} else {
-				LOG_L(L_WARNING, "[%s] could not load texture \"%s\" from model \"%s\"",
-					__FUNCTION__, textureName.c_str(), model->name.c_str());
-			}
+		if (!bitmap->Load(textureName) && !bitmap->Load("unittextures/" + textureName)) {
+			if (texNum == 0)
+				LOG_L(L_WARNING, "[%s] could not load primary texture \"%s\" from model \"%s\"", __func__, textureName.c_str(), model->name.c_str());
+
+			// file not found (or headless build), set a single pixel so model is visible
+			bitmap->AllocDummy(SColor(255 * (texNum == 0), 0, 0, 255 * (1 - invertAlpha)));
 		}
-		// file not found (or headless build), set a single pixel so unit is visible
-		if (!found)
-			bitmap->AllocDummy(SColor(255 * (texNum == 0), 0, 0, 255));
 
 		if (invertAxis)
 			bitmap->ReverseYAxis();

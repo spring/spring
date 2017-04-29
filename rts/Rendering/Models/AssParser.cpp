@@ -666,9 +666,9 @@ static std::string FindTextureByRegex(const std::string& regex_path, const std::
 	//FIXME instead of ".*" only check imagetypes!
 	const std::vector<std::string>& files = CFileHandler::FindFiles(regex_path, regex + ".*");
 
-	if (!files.empty()) {
+	if (!files.empty())
 		return FindTexture(FileSystem::GetFilename(files[0]), "", "");
-	}
+
 	return "";
 }
 
@@ -689,7 +689,6 @@ void CAssParser::FindTextures(
 	if (model->texs[1].empty()) model->texs[1] = FindTextureByRegex(modelPath, "tex2");
 	if (model->texs[0].empty()) model->texs[0] = FindTextureByRegex(modelPath, "diffuse");
 	if (model->texs[1].empty()) model->texs[1] = FindTextureByRegex(modelPath, "glow"); // lowest-priority name
-
 
 	// 2. gather model-defined textures of first material (medium priority)
 	if (scene->mNumMaterials > 0) {

@@ -35,8 +35,8 @@ S3DModel CS3OParser::Load(const std::string& name)
 		model.name = name;
 		model.type = MODELTYPE_S3O;
 		model.numPieces = 0;
-		model.texs[0] = header.texture1 == 0 ? "" : (char*) &fileBuf[header.texture1];
-		model.texs[1] = header.texture2 == 0 ? "" : (char*) &fileBuf[header.texture2];
+		model.texs[0] = (header.texture1 == 0)? "" : (char*) &fileBuf[header.texture1];
+		model.texs[1] = (header.texture2 == 0)? "" : (char*) &fileBuf[header.texture2];
 		model.mins = DEF_MIN_SIZE;
 		model.maxs = DEF_MAX_SIZE;
 
