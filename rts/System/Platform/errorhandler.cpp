@@ -97,6 +97,10 @@ void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigne
 		// MT thread has crashed or deviated from its normal execution path by throwing an exception
 		spring::thread forcedExitThread = spring::thread(std::bind(&ExitSpringProcess, msg, caption, flags));
 
+		// .join can (very rarely) throw a no-such-process exception if it runs in parallel with exit
+		assert(forcedExitThread.joinable());
+		forcedExitThread.detach();
+
 		LOG_L(L_ERROR, "[%s][2]", __func__);
 
 		// exit any possibly threads (otherwise they would
@@ -107,7 +111,6 @@ void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigne
 		LOG_L(L_ERROR, "[%s][3]", __func__);
 
 		exitSuccess = true;
-		forcedExitThread.join();
 	}
 #endif
 }

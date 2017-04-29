@@ -315,12 +315,16 @@ bool CGlobalRendering::CreateSDLWindow(const char* title)
 
 
 void CGlobalRendering::DestroySDLWindow() {
+	SDL_SetWindowGrab(window, SDL_FALSE);
 	SDL_DestroyWindow(window);
+
 	window = nullptr;
+
 #if !defined(HEADLESS)
 	SDL_GL_DeleteContext(sdlGlCtx);
 	SDL_QuitSubSystem(SDL_INIT_VIDEO);
 #endif
+	SDL_Quit();
 }
 
 

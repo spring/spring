@@ -220,9 +220,9 @@ bool SpringApp::Initialize()
 	{
 		// don't display a dialog box if gdb helpers aren't found
 		UINT olderrors = SetErrorMode(SEM_FAILCRITICALERRORS);
-		if (LoadLibrary("gdbmacros.dll")) {
+		if (LoadLibrary("gdbmacros.dll"))
 			LOG_L(L_DEBUG, "QT Creator's gdbmacros.dll loaded");
-		}
+
 		SetErrorMode(olderrors);
 	}
 #endif
@@ -374,9 +374,8 @@ void SpringApp::GetDisplayGeometry()
 void SpringApp::SaveWindowPosition()
 {
 #ifndef HEADLESS
-	if (globalRendering->fullScreen) {
+	if (globalRendering->fullScreen)
 		return;
-	}
 
 	GetDisplayGeometry();
 	if (globalRendering->winState == CGlobalRendering::WINSTATE_DEFAULT) {
@@ -902,8 +901,10 @@ int SpringApp::Run()
 		ErrorMessageBox("  [thread] " + thrErr->message, thrErr->caption, thrErr->flags);
 
 	try {
-		SaveWindowPosition();
-		ShutDown(true);
+		if (globalRendering != nullptr) {
+			SaveWindowPosition();
+			ShutDown(true);
+		}
 	} CATCH_SPRING_ERRORS
 
 	// no exception from main, but a thread might have thrown *during* ShutDown
@@ -965,10 +966,8 @@ void SpringApp::ShutDown(bool fromRun)
 	IMouseInput::FreeInstance(mouseInput);
 
 	LOG("[SpringApp::%s][6]", __func__);
-	SDL_SetWindowGrab(globalRendering->window, SDL_FALSE);
 	WindowManagerHelper::SetIconSurface();
 	globalRendering->DestroySDLWindow();
-	SDL_Quit();
 
 	LOG("[SpringApp::%s][7]", __func__);
 	spring::SafeDelete(gs);
