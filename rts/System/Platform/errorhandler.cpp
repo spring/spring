@@ -9,7 +9,6 @@
 #include "errorhandler.h"
 
 #include <string>
-#include <sstream>
 #include <functional>
 
 #include "Game/GlobalUnsynced.h"
@@ -57,10 +56,10 @@ void ExitSpringProcess(const std::string& msg, const std::string& caption, unsig
 
 #ifdef _MSC_VER
 	if (!exitSuccess)
-		TerminateProcess(GetCurrentProcess(), -1);
+		TerminateProcess(GetCurrentProcess(), EXIT_FAILURE);
 #endif
 
-	exit(-1);
+	exit(EXIT_FAILURE);
 }
 
 
