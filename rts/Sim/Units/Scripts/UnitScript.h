@@ -189,6 +189,8 @@ public:
 	virtual void Destroy() = 0;
 	virtual void StartMoving(bool reversing) = 0;
 	virtual void StopMoving() = 0;
+	virtual void StartSkidding(const float3&) = 0;
+	virtual void StopSkidding() = 0;
 	virtual void ChangeHeading(short deltaHeading) = 0;
 	virtual void StartUnload() = 0;
 	virtual void EndTransport() = 0;

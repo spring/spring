@@ -142,7 +142,9 @@ public:
 	void Destroy() override;
 	void StartMoving(bool reversing) override;
 	void StopMoving() override;
-	void ChangeHeading(short deltaHeading) override {}
+	void StartSkidding(const float3&) override { /* LUS-only */ }
+	void StopSkidding() override { /* LUS-only */ }
+	void ChangeHeading(short deltaHeading) override { /* LUS-only */ }
 	void StartUnload() override;
 	void EndTransport() override;
 	void StartBuilding() override;

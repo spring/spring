@@ -99,6 +99,8 @@ public:
 	void Destroy() override;
 	void StartMoving(bool reversing) override;
 	void StopMoving() override;
+	void StartSkidding(const float3& vel) override;
+	void StopSkidding() override;
 	void ChangeHeading(short deltaHeading) override;
 	void StartUnload() override;
 	void EndTransport() override;

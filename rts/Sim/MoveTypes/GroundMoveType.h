@@ -24,7 +24,7 @@ public:
 	struct MemberData {
 		std::array<std::pair<unsigned int,  bool*>, 2>  bools;
 		std::array<std::pair<unsigned int, short*>, 1> shorts;
-		std::array<std::pair<unsigned int, float*>, 8> floats;
+		std::array<std::pair<unsigned int, float*>, 9> floats;
 	};
 
 	void PostLoad();
@@ -81,8 +81,8 @@ private:
 	float3 GetNewSpeedVector(const float hAcc, const float vAcc) const;
 
 	#define SQUARE(x) ((x) * (x))
-	bool StartSkidding(const float3& vel, const float3& dir) const { return ((SQUARE(vel.dot(dir)) + 0.01f) < (vel.SqLength() * 0.95f)); }
-	bool StopSkidding(const float3& vel, const float3& dir) const { return ((SQUARE(vel.dot(dir)) + 0.01f) >= (vel.SqLength() * 0.95f)); }
+	bool StartSkidding(const float3& vel, const float3& dir) const { return ((SQUARE(vel.dot(dir)) + 0.01f) < (vel.SqLength() * sqSkidSpeedMult)); }
+	bool StopSkidding(const float3& vel, const float3& dir) const { return ((SQUARE(vel.dot(dir)) + 0.01f) >= (vel.SqLength() * sqSkidSpeedMult)); }
 	bool StartFlying(const float3& vel, const float3& dir) const { return (vel.dot(dir) > 0.2f); }
 	bool StopFlying(const float3& vel, const float3& dir) const { return (vel.dot(dir) <= 0.2f); }
 	#undef SQUARE
@@ -170,6 +170,7 @@ private:
 	float maxReverseDist;
 	float minReverseAngle;
 	float maxReverseSpeed;
+	float sqSkidSpeedMult;
 
 	float wantedSpeed;
 	float currentSpeed;

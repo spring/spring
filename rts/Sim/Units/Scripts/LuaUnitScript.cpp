@@ -867,6 +867,8 @@ bool CLuaUnitScript::RawRunCallIn(int functionId, int inArgs, int outArgs)
 void CLuaUnitScript::Destroy() { Call(LUAFN_Destroy); }
 void CLuaUnitScript::StartMoving(bool reversing) { Call(LUAFN_StartMoving, reversing * 1.0f); }
 void CLuaUnitScript::StopMoving() { Call(LUAFN_StopMoving); }
+void CLuaUnitScript::StartSkidding(const float3& vel) { Call(LUAFN_StartSkidding, vel.x, vel.y, vel.z); }
+void CLuaUnitScript::StopSkidding() { Call(LUAFN_StopSkidding); }
 void CLuaUnitScript::ChangeHeading(short deltaHeading) { Call(LUAFN_ChangeHeading, deltaHeading * 1.0f); }
 void CLuaUnitScript::StartUnload() { Call(LUAFN_StartUnload); }
 void CLuaUnitScript::EndTransport() { Call(LUAFN_EndTransport); }

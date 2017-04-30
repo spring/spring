@@ -103,6 +103,7 @@ CR_REG_METADATA(CGroundMoveType, (
 	CR_MEMBER(maxReverseDist),
 	CR_MEMBER(minReverseAngle),
 	CR_MEMBER(maxReverseSpeed),
+	CR_MEMBER(sqSkidSpeedMult),
 
 	CR_MEMBER(wantedSpeed),
 	CR_MEMBER(currentSpeed),
@@ -156,6 +157,7 @@ static CGroundMoveType::MemberData gmtMemberData = {
 		std::pair<unsigned int, float*>{MEMBER_LITERAL_HASH( "maxReverseDist"), nullptr},
 		std::pair<unsigned int, float*>{MEMBER_LITERAL_HASH("minReverseAngle"), nullptr},
 		std::pair<unsigned int, float*>{MEMBER_LITERAL_HASH("maxReverseSpeed"), nullptr},
+		std::pair<unsigned int, float*>{MEMBER_LITERAL_HASH("sqSkidSpeedMult"), nullptr},
 	},
 };
 
@@ -184,6 +186,7 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	maxReverseDist(0.0f),
 	minReverseAngle(0.0f),
 	maxReverseSpeed(0.0f),
+	sqSkidSpeedMult(0.95f),
 
 	wantedSpeed(0.0f),
 	currentSpeed(0.0f),
@@ -717,7 +720,7 @@ bool CGroundMoveType::CanApplyImpulse(const float3& impulse)
 	if (owner->beingBuilt)
 		return false;
 	// will be applied to transporter instead
-	if (owner->GetTransporter() != NULL)
+	if (owner->GetTransporter() != nullptr)
 		return false;
 	if (impulse.SqLength() <= 0.01f)
 		return false;
@@ -743,9 +746,11 @@ bool CGroundMoveType::CanApplyImpulse(const float3& impulse)
 	const bool startSkidding = StartSkidding(newSpeed, skidDir);
 	const bool startFlying = StartFlying(newSpeed, CGround::GetNormal(owner->pos.x, owner->pos.z));
 
-	if (newSpeed.SqLength2D() >= 0.01f) {
+	if (startSkidding)
+		owner->script->StartSkidding(newSpeed);
+
+	if (newSpeed.SqLength2D() >= 0.01f)
 		skidDir = newSpeed.Normalize2D();
-	}
 
 	skidRotVector = skidDir.cross(UpVector) * startSkidding;
 	skidRotAccel = ((gsRNG.NextFloat() - 0.5f) * 0.04f) * startFlying;
@@ -810,6 +815,8 @@ void CGroundMoveType::UpdateSkid()
 			skidRotAccel *= math::DEG_TO_RAD;
 
 			owner->ClearPhysicalStateBit(CSolidObject::PSTATE_BIT_SKIDDING);
+			owner->script->StopSkidding();
+
 			// update wanted-heading after coming to a stop
 			ChangeHeading(owner->heading);
 		} else {
@@ -2487,6 +2494,7 @@ void CGroundMoveType::InitMemberPtrs(MemberData* memberData)
 	memberData->floats[5].second = &maxReverseDist,
 	memberData->floats[6].second = &minReverseAngle;
 	memberData->floats[7].second = &maxReverseSpeed;
+	memberData->floats[8].second = &sqSkidSpeedMult;
 }
 
 bool CGroundMoveType::SetMemberValue(unsigned int memberHash, void* memberValue)
