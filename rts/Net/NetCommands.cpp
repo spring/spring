@@ -254,7 +254,7 @@ void CGame::ClientReadNet()
 
 					LOG("%s", message.c_str());
 
-					GameEnd(std::vector<unsigned char>());
+					GameEnd({});
 					AddTraffic(-1, packetCode, dataLength);
 					clientNet->Close(true);
 				} catch (const netcode::UnpackPacketException& ex) {

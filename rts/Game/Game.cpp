@@ -125,6 +125,7 @@
 
 #undef CreateDirectory
 
+CONFIG(bool, GameEndOnConnectionLoss).defaultValue(true);
 CONFIG(bool, WindowedEdgeMove).defaultValue(true).description("Sets whether moving the mouse cursor to the screen edge will move the camera across the map.");
 CONFIG(bool, FullscreenEdgeMove).defaultValue(true).description("see WindowedEdgeMove, just for fullscreen mode");
 CONFIG(bool, ShowFPS).defaultValue(false).description("Displays current framerate.");
@@ -1012,14 +1013,16 @@ int CGame::KeyReleased(int k)
 
 int CGame::TextInput(const std::string& utf8Text)
 {
-	const bool caught = eventHandler.TextInput(utf8Text);
+	if (eventHandler.TextInput(utf8Text))
+		return 0;
+	if (!userWriting)
+		return 0;
 
-	if (userWriting && !caught){
-		std::string text = ignoreNextChar ? utf8Text.substr(utf8::NextChar(utf8Text, 0)) : utf8Text;
-		writingPos = Clamp<int>(writingPos, 0, userInput.length());
-		userInput.insert(writingPos, text);
-		writingPos += text.length();
-	}
+	std::string text = ignoreNextChar ? utf8Text.substr(utf8::NextChar(utf8Text, 0)) : utf8Text;
+
+	writingPos = Clamp<int>(writingPos, 0, userInput.length());
+	userInput.insert(writingPos, text);
+	writingPos += text.length();
 	return 0;
 }
 
@@ -1035,25 +1038,22 @@ bool CGame::Update()
 
 	// When video recording do step by step simulation, so each simframe gets a corresponding videoframe
 	// FIXME: SERVER ALREADY DOES THIS BY ITSELF
-	if (globalRendering->isVideoCapturing && playing && gameServer != NULL) {
+	if (globalRendering->isVideoCapturing && playing && gameServer != nullptr)
 		gameServer->CreateNewFrame(false, true);
-	}
 
 	ENTER_SYNCED_CODE();
 	SendClientProcUsage();
 	ClientReadNet(); // this can issue new SimFrame()s
 
 	if (!gameOver) {
-		if (clientNet->NeedsReconnect()) {
+		if (clientNet->NeedsReconnect())
 			clientNet->AttemptReconnect(SpringVersion::GetFull());
-		}
 
-		if (clientNet->CheckTimeout(0, gs->PreSimFrame())) {
-			GameEnd(std::vector<unsigned char>(), true);
-		}
+		if (clientNet->CheckTimeout(0, gs->PreSimFrame()))
+			GameEnd({}, true);
 	}
-	LEAVE_SYNCED_CODE();
 
+	LEAVE_SYNCED_CODE();
 	return true;
 }
 
@@ -1607,6 +1607,23 @@ void CGame::GameEnd(const std::vector<unsigned char>& winningAllyTeams, bool tim
 	if (gameOver)
 		return;
 
+	if (timeout) {
+		// client timed out, don't send anything (in theory the GAMEOVER
+		// message should not be able to reach the server if connection
+		// is lost, but in practice it can get through --> timeout check
+		// needs work)
+		if (!configHandler->GetBool("GameEndOnConnectionLoss")) {
+			LOG_L(L_WARNING, "[%s] lost connection to server; continuing game", __func__);
+			return;
+		}
+
+		LOG_L(L_ERROR, "[%s] lost connection to server; terminating game", __func__);
+	} else {
+		// pass the winner info to the host in the case it's a dedicated server
+		clientNet->Send(CBaseNetProtocol::Get().SendGameOver(gu->myPlayerNum, winningAllyTeams));
+	}
+
+
 	gameOver = true;
 	eventHandler.GameOver(winningAllyTeams);
 
@@ -1617,38 +1634,29 @@ void CGame::GameEnd(const std::vector<unsigned char>& winningAllyTeams, bool tim
 
 	CDemoRecorder* record = clientNet->GetDemoRecorder();
 
-	if (record != NULL) {
-		// Write CPlayer::Statistics and CTeam::Statistics to demo
-		// TODO: move this to a method in CTeamHandler
-		const int numPlayers = playerHandler->ActivePlayers();
-		const int numTeams = teamHandler->ActiveTeams() - int(gs->useLuaGaia);
+	if (record == nullptr)
+		return;
 
-		record->SetTime(gs->frameNum / GAME_SPEED, (int)gu->gameTime);
-		record->InitializeStats(numPlayers, numTeams);
-		// pass the list of winners
-		record->SetWinningAllyTeams(winningAllyTeams);
+	// Write CPlayer::Statistics and CTeam::Statistics to demo
+	// TODO: move this to a method in CTeamHandler
+	const int numPlayers = playerHandler->ActivePlayers();
+	const int numTeams = teamHandler->ActiveTeams() - int(gs->useLuaGaia);
 
-		// tell everybody about our APM, it's the most important statistic
-		clientNet->Send(CBaseNetProtocol::Get().SendPlayerStat(gu->myPlayerNum, playerHandler->Player(gu->myPlayerNum)->currentStats));
+	record->SetTime(gs->frameNum / GAME_SPEED, (int)gu->gameTime);
+	record->InitializeStats(numPlayers, numTeams);
+	// pass the list of winners
+	record->SetWinningAllyTeams(winningAllyTeams);
 
-		for (int i = 0; i < numPlayers; ++i) {
-			record->SetPlayerStats(i, playerHandler->Player(i)->currentStats);
-		}
-		for (int i = 0; i < numTeams; ++i) {
-			const CTeam* team = teamHandler->Team(i);
-			record->SetTeamStats(i, team->statHistory);
-			clientNet->Send(CBaseNetProtocol::Get().SendTeamStat(team->teamNum, team->GetCurrentStats()));
-		}
+	// tell everybody about our APM, it's the most important statistic
+	clientNet->Send(CBaseNetProtocol::Get().SendPlayerStat(gu->myPlayerNum, playerHandler->Player(gu->myPlayerNum)->currentStats));
+
+	for (int i = 0; i < numPlayers; ++i) {
+		record->SetPlayerStats(i, playerHandler->Player(i)->currentStats);
 	}
-
-	if (!timeout) {
-		// pass the winner info to the host in the case it's a dedicated server
-		clientNet->Send(CBaseNetProtocol::Get().SendGameOver(gu->myPlayerNum, winningAllyTeams));
-	} else {
-		// client timed out, don't send anything (in theory the GAMEOVER
-		// message not be able to reach the server if connection is lost,
-		// but in practice it can get through --> timeout check needs work)
-		LOG_L(L_ERROR, "[%s] lost connection to gameserver", __func__);
+	for (int i = 0; i < numTeams; ++i) {
+		const CTeam* team = teamHandler->Team(i);
+		record->SetTeamStats(i, team->statHistory);
+		clientNet->Send(CBaseNetProtocol::Get().SendTeamStat(team->teamNum, team->GetCurrentStats()));
 	}
 }
 
