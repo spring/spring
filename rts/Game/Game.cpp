@@ -1614,6 +1614,7 @@ void CGame::GameEnd(const std::vector<unsigned char>& winningAllyTeams, bool tim
 		// needs work)
 		if (!configHandler->GetBool("GameEndOnConnectionLoss")) {
 			LOG_L(L_WARNING, "[%s] lost connection to server; continuing game", __func__);
+			clientNet->InitLocalClient();
 			return;
 		}
 
