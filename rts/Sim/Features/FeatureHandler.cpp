@@ -189,14 +189,17 @@ void CFeatureHandler::Update()
 	SCOPED_TIMER("Sim::Features");
 
 	if ((gs->frameNum & 31) == 0) {
-		toBeFreedFeatureIDs.erase(std::remove_if(toBeFreedFeatureIDs.begin(), toBeFreedFeatureIDs.end(),
-			[this](int id) { return this->TryFreeFeatureID(id); }
-		), toBeFreedFeatureIDs.end());
-	}
+		const auto& pred = [this](int id) { return (this->TryFreeFeatureID(id)); };
+		const auto& iter = std::remove_if(toBeFreedFeatureIDs.begin(), toBeFreedFeatureIDs.end(), pred);
 
-	updateFeatures.erase(std::remove_if(updateFeatures.begin(), updateFeatures.end(),
-		[this](CFeature* feature) { return this->UpdateFeature(feature); }
-	), updateFeatures.end());
+		toBeFreedFeatureIDs.erase(iter, toBeFreedFeatureIDs.end());
+	}
+	{
+		const auto& pred = [this](CFeature* feature) { return (this->UpdateFeature(feature)); };
+		const auto& iter = std::remove_if(updateFeatures.begin(), updateFeatures.end(), pred);
+
+		updateFeatures.erase(iter, updateFeatures.end());
+	}
 }
 
 

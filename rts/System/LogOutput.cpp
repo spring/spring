@@ -16,7 +16,6 @@
 #include "System/UnorderedMap.hpp"
 
 #include <string>
-#include <vector>
 #include <iostream>
 #include <sstream>
 
@@ -273,10 +272,9 @@ void CLogOutput::Initialize()
 void CLogOutput::LogConfigInfo()
 {
 	LOG("============== <User Config> ==============");
-	const auto& settings = configHandler->GetDataWithoutDefaults();
 
-	for (const auto& it: settings) {
-		// list user's config; exclude non-engine configtags
+	// list user's non-default config; exclude non-engine tags
+	for (const auto& it: configHandler->GetDataWithoutDefaults()) {
 		if (ConfigVariable::GetMetaData(it.first) == nullptr)
 			continue;
 
@@ -291,19 +289,14 @@ void CLogOutput::LogSystemInfo()
 {
 	LOG("============== <User System> ==============");
 	LOG("  Spring %s", SpringVersion::GetFull().c_str());
-	LOG("  Build Environment: %s", SpringVersion::GetBuildEnvironment().c_str());
-	LOG("  Compiler Version:  %s", SpringVersion::GetCompiler().c_str());
-	LOG("  Operating System:  %s", Platform::GetOS().c_str());
-
-	if (Platform::Is64Bit()) {
-		LOG("    Word Size:       64-bit (native)");
-	} else {
-		LOG("    Word Size:       32-bit (%s)", ((Platform::Is32BitEmulation())? "emulated": "native"));
-	}
-
-	LOG("           CPU Clock: %s", spring_clock::GetName());
-	LOG("  Physical CPU Cores: %d", Threading::GetPhysicalCpuCores());
-	LOG("   Logical CPU Cores: %d", Threading::GetLogicalCpuCores());
+	LOG("    Build Environment: %s", SpringVersion::GetBuildEnvironment().c_str());
+	LOG("     Compiler Version: %s", SpringVersion::GetCompiler().c_str());
+	LOG("     Operating System: %s", Platform::GetOS().c_str());
+	LOG("     Binary Word Size: %s", Platform::GetWordSizeStr().c_str());
+	LOG("     Deque Chunk Size: %u", Platform::DequeChunkSize());
+	LOG("        Process Clock: %s", spring_clock::GetName());
+	LOG("   Physical CPU Cores: %d", Threading::GetPhysicalCpuCores());
+	LOG("    Logical CPU Cores: %d", Threading::GetLogicalCpuCores());
 	LOG("============== </User System> ==============");
 }
 
