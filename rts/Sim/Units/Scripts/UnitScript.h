@@ -119,8 +119,9 @@ public:
 	      CUnit* GetUnit()       { return unit; }
 	const CUnit* GetUnit() const { return unit; }
 
-	bool Tick(int deltaTime);
-	void TickAnims(int deltaTime, AnimType type, std::vector<AnimInfo>& doneAnims);
+	bool Tick(int tickRate);
+	bool TickAnim(int tickRate, AnimType animType, float3& pos, float3& rot, AnimInfo& ai);
+	void TickAnims(int tickRate, AnimType animType, std::vector<AnimInfo>& doneAnims);
 
 	// animation, used by CCobThread
 	void Spin(int piece, int axis, float speed, float accel);

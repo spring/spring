@@ -63,13 +63,13 @@ CR_REG_METADATA(CUnitScript, (
 CR_BIND(CUnitScript::AnimInfo,)
 
 CR_REG_METADATA_SUB(CUnitScript, AnimInfo,(
-		CR_MEMBER(axis),
-		CR_MEMBER(piece),
-		CR_MEMBER(speed),
-		CR_MEMBER(dest),
-		CR_MEMBER(accel),
-		CR_MEMBER(done),
-		CR_MEMBER(hasWaiting)
+	CR_MEMBER(axis),
+	CR_MEMBER(piece),
+	CR_MEMBER(speed),
+	CR_MEMBER(dest),
+	CR_MEMBER(accel),
+	CR_MEMBER(done),
+	CR_MEMBER(hasWaiting)
 ))
 
 
@@ -85,8 +85,10 @@ CUnitScript::CUnitScript(CUnit* unit)
 CUnitScript::~CUnitScript()
 {
 	// Remove us from possible animation ticking
-	if (HaveAnimations())
-		unitScriptEngine->RemoveInstance(this);
+	if (!HaveAnimations())
+		return;
+
+	unitScriptEngine->RemoveInstance(this);
 }
 
 
@@ -109,12 +111,7 @@ bool CUnitScript::MoveToward(float& cur, float dest, float speed)
 		return true;
 	}
 
-	if (delta > 0.0f) {
-		cur += speed;
-	} else {
-		cur -= speed;
-	}
-
+	cur += (speed * Sign(delta));
 	return false;
 }
 
@@ -130,7 +127,7 @@ bool CUnitScript::TurnToward(float& cur, float dest, float speed)
 {
 	float delta = dest - cur;
 
-	// clamp: -pi .. 0 .. +pi (remainder(x,TWOPI) would do the same but is slower due to streflop)
+	// clamp: -pi .. 0 .. +pi (fmod(x,TWOPI) would do the same but is slower due to streflop)
 	if (delta > math::PI) {
 		delta -= math::TWOPI;
 	} else if (delta <= -math::PI) {
@@ -142,14 +139,7 @@ bool CUnitScript::TurnToward(float& cur, float dest, float speed)
 		return true;
 	}
 
-	if (delta > 0.0f) {
-		cur += speed;
-	} else {
-		cur -= speed;
-	}
-
-	ClampRad(&cur);
-
+	cur = ClampRad(cur + speed * Sign(delta));
 	return false;
 }
 
@@ -162,107 +152,60 @@ bool CUnitScript::TurnToward(float& cur, float dest, float speed)
  * @param divisor int is the deltatime, it is not added before the call because speed may have to be updated
  * @return true if the desired speed is 0 and it is reached, false otherwise
  */
-bool CUnitScript::DoSpin(float& cur, float dest, float &speed, float accel, int divisor)
+bool CUnitScript::DoSpin(float& cur, float dest, float& speed, float accel, int divisor)
 {
 	const float delta = dest - speed;
 
 	// Check if we are not at the final speed and
-	// make sure we dont go past desired speed
+	// make sure we do not go past desired speed
 	if (math::fabsf(delta) <= accel) {
-		speed = dest;
-		if (speed == 0.0f)
+		if ((speed = dest) == 0.0f)
 			return true;
-	}
-	else {
-		if (delta > 0.0f) {
-			// accelerations are defined in speed/frame (at GAME_SPEED fps)
-			speed += accel * (float(GAME_SPEED) / divisor);
-		} else {
-			speed -= accel * (float(GAME_SPEED) / divisor);
-		}
+	} else {
+		// accelerations are defined in speed/frame (at GAME_SPEED fps)
+		speed += (accel * (GAME_SPEED * 1.0f / divisor) * Sign(delta));
 	}
 
-	cur += (speed / divisor);
-	ClampRad(&cur);
-
+	cur = ClampRad(cur + (speed / divisor));
 	return false;
 }
 
 
 
-void CUnitScript::TickAnims(int deltaTime, AnimType type, std::vector<AnimInfo>& doneAnims) {
-	switch (type) {
-		case AMove: {
-			int i = 0;
-			while (i < anims[type].size()) {
-				AnimInfo& ai = anims[type][i];
-				const int piece = ai.piece;
+bool CUnitScript::TickAnim(int tickRate, AnimType animType, float3& pos, float3& rot, AnimInfo& ai) {
+	switch (animType) {
+		case AMove: { return (MoveToward(pos[ai.axis], ai.dest, ai.speed / tickRate)); } break;
+		case ATurn: { return (TurnToward(rot[ai.axis], ai.dest, ai.speed / tickRate)); } break;
+		case ASpin: { return (DoSpin(rot[ai.axis], ai.dest, ai.speed, ai.accel, tickRate)); } break;
+		default: {} break;
+	}
 
-				// NOTE: we should not need to copy-and-set here, because
-				// MoveToward/TurnToward/DoSpin modify pos/rot by reference
-				float3 pos = pieces[piece]->GetPosition();
+	return false;
+}
 
-				if (MoveToward(pos[ai.axis], ai.dest, ai.speed / (1000 / deltaTime))) {
-					ai.done = true;
-					if (ai.hasWaiting)
-						doneAnims.push_back(ai);
+void CUnitScript::TickAnims(int tickRate, AnimType animType, std::vector<AnimInfo>& doneAnims) {
+	size_t i = 0;
 
-					ai = anims[type].back();
-					anims[type].pop_back();
-				} else {
-					++i;
-				}
+	while (i < anims[animType].size()) {
+		AnimInfo& ai = anims[animType][i];
+		LocalModelPiece& p = *pieces[ai.piece];
 
-				pieces[piece]->SetPosition(pos);
-			}
-		} break;
+		// note: must copy-and-set here (LMP dirty flag, etc)
+		float3 pos = p.GetPosition();
+		float3 rot = p.GetRotation();
 
-		case ATurn: {
-			int i = 0;
-			while (i < anims[type].size()) {
-				AnimInfo& ai = anims[type][i];
-				const int piece = ai.piece;
-				float3 rot = pieces[piece]->GetRotation();
+		if ((ai.done |= TickAnim(tickRate, animType, pos, rot, ai))) {
+			if (ai.hasWaiting)
+				doneAnims.push_back(ai);
 
-				if (TurnToward(rot[ai.axis], ai.dest, ai.speed / (1000 / deltaTime))) {
-					ai.done = true;
-					if (ai.hasWaiting)
-						doneAnims.push_back(ai);
+			ai = anims[animType].back();
+			anims[animType].pop_back();
+		} else {
+			++i;
+		}
 
-					ai = anims[type].back();
-					anims[type].pop_back();
-				} else {
-					++i;
-				}
-
-				pieces[piece]->SetRotation(rot);
-			}
-		} break;
-
-		case ASpin: {
-			int i = 0;
-			while (i < anims[type].size()) {
-				AnimInfo& ai = anims[type][i];
-				const int piece = ai.piece;
-				float3 rot = pieces[piece]->GetRotation();
-
-				if (DoSpin(rot[ai.axis], ai.dest, ai.speed, ai.accel, 1000 / deltaTime)) {
-					ai.done = true;
-					if (ai.hasWaiting)
-						doneAnims.push_back(ai);
-
-					ai = anims[type].back();
-					anims[type].pop_back();
-				} else {
-					++i;
-				}
-
-				pieces[piece]->SetRotation(rot);
-			}
-		} break;
-
-		default: {
-		} break;
+		p.SetPosition(pos);
+		p.SetRotation(rot);
 	}
 }
 
@@ -279,7 +222,7 @@ bool CUnitScript::Tick(int deltaTime)
 	static std::vector<AnimInfo> doneAnims[AMove + 1];
 
 	for (int animType = ATurn; animType <= AMove; animType++) {
-		TickAnims(deltaTime, AnimType(animType), doneAnims[animType]);
+		TickAnims(1000 / deltaTime, AnimType(animType), doneAnims[animType]);
 	}
 
 	// Tell listeners to unblock, and remove finished animations from the unit/script.
@@ -287,6 +230,7 @@ bool CUnitScript::Tick(int deltaTime)
 		for (AnimInfo& ai: doneAnims[animType]) {
 			AnimFinished((AnimType) animType, ai.piece, ai.axis);
 		}
+
 		doneAnims[animType].clear();
 	}
 
@@ -297,12 +241,9 @@ bool CUnitScript::Tick(int deltaTime)
 
 CUnitScript::AnimContainerTypeIt CUnitScript::FindAnim(AnimType type, int piece, int axis)
 {
-	for (auto it = anims[type].begin(); it != anims[type].end(); ++it) {
-		if (((*it).piece == piece) && ((*it).axis == axis))
-			return it;
-	}
-
-	return anims[type].end();
+	const auto& pred = [&](const AnimInfo& ai) { return (ai.piece == piece && ai.axis == axis); };
+	const auto& iter = std::find_if(anims[type].begin(), anims[type].end(), pred);
+	return iter;
 }
 
 void CUnitScript::RemoveAnim(AnimType type, const AnimContainerTypeIt& animInfoIt)
@@ -312,8 +253,8 @@ void CUnitScript::RemoveAnim(AnimType type, const AnimContainerTypeIt& animInfoI
 
 	AnimInfo& ai = *animInfoIt;
 
-	//! We need to unblock threads waiting on this animation, otherwise they will be lost in the void
-	//! NOTE: AnimFinished might result in new anims being added
+	// We need to unblock threads waiting on this animation, otherwise they will be lost in the void
+	// NOTE: AnimFinished might result in new anims being added
 	if (ai.hasWaiting)
 		AnimFinished(type, ai.piece, ai.axis);
 
@@ -322,9 +263,10 @@ void CUnitScript::RemoveAnim(AnimType type, const AnimContainerTypeIt& animInfoI
 
 	// If this was the last animation, remove from currently animating list
 	// FIXME: this could be done in a cleaner way
-	if (!HaveAnimations()) {
-		unitScriptEngine->RemoveInstance(this);
-	}
+	if (HaveAnimations())
+		return;
+
+	unitScriptEngine->RemoveInstance(this);
 }
 
 
@@ -343,14 +285,12 @@ void CUnitScript::AddAnim(AnimType type, int piece, int axis, float speed, float
 	if (type == AMove) {
 		destf = pieces[piece]->original->offset[axis] + dest;
 	} else {
-		destf = dest;
-		if (type == ATurn) {
-			ClampRad(&destf);
-		}
+		// clamp destination (angle) for turn-anims
+		destf = mix(dest, ClampRad(dest), type == ATurn);
 	}
 
 	AnimContainerTypeIt animInfoIt;
-	AnimInfo* ai = NULL;
+	AnimInfo* ai = nullptr;
 	AnimType overrideType = ANone;
 
 	// first find an animation of a type we override
@@ -385,9 +325,8 @@ void CUnitScript::AddAnim(AnimType type, int piece, int axis, float speed, float
 	if (animInfoIt == anims[type].end()) {
 		// If we were not animating before, inform the engine of this so it can schedule us
 		// FIXME: this could be done in a cleaner way
-		if (!HaveAnimations()) {
+		if (!HaveAnimations())
 			unitScriptEngine->AddInstance(this);
-		}
 
 		anims[type].emplace_back();
 		ai = &anims[type].back();
@@ -408,24 +347,27 @@ void CUnitScript::Spin(int piece, int axis, float speed, float accel)
 {
 	auto animInfoIt = FindAnim(ASpin, piece, axis);
 
-	//If we are already spinning, we may have to decelerate to the new speed
+	// if we are already spinning, we may have to decelerate to the new speed
 	if (animInfoIt != anims[ASpin].end()) {
 		AnimInfo* ai = &(*animInfoIt);
 		ai->dest = speed;
 
-		if (accel > 0) {
+		if (accel > 0.0f) {
 			ai->accel = accel;
 		} else {
-			//Go there instantly. Or have a defaul accel?
+			// Go there instantly. Or have a defaul accel?
 			ai->speed = speed;
-			ai->accel = 0;
+			ai->accel = 0.0f;
 		}
+
+		return;
+	}
+
+	// no acceleration means we start at desired speed instantly
+	if (accel <= 0.0f) {
+		AddAnim(ASpin, piece, axis,  speed, speed, 0.0f);
 	} else {
-		//No accel means we start at desired speed instantly
-		if (accel <= 0)
-			AddAnim(ASpin, piece, axis, speed, speed, 0);
-		else
-			AddAnim(ASpin, piece, axis, 0, speed, accel);
+		AddAnim(ASpin, piece, axis,   0.0f, speed, accel);
 	}
 }
 
@@ -434,14 +376,14 @@ void CUnitScript::StopSpin(int piece, int axis, float decel)
 {
 	auto animInfoIt = FindAnim(ASpin, piece, axis);
 
-	if (decel <= 0) {
+	if (decel <= 0.0f) {
 		RemoveAnim(ASpin, animInfoIt);
 	} else {
 		if (animInfoIt == anims[ASpin].end())
 			return;
 
 		AnimInfo* ai = &(*animInfoIt);
-		ai->dest = 0;
+		ai->dest = 0.0f;
 		ai->accel = decel;
 	}
 }
@@ -469,7 +411,9 @@ void CUnitScript::MoveNow(int piece, int axis, float destination)
 	LocalModelPiece* p = pieces[piece];
 
 	float3 pos = p->GetPosition();
-	pos[axis] = pieces[piece]->original->offset[axis] + destination;
+	float3 ofs = p->original->offset;
+
+	pos[axis] = ofs[axis] + destination;
 
 	p->SetPosition(pos);
 }
@@ -704,9 +648,12 @@ void CUnitScript::AttachUnit(int piece, int u)
 	}
 
 #ifndef _CONSOLE
-	if (unit->unitDef->IsTransportUnit() && unitHandler->GetUnit(u) != nullptr) {
-		unit->AttachUnit(unitHandler->GetUnit(u), piece);
-	}
+	CUnit* tgtUnit = unitHandler->GetUnit(u);
+
+	if (tgtUnit == nullptr || !unit->unitDef->IsTransportUnit())
+		return;
+
+	unit->AttachUnit(tgtUnit, piece);
 #endif
 }
 
@@ -714,9 +661,12 @@ void CUnitScript::AttachUnit(int piece, int u)
 void CUnitScript::DropUnit(int u)
 {
 #ifndef _CONSOLE
-	if (unit->unitDef->IsTransportUnit() && unitHandler->GetUnit(u) != nullptr) {
-		unit->DetachUnit(unitHandler->GetUnit(u));
-	}
+	CUnit* tgtUnit = unitHandler->GetUnit(u);
+
+	if (tgtUnit == nullptr || !unit->unitDef->IsTransportUnit())
+		return;
+
+	unit->DetachUnit(tgtUnit);
 #endif
 }
 
@@ -726,28 +676,26 @@ bool CUnitScript::NeedsWait(AnimType type, int piece, int axis)
 {
 	auto animInfoIt = FindAnim(type, piece, axis);
 
-	if (animInfoIt != anims[type].end()) {
-		AnimInfo* ai = &(*animInfoIt);
+	if (animInfoIt == anims[type].end())
+		return false;
 
-		if (!ai->done) {
-			ai->hasWaiting = true;
-			return true;
-		}
+	AnimInfo& ai = *animInfoIt;
 
-		// if the animation is already finished, listening for
-		// it just adds some overhead since either the current
-		// or the next Tick will remove it and call UnblockAll
-		// (which calls AnimFinished for each listener)
-		//
-		// we could notify the listener here, but a cleaner way
-		// is to treat the animation as if it did not exist and
-		// simply disregard the WaitFor* (no side-effects)
-		//
-		// if (ai->hasWaiting)
-		// 		AnimFinished(ai->type, ai->piece, ai->axis);
-	}
+	// if the animation is already finished, listening for
+	// it just adds some overhead since either the current
+	// or the next Tick will remove it and call UnblockAll
+	// (which calls AnimFinished for each listener)
+	//
+	// we could notify the listener here, but a cleaner way
+	// is to treat the animation as if it did not exist and
+	// simply disregard the WaitFor* (no side-effects)
+	//
+	// if (ai.hasWaiting)
+	// 		AnimFinished(ai.type, ai.piece, ai.axis);
+	if (ai.done)
+		return false;
 
-	return false;
+	return (ai.hasWaiting = true);
 }
 
 
@@ -768,10 +716,9 @@ void CUnitScript::Explode(int piece, int flags)
 	tracefile << absPos.x << " " << absPos.y << " " << absPos.z << " " << piece << " " << flags << "\n";
 #endif
 
-	if (!(flags & PF_NoHeatCloud)) {
-		// Do an explosion at the location first
+	// do an explosion at the location first
+	if (!(flags & PF_NoHeatCloud))
 		new CHeatCloudProjectile(nullptr, absPos, ZeroVector, 30, 30);
-	}
 
 	// If this is true, no stuff should fly off
 	if (flags & PF_NONE)
@@ -788,9 +735,9 @@ void CUnitScript::Explode(int piece, int flags)
 	// This means that we are going to do a full fledged piece explosion!
 	float3 baseSpeed = unit->speed;
 	float3 explSpeed;
-	explSpeed.x = (0.5f - gsRNG.NextFloat()) * 6.0f;
-	explSpeed.y = 1.2f + (gsRNG.NextFloat() * 5.0f);
-	explSpeed.z = (0.5f - gsRNG.NextFloat()) * 6.0f;
+	explSpeed.x = (0.5f -  gsRNG.NextFloat()) * 6.0f;
+	explSpeed.y =  1.2f + (gsRNG.NextFloat()  * 5.0f);
+	explSpeed.z = (0.5f -  gsRNG.NextFloat()) * 6.0f;
 
 	if (unit->pos.y - CGround::GetApproximateHeight(unit->pos.x, unit->pos.z) > 15)
 		explSpeed.y = (0.5f - gsRNG.NextFloat()) * 6.0f;
@@ -801,18 +748,16 @@ void CUnitScript::Explode(int piece, int flags)
 		baseSpeed *= (l2 / l);
 	}
 
-	explSpeed += baseSpeed;
-
 	const float partSat = projectileHandler->GetParticleSaturation();
 
-	int newFlags = 0;
+	unsigned int newFlags = 0;
 	newFlags |= (PF_Explode    *  ((flags & PF_Explode   ) != 0)                    );
 	newFlags |= (PF_Smoke      * (((flags & PF_Smoke     ) != 0) && partSat < 0.95f));
 	newFlags |= (PF_Fire       * (((flags & PF_Fire      ) != 0) && partSat < 0.95f));
 	newFlags |= (PF_NoCEGTrail *  ((flags & PF_NoCEGTrail) != 0)                    );
 	newFlags |= (PF_Recursive  *  ((flags & PF_Recursive ) != 0)                    );
 
-	new CPieceProjectile(unit, pieces[piece], absPos, explSpeed, newFlags, 0.5f);
+	new CPieceProjectile(unit, pieces[piece], absPos, explSpeed + baseSpeed, newFlags, 0.5f);
 #endif
 }
 
@@ -842,10 +787,8 @@ void CUnitScript::ShowFlare(int piece)
 #ifndef _CONSOLE
 	const float3 relPos = GetPiecePos(piece);
 	const float3 absPos = unit->GetObjectSpacePos(relPos);
-	const float3 dir = unit->lastMuzzleFlameDir;
-	const float size = unit->lastMuzzleFlameSize;
 
-	new CMuzzleFlame(absPos, unit->speed, dir, size);
+	new CMuzzleFlame(absPos, unit->speed, unit->lastMuzzleFlameDir, unit->lastMuzzleFlameSize);
 #endif
 }
 
@@ -1015,9 +958,8 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		LOG("Value 1: %d, 2: %d, 3: %d, 4: %d", p1, p2, p3, p4);
 		break;
 	case HEADING: {
-		if (p1 <= 0) {
+		if (p1 <= 0)
 			return unit->heading;
-		}
 
 		const CUnit* u = unitHandler->GetUnit(p1);
 
@@ -1041,7 +983,7 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 	} break;
 
 	case LAST_ATTACKER_ID:
-		return unit->lastAttacker? unit->lastAttacker->id: -1;
+		return ((unit->lastAttacker != nullptr)? unit->lastAttacker->id: -1);
 	case LOS_RADIUS:
 		return unit->realLosRadius;
 	case AIR_LOS_RADIUS:
@@ -1064,7 +1006,7 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 	case CURRENT_FUEL: //deprecated
 		return 0;
 	case TRANSPORT_ID:
-		return unit->transporter?unit->transporter->id:-1;
+		return ((unit->transporter != nullptr)? unit->transporter->id: -1);
 
 	case SHIELD_POWER: {
 		const CWeapon* shield = unit->shieldWeapon;
@@ -1076,22 +1018,21 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 	} break;
 
 	case STEALTH: {
-		return unit->stealth ? 1 : 0;
+		return unit->stealth;
 	} break;
 	case SONAR_STEALTH: {
-		return unit->sonarStealth ? 1 : 0;
+		return unit->sonarStealth;
 	} break;
 
 	case CRASHING:
-		return !!unit->IsCrashing();
+		return (unit->IsCrashing());
 
 	case COB_ID: {
-		if (p1 <= 0) {
+		if (p1 <= 0)
 			return unit->unitDef->cobID;
-		} else {
-			const CUnit* u = unitHandler->GetUnit(p1);
-			return ((u == nullptr)? -1 : u->unitDef->cobID);
-		}
+
+		const CUnit* u = unitHandler->GetUnit(p1);
+		return ((u == nullptr)? -1 : u->unitDef->cobID);
 	} break;
 
  	case PLAY_SOUND: {
@@ -1156,19 +1097,21 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		if (weapon == nullptr)
 			return 0;
 
-		//! if targetID is 0, just sets weapon->haveUserTarget
-		//! to false (and targetType to None) without attacking
+		// if targetID is 0, just sets weapon->haveUserTarget
+		// to false (and targetType to None) without attacking
 		CUnit* target = (targetID > 0)? unitHandler->GetUnit(targetID): nullptr;
-		return (weapon->Attack(SWeaponTarget(target, userTarget)) ? 1 : 0);
+		return (weapon->Attack(SWeaponTarget(target, userTarget)));
 	} break;
 
 	case SET_WEAPON_GROUND_TARGET: {
-		const int weaponID = p1 - 1;
+		const unsigned int weaponID = p1 - 1;
+
 		const float3 pos = float3(float(UNPACKX(p2)),
 		                          float(p3) / float(COBSCALE),
 		                          float(UNPACKZ(p2)));
 		const bool userTarget = !!p4;
-		if ((weaponID < 0) || (static_cast<size_t>(weaponID) >= unit->weapons.size()))
+
+		if (weaponID >= unit->weapons.size())
 			return 0;
 
 		CWeapon* weapon = unit->weapons[weaponID];
@@ -1201,9 +1144,9 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 			case 1: return int(unit->flankingBonusDir.x * COBSCALE);
 			case 2: return int(unit->flankingBonusDir.y * COBSCALE);
 			case 3: return int(unit->flankingBonusDir.z * COBSCALE);
-			case 4: unit->flankingBonusDir.x = (p2/(float)COBSCALE); return 0;
-			case 5: unit->flankingBonusDir.y = (p2/(float)COBSCALE); return 0;
-			case 6: unit->flankingBonusDir.z = (p2/(float)COBSCALE); return 0;
+			case 4: unit->flankingBonusDir.x = (p2 / (float)COBSCALE); return 0;
+			case 5: unit->flankingBonusDir.y = (p2 / (float)COBSCALE); return 0;
+			case 6: unit->flankingBonusDir.z = (p2 / (float)COBSCALE); return 0;
 			case 7: unit->flankingBonusDir = float3(p2/(float)COBSCALE, p3/(float)COBSCALE, p4/(float)COBSCALE).Normalize(); return 0;
 			default: return(-1);
 		}
@@ -1215,7 +1158,7 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		return int((unit->flankingBonusAvgDamage - unit->flankingBonusDifDamage) * COBSCALE);
 
 	case KILL_UNIT: {
-		//! ID 0 is reserved for the script's owner
+		// ID 0 is reserved for the script's owner
 		CUnit* u = (p1 > 0)? unitHandler->GetUnit(p1): this->unit;
 
 		if (u == nullptr)
@@ -1499,9 +1442,7 @@ void CUnitScript::SetUnitVal(int val, int param)
 		} break;
 
 		case HEADING: {
-			unit->heading = param % COBSCALE;
-			unit->UpdateDirVectors(!unit->upright);
-			unit->UpdateMidAndAimPos();
+			unit->SetHeading(param % COBSCALE, !unit->upright);
 		} break;
 		case LOS_RADIUS: {
 			unit->ChangeLos(param, unit->realAirLosRadius);
