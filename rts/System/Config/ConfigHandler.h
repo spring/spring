@@ -51,13 +51,13 @@ public:
 	void NotifyOnChange(T* observer, const std::vector<std::string>& configs)
 	{
 		// issues: still needs to call configHandler->Get() on startup, automate it
-		AddObserver(std::bind(&T::ConfigNotify, observer, std::placeholders::_1, std::placeholders::_2), (void*)observer, configs);
+		AddObserver(std::bind(&T::ConfigNotify, observer, std::placeholders::_1, std::placeholders::_2), (void*) observer, configs);
 	}
 
 	template<class T>
 	void RemoveObserver(T* observer)
 	{
-		RemoveObserver((void*)observer);
+		RemoveObserver((void*) observer);
 	}
 
 
@@ -150,8 +150,8 @@ public:
 protected:
 	typedef std::function<void(const std::string&, const std::string&)> ConfigNotifyCallback;
 
-	virtual void AddObserver(ConfigNotifyCallback observer, void* holder, const std::vector<std::string>& configs) = 0;
-	virtual void RemoveObserver(void* holder) = 0;
+	virtual void AddObserver(ConfigNotifyCallback callback, void* observer, const std::vector<std::string>& configs) = 0;
+	virtual void RemoveObserver(void* observer) = 0;
 
 private:
 	/// @see GetString
