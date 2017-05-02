@@ -10,6 +10,7 @@
 #endif
 #include "ExternalAI/EngineOutHandler.h"
 #include "ExternalAI/SkirmishAIHandler.h"
+#include "Game/ClientData.h"
 #include "Game/CommandMessage.h"
 #include "Game/GameSetup.h"
 #include "Game/GlobalUnsynced.h"
@@ -28,6 +29,7 @@
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Path/IPathManager.h"
 #include "Sim/Units/UnitHandler.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
 #include "System/GlobalConfig.h"
 #include "System/Log/ILog.h"
@@ -37,6 +39,8 @@
 #include "System/LoadSave/DemoRecorder.h"
 #include "System/Net/UnpackPacket.h"
 #include "System/Sound/ISound.h"
+
+CONFIG(bool, LogClientData).defaultValue(false);
 
 #define LOG_SECTION_NET "Net"
 LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_NET)
@@ -1305,6 +1309,39 @@ void CGame::ClientReadNet()
 				} catch (const netcode::UnpackPacketException& ex) {
 					LOG_L(L_ERROR, "[Game::%s] invalid NETMSG_CREATE_NEWPLAYER: %s", __FUNCTION__, ex.what());
 				}
+				break;
+			}
+
+			case NETMSG_CLIENTDATA: {
+				if (!configHandler->GetBool("LogClientData"))
+					break;
+
+				const unsigned char fixedSize = sizeof(unsigned char) + sizeof(unsigned short) + sizeof(unsigned char);
+
+				netcode::UnpackPacket pckt(packet, 1);
+				unsigned short totalSize;
+				unsigned char playerNum;
+				pckt >> totalSize;
+				pckt >> playerNum;
+
+				if (!playerHandler->IsValidPlayer(playerNum)) {
+					LOG_L(L_ERROR, "Invalid player number (%i) in NETMSG_CLIENTDATA", playerNum);
+					break;
+				}
+
+				std::vector<std::uint8_t> buf(totalSize - fixedSize);
+				pckt >> buf;
+				std::string clientData = ClientData::GetUncompressed(buf);
+
+				if (clientData.empty()) {
+					LOG_L(L_ERROR, "Corrupt Client Data received from player %d", playerNum);
+					break;
+				}
+
+				CPlayer* sender = playerHandler->Player(playerNum);
+				LOG("[Game::%s] Client Data for player %d (%s): \n%s", __FUNCTION__, playerNum, sender->name.c_str(), clientData.c_str());
+
+				AddTraffic(-1, packetCode, dataLength);
 				break;
 			}
 

@@ -402,6 +402,18 @@ PacketType CBaseNetProtocol::SendCurrentFrameProgress(int frameNum)
 }
 
 
+PacketType CBaseNetProtocol::SendClientData(uchar playernum, const std::vector<std::uint8_t>& data)
+{
+	unsigned short size = 1 + 1 + 2 + data.size();
+	PackPacket* packet = new PackPacket(size, NETMSG_CLIENTDATA);
+	*packet << size;
+	*packet << playernum;
+	*packet << data;
+
+	return PacketType(packet);
+}
+
+
 
 #ifdef SYNCDEBUG
 PacketType CBaseNetProtocol::SendSdCheckrequest(int frameNum)
@@ -493,6 +505,7 @@ CBaseNetProtocol::CBaseNetProtocol()
 	proto->AddType(NETMSG_ALLIANCE, 4);
 	proto->AddType(NETMSG_CCOMMAND, -2);
 	proto->AddType(NETMSG_TEAMSTAT, 2 + sizeof(TeamStatistics));
+	proto->AddType(NETMSG_CLIENTDATA, -2);
 	proto->AddType(NETMSG_REQUEST_TEAMSTAT, 4 );
 
 	proto->AddType(NETMSG_CREATE_NEWPLAYER, -2);

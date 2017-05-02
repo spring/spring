@@ -7,6 +7,7 @@
 
 #include "PreGame.h"
 
+#include "ClientData.h"
 #include "ClientSetup.h"
 #include "System/Sync/FPUCheck.h"
 #include "Game.h"
@@ -358,6 +359,9 @@ void CPreGame::UpdateClientNet()
 				gu->SetMyPlayer(playerNum);
 
 				LOG("[PreGame::%s] received user number %i (team %i, allyteam %i), creating load-screen", __func__, gu->myPlayerNum, gu->myTeam, gu->myAllyTeam);
+
+				// respond with the client data
+				clientNet->Send(CBaseNetProtocol::Get().SendClientData(playerNum, ClientData::GetCompressed()));
 
 				CLoadScreen::CreateInstance(gameSetup->MapFile(), modArchive, savefile);
 
