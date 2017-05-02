@@ -5,9 +5,6 @@
 #include "Game/Game.h"
 #include "GameServer.h"
 
-#ifdef _WIN32
-#  include "winerror.h" // TODO someone on windows (MinGW? VS?) please check if this is required
-#endif
 #include "ExternalAI/EngineOutHandler.h"
 #include "ExternalAI/SkirmishAIHandler.h"
 #include "Game/ClientData.h"
