@@ -153,7 +153,7 @@ void ConfigHandlerImpl::RemoveDefaults()
 			continue;
 
 		// Copy the map; we modify the original while iterating over the copy.
-		StringMap file = source->GetData();
+		const StringMap file = source->GetData();
 
 		for (auto it = file.cbegin(); it != file.cend(); ++it) {
 			// Does the key exist in `defaults'?
@@ -207,8 +207,10 @@ void ConfigHandlerImpl::Delete(const std::string& key)
 		// violate Liskov Substitution Principle... (by blocking modifications)
 		ReadWriteConfigSource* rwcs = dynamic_cast<ReadWriteConfigSource*>(s);
 
-		if (rwcs != nullptr)
-			rwcs->Delete(key);
+		if (rwcs == nullptr)
+			continue;
+
+		rwcs->Delete(key);
 	}
 }
 
