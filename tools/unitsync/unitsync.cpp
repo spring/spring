@@ -315,7 +315,7 @@ class UnitsyncConfigObserver
 {
 public:
 	UnitsyncConfigObserver() {
-		configHandler->NotifyOnChange(this);
+		configHandler->NotifyOnChange(this, {"UnitsyncAutoUnLoadMaps"});
 	}
 
 	~UnitsyncConfigObserver() {
@@ -323,9 +323,7 @@ public:
 	}
 
 	void ConfigNotify(const std::string& key, const std::string& value) {
-		if (key == "UnitsyncAutoUnLoadMaps" ) {
-			autoUnLoadmap = configHandler->GetBool("UnitsyncAutoUnLoadMaps");
-		}
+		autoUnLoadmap = configHandler->GetBool("UnitsyncAutoUnLoadMaps");
 	}
 };
 
