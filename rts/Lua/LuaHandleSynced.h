@@ -87,7 +87,8 @@ class CSyncedLuaHandle : public CLuaHandle
 			int projectileID,
 			bool paralyzer,
 			float* newDamage,
-			float* impulseMult);
+			float* impulseMult
+		);
 
 		bool FeaturePreDamaged(
 			const CFeature* feature,
@@ -96,7 +97,8 @@ class CSyncedLuaHandle : public CLuaHandle
 			int weaponDefID,
 			int projectileID,
 			float* newDamage,
-			float* impulseMult);
+			float* impulseMult
+		);
 
 		bool ShieldPreDamaged(
 			const CProjectile* projectile,
@@ -105,7 +107,9 @@ class CSyncedLuaHandle : public CLuaHandle
 			bool bounceProjectile,
 			const CWeapon* beamEmitter,
 			const CUnit* beamCarrier,
-			const float3& hitPos);
+			const float3& startPos,
+			const float3& hitPos
+		);
 
 		bool SyncedActionFallback(const string& line, int playerID);
 

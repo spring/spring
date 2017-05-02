@@ -1644,11 +1644,24 @@ end
 --  Shield call-ins
 --
 
-function gadgetHandler:ShieldPreDamaged(proID, proOwnerID, shieldEmitterWeaponNum, shieldCarrierUnitID, bounceProjectile, beamEmitterWeaponNum, beamEmitterUnitID, x, y, z)
-
+function gadgetHandler:ShieldPreDamaged(
+  proID,
+  proOwnerID,
+  shieldEmitterWeapNum,
+  shieldCarrierUnitID,
+  bounceProj,
+  beamEmitterWeapNum,
+  beamEmitterUnitID,
+  spx,
+  spy,
+  spz,
+  hpx,
+  hpy,
+  hpz
+)
   for _,g in r_ipairs(self.ShieldPreDamagedList) do
     -- first gadget to handle this consumes the event
-    if (g:ShieldPreDamaged(proID, proOwnerID, shieldEmitterWeaponNum, shieldCarrierUnitID, bounceProjectile, beamEmitterWeaponNum, beamEmitterUnitID, x, y, z)) then
+    if (g:ShieldPreDamaged(proID, proOwnerID, shieldEmitterWeapNum, shieldCarrierUnitID, bounceProj, beamEmitterWeapNum, beamEmitterUnitID, spx, spy, spz, hpx, hpy, hpz)) then
       return true
     end
   end

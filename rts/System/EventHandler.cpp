@@ -375,9 +375,10 @@ bool CEventHandler::ShieldPreDamaged(
 	bool bounceProjectile,
 	const CWeapon* beamEmitter,
 	const CUnit* beamCarrier,
+	const float3& startPos,
 	const float3& hitPos
 ) {
-	CONTROL_ITERATE_DEF_FALSE(ShieldPreDamaged, projectile, shieldEmitter, shieldCarrier, bounceProjectile, beamEmitter, beamCarrier, hitPos)
+	CONTROL_ITERATE_DEF_FALSE(ShieldPreDamaged, projectile, shieldEmitter, shieldCarrier, bounceProjectile, beamEmitter, beamCarrier, startPos, hitPos)
 }
 
 

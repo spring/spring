@@ -130,7 +130,7 @@ bool CPlasmaRepulser::IncomingProjectile(CWeaponProjectile* p, const float3& hit
 	const int defRechargeDelay = weaponDef->shieldRechargeDelay;
 
 	// gadget handles the collision event, don't touch the projectile
-	if (eventHandler.ShieldPreDamaged(p, this, owner, weaponDef->shieldRepulser, nullptr, nullptr, hitPos))
+	if (eventHandler.ShieldPreDamaged(p, this, owner, weaponDef->shieldRepulser, nullptr, nullptr, p->GetStartPos(), hitPos))
 		return false;
 
 	const DamageArray& damageArray = p->damages->GetDynamicDamages(p->GetStartPos(), p->pos);
@@ -217,13 +217,13 @@ void CPlasmaRepulser::SlowUpdate()
 }
 
 
-bool CPlasmaRepulser::IncomingBeam(const CWeapon* emitter, const float3& start, float damageMultiplier, const float3& hitPos)
+bool CPlasmaRepulser::IncomingBeam(const CWeapon* emitter, const float3& startPos, const float3& hitPos, float damageMultiplier)
 {
 	// gadget handles the collision event, don't touch the projectile
-	if (eventHandler.ShieldPreDamaged(nullptr, this, owner, weaponDef->shieldRepulser, emitter, emitter->owner, hitPos))
+	if (eventHandler.ShieldPreDamaged(nullptr, this, owner, weaponDef->shieldRepulser, emitter, emitter->owner, startPos, hitPos))
 		return false;
 
-	const DamageArray& damageArray = emitter->damages->GetDynamicDamages(start, weaponMuzzlePos);
+	const DamageArray& damageArray = emitter->damages->GetDynamicDamages(startPos, weaponMuzzlePos);
 	const float shieldDamage = damageArray.Get(weaponDef->shieldArmorType);
 
 	if (curPower < shieldDamage)
@@ -233,7 +233,7 @@ bool CPlasmaRepulser::IncomingBeam(const CWeapon* emitter, const float3& start, 
 	if (teamHandler->Team(owner->team)->res.energy < weaponDef->shieldEnergyUse)
 		return false;
 
-	if (weaponDef->shieldPower > 0)
+	if (weaponDef->shieldPower > 0.0f)
 		curPower -= shieldDamage * damageMultiplier;
 
 	return true;

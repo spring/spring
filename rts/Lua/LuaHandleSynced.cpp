@@ -979,8 +979,9 @@ bool CSyncedLuaHandle::ShieldPreDamaged(
 	bool bounceProjectile,
 	const CWeapon* beamEmitter,
 	const CUnit* beamCarrier,
-	const float3& hitPos)
-{
+	const float3& startPos,
+	const float3& hitPos
+) {
 	assert((projectile != nullptr) || ((beamEmitter != nullptr) && (beamCarrier != nullptr)));
 	LUA_CALL_IN_CHECK(L, false);
 	luaL_checkstack(L, 2 + 7 + 1, __func__);
@@ -991,8 +992,8 @@ bool CSyncedLuaHandle::ShieldPreDamaged(
 		return false;
 
 	// push the call-in arguments
-	int numArgs;
-	if (projectile != nullptr) { //Regular projectiles
+	if (projectile != nullptr) {
+		// Regular projectiles
 		lua_pushnumber(L, projectile->id);
 		lua_pushnumber(L, projectile->GetOwnerID());
 		lua_pushnumber(L, shieldEmitter->weaponNum + LUA_WEAPON_BASE_INDEX);
@@ -1000,7 +1001,8 @@ bool CSyncedLuaHandle::ShieldPreDamaged(
 		lua_pushboolean(L, bounceProjectile);
 		lua_pushnil(L);
 		lua_pushnil(L);
-	} else { //Beam weapons
+	} else {
+		// Beam projectiles
 		lua_pushnumber(L, -1);
 		lua_pushnumber(L, -1);
 		lua_pushnumber(L, shieldEmitter->weaponNum + LUA_WEAPON_BASE_INDEX);
@@ -1009,12 +1011,16 @@ bool CSyncedLuaHandle::ShieldPreDamaged(
 		lua_pushnumber(L, beamEmitter->weaponNum + LUA_WEAPON_BASE_INDEX);
 		lua_pushnumber(L, beamCarrier->id);
 	}
+
+	lua_pushnumber(L, startPos.x);
+	lua_pushnumber(L, startPos.y);
+	lua_pushnumber(L, startPos.z);
 	lua_pushnumber(L, hitPos.x);
 	lua_pushnumber(L, hitPos.y);
 	lua_pushnumber(L, hitPos.z);
 
 	// call the routine
-	if (!RunCallInTraceback(L, cmdStr, 10, 1, traceBack.GetErrFuncIdx(), false))
+	if (!RunCallInTraceback(L, cmdStr, 13, 1, traceBack.GetErrFuncIdx(), false))
 		return false;
 
 	// pop the return-value; must be true or false

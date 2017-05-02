@@ -37,7 +37,7 @@ public:
 	int GetHitFrames() const { return hitFrames; }
 	bool CanIntercept(unsigned interceptedType, int allyTeam) const;
 
-	bool IncomingBeam(const CWeapon* emitter, const float3& start, float damageMultiplier, const float3& hitPos);
+	bool IncomingBeam(const CWeapon* emitter, const float3& startPos, const float3& hitPos, float damageMultiplier);
 	bool IncomingProjectile(CWeaponProjectile* p, const float3& hitPos);
 
 	//collisions

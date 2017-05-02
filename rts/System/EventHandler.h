@@ -168,7 +168,8 @@ class CEventHandler
 			int projectileID,
 			bool paralyzer,
 			float* newDamage,
-			float* impulseMult);
+			float* impulseMult
+		);
 
 		bool FeaturePreDamaged(
 			const CFeature* feature,
@@ -177,7 +178,8 @@ class CEventHandler
 			int weaponDefID,
 			int projectileID,
 			float* newDamage,
-			float* impulseMult);
+			float* impulseMult
+		);
 
 		bool ShieldPreDamaged(
 			const CProjectile* projectile,
@@ -186,7 +188,9 @@ class CEventHandler
 			bool bounceProjectile,
 			const CWeapon* beamEmitter,
 			const CUnit* beamCarrier,
-			const float3& hitPos);
+			const float3& startPos,
+			const float3& hitPos
+		);
 
 		bool SyncedActionFallback(const string& line, int playerID);
 		/// @}

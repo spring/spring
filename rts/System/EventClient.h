@@ -209,15 +209,15 @@ class CEventClient
 		virtual bool TerraformComplete(const CUnit* unit, const CUnit* build);
 		virtual bool MoveCtrlNotify(const CUnit* unit, int data);
 
-		virtual int AllowWeaponTargetCheck(unsigned int attackerID, unsigned int attackerWeaponNum, unsigned int attackerWeaponDefID);
+		virtual int AllowWeaponTargetCheck(unsigned int attackerID, unsigned int attackerWeaponNum, unsigned int attackerWeaponDefID) { return -1; }
 		virtual bool AllowWeaponTarget(
 			unsigned int attackerID,
 			unsigned int targetID,
 			unsigned int attackerWeaponNum,
 			unsigned int attackerWeaponDefID,
 			float* targetPriority
-		);
-		virtual bool AllowWeaponInterceptTarget(const CUnit* interceptorUnit, const CWeapon* interceptorWeapon, const CProjectile* interceptorTarget);
+		) { return true; }
+		virtual bool AllowWeaponInterceptTarget(const CUnit* interceptorUnit, const CWeapon* interceptorWeapon, const CProjectile* interceptorTarget) { return true; }
 
 		virtual bool UnitPreDamaged(
 			const CUnit* unit,
@@ -227,7 +227,8 @@ class CEventClient
 			int projectileID,
 			bool paralyzer,
 			float* newDamage,
-			float* impulseMult);
+			float* impulseMult
+		) { return false; }
 
 		virtual bool FeaturePreDamaged(
 			const CFeature* feature,
@@ -236,7 +237,8 @@ class CEventClient
 			int weaponDefID,
 			int projectileID,
 			float* newDamage,
-			float* impulseMult);
+			float* impulseMult
+		) { return false; }
 
 		virtual bool ShieldPreDamaged(
 			const CProjectile* projectile,
@@ -245,7 +247,9 @@ class CEventClient
 			bool bounceProjectile,
 			const CWeapon* beamEmitter,
 			const CUnit* beamCarrier,
-			const float3& hitPos);
+			const float3& startPos,
+			const float3& hitPos
+		) { return false; }
 
 		virtual bool SyncedActionFallback(const string& line, int playerID);
 		/// @}

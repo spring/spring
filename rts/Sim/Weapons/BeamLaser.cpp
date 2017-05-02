@@ -285,9 +285,9 @@ void CBeamLaser::FireInternal(float3 curDir)
 	float3 newDir;
 
 	// objects at the end of the beam
-	CUnit* hitUnit = NULL;
-	CFeature* hitFeature = NULL;
-	CPlasmaRepulser* hitShield = NULL;
+	CUnit* hitUnit = nullptr;
+	CFeature* hitFeature = nullptr;
+	CPlasmaRepulser* hitShield = nullptr;
 	static std::vector<TraceRay::SShieldDist> hitShields;
 	CollisionQuery hitColQuery;
 
@@ -325,8 +325,8 @@ void CBeamLaser::FireInternal(float3 curDir)
 			// terminate beam at water surface if necessary
 			if ((curDir.y < 0.0f) && ((curPos.y + curDir.y * beamLength) <= 0.0f)) {
 				beamLength = curPos.y / -curDir.y;
-				hitUnit = NULL;
-				hitFeature = NULL;
+				hitUnit = nullptr;
+				hitFeature = nullptr;
 			}
 		}
 
@@ -338,10 +338,10 @@ void CBeamLaser::FireInternal(float3 curDir)
 		TraceRay::TraceRayShields(this, curPos, curDir, beamLength, hitShields);
 
 		for (const TraceRay::SShieldDist& sd: hitShields) {
-			if(sd.dist < beamLength && sd.rep->IncomingBeam(this, curPos, salvoDamageMult, curPos + (curDir * sd.dist))) {
+			if (sd.dist < beamLength && sd.rep->IncomingBeam(this, curPos, curPos + (curDir * sd.dist), salvoDamageMult)) {
 				beamLength = sd.dist;
-				hitUnit = NULL;
-				hitFeature = NULL;
+				hitUnit = nullptr;
+				hitFeature = nullptr;
 				hitShield = sd.rep;
 				break;
 			}

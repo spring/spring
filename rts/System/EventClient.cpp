@@ -61,40 +61,6 @@ bool CEventClient::AllowStartPosition(int playerID, int teamID, unsigned char re
 bool CEventClient::TerraformComplete(const CUnit* unit, const CUnit* build) { return false; }
 bool CEventClient::MoveCtrlNotify(const CUnit* unit, int data) { return false; }
 
-int CEventClient::AllowWeaponTargetCheck(unsigned int attackerID, unsigned int attackerWeaponNum, unsigned int attackerWeaponDefID) { return -1; }
-bool CEventClient::AllowWeaponTarget(
-	unsigned int attackerID,
-	unsigned int targetID,
-	unsigned int attackerWeaponNum,
-	unsigned int attackerWeaponDefID,
-	float* targetPriority
-) { return true; }
-bool CEventClient::AllowWeaponInterceptTarget(const CUnit* interceptorUnit, const CWeapon* interceptorWeapon, const CProjectile* interceptorTarget) { return true; }
-bool CEventClient::UnitPreDamaged(
-	const CUnit* unit,
-	const CUnit* attacker,
-	float damage,
-	int weaponDefID,
-	int projectileID,
-	bool paralyzer,
-	float* newDamage,
-	float* impulseMult) { return false; }
-bool CEventClient::FeaturePreDamaged(
-	const CFeature* feature,
-	const CUnit* attacker,
-	float damage,
-	int weaponDefID,
-	int projectileID,
-	float* newDamage,
-	float* impulseMult) { return false; }
-bool CEventClient::ShieldPreDamaged(
-	const CProjectile* projectile,
-	const CWeapon* shieldEmitter,
-	const CUnit* shieldCarrier,
-	bool bounceProjectile,
-	const CWeapon* beamEmitter,
-	const CUnit* beamCarrier,
-	const float3& hitPos)  { return false; }
 
 
 bool CEventClient::SyncedActionFallback(const string& line, int playerID) { return false; }
