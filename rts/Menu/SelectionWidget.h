@@ -85,6 +85,8 @@ public:
 private:
 	void CleanWindow();
 	void UpdateAvailableScripts();
+	void AddAIScriptsFromArchive();
+
 
 	agui::Button* mod;
 	agui::TextElement* modT;

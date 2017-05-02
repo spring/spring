@@ -117,17 +117,23 @@ void SelectionWidget::ShowMapList()
 	curSelect->list->SetCurrentItem(userMap);
 }
 
-
-static void AddArchive(const std::string& name) {
-	if (name.empty())
+void SelectionWidget::AddAIScriptsFromArchive()
+{
+	if (userMod == SelectionWidget::NoModSelect || userMap == SelectionWidget::NoMapSelect )
 		return;
-	vfsHandler->AddArchive(name, true);
-}
 
-static void RemoveArchive(const std::string& name) {
-	if (name.empty())
-		return;
-	vfsHandler->RemoveArchive(name);
+	vfsHandler->AddArchive(userMod, true);
+	vfsHandler->AddArchive(userMap, true);
+
+	std::vector< std::vector<InfoItem> > luaAIInfos = luaAIImplHandler.LoadInfos();
+	for(int i=0; i<luaAIInfos.size(); i++) {
+		for (int j=0; j<luaAIInfos[i].size(); j++) {
+			if (luaAIInfos[i][j].key==SKIRMISH_AI_PROPERTY_SHORT_NAME)
+				availableScripts.push_back(luaAIInfos[i][j].GetValueAsString());
+		}
+	}
+	vfsHandler->RemoveArchive(userMap);
+	vfsHandler->RemoveArchive(userMod);
 }
 
 void SelectionWidget::UpdateAvailableScripts()
@@ -137,20 +143,8 @@ void SelectionWidget::UpdateAvailableScripts()
 
 	availableScripts.clear();
 	// load selected archives to get lua ais
-	AddArchive(userMod);
-	AddArchive(userMap);
 
-	std::vector< std::vector<InfoItem> > luaAIInfos = luaAIImplHandler.LoadInfos();
-	for(int i=0; i<luaAIInfos.size(); i++) {
-		for (int j=0; j<luaAIInfos[i].size(); j++) {
-			if (luaAIInfos[i][j].key==SKIRMISH_AI_PROPERTY_SHORT_NAME)
-				availableScripts.push_back(luaAIInfos[i][j].GetValueAsString());
-		}
-	}
-
-	// close archives
-	RemoveArchive(userMap);
-	RemoveArchive(userMod);
+	AddAIScriptsFromArchive();
 
 	// add sandbox script to list
 	availableScripts.push_back(SandboxAI);
