@@ -172,40 +172,21 @@ bool CUnitScript::DoSpin(float& cur, float dest, float& speed, float accel, int 
 
 
 
-bool CUnitScript::TickAnim(int tickRate, AnimType animType, float3& pos, float3& rot, AnimInfo& ai) {
-	switch (animType) {
-		case AMove: { return (MoveToward(pos[ai.axis], ai.dest, ai.speed / tickRate)); } break;
-		case ATurn: { return (TurnToward(rot[ai.axis], ai.dest, ai.speed / tickRate)); } break;
-		case ASpin: { return (DoSpin(rot[ai.axis], ai.dest, ai.speed, ai.accel, tickRate)); } break;
-		default: {} break;
-	}
+void CUnitScript::TickAnims(int tickRate, const TickAnimFunc& tickAnimFunc, AnimContainerType& liveAnims, AnimContainerType& doneAnims) {
+	for (size_t i = 0; i < liveAnims.size(); ) {
+		AnimInfo& ai = liveAnims[i];
+		LocalModelPiece& lmp = *pieces[ai.piece];
 
-	return false;
-}
-
-void CUnitScript::TickAnims(int tickRate, AnimType animType, std::vector<AnimInfo>& doneAnims) {
-	size_t i = 0;
-
-	while (i < anims[animType].size()) {
-		AnimInfo& ai = anims[animType][i];
-		LocalModelPiece& p = *pieces[ai.piece];
-
-		// note: must copy-and-set here (LMP dirty flag, etc)
-		float3 pos = p.GetPosition();
-		float3 rot = p.GetRotation();
-
-		if ((ai.done |= TickAnim(tickRate, animType, pos, rot, ai))) {
+		if ((ai.done |= (this->*tickAnimFunc)(tickRate, lmp, ai))) {
 			if (ai.hasWaiting)
 				doneAnims.push_back(ai);
 
-			ai = anims[animType].back();
-			anims[animType].pop_back();
-		} else {
-			++i;
+			ai = liveAnims.back();
+			liveAnims.pop_back();
+			continue;
 		}
 
-		p.SetPosition(pos);
-		p.SetRotation(rot);
+		++i;
 	}
 }
 
@@ -219,10 +200,12 @@ bool CUnitScript::Tick(int deltaTime)
 {
 	// vector of indexes of finished animations,
 	// so we can get rid of them in constant time
-	static std::vector<AnimInfo> doneAnims[AMove + 1];
+	static AnimContainerType doneAnims[AMove + 1];
+	// tick-functions; these never change address
+	static constexpr TickAnimFunc tickAnimFuncs[AMove + 1] = {&CUnitScript::TickTurnAnim, &CUnitScript::TickSpinAnim, &CUnitScript::TickMoveAnim};
 
 	for (int animType = ATurn; animType <= AMove; animType++) {
-		TickAnims(1000 / deltaTime, AnimType(animType), doneAnims[animType]);
+		TickAnims(1000 / deltaTime, tickAnimFuncs[animType], anims[animType], doneAnims[animType]);
 	}
 
 	// Tell listeners to unblock, and remove finished animations from the unit/script.
