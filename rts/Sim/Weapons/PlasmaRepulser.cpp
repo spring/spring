@@ -130,7 +130,8 @@ bool CPlasmaRepulser::IncomingProjectile(CWeaponProjectile* p, const float3& hit
 	const int defRechargeDelay = weaponDef->shieldRechargeDelay;
 
 	// gadget handles the collision event, don't touch the projectile
-	if (eventHandler.ShieldPreDamaged(p, this, owner, weaponDef->shieldRepulser, nullptr, nullptr, p->GetStartPos(), hitPos))
+	// start-pos only makes sense for beams, pass current p->pos here
+	if (eventHandler.ShieldPreDamaged(p, this, owner, weaponDef->shieldRepulser, nullptr, nullptr, p->pos, hitPos))
 		return false;
 
 	const DamageArray& damageArray = p->damages->GetDynamicDamages(p->GetStartPos(), p->pos);
@@ -220,6 +221,8 @@ void CPlasmaRepulser::SlowUpdate()
 bool CPlasmaRepulser::IncomingBeam(const CWeapon* emitter, const float3& startPos, const float3& hitPos, float damageMultiplier)
 {
 	// gadget handles the collision event, don't touch the projectile
+	// note that startPos only equals the beam's true origin (which is
+	// p->GetStartPos()) if it did not get reflected
 	if (eventHandler.ShieldPreDamaged(nullptr, this, owner, weaponDef->shieldRepulser, emitter, emitter->owner, startPos, hitPos))
 		return false;
 
