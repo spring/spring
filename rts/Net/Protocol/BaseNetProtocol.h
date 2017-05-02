@@ -92,6 +92,7 @@ enum NETMSG {
 	NETMSG_ALLIANCE         = 53, // uchar myPlayerNum, uchar otherAllyTeam, uchar allianceState (0 = not allied / 1 = allied)
 	NETMSG_CCOMMAND         = 54, // /* short! messageSize */, int! myPlayerNum, std::string command, std::string extra (each string ends with \0)
 	NETMSG_TEAMSTAT         = 60, // uchar teamNum, struct TeamStatistics statistics      # used by LadderBot #
+	NETMSG_CLIENTDATA       = 61, // uint16_t messageSize, std::string setupText
 
 	NETMSG_ATTEMPTCONNECT   = 65, // ushort msgsize, ushort netversion, string playername, string passwd, string VERSION_STRING_DETAILED
 	NETMSG_REJECT_CONNECT   = 66, // string reason
@@ -213,6 +214,8 @@ public:
 	PacketType SendSetAllied(uchar myPlayerNum, uchar whichAllyTeam, uchar state);
 
 	PacketType SendCreateNewPlayer( uchar playerNum, bool spectator, uchar teamNum, std::string playerName);
+
+	PacketType SendClientData(uchar playerNum, const std::vector<std::uint8_t>& data);
 
 #ifdef SYNCDEBUG
 	PacketType SendSdCheckrequest(int frameNum);

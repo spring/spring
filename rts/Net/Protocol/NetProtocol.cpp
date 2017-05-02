@@ -9,7 +9,6 @@
 
 #include "NetProtocol.h"
 
-#include "Game/GameData.h"
 #include "Game/GlobalUnsynced.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "System/Net/UnpackPacket.h"

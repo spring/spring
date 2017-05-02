@@ -1694,7 +1694,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 						PushAction(msg.GetAction(), false);
 					}
 					else if (commandBlacklist.find(msg.GetAction().command) == commandBlacklist.end()) {
-						// command is save
+						// command is safe
 						Broadcast(packet);
 					}
 					else {
@@ -1743,6 +1743,11 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 			} catch (const netcode::UnpackPacketException& ex) {
 				Message(spring::format("Player %s sent invalid GameOver: %s", players[a].name.c_str(), ex.what()));
 			}
+			break;
+		}
+
+		case NETMSG_CLIENTDATA: {
+			Broadcast(packet);
 			break;
 		}
 
