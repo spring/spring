@@ -336,207 +336,15 @@ void CGlobalRendering::PostInit() {
 	// glewInit sets GL_INVALID_ENUM, get rid of it
 	glGetError();
 
+	char sdlVersionStr[64] = "";
+	char glVidMemStr[64] = "unknown";
 
-	{
-		SDL_VERSION(&globalRenderingInfo.sdlVersionCompiled);
-		SDL_GetVersion(&globalRenderingInfo.sdlVersionLinked);
+	QueryVersionInfo(sdlVersionStr, glVidMemStr);
+	CheckExtensions();
+	SetSupportFlags();
+	QueryGLMaxVals();
 
-		if ((globalRenderingInfo.glVersion   = (const char*) glGetString(GL_VERSION                 )) == nullptr) globalRenderingInfo.glVersion   = "unknown";
-		if ((globalRenderingInfo.glVendor    = (const char*) glGetString(GL_VENDOR                  )) == nullptr) globalRenderingInfo.glVendor    = "unknown";
-		if ((globalRenderingInfo.glRenderer  = (const char*) glGetString(GL_RENDERER                )) == nullptr) globalRenderingInfo.glRenderer  = "unknown";
-		if ((globalRenderingInfo.glslVersion = (const char*) glGetString(GL_SHADING_LANGUAGE_VERSION)) == nullptr) globalRenderingInfo.glslVersion = "unknown";
-		if ((globalRenderingInfo.glewVersion = (const char*) glewGetString(GLEW_VERSION             )) == nullptr) globalRenderingInfo.glewVersion = "unknown";
-
-		memset(globalRenderingInfo.glVersionShort, 0, sizeof(globalRenderingInfo.glVersionShort));
-		memset(globalRenderingInfo.glslVersionShort, 0, sizeof(globalRenderingInfo.glslVersionShort));
-
-		char glVidMemStr[64] = "unknown";
-		GLint vidMemBuffer[2] = {0, 0};
-
-		if (GetAvailableVideoRAM(vidMemBuffer)) {
-			const GLint totalMemMB = vidMemBuffer[0] / 1024;
-			const GLint availMemMB = vidMemBuffer[1] / 1024;
-
-			if (totalMemMB > 0 && availMemMB > 0) {
-				const char* memFmtStr = "total %iMB, available %iMB";
-				SNPRINTF(glVidMemStr, sizeof(glVidMemStr), memFmtStr, totalMemMB, availMemMB);
-			}
-
-			gpuMemorySize = totalMemMB;
-		}
-
-		// log some useful version info
-		LOG("[GR::%s]", __func__);
-		LOG("\tSDL version:  linked %d.%d.%d; compiled %d.%d.%d",
-			globalRenderingInfo.sdlVersionLinked.major, globalRenderingInfo.sdlVersionLinked.minor, globalRenderingInfo.sdlVersionLinked.patch,
-			globalRenderingInfo.sdlVersionCompiled.major, globalRenderingInfo.sdlVersionCompiled.minor, globalRenderingInfo.sdlVersionCompiled.patch);
-		LOG("\tGL version:   %s", globalRenderingInfo.glVersion);
-		LOG("\tGL vendor:    %s", globalRenderingInfo.glVendor);
-		LOG("\tGL renderer:  %s", globalRenderingInfo.glRenderer);
-		LOG("\tGLSL version: %s", globalRenderingInfo.glslVersion);
-		LOG("\tGLEW version: %s", globalRenderingInfo.glewVersion);
-		LOG("\tVideo RAM:    %s", glVidMemStr);
-		LOG("\tSwapInterval: %d", SDL_GL_GetSwapInterval());
-	}
-	{
-		char extMsg[2048] = {0};
-		char errMsg[2048] = {0};
-		char* ptr = &extMsg[0];
-
-		if (!GLEW_ARB_multitexture       ) ptr += snprintf(ptr, sizeof(extMsg) - (ptr - extMsg), " GL_ARB_multitexture");
-		if (!GLEW_ARB_texture_env_combine) ptr += snprintf(ptr, sizeof(extMsg) - (ptr - extMsg), " GL_ARB_texture_env_combine");
-		if (!GLEW_ARB_texture_compression) ptr += snprintf(ptr, sizeof(extMsg) - (ptr - extMsg), " GL_ARB_texture_compression");
-
-		if (extMsg[0] != 0) {
-			SNPRINTF(errMsg, sizeof(errMsg),
-				"Needed OpenGL extension(s) not found:\n"
-				"  %s\n\n"
-				"Update your graphics-card drivers!\n"
-				"  Graphics card:  %s\n"
-				"  OpenGL version: %s\n",
-				extMsg,
-				globalRenderingInfo.glRenderer,
-				globalRenderingInfo.glVersion);
-			throw unsupported_error(errMsg);
-		}
-	}
-
-	{
-		const std::string& glVendor = StringToLower(globalRenderingInfo.glVendor);
-		const std::string& glRenderer = StringToLower(globalRenderingInfo.glRenderer);
-
-		supportNPOTs = GLEW_ARB_texture_non_power_of_two;
-		haveARB   = GLEW_ARB_vertex_program && GLEW_ARB_fragment_program;
-		haveGLSL  = (glGetString(GL_SHADING_LANGUAGE_VERSION) != nullptr);
-		haveGLSL &= GLEW_ARB_vertex_shader && GLEW_ARB_fragment_shader;
-		haveGLSL &= !!GLEW_VERSION_2_0; // we want OpenGL 2.0 core functions
-
-		haveATI    = (  glVendor.find(   "ati ") != std::string::npos) || (glVendor.find("amd ") != std::string::npos);
-		haveIntel  = (  glVendor.find(  "intel") != std::string::npos);
-		haveNvidia = (  glVendor.find("nvidia ") != std::string::npos);
-		haveMesa   = (glRenderer.find(  "mesa ") != std::string::npos) || (glRenderer.find("gallium ") != std::string::npos);
-
-		if (haveATI) {
-			globalRenderingInfo.gpuName   = globalRenderingInfo.glRenderer;
-			globalRenderingInfo.gpuVendor = "ATI";
-		} else if (haveIntel) {
-			globalRenderingInfo.gpuName   = globalRenderingInfo.glRenderer;
-			globalRenderingInfo.gpuVendor = "Intel";
-		} else if (haveNvidia) {
-			globalRenderingInfo.gpuName   = globalRenderingInfo.glRenderer;
-			globalRenderingInfo.gpuVendor = "Nvidia";
-		} else if (haveMesa) {
-			globalRenderingInfo.gpuName   = globalRenderingInfo.glRenderer;
-			globalRenderingInfo.gpuVendor = globalRenderingInfo.glVendor;
-		} else {
-			globalRenderingInfo.gpuName   = "Unknown";
-			globalRenderingInfo.gpuVendor = "Unknown";
-		}
-
-		if (forceShaders < 0) {
-			// disable shaders for Intel drivers
-			haveARB  &= !haveIntel;
-			haveGLSL &= !haveIntel;
-		} else if (forceShaders == 0) {
-			haveARB  = false;
-			haveGLSL = false;
-		} else if (forceShaders > 0) {
-			// rely on extension detection (don't force enable shaders, when the extensions aren't exposed!)
-		}
-
-		// x-series doesn't support NPOTs (but hd-series does)
-		if (haveATI)
-			supportNPOTs = (glRenderer.find(" x") == std::string::npos && glRenderer.find(" 9") == std::string::npos);
-
-
-		for (size_t n = 0; (n < sizeof(globalRenderingInfo.glVersionShort) && globalRenderingInfo.glVersion[n] != 0); n++) {
-			if ((globalRenderingInfo.glVersionShort[n] = globalRenderingInfo.glVersion[n]) == ' ') {
-				globalRenderingInfo.glVersionShort[n] = 0;
-				break;
-			}
-		}
-
-		for (size_t n = 0; (n < sizeof(globalRenderingInfo.glslVersionShort) && globalRenderingInfo.glslVersion[n] != 0); n++) {
-			if ((globalRenderingInfo.glslVersionShort[n] = globalRenderingInfo.glslVersion[n]) == ' ') {
-				globalRenderingInfo.glslVersionShort[n] = 0;
-				break;
-			}
-		}
-
-		ShowCrappyGpuWarning(globalRenderingInfo.glVendor, globalRenderingInfo.glRenderer);
-	}
-
-	{
-		// use some ATI bugfixes?
-		const int atiHacksCfg = configHandler->GetInt("AtiHacks");
-		atiHacks = haveATI;
-		atiHacks &= (atiHacksCfg < 0); // runtime detect
-		atiHacks |= (atiHacksCfg > 0); // user override
-	}
-
-	// runtime-compress textures? (also already required for SMF ground textures)
-	// default to off because it reduces quality (smallest mipmap level is bigger)
-	if (GLEW_ARB_texture_compression)
-		compressTextures = configHandler->GetBool("CompressTextures");
-
-#ifdef GLEW_NV_primitive_restart
-	supportRestartPrimitive = !!(GLEW_NV_primitive_restart);
-#endif
-#ifdef GL_ARB_clip_control
-	supportClipControl = !!(GL_ARB_clip_control);
-#endif
-
-
-	// maximum 2D texture size
-	{
-		glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTextureSize);
-	}
-
-	// some GLSL relevant information
-	{
-		glGetIntegerv(GL_MAX_UNIFORM_BUFFER_BINDINGS, &glslMaxUniformBufferBindings);
-		glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE,      &glslMaxUniformBufferSize);
-		glGetIntegerv(GL_MAX_VARYING_FLOATS,          &glslMaxVaryings);
-		glGetIntegerv(GL_MAX_VERTEX_ATTRIBS,          &glslMaxAttributes);
-		glGetIntegerv(GL_MAX_DRAW_BUFFERS,            &glslMaxDrawBuffers);
-		glGetIntegerv(GL_MAX_ELEMENTS_INDICES,        &glslMaxRecommendedIndices);
-		glGetIntegerv(GL_MAX_ELEMENTS_VERTICES,       &glslMaxRecommendedVertices);
-		glslMaxVaryings /= 4; // GL_MAX_VARYING_FLOATS returns max individual floats, we want float4
-	}
-
-	// detect if GL_DEPTH_COMPONENT24 is supported (many ATIs don't)
-	{
-		// ATI seems to support GL_DEPTH_COMPONENT24 for static textures, but you can't render to them
-		/*
-		GLint state = 0;
-		glTexImage2D(GL_PROXY_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, 16, 16, 0, GL_LUMINANCE, GL_FLOAT, nullptr);
-		glGetTexLevelParameteriv(GL_PROXY_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &state);
-		support24bitDepthBuffers = (state > 0);
-		*/
-
-		support24bitDepthBuffers = false;
-		if (FBO::IsSupported() && !atiHacks) {
-			FBO fbo;
-			fbo.Bind();
-			fbo.CreateRenderBuffer(GL_COLOR_ATTACHMENT0_EXT, GL_RGBA8, 16, 16);
-			fbo.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT,  GL_DEPTH_COMPONENT24, 16, 16);
-			const GLenum status = fbo.GetStatus();
-			fbo.Unbind();
-
-			support24bitDepthBuffers = (status == GL_FRAMEBUFFER_COMPLETE_EXT);
-		}
-	}
-
-	// print info
-	LOG("[GR::%s]", __func__);
-	LOG("\tARB support: %i, GLSL support: %i, ATI hacks: %i", haveARB, haveGLSL, atiHacks);
-	LOG("\tFBO support: %i, NPOT-texture support: %i, 24bit Z-buffer support: %i", FBO::IsSupported(), supportNPOTs, support24bitDepthBuffers);
-	LOG("\tprimitive-restart support: %i, clip-control support: %i", supportRestartPrimitive, supportClipControl);
-	LOG("\tmax. FBO samples: %i, max. texture size: %i, compress MIP-map textures: %i", FBO::GetMaxSamples(), maxTextureSize, compressTextures);
-	LOG("\tmax. vec4 varyings/attributes: %i/%i", glslMaxVaryings, glslMaxAttributes);
-	LOG("\tmax. draw-buffers: %i, max. recommended indices/vertices: %i/%i", glslMaxDrawBuffers, glslMaxRecommendedIndices, glslMaxRecommendedVertices);
-	LOG("\tmax. buffer-bindings: %i, max. block-size: %ikB", glslMaxUniformBufferBindings, glslMaxUniformBufferSize / 1024);
-
+	LogVersionInfo(sdlVersionStr, glVidMemStr);
 	ToggleGLDebugOutput();
 }
 
@@ -556,7 +364,229 @@ void CGlobalRendering::SwapBuffers(bool allowSwapBuffers)
 	eventHandler.DbgTimingInfo(TIMING_SWAP, pre, spring_now());
 }
 
-void CGlobalRendering::LogDisplayMode()
+
+void CGlobalRendering::CheckExtensions() const
+{
+	char extMsg[2048] = {0};
+	char errMsg[2048] = {0};
+	char* ptr = &extMsg[0];
+
+	if (!GLEW_ARB_multitexture       ) ptr += snprintf(ptr, sizeof(extMsg) - (ptr - extMsg), " GL_ARB_multitexture");
+	if (!GLEW_ARB_texture_env_combine) ptr += snprintf(ptr, sizeof(extMsg) - (ptr - extMsg), " GL_ARB_texture_env_combine");
+	if (!GLEW_ARB_texture_compression) ptr += snprintf(ptr, sizeof(extMsg) - (ptr - extMsg), " GL_ARB_texture_compression");
+
+	if (extMsg[0] != 0) {
+		SNPRINTF(errMsg, sizeof(errMsg),
+			"Needed OpenGL extension(s) not found:\n"
+			"  %s\n\n"
+			"Update your graphics-card drivers!\n"
+			"  Graphics card:  %s\n"
+			"  OpenGL version: %s\n",
+			extMsg,
+			globalRenderingInfo.glRenderer,
+			globalRenderingInfo.glVersion);
+		throw unsupported_error(errMsg);
+	}
+}
+
+void CGlobalRendering::SetSupportFlags()
+{
+	const std::string& glVendor = StringToLower(globalRenderingInfo.glVendor);
+	const std::string& glRenderer = StringToLower(globalRenderingInfo.glRenderer);
+
+	supportNPOTs = GLEW_ARB_texture_non_power_of_two;
+	haveARB   = GLEW_ARB_vertex_program && GLEW_ARB_fragment_program;
+	haveGLSL  = (glGetString(GL_SHADING_LANGUAGE_VERSION) != nullptr);
+	haveGLSL &= GLEW_ARB_vertex_shader && GLEW_ARB_fragment_shader;
+	haveGLSL &= !!GLEW_VERSION_2_0; // we want OpenGL 2.0 core functions
+
+	haveATI    = (  glVendor.find(   "ati ") != std::string::npos) || (glVendor.find("amd ") != std::string::npos);
+	haveIntel  = (  glVendor.find(  "intel") != std::string::npos);
+	haveNvidia = (  glVendor.find("nvidia ") != std::string::npos);
+	haveMesa   = (glRenderer.find(  "mesa ") != std::string::npos) || (glRenderer.find("gallium ") != std::string::npos);
+
+	if (haveATI) {
+		globalRenderingInfo.gpuName   = globalRenderingInfo.glRenderer;
+		globalRenderingInfo.gpuVendor = "ATI";
+	} else if (haveIntel) {
+		globalRenderingInfo.gpuName   = globalRenderingInfo.glRenderer;
+		globalRenderingInfo.gpuVendor = "Intel";
+	} else if (haveNvidia) {
+		globalRenderingInfo.gpuName   = globalRenderingInfo.glRenderer;
+		globalRenderingInfo.gpuVendor = "Nvidia";
+	} else if (haveMesa) {
+		globalRenderingInfo.gpuName   = globalRenderingInfo.glRenderer;
+		globalRenderingInfo.gpuVendor = globalRenderingInfo.glVendor;
+	} else {
+		globalRenderingInfo.gpuName   = "Unknown";
+		globalRenderingInfo.gpuVendor = "Unknown";
+	}
+
+	if (forceShaders < 0) {
+		// disable shaders for Intel drivers
+		haveARB  &= !haveIntel;
+		haveGLSL &= !haveIntel;
+	} else if (forceShaders == 0) {
+		haveARB  = false;
+		haveGLSL = false;
+	} else if (forceShaders > 0) {
+		// rely on extension detection (don't force enable shaders, when the extensions aren't exposed!)
+	}
+
+	// x-series doesn't support NPOTs (but hd-series does)
+	if (haveATI)
+		supportNPOTs = (glRenderer.find(" x") == std::string::npos && glRenderer.find(" 9") == std::string::npos);
+
+
+	for (size_t n = 0; (n < sizeof(globalRenderingInfo.glVersionShort) && globalRenderingInfo.glVersion[n] != 0); n++) {
+		if ((globalRenderingInfo.glVersionShort[n] = globalRenderingInfo.glVersion[n]) == ' ') {
+			globalRenderingInfo.glVersionShort[n] = 0;
+			break;
+		}
+	}
+
+	for (size_t n = 0; (n < sizeof(globalRenderingInfo.glslVersionShort) && globalRenderingInfo.glslVersion[n] != 0); n++) {
+		if ((globalRenderingInfo.glslVersionShort[n] = globalRenderingInfo.glslVersion[n]) == ' ') {
+			globalRenderingInfo.glslVersionShort[n] = 0;
+			break;
+		}
+	}
+
+	ShowCrappyGpuWarning(globalRenderingInfo.glVendor, globalRenderingInfo.glRenderer);
+
+
+	{
+		// use some ATI bugfixes?
+		const int atiHacksCfg = configHandler->GetInt("AtiHacks");
+		atiHacks = haveATI;
+		atiHacks &= (atiHacksCfg < 0); // runtime detect
+		atiHacks |= (atiHacksCfg > 0); // user override
+	}
+
+	// runtime-compress textures? (also already required for SMF ground textures)
+	// default to off because it reduces quality (smallest mipmap level is bigger)
+	if (GLEW_ARB_texture_compression)
+		compressTextures = configHandler->GetBool("CompressTextures");
+
+
+	#ifdef GLEW_NV_primitive_restart
+	supportRestartPrimitive = !!(GLEW_NV_primitive_restart);
+	#endif
+	#ifdef GL_ARB_clip_control
+	supportClipControl = !!(GL_ARB_clip_control);
+	#endif
+
+	// detect if GL_DEPTH_COMPONENT24 is supported (many ATIs don't;
+	// they seem to support GL_DEPTH_COMPONENT24 for static textures
+	// but you can't render to them)
+	{
+		#if 0
+		GLint state = 0;
+		glTexImage2D(GL_PROXY_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, 16, 16, 0, GL_LUMINANCE, GL_FLOAT, nullptr);
+		glGetTexLevelParameteriv(GL_PROXY_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &state);
+		support24bitDepthBuffers = (state > 0);
+		#else
+		if (FBO::IsSupported() && !atiHacks) {
+			FBO fbo;
+			fbo.Bind();
+			fbo.CreateRenderBuffer(GL_COLOR_ATTACHMENT0_EXT, GL_RGBA8, 16, 16);
+			fbo.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT,  GL_DEPTH_COMPONENT24, 16, 16);
+			const GLenum status = fbo.GetStatus();
+			fbo.Unbind();
+
+			support24bitDepthBuffers = (status == GL_FRAMEBUFFER_COMPLETE_EXT);
+		}
+		#endif
+	}
+}
+
+void CGlobalRendering::QueryGLMaxVals()
+{
+	// maximum 2D texture size
+	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTextureSize);
+
+	// some GLSL relevant information
+	glGetIntegerv(GL_MAX_UNIFORM_BUFFER_BINDINGS, &glslMaxUniformBufferBindings);
+	glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE,      &glslMaxUniformBufferSize);
+	glGetIntegerv(GL_MAX_VARYING_FLOATS,          &glslMaxVaryings);
+	glGetIntegerv(GL_MAX_VERTEX_ATTRIBS,          &glslMaxAttributes);
+	glGetIntegerv(GL_MAX_DRAW_BUFFERS,            &glslMaxDrawBuffers);
+	glGetIntegerv(GL_MAX_ELEMENTS_INDICES,        &glslMaxRecommendedIndices);
+	glGetIntegerv(GL_MAX_ELEMENTS_VERTICES,       &glslMaxRecommendedVertices);
+
+	// GL_MAX_VARYING_FLOATS is the maximum number of floats, we count float4's
+	glslMaxVaryings /= 4;
+}
+
+void CGlobalRendering::QueryVersionInfo(char (&sdlVersionStr)[64], char (&glVidMemStr)[64])
+{
+	SDL_VERSION(&globalRenderingInfo.sdlVersionCompiled);
+	SDL_GetVersion(&globalRenderingInfo.sdlVersionLinked);
+
+	if ((globalRenderingInfo.glVersion   = (const char*) glGetString(GL_VERSION                 )) == nullptr) globalRenderingInfo.glVersion   = "unknown";
+	if ((globalRenderingInfo.glVendor    = (const char*) glGetString(GL_VENDOR                  )) == nullptr) globalRenderingInfo.glVendor    = "unknown";
+	if ((globalRenderingInfo.glRenderer  = (const char*) glGetString(GL_RENDERER                )) == nullptr) globalRenderingInfo.glRenderer  = "unknown";
+	if ((globalRenderingInfo.glslVersion = (const char*) glGetString(GL_SHADING_LANGUAGE_VERSION)) == nullptr) globalRenderingInfo.glslVersion = "unknown";
+	if ((globalRenderingInfo.glewVersion = (const char*) glewGetString(GLEW_VERSION             )) == nullptr) globalRenderingInfo.glewVersion = "unknown";
+
+	memset(globalRenderingInfo.glVersionShort, 0, sizeof(globalRenderingInfo.glVersionShort));
+	memset(globalRenderingInfo.glslVersionShort, 0, sizeof(globalRenderingInfo.glslVersionShort));
+
+	constexpr const char* sdlFmtStr = "%d.%d.%d (linked) / %d.%d.%d (compiled)";
+	constexpr const char* memFmtStr = "%iMB (total) / %iMB (available)";
+
+	SNPRINTF(sdlVersionStr, sizeof(sdlVersionStr), sdlFmtStr,
+		globalRenderingInfo.sdlVersionLinked.major, globalRenderingInfo.sdlVersionLinked.minor, globalRenderingInfo.sdlVersionLinked.patch,
+		globalRenderingInfo.sdlVersionCompiled.major, globalRenderingInfo.sdlVersionCompiled.minor, globalRenderingInfo.sdlVersionCompiled.patch
+	);
+
+	GLint vidMemBuffer[2] = {0, 0};
+
+	if (GetAvailableVideoRAM(vidMemBuffer)) {
+		const GLint totalMemMB = vidMemBuffer[0] / 1024;
+		const GLint availMemMB = vidMemBuffer[1] / 1024;
+
+		if (totalMemMB > 0 && availMemMB > 0)
+			SNPRINTF(glVidMemStr, sizeof(glVidMemStr), memFmtStr, totalMemMB, availMemMB);
+
+		gpuMemorySize = totalMemMB;
+	}
+}
+
+void CGlobalRendering::LogVersionInfo(const char* sdlVersionStr, const char* glVidMemStr) const
+{
+	LOG("[GR::%s]", __func__);
+	LOG("\tSDL version : %s", sdlVersionStr);
+	LOG("\tGL version  : %s", globalRenderingInfo.glVersion);
+	LOG("\tGL vendor   : %s", globalRenderingInfo.glVendor);
+	LOG("\tGL renderer : %s", globalRenderingInfo.glRenderer);
+	LOG("\tGLSL version: %s", globalRenderingInfo.glslVersion);
+	LOG("\tGLEW version: %s", globalRenderingInfo.glewVersion);
+	LOG("\tGPU memory  : %s", glVidMemStr);
+	LOG("\tSwapInterval: %d", SDL_GL_GetSwapInterval());
+	LOG("\t");
+	LOG("\tARB shader support       : %i", haveARB);
+	LOG("\tGLSL shader support      : %i", haveGLSL);
+	LOG("\tFBO extension support    : %i", FBO::IsSupported());
+	LOG("\tNPOT-texture support     : %i", supportNPOTs);
+	LOG("\t24-bit Z-buffer support  : %i", support24bitDepthBuffers);
+	LOG("\tprimitive-restart support: %i", supportRestartPrimitive);
+	LOG("\tclip-control support     : %i", supportClipControl);
+	LOG("\t");
+	LOG("\tmax. FBO samples             : %i", FBO::GetMaxSamples());
+	LOG("\tmax. texture size            : %i", maxTextureSize);
+	LOG("\tmax. vec4 varyings/attributes: %i/%i", glslMaxVaryings, glslMaxAttributes);
+	LOG("\tmax. draw-buffers            : %i", glslMaxDrawBuffers);
+	LOG("\tmax. rec. indices/vertices   : %i/%i", glslMaxRecommendedIndices, glslMaxRecommendedVertices);
+	LOG("\tmax. uniform buffer-bindings : %i", glslMaxUniformBufferBindings);
+	LOG("\tmax. uniform block-size      : %iKB", glslMaxUniformBufferSize / 1024);
+	LOG("\t");
+	LOG("\tenable ATI-hacks : %i", atiHacks);
+	LOG("\tcompress MIP-maps: %i", compressTextures);
+
+}
+
+void CGlobalRendering::LogDisplayMode() const
 {
 	// print final mode (call after SetupViewportGeometry, which updates viewSizeX/Y)
 	SDL_DisplayMode dmode;
@@ -574,6 +604,7 @@ void CGlobalRendering::LogDisplayMode()
 
 	LOG("[%s] display-mode set to %ix%ix%ibpp@%iHz (%s)", __func__, viewSizeX, viewSizeY, SDL_BITSPERPIXEL(dmode.format), dmode.refresh_rate, names[fs * 2 + bl]);
 }
+
 
 void CGlobalRendering::SetFullScreen(bool configFullScreen, bool cmdLineWindowed, bool cmdLineFullScreen)
 {
