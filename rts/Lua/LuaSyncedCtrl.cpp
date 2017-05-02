@@ -4233,7 +4233,7 @@ static int SetSingleDamagesKey(lua_State* L, DamageArray& damages, int index)
 
 static int SetExplosionParam(lua_State* L, CExplosionParams& params, DamageArray& damages, int index)
 {
-	const string key = lua_tostring(L, index);
+	const string& key = lua_tostring(L, index);
 	if (key == "damages") {
 		if (lua_istable(L, index + 1)) {
 			// {key1 = value1, ...}
@@ -4250,7 +4250,7 @@ static int SetExplosionParam(lua_State* L, CExplosionParams& params, DamageArray
 	} else if (key == "owner") {
 		params.owner = ParseUnit(L, __func__, index + 1);
 	} else if (key == "hitUnit") {
-		params.hitUnit = ParseUnit (L, __func__, index + 1);
+		params.hitUnit = ParseUnit(L, __func__, index + 1);
 	} else if (key == "hitFeature") {
 		params.hitFeature = ParseFeature(L, __func__, index + 1);
 	} else if (key == "craterAreaOfEffect") {
@@ -4262,7 +4262,7 @@ static int SetExplosionParam(lua_State* L, CExplosionParams& params, DamageArray
 	} else if (key == "explosionSpeed") {
 		params.explosionSpeed     = lua_tofloat(L, index + 1);
 	} else if (key == "gfxMod") {
-		params.gfxMod             = lua_tofloat(L, index + 1); // scale-mult for *S*EG's
+		params.gfxMod             = lua_tofloat(L, index + 1);
 	} else if (key == "projectileID") {
 		params.projectileID = static_cast<unsigned int>(lua_toint(L, index + 1));
 	} else if (key == "impactOnly") {
@@ -4283,33 +4283,57 @@ int LuaSyncedCtrl::SpawnExplosion(lua_State* L)
 	const float3 pos = {luaL_checkfloat(L, 1      ), luaL_checkfloat(L, 2      ), luaL_checkfloat(L, 3      )};
 	const float3 dir = {luaL_optfloat  (L, 4, 0.0f), luaL_optfloat  (L, 5, 0.0f), luaL_optfloat  (L, 6, 0.0f)};
 
-	DamageArray damages(1.0f);
-	CExplosionParams params = {
-		pos,
-		dir,
-		damages,
-		nullptr,           // weaponDef
-		nullptr,           // owner
-		nullptr,           // hitUnit
-		nullptr,           // hitFeature
-		0.0f,              // craterAreaOfEffect
-		0.0f,              // damageAreaOfEffect
-		0.0f,              // edgeEffectiveness
-		0.0f,              // explosionSpeed
-		0.0f,              // gfxMod
-		false,             // impactOnly
-		false,             // ignoreOwner
-		false,             // damageGround
-		static_cast<unsigned int>(-1)
-	};
-
 	if (lua_istable(L, 7)) {
+		DamageArray damages(1.0f);
+		CExplosionParams params = {
+			pos,
+			dir,
+			damages,
+			nullptr,           // weaponDef
+			nullptr,           // owner
+			nullptr,           // hitUnit
+			nullptr,           // hitFeature
+			0.0f,              // craterAreaOfEffect
+			0.0f,              // damageAreaOfEffect
+			0.0f,              // edgeEffectiveness
+			0.0f,              // explosionSpeed
+			0.0f,              // gfxMod (scale-mult for *S*EG's)
+			false,             // impactOnly
+			false,             // ignoreOwner
+			false,             // damageGround
+			static_cast<unsigned int>(-1)
+		};
+
 		for (lua_pushnil(L); lua_next(L, 7) != 0; lua_pop(L, 1)) {
 			SetExplosionParam(L, params, damages, -2);
 		}
+
+		helper->Explosion(params);
+	} else {
+		DamageArray damages(luaL_optfloat(L, 7, 1.0f));
+		CExplosionParams params = {pos, dir, damages};
+
+		// parse remaining arguments in order of expected usage frequency
+		params.weaponDef  = weaponDefHandler->GetWeaponDefByID(luaL_optint(L, 16, -1));
+		params.owner      = ParseUnit   (L, __func__, 18);
+		params.hitUnit    = ParseUnit   (L, __func__, 19);
+		params.hitFeature = ParseFeature(L, __func__, 20);
+
+		params.craterAreaOfEffect = luaL_optfloat(L,  8, 0.0f);
+		params.damageAreaOfEffect = luaL_optfloat(L,  9, 0.0f);
+		params.edgeEffectiveness  = luaL_optfloat(L, 10, 0.0f);
+		params.explosionSpeed     = luaL_optfloat(L, 11, 0.0f);
+		params.gfxMod             = luaL_optfloat(L, 12, 0.0f);
+
+		params.impactOnly   = luaL_optboolean(L, 13, false);
+		params.ignoreOwner  = luaL_optboolean(L, 14, false);
+		params.damageGround = luaL_optboolean(L, 15, false);
+
+		params.projectileID = static_cast<unsigned int>(luaL_optint(L, 17, -1));
+
+		helper->Explosion(params);
 	}
 
-	helper->Explosion(params);
 	return 0;
 }
 
