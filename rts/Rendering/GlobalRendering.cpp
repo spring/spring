@@ -213,7 +213,7 @@ CGlobalRendering::CGlobalRendering()
 	, window(nullptr)
 	, sdlGlCtx(nullptr)
 {
-	configHandler->NotifyOnChange(this);
+	configHandler->NotifyOnChange(this, {"TextureLODBias", "Fullscreen", "WindowBorderless"});
 }
 
 CGlobalRendering::~CGlobalRendering()
@@ -592,9 +592,6 @@ void CGlobalRendering::ConfigNotify(const std::string& key, const std::string& v
 		UpdateGLConfigs();
 		return;
 	}
-
-	if (key != "Fullscreen" && key != "WindowBorderless")
-		return;
 
 	borderless = configHandler->GetBool("WindowBorderless");
 	fullScreen = configHandler->GetBool("Fullscreen");

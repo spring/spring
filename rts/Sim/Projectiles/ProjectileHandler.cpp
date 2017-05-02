@@ -102,7 +102,7 @@ CProjectileHandler::CProjectileHandler()
 	}
 
 	// register ConfigNotify()
-	configHandler->NotifyOnChange(this);
+	configHandler->NotifyOnChange(this, {"MaxParticles", "MaxNanoParticles"});
 }
 
 CProjectileHandler::~CProjectileHandler()
@@ -149,9 +149,6 @@ CProjectileHandler::~CProjectileHandler()
 
 void CProjectileHandler::ConfigNotify(const std::string& key, const std::string& value)
 {
-	if (key != "MaxParticles" && key != "MaxNanoParticles")
-		return;
-
 	maxParticles     = configHandler->GetInt("MaxParticles");
 	maxNanoParticles = configHandler->GetInt("MaxNanoParticles");
 }

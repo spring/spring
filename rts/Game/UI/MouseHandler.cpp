@@ -124,7 +124,7 @@ CMouseHandler::CMouseHandler()
 
 	dragScrollThreshold = configHandler->GetFloat("MouseDragScrollThreshold");
 
-	configHandler->NotifyOnChange(this);
+	configHandler->NotifyOnChange(this, {"MouseDragScrollThreshold", "ScrollWheelSpeed"});
 }
 
 CMouseHandler::~CMouseHandler()
@@ -948,9 +948,6 @@ bool CMouseHandler::ReplaceMouseCursor(
 
 void CMouseHandler::ConfigNotify(const std::string& key, const std::string& value)
 {
-	if (key == "MouseDragScrollThreshold") {
-		dragScrollThreshold = atof(value.c_str());
-	} else if (key =="ScrollWheelSpeed") {
-		scrollWheelSpeed = atof(value.c_str());
-	}
+	dragScrollThreshold = configHandler->GetFloat("MouseDragScrollThreshold");
+	scrollWheelSpeed = configHandler->GetFloat("ScrollWheelSpeed");
 }

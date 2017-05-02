@@ -28,7 +28,7 @@ CFPSController::CFPSController()
 	dir = camera->GetDir();
 	Update();
 
-	configHandler->NotifyOnChange(this);
+	configHandler->NotifyOnChange(this, {"FPSScrollSpeed", "FPSMouseScale", "FPSEnabled", "FPSFOV", "FPSClampPos"});
 }
 
 CFPSController::~CFPSController()
@@ -47,9 +47,6 @@ void CFPSController::ConfigUpdate()
 
 void CFPSController::ConfigNotify(const std::string& key, const std::string& value)
 {
-	if (key != "FPSScrollSpeed" && key != "FPSMouseScale" && key != "FPSEnabled" && key != "FPSFOV" && key != "FPSClampPos")
-		return;
-
 	ConfigUpdate();
 }
 

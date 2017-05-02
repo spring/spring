@@ -33,7 +33,7 @@ COverheadController::COverheadController()
 	, maxHeight(10000)
 	, angle(DEFAULT_ANGLE)
 {
-	configHandler->NotifyOnChange(this);
+	configHandler->NotifyOnChange(this, {"MiddleClickScrollSpeed", "OverheadScrollSpeed", "OverheadTiltSpeed", "OverheadEnabled", "OverheadFOV", "OverheadMaxHeightFactor"});
 	ConfigUpdate();
 
 	if (globalRendering) {
@@ -62,14 +62,6 @@ void COverheadController::ConfigUpdate()
 
 void COverheadController::ConfigNotify(const std::string & key, const std::string & value)
 {
-	if (key != "MiddleClickScrollSpeed"
-	&&  key != "OverheadScrollSpeed"
-	&&  key != "OverheadTiltSpeed"
-	&&  key != "OverheadEnabled"
-	&&  key != "OverheadFOV"
-	&&  key != "OverheadMaxHeightFactor")
-		return;
-
 	ConfigUpdate();
 }
 

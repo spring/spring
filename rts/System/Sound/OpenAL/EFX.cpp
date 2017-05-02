@@ -175,7 +175,7 @@ CEFX::CEFX(ALCdevice* device)
 		LOG_L(L_DEBUG, "  EFX MaxSlotsPerSource: %i", maxSlotsPerSource);
 	}
 
-	configHandler->NotifyOnChange(this);
+	configHandler->NotifyOnChange(this, {"snd_airAbsorption"});
 }
 
 
@@ -270,7 +270,5 @@ void CEFX::SetAirAbsorptionFactor(ALfloat value)
 
 void CEFX::ConfigNotify(const std::string& key, const std::string& value)
 {
-	if (key == "snd_airAbsorption") {
-		SetAirAbsorptionFactor(std::atof(value.c_str()));
-	}
+	SetAirAbsorptionFactor(configHandler->GetFloat("snd_airAbsorption"));
 }

@@ -18,7 +18,6 @@
 #include "System/myMath.h"
 
 #include <vector>
-#include <list>
 
 #define CHECK_UNITID(id) ((unsigned)(id) < (unsigned)unitHandler->MaxUnits())
 #define CHECK_GROUPID(id) ((unsigned)(id) < (unsigned)gh->groups.size())

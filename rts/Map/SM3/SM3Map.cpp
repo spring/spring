@@ -114,13 +114,11 @@ CSM3ReadMap::~CSM3ReadMap()
 
 void CSM3ReadMap::ConfigNotify(const std::string& key, const std::string& value)
 {
-	if (key == "Shadows") {
-		bool drawShadows = (std::atoi(value.c_str()) > 0);
+	bool drawShadows = (configHandler->GetInt("Shadows") > 0);
 
-		if (renderer->config.useShadowMaps != drawShadows) {
-			renderer->config.useShadowMaps = drawShadows;
-			renderer->ReloadShaders();
-		}
+	if (renderer->config.useShadowMaps != drawShadows) {
+		renderer->config.useShadowMaps = drawShadows;
+		renderer->ReloadShaders();
 	}
 }
 
@@ -163,7 +161,7 @@ void CSM3ReadMap::InitGroundDrawer() {
 
 	groundDrawer = new CSM3GroundDrawer(this);
 
-	configHandler->NotifyOnChange(this);
+	configHandler->NotifyOnChange(this, {"Shadows"});
 }
 
 void CSM3ReadMap::KillGroundDrawer() {

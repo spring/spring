@@ -69,7 +69,7 @@ CSound::CSound()
 	soundThread = new spring::thread();
 	*soundThread = Threading::CreateNewThread(std::bind(&CSound::UpdateThread, this, configHandler->GetInt("MaxSounds")));
 
-	configHandler->NotifyOnChange(this);
+	configHandler->NotifyOnChange(this, {"snd_volmaster", "snd_eaxpreset", "snd_filter", "UseEFX", "snd_volgeneral", "snd_volunitreply", "snd_volbattle", "snd_volui", "snd_volmusic", "PitchAdjust"});
 }
 
 CSound::~CSound()

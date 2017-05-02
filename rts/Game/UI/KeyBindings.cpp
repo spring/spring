@@ -282,7 +282,7 @@ CKeyBindings::CKeyBindings()
 	RegisterAction("keysyms");
 	RegisterAction("keycodes");
 
-	configHandler->NotifyOnChange(this);
+	configHandler->NotifyOnChange(this, {"KeyChainTimeout"});
 }
 
 
@@ -578,9 +578,7 @@ bool CKeyBindings::RemoveCommandFromList(ActionList& al, const std::string& comm
 
 void CKeyBindings::ConfigNotify(const std::string& key, const std::string& value)
 {
-	if (key == "KeyChainTimeout") {
-		keyChainTimeout = atoi(value.c_str());
-	}
+	keyChainTimeout = atoi(value.c_str());
 }
 
 

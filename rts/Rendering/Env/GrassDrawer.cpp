@@ -240,7 +240,7 @@ CGrassDrawer::CGrassDrawer()
 
 	ChangeDetail(detail);
 	LoadGrassShaders();
-	configHandler->NotifyOnChange(this);
+	configHandler->NotifyOnChange(this, {"GrassDetail"});
 
 	// eventclient
 	autoLinkEvents = true;
@@ -292,9 +292,7 @@ void CGrassDrawer::ChangeDetail(int detail) {
 
 
 void CGrassDrawer::ConfigNotify(const std::string& key, const std::string& value) {
-	if (key == "GrassDetail") {
-		ChangeDetail(std::atoi(value.c_str()));
-	}
+	ChangeDetail(configHandler->GetInt("GrassDetail"));
 }
 
 
