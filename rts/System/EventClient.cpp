@@ -93,7 +93,8 @@ bool CEventClient::ShieldPreDamaged(
 	const CUnit* shieldCarrier,
 	bool bounceProjectile,
 	const CWeapon* beamEmitter,
-	const CUnit* beamCarrier)  { return false; }
+	const CUnit* beamCarrier,
+	const float3& hitPos)  { return false; }
 
 
 bool CEventClient::SyncedActionFallback(const string& line, int playerID) { return false; }

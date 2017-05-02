@@ -25,7 +25,6 @@ public:
 	void Update() override final;
 	void SlowUpdate() override final;
 
-	bool IncomingBeam(const CWeapon* emitter, const float3& start, float damageMultiplier = 1.0f);
 
 	void SetEnabled(bool b) { isEnabled = b; }
 	void SetCurPower(float p) { curPower = p; }
@@ -38,7 +37,8 @@ public:
 	int GetHitFrames() const { return hitFrames; }
 	bool CanIntercept(unsigned interceptedType, int allyTeam) const;
 
-	bool IncomingProjectile(CWeaponProjectile* p);
+	bool IncomingBeam(const CWeapon* emitter, const float3& start, float damageMultiplier, const float3& hitPos);
+	bool IncomingProjectile(CWeaponProjectile* p, const float3& hitPos);
 
 	//collisions
 	std::vector<int> quads;

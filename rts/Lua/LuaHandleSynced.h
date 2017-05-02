@@ -104,7 +104,8 @@ class CSyncedLuaHandle : public CLuaHandle
 			const CUnit* shieldCarrier,
 			bool bounceProjectile,
 			const CWeapon* beamEmitter,
-			const CUnit* beamCarrier);
+			const CUnit* beamCarrier,
+			const float3& hitPos);
 
 		bool SyncedActionFallback(const string& line, int playerID);
 

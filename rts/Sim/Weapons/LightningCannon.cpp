@@ -59,7 +59,7 @@ void CLightningCannon::FireImpl(const bool scriptCall)
 	hitShields.clear();
 	TraceRay::TraceRayShields(this, curPos, curDir, range, hitShields);
 	for (const TraceRay::SShieldDist& sd: hitShields) {
-		if(sd.dist < boltLength && sd.rep->IncomingBeam(this, curPos)) {
+		if(sd.dist < boltLength && sd.rep->IncomingBeam(this, curPos, 1.0f, curPos + (curDir * sd.dist))) {
 			boltLength = sd.dist;
 			hitUnit = NULL;
 			hitFeature = NULL;

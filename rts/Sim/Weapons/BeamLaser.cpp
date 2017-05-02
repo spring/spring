@@ -338,7 +338,7 @@ void CBeamLaser::FireInternal(float3 curDir)
 		TraceRay::TraceRayShields(this, curPos, curDir, beamLength, hitShields);
 
 		for (const TraceRay::SShieldDist& sd: hitShields) {
-			if(sd.dist < beamLength && sd.rep->IncomingBeam(this, curPos, salvoDamageMult)) {
+			if(sd.dist < beamLength && sd.rep->IncomingBeam(this, curPos, salvoDamageMult, curPos + (curDir * sd.dist))) {
 				beamLength = sd.dist;
 				hitUnit = NULL;
 				hitFeature = NULL;

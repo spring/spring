@@ -244,7 +244,8 @@ class CEventClient
 			const CUnit* shieldCarrier,
 			bool bounceProjectile,
 			const CWeapon* beamEmitter,
-			const CUnit* beamCarrier);
+			const CUnit* beamCarrier,
+			const float3& hitPos);
 
 		virtual bool SyncedActionFallback(const string& line, int playerID);
 		/// @}

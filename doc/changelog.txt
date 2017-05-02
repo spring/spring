@@ -54,6 +54,7 @@ Lua:
     Platform.os: string, full name of the OS
     Platform.osFamily: string, one of "Windows", "Linux", "MacOSX", "FreeBSD", "Unknown"
     Platform.osWordSize: number, usually 32 or 64 for 32bit and 64bit OS
+ - Add hit position x, y, z arguments to ShieldPreDamaged callin
 
 UI:
  - Add FPSClampPos config for whether the engine should verify the camera doesn't hit ground/go too far

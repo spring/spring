@@ -978,7 +978,8 @@ bool CSyncedLuaHandle::ShieldPreDamaged(
 	const CUnit* shieldCarrier,
 	bool bounceProjectile,
 	const CWeapon* beamEmitter,
-	const CUnit* beamCarrier)
+	const CUnit* beamCarrier,
+	const float3& hitPos)
 {
 	assert((projectile != nullptr) || ((beamEmitter != nullptr) && (beamCarrier != nullptr)));
 	LUA_CALL_IN_CHECK(L, false);
@@ -997,7 +998,8 @@ bool CSyncedLuaHandle::ShieldPreDamaged(
 		lua_pushnumber(L, shieldEmitter->weaponNum + LUA_WEAPON_BASE_INDEX);
 		lua_pushnumber(L, shieldCarrier->id);
 		lua_pushboolean(L, bounceProjectile);
-		numArgs = 5;
+		lua_pushnil(L);
+		lua_pushnil(L);
 	} else { //Beam weapons
 		lua_pushnumber(L, -1);
 		lua_pushnumber(L, -1);
@@ -1006,11 +1008,13 @@ bool CSyncedLuaHandle::ShieldPreDamaged(
 		lua_pushboolean(L, bounceProjectile);
 		lua_pushnumber(L, beamEmitter->weaponNum + LUA_WEAPON_BASE_INDEX);
 		lua_pushnumber(L, beamCarrier->id);
-		numArgs = 7;
 	}
+	lua_pushnumber(L, hitPos.x);
+	lua_pushnumber(L, hitPos.y);
+	lua_pushnumber(L, hitPos.z);
 
 	// call the routine
-	if (!RunCallInTraceback(L, cmdStr, numArgs, 1, traceBack.GetErrFuncIdx(), false))
+	if (!RunCallInTraceback(L, cmdStr, 10, 1, traceBack.GetErrFuncIdx(), false))
 		return false;
 
 	// pop the return-value; must be true or false

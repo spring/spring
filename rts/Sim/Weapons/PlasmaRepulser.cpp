@@ -124,13 +124,13 @@ void CPlasmaRepulser::Update()
 }
 
 // Returns true if the projectile is destroyed.
-bool CPlasmaRepulser::IncomingProjectile(CWeaponProjectile* p)
+bool CPlasmaRepulser::IncomingProjectile(CWeaponProjectile* p, const float3& hitPos)
 {
 	const int defHitFrames = weaponDef->visibleShieldHitFrames;
 	const int defRechargeDelay = weaponDef->shieldRechargeDelay;
 
 	// gadget handles the collision event, don't touch the projectile
-	if (eventHandler.ShieldPreDamaged(p, this, owner, weaponDef->shieldRepulser, nullptr, nullptr))
+	if (eventHandler.ShieldPreDamaged(p, this, owner, weaponDef->shieldRepulser, nullptr, nullptr, hitPos))
 		return false;
 
 	const DamageArray& damageArray = p->damages->GetDynamicDamages(p->GetStartPos(), p->pos);
@@ -217,10 +217,10 @@ void CPlasmaRepulser::SlowUpdate()
 }
 
 
-bool CPlasmaRepulser::IncomingBeam(const CWeapon* emitter, const float3& start, float damageMultiplier)
+bool CPlasmaRepulser::IncomingBeam(const CWeapon* emitter, const float3& start, float damageMultiplier, const float3& hitPos)
 {
 	// gadget handles the collision event, don't touch the projectile
-	if (eventHandler.ShieldPreDamaged(nullptr, this, owner, weaponDef->shieldRepulser, emitter, emitter->owner))
+	if (eventHandler.ShieldPreDamaged(nullptr, this, owner, weaponDef->shieldRepulser, emitter, emitter->owner, hitPos))
 		return false;
 
 	const DamageArray& damageArray = emitter->damages->GetDynamicDamages(start, weaponMuzzlePos);

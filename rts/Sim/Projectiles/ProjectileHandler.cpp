@@ -506,7 +506,7 @@ void CProjectileHandler::CheckShieldCollisions(
 
 		if (CCollisionHandler::DetectHit(repulser->owner, &repulser->collisionVolume, repulser->owner->GetTransformMatrix(true), ppos0, ppos1, &cq)) {
 			if (!cq.InsideHit() || !repulser->weaponDef->exteriorShield || repulser->IsRepulsing(wpro)) {
-				if (repulser->IncomingProjectile(wpro))
+				if (repulser->IncomingProjectile(wpro, cq.GetHitPos()))
 					return;
 			}
 		}
