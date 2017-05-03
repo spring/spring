@@ -245,6 +245,7 @@ void CSkirmishAIWrapper::Release(int reason) {
 static void streamCopy(/*const*/ std::istream* in, std::ostream* out)
 {
 	std::vector<char> buffer(128);
+	std::streampos start = in->tellg();
 
 	in->read(&buffer[0], buffer.size());
 
@@ -254,6 +255,9 @@ static void streamCopy(/*const*/ std::istream* in, std::ostream* out)
 	}
 
 	out->write(&buffer[0], in->gcount());
+
+	in->clear();  // clear fail and eof bits
+	in->seekg(start, std::ios::beg);  // back to the start!
 }
 
 static std::string createTempFileName(const char* action, int teamId, int skirmishAIId) {
