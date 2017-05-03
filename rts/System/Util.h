@@ -344,14 +344,14 @@ namespace utf8 {
 	}
 };
 
-
+#ifndef UNITSYNC
 namespace zlib {
-	std::vector<std::uint8_t> deflate(const std::uint8_t* inflData, std::uint64_t inflSize);
-	std::vector<std::uint8_t> inflate(const std::uint8_t* deflData, std::uint64_t deflSize);
+	std::vector<std::uint8_t> deflate(const std::uint8_t* inflData, unsigned long inflSize);
+	std::vector<std::uint8_t> inflate(const std::uint8_t* deflData, unsigned long deflSize);
 
 	std::vector<std::uint8_t> deflate(const std::vector<std::uint8_t>& inflData);
 	std::vector<std::uint8_t> inflate(const std::vector<std::uint8_t>& deflData);
 };
-
+#endif //UNITSYNC
 
 #endif // UTIL_H

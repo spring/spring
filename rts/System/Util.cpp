@@ -248,12 +248,12 @@ std::string utf8::FromUnicode(char32_t ch)
 }
 
 
-
+#ifndef UNITSYNC
 std::vector<std::uint8_t> zlib::deflate(const std::vector<std::uint8_t>& inflData) { return (zlib::deflate(inflData.data(), inflData.size())); }
-std::vector<std::uint8_t> zlib::deflate(const std::uint8_t* inflData, std::uint64_t inflSize) {
+std::vector<std::uint8_t> zlib::deflate(const std::uint8_t* inflData, unsigned long inflSize) {
 	std::vector<std::uint8_t> deflData(compressBound(inflSize));
 
-	uint64_t bufSize = deflData.size();
+	unsigned long bufSize = deflData.size();
 
 	if (compress(deflData.data(), &bufSize,  inflData, inflSize) == Z_OK) {
 		deflData.shrink_to_fit();
@@ -265,7 +265,7 @@ std::vector<std::uint8_t> zlib::deflate(const std::uint8_t* inflData, std::uint6
 }
 
 std::vector<std::uint8_t> zlib::inflate(const std::vector<std::uint8_t>& deflData) { return (zlib::inflate(deflData.data(), deflData.size())); }
-std::vector<std::uint8_t> zlib::inflate(const std::uint8_t* deflData, std::uint64_t deflSize) {
+std::vector<std::uint8_t> zlib::inflate(const std::uint8_t* deflData, unsigned long deflSize) {
 	// "the LSB does not describe any mechanism by which a
 	// compressor can communicate the size required to the
 	// uncompressor" ==> we must reserve some fixed-length
@@ -286,4 +286,4 @@ std::vector<std::uint8_t> zlib::inflate(const std::uint8_t* deflData, std::uint6
 
 	return (std::move(inflData));
 }
-
+#endif //UNITSYNC
