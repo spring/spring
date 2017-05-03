@@ -3,7 +3,7 @@
 #ifndef UTIL_H
 #define UTIL_H
 
-#include <assert.h>
+#include <cassert>
 #include <string>
 #include <sstream>
 #include <vector>
@@ -343,5 +343,15 @@ namespace utf8 {
 		return oldPos;
 	}
 };
+
+
+namespace zlib {
+	std::vector<std::uint8_t> deflate(const std::uint8_t* inflData, std::uint64_t inflSize);
+	std::vector<std::uint8_t> inflate(const std::uint8_t* deflData, std::uint64_t deflSize);
+
+	std::vector<std::uint8_t> deflate(const std::vector<std::uint8_t>& inflData);
+	std::vector<std::uint8_t> inflate(const std::vector<std::uint8_t>& deflData);
+};
+
 
 #endif // UTIL_H

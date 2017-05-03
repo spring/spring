@@ -33,7 +33,7 @@ public:
 	void PostInit();
 	void SwapBuffers(bool allowSwapBuffers);
 
-	void CheckExtensions() const;
+	void CheckGLExtensions() const;
 	void SetSupportFlags();
 	void QueryVersionInfo(char (&sdlVersionStr)[64], char (&glVidMemStr)[64]);
 	void QueryGLMaxVals();

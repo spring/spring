@@ -340,7 +340,7 @@ void CGlobalRendering::PostInit() {
 	char glVidMemStr[64] = "unknown";
 
 	QueryVersionInfo(sdlVersionStr, glVidMemStr);
-	CheckExtensions();
+	CheckGLExtensions();
 	SetSupportFlags();
 	QueryGLMaxVals();
 
@@ -365,7 +365,7 @@ void CGlobalRendering::SwapBuffers(bool allowSwapBuffers)
 }
 
 
-void CGlobalRendering::CheckExtensions() const
+void CGlobalRendering::CheckGLExtensions() const
 {
 	char extMsg[2048] = {0};
 	char errMsg[2048] = {0};

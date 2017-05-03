@@ -3,9 +3,12 @@
 #include "System/Util.h"
 #include "System/bitops.h"
 
+#include <zlib.h>
+
 #if defined(_MSC_VER) && (_MSC_VER >= 1310)
 	#include <intrin.h>
 #endif
+
 #include <cstring>
 #include <cinttypes>
 
@@ -243,3 +246,44 @@ std::string utf8::FromUnicode(char32_t ch)
 
 	return str;
 }
+
+
+
+std::vector<std::uint8_t> zlib::deflate(const std::vector<std::uint8_t>& inflData) { return (zlib::deflate(inflData.data(), inflData.size())); }
+std::vector<std::uint8_t> zlib::deflate(const std::uint8_t* inflData, std::uint64_t inflSize) {
+	std::vector<std::uint8_t> deflData(compressBound(inflSize));
+
+	uint64_t bufSize = deflData.size();
+
+	if (compress(deflData.data(), &bufSize,  inflData, inflSize) == Z_OK) {
+		deflData.shrink_to_fit();
+	} else {
+		deflData.clear();
+	}
+
+	return (std::move(deflData));
+}
+
+std::vector<std::uint8_t> zlib::inflate(const std::vector<std::uint8_t>& deflData) { return (zlib::inflate(deflData.data(), deflData.size())); }
+std::vector<std::uint8_t> zlib::inflate(const std::uint8_t* deflData, std::uint64_t deflSize) {
+	// "the LSB does not describe any mechanism by which a
+	// compressor can communicate the size required to the
+	// uncompressor" ==> we must reserve some fixed-length
+	// buffer (starting at 256K bytes to handle very large
+	// blobs) for each new decompression attempt
+	std::vector<std::uint8_t> inflData(256 * 1024);
+
+	unsigned long bufSize = inflData.size();
+	unsigned long rawSize = bufSize;
+
+	int ret;
+	while ((ret = uncompress(inflData.data(), &rawSize,  deflData, deflSize)) == Z_BUF_ERROR) {
+		inflData.resize(rawSize = (bufSize *= 2));
+	}
+
+	if (ret != Z_OK)
+		inflData.clear();
+
+	return (std::move(inflData));
+}
+
