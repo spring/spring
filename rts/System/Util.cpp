@@ -248,7 +248,7 @@ std::string utf8::FromUnicode(char32_t ch)
 }
 
 
-#ifndef UNITSYNC
+#if !defined(UNITSYNC) && !defined(UNIT_TEST)
 std::vector<std::uint8_t> zlib::deflate(const std::vector<std::uint8_t>& inflData) { return (zlib::deflate(inflData.data(), inflData.size())); }
 std::vector<std::uint8_t> zlib::deflate(const std::uint8_t* inflData, unsigned long inflSize) {
 	std::vector<std::uint8_t> deflData(compressBound(inflSize));

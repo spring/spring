@@ -344,7 +344,7 @@ namespace utf8 {
 	}
 };
 
-#ifndef UNITSYNC
+#if !defined(UNITSYNC) && !defined(UNIT_TEST)
 namespace zlib {
 	std::vector<std::uint8_t> deflate(const std::uint8_t* inflData, unsigned long inflSize);
 	std::vector<std::uint8_t> inflate(const std::uint8_t* deflData, unsigned long deflSize);
