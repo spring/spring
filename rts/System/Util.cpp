@@ -256,6 +256,7 @@ std::vector<std::uint8_t> zlib::deflate(const std::uint8_t* inflData, unsigned l
 	unsigned long bufSize = deflData.size();
 
 	if (compress(deflData.data(), &bufSize,  inflData, inflSize) == Z_OK) {
+		deflData.resize(bufSize);
 		deflData.shrink_to_fit();
 	} else {
 		deflData.clear();
@@ -281,8 +282,12 @@ std::vector<std::uint8_t> zlib::inflate(const std::uint8_t* deflData, unsigned l
 		inflData.resize(rawSize = (bufSize *= 2));
 	}
 
+
 	if (ret != Z_OK)
 		inflData.clear();
+
+	inflData.resize(rawSize);
+	inflData.shrink_to_fit();
 
 	return (std::move(inflData));
 }
