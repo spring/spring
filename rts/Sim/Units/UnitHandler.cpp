@@ -87,9 +87,7 @@ CUnit* CUnitHandler::NewUnit(const UnitDef* ud)
 		memPool.pages.emplace_back();
 		unit = NewUnitAux(ud, memPool.pages.size() - 1);
 	} else {
-		const size_t memPoolIdx = memPool.indcs.back();
-
-		unit = NewUnitAux(ud, memPoolIdx);
+		unit = NewUnitAux(ud, memPool.indcs.back());
 		memPool.indcs.pop_back();
 	}
 
