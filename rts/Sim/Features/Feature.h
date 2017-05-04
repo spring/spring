@@ -29,7 +29,7 @@ class CFeature: public CSolidObject, public spring::noncopyable
 	CR_DECLARE(CFeature)
 
 public:
-	CFeature();
+	CFeature(size_t fhMemPoolIdx = -1lu);
 	~CFeature();
 
 	CR_DECLARE_SUB(MoveCtrl)
@@ -117,7 +117,6 @@ private:
 	static int ChunkNumber(float f);
 
 public:
-
 	/**
 	 * This flag is used to stop a potential exploit involving tripping
 	 * a unit back and forth across a chunk boundary to get unlimited resources.

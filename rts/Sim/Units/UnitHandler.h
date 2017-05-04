@@ -49,13 +49,16 @@ public:
 	CUnit* GetUnitUnsafe(unsigned int unitID) const { return units[unitID]; }
 	CUnit* GetUnit(unsigned int unitID) const { return (unitID < MaxUnits()? units[unitID]: nullptr); }
 
+	static CUnit* NewUnitAux(const UnitDef* ud, size_t poolIdx);
+	static CUnit* NewUnit(const UnitDef* ud);
+
 	const spring::unordered_map<unsigned int, CBuilderCAI*>& GetBuilderCAIs() const { return builderCAIs; }
 
 public:
 	// FIXME
 	std::vector<CUnit*> units;                        ///< used to get units from IDs (0 if not created)
-	std::vector<std::vector<std::vector<CUnit*>>> unitsByDefs; ///< units sorted by team and unitDef
 	std::vector<CUnit*> activeUnits;                  ///< used to get all active units
+	std::vector<std::vector<std::vector<CUnit*>>> unitsByDefs; ///< units sorted by team and unitDef
 
 private:
 	void DeleteUnit(CUnit* unit);

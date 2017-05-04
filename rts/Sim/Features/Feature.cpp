@@ -26,7 +26,7 @@
 #include "System/myMath.h"
 #include "System/creg/DefTypes.h"
 #include "System/Log/ILog.h"
-#include <assert.h>
+#include <cassert>
 
 
 CR_BIND_DERIVED(CFeature, CSolidObject, )
@@ -68,8 +68,9 @@ CR_REG_METADATA_SUB(CFeature,MoveCtrl,(
 ))
 
 
-CFeature::CFeature()
-: CSolidObject()
+CFeature::CFeature(size_t fhMemPoolIdx)
+: CSolidObject(fhMemPoolIdx)
+
 , isRepairingBeforeResurrect(false)
 , inUpdateQue(false)
 , deleteMe(false)
@@ -86,10 +87,10 @@ CFeature::CFeature()
 
 , fireTime(0)
 , smokeTime(0)
-, def(NULL)
-, udef(NULL)
-, myFire(NULL)
-, solidOnTop(NULL)
+, def(nullptr)
+, udef(nullptr)
+, myFire(nullptr)
+, solidOnTop(nullptr)
 {
 	crushable = true;
 	immobile = true;
@@ -101,9 +102,9 @@ CFeature::~CFeature()
 	UnBlock();
 	quadField->RemoveFeature(this);
 
-	if (myFire != NULL) {
+	if (myFire != nullptr) {
 		myFire->StopFire();
-		myFire = NULL;
+		myFire = nullptr;
 	}
 
 	if (def->geoThermal) {
@@ -407,7 +408,7 @@ void CFeature::DoDamage(
 
 	// features have no armor-type, so use default damage
 	float baseDamage = damages.GetDefault();
-	float impulseMult = float((def->drawType >= DRAWTYPE_TREE) || (udef != NULL && !udef->IsImmobileUnit()));
+	float impulseMult = float((def->drawType >= DRAWTYPE_TREE) || (udef != nullptr && !udef->IsImmobileUnit()));
 
 	if (eventHandler.FeaturePreDamaged(this, attacker, baseDamage, weaponDefID, projectileID, &baseDamage, &impulseMult))
 		return;
@@ -425,10 +426,10 @@ void CFeature::DoDamage(
 	eventHandler.FeatureDamaged(this, attacker, baseDamage, weaponDefID, projectileID);
 
 	if (health <= 0.0f && def->destructable) {
-		FeatureLoadParams params = {featureDefHandler->GetFeatureDefByID(def->deathFeatureDefID), NULL, pos, speed, -1, team, -1, heading, buildFacing, 0};
+		FeatureLoadParams params = {featureDefHandler->GetFeatureDefByID(def->deathFeatureDefID), nullptr, pos, speed, -1, team, -1, heading, buildFacing, 0};
 		CFeature* deathFeature = featureHandler->CreateWreckage(params, 0, false);
 
-		if (deathFeature != NULL) {
+		if (deathFeature != nullptr) {
 			// if a partially reclaimed corpse got blasted,
 			// ensure its wreck is not worth the full amount
 			// (which might be more than the amount remaining)
@@ -607,10 +608,10 @@ bool CFeature::Update()
 	if (smokeTime != 0) {
 		if (!((gs->frameNum + id) & 3) && projectileHandler->GetParticleSaturation() < 0.7f) {
 			if (pos.y < 0.0f) {
-				new CBubbleProjectile(NULL, midPos + guRNG.NextVector() * radius * 0.3f,
+				new CBubbleProjectile(nullptr, midPos + guRNG.NextVector() * radius * 0.3f,
 					guRNG.NextVector() * 0.3f + UpVector, smokeTime / 6 + 20, 6, 0.4f, 0.5f);
 			} else {
-				new CSmokeProjectile (NULL, midPos + guRNG.NextVector() * radius * 0.3f,
+				new CSmokeProjectile (nullptr, midPos + guRNG.NextVector() * radius * 0.3f,
 					guRNG.NextVector() * 0.3f + UpVector, smokeTime / 6 + 20, 6, 0.4f, 0.5f);
 			}
 		}
@@ -671,7 +672,7 @@ void CFeature::EmitGeoSmoke()
 	// Hide the smoke if there is a geothermal unit on the vent
 	const CUnit* u = dynamic_cast<CUnit*>(solidOnTop);
 
-	if (u == NULL || !u->unitDef->needGeo) {
+	if (u == nullptr || !u->unitDef->needGeo) {
 		const float partSat = !(gs->frameNum & 3) ? 1.0f : 0.7f;
 		if (projectileHandler->GetParticleSaturation() < partSat) {
 			const float3 pPos = guRNG.NextVector() * 10.0f + float3(pos.x, pos.y - 10.0f, pos.z);

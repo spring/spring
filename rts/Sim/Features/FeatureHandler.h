@@ -3,13 +3,14 @@
 #ifndef _FEATURE_HANDLER_H
 #define _FEATURE_HANDLER_H
 
-#include <string>
+#include <deque>
 #include <vector>
 
 #include "System/float3.h"
 #include "System/Misc/NonCopyable.h"
 #include "System/creg/creg_cond.h"
 #include "System/UnorderedSet.hpp"
+#include "Sim/Features/Feature.h"
 #include "Sim/Misc/SimObjectIDPool.h"
 
 
@@ -35,13 +36,22 @@ struct FeatureLoadParams {
 	int smokeTime;
 };
 
+struct FeatureMemPool {
+	std::deque< char[sizeof(CFeature)] > pages;
+	std::vector<size_t> indcs;
+};
+
 class LuaParser;
 class CFeatureHandler : public spring::noncopyable
 {
 	CR_DECLARE_STRUCT(CFeatureHandler)
 
 public:
-	CFeatureHandler() { activeFeatureIDs.reserve(128); }
+	CFeatureHandler() {
+		features.reserve(128);
+		activeFeatureIDs.reserve(128);
+		memPool.indcs.reserve(128);
+	}
 	~CFeatureHandler();
 
 	CFeature* LoadFeature(const FeatureLoadParams& params);
@@ -71,7 +81,7 @@ private:
 			return true;
 		// is this ID not already in use?
 		if (id < features.size())
-			return (features[id] == NULL);
+			return (features[id] == nullptr);
 		// AddFeature will make new room for us
 		return true;
 	}
@@ -81,9 +91,10 @@ private:
 
 private:
 	SimObjectIDPool idPool;
+	FeatureMemPool memPool;
 
 	spring::unordered_set<int> activeFeatureIDs;
-	std::vector<int> toBeFreedFeatureIDs;
+	std::vector<int> deletedFeatureIDs;
 	std::vector<CFeature*> features;
 
 	std::vector<CFeature*> updateFeatures;

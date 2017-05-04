@@ -64,7 +64,8 @@ CR_REG_METADATA(CBuilder, (
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CBuilder::CBuilder():
+CBuilder::CBuilder(size_t uhMemPoolIdx):
+	CUnit(uhMemPoolIdx),
 	range3D(true),
 	buildDistance(16),
 	buildSpeed(100),
@@ -93,10 +94,6 @@ CBuilder::CBuilder():
 {
 }
 
-
-CBuilder::~CBuilder()
-{
-}
 
 
 void CBuilder::PreInit(const UnitLoadParams& params)

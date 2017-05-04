@@ -13,14 +13,14 @@
 #include "System/TimeProfiler.h"
 #include "System/Util.h"
 
-CFeatureHandler* featureHandler = NULL;
+CFeatureHandler* featureHandler = nullptr;
 
 /******************************************************************************/
 
 CR_BIND(CFeatureHandler, )
 CR_REG_METADATA(CFeatureHandler, (
 	CR_MEMBER(idPool),
-	CR_MEMBER(toBeFreedFeatureIDs),
+	CR_MEMBER(deletedFeatureIDs),
 	CR_MEMBER(activeFeatureIDs),
 	CR_MEMBER(features),
 	CR_MEMBER(updateFeatures)
@@ -52,7 +52,7 @@ void CFeatureHandler::LoadFeaturesFromMap()
 
 		FeatureLoadParams params = {
 			def,
-			NULL,
+			nullptr,
 
 			float3(mfi[a].pos.x, CGround::GetHeightReal(mfi[a].pos.x, mfi[a].pos.z), mfi[a].pos.z),
 			ZeroVector,
@@ -77,8 +77,20 @@ CFeature* CFeatureHandler::LoadFeature(const FeatureLoadParams& params) {
 	if (!CanAddFeature(params.featureID))
 		return nullptr;
 
-	// Initialize() calls AddFeature -> no memory-leak
-	CFeature* feature = new CFeature();
+	CFeature* feature = nullptr;
+
+	if (memPool.indcs.empty()) {
+		memPool.pages.emplace_back();
+		feature = new (&memPool.pages[memPool.pages.size() - 1]) CFeature(memPool.pages.size() - 1);
+	} else {
+		const size_t memPoolIdx = memPool.indcs.back();
+
+		// use placement since features are non-copyable and have no move-ctor
+		feature = new (&memPool.pages[memPoolIdx]) CFeature(memPoolIdx);
+		memPool.indcs.pop_back();
+	}
+
+	// calls back into AddFeature
 	feature->Initialize(params);
 	return feature;
 }
@@ -103,7 +115,7 @@ void CFeatureHandler::AllocateNewFeatureIDs(const CFeature* feature)
 	const unsigned int numNewIDs = std::max(int(features.size()) + (128 * idPool.IsEmpty()), (feature->id + 1) - int(features.size()));
 
 	idPool.Expand(features.size(), numNewIDs);
-	features.resize(features.size() + numNewIDs, NULL);
+	features.resize(features.size() + numNewIDs, nullptr);
 }
 
 void CFeatureHandler::InsertActiveFeature(CFeature* feature)
@@ -111,7 +123,7 @@ void CFeatureHandler::InsertActiveFeature(CFeature* feature)
 	idPool.AssignID(feature);
 
 	assert(feature->id < features.size());
-	assert(features[feature->id] == NULL);
+	assert(features[feature->id] == nullptr);
 
 	activeFeatureIDs.insert(feature->id);
 	features[feature->id] = feature;
@@ -190,9 +202,9 @@ void CFeatureHandler::Update()
 
 	if ((gs->frameNum & 31) == 0) {
 		const auto& pred = [this](int id) { return (this->TryFreeFeatureID(id)); };
-		const auto& iter = std::remove_if(toBeFreedFeatureIDs.begin(), toBeFreedFeatureIDs.end(), pred);
+		const auto& iter = std::remove_if(deletedFeatureIDs.begin(), deletedFeatureIDs.end(), pred);
 
-		toBeFreedFeatureIDs.erase(iter, toBeFreedFeatureIDs.end());
+		deletedFeatureIDs.erase(iter, deletedFeatureIDs.end());
 	}
 	{
 		const auto& pred = [this](CFeature* feature) { return (this->UpdateFeature(feature)); };
@@ -226,23 +238,24 @@ bool CFeatureHandler::UpdateFeature(CFeature* feature)
 	if (feature->deleteMe) {
 		eventHandler.RenderFeatureDestroyed(feature);
 		eventHandler.FeatureDestroyed(feature);
-		toBeFreedFeatureIDs.push_back(feature->id);
+
+		deletedFeatureIDs.push_back(feature->id);
 		activeFeatureIDs.erase(feature->id);
-		features[feature->id] = NULL;
+		memPool.indcs.push_back(feature->memPoolIdx);
+
+		features[feature->id] = nullptr;
 
 		// ID must match parameter for object commands, just use this
 		CSolidObject::SetDeletingRefID(feature->GetBlockingMapID());
 		// destructor removes feature from update-queue
-		delete feature;
+		feature->~CFeature();
 		CSolidObject::SetDeletingRefID(-1);
-
 		return true;
 	}
 
 	if (!feature->Update()) {
 		// feature is done updating itself, remove from queue
 		feature->inUpdateQue = false;
-
 		return true;
 	}
 

@@ -242,6 +242,8 @@ void CWorldDrawer::Draw() const
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 
+	sky->Draw();
+
 	DrawOpaqueObjects();
 	DrawAlphaObjects();
 
@@ -269,8 +271,6 @@ void CWorldDrawer::Draw() const
 void CWorldDrawer::DrawOpaqueObjects() const
 {
 	CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
-
-	sky->Draw();
 
 	if (globalRendering->drawGround) {
 		{
@@ -318,7 +318,6 @@ void CWorldDrawer::DrawOpaqueObjects() const
 
 void CWorldDrawer::DrawAlphaObjects() const
 {
-
 	// transparent objects
 	glEnable(GL_BLEND);
 	glDepthFunc(GL_LEQUAL);

@@ -7,12 +7,6 @@
 #include "UnitDefHandler.h"
 #include "UnitHandler.h"
 
-#include "Scripts/UnitScript.h"
-
-#include "UnitTypes/Builder.h"
-#include "UnitTypes/ExtractorBuilding.h"
-#include "UnitTypes/Factory.h"
-
 #include "CommandAI/AirCAI.h"
 #include "CommandAI/BuilderCAI.h"
 #include "CommandAI/CommandAI.h"
@@ -33,6 +27,8 @@
 #include "System/Log/ILog.h"
 #include "System/Platform/Watchdog.h"
 
+
+
 CUnitLoader* CUnitLoader::GetInstance()
 {
 	// NOTE: UnitLoader has no internal state, so this is fine wrt. reloading
@@ -41,12 +37,11 @@ CUnitLoader* CUnitLoader::GetInstance()
 }
 
 
-
 CUnit* CUnitLoader::LoadUnit(const std::string& name, const UnitLoadParams& params)
 {
 	const_cast<UnitLoadParams&>(params).unitDef = unitDefHandler->GetUnitDefByName(name);
 
-	if (params.unitDef == NULL)
+	if (params.unitDef == nullptr)
 		throw content_error("Couldn't find unittype " +  name);
 
 	return (LoadUnit(params));
@@ -55,13 +50,13 @@ CUnit* CUnitLoader::LoadUnit(const std::string& name, const UnitLoadParams& para
 
 CUnit* CUnitLoader::LoadUnit(const UnitLoadParams& cparams)
 {
-	CUnit* unit = NULL;
+	CUnit* unit = nullptr;
 	UnitLoadParams& params = const_cast<UnitLoadParams&>(cparams);
 
 	{
 		const UnitDef* ud = params.unitDef;
 
-		if (ud == NULL)
+		if (ud == nullptr)
 			return unit;
 		// need to check this BEFORE creating the instance
 		if (!unitHandler->CanAddUnit(cparams.unitID))
@@ -73,27 +68,7 @@ CUnit* CUnitLoader::LoadUnit(const UnitLoadParams& cparams)
 				throw content_error("Invalid team and no gaia team to put unit in");
 		}
 
-		if (ud->IsFactoryUnit()) {
-			// special static builder structures that can always be given
-			// move orders (which are passed on to all mobile buildees)
-			unit = new CFactory();
-		} else if (ud->IsMobileBuilderUnit() || ud->IsStaticBuilderUnit()) {
-			// all other types of non-structure "builders", including hubs and
-			// nano-towers (the latter should not have any build-options at all,
-			// whereas the former should be unable to build any mobile units)
-			unit = new CBuilder();
-		} else if (ud->IsBuildingUnit()) {
-			// static non-builder structures
-			if (ud->IsExtractorUnit()) {
-				unit = new CExtractorBuilding();
-			} else {
-				unit = new CBuilding();
-			}
-		} else {
-			// regular mobile unit
-			unit = new CUnit();
-		}
-
+		unit = CUnitHandler::NewUnit(ud);
 		unit->PreInit(params);
 
 		if (ud->IsFactoryUnit()) {
@@ -213,7 +188,7 @@ void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amoun
 
 			const UnitLoadParams unitParams = {
 				ud,
-				NULL,
+				nullptr,
 
 				float3(px, CGround::GetHeightReal(px, pz), pz),
 				ZeroVector,
@@ -248,12 +223,12 @@ void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amoun
 		const UnitDef* unitDef = unitDefHandler->GetUnitDefByName(objectName);
 		const FeatureDef* featureDef = featureDefHandler->GetFeatureDef(objectName, false);
 
-		if (unitDef == NULL && featureDef == NULL) {
+		if (unitDef == nullptr && featureDef == nullptr) {
 			LOG_L(L_WARNING, "[%s] %s is not a valid object-name", __FUNCTION__, objectName.c_str());
 			return;
 		}
 
-		if (unitDef != NULL) {
+		if (unitDef != nullptr) {
 			const int xsize = unitDef->xsize;
 			const int zsize = unitDef->zsize;
 			const int squareSize = math::ceil(math::sqrt((float) numRequestedUnits));
@@ -274,7 +249,7 @@ void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amoun
 
 					const UnitLoadParams unitParams = {
 						unitDef,
-						NULL,
+						nullptr,
 
 						float3(px, CGround::GetHeightReal(px, pz), pz),
 						ZeroVector,
@@ -295,10 +270,9 @@ void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amoun
 					__FUNCTION__, numRequestedUnits, objectName.c_str(), team);
 		}
 
-		if (featureDef != NULL) {
-			if (featureAllyTeam < 0) {
+		if (featureDef != nullptr) {
+			if (featureAllyTeam < 0)
 				team = -1; // default to world features
-			}
 
 			const int xsize = featureDef->xsize;
 			const int zsize = featureDef->zsize;
@@ -320,7 +294,7 @@ void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amoun
 					Watchdog::ClearPrimaryTimers();
 					FeatureLoadParams params = {
 						featureDef,
-						NULL,
+						nullptr,
 
 						featurePos,
 						ZeroVector,

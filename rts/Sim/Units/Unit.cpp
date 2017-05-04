@@ -80,8 +80,8 @@ float CUnit::expReloadScale = 0.0f;
 float CUnit::expGrade       = 0.0f;
 
 
-CUnit::CUnit()
-: CSolidObject()
+CUnit::CUnit(size_t uhMemPoolIdx)
+: CSolidObject(uhMemPoolIdx)
 , unitDef(nullptr)
 , shieldWeapon(nullptr)
 , stockpileWeapon(nullptr)

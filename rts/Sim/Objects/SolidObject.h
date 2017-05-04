@@ -96,7 +96,7 @@ public:
 		DAMAGE_EXTSOURCE_CRUSHED = 7,
 	};
 
-	CSolidObject();
+	CSolidObject(size_t ohMemPoolIdx = -1lu);
 	virtual ~CSolidObject() {}
 
 	void PostLoad();
@@ -295,6 +295,8 @@ private:
 	float3 GetAimPos() const { return (GetObjectSpacePos(relAimPos)); }
 
 public:
+	size_t memPoolIdx;
+
 	float health;
 	float maxHealth;
 

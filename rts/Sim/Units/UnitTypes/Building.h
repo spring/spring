@@ -13,7 +13,7 @@ class CBuilding : public CUnit
 public:
 	CR_DECLARE(CBuilding)
 
-	CBuilding();
+	CBuilding(size_t uhMemPoolIdx = -1lu);
 	virtual ~CBuilding() {}
 
 	void PreInit(const UnitLoadParams& params);

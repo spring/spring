@@ -279,16 +279,20 @@ void LocalModel::SetModel(const S3DModel* model, bool initialize)
 
 	// Only update the pieces
 	if (!initialize) {
-		assert(pieces.size() == model->numPieces);
 		int idx = 0;
+
+		assert(pieces.size() == model->numPieces);
 		SetOriginalPieces(model->GetRootPiece(), idx);
 		assert(idx == model->numPieces);
+
 		pieces[0].UpdateChildMatricesRec(true);
 		UpdateBoundingVolume();
 		return;
 	}
 
-	assert(pieces.size() == 0);
+	assert(pieces.empty());
+
+	pieces.clear();
 	pieces.reserve(model->numPieces);
 
 	CreateLocalModelPieces(model->GetRootPiece());

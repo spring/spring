@@ -17,7 +17,7 @@ CR_REG_METADATA(CBuilding, )
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CBuilding::CBuilding()
+CBuilding::CBuilding(size_t uhMemPoolIdx): CUnit(uhMemPoolIdx)
 {
 	immobile = true;
 }

@@ -5,6 +5,10 @@
 #include "UnitHandler.h"
 #include "Unit.h"
 #include "UnitDefHandler.h"
+#include "UnitTypes/Builder.h"
+#include "UnitTypes/ExtractorBuilding.h"
+#include "UnitTypes/Factory.h"
+
 #include "CommandAI/BuilderCAI.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/TeamHandler.h"
@@ -25,7 +29,7 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CUnitHandler* unitHandler = NULL;
+CUnitHandler* unitHandler = nullptr;
 
 CR_BIND(CUnitHandler, )
 CR_REG_METADATA(CUnitHandler, (
@@ -42,11 +46,76 @@ CR_REG_METADATA(CUnitHandler, (
 ))
 
 
-CUnitHandler::CUnitHandler()
-:
+
+struct UnitMemPool {
+	// CBuilder is (currently) the largest derived unit-type
+	std::deque< char[sizeof(CBuilder)] > pages;
+	std::vector<size_t> indcs;
+};
+
+static UnitMemPool memPool;
+
+
+
+CUnit* CUnitHandler::NewUnitAux(const UnitDef* ud, size_t poolIdx)
+{
+	auto* mem = &memPool.pages[poolIdx];
+
+	// special static builder structures that can always be given
+	// move orders (which are passed on to all mobile buildees)
+	if (ud->IsFactoryUnit())
+		return (new (mem) CFactory(poolIdx));
+
+	// all other types of non-structure "builders", including hubs and
+	// nano-towers (the latter should not have any build-options at all,
+	// whereas the former should be unable to build any mobile units)
+	if (ud->IsMobileBuilderUnit() || ud->IsStaticBuilderUnit())
+		return (new (mem) CBuilder(poolIdx));
+
+	// static non-builder structures
+	if (ud->IsBuildingUnit()) {
+		if (ud->IsExtractorUnit())
+			return (new (mem) CExtractorBuilding(poolIdx));
+
+		return (new (mem) CBuilding(poolIdx));
+	}
+
+	// regular mobile unit
+	return (new (mem) CUnit(poolIdx));
+}
+
+CUnit* CUnitHandler::NewUnit(const UnitDef* ud)
+{
+	CUnit* unit = nullptr;
+
+	if (memPool.indcs.empty()) {
+		memPool.pages.emplace_back();
+		unit = NewUnitAux(ud, memPool.pages.size() - 1);
+	} else {
+		const size_t memPoolIdx = memPool.indcs.back();
+
+		unit = NewUnitAux(ud, memPoolIdx);
+		memPool.indcs.pop_back();
+	}
+
+	return unit;
+}
+
+
+
+CUnitHandler::CUnitHandler():
 	maxUnits(0),
 	maxUnitRadius(0.0f)
 {
+	memPool.pages.clear();
+	memPool.indcs.clear();
+	memPool.indcs.reserve(128);
+
+	static_assert(sizeof(CBuilder) >= sizeof(CUnit             ), "");
+	static_assert(sizeof(CBuilder) >= sizeof(CBuilding         ), "");
+	static_assert(sizeof(CBuilder) >= sizeof(CExtractorBuilding), "");
+	static_assert(sizeof(CBuilder) >= sizeof(CFactory          ), "");
+
 	// set the global (runtime-constant) unit-limit as the sum
 	// of  all team unit-limits, which is *always* <= MAX_UNITS
 	// (note that this also counts the Gaia team)
@@ -58,7 +127,7 @@ CUnitHandler::CUnitHandler()
 		maxUnits += teamHandler->Team(n)->GetMaxUnits();
 	}
 
-	units.resize(maxUnits, NULL);
+	units.resize(maxUnits, nullptr);
 	unitsByDefs.resize(teamHandler->ActiveTeams(), std::vector<std::vector<CUnit*>>(unitDefHandler->unitDefs.size()));
 
 	// id's are used as indices, so they must lie in [0, units.size() - 1]
@@ -75,7 +144,7 @@ CUnitHandler::~CUnitHandler()
 	for (CUnit* u: activeUnits) {
 		// ~CUnit dereferences featureHandler which is destroyed already
 		u->delayedWreckLevel = -1;
-		delete u;
+		u->~CUnit();
 	}
 }
 
@@ -97,7 +166,7 @@ void CUnitHandler::InsertActiveUnit(CUnit* unit)
 	idPool.AssignID(unit);
 
 	assert(unit->id < units.size());
-	assert(units[unit->id] == NULL);
+	assert(units[unit->id] == nullptr);
 
 	assert(insertionPos >= 0 && insertionPos <= activeUnits.size());
 	activeUnits.insert(activeUnits.begin() + insertionPos, unit);
@@ -155,17 +224,19 @@ void CUnitHandler::DeleteUnitNow(CUnit* delUnit)
 
 		teamHandler->Team(delTeam)->RemoveUnit(delUnit, CTeam::RemoveDied);
 
-		if (activeSlowUpdateUnit > std::distance(activeUnits.begin(), it)) {
+		if (activeSlowUpdateUnit > std::distance(activeUnits.begin(), it))
 			--activeSlowUpdateUnit;
-		}
 
 		activeUnits.erase(it);
+		memPool.indcs.push_back(delUnit->memPoolIdx);
+
 		spring::VectorErase(unitsByDefs[delTeam][delType], delUnit);
 		idPool.FreeID(delUnit->id, true);
+
 		units[delUnit->id] = nullptr;
 
 		CSolidObject::SetDeletingRefID(delUnit->id);
-		delete delUnit;
+		delUnit->~CUnit();
 		CSolidObject::SetDeletingRefID(-1);
 	}
 
