@@ -7,6 +7,7 @@
 
 #include "UnitDef.h"
 #include "Sim/Misc/SimObjectIDPool.h"
+#include "Sim/Misc/SimObjectMemPool.h"
 #include "System/creg/STL_Map.h"
 
 class CUnit;
@@ -49,7 +50,6 @@ public:
 	CUnit* GetUnitUnsafe(unsigned int unitID) const { return units[unitID]; }
 	CUnit* GetUnit(unsigned int unitID) const { return (unitID < MaxUnits()? units[unitID]: nullptr); }
 
-	static CUnit* NewUnitAux(const UnitDef* ud, size_t poolIdx);
 	static CUnit* NewUnit(const UnitDef* ud);
 
 	const spring::unordered_map<unsigned int, CBuilderCAI*>& GetBuilderCAIs() const { return builderCAIs; }

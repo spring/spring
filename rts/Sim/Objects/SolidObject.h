@@ -100,6 +100,7 @@ public:
 	virtual ~CSolidObject() { assert(memPoolIdx != -1lu); memPoolIdx = -1lu; }
 
 	void PostLoad();
+	size_t GetMemPoolIdx() const { return memPoolIdx; }
 
 	virtual bool AddBuildPower(CUnit* builder, float amount) { return false; }
 	virtual void DoDamage(const DamageArray& damages, const float3& impulse, CUnit* attacker, int weaponDefID, int projectileID) {}

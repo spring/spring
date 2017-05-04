@@ -12,7 +12,7 @@
 #include "System/UnorderedSet.hpp"
 #include "Sim/Features/Feature.h"
 #include "Sim/Misc/SimObjectIDPool.h"
-
+#include "Sim/Misc/SimObjectMemPool.h"
 
 class CFeature;
 struct UnitDef;
@@ -36,11 +36,6 @@ struct FeatureLoadParams {
 	int smokeTime;
 };
 
-struct FeatureMemPool {
-	std::deque< char[sizeof(CFeature)] > pages;
-	std::vector<size_t> indcs;
-};
-
 class LuaParser;
 class CFeatureHandler : public spring::noncopyable
 {
@@ -48,10 +43,14 @@ class CFeatureHandler : public spring::noncopyable
 
 public:
 	CFeatureHandler();
-	~CFeatureHandler();
+	~CFeatureHandler() {
+		features.clear();
+		activeFeatureIDs.clear();
+	}
 
 	CFeature* LoadFeature(const FeatureLoadParams& params);
 	CFeature* CreateWreckage(const FeatureLoadParams& params, const int numWreckLevels, bool emitSmoke);
+	CFeature* GetFeature(int id);
 
 	void Update();
 
@@ -59,7 +58,6 @@ public:
 	bool TryFreeFeatureID(int id);
 	bool AddFeature(CFeature* feature);
 	void DeleteFeature(CFeature* feature);
-	CFeature* GetFeature(int id);
 
 	void LoadFeaturesFromMap();
 
@@ -87,7 +85,6 @@ private:
 
 private:
 	SimObjectIDPool idPool;
-	// FeatureMemPool memPool;
 
 	spring::unordered_set<int> activeFeatureIDs;
 	std::vector<int> deletedFeatureIDs;

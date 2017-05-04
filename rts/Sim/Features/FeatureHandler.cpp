@@ -26,24 +26,17 @@ CR_REG_METADATA(CFeatureHandler, (
 
 /******************************************************************************/
 
-static FeatureMemPool memPool;
+static SimObjectMemPool<sizeof(CFeature)> memPool;
 
 CFeatureHandler* featureHandler = nullptr;
 
 
 CFeatureHandler::CFeatureHandler() {
-	memPool.pages.clear();
-	memPool.indcs.clear();
-	memPool.indcs.reserve(128);
+	memPool.clear();
+	memPool.reserve(128);
 
 	features.reserve(128);
 	activeFeatureIDs.reserve(128);
-}
-
-CFeatureHandler::~CFeatureHandler()
-{
-	activeFeatureIDs.clear();
-	features.clear();
 }
 
 
@@ -51,14 +44,17 @@ void CFeatureHandler::LoadFeaturesFromMap()
 {
 	// create map-specified feature instances
 	const int numFeatures = readMap->GetNumFeatures();
+
 	if (numFeatures == 0)
 		return;
+
 	std::vector<MapFeatureInfo> mfi;
 	mfi.resize(numFeatures);
 	readMap->GetFeatureInfo(&mfi[0]);
 
 	for (int a = 0; a < numFeatures; ++a) {
 		const FeatureDef* def = featureDefHandler->GetFeatureDef(readMap->GetFeatureTypeName(mfi[a].featureType), true);
+
 		if (def == nullptr)
 			continue;
 
@@ -89,18 +85,7 @@ CFeature* CFeatureHandler::LoadFeature(const FeatureLoadParams& params) {
 	if (!CanAddFeature(params.featureID))
 		return nullptr;
 
-	CFeature* feature = nullptr;
-
-	if (memPool.indcs.empty()) {
-		memPool.pages.emplace_back();
-		feature = new (&memPool.pages[memPool.pages.size() - 1]) CFeature(memPool.pages.size() - 1);
-	} else {
-		const size_t memPoolIdx = memPool.indcs.back();
-
-		// use placement since features are non-copyable and have no move-ctor
-		feature = new (&memPool.pages[memPoolIdx]) CFeature(memPoolIdx);
-		memPool.indcs.pop_back();
-	}
+	CFeature* feature = memPool.alloc<CFeature>();
 
 	// calls back into AddFeature
 	feature->Initialize(params);
@@ -253,14 +238,13 @@ bool CFeatureHandler::UpdateFeature(CFeature* feature)
 
 		deletedFeatureIDs.push_back(feature->id);
 		activeFeatureIDs.erase(feature->id);
-		memPool.indcs.push_back(feature->memPoolIdx);
 
 		features[feature->id] = nullptr;
 
 		// ID must match parameter for object commands, just use this
 		CSolidObject::SetDeletingRefID(feature->GetBlockingMapID());
 		// destructor removes feature from update-queue
-		feature->~CFeature();
+		memPool.free(feature);
 		CSolidObject::SetDeletingRefID(-1);
 		return true;
 	}

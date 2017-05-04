@@ -41,57 +41,34 @@ CR_REG_METADATA(CUnitHandler, (
 
 
 
-struct UnitMemPool {
-	// CBuilder is (currently) the largest derived unit-type
-	std::deque< char[sizeof(CBuilder)] > pages;
-	std::vector<size_t> indcs;
-};
-
-static UnitMemPool memPool;
+// CBuilder is (currently) the largest derived unit-type
+static SimObjectMemPool<sizeof(CBuilder)> memPool;
 
 CUnitHandler* unitHandler = nullptr;
 
-
-CUnit* CUnitHandler::NewUnitAux(const UnitDef* ud, size_t poolIdx)
+CUnit* CUnitHandler::NewUnit(const UnitDef* ud)
 {
-	auto* mem = &memPool.pages[poolIdx];
-
 	// special static builder structures that can always be given
 	// move orders (which are passed on to all mobile buildees)
 	if (ud->IsFactoryUnit())
-		return (new (mem) CFactory(poolIdx));
+		return (memPool.alloc<CFactory>());
 
 	// all other types of non-structure "builders", including hubs and
 	// nano-towers (the latter should not have any build-options at all,
 	// whereas the former should be unable to build any mobile units)
 	if (ud->IsMobileBuilderUnit() || ud->IsStaticBuilderUnit())
-		return (new (mem) CBuilder(poolIdx));
+		return (memPool.alloc<CBuilder>());
 
 	// static non-builder structures
 	if (ud->IsBuildingUnit()) {
 		if (ud->IsExtractorUnit())
-			return (new (mem) CExtractorBuilding(poolIdx));
+			return (memPool.alloc<CExtractorBuilding>());
 
-		return (new (mem) CBuilding(poolIdx));
+		return (memPool.alloc<CBuilding>());
 	}
 
 	// regular mobile unit
-	return (new (mem) CUnit(poolIdx));
-}
-
-CUnit* CUnitHandler::NewUnit(const UnitDef* ud)
-{
-	CUnit* unit = nullptr;
-
-	if (memPool.indcs.empty()) {
-		memPool.pages.emplace_back();
-		unit = NewUnitAux(ud, memPool.pages.size() - 1);
-	} else {
-		unit = NewUnitAux(ud, memPool.indcs.back());
-		memPool.indcs.pop_back();
-	}
-
-	return unit;
+	return (memPool.alloc<CUnit>());
 }
 
 
@@ -100,9 +77,8 @@ CUnitHandler::CUnitHandler():
 	maxUnits(0),
 	maxUnitRadius(0.0f)
 {
-	memPool.pages.clear();
-	memPool.indcs.clear();
-	memPool.indcs.reserve(128);
+	memPool.clear();
+	memPool.reserve(128);
 
 	static_assert(sizeof(CBuilder) >= sizeof(CUnit             ), "");
 	static_assert(sizeof(CBuilder) >= sizeof(CBuilding         ), "");
@@ -221,7 +197,6 @@ void CUnitHandler::DeleteUnitNow(CUnit* delUnit)
 			--activeSlowUpdateUnit;
 
 		activeUnits.erase(it);
-		memPool.indcs.push_back(delUnit->memPoolIdx);
 
 		spring::VectorErase(unitsByDefs[delTeam][delType], delUnit);
 		idPool.FreeID(delUnit->id, true);
@@ -229,7 +204,7 @@ void CUnitHandler::DeleteUnitNow(CUnit* delUnit)
 		units[delUnit->id] = nullptr;
 
 		CSolidObject::SetDeletingRefID(delUnit->id);
-		delUnit->~CUnit();
+		memPool.free(delUnit);
 		CSolidObject::SetDeletingRefID(-1);
 	}
 

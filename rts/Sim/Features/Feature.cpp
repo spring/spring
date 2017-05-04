@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-
 #include "Feature.h"
 #include "FeatureDef.h"
 #include "FeatureDefHandler.h"
@@ -26,7 +25,6 @@
 #include "System/myMath.h"
 #include "System/creg/DefTypes.h"
 #include "System/Log/ILog.h"
-#include <cassert>
 
 
 CR_BIND_DERIVED(CFeature, CSolidObject, )
