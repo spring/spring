@@ -21,7 +21,7 @@ public:
 		T* p = nullptr;
 		uint8_t* m = nullptr;
 
-		assert(sizeof(T) <= N);
+		static_assert(sizeof(T) <= N, "");
 
 		if (indcs.empty()) {
 			pages.emplace_back();
