@@ -5,7 +5,6 @@
 #include <SDL_keyboard.h>
 
 #include "Game.h"
-#include "GameJobDispatcher.h"
 #include "Benchmark.h"
 #include "Camera.h"
 #include "CameraHandler.h"
@@ -146,6 +145,7 @@ CR_REG_METADATA(CGame, (
 	CR_IGNORED(numDrawFrames),
 	CR_MEMBER(lastSimFrame),
 	CR_IGNORED(lastNumQueuedSimFrames),
+
 	CR_IGNORED(frameStartTime),
 	CR_IGNORED(lastSimFrameTime),
 	CR_IGNORED(lastDrawFrameTime),
@@ -155,6 +155,8 @@ CR_REG_METADATA(CGame, (
 	CR_IGNORED(lastReceivedNetPacketTime),
 	CR_IGNORED(lastSimFrameNetPacketTime),
 	CR_IGNORED(lastUnsyncedUpdateTime),
+	CR_IGNORED(skipLastDrawTime),
+
 	CR_IGNORED(updateDeltaSeconds),
 	CR_MEMBER(totalGameTime),
 	CR_MEMBER(userInputPrefix),
@@ -189,7 +191,6 @@ CR_REG_METADATA(CGame, (
 	CR_IGNORED(skipSoundmute),
 	CR_IGNORED(skipOldSpeed),
 	CR_IGNORED(skipOldUserSpeed),
-	CR_IGNORED(skipLastDrawTime),
 
 	CR_MEMBER(speedControl),
 
@@ -217,6 +218,7 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 	, lastSimFrame(-1)
 	, lastNumQueuedSimFrames(-1)
 	, numDrawFrames(0)
+
 	, frameStartTime(spring_gettime())
 	, lastSimFrameTime(spring_gettime())
 	, lastDrawFrameTime(spring_gettime())
@@ -226,6 +228,8 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 	, lastReceivedNetPacketTime(spring_gettime())
 	, lastSimFrameNetPacketTime(spring_gettime())
 	, lastUnsyncedUpdateTime(spring_gettime())
+	, skipLastDrawTime(spring_gettime())
+
 	, updateDeltaSeconds(0.0f)
 	, totalGameTime(0)
 	, hideInterface(false)
@@ -242,7 +246,6 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 	, skipSoundmute(false)
 	, skipOldSpeed(0.0f)
 	, skipOldUserSpeed(0.0f)
-	, skipLastDrawTime(spring_gettime())
 	, speedControl(-1)
 	, consoleHistory(NULL)
 	, worldDrawer(NULL)
@@ -252,7 +255,6 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 	, gameOver(false)
 {
 	game = this;
-	jobDispatcher = new JobDispatcher();
 
 	memset(gameID, 0, sizeof(gameID));
 
@@ -322,7 +324,6 @@ CGame::~CGame()
 
 	LOG("[Game::%s][2]", __func__);
 	spring::SafeDelete(saveFile); // ILoadSaveHandler, depends on vfsHandler via ~IArchive
-	spring::SafeDelete(jobDispatcher);
 
 	LOG("[Game::%s][3]", __func__);
 	CWordCompletion::DestroyInstance();
@@ -346,10 +347,10 @@ void CGame::AddTimedJobs()
 		};
 
 		j.freq = GAME_SPEED;
-		j.time = j.startDirect ? 0.0f : (1000.0f / j.freq);
+		j.time = (1000.0f / j.freq) * (1 - j.startDirect);
 		j.name = "EventHandler::CollectGarbage";
 
-		jobDispatcher->AddTimedJob(j);
+		jobDispatcher.AddTimedJob(j);
 	}
 
 	{
@@ -361,10 +362,10 @@ void CGame::AddTimedJobs()
 		};
 
 		j.freq = 1.0f;
-		j.time = j.startDirect ? 0.0f : (1000.0f / j.freq);
+		j.time = (1000.0f / j.freq) * (1 - j.startDirect);
 		j.name = "Profiler::Update";
 
-		jobDispatcher->AddTimedJob(j);
+		jobDispatcher.AddTimedJob(j);
 	}
 }
 
@@ -1033,7 +1034,7 @@ bool CGame::Update()
 
 	good_fpu_control_registers("CGame::Update");
 
-	jobDispatcher->Update();
+	jobDispatcher.Update();
 	clientNet->Update();
 
 	// When video recording do step by step simulation, so each simframe gets a corresponding videoframe

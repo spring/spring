@@ -7,12 +7,12 @@
 #include <vector>
 
 #include "GameController.h"
+#include "GameJobDispatcher.h"
 #include "Game/UI/KeySet.h"
 #include "System/UnorderedMap.hpp"
 #include "System/creg/creg_cond.h"
 #include "System/Misc/SpringTime.h"
 
-class JobDispatcher;
 class CConsoleHistory;
 class LuaParser;
 class ILoadSaveHandler;
@@ -165,6 +165,7 @@ public:
 	spring_time lastReceivedNetPacketTime;
 	spring_time lastSimFrameNetPacketTime;
 	spring_time lastUnsyncedUpdateTime;
+	spring_time skipLastDrawTime;
 
 	float updateDeltaSeconds;
 	/// Time in seconds, stops at game end
@@ -209,7 +210,6 @@ public:
 	bool skipSoundmute;
 	float skipOldSpeed;
 	float skipOldUserSpeed;
-	spring_time skipLastDrawTime;
 
 	/**
 	 * @see CGameServer#speedControl
@@ -219,7 +219,7 @@ public:
 	CConsoleHistory* consoleHistory;
 
 private:
-	JobDispatcher* jobDispatcher;
+	JobDispatcher jobDispatcher;
 
 	CWorldDrawer* worldDrawer;
 
