@@ -13,14 +13,11 @@
 #include "System/TimeProfiler.h"
 #include "System/Util.h"
 
-CFeatureHandler* featureHandler = nullptr;
-
 /******************************************************************************/
 
 CR_BIND(CFeatureHandler, )
 CR_REG_METADATA(CFeatureHandler, (
 	CR_MEMBER(idPool),
-	CR_IGNORED(memPool),
 	CR_MEMBER(deletedFeatureIDs),
 	CR_MEMBER(activeFeatureIDs),
 	CR_MEMBER(features),
@@ -28,6 +25,20 @@ CR_REG_METADATA(CFeatureHandler, (
 ))
 
 /******************************************************************************/
+
+static FeatureMemPool memPool;
+
+CFeatureHandler* featureHandler = nullptr;
+
+
+CFeatureHandler::CFeatureHandler() {
+	memPool.pages.clear();
+	memPool.indcs.clear();
+	memPool.indcs.reserve(128);
+
+	features.reserve(128);
+	activeFeatureIDs.reserve(128);
+}
 
 CFeatureHandler::~CFeatureHandler()
 {

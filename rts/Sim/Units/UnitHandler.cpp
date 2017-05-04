@@ -25,12 +25,6 @@
 #include "System/creg/STL_Set.h"
 
 
-//////////////////////////////////////////////////////////////////////
-// Construction/Destruction
-//////////////////////////////////////////////////////////////////////
-
-CUnitHandler* unitHandler = nullptr;
-
 CR_BIND(CUnitHandler, )
 CR_REG_METADATA(CUnitHandler, (
 	CR_MEMBER(units),
@@ -55,6 +49,7 @@ struct UnitMemPool {
 
 static UnitMemPool memPool;
 
+CUnitHandler* unitHandler = nullptr;
 
 
 CUnit* CUnitHandler::NewUnitAux(const UnitDef* ud, size_t poolIdx)

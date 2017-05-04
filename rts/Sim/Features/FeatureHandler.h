@@ -47,11 +47,7 @@ class CFeatureHandler : public spring::noncopyable
 	CR_DECLARE_STRUCT(CFeatureHandler)
 
 public:
-	CFeatureHandler() {
-		features.reserve(128);
-		activeFeatureIDs.reserve(128);
-		memPool.indcs.reserve(128);
-	}
+	CFeatureHandler();
 	~CFeatureHandler();
 
 	CFeature* LoadFeature(const FeatureLoadParams& params);
@@ -91,7 +87,7 @@ private:
 
 private:
 	SimObjectIDPool idPool;
-	FeatureMemPool memPool;
+	// FeatureMemPool memPool;
 
 	spring::unordered_set<int> activeFeatureIDs;
 	std::vector<int> deletedFeatureIDs;
