@@ -38,12 +38,13 @@ GameData::GameData(std::shared_ptr<const RawPacket> pckt)
 	packet >> compressedSize; compressed.resize(compressedSize);
 	packet >> compressed;
 
-	std::vector<std::uint8_t> buffer{zlib::inflate(compressed)};
+	const std::vector<std::uint8_t> buffer{zlib::inflate(compressed)};
 
 	if (buffer.empty())
 		throw netcode::UnpackPacketException("Error decompressing GameData");
 
-	setupText = reinterpret_cast<char*>(&buffer[0]);
+	// avoid reinterpret_cast; buffer is not null-terminated
+	setupText = {buffer.begin(), buffer.end()};
 
 	packet >> mapChecksum;
 	packet >> modChecksum;
