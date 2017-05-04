@@ -97,7 +97,7 @@ public:
 	};
 
 	CSolidObject(size_t ohMemPoolIdx = -1lu);
-	virtual ~CSolidObject() {}
+	virtual ~CSolidObject() { assert(memPoolIdx != -1lu); memPoolIdx = -1lu; }
 
 	void PostLoad();
 
