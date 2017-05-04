@@ -3,6 +3,7 @@
 #ifndef SIMOBJECT_MEMPOOL_H
 #define SIMOBJECT_MEMPOOL_H
 
+#include <cassert>
 #include <deque>
 #include <vector>
 
@@ -19,6 +20,8 @@ public:
 	template<typename T> T* alloc() {
 		T* p = nullptr;
 		uint8_t* m = nullptr;
+
+		assert(sizeof(T) <= N);
 
 		if (indcs.empty()) {
 			pages.emplace_back();
