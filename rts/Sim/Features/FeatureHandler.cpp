@@ -20,6 +20,7 @@ CFeatureHandler* featureHandler = nullptr;
 CR_BIND(CFeatureHandler, )
 CR_REG_METADATA(CFeatureHandler, (
 	CR_MEMBER(idPool),
+	CR_IGNORED(memPool),
 	CR_MEMBER(deletedFeatureIDs),
 	CR_MEMBER(activeFeatureIDs),
 	CR_MEMBER(features),
