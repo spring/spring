@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "System/UnorderedMap.hpp"
+#include "System/SafeUtil.h"
 
 template<size_t N> struct SimObjectMemPool {
 public:
@@ -45,8 +46,8 @@ public:
 		return p;
 	}
 
-	template<typename T> void free(T* ptr) {
-		const auto it = table.find(ptr);
+	template<typename T> void free(T*& p) {
+		const auto it = table.find(p);
 
 		assert(it != table.end());
 		assert(it->second != -1lu);
@@ -54,7 +55,7 @@ public:
 		indcs.push_back(it->second);
 		table.erase(it);
 
-		ptr->~T();
+		spring::SafeDestruct(p);
 	}
 
 private:

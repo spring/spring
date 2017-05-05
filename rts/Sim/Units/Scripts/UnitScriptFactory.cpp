@@ -30,9 +30,15 @@ void CUnitScriptFactory::InitStatic()
 CUnitScript* CUnitScriptFactory::CreateScript(CUnit* unit, const UnitDef* udef)
 {
 	CUnitScript* script = &CNullUnitScript::value;
+
+	// NOTE:
+	//   Lua scripts are not loaded here but deferred to LuaUnitScript::CreateScript
+	//   do not check extension in GetCobFile, prevents warning spam for .lua files
+	if (FileSystem::GetExtension(name) != "cob")
+		return script;
+
 	CCobFile* file = cobFileHandler->GetCobFile(udef->scriptName);
 
-	// NOTE: Lua scripts are not loaded here, see LuaUnitScript::CreateScript
 	if (file != nullptr)
 		return (CreateCOBScript(unit, file));
 
@@ -56,6 +62,5 @@ void CUnitScriptFactory::FreeScript(CUnitScript*& script)
 {
 	assert(script != &CNullUnitScript::value);
 	memPool.free(script);
-	script = nullptr;
 }
 

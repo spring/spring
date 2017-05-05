@@ -64,7 +64,6 @@ bool MoveTypeFactory::FreeMoveType(AMoveType*& moveType) {
 		return false;
 
 	memPool.free(moveType);
-	moveType = nullptr;
 	return true;
 }
 

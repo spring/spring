@@ -10,6 +10,8 @@
 #include <algorithm>
 
 #include "System/maindefines.h"
+#include "System/SafeUtil.h"
+#include "System/ContainerUtil.h"
 
 /*
  * Pre-processor trickery, useful to create unique identifiers.
@@ -179,138 +181,6 @@ void InverseOrSetBool(bool& b, const std::string& argValue, const bool inverseAr
 namespace spring {
 	// only here for validation tests
 	extern int exitCode;
-
-
-	template<typename T, typename TV>
-	static auto find(T& c, const TV& v) -> decltype(c.end())
-	{
-		return std::find(c.begin(), c.end(), v);
-	}
-
-	template<typename T, typename UnaryPredicate>
-	static void map_erase_if(T& c, UnaryPredicate p)
-	{
-		for(auto it = c.begin(); it != c.end(); ) {
-			if( p(*it) ) it = c.erase(it);
-			else ++it;
-		}
-	}
-
-
-	template<typename T, typename P>
-	static bool VectorEraseIf(std::vector<T>& v, const P& p)
-	{
-		auto it = std::find_if(v.begin(), v.end(), p);
-
-		if (it == v.end())
-			return false;
-
-		*it = v.back();
-		v.pop_back();
-		return true;
-	}
-
-	template<typename T>
-	static bool VectorErase(std::vector<T>& v, T e)
-	{
-		auto it = std::find(v.begin(), v.end(), e);
-
-		if (it == v.end())
-			return false;
-
-		*it = v.back();
-		v.pop_back();
-		return true;
-	}
-
-	template<typename T, typename C>
-	static bool VectorEraseUniqueSorted(std::vector<T>& v, const T& e, const C& c)
-	{
-		const auto iter = std::lower_bound(v.begin(), v.end(), e, c);
-
-		if ((iter == v.end()) || (*iter != e))
-			return false;
-
-		for (size_t n = (iter - v.begin()); n < (v.size() - 1); n++) {
-			std::swap(v[n], v[n + 1]);
-		}
-
-		v.pop_back();
-		return true;
-	}
-
-
-
-	template<typename T>
-	static bool VectorInsertUnique(std::vector<T>& v, T e, bool b = false)
-	{
-		// do not assume uniqueness, test for it
-		if (b && std::find(v.begin(), v.end(), e) != v.end())
-			return false;
-
-		// assume caller knows best, skip the test
-		assert(b || std::find(v.begin(), v.end(), e) == v.end());
-		v.push_back(e);
-		return true;
-	}
-
-	template<typename T, typename C>
-	static bool VectorInsertUniqueSorted(std::vector<T>& v, const T& e, const C& c)
-	{
-		const auto iter = std::lower_bound(v.begin(), v.end(), e, c);
-
-		if ((iter != v.end()) && (*iter == e))
-			return false;
-
-		v.push_back(e);
-
-		for (size_t n = v.size() - 1; n > 0; n--) {
-			if (c(v[n - 1], v[n]))
-				break;
-
-			std::swap(v[n - 1], v[n]);
-		}
-
-		return true;
-	}
-
-
-	/**
-	 * @brief Safe alternative to "delete obj;"
-	 * Safely deletes an object, by first setting the pointer to NULL and then
-	 * deleting.
-	 * This way, it is guaranteed that other objects can not access the object
-	 * through the pointer while the object is running its destructor.
-	 */
-	template<class T> void SafeDelete(T& a)
-	{
-		T tmp = a;
-		a = NULL;
-		delete tmp;
-	}
-
-	/**
-	 * @brief Safe alternative to "delete [] obj;"
-	 * Safely deletes an array object, by first setting the pointer to NULL and then
-	 * deleting.
-	 * This way, it is guaranteed that other objects can not access the object
-	 * through the pointer while the object is running its destructor.
-	 */
-	template<class T> void SafeDeleteArray(T*& a)
-	{
-		T* tmp = a;
-		a = NULL;
-		delete [] tmp;
-	}
-
-
-	static inline float SafeDivide(const float a, const float b)
-	{
-		if (b == 0.0f)
-			return a;
-
-		return (a / b);
-	}
 };
 
 

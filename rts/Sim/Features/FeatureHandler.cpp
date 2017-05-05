@@ -6,6 +6,7 @@
 #include "FeatureDefHandler.h"
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
+#include "Sim/Misc/SimObjectMemPool.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Units/CommandAI/BuilderCAI.h"
 #include "System/creg/STL_Set.h"

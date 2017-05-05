@@ -12,7 +12,6 @@
 #include "System/UnorderedSet.hpp"
 #include "Sim/Features/Feature.h"
 #include "Sim/Misc/SimObjectIDPool.h"
-#include "Sim/Misc/SimObjectMemPool.h"
 
 class CFeature;
 struct UnitDef;

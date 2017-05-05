@@ -5,7 +5,6 @@
 #include "CobThread.h"
 #include "CobFile.h"
 #include "System/FileSystem/FileHandler.h"
-#include "System/FileSystem/FileSystem.h"
 
 
 CCobEngine* cobEngine = nullptr;
@@ -92,7 +91,7 @@ void CCobEngine::TickThread(CCobThread* thread)
 	if (!thread->Tick())
 		delete thread;
 
-	curThread = NULL;
+	curThread = nullptr;
 }
 
 
@@ -158,9 +157,6 @@ void CCobEngine::ShowScriptError(const std::string& msg)
 
 CCobFile* CCobFileHandler::GetCobFile(const std::string& name)
 {
-	if (FileSystem::GetExtension(name) != "cob")
-		return nullptr;
-
 	const auto i = cobFiles.find(name);
 
 	if (i != cobFiles.end())

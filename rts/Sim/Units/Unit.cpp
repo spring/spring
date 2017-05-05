@@ -240,8 +240,7 @@ CUnit::~CUnit()
 	// delete script first so any callouts still see valid ptrs
 	DeleteScript();
 
-	commandAI->~CCommandAI();
-	commandAI = nullptr;
+	spring::SafeDestruct(commandAI);
 
 	MoveTypeFactory::FreeMoveType(moveType);
 	MoveTypeFactory::FreeMoveType(prevMoveType);
