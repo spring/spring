@@ -341,8 +341,7 @@ void CUnit::PreInit(const UnitLoadParams& params)
 
 	ASSERT_SYNCED(pos);
 
-	const auto& ym = unitDef->GetYardMap();
-	blockMap = ym.data(); // null if empty
+	blockMap = (unitDef->GetYardMap()).data(); // null if empty
 	footprint = int2(unitDef->xsize, unitDef->zsize);
 
 	beingBuilt = params.beingBuilt;
@@ -482,7 +481,7 @@ void CUnit::PostInit(const CUnit* builder)
 
 void CUnit::PostLoad()
 {
-	blockMap = (unitDef->GetYardMap().empty())? nullptr: &unitDef->GetYardMap()[0];
+	blockMap = (unitDef->GetYardMap()).data();
 
 	if (unitDef->windGenerator > 0.0f)
 		wind.AddUnit(this);
