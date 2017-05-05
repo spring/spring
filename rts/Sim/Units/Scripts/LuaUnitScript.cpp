@@ -202,12 +202,14 @@ CLuaUnitScript::CLuaUnitScript(lua_State* L, CUnit* unit)
 CLuaUnitScript::~CLuaUnitScript()
 {
 	// if L is NULL then the lua_State is closed/closing (see HandleFreed)
-	if (L != NULL) {
-		// notify Lua the script is going down
-		Destroy();
-		for (auto it = scriptNames.begin(); it != scriptNames.end(); ++it) {
-			luaL_unref(L, LUA_REGISTRYINDEX, it->second);
-		}
+	if (L == nullptr)
+		return;
+
+	// notify Lua the script is going down
+	Destroy();
+
+	for (auto it = scriptNames.begin(); it != scriptNames.end(); ++it) {
+		luaL_unref(L, LUA_REGISTRYINDEX, it->second);
 	}
 }
 
@@ -987,13 +989,14 @@ static inline CUnit* ParseUnit(lua_State* L, const char* caller, int index)
 
 static inline int ParseAxis(lua_State* L, const char* caller, int index)
 {
-	if (!lua_israwnumber(L, index)) {
+	if (!lua_israwnumber(L, index))
 		luaL_error(L, "%s(): Bad axis", caller);
-	}
+
 	const int axis  = lua_toint(L, index) - 1;
-	if ((axis < 0) || (axis > 2)) {
+
+	if ((axis < 0) || (axis > 2))
 		luaL_error(L, "%s(): Bad axis", caller);
-	}
+
 	return axis;
 }
 
