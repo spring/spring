@@ -289,6 +289,11 @@ public:
 	CCommandAI* commandAI;
 	CUnitScript* script;
 
+	// sufficient for the largest CommandAI type (CBuilderCAI)
+	// knowing the exact CAI object size here is not required;
+	// static asserts will catch any overflow
+	uint8_t caiMemBuffer[700];
+
 	/// which squares the unit can currently observe
 	std::vector<SLosInstance*> los;
 

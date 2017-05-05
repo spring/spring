@@ -8,12 +8,12 @@
 #include <string>
 #include <vector>
 
+class CCommandAI;
 class CUnit;
 class CWeapon;
-struct GuiSoundSet;
+
 struct UnitDef;
 struct UnitDefWeapon;
-struct WeaponDef;
 
 struct UnitLoadParams {
 	const UnitDef* unitDef; /// must be non-NULL
@@ -34,6 +34,7 @@ class CUnitLoader
 {
 public:
 	static CUnitLoader* GetInstance();
+	static CCommandAI* NewCommandAI(CUnit* u, const UnitDef* ud);
 
 	CUnit* LoadUnit(const std::string& name, const UnitLoadParams& params);
 	CUnit* LoadUnit(const UnitLoadParams& params);
@@ -45,9 +46,6 @@ public:
 
 	void FlattenGround(const CUnit* unit);
 	void RestoreGround(const CUnit* unit);
-
-protected:
-	void LoadSound(GuiSoundSet& sound);
 };
 
 #define unitLoader (CUnitLoader::GetInstance())

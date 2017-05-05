@@ -36,6 +36,32 @@ CUnitLoader* CUnitLoader::GetInstance()
 	return &instance;
 }
 
+CCommandAI* CUnitLoader::NewCommandAI(CUnit* u, const UnitDef* ud)
+{
+	static_assert(sizeof(CFactoryCAI) <= sizeof(u->caiMemBuffer), "");
+	static_assert(sizeof(CBuilderCAI) <= sizeof(u->caiMemBuffer), "");
+	static_assert(sizeof(    CAirCAI) <= sizeof(u->caiMemBuffer), "");
+	static_assert(sizeof( CMobileCAI) <= sizeof(u->caiMemBuffer), "");
+	static_assert(sizeof( CCommandAI) <= sizeof(u->caiMemBuffer), "");
+
+	if (ud->IsFactoryUnit())
+		return (new (u->caiMemBuffer) CFactoryCAI(u));
+
+	if (ud->IsMobileBuilderUnit() || ud->IsStaticBuilderUnit())
+		return (new (u->caiMemBuffer) CBuilderCAI(u));
+
+	// non-hovering fighter or bomber aircraft; coupled to StrafeAirMoveType
+	if (ud->IsStrafingAirUnit())
+		return (new (u->caiMemBuffer) CAirCAI(u));
+	// all other aircraft; coupled to HoverAirMoveType
+	if (ud->IsAirUnit())
+		return (new (u->caiMemBuffer) CMobileCAI(u));
+
+	if (ud->IsGroundUnit() || ud->IsTransportUnit())
+		return (new (u->caiMemBuffer) CMobileCAI(u));
+
+	return (new (u->caiMemBuffer) CCommandAI(u));
+}
 
 CUnit* CUnitLoader::LoadUnit(const std::string& name, const UnitLoadParams& params)
 {
@@ -47,52 +73,37 @@ CUnit* CUnitLoader::LoadUnit(const std::string& name, const UnitLoadParams& para
 	return (LoadUnit(params));
 }
 
-
-CUnit* CUnitLoader::LoadUnit(const UnitLoadParams& cparams)
+CUnit* CUnitLoader::LoadUnit(const UnitLoadParams& params)
 {
 	CUnit* unit = nullptr;
-	UnitLoadParams& params = const_cast<UnitLoadParams&>(cparams);
 
 	{
 		const UnitDef* ud = params.unitDef;
+		const int teamID = params.teamID;
 
 		if (ud == nullptr)
 			return unit;
 		// need to check this BEFORE creating the instance
-		if (!unitHandler->CanAddUnit(cparams.unitID))
+		if (!unitHandler->CanAddUnit(params.unitID))
 			return unit;
 
 		if (params.teamID < 0) {
-			// FIXME use gs->gaiaTeamID ?  (once it is always enabled)
-			if ((params.teamID = teamHandler->GaiaTeamID()) < 0)
-				throw content_error("Invalid team and no gaia team to put unit in");
+			if (teamHandler->GaiaTeamID() < 0) {
+				LOG_L(L_WARNING, "[%s] invalid team %d and no Gaia-team", __func__, params.teamID);
+				return unit;
+			}
+
+			const_cast<UnitLoadParams&>(params).teamID = teamHandler->GaiaTeamID();
 		}
 
 		unit = CUnitHandler::NewUnit(ud);
+
 		unit->PreInit(params);
-
-		if (ud->IsFactoryUnit()) {
-			new CFactoryCAI(unit);
-		} else if (ud->IsMobileBuilderUnit() || ud->IsStaticBuilderUnit()) {
-			new CBuilderCAI(unit);
-		} else if (ud->IsStrafingAirUnit()) {
-			// non-hovering fighter or bomber aircraft; coupled to StrafeAirMoveType
-			new CAirCAI(unit);
-		} else if (ud->IsAirUnit()) {
-			// all other aircraft; coupled to HoverAirMoveType
-			new CMobileCAI(unit);
-		} else if (ud->IsGroundUnit() || ud->IsTransportUnit()) {
-			new CMobileCAI(unit);
-		} else {
-			new CCommandAI(unit);
-		}
+		unit->PostInit(params.builder);
 	}
 
-	unit->PostInit(params.builder);
-
-	if (params.flattenGround) {
+	if (params.flattenGround)
 		FlattenGround(unit);
-	}
 
 	return unit;
 }

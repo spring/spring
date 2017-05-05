@@ -106,8 +106,6 @@ CCommandAI::CCommandAI(CUnit* owner):
 	unimportantMove(false),
 	targetLostTimer(TARGET_LOST_TIMER)
 {
-	owner->commandAI = this;
-
 	{
 		SCommandDescription c;
 

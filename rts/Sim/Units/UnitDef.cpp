@@ -725,14 +725,13 @@ void UnitDef::ParseWeaponsTable(const LuaTable& weaponsTable)
 
 void UnitDef::CreateYardMap(std::string yardMapStr)
 {
-	if (yardMapStr.empty()) {
-		// if a unit is immobile but does *not* have a yardmap
-		// defined, assume it is not supposed to be a building
-		// (so do not assign a default per facing)
+	// if a unit is immobile but does *not* have a yardmap
+	// defined, assume it is not supposed to be a building
+	// (so do not assign a default per facing)
+	if (yardMapStr.empty())
 		return;
-	} else {
-		yardmap.resize(xsize * zsize);
-	}
+
+	yardmap.resize(xsize * zsize);
 
 	StringToLowerInPlace(yardMapStr);
 
@@ -768,8 +767,7 @@ void UnitDef::CreateYardMap(std::string yardMapStr)
 			case 'f':
 			case 'o': ys = YARDMAP_BLOCKED; break;
 			default:
-				if (unknownChars.find_first_of(c) == std::string::npos)
-					unknownChars += c;
+				unknownChars += (unknownChars.find_first_of(c) == std::string::npos);
 		}
 
 		if (ymCopyIdx < defYardMap.size()) {
