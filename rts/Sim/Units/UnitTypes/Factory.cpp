@@ -42,8 +42,8 @@ CR_REG_METADATA(CFactory, (
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CFactory::CFactory(size_t uhMemPoolIdx):
-	CBuilding(uhMemPoolIdx),
+CFactory::CFactory():
+	CBuilding(),
 	buildSpeed(100.0f),
 	curBuild(nullptr),
 	curBuildDef(nullptr),

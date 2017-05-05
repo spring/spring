@@ -64,8 +64,8 @@ CR_REG_METADATA(CBuilder, (
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CBuilder::CBuilder(size_t uhMemPoolIdx):
-	CUnit(uhMemPoolIdx),
+CBuilder::CBuilder():
+	CUnit(),
 	range3D(true),
 	buildDistance(16),
 	buildSpeed(100),

@@ -34,12 +34,14 @@ private:
 	// used to enforce SetDeathScriptFinished can only be used inside Killed
 	bool inKilled;
 
-protected:
-	void ShowScriptError(const std::string& msg) override;
-
-	// only called from CreateScript, instance can not be created from C++
+public:
+	// note: instance can not logically be created from outside CreateScript
+	// the ctor and dtor still have to be public because scripts are pooled
 	CLuaUnitScript(lua_State* L, CUnit* unit);
 	virtual ~CLuaUnitScript();
+
+protected:
+	void ShowScriptError(const std::string& msg) override;
 
 	int UpdateCallIn();
 	void UpdateCallIn(const std::string& fname, int ref);

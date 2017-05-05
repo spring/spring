@@ -56,7 +56,6 @@
 #include "Lua/LuaParser.h"
 #include "Lua/LuaSyncedRead.h"
 #include "Lua/LuaUI.h"
-#include "Lua/LuaUtils.h"
 #include "Map/MapDamage.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
@@ -78,12 +77,13 @@
 #include "Sim/Misc/Wind.h"
 #include "Sim/Misc/ResourceHandler.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
+#include "Sim/MoveTypes/MoveTypeFactory.h"
 #include "Sim/Path/IPathManager.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/Projectile.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
-#include "Sim/Units/Scripts/CobEngine.h"
+#include "Sim/Units/Scripts/UnitScriptFactory.h"
 #include "Sim/Units/Scripts/UnitScriptEngine.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitDefHandler.h"
@@ -106,7 +106,6 @@
 #include "System/EventHandler.h"
 #include "System/Exceptions.h"
 #include "System/Sync/FPUCheck.h"
-#include "System/GlobalConfig.h"
 #include "System/myMath.h"
 #include "Net/GameServer.h"
 #include "Net/Protocol/NetProtocol.h"
@@ -559,7 +558,9 @@ void CGame::PostLoadSimulation()
 
 	CUnit::InitStatic();
 	CCommandAI::InitCommandDescriptionCache();
+	CUnitScriptFactory::InitStatic();
 	CUnitScriptEngine::InitStatic();
+	MoveTypeFactory::InitStatic();
 
 	unitHandler = new CUnitHandler();
 	featureHandler = new CFeatureHandler();
@@ -907,9 +908,8 @@ void CGame::KillSimulation()
 
 void CGame::ResizeEvent()
 {
-	if (minimap != NULL) {
+	if (minimap != nullptr)
 		minimap->UpdateGeometry();
-	}
 
 	// reload water renderer (it may depend on screen resolution)
 	water = IWater::GetWater(water, water->GetID());
@@ -1285,9 +1285,8 @@ bool CGame::Draw() {
 
 	//FIXME move both to UpdateUnsynced?
 	CTeamHighlight::Enable(spring_tomsecs(currentTimePreDraw));
-	if (unitTracker.Enabled()) {
+	if (unitTracker.Enabled())
 		unitTracker.SetCam();
-	}
 
 	{
 		minimap->Update();
@@ -1562,7 +1561,6 @@ void CGame::SimFrame() {
 		featureHandler->Update();
 		{
 			SCOPED_TIMER("Sim::Script");
-			cobEngine->Tick(33);
 			unitScriptEngine->Tick(33);
 		}
 		wind.Update();
@@ -1856,45 +1854,23 @@ void CGame::DrawSkip(bool blackscreen) {
 void CGame::ReloadCOB(const string& msg, int player)
 {
 	if (!gs->cheatEnabled) {
-		LOG_L(L_WARNING, "reloadcob can only be used if cheating is enabled");
+		LOG_L(L_WARNING, "[Game::%s] can only be used if cheating is enabled", __func__);
 		return;
 	}
-	const string unitName = msg;
-	if (unitName.empty()) {
-		LOG_L(L_WARNING, "Missing unit name");
-		return;
-	}
-	const UnitDef* udef = unitDefHandler->GetUnitDefByName(unitName);
-	if (udef==NULL) {
-		LOG_L(L_WARNING, "Unknown unit name: \"%s\"", unitName.c_str());
-		return;
-	}
-	const CCobFile* oldScript = cobFileHandler->GetScriptAddr(udef->scriptName);
-	if (oldScript == NULL) {
-		LOG_L(L_WARNING, "Unknown COB script for unit \"%s\": %s", unitName.c_str(), udef->scriptName.c_str());
-		return;
-	}
-	CCobFile* newScript = cobFileHandler->ReloadCobFile(udef->scriptName);
-	if (newScript == NULL) {
-		LOG_L(L_WARNING, "Could not load COB script for unit \"%s\" from: %s", unitName.c_str(), udef->scriptName.c_str());
-		return;
-	}
-	int count = 0;
-	for (size_t i = 0; i < unitHandler->MaxUnits(); i++) {
-		CUnit* unit = unitHandler->GetUnit(i);
-		if (unit == nullptr)
-			continue;
 
-		CCobInstance* cob = dynamic_cast<CCobInstance*>(unit->script);
-		if (cob == nullptr || cob->GetScriptAddr() != oldScript)
-			continue;
-
-		count++;
-		delete unit->script;
-		unit->script = new CCobInstance(newScript, unit);
-		unit->script->Create();
+	if (msg.empty()) {
+		LOG_L(L_WARNING, "[Game::%s] missing UnitDef name", __func__);
+		return;
 	}
-	LOG("[Game::%s] reloaded COB scripts for %i units", __func__, count);
+
+	const UnitDef* udef = unitDefHandler->GetUnitDefByName(msg);
+
+	if (udef == nullptr) {
+		LOG_L(L_WARNING, "[Game::%s] unknown UnitDef name: \"%s\"", __func__, msg.c_str());
+		return;
+	}
+
+	unitScriptEngine->ReloadScripts(udef);
 }
 
 
@@ -1921,18 +1897,18 @@ bool CGame::IsLagging(float maxLatency) const
 
 void CGame::SaveGame(const std::string& filename, bool overwrite, bool usecreg)
 {
-	if (FileSystem::CreateDirectory("Saves")) {
-		if (overwrite || !FileSystem::FileExists(filename)) {
-			LOG("[Game::%s] saving game to %s", __func__, filename.c_str());
-			ILoadSaveHandler* ls = ILoadSaveHandler::Create(usecreg);
-			ls->mapName = gameSetup->mapName;
-			ls->modName = gameSetup->modName;
-			ls->SaveGame(filename);
-			delete ls;
-		}
-		else {
-			LOG_L(L_WARNING, "File %s already exists(use /save -y to override)", filename.c_str());
-		}
+	if (!FileSystem::CreateDirectory("Saves"))
+		return;
+
+	if (overwrite || !FileSystem::FileExists(filename)) {
+		LOG("[Game::%s] saving game to %s", __func__, filename.c_str());
+		ILoadSaveHandler* ls = ILoadSaveHandler::Create(usecreg);
+		ls->mapName = gameSetup->mapName;
+		ls->modName = gameSetup->modName;
+		ls->SaveGame(filename);
+		delete ls;
+	} else {
+		LOG_L(L_WARNING, "File %s already exists(use /save -y to override)", filename.c_str());
 	}
 }
 

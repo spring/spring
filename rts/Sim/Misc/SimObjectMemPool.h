@@ -7,17 +7,21 @@
 #include <deque>
 #include <vector>
 
+#include "System/UnorderedMap.hpp"
+
 template<size_t N> struct SimObjectMemPool {
 public:
 	void clear() {
 		pages.clear();
 		indcs.clear();
+		table.clear();
 	}
 	void reserve(size_t n) {
-		indcs.reserve(128);
+		indcs.reserve(n);
+		table.reserve(n);
 	}
 
-	template<typename T> T* alloc() {
+	template<typename T, typename... A> T* alloc(A&&... a) {
 		T* p = nullptr;
 		uint8_t* m = nullptr;
 
@@ -27,11 +31,14 @@ public:
 			pages.emplace_back();
 
 			m = &pages[pages.size() - 1][0];
-			p = new (m) T(pages.size() - 1);
+			p = new (m) T(a...);
+
+			table.emplace(p, pages.size() - 1);
 		} else {
 			m = &pages[indcs.back()][0];
-			p = new (m) T(indcs.back());
+			p = new (m) T(a...);
 
+			table.emplace(p, indcs.back());
 			indcs.pop_back();
 		}
 
@@ -39,13 +46,23 @@ public:
 	}
 
 	template<typename T> void free(T* ptr) {
-		indcs.push_back(ptr->GetMemPoolIdx());
+		const auto it = table.find(ptr);
+
+		assert(it != table.end());
+		assert(it->second != -1lu);
+
+		indcs.push_back(it->second);
+		table.erase(it);
+
 		ptr->~T();
 	}
 
 private:
 	std::deque< uint8_t[N] > pages;
 	std::vector<size_t> indcs;
+
+	// <pointer, page index> (non-intrusive)
+	spring::unsynced_map<void*, size_t> table;
 };
 
 #endif

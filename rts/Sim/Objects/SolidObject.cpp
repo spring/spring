@@ -20,8 +20,6 @@ const float CSolidObject::MAXIMUM_MASS = 1e6f;
 CR_BIND_DERIVED_INTERFACE(CSolidObject, CWorldObject)
 CR_REG_METADATA(CSolidObject,
 (
-	CR_IGNORED(memPoolIdx),
-
 	CR_MEMBER(health),
 	CR_MEMBER(maxHealth),
 
@@ -86,9 +84,7 @@ CR_REG_METADATA(CSolidObject,
 ))
 
 
-CSolidObject::CSolidObject(size_t ohMemPoolIdx):
-	memPoolIdx(ohMemPoolIdx),
-
+CSolidObject::CSolidObject():
 	health(0.0f),
 	maxHealth(1.0f),
 

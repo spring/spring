@@ -6,6 +6,9 @@
 
 #include "CobEngine.h"
 #include "UnitScript.h"
+#include "UnitScriptFactory.h"
+#include "Sim/Units/Unit.h"
+#include "Sim/Units/UnitHandler.h"
 #include "System/Util.h"
 #include "System/FileSystem/FileHandler.h"
 
@@ -34,42 +37,69 @@ void CUnitScriptEngine::KillStatic() {
 }
 
 
-/******************************************************************************/
-/******************************************************************************/
 
-
-CUnitScriptEngine::CUnitScriptEngine() : currentScript(nullptr)
+void CUnitScriptEngine::ReloadScripts(const UnitDef* udef)
 {
+	const CCobFile* oldScript = cobFileHandler->GetScriptAddr(udef->scriptName);
+
+	if (oldScript == nullptr) {
+		LOG_L(L_WARNING, "[UnitScriptEngine::%s] unknown COB script for unit \"%s\": %s", __func__, udef->name.c_str(), udef->scriptName.c_str());
+		return;
+	}
+
+	CCobFile* newScript = cobFileHandler->ReloadCobFile(udef->scriptName);
+
+	if (newScript == nullptr) {
+		LOG_L(L_WARNING, "[UnitScriptEngine::%s] could not load COB script for unit \"%s\" from: %s", __func__, udef->name.c_str(), udef->scriptName.c_str());
+		return;
+	}
+
+	int count = 0;
+	for (size_t i = 0; i < unitHandler->MaxUnits(); i++) {
+		CUnit* unit = unitHandler->GetUnit(i);
+
+		if (unit == nullptr)
+			continue;
+
+		CCobInstance* cob = dynamic_cast<CCobInstance*>(unit->script);
+
+		if (cob == nullptr || cob->GetScriptAddr() != oldScript)
+			continue;
+
+		count++;
+
+		CUnitScriptFactory::FreeScript(unit->script);
+
+		unit->script = CUnitScriptFactory::CreateCOBScript(unit, newScript);
+		unit->script->Create();
+	}
+
+	LOG("[UnitScriptEngine::%s] reloaded COB scripts for %i units", __func__, count);
 }
-
-
-CUnitScriptEngine::~CUnitScriptEngine()
-{
-}
-
 
 void CUnitScriptEngine::CheckForDuplicates(const char* name, const CUnitScript* instance)
 {
 	int found = 0;
 
 	for (const CUnitScript* us: animating) {
-		if (us == instance)
-			found++;
+		found += (us == instance);
 	}
 
 	if (found > 1)
-		LOG_L(L_WARNING, "%s found duplicates %d", name, found);
+		LOG_L(L_WARNING, "[UnitScriptEngine::%s] %d duplicates found for %s", __func__, found, name);
 }
 
 
-void CUnitScriptEngine::AddInstance(CUnitScript *instance)
+void CUnitScriptEngine::AddInstance(CUnitScript* instance)
 {
-	if (instance != currentScript)
-		spring::VectorInsertUnique(animating, instance);
+	if (instance == currentScript)
+		return;
+
+	spring::VectorInsertUnique(animating, instance);
 }
 
 
-void CUnitScriptEngine::RemoveInstance(CUnitScript *instance)
+void CUnitScriptEngine::RemoveInstance(CUnitScript* instance)
 {
 	// Error checking
 #ifdef _DEBUG
@@ -77,29 +107,31 @@ void CUnitScriptEngine::RemoveInstance(CUnitScript *instance)
 #endif
 
 	//This is slow. would be better if instance was a hashlist perhaps
-	if (instance != currentScript)
-		spring::VectorErase(animating, instance);
+	if (instance == currentScript)
+		return;
+
+	spring::VectorErase(animating, instance);
 }
 
 
 void CUnitScriptEngine::Tick(int deltaTime)
 {
+	cobEngine->Tick(deltaTime);
+
 	// Tick all instances that have registered themselves as animating
-	int i = 0;
+	size_t i = 0;
 	while (i < animating.size()) {
 		currentScript = animating[i];
 
-		if (currentScript->Tick(deltaTime)) {
-			++i;
-		} else {
+		if (!currentScript->Tick(deltaTime)) {
 			animating[i] = animating.back();
 			animating.pop_back();
+			continue;
 		}
+
+		i++;
 	}
 
 	currentScript = nullptr;
 }
 
-
-/******************************************************************************/
-/******************************************************************************/

@@ -12,8 +12,11 @@ public:
 	CR_DECLARE(CExtractorBuilding)
 	CR_DECLARE_SUB(MetalSquareOfControl)
 
-	CExtractorBuilding(size_t uhMemPoolIdx = -1lu);
-	virtual ~CExtractorBuilding();
+	CExtractorBuilding(): CBuilding() {
+		extractionRange = 0.0f;
+		extractionDepth = 0.0f;
+	}
+	~CExtractorBuilding();
 
 	void ResetExtraction();
 	void SetExtractionRangeAndDepth(float range, float depth);

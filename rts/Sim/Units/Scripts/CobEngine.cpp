@@ -3,9 +3,9 @@
 
 #include "CobEngine.h"
 #include "CobThread.h"
-#include "CobInstance.h"
 #include "CobFile.h"
 #include "System/FileSystem/FileHandler.h"
+#include "System/FileSystem/FileSystem.h"
 
 
 CCobEngine* cobEngine = nullptr;
@@ -119,7 +119,7 @@ void CCobEngine::Tick(int deltaTime)
 	if (!sleeping.empty()) {
 		CCobThread* cur = sleeping.top();
 
-		while ((cur != NULL) && (cur->GetWakeTime() < currentTime)) {
+		while ((cur != nullptr) && (cur->GetWakeTime() < currentTime)) {
 			// Start with removing the executing thread from the queue
 			sleeping.pop();
 
@@ -138,13 +138,13 @@ void CCobEngine::Tick(int deltaTime)
 			if (!sleeping.empty())
 				cur = sleeping.top();
 			else
-				cur = NULL;
+				cur = nullptr;
 		}
 	}
 }
 
 
-void CCobEngine::ShowScriptError(const string& msg)
+void CCobEngine::ShowScriptError(const std::string& msg)
 {
 	if (curThread != nullptr)
 		curThread->ShowError(msg);
@@ -156,8 +156,11 @@ void CCobEngine::ShowScriptError(const string& msg)
 /******************************************************************************/
 /******************************************************************************/
 
-CCobFile* CCobFileHandler::GetCobFile(const string& name)
+CCobFile* CCobFileHandler::GetCobFile(const std::string& name)
 {
+	if (FileSystem::GetExtension(name) != "cob")
+		return nullptr;
+
 	const auto i = cobFiles.find(name);
 
 	if (i != cobFiles.end())
@@ -176,7 +179,7 @@ CCobFile* CCobFileHandler::GetCobFile(const string& name)
 }
 
 
-CCobFile* CCobFileHandler::ReloadCobFile(const string& name)
+CCobFile* CCobFileHandler::ReloadCobFile(const std::string& name)
 {
 	const auto it = cobFiles.find(name);
 
@@ -190,7 +193,7 @@ CCobFile* CCobFileHandler::ReloadCobFile(const string& name)
 }
 
 
-const CCobFile* CCobFileHandler::GetScriptAddr(const string& name) const
+const CCobFile* CCobFileHandler::GetScriptAddr(const std::string& name) const
 {
 	const auto it = cobFiles.find(name);
 

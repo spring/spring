@@ -96,11 +96,10 @@ public:
 		DAMAGE_EXTSOURCE_CRUSHED = 7,
 	};
 
-	CSolidObject(size_t ohMemPoolIdx = -1lu);
-	virtual ~CSolidObject() { assert(memPoolIdx != -1lu); memPoolIdx = -1lu; }
+	CSolidObject();
+	virtual ~CSolidObject() {}
 
 	void PostLoad();
-	size_t GetMemPoolIdx() const { return memPoolIdx; }
 
 	virtual bool AddBuildPower(CUnit* builder, float amount) { return false; }
 	virtual void DoDamage(const DamageArray& damages, const float3& impulse, CUnit* attacker, int weaponDefID, int projectileID) {}
@@ -296,8 +295,6 @@ private:
 	float3 GetAimPos() const { return (GetObjectSpacePos(relAimPos)); }
 
 public:
-	size_t memPoolIdx;
-
 	float health;
 	float maxHealth;
 

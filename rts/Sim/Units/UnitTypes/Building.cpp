@@ -13,17 +13,6 @@ CR_BIND_DERIVED(CBuilding, CUnit, )
 
 CR_REG_METADATA(CBuilding, )
 
-//////////////////////////////////////////////////////////////////////
-// Construction/Destruction
-//////////////////////////////////////////////////////////////////////
-
-CBuilding::CBuilding(size_t uhMemPoolIdx): CUnit(uhMemPoolIdx)
-{
-	immobile = true;
-}
-
-
-
 void CBuilding::PreInit(const UnitLoadParams& params)
 {
 	unitDef = params.unitDef;

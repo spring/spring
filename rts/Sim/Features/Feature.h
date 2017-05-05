@@ -29,7 +29,7 @@ class CFeature: public CSolidObject, public spring::noncopyable
 	CR_DECLARE(CFeature)
 
 public:
-	CFeature(size_t fhMemPoolIdx = -1lu);
+	CFeature();
 	~CFeature();
 
 	CR_DECLARE_SUB(MoveCtrl)

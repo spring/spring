@@ -70,7 +70,7 @@ class CUnit : public CSolidObject
 public:
 	CR_DECLARE(CUnit)
 
-	CUnit(size_t uhMemPoolIdx = -1lu);
+	CUnit();
 	virtual ~CUnit();
 
 	static void InitStatic();

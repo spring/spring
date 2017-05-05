@@ -17,7 +17,7 @@ class CFactory : public CBuilding
 public:
 	CR_DECLARE(CFactory)
 
-	CFactory(size_t uhMemPoolIdx = -1lu);
+	CFactory();
 
 	void StartBuild(const UnitDef* buildeeDef);
 	void UpdateBuild(CUnit* buildee);

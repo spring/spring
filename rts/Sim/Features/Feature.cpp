@@ -66,8 +66,8 @@ CR_REG_METADATA_SUB(CFeature,MoveCtrl,(
 ))
 
 
-CFeature::CFeature(size_t fhMemPoolIdx)
-: CSolidObject(fhMemPoolIdx)
+CFeature::CFeature()
+: CSolidObject()
 
 , isRepairingBeforeResurrect(false)
 , inUpdateQue(false)

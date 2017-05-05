@@ -2,12 +2,12 @@
 
 #define LUA_SYNCED_ONLY
 
-#include <sstream>
 #include "LuaUnitScript.h"
 
 #include "CobInstance.h"
 #include "LuaInclude.h"
 #include "NullUnitScript.h"
+#include "UnitScriptFactory.h"
 #include "LuaScriptNames.h"
 #include "Lua/LuaConfig.h"
 #include "Lua/LuaCallInCheck.h"
@@ -16,14 +16,14 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Weapons/PlasmaRepulser.h"
+#include "System/Util.h"
 
 static inline LocalModelPiece* ParseLocalModelPiece(lua_State* L, CUnitScript* script, const char* caller)
 {
 	const int piece = luaL_checkint(L, 1) - 1;
 
-	if (!script->PieceExists(piece)) {
+	if (!script->PieceExists(piece))
 		luaL_error(L, "%s(): Invalid piecenumber", caller);
-	}
 
 	return (script->GetScriptLocalModelPiece(piece));
 }
@@ -214,22 +214,23 @@ CLuaUnitScript::~CLuaUnitScript()
 
 void CLuaUnitScript::HandleFreed(CLuaHandle* handle)
 {
-	for (auto ui = unitHandler->activeUnits.begin(); ui != unitHandler->activeUnits.end(); ++ui) {
-		CLuaUnitScript* script = dynamic_cast<CLuaUnitScript*>((*ui)->script);
+	for (CUnit* u: unitHandler->activeUnits) {
+		CUnitScript* script = u->script;
+		CLuaUnitScript* luaScript = dynamic_cast<CLuaUnitScript*>(script);
 
 		// kill only the Lua scripts running in this handle
-		if (script == NULL)
+		if (luaScript == nullptr)
 			continue;
-		if (script->handle != handle)
+		if (luaScript->handle != handle)
 			continue;
 
 		// we don't have anything better ...
-		(*ui)->script = &CNullUnitScript::value;
+		u->script = &CNullUnitScript::value;
 
 		// signal the destructor it shouldn't unref refs
-		script->L = NULL;
+		luaScript->L = nullptr;
 
-		delete script;
+		CUnitScriptFactory::FreeScript(script);
 	}
 }
 
@@ -831,9 +832,7 @@ std::string CLuaUnitScript::GetScriptName(int functionId) const
 	for (; it != scriptNames.end(); ++it) {
 		if (it->second == functionId) return it->first;
 	}
-	std::stringstream s;
-	s << "<unnamed: " << functionId << ">";
-	return s.str();
+	return ("<unnamed: " + IntToString(functionId) + ">");
 }
 
 
@@ -1006,16 +1005,15 @@ static inline int ParseAxis(lua_State* L, const char* caller, int index)
 int CLuaUnitScript::CreateScript(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
-		//LUA_TRACE("no such unit");
+
+	if (unit == nullptr)
 		return 0;
-	}
 
 	// check table of callIns
 	// (we might not get a chance to clean up later on, if something is wrong)
-	if (!lua_istable(L, 2)) {
+	if (!lua_istable(L, 2))
 		luaL_error(L, "%s(): error parsing callIn table", __FUNCTION__);
-	}
+
 	for (lua_pushnil(L); lua_next(L, 2) != 0; lua_pop(L, 1)) {
 		if (!lua_israwstring(L, -2) || !lua_isfunction(L, -1)) {
 			luaL_error(L, "%s(): error parsing callIn table", __FUNCTION__);
@@ -1023,19 +1021,17 @@ int CLuaUnitScript::CreateScript(lua_State* L)
 	}
 
 	// replace the unit's script (ctor parses callIn table)
-	CLuaUnitScript* newScript = new CLuaUnitScript(L, unit);
+	CUnitScript* newScript = CUnitScriptFactory::CreateLuaScript(unit, L);
 
-	if (unit->script != &CNullUnitScript::value) {
-		delete unit->script;
-	}
+	if (unit->script != &CNullUnitScript::value)
+		CUnitScriptFactory::FreeScript(unit->script);
+
 	unit->script = newScript;
 
 	// flush some caches (which store availability of certain script functions)
 	for (CWeapon* w: unit->weapons) {
 		w->SetWeaponNum(w->weaponNum);
 	}
-
-	//LUA_TRACE("script replaced with CLuaUnitScript");
 
 	return 0;
 }
@@ -1044,13 +1040,15 @@ int CLuaUnitScript::CreateScript(lua_State* L)
 int CLuaUnitScript::UpdateCallIn(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+
+	if (unit == nullptr)
 		return 0;
-	}
+
 	CLuaUnitScript* script = dynamic_cast<CLuaUnitScript*>(unit->script);
-	if (script == NULL) {
+
+	if (script == nullptr)
 		luaL_error(L, "%s(): not a Lua unit script", __FUNCTION__);
-	}
+
 	// we would get confused if our refs aren't together in a single state
 	if (L != script->L) {
 		luaL_error(L, "%s(): incorrect lua_State", __FUNCTION__);

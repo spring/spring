@@ -34,13 +34,6 @@ CR_REG_METADATA_SUB(CExtractorBuilding,MetalSquareOfControl, (
 // TODO: How are class statics incorporated into creg?
 float CExtractorBuilding::maxExtractionRange = 0.0f;
 
-CExtractorBuilding::CExtractorBuilding(size_t uhMemPoolIdx):
-	CBuilding(uhMemPoolIdx),
-	extractionRange(0.0f),
-	extractionDepth(0.0f)
-{
-}
-
 CExtractorBuilding::~CExtractorBuilding()
 {
 	// if uh == NULL then all pointers to units should be considered dangling pointers

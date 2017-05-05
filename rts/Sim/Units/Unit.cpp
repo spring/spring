@@ -80,8 +80,8 @@ float CUnit::expReloadScale = 0.0f;
 float CUnit::expGrade       = 0.0f;
 
 
-CUnit::CUnit(size_t uhMemPoolIdx)
-: CSolidObject(uhMemPoolIdx)
+CUnit::CUnit()
+: CSolidObject()
 , unitDef(nullptr)
 , shieldWeapon(nullptr)
 , stockpileWeapon(nullptr)
@@ -219,14 +219,13 @@ CUnit::~CUnit()
 	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << id << "\n";
 #endif
 
-	if (fpsControlPlayer != NULL) {
+	if (fpsControlPlayer != nullptr) {
 		fpsControlPlayer->StopControllingUnit();
-		assert(fpsControlPlayer == NULL);
+		assert(fpsControlPlayer == nullptr);
 	}
 
-	if (activated && unitDef->targfac) {
+	if (activated && unitDef->targfac)
 		losHandler->IncreaseAllyTeamRadarErrorSize(allyteam);
-	}
 
 	SetMetalStorage(0);
 	SetEnergyStorage(0);
@@ -242,8 +241,8 @@ CUnit::~CUnit()
 	DeleteScript();
 
 	spring::SafeDelete(commandAI);
-	spring::SafeDelete(moveType);
-	spring::SafeDelete(prevMoveType);
+	MoveTypeFactory::FreeMoveType(moveType);
+	MoveTypeFactory::FreeMoveType(prevMoveType);
 
 	// ScriptCallback may reference weapons, so delete the script first
 	for (auto wi = weapons.cbegin(); wi != weapons.cend(); ++wi) {
@@ -284,7 +283,7 @@ void CUnit::PreInit(const UnitLoadParams& params)
 		if (wreckFeatureDef != nullptr) {
 			featureDefID = wreckFeatureDef->id;
 
-			while (wreckFeatureDef != nullptr){
+			while (wreckFeatureDef != nullptr) {
 				wreckFeatureDef->PreloadModel();
 				wreckFeatureDef = featureDefHandler->GetFeatureDefByID(wreckFeatureDef->deathFeatureDefID);
 			}
@@ -393,7 +392,7 @@ void CUnit::PreInit(const UnitLoadParams& params)
 	harvestStorage.energy = unitDef->harvestEnergyStorage;
 
 	moveType = MoveTypeFactory::GetMoveType(this, unitDef);
-	script = CUnitScriptFactory::CreateScript(unitDef->scriptName, this);
+	script = CUnitScriptFactory::CreateScript(this, unitDef);
 
 	if (unitDef->selfdExpWeaponDef != nullptr)
 		selfdExpDamages = DynDamageArray::IncRef(&unitDef->selfdExpWeaponDef->damages);
@@ -770,7 +769,7 @@ void CUnit::Drop(const float3& parentPos, const float3& parentDir, CUnit* parent
 void CUnit::DeleteScript()
 {
 	if (script != &CNullUnitScript::value)
-		spring::SafeDelete(script);
+		CUnitScriptFactory::FreeScript(script);
 
 	script = &CNullUnitScript::value;
 }
@@ -781,7 +780,7 @@ void CUnit::EnableScriptMoveType()
 		return;
 
 	prevMoveType = moveType;
-	moveType = new CScriptMoveType(this);
+	moveType = MoveTypeFactory::GetScriptMoveType(this);
 }
 
 void CUnit::DisableScriptMoveType()
@@ -789,14 +788,14 @@ void CUnit::DisableScriptMoveType()
 	if (!UsingScriptMoveType())
 		return;
 
-	delete moveType;
+	MoveTypeFactory::FreeMoveType(moveType);
 	moveType = prevMoveType;
-	prevMoveType = NULL;
+	prevMoveType = nullptr;
 
 	// ensure unit does not try to move back to the
 	// position it was at when MoveCtrl was enabled
 	// FIXME: prevent the issuing of extra commands?
-	if (moveType != NULL) {
+	if (moveType != nullptr) {
 		moveType->SetGoal(moveType->oldPos = pos);
 		moveType->StopMoving();
 	}

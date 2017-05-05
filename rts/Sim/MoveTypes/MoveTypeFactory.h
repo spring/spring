@@ -9,7 +9,13 @@ struct UnitDef;
 
 class MoveTypeFactory {
 public:
+	static void InitStatic();
+
 	static AMoveType* GetMoveType(CUnit*, const UnitDef*);
+	static AMoveType* GetScriptMoveType(CUnit*);
+
+	static bool FreeMoveType(AMoveType*&);
 };
 
 #endif
+

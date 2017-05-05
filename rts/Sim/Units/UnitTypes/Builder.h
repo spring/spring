@@ -36,7 +36,7 @@ public:
 public:
 	CR_DECLARE(CBuilder)
 
-	CBuilder(size_t uhMemPoolIdx = -1lu);
+	CBuilder();
 
 	void Update();
 	void SlowUpdate();
