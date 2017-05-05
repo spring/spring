@@ -34,7 +34,7 @@ CUnitScript* CUnitScriptFactory::CreateScript(CUnit* unit, const UnitDef* udef)
 	// NOTE:
 	//   Lua scripts are not loaded here but deferred to LuaUnitScript::CreateScript
 	//   do not check extension in GetCobFile, prevents warning spam for .lua files
-	if (FileSystem::GetExtension(name) != "cob")
+	if (FileSystem::GetExtension(udef->scriptName) != "cob")
 		return script;
 
 	CCobFile* file = cobFileHandler->GetCobFile(udef->scriptName);
