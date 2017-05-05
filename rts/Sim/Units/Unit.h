@@ -253,8 +253,6 @@ public:
 public:
 	const UnitDef* unitDef;
 
-	std::vector<CWeapon*> weapons;
-
 	/// Our shield weapon, NULL if we have none
 	CWeapon* shieldWeapon;
 	/// Our weapon with stockpiled ammo, NULL if we have none
@@ -264,24 +262,13 @@ public:
 	const DynDamageArray* deathExpDamages;
 
 	CUnit* soloBuilder;
-	/// last attacker
 	CUnit* lastAttacker;
 
-	/// last frame unit was attacked by other unit
-	int lastAttackFrame;
-	/// last time this unit fired a weapon
-	int lastFireWeapon;
-
-	/// current attackee
-	SWeaponTarget curTarget;
+	/// player who is currently FPS'ing this unit
+	CPlayer* fpsControlPlayer;
 
 	/// transport that the unit is currently in
 	CUnit* transporter;
-
-	//Transporter stuff
-	int transportCapacityUsed;
-	float transportMassUsed;
-	std::vector<TransportedUnit> transportedUnits;
 
 	AMoveType* moveType;
 	AMoveType* prevMoveType;
@@ -289,10 +276,21 @@ public:
 	CCommandAI* commandAI;
 	CUnitScript* script;
 
+	/// current attackee
+	SWeaponTarget curTarget;
+
+
+	// sufficient for the largest UnitScript (CLuaUnitScript)
+	uint8_t usMemBuffer[240];
+	// sufficient for the largest AMoveType (CGroundMoveType)
+	uint8_t amtMemBuffer[460];
 	// sufficient for the largest CommandAI type (CBuilderCAI)
 	// knowing the exact CAI object size here is not required;
 	// static asserts will catch any overflow
 	uint8_t caiMemBuffer[700];
+
+
+	std::vector<CWeapon*> weapons;
 
 	/// which squares the unit can currently observe
 	std::vector<SLosInstance*> los;
@@ -300,13 +298,12 @@ public:
 	/// indicate the los/radar status the allyteam has on this unit
 	std::vector<unsigned short> losStatus;
 
-	/// player who is currently FPS'ing this unit
-	CPlayer* fpsControlPlayer;
-
 	/// quads the unit is part of
 	std::vector<int> quads;
 
+	std::vector<TransportedUnit> transportedUnits;
 	std::vector<CMissileProjectile*> incomingMissiles;
+
 
 	float3 deathSpeed;
 	float3 lastMuzzleFlameDir;
@@ -317,6 +314,7 @@ public:
 	/// used for innacuracy with radars etc
 	float3 posErrorVector;
 	float3 posErrorDelta;
+
 
 	int featureDefID; // FeatureDef id of the wreck we spawn on death
 
@@ -348,17 +346,24 @@ public:
 	bool groundLevelled;
 	/// how much terraforming is left to do
 	float terraformLeft;
+	/// How much reapir power has been added to this recently
+	float repairAmount;
+
+	/// last frame unit was attacked by other unit
+	int lastAttackFrame;
+	/// last time this unit fired a weapon
+	int lastFireWeapon;
 
 	/// if we arent built on for a while start decaying
 	int lastNanoAdd;
 	int lastFlareDrop;
 
-	/// How much reapir power has been added to this recently
-	float repairAmount;
-
 	/// id of transport that the unit is about to be picked up by
 	int loadingTransportId;
 	int unloadingTransportId;
+
+	int transportCapacityUsed;
+	float transportMassUsed;
 
 
 	/// used by constructing units
@@ -428,12 +433,6 @@ public:
 	SResourcePack resourcesUseOld;
 	SResourcePack resourcesMakeOld;
 
-	/// energy added each halftick
-	float energyTickMake; //FIXME???
-
-	/// how much metal the unit currently extracts from the ground
-	float metalExtract;
-
 	/// the amount of storage the unit contributes to the team
 	SResourcePack storage;
 
@@ -442,6 +441,13 @@ public:
 	SResourcePack harvested;
 
 	SResourcePack cost;
+
+	/// energy added each halftick
+	float energyTickMake; //FIXME???
+
+	/// how much metal the unit currently extracts from the ground
+	float metalExtract;
+
 	float buildTime;
 
 	/// decaying value of how much damage the unit has taken recently (for severity of death)

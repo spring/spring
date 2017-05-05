@@ -13,8 +13,6 @@ public:
 
 	static AMoveType* GetMoveType(CUnit*, const UnitDef*);
 	static AMoveType* GetScriptMoveType(CUnit*);
-
-	static bool FreeMoveType(AMoveType*&);
 };
 
 #endif

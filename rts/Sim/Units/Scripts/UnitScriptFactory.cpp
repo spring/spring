@@ -14,14 +14,8 @@
 #include "System/Log/ILog.h"
 #include "System/Util.h"
 
-static SimObjectMemPool<sizeof(CLuaUnitScript)> memPool;
-
-
 void CUnitScriptFactory::InitStatic()
 {
-	memPool.clear();
-	memPool.reserve(128);
-
 	static_assert(sizeof(CLuaUnitScript) >= sizeof(CCobInstance   ), "");
 	static_assert(sizeof(CLuaUnitScript) >= sizeof(CNullUnitScript), "");
 }
@@ -49,18 +43,13 @@ CUnitScript* CUnitScriptFactory::CreateScript(CUnit* unit, const UnitDef* udef)
 
 CUnitScript* CUnitScriptFactory::CreateCOBScript(CUnit* unit, CCobFile* F)
 {
-	return (memPool.alloc<CCobInstance>(F, unit));
+	static_assert(sizeof(CCobInstance) <= sizeof(unit->usMemBuffer), "");
+	return (new (unit->usMemBuffer) CCobInstance(F, unit));
 }
 
 CUnitScript* CUnitScriptFactory::CreateLuaScript(CUnit* unit, lua_State* L)
 {
-	return (memPool.alloc<CLuaUnitScript>(L, unit));
-}
-
-
-void CUnitScriptFactory::FreeScript(CUnitScript*& script)
-{
-	assert(script != &CNullUnitScript::value);
-	memPool.free(script);
+	static_assert(sizeof(CLuaUnitScript) <= sizeof(unit->usMemBuffer), "");
+	return (new (unit->usMemBuffer) CLuaUnitScript(L, unit));
 }
 

@@ -3,8 +3,6 @@
 #ifndef UNITSCRIPTFACTORY_H
 #define UNITSCRIPTFACTORY_H
 
-#include <string>
-
 struct UnitDef;
 
 struct lua_State;
@@ -22,8 +20,7 @@ public:
 
 	static CUnitScript* CreateCOBScript(CUnit* unit, CCobFile* F);
 	static CUnitScript* CreateLuaScript(CUnit* unit, lua_State* L);
-
-	static void FreeScript(CUnitScript*& script);
 };
 
 #endif
+

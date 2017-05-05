@@ -68,7 +68,7 @@ void CUnitScriptEngine::ReloadScripts(const UnitDef* udef)
 
 		count++;
 
-		CUnitScriptFactory::FreeScript(unit->script);
+		spring::SafeDestruct(unit->script);
 
 		unit->script = CUnitScriptFactory::CreateCOBScript(unit, newScript);
 		unit->script->Create();

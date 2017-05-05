@@ -89,23 +89,24 @@ CUnit::CUnit()
 , deathExpDamages(nullptr)
 , soloBuilder(nullptr)
 , lastAttacker(nullptr)
-, lastAttackFrame(-200)
-, lastFireWeapon(0)
+
+, fpsControlPlayer(nullptr)
 , transporter(nullptr)
-, transportCapacityUsed(0)
-, transportMassUsed(0)
+
 , moveType(nullptr)
 , prevMoveType(nullptr)
 , commandAI(nullptr)
 , script(nullptr)
+
 , los(ILosType::LOS_TYPE_COUNT, nullptr)
 , losStatus(teamHandler->ActiveAllyTeams(), 0)
-, fpsControlPlayer(nullptr)
+
 , deathSpeed(ZeroVector)
 , lastMuzzleFlameDir(UpVector)
 , flankingBonusDir(RgtVector)
 , posErrorVector(ZeroVector)
 , posErrorDelta(ZeroVector)
+
 , featureDefID(-1)
 , power(100.0f)
 , buildProgress(0.0f)
@@ -118,16 +119,24 @@ CUnit::CUnit()
 , upright(true)
 , groundLevelled(true)
 , terraformLeft(0.0f)
+, repairAmount(0.0f)
+
+, lastAttackFrame(-200)
+, lastFireWeapon(0)
 , lastNanoAdd(gs->frameNum)
 , lastFlareDrop(0)
-, repairAmount(0.0f)
+
 , loadingTransportId(-1)
 , unloadingTransportId(-1)
+, transportCapacityUsed(0)
+, transportMassUsed(0)
+
 , inBuildStance(false)
 , useHighTrajectory(false)
 , dontUseWeapons(false)
 , dontFire(false)
 , deathScriptFinished(false)
+
 , delayedWreckLevel(-1)
 , restTime(0)
 , outOfMapTime(0)
@@ -170,6 +179,7 @@ CUnit::CUnit()
 , armoredMultiple(1.0f)
 , curArmorMultiple(1.0f)
 , nextPosErrorUpdate(1)
+
 , isCloaked(false)
 , wantCloak(false)
 , scriptCloak(0)
@@ -241,9 +251,8 @@ CUnit::~CUnit()
 	DeleteScript();
 
 	spring::SafeDestruct(commandAI);
-
-	MoveTypeFactory::FreeMoveType(moveType);
-	MoveTypeFactory::FreeMoveType(prevMoveType);
+	spring::SafeDestruct(moveType);
+	spring::SafeDestruct(prevMoveType);
 
 	// ScriptCallback may reference weapons, so delete the script first
 	for (auto wi = weapons.cbegin(); wi != weapons.cend(); ++wi) {
@@ -769,7 +778,7 @@ void CUnit::Drop(const float3& parentPos, const float3& parentDir, CUnit* parent
 void CUnit::DeleteScript()
 {
 	if (script != &CNullUnitScript::value)
-		CUnitScriptFactory::FreeScript(script);
+		spring::SafeDestruct(script);
 
 	script = &CNullUnitScript::value;
 }
@@ -788,7 +797,7 @@ void CUnit::DisableScriptMoveType()
 	if (!UsingScriptMoveType())
 		return;
 
-	MoveTypeFactory::FreeMoveType(moveType);
+	spring::SafeDestruct(moveType);
 	moveType = prevMoveType;
 	prevMoveType = nullptr;
 
@@ -1774,9 +1783,9 @@ void CUnit::DependentDied(CObject* o)
 	}
 
 	if (o == curTarget.unit) { DropCurrentAttackTarget(); }
-	if (o == soloBuilder)    { soloBuilder  = NULL; }
-	if (o == transporter)    { transporter  = NULL; }
-	if (o == lastAttacker)   { lastAttacker = NULL; }
+	if (o == soloBuilder)    { soloBuilder  = nullptr; }
+	if (o == transporter)    { transporter  = nullptr; }
+	if (o == lastAttacker)   { lastAttacker = nullptr; }
 
 	spring::VectorErase(incomingMissiles, static_cast<CMissileProjectile*>(o));
 
@@ -2383,9 +2392,9 @@ void CUnit::TempHoldFire(int cmdID)
 
 void CUnit::StopAttackingAllyTeam(int ally)
 {
-	if (lastAttacker != NULL && lastAttacker->allyteam == ally) {
+	if (lastAttacker != nullptr && lastAttacker->allyteam == ally) {
 		DeleteDeathDependence(lastAttacker, DEPENDENCE_ATTACKER);
-		lastAttacker = NULL;
+		lastAttacker = nullptr;
 	}
 	if (curTarget.type == Target_Unit && curTarget.unit->allyteam == ally)
 		DropCurrentAttackTarget();
@@ -2764,11 +2773,12 @@ short CUnit::GetTransporteeWantedHeading(const CUnit* unit) const {
 CR_BIND_DERIVED(CUnit, CSolidObject, )
 CR_REG_METADATA(CUnit, (
 	CR_MEMBER(unitDef),
+	CR_MEMBER(shieldWeapon),
+	CR_MEMBER(stockpileWeapon),
+	CR_MEMBER(selfdExpDamages),
+	CR_MEMBER(deathExpDamages),
+
 	CR_MEMBER(featureDefID),
-
-	CR_MEMBER(upright),
-
-	CR_MEMBER(deathSpeed),
 
 	CR_MEMBER(travel),
 	CR_MEMBER(travelPeriod),
@@ -2781,24 +2791,49 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(limExperience),
 
 	CR_MEMBER(neutral),
+	CR_MEMBER(beingBuilt),
+	CR_MEMBER(upright),
+
+	CR_MEMBER(lastAttackFrame),
+	CR_MEMBER(lastFireWeapon),
+	CR_MEMBER(lastFlareDrop),
+	CR_MEMBER(lastNanoAdd),
 
 	CR_MEMBER(soloBuilder),
-	CR_MEMBER(beingBuilt),
-	CR_MEMBER(lastNanoAdd),
-	CR_MEMBER(repairAmount),
-	CR_MEMBER(transportCapacityUsed),
-	CR_MEMBER(transportMassUsed),
-	CR_MEMBER(transportedUnits),
+	CR_MEMBER(lastAttacker),
+
+	CR_MEMBER(fpsControlPlayer),
 	CR_MEMBER(transporter),
+
+	CR_MEMBER(moveType),
+	CR_MEMBER(prevMoveType),
+
+	CR_MEMBER(commandAI),
+	CR_MEMBER(group),
+	CR_MEMBER(script),
+
+	CR_IGNORED( usMemBuffer),
+	CR_IGNORED(amtMemBuffer),
+	CR_IGNORED(caiMemBuffer),
+
+	CR_MEMBER(weapons),
+	CR_IGNORED(los),
+	CR_MEMBER(losStatus),
+	CR_MEMBER(quads),
+
+
 	CR_MEMBER(loadingTransportId),
 	CR_MEMBER(unloadingTransportId),
+	CR_MEMBER(transportCapacityUsed),
+	CR_MEMBER(transportMassUsed),
+
 	CR_MEMBER(buildProgress),
 	CR_MEMBER(groundLevelled),
 	CR_MEMBER(terraformLeft),
+	CR_MEMBER(repairAmount),
+
 	CR_MEMBER(realLosRadius),
 	CR_MEMBER(realAirLosRadius),
-
-	CR_MEMBER(losStatus),
 
 	CR_MEMBER(inBuildStance),
 	CR_MEMBER(useHighTrajectory),
@@ -2812,23 +2847,16 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(restTime),
 	CR_MEMBER(outOfMapTime),
 
-	CR_MEMBER(weapons),
-	CR_MEMBER(shieldWeapon),
-	CR_MEMBER(stockpileWeapon),
-	CR_MEMBER(selfdExpDamages),
-	CR_MEMBER(deathExpDamages),
-
 	CR_MEMBER(reloadSpeed),
 	CR_MEMBER(maxRange),
-
 	CR_MEMBER(lastMuzzleFlameSize),
+
+	CR_MEMBER(deathSpeed),
 	CR_MEMBER(lastMuzzleFlameDir),
+	CR_MEMBER(flankingBonusDir),
 
 	CR_MEMBER(armorType),
 	CR_MEMBER(category),
-
-	CR_MEMBER(quads),
-	CR_IGNORED(los),
 
 	CR_MEMBER(mapSquare),
 
@@ -2844,15 +2872,7 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(stealth),
 	CR_MEMBER(sonarStealth),
 
-	CR_MEMBER(moveType),
-	CR_MEMBER(prevMoveType),
-
-	CR_MEMBER(fpsControlPlayer),
-	CR_MEMBER(commandAI),
-	CR_MEMBER(group),
-	CR_MEMBER(script),
-
-	CR_IGNORED(caiMemBuffer),
+	CR_MEMBER(curTarget),
 
 	CR_MEMBER(resourcesCondUse),
 	CR_MEMBER(resourcesCondMake),
@@ -2878,9 +2898,6 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(cost),
 	CR_MEMBER(buildTime),
 
-	CR_MEMBER(lastAttacker),
-	CR_MEMBER(lastAttackFrame),
-	CR_MEMBER(lastFireWeapon),
 	CR_MEMBER(recentDamage),
 
 	CR_MEMBER(fireState),
@@ -2888,13 +2905,10 @@ CR_REG_METADATA(CUnit, (
 
 	CR_MEMBER(activated),
 
-	CR_MEMBER(curTarget),
-
 	CR_MEMBER(isDead),
 	CR_MEMBER(fallSpeed),
 
 	CR_MEMBER(flankingBonusMode),
-	CR_MEMBER(flankingBonusDir),
 	CR_MEMBER(flankingBonusMobility),
 	CR_MEMBER(flankingBonusMobilityAdd),
 	CR_MEMBER(flankingBonusAvgDamage),
@@ -2923,8 +2937,8 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER_UN(myTrack),
 	CR_MEMBER_UN(myIcon),
 
+	CR_MEMBER(transportedUnits),
 	CR_MEMBER(incomingMissiles),
-	CR_MEMBER(lastFlareDrop),
 
 	CR_MEMBER(cegDamage),
 
@@ -2957,7 +2971,7 @@ CR_REG_METADATA(CUnit, (
 
 CR_BIND(CUnit::TransportedUnit,)
 
-CR_REG_METADATA_SUB(CUnit,TransportedUnit,(
+CR_REG_METADATA_SUB(CUnit, TransportedUnit, (
 	CR_MEMBER(unit),
 	CR_MEMBER(piece)
 ))

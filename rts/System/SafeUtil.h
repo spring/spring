@@ -6,6 +6,7 @@
 namespace spring {
 	template<class T> inline void SafeDestruct(T*& p)
 	{
+		if (p == nullptr) return;
 		T* tmp = p; p = nullptr; tmp->~T();
 	}
 

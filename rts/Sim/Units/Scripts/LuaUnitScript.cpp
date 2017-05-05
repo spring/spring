@@ -230,7 +230,7 @@ void CLuaUnitScript::HandleFreed(CLuaHandle* handle)
 		// signal the destructor it shouldn't unref refs
 		luaScript->L = nullptr;
 
-		CUnitScriptFactory::FreeScript(script);
+		spring::SafeDestruct(script);
 	}
 }
 
@@ -1024,7 +1024,7 @@ int CLuaUnitScript::CreateScript(lua_State* L)
 	CUnitScript* newScript = CUnitScriptFactory::CreateLuaScript(unit, L);
 
 	if (unit->script != &CNullUnitScript::value)
-		CUnitScriptFactory::FreeScript(unit->script);
+		spring::SafeDestruct(unit->script);
 
 	unit->script = newScript;
 
