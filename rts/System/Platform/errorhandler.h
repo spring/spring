@@ -59,6 +59,9 @@ void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigne
  * Spring's exception handler additions to BASE for non DEBUG builds.
  */
 #define CATCH_SPRING_ERRORS_EXTENDED                                                          \
+	catch (const std::logic_error& e) {                                                       \
+		ErrorMessageBox(e.what(), "Spring: caught std::logic_error", MBF_OK | MBF_CRASH);     \
+	}                                                                                         \
 	catch (const std::bad_alloc& e) {                                                         \
 		ErrorMessageBox(e.what(), "Spring: caught std::bad_alloc", MBF_OK | MBF_CRASH);       \
 	}                                                                                         \
