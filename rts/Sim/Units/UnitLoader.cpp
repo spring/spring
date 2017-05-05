@@ -79,7 +79,6 @@ CUnit* CUnitLoader::LoadUnit(const UnitLoadParams& params)
 
 	{
 		const UnitDef* ud = params.unitDef;
-		const int teamID = params.teamID;
 
 		if (ud == nullptr)
 			return unit;
