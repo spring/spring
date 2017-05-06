@@ -189,6 +189,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetUnitHarvestStorage);
 	REGISTER_LUA_CFUNC(SetUnitBuildSpeed);
 	REGISTER_LUA_CFUNC(SetUnitNanoPieces);
+
 	REGISTER_LUA_CFUNC(SetUnitBlocking);
 	REGISTER_LUA_CFUNC(SetUnitCrashing);
 	REGISTER_LUA_CFUNC(SetUnitShieldState);
@@ -202,12 +203,12 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetUnitTarget);
 	REGISTER_LUA_CFUNC(SetUnitMidAndAimPos);
 	REGISTER_LUA_CFUNC(SetUnitRadiusAndHeight);
+
 	REGISTER_LUA_CFUNC(SetUnitCollisionVolumeData);
 	REGISTER_LUA_CFUNC(SetUnitPieceCollisionVolumeData);
 	REGISTER_LUA_CFUNC(SetUnitPieceParent);
 	REGISTER_LUA_CFUNC(SetUnitSensorRadius);
 	REGISTER_LUA_CFUNC(SetUnitPosErrorParams);
-
 	REGISTER_LUA_CFUNC(SetUnitPhysics);
 	REGISTER_LUA_CFUNC(SetUnitMass);
 	REGISTER_LUA_CFUNC(SetUnitPosition);
@@ -1196,7 +1197,7 @@ int LuaSyncedCtrl::CreateUnit(lua_State* L)
 		return 0;
 	}
 
-	const UnitDef* unitDef = NULL;
+	const UnitDef* unitDef = nullptr;
 
 	if (lua_israwstring(L, 1)) {
 		unitDef = unitDefHandler->GetUnitDefByName(lua_tostring(L, 1));
@@ -2303,7 +2304,7 @@ int LuaSyncedCtrl::SetUnitPieceParent(lua_State* L)
 		return 0;
 	}
 
-	childPiece->parent->RemoveChild(childPiece );
+	childPiece->parent->RemoveChild(childPiece);
 	childPiece->SetParent(parentPiece);
 	parentPiece->AddChild(childPiece);
 	return 0;
@@ -2574,8 +2575,7 @@ int LuaSyncedCtrl::AddUnitSeismicPing(lua_State* L)
 	if (unit == nullptr)
 		return 0;
 
-	const float pingSize = luaL_checkfloat(L, 2);
-	unit->DoSeismicPing(pingSize);
+	unit->DoSeismicPing(luaL_checkfloat(L, 2));
 	return 0;
 }
 
@@ -2817,7 +2817,7 @@ int LuaSyncedCtrl::SetFeatureHealth(lua_State* L)
 	if (feature == nullptr)
 		return 0;
 
-	feature->health = min(feature->maxHealth, luaL_checkfloat(L, 2));
+	feature->health = std::min(feature->maxHealth, luaL_checkfloat(L, 2));
 	return 0;
 }
 
@@ -2829,10 +2829,7 @@ int LuaSyncedCtrl::SetFeatureMaxHealth(lua_State* L)
 		return 0;
 
 	feature->maxHealth = std::max(0.1f, luaL_checkfloat(L, 2));
-
-	if (feature->health > feature->maxHealth)
-		feature->health = feature->maxHealth;
-
+	feature->health = std::min(feature->health, feature->maxHealth);
 	return 0;
 }
 
