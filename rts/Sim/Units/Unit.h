@@ -153,8 +153,8 @@ public:
 
 	void UpdatePosErrorParams(bool updateError, bool updateDelta);
 
-	bool UsingScriptMoveType() const { return (prevMoveType != NULL); }
-	bool UnderFirstPersonControl() const { return (fpsControlPlayer != NULL); }
+	bool UsingScriptMoveType() const { return (prevMoveType != nullptr); }
+	bool UnderFirstPersonControl() const { return (fpsControlPlayer != nullptr); }
 
 	bool FloatOnWater() const;
 
@@ -204,8 +204,8 @@ public:
 	bool DetachUnitCore(CUnit* unit);
 	bool DetachUnitFromAir(CUnit* unit, const float3& pos); ///< moves to position after
 
-	bool CanLoadUnloadAtPos(const float3& wantedPos, const CUnit* unit, float* wantedHeightPtr = NULL) const;
-	float GetTransporteeWantedHeight(const float3& wantedPos, const CUnit* unit, bool* ok = NULL) const;
+	bool CanLoadUnloadAtPos(const float3& wantedPos, const CUnit* unit, float* wantedHeightPtr = nullptr) const;
+	float GetTransporteeWantedHeight(const float3& wantedPos, const CUnit* unit, bool* ok = nullptr) const;
 	short GetTransporteeWantedHeading(const CUnit* unit) const;
 
 public:
