@@ -2816,6 +2816,7 @@ CR_REG_METADATA(CUnit, (
 
 	CR_IGNORED( usMemBuffer),
 	CR_IGNORED(amtMemBuffer),
+	CR_IGNORED(smtMemBuffer),
 	CR_IGNORED(caiMemBuffer),
 
 	CR_MEMBER(weapons),

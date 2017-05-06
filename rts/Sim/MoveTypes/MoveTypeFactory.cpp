@@ -19,6 +19,7 @@ void MoveTypeFactory::InitStatic() {
 
 AMoveType* MoveTypeFactory::GetMoveType(CUnit* unit, const UnitDef* ud) {
 	static_assert(sizeof(CGroundMoveType) <= sizeof(unit->amtMemBuffer), "");
+	static_assert(sizeof(CScriptMoveType) <= sizeof(unit->smtMemBuffer), "");
 
 	if (ud->IsGroundUnit()) {
 		// mobile ground-unit
