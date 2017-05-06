@@ -4,6 +4,7 @@
 #define SIMOBJECT_MEMPOOL_H
 
 #include <cassert>
+#include <cstring> // memset
 #include <deque>
 #include <vector>
 
@@ -47,15 +48,14 @@ public:
 	}
 
 	template<typename T> void free(T*& p) {
-		const auto it = table.find(p);
+		const auto pit = table.find(p); assert(pit != table.end());
+		const size_t idx = pit->second; assert(idx != -1lu);
 
-		assert(it != table.end());
-		assert(it->second != -1lu);
-
-		indcs.push_back(it->second);
-		table.erase(it);
+		indcs.push_back(idx);
+		table.erase(pit);
 
 		spring::SafeDestruct(p);
+		std::memset(&pages[idx][0], 0, N);
 	}
 
 private:

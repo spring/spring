@@ -139,12 +139,13 @@ void CUnitHandler::InsertActiveUnit(CUnit* unit)
 
 	assert(insertionPos >= 0 && insertionPos <= activeUnits.size());
 	activeUnits.insert(activeUnits.begin() + insertionPos, unit);
-	if (insertionPos <= activeSlowUpdateUnit) {
+
+	if (insertionPos <= activeSlowUpdateUnit)
 		++activeSlowUpdateUnit;
-	}
-	if (insertionPos <= activeUpdateUnit) {
+
+	if (insertionPos <= activeUpdateUnit)
 		++activeUpdateUnit;
-	}
+
 	units[unit->id] = unit;
 }
 
@@ -187,6 +188,7 @@ void CUnitHandler::DeleteUnitNow(CUnit* delUnit)
 
 	const auto it = std::find(activeUnits.begin(), activeUnits.end(), delUnit);
 	assert(it != activeUnits.end());
+
 	{
 		const int delTeam = delUnit->team;
 		const int delType = delUnit->unitDef->id;
