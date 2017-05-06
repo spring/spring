@@ -283,7 +283,9 @@ public:
 	// sufficient for the largest UnitScript (CLuaUnitScript)
 	uint8_t usMemBuffer[240];
 	// sufficient for the largest AMoveType (CGroundMoveType)
+	// need two buffers since ScriptMoveType might be enabled
 	uint8_t amtMemBuffer[460];
+	uint8_t smtMemBuffer[460];
 	// sufficient for the largest CommandAI type (CBuilderCAI)
 	// knowing the exact CAI object size here is not required;
 	// static asserts will catch any overflow

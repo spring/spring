@@ -50,6 +50,6 @@ AMoveType* MoveTypeFactory::GetMoveType(CUnit* unit, const UnitDef* ud) {
 }
 
 AMoveType* MoveTypeFactory::GetScriptMoveType(CUnit* unit) {
-	return (new (unit->amtMemBuffer) CScriptMoveType(unit));
+	return (new (unit->smtMemBuffer) CScriptMoveType(unit));
 }
 

@@ -798,16 +798,18 @@ void CUnit::DisableScriptMoveType()
 		return;
 
 	spring::SafeDestruct(moveType);
+
 	moveType = prevMoveType;
 	prevMoveType = nullptr;
 
 	// ensure unit does not try to move back to the
 	// position it was at when MoveCtrl was enabled
 	// FIXME: prevent the issuing of extra commands?
-	if (moveType != nullptr) {
-		moveType->SetGoal(moveType->oldPos = pos);
-		moveType->StopMoving();
-	}
+	if (moveType == nullptr)
+		return;
+
+	moveType->SetGoal(moveType->oldPos = pos);
+	moveType->StopMoving();
 }
 
 
