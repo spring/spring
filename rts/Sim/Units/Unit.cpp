@@ -1467,9 +1467,8 @@ void CUnit::AddExperience(float exp)
 
 void CUnit::SetMass(float newMass)
 {
-	const float dif = newMass - mass;
 	if (transporter != nullptr)
-		transporter->SetMass(transporter->mass + dif);
+		transporter->SetMass(transporter->mass + (newMass - mass));
 
 	CSolidObject::SetMass(newMass);
 }
@@ -1483,7 +1482,7 @@ void CUnit::DoSeismicPing(float pingSize)
 	if (!(losStatus[gu->myAllyTeam] & LOS_INLOS) && losHandler->InSeismicDistance(this, gu->myAllyTeam)) {
 		const float3 err = float3(0.5f - rx, 0.0f, 0.5f - rz) * losHandler->GetAllyTeamRadarErrorSize(gu->myAllyTeam);
 
-		new CSeismicGroundFlash(pos + err, 30, 15, 0, pingSize, 1, float3(0.8f, 0.0f, 0.0f));
+		projMemPool.alloc<CSeismicGroundFlash>(pos + err, 30, 15, 0, pingSize, 1, float3(0.8f, 0.0f, 0.0f));
 	}
 	for (int a = 0; a < teamHandler->ActiveAllyTeams(); ++a) {
 		if (losHandler->InSeismicDistance(this, a)) {
@@ -2371,7 +2370,7 @@ void CUnit::IncomingMissile(CMissileProjectile* missile)
 	if (lastFlareDrop >= (gs->frameNum - unitDef->flareReloadTime * GAME_SPEED))
 		return;
 
-	new CFlareProjectile(pos, speed, this, (int) (gs->frameNum + unitDef->flareDelay * (1 + gsRNG.NextFloat()) * 15));
+	projMemPool.alloc<CFlareProjectile>(pos, speed, this, (int) (gs->frameNum + unitDef->flareDelay * (1 + gsRNG.NextFloat()) * 15));
 	lastFlareDrop = gs->frameNum;
 }
 

@@ -247,7 +247,7 @@ void CSphereParticleSpawner::Init(const CUnit* owner, const float3& offset)
 
 		const float3 pspeed = ((up * emitMul.y) * std::cos(ay) - ((right * emitMul.x) * std::cos(az) - (forward * emitMul.z) * std::sin(az)) * std::sin(ay)) * (particleSpeed + (guRNG.NextFloat() * particleSpeedSpread));
 
-		CGenericParticleProjectile* particle = new CGenericParticleProjectile(owner, pos + offset, pspeed);
+		CGenericParticleProjectile* particle = projMemPool.alloc<CGenericParticleProjectile>(owner, pos + offset, pspeed);
 
 		particle->decayrate = 1.0f / (particleLife + guRNG.NextFloat() * particleLifeSpread);
 		particle->life = 0;

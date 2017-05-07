@@ -4,6 +4,7 @@
 
 #include "Projectile.h"
 #include "ProjectileHandler.h"
+#include "ProjectileMemPool.h"
 #include "Game/GlobalUnsynced.h"
 #include "Game/TraceRay.h"
 #include "Map/Ground.h"
@@ -66,9 +67,10 @@ CR_REG_METADATA(CProjectileHandler, (
 
 
 
-//////////////////////////////////////////////////////////////////////
-// Construction/Destruction
-//////////////////////////////////////////////////////////////////////
+// note: stores all ExpGenSpawnable types, not just projectiles
+SimObjectMemPool<840> projMemPool;
+
+
 
 CProjectileHandler::CProjectileHandler()
 : currentNanoParticles(0)
@@ -85,6 +87,9 @@ CProjectileHandler::CProjectileHandler()
 {
 	maxParticles     = configHandler->GetInt("MaxParticles");
 	maxNanoParticles = configHandler->GetInt("MaxNanoParticles");
+
+	projMemPool.clear();
+	projMemPool.reserve(1024);
 
 	// preload some IDs
 	for (int i = 0; i < syncedProjectileIDs.size(); i++) {
@@ -112,21 +117,21 @@ CProjectileHandler::~CProjectileHandler()
 	{
 		// synced first, to avoid callback crashes
 		for (CProjectile* p: syncedProjectiles)
-			delete p;
+			projMemPool.free(p);
 
 		syncedProjectiles.clear();
 	}
 
 	{
 		for (CProjectile* p: unsyncedProjectiles)
-			delete p;
+			projMemPool.free(p);
 
 		unsyncedProjectiles.clear();
 	}
 
 	{
 		for (CGroundFlash* gf: groundFlashes)
-			delete gf;
+			projMemPool.free(gf);
 
 		groundFlashes.clear();
 	}
@@ -168,11 +173,14 @@ static void MAPPOS_SANITY_CHECK(const float3 v)
 
 void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool synced)
 {
-	// WARNING: we can't use iters here cause ProjectileCreated and ProjectileDestroyed events
-	// may add new projectiles to the container!
+	// WARNING:
+	//   we can't use iterators here because ProjectileCreated
+	//   and ProjectileDestroyed events may add new projectiles
+	//   to the container!
 	for (size_t i = 0; i < pc.size(); /*no-op*/) {
 		CProjectile* p = pc[i];
-		assert(p);
+
+		assert(p != nullptr);
 		assert(p->synced == synced);
 #ifdef USING_CREG
 		assert(p->synced == !!(p->GetClass()->binder->flags & creg::CF_Synced));
@@ -187,16 +195,18 @@ void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool
 			p->callEvent = false;
 		}
 
-		// deletion
+		// deletion (FIXME: move outside of loop)
 		if (p->deleteMe) {
 			pc[i] = pc.back();
 			pc.pop_back();
+
 			eventHandler.RenderProjectileDestroyed(p);
 
-			if (synced) { //FIXME move outside of loop!
+			if (synced) {
 				eventHandler.ProjectileDestroyed(p, p->GetAllyteamID());
 				syncedProjectileIDs[p->id] = nullptr;
 				freeSyncedIDs.push_back(p->id);
+
 				ASSERT_SYNCED(p->pos);
 				ASSERT_SYNCED(p->id);
 			} else {
@@ -207,7 +217,7 @@ void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool
 			#endif
 			}
 
-			delete p;
+			projMemPool.free(p);
 			continue;
 		}
 
@@ -217,10 +227,10 @@ void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool
 
 	SCOPED_TIMER("Sim::Projectiles::Update");
 
-	//WARNING: we can't use iters here cause p->Update() may add new projectiles to the container!
+	// WARNING: same as above but for p->Update()
 	for (size_t i = 0; i < pc.size(); ++i) {
 		CProjectile* p = pc[i];
-		assert(p);
+		assert(p != nullptr);
 
 		MAPPOS_SANITY_CHECK(p->pos);
 
@@ -243,19 +253,20 @@ static void UPDATE_PTR_CONTAINER(T& cont) {
 	size_t size = cont.size();
 
 	for (unsigned int i = 0; i < size; /*no-op*/) {
-		auto*& p = cont[i];
+		CGroundFlash*& gf = cont[i];
 
-		if (!p->Update()) {
-			delete p;
-			p = cont[size -= 1];
+		if (!gf->Update()) {
+			projMemPool.free(gf);
+			gf = cont[size -= 1];
 			continue;
 		}
 
 		++i;
 	}
 
-	//WARNING: check if the vector got enlarged while iterating, in that case
-	// we didn't update the newest items
+	// WARNING:
+	//   check if the vector was enlarged while iterating, in
+	//   which case we will have missed updating newest items
 	assert(cont.size() == origSize);
 
 	cont.erase(cont.begin() + size, cont.end());
@@ -334,11 +345,13 @@ void CProjectileHandler::AddProjectile(CProjectile* p)
 	// already initialized?
 	assert(p->id < 0);
 	assert(p->callEvent);
-	std::deque<int>* freeIDs = NULL;
-	ProjectileMap* proIDs = NULL;
+
+	std::deque<int>* freeIDs = nullptr;
+	ProjectileMap* proIDs = nullptr;
 
 	if (p->synced) {
 		syncedProjectiles.push_back(p);
+
 		freeIDs = &freeSyncedIDs;
 		proIDs = &syncedProjectileIDs;
 		ASSERT_SYNCED(freeIDs->size());
@@ -347,6 +360,7 @@ void CProjectileHandler::AddProjectile(CProjectile* p)
 #if UNSYNCED_PROJ_NOEVENT
 		return;
 #endif
+
 		freeIDs = &freeUnsyncedIDs;
 		proIDs = &unsyncedProjectileIDs;
 	}
@@ -518,6 +532,7 @@ void CProjectileHandler::CheckUnitFeatureCollisions(ProjectileContainer& pc)
 
 	for (size_t i=0; i<pc.size(); ++i) {
 		CProjectile* p = pc[i];
+
 		if (!p->checkCol) continue;
 		if ( p->deleteMe) continue;
 
@@ -626,7 +641,7 @@ void CProjectileHandler::AddNanoParticle(
 		SColor(tColor[0], tColor[1], tColor[2], uint8_t(20)),
 	};
 
-	new CNanoProjectile(startPos, dif, int(l), colors[globalRendering->teamNanospray]);
+	projMemPool.alloc<CNanoProjectile>(startPos, dif, int(l), colors[globalRendering->teamNanospray]);
 }
 
 void CProjectileHandler::AddNanoParticle(
@@ -660,9 +675,9 @@ void CProjectileHandler::AddNanoParticle(
 	};
 
 	if (!inverse) {
-		new CNanoProjectile(startPos, (dif + error) * 3, int(l / 3), colors[globalRendering->teamNanospray]);
+		projMemPool.alloc<CNanoProjectile>(startPos, (dif + error) * 3, int(l / 3), colors[globalRendering->teamNanospray]);
 	} else {
-		new CNanoProjectile(startPos + (dif + error) * l, -(dif + error) * 3, int(l / 3), colors[globalRendering->teamNanospray]);
+		projMemPool.alloc<CNanoProjectile>(startPos + (dif + error) * l, -(dif + error) * 3, int(l / 3), colors[globalRendering->teamNanospray]);
 	}
 }
 

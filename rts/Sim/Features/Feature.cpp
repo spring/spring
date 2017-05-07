@@ -606,10 +606,10 @@ bool CFeature::Update()
 	if (smokeTime != 0) {
 		if (!((gs->frameNum + id) & 3) && projectileHandler->GetParticleSaturation() < 0.7f) {
 			if (pos.y < 0.0f) {
-				new CBubbleProjectile(nullptr, midPos + guRNG.NextVector() * radius * 0.3f,
+				projMemPool.alloc<CBubbleProjectile>(nullptr, midPos + guRNG.NextVector() * radius * 0.3f,
 					guRNG.NextVector() * 0.3f + UpVector, smokeTime / 6 + 20, 6, 0.4f, 0.5f);
 			} else {
-				new CSmokeProjectile (nullptr, midPos + guRNG.NextVector() * radius * 0.3f,
+				projMemPool.alloc<CSmokeProjectile> (nullptr, midPos + guRNG.NextVector() * radius * 0.3f,
 					guRNG.NextVector() * 0.3f + UpVector, smokeTime / 6 + 20, 6, 0.4f, 0.5f);
 			}
 		}
@@ -636,7 +636,7 @@ void CFeature::StartFire()
 	fireTime = 200 + (int)(gsRNG.NextFloat() * GAME_SPEED);
 	featureHandler->SetFeatureUpdateable(this);
 
-	myFire = new CFireProjectile(midPos, UpVector, 0, 300, 70, radius * 0.8f, 20.0f);
+	myFire = projMemPool.alloc<CFireProjectile>(midPos, UpVector, nullptr, 300, 70, radius * 0.8f, 20.0f);
 }
 
 
@@ -652,15 +652,17 @@ void CFeature::EmitGeoSmoke()
 		for (CSolidObject* obj: objs) {
 			const float dist = (obj->pos - pos).SqLength();
 
-			if (dist < bestDist)  {
-				bestDist = dist; so = obj;
-			}
+			if (dist > bestDist)
+				continue;
+
+			bestDist = dist;
+			so = obj;
 		}
 
 		if (so != solidOnTop) {
-			if (solidOnTop)
+			if (solidOnTop != nullptr)
 				DeleteDeathDependence(solidOnTop, DEPENDENCE_SOLIDONTOP);
-			if (so)
+			if (so != nullptr)
 				AddDeathDependence(so, DEPENDENCE_SOLIDONTOP);
 		}
 
@@ -670,15 +672,16 @@ void CFeature::EmitGeoSmoke()
 	// Hide the smoke if there is a geothermal unit on the vent
 	const CUnit* u = dynamic_cast<CUnit*>(solidOnTop);
 
-	if (u == nullptr || !u->unitDef->needGeo) {
-		const float partSat = !(gs->frameNum & 3) ? 1.0f : 0.7f;
-		if (projectileHandler->GetParticleSaturation() < partSat) {
-			const float3 pPos = guRNG.NextVector() * 10.0f + float3(pos.x, pos.y - 10.0f, pos.z);
-			const float3 pSpeed = (guRNG.NextVector() * 0.5f) + (UpVector * 2.0f);
+	if (u != nullptr && u->unitDef->needGeo)
+		return;
 
-			new CGeoThermSmokeProjectile(pPos, pSpeed, int(50 + guRNG.NextFloat() * 7), this);
-		}
-	}
+	if (projectileHandler->GetParticleSaturation() >= (!(gs->frameNum & 3) ? 1.0f : 0.7f))
+		return;
+
+	const float3 pPos = guRNG.NextVector() * 10.0f + float3(pos.x, pos.y - 10.0f, pos.z);
+	const float3 pSpeed = (guRNG.NextVector() * 0.5f) + (UpVector * 2.0f);
+
+	projMemPool.alloc<CGeoThermSmokeProjectile>(pPos, pSpeed, int(50 + guRNG.NextFloat() * 7), this);
 }
 
 

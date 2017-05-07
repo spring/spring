@@ -483,7 +483,7 @@ bool CUnitScript::EmitAbsSFX(int sfxType, const float3& absPos, const float3& ab
 		// reverse ship wake
 		case SFX_REVERSE_WAKE:
 		case SFX_REVERSE_WAKE_2: {
-			new CWakeProjectile(
+			projMemPool.alloc<CWakeProjectile>(
 				unit,
 				absPos + guRNG.NextVector() * 2.0f,
 				absDir * 0.4f,
@@ -496,7 +496,7 @@ bool CUnitScript::EmitAbsSFX(int sfxType, const float3& absPos, const float3& ab
 		// regular ship wake
 		case SFX_WAKE_2:
 		case SFX_WAKE: {
-			new CWakeProjectile(
+			projMemPool.alloc<CWakeProjectile>(
 				unit,
 				absPos + guRNG.NextVector() * 2.0f,
 				absDir * 0.4f,
@@ -510,7 +510,7 @@ bool CUnitScript::EmitAbsSFX(int sfxType, const float3& absPos, const float3& ab
 		case SFX_BUBBLE: {
 			const float3 pspeed = guRNG.NextVector() * 0.1f;
 
-			new CBubbleProjectile(
+			projMemPool.alloc<CBubbleProjectile>(
 				unit,
 				absPos + guRNG.NextVector() * 2.0f,
 				pspeed + UpVector * 0.2f,
@@ -523,10 +523,10 @@ bool CUnitScript::EmitAbsSFX(int sfxType, const float3& absPos, const float3& ab
 
 		// damaged unit smoke
 		case SFX_WHITE_SMOKE: {
-			new CSmokeProjectile(unit, absPos, guRNG.NextVector() * 0.5f + UpVector * 1.1f, 60, 4, 0.5f, 0.5f);
+			projMemPool.alloc<CSmokeProjectile>(unit, absPos, guRNG.NextVector() * 0.5f + UpVector * 1.1f, 60, 4, 0.5f, 0.5f);
 		} break;
 		case SFX_BLACK_SMOKE: {
-			new CSmokeProjectile(unit, absPos, guRNG.NextVector() * 0.5f + UpVector * 1.1f, 60, 4, 0.5f, 0.6f);
+			projMemPool.alloc<CSmokeProjectile>(unit, absPos, guRNG.NextVector() * 0.5f + UpVector * 1.1f, 60, 4, 0.5f, 0.6f);
 		} break;
 
 		case SFX_VTOL: {
@@ -537,7 +537,7 @@ bool CUnitScript::EmitAbsSFX(int sfxType, const float3& absPos, const float3& ab
 				unit->updir    * scale.y * -math::fabs(relDir.y) +
 				unit->rightdir * scale.x *             relDir.x;
 
-			CHeatCloudProjectile* hc = new CHeatCloudProjectile(
+			CHeatCloudProjectile* hc = projMemPool.alloc<CHeatCloudProjectile>(
 				unit,
 				absPos,
 				speed,
@@ -701,7 +701,7 @@ void CUnitScript::Explode(int piece, int flags)
 
 	// do an explosion at the location first
 	if (!(flags & PF_NoHeatCloud))
-		new CHeatCloudProjectile(nullptr, absPos, ZeroVector, 30, 30);
+		projMemPool.alloc<CHeatCloudProjectile>(nullptr, absPos, ZeroVector, 30, 30);
 
 	// If this is true, no stuff should fly off
 	if (flags & PF_NONE)
@@ -740,7 +740,7 @@ void CUnitScript::Explode(int piece, int flags)
 	newFlags |= (PF_NoCEGTrail *  ((flags & PF_NoCEGTrail) != 0)                    );
 	newFlags |= (PF_Recursive  *  ((flags & PF_Recursive ) != 0)                    );
 
-	new CPieceProjectile(unit, pieces[piece], absPos, explSpeed + baseSpeed, newFlags, 0.5f);
+	projMemPool.alloc<CPieceProjectile>(unit, pieces[piece], absPos, explSpeed + baseSpeed, newFlags, 0.5f);
 #endif
 }
 
@@ -771,7 +771,7 @@ void CUnitScript::ShowFlare(int piece)
 	const float3 relPos = GetPiecePos(piece);
 	const float3 absPos = unit->GetObjectSpacePos(relPos);
 
-	new CMuzzleFlame(absPos, unit->speed, unit->lastMuzzleFlameDir, unit->lastMuzzleFlameSize);
+	projMemPool.alloc<CMuzzleFlame>(absPos, unit->speed, unit->lastMuzzleFlameDir, unit->lastMuzzleFlameSize);
 #endif
 }
 

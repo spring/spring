@@ -13,7 +13,7 @@
 #include "System/Sync/SyncTracer.h"
 #include "System/myMath.h"
 
-CR_BIND_DERIVED(CRifle, CWeapon, (NULL, NULL))
+CR_BIND_DERIVED(CRifle, CWeapon, (nullptr, nullptr))
 CR_REG_METADATA(CRifle, )
 
 //////////////////////////////////////////////////////////////////////
@@ -42,14 +42,14 @@ void CRifle::FireImpl(const bool scriptCall)
 	const float length = TraceRay::TraceRay(weaponMuzzlePos, dir, range, 0, owner, hitUnit, hitFeature);
 	const float impulse = CGameHelper::CalcImpulseScale(*damages, 1.0f);
 
-	if (hitUnit != NULL) {
+	if (hitUnit != nullptr) {
 		hitUnit->DoDamage(*damages, dir * impulse, owner, weaponDef->id, -1);
-		new CHeatCloudProjectile(owner, weaponMuzzlePos + dir * length, hitUnit->speed * 0.9f, 30, 1);
-	}else if (hitFeature != NULL) {
+		projMemPool.alloc<CHeatCloudProjectile>(owner, weaponMuzzlePos + dir * length, hitUnit->speed * 0.9f, 30, 1);
+	} else if (hitFeature != nullptr) {
 		hitFeature->DoDamage(*damages, dir * impulse, owner, weaponDef->id, -1);
-		new CHeatCloudProjectile(owner, weaponMuzzlePos + dir * length, hitFeature->speed * 0.9f, 30, 1);
+		projMemPool.alloc<CHeatCloudProjectile>(owner, weaponMuzzlePos + dir * length, hitFeature->speed * 0.9f, 30, 1);
 	}
 
-	new CTracerProjectile(owner, weaponMuzzlePos, dir * projectileSpeed, length);
-	new CSmokeProjectile(owner, weaponMuzzlePos, ZeroVector, 70, 0.1f, 0.02f, 0.6f);
+	projMemPool.alloc<CTracerProjectile>(owner, weaponMuzzlePos, dir * projectileSpeed, length);
+	projMemPool.alloc<CSmokeProjectile>(owner, weaponMuzzlePos, ZeroVector, 70, 0.1f, 0.02f, 0.6f);
 }

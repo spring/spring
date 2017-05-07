@@ -170,42 +170,40 @@ bool CPlasmaRepulser::IncomingProjectile(CWeaponProjectile* p, const float3& hit
 			// regardless of shield pushing power
 			owner->UseEnergy(weaponDef->shieldEnergyUse / GAME_SPEED);
 
-			if (weaponDef->shieldPower != 0) {
-				curPower -= shieldDamage / GAME_SPEED;
-			}
+			curPower -= ((shieldDamage / GAME_SPEED) * (weaponDef->shieldPower != 0.0f));
 		}
-		const bool newRepulsed = spring::VectorInsertUnique(repulsedProjectiles, p, true);
-		if (newRepulsed) {
+
+		if (spring::VectorInsertUnique(repulsedProjectiles, p, true)) {
+			// projectile was not repulsed before
 			AddDeathDependence(p, DEPENDENCE_REPULSED);
+
 			if (weaponDef->visibleShieldRepulse) {
-				// projectile was not added before
 				const float colorMix = std::min(1.0f, curPower / std::max(1.0f, weaponDef->shieldPower));
 				const float3 color =
 					(weaponDef->shieldGoodColor * colorMix) +
 					(weaponDef->shieldBadColor * (1.0f - colorMix));
 
-				new CRepulseGfx(owner, p, radius, color);
+				projMemPool.alloc<CRepulseGfx>(owner, p, radius, color);
 			}
 		}
 
-		if (defHitFrames > 0) {
+		if (defHitFrames > 0)
 			hitFrames = defHitFrames;
-		}
+
 	} else {
 		// kill the projectile
 		if (owner->UseEnergy(weaponDef->shieldEnergyUse)) {
-			if (weaponDef->shieldPower != 0) {
-				curPower -= shieldDamage;
-			}
+			curPower -= (shieldDamage * (weaponDef->shieldPower != 0.0f));
 
 			p->Collision();
 
-			if (defHitFrames > 0) {
+			if (defHitFrames > 0)
 				hitFrames = defHitFrames;
-			}
+
 			return true;
 		}
 	}
+
 	return false;
 }
 

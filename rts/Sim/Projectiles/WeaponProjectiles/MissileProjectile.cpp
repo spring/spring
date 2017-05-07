@@ -106,9 +106,8 @@ CMissileProjectile::CMissileProjectile(const ProjectileParams& params): CWeaponP
 
 void CMissileProjectile::Collision()
 {
-	if (weaponDef->visuals.smokeTrail) {
-		new CSmokeTrailProjectile(owner(), pos, oldSmoke, dir, oldDir, false, true, 7, SMOKE_TIME, 0.6f, weaponDef->visuals.texture2);
-	}
+	if (weaponDef->visuals.smokeTrail)
+		projMemPool.alloc<CSmokeTrailProjectile>(owner(), pos, oldSmoke, dir, oldDir, false, true, 7, SMOKE_TIME, 0.6f, weaponDef->visuals.texture2);
 
 	CWeaponProjectile::Collision();
 	oldSmoke = pos;
@@ -116,9 +115,8 @@ void CMissileProjectile::Collision()
 
 void CMissileProjectile::Collision(CUnit* unit)
 {
-	if (weaponDef->visuals.smokeTrail) {
-		new CSmokeTrailProjectile(owner(), pos, oldSmoke, dir, oldDir, false, true, 7, SMOKE_TIME, 0.6f, weaponDef->visuals.texture2);
-	}
+	if (weaponDef->visuals.smokeTrail)
+		projMemPool.alloc<CSmokeTrailProjectile>(owner(), pos, oldSmoke, dir, oldDir, false, true, 7, SMOKE_TIME, 0.6f, weaponDef->visuals.texture2);
 
 	CWeaponProjectile::Collision(unit);
 	oldSmoke = pos;
@@ -126,9 +124,8 @@ void CMissileProjectile::Collision(CUnit* unit)
 
 void CMissileProjectile::Collision(CFeature* feature)
 {
-	if (weaponDef->visuals.smokeTrail) {
-		new CSmokeTrailProjectile(owner(), pos, oldSmoke, dir, oldDir, false, true, 7, SMOKE_TIME, 0.6f, weaponDef->visuals.texture2);
-	}
+	if (weaponDef->visuals.smokeTrail)
+		projMemPool.alloc<CSmokeTrailProjectile>(owner(), pos, oldSmoke, dir, oldDir, false, true, 7, SMOKE_TIME, 0.6f, weaponDef->visuals.texture2);
 
 	CWeaponProjectile::Collision(feature);
 	oldSmoke = pos;
@@ -224,15 +221,13 @@ void CMissileProjectile::Update()
 		} else {
 			// only when TTL <= 0 do we (missiles)
 			// get influenced by gravity and drag
-			if (!luaMoveCtrl) {
+			if (!luaMoveCtrl)
 				SetVelocityAndSpeed((speed * 0.98f) + (UpVector * mygravity));
-			}
 		}
 	}
 
-	if (!luaMoveCtrl) {
+	if (!luaMoveCtrl)
 		SetPosition(pos + speed);
-	}
 
 	age++;
 	numParts++;
@@ -245,7 +240,7 @@ void CMissileProjectile::Update()
 		}
 
 		if ((age % 8) == 0) {
-			smokeTrail = new CSmokeTrailProjectile(
+			smokeTrail = projMemPool.alloc<CSmokeTrailProjectile>(
 				own,
 				pos, oldSmoke,
 				dir, oldDir,

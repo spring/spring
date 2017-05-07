@@ -145,7 +145,7 @@ void CTorpedoProjectile::Update()
 			const float3 pspeed = (guRNG.NextVector() * 0.1f) + float3(0.0f, 0.2f, 0.0f);
 
 			// Spawn unsynced bubble projectile
-			new CBubbleProjectile(
+			projMemPool.alloc<CBubbleProjectile>(
 				owner(),
 				pos + guRNG.NextVector(), pspeed, 40 + guRNG.NextFloat() * GAME_SPEED,
 				1 + guRNG.NextFloat() * 2, 0.01f, 0.3f + guRNG.NextFloat() * 0.3f

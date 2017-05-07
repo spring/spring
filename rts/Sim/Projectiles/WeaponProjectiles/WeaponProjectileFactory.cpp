@@ -17,53 +17,53 @@
 
 unsigned int WeaponProjectileFactory::LoadProjectile(const ProjectileParams& params) {
 	const WeaponDef* weaponDef = params.weaponDef;
-	const CWeaponProjectile* projectile = NULL;
+	const CWeaponProjectile* projectile = nullptr;
 
-	assert(weaponDef != NULL);
+	assert(weaponDef != nullptr);
 
 	switch (weaponDef->projectileType) {
 		case WEAPON_EMG_PROJECTILE: {
-			projectile = new CEmgProjectile(params);
+			projectile = projMemPool.alloc<CEmgProjectile>(params);
 		} break;
 
 		case WEAPON_EXPLOSIVE_PROJECTILE: {
-			projectile = new CExplosiveProjectile(params);
+			projectile = projMemPool.alloc<CExplosiveProjectile>(params);
 		} break;
 
 		case WEAPON_FLAME_PROJECTILE: {
-			projectile = new CFlameProjectile(params);
+			projectile = projMemPool.alloc<CFlameProjectile>(params);
 		} break;
 
 		case WEAPON_FIREBALL_PROJECTILE: {
-			projectile = new CFireBallProjectile(params);
+			projectile = projMemPool.alloc<CFireBallProjectile>(params);
 		} break;
 
 		case WEAPON_LASER_PROJECTILE: {
-			projectile = new CLaserProjectile(params);
+			projectile = projMemPool.alloc<CLaserProjectile>(params);
 		} break;
 
 		case WEAPON_MISSILE_PROJECTILE: {
-			projectile = new CMissileProjectile(params);
+			projectile = projMemPool.alloc<CMissileProjectile>(params);
 		} break;
 
 		case WEAPON_BEAMLASER_PROJECTILE: {
-			projectile = new CBeamLaserProjectile(params);
+			projectile = projMemPool.alloc<CBeamLaserProjectile>(params);
 		} break;
 
 		case WEAPON_LARGEBEAMLASER_PROJECTILE: {
-			projectile = new CLargeBeamLaserProjectile(params);
+			projectile = projMemPool.alloc<CLargeBeamLaserProjectile>(params);
 		} break;
 
 		case WEAPON_LIGHTNING_PROJECTILE: {
-			projectile = new CLightningProjectile(params);
+			projectile = projMemPool.alloc<CLightningProjectile>(params);
 		} break;
 
 		case WEAPON_STARBURST_PROJECTILE: {
-			projectile = new CStarburstProjectile(params);
+			projectile = projMemPool.alloc<CStarburstProjectile>(params);
 		} break;
 
 		case WEAPON_TORPEDO_PROJECTILE: {
-			projectile = new CTorpedoProjectile(params);
+			projectile = projMemPool.alloc<CTorpedoProjectile>(params);
 		} break;
 
 		default: {

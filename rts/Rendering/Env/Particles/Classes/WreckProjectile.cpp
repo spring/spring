@@ -28,19 +28,16 @@ void CWreckProjectile::Update()
 	speed.x *= 0.994f;
 	speed.z *= 0.994f;
 
-	if (speed.y > 0) {
+	if (speed.y > 0.0f)
 		speed.y *= 0.998f;
-	}
 
 	pos += speed;
 
 	if (!(gs->frameNum & (projectileHandler->GetParticleSaturation() < 0.5f? 1: 3))) {
-		CSmokeProjectile* hp = new CSmokeProjectile(owner(), pos, ZeroVector, 50, 4, 0.3f, 0.5f);
+		CSmokeProjectile* hp = projMemPool.alloc<CSmokeProjectile>(owner(), pos, ZeroVector, 50, 4, 0.3f, 0.5f);
 		hp->size += 0.1f;
 	}
-	if (pos.y + 0.3f < CGround::GetApproximateHeight(pos.x, pos.z)) {
-		deleteMe = true;
-	}
+	deleteMe |= (pos.y + 0.3f < CGround::GetApproximateHeight(pos.x, pos.z));
 }
 
 void CWreckProjectile::Draw()

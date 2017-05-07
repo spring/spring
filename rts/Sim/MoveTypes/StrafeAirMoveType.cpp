@@ -520,7 +520,7 @@ bool CStrafeAirMoveType::Update()
 				owner->KillUnit(NULL, true, false);
 			}
 
-			new CSmokeProjectile(owner, owner->midPos, gsRNG.NextVector() * 0.08f, 100 + gsRNG.NextFloat() * 50, 5, 0.2f, 0.4f);
+			projMemPool.alloc<CSmokeProjectile>(owner, owner->midPos, gsRNG.NextVector() * 0.08f, 100 + gsRNG.NextFloat() * 50, 5, 0.2f, 0.4f);
 		} break;
 		case AIRCRAFT_TAKEOFF:
 			UpdateTakeOff();

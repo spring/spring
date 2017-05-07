@@ -7,7 +7,6 @@
 #include <string>
 #include <sstream>
 #include <vector>
-#include <algorithm>
 
 #include "System/maindefines.h"
 #include "System/SafeUtil.h"

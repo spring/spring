@@ -119,9 +119,8 @@ CStarburstProjectile::CStarburstProjectile(const ProjectileParams& params): CWea
 
 void CStarburstProjectile::Collision()
 {
-	if (weaponDef->visuals.smokeTrail) {
-		new CSmokeTrailProjectile(owner(), pos, oldSmoke, dir, oldSmokeDir, false, true, 7, SMOKE_TIME, 0.7f, weaponDef->visuals.texture2);
-	}
+	if (weaponDef->visuals.smokeTrail)
+		projMemPool.alloc<CSmokeTrailProjectile>(owner(), pos, oldSmoke, dir, oldSmokeDir, false, true, 7, SMOKE_TIME, 0.7f, weaponDef->visuals.texture2);
 
 	oldSmokeDir = dir;
 	CWeaponProjectile::Collision();
@@ -130,9 +129,8 @@ void CStarburstProjectile::Collision()
 
 void CStarburstProjectile::Collision(CUnit* unit)
 {
-	if (weaponDef->visuals.smokeTrail) {
-		new CSmokeTrailProjectile(owner(), pos, oldSmoke, dir, oldSmokeDir, false, true, 7, SMOKE_TIME, 0.7f, weaponDef->visuals.texture2);
-	}
+	if (weaponDef->visuals.smokeTrail)
+		projMemPool.alloc<CSmokeTrailProjectile>(owner(), pos, oldSmoke, dir, oldSmokeDir, false, true, 7, SMOKE_TIME, 0.7f, weaponDef->visuals.texture2);
 
 	oldSmokeDir = dir;
 	CWeaponProjectile::Collision(unit);
@@ -141,9 +139,8 @@ void CStarburstProjectile::Collision(CUnit* unit)
 
 void CStarburstProjectile::Collision(CFeature* feature)
 {
-	if (weaponDef->visuals.smokeTrail) {
-		new CSmokeTrailProjectile(owner(), pos, oldSmoke, dir, oldSmokeDir, false, true, 7, SMOKE_TIME, 0.7f, weaponDef->visuals.texture2);
-	}
+	if (weaponDef->visuals.smokeTrail)
+		projMemPool.alloc<CSmokeTrailProjectile>(owner(), pos, oldSmoke, dir, oldSmokeDir, false, true, 7, SMOKE_TIME, 0.7f, weaponDef->visuals.texture2);
 
 	oldSmokeDir = dir;
 	CWeaponProjectile::Collision(feature);
@@ -200,9 +197,8 @@ void CStarburstProjectile::Update()
 			tracerPart->ageMods[newsize] = ageMod;
 		}
 
-		if (tracerPart->numAgeMods != newsize) {
+		if (tracerPart->numAgeMods != newsize)
 			tracerPart->numAgeMods = newsize;
-		}
 	}
 
 	age++;
@@ -216,7 +212,7 @@ void CStarburstProjectile::Update()
 		}
 
 		if ((age % 8) == 0) {
-			smokeTrail = new CSmokeTrailProjectile(
+			smokeTrail = projMemPool.alloc<CSmokeTrailProjectile>(
 				owner(),
 				pos,
 				oldSmoke,

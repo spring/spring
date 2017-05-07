@@ -51,14 +51,13 @@ CPieceProjectile::CPieceProjectile(
 	explFlags(flags),
 	dispList((lmp != nullptr) ? lmp->dispListID : 0),
 	omp((lmp != nullptr) ? lmp->original : nullptr),
-	smokeTrail(NULL)
+	smokeTrail(nullptr)
 {
 	checkCol = false;
 
-	if (owner != NULL) {
-		if ((explFlags & PF_NoCEGTrail) == 0) {
+	if (owner != nullptr) {
+		if ((explFlags & PF_NoCEGTrail) == 0)
 			explGenHandler->GenExplosion((cegID = owner->unitDef->GetPieceExplosionGeneratorID(gsRNG.NextInt())), pos, speed, 100, 0.0f, 0.0f, NULL, NULL);
-		}
 
 		model = owner->model;
 		explFlags |= (PF_NoCEGTrail * (cegID == -1u));
@@ -155,7 +154,7 @@ void CPieceProjectile::Collision(CUnit* unit, CFeature* feature)
 
 	if (explFlags & PF_Smoke) {
 		if (explFlags & PF_NoCEGTrail) {
-			smokeTrail = new CSmokeTrailProjectile(
+			smokeTrail = projMemPool.alloc<CSmokeTrailProjectile>(
 				owner(),
 				pos, oldSmokePos,
 				dir, oldSmokeDir,
@@ -228,7 +227,7 @@ void CPieceProjectile::Update()
 		}
 
 		if ((age % 8) == 0) {
-			smokeTrail = new CSmokeTrailProjectile(
+			smokeTrail = projMemPool.alloc<CSmokeTrailProjectile>(
 				owner(),
 				pos, oldSmokePos,
 				dir, oldSmokeDir,

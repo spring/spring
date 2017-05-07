@@ -88,9 +88,9 @@ int CExpGenSpawnable::GetSpawnableID(const std::string& spawnableName)
 CExpGenSpawnable* CExpGenSpawnable::CreateSpawnable(int spawnableID)
 {
 	int i = 0;
-#define CHECK_SPAWNABLE(spawnable) \
-	if (spawnableID == i)          \
-		return new spawnable();    \
+#define CHECK_SPAWNABLE(spawnable)               \
+	if (spawnableID == i)                        \
+		return (projMemPool.alloc<spawnable>()); \
 	++i;
 
 	CHECK_ALL_SPAWNABLES()

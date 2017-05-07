@@ -61,7 +61,7 @@ ShieldSegmentCollection::ShieldSegmentCollection(CPlasmaRepulser* shield_)
 		// Y*X segments, deleted by ProjectileHandler
 		for (int y = 0; y < NUM_SEGMENTS_Y; ++y) {
 			for (int x = 0; x < NUM_SEGMENTS_X; ++x) {
-				shieldSegments.push_back(new ShieldSegmentProjectile(this, wd, u->pos, x, y));
+				shieldSegments.push_back(projMemPool.alloc<ShieldSegmentProjectile>(this, wd, u->pos, x, y));
 			}
 		}
 

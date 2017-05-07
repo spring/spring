@@ -10,6 +10,7 @@
 #endif
 
 #include "ExpGenSpawnable.h"
+#include "ProjectileMemPool.h"
 #include "System/float3.h"
 #include "System/type2.h"
 

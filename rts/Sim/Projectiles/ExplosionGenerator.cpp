@@ -407,7 +407,7 @@ bool CStdExplosionGenerator::Explosion(
 
 	const float3 npos = pos + camVect * moveLength;
 
-	new CHeatCloudProjectile(owner, npos, float3(0.0f, 0.3f, 0.0f), 8.0f + sqrtDmg * 0.5f, 7 + damage * 2.8f);
+	projMemPool.alloc<CHeatCloudProjectile>(owner, npos, float3(0.0f, 0.3f, 0.0f), 8.0f + sqrtDmg * 0.5f, 7 + damage * 2.8f);
 
 	if (projectileHandler->GetParticleSaturation() < 1.0f) {
 		// turn off lots of graphic only particles when we have more particles than we want
@@ -436,7 +436,7 @@ bool CStdExplosionGenerator::Explosion(
 			dir.y = math::fabsf(dir.y);
 			const float3 npos = pos + dir;
 
-			new CSmokeProjectile2(owner, pos, npos, speed, time, smokeDamageSQRT * 4.0f, 0.4f, 0.6f);
+			projMemPool.alloc<CSmokeProjectile2>(owner, pos, npos, speed, time, smokeDamageSQRT * 4.0f, 0.4f, 0.6f);
 		}
 
 		if (groundExplosion) {
@@ -457,7 +457,7 @@ bool CStdExplosionGenerator::Explosion(
 					pos.z - (0.5f - guRNG.NextFloat()) * (radius * 0.6f)
 				);
 
-				new CDirtProjectile(owner, npos, explSpeed  * explSpeedMod, 90.0f + damage * 2.0f, 2.0f + sqrtDmg * 1.5f, 0.4f, 0.999f, color);
+				projMemPool.alloc<CDirtProjectile>(owner, npos, explSpeed  * explSpeedMod, 90.0f + damage * 2.0f, 2.0f + sqrtDmg * 1.5f, 0.4f, 0.999f, color);
 			}
 		}
 
@@ -477,7 +477,7 @@ bool CStdExplosionGenerator::Explosion(
 					pos.z - (0.5f - guRNG.NextFloat()) * (radius * 0.2f)
 				);
 
-				new CDirtProjectile(
+				projMemPool.alloc<CDirtProjectile>(
 					owner,
 					npos,
 					speed * (0.7f + std::min(30.0f, damage) / GAME_SPEED),
@@ -504,14 +504,14 @@ bool CStdExplosionGenerator::Explosion(
 					pos.z - (0.5f - guRNG.NextFloat()) * (radius * 1)
 				);
 
-				new CWreckProjectile(owner, npos, explSpeed * explSpeedMod, 90.0f + damage * 2.0f);
+				projMemPool.alloc<CWreckProjectile>(owner, npos, explSpeed * explSpeedMod, 90.0f + damage * 2.0f);
 			}
 		}
 		if (uwExplosion) {
 			const int numBubbles = (damage * 0.7f);
 
 			for (int a = 0; a < numBubbles; ++a) {
-				new CBubbleProjectile(
+				projMemPool.alloc<CBubbleProjectile>(
 					owner,
 					pos + guRNG.NextVector() * radius * 0.5f,
 					guRNG.NextVector() * 0.2f + float3(0.0f, 0.2f, 0.0f),
@@ -526,7 +526,7 @@ bool CStdExplosionGenerator::Explosion(
 			const int numWake = (damage * 0.5f);
 
 			for (int a = 0; a < numWake; ++a) {
-				new CWakeProjectile(
+				projMemPool.alloc<CWakeProjectile>(
 					owner,
 					pos + guRNG.NextVector() * radius * 0.2f,
 					guRNG.NextVector() * radius * 0.003f,
@@ -549,7 +549,7 @@ bool CStdExplosionGenerator::Explosion(
 					explSpeed.y = -explSpeed.y;
 				}
 
-				new CExploSpikeProjectile(
+				projMemPool.alloc<CExploSpikeProjectile>(
 					owner,
 					pos + explSpeed,
 					explSpeed * (0.9f + guRNG.NextFloat() * 0.4f),
@@ -577,7 +577,7 @@ bool CStdExplosionGenerator::Explosion(
 				circleGrowth = (8.0f + damage * 2.5f) / (9.0f + sqrtDmg * 0.7f) * 0.55f;
 			}
 
-			new CStandardGroundFlash(pos, circleAlpha, flashAlpha, flashSize, circleGrowth, ttl);
+			projMemPool.alloc<CStandardGroundFlash>(pos, circleAlpha, flashAlpha, flashSize, circleGrowth, ttl);
 		}
 	}
 
@@ -601,7 +601,8 @@ void CCustomExplosionGenerator::ExecuteExplosionCode(const char* code, float dam
 	float val = 0.0f;
 	void* ptr = NULL;
 	float buffer[16];
-	for(int i=0; i<16; i++) buffer[i] = 0.0f; //initialize buffer
+
+	std::memset(&buffer[0], 0, 16 * sizeof(float));
 
 	for (;;) {
 		switch (*(code++)) {
@@ -749,8 +750,8 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 		SExpGenSpawnableMemberInfo subInfo = memberInfo;
 		subInfo.length = 1;
 		for (unsigned int i = 0; i < memberInfo.length && start < script.length(); ++i) {
-			string::size_type subEnd = script.find(',', start+1);
-			ParseExplosionCode(psi, script.substr(start, subEnd-start), subInfo, code);
+			string::size_type subEnd = script.find(',', start + 1);
+			ParseExplosionCode(psi, script.substr(start, subEnd - start), subInfo, code);
 			start = subEnd + 1;
 			subInfo.offset += subInfo.size;
 		}
@@ -981,13 +982,11 @@ bool CCustomExplosionGenerator::Explosion(
 		}
 	}
 
-	if (groundExplosion && (groundFlash.ttl > 0) && (groundFlash.flashSize > 1)) {
-		new CStandardGroundFlash(pos, groundFlash);
-	}
+	if (groundExplosion && (groundFlash.ttl > 0) && (groundFlash.flashSize > 1))
+		projMemPool.alloc<CStandardGroundFlash>(pos, groundFlash);
 
-	if (expGenParams.useDefaultExplosions) {
+	if (expGenParams.useDefaultExplosions)
 		return (explGenHandler->GenExplosion(CExplosionGeneratorHandler::EXPGEN_ID_STANDARD, pos, dir, damage, radius, gfxMod, owner, hit));
-	}
 
 	return true;
 }

@@ -51,7 +51,7 @@ int CGeometricObjects::AddSpline(float3 b1, float3 b2, float3 b3, float3 b4, flo
 			w1 = width * 0.5f;
 			w2 = w1;
 		}
-		CGeoSquareProjectile* gsp = new CGeoSquareProjectile(old1, old2, dir1, dir2, w1, w2);
+		CGeoSquareProjectile* gsp = projMemPool.alloc<CGeoSquareProjectile>(old1, old2, dir1, dir2, w1, w2);
 		geoGroups[group].squares.push_back(gsp);
 		old1 = old2;
 		old2 = np;
@@ -102,14 +102,14 @@ int CGeometricObjects::AddLine(float3 start, float3 end, float width, int arrow,
 
 	float3 dir = (end - start).SafeANormalize();
 	if (arrow) {
-		CGeoSquareProjectile* gsp = new CGeoSquareProjectile(start, start*0.2f + end*0.8f, dir, dir, width*0.5f, width*0.5f);
+		CGeoSquareProjectile* gsp = projMemPool.alloc<CGeoSquareProjectile>(start, start*0.2f + end*0.8f, dir, dir, width*0.5f, width*0.5f);
 		geoGroups[group].squares.push_back(gsp);
 
-		gsp = new CGeoSquareProjectile(start*0.2f + end*0.8f, end, dir, dir, width, 0);
+		gsp = projMemPool.alloc<CGeoSquareProjectile>(start*0.2f + end*0.8f, end, dir, dir, width, 0);
 		geoGroups[group].squares.push_back(gsp);
 
 	} else {
-		CGeoSquareProjectile* gsp = new CGeoSquareProjectile(start, end, dir, dir, width*0.5f, width*0.5f);
+		CGeoSquareProjectile* gsp = projMemPool.alloc<CGeoSquareProjectile>(start, end, dir, dir, width*0.5f, width*0.5f);
 		geoGroups[group].squares.push_back(gsp);
 	}
 

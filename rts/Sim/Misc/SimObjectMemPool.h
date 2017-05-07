@@ -9,39 +9,35 @@
 #include <vector>
 
 #include "System/UnorderedMap.hpp"
+#include "System/ContainerUtil.h"
 #include "System/SafeUtil.h"
 
 template<size_t N> struct SimObjectMemPool {
 public:
-	void clear() {
-		pages.clear();
-		indcs.clear();
-		table.clear();
-	}
-	void reserve(size_t n) {
-		indcs.reserve(n);
-		table.reserve(n);
-	}
-
 	template<typename T, typename... A> T* alloc(A&&... a) {
+		static_assert(sizeof(T) <= N, "");
+
 		T* p = nullptr;
 		uint8_t* m = nullptr;
 
-		static_assert(sizeof(T) <= N, "");
+		size_t i = -1lu;
 
 		if (indcs.empty()) {
 			pages.emplace_back();
 
-			m = &pages[pages.size() - 1][0];
-			p = new (m) T(a...);
+			i = pages.size() - 1;
+			m = &pages[i][0];
+			p = new (m) T(std::forward<A>(a)...);
 
-			table.emplace(p, pages.size() - 1);
+			table.emplace(p, i);
 		} else {
-			m = &pages[indcs.back()][0];
-			p = new (m) T(a...);
+			i = spring::VectorBackPop(indcs);
+			m = &pages[i][0];
+			p = new (m) T(std::forward<A>(a)...);
 
-			table.emplace(p, indcs.back());
-			indcs.pop_back();
+			table.emplace(p, i);
+			// must pop before ctor runs; objects can be created recursively
+			// indcs.pop_back();
 		}
 
 		return p;
@@ -56,6 +52,18 @@ public:
 
 		spring::SafeDestruct(p);
 		std::memset(&pages[idx][0], 0, N);
+	}
+
+	template<typename T> bool mapped(const T* p) const { return (table.find(p) != table.end()); }
+
+	void clear() {
+		pages.clear();
+		indcs.clear();
+		table.clear();
+	}
+	void reserve(size_t n) {
+		indcs.reserve(n);
+		table.reserve(n);
 	}
 
 private:

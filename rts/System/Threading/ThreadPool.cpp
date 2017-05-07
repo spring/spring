@@ -323,11 +323,15 @@ void PushTaskGroup(ITaskGroup* taskGroup)
 	while (!queue.enqueue(taskGroup));
 	#endif
 
+	#if 1
 	// AsyncTask's do not care about wakeup-latency as much
 	if (taskGroup->IsAsyncTask())
 		return;
 
 	NotifyWorkerThreads(false, false);
+	#else
+	NotifyWorkerThreads(false, taskGroup->IsAsyncTask());
+	#endif
 }
 
 void NotifyWorkerThreads(bool force, bool async)

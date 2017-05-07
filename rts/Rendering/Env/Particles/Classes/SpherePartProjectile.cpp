@@ -118,7 +118,7 @@ void CSpherePartProjectile::CreateSphere(const CUnit* owner, int ttl, float alph
 {
 	for (int y = 0; y < 16; y += 4) {
 		for (int x = 0; x < 32; x += 4) {
-			new CSpherePartProjectile(owner, pos, x, y, expansionSpeed, alpha, ttl, color);
+			projMemPool.alloc<CSpherePartProjectile>(owner, pos, x, y, expansionSpeed, alpha, ttl, color);
 		}
 	}
 }
