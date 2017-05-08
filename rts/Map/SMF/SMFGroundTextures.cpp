@@ -26,6 +26,7 @@
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/Platform/Watchdog.h"
+#include "System/Threading/ThreadPool.h" // for_mt
 
 using std::sprintf;
 
