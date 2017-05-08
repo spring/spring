@@ -25,7 +25,7 @@
 #include "System/TimeProfiler.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
-#include "System/Threading/ThreadPool.h"
+#include "System/Platform/Watchdog.h"
 
 using std::sprintf;
 
@@ -274,6 +274,7 @@ bool CSMFGroundTextures::RecompressTilesIfNeeded()
 	// note 3: for both DXT1 & ETC1/2 blocksize is 8 bytes per 4x4 pixel block -> perfect for us :)
 
 	loadscreen->SetLoadMessage("Recompressing Map Tiles with ETC1");
+	Watchdog::ClearTimer(WTD_MAIN);
 
 	rg_etc1::pack_etc1_block_init();
 	rg_etc1::etc1_pack_params pack_params;
