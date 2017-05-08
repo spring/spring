@@ -114,7 +114,7 @@ bool CEventHandler::IsManaged(const std::string& eName) const
 {
 	const auto comp = [](const EventPair& a, const EventPair& b) { return (a.first < b.first); };
 	const auto iter = std::lower_bound(eventMap.begin(), eventMap.end(), EventPair{eName, {}}, comp);
-	return (iter != eventMap.end() && iter->first == eName && iter->second.HasPropBit(MANAGED_BIT));
+	return (iter != eventMap.end() && iter->second.HasPropBit(MANAGED_BIT) && iter->first == eName);
 }
 
 
@@ -122,7 +122,7 @@ bool CEventHandler::IsUnsynced(const std::string& eName) const
 {
 	const auto comp = [](const EventPair& a, const EventPair& b) { return (a.first < b.first); };
 	const auto iter = std::lower_bound(eventMap.begin(), eventMap.end(), EventPair{eName, {}}, comp);
-	return (iter != eventMap.end() && iter->first == eName && iter->second.HasPropBit(UNSYNCED_BIT));
+	return (iter != eventMap.end() && iter->second.HasPropBit(UNSYNCED_BIT) && iter->first == eName);
 }
 
 
@@ -130,7 +130,7 @@ bool CEventHandler::IsController(const std::string& eName) const
 {
 	const auto comp = [](const EventPair& a, const EventPair& b) { return (a.first < b.first); };
 	const auto iter = std::lower_bound(eventMap.begin(), eventMap.end(), EventPair{eName, {}}, comp);
-	return (iter != eventMap.end() && iter->first == eName && iter->second.HasPropBit(CONTROL_BIT));
+	return (iter != eventMap.end() && iter->second.HasPropBit(CONTROL_BIT) && iter->first == eName);
 }
 
 
@@ -141,7 +141,7 @@ bool CEventHandler::InsertEvent(CEventClient* ec, const std::string& ciName)
 	const auto comp = [](const EventPair& a, const EventPair& b) { return (a.first < b.first); };
 	const auto iter = std::lower_bound(eventMap.begin(), eventMap.end(), EventPair{ciName, {}}, comp);
 
-	if ((iter == eventMap.end()) || (iter->first != ciName) || (iter->second.GetList() == nullptr))
+	if ((iter == eventMap.end()) || (iter->second.GetList() == nullptr) || (iter->first != ciName))
 		return false;
 
 	if (ec->GetSynced() && iter->second.HasPropBit(UNSYNCED_BIT))
@@ -157,7 +157,7 @@ bool CEventHandler::RemoveEvent(CEventClient* ec, const std::string& ciName)
 	const auto comp = [](const EventPair& a, const EventPair& b) { return (a.first < b.first); };
 	const auto iter = std::lower_bound(eventMap.begin(), eventMap.end(), EventPair{ciName, {}}, comp);
 
-	if ((iter == eventMap.end()) || (iter->first != ciName) || (iter->second.GetList() == nullptr))
+	if ((iter == eventMap.end()) || (iter->second.GetList() == nullptr) || (iter->first != ciName))
 		return false;
 
 	ListRemove(*(iter->second.GetList()), ec);
@@ -204,24 +204,30 @@ void CEventHandler::ListRemove(EventClientList& ecList, CEventClient* ec)
 /******************************************************************************/
 /******************************************************************************/
 
-#define CONTROL_ITERATE_DEF_TRUE(name, ...) \
-	bool result = true;                        \
-	for (int i = 0; i < list##name.size(); ) { \
-		CEventClient* ec = list##name[i];  \
-		result &= ec->name(__VA_ARGS__);   \
-		if (i < list##name.size() && ec == list##name[i]) \
+#define CONTROL_ITERATE_DEF_TRUE(name, ...)                        \
+	bool result = true;                                            \
+                                                                   \
+	for (size_t i = 0; i < list##name.size(); ) {                  \
+		CEventClient* ec = list##name[i];                          \
+		result &= ec->name(__VA_ARGS__);                           \
+                                                                   \
+		if (i < list##name.size() && ec == list##name[i])          \
 			++i; /* the call-in may remove itself from the list */ \
-	} \
+	}                                                              \
+                                                                   \
 	return result;
 
-#define CONTROL_ITERATE_DEF_FALSE(name, ...) \
-	bool result = false;                        \
-	for (int i = 0; i < list##name.size(); ) { \
-		CEventClient* ec = list##name[i];  \
-		result |= ec->name(__VA_ARGS__);   \
-		if (i < list##name.size() && ec == list##name[i]) \
+#define CONTROL_ITERATE_DEF_FALSE(name, ...)                       \
+	bool result = false;                                           \
+                                                                   \
+	for (size_t i = 0; i < list##name.size(); ) {                  \
+		CEventClient* ec = list##name[i];                          \
+		result |= ec->name(__VA_ARGS__);                           \
+                                                                   \
+		if (i < list##name.size() && ec == list##name[i])          \
 			++i; /* the call-in may remove itself from the list */ \
-	} \
+	}                                                              \
+                                                                   \
 	return result;
 
 
@@ -313,13 +319,16 @@ bool CEventHandler::MoveCtrlNotify(const CUnit* unit, int data)
 int CEventHandler::AllowWeaponTargetCheck(unsigned int attackerID, unsigned int attackerWeaponNum, unsigned int attackerWeaponDefID)
 {
 	int result = -1;
-	for (int i = 0; i < listAllowWeaponTargetCheck.size(); ) {
+
+	for (size_t i = 0; i < listAllowWeaponTargetCheck.size(); ) {
 		CEventClient* ec = listAllowWeaponTargetCheck[i];
-		int result2 = ec->AllowWeaponTargetCheck(attackerID, attackerWeaponNum, attackerWeaponDefID);
-		if (result2 > result) result = result2;
+
+		result = std::max(result, ec->AllowWeaponTargetCheck(attackerID, attackerWeaponNum, attackerWeaponDefID));
+
 		if (i < listAllowWeaponTargetCheck.size() && ec == listAllowWeaponTargetCheck[i])
 			++i; /* the call-in may remove itself from the list */
 	}
+
 	return result;
 }
 
@@ -398,11 +407,12 @@ bool CEventHandler::SyncedActionFallback(const std::string& line, int playerID)
 /******************************************************************************/
 /******************************************************************************/
 
-#define ITERATE_EVENTCLIENTLIST(name, ...) \
-	for (int i = 0; i < list##name.size(); ) { \
-		CEventClient* ec = list##name[i]; \
-		ec->name(__VA_ARGS__); \
-		if (i < list##name.size() && ec == list##name[i]) \
+#define ITERATE_EVENTCLIENTLIST(name, ...)                         \
+	for (size_t i = 0; i < list##name.size(); ) {                  \
+		CEventClient* ec = list##name[i];                          \
+		ec->name(__VA_ARGS__);                                     \
+                                                                   \
+		if (i < list##name.size() && ec == list##name[i])          \
 			++i; /* the call-in may remove itself from the list */ \
 	}
 
@@ -539,23 +549,25 @@ void CEventHandler::GameProgress(int gameFrame)
 }
 
 
-#define DRAW_CALLIN(name)                                            \
-  void CEventHandler:: Draw ## name ()                               \
-  {                                                                  \
-    if (listDraw ## name.empty())                                    \
-      return;                                                        \
-    LuaOpenGL::EnableDraw ## name ();                                \
-    listDraw ## name [0]->Draw ## name ();                           \
-                                                                     \
-    for (int i = 1; i < listDraw ## name.size(); ) {                 \
-      LuaOpenGL::ResetDraw ## name ();                               \
-      CEventClient* ec = listDraw ## name [i];                       \
-      ec-> Draw ## name ();                                          \
-      if (i < listDraw ## name.size() && ec == listDraw ## name [i]) \
-	    ++i;                                                         \
-    }                                                                \
-                                                                     \
-    LuaOpenGL::DisableDraw ## name ();                               \
+#define DRAW_CALLIN(name)                                                   \
+	void CEventHandler:: Draw ## name ()                                    \
+	{                                                                       \
+		if (listDraw ## name.empty())                                       \
+			return;                                                         \
+                                                                            \
+		LuaOpenGL::EnableDraw ## name ();                                   \
+		listDraw ## name [0]->Draw ## name ();                              \
+                                                                            \
+		for (size_t i = 1; i < listDraw ## name.size(); ) {                 \
+			LuaOpenGL::ResetDraw ## name ();                                \
+			CEventClient* ec = listDraw ## name [i];                        \
+			ec-> Draw ## name ();                                           \
+                                                                            \
+			if (i < listDraw ## name.size() && ec == listDraw ## name [i])  \
+				++i;                                                        \
+		}                                                                   \
+                                                                            \
+		LuaOpenGL::DisableDraw ## name ();                                  \
   }
 
 DRAW_CALLIN(Genesis)
@@ -576,17 +588,20 @@ DRAW_CALLIN(InMiniMap)
 DRAW_CALLIN(InMiniMapBackground)
 
 
-#define DRAW_ENTITY_CALLIN(name, args, args2)     \
-  bool CEventHandler:: Draw ## name args        \
-  {                                               \
-    bool skipEngineDrawing = false;               \
-    for (int i = 0; i < listDraw ## name.size(); ) { \
-      CEventClient* ec = listDraw ## name [i];    \
-      skipEngineDrawing |= ec-> Draw ## name args2 ; \
-      if (i < listDraw ## name.size() && ec == listDraw ## name [i]) \
-	    ++i;                                      \
-    } \
-    return skipEngineDrawing; \
+#define DRAW_ENTITY_CALLIN(name, args, args2)                               \
+	bool CEventHandler:: Draw ## name args                                  \
+	{                                                                       \
+		bool skipEngineDrawing = false;                                     \
+                                                                            \
+		for (size_t i = 0; i < listDraw ## name.size(); ) {                 \
+			CEventClient* ec = listDraw ## name [i];                        \
+			skipEngineDrawing |= ec-> Draw ## name args2 ;                  \
+                                                                            \
+			if (i < listDraw ## name.size() && ec == listDraw ## name [i])  \
+				++i;                                                        \
+		}                                                                   \
+                                                                            \
+		return skipEngineDrawing;                                           \
   }
 
 DRAW_ENTITY_CALLIN(Unit, (const CUnit* unit), (unit))
@@ -597,19 +612,21 @@ DRAW_ENTITY_CALLIN(Projectile, (const CProjectile* projectile), (projectile))
 /******************************************************************************/
 /******************************************************************************/
 
-#define CONTROL_REVERSE_ITERATE_DEF_TRUE(name, ...) \
-	for (int i = list##name.size() - 1; i >= 0; --i) { \
-		CEventClient* ec = list##name[i]; \
-		if (ec->name(__VA_ARGS__)) \
-			return true; \
+#define CONTROL_REVERSE_ITERATE_DEF_TRUE(name, ...)                \
+	for (size_t i = 0; i < list##name.size(); ++i) {               \
+		CEventClient* ec = list##name[list##name.size() - 1 - i];  \
+                                                                   \
+		if (ec->name(__VA_ARGS__))                                 \
+			return true;                                           \
 	}
 
-#define CONTROL_REVERSE_ITERATE_STRING(name, ...) \
-	for (int i = list##name.size() - 1; i >= 0; --i) { \
-		CEventClient* ec = list##name[i]; \
-		const std::string& str = ec->name(__VA_ARGS__); \
-		if (!str.empty()) \
-			return str; \
+#define CONTROL_REVERSE_ITERATE_STRING(name, ...)                  \
+	for (size_t i = 0; i < list##name.size(); ++i) {               \
+		CEventClient* ec = list##name[list##name.size() - 1 - i];  \
+		const std::string& str = ec->name(__VA_ARGS__);            \
+                                                                   \
+		if (!str.empty())                                          \
+			return str;                                            \
 	}
 
 bool CEventHandler::CommandNotify(const Command& cmd)
@@ -642,32 +659,35 @@ bool CEventHandler::TextInput(const std::string& utf8)
 
 bool CEventHandler::MousePress(int x, int y, int button)
 {
-	for (int i = listMousePress.size() - 1; i >= 0; --i) {
-		CEventClient* ec = listMousePress[i];
-		if (ec->MousePress(x,y,button)) {
-			if (!mouseOwner)
+	for (size_t i = 0; i < listMousePress.size(); i++) {
+		CEventClient* ec = listMousePress[listMousePress.size() - 1 - i];
+
+		if (ec->MousePress(x, y, button)) {
+			if (mouseOwner == nullptr)
 				mouseOwner = ec;
+
 			return true;
 		}
 	}
+
 	return false;
 }
 
 
 void CEventHandler::MouseRelease(int x, int y, int button)
 {
-	if (mouseOwner) {
-		mouseOwner->MouseRelease(x, y, button);
-		mouseOwner = NULL;
-	}
+	if (mouseOwner == nullptr)
+		return;
+
+	mouseOwner->MouseRelease(x, y, button);
+	mouseOwner = nullptr;
 }
 
 
 bool CEventHandler::MouseMove(int x, int y, int dx, int dy, int button)
 {
-	if (mouseOwner == NULL) {
+	if (mouseOwner == nullptr)
 		return false;
-	}
 
 	return mouseOwner->MouseMove(x, y, dx, dy, button);
 }
