@@ -441,18 +441,18 @@ float CFontTexture::GetKerning(const GlyphInfo& lgl, const GlyphInfo& rgl)
 {
 #ifndef HEADLESS
 	// first check caches
-	uint32_t hash = GetKerningHash(lgl.utf16, rgl.utf16);
-	if (hash < 128*128) {
-		return kerningPrecached[hash];
-	}
-	const auto it = kerningDynamic.find(hash);
-	if (it != kerningDynamic.end()) {
-		return it->second;
-	}
+	const uint32_t hash = GetKerningHash(lgl.utf16, rgl.utf16);
 
-	if (lgl.face != rgl.face) {
+	if (hash < 128*128)
+		return kerningPrecached[hash];
+
+	const auto it = kerningDynamic.find(hash);
+
+	if (it != kerningDynamic.end())
+		return it->second;
+
+	if (lgl.face != rgl.face)
 		return (kerningDynamic[hash] = lgl.advance);
-	}
 
 	// load & cache
 	FT_Vector kerning;
