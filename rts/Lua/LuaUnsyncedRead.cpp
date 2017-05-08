@@ -2579,11 +2579,13 @@ int LuaUnsyncedRead::GetDecalOwner(lua_State* L)
 		return 0;
 
 	auto decal = decalsGl4->GetDecalByIdx(luaL_checkint(L, 1));
-	if (decal.owner == nullptr) return 0;
+
+	if (decal.owner == nullptr)
+		return 0;
 
 	//XXX: I know, not very fast, but you cannot dynamic_cast a void* back to a CUnit*
 	//     also it's not called very often and so doesn't matter
-	for (auto u: unitHandler->activeUnits) {
+	for (const CUnit* u: unitHandler->GetActiveUnits()) {
 		if (u != decal.owner)
 			continue;
 

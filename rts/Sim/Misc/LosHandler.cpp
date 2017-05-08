@@ -699,7 +699,7 @@ void CLosHandler::Update()
 {
 	SCOPED_TIMER("Sim::Los");
 
-	const std::vector<CUnit*>& activeUnits = unitHandler->activeUnits;
+	const std::vector<CUnit*>& activeUnits = unitHandler->GetActiveUnits();
 
 	#if (USE_STAGGERED_UPDATES == 1)
 	const size_t losBatchRate = UNIT_SLOWUPDATE_RATE;

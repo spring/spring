@@ -40,6 +40,12 @@ CFeatureHandler::CFeatureHandler() {
 	activeFeatureIDs.reserve(128);
 }
 
+CFeatureHandler::~CFeatureHandler() {
+	for (const int featureID: activeFeatureIDs) {
+		memPool.free(features[featureID]);
+	}
+}
+
 
 void CFeatureHandler::LoadFeaturesFromMap()
 {

@@ -4100,7 +4100,7 @@ EXPORT(int) skirmishAiCallback_getTeamUnits(int skirmishAIId, int* unitIds, int 
 
 	const int teamId = skirmishAIId_teamId[skirmishAIId];
 
-	for (CUnit* u: unitHandler->activeUnits) {
+	for (const CUnit* u: unitHandler->GetActiveUnits()) {
 		if (u->team != teamId)
 			continue;
 

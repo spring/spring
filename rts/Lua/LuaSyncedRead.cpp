@@ -1580,16 +1580,16 @@ int LuaSyncedRead::ArePlayersAllied(lua_State* L)
 
 int LuaSyncedRead::GetAllUnits(lua_State* L)
 {
-	lua_createtable(L, unitHandler->activeUnits.size(), 0);
+	lua_createtable(L, (unitHandler->GetActiveUnits()).size(), 0);
 
 	int count = 1;
 	if (CLuaHandle::GetHandleFullRead(L)) {
-		for (const CUnit* unit: unitHandler->activeUnits) {
+		for (const CUnit* unit: unitHandler->GetActiveUnits()) {
 			lua_pushnumber(L, unit->id);
 			lua_rawseti(L, -2, count++);
 		}
 	} else {
-		for (const CUnit* unit: unitHandler->activeUnits) {
+		for (const CUnit* unit: unitHandler->GetActiveUnits()) {
 			if (!IsUnitVisible(L, unit))
 				continue;
 

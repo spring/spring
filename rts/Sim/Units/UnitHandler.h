@@ -52,12 +52,13 @@ public:
 
 	static CUnit* NewUnit(const UnitDef* ud);
 
+	const std::vector<CUnit*>& GetActiveUnits() const { return activeUnits; }
+	      std::vector<CUnit*>& GetActiveUnits()       { return activeUnits; }
+
 	const spring::unordered_map<unsigned int, CBuilderCAI*>& GetBuilderCAIs() const { return builderCAIs; }
 
 public:
 	// FIXME
-	std::vector<CUnit*> units;                        ///< used to get units from IDs (0 if not created)
-	std::vector<CUnit*> activeUnits;                  ///< used to get all active units
 	std::vector<std::vector<std::vector<CUnit*>>> unitsByDefs; ///< units sorted by team and unitDef
 
 private:
@@ -69,7 +70,10 @@ private:
 private:
 	SimObjectIDPool idPool;
 
+	std::vector<CUnit*> units;                         ///< used to get units from IDs (0 if not created)
+	std::vector<CUnit*> activeUnits;                   ///< used to get all active units
 	std::vector<CUnit*> unitsToBeRemoved;              ///< units that will be removed at start of next update
+
 	spring::unordered_map<unsigned int, CBuilderCAI*> builderCAIs;
 
 	size_t activeSlowUpdateUnit;  ///< first unit of batch that will be SlowUpdate'd this frame

@@ -113,7 +113,7 @@ CUnitHandler::~CUnitHandler()
 	for (CUnit* u: activeUnits) {
 		// ~CUnit dereferences featureHandler which is destroyed already
 		u->delayedWreckLevel = -1;
-		u->~CUnit();
+		memPool.free(u);
 	}
 }
 
@@ -250,9 +250,9 @@ void CUnitHandler::Update()
 
 			UNIT_SANITY_CHECK(unit);
 
-			if (moveType->Update()) {
+			if (moveType->Update())
 				eventHandler.UnitMoved(unit);
-			}
+
 			if (!unit->pos.IsInBounds() && (unit->speed.w > MAX_UNIT_SPEED)) {
 				// this unit is not coming back, kill it now without any death
 				// sequence (so deathScriptFinished becomes true immediately)
@@ -296,9 +296,8 @@ void CUnitHandler::Update()
 		SCOPED_TIMER("Sim::Unit::SlowUpdate");
 		assert(activeSlowUpdateUnit >= 0);
 		// reset the iterator every <UNIT_SLOWUPDATE_RATE> frames
-		if ((gs->frameNum % UNIT_SLOWUPDATE_RATE) == 0) {
+		if ((gs->frameNum % UNIT_SLOWUPDATE_RATE) == 0)
 			activeSlowUpdateUnit = 0;
-		}
 
 		// stagger the SlowUpdate's
 		unsigned int n = (activeUnits.size() / UNIT_SLOWUPDATE_RATE) + 1;
@@ -362,12 +361,11 @@ void CUnitHandler::RemoveBuilderCAI(CBuilderCAI* b)
 
 bool CUnitHandler::CanBuildUnit(const UnitDef* unitdef, int team) const
 {
-	if (teamHandler->Team(team)->AtUnitLimit()) {
+	if (teamHandler->Team(team)->AtUnitLimit())
 		return false;
-	}
-	if (unitsByDefs[team][unitdef->id].size() >= unitdef->maxThisUnit) {
+
+	if (unitsByDefs[team][unitdef->id].size() >= unitdef->maxThisUnit)
 		return false;
-	}
 
 	return true;
 }

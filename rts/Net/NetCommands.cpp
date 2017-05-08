@@ -1207,11 +1207,9 @@ void CGame::ClientReadNet()
 
 					// stop attacks against former foe
 					if (allied) {
-						const auto& units = unitHandler->activeUnits;
-
-						for (auto it = units.begin(); it != units.end(); ++it) {
-							if (teamHandler->Ally((*it)->allyteam, whichAllyTeam)) {
-								(*it)->StopAttackingAllyTeam(whichAllyTeam);
+						for (CUnit* u: unitHandler->GetActiveUnits()) {
+							if (teamHandler->Ally(u->allyteam, whichAllyTeam)) {
+								u->StopAttackingAllyTeam(whichAllyTeam);
 							}
 						}
 					}

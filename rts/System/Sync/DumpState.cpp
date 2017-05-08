@@ -88,7 +88,7 @@ void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod)
 	if ((gs->frameNum % gFramePeriod) != 0) { return; }
 
 	// we only care about the synced projectile data here
-	const std::vector<CUnit*>& units = unitHandler->activeUnits;
+	const std::vector<CUnit*>& activeUnits = unitHandler->GetActiveUnits();
 	const auto& activeFeatureIDs = featureHandler->GetActiveFeatureIDs();
 	ProjectileContainer& projectiles = projectileHandler->syncedProjectiles;
 
@@ -96,7 +96,7 @@ void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod)
 	std::vector<CWeapon*>::const_iterator weaponsIt;
 
 	file << "frame: " << gs->frameNum << ", seed: " << gsRNG.GetSeed() << "\n";
-	file << "\tunits: " << unitHandler->activeUnits.size() << "\n";
+	file << "\tunits: " << activeUnits.size() << "\n";
 
 	#define DUMP_UNIT_DATA
 	#define DUMP_UNIT_PIECE_DATA
@@ -109,7 +109,7 @@ void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod)
 	// #define DUMP_ALLYTEAM_DATA
 
 	#ifdef DUMP_UNIT_DATA
-	for (CUnit* u: units) {
+	for (CUnit* u: activeUnits) {
 		const std::vector<CWeapon*>& weapons = u->weapons;
 		const LocalModel& lm = u->localModel;
 		const std::vector<LocalModelPiece>& pieces = lm.pieces;

@@ -42,10 +42,7 @@ class CFeatureHandler : public spring::noncopyable
 
 public:
 	CFeatureHandler();
-	~CFeatureHandler() {
-		features.clear();
-		activeFeatureIDs.clear();
-	}
+	~CFeatureHandler();
 
 	CFeature* LoadFeature(const FeatureLoadParams& params);
 	CFeature* CreateWreckage(const FeatureLoadParams& params, const int numWreckLevels, bool emitSmoke);
@@ -88,7 +85,6 @@ private:
 	spring::unordered_set<int> activeFeatureIDs;
 	std::vector<int> deletedFeatureIDs;
 	std::vector<CFeature*> features;
-
 	std::vector<CFeature*> updateFeatures;
 };
 

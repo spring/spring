@@ -1170,17 +1170,18 @@ CGameHelper::BuildSquareStatus CGameHelper::TestBuildSquare(
 	// height difference IF terrain is above sea-level
 	if (unitDef->IsImmobileUnit()) {
 		if (!unitDef->floatOnWater || groundHeight > 0.0f) {
-			if (std::abs(pos.y - groundHeight) > unitDef->maxHeightDif) {
+			if (std::abs(pos.y - groundHeight) > unitDef->maxHeightDif)
 				return BUILDSQUARE_BLOCKED;
-			}
 		}
 	}
 
 	BuildSquareStatus ret = BUILDSQUARE_OPEN;
 	const int yardxpos = unsigned(pos.x + (SQUARE_SIZE >> 1)) / SQUARE_SIZE;
 	const int yardypos = unsigned(pos.z + (SQUARE_SIZE >> 1)) / SQUARE_SIZE;
+
 	CSolidObject* so = groundBlockingObjectMap->GroundBlocked(yardxpos, yardypos);
-	if (so != NULL) {
+
+	if (so != nullptr) {
 		CFeature* f = dynamic_cast<CFeature*>(so);
 		CUnit* u = dynamic_cast<CUnit*>(so);
 
@@ -1188,7 +1189,7 @@ CGameHelper::BuildSquareStatus CGameHelper::TestBuildSquare(
 		assert(true || (so->pos.x >= xrange.x && so->pos.x <= xrange.y));
 		assert(true || (so->pos.z >= zrange.x && so->pos.z <= zrange.y));
 
-		if (f != NULL) {
+		if (f != nullptr) {
 			if ((allyteam < 0) || f->IsInLosForAllyTeam(allyteam)) {
 				if (!f->def->reclaimable) {
 					ret = BUILDSQUARE_BLOCKED;
@@ -1224,20 +1225,17 @@ CGameHelper::BuildSquareStatus CGameHelper::TestBuildSquare(
 			}
 			#endif
 
-			if (moveDef != NULL && CMoveMath::IsNonBlocking(*moveDef, so, NULL)) {
+			if (moveDef != nullptr && CMoveMath::IsNonBlocking(*moveDef, so, nullptr))
 				ret = BUILDSQUARE_OPEN;
-			}
 
 			#if 0
-			if (synced) {
+			if (synced)
 				so->PopPhysicalStateBit(CSolidObject::PSTATE_BIT_ONGROUND);
-			}
 			#endif
 		}
 
-		if (ret == BUILDSQUARE_BLOCKED) {
+		if (ret == BUILDSQUARE_BLOCKED)
 			return ret;
-		}
 	}
 
 	return ret;
@@ -1255,11 +1253,9 @@ Command CGameHelper::GetBuildCommand(const float3& pos, const float3& dir) {
 	CCommandQueue::iterator ci;
 
 
-	for (CUnit *unit: unitHandler->activeUnits) {
-
-		if (unit->team != gu->myTeam) {
+	for (CUnit* unit: unitHandler->GetActiveUnits()) {
+		if (unit->team != gu->myTeam)
 			continue;
-		}
 
 		ci = unit->commandAI->commandQue.begin();
 
@@ -1270,9 +1266,8 @@ Command CGameHelper::GetBuildCommand(const float3& pos, const float3& dir) {
 				BuildInfo bi(cmd);
 				tempF1 = pos + dir * ((bi.pos.y - pos.y) / dir.y) - bi.pos;
 
-				if (bi.def && (bi.GetXSize() / 2) * SQUARE_SIZE > math::fabs(tempF1.x) && (bi.GetZSize() / 2) * SQUARE_SIZE > math::fabs(tempF1.z)) {
+				if (bi.def && (bi.GetXSize() / 2) * SQUARE_SIZE > math::fabs(tempF1.x) && (bi.GetZSize() / 2) * SQUARE_SIZE > math::fabs(tempF1.z))
 					return cmd;
-				}
 			}
 		}
 	}
