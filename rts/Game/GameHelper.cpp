@@ -40,26 +40,11 @@
 #include "System/Sound/ISoundChannels.h"
 #include "System/Sync/SyncTracer.h"
 
-#define NUM_WAITING_DAMAGE_LISTS 128
-
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
 CGameHelper* helper;
-
-
-CGameHelper::CGameHelper()
-{
-	waitingDamageLists.resize(NUM_WAITING_DAMAGE_LISTS);
-}
-
-CGameHelper::~CGameHelper()
-{
-	waitingDamageLists.clear();
-}
-
-
 
 //////////////////////////////////////////////////////////////////////
 // Explosions/Damage
@@ -93,7 +78,7 @@ void CGameHelper::DoExplosionDamage(
 	const int weaponDefID,
 	const int projectileID
 ) {
-	assert(unit != NULL);
+	assert(unit != nullptr);
 
 	if (ignoreOwner && (unit == owner))
 		return;
@@ -101,7 +86,7 @@ void CGameHelper::DoExplosionDamage(
 	const LocalModelPiece* lhp = unit->GetLastHitPiece(gs->frameNum);
 	const CollisionVolume* vol = unit->GetCollisionVolume(lhp);
 
-	const float3& lhpPos = (lhp != NULL && vol == lhp->GetCollisionVolume())? lhp->GetAbsolutePos(): ZeroVector;
+	const float3& lhpPos = (lhp != nullptr && vol == lhp->GetCollisionVolume())? lhp->GetAbsolutePos(): ZeroVector;
 	const float3& volPos = vol->GetWorldSpacePos(unit, lhpPos);
 
 	// linear damage falloff with distance
@@ -130,14 +115,14 @@ void CGameHelper::DoExplosionDamage(
 	const float3 impulseDir = (volPos - expPos).SafeNormalize();
 	const float3 expImpulse = impulseDir * modImpulseScale;
 
-	const DamageArray expDamages = damages * expDistanceMod;
+	DamageArray expDamages = damages * expDistanceMod;
 
 	if (expDist < (expSpeed * DIRECT_EXPLOSION_DAMAGE_SPEED_SCALE)) {
 		// damage directly
 		unit->DoDamage(expDamages, expImpulse, owner, weaponDefID, projectileID);
 	} else {
 		// damage later
-		waitingDamageLists[(gs->frameNum + int(expDist / expSpeed) - 3) & 127].emplace_back((owner? owner->id: -1), unit->id, expDamages, expImpulse, weaponDefID, projectileID);
+		waitingDamages[(gs->frameNum + int(expDist / expSpeed) - 3) & (waitingDamages.size() - 1)].emplace_back(std::move(expDamages), expImpulse, ((owner != nullptr)? owner->id: -1), unit->id, weaponDefID, projectileID);
 	}
 }
 
@@ -1041,7 +1026,7 @@ CGameHelper::BuildSquareStatus CGameHelper::TestUnitBuildSquare(
 	std::vector<float3>* nobuildpos,
 	const std::vector<Command>* commands)
 {
-	feature = NULL;
+	feature = nullptr;
 
 	const int xsize = buildInfo.GetXSize();
 	const int zsize = buildInfo.GetZSize();
@@ -1084,7 +1069,7 @@ CGameHelper::BuildSquareStatus CGameHelper::TestUnitBuildSquare(
 		}
 	}
 
-	if (commands != NULL) {
+	if (commands != nullptr) {
 		// this is only called in unsynced context (ShowUnitBuildSquare)
 		assert(!synced);
 
@@ -1281,15 +1266,16 @@ Command CGameHelper::GetBuildCommand(const float3& pos, const float3& dir) {
 
 void CGameHelper::Update()
 {
-	std::vector<WaitingDamage>& wdList = waitingDamageLists[gs->frameNum & 127];
+	std::vector<WaitingDamage>& wdList = waitingDamages[gs->frameNum & (waitingDamages.size() - 1)];
 
 	for (const WaitingDamage& wd: wdList) {
-		CUnit* attackee = unitHandler->GetUnit(wd.target);
-		CUnit* attacker = unitHandler->GetUnit(wd.attacker); // null if wd.attacker is -1
+		CUnit* attackee = unitHandler->GetUnit(wd.targetID);
+		CUnit* attacker = unitHandler->GetUnit(wd.attackerID); // null if wd.attacker is -1
 
-		if (attackee != nullptr) {
-			attackee->DoDamage(wd.damage, wd.impulse, attacker, wd.weaponID, wd.projectileID);
-		}
+		if (attackee == nullptr)
+			continue;
+
+		attackee->DoDamage(wd.damage, wd.impulse, attacker, wd.weaponID, wd.projectileID);
 	}
 
 	wdList.clear();

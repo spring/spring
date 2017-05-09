@@ -9,7 +9,9 @@
 #include "System/float3.h"
 #include "System/type2.h"
 
+#include <array>
 #include <vector>
+
 
 class CUnit;
 class CWeapon;
@@ -57,9 +59,7 @@ public:
 		BUILDSQUARE_OPEN        = 3
 	};
 
-	CGameHelper();
-	~CGameHelper();
-
+	CGameHelper() {}
 	CGameHelper(const CGameHelper&) = delete; // no-copy
 
 	static void GetEnemyUnits(const float3& pos, float searchRadius, int searchAllyteam, std::vector<int>& found);
@@ -146,17 +146,17 @@ public:
 
 private:
 	struct WaitingDamage {
-		WaitingDamage(int attacker, int target, const DamageArray& damage, const float3& impulse, const int _weaponID, const int _projectileID)
-		: target(target)
-		, attacker(attacker)
+		WaitingDamage(const DamageArray& _damage, const float3& _impulse, int _attackerID, int _targetID, int _weaponID, int _projectileID)
+		: attackerID(_attackerID)
+		, targetID(_targetID)
 		, weaponID(_weaponID)
 		, projectileID(_projectileID)
-		, damage(damage)
-		, impulse(impulse)
+		, damage(_damage)
+		, impulse(_impulse)
 		{}
 
-		int target;
-		int attacker;
+		int attackerID;
+		int targetID;
 		int weaponID;
 		int projectileID;
 
@@ -164,7 +164,8 @@ private:
 		float3 impulse;
 	};
 
-	std::vector< std::vector<WaitingDamage> > waitingDamageLists;
+	// note: size must be a power of two
+	std::array<std::vector<WaitingDamage>, 128> waitingDamages;
 };
 
 extern CGameHelper* helper;

@@ -17,31 +17,11 @@ CR_REG_METADATA(DamageArray, (
 	CR_MEMBER(damages)
 ))
 
-DamageArray::DamageArray(float damage)
-	: paralyzeDamageTime(0)
-	, impulseFactor(1.0f)
-	, impulseBoost(0.0f)
-	, craterMult(1.0f)
-	, craterBoost(0.0f)
-{
-	SetDefaultDamage(damage);
-}
-
-
-DamageArray DamageArray::operator * (float damageMult) const {
-	DamageArray da(*this);
-
-	for (unsigned int a = 0; a < damages.size(); ++a)
-		da.damages[a] *= damageMult;
-
-	return da;
-}
-
-
 void DamageArray::SetDefaultDamage(float damage)
 {
 	damages.clear();
-	if (damageArrayHandler != NULL) {
+
+	if (damageArrayHandler != nullptr) {
 		damages.resize(damageArrayHandler->GetNumTypes(), damage);
 		assert(!damages.empty());
 	} else {
