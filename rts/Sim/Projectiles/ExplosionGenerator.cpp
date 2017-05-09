@@ -81,7 +81,10 @@ CR_REG_METADATA(CCustomExplosionGenerator, (
 ))
 
 
-CExplosionGeneratorHandler* explGenHandler = NULL;
+
+static SimObjectMemPool<sizeof(CCustomExplosionGenerator)> egMemPool;
+
+CExplosionGeneratorHandler* explGenHandler = nullptr;
 
 
 
@@ -177,8 +180,11 @@ string ClassAliasList::FindAlias(const string& className) const
 
 CExplosionGeneratorHandler::CExplosionGeneratorHandler()
 {
+	egMemPool.clear();
+	egMemPool.reserve(32);
+
 	explosionGenerators.reserve(32);
-	explosionGenerators.push_back(new CStdExplosionGenerator()); // id=0
+	explosionGenerators.push_back(egMemPool.alloc<CStdExplosionGenerator>()); // id=0
 	explosionGenerators[0]->SetGeneratorID(EXPGEN_ID_STANDARD);
 
 	exploParser = nullptr;
@@ -195,10 +201,10 @@ CExplosionGeneratorHandler::~CExplosionGeneratorHandler()
 	spring::SafeDelete(explTblRoot);
 
 	// delete CStdExplGen
-	spring::SafeDelete(explosionGenerators[0]);
+	egMemPool.free(explosionGenerators[0]);
 
 	for (unsigned int n = 1; n < explosionGenerators.size(); n++) {
-		spring::SafeDelete(explosionGenerators[n]);
+		egMemPool.free(explosionGenerators[n]);
 	}
 
 	explosionGenerators.clear();
@@ -214,7 +220,7 @@ void CExplosionGeneratorHandler::ParseExplosionTables() {
 
 	exploParser = new LuaParser("gamedata/explosions.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
 	aliasParser = new LuaParser("gamedata/explosion_alias.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
-	explTblRoot = NULL;
+	explTblRoot = nullptr;
 
 	if (!aliasParser->Execute()) {
 		LOG_L(L_ERROR, "Failed to parse explosion aliases: %s",
@@ -282,7 +288,7 @@ unsigned int CExplosionGeneratorHandler::LoadGeneratorID(const std::string& tag)
 {
 	IExplosionGenerator* eg = LoadGenerator(tag);
 
-	if (eg == NULL)
+	if (eg == nullptr)
 		return EXPGEN_ID_INVALID;
 
 	return (eg->GetGeneratorID());
@@ -316,10 +322,10 @@ IExplosionGenerator* CExplosionGeneratorHandler::LoadGenerator(const string& tag
 		prefix = tag.substr(0, seppos);
 		postfix = tag.substr(seppos + 1);
 		assert((prefix + ":") == CEG_PREFIX_STRING);
-		explGen = new CCustomExplosionGenerator();
+		explGen = egMemPool.alloc<CCustomExplosionGenerator>();
 	} else {
 		prefix = tag;
-		explGen = new CStdExplosionGenerator();
+		explGen = egMemPool.alloc<CStdExplosionGenerator>();
 	}
 
 	explGen->SetGeneratorID(explosionGenerators.size());
