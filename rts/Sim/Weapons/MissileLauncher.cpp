@@ -60,35 +60,32 @@ void CMissileLauncher::FireImpl(const bool scriptCall)
 	WeaponProjectileFactory::LoadProjectile(params);
 }
 
-bool CMissileLauncher::HaveFreeLineOfFire(const float3 pos, const SWeaponTarget& trg, bool useMuzzle) const
+bool CMissileLauncher::HaveFreeLineOfFire(const float3 srcPos, const float3 tgtPos, const SWeaponTarget& trg) const
 {
 	// do a different test depending on if the missile has high
 	// trajectory (parabolic vs. linear ground intersection)
 	if (weaponDef->trajectoryHeight <= 0.0f)
-		return CWeapon::HaveFreeLineOfFire(pos, trg);
+		return (CWeapon::HaveFreeLineOfFire(srcPos, tgtPos, trg));
 
-	float3 dir(pos - weaponMuzzlePos);
-
+	float3 dir(tgtPos - srcPos);
 	float3 flatDir(dir.x, 0, dir.z);
 	dir.SafeNormalize();
-	float flatLength = flatDir.Length();
+	const float flatLength = flatDir.LengthNormalize();
 
-	if (flatLength == 0)
+	if (flatLength == 0.0f)
 		return true;
-
-	flatDir /= flatLength;
 
 	const float linear = dir.y + weaponDef->trajectoryHeight;
 	const float quadratic = -weaponDef->trajectoryHeight / flatLength;
 	const float groundDist = ((avoidFlags & Collision::NOGROUND) == 0)?
-		CGround::TrajectoryGroundCol(weaponMuzzlePos, flatDir, flatLength, linear, quadratic):
+		CGround::TrajectoryGroundCol(srcPos, flatDir, flatLength, linear, quadratic):
 		-1.0f;
 
 	if (groundDist > 0.0f)
 		return false;
 
-	if (TraceRay::TestTrajectoryCone(weaponMuzzlePos, flatDir, flatLength,
-		linear, quadratic, 0, owner->allyteam, avoidFlags, owner)) {
+	if (TraceRay::TestTrajectoryCone(srcPos, flatDir, flatLength,
+		linear, quadratic, 0.0f, owner->allyteam, avoidFlags, owner)) {
 		return false;
 	}
 

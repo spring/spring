@@ -3517,20 +3517,25 @@ int LuaSyncedRead::GetUnitWeaponHaveFreeLineOfFire(lua_State* L)
 	const CWeapon* weapon = unit->weapons[weaponNum];
 	const CUnit* enemy = nullptr;
 
-	float3 pos;
+	float3 srcPos = weapon->GetAimFromPos();
+	float3 tgtPos;
 
-	if (lua_gettop(L) >= 5) {
-		pos.x = luaL_optnumber(L, 3, 0.0f);
-		pos.y = luaL_optnumber(L, 4, 0.0f);
-		pos.z = luaL_optnumber(L, 5, 0.0f);
-	} else {
+	if (lua_gettop(L) <= 3) {
 		if ((enemy = ParseUnit(L, __func__, 3)) == nullptr)
 			return 0;
 
-		pos = weapon->GetUnitLeadTargetPos(enemy);
+		tgtPos = weapon->GetUnitLeadTargetPos(enemy);
+	} else {
+		srcPos.x = luaL_optnumber(L, 3, srcPos.x);
+		srcPos.y = luaL_optnumber(L, 4, srcPos.y);
+		srcPos.z = luaL_optnumber(L, 5, srcPos.z);
+
+		tgtPos.x = luaL_optnumber(L, 6, 0.0f);
+		tgtPos.y = luaL_optnumber(L, 7, 0.0f);
+		tgtPos.z = luaL_optnumber(L, 8, 0.0f);
 	}
 
-	lua_pushboolean(L, weapon->HaveFreeLineOfFire(pos, SWeaponTarget(enemy, pos, true)));
+	lua_pushboolean(L, weapon->HaveFreeLineOfFire(srcPos, tgtPos, SWeaponTarget(enemy, tgtPos, true)));
 	return 1;
 }
 

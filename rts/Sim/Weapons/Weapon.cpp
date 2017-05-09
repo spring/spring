@@ -848,7 +848,7 @@ float3 CWeapon::GetTargetBorderPos(
 
 bool CWeapon::TryTarget(const float3 tgtPos, const SWeaponTarget& trg, bool preFire) const
 {
-	assert(GetLeadTargetPos(trg).SqDistance(tgtPos) < Square(250.f));
+	assert(GetLeadTargetPos(trg).SqDistance(tgtPos) < Square(250.0f));
 
 	if (!TestTarget(tgtPos, trg))
 		return false;
@@ -859,8 +859,8 @@ bool CWeapon::TryTarget(const float3 tgtPos, const SWeaponTarget& trg, bool preF
 	if (preFire && (weaponMuzzlePos.y < CGround::GetHeightReal(weaponMuzzlePos.x, weaponMuzzlePos.z)))
 		return false;
 
-	//FIXME add a forcedUserTarget (a forced fire mode enabled with ctrl key or something) and skip the tests below then
-	return HaveFreeLineOfFire(tgtPos, trg, preFire);
+	// TODO: add a forcedUserTarget (forced-fire mode enabled with CTRL e.g.) and skip the tests below
+	return (HaveFreeLineOfFire(GetAimFromPos(preFire), tgtPos, trg));
 }
 
 
@@ -958,12 +958,11 @@ bool CWeapon::TestRange(const float3 tgtPos, const SWeaponTarget& trg) const
 }
 
 
-bool CWeapon::HaveFreeLineOfFire(const float3 pos, const SWeaponTarget& trg, bool useMuzzle) const
+bool CWeapon::HaveFreeLineOfFire(const float3 srcPos, const float3 tgtPos, const SWeaponTarget& trg) const
 {
-	float3 testPos = useMuzzle ? weaponMuzzlePos : aimFromPos;
-	float3 dir = pos - testPos;
+	float3 tgtDir = tgtPos - srcPos;
 
-	const float length = dir.LengthNormalize();
+	const float length = tgtDir.LengthNormalize();
 	const float spread = AccuracyExperience() + SprayAngleExperience();
 
 	if (length == 0.0f)
@@ -972,21 +971,21 @@ bool CWeapon::HaveFreeLineOfFire(const float3 pos, const SWeaponTarget& trg, boo
 	// ground check
 	if ((avoidFlags & Collision::NOGROUND) == 0) {
 		// NOTE:
-		//     ballistic weapons (Cannon / Missile icw. trajectoryHeight) do not call this,
-		//     they use TrajectoryGroundCol with an external check for the NOGROUND flag
+		//   ballistic weapons (Cannon / Missile icw. trajectoryHeight) do not call this,
+		//   they rely on TrajectoryGroundCol with an external check for the NOGROUND flag
 		CUnit* unit = nullptr;
 		CFeature* feature = nullptr;
 
-		const float gdst = TraceRay::TraceRay(testPos, dir, length, ~Collision::NOGROUND, owner, unit, feature);
-		const float3 gpos = testPos + dir * gdst;
+		const float gdst = TraceRay::TraceRay(srcPos, tgtDir, length, ~Collision::NOGROUND, owner, unit, feature);
+		const float3 gpos = srcPos + tgtDir * gdst;
 
-		// true iff ground does not block the ray of length <length> from <pos> along <dir>
-		if ((gdst > 0.0f) && (gpos.SqDistance(pos) > Square(damages->damageAreaOfEffect)))
+		// true iff ground does not block the ray of length <length> from <srcPos> along <tgtDir>
+		if ((gdst > 0.0f) && (gpos.SqDistance(tgtPos) > Square(damages->damageAreaOfEffect)))
 			return false;
 	}
 
 	// friendly, neutral & feature check
-	if (TraceRay::TestCone(testPos, dir, length, spread, owner->allyteam, avoidFlags, owner))
+	if (TraceRay::TestCone(srcPos, tgtDir, length, spread, owner->allyteam, avoidFlags, owner))
 		return false;
 
 	return true;

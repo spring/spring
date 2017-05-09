@@ -37,7 +37,9 @@ public:
 
 	bool HaveTarget() const { return (currentTarget.type != Target_None); }
 	const SWeaponTarget& GetCurrentTarget() const { return currentTarget; }
-	const float3&     GetCurrentTargetPos() const { return currentTargetPos; }
+	const float3& GetCurrentTargetPos() const { return currentTargetPos; }
+
+	virtual const float3& GetAimFromPos(bool useMuzzle = false) const { return (useMuzzle? weaponMuzzlePos: aimFromPos); }
 
 	bool HasIncomingProjectile(int projID) const { return (std::find(incomingProjectileIDs.begin(), incomingProjectileIDs.end(), projID) != incomingProjectileIDs.end()); }
 	void AddIncomingProjectile(int projID) { incomingProjectileIDs.push_back(projID); }
@@ -48,7 +50,7 @@ public:
 	/// test if the enemy/mapspot is in range/angle
 	virtual bool TestRange(const float3 tgtPos, const SWeaponTarget& trg) const;
 	/// test if something is blocking our LineOfFire
-	virtual bool HaveFreeLineOfFire(const float3 tgtPos, const SWeaponTarget& trg, bool useMuzzle = false) const;
+	virtual bool HaveFreeLineOfFire(const float3 srcPos, const float3 tgtPos, const SWeaponTarget& trg) const;
 
 	virtual bool CanFire(bool ignoreAngleGood, bool ignoreTargetType, bool ignoreRequestedDir) const;
 

@@ -69,29 +69,26 @@ void CCannon::UpdateWantedDir()
 }
 
 
-bool CCannon::HaveFreeLineOfFire(const float3 pos, const SWeaponTarget& trg, bool useMuzzle) const
+bool CCannon::HaveFreeLineOfFire(const float3 srcPos, const float3 tgtPos, const SWeaponTarget& trg) const
 {
 	// assume we can still fire at partially submerged targets
-	if (!weaponDef->waterweapon && TargetUnderWater(pos, trg))
+	if (!weaponDef->waterweapon && TargetUnderWater(tgtPos, trg))
 		return false;
 
-	if (projectileSpeed == 0) {
+	if (projectileSpeed == 0.0f)
 		return true;
-	}
 
-	float3 dif(pos - weaponMuzzlePos);
+	float3 dif(tgtPos - srcPos);
 	float3 dir(GetWantedDir2(dif));
+	float3 flatDir(dif.x, 0.0f, dif.z);
 
-	if (dir.SqLength() == 0) {
+	if (dir.SqLength() == 0.0f)
 		return false;
-	}
 
-	float3 flatDir(dif.x, 0, dif.z);
-	float flatLength = flatDir.Length();
-	if (flatLength == 0) {
+	const float flatLength = flatDir.LengthNormalize();
+
+	if (flatLength == 0.0f)
 		return true;
-	}
-	flatDir /= flatLength;
 
 	const float linear = dir.y;
 	const float quadratic = gravity / (projectileSpeed * projectileSpeed) * 0.5f;
@@ -100,12 +97,11 @@ bool CCannon::HaveFreeLineOfFire(const float3 pos, const SWeaponTarget& trg, boo
 		-1.0f;
 	const float spread = (AccuracyExperience() + SprayAngleExperience()) * 0.6f * 0.9f;
 
-	if (groundDist > 0.0f) {
+	if (groundDist > 0.0f)
 		return false;
-	}
 
 	//FIXME add a forcedUserTarget (a forced fire mode enabled with meta key or something) and skip the test below then
-	if (TraceRay::TestTrajectoryCone(weaponMuzzlePos, flatDir, flatLength,
+	if (TraceRay::TestTrajectoryCone(srcPos, flatDir, flatLength,
 		dir.y, quadratic, spread, owner->allyteam, avoidFlags, owner)) {
 		return false;
 	}

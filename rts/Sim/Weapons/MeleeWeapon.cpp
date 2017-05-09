@@ -4,22 +4,8 @@
 #include "WeaponDef.h"
 #include "Sim/Units/Unit.h"
 
-CR_BIND_DERIVED(CMeleeWeapon, CWeapon, (NULL, NULL))
+CR_BIND_DERIVED(CMeleeWeapon, CWeapon, (nullptr, nullptr))
 CR_REG_METADATA(CMeleeWeapon, )
-
-//////////////////////////////////////////////////////////////////////
-// Construction/Destruction
-//////////////////////////////////////////////////////////////////////
-
-CMeleeWeapon::CMeleeWeapon(CUnit* owner, const WeaponDef* def): CWeapon(owner, def)
-{
-}
-
-
-bool CMeleeWeapon::HaveFreeLineOfFire(const float3 pos, const SWeaponTarget& trg, bool useMuzzle) const
-{
-	return true;
-}
 
 void CMeleeWeapon::FireImpl(const bool scriptCall)
 {

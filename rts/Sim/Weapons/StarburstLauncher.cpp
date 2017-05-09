@@ -41,13 +41,12 @@ void CStarburstLauncher::FireImpl(const bool scriptCall)
 	WeaponProjectileFactory::LoadProjectile(params);
 }
 
-bool CStarburstLauncher::HaveFreeLineOfFire(const float3 pos, const SWeaponTarget& trg, bool useMuzzle) const
+bool CStarburstLauncher::HaveFreeLineOfFire(const float3 srcPos, const float3 tgtPos, const SWeaponTarget& trg) const
 {
 	const float3& wdir = weaponDef->fixedLauncher? weaponDir: UpVector;
 
-	if (TraceRay::TestCone(weaponMuzzlePos, wdir, 100.0f, 0.0f, owner->allyteam, avoidFlags, owner)) {
+	if (TraceRay::TestCone(srcPos, wdir, 100.0f, 0.0f, owner->allyteam, avoidFlags, owner))
 		return false;
-	}
 
 	return true;
 }

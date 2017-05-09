@@ -83,11 +83,6 @@ bool CPlasmaRepulser::IsActive() const
 	return isEnabled && !owner->IsStunned() && !owner->beingBuilt;
 }
 
-bool CPlasmaRepulser::HaveFreeLineOfFire(const float3 pos, const SWeaponTarget& trg, bool useMuzzle) const
-{
-	return true;
-}
-
 bool CPlasmaRepulser::CanIntercept(unsigned interceptedType, int allyTeam) const
 {
 	if ((weaponDef->shieldInterceptType & interceptedType) == 0)
