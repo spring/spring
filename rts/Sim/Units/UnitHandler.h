@@ -47,8 +47,8 @@ public:
 	void RemoveBuilderCAI(CBuilderCAI*);
 
 	// note: negative ID's are implicitly converted
-	CUnit* GetUnitUnsafe(unsigned int unitID) const { return units[unitID]; }
-	CUnit* GetUnit(unsigned int unitID) const { return (unitID < MaxUnits()? units[unitID]: nullptr); }
+	CUnit* GetUnitUnsafe(unsigned int id) const { return units[id]; }
+	CUnit* GetUnit(unsigned int id) const { return ((id < MaxUnits())? units[id]: nullptr); }
 
 	static CUnit* NewUnit(const UnitDef* ud);
 

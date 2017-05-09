@@ -46,7 +46,7 @@ public:
 
 	CFeature* LoadFeature(const FeatureLoadParams& params);
 	CFeature* CreateWreckage(const FeatureLoadParams& params, const int numWreckLevels, bool emitSmoke);
-	CFeature* GetFeature(int id);
+	CFeature* GetFeature(unsigned int id) { return ((id < features.size())? features[id]: nullptr); }
 
 	void Update();
 

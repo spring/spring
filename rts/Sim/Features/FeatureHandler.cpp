@@ -156,14 +156,6 @@ void CFeatureHandler::DeleteFeature(CFeature* feature)
 	feature->deleteMe = true;
 }
 
-CFeature* CFeatureHandler::GetFeature(int id)
-{
-	if (id >= 0 && id < features.size())
-		return features[id];
-
-	return nullptr;
-}
-
 
 CFeature* CFeatureHandler::CreateWreckage(
 	const FeatureLoadParams& cparams,
