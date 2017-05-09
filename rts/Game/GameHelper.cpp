@@ -1266,9 +1266,14 @@ Command CGameHelper::GetBuildCommand(const float3& pos, const float3& dir) {
 
 void CGameHelper::Update()
 {
-	std::vector<WaitingDamage>& wdList = waitingDamages[gs->frameNum & (waitingDamages.size() - 1)];
+	const int wdIdx = gs->frameNum & (waitingDamages.size() - 1);
 
-	for (const WaitingDamage& wd: wdList) {
+	// need to use explicit indexing because CUnit::DoDamage
+	// can add *new* WaitingDamage's for this frame while we
+	// are still iterating
+	for (size_t n = 0; n < waitingDamages[wdIdx].size(); n++) {
+		const WaitingDamage& wd = waitingDamages[wdIdx][n];
+
 		CUnit* attackee = unitHandler->GetUnit(wd.targetID);
 		CUnit* attacker = unitHandler->GetUnit(wd.attackerID); // null if wd.attacker is -1
 
@@ -1278,6 +1283,6 @@ void CGameHelper::Update()
 		attackee->DoDamage(wd.damage, wd.impulse, attacker, wd.weaponID, wd.projectileID);
 	}
 
-	wdList.clear();
+	waitingDamages[wdIdx].clear();
 }
 
