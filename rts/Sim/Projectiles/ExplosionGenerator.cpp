@@ -345,9 +345,9 @@ IExplosionGenerator* CExplosionGeneratorHandler::LoadGenerator(const string& tag
 IExplosionGenerator* CExplosionGeneratorHandler::GetGenerator(unsigned int expGenID)
 {
 	if (expGenID == EXPGEN_ID_INVALID)
-		return NULL;
+		return nullptr;
 	if (expGenID >= explosionGenerators.size())
-		return NULL;
+		return nullptr;
 
 	return explosionGenerators[expGenID];
 }
@@ -362,12 +362,12 @@ bool CExplosionGeneratorHandler::GenExplosion(
 	CUnit* owner,
 	CUnit* hit
 ) {
-	if (expGenID == EXPGEN_ID_INVALID)
+	IExplosionGenerator* expGen = GetGenerator(expGenID);
+
+	if (expGen == nullptr)
 		return false;
 
-	assert(expGenID < explosionGenerators.size());
-
-	return explosionGenerators[expGenID]->Explosion(pos, dir, damage, radius, gfxMod, owner, hit);
+	return (expGen->Explosion(pos, dir, damage, radius, gfxMod, owner, hit));
 }
 
 
