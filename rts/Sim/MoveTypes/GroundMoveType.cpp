@@ -18,7 +18,6 @@
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "Sim/Path/IPathController.hpp"
 #include "Sim/Path/IPathManager.h"
 #include "Sim/Units/Scripts/CobInstance.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
@@ -165,7 +164,7 @@ static CGroundMoveType::MemberData gmtMemberData = {
 
 CGroundMoveType::CGroundMoveType(CUnit* owner):
 	AMoveType(owner),
-	pathController((owner != nullptr)? IPathController::GetInstance(owner): nullptr),
+	pathController(owner),
 
 	currWayPoint(ZeroVector),
 	nextWayPoint(ZeroVector),
@@ -241,20 +240,21 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 
 CGroundMoveType::~CGroundMoveType()
 {
-	if (pathID != 0)
-		pathManager->DeletePath(pathID);
+	if (pathID == 0)
+		return;
 
-	IPathController::FreeInstance(pathController);
+	pathManager->DeletePath(pathID);
 }
 
 void CGroundMoveType::PostLoad()
 {
-	pathController = IPathController::GetInstance(owner);
+	pathController = GMTDefaultPathController(owner);
 
 	// HACK: re-initialize path after load
-	if (pathID != 0) {
-		pathID = pathManager->RequestPath(owner, owner->moveDef, owner->pos, goalPos, goalRadius, true);
-	}
+	if (pathID == 0)
+		return;
+
+	pathID = pathManager->RequestPath(owner, owner->moveDef, owner->pos, goalPos, goalRadius, true);
 }
 
 bool CGroundMoveType::OwnerMoved(const short oldHeading, const float3& posDif, const float3& cmpEps) {
@@ -673,7 +673,7 @@ void CGroundMoveType::ChangeSpeed(float newWantedSpeed, bool wantReverse, bool f
 		}
 	}
 
-	deltaSpeed = pathController->GetDeltaSpeed(
+	deltaSpeed = pathController.GetDeltaSpeed(
 		pathID,
 		targetSpeed,
 		currentSpeed,
@@ -695,10 +695,10 @@ void CGroundMoveType::ChangeHeading(short newHeading) {
 		return;
 
 	#if 0
-	const short rawDeltaHeading = pathController->GetDeltaHeading(pathID, (wantedHeading = newHeading), owner->heading, turnRate);
+	const short rawDeltaHeading = pathController.GetDeltaHeading(pathID, (wantedHeading = newHeading), owner->heading, turnRate);
 	#else
 	// model rotational inertia (more realistic for ships)
-	const short rawDeltaHeading = pathController->GetDeltaHeading(pathID, (wantedHeading = newHeading), owner->heading, turnRate, turnAccel, BrakingDistance(turnSpeed, turnAccel), &turnSpeed);
+	const short rawDeltaHeading = pathController.GetDeltaHeading(pathID, (wantedHeading = newHeading), owner->heading, turnRate, turnAccel, BrakingDistance(turnSpeed, turnAccel), &turnSpeed);
 	#endif
 	const short absDeltaHeading = rawDeltaHeading * Sign(rawDeltaHeading);
 
@@ -1303,8 +1303,8 @@ unsigned int CGroundMoveType::GetNewPath()
 		currWayPoint = pathManager->NextWayPoint(owner, newPathID, 0,   owner->pos, 1.25f * SQUARE_SIZE, true);
 		nextWayPoint = pathManager->NextWayPoint(owner, newPathID, 0, currWayPoint, 1.25f * SQUARE_SIZE, true);
 
-		pathController->SetRealGoalPosition(newPathID, goalPos);
-		pathController->SetTempGoalPosition(newPathID, currWayPoint);
+		pathController.SetRealGoalPosition(newPathID, goalPos);
+		pathController.SetTempGoalPosition(newPathID, currWayPoint);
 	} else {
 		Fail(false);
 	}
@@ -1331,7 +1331,7 @@ bool CGroundMoveType::CanGetNextWayPoint() {
 
 	if (pathID == 0)
 		return false;
-	if (!pathController->AllowSetTempGoalPosition(pathID, nextWayPoint))
+	if (!pathController.AllowSetTempGoalPosition(pathID, nextWayPoint))
 		return false;
 
 
@@ -1445,7 +1445,7 @@ void CGroundMoveType::GetNextWayPoint()
 	assert(!useRawMovement);
 
 	if (CanGetNextWayPoint()) {
-		pathController->SetTempGoalPosition(pathID, nextWayPoint);
+		pathController.SetTempGoalPosition(pathID, nextWayPoint);
 
 		// NOTE: pathfinder implementation should ensure waypoints are not equal
 		currWayPoint = nextWayPoint;
@@ -1892,7 +1892,7 @@ void CGroundMoveType::HandleUnitCollisions(
 		if (crushCollidee && !CMoveMath::CrushResistant(*colliderMD, collidee))
 			collidee->Kill(collider, crushImpulse, true);
 
-		if (pathController->IgnoreCollision(collider, collidee))
+		if (pathController.IgnoreCollision(collider, collidee))
 			continue;
 
 		eventHandler.UnitUnitCollision(collider, collidee);
@@ -2049,7 +2049,7 @@ void CGroundMoveType::HandleFeatureCollisions(
 		if (!CMoveMath::CrushResistant(*colliderMD, collidee))
 			collidee->Kill(collider, crushImpulse, true);
 
-		if (pathController->IgnoreCollision(collider, collidee))
+		if (pathController.IgnoreCollision(collider, collidee))
 			continue;
 
 		eventHandler.UnitFeatureCollision(collider, collidee);
@@ -2391,7 +2391,7 @@ void CGroundMoveType::UpdateOwnerPos(const float3& oldSpeedVector, const float3&
  		//   relies on assumption that PFS will not search if start-sqr
  		//   is blocked, so too fragile
 		//
-		if (!pathController->IgnoreTerrain(*owner->moveDef, owner->pos) && !owner->moveDef->TestMoveSquare(owner, owner->pos, owner->speed, true, false, true)) {
+		if (!pathController.IgnoreTerrain(*owner->moveDef, owner->pos) && !owner->moveDef->TestMoveSquare(owner, owner->pos, owner->speed, true, false, true)) {
 			bool updatePos = false;
 
 			for (unsigned int n = 1; n <= SQUARE_SIZE; n++) {

@@ -6,12 +6,12 @@
 #include <array>
 
 #include "MoveType.h"
+#include "Sim/Path/IPathController.hpp"
 #include "System/Sync/SyncedFloat3.h"
 
 struct UnitDef;
 struct MoveDef;
 class CSolidObject;
-class IPathController;
 
 class CGroundMoveType : public AMoveType
 {
@@ -148,7 +148,7 @@ private:
 	bool WantReverse(const float3& wpDir, const float3& ffDir) const;
 
 private:
-	IPathController* pathController;
+	GMTDefaultPathController pathController;
 
 	SyncedFloat3 currWayPoint;
 	SyncedFloat3 nextWayPoint;

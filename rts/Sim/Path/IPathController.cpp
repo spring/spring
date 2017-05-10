@@ -3,16 +3,6 @@
 #include "Sim/Units/Unit.h"
 #include "System/myMath.h"
 
-IPathController* IPathController::GetInstance(CUnit* owner) {
-	return (new GMTDefaultPathController(owner));
-}
-
-void IPathController::FreeInstance(IPathController* instance) {
-	delete instance;
-}
-
-
-
 float GMTDefaultPathController::GetDeltaSpeed(
 	unsigned int pathID,
 	float targetSpeed, // unsigned

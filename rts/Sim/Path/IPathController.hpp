@@ -16,10 +16,11 @@ struct MoveDef;
 //
 // TODO: for crowds, track units with the same move order
 class IPathController {
-public:
-	static IPathController* GetInstance(CUnit* owner);
-	static void FreeInstance(IPathController* instance);
+protected:
+	IPathController(CUnit* owner_): owner(owner_) {}
+	virtual ~IPathController() {}
 
+public:
 	// if a unit has a path to follow (and is not stunned,
 	// being built, etc) this gets called every sim-frame
 	virtual float GetDeltaSpeed(
@@ -63,9 +64,6 @@ public:
 	virtual bool IgnoreCollision(const CUnit* collider, const CFeature* collidee) const = 0;
 
 protected:
-	IPathController(CUnit* owner_): owner(owner_) {}
-	virtual ~IPathController() {}
-
 	CUnit* owner;
 };
 
