@@ -226,7 +226,7 @@ void CSelectionKeyHandler::DoSelection(std::string selectString)
 	} else if (s == "Visible") {
 		if (!gu->spectatingFullSelect) {
 			// team units in viewport
-			for (CUnit* unit: teamHandler->Team(gu->myTeam)->units){
+			for (CUnit* unit: teamHandler->Team(gu->myTeam)->units) {
 				if (camera->InView(unit->midPos, unit->radius))
 					selection.push_back(unit);
 			}
@@ -243,11 +243,14 @@ void CSelectionKeyHandler::DoSelection(std::string selectString)
 		// FromMouseC uses a cylinder shaped volume for selection,
 		// so the heights of the units do not matter.
 		const bool cylindrical = (s == "FromMouseC");
-		ReadDelimiter(selectString);
-		float maxDist=atof(ReadToken(selectString).c_str());
 
-		float dist = CGround::LineGroundCol(camera->GetPos(), camera->GetPos() + mouse->dir * 8000, false);
+		ReadDelimiter(selectString);
+
+		const float maxDist = atof(ReadToken(selectString).c_str());
+		const float dist = CGround::LineGroundCol(camera->GetPos(), camera->GetPos() + mouse->dir * 8000, false);
+
 		float3 mp = camera->GetPos() + mouse->dir * dist;
+
 		if (cylindrical)
 			mp.y = 0.0f;
 
@@ -263,7 +266,7 @@ void CSelectionKeyHandler::DoSelection(std::string selectString)
 			}
 		} else {
 			// all units in mouse range
-			for (CUnit *unit: unitHandler->GetActiveUnits()) {
+			for (CUnit* unit: unitHandler->GetActiveUnits()) {
 				float3 up = unit->pos;
 
 				if (cylindrical)
@@ -273,7 +276,7 @@ void CSelectionKeyHandler::DoSelection(std::string selectString)
 					selection.push_back(unit);
 			}
 		}
-	} else if(s == "PrevSelection") {
+	} else if (s == "PrevSelection") {
 		const auto& selUnits = selectedUnitsHandler.selectedUnits;
 
 		for (const int unitID: selUnits) {
@@ -292,7 +295,7 @@ void CSelectionKeyHandler::DoSelection(std::string selectString)
 		if (filter == "+")
 			break;
 
-		filter = ReadToken(selectString);
+		filter = std::move(ReadToken(selectString));
 
 		bool _not = false;
 
@@ -303,15 +306,18 @@ void CSelectionKeyHandler::DoSelection(std::string selectString)
 		}
 
 		Filter::Map& filters = Filter::all();
-		Filter::Map::iterator f = filters.find(s);
+		Filter::Map::iterator f = filters.find(filter);
 
 		if (f != filters.end()) {
 			f->second->Prepare();
+
 			for (int i = 0; i < f->second->numArgs; ++i) {
 				ReadDelimiter(selectString);
 				f->second->SetParam(i, ReadToken(selectString));
 			}
+
 			auto ui = selection.begin();
+
 			while (ui != selection.end()) {
 				if (f->second->ShouldIncludeUnit(*ui) ^ _not) {
 					++ui;
@@ -347,7 +353,7 @@ void CSelectionKeyHandler::DoSelection(std::string selectString)
 		if (selection.empty())
 			return;
 		if (++selectNumber >= selection.size())
-			selectNumber=0;
+			selectNumber = 0;
 
 		CUnit* sel = nullptr;
 		int a = 0;
@@ -359,6 +365,7 @@ void CSelectionKeyHandler::DoSelection(std::string selectString)
 
 		selectedUnitsHandler.AddUnit(sel);
 		camHandler->CameraTransition(0.8f);
+
 		if (camHandler->GetCurrentControllerNum() != CCameraHandler::CAMERA_MODE_FIRSTPERSON) {
 			camHandler->GetCurrentController().SetPos(sel->pos);
 		} else {
@@ -391,7 +398,7 @@ void CSelectionKeyHandler::DoSelection(std::string selectString)
 			selectedUnitsHandler.AddUnit(*ui);
 		}
 
-		selectNumber+=num;
+		selectNumber += num;
 		return;
 	}
 
