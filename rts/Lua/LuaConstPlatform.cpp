@@ -27,9 +27,8 @@ bool LuaConstPlatform::PushEntries(lua_State* L)
 	LuaPushNamedNumber(L, "sdlVersionLinkedMinor", globalRenderingInfo.sdlVersionLinked.minor);
 	LuaPushNamedNumber(L, "sdlVersionLinkedPatch", globalRenderingInfo.sdlVersionLinked.patch);
 
-	LuaPushNamedString(L, "os", Platform::GetOS());
+	LuaPushNamedString(L, "osName", Platform::GetOS());
 	LuaPushNamedString(L, "osFamily", Platform::GetOSFamily());
-	LuaPushNamedNumber(L, "osWordSize", Platform::SystemWordSize() * 8);
 
 	return true;
 }
