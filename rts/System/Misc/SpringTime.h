@@ -8,24 +8,10 @@
 #include <cinttypes>
 #include <cassert>
 
-// glibc's chrono is non monotonic/not steady atm (it depends on set timezone and can change at runtime!)
-// we don't want to specially handle all the problems caused by this, so just use boost version instead
-// not possible either: boost::chrono uses extremely broken HPE timers on Windows 7 (but so does std::)
-//
-// #define FORCE_CHRONO_TIMERS
-// #define FORCE_BOOST_CHRONO
+#undef gt
+#include <chrono>
+namespace chrono { using namespace std::chrono; }
 
-#if (__cplusplus > 199711L) && !defined(FORCE_BOOST_CHRONO) || defined(_MSC_VER)
-	#define SPRINGTIME_USING_STDCHRONO
-	#undef gt
-	#include <chrono>
-	namespace chrono { using namespace std::chrono; }
-#else
-	#define SPRINGTIME_USING_BOOST
-	#undef gt
-	#include <boost/chrono/include.hpp>
-	namespace chrono { using namespace boost::chrono; };
-#endif
 
 
 

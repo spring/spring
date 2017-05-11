@@ -150,7 +150,7 @@ public:
 namespace this_thread
 {
     inline thread::id get_id() {return thread::id(GetCurrentThreadId());}
-    inline void yield() {Sleep(0);}
+    inline void yield() {SwitchToThread();}
     template< class Rep, class Period >
     void sleep_for( const std::chrono::duration<Rep,Period>& sleep_duration)
     {
