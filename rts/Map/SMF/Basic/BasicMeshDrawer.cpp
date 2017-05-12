@@ -67,9 +67,12 @@ CBasicMeshDrawer::CBasicMeshDrawer(CSMFReadMap* rm, CSMFGroundDrawer* gd)
 	assert(numPatchesX >= 1);
 	assert(numPatchesY >= 1);
 
-	// f(x)=125.0*x^2 for x in [1,LOD_LEVELS]
+	// const auto& lodDistFunc = [](uint32_t i) { return (125.0f * i * i        ); }; // f(x)=125.0*x^2
+	// const auto& lodDistFunc = [](uint32_t i) { return ( 25.0f * i * i * i    ); }; // f(x)=25.0*x^3
+	const auto& lodDistFunc = [](uint32_t i) { return (  5.0f * i * i * i * i); }; // f(x)=5.0*x^4
+
 	for (uint32_t n = 0; n < LOD_LEVELS; n++) {
-		lodDistTable[n] = 125.0f * Square(n + 1);
+		lodDistTable[n] = lodDistFunc(n + 1);
 	}
 
 	meshPatches.resize(numPatchesX * numPatchesY);
