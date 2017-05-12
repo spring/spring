@@ -872,8 +872,10 @@ void CGame::KillSimulation()
 		teamHandler->Team(t)->Died(false);
 	}
 
-	LOG("[Game::%s][2]", __func__);
-	if (unitHandler) unitHandler->DeleteScripts();
+	LOG("[Game::%s][2] unitHandler=%p", __func__, unitHandler);
+	if (unitHandler != nullptr)
+		unitHandler->DeleteScripts();
+
 	spring::SafeDelete(featureHandler); // depends on unitHandler (via ~CFeature)
 	spring::SafeDelete(unitHandler);
 	spring::SafeDelete(projectileHandler);

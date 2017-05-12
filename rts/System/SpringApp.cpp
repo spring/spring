@@ -766,28 +766,25 @@ void SpringApp::Reload(const std::string script)
 
 	LOG("[SpringApp::%s][4]", __func__);
 
-	spring::SafeDelete(game);
-	spring::SafeDelete(pregame);
-
-	LOG("[SpringApp::%s][5]", __func__);
-
-	// no-op if we are not the server
-	spring::SafeDelete(gameServer);
 	// PreGame allocates clientNet, so we need to delete our old connection
 	spring::SafeDelete(clientNet);
+	spring::SafeDelete(game);
+	spring::SafeDelete(pregame);
+	// no-op if we are not the server
+	spring::SafeDelete(gameServer);
 
-	LOG("[SpringApp::%s][6]", __func__);
+	LOG("[SpringApp::%s][5]", __func__);
 
 	LuaVFSDownload::Free();
 	spring::SafeDelete(battery);
 
-	LOG("[SpringApp::%s][7]", __func__);
+	LOG("[SpringApp::%s][6]", __func__);
 
 	// note: technically we only need to use RemoveArchive
 	FileSystemInitializer::Cleanup(false);
 	FileSystemInitializer::Initialize();
 
-	LOG("[SpringApp::%s][8]", __func__);
+	LOG("[SpringApp::%s][7]", __func__);
 
 	CNamedTextures::Kill();
 	CNamedTextures::Init();
@@ -798,7 +795,7 @@ void SpringApp::Reload(const std::string script)
 	// normally not needed, but would allow switching fonts
 	// LoadFonts();
 
-	LOG("[SpringApp::%s][9]", __func__);
+	LOG("[SpringApp::%s][8]", __func__);
 
 	// reload sounds.lua in case we switched to a different game
 	ISound::Initialize();
@@ -942,13 +939,16 @@ void SpringApp::ShutDown(bool fromRun)
 	// see ::Reload
 	ISound::Shutdown();
 
+	// delete connection before destroying game, such that a crash
+	// in any of the Game::Kill* functions will not prevent a demo
+	// from being written
+	spring::SafeDelete(clientNet);
 	spring::SafeDelete(game);
 	spring::SafeDelete(pregame);
 
 	spring::SafeDelete(luaMenuController);
 
 	LOG("[SpringApp::%s][3]", __func__);
-	spring::SafeDelete(clientNet);
 	spring::SafeDelete(gameServer);
 	spring::SafeDelete(gameSetup);
 
