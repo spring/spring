@@ -51,9 +51,10 @@ Lua:
     Platform.sdlVersionLinkedMajor: number
     Platform.sdlVersionLinkedMinor: number
     Platform.sdlVersionLinkedPatch: number
-    Platform.os: string, full name of the OS
+    Platform.osName: string, full name of the OS
     Platform.osFamily: string, one of "Windows", "Linux", "MacOSX", "FreeBSD", "Unknown"
-    Platform.osWordSize: number, usually 32 or 64 for 32bit and 64bit OS
+ - Spring.SetWaterParams() can now be used without /cheat for modifying unsynced values.
+ - Implemented gl.GetWaterRendering() to expose access to water rendering variables. Removed water rendering parameters from LuaConstGame, as they're no longer const.
  - Add start and hit position x, y, z arguments to ShieldPreDamaged callin
 
 UI:
