@@ -73,8 +73,8 @@ bool LuaConstGame::PushEntries(lua_State* L)
 	LuaPushNamedNumber(L, "extractorRadius",     mapInfo->map.extractorRadius);
 	LuaPushNamedNumber(L, "tidal",               mapInfo->map.tidalStrength);
 
-    LuaPushNamedNumber(L, "waterDamage",         mapInfo->water.damage);
-    
+	LuaPushNamedNumber(L, "waterDamage",         mapInfo->water.damage);
+
 	LuaPushNamedBool(L,   "voidWater",           mapInfo->map.voidWater);
 	LuaPushNamedBool(L,   "voidGround",          mapInfo->map.voidGround);
 
