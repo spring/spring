@@ -4468,7 +4468,7 @@ int LuaOpenGL::GetSun(lua_State* L)
 
 int LuaOpenGL::GetWaterRendering(lua_State* L)
 {
-	const int args = lua_gettop(L); // number of arguments
+//	const int args = lua_gettop(L); // number of arguments
 
 	const string key = luaL_checkstring(L, 1);
 
@@ -4586,6 +4586,7 @@ int LuaOpenGL::GetWaterRendering(lua_State* L)
 	}
 
 	luaL_error(L, "Unknown key %s", key.c_str());
+	return 0;
 }
 
 /******************************************************************************/

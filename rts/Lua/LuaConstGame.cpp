@@ -21,6 +21,7 @@
 /******************************************************************************/
 /******************************************************************************/
 
+/*
 static void LuaPushNamedColor(lua_State* L,
                               const string& name, const float3& color)
 {
@@ -31,6 +32,7 @@ static void LuaPushNamedColor(lua_State* L,
 	lua_pushnumber(L, color.z); lua_rawseti(L, -2, 3);
 	lua_rawset(L, -3);
 }
+*/
 
 
 bool LuaConstGame::PushEntries(lua_State* L)
