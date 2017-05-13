@@ -12,6 +12,7 @@
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Env/ISky.h"
 #include "Rendering/Env/SunLighting.h"
+#include "Rendering/Env/WaterRendering.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Rendering/Textures/Bitmap.h"
@@ -171,8 +172,8 @@ void CSMFReadMap::InitializeWaterHeightColors()
 
 	for (int a = 0; a < 1024; ++a) {
 		for (int b = 0; b < 3; ++b) {
-			const float absorbColor = mapInfo->water.baseColor[b] - mapInfo->water.absorb[b] * a;
-			const float clampedColor = std::max(mapInfo->water.minColor[b], absorbColor);
+			const float absorbColor = waterRendering->baseColor[b] - waterRendering->absorb[b] * a;
+			const float clampedColor = std::max(waterRendering->minColor[b], absorbColor);
 			waterHeightColors[a * 4 + b] = std::min(255.0f, clampedColor * 255.0f);
 		}
 		waterHeightColors[a * 4 + 3] = 1;
@@ -947,4 +948,3 @@ void CSMFReadMap::InitGroundDrawer() { groundDrawer = new CSMFGroundDrawer(this)
 void CSMFReadMap::KillGroundDrawer() { spring::SafeDelete(groundDrawer); }
 
 inline CBaseGroundDrawer* CSMFReadMap::GetGroundDrawer() { return groundDrawer; }
-

@@ -1,6 +1,8 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 
+#include "WaterRendering.h"
+
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/myGL.h"
 #include "RefractWater.h"
@@ -47,7 +49,7 @@ CRefractWater::~CRefractWater()
 
 void CRefractWater::Draw()
 {
-	if (!mapInfo->water.forceRendering && !readMap->HasVisibleWater())
+	if (!waterRendering->forceRendering && !readMap->HasVisibleWater())
 		return;
 
 	glActiveTextureARB(GL_TEXTURE2_ARB);
@@ -88,7 +90,7 @@ void CRefractWater::SetupWaterDepthTex()
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, readMap->GetShadingTexture()); // the shading texture has water depth encoded in alpha
 	glEnable(GL_TEXTURE_GEN_S);
-	float splane[] = { 1.0f / (mapDims.pwr2mapx * SQUARE_SIZE), 0.0f, 0.0f, 0.0f }; 
+	float splane[] = { 1.0f / (mapDims.pwr2mapx * SQUARE_SIZE), 0.0f, 0.0f, 0.0f };
 	glTexGeni(GL_S,GL_TEXTURE_GEN_MODE,GL_OBJECT_LINEAR);
 	glTexGenfv(GL_S,GL_OBJECT_PLANE,splane);
 
@@ -97,4 +99,3 @@ void CRefractWater::SetupWaterDepthTex()
 	glTexGeni(GL_T,GL_TEXTURE_GEN_MODE,GL_OBJECT_LINEAR);
 	glTexGenfv(GL_T,GL_OBJECT_PLANE,tplane);
 }
-

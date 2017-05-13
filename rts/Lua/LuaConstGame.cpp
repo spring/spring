@@ -73,41 +73,10 @@ bool LuaConstGame::PushEntries(lua_State* L)
 	LuaPushNamedNumber(L, "extractorRadius",     mapInfo->map.extractorRadius);
 	LuaPushNamedNumber(L, "tidal",               mapInfo->map.tidalStrength);
 
-	LuaPushNamedNumber(L, "waterDamage",         mapInfo->water.damage);
-	LuaPushNamedString(L, "waterTexture",        mapInfo->water.texture);
-	LuaPushNamedNumber(L, "waterRepeatX",        mapInfo->water.repeatX);
-	LuaPushNamedNumber(L, "waterRepeatY",        mapInfo->water.repeatY);
-	LuaPushNamedString(L, "waterFoamTexture",    mapInfo->water.foamTexture);
-	LuaPushNamedString(L, "waterNormalTexture",  mapInfo->water.normalTexture);
-	LuaPushNamedNumber(L, "waterNumTiles",       mapInfo->water.numTiles);
+    LuaPushNamedNumber(L, "waterDamage",         mapInfo->water.damage);
+    
 	LuaPushNamedBool(L,   "voidWater",           mapInfo->map.voidWater);
 	LuaPushNamedBool(L,   "voidGround",          mapInfo->map.voidGround);
-	LuaPushNamedBool(L,   "waterHasWaterPlane",  mapInfo->water.hasWaterPlane);
-	LuaPushNamedBool(L,   "waterForceRendering", mapInfo->water.forceRendering);
-	LuaPushNamedColor(L,  "waterAbsorb",         mapInfo->water.absorb);
-	LuaPushNamedColor(L,  "waterBaseColor",      mapInfo->water.baseColor);
-	LuaPushNamedColor(L,  "waterMinColor",       mapInfo->water.minColor);
-	LuaPushNamedColor(L,  "waterSurfaceColor",   mapInfo->water.surfaceColor);
-	LuaPushNamedNumber(L, "waterSurfaceAlpha",   mapInfo->water.surfaceAlpha);
-	LuaPushNamedColor(L,  "waterDiffuseColor",   mapInfo->water.diffuseColor);
-	LuaPushNamedNumber(L, "waterDiffuseFactor",  mapInfo->water.diffuseFactor);
-	LuaPushNamedColor(L,  "waterSpecularColor",  mapInfo->water.specularColor);
-	LuaPushNamedNumber(L, "waterSpecularFactor", mapInfo->water.specularFactor);
-	LuaPushNamedNumber(L, "waterAmbientFactor",  mapInfo->water.ambientFactor);
-	LuaPushNamedColor(L,  "waterPlaneColor",     mapInfo->water.planeColor);
-	LuaPushNamedNumber(L, "waterFresnelMin",     mapInfo->water.fresnelMin);
-	LuaPushNamedNumber(L, "waterFresnelMax",     mapInfo->water.fresnelMax);
-	LuaPushNamedNumber(L, "waterFresnelPower",   mapInfo->water.fresnelPower);
-	LuaPushNamedNumber(L, "waterReflectionDistortion", mapInfo->water.reflDistortion);
-
-	const std::vector<string>& causticTexs = mapInfo->water.causticTextures;
-	lua_pushliteral(L, "waterCausticTextures");
-	lua_newtable(L);
-	for (size_t i = 0; i < causticTexs.size(); i++) {
-		lua_pushsstring(L, causticTexs[i]);
-		lua_rawseti(L, -2, i + 1);
-	}
-	lua_rawset(L, -3);
 
 	LuaPushNamedBool(L,   "allowTeamColors", true);
 

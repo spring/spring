@@ -3,6 +3,8 @@
 
 #include "AdvWater.h"
 #include "ISky.h"
+#include "WaterRendering.h"
+
 #include "Game/Camera.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
@@ -81,7 +83,7 @@ CAdvWater::CAdvWater(bool loadShader)
 		waterFP = LoadFragmentProgram("ARB/water.fp");
 	}
 
-	waterSurfaceColor = mapInfo->water.surfaceColor;
+	waterSurfaceColor = waterRendering->surfaceColor;
 
 	reflectFBO.Bind();
 	reflectFBO.AttachTexture(reflectTexture, GL_TEXTURE_2D, GL_COLOR_ATTACHMENT0_EXT);
@@ -110,7 +112,7 @@ void CAdvWater::Draw()
 
 void CAdvWater::Draw(bool useBlending)
 {
-	if (!mapInfo->water.forceRendering && !readMap->HasVisibleWater())
+	if (!waterRendering->forceRendering && !readMap->HasVisibleWater())
 		return;
 
 	float3 base = camera->CalcPixelDir(globalRendering->viewPosX, globalRendering->viewSizeY);
@@ -223,7 +225,7 @@ void CAdvWater::Draw(bool useBlending)
 
 void CAdvWater::UpdateWater(CGame* game)
 {
-	if (!mapInfo->water.forceRendering && !readMap->HasVisibleWater())
+	if (!waterRendering->forceRendering && !readMap->HasVisibleWater())
 		return;
 
 	glPushAttrib(GL_FOG_BIT | GL_COLOR_BUFFER_BIT);

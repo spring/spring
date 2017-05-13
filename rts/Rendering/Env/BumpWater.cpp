@@ -8,6 +8,8 @@
 
 #include "ISky.h"
 #include "SunLighting.h"
+#include "WaterRendering.h"
+
 #include "Game/Camera.h"
 #include "Game/GlobalUnsynced.h"
 #include "Map/MapInfo.h"
@@ -176,10 +178,10 @@ CBumpWater::CBumpWater()
 	if ((depthBits == 24) && !globalRendering->support24bitDepthBuffers)
 		depthBits = 16;
 	blurRefl     = configHandler->GetBool("BumpWaterBlurReflection");
-	shoreWaves   = (configHandler->GetBool("BumpWaterShoreWaves")) && mapInfo->water.shoreWaves;
-	endlessOcean = (configHandler->GetBool("BumpWaterEndlessOcean")) && mapInfo->water.hasWaterPlane
-	               && ((readMap->HasVisibleWater()) || (mapInfo->water.forceRendering));
-	dynWaves     = (configHandler->GetBool("BumpWaterDynamicWaves")) && (mapInfo->water.numTiles > 1);
+	shoreWaves   = (configHandler->GetBool("BumpWaterShoreWaves")) && waterRendering->shoreWaves;
+	endlessOcean = (configHandler->GetBool("BumpWaterEndlessOcean")) && waterRendering->hasWaterPlane
+	               && ((readMap->HasVisibleWater()) || (waterRendering->forceRendering));
+	dynWaves     = (configHandler->GetBool("BumpWaterDynamicWaves")) && (waterRendering->numTiles > 1);
 	useUniforms  = (configHandler->GetBool("BumpWaterUseUniforms"));
 
 	// CHECK HARDWARE
@@ -192,11 +194,11 @@ CBumpWater::CBumpWater()
 
 
 	// LOAD TEXTURES
-	foamTexture   = LoadTexture(mapInfo->water.foamTexture);
-	normalTexture = LoadTexture(mapInfo->water.normalTexture , anisotropy , &normalTextureX, &normalTextureY);
+	foamTexture   = LoadTexture(waterRendering->foamTexture);
+	normalTexture = LoadTexture(waterRendering->normalTexture , anisotropy , &normalTextureX, &normalTextureY);
 
 	//! caustic textures
-	const vector<string>& causticNames = mapInfo->water.causticTextures;
+	const vector<string>& causticNames = waterRendering->causticTextures;
 	if (causticNames.empty()) {
 		throw content_error("[" LOG_SECTION_BUMP_WATER "] no caustic textures");
 	}
@@ -346,7 +348,7 @@ CBumpWater::CBumpWater()
 
 	if (dynWaves) {
 		//! SETUP DYNAMIC WAVES
-		tileOffsets = new unsigned char[mapInfo->water.numTiles * mapInfo->water.numTiles];
+		tileOffsets = new unsigned char[waterRendering->numTiles * waterRendering->numTiles];
 
 		normalTexture2 = normalTexture;
 		glBindTexture(GL_TEXTURE_2D, normalTexture2);
@@ -425,25 +427,25 @@ CBumpWater::CBumpWater()
 	if (useUniforms) {
 		SetupUniforms(definitions);
 	} else {
-		GLSLDefineConstf4(definitions, "SurfaceColor",   mapInfo->water.surfaceColor*0.4, mapInfo->water.surfaceAlpha );
-		GLSLDefineConstf4(definitions, "PlaneColor",     mapInfo->water.planeColor*0.4, mapInfo->water.surfaceAlpha );
-		GLSLDefineConstf3(definitions, "DiffuseColor",   mapInfo->water.diffuseColor);
-		GLSLDefineConstf3(definitions, "SpecularColor",  mapInfo->water.specularColor);
-		GLSLDefineConstf1(definitions, "SpecularPower",  mapInfo->water.specularPower);
-		GLSLDefineConstf1(definitions, "SpecularFactor", mapInfo->water.specularFactor);
-		GLSLDefineConstf1(definitions, "AmbientFactor",  mapInfo->water.ambientFactor);
-		GLSLDefineConstf1(definitions, "DiffuseFactor",  mapInfo->water.diffuseFactor * 15.0f);
+		GLSLDefineConstf4(definitions, "SurfaceColor",   waterRendering->surfaceColor*0.4, waterRendering->surfaceAlpha );
+		GLSLDefineConstf4(definitions, "PlaneColor",     waterRendering->planeColor*0.4, waterRendering->surfaceAlpha );
+		GLSLDefineConstf3(definitions, "DiffuseColor",   waterRendering->diffuseColor);
+		GLSLDefineConstf3(definitions, "SpecularColor",  waterRendering->specularColor);
+		GLSLDefineConstf1(definitions, "SpecularPower",  waterRendering->specularPower);
+		GLSLDefineConstf1(definitions, "SpecularFactor", waterRendering->specularFactor);
+		GLSLDefineConstf1(definitions, "AmbientFactor",  waterRendering->ambientFactor);
+		GLSLDefineConstf1(definitions, "DiffuseFactor",  waterRendering->diffuseFactor * 15.0f);
 		GLSLDefineConstf3(definitions, "SunDir",         sky->GetLight()->GetLightDir()); // FIXME: not a constant
-		GLSLDefineConstf1(definitions, "FresnelMin",     mapInfo->water.fresnelMin);
-		GLSLDefineConstf1(definitions, "FresnelMax",     mapInfo->water.fresnelMax);
-		GLSLDefineConstf1(definitions, "FresnelPower",   mapInfo->water.fresnelPower);
-		GLSLDefineConstf1(definitions, "ReflDistortion", mapInfo->water.reflDistortion);
-		GLSLDefineConstf2(definitions, "BlurBase",       0.0f, mapInfo->water.blurBase / globalRendering->viewSizeY);
-		GLSLDefineConstf1(definitions, "BlurExponent",   mapInfo->water.blurExponent);
-		GLSLDefineConstf1(definitions, "PerlinStartFreq",  mapInfo->water.perlinStartFreq);
-		GLSLDefineConstf1(definitions, "PerlinLacunarity", mapInfo->water.perlinLacunarity);
-		GLSLDefineConstf1(definitions, "PerlinAmp",        mapInfo->water.perlinAmplitude);
-		GLSLDefineConstf1(definitions, "WindSpeed",        mapInfo->water.windSpeed);
+		GLSLDefineConstf1(definitions, "FresnelMin",     waterRendering->fresnelMin);
+		GLSLDefineConstf1(definitions, "FresnelMax",     waterRendering->fresnelMax);
+		GLSLDefineConstf1(definitions, "FresnelPower",   waterRendering->fresnelPower);
+		GLSLDefineConstf1(definitions, "ReflDistortion", waterRendering->reflDistortion);
+		GLSLDefineConstf2(definitions, "BlurBase",       0.0f, waterRendering->blurBase / globalRendering->viewSizeY);
+		GLSLDefineConstf1(definitions, "BlurExponent",   waterRendering->blurExponent);
+		GLSLDefineConstf1(definitions, "PerlinStartFreq",  waterRendering->perlinStartFreq);
+		GLSLDefineConstf1(definitions, "PerlinLacunarity", waterRendering->perlinLacunarity);
+		GLSLDefineConstf1(definitions, "PerlinAmp",        waterRendering->perlinAmplitude);
+		GLSLDefineConstf1(definitions, "WindSpeed",        waterRendering->windSpeed);
 		GLSLDefineConstf1(definitions, "shadowDensity",  sunLighting->groundShadowDensity);
 	}
 
@@ -660,7 +662,7 @@ void CBumpWater::GetUniformLocations(const Shader::IProgramObject* shader)
 
 void CBumpWater::Update()
 {
-	if (!mapInfo->water.forceRendering && !readMap->HasVisibleWater())
+	if (!waterRendering->forceRendering && !readMap->HasVisibleWater())
 		return;
 	if (!wasVisibleLastFrame)
 		return;
@@ -689,7 +691,7 @@ void CBumpWater::Update()
 
 void CBumpWater::UpdateWater(CGame* game)
 {
-	if (!mapInfo->water.forceRendering && !readMap->HasVisibleWater())
+	if (!waterRendering->forceRendering && !readMap->HasVisibleWater())
 		return;
 
 #ifdef GLEW_ARB_occlusion_query2
@@ -945,7 +947,7 @@ void CBumpWater::UpdateDynWaves(const bool initialize)
 	if (!dynWaves || !dynWavesFBO.IsValid())
 		return;
 
-	const unsigned char tiles  = mapInfo->water.numTiles; //! (numTiles <= 16)
+	const unsigned char tiles  = waterRendering->numTiles; //! (numTiles <= 16)
 	const unsigned char ntiles = tiles * tiles;
 
 	const float tilesize = 1.0f / tiles;
@@ -1020,32 +1022,32 @@ void CBumpWater::UpdateDynWaves(const bool initialize)
 
 void CBumpWater::SetUniforms()
 {
-	glUniform4f( uniforms[ 0], mapInfo->water.surfaceColor.x*0.4, mapInfo->water.surfaceColor.y*0.4, mapInfo->water.surfaceColor.z*0.4, mapInfo->water.surfaceAlpha);
-	glUniform4f( uniforms[ 1], mapInfo->water.planeColor.x*0.4, mapInfo->water.planeColor.y*0.4, mapInfo->water.planeColor.z*0.4, mapInfo->water.surfaceAlpha);
-	glUniform3f( uniforms[ 2], mapInfo->water.diffuseColor.x, mapInfo->water.diffuseColor.y, mapInfo->water.diffuseColor.z);
-	glUniform3f( uniforms[ 3], mapInfo->water.specularColor.x, mapInfo->water.specularColor.y, mapInfo->water.specularColor.z);
-	glUniform1f( uniforms[ 4], mapInfo->water.specularPower);
-	glUniform1f( uniforms[ 5], mapInfo->water.specularFactor);
-	glUniform1f( uniforms[ 6], mapInfo->water.ambientFactor);
-	glUniform1f( uniforms[ 7], mapInfo->water.diffuseFactor * 15.0f);
+	glUniform4f( uniforms[ 0], waterRendering->surfaceColor.x*0.4, waterRendering->surfaceColor.y*0.4, waterRendering->surfaceColor.z*0.4, waterRendering->surfaceAlpha);
+	glUniform4f( uniforms[ 1], waterRendering->planeColor.x*0.4, waterRendering->planeColor.y*0.4, waterRendering->planeColor.z*0.4, waterRendering->surfaceAlpha);
+	glUniform3f( uniforms[ 2], waterRendering->diffuseColor.x, waterRendering->diffuseColor.y, waterRendering->diffuseColor.z);
+	glUniform3f( uniforms[ 3], waterRendering->specularColor.x, waterRendering->specularColor.y, waterRendering->specularColor.z);
+	glUniform1f( uniforms[ 4], waterRendering->specularPower);
+	glUniform1f( uniforms[ 5], waterRendering->specularFactor);
+	glUniform1f( uniforms[ 6], waterRendering->ambientFactor);
+	glUniform1f( uniforms[ 7], waterRendering->diffuseFactor * 15.0f);
 	glUniform3fv(uniforms[ 8], 1, &sky->GetLight()->GetLightDir().x);
-	glUniform1f( uniforms[ 9], mapInfo->water.fresnelMin);
-	glUniform1f( uniforms[10], mapInfo->water.fresnelMax);
-	glUniform1f( uniforms[11], mapInfo->water.fresnelPower);
-	glUniform1f( uniforms[12], mapInfo->water.reflDistortion);
-	glUniform2f( uniforms[13], 0.0f, mapInfo->water.blurBase / globalRendering->viewSizeY);
-	glUniform1f( uniforms[14], mapInfo->water.blurExponent);
-	glUniform1f( uniforms[15], mapInfo->water.perlinStartFreq);
-	glUniform1f( uniforms[16], mapInfo->water.perlinLacunarity);
-	glUniform1f( uniforms[17], mapInfo->water.perlinAmplitude);
-	glUniform1f( uniforms[18], mapInfo->water.windSpeed);
+	glUniform1f( uniforms[ 9], waterRendering->fresnelMin);
+	glUniform1f( uniforms[10], waterRendering->fresnelMax);
+	glUniform1f( uniforms[11], waterRendering->fresnelPower);
+	glUniform1f( uniforms[12], waterRendering->reflDistortion);
+	glUniform2f( uniforms[13], 0.0f, waterRendering->blurBase / globalRendering->viewSizeY);
+	glUniform1f( uniforms[14], waterRendering->blurExponent);
+	glUniform1f( uniforms[15], waterRendering->perlinStartFreq);
+	glUniform1f( uniforms[16], waterRendering->perlinLacunarity);
+	glUniform1f( uniforms[17], waterRendering->perlinAmplitude);
+	glUniform1f( uniforms[18], waterRendering->windSpeed);
 	glUniform1f( uniforms[19], sunLighting->groundShadowDensity);
 }
 
 
 void CBumpWater::Draw()
 {
-	if (!occlusionQueryResult || (!mapInfo->water.forceRendering && !readMap->HasVisibleWater()))
+	if (!occlusionQueryResult || (!waterRendering->forceRendering && !readMap->HasVisibleWater()))
 		return;
 
 #ifdef GLEW_ARB_occlusion_query2
@@ -1194,7 +1196,7 @@ void CBumpWater::DrawReflection(CGame* game)
 
 void CBumpWater::OcclusionQuery()
 {
-	if (!occlusionQuery || (!mapInfo->water.forceRendering && !readMap->HasVisibleWater()))
+	if (!occlusionQuery || (!waterRendering->forceRendering && !readMap->HasVisibleWater()))
 		return;
 
 #ifdef GLEW_ARB_occlusion_query2

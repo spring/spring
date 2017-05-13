@@ -46,6 +46,7 @@
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/Env/ISky.h"
 #include "Rendering/Env/SunLighting.h"
+#include "Rendering/Env/WaterRendering.h"
 #include "Rendering/Env/IWater.h"
 #include "Rendering/Env/CubeMapHandler.h"
 #include "Rendering/GL/glExtra.h"
@@ -384,8 +385,9 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetGlobalTexCoords);
 	REGISTER_LUA_CFUNC(GetShadowMapParams);
 
-	REGISTER_LUA_CFUNC(GetSun);
 	REGISTER_LUA_CFUNC(GetAtmosphere);
+	REGISTER_LUA_CFUNC(GetSun);
+	REGISTER_LUA_CFUNC(GetWaterRendering);
 
 	if (canUseShaders) {
 		LuaShaders::PushEntries(L);
@@ -4462,6 +4464,128 @@ int LuaOpenGL::GetSun(lua_State* L)
 	}
 
 	return 0;
+}
+
+int LuaOpenGL::GetWaterRendering(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+
+	const string key = luaL_checkstring(L, 1);
+
+	// float3
+	if (key == "absorb") {
+		lua_pushnumber(L, waterRendering->absorb[0]);
+		lua_pushnumber(L, waterRendering->absorb[1]);
+		lua_pushnumber(L, waterRendering->absorb[2]);
+		return 3;
+	} else if (key == "baseColor") {
+		lua_pushnumber(L, waterRendering->baseColor[0]);
+		lua_pushnumber(L, waterRendering->baseColor[1]);
+		lua_pushnumber(L, waterRendering->baseColor[2]);
+		return 3;
+	} else if (key == "minColor") {
+		lua_pushnumber(L, waterRendering->minColor[0]);
+		lua_pushnumber(L, waterRendering->minColor[1]);
+		lua_pushnumber(L, waterRendering->minColor[2]);
+		return 3;
+	} else if (key == "surfaceColor") {
+		lua_pushnumber(L, waterRendering->surfaceColor[0]);
+		lua_pushnumber(L, waterRendering->surfaceColor[1]);
+		lua_pushnumber(L, waterRendering->surfaceColor[2]);
+		return 3;
+	} else if (key == "diffuseColor") {
+		lua_pushnumber(L, waterRendering->diffuseColor[0]);
+		lua_pushnumber(L, waterRendering->diffuseColor[1]);
+		lua_pushnumber(L, waterRendering->diffuseColor[2]);
+		return 3;
+	} else if (key == "specularColor") {
+		lua_pushnumber(L, waterRendering->specularColor[0]);
+		lua_pushnumber(L, waterRendering->specularColor[1]);
+		lua_pushnumber(L, waterRendering->specularColor[2]);
+		return 3;
+	} else if (key == "planeColor") {
+		lua_pushnumber(L, waterRendering->planeColor.x);
+		lua_pushnumber(L, waterRendering->planeColor.y);
+		lua_pushnumber(L, waterRendering->planeColor.z);
+		return 3;
+	}
+	// string
+	else if (key == "texture") {
+		lua_pushsstring(L, waterRendering->texture);
+		return 1;
+	} else if (key == "foamTexture") {
+		lua_pushsstring(L, waterRendering->foamTexture);
+		return 1;
+	} else if (key == "normalTexture") {
+		lua_pushsstring(L, waterRendering->normalTexture);
+		return 1;
+	}
+	// scalar
+	else if (key == "repeatX") {
+		lua_pushnumber(L, waterRendering->repeatX);
+		return 1;
+	} else if (key == "repeatY") {
+		lua_pushnumber(L, waterRendering->repeatY);
+		return 1;
+	} else if (key == "surfaceAlpha") {
+		lua_pushnumber(L, waterRendering->surfaceAlpha);
+		return 1;
+	} else if (key == "ambientFactor") {
+		lua_pushnumber(L, waterRendering->ambientFactor);
+		return 1;
+	} else if (key == "diffuseFactor") {
+		lua_pushnumber(L, waterRendering->diffuseFactor);
+		return 1;
+	} else if (key == "specularFactor") {
+		lua_pushnumber(L, waterRendering->specularFactor);
+		return 1;
+	} else if (key == "specularPower") {
+		lua_pushnumber(L, waterRendering->specularPower);
+		return 1;
+	} else if (key == "fresnelMin") {
+		lua_pushnumber(L, waterRendering->fresnelMin);
+		return 1;
+	} else if (key == "fresnelMax") {
+		lua_pushnumber(L, waterRendering->fresnelMax);
+		return 1;
+	} else if (key == "fresnelPower") {
+		lua_pushnumber(L, waterRendering->fresnelPower);
+		return 1;
+	} else if (key == "reflectionDistortion") {
+		lua_pushnumber(L, waterRendering->reflDistortion);
+		return 1;
+	} else if (key == "blurBase") {
+		lua_pushnumber(L, waterRendering->blurBase);
+		return 1;
+	} else if (key == "blurExponent") {
+		lua_pushnumber(L, waterRendering->blurExponent);
+		return 1;
+	} else if (key == "perlinStartFreq") {
+		lua_pushnumber(L, waterRendering->perlinStartFreq);
+		return 1;
+	} else if (key == "perlinLacunarity") {
+		lua_pushnumber(L, waterRendering->perlinLacunarity);
+		return 1;
+	} else if (key == "perlinAmplitude") {
+		lua_pushnumber(L, waterRendering->perlinAmplitude);
+		return 1;
+	} else if (key == "numTiles") {
+		lua_pushnumber(L, waterRendering->numTiles);
+		return 1;
+	}
+	// boolean
+	else if (key == "shoreWaves") {
+		lua_pushboolean(L, waterRendering->shoreWaves);
+		return 1;
+	} else if (key == "forceRendering") {
+		lua_pushboolean(L, waterRendering->forceRendering);
+		return 1;
+	} else if (key == "hasWaterPlane") {
+		lua_pushboolean(L, waterRendering->hasWaterPlane);
+		return 1;
+	}
+
+	luaL_error(L, "Unknown key %s", key.c_str());
 }
 
 /******************************************************************************/

@@ -2,6 +2,8 @@
 
 
 #include "DynWater.h"
+#include "WaterRendering.h"
+
 #include "Game/Camera.h"
 #include "Game/GameHelper.h"
 #include "Game/GlobalUnsynced.h"
@@ -93,8 +95,8 @@ CDynWater::CDynWater()
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F_ARB, 64, 64, 0, GL_RGBA, GL_FLOAT, temp);
 
 	CBitmap foam;
-	if (!foam.Load(mapInfo->water.foamTexture)) {
-		throw content_error("Could not load foam from file " + mapInfo->water.foamTexture);
+	if (!foam.Load(waterRendering->foamTexture)) {
+		throw content_error("Could not load foam from file " + waterRendering->foamTexture);
 	}
 	if ((count_bits_set(foam.xsize) != 1) || (count_bits_set(foam.ysize) != 1)) {
 		throw content_error("Foam texture not power of two!");
@@ -132,7 +134,7 @@ CDynWater::CDynWater()
 	dwAddSplashFP    = LoadFragmentProgram("ARB/dwAddSplash.fp");
 	dwAddSplashVP    = LoadVertexProgram(  "ARB/dwAddSplash.vp");
 
-	waterSurfaceColor = mapInfo->water.surfaceColor;
+	waterSurfaceColor = waterRendering->surfaceColor;
 
 	for (int y = 0; y < 1024; ++y) {
 		for (int x = 0; x < 1024; ++x) {
@@ -291,7 +293,7 @@ CDynWater::~CDynWater()
 
 void CDynWater::Draw()
 {
-	if (!mapInfo->water.forceRendering && !readMap->HasVisibleWater())
+	if (!waterRendering->forceRendering && !readMap->HasVisibleWater())
 		return;
 
 	glPushAttrib(GL_ENABLE_BIT);
@@ -382,7 +384,7 @@ void CDynWater::Draw()
 
 void CDynWater::UpdateWater(CGame* game)
 {
-	if (!mapInfo->water.forceRendering && !readMap->HasVisibleWater())
+	if (!waterRendering->forceRendering && !readMap->HasVisibleWater())
 		return;
 
 	glPushAttrib(GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_FOG_BIT);
@@ -408,7 +410,7 @@ void CDynWater::UpdateWater(CGame* game)
 
 void CDynWater::Update()
 {
-	if (!mapInfo->water.forceRendering && !readMap->HasVisibleWater())
+	if (!waterRendering->forceRendering && !readMap->HasVisibleWater())
 		return;
 
 	oldCamPosBig = camPosBig;
@@ -1301,4 +1303,3 @@ void CDynWater::DrawOuterSurface()
 
 	va->DrawArray0(GL_QUADS);
 }
-

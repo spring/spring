@@ -13,6 +13,7 @@
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/Env/ISky.h"
+#include "Rendering/Env/WaterRendering.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Shaders/Shader.h"
@@ -94,7 +95,7 @@ CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
 	waterPlaneDispLists[0] = 0;
 	waterPlaneDispLists[1] = 0;
 
-	if (mapInfo->water.hasWaterPlane) {
+	if (waterRendering->hasWaterPlane) {
 		glNewList((waterPlaneDispLists[0] = glGenLists(1)), GL_COMPILE);
 		CreateWaterPlanes(true);
 		glEndList();
@@ -181,9 +182,9 @@ void CSMFGroundDrawer::CreateWaterPlanes(bool camOufOfMap) {
 	};
 
 	const unsigned char planeColor[4] = {
-		(unsigned char)(255 * mapInfo->water.planeColor[0]),
-		(unsigned char)(255 * mapInfo->water.planeColor[1]),
-		(unsigned char)(255 * mapInfo->water.planeColor[2]),
+		(unsigned char)(255 * waterRendering->planeColor[0]),
+		(unsigned char)(255 * waterRendering->planeColor[1]),
+		(unsigned char)(255 * waterRendering->planeColor[2]),
 		 255
 	};
 
@@ -378,7 +379,7 @@ void CSMFGroundDrawer::Draw(const DrawPass::e& drawPass)
 	glDisable(GL_CULL_FACE);
 
 	if (drawPass == DrawPass::Normal) {
-		if (mapInfo->water.hasWaterPlane) {
+		if (waterRendering->hasWaterPlane) {
 			DrawWaterPlane(false);
 		}
 
@@ -579,4 +580,3 @@ int CSMFGroundDrawer::GetGroundDetail(const DrawPass::e& drawPass) const
 
 	return detail;
 }
-

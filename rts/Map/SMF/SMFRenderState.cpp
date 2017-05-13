@@ -11,6 +11,7 @@
 #include "Rendering/Env/ISky.h"
 #include "Rendering/Env/SkyLight.h"
 #include "Rendering/Env/SunLighting.h"
+#include "Rendering/Env/WaterRendering.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Rendering/Shaders/ShaderHandler.h"
@@ -233,9 +234,9 @@ void SMFRenderStateGLSL::Update(
 			glslShaders[n]->SetUniformMatrix4x4("shadowMat", false, shadowHandler->GetShadowMatrixRaw());
 			glslShaders[n]->SetUniform4v("shadowParams", &(shadowHandler->GetShadowParams().x));
 
-			glslShaders[n]->SetUniform3v("waterMinColor",    &mapInfo->water.minColor[0]);
-			glslShaders[n]->SetUniform3v("waterBaseColor",   &mapInfo->water.baseColor[0]);
-			glslShaders[n]->SetUniform3v("waterAbsorbColor", &mapInfo->water.absorb[0]);
+			glslShaders[n]->SetUniform3v("waterMinColor",    &waterRendering->minColor[0]);
+			glslShaders[n]->SetUniform3v("waterBaseColor",   &waterRendering->baseColor[0]);
+			glslShaders[n]->SetUniform3v("waterAbsorbColor", &waterRendering->absorb[0]);
 
 			glslShaders[n]->SetUniform4v("splatTexScales", &mapInfo->splats.texScales[0]);
 			glslShaders[n]->SetUniform4v("splatTexMults", &mapInfo->splats.texMults[0]);
@@ -604,4 +605,3 @@ void SMFRenderStateGLSL::UpdateCurrentShaderSky(const ISkyLight* skyLight) const
 	glslShaders[GLSL_SHADER_CURRENT]->SetUniform3v("groundSpecularColor", &sunLighting->groundSpecularColor[0]);
 	glslShaders[GLSL_SHADER_CURRENT]->Disable();
 }
-

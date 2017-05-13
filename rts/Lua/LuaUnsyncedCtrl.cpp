@@ -41,6 +41,7 @@
 #include "Net/GameServer.h"
 #include "Rendering/Env/ISky.h"
 #include "Rendering/Env/SunLighting.h"
+#include "Rendering/Env/WaterRendering.h"
 #include "Rendering/Env/IGroundDecalDrawer.h"
 #include "Rendering/Env/Decals/DecalsDrawerGL4.h"
 #include "Rendering/GL/myGL.h"
@@ -1067,7 +1068,6 @@ int LuaUnsyncedCtrl::SetWaterParams(lua_State* L)
 		luaL_error(L, "Incorrect arguments to SetWaterParams()");
 	}
 
-	CMapInfo::water_t& w = const_cast<CMapInfo*>(mapInfo)->water;
 	for (lua_pushnil(L); lua_next(L, 1) != 0; lua_pop(L, 1)) {
 		if (!lua_israwstring(L, -2))
 			continue;
@@ -1079,21 +1079,21 @@ int LuaUnsyncedCtrl::SetWaterParams(lua_State* L)
 			const int size = LuaUtils::ParseFloatArray(L, -1, color, 3);
 			if (size >= 3) {
 				if (key == "absorb") {
-					w.absorb = color;
+					waterRendering->absorb = color;
 				} else if (key == "baseColor") {
-					w.baseColor = color;
+					waterRendering->baseColor = color;
 				} else if (key == "minColor") {
-					w.minColor = color;
+					waterRendering->minColor = color;
 				} else if (key == "surfaceColor") {
-					w.surfaceColor = color;
+					waterRendering->surfaceColor = color;
 				} else if (key == "diffuseColor") {
-					w.diffuseColor = color;
+					waterRendering->diffuseColor = color;
 				} else if (key == "specularColor") {
-					w.specularColor = color;
+					waterRendering->specularColor = color;
 					} else if (key == "planeColor") {
-					w.planeColor.x = color[0];
-					w.planeColor.y = color[1];
-					w.planeColor.z = color[2];
+					waterRendering->planeColor.x = color[0];
+					waterRendering->planeColor.y = color[1];
+					waterRendering->planeColor.z = color[2];
 				} else {
 					luaL_error(L, "Unknown array key %s", key.c_str());
 				}
@@ -1105,11 +1105,11 @@ int LuaUnsyncedCtrl::SetWaterParams(lua_State* L)
 		else if (lua_israwstring(L, -1)) {
 			const std::string value = lua_tostring(L, -1);
 			if (key == "texture") {
-				w.texture = value;
+				waterRendering->texture = value;
 			} else if (key == "foamTexture") {
-				w.foamTexture = value;
+				waterRendering->foamTexture = value;
 			} else if (key == "normalTexture") {
-				w.normalTexture = value;
+				waterRendering->normalTexture = value;
 			} else {
 				luaL_error(L, "Unknown string key %s", key.c_str());
 			}
@@ -1117,42 +1117,40 @@ int LuaUnsyncedCtrl::SetWaterParams(lua_State* L)
 
 		else if (lua_isnumber(L, -1)) {
 			const float value = lua_tofloat(L, -1);
-			if (key == "damage") {
-				w.damage = value;
-			} else if (key == "repeatX") {
-				w.repeatX = value;
+			if (key == "repeatX") {
+				waterRendering->repeatX = value;
 			} else if (key == "repeatY") {
-				w.repeatY = value;
+				waterRendering->repeatY = value;
 			} else if (key == "surfaceAlpha") {
-				w.surfaceAlpha = value;
+				waterRendering->surfaceAlpha = value;
 			} else if (key == "ambientFactor") {
-				w.ambientFactor = value;
+				waterRendering->ambientFactor = value;
 			} else if (key == "diffuseFactor") {
-				w.diffuseFactor = value;
+				waterRendering->diffuseFactor = value;
 			} else if (key == "specularFactor") {
-				w.specularFactor = value;
+				waterRendering->specularFactor = value;
 			} else if (key == "specularPower") {
-				w.specularPower = value;
+				waterRendering->specularPower = value;
 			} else if (key == "fresnelMin") {
-				w.fresnelMin = value;
+				waterRendering->fresnelMin = value;
 			} else if (key == "fresnelMax") {
-				w.fresnelMax = value;
+				waterRendering->fresnelMax = value;
 			} else if (key == "fresnelPower") {
-				w.fresnelPower = value;
+				waterRendering->fresnelPower = value;
 			} else if (key == "reflectionDistortion") {
-				w.reflDistortion = value;
+				waterRendering->reflDistortion = value;
 			} else if (key == "blurBase") {
-				w.blurBase = value;
+				waterRendering->blurBase = value;
 			} else if (key == "blurExponent") {
-				w.blurExponent = value;
+				waterRendering->blurExponent = value;
 			} else if (key == "perlinStartFreq") {
-				w.perlinStartFreq = value;
+				waterRendering->perlinStartFreq = value;
 			} else if (key == "perlinLacunarity") {
-				w.perlinLacunarity = value;
+				waterRendering->perlinLacunarity = value;
 			} else if (key == "perlinAmplitude") {
-				w.perlinAmplitude = value;
+				waterRendering->perlinAmplitude = value;
 			} else if (key == "numTiles") {
-				w.numTiles = (unsigned char)value;
+				waterRendering->numTiles = (unsigned char)value;
 			} else {
 				luaL_error(L, "Unknown scalar key %s", key.c_str());
 			}
@@ -1161,11 +1159,11 @@ int LuaUnsyncedCtrl::SetWaterParams(lua_State* L)
 		else if (lua_isboolean(L, -1)) {
 			const bool value = lua_toboolean(L, -1);
 			if (key == "shoreWaves") {
-				w.shoreWaves = value;
+				waterRendering->shoreWaves = value;
 			} else if (key == "forceRendering") {
-				w.forceRendering = value;
+				waterRendering->forceRendering = value;
 			} else if (key == "hasWaterPlane") {
-				w.hasWaterPlane = value;
+				waterRendering->hasWaterPlane = value;
 			} else {
 				luaL_error(L, "Unknown boolean key %s", key.c_str());
 			}
