@@ -1063,100 +1063,111 @@ int LuaUnsyncedCtrl::SetVideoCapturingMode(lua_State* L)
 
 int LuaUnsyncedCtrl::SetWaterParams(lua_State* L)
 {
-	if (!gs->cheatEnabled) {
-		LOG("SetWaterParams() needs cheating enabled");
-		return 0;
-	}
 	if (!lua_istable(L, 1)) {
 		luaL_error(L, "Incorrect arguments to SetWaterParams()");
 	}
 
 	CMapInfo::water_t& w = const_cast<CMapInfo*>(mapInfo)->water;
 	for (lua_pushnil(L); lua_next(L, 1) != 0; lua_pop(L, 1)) {
-		if (lua_israwstring(L, -2)) {
-			const string key = lua_tostring(L, -2);
-			if (lua_istable(L, -1)) {
-				float color[3];
-				const int size = LuaUtils::ParseFloatArray(L, -1, color, 3);
-				if (size >= 3) {
-					if (key == "absorb") {
-						w.absorb = color;
-					} else if (key == "baseColor") {
-						w.baseColor = color;
-					} else if (key == "minColor") {
-						w.minColor = color;
-					} else if (key == "surfaceColor") {
-						w.surfaceColor = color;
-					} else if (key == "diffuseColor") {
-						w.diffuseColor = color;
-					} else if (key == "specularColor") {
-						w.specularColor = color;
- 					} else if (key == "planeColor") {
-						w.planeColor.x = color[0];
-						w.planeColor.y = color[1];
-						w.planeColor.z = color[2];
-					}
+		if (!lua_israwstring(L, -2))
+			continue;
+
+		const string key = lua_tostring(L, -2);
+
+		if (lua_istable(L, -1)) {
+			float color[3];
+			const int size = LuaUtils::ParseFloatArray(L, -1, color, 3);
+			if (size >= 3) {
+				if (key == "absorb") {
+					w.absorb = color;
+				} else if (key == "baseColor") {
+					w.baseColor = color;
+				} else if (key == "minColor") {
+					w.minColor = color;
+				} else if (key == "surfaceColor") {
+					w.surfaceColor = color;
+				} else if (key == "diffuseColor") {
+					w.diffuseColor = color;
+				} else if (key == "specularColor") {
+					w.specularColor = color;
+					} else if (key == "planeColor") {
+					w.planeColor.x = color[0];
+					w.planeColor.y = color[1];
+					w.planeColor.z = color[2];
+				} else {
+					luaL_error(L, "Unknown array key %s", key.c_str());
 				}
+			} else {
+				luaL_error(L, "Unexpected size of %d for array key %s", size,  key.c_str());
 			}
-			else if (lua_israwstring(L, -1)) {
-				const std::string value = lua_tostring(L, -1);
-				if (key == "texture") {
-					w.texture = value;
-				} else if (key == "foamTexture") {
-					w.foamTexture = value;
-				} else if (key == "normalTexture") {
-					w.normalTexture = value;
-				}
+		}
+
+		else if (lua_israwstring(L, -1)) {
+			const std::string value = lua_tostring(L, -1);
+			if (key == "texture") {
+				w.texture = value;
+			} else if (key == "foamTexture") {
+				w.foamTexture = value;
+			} else if (key == "normalTexture") {
+				w.normalTexture = value;
+			} else {
+				luaL_error(L, "Unknown string key %s", key.c_str());
 			}
-			else if (lua_isnumber(L, -1)) {
-				const float value = lua_tofloat(L, -1);
-				if (key == "damage") {
-					w.damage = value;
-				} else if (key == "repeatX") {
-					w.repeatX = value;
-				} else if (key == "repeatY") {
-					w.repeatY = value;
-				} else if (key == "surfaceAlpha") {
-					w.surfaceAlpha = value;
-				} else if (key == "ambientFactor") {
-					w.ambientFactor = value;
-				} else if (key == "diffuseFactor") {
-					w.diffuseFactor = value;
-				} else if (key == "specularFactor") {
-					w.specularFactor = value;
-				} else if (key == "specularPower") {
-					w.specularPower = value;
-				} else if (key == "fresnelMin") {
-					w.fresnelMin = value;
-				} else if (key == "fresnelMax") {
-					w.fresnelMax = value;
-				} else if (key == "fresnelPower") {
-					w.fresnelPower = value;
-				} else if (key == "reflectionDistortion") {
-					w.reflDistortion = value;
-				} else if (key == "blurBase") {
-					w.blurBase = value;
-				} else if (key == "blurExponent") {
-					w.blurExponent = value;
-				} else if (key == "perlinStartFreq") {
-					w.perlinStartFreq = value;
-				} else if (key == "perlinLacunarity") {
-					w.perlinLacunarity = value;
-				} else if (key == "perlinAmplitude") {
-					w.perlinAmplitude = value;
-				} else if (key == "numTiles") {
-					w.numTiles = (unsigned char)value;
-				}
+		}
+
+		else if (lua_isnumber(L, -1)) {
+			const float value = lua_tofloat(L, -1);
+			if (key == "damage") {
+				w.damage = value;
+			} else if (key == "repeatX") {
+				w.repeatX = value;
+			} else if (key == "repeatY") {
+				w.repeatY = value;
+			} else if (key == "surfaceAlpha") {
+				w.surfaceAlpha = value;
+			} else if (key == "ambientFactor") {
+				w.ambientFactor = value;
+			} else if (key == "diffuseFactor") {
+				w.diffuseFactor = value;
+			} else if (key == "specularFactor") {
+				w.specularFactor = value;
+			} else if (key == "specularPower") {
+				w.specularPower = value;
+			} else if (key == "fresnelMin") {
+				w.fresnelMin = value;
+			} else if (key == "fresnelMax") {
+				w.fresnelMax = value;
+			} else if (key == "fresnelPower") {
+				w.fresnelPower = value;
+			} else if (key == "reflectionDistortion") {
+				w.reflDistortion = value;
+			} else if (key == "blurBase") {
+				w.blurBase = value;
+			} else if (key == "blurExponent") {
+				w.blurExponent = value;
+			} else if (key == "perlinStartFreq") {
+				w.perlinStartFreq = value;
+			} else if (key == "perlinLacunarity") {
+				w.perlinLacunarity = value;
+			} else if (key == "perlinAmplitude") {
+				w.perlinAmplitude = value;
+			} else if (key == "numTiles") {
+				w.numTiles = (unsigned char)value;
+			} else {
+				luaL_error(L, "Unknown scalar key %s", key.c_str());
 			}
-			else if (lua_isboolean(L, -1)) {
-				const bool value = lua_toboolean(L, -1);
-				if (key == "shoreWaves") {
-					w.shoreWaves = value;
-				} else if (key == "forceRendering") {
-					w.forceRendering = value;
-				} else if (key == "hasWaterPlane") {
-					w.hasWaterPlane = value;
-				}
+		}
+
+		else if (lua_isboolean(L, -1)) {
+			const bool value = lua_toboolean(L, -1);
+			if (key == "shoreWaves") {
+				w.shoreWaves = value;
+			} else if (key == "forceRendering") {
+				w.forceRendering = value;
+			} else if (key == "hasWaterPlane") {
+				w.hasWaterPlane = value;
+			} else {
+				luaL_error(L, "Unknown boolean key %s", key.c_str());
 			}
 		}
 	}
@@ -2778,10 +2789,9 @@ int LuaUnsyncedCtrl::SetAtmosphere(lua_State* L)
 			} else {
 				luaL_error(L, "Unknown array key %s", key.c_str());
 			}
-			continue;
 		}
 
-		if (lua_isnumber(L, -1)) {
+		else if (lua_isnumber(L, -1)) {
 			if (key == "fogStart") {
 				sky->fogStart = lua_tofloat(L, -1);
 			} else if (key == "fogEnd") {
@@ -2789,7 +2799,6 @@ int LuaUnsyncedCtrl::SetAtmosphere(lua_State* L)
 			} else {
 				luaL_error(L, "Unknown scalar key %s", key.c_str());
 			}
-			continue;
 		}
 	}
 
@@ -3040,5 +3049,3 @@ int LuaUnsyncedCtrl::SetDecalAlpha(lua_State* L)
 	decal.Invalidate();
 	return 0;
 }
-
-
