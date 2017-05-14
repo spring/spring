@@ -58,7 +58,13 @@ CObject::~CObject()
 	assert(!detached);
 	detached = true;
 
-	for (const auto& p: listenersDepTbl) {
+	while (!listenersDepTbl.empty()) {
+		const decltype(listenersDepTbl)::iterator it = listenersDepTbl.begin();
+		const decltype(listenersDepTbl)::value_type p = {it->first, it->second};
+
+		assert(p.first >= DEPENDENCE_ATTACKER && p.first < DEPENDENCE_COUNT);
+		assert(p.second < listeners.size());
+
 		auto& depListeners = listeners[p.second];
 
 		while (!depListeners.empty()) {
@@ -75,10 +81,23 @@ CObject::~CObject()
 
 			VectorEraseSorted(obj->listening[ jt->second ], this);
 		}
+
+		// can't erase by iterator itself, might be invalidated too
+		listenersDepTbl.erase(p.first);
 	}
 
-	for (const auto& p: listeningDepTbl) {
-		for (CObject* obj: listening[p.second]) {
+	while (!listeningDepTbl.empty()) {
+		const decltype(listeningDepTbl)::iterator it = listeningDepTbl.begin();
+		const decltype(listeningDepTbl)::value_type p = {it->first, it->second};
+
+		assert(p.first >= DEPENDENCE_ATTACKER && p.first < DEPENDENCE_COUNT);
+		assert(p.second < listening.size());
+
+		auto& depListening = listening[p.second];
+
+		while (!depListening.empty()) {
+			CObject* obj = spring::VectorBackPop(depListening);
+
 			const auto jt = obj->listenersDepTbl.find(p.first);
 
 			if (jt == obj->listenersDepTbl.end())
@@ -86,6 +105,8 @@ CObject::~CObject()
 
 			VectorEraseSorted(obj->listeners[ jt->second ], this);
 		}
+
+		listeningDepTbl.erase(p.first);
 	}
 }
 
