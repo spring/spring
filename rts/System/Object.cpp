@@ -65,10 +65,8 @@ CObject::~CObject()
 		assert(p.first >= DEPENDENCE_ATTACKER && p.first < DEPENDENCE_COUNT);
 		assert(p.second < listeners.size());
 
-		auto& depListeners = listeners[p.second];
-
-		while (!depListeners.empty()) {
-			CObject* obj = spring::VectorBackPop(depListeners);
+		while (!listeners[p.second].empty()) {
+			CObject* obj = spring::VectorBackPop(listeners[p.second]);
 
 			// note: can indirectly trigger AddDeathDependence (which
 			// might modify depListeners), so do not use a ranged-for
@@ -93,10 +91,8 @@ CObject::~CObject()
 		assert(p.first >= DEPENDENCE_ATTACKER && p.first < DEPENDENCE_COUNT);
 		assert(p.second < listening.size());
 
-		auto& depListening = listening[p.second];
-
-		while (!depListening.empty()) {
-			CObject* obj = spring::VectorBackPop(depListening);
+		while (!listening[p.second].empty()) {
+			CObject* obj = spring::VectorBackPop(listening[p.second]);
 
 			const auto jt = obj->listenersDepTbl.find(p.first);
 
