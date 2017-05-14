@@ -132,7 +132,9 @@ void CFarTextureHandler::CreateFarTexture(const CSolidObject* obj)
 	if (model->id >= iconCache[obj->team].size())
 		iconCache[obj->team].resize(std::max(iconCache[obj->team].size() * 2, size_t(model->id + 1)), {0});
 
-	assert(iconCache[obj->team][model->id].farTexNum == 0);
+	// same object can be queued multiple times in different passes
+	if (iconCache[obj->team][model->id].farTexNum != 0)
+		return;
 
 	// enough free space in the atlas?
 	if (!CheckResizeAtlas())
