@@ -806,7 +806,6 @@ void _GL_APIENTRY glDebugMessageCallbackFunc(GLenum source, GLenum type, GLuint 
 bool CGlobalRendering::ToggleGLDebugOutput()
 {
 	const static bool dbgOutput = configHandler->GetBool("DebugGL");
-	const static bool dbgTraces = configHandler->GetBool("DebugGLStacktraces");
 
 	if (!dbgOutput) {
 		LOG("[GR::%s] OpenGL debug context required", __func__);
@@ -814,6 +813,7 @@ bool CGlobalRendering::ToggleGLDebugOutput()
 	}
 
 	#if (defined(GL_ARB_debug_output) && !defined(HEADLESS))
+	const static bool dbgTraces = configHandler->GetBool("DebugGLStacktraces");
 	if ((gldebug = !gldebug)) {
 		// install OpenGL debug message callback; typecast is a workaround
 		// for #4510 (change in callback function signature with GLEW 1.11)
