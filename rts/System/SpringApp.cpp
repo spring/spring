@@ -755,6 +755,9 @@ void SpringApp::Reload(const std::string script)
 	if (gameServer != nullptr)
 		gameServer->SetReloading(true);
 
+	if (clientNet != nullptr)
+		clientNet->SetDemoRecorder(nullptr);
+
 	// Lua shutdown functions need to access 'game' but spring::SafeDelete sets it to NULL.
 	// ~CGame also calls this, which does not matter because handlers are gone by then
 	game->KillLua(false);
@@ -767,9 +770,10 @@ void SpringApp::Reload(const std::string script)
 	LOG("[SpringApp::%s][4]", __func__);
 
 	// PreGame allocates clientNet, so we need to delete our old connection
-	spring::SafeDelete(clientNet);
 	spring::SafeDelete(game);
 	spring::SafeDelete(pregame);
+
+	spring::SafeDelete(clientNet);
 	// no-op if we are not the server
 	spring::SafeDelete(gameServer);
 
@@ -935,20 +939,21 @@ void SpringApp::ShutDown(bool fromRun)
 	// see ::Reload
 	if (game != nullptr)
 		game->KillLua(false);
+	// write the demo before destroying game, such that it can not
+	// be affected by a crash in any of the Game::Kill* functions
+	if (clientNet != nullptr)
+		clientNet->SetDemoRecorder(nullptr);
 
 	// see ::Reload
 	ISound::Shutdown();
 
-	// delete connection before destroying game, such that a crash
-	// in any of the Game::Kill* functions will not prevent a demo
-	// from being written
-	spring::SafeDelete(clientNet);
 	spring::SafeDelete(game);
 	spring::SafeDelete(pregame);
 
 	spring::SafeDelete(luaMenuController);
 
 	LOG("[SpringApp::%s][3]", __func__);
+	spring::SafeDelete(clientNet);
 	spring::SafeDelete(gameServer);
 	spring::SafeDelete(gameSetup);
 

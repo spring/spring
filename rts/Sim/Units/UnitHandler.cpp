@@ -244,7 +244,7 @@ void CUnitHandler::Update()
 	{
 		SCOPED_TIMER("Sim::Unit::MoveType");
 
-		for (activeUpdateUnit = 0; activeUpdateUnit < activeUnits.size();++activeUpdateUnit) {
+		for (activeUpdateUnit = 0; activeUpdateUnit < activeUnits.size(); ++activeUpdateUnit) {
 			CUnit* unit = activeUnits[activeUpdateUnit];
 			AMoveType* moveType = unit->moveType;
 

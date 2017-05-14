@@ -21,11 +21,11 @@
 CONFIG(int, SourcePort).defaultValue(0);
 
 
-CNetProtocol* clientNet = NULL;
+CNetProtocol* clientNet = nullptr;
 
 CNetProtocol::CNetProtocol() : keepUpdating(false)
 {
-	demoRecorder.reset(NULL);
+	demoRecorder.reset(nullptr);
 }
 
 CNetProtocol::~CNetProtocol()
@@ -117,12 +117,13 @@ std::shared_ptr<const netcode::RawPacket> CNetProtocol::GetData(int frameNum)
 {
 	std::shared_ptr<const netcode::RawPacket> ret = serverConn->GetData();
 
-	if (ret.get() == NULL) { return ret; }
-	if (ret->data[0] == NETMSG_GAMEDATA) { return ret; }
+	if (ret.get() == nullptr)
+		return ret;
+	if (ret->data[0] == NETMSG_GAMEDATA)
+		return ret;
 
-	if (demoRecorder.get() != NULL) {
+	if (demoRecorder.get() != nullptr)
 		demoRecorder->SaveToDemo(ret->data, ret->length, GetPacketTime(frameNum));
-	}
 
 	return ret;
 }

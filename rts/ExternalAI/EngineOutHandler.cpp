@@ -622,11 +622,6 @@ void CEngineOutHandler::DestroySkirmishAI(const size_t skirmishAIId) {
 	internal_aiErase(team_skirmishAIs[aiWrapper->GetTeamId()], skirmishAIId);
 	id_skirmishAI.erase(skirmishAIId);
 
-	// if called from dtor on shutdown, this is already gone
-	// TODO: send message earlier to notify remaining players
-	if (clientNet == nullptr)
-		return;
-
 	clientNet->Send(CBaseNetProtocol::Get().SendAIStateChanged(gu->myPlayerNum, skirmishAIId, SKIRMAISTATE_DEAD));
 }
 
