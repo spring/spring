@@ -12,6 +12,7 @@
 #include <cassert>
 #include <cstring>
 
+static int CompareDummy      (const int aIdx, const int bIdx) { return ((aIdx > bIdx) * 2 - 1); }
 static int CompareAllies     (const int aIdx, const int bIdx);
 static int CompareTeamIDs    (const int aIdx, const int bIdx);
 static int ComparePlayerNames(const int aIdx, const int bIdx);
@@ -37,7 +38,7 @@ void PlayerRoster::SetCompareFunc(SortType cmpType)
 		case PlayerName: { compareFunc = ComparePlayerNames; } break;
 		case PlayerCPU:  { compareFunc = ComparePlayerCPUs;  } break;
 		case PlayerPing: { compareFunc = ComparePlayerPings; } break;
-		case Disabled:   { compareFunc = CompareAllies;      } break;
+		case Disabled:   { compareFunc = CompareDummy;       } break;
 		default:         { compareFunc = CompareAllies;      } break;
 	}
 }
@@ -97,7 +98,8 @@ const char* PlayerRoster::GetSortName() const
 
 const std::vector<int>& PlayerRoster::GetIndices(int* activePlayerCount, bool includePathingFlag, bool callerBlockResort)
 {
-	assert(compareType != Disabled);
+	// if Disabled, compareFunc is a dummy so the indices are left alone
+	// assert(compareType != Disabled);
 
 	// number of players can change at runtime, must test this each call
 	// or make PlayerRoster an EventClient and listen for Player* events
