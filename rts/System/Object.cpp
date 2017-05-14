@@ -2,7 +2,7 @@
 
 
 #include "System/Object.h"
-#include "System/Util.h"
+#include "System/ContainerUtil.h"
 #include "System/creg/STL_Set.h"
 #include "System/Log/ILog.h"
 #include "System/Platform/CrashHandler.h"
@@ -59,7 +59,13 @@ CObject::~CObject()
 	detached = true;
 
 	for (const auto& p: listenersDepTbl) {
-		for (CObject* obj: listeners[p.second]) {
+		auto& depListeners = listeners[p.second];
+
+		while (!depListeners.empty()) {
+			CObject* obj = spring::VectorBackPop(depListeners);
+
+			// note: can indirectly trigger AddDeathDependence (which
+			// might modify depListeners), so do not use a ranged-for
 			obj->DependentDied(this);
 
 			const auto jt = obj->listeningDepTbl.find(p.first);
