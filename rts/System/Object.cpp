@@ -57,18 +57,11 @@ CObject::~CObject()
 	assert(!detached);
 	detached = true;
 
-	while (!listenersDepTbl.empty()) {
-		const decltype(listenersDepTbl)::iterator it = listenersDepTbl.begin();
-		const decltype(listenersDepTbl)::value_type p = {it->first, it->second};
-
+	for (const auto& p: listenersDepTbl) {
 		assert(p.first >= DEPENDENCE_ATTACKER && p.first < DEPENDENCE_COUNT);
 		assert(p.second < listeners.size());
 
-		while (!listeners[p.second].empty()) {
-			CObject* obj = spring::VectorBackPop(listeners[p.second]);
-
-			// note: can indirectly trigger AddDeathDependence (which
-			// might modify depListeners), so do not use a ranged-for
+		for (CObject* obj: listeners[p.second]) {
 			obj->DependentDied(this);
 
 			const auto jt = obj->listeningDepTbl.find(p.first);
@@ -78,21 +71,13 @@ CObject::~CObject()
 
 			VectorEraseSorted(obj->listening[ jt->second ], this);
 		}
-
-		// can't erase by iterator itself, might be invalidated too
-		listenersDepTbl.erase(p.first);
 	}
 
-	while (!listeningDepTbl.empty()) {
-		const decltype(listeningDepTbl)::iterator it = listeningDepTbl.begin();
-		const decltype(listeningDepTbl)::value_type p = {it->first, it->second};
-
+	for (const auto& p: listeningDepTbl) {
 		assert(p.first >= DEPENDENCE_ATTACKER && p.first < DEPENDENCE_COUNT);
 		assert(p.second < listening.size());
 
-		while (!listening[p.second].empty()) {
-			CObject* obj = spring::VectorBackPop(listening[p.second]);
-
+		for (CObject* obj: listening[p.second]) {
 			const auto jt = obj->listenersDepTbl.find(p.first);
 
 			if (jt == obj->listenersDepTbl.end())
@@ -100,8 +85,6 @@ CObject::~CObject()
 
 			VectorEraseSorted(obj->listeners[ jt->second ], this);
 		}
-
-		listeningDepTbl.erase(p.first);
 	}
 }
 
