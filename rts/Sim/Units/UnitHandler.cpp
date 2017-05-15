@@ -187,9 +187,8 @@ void CUnitHandler::DeleteUnitNow(CUnit* delUnit)
 	eventHandler.RenderUnitDestroyed(delUnit);
 
 	const auto it = std::find(activeUnits.begin(), activeUnits.end(), delUnit);
-	assert(it != activeUnits.end());
 
-	{
+	if (it != activeUnits.end()) {
 		const int delTeam = delUnit->team;
 		const int delType = delUnit->unitDef->id;
 
@@ -208,15 +207,9 @@ void CUnitHandler::DeleteUnitNow(CUnit* delUnit)
 		CSolidObject::SetDeletingRefID(delUnit->id);
 		memPool.free(delUnit);
 		CSolidObject::SetDeletingRefID(-1);
+	} else {
+		assert(false);
 	}
-
-#ifdef _DEBUG
-	for (CUnit* u: activeUnits) {
-		if (u == delUnit) {
-			LOG_L(L_ERROR, "Duplicated unit found in active units on erase");
-		}
-	}
-#endif
 }
 
 

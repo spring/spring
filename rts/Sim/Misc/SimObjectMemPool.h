@@ -16,6 +16,9 @@ template<size_t N> struct SimObjectMemPool {
 public:
 	template<typename T, typename... A> T* alloc(A&&... a) {
 		static_assert(sizeof(T) <= N, "");
+		// assert(!recursed());
+
+		in_ctor = true;
 
 		T* p = nullptr;
 		uint8_t* m = nullptr;
@@ -28,33 +31,42 @@ public:
 			i = pages.size() - 1;
 			m = &pages[i][0];
 			p = new (m) T(std::forward<A>(a)...);
-
-			table.emplace(p, i);
 		} else {
+			// must pop before ctor runs; objects can be created recursively
 			i = spring::VectorBackPop(indcs);
 			m = &pages[i][0];
 			p = new (m) T(std::forward<A>(a)...);
-
-			table.emplace(p, i);
-			// must pop before ctor runs; objects can be created recursively
-			// indcs.pop_back();
 		}
 
+		table.emplace(p, i);
+
+		in_ctor = false;
 		return p;
 	}
 
 	template<typename T> void free(T*& p) {
-		const auto pit = table.find(p); assert(pit != table.end());
-		const size_t idx = pit->second; assert(idx != -1lu);
+		assert(mapped(p));
+		// assert(!recursed());
 
-		indcs.push_back(idx);
-		table.erase(pit);
+		in_dtor = true;
+
+		const auto iter = table.find(p);
+		const auto pair = std::pair<void*, size_t>{iter->first, iter->second};
 
 		spring::SafeDestruct(p);
-		std::memset(&pages[idx][0], 0, N);
+		std::memset(&pages[pair.second][0], 0, N);
+
+		// must push after dtor runs, since that can trigger *another* ctor call
+		// by proxy (~CUnit -> ~CObject -> DependentDied -> CommandAI::FinishCmd
+		// -> CBuilderCAI::ExecBuildCmd -> UnitLoader::LoadUnit -> CUnit e.g.)
+		indcs.push_back(pair.second);
+		table.erase(pair.first);
+
+		in_dtor = false;
 	}
 
-	template<typename T> bool mapped(const T* p) const { return (table.find(p) != table.end()); }
+	bool mapped(void* p) const { return (table.find(p) != table.end()); }
+	bool recursed() const { return (in_ctor || in_dtor); }
 
 	void clear() {
 		pages.clear();
@@ -72,6 +84,9 @@ private:
 
 	// <pointer, page index> (non-intrusive)
 	spring::unsynced_map<void*, size_t> table;
+
+	bool in_ctor = false;
+	bool in_dtor = false;
 };
 
 #endif

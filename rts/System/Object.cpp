@@ -7,7 +7,6 @@
 #include "System/Log/ILog.h"
 #include "System/Platform/CrashHandler.h"
 
-
 CR_BIND(CObject, )
 
 CR_REG_METADATA(CObject, (
@@ -186,12 +185,18 @@ void CObject::PostLoad()
 #endif //USING_CREG
 
 
-// NOTE that we can be listening to a single object from several different places,
-// however objects are responsible for not adding the same dependence more than once,
-// and preferably try to delete the dependence asap in order not to waste memory
+// NOTE:
+//   we can be listening to a single object from several different places
+//   objects are responsible for not adding the same dependence more than
+//   once, and preferably try to delete the dependence ASAP in order not
+//   to waste memory
 void CObject::AddDeathDependence(CObject* obj, DependenceType dep)
 {
 	assert(!detached && !obj->detached);
+
+	// check this explicitly
+	if (detached || obj->detached)
+		return;
 
 	VectorInsertSorted(const_cast<TSyncSafeSet&>(     GetListening(dep)),  obj);
 	VectorInsertSorted(const_cast<TSyncSafeSet&>(obj->GetListeners(dep)), this);
@@ -201,7 +206,8 @@ void CObject::AddDeathDependence(CObject* obj, DependenceType dep)
 void CObject::DeleteDeathDependence(CObject* obj, DependenceType dep)
 {
 	assert(!detached);
-	if (obj->detached)
+
+	if (detached || obj->detached)
 		return;
 
 	const auto it =      listeningDepTbl.find(dep);
