@@ -492,11 +492,10 @@ float3 CPathManager::NextWayPoint(
 	IPath::Path& medResPath = multiPath->medResPath;
 	IPath::Path& lowResPath = multiPath->lowResPath;
 
-	if ((callerPos == ZeroVector) && !maxResPath.path.empty()) {
+	if ((callerPos == ZeroVector) && !maxResPath.path.empty())
 		callerPos = maxResPath.path.back();
-	}
 
-	assert(multiPath->peDef->synced == synced);
+	assert(multiPath->peDef.synced == synced);
 
 	#define EXTEND_PATH_POINTS(curResPts, nxtResPts, dist) ((!curResPts.empty() && (curResPts.back()).SqDistance2D(callerPos) < Square((dist))) || nxtResPts.size() <= 2)
 	const bool extendMaxResPath = EXTEND_PATH_POINTS(medResPath.path, maxResPath.path, MAXRES_SEARCH_DISTANCE_EXT);
