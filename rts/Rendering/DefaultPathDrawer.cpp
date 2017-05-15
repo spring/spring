@@ -324,7 +324,7 @@ void DefaultPathDrawer::Draw() const {
 		glEnd();
 
 		// visualize the path definition (goal, radius)
-		Draw(multiPath.peDef);
+		Draw(&multiPath.peDef);
 	}
 
 	glLineWidth(1);

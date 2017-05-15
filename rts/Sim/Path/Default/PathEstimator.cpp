@@ -407,6 +407,7 @@ void CPathEstimator::CalculateVertex(
 	pfDef.needPath       = false;
 	pfDef.exactPath      = true;
 	pfDef.dirIndependent = true;
+
 	IPath::Path path;
 	IPath::SearchResult result = pathFinders[threadNum]->GetPath(moveDef, pfDef, nullptr, startPos, path, MAX_SEARCHED_NODES_PF >> 2);
 

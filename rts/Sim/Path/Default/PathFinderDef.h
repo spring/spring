@@ -50,11 +50,11 @@ public:
 class CCircularSearchConstraint: public CPathFinderDef {
 public:
 	CCircularSearchConstraint(
-		const float3& start,
-		const float3& goal,
-		float goalRadius,
-		float searchSize,
-		unsigned int extraSize
+		const float3& start = ZeroVector,
+		const float3& goal = ZeroVector,
+		float goalRadius = 0.0f,
+		float searchSize = 0.0f,
+		unsigned int extraSize = 0
 	);
 
 	// tests if a square is inside is the circular constrained area

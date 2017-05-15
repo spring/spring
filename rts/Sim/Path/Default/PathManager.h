@@ -93,18 +93,17 @@ public:
 
 private:
 	struct MultiPath {
-		MultiPath(): peDef(nullptr), moveDef(nullptr), caller(nullptr) {}
-		MultiPath(const float3& pos, const CPathFinderDef* def, const MoveDef* moveDef)
+		MultiPath(): moveDef(nullptr), caller(nullptr) {}
+		MultiPath(const MoveDef* moveDef, const float3& startPos, const float3& goalPos, float goalRadius)
 			: searchResult(IPath::Error)
-			, start(pos)
-			, peDef(def)
+			, start(startPos)
+			, peDef(startPos, goalPos, goalRadius, 3.0f, 2000)
 			, moveDef(moveDef)
 			, caller(nullptr)
 		{}
 
 		MultiPath(const MultiPath& mp) = delete;
 		MultiPath(MultiPath&& mp) { *this = std::move(mp); }
-		~MultiPath() { delete peDef; peDef = nullptr; }
 
 		MultiPath& operator = (const MultiPath& mp) = delete;
 		MultiPath& operator = (MultiPath&& mp) {
@@ -121,7 +120,6 @@ private:
 			moveDef = mp.moveDef;
 			caller  = mp.caller;
 
-			mp.peDef   = nullptr;
 			mp.moveDef = nullptr;
 			mp.caller  = nullptr;
 			return *this;
@@ -138,7 +136,8 @@ private:
 		float3 start;
 		float3 finalGoal;
 
-		const CPathFinderDef* peDef;
+		CCircularSearchConstraint peDef;
+
 		const MoveDef* moveDef;
 
 		// additional information
@@ -151,7 +150,6 @@ private:
 		const MoveDef* moveDef,
 		const float3& startPos,
 		const float3& goalPos,
-		CPathFinderDef* peDef,
 		CSolidObject* caller
 	) const;
 
