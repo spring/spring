@@ -113,7 +113,7 @@ IPath::SearchResult CPathManager::ArrangePath(
 	const float3& goalPos,
 	CSolidObject* caller
 ) const {
-	CPathFinderDef* pfDef = &newPath.peDef;
+	CPathFinderDef* pfDef = &newPath->peDef;
 
 	// choose the PF or the PE depending on the projected 2D goal-distance
 	// NOTE: this distance can be far smaller than the actual path length!
