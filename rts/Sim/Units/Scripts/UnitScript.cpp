@@ -445,7 +445,7 @@ bool CUnitScript::EmitSfx(int sfxType, int sfxPiece)
 		return false;
 	}
 
-	return (EmitRelSFX(sfxType, relPos, relDir));
+	return (EmitRelSFX(sfxType, relPos, relDir.SafeNormalize()));
 #endif
 }
 
