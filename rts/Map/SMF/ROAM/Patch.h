@@ -23,7 +23,10 @@ class CCamera;
 #define VARIANCE_DEPTH (12)
 
 // how many TriTreeNodes should be reserved per pool
-#define NEW_POOL_SIZE (1 << 19)
+// this is a reasonable baseline for *most* maps but
+// not guaranteed to suffice under all possible user
+// detail levels on every map in existence
+#define NEW_POOL_SIZE (1 << 20)
 // debug (simulates fast pool exhaustion)
 // #define NEW_POOL_SIZE (1 << 2)
 
