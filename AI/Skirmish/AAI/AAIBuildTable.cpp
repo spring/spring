@@ -7,7 +7,7 @@
 // Released under GPL license: see LICENSE.html for more information.
 // -------------------------------------------------------------------------
 
-#include "System/Util.h"
+#include "System/SafeUtil.h"
 #include "AAIBuildTable.h"
 #include "AAI.h"
 #include "AAIBrain.h"
@@ -500,7 +500,7 @@ void AAIBuildTable::Init()
 			else if(GetUnitDef(i).movedata)
 			{
 				// ground units
-				if(GetUnitDef(i).movedata->moveFamily == MoveData::Tank || 
+				if(GetUnitDef(i).movedata->moveFamily == MoveData::Tank ||
 					GetUnitDef(i).movedata->moveFamily == MoveData::KBot ||
 					GetUnitDef(i).movedata->moveFamily == MoveData::Hover)
 				{
@@ -850,7 +850,7 @@ void AAIBuildTable::PrecacheStats()
 		// precache efficiency of metalmakers
 		for(list<int>::iterator i = units_of_category[METAL_MAKER][s].begin(); i != units_of_category[METAL_MAKER][s].end(); ++i) {
 			if (GetUnitDef(*i).makesMetal <= 0.1f) {
-				units_static[*i].efficiency[0] = 12.0f/600.0f; //FIXME: this somehow is broken... 
+				units_static[*i].efficiency[0] = 12.0f/600.0f; //FIXME: this somehow is broken...
 			} else {
 				units_static[*i].efficiency[0] = GetUnitDef(*i).makesMetal/(GetUnitDef(*i).energyUpkeep+1);
 			}

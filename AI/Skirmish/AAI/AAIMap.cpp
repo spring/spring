@@ -14,7 +14,7 @@
 #include "AAIConfig.h"
 #include "AAISector.h"
 
-#include "System/Util.h"
+#include "System/SafeUtil.h"
 #include "LegacyCpp/UnitDef.h"
 using namespace springLegacyAI;
 

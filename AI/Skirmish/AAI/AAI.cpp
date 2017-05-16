@@ -27,7 +27,7 @@
 #include "AAISector.h"
 
 
-#include "System/Util.h"
+#include "System/SafeUtil.h"
 
 #include "LegacyCpp/IGlobalAICallback.h"
 #include "LegacyCpp/UnitDef.h"
