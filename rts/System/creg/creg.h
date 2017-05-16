@@ -317,7 +317,7 @@ public: \
 	void* TCls::_Alloc() { return poolAlloc<MyType>(ctor_args); } \
 	void TCls::_Free(void* d) { MyType* mt = (MyType*) d; return poolFree<MyType>(mt); } \
 	void TCls::_ConstructInstance(void* d) { } \
-	void TCls::_DestructInstance(void* d) { ((MyType*)d)->~MyType(); } \
+	void TCls::_DestructInstance(void* d) { } \
 	creg::ClassBinder TCls::binder(#TCls, creg::CF_None, &TBase::binder, &TCls::_CregRegisterMembers, sizeof(TCls), alignof(TCls), TCls::creg_hasVTable, TCls::creg_isStruct, nullptr, nullptr, TCls::_Alloc, TCls::_Free);
 
 /** @def CR_BIND_TEMPLATE

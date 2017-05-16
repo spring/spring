@@ -95,7 +95,7 @@ class DynDamageArray : public DamageArray
 
 public:
 	DynDamageArray(float damage = 1.0f);
-	DynDamageArray(const DynDamageArray& da) { *this = da; refCount = 1; }
+	DynDamageArray(const DynDamageArray& da) { *this = da; fromDef = false; refCount = 1; }
 	~DynDamageArray();
 
 	void PostLoad();
