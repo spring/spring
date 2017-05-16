@@ -3,7 +3,7 @@
 
 #include "System/Object.h"
 #include "System/ContainerUtil.h"
-#include "System/creg/STL_Set.h"
+#include "System/creg/STL_Map.h"
 #include "System/Log/ILog.h"
 #include "System/Platform/CrashHandler.h"
 
@@ -14,13 +14,10 @@ CR_REG_METADATA(CObject, (
 
 	CR_MEMBER(detached),
 
-	CR_IGNORED(listening), // handled in Serialize
-	CR_IGNORED(listeners), // handled in Serialize
-	CR_IGNORED(listenersDepTbl),
-	CR_IGNORED(listeningDepTbl),
-
-	CR_SERIALIZER(Serialize),
-	CR_POSTLOAD(PostLoad)
+	CR_MEMBER(listening),
+	CR_MEMBER(listeners),
+	CR_MEMBER(listenersDepTbl),
+	CR_MEMBER(listeningDepTbl)
 ))
 
 std::atomic<std::int64_t> CObject::cur_sync_id(0);
@@ -87,85 +84,6 @@ CObject::~CObject()
 		}
 	}
 }
-
-#ifdef USING_CREG
-void CObject::Serialize(creg::ISerializer* ser)
-{
-	/*
-	if (ser->IsWriting()) {
-		int num = 0;
-		for (int dt = 0; dt < DEPENDENCE_COUNT; ++dt) {
-			if (listening[dt]) {
-				++num;
-			}
-		}
-		ser->Serialize(&num, sizeof(int));
-		for (int dt = 0; dt < DEPENDENCE_COUNT; ++dt) {
-			if (listening[dt]) {
-				ser->Serialize(&dt, sizeof(int));
-				TSyncSafeSet& dl = *listening[dt];
-				int size = 0;
-				TSyncSafeSet::const_iterator oi;
-				for (oi = dl.begin(); oi != dl.end(); ++oi) {
-					if ((*oi)->GetClass() != CObject::StaticClass()) {
-						size++;
-					}
-				}
-				ser->Serialize(&size, sizeof(int));
-				for (oi = dl.begin(); oi != dl.end(); ++oi) {
-					if ((*oi)->GetClass() != CObject::StaticClass()) {
-						ser->SerializeObjectPtr((void**)&*oi, (*oi)->GetClass());
-					} else {
-						LOG("Death dependance not serialized in %s", GetClass()->name.c_str());
-					}
-				}
-			}
-		}
-	} else {
-		int num;
-		ser->Serialize(&num, sizeof(int));
-		for (int i = 0; i < num; i++) {
-			int dt;
-			ser->Serialize(&dt, sizeof(int));
-			int size;
-			ser->Serialize(&size, sizeof(int));
-			if (!listening[dt])
-				listening[dt] = new TSyncSafeSet();
-			TSyncSafeSet& dl = *listening[dt];
-			for (int o = 0; o < size; o++) {
-				CObject* obj = NULL;
-				ser->SerializeObjectPtr((void**)&obj, NULL);
-				dl.insert(obj);
-			}
-		}
-		// cur_sync_id needs fixing since it's not serialized
-		// it might not be exactly where we left it, but that's not important
-		// since only order matters
-		cur_sync_id = std::max(sync_id, (std::int64_t) cur_sync_id);
-	}
-	*/
-}
-
-void CObject::PostLoad()
-{
-	for (int depType = 0; depType < DEPENDENCE_COUNT; ++depType) {
-		const auto it = listeningDepTbl.find(depType);
-
-		if (it == listeningDepTbl.end())
-			continue;
-
-		for (CObject* obj: listening[ it->second ]) {
-			const auto jt = obj->listenersDepTbl.find(depType);
-
-			if (jt == obj->listenersDepTbl.end())
-				continue;
-
-			VectorInsertSorted(obj->listeners[ jt->second ], this);
-		}
-	}
-}
-
-#endif //USING_CREG
 
 
 // NOTE:
