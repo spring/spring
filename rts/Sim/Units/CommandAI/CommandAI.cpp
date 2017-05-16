@@ -27,6 +27,7 @@
 #include "System/EventHandler.h"
 #include "System/myMath.h"
 #include "System/Log/ILog.h"
+#include "System/SafeUtil.h"
 #include "System/Util.h"
 #include "System/creg/STL_Set.h"
 #include "System/creg/STL_Deque.h"

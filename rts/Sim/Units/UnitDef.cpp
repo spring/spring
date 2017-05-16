@@ -18,6 +18,7 @@
 #include "System/Exceptions.h"
 #include "System/Log/ILog.h"
 #include "System/myMath.h"
+#include "System/SafeUtil.h"
 #include "System/Util.h"
 
 /******************************************************************************/

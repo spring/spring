@@ -43,7 +43,7 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
 #include "System/myMath.h"
-#include "System/Util.h"
+#include "System/SafeUtil.h"
 
 #define UNIT_SHADOW_ALPHA_MASKING
 

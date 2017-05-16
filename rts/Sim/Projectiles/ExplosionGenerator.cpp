@@ -38,7 +38,7 @@
 #include "System/Sync/HsiehHash.h"
 #include "System/Exceptions.h"
 #include "System/myMath.h"
-#include "System/Util.h"
+#include "System/SafeUtil.h"
 
 
 CR_BIND_INTERFACE(IExplosionGenerator)

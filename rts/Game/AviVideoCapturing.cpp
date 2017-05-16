@@ -8,6 +8,7 @@
 #include "Rendering/GlobalRendering.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "System/Log/ILog.h"
+#include "System/SafeUtil.h"
 #include "System/Util.h"
 #include "System/FileSystem/FileHandler.h"
 #include "lib/streflop/streflop_cond.h"

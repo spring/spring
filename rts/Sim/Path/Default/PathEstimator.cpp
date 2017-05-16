@@ -28,6 +28,8 @@
 #include "System/FileSystem/FileSystem.h"
 #include "System/FileSystem/FileQueryFlags.h"
 #include "System/Platform/Threading.h"
+#include "System/SafeUtil.h"
+#include "System/Util.h"
 #include "System/Sync/HsiehHash.h"
 #include "System/Threading/SpringThreading.h"
 

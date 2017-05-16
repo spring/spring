@@ -32,6 +32,7 @@
 #include "Map/Ground.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "System/myMath.h"
+#include "System/SafeUtil.h"
 #include "System/Util.h"
 #include "System/Platform/Threading.h"
 #include "System/Platform/Watchdog.h"

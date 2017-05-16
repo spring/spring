@@ -11,7 +11,6 @@
 #include <functional>
 
 #include "ConfigVariable.h"
-#include "System/Util.h"
 
 /**
  * @brief Config handler interface
@@ -166,10 +165,7 @@ private:
 
 	/// @see Get
 	/// @brief <bool> specialization of Get<> (we cannot use template spezialization here, so just overload it)
-	bool Get(const std::string& key) const
-	{
-		return StringToBool(GetString(key));
-	}
+	bool Get(const std::string& key) const;
 };
 
 extern ConfigHandler* configHandler;

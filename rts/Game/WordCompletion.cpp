@@ -9,7 +9,7 @@
 
 #include "WordCompletion.h"
 #include "System/Log/ILog.h"
-#include "System/Util.h"
+#include "System/SafeUtil.h"
 
 #include <stdexcept>
 #include <algorithm>

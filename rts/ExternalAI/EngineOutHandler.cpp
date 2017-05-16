@@ -21,7 +21,7 @@
 #include "Net/Protocol/NetProtocol.h"
 #include "System/Log/ILog.h"
 #include "System/TimeProfiler.h"
-#include "System/Util.h"
+#include "System/SafeUtil.h"
 
 #include "System/creg/STL_Map.h"
 

@@ -17,7 +17,7 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
 #include "System/TdfParser.h"
-#include "System/Util.h"
+#include "System/SafeUtil.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/Platform/byteorder.h"
 

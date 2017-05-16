@@ -12,7 +12,6 @@
 #include "System/creg/STL_Set.h"
 #include "System/EventHandler.h"
 #include "System/TimeProfiler.h"
-#include "System/Util.h"
 
 /******************************************************************************/
 

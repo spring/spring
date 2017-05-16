@@ -5,7 +5,7 @@
 #include "ArchiveScanner.h"
 #include "VFSHandler.h"
 #include "System/LogOutput.h"
-#include "System/Util.h"
+#include "System/SafeUtil.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Platform/Misc.h"
 

@@ -16,6 +16,7 @@
 #include "Net/Protocol/NetProtocol.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
+#include "System/Util.h"
 
 #include <cassert>
 #include <string>

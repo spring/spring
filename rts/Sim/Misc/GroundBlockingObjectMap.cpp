@@ -8,7 +8,7 @@
 #include "Sim/Path/IPathManager.h"
 #include "System/creg/STL_Map.h"
 #include "System/Sync/HsiehHash.h"
-#include "System/Util.h"
+#include "System/ContainerUtil.h"
 
 CGroundBlockingObjectMap* groundBlockingObjectMap = nullptr;
 

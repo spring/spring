@@ -15,7 +15,6 @@
 #include "Sim/Weapons/WeaponDef.h"
 #include "System/EventHandler.h"
 #include "System/myMath.h"
-#include "System/Util.h"
 
 CR_BIND_DERIVED(CPlasmaRepulser, CWeapon, (NULL, NULL))
 

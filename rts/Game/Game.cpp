@@ -110,7 +110,7 @@
 #include "System/myMath.h"
 #include "Net/GameServer.h"
 #include "Net/Protocol/NetProtocol.h"
-#include "System/Util.h"
+#include "System/SafeUtil.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/LoadSave/LoadSaveHandler.h"
 #include "System/LoadSave/DemoRecorder.h"

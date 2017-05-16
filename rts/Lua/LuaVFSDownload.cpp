@@ -3,7 +3,7 @@
 #include "System/EventHandler.h"
 
 #include "LuaVFSDownload.h"
-#include "System/Util.h"
+#include "System/SafeUtil.h"
 #include "System/EventHandler.h"
 #include "System/Platform/Threading.h" // Is{Main,GameLoad}Thread
 #include "System/Threading/SpringThreading.h"

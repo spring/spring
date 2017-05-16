@@ -18,7 +18,7 @@
 #include "Rendering/GlobalRendering.h"
 #include "System/bitops.h"
 #include "System/ScopedFPUSettings.h"
-#include "System/Util.h"
+#include "System/SafeUtil.h"
 #include "System/Log/ILog.h"
 #include "System/Threading/ThreadPool.h"
 #include "System/FileSystem/DataDirsAccess.h"

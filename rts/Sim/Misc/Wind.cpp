@@ -6,7 +6,6 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "System/myMath.h"
-#include "System/Util.h"
 
 CR_BIND(CWind, )
 

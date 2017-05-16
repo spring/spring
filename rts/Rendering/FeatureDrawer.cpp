@@ -29,7 +29,6 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
 #include "System/myMath.h"
-#include "System/Util.h"
 
 #define DRAW_QUAD_SIZE 32
 

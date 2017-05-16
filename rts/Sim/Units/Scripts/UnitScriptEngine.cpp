@@ -9,7 +9,7 @@
 #include "UnitScriptFactory.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
-#include "System/Util.h"
+#include "System/SafeUtil.h"
 #include "System/FileSystem/FileHandler.h"
 
 CUnitScriptEngine* unitScriptEngine = nullptr;

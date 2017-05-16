@@ -87,7 +87,7 @@
 #include "System/Sound/ISound.h"
 #include "System/Sound/ISoundChannels.h"
 #include "System/Sync/DumpState.h"
-#include "System/Util.h"
+#include "System/SafeUtil.h"
 #include "System/EventHandler.h"
 
 #include <SDL_events.h>

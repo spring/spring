@@ -21,6 +21,7 @@
 #include "System/Log/ILog.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/Misc/SpringTime.h"
+#include "System/ContainerUtil.h"
 #include "System/ScopedFPUSettings.h"
 #include "System/Util.h"
 

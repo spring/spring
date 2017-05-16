@@ -40,7 +40,7 @@
 #include "Game/UI/GuiHandler.h"
 #include "System/EventHandler.h"
 #include "System/TimeProfiler.h"
-#include "System/Util.h"
+#include "System/SafeUtil.h"
 
 CWorldDrawer::CWorldDrawer(): numUpdates(0)
 {

@@ -19,8 +19,8 @@
 #include "Rendering/Textures/Bitmap.h"
 #include "Sim/Units/UnitDef.h"
 #include "System/EventHandler.h"
-#include "System/Util.h"
 #include "System/TimeProfiler.h"
+#include "System/Util.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/Log/ILog.h"
 

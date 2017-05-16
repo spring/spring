@@ -3,6 +3,8 @@
 #include "ConfigHandler.h"
 #include "ConfigLocater.h"
 #include "ConfigSource.h"
+#include "System/ContainerUtil.h"
+#include "System/SafeUtil.h"
 #include "System/Util.h"
 #include "System/Log/ILog.h"
 #include "System/UnorderedMap.hpp"
@@ -398,5 +400,11 @@ void ConfigHandler::Deallocate()
 {
 	spring::SafeDelete(configHandler);
 }
+
+bool ConfigHandler::Get(const std::string& key) const
+{
+	return StringToBool(GetString(key));
+}
+
 
 /******************************************************************************/

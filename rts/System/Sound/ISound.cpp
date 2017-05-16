@@ -17,7 +17,7 @@
 #endif
 
 #include "System/Misc/SpringTime.h" //FIXME: remove this
-#include "System/Util.h"
+#include "System/SafeUtil.h"
 
 CONFIG(bool, Sound).defaultValue(true).description("Select the Sound driver, true = OpenAL, false = NullAudio");
 

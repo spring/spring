@@ -16,11 +16,9 @@
 #include "System/EventHandler.h"
 #include "System/Log/ILog.h"
 #include "System/MsgStrings.h"
-#include "System/Util.h"
 #include "System/creg/STL_Set.h"
 #include "System/creg/STL_List.h"
 #include "System/creg/STL_Map.h"
-#include "System/creg/STL_Set.h"
 
 
 CR_BIND_DERIVED(CTeam, TeamBase, )

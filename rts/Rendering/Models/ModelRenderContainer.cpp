@@ -9,7 +9,6 @@
 #include "Sim/Projectiles/Projectile.h"
 #include "Sim/Units/Unit.h"
 #include "System/Log/ILog.h"
-#include "System/Util.h"
 
 #define LOG_SECTION_WORLD_OBJECT_MODEL_RENDERER "ModelRenderContainer"
 LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_WORLD_OBJECT_MODEL_RENDERER)

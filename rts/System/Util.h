@@ -3,14 +3,13 @@
 #ifndef UTIL_H
 #define UTIL_H
 
+#include <algorithm>
 #include <cassert>
 #include <string>
 #include <sstream>
 #include <vector>
 
 #include "System/maindefines.h"
-#include "System/SafeUtil.h"
-#include "System/ContainerUtil.h"
 
 /*
  * Pre-processor trickery, useful to create unique identifiers.

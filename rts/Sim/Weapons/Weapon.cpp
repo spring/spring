@@ -28,7 +28,6 @@
 #include "System/Sync/SyncTracer.h"
 #include "System/Sound/ISoundChannels.h"
 #include "System/Log/ILog.h"
-#include "System/Util.h"
 
 CR_BIND_DERIVED(CWeapon, CObject, (nullptr, nullptr))
 

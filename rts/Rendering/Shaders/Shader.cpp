@@ -7,6 +7,7 @@
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GlobalRendering.h"
 
+#include "System/SafeUtil.h"
 #include "System/Util.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/Sync/HsiehHash.h"

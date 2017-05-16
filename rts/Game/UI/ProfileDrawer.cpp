@@ -17,7 +17,7 @@
 #include "System/EventHandler.h"
 #include "System/Rectangle.h"
 #include "System/TimeProfiler.h"
-#include "System/Util.h"
+#include "System/SafeUtil.h"
 #include "lib/lua/include/LuaUser.h"
 
 ProfileDrawer* ProfileDrawer::instance = nullptr;

@@ -7,7 +7,7 @@
 
 #include "System/Exceptions.h"
 #include "System/maindefines.h"
-#include "System/Util.h"
+#include "System/SafeUtil.h"
 #include "System/Log/ILog.h"
 #include "System/Platform/errorhandler.h"
 #include "System/Platform/Threading.h"

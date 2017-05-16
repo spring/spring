@@ -9,7 +9,7 @@
 #include "System/Log/ILog.h"
 #include "System/Platform/Threading.h"
 #include "System/SpringApp.h"
-#include "System/Util.h"
+#include "System/SafeUtil.h"
 
 #include <windows.h>
 

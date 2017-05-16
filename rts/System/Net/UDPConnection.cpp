@@ -15,7 +15,7 @@
 #include "System/GlobalConfig.h"
 #include "System/Log/ILog.h"
 #include "System/SpringFormat.h"
-#include "System/Util.h"
+#include "System/SafeUtil.h"
 
 #ifndef UNIT_TEST
 CONFIG(bool, UDPConnectionLogDebugMessages).defaultValue(false);

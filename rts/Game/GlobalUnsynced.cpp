@@ -12,7 +12,7 @@
 #include "Sim/Misc/TeamHandler.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Exceptions.h"
-#include "System/Util.h"
+#include "System/SafeUtil.h"
 #include "System/creg/creg_cond.h"
 #include "System/Misc/SpringTime.h"
 #include "System/Sync/SyncTracer.h"

@@ -9,7 +9,7 @@
 #include "Game/GameSetup.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/GlobalConstants.h"
-#include "System/Util.h"
+#include "System/SafeUtil.h"
 #include "System/Log/FramePrefixer.h"
 
 #ifdef SYNCCHECK

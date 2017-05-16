@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "FBO.h"
+#include "System/ContainerUtil.h"
 #include "System/Log/ILog.h"
 #include "System/Config/ConfigHandler.h"
 

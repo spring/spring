@@ -23,7 +23,7 @@
 #include "System/FileSystem/FileHandler.h"
 #include "System/Threading/ThreadPool.h"
 #include "System/myMath.h"
-#include "System/Util.h"
+#include "System/SafeUtil.h"
 
 #define SSMF_UNCOMPRESSED_NORMALS 0
 

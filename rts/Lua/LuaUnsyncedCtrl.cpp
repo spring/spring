@@ -69,6 +69,7 @@
 #include "System/Log/ILog.h"
 #include "System/Net/PackPacket.h"
 #include "System/Platform/Misc.h"
+#include "System/SafeUtil.h"
 #include "System/UnorderedMap.hpp"
 #include "System/Util.h"
 #include "System/Sound/ISound.h"

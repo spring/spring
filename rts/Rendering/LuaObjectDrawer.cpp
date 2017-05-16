@@ -18,7 +18,7 @@
 #include "Sim/Units/Unit.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
-#include "System/Util.h"
+#include "System/SafeUtil.h"
 
 
 #define USE_OBJECT_RENDERING_BUCKETS

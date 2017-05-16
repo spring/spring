@@ -52,6 +52,7 @@
 #include "System/GlobalConfig.h"
 #include "System/myMath.h"
 #include "System/MsgStrings.h"
+#include "System/SafeUtil.h"
 #include "System/StartScriptGen.h"
 #include "System/TimeProfiler.h"
 #include "System/UriParser.h"

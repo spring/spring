@@ -14,7 +14,7 @@
 #include "Game/GlobalUnsynced.h"
 #include "System/Log/ILog.h"
 #include "System/Log/LogSinkHandler.h"
-#include "System/Util.h"
+#include "System/SafeUtil.h"
 #include "System/Threading/SpringThreading.h"
 
 #if !defined(DEDICATED) || defined(_MSC_VER)

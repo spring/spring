@@ -5,6 +5,7 @@
 #include "Rendering/Env/Decals/DecalsDrawerGL4.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Exceptions.h"
+#include "System/SafeUtil.h"
 #include "System/Log/ILog.h"
 
 

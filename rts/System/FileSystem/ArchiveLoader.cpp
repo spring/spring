@@ -14,7 +14,7 @@
 #include "FileSystem.h"
 #include "DataDirsAccess.h"
 
-#include "System/Util.h"
+#include "System/SafeUtil.h"
 
 
 CArchiveLoader::CArchiveLoader()

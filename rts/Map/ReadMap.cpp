@@ -22,7 +22,7 @@
 #include "System/Log/ILog.h"
 #include "System/Misc/RectangleOptimizer.h"
 #include "System/Sync/HsiehHash.h"
-#include "System/Util.h"
+#include "System/SafeUtil.h"
 
 #ifdef USE_UNSYNCED_HEIGHTMAP
 #include "Game/GlobalUnsynced.h"

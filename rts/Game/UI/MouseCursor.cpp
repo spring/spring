@@ -12,6 +12,7 @@
 #include "HwMouseCursor.h"
 #include "System/Log/ILog.h"
 #include "System/myMath.h"
+#include "System/SafeUtil.h"
 #include "System/Util.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"

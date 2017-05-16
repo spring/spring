@@ -34,6 +34,7 @@
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileQueryFlags.h"
 #include "System/FileSystem/FileSystem.h"
+#include "System/SafeUtil.h"
 #include "System/Util.h"
 #include "minizip/zip.h"
 #include <cstring>

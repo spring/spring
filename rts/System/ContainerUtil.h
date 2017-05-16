@@ -4,6 +4,7 @@
 #define CONTAINER_UTIL_H
 
 #include <algorithm>
+#include <cassert>
 #include <vector>
 
 namespace spring {

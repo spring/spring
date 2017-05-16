@@ -28,7 +28,7 @@
 #include "Sim/Units/Unit.h"
 #include "System/FileSystem/SimpleParser.h"
 #include "System/Log/ILog.h"
-#include "System/Util.h"
+#include "System/SafeUtil.h"
 
 #include <string>
 #include <vector>
