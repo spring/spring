@@ -162,17 +162,17 @@ CReadMap* CReadMap::LoadMap(const std::string& mapname)
 
 	assert(mbi.width == (mapDims.mapx >> 1));
 	assert(mbi.height == (mapDims.mapy >> 1));
-
 	rm->metalMap = new CMetalMap(metalmapPtr, mbi.width, mbi.height, mapInfo->map.maxMetal);
 
 	if (metalmapPtr != nullptr)
 		rm->FreeInfoMap("metal", metalmapPtr);
 
+	typeMap.clear();
+
 	if (typemapPtr != nullptr && tbi.width == (mapDims.mapx >> 1) && tbi.height == (mapDims.mapy >> 1)) {
 		assert(mapDims.hmapx == tbi.width && mapDims.hmapy == tbi.height);
-		rm->typeMap.clear();
-		rm->typeMap.resize(tbi.width * tbi.height);
-		memcpy(&rm->typeMap[0], typemapPtr, tbi.width * tbi.height);
+		typeMap.resize(tbi.width * tbi.height);
+		memcpy(typeMap.data(), typemapPtr, tbi.width * tbi.height);
 	} else
 		throw content_error("[CReadMap::LoadMap] bad/no terrain typemap");
 
@@ -370,6 +370,9 @@ void CReadMap::Initialize()
 	}
 
 	mapChecksum = CalcHeightmapChecksum();
+
+	syncedHeightMapDigests.clear();
+	unsyncedHeightMapDigests.clear();
 
 	// not callable here because losHandler is still NULL, deferred to Game::PostLoadSim
 	// InitHeightMapDigestVectors();
