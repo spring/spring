@@ -35,6 +35,7 @@
 #include "ExternalAI/SkirmishAIHandler.h"
 #include "Rendering/WorldDrawer.h"
 #include "Rendering/Env/IWater.h"
+#include "Rendering/Env/WaterRendering.h"
 #include "Rendering/Fonts/CFontTexture.h"
 #include "Rendering/Fonts/glFont.h"
 #include "Rendering/CommandDrawer.h"
@@ -463,6 +464,7 @@ void CGame::LoadMap(const std::string& mapName)
 		// simulation components
 		helper = new CGameHelper();
 
+		waterRendering->Init();
 		readMap = CReadMap::LoadMap(mapName);
 		groundBlockingObjectMap = new CGroundBlockingObjectMap(mapDims.mapSquares);
 		buildingMaskMap = new BuildingMaskMap();
@@ -2219,4 +2221,3 @@ bool CGame::ActionPressed(unsigned int key, const Action& action, bool isRepeat)
 
 	return (commandConsole.ExecuteAction(action));
 }
-

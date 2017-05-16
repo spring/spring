@@ -8,7 +8,6 @@
 #include "Rendering/Env/IGroundDecalDrawer.h"
 #include "Rendering/Env/ISky.h"
 #include "Rendering/Env/SunLighting.h"
-#include "Rendering/Env/WaterRendering.h"
 #include "Rendering/Env/ITreeDrawer.h"
 #include "Rendering/Env/IWater.h"
 #include "Rendering/CommandDrawer.h"
@@ -98,7 +97,6 @@ void CWorldDrawer::LoadPre() const
 
 	sky = ISky::GetSky();
 	sunLighting->Init();
-	waterRendering->Init();
 }
 
 void CWorldDrawer::LoadPost() const
