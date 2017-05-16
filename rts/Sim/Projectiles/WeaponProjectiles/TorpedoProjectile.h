@@ -9,6 +9,9 @@ class CTorpedoProjectile : public CWeaponProjectile
 {
 	CR_DECLARE_DERIVED(CTorpedoProjectile)
 public:
+	// creg only
+	CTorpedoProjectile() { }
+
 	CTorpedoProjectile(const ProjectileParams& params);
 
 	void Update() override;
@@ -18,7 +21,6 @@ public:
 
 	void SetIgnoreError(bool b) { ignoreError = b; }
 private:
-	CTorpedoProjectile() { }
 
 	float tracking;
 	bool ignoreError;

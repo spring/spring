@@ -18,6 +18,7 @@
 #include "Sim/Units/CommandAI/MobileCAI.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitLoader.h"
+#include "Sim/Units/UnitMemPool.h"
 #include "System/EventHandler.h"
 #include "System/Matrix44f.h"
 #include "System/myMath.h"
@@ -27,8 +28,8 @@
 
 #include "Game/GlobalUnsynced.h"
 
-CR_BIND_DERIVED(CFactory, CBuilding, )
 
+CR_BIND_DERIVED_POOL(CFactory, CBuilding, , unitMemPool.alloc, unitMemPool.free)
 CR_REG_METADATA(CFactory, (
 	CR_MEMBER(buildSpeed),
 	CR_MEMBER(lastBuildUpdateFrame),

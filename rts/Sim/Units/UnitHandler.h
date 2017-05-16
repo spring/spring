@@ -7,7 +7,6 @@
 
 #include "UnitDef.h"
 #include "Sim/Misc/SimObjectIDPool.h"
-#include "Sim/Misc/SimObjectMemPool.h"
 #include "System/creg/STL_Map.h"
 
 class CUnit;

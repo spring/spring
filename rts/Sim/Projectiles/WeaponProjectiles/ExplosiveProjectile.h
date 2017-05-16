@@ -9,6 +9,9 @@ class CExplosiveProjectile : public CWeaponProjectile
 {
 	CR_DECLARE_DERIVED(CExplosiveProjectile)
 public:
+	// creg only
+	CExplosiveProjectile() { }
+
 	CExplosiveProjectile(const ProjectileParams& params);
 
 	void Update() override;
@@ -19,8 +22,6 @@ public:
 	int ShieldRepulse(const float3& shieldPos, float shieldForce, float shieldMaxSpeed) override;
 
 private:
-	CExplosiveProjectile() { }
-
 	float invttl;
 	float curTime;
 };

@@ -16,6 +16,8 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Weapons/PlasmaRepulser.h"
+#include "System/ContainerUtil.h"
+#include "System/SafeUtil.h"
 #include "System/Util.h"
 
 static inline LocalModelPiece* ParseLocalModelPiece(lua_State* L, CUnitScript* script, const char* caller)

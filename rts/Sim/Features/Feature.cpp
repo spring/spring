@@ -3,6 +3,7 @@
 #include "Feature.h"
 #include "FeatureDef.h"
 #include "FeatureDefHandler.h"
+#include "FeatureMemPool.h"
 #include "FeatureHandler.h"
 #include "Game/GlobalUnsynced.h"
 #include "Map/Ground.h"
@@ -27,7 +28,7 @@
 #include "System/Log/ILog.h"
 
 
-CR_BIND_DERIVED(CFeature, CSolidObject, )
+CR_BIND_DERIVED_POOL(CFeature, CSolidObject, , featureMemPool.alloc, featureMemPool.free)
 
 CR_REG_METADATA(CFeature, (
 	CR_MEMBER(isRepairingBeforeResurrect),

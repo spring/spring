@@ -6,6 +6,7 @@
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
+#include "Sim/Projectiles/ProjectileMemPool.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Weapons/PlasmaRepulser.h"
 #include "Sim/Weapons/WeaponDef.h"
@@ -28,7 +29,8 @@ CR_REG_METADATA(ShieldSegmentCollection, (
 ))
 
 
-CR_BIND_DERIVED(ShieldSegmentProjectile, CProjectile, )
+CR_BIND_DERIVED_POOL(ShieldSegmentProjectile, CProjectile, , projMemPool.alloc, projMemPool.free)
+
 CR_REG_METADATA(ShieldSegmentProjectile, (
 	CR_IGNORED(collection),
 	CR_IGNORED(vertices),

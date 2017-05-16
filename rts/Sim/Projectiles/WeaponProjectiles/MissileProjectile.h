@@ -15,6 +15,9 @@ class CMissileProjectile : public CWeaponProjectile
 protected:
 	void UpdateGroundBounce() override;
 public:
+	// creg only
+	CMissileProjectile() { }
+
 	CMissileProjectile(const ProjectileParams& params);
 
 	void Collision(CUnit* unit) override;
@@ -30,8 +33,6 @@ public:
 
 	void SetIgnoreError(bool b) { ignoreError = b; }
 private:
-	CMissileProjectile() { }
-
 	void UpdateWobble();
 	void UpdateDance();
 

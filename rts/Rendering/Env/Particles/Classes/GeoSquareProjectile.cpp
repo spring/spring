@@ -6,8 +6,9 @@
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
+#include "Sim/Projectiles/ProjectileMemPool.h"
 
-CR_BIND_DERIVED(CGeoSquareProjectile, CProjectile, )
+CR_BIND_DERIVED_POOL(CGeoSquareProjectile, CProjectile, , projMemPool.alloc, projMemPool.free)
 
 CR_REG_METADATA(CGeoSquareProjectile,(
 	CR_MEMBER(p1),

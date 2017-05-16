@@ -12,9 +12,10 @@
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
 #include "Sim/Projectiles/ExpGenSpawnableMemberInfo.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
+#include "Sim/Projectiles/ProjectileMemPool.h"
 #include "System/myMath.h"
 
-CR_BIND_DERIVED(CGroundFlash, CExpGenSpawnable, )
+CR_BIND_DERIVED_POOL(CGroundFlash, CExpGenSpawnable, , projMemPool.alloc, projMemPool.free)
 CR_REG_METADATA(CGroundFlash, (
  	CR_MEMBER_BEGINFLAG(CM_Config),
 		CR_MEMBER(size),

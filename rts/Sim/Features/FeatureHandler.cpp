@@ -4,6 +4,7 @@
 
 #include "FeatureDef.h"
 #include "FeatureDefHandler.h"
+#include "FeatureMemPool.h"
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
 #include "Sim/Misc/SimObjectMemPool.h"
@@ -26,14 +27,13 @@ CR_REG_METADATA(CFeatureHandler, (
 
 /******************************************************************************/
 
-static SimObjectMemPool<sizeof(CFeature)> memPool;
+SimObjectMemPool<sizeof(CFeature)> featureMemPool;
 
 CFeatureHandler* featureHandler = nullptr;
 
 
 CFeatureHandler::CFeatureHandler() {
-	memPool.clear();
-	memPool.reserve(128);
+	featureMemPool.reserve(128);
 
 	features.reserve(128);
 	activeFeatureIDs.reserve(128);
@@ -41,8 +41,9 @@ CFeatureHandler::CFeatureHandler() {
 
 CFeatureHandler::~CFeatureHandler() {
 	for (const int featureID: activeFeatureIDs) {
-		memPool.free(features[featureID]);
+		featureMemPool.free(features[featureID]);
 	}
+	featureMemPool.clear();
 }
 
 
@@ -91,7 +92,7 @@ CFeature* CFeatureHandler::LoadFeature(const FeatureLoadParams& params) {
 	if (!CanAddFeature(params.featureID))
 		return nullptr;
 
-	CFeature* feature = memPool.alloc<CFeature>();
+	CFeature* feature = featureMemPool.alloc<CFeature>();
 
 	// calls back into AddFeature
 	feature->Initialize(params);
@@ -242,7 +243,7 @@ bool CFeatureHandler::UpdateFeature(CFeature* feature)
 		// ID must match parameter for object commands, just use this
 		CSolidObject::SetDeletingRefID(feature->GetBlockingMapID());
 		// destructor removes feature from update-queue
-		memPool.free(feature);
+		featureMemPool.free(feature);
 		CSolidObject::SetDeletingRefID(-1);
 		return true;
 	}

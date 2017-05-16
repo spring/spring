@@ -24,6 +24,7 @@
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitLoader.h"
+#include "Sim/Units/UnitMemPool.h"
 #include "System/EventHandler.h"
 #include "System/Log/ILog.h"
 #include "System/Sound/ISoundChannels.h"
@@ -31,8 +32,7 @@
 using std::min;
 using std::max;
 
-CR_BIND_DERIVED(CBuilder, CUnit, )
-
+CR_BIND_DERIVED_POOL(CBuilder, CUnit, , unitMemPool.alloc, unitMemPool.free)
 CR_REG_METADATA(CBuilder, (
 	CR_MEMBER(range3D),
 	CR_MEMBER(buildDistance),

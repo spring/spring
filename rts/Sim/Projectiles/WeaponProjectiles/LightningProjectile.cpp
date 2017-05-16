@@ -8,13 +8,14 @@
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
+#include "Sim/Projectiles/ProjectileMemPool.h"
 #include "Sim/Weapons/WeaponDef.h"
 
 #ifdef TRACE_SYNC
 	#include "System/Sync/SyncTracer.h"
 #endif
 
-CR_BIND_DERIVED(CLightningProjectile, CWeaponProjectile, )
+CR_BIND_DERIVED_POOL(CLightningProjectile, CWeaponProjectile, , projMemPool.alloc, projMemPool.free)
 
 CR_REG_METADATA(CLightningProjectile,(
 	CR_SETFLAG(CF_Synced),

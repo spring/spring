@@ -7,10 +7,11 @@
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
+#include "Sim/Projectiles/ProjectileMemPool.h"
 #include "Sim/Weapons/WeaponDef.h"
 #include <cstring> //memset
 
-CR_BIND_DERIVED(CBeamLaserProjectile, CWeaponProjectile, )
+CR_BIND_DERIVED_POOL(CBeamLaserProjectile, CWeaponProjectile, , projMemPool.alloc, projMemPool.free)
 
 CR_REG_METADATA(CBeamLaserProjectile,(
 	CR_SETFLAG(CF_Synced),

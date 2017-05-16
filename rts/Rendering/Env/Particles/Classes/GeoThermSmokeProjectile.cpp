@@ -4,11 +4,12 @@
 #include "GeoThermSmokeProjectile.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
+#include "Sim/Projectiles/ProjectileMemPool.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/Wind.h"
 
 
-CR_BIND_DERIVED(CGeoThermSmokeProjectile, CSmokeProjectile, )
+CR_BIND_DERIVED_POOL(CGeoThermSmokeProjectile, CSmokeProjectile, , projMemPool.alloc, projMemPool.free)
 
 CR_REG_METADATA(CGeoThermSmokeProjectile, (
 	CR_MEMBER(geo)

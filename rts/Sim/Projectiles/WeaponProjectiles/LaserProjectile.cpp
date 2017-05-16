@@ -7,6 +7,7 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
+#include "Sim/Projectiles/ProjectileMemPool.h"
 #include "Rendering/Env/Particles/Classes/SimpleParticleSystem.h"
 #include "Sim/Weapons/WeaponDef.h"
 
@@ -14,7 +15,7 @@
 	#include "System/Sync/SyncTracer.h"
 #endif
 
-CR_BIND_DERIVED(CLaserProjectile, CWeaponProjectile, )
+CR_BIND_DERIVED_POOL(CLaserProjectile, CWeaponProjectile, , projMemPool.alloc, projMemPool.free)
 
 CR_REG_METADATA(CLaserProjectile,(
 	CR_SETFLAG(CF_Synced),

@@ -9,13 +9,14 @@
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
+#include "Sim/Projectiles/ProjectileMemPool.h"
 #include "Sim/Weapons/WeaponDef.h"
 
 #ifdef TRACE_SYNC
 	#include "System/Sync/SyncTracer.h"
 #endif
 
-CR_BIND_DERIVED(CExplosiveProjectile, CWeaponProjectile, )
+CR_BIND_DERIVED_POOL(CExplosiveProjectile, CWeaponProjectile, , projMemPool.alloc, projMemPool.free)
 
 CR_REG_METADATA(CExplosiveProjectile, (
 	CR_SETFLAG(CF_Synced),

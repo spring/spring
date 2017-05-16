@@ -5,6 +5,7 @@
 #include "UnitHandler.h"
 #include "UnitDefHandler.h"
 #include "UnitLoader.h"
+#include "UnitMemPool.h"
 #include "UnitTypes/Building.h"
 #include "Scripts/NullUnitScript.h"
 #include "Scripts/UnitScriptFactory.h"
@@ -2770,7 +2771,7 @@ short CUnit::GetTransporteeWantedHeading(const CUnit* unit) const {
 /******************************************************************************/
 
 
-CR_BIND_DERIVED(CUnit, CSolidObject, )
+CR_BIND_DERIVED_POOL(CUnit, CSolidObject, , unitMemPool.alloc, unitMemPool.free)
 CR_REG_METADATA(CUnit, (
 	CR_MEMBER(unitDef),
 	CR_MEMBER(shieldWeapon),

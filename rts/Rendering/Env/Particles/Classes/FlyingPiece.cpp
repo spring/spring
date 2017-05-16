@@ -14,7 +14,7 @@
 
 static const float EXPLOSION_SPEED = 2.f;
 
-
+//TODO: add to creg
 
 /////////////////////////////////////////////////////////////////////
 /// NEW S3O,OBJ,ASSIMP,... IMPLEMENTATION

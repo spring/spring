@@ -9,17 +9,19 @@
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
+#include "Sim/Projectiles/ProjectileMemPool.h"
 #include "Sim/Weapons/WeaponDef.h"
 #include "System/creg/STL_Deque.h"
 
-CR_BIND_DERIVED(CFireBallProjectile, CWeaponProjectile, )
-CR_BIND(CFireBallProjectile::Spark, )
+CR_BIND_DERIVED_POOL(CFireBallProjectile, CWeaponProjectile, , projMemPool.alloc, projMemPool.free)
 
 CR_REG_METADATA(CFireBallProjectile,(
 	CR_SETFLAG(CF_Synced),
 	CR_MEMBER(sparks)
 ))
 
+
+CR_BIND(CFireBallProjectile::Spark, )
 CR_REG_METADATA_SUB(CFireBallProjectile,Spark,(
 	CR_MEMBER(pos),
 	CR_MEMBER(speed),

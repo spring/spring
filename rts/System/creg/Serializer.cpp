@@ -502,8 +502,9 @@ void CInputStreamSerializer::SerializeObjectPtr(void** ptr, creg::Class* cls)
 			ufp.ptrAddr = ptr;
 			unfixedPointers.push_back(ufp);
 		}
-	} else
+	} else {
 		*ptr = NULL;
+	}
 }
 
 // Serialize an instance of an object embedded into another object

@@ -5,6 +5,7 @@
 #include "UnitHandler.h"
 #include "Unit.h"
 #include "UnitDefHandler.h"
+#include "UnitMemPool.h"
 #include "UnitTypes/Builder.h"
 #include "UnitTypes/ExtractorBuilding.h"
 #include "UnitTypes/Factory.h"
@@ -40,8 +41,7 @@ CR_REG_METADATA(CUnitHandler, (
 
 
 
-// CBuilder is (currently) the largest derived unit-type
-static SimObjectMemPool<sizeof(CBuilder)> memPool;
+SimObjectMemPool<sizeof(CBuilder)> unitMemPool;
 
 CUnitHandler* unitHandler = nullptr;
 
@@ -50,24 +50,24 @@ CUnit* CUnitHandler::NewUnit(const UnitDef* ud)
 	// special static builder structures that can always be given
 	// move orders (which are passed on to all mobile buildees)
 	if (ud->IsFactoryUnit())
-		return (memPool.alloc<CFactory>());
+		return (unitMemPool.alloc<CFactory>());
 
 	// all other types of non-structure "builders", including hubs and
 	// nano-towers (the latter should not have any build-options at all,
 	// whereas the former should be unable to build any mobile units)
 	if (ud->IsMobileBuilderUnit() || ud->IsStaticBuilderUnit())
-		return (memPool.alloc<CBuilder>());
+		return (unitMemPool.alloc<CBuilder>());
 
 	// static non-builder structures
 	if (ud->IsBuildingUnit()) {
 		if (ud->IsExtractorUnit())
-			return (memPool.alloc<CExtractorBuilding>());
+			return (unitMemPool.alloc<CExtractorBuilding>());
 
-		return (memPool.alloc<CBuilding>());
+		return (unitMemPool.alloc<CBuilding>());
 	}
 
 	// regular mobile unit
-	return (memPool.alloc<CUnit>());
+	return (unitMemPool.alloc<CUnit>());
 }
 
 
@@ -76,8 +76,7 @@ CUnitHandler::CUnitHandler():
 	maxUnits(0),
 	maxUnitRadius(0.0f)
 {
-	memPool.clear();
-	memPool.reserve(128);
+	unitMemPool.reserve(128);
 
 	static_assert(sizeof(CBuilder) >= sizeof(CUnit             ), "");
 	static_assert(sizeof(CBuilder) >= sizeof(CBuilding         ), "");
@@ -112,8 +111,9 @@ CUnitHandler::~CUnitHandler()
 	for (CUnit* u: activeUnits) {
 		// ~CUnit dereferences featureHandler which is destroyed already
 		u->delayedWreckLevel = -1;
-		memPool.free(u);
+		unitMemPool.free(u);
 	}
+	unitMemPool.clear();
 }
 
 
@@ -204,7 +204,7 @@ void CUnitHandler::DeleteUnitNow(CUnit* delUnit)
 		units[delUnit->id] = nullptr;
 
 		CSolidObject::SetDeletingRefID(delUnit->id);
-		memPool.free(delUnit);
+		unitMemPool.free(delUnit);
 		CSolidObject::SetDeletingRefID(-1);
 	} else {
 		assert(false);

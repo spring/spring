@@ -11,6 +11,9 @@ class CLightningProjectile : public CWeaponProjectile
 {
 	CR_DECLARE_DERIVED(CLightningProjectile)
 public:
+	// creg only
+	CLightningProjectile() { }
+
 	CLightningProjectile(const ProjectileParams& params);
 
 	void Update() override;
@@ -20,8 +23,6 @@ public:
 	virtual int GetProjectilesCount() const override;
 
 private:
-	CLightningProjectile() { }
-
 	float3 color;
 
 	#define displacements_size 10

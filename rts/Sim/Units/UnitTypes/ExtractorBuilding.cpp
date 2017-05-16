@@ -7,14 +7,16 @@
 #include "ExtractorBuilding.h"
 #include "Sim/Units/Scripts/UnitScript.h"
 #include "Sim/Units/UnitHandler.h"
+#include "Sim/Units/UnitMemPool.h"
 #include "Map/ReadMap.h"
 #include "Sim/Units/UnitDef.h"
 #include "Map/MetalMap.h"
 #include "Sim/Misc/QuadField.h"
 #include "System/Sync/SyncTracer.h"
+#include "System/ContainerUtil.h"
 
-CR_BIND_DERIVED(CExtractorBuilding, CBuilding, )
 
+CR_BIND_DERIVED_POOL(CExtractorBuilding, CBuilding, , unitMemPool.alloc, unitMemPool.free)
 CR_REG_METADATA(CExtractorBuilding, (
 	CR_MEMBER(extractionRange),
 	CR_MEMBER(extractionDepth),

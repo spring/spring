@@ -9,9 +9,10 @@
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
+#include "Sim/Projectiles/ProjectileMemPool.h"
 #include "System/myMath.h"
 
-CR_BIND_DERIVED(CSmokeTrailProjectile, CProjectile, )
+CR_BIND_DERIVED_POOL(CSmokeTrailProjectile, CProjectile, , projMemPool.alloc, projMemPool.free)
 
 CR_REG_METADATA(CSmokeTrailProjectile,(
 	CR_MEMBER(pos1),

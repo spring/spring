@@ -5,6 +5,7 @@
 #include "GlobalSynced.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
+#include "System/ContainerUtil.h"
 #include "System/myMath.h"
 
 CR_BIND(CWind, )

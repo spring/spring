@@ -7,9 +7,10 @@
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
+#include "Sim/Projectiles/ProjectileMemPool.h"
 
 
-CR_BIND_DERIVED(CMuzzleFlame, CProjectile, )
+CR_BIND_DERIVED_POOL(CMuzzleFlame, CProjectile, , projMemPool.alloc, projMemPool.free)
 
 CR_REG_METADATA(CMuzzleFlame,(
 	CR_MEMBER(size),

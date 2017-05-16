@@ -10,8 +10,9 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ExpGenSpawnableMemberInfo.h"
+#include "Sim/Projectiles/ProjectileMemPool.h"
 
-CR_BIND_DERIVED(CExploSpikeProjectile, CProjectile, )
+CR_BIND_DERIVED_POOL(CExploSpikeProjectile, CProjectile, , projMemPool.alloc, projMemPool.free)
 
 CR_REG_METADATA(CExploSpikeProjectile,
 (

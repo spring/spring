@@ -10,11 +10,12 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/ColorMap.h"
 #include "Sim/Projectiles/ExpGenSpawnableMemberInfo.h"
+#include "Sim/Projectiles/ProjectileMemPool.h"
 #include "System/float3.h"
 #include "System/Log/ILog.h"
 #include "System/myMath.h"
 
-CR_BIND_DERIVED(CSimpleParticleSystem, CProjectile, )
+CR_BIND_DERIVED_POOL(CSimpleParticleSystem, CProjectile, , projMemPool.alloc, projMemPool.free)
 
 CR_REG_METADATA(CSimpleParticleSystem,
 (
@@ -220,8 +221,7 @@ bool CSimpleParticleSystem::GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo
 }
 
 
-
-CR_BIND_DERIVED(CSphereParticleSpawner, CSimpleParticleSystem, )
+CR_BIND_DERIVED_POOL(CSphereParticleSpawner, CSimpleParticleSystem, , projMemPool.alloc, projMemPool.free)
 
 CR_REG_METADATA(CSphereParticleSpawner, )
 

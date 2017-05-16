@@ -9,9 +9,10 @@
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
+#include "Sim/Projectiles/ProjectileMemPool.h"
 #include "Sim/Weapons/WeaponDef.h"
 
-CR_BIND_DERIVED(CFlameProjectile, CWeaponProjectile, )
+CR_BIND_DERIVED_POOL(CFlameProjectile, CWeaponProjectile, , projMemPool.alloc, projMemPool.free)
 
 CR_REG_METADATA(CFlameProjectile,(
 	CR_SETFLAG(CF_Synced),

@@ -12,8 +12,9 @@
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Misc/Wind.h"
 #include "Sim/Projectiles/ExpGenSpawnableMemberInfo.h"
+#include "Sim/Projectiles/ProjectileMemPool.h"
 
-CR_BIND_DERIVED(CSmokeProjectile2, CProjectile, )
+CR_BIND_DERIVED_POOL(CSmokeProjectile2, CProjectile, , projMemPool.alloc, projMemPool.free)
 
 CR_REG_METADATA(CSmokeProjectile2,
 (

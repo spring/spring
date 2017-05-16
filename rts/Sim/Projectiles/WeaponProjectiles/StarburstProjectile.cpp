@@ -11,6 +11,7 @@
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
+#include "Sim/Projectiles/ProjectileMemPool.h"
 #include "Rendering/Env/Particles/Classes/SmokeTrailProjectile.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Weapons/WeaponDef.h"
@@ -36,7 +37,7 @@ CR_REG_METADATA_SUB(CStarburstProjectile, TracerPart, (
 ))
 
 
-CR_BIND_DERIVED(CStarburstProjectile, CWeaponProjectile, )
+CR_BIND_DERIVED_POOL(CStarburstProjectile, CWeaponProjectile, , projMemPool.alloc, projMemPool.free)
 CR_REG_METADATA(CStarburstProjectile, (
 	CR_SETFLAG(CF_Synced),
 	CR_MEMBER(tracking),
