@@ -19,6 +19,7 @@
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
+#include "System/Log/ILog.h"
 #include "System/Misc/RectangleOptimizer.h"
 #include "System/Sync/HsiehHash.h"
 #include "System/Util.h"
@@ -138,16 +139,16 @@ MapTexture::~MapTexture() {
 
 
 
-CReadMap* CReadMap::LoadMap(const std::string& mapname)
+CReadMap* CReadMap::LoadMap(const std::string& mapName)
 {
 	CReadMap* rm = nullptr;
 
-	if (FileSystem::GetExtension(mapname) == "sm3") {
+	if (FileSystem::GetExtension(mapName) == "sm3") {
 		throw content_error("[CReadMap::LoadMap] SM3 maps are no longer supported as of Spring 95.0");
-		// rm = new CSM3ReadMap(mapname);
+		// rm = new CSM3ReadMap(mapName);
 	} else {
 		// assume SMF format by default; calls ::Initialize
-		rm = new CSMFReadMap(mapname);
+		rm = new CSMFReadMap(mapName);
 	}
 
 	if (rm == nullptr)
@@ -160,21 +161,19 @@ CReadMap* CReadMap::LoadMap(const std::string& mapname)
 	unsigned char* metalmapPtr = rm->GetInfoMap("metal", &mbi);
 	unsigned char* typemapPtr = rm->GetInfoMap("type", &tbi);
 
-	assert(mbi.width == (mapDims.mapx >> 1));
-	assert(mbi.height == (mapDims.mapy >> 1));
+	assert(mbi.width == mapDims.hmapx);
+	assert(mbi.height == mapDims.hmapy);
 	rm->metalMap = new CMetalMap(metalmapPtr, mbi.width, mbi.height, mapInfo->map.maxMetal);
 
 	if (metalmapPtr != nullptr)
 		rm->FreeInfoMap("metal", metalmapPtr);
 
-	typeMap.clear();
-
-	if (typemapPtr != nullptr && tbi.width == (mapDims.mapx >> 1) && tbi.height == (mapDims.mapy >> 1)) {
-		assert(mapDims.hmapx == tbi.width && mapDims.hmapy == tbi.height);
-		typeMap.resize(tbi.width * tbi.height);
-		memcpy(typeMap.data(), typemapPtr, tbi.width * tbi.height);
-	} else
-		throw content_error("[CReadMap::LoadMap] bad/no terrain typemap");
+	if (typemapPtr != nullptr && tbi.width == mapDims.hmapx && tbi.height == mapDims.hmapy) {
+		assert(!typeMap.empty());
+		memcpy(typeMap.data(), typemapPtr, typeMap.size());
+	} else {
+		LOG_L(L_WARNING, "[CReadMap::%s] missing or illegal typemap for \"%s\" (dims=<%d,%d>)", __func__, mapName.c_str(), tbi.width, tbi.height);
+	}
 
 	if (typemapPtr != nullptr)
 		rm->FreeInfoMap("type", typemapPtr);
@@ -209,7 +208,7 @@ void CReadMap::Serialize(creg::ISerializer* s)
 			s->Serialize(&height, sizeof(int32_t));
 		}
 
-		for (unsigned int i = 0; i < ((mapDims.mapx >> 1) * (mapDims.mapy >> 1)); i++) {
+		for (unsigned int i = 0; i < (mapDims.hmapx * mapDims.hmapy); i++) {
 			type = itm[i] ^ iotm[i];
 			s->Serialize(&type, sizeof(uint8_t));
 		}
@@ -219,7 +218,7 @@ void CReadMap::Serialize(creg::ISerializer* s)
 			ichms[i] = height ^ iochms[i];
 		}
 
-		for (unsigned int i = 0; i < ((mapDims.mapx >> 1) * (mapDims.mapy >> 1)); i++) {
+		for (unsigned int i = 0; i < (mapDims.hmapx * mapDims.hmapy); i++) {
 			s->Serialize(&type, sizeof(uint8_t));
 			itm[i] = type ^ iotm[i];
 		}
@@ -297,6 +296,7 @@ void CReadMap::Initialize()
 			((( mapDims.mapxp1)   * mapDims.mapyp1          * sizeof(float3))        / 1024) +   // VisVertexNormals
 			((  mapDims.mapx      * mapDims.mapy            * sizeof(float))         / 1024) +   // centerHeightMap
 			((  mapDims.hmapx     * mapDims.hmapy           * sizeof(float))         / 1024) +   // slopeMap
+			((  mapDims.hmapx     * mapDims.hmapy           * sizeof(uint8_t))       / 1024) +   // typeMap
 			((  mapDims.hmapx     * mapDims.hmapy           * sizeof(float))         / 1024) +   // MetalMap::extractionMap
 			((  mapDims.hmapx     * mapDims.hmapy           * sizeof(unsigned char)) / 1024);    // MetalMap::metalMap
 
@@ -339,6 +339,11 @@ void CReadMap::Initialize()
 
 	slopeMap.clear();
 	slopeMap.resize(mapDims.hmapx * mapDims.hmapy);
+
+	// by default, all squares are set to terrain-type 0
+	typeMap.clear();
+	typeMap.resize(mapDims.hmapx * mapDims.hmapy, 0);
+
 	visVertexNormals.clear();
 	visVertexNormals.resize(mapDims.mapxp1 * mapDims.mapyp1);
 
