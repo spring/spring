@@ -96,8 +96,6 @@ CONFIG(unsigned, SetCoreAffinitySim).defaultValue(0).safemodeValue(1).descriptio
 CONFIG(bool, UseHighResTimer).defaultValue(false).description("On Windows, sets whether Spring will use low- or high-resolution timer functions for tasks like graphical interpolation between game frames.");
 CONFIG(int, PathingThreadCount).defaultValue(0).safemodeValue(1).minimumValue(0);
 
-CONFIG(int, FSAALevel).defaultValue(0).minimumValue(0).maximumValue(8).description("If >0 enables FullScreen AntiAliasing.");
-
 CONFIG(std::string, FontFile).defaultValue("fonts/FreeSansBold.otf").description("Sets the font of Spring engine text.");
 CONFIG(std::string, SmallFontFile).defaultValue("fonts/FreeSansBold.otf").description("Sets the font of Spring engine small text.");
 CONFIG(int, FontSize).defaultValue(23).description("Sets the font size (in pixels) of the MainMenu and more.");
@@ -318,9 +316,8 @@ bool SpringApp::InitWindow(const char* title)
 	// Set single precision floating point math.
 	streflop::streflop_init<streflop::Simple>();
 
-	if (FLAGS_minimise) {
+	if (FLAGS_minimise)
 		SDL_HideWindow(globalRendering->window);
-	}
 
 	// any other thread spawned from the main-process should be `unknown`
 	Threading::SetThreadName("unknown");

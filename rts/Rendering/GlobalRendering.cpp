@@ -29,6 +29,8 @@
 CONFIG(bool, DebugGL).defaultValue(false).description("Enables _driver_ debug feedback. (see GL_ARB_debug_output)");
 CONFIG(bool, DebugGLStacktraces).defaultValue(false).description("Create a stacktrace when an OpenGL error occurs");
 
+CONFIG(int, FSAALevel).defaultValue(0).minimumValue(0).maximumValue(32).description("If >0 enables FullScreen AntiAliasing.");
+
 // enabled in safemode, far more likely the gpu runs out of memory than this extension causes crashes!
 CONFIG(bool, CompressTextures).defaultValue(false).safemodeValue(true).description("Runtime compress most textures to save VideoRAM.");
 CONFIG(int, ForceShaders).defaultValue(-1).minimumValue(-1).maximumValue(1);
@@ -251,8 +253,6 @@ bool CGlobalRendering::CreateSDLWindow(const char* title)
 			LOG_L(L_WARNING, "FSAALevel > 0 and LIBGL_ALWAYS_SOFTWARE set, this will very likely crash!");
 
 		make_even_number(fsaaLevel);
-		SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
-		SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, fsaaLevel);
 	}
 
 	// Get wanted resolution
@@ -261,16 +261,38 @@ bool CGlobalRendering::CreateSDLWindow(const char* title)
 	// Window Pos & State
 	winPosX  = configHandler->GetInt("WindowPosX");
 	winPosY  = configHandler->GetInt("WindowPosY");
-	winState = configHandler->GetInt("WindowState");
-	switch (winState) {
+
+	switch ((winState = configHandler->GetInt("WindowState"))) {
 		case CGlobalRendering::WINSTATE_MAXIMIZED: sdlflags |= SDL_WINDOW_MAXIMIZED; break;
 		case CGlobalRendering::WINSTATE_MINIMIZED: sdlflags |= SDL_WINDOW_MINIMIZED; break;
 	}
 
+	const int aaLvls[] = {fsaaLevel, fsaaLevel / 2, fsaaLevel / 4, fsaaLevel / 8, fsaaLevel / 16, fsaaLevel / 32, 0};
+	const int zbBits[] = {24, 32, 16};
+
 	// Create Window
-	if ((window = SDL_CreateWindow(title, winPosX, winPosY, res.x, res.y, sdlflags)) == nullptr) {
+	for (size_t i = 0; i < (sizeof(aaLvls) / sizeof(aaLvls[0])) && (window == nullptr); i++) {
+		SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, aaLvls[i] > 0);
+		SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, aaLvls[i]);
+
+		for (size_t j = 0; j < (sizeof(zbBits) / sizeof(zbBits[0])) && (window == nullptr); j++) {
+			SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, zbBits[j]);
+
+			if ((window = SDL_CreateWindow(title, winPosX, winPosY, res.x, res.y, sdlflags)) == nullptr) {
+				LOG_L(L_WARNING, "[GR::%s] error \"%s\" using %dx anti-aliasing and %d-bit depth-buffer", __func__, SDL_GetError(), aaLvls[i], zbBits[j]);
+				continue;
+			}
+
+			LOG("[GR::%s] using %dx anti-aliasing and %d-bit depth-buffer", __func__, aaLvls[i], zbBits[j]);
+		}
+
+		if (i > 0 && aaLvls[i] == aaLvls[i - 1])
+			break;
+	}
+
+	if (window == nullptr) {
 		char buf[1024];
-		SNPRINTF(buf, sizeof(buf), "Could not set video mode:\n%s", SDL_GetError());
+		SNPRINTF(buf, sizeof(buf), "[%s] could not create SDL GL-window\n", __func__);
 		handleerror(nullptr, buf, "ERROR", MBF_OK|MBF_EXCL);
 		return false;
 	}
@@ -293,7 +315,7 @@ bool CGlobalRendering::CreateSDLWindow(const char* title)
 	if (sdlGlCtx == nullptr) {
 		if ((sdlGlCtx = SDL_GL_CreateContext(window)) == nullptr) {
 			char buf[1024];
-			SNPRINTF(buf, sizeof(buf), "Could not create SDL GL context:\n%s", SDL_GetError());
+			SNPRINTF(buf, sizeof(buf), "[%s] could not create SDL GL-context:\n%s", __func__, SDL_GetError());
 			handleerror(nullptr, buf, "ERROR", MBF_OK|MBF_EXCL);
 			return false;
 		}
@@ -670,9 +692,7 @@ int2 CGlobalRendering::GetWantedViewSize(const bool fullscreen)
 
 void CGlobalRendering::SetDualScreenParams()
 {
-	dualScreenMode = configHandler->GetBool("DualScreenMode");
-
-	if (dualScreenMode) {
+	if ((dualScreenMode = configHandler->GetBool("DualScreenMode"))) {
 		dualScreenMiniMapOnLeft = configHandler->GetBool("DualScreenMiniMapOnLeft");
 	} else {
 		dualScreenMiniMapOnLeft = false;
@@ -685,20 +705,17 @@ void CGlobalRendering::UpdateViewPortGeometry()
 	if (!dualScreenMode) {
 		viewSizeX = winSizeX;
 		viewSizeY = winSizeY;
+
 		viewPosX = 0;
 		viewPosY = 0;
-	} else {
-		viewSizeX = winSizeX >> 1;
-		viewSizeY = winSizeY;
-
-		if (dualScreenMiniMapOnLeft) {
-			viewPosX = winSizeX >> 1;
-			viewPosY = 0;
-		} else {
-			viewPosX = 0;
-			viewPosY = 0;
-		}
+		return;
 	}
+
+	viewSizeX = winSizeX >> 1;
+	viewSizeY = winSizeY;
+
+	viewPosX = (winSizeX >> 1) * dualScreenMiniMapOnLeft;
+	viewPosY = 0;
 }
 
 void CGlobalRendering::UpdatePixelGeometry()
