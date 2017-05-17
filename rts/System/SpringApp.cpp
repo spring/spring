@@ -300,17 +300,16 @@ bool SpringApp::InitWindow(const char* title)
 
 	// the crash reporter should be catching errors, not SDL
 	if ((SDL_Init(SDL_INIT_VIDEO | SDL_INIT_NOPARACHUTE) == -1)) {
-		LOG_L(L_FATAL, "Could not initialize SDL: %s", SDL_GetError());
+		LOG_L(L_FATAL, "[%s] error \"%s\" initializing SDL", __func__, SDL_GetError());
 		return false;
 	}
 
 	PrintAvailableResolutions();
 	SDL_DisableScreenSaver();
 
-	if (!globalRendering->CreateSDLWindow(title)) {
-		LOG_L(L_FATAL, "Failed to set SDL video mode: %s", SDL_GetError());
+	// raises an error-prompt in case of failure
+	if (!globalRendering->CreateSDLWindow(title))
 		return false;
-	}
 
 	// Something in SDL_SetVideoMode (OpenGL drivers?) messes with the FPU control word.
 	// Set single precision floating point math.

@@ -293,7 +293,7 @@ bool CGlobalRendering::CreateSDLWindow(const char* title)
 	if (window == nullptr) {
 		char buf[1024];
 		SNPRINTF(buf, sizeof(buf), "[%s] could not create SDL GL-window\n", __func__);
-		handleerror(nullptr, buf, "ERROR", MBF_OK|MBF_EXCL);
+		handleerror(nullptr, buf, "ERROR", MBF_OK | MBF_EXCL);
 		return false;
 	}
 
@@ -303,6 +303,7 @@ bool CGlobalRendering::CreateSDLWindow(const char* title)
 #if defined(WIN32)
 	if (borderless && !fullScreen) {
 		WindowManagerHelper::SetWindowResizable(window, !borderless);
+
 		SDL_SetWindowBordered(window, borderless ? SDL_FALSE : SDL_TRUE);
 		SDL_SetWindowPosition(window, winPosX, winPosY);
 		SDL_SetWindowSize(window, res.x, res.y);
@@ -316,7 +317,7 @@ bool CGlobalRendering::CreateSDLWindow(const char* title)
 		if ((sdlGlCtx = SDL_GL_CreateContext(window)) == nullptr) {
 			char buf[1024];
 			SNPRINTF(buf, sizeof(buf), "[%s] could not create SDL GL-context:\n%s", __func__, SDL_GetError());
-			handleerror(nullptr, buf, "ERROR", MBF_OK|MBF_EXCL);
+			handleerror(nullptr, buf, "ERROR", MBF_OK | MBF_EXCL);
 			return false;
 		}
 	} else {
