@@ -272,6 +272,9 @@ bool CGlobalRendering::CreateSDLWindow(const char* title)
 
 	// Create Window
 	for (size_t i = 0; i < (sizeof(aaLvls) / sizeof(aaLvls[0])) && (window == nullptr); i++) {
+		if (i > 0 && aaLvls[i] == aaLvls[i - 1])
+			break;
+
 		SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, aaLvls[i] > 0);
 		SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, aaLvls[i]);
 
@@ -285,9 +288,6 @@ bool CGlobalRendering::CreateSDLWindow(const char* title)
 
 			LOG("[GR::%s] using %dx anti-aliasing and %d-bit depth-buffer", __func__, aaLvls[i], zbBits[j]);
 		}
-
-		if (i > 0 && aaLvls[i] == aaLvls[i - 1])
-			break;
 	}
 
 	if (window == nullptr) {
