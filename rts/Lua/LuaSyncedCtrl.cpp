@@ -231,6 +231,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetFeatureHealth);
 	REGISTER_LUA_CFUNC(SetFeatureMaxHealth);
 	REGISTER_LUA_CFUNC(SetFeatureReclaim);
+	REGISTER_LUA_CFUNC(SetFeatureResources);
 	REGISTER_LUA_CFUNC(SetFeatureResurrect);
 
 	REGISTER_LUA_CFUNC(SetFeatureMoveCtrl);
@@ -2699,7 +2700,7 @@ int LuaSyncedCtrl::CreateFeature(lua_State* L)
 {
 	CheckAllowGameChanges(L);
 
-	const FeatureDef* featureDef = NULL;
+	const FeatureDef* featureDef = nullptr;
 
 	if (lua_israwstring(L, 1)) {
 		featureDef = featureDefHandler->GetFeatureDef(lua_tostring(L, 1));
@@ -2708,7 +2709,7 @@ int LuaSyncedCtrl::CreateFeature(lua_State* L)
 	}
 
 	if (featureDef == nullptr)
-		return 0; // do not error  (featureDefs are dynamic)
+		return 0; // do not error (featureDefs are dynamic)
 
 	const float3 pos(luaL_checkfloat(L, 2),
 	                 luaL_checkfloat(L, 3),
@@ -2728,8 +2729,7 @@ int LuaSyncedCtrl::CreateFeature(lua_State* L)
 	// FIXME -- separate teamcolor/allyteam arguments
 
 	if (lua_isnumber(L, 6)) {
-		team = lua_toint(L, 6);
-		if (team < -1) {
+		if ((team = lua_toint(L, 6)) < -1) {
 			team = -1;
 		} else if (team >= teamHandler->ActiveTeams()) {
 			return 0;
@@ -2737,19 +2737,18 @@ int LuaSyncedCtrl::CreateFeature(lua_State* L)
 	}
 
 	const int allyTeam = (team < 0) ? -1 : teamHandler->AllyTeam(team);
-	if (!CanControlFeatureAllyTeam(L, allyTeam)) {
-		luaL_error(L, "CreateFeature() bad team permission %d", team);
-	}
 
-	if (inCreateFeature) {
+	if (!CanControlFeatureAllyTeam(L, allyTeam))
+		luaL_error(L, "CreateFeature() bad team permission %d", team);
+
+	if (inCreateFeature)
 		luaL_error(L, "CreateFeature() recursion is not permitted");
-	}
 
 	// use SetFeatureResurrect() to fill in the missing bits
 	inCreateFeature = true;
 	FeatureLoadParams params;
 	params.featureDef = featureDef;
-	params.unitDef    = NULL;
+	params.unitDef    = nullptr;
 	params.pos        = pos;
 	params.speed      = ZeroVector;
 	params.featureID  = luaL_optint(L, 7, -1);
@@ -2814,6 +2813,7 @@ int LuaSyncedCtrl::SetFeatureAlwaysVisible(lua_State* L)
 int LuaSyncedCtrl::SetFeatureHealth(lua_State* L)
 {
 	CFeature* feature = ParseFeature(L, __func__, 1);
+
 	if (feature == nullptr)
 		return 0;
 
@@ -2825,6 +2825,7 @@ int LuaSyncedCtrl::SetFeatureHealth(lua_State* L)
 int LuaSyncedCtrl::SetFeatureMaxHealth(lua_State* L)
 {
 	CFeature* feature = ParseFeature(L, __func__, 1);
+
 	if (feature == nullptr)
 		return 0;
 
@@ -2837,10 +2838,50 @@ int LuaSyncedCtrl::SetFeatureMaxHealth(lua_State* L)
 int LuaSyncedCtrl::SetFeatureReclaim(lua_State* L)
 {
 	CFeature* feature = ParseFeature(L, __func__, 1);
+
 	if (feature == nullptr)
 		return 0;
 
 	feature->reclaimLeft = luaL_checkfloat(L, 2);
+	return 0;
+}
+
+int LuaSyncedCtrl::SetFeatureResources(lua_State* L)
+{
+	CFeature* feature = ParseFeature(L, __func__, 1);
+
+	if (feature == nullptr)
+		return 0;
+
+	feature->resources.metal  = std::max(0.0f, luaL_checknumber(L, 2));
+	feature->resources.energy = std::max(0.0f, luaL_checknumber(L, 3));
+
+	feature->reclaimTime = Clamp(luaL_optnumber(L, 4, feature->reclaimTime), 1.0f, 1000000.0f);
+	feature->reclaimLeft = Clamp(luaL_optnumber(L, 5, feature->reclaimLeft), 0.0f,       1.0f);
+	return 0;
+}
+
+int LuaSyncedCtrl::SetFeatureResurrect(lua_State* L)
+{
+	CFeature* feature = ParseFeature(L, __func__, 1);
+
+	if (feature == nullptr)
+		return 0;
+
+	if (lua_isnumber(L, 2)) {
+		feature->resurrectProgress = Clamp(lua_tonumber(L, 2), 0.0f, 1.0f);
+		return 0;
+	}
+
+	// which type of unit this feature should turn into if resurrected, by name
+	const UnitDef* ud = unitDefHandler->GetUnitDefByName(luaL_checkstring(L, 2));
+
+	if (ud != nullptr)
+		feature->udef = ud;
+
+	if (lua_gettop(L) >= 3)
+		feature->buildFacing = LuaUtils::ParseFacing(L, __func__, 3);
+
 	return 0;
 }
 
@@ -2914,25 +2955,6 @@ int LuaSyncedCtrl::SetFeatureDirection(lua_State* L)
 int LuaSyncedCtrl::SetFeatureVelocity(lua_State* L)
 {
 	return (SetWorldObjectVelocity(L, ParseFeature(L, __func__, 1)));
-}
-
-
-int LuaSyncedCtrl::SetFeatureResurrect(lua_State* L)
-{
-	CFeature* feature = ParseFeature(L, __func__, 1);
-
-	if (feature == nullptr)
-		return 0;
-
-	const UnitDef* ud = unitDefHandler->GetUnitDefByName(luaL_checkstring(L, 2));
-
-	if (ud != nullptr)
-		feature->udef = ud;
-
-	if (lua_gettop(L) >= 3)
-		feature->buildFacing = LuaUtils::ParseFacing(L, __func__, 3);
-
-	return 0;
 }
 
 

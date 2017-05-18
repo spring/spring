@@ -127,22 +127,21 @@ public:
 	bool isRepairingBeforeResurrect;
 	bool inUpdateQue;
 	bool deleteMe;
+	bool alphaFade; // unsynced
 
+	float drawAlpha; // unsynced
 	float resurrectProgress;
+	float reclaimTime;
 	float reclaimLeft;
-	int lastReclaim;
+
 	SResourcePack resources;
 
-	/// which drawQuad we are part of
-	int drawQuad;
-	/// one of FD_*_FLAG
-	int drawFlag;
-
-	float drawAlpha;
-	bool alphaFade;
-
+	int lastReclaimFrame;
 	int fireTime;
 	int smokeTime;
+
+	int drawQuad; /// which drawQuad we are part of (unsynced)
+	int drawFlag; /// one of FD_*_FLAG (unsynced)
 
 	const FeatureDef* def;
 	const UnitDef* udef; /// type of unit this feature should be resurrected to
@@ -151,7 +150,7 @@ public:
 
 	CFireProjectile* myFire;
 
-	/// the solid object that is on top of the geothermal
+	/// object on top of us if we are a geothermal vent
 	CSolidObject* solidOnTop;
 
 

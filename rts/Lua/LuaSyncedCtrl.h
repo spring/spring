@@ -120,6 +120,7 @@ class LuaSyncedCtrl
 		static int SetFeatureHealth(lua_State* L);
 		static int SetFeatureMaxHealth(lua_State* L);
 		static int SetFeatureReclaim(lua_State* L);
+		static int SetFeatureResources(lua_State* L);
 		static int SetFeatureResurrect(lua_State* L);
 
 		static int SetFeatureMoveCtrl(lua_State* L);

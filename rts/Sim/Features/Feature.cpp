@@ -34,16 +34,21 @@ CR_REG_METADATA(CFeature, (
 	CR_MEMBER(isRepairingBeforeResurrect),
 	CR_MEMBER(inUpdateQue),
 	CR_MEMBER(deleteMe),
+	CR_MEMBER(alphaFade),
+
+	CR_MEMBER(drawAlpha),
 	CR_MEMBER(resurrectProgress),
+	CR_MEMBER(reclaimTime),
 	CR_MEMBER(reclaimLeft),
 	CR_MEMBER(resources),
-	CR_MEMBER(lastReclaim),
-	CR_MEMBER(drawQuad),
-	CR_MEMBER(drawFlag),
-	CR_MEMBER(drawAlpha),
-	CR_MEMBER(alphaFade),
+
+	CR_MEMBER(lastReclaimFrame),
 	CR_MEMBER(fireTime),
 	CR_MEMBER(smokeTime),
+
+	CR_MEMBER(drawQuad),
+	CR_MEMBER(drawFlag),
+
 	CR_MEMBER(def),
 	CR_MEMBER(udef),
 	CR_MEMBER(moveCtrl),
@@ -73,19 +78,21 @@ CFeature::CFeature()
 , isRepairingBeforeResurrect(false)
 , inUpdateQue(false)
 , deleteMe(false)
+, alphaFade(true)
+
+, drawAlpha(1.0f)
 , resurrectProgress(0.0f)
+, reclaimTime(0.0f)
 , reclaimLeft(1.0f)
-, lastReclaim(0)
 , resources(0.0f, 1.0f)
+
+, lastReclaimFrame(0)
+, fireTime(0)
+, smokeTime(0)
 
 , drawQuad(-2)
 , drawFlag(-1)
 
-, drawAlpha(1.0f)
-, alphaFade(true)
-
-, fireTime(0)
-, smokeTime(0)
 , def(nullptr)
 , udef(nullptr)
 , myFire(nullptr)
@@ -174,6 +181,7 @@ void CFeature::Initialize(const FeatureLoadParams& params)
 	mass = def->mass;
 	health = def->health;
 	maxHealth = def->health;
+	reclaimTime = def->reclaimTime;
 
 	resources = SResourcePack(def->metal, def->energy);
 
@@ -281,7 +289,7 @@ bool CFeature::AddBuildPower(CUnit* builder, float amount)
 		const CTeam* builderTeam = teamHandler->Team(builder->team);
 
 		// Work out how much to try to put back, based on the speed this unit would reclaim at.
-		const float step = amount / def->reclaimTime;
+		const float step = amount / reclaimTime;
 
 		// Work out how much that will cost
 		const float metalUse  = step * def->metal;
@@ -293,15 +301,16 @@ bool CFeature::AddBuildPower(CUnit* builder, float amount)
 			builder->UseMetal(metalUse);
 			builder->UseEnergy(energyUse);
 
-			reclaimLeft += step;
 			resources.metal  += metalUse;
 			resources.energy += energyUse;
 			resources.metal  = std::min(resources.metal, def->metal);
 			resources.energy = std::min(resources.energy, def->energy);
 
+			reclaimLeft = Clamp(reclaimLeft + step, 0.0f, 1.0f);
+
 			if (reclaimLeft >= 1.0f) {
-				isRepairingBeforeResurrect = false; // They can start reclaiming it again if they so wish
-				reclaimLeft = 1;
+				// feature can start being reclaimed again
+				isRepairingBeforeResurrect = false;
 			} else if (reclaimLeft <= 0.0f) {
 				// this can happen when a mod tampers the feature in AllowFeatureBuildStep
 				featureHandler->DeleteFeature(this);
@@ -327,10 +336,10 @@ bool CFeature::AddBuildPower(CUnit* builder, float amount)
 		return false;
 
 	// make sure several units cant reclaim at once on a single feature
-	if ((modInfo.multiReclaim == 0) && (lastReclaim == gs->frameNum))
+	if ((modInfo.multiReclaim == 0) && (lastReclaimFrame == gs->frameNum))
 		return true;
 
-	const float step = (-amount) / def->reclaimTime;
+	const float step = (-amount) / reclaimTime;
 
 	if (!eventHandler.AllowFeatureBuildStep(builder, this, -step))
 		return false;
@@ -380,10 +389,10 @@ bool CFeature::AddBuildPower(CUnit* builder, float amount)
 
 	resources  -= order.add;
 	reclaimLeft = reclaimLeftTemp;
-	lastReclaim = gs->frameNum;
+	lastReclaimFrame = gs->frameNum;
 
 	// Has the reclaim finished?
-	if (reclaimLeft <= 0) {
+	if (reclaimLeft <= 0.0f) {
 		featureHandler->DeleteFeature(this);
 		return false;
 	}
