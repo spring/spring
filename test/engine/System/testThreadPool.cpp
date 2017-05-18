@@ -14,7 +14,7 @@
 #include <boost/test/unit_test.hpp>
 BOOST_GLOBAL_FIXTURE(InitSpringTime);
 
-static int NUM_THREADS = std::min(ThreadPool::GetMaxThreads(), 10);
+static const int NUM_THREADS = std::min(ThreadPool::GetMaxThreads(), 10);
 
 // !!! BOOST.TEST IS NOT THREADSAFE !!! (facepalms)
 #define SAFE_BOOST_CHECK( P )           do { std::lock_guard<spring::mutex> _(m); BOOST_CHECK( ( P ) );               } while( 0 );
@@ -81,15 +81,16 @@ BOOST_AUTO_TEST_CASE( testParallel )
 	std::vector<int> runs(NUM_THREADS, 0);
 
 	// should be executed exactly once by each worker, and never by WaitForFinished (tid=0)
+	// threadnum=0 only in the special case that the pool is actually empty (NUM_THREADS=1)
 	parallel([&]{
 		const int threadnum = ThreadPool::GetThreadNum();
-		SAFE_BOOST_CHECK(threadnum >           0);
-		SAFE_BOOST_CHECK(threadnum < NUM_THREADS);
+		SAFE_BOOST_CHECK(threadnum >           0 || runs.size() == 1);
+		SAFE_BOOST_CHECK(threadnum < NUM_THREADS                    );
 		runs[threadnum]++;
 	});
 
 	for (int i = 0; i < NUM_THREADS; i++) {
-		BOOST_CHECK(i == 0 || runs[i] == 1);
+		BOOST_CHECK(runs[i] == 1 || runs.size() == 1);
 	}
 }
 
