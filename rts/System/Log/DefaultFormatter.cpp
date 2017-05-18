@@ -44,7 +44,7 @@ static inline bool printf_append(log_record_t* log, va_list arguments)
 	// since writtenChars excludes the null terminator (if any was written),
 	// writtenChars >= freeBufferSize always means the buffer was too small
 	// NOTE: earlier glibc versions and MSVC will return -1 in this case
-	return (writtenChars >= 0 && writtenChars < (bufferSize - bufferPos));
+	return (size_t(writtenChars) < (bufferSize - bufferPos));
 }
 
 

@@ -174,7 +174,7 @@ namespace Threading {
 
 	void SetAffinityHelper(const char *threadName, std::uint32_t affinity) {
 		const std::uint32_t cpuMask  = Threading::SetAffinity(affinity);
-		if (cpuMask == ~0) {
+		if (cpuMask == ~0u) {
 			LOG("[Threading] %s thread CPU affinity not set", threadName);
 		}
 		else if (cpuMask != affinity) {

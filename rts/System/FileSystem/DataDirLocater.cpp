@@ -121,7 +121,7 @@ std::string DataDirLocater::SubstEnvVars(const std::string& in) const
 		if (r == EXIT_SUCCESS) {
 			if (pwordexp.we_wordc > 0) {
 				out = pwordexp.we_wordv[0];;
-				for (int w = 1; w < pwordexp.we_wordc; ++w) {
+				for (unsigned int w = 1; w < pwordexp.we_wordc; ++w) {
 					out += " ";
 					out += pwordexp.we_wordv[w];
 				}

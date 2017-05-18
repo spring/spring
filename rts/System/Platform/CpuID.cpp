@@ -208,13 +208,13 @@ namespace springproc {
 		{
 			// compute the next power of 2 that is larger than shiftPackage
 			int i = 0;
-			while ((1 << i) < shiftCore)
+			while ((1u << i) < shiftCore)
 				i++;
 			shiftCore = i;
 		}
 		{
 			int i = 0;
-			while ((1 << i) < maxAddressableCores)
+			while ((1u << i) < maxAddressableCores)
 				i++;
 			shiftPackage = i;
 		}
@@ -229,8 +229,8 @@ namespace springproc {
 	{
 		auto oldAffinity = Threading::GetAffinity();
 
-		for (size_t processor = 0; processor < numProcessors; processor++) {
-			Threading::SetAffinity(((uint32_t) 1) << processor, true);
+		for (int processor = 0; processor < numProcessors; processor++) {
+			Threading::SetAffinity(1u << processor, true);
 			spring::this_thread::yield();
 			processorApicIds[processor] = getApicIdIntel();
 		}
@@ -239,22 +239,22 @@ namespace springproc {
 		spring::unordered_set<uint32_t> packages;
 
 		// determine the total number of cores
-		for (size_t processor = 0; processor < numProcessors; processor++) {
+		for (int processor = 0; processor < numProcessors; processor++) {
 			auto ret = cores.insert(processorApicIds[processor] >> shiftCore);
 			if (!ret.second)
 				continue;
 
-			affinityMaskOfCores[cores.size() - 1] = ((uint64_t) 1) << processor;
+			affinityMaskOfCores[cores.size() - 1] = (1lu << processor);
 		}
 		totalNumCores = cores.size();
 
 		// determine the total number of packages
-		for (size_t processor = 0; processor < numProcessors; processor++) {
+		for (int processor = 0; processor < numProcessors; processor++) {
 			auto ret = packages.insert(processorApicIds[processor] >> shiftPackage);
 			if (!ret.second)
 				continue;
 
-			affinityMaskOfPackages[packages.size() - 1] |= ((uint64_t) 1) << processor;
+			affinityMaskOfPackages[packages.size() - 1] |= (1lu << processor);
 		}
 
 		totalNumPackages = packages.size();
