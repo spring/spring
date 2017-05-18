@@ -5,7 +5,7 @@
 #include "ThreadPool.h"
 #include "System/Exceptions.h"
 #include "System/myMath.h"
-#if !defined(UNITSYNC) && !defined(UNIT_TEST)
+#if (!defined(UNITSYNC) && !defined(UNIT_TEST))
 	#include "System/OffscreenGLContext.h"
 #endif
 #include "System/TimeProfiler.h"
@@ -72,11 +72,12 @@ static spring::signal newTasksSignal[2];
 
 static _threadlocal int threadnum(0);
 
-
-#if !defined(UNITSYNC) && !defined(UNIT_TEST)
-static bool hasOGLthreads = false; // disable for now (not used atm)
-#else
-static bool hasOGLthreads = false;
+#ifndef UNITSYNC
+// if enabled, allows OpenGL calls from ThreadPool tasks
+// so certain logic (e.g. loading models) can be written
+// without forcing GL code to run within the main thread
+// this is highly experimental, use at own risk
+static bool glThreadSupport = false;
 #endif
 
 
@@ -162,7 +163,7 @@ static bool DoTask(int tid, bool async)
 
 			#ifdef USE_TASK_STATS_TRACKING
 			const uint64_t wdt = tg->GetDeltaTime(spring_now());
-			const uint64_t edt = tg->ExecuteLoop(false);
+			const uint64_t edt = tg->ExecuteLoop(tid, false);
 
 			threadStats[async][tid].numTasksRun += 1;
 			threadStats[async][tid].sumExecTime += edt;
@@ -172,7 +173,7 @@ static bool DoTask(int tid, bool async)
 			threadStats[async][tid].minWaitTime  = std::min(threadStats[async][tid].minWaitTime, wdt);
 			threadStats[async][tid].maxWaitTime  = std::max(threadStats[async][tid].maxWaitTime, wdt);
 			#else
-			tg->ExecuteLoop(false);
+			tg->ExecuteLoop(tid, false);
 			#endif
 		}
 
@@ -185,7 +186,7 @@ static bool DoTask(int tid, bool async)
 
 			#ifdef USE_TASK_STATS_TRACKING
 			const uint64_t wdt = tg->GetDeltaTime(spring_now());
-			const uint64_t edt = tg->ExecuteLoop(false);
+			const uint64_t edt = tg->ExecuteLoop(tid, false);
 
 			threadStats[async][tid].numTasksRun += 1;
 			threadStats[async][tid].sumExecTime += edt;
@@ -195,7 +196,7 @@ static bool DoTask(int tid, bool async)
 			threadStats[async][tid].minWaitTime  = std::min(threadStats[async][tid].minWaitTime, wdt);
 			threadStats[async][tid].maxWaitTime  = std::max(threadStats[async][tid].maxWaitTime, wdt);
 			#else
-			tg->ExecuteLoop(false);
+			tg->ExecuteLoop(tid, false);
 			#endif
 		}
 	}
@@ -251,7 +252,7 @@ void WaitForFinished(std::shared_ptr<ITaskGroup>&& taskGroup)
 
 		assert(!taskGroup->IsAsyncTask());
 		assert(!taskGroup->SelfDelete());
-		taskGroup->ExecuteLoop(true);
+		taskGroup->ExecuteLoop(tid, true);
 	}
 
 	// NOTE:
@@ -351,7 +352,7 @@ void NotifyWorkerThreads(bool force, bool async)
 static void SpawnThreads(int wantedNumThreads, int curNumThreads)
 {
 #ifndef UNITSYNC
-	if (hasOGLthreads) {
+	if (glThreadSupport) {
 		try {
 			for (int i = curNumThreads; i < wantedNumThreads; ++i) {
 				exitFlags[i] = false;
@@ -363,7 +364,7 @@ static void SpawnThreads(int wantedNumThreads, int curNumThreads)
 			// shared gl context creation failed
 			ThreadPool::SetThreadCount(0);
 
-			hasOGLthreads = false;
+			glThreadSupport = false;
 			curNumThreads = ThreadPool::GetNumThreads();
 		}
 	} else
@@ -391,7 +392,7 @@ static void KillThreads(int wantedNumThreads, int curNumThreads)
 		assert(!workerThreads[ true].empty());
 
 	#ifndef UNITSYNC
-		if (hasOGLthreads) {
+		if (glThreadSupport) {
 			{ auto th = reinterpret_cast<COffscreenGLThread*>(workerThreads[false].back()); th->join(); delete th; }
 			{ auto th = reinterpret_cast<COffscreenGLThread*>(workerThreads[ true].back()); th->join(); delete th; }
 		} else
@@ -452,7 +453,7 @@ static std::uint32_t FindWorkerThreadCore(std::int32_t index, std::uint32_t avai
 		return threadAvoidCore;
 
 	// fallback; use all
-	return (~0);
+	return (~0u);
 }
 
 
@@ -460,7 +461,7 @@ static std::uint32_t FindWorkerThreadCore(std::int32_t index, std::uint32_t avai
 
 void SetThreadCount(int wantedNumThreads)
 {
-	const int curNumThreads = GetNumThreads();
+	const int curNumThreads = GetNumThreads(); // includes main
 	const int wtdNumThreads = Clamp(wantedNumThreads, 1, GetMaxThreads());
 
 	const char* fmts[4] = {

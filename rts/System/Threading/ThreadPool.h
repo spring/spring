@@ -3,7 +3,6 @@
 #ifndef _THREADPOOL_H
 #define _THREADPOOL_H
 
-
 #ifndef THREADPOOL
 #include  <functional>
 
@@ -78,13 +77,40 @@ static inline auto parallel_reduce(F&& f, G&& g) -> typename std::result_of<F()>
 	#define SCOPED_MT_TIMER(x)
 #endif
 
+class ITaskGroup;
+namespace ThreadPool {
+	template<class F, class... Args>
+	static auto Enqueue(F&& f, Args&&... args)
+	-> std::shared_ptr<std::future<typename std::result_of<F(Args...)>::type>>;
+
+	void PushTaskGroup(ITaskGroup* taskGroup);
+	void PushTaskGroup(std::shared_ptr<ITaskGroup>&& taskGroup);
+	void WaitForFinished(std::shared_ptr<ITaskGroup>&& taskGroup);
+
+	template<typename T>
+	inline void PushTaskGroup(std::shared_ptr<T>& taskGroup) { PushTaskGroup(std::move(std::static_pointer_cast<ITaskGroup>(taskGroup))); } //FIXME std::move? doesn't it delete the original arg?
+	template<typename T>
+	inline void WaitForFinished(std::shared_ptr<T>& taskGroup) { WaitForFinished(std::move(std::static_pointer_cast<ITaskGroup>(taskGroup))); }
+
+	void SetMaximumThreadCount();
+	void SetDefaultThreadCount();
+	void SetThreadCount(int num);
+	int GetThreadNum();
+	bool HasThreads();
+	int GetMaxThreads();
+	int GetNumThreads();
+	void NotifyWorkerThreads(bool force, bool async);
+
+	static constexpr int MAX_THREADS = 16;
+}
+
 
 
 
 class ITaskGroup
 {
 public:
-	ITaskGroup(const bool getid = true, const bool pooled = false) : id(getid ? lastId.fetch_add(1) : -1u), ts(0) {
+	ITaskGroup(const bool getid = true, const bool pooled = false): id(getid ? lastId.fetch_add(1) : -1u), ts(0) {
 		ResetState(pooled);
 	}
 
@@ -94,11 +120,22 @@ public:
 	}
 
 	virtual bool IsAsyncTask() const { return false; }
+	virtual bool IsSliceTask() const { return false; }
 	virtual bool ExecuteStep() = 0;
 	virtual bool SelfDelete() const { return false; }
 
-	uint64_t ExecuteLoop(bool wffCall) {
+	uint64_t ExecuteLoop(int tid, bool wffCall) {
 		const spring_time t0 = spring_now();
+
+		// if this is a for-task, execute a *single* slice
+		// and re-insert such that other threads can share
+		// the work (otherwise all slices would be handled
+		// by *one* worker, although in practice this still
+		// occurs since WaitForFinished suffers no latency)
+		if (!wffCall && IsSliceTask() && ExecuteStep()) {
+			ThreadPool::PushTaskGroup(this);
+			return ((spring_now() - t0).toNanoSecsi());
+		}
 
 		while (ExecuteStep());
 
@@ -137,11 +174,11 @@ public:
 	void SetTimeStamp(const spring_time t) { ts = t.toNanoSecsi(); }
 
 	void ResetState(bool pooled) {
-		remainingTasks = 0;
-		wantedThread = 0;
+		remainingTasks.store(0);
+		wantedThread.store(0);
 
-		inTaskQueue = true;
-		inTaskPool = pooled;
+		inTaskQueue.store(true);
+		inTaskPool.store(pooled);
 	}
 
 public:
@@ -160,38 +197,11 @@ private:
 };
 
 
-namespace ThreadPool {
-	template<class F, class... Args>
-	static auto Enqueue(F&& f, Args&&... args)
-	-> std::shared_ptr<std::future<typename std::result_of<F(Args...)>::type>>;
-
-	void PushTaskGroup(ITaskGroup* taskGroup);
-	void PushTaskGroup(std::shared_ptr<ITaskGroup>&& taskGroup);
-	void WaitForFinished(std::shared_ptr<ITaskGroup>&& taskGroup);
-
-	template<typename T>
-	inline void PushTaskGroup(std::shared_ptr<T>& taskGroup) { PushTaskGroup(std::move(std::static_pointer_cast<ITaskGroup>(taskGroup))); } //FIXME std::move? doesn't it delete the original arg?
-	template<typename T>
-	inline void WaitForFinished(std::shared_ptr<T>& taskGroup) { WaitForFinished(std::move(std::static_pointer_cast<ITaskGroup>(taskGroup))); }
-
-	void SetMaximumThreadCount();
-	void SetDefaultThreadCount();
-	void SetThreadCount(int num);
-	int GetThreadNum();
-	bool HasThreads();
-	int GetMaxThreads();
-	int GetNumThreads();
-	void NotifyWorkerThreads(bool force, bool async);
-
-	static constexpr int MAX_THREADS = 16;
-}
-
-
 template<class F, class... Args>
-class AsyncTask : public ITaskGroup
+class AsyncTask: public ITaskGroup
 {
 public:
-	typedef typename std::result_of<F(Args...)>::type return_type;
+	typedef  typename std::result_of<F(Args...)>::type  return_type;
 
 	AsyncTask(F f, Args... args) : selfDelete(true) {
 		task = std::make_shared<std::packaged_task<return_type()>>(std::bind(f, std::forward<Args>(args)...));
@@ -223,7 +233,7 @@ public:
 
 
 template<class F, typename R = int, class... Args>
-class TTaskGroup : public ITaskGroup
+class TTaskGroup: public ITaskGroup
 {
 public:
 	TTaskGroup(const int num = 0) : curtask(0) {
@@ -270,7 +280,7 @@ public:
 
 
 template<class F, typename ...Args>
-class TTaskGroup<F, void, Args...> : public ITaskGroup
+class TTaskGroup<F, void, Args...>: public ITaskGroup
 {
 public:
 	TTaskGroup(const int num = 0) : curtask(0) {
@@ -303,7 +313,7 @@ public:
 
 
 template<class F>
-class TTaskGroup<F, void> : public ITaskGroup
+class TTaskGroup<F, void>: public ITaskGroup
 {
 public:
 	TTaskGroup(const int num = 0) : curtask(0) {
@@ -335,10 +345,20 @@ public:
 };
 
 
+template<typename F, typename ...Args>
+class TaskGroup: public TTaskGroup<F, decltype(std::declval<F>()((std::declval<Args>())...)), Args...> {
+public:
+	typedef decltype(std::declval<F>()((std::declval<Args>())...)) R;
+
+	TaskGroup(const int num = 0) : TTaskGroup<F, R, Args...>(num) {}
+};
 
 
+
+
+#if 0
 template<typename F, typename return_type = int, typename... Args>
-class TParallelTaskGroup : public TTaskGroup<F, return_type, Args...>
+class TParallelTaskGroup: public TTaskGroup<F, return_type, Args...>
 {
 public:
 	TParallelTaskGroup(const int num = 0) : TTaskGroup<F, return_type, Args...>(num) {
@@ -384,33 +404,29 @@ public:
 public:
 	std::array<std::function<void()>, ThreadPool::MAX_THREADS> uniqueTasks;
 };
+#endif
 
 
+#if 0
 template<typename F, typename ...Args>
-class TaskGroup : public TTaskGroup<F, decltype(std::declval<F>()((std::declval<Args>())...)), Args...> {
-public:
-	typedef decltype(std::declval<F>()((std::declval<Args>())...)) R;
-
-	TaskGroup(const int num = 0) : TTaskGroup<F, R, Args...>(num) {}
-};
-
-template<typename F, typename ...Args>
-class ParallelTaskGroup : public TParallelTaskGroup<F, decltype(std::declval<F>()((std::declval<Args>())...)), Args...> {
+class ParallelTaskGroup: public TParallelTaskGroup<F, decltype(std::declval<F>()((std::declval<Args>())...)), Args...> {
 public:
 	typedef decltype(std::declval<F>()((std::declval<Args>())...)) R;
 
 	ParallelTaskGroup(const int num = 0) : TParallelTaskGroup<F, R, Args...>(num) {}
 };
+#endif
 
 
 
 
+#if 0
 template<typename F>
-class Parallel2TaskGroup : public ITaskGroup
+class Parallel2TaskGroup: public ITaskGroup
 {
 public:
 	Parallel2TaskGroup(bool pooled) : ITaskGroup(false, pooled) {
-		//uniqueTasks.fill(false);
+		// uniqueTasks.fill(false);
 	}
 
 
@@ -418,10 +434,16 @@ public:
 	{
 		f = func;
 		remainingTasks = ThreadPool::GetNumThreads();
+
 		uniqueTasks.fill(false);
 	}
 
-
+	// NOTE:
+	//   as written, this can only work *by accident* if 1) the thread
+	//   that executes it in DoTask has a different id than the one in
+	//   WaitForFinished and 2) the pool contains at most two threads
+	//   (three or more will inevitably cause a hang, same conditions
+	//   as TParallelTaskGroup)
 	bool ExecuteStep() override
 	{
 		auto& ut = uniqueTasks[ThreadPool::GetThreadNum()];
@@ -430,6 +452,7 @@ public:
 			// no need to make threadsafe; each thread has its own container
 			ut = true;
 			f();
+
 			remainingTasks -= 1;
 			return (!IsFinished());
 		}
@@ -442,34 +465,139 @@ public:
 	std::function<void()> f;
 };
 
+#else
 
 template<typename F>
-class ForTaskGroup : public ITaskGroup
+class Parallel2TaskGroup: public ITaskGroup
 {
 public:
-	ForTaskGroup(bool pooled) : ITaskGroup(false, pooled), curtask(0) {
+	typedef  TTaskGroup<F, void>  ChildTaskType;
+
+	Parallel2TaskGroup(bool pooled) : ITaskGroup(false, pooled) {}
+
+	void Enqueue(F& func)
+	{
+		// note: GNT counts main so we would be short one worker
+		// (final task would never be executed and hang the pool)
+		remainingTasks.store(ThreadPool::GetNumThreads() - 1);
+
+		childTasks.clear();
+		childTasks.reserve(remainingTasks);
+
+		for (int i = 0; i < remainingTasks; i++) {
+			auto task = std::make_shared<ChildTaskType>(1);
+
+			task->Enqueue(func);
+			task->wantedThread.store(1 + i % (ThreadPool::GetNumThreads() - 1));
+
+			childTasks.push_back(task);
+			ThreadPool::PushTaskGroup(task);
+		}
 	}
 
+	bool ExecuteStep() override
+	{
+		bool isFinished = true;
+
+		for (size_t n = 0; n < childTasks.size(); n++) {
+			isFinished &= (childTasks[n]->IsFinished() && !childTasks[n]->IsInQueue());
+		}
+
+		if (!isFinished)
+			return true;
+
+		remainingTasks.store(0);
+		childTasks.clear();
+		return false;
+	}
+
+private:
+	std::vector< std::shared_ptr<ITaskGroup> > childTasks;
+};
+#endif
+
+
+
+#if 0
+template<typename F>
+class ForTaskGroup: public ITaskGroup
+{
+public:
+	typedef  TTaskGroup<F, void, int>  ChildTaskType;
+
+	ForTaskGroup(bool pooled) : ITaskGroup(false, pooled) {}
 
 	void Enqueue(const int from, const int to, const int step, F& func)
 	{
 		assert(to >= from);
-		remainingTasks = (step == 1) ? (to - from) : ((to - from + step - 1) / step);
-		curtask = {0};
 
-		this->from = from;
-		this->to   = to;
-		this->step = step;
-		this->f    = func;
+		remainingTasks.store((step == 1) ? (to - from) : ((to - from + step - 1) / step));
+
+		childTasks.clear();
+		childTasks.reserve(remainingTasks);
+
+		for (int i = 0; i < remainingTasks; i++) {
+			auto task = std::make_shared<ChildTaskType>(1);
+
+			task->Enqueue(func, from + (step * i));
+			task->wantedThread.store(1 + i % (ThreadPool::GetNumThreads() - 1));
+
+			childTasks.push_back(task);
+			ThreadPool::PushTaskGroup(task);
+		}
 	}
 
 
 	bool ExecuteStep() override
 	{
-		const int i = from + (step * curtask.fetch_add(1, std::memory_order_relaxed));
+		bool isFinished = true;
+
+		for (size_t n = 0; n < childTasks.size(); n++) {
+			isFinished &= (childTasks[n]->IsFinished() && !childTasks[n]->IsInQueue());
+		}
+
+		if (!isFinished)
+			return true;
+
+		remainingTasks.store(0);
+		childTasks.clear();
+		return false;
+	}
+
+private:
+	std::vector< std::shared_ptr<ITaskGroup> > childTasks;
+};
+
+#else
+
+template<typename F>
+class ForTaskGroup: public ITaskGroup
+{
+public:
+	typedef  TTaskGroup<F, void, int>  ChildTaskType;
+
+	ForTaskGroup(bool pooled) : ITaskGroup(false, pooled) {}
+
+	void Enqueue(const int from, const int to, const int step, F& func)
+	{
+		assert(to >= from);
+
+		remainingTasks.store((step == 1) ? (to - from) : ((to - from + step - 1) / step));
+		ctr.store(0);
+
+		this->from = from;
+		this->to   = to;
+		this->step = step;
+		this->func = func;
+	}
+
+	bool IsSliceTask() const override { return true; }
+	bool ExecuteStep() override
+	{
+		const int i = from + (step * ctr.fetch_add(1, std::memory_order_relaxed));
 
 		if (i < to) {
-			f(i);
+			func(i);
 			remainingTasks -= 1;
 			return true;
 		}
@@ -477,13 +605,15 @@ public:
 		return false;
 	}
 
-public:
-	std::atomic<int> curtask;
+private:
+	std::atomic<int> ctr;
+	std::function<void(const int)> func;
+
 	int from;
 	int to;
 	int step;
-	std::function<void(const int)> f;
 };
+#endif
 
 
 
@@ -544,7 +674,10 @@ static inline void for_mt(int start, int end, int step, F&& f)
 
 	taskGroup->Enqueue(start, end, step, f);
 	taskGroup->UpdateId();
-	ThreadPool::PushTaskGroup(taskGroup);
+
+	assert(taskGroup->IsInQueue());
+
+	ThreadPool::PushTaskGroup(taskGroup); // note: ForTask re-queues itself for each slice
 	ThreadPool::WaitForFinished(taskGroup); // make calling thread also run ExecuteLoop
 }
 
@@ -569,7 +702,11 @@ static inline void parallel(F&& f)
 
 	taskGroup->Enqueue(f);
 	taskGroup->UpdateId();
-	ThreadPool::PushTaskGroup(taskGroup);
+
+	assert(taskGroup->IsInQueue());
+
+	// note: child-tasks are pushed, parent itself should not be
+	// ThreadPool::PushTaskGroup(taskGroup);
 	ThreadPool::WaitForFinished(taskGroup);
 }
 
@@ -600,8 +737,8 @@ static inline auto parallel_reduce(F&& f, G&& g) -> typename std::result_of<F()>
 	tasks[0] = new AsyncTask<F>(std::forward<F>(f));
 	results[0] = std::move(tasks[0]->GetFuture());
 
-	// first job usually wants to run on the main thread
-	tasks[0]->ExecuteLoop(false);
+	// first job in a reduction usually wants to run on the main thread
+	tasks[0]->ExecuteLoop(0, false);
 
 	// need to push N individual tasks; see NOTE in TParallelTaskGroup
 	for (size_t i = 1; i < results.size(); ++i) {

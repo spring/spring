@@ -85,8 +85,9 @@ BOOST_AUTO_TEST_CASE( testParallel )
 		runs[threadnum]++;
 	});
 
-	for(int i=0; i<NUM_THREADS; i++) {
-		BOOST_CHECK(runs[i] == 1);
+	// ParallelTask children never execute WaitForFinished (tid=0)
+	for (int i = 0; i < NUM_THREADS; i++) {
+		BOOST_CHECK(runs[i] == (1 * (i > 0)));
 	}
 }
 
