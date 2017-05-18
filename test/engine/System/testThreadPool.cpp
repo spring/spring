@@ -76,18 +76,20 @@ BOOST_AUTO_TEST_CASE( testFor_mt )
 BOOST_AUTO_TEST_CASE( testParallel )
 {
 	LOG_L(L_WARNING, "parallel");
+	BOOST_CHECK(ThreadPool::GetNumThreads() == NUM_THREADS);
 
-	std::vector<int> runs(NUM_THREADS);
+	std::vector<int> runs(NUM_THREADS, 0);
+
+	// should be executed exactly once by each worker, and never by WaitForFinished (tid=0)
 	parallel([&]{
 		const int threadnum = ThreadPool::GetThreadNum();
-		SAFE_BOOST_CHECK(threadnum >= 0);
+		SAFE_BOOST_CHECK(threadnum >           0);
 		SAFE_BOOST_CHECK(threadnum < NUM_THREADS);
 		runs[threadnum]++;
 	});
 
-	// ParallelTask children never execute WaitForFinished (tid=0)
 	for (int i = 0; i < NUM_THREADS; i++) {
-		BOOST_CHECK(runs[i] == (1 * (i > 0)));
+		BOOST_CHECK(i == 0 || runs[i] == 1);
 	}
 }
 
