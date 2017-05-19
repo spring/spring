@@ -66,7 +66,7 @@ void log_backend_record(int level, const char* section, const char* fmt, va_list
 
 	// check for duplicates after formatting; can not be
 	// done in log_frontend_record or log_filter_record
-	const int cmp = (prv_record.msg != NULL && STRCASECMP(cur_record.msg, prv_record.msg) == 0);
+	const int cmp = (prv_record.msg[0] != 0 && STRCASECMP(cur_record.msg, prv_record.msg) == 0);
 
 	cur_record.cnt += cmp;
 	cur_record.cnt *= cmp;
