@@ -22,15 +22,12 @@
 
 #include <climits>
 
-// -------------------------------------------------------------------------------------------------
-// -------------------------------------------------------------------------------------------------
-// STATICS
-
 
 Patch::RenderMode Patch::renderMode = Patch::VBO;
 
 static size_t CUR_POOL_SIZE =                 0; // split over all threads
-static size_t MAX_POOL_SIZE = NEW_POOL_SIZE * 2;
+static size_t MAX_POOL_SIZE = NEW_POOL_SIZE * 8; // upper limit for ResetAll
+
 
 static std::vector<CTriNodePool> pools[CRoamMeshDrawer::MESH_COUNT];
 
@@ -79,10 +76,6 @@ CTriNodePool* CTriNodePool::GetPool(bool shadowPass)
 }
 
 
-// -------------------------------------------------------------------------------------------------
-// -------------------------------------------------------------------------------------------------
-// CTriNodePool Class
-
 CTriNodePool::CTriNodePool(const size_t poolSize): nextTriNodeIdx(0)
 {
 	// child nodes are always allocated in pairs, so poolSize must be even
@@ -119,10 +112,7 @@ bool CTriNodePool::Allocate(TriTreeNode*& left, TriTreeNode*& right)
 }
 
 
-// -------------------------------------------------------------------------------------------------
-// -------------------------------------------------------------------------------------------------
-// Patch Class
-//
+
 
 Patch::Patch()
 	: smfGroundDrawer(nullptr)
@@ -597,8 +587,8 @@ void Patch::RecursBorderRender(
 		const float3& v2 = *(float3*)&vertices[(left.x + left.y * (PATCH_SIZE + 1))*3];
 		const float3& v3 = *(float3*)&vertices[(rght.x + rght.y * (PATCH_SIZE + 1))*3];
 
-		static const unsigned char white[] = {255,255,255,255};
-		static const unsigned char trans[] = {255,255,255,0};
+		static constexpr unsigned char white[] = {255, 255, 255, 255};
+		static constexpr unsigned char trans[] = {255, 255, 255,   0};
 
 		va->EnlargeArrays(6, 0, VA_SIZE_C);
 
@@ -641,9 +631,9 @@ void Patch::RecursBorderRender(
 	}
 
 	if (leftChild) {
-		return RecursBorderRender(va, tri->LeftChild,  apex, left, center, depth + 1,  leftChild);
+		return RecursBorderRender(va, tri->LeftChild,  apex, left, center, depth + 1,  true);
 	} else {
-		return RecursBorderRender(va, tri->RightChild, rght, apex, center, depth + 1, !leftChild);
+		return RecursBorderRender(va, tri->RightChild, rght, apex, center, depth + 1, false);
 	}
 }
 
@@ -651,15 +641,12 @@ void Patch::GenerateBorderIndices(CVertexArray* va)
 {
 	va->Initialize();
 
-	const bool isLeftBorder   = (baseLeft.LeftNeighbor   == nullptr);
-	const bool isBottomBorder = (baseRight.RightNeighbor == nullptr);
-	const bool isRightBorder  = (baseLeft.RightNeighbor  == nullptr);
-	const bool isTopBorder    = (baseRight.LeftNeighbor  == nullptr);
-
-	if (isLeftBorder)   RecursBorderRender(va, &baseLeft,  int2(0, PATCH_SIZE), int2(PATCH_SIZE, 0), int2(0, 0),                   1, true);
-	if (isBottomBorder) RecursBorderRender(va, &baseRight, int2(PATCH_SIZE, 0), int2(0, PATCH_SIZE), int2(PATCH_SIZE, PATCH_SIZE), 1, false);
-	if (isRightBorder)  RecursBorderRender(va, &baseLeft,  int2(0, PATCH_SIZE), int2(PATCH_SIZE, 0), int2(0, 0),                   1, false);
-	if (isTopBorder)    RecursBorderRender(va, &baseRight, int2(PATCH_SIZE, 0), int2(0, PATCH_SIZE), int2(PATCH_SIZE, PATCH_SIZE), 1, true);
+	#define PS PATCH_SIZE
+	if (baseLeft.LeftNeighbor   == nullptr) RecursBorderRender(va, &baseLeft , { 0, PS}, {PS,  0}, { 0,  0}, 1,  true);
+	if (baseRight.RightNeighbor == nullptr) RecursBorderRender(va, &baseRight, {PS,  0}, { 0, PS}, {PS, PS}, 1, false);
+	if (baseLeft.RightNeighbor  == nullptr) RecursBorderRender(va, &baseLeft , { 0, PS}, {PS,  0}, { 0,  0}, 1, false);
+	if (baseRight.LeftNeighbor  == nullptr) RecursBorderRender(va, &baseRight, {PS,  0}, { 0, PS}, {PS, PS}, 1,  true);
+	#undef PS
 }
 
 
@@ -676,19 +663,11 @@ void Patch::Upload()
 		} break;
 
 		case VBO: {
-			if (!vboVerticesUploaded) VBOUploadVertices();
+			if (!vboVerticesUploaded)
+				VBOUploadVertices();
+
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vertexIndexBuffer);
 			glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned), &indices[0], GL_DYNAMIC_DRAW);
-
-			/*
-			int bufferSize = 0;
-			glGetBufferParameteriv(GL_ELEMENT_ARRAY_BUFFER, GL_BUFFER_SIZE, &bufferSize);
-			if (rend != bufferSize) {
-				glDeleteBuffers(1, &vertexIndexBuffer);
-				LOG( "[createVBO()] Data size is mismatch with input array\n" );
-			}
-			*/
-
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 		} break;
 
