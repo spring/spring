@@ -737,9 +737,11 @@ void CGame::LoadSkirmishAIs()
 
 void CGame::LoadFinalize()
 {
-	ENTER_SYNCED_CODE();
-	eventHandler.GamePreload();
-	LEAVE_SYNCED_CODE();
+	if (saveFile == nullptr) {
+		ENTER_SYNCED_CODE();
+		eventHandler.GamePreload();
+		LEAVE_SYNCED_CODE();
+	}
 
 	{
 		loadscreen->SetLoadMessage("[" + std::string(__func__) + "] finalizing PFS");
@@ -1512,7 +1514,8 @@ void CGame::StartPlaying()
 		}
 	}
 
-	eventHandler.GameStart();
+	if (saveFile == nullptr)
+		eventHandler.GameStart();
 }
 
 

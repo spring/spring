@@ -24,6 +24,7 @@ Lua:
  ! Changed the order of AllowStartPosition parameters and added a new one:
    Old: clampedX, clampedY, clampedZ, playerID, readyState, rawX, rawY, rawZ
    New: playerID, teamID, readyState, clampedX, clampedY, clampedZ, rawX, rawY, rawZ
+ ! The callins GameStart and GamePreload won't be called when a saved game is loaded
  - Add VFS.AbortDownload(id) - returns whether the download was found&removed from the queue
  - Add Spring.Get{Game,Menu}Name to LuaUnsyncedRead, so LuaMenu and unsynced Lua handles know about each other
  - Add new callins (LuaMenu only):
