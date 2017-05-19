@@ -94,8 +94,8 @@ public:
 	 */
 	void DestroySkirmishAI(const size_t skirmishAIId);
 
-	void Load(std::istream* s);
-	void Save(std::ostream* s);
+	void Load(std::istream* s, const size_t skirmishAIId);
+	void Save(std::ostream* s, const size_t skirmishAIId);
 
 private:
 	typedef std::vector<uint8_t> ids_t;

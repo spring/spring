@@ -3,6 +3,7 @@
 #include <sstream>
 #include <zlib.h>
 
+#include "ExternalAI/SkirmishAIHandler.h"
 #include "ExternalAI/EngineOutHandler.h"
 #include "CregLoadSaveHandler.h"
 #include "Map/ReadMap.h"
@@ -143,7 +144,12 @@ void CCregLoadSaveHandler::SaveGame(const std::string& path)
 
 		// save ai state
 		int aistart = oss.tellp();
-		eoh->Save(&oss);
+		const CSkirmishAIHandler::id_ai_t& ais = skirmishAIHandler.GetAllSkirmishAIs();
+		for (const auto& ai : ais) {
+			std::stringstream aidata;
+			eoh->Save(&aidata, ai.first);
+			oss << (std::streamsize)aidata.tellp() << aidata.rdbuf();
+		}
 		PrintSize("AIs", ((int)oss.tellp()) - aistart);
 
 		gzFile file = gzopen(dataDirsAccess.LocateFile(path, FileQueryFlags::WRITE).c_str(), "wb9");
@@ -234,7 +240,16 @@ void CCregLoadSaveHandler::LoadGame()
 	gsc = NULL;
 
 	// load ai state
-	eoh->Load(iss);
+	const CSkirmishAIHandler::id_ai_t& ais = skirmishAIHandler.GetAllSkirmishAIs();
+	for (const auto& ai : ais) {
+		std::streamsize aisize;
+		*iss >> aisize;
+		std::vector<char> buffer(aisize);
+		iss->read(&buffer[0], buffer.size());
+		std::stringstream aidata;
+		aidata.write(&buffer[0], buffer.size());
+		eoh->Load(&aidata, ai.first);
+	}
 	//for (int a=0; a < teamHandler->ActiveTeams(); a++) { // For old savegames
 	//	if (teamHandler->Team(a)->isDead && eoh->IsSkirmishAI(a)) {
 	//		eoh->DestroySkirmishAI(skirmishAIId(a), 2 /* = team died */);

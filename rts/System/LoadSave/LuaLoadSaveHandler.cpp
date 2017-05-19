@@ -7,6 +7,7 @@
 
 #include "minizip/zip.h"
 
+#include "ExternalAI/SkirmishAIHandler.h"
 #include "ExternalAI/EngineOutHandler.h"
 #include "Game/GameSetup.h"
 #include "Lua/LuaZip.h"
@@ -21,6 +22,7 @@
 #include "System/EventHandler.h"
 #include "System/Exceptions.h"
 #include "System/Log/ILog.h"
+#include "System/Util.h"
 
 
 
@@ -118,12 +120,13 @@ void CLuaLoadSaveHandler::SaveGameStartInfo()
 
 void CLuaLoadSaveHandler::SaveAIData()
 {
-	// Save to a stringstream first, to be able to use current interface.
-	// FIXME: maybe expose richer stream to AI interface?
-	//        (e.g. one file in the zip per AI?)
-	std::stringstream aidata;
-	eoh->Save(&aidata);
-	SaveEntireFile(FILE_AIDATA, "AI data", aidata.str().data(), aidata.tellp());
+	const CSkirmishAIHandler::id_ai_t& ais = skirmishAIHandler.GetAllSkirmishAIs();
+	for (const auto& ai : ais) {
+		std::stringstream aidata;
+		eoh->Save(&aidata, ai.first);
+		std::string aisection = FILE_AIDATA + IntToString(ai.first, ".%i");
+		SaveEntireFile(aisection.c_str(), "AI data", aidata.str().data(), aidata.tellp());
+	}
 }
 
 
@@ -206,8 +209,12 @@ void CLuaLoadSaveHandler::LoadEventClients()
 
 void CLuaLoadSaveHandler::LoadAIData()
 {
-	std::stringstream aidata(LoadEntireFile(FILE_AIDATA));
-	eoh->Load(&aidata);
+	const CSkirmishAIHandler::id_ai_t& ais = skirmishAIHandler.GetAllSkirmishAIs();
+	for (const auto& ai : ais) {
+		std::string aisection = FILE_AIDATA + IntToString(ai.first, ".%i");
+		std::stringstream aidata(LoadEntireFile(aisection));
+		eoh->Load(&aidata, ai.first);
+	}
 }
 
 
