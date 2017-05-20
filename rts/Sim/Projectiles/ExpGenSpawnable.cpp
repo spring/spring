@@ -2,6 +2,7 @@
 
 #include "ExpGenSpawnableMemberInfo.h"
 #include "ExpGenSpawner.h"
+#include "ProjectileMemPool.h"
 #include "Rendering/GroundFlash.h"
 #include "Rendering/Env/Particles/Classes/BitmapMuzzleFlame.h"
 #include "Rendering/Env/Particles/Classes/BubbleProjectile.h"
@@ -19,6 +20,18 @@
 
 CR_BIND_DERIVED_INTERFACE(CExpGenSpawnable, CWorldObject)
 CR_REG_METADATA(CExpGenSpawnable, )
+
+CExpGenSpawnable::CExpGenSpawnable(const float3& pos, const float3& spd)
+ : CWorldObject(pos, spd)
+{
+	assert(!projMemPool.recursed());
+}
+
+CExpGenSpawnable::CExpGenSpawnable()
+ : CWorldObject()
+{
+	assert(!projMemPool.recursed());
+}
 
 
 bool CExpGenSpawnable::GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo)

@@ -203,6 +203,7 @@ CUnit::CUnit()
 
 , stunned(false)
 {
+	assert(!unitMemPool.recursed());
 }
 
 CUnit::~CUnit()
