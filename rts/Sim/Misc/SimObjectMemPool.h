@@ -17,7 +17,7 @@ public:
 	template<typename T, typename... A> T* alloc(A&&... a) {
 		static_assert(sizeof(T) <= N, "");
 		// disabled, recursion is allowed
-		// assert(!pool_call());
+		// assert(!poolCall());
 
 		ctorCallDepth += 1;
 
@@ -47,7 +47,7 @@ public:
 
 	template<typename T> void free(T*& p) {
 		assert(mapped(p));
-		// assert(!pool_call());
+		// assert(!poolCall());
 
 		dtorCallDepth += 1;
 
