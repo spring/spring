@@ -625,15 +625,21 @@ void Patch::RecursBorderRender(
 
 	const int2 center = {(left.x + rght.x) >> 1, (left.y + rght.y) >> 1};
 
+	// at even depths, descend down left *and* right children since both
+	// are on the patch-edge; returns are needed for gcc's TCO (although
+	// unlikely to be applied)
 	if ((depth & 1) == 0) {
 		       RecursBorderRender(va, tri->LeftChild,  apex, left, center, depth + 1, !leftChild);
-		return RecursBorderRender(va, tri->RightChild, rght, apex, center, depth + 1,  leftChild); // return is needed for tail call optimization (it's still unlikely gcc does so...)
+		return RecursBorderRender(va, tri->RightChild, rght, apex, center, depth + 1,  leftChild);
 	}
 
+	// at odd depths (where only one triangle is on the edge), always force
+	// a left-bias for the next call so the recursion ends up at the correct
+	// leafs
 	if (leftChild) {
-		return RecursBorderRender(va, tri->LeftChild,  apex, left, center, depth + 1,  true);
+		return RecursBorderRender(va, tri->LeftChild,  apex, left, center, depth + 1, true);
 	} else {
-		return RecursBorderRender(va, tri->RightChild, rght, apex, center, depth + 1, false);
+		return RecursBorderRender(va, tri->RightChild, rght, apex, center, depth + 1, true);
 	}
 }
 
@@ -642,10 +648,13 @@ void Patch::GenerateBorderIndices(CVertexArray* va)
 	va->Initialize();
 
 	#define PS PATCH_SIZE
-	if (baseLeft.LeftNeighbor   == nullptr) RecursBorderRender(va, &baseLeft , { 0, PS}, {PS,  0}, { 0,  0}, 1,  true);
-	if (baseRight.RightNeighbor == nullptr) RecursBorderRender(va, &baseRight, {PS,  0}, { 0, PS}, {PS, PS}, 1, false);
-	if (baseLeft.RightNeighbor  == nullptr) RecursBorderRender(va, &baseLeft , { 0, PS}, {PS,  0}, { 0,  0}, 1, false);
-	if (baseRight.LeftNeighbor  == nullptr) RecursBorderRender(va, &baseRight, {PS,  0}, { 0, PS}, {PS, PS}, 1,  true);
+	// border vertices are always part of base-level triangles
+	// that have either no left or no right neighbor, i.e. are
+	// on the map edge
+	if (baseLeft.LeftNeighbor   == nullptr) RecursBorderRender(va, &baseLeft , { 0, PS}, {PS,  0}, { 0,  0}, 1,  true); // left border
+	if (baseLeft.RightNeighbor  == nullptr) RecursBorderRender(va, &baseLeft , { 0, PS}, {PS,  0}, { 0,  0}, 1, false); // right border
+	if (baseRight.RightNeighbor == nullptr) RecursBorderRender(va, &baseRight, {PS,  0}, { 0, PS}, {PS, PS}, 1, false); // bottom border
+	if (baseRight.LeftNeighbor  == nullptr) RecursBorderRender(va, &baseRight, {PS,  0}, { 0, PS}, {PS, PS}, 1,  true); // top border
 	#undef PS
 }
 
