@@ -24,13 +24,13 @@ CR_REG_METADATA(CExpGenSpawnable, )
 CExpGenSpawnable::CExpGenSpawnable(const float3& pos, const float3& spd)
  : CWorldObject(pos, spd)
 {
-	assert(!projMemPool.recursed());
+	assert(projMemPool.ctorCall());
 }
 
 CExpGenSpawnable::CExpGenSpawnable()
  : CWorldObject()
 {
-	assert(!projMemPool.recursed());
+	assert(projMemPool.ctorCall());
 }
 
 

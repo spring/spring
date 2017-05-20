@@ -16,9 +16,10 @@ template<size_t N> struct SimObjectMemPool {
 public:
 	template<typename T, typename... A> T* alloc(A&&... a) {
 		static_assert(sizeof(T) <= N, "");
-		// assert(!recursed());
+		// disabled, recursion is allowed
+		// assert(!pool_call());
 
-		in_ctor = true;
+		ctorCallDepth += 1;
 
 		T* p = nullptr;
 		uint8_t* m = nullptr;
@@ -40,15 +41,15 @@ public:
 
 		table.emplace(p, i);
 
-		in_ctor = false;
+		ctorCallDepth -= 1;
 		return p;
 	}
 
 	template<typename T> void free(T*& p) {
 		assert(mapped(p));
-		// assert(!recursed());
+		// assert(!pool_call());
 
-		in_dtor = true;
+		dtorCallDepth += 1;
 
 		const auto iter = table.find(p);
 		const auto pair = std::pair<void*, size_t>{iter->first, iter->second};
@@ -62,11 +63,13 @@ public:
 		indcs.push_back(pair.second);
 		table.erase(pair.first);
 
-		in_dtor = false;
+		dtorCallDepth -= 1;
 	}
 
 	bool mapped(void* p) const { return (table.find(p) != table.end()); }
-	bool recursed() const { return (in_ctor || in_dtor); }
+	bool ctorCall() const { return (ctorCallDepth > 0); }
+	bool dtorCall() const { return (dtorCallDepth > 0); }
+	bool poolCall() const { return (ctorCall() || dtorCall()); }
 
 	void clear() {
 		pages.clear();
@@ -85,8 +88,8 @@ private:
 	// <pointer, page index> (non-intrusive)
 	spring::unsynced_map<void*, size_t> table;
 
-	bool in_ctor = false;
-	bool in_dtor = false;
+	size_t ctorCallDepth = 0;
+	size_t dtorCallDepth = 0;
 };
 
 #endif

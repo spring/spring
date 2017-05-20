@@ -98,7 +98,7 @@ CFeature::CFeature()
 , myFire(nullptr)
 , solidOnTop(nullptr)
 {
-	assert(!featureMemPool.recursed());
+	assert(featureMemPool.ctorCall());
 	crushable = true;
 	immobile = true;
 }
