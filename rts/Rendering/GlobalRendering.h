@@ -34,7 +34,7 @@ public:
 	void SwapBuffers(bool allowSwapBuffers);
 
 	void CheckGLExtensions() const;
-	void SetSupportFlags();
+	void SetGLSupportFlags();
 	void QueryVersionInfo(char (&sdlVersionStr)[64], char (&glVidMemStr)[64]);
 	void QueryGLMaxVals();
 	void LogVersionInfo(const char* sdlVersionStr, const char* glVidMemStr) const;
@@ -130,7 +130,7 @@ public:
 
 
 
-	int forceShaders;
+	int forceDisableShaders;
 	int forceCoreContext;
 	int forceSwapBuffers;
 

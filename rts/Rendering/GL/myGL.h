@@ -94,7 +94,7 @@ void glSafeDeleteProgram(GLuint program);
 void PrintAvailableResolutions();
 
 bool GetAvailableVideoRAM(GLint* memory);
-void ShowCrappyGpuWarning(const char* glVendor, const char* glRenderer);
+bool ShowDriverWarning(const char* glVendor, const char* glRenderer);
 
 
 class CVertexArray;

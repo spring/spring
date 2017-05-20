@@ -116,56 +116,56 @@ bool GetAvailableVideoRAM(GLint* memory)
 }
 
 
-void ShowCrappyGpuWarning(const char* glVendor, const char* glRenderer)
+bool ShowDriverWarning(const char* glVendor, const char* glRenderer)
 {
 #ifndef DEBUG
 	assert(glVendor != nullptr);
 	assert(glRenderer != nullptr);
 
-	// Print out warnings for really crappy graphic cards/drivers
+	// print out warnings for really crappy graphic cards/drivers
 	const std::string& gpuVendor = glVendor;
 	const std::string& gpuModel  = glRenderer;
 
-	bool gpuIsCrap = false;
-	bool msDrivers = false;
+	constexpr size_t np = std::string::npos;
 
-	if (gpuVendor == "SiS") {
-		gpuIsCrap = true;
-	} else if (gpuModel.find("Intel") != std::string::npos) {
-		// the vendor does not have to be Intel
-		gpuIsCrap = (gpuModel.find(" 945G") != std::string::npos || gpuModel.find(" 915G") != std::string::npos);
-	} else if (gpuVendor.find("Microsoft") != std::string::npos) {
-		msDrivers = true;
-	}
-
-	if (gpuIsCrap) {
+	if (gpuVendor.find("Microsoft") != np || gpuVendor.find("unknown") != np) {
 		const char* msg =
-			"Warning!\n"
-			"Your graphics card is insufficient to run the Spring engine.\n\n"
-			"If you experience crashes or poor performance, buy a better card!\n"
-			"You may try \"spring --safemode\" to test if some of your issues are related to wrong settings.\n";
-		LOG_L(L_WARNING, "%s", msg);
-		Platform::MsgBox(msg, "Warning: Your GPU is not supported", MBF_EXCL);
-	} else if (globalRendering->haveMesa) {
-		const char* msg =
-			"Warning!\n"
-			"OpenSource graphics card drivers detected.\n"
-			"MesaGL/Gallium drivers don't work well with Spring. Try to switch to proprietary drivers.\n\n"
-			"You may try \"spring --safemode\".\n";
-		LOG_L(L_WARNING, "%s", msg);
-		Platform::MsgBox(msg, "Warning: Your GPU driver is not supported", MBF_EXCL);
-	} else if (msDrivers) {
-		const char* msg =
-			"Warning!\n"
-			"No OpenGL drivers installed.\n"
-			"Please go to your GPU vendor's website and download their drivers:\n"
+			"No OpenGL drivers installed on your system. Please visit your\n"
+			"GPU vendor's website (listed below) and download these first.\n\n"
 			" * Nvidia: http://www.nvidia.com\n"
 			" * AMD: http://support.amd.com\n"
 			" * Intel: http://downloadcenter.intel.com";
+
 		LOG_L(L_WARNING, "%s", msg);
-		Platform::MsgBox(msg, "Warning: No OpenGL drivers found", MBF_EXCL);
+		Platform::MsgBox(msg, "Warning", MBF_EXCL);
+		return false;
+	}
+
+	if ((gpuVendor == "SiS") || (gpuModel.find("Intel") != np && (gpuModel.find(" 945G") != np || gpuModel.find(" 915G") != np))) {
+		const char* msg =
+			"Your graphics card is insufficient to properly run the Spring engine.\n\n"
+			"If you experience crashes or poor performance, upgrade to better hardware "
+			"or try \"spring --safemode\" to test if your issues are caused by wrong "
+			"settings.\n";
+
+		LOG_L(L_WARNING, "%s", msg);
+		Platform::MsgBox(msg, "Warning", MBF_EXCL);
+		return true;
+	}
+
+	if (gpuModel.find(  "mesa ") != np || gpuModel.find("gallium ") != np) {
+		const char* msg =
+			"You are using an open-source (Mesa / Gallium) graphics card driver, "
+			"which may not work well with the Spring engine.\n\nIf you experience "
+			"problems, switch to proprietary drivers or try \"spring --safemode\".\n";
+
+		LOG_L(L_WARNING, "%s", msg);
+		Platform::MsgBox(msg, "Warning", MBF_EXCL);
+		return true;
 	}
 #endif
+
+	return true;
 }
 
 

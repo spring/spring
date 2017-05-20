@@ -33,7 +33,7 @@ CONFIG(int, FSAALevel).defaultValue(0).minimumValue(0).maximumValue(32).descript
 
 // enabled in safemode, far more likely the gpu runs out of memory than this extension causes crashes!
 CONFIG(bool, CompressTextures).defaultValue(false).safemodeValue(true).description("Runtime compress most textures to save VideoRAM.");
-CONFIG(int, ForceShaders).defaultValue(-1).minimumValue(-1).maximumValue(1);
+CONFIG(int, ForceDisableShaders).defaultValue(0).minimumValue(0).maximumValue(1);
 CONFIG(int, ForceCoreContext).defaultValue(0).minimumValue(0).maximumValue(1);
 CONFIG(int, ForceSwapBuffers).defaultValue(1).minimumValue(0).maximumValue(1);
 CONFIG(int, AtiHacks).defaultValue(-1).headlessValue(0).minimumValue(-1).maximumValue(1).description("Enables graphics drivers workarounds for users with ATI video cards.\n -1:=runtime detect, 0:=off, 1:=on");
@@ -93,7 +93,7 @@ CR_REG_METADATA(CGlobalRendering, (
 	CR_IGNORED(zNear),
 	CR_IGNORED(viewRange),
 
-	CR_IGNORED(forceShaders),
+	CR_IGNORED(forceDisableShaders),
 	CR_IGNORED(forceCoreContext),
 	CR_IGNORED(forceSwapBuffers),
 
@@ -166,7 +166,7 @@ CGlobalRendering::CGlobalRendering()
 	, zNear(NEAR_PLANE)
 	, viewRange(MAX_VIEW_RANGE)
 
-	, forceShaders(configHandler->GetInt("ForceShaders"))
+	, forceDisableShaders(configHandler->GetInt("ForceDisableShaders"))
 	, forceCoreContext(configHandler->GetInt("ForceCoreContext"))
 	, forceSwapBuffers(configHandler->GetInt("ForceSwapBuffers"))
 
@@ -246,6 +246,8 @@ bool CGlobalRendering::CreateSDLWindow(const char* title)
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, forceCoreContext? SDL_GL_CONTEXT_PROFILE_CORE: SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG * configHandler->GetBool("DebugGL"));
 
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
 
 	// FullScreen AntiAliasing
 	if (fsaaLevel > 0) {
@@ -364,7 +366,7 @@ void CGlobalRendering::PostInit() {
 
 	QueryVersionInfo(sdlVersionStr, glVidMemStr);
 	CheckGLExtensions();
-	SetSupportFlags();
+	SetGLSupportFlags();
 	QueryGLMaxVals();
 
 	LogVersionInfo(sdlVersionStr, glVidMemStr);
@@ -412,16 +414,22 @@ void CGlobalRendering::CheckGLExtensions() const
 	}
 }
 
-void CGlobalRendering::SetSupportFlags()
+void CGlobalRendering::SetGLSupportFlags()
 {
 	const std::string& glVendor = StringToLower(globalRenderingInfo.glVendor);
 	const std::string& glRenderer = StringToLower(globalRenderingInfo.glRenderer);
 
-	supportNPOTs = GLEW_ARB_texture_non_power_of_two;
 	haveARB   = GLEW_ARB_vertex_program && GLEW_ARB_fragment_program;
 	haveGLSL  = (glGetString(GL_SHADING_LANGUAGE_VERSION) != nullptr);
 	haveGLSL &= GLEW_ARB_vertex_shader && GLEW_ARB_fragment_shader;
 	haveGLSL &= !!GLEW_VERSION_2_0; // we want OpenGL 2.0 core functions
+
+	if (!haveARB || !haveGLSL)
+		throw unsupported_error("OpenGL shaders not supported, aborting");
+
+	// useful if a GPU claims to support GL3 and shaders but crashes (Intels...)
+	haveARB  &= !forceDisableShaders;
+	haveGLSL &= !forceDisableShaders;
 
 	haveATI    = (  glVendor.find(   "ati ") != std::string::npos) || (glVendor.find("amd ") != std::string::npos);
 	haveIntel  = (  glVendor.find(  "intel") != std::string::npos);
@@ -445,20 +453,8 @@ void CGlobalRendering::SetSupportFlags()
 		globalRenderingInfo.gpuVendor = "Unknown";
 	}
 
-	if (forceShaders < 0) {
-		// disable shaders for Intel drivers
-		haveARB  &= !haveIntel;
-		haveGLSL &= !haveIntel;
-	} else if (forceShaders == 0) {
-		haveARB  = false;
-		haveGLSL = false;
-	} else if (forceShaders > 0) {
-		// rely on extension detection (don't force enable shaders, when the extensions aren't exposed!)
-	}
-
-	// x-series doesn't support NPOTs (but hd-series does)
-	if (haveATI)
-		supportNPOTs = (glRenderer.find(" x") == std::string::npos && glRenderer.find(" 9") == std::string::npos);
+	// ATI's x-series doesn't support NPOTs, hd-series does
+	supportNPOTs = GLEW_ARB_texture_non_power_of_two && (!haveATI || (glRenderer.find(" x") == std::string::npos && glRenderer.find(" 9") == std::string::npos));
 
 
 	for (size_t n = 0; (n < sizeof(globalRenderingInfo.glVersionShort) && globalRenderingInfo.glVersion[n] != 0); n++) {
@@ -474,8 +470,6 @@ void CGlobalRendering::SetSupportFlags()
 			break;
 		}
 	}
-
-	ShowCrappyGpuWarning(globalRenderingInfo.glVendor, globalRenderingInfo.glRenderer);
 
 
 	{
@@ -501,7 +495,7 @@ void CGlobalRendering::SetSupportFlags()
 
 	// detect if GL_DEPTH_COMPONENT24 is supported (many ATIs don't;
 	// they seem to support GL_DEPTH_COMPONENT24 for static textures
-	// but you can't render to them)
+	// but those can't be rendered to)
 	{
 		#if 0
 		GLint state = 0;
@@ -514,10 +508,8 @@ void CGlobalRendering::SetSupportFlags()
 			fbo.Bind();
 			fbo.CreateRenderBuffer(GL_COLOR_ATTACHMENT0_EXT, GL_RGBA8, 16, 16);
 			fbo.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT,  GL_DEPTH_COMPONENT24, 16, 16);
-			const GLenum status = fbo.GetStatus();
+			support24bitDepthBuffers = (fbo.GetStatus() == GL_FRAMEBUFFER_COMPLETE_EXT);
 			fbo.Unbind();
-
-			support24bitDepthBuffers = (status == GL_FRAMEBUFFER_COMPLETE_EXT);
 		}
 		#endif
 	}
@@ -551,6 +543,9 @@ void CGlobalRendering::QueryVersionInfo(char (&sdlVersionStr)[64], char (&glVidM
 	if ((globalRenderingInfo.glRenderer  = (const char*) glGetString(GL_RENDERER                )) == nullptr) globalRenderingInfo.glRenderer  = "unknown";
 	if ((globalRenderingInfo.glslVersion = (const char*) glGetString(GL_SHADING_LANGUAGE_VERSION)) == nullptr) globalRenderingInfo.glslVersion = "unknown";
 	if ((globalRenderingInfo.glewVersion = (const char*) glewGetString(GLEW_VERSION             )) == nullptr) globalRenderingInfo.glewVersion = "unknown";
+
+	if (!ShowDriverWarning(globalRenderingInfo.glVendor, globalRenderingInfo.glRenderer))
+		throw unsupported_error("OpenGL drivers not installed, aborting");
 
 	memset(globalRenderingInfo.glVersionShort, 0, sizeof(globalRenderingInfo.glVersionShort));
 	memset(globalRenderingInfo.glslVersionShort, 0, sizeof(globalRenderingInfo.glslVersionShort));
