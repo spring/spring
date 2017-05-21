@@ -231,6 +231,10 @@ extern DECLSPEC int SDLCALL SDL_GetDesktopDisplayMode(int displayIndex, SDL_Disp
 	return 0;
 }
 
+extern DECLSPEC int SDLCALL SDL_GetCurrentDisplayMode(int displayIndex, SDL_DisplayMode * mode) {
+	return SDL_GetDesktopDisplayMode(0, mode);
+}
+
 extern DECLSPEC int SDLCALL SDL_GetWindowDisplayMode(SDL_Window* window, SDL_DisplayMode* mode) {
 	return SDL_GetDesktopDisplayMode(0, mode);
 }
