@@ -36,18 +36,32 @@ CVertexArray* GetVertexArray()
 
 /******************************************************************************/
 
-void PrintAvailableResolutions()
+bool CheckAvailableVideoModes()
 {
-	LOG("[GL::%s]", __func__);
-
 	// Get available fullscreen/hardware modes
 	const int numDisplays = SDL_GetNumVideoDisplays();
+
+	SDL_DisplayMode ddm = {0, 0, 0, 0, nullptr};
+	SDL_DisplayMode cdm = {0, 0, 0, 0, nullptr};
+
+	// ddm is virtual, contains all displays in multi-monitor setups
+	// for fullscreen windows with non-native resolutions, ddm holds
+	// the original screen mode and cdm is the changed mode
+	SDL_GetDesktopDisplayMode(0, &ddm);
+	SDL_GetCurrentDisplayMode(0, &cdm);
+
+	LOG(
+		"[GL::%s] desktop={%ix%ix%ibpp@%iHz} current={%ix%ix%ibpp@%iHz}",
+		__func__,
+		ddm.w, ddm.h, SDL_BPP(ddm.format), ddm.refresh_rate,
+		cdm.w, cdm.h, SDL_BPP(cdm.format), cdm.refresh_rate
+	);
 
 	for (int k = 0; k < numDisplays; ++k) {
 		std::vector<SDL_DisplayMode> modes(std::max(0, SDL_GetNumDisplayModes(k)));
 
 		if (modes.empty()) {
-			LOG("\tdisplay: %d, bounds: N/A, FS modes: N/A", k + 1);
+			LOG("\tdisplay=%d bounds=N/A modes=N/A", k + 1);
 			continue;
 		}
 
@@ -59,7 +73,7 @@ void PrintAvailableResolutions()
 			SDL_GetDisplayMode(k, i, &modes[i]);
 		}
 
-		LOG("\tdisplay: %d, bounds: {x=%d, y=%d, w=%d, h=%d}, FS modes:", k + 1, db.x, db.y, db.w, db.h);
+		LOG("\tdisplay=%d bounds={x=%d, y=%d, w=%d, h=%d} modes=%u", k + 1, db.x, db.y, db.w, db.h, uint32_t(modes.size()));
 
 		for (size_t i = 0; i < modes.size(); ++i) {
 			const SDL_DisplayMode& cm = modes[i];
@@ -79,6 +93,9 @@ void PrintAvailableResolutions()
 			pm = cm;
 		}
 	}
+
+	// we need at least 24bpp or window-creation will fail
+	return (SDL_BPP(ddm.format) >= 24);
 }
 
 

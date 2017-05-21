@@ -226,10 +226,13 @@ CGlobalRendering::~CGlobalRendering()
 
 bool CGlobalRendering::CreateSDLWindow(const char* title)
 {
-	int sdlflags = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE;
+	if (!CheckAvailableVideoModes())
+		throw unsupported_error("desktop color-depth should be at least 24 bits per pixel, aborting");
 
-	sdlflags |= (borderless? SDL_WINDOW_FULLSCREEN_DESKTOP: SDL_WINDOW_FULLSCREEN) * fullScreen;
-	sdlflags |= (SDL_WINDOW_BORDERLESS * borderless);
+	uint32_t sdlFlags = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE;
+
+	sdlFlags |= (borderless? SDL_WINDOW_FULLSCREEN_DESKTOP: SDL_WINDOW_FULLSCREEN) * fullScreen;
+	sdlFlags |= (SDL_WINDOW_BORDERLESS * borderless);
 
 	// use standard: 24bit color + 24bit depth + 8bit stencil & doublebuffered
 	SDL_GL_SetAttribute(SDL_GL_RED_SIZE,   8);
@@ -265,8 +268,8 @@ bool CGlobalRendering::CreateSDLWindow(const char* title)
 	winPosY  = configHandler->GetInt("WindowPosY");
 
 	switch ((winState = configHandler->GetInt("WindowState"))) {
-		case CGlobalRendering::WINSTATE_MAXIMIZED: sdlflags |= SDL_WINDOW_MAXIMIZED; break;
-		case CGlobalRendering::WINSTATE_MINIMIZED: sdlflags |= SDL_WINDOW_MINIMIZED; break;
+		case CGlobalRendering::WINSTATE_MAXIMIZED: sdlFlags |= SDL_WINDOW_MAXIMIZED; break;
+		case CGlobalRendering::WINSTATE_MINIMIZED: sdlFlags |= SDL_WINDOW_MINIMIZED; break;
 	}
 
 	const int aaLvls[] = {fsaaLevel, fsaaLevel / 2, fsaaLevel / 4, fsaaLevel / 8, fsaaLevel / 16, fsaaLevel / 32, 0};
@@ -283,7 +286,7 @@ bool CGlobalRendering::CreateSDLWindow(const char* title)
 		for (size_t j = 0; j < (sizeof(zbBits) / sizeof(zbBits[0])) && (window == nullptr); j++) {
 			SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, zbBits[j]);
 
-			if ((window = SDL_CreateWindow(title, winPosX, winPosY, res.x, res.y, sdlflags)) == nullptr) {
+			if ((window = SDL_CreateWindow(title, winPosX, winPosY, res.x, res.y, sdlFlags)) == nullptr) {
 				LOG_L(L_WARNING, "[GR::%s] error \"%s\" using %dx anti-aliasing and %d-bit depth-buffer", __func__, SDL_GetError(), aaLvls[i], zbBits[j]);
 				continue;
 			}

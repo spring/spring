@@ -91,7 +91,7 @@ unsigned int LoadFragmentProgram(const char* filename);
 void glClearErrors();
 void glSafeDeleteProgram(GLuint program);
 
-void PrintAvailableResolutions();
+bool CheckAvailableVideoModes();
 
 bool GetAvailableVideoRAM(GLint* memory);
 bool ShowDriverWarning(const char* glVendor, const char* glRenderer);

@@ -304,7 +304,6 @@ bool SpringApp::InitWindow(const char* title)
 		return false;
 	}
 
-	PrintAvailableResolutions();
 	SDL_DisableScreenSaver();
 
 	// raises an error-prompt in case of failure
