@@ -106,16 +106,16 @@ void CEngineOutHandler::PreDestroy() {
 	DO_FOR_SKIRMISH_AIS(PreDestroy())
 }
 
-void CEngineOutHandler::Load(std::istream* s) {
+void CEngineOutHandler::Load(std::istream* s, const size_t skirmishAIId) {
 	AI_EVT_MTH();
 
-	DO_FOR_SKIRMISH_AIS(Load(s))
+	id_skirmishAI[skirmishAIId]->Load(s);
 }
 
-void CEngineOutHandler::Save(std::ostream* s) {
+void CEngineOutHandler::Save(std::ostream* s, const size_t skirmishAIId) {
 	AI_EVT_MTH();
 
-	DO_FOR_SKIRMISH_AIS(Save(s))
+	id_skirmishAI[skirmishAIId]->Save(s);
 }
 
 
