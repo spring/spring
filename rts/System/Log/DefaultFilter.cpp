@@ -54,7 +54,7 @@ namespace {
 		static std::set<const char*, log_filter_section_compare> sections;
 		return sections;
 	}
-
+/*
 	void inline log_filter_printSectionMinLevels(const char* func) {
 		printf("[%s][caller=%s]\n", __func__, func);
 
@@ -62,6 +62,7 @@ namespace {
 			printf("\tsectionName=\"%s\" minLevel=%d\n", p.first, p.second);
 		}
 	}
+*/
 }
 
 #ifdef __cplusplus

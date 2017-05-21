@@ -84,6 +84,7 @@ static inline CSolidObject* ParseSolidObject(lua_State* L, const char* caller, i
 }
 
 
+/*
 static inline CUnit* ParseUnit(lua_State* L, const char* caller, int index)
 {
 	return (static_cast<CUnit*>(ParseSolidObject(L, caller, index, LUAOBJ_UNIT)));
@@ -93,6 +94,7 @@ static inline CFeature* ParseFeature(lua_State* L, const char* caller, int index
 {
 	return (static_cast<CFeature*>(ParseSolidObject(L, caller, index, LUAOBJ_FEATURE)));
 }
+*/
 
 
 

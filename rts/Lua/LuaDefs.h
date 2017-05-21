@@ -49,11 +49,11 @@ namespace {
 		assert(valid_type);
 		return ERROR_TYPE;
 	}
-	template<> DataType GetDataType(unsigned)           { return INT_TYPE; }
-	template<> DataType GetDataType(int)                { return INT_TYPE; }
-	template<> DataType GetDataType(bool)               { return BOOL_TYPE; }
-	template<> DataType GetDataType(float)              { return FLOAT_TYPE; }
-	template<> DataType GetDataType(std::string)        { return STRING_TYPE; }
+	template<> inline DataType GetDataType(unsigned)           { return INT_TYPE; }
+	template<> inline DataType GetDataType(int)                { return INT_TYPE; }
+	template<> inline DataType GetDataType(bool)               { return BOOL_TYPE; }
+	template<> inline DataType GetDataType(float)              { return FLOAT_TYPE; }
+	template<> inline DataType GetDataType(std::string)        { return STRING_TYPE; }
 }
 
 #define ADDRESS(name) ((const char *)&name)
