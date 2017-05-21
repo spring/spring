@@ -142,9 +142,13 @@ extern DECLSPEC int SDLCALL SDL_GL_GetAttribute(SDL_GLattr attr, int* value) {
 	return 0;
 }
 
+
 extern DECLSPEC SDL_GLContext SDLCALL SDL_GL_CreateContext(SDL_Window* window) {
 	static int foo;
 	return &foo;
+}
+
+extern DECLSPEC void SDLCALL SDL_GL_DeleteContext(SDL_GLContext context) {
 }
 
 
@@ -231,7 +235,7 @@ extern DECLSPEC int SDLCALL SDL_GetDesktopDisplayMode(int displayIndex, SDL_Disp
 	return 0;
 }
 
-extern DECLSPEC int SDLCALL SDL_GetCurrentDisplayMode(int displayIndex, SDL_DisplayMode * mode) {
+extern DECLSPEC int SDLCALL SDL_GetCurrentDisplayMode(int displayIndex, SDL_DisplayMode* mode) {
 	return SDL_GetDesktopDisplayMode(0, mode);
 }
 
