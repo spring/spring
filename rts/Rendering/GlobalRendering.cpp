@@ -29,14 +29,17 @@
 CONFIG(bool, DebugGL).defaultValue(false).description("Enables _driver_ debug feedback. (see GL_ARB_debug_output)");
 CONFIG(bool, DebugGLStacktraces).defaultValue(false).description("Create a stacktrace when an OpenGL error occurs");
 
+CONFIG(int, GLContextMajorVersion).defaultValue(3).minimumValue(3).maximumValue(4);
+CONFIG(int, GLContextMinorVersion).defaultValue(0).minimumValue(0).maximumValue(5);
 CONFIG(int, FSAALevel).defaultValue(0).minimumValue(0).maximumValue(32).description("If >0 enables FullScreen AntiAliasing.");
 
-// enabled in safemode, far more likely the gpu runs out of memory than this extension causes crashes!
-CONFIG(bool, CompressTextures).defaultValue(false).safemodeValue(true).description("Runtime compress most textures to save VideoRAM.");
 CONFIG(int, ForceDisableShaders).defaultValue(0).minimumValue(0).maximumValue(1);
 CONFIG(int, ForceCoreContext).defaultValue(0).minimumValue(0).maximumValue(1);
 CONFIG(int, ForceSwapBuffers).defaultValue(1).minimumValue(0).maximumValue(1);
 CONFIG(int, AtiHacks).defaultValue(-1).headlessValue(0).minimumValue(-1).maximumValue(1).description("Enables graphics drivers workarounds for users with ATI video cards.\n -1:=runtime detect, 0:=off, 1:=on");
+
+// enabled in safemode, far more likely the gpu runs out of memory than this extension causes crashes!
+CONFIG(bool, CompressTextures).defaultValue(false).safemodeValue(true).description("Runtime compress most textures to save VideoRAM.");
 CONFIG(bool, DualScreenMode).defaultValue(false).description("Sets whether to split the screen in half, with one half for minimap and one for main screen. Right side is for minimap unless DualScreenMiniMapOnLeft is set.");
 CONFIG(bool, DualScreenMiniMapOnLeft).defaultValue(false).description("When set, will make the left half of the screen the minimap when DualScreenMode is set.");
 CONFIG(bool, TeamNanoSpray).defaultValue(true).headlessValue(false);
@@ -229,6 +232,14 @@ bool CGlobalRendering::CreateSDLWindow(const char* title)
 	if (!CheckAvailableVideoModes())
 		throw unsupported_error("desktop color-depth should be at least 24 bits per pixel, aborting");
 
+	// Get wanted resolution and context-version
+	const int2 winRes = GetWantedViewSize(fullScreen);
+	const int2 oglCtx = {configHandler->GetInt("GLContextMajorVersion"), configHandler->GetInt("GLContextMinorVersion")};
+	const int2 glCtxs[] = {{2, 0}, {2, 1},  {3, 0}, {3, 1}, {3, 2}, {3, 3},  {4, 0}, {4, 1}, {4, 2}, {4, 3}, {4, 4}, {4, 5}};
+
+	if (std::find(&glCtxs[0], &glCtxs[0] + (sizeof(glCtxs) / sizeof(int2)), oglCtx) == (&glCtxs[0] + (sizeof(glCtxs) / sizeof(int2))))
+		throw unsupported_error("illegal OpenGL context-version specified, aborting");
+
 	uint32_t sdlFlags = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE;
 
 	sdlFlags |= (borderless? SDL_WINDOW_FULLSCREEN_DESKTOP: SDL_WINDOW_FULLSCREEN) * fullScreen;
@@ -249,8 +260,8 @@ bool CGlobalRendering::CreateSDLWindow(const char* title)
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, forceCoreContext? SDL_GL_CONTEXT_PROFILE_CORE: SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG * configHandler->GetBool("DebugGL"));
 
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, oglCtx.x);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, oglCtx.y);
 
 	// FullScreen AntiAliasing
 	if (fsaaLevel > 0) {
@@ -260,9 +271,6 @@ bool CGlobalRendering::CreateSDLWindow(const char* title)
 		make_even_number(fsaaLevel);
 	}
 
-	// Get wanted resolution
-	const int2 res = GetWantedViewSize(fullScreen);
-
 	// Window Pos & State
 	winPosX  = configHandler->GetInt("WindowPosX");
 	winPosY  = configHandler->GetInt("WindowPosY");
@@ -271,6 +279,7 @@ bool CGlobalRendering::CreateSDLWindow(const char* title)
 		case CGlobalRendering::WINSTATE_MAXIMIZED: sdlFlags |= SDL_WINDOW_MAXIMIZED; break;
 		case CGlobalRendering::WINSTATE_MINIMIZED: sdlFlags |= SDL_WINDOW_MINIMIZED; break;
 	}
+
 
 	const int aaLvls[] = {fsaaLevel, fsaaLevel / 2, fsaaLevel / 4, fsaaLevel / 8, fsaaLevel / 16, fsaaLevel / 32, 0};
 	const int zbBits[] = {24, 32, 16};
@@ -286,7 +295,7 @@ bool CGlobalRendering::CreateSDLWindow(const char* title)
 		for (size_t j = 0; j < (sizeof(zbBits) / sizeof(zbBits[0])) && (window == nullptr); j++) {
 			SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, zbBits[j]);
 
-			if ((window = SDL_CreateWindow(title, winPosX, winPosY, res.x, res.y, sdlFlags)) == nullptr) {
+			if ((window = SDL_CreateWindow(title, winPosX, winPosY, winRes.x, winRes.y, sdlFlags)) == nullptr) {
 				LOG_L(L_WARNING, "[GR::%s] error \"%s\" using %dx anti-aliasing and %d-bit depth-buffer", __func__, SDL_GetError(), aaLvls[i], zbBits[j]);
 				continue;
 			}
@@ -297,10 +306,11 @@ bool CGlobalRendering::CreateSDLWindow(const char* title)
 
 	if (window == nullptr) {
 		char buf[1024];
-		SNPRINTF(buf, sizeof(buf), "[%s] could not create SDL GL-window\n", __func__);
+		SNPRINTF(buf, sizeof(buf), "[GR::%s] could not create SDL-window\n", __func__);
 		handleerror(nullptr, buf, "ERROR", MBF_OK | MBF_EXCL);
 		return false;
 	}
+
 
 	if (configHandler->GetInt("MinimizeOnFocusLoss") == 0)
 		SDL_SetHint(SDL_HINT_VIDEO_MINIMIZE_ON_FOCUS_LOSS, "0");
@@ -311,23 +321,47 @@ bool CGlobalRendering::CreateSDLWindow(const char* title)
 
 		SDL_SetWindowBordered(window, borderless ? SDL_FALSE : SDL_TRUE);
 		SDL_SetWindowPosition(window, winPosX, winPosY);
-		SDL_SetWindowSize(window, res.x, res.y);
+		SDL_SetWindowSize(window, winRes.x, winRes.y);
 	}
 #endif
 
-	// Create GL Context
 	SDL_SetWindowMinimumSize(window, minWinSizeX, minWinSizeY);
 
-	if (sdlGlCtx == nullptr) {
-		if ((sdlGlCtx = SDL_GL_CreateContext(window)) == nullptr) {
-			char buf[1024];
-			SNPRINTF(buf, sizeof(buf), "[%s] could not create SDL GL-context:\n%s", __func__, SDL_GetError());
-			handleerror(nullptr, buf, "ERROR", MBF_OK | MBF_EXCL);
-			return false;
+
+	// Create GL Context
+	assert(sdlGlCtx == nullptr);
+
+	if ((sdlGlCtx = SDL_GL_CreateContext(window)) == nullptr) {
+		const char* frmts[] = {"[GR::%s] error \"%s\" creating GL%d.%d %s-context", "[GR::%s] created GL%d.%d %s-context"};
+		const char* profs[] = {"compat", "core"};
+		char buf[1024];
+
+		for (const int2 tmpCtx: glCtxs) {
+			SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, tmpCtx.x);
+			SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, tmpCtx.y);
+
+			for (uint32_t mask: {SDL_GL_CONTEXT_PROFILE_CORE, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY}) {
+				SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, mask);
+
+				if ((sdlGlCtx = SDL_GL_CreateContext(window)) == nullptr) {
+					LOG_L(L_WARNING, frmts[false], __func__, SDL_GetError(), tmpCtx.x, tmpCtx.y, profs[mask == SDL_GL_CONTEXT_PROFILE_CORE]);
+				} else {
+					LOG_L(L_WARNING, frmts[true], __func__, tmpCtx.x, tmpCtx.y, profs[mask == SDL_GL_CONTEXT_PROFILE_CORE]);
+				}
+
+				// accepts nullptr's
+				SDL_GL_DeleteContext(sdlGlCtx);
+			}
 		}
-	} else {
-		SDL_GL_MakeCurrent(window, sdlGlCtx);
+
+		SNPRINTF(buf, sizeof(buf), frmts[false], __func__, SDL_GetError(), oglCtx.x, oglCtx.y, profs[forceCoreContext]);
+		handleerror(nullptr, buf, "ERROR", MBF_OK | MBF_EXCL);
+		return false;
 	}
+
+	// redundant, but harmless
+	SDL_GL_MakeCurrent(window, sdlGlCtx);
+
 
 #if !defined(HEADLESS)
 	// disable desktop compositing to fix tearing
