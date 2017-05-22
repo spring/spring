@@ -40,9 +40,8 @@ private:
 	static void InitOpenGL();                       //!< Initializes OpenGL
 	static void LoadFonts();                        //!< Initialize glFonts (font & smallFont)
 
-	static void GetDisplayGeometry();
 	static void SetupViewportGeometry();
-	static void SaveWindowPosition();
+	static void SaveWindowPosAndSize();
 
 	std::string inputFile;
 
@@ -55,7 +54,7 @@ private:
 
 	CGameController* RunScript(const std::string& buf);
 	CGameController* LoadSaveFile(const std::string& saveName); //!< Starts game from a specified save
-	CGameController* LoadDemoFile(const std::string& demoName); //!< Starts game from a specified save
+	CGameController* LoadDemoFile(const std::string& demoName); //!< Starts game from a specified demo
 };
 
 /**

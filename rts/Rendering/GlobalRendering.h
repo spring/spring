@@ -28,7 +28,7 @@ public:
 	 *
 	 * Sets SDL video mode options/settings
 	 */
-	bool CreateSDLWindow(const char* title);
+	bool CreateSDLWindow(const char* title, bool minimized);
 	void DestroySDLWindow();
 	void PostInit();
 	void SwapBuffers(bool allowSwapBuffers);
@@ -46,7 +46,11 @@ public:
 	void SetDualScreenParams();
 	void UpdateViewPortGeometry();
 	void UpdatePixelGeometry();
+	void UpdateWindowState();
+	void ReadWindowPosAndSize();
+	void SaveWindowPosAndSize();
 	void UpdateGLConfigs();
+
 	int2 GetWantedViewSize(const bool fullscreen);
 
 	bool EnableFSAA() const;

@@ -11,7 +11,6 @@
 #include "Rendering/VerticalSync.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/FBO.h"
-#include "Sim/Misc/GlobalConstants.h"
 #include "System/bitops.h"
 #include "System/EventHandler.h"
 #include "System/type2.h"
@@ -142,15 +141,15 @@ CGlobalRendering::CGlobalRendering()
 	, lastFrameStart(spring_notime)
 	, weightedSpeedFactor(0.0f)
 	, drawFrame(1)
-	, FPS(GAME_SPEED)
+	, FPS(1.0f)
 
-	, winState(WINSTATE_DEFAULT)
+	, winState(configHandler->GetInt("WindowState"))
 	, screenSizeX(1)
 	, screenSizeY(1)
 
 	// window geometry
-	, winPosX(0)
-	, winPosY(0)
+	, winPosX(configHandler->GetInt("WindowPosX"))
+	, winPosY(configHandler->GetInt("WindowPosY"))
 	, winSizeX(1)
 	, winSizeY(1)
 
@@ -227,12 +226,20 @@ CGlobalRendering::~CGlobalRendering()
 }
 
 
-bool CGlobalRendering::CreateSDLWindow(const char* title)
+bool CGlobalRendering::CreateSDLWindow(const char* title, bool minimized)
 {
+	SDL_DisableScreenSaver();
+
+	// the crash reporter should be catching errors, not SDL
+	if ((SDL_Init(SDL_INIT_VIDEO | SDL_INIT_NOPARACHUTE) == -1)) {
+		LOG_L(L_FATAL, "[GR::%s] error \"%s\" initializing SDL", __func__, SDL_GetError());
+		return false;
+	}
+
 	if (!CheckAvailableVideoModes())
 		throw unsupported_error("desktop color-depth should be at least 24 bits per pixel, aborting");
 
-	// Get wanted resolution and context-version
+	// get wanted resolution and context-version
 	const int2 winRes = GetWantedViewSize(fullScreen);
 	const int2 oglCtx = {configHandler->GetInt("GLContextMajorVersion"), configHandler->GetInt("GLContextMinorVersion")};
 	const int2 glCtxs[] = {{2, 0}, {2, 1},  {3, 0}, {3, 1}, {3, 2}, {3, 3},  {4, 0}, {4, 1}, {4, 2}, {4, 3}, {4, 4}, {4, 5}};
@@ -244,8 +251,10 @@ bool CGlobalRendering::CreateSDLWindow(const char* title)
 
 	sdlFlags |= (borderless? SDL_WINDOW_FULLSCREEN_DESKTOP: SDL_WINDOW_FULLSCREEN) * fullScreen;
 	sdlFlags |= (SDL_WINDOW_BORDERLESS * borderless);
+	sdlFlags |= (SDL_WINDOW_MAXIMIZED * (winState == WINSTATE_MAXIMIZED));
+	sdlFlags |= (SDL_WINDOW_MINIMIZED * (winState == WINSTATE_MINIMIZED));
 
-	// use standard: 24bit color + 24bit depth + 8bit stencil & doublebuffered
+	// use standard PF: 24bit color + 24bit depth + 8bit stencil & doublebuffered
 	SDL_GL_SetAttribute(SDL_GL_RED_SIZE,   8);
 	SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE,  8);
@@ -255,15 +264,18 @@ bool CGlobalRendering::CreateSDLWindow(const char* title)
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
 	// create GL debug-context if wanted (more verbose GL messages, but runs slower)
-	// for Mesa requesting a core profile explicitly is needed to get versions later
-	// than 3.0/1.30, although this still suffices for most of Spring
+	// note:
+	//   requesting a core profile explicitly is needed to get versions later than
+	//   3.0/1.30 for Mesa, other drivers return their *maximum* supported context
+	//   in compat and do not make 3.0 itself available in core (though this still
+	//   suffices for most of Spring)
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, forceCoreContext? SDL_GL_CONTEXT_PROFILE_CORE: SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG * configHandler->GetBool("DebugGL"));
 
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, oglCtx.x);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, oglCtx.y);
 
-	// FullScreen AntiAliasing
+
 	if (fsaaLevel > 0) {
 		if (getenv("LIBGL_ALWAYS_SOFTWARE") != nullptr)
 			LOG_L(L_WARNING, "FSAALevel > 0 and LIBGL_ALWAYS_SOFTWARE set, this will very likely crash!");
@@ -271,20 +283,11 @@ bool CGlobalRendering::CreateSDLWindow(const char* title)
 		make_even_number(fsaaLevel);
 	}
 
-	// Window Pos & State
-	winPosX  = configHandler->GetInt("WindowPosX");
-	winPosY  = configHandler->GetInt("WindowPosY");
-
-	switch ((winState = configHandler->GetInt("WindowState"))) {
-		case CGlobalRendering::WINSTATE_MAXIMIZED: sdlFlags |= SDL_WINDOW_MAXIMIZED; break;
-		case CGlobalRendering::WINSTATE_MINIMIZED: sdlFlags |= SDL_WINDOW_MINIMIZED; break;
-	}
-
 
 	const int aaLvls[] = {fsaaLevel, fsaaLevel / 2, fsaaLevel / 4, fsaaLevel / 8, fsaaLevel / 16, fsaaLevel / 32, 0};
 	const int zbBits[] = {24, 32, 16};
 
-	// Create Window
+	// create window
 	for (size_t i = 0; i < (sizeof(aaLvls) / sizeof(aaLvls[0])) && (window == nullptr); i++) {
 		if (i > 0 && aaLvls[i] == aaLvls[i - 1])
 			break;
@@ -327,14 +330,28 @@ bool CGlobalRendering::CreateSDLWindow(const char* title)
 
 	SDL_SetWindowMinimumSize(window, minWinSizeX, minWinSizeY);
 
+	if (minimized)
+		SDL_HideWindow(window);
 
-	// Create GL Context
+#if !defined(HEADLESS)
+	// disable desktop compositing to fix tearing
+	// (happens at 300fps, neither fullscreen nor vsync fixes it, so disable compositing)
+	// On Windows Aero often uses vsync, and so when Spring runs windowed it will run with
+	// vsync too, resulting in bad performance.
+	if (configHandler->GetBool("BlockCompositing"))
+		WindowManagerHelper::BlockCompositing(window);
+#endif
+
+
+	// create GL context
 	assert(sdlGlCtx == nullptr);
 
 	if ((sdlGlCtx = SDL_GL_CreateContext(window)) == nullptr) {
 		const char* frmts[] = {"[GR::%s] error \"%s\" creating GL%d.%d %s-context", "[GR::%s] created GL%d.%d %s-context"};
 		const char* profs[] = {"compat", "core"};
+
 		char buf[1024];
+		SNPRINTF(buf, sizeof(buf), frmts[false], __func__, SDL_GetError(), oglCtx.x, oglCtx.y, profs[forceCoreContext]);
 
 		for (const int2 tmpCtx: glCtxs) {
 			SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, tmpCtx.x);
@@ -354,39 +371,29 @@ bool CGlobalRendering::CreateSDLWindow(const char* title)
 			}
 		}
 
-		SNPRINTF(buf, sizeof(buf), frmts[false], __func__, SDL_GetError(), oglCtx.x, oglCtx.y, profs[forceCoreContext]);
 		handleerror(nullptr, buf, "ERROR", MBF_OK | MBF_EXCL);
 		return false;
 	}
 
 	// redundant, but harmless
 	SDL_GL_MakeCurrent(window, sdlGlCtx);
-
-
-#if !defined(HEADLESS)
-	// disable desktop compositing to fix tearing
-	// (happens at 300fps, neither fullscreen nor vsync fixes it, so disable compositing)
-	// On Windows Aero often uses vsync, and so when Spring runs windowed it will run with
-	// vsync too, resulting in bad performance.
-	if (configHandler->GetBool("BlockCompositing"))
-		WindowManagerHelper::BlockCompositing(globalRendering->window);
-#endif
-
 	return true;
 }
 
 
 void CGlobalRendering::DestroySDLWindow() {
 	SDL_SetWindowGrab(window, SDL_FALSE);
+	SDL_GL_MakeCurrent(window, nullptr);
 	SDL_DestroyWindow(window);
-
-	window = nullptr;
 
 #if !defined(HEADLESS)
 	SDL_GL_DeleteContext(sdlGlCtx);
 	SDL_QuitSubSystem(SDL_INIT_VIDEO);
 #endif
 	SDL_Quit();
+
+	window = nullptr;
+	sdlGlCtx = nullptr;
 }
 
 
@@ -518,7 +525,7 @@ void CGlobalRendering::SetGLSupportFlags()
 	}
 
 	// runtime-compress textures? (also already required for SMF ground textures)
-	// default to off because it reduces quality (smallest mipmap level is bigger)
+	// default to off because it reduces quality, smallest mipmap level is bigger
 	if (GLEW_ARB_texture_compression)
 		compressTextures = configHandler->GetBool("CompressTextures");
 
@@ -701,16 +708,17 @@ int2 CGlobalRendering::GetWantedViewSize(const bool fullscreen)
 
 	int2 res = {configHandler->GetInt(xsKeys[fullscreen]), configHandler->GetInt(ysKeys[fullscreen])};
 
-	{
-		// use Native Desktop Resolution
-		// SDL2 can do this itself when size{X,Y} are set to
-		// zero, but fails with Display Cloneing and similar
-		//  -> DVI monitor will run at 640x400 and HDMI at full-HD
+	if (res.x <= 0 || res.y <= 0) {
+		// copy Native Desktop Resolution if user did not specify a value
+		// SDL2 can do this itself if size{X,Y} are set to zero but fails
+		// with Display Cloning and similar, causing DVI monitors to only
+		// run at (e.g.) 640x400 and HDMI devices at full-HD
+		// TODO: make screen configurable?
 		SDL_DisplayMode dmode;
-		SDL_GetDesktopDisplayMode(0, &dmode); //TODO make screen configurable?
+		SDL_GetDesktopDisplayMode(0, &dmode);
 
-		if (res.x <= 0) res.x = dmode.w;
-		if (res.y <= 0) res.y = dmode.h;
+		res.x = dmode.w;
+		res.y = dmode.h;
 	}
 
 	// limit minimum window size in windowed mode
@@ -735,19 +743,10 @@ void CGlobalRendering::SetDualScreenParams()
 void CGlobalRendering::UpdateViewPortGeometry()
 {
 	// NOTE: viewPosY is not currently used (always 0)
-	if (!dualScreenMode) {
-		viewSizeX = winSizeX;
-		viewSizeY = winSizeY;
-
-		viewPosX = 0;
-		viewPosY = 0;
-		return;
-	}
-
-	viewSizeX = winSizeX >> 1;
+	viewSizeX = winSizeX >> (1 * dualScreenMode);
 	viewSizeY = winSizeY;
 
-	viewPosX = (winSizeX >> 1) * dualScreenMiniMapOnLeft;
+	viewPosX = (winSizeX >> 1) * dualScreenMode * dualScreenMiniMapOnLeft;
 	viewPosY = 0;
 }
 
@@ -758,6 +757,72 @@ void CGlobalRendering::UpdatePixelGeometry()
 
 	aspectRatio = viewSizeX / float(viewSizeY);
 }
+
+void CGlobalRendering::UpdateWindowState()
+{
+	// FIXME
+	// reading window state fails if it is changed via the window manager, like clicking on the titlebar (2013)
+	// https://bugzilla.libsdl.org/show_bug.cgi?id=1508 & https://bugzilla.libsdl.org/show_bug.cgi?id=2282
+	// happens on linux too!
+	const int state = WindowManagerHelper::GetWindowState(window);
+
+	winState  = WINSTATE_DEFAULT;
+	winState += WINSTATE_MAXIMIZED * ((state & SDL_WINDOW_MAXIMIZED) != 0);
+	winState += WINSTATE_MINIMIZED * ((state & SDL_WINDOW_MINIMIZED) != 0);
+
+	assert(winState <= WINSTATE_MINIMIZED);
+}
+
+
+void CGlobalRendering::ReadWindowPosAndSize()
+{
+#ifdef HEADLESS
+	screenSizeX = 8;
+	screenSizeY = 8;
+	winSizeX = 8;
+	winSizeY = 8;
+	winPosX = 0;
+	winPosY = 0;
+
+#else
+
+	SDL_Rect screenSize;
+	SDL_GetDisplayBounds(SDL_GetWindowDisplayIndex(window), &screenSize);
+
+	// no other good place to set these
+	screenSizeX = screenSize.w;
+	screenSizeY = screenSize.h;
+
+	SDL_GetWindowSize(window, &winSizeX, &winSizeY);
+	SDL_GetWindowPosition(window, &winPosX, &winPosY);
+#endif
+
+	// should be done by caller
+	// UpdateViewPortGeometry();
+}
+
+void CGlobalRendering::SaveWindowPosAndSize()
+{
+#ifdef HEADLESS
+	return;
+#endif
+
+	if (fullScreen)
+		return;
+
+	// don't automatically save minimized states
+	if (winState != WINSTATE_MINIMIZED)
+		configHandler->Set("WindowState", winState);
+
+	if (winState != WINSTATE_DEFAULT)
+		return;
+
+	configHandler->Set("WindowPosX", winPosX);
+	configHandler->Set("WindowPosY", winPosY);
+	configHandler->Set("XResolutionWindowed", winSizeX);
+	configHandler->Set("YResolutionWindowed", winSizeY);
+}
+
 
 void CGlobalRendering::UpdateGLConfigs()
 {

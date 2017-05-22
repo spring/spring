@@ -298,24 +298,13 @@ bool SpringApp::InitWindow(const char* title)
 	// SDL will cause a creation of gpu-driver thread that will clone its name from the starting threads (= this one = mainthread)
 	Threading::SetThreadName("gpu-driver");
 
-	// the crash reporter should be catching errors, not SDL
-	if ((SDL_Init(SDL_INIT_VIDEO | SDL_INIT_NOPARACHUTE) == -1)) {
-		LOG_L(L_FATAL, "[%s] error \"%s\" initializing SDL", __func__, SDL_GetError());
-		return false;
-	}
-
-	SDL_DisableScreenSaver();
-
 	// raises an error-prompt in case of failure
-	if (!globalRendering->CreateSDLWindow(title))
+	if (!globalRendering->CreateSDLWindow(title, FLAGS_minimise))
 		return false;
 
 	// Something in SDL_SetVideoMode (OpenGL drivers?) messes with the FPU control word.
 	// Set single precision floating point math.
 	streflop::streflop_init<streflop::Simple>();
-
-	if (FLAGS_minimise)
-		SDL_HideWindow(globalRendering->window);
 
 	// any other thread spawned from the main-process should be `unknown`
 	Threading::SetThreadName("unknown");
@@ -323,77 +312,19 @@ bool SpringApp::InitWindow(const char* title)
 }
 
 
-// origin for our coordinates is the bottom left corner
-void SpringApp::GetDisplayGeometry()
-{
-#ifdef HEADLESS
-	globalRendering->screenSizeX = 8;
-	globalRendering->screenSizeY = 8;
-	globalRendering->winSizeX = 8;
-	globalRendering->winSizeY = 8;
-	globalRendering->winPosX = 0;
-	globalRendering->winPosY = 0;
-	globalRendering->UpdateViewPortGeometry();
-	return;
-
-#else
-	SDL_Rect screenSize;
-	SDL_GetDisplayBounds(SDL_GetWindowDisplayIndex(globalRendering->window), &screenSize);
-	globalRendering->screenSizeX = screenSize.w;
-	globalRendering->screenSizeY = screenSize.h;
-
-	SDL_GetWindowSize(globalRendering->window, &globalRendering->winSizeX, &globalRendering->winSizeY);
-	SDL_GetWindowPosition(globalRendering->window, &globalRendering->winPosX, &globalRendering->winPosY);
-
-	globalRendering->UpdateViewPortGeometry();
-
-	//XXX SDL2 is crap ...
-	// Reading window state fails if it is changed via the window manager, like clicking on the titlebar (2013)
-	// https://bugzilla.libsdl.org/show_bug.cgi?id=1508 & https://bugzilla.libsdl.org/show_bug.cgi?id=2282
-	// happens on linux too!
-	const int state = WindowManagerHelper::GetWindowState(globalRendering->window);
-
-	globalRendering->winState = CGlobalRendering::WINSTATE_DEFAULT;
-	if (state & SDL_WINDOW_MAXIMIZED) {
-		globalRendering->winState = CGlobalRendering::WINSTATE_MAXIMIZED;
-	} else
-	if (state & SDL_WINDOW_MINIMIZED) {
-		globalRendering->winState = CGlobalRendering::WINSTATE_MINIMIZED;
-	}
-#endif
-}
-
-
 /**
  * Saves position of the window, if we are not in full-screen mode
  */
-void SpringApp::SaveWindowPosition()
+void SpringApp::SaveWindowPosAndSize()
 {
-#ifndef HEADLESS
-	if (globalRendering->fullScreen)
-		return;
-
-	GetDisplayGeometry();
-	if (globalRendering->winState == CGlobalRendering::WINSTATE_DEFAULT) {
-		configHandler->Set("WindowPosX",  globalRendering->winPosX);
-		configHandler->Set("WindowPosY",  globalRendering->winPosY);
-		configHandler->Set("WindowState", globalRendering->winState);
-		configHandler->Set("XResolutionWindowed", globalRendering->winSizeX);
-		configHandler->Set("YResolutionWindowed", globalRendering->winSizeY);
-	} else
-	if (globalRendering->winState == CGlobalRendering::WINSTATE_MINIMIZED) {
-		// don't automatically save minimized states
-	} else {
-		configHandler->Set("WindowState", globalRendering->winState);
-	}
-#endif
+	globalRendering->ReadWindowPosAndSize();
+	globalRendering->SaveWindowPosAndSize();
 }
 
 
 void SpringApp::SetupViewportGeometry()
 {
-	GetDisplayGeometry();
-
+	globalRendering->ReadWindowPosAndSize();
 	globalRendering->SetDualScreenParams();
 	globalRendering->UpdateViewPortGeometry();
 	globalRendering->UpdatePixelGeometry();
@@ -401,9 +332,8 @@ void SpringApp::SetupViewportGeometry()
 	const int vpx = globalRendering->viewPosX;
 	const int vpy = globalRendering->winSizeY - globalRendering->viewSizeY - globalRendering->viewPosY;
 
-	if (agui::gui != nullptr) {
+	if (agui::gui != nullptr)
 		agui::gui->UpdateScreenGeometry(globalRendering->viewSizeX, globalRendering->viewSizeY, vpx, vpy);
-	}
 
 	glViewport(globalRendering->viewPosX, globalRendering->viewPosY, globalRendering->viewSizeX, globalRendering->viewSizeY);
 	gluPerspective(45.0f, globalRendering->aspectRatio, 2.8f, CGlobalRendering::MAX_VIEW_RANGE);
@@ -568,9 +498,10 @@ void SpringApp::ParseCmdLine(int argc, char* argv[])
 
 	if (FLAGS_benchmark > 0) {
 		CBenchmark::enabled = true;
-		if (FLAGS_benchmarkstart > 0) {
+
+		if (FLAGS_benchmarkstart > 0)
 			CBenchmark::startFrame = FLAGS_benchmarkstart * 60 * GAME_SPEED;
-		}
+
 		CBenchmark::endFrame = CBenchmark::startFrame + FLAGS_benchmark * 60 * GAME_SPEED;
 	}
 
@@ -689,7 +620,7 @@ void SpringApp::LoadSpringMenu()
 void SpringApp::Startup()
 {
 	// bash input
-	const std::string extension = FileSystem::GetExtension(inputFile);
+	const std::string& extension = FileSystem::GetExtension(inputFile);
 
 	// note: avoid any .get() leaks between here and GameServer!
 	clientSetup.reset(new ClientSetup());
@@ -858,7 +789,7 @@ bool SpringApp::Update()
 	swap = (retc && activeController != nullptr && activeController->Draw());
 	#endif
 
-	// always swap by default, seemingly upsets some drivers not to
+	// always swap by default, not doing so can upset some drivers
 	globalRendering->SwapBuffers(swap);
 	return retc;
 }
@@ -899,7 +830,7 @@ int SpringApp::Run()
 
 	try {
 		if (globalRendering != nullptr) {
-			SaveWindowPosition();
+			SaveWindowPosAndSize();
 			ShutDown(true);
 		}
 	} CATCH_SPRING_ERRORS
@@ -995,12 +926,12 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 		case SDL_WINDOWEVENT: {
 			switch (event.window.event) {
 				case SDL_WINDOWEVENT_MOVED: {
-					SaveWindowPosition();
+					SaveWindowPosAndSize();
 				} break;
 				//case SDL_WINDOWEVENT_RESIZED: //this is event is always preceded by:
 				case SDL_WINDOWEVENT_SIZE_CHANGED: {
 					Watchdog::ClearTimer(WDT_MAIN, true);
-					SaveWindowPosition();
+					SaveWindowPosAndSize();
 					InitOpenGL();
 					activeController->ResizeEvent();
 					mouseInput->InstallWndCallback();
@@ -1010,27 +941,29 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 				case SDL_WINDOWEVENT_SHOWN: {
 					// reactivate sounds and other
 					globalRendering->active = true;
-					if (ISound::IsInitialized()) {
+
+					if (ISound::IsInitialized())
 						sound->Iconified(false);
-					}
-					if (globalRendering->fullScreen) {
+
+					if (globalRendering->fullScreen)
 						FBO::GLContextReinit();
-					}
+
 				} break;
 				case SDL_WINDOWEVENT_MINIMIZED:
 				case SDL_WINDOWEVENT_HIDDEN: {
 					// deactivate sounds and other
 					globalRendering->active = false;
-					if (ISound::IsInitialized()) {
+
+					if (ISound::IsInitialized())
 						sound->Iconified(true);
-					}
-					if (globalRendering->fullScreen) {
+
+					if (globalRendering->fullScreen)
 						FBO::GLContextLost();
-					}
+
 				} break;
 				case SDL_WINDOWEVENT_FOCUS_GAINED: {
 					// update keydown table
-					KeyInput::Update(0, ((keyBindings != NULL)? keyBindings->GetFakeMetaKey(): -1));
+					KeyInput::Update(0, ((keyBindings != nullptr)? keyBindings->GetFakeMetaKey(): -1));
 				} break;
 				case SDL_WINDOWEVENT_FOCUS_LOST: {
 					Watchdog::ClearTimer(WDT_MAIN, true);
@@ -1042,27 +975,25 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 					// release all keyboard keys
 					KeyInput::ReleaseAllKeys();
 
-					// simulate mouse release to prevent hung buttons
-					for (int i = 1; i <= NUM_BUTTONS; ++i) {
-						if (!mouse)
-							continue;
+					if (mouse != nullptr) {
+						// simulate mouse release to prevent hung buttons
+						for (int i = 1; i <= NUM_BUTTONS; ++i) {
+							if (!mouse->buttons[i].pressed)
+								continue;
 
-						if (!mouse->buttons[i].pressed)
-							continue;
+							SDL_Event event;
+							event.type = event.button.type = SDL_MOUSEBUTTONUP;
+							event.button.state = SDL_RELEASED;
+							event.button.which = 0;
+							event.button.button = i;
+							event.button.x = -1;
+							event.button.y = -1;
+							SDL_PushEvent(&event);
+						}
 
-						SDL_Event event;
-						event.type = event.button.type = SDL_MOUSEBUTTONUP;
-						event.button.state = SDL_RELEASED;
-						event.button.which = 0;
-						event.button.button = i;
-						event.button.x = -1;
-						event.button.y = -1;
-						SDL_PushEvent(&event);
-					}
-
-					// unlock mouse
-					if (mouse && mouse->locked) {
-						mouse->ToggleMiddleClickScroll();
+						// unlock mouse
+						if (mouse->locked)
+							mouse->ToggleMiddleClickScroll();
 					}
 
 					// and make sure to un-capture mouse
@@ -1084,25 +1015,22 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 			//FIXME don't known when this is called
 		} break;
 		case SDL_TEXTINPUT: {
-			if (activeController) {
-				std::string utf8Text = event.text.text;
-				activeController->TextInput(utf8Text);
-			}
+			if (activeController != nullptr)
+				activeController->TextInput(event.text.text);
+
 		} break;
 		case SDL_KEYDOWN: {
-			KeyInput::Update(event.key.keysym.sym, ((keyBindings != NULL)? keyBindings->GetFakeMetaKey(): -1));
+			KeyInput::Update(event.key.keysym.sym, ((keyBindings != nullptr)? keyBindings->GetFakeMetaKey(): -1));
 
-			if (activeController) {
+			if (activeController != nullptr)
 				activeController->KeyPressed(KeyInput::GetNormalizedKeySymbol(event.key.keysym.sym), event.key.repeat);
-			}
+
 		} break;
 		case SDL_KEYUP: {
-			KeyInput::Update(event.key.keysym.sym, ((keyBindings != NULL)? keyBindings->GetFakeMetaKey(): -1));
+			KeyInput::Update(event.key.keysym.sym, ((keyBindings != nullptr)? keyBindings->GetFakeMetaKey(): -1));
 
-			if (activeController) {
-				if (activeController->ignoreNextChar) {
-					activeController->ignoreNextChar = false;
-				}
+			if (activeController != nullptr) {
+				activeController->ignoreNextChar = false;
 				activeController->KeyReleased(KeyInput::GetNormalizedKeySymbol(event.key.keysym.sym));
 			}
 		} break;
