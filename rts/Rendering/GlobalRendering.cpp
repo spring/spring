@@ -866,7 +866,8 @@ bool CGlobalRendering::CheckGLContextVersion(const int2& minCtx) const
 	int2 tmpCtx = {0, 0};
 	glGetIntegerv(GL_MAJOR_VERSION, &tmpCtx.x);
 	glGetIntegerv(GL_MINOR_VERSION, &tmpCtx.y);
-	return (tmpCtx.x >= minCtx.x && tmpCtx.y >= minCtx.y);
+	// compare major * 10 + minor s.t. 4.1 evaluates as larger than 3.2
+	return ((tmpCtx.x * 10 + tmpCtx.y) >= (minCtx.x * 10 + minCtx.y));
 }
 
 
