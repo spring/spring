@@ -2868,19 +2868,23 @@ int LuaSyncedCtrl::SetFeatureResurrect(lua_State* L)
 	if (feature == nullptr)
 		return 0;
 
-	if (lua_isnumber(L, 2)) {
-		feature->resurrectProgress = Clamp(lua_tonumber(L, 2), 0.0f, 1.0f);
-		return 0;
+	{
+		const UnitDef* ud = nullptr;
+
+		// which type of unit this feature should turn into if resurrected, by id or name
+		if (lua_israwnumber(L, 2))
+			ud = unitDefHandler->GetUnitDefByID(lua_toint(L, 2));
+		else if (lua_israwstring(L, 2))
+			ud = unitDefHandler->GetUnitDefByName(lua_tostring(L, 2));
+
+		// nullptr is also accepted, allows unsetting the target
+		feature->udef = ud;
 	}
 
-	// which type of unit this feature should turn into if resurrected, by name
-	const UnitDef* ud = unitDefHandler->GetUnitDefByName(luaL_checkstring(L, 2));
-
-	if (ud != nullptr)
-		feature->udef = ud;
-
-	if (lua_gettop(L) >= 3)
+	if (!lua_isnoneornil(L, 3))
 		feature->buildFacing = LuaUtils::ParseFacing(L, __func__, 3);
+
+	feature->resurrectProgress = Clamp(luaL_optnumber(L, 4, feature->resurrectProgress), 0.0f, 1.0f);
 
 	return 0;
 }
