@@ -163,8 +163,8 @@ extern DECLSPEC Uint32 SDLCALL SDL_GetWindowFlags(SDL_Window* window) {
 	return 0;
 }
 
-extern DECLSPEC void SDLCALL SDL_DisableScreenSaver() {
-}
+extern DECLSPEC void SDLCALL SDL_EnableScreenSaver() {}
+extern DECLSPEC void SDLCALL SDL_DisableScreenSaver() {}
 
 extern DECLSPEC char* SDLCALL SDL_GetClipboardText() {
 	return "";
