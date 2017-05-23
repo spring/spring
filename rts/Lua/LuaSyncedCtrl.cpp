@@ -2869,7 +2869,7 @@ int LuaSyncedCtrl::SetFeatureResurrect(lua_State* L)
 		return 0;
 
 	{
-		UnitDef* ud = nullptr;
+		const UnitDef* ud = nullptr;
 
 		if (lua_israwnumber(L, 2))
 			ud = unitDefHandler->GetUnitDefByID(lua_toint(L, 2));
