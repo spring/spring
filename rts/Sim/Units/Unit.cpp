@@ -203,7 +203,7 @@ CUnit::CUnit()
 
 , stunned(false)
 {
-	assert(unitMemPool.ctorCall());
+	assert(unitMemPool.alloced(this));
 }
 
 CUnit::~CUnit()

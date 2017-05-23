@@ -30,7 +30,7 @@ CExpGenSpawnable::CExpGenSpawnable(const float3& pos, const float3& spd)
 CExpGenSpawnable::CExpGenSpawnable()
  : CWorldObject()
 {
-	assert(projMemPool.ctorCall());
+	assert(projMemPool.alloced(this));
 }
 
 

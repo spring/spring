@@ -17,29 +17,29 @@ public:
 	template<typename T, typename... A> T* alloc(A&&... a) {
 		static_assert(sizeof(T) <= N, "");
 		// disabled, recursion is allowed
-		// assert(!poolCall());
+		// assert(!xtorCall());
 
 		ctorCallDepth += 1;
 
 		T* p = nullptr;
 		uint8_t* m = nullptr;
 
-		size_t i = -1lu;
-
 		if (indcs.empty()) {
 			pages.emplace_back();
 
-			i = pages.size() - 1;
-			m = &pages[i][0];
+			allocPageIndx = pages.size() - 1;
+
+			m = &pages[allocPageIndx][0];
 			p = new (m) T(std::forward<A>(a)...);
 		} else {
 			// must pop before ctor runs; objects can be created recursively
-			i = spring::VectorBackPop(indcs);
-			m = &pages[i][0];
+			allocPageIndx = spring::VectorBackPop(indcs);
+
+			m = &pages[allocPageIndx][0];
 			p = new (m) T(std::forward<A>(a)...);
 		}
 
-		table.emplace(p, i);
+		table.emplace(p, allocPageIndx);
 
 		ctorCallDepth -= 1;
 		return p;
@@ -47,7 +47,7 @@ public:
 
 	template<typename T> void free(T*& p) {
 		assert(mapped(p));
-		// assert(!poolCall());
+		// assert(!xtorCall());
 
 		dtorCallDepth += 1;
 
@@ -67,14 +67,20 @@ public:
 	}
 
 	bool mapped(void* p) const { return (table.find(p) != table.end()); }
+	bool alloced(void* p) const { return ((allocPageIndx < pages.size()) && (&pages[allocPageIndx][0] == p)); }
+
 	bool ctorCall() const { return (ctorCallDepth > 0); }
 	bool dtorCall() const { return (dtorCallDepth > 0); }
-	bool poolCall() const { return (ctorCall() || dtorCall()); }
+	bool xtorCall() const { return (ctorCall() || dtorCall()); }
 
 	void clear() {
 		pages.clear();
 		indcs.clear();
 		table.clear();
+
+		ctorCallDepth = 0;
+		dtorCallDepth = 0;
+		allocPageIndx = 0;
 	}
 	void reserve(size_t n) {
 		indcs.reserve(n);
@@ -90,6 +96,7 @@ private:
 
 	size_t ctorCallDepth = 0;
 	size_t dtorCallDepth = 0;
+	size_t allocPageIndx = 0;
 };
 
 #endif
