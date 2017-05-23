@@ -2871,13 +2871,14 @@ int LuaSyncedCtrl::SetFeatureResurrect(lua_State* L)
 	{
 		const UnitDef* ud = nullptr;
 
+		// which type of unit this feature should turn into if resurrected, by id or name
 		if (lua_israwnumber(L, 2))
 			ud = unitDefHandler->GetUnitDefByID(lua_toint(L, 2));
 		else if (lua_israwstring(L, 2))
 			ud = unitDefHandler->GetUnitDefByName(lua_tostring(L, 2));
 
-		if (ud != nullptr)
-			feature->udef = ud;
+		// nullptr is also accepted, allows unsetting the target
+		feature->udef = ud;
 	}
 
 	if (!lua_isnoneornil(L, 3))
