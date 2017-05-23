@@ -132,7 +132,7 @@ CR_REG_METADATA(CGlobalRendering, (
 	CR_IGNORED(borderless),
 
 	CR_IGNORED(window),
-	CR_IGNORED(sdlGlCtx)
+	CR_IGNORED(glContext)
 ))
 
 CGlobalRendering::CGlobalRendering()
@@ -215,7 +215,7 @@ CGlobalRendering::CGlobalRendering()
 	, borderless(configHandler->GetBool("WindowBorderless"))
 
 	, window(nullptr)
-	, sdlGlCtx(nullptr)
+	, glContext(nullptr)
 {
 	configHandler->NotifyOnChange(this, {"TextureLODBias", "Fullscreen", "WindowBorderless"});
 }
@@ -228,8 +228,6 @@ CGlobalRendering::~CGlobalRendering()
 
 bool CGlobalRendering::CreateSDLWindow(const char* title, bool minimized)
 {
-	SDL_DisableScreenSaver();
-
 	// the crash reporter should be catching errors, not SDL
 	if ((SDL_Init(SDL_INIT_VIDEO | SDL_INIT_NOPARACHUTE) == -1)) {
 		LOG_L(L_FATAL, "[GR::%s] error \"%s\" initializing SDL", __func__, SDL_GetError());
@@ -241,10 +239,10 @@ bool CGlobalRendering::CreateSDLWindow(const char* title, bool minimized)
 
 	// get wanted resolution and context-version
 	const int2 winRes = GetWantedViewSize(fullScreen);
-	const int2 oglCtx = {configHandler->GetInt("GLContextMajorVersion"), configHandler->GetInt("GLContextMinorVersion")};
+	const int2 minCtx = {configHandler->GetInt("GLContextMajorVersion"), configHandler->GetInt("GLContextMinorVersion")};
 	const int2 glCtxs[] = {{2, 0}, {2, 1},  {3, 0}, {3, 1}, {3, 2}, {3, 3},  {4, 0}, {4, 1}, {4, 2}, {4, 3}, {4, 4}, {4, 5}};
 
-	if (std::find(&glCtxs[0], &glCtxs[0] + (sizeof(glCtxs) / sizeof(int2)), oglCtx) == (&glCtxs[0] + (sizeof(glCtxs) / sizeof(int2))))
+	if (std::find(&glCtxs[0], &glCtxs[0] + (sizeof(glCtxs) / sizeof(int2)), minCtx) == (&glCtxs[0] + (sizeof(glCtxs) / sizeof(int2))))
 		throw unsupported_error("illegal OpenGL context-version specified, aborting");
 
 	uint32_t sdlFlags = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE;
@@ -272,8 +270,8 @@ bool CGlobalRendering::CreateSDLWindow(const char* title, bool minimized)
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, forceCoreContext? SDL_GL_CONTEXT_PROFILE_CORE: SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG * configHandler->GetBool("DebugGL"));
 
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, oglCtx.x);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, oglCtx.y);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, minCtx.x);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, minCtx.y);
 
 
 	if (fsaaLevel > 0) {
@@ -344,14 +342,14 @@ bool CGlobalRendering::CreateSDLWindow(const char* title, bool minimized)
 
 
 	// create GL context
-	assert(sdlGlCtx == nullptr);
+	assert(glContext == nullptr);
 
-	if ((sdlGlCtx = SDL_GL_CreateContext(window)) == nullptr) {
+	if ((glContext = SDL_GL_CreateContext(window)) == nullptr) {
 		const char* frmts[] = {"[GR::%s] error \"%s\" creating GL%d.%d %s-context", "[GR::%s] created GL%d.%d %s-context"};
-		const char* profs[] = {"compat", "core"};
+		const char* profs[] = {"compatibility", "core"};
 
 		char buf[1024];
-		SNPRINTF(buf, sizeof(buf), frmts[false], __func__, SDL_GetError(), oglCtx.x, oglCtx.y, profs[forceCoreContext]);
+		SNPRINTF(buf, sizeof(buf), frmts[false], __func__, SDL_GetError(), minCtx.x, minCtx.y, profs[forceCoreContext]);
 
 		for (const int2 tmpCtx: glCtxs) {
 			SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, tmpCtx.x);
@@ -360,14 +358,14 @@ bool CGlobalRendering::CreateSDLWindow(const char* title, bool minimized)
 			for (uint32_t mask: {SDL_GL_CONTEXT_PROFILE_CORE, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY}) {
 				SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, mask);
 
-				if ((sdlGlCtx = SDL_GL_CreateContext(window)) == nullptr) {
+				if ((glContext = SDL_GL_CreateContext(window)) == nullptr) {
 					LOG_L(L_WARNING, frmts[false], __func__, SDL_GetError(), tmpCtx.x, tmpCtx.y, profs[mask == SDL_GL_CONTEXT_PROFILE_CORE]);
 				} else {
 					LOG_L(L_WARNING, frmts[true], __func__, tmpCtx.x, tmpCtx.y, profs[mask == SDL_GL_CONTEXT_PROFILE_CORE]);
 				}
 
 				// accepts nullptr's
-				SDL_GL_DeleteContext(sdlGlCtx);
+				SDL_GL_DeleteContext(glContext);
 			}
 		}
 
@@ -375,8 +373,13 @@ bool CGlobalRendering::CreateSDLWindow(const char* title, bool minimized)
 		return false;
 	}
 
+	if (!CheckGLContextVersion(minCtx))
+		throw unsupported_error("minimum OpenGL version-requirement not satisfied, aborting");
+
 	// redundant, but harmless
-	SDL_GL_MakeCurrent(window, sdlGlCtx);
+	SDL_GL_MakeCurrent(window, glContext);
+
+	SDL_DisableScreenSaver();
 	return true;
 }
 
@@ -387,13 +390,14 @@ void CGlobalRendering::DestroySDLWindow() {
 	SDL_DestroyWindow(window);
 
 #if !defined(HEADLESS)
-	SDL_GL_DeleteContext(sdlGlCtx);
+	SDL_GL_DeleteContext(glContext);
 	SDL_QuitSubSystem(SDL_INIT_VIDEO);
 #endif
+	SDL_EnableScreenSaver();
 	SDL_Quit();
 
 	window = nullptr;
-	sdlGlCtx = nullptr;
+	glContext = nullptr;
 }
 
 
@@ -844,7 +848,7 @@ void CGlobalRendering::UpdateGLConfigs()
  *
  * Tests whether FSAA was actually enabled
  */
-bool CGlobalRendering::EnableFSAA() const
+bool CGlobalRendering::CheckGLMultiSampling() const
 {
 	if (fsaaLevel == 0)
 		return false;
@@ -852,10 +856,20 @@ bool CGlobalRendering::EnableFSAA() const
 		return false;
 	GLint buffers = 0;
 	GLint samples = 0;
-	glGetIntegerv(GL_SAMPLE_BUFFERS_ARB, &buffers);
-	glGetIntegerv(GL_SAMPLES_ARB, &samples);
+	glGetIntegerv(GL_SAMPLE_BUFFERS, &buffers);
+	glGetIntegerv(GL_SAMPLES, &samples);
 	return (buffers != 0 && samples != 0);
 }
+
+bool CGlobalRendering::CheckGLContextVersion(const int2& minCtx) const
+{
+	int2 tmpCtx = {0, 0};
+	glGetIntegerv(GL_MAJOR_VERSION, &tmpCtx.x);
+	glGetIntegerv(GL_MINOR_VERSION, &tmpCtx.y);
+	return (tmpCtx.x >= minCtx.x && tmpCtx.y >= minCtx.y);
+}
+
+
 
 #if defined(WIN32) && !defined(HEADLESS)
 	#if defined(_MSC_VER) && _MSC_VER >= 1600

@@ -53,7 +53,8 @@ public:
 
 	int2 GetWantedViewSize(const bool fullscreen);
 
-	bool EnableFSAA() const;
+	bool CheckGLMultiSampling() const;
+	bool CheckGLContextVersion(const int2& minCtx) const;
 	bool ToggleGLDebugOutput();
 
 public:
@@ -275,7 +276,7 @@ public:
 
 public:
 	SDL_Window* window;
-	SDL_GLContext sdlGlCtx;
+	SDL_GLContext glContext;
 
 public:
 	/**

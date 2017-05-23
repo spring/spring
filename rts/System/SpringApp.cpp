@@ -360,7 +360,7 @@ void SpringApp::InitOpenGL()
 	glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE);
 	#endif
 
-	if (globalRendering->EnableFSAA()) {
+	if (globalRendering->CheckGLMultiSampling()) {
 		glEnable(GL_MULTISAMPLE);
 	} else {
 		glDisable(GL_MULTISAMPLE);
