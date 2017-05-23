@@ -24,22 +24,23 @@ public:
 		T* p = nullptr;
 		uint8_t* m = nullptr;
 
+		size_t i = -1lu;
+
 		if (indcs.empty()) {
 			pages.emplace_back();
 
-			allocPageIndx = pages.size() - 1;
-
-			m = &pages[allocPageIndx][0];
+			i = pages.size() - 1;
+			m = &pages[allocPageIndx = i][0];
 			p = new (m) T(std::forward<A>(a)...);
 		} else {
 			// must pop before ctor runs; objects can be created recursively
-			allocPageIndx = spring::VectorBackPop(indcs);
+			i = spring::VectorBackPop(indcs);
 
-			m = &pages[allocPageIndx][0];
+			m = &pages[allocPageIndx = i][0];
 			p = new (m) T(std::forward<A>(a)...);
 		}
 
-		table.emplace(p, allocPageIndx);
+		table.emplace(p, i);
 
 		ctorCallDepth -= 1;
 		return p;
