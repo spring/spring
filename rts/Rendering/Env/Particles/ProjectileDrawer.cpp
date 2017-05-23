@@ -574,8 +574,6 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 	zSortedProjectiles.clear();
 	unsortedProjectiles.clear();
 
-	Update();
-
 	{
 		unitDrawer->SetupOpaqueDrawing(false);
 

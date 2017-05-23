@@ -2316,7 +2316,7 @@ void CGameServer::PushAction(const Action& action, bool fromAutoHost)
 		}
 	}
 	else if (action.command == "kill") {
-		LOG("Server killed!!!");
+		LOG("Server killed!");
 		quitServer = true;
 	}
 	else if (action.command == "pause") {
