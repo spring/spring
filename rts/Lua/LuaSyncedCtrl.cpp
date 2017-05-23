@@ -2868,7 +2868,7 @@ int LuaSyncedCtrl::SetFeatureResurrect(lua_State* L)
 	if (feature == nullptr)
 		return 0;
 
-	{
+	if (!lua_isnoneornil(L, 2)) {
 		const UnitDef* ud = nullptr;
 
 		// which type of unit this feature should turn into if resurrected, by id or name
@@ -2877,7 +2877,7 @@ int LuaSyncedCtrl::SetFeatureResurrect(lua_State* L)
 		else if (lua_israwstring(L, 2))
 			ud = unitDefHandler->GetUnitDefByName(lua_tostring(L, 2));
 
-		// nullptr is also accepted, allows unsetting the target
+		// nullptr is also accepted, allows unsetting the target via id=-1
 		feature->udef = ud;
 	}
 
@@ -2885,7 +2885,6 @@ int LuaSyncedCtrl::SetFeatureResurrect(lua_State* L)
 		feature->buildFacing = LuaUtils::ParseFacing(L, __func__, 3);
 
 	feature->resurrectProgress = Clamp(luaL_optnumber(L, 4, feature->resurrectProgress), 0.0f, 1.0f);
-
 	return 0;
 }
 
