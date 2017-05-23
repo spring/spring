@@ -6,7 +6,6 @@
 #include "System/Misc/NonCopyable.h"
 #include <memory>
 #include <asio/ip/udp.hpp>
-#include <list>
 #include <map>
 #include <queue>
 #include <string>
@@ -36,7 +35,7 @@ public:
 	/**
 	 * @brief close the socket and DELETE all connections
 	 */
-	~UDPListener() {}
+	~UDPListener();
 
 	/**
 	 * Try to bind a socket to a local address and port.
@@ -48,8 +47,7 @@ public:
 	 *         the default value "" results in the v6 any address "::",
 	 *         or the v4 equivalent "0.0.0.0", if v6 is no supported
 	 */
-	static std::string TryBindSocket(int port, SocketPtr* socket,
-			const std::string& ip = "");
+	static std::string TryBindSocket(int port, SocketPtr* socket, const std::string& ip = "");
 
 	/**
 	 * @brief Run this from time to time
@@ -62,8 +60,7 @@ public:
 	 * @brief Initiate a connection
 	 * Make a new connection to ip:port. It will be pushed back in conn.
 	 */
-	std::shared_ptr<UDPConnection> SpawnConnection(const std::string& ip,
-			const unsigned port);
+	std::shared_ptr<UDPConnection> SpawnConnection(const std::string& ip, const unsigned port);
 
 	/**
 	 * Set if we are accepting new connections
@@ -71,12 +68,12 @@ public:
 	 */
 	void SetAcceptingConnections(const bool enable);
 	bool IsAcceptingConnections() const;
-
 	bool HasIncomingConnections() const;
+
 	std::weak_ptr<UDPConnection> PreviewConnection();
 	std::shared_ptr<UDPConnection> AcceptConnection();
-	void RejectConnection();
 
+	void RejectConnection();
 	void UpdateConnections(); // Updates connections when the endpoint has been reconnected
 
 private:
@@ -91,8 +88,8 @@ private:
 	SocketPtr mySocket;
 
 	/// all connections
-	typedef std::map< asio::ip::udp::endpoint, std::weak_ptr<UDPConnection> > ConnMap;
-	ConnMap conn;
+	std::map< asio::ip::udp::endpoint, std::weak_ptr<UDPConnection> > connMap;
+	std::map< std::string, size_t> dropMap;
 
 	std::queue< std::shared_ptr<UDPConnection> > waiting;
 };
