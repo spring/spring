@@ -3,12 +3,13 @@
 #include "AudioChannel.h"
 
 #include "ALShared.h"
-#include "System/Sound/ISound.h"
 #include "SoundItem.h"
-#include "System/Sound/SoundLog.h"
 #include "SoundSource.h"
+#include "Game/GlobalUnsynced.h"
 #include "Sim/Misc/GuiSoundSet.h"
 #include "Sim/Objects/WorldObject.h"
+#include "System/Sound/ISound.h"
+#include "System/Sound/SoundLog.h"
 #include "System/Threading/SpringThreading.h"
 
 #include <climits>
@@ -156,11 +157,10 @@ void AudioChannel::PlayRandomSample(const GuiSoundSet& soundSet, const CWorldObj
 
 void AudioChannel::PlayRandomSample(const GuiSoundSet& soundSet, const float3& pos)
 {
-	const int soundIdx = soundSet.getRandomIdx();
-
-	if (soundIdx < 0)
+	if (soundSet.sounds.empty())
 		return;
 
+	const int soundIdx = guRNG.NextInt(soundSet.sounds.size());
 	const int soundID = soundSet.getID(soundIdx);
 	const float soundVol = soundSet.getVolume(soundIdx);
 

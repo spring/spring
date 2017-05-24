@@ -4,10 +4,10 @@
 #include "AdvSky.h"
 
 #include "Game/Camera.h"
+#include "Game/GlobalUnsynced.h"
 #include "Map/MapInfo.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/VertexArray.h"
-#include "Rendering/Textures/Bitmap.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Exceptions.h"
@@ -509,19 +509,17 @@ void CAdvSky::Update()
 	}
 }
 
-void CAdvSky::CreateRandMatrix(int **matrix,float mod)
+void CAdvSky::CreateRandMatrix(int** matrix, float /*mod*/)
 {
-	for(int a=0, *pmat=*matrix; a<32*32; ++a) {
-		float r = ((float)( rand() )) / (float)RAND_MAX;
-		*pmat++=((int)(r * 255.0f));
+	for (int a = 0, *pmat = *matrix; a < 32*32; ++a) {
+		*pmat++ = ((int)(guRNG.NextFloat() * 255.0f));
 	}
 }
 
-void CAdvSky::CreateRandDetailMatrix(unsigned char* matrix,int size)
+void CAdvSky::CreateRandDetailMatrix(unsigned char* matrix, int size)
 {
-	for(int a=0;a<size*size;a++){
-		float  r = ((float)( rand() )) / (float)RAND_MAX;
-		*matrix++=((int)(r * 255.0f));
+	for (int a = 0; a < size*size; a++) {
+		*matrix++ = ((int)(guRNG.NextFloat() * 255.0f));
 	}
 }
 

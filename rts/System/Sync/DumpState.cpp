@@ -27,6 +27,12 @@
 #include "System/Util.h"
 #include "System/Log/ILog.h"
 
+static std::fstream file;
+
+static int gMinFrameNum = -1;
+static int gMaxFrameNum = -1;
+static int gFramePeriod =  1;
+
 
 void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod)
 {
@@ -35,22 +41,19 @@ void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod)
 	return;
 	#endif
 
-	static std::fstream file;
-
-	static int gMinFrameNum = -1;
-	static int gMaxFrameNum = -1;
-	static int gFramePeriod =  1;
-
 	const int oldMinFrameNum = gMinFrameNum;
 	const int oldMaxFrameNum = gMaxFrameNum;
 
-	if (!gs->cheatEnabled) { return; }
+	if (!gs->cheatEnabled)
+		return;
 	// check if the range is valid
-	if (newMaxFrameNum < newMinFrameNum) { return; }
+	if (newMaxFrameNum < newMinFrameNum)
+		return;
+
 	// adjust the bounds if the new values are valid
-	if (newMinFrameNum >= 0) { gMinFrameNum = newMinFrameNum; }
-	if (newMaxFrameNum >= 0) { gMaxFrameNum = newMaxFrameNum; }
-	if (newFramePeriod >= 1) { gFramePeriod = newFramePeriod; }
+	if (newMinFrameNum >= 0) gMinFrameNum = newMinFrameNum;
+	if (newMaxFrameNum >= 0) gMaxFrameNum = newMaxFrameNum;
+	if (newFramePeriod >= 1) gFramePeriod = newFramePeriod;
 
 	if ((gMinFrameNum != oldMinFrameNum) || (gMaxFrameNum != oldMaxFrameNum)) {
 		// bounds changed, open a new file
@@ -59,7 +62,7 @@ void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod)
 			file.close();
 		}
 
-		std::string name = (gameServer != NULL)? "Server": "Client";
+		std::string name = (gameServer != nullptr)? "Server": "Client";
 		name += "GameState-";
 		name += IntToString(guRNG.NextInt());
 		name += "-[";
@@ -71,31 +74,33 @@ void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod)
 		file.open(name.c_str(), std::ios::out);
 
 		if (file.is_open()) {
-			file << "map name: " << gameSetup->mapName << "\n";
-			file << "mod name: " << gameSetup->modName << "\n";
-			file << "minFrame: " << gMinFrameNum << ", maxFrame: " << gMaxFrameNum << "\n";
-			file << "randSeed: " << gsRNG.GetSeed() << "\n";
+			file << " mapName: " << gameSetup->mapName << "\n";
+			file << " modName: " << gameSetup->modName << "\n";
+			file << "minFrame: " << gMinFrameNum << "\n";
+			file << "maxFrame: " << gMaxFrameNum << "\n";
+			file << "randSeed: " << gsRNG.GetLastSeed() << "\n";
 			file << "initSeed: " << gsRNG.GetInitSeed() << "\n";
 		}
 
-		LOG("[DumpState] using dump-file \"%s\"", name.c_str());
+		LOG("[%s] using dump-file \"%s\"", __func__, name.c_str());
 	}
 
-	if (file.bad() || !file.is_open()) { return; }
+	if (file.bad() || !file.is_open())
+		return;
 	// check if the CURRENT frame lies within the bounds
-	if (gs->frameNum < gMinFrameNum) { return; }
-	if (gs->frameNum > gMaxFrameNum) { return; }
-	if ((gs->frameNum % gFramePeriod) != 0) { return; }
+	if (gs->frameNum < gMinFrameNum)
+		return;
+	if (gs->frameNum > gMaxFrameNum)
+		return;
+	if ((gs->frameNum % gFramePeriod) != 0)
+		return;
 
 	// we only care about the synced projectile data here
 	const std::vector<CUnit*>& activeUnits = unitHandler->GetActiveUnits();
 	const auto& activeFeatureIDs = featureHandler->GetActiveFeatureIDs();
-	ProjectileContainer& projectiles = projectileHandler->syncedProjectiles;
+	const ProjectileContainer& projectiles = projectileHandler->syncedProjectiles;
 
-	ProjectileContainer::iterator projectilesIt;
-	std::vector<CWeapon*>::const_iterator weaponsIt;
-
-	file << "frame: " << gs->frameNum << ", seed: " << gsRNG.GetSeed() << "\n";
+	file << "frame: " << gs->frameNum << ", seed: " << gsRNG.GetLastSeed() << "\n";
 	file << "\tunits: " << activeUnits.size() << "\n";
 
 	#define DUMP_UNIT_DATA
@@ -109,10 +114,11 @@ void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod)
 	// #define DUMP_ALLYTEAM_DATA
 
 	#ifdef DUMP_UNIT_DATA
-	for (CUnit* u: activeUnits) {
+	for (const CUnit* u: activeUnits) {
 		const std::vector<CWeapon*>& weapons = u->weapons;
 		const LocalModel& lm = u->localModel;
 		const std::vector<LocalModelPiece>& pieces = lm.pieces;
+
 		const float3& pos = u->pos;
 		const float3& xdir = u->rightdir;
 		const float3& ydir = u->updir;
@@ -148,8 +154,7 @@ void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod)
 		file << "\t\t\tweapons: " << weapons.size() << "\n";
 
 		#ifdef DUMP_UNIT_WEAPON_DATA
-		for (weaponsIt = weapons.begin(); weaponsIt != weapons.end(); ++weaponsIt) {
-			const CWeapon* w = *weaponsIt;
+		for (const CWeapon* w: weapons) {
 			const float3& awp = w->aimFromPos;
 			const float3& rwp = w->relAimFromPos;
 			const float3& amp = w->weaponMuzzlePos;
@@ -170,12 +175,10 @@ void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod)
 		const CCommandQueue& cq = cai->commandQue;
 
 		file << "\t\t\tcommandAI:\n";
-		file << "\t\t\t\torderTarget->id: " << ((cai->orderTarget != NULL)? cai->orderTarget->id: -1) << "\n";
+		file << "\t\t\t\torderTarget->id: " << ((cai->orderTarget != nullptr)? cai->orderTarget->id: -1) << "\n";
 		file << "\t\t\t\tcommandQue.size(): " << cq.size() << "\n";
 
-		for (CCommandQueue::const_iterator cit = cq.begin(); cit != cq.end(); ++cit) {
-			const Command& c = *cit;
-
+		for (const Command& c: cq) {
 			file << "\t\t\t\t\tcommandID: " << c.GetID() << "\n";
 			file << "\t\t\t\t\ttag: " << c.tag << ", options: " << c.options << "\n";
 			file << "\t\t\t\t\tparams: " << c.GetParamsCount() << "\n";
@@ -217,9 +220,7 @@ void DumpState(int newMinFrameNum, int newMaxFrameNum, int newFramePeriod)
 	file << "\tprojectiles: " << projectiles.size() << "\n";
 
 	#ifdef DUMP_PROJECTILE_DATA
-	for (projectilesIt = projectiles.begin(); projectilesIt != projectiles.end(); ++projectilesIt) {
-		const CProjectile* p = *projectilesIt;
-
+	for (const CProjectile* p: projectiles) {
 		file << "\t\tprojectileID: " << p->id << "\n";
 		file << "\t\t\tpos: <" << p->pos.x << ", " << p->pos.y << ", " << p->pos.z << ">\n";
 		file << "\t\t\tdir: <" << p->dir.x << ", " << p->dir.y << ", " << p->dir.z << ">\n";

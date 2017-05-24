@@ -19,18 +19,6 @@ struct GuiSoundSet
 	};
 	std::vector<Data> sounds;
 
-	/**
-	 * Returns a random sound index if more than one sound was loaded.
-	 * Used for unit acknowledgements, could be called for weapons too.
-	 */
-	int getRandomIdx() const {
-		switch (sounds.size()) {
-			case 0:  { return -1; }
-			case 1:  { return  0; }
-			default: { return (rand() % sounds.size()); }
-		}
-	}
-
 	bool ValidIndex(int idx) const {
 		return ((idx >= 0) && (idx < (int)sounds.size()));
 	}
@@ -39,10 +27,12 @@ struct GuiSoundSet
 	std::string getName(int idx) const {
 		return ValidIndex(idx) ? sounds[idx].name : "";
 	}
+
 	/// get a (loaded) sound's ID for index \<idx\>
 	int getID(int idx) const {
 		return ValidIndex(idx) ? sounds[idx].id : 0;
 	}
+
 	/// get a (loaded) sound's volume for index \<idx\>
 	float getVolume(int idx) const {
 		return ValidIndex(idx) ? sounds[idx].volume : 0.0f;

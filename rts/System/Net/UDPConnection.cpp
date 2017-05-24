@@ -32,15 +32,9 @@ static const int chunksPerSec = 30;
 
 
 #if NETWORK_TEST
-float RANDOM_NUMBER() {
-	// spring has some srand calls that interfere with the random seed
-	static int lastRand = 0;
+static CGlobalUnsyncedRNG rng;
 
-	srand(lastRand);
-
-	// [0.0f, 1.0f)
-	return (lastRand = rand()) / float(RAND_MAX);
-}
+float RANDOM_NUMBER() { return (rng.NextFloat()); }
 
 bool EMULATE_PACKET_LOSS(int& lossCtr) {
 	if (RANDOM_NUMBER() < (PACKET_LOSS_FACTOR / 100.0f))
@@ -56,14 +50,14 @@ bool EMULATE_PACKET_LOSS(int& lossCtr) {
 
 void EMULATE_PACKET_CORRUPTION(uint8_t& crc) {
 	if ((RANDOM_NUMBER() < (PACKET_CORRUPTION_FACTOR / 100.0f)))
-		crc = (uint8_t)rand();
+		crc = (uint8_t)rng.NextInt();
 }
 
 #define LOSS_COUNTER lossCounter
 
 #else
 static int dummyLossCounter = 0;
-inline bool EMULATE_PACKET_LOSS(int &lossCtr) { return false; }
+inline bool EMULATE_PACKET_LOSS(int& lossCtr) { return false; }
 inline void EMULATE_PACKET_CORRUPTION(std::uint8_t& crc) {}
 #define LOSS_COUNTER dummyLossCounter
 #endif

@@ -325,7 +325,7 @@ bool CLuaUI::ConfigCommand(const string& command) //FIXME rename to fit event na
 
 static inline float fuzzRand(float fuzz)
 {
-	return (1.0f + fuzz) - ((2.0f * fuzz) * (float)rand() / (float)RAND_MAX);
+	return (1.0f + fuzz) - ((2.0f * fuzz) * guRNG.NextFloat());
 }
 
 
@@ -333,7 +333,7 @@ void CLuaUI::ShockFront(const float3& pos, float power, float areaOfEffect, cons
 {
 	if (!haveShockFront)
 		return;
-	if (areaOfEffect < shockFrontMinArea && distMod == NULL)
+	if (areaOfEffect < shockFrontMinArea && distMod == nullptr)
 		return;
 
 	float3 gap = (camera->GetPos() - pos);
@@ -341,7 +341,7 @@ void CLuaUI::ShockFront(const float3& pos, float power, float areaOfEffect, cons
 	const float shockFrontDistMod = this->shockFrontDistAdj;
 	float dist = gap.Length() + shockFrontDistMod;
 
-	if ((power /= (dist * dist)) < shockFrontMinPower && distMod == NULL)
+	if ((power /= (dist * dist)) < shockFrontMinPower && distMod == nullptr)
 		return;
 
 	LUA_CALL_IN_CHECK(L);

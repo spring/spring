@@ -3,6 +3,7 @@
 
 #include "FireBallProjectile.h"
 #include "Game/Camera.h"
+#include "Game/GlobalUnsynced.h"
 #include "Map/Ground.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
@@ -34,7 +35,7 @@ CFireBallProjectile::CFireBallProjectile(const ProjectileParams& params): CWeapo
 {
 	projectileType = WEAPON_FIREBALL_PROJECTILE;
 
-	if (weaponDef != NULL) {
+	if (weaponDef != nullptr) {
 		SetRadiusAndHeight(weaponDef->collisionSize, 0.0f);
 		drawRadius = weaponDef->size;
 	}
@@ -91,32 +92,24 @@ void CFireBallProjectile::Update()
 	if (checkCol) {
 		if (!luaMoveCtrl) {
 			pos += speed;
-
-			if (weaponDef->gravityAffected) {
-				speed.y += mygravity;
-			}
+			speed.y += (mygravity * weaponDef->gravityAffected);
 		}
 
-		if (weaponDef->noExplode && TraveledRange()) {
+		if (weaponDef->noExplode && TraveledRange())
 			checkCol = false;
-		}
 
 		EmitSpark();
 	} else {
-		if (sparks.empty()) {
-			deleteMe = true;
-		}
+		deleteMe |= sparks.empty();
 	}
 
 	for (unsigned int i = 0; i < sparks.size(); i++) {
-		sparks[i].ttl--;
-		if (sparks[i].ttl == 0) {
+		if ((--sparks[i].ttl) == 0) {
 			sparks.pop_back();
 			break;
 		}
-		if (checkCol) {
-			sparks[i].pos += sparks[i].speed;
-		}
+
+		sparks[i].pos += (sparks[i].speed * checkCol);
 		sparks[i].speed *= 0.95f;
 	}
 
@@ -128,11 +121,12 @@ void CFireBallProjectile::Update()
 void CFireBallProjectile::EmitSpark()
 {
 	Spark spark;
-	const float x = (rand() / (float) RAND_MAX) - 0.5f;
-	const float y = (rand() / (float) RAND_MAX) - 0.5f;
-	const float z = (rand() / (float) RAND_MAX) - 0.5f;
+	const float x = guRNG.NextFloat() - 0.5f;
+	const float y = guRNG.NextFloat() - 0.5f;
+	const float z = guRNG.NextFloat() - 0.5f;
+
 	spark.speed = (speed * 0.95f) + float3(x, y, z);
-	spark.pos = pos - speed * (rand() / (float) RAND_MAX + 3) + spark.speed * 3;
+	spark.pos = pos - speed * (guRNG.NextFloat() + 3) + spark.speed * 3;
 	spark.size = 5.0f;
 	spark.ttl = 15;
 

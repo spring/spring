@@ -4,15 +4,15 @@
 #pragma warning(disable:4258)
 #endif
 
-#include <assert.h>
+#include <cassert>
 
 #include "BasicSky.h"
 
 #include "Game/Camera.h"
+#include "Game/GlobalUnsynced.h"
 #include "Map/MapInfo.h"
-#include "Map/ReadMap.h"
 #include "Rendering/GlobalRendering.h"
-#include "Rendering/Textures/Bitmap.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Matrix44f.h"
 #include "System/myMath.h"
@@ -496,9 +496,8 @@ void CBasicSky::Update()
 
 void CBasicSky::CreateRandMatrix(int **matrix,float mod)
 {
-	for(int a=0, *pmat=*matrix; a<32*32; ++a) {
-		float r = ((float)( rand() )) / (float)RAND_MAX;
-		*pmat++=((int)( r * 255.0f ));
+	for (int a = 0, *pmat = *matrix; a < 32*32; ++a) {
+		*pmat++ = ((int)(guRNG.NextFloat() * 255.0f));
 	}
 }
 

@@ -263,7 +263,7 @@ namespace terrain {
 					factor *= ((gi->maxSlope + gi->maxSlopeFuzzy) - h) / (2.0f * gi->maxSlopeFuzzy);
 
 				factor *= gi->coverage;
-				factor *= (rand() < gi->noise * RAND_MAX) ? 0.0f : 1.0f;
+				factor *= (guRNG.NextFloat() < gi->noise) ? 0.0f : 1.0f;
 
 				bm->at(x,y) = factor;
 			}

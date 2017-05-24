@@ -3,7 +3,7 @@
 
 #include "StarburstProjectile.h"
 #include "Game/Camera.h"
-#include "Game/GameHelper.h"
+#include "Game/GlobalUnsynced.h"
 #include "Map/Ground.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
@@ -83,18 +83,16 @@ CStarburstProjectile::CStarburstProjectile(const ProjectileParams& params): CWea
 	projectileType = WEAPON_STARBURST_PROJECTILE;
 
 
-	if (weaponDef != NULL) {
+	if (weaponDef != nullptr) {
 		maxSpeed = weaponDef->projectilespeed;
 		ttl = weaponDef->flighttime;
 
 		// Default uptime is -1. Positive values override the weapondef.
-		if (uptime < 0) {
+		if (uptime < 0)
 			uptime = weaponDef->uptime * GAME_SPEED;
-		}
 
-		if (weaponDef->flighttime == 0) {
+		if (weaponDef->flighttime == 0)
 			ttl = std::min(3000.0f, uptime + weaponDef->range / maxSpeed + 100);
-		}
 	}
 
 	maxGoodDif = math::cos(tracking * 0.6f);
@@ -158,8 +156,9 @@ void CStarburstProjectile::Update()
 	if (target != nullptr && weaponDef->tracks) {
 		const CSolidObject* so = dynamic_cast<const CSolidObject*>(target);
 
-		if (so != NULL) {
+		if (so != nullptr) {
 			targetPos = so->aimPos;
+
 			if (allyteamID != -1 && !ignoreError) {
 				const CUnit* u = dynamic_cast<const CUnit*>(so);
 
@@ -173,13 +172,11 @@ void CStarburstProjectile::Update()
 		targetPos += aimError;
 	}
 
-	if (!luaMoveCtrl) {
+	if (!luaMoveCtrl)
 		UpdateTrajectory();
-	}
 
-	if (ttl > 0) {
+	if (ttl > 0)
 		explGenHandler->GenExplosion(cegID, pos, dir, ttl, damages->damageAreaOfEffect, 0.0f, NULL, NULL);
-	}
 
 
 	{
@@ -194,12 +191,11 @@ void CStarburstProjectile::Update()
 		unsigned int newsize = 0;
 
 		for (float aa = 0; aa < speed.w + 0.6f && newsize < MAX_NUM_AGEMODS; aa += TRACER_PARTS_STEP, ++newsize) {
-			const float ageMod = (missileAge < 20) ? 1.0f : (0.6f + (rand() * 0.8f) / RAND_MAX);
+			const float ageMod = (missileAge < 20) ? 1.0f : (0.6f + (guRNG.NextFloat() * 0.8f));
 			tracerPart->ageMods[newsize] = ageMod;
 		}
 
-		if (tracerPart->numAgeMods != newsize)
-			tracerPart->numAgeMods = newsize;
+		tracerPart->numAgeMods = newsize;
 	}
 
 	age++;

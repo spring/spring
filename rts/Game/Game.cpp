@@ -1535,7 +1535,7 @@ void CGame::SimFrame() {
 	spring_lua_alloc_update_stats((gs->frameNum % GAME_SPEED) == 0);
 
 #ifdef TRACE_SYNC
-	tracefile << "New frame:" << gs->frameNum << " " << gsRNG.GetSeed() << "\n";
+	tracefile << "New frame:" << gs->frameNum << " " << gsRNG.GetLastSeed() << "\n";
 #endif
 
 	if (!skipping) {
@@ -1548,7 +1548,10 @@ void CGame::SimFrame() {
 		for (size_t a = 0; a < grouphandlers.size(); a++)
 			grouphandlers[a]->Update();
 
-		(playerHandler->Player(gu->myPlayerNum)->fpsController).SendStateUpdate(/*camera->GetMovState(), mouse->buttons*/);
+		CPlayer* p = playerHandler->Player(gu->myPlayerNum);
+		FPSUnitController& c = p->fpsController;
+
+		c.SendStateUpdate(/*camera->GetMovState(), mouse->buttons*/);
 
 		CTeamHighlight::Update(gs->frameNum);
 	}

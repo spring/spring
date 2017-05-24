@@ -110,7 +110,7 @@ void CAdvTreeGenerator::Init()
 
 
 	leafDL = glGenLists(8);
-	srand(15U);
+
 	for (int a = 0; a < 8; ++a) {
 		va = GetVertexArray();
 		va->Initialize();
@@ -126,7 +126,7 @@ void CAdvTreeGenerator::Init()
 	}
 
 	pineDL = glGenLists(8);
-	srand(15U);
+
 	for (int a = 0; a < 8; ++a) {
 		va = GetVertexArray();
 		va->Initialize();
@@ -517,9 +517,10 @@ void CAdvTreeGenerator::CreateGranTexBranch(const float3& start, const float3& e
 		glVertexf3(end+orto*0.001f);
 	glEnd();
 
-	float tipDist=0.025f;
-	float delta=0.013f;
-	int side=(rand()&1)*2-1;
+	float tipDist = 0.025f;
+	float delta = 0.013f;
+	int side = (guRNG.NextInt() & 1) * 2 - 1;
+
 	while(tipDist < length * (0.15f * guRNG.NextFloat() + 0.83f)){
 		float3 bstart=start+dir*(length-tipDist);
 		float3 bdir=dir+orto*side*(1.0f + 0.7f * guRNG.NextFloat());
@@ -593,7 +594,7 @@ void CAdvTreeGenerator::DrawPineBranch(const float3 &start, const float3 &dir, f
 	orto1.ANormalize();
 	float3 orto2 = dir.cross(orto1);
 
-	float tex = 0.0f;//int(rand() * 3.0f/RAND_MAX) * 0.125f;
+	float tex = 0.0f; // int(guRNG.NextFloat() * 3.0f) * 0.125f;
 	float baseCol = 0.4f + 0.3f * dir.dot(flatSun) + 0.1f * guRNG.NextFloat();
 
 	float col1=baseCol + 0.2f * guRNG.NextFloat();
