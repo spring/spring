@@ -246,8 +246,8 @@ void CAdvTreeGenerator::CreateLeaves(const float3& start, const float3& dir, flo
 		npos.y = 0;
 		npos.ANormalize();
 
-		const float tex = (guRNG.NextInt() % 3) * 0.125f;
-		const float flipTex = (guRNG.NextInt() % 2) * 0.123f;
+		const float tex = (guRNG.NextInt(3)) * 0.125f;
+		const float flipTex = (guRNG.NextInt(2)) * 0.123f;
 		const float col = 0.5f + (npos.dot(flatSun) * 0.3f) + 0.1f * guRNG.NextFloat();
 
 		va->AddVertexTN(pos, 0.126f + tex + flipTex, 0.98f, float3( 0.09f * MAX_TREE_HEIGHT, -0.09f * MAX_TREE_HEIGHT, col));

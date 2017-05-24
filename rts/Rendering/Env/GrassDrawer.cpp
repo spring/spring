@@ -814,7 +814,7 @@ void CGrassDrawer::CreateGrassDispList(int listNum)
 		const float3 basePos = rng.NextVector2D() * (turfSize - (bendVect * std::sin(maxAng) * length).Length2D());
 
 		// select one of the 16 color shadings
-		const float xtexCoord = (rng.NextInt() % 16) / 16.0f;
+		const float xtexCoord = rng.NextInt(16) / 16.0f;
 		const int numSections = 2 + int(maxAng * 1.2f + length * 0.2f);
 
 		float3 normalBend = -bendVect;

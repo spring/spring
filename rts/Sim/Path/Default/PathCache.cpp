@@ -3,6 +3,7 @@
 #include <algorithm>
 
 #include "PathCache.h"
+#include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "System/Log/ILog.h"
 

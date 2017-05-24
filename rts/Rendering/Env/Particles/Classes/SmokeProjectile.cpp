@@ -64,30 +64,20 @@ CSmokeProjectile::CSmokeProjectile(
 	ageSpeed = 1.0f / ttl;
 	checkCol = false;
 	castShadow = true;
-	textureNum = (int) (guRNG.NextInt() % projectileDrawer->smoketex.size());
+	textureNum = (int) (guRNG.NextInt(projectileDrawer->smoketex.size()));
 
-	if ((pos.y - CGround::GetApproximateHeight(pos.x, pos.z, false)) > 10) {
-		useAirLos = true;
-	}
-
-	if (!owner) {
-		alwaysVisible = true;
-	}
+	useAirLos |= ((pos.y - CGround::GetApproximateHeight(pos.x, pos.z, false)) > 10.0f);
+	alwaysVisible |= (owner == nullptr);
 }
 
 
 
 void CSmokeProjectile::Init(const CUnit* owner, const float3& offset)
 {
-	textureNum = (int) (guRNG.NextInt() % projectileDrawer->smoketex.size());
+	textureNum = (int) (guRNG.NextInt(projectileDrawer->smoketex.size()));
 
-	if (offset.y - CGround::GetApproximateHeight(offset.x, offset.z, false) > 10.0f) {
-		useAirLos = true;
-	}
-
-	if (!owner) {
-		alwaysVisible = true;
-	}
+	useAirLos |= (offset.y - CGround::GetApproximateHeight(offset.x, offset.z, false) > 10.0f);
+	alwaysVisible |= (owner == nullptr);
 
 	CProjectile::Init(owner, offset);
 }

@@ -37,7 +37,7 @@ FlyingPiece::FlyingPiece(
 
 	InitCommon(pos, speed, _pieceParams.x, _renderParams.y, _renderParams.x);
 
-	const S3DModelPiecePart& shatterPiecePart = piece->shatterParts[guRNG.NextInt() % piece->shatterParts.size()];
+	const S3DModelPiecePart& shatterPiecePart = piece->shatterParts[guRNG.NextInt(piece->shatterParts.size())];
 	const auto& shatterPieceData = shatterPiecePart.renderData;
 
 	splitterParts.reserve(shatterPieceData.size());

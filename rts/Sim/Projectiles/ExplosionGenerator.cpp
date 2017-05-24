@@ -496,7 +496,7 @@ bool CStdExplosionGenerator::Explosion(
 			}
 		}
 		if (damage >= 20.0f && !uwExplosion && !airExplosion) {
-			const int numDebris = (guRNG.NextInt() % 6) + 3 + int(damage * 0.04f);
+			const int numDebris = (guRNG.NextInt(6)) + 3 + int(damage * 0.04f);
 			const float explSpeedMod = (0.7f + std::min(30.0f, damage) / 23);
 
 			for (int a = 0; a < numDebris; ++a) {

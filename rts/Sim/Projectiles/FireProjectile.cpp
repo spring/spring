@@ -84,7 +84,7 @@ void CFireProjectile::Update()
 			sub.pos.y += sub.posDif.y;
 			sub.posDif.y = 0;
 			sub.rotSpeed = (guRNG.NextFloat() - 0.5f) * 4;
-			sub.smokeType = guRNG.NextInt() % projectileDrawer->smoketex.size();
+			sub.smokeType = guRNG.NextInt(projectileDrawer->smoketex.size());
 			subParticles.push_front(sub);
 
 			sub.maxSize = (0.7f + guRNG.NextFloat()*0.3f) * particleSize;

@@ -100,12 +100,6 @@ static constexpr int MAX_UNITS = 32000;
  */
 static constexpr int MAX_WEAPONS_PER_UNIT = 32;
 
-/**
- * @brief randint max
- *
- * Defines the maximum random integer as 0x7fff.
- */
-static constexpr int RANDINT_MAX = 0x7fff;
 
 /**
  * maximum speed (elmos/frame) a unit is allowed to have outside the map

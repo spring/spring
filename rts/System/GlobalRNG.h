@@ -5,7 +5,6 @@
 
 #include <limits>
 
-#include "Sim/Misc/GlobalConstants.h" // RANDINT_MAX
 #include "System/float3.h"
 
 
@@ -63,9 +62,6 @@ template<bool synced> class CGlobalRNG {
 public:
 	void Seed(PCG32Random::val_type seed) { SetSeed(seed); }
 	void SetSeed(PCG32Random::val_type seed, bool init = false) {
-		assert(min() ==           0);
-		assert(max() >= RANDINT_MAX);
-
 		// use address of this object as sequence-id for unsynced RNG, modern systems have ASLR
 		if (init) {
 			pcg.seed(initSeed = seed, PCG32Random::val_type(this) * (1 - synced) + PCG32Random::def_seq * synced);
@@ -84,8 +80,8 @@ public:
 	static constexpr PCG32Random::res_type min() { return (std::numeric_limits<PCG32Random::res_type>::min()); }
 	static constexpr PCG32Random::res_type max() { return (std::numeric_limits<PCG32Random::res_type>::max()); }
 
-	PCG32Random::res_type NextInt(PCG32Random::res_type N = RANDINT_MAX) { return ((*this)(N)); }
-	float NextFloat(PCG32Random::res_type N = RANDINT_MAX) { return ((NextInt(N) * 1.0f) / N); }
+	PCG32Random::res_type NextInt(PCG32Random::res_type N = max()) { return ((*this)(N)); }
+	float NextFloat(PCG32Random::res_type N = max()) { return ((NextInt(N) * 1.0f) / N); }
 
 	float3 NextVector2D() { return (NextVector(0.0f)); }
 	float3 NextVector(float y = 1.0f) {

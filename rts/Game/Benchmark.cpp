@@ -9,6 +9,7 @@
 #include "GlobalUnsynced.h"
 #include "UI/GuiHandler.h"
 #include "Rendering/GlobalRendering.h"
+#include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Features/FeatureHandler.h"

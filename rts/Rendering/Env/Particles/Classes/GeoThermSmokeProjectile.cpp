@@ -5,7 +5,7 @@
 #include "Sim/Features/Feature.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Projectiles/ProjectileMemPool.h"
-#include "Sim/Misc/GlobalSynced.h"
+#include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/Wind.h"
 
 
@@ -22,7 +22,7 @@ CGeoThermSmokeProjectile::CGeoThermSmokeProjectile(
 	int ttl,
 	const CFeature* geo
 )
-	: CSmokeProjectile(NULL, pos, spd, ttl, 6, 0.35f, 0.8f)
+	: CSmokeProjectile(nullptr, pos, spd, ttl, 6, 0.35f, 0.8f)
 	, geo(geo)
 { }
 
@@ -47,12 +47,12 @@ void CGeoThermSmokeProjectile::Update()
 
 void CGeoThermSmokeProjectile::UpdateDir()
 {
-	if (geo == NULL)
+	if (geo == nullptr)
 		return;
 
 	const CSolidObject* obj = geo->solidOnTop;
 
-	if (obj == NULL)
+	if (obj == nullptr)
 		return;
 	if (!obj->HasCollidableStateBit(CSolidObject::CSTATE_BIT_SOLIDOBJECTS))
 		return;
@@ -80,15 +80,15 @@ void CGeoThermSmokeProjectile::UpdateDir()
 
 void CGeoThermSmokeProjectile::GeoThermDestroyed(const CFeature* geo)
 {
-	for (ProjectileContainer::iterator it = projectileHandler->unsyncedProjectiles.begin(); it != projectileHandler->unsyncedProjectiles.end(); ++it) {
-		CGeoThermSmokeProjectile* geoPuff = dynamic_cast<CGeoThermSmokeProjectile*>(*it);
+	for (CProjectile* p: projectileHandler->unsyncedProjectiles) {
+		CGeoThermSmokeProjectile* geoPuff = dynamic_cast<CGeoThermSmokeProjectile*>(p);
 
-		if (geoPuff == NULL)
+		if (geoPuff == nullptr)
 			continue;
 		if (geoPuff->geo != geo)
 			continue;
 
-		geoPuff->geo = NULL;
+		geoPuff->geo = nullptr;
 	}
 }
 

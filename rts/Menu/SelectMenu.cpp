@@ -138,7 +138,7 @@ SelectMenu::SelectMenu(std::shared_ptr<ClientSetup> setup)
 			const std::vector<std::string> files = CFileHandler::FindFiles("bitmaps/ui/background/", "*");
 			if (!files.empty()) {
 				//TODO: select by resolution / aspect ratio with fallback image
-				background->Load(files[guRNG.NextInt() % files.size()]);
+				background->Load(files[guRNG.NextInt(files.size())]);
 			}
 			vfsHandler->RemoveArchive(archiveName);
 		}

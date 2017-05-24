@@ -19,8 +19,8 @@ int NanoPieceCache::GetNanoPiece(CUnitScript* ownerScript) {
 
 	if (!nanoPieces.empty()) {
 		const unsigned cnt = nanoPieces.size();
-		const unsigned rnd = gsRNG.NextInt();
-		nanoPiece = nanoPieces[rnd % cnt];
+		const unsigned rnd = gsRNG.NextInt(cnt);
+		nanoPiece = nanoPieces[rnd];
 	}
 
 	if (lastNanoPieceCnt <= MAX_QUERYNANOPIECE_CALLS) {

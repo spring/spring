@@ -1151,7 +1151,7 @@ int CSyncedLuaHandle::SyncedRandom(lua_State* L)
 				if (maxn < 1)
 					luaL_error(L, "error: too small upper limit (%d) given to math.random(), should be >= 1 {synced}", maxn);
 
-				lua_pushnumber(L, 1 + (gsRNG.NextInt() % maxn));
+				lua_pushnumber(L, 1 + gsRNG.NextInt(maxn));
 				return 1;
 			}
 		} break;

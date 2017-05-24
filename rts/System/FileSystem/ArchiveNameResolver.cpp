@@ -103,7 +103,7 @@ namespace ArchiveNameResolver {
 		if (lazyName == "random") {
 			const std::vector<CArchiveScanner::ArchiveData>& games = archiveScanner->GetPrimaryMods();
 			if (!games.empty()) {
-				*applicableName = games[guRNG.NextInt() % games.size()].GetNameVersioned();
+				*applicableName = games[guRNG.NextInt(games.size())].GetNameVersioned();
 				return true;
 			}
 		}
@@ -181,7 +181,7 @@ namespace ArchiveNameResolver {
 		if (lazyName == "random") {
 			const std::vector<std::string>& maps = archiveScanner->GetMaps();
 			if (!maps.empty()) {
-				*applicableName = maps[guRNG.NextInt() % maps.size()];
+				*applicableName = maps[guRNG.NextInt(maps.size())];
 				return true;
 			}
 		}

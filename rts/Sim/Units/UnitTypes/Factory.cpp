@@ -350,7 +350,7 @@ void CFactory::SendToEmptySpot(CUnit* unit)
 		foundPos.y = 0.0f;
 
 		for (int i = 0; i < numSteps; ++i) {
-			const float x = ((gsRNG.NextInt() * 1.0f) / RANDINT_MAX) * numSteps;
+			const float x = gsRNG.NextFloat() * numSteps;
 			const float a = searchRadius * math::cos(x * searchAngle);
 			const float b = searchRadius * math::sin(x * searchAngle);
 

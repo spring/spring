@@ -71,7 +71,7 @@ CSmokeProjectile2::CSmokeProjectile2(
 		useAirLos = true;
 	}
 	glowFalloff = 4.5f + guRNG.NextFloat() * 6;
-	textureNum = (int)(guRNG.NextInt() % projectileDrawer->smoketex.size());
+	textureNum = (int)(guRNG.NextInt(projectileDrawer->smoketex.size()));
 }
 
 
