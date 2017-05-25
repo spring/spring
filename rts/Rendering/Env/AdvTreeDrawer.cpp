@@ -336,8 +336,7 @@ struct CAdvTreeSquareDrawer : public CReadMap::IQuadDrawer
 
 void CAdvTreeSquareDrawer::DrawQuad(int x, int y)
 {
-	const int treesX = td->treesX;
-	ITreeDrawer::TreeSquareStruct* tss = &td->treeSquares[(y * treesX) + x];
+	ITreeDrawer::TreeSquareStruct* tss = &td->treeSquares[(y * td->NumTreesX()) + x];
 
 	if ((abs(cy - y) <= 2) && (abs(cx - x) <= 2) && drawDetailed) {
 		// skip the closest squares
@@ -800,8 +799,7 @@ struct CAdvTreeSquareShadowPassDrawer: public CReadMap::IQuadDrawer
 
 void CAdvTreeSquareShadowPassDrawer::DrawQuad(int x, int y)
 {
-	const int treesX = td->treesX;
-	ITreeDrawer::TreeSquareStruct* tss = &td->treeSquares[(y * treesX) + x];
+	ITreeDrawer::TreeSquareStruct* tss = &td->treeSquares[(y * td->NumTreesX()) + x];
 
 	// skip the closest squares
 	if ((abs(cy - y) <= 2) && (abs(cx - x) <= 2) && drawDetailed)

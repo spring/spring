@@ -197,20 +197,21 @@ void CAdvSky::Draw()
 
 	glDisable(GL_DEPTH_TEST);
 	glEnable(GL_BLEND);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE * wireFrameMode + GL_FILL * (1 - wireFrameMode));
 
 	glPushMatrix();
 	// glTranslatef3(camera->GetPos());
 	glMultMatrixf(CMatrix44f(camera->GetPos(), skydir1, UpVector, skydir2));
 
-	float3 modCamera=skydir1*camera->GetPos().x+skydir2*camera->GetPos().z;
+	const float3 modCamera = skydir1 * camera->GetPos().x + skydir2 * camera->GetPos().z;
 
 	glMatrixMode(GL_TEXTURE);
 	  glActiveTextureARB(GL_TEXTURE2_ARB);
 		glPushMatrix();
-		glTranslatef((gs->frameNum%20000)*0.00005f+modCamera.x*0.000025f,modCamera.z*0.000025f,0);
+		glTranslatef((gs->frameNum % 20000) * 0.00005f + modCamera.x * 0.000025f, modCamera.z * 0.000025f, 0);
 	  glActiveTextureARB(GL_TEXTURE3_ARB);
 		glPushMatrix();
-		glTranslatef((gs->frameNum%20000)*0.0020f+modCamera.x*0.001f,modCamera.z*0.001f,0);
+		glTranslatef((gs->frameNum % 20000) * 0.0020f + modCamera.x * 0.001f, modCamera.z * 0.001f, 0);
 	  glActiveTextureARB(GL_TEXTURE0_ARB);
 	glMatrixMode(GL_MODELVIEW);
 
@@ -226,6 +227,7 @@ void CAdvSky::Draw()
 
 	glPopMatrix();
 
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_BLEND);
 

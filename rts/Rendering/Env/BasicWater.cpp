@@ -91,8 +91,9 @@ void CBasicWater::Draw()
 	if (!waterRendering->forceRendering && !readMap->HasVisibleWater())
 		return;
 
-	glPushAttrib(GL_FOG_BIT);
+	glPushAttrib(GL_FOG_BIT | GL_POLYGON_BIT);
 	sky->SetupFog();
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE * wireFrameMode + GL_FILL * (1 - wireFrameMode));
 	glCallList(displistID);
 	glPopAttrib();
 }

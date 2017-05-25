@@ -1053,7 +1053,7 @@ void CBumpWater::Draw()
 #ifdef GLEW_ARB_occlusion_query2
 	if (occlusionQuery) {
 		glBeginConditionalRenderNV(occlusionQuery, GL_QUERY_BY_REGION_WAIT_NV);
-		glBeginQuery(GL_ANY_SAMPLES_PASSED,occlusionQuery);
+		glBeginQuery(GL_ANY_SAMPLES_PASSED, occlusionQuery);
 	}
 #endif
 
@@ -1070,12 +1070,12 @@ void CBumpWater::Draw()
 	}
 
 	glDisable(GL_ALPHA_TEST);
-	if (refraction < 2) {
+
+	if (refraction < 2)
 		glDepthMask(GL_FALSE);
-	}
-	if (refraction > 0) {
+
+	if (refraction > 0)
 		glDisable(GL_BLEND);
-	}
 
 	waterShader->SetFlag("opt_shadows", (shadowHandler->ShadowsLoaded()));
 	waterShader->SetFlag("opt_infotex", infoTextureHandler->IsEnabled());
@@ -1103,12 +1103,13 @@ void CBumpWater::Draw()
 	glActiveTexture(GL_TEXTURE10); glBindTexture(GL_TEXTURE_2D, infoTextureHandler->GetCurrentInfoTexture());
 	glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, normalTexture);
 
-	if (useUniforms) {
+	if (useUniforms)
 		SetUniforms();
-	}
 
 	glMultiTexCoord2f(GL_TEXTURE1, windVec.x, windVec.z);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE * wireFrameMode + GL_FILL * (1 - wireFrameMode));
 	glCallList(displayList);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 	waterShader->Disable();
 
@@ -1116,12 +1117,12 @@ void CBumpWater::Draw()
 		glActiveTexture(GL_TEXTURE9); glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);
 		glActiveTexture(GL_TEXTURE0);
 	}
-	if (refraction < 2) {
+
+	if (refraction < 2)
 		glDepthMask(GL_TRUE);
-	}
-	if (refraction > 0) {
+
+	if (refraction > 0)
 		glEnable(GL_BLEND);
-	}
 
 #ifdef GLEW_ARB_occlusion_query2
 	if (occlusionQuery) {

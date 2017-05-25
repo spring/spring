@@ -140,7 +140,7 @@ struct CBasicTreeSquareDrawer : public CReadMap::IQuadDrawer
 	}
 
 	void DrawQuad(int x, int y) {
-		ITreeDrawer::TreeSquareStruct* tss = &td->treeSquares[(y * td->treesX) + x];
+		ITreeDrawer::TreeSquareStruct* tss = &td->treeSquares[(y * td->NumTreesX()) + x];
 
 		float3 dif;
 			dif.x = camera->GetPos().x - ((x * SQUARE_SIZE * TREE_SQUARE_SIZE) + (SQUARE_SIZE * TREE_SQUARE_SIZE / 2));

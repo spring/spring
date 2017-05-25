@@ -27,8 +27,9 @@ CONFIG(bool, 3DTrees).defaultValue(true).headlessValue(false).safemodeValue(fals
 ITreeDrawer* treeDrawer = nullptr;
 
 
-ITreeDrawer::ITreeDrawer()
-	: CEventClient("[ITreeDrawer]", 314444, false), drawTrees(true)
+ITreeDrawer::ITreeDrawer(): CEventClient("[ITreeDrawer]", 314444, false)
+	, drawTrees(true)
+	, wireFrameMode(false)
 {
 	eventHandler.AddClient(this);
 	baseTreeDistance = configHandler->GetInt("TreeRadius") / 256.0f;
@@ -128,7 +129,8 @@ ITreeDrawer* ITreeDrawer::GetTreeDrawer()
 
 
 void ITreeDrawer::SetupState() const {
-	glPushAttrib(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT | GL_CURRENT_BIT);
+	glPushAttrib(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT | GL_CURRENT_BIT | GL_POLYGON_BIT);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE * wireFrameMode + GL_FILL * (1 - wireFrameMode));
 
 	glEnable(GL_ALPHA_TEST);
 	glAlphaFunc(GL_GREATER, 0.005f);

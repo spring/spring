@@ -1227,25 +1227,21 @@ public:
 
 	bool Execute(const UnsyncedAction& action) const {
 		std::string channel;
-		int enableInt, enable;
+		int enable;
 		std::istringstream buf(action.GetArgs());
 		buf >> channel;
-		buf >> enableInt;
-		if (enableInt == 0)
-			enable = false;
-		else
-			enable = true;
+		buf >> enable;
 
 		if (channel == "UnitReply")
-			Channels::UnitReply->Enable(enable);
+			Channels::UnitReply->Enable(enable != 0);
 		else if (channel == "General")
-			Channels::General->Enable(enable);
+			Channels::General->Enable(enable != 0);
 		else if (channel == "Battle")
-			Channels::Battle->Enable(enable);
+			Channels::Battle->Enable(enable != 0);
 		else if (channel == "UserInterface")
-			Channels::UserInterface->Enable(enable);
+			Channels::UserInterface->Enable(enable != 0);
 		else if (channel == "Music")
-			Channels::BGMusic->Enable(enable);
+			Channels::BGMusic->Enable(enable != 0);
 		else
 			LOG_L(L_WARNING, "/%s: wrong channel name \"%s\"", GetCommand().c_str(), channel.c_str());
 
@@ -1261,7 +1257,6 @@ public:
 			"Start/Stop capturing a video of the game in progress") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-
 		// toggle
 		videoCapturing->SetCapturing(!videoCapturing->IsCapturing());
 		LogSystemStatus("Video capturing", videoCapturing->IsCapturing());
@@ -1273,13 +1268,11 @@ public:
 
 class DrawTreesActionExecutor : public IUnsyncedActionExecutor {
 public:
-	DrawTreesActionExecutor() : IUnsyncedActionExecutor("DrawTrees",
-			"Enable/Disable rendering of engine trees") {}
+	DrawTreesActionExecutor() : IUnsyncedActionExecutor("DrawTrees", "Enable/Disable engine-tree rendering") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-
-		InverseOrSetBool(treeDrawer->drawTrees, action.GetArgs());
-		LogSystemStatus("rendering of engine trees", treeDrawer->drawTrees);
+		InverseOrSetBool(treeDrawer->DrawTreesRef(), action.GetArgs());
+		LogSystemStatus("engine-tree rendering", treeDrawer->DrawTreesRef());
 		return true;
 	}
 };
@@ -1288,13 +1281,10 @@ public:
 
 class DynamicSkyActionExecutor : public IUnsyncedActionExecutor {
 public:
-	DynamicSkyActionExecutor() : IUnsyncedActionExecutor("DynamicSky",
-			"Enable/Disable dynamic-sky rendering") {}
+	DynamicSkyActionExecutor() : IUnsyncedActionExecutor("DynamicSky", "Enable/Disable dynamic-sky rendering") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		sky->DynamicSkyRef() = !sky->DynamicSkyRef();
-
-		LogSystemStatus("dynamic-sky rendering", sky->DynamicSkyRef());
+		LogSystemStatus("dynamic-sky rendering", sky->DynamicSkyRef() = !sky->DynamicSkyRef());
 		return true;
 	}
 };
@@ -1445,34 +1435,20 @@ public:
 
 class MoreTreesActionExecutor : public IUnsyncedActionExecutor {
 public:
-	MoreTreesActionExecutor() : IUnsyncedActionExecutor("MoreTrees",
-			"Increases the distance to the camera, in which trees are still"
-			" shown (lower performance)") {}
+	MoreTreesActionExecutor() : IUnsyncedActionExecutor("MoreTrees", "Increases distance from the camera at which trees are still drawn") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-
-		treeDrawer->baseTreeDistance += 0.2f;
-		ReportTreeDistance();
+		LOG("tree draw-distance increased to %f", (treeDrawer->IncrDrawDistance() * 2.0f * SQUARE_SIZE * TREE_SQUARE_SIZE));
 		return true;
-	}
-	static void ReportTreeDistance() {
-		LOG("Base tree distance %f",
-				treeDrawer->baseTreeDistance * 2 * SQUARE_SIZE * TREE_SQUARE_SIZE);
 	}
 };
 
-
-
 class LessTreesActionExecutor : public IUnsyncedActionExecutor {
 public:
-	LessTreesActionExecutor() : IUnsyncedActionExecutor("LessTrees",
-			"Decreases the distance to the camera, in which trees are still"
-			" shown (higher performance)") {}
+	LessTreesActionExecutor() : IUnsyncedActionExecutor("LessTrees", "Decreases distance from the camera at which trees are still drawn") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-
-		treeDrawer->baseTreeDistance -= 0.2f;
-		MoreTreesActionExecutor::ReportTreeDistance();
+		LOG("tree draw-distance decreased to %f", (treeDrawer->DecrDrawDistance() * 2.0f * SQUARE_SIZE * TREE_SQUARE_SIZE));
 		return true;
 	}
 };
@@ -2559,9 +2535,8 @@ public:
 	WireModelActionExecutor(): IUnsyncedActionExecutor("WireModel", "Toggle wireframe-mode drawing of model geometry") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		unitDrawer->WireFrameModeRef() = !unitDrawer->WireFrameModeRef();
-
-		LogSystemStatus("wireframe model-drawing mode", unitDrawer->WireFrameModeRef());
+		// note: affects feature and projectile render-state for free
+		LogSystemStatus("wireframe model-drawing mode", unitDrawer->WireFrameModeRef() = !unitDrawer->WireFrameModeRef());
 		return true;
 	}
 };
@@ -2571,9 +2546,9 @@ public:
 	WireMapActionExecutor(): IUnsyncedActionExecutor("WireMap", "Toggle wireframe-mode drawing of map geometry") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		(readMap->GetGroundDrawer())->WireFrameModeRef() = !(readMap->GetGroundDrawer())->WireFrameModeRef();
+		CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
 
-		LogSystemStatus("wireframe map-drawing mode", (readMap->GetGroundDrawer())->WireFrameMode());
+		LogSystemStatus("wireframe map-drawing mode", gd->WireFrameModeRef() = !gd->WireFrameModeRef());
 		return true;
 	}
 };
@@ -2583,9 +2558,27 @@ public:
 	WireSkyActionExecutor(): IUnsyncedActionExecutor("WireSky", "Toggle wireframe-mode drawing of skydome geometry") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		sky->WireFrameModeRef() = !sky->WireFrameModeRef();
+		LogSystemStatus("wireframe sky-drawing mode", sky->WireFrameModeRef() = !sky->WireFrameModeRef());
+		return true;
+	}
+};
 
-		LogSystemStatus("wireframe sky-drawing mode", sky->WireFrameModeRef());
+class WireTreeActionExecutor: public IUnsyncedActionExecutor {
+public:
+	WireTreeActionExecutor(): IUnsyncedActionExecutor("WireTree", "Toggle wireframe-mode drawing of tree geometry") {}
+
+	bool Execute(const UnsyncedAction& action) const {
+		LogSystemStatus("wireframe tree-drawing mode", treeDrawer->WireFrameModeRef() = !treeDrawer->WireFrameModeRef());
+		return true;
+	}
+};
+
+class WireWaterActionExecutor: public IUnsyncedActionExecutor {
+public:
+	WireWaterActionExecutor(): IUnsyncedActionExecutor("WireWater", "Toggle wireframe-mode drawing of water geometry") {}
+
+	bool Execute(const UnsyncedAction& action) const {
+		LogSystemStatus("wireframe water-drawing mode", water->WireFrameModeRef() = !water->WireFrameModeRef());
 		return true;
 	}
 };
@@ -3178,6 +3171,8 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new WireModelActionExecutor());
 	AddActionExecutor(new WireMapActionExecutor());
 	AddActionExecutor(new WireSkyActionExecutor());
+	AddActionExecutor(new WireTreeActionExecutor());
+	AddActionExecutor(new WireWaterActionExecutor());
 	AddActionExecutor(new CrashActionExecutor());
 	AddActionExecutor(new ExceptionActionExecutor());
 	AddActionExecutor(new DivByZeroActionExecutor());

@@ -226,15 +226,13 @@ void CBasicSky::Draw()
 		return;
 
 	glDisable(GL_DEPTH_TEST);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE * wireFrameMode + GL_FILL * (1 - wireFrameMode));
 
-	if (wireframe)
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
-	float3 modCamera=skydir1*camera->GetPos().x+skydir2*camera->GetPos().z;
+	const float3 modCamera = skydir1 * camera->GetPos().x + skydir2 * camera->GetPos().z;
 
 	glMatrixMode(GL_TEXTURE);
 		glPushMatrix();
-		glTranslatef((gs->frameNum%20000)*0.00005f+modCamera.x*0.000025f,modCamera.z*0.000025f,0);
+		glTranslatef((gs->frameNum % 20000) * 0.00005f + modCamera.x * 0.000025f, modCamera.z * 0.000025f, 0);
 	glMatrixMode(GL_MODELVIEW);
 		glPushMatrix();
 		// glTranslatef3(camera->GetPos());
@@ -247,9 +245,7 @@ void CBasicSky::Draw()
 	glMatrixMode(GL_MODELVIEW);
 		glPopMatrix();
 
-	if (wireframe)
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	glEnable(GL_DEPTH_TEST);
 
 	sky->SetupFog();

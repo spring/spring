@@ -26,7 +26,7 @@ ISky::ISky()
 	, fogEnd(mapInfo->atmosphere.fogEnd)
 	, cloudDensity(mapInfo->atmosphere.cloudDensity)
 	, skyLight(nullptr)
-	, wireframe(false)
+	, wireFrameMode(false)
 	, dynamicSky(false)
 
 {

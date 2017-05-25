@@ -42,20 +42,20 @@ public:
 			(eventName == "RenderFeatureDestroyed");
 	}
 
+	float IncrDrawDistance() { return (baseTreeDistance += 0.2f); }
+	float DecrDrawDistance() { return (baseTreeDistance -= 0.2f); }
+
+	int NumTreesX() const { return treesX; }
+	int NumTreesY() const { return treesY; }
+
+	bool& DrawTreesRef() { return drawTrees; }
+	bool& WireFrameModeRef() { return wireFrameMode; }
+
 	void RenderFeatureCreated(const CFeature* feature);
 	void FeatureMoved(const CFeature* feature, const float3& oldpos);
 	void RenderFeatureDestroyed(const CFeature* feature);
 
 public:
-	int treesX;
-	int treesY;
-	int nTrees;
-
-
-public:
-	float baseTreeDistance;
-	bool drawTrees;
-
 	struct TreeStruct {
 	public:
 		bool operator == (const TreeStruct& ts) const { return (id == ts.id); }
@@ -92,6 +92,17 @@ public:
 
 private:
 	void AddTrees();
+
+protected:
+	float baseTreeDistance;
+
+	int treesX;
+	int treesY;
+	int nTrees;
+
+	bool drawTrees;
+	bool wireFrameMode;
+
 };
 
 extern ITreeDrawer* treeDrawer;

@@ -33,7 +33,7 @@ public:
 
 	bool SunVisible(const float3 pos) const;
 
-	bool& WireFrameModeRef() { return wireframe; }
+	bool& WireFrameModeRef() { return wireFrameMode; }
 	bool& DynamicSkyRef() { return dynamicSky; }
 
 	/**
@@ -58,7 +58,7 @@ public:
 protected:
 	ISkyLight* skyLight;
 
-	bool wireframe;
+	bool wireFrameMode;
 	bool dynamicSky;
 };
 

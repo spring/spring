@@ -42,7 +42,7 @@ CAdvWater::CAdvWater(bool loadShader)
 	for (int y = 0; y < 64; ++y) {
 		for (int x = 0; x < 64; ++x) {
 			scrap[(y*64 + x)*4 + 0] = 128;
-			scrap[(y*64 + x)*4 + 1] = (unsigned char)(std::sin(y*math::TWOPI/64.0f)*128 + 128);
+			scrap[(y*64 + x)*4 + 1] = (unsigned char)(fastmath::sin(y * math::TWOPI / 64.0f) * 128 + 128);
 			scrap[(y*64 + x)*4 + 2] = 0;
 			scrap[(y*64 + x)*4 + 3] = 255;
 		}
@@ -56,8 +56,8 @@ CAdvWater::CAdvWater(bool loadShader)
 		for (int x = 0; x < 64; ++x) {
 			const float ang = 26.5f*math::DEG_TO_RAD;
 			const float pos = y*2+x;
-			scrap[(y*64 + x)*4 + 0] = (unsigned char)((std::sin(pos*math::TWOPI/64.0f))*128*std::sin(ang)) + 128;
-			scrap[(y*64 + x)*4 + 1] = (unsigned char)((std::sin(pos*math::TWOPI/64.0f))*128*std::cos(ang)) + 128;
+			scrap[(y*64 + x)*4 + 0] = (unsigned char)((fastmath::sin(pos*math::TWOPI / 64.0f)) * 128 * fastmath::sin(ang)) + 128;
+			scrap[(y*64 + x)*4 + 1] = (unsigned char)((fastmath::sin(pos*math::TWOPI / 64.0f)) * 128 * fastmath::cos(ang)) + 128;
 		}
 	}
 	glBindTexture(GL_TEXTURE_2D, rawBumpTexture[1]);
@@ -69,8 +69,8 @@ CAdvWater::CAdvWater(bool loadShader)
 		for (int x = 0; x < 64; ++x) {
 			const float ang = -19.0f * math::DEG_TO_RAD;
 			const float pos = 3.0f * y - x;
-			scrap[(y*64 + x)*4 + 0] = (unsigned char)((std::sin(pos*math::TWOPI/64.0f))*128*std::sin(ang)) + 128;
-			scrap[(y*64 + x)*4 + 1] = (unsigned char)((std::sin(pos*math::TWOPI/64.0f))*128*std::cos(ang)) + 128;
+			scrap[(y*64 + x)*4 + 0] = (unsigned char)((fastmath::sin(pos*math::TWOPI / 64.0f)) * 128 * fastmath::sin(ang)) + 128;
+			scrap[(y*64 + x)*4 + 1] = (unsigned char)((fastmath::sin(pos*math::TWOPI / 64.0f)) * 128 * fastmath::cos(ang)) + 128;
 		}
 	}
 	glBindTexture(GL_TEXTURE_2D, rawBumpTexture[2]);
@@ -120,12 +120,16 @@ void CAdvWater::Draw(bool useBlending)
 	float3 dh   = camera->CalcPixelDir(globalRendering->viewPosX + globalRendering->viewSizeX, 0) - camera->CalcPixelDir(globalRendering->viewPosX, 0);
 
 	float3 xbase;
+	float3 forward = camera->GetDir();
+	float3 dir;
+	float3 zpos;
+
 	const int numDivs = 20;
 
 	base *= numDivs;
 	float maxY = -0.1f;
 	float yInc = 1.0f / numDivs;
-	float screenY = 1;
+	float screenY = 1.0f;
 
 	unsigned char col[4];
 	col[0] = (unsigned char)(waterSurfaceColor.x * 255);
@@ -142,8 +146,8 @@ void CAdvWater::Draw(bool useBlending)
 	glActiveTextureARB(GL_TEXTURE1_ARB);
 		glBindTexture(GL_TEXTURE_2D, bumpTexture);
 		GLfloat plan[] = {0.02f, 0, 0, 0};
-		glTexGeni(GL_S,GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR);
-		glTexGenfv(GL_S,GL_EYE_PLANE, plan);
+		glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR);
+		glTexGenfv(GL_S, GL_EYE_PLANE, plan);
 		glEnable(GL_TEXTURE_GEN_S);
 
 		GLfloat plan2[] = {0, 0, 0.02f, 0};
@@ -155,21 +159,20 @@ void CAdvWater::Draw(bool useBlending)
 
 	glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, waterFP);
 	glEnable(GL_FRAGMENT_PROGRAM_ARB);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE * wireFrameMode + GL_FILL * (1 - wireFrameMode));
 
-	float3 forward = camera->GetDir();
-	forward.y = 0;
-	forward.ANormalize();
+	forward.ANormalize2D();
 
-	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 0, forward.z,  forward.x, 0, 0);
-	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 1, -forward.x, forward.z, 0, 0);
+	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 0,  forward.z, forward.x, 0.0f, 0.0f);
+	glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 1, -forward.x, forward.z, 0.0f, 0.0f);
 
 	CVertexArray* va = GetVertexArray();
 	va->Initialize();
-	va->EnlargeArrays(5*numDivs*(numDivs + 1)*2, 5*numDivs, VA_SIZE_TC); //! alloc room for all vertexes and strips
-	float3 dir, zpos;
+	va->EnlargeArrays(5 * numDivs * (numDivs + 1) * 2, 5 * numDivs, VA_SIZE_TC); //! alloc room for all vertexes and strips
 
 	for (int a = 0; a < 5; ++a) { //! CAUTION: loop count must match EnlargeArrays above
 		bool maxReached = false;
+
 		for (int y = 0; y < numDivs; ++y) {
 			dir = base;
 			dir.ANormalize();
@@ -180,20 +183,25 @@ void CAdvWater::Draw(bool useBlending)
 			}
 
 			xbase = base;
+
 			for (int x = 0; x < numDivs + 1; ++x) { //! CAUTION: loop count must match EnlargeArrays above
 				dir = xbase + dv;
 				dir.ANormalize();
-				zpos = camera->GetPos() + dir*(camera->GetPos().y / -dir.y);
-				zpos.y = std::sin(zpos.z*0.1f + gs->frameNum*0.06f)*0.06f + 0.05f;
-				col[3] = (unsigned char)((0.8f + 0.7f*dir.y)*255);
-				va->AddVertexQTC(zpos, x*(1.0f/numDivs), screenY - yInc, col);
+
+				zpos = camera->GetPos() + dir * (camera->GetPos().y / -dir.y);
+				zpos.y = fastmath::sin(zpos.z * 0.1f + gs->frameNum * 0.06f) * 0.06f + 0.05f;
+
+				col[3] = (unsigned char)((0.8f + 0.7f * dir.y) * 255);
+				va->AddVertexQTC(zpos, x * (1.0f / numDivs), screenY - yInc, col);
 
 				dir = xbase;
 				dir.ANormalize();
-				zpos = camera->GetPos() + dir*(camera->GetPos().y / -dir.y);
-				zpos.y = std::sin(zpos.z*0.1f + gs->frameNum*0.06f)*0.06f + 0.05f;
-				col[3] = (unsigned char)((0.8f + 0.7f*dir.y)*255);
-				va->AddVertexQTC(zpos, x*(1.0f/numDivs), screenY, col);
+
+				zpos = camera->GetPos() + dir * (camera->GetPos().y / -dir.y);
+				zpos.y = fastmath::sin(zpos.z * 0.1f + gs->frameNum * 0.06f) * 0.06f + 0.05f;
+
+				col[3] = (unsigned char)((0.8f + 0.7f * dir.y) * 255);
+				va->AddVertexQTC(zpos, x * (1.0f / numDivs), screenY, col);
 
 				xbase += dh;
 			}
@@ -212,15 +220,17 @@ void CAdvWater::Draw(bool useBlending)
 	va->DrawArrayTC(GL_TRIANGLE_STRIP);
 
 	glDepthMask(1);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	glDisable(GL_FRAGMENT_PROGRAM_ARB);
+
 	glActiveTextureARB(GL_TEXTURE1_ARB);
 		glDisable(GL_TEXTURE_GEN_S);
 		glDisable(GL_TEXTURE_GEN_T);
 	glActiveTextureARB(GL_TEXTURE0_ARB);
 
-	if (!useBlending) { // for translucent stuff like water, the default mode is blending and alpha testing enabled
+	// for translucent stuff like water, the default mode is blending and alpha testing enabled
+	if (!useBlending)
 		glEnable(GL_BLEND);
-	}
 }
 
 void CAdvWater::UpdateWater(CGame* game)

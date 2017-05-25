@@ -326,6 +326,7 @@ void CDynWater::Draw()
 	glEnable(GL_FRAGMENT_PROGRAM_ARB);
 	glBindProgramARB(GL_VERTEX_PROGRAM_ARB, waterVP);
 	glEnable(GL_VERTEX_PROGRAM_ARB);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE * wireFrameMode + GL_FILL * (1 - wireFrameMode));
 
 	const float dx = float(globalRendering->viewSizeX) / globalRendering->viewSizeY * camera->GetTanHalfFov();
 	const float dy = float(globalRendering->viewSizeY) / globalRendering->viewSizeY * camera->GetTanHalfFov();
@@ -359,6 +360,7 @@ void CDynWater::Draw()
 
 	DrawOuterSurface();
 
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	glDisable(GL_FRAGMENT_PROGRAM_ARB);
 	glDisable(GL_VERTEX_PROGRAM_ARB);
 	glPopAttrib();
