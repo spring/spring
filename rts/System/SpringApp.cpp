@@ -299,7 +299,7 @@ bool SpringApp::InitWindow(const char* title)
 	Threading::SetThreadName("gpu-driver");
 
 	// raises an error-prompt in case of failure
-	if (!globalRendering->CreateSDLWindow(title, FLAGS_minimise))
+	if (!globalRendering->CreateWindowAndContext(title, FLAGS_minimise))
 		return false;
 
 	// Something in SDL_SetVideoMode (OpenGL drivers?) messes with the FPU control word.
