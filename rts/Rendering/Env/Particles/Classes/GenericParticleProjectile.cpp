@@ -44,9 +44,6 @@ CGenericParticleProjectile::CGenericParticleProjectile(const CUnit* owner, const
 	deleteMe  = false;
 }
 
-CGenericParticleProjectile::~CGenericParticleProjectile()
-{
-}
 
 void CGenericParticleProjectile::Update()
 {
@@ -56,15 +53,11 @@ void CGenericParticleProjectile::Update()
 	life += decayrate;
 	size = size * sizeMod + sizeGrowth;
 
-	if (life > 1.0f) {
-		deleteMe = true;
-	}
+	deleteMe |= (life > 1.0f);
 }
 
-void CGenericParticleProjectile::Draw()
+void CGenericParticleProjectile::Draw(CVertexArray* va)
 {
-	inArray = true;
-
 	float3 dir1 = camera->GetRight();
 	float3 dir2 = camera->GetUp();
 	if (directional) {

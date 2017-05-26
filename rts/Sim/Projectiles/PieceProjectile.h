@@ -35,7 +35,7 @@ public:
 	);
 
 	void Update() override;
-	void Draw() override;
+	void Draw(CVertexArray* va) override;
 	void DrawOnMinimap(CVertexArray& lines, CVertexArray& points) override;
 	void Collision() override;
 	void Collision(CUnit* unit) override;

@@ -27,7 +27,7 @@ public:
 	);
 
 	void Update() override;
-	void Draw() override;
+	void Draw(CVertexArray* va) override;
 
 	int GetProjectilesCount() const override;
 

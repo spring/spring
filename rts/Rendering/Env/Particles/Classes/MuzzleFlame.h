@@ -12,12 +12,11 @@ class CMuzzleFlame : public CProjectile
 public:
 	CMuzzleFlame() { }
 	CMuzzleFlame(const float3& pos, const float3& speed, const float3& dir, float size);
-	~CMuzzleFlame();
 
-	void Draw() override;
+	void Draw(CVertexArray* va) override;
 	void Update() override;
 
-	virtual int GetProjectilesCount() const override;
+	int GetProjectilesCount() const override;
 
 private:
 	float size;

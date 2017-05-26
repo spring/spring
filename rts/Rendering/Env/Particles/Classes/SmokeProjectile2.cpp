@@ -97,21 +97,19 @@ void CSmokeProjectile2::Update()
 	pos.x += (wantedPos.x - pos.x) * 0.07f;
 	pos.y += (wantedPos.y - pos.y) * 0.02f;
 	pos.z += (wantedPos.z - pos.z) * 0.07f;
+
 	age += ageSpeed;
 	size += sizeExpansion;
-	if (size < startSize) {
-		size += (startSize - size) * 0.2f;
-	}
+	size += ((startSize - size) * 0.2f * (size < startSize));
+
 	SetRadiusAndHeight(size, 0.0f);
-	if (age > 1) {
-		age = 1;
-		deleteMe = true;
-	}
+	age = std::min(age, 1.0f);
+
+	deleteMe |= (age >= 1.0f);
 }
 
-void CSmokeProjectile2::Draw()
+void CSmokeProjectile2::Draw(CVertexArray* va)
 {
-	inArray = true;
 	const float interAge = std::min(1.0f, age + ageSpeed * globalRendering->timeOffset);
 	unsigned char col[4];
 	unsigned char alpha;

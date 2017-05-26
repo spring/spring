@@ -66,9 +66,8 @@ void CLightningProjectile::Update()
 	UpdateInterception();
 }
 
-void CLightningProjectile::Draw()
+void CLightningProjectile::Draw(CVertexArray* va)
 {
-	inArray = true;
 	unsigned char col[4];
 	col[0] = (unsigned char) (color.x * 255);
 	col[1] = (unsigned char) (color.y * 255);

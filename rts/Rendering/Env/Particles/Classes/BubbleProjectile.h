@@ -19,12 +19,11 @@ public:
 		float sizeExpansion,
 		float alpha
 	);
-	virtual ~CBubbleProjectile();
 
 	void Update() override;
-	void Draw() override;
+	void Draw(CVertexArray* va) override;
 
-	virtual int GetProjectilesCount() const override;
+	int GetProjectilesCount() const override;
 
 	static bool GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo);
 

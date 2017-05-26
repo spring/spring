@@ -5,17 +5,18 @@
 
 #include <limits>
 
+#include "lib/streflop/streflop_cond.h"
 #include "System/float3.h"
 
 
 
-struct PCG32Random {
+struct PCG32 {
 public:
 	typedef uint32_t res_type;
 	typedef uint64_t val_type;
 
-	PCG32Random(const val_type _val = def_val, const val_type _seq = def_seq) { seed(_val, _seq); }
-	PCG32Random(const PCG32Random& rng) { *this = rng; }
+	PCG32(const val_type _val = def_val, const val_type _seq = def_seq) { seed(_val, _seq); }
+	PCG32(const PCG32& rng) { *this = rng; }
 
 	void seed(const val_type initval, const val_type initseq) {
 		val = 0u;
@@ -60,28 +61,30 @@ private:
 
 template<bool synced> class CGlobalRNG {
 public:
-	void Seed(PCG32Random::val_type seed) { SetSeed(seed); }
-	void SetSeed(PCG32Random::val_type seed, bool init = false) {
+	void Seed(PCG32::val_type seed) { SetSeed(seed); }
+	void SetSeed(PCG32::val_type seed, bool init = false) {
 		// use address of this object as sequence-id for unsynced RNG, modern systems have ASLR
 		if (init) {
-			pcg.seed(initSeed = seed, PCG32Random::val_type(this) * (1 - synced) + PCG32Random::def_seq * synced);
+			pcg.seed(initSeed = seed, PCG32::val_type(this) * (1 - synced) + PCG32::def_seq * synced);
 		} else {
-			pcg.seed(lastSeed = seed, PCG32Random::val_type(this) * (1 - synced) + PCG32Random::def_seq * synced);
+			pcg.seed(lastSeed = seed, PCG32::val_type(this) * (1 - synced) + PCG32::def_seq * synced);
 		}
 	}
 
-	PCG32Random::val_type GetInitSeed() const { return initSeed; }
-	PCG32Random::val_type GetLastSeed() const { return lastSeed; }
+	PCG32::val_type GetInitSeed() const { return initSeed; }
+	PCG32::val_type GetLastSeed() const { return lastSeed; }
 
 	// needed for std::{random_}shuffle
-	PCG32Random::res_type operator()(                       ) { return (pcg. next( )); }
-	PCG32Random::res_type operator()(PCG32Random::res_type N) { return (pcg.bnext(N)); }
+	PCG32::res_type operator()(                 ) { return (pcg. next( )); }
+	PCG32::res_type operator()(PCG32::res_type N) { return (pcg.bnext(N)); }
 
-	static constexpr PCG32Random::res_type min() { return (std::numeric_limits<PCG32Random::res_type>::min()); }
-	static constexpr PCG32Random::res_type max() { return (std::numeric_limits<PCG32Random::res_type>::max()); }
+	static constexpr PCG32::res_type min() { return (std::numeric_limits<PCG32::res_type>::min()); }
+	static constexpr PCG32::res_type max() { return (std::numeric_limits<PCG32::res_type>::max()); }
 
-	PCG32Random::res_type NextInt(PCG32Random::res_type N = max()) { return ((*this)(N)); }
-	float NextFloat(PCG32Random::res_type N = max()) { return ((NextInt(N) * 1.0f) / N); }
+	PCG32::res_type NextInt(PCG32::res_type N = max()) { return ((*this)(N)); }
+
+	float NextFloat(PCG32::res_type N = max()) { return ((NextInt(N) * 1.0f) / N); } // [0,1) rounded to multiple of 1/N
+	float NextFloat32() { return (math::ldexp(NextInt(max()), -32)); } // [0,1) rounded to multiple of 1/(2^32)
 
 	float3 NextVector2D() { return (NextVector(0.0f)); }
 	float3 NextVector(float y = 1.0f) {
@@ -97,11 +100,11 @@ public:
 	}
 
 private:
-	PCG32Random pcg;
+	PCG32 pcg;
 
 	// initial and last-set seed
-	PCG32Random::val_type initSeed = 0;
-	PCG32Random::val_type lastSeed = 0;
+	PCG32::val_type initSeed = 0;
+	PCG32::val_type lastSeed = 0;
 };
 
 

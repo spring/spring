@@ -18,12 +18,11 @@ public:
 		float maxDist,
 		const float3& color
 	);
-	~CRepulseGfx();
 
-	void Draw() override;
+	void Draw(CVertexArray* va) override;
 	void Update() override;
 
-	virtual int GetProjectilesCount() const override;
+	int GetProjectilesCount() const override;
 
 	void DependentDied(CObject* o) override;
 

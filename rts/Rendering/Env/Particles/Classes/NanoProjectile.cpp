@@ -42,14 +42,14 @@ CNanoProjectile::CNanoProjectile(float3 pos, float3 speed, int lifeTime, SColor 
 	drawSorted = false;
 	drawRadius = 3;
 
-	if (projectileHandler != NULL) {
+	if (projectileHandler != nullptr) {
 		projectileHandler->currentNanoParticles += 1;
 	}
 }
 
 CNanoProjectile::~CNanoProjectile()
 {
-	if (projectileHandler != NULL) {
+	if (projectileHandler != nullptr) {
 		projectileHandler->currentNanoParticles -= 1;
 	}
 }
@@ -58,15 +58,11 @@ CNanoProjectile::~CNanoProjectile()
 void CNanoProjectile::Update()
 {
 	pos += speed;
-	if (gs->frameNum >= deathFrame) {
-		deleteMe = true;
-	}
+	deleteMe |= (gs->frameNum >= deathFrame);
 }
 
-void CNanoProjectile::Draw()
+void CNanoProjectile::Draw(CVertexArray* va)
 {
-	inArray = true;
-
 	const auto* gfxt = projectileDrawer->gfxtex;
 	va->AddVertexTC(drawPos - camera->GetRight() * drawRadius - camera->GetUp() * drawRadius, gfxt->xstart, gfxt->ystart, color);
 	va->AddVertexTC(drawPos + camera->GetRight() * drawRadius - camera->GetUp() * drawRadius, gfxt->xend,   gfxt->ystart, color);

@@ -68,31 +68,24 @@ CHeatCloudProjectile::CHeatCloudProjectile(
 	SetRadiusAndHeight(size + sizeGrowth * heat / heatFalloff, 0.0f);
 }
 
-CHeatCloudProjectile::~CHeatCloudProjectile()
-{
-}
 
 void CHeatCloudProjectile::Update()
 {
 	pos += speed;
-	heat -= heatFalloff;
-	if (heat <= 0) {
-		deleteMe = true;
-		heat = 0;
-	}
+	heat = std::max(heat - heatFalloff, 0.0f);
+
+	deleteMe |= (heat <= 0.0f);
+
 	size += sizeGrowth;
 	sizemod *= sizemodmod;
 }
 
-void CHeatCloudProjectile::Draw()
+void CHeatCloudProjectile::Draw(CVertexArray* va)
 {
-	inArray = true;
 	unsigned char col[4];
-	float dheat = heat-globalRendering->timeOffset;
-	if (dheat < 0) {
-		dheat = 0;
-	}
-	float alpha = (dheat / maxheat) * 255.0f;
+	const float dheat = std::max(0.0f, heat-globalRendering->timeOffset);
+	const float alpha = (dheat / maxheat) * 255.0f;
+
 	col[0] = (unsigned char) alpha;
 	col[1] = (unsigned char) alpha;
 	col[2] = (unsigned char) alpha;

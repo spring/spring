@@ -59,11 +59,9 @@ void CTracerProjectile::Update()
 	deleteMe |= (length < 0.0f);
 }
 
-void CTracerProjectile::Draw()
+void CTracerProjectile::Draw(CVertexArray* va)
 {
-	if (drawLength > 3) {
-		drawLength = 3;
-	}
+	drawLength = std::min(drawLength, 3.0f);
 
 	glTexCoord2f(1.0f/16, 1.0f/16);
 	glColor4f(1, 1, 0.1f, 0.4f);

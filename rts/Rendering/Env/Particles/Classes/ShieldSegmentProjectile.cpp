@@ -288,7 +288,7 @@ const float2* ShieldSegmentProjectile::GetSegmentTexCoords(const AtlasedTexture*
 
 void ShieldSegmentProjectile::Update()
 {
-	if (collection == NULL)
+	if (collection == nullptr)
 		return;
 
 	// use the "middle" vertex for z-ordering
@@ -296,7 +296,7 @@ void ShieldSegmentProjectile::Update()
 
 }
 
-void ShieldSegmentProjectile::Draw()
+void ShieldSegmentProjectile::Draw(CVertexArray* va)
 {
 	if (collection == nullptr)
 		return;
@@ -313,7 +313,6 @@ void ShieldSegmentProjectile::Draw()
 	const float3 shieldPos = collection->GetShieldDrawPos();
 	const float size = collection->GetSize();
 
-	inArray = true;
 	va->EnlargeArrays(NUM_VERTICES_Y * NUM_VERTICES_X * 4, 0, VA_SIZE_TC);
 
 	// draw all quads

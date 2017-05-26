@@ -64,6 +64,14 @@ void CWakeProjectile::Update()
 	size += sizeExpansion;
 	drawRadius = size;
 
+	#if 0
+	alpha += (alphaAdd * (alphaAddTime != 0));
+	alphaAddTime -= 1;
+
+	alpha = std::max(alpha, 0.0f);
+	deleteMe |= (alpha <= 0.0f);
+	#endif
+
 	if (alphaAddTime != 0) {
 		alpha += alphaAdd;
 		--alphaAddTime;
@@ -73,9 +81,8 @@ void CWakeProjectile::Update()
 	}
 }
 
-void CWakeProjectile::Draw()
+void CWakeProjectile::Draw(CVertexArray* va)
 {
-	inArray = true;
 	unsigned char col[4];
 	col[0] = (unsigned char) (255 * alpha);
 	col[1] = (unsigned char) (255 * alpha);

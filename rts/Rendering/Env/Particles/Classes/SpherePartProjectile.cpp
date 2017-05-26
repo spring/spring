@@ -70,15 +70,12 @@ CSpherePartProjectile::CSpherePartProjectile(
 
 void CSpherePartProjectile::Update()
 {
-	age++;
-	if (age >= ttl) {
-		deleteMe = true;
-	}
+	deleteMe |= ((age += 1) >= ttl);
 	sphereSize += expansionSpeed;
-	pos = centerPos+vectors[12] * sphereSize;
+	pos = centerPos + vectors[12] * sphereSize;
 }
 
-void CSpherePartProjectile::Draw()
+void CSpherePartProjectile::Draw(CVertexArray* va)
 {
 	unsigned char col[4];
 	va->EnlargeArrays(4*4*4, 0, VA_SIZE_TC);

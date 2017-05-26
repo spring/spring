@@ -48,9 +48,8 @@ CTorpedoProjectile::CTorpedoProjectile(const ProjectileParams& params): CWeaponP
 
 	tracking = params.tracking;
 
-	if (weaponDef != NULL) {
+	if (weaponDef != nullptr)
 		maxSpeed = weaponDef->projectilespeed;
-	}
 
 	drawRadius = maxSpeed * 8;
 
@@ -158,24 +157,23 @@ void CTorpedoProjectile::Update()
 	UpdateInterception();
 }
 
-void CTorpedoProjectile::Draw()
+void CTorpedoProjectile::Draw(CVertexArray* va)
 {
-	if (model) {
-		// do not draw if a 3D model has been defined for us
+	// do not draw if a 3D model has been defined for us
+	if (model != nullptr)
 		return;
-	}
 
 	SColor col(60, 60, 100, 255);
 	float3 r = dir.cross(UpVector);
-	if (r.SqLength() < 0.001f) {
-		r = float3(RgtVector);
-	}
+
+	if (r.SqLength() < 0.001f)
+		r = RgtVector;
+
 	r.Normalize();
 	const float3 u = dir.cross(r);
 	const float h = 12;
 	const float w = 2;
 
-	inArray = true;
 	va->EnlargeArrays(32, 0, VA_SIZE_TC);
 
 	va->AddVertexQTC(drawPos + (r * w),             texx, texy, col);

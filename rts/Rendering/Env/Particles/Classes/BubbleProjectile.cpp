@@ -53,11 +53,6 @@ CBubbleProjectile::CBubbleProjectile(
 	checkCol = false;
 }
 
-CBubbleProjectile::~CBubbleProjectile()
-{
-
-}
-
 
 void CBubbleProjectile::Update()
 {
@@ -82,9 +77,8 @@ void CBubbleProjectile::Update()
 	}
 }
 
-void CBubbleProjectile::Draw()
+void CBubbleProjectile::Draw(CVertexArray* va)
 {
-	inArray = true;
 	unsigned char col[4];
 	col[0] = (unsigned char)(255 * alpha);
 	col[1] = (unsigned char)(255 * alpha);

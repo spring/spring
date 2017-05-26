@@ -88,19 +88,16 @@ void CSmokeProjectile::Update()
 	pos += wind.GetCurrentWind() * age * 0.05f;
 	age += ageSpeed;
 	size += sizeExpansion;
-	if (size < startSize) {
-		size+=(startSize-size) * 0.2f;
-	}
+	size += ((startSize - size) * 0.2f * (size < startSize));
+
 	drawRadius = size;
-	if (age > 1) {
-		age = 1;
-		deleteMe = true;
-	}
+	age = std::min(age, 1.0f);
+
+	deleteMe |= (age >= 1.0f);
 }
 
-void CSmokeProjectile::Draw()
+void CSmokeProjectile::Draw(CVertexArray* va)
 {
-	inArray = true;
 	unsigned char col[4];
 	unsigned char alpha = (unsigned char) ((1 - age) * 255);
 	col[0] = (unsigned char) (color * alpha);

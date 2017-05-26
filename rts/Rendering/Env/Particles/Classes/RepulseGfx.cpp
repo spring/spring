@@ -50,24 +50,21 @@ CRepulseGfx::CRepulseGfx(CUnit* owner, CProjectile* repulsed, float maxDist, con
 	}
 }
 
-CRepulseGfx::~CRepulseGfx()
-{
-}
 
 void CRepulseGfx::DependentDied(CObject* o)
 {
 	if (o == repulsed) {
-		repulsed = NULL;
+		repulsed = nullptr;
 		deleteMe = true;
 	}
 }
 
-void CRepulseGfx::Draw()
+void CRepulseGfx::Draw(CVertexArray* va)
 {
 	const CUnit* owner = CProjectile::owner();
-	if (!owner || !repulsed) {
+
+	if (owner == nullptr || repulsed == nullptr)
 		return;
-	}
 
 	const float3 zdir = (repulsed->pos - owner->pos).SafeANormalize();
 	const float3 xdir = (zdir.cross(UpVector)).SafeANormalize();
@@ -77,7 +74,6 @@ void CRepulseGfx::Draw()
 	float3 ydirDS;
 
 	pos = (repulsed->pos - zdir * 10.0f) + (repulsed->speed * globalRendering->timeOffset);
-	inArray = true;
 
 	float drawsize = 10.0f;
 	float alpha = std::min(255.0f, age * 10.0f);

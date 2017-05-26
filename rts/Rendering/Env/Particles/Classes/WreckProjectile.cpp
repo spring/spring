@@ -41,9 +41,8 @@ void CWreckProjectile::Update()
 	deleteMe |= (pos.y + 0.3f < CGround::GetApproximateHeight(pos.x, pos.z));
 }
 
-void CWreckProjectile::Draw()
+void CWreckProjectile::Draw(CVertexArray* va)
 {
-	inArray = true;
 	unsigned char col[4];
 	col[0] = (unsigned char) (0.15f * 200);
 	col[1] = (unsigned char) (0.1f  * 200);

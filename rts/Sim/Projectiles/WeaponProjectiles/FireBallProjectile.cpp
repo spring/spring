@@ -23,7 +23,7 @@ CR_REG_METADATA(CFireBallProjectile,(
 
 
 CR_BIND(CFireBallProjectile::Spark, )
-CR_REG_METADATA_SUB(CFireBallProjectile,Spark,(
+CR_REG_METADATA_SUB(CFireBallProjectile, Spark, (
 	CR_MEMBER(pos),
 	CR_MEMBER(speed),
 	CR_MEMBER(size),
@@ -41,9 +41,8 @@ CFireBallProjectile::CFireBallProjectile(const ProjectileParams& params): CWeapo
 	}
 }
 
-void CFireBallProjectile::Draw()
+void CFireBallProjectile::Draw(CVertexArray* va)
 {
-	inArray = true;
 	unsigned char col[4] = { 255, 150, 100, 1 };
 
 	float3 interPos = checkCol ? drawPos : pos;

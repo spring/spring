@@ -59,7 +59,7 @@ void CExplosiveProjectile::Update()
 		Collision();
 	} else {
 		if (ttl > 0) {
-			explGenHandler->GenExplosion(cegID, pos, speed, ttl, damages->damageAreaOfEffect, 0.0f, NULL, NULL);
+			explGenHandler->GenExplosion(cegID, pos, speed, ttl, damages->damageAreaOfEffect, 0.0f, nullptr, nullptr);
 		}
 	}
 
@@ -75,14 +75,11 @@ void CExplosiveProjectile::Update()
 	UpdateInterception();
 }
 
-void CExplosiveProjectile::Draw()
+void CExplosiveProjectile::Draw(CVertexArray* va)
 {
-	if (model) {
-		// do not draw if a 3D model has been defined for us
+	// do not draw if a 3D model has been defined for us
+	if (model != nullptr)
 		return;
-	}
-
-	inArray = true;
 
 	unsigned char col[4] = {0};
 

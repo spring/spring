@@ -16,10 +16,10 @@ public:
 	CLargeBeamLaserProjectile(const ProjectileParams& params);
 
 	void Update() override;
-	void Draw() override;
+	void Draw(CVertexArray* va) override;
 	void DrawOnMinimap(CVertexArray& lines, CVertexArray& points) override;
 
-	virtual int GetProjectilesCount() const override;
+	int GetProjectilesCount() const override;
 
 private:
 	unsigned char coreColStart[4];

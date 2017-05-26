@@ -309,10 +309,8 @@ void CMissileProjectile::UpdateGroundBounce() {
 
 
 
-void CMissileProjectile::Draw()
+void CMissileProjectile::Draw(CVertexArray* va)
 {
-	inArray = true;
-
 	// rocket flare
 	const SColor lightYellow(255, 210, 180, 1);
 	const float fsize = radius * 0.4f;

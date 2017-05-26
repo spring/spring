@@ -13,13 +13,12 @@ class CFireBallProjectile : public CWeaponProjectile
 public:
 	// creg only
 	CFireBallProjectile() { }
-
 	CFireBallProjectile(const ProjectileParams& params);
 
-	void Draw() override;
+	void Draw(CVertexArray* va) override;
 	void Update() override;
 
-	virtual int GetProjectilesCount() const override;
+	int GetProjectilesCount() const override;
 
 	void Collision() override;
 

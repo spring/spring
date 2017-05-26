@@ -15,9 +15,9 @@ public:
 	CTorpedoProjectile(const ProjectileParams& params);
 
 	void Update() override;
-	void Draw() override;
+	void Draw(CVertexArray* va) override;
 
-	virtual int GetProjectilesCount() const override;
+	int GetProjectilesCount() const override;
 
 	void SetIgnoreError(bool b) { ignoreError = b; }
 private:

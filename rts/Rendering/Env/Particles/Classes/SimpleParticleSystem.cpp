@@ -80,10 +80,8 @@ CSimpleParticleSystem::CSimpleParticleSystem()
 	useAirLos = true;
 }
 
-void CSimpleParticleSystem::Draw()
+void CSimpleParticleSystem::Draw(CVertexArray* va)
 {
-	inArray = true;
-
 	va->EnlargeArrays(numParticles * 4, 0, VA_SIZE_TC);
 
 	if (directional) {

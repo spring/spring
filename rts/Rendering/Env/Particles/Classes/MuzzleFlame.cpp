@@ -40,10 +40,6 @@ CMuzzleFlame::CMuzzleFlame(const float3& pos, const float3& speed, const float3&
 	}
 }
 
-CMuzzleFlame::~CMuzzleFlame()
-{
-//	delete[] randSmokeDir;
-}
 
 void CMuzzleFlame::Update()
 {
@@ -54,9 +50,8 @@ void CMuzzleFlame::Update()
 	pos += speed;
 }
 
-void CMuzzleFlame::Draw()
+void CMuzzleFlame::Draw(CVertexArray* va)
 {
-	inArray = true;
 	unsigned char col[4];
 	float alpha = std::max(0.0f, 1 - (age / (4 + size * 30)));
 	float modAge = fastmath::apxsqrt(static_cast<float>(age + 2));

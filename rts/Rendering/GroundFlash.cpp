@@ -71,8 +71,6 @@ CR_REG_METADATA(CSimpleGroundFlash, (
 
 
 
-CVertexArray* CGroundFlash::va = nullptr;
-
 // CREG-only
 CGroundFlash::CGroundFlash()
 {
@@ -214,7 +212,7 @@ bool CStandardGroundFlash::Update()
 	return (std::max(--ttl, 0) > 0);
 }
 
-void CStandardGroundFlash::Draw()
+void CStandardGroundFlash::Draw(CVertexArray* va)
 {
 	float iAlpha = Clamp(circleAlpha - (circleAlphaDec * globalRendering->timeOffset), 0.0f, 1.0f);
 
@@ -299,7 +297,7 @@ void CSimpleGroundFlash::Init(const CUnit* owner, const float3& offset)
 	projectileHandler->AddGroundFlash(this);
 }
 
-void CSimpleGroundFlash::Draw()
+void CSimpleGroundFlash::Draw(CVertexArray* va)
 {
 	unsigned char color[4] = {0, 0, 0, 0};
 	colorMap->GetColor(color, age);
@@ -372,7 +370,7 @@ CSeismicGroundFlash::CSeismicGroundFlash(
 	projectileHandler->AddGroundFlash(this);
 }
 
-void CSeismicGroundFlash::Draw()
+void CSeismicGroundFlash::Draw(CVertexArray* va)
 {
 	color.a = mix(255, int(255 * (ttl / (1.0f * fade))), (ttl < fade));
 

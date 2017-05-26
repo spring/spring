@@ -471,9 +471,8 @@ void CProjectileDrawer::DrawProjectileShadow(CProjectile* p)
 		if (!p->castShadow)
 			return;
 
-		// don't need to z-sort particle
-		// effects for the shadow pass
-		p->Draw();
+		// don't need to z-sort in the shadow pass
+		p->Draw(projectileDrawer->fxVA);
 	}
 }
 
@@ -589,26 +588,24 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 		// only z-sorted (if the projectiles indicate they want to be)
 		DrawProjectilesSet(renderProjectiles, drawReflection, drawRefraction);
 
-		CProjectile::inArray = false;
-		CProjectile::va = GetVertexArray();
-		CProjectile::va->Initialize();
-
 		std::sort(zSortedProjectiles.begin(), zSortedProjectiles.end(), zSortCmp);
 
-		// draw the particle effects
+		fxVA = GetVertexArray();
+		fxVA->Initialize();
+
+		// collect the alpha-translucent particle effects in fxVA
 		for (CProjectile* p: zSortedProjectiles) {
-			p->Draw();
+			p->Draw(fxVA);
 		}
 		for (CProjectile* p: unsortedProjectiles) {
-			p->Draw(); //FIXME rename to explosionSpawners ? and why to call Draw() for them??
+			p->Draw(fxVA);
 		}
 	}
 
 	glEnable(GL_BLEND);
 	glDisable(GL_FOG);
 
-	if (CProjectile::inArray) {
-		// alpha-translucent particles
+	if (fxVA->drawIndex() > 0) {
 		glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 		glEnable(GL_TEXTURE_2D);
 		textureAtlas->BindTexture();
@@ -617,7 +614,7 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 		glEnable(GL_ALPHA_TEST);
 		glDepthMask(GL_FALSE);
 
-		CProjectile::DrawArray();
+		fxVA->DrawArrayTC(GL_QUADS);
 	}
 
 	glPopAttrib();
@@ -631,9 +628,8 @@ void CProjectileDrawer::DrawShadowPass()
 	glDisable(GL_TEXTURE_2D);
 	po->Enable();
 
-	CProjectile::inArray = false;
-	CProjectile::va = GetVertexArray();
-	CProjectile::va->Initialize();
+	fxVA = GetVertexArray();
+	fxVA->Initialize();
 
 	{
 		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
@@ -644,15 +640,15 @@ void CProjectileDrawer::DrawShadowPass()
 		DrawProjectilesSetShadow(renderProjectiles);
 	}
 
-	if (CProjectile::inArray) {
+	if (fxVA->drawIndex() > 0) {
 		glEnable(GL_TEXTURE_2D);
 		textureAtlas->BindTexture();
 		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-		glAlphaFunc(GL_GREATER,0.3f);
+		glAlphaFunc(GL_GREATER, 0.3f);
 		glEnable(GL_ALPHA_TEST);
 		glShadeModel(GL_SMOOTH);
 
-		CProjectile::DrawArray();
+		fxVA->DrawArrayTC(GL_QUADS);
 	}
 
 	po->Disable();
@@ -665,7 +661,7 @@ void CProjectileDrawer::DrawShadowPass()
 
 bool CProjectileDrawer::DrawProjectileModel(const CProjectile* p)
 {
-	if (!(p->weapon || p->piece) || (p->model == NULL))
+	if (!(p->weapon || p->piece) || (p->model == nullptr))
 		return false;
 
 	if (p->weapon) {
@@ -724,9 +720,9 @@ void CProjectileDrawer::DrawGroundFlashes()
 	glEnable(GL_POLYGON_OFFSET_FILL);
 	glFogfv(GL_FOG_COLOR, black);
 
-	CGroundFlash::va = GetVertexArray();
-	CGroundFlash::va->Initialize();
-	CGroundFlash::va->EnlargeArrays(8 * gfc.size(), 0, VA_SIZE_TC);
+	gfVA = GetVertexArray();
+	gfVA->Initialize();
+	gfVA->EnlargeArrays(8 * gfc.size(), 0, VA_SIZE_TC);
 
 
 	bool depthTest = true;
@@ -741,32 +737,30 @@ void CProjectileDrawer::DrawGroundFlashes()
 			continue;
 
 		if (depthTest != gf->depthTest) {
-			CGroundFlash::va->DrawArrayTC(GL_QUADS);
-			CGroundFlash::va->Initialize();
-			depthTest = gf->depthTest;
+			gfVA->DrawArrayTC(GL_QUADS);
+			gfVA->Initialize();
 
-			if (depthTest) {
+			if ((depthTest = gf->depthTest)) {
 				glEnable(GL_DEPTH_TEST);
 			} else {
 				glDisable(GL_DEPTH_TEST);
 			}
 		}
 		if (depthMask != gf->depthMask) {
-			CGroundFlash::va->DrawArrayTC(GL_QUADS);
-			CGroundFlash::va->Initialize();
-			depthMask = gf->depthMask;
+			gfVA->DrawArrayTC(GL_QUADS);
+			gfVA->Initialize();
 
-			if (depthMask) {
+			if ((depthMask = gf->depthMask)) {
 				glDepthMask(GL_TRUE);
 			} else {
 				glDepthMask(GL_FALSE);
 			}
 		}
 
-		gf->Draw();
+		gf->Draw(gfVA);
 	}
 
-	CGroundFlash::va->DrawArrayTC(GL_QUADS);
+	gfVA->DrawArrayTC(GL_QUADS);
 
 	glFogfv(GL_FOG_COLOR, sky->fogColor);
 	glDisable(GL_POLYGON_OFFSET_FILL);

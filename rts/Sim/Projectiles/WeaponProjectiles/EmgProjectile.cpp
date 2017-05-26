@@ -66,9 +66,8 @@ void CEmgProjectile::Update()
 	--ttl;
 }
 
-void CEmgProjectile::Draw()
+void CEmgProjectile::Draw(CVertexArray* va)
 {
-	inArray = true;
 	unsigned char col[4];
 	col[0] = (unsigned char) (color.x * intensity * 255);
 	col[1] = (unsigned char) (color.y * intensity * 255);

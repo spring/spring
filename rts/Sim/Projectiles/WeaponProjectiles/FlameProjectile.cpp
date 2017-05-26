@@ -66,20 +66,15 @@ void CFlameProjectile::Update()
 	drawRadius = radius * weaponDef->collisionSize;
 
 	curTime += invttl;
-	if (curTime > physLife) {
-		checkCol = false;
-	}
-	if (curTime > 1) {
-		curTime = 1;
-		deleteMe = true;
-	}
+	checkCol &= (curTime <= physLife);
+	curTime = std::min(curTime, 1.0f);
+	deleteMe |= (curTime >= 1.0f);
 
-	explGenHandler->GenExplosion(cegID, pos, speed, curTime, 0.0f, 0.0f, NULL, NULL);
+	explGenHandler->GenExplosion(cegID, pos, speed, curTime, 0.0f, 0.0f, nullptr, nullptr);
 }
 
-void CFlameProjectile::Draw()
+void CFlameProjectile::Draw(CVertexArray* va)
 {
-	inArray = true;
 	unsigned char col[4];
 	weaponDef->visuals.colorMap->GetColor(col, curTime);
 

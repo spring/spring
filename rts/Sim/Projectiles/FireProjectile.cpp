@@ -136,9 +136,8 @@ void CFireProjectile::Update()
 	deleteMe |= (ttl <= -particleTime);
 }
 
-void CFireProjectile::Draw()
+void CFireProjectile::Draw(CVertexArray* va)
 {
-	inArray = true;
 	unsigned char col[4];
 	col[3] = 1;
 	unsigned char col2[4];

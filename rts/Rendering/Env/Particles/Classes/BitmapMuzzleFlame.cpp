@@ -52,9 +52,8 @@ CBitmapMuzzleFlame::CBitmapMuzzleFlame()
 	deleteMe  = false;
 }
 
-void CBitmapMuzzleFlame::Draw()
+void CBitmapMuzzleFlame::Draw(CVertexArray* va)
 {
-	inArray = true;
 	life = (gs->frameNum - createTime + globalRendering->timeOffset) * invttl;
 
 	unsigned char col[4];

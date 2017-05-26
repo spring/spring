@@ -70,10 +70,8 @@ void CExploSpikeProjectile::Update()
 	deleteMe |= (alpha <= 0.0f);
 }
 
-void CExploSpikeProjectile::Draw()
+void CExploSpikeProjectile::Draw(CVertexArray* va)
 {
-	inArray = true;
-
 	const float3 dif = (pos - camera->GetPos()).ANormalize();
 	const float3 dir2 = (dif.cross(dir)).ANormalize();
 

@@ -60,7 +60,7 @@ CSmokeTrailProjectile::CSmokeTrailProjectile(
 	drawSegmented(false),
 	firstSegment(firstSegment),
 	lastSegment(lastSegment),
-	texture(texture == NULL ? projectileDrawer->smoketrailtex : texture)
+	texture((texture == nullptr)? projectileDrawer->smoketrailtex : texture)
 {
 	checkCol = false;
 	castShadow = true;
@@ -68,9 +68,7 @@ CSmokeTrailProjectile::CSmokeTrailProjectile(
 	UpdateEndPos(pos1, dir1);
 	SetRadiusAndHeight(pos1.distance(pos2), 0.0f);
 
-	if ((pos.y - CGround::GetApproximateHeight(pos.x, pos.z)) > 10) {
-		useAirLos = true;
-	}
+	useAirLos |= ((pos.y - CGround::GetApproximateHeight(pos.x, pos.z)) > 10.0f);
 }
 
 
@@ -96,9 +94,8 @@ void CSmokeTrailProjectile::UpdateEndPos(const float3 pos, const float3 dir)
 }
 
 
-void CSmokeTrailProjectile::Draw()
+void CSmokeTrailProjectile::Draw(CVertexArray* va)
 {
-	inArray = true;
 	const float age = gs->frameNum + globalRendering->timeOffset - creationTime;
 	const float invLifeTime = (1.0f / lifeTime);
 	va->EnlargeArrays(8, 0, VA_SIZE_TC);

@@ -15,9 +15,9 @@ public:
 	CExplosiveProjectile(const ProjectileParams& params);
 
 	void Update() override;
-	void Draw() override;
+	void Draw(CVertexArray* va) override;
 
-	virtual int GetProjectilesCount() const override;
+	int GetProjectilesCount() const override;
 
 	int ShieldRepulse(const float3& shieldPos, float shieldForce, float shieldMaxSpeed) override;
 

@@ -92,10 +92,8 @@ void CBeamLaserProjectile::Update()
 	UpdateInterception();
 }
 
-void CBeamLaserProjectile::Draw()
+void CBeamLaserProjectile::Draw(CVertexArray* va)
 {
-	inArray = true;
-
 	const float3 midPos = (targetPos + startPos) * 0.5f;
 	const float3 cameraDir = (midPos - camera->GetPos()).SafeANormalize();
 	// beam's coor-system; degenerate if targetPos == startPos

@@ -294,10 +294,8 @@ void CStarburstProjectile::UpdateTrajectory()
 	SetPosition(pos + speed);
 }
 
-void CStarburstProjectile::Draw()
+void CStarburstProjectile::Draw(CVertexArray* va)
 {
-	inArray = true;
-
 	unsigned int part = curTracerPart;
 	const auto wt3 = weaponDef->visuals.texture3;
 	const auto wt1 = weaponDef->visuals.texture1;

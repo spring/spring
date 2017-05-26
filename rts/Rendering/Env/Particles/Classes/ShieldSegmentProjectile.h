@@ -26,23 +26,30 @@ public:
 	~ShieldSegmentCollection();
 
 	void Update();
+	void UpdateColor();
 
 	bool AllowDrawing();
+
 	CPlasmaRepulser* GetShield() const { return shield; }
 	const AtlasedTexture* GetShieldTexture() const { return shieldTexture; }
+
 	float3 GetShieldDrawPos() const;
-	void UpdateColor();
+
 	SColor GetColor() const { return color; }
 	float GetSize() const { return size; }
 
 	void PostLoad();
+
 private:
 	bool UsingPerlinNoise() const;
+
 	CPlasmaRepulser* shield;
 	const AtlasedTexture* shieldTexture;
+
 	int lastAllowDrawingframe;
 	bool allowDrawing;
 	float size;
+
 	SColor color;
 
 	// NOTE: these are also registered in ProjectileHandler
@@ -65,7 +72,7 @@ public:
 	);
 	~ShieldSegmentProjectile();
 
-	void Draw() override;
+	void Draw(CVertexArray* va) override;
 	void Update() override;
 	void PreDelete();
 	void Reload(
@@ -74,7 +81,7 @@ public:
 		const int ypart
 	);
 
-	virtual int GetProjectilesCount() const override;
+	int GetProjectilesCount() const override;
 
 private:
 	static const float3* GetSegmentVertices(const int xpart, const int ypart);

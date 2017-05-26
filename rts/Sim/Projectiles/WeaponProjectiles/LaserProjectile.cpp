@@ -181,14 +181,12 @@ void CLaserProjectile::Collision()
 
 
 
-void CLaserProjectile::Draw()
+void CLaserProjectile::Draw(CVertexArray* va)
 {
-	if (model) {
-		// dont draw if a 3d model has been defined for us
+	// dont draw if a 3d model has been defined for us
+	if (model != nullptr)
 		return;
-	}
 
-	inArray = true;
 	float3 dif(pos - camera->GetPos());
 	const float camDist = dif.Length();
 	dif /= camDist;

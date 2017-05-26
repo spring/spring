@@ -95,18 +95,14 @@ void CFlareProjectile::Update()
 		}
 	}
 
-	if (gs->frameNum >= deathFrame) {
-		deleteMe = true;
-	}
+	deleteMe |= (gs->frameNum >= deathFrame);
 }
 
-void CFlareProjectile::Draw()
+void CFlareProjectile::Draw(CVertexArray* va)
 {
-	if (gs->frameNum <= activateFrame) {
+	if (gs->frameNum <= activateFrame)
 		return;
-	}
 
-	inArray = true;
 	unsigned char col[4];
 	float alpha = std::max(0.0f,1-(gs->frameNum-activateFrame)*alphaFalloff);
 	col[0] = (unsigned char) (alpha * 255);
