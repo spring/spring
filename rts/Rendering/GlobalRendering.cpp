@@ -508,8 +508,10 @@ void CGlobalRendering::SetGLSupportFlags()
 	haveGLSL &= GLEW_ARB_vertex_shader && GLEW_ARB_fragment_shader;
 	haveGLSL &= !!GLEW_VERSION_2_0; // we want OpenGL 2.0 core functions
 
+	#ifndef HEADLESS
 	if (!haveARB || !haveGLSL)
 		throw unsupported_error("OpenGL shaders not supported, aborting");
+	#endif
 
 	// useful if a GPU claims to support GL3 and shaders but crashes (Intels...)
 	haveARB  &= !forceDisableShaders;
