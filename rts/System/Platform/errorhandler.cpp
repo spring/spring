@@ -30,8 +30,8 @@
 #endif
 
 
-volatile bool waitForExit = true;
-volatile bool exitSuccess = false;
+volatile static bool waitForExit = true;
+volatile static bool exitSuccess = false;
 
 
 __FORCE_ALIGN_STACK__
@@ -44,16 +44,6 @@ void ExitSpringProcess(const std::string& msg, const std::string& caption, unsig
 
 	logSinkHandler.SetSinking(false);
 
-	LOG_L(L_FATAL, "[%s] msg=\"%s\" cap=\"%s\" (forced=%d)", __func__, msg.c_str(), caption.c_str(), !exitSuccess);
-
-	if (exitSuccess) {
-	#if !defined(DEDICATED) && !defined(HEADLESS)
-		Platform::MsgBox(msg, caption, flags);
-	#else
-		// no op
-	#endif
-	}
-
 #ifdef _MSC_VER
 	if (!exitSuccess)
 		TerminateProcess(GetCurrentProcess(), EXIT_FAILURE);
@@ -65,6 +55,12 @@ void ExitSpringProcess(const std::string& msg, const std::string& caption, unsig
 
 void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigned int flags)
 {
+	#if !defined(DEDICATED) && !defined(HEADLESS)
+	Platform::MsgBox(msg, caption, flags);
+	#endif
+
+	LOG_L(L_ERROR, "[%s] errorMsg=\"%s\" msgCaption=\"%s\" mainThread=%d", __func__, msg.c_str(), caption.c_str(), Threading::IsMainThread());
+
 #ifdef DEDICATED
 	waitForExit = false;
 	exitSuccess = true;
@@ -73,8 +69,6 @@ void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigne
 	ExitSpringProcess(msg, caption, flags);
 
 #else
-
-	LOG_L(L_ERROR, "[%s][1] msg=\"%s\" cap=\"%s\" mainThread=%d", __func__, msg.c_str(), caption.c_str(), Threading::IsMainThread());
 
 	if (!Threading::IsMainThread()) {
 		// thread threw an exception which was caught, try to organize
@@ -100,14 +94,10 @@ void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigne
 		assert(forcedExitThread.joinable());
 		forcedExitThread.detach();
 
-		LOG_L(L_ERROR, "[%s][2]", __func__);
-
 		// exit any possibly threads (otherwise they would
 		// still run while the error message-box is shown)
 		Watchdog::ClearTimer();
 		SpringApp::ShutDown(false);
-
-		LOG_L(L_ERROR, "[%s][3]", __func__);
 
 		exitSuccess = true;
 	}
