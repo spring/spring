@@ -223,6 +223,7 @@ CGlobalRendering::CGlobalRendering()
 CGlobalRendering::~CGlobalRendering()
 {
 	configHandler->RemoveObserver(this);
+	DestroyWindowAndContext();
 }
 
 
@@ -416,7 +417,9 @@ bool CGlobalRendering::CreateWindowAndContext(const char* title, bool minimized)
 }
 
 
-void CGlobalRendering::DestroySDLWindow() {
+void CGlobalRendering::DestroyWindowAndContext() {
+	WindowManagerHelper::SetIconSurface(window, nullptr);
+
 	SDL_SetWindowGrab(window, SDL_FALSE);
 	SDL_GL_MakeCurrent(window, nullptr);
 	SDL_DestroyWindow(window);

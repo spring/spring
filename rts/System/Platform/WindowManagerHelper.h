@@ -20,7 +20,7 @@ namespace WindowManagerHelper {
 	 * Note: Must be called before the first call to SDL_SetVideoMode.
 	 */
 	void SetIcon(CBitmap* bmp);
-	bool SetIconSurface(CBitmap* bmp = nullptr);
+	bool SetIconSurface(SDL_Window* win, CBitmap* bmp = nullptr);
 
 	/**
 	 * Sets the window-manager caption/title for the running process.

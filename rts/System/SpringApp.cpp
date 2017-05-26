@@ -76,7 +76,6 @@
 #include "System/Platform/CrashHandler.h"
 #include "System/Platform/Threading.h"
 #include "System/Platform/Watchdog.h"
-#include "System/Platform/WindowManagerHelper.h"
 #include "System/Sound/ISound.h"
 #include "System/Sync/FPUCheck.h"
 #include "System/Threading/ThreadPool.h"
@@ -898,12 +897,10 @@ void SpringApp::ShutDown(bool fromRun)
 	IMouseInput::FreeInstance(mouseInput);
 
 	LOG("[SpringApp::%s][6]", __func__);
-	WindowManagerHelper::SetIconSurface();
-	globalRendering->DestroySDLWindow();
-
-	LOG("[SpringApp::%s][7]", __func__);
 	spring::SafeDelete(gs);
 	spring::SafeDelete(gu);
+
+	LOG("[SpringApp::%s][7]", __func__);
 	spring::SafeDelete(globalRendering);
 	spring::SafeDelete(luaSocketRestrictions);
 

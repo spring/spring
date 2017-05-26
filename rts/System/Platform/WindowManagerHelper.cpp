@@ -33,25 +33,23 @@ void SetIcon(CBitmap* bmp) {
 		|| (bmp->ysize != 32)
 //#endif
 	) {
-		LOG_L(L_WARNING, "window-manager icon: Trying to set a window-manager icon with the wrong format.");
-		LOG_L(L_WARNING, "window-manager icon: It has to be 24bit or 32bit, and on windows it additionally has to be 32x32 pixels.");
+		LOG_L(L_WARNING, "[WindowManager::%s] icon-format has to be RGB or RGBA, and 32x32 pixels on Windows", __func__);
 		return;
 	}
 
 	// supplied bitmap is usable as icon, keep it
-	if (SetIconSurface(bmp)) {
-		windowIcon.bmp = std::move(*bmp);
-	}
+	if (!SetIconSurface(globalRendering->window, bmp))
+		return;
+
+	windowIcon.bmp = std::move(*bmp);
 }
 
 
-bool SetIconSurface(CBitmap* bmp) {
-	assert(globalRendering != nullptr);
-
+bool SetIconSurface(SDL_Window* win, CBitmap* bmp) {
 	if (bmp == nullptr) {
 		// only reached on exit
 		SDL_FreeSurface(windowIcon.surf);
-		SDL_SetWindowIcon(globalRendering->window, windowIcon.surf = nullptr);
+		SDL_SetWindowIcon(win, windowIcon.surf = nullptr);
 		return false;
 	}
 
@@ -64,7 +62,7 @@ bool SetIconSurface(CBitmap* bmp) {
 	}
 
 	SDL_FreeSurface(windowIcon.surf);
-	SDL_SetWindowIcon(globalRendering->window, windowIcon.surf = surf);
+	SDL_SetWindowIcon(win, windowIcon.surf = surf);
 	return true;
 }
 

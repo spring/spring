@@ -31,7 +31,7 @@ public:
 	bool CreateWindowAndContext(const char* title, bool minimized);
 	bool CreateSDLWindow(const int2& winRes, const int2& minRes, const char* title);
 	bool CreateGLContext(const int2& minCtx);
-	void DestroySDLWindow();
+	void DestroyWindowAndContext();
 	void PostInit();
 	void SwapBuffers(bool allowSwapBuffers);
 
