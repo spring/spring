@@ -59,9 +59,9 @@ void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigne
 	Platform::MsgBox(msg, caption, flags);
 	#endif
 
-	LOG_L(L_ERROR, "[%s] errorMsg=\"%s\" msgCaption=\"%s\" mainThread=%d", __func__, msg.c_str(), caption.c_str(), Threading::IsMainThread());
-
 #ifdef DEDICATED
+	LOG_L(L_ERROR, "[%s] errorMsg=\"%s\" msgCaption=\"%s\"", __func__, msg.c_str(), caption.c_str());
+
 	waitForExit = false;
 	exitSuccess = true;
 
@@ -69,6 +69,7 @@ void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigne
 	ExitSpringProcess(msg, caption, flags);
 
 #else
+	LOG_L(L_ERROR, "[%s] errorMsg=\"%s\" msgCaption=\"%s\" mainThread=%d", __func__, msg.c_str(), caption.c_str(), Threading::IsMainThread());
 
 	if (!Threading::IsMainThread()) {
 		// thread threw an exception which was caught, try to organize
