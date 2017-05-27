@@ -250,7 +250,7 @@ bool COggStream::UpdateBuffers()
 		}
 	}
 
-	return (CheckError("[COggStream::UpdateBuffers][3]"));
+	return (active && CheckError("[COggStream::UpdateBuffers][3]"));
 }
 
 
