@@ -116,7 +116,7 @@ public:
 
 	virtual ~ITaskGroup() {
 		// pooled tasks are deleted only when their pool dies (on exit)
-		assert(IsFinished() && (!IsInQueue() || IsInPool()));
+		assert(AllowDelete());
 	}
 
 	virtual bool IsAsyncTask() const { return false; }
@@ -148,15 +148,22 @@ public:
 			inTaskQueue.store(false);
 		}
 
-		if (SelfDelete())
+		if (SelfDelete()) {
+			// store *after* the check in both branches, avoids UAF
+			execLoopDone.store(true);
 			delete this;
+		} else {
+			execLoopDone.store(true);
+		}
 
 		return (dt.toNanoSecsi());
 	}
 
 	bool IsFinished() const { assert(remainingTasks.load() >= 0); return (remainingTasks.load(std::memory_order_relaxed) == 0); }
-	bool IsInQueue() const { return (inTaskQueue.load(std::memory_order_relaxed)); }
-	bool IsInPool() const { return (inTaskPool.load(std::memory_order_relaxed)); }
+	bool IsInJobQueue() const { return (inTaskQueue.load(std::memory_order_relaxed)); }
+	bool IsInTaskPool() const { return (inTaskPool.load(std::memory_order_relaxed)); }
+	bool ExecLoopDone() const { return (execLoopDone.load(std::memory_order_relaxed)); }
+	bool AllowDelete() const { return (IsFinished() && (!IsInJobQueue() || IsInTaskPool()) && ExecLoopDone()); }
 
 	int RemainingTasks() const { return remainingTasks; }
 	int WantedThread() const { return wantedThread; }
@@ -179,6 +186,7 @@ public:
 
 		inTaskQueue.store(true);
 		inTaskPool.store(pooled);
+		execLoopDone.store(false);
 	}
 
 public:
@@ -186,8 +194,9 @@ public:
 	// if 0 (default), task will be executed by an arbitrary thread
 	std::atomic_int wantedThread;
 
-	std::atomic_bool inTaskQueue;
-	std::atomic_bool inTaskPool;
+	std::atomic_bool inTaskQueue; // whether this task is still in a thread's queue
+	std::atomic_bool inTaskPool; // whether this task is managed (owned) by a TaskPool
+	std::atomic_bool execLoopDone;
 
 private:
 	static std::atomic_uint lastId;
@@ -500,7 +509,7 @@ public:
 		bool isFinished = true;
 
 		for (size_t n = 0; n < childTasks.size(); n++) {
-			isFinished &= (childTasks[n]->IsFinished() && !childTasks[n]->IsInQueue());
+			isFinished &= childTasks[n]->AllowDelete();
 		}
 
 		if (!isFinished)
@@ -553,7 +562,7 @@ public:
 		bool isFinished = true;
 
 		for (size_t n = 0; n < childTasks.size(); n++) {
-			isFinished &= (childTasks[n]->IsFinished() && !childTasks[n]->IsInQueue());
+			isFinished &= (childTasks[n]->IsFinished() && !childTasks[n]->IsInJobQueue());
 		}
 
 		if (!isFinished)
@@ -642,7 +651,7 @@ struct TaskPool {
 		auto tg = tgPool[pos.fetch_add(1) % tgPool.size()];
 
 		assert(tg->IsFinished());
-		assert(tg->IsInPool());
+		assert(tg->IsInTaskPool());
 
 		tg->ResetState(true);
 		return tg;
@@ -675,7 +684,7 @@ static inline void for_mt(int start, int end, int step, F&& f)
 	taskGroup->Enqueue(start, end, step, f);
 	taskGroup->UpdateId();
 
-	assert(taskGroup->IsInQueue());
+	assert(taskGroup->IsInJobQueue());
 
 	ThreadPool::PushTaskGroup(taskGroup); // note: ForTask re-queues itself for each slice
 	ThreadPool::WaitForFinished(taskGroup); // make calling thread also run ExecuteLoop
@@ -703,7 +712,7 @@ static inline void parallel(F&& f)
 	taskGroup->Enqueue(f);
 	taskGroup->UpdateId();
 
-	assert(taskGroup->IsInQueue());
+	assert(taskGroup->IsInJobQueue());
 
 	// note: child-tasks are pushed, parent itself should not be
 	// ThreadPool::PushTaskGroup(taskGroup);

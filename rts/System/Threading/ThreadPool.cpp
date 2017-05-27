@@ -262,8 +262,8 @@ void WaitForFinished(std::shared_ptr<ITaskGroup>&& taskGroup)
 	//   under that condition could cause the group to be deleted
 	//   prematurely if non-pooled) --> wait
 	if (taskGroup->IsFinished()) {
-		if (!taskGroup->IsInPool()) {
-			while (taskGroup->IsInQueue()) {
+		if (!taskGroup->IsInTaskPool()) {
+			while (taskGroup->IsInJobQueue()) {
 				DoTask(tid, false);
 			}
 		}
@@ -292,8 +292,8 @@ void WaitForFinished(std::shared_ptr<ITaskGroup>&& taskGroup)
 	//for (auto& ep: taskGroup->GetExceptions())
 	//	std::rethrow_exception(ep);
 
-	if (!taskGroup->IsInPool()) {
-		while (taskGroup->IsInQueue()) {
+	if (!taskGroup->IsInTaskPool()) {
+		while (taskGroup->IsInJobQueue()) {
 			DoTask(tid, false);
 		}
 	}
