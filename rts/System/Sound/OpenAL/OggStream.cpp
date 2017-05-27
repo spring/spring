@@ -263,7 +263,10 @@ void COggStream::Update()
 	const spring_time tick = spring_gettime();
 
 	if (!paused) {
-		if (!UpdateBuffers() || !IsPlaying())
+		// releasing buffers is only allowed once the source has actually
+		// stopped playing, since it might still be reading from the last
+		// decoded chunk
+		if (UpdateBuffers(), !IsPlaying())
 			ReleaseBuffers();
 
 		msecsPlayed += (tick - lastTick);
