@@ -115,7 +115,6 @@ public:
 	}
 
 	virtual ~ITaskGroup() {
-		// pooled tasks are deleted only when their pool dies (on exit)
 		assert(AllowDelete());
 	}
 
@@ -164,7 +163,8 @@ public:
 	bool IsInJobQueue() const { return (inTaskQueue.load(std::memory_order_relaxed)); }
 	bool IsInTaskPool() const { return (inTaskPool.load(std::memory_order_relaxed)); }
 	bool ExecLoopDone() const { return (execLoopDone.load(std::memory_order_relaxed)); }
-	bool AllowDelete() const { return (IsFinished() && (!IsInJobQueue() || IsInTaskPool()) && ExecLoopDone()); }
+	// pooled tasks are deleted only when their pool dies (on exit) which is always allowed
+	bool AllowDelete() const { return (IsFinished() && ((!IsInJobQueue() && ExecLoopDone()) || IsInTaskPool())); }
 
 	int RemainingTasks() const { return remainingTasks; }
 	int WantedThread() const { return wantedThread; }
@@ -642,7 +642,7 @@ struct TaskPool {
 	std::atomic_int pos = {0};
 
 	TaskPool() {
-		for (int i = 0; i < tgPool.size(); ++i) {
+		for (size_t i = 0; i < tgPool.size(); ++i) {
 			tgPool[i] = FuncTaskGroupPtr(new FuncTaskGroup(true));
 		}
 	}
@@ -653,6 +653,7 @@ struct TaskPool {
 
 		assert(tg->IsFinished());
 		assert(tg->IsInTaskPool());
+		assert(tg->ExecLoopDone());
 
 		tg->ResetState(true);
 		return tg;
