@@ -202,11 +202,12 @@ bool COggStream::StartPlaying()
 
 	alSourceQueueBuffers(source, 2, buffers);
 
-	// true if no error
-	if (CheckError("[COggStream::StartPlaying]"))
-		alSourcePlay(source);
+	// CheckError returns true if *no* error occurred
+	if (!CheckError("[COggStream::StartPlaying][1]"))
+		return false;
 
-	return false;
+	alSourcePlay(source);
+	return (CheckError("[COggStream::StartPlaying][2]"));
 }
 
 
