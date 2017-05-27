@@ -28,6 +28,7 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
 #include "System/Platform/Misc.h"
+#include "System/SafeUtil.h"
 
 CONFIG(std::string, SpringData).defaultValue("")
 		.description("List of addidional data-directories, separated by ';' on windows, ':' on other OSs")
@@ -558,10 +559,8 @@ std::vector<std::string> DataDirLocater::GetDataDirPaths() const
 	assert(!dataDirs.empty());
 	std::vector<std::string> dataDirPaths;
 
-	const std::vector<DataDir>& datadirs = GetDataDirs();
-	std::vector<DataDir>::const_iterator ddi;
-	for (ddi = datadirs.begin(); ddi != datadirs.end(); ++ddi) {
-		dataDirPaths.push_back(ddi->path);
+	for (const DataDir& ddir: GetDataDirs()) {
+		dataDirPaths.push_back(ddir.path);
 	}
 
 	return dataDirPaths;
@@ -570,16 +569,14 @@ std::vector<std::string> DataDirLocater::GetDataDirPaths() const
 static DataDirLocater* instance = nullptr;
 DataDirLocater& DataDirLocater::GetInstance()
 {
-	if (instance == nullptr) {
+	if (instance == nullptr)
 		instance = new DataDirLocater();
-	}
+
 	return *instance;
 }
 
 void DataDirLocater::FreeInstance()
 {
-	assert(instance != nullptr); //don't free twice
-	delete instance;
-	instance = nullptr;
+	spring::SafeDelete(instance);
 }
 
