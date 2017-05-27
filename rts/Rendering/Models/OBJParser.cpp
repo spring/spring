@@ -73,8 +73,6 @@ S3DModel COBJParser::Load(const std::string& modelFileName)
 	model.radius = modelTable.GetFloat("radius", model.CalcDrawRadius());
 	model.height = modelTable.GetFloat("height", model.CalcDrawHeight());
 	model.relMidPos = modelTable.GetFloat3("midpos", model.CalcDrawMidPos());
-
-	assert(model.numPieces == modelTable.GetInt("numpieces", 0));
 	return model;
 }
 
