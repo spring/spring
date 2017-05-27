@@ -115,7 +115,8 @@ void COggStream::Play(const std::string& path, float volume)
 		format = AL_FORMAT_STEREO16;
 	}
 
-	alGenBuffers(2, buffers); CheckError("COggStream::Play");
+	alGenBuffers(2, buffers);
+	CheckError("[COggStream::Play][1]");
 
 	if (!StartPlaying()) {
 		ReleaseBuffers();
@@ -124,7 +125,7 @@ void COggStream::Play(const std::string& path, float volume)
 		paused = false;
 	}
 
-	CheckError("COggStream::Play");
+	CheckError("[COggStream::Play][2]");
 }
 
 // stops the currently playing stream
@@ -181,7 +182,7 @@ void COggStream::ReleaseBuffers()
 	EmptyBuffers();
 
 	alDeleteBuffers(2, buffers);
-	CheckError("COggStream::ReleaseBuffers");
+	CheckError("[COggStream::ReleaseBuffers]");
 
 	ov_clear(&ovFile);
 }
@@ -194,13 +195,18 @@ bool COggStream::StartPlaying()
 	msecsPlayed = spring_nulltime;
 	lastTick = spring_gettime();
 
-	if (!DecodeStream(buffers[0])) { return false; }
-	if (!DecodeStream(buffers[1])) { return false; }
+	if (!DecodeStream(buffers[0]))
+		return false;
+	if (!DecodeStream(buffers[1]))
+		return false;
 
-	alSourceQueueBuffers(source, 2, buffers); CheckError("COggStream::StartPlaying");
-	alSourcePlay(source); CheckError("COggStream::StartPlaying");
+	alSourceQueueBuffers(source, 2, buffers);
 
-	return true;
+	// true if no error
+	if (CheckError("[COggStream::StartPlaying]"))
+		alSourcePlay(source);
+
+	return false;
 }
 
 
@@ -233,17 +239,18 @@ bool COggStream::UpdateBuffers()
 
 	while (buffersProcessed-- > 0) {
 		ALuint buffer;
-		alSourceUnqueueBuffers(source, 1, &buffer); CheckError("COggStream::UpdateBuffers");
+
+		alSourceUnqueueBuffers(source, 1, &buffer);
+		CheckError("[COggStream::UpdateBuffers][1]");
 
 		// false if we've reached end of stream
-		active = DecodeStream(buffer);
-		if (active) {
-			alSourceQueueBuffers(source, 1, &buffer); CheckError("COggStream::UpdateBuffers");
+		if ((active = DecodeStream(buffer))) {
+			alSourceQueueBuffers(source, 1, &buffer);
+			CheckError("[COggStream::UpdateBuffers][2]");
 		}
 	}
-	CheckError("COggStream::UpdateBuffers");
 
-	return active;
+	return (CheckError("[COggStream::UpdateBuffers][3]"));
 }
 
 
@@ -255,9 +262,7 @@ void COggStream::Update()
 	const spring_time tick = spring_gettime();
 
 	if (!paused) {
-		UpdateBuffers();
-
-		if (!IsPlaying())
+		if (!UpdateBuffers() || !IsPlaying())
 			ReleaseBuffers();
 
 		msecsPlayed += (tick - lastTick);
@@ -296,8 +301,7 @@ bool COggStream::DecodeStream(ALuint buffer)
 		return false;
 
 	alBufferData(buffer, format, pcmDecodeBuffer, size, vorbisInfo->rate);
-	CheckError("COggStream::DecodeStream");
-	return true;
+	return (CheckError("[COggStream::DecodeStream]"));
 }
 
 
@@ -305,11 +309,15 @@ bool COggStream::DecodeStream(ALuint buffer)
 void COggStream::EmptyBuffers()
 {
 	int queuedBuffers = 0;
-	alGetSourcei(source, AL_BUFFERS_QUEUED, &queuedBuffers); CheckError("COggStream::EmptyBuffers");
+
+	alGetSourcei(source, AL_BUFFERS_QUEUED, &queuedBuffers);
+	CheckError("[COggStream::EmptyBuffers][1]");
 
 	while (queuedBuffers-- > 0) {
 		ALuint buffer;
-		alSourceUnqueueBuffers(source, 1, &buffer); CheckError("COggStream::EmptyBuffers");
+
+		alSourceUnqueueBuffers(source, 1, &buffer);
+		CheckError("[COggStream::EmptyBuffers][2]");
 	}
 }
 
