@@ -90,11 +90,9 @@ bool CFileHandler::TryReadFromVFS(const string& fileName, int section)
 	if (vfsHandler == nullptr)
 		return false;
 
-	const string file = StringToLower(fileName);
-	if (vfsHandler->LoadFile(file, fileBuffer, (CVFSHandler::Section) section)) {
-		// did we allocated more mem than needed
-		// (e.g. because of incorrect usage of std::vector)?
-		assert(fileBuffer.size() == fileBuffer.capacity());
+	if (vfsHandler->LoadFile(StringToLower(fileName), fileBuffer, (CVFSHandler::Section) section)) {
+		// capacity can exceed size if FH was used to open more than one file
+		// assert(fileBuffer.size() == fileBuffer.capacity());
 
 		fileSize = fileBuffer.size();
 		return true;
