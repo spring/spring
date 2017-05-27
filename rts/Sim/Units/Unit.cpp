@@ -664,18 +664,18 @@ void CUnit::ForcedKillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed, b
 				ZeroVector,
 				*d,
 				wd,
-				this,                              // owner
-				nullptr,                              // hitUnit
-				nullptr,                              // hitFeature
+				this,                                    // owner
+				nullptr,                                 // hitUnit
+				nullptr,                                 // hitFeature
 				d->craterAreaOfEffect,
 				d->damageAreaOfEffect,
 				d->edgeEffectiveness,
 				d->explosionSpeed,
-				d->GetDefault() > 500 ? 1.0f: 2.0f,  // gfxMod
-				false,                             // impactOnly
-				false,                             // ignoreOwner
-				true,                              // damageGround
-				-1u                                // projectileID
+				(d->GetDefault() > 500.0f)? 1.0f: 2.0f,  // gfxMod
+				false,                                   // impactOnly
+				false,                                   // ignoreOwner
+				true,                                    // damageGround
+				-1u                                      // projectileID
 			};
 
 			helper->Explosion(params);
@@ -1250,7 +1250,7 @@ void CUnit::DoWaterDamage()
 
 static void AddUnitDamageStats(CUnit* unit, float damage, bool dealt)
 {
-	if (unit == NULL)
+	if (unit == nullptr)
 		return;
 
 	CTeam* team = teamHandler->Team(unit->team);
@@ -1263,51 +1263,18 @@ static void AddUnitDamageStats(CUnit* unit, float damage, bool dealt)
 	}
 }
 
-void CUnit::DoDamage(
-	const DamageArray& damages,
-	const float3& impulse,
-	CUnit* attacker,
-	int weaponDefID,
-	int projectileID
-) {
-	if (isDead)
-		return;
-	if (IsCrashing() || IsInVoid())
-		return;
-
-	float baseDamage = damages.Get(armorType);
-	float experienceMod = expMultiplier;
-	float impulseMult = 1.0f;
-
-	const bool isParalyzer = (damages.paralyzeDamageTime != 0);
-
-	if (baseDamage > 0.0f) {
-		if (attacker != NULL) {
-			SetLastAttacker(attacker);
-
-			// FIXME -- not the impulse direction?
-			baseDamage *= GetFlankingDamageBonus((attacker->pos - pos).SafeNormalize());
-		}
-
-		baseDamage *= curArmorMultiple;
-		restTime = 0; // bleeding != resting
-	}
-
-	if (eventHandler.UnitPreDamaged(this, attacker, baseDamage, weaponDefID, projectileID, isParalyzer, &baseDamage, &impulseMult))
-		return;
-
-	script->WorldHitByWeapon(-(float3(impulse * impulseMult)).SafeNormalize2D(), weaponDefID, /*inout*/ baseDamage);
-	ApplyImpulse((impulse * impulseMult) / mass);
-
-	if (!isParalyzer) {
+void CUnit::ApplyDamage(CUnit* attacker, const DamageArray& damages, float& baseDamage, float& experienceMod)
+{
+	if (damages.paralyzeDamageTime == 0) {
 		// real damage
 		if (baseDamage > 0.0f) {
-			// do not log overkill damage (so nukes etc do not inflate values)
+			// do not log overkill damage, so nukes etc do not inflate values
 			AddUnitDamageStats(attacker, Clamp(maxHealth - health, 0.0f, baseDamage), true);
 			AddUnitDamageStats(this, Clamp(maxHealth - health, 0.0f, baseDamage), false);
 
 			health -= baseDamage;
-		} else { // healing
+		} else {
+			// healing
 			health -= baseDamage;
 			health = std::min(health, maxHealth);
 
@@ -1356,9 +1323,56 @@ void CUnit::DoDamage(
 	}
 
 	recentDamage += baseDamage;
+}
 
-	eventHandler.UnitDamaged(this, attacker, baseDamage, weaponDefID, projectileID, isParalyzer);
-	eoh->UnitDamaged(*this, attacker, baseDamage, weaponDefID, projectileID, isParalyzer);
+void CUnit::DoDamage(
+	const DamageArray& damages,
+	const float3& impulse,
+	CUnit* attacker,
+	int weaponDefID,
+	int projectileID
+) {
+	if (isDead)
+		return;
+	if (IsCrashing() || IsInVoid())
+		return;
+
+	float baseDamage = damages.Get(armorType);
+	float experienceMod = expMultiplier;
+	float impulseMult = 1.0f;
+
+	const bool isParalyzer = (damages.paralyzeDamageTime != 0);
+
+	if (baseDamage > 0.0f) {
+		if (attacker != nullptr) {
+			SetLastAttacker(attacker);
+
+			// FIXME -- not the impulse direction?
+			baseDamage *= GetFlankingDamageBonus((attacker->pos - pos).SafeNormalize());
+		}
+
+		baseDamage *= curArmorMultiple;
+		restTime = 0; // bleeding != resting
+	}
+
+	if (eventHandler.UnitPreDamaged(this, attacker, baseDamage, weaponDefID, projectileID, isParalyzer, &baseDamage, &impulseMult))
+		return;
+
+	script->WorldHitByWeapon(-(impulse * impulseMult).SafeNormalize2D(), weaponDefID, /*inout*/ baseDamage);
+	ApplyImpulse((impulse * impulseMult) / mass);
+	ApplyDamage(attacker, damages, baseDamage, experienceMod);
+
+	{
+		eventHandler.UnitDamaged(this, attacker, baseDamage, weaponDefID, projectileID, isParalyzer);
+
+		// unit might have been killed via Lua from within UnitDamaged (e.g.
+		// through a recursive DoDamage call from AddUnitDamage or directly
+		// via DestroyUnit); can skip the rest
+		if (isDead)
+			return;
+
+		eoh->UnitDamaged(*this, attacker, baseDamage, weaponDefID, projectileID, isParalyzer);
+	}
 
 #ifdef TRACE_SYNC
 	tracefile << "Damage: ";
@@ -1366,7 +1380,7 @@ void CUnit::DoDamage(
 #endif
 
 	if (baseDamage > 0.0f) {
-		if ((attacker != NULL) && !teamHandler->Ally(allyteam, attacker->allyteam)) {
+		if ((attacker != nullptr) && !teamHandler->Ally(allyteam, attacker->allyteam)) {
 			const float scaledExpMod = 0.1f * experienceMod * (power / attacker->power);
 			const float scaledDamage = std::max(0.0f, (baseDamage + std::min(0.0f, health))) / maxHealth;
 			// alternative
@@ -1377,27 +1391,29 @@ void CUnit::DoDamage(
 		}
 	}
 
-	if (health <= 0.0f) {
-		KillUnit(attacker, false, false);
+	if (health > 0.0f)
+		return;
 
-		if (!isDead)
-			return;
-		if (beingBuilt)
-			return;
-		if (attacker == nullptr)
-			return;
+	KillUnit(attacker, false, false);
 
-		if (!teamHandler->Ally(allyteam, attacker->allyteam)) {
-			attacker->AddExperience(expMultiplier * 0.1f * (power / attacker->power));
-			teamHandler->Team(attacker->team)->GetCurrentStats().unitsKilled++;
-		}
-	}
+	if (!isDead)
+		return;
+	if (beingBuilt)
+		return;
+	if (attacker == nullptr)
+		return;
+
+	if (teamHandler->Ally(allyteam, attacker->allyteam))
+		return;
+
+	attacker->AddExperience(expMultiplier * 0.1f * (power / attacker->power));
+	teamHandler->Team(attacker->team)->GetCurrentStats().unitsKilled++;
 }
 
 
 
 void CUnit::ApplyImpulse(const float3& impulse) {
-	if (GetTransporter() != NULL) {
+	if (GetTransporter() != nullptr) {
 		// transfer impulse to unit transporting us, scaled by its mass
 		// assume we came here straight from DoDamage, not LuaSyncedCtrl
 		GetTransporter()->ApplyImpulse((impulse * mass) / (GetTransporter()->mass));
