@@ -23,6 +23,7 @@
 #include "System/Exceptions.h"
 #include "System/Log/ILog.h"
 #include "System/Util.h"
+#include "System/SafeUtil.h"
 
 
 
@@ -120,12 +121,16 @@ void CLuaLoadSaveHandler::SaveGameStartInfo()
 
 void CLuaLoadSaveHandler::SaveAIData()
 {
-	const CSkirmishAIHandler::id_ai_t& ais = skirmishAIHandler.GetAllSkirmishAIs();
-	for (const auto& ai : ais) {
-		std::stringstream aidata;
-		eoh->Save(&aidata, ai.first);
-		std::string aisection = FILE_AIDATA + IntToString(ai.first, ".%i");
-		SaveEntireFile(aisection.c_str(), "AI data", aidata.str().data(), aidata.tellp());
+	// reset by each Save() call
+	std::stringstream aiData;
+
+	for (const auto& ai: skirmishAIHandler.GetAllSkirmishAIs()) {
+		eoh->Save(&aiData, ai.first);
+
+		const std::string aiSection = FILE_AIDATA + IntToString(ai.first, ".%i");
+		const std::string aiDataStr = aiData.str();
+
+		SaveEntireFile(aiSection.c_str(), "AI data", aiDataStr.data(), aiData.tellp());
 	}
 }
 
@@ -209,11 +214,13 @@ void CLuaLoadSaveHandler::LoadEventClients()
 
 void CLuaLoadSaveHandler::LoadAIData()
 {
-	const CSkirmishAIHandler::id_ai_t& ais = skirmishAIHandler.GetAllSkirmishAIs();
-	for (const auto& ai : ais) {
-		std::string aisection = FILE_AIDATA + IntToString(ai.first, ".%i");
-		std::stringstream aidata(LoadEntireFile(aisection));
-		eoh->Load(&aidata, ai.first);
+	for (const auto& ai: skirmishAIHandler.GetAllSkirmishAIs()) {
+		const std::string aiSection = FILE_AIDATA + IntToString(ai.first, ".%i");
+		const std::string aiDataFile = LoadEntireFile(aiSection);
+
+		std::stringstream aiData(aiDataFile);
+
+		eoh->Load(&aiData, ai.first);
 	}
 }
 

@@ -31,22 +31,22 @@ CR_REG_METADATA(CEngineOutHandler, (
 	//   "constexpr std::pair<_T1, _T2>::pair(const std::pair<_T1, _T2>&)
 	//   [with _T1 = const unsigned char; _T2 = std::unique_ptr<CSkirmishAIWrapper>]’
 	//   is implicitly deleted because the default definition would be ill-formed"
-	CR_IGNORED(id_skirmishAI),
-	CR_MEMBER(team_skirmishAIs)
+	CR_IGNORED(hostSkirmishAIs),
+	CR_MEMBER(teamSkirmishAIs)
 ))
 
 
 static inline bool IsUnitInLosOrRadarOfAllyTeam(const CUnit& unit, const int allyTeamId) {
 	// NOTE:
-	//     we check for globalLOS because the LOS-state of a
-	//     new unit has not yet been set when it is created
-	//     (thus UnitCreated will not produce EnemyCreated,
-	//     etc. without this, even when globalLOS is enabled
-	//     (for non-cheating AI's))
+	//   we check for globalLOS because the LOS-state of a
+	//   new unit has not yet been set when it is created
+	//   (thus UnitCreated will not produce EnemyCreated,
+	//   etc. without this, even when globalLOS is enabled
+	//   (for non-cheating AI's))
 	return (losHandler->globalLOS[allyTeamId] || (unit.losStatus[allyTeamId] & (LOS_INLOS | LOS_INRADAR)));
 }
 
-static CEngineOutHandler* singleton = NULL;
+static CEngineOutHandler* singleton = nullptr;
 static unsigned int numInstances = 0;
 
 CEngineOutHandler* CEngineOutHandler::GetInstance() {
@@ -58,14 +58,14 @@ CEngineOutHandler* CEngineOutHandler::GetInstance() {
 }
 
 void CEngineOutHandler::Create() {
-	if (singleton == NULL) {
+	if (singleton == nullptr) {
 		singleton = new CEngineOutHandler();
 		numInstances += 1;
 	}
 }
 
 void CEngineOutHandler::Destroy() {
-	if (singleton != NULL) {
+	if (singleton != nullptr) {
 		singleton->PreDestroy();
 
 		spring::SafeDelete(singleton);
@@ -77,24 +77,24 @@ void CEngineOutHandler::Destroy() {
 
 
 CEngineOutHandler::~CEngineOutHandler() {
-	// id_skirmishAI should be empty already, but this can not hurt
+	// hostSkirmishAIs should be empty already, but this can not hurt
 	// (it releases only those AI's that were not already released)
-	while (!id_skirmishAI.empty()) {
-		DestroySkirmishAI((id_skirmishAI.begin())->first);
+	while (!hostSkirmishAIs.empty()) {
+		DestroySkirmishAI((hostSkirmishAIs.begin())->first);
 	}
 }
 
 
 // This macro should be insterted at the start of each method sending AI events
-#define AI_EVT_MTH()            \
-	if (id_skirmishAI.empty())  \
-		return;                 \
+#define AI_EVT_MTH()              \
+	if (hostSkirmishAIs.empty())  \
+		return;                   \
 	SCOPED_TIMER("AI");
 
 
-#define DO_FOR_SKIRMISH_AIS(FUNC)     \
-	for (auto& ai: id_skirmishAI) {   \
-		(ai.second)->FUNC;        \
+#define DO_FOR_SKIRMISH_AIS(FUNC)       \
+	for (auto& ai: hostSkirmishAIs) {   \
+		(ai.second)->FUNC;              \
 	}
 
 
@@ -106,16 +106,26 @@ void CEngineOutHandler::PreDestroy() {
 	DO_FOR_SKIRMISH_AIS(PreDestroy())
 }
 
-void CEngineOutHandler::Load(std::istream* s, const size_t skirmishAIId) {
+void CEngineOutHandler::Load(std::istream* s, const uint8_t skirmishAIId) {
 	AI_EVT_MTH();
 
-	id_skirmishAI[skirmishAIId]->Load(s);
+	const auto it = hostSkirmishAIs.find(skirmishAIId);
+
+	if (it == hostSkirmishAIs.end())
+		return;
+
+	(it->second)->Load(s);
 }
 
-void CEngineOutHandler::Save(std::ostream* s, const size_t skirmishAIId) {
+void CEngineOutHandler::Save(std::ostream* s, const uint8_t skirmishAIId) {
 	AI_EVT_MTH();
 
-	id_skirmishAI[skirmishAIId]->Save(s);
+	const auto it = hostSkirmishAIs.find(skirmishAIId);
+
+	if (it == hostSkirmishAIs.end())
+		return;
+
+	(it->second)->Save(s);
 }
 
 
@@ -133,10 +143,10 @@ void CEngineOutHandler::Update() {
 // everything about it anyway, and do not need to be informed
 #define DO_FOR_ALLIED_SKIRMISH_AIS(FUNC, ALLY_TEAM_ID, UNIT_ALLY_TEAM_ID)            \
 	if (!teamHandler->Ally(ALLY_TEAM_ID, UNIT_ALLY_TEAM_ID)) {                       \
-		for (auto& ai: id_skirmishAI) {                                              \
-			const int aiAllyTeam = teamHandler->AllyTeam((ai.second)->GetTeamId());  \
+		for (auto& p: hostSkirmishAIs) {                                             \
+			const int aiAllyTeam = teamHandler->AllyTeam((p.second)->GetTeamId());   \
 			if (teamHandler->Ally(aiAllyTeam, ALLY_TEAM_ID)) {                       \
-				(ai.second)->FUNC;                                               \
+				(p.second)->FUNC;                                                    \
 			}                                                                        \
 		}                                                                            \
 	}
@@ -180,31 +190,31 @@ void CEngineOutHandler::UnitLeftRadar(const CUnit& unit, int allyTeamId) {
 
 
 
-#define DO_FOR_TEAM_SKIRMISH_AIS(FUNC, TEAM_ID)                     \
-	if (team_skirmishAIs.find(TEAM_ID) == team_skirmishAIs.end())   \
-		return;                                                     \
-                                                                    \
-	for (auto ai: team_skirmishAIs[TEAM_ID]) {                      \
-		id_skirmishAI[ai]->FUNC;                                \
-	}                                                               \
+#define DO_FOR_TEAM_SKIRMISH_AIS(FUNC, TEAM_ID)                    \
+	if (teamSkirmishAIs.find(TEAM_ID) == teamSkirmishAIs.end())    \
+		return;                                                    \
+                                                                   \
+	for (uint8_t aiID: teamSkirmishAIs[TEAM_ID]) {                 \
+		hostSkirmishAIs[aiID]->FUNC;                               \
+	}                                                              \
 
 
 
 // Send to all teams which the unit is not allied to,
 // and which have cheat-events enabled, or the unit in sensor range.
 #define DO_FOR_ENEMY_SKIRMISH_AIS(FUNC, ALLY_TEAM_ID, UNIT)                     \
-	for (auto& ai: id_skirmishAI) {                                             \
-		CSkirmishAIWrapper* saw = (ai.second).get();                            \
+	for (auto& p: hostSkirmishAIs) {                                            \
+		CSkirmishAIWrapper* aiWrapper = (p.second).get();                       \
                                                                                 \
-		const int aiAllyTeam = teamHandler->AllyTeam(saw->GetTeamId());         \
+		const int aiAllyTeam = teamHandler->AllyTeam(aiWrapper->GetTeamId());   \
                                                                                 \
 		const bool alliedAI = teamHandler->Ally(aiAllyTeam, ALLY_TEAM_ID);      \
-		const bool cheatingAI = saw->IsCheatEventsEnabled();                    \
+		const bool cheatingAI = aiWrapper->IsCheatEventsEnabled();              \
                                                                                 \
 		if (alliedAI)                                                           \
 			continue;                                                           \
 		if (cheatingAI || IsUnitInLosOrRadarOfAllyTeam(UNIT, aiAllyTeam)) {     \
-			saw->FUNC;                                                      \
+			aiWrapper->FUNC;                                                    \
 		}                                                                       \
 	}
 
@@ -260,10 +270,10 @@ void CEngineOutHandler::UnitGiven(const CUnit& unit, int oldTeam, int newTeam) {
 	const int newAllyTeamId = unit.allyteam;
 	const int oldAllyTeamId = teamHandler->AllyTeam(oldTeam);
 
-	for (auto& ai: id_skirmishAI) {
-		CSkirmishAIWrapper* saw = (ai.second).get();
+	for (auto& p: hostSkirmishAIs) {
+		CSkirmishAIWrapper* aiWrapper = (p.second).get();
 
-		const int aiTeam     = saw->GetTeamId();
+		const int aiTeam     = aiWrapper->GetTeamId();
 		const int aiAllyTeam = teamHandler->AllyTeam(aiTeam);
 		const bool alliedOld = teamHandler->Ally(aiAllyTeam, oldAllyTeamId);
 		const bool alliedNew = teamHandler->Ally(aiAllyTeam, newAllyTeamId);
@@ -277,14 +287,14 @@ void CEngineOutHandler::UnitGiven(const CUnit& unit, int oldTeam, int newTeam) {
 			informAI  = false;
 			informAI |= alliedOld;
 			informAI |= alliedNew;
-			informAI |= saw->IsCheatEventsEnabled();
+			informAI |= aiWrapper->IsCheatEventsEnabled();
 			informAI |= IsUnitInLosOrRadarOfAllyTeam(unit, aiAllyTeam);
 		}
 
 		if (!informAI)
 			continue;
 
-		saw->UnitGiven(unitId, oldTeam, newTeam);
+		aiWrapper->UnitGiven(unitId, oldTeam, newTeam);
 	}
 }
 
@@ -295,10 +305,10 @@ void CEngineOutHandler::UnitCaptured(const CUnit& unit, int oldTeam, int newTeam
 	const int newAllyTeamId = unit.allyteam;
 	const int oldAllyTeamId = teamHandler->AllyTeam(oldTeam);
 
-	for (auto& ai: id_skirmishAI) {
-		CSkirmishAIWrapper* saw = (ai.second).get();
+	for (auto& p: hostSkirmishAIs) {
+		CSkirmishAIWrapper* aiWrapper = (p.second).get();
 
-		const int aiTeam     = saw->GetTeamId();
+		const int aiTeam     = aiWrapper->GetTeamId();
 		const int aiAllyTeam = teamHandler->AllyTeam(aiTeam);
 
 		const bool alliedOld = teamHandler->Ally(aiAllyTeam, oldAllyTeamId);
@@ -313,14 +323,14 @@ void CEngineOutHandler::UnitCaptured(const CUnit& unit, int oldTeam, int newTeam
 			informAI  = false;
 			informAI |= alliedOld;
 			informAI |= alliedNew;
-			informAI |= saw->IsCheatEventsEnabled();
+			informAI |= aiWrapper->IsCheatEventsEnabled();
 			informAI |= IsUnitInLosOrRadarOfAllyTeam(unit, aiAllyTeam);
 		}
 
 		if (!informAI)
 			continue;
 
-		saw->UnitCaptured(unitId, oldTeam, newTeam);
+		aiWrapper->UnitCaptured(unitId, oldTeam, newTeam);
 	}
 }
 
@@ -332,39 +342,39 @@ void CEngineOutHandler::UnitDestroyed(const CUnit& destroyed, const CUnit* attac
 	const int dt          = destroyed.team;
 
 	// inform destroyed units team (not allies)
-	if (team_skirmishAIs.find(dt) != team_skirmishAIs.end()) {
+	if (teamSkirmishAIs.find(dt) != teamSkirmishAIs.end()) {
 		const bool attackerInLosOrRadar = attacker && IsUnitInLosOrRadarOfAllyTeam(*attacker, destroyed.allyteam);
 
-		for (auto ai: team_skirmishAIs[dt]) {
-			CSkirmishAIWrapper* saw = id_skirmishAI[ai].get();
+		for (uint8_t aiID: teamSkirmishAIs[dt]) {
+			CSkirmishAIWrapper* aiWrapper = hostSkirmishAIs[aiID].get();
 			int visibleAttackerId = -1;
 
-			if (attackerInLosOrRadar || saw->IsCheatEventsEnabled()) {
+			if (attackerInLosOrRadar || aiWrapper->IsCheatEventsEnabled())
 				visibleAttackerId = attackerId;
-			}
-			saw->UnitDestroyed(destroyedId, visibleAttackerId);
+
+			aiWrapper->UnitDestroyed(destroyedId, visibleAttackerId);
 		}
 	}
 
 	// inform all enemy teams
-	for (auto& ai: id_skirmishAI) {
-		CSkirmishAIWrapper* saw = (ai.second).get();
+	for (auto& p: hostSkirmishAIs) {
+		CSkirmishAIWrapper* aiWrapper = (p.second).get();
 
-		const int aiTeam = saw->GetTeamId();
+		const int aiTeam = aiWrapper->GetTeamId();
 		const int aiAllyTeam = teamHandler->AllyTeam(aiTeam);
 
 		if (teamHandler->Ally(aiAllyTeam, destroyed.allyteam))
 			continue;
 
-		if (!saw->IsCheatEventsEnabled() && !IsUnitInLosOrRadarOfAllyTeam(destroyed, aiAllyTeam))
+		if (!aiWrapper->IsCheatEventsEnabled() && !IsUnitInLosOrRadarOfAllyTeam(destroyed, aiAllyTeam))
 			continue;
 
 		int myAttackerId = -1;
 
-		if ((attacker != NULL) && teamHandler->Ally(aiAllyTeam, attacker->allyteam)) {
+		if ((attacker != nullptr) && teamHandler->Ally(aiAllyTeam, attacker->allyteam))
 			myAttackerId = attackerId;
-		}
-		saw->EnemyDestroyed(destroyedId, myAttackerId);
+
+		aiWrapper->EnemyDestroyed(destroyedId, myAttackerId);
 	}
 }
 
@@ -384,48 +394,46 @@ void CEngineOutHandler::UnitDamaged(
 	const int attackerUnitId = attacker ? attacker->id : -1;
 
 	// inform damaged units team (not allies)
-	if (team_skirmishAIs.find(dt) != team_skirmishAIs.end()) {
-		float3 attackDir_damagedsView = ZeroVector;
-		if (attacker) {
-			attackDir_damagedsView =
-					attacker->GetErrorPos(damaged.allyteam)
-					- damaged.pos;
-			attackDir_damagedsView.ANormalize();
-		}
+	if (teamSkirmishAIs.find(dt) != teamSkirmishAIs.end()) {
+		float3 attackeeDir;
+
+		if (attacker != nullptr)
+			attackeeDir = (attacker->GetErrorPos(damaged.allyteam) - damaged.pos).ANormalize();
 
 		const bool attackerInLosOrRadar = attacker && IsUnitInLosOrRadarOfAllyTeam(*attacker, damaged.allyteam);
 
-		for (auto ai: team_skirmishAIs[dt]) {
-			const CSkirmishAIWrapper* saw = id_skirmishAI[ai].get();
+		for (uint8_t aiID: teamSkirmishAIs[dt]) {
+			CSkirmishAIWrapper* aiWrapper = hostSkirmishAIs[aiID].get();
+
 			int visibleAttackerUnitId = -1;
 
-			if (attackerInLosOrRadar || saw->IsCheatEventsEnabled())
+			if (attackerInLosOrRadar || aiWrapper->IsCheatEventsEnabled())
 				visibleAttackerUnitId = attackerUnitId;
 
-			id_skirmishAI[ai]->UnitDamaged(damagedUnitId, visibleAttackerUnitId, damage, attackDir_damagedsView, weaponDefID, paralyzer);
+			aiWrapper->UnitDamaged(damagedUnitId, visibleAttackerUnitId, damage, attackeeDir, weaponDefID, paralyzer);
 		}
 	}
 
 	// inform attacker units team (not allies)
-	if (attacker) {
+	if (attacker != nullptr) {
 		const int at = attacker ? attacker->team : -1;
 
 		if (teamHandler->Ally(attacker->allyteam, damaged.allyteam))
 			return;
-		if (team_skirmishAIs.find(at) == team_skirmishAIs.end())
+		if (teamSkirmishAIs.find(at) == teamSkirmishAIs.end())
 			return;
 
 		// direction from the attacker's view
-		const float3 attackDir = (attacker->pos - damaged.GetErrorPos(attacker->allyteam)).ANormalize();
+		const float3 attackerDir = (attacker->pos - damaged.GetErrorPos(attacker->allyteam)).ANormalize();
 		const bool damagedInLosOrRadar = IsUnitInLosOrRadarOfAllyTeam(damaged, attacker->allyteam);
 
-		for (auto ai: team_skirmishAIs[at]) {
-			CSkirmishAIWrapper* saw = id_skirmishAI[ai].get();
+		for (uint8_t aiID: teamSkirmishAIs[at]) {
+			CSkirmishAIWrapper* aiWrapper = hostSkirmishAIs[aiID].get();
 
-			if (damagedInLosOrRadar || saw->IsCheatEventsEnabled()) {
-				saw->EnemyDamaged(damagedUnitId, attackerUnitId, damage,
-						attackDir, weaponDefID, paralyzer);
-			}
+			if (!damagedInLosOrRadar && !aiWrapper->IsCheatEventsEnabled())
+				continue;
+
+			aiWrapper->EnemyDamaged(damagedUnitId, attackerUnitId, damage, attackerDir, weaponDefID, paralyzer);
 		}
 	}
 }
@@ -484,40 +492,38 @@ void CEngineOutHandler::SendChatMessage(const char* msg, int fromPlayerId) {
 bool CEngineOutHandler::SendLuaMessages(int aiTeam, const char* inData, std::vector<const char*>& outData) {
 	SCOPED_TIMER("AI");
 
-	if (id_skirmishAI.empty()) {
+	if (hostSkirmishAIs.empty())
 		return false;
-	}
 
 	unsigned int n = 0;
 
 	if (aiTeam != -1) {
 		// get the AI's for team <aiTeam>
-		const team_ais_t::iterator aiTeamIter = team_skirmishAIs.find(aiTeam);
+		const auto aiTeamIt = teamSkirmishAIs.find(aiTeam);
 
-		if (aiTeamIter == team_skirmishAIs.end()) {
+		if (aiTeamIt == teamSkirmishAIs.end())
 			return false;
-		}
 
 		// get the vector of ID's for the AI's
-		ids_t& aiIDs = aiTeamIter->second;
+		const ids_t& aiIDs = aiTeamIt->second;
 
 		outData.resize(aiIDs.size(), "");
 
 		// send only to AI's in team <aiTeam>
-		for (auto aiIDsIter = aiIDs.begin(); aiIDsIter != aiIDs.end(); ++aiIDsIter) {
-			CSkirmishAIWrapper* wrapperAI = id_skirmishAI[*aiIDsIter].get();
+		for (uint8_t aiID: aiIDs) {
+			CSkirmishAIWrapper* wrapperAI = hostSkirmishAIs[aiID].get();
 			wrapperAI->SendLuaMessage(inData, &outData[n++]);
 		}
 	} else {
-		outData.resize(id_skirmishAI.size(), "");
+		outData.resize(hostSkirmishAIs.size(), "");
 
 		// broadcast to all AI's across all teams
 		//
 		// since neither AI ID's nor AI teams are
 		// necessarily consecutive, store responses
 		// in calling order
-		for (auto it = id_skirmishAI.begin(); it != id_skirmishAI.end(); ++it) {
-			CSkirmishAIWrapper* wrapperAI = (it->second).get();
+		for (auto& p: hostSkirmishAIs) {
+			CSkirmishAIWrapper* wrapperAI = (p.second).get();
 			wrapperAI->SendLuaMessage(inData, &outData[n++]);
 		}
 	}
@@ -527,7 +533,7 @@ bool CEngineOutHandler::SendLuaMessages(int aiTeam, const char* inData, std::vec
 
 
 
-void CEngineOutHandler::CreateSkirmishAI(const size_t skirmishAIId) {
+void CEngineOutHandler::CreateSkirmishAI(const uint8_t skirmishAIId) {
 	SCOPED_TIMER("AI");
 
 	//const bool unpauseAfterAIInit = configHandler->GetBool("AI_UnpauseAfterInit");
@@ -559,11 +565,8 @@ void CEngineOutHandler::CreateSkirmishAI(const size_t skirmishAIId) {
 	} else {
 		CSkirmishAIWrapper* aiWrapper = nullptr;
 
-		id_skirmishAI[skirmishAIId].reset(new CSkirmishAIWrapper(skirmishAIId));
-
-		aiWrapper = id_skirmishAI[skirmishAIId].get();
-
-		team_skirmishAIs[aiWrapper->GetTeamId()].push_back(skirmishAIId);
+		hostSkirmishAIs[skirmishAIId].reset(aiWrapper = new CSkirmishAIWrapper(skirmishAIId));
+		teamSkirmishAIs[aiWrapper->GetTeamId()].push_back(skirmishAIId);
 
 		aiWrapper->Init();
 
@@ -572,10 +575,9 @@ void CEngineOutHandler::CreateSkirmishAI(const size_t skirmishAIId) {
 		if (skirmishAIHandler.IsLocalSkirmishAIDieing(skirmishAIId))
 			return;
 
-		if (!gs->PreSimFrame()) {
-			// We will only get here if the AI is created mid-game.
+		// We will only get here if the AI is created mid-game.
+		if (!gs->PreSimFrame())
 			aiWrapper->Update(gs->frameNum);
-		}
 
 		// Send a UnitCreated event for each unit of the team.
 		// This will only do something if the AI is created mid-game.
@@ -590,37 +592,33 @@ void CEngineOutHandler::CreateSkirmishAI(const size_t skirmishAIId) {
 	}
 }
 
-void CEngineOutHandler::SetSkirmishAIDieing(const size_t skirmishAIId) {
+void CEngineOutHandler::SetSkirmishAIDieing(const uint8_t skirmishAIId) {
 	SCOPED_TIMER("AI");
 
 	// if exiting before start, AI's have not been loaded yet
 	// and std::map<>::operator[] would insert a NULL instance
-	if (id_skirmishAI.find(skirmishAIId) == id_skirmishAI.end())
+	if (hostSkirmishAIs.find(skirmishAIId) == hostSkirmishAIs.end())
 		return;
 
-	assert(id_skirmishAI[skirmishAIId].get() != nullptr);
-	id_skirmishAI[skirmishAIId]->Dieing();
+	assert(hostSkirmishAIs[skirmishAIId].get() != nullptr);
+	hostSkirmishAIs[skirmishAIId]->Dieing();
 }
 
-static void internal_aiErase(std::vector<unsigned char>& ais, const unsigned char skirmishAIId) {
-	auto it = std::find(ais.begin(), ais.end(), skirmishAIId);
-
-	if (it != ais.end()) {
-		ais.erase(it);
-		return;
-	}
-
-	// failed to remove Skirmish AI ID
-	assert(false);
-}
-
-void CEngineOutHandler::DestroySkirmishAI(const size_t skirmishAIId) {
+void CEngineOutHandler::DestroySkirmishAI(const uint8_t skirmishAIId) {
 	SCOPED_TIMER("AI");
 
-	CSkirmishAIWrapper* aiWrapper = id_skirmishAI[skirmishAIId].get();
+	CSkirmishAIWrapper* aiWrapper = hostSkirmishAIs[skirmishAIId].get();
 
-	internal_aiErase(team_skirmishAIs[aiWrapper->GetTeamId()], skirmishAIId);
-	id_skirmishAI.erase(skirmishAIId);
+	const int teamID = aiWrapper->GetTeamId();
+	const auto aiIter = std::find(teamSkirmishAIs[teamID].begin(), teamSkirmishAIs[teamID].end(), skirmishAIId);
+
+	if (aiIter != teamSkirmishAIs[teamID].end()) {
+		teamSkirmishAIs[teamID].erase(aiIter);
+	} else {
+		assert(false);
+	}
+
+	hostSkirmishAIs.erase(skirmishAIId);
 
 	clientNet->Send(CBaseNetProtocol::Get().SendAIStateChanged(gu->myPlayerNum, skirmishAIId, SKIRMAISTATE_DEAD));
 }

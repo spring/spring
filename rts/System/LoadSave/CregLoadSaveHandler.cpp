@@ -30,7 +30,7 @@
 #include "Sim/Units/Scripts/UnitScriptEngine.h"
 #include "Sim/Units/Scripts/NullUnitScript.h"
 #include "Game/UI/Groups/GroupHandler.h"
-
+#include "System/SafeUtil.h"
 #include "System/Platform/errorhandler.h"
 #include "System/FileSystem/DataDirsAccess.h"
 #include "System/FileSystem/FileQueryFlags.h"
@@ -38,6 +38,7 @@
 #include "System/creg/Serializer.h"
 #include "System/Exceptions.h"
 #include "System/Log/ILog.h"
+
 
 
 CCregLoadSaveHandler::CCregLoadSaveHandler()
@@ -125,8 +126,8 @@ void CCregLoadSaveHandler::SaveGame(const std::string& path)
 {
 #ifdef USING_CREG
 	LOG("Saving game");
-	try {
 
+	try {
 		std::stringstream oss;
 
 		// write our own header. SavePackage() will add its own
@@ -137,20 +138,27 @@ void CCregLoadSaveHandler::SaveGame(const std::string& path)
 
 		CGameStateCollector gsc = CGameStateCollector();
 
-		// save creg state
-		creg::COutputStreamSerializer os;
-		os.SavePackage(&oss, &gsc, gsc.GetClass());
-		PrintSize("Game", oss.tellp());
-
-		// save ai state
-		int aistart = oss.tellp();
-		const CSkirmishAIHandler::id_ai_t& ais = skirmishAIHandler.GetAllSkirmishAIs();
-		for (const auto& ai : ais) {
-			std::stringstream aidata;
-			eoh->Save(&aidata, ai.first);
-			oss << (std::streamsize)aidata.tellp() << aidata.rdbuf();
+		{
+			// save creg state
+			creg::COutputStreamSerializer os;
+			os.SavePackage(&oss, &gsc, gsc.GetClass());
+			PrintSize("Game", oss.tellp());
 		}
-		PrintSize("AIs", ((int)oss.tellp()) - aistart);
+		{
+			// save AI state
+			const int aiStart = oss.tellp();
+
+			// reset by each Save() call
+			std::stringstream aiData;
+
+			for (const auto& ai: skirmishAIHandler.GetAllSkirmishAIs()) {
+				eoh->Save(&aiData, ai.first);
+
+				oss << (std::streamsize) aiData.tellp();
+				oss << aiData.rdbuf();
+			}
+			PrintSize("AIs", ((int)oss.tellp()) - aiStart);
+		}
 
 		gzFile file = gzopen(dataDirsAccess.LocateFile(path, FileQueryFlags::WRITE).c_str(), "wb9");
 		if (file == nullptr) {
@@ -227,41 +235,34 @@ void CCregLoadSaveHandler::LoadGame()
 #ifdef USING_CREG
 	ENTER_SYNCED_CODE();
 
-	void* pGSC = NULL;
-	creg::Class* gsccls = NULL;
+	void* pGSC = nullptr;
+	creg::Class* gsccls = nullptr;
 
 	// load creg state
 	creg::CInputStreamSerializer inputStream;
 	inputStream.LoadPackage(iss, pGSC, gsccls);
 	assert(pGSC && gsccls == CGameStateCollector::StaticClass());
 
+	// the only job of gsc is to collect gamestate data
 	CGameStateCollector* gsc = static_cast<CGameStateCollector*>(pGSC);
-	delete gsc; // the only job of gsc is to collect gamestate data
-	gsc = NULL;
+	spring::SafeDelete(gsc);
 
 	// load ai state
-	const CSkirmishAIHandler::id_ai_t& ais = skirmishAIHandler.GetAllSkirmishAIs();
-	for (const auto& ai : ais) {
-		std::streamsize aisize;
-		*iss >> aisize;
-		std::vector<char> buffer(aisize);
+	for (const auto& ai: skirmishAIHandler.GetAllSkirmishAIs()) {
+		std::streamsize aiSize;
+		*iss >> aiSize;
+		std::vector<char> buffer(aiSize);
 		iss->read(&buffer[0], buffer.size());
-		std::stringstream aidata;
-		aidata.write(&buffer[0], buffer.size());
-		eoh->Load(&aidata, ai.first);
+		std::stringstream aiData;
+		aiData.write(&buffer[0], buffer.size());
+		eoh->Load(&aiData, ai.first);
 	}
-	//for (int a=0; a < teamHandler->ActiveTeams(); a++) { // For old savegames
-	//	if (teamHandler->Team(a)->isDead && eoh->IsSkirmishAI(a)) {
-	//		eoh->DestroySkirmishAI(skirmishAIId(a), 2 /* = team died */);
-	//	}
-	//}
 
 	// cleanup
-	delete iss;
-	iss = NULL;
+	spring::SafeDelete(iss);
 
 	gs->paused = false;
-	if (gameServer) {
+	if (gameServer != nullptr) {
 		gameServer->isPaused = false;
 		gameServer->syncErrorFrame = 0;
 	}
