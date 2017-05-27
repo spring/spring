@@ -254,7 +254,7 @@ bool CGlobalRendering::CreateSDLWindow(const int2& winRes, const int2& minRes, c
 				continue;
 			}
 
-			LOG("[GR::%s] using %dx anti-aliasing and %d-bit depth-buffer", __func__, aaLvls[i], zbBits[j]);
+			LOG("[GR::%s] using %dx anti-aliasing and %d-bit depth-buffer (PF=%s)", __func__, aaLvls[i], zbBits[j], SDL_GetPixelFormatName(SDL_GetWindowPixelFormat(window)));
 		}
 	}
 

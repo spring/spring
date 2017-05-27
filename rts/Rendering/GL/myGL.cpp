@@ -58,25 +58,22 @@ bool CheckAvailableVideoModes()
 	);
 
 	for (int k = 0; k < numDisplays; ++k) {
-		std::vector<SDL_DisplayMode> modes(std::max(0, SDL_GetNumDisplayModes(k)));
+		const int numModes = SDL_GetNumDisplayModes(k);
 
-		if (modes.empty()) {
+		if (numModes <= 0) {
 			LOG("\tdisplay=%d bounds=N/A modes=N/A", k + 1);
 			continue;
 		}
 
+		SDL_DisplayMode cm = {0, 0, 0, 0, nullptr};
 		SDL_DisplayMode pm = {0, 0, 0, 0, nullptr};
 		SDL_Rect db;
 		SDL_GetDisplayBounds(k, &db);
 
-		for (size_t i = 0; i < modes.size(); ++i) {
-			SDL_GetDisplayMode(k, i, &modes[i]);
-		}
+		LOG("\tdisplay=%d modes=%d bounds={x=%d, y=%d, w=%d, h=%d}", k + 1, numModes, db.x, db.y, db.w, db.h);
 
-		LOG("\tdisplay=%d bounds={x=%d, y=%d, w=%d, h=%d} modes=%u", k + 1, db.x, db.y, db.w, db.h, uint32_t(modes.size()));
-
-		for (size_t i = 0; i < modes.size(); ++i) {
-			const SDL_DisplayMode& cm = modes[i];
+		for (int i = 0; i < numModes; ++i) {
+			SDL_GetDisplayMode(k, i, &cm);
 
 			const float r0 = (cm.w *  9.0f) / cm.h;
 			const float r1 = (cm.w * 10.0f) / cm.h;
@@ -284,7 +281,7 @@ void glSpringTexStorage2D(const GLenum target, GLint levels, const GLint interna
 void glBuildMipmaps(const GLenum target, GLint internalFormat, const GLsizei width, const GLsizei height, const GLenum format, const GLenum type, const void* data)
 {
 	if (globalRendering->compressTextures) {
-		switch ( internalFormat ) {
+		switch (internalFormat) {
 			case 4:
 			case GL_RGBA8 :
 			case GL_RGBA :  internalFormat = GL_COMPRESSED_RGBA_ARB; break;
