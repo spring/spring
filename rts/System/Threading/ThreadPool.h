@@ -150,10 +150,11 @@ public:
 
 		if (SelfDelete()) {
 			// store *after* the check in both branches, avoids UAF
+			// async-tasks can never have a parent waiting for them
 			execLoopDone.store(true);
 			delete this;
 		} else {
-			execLoopDone.store(true);
+			execLoopDone.store(ExecLoopDone() || !wffCall);
 		}
 
 		return (dt.toNanoSecsi());
