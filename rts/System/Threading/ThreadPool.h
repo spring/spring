@@ -111,7 +111,7 @@ class ITaskGroup
 {
 public:
 	ITaskGroup(const bool getid = true, const bool pooled = false): id(getid ? lastId.fetch_add(1) : -1u), ts(0) {
-		ResetState(true, pooled, false);
+		ResetState(!pooled, pooled, false);
 	}
 
 	virtual ~ITaskGroup() {
