@@ -266,7 +266,7 @@ void WaitForFinished(std::shared_ptr<ITaskGroup>&& taskGroup)
 			DoTask(tid, false);
 		}
 
-		taskGroup->ResetState(taskGroup->IsInTaskPool(), false);
+		taskGroup->ResetState(false, taskGroup->IsInTaskPool(), false);
 		return;
 	}
 
@@ -291,7 +291,7 @@ void WaitForFinished(std::shared_ptr<ITaskGroup>&& taskGroup)
 		DoTask(tid, false);
 	}
 
-	taskGroup->ResetState(taskGroup->IsInTaskPool(), false);
+	taskGroup->ResetState(false, taskGroup->IsInTaskPool(), false);
 }
 
 

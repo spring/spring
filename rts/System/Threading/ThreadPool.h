@@ -111,7 +111,7 @@ class ITaskGroup
 {
 public:
 	ITaskGroup(const bool getid = true, const bool pooled = false): id(getid ? lastId.fetch_add(1) : -1u), ts(0) {
-		ResetState(pooled, false);
+		ResetState(true, pooled, false);
 	}
 
 	virtual ~ITaskGroup() {
@@ -163,6 +163,7 @@ public:
 	bool IsInJobQueue() const { return (inTaskQueue.load(std::memory_order_relaxed)); }
 	bool IsInTaskPool() const { return ((taskPoolMask.load(std::memory_order_relaxed) & (1 << 0)) != 0); }
 	bool IsInPoolUse() const { return ((taskPoolMask.load(std::memory_order_relaxed) & (1 << 1)) != 0); }
+
 	bool ExecLoopDone() const { return (execLoopDone.load(std::memory_order_relaxed)); }
 	// pooled tasks are deleted only when their pool dies (on exit) which is always allowed
 	bool AllowDelete() const { return (IsFinished() && ((!IsInJobQueue() && ExecLoopDone()) || IsInTaskPool())); }
@@ -182,12 +183,12 @@ public:
 	void UpdateId() { id = lastId.fetch_add(1); }
 	void SetTimeStamp(const spring_time t) { ts = t.toNanoSecsi(); }
 
-	void ResetState(bool pooled, bool inuse) {
+	void ResetState(bool queued, bool pooled, bool inuse) {
 		remainingTasks.store(0);
 		wantedThread.store(0);
 		taskPoolMask.store(((1 * pooled) << 0) + ((1 * inuse) << 1));
 
-		inTaskQueue.store(true);
+		inTaskQueue.store(queued);
 		execLoopDone.store(false);
 	}
 
@@ -656,7 +657,7 @@ struct TaskPool {
 		assert(!tg->IsInJobQueue());
 		assert(!tg->IsInPoolUse());
 
-		tg->ResetState(true, true);
+		tg->ResetState(true, true, true);
 		return tg;
 	}
 };
