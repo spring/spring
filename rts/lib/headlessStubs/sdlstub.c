@@ -65,8 +65,11 @@ extern DECLSPEC int SDLCALL SDL_GL_MakeCurrent(SDL_Window * window, SDL_GLContex
 }
 
 extern DECLSPEC const char *SDLCALL SDL_GetWindowTitle(SDL_Window * window) {
-	return NULL;
+	return "";
 }
+
+extern DECLSPEC Uint32 SDLCALL SDL_GetWindowPixelFormat(SDL_Window* window) { return 0; }
+extern DECLSPEC const char* SDLCALL SDL_GetPixelFormatName(Uint32 format) { return ""; }
 
 extern DECLSPEC struct SDL_RWops* SDLCALL SDL_RWFromFile(const char* file, const char* mode) {
 	return &stubRWops;
