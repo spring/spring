@@ -111,7 +111,7 @@ class ITaskGroup
 {
 public:
 	ITaskGroup(const bool getid = true, const bool pooled = false): id(getid ? lastId.fetch_add(1) : -1u), ts(0) {
-		ResetState(pooled);
+		ResetState(pooled, false);
 	}
 
 	virtual ~ITaskGroup() {
@@ -161,7 +161,8 @@ public:
 
 	bool IsFinished() const { assert(remainingTasks.load() >= 0); return (remainingTasks.load(std::memory_order_relaxed) == 0); }
 	bool IsInJobQueue() const { return (inTaskQueue.load(std::memory_order_relaxed)); }
-	bool IsInTaskPool() const { return (inTaskPool.load(std::memory_order_relaxed)); }
+	bool IsInTaskPool() const { return ((taskPoolMask.load(std::memory_order_relaxed) & (1 << 0)) != 0); }
+	bool IsInPoolUse() const { return ((taskPoolMask.load(std::memory_order_relaxed) & (1 << 1)) != 0); }
 	bool ExecLoopDone() const { return (execLoopDone.load(std::memory_order_relaxed)); }
 	// pooled tasks are deleted only when their pool dies (on exit) which is always allowed
 	bool AllowDelete() const { return (IsFinished() && ((!IsInJobQueue() && ExecLoopDone()) || IsInTaskPool())); }
@@ -181,23 +182,22 @@ public:
 	void UpdateId() { id = lastId.fetch_add(1); }
 	void SetTimeStamp(const spring_time t) { ts = t.toNanoSecsi(); }
 
-	void ResetState(bool pooled) {
+	void ResetState(bool pooled, bool inuse) {
 		remainingTasks.store(0);
 		wantedThread.store(0);
+		taskPoolMask.store(((1 * pooled) << 0) + ((1 * inuse) << 1));
 
 		inTaskQueue.store(true);
-		inTaskPool.store(pooled);
 		execLoopDone.store(false);
 	}
 
 public:
 	std::atomic_int remainingTasks;
-	// if 0 (default), task will be executed by an arbitrary thread
-	std::atomic_int wantedThread;
+	std::atomic_int wantedThread; // if 0 (default), task will be executed by an arbitrary thread
+	std::atomic_int taskPoolMask; // whether this task is managed (owned) and in use by a TaskPool
 
 	std::atomic_bool inTaskQueue; // whether this task is still in a thread's queue
-	std::atomic_bool inTaskPool; // whether this task is managed (owned) by a TaskPool
-	std::atomic_bool execLoopDone;
+	std::atomic_bool execLoopDone; // whether the thread running this task is about to exit ExecLoop
 
 private:
 	static std::atomic_uint lastId;
@@ -653,9 +653,10 @@ struct TaskPool {
 
 		assert(tg->IsFinished());
 		assert(tg->IsInTaskPool());
-		assert(tg->ExecLoopDone());
+		assert(!tg->IsInJobQueue());
+		assert(!tg->IsInPoolUse());
 
-		tg->ResetState(true);
+		tg->ResetState(true, true);
 		return tg;
 	}
 };

@@ -260,14 +260,13 @@ void WaitForFinished(std::shared_ptr<ITaskGroup>&& taskGroup)
 	//   entirely by the loop above, before any worker thread has
 	//   even had a chance to pop it from the queue (so returning
 	//   under that condition could cause the group to be deleted
-	//   prematurely if non-pooled) --> wait
+	//   or reassigned prematurely) --> wait
 	if (taskGroup->IsFinished()) {
-		if (!taskGroup->IsInTaskPool()) {
-			while (taskGroup->IsInJobQueue()) {
-				DoTask(tid, false);
-			}
+		while (taskGroup->IsInJobQueue()) {
+			DoTask(tid, false);
 		}
 
+		taskGroup->ResetState(taskGroup->IsInTaskPool(), false);
 		return;
 	}
 
@@ -288,15 +287,11 @@ void WaitForFinished(std::shared_ptr<ITaskGroup>&& taskGroup)
 		}
 	} while (!taskGroup->IsFinished() && !exitFlags[tid]);
 
-	//LOG("WaitForFinished %i", taskGroup->GetExceptions().size());
-	//for (auto& ep: taskGroup->GetExceptions())
-	//	std::rethrow_exception(ep);
-
-	if (!taskGroup->IsInTaskPool()) {
-		while (taskGroup->IsInJobQueue()) {
-			DoTask(tid, false);
-		}
+	while (taskGroup->IsInJobQueue()) {
+		DoTask(tid, false);
 	}
+
+	taskGroup->ResetState(taskGroup->IsInTaskPool(), false);
 }
 
 
