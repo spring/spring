@@ -354,42 +354,53 @@ static void DrawInfoText()
 	glColor4f(0.0f,0.0f,0.0f, 0.5f);
 	va->DrawArray0(GL_QUADS);
 
-	//print some infos (fps,gameframe,particles)
-	font->SetTextColor(1,1,0.5f,0.8f);
+	// print performance-related information (timings, particle-counts, etc)
+	font->SetTextColor(1.0f, 1.0f, 0.5f, 0.8f);
 
-	font->glFormat(0.01f, 0.02f, 1.0f, DBG_FONT_FLAGS, "FPS: %0.1f SimFPS: %0.1f SimFrame: %d Speed: %2.2f (%2.2f) Particles: %d (%d : %0.1f)",
-	    globalRendering->FPS, gu->simFPS, gs->frameNum, gs->speedFactor, gs->wantedSpeedFactor, projectileHandler->syncedProjectiles.size() + projectileHandler->unsyncedProjectiles.size(), projectileHandler->GetCurrentParticles(), projectileHandler->GetParticleSaturation(true));
+	const char* pfsFmtStr = "[pfs-updates] NumQueued={%i, %i} Type=%s";
+	const char* fpsFmtStr = "[frame-rates] {Draw,Sim}={%0.1f, %0.1f}fps";
+	const char* avgFmtStr = "[dt-averages] {Update,Draw,Sim}Frame={%s%2.1f, %s%2.1f, %s%2.1f}ms";
+	const char* spdFmtStr = "[speed-facts] {Current,Wanted}SimSpeed={%2.2f, %2.2f}";
+	const char* sfxFmtStr = "[particle-fx] {Synced,Unsynced}Projectiles={%u,%u} Particles=%u Saturation=%.1f";
+	const char* luaFmtStr = "Lua-allocated memory: %.1fMB (%.5uK allocs : %.5u usecs : %.1u states)";
+	const char* gpuFmtStr = "GPU-allocated memory: %.1fMB / %.1fMB";
+
+	font->glFormat(0.01f, 0.02f, 0.5f, DBG_FONT_FLAGS, fpsFmtStr, globalRendering->FPS, gu->simFPS, gs->frameNum);
 
 	// 16ms := 60fps := 30simFPS + 30drawFPS
-	font->glFormat(0.01f, 0.07f, 0.7f, DBG_FONT_FLAGS, "avgFrame: %s%2.1fms\b avgDrawFrame: %s%2.1fms\b avgSimFrame: %s%2.1fms\b",
+	font->glFormat(0.01f, 0.04f, 0.5f, DBG_FONT_FLAGS, avgFmtStr,
 	   (gu->avgFrameTime     > 30) ? "\xff\xff\x01\x01" : "", gu->avgFrameTime,
 	   (gu->avgDrawFrameTime > 16) ? "\xff\xff\x01\x01" : "", gu->avgDrawFrameTime,
 	   (gu->avgSimFrameTime  > 16) ? "\xff\xff\x01\x01" : "", gu->avgSimFrameTime
 	);
 
+	font->glFormat(0.01f, 0.06f, 0.5f, DBG_FONT_FLAGS, spdFmtStr, gs->speedFactor, gs->wantedSpeedFactor);
+	font->glFormat(0.01f, 0.08f, 0.5f, DBG_FONT_FLAGS, sfxFmtStr, projectileHandler->syncedProjectiles.size(), projectileHandler->unsyncedProjectiles.size(), projectileHandler->GetCurrentParticles(), projectileHandler->GetParticleSaturation(true));
+
 	const int2 pfsUpdates = pathManager->GetNumQueuedUpdates();
-	const char* fmtString = "[%s-PFS] queued updates: %i %i";
 
 	switch (pathManager->GetPathFinderType()) {
 		case PFS_TYPE_DEFAULT: {
-			font->glFormat(0.01f, 0.12f, 0.7f, DBG_FONT_FLAGS, fmtString, "DEFAULT", pfsUpdates.x, pfsUpdates.y);
+			font->glFormat(0.01f, 0.10f, 0.5f, DBG_FONT_FLAGS, pfsFmtStr, pfsUpdates.x, pfsUpdates.y, "DEFAULT");
 		} break;
 		case PFS_TYPE_QTPFS: {
-			font->glFormat(0.01f, 0.12f, 0.7f, DBG_FONT_FLAGS, fmtString, "QT", pfsUpdates.x, pfsUpdates.y);
+			font->glFormat(0.01f, 0.10f, 0.5f, DBG_FONT_FLAGS, pfsFmtStr, pfsUpdates.x, pfsUpdates.y, "QTPFS");
 		} break;
 	}
 
-	SLuaInfo luaInfo = {0, 0, 0, 0};
-	spring_lua_alloc_get_stats(&luaInfo);
+	{
+		int2 gpuInfo;
+		GetAvailableVideoRAM(&gpuInfo.x);
 
-	font->glFormat(
-		0.01f, 0.15f, 0.7f, DBG_FONT_FLAGS,
-		"Lua-allocated memory: %.1fMB (%.5uK allocs : %.5u usecs : %.1u states)",
-		luaInfo.allocedBytes / 1024.0f / 1024.0f,
-		luaInfo.numLuaAllocs / 1000,
-		luaInfo.luaAllocTime,
-		luaInfo.numLuaStates
-	);
+		font->glFormat(0.01f, 0.12f, 0.5f, DBG_FONT_FLAGS, gpuFmtStr, (gpuInfo.x - gpuInfo.y) / 1024.0f, gpuInfo.x / 1024.0f);
+	}
+
+	{
+		SLuaInfo luaInfo = {0, 0, 0, 0};
+		spring_lua_alloc_get_stats(&luaInfo);
+
+		font->glFormat(0.01f, 0.14f, 0.5f, DBG_FONT_FLAGS, luaFmtStr, luaInfo.allocedBytes / 1024.0f / 1024.0f, luaInfo.numLuaAllocs / 1000, luaInfo.luaAllocTime, luaInfo.numLuaStates);
+	}
 }
 
 
