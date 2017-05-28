@@ -97,45 +97,74 @@ bool CheckAvailableVideoModes()
 
 
 
-bool GetAvailableVideoRAM(GLint* memory)
+static bool GetVideoMemInfoNV(GLint* memInfo)
 {
-#if defined(HEADLESS) || !defined(GL_GPU_MEMORY_INFO_TOTAL_AVAILABLE_MEMORY_NVX) || !defined(GL_TEXTURE_FREE_MEMORY_ATI)
+	#ifdef GL_GPU_MEMORY_INFO_TOTAL_AVAILABLE_MEMORY_NVX
+	if (!GLEW_NVX_gpu_memory_info)
+		return false;
+
+	glGetIntegerv(GL_GPU_MEMORY_INFO_TOTAL_AVAILABLE_MEMORY_NVX, &memInfo[0]);
+	glGetIntegerv(GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX, &memInfo[1]);
+	return true;
+	#else
 	return false;
-#else
-	GLint memInfo[4] = {0, 0, 0, 0};
+	#endif
+}
 
-	// check free video ram (all values in kB)
-	if (GLEW_NVX_gpu_memory_info) {
-		glGetIntegerv(GL_GPU_MEMORY_INFO_TOTAL_AVAILABLE_MEMORY_NVX, &memory[0]);
-		glGetIntegerv(GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX, &memory[1]);
-	} else
-	if (GLEW_ATI_meminfo) {
-		glGetIntegerv(GL_TEXTURE_FREE_MEMORY_ATI, memInfo);
+static bool GetVideoMemInfoATI(GLint* memInfo)
+{
+	#ifdef GL_TEXTURE_FREE_MEMORY_ATI
+	if (!GL_ATI_meminfo && !GLEW_ATI_meminfo)
+		return false;
 
-		memory[0] = memInfo[0];
-		memory[1] = memInfo[1];
-	} else
-#ifdef GLX_MESA_query_renderer
-	if (GLXEW_MESA_query_renderer) {
-		glGetIntegerv(GLX_RENDERER_VIDEO_MEMORY_MESA, &memInfo[0]);
+	for (uint32_t param: {GL_VBO_FREE_MEMORY_ATI, GL_TEXTURE_FREE_MEMORY_ATI, GL_RENDERBUFFER_FREE_MEMORY_ATI}) {
+		glGetIntegerv(param, &memInfo[0]);
 
-		memory[0] = memInfo[0];
-		memory[1] = memInfo[1];
-	} else
-#endif
-	{
-		// no information available
-		memory[0] = 0;
-		memory[1] = 0;
+		memInfo[4] += (memInfo[0] + memInfo[2]); // total main plus aux. memory free in pool
+		memInfo[5] += (memInfo[1] + memInfo[3]); // largest main plus aux. free block in pool
 	}
 
-	// callers assume [0]=total and [1]=available
-	if (memory[0] < memory[1])
-		std::swap(memory[0], memory[1]);
+	memInfo[0] = memInfo[4]; // return the VBO/RBO/TEX pool sum
+	memInfo[1] = memInfo[4]; // sic, just assume total >= free
+	return true;
+	#else
+	return false;
+	#endif
+}
 
+static bool GetVideoMemInfoMESA(GLint* memInfo)
+{
+	#ifdef GLX_MESA_query_renderer
+	if (!GLXEW_MESA_query_renderer)
+		return false;
+
+	glGetIntegerv(GLX_RENDERER_VIDEO_MEMORY_MESA, &memInfo[0]);
+
+	// unlike the others, this value is returned in megabytes
+	memInfo[0] *= 1024;
+	return true;
+	#else
+	return false;
+	#endif
+}
+
+bool GetAvailableVideoRAM(GLint* memory)
+{
+#if defined(HEADLESS)
+	return false;
+#else
+	GLint memInfo[4 + 2] = {0, 0, 0, 0, 0, 0};
+
+	if (!GetVideoMemInfoNV(memInfo) && !GetVideoMemInfoATI(memInfo) && !GetVideoMemInfoMESA(memInfo))
+		return false;
+
+	// callers assume [0]=total and [1]=free
+	memory[0] = std::max(memInfo[0], memInfo[1]);
+	memory[1] = std::min(memInfo[0], memInfo[1]);
 	return true;
 #endif
 }
+
 
 
 bool ShowDriverWarning(const char* glVendor, const char* glRenderer)
