@@ -125,7 +125,7 @@ static bool GetVideoMemInfoATI(GLint* memInfo)
 		memInfo[5] += (memInfo[1] + memInfo[3]); // largest main plus aux. free block in pool
 	}
 
-	memInfo[0] = memInfo[4]; // return the VBO/RBO/TEX pool sum
+	memInfo[0] = memInfo[4]; // return the VBO/RBO/TEX free sum
 	memInfo[1] = memInfo[4]; // sic, just assume total >= free
 	return true;
 	#else
@@ -139,10 +139,11 @@ static bool GetVideoMemInfoMESA(GLint* memInfo)
 	if (!GLXEW_MESA_query_renderer)
 		return false;
 
+	// note: unlike the others, this value is returned in megabytes
 	glGetIntegerv(GLX_RENDERER_VIDEO_MEMORY_MESA, &memInfo[0]);
 
-	// unlike the others, this value is returned in megabytes
 	memInfo[0] *= 1024;
+	memInfo[1] = memInfo[0];
 	return true;
 	#else
 	return false;
@@ -155,7 +156,7 @@ bool GetAvailableVideoRAM(GLint* memory)
 	#ifdef HEADLESS
 	return false;
 	#else
-	GLint memInfo[4 + 2] = {0, 0, 0, 0, 0, 0};
+	GLint memInfo[4 + 2] = {-1, -1, -1, -1, 0, 0};
 
 	if (!GetVideoMemInfoNV(memInfo) && !GetVideoMemInfoATI(memInfo) && !GetVideoMemInfoMESA(memInfo))
 		return false;
