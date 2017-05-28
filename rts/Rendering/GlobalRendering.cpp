@@ -650,10 +650,7 @@ void CGlobalRendering::QueryVersionInfo(char (&sdlVersionStr)[64], char (&glVidM
 		const GLint totalMemMB = vidMemBuffer[0] / 1024;
 		const GLint availMemMB = vidMemBuffer[1] / 1024;
 
-		if (totalMemMB > 0 && availMemMB > 0)
-			SNPRINTF(glVidMemStr, sizeof(glVidMemStr), memFmtStr, totalMemMB, availMemMB);
-
-		gpuMemorySize = totalMemMB;
+		SNPRINTF(glVidMemStr, sizeof(glVidMemStr), memFmtStr, gpuMemorySize = totalMemMB, availMemMB);
 	}
 }
 
