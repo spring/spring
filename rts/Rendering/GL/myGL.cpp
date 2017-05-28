@@ -102,28 +102,36 @@ bool GetAvailableVideoRAM(GLint* memory)
 #if defined(HEADLESS) || !defined(GL_GPU_MEMORY_INFO_TOTAL_AVAILABLE_MEMORY_NVX) || !defined(GL_TEXTURE_FREE_MEMORY_ATI)
 	return false;
 #else
+	GLint memInfo[4] = {0, 0, 0, 0};
+
 	// check free video ram (all values in kB)
 	if (GLEW_NVX_gpu_memory_info) {
 		glGetIntegerv(GL_GPU_MEMORY_INFO_TOTAL_AVAILABLE_MEMORY_NVX, &memory[0]);
 		glGetIntegerv(GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX, &memory[1]);
 	} else
 	if (GLEW_ATI_meminfo) {
-		GLint texMemInfo[4];
-		glGetIntegerv(GL_TEXTURE_FREE_MEMORY_ATI, texMemInfo);
+		glGetIntegerv(GL_TEXTURE_FREE_MEMORY_ATI, memInfo);
 
-		memory[0] = texMemInfo[1];
-		memory[1] = texMemInfo[0];
+		memory[0] = memInfo[0];
+		memory[1] = memInfo[1];
 	} else
 #ifdef GLX_MESA_query_renderer
 	if (GLXEW_MESA_query_renderer) {
-		glGetIntegerv(GLX_RENDERER_VIDEO_MEMORY_MESA, &memory[0]);
-		memory[1] = texMemInfo[0];
+		glGetIntegerv(GLX_RENDERER_VIDEO_MEMORY_MESA, &memInfo[0]);
+
+		memory[0] = memInfo[0];
+		memory[1] = memInfo[1];
 	} else
 #endif
 	{
+		// no information available
 		memory[0] = 0;
-		memory[1] = memory[0]; // not available
+		memory[1] = 0;
 	}
+
+	// callers assume [0]=total and [1]=available
+	if (memory[0] < memory[1])
+		std::swap(memory[0], memory[1]);
 
 	return true;
 #endif
