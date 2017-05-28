@@ -14,7 +14,7 @@ public:
 
 public:
 	static void SetEnabled(bool enable);
-	static bool IsEnabled();
+	static bool IsEnabled() { return (instance != nullptr); }
 
 	virtual void DrawScreen();
 	virtual bool MousePress(int x, int y, int button);

@@ -59,11 +59,6 @@ void ProfileDrawer::SetEnabled(bool enable)
 	}
 }
 
-bool ProfileDrawer::IsEnabled()
-{
-	return (instance != nullptr);
-}
-
 
 
 static void DrawTimeSlice(std::deque<TimeSlice>& frames, const spring_time curTime, const spring_time maxHist, const float drawArea[4])
@@ -265,10 +260,11 @@ static void DrawProfiler()
 
 	// draw the textual info (total-time, short-time percentual time, timer-name)
 	int y = 1;
-	for (auto pi = profiler.sortedProfile.begin(); pi != profiler.sortedProfile.end(); ++pi, ++y) {
-		const auto& profileData = pi->second;
 
-		const float fStartY = start_y - y * lineHeight;
+	for (const auto& p: profiler.sortedProfile) {
+		const auto& profileData = p.second;
+
+		const float fStartY = start_y - (y++) * lineHeight;
 		float fStartX = start_x + 0.005f + 0.015f + 0.005f;
 
 		// print total-time running since application start
@@ -280,7 +276,7 @@ static void DrawProfiler()
 		fStartX += 0.04f; font->glFormat(fStartX, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "\xff\xff%c%c%.0fms", profileData.newLagPeak?1:255, profileData.newLagPeak?1:255, profileData.maxLag);
 
 		// print timer name
-		fStartX += 0.01f; font->glPrint(fStartX, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM, pi->first);
+		fStartX += 0.01f; font->glPrint(fStartX, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM, p.first);
 	}
 
 
@@ -294,7 +290,7 @@ static void DrawProfiler()
 		va->Initialize();
 		va2->Initialize();
 			int i = 1;
-			for (auto pi = profiler.sortedProfile.begin(); pi != profiler.sortedProfile.end(); ++pi, ++i){
+			for (auto pi = profiler.sortedProfile.begin(); pi != profiler.sortedProfile.end(); ++pi, ++i) {
 				auto& fc = pi->second.color;
 				SColor c(fc[0], fc[1], fc[2]);
 				va->AddVertexC(float3(0, -i*lineHeight, 0), c); // upper left
@@ -318,24 +314,27 @@ static void DrawProfiler()
 
 	// draw the graph
 	glLineWidth(3.0f);
-	for (auto pi = profiler.sortedProfile.begin(); pi != profiler.sortedProfile.end(); ++pi) {
-		if (!pi->second.showGraph)
+
+	for (const auto& p: profiler.sortedProfile) {
+		const CTimeProfiler::TimeRecord& tr = p.second;
+
+		if (!tr.showGraph)
 			continue;
 
 		CVertexArray* va = GetVertexArray();
 		va->Initialize();
 		const float steps_x = (end_x - start_x) / CTimeProfiler::TimeRecord::numFrames;
-		for (size_t a=0; a < CTimeProfiler::TimeRecord::numFrames; ++a) {
+		for (size_t a = 0; a < CTimeProfiler::TimeRecord::numFrames; ++a) {
 			// profile runtime; eg 0.5f means: uses 50% of a CPU (during that frame)
 			// This may be more then 1.0f, in case an operation
 			// which ran over many frames, ended in this one.
-			const float p = pi->second.frames[a].toSecsf() * GAME_SPEED;
+			const float p = tr.frames[a].toSecsf() * GAME_SPEED;
 			const float x = start_x + (a * steps_x);
 			const float y = 0.02f + (p * 0.96f);
 			va->AddVertex0(x, y, 0.0f);
 		}
 
-		glColorf3((float3)pi->second.color);
+		glColorf3((float3) tr.color);
 		va->DrawArray0(GL_LINE_STRIP);
 	}
 	glLineWidth(1.0f);
@@ -351,55 +350,62 @@ static void DrawInfoText()
 		va->AddVertex0(0.01f - 10 * globalRendering->pixelX, 0.16f + 20 * globalRendering->pixelY, 0.0f);
 		va->AddVertex0(start_x - 0.05f + 10 * globalRendering->pixelX, 0.16f + 20 * globalRendering->pixelY, 0.0f);
 		va->AddVertex0(start_x - 0.05f + 10 * globalRendering->pixelX, 0.02f - 10 * globalRendering->pixelY, 0.0f);
-	glColor4f(0.0f,0.0f,0.0f, 0.5f);
+	glColor4f(0.0f, 0.0f, 0.0f, 0.5f);
 	va->DrawArray0(GL_QUADS);
 
 	// print performance-related information (timings, particle-counts, etc)
 	font->SetTextColor(1.0f, 1.0f, 0.5f, 0.8f);
 
-	const char* pfsFmtStr = "[pfs-updates] NumQueued={%i, %i} Type=%s";
-	const char* fpsFmtStr = "[frame-rates] {Draw,Sim}={%0.1f, %0.1f}fps";
-	const char* avgFmtStr = "[dt-averages] {Update,Draw,Sim}Frame={%s%2.1f, %s%2.1f, %s%2.1f}ms";
-	const char* spdFmtStr = "[speed-facts] {Current,Wanted}SimSpeed={%2.2f, %2.2f}";
-	const char* sfxFmtStr = "[particle-fx] {Synced,Unsynced}Projectiles={%u,%u} Particles=%u Saturation=%.1f";
-	const char* luaFmtStr = "Lua-allocated memory: %.1fMB (%.5uK allocs : %.5u usecs : %.1u states)";
-	const char* gpuFmtStr = "GPU-allocated memory: %.1fMB / %.1fMB";
+	const char* fpsFmtStr = "[1] {Draw,Sim}FrameRate={%0.1f, %0.1f}Hz";
+	const char* ctrFmtStr = "[2] {Draw,Sim}FrameTick={%u, %d}";
+	const char* avgFmtStr = "[3] {Update,Draw,Sim}FrameTime={%s%2.1f, %s%2.1f, %s%2.1f}ms";
+	const char* spdFmtStr = "[4] {Current,Wanted}SimSpeedMul={%2.2f, %2.2f}x";
+	const char* sfxFmtStr = "[5] {Synced,Unsynced}Projectiles={%u,%u} Particles=%u Saturation=%.1f";
+	const char* pfsFmtStr = "[6] (%s)PFS-updates queued: {%i, %i}";
+	const char* luaFmtStr = "[7] Lua-allocated memory: %.1fMB (%.5uK allocs : %.5u usecs : %.1u states)";
+	const char* gpuFmtStr = "[8] GPU-allocated memory: %.1fMB / %.1fMB";
 
-	font->glFormat(0.01f, 0.02f, 0.5f, DBG_FONT_FLAGS, fpsFmtStr, globalRendering->FPS, gu->simFPS, gs->frameNum);
+	const CProjectileHandler* ph = projectileHandler;
+	const IPathManager* pm = pathManager;
+
+	font->glFormat(0.01f, 0.02f, 0.5f, DBG_FONT_FLAGS, fpsFmtStr, globalRendering->FPS, gu->simFPS);
+	font->glFormat(0.01f, 0.04f, 0.5f, DBG_FONT_FLAGS, ctrFmtStr, globalRendering->drawFrame, gs->frameNum);
 
 	// 16ms := 60fps := 30simFPS + 30drawFPS
-	font->glFormat(0.01f, 0.04f, 0.5f, DBG_FONT_FLAGS, avgFmtStr,
+	font->glFormat(0.01f, 0.06f, 0.5f, DBG_FONT_FLAGS, avgFmtStr,
 	   (gu->avgFrameTime     > 30) ? "\xff\xff\x01\x01" : "", gu->avgFrameTime,
 	   (gu->avgDrawFrameTime > 16) ? "\xff\xff\x01\x01" : "", gu->avgDrawFrameTime,
 	   (gu->avgSimFrameTime  > 16) ? "\xff\xff\x01\x01" : "", gu->avgSimFrameTime
 	);
 
-	font->glFormat(0.01f, 0.06f, 0.5f, DBG_FONT_FLAGS, spdFmtStr, gs->speedFactor, gs->wantedSpeedFactor);
-	font->glFormat(0.01f, 0.08f, 0.5f, DBG_FONT_FLAGS, sfxFmtStr, projectileHandler->syncedProjectiles.size(), projectileHandler->unsyncedProjectiles.size(), projectileHandler->GetCurrentParticles(), projectileHandler->GetParticleSaturation(true));
-
-	const int2 pfsUpdates = pathManager->GetNumQueuedUpdates();
-
-	switch (pathManager->GetPathFinderType()) {
-		case PFS_TYPE_DEFAULT: {
-			font->glFormat(0.01f, 0.10f, 0.5f, DBG_FONT_FLAGS, pfsFmtStr, pfsUpdates.x, pfsUpdates.y, "DEFAULT");
-		} break;
-		case PFS_TYPE_QTPFS: {
-			font->glFormat(0.01f, 0.10f, 0.5f, DBG_FONT_FLAGS, pfsFmtStr, pfsUpdates.x, pfsUpdates.y, "QTPFS");
-		} break;
-	}
+	font->glFormat(0.01f, 0.08f, 0.5f, DBG_FONT_FLAGS, spdFmtStr, gs->speedFactor, gs->wantedSpeedFactor);
+	font->glFormat(0.01f, 0.10f, 0.5f, DBG_FONT_FLAGS, sfxFmtStr, ph->syncedProjectiles.size(), ph->unsyncedProjectiles.size(), ph->GetCurrentParticles(), ph->GetParticleSaturation(true));
 
 	{
-		int2 gpuInfo;
-		GetAvailableVideoRAM(&gpuInfo.x);
+		const int2 pfsUpdates = pm->GetNumQueuedUpdates();
 
-		font->glFormat(0.01f, 0.12f, 0.5f, DBG_FONT_FLAGS, gpuFmtStr, (gpuInfo.x - gpuInfo.y) / 1024.0f, gpuInfo.x / 1024.0f);
+		switch (pm->GetPathFinderType()) {
+			case PFS_TYPE_DEFAULT: {
+				font->glFormat(0.01f, 0.13f, 0.5f, DBG_FONT_FLAGS, pfsFmtStr, "DEF", pfsUpdates.x, pfsUpdates.y);
+			} break;
+			case PFS_TYPE_QTPFS: {
+				font->glFormat(0.01f, 0.13f, 0.5f, DBG_FONT_FLAGS, pfsFmtStr, "QT", pfsUpdates.x, pfsUpdates.y);
+			} break;
+		}
 	}
 
 	{
 		SLuaInfo luaInfo = {0, 0, 0, 0};
 		spring_lua_alloc_get_stats(&luaInfo);
 
-		font->glFormat(0.01f, 0.14f, 0.5f, DBG_FONT_FLAGS, luaFmtStr, luaInfo.allocedBytes / 1024.0f / 1024.0f, luaInfo.numLuaAllocs / 1000, luaInfo.luaAllocTime, luaInfo.numLuaStates);
+		font->glFormat(0.01f, 0.15f, 0.5f, DBG_FONT_FLAGS, luaFmtStr, luaInfo.allocedBytes / 1024.0f / 1024.0f, luaInfo.numLuaAllocs / 1000, luaInfo.luaAllocTime, luaInfo.numLuaStates);
+	}
+
+	{
+		int2 gpuInfo;
+		GetAvailableVideoRAM(&gpuInfo.x);
+
+		font->glFormat(0.01f, 0.17f, 0.5f, DBG_FONT_FLAGS, gpuFmtStr, (gpuInfo.x - gpuInfo.y) / 1024.0f, gpuInfo.x / 1024.0f);
 	}
 }
 
