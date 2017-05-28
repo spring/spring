@@ -97,6 +97,7 @@ bool CheckAvailableVideoModes()
 
 
 
+#ifndef HEADLESS
 static bool GetVideoMemInfoNV(GLint* memInfo)
 {
 	#ifdef GL_GPU_MEMORY_INFO_TOTAL_AVAILABLE_MEMORY_NVX
@@ -147,12 +148,13 @@ static bool GetVideoMemInfoMESA(GLint* memInfo)
 	return false;
 	#endif
 }
+#endif
 
 bool GetAvailableVideoRAM(GLint* memory)
 {
-#if defined(HEADLESS)
+	#ifdef HEADLESS
 	return false;
-#else
+	#else
 	GLint memInfo[4 + 2] = {0, 0, 0, 0, 0, 0};
 
 	if (!GetVideoMemInfoNV(memInfo) && !GetVideoMemInfoATI(memInfo) && !GetVideoMemInfoMESA(memInfo))
@@ -162,7 +164,7 @@ bool GetAvailableVideoRAM(GLint* memory)
 	memory[0] = std::max(memInfo[0], memInfo[1]);
 	memory[1] = std::min(memInfo[0], memInfo[1]);
 	return true;
-#endif
+	#endif
 }
 
 
