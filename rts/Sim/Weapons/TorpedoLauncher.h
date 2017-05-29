@@ -9,7 +9,7 @@ class CTorpedoLauncher: public CWeapon
 {
 	CR_DECLARE_DERIVED(CTorpedoLauncher)
 public:
-	CTorpedoLauncher(CUnit* owner, const WeaponDef* def);
+	CTorpedoLauncher(CUnit* owner = nullptr, const WeaponDef* def = nullptr);
 
 private:
 	bool TestTarget(const float3 pos, const SWeaponTarget& trg) const override final;

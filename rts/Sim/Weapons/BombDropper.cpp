@@ -13,7 +13,7 @@
 #include "System/Log/ILog.h"
 
 
-CR_BIND_DERIVED(CBombDropper, CWeapon, (NULL, NULL, false))
+CR_BIND_DERIVED_POOL(CBombDropper, CWeapon, , weaponMemPool.alloc, weaponMemPool.free)
 
 CR_REG_METADATA(CBombDropper,(
 	CR_MEMBER(dropTorpedoes),
@@ -29,7 +29,7 @@ CBombDropper::CBombDropper(CUnit* owner, const WeaponDef* def, bool useTorps)
 	: CWeapon(owner, def)
 	, dropTorpedoes(useTorps)
 {
-	//happens when loading
+	// null happens when loading
 	if (def != nullptr) {
 		torpMoveRange = def->range * useTorps;
 		tracking = def->turnrate * def->tracks;

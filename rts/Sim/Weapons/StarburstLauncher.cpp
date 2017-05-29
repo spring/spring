@@ -7,8 +7,7 @@
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
 #include "Sim/Units/Unit.h"
 
-CR_BIND_DERIVED(CStarburstLauncher, CWeapon, (NULL, NULL))
-
+CR_BIND_DERIVED_POOL(CStarburstLauncher, CWeapon, , weaponMemPool.alloc, weaponMemPool.free)
 CR_REG_METADATA(CStarburstLauncher, (
 	CR_MEMBER(uptime),
 	CR_MEMBER(tracking)
@@ -16,7 +15,7 @@ CR_REG_METADATA(CStarburstLauncher, (
 
 CStarburstLauncher::CStarburstLauncher(CUnit* owner, const WeaponDef* def): CWeapon(owner, def)
 {
-	//happens when loading
+	// null happens when loading
 	if (def != nullptr) {
 		tracking = weaponDef->turnrate * def->tracks;
 		uptime = (def->uptime * GAME_SPEED);

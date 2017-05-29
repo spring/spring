@@ -6,12 +6,8 @@
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
 #include "Sim/Units/Unit.h"
 
-CR_BIND_DERIVED(CDGunWeapon, CWeapon, (NULL, NULL))
+CR_BIND_DERIVED_POOL(CDGunWeapon, CWeapon, , weaponMemPool.alloc, weaponMemPool.free)
 CR_REG_METADATA(CDGunWeapon, )
-
-CDGunWeapon::CDGunWeapon(CUnit* owner, const WeaponDef* def): CWeapon(owner, def)
-{
-}
 
 
 float CDGunWeapon::GetPredictedImpactTime(float3 p) const

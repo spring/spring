@@ -9,7 +9,7 @@ class CDGunWeapon: public CWeapon
 {
 	CR_DECLARE_DERIVED(CDGunWeapon)
 public:
-	CDGunWeapon(CUnit* owner, const WeaponDef* def);
+	CDGunWeapon(CUnit* owner = nullptr, const WeaponDef* def = nullptr): CWeapon(owner, def) {}
 
 	void Fire();
 	float GetPredictedImpactTime(float3 p) const override final;

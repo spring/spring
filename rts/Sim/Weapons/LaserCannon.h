@@ -9,7 +9,7 @@ class CLaserCannon: public CWeapon
 {
 	CR_DECLARE_DERIVED(CLaserCannon)
 public:
-	CLaserCannon(CUnit* owner, const WeaponDef* def);
+	CLaserCannon(CUnit* owner = nullptr, const WeaponDef* def = nullptr);
 
 	void UpdateRange(const float val) override final;
 

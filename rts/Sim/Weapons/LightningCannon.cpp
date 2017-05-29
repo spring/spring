@@ -12,16 +12,14 @@
 
 #include <vector>
 
-CR_BIND_DERIVED(CLightningCannon, CWeapon, (NULL, NULL))
-
-CR_REG_METADATA(CLightningCannon,(
+CR_BIND_DERIVED_POOL(CLightningCannon, CWeapon, , weaponMemPool.alloc, weaponMemPool.free)
+CR_REG_METADATA(CLightningCannon, (
 	CR_MEMBER(color)
 ))
 
-CLightningCannon::CLightningCannon(CUnit* owner, const WeaponDef* def)
-	: CWeapon(owner, def)
+CLightningCannon::CLightningCannon(CUnit* owner, const WeaponDef* def): CWeapon(owner, def)
 {
-	//happens when loading
+	// null happens when loading
 	if (def != nullptr)
 		color = def->visuals.color;
 }

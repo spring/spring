@@ -9,7 +9,7 @@ class CBombDropper: public CWeapon
 {
 	CR_DECLARE_DERIVED(CBombDropper)
 public:
-	CBombDropper(CUnit* owner, const WeaponDef* def, bool useTorps);
+	CBombDropper(CUnit* owner = nullptr, const WeaponDef* def = nullptr, bool useTorps = false);
 
 	float GetPredictedImpactTime(float3 p) const override final;
 

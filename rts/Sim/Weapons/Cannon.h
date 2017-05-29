@@ -18,7 +18,7 @@ protected:
 	float3 lastDir;
 
 public:
-	CCannon(CUnit* owner, const WeaponDef* def);
+	CCannon(CUnit* owner = nullptr, const WeaponDef* def = nullptr);
 
 	void Init() override final;
 	void UpdateRange(const float val) override final;

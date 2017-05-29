@@ -8,6 +8,7 @@
 #include "System/Object.h"
 #include "Sim/Misc/DamageArray.h"
 #include "Sim/Projectiles/ProjectileParams.h"
+#include "Sim/Weapons/WeaponMemPool.h"
 #include "Sim/Weapons/WeaponTarget.h"
 #include "System/float3.h"
 
@@ -21,8 +22,7 @@ class CWeapon : public CObject
 	CR_DECLARE_DERIVED(CWeapon)
 
 public:
-	CWeapon();
-	CWeapon(CUnit* owner, const WeaponDef* def);
+	CWeapon(CUnit* owner = nullptr, const WeaponDef* def = nullptr);
 	virtual ~CWeapon();
 	virtual void Init();
 

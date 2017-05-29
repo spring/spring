@@ -11,7 +11,7 @@ class CBeamLaser: public CWeapon
 	CR_DECLARE_SUB(SweepFireState)
 
 public:
-	CBeamLaser(CUnit* owner, const WeaponDef* def);
+	CBeamLaser(CUnit* owner = nullptr, const WeaponDef* def = nullptr);
 
 	void Update() override final;
 	void Init() override final;

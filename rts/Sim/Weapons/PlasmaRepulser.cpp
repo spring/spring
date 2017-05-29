@@ -16,8 +16,7 @@
 #include "System/EventHandler.h"
 #include "System/myMath.h"
 
-CR_BIND_DERIVED(CPlasmaRepulser, CWeapon, (NULL, NULL))
-
+CR_BIND_DERIVED_POOL(CPlasmaRepulser, CWeapon, , weaponMemPool.alloc, weaponMemPool.free)
 CR_REG_METADATA(CPlasmaRepulser, (
 	CR_MEMBER(radius),
 	CR_MEMBER(sqRadius),

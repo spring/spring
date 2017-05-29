@@ -9,15 +9,14 @@
 #include "Sim/Units/Unit.h"
 #include "System/myMath.h"
 
-CR_BIND_DERIVED(CTorpedoLauncher, CWeapon, (NULL, NULL))
-
+CR_BIND_DERIVED_POOL(CTorpedoLauncher, CWeapon, , weaponMemPool.alloc, weaponMemPool.free)
 CR_REG_METADATA(CTorpedoLauncher,(
 	CR_MEMBER(tracking)
 ))
 
 CTorpedoLauncher::CTorpedoLauncher(CUnit* owner, const WeaponDef* def): CWeapon(owner, def)
 {
-	//happens when loading
+	// null happens when loading
 	if (def != nullptr)
 		tracking = weaponDef->turnrate * def->tracks;
 }

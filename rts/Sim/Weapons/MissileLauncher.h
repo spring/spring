@@ -9,7 +9,7 @@ class CMissileLauncher: public CWeapon
 {
 	CR_DECLARE_DERIVED(CMissileLauncher)
 public:
-	CMissileLauncher(CUnit* owner, const WeaponDef* def);
+	CMissileLauncher(CUnit* owner = nullptr, const WeaponDef* def = nullptr): CWeapon(owner, def) {}
 
 	void UpdateWantedDir() override final;
 

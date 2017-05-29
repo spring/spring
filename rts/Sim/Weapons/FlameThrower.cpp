@@ -8,16 +8,12 @@
 #include "Sim/Units/Unit.h"
 #include "System/myMath.h"
 
-CR_BIND_DERIVED(CFlameThrower, CWeapon, (NULL, NULL))
+CR_BIND_DERIVED_POOL(CFlameThrower, CWeapon, , weaponMemPool.alloc, weaponMemPool.free)
 
 CR_REG_METADATA(CFlameThrower,(
 	CR_MEMBER(color),
 	CR_MEMBER(color2)
 ))
-
-CFlameThrower::CFlameThrower(CUnit* owner, const WeaponDef* def): CWeapon(owner, def)
-{
-}
 
 
 void CFlameThrower::FireImpl(const bool scriptCall)

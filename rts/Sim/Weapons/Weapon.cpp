@@ -2,7 +2,6 @@
 
 #include "Weapon.h"
 #include "WeaponDefHandler.h"
-#include "WeaponMemPool.h"
 #include "Game/GameHelper.h"
 #include "Game/TraceRay.h"
 #include "Game/Players/Player.h"
@@ -31,7 +30,6 @@
 #include "System/Log/ILog.h"
 
 CR_BIND_DERIVED_POOL(CWeapon, CObject, , weaponMemPool.alloc, weaponMemPool.free)
-
 CR_REG_METADATA(CWeapon, (
 	CR_MEMBER(owner),
 	CR_MEMBER(slavedTo),
@@ -103,10 +101,6 @@ CR_REG_METADATA(CWeapon, (
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
-CWeapon::CWeapon()
-{
-	assert(weaponMemPool.alloced(this));
-}
 
 CWeapon::CWeapon(CUnit* owner, const WeaponDef* def):
 	owner(owner),
@@ -175,6 +169,7 @@ CWeapon::CWeapon(CUnit* owner, const WeaponDef* def):
 CWeapon::~CWeapon()
 {
 	DynDamageArray::DecRef(damages);
+
 	if (weaponDef->interceptor)
 		interceptHandler.RemoveInterceptorWeapon(this);
 }

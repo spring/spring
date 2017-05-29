@@ -9,7 +9,7 @@ class CNoWeapon: public CWeapon
 {
 	CR_DECLARE_DERIVED(CNoWeapon)
 public:
-	CNoWeapon(CUnit* owner, const WeaponDef* def);
+	CNoWeapon(CUnit* owner = nullptr, const WeaponDef* def = nullptr): CWeapon(owner, def) {}
 
 	void Update() override final {}
 	void SlowUpdate() override final {}

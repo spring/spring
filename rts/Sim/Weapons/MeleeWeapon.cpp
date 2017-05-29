@@ -4,15 +4,14 @@
 #include "WeaponDef.h"
 #include "Sim/Units/Unit.h"
 
-CR_BIND_DERIVED(CMeleeWeapon, CWeapon, (nullptr, nullptr))
+CR_BIND_DERIVED_POOL(CMeleeWeapon, CWeapon, , weaponMemPool.alloc, weaponMemPool.free)
 CR_REG_METADATA(CMeleeWeapon, )
 
 void CMeleeWeapon::FireImpl(const bool scriptCall)
 {
-	if (currentTarget.type == Target_Unit) {
-		const float3 impulseVec = wantedDir * owner->mass * damages->impulseFactor;
+	if (currentTarget.type != Target_Unit)
+		return;
 
-		// the heavier the unit, the more impulse it does
-		currentTarget.unit->DoDamage(*damages, impulseVec, owner, weaponDef->id, -1);
-	}
+	// the heavier the unit, the more impulse it does
+	currentTarget.unit->DoDamage(*damages, wantedDir * owner->mass * damages->impulseFactor, owner, weaponDef->id, -1);
 }

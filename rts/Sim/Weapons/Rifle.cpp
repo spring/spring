@@ -13,21 +13,13 @@
 #include "System/Sync/SyncTracer.h"
 #include "System/myMath.h"
 
-CR_BIND_DERIVED(CRifle, CWeapon, (nullptr, nullptr))
+CR_BIND_DERIVED_POOL(CRifle, CWeapon, , weaponMemPool.alloc, weaponMemPool.free)
 CR_REG_METADATA(CRifle, )
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CRifle::CRifle(CUnit* owner, const WeaponDef* def): CWeapon(owner, def)
-{
-}
-
-float CRifle::GetPredictedImpactTime(float3 p) const
-{
-	return 0;
-}
 
 void CRifle::FireImpl(const bool scriptCall)
 {

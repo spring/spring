@@ -21,7 +21,7 @@
 
 #define SWEEPFIRE_ENABLED 1
 
-CR_BIND_DERIVED(CBeamLaser, CWeapon, (NULL, NULL))
+CR_BIND_DERIVED_POOL(CBeamLaser, CWeapon, , weaponMemPool.alloc, weaponMemPool.free)
 
 CR_REG_METADATA(CBeamLaser,(
 	CR_MEMBER(color),
@@ -84,7 +84,7 @@ CBeamLaser::CBeamLaser(CUnit* owner, const WeaponDef* def)
 	: CWeapon(owner, def)
 	, salvoDamageMult(1.0f)
 {
-	//happens when loading
+	// null happens when loading
 	if (def != nullptr)
 		color = def->visuals.color;
 

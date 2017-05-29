@@ -10,12 +10,8 @@
 #include "Sim/Units/UnitDef.h"
 #include "System/myMath.h"
 
-CR_BIND_DERIVED(CMissileLauncher, CWeapon, (NULL, NULL))
+CR_BIND_DERIVED_POOL(CMissileLauncher, CWeapon, , weaponMemPool.alloc, weaponMemPool.free)
 CR_REG_METADATA(CMissileLauncher, )
-
-CMissileLauncher::CMissileLauncher(CUnit* owner, const WeaponDef* def): CWeapon(owner, def)
-{
-}
 
 
 void CMissileLauncher::UpdateWantedDir()

@@ -15,7 +15,7 @@ class CPlasmaRepulser: public CWeapon
 {
 	CR_DECLARE_DERIVED(CPlasmaRepulser)
 public:
-	CPlasmaRepulser(CUnit* owner, const WeaponDef* def);
+	CPlasmaRepulser(CUnit* owner = nullptr, const WeaponDef* def = nullptr);
 	~CPlasmaRepulser();
 
 	void Init() override final;

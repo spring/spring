@@ -11,12 +11,8 @@
 #include "System/Sync/SyncTracer.h"
 #include "System/myMath.h"
 
-CR_BIND_DERIVED(CEmgCannon, CWeapon, (NULL, NULL))
+CR_BIND_DERIVED_POOL(CEmgCannon, CWeapon, , weaponMemPool.alloc, weaponMemPool.free)
 CR_REG_METADATA(CEmgCannon, )
-
-CEmgCannon::CEmgCannon(CUnit* owner, const WeaponDef* def): CWeapon(owner, def)
-{
-}
 
 
 void CEmgCannon::FireImpl(const bool scriptCall)

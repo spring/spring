@@ -27,7 +27,7 @@
 #include "System/Util.h"
 #include "System/Log/ILog.h"
 
-SimObjectMemPool<sizeof(CWeapon) + (sizeof(CWeapon) >> 1)> weaponMemPool;
+SimObjectMemPool<760> weaponMemPool;
 
 void CWeaponLoader::InitStatic() { weaponMemPool.reserve(128); }
 void CWeaponLoader::KillStatic() { weaponMemPool.clear(); }
