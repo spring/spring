@@ -17,6 +17,7 @@
 #include "Sim/Units/UnitMemPool.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Projectiles/ProjectileMemPool.h"
+#include "Sim/Weapons/WeaponMemPool.h"
 #include "System/EventHandler.h"
 #include "System/TimeProfiler.h"
 #include "System/SafeUtil.h"
@@ -373,7 +374,7 @@ static void DrawInfoText()
 	const char* pfsFmtStr = "[6] (%s)PFS-updates queued: {%i, %i}";
 	const char* luaFmtStr = "[7] Lua-allocated memory: %.1fMB (%.5uK allocs : %.5u usecs : %.1u states)";
 	const char* gpuFmtStr = "[8] GPU-allocated memory: %.1fMB / %.1fMB";
-	const char* sopFmtStr = "[9] SOP-allocated memory: {U,F,P}={%.1f / %.1f, %.1f / %.1f, %.1f / %.1f}KB";
+	const char* sopFmtStr = "[9] SOP-allocated memory: {U,F,P,W}={%.1f/%.1f, %.1f/%.1f, %.1f/%.1f, %.1f/%.1f}KB";
 
 	const CProjectileHandler* ph = projectileHandler;
 	const IPathManager* pm = pathManager;
@@ -424,7 +425,9 @@ static void DrawInfoText()
 		featureMemPool.total_size() / 1024.0f,
 		featureMemPool.freed_size() / 1024.0f,
 		projMemPool.total_size() / 1024.0f,
-		projMemPool.freed_size() / 1024.0f
+		projMemPool.freed_size() / 1024.0f,
+		weaponMemPool.total_size() / 1024.0f,
+		weaponMemPool.freed_size() / 1024.0f
 	);
 }
 

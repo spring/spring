@@ -1,7 +1,8 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "WeaponDefHandler.h"
 #include "Weapon.h"
+#include "WeaponDefHandler.h"
+#include "WeaponMemPool.h"
 #include "Game/GameHelper.h"
 #include "Game/TraceRay.h"
 #include "Game/Players/Player.h"
@@ -29,7 +30,7 @@
 #include "System/Sound/ISoundChannels.h"
 #include "System/Log/ILog.h"
 
-CR_BIND_DERIVED(CWeapon, CObject, (nullptr, nullptr))
+CR_BIND_DERIVED_POOL(CWeapon, CObject, , weaponMemPool.alloc, weaponMemPool.free)
 
 CR_REG_METADATA(CWeapon, (
 	CR_MEMBER(owner),
@@ -102,6 +103,10 @@ CR_REG_METADATA(CWeapon, (
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
+CWeapon::CWeapon()
+{
+	assert(weaponMemPool.alloced(this));
+}
 
 CWeapon::CWeapon(CUnit* owner, const WeaponDef* def):
 	owner(owner),
@@ -163,6 +168,7 @@ CWeapon::CWeapon(CUnit* owner, const WeaponDef* def):
 	fireSoundId(0),
 	fireSoundVolume(0)
 {
+	assert(weaponMemPool.alloced(this));
 }
 
 

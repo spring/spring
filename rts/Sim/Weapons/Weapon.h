@@ -21,6 +21,7 @@ class CWeapon : public CObject
 	CR_DECLARE_DERIVED(CWeapon)
 
 public:
+	CWeapon();
 	CWeapon(CUnit* owner, const WeaponDef* def);
 	virtual ~CWeapon();
 	virtual void Init();

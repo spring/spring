@@ -43,6 +43,8 @@ CFeatureHandler::~CFeatureHandler() {
 	for (const int featureID: activeFeatureIDs) {
 		featureMemPool.free(features[featureID]);
 	}
+
+	// do not clear in ctor because creg-loaded objects would be wiped out
 	featureMemPool.clear();
 }
 

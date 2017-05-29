@@ -89,6 +89,7 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
+#include "Sim/Weapons/WeaponLoader.h"
 #include "UI/CommandColors.h"
 #include "UI/EndGameBox.h"
 #include "UI/GameSetupDrawer.h"
@@ -563,6 +564,7 @@ void CGame::PostLoadSimulation()
 	CUnitScriptFactory::InitStatic();
 	CUnitScriptEngine::InitStatic();
 	MoveTypeFactory::InitStatic();
+	CWeaponLoader::InitStatic();
 
 	unitHandler = new CUnitHandler();
 	featureHandler = new CFeatureHandler();
@@ -906,6 +908,7 @@ void CGame::KillSimulation()
 	LOG("[Game::%s][4]", __func__);
 	CCommandAI::KillCommandDescriptionCache();
 	CUnitScriptEngine::KillStatic();
+	CWeaponLoader::KillStatic();
 }
 
 

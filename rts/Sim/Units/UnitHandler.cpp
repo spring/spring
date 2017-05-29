@@ -113,6 +113,8 @@ CUnitHandler::~CUnitHandler()
 		u->delayedWreckLevel = -1;
 		unitMemPool.free(u);
 	}
+
+	// do not clear in ctor because creg-loaded objects would be wiped out
 	unitMemPool.clear();
 }
 
