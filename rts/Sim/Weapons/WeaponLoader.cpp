@@ -19,6 +19,7 @@
 #include "StarburstLauncher.h"
 #include "TorpedoLauncher.h"
 
+#include "Game/TraceRay.h" // Collision::*
 #include "Sim/Misc/DamageArray.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Units/Unit.h"
@@ -27,7 +28,6 @@
 #include "System/Log/ILog.h"
 
 SimObjectMemPool<sizeof(CWeapon) + (sizeof(CWeapon) >> 1)> weaponMemPool;
-CWeaponLoader weaponLoader;
 
 void CWeaponLoader::InitStatic() { weaponMemPool.reserve(128); }
 void CWeaponLoader::KillStatic() { weaponMemPool.clear(); }
@@ -44,8 +44,8 @@ void CWeaponLoader::LoadWeapons(CUnit* unit)
 	weapons.reserve(defWeapons.size());
 
 	for (const UnitDefWeapon& defWeapon: defWeapons) {
-		CWeapon* weapon = LoadWeapon(unit, &defWeapon);
-		weapons.push_back(InitWeapon(unit, weapon, &defWeapon));
+		CWeapon* weapon = InitWeapon(unit, LoadWeapon(unit, &defWeapon.def), &defWeapon);
+		weapons.push_back(weapon);
 		unit->maxRange = std::max(weapon->range, unit->maxRange);
 	}
 }
@@ -55,13 +55,14 @@ void CWeaponLoader::FreeWeapons(CUnit* unit)
 	for (CWeapon*& w: unit->weapons) {
 		weaponMemPool.free(w);
 	}
+
+	unit->weapons.clear();
 }
 
 
 
-CWeapon* CWeaponLoader::LoadWeapon(CUnit* owner, const UnitDefWeapon* defWeapon)
+CWeapon* CWeaponLoader::LoadWeapon(CUnit* owner, const WeaponDef* weaponDef)
 {
-	const WeaponDef* weaponDef = defWeapon->def;
 	const std::string& weaponType = weaponDef->type;
 
 	if (StringToLower(weaponDef->name) == "noweapon")

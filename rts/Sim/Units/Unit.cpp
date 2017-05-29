@@ -256,7 +256,7 @@ CUnit::~CUnit()
 	spring::SafeDestruct(prevMoveType);
 
 	// ScriptCallback may reference weapons, so delete the script first
-	weaponLoader.FreeWeapons(this);
+	CWeaponLoader::FreeWeapons(this);
 	quadField->RemoveUnit(this);
 }
 
@@ -413,7 +413,7 @@ void CUnit::PreInit(const UnitLoadParams& params)
 
 void CUnit::PostInit(const CUnit* builder)
 {
-	weaponLoader.LoadWeapons(this);
+	CWeaponLoader::LoadWeapons(this);
 	// Call initializing script functions
 	script->Create();
 
