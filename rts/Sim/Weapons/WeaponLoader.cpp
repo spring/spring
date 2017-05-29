@@ -37,16 +37,12 @@ void CWeaponLoader::KillStatic() { weaponMemPool.clear(); }
 void CWeaponLoader::LoadWeapons(CUnit* unit)
 {
 	const UnitDef* unitDef = unit->unitDef;
+	const WeaponDef* wd = nullptr;
 
-	      std::vector<CWeapon*>& weapons = unit->weapons;
-	const std::vector<UnitDefWeapon>& defWeapons = unitDef->weapons;
+	unit->weapons.reserve(unitDef->weapons.size());
 
-	weapons.reserve(defWeapons.size());
-
-	for (const UnitDefWeapon& defWeapon: defWeapons) {
-		CWeapon* weapon = InitWeapon(unit, LoadWeapon(unit, &defWeapon.def), &defWeapon);
-		weapons.push_back(weapon);
-		unit->maxRange = std::max(weapon->range, unit->maxRange);
+	for (const UnitDefWeapon& defWeapon: unitDef->weapons) {
+		InitWeapon(unit, LoadWeapon(unit, defWeapon.def), &defWeapon);
 	}
 }
 
@@ -121,7 +117,7 @@ CWeapon* CWeaponLoader::LoadWeapon(CUnit* owner, const WeaponDef* weaponDef)
 	return (weaponMemPool.alloc<CNoWeapon>(owner, weaponDef));
 }
 
-CWeapon* CWeaponLoader::InitWeapon(CUnit* owner, CWeapon* weapon, const UnitDefWeapon* defWeapon)
+void CWeaponLoader::InitWeapon(CUnit* owner, CWeapon* weapon, const UnitDefWeapon* defWeapon)
 {
 	const WeaponDef* weaponDef = defWeapon->def;
 
@@ -163,6 +159,8 @@ CWeapon* CWeaponLoader::InitWeapon(CUnit* owner, CWeapon* weapon, const UnitDefW
 	weapon->SetWeaponNum(owner->weapons.size());
 	weapon->Init();
 	weapon->UpdateRange(weaponDef->range);
-	return weapon;
+	owner->maxRange = std::max(weapon->range, owner->maxRange);
+
+	owner->weapons.push_back(weapon);
 }
 

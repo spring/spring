@@ -18,7 +18,7 @@ public:
 
 private:
 	static CWeapon* LoadWeapon(CUnit* owner, const WeaponDef* weaponDef);
-	static CWeapon* InitWeapon(CUnit* owner, CWeapon* weapon, const UnitDefWeapon* defWeapon);
+	static void InitWeapon(CUnit* owner, CWeapon* weapon, const UnitDefWeapon* defWeapon);
 };
 
 #endif
