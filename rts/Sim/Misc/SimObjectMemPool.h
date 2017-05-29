@@ -67,6 +67,11 @@ public:
 		dtorCallDepth -= 1;
 	}
 
+	constexpr size_t page_size() const { return N; }
+
+	size_t total_size() const { return (pages.size() * page_size()); } // size of total number of pages added over the pool's lifetime
+	size_t freed_size() const { return (indcs.size() * page_size()); } // size of number of pages that were freed and are awaiting reuse
+
 	bool mapped(void* p) const { return (table.find(p) != table.end()); }
 	bool alloced(void* p) const { return ((allocPageIndx < pages.size()) && (&pages[allocPageIndx][0] == p)); }
 

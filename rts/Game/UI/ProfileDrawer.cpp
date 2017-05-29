@@ -10,12 +10,14 @@
 #include "Rendering/Fonts/glFont.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/VertexArray.h"
+#include "Sim/Features/FeatureMemPool.h"
 #include "Sim/Misc/GlobalConstants.h" // for GAME_SPEED
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Path/IPathManager.h"
+#include "Sim/Units/UnitMemPool.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
+#include "Sim/Projectiles/ProjectileMemPool.h"
 #include "System/EventHandler.h"
-#include "System/Rectangle.h"
 #include "System/TimeProfiler.h"
 #include "System/SafeUtil.h"
 #include "lib/lua/include/LuaUser.h"
@@ -74,8 +76,8 @@ static void DrawTimeSlice(std::deque<TimeSlice>& frames, const spring_time curTi
 	// render
 	CVertexArray* va = GetVertexArray();
 	va->Initialize();
-	for (TimeSlice& ts: frames) {
-		float x1 = (ts.first % maxHist).toSecsf() / maxHist.toSecsf();
+	for (const TimeSlice& ts: frames) {
+		float x1 = (ts.first  % maxHist).toSecsf() / maxHist.toSecsf();
 		float x2 = (ts.second % maxHist).toSecsf() / maxHist.toSecsf();
 		x2 = std::max(x1 + globalRendering->pixelX, x2);
 
@@ -118,17 +120,17 @@ static void DrawThreadBarcode()
 		va->AddVertex0(drawArea[0] - 10 * globalRendering->pixelX, drawArea[3] + 10 * globalRendering->pixelY, 0.0f);
 		va->AddVertex0(drawArea[2] + 10 * globalRendering->pixelX, drawArea[3] + 10 * globalRendering->pixelY, 0.0f);
 		va->AddVertex0(drawArea[2] + 10 * globalRendering->pixelX, drawArea[1] - 10 * globalRendering->pixelY, 0.0f);
-	glColor4f(0.0f,0.0f,0.0f, 0.5f);
+	glColor4f(0.0f, 0.0f, 0.0f, 0.5f);
 	va->DrawArray0(GL_QUADS);
 
 	// title
 	font->glFormat(drawArea[0], drawArea[3], 0.7f, FONT_TOP | DBG_FONT_FLAGS, "ThreadPool (%.0fsec)", maxHist_f);
 
 	// bars
-	glColor4f(1.0f,0.0f,0.0f, 0.6f);
+	glColor4f(1.0f, 0.0f, 0.0f, 0.6f);
 	int i = 0;
 	for (auto& frames: coreProf) {
-		float drawArea2[4] = {drawArea[0], 0.f, drawArea[2], 0.f};
+		float drawArea2[4] = {drawArea[0], 0.f, drawArea[2], 0.0f};
 		drawArea2[1] = drawArea[1] + ((drawArea[3] - drawArea[1]) / numThreads) * i++;
 		drawArea2[3] = drawArea[1] + ((drawArea[3] - drawArea[1]) / numThreads) * i - 4 * globalRendering->pixelY;
 		DrawTimeSlice(frames, curTime, maxHist, drawArea2);
@@ -139,11 +141,11 @@ static void DrawThreadBarcode()
 	va->Initialize();
 		const float r = (curTime % maxHist).toSecsf() / maxHist_f;
 		const float xf = drawArea[0] + r * (drawArea[2] - drawArea[0]);
-		va->AddVertex0(xf, drawArea[1], 0.0f);
-		va->AddVertex0(xf, drawArea[3], 0.0f);
+		va->AddVertex0(xf                              , drawArea[1], 0.0f);
+		va->AddVertex0(xf                              , drawArea[3], 0.0f);
 		va->AddVertex0(xf + 5 * globalRendering->pixelX, drawArea[3], 0.0f);
 		va->AddVertex0(xf + 5 * globalRendering->pixelX, drawArea[1], 0.0f);
-	glColor3f(1.0f,0.0f,0.0f);
+	glColor3f(1.0f, 0.0f, 0.0f);
 	va->DrawArray0(GL_QUADS);
 }
 
@@ -151,9 +153,10 @@ static void DrawThreadBarcode()
 static void DrawFrameBarcode()
 {
 	const float maxHist_f = 0.5f;
+	const float drawArea[4] = {0.01f, 0.21f, start_x - 0.05f, 0.26f};
+
 	const spring_time curTime = spring_now();
 	const spring_time maxHist = spring_secs(maxHist_f);
-	float drawArea[4] = {0.01f, 0.2f, start_x - 0.05f, 0.25f};
 
 	// background
 	CVertexArray* va = GetVertexArray();
@@ -162,7 +165,7 @@ static void DrawFrameBarcode()
 		va->AddVertex0(drawArea[0] - 10 * globalRendering->pixelX, drawArea[3] + 20 * globalRendering->pixelY, 0.0f);
 		va->AddVertex0(drawArea[2] + 10 * globalRendering->pixelX, drawArea[3] + 20 * globalRendering->pixelY, 0.0f);
 		va->AddVertex0(drawArea[2] + 10 * globalRendering->pixelX, drawArea[1] - 10 * globalRendering->pixelY, 0.0f);
-	glColor4f(0.0f,0.0f,0.0f, 0.5f);
+	glColor4f(0.0f, 0.0f, 0.0f, 0.5f);
 	va->DrawArray0(GL_QUADS);
 
 	// title and legend
@@ -176,23 +179,23 @@ static void DrawFrameBarcode()
 			, maxHist_f);
 
 	// gc frames
-	glColor4f(1.0f,0.5f,1.0f, 0.55f);
+	glColor4f(1.0f, 0.5f, 1.0f, 0.55f);
 	DrawTimeSlice(lgcFrames, curTime, maxHist, drawArea);
 
 	// updateunsynced frames
-	glColor4f(1.0f,1.0f,0.0f, 0.9f);
+	glColor4f(1.0f, 1.0f, 0.0f, 0.9f);
 	DrawTimeSlice(uusFrames, curTime, maxHist, drawArea);
 
 	// video swap frames
-	glColor4f(0.0f,0.0f,1.0f, 0.55f);
+	glColor4f(0.0f, 0.0f, 1.0f, 0.55f);
 	DrawTimeSlice(swpFrames, curTime, maxHist, drawArea);
 
 	// video frames
-	glColor4f(0.0f,1.0f,0.0f, 0.55f);
+	glColor4f(0.0f, 1.0f, 0.0f, 0.55f);
 	DrawTimeSlice(vidFrames, curTime, maxHist, drawArea);
 
 	// sim frames
-	glColor4f(1.0f,0.0f,0.0f, 0.55f);
+	glColor4f(1.0f, 0.0f, 0.0f, 0.55f);
 	DrawTimeSlice(simFrames, curTime, maxHist, drawArea);
 
 	// draw `feeder` indicating current time pos
@@ -213,14 +216,14 @@ static void DrawFrameBarcode()
 		va->AddVertex0(xs1, drawArea[3] + 10 * globalRendering->pixelY, 0.0f);
 		va->AddVertex0(xs2, drawArea[3] + 10 * globalRendering->pixelY, 0.0f);
 		va->AddVertex0(xs2, drawArea[3] +  2 * globalRendering->pixelY, 0.0f);
-	glColor4f(1.0f,0.0f,0.0f, 1.0f);
+	glColor4f(1.0f, 0.0f, 0.0f, 1.0f);
 	va->DrawArray0(GL_QUADS);
 }
 
 
 static void DrawProfiler()
 {
-	font->SetTextColor(1,1,1,1);
+	font->SetTextColor(1.0f, 1.0f, 1.0f, 1.0f);
 
 	// this locks a mutex, so don't call it every frame
 	if ((globalRendering->drawFrame % 10) == 0)
@@ -231,9 +234,9 @@ static void DrawProfiler()
 		CVertexArray* va  = GetVertexArray();
 		va->Initialize();
 			va->AddVertex0(start_x, start_y +                                 lineHeight + 0.005f, 0);
-			va->AddVertex0(end_x,   start_y +                                 lineHeight + 0.005f, 0);
+			va->AddVertex0(  end_x, start_y +                                 lineHeight + 0.005f, 0);
 			va->AddVertex0(start_x, start_y - profiler.sortedProfile.size() * lineHeight - 0.010f, 0);
-			va->AddVertex0(end_x,   start_y - profiler.sortedProfile.size() * lineHeight - 0.010f, 0);
+			va->AddVertex0(  end_x, start_y - profiler.sortedProfile.size() * lineHeight - 0.010f, 0);
 		glColor4f(0.0f, 0.0f, 0.5f, 0.5f);
 		va->DrawArray0(GL_TRIANGLE_STRIP);
 	}
@@ -246,16 +249,15 @@ static void DrawProfiler()
 		float fStartX = start_x + 0.005f + 0.015f + 0.005f;
 
 		// print total-time running since application start
-		fStartX += 0.04f; font->glPrint(fStartX, fStartY, textSize, FONT_SHADOW | FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "totaltime");
+		font->glPrint(fStartX += 0.04f, fStartY, textSize, FONT_SHADOW | FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "totaltime");
 
 		// print percent of CPU time used within the last 500ms
-		fStartX += 0.06f; font->glPrint(fStartX, fStartY, textSize, FONT_SHADOW | FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "cur-%usage");
-		fStartX += 0.04f; font->glPrint(fStartX, fStartY, textSize, FONT_SHADOW | FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "max-%usage");
-		fStartX += 0.04f; font->glPrint(fStartX, fStartY, textSize, FONT_SHADOW | FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "lag");
+		font->glPrint(fStartX += 0.06f, fStartY, textSize, FONT_SHADOW | FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "cur-%usage");
+		font->glPrint(fStartX += 0.04f, fStartY, textSize, FONT_SHADOW | FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "max-%usage");
+		font->glPrint(fStartX += 0.04f, fStartY, textSize, FONT_SHADOW | FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "lag");
 
 		// print timer name
-		fStartX += 0.01f;
-		font->glPrint(fStartX, fStartY, textSize, FONT_SHADOW | FONT_DESCENDER | FONT_SCALE | FONT_NORM, "title");
+		font->glPrint(fStartX += 0.01f, fStartY, textSize, FONT_SHADOW | FONT_DESCENDER | FONT_SCALE | FONT_NORM, "title");
 	}
 
 	// draw the textual info (total-time, short-time percentual time, timer-name)
@@ -268,43 +270,50 @@ static void DrawProfiler()
 		float fStartX = start_x + 0.005f + 0.015f + 0.005f;
 
 		// print total-time running since application start
-		fStartX += 0.04f; font->glFormat(fStartX, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "%.2fs", profileData.total.toSecsf());
+		font->glFormat(fStartX += 0.04f, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "%.2fs", profileData.total.toSecsf());
 
 		// print percent of CPU time used within the last 500ms
-		fStartX += 0.06f; font->glFormat(fStartX, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "%.2f%%", profileData.percent * 100);
-		fStartX += 0.04f; font->glFormat(fStartX, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "\xff\xff%c%c%.2f%%", profileData.newPeak?1:255, profileData.newPeak?1:255, profileData.peak * 100);
-		fStartX += 0.04f; font->glFormat(fStartX, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "\xff\xff%c%c%.0fms", profileData.newLagPeak?1:255, profileData.newLagPeak?1:255, profileData.maxLag);
+		font->glFormat(fStartX += 0.06f, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "%.2f%%", profileData.percent * 100);
+		font->glFormat(fStartX += 0.04f, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "\xff\xff%c%c%.2f%%", profileData.newPeak?1:255, profileData.newPeak?1:255, profileData.peak * 100);
+		font->glFormat(fStartX += 0.04f, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM | FONT_RIGHT, "\xff\xff%c%c%.0fms", profileData.newLagPeak?1:255, profileData.newLagPeak?1:255, profileData.maxLag);
 
 		// print timer name
-		fStartX += 0.01f; font->glPrint(fStartX, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM, p.first);
+		font->glPrint(fStartX += 0.01f, fStartY, textSize, FONT_DESCENDER | FONT_SCALE | FONT_NORM, p.first);
 	}
 
 
 	// draw the Timer selection boxes
-	const float boxSize = lineHeight*0.9;
-	const float selOffset = boxSize*0.2;
+	const float boxSize = lineHeight * 0.9f;
+	const float selOffset = boxSize * 0.2f;
 	glPushMatrix();
 	glTranslatef(start_x + 0.005f, start_y + boxSize, 0); // we are now at upper left of first box
 		CVertexArray* va  = GetVertexArray();
 		CVertexArray* va2 = GetVertexArray();
 		va->Initialize();
 		va2->Initialize();
-			int i = 1;
-			for (auto pi = profiler.sortedProfile.begin(); pi != profiler.sortedProfile.end(); ++pi, ++i) {
-				auto& fc = pi->second.color;
-				SColor c(fc[0], fc[1], fc[2]);
-				va->AddVertexC(float3(0, -i*lineHeight, 0), c); // upper left
-				va->AddVertexC(float3(0, -i*lineHeight-boxSize, 0), c); // lower left
-				va->AddVertexC(float3(boxSize, -i*lineHeight-boxSize, 0), c); // lower right
-				va->AddVertexC(float3(boxSize, -i*lineHeight, 0), c); // upper right
 
-				if (pi->second.showGraph) {
-					va2->AddVertex0(lineHeight+selOffset, -i*lineHeight-selOffset, 0); // upper left
-					va2->AddVertex0(lineHeight+selOffset, -i*lineHeight-boxSize+selOffset, 0); // lower left
-					va2->AddVertex0(lineHeight+boxSize-selOffset, -i*lineHeight-boxSize+selOffset, 0); // lower right
-					va2->AddVertex0(lineHeight+boxSize-selOffset, -i*lineHeight-selOffset, 0); // upper right
+			int i = 1;
+
+			for (const auto& p: profiler.sortedProfile) {
+				const CTimeProfiler::TimeRecord& tr = p.second;
+				const float3& fc = tr.color;
+
+				SColor c(fc[0], fc[1], fc[2]);
+				va->AddVertexC(float3(      0, -i * lineHeight          , 0), c); // upper left
+				va->AddVertexC(float3(      0, -i * lineHeight - boxSize, 0), c); // lower left
+				va->AddVertexC(float3(boxSize, -i * lineHeight - boxSize, 0), c); // lower right
+				va->AddVertexC(float3(boxSize, -i * lineHeight          , 0), c); // upper right
+
+				if (tr.showGraph) {
+					va2->AddVertex0(lineHeight +           selOffset, -i * lineHeight -           selOffset, 0); // upper left
+					va2->AddVertex0(lineHeight +           selOffset, -i * lineHeight - boxSize + selOffset, 0); // lower left
+					va2->AddVertex0(lineHeight + boxSize - selOffset, -i * lineHeight - boxSize + selOffset, 0); // lower right
+					va2->AddVertex0(lineHeight + boxSize - selOffset, -i * lineHeight -           selOffset, 0); // upper right
 				}
+
+				i++;
 			}
+
 		// draw the boxes
 		va->DrawArrayC(GL_QUADS);
 		// draw the 'graph view disabled' cross
@@ -346,9 +355,9 @@ static void DrawInfoText()
 	// background
 	CVertexArray* va = GetVertexArray();
 	va->Initialize();
-		va->AddVertex0(0.01f - 10 * globalRendering->pixelX, 0.02f - 10 * globalRendering->pixelY, 0.0f);
-		va->AddVertex0(0.01f - 10 * globalRendering->pixelX, 0.16f + 20 * globalRendering->pixelY, 0.0f);
-		va->AddVertex0(start_x - 0.05f + 10 * globalRendering->pixelX, 0.16f + 20 * globalRendering->pixelY, 0.0f);
+		va->AddVertex0(          0.01f - 10 * globalRendering->pixelX, 0.02f - 10 * globalRendering->pixelY, 0.0f);
+		va->AddVertex0(          0.01f - 10 * globalRendering->pixelX, 0.17f + 20 * globalRendering->pixelY, 0.0f);
+		va->AddVertex0(start_x - 0.05f + 10 * globalRendering->pixelX, 0.17f + 20 * globalRendering->pixelY, 0.0f);
 		va->AddVertex0(start_x - 0.05f + 10 * globalRendering->pixelX, 0.02f - 10 * globalRendering->pixelY, 0.0f);
 	glColor4f(0.0f, 0.0f, 0.0f, 0.5f);
 	va->DrawArray0(GL_QUADS);
@@ -364,6 +373,7 @@ static void DrawInfoText()
 	const char* pfsFmtStr = "[6] (%s)PFS-updates queued: {%i, %i}";
 	const char* luaFmtStr = "[7] Lua-allocated memory: %.1fMB (%.5uK allocs : %.5u usecs : %.1u states)";
 	const char* gpuFmtStr = "[8] GPU-allocated memory: %.1fMB / %.1fMB";
+	const char* sopFmtStr = "[9] SOP-allocated memory: {U,F,P}={%.1f / %.1f, %.1f / %.1f, %.1f / %.1f}KB";
 
 	const CProjectileHandler* ph = projectileHandler;
 	const IPathManager* pm = pathManager;
@@ -386,10 +396,10 @@ static void DrawInfoText()
 
 		switch (pm->GetPathFinderType()) {
 			case PFS_TYPE_DEFAULT: {
-				font->glFormat(0.01f, 0.13f, 0.5f, DBG_FONT_FLAGS, pfsFmtStr, "DEF", pfsUpdates.x, pfsUpdates.y);
+				font->glFormat(0.01f, 0.12f, 0.5f, DBG_FONT_FLAGS, pfsFmtStr, "DEF", pfsUpdates.x, pfsUpdates.y);
 			} break;
 			case PFS_TYPE_QTPFS: {
-				font->glFormat(0.01f, 0.13f, 0.5f, DBG_FONT_FLAGS, pfsFmtStr, "QT", pfsUpdates.x, pfsUpdates.y);
+				font->glFormat(0.01f, 0.12f, 0.5f, DBG_FONT_FLAGS, pfsFmtStr, "QT", pfsUpdates.x, pfsUpdates.y);
 			} break;
 		}
 	}
@@ -398,15 +408,24 @@ static void DrawInfoText()
 		SLuaInfo luaInfo = {0, 0, 0, 0};
 		spring_lua_alloc_get_stats(&luaInfo);
 
-		font->glFormat(0.01f, 0.15f, 0.5f, DBG_FONT_FLAGS, luaFmtStr, luaInfo.allocedBytes / 1024.0f / 1024.0f, luaInfo.numLuaAllocs / 1000, luaInfo.luaAllocTime, luaInfo.numLuaStates);
+		font->glFormat(0.01f, 0.14f, 0.5f, DBG_FONT_FLAGS, luaFmtStr, luaInfo.allocedBytes / 1024.0f / 1024.0f, luaInfo.numLuaAllocs / 1000, luaInfo.luaAllocTime, luaInfo.numLuaStates);
 	}
 
 	{
 		int2 gpuInfo;
 		GetAvailableVideoRAM(&gpuInfo.x);
 
-		font->glFormat(0.01f, 0.17f, 0.5f, DBG_FONT_FLAGS, gpuFmtStr, (gpuInfo.x - gpuInfo.y) / 1024.0f, gpuInfo.x / 1024.0f);
+		font->glFormat(0.01f, 0.16f, 0.5f, DBG_FONT_FLAGS, gpuFmtStr, (gpuInfo.x - gpuInfo.y) / 1024.0f, gpuInfo.x / 1024.0f);
 	}
+
+	font->glFormat(0.01f, 0.18f, 0.5f, DBG_FONT_FLAGS, sopFmtStr,
+		unitMemPool.total_size() / 1024.0f,
+		unitMemPool.freed_size() / 1024.0f,
+		featureMemPool.total_size() / 1024.0f,
+		featureMemPool.freed_size() / 1024.0f,
+		projMemPool.total_size() / 1024.0f,
+		projMemPool.freed_size() / 1024.0f
+	);
 }
 
 
