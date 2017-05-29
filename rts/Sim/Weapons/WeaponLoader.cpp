@@ -37,7 +37,6 @@ void CWeaponLoader::KillStatic() { weaponMemPool.clear(); }
 void CWeaponLoader::LoadWeapons(CUnit* unit)
 {
 	const UnitDef* unitDef = unit->unitDef;
-	const WeaponDef* wd = nullptr;
 
 	unit->weapons.reserve(unitDef->weapons.size());
 
