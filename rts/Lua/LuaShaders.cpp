@@ -4,7 +4,6 @@
 #include "LuaShaders.h"
 
 #include "LuaInclude.h"
-
 #include "LuaHashString.h"
 #include "LuaHandle.h"
 #include "LuaOpenGL.h"
@@ -18,9 +17,9 @@
 
 #include <string>
 #include <vector>
-using std::string;
-using std::vector;
 
+int   intUniformArrayBuf[1024] = {0   };
+float fltUniformArrayBuf[1024] = {0.0f};
 
 int LuaShaders::activeShaderDepth = 0;
 
@@ -236,7 +235,7 @@ static bool ParseUniformsTable(lua_State* L, const char* fieldName, int index, i
 			if (!lua_israwstring(L, -2))
 				continue;
 
-			const string name = lua_tostring(L, -2);
+			const std::string name = lua_tostring(L, -2);
 			const GLint loc = glGetUniformLocation(progName, name.c_str());
 
 			if (loc < 0)
@@ -275,8 +274,8 @@ static bool ParseUniformSetupTables(lua_State* L, int index, GLuint progName)
 
 static GLuint CompileObject(
 	lua_State* L,
-	const vector<string>& defs,
-	const vector<string>& sources,
+	const std::vector<std::string>& defs,
+	const std::vector<std::string>& sources,
 	const GLenum type,
 	bool& success
 ) {
@@ -373,7 +372,7 @@ static bool ParseShaderTable(
 	}
 
 	LuaShaders& shaders = CLuaHandle::GetActiveShaders(L);
-	shaders.errorLog = "\"" + string(key) + "\" must be a string or a table value!";
+	shaders.errorLog = "\"" + std::string(key) + "\" must be a string or a table value!";
 
 	lua_pop(L, 1);
 	return false;
@@ -514,7 +513,7 @@ int LuaShaders::DeleteShader(lua_State* L)
 
 int LuaShaders::UseShader(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 
 	const int progIdx = luaL_checkint(L, 1);
 	if (progIdx == 0) {
@@ -573,11 +572,11 @@ int LuaShaders::ActiveShader(lua_State* L)
 
 static const char* UniformTypeString(GLenum type)
 {
-#define UNIFORM_STRING_CASE(x)                   \
-  case (GL_ ## x): {                             \
-    static const string str = StringToLower(#x); \
-    return str.c_str();                          \
-	}
+#define UNIFORM_STRING_CASE(x)                        \
+  case (GL_ ## x): {                                  \
+    static const std::string str = StringToLower(#x); \
+    return str.c_str();                               \
+  }
 
 	switch (type) {
 		UNIFORM_STRING_CASE(FLOAT)
@@ -649,7 +648,7 @@ int LuaShaders::GetUniformLocation(lua_State* L)
 	if (progName == 0)
 		return 0;
 
-	const string name = luaL_checkstring(L, 2);
+	const std::string name = luaL_checkstring(L, 2);
 	const GLint location = glGetUniformLocation(progName, name.c_str());
 
 	lua_pushnumber(L, location);
@@ -663,9 +662,9 @@ int LuaShaders::GetUniformLocation(lua_State* L)
 int LuaShaders::Uniform(lua_State* L)
 {
 	if (activeShaderDepth <= 0)
-		CheckDrawingEnabled(L, __FUNCTION__);
+		CheckDrawingEnabled(L, __func__);
 
-	const GLuint location = (GLuint) luaL_checknumber(L, 1);
+	const GLuint location = luaL_checkint(L, 1);
 	const int numValues = lua_gettop(L) - 1;
 
 	switch (numValues) {
@@ -693,28 +692,24 @@ int LuaShaders::Uniform(lua_State* L)
 int LuaShaders::UniformInt(lua_State* L)
 {
 	if (activeShaderDepth <= 0)
-		CheckDrawingEnabled(L, __FUNCTION__);
+		CheckDrawingEnabled(L, __func__);
 
-	const GLuint location = (GLuint) luaL_checknumber(L, 1);
+	const GLuint location = luaL_checkint(L, 1);
 	const int numValues = lua_gettop(L) - 1;
 
 	switch (numValues) {
 		case 1: {
 			glUniform1i(location, luaL_checkint(L, 2));
-			break;
-		}
+		} break;
 		case 2: {
 			glUniform2i(location, luaL_checkint(L, 2), luaL_checkint(L, 3));
-			break;
-		}
+		} break;
 		case 3: {
 			glUniform3i(location, luaL_checkint(L, 2), luaL_checkint(L, 3), luaL_checkint(L, 4));
-			break;
-		}
+		} break;
 		case 4: {
 			glUniform4i(location, luaL_checkint(L, 2), luaL_checkint(L, 3), luaL_checkint(L, 4), luaL_checkint(L, 5));
-			break;
-		}
+		} break;
 		default: {
 			luaL_error(L, "Incorrect arguments to gl.UniformInt()");
 		}
@@ -723,29 +718,58 @@ int LuaShaders::UniformInt(lua_State* L)
 	return 0;
 }
 
+
+#if 0
+template<typename type, typename glUniformFunc, typename ParseArrayFunc>
+static bool GLUniformArray(lua_State* L, UniformFunc uf, ParseArrayFunc pf)
+{
+	const GLuint loc = luaL_checkint(L, 1);
+
+	switch (next_power_of_2(luaL_optint(L, 4, 32))) {
+		case (1 <<  3): { type array[1 <<  3] = {type(0)}; uf(loc, pf(L, 3, array, 1 <<  3), &array[0]); return true; } break;
+		case (1 <<  4): { type array[1 <<  4] = {type(0)}; uf(loc, pf(L, 3, array, 1 <<  4), &array[0]); return true; } break;
+		case (1 <<  5): { type array[1 <<  5] = {type(0)}; uf(loc, pf(L, 3, array, 1 <<  5), &array[0]); return true; } break;
+		case (1 <<  6): { type array[1 <<  6] = {type(0)}; uf(loc, pf(L, 3, array, 1 <<  6), &array[0]); return true; } break;
+		case (1 <<  7): { type array[1 <<  7] = {type(0)}; uf(loc, pf(L, 3, array, 1 <<  7), &array[0]); return true; } break;
+		case (1 <<  8): { type array[1 <<  8] = {type(0)}; uf(loc, pf(L, 3, array, 1 <<  8), &array[0]); return true; } break;
+		case (1 <<  9): { type array[1 <<  9] = {type(0)}; uf(loc, pf(L, 3, array, 1 <<  9), &array[0]); return true; } break;
+		case (1 << 10): { type array[1 << 10] = {type(0)}; uf(loc, pf(L, 3, array, 1 << 10), &array[0]); return true; } break;
+		default: {} break;
+	}
+
+	return false;
+}
+#endif
+
 int LuaShaders::UniformArray(lua_State* L)
 {
 	if (activeShaderDepth <= 0)
-		CheckDrawingEnabled(L, __FUNCTION__);
+		CheckDrawingEnabled(L, __func__);
 
 	if (!lua_istable(L, 3))
 		return 0;
 
-	const GLuint location = (GLuint) luaL_checknumber(L, 1);
-
 	switch (luaL_checkint(L, 2)) {
 		case UNIFORM_TYPE_INT: {
-			int array[32] = {0};
-			const int count = LuaUtils::ParseIntArray(L, 3, array, sizeof(array) / sizeof(int));
+			#if 0
+			GLUniformArray<int>(L, glUniform1iv, LuaUtils::ParseIntArray);
+			#else
+			const int loc = luaL_checkint(L, 1);
+			const int cnt = LuaUtils::ParseIntArray(L, 3, intUniformArrayBuf, sizeof(intUniformArrayBuf) / sizeof(int));
 
-			glUniform1iv(location, count, &array[0]);
+			glUniform1iv(loc, cnt, &intUniformArrayBuf[0]);
+			#endif
 		} break;
 
 		case UNIFORM_TYPE_FLOAT: {
-			float array[32] = {0.0f};
-			const int count = LuaUtils::ParseFloatArray(L, 3, array, sizeof(array) / sizeof(float));
+			#if 0
+			GLUniformArray<float>(L, glUniform1fv, LuaUtils::ParseFloatArray);
+			#else
+			const int loc = luaL_checkint(L, 1);
+			const int cnt = LuaUtils::ParseFloatArray(L, 3, fltUniformArrayBuf, sizeof(fltUniformArrayBuf) / sizeof(float));
 
-			glUniform1fv(location, count, &array[0]);
+			glUniform1fv(loc, cnt, &fltUniformArrayBuf[0]);
+			#endif
 		} break;
 
 		default: {
@@ -758,18 +782,17 @@ int LuaShaders::UniformArray(lua_State* L)
 int LuaShaders::UniformMatrix(lua_State* L)
 {
 	if (activeShaderDepth <= 0)
-		CheckDrawingEnabled(L, __FUNCTION__);
+		CheckDrawingEnabled(L, __func__);
 
 	const GLuint location = (GLuint)luaL_checknumber(L, 1);
 	const int numValues = lua_gettop(L) - 1;
 
 	switch (numValues) {
 		case 1: {
-			if (!lua_isstring(L, 2)) {
+			if (!lua_isstring(L, 2))
 				luaL_error(L, "Incorrect arguments to gl.UniformMatrix()");
-			}
 
-			const string matName = lua_tostring(L, 2);
+			const std::string matName = lua_tostring(L, 2);
 			const CMatrix44f* mat = LuaOpenGLUtils::GetNamedMatrix(matName);
 
 			if (mat) {
@@ -820,22 +843,19 @@ int LuaShaders::UniformMatrix(lua_State* L)
 
 int LuaShaders::SetShaderParameter(lua_State* L)
 {
-	if (activeShaderDepth <= 0) {
-		CheckDrawingEnabled(L, __FUNCTION__);
-	}
+	if (activeShaderDepth <= 0)
+		CheckDrawingEnabled(L, __func__);
 
 	const LuaShaders& shaders = CLuaHandle::GetActiveShaders(L);
 	const GLuint progName = shaders.GetProgramName(L, 1);
-	if (progName == 0) {
+	if (progName == 0)
 		return 0;
-	}
 
 	const GLenum param = (GLenum)luaL_checkint(L, 2);
 	const GLint  value =  (GLint)luaL_checkint(L, 3);
 
-	if (IS_GL_FUNCTION_AVAILABLE(glProgramParameteriEXT)) {
+	if (IS_GL_FUNCTION_AVAILABLE(glProgramParameteriEXT))
 		glProgramParameteriEXT(progName, param, value);
-	}
 
 	return 0;
 }

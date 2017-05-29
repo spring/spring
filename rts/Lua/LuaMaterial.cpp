@@ -919,9 +919,7 @@ void LuaMatHandler::PrintBins(const string& indent, LuaMatType type) const
 void LuaMatHandler::PrintAllBins(const string& indent) const
 {
 	for (int m = 0; m < LUAMAT_TYPE_COUNT; m++) {
-		std::string newIndent = indent + GetMatTypeName(LuaMatType(m));
-		newIndent += "  ";
-		PrintBins(newIndent, LuaMatType(m));
+		PrintBins(indent + GetMatTypeName(LuaMatType(m)) + "  ", LuaMatType(m));
 	}
 }
 
