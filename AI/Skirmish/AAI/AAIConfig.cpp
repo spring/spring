@@ -10,7 +10,7 @@
 #include "AAIConfig.h"
 #include "AAI.h"
 #include "System/SafeCStrings.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 
 // all paths
 #define CFG_PATH "cfg/"

@@ -2,7 +2,7 @@
 #include "RAI.h"
 #include <set>
 #include "LegacyCpp/MoveData.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include "CUtils/Util.h"
 #include <stdexcept>
 //#include <time.h>

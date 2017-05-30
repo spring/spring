@@ -2,7 +2,7 @@
 #include "RAI.h"
 #include <set>
 #include "LegacyCpp/FeatureDef.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include <stdio.h>
 #include <stdexcept>
 
