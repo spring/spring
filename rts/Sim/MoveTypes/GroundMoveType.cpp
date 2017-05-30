@@ -309,7 +309,7 @@ bool CGroundMoveType::Update()
 	ASSERT_SYNCED(owner->pos);
 
 	// do nothing at all if we are inside a transport
-	if (owner->GetTransporter() != NULL)
+	if (owner->GetTransporter() != nullptr)
 		return false;
 
 	owner->UpdatePhysicalStateBit(CSolidObject::PSTATE_BIT_SKIDDING, owner->IsSkidding() || OnSlope(1.0f));
@@ -335,8 +335,8 @@ bool CGroundMoveType::Update()
 	// units do not get buried by restoring terrain)
 	UpdateOwnerSpeedAndHeading();
 	UpdateOwnerPos(owner->speed, GetNewSpeedVector(deltaSpeed, myGravity));
-	AdjustPosToWaterLine();
 	HandleObjectCollisions();
+	AdjustPosToWaterLine();
 
 	ASSERT_SANE_OWNER_SPEED(owner->speed);
 
@@ -790,9 +790,8 @@ void CGroundMoveType::UpdateSkid()
 			// TODO:
 			//   bouncing behaves too much like a rubber-ball,
 			//   most impact energy needs to go into the ground
-			if (doColliderDamage) {
-				owner->DoDamage(DamageArray(impactDamageMult), ZeroVector, NULL, -CSolidObject::DAMAGE_COLLISION_GROUND, -1);
-			}
+			if (doColliderDamage)
+				owner->DoDamage(DamageArray(impactDamageMult), ZeroVector, nullptr, -CSolidObject::DAMAGE_COLLISION_GROUND, -1);
 
 			skidRotSpeed = 0.0f;
 			// skidRotAccel = 0.0f;
@@ -885,6 +884,8 @@ void CGroundMoveType::UpdateSkid()
 		HandleObjectCollisions();
 	}
 
+	AdjustPosToWaterLine();
+
 	// always update <oldPos> here so that <speed> does not make
 	// extreme jumps when the unit transitions from skidding back
 	// to non-skidding
@@ -959,13 +960,11 @@ void CGroundMoveType::CheckCollisionSkid()
 				continue;
 
 			// damage the collider, no added impulse
-			if (doColliderDamage) {
-				collider->DoDamage(DamageArray(impactDamageMult), ZeroVector, NULL, -CSolidObject::DAMAGE_COLLISION_OBJECT, -1);
-			}
+			if (doColliderDamage)
+				collider->DoDamage(DamageArray(impactDamageMult), ZeroVector, nullptr, -CSolidObject::DAMAGE_COLLISION_OBJECT, -1);
 			// damage the (static) collidee based on collider's mass, no added impulse
-			if (doCollideeDamage) {
-				collidee->DoDamage(DamageArray(impactDamageMult), ZeroVector, NULL, -CSolidObject::DAMAGE_COLLISION_OBJECT, -1);
-			}
+			if (doCollideeDamage)
+				collidee->DoDamage(DamageArray(impactDamageMult), ZeroVector, nullptr, -CSolidObject::DAMAGE_COLLISION_OBJECT, -1);
 
 			collider->Move(dif * impactSpeed, true);
 			collider->SetVelocity(collider->speed + ((dif * impactSpeed) * 1.8f));
@@ -993,13 +992,11 @@ void CGroundMoveType::CheckCollisionSkid()
 				continue;
 
 			// damage the collider
-			if (doColliderDamage) {
-				collider->DoDamage(DamageArray(colliderImpactDmgMult), dif * colliderImpactDmgMult, NULL, -CSolidObject::DAMAGE_COLLISION_OBJECT, -1);
-			}
+			if (doColliderDamage)
+				collider->DoDamage(DamageArray(colliderImpactDmgMult), dif * colliderImpactDmgMult, nullptr, -CSolidObject::DAMAGE_COLLISION_OBJECT, -1);
 			// damage the collidee
-			if (doCollideeDamage) {
-				collidee->DoDamage(DamageArray(collideeImpactDmgMult), dif * -collideeImpactDmgMult, NULL, -CSolidObject::DAMAGE_COLLISION_OBJECT, -1);
-			}
+			if (doCollideeDamage)
+				collidee->DoDamage(DamageArray(collideeImpactDmgMult), dif * -collideeImpactDmgMult, nullptr, -CSolidObject::DAMAGE_COLLISION_OBJECT, -1);
 
 			collider->Move( colliderImpactImpulse, true);
 			collidee->Move(-collideeImpactImpulse, true);
@@ -1030,12 +1027,11 @@ void CGroundMoveType::CheckCollisionSkid()
 			continue;
 
 		// damage the collider, no added impulse (!)
-		if (doColliderDamage) {
-			collider->DoDamage(DamageArray(impactDamageMult), ZeroVector, NULL, -CSolidObject::DAMAGE_COLLISION_OBJECT, -1);
-		}
+		if (doColliderDamage)
+			collider->DoDamage(DamageArray(impactDamageMult), ZeroVector, nullptr, -CSolidObject::DAMAGE_COLLISION_OBJECT, -1);
 
 		// damage the collidee feature based on collider's mass
-		collidee->DoDamage(DamageArray(impactDamageMult), -impactImpulse, NULL, -CSolidObject::DAMAGE_COLLISION_OBJECT, -1);
+		collidee->DoDamage(DamageArray(impactDamageMult), -impactImpulse, nullptr, -CSolidObject::DAMAGE_COLLISION_OBJECT, -1);
 
 		collider->Move(impactImpulse, true);
 		collider->SetVelocity(collider->speed + (impactImpulse * 1.8f));
