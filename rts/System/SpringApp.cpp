@@ -152,6 +152,8 @@ DEFINE_bool     (oldmenu,                                  false, "Start the old
 
 
 
+int spring::exitCode = spring::EXIT_CODE_NORMAL;
+
 static bool inShutDown = false;
 
 

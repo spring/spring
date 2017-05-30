@@ -8,7 +8,6 @@
 
 
 #include "System/SpringApp.h"
-#include "System/SpringExitCode.h"
 #include "System/Exceptions.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/Platform/errorhandler.h"
@@ -22,8 +21,6 @@
 #ifdef WIN32
 	#include "lib/SOP/SOP.hpp" // NvOptimus
 #endif
-
-int spring::exitCode = spring::EXIT_CODE_NORMAL;
 
 int Run(int argc, char* argv[])
 {

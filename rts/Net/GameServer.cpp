@@ -749,7 +749,10 @@ void CGameServer::CheckSync()
 				Broadcast(CBaseNetProtocol::Get().SendSdCheckrequest(serverFrameNum));
 			#endif
 
+				#ifndef DEDICATED
+				// DS exit-codes are not used
 				spring::exitCode = spring::EXIT_CODE_DESYNC;
+				#endif
 
 				// For each group, output a message with list of player names in it.
 				// TODO this should be linked to the resync system so it can roundrobin
