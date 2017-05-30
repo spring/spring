@@ -234,6 +234,9 @@ bool SpringApp::Initialize()
 	// GlobalConfig
 	GlobalConfig::Instantiate();
 
+	// Install Watchdog (must happen after time epoch is set)
+	Watchdog::Install();
+	Watchdog::RegisterThread(WDT_MAIN, true);
 
 	// Create Window
 	if (!InitWindow(("Spring " + SpringVersion::GetSync()).c_str())) {
@@ -244,10 +247,6 @@ bool SpringApp::Initialize()
 	// Init OpenGL
 	globalRendering->PostInit();
 	InitOpenGL();
-
-	// Install Watchdog (must happen after time epoch is set)
-	Watchdog::Install();
-	Watchdog::RegisterThread(WDT_MAIN, true);
 
 	// ArchiveScanner uses for_mt --> needs thread-count set
 	// (employ all available threads, then switch to default)
