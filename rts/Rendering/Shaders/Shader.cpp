@@ -8,7 +8,7 @@
 #include "Rendering/GlobalRendering.h"
 
 #include "System/SafeUtil.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/Sync/HsiehHash.h"
 #include "System/Log/ILog.h"

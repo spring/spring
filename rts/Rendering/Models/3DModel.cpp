@@ -7,7 +7,7 @@
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "System/Exceptions.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 
 #include <algorithm>
 #include <cctype>

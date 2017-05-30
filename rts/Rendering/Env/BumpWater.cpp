@@ -33,7 +33,7 @@
 #include "System/Log/ILog.h"
 #include "System/Exceptions.h"
 #include "System/SpringFormat.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 
 using std::string;
 using std::vector;

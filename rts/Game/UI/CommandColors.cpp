@@ -6,7 +6,7 @@
 #include "Rendering/GL/myGL.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/SimpleParser.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 
 #include <cstdio>
 #include <cstring>

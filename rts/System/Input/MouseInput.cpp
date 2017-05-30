@@ -26,7 +26,7 @@
 #include "Game/UI/MouseHandler.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/FBO.h"
-#include "System/maindefines.h"
+#include "System/MainDefines.h"
 
 #include <functional>
 #include <SDL_events.h>

@@ -2,7 +2,7 @@
 
 #include "DefinitionTag.h"
 #include "System/Log/ILog.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include <iostream>
 #ifndef _MSC_VER
 #include <cxxabi.h>

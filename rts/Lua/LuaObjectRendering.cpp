@@ -16,7 +16,7 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "System/Log/ILog.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 
 static const spring::unordered_map<std::string, LuaMatType> matNameMap = {
 	{"alpha",          LUAMAT_ALPHA},

@@ -12,7 +12,7 @@
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/RapidHandler.h"
 #include "System/FileSystem/VFSHandler.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 
 #include <string>
 

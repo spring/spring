@@ -1,6 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include "System/bitops.h"
 
 #include <zlib.h>
@@ -11,9 +11,6 @@
 
 #include <cstring>
 #include <cinttypes>
-
-
-int spring::exitCode = SPRING_EXIT_CODE_NORMAL;
 
 
 std::string StringReplace(const std::string& text,

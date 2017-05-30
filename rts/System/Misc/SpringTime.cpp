@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "SpringTime.h"
-#include "System/maindefines.h"
+#include "System/MainDefines.h"
 #include "System/myMath.h"
 
 #define FORCE_CHRONO_TIMERS

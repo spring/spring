@@ -15,7 +15,7 @@
 #include "System/FileSystem/FileSystem.h"
 #include "System/Log/ILog.h"
 #include "System/UnorderedMap.hpp"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 
 #if !defined UNITSYNC && !defined DEDICATED && !defined BUILDING_AI
 	#include "System/TimeProfiler.h"

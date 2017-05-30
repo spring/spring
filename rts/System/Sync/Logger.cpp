@@ -12,7 +12,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include "Logger.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include "System/SafeCStrings.h"
 
 #ifdef _MSC_VER

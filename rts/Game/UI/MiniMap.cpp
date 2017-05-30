@@ -36,7 +36,7 @@
 #include "Sim/Weapons/Weapon.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include "System/TimeProfiler.h"
 #include "System/Input/KeyInput.h"
 #include "System/FileSystem/SimpleParser.h"

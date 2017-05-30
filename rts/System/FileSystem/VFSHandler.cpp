@@ -13,7 +13,7 @@
 #include "ArchiveScanner.h"
 #include "System/Exceptions.h"
 #include "System/Log/ILog.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 
 
 #define LOG_SECTION_VFS "VFS"

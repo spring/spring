@@ -18,7 +18,7 @@
 #include "Rendering/Shaders/Shader.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "System/Config/ConfigHandler.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 
 #define SMF_TEXSQUARE_SIZE 1024.0f
 

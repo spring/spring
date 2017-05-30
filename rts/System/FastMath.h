@@ -9,7 +9,7 @@
 #include <cinttypes>
 
 #include "lib/streflop/streflop_cond.h"
-#include "System/maindefines.h"
+#include "System/MainDefines.h"
 #include "System/MathConstants.h"
 
 #ifdef _MSC_VER

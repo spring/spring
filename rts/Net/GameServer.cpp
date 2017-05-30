@@ -38,9 +38,10 @@
 #include "System/GlobalConfig.h"
 #include "System/MsgStrings.h"
 #include "System/myMath.h"
+#include "System/SpringExitCode.h"
 #include "System/SpringFormat.h"
 #include "System/TdfParser.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/FileSystem/SimpleParser.h"
 #include "System/Net/Connection.h"
@@ -748,7 +749,7 @@ void CGameServer::CheckSync()
 				Broadcast(CBaseNetProtocol::Get().SendSdCheckrequest(serverFrameNum));
 			#endif
 
-				spring::exitCode = SPRING_EXIT_CODE_DESYNC;
+				spring::exitCode = spring::EXIT_CODE_DESYNC;
 
 				// For each group, output a message with list of player names in it.
 				// TODO this should be linked to the resync system so it can roundrobin

@@ -6,7 +6,7 @@
 #include "ExternalAI/Interface/AISCommands.h"
 #include "Sim/Units/CommandAI/Command.h"
 #include "Sim/Units/CommandAI/CommandDescription.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 
 // engine copies, so we do not have to adjust
 // to each minor change done there

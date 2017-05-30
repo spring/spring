@@ -12,7 +12,7 @@ extern "C" {
 #include "lib/7z/7zCrc.h"
 }
 
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include "System/Log/ILog.h"
 
 static Byte kUtf8Limits[5] = { 0xC0, 0xE0, 0xF0, 0xF8, 0xFC };

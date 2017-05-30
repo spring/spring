@@ -14,7 +14,7 @@
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/VFSHandler.h"
 #include "System/FileSystem/FileSystem.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include "../tools/pr-downloader/src/pr-downloader.h"
 
 

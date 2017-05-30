@@ -3,7 +3,7 @@
 #ifndef SPRING_FORMAT_H
 #define SPRING_FORMAT_H
 
-#include "maindefines.h"
+#include "MainDefines.h"
 #include <string>
 
 namespace spring {

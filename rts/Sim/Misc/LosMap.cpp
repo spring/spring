@@ -6,7 +6,7 @@
 #include "System/myMath.h"
 #include "System/float3.h"
 #include "System/Log/ILog.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include "System/Threading/ThreadPool.h"
 #ifdef USE_UNSYNCED_HEIGHTMAP
 	#include "Game/GlobalUnsynced.h" // for myAllyTeam

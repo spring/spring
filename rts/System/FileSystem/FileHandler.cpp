@@ -18,7 +18,7 @@
 #ifndef TOOLS
 	#include "VFSHandler.h"
 	#include "DataDirsAccess.h"
-	#include "System/Util.h"
+	#include "System/StringUtil.h"
 	#include "System/Platform/Misc.h"
 #endif
 

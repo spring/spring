@@ -9,7 +9,7 @@
 #include "Rendering/GL/myGL.h"
 #include "Game/GlobalUnsynced.h"
 #include "Gui.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 
 namespace agui
 {

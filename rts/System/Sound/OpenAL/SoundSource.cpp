@@ -17,7 +17,7 @@
 
 #include "Sim/Misc/GlobalConstants.h"
 #include "System/float3.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include "System/myMath.h"
 
 float CSoundSource::referenceDistance = 200.0f;

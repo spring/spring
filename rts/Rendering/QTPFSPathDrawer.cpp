@@ -25,7 +25,7 @@
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Map/InfoTexture/Legacy/LegacyInfoTextureHandler.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 
 QTPFSPathDrawer::QTPFSPathDrawer(): IPathDrawer() {
 	pm = dynamic_cast<QTPFS::PathManager*>(pathManager);

@@ -21,7 +21,7 @@
 #include "Lua/LuaParser.h"
 #include "System/ContainerUtil.h"
 #include "System/CRC.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include "System/Exceptions.h"
 #include "System/Threading/ThreadPool.h"
 #include "System/FileSystem/RapidHandler.h"

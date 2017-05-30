@@ -10,7 +10,7 @@
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/Models/3DModel.h"
 #include "Rendering/Textures/Bitmap.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include "System/Exceptions.h"
 #include "System/Log/ILog.h"
 #include "System/Platform/Threading.h"

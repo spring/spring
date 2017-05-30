@@ -26,7 +26,7 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/Color.h"
 #include "System/Exceptions.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include "System/Threading/ThreadPool.h"
 #include "System/TimeProfiler.h"
 #include "System/Log/ILog.h"

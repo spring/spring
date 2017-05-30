@@ -24,7 +24,7 @@
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include "System/Log/ILog.h"
 
 SimObjectMemPool<760> weaponMemPool;

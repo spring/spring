@@ -2,7 +2,7 @@
 
 #include "System/LogOutput.h"
 
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include "Game/GameVersion.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/FileSystem/FileSystem.h"

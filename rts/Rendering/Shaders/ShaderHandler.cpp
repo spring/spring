@@ -6,7 +6,7 @@
 #include "Rendering/Shaders/Shader.h"
 #include "Rendering/GlobalRendering.h"
 #include "System/Log/ILog.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 
 #include <cassert>
 

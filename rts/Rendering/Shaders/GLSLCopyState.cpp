@@ -4,7 +4,7 @@
 #include "Shader.h"
 #include "Rendering/GL/myGL.h"
 #include "System/Log/ILog.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 
 
 #define LOG_SECTION_SHADER "Shader"

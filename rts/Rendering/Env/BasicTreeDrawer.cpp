@@ -13,7 +13,7 @@
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Features/Feature.h"
 #include "System/Log/ILog.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

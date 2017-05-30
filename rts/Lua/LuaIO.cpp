@@ -19,7 +19,7 @@ using std::string;
 #include "LuaInclude.h"
 #include "System/FileSystem/DataDirsAccess.h"
 #include "System/FileSystem/FileSystem.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 
 
 /******************************************************************************/

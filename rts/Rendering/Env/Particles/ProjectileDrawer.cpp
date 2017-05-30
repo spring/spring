@@ -34,11 +34,11 @@
 #include "System/EventHandler.h"
 #include "System/Exceptions.h"
 #include "System/Log/ILog.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 
 
 
-CProjectileDrawer* projectileDrawer = NULL;
+CProjectileDrawer* projectileDrawer = nullptr;
 
 CProjectileDrawer::CProjectileDrawer(): CEventClient("[CProjectileDrawer]", 123456, false) {
 	eventHandler.AddClient(this);

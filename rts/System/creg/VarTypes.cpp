@@ -7,7 +7,7 @@
 
 #include "VarTypes.h"
 
-#include "System/Util.h"
+#include "System/StringUtil.h"
 
 #include <assert.h>
 

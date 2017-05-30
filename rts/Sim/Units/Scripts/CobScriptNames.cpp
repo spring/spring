@@ -2,7 +2,7 @@
 
 #include "CobScriptNames.h"
 #include "Sim/Misc/GlobalConstants.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 
 // script function-indices never change, so this is fine wrt. reloading
 static std::vector<std::string> scriptNames;

@@ -11,7 +11,7 @@
 #include "System/Log/ILog.h"
 #include "System/Exceptions.h"
 #include "System/myMath.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include "System/FileSystem/FileHandler.h"
 
 #if !defined(HEADLESS) && !defined(NO_SOUND)

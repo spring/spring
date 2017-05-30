@@ -3,7 +3,7 @@
 #include "IArchive.h"
 
 #include "System/CRC.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 
 IArchive::IArchive(const std::string& archiveName)
 	: archiveFile(archiveName)

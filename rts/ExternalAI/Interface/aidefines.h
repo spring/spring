@@ -8,8 +8,8 @@
 #ifndef AI_DEFINES_H
 #define AI_DEFINES_H
 
-#include "System/maindefines.h"
-#include "System/exportdefines.h"
+#include "System/MainDefines.h"
+#include "System/ExportDefines.h"
 
 #define ENGINE_VERSION_STRING VERSION_STRING
 #define ENGINE_VERSION_NUMBER 1000

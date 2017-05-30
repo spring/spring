@@ -12,7 +12,7 @@
 #include "Sim/Misc/SimObjectMemPool.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/Log/ILog.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 
 void CUnitScriptFactory::InitStatic()
 {

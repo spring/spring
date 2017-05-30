@@ -8,7 +8,7 @@
 #include "Backend.h"
 #include "FramePrefixer.h"
 #include "Level.h" // for LOG_LEVEL_*
-#include "System/maindefines.h"
+#include "System/MainDefines.h"
 
 #include <cstdio>
 

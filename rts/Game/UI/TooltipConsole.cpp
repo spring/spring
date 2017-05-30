@@ -20,7 +20,7 @@
 #include "Sim/Units/UnitHandler.h"
 #include "System/EventHandler.h"
 #include "System/Config/ConfigHandler.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 
 
 CONFIG(std::string, TooltipGeometry).defaultValue("0.0 0.0 0.41 0.1");

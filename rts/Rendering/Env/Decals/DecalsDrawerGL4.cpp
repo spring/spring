@@ -34,7 +34,7 @@
 #include "System/Log/ILog.h"
 #include "System/myMath.h"
 #include "System/TimeProfiler.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/UnorderedMap.hpp"

@@ -23,7 +23,7 @@
 #include "System/Misc/SpringTime.h"
 #include "System/ContainerUtil.h"
 #include "System/ScopedFPUSettings.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 
 
 LuaParser* GetLuaParser(lua_State* L) {

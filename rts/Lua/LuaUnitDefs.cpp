@@ -25,7 +25,7 @@
 #include "Sim/Weapons/WeaponDef.h"
 #include "System/FileSystem/SimpleParser.h"
 #include "System/Log/ILog.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 
 
 static ParamMap paramMap;

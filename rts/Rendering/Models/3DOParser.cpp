@@ -8,7 +8,7 @@
 #include "Sim/Misc/CollisionVolume.h"
 #include "System/Exceptions.h"
 #include "System/UnorderedMap.hpp"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include "System/Log/ILog.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/SimpleParser.h"

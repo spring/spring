@@ -22,7 +22,7 @@
 #include "Sim/Weapons/WeaponDef.h"
 #include "System/Log/ILog.h"
 #include "System/myMath.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include <assert.h>
 
 #define AUTO_GENERATE_ATTACK_ORDERS 1

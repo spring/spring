@@ -7,7 +7,7 @@
 #include "System/TdfParser.h"
 #include "System/Exceptions.h"
 #include "System/SpringFormat.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/RapidHandler.h"
 #include "System/Sync/HsiehHash.h"

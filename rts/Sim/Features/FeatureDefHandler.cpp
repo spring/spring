@@ -9,7 +9,7 @@
 #include "Sim/Objects/SolidObject.h"
 #include "System/Exceptions.h"
 #include "System/Log/ILog.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 
 CFeatureDefHandler* featureDefHandler = NULL;
 

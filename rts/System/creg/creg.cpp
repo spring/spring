@@ -11,7 +11,7 @@
 
 #include "creg_cond.h"
 #include "System/UnorderedMap.hpp"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include "System/Sync/HsiehHash.h"
 
 

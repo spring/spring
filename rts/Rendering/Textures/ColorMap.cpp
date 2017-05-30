@@ -8,7 +8,7 @@
 #include "Bitmap.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/UnorderedMap.hpp"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include "System/Exceptions.h"
 
 static std::deque<CColorMap> colorMaps;

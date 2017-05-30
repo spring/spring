@@ -19,7 +19,7 @@
 #include "Sim/Units/CommandAI/Command.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include "System/Threading/SpringThreading.h"
 
 

@@ -9,7 +9,7 @@
 #include "System/FileSystem/DataDirsAccess.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/FileSystem/FileQueryFlags.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 
 
 CDirArchiveFactory::CDirArchiveFactory()

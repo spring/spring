@@ -7,7 +7,7 @@
 #include "Net/Protocol/BaseNetProtocol.h"
 #include "System/Net/PackPacket.h"
 #include "System/Net/UnpackPacket.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 
 using namespace netcode;
 

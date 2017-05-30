@@ -6,7 +6,7 @@
 #include "Lua/LuaSyncedRead.h"
 #include "System/float3.h"
 #include "System/Exceptions.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
 

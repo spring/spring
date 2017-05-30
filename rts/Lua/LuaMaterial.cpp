@@ -15,7 +15,7 @@
 #include "Sim/Objects/SolidObject.h"
 #include "Sim/Misc/GlobalSynced.h" // simFrame
 #include "System/Log/ILog.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 
 struct LuaMatBinPtrLessThan {
 	bool operator()(const LuaMatBin* a, const LuaMatBin* b) const {

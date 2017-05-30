@@ -14,7 +14,7 @@
 #include "TAPalette.h"
 #include "System/Exceptions.h"
 #include "System/UnorderedSet.hpp"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include "System/type2.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"

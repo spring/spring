@@ -3,7 +3,7 @@
 #ifndef I_GAME_COMMANDS_H
 #define I_GAME_COMMANDS_H
 
-#include "System/Util.h"
+#include "System/StringUtil.h"
 
 // These two are required for the destructors
 #include "SyncedActionExecutor.h"

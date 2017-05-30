@@ -3,7 +3,7 @@
 #include "creg_runtime_tests.h"
 #include "creg_cond.h"
 #include "System/myMath.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include "System/Log/ILog.h"
 #include <vector>
 #include <map>

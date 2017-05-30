@@ -29,7 +29,7 @@
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/UnitDefImage.h"
 #include "System/Matrix44f.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include "System/Log/ILog.h"
 #include "System/Sync/HsiehHash.h"
 

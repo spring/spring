@@ -9,7 +9,7 @@
 #include <sstream>
 #include <vector>
 
-#include "System/maindefines.h"
+#include "System/MainDefines.h"
 
 /*
  * Pre-processor trickery, useful to create unique identifiers.
@@ -174,12 +174,6 @@ static inline void EnsureEndsWith(std::string* str, const char* postfix)
  * - "1" -> true
  */
 void InverseOrSetBool(bool& b, const std::string& argValue, const bool inverseArg = false);
-
-
-namespace spring {
-	// only here for validation tests
-	extern int exitCode;
-};
 
 
 namespace utf8 {

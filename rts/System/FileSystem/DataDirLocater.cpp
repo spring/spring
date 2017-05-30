@@ -24,7 +24,7 @@
 #include "FileSystem.h"
 #include "CacheDir.h"
 #include "System/Exceptions.h"
-#include "System/maindefines.h" // for sPS, cPS, cPD
+#include "System/MainDefines.h" // for sPS, cPS, cPD
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
 #include "System/Platform/Misc.h"

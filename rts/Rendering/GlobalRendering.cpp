@@ -15,7 +15,7 @@
 #include "System/EventHandler.h"
 #include "System/type2.h"
 #include "System/TimeProfiler.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
 #include "System/Platform/CrashHandler.h"

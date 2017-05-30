@@ -13,7 +13,7 @@
 #include "Game/Camera.h"
 #include "Rendering/ShadowHandler.h"
 #include "System/Log/ILog.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 
 #include <string>
 #include <vector>

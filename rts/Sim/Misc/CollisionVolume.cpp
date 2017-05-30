@@ -6,7 +6,7 @@
 #include "Sim/Features/Feature.h"
 #include "System/Matrix44f.h"
 #include "System/myMath.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 
 CR_BIND(CollisionVolume, )
 CR_REG_METADATA(CollisionVolume, (

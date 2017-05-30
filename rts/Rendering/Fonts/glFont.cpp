@@ -13,7 +13,7 @@
 #include "System/Color.h"
 #include "System/Exceptions.h"
 #include "System/myMath.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 
 #undef GetCharWidth // winapi.h
 

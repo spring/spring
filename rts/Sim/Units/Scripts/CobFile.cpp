@@ -7,7 +7,7 @@
 #include "System/Log/ILog.h"
 #include "System/Sound/ISound.h"
 #include "System/Platform/byteorder.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 
 #include <algorithm>
 #include <locale>

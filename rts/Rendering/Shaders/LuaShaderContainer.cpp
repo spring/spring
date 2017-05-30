@@ -8,7 +8,7 @@
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/Shaders/Shader.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include "System/Log/ILog.h"
 #include <sstream>
 

@@ -34,9 +34,9 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/Exceptions.h"
 #include "System/SafeUtil.h"
+#include "System/SpringExitCode.h"
 #include "System/TimeProfiler.h"
 #include "System/TdfParser.h"
-#include "System/Util.h"
 #include "System/Input/KeyInput.h"
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/FileSystem.h"
@@ -260,7 +260,7 @@ void CPreGame::UpdateClientNet()
 
 		LOG_L(L_WARNING, "[PreGame] Server Connection Timeout");
 
-		spring::exitCode = SPRING_EXIT_CODE_TIMEOUT;
+		spring::exitCode = spring::EXIT_CODE_TIMEOUT;
 		gu->globalQuit = true;
 		return;
 	}

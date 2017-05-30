@@ -46,7 +46,7 @@
 #include "System/myMath.h"
 #include "System/UnorderedMap.hpp"
 #include "System/UnorderedSet.hpp"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include "System/Input/KeyInput.h"
 #include "System/Sound/ISound.h"
 #include "System/Sound/ISoundChannels.h"

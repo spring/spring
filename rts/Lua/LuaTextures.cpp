@@ -2,7 +2,7 @@
 
 
 #include "LuaTextures.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 
 
 /******************************************************************************/

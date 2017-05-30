@@ -7,7 +7,7 @@
 #include <stdexcept>
 #include <assert.h>
 
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include "System/Log/ILog.h"
 
 

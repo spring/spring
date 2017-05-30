@@ -5,7 +5,7 @@
 #include "Interface/aidefines.h"
 #include "Interface/SSkirmishAILibrary.h"
 #include "SkirmishAIKey.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include "System/Info.h"
 #include "System/Option.h"
 #include "System/Log/ILog.h"

@@ -71,7 +71,7 @@
 #include "System/Platform/Misc.h"
 #include "System/SafeUtil.h"
 #include "System/UnorderedMap.hpp"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include "System/Sound/ISound.h"
 #include "System/Sound/ISoundChannels.h"
 #include "System/FileSystem/FileHandler.h"

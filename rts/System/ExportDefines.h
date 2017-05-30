@@ -8,7 +8,7 @@
 #ifndef _EXPORTDEFINES_H
 #define _EXPORTDEFINES_H
 
-#include "System/maindefines.h" // for __arch32__ / __arch64__
+#include "System/MainDefines.h" // for __arch32__ / __arch64__
 
 #ifndef EXTERNALIZER
 	#if defined(__cplusplus)

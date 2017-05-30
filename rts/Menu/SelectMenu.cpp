@@ -17,7 +17,7 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/Exceptions.h"
 #include "System/Log/ILog.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include "System/Input/InputHandler.h"
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/FileHandler.h"

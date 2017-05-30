@@ -10,7 +10,7 @@
 #include "LogUtil.h"
 #include "Level.h"
 #include "Section.h"
-#include "System/maindefines.h"
+#include "System/MainDefines.h"
 #include "System/SafeCStrings.h"
 
 #include <cstdio>

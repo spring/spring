@@ -9,7 +9,7 @@
 	#include "System/OffscreenGLContext.h"
 #endif
 #include "System/TimeProfiler.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #ifndef UNIT_TEST
 	#include "System/Config/ConfigHandler.h"
 #endif

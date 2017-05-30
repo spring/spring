@@ -10,7 +10,7 @@
 #include "System/Exceptions.h"
 #include "System/CRC.h"
 #include "System/myMath.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 
 CR_BIND(MoveDef, ())
 CR_BIND(MoveDefHandler, (nullptr))

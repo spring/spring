@@ -8,7 +8,7 @@
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/Exceptions.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 
 #include <fstream>
 #include <sstream>

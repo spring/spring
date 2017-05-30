@@ -2,7 +2,7 @@
 
 #include "System/TimeUtil.h"
 
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include "System/Exceptions.h"
 
 #include <string>

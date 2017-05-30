@@ -7,7 +7,7 @@
 #include "GameVersion.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Platform/Misc.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 
 std::vector<std::uint8_t> ClientData::GetCompressed()
 {

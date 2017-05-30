@@ -5,7 +5,7 @@
 #include "lib/streflop/streflop_cond.h"
 
 #include "System/Log/ILog.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 
 
 namespace netcode

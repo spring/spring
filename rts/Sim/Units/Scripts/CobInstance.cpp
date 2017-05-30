@@ -29,7 +29,7 @@
 #include "Sim/Weapons/PlasmaRepulser.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include "System/myMath.h"
 #include "System/Sound/ISoundChannels.h"
 #include "System/Sync/SyncTracer.h"

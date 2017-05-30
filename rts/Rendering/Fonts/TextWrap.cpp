@@ -5,7 +5,7 @@
 #include "FontLogSection.h"
 #include "System/Log/ILog.h"
 #include "System/myMath.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 
 
 static const char32_t spaceUTF16    = 0x20;

@@ -158,11 +158,5 @@
 #define __FORCE_ALIGN_STACK__
 #endif
 
-
-#define SPRING_EXIT_CODE_NORMAL   0
-#define SPRING_EXIT_CODE_DESYNC  -1
-#define SPRING_EXIT_CODE_TIMEOUT  1
-
-
 #endif /* MAIN_DEFINES_H */
 

@@ -6,7 +6,7 @@
 #include <functional>
 
 #include "System/Exceptions.h"
-#include "System/maindefines.h"
+#include "System/MainDefines.h"
 #include "System/SafeUtil.h"
 #include "System/Log/ILog.h"
 #include "System/Platform/errorhandler.h"

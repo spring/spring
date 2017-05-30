@@ -28,7 +28,7 @@
 #include "System/myMath.h"
 #include "System/Log/ILog.h"
 #include "System/SafeUtil.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include "System/creg/STL_Set.h"
 #include "System/creg/STL_Deque.h"
 #include <assert.h>

@@ -6,7 +6,7 @@
 #include "KeyBindings.h"
 
 #include "System/Log/ILog.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include "System/Input/KeyInput.h"
 
 #include <SDL_keycode.h>

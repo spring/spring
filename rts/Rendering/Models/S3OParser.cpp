@@ -10,7 +10,7 @@
 #include "Rendering/Textures/S3OTextureHandler.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "System/Exceptions.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include "System/Log/ILog.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/Platform/byteorder.h"

@@ -25,7 +25,7 @@
 #include "System/Threading/SpringThreading.h"
 #include "System/Rectangle.h"
 #include "System/TimeProfiler.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 
 #ifdef GetTempPath
 #undef GetTempPath

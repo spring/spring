@@ -8,7 +8,7 @@
 
 #include "FileQueryFlags.h"
 
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include "System/Log/ILog.h"
 #include "System/Exceptions.h"
 

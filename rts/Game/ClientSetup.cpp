@@ -7,7 +7,7 @@
 #include "System/MsgStrings.h"
 #include "System/Log/ILog.h"
 #include "System/Config/ConfigHandler.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #ifdef DEDICATED
 #include "System/Platform/errorhandler.h"
 #endif

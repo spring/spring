@@ -15,7 +15,7 @@
 #include "Sim/Misc/Wind.h"
 #include "Sim/Units/UnitHandler.h"
 #include "System/FileSystem/ArchiveScanner.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 
 
 /******************************************************************************/

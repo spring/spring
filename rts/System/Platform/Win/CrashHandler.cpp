@@ -12,7 +12,7 @@
 #include "System/LogOutput.h"
 #include "Net/Protocol/NetProtocol.h"
 #include "seh.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include "System/SafeCStrings.h"
 #include "Game/GameVersion.h"
 #include <new>

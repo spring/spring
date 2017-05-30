@@ -24,7 +24,7 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include "System/Log/ILog.h"
 
 static std::fstream file;

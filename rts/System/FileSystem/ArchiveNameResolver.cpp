@@ -7,7 +7,7 @@
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/RapidHandler.h"
 #include "System/UriParser.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 
 #include <iostream>
 #include <cinttypes>

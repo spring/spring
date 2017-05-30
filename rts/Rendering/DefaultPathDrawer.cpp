@@ -34,7 +34,7 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Map/InfoTexture/Legacy/LegacyInfoTextureHandler.h"
 #include "System/myMath.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 
 #define PE_EXTRA_DEBUG_OVERLAYS 1
 

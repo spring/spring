@@ -10,7 +10,7 @@
 #include "Lua/LuaParser.h"
 #include "Sim/Misc/DamageArrayHandler.h"
 #include "System/Exceptions.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include "System/Log/ILog.h"
 
 

@@ -6,7 +6,7 @@
 // Doc-comments for the functions in this header can be found in this file:
 // rts/ExternalAI/Interface/SSkirmishAICallback.h
 
-#include "System/exportdefines.h"
+#include "System/ExportDefines.h"
 
 #if	defined(__cplusplus)
 extern "C" {

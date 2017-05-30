@@ -7,7 +7,7 @@
 #include "Game/GlobalUnsynced.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/GlobalSynced.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 
 #include <cassert>
 #include <cstring>

@@ -5,7 +5,7 @@
 #ifdef USE_SAFE_VECTOR
 #include "System/Log/ILog.h"
 #include "System/Platform/CrashHandler.h"
-#include "System/maindefines.h"
+#include "System/MainDefines.h"
 
 template <> const float& safe_vector<float>::safe_element(size_type idx) const {
 	static const float def = 0.0f;

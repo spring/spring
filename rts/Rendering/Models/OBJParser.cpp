@@ -10,7 +10,7 @@
 #include "System/Exceptions.h"
 #include "System/Log/ILog.h"
 #include "System/FileSystem/FileHandler.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 
 #include <cassert>
 #include <sstream>

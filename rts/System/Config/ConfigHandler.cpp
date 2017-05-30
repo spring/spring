@@ -5,7 +5,7 @@
 #include "ConfigSource.h"
 #include "System/ContainerUtil.h"
 #include "System/SafeUtil.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include "System/Log/ILog.h"
 #include "System/UnorderedMap.hpp"
 #include "System/Threading/SpringThreading.h"

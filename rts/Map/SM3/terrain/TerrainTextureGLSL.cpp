@@ -9,7 +9,7 @@
 #include "Rendering/GL/FBO.h"
 #include "Rendering/GlobalRendering.h"
 #include "System/bitops.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include "System/Log/ILog.h"
 #include "System/Exceptions.h"
 #include "System/FileSystem/DataDirsAccess.h"

@@ -34,7 +34,7 @@
 #include "System/Exceptions.h"
 #include "System/Log/ILog.h"
 #include "System/myMath.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include "System/FileSystem/FileSystem.h"
 
 #define TEX_QUAD_SIZE 16

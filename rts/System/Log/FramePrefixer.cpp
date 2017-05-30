@@ -4,7 +4,7 @@
  * This eventually prefixes log records with the current frame number.
  */
 
-#include "System/maindefines.h"
+#include "System/MainDefines.h"
 
 #include <cstdarg>
 #include <cstring>

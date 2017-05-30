@@ -28,7 +28,7 @@
 #include "System/Threading/SpringThreading.h"
 #include "System/SafeUtil.h"
 #include "System/UnorderedMap.hpp"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include "System/float4.h"
 #include "System/bitops.h"
 

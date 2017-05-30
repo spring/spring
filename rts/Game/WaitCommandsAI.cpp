@@ -18,7 +18,7 @@
 #include "Sim/Units/CommandAI/FactoryCAI.h"
 #include "Sim/Units/UnitTypes/Factory.h"
 #include "System/Object.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include "System/creg/STL_Map.h"
 #include "System/creg/STL_Set.h"
 #include <assert.h>

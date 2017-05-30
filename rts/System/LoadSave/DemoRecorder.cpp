@@ -8,7 +8,7 @@
 #include "Game/GameVersion.h"
 #include "Sim/Misc/TeamStatistics.h"
 #include "System/TimeUtil.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include "System/FileSystem/DataDirsAccess.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/FileSystem/FileQueryFlags.h"

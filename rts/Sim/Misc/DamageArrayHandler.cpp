@@ -12,7 +12,7 @@
 #include "System/creg/STL_Map.h"
 #include "System/Log/ILog.h"
 #include "System/Exceptions.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 
 
 CR_BIND(CDamageArrayHandler, (NULL))
