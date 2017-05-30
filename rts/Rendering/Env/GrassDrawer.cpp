@@ -34,6 +34,15 @@
 
 CONFIG(int, GrassDetail).defaultValue(7).headlessValue(0).minimumValue(0).description("Sets how detailed the engine rendered grass will be on any given map.");
 
+// uses a 'synced' RNG s.t. grass turfs generated from the same
+// seed also share identical sequences, otherwise an unpleasant
+// shimmering effect occurs when zooming
+#if 0
+typedef CGlobalRNG<LCG16, true> GrassRNG;
+#else
+typedef CGlobalRNG<PCG32, true> GrassRNG;
+#endif
+
 static const float turfSize        = 20.0f;            // single turf size
 static const float partTurfSize    = turfSize * 1.0f;  // single turf size
 static const int   grassSquareSize = 4;                // mapsquares per grass square
@@ -43,7 +52,7 @@ static const int   blockMapSize    = grassSquareSize * grassBlockSize;
 static const int   gSSsq = SQUARE_SIZE * grassSquareSize;
 static const int   bMSsq = SQUARE_SIZE * blockMapSize;
 
-static CGlobalUnsyncedRNG rng;
+static GrassRNG grng;
 
 
 
@@ -112,13 +121,13 @@ private:
 		// blocks close to the camera
 		for (int y2 = y * grassBlockSize; y2 < (y + 1) * grassBlockSize; ++y2) {
 			for (int x2 = x * grassBlockSize; x2 < (x + 1) * grassBlockSize; ++x2) {
-				if (!gd->grassMap[y2 * mapDims.mapx / grassSquareSize + x2]) {
+				if (!gd->grassMap[y2 * mapDims.mapx / grassSquareSize + x2])
 					continue;
-				}
 
-				rng.Seed(y2 * mapDims.mapx / grassSquareSize + x2);
+				grng.Seed(y2 * mapDims.mapx / grassSquareSize + x2);
+
 				const float dist  = GetCamDistOfGrassBlock(x2, y2, false);
-				const float rdist = 1.0f + rng.NextFloat() * 0.5f;
+				const float rdist = 1.0f + grng.NextFloat() * 0.5f;
 
 				//TODO instead of adding grass turfs depending on their distance to the camera,
 				//     there should be a fixed sized pool for mesh & billboard turfs
@@ -178,7 +187,7 @@ CGrassDrawer::CGrassDrawer()
 , grassMap(nullptr)
 {
 	blockDrawer.ResetState();
-	rng.Seed(15);
+	grng.Seed(15);
 
 	const int detail = configHandler->GetInt("GrassDetail");
 
@@ -378,17 +387,12 @@ void CGrassDrawer::EnableShader(const GrassShaderProgram type) {
 //////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
-struct STurfParams {
-	float x, y, rotation;
-};
-
-
-static STurfParams GetTurfParams(CGlobalUnsyncedRNG& rng, const int x, const int y)
+static float3 GetTurfParams(GrassRNG& rng, const int x, const int y)
 {
-	STurfParams result;
+	float3 result;
 	result.x = (x + rng.NextFloat()) * gSSsq;
 	result.y = (y + rng.NextFloat()) * gSSsq;
-	result.rotation = rng.NextFloat() * 360.f;
+	result.z = rng.NextFloat() * 360.0f; // rotation
 	return result;
 }
 
@@ -397,20 +401,22 @@ static STurfParams GetTurfParams(CGlobalUnsyncedRNG& rng, const int x, const int
 void CGrassDrawer::DrawNear(const std::vector<InviewNearGrass>& inviewGrass)
 {
 	for (const InviewNearGrass& g: inviewGrass) {
-		rng.Seed(g.y * mapDims.mapx / grassSquareSize + g.x);
+		grng.Seed(g.y * mapDims.mapx / grassSquareSize + g.x);
+
 //		const float distSq = GetCamDistOfGrassBlock(g.x, g.y, true);
-		const float rdist  = 1.0f + rng.NextFloat() * 0.5f;
-		const float alpha  = linearstep(maxDetailedDist, maxDetailedDist + 128.f * rdist, g.dist);
+		const float rdist  = 1.0f + grng.NextFloat() * 0.5f;
+		const float alpha  = linearstep(maxDetailedDist, maxDetailedDist + 128.0f * rdist, g.dist);
 
 		for (int a = 0; a < numTurfs; a++) {
-			const STurfParams& p = GetTurfParams(rng, g.x, g.y);
+			const float3& p = GetTurfParams(grng, g.x, g.y);
 			float3 pos(p.x, CGround::GetHeightReal(p.x, p.y, false), p.y);
-				pos.y -= CGround::GetSlope(p.x, p.y, false) * 30.0f;
-				pos.y -= 2.0f * mapInfo->grass.bladeHeight * alpha;
+
+			pos.y -= CGround::GetSlope(p.x, p.y, false) * 30.0f;
+			pos.y -= 2.0f * mapInfo->grass.bladeHeight * alpha;
 
 			glPushMatrix();
 			glTranslatef3(pos);
-			glRotatef(p.rotation, 0.0f, 1.0f, 0.0f);
+			glRotatef(p.z, 0.0f, 1.0f, 0.0f);
 			glCallList(grassDL);
 			glPopMatrix();
 		}
@@ -420,16 +426,17 @@ void CGrassDrawer::DrawNear(const std::vector<InviewNearGrass>& inviewGrass)
 
 void CGrassDrawer::DrawBillboard(const int x, const int y, const float dist, VA_TYPE_TN* va_tn)
 {
-	CGlobalUnsyncedRNG rng; // need our own, cause this function may run threaded
-	rng.Seed(y * mapDims.mapx / grassSquareSize + x);
-	const float rdist  = 1.0f + rng.NextFloat() * 0.5f;
-	float alpha = 1.0f - linearstep(maxGrassDist,  maxGrassDist + 127.f, dist + 128.f);
-	alpha = std::min(alpha, linearstep(maxDetailedDist, maxDetailedDist + 128.f * rdist, dist));
+	GrassRNG trng; // need our own, cause this function may run threaded
+	trng.Seed(y * mapDims.mapx / grassSquareSize + x);
+
+	const float rDist = 1.0f + trng.NextFloat() * 0.5f;
+	const float gStep = linearstep(maxGrassDist,  maxGrassDist + 127.0f, dist + 128.0f);
+	const float dStep = linearstep(maxDetailedDist, maxDetailedDist + 128.0f * rDist, dist);
+	const float alpha = std::min(1.0f - gStep, dStep);
 
 	for (int a = 0; a < numTurfs; a++) {
-		const STurfParams p = GetTurfParams(rng, x, y);
-		float3 pos(p.x, CGround::GetHeightReal(p.x, p.y, false), p.y);
-			pos.y -= CGround::GetSlope(p.x, p.y, false) * 30.0f;
+		const float3& p = GetTurfParams(trng, x, y);
+		const float3 pos(p.x, CGround::GetHeightReal(p.x, p.y, false) - CGround::GetSlope(p.x, p.y, false) * 30.0f, p.y);
 
 		va_tn[a * 4 + 0] = { pos,         0.0f, 1.0f, float3(-partTurfSize, -partTurfSize, alpha) };
 		va_tn[a * 4 + 1] = { pos, 1.0f / 16.0f, 1.0f, float3( partTurfSize, -partTurfSize, alpha) };
@@ -799,22 +806,25 @@ void CGrassDrawer::CreateGrassDispList(int listNum)
 {
 	CVertexArray* va = GetVertexArray();
 	va->Initialize();
-	rng.Seed(15);
+	grng.Seed(15);
 
 	for (int a = 0; a < strawPerTurf; ++a) {
 		// draw a single blade
-		const float lngRnd = rng.NextFloat();
+		const float lngRnd = grng.NextFloat();
 		const float length = mapInfo->grass.bladeHeight * (1.0f + lngRnd);
-		const float maxAng = mapInfo->grass.bladeAngle * std::max(rng.NextFloat(), 1.f - smoothstep(0.f,1.f,lngRnd));
+		const float maxAng = mapInfo->grass.bladeAngle * std::max(grng.NextFloat(), 1.0f - smoothstep(0.0f, 1.0f, lngRnd));
 
-		float3 sideVect(rng.NextFloat() - 0.5f, 0.0f, rng.NextFloat() - 0.5f);
+		float3 sideVect;
+		sideVect.x = grng.NextFloat() - 0.5f;
+		sideVect.z = grng.NextFloat() - 0.5f;
 		sideVect.ANormalize();
 		float3 bendVect = sideVect.cross(UpVector); // direction to bend into
 		sideVect *= mapInfo->grass.bladeWidth * (-0.15f * lngRnd + 1.0f);
-		const float3 basePos = rng.NextVector2D() * (turfSize - (bendVect * std::sin(maxAng) * length).Length2D());
+
+		const float3 basePos = grng.NextVector2D() * (turfSize - (bendVect * std::sin(maxAng) * length).Length2D());
 
 		// select one of the 16 color shadings
-		const float xtexCoord = rng.NextInt(16) / 16.0f;
+		const float xtexCoord = grng.NextInt(16) / 16.0f;
 		const int numSections = 2 + int(maxAng * 1.2f + length * 0.2f);
 
 		float3 normalBend = -bendVect;
@@ -851,7 +861,7 @@ void CGrassDrawer::CreateGrassDispList(int listNum)
 void CGrassDrawer::CreateGrassBladeTex(unsigned char* buf)
 {
 	float3 redish = float3(0.95f, 0.70f, 0.4f);
-	float3 col = mix(mapInfo->grass.color, redish, 0.1f * rng.NextFloat());
+	float3 col = mix(mapInfo->grass.color, redish, 0.1f * grng.NextFloat());
 	col.x = Clamp(col.x, 0.f, 1.f);
 	col.y = Clamp(col.y, 0.f, 1.f);
 	col.z = Clamp(col.z, 0.f, 1.f);
