@@ -80,7 +80,7 @@ set(main_files
 	"${ENGINE_SRC_ROOT}/System/TdfParser.cpp"
 	"${ENGINE_SRC_ROOT}/System/Threading/ThreadPool.cpp"
 	"${ENGINE_SRC_ROOT}/System/UriParser.cpp"
-	"${ENGINE_SRC_ROOT}/System/Util.cpp"
+	"${ENGINE_SRC_ROOT}/System/StringUtil.cpp"
 	)
 if (WIN32)
 	LIST(APPEND main_files "${ENGINE_SRC_ROOT}/System/Platform/Win/WinVersion.cpp")

@@ -23,7 +23,7 @@ SET(demoToolSpringSources
 	${ENGINE_SRC_ROOT_DIR}/System/FileSystem/FileSystem.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/FileSystem/FileSystemAbstraction.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/FileSystem/GZFileHandler.cpp
-	${ENGINE_SRC_ROOT_DIR}/System/Util.cpp
+	${ENGINE_SRC_ROOT_DIR}/System/StringUtil.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/Net/RawPacket.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/LoadSave/DemoReader.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/LoadSave/Demo.cpp

@@ -275,7 +275,7 @@ endif()
 	Set(test_src
 			"${ENGINE_SOURCE_DIR}/System/FileSystem/FileSystem.cpp"
 			"${ENGINE_SOURCE_DIR}/System/FileSystem/FileSystemAbstraction.cpp"
-			"${ENGINE_SOURCE_DIR}/System/Util.cpp"
+			"${ENGINE_SOURCE_DIR}/System/StringUtil.cpp"
 			"${ENGINE_SOURCE_DIR}/Game/GameVersion.cpp"
 			"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/FileSystem/TestFileSystem.cpp"
 			${test_Log_sources}
