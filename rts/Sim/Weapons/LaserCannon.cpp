@@ -2,6 +2,7 @@
 
 #include "LaserCannon.h"
 #include "WeaponDef.h"
+#include "WeaponMemPool.h"
 #include "Map/Ground.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
 #include "Sim/Units/Unit.h"
@@ -13,8 +14,7 @@ CR_REG_METADATA(CLaserCannon,(
 	CR_MEMBER(color)
 ))
 
-CLaserCannon::CLaserCannon(CUnit* owner, const WeaponDef* def)
-	: CWeapon(owner, def)
+CLaserCannon::CLaserCannon(CUnit* owner, const WeaponDef* def): CWeapon(owner, def)
 {
 	//happens when loading
 	if (def != nullptr)

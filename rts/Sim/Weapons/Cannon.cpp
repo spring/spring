@@ -1,6 +1,8 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "Cannon.h"
+#include "WeaponDef.h"
+#include "WeaponMemPool.h"
 #include "Game/TraceRay.h"
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
@@ -9,7 +11,6 @@
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
 #include "Sim/Units/Unit.h"
 #include "System/Sync/SyncTracer.h"
-#include "WeaponDefHandler.h"
 #include "System/myMath.h"
 #include "System/FastMath.h"
 

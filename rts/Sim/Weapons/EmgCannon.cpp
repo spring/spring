@@ -3,8 +3,9 @@
 #include "EmgCannon.h"
 
 #include "WeaponDef.h"
-#include "Sim/Misc/Team.h"
+#include "WeaponMemPool.h"
 #include "Map/Ground.h"
+#include "Sim/Misc/Team.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
@@ -20,10 +21,9 @@ void CEmgCannon::FireImpl(const bool scriptCall)
 	float3 dir = currentTargetPos - weaponMuzzlePos;
 	const float dist = dir.LengthNormalize();
 
-	if (onlyForward && owner->unitDef->IsStrafingAirUnit()) {
-		// [?] StrafeAirMoveType cannot align itself properly, change back when that is fixed
+	// [?] StrafeAirMoveType cannot align itself properly, change back when that is fixed
+	if (onlyForward && owner->unitDef->IsStrafingAirUnit())
 		dir = owner->frontdir;
-	}
 
 	dir += (gsRNG.NextVector() * SprayAngleExperience() + SalvoErrorExperience());
 	dir.Normalize();

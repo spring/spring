@@ -2,6 +2,7 @@
 
 #include "BombDropper.h"
 #include "WeaponDef.h"
+#include "WeaponMemPool.h"
 #include "Game/GameHelper.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/Team.h"

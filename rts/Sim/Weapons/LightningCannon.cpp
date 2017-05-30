@@ -3,6 +3,7 @@
 #include "LightningCannon.h"
 #include "PlasmaRepulser.h"
 #include "WeaponDef.h"
+#include "WeaponMemPool.h"
 #include "Game/GameHelper.h"
 #include "Game/TraceRay.h"
 #include "Sim/Misc/CollisionHandler.h"

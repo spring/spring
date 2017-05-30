@@ -8,7 +8,6 @@
 #include "System/Object.h"
 #include "Sim/Misc/DamageArray.h"
 #include "Sim/Projectiles/ProjectileParams.h"
-#include "Sim/Weapons/WeaponMemPool.h"
 #include "Sim/Weapons/WeaponTarget.h"
 #include "System/float3.h"
 

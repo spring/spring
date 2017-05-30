@@ -3,6 +3,7 @@
 #include "MissileLauncher.h"
 
 #include "WeaponDef.h"
+#include "WeaponMemPool.h"
 #include "Game/TraceRay.h"
 #include "Map/Ground.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"

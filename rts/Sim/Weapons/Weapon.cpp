@@ -2,6 +2,7 @@
 
 #include "Weapon.h"
 #include "WeaponDefHandler.h"
+#include "WeaponMemPool.h"
 #include "Game/GameHelper.h"
 #include "Game/TraceRay.h"
 #include "Game/Players/Player.h"

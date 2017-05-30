@@ -2,6 +2,7 @@
 
 #include "MeleeWeapon.h"
 #include "WeaponDef.h"
+#include "WeaponMemPool.h"
 #include "Sim/Units/Unit.h"
 
 CR_BIND_DERIVED_POOL(CMeleeWeapon, CWeapon, , weaponMemPool.alloc, weaponMemPool.free)

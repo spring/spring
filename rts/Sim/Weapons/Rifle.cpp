@@ -2,6 +2,7 @@
 
 #include "Rifle.h"
 #include "WeaponDef.h"
+#include "WeaponMemPool.h"
 #include "Game/TraceRay.h"
 #include "Game/GameHelper.h"
 #include "Map/Ground.h"

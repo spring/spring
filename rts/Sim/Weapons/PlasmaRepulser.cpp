@@ -3,6 +3,7 @@
 #include "System/creg/STL_List.h"
 #include "System/creg/STL_Set.h"
 #include "PlasmaRepulser.h"
+#include "WeaponMemPool.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/TeamHandler.h"

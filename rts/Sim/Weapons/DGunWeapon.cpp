@@ -2,19 +2,13 @@
 
 #include "DGunWeapon.h"
 #include "WeaponDef.h"
+#include "WeaponMemPool.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
 #include "Sim/Units/Unit.h"
 
 CR_BIND_DERIVED_POOL(CDGunWeapon, CWeapon, , weaponMemPool.alloc, weaponMemPool.free)
 CR_REG_METADATA(CDGunWeapon, )
-
-
-float CDGunWeapon::GetPredictedImpactTime(float3 p) const
-{
-	// user has to manually predict
-	return 0;
-}
 
 
 void CDGunWeapon::FireImpl(const bool scriptCall)
