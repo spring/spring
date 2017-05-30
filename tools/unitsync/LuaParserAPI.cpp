@@ -4,7 +4,7 @@
 
 #include "Lua/LuaParser.h"
 #include "System/FileSystem/ArchiveScanner.h"
-#include "System/exportdefines.h"
+#include "System/ExportDefines.h"
 
 #include <string>
 #include <vector>

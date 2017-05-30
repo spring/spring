@@ -3,7 +3,7 @@
 #include "System/Log/FileSink.h"
 #include "System/Log/StreamSink.h"
 #include "System/Log/LogUtil.h"
-#include "System/Util.h" // IntToString() -> header only
+#include "System/StringUtil.h" // IntToString() -> header only
 
 #define BOOST_TEST_MODULE ILog
 #include <boost/test/unit_test.hpp>

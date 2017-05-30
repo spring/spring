@@ -41,8 +41,8 @@
 #include "System/Option.h"
 #include "System/SafeCStrings.h"
 #include "System/SafeUtil.h"
-#include "System/Util.h"
-#include "System/exportdefines.h"
+#include "System/StringUtil.h"
+#include "System/ExportDefines.h"
 
 #ifdef WIN32
 #include <windows.h>

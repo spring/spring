@@ -10,7 +10,7 @@
 	#warning PLAIN_API_STRUCTURE is defined -> functions will NOT be properly exported!
 #else
 	#include "unitsync.h"
-	#include "System/exportdefines.h"
+	#include "System/ExportDefines.h"
 #endif
 
 // from unitsync.cpp:
