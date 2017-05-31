@@ -138,9 +138,8 @@ S3DModel C3DOParser::Load(const std::string& name)
 	CFileHandler file(name);
 	std::vector<unsigned char> fileBuf;
 
-	if (!file.FileExists()) {
+	if (!file.FileExists())
 		throw content_error("[3DOParser] could not find model-file " + name);
-	}
 
 	fileBuf.resize(file.FileSize(), 0);
 
@@ -155,8 +154,7 @@ S3DModel C3DOParser::Load(const std::string& name)
 		model.mins = DEF_MIN_SIZE;
 		model.maxs = DEF_MAX_SIZE;
 
-	S3DOPiece* rootPiece = LoadPiece(&model, 0, NULL, &model.numPieces, fileBuf);
-	model.SetRootPiece(rootPiece);
+	model.FlattenPieceTree(LoadPiece(&model, 0, nullptr, &model.numPieces, fileBuf));
 
 	// set after the extrema are known
 	model.radius = model.CalcDrawRadius();
@@ -309,20 +307,20 @@ S3DOPiece* C3DOParser::LoadPiece(S3DModel* model, int pos, S3DOPiece* parent, in
 		piece->offset.x =  me.XFromParent * SCALE_FACTOR_3DO;
 		piece->offset.y =  me.YFromParent * SCALE_FACTOR_3DO;
 		piece->offset.z = -me.ZFromParent * SCALE_FACTOR_3DO;
-		piece->goffset = piece->offset + ((parent != NULL)? parent->goffset: ZeroVector);
+		piece->goffset = piece->offset + ((parent != nullptr)? parent->goffset: ZeroVector);
 
 	GetVertexes(&me, piece, fileBuf);
 	GetPrimitives(piece, me.OffsetToPrimitiveArray, me.NumberOfPrimitives, ((pos == 0)? me.SelectionPrimitive: -1), fileBuf);
 	piece->CalcNormals();
 	piece->SetMinMaxExtends();
 
-	piece->emitPos = ZeroVector;
-	piece->emitDir = FwdVector;
-	if (piece->vertexPos.size() >= 2) {
-		piece->emitPos = piece->vertexPos[0];
-		piece->emitDir = piece->vertexPos[1] - piece->vertexPos[0];
-	} else 	if (piece->vertexPos.size() == 1) {
-		piece->emitDir = piece->vertexPos[0];
+	switch (piece->vertexPos.size()) {
+		case 0: { piece->emitDir = FwdVector; } break;
+		case 1: { piece->emitDir = piece->vertexPos[0]; } break;
+		default: {
+			piece->emitPos = piece->vertexPos[0];
+			piece->emitDir = piece->vertexPos[1] - piece->vertexPos[0];
+		} break;
 	}
 
 	model->mins = float3::min(piece->goffset + piece->mins, model->mins);
@@ -330,13 +328,11 @@ S3DOPiece* C3DOParser::LoadPiece(S3DModel* model, int pos, S3DOPiece* parent, in
 
 	piece->SetCollisionVolume(CollisionVolume('b', 'z', piece->maxs - piece->mins, (piece->maxs + piece->mins) * 0.5f));
 
-	if (me.OffsetToChildObject > 0) {
+	if (me.OffsetToChildObject > 0)
 		piece->children.push_back(LoadPiece(model, me.OffsetToChildObject, piece, numobj, fileBuf));
-	}
 
-	if (me.OffsetToSiblingObject > 0) {
+	if (me.OffsetToSiblingObject > 0)
 		parent->children.push_back(LoadPiece(model, me.OffsetToSiblingObject, parent, numobj, fileBuf));
-	}
 
 	return piece;
 }

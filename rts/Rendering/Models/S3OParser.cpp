@@ -42,8 +42,7 @@ S3DModel CS3OParser::Load(const std::string& name)
 
 	texturehandlerS3O->PreloadTexture(&model);
 
-	SS3OPiece* rootPiece = LoadPiece(&model, nullptr, &fileBuf[0], header.rootPiece);
-	model.SetRootPiece(rootPiece);
+	model.FlattenPieceTree(LoadPiece(&model, nullptr, &fileBuf[0], header.rootPiece));
 
 	// set after the extrema are known
 	model.radius = (header.radius <= 0.01f)? model.CalcDrawRadius(): header.radius;
@@ -58,11 +57,10 @@ SS3OPiece* CS3OParser::LoadPiece(S3DModel* model, SS3OPiece* parent, unsigned ch
 	model->numPieces++;
 
 	// retrieve piece data
-	Piece* fp = (Piece*)&buf[offset];
-	fp->swap(); // Does it matter we mess with the original buffer here? Don't hope so.
+	Piece* fp = (Piece*)&buf[offset]; fp->swap();
 	Vertex* vertexList = reinterpret_cast<Vertex*>(&buf[fp->vertices]);
-	int*    indexList  = reinterpret_cast<int*>(&buf[fp->vertexTable]);
-	int*    childList  = reinterpret_cast<int*>(&buf[fp->children]);
+	const int* indexList = reinterpret_cast<int*>(&buf[fp->vertexTable]);
+	const int* childList = reinterpret_cast<int*>(&buf[fp->children]);
 
 	// create piece
 	SS3OPiece* piece = new SS3OPiece();
@@ -111,6 +109,7 @@ SS3OPiece* CS3OParser::LoadPiece(S3DModel* model, SS3OPiece* parent, unsigned ch
 
 	// load children pieces
 	piece->children.reserve(fp->numchildren);
+
 	for (int a = 0; a < fp->numchildren; ++a) {
 		int childOffset = swabDWord(*(childList++));
 		SS3OPiece* childPiece = LoadPiece(model, piece, buf, childOffset);

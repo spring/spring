@@ -15,6 +15,7 @@
 #include "System/StringUtil.h"
 #include "System/Exceptions.h"
 #include "System/MainDefines.h"
+#include "System/SafeUtil.h"
 #include "System/Threading/ThreadPool.h"
 #include "lib/assimp/include/assimp/Importer.hpp"
 
@@ -68,7 +69,7 @@ static S3DModel CreateDummyModel()
 	model.type = MODELTYPE_3DO;
 	model.numPieces = 1;
 	// give it one empty piece
-	model.SetRootPiece(new S3DOPiece());
+	model.AddPiece(new S3DOPiece());
 	model.GetRootPiece()->SetCollisionVolume(CollisionVolume('b', 'z', -UpVector, ZeroVector));
 	return model;
 }
@@ -132,12 +133,7 @@ void CModelLoader::Kill()
 void CModelLoader::KillModels()
 {
 	for (unsigned int n = 1; n < models.size(); n++) {
-		S3DModel& model = models[n];
-
-		assert(model.GetRootPiece() != nullptr);
-
-		model.DeletePieces(model.GetRootPiece());
-		model.SetRootPiece(nullptr);
+		models[n].DeletePieces();
 	}
 
 	models.clear();
@@ -145,8 +141,8 @@ void CModelLoader::KillModels()
 
 void CModelLoader::KillParsers()
 {
-	for (auto it = parsers.cbegin(); it != parsers.cend(); ++it) {
-		delete (it->second);
+	for (auto& p: parsers) {
+		spring::SafeDelete(p.second);
 	}
 
 	parsers.clear();
@@ -259,6 +255,7 @@ S3DModel* CModelLoader::CreateModel(
 		model = std::move(CreateDummyModel());
 
 	assert(model.GetRootPiece() != nullptr);
+	model.SetPieceMatrices();
 
 	if (!preload)
 		CreateLists(&model);
@@ -307,25 +304,17 @@ S3DModel CModelLoader::ParseModel(const std::string& name, const std::string& pa
 
 
 
-void CModelLoader::CreateListsNow(S3DModelPiece* o)
-{
-	o->UploadGeometryVBOs();
-	o->CreateShatterPieces();
-	o->CreateDispList();
-
-	for (unsigned int n = 0; n < o->GetChildCount(); n++) {
-		CreateListsNow(o->GetChild(n));
-	}
-}
-
-
 void CModelLoader::CreateLists(S3DModel* model) {
-	S3DModelPiece* rootPiece = model->GetRootPiece();
+	const S3DModelPiece* rootPiece = model->GetRootPiece();
 
 	if (rootPiece->GetDisplayListID() != 0)
 		return;
 
-	CreateListsNow(rootPiece);
+	for (S3DModelPiece* p: model->pieces) {
+		p->UploadGeometryVBOs();
+		p->CreateShatterPieces();
+		p->CreateDispList();
+	}
 
 	if (model->type == MODELTYPE_3DO)
 		return;
@@ -334,8 +323,8 @@ void CModelLoader::CreateLists(S3DModel* model) {
 	texturehandlerS3O->LoadTexture(model);
 
 	// warn about models with bad normals (they break lighting)
-	// skip for 3DO's since they are auto-calculated there
-	CheckPieceNormals(model, model->GetRootPiece());
+	// skip for 3DO's since those have auto-calculated normals
+	CheckPieceNormals(model, rootPiece);
 }
 
 /******************************************************************************/

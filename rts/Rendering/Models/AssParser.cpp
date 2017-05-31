@@ -518,10 +518,9 @@ SAssPiece* CAssParser::LoadPiece(
 	SAssPiece* piece = new SAssPiece();
 
 	if (pieceNode->mParent == nullptr) {
-		// set the model's root piece ASAP, needed later
+		// set the model's root piece ASAP, needed in SetPiece*Name
 		assert(pieceNode == scene->mRootNode);
-		assert(model->GetRootPiece() == nullptr);
-		model->SetRootPiece(piece);
+		model->AddPiece(piece);
 	}
 
 	SetPieceName(piece, model, pieceNode, pieceMap);
@@ -531,9 +530,8 @@ SAssPiece* CAssParser::LoadPiece(
 	// Load additional piece properties from metadata
 	const LuaTable& pieceTable = modelTable.SubTable("pieces").SubTable(piece->name);
 
-	if (pieceTable.IsValid()) {
+	if (pieceTable.IsValid())
 		LOG_SL(LOG_SECTION_PIECE, L_INFO, "Found metadata for piece '%s'", piece->name.c_str());
-	}
 
 
 	LoadPieceTransformations(piece, model, pieceNode, pieceTable);
@@ -567,7 +565,7 @@ void CAssParser::BuildPieceHierarchy(S3DModel* model, ModelPieceMap& pieceMap, c
 	const char* fmt1 = "Missing piece '%s' declared as parent of '%s'.";
 	const char* fmt2 = "Missing root piece (parent of orphan '%s')";
 
-	// Loop through all pieces and create missing hierarchy info
+	// loop through all pieces and create missing hierarchy info
 	for (auto it = pieceMap.cbegin(); it != pieceMap.cend(); ++it) {
 		SAssPiece* piece = static_cast<SAssPiece*>(it->second);
 
@@ -583,6 +581,7 @@ void CAssParser::BuildPieceHierarchy(S3DModel* model, ModelPieceMap& pieceMap, c
 			const std::string& parentName = parentNameIt->second;
 			const auto pieceIt = pieceMap.find(parentName);
 
+			// re-assign this piece to a different parent
 			if (pieceIt != pieceMap.end()) {
 				piece->parent = pieceIt->second;
 				piece->parent->children.push_back(piece);
@@ -593,14 +592,16 @@ void CAssParser::BuildPieceHierarchy(S3DModel* model, ModelPieceMap& pieceMap, c
 			continue;
 		}
 
-		// a piece with no named parent that isn't the root (orphan)
-		// link these to the root piece if it exists (which it should)
+		// piece with no named parent that isn't the root (orphaned)
+		// link it to the root piece which has already been pre-added
 		if ((piece->parent = model->GetRootPiece()) == nullptr) {
 			LOG_SL(LOG_SECTION_PIECE, L_ERROR, fmt2, piece->name.c_str());
 		} else {
 			piece->parent->children.push_back(piece);
 		}
 	}
+
+	model->FlattenPieceTree(model->GetRootPiece());
 }
 
 
@@ -619,15 +620,15 @@ void CAssParser::CalculateModelDimensions(S3DModel* model, S3DModelPiece* piece)
 	piece->SetCollisionVolume(CollisionVolume('b', 'z', piece->maxs - piece->mins, (piece->maxs + piece->mins) * 0.5f));
 
 	// Repeat with children
-	for (unsigned int i = 0; i < piece->children.size(); i++) {
-		CalculateModelDimensions(model, piece->children[i]);
+	for (S3DModelPiece* childPiece: piece->children) {
+		CalculateModelDimensions(model, childPiece);
 	}
 }
 
 // Calculate model radius from the min/max extents
 void CAssParser::CalculateModelProperties(S3DModel* model, const LuaTable& modelTable)
 {
-	CalculateModelDimensions(model, model->rootPiece);
+	CalculateModelDimensions(model, model->pieces[0]);
 
 	model->mins = modelTable.GetFloat3("mins", model->mins);
 	model->maxs = modelTable.GetFloat3("maxs", model->maxs);

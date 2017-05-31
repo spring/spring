@@ -54,7 +54,6 @@ private:
 	void KillParsers();
 
 	void CreateLists(S3DModel* o);
-	void CreateListsNow(S3DModelPiece* o);
 
 private:
 	ModelMap cache;

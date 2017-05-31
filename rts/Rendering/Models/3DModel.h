@@ -115,13 +115,20 @@ protected:
 	virtual const std::vector<unsigned>& GetVertexIndices() const = 0;
 
 public:
-	void DrawStatic() const; //< draw piece and children statically (ie. without script-transforms)
+	void DrawStatic() const;
 	void CreateDispList();
 	unsigned int GetDisplayListID() const { return dispListID; }
 
 	void CreateShatterPieces();
 	void Shatter(float, int, int, int, const float3, const float3, const CMatrix44f&) const;
 
+	void SetPieceMatrix(const CMatrix44f& m) {
+		pieceMatrix = ComposeTransform(offset, ZeroVector, scales) * m;
+
+		for (S3DModelPiece* c: children) {
+			c->SetPieceMatrix(pieceMatrix);
+		}
+	}
 	void SetBakedMatrix(const CMatrix44f& m) {
 		bakedMatrix = m;
 		hasBakedMat = !m.IsIdentity();
@@ -150,9 +157,6 @@ public:
 	const CollisionVolume* GetCollisionVolume() const { return &colvol; }
 	      CollisionVolume* GetCollisionVolume()       { return &colvol; }
 
-	unsigned int GetChildCount() const { return children.size(); }
-	S3DModelPiece* GetChild(unsigned int i) const { return children[i]; }
-
 	bool HasGeometryData() const { return (GetVertexDrawIndexCount() >= 3); }
 
 private:
@@ -166,6 +170,7 @@ public:
 	S3DModelPiece* parent;
 	CollisionVolume colvol;
 
+	CMatrix44f pieceMatrix;
 	CMatrix44f bakedMatrix;    /// baked local-space rotations
 
 	float3 offset;             /// local (piece-space) offset wrt. parent piece
@@ -202,8 +207,6 @@ struct S3DModel
 		, mins(DEF_MIN_SIZE)
 		, maxs(DEF_MAX_SIZE)
 		, relMidPos(ZeroVector)
-
-		, rootPiece(nullptr)
 	{
 	}
 
@@ -229,16 +232,42 @@ struct S3DModel
 		maxs = m.maxs;
 		relMidPos = m.relMidPos;
 
-		rootPiece = m.rootPiece;
-		m.rootPiece = nullptr;
+		pieces = std::move(m.pieces);
 		return *this;
 	}
 
-	S3DModelPiece* GetRootPiece() const { return rootPiece; }
+	S3DModelPiece* GetPiece(size_t i) const { assert(i < pieces.size()); return pieces[i]; }
+	S3DModelPiece* GetRootPiece() const { return (GetPiece(0)); }
 
-	void SetRootPiece(S3DModelPiece* p) { rootPiece = p; }
-	void DrawStatic() const { rootPiece->DrawStatic(); }
-	void DeletePieces(S3DModelPiece* piece);
+	void AddPiece(S3DModelPiece* p) { pieces.push_back(p); }
+	void DrawStatic() const {
+		// draw pieces in their static bind-pose (ie. without script-transforms)
+		for (const S3DModelPiece* piece: pieces) {
+			piece->DrawStatic();
+		}
+	}
+
+	void SetPieceMatrices() { pieces[0]->SetPieceMatrix(CMatrix44f()); }
+	void DeletePieces();
+	void FlattenPieceTree(S3DModelPiece* root) {
+		assert(root != nullptr);
+
+		pieces.clear();
+		pieces.reserve(numPieces);
+
+		std::vector<S3DModelPiece*> stack = {root};
+
+		while (!stack.empty()) {
+			S3DModelPiece* p = stack.back();
+
+			stack.pop_back();
+			pieces.push_back(p);
+
+			for (S3DModelPiece* c: p->children) {
+				stack.push_back(c);
+			}
+		}
+	}
 
 	// default values set by parsers; radius is also cached in WorldObject::drawRadius (used by projectiles)
 	float CalcDrawRadius() const { return ((maxs - mins).Length() * 0.5f); }
@@ -253,6 +282,9 @@ public:
 	std::string name;
 	std::string texs[NUM_MODEL_TEXTURES];
 
+	// flattened tree; pieces[0] is the root
+	std::vector<S3DModelPiece*> pieces;
+
 	int id;                     /// unsynced ID, starting with 1
 	int numPieces;
 	int textureType;            /// FIXME: MAKE S3O ONLY (0 = 3DO, otherwise S3O or OBJ)
@@ -265,8 +297,6 @@ public:
 	float3 mins;
 	float3 maxs;
 	float3 relMidPos;
-
-	S3DModelPiece* rootPiece;   /// The piece at the base of the model hierarchy
 };
 
 
@@ -414,9 +444,6 @@ struct LocalModel
 	void SetModel(const S3DModel* model, bool initialize = true);
 	void SetLODCount(unsigned int lodCount);
 	void UpdateBoundingVolume();
-
-	void SetOriginalPieces(const S3DModelPiece* mp, int& idx);
-
 
 	void GetBoundingBoxVerts(std::vector<float3>& verts) const {
 		verts.resize(8 + 2); GetBoundingBoxVerts(&verts[0]);

@@ -7,7 +7,7 @@
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "System/Exceptions.h"
-#include "System/StringUtil.h"
+#include "System/SafeUtil.h"
 
 #include <algorithm>
 #include <cctype>
@@ -49,13 +49,15 @@ CR_REG_METADATA(LocalModel, (
 /** ****************************************************************************************************
  * S3DModel
  */
-void S3DModel::DeletePieces(S3DModelPiece* piece)
+void S3DModel::DeletePieces()
 {
-	for (unsigned int n = 0; n < piece->GetChildCount(); n++) {
-		DeletePieces(piece->GetChild(n));
+	assert(!pieces.empty());
+
+	for (size_t n = 0; n < pieces.size(); n++) {
+		spring::SafeDelete(pieces[n]);
 	}
 
-	delete piece;
+	pieces.clear();
 }
 
 
@@ -78,19 +80,12 @@ void S3DModelPiece::CreateDispList()
 
 void S3DModelPiece::DrawStatic() const
 {
-	// get the static transform (sans script influences)
-	const CMatrix44f mat = std::move(ComposeTransform(offset, ZeroVector, scales));
+	if (!HasGeometryData())
+		return;
 
 	glPushMatrix();
-	glMultMatrixf(mat);
-
-	if (HasGeometryData())
-		glCallList(dispListID);
-
-	for (unsigned int n = 0; n < children.size(); n++) {
-		children[n]->DrawStatic();
-	}
-
+	glMultMatrixf(pieceMatrix);
+	glCallList(dispListID);
 	glPopMatrix();
 }
 
@@ -99,28 +94,17 @@ float3 S3DModelPiece::GetEmitPos() const
 {
 	switch (GetVertexCount()) {
 		case 0:
-		case 1: {
-			return ZeroVector;
-		} break;
-		default: {
-			return GetVertexPos(0);
-		} break;
+		case 1: { return ZeroVector; } break;
+		default: { return GetVertexPos(0); } break;
 	}
 }
-
 
 float3 S3DModelPiece::GetEmitDir() const
 {
 	switch (GetVertexCount()) {
-		case 0: {
-			return FwdVector;
-		} break;
-		case 1: {
-			return GetVertexPos(0);
-		} break;
-		default: {
-			return GetVertexPos(1) - GetVertexPos(0);
-		} break;
+		case 0: { return FwdVector; } break;
+		case 1: { return GetVertexPos(0); } break;
+		default: { return (GetVertexPos(1) - GetVertexPos(0)); } break;
 	}
 }
 
@@ -143,30 +127,26 @@ void S3DModelPiece::CreateShatterPieces()
 
 void S3DModelPiece::CreateShatterPiecesVariation(const int num)
 {
-	const std::vector<unsigned>& indices = GetVertexIndices();
+	typedef  std::pair<S3DModelPiecePart::RenderData, std::vector<unsigned> >  ShatterPartDataPair;
+	typedef  std::array< ShatterPartDataPair, S3DModelPiecePart::SHATTER_MAX_PARTS>  ShatterPartsBuffer;
 
-	// we just operate on a buffer
-	// (cause the indices aren't needed once the buffer has been created)
-	struct ShatterPartDataBuffer : S3DModelPiecePart::RenderData {
-		std::vector<unsigned> indices;
-	};
-	std::vector<ShatterPartDataBuffer> shatterPartsBuf;
+	// operate on a buffer; indices are not needed once VBO has been created
+	ShatterPartsBuffer shatterPartsBuf;
 
-	// initialize splitter parts
-	shatterPartsBuf.resize(S3DModelPiecePart::SHATTER_MAX_PARTS);
-	for (auto& cp: shatterPartsBuf) {
-		cp.dir = guRNG.NextVector().ANormalize();
+	for (ShatterPartDataPair& cp: shatterPartsBuf) {
+		cp.first.dir = (guRNG.NextVector()).ANormalize();
 	}
 
 	// helper
-	auto GetPolygonDir = [&](const size_t idx) -> float3
+	const std::vector<unsigned>& indices = GetVertexIndices();
+	const auto GetPolygonDir = [&](const size_t idx) -> float3
 	{
 		float3 midPos;
-		for (int j: {0,1,2}) {
-			midPos += GetVertexPos(indices[idx + j]);
-		}
+		midPos += GetVertexPos(indices[idx + 0]);
+		midPos += GetVertexPos(indices[idx + 1]);
+		midPos += GetVertexPos(indices[idx + 2]);
 		midPos *= 0.333f;
-		return midPos.ANormalize();
+		return (midPos.ANormalize());
 	};
 
 	// add vertices to splitter parts
@@ -174,49 +154,71 @@ void S3DModelPiece::CreateShatterPiecesVariation(const int num)
 		const float3& dir = GetPolygonDir(i);
 
 		// find the closest shatter part (the one that points into same dir)
-		float md = -2.f;
-		ShatterPartDataBuffer* mcp = nullptr;
-		for (auto& cp: shatterPartsBuf) {
-			if (cp.dir.dot(dir) < md)
+		float md = -2.0f;
+
+		ShatterPartDataPair* mcp = nullptr;
+		S3DModelPiecePart::RenderData* rd = nullptr;
+
+		for (ShatterPartDataPair& cp: shatterPartsBuf) {
+			rd = &cp.first;
+
+			if (rd->dir.dot(dir) < md)
 				continue;
 
-			md = cp.dir.dot(dir);
+			md = rd->dir.dot(dir);
 			mcp = &cp;
 		}
 
-		mcp->indices.push_back(indices[i + 0]);
-		mcp->indices.push_back(indices[i + 1]);
-		mcp->indices.push_back(indices[i + 2]);
+		(mcp->second).push_back(indices[i + 0]);
+		(mcp->second).push_back(indices[i + 1]);
+		(mcp->second).push_back(indices[i + 2]);
 	}
 
-	// fill the vertex index vbo
-	const auto isize = indices.size() * sizeof(unsigned int);
-	auto* memVBO = reinterpret_cast<unsigned char*>(vboShatterIndices.MapBuffer(num * isize, isize, GL_WRITE_ONLY));
-	size_t curVboPos = 0;
-	for (auto& cp: shatterPartsBuf) {
-		cp.indexCount = cp.indices.size();
-		cp.vboOffset  = num * isize + curVboPos;
-		if (cp.indexCount > 0) {
-			memcpy(memVBO + curVboPos, &cp.indices[0], cp.indexCount * sizeof(unsigned int));
-			curVboPos    += cp.indexCount * sizeof(unsigned int);
+	{
+		// fill the vertex index vbo
+		const size_t isize = indices.size() * sizeof(unsigned int);
+		size_t vboPos = 0;
+
+		auto* vboMem = reinterpret_cast<unsigned char*>(vboShatterIndices.MapBuffer(num * isize, isize, GL_WRITE_ONLY));
+
+		for (ShatterPartDataPair& cp: shatterPartsBuf) {
+			S3DModelPiecePart::RenderData& rd = cp.first;
+
+			rd.indexCount = (cp.second).size();
+			rd.vboOffset  = num * isize + vboPos;
+
+			if (rd.indexCount > 0) {
+				memcpy(vboMem + vboPos, &(cp.second)[0], rd.indexCount * sizeof(unsigned int));
+				vboPos += (rd.indexCount * sizeof(unsigned int));
+			}
 		}
-	}
-	vboShatterIndices.UnmapBuffer();
 
-	// delete empty splitter parts
-	for (int i = shatterPartsBuf.size() - 1; i >= 0; --i) {
-		auto& cp = shatterPartsBuf[i];
-		if (cp.indexCount == 0) {
-			cp = std::move(shatterPartsBuf.back());
-			shatterPartsBuf.pop_back();
+		vboShatterIndices.UnmapBuffer();
+	}
+
+	{
+		// delete empty splitter parts
+		size_t backIdx = shatterPartsBuf.size() - 1;
+
+		for (size_t j = 0; j < shatterPartsBuf.size() && j < backIdx; ) {
+			const ShatterPartDataPair& cp = shatterPartsBuf[j];
+			const S3DModelPiecePart::RenderData& rd = cp.first;
+
+			if (rd.indexCount == 0) {
+				std::swap(shatterPartsBuf[j], shatterPartsBuf[backIdx--]);
+				continue;
+			}
+
+			j++;
 		}
-	}
 
+		shatterParts[num].renderData.clear();
+		shatterParts[num].renderData.reserve(backIdx + 1);
 
-	// finish: copy buffer to actual memory
-	shatterParts[num].renderData.reserve(shatterPartsBuf.size());
-	for (const auto& cp: shatterPartsBuf) {
-		shatterParts[num].renderData.push_back(cp);
+		// finish: copy buffer to actual memory
+		for (size_t n = 0; n <= backIdx; n++) {
+			shatterParts[num].renderData.push_back(shatterPartsBuf[n].first);
+		}
 	}
 }
 
@@ -261,29 +263,22 @@ void LocalModel::SetLODCount(unsigned int lodCount)
 }
 
 
-void LocalModel::SetOriginalPieces(const S3DModelPiece* mp, int& idx)
-{
-	pieces[idx  ].original = mp;
-	pieces[idx++].dispListID = mp->GetDisplayListID();
-
-	for (unsigned int i = 0; i < mp->GetChildCount(); i++) {
-		SetOriginalPieces(mp->GetChild(i), idx);
-	}
-}
-
 void LocalModel::SetModel(const S3DModel* model, bool initialize)
 {
 	// make sure we do not get called for trees, etc
 	assert(model != nullptr);
 	assert(model->numPieces >= 1);
 
-	// Only update the pieces
 	if (!initialize) {
-		int idx = 0;
-
 		assert(pieces.size() == model->numPieces);
-		SetOriginalPieces(model->GetRootPiece(), idx);
-		assert(idx == model->numPieces);
+
+		// PostLoad; only update the pieces
+		for (size_t n = 0; n < pieces.size(); n++) {
+			S3DModelPiece* omp = model->GetPiece(n);
+
+			pieces[n].original = omp;
+			pieces[n].dispListID = omp->GetDisplayListID();
+		}
 
 		pieces[0].UpdateChildMatricesRec(true);
 		UpdateBoundingVolume();
@@ -299,7 +294,7 @@ void LocalModel::SetModel(const S3DModel* model, bool initialize)
 
 	// must recursively update matrices here too: for features
 	// LocalModel::Update is never called, but they might have
-	// baked piece rotations (if .dae)
+	// baked piece rotations (in the case of .dae)
 	pieces[0].UpdateChildMatricesRec(false);
 	UpdateBoundingVolume();
 
@@ -321,14 +316,15 @@ LocalModelPiece* LocalModel::CreateLocalModelPieces(const S3DModelPiece* mpParen
 	// CobInstance::MapScriptToModelPieces does the remapping (if any)
 	assert(lmpParent->GetLModelPieceIndex() == lmpParent->GetScriptPieceIndex());
 
-	for (unsigned int i = 0; i < mpParent->GetChildCount(); i++) {
-		lmpChild = CreateLocalModelPieces(mpParent->GetChild(i));
+	for (const S3DModelPiece* mpChild: mpParent->children) {
+		lmpChild = CreateLocalModelPieces(mpChild);
 		lmpChild->SetParent(lmpParent);
 		lmpParent->AddChild(lmpChild);
 	}
 
 	return lmpParent;
 }
+
 
 void LocalModel::UpdateBoundingVolume()
 {
