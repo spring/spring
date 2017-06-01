@@ -1059,8 +1059,8 @@ int CLuaUnitScript::UpdateCallIn(lua_State* L)
 
 int CLuaUnitScript::CallAsUnit(lua_State* L)
 {
-return 0;
 	CUnit* unit = ParseUnit(L, __func__, 1);
+
 	if (unit == nullptr)
 		return 0;
 
