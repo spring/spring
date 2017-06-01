@@ -3,6 +3,7 @@
 // TODO: move this out of Sim, this is rendering code!
 
 #include "LineDrawer.h"
+#include <cmath>
 
 #include <cmath>
 
