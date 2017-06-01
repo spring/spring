@@ -405,13 +405,12 @@ void COBJParser::BuildModelPieceTreeRec(
 			if (pieceIt == pieceMap.end()) {
 				throw content_error("[OBJParser] meta-data piece named \"" + childPieceName + "\" not defined in model");
 			} else {
-				assert(childPieceName == childPiece->name);
-
 				SOBJPiece* childPiece = pieceIt->second;
 
 				childPiece->parent = piece;
 				piece->children.push_back(childPiece);
 
+				assert(childPieceName == childPiece->name);
 				BuildModelPieceTreeRec(model, childPiece, pieceMap, childPieceTable, globalVertexOffsets, localPieceOffsets);
 			}
 		}
@@ -427,13 +426,12 @@ void COBJParser::BuildModelPieceTreeRec(
 			if (pieceIt == pieceMap.end()) {
 				throw content_error("[OBJParser] meta-data piece named \"" + childPieceName + "\" not defined in model");
 			} else {
-				assert(childPieceName == childPiece->name);
-
 				SOBJPiece* childPiece = pieceIt->second;
 
 				childPiece->parent = piece;
 				piece->children.push_back(childPiece);
 
+				assert(childPieceName == childPiece->name);
 				BuildModelPieceTreeRec(model, childPiece, pieceMap, childPieceTable, globalVertexOffsets, localPieceOffsets);
 			}
 		}
