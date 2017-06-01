@@ -19,6 +19,7 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
 #include "System/Platform/CrashHandler.h"
+#include "System/Platform/MessageBox.h"
 #include "System/Platform/Threading.h"
 #include "System/Platform/WindowManagerHelper.h"
 #include "System/Platform/errorhandler.h"
@@ -638,6 +639,9 @@ void CGlobalRendering::QueryVersionInfo(char (&sdlVersionStr)[64], char (&glVidM
 
 	constexpr const char* sdlFmtStr = "%d.%d.%d (linked) / %d.%d.%d (compiled)";
 	constexpr const char* memFmtStr = "%iMB (total) / %iMB (available)";
+	constexpr const char* msgBoxStr =
+		"Your system has less than 1GB of GPU memory. You may experience"
+		" graphical glitches or crashes when playing longer/larger games.";
 
 	SNPRINTF(sdlVersionStr, sizeof(sdlVersionStr), sdlFmtStr,
 		globalRenderingInfo.sdlVersionLinked.major, globalRenderingInfo.sdlVersionLinked.minor, globalRenderingInfo.sdlVersionLinked.patch,
@@ -649,6 +653,11 @@ void CGlobalRendering::QueryVersionInfo(char (&sdlVersionStr)[64], char (&glVidM
 	if (GetAvailableVideoRAM(vidMemBuffer)) {
 		const GLint totalMemMB = vidMemBuffer[0] / 1024;
 		const GLint availMemMB = vidMemBuffer[1] / 1024;
+
+		#if !defined(DEDICATED) && !defined(HEADLESS)
+		if (totalMemMB < 1024)
+			Platform::MsgBox(msgBoxStr, "WARNING", MBF_OK | MBF_EXCL);
+		#endif
 
 		SNPRINTF(glVidMemStr, sizeof(glVidMemStr), memFmtStr, gpuMemorySize = totalMemMB, availMemMB);
 	}
