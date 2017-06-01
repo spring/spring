@@ -14,6 +14,7 @@ public:
 	static void KillStatic();
 
 	static void LoadWeapons(CUnit* unit);
+	static void InitWeapons(CUnit* unit);
 	static void FreeWeapons(CUnit* unit);
 
 private:

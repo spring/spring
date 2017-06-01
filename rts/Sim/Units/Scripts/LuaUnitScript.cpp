@@ -1009,7 +1009,7 @@ static inline int ParseAxis(lua_State* L, const char* caller, int index)
 
 int CLuaUnitScript::CreateScript(lua_State* L)
 {
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	CUnit* unit = ParseUnit(L, __func__, 1);
 
 	if (unit == nullptr)
 		return 0;
@@ -1032,12 +1032,6 @@ int CLuaUnitScript::CreateScript(lua_State* L)
 		spring::SafeDestruct(unit->script);
 
 	unit->script = newScript;
-
-	// flush some caches (which store availability of certain script functions)
-	for (CWeapon* w: unit->weapons) {
-		w->SetWeaponNum(w->weaponNum);
-	}
-
 	return 0;
 }
 
@@ -1055,12 +1049,11 @@ int CLuaUnitScript::UpdateCallIn(lua_State* L)
 		luaL_error(L, "%s(): not a Lua unit script", __FUNCTION__);
 
 	// we would get confused if our refs aren't together in a single state
-	if (L != script->L) {
+	if (L != script->L)
 		luaL_error(L, "%s(): incorrect lua_State", __FUNCTION__);
-	}
-	if (!lua_israwstring(L, 2) || (!lua_isfunction(L, 3) && !lua_isnoneornil(L, 3))) {
+
+	if (!lua_israwstring(L, 2) || (!lua_isfunction(L, 3) && !lua_isnoneornil(L, 3)))
 		luaL_error(L, "Incorrect arguments to %s()", __FUNCTION__);
-	}
 
 	return script->UpdateCallIn();
 }

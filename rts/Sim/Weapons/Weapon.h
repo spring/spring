@@ -25,7 +25,7 @@ public:
 	virtual ~CWeapon();
 	virtual void Init();
 
-	void SetWeaponNum(int);
+	void SetWeaponNum(int num) { weaponNum = num; }
 	void DependentDied(CObject* o) override;
 	virtual void SlowUpdate();
 	virtual void Update();

@@ -41,7 +41,19 @@ void CWeaponLoader::LoadWeapons(CUnit* unit)
 	unit->weapons.reserve(unitDef->weapons.size());
 
 	for (const UnitDefWeapon& defWeapon: unitDef->weapons) {
-		InitWeapon(unit, LoadWeapon(unit, defWeapon.def), &defWeapon);
+		CWeapon* weapon = LoadWeapon(unit, defWeapon.def);
+
+		weapon->SetWeaponNum(unit->weapons.size());
+		unit->weapons.push_back(weapon);
+	}
+}
+
+void CWeaponLoader::InitWeapons(CUnit* unit)
+{
+	const UnitDef* unitDef = unit->unitDef;
+
+	for (size_t n = 0; n < unit->weapons.size(); n++) {
+		InitWeapon(unit, unit->weapons[n], &unitDef->weapons[n]);
 	}
 }
 
@@ -155,11 +167,10 @@ void CWeaponLoader::InitWeapon(CUnit* owner, CWeapon* weapon, const UnitDefWeapo
 
 	weapon->damages = DynDamageArray::IncRef(&weaponDef->damages);
 
-	weapon->SetWeaponNum(owner->weapons.size());
+	// store availability of {Query,AimFrom}Weapon script functions, etc
 	weapon->Init();
 	weapon->UpdateRange(weaponDef->range);
-	owner->maxRange = std::max(weapon->range, owner->maxRange);
 
-	owner->weapons.push_back(weapon);
+	owner->maxRange = std::max(weapon->range, owner->maxRange);
 }
 

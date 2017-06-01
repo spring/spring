@@ -176,22 +176,11 @@ CWeapon::~CWeapon()
 }
 
 
-void CWeapon::SetWeaponNum(int num)
-{
-	weaponNum = num;
-
-	UpdateWeaponPieces();
-	UpdateWeaponVectors();
-	hasBlockShot = owner->script->HasBlockShot(weaponNum);
-	hasTargetWeight = owner->script->HasTargetWeight(weaponNum);
-}
-
-
 inline bool CWeapon::CobBlockShot() const
 {
-	if (!hasBlockShot) {
+	if (!hasBlockShot)
 		return false;
-	}
+
 	return owner->script->BlockShot(weaponNum, currentTarget.unit, currentTarget.isUserTarget);
 }
 
@@ -204,13 +193,18 @@ float CWeapon::TargetWeight(const CUnit* targetUnit) const
 
 void CWeapon::UpdateWeaponPieces(const bool updateAimFrom)
 {
-	// Call UnitScript
-	muzzlePiece = owner->script->QueryWeapon(weaponNum);
-	if (updateAimFrom) aimFromPiece = owner->script->AimFromWeapon(weaponNum);
+	hasBlockShot = owner->script->HasBlockShot(weaponNum);
+	hasTargetWeight = owner->script->HasTargetWeight(weaponNum);
 
-	// Some UnitScripts only implement on of them
+	muzzlePiece = owner->script->QueryWeapon(weaponNum);
+
+	if (updateAimFrom)
+		aimFromPiece = owner->script->AimFromWeapon(weaponNum);
+
+	// some scripts only implement one of these
 	const bool aimExists = owner->script->PieceExists(aimFromPiece);
 	const bool muzExists = owner->script->PieceExists(muzzlePiece);
+
 	if (aimExists && muzExists) {
 		// everything fine
 	} else
