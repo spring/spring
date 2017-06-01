@@ -69,13 +69,7 @@ void FPSUnitController::Update() {
 		targetPos  = pos + viewDir * targetDist;
 
 		if (!mouse2) {
-			// if a target position is in range, but not on the ground,
-			// projectiles can gain extra flighttime and travel further
-			//
-			// NOTE: CWeapon::AttackGround checks range via TryTarget
-			if ((targetPos.y - CGround::GetHeightReal(targetPos.x, targetPos.z)) <= SQUARE_SIZE) {
-				controllee->AttackGround(targetPos, true, true, true);
-			}
+			controllee->AttackGround(targetPos, true, true, true);
 		}
 	}
 }

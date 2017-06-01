@@ -152,7 +152,6 @@ void CCannon::SlowUpdate()
 	CWeapon::SlowUpdate();
 }
 
-
 float3 CCannon::GetWantedDir(const float3& diff)
 {
 	// try to cache results, sacrifice some (not much too much even for a pewee) accuracy

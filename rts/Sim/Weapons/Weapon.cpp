@@ -1168,11 +1168,6 @@ void CWeapon::AdjustTargetPosToWater(float3& tgtPos, bool attackGround) const
 
 	tgtPos.y = std::max(tgtPos.y, CGround::GetHeightReal(tgtPos.x, tgtPos.z));
 	tgtPos.y = std::max(tgtPos.y, tgtPos.y * weaponDef->waterweapon);
-
-	// prevent range hax in FPS mode
-	if (owner->UnderFirstPersonControl() && dynamic_cast<const CCannon*>(this)) {
-		tgtPos.y = CGround::GetHeightAboveWater(tgtPos.x, tgtPos.z);
-	}
 }
 
 
