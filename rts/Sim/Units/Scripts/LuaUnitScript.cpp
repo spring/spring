@@ -167,9 +167,9 @@ Spring.UnitScript.UpdateCallIn(number unitID, string fname[, function callIn]) -
 #define LUA_TRACE(m) \
 	do { \
 		if (unit) { \
-			LOG_L(L_DEBUG, "%s: %d: %s", __FUNCTION__, unit->id, m); \
+			LOG_L(L_DEBUG, "%s: %d: %s", __func__, unit->id, m); \
 		} else { \
-			LOG_L(L_DEBUG, "%s: %s", __FUNCTION__, m); \
+			LOG_L(L_DEBUG, "%s: %s", __func__, m); \
 		} \
 	} while (false)
 
@@ -1017,28 +1017,26 @@ int CLuaUnitScript::CreateScript(lua_State* L)
 	// check table of callIns
 	// (we might not get a chance to clean up later on, if something is wrong)
 	if (!lua_istable(L, 2))
-		luaL_error(L, "%s(): error parsing callIn table", __FUNCTION__);
+		luaL_error(L, "%s(): error parsing callIn table", __func__);
 
 	for (lua_pushnil(L); lua_next(L, 2) != 0; lua_pop(L, 1)) {
 		if (!lua_israwstring(L, -2) || !lua_isfunction(L, -1)) {
-			luaL_error(L, "%s(): error parsing callIn table", __FUNCTION__);
+			luaL_error(L, "%s(): error parsing callIn table", __func__);
 		}
 	}
-
-	// replace the unit's script (ctor parses callIn table)
-	CUnitScript* newScript = CUnitScriptFactory::CreateLuaScript(unit, L);
 
 	if (unit->script != &CNullUnitScript::value)
 		spring::SafeDestruct(unit->script);
 
-	unit->script = newScript;
+	// replace the unit's script (ctor parses callIn table)
+	unit->script = CUnitScriptFactory::CreateLuaScript(unit, L);
 	return 0;
 }
 
 
 int CLuaUnitScript::UpdateCallIn(lua_State* L)
 {
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	CUnit* unit = ParseUnit(L, __func__, 1);
 
 	if (unit == nullptr)
 		return 0;
@@ -1046,14 +1044,14 @@ int CLuaUnitScript::UpdateCallIn(lua_State* L)
 	CLuaUnitScript* script = dynamic_cast<CLuaUnitScript*>(unit->script);
 
 	if (script == nullptr)
-		luaL_error(L, "%s(): not a Lua unit script", __FUNCTION__);
+		luaL_error(L, "%s(): not a Lua unit script", __func__);
 
 	// we would get confused if our refs aren't together in a single state
 	if (L != script->L)
-		luaL_error(L, "%s(): incorrect lua_State", __FUNCTION__);
+		luaL_error(L, "%s(): incorrect lua_State", __func__);
 
 	if (!lua_israwstring(L, 2) || (!lua_isfunction(L, 3) && !lua_isnoneornil(L, 3)))
-		luaL_error(L, "Incorrect arguments to %s()", __FUNCTION__);
+		luaL_error(L, "Incorrect arguments to %s()", __func__);
 
 	return script->UpdateCallIn();
 }
@@ -1061,16 +1059,15 @@ int CLuaUnitScript::UpdateCallIn(lua_State* L)
 
 int CLuaUnitScript::CallAsUnit(lua_State* L)
 {
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+return 0;
+	CUnit* unit = ParseUnit(L, __func__, 1);
+	if (unit == nullptr)
 		return 0;
-	}
 
 	const int funcIndex = 2;
 
-	if (!lua_isfunction(L, funcIndex)) {
-		luaL_error(L, "Incorrect arguments to %s()", __FUNCTION__);
-	}
+	if (!lua_isfunction(L, funcIndex))
+		luaL_error(L, "Incorrect arguments to %s()", __func__);
 
 	CUnit* oldActiveUnit = activeUnit;
 	CUnitScript* oldActiveScript = activeScript;
@@ -1083,9 +1080,8 @@ int CLuaUnitScript::CallAsUnit(lua_State* L)
 	activeUnit = oldActiveUnit;
 	activeScript = oldActiveScript;
 
-	if (error != 0) {
+	if (error != 0)
 		lua_error(L);
-	}
 
 	return (lua_gettop(L) - funcIndex + 1);
 }
@@ -1129,9 +1125,9 @@ int CLuaUnitScript::GetUnitValue(lua_State* L, CUnitScript* script, int arg)
 
 int CLuaUnitScript::GetUnitCOBValue(lua_State* L)
 {
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	CUnit* unit = ParseUnit(L, __func__, 1);
 
-	if (unit == NULL)
+	if (unit == nullptr)
 		return 0;
 
 	return GetUnitValue(L, unit->script, 2);
@@ -1140,7 +1136,7 @@ int CLuaUnitScript::GetUnitCOBValue(lua_State* L)
 
 int CLuaUnitScript::GetUnitValue(lua_State* L)
 {
-	if (activeScript == NULL)
+	if (activeScript == nullptr)
 		return 0;
 
 	return GetUnitValue(L, activeScript, 1);
@@ -1169,9 +1165,9 @@ int CLuaUnitScript::SetUnitValue(lua_State* L, CUnitScript* script, int arg)
 
 int CLuaUnitScript::SetUnitCOBValue(lua_State* L)
 {
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	CUnit* unit = ParseUnit(L, __func__, 1);
 
-	if (unit == NULL)
+	if (unit == nullptr)
 		return 0;
 
 	return SetUnitValue(L, unit->script, 2);
@@ -1180,7 +1176,7 @@ int CLuaUnitScript::SetUnitCOBValue(lua_State* L)
 
 int CLuaUnitScript::SetUnitValue(lua_State* L)
 {
-	if (activeScript == NULL)
+	if (activeScript == nullptr)
 		return 0;
 
 	return SetUnitValue(L, activeScript, 1);
@@ -1190,7 +1186,7 @@ int CLuaUnitScript::SetUnitValue(lua_State* L)
 int CLuaUnitScript::SetPieceVisibility(lua_State* L)
 {
 	// void SetVisibility(int piece, bool visible);
-	if (activeScript == NULL)
+	if (activeScript == nullptr)
 		return 0;
 
 	// note: for Lua unit scripts it would be confusing if the unit's
@@ -1206,7 +1202,7 @@ int CLuaUnitScript::SetPieceVisibility(lua_State* L)
 int CLuaUnitScript::EmitSfx(lua_State* L)
 {
 	// void EmitSfx(int type, int piece);
-	if (activeScript == NULL)
+	if (activeScript == nullptr)
 		return 0;
 
 	// note: the arguments are reversed compared to the C++ (and COB?) function
@@ -1221,15 +1217,15 @@ int CLuaUnitScript::EmitSfx(lua_State* L)
 int CLuaUnitScript::AttachUnit(lua_State* L)
 {
 	// void AttachUnit(int piece, int unit);
-	if (activeScript == NULL)
+	if (activeScript == nullptr)
 		return 0;
 
-	const int piece = luaL_checkint(L, 1) - 1;
-	const CUnit* transportee = ParseUnit(L, __FUNCTION__, 2);
-	if (transportee == NULL)
+	const CUnit* transportee = ParseUnit(L, __func__, 2);
+
+	if (transportee == nullptr)
 		return 0;
 
-	activeScript->AttachUnit(piece, transportee->id);
+	activeScript->AttachUnit(luaL_checkint(L, 1) - 1, transportee->id);
 	return 0;
 }
 
@@ -1237,11 +1233,12 @@ int CLuaUnitScript::AttachUnit(lua_State* L)
 int CLuaUnitScript::DropUnit(lua_State* L)
 {
 	// void DropUnit(int unit);
-	if (activeScript == NULL)
+	if (activeScript == nullptr)
 		return 0;
 
-	const CUnit* transportee = ParseUnit(L, __FUNCTION__, 1);
-	if (transportee == NULL)
+	const CUnit* transportee = ParseUnit(L, __func__, 1);
+
+	if (transportee == nullptr)
 		return 0;
 
 	activeScript->DropUnit(transportee->id);
@@ -1252,7 +1249,7 @@ int CLuaUnitScript::DropUnit(lua_State* L)
 int CLuaUnitScript::Explode(lua_State* L)
 {
 	// void Explode(int piece, int flags);
-	if (activeScript == NULL)
+	if (activeScript == nullptr)
 		return 0;
 
 	const int piece = luaL_checkint(L, 1) - 1;
@@ -1265,7 +1262,7 @@ int CLuaUnitScript::Explode(lua_State* L)
 int CLuaUnitScript::ShowFlare(lua_State* L)
 {
 	// void ShowFlare(int piece);
-	if (activeScript == NULL)
+	if (activeScript == nullptr)
 		return 0;
 
 	const int piece = luaL_checkint(L, 1) - 1;
@@ -1277,11 +1274,11 @@ int CLuaUnitScript::ShowFlare(lua_State* L)
 int CLuaUnitScript::Spin(lua_State* L)
 {
 	// void Spin(int piece, int axis, int speed, int accel);
-	if (activeScript == NULL)
+	if (activeScript == nullptr)
 		return 0;
 
 	const int piece = luaL_checkint(L, 1) - 1;
-	const int axis = ParseAxis(L, __FUNCTION__, 2);
+	const int axis = ParseAxis(L, __func__, 2);
 	const float speed = luaL_checkfloat(L, 3);
 	const float accel = luaL_optfloat(L, 4, 0.0f); // accel == 0 -> start at desired speed immediately
 
@@ -1293,11 +1290,11 @@ int CLuaUnitScript::Spin(lua_State* L)
 int CLuaUnitScript::StopSpin(lua_State* L)
 {
 	// void StopSpin(int piece, int axis, int decel);
-	if (activeScript == NULL)
+	if (activeScript == nullptr)
 		return 0;
 
 	const int piece = luaL_checkint(L, 1) - 1;
-	const int axis = ParseAxis(L, __FUNCTION__, 2);
+	const int axis = ParseAxis(L, __func__, 2);
 	const float decel = luaL_optfloat(L, 3, 0.0f); // decel == 0 -> stop immediately
 
 	activeScript->StopSpin(piece, axis, decel);
@@ -1309,11 +1306,11 @@ int CLuaUnitScript::Turn(lua_State* L)
 {
 	// void Turn(int piece, int axis, int speed, int destination);
 	// void TurnNow(int piece, int axis, int destination);
-	if (activeScript == NULL)
+	if (activeScript == nullptr)
 		return 0;
 
 	const int piece = luaL_checkint(L, 1) - 1;
-	const int axis = ParseAxis(L, __FUNCTION__, 2);
+	const int axis = ParseAxis(L, __func__, 2);
 	const float dest  = luaL_checkfloat(L, 3);
 	const float speed = luaL_optfloat(L, 4, 0.0f); // speed == 0 -> TurnNow
 
@@ -1331,11 +1328,11 @@ int CLuaUnitScript::Move(lua_State* L)
 {
 	// void Move(int piece, int axis, int speed, int destination);
 	// void MoveNow(int piece, int axis, int destination);
-	if (activeScript == NULL)
+	if (activeScript == nullptr)
 		return 0;
 
 	const int piece = luaL_checkint(L, 1) - 1;
-	const int axis = ParseAxis(L, __FUNCTION__, 2);
+	const int axis = ParseAxis(L, __func__, 2);
 	const float dest  = luaL_checkfloat(L, 3);
 	const float speed = luaL_optfloat(L, 4, 0.0f); // speed == 0 -> MoveNow
 
@@ -1351,7 +1348,7 @@ int CLuaUnitScript::Move(lua_State* L)
 
 int CLuaUnitScript::IsInAnimation(lua_State* L, const char* caller, AnimType type)
 {
-	if (activeScript == NULL)
+	if (activeScript == nullptr)
 		return 0;
 
 	const int piece = luaL_checkint(L, 1) - 1;
@@ -1364,32 +1361,31 @@ int CLuaUnitScript::IsInAnimation(lua_State* L, const char* caller, AnimType typ
 
 int CLuaUnitScript::IsInTurn(lua_State* L)
 {
-	return IsInAnimation(L, __FUNCTION__, ATurn);
+	return IsInAnimation(L, __func__, ATurn);
 }
 
 
 int CLuaUnitScript::IsInMove(lua_State* L)
 {
-	return IsInAnimation(L, __FUNCTION__, AMove);
+	return IsInAnimation(L, __func__, AMove);
 }
 
 
 int CLuaUnitScript::IsInSpin(lua_State* L)
 {
-	return IsInAnimation(L, __FUNCTION__, ASpin);
+	return IsInAnimation(L, __func__, ASpin);
 }
 
 
 int CLuaUnitScript::WaitForAnimation(lua_State* L, const char* caller, AnimType type)
 {
-	if (activeScript == NULL)
+	if (activeScript == nullptr)
 		return 0;
 
 	CLuaUnitScript* script = dynamic_cast<CLuaUnitScript*>(activeScript);
 
-	if (script == NULL) {
+	if (script == nullptr)
 		luaL_error(L, "%s(): not a Lua unit script", caller);
-	}
 
 	const int piece = luaL_checkint(L, 1) - 1;
 	const int axis  = ParseAxis(L, caller, 2);
@@ -1401,26 +1397,25 @@ int CLuaUnitScript::WaitForAnimation(lua_State* L, const char* caller, AnimType 
 
 int CLuaUnitScript::WaitForTurn(lua_State* L)
 {
-	return WaitForAnimation(L, __FUNCTION__, ATurn);
+	return WaitForAnimation(L, __func__, ATurn);
 }
 
 
 int CLuaUnitScript::WaitForMove(lua_State* L)
 {
-	return WaitForAnimation(L, __FUNCTION__, AMove);
+	return WaitForAnimation(L, __func__, AMove);
 }
 
 
 int CLuaUnitScript::SetDeathScriptFinished(lua_State* L)
 {
-	if (activeUnit == NULL || activeScript == NULL)
+	if (activeUnit == NULL || activeScript == nullptr)
 		return 0;
 
 	CLuaUnitScript* script = dynamic_cast<CLuaUnitScript*>(activeScript);
 
-	if (script == NULL || !script->inKilled) {
-		luaL_error(L, "%s(): not a Lua unit script or 'Killed' not called", __FUNCTION__);
-	}
+	if (script == NULL || !script->inKilled)
+		luaL_error(L, "%s(): not a Lua unit script or 'Killed' not called", __func__);
 
 	activeUnit->deathScriptFinished = true;
 	activeUnit->delayedWreckLevel = luaL_optint(L, 1, -1);
@@ -1431,37 +1426,39 @@ int CLuaUnitScript::SetDeathScriptFinished(lua_State* L)
 
 int CLuaUnitScript::GetPieceTranslation(lua_State* L)
 {
-	if (activeScript == NULL)
+	if (activeScript == nullptr)
 		return 0;
 
-	LocalModelPiece* piece = ParseLocalModelPiece(L, activeScript, __FUNCTION__);
+	LocalModelPiece* piece = ParseLocalModelPiece(L, activeScript, __func__);
 	return ToLua(L, piece->GetPosition() - piece->original->offset);
 }
 
 
 int CLuaUnitScript::GetPieceRotation(lua_State* L)
 {
-	if (activeScript == NULL)
+	if (activeScript == nullptr)
 		return 0;
 
-	LocalModelPiece* piece = ParseLocalModelPiece(L, activeScript, __FUNCTION__);
+	LocalModelPiece* piece = ParseLocalModelPiece(L, activeScript, __func__);
 	return ToLua(L, piece->GetRotation());
 }
 
 
 int CLuaUnitScript::GetPiecePosDir(lua_State* L)
 {
-	if (activeScript == NULL)
+	if (activeScript == nullptr)
 		return 0;
 
-	LocalModelPiece* piece = ParseLocalModelPiece(L, activeScript, __FUNCTION__);
-	float3 pos, dir;
+	LocalModelPiece* piece = ParseLocalModelPiece(L, activeScript, __func__);
 
-	if (!piece->GetEmitDirPos(pos, dir)) {
+	float3 pos;
+	float3 dir;
+
+	if (!piece->GetEmitDirPos(pos, dir))
 		return 0;
-	}
 
-	ToLua(L, pos); ToLua(L, dir);
+	ToLua(L, pos);
+	ToLua(L, dir);
 	return 6;
 }
 
@@ -1470,9 +1467,9 @@ int CLuaUnitScript::GetPiecePosDir(lua_State* L)
 
 int CLuaUnitScript::GetActiveUnitID(lua_State* L)
 {
-	if (activeScript == NULL)
+	if (activeScript == nullptr)
 		return 0;
-	if (activeUnit == NULL)
+	if (activeUnit == nullptr)
 		return 0;
 
 	lua_pushnumber(L, activeUnit->id);
