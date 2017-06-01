@@ -657,6 +657,8 @@ void CGlobalRendering::QueryVersionInfo(char (&sdlVersionStr)[64], char (&glVidM
 		#if !defined(DEDICATED) && !defined(HEADLESS)
 		if (totalMemMB < 1024)
 			Platform::MsgBox(msgBoxStr, "WARNING", MBF_OK | MBF_EXCL);
+		#else
+		(void) msgBoxStr;
 		#endif
 
 		SNPRINTF(glVidMemStr, sizeof(glVidMemStr), memFmtStr, gpuMemorySize = totalMemMB, availMemMB);
