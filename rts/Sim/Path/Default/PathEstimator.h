@@ -106,10 +106,10 @@ private:
 	void CalculateVertices(const MoveDef&, int2, unsigned int threadNum = 0);
 	void CalculateVertex(const MoveDef&, int2, unsigned int, unsigned int threadNum = 0);
 
-	bool ReadFile(const std::string& cacheFileName, const std::string& map);
-	void WriteFile(const std::string& cacheFileName, const std::string& map);
+	bool ReadFile(const std::string& baseFileName, const std::string& mapName);
+	void WriteFile(const std::string& baseFileName, const std::string& mapName);
 	std::uint32_t CalcChecksum() const;
-	unsigned int Hash() const;
+	unsigned int Hash(const char* caller) const;
 
 private:
 	friend class CPathManager;

@@ -59,8 +59,8 @@ std::int64_t CPathManager::Finalize() {
 		lowResPE = new CPathEstimator(medResPE, LOWRES_PE_BLOCKSIZE, "pe2", mapInfo->map.name);
 
 		// make cached path data checksum part of synced state
-		// so when one client got a corrupted/incorrect cache
-		// it desyncs from the starts and not minutes later
+		// so that when any client has a corrupted / incorrect
+		// cache it desyncs from the start, not minutes later
 		{ SyncedUint tmp(GetPathCheckSum()); }
 	}
 
