@@ -95,7 +95,7 @@ protected: // IPathFinder impl
 	);
 
 private:
-	void InitEstimator(const std::string& cacheFileName, const std::string& map);
+	void InitEstimator(const std::string& cacheFileName, const std::string& mapName);
 	void InitBlocks();
 
 	void CalcOffsetsAndPathCosts(unsigned int threadNum);
@@ -108,8 +108,9 @@ private:
 
 	bool ReadFile(const std::string& baseFileName, const std::string& mapName);
 	void WriteFile(const std::string& baseFileName, const std::string& mapName);
+
 	std::uint32_t CalcChecksum() const;
-	unsigned int Hash(const char* caller) const;
+	std::uint32_t CalcHash(const char* caller) const;
 
 private:
 	friend class CPathManager;
@@ -121,6 +122,7 @@ private:
 	unsigned int nextCostMessageIdx;
 
 	std::uint32_t pathChecksum;               ///< currently crc from the zip
+	std::uint32_t fileHashCode;
 
 	std::atomic<std::int64_t> offsetBlockNum;
 	std::atomic<std::int64_t> costBlockNum;

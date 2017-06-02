@@ -56,6 +56,7 @@ CPathEstimator::CPathEstimator(IPathFinder* pf, unsigned int BLOCK_SIZE, const s
 	, nextOffsetMessageIdx(0)
 	, nextCostMessageIdx(0)
 	, pathChecksum(0)
+	, fileHashCode(CalcHash(__func__))
 	, offsetBlockNum(nbrOfBlocks.x * nbrOfBlocks.y)
 	, costBlockNum(nbrOfBlocks.x * nbrOfBlocks.y)
 	, pathFinder(pf)
@@ -129,7 +130,7 @@ const int2* CPathEstimator::GetDirectionVectorsTable() {
 }
 
 
-void CPathEstimator::InitEstimator(const std::string& cacheFileName, const std::string& map)
+void CPathEstimator::InitEstimator(const std::string& cacheFileName, const std::string& mapName)
 {
 	const unsigned int numThreads = GetNumThreads();
 
@@ -144,7 +145,7 @@ void CPathEstimator::InitEstimator(const std::string& cacheFileName, const std::
 	// Not much point in multithreading these...
 	InitBlocks();
 
-	if (!ReadFile(cacheFileName, map)) {
+	if (!ReadFile(cacheFileName, mapName)) {
 		// start extra threads if applicable, but always keep the total
 		// memory-footprint made by CPathFinder instances within bounds
 		const unsigned int minMemFootPrint = sizeof(CPathFinder) + pathFinder->GetMemFootPrint();
@@ -188,7 +189,7 @@ void CPathEstimator::InitEstimator(const std::string& cacheFileName, const std::
 		sprintf(calcMsg, fmtStrs[2], __func__, BLOCK_SIZE, cacheFileName.c_str());
 		loadscreen->SetLoadMessage(calcMsg, true);
 
-		WriteFile(cacheFileName, map);
+		WriteFile(cacheFileName, mapName);
 
 		sprintf(calcMsg, fmtStrs[3], __func__, BLOCK_SIZE, cacheFileName.c_str());
 		loadscreen->SetLoadMessage(calcMsg, true);
@@ -854,9 +855,7 @@ IPath::SearchResult CPathEstimator::FinishSearch(const MoveDef& moveDef, const C
  */
 bool CPathEstimator::ReadFile(const std::string& baseFileName, const std::string& mapName)
 {
-	const unsigned int hash = Hash(__func__);
-
-	const std::string hashHexString = IntToString(hash, "%x");
+	const std::string hashHexString = IntToString(fileHashCode, "%x");
 	const std::string cacheFileName = GetPathCacheDir() + mapName + "." + baseFileName + "-" + hashHexString + ".zip";
 
 	LOG("[PathEstimator::%s] hash=%s file=\"%s\" (exists=%d)", __func__, hashHexString.c_str(), cacheFileName.c_str(), FileSystem::FileExists(cacheFileName));
@@ -864,7 +863,6 @@ bool CPathEstimator::ReadFile(const std::string& baseFileName, const std::string
 	if (!FileSystem::FileExists(cacheFileName))
 		return false;
 
-	// open file for reading from a suitable location (where the file exists)
 	IArchive* pfile = archiveLoader.OpenArchive(dataDirsAccess.LocateFile(cacheFileName), "sdz");
 
 	if (pfile == nullptr || !pfile->IsOpen()) {
@@ -893,13 +891,14 @@ bool CPathEstimator::ReadFile(const std::string& baseFileName, const std::string
 		return false;
 
 	unsigned pos = 0;
-	unsigned filehash = *((unsigned*)&buffer[pos]);
+	const unsigned filehash = *((unsigned*)&buffer[pos]);
+	const unsigned blockSize = blockStates.GetSize() * sizeof(short2);
 	pos += sizeof(unsigned);
-	if (filehash != hash)
+
+	if (filehash != fileHashCode)
 		return false;
 
-	// Read block-center-offset data.
-	const unsigned blockSize = blockStates.GetSize() * sizeof(short2);
+	// read block-center-offset data
 	if (buffer.size() < pos + blockSize * moveDefHandler->GetNumMoveDefs())
 		return false;
 
@@ -908,12 +907,11 @@ bool CPathEstimator::ReadFile(const std::string& baseFileName, const std::string
 		pos += blockSize;
 	}
 
-	// Read vertices data.
+	// read vertex-cost data
 	if (buffer.size() < pos + vertexCosts.size() * sizeof(float))
 		return false;
-	std::memcpy(&vertexCosts[0], &buffer[pos], vertexCosts.size() * sizeof(float));
 
-	// File read successful.
+	std::memcpy(&vertexCosts[0], &buffer[pos], vertexCosts.size() * sizeof(float));
 	return true;
 }
 
@@ -923,13 +921,11 @@ bool CPathEstimator::ReadFile(const std::string& baseFileName, const std::string
  */
 void CPathEstimator::WriteFile(const std::string& baseFileName, const std::string& mapName)
 {
-	// We need this directory to exist
+	// we need this directory to exist
 	if (!FileSystem::CreateDirectory(GetPathCacheDir()))
 		return;
 
-	const unsigned int hash = Hash(__func__);
-
-	const std::string hashHexString = IntToString(hash, "%x");
+	const std::string hashHexString = IntToString(fileHashCode, "%x");
 	const std::string cacheFileName = GetPathCacheDir() + mapName + "." + baseFileName + "-" + hashHexString + ".zip";
 
 	LOG("[PathEstimator::%s] hash=%s file=\"%s\" (exists=%d)", __func__, hashHexString.c_str(), cacheFileName.c_str(), FileSystem::FileExists(cacheFileName));
@@ -942,15 +938,15 @@ void CPathEstimator::WriteFile(const std::string& baseFileName, const std::strin
 
 	zipOpenNewFileInZip(file, "pathinfo", nullptr, nullptr, 0, nullptr, 0, nullptr, Z_DEFLATED, Z_BEST_COMPRESSION);
 
-	// Write hash. (NOTE: this also affects the CRC!)
-	zipWriteInFileInZip(file, (void*) &hash, 4);
+	// write hash-code (NOTE: this also affects the CRC!)
+	zipWriteInFileInZip(file, (const void*) &fileHashCode, 4);
 
-	// Write block-center-offsets.
+	// write block-center-offsets
 	for (int pathType = 0; pathType < moveDefHandler->GetNumMoveDefs(); ++pathType) {
-		zipWriteInFileInZip(file, (void*) &blockStates.peNodeOffsets[pathType][0], blockStates.peNodeOffsets[pathType].size() * sizeof(short2));
+		zipWriteInFileInZip(file, (const void*) &blockStates.peNodeOffsets[pathType][0], blockStates.peNodeOffsets[pathType].size() * sizeof(short2));
 	}
 
-	// Write vertices.
+	// write vertex-costs
 	zipWriteInFileInZip(file, vertexCosts.data(), vertexCosts.size() * sizeof(float));
 
 	zipCloseFileInZip(file);
@@ -987,7 +983,7 @@ std::uint32_t CPathEstimator::CalcChecksum() const
 /**
  * Returns a hash-code identifying the dataset of this estimator.
  */
-unsigned int CPathEstimator::Hash(const char* caller) const
+std::uint32_t CPathEstimator::CalcHash(const char* caller) const
 {
 	const unsigned int hmChecksum = readMap->CalcHeightmapChecksum();
 	const unsigned int tmChecksum = readMap->CalcTypemapChecksum();
