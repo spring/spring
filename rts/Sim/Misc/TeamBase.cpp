@@ -22,7 +22,7 @@ CR_REG_METADATA(TeamBase, (
 ))
 
 
-unsigned char TeamBase::teamDefaultColor[10][4] =
+unsigned char TeamBase::teamDefaultColor[TeamBase::NUM_DEFAULT_TEAM_COLORS][4] =
 {
 	{  90,  90, 255, 255}, // blue
 	{ 200,   0,   0, 255}, // red

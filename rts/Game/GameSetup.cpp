@@ -406,14 +406,9 @@ void CGameSetup::LoadTeams(const TdfParser& file)
 			continue;
 
 		TeamBase teamBase;
+		teamBase.SetDefaultColor(a);
 
-		// Get default color from palette (based on "color" tag)
-		for (size_t num = 0; num < 3; ++num)
-			teamBase.color[num] = TeamBase::teamDefaultColor[a][num];
-
-		teamBase.color[3] = 255;
-
-		for (auto it: file.GetAllValues(section))
+		for (const auto& it: file.GetAllValues(section))
 			teamBase.SetValue(it.first, it.second);
 
 		teamStartingData.push_back(teamBase);

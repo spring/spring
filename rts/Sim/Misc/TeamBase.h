@@ -21,9 +21,7 @@ public:
 	virtual ~TeamBase() {}
 
 	void SetValue(const std::string& key, const std::string& value);
-	const customOpts& GetAllValues() const {
-		return customValues;
-	}
+	const customOpts& GetAllValues() const { return customValues; }
 
 	const std::string& GetSide() const { return side; }
 
@@ -72,7 +70,15 @@ public:
 	/// @see incomeMultiplier
 	float GetIncomeMultiplier() const { return incomeMultiplier; }
 
+	void SetDefaultColor(int teamNum) {
+		for (size_t colorIdx = 0; colorIdx < 3; ++colorIdx) {
+			color[colorIdx] = teamDefaultColor[teamNum % NUM_DEFAULT_TEAM_COLORS][colorIdx];
+		}
 
+		color[3] = 255;
+	}
+
+public:
 	/**
 	 * Player ID of the player in charge of this team.
 	 * The player either controls this team directly,
@@ -88,7 +94,8 @@ public:
 	int teamStartNum;
 	int teamAllyteam;
 
-	static unsigned char teamDefaultColor[10][4];
+	static constexpr int NUM_DEFAULT_TEAM_COLORS = 10;
+	static unsigned char teamDefaultColor[NUM_DEFAULT_TEAM_COLORS][4];
 
 protected:
 	/**
