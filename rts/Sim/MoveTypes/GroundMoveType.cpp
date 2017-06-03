@@ -335,8 +335,8 @@ bool CGroundMoveType::Update()
 	// units do not get buried by restoring terrain)
 	UpdateOwnerSpeedAndHeading();
 	UpdateOwnerPos(owner->speed, GetNewSpeedVector(deltaSpeed, myGravity));
-	AdjustPosToWaterLine();
 	HandleObjectCollisions();
+	AdjustPosToWaterLine();
 
 	ASSERT_SANE_OWNER_SPEED(owner->speed);
 
@@ -884,7 +884,7 @@ void CGroundMoveType::UpdateSkid()
 		HandleObjectCollisions();
 	}
 
-	//!! AdjustPosToWaterLine();
+	AdjustPosToWaterLine();
 
 	// always update <oldPos> here so that <speed> does not make
 	// extreme jumps when the unit transitions from skidding back
