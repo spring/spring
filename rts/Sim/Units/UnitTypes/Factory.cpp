@@ -473,8 +473,13 @@ void CFactory::AssignBuildeeOrders(CUnit* unit) {
 
 bool CFactory::ChangeTeam(int newTeam, ChangeType type)
 {
-	StopBuild();
-	return (CBuilding::ChangeTeam(newTeam, type));
+	if (!CBuilding::ChangeTeam(newTeam, type))
+		return false;
+
+	if (curBuild)
+		curBuild->ChangeTeam(newTeam, type);
+
+	return true;
 }
 
 
