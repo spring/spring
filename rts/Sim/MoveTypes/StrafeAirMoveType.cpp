@@ -2,6 +2,7 @@
 
 
 #include "StrafeAirMoveType.h"
+#include "Game/GlobalUnsynced.h"
 #include "Game/Players/Player.h"
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
@@ -404,7 +405,7 @@ CStrafeAirMoveType::CStrafeAirMoveType(CUnit* owner):
 	accRate     *= (0.99f + gsRNG.NextFloat() * 0.02f);
 
 	crashAileron = 1.0f - (gsRNG.NextFloat() * gsRNG.NextFloat());
-	crashAileron *= ((gsRNG.NextInt() & 1)? -1.0f: 1.0f);
+	crashAileron *= ((gsRNG.NextInt(2) == 1)? -1.0f: 1.0f);
 	crashElevator = gsRNG.NextFloat();
 	crashRudder = gsRNG.NextFloat() - 0.5f;
 
@@ -517,10 +518,10 @@ bool CStrafeAirMoveType::Update()
 
 			if ((CGround::GetHeightAboveWater(owner->pos.x, owner->pos.z) + 5.0f + owner->radius) > owner->pos.y) {
 				owner->ClearPhysicalStateBit(CSolidObject::PSTATE_BIT_CRASHING);
-				owner->KillUnit(NULL, true, false);
+				owner->KillUnit(nullptr, true, false);
 			}
 
-			projMemPool.alloc<CSmokeProjectile>(owner, owner->midPos, gsRNG.NextVector() * 0.08f, 100 + gsRNG.NextFloat() * 50, 5, 0.2f, 0.4f);
+			projMemPool.alloc<CSmokeProjectile>(owner, owner->midPos, guRNG.NextVector() * 0.08f, 100.0f + guRNG.NextFloat() * 50.0f, 5, 0.2f, 0.4f);
 		} break;
 		case AIRCRAFT_TAKEOFF:
 			UpdateTakeOff();

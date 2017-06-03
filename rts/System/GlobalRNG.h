@@ -27,6 +27,8 @@ public:
 	res_type next() { return (((val = (val * 214013L + seq)) >> 16) & max_res); }
 	res_type bnext(const res_type bound) { return (next() % bound); }
 
+	val_type state() const { return val; }
+
 public:
 	static constexpr res_type min_res = 0;
 	static constexpr res_type max_res = 0x7fff;
@@ -78,6 +80,8 @@ public:
 		return (r % bound);
 	}
 
+	val_type state() const { return val; }
+
 public:
 	static constexpr res_type min_res = std::numeric_limits<res_type>::min();
 	static constexpr res_type max_res = std::numeric_limits<res_type>::max();
@@ -108,6 +112,7 @@ public:
 
 	rng_val_type GetInitSeed() const { return initSeed; }
 	rng_val_type GetLastSeed() const { return lastSeed; }
+	rng_val_type GetGenState() const { return (gen.state()); }
 
 	// needed for std::{random_}shuffle
 	rng_res_type operator()(              ) { return (gen. next( )); }

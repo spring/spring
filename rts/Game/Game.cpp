@@ -1525,6 +1525,7 @@ void CGame::StartPlaying()
 
 void CGame::SimFrame() {
 	ENTER_SYNCED_CODE();
+	ASSERT_SYNCED(gsRNG.GetGenState());
 
 	good_fpu_control_registers("CGame::SimFrame");
 
@@ -1610,6 +1611,7 @@ void CGame::SimFrame() {
 	// useful for desync-debugging (enter instead of -1 start & end frame of the range you want to debug)
 	DumpState(-1, -1, 1);
 
+	ASSERT_SYNCED(gsRNG.GetGenState());
 	LEAVE_SYNCED_CODE();
 }
 

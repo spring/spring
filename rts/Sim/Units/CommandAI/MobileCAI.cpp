@@ -91,7 +91,7 @@ CMobileCAI::CMobileCAI():
 	cancelDistance(1024),
 	lastCloseInTry(-1),
 	slowGuard(false),
-	moveDir(gsRNG.NextFloat() > 0.5)
+	moveDir(gsRNG.NextFloat() > 0.5f)
 {}
 
 

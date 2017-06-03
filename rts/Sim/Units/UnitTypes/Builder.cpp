@@ -364,7 +364,7 @@ void CBuilder::Update()
 							curResurrect->resurrectProgress += step;
 							curResurrect->resurrectProgress = std::min(curResurrect->resurrectProgress, 1.0f);
 
-							CreateNanoParticle(curResurrect->midPos, curResurrect->radius * 0.7f, (gsRNG.NextInt() & 1));
+							CreateNanoParticle(curResurrect->midPos, curResurrect->radius * 0.7f, gsRNG.NextInt(2));
 						}
 
 						if (curResurrect->resurrectProgress >= 1.0f) {
