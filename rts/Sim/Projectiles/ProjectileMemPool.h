@@ -6,7 +6,13 @@
 #include "Sim/Misc/SimObjectMemPool.h"
 #include "Sim/Misc/GlobalConstants.h"
 
-extern SimObjectStaticMemPool<MAX_PROJECTILES, 840> projMemPool;
+#if (defined(__x86_64) || defined(__x86_64__))
+typedef StaticMemPool<MAX_PROJECTILES, 840> ProjMemPool;
+#else
+typedef DynMemPool<840> ProjMemPool;
+#endif
+
+extern ProjMemPool projMemPool;
 
 #endif
 

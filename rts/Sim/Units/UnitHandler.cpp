@@ -41,9 +41,11 @@ CR_REG_METADATA(CUnitHandler, (
 
 
 
-SimObjectStaticMemPool<MAX_UNITS, sizeof(CBuilder)> unitMemPool;
+UnitMemPool unitMemPool;
 
 CUnitHandler* unitHandler = nullptr;
+
+
 
 CUnit* CUnitHandler::NewUnit(const UnitDef* ud)
 {

@@ -82,7 +82,7 @@ CR_REG_METADATA(CCustomExplosionGenerator, (
 
 
 
-static SimObjectMemPool<sizeof(CCustomExplosionGenerator)> egMemPool;
+static DynMemPool<sizeof(CCustomExplosionGenerator)> egMemPool;
 
 CExplosionGeneratorHandler* explGenHandler = nullptr;
 

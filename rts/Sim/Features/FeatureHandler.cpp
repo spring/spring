@@ -27,7 +27,7 @@ CR_REG_METADATA(CFeatureHandler, (
 
 /******************************************************************************/
 
-SimObjectStaticMemPool<MAX_FEATURES, sizeof(CFeature)> featureMemPool;
+FeatureMemPool featureMemPool;
 
 CFeatureHandler* featureHandler = nullptr;
 

@@ -7,7 +7,13 @@
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/SimObjectMemPool.h"
 
-extern SimObjectStaticMemPool<MAX_FEATURES, sizeof(CFeature)> featureMemPool;
+#if (defined(__x86_64) || defined(__x86_64__))
+typedef StaticMemPool<MAX_FEATURES, sizeof(CFeature)> FeatureMemPool;
+#else
+typedef DynMemPool<sizeof(CFeature)> FeatureMemPool;
+#endif
+
+extern FeatureMemPool featureMemPool;
 
 #endif
 

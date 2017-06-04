@@ -27,7 +27,7 @@
 #include "System/StringUtil.h"
 #include "System/Log/ILog.h"
 
-SimObjectStaticMemPool<MAX_UNITS * MAX_WEAPONS_PER_UNIT, 760> weaponMemPool;
+WeaponMemPool weaponMemPool;
 
 void CWeaponLoader::InitStatic() { weaponMemPool.reserve(128); }
 void CWeaponLoader::KillStatic() { weaponMemPool.clear(); }

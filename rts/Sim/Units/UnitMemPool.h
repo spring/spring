@@ -7,8 +7,14 @@
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/SimObjectMemPool.h"
 
+#if (defined(__x86_64) || defined(__x86_64__))
 // CBuilder is (currently) the largest derived unit-type
-extern SimObjectStaticMemPool<MAX_UNITS, sizeof(CBuilder)> unitMemPool;
+typedef StaticMemPool<MAX_UNITS, sizeof(CBuilder)> UnitMemPool;
+#else
+typedef DynMemPool<sizeof(CBuilder)> UnitMemPool;
+#endif
+
+extern UnitMemPool unitMemPool;
 
 #endif
 

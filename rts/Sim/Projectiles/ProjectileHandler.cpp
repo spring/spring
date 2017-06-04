@@ -41,8 +41,6 @@ using namespace std;
 CONFIG(int, MaxParticles).defaultValue(10000).headlessValue(1).minimumValue(1);
 CONFIG(int, MaxNanoParticles).defaultValue(2000).headlessValue(1).minimumValue(1);
 
-CProjectileHandler* projectileHandler = nullptr;
-
 
 CR_BIND(CProjectileHandler, )
 CR_REG_METADATA(CProjectileHandler, (
@@ -68,7 +66,9 @@ CR_REG_METADATA(CProjectileHandler, (
 
 
 // note: stores all ExpGenSpawnable types, not just projectiles
-SimObjectStaticMemPool<MAX_PROJECTILES, 840> projMemPool;
+ProjMemPool projMemPool;
+
+CProjectileHandler* projectileHandler = nullptr;
 
 
 

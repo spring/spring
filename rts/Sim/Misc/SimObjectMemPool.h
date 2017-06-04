@@ -13,7 +13,7 @@
 #include "System/ContainerUtil.h"
 #include "System/SafeUtil.h"
 
-template<size_t S> struct SimObjectMemPool {
+template<size_t S> struct DynMemPool {
 public:
 	template<typename T, typename... A> T* alloc(A&&... a) {
 		static_assert(sizeof(T) <= page_size(), "");
@@ -109,9 +109,10 @@ private:
 
 
 
-template<size_t N, size_t S> struct SimObjectStaticMemPool {
+// fixed-size version
+template<size_t N, size_t S> struct StaticMemPool {
 public:
-	SimObjectStaticMemPool() { clear(); }
+	StaticMemPool() { clear(); }
 
 	template<typename T, typename... A> T* alloc(A&&... a) {
 		static_assert(sizeof(T) <= page_size(), "");
