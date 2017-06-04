@@ -41,7 +41,7 @@ using namespace std;
 CONFIG(int, MaxParticles).defaultValue(10000).headlessValue(1).minimumValue(1);
 CONFIG(int, MaxNanoParticles).defaultValue(2000).headlessValue(1).minimumValue(1);
 
-CProjectileHandler* projectileHandler = NULL;
+CProjectileHandler* projectileHandler = nullptr;
 
 
 CR_BIND(CProjectileHandler, )

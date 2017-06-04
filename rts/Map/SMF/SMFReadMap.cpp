@@ -485,8 +485,8 @@ void CSMFReadMap::UpdateNormalTexture(const SRectangle& update)
 
 		// a heightmap update over (x1, y1) - (x2, y2) implies the
 		// normals change over (x1 - 1, y1 - 1) - (x2 + 1, y2 + 1)
-		const int minx = std::max(update.x1 - 1,        0);
-		const int minz = std::max(update.y1 - 1,        0);
+		const int minx = std::max(update.x1 - 1,           0);
+		const int minz = std::max(update.y1 - 1,            0);
 		const int maxx = std::min(update.x2 + 1, mapDims.mapx);
 		const int maxz = std::min(update.y2 + 1, mapDims.mapy);
 
@@ -495,10 +495,14 @@ void CSMFReadMap::UpdateNormalTexture(const SRectangle& update)
 
 		// Note, it doesn't make sense to use a PBO here.
 		// Cause the upstreamed float32s need to be transformed to float16s, which seems to happen on the CPU!
+		static std::vector<float> pixels;
+
 	#if (SSMF_UNCOMPRESSED_NORMALS == 1)
-		std::vector<float> pixels(xsize * zsize * 4, 0.0f);
+		pixels.clear();
+		pixels.resize(xsize * zsize * 4, 0.0f);
 	#else
-		std::vector<float> pixels(xsize * zsize * 2, 0.0f);
+		pixels.clear();
+		pixels.resize(xsize * zsize * 2, 0.0f);
 	#endif
 
 		for (int z = minz; z <= maxz; z++) {
@@ -548,7 +552,10 @@ void CSMFReadMap::UpdateShadingTexture(const SRectangle& update)
 		const int ysize = (y2 - y1) + 1; // x1 <= xi <= x2  (not!  x1 <= xi < x2)
 
 		//TODO switch to PBO?
-		std::vector<unsigned char> pixels(xsize * ysize * 4, 0.0f);
+		static std::vector<unsigned char> pixels;
+
+		pixels.clear();
+		pixels.resize(xsize * ysize * 4, 0.0f);
 
 		for_mt(0, ysize, [&](const int y) {
 			const int idx1 = (y + y1) * mapDims.mapx + x1;
