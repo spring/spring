@@ -2745,18 +2745,19 @@ int LuaSyncedCtrl::CreateFeature(lua_State* L)
 		luaL_error(L, "CreateFeature() recursion is not permitted");
 
 	// use SetFeatureResurrect() to fill in the missing bits
-	inCreateFeature = true;
-	FeatureLoadParams params;
-	params.featureDef = featureDef;
-	params.unitDef    = nullptr;
-	params.pos        = pos;
-	params.speed      = ZeroVector;
-	params.featureID  = luaL_optint(L, 7, -1);
-	params.teamID     = team;
-	params.allyTeamID = allyTeam;
-	params.heading    = heading,
-	params.facing     = facing,
-	params.smokeTime  = 0; // smokeTime
+	inCreateFeature =  true;
+	FeatureLoadParams  params;
+	params.featureDef  = featureDef;
+	params.unitDef     = nullptr;
+	params.pos         = pos;
+	params.speed       = ZeroVector;
+	params.featureID   = luaL_optint(L, 7, -1);
+	params.teamID      = team;
+	params.allyTeamID  = allyTeam;
+	params.heading     = heading,
+	params.facing      = facing,
+	params.wreckLevels = 0;
+	params.smokeTime   = 0;
 
 	CFeature* feature = featureHandler->LoadFeature(params);
 	inCreateFeature = false;

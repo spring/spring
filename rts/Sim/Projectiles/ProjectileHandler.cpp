@@ -68,7 +68,7 @@ CR_REG_METADATA(CProjectileHandler, (
 
 
 // note: stores all ExpGenSpawnable types, not just projectiles
-SimObjectMemPool<840> projMemPool;
+SimObjectStaticMemPool<MAX_PROJECTILES, 840> projMemPool;
 
 
 

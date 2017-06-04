@@ -420,13 +420,13 @@ static void DrawInfoText()
 	}
 
 	font->glFormat(0.01f, 0.18f, 0.5f, DBG_FONT_FLAGS, sopFmtStr,
-		unitMemPool.total_size() / 1024.0f,
+		unitMemPool.alloc_size() / 1024.0f,
 		unitMemPool.freed_size() / 1024.0f,
-		featureMemPool.total_size() / 1024.0f,
+		featureMemPool.alloc_size() / 1024.0f,
 		featureMemPool.freed_size() / 1024.0f,
-		projMemPool.total_size() / 1024.0f,
+		projMemPool.alloc_size() / 1024.0f,
 		projMemPool.freed_size() / 1024.0f,
-		weaponMemPool.total_size() / 1024.0f,
+		weaponMemPool.alloc_size() / 1024.0f,
 		weaponMemPool.freed_size() / 1024.0f
 	);
 }

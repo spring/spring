@@ -32,6 +32,7 @@ struct FeatureLoadParams {
 	short int heading;
 	short int facing;
 
+	int wreckLevels;
 	int smokeTime;
 };
 
@@ -45,7 +46,7 @@ public:
 	~CFeatureHandler();
 
 	CFeature* LoadFeature(const FeatureLoadParams& params);
-	CFeature* CreateWreckage(const FeatureLoadParams& params, const int numWreckLevels, bool emitSmoke);
+	CFeature* CreateWreckage(const FeatureLoadParams& params);
 	CFeature* GetFeature(unsigned int id) { return ((id < features.size())? features[id]: nullptr); }
 
 	void Update();
@@ -64,19 +65,16 @@ public:
 
 private:
 	bool CanAddFeature(int id) const {
-		// do we want to be assigned a random ID? (in case
-		// idPool is empty, AddFeature will always allocate
-		// more)
+		// do we want to be assigned a random ID and are any left in pool?
 		if (id < 0)
 			return true;
 		// is this ID not already in use?
 		if (id < features.size())
 			return (features[id] == nullptr);
-		// AddFeature will make new room for us
-		return true;
+		// AddFeature will not make new room for us
+		return false;
 	}
-	bool NeedAllocateNewFeatureIDs(const CFeature* feature) const;
-	void AllocateNewFeatureIDs(const CFeature* feature);
+
 	void InsertActiveFeature(CFeature* feature);
 
 private:

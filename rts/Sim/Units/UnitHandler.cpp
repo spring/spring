@@ -41,7 +41,7 @@ CR_REG_METADATA(CUnitHandler, (
 
 
 
-SimObjectMemPool<sizeof(CBuilder)> unitMemPool;
+SimObjectStaticMemPool<MAX_UNITS, sizeof(CBuilder)> unitMemPool;
 
 CUnitHandler* unitHandler = nullptr;
 
@@ -76,8 +76,6 @@ CUnitHandler::CUnitHandler():
 	maxUnits(0),
 	maxUnitRadius(0.0f)
 {
-	unitMemPool.reserve(128);
-
 	static_assert(sizeof(CBuilder) >= sizeof(CUnit             ), "");
 	static_assert(sizeof(CBuilder) >= sizeof(CBuilding         ), "");
 	static_assert(sizeof(CBuilder) >= sizeof(CExtractorBuilding), "");
@@ -97,6 +95,7 @@ CUnitHandler::CUnitHandler():
 	units.resize(maxUnits, nullptr);
 	unitsByDefs.resize(teamHandler->ActiveTeams(), std::vector<std::vector<CUnit*>>(unitDefHandler->unitDefs.size()));
 
+	unitMemPool.reserve(128);
 	// id's are used as indices, so they must lie in [0, units.size() - 1]
 	// (furthermore all id's are treated equally, none have special status)
 	idPool.Expand(0, units.size());

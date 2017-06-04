@@ -4,8 +4,9 @@
 #define WEAPON_MEMPOOL_H
 
 #include "Sim/Misc/SimObjectMemPool.h"
+#include "Sim/Misc/GlobalConstants.h"
 
-extern SimObjectMemPool<760> weaponMemPool;
+extern SimObjectStaticMemPool<MAX_UNITS * MAX_WEAPONS_PER_UNIT, 760> weaponMemPool;
 
 #endif
 

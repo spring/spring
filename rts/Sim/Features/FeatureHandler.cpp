@@ -27,16 +27,17 @@ CR_REG_METADATA(CFeatureHandler, (
 
 /******************************************************************************/
 
-SimObjectMemPool<sizeof(CFeature)> featureMemPool;
+SimObjectStaticMemPool<MAX_FEATURES, sizeof(CFeature)> featureMemPool;
 
 CFeatureHandler* featureHandler = nullptr;
 
 
 CFeatureHandler::CFeatureHandler() {
-	featureMemPool.reserve(128);
+	features.resize(MAX_FEATURES, nullptr);
+	activeFeatureIDs.reserve(MAX_FEATURES);
 
-	features.reserve(128);
-	activeFeatureIDs.reserve(128);
+	featureMemPool.reserve(128);
+	idPool.Expand(0, features.size());
 }
 
 CFeatureHandler::~CFeatureHandler() {
@@ -81,6 +82,7 @@ void CFeatureHandler::LoadFeaturesFromMap()
 			static_cast<short int>(mfi[a].rotation),
 			FACING_SOUTH,
 
+			0, // wreckLevels
 			0, // smokeTime
 		};
 
@@ -102,28 +104,6 @@ CFeature* CFeatureHandler::LoadFeature(const FeatureLoadParams& params) {
 }
 
 
-bool CFeatureHandler::NeedAllocateNewFeatureIDs(const CFeature* feature) const
-{
-	if (feature->id < 0 && idPool.IsEmpty())
-		return true;
-	if (feature->id >= 0 && feature->id >= features.size())
-		return true;
-
-	return false;
-}
-
-void CFeatureHandler::AllocateNewFeatureIDs(const CFeature* feature)
-{
-	// if feature->id is non-negative, then allocate enough to
-	// make it a valid index (we have no hard MAX_FEATURES cap)
-	// and always make sure to at least double the pool
-	// note: WorldObject::id is signed, so block RHS underflow
-	const unsigned int numNewIDs = std::max(int(features.size()) + (128 * idPool.IsEmpty()), (feature->id + 1) - int(features.size()));
-
-	idPool.Expand(features.size(), numNewIDs);
-	features.resize(features.size() + numNewIDs, nullptr);
-}
-
 void CFeatureHandler::InsertActiveFeature(CFeature* feature)
 {
 	idPool.AssignID(feature);
@@ -142,10 +122,6 @@ bool CFeatureHandler::AddFeature(CFeature* feature)
 	// LoadFeature should make sure this is true
 	assert(CanAddFeature(feature->id));
 
-	if (NeedAllocateNewFeatureIDs(feature)) {
-		AllocateNewFeatureIDs(feature);
-	}
-
 	InsertActiveFeature(feature);
 	SetFeatureUpdateable(feature);
 	return true;
@@ -159,10 +135,7 @@ void CFeatureHandler::DeleteFeature(CFeature* feature)
 }
 
 
-CFeature* CFeatureHandler::CreateWreckage(
-	const FeatureLoadParams& cparams,
-	const int numWreckLevels,
-	bool emitSmoke)
+CFeature* CFeatureHandler::CreateWreckage(const FeatureLoadParams& cparams)
 {
 	const FeatureDef* fd = cparams.featureDef;
 
@@ -170,10 +143,9 @@ CFeature* CFeatureHandler::CreateWreckage(
 		return nullptr;
 
 	// move down the wreck-chain by <numWreckLevels> steps beyond <fd>
-	for (int i = 0; i < numWreckLevels; i++) {
-		if ((fd = featureDefHandler->GetFeatureDefByID(fd->deathFeatureDefID)) == nullptr) {
+	for (int i = 0; i < cparams.wreckLevels; i++) {
+		if ((fd = featureDefHandler->GetFeatureDefByID(fd->deathFeatureDefID)) == nullptr)
 			return nullptr;
-		}
 	}
 
 	if (!eventHandler.AllowFeatureCreation(fd, cparams.teamID, cparams.pos))
@@ -182,9 +154,11 @@ CFeature* CFeatureHandler::CreateWreckage(
 	if (!fd->modelName.empty()) {
 		FeatureLoadParams params = cparams;
 
-		params.unitDef = ((fd->resurrectable == 0) || (numWreckLevels > 0 && fd->resurrectable < 0)) ? nullptr: cparams.unitDef;
-		params.smokeTime = fd->smokeTime * emitSmoke;
+		params.unitDef = ((fd->resurrectable == 0) || (cparams.wreckLevels > 0 && fd->resurrectable < 0))? nullptr: cparams.unitDef;
 		params.featureDef = fd;
+
+		// for the CreateWreckage call, params.smokeTime acts as a multiplier
+		params.smokeTime = fd->smokeTime * cparams.smokeTime;
 
 		return (LoadFeature(params));
 	}

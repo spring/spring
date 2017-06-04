@@ -4,8 +4,9 @@
 #define PROJECTILE_MEMPOOL_H
 
 #include "Sim/Misc/SimObjectMemPool.h"
+#include "Sim/Misc/GlobalConstants.h"
 
-extern SimObjectMemPool<840> projMemPool;
+extern SimObjectStaticMemPool<MAX_PROJECTILES, 840> projMemPool;
 
 #endif
 

@@ -4,9 +4,10 @@
 #define FEATURE_MEMPOOL_H
 
 #include "Feature.h"
+#include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/SimObjectMemPool.h"
 
-extern SimObjectMemPool<sizeof(CFeature)> featureMemPool;
+extern SimObjectStaticMemPool<MAX_FEATURES, sizeof(CFeature)> featureMemPool;
 
 #endif
 

@@ -315,6 +315,7 @@ void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amoun
 						0, // rotation
 						FACING_SOUTH,
 
+						0, // wreckLevels
 						0, // smokeTime
 					};
 

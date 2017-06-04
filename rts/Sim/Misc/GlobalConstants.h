@@ -83,15 +83,25 @@ static constexpr int MAX_PLAYERS = 251;
 static constexpr int MAX_AIS = 255;
 
 /**
- * @brief max units
+ * @brief max units / features / projectiles
  *
- * Defines the absolute global maximum number of units allowed to exist in a
- * game at any time.
- * NOTE: This must be <= SHRT_MAX (32'766) because current network code
- * transmits unit-IDs as signed shorts. The effective global unit limit is
- * stored in UnitHandler::maxUnits, and is always clamped to this value.
+ * Defines the absolute global maximum number of simulation objects
+ * (units, features, projectiles) that are allowed to exist in a game
+ * at any time.
+ *
+ * NOTE:
+ * MAX_UNITS must be LEQ SHORT_MAX (32767) because current network code
+ * transmits unit IDs as signed shorts. The effective global unit limit
+ * is stored in UnitHandler::maxUnits, and always clamped to this value.
+ *
+ * All types of IDs are also passed to Lua callins, while feature IDs are
+ * additionally transmitted as (32-bit) floating-point command parameters,
+ * which further limits them to 1 << 24 (far beyond the realm of feasible
+ * runtime performance).
  */
 static constexpr int MAX_UNITS = 32000;
+static constexpr int MAX_FEATURES = 64000;
+static constexpr int MAX_PROJECTILES = 256000;
 
 /**
  * @brief max weapons per unit

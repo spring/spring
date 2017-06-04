@@ -217,8 +217,8 @@ CUnit::~CUnit()
 		// we have to wait for deathScriptFinished (but we want the delay
 		// in frames between CUnitKilledCB() and the CreateWreckage() call
 		// to be as short as possible to prevent position jumps)
-		FeatureLoadParams params = {featureDefHandler->GetFeatureDefByID(featureDefID), unitDef, pos, deathSpeed, -1, team, -1, heading, buildFacing, 0};
-		featureHandler->CreateWreckage(params, delayedWreckLevel - 1, true);
+		FeatureLoadParams params = {featureDefHandler->GetFeatureDefByID(featureDefID), unitDef, pos, deathSpeed, -1, team, -1, heading, buildFacing, delayedWreckLevel - 1, 1};
+		featureHandler->CreateWreckage(params);
 	}
 	if (deathExpDamages != nullptr)
 		DynDamageArray::DecRef(deathExpDamages);
@@ -531,8 +531,8 @@ void CUnit::FinishedBuilding(bool postInit)
 	eoh->UnitFinished(*this);
 
 	if (unitDef->isFeature && CUnit::spawnFeature) {
-		FeatureLoadParams p = {featureDefHandler->GetFeatureDefByID(featureDefID), nullptr, pos, ZeroVector, -1, team, allyteam, heading, buildFacing, 0};
-		CFeature* f = featureHandler->CreateWreckage(p, 0, false);
+		FeatureLoadParams p = {featureDefHandler->GetFeatureDefByID(featureDefID), nullptr, pos, ZeroVector, -1, team, allyteam, heading, buildFacing, 0, 0};
+		CFeature* f = featureHandler->CreateWreckage(p);
 
 		if (f != nullptr)
 			f->blockHeightChanges = true;

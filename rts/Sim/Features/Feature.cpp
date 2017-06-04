@@ -436,8 +436,8 @@ void CFeature::DoDamage(
 	eventHandler.FeatureDamaged(this, attacker, baseDamage, weaponDefID, projectileID);
 
 	if (health <= 0.0f && def->destructable) {
-		FeatureLoadParams params = {featureDefHandler->GetFeatureDefByID(def->deathFeatureDefID), nullptr, pos, speed, -1, team, -1, heading, buildFacing, 0};
-		CFeature* deathFeature = featureHandler->CreateWreckage(params, 0, false);
+		FeatureLoadParams params = {featureDefHandler->GetFeatureDefByID(def->deathFeatureDefID), nullptr, pos, speed, -1, team, -1, heading, buildFacing, 0, 0};
+		CFeature* deathFeature = featureHandler->CreateWreckage(params);
 
 		if (deathFeature != nullptr) {
 			// if a partially reclaimed corpse got blasted,

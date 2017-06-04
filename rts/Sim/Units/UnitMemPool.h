@@ -4,10 +4,11 @@
 #define UNIT_MEMPOOL_H
 
 #include "UnitTypes/Builder.h"
+#include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/SimObjectMemPool.h"
 
 // CBuilder is (currently) the largest derived unit-type
-extern SimObjectMemPool<sizeof(CBuilder)> unitMemPool;
+extern SimObjectStaticMemPool<MAX_UNITS, sizeof(CBuilder)> unitMemPool;
 
 #endif
 
