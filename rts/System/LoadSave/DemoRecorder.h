@@ -24,10 +24,8 @@ public:
 	void WriteSetupText(const std::string& text);
 	void SaveToDemo(const unsigned char* buf, const unsigned length, const float modGameTime);
 
-	/**
-	@brief assign a map name for the demo file
-	*/
-	void SetName(const std::string& mapName, const std::string& modName, bool serverDemo);
+	void SetStream();
+	void SetName(const std::string& mapName, const std::string& modName);
 	const std::string& GetName() const { return demoName; }
 
 	void SetGameID(const unsigned char* buf);
@@ -49,10 +47,12 @@ private:
 
 private:
 	gzFile file;
-	std::stringstream demoStream;
+
 	std::vector<PlayerStatistics> playerStats;
 	std::vector< std::vector<TeamStatistics> > teamStats;
 	std::vector<unsigned char> winningAllyTeams;
+
+	bool isServerDemo;
 };
 
 
