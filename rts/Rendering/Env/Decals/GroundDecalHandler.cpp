@@ -411,11 +411,12 @@ void CGroundDecalHandler::GatherDecalsForType(CGroundDecalHandler::SolidObjectDe
 	for (size_t i = 0; i < objectDecals.size(); ) {
 		SolidObjectGroundDecal*& decal = objectDecals[i];
 		CSolidObject* decalOwner = decal->owner;
+		GhostSolidObject* gbOwner = decal->gbOwner;
 
 		if (decalOwner == nullptr) {
-			if (decal->gbOwner == nullptr) {
+			if (gbOwner == nullptr) {
 				decal->alpha -= (decal->alphaFalloff * globalRendering->lastFrameTime * 0.001f * gs->speedFactor);
-			} else if (decal->gbOwner->lastDrawFrame < (globalRendering->drawFrame - 1)) {
+			} else if (gbOwner->lastDrawFrame < (globalRendering->drawFrame - 1)) {
 				++i; continue;
 			}
 
@@ -430,7 +431,11 @@ void CGroundDecalHandler::GatherDecalsForType(CGroundDecalHandler::SolidObjectDe
 				sogdMemPool.free(decal);
 				continue;
 			}
+
+			++i;
 		} else {
+			++i;
+
 			if (decalOwner->GetBlockingMapID() < unitHandler->MaxUnits()) {
 				const CUnit* decalOwnerUnit = static_cast<const CUnit*>(decalOwner);
 
@@ -454,8 +459,6 @@ void CGroundDecalHandler::GatherDecalsForType(CGroundDecalHandler::SolidObjectDe
 				decal->alpha = decalOwnerFeature->drawAlpha;
 			}
 		}
-
-		++i;
 
 		if (!camera->InView(decal->pos, decal->radius))
 			continue;
