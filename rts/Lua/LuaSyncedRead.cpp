@@ -306,6 +306,7 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetGroundHeight);
 	REGISTER_LUA_CFUNC(GetGroundOrigHeight);
 	REGISTER_LUA_CFUNC(GetGroundNormal);
+	REGISTER_LUA_CFUNC(GetGroundSlope);
 	REGISTER_LUA_CFUNC(GetGroundInfo);
 	REGISTER_LUA_CFUNC(GetGroundBlocked);
 	REGISTER_LUA_CFUNC(GetGroundExtremes);
@@ -4940,6 +4941,15 @@ int LuaSyncedRead::GetGroundNormal(lua_State* L)
 	// slope derives from face normals, include it here
 	lua_pushnumber(L, CGround::GetSlope(x, z, CLuaHandle::GetHandleSynced(L)));
 	return 4;
+}
+
+
+int LuaSyncedRead::GetGroundSlope(lua_State* L)
+{
+	const float x = luaL_checkfloat(L, 1);
+	const float z = luaL_checkfloat(L, 2);
+	lua_pushnumber(L, CGround::GetSlope(x, z, CLuaHandle::GetHandleSynced(L)));
+	return 1;
 }
 
 

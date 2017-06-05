@@ -156,3 +156,5 @@ Spring.VC.VC.opendb
 /rapid
 /packages
 
+CMakeLists.txt
+.gitignore
