@@ -741,26 +741,21 @@
 #define ENABLE_USERSTATE_LOCKS 0
 #ifndef BUILDING_AI
 	#define LUA_USER_H "LuaUser.h"
-	#define luai_userstateopen(L)		LuaCreateMutex(L)
-	#define luai_userstateclose(L)		LuaDestroyMutex(L)
-	#define luai_userstatethread(L,L1)	LuaLinkMutex(L,L1)
-	#define luai_userstatefree(L)		LuaDestroyMutex(L)
-	#define luai_userstateresume(L,n)	((void)L)
-	#define luai_userstateyield(L,n)	((void)L)
-	// Don't use internal locking system yet, cause it makes _each_ c++ call to a lua function safe.
-	// But not a group of them, so it's possible that multiple threads modify the stack of a single lua_State and breaking each other.
-	// Solution might be to use coroutines for each c++ thread, cause they got their own stacks and so cannot break each other.
-	//#define luai_userstateyield(L,n)	LuaMutexYield(L)
-	#define lua_lock(L)			LuaMutexLock(L)
-	#define lua_unlock(L)			LuaMutexUnlock(L)
-#else
-	#define luai_userstateopen(L)		((void)L)
-	#define luai_userstateclose(L)		((void)L)
-	#define luai_userstatethread(L,L1)	((void)L)
-	#define luai_userstatefree(L)		((void)L)
-	#define luai_userstateresume(L,n)	((void)L)
-	#define luai_userstateyield(L,n)	((void)L)
+
+//#ifndef NDEBUG
+	#define lua_lock(L)			LuaCheckIfMain(L)
+	#define lua_unlock(L)			LuaCheckIfMain(L)
+//#endif
+
 #endif
+
+
+#define luai_userstateopen(L)		((void)L)
+#define luai_userstateclose(L)		((void)L)
+#define luai_userstatethread(L,L1)	((void)L)
+#define luai_userstatefree(L)		((void)L)
+#define luai_userstateresume(L,n)	((void)L)
+#define luai_userstateyield(L,n)	((void)L)
 
 /*
 @@ LUA_INTFRMLEN is the length modifier for integer conversions

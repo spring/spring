@@ -33,6 +33,14 @@ static spring::recursive_mutex* GetLuaMutex(lua_State* L)
 }
 #endif
 
+void LuaCheckIfMain(lua_State* L)
+{
+
+	if (!Threading::IsMainThread())
+	{
+		LOG_L(L_ERROR, "attempt to access lua locking not from main thread"); 
+	}
+}
 
 void LuaCreateMutex(lua_State* L)
 {

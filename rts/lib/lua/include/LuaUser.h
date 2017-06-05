@@ -12,6 +12,8 @@ extern void LuaMutexLock(lua_State* L);
 extern void LuaMutexUnlock(lua_State* L);
 extern void LuaMutexYield(lua_State* L);
 
+extern void LuaCheckIfMain(lua_State* L);
+
 extern const char* spring_lua_getName(lua_State* L);
 
 struct SLuaInfo {
