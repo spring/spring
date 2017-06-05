@@ -211,9 +211,8 @@ namespace Threading {
 	    hyperthreading ones). These are the total cores in the system
 	    (across all existing processors, if more than one)*/
 	int GetPhysicalCpuCores() {
-		// Get CPU features
-		static springproc::CpuId cpuid;
-		return cpuid.getCoreTotalNumber();
+		static springproc::CPUID cpuid;
+		return cpuid.getTotalNumCores();
 	}
 
 

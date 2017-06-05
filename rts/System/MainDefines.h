@@ -22,6 +22,16 @@
 	#define _X11
 #endif
 
+
+#if (defined(__alpha__) || defined(__arm__) || defined(__aarch64__) || defined(__mips__) || defined(__powerpc__) || defined(__sparc__) || defined(__m68k__) || defined(__ia64__))
+#define __is_x86_arch__ 0
+#elif (defined(__i386__) || defined(__x86_64__) || defined(__amd64__))
+#define __is_x86_arch__ 1
+#else
+#error unknown CPU-architecture
+#endif
+
+
 /* define a common indicator for 32bit or 64bit-ness */
 #if defined _WIN64 || defined __LP64__ || defined __ppc64__ || defined __ILP64__ || defined __SILP64__ || defined __LLP64__ || defined(__sparcv9)
 #define __arch64__
@@ -30,6 +40,7 @@
 #define __arch32__
 #define __archBits__ 32
 #endif
+
 
 /*
   define a cross-platform/-compiler compatible "%z" format replacement for

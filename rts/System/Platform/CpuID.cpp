@@ -1,6 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "CpuID.h"
+#include "System/MainDefines.h"
 #include "System/Platform/Threading.h"
 #include "System/Log/ILog.h"
 
@@ -23,17 +24,20 @@ namespace springproc {
 		REG_CNT = 4,
 	};
 
-#if defined(__GNUC__)
-	// function inlining breaks this
+
+#if (__is_x86_arch__ == 1 && defined(__GNUC__))
+	// function inlining breaks the asm
 	_noinline void ExecCPUID(unsigned int* a, unsigned int* b, unsigned int* c, unsigned int* d)
 	{
-	#ifndef __APPLE__
+		#ifndef __APPLE__
 		__asm__ __volatile__(
 			"cpuid"
 			: "=a" (*a), "=b" (*b), "=c" (*c), "=d" (*d)
 			: "0" (*a), "2" (*c)
 		);
-	#else
+
+		#else
+
 		#ifdef __x86_64__
 			__asm__ __volatile__(
 				"pushq %%rbx\n\t"
@@ -53,26 +57,29 @@ namespace springproc {
 				: "0" (*a)
 			);
 		#endif
-	#endif
+		#endif
 	}
-#elif defined(_MSC_VER) && (_MSC_VER >= 1310)
+
+#elif (__is_x86_arch__ == 1 && defined(_MSC_VER) && (_MSC_VER >= 1310))
+
 	void ExecCPUID(unsigned int* a, unsigned int* b, unsigned int* c, unsigned int* d)
 	{
-		int features[REG_CNT];
-		__cpuid(features, *a);
+		int regs[REG_CNT] = {0};
+		__cpuid(regs, *a);
 		*a = features[0];
 		*b = features[1];
 		*c = features[2];
 		*d = features[3];
 	}
+
 #else
-	// no-op on other compilers
-	void ExecCPUID(unsigned int* a, unsigned int* b, unsigned int* c, unsigned int* d)
-	{
-	}
+
+	// no-op on other compilers / platforms (ARM has no cpuid instruction, etc)
+	void ExecCPUID(unsigned int* a, unsigned int* b, unsigned int* c, unsigned int* d) {}
 #endif
 
-	CpuId::CpuId()
+
+	CPUID::CPUID()
 		: shiftCore(0)
 		, shiftPackage(0)
 
@@ -104,7 +111,7 @@ namespace springproc {
 	}
 
 	// Function based on Figure 1 from Kuo_CpuTopology_rc1.rh1.final.pdf
-	void CpuId::getIdsIntel()
+	void CPUID::getIdsIntel()
 	{
 		int maxLeaf = 0;
 		uint32_t regs[REG_CNT] = {0, 0, 0, 0};
@@ -139,7 +146,7 @@ namespace springproc {
 		setDefault();
 	}
 
-	void CpuId::getMasksIntelLeaf11Enumerate()
+	void CPUID::getMasksIntelLeaf11Enumerate()
 	{
 		uint32_t currentLevel = 0;
 		uint32_t regs[REG_CNT] = {1, 0, 0, 0};
@@ -178,7 +185,7 @@ namespace springproc {
 	// Implementing "Sub ID Extraction Parameters for x2APIC ID" from
 	// Kuo_CpuTopology_rc1.rh1.final.pdf
 
-	void CpuId::getMasksIntelLeaf11()
+	void CPUID::getMasksIntelLeaf11()
 	{
 		getMasksIntelLeaf11Enumerate();
 
@@ -188,7 +195,7 @@ namespace springproc {
 		maskPackage =   ((-1u) << shiftPackage );
 	}
 
-	void CpuId::getMasksIntelLeaf1and4()
+	void CPUID::getMasksIntelLeaf1and4()
 	{
 		uint32_t regs[REG_CNT] = {1, 0, 0, 0};
 
@@ -225,9 +232,9 @@ namespace springproc {
 		maskPackage =   ((-1u) << shiftPackage );
 	}
 
-	void CpuId::getIdsIntelEnumerate()
+	void CPUID::getIdsIntelEnumerate()
 	{
-		auto oldAffinity = Threading::GetAffinity();
+		const auto oldAffinity = Threading::GetAffinity();
 
 		for (int processor = 0; processor < numProcessors; processor++) {
 			Threading::SetAffinity(1u << processor, true);
@@ -262,7 +269,7 @@ namespace springproc {
 		Threading::SetAffinity(oldAffinity);
 	}
 
-	uint32_t CpuId::getApicIdIntel()
+	uint32_t CPUID::getApicIdIntel()
 	{
 		uint32_t regs[REG_CNT] = {0, 0, 0, 0};
 
@@ -277,14 +284,14 @@ namespace springproc {
 		return (regs[REG_EBX] >> 24);
 	}
 
-	void CpuId::getIdsAmd()
+	void CPUID::getIdsAmd()
 	{
 		LOG_L(L_DEBUG,"[CpuId] ht/smt/cmt detection for AMD is not implemented! Using OS processor number.");
 		// already called
 		// setDefault();
 	}
 
-	void CpuId::setDefault()
+	void CPUID::setDefault()
 	{
 		numProcessors = Threading::GetLogicalCpuCores();
 		totalNumCores = numProcessors;
