@@ -90,14 +90,14 @@ class CGroundDecalHandler: public IGroundDecalDrawer, public CEventClient, publi
 {
 public:
 	CGroundDecalHandler();
-	virtual ~CGroundDecalHandler();
+	~CGroundDecalHandler();
 
-	virtual void Draw();
+	void Draw();
 
-	virtual void GhostCreated(CSolidObject* object, GhostSolidObject* gb);
-	virtual void GhostDestroyed(GhostSolidObject* gb);
+	void GhostCreated(CSolidObject* object, GhostSolidObject* gb);
+	void GhostDestroyed(GhostSolidObject* gb);
 
-	virtual void RemoveSolidObject(CSolidObject* object, GhostSolidObject* gb);
+	void RemoveSolidObject(CSolidObject* object, GhostSolidObject* gb);
 	void ForceRemoveSolidObject(CSolidObject* object);
 	static void RemoveTrack(CUnit* unit);
 
@@ -114,7 +114,7 @@ private:
 	int GetSolidObjectDecalType(const std::string& name);
 
 public:
-	//CEventClient
+	// CEventClient
 	bool WantsEvent(const std::string& eventName) {
 		return
 			(eventName == "SunChanged") ||
@@ -140,10 +140,10 @@ public:
 	void UnitLoaded(const CUnit* unit, const CUnit* transport);
 	void UnitUnloaded(const CUnit* unit, const CUnit* transport);
 
-	//IExplosionListener
+	// IExplosionListener
 	void ExplosionOccurred(const CExplosionParams& event);
 
-private:
+public:
 	struct SolidObjectDecalType {
 		SolidObjectDecalType(): texture(0) {}
 
@@ -155,31 +155,7 @@ private:
 
 	struct Scar {
 	public:
-		Scar()
-			: id(-1)
-			, creationTime(0)
-			, lifeTime(0)
-
-			, x1(0), x2(0)
-			, y1(0), y2(0)
-
-			, lastTest(0)
-			, lastDraw(-1)
-
-			, pos(ZeroVector)
-
-			, radius(0.0f)
-			, basesize(0.0f)
-			, overdrawn(0.0f)
-
-			, alphaFalloff(0.0f)
-			, startAlpha(1.0f)
-			, texOffsetX(0.0f)
-			, texOffsetY(0.0f)
-
-			, va(2048)
-		{}
-
+		Scar(): va(2048) {}
 		Scar(const Scar& s) = delete;
 		Scar(Scar&& s) { *this = std::move(s); }
 
@@ -187,11 +163,11 @@ private:
 		Scar& operator = (Scar&& s) {
 			id = s.id;
 
-			creationTime = s.creationTime;
-			lifeTime     = s.lifeTime;
-
 			x1 = s.x1; x2 = s.x2;
 			y1 = s.y1; y2 = s.y2;
+
+			creationTime = s.creationTime;
+			lifeTime     = s.lifeTime;
 
 			lastTest = s.lastTest;
 			lastDraw = s.lastDraw;
@@ -202,23 +178,48 @@ private:
 			basesize  = s.basesize;
 			overdrawn = s.overdrawn;
 
-			alphaFalloff = s.alphaFalloff;
-			startAlpha   = s.startAlpha;
-			texOffsetX   = s.texOffsetX;
-			texOffsetY   = s.texOffsetY;
+			alphaDecay = s.alphaDecay;
+			startAlpha = s.startAlpha;
+			texOffsetX = s.texOffsetX;
+			texOffsetY = s.texOffsetY;
 
 			va = std::move(s.va);
 			return *this;
 		}
 
+		void Reset() {
+			id = -1;
+
+			x1 = 0; x2 = 0;
+			y1 = 0; y2 = 0;
+
+			creationTime = 0;
+			lifeTime = 0;
+			lastTest = 0;
+			lastDraw = -1;
+
+			pos = ZeroVector;
+
+			radius = 0.0f;
+			basesize = 0.0f;
+			overdrawn = 0.0f;
+
+			alphaDecay = 0.0f;
+			startAlpha = 1.0f;
+			texOffsetX = 0.0f;
+			texOffsetY = 0.0f;
+
+			va.Initialize();
+		}
+
 	public:
 		int id;
-		int creationTime;
-		int lifeTime;
 
 		int x1, x2;
 		int y1, y2;
 
+		int creationTime;
+		int lifeTime;
 		int lastTest;
 		int lastDraw;
 
@@ -228,7 +229,7 @@ private:
 		float basesize;
 		float overdrawn;
 
-		float alphaFalloff;
+		float alphaDecay;
 		float startAlpha;
 		float texOffsetX;
 		float texOffsetY;
@@ -236,6 +237,7 @@ private:
 		CVertexArray va;
 	};
 
+private:
 	void LoadDecalShaders();
 	void DrawObjectDecals();
 
@@ -246,18 +248,15 @@ private:
 	void AddDecal(CUnit* unit, const float3& newPos);
 
 	void DrawObjectDecal(SolidObjectGroundDecal* decal);
-	void DrawGroundScar(Scar& scar, bool fade);
+	void DrawGroundScar(Scar& scar);
 
 	int GetScarID();
-	int OverlapSize(const Scar& s1, const Scar& s2);
-	void TestOverlaps(const Scar& scar);
+	int ScarOverlapSize(const Scar& s1, const Scar& s2);
+	void TestScarOverlaps(const Scar& scar);
 	void RemoveScar(Scar& scar);
 	void LoadScar(const std::string& file, std::vector<unsigned char>& buf, int xoffset, int yoffset);
 
 private:
-	unsigned int scarTex;
-	bool groundScarAlphaFade;
-
 	enum DecalShaderProgram {
 		DECAL_SHADER_ARB,
 		DECAL_SHADER_GLSL,
@@ -270,19 +269,25 @@ private:
 	std::vector<Shader::IProgramObject*> decalShaders;
 	std::vector<SolidObjectGroundDecal*> decalsToDraw;
 
-	std::vector<Scar> scars;
-	std::vector<Scar> scarsToBeAdded;
+	std::vector<int> addedScars;
 	// stores the free slots in <scars>
-	std::vector< int> scarIndices;
+	std::vector<int> scarIndices;
 
-	// stores indices into <scars>
+	// stores indices into <scars> of reserved slots, per quad
 	std::vector< std::vector<int> > scarField;
+
 
 	int scarFieldX;
 	int scarFieldY;
 
-	int lastTest;
-	float maxOverlap;
+	unsigned int scarTex;
+
+	// number of calls made to TestScarOverlaps
+	int lastScarOverlapTest;
+
+	float maxScarOverlapSize;
+
+	bool groundScarAlphaFade;
 
 	LegacyTrackHandler trackHandler;
 };
