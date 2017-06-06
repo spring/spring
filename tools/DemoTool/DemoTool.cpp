@@ -413,6 +413,15 @@ void TrafficDump(CDemoReader& reader, bool trafficStats)
 			case NETMSG_SETSHARE:
 				std::cout << "NETMSG_SETSHARE: " << std::endl;
 				break;
+			case NETMSG_CLIENTDATA: {
+				const uint16_t playerNum = (int)buffer[3];
+				const uint16_t totalSize = *(unsigned short*)(buffer+1);
+				std::cout << "NETMSG_CLIENTDATA: Player " << (unsigned)playerNum << " totalSize: " <<totalSize << std::endl;
+				break;
+			}
+			case NETMSG_AI_STATE_CHANGED:
+				std::cout << "NETMSG_AI_STATE_CHANGED: " << std::endl;
+				break;
 			default:
 				std::cout << "MSG: " << cmd << std::endl;
 		}
