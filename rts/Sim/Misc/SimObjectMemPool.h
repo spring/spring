@@ -115,6 +115,7 @@ public:
 	StaticMemPool() { clear(); }
 
 	template<typename T, typename... A> T* alloc(A&&... a) {
+		static_assert<(num_pages() != 0, "");
 		static_assert(sizeof(T) <= page_size(), "");
 
 		T* p = nullptr;
@@ -126,7 +127,7 @@ public:
 		ctor_call_depth += 1;
 
 		if (free_page_count == 0) {
-			i = ++used_page_index;
+			i = used_page_count++;
 			m = &pages[curr_page_index = i][0];
 			p = new (m) T(std::forward<A>(a)...);
 		} else {
@@ -160,7 +161,7 @@ public:
 	static constexpr size_t num_pages() { return N; }
 	static constexpr size_t page_size() { return S; }
 
-	size_t alloc_size() const { return (used_page_index * page_size()); } // size of total number of pages added over the pool's lifetime
+	size_t alloc_size() const { return (used_page_count * page_size()); } // size of total number of pages added over the pool's lifetime
 	size_t freed_size() const { return (free_page_count * page_size()); } // size of number of pages that were freed and are awaiting reuse
 	size_t total_size() const { return (num_pages() * page_size()); }
 	size_t base_offset(const void* p) const { return (reinterpret_cast<const uint8_t*>(p) - reinterpret_cast<const uint8_t*>(&pages[0][0])); }
@@ -168,7 +169,7 @@ public:
 	bool mapped(const void* p) const { return (((base_offset(p) / page_size()) < total_size()) && ((base_offset(p) % page_size()) == 0)); }
 	bool alloced(const void* p) const { return (&pages[curr_page_index][0] == p); }
 
-	bool can_alloc() const { return (used_page_index < num_pages() || free_page_count > 0); }
+	bool can_alloc() const { return (used_page_count < num_pages() || free_page_count > 0); }
 	bool can_free() const { return (free_page_count < num_pages()); }
 
 	bool ctorCall() const { return (ctor_call_depth > 0); }
@@ -180,7 +181,7 @@ public:
 		std::memset(&pages[0], 0, total_size());
 		std::memset(&indcs[0], 0, num_pages());
 
-		used_page_index = 0;
+		used_page_count = 0;
 		free_page_count = 0;
 		curr_page_index = 0;
 
@@ -192,7 +193,7 @@ private:
 	std::array<uint8_t[S], N> pages;
 	std::array<size_t, N> indcs;
 
-	size_t used_page_index = 0;
+	size_t used_page_count = 0;
 	size_t free_page_count = 0; // indcs[fpc-1] is the last recycled page
 	size_t curr_page_index = 0;
 

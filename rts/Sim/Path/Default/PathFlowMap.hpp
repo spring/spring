@@ -14,8 +14,7 @@ class CSolidObject;
 class PathFlowMap {
 public:
 	struct FlowCell {
-		FlowCell(): numObjects(0) {
-		}
+		FlowCell(): numObjects(0) {}
 
 		float3 flowVector;
 		float3 cellCenter; // WS
