@@ -13,6 +13,7 @@
 #include "PathFinderDef.h"
 #include "PathFlowMap.hpp"
 #include "PathLog.h"
+#include "PathMemPool.h"
 #include "Game/LoadScreen.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/ModInfo.h"
@@ -34,8 +35,10 @@
 #include "System/Threading/SpringThreading.h"
 
 
-CONFIG(int, MaxPathCostsMemoryFootPrint).defaultValue(512).minimumValue(64).description("Maximum memusage (in MByte) of mutlithreaded pathcache generator at loading time.");
+CONFIG(int, MaxPathCostsMemoryFootPrint).defaultValue(512).minimumValue(64).description("Maximum memusage (in MByte) of multithreaded pathcache generator at loading time.");
 
+PCMemPool pcMemPool;
+PEMemPool peMemPool;
 
 
 static const std::string GetPathCacheDir() {
@@ -120,8 +123,8 @@ CPathEstimator::CPathEstimator(IPathFinder* pf, unsigned int BLOCK_SIZE, const s
 
 CPathEstimator::~CPathEstimator()
 {
-	spring::SafeDelete(pathCache[0]);
-	spring::SafeDelete(pathCache[1]);
+	pcMemPool.free(pathCache[0]);
+	pcMemPool.free(pathCache[1]);
 }
 
 
@@ -140,7 +143,7 @@ void CPathEstimator::InitEstimator(const std::string& cacheFileName, const std::
 	}
 
 	// always use PF for initialization, later PE maybe used
-	pathFinders[0] = new CPathFinder();
+	pathFinders[0] = pfMemPool.alloc<CPathFinder>();
 
 	// Not much point in multithreading these...
 	InitBlocks();
@@ -170,7 +173,7 @@ void CPathEstimator::InitEstimator(const std::string& cacheFileName, const std::
 		pathBarrier = new spring::barrier(numExtraThreads + 1);
 
 		for (unsigned int i = 1; i <= numExtraThreads; i++) {
-			pathFinders[i] = new CPathFinder();
+			pathFinders[i] = pfMemPool.alloc<CPathFinder>();
 			threads[i] = new spring::thread(std::bind(&CPathEstimator::CalcOffsetsAndPathCosts, this, i));
 		}
 
@@ -180,7 +183,7 @@ void CPathEstimator::InitEstimator(const std::string& cacheFileName, const std::
 		for (unsigned int i = 1; i <= numExtraThreads; i++) {
 			threads[i]->join();
 			delete threads[i];
-			delete pathFinders[i];
+			pfMemPool.free(pathFinders[i]);
 		}
 
 		delete pathBarrier;
@@ -199,11 +202,11 @@ void CPathEstimator::InitEstimator(const std::string& cacheFileName, const std::
 	pathChecksum = CalcChecksum();
 
 	// switch to runtime wanted IPathFinder (maybe PF or PE)
-	delete pathFinders[0];
+	pfMemPool.free(pathFinders[0]);
 	pathFinders[0] = pathFinder;
 
-	pathCache[0] = new CPathCache(nbrOfBlocks.x, nbrOfBlocks.y);
-	pathCache[1] = new CPathCache(nbrOfBlocks.x, nbrOfBlocks.y);
+	pathCache[0] = pcMemPool.alloc<CPathCache>(nbrOfBlocks.x, nbrOfBlocks.y);
+	pathCache[1] = pcMemPool.alloc<CPathCache>(nbrOfBlocks.x, nbrOfBlocks.y);
 }
 
 

@@ -9,6 +9,7 @@
 #include "PathFlowMap.hpp"
 #include "PathHeatMap.hpp"
 #include "PathLog.h"
+#include "PathMemPool.h"
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
@@ -21,6 +22,7 @@
 
 using namespace Bitwise;
 
+PFMemPool pfMemPool;
 
 
 static const CMoveMath::BlockType squareMobileBlockBits = (CMoveMath::BLOCK_MOBILE | CMoveMath::BLOCK_MOVING | CMoveMath::BLOCK_MOBILE_BUSY);
@@ -32,6 +34,7 @@ static const CPathFinder::BlockCheckFunc blockCheckFuncs[2] = {
 // both indexed by PATHOPT* bitmasks
 static float3 PF_DIRECTION_VECTORS_3D[PATH_DIRECTIONS << 1];
 static float  PF_DIRECTION_COSTS[PATH_DIRECTIONS << 1];
+
 
 CPathFinder::CPathFinder(bool threadSafe): IPathFinder(1)
 {

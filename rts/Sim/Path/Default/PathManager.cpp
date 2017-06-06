@@ -8,6 +8,7 @@
 #include "PathFlowMap.hpp"
 #include "PathHeatMap.hpp"
 #include "PathLog.h"
+#include "PathMemPool.h"
 #include "Map/MapInfo.h"
 #include "Sim/Objects/SolidObjectDef.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
@@ -33,6 +34,9 @@ CPathManager::CPathManager()
 	pathHeatMap = PathHeatMap::GetInstance();
 
 	pathMap.reserve(1024);
+	pcMemPool.clear();
+	peMemPool.clear();
+	pfMemPool.clear();
 
 	// PathNode::nodePos is an ushort2, PathNode::nodeNum is an int
 	// therefore the maximum map size is limited to 64k*64k squares
@@ -41,9 +45,9 @@ CPathManager::CPathManager()
 
 CPathManager::~CPathManager()
 {
-	spring::SafeDelete(lowResPE);
-	spring::SafeDelete(medResPE);
-	spring::SafeDelete(maxResPF);
+	peMemPool.free(lowResPE);
+	peMemPool.free(medResPE);
+	pfMemPool.free(maxResPF);
 
 	PathHeatMap::FreeInstance(pathHeatMap);
 	PathFlowMap::FreeInstance(pathFlowMap);
@@ -54,9 +58,9 @@ std::int64_t CPathManager::Finalize() {
 
 	{
 		// Thread unsafe pathfinder
-		maxResPF = new CPathFinder(false);
-		medResPE = new CPathEstimator(maxResPF, MEDRES_PE_BLOCKSIZE, "pe",  mapInfo->map.name);
-		lowResPE = new CPathEstimator(medResPE, LOWRES_PE_BLOCKSIZE, "pe2", mapInfo->map.name);
+		maxResPF = pfMemPool.alloc<CPathFinder>(false);
+		medResPE = peMemPool.alloc<CPathEstimator>(maxResPF, MEDRES_PE_BLOCKSIZE, "pe",  mapInfo->map.name);
+		lowResPE = peMemPool.alloc<CPathEstimator>(medResPE, LOWRES_PE_BLOCKSIZE, "pe2", mapInfo->map.name);
 
 		// make cached path data checksum part of synced state
 		// so that when any client has a corrupted / incorrect

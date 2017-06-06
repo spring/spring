@@ -3,6 +3,7 @@
 #include "PathFlowMap.hpp"
 #include "PathConstants.h"
 #include "Map/ReadMap.h"
+#include "Sim/Misc/SimObjectMemPool.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/Objects/SolidObject.h"
 #include "System/myMath.h"
@@ -14,19 +15,21 @@
 #define FLOW_NGB_PROJECTION  0
 
 // not extern'ed, so static
-static PathFlowMap* gPathFlowMap = NULL;
+static StaticMemPool<1, sizeof(PathFlowMap)> pfmMemPool;
+static PathFlowMap* gPathFlowMap = nullptr;
+
+
 
 PathFlowMap* PathFlowMap::GetInstance() {
-	if (gPathFlowMap == NULL)
-		gPathFlowMap = new PathFlowMap(PATH_FLOWMAP_XSCALE, PATH_FLOWMAP_ZSCALE);
+	if (gPathFlowMap == nullptr)
+		gPathFlowMap = pfmMemPool.alloc<PathFlowMap>(PATH_FLOWMAP_XSCALE, PATH_FLOWMAP_ZSCALE);
 
 	return gPathFlowMap;
 }
 
 void PathFlowMap::FreeInstance(PathFlowMap* pfm) {
 	assert(pfm == gPathFlowMap);
-	delete pfm;
-	gPathFlowMap = NULL;
+	pfmMemPool.free(gPathFlowMap);
 }
 
 

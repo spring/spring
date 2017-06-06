@@ -4,23 +4,26 @@
 #include "PathConstants.h"
 #include "PathManager.h"
 #include "Sim/Misc/GlobalSynced.h"
+#include "Sim/Misc/SimObjectMemPool.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/Objects/SolidObject.h"
 
 // not extern'ed, so static
+static StaticMemPool<1, sizeof(PathHeatMap)> phmMemPool;
 static PathHeatMap* gPathHeatMap = nullptr;
+
+
 
 PathHeatMap* PathHeatMap::GetInstance() {
 	if (gPathHeatMap == nullptr)
-		gPathHeatMap = new PathHeatMap(PATH_HEATMAP_XSCALE, PATH_HEATMAP_ZSCALE);
+		gPathHeatMap = phmMemPool.alloc<PathHeatMap>(PATH_HEATMAP_XSCALE, PATH_HEATMAP_ZSCALE);
 
 	return gPathHeatMap;
 }
 
 void PathHeatMap::FreeInstance(PathHeatMap* phm) {
 	assert(phm == gPathHeatMap);
-	delete phm;
-	gPathHeatMap = nullptr;
+	phmMemPool.free(gPathHeatMap);
 }
 
 
