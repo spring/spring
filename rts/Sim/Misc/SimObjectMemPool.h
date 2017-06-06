@@ -115,7 +115,7 @@ public:
 	StaticMemPool() { clear(); }
 
 	template<typename T, typename... A> T* alloc(A&&... a) {
-		static_assert<(num_pages() != 0, "");
+		static_assert(num_pages() != 0, "");
 		static_assert(sizeof(T) <= page_size(), "");
 
 		T* p = nullptr;
