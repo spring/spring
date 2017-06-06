@@ -422,6 +422,9 @@ void TrafficDump(CDemoReader& reader, bool trafficStats)
 			case NETMSG_AI_STATE_CHANGED:
 				std::cout << "NETMSG_AI_STATE_CHANGED: " << std::endl;
 				break;
+			case NETMSG_PLAYERSTAT:
+				std::cout << "NETMSG_PLAYERSTAT: " << std::endl;
+				break;
 			default:
 				std::cout << "MSG: " << cmd << std::endl;
 		}
