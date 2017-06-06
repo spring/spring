@@ -258,7 +258,7 @@ void CPreGame::UpdateClientNet()
 			return;
 		}
 
-		LOG_L(L_WARNING, "[PreGame] Server Connection Timeout");
+		LOG_L(L_ERROR, "[PreGame] Server Connection Timeout");
 
 		spring::exitCode = spring::EXIT_CODE_TIMEOUT;
 		gu->globalQuit = true;
