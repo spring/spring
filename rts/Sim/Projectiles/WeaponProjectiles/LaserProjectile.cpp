@@ -43,7 +43,6 @@ CLaserProjectile::CLaserProjectile(const ProjectileParams& params): CWeaponProje
 {
 	projectileType = WEAPON_LASER_PROJECTILE;
 
-	// FIXME: constant, assumes |speed| never changes after creation
 	speedf = speed.w;
 
 	if (weaponDef != NULL) {
@@ -132,7 +131,7 @@ void CLaserProjectile::UpdatePos(const float4& oldSpeed) {
 	UpdateGroundBounce();
 
 	if (oldSpeed != speed) {
-		SetVelocityAndSpeed(speed);
+		speedf = speed.w;
 	}
 }
 
