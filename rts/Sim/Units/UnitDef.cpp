@@ -524,7 +524,6 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 
 		if (moveDef == nullptr) {
 			upright           |= !canfly;
-			floatOnWater      |= udTable.GetBool("floater", udTable.KeyExists("WaterLine"));
 
 			// we have no MoveDef, so pathType == -1 and IsAirUnit() MIGHT be true
 			cantBeTransported |= (!modInfo.transportAir && canfly);
@@ -538,6 +537,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 			cantBeTransported |= (!modInfo.transportShip   && moveDef->speedModClass == MoveDef::Ship );
 			cantBeTransported |= (!modInfo.transportHover  && moveDef->speedModClass == MoveDef::Hover);
 		}
+		floatOnWater          |= udTable.GetBool("floater", udTable.KeyExists("WaterLine"));
 
 		if (seismicSignature == -1.0f) {
 			const bool isTank = (moveDef != NULL && moveDef->speedModClass == MoveDef::Tank);
