@@ -618,21 +618,27 @@ namespace CrashHandler
 		assert(&stacktrace != nullptr);
 
 		unw_cursor_t cursor;
-		// Effective ucontext_t. If uc not supplied, use unw_getcontext locally. This is appropriate inside signal handlers.
-#if defined(__APPLE__)
+
+#if (defined(__arm__) || defined(__APPLE__))
+		// ucontext_t and unw_context_t are not aliases here
 		unw_context_t thisctx;
 		unw_getcontext(&thisctx);
 #else
+		// Effective ucontext_t. If uc not supplied, use unw_getcontext
+		// locally. This is appropriate inside signal handlers.
 		ucontext_t thisctx;
+
 		if (uc == nullptr) {
 			unw_getcontext(&thisctx);
 			uc = &thisctx;
 		}
 #endif
-		const int BUFR_SZ = 1000;
-		char procbuffer[BUFR_SZ];
+
+
+		char procbuffer[1024];
+
 		stacktrace.clear();
-		stacktrace.reserve(120);
+		stacktrace.reserve(MAX_STACKTRACE_DEPTH);
 		/*
 		 * Note: documentation seems to indicate that uc_link contains a pointer to a "successor" context
 		 * that is to be resumed after the current one (as you might expect in a signal handler).
@@ -645,35 +651,37 @@ namespace CrashHandler
 			LOG_L(L_DEBUG, "Dereferencing uc_link");
 		}
 		*/
-#if defined(__APPLE__)
-		int err = unw_init_local(&cursor, &thisctx);
+
+#if (defined(__arm__) || defined(__APPLE__))
+		const int err = unw_init_local(&cursor, &thisctx);
 #else
-		int err = unw_init_local(&cursor, uc);
+		const int err = unw_init_local(&cursor, uc);
 #endif
-		if (err) {
+
+		if (err != 0) {
 			LOG_L(L_ERROR, "unw_init_local returned %d", err);
 			return 0;
 		}
-		int i=0;
-		while (i < MAX_STACKTRACE_DEPTH && unw_step(&cursor)) {
-			StackFrame frame;
+
+		for (int i = 0; i < MAX_STACKTRACE_DEPTH && unw_step(&cursor); i++) {
 			unw_word_t ip;
 			unw_word_t offp;
 			unw_get_reg(&cursor, UNW_REG_IP, &ip);
-			frame.ip = reinterpret_cast<void*>(ip);
+
+			stacktrace.emplace_back();
+			StackFrame& frame = stacktrace.back();
+
+			frame.ip = (iparray[i] = reinterpret_cast<void*>(ip));
 			frame.level = i;
-			iparray[i] = frame.ip;
-			if (!unw_get_proc_name(&cursor, procbuffer, BUFR_SZ-1, &offp)) {
+
+			if (!unw_get_proc_name(&cursor, procbuffer, sizeof(procbuffer) - 1, &offp)) {
 				frame.mangled = std::string(procbuffer);
 			} else {
 				frame.mangled = std::string("UNW_ENOINFO");
 			}
-			stacktrace.push_back(frame);
-			i++;
 		}
-		stacktrace.resize(i);
-		LOG_L(L_DEBUG, "thread_unwind returned %d frames", i);
-		return i;
+
+		return (int(stacktrace.size()));
 	}
 
 	static void Stacktrace(bool* aiCrash, pthread_t* hThread = NULL, const char* threadName = NULL, const int logLevel = LOG_LEVEL_ERROR)
