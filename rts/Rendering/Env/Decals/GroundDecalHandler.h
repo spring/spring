@@ -238,6 +238,7 @@ public:
 	};
 
 private:
+	void LoadScarTextures();
 	void LoadDecalShaders();
 	void DrawObjectDecals();
 
@@ -250,11 +251,11 @@ private:
 	void DrawObjectDecal(SolidObjectGroundDecal* decal);
 	void DrawGroundScar(Scar& scar);
 
-	int GetScarID();
+	int GetScarID() const;
 	int ScarOverlapSize(const Scar& s1, const Scar& s2);
 	void TestScarOverlaps(const Scar& scar);
 	void RemoveScar(Scar& scar);
-	void LoadScar(const std::string& file, std::vector<unsigned char>& buf, int xoffset, int yoffset);
+	void LoadScarTexture(const std::string& file, uint8_t* buf, int xoffset, int yoffset);
 
 private:
 	enum DecalShaderProgram {
@@ -270,8 +271,6 @@ private:
 	std::vector<SolidObjectGroundDecal*> decalsToDraw;
 
 	std::vector<int> addedScars;
-	// stores the free slots in <scars>
-	std::vector<int> scarIndices;
 
 	// stores indices into <scars> of reserved slots, per quad
 	std::vector< std::vector<int> > scarField;

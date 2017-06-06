@@ -32,7 +32,6 @@
 #include "Sim/Weapons/WeaponDef.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
-#include "System/Exceptions.h"
 #include "System/Log/ILog.h"
 #include "System/myMath.h"
 #include "System/StringUtil.h"
@@ -43,7 +42,14 @@
 
 
 static DynMemPool<sizeof(SolidObjectGroundDecal)> sogdMemPool;
+
 static std::array<CGroundDecalHandler::Scar, MAX_SCAR_COUNT> scars;
+static std::vector<uint8_t> scarTexBuf;
+
+// free and used slots in <scars>
+static std::vector<int> freeScarIDs;
+static std::vector<int> usedScarIDs;
+
 
 
 CONFIG(int, GroundScarAlphaFade).defaultValue(0);
@@ -58,37 +64,16 @@ CGroundDecalHandler::CGroundDecalHandler(): CEventClient("[CGroundDecalHandler]"
 
 	sogdMemPool.clear();
 	sogdMemPool.reserve(128);
-
-
-	static std::vector<unsigned char> buf;
-
-	buf.clear();
-	buf.resize(512 * 512 * 4);
-
-	{
-		LuaParser resourcesParser("gamedata/resources.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
-
-		if (!resourcesParser.Execute())
-			LOG_L(L_ERROR, "Failed to load resources: %s", resourcesParser.GetErrorLog().c_str());
-
-		const LuaTable& gfxTable = resourcesParser.GetRoot().SubTable("graphics");
-		const LuaTable& scarsTable = gfxTable.SubTable("scars");
-
-		LoadScar("bitmaps/" + scarsTable.GetString(2, "scars/scar2.bmp"), buf,   0,   0);
-		LoadScar("bitmaps/" + scarsTable.GetString(3, "scars/scar3.bmp"), buf, 256,   0);
-		LoadScar("bitmaps/" + scarsTable.GetString(1, "scars/scar1.bmp"), buf,   0, 256);
-		LoadScar("bitmaps/" + scarsTable.GetString(4, "scars/scar4.bmp"), buf, 256, 256);
-	}
-
-	glGenTextures(1, &scarTex);
-	glBindTexture(GL_TEXTURE_2D, scarTex);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
-	glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, 512, 512, GL_RGBA, GL_UNSIGNED_BYTE, buf.data());
-
+	freeScarIDs.clear();
+	freeScarIDs.reserve(MAX_SCAR_COUNT);
+	usedScarIDs.clear();
+	usedScarIDs.reserve(128);
+	scarTexBuf.clear();
+	scarTexBuf.resize(512 * 512 * 4, 0); // 1MB
 
 	for (int i = 0; i < MAX_SCAR_COUNT; i++) {
-		scarIndices.push_back(i);
+		freeScarIDs.push_back(i);
+
 		// wipe out scars from previous runs; keep their VA's
 		scars[i].Reset();
 	}
@@ -103,6 +88,7 @@ CGroundDecalHandler::CGroundDecalHandler(): CEventClient("[CGroundDecalHandler]"
 
 	groundScarAlphaFade = (configHandler->GetInt("GroundScarAlphaFade") != 0);
 
+	LoadScarTextures();
 	LoadDecalShaders();
 }
 
@@ -131,9 +117,30 @@ CGroundDecalHandler::~CGroundDecalHandler()
 	decalShaders.clear();
 }
 
+void CGroundDecalHandler::LoadScarTextures() {
+	LuaParser resourcesParser("gamedata/resources.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
+
+	if (!resourcesParser.Execute())
+		LOG_L(L_ERROR, "Failed to load resources: %s", resourcesParser.GetErrorLog().c_str());
+
+	const LuaTable& gfxTable = resourcesParser.GetRoot().SubTable("graphics");
+	const LuaTable& scarsTable = gfxTable.SubTable("scars");
+
+	LoadScarTexture("bitmaps/" + scarsTable.GetString(2, "scars/scar2.bmp"), scarTexBuf.data(),   0,   0);
+	LoadScarTexture("bitmaps/" + scarsTable.GetString(3, "scars/scar3.bmp"), scarTexBuf.data(), 256,   0);
+	LoadScarTexture("bitmaps/" + scarsTable.GetString(1, "scars/scar1.bmp"), scarTexBuf.data(),   0, 256);
+	LoadScarTexture("bitmaps/" + scarsTable.GetString(4, "scars/scar4.bmp"), scarTexBuf.data(), 256, 256);
+
+	glGenTextures(1, &scarTex);
+	glBindTexture(GL_TEXTURE_2D, scarTex);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
+	glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, 512, 512, GL_RGBA, GL_UNSIGNED_BYTE, scarTexBuf.data());
+}
+
 void CGroundDecalHandler::LoadDecalShaders() {
 	#define sh shaderHandler
-	decalShaders.resize(DECAL_SHADER_LAST, NULL);
+	decalShaders.resize(DECAL_SHADER_LAST, nullptr);
 
 	// SM3 maps have no baked lighting, so decals blend differently
 	const bool haveShadingTexture = (readMap->GetShadingTexture() != 0);
@@ -410,6 +417,7 @@ void CGroundDecalHandler::GatherDecalsForType(CGroundDecalHandler::SolidObjectDe
 
 	for (size_t i = 0; i < objectDecals.size(); ) {
 		SolidObjectGroundDecal*& decal = objectDecals[i];
+
 		CSolidObject* decalOwner = decal->owner;
 		GhostSolidObject* gbOwner = decal->gbOwner;
 
@@ -425,10 +433,10 @@ void CGroundDecalHandler::GatherDecalsForType(CGroundDecalHandler::SolidObjectDe
 				if (decalOwner != nullptr)
 					decalOwner->groundDecal = nullptr;
 
+				sogdMemPool.free(decal);
+
 				objectDecals[i] = objectDecals.back();
 				objectDecals.pop_back();
-
-				sogdMemPool.free(decal);
 				continue;
 			}
 
@@ -491,10 +499,12 @@ void CGroundDecalHandler::DrawObjectDecals() {
 void CGroundDecalHandler::AddScars()
 {
 	for (const int id: addedScars) {
-		const Scar& s = scars[id];
+		// potentially evicts one or more existing in-field scars
+		TestScarOverlaps(scars[id]);
+	}
 
-		// potentially evicts an existing in-field scar
-		TestScarOverlaps(s);
+	for (const int id: addedScars) {
+		const Scar& s = scars[id];
 
 		const int x1 = s.x1 / TEX_QUAD_SIZE;
 		const int y1 = s.y1 / TEX_QUAD_SIZE;
@@ -506,6 +516,8 @@ void CGroundDecalHandler::AddScars()
 				spring::VectorInsertUnique(scarField[y * scarFieldX + x], s.id);
 			}
 		}
+
+		usedScarIDs.push_back(id);
 	}
 
 	addedScars.clear();
@@ -513,11 +525,10 @@ void CGroundDecalHandler::AddScars()
 
 void CGroundDecalHandler::DrawScars() {
 	// create and draw the 16x16 quads for each ground scar
-	for (size_t i = 0; i < scars.size(); i++) {
-		Scar& scar = scars[i];
+	for (size_t i = 0; i < usedScarIDs.size(); ) {
+		Scar& scar = scars[ usedScarIDs[i] ];
 
-		if (scar.id == -1)
-			continue;
+		assert(scar.id == usedScarIDs[i]);
 
 		if (scar.lifeTime < gs->frameNum) {
 			RemoveScar(scar);
@@ -525,6 +536,7 @@ void CGroundDecalHandler::DrawScars() {
 		}
 
 		DrawGroundScar(scar);
+		i++;
 	}
 }
 
@@ -731,32 +743,30 @@ void CGroundDecalHandler::AddExplosion(float3 pos, float damage, float radius)
 }
 
 
-void CGroundDecalHandler::LoadScar(
-	const std::string& file,
-	std::vector<unsigned char>& buf,
-	int xoffset,
-	int yoffset
-) {
+void CGroundDecalHandler::LoadScarTexture(const std::string& file, uint8_t* buf, int xoffset, int yoffset)
+{
 	CBitmap bm;
 
-	if (!bm.Load(file))
-		throw content_error("Could not load scar from file " + file);
+	if (!bm.Load(file)) {
+		LOG_L(L_WARNING, "[%s] could not load file \"%s\"", __func__, file.c_str());
+		return;
+	}
 
 	if (bm.ysize != 256 || bm.xsize != 256)
-		bm = bm.CreateRescaled(256,256);
+		bm = bm.CreateRescaled(256, 256);
 
 	if (FileSystem::GetExtension(file) == "bmp") {
-		// bitmaps don't have an alpha channel
-		// so use: red := brightness & green := alpha
+		// bitmaps don't have an alpha channel, use red=brightness and green=alpha
 		for (int y = 0; y < bm.ysize; ++y) {
 			for (int x = 0; x < bm.xsize; ++x) {
 				const int memIndex = ((y * bm.xsize) + x) * 4;
 				const int bufIndex = (((y + yoffset) * 512) + x + xoffset) * 4;
-				buf[bufIndex + 3]    = bm.mem[memIndex + 1];
 				const int brightness = bm.mem[memIndex + 0];
+
 				buf[bufIndex + 0] = (brightness * 90) / 255;
 				buf[bufIndex + 1] = (brightness * 60) / 255;
 				buf[bufIndex + 2] = (brightness * 30) / 255;
+				buf[bufIndex + 3] = bm.mem[memIndex + 1];
 			}
 		}
 	} else {
@@ -770,11 +780,11 @@ void CGroundDecalHandler::LoadScar(
 }
 
 
-int CGroundDecalHandler::GetScarID() {
-	if (scarIndices.empty())
+int CGroundDecalHandler::GetScarID() const {
+	if (freeScarIDs.empty())
 		return -1;
 
-	return (spring::VectorBackPop(scarIndices));
+	return (spring::VectorBackPop(freeScarIDs));
 }
 
 int CGroundDecalHandler::ScarOverlapSize(const Scar& s1, const Scar& s2)
@@ -844,7 +854,9 @@ void CGroundDecalHandler::RemoveScar(Scar& scar)
 	}
 
 	// recycle the id
-	scarIndices.push_back(scar.id);
+	spring::VectorInsertUnique(freeScarIDs, scar.id);
+	spring::VectorErase(usedScarIDs, scar.id);
+
 	scar.Reset();
 }
 
