@@ -20,7 +20,10 @@ class CSolidObject;
 class IPathFinder {
 public:
 	IPathFinder(unsigned int BLOCK_SIZE);
-	virtual ~IPathFinder() {}
+	virtual ~IPathFinder();
+
+	static void InitStatic();
+	static void KillStatic();
 
 	// size of the memory-region we hold allocated (excluding sizeof(*this))
 	// (PathManager stores HeatMap and FlowMap, so we do not need to add them)
@@ -66,9 +69,9 @@ public:
 	);
 
 protected:
-	///
 	IPath::SearchResult InitSearch(const MoveDef&, const CPathFinderDef&, const CSolidObject* owner);
 
+	void AllocStateBuffer();
 	/// Clear things up from last search.
 	void ResetSearch();
 
@@ -120,25 +123,30 @@ public:
 	static int2 PE_DIRECTION_VECTORS[PATH_DIRECTIONS];
 	static int2 PF_DIRECTION_VECTORS_2D[PATH_DIRECTIONS << 1];
 
+	// if larger than 1, this IPF is an estimator
 	const unsigned int BLOCK_SIZE;
 	const unsigned int BLOCK_PIXEL_SIZE;
-	const bool isEstimator;
 
+	int2 nbrOfBlocks;
 	int2 mStartBlock;
+
 	unsigned int mStartBlockIdx;
-	unsigned int mGoalBlockIdx;   //< set during each search as the square closest to the goal
-	float mGoalHeuristic;         //< heuristic value of goalSquareIdx
+	unsigned int mGoalBlockIdx; // set during each search as the square closest to the goal
+
+	// heuristic value of goalSquareIdx
+	float mGoalHeuristic;
 
 	unsigned int maxBlocksToBeSearched;
 	unsigned int testedBlocks;
 
-	int2 nbrOfBlocks;             //< Number of blocks on the axes
+	unsigned int instanceIndex;
 
 	PathNodeBuffer openBlockBuffer;
 	PathNodeStateBuffer blockStates;
 	PathPriorityQueue openBlocks;
 
-	std::vector<unsigned int> dirtyBlocks; //< List of blocks changed in last search.
+	// list of blocks changed in last search
+	std::vector<unsigned int> dirtyBlocks;
 };
 
 #endif // IPATH_FINDER_H

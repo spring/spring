@@ -8,6 +8,11 @@
 #include "System/Log/ILog.h"
 
 
+static std::vector<PathNodeStateBuffer> nodeStateBuffers;
+static std::vector<IPathFinder*> pathFinderInstances;
+
+
+
 // these give the changes in (x, z) coors
 // when moving one step in given direction
 //
@@ -50,19 +55,42 @@ int2 IPathFinder::PF_DIRECTION_VECTORS_2D[PATH_DIRECTIONS << 1] = {
 IPathFinder::IPathFinder(unsigned int _BLOCK_SIZE)
 	: BLOCK_SIZE(_BLOCK_SIZE)
 	, BLOCK_PIXEL_SIZE(BLOCK_SIZE * SQUARE_SIZE)
-	, isEstimator(BLOCK_SIZE != 1)
+	, nbrOfBlocks(mapDims.mapx / BLOCK_SIZE, mapDims.mapy / BLOCK_SIZE)
 	, mStartBlockIdx(0)
 	, mGoalBlockIdx(0)
 	, mGoalHeuristic(0.0f)
 	, maxBlocksToBeSearched(0)
 	, testedBlocks(0)
-	, nbrOfBlocks(mapDims.mapx / BLOCK_SIZE, mapDims.mapy / BLOCK_SIZE)
-	, blockStates(nbrOfBlocks, int2(mapDims.mapx, mapDims.mapy))
+	, instanceIndex(pathFinderInstances.size())
 {
-	// reserve a batch of dirty blocks
+	pathFinderInstances.push_back(this);
+
+	AllocStateBuffer();
 	ResetSearch();
 }
 
+IPathFinder::~IPathFinder()
+{
+	// allow our PNSB to be reused across reloads
+	nodeStateBuffers[instanceIndex] = std::move(blockStates);
+}
+
+
+void IPathFinder::InitStatic() { pathFinderInstances.reserve(8); }
+void IPathFinder::KillStatic() { pathFinderInstances.clear  ( ); }
+
+
+void IPathFinder::AllocStateBuffer()
+{
+	if (instanceIndex >= nodeStateBuffers.size())
+		nodeStateBuffers.emplace_back();
+
+	nodeStateBuffers[instanceIndex].Clear();
+	nodeStateBuffers[instanceIndex].Resize(nbrOfBlocks, int2(mapDims.mapx, mapDims.mapy));
+
+	// steal memory, returned in dtor
+	blockStates = std::move(nodeStateBuffers[instanceIndex]);
+}
 
 void IPathFinder::ResetSearch()
 {
@@ -71,6 +99,7 @@ void IPathFinder::ResetSearch()
 		dirtyBlocks.pop_back();
 	}
 
+	// reserve a batch of dirty blocks
 	dirtyBlocks.reserve(4096);
 	openBlocks.Clear();
 
@@ -88,45 +117,44 @@ IPath::SearchResult IPathFinder::GetPath(
 ) {
 	startPos.ClampInBounds();
 
-	// Clear the path
+	// clear the path
 	path.path.clear();
 	path.squares.clear();
 	path.pathCost = PATHCOST_INFINITY;
 
 	// initial calculations
-	if (isEstimator) {
+	if (BLOCK_SIZE != 1) {
 		maxBlocksToBeSearched = std::min(MAX_SEARCHED_NODES_PE - 8U, maxNodes);
 	} else {
 		maxBlocksToBeSearched = std::min(MAX_SEARCHED_NODES_PF - 8U, maxNodes);
 	}
+
 	mStartBlock.x  = startPos.x / BLOCK_PIXEL_SIZE;
 	mStartBlock.y  = startPos.z / BLOCK_PIXEL_SIZE;
 	mStartBlockIdx = BlockPosToIdx(mStartBlock);
 	assert((unsigned)mStartBlock.x < nbrOfBlocks.x && (unsigned)mStartBlock.y < nbrOfBlocks.y);
 
-	// Check cache (when there is one)
-	int2 goalBlock;
-	goalBlock.x = pfDef.goalSquareX / BLOCK_SIZE;
-	goalBlock.y = pfDef.goalSquareZ / BLOCK_SIZE;
-
+	// check cache (when there is one)
+	const int2 goalBlock = {int(pfDef.goalSquareX / BLOCK_SIZE), int(pfDef.goalSquareZ / BLOCK_SIZE)};
 	const CPathCache::CacheItem& ci = GetCache(mStartBlock, goalBlock, pfDef.sqGoalRadius, moveDef.pathType, pfDef.synced);
+
 	if (ci.pathType != -1) {
 		path = ci.path;
 		return ci.result;
 	}
 
-	// Start up a new search
+	// start up a new search
 	IPath::SearchResult result = InitSearch(moveDef, pfDef, owner);
 
-	// If search was successful, generate new path
+	// if search was successful, generate new path
 	if (result == IPath::Ok || result == IPath::GoalOutOfRange) {
 		FinishSearch(moveDef, pfDef, path);
 
-		// Save to cache
+		// save to cache
 		AddCache(&path, result, mStartBlock, goalBlock, pfDef.sqGoalRadius, moveDef.pathType, pfDef.synced);
 
 		if (LOG_IS_ENABLED(L_DEBUG)) {
-			LOG_L(L_DEBUG, "==== %s: Search completed ====", (isEstimator) ? "PE" : "PF");
+			LOG_L(L_DEBUG, "==== %s: Search completed ====", (BLOCK_SIZE != 1) ? "PE" : "PF");
 			LOG_L(L_DEBUG, "Tested blocks: %u", testedBlocks);
 			LOG_L(L_DEBUG, "Open blocks: %u", openBlockBuffer.GetSize());
 			LOG_L(L_DEBUG, "Path length: " _STPF_, path.path.size());
@@ -135,7 +163,7 @@ IPath::SearchResult IPathFinder::GetPath(
 		}
 	} else {
 		if (LOG_IS_ENABLED(L_DEBUG)) {
-			LOG_L(L_DEBUG, "==== %s: Search failed! ====", (isEstimator) ? "PE" : "PF");
+			LOG_L(L_DEBUG, "==== %s: Search failed! ====", (BLOCK_SIZE != 1) ? "PE" : "PF");
 			LOG_L(L_DEBUG, "Tested blocks: %u", testedBlocks);
 			LOG_L(L_DEBUG, "Open blocks: %u", openBlockBuffer.GetSize());
 			LOG_L(L_DEBUG, "============================");
@@ -151,7 +179,7 @@ IPath::SearchResult IPathFinder::InitSearch(const MoveDef& moveDef, const CPathF
 {
 	int2 square = mStartBlock;
 
-	if (isEstimator)
+	if (BLOCK_SIZE != 1)
 		square = blockStates.peNodeOffsets[moveDef.pathType][mStartBlockIdx];
 
 	const bool isStartGoal = pfDef.IsGoal(square.x, square.y);

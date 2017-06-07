@@ -27,8 +27,8 @@ CPathManager::CPathManager()
 , pathHeatMap(nullptr)
 , nextPathID(0)
 {
-	CPathFinder::InitDirectionVectorsTable();
-	CPathFinder::InitDirectionCostsTable();
+	IPathFinder::InitStatic();
+	CPathFinder::InitStatic();
 
 	pathFlowMap = PathFlowMap::GetInstance();
 	pathHeatMap = PathHeatMap::GetInstance();
@@ -51,13 +51,14 @@ CPathManager::~CPathManager()
 
 	PathHeatMap::FreeInstance(pathHeatMap);
 	PathFlowMap::FreeInstance(pathFlowMap);
+	IPathFinder::KillStatic();
 }
 
 std::int64_t CPathManager::Finalize() {
 	const spring_time t0 = spring_gettime();
 
 	{
-		// Thread unsafe pathfinder
+		// maxResPF only runs on the main thread, so can be unsafe
 		maxResPF = pfMemPool.alloc<CPathFinder>(false);
 		medResPE = peMemPool.alloc<CPathEstimator>(maxResPF, MEDRES_PE_BLOCKSIZE, "pe",  mapInfo->map.name);
 		lowResPE = peMemPool.alloc<CPathEstimator>(medResPE, LOWRES_PE_BLOCKSIZE, "pe2", mapInfo->map.name);

@@ -43,15 +43,15 @@ CPathFinder::CPathFinder(bool threadSafe): IPathFinder(1)
 }
 
 
-void CPathFinder::InitDirectionVectorsTable() {
+void CPathFinder::InitStatic() {
+	// initialize direction-vectors table
 	for (int i = 0; i < (PATH_DIRECTIONS << 1); ++i) {
 		PF_DIRECTION_VECTORS_3D[i].x = PF_DIRECTION_VECTORS_2D[i].x;
 		PF_DIRECTION_VECTORS_3D[i].z = PF_DIRECTION_VECTORS_2D[i].y;
 		PF_DIRECTION_VECTORS_3D[i].Normalize();
 	}
-}
 
-void CPathFinder::InitDirectionCostsTable() {
+	// initialize direction-costs table
 	// note: PATH_NODE_SPACING should not affect these
 	PF_DIRECTION_COSTS[PATHOPT_LEFT                ] =    1.0f;
 	PF_DIRECTION_COSTS[PATHOPT_RIGHT               ] =    1.0f;

@@ -21,8 +21,7 @@ class CPathFinder: public IPathFinder {
 public:
 	CPathFinder(bool threadSafe = true);
 
-	static void InitDirectionVectorsTable();
-	static void InitDirectionCostsTable();
+	static void InitStatic();
 
 	static const   int2* GetDirectionVectorsTable2D();
 	static const float3* GetDirectionVectorsTable3D();
