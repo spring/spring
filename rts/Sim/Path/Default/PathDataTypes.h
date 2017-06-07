@@ -84,6 +84,9 @@ struct PathNodeStateBuffer {
 		extraCostsOverlay[ true] = pnsb.extraCostsOverlay[ true];
 		extraCostsOverlay[false] = pnsb.extraCostsOverlay[false];
 
+		pnsb.extraCostsOverlay[ true] = nullptr;
+		pnsb.extraCostsOverlay[false] = nullptr;
+
 		maxCosts[NODE_COST_F] = pnsb.maxCosts[NODE_COST_F];
 		maxCosts[NODE_COST_G] = pnsb.maxCosts[NODE_COST_G];
 		maxCosts[NODE_COST_H] = pnsb.maxCosts[NODE_COST_H];
@@ -148,7 +151,8 @@ struct PathNodeStateBuffer {
 		// assert(idx >= 0 && idx < fCost.size());
 		fCost[idx] = PATHCOST_INFINITY;
 		gCost[idx] = PATHCOST_INFINITY;
-		nodeMask[idx] &= PATHOPT_OBSOLETE; // clear all except PATHOPT_OBSOLETE
+		// clear all bits except PATHOPT_OBSOLETE
+		nodeMask[idx] &= PATHOPT_OBSOLETE;
 	}
 
 
