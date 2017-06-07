@@ -154,7 +154,8 @@ DEFINE_bool     (oldmenu,                                  false, "Start the old
 
 int spring::exitCode = spring::EXIT_CODE_NORMAL;
 
-static bool inShutDown = false;
+static unsigned int numReloads = 0;
+static unsigned int numShutDowns = 0;
 
 
 
@@ -764,7 +765,7 @@ void SpringApp::Reload(const std::string script)
 		activeController = RunScript(script);
 	}
 
-	LOG("[SpringApp::%s][13]", __func__);
+	LOG("[SpringApp::%s][13] numReloads=%u\n\n\n", __func__, ++numReloads);
 }
 
 /**
@@ -852,12 +853,12 @@ void SpringApp::ShutDown(bool fromRun)
 {
 	assert(Threading::IsMainThread());
 
-	if (inShutDown) {
+	if (numShutDowns > 0) {
 		assert(!fromRun);
 		return;
 	}
 
-	inShutDown = true;
+	numShutDowns += 1;
 
 	LOG("[SpringApp::%s][1] fromRun=%d", __func__, fromRun);
 	ThreadPool::SetThreadCount(0);
@@ -915,7 +916,7 @@ void SpringApp::ShutDown(bool fromRun)
 	Watchdog::Uninstall();
 	LOG("[SpringApp::%s][9]", __func__);
 
-	inShutDown = false;
+	numShutDowns -= 1;
 }
 
 
