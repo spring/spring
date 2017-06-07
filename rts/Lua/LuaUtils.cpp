@@ -1162,48 +1162,58 @@ int LuaUtils::Next(const ParamMap& paramMap, lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 
-static std::string getprintf_msg(lua_State* L, int index)
+static void LogMsg(lua_State* L, const char* logSection, int logLevel, int index)
 {
-	// copied from lua/src/lib/lbaselib.c
-	string msg = "";
-	const int args = lua_gettop(L); // number of arguments
+	// mostly copied from lua/src/lbaselib.cpp
+	std::string msg;
 
+	const int args = lua_gettop(L); // number of arguments
 	lua_getglobal(L, "tostring");
 
 	for (int i = index; i <= args; i++) {
-		const char* s;
 		lua_pushvalue(L, -1);     // function to be called
 		lua_pushvalue(L, i);      // value to print
-		lua_call(L, 1, 1);
-		s = lua_tostring(L, -1);  // get result
-		if (i > index) {
+		lua_pcall(L, 1, 1, 0);
+
+		const char* s = lua_tostring(L, -1);  // get result
+
+		if (i > index)
 			msg += ", ";
-		}
-		msg += s;
+		if (s != nullptr)
+			msg += s;
+
 		lua_pop(L, 1);            // pop result
 	}
 
-	if ((args != index) || !lua_istable(L, index)) {
+	if ((args != index) || !lua_istable(L, index))
 		return msg;
-	}
 
 	// print solo tables (array style)
 	msg = "TABLE: ";
-	bool first = true;
-	for (lua_pushnil(L); lua_next(L, index) != 0; lua_pop(L, 1)) {
-		if (lua_israwnumber(L, -2)) {  // only numeric keys
-			const char *s;
-			lua_pushvalue(L, -3);    // function to be called
-			lua_pushvalue(L, -2);    // value to print
-			lua_call(L, 1, 1);
-			s = lua_tostring(L, -1);  // get result
-			if (!first) {
-				msg += ", ";
-			}
+
+	for (bool first = true, lua_pushnil(L); lua_next(L, index) != 0; lua_pop(L, 1)) {
+		if (!lua_israwnumber(L, -2)) // only numeric keys
+			continue;
+
+		lua_pushvalue(L, -3);    // function to be called
+		lua_pushvalue(L, -2);    // value to print
+		lua_pcall(L, 1, 1, 0);
+
+		const char* s = lua_tostring(L, -1);  // get result
+
+		if (!first)
+			msg += ", ";
+		if (s != nullptr)
 			msg += s;
-			first = false;
-			lua_pop(L, 1);            // pop result
-		}
+
+		first = false;
+		lua_pop(L, 1);            // pop result
+	}
+
+	if (logSection == nullptr) {
+		LOG("%s", msg.c_str());
+	} else {
+		LOG_SI(logSection, logLevel, "%s", msg.c_str());
 	}
 
 	return msg;
@@ -1212,8 +1222,7 @@ static std::string getprintf_msg(lua_State* L, int index)
 
 int LuaUtils::Echo(lua_State* L)
 {
-	const std::string msg = getprintf_msg(L, 1);
-	LOG("%s", msg.c_str());
+	LogMsg(L, nullptr, -1, 1);
 	return 0;
 }
 
@@ -1279,8 +1288,7 @@ int LuaUtils::Log(lua_State* L)
 		return luaL_error(L, "Incorrect arguments to Spring.Log(logsection, loglevel, ...)");
 	}
 
-	const std::string msg = getprintf_msg(L, 3);
-	LOG_SI(section, loglevel, "%s", msg.c_str());
+	LogMsg(L, section, loglevel, 3);
 	return 0;
 }
 
