@@ -1186,7 +1186,7 @@ static void LogMsg(lua_State* L, const char* logSection, int logLevel, int index
 	}
 
 	if ((args != index) || !lua_istable(L, index))
-		return msg;
+		return;
 
 	// print solo tables (array style)
 	msg = "TABLE: ";
