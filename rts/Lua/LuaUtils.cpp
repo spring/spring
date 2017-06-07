@@ -1215,8 +1215,6 @@ static void LogMsg(lua_State* L, const char* logSection, int logLevel, int index
 	} else {
 		LOG_SI(logSection, logLevel, "%s", msg.c_str());
 	}
-
-	return msg;
 }
 
 
