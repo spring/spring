@@ -450,9 +450,8 @@ void CLuaHandle::Shutdown()
 	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
 	static const LuaHashString cmdStr(__func__);
-	if (!cmdStr.GetGlobalFunc(L)) {
-		return; // the call is not defined
-	}
+	if (!cmdStr.GetGlobalFunc(L))
+		return;
 
 	// call the routine
 	RunCallInTraceback(L, cmdStr, 0, 0, traceBack.GetErrFuncIdx(), false);
@@ -492,9 +491,8 @@ void CLuaHandle::Load(IArchive* archive)
 	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
 	static const LuaHashString cmdStr(__func__);
-	if (!cmdStr.GetGlobalFunc(L)) {
-		return; // the call is not defined
-	}
+	if (!cmdStr.GetGlobalFunc(L))
+		return;
 
 	// Load gets ZipFileReader userdatum as single argument
 	LuaZipFileReader::PushNew(L, "", archive);
@@ -546,9 +544,8 @@ void CLuaHandle::GamePreload()
 	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
 	static const LuaHashString cmdStr(__func__);
-	if (!cmdStr.GetGlobalFunc(L)) {
-		return; // the call is not defined
-	}
+	if (!cmdStr.GetGlobalFunc(L))
+		return;
 
 	// call the routine
 	RunCallInTraceback(L, cmdStr, 0, 0, traceBack.GetErrFuncIdx(), false);
@@ -562,9 +559,8 @@ void CLuaHandle::GameStart()
 	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
 	static const LuaHashString cmdStr(__func__);
-	if (!cmdStr.GetGlobalFunc(L)) {
-		return; // the call is not defined
-	}
+	if (!cmdStr.GetGlobalFunc(L))
+		return;
 
 	// call the routine
 	RunCallInTraceback(L, cmdStr, 0, 0, traceBack.GetErrFuncIdx(), false);
@@ -578,9 +574,8 @@ void CLuaHandle::GameOver(const std::vector<unsigned char>& winningAllyTeams)
 	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
 	static const LuaHashString cmdStr(__func__);
-	if (!cmdStr.GetGlobalFunc(L)) {
-		return; // the call is not defined
-	}
+	if (!cmdStr.GetGlobalFunc(L))
+		return;
 
 	lua_createtable(L, winningAllyTeams.size(), 0);
 	for (unsigned int i = 0; i < winningAllyTeams.size(); i++) {
@@ -601,9 +596,8 @@ void CLuaHandle::GamePaused(int playerID, bool paused)
 	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
 	static const LuaHashString cmdStr(__func__);
-	if (!cmdStr.GetGlobalFunc(L)) {
-		return; // the call is not defined
-	}
+	if (!cmdStr.GetGlobalFunc(L))
+		return;
 
 	lua_pushnumber(L, playerID);
 	lua_pushboolean(L, paused);
@@ -631,7 +625,7 @@ void CLuaHandle::GameFrame(int frameNum)
 	static const LuaHashString cmdStr(__func__);
 
 	if (!cmdStr.GetGlobalFunc(L))
-		return; // the call is not defined
+		return;
 
 	lua_pushnumber(L, frameNum);
 
@@ -647,9 +641,9 @@ void CLuaHandle::GameID(const unsigned char* gameID, unsigned int numBytes)
 	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
 	const LuaHashString cmdStr(__func__);
-	if (!cmdStr.GetGlobalFunc(L)) {
+	if (!cmdStr.GetGlobalFunc(L))
 		return;
-	}
+
 	char buf[33];
 
 	SNPRINTF(buf, sizeof(buf),
@@ -670,9 +664,8 @@ void CLuaHandle::TeamDied(int teamID)
 	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
 	static const LuaHashString cmdStr(__func__);
-	if (!cmdStr.GetGlobalFunc(L)) {
-		return; // the call is not defined
-	}
+	if (!cmdStr.GetGlobalFunc(L))
+		return;
 
 	lua_pushnumber(L, teamID);
 
@@ -689,9 +682,8 @@ void CLuaHandle::TeamChanged(int teamID)
 	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
 	static const LuaHashString cmdStr(__func__);
-	if (!cmdStr.GetGlobalFunc(L)) {
-		return; // the call is not defined
-	}
+	if (!cmdStr.GetGlobalFunc(L))
+		return;
 
 	lua_pushnumber(L, teamID);
 
@@ -708,9 +700,8 @@ void CLuaHandle::PlayerChanged(int playerID)
 	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
 	static const LuaHashString cmdStr(__func__);
-	if (!cmdStr.GetGlobalFunc(L)) {
-		return; // the call is not defined
-	}
+	if (!cmdStr.GetGlobalFunc(L))
+		return;
 
 	lua_pushnumber(L, playerID);
 
@@ -727,9 +718,8 @@ void CLuaHandle::PlayerAdded(int playerID)
 	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
 	static const LuaHashString cmdStr(__func__);
-	if (!cmdStr.GetGlobalFunc(L)) {
-		return; // the call is not defined
-	}
+	if (!cmdStr.GetGlobalFunc(L))
+		return;
 
 	lua_pushnumber(L, playerID);
 
@@ -746,9 +736,8 @@ void CLuaHandle::PlayerRemoved(int playerID, int reason)
 	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
 	static const LuaHashString cmdStr(__func__);
-	if (!cmdStr.GetGlobalFunc(L)) {
-		return; // the call is not defined
-	}
+	if (!cmdStr.GetGlobalFunc(L))
+		return;
 
 	lua_pushnumber(L, playerID);
 	lua_pushnumber(L, reason);
@@ -766,9 +755,8 @@ inline void CLuaHandle::UnitCallIn(const LuaHashString& hs, const CUnit* unit)
 	luaL_checkstack(L, 6, __func__);
 	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
-	if (!hs.GetGlobalFunc(L)) {
-		return; // the call is not defined
-	}
+	if (!hs.GetGlobalFunc(L))
+		return;
 
 	lua_pushnumber(L, unit->id);
 	lua_pushnumber(L, unit->unitDef->id);
@@ -787,20 +775,17 @@ void CLuaHandle::UnitCreated(const CUnit* unit, const CUnit* builder)
 	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
 	static const LuaHashString cmdStr(__func__);
-	if (!cmdStr.GetGlobalFunc(L)) {
-		return; // the call is not defined
-	}
+	if (!cmdStr.GetGlobalFunc(L))
+		return;
 
 	lua_pushnumber(L, unit->id);
 	lua_pushnumber(L, unit->unitDef->id);
 	lua_pushnumber(L, unit->team);
-	if (builder != NULL) {
+	if (builder != nullptr)
 		lua_pushnumber(L, builder->id);
-	}
 
-	int args = (builder != NULL) ? 4 : 3;
 	// call the routine
-	RunCallInTraceback(L, cmdStr, args, 0, traceBack.GetErrFuncIdx(), false);
+	RunCallInTraceback(L, cmdStr, (builder != nullptr)? 4: 3, 0, traceBack.GetErrFuncIdx(), false);
 }
 
 
@@ -819,9 +804,8 @@ void CLuaHandle::UnitFromFactory(const CUnit* unit,
 	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
 	static const LuaHashString cmdStr(__func__);
-	if (!cmdStr.GetGlobalFunc(L)) {
-		return; // the call is not defined
-	}
+	if (!cmdStr.GetGlobalFunc(L))
+		return;
 
 	lua_pushnumber(L, unit->id);
 	lua_pushnumber(L, unit->unitDef->id);
@@ -860,7 +844,7 @@ void CLuaHandle::UnitDestroyed(const CUnit* unit, const CUnit* attacker)
 	lua_pushnumber(L, unit->unitDef->id);
 	lua_pushnumber(L, unit->team);
 
-	if (GetHandleFullRead(L) && (attacker != NULL)) {
+	if (GetHandleFullRead(L) && (attacker != nullptr)) {
 		lua_pushnumber(L, attacker->id);
 		lua_pushnumber(L, attacker->unitDef->id);
 		lua_pushnumber(L, attacker->team);
@@ -882,9 +866,8 @@ void CLuaHandle::UnitTaken(const CUnit* unit, int oldTeam, int newTeam)
 	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
 	static const LuaHashString cmdStr(__func__);
-	if (!cmdStr.GetGlobalFunc(L)) {
-		return; // the call is not defined
-	}
+	if (!cmdStr.GetGlobalFunc(L))
+		return;
 
 	lua_pushnumber(L, unit->id);
 	lua_pushnumber(L, unit->unitDef->id);
@@ -903,9 +886,8 @@ void CLuaHandle::UnitGiven(const CUnit* unit, int oldTeam, int newTeam)
 	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
 	static const LuaHashString cmdStr(__func__);
-	if (!cmdStr.GetGlobalFunc(L)) {
-		return; // the call is not defined
-	}
+	if (!cmdStr.GetGlobalFunc(L))
+		return;
 
 	lua_pushnumber(L, unit->id);
 	lua_pushnumber(L, unit->unitDef->id);
@@ -932,9 +914,8 @@ void CLuaHandle::UnitCommand(const CUnit* unit, const Command& command)
 	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
 	static const LuaHashString cmdStr(__func__);
-	if (!cmdStr.GetGlobalFunc(L)) {
-		return; // the call is not defined
-	}
+	if (!cmdStr.GetGlobalFunc(L))
+		return;
 
 	LuaUtils::PushUnitAndCommand(L, unit, command);
 
@@ -951,9 +932,8 @@ void CLuaHandle::UnitCmdDone(const CUnit* unit, const Command& command)
 	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
 	static const LuaHashString cmdStr(__func__);
-	if (!cmdStr.GetGlobalFunc(L)) {
-		return; // the call is not defined
-	}
+	if (!cmdStr.GetGlobalFunc(L))
+		return;
 
 	LuaUtils::PushUnitAndCommand(L, unit, command);
 
@@ -992,7 +972,7 @@ void CLuaHandle::UnitDamaged(
 		lua_pushnumber(L, projectileID);
 		argCount += 2;
 
-		if (attacker != NULL) {
+		if (attacker != nullptr) {
 			lua_pushnumber(L, attacker->id);
 			lua_pushnumber(L, attacker->unitDef->id);
 			lua_pushnumber(L, attacker->team);
@@ -1034,9 +1014,8 @@ void CLuaHandle::UnitExperience(const CUnit* unit, float oldExperience)
 	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
 	static const LuaHashString cmdStr(__func__);
-	if (!cmdStr.GetGlobalFunc(L)) {
-		return; // the call is not defined
-	}
+	if (!cmdStr.GetGlobalFunc(L))
+		return;
 
 	lua_pushnumber(L, unit->id);
 	lua_pushnumber(L, unit->unitDef->id);
@@ -1070,7 +1049,7 @@ void CLuaHandle::UnitSeismicPing(const CUnit* unit, int allyTeam,
 
 	static const LuaHashString cmdStr(__func__);
 	if (!cmdStr.GetGlobalFunc(L))
-		return; // the call is not defined
+		return;
 
 	lua_pushnumber(L, pos.x);
 	lua_pushnumber(L, pos.y);
@@ -1095,7 +1074,7 @@ void CLuaHandle::LosCallIn(const LuaHashString& hs,
 	LUA_CALL_IN_CHECK(L);
 	luaL_checkstack(L, 6, __func__);
 	if (!hs.GetGlobalFunc(L))
-		return; // the call is not defined
+		return;
 
 	lua_pushnumber(L, unit->id);
 	lua_pushnumber(L, unit->team);
@@ -1147,9 +1126,8 @@ void CLuaHandle::UnitLoaded(const CUnit* unit, const CUnit* transport)
 	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
 	static const LuaHashString cmdStr(__func__);
-	if (!cmdStr.GetGlobalFunc(L)) {
-		return; // the call is not defined
-	}
+	if (!cmdStr.GetGlobalFunc(L))
+		return;
 
 	lua_pushnumber(L, unit->id);
 	lua_pushnumber(L, unit->unitDef->id);
@@ -1170,9 +1148,8 @@ void CLuaHandle::UnitUnloaded(const CUnit* unit, const CUnit* transport)
 	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
 	static const LuaHashString cmdStr(__func__);
-	if (!cmdStr.GetGlobalFunc(L)) {
-		return; // the call is not defined
-	}
+	if (!cmdStr.GetGlobalFunc(L))
+		return;
 
 	lua_pushnumber(L, unit->id);
 	lua_pushnumber(L, unit->unitDef->id);
@@ -1245,9 +1222,8 @@ void CLuaHandle::UnitUnitCollision(const CUnit* collider, const CUnit* collidee)
 	static const LuaHashString cmdStr(__func__);
 	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
-	if (!cmdStr.GetGlobalFunc(L)) {
+	if (!cmdStr.GetGlobalFunc(L))
 		return;
-	}
 
 	lua_pushnumber(L, collider->id);
 	lua_pushnumber(L, collidee->id);
@@ -1270,9 +1246,8 @@ void CLuaHandle::UnitFeatureCollision(const CUnit* collider, const CFeature* col
 	static const LuaHashString cmdStr(__func__);
 	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
-	if (!cmdStr.GetGlobalFunc(L)) {
+	if (!cmdStr.GetGlobalFunc(L))
 		return;
-	}
 
 	lua_pushnumber(L, collider->id);
 	lua_pushnumber(L, collidee->id);
@@ -1325,9 +1300,8 @@ void CLuaHandle::FeatureCreated(const CFeature* feature)
 	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 	static const LuaHashString cmdStr(__func__);
 
-	if (!cmdStr.GetGlobalFunc(L)) {
-		return; // the call is not defined
-	}
+	if (!cmdStr.GetGlobalFunc(L))
+		return;
 
 	lua_pushnumber(L, feature->id);
 	lua_pushnumber(L, feature->allyteam);
@@ -1344,9 +1318,8 @@ void CLuaHandle::FeatureDestroyed(const CFeature* feature)
 	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
 	static const LuaHashString cmdStr(__func__);
-	if (!cmdStr.GetGlobalFunc(L)) {
-		return; // the call is not defined
-	}
+	if (!cmdStr.GetGlobalFunc(L))
+		return;
 
 	lua_pushnumber(L, feature->id);
 	lua_pushnumber(L, feature->allyteam);
@@ -1381,7 +1354,7 @@ void CLuaHandle::FeatureDamaged(
 		lua_pushnumber(L, weaponDefID); argCount += 1;
 		lua_pushnumber(L, projectileID); argCount += 1;
 
-		if (attacker != NULL) {
+		if (attacker != nullptr) {
 			lua_pushnumber(L, attacker->id);
 			lua_pushnumber(L, attacker->unitDef->id);
 			lua_pushnumber(L, attacker->team);
@@ -1405,8 +1378,8 @@ void CLuaHandle::ProjectileCreated(const CProjectile* p)
 	if (!p->weapon && !p->piece) return;
 
 	const CUnit* owner = p->owner();
-	const CWeaponProjectile* wp = p->weapon? static_cast<const CWeaponProjectile*>(p): NULL;
-	const WeaponDef* wd = p->weapon? wp->GetWeaponDef(): NULL;
+	const CWeaponProjectile* wp = p->weapon? static_cast<const CWeaponProjectile*>(p): nullptr;
+	const WeaponDef* wd = p->weapon? wp->GetWeaponDef(): nullptr;
 
 	// if this weapon-type is not being watched, bail
 	if (p->weapon && (wd == NULL || !watchWeaponDefs[wd->id]))
@@ -1418,11 +1391,11 @@ void CLuaHandle::ProjectileCreated(const CProjectile* p)
 	static const LuaHashString cmdStr(__func__);
 
 	if (!cmdStr.GetGlobalFunc(L))
-		return; // the call is not defined
+		return;
 
 	lua_pushnumber(L, p->id);
-	lua_pushnumber(L, ((owner != NULL)? owner->id: -1));
-	lua_pushnumber(L, ((wd != NULL)? wd->id: -1));
+	lua_pushnumber(L, ((owner != nullptr)? owner->id: -1));
+	lua_pushnumber(L, ((wd != nullptr)? wd->id: -1));
 
 	// call the routine
 	RunCallIn(L, cmdStr, 3, 0);
@@ -1450,7 +1423,7 @@ void CLuaHandle::ProjectileDestroyed(const CProjectile* p)
 	static const LuaHashString cmdStr(__func__);
 
 	if (!cmdStr.GetGlobalFunc(L))
-		return; // the call is not defined
+		return;
 
 	lua_pushnumber(L, p->id);
 
@@ -1475,7 +1448,7 @@ bool CLuaHandle::Explosion(int weaponDefID, int projectileID, const float3& pos,
 
 	static const LuaHashString cmdStr(__func__);
 	if (!cmdStr.GetGlobalFunc(L))
-		return false; // the call is not defined
+		return false;
 
 	lua_pushnumber(L, weaponDefID);
 	lua_pushnumber(L, pos.x);
@@ -1551,44 +1524,46 @@ void CLuaHandle::HandleLuaMsg(int playerID, int script, int mode, const std::vec
 	std::string msg;
 	msg.resize(data.size());
 	std::copy(data.begin(), data.end(), msg.begin());
-	if (script == LUA_HANDLE_ORDER_UI) {
-		if (luaUI) {
-			bool sendMsg = false;
-			if (mode == 0) {
-				sendMsg = true;
-			}
-			else if (mode == 's') {
-				sendMsg = gu->spectating;
-			}
-			else if (mode == 'a') {
-				const CPlayer* player = playerHandler->Player(playerID);
-				if (player == NULL) {
-					return;
+
+	switch (script) {
+		case LUA_HANDLE_ORDER_UI: {
+			if (luaUI != nullptr) {
+				bool sendMsg = false;
+
+				switch (mode) {
+					case 0: { sendMsg = true; } break;
+					case 's': { sendMsg = gu->spectating; } break;
+					case 'a': {
+						const CPlayer* player = playerHandler->Player(playerID);
+
+						if (player == nullptr)
+							return;
+
+						if (gu->spectatingFullView) {
+							sendMsg = true;
+						} else if (player->spectator) {
+							sendMsg = gu->spectating;
+						} else {
+							const int msgAllyTeam = teamHandler->AllyTeam(player->team);
+							sendMsg = teamHandler->Ally(msgAllyTeam, gu->myAllyTeam);
+						}
+					} break;
 				}
-				if (gu->spectatingFullView) {
-					sendMsg = true;
-				}
-				else if (player->spectator) {
-					sendMsg = gu->spectating;
-				} else {
-					const int msgAllyTeam = teamHandler->AllyTeam(player->team);
-					sendMsg = teamHandler->Ally(msgAllyTeam, gu->myAllyTeam);
-				}
+
+				if (sendMsg)
+					luaUI->RecvLuaMsg(msg, playerID);
 			}
-			if (sendMsg) {
-				luaUI->RecvLuaMsg(msg, playerID);
-			}
-		}
-	}
-	else if (script == LUA_HANDLE_ORDER_GAIA) {
-		if (luaGaia) {
-			luaGaia->RecvLuaMsg(msg, playerID);
-		}
-	}
-	else if (script == LUA_HANDLE_ORDER_RULES) {
-		if (luaRules) {
-			luaRules->RecvLuaMsg(msg, playerID);
-		}
+		} break;
+
+		case LUA_HANDLE_ORDER_GAIA: {
+			if (luaGaia != nullptr)
+				luaGaia->RecvLuaMsg(msg, playerID);
+		} break;
+
+		case LUA_HANDLE_ORDER_RULES: {
+			if (luaRules != nullptr)
+				luaRules->RecvLuaMsg(msg, playerID);
+		} break;
 	}
 }
 
@@ -1599,16 +1574,14 @@ void CLuaHandle::HandleLuaMsg(int playerID, int script, int mode, const std::vec
 void CLuaHandle::Save(zipFile archive)
 {
 	// LuaUI does not get this call-in
-	if (GetUserMode()) {
+	if (GetUserMode())
 		return;
-	}
 
 	LUA_CALL_IN_CHECK(L);
 	luaL_checkstack(L, 3, __func__);
 	static const LuaHashString cmdStr(__func__);
-	if (!cmdStr.GetGlobalFunc(L)) {
+	if (!cmdStr.GetGlobalFunc(L))
 		return;
-	}
 
 	// Save gets ZipFileWriter userdatum as single argument
 	LuaZipFileWriter::PushNew(L, "", archive);
@@ -1623,9 +1596,8 @@ void CLuaHandle::UnsyncedHeightMapUpdate(const SRectangle& rect)
 	LUA_CALL_IN_CHECK(L);
 	luaL_checkstack(L, 6, __func__);
 	static const LuaHashString cmdStr(__func__);
-	if (!cmdStr.GetGlobalFunc(L)) {
+	if (!cmdStr.GetGlobalFunc(L))
 		return;
-	}
 
 	lua_pushnumber(L, rect.x1);
 	lua_pushnumber(L, rect.z1);
@@ -1642,9 +1614,8 @@ void CLuaHandle::Update()
 	LUA_CALL_IN_CHECK(L);
 	luaL_checkstack(L, 2, __func__);
 	static const LuaHashString cmdStr(__func__);
-	if (!cmdStr.GetGlobalFunc(L)) {
+	if (!cmdStr.GetGlobalFunc(L))
 		return;
-	}
 
 	// call the routine
 	RunCallIn(L, cmdStr, 0, 0);
@@ -1656,9 +1627,8 @@ void CLuaHandle::ViewResize()
 	LUA_CALL_IN_CHECK(L);
 	luaL_checkstack(L, 5, __func__);
 	static const LuaHashString cmdStr(__func__);
-	if (!cmdStr.GetGlobalFunc(L)) {
+	if (!cmdStr.GetGlobalFunc(L))
 		return;
-	}
 
 	const int winPosY_bl = globalRendering->screenSizeY - globalRendering->winSizeY - globalRendering->winPosY; //! origin BOTTOMLEFT
 
@@ -1687,9 +1657,8 @@ bool CLuaHandle::DefaultCommand(const CUnit* unit,
 	LUA_CALL_IN_CHECK(L, false);
 	luaL_checkstack(L, 4, __func__);
 	static const LuaHashString cmdStr(__func__);
-	if (!cmdStr.GetGlobalFunc(L)) {
+	if (!cmdStr.GetGlobalFunc(L))
 		return false;
-	}
 
 	int args = 0;
 	if (unit) {
@@ -1735,9 +1704,8 @@ void CLuaHandle::RunDrawCallIn(const LuaHashString& hs)
 {
 	LUA_CALL_IN_CHECK(L);
 	luaL_checkstack(L, 2, __func__);
-	if (!hs.GetGlobalFunc(L)) {
+	if (!hs.GetGlobalFunc(L))
 		return;
-	}
 
 	LuaOpenGL::SetDrawingEnabled(L, true);
 
@@ -1758,6 +1726,7 @@ void CLuaHandle::name()                       \
 DRAW_CALLIN(DrawGenesis)
 DRAW_CALLIN(DrawWorld)
 DRAW_CALLIN(DrawWorldPreUnit)
+DRAW_CALLIN(DrawWorldPreParticles)
 DRAW_CALLIN(DrawWorldShadow)
 DRAW_CALLIN(DrawWorldReflection)
 DRAW_CALLIN(DrawWorldRefraction)
@@ -1769,9 +1738,8 @@ DRAW_CALLIN(DrawFeaturesPostDeferred)
 
 inline void CLuaHandle::DrawScreenCommon(const LuaHashString& cmdStr)
 {
-	if (!cmdStr.GetGlobalFunc(L)) {
+	if (!cmdStr.GetGlobalFunc(L))
 		return;
-	}
 
 	lua_pushnumber(L, globalRendering->viewSizeX);
 	lua_pushnumber(L, globalRendering->viewSizeY);
@@ -1818,9 +1786,8 @@ void CLuaHandle::DrawInMiniMap()
 	LUA_CALL_IN_CHECK(L);
 	luaL_checkstack(L, 4, __func__);
 	static const LuaHashString cmdStr(__func__);
-	if (!cmdStr.GetGlobalFunc(L)) {
+	if (!cmdStr.GetGlobalFunc(L))
 		return;
-	}
 
 	lua_pushnumber(L, minimap->GetSizeX());
 	lua_pushnumber(L, minimap->GetSizeY());
@@ -1840,9 +1807,8 @@ void CLuaHandle::DrawInMiniMapBackground()
 	LUA_CALL_IN_CHECK(L);
 	luaL_checkstack(L, 4, __func__);
 	static const LuaHashString cmdStr(__func__);
-	if (!cmdStr.GetGlobalFunc(L)) {
+	if (!cmdStr.GetGlobalFunc(L))
 		return;
-	}
 
 	lua_pushnumber(L, minimap->GetSizeX());
 	lua_pushnumber(L, minimap->GetSizeY());
@@ -1862,9 +1828,8 @@ void CLuaHandle::GameProgress(int frameNum )
 	LUA_CALL_IN_CHECK(L);
 	luaL_checkstack(L, 3, __func__);
 	static const LuaHashString cmdStr(__func__);
-	if (!cmdStr.GetGlobalFunc(L)) {
+	if (!cmdStr.GetGlobalFunc(L))
 		return;
-	}
 
 	lua_pushnumber(L, frameNum);
 
@@ -1881,9 +1846,10 @@ bool CLuaHandle::KeyPress(int key, bool isRepeat)
 	LUA_CALL_IN_CHECK(L, false);
 	luaL_checkstack(L, 6, __func__);
 	static const LuaHashString cmdStr(__func__);
-	if (!cmdStr.GetGlobalFunc(L)) {
-		return false; // the call is not defined, do not take the event
-	}
+
+	// if the call is not defined, do not take the event
+	if (!cmdStr.GetGlobalFunc(L))
+		return false;
 
 	//FIXME we should never had started using directly SDL consts, somaeday we should weakly force lua-devs to fix their code
 	lua_pushinteger(L, SDL21_keysyms(key));
@@ -1915,9 +1881,8 @@ bool CLuaHandle::KeyRelease(int key)
 	LUA_CALL_IN_CHECK(L, false);
 	luaL_checkstack(L, 5, __func__);
 	static const LuaHashString cmdStr(__func__);
-	if (!cmdStr.GetGlobalFunc(L)) {
-		return false; // the call is not defined, do not take the event
-	}
+	if (!cmdStr.GetGlobalFunc(L))
+		return false;
 
 	lua_pushinteger(L, SDL21_keysyms(key));
 
@@ -1946,9 +1911,8 @@ bool CLuaHandle::TextInput(const std::string& utf8)
 	LUA_CALL_IN_CHECK(L, false);
 	luaL_checkstack(L, 3, __func__);
 	static const LuaHashString cmdStr(__func__);
-	if (!cmdStr.GetGlobalFunc(L)) {
-		return false; // the call is not defined, do not take the event
-	}
+	if (!cmdStr.GetGlobalFunc(L))
+		return false;
 
 	lua_pushsstring(L, utf8);
 	//lua_pushnumber(L, UTF8toUTF32(utf8));
@@ -1968,9 +1932,8 @@ bool CLuaHandle::MousePress(int x, int y, int button)
 	LUA_CALL_IN_CHECK(L, false);
 	luaL_checkstack(L, 5, __func__);
 	static const LuaHashString cmdStr(__func__);
-	if (!cmdStr.GetGlobalFunc(L)) {
-		return false; // the call is not defined, do not take the event
-	}
+	if (!cmdStr.GetGlobalFunc(L))
+		return false;
 
 	lua_pushnumber(L, x - globalRendering->viewPosX);
 	lua_pushnumber(L, globalRendering->viewSizeY - y - 1);
@@ -1991,9 +1954,8 @@ void CLuaHandle::MouseRelease(int x, int y, int button)
 	LUA_CALL_IN_CHECK(L, false);
 	luaL_checkstack(L, 5, __func__);
 	static const LuaHashString cmdStr(__func__);
-	if (!cmdStr.GetGlobalFunc(L)) {
-		return; // the call is not defined, do not take the event
-	}
+	if (!cmdStr.GetGlobalFunc(L))
+		return;
 
 	lua_pushnumber(L, x - globalRendering->viewPosX);
 	lua_pushnumber(L, globalRendering->viewSizeY - y - 1);
@@ -2009,9 +1971,8 @@ bool CLuaHandle::MouseMove(int x, int y, int dx, int dy, int button)
 	LUA_CALL_IN_CHECK(L, false);
 	luaL_checkstack(L, 7, __func__);
 	static const LuaHashString cmdStr(__func__);
-	if (!cmdStr.GetGlobalFunc(L)) {
-		return false; // the call is not defined, do not take the event
-	}
+	if (!cmdStr.GetGlobalFunc(L))
+		return false;
 
 	lua_pushnumber(L, x - globalRendering->viewPosX);
 	lua_pushnumber(L, globalRendering->viewSizeY - y - 1);
@@ -2034,9 +1995,8 @@ bool CLuaHandle::MouseWheel(bool up, float value)
 	LUA_CALL_IN_CHECK(L, false);
 	luaL_checkstack(L, 4, __func__);
 	static const LuaHashString cmdStr(__func__);
-	if (!cmdStr.GetGlobalFunc(L)) {
-		return false; // the call is not defined, do not take the event
-	}
+	if (!cmdStr.GetGlobalFunc(L))
+		return false;
 
 	lua_pushboolean(L, up);
 	lua_pushnumber(L, value);
@@ -2055,9 +2015,8 @@ bool CLuaHandle::JoystickEvent(const std::string& event, int val1, int val2)
 	LUA_CALL_IN_CHECK(L, false);
 	luaL_checkstack(L, 4, __func__);
 	const LuaHashString cmdStr(event);
-	if (!cmdStr.GetGlobalFunc(L)) {
-		return false; // the call is not defined, do not take the event
-	}
+	if (!cmdStr.GetGlobalFunc(L))
+		return false;
 
 	lua_pushnumber(L, val1);
 	lua_pushnumber(L, val2);
@@ -2076,9 +2035,8 @@ bool CLuaHandle::IsAbove(int x, int y)
 	LUA_CALL_IN_CHECK(L, false);
 	luaL_checkstack(L, 4, __func__);
 	static const LuaHashString cmdStr(__func__);
-	if (!cmdStr.GetGlobalFunc(L)) {
-		return false; // the call is not defined
-	}
+	if (!cmdStr.GetGlobalFunc(L))
+		return false;
 
 	lua_pushnumber(L, x - globalRendering->viewPosX);
 	lua_pushnumber(L, globalRendering->viewSizeY - y - 1);
@@ -2098,9 +2056,8 @@ string CLuaHandle::GetTooltip(int x, int y)
 	LUA_CALL_IN_CHECK(L, "");
 	luaL_checkstack(L, 4, __func__);
 	static const LuaHashString cmdStr(__func__);
-	if (!cmdStr.GetGlobalFunc(L)) {
-		return ""; // the call is not defined
-	}
+	if (!cmdStr.GetGlobalFunc(L))
+		return "";
 
 	lua_pushnumber(L, x - globalRendering->viewPosX);
 	lua_pushnumber(L, globalRendering->viewSizeY - y - 1);
@@ -2120,9 +2077,8 @@ bool CLuaHandle::CommandNotify(const Command& cmd)
 	LUA_CALL_IN_CHECK(L, false);
 	luaL_checkstack(L, 5, __func__);
 	static const LuaHashString cmdStr(__func__);
-	if (!cmdStr.GetGlobalFunc(L)) {
-		return false; // the call is not defined
-	}
+	if (!cmdStr.GetGlobalFunc(L))
+		return false;
 
 	// push the command id
 	lua_pushnumber(L, cmd.GetID());
@@ -2148,9 +2104,8 @@ bool CLuaHandle::AddConsoleLine(const string& msg, const string& section, int le
 	LUA_CALL_IN_CHECK(L, true);
 	luaL_checkstack(L, 4, __func__);
 	static const LuaHashString cmdStr(__func__);
-	if (!cmdStr.GetGlobalFunc(L)) {
-		return true; // the call is not defined
-	}
+	if (!cmdStr.GetGlobalFunc(L))
+		return true;
 
 	lua_pushsstring(L, msg);
 	lua_pushnumber(L, level);
@@ -2169,9 +2124,8 @@ bool CLuaHandle::GroupChanged(int groupID)
 	LUA_CALL_IN_CHECK(L, false);
 	luaL_checkstack(L, 3, __func__);
 	static const LuaHashString cmdStr(__func__);
-	if (!cmdStr.GetGlobalFunc(L)) {
-		return false; // the call is not defined
-	}
+	if (!cmdStr.GetGlobalFunc(L))
+		return false;
 
 	lua_pushnumber(L, groupID);
 
@@ -2191,9 +2145,8 @@ string CLuaHandle::WorldTooltip(const CUnit* unit,
 	LUA_CALL_IN_CHECK(L, "");
 	luaL_checkstack(L, 6, __func__);
 	static const LuaHashString cmdStr(__func__);
-	if (!cmdStr.GetGlobalFunc(L)) {
-		return ""; // the call is not defined
-	}
+	if (!cmdStr.GetGlobalFunc(L))
+		return "";
 
 	int args;
 	if (unit) {
@@ -2236,9 +2189,8 @@ bool CLuaHandle::MapDrawCmd(int playerID, int type,
 	LUA_CALL_IN_CHECK(L, false);
 	luaL_checkstack(L, 9, __func__);
 	static const LuaHashString cmdStr(__func__);
-	if (!cmdStr.GetGlobalFunc(L)) {
-		return false; // the call is not defined
-	}
+	if (!cmdStr.GetGlobalFunc(L))
+		return false;
 
 	int args;
 
@@ -2315,9 +2267,9 @@ bool CLuaHandle::GameSetup(const string& state, bool& ready,
 	if (lua_isboolean(L, -2)) {
 		if (lua_toboolean(L, -2)) {
 			// only allow ready-state change if Lua takes the event
-			if (lua_isboolean(L, -1)) {
+			if (lua_isboolean(L, -1))
 				ready = lua_toboolean(L, -1);
-			}
+
 			lua_pop(L, 2);
 			return true;
 		}
@@ -2330,35 +2282,34 @@ bool CLuaHandle::GameSetup(const string& state, bool& ready,
 
 const char* CLuaHandle::RecvSkirmishAIMessage(int aiTeam, const char* inData, int inSize)
 {
-	LUA_CALL_IN_CHECK(L, NULL);
+	LUA_CALL_IN_CHECK(L, nullptr);
 	luaL_checkstack(L, 4, __func__);
 
 	static const LuaHashString cmdStr(__func__);
 
 	// <this> is either CLuaRules* or CLuaUI*,
 	// but the AI call-in is always unsynced!
-	if (!cmdStr.GetGlobalFunc(L)) {
-		return NULL;
-	}
+	if (!cmdStr.GetGlobalFunc(L))
+		return nullptr;
 
 	lua_pushnumber(L, aiTeam);
 
 	int argCount = 1;
-	const char* outData = NULL;
+	const char* outData = nullptr;
 
-	if (inData != NULL) {
-		if (inSize < 0) {
+	if (inData != nullptr) {
+		if (inSize < 0)
 			inSize = strlen(inData);
-		}
+
 		lua_pushlstring(L, inData, inSize);
 		argCount = 2;
 	}
 
 	if (!RunCallIn(L, cmdStr, argCount, 1))
-		return NULL;
+		return nullptr;
 
 	if (lua_isstring(L, -1))
-		outData = lua_tolstring(L, -1, NULL);
+		outData = lua_tolstring(L, -1, nullptr);
 
 	lua_pop(L, 1);
 	return outData;
@@ -2372,17 +2323,15 @@ void CLuaHandle::DownloadQueued(int ID, const string& archiveName, const string&
 	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
 	static const LuaHashString cmdStr(__func__);
-	if (!cmdStr.GetGlobalFunc(L)) {
-		return; // the call is not defined
-	}
+	if (!cmdStr.GetGlobalFunc(L))
+		return;
 
-	int argCount = 3;
 	lua_pushinteger(L, ID);
 	lua_pushsstring(L, archiveName);
 	lua_pushsstring(L, archiveType);
 
 	// call the routine
-	RunCallInTraceback(L, cmdStr, argCount, 0, traceBack.GetErrFuncIdx(), false);
+	RunCallInTraceback(L, cmdStr, 3, 0, traceBack.GetErrFuncIdx(), false);
 }
 
 void CLuaHandle::DownloadStarted(int ID)
@@ -2393,15 +2342,13 @@ void CLuaHandle::DownloadStarted(int ID)
 	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
 	static const LuaHashString cmdStr(__func__);
-	if (!cmdStr.GetGlobalFunc(L)) {
-		return; // the call is not defined
-	}
+	if (!cmdStr.GetGlobalFunc(L))
+		return;
 
-	int argCount = 1;
 	lua_pushinteger(L, ID);
 
 	// call the routine
-	RunCallInTraceback(L, cmdStr, argCount, 0, traceBack.GetErrFuncIdx(), false);
+	RunCallInTraceback(L, cmdStr, 1, 0, traceBack.GetErrFuncIdx(), false);
 }
 
 void CLuaHandle::DownloadFinished(int ID)
@@ -2412,15 +2359,13 @@ void CLuaHandle::DownloadFinished(int ID)
 	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
 	static const LuaHashString cmdStr(__func__);
-	if (!cmdStr.GetGlobalFunc(L)) {
-		return; // the call is not defined
-	}
+	if (!cmdStr.GetGlobalFunc(L))
+		return;
 
-	int argCount = 1;
 	lua_pushinteger(L, ID);
 
 	// call the routine
-	RunCallInTraceback(L, cmdStr, argCount, 0, traceBack.GetErrFuncIdx(), false);
+	RunCallInTraceback(L, cmdStr, 1, 0, traceBack.GetErrFuncIdx(), false);
 }
 
 void CLuaHandle::DownloadFailed(int ID, int errorID)
@@ -2431,16 +2376,14 @@ void CLuaHandle::DownloadFailed(int ID, int errorID)
 	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
 	static const LuaHashString cmdStr(__func__);
-	if (!cmdStr.GetGlobalFunc(L)) {
-		return; // the call is not defined
-	}
+	if (!cmdStr.GetGlobalFunc(L))
+		return;
 
-	int argCount = 2;
 	lua_pushinteger(L, ID);
 	lua_pushinteger(L, errorID);
 
 	// call the routine
-	RunCallInTraceback(L, cmdStr, argCount, 0, traceBack.GetErrFuncIdx(), false);
+	RunCallInTraceback(L, cmdStr, 2, 0, traceBack.GetErrFuncIdx(), false);
 }
 
 void CLuaHandle::DownloadProgress(int ID, long downloaded, long total)
@@ -2451,17 +2394,15 @@ void CLuaHandle::DownloadProgress(int ID, long downloaded, long total)
 	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
 	static const LuaHashString cmdStr(__func__);
-	if (!cmdStr.GetGlobalFunc(L)) {
-		return; // the call is not defined
-	}
+	if (!cmdStr.GetGlobalFunc(L))
+		return;
 
-	int argCount = 3;
 	lua_pushinteger(L, ID);
 	lua_pushnumber(L, downloaded);
 	lua_pushnumber(L, total);
 
 	// call the routine
-	RunCallInTraceback(L, cmdStr, argCount, 0, traceBack.GetErrFuncIdx(), false);
+	RunCallInTraceback(L, cmdStr, 3, 0, traceBack.GetErrFuncIdx(), false);
 }
 
 /******************************************************************************/

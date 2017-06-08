@@ -8,7 +8,6 @@
 
 #include "Lua/LuaHandle.h"
 
-
 struct lua_State;
 
 
@@ -41,6 +40,11 @@ class LuaOpenGL {
 		static bool GetSafeMode() { return safeMode; }
 		static void SetSafeMode(bool value) { safeMode = value; }
 
+		#define NOOP_STATE_FUNCS(Name)    \
+		static void Enable  ## Name () {} \
+		static void Disable ## Name () {} \
+		static void Reset   ## Name () {}
+
 		static void EnableCommon(DrawMode);
 		static void ResetCommon(DrawMode);
 		static void DisableCommon(DrawMode);
@@ -57,6 +61,8 @@ class LuaOpenGL {
 		static void ResetDrawWorldPreUnit();
 		static void DisableDrawWorldPreUnit();
 
+		NOOP_STATE_FUNCS(DrawWorldPreParticles)
+
 		static void EnableDrawWorldShadow();
 		static void ResetDrawWorldShadow();
 		static void DisableDrawWorldShadow();
@@ -68,11 +74,6 @@ class LuaOpenGL {
 		static void EnableDrawWorldRefraction();
 		static void ResetDrawWorldRefraction();
 		static void DisableDrawWorldRefraction();
-
-		#define NOOP_STATE_FUNCS(Name)    \
-		static void Enable  ## Name () {} \
-		static void Disable ## Name () {} \
-		static void Reset   ## Name () {}
 
 		// no-ops (should probably guard some state)
 		NOOP_STATE_FUNCS(DrawGroundPreForward)

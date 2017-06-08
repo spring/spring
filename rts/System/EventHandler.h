@@ -248,9 +248,11 @@ class CEventHandler
 
 		void ViewResize();
 
+		// see the DRAW_CALLIN macro for implementations
 		void DrawGenesis();
 		void DrawWorld();
 		void DrawWorldPreUnit();
+		void DrawWorldPreParticles();
 		void DrawWorldShadow();
 		void DrawWorldReflection();
 		void DrawWorldRefraction();

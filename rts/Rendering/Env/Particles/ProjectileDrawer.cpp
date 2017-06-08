@@ -608,13 +608,20 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 	if (fxVA->drawIndex() > 0) {
 		glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 		glEnable(GL_TEXTURE_2D);
-		textureAtlas->BindTexture();
+
 		glColor4f(1.0f, 1.0f, 1.0f, 0.2f);
 		glAlphaFunc(GL_GREATER, 0.0f);
 		glEnable(GL_ALPHA_TEST);
 		glDepthMask(GL_FALSE);
 
+		// send event after the default state has been set, allows overriding
+		// it for specific cases such as proper blending with depth-aware fog
+		// (requires mask=true and func=always)
+		textureAtlas->BindTexture();
+		eventHandler.DrawWorldPreParticles();
 		fxVA->DrawArrayTC(GL_QUADS);
+	} else {
+		eventHandler.DrawWorldPreParticles();
 	}
 
 	glPopAttrib();

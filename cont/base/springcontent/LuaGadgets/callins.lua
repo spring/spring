@@ -124,6 +124,7 @@ CALLIN_LIST = {
 	"DrawGenesis",
 	"DrawWorld",
 	"DrawWorldPreUnit",
+	"DrawWorldPreParticles",
 	"DrawWorldShadow",
 	"DrawWorldReflection",
 	"DrawWorldRefraction",

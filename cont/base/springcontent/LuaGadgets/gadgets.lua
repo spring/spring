@@ -1735,6 +1735,12 @@ function gadgetHandler:DrawWorldPreUnit()
   end
 end
 
+function gadgetHandler:DrawWorldPreParticles()
+  for _,g in r_ipairs(self.DrawWorldPreParticlesList) do
+    g:DrawWorldPreParticles()
+  end
+end
+
 function gadgetHandler:DrawWorldShadow()
   for _,g in r_ipairs(self.DrawWorldShadowList) do
     g:DrawWorldShadow()
