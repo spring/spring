@@ -91,6 +91,8 @@ class LuaUnsyncedCtrl {
 
 		static int GetConfigInt(lua_State* L);
 		static int SetConfigInt(lua_State* L);
+		static int GetConfigFloat(lua_State* L);
+		static int SetConfigFloat(lua_State* L);
 		static int GetConfigString(lua_State* L);
 		static int SetConfigString(lua_State* L);
 

@@ -2025,64 +2025,68 @@ int LuaUnsyncedCtrl::SetLosViewColors(lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 
-#define SET_IN_OVERLAY_WARNING \
-	if (lua_isboolean(L, 3)) { \
-		static bool shown = false; \
-		if (!shown) { \
-			LOG_L(L_WARNING, "%s: third parameter \"setInOverlay\" is deprecated", __FUNCTION__); \
-			shown = true; \
-		} \
-	}
-
 int LuaUnsyncedCtrl::GetConfigInt(lua_State* L)
 {
-	const string name = luaL_checkstring(L, 1);
-	const int def     = luaL_optint(L, 2, 0);
-	SET_IN_OVERLAY_WARNING;
-	const int value = configHandler->IsSet(name) ? configHandler->GetInt(name) : def;
-	lua_pushnumber(L, value);
+	lua_pushinteger(L, configHandler->GetIntSafe(luaL_checkstring(L, 1), luaL_optint(L, 2, 0)));
 	return 1;
 }
 
-int LuaUnsyncedCtrl::SetConfigInt(lua_State* L)
+int LuaUnsyncedCtrl::GetConfigFloat(lua_State* L)
 {
-	const string name = luaL_checkstring(L, 1);
-	const int value   = luaL_checkint(L, 2);
-	const bool useOverlay = luaL_optboolean(L, 3, false);
-	// don't allow to change a read-only variable
-	if (configHandler->IsReadOnly(name)) {
-		LOG_L(L_ERROR, "tried to set readonly (int) %s = %d", name.c_str(), value);
-		return 0;
-	}
-	configHandler->EnableWriting(globalConfig->luaWritableConfigFile);
-	configHandler->Set(name, value, useOverlay);
-	configHandler->EnableWriting(true);
-	return 0;
+	lua_pushnumber(L, configHandler->GetFloatSafe(luaL_checkstring(L, 1), luaL_optfloat(L, 2, 0.0f)));
+	return 1;
 }
 
 int LuaUnsyncedCtrl::GetConfigString(lua_State* L)
 {
-	const string name = luaL_checkstring(L, 1);
-	const string def  = luaL_optstring(L, 2, "");
-	SET_IN_OVERLAY_WARNING;
-	const string value = configHandler->IsSet(name) ? configHandler->GetString(name) : def;
-	lua_pushsstring(L, value);
+	lua_pushsstring(L, configHandler->GetStringSafe(luaL_checkstring(L, 1), luaL_optstring(L, 2, "")));
 	return 1;
 }
 
 
-int LuaUnsyncedCtrl::SetConfigString(lua_State* L)
+int LuaUnsyncedCtrl::SetConfigInt(lua_State* L)
 {
-	const string name  = luaL_checkstring(L, 1);
-	const string value = luaL_checkstring(L, 2);
-	const bool useOverlay = luaL_optboolean(L, 3, false);
+	const std::string& key = luaL_checkstring(L, 1);
+
 	// don't allow to change a read-only variable
-	if (configHandler->IsReadOnly(name)) {
-		LOG_L(L_ERROR, "tried to set readonly (string) %s = %s", name.c_str(), value.c_str());
+	if (configHandler->IsReadOnly(key)) {
+		LOG_L(L_ERROR, "[%s] key \"%s\" is read-only", __func__, key.c_str());
 		return 0;
 	}
+
 	configHandler->EnableWriting(globalConfig->luaWritableConfigFile);
-	configHandler->SetString(name, value, useOverlay);
+	configHandler->Set(key, luaL_checkint(L, 2), luaL_optboolean(L, 3, false));
+	configHandler->EnableWriting(true);
+	return 0;
+}
+
+int LuaUnsyncedCtrl::SetConfigFloat(lua_State* L)
+{
+	const std::string& key = luaL_checkstring(L, 1);
+
+	if (configHandler->IsReadOnly(key)) {
+		LOG_L(L_ERROR, "[%s] key \"%s\" is read-only", __func__, key.c_str());
+		return 0;
+	}
+
+	configHandler->EnableWriting(globalConfig->luaWritableConfigFile);
+	configHandler->Set(key, luaL_checkfloat(L, 2), luaL_optboolean(L, 3, false));
+	configHandler->EnableWriting(true);
+	return 0;
+}
+
+int LuaUnsyncedCtrl::SetConfigString(lua_State* L)
+{
+	const std::string& key = luaL_checkstring(L, 1);
+	const std::string& val = luaL_checkstring(L, 2);
+
+	if (configHandler->IsReadOnly(key)) {
+		LOG_L(L_ERROR, "[%s] key \"%s\" is read-only", __func__, key.c_str());
+		return 0;
+	}
+
+	configHandler->EnableWriting(globalConfig->luaWritableConfigFile);
+	configHandler->SetString(key, val, luaL_optboolean(L, 3, false));
 	configHandler->EnableWriting(true);
 	return 0;
 }
@@ -2092,16 +2096,21 @@ int LuaUnsyncedCtrl::SetConfigString(lua_State* L)
 
 int LuaUnsyncedCtrl::CreateDir(lua_State* L)
 {
-	const string dir = luaL_checkstring(L, 1);
+	const std::string& dir = luaL_checkstring(L, 1);
 
 	// keep directories within the Spring directory
-	if ((dir[0] == '/') || (dir[0] == '\\') ||
-	    (strstr(dir.c_str(), "..") != NULL) ||
-	    ((dir.size() > 0) && (dir[1] == ':'))) {
-		luaL_error(L, "Invalid CreateDir() access: %s", dir.c_str());
-	}
-	const bool success = FileSystem::CreateDirectory(dir);
-	lua_pushboolean(L, success);
+	if (dir[0] == '/' || dir[0] == '\\' || dir[0] == '~')
+		luaL_error(L, "[%s][1] invalid access: %s", __func__, dir.c_str());
+	if (dir[0] == ' ' || dir[0] == '\t')
+		luaL_error(L, "[%s][2] invalid access: %s", __func__, dir.c_str());
+
+	if (strstr(dir.c_str(), "..") != nullptr)
+		luaL_error(L, "[%s][3] invalid access: %s", __func__, dir.c_str());
+
+	if (dir.size() > 1 && dir[1] == ':')
+		luaL_error(L, "[%s][4] invalid access: %s", __func__, dir.c_str());
+
+	lua_pushboolean(L, FileSystem::CreateDirectory(dir));
 	return 1;
 }
 

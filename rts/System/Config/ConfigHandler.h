@@ -70,13 +70,18 @@ public:
 	}
 
 	/// @brief Get bool, throw if key not present
-	bool  GetBool(const std::string& key)     const { return Get(key); }
+	bool GetBool(const std::string& key) const { return (Get<bool>(key)); }
 	/// @brief Get int, throw if key not present
-	int   GetInt(const std::string& key)      const { return Get<int>(key); }
+	int GetInt(const std::string& key) const { return (Get<int>(key)); }
 	/// @brief Get int, throw if key not present
-	int   GetUnsigned(const std::string& key) const { return Get<unsigned>(key); }
+	int GetUnsigned(const std::string& key) const { return (Get<unsigned>(key)); }
 	/// @brief Get float, throw if key not present
-	float GetFloat(const std::string& key)    const { return Get<float>(key); }
+	float GetFloat(const std::string& key) const { return (Get<float>(key)); }
+
+	bool GetBoolSafe(const std::string& key, bool def) const { return (IsSet(key)? GetBool(key): def); }
+	int GetIntSafe(const std::string& key, int def) const { return (IsSet(key)? GetInt(key): def); }
+	float GetFloatSafe(const std::string& key, float def) const { return (IsSet(key)? GetFloat(key): def); }
+	std::string GetStringSafe(const std::string& key, const std::string& def) const { return (IsSet(key)? GetString(key): def); }
 
 public:
 	virtual ~ConfigHandler() {}
