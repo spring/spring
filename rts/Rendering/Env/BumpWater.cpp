@@ -730,9 +730,9 @@ void CBumpWater::UpdateWater(CGame* game)
 
 CBumpWater::CoastAtlasRect::CoastAtlasRect(const SRectangle& rect)
 {
-	ix1 = std::max(rect.x1 - 15, 0);
+	ix1 = std::max(rect.x1 - 15,            0);
+	iy1 = std::max(rect.y1 - 15,            0);
 	ix2 = std::min(rect.x2 + 15, mapDims.mapx);
-	iy1 = std::max(rect.y1 - 15, 0);
 	iy2 = std::min(rect.y2 + 15, mapDims.mapy);
 
 	xsize = ix2 - ix1;
@@ -742,7 +742,7 @@ CBumpWater::CoastAtlasRect::CoastAtlasRect(const SRectangle& rect)
 	x2 = (ix2 + 0.5f) / (float)mapDims.mapx;
 	y1 = (iy1 + 0.5f) / (float)mapDims.mapy;
 	y2 = (iy2 + 0.5f) / (float)mapDims.mapy;
-	tx1 = tx2 = ty1 = ty2 = 0.f;
+	tx1 = tx2 = ty1 = ty2 = 0.0f;
 	isCoastline = true;
 }
 
@@ -762,18 +762,20 @@ void CBumpWater::UploadCoastline(const bool forceFull)
 
 	//! limit the to be updated areas
 	unsigned int currentPixels = 0;
+	unsigned int numCoastRects = 0;
 
 	//! select the to be updated areas
 	while (!heightmapUpdates.empty()) {
-		SRectangle& cuRect1 = heightmapUpdates.front();
+		const SRectangle& cuRect1 = heightmapUpdates.front();
 
 		if ((currentPixels + cuRect1.GetArea() <= 512 * 512) || forceFull) {
 			currentPixels += cuRect1.GetArea();
 			coastmapAtlasRects.push_back(cuRect1);
 			heightmapUpdates.pop_front();
-		} else {
-			break;
+			continue;
 		}
+
+		break;
 	}
 
 
@@ -790,7 +792,7 @@ void CBumpWater::UploadCoastline(const bool forceFull)
 		unsigned char* texpixels = (unsigned char*) atlas.AddGetTex(IntToString(i), caRect.xsize, caRect.ysize);
 
 		for (int y = 0; y < caRect.ysize; ++y) {
-			const int yindex  = (y + caRect.iy1) * (mapDims.mapx+1) + caRect.ix1;
+			const int yindex  = (y + caRect.iy1) * mapDims.mapxp1 + caRect.ix1;
 			const int yindex2 = y * caRect.xsize;
 
 			for (int x = 0; x < caRect.xsize; ++x) {
@@ -802,17 +804,15 @@ void CBumpWater::UploadCoastline(const bool forceFull)
 				texpixels[index2 + 1] = (height >  0.0f)? 255 : 0; //! coastdist
 				texpixels[index2 + 2] = (height <  0.0f)? CReadMap::EncodeHeight(height) : 255; //! waterdepth
 				texpixels[index2 + 3] = 0;
-				a += (height > 0.0f)? 1: 0;
+				a += (height > 0.0f);
 			}
 		}
 
-		if (a == 0 || a == caRect.ysize * caRect.xsize) {
-			caRect.isCoastline = false;
-		}
+		numCoastRects += (caRect.isCoastline = (a != 0 && a != (caRect.ysize * caRect.xsize)));
 	}
 
-	//! create the texture atlas
-	if (!atlas.Finalize()) {
+	//! create the texture atlas only if any coastal regions exist
+	if (numCoastRects == 0 || !atlas.Finalize()) {
 		coastmapAtlasRects.clear();
 		return;
 	}
@@ -866,8 +866,7 @@ void CBumpWater::UpdateCoastmap()
 	glMultiTexCoord2i(GL_TEXTURE2, 0, 0);
 
 	glBegin(GL_QUADS);
-	for (size_t i = 0; i < coastmapAtlasRects.size(); i++) {
-		const CoastAtlasRect& r = coastmapAtlasRects[i];
+	for (const CoastAtlasRect& r: coastmapAtlasRects) {
 		glTexCoord4f(r.tx1, r.ty1, 0.0f, 0.0f); glVertex2f(r.x1, r.y1);
 		glTexCoord4f(r.tx1, r.ty2, 0.0f, 1.0f); glVertex2f(r.x1, r.y2);
 		glTexCoord4f(r.tx2, r.ty2, 1.0f, 1.0f); glVertex2f(r.x2, r.y2);
@@ -883,8 +882,7 @@ void CBumpWater::UpdateCoastmap()
 			glMultiTexCoord2i(GL_TEXTURE2, 1, ++n);
 
 			glBegin(GL_QUADS);
-			for (size_t j = 0; j < coastmapAtlasRects.size(); j++) {
-				const CoastAtlasRect& r = coastmapAtlasRects[j];
+			for (const CoastAtlasRect& r: coastmapAtlasRects) {
 				if (!r.isCoastline) continue;
 				glTexCoord4f(r.x1, r.y1, 0.0f, 0.0f); glVertex2f(r.tx1, r.ty1);
 				glTexCoord4f(r.x1, r.y2, 0.0f, 1.0f); glVertex2f(r.tx1, r.ty2);
@@ -898,8 +896,7 @@ void CBumpWater::UpdateCoastmap()
 			glMultiTexCoord2i(GL_TEXTURE2, 0, ++n);
 
 			glBegin(GL_QUADS);
-			for (size_t j = 0; j < coastmapAtlasRects.size(); j++) {
-				const CoastAtlasRect& r = coastmapAtlasRects[j];
+			for (const CoastAtlasRect& r: coastmapAtlasRects) {
 				if (!r.isCoastline) continue;
 				glTexCoord4f(r.tx1, r.ty1, 0.0f, 0.0f); glVertex2f(r.x1, r.y1);
 				glTexCoord4f(r.tx1, r.ty2, 0.0f, 1.0f); glVertex2f(r.x1, r.y2);
