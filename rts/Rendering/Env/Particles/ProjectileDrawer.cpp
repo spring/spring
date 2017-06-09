@@ -617,8 +617,9 @@ void CProjectileDrawer::Draw(bool drawReflection, bool drawRefraction) {
 		// send event after the default state has been set, allows overriding
 		// it for specific cases such as proper blending with depth-aware fog
 		// (requires mask=true and func=always)
-		textureAtlas->BindTexture();
 		eventHandler.DrawWorldPreParticles();
+
+		textureAtlas->BindTexture();
 		fxVA->DrawArrayTC(GL_QUADS);
 	} else {
 		eventHandler.DrawWorldPreParticles();
