@@ -175,7 +175,7 @@ bool GetAvailableVideoRAM(GLint* memory, const char* glVendor)
 		case 'I': {                                    return false; } break; // "Intel"
 		case 'T': {                                    return false; } break; // "Tungsten"
 		case 'V': {                                    return false; } break; // "VMware"
-		default: {} break;
+		default : {                                    return false; } break;
 	}
 
 	// callers assume [0]=total and [1]=free
