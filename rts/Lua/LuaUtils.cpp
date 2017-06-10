@@ -1162,52 +1162,54 @@ int LuaUtils::Next(const ParamMap& paramMap, lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 
-static void LogMsg(lua_State* L, const char* logSection, int logLevel, int index)
+static void LogMsg(lua_State* L, const char* logSection, int logLevel, int argIndex)
 {
 	// mostly copied from lua/src/lbaselib.cpp
 	std::string msg;
 
-	const int args = lua_gettop(L); // number of arguments
+	const int numArgs = lua_gettop(L);
+
+	// rely on Lua's own number formatting
 	lua_getglobal(L, "tostring");
 
-	for (int i = index; i <= args; i++) {
-		lua_pushvalue(L, -1);     // function to be called
-		lua_pushvalue(L, i);      // value to print
-		lua_pcall(L, 1, 1, 0);
+	if (numArgs != argIndex || !lua_istable(L, argIndex)) {
+		// print individual args
+		for (int i = argIndex; i <= numArgs; i++) {
+			lua_pushvalue(L, -1);     // function to be called
+			lua_pushvalue(L, i);      // value to print
+			lua_pcall(L, 1, 1, 0);
 
-		const char* s = lua_tostring(L, -1);  // get result
+			const char* s = lua_tostring(L, -1);  // get result
 
-		if (i > index)
-			msg += ", ";
-		if (s != nullptr)
-			msg += s;
+			if (i > argIndex)
+				msg += ", ";
+			if (s != nullptr)
+				msg += s;
 
-		lua_pop(L, 1);            // pop result
-	}
+			lua_pop(L, 1);            // pop result
+		}
+	} else {
+		// print table values (array style)
+		msg = "TABLE: ";
 
-	if ((args != index) || !lua_istable(L, index))
-		return;
+		for (bool first = true, lua_pushnil(L); lua_next(L, argIndex) != 0; lua_pop(L, 1)) {
+			if (!lua_israwnumber(L, -2)) // only numeric keys
+				continue;
 
-	// print solo tables (array style)
-	msg = "TABLE: ";
+			lua_pushvalue(L, -3);    // function to be called
+			lua_pushvalue(L, -2);    // value to print
+			lua_pcall(L, 1, 1, 0);
 
-	for (bool first = true, lua_pushnil(L); lua_next(L, index) != 0; lua_pop(L, 1)) {
-		if (!lua_israwnumber(L, -2)) // only numeric keys
-			continue;
+			const char* s = lua_tostring(L, -1);  // get result
 
-		lua_pushvalue(L, -3);    // function to be called
-		lua_pushvalue(L, -2);    // value to print
-		lua_pcall(L, 1, 1, 0);
+			if (!first)
+				msg += ", ";
+			if (s != nullptr)
+				msg += s;
 
-		const char* s = lua_tostring(L, -1);  // get result
-
-		if (!first)
-			msg += ", ";
-		if (s != nullptr)
-			msg += s;
-
-		first = false;
-		lua_pop(L, 1);            // pop result
+			first = false;
+			lua_pop(L, 1);            // pop result
+		}
 	}
 
 	if (logSection == nullptr) {
