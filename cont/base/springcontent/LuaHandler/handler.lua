@@ -508,6 +508,8 @@ end
 -- Callin Closures
 
 local function InsertAddonCallIn(ciName, addon)
+	local ret = false
+
 	if (knownCallIns[ciName]) then
 		local f = addon[ciName]
 
@@ -521,29 +523,46 @@ local function InsertAddonCallIn(ciName, addon)
 		end
 
 		local swf = SafeWrapFunc(addon, f, ciName)
-		return handler.callInLists[ciName]:Insert(addon, swf)
+
+		assert(type(handler.callInLists[ciName]) == "table", "[InsertAddonCallIn][pre]")
+		ret = handler.callInLists[ciName]:Insert(addon, swf)
+		assert(type(handler.callInLists[ciName]) == "table", "[InsertAddonCallIn][post]")
 	elseif (handler.verbose) then
 		Spring.Log(LUA_NAME, "warning", "::InsertAddonCallIn: Unknown CallIn \"" .. ciName.. "\"")
 	end
-	return false
+
+	return ret
 end
 
 
 local function RemoveAddonCallIn(ciName, addon)
+	local ret = false
+
 	if (knownCallIns[ciName]) then
 		addon[ciName .. "__"] = nil
-		return handler.callInLists[ciName]:Remove(addon)
+
+		-- note: redundant lookup, RemoveAddonCallIns can just pass in the ciList
+		assert(type(handler.callInLists[ciName]) == "table", "[RemoveAddonCallIn][pre]")
+		ret = handler.callInLists[ciName]:Remove(addon)
+		assert(type(handler.callInLists[ciName]) == "table", "[RemoveAddonCallIn][post]")
 	elseif (handler.verbose) then
 		Spring.Log(LUA_NAME, "warning", "::RemoveAddonCallIn: Unknown CallIn \"" .. ciName.. "\"")
 	end
-	return false
+
+	return ret
 end
 
 
 local function RemoveAddonCallIns(addon)
+	assert(type(handler.callInLists) == "table")
+
 	for ciName,ciList in pairs(handler.callInLists) do
+		assert(type(ciList) == "table", "[RemoveAddonCallIns] pre-removing callin " .. ciName .. " from addon " .. addon._info.name)
 		handler:RemoveAddonCallIn(ciName, addon)
+		assert(type(ciList) == "table", "[RemoveAddonCallIns] post-removing callin " .. ciName .. " from addon " .. addon._info.name)
 	end
+
+	assert(type(handler.callInLists) == "table")
 end
 
 
@@ -987,6 +1006,7 @@ function handler:UpdateCallIn(ciName)
 	end
 
 	local ciList = handler.callInLists[ciName]
+	assert(type(ciList) == "table")
 
 	if ((ciList.first) or
 	    (staticCallInList[ciName]) or
