@@ -650,7 +650,7 @@ void CGlobalRendering::QueryVersionInfo(char (&sdlVersionStr)[64], char (&glVidM
 
 	GLint vidMemBuffer[2] = {0, 0};
 
-	if (GetAvailableVideoRAM(vidMemBuffer)) {
+	if (GetAvailableVideoRAM(vidMemBuffer, globalRenderingInfo.glVendor)) {
 		const GLint totalMemMB = vidMemBuffer[0] / 1024;
 		const GLint availMemMB = vidMemBuffer[1] / 1024;
 

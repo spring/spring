@@ -9,6 +9,7 @@
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Fonts/glFont.h"
 #include "Rendering/GlobalRendering.h"
+#include "Rendering/GlobalRenderingInfo.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Features/FeatureMemPool.h"
 #include "Sim/Misc/GlobalConstants.h" // for GAME_SPEED
@@ -414,7 +415,7 @@ static void DrawInfoText()
 
 	{
 		int2 gpuInfo;
-		GetAvailableVideoRAM(&gpuInfo.x);
+		GetAvailableVideoRAM(&gpuInfo.x, globalRenderingInfo.glVendor);
 
 		font->glFormat(0.01f, 0.16f, 0.5f, DBG_FONT_FLAGS, gpuFmtStr, (gpuInfo.x - gpuInfo.y) / 1024.0f, gpuInfo.x / 1024.0f);
 	}

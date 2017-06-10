@@ -100,7 +100,7 @@ bool CheckAvailableVideoModes()
 #ifndef HEADLESS
 static bool GetVideoMemInfoNV(GLint* memInfo)
 {
-	#ifdef GL_GPU_MEMORY_INFO_TOTAL_AVAILABLE_MEMORY_NVX
+	#if (defined(GLEW_NVX_gpu_memory_info))
 	if (!GLEW_NVX_gpu_memory_info)
 		return false;
 
@@ -114,7 +114,7 @@ static bool GetVideoMemInfoNV(GLint* memInfo)
 
 static bool GetVideoMemInfoATI(GLint* memInfo)
 {
-	#ifdef GL_TEXTURE_FREE_MEMORY_ATI
+	#if (defined(GL_ATI_meminfo) || defined(GLEW_ATI_meminfo))
 	if (!GL_ATI_meminfo && !GLEW_ATI_meminfo)
 		return false;
 
@@ -135,10 +135,11 @@ static bool GetVideoMemInfoATI(GLint* memInfo)
 
 static bool GetVideoMemInfoMESA(GLint* memInfo)
 {
-	#ifdef GLX_MESA_query_renderer
+	#if (defined(GLX_MESA_query_renderer))
 	if (!GLXEW_MESA_query_renderer)
 		return false;
 
+	// FIXME? may need to include glx.h (or glxext.h directly)
 	typedef PFNGLXQUERYCURRENTRENDERERINTEGERMESAPROC QCRIProc;
 
 	static constexpr const GLubyte* qcriProcName = (const GLubyte*) "glXQueryCurrentRendererIntegerMESA";
@@ -159,15 +160,23 @@ static bool GetVideoMemInfoMESA(GLint* memInfo)
 }
 #endif
 
-bool GetAvailableVideoRAM(GLint* memory)
+bool GetAvailableVideoRAM(GLint* memory, const char* glVendor)
 {
 	#ifdef HEADLESS
 	return false;
 	#else
 	GLint memInfo[4 + 2] = {-1, -1, -1, -1, 0, 0};
 
-	if (!GetVideoMemInfoNV(memInfo) && !GetVideoMemInfoATI(memInfo) && !GetVideoMemInfoMESA(memInfo))
-		return false;
+	switch (glVendor[0]) {
+		case 'N': { if (!GetVideoMemInfoNV  (memInfo)) return false; } break; // "NVIDIA"
+		case 'A': { if (!GetVideoMemInfoATI (memInfo)) return false; } break; // "ATI" or "AMD"
+		case 'X': { if (!GetVideoMemInfoMESA(memInfo)) return false; } break; // "X.org"
+		case 'M': { if (!GetVideoMemInfoMESA(memInfo)) return false; } break; // "Mesa"
+		case 'I': {                                    return false; } break; // "Intel"
+		case 'T': {                                    return false; } break; // "Tungsten"
+		case 'V': {                                    return false; } break; // "VMware"
+		default: {} break;
+	}
 
 	// callers assume [0]=total and [1]=free
 	memory[0] = std::max(memInfo[0], memInfo[1]);

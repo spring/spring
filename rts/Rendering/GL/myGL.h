@@ -93,7 +93,7 @@ void glSafeDeleteProgram(GLuint program);
 
 bool CheckAvailableVideoModes();
 
-bool GetAvailableVideoRAM(GLint* memory);
+bool GetAvailableVideoRAM(GLint* memory, const char* glVendor);
 bool ShowDriverWarning(const char* glVendor, const char* glRenderer);
 
 
