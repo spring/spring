@@ -148,13 +148,11 @@ void CCregLoadSaveHandler::SaveGame(const std::string& path)
 			// save AI state
 			const int aiStart = oss.tellp();
 
-			// reset by each Save() call
-			std::stringstream aiData;
-
 			for (const auto& ai: skirmishAIHandler.GetAllSkirmishAIs()) {
+				std::stringstream aiData;
 				eoh->Save(&aiData, ai.first);
 
-				oss << (std::streamsize) aiData.tellp();
+				oss << (std::streamsize) aiData.tellp() << '\n';
 				oss << aiData.rdbuf();
 			}
 			PrintSize("AIs", ((int)oss.tellp()) - aiStart);
@@ -251,6 +249,7 @@ void CCregLoadSaveHandler::LoadGame()
 	for (const auto& ai: skirmishAIHandler.GetAllSkirmishAIs()) {
 		std::streamsize aiSize;
 		*iss >> aiSize;
+		iss->seekg(iss->tellg() + std::streampos(sizeof('\n')));  // skip '\n' delimiter
 		std::vector<char> buffer(aiSize);
 		iss->read(&buffer[0], buffer.size());
 		std::stringstream aiData;

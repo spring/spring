@@ -121,10 +121,8 @@ void CLuaLoadSaveHandler::SaveGameStartInfo()
 
 void CLuaLoadSaveHandler::SaveAIData()
 {
-	// reset by each Save() call
-	std::stringstream aiData;
-
 	for (const auto& ai: skirmishAIHandler.GetAllSkirmishAIs()) {
+		std::stringstream aiData;
 		eoh->Save(&aiData, ai.first);
 
 		const std::string aiSection = FILE_AIDATA + IntToString(ai.first, ".%i");
