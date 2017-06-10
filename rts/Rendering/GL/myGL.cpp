@@ -139,8 +139,16 @@ static bool GetVideoMemInfoMESA(GLint* memInfo)
 	if (!GLXEW_MESA_query_renderer)
 		return false;
 
+	typedef PFNGLXQUERYCURRENTRENDERERINTEGERMESAPROC QCRIProc;
+
+	static constexpr const GLubyte* qcriProcName = (const GLubyte*) "glXQueryCurrentRendererIntegerMESA";
+	static           const QCRIProc qcriProcAddr = (QCRIProc) glXGetProcAddress(qcriProcName);
+
+	if (qcriProcAddr == nullptr)
+		return false;
+
 	// note: unlike the others, this value is returned in megabytes
-	glGetIntegerv(GLX_RENDERER_VIDEO_MEMORY_MESA, &memInfo[0]);
+	qcriProcAddr(GLX_RENDERER_VIDEO_MEMORY_MESA, &memInfo[0]);
 
 	memInfo[0] *= 1024;
 	memInfo[1] = memInfo[0];
