@@ -100,6 +100,7 @@ public:
 	int id;
 	int tdfId;                  ///< the id= tag in the tdf
 
+	bool isNulled;
 	bool turret;
 	bool onlyForward;
 	bool allowNonBlockingAim;
@@ -113,6 +114,9 @@ public:
 
 	bool noAutoTarget;          ///< cant target stuff (for antinuke,dgun)
 	bool manualfire;            ///< if true, slave us to the ManualFire button
+
+	bool sweepFire;
+	bool canAttackGround;
 
 	bool interceptSolo;
 	int interceptor;            ///< if >= 1, weapon will fire at any interceptable projectiles
@@ -135,7 +139,7 @@ public:
 
 	bool selfExplode;
 	bool gravityAffected;
-	int highTrajectory;         ///< Per-weapon high traj setting, 0=low, 1=high, 2=unit
+	int highTrajectory;              ///< Per-weapon high traj setting, 0=low, 1=high, 2=unit
 	float myGravity;
 	bool noExplode;
 	float startvelocity;
@@ -144,9 +148,9 @@ public:
 
 	float projectilespeed;
 
-	float wobble;             ///< how much the missile will wobble around its course
-	float dance;              ///< how much the missile will dance
-	float trajectoryHeight;   ///< how high trajectory missiles will try to fly in
+	float wobble;                    ///< how much the missile will wobble around its course
+	float dance;                     ///< how much the missile will dance
+	float trajectoryHeight;          ///< how high trajectory missiles will try to fly in
 
 	bool largeBeamLaser;             // whether a BeamLaser should spawn LargeBeamLaserProjectile's or regular ones
 	bool laserHardStop;              // whether the shot should fade out or stop and contract at max-range (applies to LaserCannons only)
@@ -207,9 +211,6 @@ public:
 
 	unsigned int projectileType;
 	unsigned int collisionFlags;
-
-	bool sweepFire;
-	bool canAttackGround;
 
 	float cameraShake;
 

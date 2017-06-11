@@ -24,7 +24,6 @@
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
-#include "System/StringUtil.h"
 #include "System/Log/ILog.h"
 
 WeaponMemPool weaponMemPool;
@@ -70,61 +69,59 @@ void CWeaponLoader::FreeWeapons(CUnit* unit)
 
 CWeapon* CWeaponLoader::LoadWeapon(CUnit* owner, const WeaponDef* weaponDef)
 {
-	const std::string& weaponType = weaponDef->type;
-
-	if (StringToLower(weaponDef->name) == "noweapon")
+	if (weaponDef->isNulled)
 		return (weaponMemPool.alloc<CNoWeapon>(owner, weaponDef));
 
-	if (weaponType == "Cannon")
-		return (weaponMemPool.alloc<CCannon>(owner, weaponDef));
+	switch (weaponDef->type[0]) {
+		case 'C': { return (weaponMemPool.alloc<CCannon>(owner, weaponDef)); } break; // "Cannon"
+		case 'R': { return (weaponMemPool.alloc<CRifle >(owner, weaponDef)); } break; // "Rifle"
 
-	if (weaponType == "Rifle")
-		return (weaponMemPool.alloc<CRifle>(owner, weaponDef));
+		case 'M': {
+			// "Melee" or "MissileLauncher"
+			switch (weaponDef->type[1]) {
+				case 'e': { return (weaponMemPool.alloc<CMeleeWeapon    >(owner, weaponDef)); } break;
+				case 'i': { return (weaponMemPool.alloc<CMissileLauncher>(owner, weaponDef)); } break;
+			}
+		} break;
+		case 'S': {
+			// "Shield" or "StarburstLauncher"
+			switch (weaponDef->type[1]) {
+				case 'h': { return (weaponMemPool.alloc<CPlasmaRepulser   >(owner, weaponDef)); } break;
+				case 't': { return (weaponMemPool.alloc<CStarburstLauncher>(owner, weaponDef)); } break;
+			}
+		} break;
 
-	if (weaponType == "Melee")
-		return (weaponMemPool.alloc<CMeleeWeapon>(owner, weaponDef));
+		case 'F': { return (weaponMemPool.alloc<CFlameThrower>(owner, weaponDef       )); } break; // "Flame"
+		case 'A': { return (weaponMemPool.alloc<CBombDropper >(owner, weaponDef, false)); } break; // "AircraftBomb"
 
-	if (weaponType == "Shield")
-		return (weaponMemPool.alloc<CPlasmaRepulser>(owner, weaponDef));
+		case 'T': {
+			// "TorpedoLauncher"
+			if (owner->unitDef->canfly && !weaponDef->submissile)
+				return (weaponMemPool.alloc<CBombDropper>(owner, weaponDef, true));
 
-	if (weaponType == "Flame")
-		return (weaponMemPool.alloc<CFlameThrower>(owner, weaponDef));
+			return (weaponMemPool.alloc<CTorpedoLauncher>(owner, weaponDef));
+		} break;
+		case 'L': {
+			// "LaserCannon" or "LightningCannon"
+			switch (weaponDef->type[1]) {
+				case 'a': { return (weaponMemPool.alloc<CLaserCannon    >(owner, weaponDef)); } break;
+				case 'i': { return (weaponMemPool.alloc<CLightningCannon>(owner, weaponDef)); } break;
+			}
+		} break;
 
-	if (weaponType == "MissileLauncher")
-		return (weaponMemPool.alloc<CMissileLauncher>(owner, weaponDef));
-
-	if (weaponType == "AircraftBomb")
-		return (weaponMemPool.alloc<CBombDropper>(owner, weaponDef, false));
-
-	if (weaponType == "TorpedoLauncher") {
-		if (owner->unitDef->canfly && !weaponDef->submissile)
-			return (weaponMemPool.alloc<CBombDropper>(owner, weaponDef, true));
-
-		return (weaponMemPool.alloc<CTorpedoLauncher>(owner, weaponDef));
+		case 'B': { return (weaponMemPool.alloc<CBeamLaser>(owner, weaponDef)); } break; // "BeamLaser"
+		case 'E': { return (weaponMemPool.alloc<CEmgCannon>(owner, weaponDef)); } break; // "EmgCannon"
+		case 'D': {
+			// "DGun"
+			// NOTE: no special connection to UnitDef::canManualFire
+			// (any type of weapon may be slaved to the button which
+			// controls manual firing) or the CMD_MANUALFIRE command
+			return (weaponMemPool.alloc<CDGunWeapon>(owner, weaponDef));
+		} break;
+		default: {} break;
 	}
 
-	if (weaponType == "LaserCannon")
-		return (weaponMemPool.alloc<CLaserCannon>(owner, weaponDef));
-
-	if (weaponType == "BeamLaser")
-		return (weaponMemPool.alloc<CBeamLaser>(owner, weaponDef));
-
-	if (weaponType == "LightningCannon")
-		return (weaponMemPool.alloc<CLightningCannon>(owner, weaponDef));
-
-	if (weaponType == "EmgCannon")
-		return (weaponMemPool.alloc<CEmgCannon>(owner, weaponDef));
-
-	// NOTE: no special connection to UnitDef::canManualFire
-	// (any type of weapon may be slaved to the button which
-	// controls manual firing) or the CMD_MANUALFIRE command
-	if (weaponType == "DGun")
-		return (weaponMemPool.alloc<CDGunWeapon>(owner, weaponDef));
-
-	if (weaponType == "StarburstLauncher")
-		return (weaponMemPool.alloc<CStarburstLauncher>(owner, weaponDef));
-
-	LOG_L(L_ERROR, "[%s] weapon-type \"%s\" unknown, using noweapon", __func__, weaponType.c_str());
+	LOG_L(L_ERROR, "[%s] unit \"%s\" has unknown weapon-type \"%s\", using NoWeapon", __func__, owner->unitDef->name.c_str(), weaponDef->type.c_str());
 	return (weaponMemPool.alloc<CNoWeapon>(owner, weaponDef));
 }
 

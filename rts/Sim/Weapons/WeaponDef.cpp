@@ -11,10 +11,10 @@
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileTypes.h"
-#include "Sim/Units/Scripts/CobInstance.h"
-#include "System/EventHandler.h"
+#include "Sim/Units/Scripts/CobInstance.h" // TAANG2RAD
 #include "System/myMath.h"
 #include "System/Log/ILog.h"
+#include "System/StringUtil.h"
 
 
 static DefType WeaponDefs("WeaponDefs");
@@ -262,6 +262,7 @@ WeaponDef::WeaponDef()
 	impactExplosionGeneratorID = CExplosionGeneratorHandler::EXPGEN_ID_STANDARD;
 	bounceExplosionGeneratorID = CExplosionGeneratorHandler::EXPGEN_ID_INVALID;
 
+	isNulled = false;
 	isShield = false;
 	noAutoTarget = false;
 	onlyForward = false;
@@ -321,10 +322,9 @@ WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 			cylinderTargeting = Clamp(wdTable.GetFloat("cylinderTargeting", wdTable.GetFloat("cylinderTargetting", 1.0f)), 0.0f, 128.0f);
 		}
 
-		if (type == "Flame") {
-			//FIXME move to lua (for all other weapons this tag is named `duration` and has a different default)
+		//FIXME move to lua (for all other weapons this tag is named `duration` and has a different default)
+		if (type == "Flame")
 			duration = wdTable.GetFloat("flameGfxTime", 1.2f);
-		}
 
 		if (type == "Cannon") {
 			heightmod = wdTable.GetFloat("heightMod", 0.8f);
@@ -492,9 +492,8 @@ WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 
 		visuals.colorMap = nullptr;
 
-		if (!colormap.empty()) {
+		if (!colormap.empty())
 			visuals.colorMap = CColorMap::LoadFromDefString(colormap);
-		}
 	}
 
 	ParseWeaponSounds(wdTable);
@@ -503,6 +502,7 @@ WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 	wdTable.SubTable("customParams").GetMap(customParams);
 
 	// internal only
+	isNulled = (StringToLower(name) == "noweapon");
 	isShield = (type == "Shield");
 	noAutoTarget = (manualfire || interceptor || isShield);
 	onlyForward = !turret && (type != "StarburstLauncher");
@@ -538,12 +538,11 @@ void WeaponDef::ParseWeaponSounds(const LuaTable& wdTable) {
 			}
 		}
 
-		if (damages.damageAreaOfEffect > 8.0f) {
+		if (damages.damageAreaOfEffect > 8.0f)
 			hitSoundVolume *= 2.0f;
-		}
-		if (type == "DGun") {
+
+		if (type == "DGun")
 			hitSoundVolume *= 0.15f;
-		}
 
 		if (fireSound.getVolume(0) == -1.0f) { fireSound.setVolume(0, fireSoundVolume); }
 		if (hitSound.getVolume(0) == -1.0f) { hitSound.setVolume(0, hitSoundVolume); }
@@ -592,16 +591,15 @@ void WeaponDef::LoadSound(
 
 S3DModel* WeaponDef::LoadModel()
 {
-	if (visuals.model == NULL) {
-		if (!visuals.modelName.empty()) {
-			visuals.model = modelLoader.LoadModel(visuals.modelName);
-		} else {
-			// not useful, too much spam
-			// LOG_L(L_WARNING, "[WeaponDef::%s] weapon \"%s\" has no model defined", __FUNCTION__, name.c_str());
-		}
-	}
+	if (visuals.model != nullptr)
+		return visuals.model;
 
-	return visuals.model;
+	if (!visuals.modelName.empty())
+		return (visuals.model = modelLoader.LoadModel(visuals.modelName));
+
+	// not useful, too much spam
+	// LOG_L(L_WARNING, "[WeaponDef::%s] weapon \"%s\" has no model defined", __FUNCTION__, name.c_str());
+	return nullptr;
 }
 
 S3DModel* WeaponDef::LoadModel() const {
