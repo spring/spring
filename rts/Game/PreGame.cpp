@@ -78,7 +78,7 @@ CPreGame::CPreGame(std::shared_ptr<ClientSetup> setup)
 #endif
 
 	if (!clientSetup->isHost) {
-		//don't allow luasocket to connect to the host
+		// don't allow luasocket to connect to the host
 		LOG("[%s] connecting to: %s:%i", __func__, clientSetup->hostIP.c_str(), clientSetup->hostPort);
 		luaSocketRestrictions->addRule(CLuaSocketRestrictions::UDP_CONNECT, clientSetup->hostIP, clientSetup->hostPort, false);
 		clientNet->InitClient(clientSetup->hostIP.c_str(), clientSetup->hostPort, clientSetup->myPlayerName, clientSetup->myPasswd, SpringVersion::GetFull());
@@ -125,14 +125,22 @@ void CPreGame::LoadSavefile(const std::string& save, bool usecreg)
 
 int CPreGame::KeyPressed(int k, bool isRepeat)
 {
-	if (k == SDLK_ESCAPE) {
-		if (KeyInput::GetKeyModState(KMOD_SHIFT)) {
-			LOG("[%s] user exited", __func__);
-			gu->globalQuit = true;
-		} else {
-			LOG("[%s] Use shift-esc to quit", __func__);
-		}
+	if (k != SDLK_ESCAPE)
+		return 0;
+
+	if (!KeyInput::GetKeyModState(KMOD_SHIFT)) {
+		LOG("[PreGame::%s] press shift+escape to abort loading or exit", __func__);
+		return 0;
 	}
+
+	if (CLuaMenuController::ActivateInstance("[PreGame] User Aborted Loading")) {
+		assert(pregame == this);
+		spring::SafeDelete(pregame);
+		return 0;
+	}
+
+	LOG("[PreGame::%s] user exited", __func__);
+	gu->globalQuit = true;
 	return 0;
 }
 
@@ -254,7 +262,8 @@ void CPreGame::UpdateClientNet()
 
 	if (clientNet->CheckTimeout(0, true)) {
 		if (CLuaMenuController::ActivateInstance("[PreGame] Server Connection Timeout")) {
-			delete this;
+			assert(pregame == this);
+			spring::SafeDelete(pregame);
 			return;
 		}
 
@@ -286,7 +295,8 @@ void CPreGame::UpdateClientNet()
 
 					// (re)activate LuaMenu if user failed to connect
 					if (CLuaMenuController::ActivateInstance(message)) {
-						delete this;
+						assert(pregame == this);
+						spring::SafeDelete(pregame);
 						return;
 					}
 
@@ -296,8 +306,7 @@ void CPreGame::UpdateClientNet()
 				} catch (const netcode::UnpackPacketException& ex) {
 					LOG_L(L_ERROR, "[PreGame::%s] invalid NETMSG_{QUIT,REJECT_CONNECT} packet (exception \"%s\")", __func__, ex.what());
 				}
-				break;
-			}
+			} break;
 
 			case NETMSG_CREATE_NEWPLAYER: {
 				// server will send this first if we're using mid-game join
@@ -335,16 +344,14 @@ void CPreGame::UpdateClientNet()
 				} catch (const netcode::UnpackPacketException& ex) {
 					LOG_L(L_ERROR, "[PreGame::%s] got invalid NETMSG_CREATE_NEWPLAYER: %s", __func__, ex.what());
 				}
-				break;
-			}
+			} break;
 
 			case NETMSG_GAMEDATA: {
 				// server first sends this to let us know about teams, allyteams
 				// etc. (not if we are joining mid-game as an extra player), see
 				// NETMSG_SETPLAYERNUM
 				GameDataReceived(packet);
-				break;
-			}
+			} break;
 
 			case NETMSG_SETPLAYERNUM: {
 				// this is sent after NETMSG_GAMEDATA, to let us know which
@@ -367,14 +374,14 @@ void CPreGame::UpdateClientNet()
 
 				CLoadScreen::CreateInstance(gameSetup->MapFile(), modArchive, savefile);
 
-				delete this;
+				assert(pregame == this);
+				spring::SafeDelete(pregame);
 				return;
-			}
+			} break;
 
 			default: {
 				LOG_L(L_WARNING, "[PreGame::%s] unknown packet type (header: %i)", __func__, inbuf[0]);
-				break;
-			}
+			} break;
 		}
 	}
 }
@@ -423,21 +430,21 @@ void CPreGame::StartServerForDemo(const std::string& demoName)
 	if (!demoGameSetup->Init(moddedDemoScript.str()))
 		throw content_error("Demo contains incorrect script");
 
-	LOG("[%s] starting GameServer", __func__);
+	LOG("[PreGame::%s] starting GameServer", __func__);
 	good_fpu_control_registers("before CGameServer creation");
 
 	gameServer = new CGameServer(clientSetup, gameData, demoGameSetup);
 	gameServer->AddLocalClient(clientSetup->myPlayerName, SpringVersion::GetFull());
 
 	good_fpu_control_registers("after CGameServer creation");
-	LOG("[%s] started GameServer", __func__);
+	LOG("[PreGame::%s] started GameServer", __func__);
 }
 
 void CPreGame::ReadDataFromDemo(const std::string& demoName)
 {
 	ScopedOnceTimer startserver("PreGame::ReadDataFromDemo");
 	assert(gameServer == nullptr);
-	LOG("[%s] pre-scanning demo file for game data...", __func__);
+	LOG("[PreGame::%s] pre-scanning demo file for game data...", __func__);
 	CDemoReader scanner(demoName, 0.0f);
 
 	{
@@ -530,7 +537,7 @@ void CPreGame::GameDataReceived(std::shared_ptr<const netcode::RawPacket> packet
 		recorder->SaveToDemo(packet->data, packet->length, clientNet->GetPacketTime(gs->frameNum));
 		clientNet->SetDemoRecorder(recorder);
 
-		LOG("Recording demo to: %s", (recorder->GetName()).c_str());
+		LOG("PreGame::%s] recording demo to \"%s\"", __func__, (recorder->GetName()).c_str());
 	}
 }
 
