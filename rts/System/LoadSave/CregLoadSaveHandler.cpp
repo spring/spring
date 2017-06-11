@@ -143,8 +143,7 @@ void CCregLoadSaveHandler::SaveGame(const std::string& path)
 			creg::COutputStreamSerializer os;
 			os.SavePackage(&oss, &gsc, gsc.GetClass());
 			PrintSize("Game", oss.tellp());
-		}
-		{
+
 			// save AI state
 			const int aiStart = oss.tellp();
 
@@ -152,7 +151,8 @@ void CCregLoadSaveHandler::SaveGame(const std::string& path)
 				std::stringstream aiData;
 				eoh->Save(&aiData, ai.first);
 
-				oss << (std::streamsize) aiData.tellp() << '\n';
+				std::streamsize aiSize = aiData.tellp();
+				os.SerializeInt(&aiSize, sizeof(aiSize));
 				oss << aiData.rdbuf();
 			}
 			PrintSize("AIs", ((int)oss.tellp()) - aiStart);
@@ -248,12 +248,13 @@ void CCregLoadSaveHandler::LoadGame()
 	// load ai state
 	for (const auto& ai: skirmishAIHandler.GetAllSkirmishAIs()) {
 		std::streamsize aiSize;
-		*iss >> aiSize;
-		iss->seekg(iss->tellg() + std::streampos(sizeof('\n')));  // skip '\n' delimiter
+		inputStream.SerializeInt(&aiSize, sizeof(aiSize));
+
 		std::vector<char> buffer(aiSize);
 		iss->read(&buffer[0], buffer.size());
 		std::stringstream aiData;
 		aiData.write(&buffer[0], buffer.size());
+
 		eoh->Load(&aiData, ai.first);
 	}
 
