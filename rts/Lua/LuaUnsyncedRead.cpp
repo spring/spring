@@ -1845,9 +1845,9 @@ int LuaUnsyncedRead::GetCmdDescIndex(lua_State* L)
 
 int LuaUnsyncedRead::GetBuildFacing(lua_State* L)
 {
-	if (guihandler == NULL) {
+	if (guihandler == nullptr)
 		return 0;
-	}
+
 	lua_pushnumber(L, guihandler->buildFacing);
 	return 1;
 }
@@ -1855,9 +1855,9 @@ int LuaUnsyncedRead::GetBuildFacing(lua_State* L)
 
 int LuaUnsyncedRead::GetBuildSpacing(lua_State* L)
 {
-	if (guihandler == NULL) {
+	if (guihandler == nullptr)
 		return 0;
-	}
+
 	lua_pushnumber(L, guihandler->buildSpacing);
 	return 1;
 }
@@ -1865,9 +1865,9 @@ int LuaUnsyncedRead::GetBuildSpacing(lua_State* L)
 
 int LuaUnsyncedRead::GetGatherMode(lua_State* L)
 {
-	if (guihandler == NULL) {
+	if (guihandler == nullptr)
 		return 0;
-	}
+
 	lua_pushnumber(L, guihandler->GetGatherMode());
 	return 1;
 }
@@ -1877,9 +1877,9 @@ int LuaUnsyncedRead::GetGatherMode(lua_State* L)
 
 int LuaUnsyncedRead::GetActivePage(lua_State* L)
 {
-	if (guihandler == NULL) {
+	if (guihandler == nullptr)
 		return 0;
-	}
+
 	lua_pushnumber(L, guihandler->GetActivePage());
 	lua_pushnumber(L, guihandler->GetMaxPage());
 	return 2;
@@ -1892,10 +1892,12 @@ int LuaUnsyncedRead::GetMouseState(lua_State* L)
 {
 	lua_pushnumber(L, mouse->lastx - globalRendering->viewPosX);
 	lua_pushnumber(L, globalRendering->viewSizeY - mouse->lasty - 1);
+
 	lua_pushboolean(L, mouse->buttons[SDL_BUTTON_LEFT].pressed);
 	lua_pushboolean(L, mouse->buttons[SDL_BUTTON_MIDDLE].pressed);
 	lua_pushboolean(L, mouse->buttons[SDL_BUTTON_RIGHT].pressed);
-	return 5;
+	lua_pushboolean(L, mouse->offscreen);
+	return 6;
 }
 
 
@@ -1909,13 +1911,14 @@ int LuaUnsyncedRead::GetMouseCursor(lua_State* L)
 
 int LuaUnsyncedRead::GetMouseStartPosition(lua_State* L)
 {
-	if (mouse == NULL) {
+	if (mouse == nullptr)
 		return 0;
-	}
+
 	const int button = luaL_checkint(L, 1);
-	if ((button <= 0) || (button > NUM_BUTTONS)) {
+
+	if ((button <= 0) || (button > NUM_BUTTONS))
 		return 0;
-	}
+
 	const CMouseHandler::ButtonPressEvt& bp = mouse->buttons[button];
 	lua_pushnumber(L, bp.x);
 	lua_pushnumber(L, bp.y);
@@ -1933,9 +1936,8 @@ int LuaUnsyncedRead::GetMouseStartPosition(lua_State* L)
 int LuaUnsyncedRead::GetClipboard(lua_State* L)
 {
 	char* text = SDL_GetClipboardText();
-	if (text == NULL) {
+	if (text == nullptr)
 		return 0;
-	}
 	lua_pushstring(L, text);
 	SDL_free(text);
 	return 1;

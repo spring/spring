@@ -75,6 +75,10 @@ public:
 	int lasty;
 
 	bool locked;
+	/// Stores if the mouse was locked or not before going into direct control,
+	/// so we can restore it when we return to normal.
+	bool wasLocked;
+	bool offscreen;
 
 	float doubleClickTime;
 	float scrollWheelSpeed;
@@ -94,10 +98,6 @@ public:
 	ButtonPressEvt buttons[NUM_BUTTONS + 1]; /// One-bottomed.
 	int activeButton;
 	float3 dir;
-
-	/// Stores if the mouse was locked or not before going into direct control,
-	/// so we can restore it when we return to normal.
-	bool wasLocked;
 
 	/// locked mouse indicator size
 	float crossSize;

@@ -53,6 +53,7 @@ public:
 	void SaveWindowPosAndSize();
 	void UpdateGLConfigs();
 
+	int2 GetScreenCenter() const { return {viewPosX + (viewSizeX >> 1), viewPosY + (viewSizeY >> 1)}; }
 	int2 GetWantedViewSize(const bool fullscreen);
 
 	bool CheckGLMultiSampling() const;

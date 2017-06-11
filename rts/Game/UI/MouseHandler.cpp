@@ -68,7 +68,7 @@ CONFIG(float, MouseDragScrollThreshold).defaultValue(0.3f);
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CMouseHandler* mouse = NULL;
+CMouseHandler* mouse = nullptr;
 
 static CInputReceiver*& activeReceiver = CInputReceiver::GetActiveReceiverRef();
 
@@ -77,11 +77,12 @@ CMouseHandler::CMouseHandler()
 	: lastx(-1)
 	, lasty(-1)
 	, locked(false)
+	, wasLocked(false)
+	, offscreen(false)
 	, doubleClickTime(0.0f)
 	, scrollWheelSpeed(0.0f)
 	, activeButton(-1)
 	, dir(ZeroVector)
-	, wasLocked(false)
 	, crossSize(0.0f)
 	, crossAlpha(0.0f)
 	, crossMoveScale(0.0f)
@@ -232,15 +233,17 @@ void CMouseHandler::ReloadCursors()
 
 void CMouseHandler::MouseMove(int x, int y, int dx, int dy)
 {
-	//FIXME don't update with lock?
-	lastx = x;
-	lasty = y;
+	// FIXME: don't update if locked?
+	lastx = std::abs(x);
+	lasty = std::abs(y);
 
-	const int screenCenterX = globalRendering->viewSizeX / 2 + globalRendering->viewPosX;
-	const int screenCenterY = globalRendering->viewSizeY / 2 + globalRendering->viewPosY;
+	// MouseInput passes negative coordinates when cursor leaves the window
+	offscreen = (x < 0 && y < 0);
 
-	scrollx += lastx - screenCenterX;
-	scrolly += lasty - screenCenterY;
+	const int2 screenCenter = globalRendering->GetScreenCenter();
+
+	scrollx += (lastx - screenCenter.x);
+	scrolly += (lasty - screenCenter.y);
 
 	dir = hide ? camera->GetDir() : camera->CalcPixelDir(x, y);
 
@@ -249,7 +252,7 @@ void CMouseHandler::MouseMove(int x, int y, int dx, int dy)
 		return;
 	}
 
-	const int movedPixels = (int)math::sqrt(float(dx*dx + dy*dy));
+	const int movedPixels = (int)fastmath::sqrt_sse(float(dx*dx + dy*dy));
 	buttons[SDL_BUTTON_LEFT].movement  += movedPixels;
 	buttons[SDL_BUTTON_RIGHT].movement += movedPixels;
 
@@ -586,10 +589,8 @@ std::string CMouseHandler::GetCurrentTooltip()
 	if (selTip != "")
 		return selTip;
 
-	if (dist <= range) {
-		const float3 pos = camera->GetPos() + (dir * dist);
-		return CTooltipConsole::MakeGroundString(pos);
-	}
+	if (dist <= range)
+		return CTooltipConsole::MakeGroundString(camera->GetPos() + (dir * dist));
 
 	return "";
 }
@@ -602,58 +603,70 @@ void CMouseHandler::Update()
 	if (!hide)
 		return;
 
+	const int2 screenCenter = globalRendering->GetScreenCenter();
+
 	// Update MiddleClickScrolling
 	scrollx *= 0.5f;
 	scrolly *= 0.5f;
-	lastx = globalRendering->viewSizeX / 2 + globalRendering->viewPosX;
-	lasty = globalRendering->viewSizeY / 2 + globalRendering->viewPosY;
-	if (globalRendering->active) {
-		mouseInput->SetPos(int2(lastx, lasty));
-	}
+	lastx = screenCenter.x;
+	lasty = screenCenter.y;
+
+	if (!globalRendering->active)
+		return;
+
+	mouseInput->SetPos(screenCenter);
 }
 
 
 void CMouseHandler::WarpMouse(int x, int y)
 {
-	if (!locked) {
-		lastx = x + globalRendering->viewPosX;
-		lasty = y + globalRendering->viewPosY;
-		mouseInput->SetPos(int2(lastx, lasty));
-	}
+	if (locked)
+		return;
+
+	lastx = x + globalRendering->viewPosX;
+	lasty = y + globalRendering->viewPosY;
+
+	mouseInput->SetPos(int2(lastx, lasty));
 }
 
 
 void CMouseHandler::ShowMouse()
 {
-	if (hide) {
-		hide = false;
-		cursorText = "none"; // force hardware cursor rebinding (else we have standard b&w cursor)
+	if (!hide)
+		return;
 
-		// I don't use SDL_ShowCursor here 'cos it would cause a flicker with hwCursor
-		// (flicker caused by switching between default cursor and later the really one e.g. `attack`)
-		// instead update state and cursor at the same time
-		if (hardwareCursor) {
-			hwHide = true;
-		} else {
-			SDL_ShowCursor(SDL_DISABLE);
-		}
+	hide = false;
+	cursorText = "none"; // force hardware cursor rebinding (else we have standard b&w cursor)
+
+	// don't use SDL_ShowCursor here, it would cause a flicker with hwCursor
+	// (by switching between default cursor and later the real one, e.g. `attack`)
+	// instead update state and cursor at the same time
+	if (hardwareCursor) {
+		hwHide = true;
+	} else {
+		SDL_ShowCursor(SDL_DISABLE);
 	}
 }
 
 
 void CMouseHandler::HideMouse()
 {
-	if (!hide) {
-		hwHide = true;
-		SDL_ShowCursor(SDL_DISABLE);
-		mouseInput->SetWMMouseCursor(NULL);
-		scrollx = 0.f;
-		scrolly = 0.f;
-		lastx = globalRendering->viewSizeX / 2 + globalRendering->viewPosX;
-		lasty = globalRendering->viewSizeY / 2 + globalRendering->viewPosY;
-		mouseInput->SetPos(int2(lastx, lasty));
-		hide = true;
-	}
+	if (hide)
+		return;
+
+	hwHide = true;
+	SDL_ShowCursor(SDL_DISABLE);
+	mouseInput->SetWMMouseCursor(nullptr);
+
+	const int2 screenCenter = globalRendering->GetScreenCenter();
+
+	scrollx = 0.0f;
+	scrolly = 0.0f;
+	lastx = screenCenter.x;
+	lasty = screenCenter.y;
+
+	mouseInput->SetPos(screenCenter);
+	hide = true;
 }
 
 
