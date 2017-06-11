@@ -216,7 +216,7 @@ namespace CNamedTextures {
 		} else {
 			if (resize) bitmap = bitmap.CreateRescaled(resizeDimensions.x,resizeDimensions.y);
 			if (invert) bitmap.InvertColors();
-			if (greyed) bitmap.GrayScale();
+			if (greyed) bitmap.MakeGrayScale();
 			if (tint)   bitmap.Tint(tintColor);
 
 			//! make the texture

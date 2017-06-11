@@ -923,7 +923,9 @@ void CBitmap::InvertColors()
 
 void CBitmap::InvertAlpha()
 {
-	if (compressed) return; // Don't try to invert DDS
+	if (compressed)
+		return; // Don't try to invert DDS
+
 	for (int y = 0; y < ysize; ++y) {
 		for (int x = 0; x < xsize; ++x) {
 			const int base = ((y * xsize) + x) * 4;
@@ -933,11 +935,11 @@ void CBitmap::InvertAlpha()
 }
 
 
-void CBitmap::GrayScale()
+void CBitmap::MakeGrayScale()
 {
-	if (compressed) {
+	if (compressed)
 		return;
-	}
+
 	for (int y = 0; y < ysize; ++y) {
 		for (int x = 0; x < xsize; ++x) {
 			const int base = ((y * xsize) + x) * 4;

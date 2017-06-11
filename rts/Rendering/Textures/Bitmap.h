@@ -76,7 +76,7 @@ public:
 	void ReverseYAxis();
 	void InvertColors();
 	void InvertAlpha();
-	void GrayScale();
+	void MakeGrayScale();
 	void Tint(const float tint[3]);
 };
 

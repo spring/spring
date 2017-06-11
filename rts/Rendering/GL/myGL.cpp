@@ -6,6 +6,10 @@
 #include <cmath>
 
 #include <SDL.h>
+#if (!defined(HEADLESS) && !defined(WIN32) && !defined(__APPLE__))
+// need this for glXQueryCurrentRendererIntegerMESA (glxext)
+#include <GL/glxew.h>
+#endif
 
 #include "myGL.h"
 #include "VertexArray.h"
@@ -139,7 +143,6 @@ static bool GetVideoMemInfoMESA(GLint* memInfo)
 	if (!GLXEW_MESA_query_renderer)
 		return false;
 
-	// FIXME? may need to include glx.h (or glxext.h directly)
 	typedef PFNGLXQUERYCURRENTRENDERERINTEGERMESAPROC QCRIProc;
 
 	static constexpr const GLubyte* qcriProcName = (const GLubyte*) "glXQueryCurrentRendererIntegerMESA";
@@ -149,7 +152,7 @@ static bool GetVideoMemInfoMESA(GLint* memInfo)
 		return false;
 
 	// note: unlike the others, this value is returned in megabytes
-	qcriProcAddr(GLX_RENDERER_VIDEO_MEMORY_MESA, &memInfo[0]);
+	qcriProcAddr(GLX_RENDERER_VIDEO_MEMORY_MESA, reinterpret_cast<unsigned int*>(&memInfo[0]));
 
 	memInfo[0] *= 1024;
 	memInfo[1] = memInfo[0];
