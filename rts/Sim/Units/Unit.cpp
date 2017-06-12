@@ -1459,8 +1459,8 @@ void CUnit::AddExperience(float exp)
 	limExperience = experience / (experience + 1.0f);
 
 	if (expGrade != 0.0f) {
-		const int oldGrade = (int)(oldLimExp     / expGrade);
-		const int newGrade = (int)(limExperience / expGrade);
+		const int oldGrade = (int)(oldExp     / expGrade);
+		const int newGrade = (int)(experience / expGrade);
 		if (oldGrade != newGrade) {
 			eventHandler.UnitExperience(this, oldExp);
 		}
