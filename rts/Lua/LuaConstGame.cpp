@@ -77,9 +77,6 @@ bool LuaConstGame::PushEntries(lua_State* L)
 
 	LuaPushNamedNumber(L, "waterDamage",         mapInfo->water.damage);
 
-	LuaPushNamedBool(L,   "voidWater",           mapInfo->map.voidWater);
-	LuaPushNamedBool(L,   "voidGround",          mapInfo->map.voidGround);
-
 	LuaPushNamedBool(L,   "allowTeamColors", true);
 
 	LuaPushNamedString(L, "gameName",         modInfo.humanName);

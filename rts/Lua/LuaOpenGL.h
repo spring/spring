@@ -315,6 +315,7 @@ class LuaOpenGL {
 		static int GetAtmosphere(lua_State* L);
 		static int GetSun(lua_State* L);
 		static int GetWaterRendering(lua_State* L);
+		static int GetMapRendering(lua_State* L);
 };
 
 inline void LuaOpenGL::InitMatrixState(lua_State* L, const char* fn) {

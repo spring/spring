@@ -14,6 +14,7 @@
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/Env/ISky.h"
 #include "Rendering/Env/WaterRendering.h"
+#include "Rendering/Env/MapRendering.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Shaders/Shader.h"
@@ -228,7 +229,7 @@ inline void CSMFGroundDrawer::DrawWaterPlane(bool drawWaterReflection) {
 
 	glPushMatrix();
 	glTranslatef(0.0f, std::min(-200.0f, smfMap->GetCurrMinHeight() - 400.0f), 0.0f);
-	glCallList(waterPlaneDispLists[camera->GetPos().IsInBounds() && !mapInfo->map.voidWater]);
+	glCallList(waterPlaneDispLists[camera->GetPos().IsInBounds() && !mapRendering->voidWater]);
 	glPopMatrix();
 }
 
@@ -369,11 +370,11 @@ void CSMFGroundDrawer::Draw(const DrawPass::e& drawPass)
 		// do the deferred pass first, will allow us to re-use
 		// its output at some future point and eventually draw
 		// the entire map deferred
-		DrawDeferredPass(drawPass, mapInfo->map.voidGround || (mapInfo->map.voidWater && drawPass != DrawPass::WaterReflection));
+		DrawDeferredPass(drawPass, mapRendering->voidGround || (mapRendering->voidWater && drawPass != DrawPass::WaterReflection));
 	}
 
 	if (drawForward) {
-		DrawForwardPass(drawPass, mapInfo->map.voidGround || (mapInfo->map.voidWater && drawPass != DrawPass::WaterReflection));
+		DrawForwardPass(drawPass, mapRendering->voidGround || (mapRendering->voidWater && drawPass != DrawPass::WaterReflection));
 	}
 
 	glDisable(GL_CULL_FACE);
@@ -431,7 +432,7 @@ void CSMFGroundDrawer::DrawBorder(const DrawPass::e drawPass)
 		}
 
 		/*
-		if (mapInfo->map.voidWater && (drawPass != DrawPass::WaterReflection)) {
+		if (mapRendering->voidWater && (drawPass != DrawPass::WaterReflection)) {
 			glEnable(GL_ALPHA_TEST);
 			glAlphaFunc(GL_GREATER, 0.9f);
 		}
@@ -440,7 +441,7 @@ void CSMFGroundDrawer::DrawBorder(const DrawPass::e drawPass)
 		meshDrawer->DrawBorderMesh(drawPass);
 
 		/*
-		if (mapInfo->map.voidWater && (drawPass != DrawPass::WaterReflection)) {
+		if (mapRendering->voidWater && (drawPass != DrawPass::WaterReflection)) {
 			glDisable(GL_ALPHA_TEST);
 		}
 		*/

@@ -8,6 +8,7 @@
 #include "Rendering/Env/IGroundDecalDrawer.h"
 #include "Rendering/Env/ISky.h"
 #include "Rendering/Env/SunLighting.h"
+#include "Rendering/Env/MapRendering.h"
 #include "Rendering/Env/ITreeDrawer.h"
 #include "Rendering/Env/IWater.h"
 #include "Rendering/CommandDrawer.h"
@@ -294,7 +295,7 @@ void CWorldDrawer::DrawOpaqueObjects() const
 	}
 
 	// run occlusion query here so it has more time to finish before UpdateWater
-	if (globalRendering->drawWater && !mapInfo->map.voidWater) {
+	if (globalRendering->drawWater && !mapRendering->voidWater) {
 		SCOPED_GMARKER("Draw::World::Water::OcclusionQuery");
 		water->OcclusionQuery();
 	}
@@ -343,7 +344,7 @@ void CWorldDrawer::DrawAlphaObjects() const
 	}
 
 	// draw water (in-between)
-	if (globalRendering->drawWater && !mapInfo->map.voidWater) {
+	if (globalRendering->drawWater && !mapRendering->voidWater) {
 		SCOPED_TIMER("Draw::World::Water");
 		SCOPED_GMARKER("Draw::World::Water");
 
@@ -405,7 +406,7 @@ void CWorldDrawer::DrawBelowWaterOverlay() const
 
 	if (!globalRendering->drawWater)
 		return;
-	if (mapInfo->map.voidWater)
+	if (mapRendering->voidWater)
 		return;
 	if (camera->GetPos().y >= 0.0f)
 		return;

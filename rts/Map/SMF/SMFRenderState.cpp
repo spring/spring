@@ -12,6 +12,7 @@
 #include "Rendering/Env/SkyLight.h"
 #include "Rendering/Env/SunLighting.h"
 #include "Rendering/Env/WaterRendering.h"
+#include "Rendering/Env/MapRendering.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Rendering/Shaders/ShaderHandler.h"
@@ -169,8 +170,8 @@ void SMFRenderStateGLSL::Update(
 		// const int2 specTexSize = smfMap->GetTextureSize(MAP_SSMF_SPECULAR_TEX);
 
 		for (unsigned int n = GLSL_SHADER_STANDARD; n <= GLSL_SHADER_DEFERRED; n++) {
-			glslShaders[n]->SetFlag("SMF_VOID_WATER",                       mapInfo->map.voidWater);
-			glslShaders[n]->SetFlag("SMF_VOID_GROUND",                      mapInfo->map.voidGround);
+			glslShaders[n]->SetFlag("SMF_VOID_WATER",                       mapRendering->voidWater);
+			glslShaders[n]->SetFlag("SMF_VOID_GROUND",                      mapRendering->voidGround);
 			glslShaders[n]->SetFlag("SMF_SPECULAR_LIGHTING",               (smfMap->GetSpecularTexture() != 0));
 			glslShaders[n]->SetFlag("SMF_DETAIL_TEXTURE_SPLATTING",        (smfMap->GetSplatDistrTexture() != 0 && smfMap->GetSplatDetailTexture() != 0));
 			glslShaders[n]->SetFlag("SMF_DETAIL_NORMAL_TEXTURE_SPLATTING", (smfMap->GetSplatDistrTexture() != 0 && smfMap->HaveSplatNormalTexture()));
@@ -238,8 +239,8 @@ void SMFRenderStateGLSL::Update(
 			glslShaders[n]->SetUniform3v("waterBaseColor",   &waterRendering->baseColor[0]);
 			glslShaders[n]->SetUniform3v("waterAbsorbColor", &waterRendering->absorb[0]);
 
-			glslShaders[n]->SetUniform4v("splatTexScales", &mapInfo->splats.texScales[0]);
-			glslShaders[n]->SetUniform4v("splatTexMults", &mapInfo->splats.texMults[0]);
+			glslShaders[n]->SetUniform4v("splatTexScales", &mapRendering->splatTexScales[0]);
+			glslShaders[n]->SetUniform4v("splatTexMults", &mapRendering->splatTexMults[0]);
 
 			glslShaders[n]->SetUniform("infoTexIntensityMul", 1.0f);
 

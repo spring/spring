@@ -55,7 +55,11 @@ Lua:
     Platform.osName: string, full name of the OS
     Platform.osFamily: string, one of "Windows", "Linux", "MacOSX", "FreeBSD", "Unknown"
  - Spring.SetWaterParams() can now be used without /cheat for modifying unsynced values.
- - Implemented gl.GetWaterRendering() to expose access to water rendering variables. Removed water rendering parameters from LuaConstGame, as they're no longer const.
+ - Implemented gl.GetWaterRendering() to expose access to water rendering variables.
+ ! Removed water rendering parameters from LuaConstGame, as they're no longer const.
+ - Added Spring.SetMapRenderingParams() for modifying splatTexMults, splatTexScales, voidWater and voidGround.
+ - Implemented gl.GetMapRendering() to expose access to the map rendering variables.
+ ! Removed voidWater and voidGround constant parameters from LuaConstGame, as they're no longer const.
  - Add start and hit position x, y, z arguments to ShieldPreDamaged callin
 
 UI:

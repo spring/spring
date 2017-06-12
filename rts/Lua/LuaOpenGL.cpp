@@ -47,6 +47,7 @@
 #include "Rendering/Env/ISky.h"
 #include "Rendering/Env/SunLighting.h"
 #include "Rendering/Env/WaterRendering.h"
+#include "Rendering/Env/MapRendering.h"
 #include "Rendering/Env/IWater.h"
 #include "Rendering/Env/CubeMapHandler.h"
 #include "Rendering/GL/glExtra.h"
@@ -388,6 +389,7 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetAtmosphere);
 	REGISTER_LUA_CFUNC(GetSun);
 	REGISTER_LUA_CFUNC(GetWaterRendering);
+	REGISTER_LUA_CFUNC(GetMapRendering);
 
 	if (canUseShaders) {
 		LuaShaders::PushEntries(L);
@@ -4583,6 +4585,37 @@ int LuaOpenGL::GetWaterRendering(lua_State* L)
 	} else if (key == "hasWaterPlane") {
 		lua_pushboolean(L, waterRendering->hasWaterPlane);
 		return 1;
+	}
+
+	luaL_error(L, "Unknown key %s", key.c_str());
+	return 0;
+}
+
+int LuaOpenGL::GetMapRendering(lua_State* L)
+{
+	const string key = luaL_checkstring(L, 1);
+
+	// float4
+	if (key == "splatTexScales") {
+		lua_pushnumber(L, mapRendering->splatTexScales[0]);
+		lua_pushnumber(L, mapRendering->splatTexScales[1]);
+		lua_pushnumber(L, mapRendering->splatTexScales[2]);
+		lua_pushnumber(L, mapRendering->splatTexScales[3]);
+		return 4;
+	} else if (key == "splatTexMults") {
+		lua_pushnumber(L, mapRendering->splatTexMults[0]);
+		lua_pushnumber(L, mapRendering->splatTexMults[1]);
+		lua_pushnumber(L, mapRendering->splatTexMults[2]);
+		lua_pushnumber(L, mapRendering->splatTexMults[3]);
+		return 4;
+	}
+	// boolean
+	else if (key == "voidWater") {
+		lua_pushboolean(L, mapRendering->voidWater);
+		return 1;
+	} else if (key == "voidGround") {
+		lua_pushboolean(L, mapRendering->voidGround);
+		return 1;;
 	}
 
 	luaL_error(L, "Unknown key %s", key.c_str());

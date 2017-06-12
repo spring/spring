@@ -42,6 +42,7 @@
 #include "Rendering/Env/ISky.h"
 #include "Rendering/Env/SunLighting.h"
 #include "Rendering/Env/WaterRendering.h"
+#include "Rendering/Env/MapRendering.h"
 #include "Rendering/Env/IGroundDecalDrawer.h"
 #include "Rendering/Env/Decals/DecalsDrawerGL4.h"
 #include "Rendering/GL/myGL.h"
@@ -255,6 +256,7 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetAtmosphere);
 	REGISTER_LUA_CFUNC(SetSunLighting);
 	REGISTER_LUA_CFUNC(SetSunDirection);
+	REGISTER_LUA_CFUNC(SetMapRenderingParams);
 
 	REGISTER_LUA_CFUNC(SendSkirmishAIMessage);
 
@@ -2851,6 +2853,52 @@ int LuaUnsyncedCtrl::SetSunLighting(lua_State* L)
 	}
 
 	*sunLighting = sl;
+	return 0;
+}
+
+int LuaUnsyncedCtrl::SetMapRenderingParams(lua_State* L)
+{
+	if (!lua_istable(L, 1)) {
+		luaL_error(L, "Incorrect arguments to SetMapRenderingParams()");
+	}
+
+	for (lua_pushnil(L); lua_next(L, 1) != 0; lua_pop(L, 1)) {
+		if (!lua_israwstring(L, -2))
+			continue;
+
+		const string key = lua_tostring(L, -2);
+
+		if (lua_istable(L, -1)) {
+			float values[4];
+			const int size = LuaUtils::ParseFloatArray(L, -1, values, 4);
+			if (size == 4) {
+				if (key == "splatTexScales") {
+					mapRendering->splatTexScales = values;
+				} else if (key == "splatTexMults") {
+					mapRendering->splatTexMults = values;
+				} else {
+					luaL_error(L, "Unknown array key %s", key.c_str());
+				}
+			} else {
+				luaL_error(L, "Unexpected size of %d for array key %s", size,  key.c_str());
+			}
+		}
+
+		else if (lua_isboolean(L, -1)) {
+			const bool value = lua_toboolean(L, -1);
+			if (key == "voidWater") {
+				mapRendering->voidWater = value;
+			} else if (key == "voidGround") {
+				mapRendering->voidGround = value;
+			} else {
+				luaL_error(L, "Unknown boolean key %s", key.c_str());
+			}
+		}
+	}
+
+	CBaseGroundDrawer* groundDrawer = readMap->GetGroundDrawer();
+	groundDrawer->UpdateRenderState();
+
 	return 0;
 }
 

@@ -36,6 +36,7 @@
 #include "Rendering/WorldDrawer.h"
 #include "Rendering/Env/IWater.h"
 #include "Rendering/Env/WaterRendering.h"
+#include "Rendering/Env/MapRendering.h"
 #include "Rendering/Fonts/CFontTexture.h"
 #include "Rendering/Fonts/glFont.h"
 #include "Rendering/CommandDrawer.h"
@@ -466,6 +467,7 @@ void CGame::LoadMap(const std::string& mapName)
 		helper = new CGameHelper();
 
 		waterRendering->Init();
+		mapRendering->Init();
 		readMap = CReadMap::LoadMap(mapName);
 		groundBlockingObjectMap = new CGroundBlockingObjectMap(mapDims.mapSquares);
 		buildingMaskMap = new BuildingMaskMap();

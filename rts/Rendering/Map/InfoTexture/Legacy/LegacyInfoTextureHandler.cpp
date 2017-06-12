@@ -11,6 +11,7 @@
 #include "Map/MetalMap.h"
 #include "Map/ReadMap.h"
 #include "Rendering/IPathDrawer.h"
+#include "Rendering/Env/MapRendering.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/ModInfo.h"
 #include "System/Log/ILog.h"
@@ -257,7 +258,7 @@ bool CLegacyInfoTextureHandler::UpdateExtraTexture(BaseGroundDrawMode texDrawMod
 	if (texDrawMode == drawNormal)
 		return true;
 
-	if (mapInfo->map.voidWater && readMap->IsUnderWater())
+	if (mapRendering->voidWater && readMap->IsUnderWater())
 		return true;
 
 	if (updateTextureState < extraTextureUpdateRate) {

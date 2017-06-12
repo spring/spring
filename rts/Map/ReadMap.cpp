@@ -8,6 +8,7 @@
 #include "MapDamage.h"
 #include "MapInfo.h"
 #include "MetalMap.h"
+#include "Rendering/Env/MapRendering.h"
 // #include "SM3/SM3Map.h"
 #include "SMF/SMFReadMap.h"
 #include "Game/LoadScreen.h"
@@ -799,6 +800,5 @@ void CReadMap::BecomeSpectator() {}
 #endif
 
 
-bool CReadMap::HasVisibleWater() const { return (!mapInfo->map.voidWater && !IsAboveWater()); }
-bool CReadMap::HasOnlyVoidWater() const { return (mapInfo->map.voidWater && IsUnderWater()); }
-
+bool CReadMap::HasVisibleWater() const { return (!mapRendering->voidWater && !IsAboveWater()); }
+bool CReadMap::HasOnlyVoidWater() const { return (mapRendering->voidWater && IsUnderWater()); }
