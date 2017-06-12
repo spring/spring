@@ -333,6 +333,8 @@ void CLuaUI::ShockFront(const float3& pos, float power, float areaOfEffect, cons
 {
 	if (!haveShockFront)
 		return;
+	if (power <= 0.0f)
+		return;
 	if (areaOfEffect < shockFrontMinArea && distMod == nullptr)
 		return;
 
@@ -705,18 +707,16 @@ bool CLuaUI::GetLuaCmdDescList(lua_State* L, int index,
 int CLuaUI::SetShockFrontFactors(lua_State* L)
 {
 	luaUI->haveShockFront = true;
-	if (lua_isnumber(L, 1)) {
-		const float value = max(0.0f, lua_tofloat(L, 1));
-		luaUI->shockFrontMinArea = value;
-	}
-	if (lua_isnumber(L, 2)) {
-		const float value = max(0.0f, lua_tofloat(L, 2));
-		luaUI->shockFrontMinPower = value;
-	}
-	if (lua_isnumber(L, 3)) {
-		const float value = max(1.0f, lua_tofloat(L, 3));
-		luaUI->shockFrontDistAdj = value;
-	}
+
+	if (lua_isnumber(L, 1))
+		luaUI->shockFrontMinArea = std::max(0.0f, lua_tofloat(L, 1));
+
+	if (lua_isnumber(L, 2))
+		luaUI->shockFrontMinPower = std::max(0.0f, lua_tofloat(L, 2));
+
+	if (lua_isnumber(L, 3))
+		luaUI->shockFrontDistAdj = std::max(1.0f, lua_tofloat(L, 3));
+
 	return 0;
 }
 

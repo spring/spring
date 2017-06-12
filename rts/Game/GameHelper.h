@@ -99,10 +99,10 @@ public:
 		CFeature*&,
 		int allyteam,
 		bool synced,
-		std::vector<float3>* canbuildpos = NULL,
-		std::vector<float3>* featurepos = NULL,
-		std::vector<float3>* nobuildpos = NULL,
-		const std::vector<Command>* commands = NULL
+		std::vector<float3>* canbuildpos = nullptr,
+		std::vector<float3>* featurepos = nullptr,
+		std::vector<float3>* nobuildpos = nullptr,
+		const std::vector<Command>* commands = nullptr
 	);
 	static float GetBuildHeight(const float3& pos, const UnitDef* unitdef, bool synced = true);
 	static Command GetBuildCommand(const float3& pos, const float3& dir);
@@ -114,6 +114,7 @@ public:
 
 	static void GenerateWeaponTargets(const CWeapon* weapon, const CUnit* avoidUnit, std::vector<std::pair<float, CUnit*>>& targets);
 
+	void Init();
 	void Update();
 
 	static float CalcImpulseScale(const DamageArray& damages, const float expDistanceMod);

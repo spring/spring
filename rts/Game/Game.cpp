@@ -463,11 +463,11 @@ void CGame::LoadMap(const std::string& mapName)
 	{
 		loadscreen->SetLoadMessage("Parsing Map Information");
 
-		// simulation components
-		helper = new CGameHelper();
-
 		waterRendering->Init();
 		mapRendering->Init();
+
+		// simulation components
+		helper->Init();
 		readMap = CReadMap::LoadMap(mapName);
 		groundBlockingObjectMap = new CGroundBlockingObjectMap(mapDims.mapSquares);
 		buildingMaskMap = new BuildingMaskMap();
@@ -904,7 +904,6 @@ void CGame::KillSimulation()
 	spring::SafeDelete(weaponDefHandler);
 	spring::SafeDelete(damageArrayHandler);
 	spring::SafeDelete(explGenHandler);
-	spring::SafeDelete(helper);
 	spring::SafeDelete((mapInfo = const_cast<CMapInfo*>(mapInfo)));
 
 	LOG("[Game::%s][4]", __func__);

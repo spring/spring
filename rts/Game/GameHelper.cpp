@@ -40,11 +40,41 @@
 #include "System/Sound/ISoundChannels.h"
 #include "System/Sync/SyncTracer.h"
 
-//////////////////////////////////////////////////////////////////////
-// Construction/Destruction
-//////////////////////////////////////////////////////////////////////
 
-CGameHelper* helper;
+static CGameHelper gGameHelper;
+CGameHelper* helper = &gGameHelper;
+
+
+void CGameHelper::Init()
+{
+	for (auto& wdVec: waitingDamages) {
+		wdVec.clear();
+		wdVec.reserve(32);
+	}
+}
+
+void CGameHelper::Update()
+{
+	const int wdIdx = gs->frameNum & (waitingDamages.size() - 1);
+
+	// need to use explicit indexing because CUnit::DoDamage
+	// can add *new* WaitingDamage's for this frame while we
+	// are still iterating
+	for (size_t n = 0; n < waitingDamages[wdIdx].size(); n++) {
+		const WaitingDamage& wd = waitingDamages[wdIdx][n];
+
+		CUnit* attackee = unitHandler->GetUnit(wd.targetID);
+		CUnit* attacker = unitHandler->GetUnit(wd.attackerID); // null if wd.attacker is -1
+
+		if (attackee == nullptr)
+			continue;
+
+		attackee->DoDamage(wd.damage, wd.impulse, attacker, wd.weaponID, wd.projectileID);
+	}
+
+	waitingDamages[wdIdx].clear();
+}
+
 
 //////////////////////////////////////////////////////////////////////
 // Explosions/Damage
@@ -136,15 +166,15 @@ void CGameHelper::DoExplosionDamage(
 	const int weaponDefID,
 	const int projectileID
 ) {
-	assert(feature != NULL);
+	assert(feature != nullptr);
 
 	const LocalModelPiece* lhp = feature->GetLastHitPiece(gs->frameNum);
 	const CollisionVolume* vol = feature->GetCollisionVolume(lhp);
 
-	const float3& lhpPos = (lhp != NULL && vol == lhp->GetCollisionVolume())? lhp->GetAbsolutePos(): ZeroVector;
+	const float3& lhpPos = (lhp != nullptr && vol == lhp->GetCollisionVolume())? lhp->GetAbsolutePos(): ZeroVector;
 	const float3& volPos = vol->GetWorldSpacePos(feature, lhpPos);
 
-	const float expDist = (expRadius != 0.0f) ? vol->GetPointSurfaceDistance(feature, NULL, expPos) : 0.0f;
+	const float expDist = (expRadius != 0.0f) ? vol->GetPointSurfaceDistance(feature, nullptr, expPos) : 0.0f;
 	const float expRim = expDist * expEdgeEffect;
 
 	if (expDist > expRadius)
@@ -204,8 +234,8 @@ void CGameHelper::Explosion(const CExplosionParams& params) {
 	// (implicit damage-type -DAMAGE_EXPLOSION_DEBRIS)
 	const WeaponDef* weaponDef = params.weaponDef;
 
-	const int weaponDefID = (weaponDef != NULL)? weaponDef->id: -CSolidObject::DAMAGE_EXPLOSION_DEBRIS;
-	const int explosionID = (weaponDef != NULL)? weaponDef->impactExplosionGeneratorID: CExplosionGeneratorHandler::EXPGEN_ID_STANDARD;
+	const int weaponDefID = (weaponDef != nullptr)? weaponDef->id: -CSolidObject::DAMAGE_EXPLOSION_DEBRIS;
+	const int explosionID = (weaponDef != nullptr)? weaponDef->impactExplosionGeneratorID: CExplosionGeneratorHandler::EXPGEN_ID_STANDARD;
 
 
 	const float craterAOE = std::max(1.0f, params.craterAreaOfEffect);
@@ -217,14 +247,11 @@ void CGameHelper::Explosion(const CExplosionParams& params) {
 	// NOTE: event triggers before damage is applied to objects
 	const bool noGfx = eventHandler.Explosion(weaponDefID, params.projectileID, params.pos, params.owner);
 
-	if (luaUI != NULL) {
-		if (weaponDef != NULL && weaponDef->cameraShake > 0.0f) {
-			luaUI->ShockFront(params.pos, weaponDef->cameraShake, damageAOE);
-		}
-	}
+	if (luaUI != nullptr && weaponDef != nullptr)
+		luaUI->ShockFront(params.pos, weaponDef->cameraShake, damageAOE);
 
 	if (params.impactOnly) {
-		if (params.hitUnit != NULL) {
+		if (params.hitUnit != nullptr) {
 			DoExplosionDamage(
 				params.hitUnit,
 				params.owner,
@@ -239,7 +266,7 @@ void CGameHelper::Explosion(const CExplosionParams& params) {
 			);
 		}
 
-		if (params.hitFeature != NULL) {
+		if (params.hitFeature != nullptr) {
 			DoExplosionDamage(
 				params.hitFeature,
 				params.owner,
@@ -284,7 +311,7 @@ void CGameHelper::Explosion(const CExplosionParams& params) {
 
 	CExplosionCreator::FireExplosionEvent(params);
 
-	if (weaponDef != NULL) {
+	if (weaponDef != nullptr) {
 		const GuiSoundSet& soundSet = weaponDef->hitSound;
 
 		const unsigned int soundFlags = CCustomExplosionGenerator::GetFlagsFromHeight(params.pos.y, realHeight);
@@ -441,7 +468,7 @@ namespace {
 			const CMobileCAI* const cai;
 
 			Enemy_InLos_ValidTarget(int at, const CMobileCAI* cai) :
-				Enemy_InLos(NULL, at), cai(cai) {}
+				Enemy_InLos(nullptr, at), cai(cai) {}
 
 			bool Unit(const CUnit* u) {
 				return Enemy_InLos::Unit(u) && cai->IsValidTarget(u);
@@ -477,7 +504,7 @@ namespace {
 
 		public:
 			ClosestUnit(const float3& pos, float searchRadius) :
-				Base(pos, searchRadius), closeSqDist(sqRadius), closeUnit(NULL) {}
+				Base(pos, searchRadius), closeSqDist(sqRadius), closeUnit(nullptr) {}
 
 			void AddUnit(CUnit* u) {
 				const float sqDist = (pos - u->midPos).SqLength2D();
@@ -536,7 +563,7 @@ namespace {
 		public:
 			ClosestUnit_InLos(const float3& pos, float searchRadius, bool canBeBlind) :
 				Base(pos, searchRadius + unitHandler->MaxUnitRadius()),
-				closeDist(searchRadius), closeUnit(NULL), canBeBlind(canBeBlind) {}
+				closeDist(searchRadius), closeUnit(nullptr), canBeBlind(canBeBlind) {}
 
 			void AddUnit(CUnit* u) {
 				// FIXME: use volumeBoundingRadius?
@@ -776,13 +803,13 @@ CUnit* CGameHelper::GetClosestEnemyAircraft(const CUnit* excludeUnit, const floa
 void CGameHelper::GetEnemyUnits(const float3& pos, float searchRadius, int searchAllyteam, vector<int> &found)
 {
 	Query::AllUnitsById q(pos, searchRadius, found);
-	QueryUnits(Filter::Enemy_InLos(NULL, searchAllyteam), q);
+	QueryUnits(Filter::Enemy_InLos(nullptr, searchAllyteam), q);
 }
 
 void CGameHelper::GetEnemyUnitsNoLosTest(const float3& pos, float searchRadius, int searchAllyteam, vector<int> &found)
 {
 	Query::AllUnitsById q(pos, searchRadius, found);
-	QueryUnits(Filter::Enemy(NULL, searchAllyteam), q);
+	QueryUnits(Filter::Enemy(nullptr, searchAllyteam), q);
 }
 
 
@@ -867,11 +894,10 @@ static const vector<SearchOffset>& GetSearchOffsetTable (int radius)
 //! only used by the AI callback of the same name
 float3 CGameHelper::ClosestBuildSite(int team, const UnitDef* unitDef, float3 pos, float searchRadius, int minDist, int facing)
 {
-	if (unitDef == NULL) {
+	if (unitDef == nullptr)
 		return -RgtVector;
-	}
 
-	CFeature* feature = NULL;
+	CFeature* feature = nullptr;
 
 	const int allyTeam = teamHandler->AllyTeam(team);
 	const int endr = (int) (searchRadius / (SQUARE_SIZE * 2));
@@ -920,7 +946,7 @@ float3 CGameHelper::ClosestBuildSite(int team, const UnitDef* unitDef, float3 po
 					for (int x2 = x2Min; x2 < x2Max; ++x2) {
 						CSolidObject* solObj = groundBlockingObjectMap->GroundBlockedUnsafe(z2 * mapDims.mapx + x2);
 
-						if (solObj == NULL)
+						if (solObj == nullptr)
 							continue;
 						if (!solObj->immobile)
 							continue;
@@ -1042,7 +1068,7 @@ CGameHelper::BuildSquareStatus CGameHelper::TestUnitBuildSquare(
 	/*const S3DModel* model =*/ buildInfo.def->LoadModel();
 
 	const float buildHeight = GetBuildHeight(pos, buildInfo.def, synced);
-	// const float modelHeight = (model != NULL) ? math::fabs(model->height) : 10.0f;
+	// const float modelHeight = (model != nullptr) ? math::fabs(model->height) : 10.0f;
 
 	BuildSquareStatus canBuild = BUILDSQUARE_OPEN;
 
@@ -1259,30 +1285,5 @@ Command CGameHelper::GetBuildCommand(const float3& pos, const float3& dir) {
 
 	Command c(CMD_STOP);
 	return c;
-}
-
-
-
-
-void CGameHelper::Update()
-{
-	const int wdIdx = gs->frameNum & (waitingDamages.size() - 1);
-
-	// need to use explicit indexing because CUnit::DoDamage
-	// can add *new* WaitingDamage's for this frame while we
-	// are still iterating
-	for (size_t n = 0; n < waitingDamages[wdIdx].size(); n++) {
-		const WaitingDamage& wd = waitingDamages[wdIdx][n];
-
-		CUnit* attackee = unitHandler->GetUnit(wd.targetID);
-		CUnit* attacker = unitHandler->GetUnit(wd.attackerID); // null if wd.attacker is -1
-
-		if (attackee == nullptr)
-			continue;
-
-		attackee->DoDamage(wd.damage, wd.impulse, attacker, wd.weaponID, wd.projectileID);
-	}
-
-	waitingDamages[wdIdx].clear();
 }
 
