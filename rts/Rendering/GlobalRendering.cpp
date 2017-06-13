@@ -357,7 +357,7 @@ bool CGlobalRendering::CreateWindowAndContext(const char* title, bool minimized)
 	const int2 winRes = GetWantedViewSize(fullScreen);
 	const int2 minRes = {minWinSizeX, minWinSizeY};
 	const int2 minCtx = (mesaGL != nullptr && std::strlen(mesaGL) >= 3)?
-		int2{                 std::max(mesaGL[0] - '\0', 3),                  std::max(mesaGL[2] - '\0', 0)}:
+		int2{                  std::max(mesaGL[0] - '0', 3),                   std::max(mesaGL[2] - '0', 0)}:
 		int2{configHandler->GetInt("GLContextMajorVersion"), configHandler->GetInt("GLContextMinorVersion")};
 
 	// start with the standard (R8G8B8A8 + 24-bit depth + 8-bit stencil + DB) format
