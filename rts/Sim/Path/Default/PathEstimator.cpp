@@ -866,10 +866,10 @@ bool CPathEstimator::ReadFile(const std::string& baseFileName, const std::string
 	if (!FileSystem::FileExists(cacheFileName))
 		return false;
 
-	IArchive* pfile = archiveLoader.OpenArchive(dataDirsAccess.LocateFile(cacheFileName), "sdz");
+	std::unique_ptr<IArchive> upfile(archiveLoader.OpenArchive(dataDirsAccess.LocateFile(cacheFileName), "sdz"));
 
-	if (pfile == nullptr || !pfile->IsOpen()) {
-		delete pfile;
+	if (upfile == nullptr || !upfile->IsOpen()) {
+		FileSystem::Remove(cacheFileName);
 		return false;
 	}
 
@@ -877,42 +877,46 @@ bool CPathEstimator::ReadFile(const std::string& baseFileName, const std::string
 	sprintf(calcMsg, "Reading Estimate PathCosts [%d]", BLOCK_SIZE);
 	loadscreen->SetLoadMessage(calcMsg);
 
-	std::unique_ptr<IArchive> auto_pfile(pfile);
-	IArchive& file(*pfile);
-
-	const unsigned fid = file.FindFile("pathinfo");
-	if (fid >= file.NumFiles())
+	const unsigned fid = upfile->FindFile("pathinfo");
+	if (fid >= upfile->NumFiles()) {
+		FileSystem::Remove(cacheFileName);
 		return false;
+	}
 
-	pathChecksum = file.GetCrc32(fid);
+	pathChecksum = upfile->GetCrc32(fid);
 
 	std::vector<std::uint8_t> buffer;
-	if (!file.GetFile(fid, buffer))
+
+	if (!upfile->GetFile(fid, buffer) || buffer.size() < 4) {
+		FileSystem::Remove(cacheFileName);
 		return false;
+	}
 
-	if (buffer.size() < 4)
+	const unsigned int filehash = *(reinterpret_cast<unsigned int*>(&buffer[0]));
+	const unsigned int blockSize = blockStates.GetSize() * sizeof(short2);
+	unsigned int pos = sizeof(unsigned);
+
+	if (filehash != fileHashCode) {
+		FileSystem::Remove(cacheFileName);
 		return false;
+	}
 
-	unsigned pos = 0;
-	const unsigned filehash = *((unsigned*)&buffer[pos]);
-	const unsigned blockSize = blockStates.GetSize() * sizeof(short2);
-	pos += sizeof(unsigned);
-
-	if (filehash != fileHashCode)
+	if (buffer.size() < (pos + blockSize * moveDefHandler->GetNumMoveDefs())) {
+		FileSystem::Remove(cacheFileName);
 		return false;
+	}
 
-	// read block-center-offset data
-	if (buffer.size() < pos + blockSize * moveDefHandler->GetNumMoveDefs())
-		return false;
-
+	// read center-offset data
 	for (int pathType = 0; pathType < moveDefHandler->GetNumMoveDefs(); ++pathType) {
 		std::memcpy(&blockStates.peNodeOffsets[pathType][0], &buffer[pos], blockSize);
 		pos += blockSize;
 	}
 
 	// read vertex-cost data
-	if (buffer.size() < pos + vertexCosts.size() * sizeof(float))
+	if (buffer.size() < pos + vertexCosts.size() * sizeof(float)) {
+		FileSystem::Remove(cacheFileName);
 		return false;
+	}
 
 	std::memcpy(&vertexCosts[0], &buffer[pos], vertexCosts.size() * sizeof(float));
 	return true;
@@ -944,7 +948,7 @@ void CPathEstimator::WriteFile(const std::string& baseFileName, const std::strin
 	// write hash-code (NOTE: this also affects the CRC!)
 	zipWriteInFileInZip(file, (const void*) &fileHashCode, 4);
 
-	// write block-center-offsets
+	// write center-offsets
 	for (int pathType = 0; pathType < moveDefHandler->GetNumMoveDefs(); ++pathType) {
 		zipWriteInFileInZip(file, (const void*) &blockStates.peNodeOffsets[pathType][0], blockStates.peNodeOffsets[pathType].size() * sizeof(short2));
 	}
@@ -957,17 +961,15 @@ void CPathEstimator::WriteFile(const std::string& baseFileName, const std::strin
 
 
 	// get the CRC over the written path data
-	IArchive* pfile = archiveLoader.OpenArchive(dataDirsAccess.LocateFile(cacheFileName), "sdz");
+	std::unique_ptr<IArchive> upfile(archiveLoader.OpenArchive(dataDirsAccess.LocateFile(cacheFileName), "sdz"));
 
-	if (pfile == nullptr)
+	if (upfile == nullptr || !upfile->IsOpen()) {
+		FileSystem::Remove(cacheFileName);
 		return;
-
-	if (pfile->IsOpen()) {
-		assert(pfile->FindFile("pathinfo") < pfile->NumFiles());
-		pathChecksum = pfile->GetCrc32(pfile->FindFile("pathinfo"));
 	}
 
-	delete pfile;
+	assert(upfile->FindFile("pathinfo") < upfile->NumFiles());
+	pathChecksum = upfile->GetCrc32(upfile->FindFile("pathinfo"));
 }
 
 
