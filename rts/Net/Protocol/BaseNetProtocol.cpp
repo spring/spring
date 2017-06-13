@@ -63,7 +63,7 @@ PacketType CBaseNetProtocol::SendSetPlayerNum(uint8_t myPlayerNum)
 PacketType CBaseNetProtocol::SendPlayerName(uint8_t myPlayerNum, const std::string& playerName)
 {
 	const uint32_t payloadSize = sizeof(myPlayerNum) + (playerName.size() + 1);
-	const uint32_t headerSize = sizeof(uint8_t);
+	const uint32_t headerSize = sizeof(uint8_t) + sizeof(uint8_t);
 	const uint32_t packetSize = headerSize + payloadSize;
 
 	PackPacket* packet = new PackPacket(packetSize, NETMSG_PLAYERNAME);
