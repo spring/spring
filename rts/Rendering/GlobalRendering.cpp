@@ -29,8 +29,8 @@
 CONFIG(bool, DebugGL).defaultValue(false).description("Enables _driver_ debug feedback. (see GL_ARB_debug_output)");
 CONFIG(bool, DebugGLStacktraces).defaultValue(false).description("Create a stacktrace when an OpenGL error occurs");
 
-CONFIG(int, GLContextMajorVersion).defaultValue(3).minimumValue(3).maximumValue(4);
-CONFIG(int, GLContextMinorVersion).defaultValue(0).minimumValue(0).maximumValue(5);
+CONFIG(int, GLContextMajorVersion).defaultValue(4).minimumValue(4).maximumValue(4);
+CONFIG(int, GLContextMinorVersion).defaultValue(1).minimumValue(0).maximumValue(5);
 CONFIG(int, FSAALevel).defaultValue(0).minimumValue(0).maximumValue(32).description("If >0 enables FullScreen AntiAliasing.");
 
 CONFIG(int, ForceDisableShaders).defaultValue(0).minimumValue(0).maximumValue(1);
@@ -255,7 +255,7 @@ bool CGlobalRendering::CreateSDLWindow(const int2& winRes, const int2& minRes, c
 				continue;
 			}
 
-			LOG("[GR::%s] using %dx anti-aliasing and %d-bit depth-buffer (PF=%s)", __func__, aaLvls[i], zbBits[j], SDL_GetPixelFormatName(SDL_GetWindowPixelFormat(window)));
+			LOG("[GR::%s] using %dx anti-aliasing and %d-bit depth-buffer (PF=\"%s\")", __func__, aaLvls[i], zbBits[j], SDL_GetPixelFormatName(SDL_GetWindowPixelFormat(window)));
 		}
 	}
 
@@ -639,9 +639,6 @@ void CGlobalRendering::QueryVersionInfo(char (&sdlVersionStr)[64], char (&glVidM
 
 	constexpr const char* sdlFmtStr = "%d.%d.%d (linked) / %d.%d.%d (compiled)";
 	constexpr const char* memFmtStr = "%iMB (total) / %iMB (available)";
-	constexpr const char* msgBoxStr =
-		"Your system has less than 1GB of GPU memory. You may experience"
-		" graphical glitches or crashes when playing longer/larger games.";
 
 	SNPRINTF(sdlVersionStr, sizeof(sdlVersionStr), sdlFmtStr,
 		globalRenderingInfo.sdlVersionLinked.major, globalRenderingInfo.sdlVersionLinked.minor, globalRenderingInfo.sdlVersionLinked.patch,
@@ -653,13 +650,6 @@ void CGlobalRendering::QueryVersionInfo(char (&sdlVersionStr)[64], char (&glVidM
 	if (GetAvailableVideoRAM(vidMemBuffer, globalRenderingInfo.glVendor)) {
 		const GLint totalMemMB = vidMemBuffer[0] / 1024;
 		const GLint availMemMB = vidMemBuffer[1] / 1024;
-
-		#if !defined(DEDICATED) && !defined(HEADLESS)
-		if (totalMemMB < 1024)
-			Platform::MsgBox(msgBoxStr, "WARNING", MBF_OK | MBF_EXCL);
-		#else
-		(void) msgBoxStr;
-		#endif
 
 		SNPRINTF(glVidMemStr, sizeof(glVidMemStr), memFmtStr, gpuMemorySize = totalMemMB, availMemMB);
 	}
