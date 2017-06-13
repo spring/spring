@@ -19,7 +19,7 @@ struct PlayerStatistics;
 struct TeamStatistics;
 
 
-static const unsigned short NETWORK_VERSION = atoi(SpringVersion::GetMajor().c_str());
+static const uint16_t NETWORK_VERSION = atoi(SpringVersion::GetMajor().c_str());
 
 
 /*
@@ -27,10 +27,10 @@ static const unsigned short NETWORK_VERSION = atoi(SpringVersion::GetMajor().c_s
  * the net message.
  * An empty comment means no extra data (message is only 1 byte).
  * Messages either consist of:
- *  1. uchar command; (NETMSG_* constant) and the specified extra data; or
- *  2. uchar command; uchar messageSize; and the specified extra data,
+ *  1. uint8_t command; (NETMSG_* constant) and the specified extra data; or
+ *  2. uint8_t command; uint8_t messageSize; and the specified extra data,
  *     for messages that contain a trailing std::string in the extra data; or
- *  3. uchar command; short messageSize; and the specified extra data,
+ *  3. uint8_t command; uint16_t messageSize; and the specified extra data,
  *     for messages that contain a trailing std::vector in the extra data.
  * Note that NETMSG_MAPDRAW can behave like 1. or 2. depending on the
  * MapDrawAction::NET_* command. messageSize is always the size of the entire
@@ -38,44 +38,44 @@ static const unsigned short NETWORK_VERSION = atoi(SpringVersion::GetMajor().c_s
  */
 
 enum NETMSG {
-	NETMSG_KEYFRAME         = 1,  // int framenum
+	NETMSG_KEYFRAME         = 1,  // int32_t framenum
 	NETMSG_NEWFRAME         = 2,  //
 	NETMSG_QUIT             = 3,  // string reason
-	NETMSG_STARTPLAYING     = 4,  // uint countdown
-	NETMSG_SETPLAYERNUM     = 5,  // uchar myPlayerNum;
-	NETMSG_PLAYERNAME       = 6,  // uchar myPlayerNum; std::string playerName;
-	NETMSG_CHAT             = 7,  // uchar from, dest; std::string message;
-	NETMSG_RANDSEED         = 8,  // uint randSeed;
-	NETMSG_GAMEID           = 9,  // uchar gameID[16];
-	NETMSG_PATH_CHECKSUM    = 10, // uchar myPlayerNum, std::uint32_t checksum
-	NETMSG_COMMAND          = 11, // uchar myPlayerNum; int id; uchar options; std::vector<float> params;
-	NETMSG_SELECT           = 12, // uchar myPlayerNum; std::vector<short> selectedUnitIDs;
-	NETMSG_PAUSE            = 13, // uchar playerNum, bPaused;
+	NETMSG_STARTPLAYING     = 4,  // uint32_t countdown
+	NETMSG_SETPLAYERNUM     = 5,  // uint8_t myPlayerNum;
+	NETMSG_PLAYERNAME       = 6,  // uint8_t myPlayerNum; std::string playerName;
+	NETMSG_CHAT             = 7,  // uint8_t from, dest; std::string message;
+	NETMSG_RANDSEED         = 8,  // uint32_t randSeed;
+	NETMSG_GAMEID           = 9,  // uint8_t gameID[16];
+	NETMSG_PATH_CHECKSUM    = 10, // uint8_t myPlayerNum, uint32_t checksum
+	NETMSG_COMMAND          = 11, // uint8_t myPlayerNum; int32_t id; uint8_t options; std::vector<float> params;
+	NETMSG_SELECT           = 12, // uint8_t myPlayerNum; std::vector<int16_t> selectedUnitIDs;
+	NETMSG_PAUSE            = 13, // uint8_t playerNum, bPaused;
 
-	NETMSG_AICOMMAND        = 14, // uchar myPlayerNum; uchar aiID; short unitID; int id; uchar options; std::vector<float> params;
-	NETMSG_AICOMMANDS       = 15, // uchar myPlayerNum; uchar aiID; uchar pairwise, uint sameCmdID, uchar sameCmdOpt, ushort sameCmdParamSize;
-	                              // short unitIDCount;  unitIDCount * short(unitID)
-	                              // short commandCount; commandCount * { int id; uchar options; std::vector<float> params }
-	NETMSG_AISHARE          = 16, // uchar myPlayerNum, uchar aiID, uchar sourceTeam, uchar destTeam, float metal, float energy, std::vector<short> unitIDs
+	NETMSG_AICOMMAND        = 14, // uint8_t myPlayerNum; uint8_t aiID; int16_t unitID; int32_t id; uint8_t options; std::vector<float> params;
+	NETMSG_AICOMMANDS       = 15, // uint8_t myPlayerNum; uint8_t aiID; uint8_t pairwise, uint32_t sameCmdID, uint8_t sameCmdOpt, uint16_t sameCmdParamSize;
+	                              // int16_t unitIDCount;  unitIDCount * int16_t(unitID)
+	                              // int16_t commandCount; commandCount * { int32_t id; uint8_t options; std::vector<float> params }
+	NETMSG_AISHARE          = 16, // uint8_t myPlayerNum, uint8_t aiID, uint8_t sourceTeam, uint8_t destTeam, float metal, float energy, std::vector<int16_t> unitIDs
 
-	NETMSG_USER_SPEED       = 19, // uchar myPlayerNum, float userSpeed;
+	NETMSG_USER_SPEED       = 19, // uint8_t myPlayerNum, float userSpeed;
 	NETMSG_INTERNAL_SPEED   = 20, // float internalSpeed;
 	NETMSG_CPU_USAGE        = 21, // float cpuUsage;
-	NETMSG_DIRECT_CONTROL   = 22, // uchar myPlayerNum;
-	NETMSG_DC_UPDATE        = 23, // uchar myPlayerNum, status; short heading, pitch;
-	NETMSG_SHARE            = 26, // uchar myPlayerNum, shareTeam, bShareUnits; float shareMetal, shareEnergy;
-	NETMSG_SETSHARE         = 27, // uchar myPlayerNum, uchar myTeam; float metalShareFraction, energyShareFraction;
+	NETMSG_DIRECT_CONTROL   = 22, // uint8_t myPlayerNum;
+	NETMSG_DC_UPDATE        = 23, // uint8_t myPlayerNum, status; int16_t heading, pitch;
+	NETMSG_SHARE            = 26, // uint8_t myPlayerNum, shareTeam, bShareUnits; float shareMetal, shareEnergy;
+	NETMSG_SETSHARE         = 27, // uint8_t myPlayerNum, uint8_t myTeam; float metalShareFraction, energyShareFraction;
 
-	NETMSG_PLAYERSTAT       = 29, // uchar myPlayerNum; CPlayer::Statistics currentStats;
-	NETMSG_GAMEOVER         = 30, // uchar myPlayerNum; std::vector<uchar> winningAllyTeams
-	NETMSG_MAPDRAW          = 31, // uchar messageSize =  8, myPlayerNum, command = MapDrawAction::NET_ERASE; short x, z;
-	                              // uchar messageSize = 12, myPlayerNum, command = MapDrawAction::NET_LINE; short x1, z1, x2, z2;
-	                              // /*messageSize*/   uchar myPlayerNum, command = MapDrawAction::NET_POINT; short x, z; std::string label;
-	NETMSG_SYNCRESPONSE     = 33, // uchar myPlayerNum; int frameNum; uint checksum;
-	NETMSG_SYSTEMMSG        = 35, // uchar myPlayerNum, std::string message;
-	NETMSG_STARTPOS         = 36, // uchar myPlayerNum, uchar myTeam, ready /*0: not ready, 1: ready, 2: don't update readiness*/; float x, y, z;
-	NETMSG_PLAYERINFO       = 38, // uchar myPlayerNum; float cpuUsage; int ping /*in milliseconds*/;
-	NETMSG_PLAYERLEFT       = 39, // uchar myPlayerNum, bIntended /*0: lost connection, 1: left, 2: forced (kicked) */;
+	NETMSG_PLAYERSTAT       = 29, // uint8_t myPlayerNum; CPlayer::Statistics currentStats;
+	NETMSG_GAMEOVER         = 30, // uint8_t myPlayerNum; std::vector<uint8_t> winningAllyTeams
+	NETMSG_MAPDRAW          = 31, // uint8_t messageSize =  8, myPlayerNum, command = MapDrawAction::NET_ERASE; int16_t x, z;
+	                              // uint8_t messageSize = 12, myPlayerNum, command = MapDrawAction::NET_LINE; int16_t x1, z1, x2, z2;
+	                              // /*messageSize*/   uint8_t myPlayerNum, command = MapDrawAction::NET_POINT; int16_t x, z; std::string label;
+	NETMSG_SYNCRESPONSE     = 33, // uint8_t myPlayerNum; int32_t frameNum; uint32_t checksum;
+	NETMSG_SYSTEMMSG        = 35, // uint8_t myPlayerNum, std::string message;
+	NETMSG_STARTPOS         = 36, // uint8_t myPlayerNum, uint8_t myTeam, ready /*0: not ready, 1: ready, 2: don't update readiness*/; float x, y, z;
+	NETMSG_PLAYERINFO       = 38, // uint8_t myPlayerNum; float cpuUsage; int32_t ping /*in milliseconds*/;
+	NETMSG_PLAYERLEFT       = 39, // uint8_t myPlayerNum, bIntended /*0: lost connection, 1: left, 2: forced (kicked) */;
 
 #ifdef SYNCDEBUG
 	NETMSG_SD_CHKREQUEST    = 41,
@@ -85,28 +85,30 @@ enum NETMSG {
 	NETMSG_SD_RESET         = 45,
 #endif // SYNCDEBUG
 
-	NETMSG_LUAMSG           = 50, // /* uint16_t messageSize */, uchar myPlayerNum, unsigned short script, uchar mode, std::vector<uint8_t> msg
-	NETMSG_TEAM             = 51, // uchar myPlayerNum, uchar action, uchar parameter1
-	NETMSG_GAMEDATA         = 52, // /* uchar messageSize */, std::string setupText, std::string script, std::string map, int mapChecksum,
-	                              // std::string mod, int modChecksum, int randomSeed (each string ends with \0)
-	NETMSG_ALLIANCE         = 53, // uchar myPlayerNum, uchar otherAllyTeam, uchar allianceState (0 = not allied / 1 = allied)
-	NETMSG_CCOMMAND         = 54, // /* short! messageSize */, int! myPlayerNum, std::string command, std::string extra (each string ends with \0)
-	NETMSG_TEAMSTAT         = 60, // uchar teamNum, struct TeamStatistics statistics      # used by LadderBot #
+	NETMSG_LOGMSG           = 49, // uint8_t myPlayerNum, std::string message
+	NETMSG_LUAMSG           = 50, // /* uint16_t messageSize */, uint8_t myPlayerNum, uint16_t script, uint8_t mode, std::vector<uint8_t> msg
+
+	NETMSG_TEAM             = 51, // uint8_t myPlayerNum, uint8_t action, uint8_t parameter1
+	NETMSG_GAMEDATA         = 52, // /* uint8_t messageSize */, std::string setupText, std::string script, std::string map, int32_t mapChecksum,
+	                              // std::string mod, int32_t modChecksum, int32_t randomSeed (each string ends with \0)
+	NETMSG_ALLIANCE         = 53, // uint8_t myPlayerNum, uint8_t otherAllyTeam, uint8_t allianceState (0 = not allied / 1 = allied)
+	NETMSG_CCOMMAND         = 54, // /* int16_t! messageSize */, int! myPlayerNum, std::string command, std::string extra (each string ends with \0)
+	NETMSG_TEAMSTAT         = 60, // uint8_t teamNum, struct TeamStatistics statistics      # used by LadderBot #
 	NETMSG_CLIENTDATA       = 61, // uint16_t messageSize, std::string setupText
 
-	NETMSG_ATTEMPTCONNECT   = 65, // ushort msgsize, ushort netversion, string playername, string passwd, string VERSION_STRING_DETAILED
+	NETMSG_ATTEMPTCONNECT   = 65, // uint16_t msgsize, uint16_t netversion, string playername, string passwd, string VERSION_STRING_DETAILED
 	NETMSG_REJECT_CONNECT   = 66, // string reason
 
-	NETMSG_AI_CREATED       = 70, // /* uchar messageSize */, uchar myPlayerNum, uchar whichSkirmishAI, uchar team, std::string name (ends with \0)
-	NETMSG_AI_STATE_CHANGED = 71, // uchar myPlayerNum, uchar whichSkirmishAI, uchar newState
+	NETMSG_AI_CREATED       = 70, // /* uint8_t messageSize */, uint8_t myPlayerNum, uint8_t whichSkirmishAI, uint8_t team, std::string name (ends with \0)
+	NETMSG_AI_STATE_CHANGED = 71, // uint8_t myPlayerNum, uint8_t whichSkirmishAI, uint8_t newState
 
-	NETMSG_REQUEST_TEAMSTAT = 72, // uchar teamNum, ushort statFrameNum                   # used by LadderBot #
+	NETMSG_REQUEST_TEAMSTAT = 72, // uint8_t teamNum, uint16_t statFrameNum                   # used by LadderBot #
 
-	NETMSG_CREATE_NEWPLAYER = 75, // uchar myPlayerNum, uchar spectator, uchar teamNum, std::string playerName #used for players not preset in script.txt#
+	NETMSG_CREATE_NEWPLAYER = 75, // uint8_t myPlayerNum, uint8_t spectator, uint8_t teamNum, std::string playerName #used for players not preset in script.txt#
 
-	NETMSG_AICOMMAND_TRACKED= 76,  // uchar myPlayerNum; uchar aiID; short unitID; int id; uchar options; int aiCommandId, std::vector<float> params;
+	NETMSG_AICOMMAND_TRACKED= 76,  // uint8_t myPlayerNum; uint8_t aiID; int16_t unitID; int32_t id; uint8_t options; int32_t aiCommandId, std::vector<float> params;
 
-	NETMSG_GAME_FRAME_PROGRESS= 77, // int frameNum # this special packet skips queue & cache entirely, indicates current game progress for clients fast-forwarding to current point the game #
+	NETMSG_GAME_FRAME_PROGRESS= 77, // int32_t frameNum # this special packet skips queue & cache entirely, indicates current game progress for clients fast-forwarding to current point the game #
 
 
 	NETMSG_LAST //max types of netmessages, internal only
@@ -139,90 +141,84 @@ enum MapDrawAction {
 class CBaseNetProtocol
 {
 public:
-	typedef unsigned char uchar;
-	typedef unsigned int uint;
 	typedef std::shared_ptr<const netcode::RawPacket> PacketType;
 
 	static CBaseNetProtocol& Get();
 
-	PacketType SendKeyFrame(int frameNum);
+	PacketType SendKeyFrame(int32_t frameNum);
 	PacketType SendNewFrame();
 	PacketType SendQuit(const std::string& reason);
 	/// client can send these to force-start the game
-	PacketType SendStartPlaying(unsigned countdown);
-	PacketType SendSetPlayerNum(uchar myPlayerNum);
-	PacketType SendPlayerName(uchar myPlayerNum, const std::string& playerName);
-	PacketType SendRandSeed(uint randSeed);
-	PacketType SendGameID(const uchar* buf);
-	PacketType SendPathCheckSum(uchar myPlayerNum, std::uint32_t checksum);
-	PacketType SendCommand(uchar myPlayerNum, int id, uchar options, const std::vector<float>& params);
-	PacketType SendSelect(uchar myPlayerNum, const std::vector<short>& selectedUnitIDs);
-	PacketType SendPause(uchar myPlayerNum, uchar bPaused);
+	PacketType SendStartPlaying(uint32_t countdown);
+	PacketType SendSetPlayerNum(uint8_t myPlayerNum);
+	PacketType SendPlayerName(uint8_t myPlayerNum, const std::string& playerName);
+	PacketType SendRandSeed(uint32_t randSeed);
+	PacketType SendGameID(const uint8_t* buf);
+	PacketType SendPathCheckSum(uint8_t myPlayerNum, uint32_t checksum);
+	PacketType SendCommand(uint8_t myPlayerNum, int32_t id, uint8_t options, const std::vector<float>& params);
+	PacketType SendSelect(uint8_t myPlayerNum, const std::vector<int16_t>& selectedUnitIDs);
+	PacketType SendPause(uint8_t myPlayerNum, uint8_t bPaused);
 
-	PacketType SendAICommand(uchar myPlayerNum, unsigned char aiID, short unitID, int id, int aiCommandId, uchar options, const std::vector<float>& params);
-	PacketType SendAIShare(uchar myPlayerNum, unsigned char aiID, uchar sourceTeam, uchar destTeam, float metal, float energy, const std::vector<short>& unitIDs);
+	PacketType SendAICommand(uint8_t myPlayerNum, uint8_t aiID, int16_t unitID, int32_t commandID, int32_t aiCommandID, uint8_t options, const std::vector<float>& params);
+	PacketType SendAIShare(uint8_t myPlayerNum, uint8_t aiID, uint8_t sourceTeam, uint8_t destTeam, float metal, float energy, const std::vector<int16_t>& unitIDs);
 
-	PacketType SendUserSpeed(uchar myPlayerNum, float userSpeed);
+	PacketType SendUserSpeed(uint8_t myPlayerNum, float userSpeed);
 	PacketType SendInternalSpeed(float internalSpeed);
 	PacketType SendCPUUsage(float cpuUsage);
-	PacketType SendCustomData(uchar myPlayerNum, uchar dataType, int dataValue);
-	PacketType SendLuaDrawTime(uchar myPlayerNum, int mSec);
-	PacketType SendDirectControl(uchar myPlayerNum);
-	PacketType SendDirectControlUpdate(uchar myPlayerNum, uchar status, short heading, short pitch);
-	PacketType SendAttemptConnect(const std::string& name, const std::string& passwd, const std::string& version, int netloss, bool reconnect = false);
+	PacketType SendCustomData(uint8_t myPlayerNum, uint8_t dataType, int32_t dataValue);
+	PacketType SendLuaDrawTime(uint8_t myPlayerNum, int32_t mSec);
+	PacketType SendDirectControl(uint8_t myPlayerNum);
+	PacketType SendDirectControlUpdate(uint8_t myPlayerNum, uint8_t status, int16_t heading, int16_t pitch);
+	PacketType SendAttemptConnect(const std::string& name, const std::string& passwd, const std::string& version, int32_t netloss, bool reconnect = false);
 	PacketType SendRejectConnect(const std::string& reason);
-	PacketType SendShare(uchar myPlayerNum, uchar shareTeam, uchar bShareUnits, float shareMetal, float shareEnergy);
-	PacketType SendSetShare(uchar myPlayerNum, uchar myTeam, float metalShareFraction, float energyShareFraction);
-	PacketType SendGameOver(uchar myPlayerNum, const std::vector<uchar>& winningAllyTeams);
-	PacketType SendMapErase(uchar myPlayerNum, short x, short z);
-	PacketType SendMapDrawLine(uchar myPlayerNum, short x1, short z1, short x2, short z2, bool);
-	PacketType SendMapDrawPoint(uchar myPlayerNum, short x, short z, const std::string& label, bool);
-	PacketType SendSyncResponse(uchar myPlayerNum, int frameNum, uint checksum);
-	PacketType SendSystemMessage(uchar myPlayerNum, std::string message);
-	PacketType SendStartPos(uchar myPlayerNum, uchar teamNum, uchar readyState, float x, float y, float z);
-	PacketType SendPlayerInfo(uchar myPlayerNum, float cpuUsage, int ping);
-	PacketType SendPlayerLeft(uchar myPlayerNum, uchar bIntended);
-	PacketType SendLuaMsg(uchar myPlayerNum, unsigned short script, uchar mode, const std::vector<std::uint8_t>& msg);
-	PacketType SendCurrentFrameProgress(int frameNum);
+	PacketType SendShare(uint8_t myPlayerNum, uint8_t shareTeam, uint8_t bShareUnits, float shareMetal, float shareEnergy);
+	PacketType SendSetShare(uint8_t myPlayerNum, uint8_t myTeam, float metalShareFraction, float energyShareFraction);
+	PacketType SendGameOver(uint8_t myPlayerNum, const std::vector<uint8_t>& winningAllyTeams);
+	PacketType SendMapErase(uint8_t myPlayerNum, int16_t x, int16_t z);
+	PacketType SendMapDrawLine(uint8_t myPlayerNum, int16_t x1, int16_t z1, int16_t x2, int16_t z2, bool);
+	PacketType SendMapDrawPoint(uint8_t myPlayerNum, int16_t x, int16_t z, const std::string& label, bool);
+	PacketType SendSyncResponse(uint8_t myPlayerNum, int32_t frameNum, uint32_t checksum);
+	PacketType SendSystemMessage(uint8_t myPlayerNum, std::string message);
+	PacketType SendStartPos(uint8_t myPlayerNum, uint8_t teamNum, uint8_t readyState, float x, float y, float z);
+	PacketType SendPlayerInfo(uint8_t myPlayerNum, float cpuUsage, int32_t ping);
+	PacketType SendPlayerLeft(uint8_t myPlayerNum, uint8_t bIntended);
+	PacketType SendLogMsg(uint8_t myPlayerNum, const std::string& msg);
+	PacketType SendLuaMsg(uint8_t myPlayerNum, uint16_t script, uint8_t mode, const std::vector<uint8_t>& msg);
+	PacketType SendCurrentFrameProgress(int32_t frameNum);
 
-	PacketType SendPlayerStat(uchar myPlayerNum, const PlayerStatistics& currentStats);
-	PacketType SendTeamStat(uchar teamNum, const TeamStatistics& currentStats);
+	PacketType SendPlayerStat(uint8_t myPlayerNum, const PlayerStatistics& currentStats);
+	PacketType SendTeamStat(uint8_t teamNum, const TeamStatistics& currentStats);
 
-	PacketType SendGiveAwayEverything(uchar myPlayerNum, uchar giveToTeam);
+	PacketType SendGiveAwayEverything(uint8_t myPlayerNum, uint8_t giveToTeam);
 	/**
 	 * Gives everything from one team to another.
 	 * The player issuing this command has to be leader of the takeFromTeam.
 	 */
-	PacketType SendGiveAwayEverything(uchar myPlayerNum, uchar giveToTeam, uchar takeFromTeam);
-	PacketType SendResign(uchar myPlayerNum);
-	PacketType SendJoinTeam(uchar myPlayerNum, uchar wantedTeamNum);
+	PacketType SendGiveAwayEverything(uint8_t myPlayerNum, uint8_t giveToTeam, uint8_t takeFromTeam);
+	PacketType SendResign(uint8_t myPlayerNum);
+	PacketType SendJoinTeam(uint8_t myPlayerNum, uint8_t wantedTeamNum);
 	/**
 	 * This is currently only used to inform the server about its death.
 	 * It may have some problems when desync, because the team may not die
 	 * on every client.
 	 */
-	PacketType SendTeamDied(uchar myPlayerNum, uchar whichTeam);
+	PacketType SendTeamDied(uint8_t myPlayerNum, uint8_t whichTeam);
 
-	PacketType SendAICreated(const uchar myPlayerNum,
-	                         const uchar whichSkirmishAI,
-	                         const uchar team,
-	                         const std::string& name);
-	PacketType SendAIStateChanged(const uchar myPlayerNum,
-	                              const uchar whichSkirmishAI,
-	                              const uchar newState);
+	PacketType SendAICreated(uint8_t myPlayerNum, uint8_t whichSkirmishAI, uint8_t team, const std::string& name);
+	PacketType SendAIStateChanged(uint8_t myPlayerNum, uint8_t whichSkirmishAI, uint8_t newState);
 
-	PacketType SendSetAllied(uchar myPlayerNum, uchar whichAllyTeam, uchar state);
+	PacketType SendSetAllied(uint8_t myPlayerNum, uint8_t whichAllyTeam, uint8_t state);
 
-	PacketType SendCreateNewPlayer( uchar playerNum, bool spectator, uchar teamNum, std::string playerName);
+	PacketType SendCreateNewPlayer( uint8_t playerNum, bool spectator, uint8_t teamNum, std::string playerName);
 
-	PacketType SendClientData(uchar playerNum, const std::vector<std::uint8_t>& data);
+	PacketType SendClientData(uint8_t playerNum, const std::vector<uint8_t>& data);
 
 #ifdef SYNCDEBUG
-	PacketType SendSdCheckrequest(int frameNum);
-	PacketType SendSdCheckresponse(uchar myPlayerNum, std::uint64_t flop, std::vector<unsigned> checksums);
+	PacketType SendSdCheckrequest(int32_t frameNum);
+	PacketType SendSdCheckresponse(uint8_t myPlayerNum, uint64_t flop, std::vector<uint32_t> checksums);
 	PacketType SendSdReset();
-	PacketType SendSdBlockrequest(unsigned short begin, unsigned short length, unsigned short requestSize);
-	PacketType SendSdBlockresponse(uchar myPlayerNum, std::vector<unsigned> checksums);
+	PacketType SendSdBlockrequest(uint16_t begin, uint16_t length, uint16_t requestSize);
+	PacketType SendSdBlockresponse(uint8_t myPlayerNum, std::vector<uint32_t> checksums);
 #endif
 
 private:

@@ -45,34 +45,32 @@ void CNetProtocol::InitClient(const char* server_addr, unsigned portnum, const s
 	userName = myName;
 	userPasswd = myPasswd;
 
-	netcode::UDPConnection* conn = new netcode::UDPConnection(configHandler->GetInt("SourcePort"), server_addr, portnum);
-	conn->Unmute();
-	serverConn.reset(conn);
+	serverConn.reset(new netcode::UDPConnection(configHandler->GetInt("SourcePort"), server_addr, portnum));
+	serverConn->Unmute();
 	serverConn->SendData(CBaseNetProtocol::Get().SendAttemptConnect(userName, userPasswd, myVersion, globalConfig->networkLossFactor));
 	serverConn->Flush(true);
 
-	LOG("Connecting to %s:%i using name %s", server_addr, portnum, myName.c_str());
+	LOG("[NetProto::%s] connecting to IP %s on port %i using name %s", __func__, server_addr, portnum, myName.c_str());
 }
 
 void CNetProtocol::InitLocalClient()
 {
-	serverConn.reset(new netcode::CLocalConnection);
+	serverConn.reset(new netcode::CLocalConnection());
 	serverConn->Flush();
 
-	LOG("Connecting to local server");
+	LOG("[NetProto::%s] connecting to local server", __func__);
 }
 
 
 void CNetProtocol::AttemptReconnect(const std::string& myVersion)
 {
-	netcode::UDPConnection* conn = new netcode::UDPConnection(*serverConn);
-	conn->Unmute();
-	conn->SendData(CBaseNetProtocol::Get().SendAttemptConnect(userName, userPasswd, myVersion, globalConfig->networkLossFactor, true));
-	conn->Flush(true);
+	netcode::UDPConnection conn(*serverConn);
 
-	LOG("Reconnecting to server... %ds", dynamic_cast<netcode::UDPConnection&>(*serverConn).GetReconnectSecs());
+	conn.Unmute();
+	conn.SendData(CBaseNetProtocol::Get().SendAttemptConnect(userName, userPasswd, myVersion, globalConfig->networkLossFactor, true));
+	conn.Flush(true);
 
-	delete conn;
+	LOG("[NetProto::%s] reconnecting to server... %ds", __func__, dynamic_cast<netcode::UDPConnection&>(*serverConn).GetReconnectSecs());
 }
 
 
