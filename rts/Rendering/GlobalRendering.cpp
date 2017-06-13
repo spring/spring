@@ -349,11 +349,16 @@ bool CGlobalRendering::CreateWindowAndContext(const char* title, bool minimized)
 		return false;
 	}
 
+	// should be set to "3.0" (non-core Mesa is stuck there), see below
+	const char* mesaGL = getenv("MESA_GL_VERSION_OVERRIDE");
+	const char* softGL = getenv("LIBGL_ALWAYS_SOFTWARE");
+
 	// get wanted resolution and context-version
 	const int2 winRes = GetWantedViewSize(fullScreen);
 	const int2 minRes = {minWinSizeX, minWinSizeY};
-	const int2 minCtx = {configHandler->GetInt("GLContextMajorVersion"), configHandler->GetInt("GLContextMinorVersion")};
-
+	const int2 minCtx = (mesaGL != nullptr && std::strlen(mesaGL) >= 3)?
+		int2{                 std::max(mesaGL[0] - '\0', 3),                  std::max(mesaGL[2] - '\0', 0)}:
+		int2{configHandler->GetInt("GLContextMajorVersion"), configHandler->GetInt("GLContextMinorVersion")};
 
 	// start with the standard (R8G8B8A8 + 24-bit depth + 8-bit stencil + DB) format
 	SDL_GL_SetAttribute(SDL_GL_RED_SIZE,   8);
@@ -378,7 +383,7 @@ bool CGlobalRendering::CreateWindowAndContext(const char* title, bool minimized)
 
 
 	if (fsaaLevel > 0) {
-		if (getenv("LIBGL_ALWAYS_SOFTWARE") != nullptr)
+		if (softGL != nullptr)
 			LOG_L(L_WARNING, "FSAALevel > 0 and LIBGL_ALWAYS_SOFTWARE set, this will very likely crash!");
 
 		make_even_number(fsaaLevel);
@@ -514,7 +519,7 @@ void CGlobalRendering::SetGLSupportFlags()
 		throw unsupported_error("OpenGL shaders not supported, aborting");
 	#endif
 
-	// useful if a GPU claims to support GL3 and shaders but crashes (Intels...)
+	// useful if a GPU claims to support GL4 and shaders but crashes (Intels...)
 	haveARB  &= !forceDisableShaders;
 	haveGLSL &= !forceDisableShaders;
 
