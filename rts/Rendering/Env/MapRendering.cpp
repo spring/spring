@@ -20,6 +20,7 @@ void CMapRendering::Init() {
 
 	splatTexScales = mapInfo->splats.texScales;
 	splatTexMults = mapInfo->splats.texMults;
+	splatDetailNormalDiffuseAlpha = mapInfo->smf.splatDetailNormalDiffuseAlpha;
 	voidWater = mapInfo->map.voidWater;
 	voidGround = mapInfo->map.voidGround;
 }

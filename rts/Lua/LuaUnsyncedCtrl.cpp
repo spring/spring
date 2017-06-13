@@ -2890,6 +2890,8 @@ int LuaUnsyncedCtrl::SetMapRenderingParams(lua_State* L)
 				mapRendering->voidWater = value;
 			} else if (key == "voidGround") {
 				mapRendering->voidGround = value;
+			} else if (key == "splatDetailNormalDiffuseAlpha") {
+				mapRendering->splatDetailNormalDiffuseAlpha = value;
 			} else {
 				luaL_error(L, "Unknown boolean key %s", key.c_str());
 			}

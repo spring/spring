@@ -63,7 +63,6 @@ CSMFReadMap::CSMFReadMap(std::string mapname)
 
 	// Detail Normal Splatting requires at least one splatDetailNormalTexture and a distribution texture
 	haveSplatNormalDistribTexture &= !mapInfo->smf.splatDistrTexName.empty();
-	haveDetailNormalDiffuseAlpha   =  mapInfo->smf.splatDetailNormalDiffuseAlpha;
 
 	ParseHeader();
 	LoadHeightMap();

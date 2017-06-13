@@ -12,6 +12,7 @@ public:
 public:
 	float4 splatTexScales;
 	float4 splatTexMults;
+	bool   splatDetailNormalDiffuseAlpha;
 	bool   voidWater;
 	bool   voidGround;
 };

@@ -142,7 +142,6 @@ public:
 		if (splatNormalTextures[3].GetID() != 0) return true;
 		return false;
 	}
-	bool HaveDetailNormalDiffuseAlpha() const { return haveDetailNormalDiffuseAlpha; }
 
 private:
 	void ParseHeader();
@@ -228,7 +227,6 @@ private:
 	bool haveSpecularTexture;
 	bool haveSplatDetailDistribTexture; // true if we have both splatDetailTex and splatDistrTex
 	bool haveSplatNormalDistribTexture; // true if we have splatDistrTex and at least one splat[Detail]NormalTex
-	bool haveDetailNormalDiffuseAlpha;
 
 	bool shadingTexUpdateNeeded;
 };

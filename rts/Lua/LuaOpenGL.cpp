@@ -4615,7 +4615,10 @@ int LuaOpenGL::GetMapRendering(lua_State* L)
 		return 1;
 	} else if (key == "voidGround") {
 		lua_pushboolean(L, mapRendering->voidGround);
-		return 1;;
+		return 1;
+	} else if (key == "splatDetailNormalDiffuseAlpha") {
+		lua_pushboolean(L, mapRendering->splatDetailNormalDiffuseAlpha);
+		return 1;
 	}
 
 	luaL_error(L, "Unknown key %s", key.c_str());
