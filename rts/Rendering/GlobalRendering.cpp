@@ -70,9 +70,12 @@ CR_REG_METADATA(CGlobalRendering, (
 	CR_MEMBER(drawGround),
 	CR_MEMBER(drawMapMarks),
 	CR_MEMBER(drawFog),
+
 	CR_MEMBER(drawdebug),
 	CR_MEMBER(drawdebugtraceray),
 	CR_MEMBER(glDebug),
+	CR_MEMBER(glDebugErrors),
+
 	CR_MEMBER(timeOffset),
 	CR_MEMBER(lastFrameTime),
 	CR_MEMBER(lastFrameStart),
@@ -183,6 +186,7 @@ CGlobalRendering::CGlobalRendering()
 	, drawGround(true)
 	, drawMapMarks(true)
 	, drawFog(true)
+
 	, drawdebug(false)
 	, drawdebugtraceray(false)
 	, glDebug(false)

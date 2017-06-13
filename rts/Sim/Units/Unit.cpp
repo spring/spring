@@ -1451,32 +1451,31 @@ void CUnit::AddExperience(float exp)
 	if (exp == 0.0f)
 		return;
 
-	assert(experience + exp >= 0.0f);
-	const float oldExp = experience;
-	experience += exp;
+	assert((experience + exp) >= 0.0f);
 
-	const float oldLimExp = limExperience;
+	const float oldExperience = experience;
+	const float oldMaxHealth = maxHealth;
+
+	experience += exp;
 	limExperience = experience / (experience + 1.0f);
 
 	if (expGrade != 0.0f) {
-		const int oldGrade = (int)(oldExp     / expGrade);
-		const int newGrade = (int)(experience / expGrade);
+		const int oldGrade = (int)(oldExperience / expGrade);
+		const int newGrade = (int)(   experience / expGrade);
 		if (oldGrade != newGrade) {
-			eventHandler.UnitExperience(this, oldExp);
+			eventHandler.UnitExperience(this, oldExperience);
 		}
 	}
 
-	if (expPowerScale > 0.0f) {
+	if (expPowerScale > 0.0f)
 		power = unitDef->power * (1.0f + (limExperience * expPowerScale));
-	}
-	if (expReloadScale > 0.0f) {
-		reloadSpeed = (1.0f + (limExperience * expReloadScale));
-	}
-	if (expHealthScale > 0.0f) {
-		const float oldMaxHealth = maxHealth;
 
+	if (expReloadScale > 0.0f)
+		reloadSpeed = (1.0f + (limExperience * expReloadScale));
+
+	if (expHealthScale > 0.0f) {
 		maxHealth = std::max(0.1f, unitDef->health * (1.0f + (limExperience * expHealthScale)));
-		health = health * (maxHealth / oldMaxHealth);
+		health *= (maxHealth / oldMaxHealth);
 	}
 }
 
