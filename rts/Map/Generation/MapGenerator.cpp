@@ -1,8 +1,8 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "MapGenerator.h"
-#include "Game/LoadScreen.h"
 #include "Map/SMF/SMFFormat.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/myGL.h"
 #include "System/FileSystem/Archives/VirtualArchive.h"
 #include "System/FileSystem/ArchiveScanner.h"
@@ -17,14 +17,8 @@ CMapGenerator::CMapGenerator(const CGameSetup* setup) : setup(setup)
 {
 }
 
-CMapGenerator::~CMapGenerator()
-{
-}
-
 void CMapGenerator::Generate()
 {
-	//loadscreen->SetLoadMessage("Generating map");
-
 	//Create archive for map
 	std::string mapArchivePath = setup->mapName + "." + virtualArchiveFactory->GetDefaultExtension();
 	CVirtualArchive* archive = virtualArchiveFactory->AddArchive(setup->mapName);
@@ -238,17 +232,15 @@ void CMapGenerator::GenerateSMT(CVirtualArchive* archive)
 	const int bpp = 3;
 	int tilePos = 0;
 	unsigned char tileData[tileSize * tileSize * bpp];
-	for(int x = 0; x < tileSize; x++)
-	{
-		for(int y = 0; y < tileSize; y++)
-		{
+	for (int x = 0; x < tileSize; x++) {
+		for (int y = 0; y < tileSize; y++) {
 			tileData[tilePos] = 0;
 			tileData[tilePos + 1] = 0xFF;
 			tileData[tilePos + 2] = 0;
 			tilePos += bpp;
 		}
 	}
-	glClearErrors();
+	glClearErrors(globalRendering->glDebugErrors);
 	GLuint tileTex;
 	glGenTextures(1, &tileTex);
 	glBindTexture(GL_TEXTURE_2D, tileTex);

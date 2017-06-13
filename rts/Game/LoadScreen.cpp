@@ -351,7 +351,7 @@ bool CLoadScreen::Draw()
 	font->End();
 
 	if (!mtLoading)
-		globalRendering->SwapBuffers(true);
+		globalRendering->SwapBuffers(true, false);
 
 	return true;
 }

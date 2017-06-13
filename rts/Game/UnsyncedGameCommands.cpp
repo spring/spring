@@ -1182,10 +1182,20 @@ public:
 
 class DebugGLActionExecutor : public IUnsyncedActionExecutor {
 public:
-	DebugGLActionExecutor() : IUnsyncedActionExecutor("DebugGL", "Enable/Disable OpenGL debug messages") {}
+	DebugGLActionExecutor() : IUnsyncedActionExecutor("DebugGL", "Enable/Disable OpenGL debug-context output") {}
 
 	bool Execute(const UnsyncedAction& action) const {
 		globalRendering->ToggleGLDebugOutput();
+		return true;
+	}
+};
+
+class DebugGLErrorsActionExecutor : public IUnsyncedActionExecutor {
+public:
+	DebugGLErrorsActionExecutor() : IUnsyncedActionExecutor("DebugGLErrors", "Enable/Disable OpenGL debug-errors") {}
+
+	bool Execute(const UnsyncedAction& action) const {
+		LogSystemStatus("GL debug-errors", globalRendering->glDebugErrors = !globalRendering->glDebugErrors);
 		return true;
 	}
 };
@@ -3092,6 +3102,7 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new PauseActionExecutor());
 	AddActionExecutor(new DebugActionExecutor());
 	AddActionExecutor(new DebugGLActionExecutor());
+	AddActionExecutor(new DebugGLErrorsActionExecutor());
 	AddActionExecutor(new DebugColVolDrawerActionExecutor());
 	AddActionExecutor(new DebugPathDrawerActionExecutor());
 	AddActionExecutor(new DebugTraceRayDrawerActionExecutor());

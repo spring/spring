@@ -422,7 +422,7 @@ static unsigned int LoadProgram(GLenum, const char*, const char*);
 bool ProgramStringIsNative(GLenum target, const char* filename)
 {
 	// clear any current GL errors so that the following check is valid
-	glClearErrors();
+	glClearErrors(globalRendering->glDebugErrors);
 
 	const GLuint tempProg = LoadProgram(target, filename, (target == GL_VERTEX_PROGRAM_ARB? "vertex": "fragment"));
 
@@ -562,11 +562,14 @@ void glSafeDeleteProgram(GLuint program)
 
 /******************************************************************************/
 
-void glClearErrors()
+void glClearErrors(bool verbose)
 {
-	int safety = 0;
-	while ((glGetError() != GL_NO_ERROR) && (safety < 1000)) {
-		safety++;
+	if (verbose) {
+		for (int count = 0, error = 0; ((error = glGetError()) != GL_NO_ERROR) && (count < 10000); count++) {
+			LOG_L(L_ERROR, "[GL::%s][frame=%u] count=%4d error=0x%x", __func__, globalRendering->drawFrame, count, error);
+		}
+	} else {
+		for (int count = 0; (glGetError() != GL_NO_ERROR) && (count < 10000); count++);
 	}
 }
 

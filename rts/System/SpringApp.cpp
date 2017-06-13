@@ -376,7 +376,7 @@ void SpringApp::InitOpenGL()
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	globalRendering->SwapBuffers(true);
+	globalRendering->SwapBuffers(true, true);
 	globalRendering->LogDisplayMode();
 }
 
@@ -792,7 +792,7 @@ bool SpringApp::Update()
 	#endif
 
 	// always swap by default, not doing so can upset some drivers
-	globalRendering->SwapBuffers(swap);
+	globalRendering->SwapBuffers(swap, false);
 	return retc;
 }
 

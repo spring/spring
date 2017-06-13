@@ -2,6 +2,7 @@
 
 
 #include "LuaTextures.h"
+#include "Rendering/GlobalRendering.h"
 #include "System/StringUtil.h"
 
 
@@ -27,15 +28,15 @@ std::string LuaTextures::Create(const Texture& tex)
 		dataType = GL_FLOAT;
 	}
 
-	glClearErrors();
+	glClearErrors(globalRendering->glDebugErrors);
 	glTexImage2D(tex.target, 0, tex.format,
 	             tex.xsize, tex.ysize, tex.border,
-	             dataFormat, dataType, NULL);
+	             dataFormat, dataType, nullptr);
 	const GLenum err = glGetError();
 	if (err != GL_NO_ERROR) {
 		glDeleteTextures(1, &texID);
 		glBindTexture(GL_TEXTURE_2D, currentBinding);
-		return std::string("");
+		return "";
 	}
 
 	glTexParameteri(tex.target, GL_TEXTURE_WRAP_S, tex.wrap_s);
@@ -62,7 +63,7 @@ std::string LuaTextures::Create(const Texture& tex)
 	if (tex.fbo != 0) {
 		if (!GLEW_EXT_framebuffer_object) {
 			glDeleteTextures(1, &texID);
-			return std::string("");
+			return "";
 		}
 		GLint currentFBO;
 		glGetIntegerv(GL_FRAMEBUFFER_BINDING_EXT, &currentFBO);
@@ -88,7 +89,7 @@ std::string LuaTextures::Create(const Texture& tex)
 			glDeleteFramebuffersEXT(1, &fbo);
 			glDeleteRenderbuffersEXT(1, &fboDepth);
 			glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, currentFBO);
-			return std::string("");
+			return "";
 		}
 
 		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, currentFBO);

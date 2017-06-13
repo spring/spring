@@ -26,7 +26,8 @@
 #include "System/creg/creg_cond.h"
 
 
-CONFIG(bool, DebugGL).defaultValue(false).description("Enables _driver_ debug feedback. (see GL_ARB_debug_output)");
+CONFIG(bool, DebugGL).defaultValue(false).description("Enables GL debug-context and output. (see GL_ARB_debug_output)");
+CONFIG(bool, DebugGLErrors).defaultValue(false).description("Enables verbose GL error reporting.");
 CONFIG(bool, DebugGLStacktraces).defaultValue(false).description("Create a stacktrace when an OpenGL error occurs");
 
 CONFIG(int, GLContextMajorVersion).defaultValue(4).minimumValue(4).maximumValue(4);
@@ -71,7 +72,7 @@ CR_REG_METADATA(CGlobalRendering, (
 	CR_MEMBER(drawFog),
 	CR_MEMBER(drawdebug),
 	CR_MEMBER(drawdebugtraceray),
-	CR_MEMBER(gldebug),
+	CR_MEMBER(glDebug),
 	CR_MEMBER(timeOffset),
 	CR_MEMBER(lastFrameTime),
 	CR_MEMBER(lastFrameStart),
@@ -184,7 +185,8 @@ CGlobalRendering::CGlobalRendering()
 	, drawFog(true)
 	, drawdebug(false)
 	, drawdebugtraceray(false)
-	, gldebug(false)
+	, glDebug(false)
+	, glDebugErrors(configHandler->GetBool("DebugGLErrors"))
 
 	, teamNanospray(configHandler->GetBool("TeamNanoSpray"))
 	, active(true)
@@ -462,10 +464,14 @@ void CGlobalRendering::PostInit() {
 	ToggleGLDebugOutput();
 }
 
-void CGlobalRendering::SwapBuffers(bool allowSwapBuffers)
+void CGlobalRendering::SwapBuffers(bool allowSwapBuffers, bool clearErrors)
 {
 	SCOPED_TIMER("Misc::SwapBuffers");
 	assert(window != nullptr);
+
+	// silently or verbosely clear queue at the end of every frame
+	if (clearErrors || glDebugErrors)
+		glClearErrors(glDebugErrors);
 
 	if (!allowSwapBuffers && !forceSwapBuffers)
 		return;
@@ -709,7 +715,7 @@ void CGlobalRendering::LogDisplayMode() const
 	const int fs = fullScreen;
 	const int bl = borderless;
 
-	LOG("[%s] display-mode set to %ix%ix%ibpp@%iHz (%s)", __func__, viewSizeX, viewSizeY, SDL_BITSPERPIXEL(dmode.format), dmode.refresh_rate, names[fs * 2 + bl]);
+	LOG("[GR::%s] display-mode set to %ix%ix%ibpp@%iHz (%s)", __func__, viewSizeX, viewSizeY, SDL_BITSPERPIXEL(dmode.format), dmode.refresh_rate, names[fs * 2 + bl]);
 }
 
 
@@ -984,12 +990,12 @@ bool CGlobalRendering::ToggleGLDebugOutput()
 	const static bool dbgTraces = configHandler->GetBool("DebugGLStacktraces");
 
 	if (!dbgOutput) {
-		LOG("[GR::%s] OpenGL debug context required (dbgTraces=%d)", __func__, dbgTraces);
+		LOG("[GR::%s] OpenGL debug-context not installed (dbgErrors=%d dbgTraces=%d)", __func__, glDebugErrors, dbgTraces);
 		return false;
 	}
 
 	#if (defined(GL_ARB_debug_output) && !defined(HEADLESS))
-	if ((gldebug = !gldebug)) {
+	if ((glDebug = !glDebug)) {
 		// install OpenGL debug message callback; typecast is a workaround
 		// for #4510 (change in callback function signature with GLEW 1.11)
 		// use SYNCHRONOUS output, we want our callback to run in the same

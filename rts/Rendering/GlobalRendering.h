@@ -33,7 +33,7 @@ public:
 	bool CreateGLContext(const int2& minCtx);
 	void DestroyWindowAndContext();
 	void PostInit();
-	void SwapBuffers(bool allowSwapBuffers);
+	void SwapBuffers(bool allowSwapBuffers, bool clearErrors);
 
 	void CheckGLExtensions() const;
 	void SetGLSupportFlags();
@@ -179,7 +179,8 @@ public:
 	bool drawdebug;
 	bool drawdebugtraceray;
 
-	bool gldebug;
+	bool glDebug;
+	bool glDebugErrors;
 
 	/**
 	 * Does the user want team colored nanospray?
