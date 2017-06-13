@@ -259,7 +259,7 @@ void CGame::ClientReadNet()
 					AddTraffic(-1, packetCode, dataLength);
 					clientNet->Close(true);
 				} catch (const netcode::UnpackPacketException& ex) {
-					LOG_L(L_ERROR, "[Game::%s][NETMSG_QUIT] exception %s", __func__, ex.what());
+					LOG_L(L_ERROR, "[Game::%s][NETMSG_QUIT] exception \"%s\"", __func__, ex.what());
 				}
 				break;
 			}
@@ -267,7 +267,7 @@ void CGame::ClientReadNet()
 			case NETMSG_PLAYERLEFT: {
 				const unsigned char player = inbuf[1];
 				if (!playerHandler->IsValidPlayer(player)) {
-					LOG_L(L_ERROR, "[Game::%s][NETMSG_PLAYERLEFT] invalid player-number %i", player);
+					LOG_L(L_ERROR, "[Game::%s][NETMSG_PLAYERLEFT] invalid player-number %i", __func__, player);
 					break;
 				}
 				playerHandler->PlayerLeft(player, inbuf[2]);
@@ -291,7 +291,7 @@ void CGame::ClientReadNet()
 			case NETMSG_PLAYERSTAT: {
 				const unsigned char playerNum = inbuf[1];
 				if (!playerHandler->IsValidPlayer(playerNum)) {
-					LOG_L(L_ERROR, "[Game::%s][NETMSG_PLAYERSTAT] invalid player-number %i", playerNum);
+					LOG_L(L_ERROR, "[Game::%s][NETMSG_PLAYERSTAT] invalid player-number %i", __func__, playerNum);
 					break;
 				}
 
@@ -309,7 +309,7 @@ void CGame::ClientReadNet()
 			case NETMSG_PAUSE: {
 				const unsigned char player = inbuf[1];
 				if (!playerHandler->IsValidPlayer(player)) {
-					LOG_L(L_ERROR, "[Game::%s][NETMSG_PAUSE] invalid player-number %i", player);
+					LOG_L(L_ERROR, "[Game::%s][NETMSG_PAUSE] invalid player-number %i", __func__, player);
 					break;
 				}
 				gs->paused = !!inbuf[2];
@@ -333,7 +333,7 @@ void CGame::ClientReadNet()
 			case NETMSG_USER_SPEED: {
 				const unsigned char player = inbuf[1];
 				if (!playerHandler->IsValidPlayer(player) && player != SERVER_PLAYER) {
-					LOG_L(L_ERROR, "[Game::%s][NETMSG_USER_SPEED] invalid player-number %i", player);
+					LOG_L(L_ERROR, "[Game::%s][NETMSG_USER_SPEED] invalid player-number %i", __func__, player);
 					break;
 				}
 				const char* pName = (player == SERVER_PLAYER)? "server": playerHandler->Player(player)->name.c_str();
@@ -353,7 +353,7 @@ void CGame::ClientReadNet()
 			case NETMSG_PLAYERINFO: {
 				const unsigned char playerId = inbuf[1];
 				if (!playerHandler->IsValidPlayer(playerId)) {
-					LOG_L(L_ERROR, "[Game::%s][NETMSG_PLAYERINFO] invalid player-number %i", playerId);
+					LOG_L(L_ERROR, "[Game::%s][NETMSG_PLAYERINFO] invalid player-number %i", __func__, playerId);
 					break;
 				}
 				CPlayer* p  = playerHandler->Player(playerId);
@@ -379,7 +379,7 @@ void CGame::ClientReadNet()
 					wordCompletion->AddWord(player->name, false, false, false); // required?
 					AddTraffic(playerID, packetCode, dataLength);
 				} catch (const netcode::UnpackPacketException& ex) {
-					LOG_L(L_ERROR, "Received an invalid net-message PlayerName: %s", ex.what());
+					LOG_L(L_ERROR, "[Game::%s][NETMSG_PLAYERNAME] exception \"%s\"", __func__, ex.what());
 				}
 				break;
 			}
@@ -391,7 +391,7 @@ void CGame::ClientReadNet()
 					HandleChatMsg(msg);
 					AddTraffic(msg.fromPlayer, packetCode, dataLength);
 				} catch (const netcode::UnpackPacketException& ex) {
-					LOG_L(L_ERROR, "[Game::%s][NETMSG_CHAT] exception %s", __func__, ex.what());
+					LOG_L(L_ERROR, "[Game::%s][NETMSG_CHAT] exception \"%s\"", __func__, ex.what());
 				}
 				break;
 			}
@@ -404,7 +404,7 @@ void CGame::ClientReadNet()
 					LOG("%s", sysMsg.c_str());
 					AddTraffic(-1, packetCode, dataLength);
 				} catch (const netcode::UnpackPacketException& ex) {
-					LOG_L(L_ERROR, "[Game::%s][NETMSG_SYSTEMMSG] exception %s", __func__, ex.what());
+					LOG_L(L_ERROR, "[Game::%s][NETMSG_SYSTEMMSG] exception \"%s\"", __func__, ex.what());
 				}
 				break;
 			}
@@ -414,11 +414,11 @@ void CGame::ClientReadNet()
 				const unsigned int teamID = inbuf[2];
 
 				if (!playerHandler->IsValidPlayer(playerID) && playerID != SERVER_PLAYER) {
-					LOG_L(L_ERROR, "[Game::%s][NETMSG_STARTPOS] invalid player-number %i", playerID);
+					LOG_L(L_ERROR, "[Game::%s][NETMSG_STARTPOS] invalid player-number %i", __func__, playerID);
 					break;
 				}
 				if (!teamHandler->IsValidTeam(teamID)) {
-					LOG_L(L_ERROR, "[Game::%s][NETMSG_STARTPOS] invalid team-number %i", teamID);
+					LOG_L(L_ERROR, "[Game::%s][NETMSG_STARTPOS] invalid team-number %i", __func__, teamID);
 					break;
 				}
 
@@ -467,7 +467,7 @@ void CGame::ClientReadNet()
 			case NETMSG_PATH_CHECKSUM: {
 				const unsigned char playerNum = inbuf[1];
 				if (!playerHandler->IsValidPlayer(playerNum)) {
-					LOG_L(L_ERROR, "[Game::%s][NETMSG_PATH_CHECKSUM] invalid player-number %i", playerNum);
+					LOG_L(L_ERROR, "[Game::%s][NETMSG_PATH_CHECKSUM] invalid player-number %i", __func__, playerNum);
 					break;
 				}
 
@@ -589,7 +589,7 @@ void CGame::ClientReadNet()
 					selectedUnitsHandler.NetOrder(c, playerNum);
 					AddTraffic(playerNum, packetCode, dataLength);
 				} catch (const netcode::UnpackPacketException& ex) {
-					LOG_L(L_ERROR, "[Game::%s][NETMSG_COMMAND] exception %s", __func__, ex.what());
+					LOG_L(L_ERROR, "[Game::%s][NETMSG_COMMAND] exception \"%s\"", __func__, ex.what());
 				}
 
 				break;
@@ -630,7 +630,7 @@ void CGame::ClientReadNet()
 					selectedUnitsHandler.NetSelect(selectedUnitIDs, playerNum);
 					AddTraffic(playerNum, packetCode, dataLength);
 				} catch (const netcode::UnpackPacketException& ex) {
-					LOG_L(L_ERROR, "[Game::%s][NETMSG_SELECT] exception %s", __func__, ex.what());
+					LOG_L(L_ERROR, "[Game::%s][NETMSG_SELECT] exception \"%s\"", __func__, ex.what());
 				}
 
 				break;
@@ -675,7 +675,7 @@ void CGame::ClientReadNet()
 					selectedUnitsHandler.AiOrder(unitid, c, player);
 					AddTraffic(player, packetCode, dataLength);
 				} catch (const netcode::UnpackPacketException& ex) {
-					LOG_L(L_ERROR, "[Game::%s][NETMSG_AICOMMAND*] exception %s", __func__, ex.what());
+					LOG_L(L_ERROR, "[Game::%s][NETMSG_AICOMMAND*] exception \"%s\"", __func__, ex.what());
 				}
 				break;
 			}
@@ -753,7 +753,7 @@ void CGame::ClientReadNet()
 					}
 					AddTraffic(player, packetCode, dataLength);
 				} catch (const netcode::UnpackPacketException& ex) {
-					LOG_L(L_ERROR, "[Game::%s][NETMSG_AICOMMANDS] exception %s", __func__, ex.what());
+					LOG_L(L_ERROR, "[Game::%s][NETMSG_AICOMMANDS] exception \"%s\"", __func__, ex.what());
 				}
 				break;
 			}
@@ -826,7 +826,7 @@ void CGame::ClientReadNet()
 						}
 					}
 				} catch (const netcode::UnpackPacketException& ex) {
-					LOG_L(L_ERROR, "[Game::%s][NETMSG_AISHARE] exception %s", __func__, ex.what());
+					LOG_L(L_ERROR, "[Game::%s][NETMSG_AISHARE] exception \"%s\"", __func__, ex.what());
 				}
 				break;
 			}
@@ -852,7 +852,7 @@ void CGame::ClientReadNet()
 
 					LOG("[Game::%s] player=\"%s\" msg=\"%s\"", __func__, playerHandler->Player(playerNum)->name.c_str(), logMsg.c_str());
 				} catch (const netcode::UnpackPacketException& ex) {
-					LOG_L(L_ERROR, "[%s] invalid NETMSG_LOGMSG: %s", __func__, ex.what());
+					LOG_L(L_ERROR, "[%s][NETMSG_LOGMSG] exception \"%s\"", __func__, ex.what());
 				}
 			} break;
 
@@ -883,7 +883,7 @@ void CGame::ClientReadNet()
 					CLuaHandle::HandleLuaMsg(playerNum, script, mode, data);
 					AddTraffic(playerNum, packetCode, dataLength);
 				} catch (const netcode::UnpackPacketException& ex) {
-					LOG_L(L_ERROR, "[%s] invalid NETMSG_LUAMSG: %s", __func__, ex.what());
+					LOG_L(L_ERROR, "[%s][NETMSG_LUAMSG] exception \"%s\"", __func__, ex.what());
 				}
 			} break;
 
@@ -1146,7 +1146,7 @@ void CGame::ClientReadNet()
 						eoh->CreateSkirmishAI(skirmishAIId);
 					}
 				} catch (const netcode::UnpackPacketException& ex) {
-					LOG_L(L_ERROR, "[Game::%s][NETMSG_AI_CREATED] exception %s", __func__, ex.what());
+					LOG_L(L_ERROR, "[Game::%s][NETMSG_AI_CREATED] exception \"%s\"", __func__, ex.what());
 				}
 				break;
 			}
@@ -1262,7 +1262,7 @@ void CGame::ClientReadNet()
 
 					ActionReceived(msg.GetAction(), msg.GetPlayerID());
 				} catch (const netcode::UnpackPacketException& ex) {
-					LOG_L(L_ERROR, "[Game::%s][NETMSG_CCOMMAND] exception %s", __func__, ex.what());
+					LOG_L(L_ERROR, "[Game::%s][NETMSG_CCOMMAND] exception \"%s\"", __func__, ex.what());
 				}
 				break;
 			}
@@ -1329,17 +1329,16 @@ void CGame::ClientReadNet()
 
 					LOG("[Game::%s] added new player %s with number %d to team %d", __FUNCTION__, name.c_str(), player.playerNum, player.team);
 
-					if (!player.spectator) {
+					if (!player.spectator)
 						eventHandler.TeamChanged(player.team);
-					}
 
 					CDemoRecorder* record = clientNet->GetDemoRecorder();
-					if (record != NULL) {
+					if (record != nullptr)
 						record->AddNewPlayer(player.name, playerNum);
-					}
+
 					AddTraffic(-1, packetCode, dataLength);
 				} catch (const netcode::UnpackPacketException& ex) {
-					LOG_L(L_ERROR, "[Game::%s] invalid NETMSG_CREATE_NEWPLAYER: %s", __FUNCTION__, ex.what());
+					LOG_L(L_ERROR, "[Game::%s][NETMSG_CREATE_NEWPLAYER] exception \"%s\"", __FUNCTION__, ex.what());
 				}
 				break;
 			}
