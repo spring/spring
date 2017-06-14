@@ -2,25 +2,22 @@
 
 #include "System/Platform/Win/win32.h"
 
-#include "PathEstimator.h"
-
-#include <fstream>
-#include <functional>
-
 #include "minizip/zip.h"
 
+#include "PathEstimator.h"
 #include "PathFinder.h"
 #include "PathFinderDef.h"
-#include "PathFlowMap.hpp"
+// #include "PathFlowMap.hpp"
 #include "PathLog.h"
 #include "PathMemPool.h"
+#include "Game/GlobalUnsynced.h"
 #include "Game/LoadScreen.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/MoveTypes/MoveMath/MoveMath.h"
 #include "Net/Protocol/NetProtocol.h"
-#include "System/Threading/ThreadPool.h"
+#include "System/Threading/ThreadPool.h" // for_mt
 #include "System/TimeProfiler.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/FileSystem/Archives/IArchive.h"
@@ -32,7 +29,9 @@
 #include "System/SafeUtil.h"
 #include "System/StringUtil.h"
 #include "System/Sync/HsiehHash.h"
-#include "System/Threading/SpringThreading.h"
+#include "System/Sync/SHA512.hpp"
+
+#define ENABLE_NETLOG_CHECKSUM 1
 
 
 CONFIG(int, MaxPathCostsMemoryFootPrint).defaultValue(512).minimumValue(64).description("Maximum memusage (in MByte) of multithreaded pathcache generator at loading time.");
@@ -883,7 +882,8 @@ bool CPathEstimator::ReadFile(const std::string& baseFileName, const std::string
 		return false;
 	}
 
-	pathChecksum = upfile->GetCrc32(fid);
+	// pointless; gets reassigned the output of CalcChecksum and CRC is not otherwise used
+	// pathChecksum = upfile->GetCrc32(fid);
 
 	std::vector<std::uint8_t> buffer;
 
@@ -969,19 +969,58 @@ void CPathEstimator::WriteFile(const std::string& baseFileName, const std::strin
 	}
 
 	assert(upfile->FindFile("pathinfo") < upfile->NumFiles());
-	pathChecksum = upfile->GetCrc32(upfile->FindFile("pathinfo"));
+	// pointless; gets reassigned the output of CalcChecksum and CRC is not otherwise used
+	// pathChecksum = upfile->GetCrc32(upfile->FindFile("pathinfo"));
 }
 
 
 std::uint32_t CPathEstimator::CalcChecksum() const
 {
 	std::uint32_t cs = 0;
+	std::uint64_t nb = 0;
+
+	#if (ENABLE_NETLOG_CHECKSUM == 1)
+	std::array<char, 256> msgBuffer;
+	std::array<uint8_t, sha512::SHA_LEN> shaBytes;
+	std::vector<uint8_t> rawBytes;
+	#endif
 
 	for (const auto& pathTypeOffsets: blockStates.peNodeOffsets) {
-		cs = HsiehHash(pathTypeOffsets.data(), pathTypeOffsets.size() * sizeof(short2), cs);
+		nb = pathTypeOffsets.size() * sizeof(short2);
+		cs = HsiehHash(pathTypeOffsets.data(), nb, cs);
+
+		#if (ENABLE_NETLOG_CHECKSUM == 1)
+		rawBytes.resize(rawBytes.size() + nb, 0);
+		std::memcpy(&rawBytes[rawBytes.size() - nb], pathTypeOffsets.data(), nb);
+		#endif
 	}
 
-	return (HsiehHash(vertexCosts.data(), vertexCosts.size() * sizeof(float), cs));
+	nb = vertexCosts.size() * sizeof(float);
+	cs = HsiehHash(vertexCosts.data(), nb, cs);
+
+	#if (ENABLE_NETLOG_CHECKSUM == 1)
+	{
+		rawBytes.resize(rawBytes.size() + nb);
+
+		std::memcpy(&rawBytes[rawBytes.size() - nb], vertexCosts.data(), nb);
+		sha512::calc_digest(rawBytes, shaBytes);
+
+		char* buf = msgBuffer.data();
+		char* ptr = msgBuffer.data();
+
+		ptr += snprintf(ptr, msgBuffer.size() - (ptr - buf), "[PE::%s][BLK_SIZE=%d][SHA512=", __func__, BLOCK_SIZE);
+
+		for (uint8_t i = 0; i < sha512::SHA_LEN; i++) {
+			ptr += snprintf(ptr, msgBuffer.size() - (ptr - buf), "%02x", shaBytes[i]);
+		}
+
+		ptr += snprintf(ptr, msgBuffer.size() - (ptr - buf), "]");
+
+		CLIENT_NETLOG(gu->myPlayerNum, msgBuffer.data());
+	}
+	#endif
+
+	return cs;
 }
 
 

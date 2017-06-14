@@ -16,6 +16,7 @@
 #include "System/float3.h"
 #include "System/Threading/SpringThreading.h"
 
+
 struct MoveDef;
 class CPathFinder;
 class CPathEstimatorDef;
@@ -121,7 +122,7 @@ private:
 	unsigned int nextOffsetMessageIdx;
 	unsigned int nextCostMessageIdx;
 
-	std::uint32_t pathChecksum;               ///< currently crc from the zip
+	std::uint32_t pathChecksum;
 	std::uint32_t fileHashCode;
 
 	std::atomic<std::int64_t> offsetBlockNum;
@@ -129,7 +130,7 @@ private:
 	spring::barrier* pathBarrier;
 
 	IPathFinder* pathFinder;
-	CPathCache* pathCache[2];                   /// [0] = !synced, [1] = synced
+	CPathCache* pathCache[2]; // [0] = !synced, [1] = synced
 
 	std::vector<IPathFinder*> pathFinders;
 	std::vector<spring::thread*> threads;
@@ -139,7 +140,8 @@ private:
 
 	std::vector<float> maxSpeedMods;
 	std::vector<float> vertexCosts;
-	std::deque<int2> updatedBlocks;       /// Blocks that may need an update due to map changes.
+	/// blocks that may need an update due to map changes
+	std::deque<int2> updatedBlocks;
 
 	int blockUpdatePenalty;
 

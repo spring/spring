@@ -49,7 +49,7 @@ void CLocalConnection::SendData(std::shared_ptr<const RawPacket> packet)
 	if (!ProtocolDef::GetInstance()->IsValidPacket(packet->data, packet->length)) {
 		// having this check here makes it easier to find networking bugs
 		// also when testing locally
-		LOG_L(L_ERROR, "[%s] discarding invalid packet: ID %d, LEN %d",
+		LOG_L(L_ERROR, "[LocalConn::%s] discarding invalid packet: ID %d, LEN %d",
 			__FUNCTION__, (packet->length > 0) ? (int)packet->data[0] : -1, packet->length);
 		return;
 	}

@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include "Game/GameVersion.h"
 
+#define CLIENT_NETLOG(p, m) clientNet->Send(CBaseNetProtocol::Get().SendLogMsg((p), (m)))
 
 namespace netcode
 {

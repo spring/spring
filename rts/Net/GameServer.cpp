@@ -1251,7 +1251,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 				}
 				if (noHelperAIs)
 					Message(spring::format(NoHelperAI, players[a].name.c_str(), a));
-				else if (demoReader == NULL)
+				else if (demoReader == nullptr)
 					Broadcast(packet); //forward data
 			} catch (const netcode::UnpackPacketException& ex) {
 				Message(spring::format("Player %s sent invalid AIShare: %s", players[a].name.c_str(), ex.what()));
@@ -1259,22 +1259,45 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 		} break;
 
 
-		case NETMSG_LUAMSG: {
+		case NETMSG_LOGMSG: {
 			try {
 				netcode::UnpackPacket pckt(packet, 3);
-				unsigned char playerNum;
+				uint8_t playerNum;
+
 				pckt >> playerNum;
+
 				if (playerNum != a) {
 					Message(spring::format(WrongPlayer, msgCode, a, (unsigned)playerNum));
 					break;
 				}
-				if (demoReader == NULL) {
-					Broadcast(packet); //forward data
-					if (hostif)
-						hostif->SendLuaMsg(packet->data, packet->length);
-				}
+
+				Broadcast(packet);
 			} catch (const netcode::UnpackPacketException& ex) {
-				Message(spring::format("Player %s sent invalid LuaMsg: %s", players[a].name.c_str(), ex.what()));
+				Message(spring::format("[GameServer::%s][NETMSG_LOGMSG] exception \"%s\" from player \"%s\"", ex.what(), players[a].name.c_str()));
+			}
+		} break;
+		case NETMSG_LUAMSG: {
+			try {
+				netcode::UnpackPacket pckt(packet, 3);
+				uint8_t playerNum;
+
+				pckt >> playerNum;
+
+				if (playerNum != a) {
+					Message(spring::format(WrongPlayer, msgCode, a, (unsigned)playerNum));
+					break;
+				}
+
+				if (demoReader != nullptr)
+					break;
+
+				Broadcast(packet);
+
+				if (hostif != nullptr)
+					hostif->SendLuaMsg(packet->data, packet->length);
+
+			} catch (const netcode::UnpackPacketException& ex) {
+				Message(spring::format("[GameServer::%s][NETMSG_LUAMSG] exception \"%s\" from player \"%s\"", ex.what(), players[a].name.c_str()));
 			}
 		} break;
 
@@ -1311,7 +1334,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 				Message(spring::format(WrongPlayer, msgCode, a, (unsigned)inbuf[1]));
 				break;
 			}
-			if (demoReader == NULL)
+			if (demoReader == nullptr)
 				Broadcast(CBaseNetProtocol::Get().SendShare(inbuf[1], inbuf[2], inbuf[3], *((float*)&inbuf[4]), *((float*)&inbuf[8])));
 			break;
 
@@ -1320,7 +1343,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 				Message(spring::format(WrongPlayer, msgCode, a, (unsigned)inbuf[1]));
 				break;
 			}
-			if (demoReader == NULL)
+			if (demoReader == nullptr)
 				Broadcast(CBaseNetProtocol::Get().SendSetShare(inbuf[1], inbuf[2], *((float*)&inbuf[3]), *((float*)&inbuf[7])));
 			break;
 

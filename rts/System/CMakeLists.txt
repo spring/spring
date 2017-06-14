@@ -49,6 +49,7 @@ MakeGlobalVar(sources_engine_System_common
 		"${CMAKE_CURRENT_SOURCE_DIR}/Sync/DumpState.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Sync/FPUCheck.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Sync/Logger.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Sync/SHA512.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Sync/SyncChecker.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Sync/SyncDebugger.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Sync/SyncTracer.cpp"

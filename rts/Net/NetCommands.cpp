@@ -497,7 +497,7 @@ void CGame::ClientReadNet()
 				const int serverFrameNum = *(int*)(inbuf + 1);
 
 				if (gs->frameNum != (serverFrameNum - 1)) {
-					LOG_L(L_ERROR, "[%s] keyframe difference: %i (client: %d, server: %d)", __FUNCTION__, gs->frameNum - (serverFrameNum - 1), gs->frameNum, serverFrameNum);
+					LOG_L(L_ERROR, "[Game::%s] keyframe difference: %i (client: %d, server: %d)", __func__, gs->frameNum - (serverFrameNum - 1), gs->frameNum, serverFrameNum);
 					break;
 				}
 
@@ -850,9 +850,9 @@ void CGame::ClientReadNet()
 
 					unpack >> logMsg;
 
-					LOG("[Game::%s] player=\"%s\" msg=\"%s\"", __func__, playerHandler->Player(playerNum)->name.c_str(), logMsg.c_str());
+					LOG("[Game::%s][LOGMSG] sender=\"%s\" string=\"%s\"", __func__, playerHandler->Player(playerNum)->name.c_str(), logMsg.c_str());
 				} catch (const netcode::UnpackPacketException& ex) {
-					LOG_L(L_ERROR, "[%s][NETMSG_LOGMSG] exception \"%s\"", __func__, ex.what());
+					LOG_L(L_ERROR, "[Game::%s][NETMSG_LOGMSG] exception \"%s\"", __func__, ex.what());
 				}
 			} break;
 
@@ -883,7 +883,7 @@ void CGame::ClientReadNet()
 					CLuaHandle::HandleLuaMsg(playerNum, script, mode, data);
 					AddTraffic(playerNum, packetCode, dataLength);
 				} catch (const netcode::UnpackPacketException& ex) {
-					LOG_L(L_ERROR, "[%s][NETMSG_LUAMSG] exception \"%s\"", __func__, ex.what());
+					LOG_L(L_ERROR, "[Game::%s][NETMSG_LUAMSG] exception \"%s\"", __func__, ex.what());
 				}
 			} break;
 
@@ -1214,7 +1214,7 @@ void CGame::ClientReadNet()
 				const unsigned char player = inbuf[1];
 
 				if (!playerHandler->IsValidPlayer(player)) {
-					LOG_L(L_ERROR, "[Game::%s] invalid player number %i in NETMSG_ALLIANCE", __FUNCTION__, player);
+					LOG_L(L_ERROR, "[Game::%s] invalid player number %i in NETMSG_ALLIANCE", __func__, player);
 					break;
 				}
 
@@ -1327,7 +1327,7 @@ void CGame::ClientReadNet()
 					playerHandler->AddPlayer(player);
 					eventHandler.PlayerAdded(player.playerNum);
 
-					LOG("[Game::%s] added new player %s with number %d to team %d", __FUNCTION__, name.c_str(), player.playerNum, player.team);
+					LOG("[Game::%s] added new player %s with number %d to team %d", __func__, name.c_str(), player.playerNum, player.team);
 
 					if (!player.spectator)
 						eventHandler.TeamChanged(player.team);
@@ -1338,7 +1338,7 @@ void CGame::ClientReadNet()
 
 					AddTraffic(-1, packetCode, dataLength);
 				} catch (const netcode::UnpackPacketException& ex) {
-					LOG_L(L_ERROR, "[Game::%s][NETMSG_CREATE_NEWPLAYER] exception \"%s\"", __FUNCTION__, ex.what());
+					LOG_L(L_ERROR, "[Game::%s][NETMSG_CREATE_NEWPLAYER] exception \"%s\"", __func__, ex.what());
 				}
 				break;
 			}
@@ -1370,7 +1370,7 @@ void CGame::ClientReadNet()
 				}
 
 				CPlayer* sender = playerHandler->Player(playerNum);
-				LOG("[Game::%s] Client Data for player %d (%s): \n%s", __FUNCTION__, playerNum, sender->name.c_str(), clientData.c_str());
+				LOG("[Game::%s] Client Data for player %d (%s): \n%s", __func__, playerNum, sender->name.c_str(), clientData.c_str());
 
 				AddTraffic(-1, packetCode, dataLength);
 				break;

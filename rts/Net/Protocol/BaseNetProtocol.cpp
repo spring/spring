@@ -591,6 +591,7 @@ CBaseNetProtocol::CBaseNetProtocol()
 	proto->AddType(NETMSG_STARTPOS, 16);
 	proto->AddType(NETMSG_PLAYERINFO, 10);
 	proto->AddType(NETMSG_PLAYERLEFT, 3);
+	proto->AddType(NETMSG_LOGMSG, -2);
 	proto->AddType(NETMSG_LUAMSG, -2);
 	proto->AddType(NETMSG_TEAM, 5);
 	proto->AddType(NETMSG_GAMEDATA, -2);
