@@ -20,6 +20,15 @@ static uint64_t rotr64(uint64_t x, uint64_t i) {
 }
 
 
+void sha512::dump_digest(const std::array<uint8_t, SHA_LEN>& sha_bytes, std::array<char, SHA_LEN * 2 + 1>& hex_chars) {
+	for (uint8_t i = 0; i < SHA_LEN; i++) {
+		snprintf(hex_chars.data() + (i * 2), hex_chars.size() - (i * 2), "%02x", sha_bytes[i]);
+	}
+
+	hex_chars[hex_chars.size() - 1] = 0;
+}
+
+
 void sha512::calc_digest(const std::vector<uint8_t>& msg_bytes, std::array<uint8_t, SHA_LEN>& sha_bytes) {
 	calc_digest(msg_bytes.data(), msg_bytes.size(), sha_bytes.data());
 }

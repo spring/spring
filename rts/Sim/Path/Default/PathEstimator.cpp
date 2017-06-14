@@ -980,8 +980,10 @@ std::uint32_t CPathEstimator::CalcChecksum() const
 	std::uint64_t nb = 0;
 
 	#if (ENABLE_NETLOG_CHECKSUM == 1)
-	std::array<char, 256> msgBuffer;
-	std::array<uint8_t, sha512::SHA_LEN> shaBytes;
+	std::array<   char, 128 + sha512::SHA_LEN * 2 + 1> msgChars;
+	std::array<   char,       sha512::SHA_LEN * 2 + 1> hexChars;
+	std::array<uint8_t,       sha512::SHA_LEN        > shaBytes;
+
 	std::vector<uint8_t> rawBytes;
 	#endif
 
@@ -1003,20 +1005,11 @@ std::uint32_t CPathEstimator::CalcChecksum() const
 		rawBytes.resize(rawBytes.size() + nb);
 
 		std::memcpy(&rawBytes[rawBytes.size() - nb], vertexCosts.data(), nb);
-		sha512::calc_digest(rawBytes, shaBytes);
+		sha512::calc_digest(rawBytes, shaBytes); // hash(offsets|costs)
+		sha512::dump_digest(shaBytes, hexChars); // hexify(hash)
 
-		char* buf = msgBuffer.data();
-		char* ptr = msgBuffer.data();
-
-		ptr += snprintf(ptr, msgBuffer.size() - (ptr - buf), "[PE::%s][BLK_SIZE=%d][SHA512=", __func__, BLOCK_SIZE);
-
-		for (uint8_t i = 0; i < sha512::SHA_LEN; i++) {
-			ptr += snprintf(ptr, msgBuffer.size() - (ptr - buf), "%02x", shaBytes[i]);
-		}
-
-		ptr += snprintf(ptr, msgBuffer.size() - (ptr - buf), "]");
-
-		CLIENT_NETLOG(gu->myPlayerNum, msgBuffer.data());
+		SNPRINTF(msgChars.data(), msgChars.size(), "[PE::%s][BLK_SIZE=%d][SHA_DATA=%s]", __func__, BLOCK_SIZE, hexChars.data());
+		CLIENT_NETLOG(gu->myPlayerNum, msgChars.data());
 	}
 	#endif
 

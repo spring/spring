@@ -50,6 +50,7 @@ namespace sha512 {
 	};
 
 
+	void dump_digest(const std::array<uint8_t, SHA_LEN>& sha_bytes, std::array<char, SHA_LEN * 2 + 1>& hex_chars);
 	void calc_digest(const std::vector<uint8_t>& msg_bytes, std::array<uint8_t, SHA_LEN>& sha_bytes);
 	void calc_digest(const uint8_t msg_bytes[], size_t len, uint8_t sha_bytes[SHA_LEN]);
 	void dm_compress(uint64_t state[NUM_STATE_CONSTS], const uint8_t blocks[], size_t len);
