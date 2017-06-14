@@ -10,7 +10,7 @@
 #include "System/Exceptions.h"
 #include "System/StringUtil.h"
 
-#include <fstream>
+#include <cstring> // strcpy,memset
 #include <sstream>
 
 CMapGenerator::CMapGenerator(const CGameSetup* setup) : setup(setup)
@@ -63,7 +63,7 @@ void CMapGenerator::GenerateSMF(CVirtualArchive* archive)
 	MapFeatureHeader smfFeature;
 
 	//--- Make SMFHeader ---
-	strcpy(smfHeader.magic, "spring map file");
+	std::strcpy(smfHeader.magic, "spring map file");
 	smfHeader.version = 1;
 	smfHeader.mapid = 0x524d4746 ^ (int)setup->mapSeed;
 
@@ -124,7 +124,7 @@ void CMapGenerator::GenerateSMF(CVirtualArchive* archive)
 	smfFeature.numFeatureType = 0;
 
 	//--- Update Ptrs and write to buffer ---
-	memset(vegmapPtr, 0, vegmapSize);
+	std::memset(vegmapPtr, 0, vegmapSize);
 
 	float heightMin = smfHeader.minHeight;
 	float heightMax = smfHeader.maxHeight;
@@ -139,7 +139,7 @@ void CMapGenerator::GenerateSMF(CVirtualArchive* archive)
 		heightmapPtr[x] = (short)h;
 	}
 
-	memset(typemapPtr, 0, typemapSize);
+	std::memset(typemapPtr, 0, typemapSize);
 
 	/*for(u32 x = 0; x < smfHeader.mapx; x++)
 	{
@@ -150,9 +150,8 @@ void CMapGenerator::GenerateSMF(CVirtualArchive* archive)
 		}
 	}*/
 
-	memset(tilemapPtr, 0, tilemapSize);
-
-	memset(metalmapPtr, 0, metalmapSize);
+	std::memset(tilemapPtr, 0, tilemapSize);
+	std::memset(metalmapPtr, 0, metalmapSize);
 
 	//--- Write to final buffer ---
 	//std::vector<std::uint8_t>& smb = fileSMF->buffer;
@@ -223,7 +222,7 @@ void CMapGenerator::GenerateSMT(CVirtualArchive* archive)
 
 	//--- Make TileFileHeader ---
 	TileFileHeader smtHeader;
-	strcpy(smtHeader.magic, "spring tilefile");
+	std::strcpy(smtHeader.magic, "spring tilefile");
 	smtHeader.version = 1;
 	smtHeader.numTiles = 1; //32 * 32 * (generator->GetMapSize().x * 32) * (generator->GetMapSize().y * 32);
 	smtHeader.tileSize = tileSize;
