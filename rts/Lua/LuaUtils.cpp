@@ -1192,7 +1192,7 @@ static void LogMsg(lua_State* L, const char* logSection, int logLevel, int argIn
 		// print table values (array style)
 		msg = "TABLE: ";
 
-		for (bool first = true, lua_pushnil(L); lua_next(L, argIndex) != 0; lua_pop(L, 1)) {
+		for (lua_pushnil(L); lua_next(L, argIndex) != 0; lua_pop(L, 1)) {
 			if (!lua_israwnumber(L, -2)) // only numeric keys
 				continue;
 
@@ -1202,12 +1202,11 @@ static void LogMsg(lua_State* L, const char* logSection, int logLevel, int argIn
 
 			const char* s = lua_tostring(L, -1);  // get result
 
-			if (!first)
+			if ((msg.size() + 1) > sizeof("TABLE: "))
 				msg += ", ";
 			if (s != nullptr)
 				msg += s;
 
-			first = false;
 			lua_pop(L, 1);            // pop result
 		}
 	}
