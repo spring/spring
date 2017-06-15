@@ -1040,8 +1040,6 @@ int CGame::TextInput(const std::string& utf8Text)
 
 bool CGame::Update()
 {
-	//TODO move as much as possible unsynced code out of this function
-
 	good_fpu_control_registers("CGame::Update");
 
 	jobDispatcher.Update();
@@ -1054,7 +1052,7 @@ bool CGame::Update()
 
 	ENTER_SYNCED_CODE();
 	SendClientProcUsage();
-	ClientReadNet(); // this can issue new SimFrame()s
+	ClientReadNet(); // issues new SimFrame()s
 
 	if (!gameOver) {
 		if (clientNet->NeedsReconnect())
@@ -1065,6 +1063,16 @@ bool CGame::Update()
 	}
 
 	LEAVE_SYNCED_CODE();
+
+	{
+		SLuaAllocError error;
+
+		if (spring_lua_alloc_get_error(&error)) {
+			LOG_L(L_FATAL, "%s", error.msgBuf);
+			CLIENT_NETLOG(gu->myPlayerNum, error.msgBuf);
+		}
+	}
+
 	return true;
 }
 
@@ -1537,7 +1545,7 @@ void CGame::SimFrame() {
 	// clear allocator statistics periodically
 	// note: allocator itself should do this (so that
 	// stats are reliable when paused) but see LuaUser
-	spring_lua_alloc_update_stats(gu->myPlayerNum, (gs->frameNum % GAME_SPEED) == 0);
+	spring_lua_alloc_update_stats((gs->frameNum % GAME_SPEED) == 0);
 
 #ifdef TRACE_SYNC
 	tracefile << "New frame:" << gs->frameNum << " " << gsRNG.GetLastSeed() << "\n";
