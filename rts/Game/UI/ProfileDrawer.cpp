@@ -407,7 +407,7 @@ static void DrawInfoText()
 	}
 
 	{
-		SLuaAllocState state = {0};
+		SLuaAllocState state = {};
 		spring_lua_alloc_get_stats(&state);
 
 		const    float allocMegs = state.allocedBytes.load() / 1024.0f / 1024.0f;

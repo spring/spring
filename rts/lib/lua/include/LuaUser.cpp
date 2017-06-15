@@ -181,7 +181,7 @@ static constexpr uint32_t maxAllocedBytes = 768u * (1024u * 1024u);
 static constexpr const char* maxAllocFmtStr = "[%s][handle=%s][OOM] synced=%d alloced=%u[b] maximum=%u[b]";
 
 // tracks allocations across all states
-static SLuaAllocState gLuaAllocState = {0};
+static SLuaAllocState gLuaAllocState = {};
 static SLuaAllocError gLuaAllocError = {{0}};
 
 
