@@ -19,27 +19,26 @@ CMapGenerator::CMapGenerator(const CGameSetup* setup) : setup(setup)
 
 void CMapGenerator::Generate()
 {
-	//Create archive for map
-	std::string mapArchivePath = setup->mapName + "." + virtualArchiveFactory->GetDefaultExtension();
+	// create archive for map
 	CVirtualArchive* archive = virtualArchiveFactory->AddArchive(setup->mapName);
 
-	//Create arrays that can be filled by top class
-	int2 gridSize = GetGridSize();
-	const int dimensions = (gridSize.x + 1) * (gridSize.y + 1);
-	heightMap.resize(dimensions);
-	metalMap.resize(dimensions);
+	// create arrays that can be filled by top class
+	const int2 gridSize = GetGridSize();
 
-	//Generate map and fill archive files
+	heightMap.resize((gridSize.x + 1) * (gridSize.y + 1));
+	metalMap.resize((gridSize.x + 1) * (gridSize.y + 1));
+
+	// generate map and fill archive files
 	GenerateMap();
 	GenerateSMF(archive);
 	GenerateMapInfo(archive);
 	GenerateSMT(archive);
 
-	//Add archive to vfs
-	archiveScanner->ScanArchive(mapArchivePath);
+	// add archive to VFS
+	archiveScanner->ScanArchive(setup->mapName + "." + virtualArchiveFactory->GetDefaultExtension());
 
-	//Write to disk for testing
-	//archive->WriteToFile();
+	// write to disk for testing
+	// archive->WriteToFile();
 }
 
 void CMapGenerator::AppendToBuffer(CVirtualFile* file, const void* data, int size)
@@ -55,8 +54,6 @@ void CMapGenerator::SetToBuffer(CVirtualFile* file, const void* data, int size, 
 void CMapGenerator::GenerateSMF(CVirtualArchive* archive)
 {
 	CVirtualFile* fileSMF = archive->AddFile("maps/generated.smf");
-
-	//FileBuffer b;
 
 	SMFHeader smfHeader;
 	MapTileHeader smfTile;
@@ -76,8 +73,8 @@ void CMapGenerator::GenerateSMF(CVirtualArchive* archive)
 	smfHeader.minHeight = -100;
 	smfHeader.maxHeight = 0x1000;
 
-	const int numSmallTiles = 1; //2087; //32 * 32 * (mapSize.x  / 2) * (mapSize.y / 2);
-	const char smtFileName[] = "generated.smt";
+	constexpr int32_t numSmallTiles = 1; //2087; //32 * 32 * (mapSize.x  / 2) * (mapSize.y / 2);
+	constexpr char smtFileName[] = "generated.smt";
 
 	//--- Extra headers ---
 	ExtraHeader vegHeader;
@@ -87,27 +84,28 @@ void CMapGenerator::GenerateSMF(CVirtualArchive* archive)
 	smfHeader.numExtraHeaders =  1;
 
 	//Make buffers for each map
-	int heightmapDimensions = (smfHeader.mapx + 1) * (smfHeader.mapy + 1);
-	int typemapDimensions = (smfHeader.mapx / 2) * (smfHeader.mapy / 2);
-	int metalmapDimensions = (smfHeader.mapx / 2) * (smfHeader.mapy / 2);
-	int tilemapDimensions =  (smfHeader.mapx * smfHeader.mapy) / 16;
-	int vegmapDimensions = (smfHeader.mapx / 4) * (smfHeader.mapy / 4);
+	const int32_t heightmapDimensions = (smfHeader.mapx + 1) * (smfHeader.mapy + 1);
+	const int32_t typemapDimensions = (smfHeader.mapx / 2) * (smfHeader.mapy / 2);
+	const int32_t metalmapDimensions = (smfHeader.mapx / 2) * (smfHeader.mapy / 2);
+	const int32_t tilemapDimensions =  (smfHeader.mapx * smfHeader.mapy) / 16;
+	const int32_t vegmapDimensions = (smfHeader.mapx / 4) * (smfHeader.mapy / 4);
 
-	int heightmapSize = heightmapDimensions * sizeof(short);
-	int typemapSize = typemapDimensions * sizeof(unsigned char);
-	int metalmapSize = metalmapDimensions * sizeof(unsigned char);
-	int tilemapSize = tilemapDimensions * sizeof(int);
-	int tilemapTotalSize = sizeof(MapTileHeader) + sizeof(numSmallTiles) + sizeof(smtFileName) + tilemapSize;
-	int vegmapSize = vegmapDimensions * sizeof(unsigned char);
+	const int32_t heightmapSize = heightmapDimensions * sizeof(int16_t);
+	const int32_t typemapSize = typemapDimensions * sizeof(uint8_t);
+	const int32_t metalmapSize = metalmapDimensions * sizeof(uint8_t);
+	const int32_t tilemapSize = tilemapDimensions * sizeof(int32_t);
+	const int32_t tilemapTotalSize = sizeof(MapTileHeader) + sizeof(numSmallTiles) + sizeof(smtFileName) + tilemapSize;
+	const int32_t vegmapSize = vegmapDimensions * sizeof(uint8_t);
 
-	short* heightmapPtr = new short[heightmapDimensions];
-	unsigned char* typemapPtr = new unsigned char[typemapDimensions];
-	unsigned char* metalmapPtr = new unsigned char[metalmapDimensions];
-	int* tilemapPtr = new int[tilemapDimensions];
-	unsigned char* vegmapPtr = new unsigned char[vegmapDimensions];
+	constexpr int32_t vegmapOffset = sizeof(smfHeader) + sizeof(vegHeader) + sizeof(int32_t);
+
+	std::vector<int16_t> heightmapPtr(heightmapDimensions);
+	std::vector<uint8_t> typemapPtr(typemapDimensions);
+	std::vector<uint8_t> metalmapPtr(metalmapDimensions);
+	std::vector<int32_t> tilemapPtr(tilemapDimensions);
+	std::vector<uint8_t> vegmapPtr(vegmapDimensions);
 
 	//--- Set offsets, increment each member with the previous one ---
-	int vegmapOffset = sizeof(smfHeader) + sizeof(vegHeader) + sizeof(int);
 	smfHeader.heightmapPtr = vegmapOffset + vegmapSize;
 	smfHeader.typeMapPtr = smfHeader.heightmapPtr + heightmapSize;
 	smfHeader.tilesPtr = smfHeader.typeMapPtr + typemapSize;
@@ -124,59 +122,44 @@ void CMapGenerator::GenerateSMF(CVirtualArchive* archive)
 	smfFeature.numFeatureType = 0;
 
 	//--- Update Ptrs and write to buffer ---
-	std::memset(vegmapPtr, 0, vegmapSize);
+	std::memset(vegmapPtr.data(), 0, vegmapSize);
 
-	float heightMin = smfHeader.minHeight;
-	float heightMax = smfHeader.maxHeight;
-	float heightMul = (float)0xFFFF / (smfHeader.maxHeight - smfHeader.minHeight);
-	for(int x = 0; x < heightmapDimensions; x++)
-	{
-		float h = heightMap[x];
-		if(h < heightMin) h = heightMin;
-		if(h > heightMax) h = heightMax;
-		h -= heightMin;
-		h *= heightMul;
-		heightmapPtr[x] = (short)h;
+	const float heightMin = smfHeader.minHeight;
+	const float heightMax = smfHeader.maxHeight;
+	const float heightMul = 65535.0f / (smfHeader.maxHeight - smfHeader.minHeight);
+
+	for (int x = 0; x < heightmapDimensions; x++) {
+		heightmapPtr[x] = int16_t(Clamp(heightMap[x], heightMin, heightMax) - heightMin) * heightMul;
 	}
 
-	std::memset(typemapPtr, 0, typemapSize);
+	std::memset(typemapPtr.data(), 0, typemapSize);
 
-	/*for(u32 x = 0; x < smfHeader.mapx; x++)
-	{
-		for(u32 y = 0; y < smfHeader.mapy; y++)
-		{
-			u32 index =
-			tilemapPtr[]
+	/*for (u32 x = 0; x < smfHeader.mapx; x++) {
+		for (u32 y = 0; y < smfHeader.mapy; y++) {
+			u32 index = tilemapPtr[]
 		}
 	}*/
 
-	std::memset(tilemapPtr, 0, tilemapSize);
-	std::memset(metalmapPtr, 0, metalmapSize);
+	std::memset(tilemapPtr.data(), 0, tilemapSize);
+	std::memset(metalmapPtr.data(), 0, metalmapSize);
 
 	//--- Write to final buffer ---
-	//std::vector<std::uint8_t>& smb = fileSMF->buffer;
 	AppendToBuffer(fileSMF, smfHeader);
 
 	AppendToBuffer(fileSMF, vegHeader);
 	AppendToBuffer(fileSMF, vegmapOffset);
-	AppendToBuffer(fileSMF, vegmapPtr, vegmapSize);
+	AppendToBuffer(fileSMF, vegmapPtr.data(), vegmapSize);
 
-	AppendToBuffer(fileSMF, heightmapPtr, heightmapSize);
-	AppendToBuffer(fileSMF, typemapPtr, typemapSize);
+	AppendToBuffer(fileSMF, heightmapPtr.data(), heightmapSize);
+	AppendToBuffer(fileSMF, typemapPtr.data(), typemapSize);
 
 	AppendToBuffer(fileSMF, smfTile);
 	AppendToBuffer(fileSMF, numSmallTiles);
 	AppendToBuffer(fileSMF, smtFileName, sizeof(smtFileName));
-	AppendToBuffer(fileSMF, tilemapPtr, tilemapSize);
+	AppendToBuffer(fileSMF, tilemapPtr.data(), tilemapSize);
 
-	AppendToBuffer(fileSMF, metalmapPtr, metalmapSize);
+	AppendToBuffer(fileSMF, metalmapPtr.data(), metalmapSize);
 	AppendToBuffer(fileSMF, smfFeature);
-
-	delete[] heightmapPtr;
-	delete[] typemapPtr;
-	delete[] metalmapPtr;
-	delete[] tilemapPtr;
-	delete[] vegmapPtr;
 }
 
 void CMapGenerator::GenerateMapInfo(CVirtualArchive* archive)
@@ -187,10 +170,8 @@ void CMapGenerator::GenerateMapInfo(CVirtualArchive* archive)
 	//Open template mapinfo.lua
 	const std::string luaTemplate = "mapgenerator/mapinfo_template.lua";
 	CFileHandler fh(luaTemplate, SPRING_VFS_PWD_ALL);
-	if(!fh.FileExists())
-	{
+	if (!fh.FileExists())
 		throw content_error("Error generating map: " + luaTemplate + " not found");
-	}
 
 	std::string luaInfo;
 	fh.LoadStringData(luaInfo);
@@ -199,8 +180,7 @@ void CMapGenerator::GenerateMapInfo(CVirtualArchive* archive)
 	std::stringstream ss;
 	std::string startPosString;
 	const std::vector<int2>& startPositions = GetStartPositions();
-	for(size_t x = 0; x < startPositions.size(); x++)
-	{
+	for (size_t x = 0; x < startPositions.size(); x++) {
 		ss << "[" << x << "] = {startPos = {x = " << startPositions[x].x << ", z = " << startPositions[x].y << "}},";
 	}
 	startPosString = ss.str();
@@ -218,7 +198,8 @@ void CMapGenerator::GenerateSMT(CVirtualArchive* archive)
 {
 	CVirtualFile* fileSMT = archive->AddFile("maps/generated.smt");
 
-	const int tileSize = 32;
+	constexpr int32_t tileSize = 32;
+	constexpr int32_t tileBPP = 3;
 
 	//--- Make TileFileHeader ---
 	TileFileHeader smtHeader;
@@ -228,54 +209,52 @@ void CMapGenerator::GenerateSMT(CVirtualArchive* archive)
 	smtHeader.tileSize = tileSize;
 	smtHeader.compressionType = 1;
 
-	const int bpp = 3;
-	int tilePos = 0;
-	unsigned char tileData[tileSize * tileSize * bpp];
-	for (int x = 0; x < tileSize; x++) {
-		for (int y = 0; y < tileSize; y++) {
-			tileData[tilePos] = 0;
+	int32_t tilePos = 0;
+	uint8_t tileData[tileSize * tileSize * tileBPP];
+	int8_t tileDataDXT[SMALL_TILE_SIZE];
+
+	for (int32_t x = 0; x < tileSize; x++) {
+		for (int32_t y = 0; y < tileSize; y++) {
+			tileData[tilePos + 0] = 0;
 			tileData[tilePos + 1] = 0xFF;
 			tileData[tilePos + 2] = 0;
-			tilePos += bpp;
+			tilePos += tileBPP;
 		}
 	}
-	glClearErrors(globalRendering->glDebugErrors);
+
+	glClearErrors("MapGen", __func__, globalRendering->glDebugErrors);
 	GLuint tileTex;
 	glGenTextures(1, &tileTex);
 	glBindTexture(GL_TEXTURE_2D, tileTex);
 
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_COMPRESSED_RGB_S3TC_DXT1_EXT, tileSize, tileSize, 0, GL_RGB, GL_UNSIGNED_BYTE, tileData);
 	glGenerateMipmapEXT(GL_TEXTURE_2D);
-	char tileDataDXT[SMALL_TILE_SIZE];
 
-	int dxtImageOffset = 0;
-	int dxtImageSize = 512;
-	for(int x = 0; x < 4; x++)
-	{
+	int32_t dxtImageOffset =   0;
+	int32_t dxtImageSize   = 512;
+	int32_t writePosition  =   0;
+
+	for (int32_t x = 0; x < 4; x++) {
 		glGetCompressedTexImage(GL_TEXTURE_2D, x, tileDataDXT + dxtImageOffset);
+
 		dxtImageOffset += dxtImageSize;
 		dxtImageSize /= 4;
 	}
 
 	glDeleteTextures(1, &tileTex);
 
-	GLenum errorcode = glGetError();
-	if(errorcode != GL_NO_ERROR)
-	{
+	if (glGetError() != GL_NO_ERROR)
 		throw content_error("Error generating map - texture generation not supported");
-	}
 
-	size_t totalSize = sizeof(TileFileHeader);
-	fileSMT->buffer.resize(totalSize);
+	fileSMT->buffer.resize(sizeof(TileFileHeader));
 
-	int writePosition = 0;
-	memcpy(&(fileSMT->buffer[writePosition]), &smtHeader, sizeof(smtHeader));
+	std::memcpy(&fileSMT->buffer[writePosition], &smtHeader, sizeof(smtHeader));
 	writePosition += sizeof(smtHeader);
 
 	fileSMT->buffer.resize(fileSMT->buffer.size() + smtHeader.numTiles * SMALL_TILE_SIZE);
-	for(int x = 0; x < smtHeader.numTiles; x++)
-	{
-		memcpy(&(fileSMT->buffer[writePosition]), tileDataDXT, SMALL_TILE_SIZE);
+
+	for (int32_t x = 0; x < smtHeader.numTiles; x++) {
+		std::memcpy(&fileSMT->buffer[writePosition], tileDataDXT, SMALL_TILE_SIZE);
 		writePosition += SMALL_TILE_SIZE;
 	}
 }

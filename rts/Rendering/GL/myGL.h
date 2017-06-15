@@ -88,7 +88,7 @@ bool ProgramStringIsNative(GLenum target, const char* filename);
 unsigned int LoadVertexProgram(const char* filename);
 unsigned int LoadFragmentProgram(const char* filename);
 
-void glClearErrors(bool verbose = false);
+void glClearErrors(const char* cls, const char* fnc, bool verbose = false);
 void glSafeDeleteProgram(GLuint program);
 
 bool CheckAvailableVideoModes();

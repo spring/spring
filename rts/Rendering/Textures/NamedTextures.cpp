@@ -219,6 +219,9 @@ namespace CNamedTextures {
 			if (greyed) bitmap.MakeGrayScale();
 			if (tint)   bitmap.Tint(tintColor);
 
+			const int xbits = count_bits_set(bitmap.xsize);
+			const int ybits = count_bits_set(bitmap.ysize);
+
 			//! make the texture
 			glBindTexture(GL_TEXTURE_2D, texID);
 
@@ -242,39 +245,25 @@ namespace CNamedTextures {
 				}
 
 				//! Note: NPOTs + nearest filtering seems broken on ATIs
-				if ( !(count_bits_set(bitmap.xsize)==1 && count_bits_set(bitmap.ysize)==1) &&
-					(!GLEW_ARB_texture_non_power_of_two || (globalRendering->atiHacks && nearest)) )
-				{
+				if ((xbits != 1 || ybits != 1) && (!GLEW_ARB_texture_non_power_of_two || (globalRendering->atiHacks && nearest)))
 					bitmap = bitmap.CreateRescaled(next_power_of_2(bitmap.xsize),next_power_of_2(bitmap.ysize));
-				}
 
-				glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8,
-							bitmap.xsize, bitmap.ysize, border ? 1 : 0,
-							GL_RGBA, GL_UNSIGNED_BYTE, &bitmap.mem[0]);
+				glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, bitmap.xsize, bitmap.ysize, int(border), GL_RGBA, GL_UNSIGNED_BYTE, &bitmap.mem[0]);
 			} else {
 				//! MIPMAPPING (default)
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
-				if ((count_bits_set(bitmap.xsize)==1 && count_bits_set(bitmap.ysize)==1) ||
-					GLEW_ARB_texture_non_power_of_two)
-				{
-					glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, bitmap.xsize, bitmap.ysize,
-								GL_RGBA, GL_UNSIGNED_BYTE, &bitmap.mem[0]);
+				if ((xbits == 1 && ybits == 1) || GLEW_ARB_texture_non_power_of_two) {
+					glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, bitmap.xsize, bitmap.ysize, GL_RGBA, GL_UNSIGNED_BYTE, &bitmap.mem[0]);
 				} else {
 					//! glu auto resizes to next POT
-					gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA8, bitmap.xsize, bitmap.ysize,
-									GL_RGBA, GL_UNSIGNED_BYTE, &bitmap.mem[0]);
+					gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA8, bitmap.xsize, bitmap.ysize, GL_RGBA, GL_UNSIGNED_BYTE, &bitmap.mem[0]);
 				}
 			}
 
-			if (aniso && GLEW_EXT_texture_filter_anisotropic) {
-				static GLfloat maxAniso = -1.0f;
-				if (maxAniso == -1.0f) {
-					glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxAniso);
-				}
-				glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, maxAniso);
-			}
+			if (aniso && GLEW_EXT_texture_filter_anisotropic)
+				glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, globalRendering->maxTexAnisoLvl);
 		}
 
 		texInfo.id    = texID;

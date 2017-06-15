@@ -137,7 +137,6 @@ public:
 	float viewRange;
 
 
-
 	int forceDisableShaders;
 	int forceCoreContext;
 	int forceSwapBuffers;
@@ -157,6 +156,8 @@ public:
 	int maxTextureSize;
 
 	int gpuMemorySize;
+
+	float maxTexAnisoLvl;
 
 
 	bool drawSky;

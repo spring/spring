@@ -838,16 +838,8 @@ namespace terrain {
 		if (config.cacheTextures)
 			config.useBumpMaps = false;
 
-		if (config.anisotropicFiltering != 0) {
-			if (!GLEW_EXT_texture_filter_anisotropic)
-				config.anisotropicFiltering = 0.0f;
-			else {
-				float maxAnisotropy = 0.0f;
-				glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxAnisotropy);
-				if (config.anisotropicFiltering > maxAnisotropy)
-					config.anisotropicFiltering = maxAnisotropy;
-			}
-		}
+		if (config.anisotropicFiltering != 0.0f)
+			config.anisotropicFiltering = std::min(config.anisotropicFiltering, globalRendering->maxTexAnisoLvl);
 
 		if (cb)
 			cb->PrintMsg("initializing heightmap renderer...");

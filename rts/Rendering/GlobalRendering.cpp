@@ -27,7 +27,6 @@
 
 
 CONFIG(bool, DebugGL).defaultValue(false).description("Enables GL debug-context and output. (see GL_ARB_debug_output)");
-CONFIG(bool, DebugGLErrors).defaultValue(false).description("Enables verbose GL error reporting.");
 CONFIG(bool, DebugGLStacktraces).defaultValue(false).description("Create a stacktrace when an OpenGL error occurs");
 
 CONFIG(int, GLContextMajorVersion).defaultValue(4).minimumValue(4).maximumValue(4);
@@ -107,6 +106,8 @@ CR_REG_METADATA(CGlobalRendering, (
 	CR_IGNORED(fsaaLevel),
 	CR_IGNORED(maxTextureSize),
 	CR_IGNORED(gpuMemorySize),
+	CR_IGNORED(maxTexAnisoLvl),
+
 	CR_IGNORED(active),
 	CR_IGNORED(isVideoCapturing),
 	CR_IGNORED(compressTextures),
@@ -180,6 +181,7 @@ CGlobalRendering::CGlobalRendering()
 	, fsaaLevel(configHandler->GetInt("FSAALevel"))
 	, maxTextureSize(2048)
 	, gpuMemorySize(0)
+	, maxTexAnisoLvl(0.0f)
 
 	, drawSky(true)
 	, drawWater(true)
@@ -190,7 +192,7 @@ CGlobalRendering::CGlobalRendering()
 	, drawdebug(false)
 	, drawdebugtraceray(false)
 	, glDebug(false)
-	, glDebugErrors(configHandler->GetBool("DebugGLErrors"))
+	, glDebugErrors(false)
 
 	, teamNanospray(configHandler->GetBool("TeamNanoSpray"))
 	, active(true)
@@ -475,7 +477,7 @@ void CGlobalRendering::SwapBuffers(bool allowSwapBuffers, bool clearErrors)
 
 	// silently or verbosely clear queue at the end of every frame
 	if (clearErrors || glDebugErrors)
-		glClearErrors(glDebugErrors);
+		glClearErrors("GR", __func__, glDebugErrors);
 
 	if (!allowSwapBuffers && !forceSwapBuffers)
 		return;
@@ -622,6 +624,9 @@ void CGlobalRendering::QueryGLMaxVals()
 	// maximum 2D texture size
 	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTextureSize);
 
+	if (GLEW_EXT_texture_filter_anisotropic)
+		glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxTexAnisoLvl);
+
 	// some GLSL relevant information
 	glGetIntegerv(GL_MAX_UNIFORM_BUFFER_BINDINGS, &glslMaxUniformBufferBindings);
 	glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE,      &glslMaxUniformBufferSize);
@@ -692,6 +697,7 @@ void CGlobalRendering::LogVersionInfo(const char* sdlVersionStr, const char* glV
 	LOG("\t");
 	LOG("\tmax. FBO samples             : %i", FBO::GetMaxSamples());
 	LOG("\tmax. texture size            : %i", maxTextureSize);
+	LOG("\tmax. texture anisotropy level: %f", maxTexAnisoLvl);
 	LOG("\tmax. vec4 varyings/attributes: %i/%i", glslMaxVaryings, glslMaxAttributes);
 	LOG("\tmax. draw-buffers            : %i", glslMaxDrawBuffers);
 	LOG("\tmax. rec. indices/vertices   : %i/%i", glslMaxRecommendedIndices, glslMaxRecommendedVertices);

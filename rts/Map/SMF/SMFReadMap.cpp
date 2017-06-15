@@ -905,17 +905,11 @@ void CSMFReadMap::ConfigureTexAnisotropyLevels()
 		return;
 	}
 
-	GLfloat maxAnisotropyLevel;
-	glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxAnisotropyLevel);
-
 	const std::string cfgKeys[2] = {"SMFTexAniso", "SSMFTexAniso"};
 
 	for (unsigned int i = 0; i < 2; i++) {
-		texAnisotropyLevels[i] = std::min(configHandler->GetFloat(cfgKeys[i]), maxAnisotropyLevel);
-
-		if (texAnisotropyLevels[i] < 1.0f) {
-			texAnisotropyLevels[i] = 0.0f; // disabled
-		}
+		texAnisotropyLevels[i] = std::min(configHandler->GetFloat(cfgKeys[i]), globalRendering->maxTexAnisoLvl);
+		texAnisotropyLevels[i] *= (texAnisotropyLevels[i] >= 1.0f); // disable AF if less than 1
 	}
 }
 

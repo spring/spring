@@ -3,6 +3,7 @@
 
 #include "LuaTextures.h"
 #include "Rendering/GlobalRendering.h"
+#include "System/myMath.h"
 #include "System/StringUtil.h"
 
 
@@ -28,12 +29,12 @@ std::string LuaTextures::Create(const Texture& tex)
 		dataType = GL_FLOAT;
 	}
 
-	glClearErrors(globalRendering->glDebugErrors);
+	glClearErrors("LuaTex", __func__, globalRendering->glDebugErrors);
 	glTexImage2D(tex.target, 0, tex.format,
 	             tex.xsize, tex.ysize, tex.border,
 	             dataFormat, dataType, nullptr);
-	const GLenum err = glGetError();
-	if (err != GL_NO_ERROR) {
+
+	if (glGetError() != GL_NO_ERROR) {
 		glDeleteTextures(1, &texID);
 		glBindTexture(GL_TEXTURE_2D, currentBinding);
 		return "";
@@ -46,14 +47,8 @@ std::string LuaTextures::Create(const Texture& tex)
 	glTexParameteri(tex.target, GL_TEXTURE_MAG_FILTER, tex.mag_filter);
 	glTexParameteri(tex.target, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);
 
-	if ((tex.aniso != 0.0f) && GLEW_EXT_texture_filter_anisotropic) {
-		static GLfloat maxAniso = -1.0f;
-
-		if (maxAniso == -1.0f)
-			glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxAniso);
-
-		glTexParameterf(tex.target, GL_TEXTURE_MAX_ANISOTROPY_EXT, std::max(1.0f, std::min(maxAniso, tex.aniso)));
-	}
+	if ((tex.aniso != 0.0f) && GLEW_EXT_texture_filter_anisotropic)
+		glTexParameterf(tex.target, GL_TEXTURE_MAX_ANISOTROPY_EXT, Clamp(tex.aniso, 1.0f, globalRendering->maxTexAnisoLvl));
 
 	glBindTexture(GL_TEXTURE_2D, currentBinding); // revert the current binding
 
