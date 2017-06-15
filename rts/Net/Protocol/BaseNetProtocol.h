@@ -3,14 +3,13 @@
 #ifndef _BASE_NET_PROTOCOL_H
 #define _BASE_NET_PROTOCOL_H
 
-#include <memory>
 #include <cinttypes>
+#include <cstdlib>
+#include <memory>
 #include <vector>
 #include <string>
-#include <stdlib.h>
-#include "Game/GameVersion.h"
 
-#define CLIENT_NETLOG(p, m) clientNet->Send(CBaseNetProtocol::Get().SendLogMsg((p), (m)))
+#include "Game/GameVersion.h"
 
 namespace netcode
 {

@@ -50,6 +50,7 @@ Else  (NOT Boost_FOUND)
 			"${ENGINE_SOURCE_DIR}/System/Log/FramePrefixer.cpp"
 			"${ENGINE_SOURCE_DIR}/System/Log/ConsoleSink.cpp"
 			"${ENGINE_SOURCE_DIR}/System/Log/StreamSink.cpp"
+			"${ENGINE_SOURCE_DIR}/Net/NetLog.cpp"
 		)
 
 	Add_Custom_Target(tests)

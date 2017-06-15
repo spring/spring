@@ -7,6 +7,7 @@
 #include "System/Net/RawPacket.h"
 #include "System/Net/PackPacket.h"
 #include "System/Net/ProtocolDef.h"
+#include "Net/Protocol/NetProtocol.h"
 #include <cinttypes>
 
 using netcode::PackPacket;

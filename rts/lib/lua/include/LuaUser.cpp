@@ -6,18 +6,14 @@
 
 #include "LuaInclude.h"
 #include "Lua/LuaHandle.h"
-#include "Net/Protocol/NetProtocol.h"
 #include "System/myMath.h"
+#include "Net/NetLog.h"
 #if (ENABLE_USERSTATE_LOCKS != 0)
 	#include <map>
 	#include "System/Threading/SpringThreading.h"
 #endif
 #include "System/Log/ILog.h"
-#if (!defined(DEDICATED) && !defined(UNITSYNC) && !defined(BUILDING_AI))
-	#include "System/Misc/SpringTime.h"
-#endif
-
-
+#include "System/Misc/SpringTime.h"
 
 
 ///////////////////////////////////////////////////////////////////////////
@@ -202,7 +198,6 @@ void* spring_lua_alloc(void* ud, void* ptr, size_t osize, size_t nsize)
 		return nullptr;
 	}
 
-	#if (!defined(DEDICATED) && !defined(UNITSYNC) && !defined(BUILDING_AI))
 	const spring_time t0 = spring_gettime();
 	void* mem = realloc(ptr, nsize);
 	const spring_time t1 = spring_gettime();
@@ -211,11 +206,6 @@ void* spring_lua_alloc(void* ud, void* ptr, size_t osize, size_t nsize)
 	gLuaAllocInfo.luaAllocTime += (t1 - t0).toMicroSecsi();
 
 	return mem;
-	#else
-	// behaves like realloc when nsize!=0 and osize!=0 (ptr != NULL)
-	// behaves like malloc when nsize!=0 and osize==0 (ptr == NULL)
-	return (realloc(ptr, nsize));
-	#endif
 }
 
 void spring_lua_alloc_get_stats(SLuaAllocInfo* info)

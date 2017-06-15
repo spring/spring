@@ -8,6 +8,7 @@ MakeGlobalVar(sources_engine_NetServer
 set(sources_engine_NetClient
 		"${CMAKE_CURRENT_SOURCE_DIR}/Protocol/NetProtocol.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/NetCommands.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/NetLog.cpp"
 	)
 
 MakeGlobalVar(sources_engine_Net
