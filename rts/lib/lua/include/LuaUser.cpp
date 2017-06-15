@@ -379,20 +379,17 @@ static inline bool HandleRounding(float* fractF, int log10, int charsInStdNotati
 	// We handle here the case when rounding in the
 	// fract part carries into the integer part.
 	// We don't handle the fract rounding itself!
-
-	int iDigits = 1;
-	if (!scienceNotation && log10 >= 0)
-		iDigits = charsInStdNotation;
-
-	int fDigits = std::max(0, nDigits - (iDigits + 1)); // excluding dot
-	if (precision >= 0)
-		fDigits = precision;
+	// fDigits excludes the dot when precision is < 0
+	const int iDigits = mix(1, charsInStdNotation, (!scienceNotation && log10 >= 0));
+	const int fDigits = mix(std::max(0, nDigits - (iDigits + 1)), precision, (precision >= 0));
 
 	// check fractional part against the rounding limit
 	// 1 -> 0.95   -%.1f-> 1.0
 	// 2 -> 0.995  -%.2f-> 1.00
 	// 3 -> 0.9995 -%.3f-> 1.000
-	if (*fractF >= (1.0f - 0.5f * std::pow(0.1f, fDigits))) {
+	const float roundLimit = 1.0f - 0.5f * std::pow(0.1f, fDigits);
+
+	if (*fractF >= roundLimit) {
 		*fractF = 0.0f;
 		return true;
 	}
