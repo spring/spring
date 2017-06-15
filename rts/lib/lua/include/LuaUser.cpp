@@ -2,17 +2,25 @@
 
 #include <array>
 #include <cinttypes>
+
 #include "lib/streflop/streflop_cond.h"
 
 #include "LuaInclude.h"
 #include "Lua/LuaHandle.h"
-#include "Net/Protocol/NetProtocol.h"
+
+#if (!defined(DEDICATED) && !defined(UNITSYNC) && !defined(BUILDING_AI) && !defined(UNIT_TEST))
+	#include "Net/Protocol/NetProtocol.h"
+#endif
+
 #include "System/myMath.h"
+
 #if (ENABLE_USERSTATE_LOCKS != 0)
-	#include <map>
+	#include "System/UnorderedMap.hpp"
 	#include "System/Threading/SpringThreading.h"
 #endif
+
 #include "System/Log/ILog.h"
+
 #if (!defined(DEDICATED) && !defined(UNITSYNC) && !defined(BUILDING_AI))
 	#include "System/Misc/SpringTime.h"
 #endif
