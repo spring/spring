@@ -4,8 +4,9 @@
 #define SPRING_LUA_INCLUDE
 
 #include <string>
-#include <string.h> // strlen
-#include <assert.h>
+#include <cstring> // strlen
+#include <cassert>
+
 #include "LuaUser.h"
 #include "lua.h"
 #include "lualib.h"
@@ -140,55 +141,51 @@ static inline int luaS_absIndex(lua_State* L, const int i)
 template<typename T>
 static inline T luaL_SpringOpt(lua_State* L, int idx, const T def, T(*lua_optFoo)(lua_State*, int, const T), T(*lua_toFoo)(lua_State*, int), int typeFoo, const char* caller)
 {
-	if (L->errorJmp) {
+	if (L->errorJmp)
 		return (*lua_optFoo)(L, idx, def);
-	}
 
 	T ret = (*lua_toFoo)(L, idx);
-	if (ret || (lua_type(L, idx) == typeFoo)) {
+	if (ret || (lua_type(L, idx) == typeFoo))
 		return ret;
-	}
 
-	if (!lua_isnoneornil(L, idx)) {
-		LOG_L(L_WARNING, "Got wrong type for return argument #%d in \"%s::%s\" (%s expected, got %s)", luaS_absIndex(L, idx), spring_lua_getName(L), caller, lua_typename(L, typeFoo), luaL_typename(L, idx));
-	}
+	if (!lua_isnoneornil(L, idx))
+		LOG_L(L_WARNING, "Got wrong type for return argument #%d in \"%s::%s\" (%s expected, got %s)", luaS_absIndex(L, idx), spring_lua_getHandleName(L), caller, lua_typename(L, typeFoo), luaL_typename(L, idx));
+
 	return def;
 }
 
 
 static inline std::string luaL_SpringOptString(lua_State* L, int idx, const std::string& def, std::string(*lua_optFoo)(lua_State*, int, const std::string&), std::string(*lua_toFoo)(lua_State*, int), int typeFoo, const char* caller)
 {
-	if (L->errorJmp) {
+	if (L->errorJmp)
 		return (*lua_optFoo)(L, idx, def);
-	}
 
 	std::string ret = (*lua_toFoo)(L, idx);
-	if (!ret.empty() || (lua_type(L, idx) == typeFoo)) {
+	if (!ret.empty() || (lua_type(L, idx) == typeFoo))
 		return ret;
-	}
 
-	if (!lua_isnoneornil(L, idx)) {
-		LOG_L(L_WARNING, "Got wrong type for return argument #%d in \"%s::%s\" (%s expected, got %s)", luaS_absIndex(L, idx), spring_lua_getName(L), caller, lua_typename(L, typeFoo), luaL_typename(L, idx));
-	}
+	if (!lua_isnoneornil(L, idx))
+		LOG_L(L_WARNING, "Got wrong type for return argument #%d in \"%s::%s\" (%s expected, got %s)", luaS_absIndex(L, idx), spring_lua_getHandleName(L), caller, lua_typename(L, typeFoo), luaL_typename(L, idx));
+
 	return def;
 }
 
 
 static inline const char* luaL_SpringOptCString(lua_State* L, int idx, const char* def, size_t* len, const char*(*lua_optFoo)(lua_State*, int, const char*, size_t*), const char*(*lua_toFoo)(lua_State*, int, size_t*), int typeFoo, const char* caller)
 {
-	if (L->errorJmp) {
+	if (L->errorJmp)
 		return (*lua_optFoo)(L, idx, def, len);
-	}
 
 	const char* ret = (*lua_toFoo)(L, idx, len);
-	if (ret || (lua_type(L, idx) == typeFoo)) {
+	if (ret || (lua_type(L, idx) == typeFoo))
 		return ret;
-	}
 
-	if (!lua_isnoneornil(L, idx)) {
-		LOG_L(L_WARNING, "Got wrong type for return argument #%d in \"%s::%s\" (%s expected, got %s)", luaS_absIndex(L, idx), spring_lua_getName(L), caller, lua_typename(L, typeFoo), luaL_typename(L, idx));
-	}
-	if (len != NULL) *len = strlen(def);
+	if (!lua_isnoneornil(L, idx))
+		LOG_L(L_WARNING, "Got wrong type for return argument #%d in \"%s::%s\" (%s expected, got %s)", luaS_absIndex(L, idx), spring_lua_getHandleName(L), caller, lua_typename(L, typeFoo), luaL_typename(L, idx));
+
+	if (len != nullptr)
+		*len = strlen(def);
+
 	return def;
 }
 

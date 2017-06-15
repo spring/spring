@@ -1,12 +1,12 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include <atomic>
 #include <array>
 #include <cinttypes>
 #include "lib/streflop/streflop_cond.h"
 
 #include "LuaInclude.h"
 #include "Lua/LuaHandle.h"
+#include "Net/Protocol/NetProtocol.h"
 #include "System/myMath.h"
 #if (ENABLE_USERSTATE_LOCKS != 0)
 	#include <map>
@@ -18,17 +18,18 @@
 #endif
 
 
+
+
 ///////////////////////////////////////////////////////////////////////////
 // Custom Lua Mutexes
 
-
 #if (ENABLE_USERSTATE_LOCKS != 0)
-static std::map<lua_State*, bool> coroutines;
-static std::map<lua_State*, spring::recursive_mutex*> mutexes;
+static spring::unsynced_map<lua_State*, bool> coroutines;
+static spring::unsynced_map<lua_State*, spring::recursive_mutex*> mutexes;
 
 static spring::recursive_mutex* GetLuaMutex(lua_State* L)
 {
-	assert(!mutexes[L]);
+	assert(mutexes[L] == nullptr);
 	return new spring::recursive_mutex();
 }
 #endif
@@ -38,8 +39,11 @@ void LuaCreateMutex(lua_State* L)
 {
 #if (ENABLE_USERSTATE_LOCKS != 0)
 	luaContextData* lcd = GetLuaContextData(L);
-	if (!lcd) return; // CLuaParser
-	assert(lcd);
+
+	if (lcd == nullptr)
+		return; // CLuaParser
+
+	assert(lcd != nullptr);
 
 	spring::recursive_mutex* mutex = GetLuaMutex(L);
 	lcd->luamutex = mutex;
@@ -51,21 +55,24 @@ void LuaCreateMutex(lua_State* L)
 void LuaDestroyMutex(lua_State* L)
 {
 #if (ENABLE_USERSTATE_LOCKS != 0)
-	if (!GetLuaContextData(L)) return; // CLuaParser
-	assert(GetLuaContextData(L));
+	if (GetLuaContextData(L) == nullptr)
+		return; // CLuaParser
+
+	assert(GetLuaContextData(L) != nullptr);
 
 	if (coroutines.find(L) != coroutines.end()) {
 		mutexes.erase(L);
 		coroutines.erase(L);
-	} else {
-		lua_unlock(L);
-		assert(mutexes.find(L) != mutexes.end());
-		spring::recursive_mutex* mutex = GetLuaContextData(L)->luamutex;
-		assert(mutex);
-		delete mutex;
-		mutexes.erase(L);
-		//TODO erase all related coroutines too?
+		return;
 	}
+
+	lua_unlock(L);
+	assert(mutexes.find(L) != mutexes.end());
+	spring::recursive_mutex* mutex = GetLuaContextData(L)->luamutex;
+	assert(mutex);
+	delete mutex;
+	mutexes.erase(L);
+	//TODO erase all related coroutines too?
 #endif
 }
 
@@ -74,11 +81,10 @@ void LuaLinkMutex(lua_State* L_parent, lua_State* L_child)
 {
 #if (ENABLE_USERSTATE_LOCKS != 0)
 	luaContextData* plcd = GetLuaContextData(L_parent);
-	assert(plcd);
-
 	luaContextData* clcd = GetLuaContextData(L_child);
-	assert(clcd);
 
+	assert(plcd != nullptr);
+	assert(clcd != nullptr);
 	assert(plcd == clcd);
 
 	coroutines[L_child] = true;
@@ -91,15 +97,14 @@ void LuaMutexLock(lua_State* L)
 {
 #if (ENABLE_USERSTATE_LOCKS != 0)
 
-	if (!GetLuaContextData(L)) return; // CLuaParser
+	if (GetLuaContextData(L) == nullptr)
+		return; // CLuaParser
 
 	spring::recursive_mutex* mutex = GetLuaContextData(L)->luamutex;
 
 	if (mutex->try_lock())
 		return;
 
-	//static int failedLocks = 0;
-	//LOG("LuaMutexLock %i", ++failedLocks);
 	mutex->lock();
 #endif
 }
@@ -108,7 +113,8 @@ void LuaMutexLock(lua_State* L)
 void LuaMutexUnlock(lua_State* L)
 {
 #if (ENABLE_USERSTATE_LOCKS != 0)
-	if (!GetLuaContextData(L)) return; // CLuaParser
+	if (GetLuaContextData(L) == nullptr)
+		return; // CLuaParser
 
 	spring::recursive_mutex* mutex = GetLuaContextData(L)->luamutex;
 	mutex->unlock();
@@ -128,11 +134,15 @@ void LuaMutexYield(lua_State* L)
 	}*/
 
 	static int count = 0;
-	bool y = false;
-	if (count-- <= 0) { y = true; count = 30; }
+
+	if (count-- <= 0)
+		count = 30;
+
 	LuaMutexUnlock(L);
 
-	if (y) spring::this_thread::yield();
+	if (count == 30)
+		spring::this_thread::yield();
+
 	LuaMutexLock(L);
 #endif
 }
@@ -141,46 +151,55 @@ void LuaMutexYield(lua_State* L)
 ///////////////////////////////////////////////////////////////////////////
 //
 
-const char* spring_lua_getName(lua_State* L)
-{
-	auto ld = GetLuaContextData(L);
-	if (ld) {
-		return ld->owner->GetName().c_str();
-	}
-
-	static const char* c = "";
-	return c;
+const char* spring_lua_getHandleName(CLuaHandle* h) {
+	return ((h->GetName()).c_str());
 }
+
+const char* spring_lua_getHandleName(lua_State* L)
+{
+	const luaContextData* lcd = GetLuaContextData(L);
+
+	if (lcd != nullptr)
+		return (spring_lua_getHandleName(lcd->owner));
+
+	return "";
+}
+
 
 
 ///////////////////////////////////////////////////////////////////////////
 // Custom Memory Allocator
 //
-// these track allocations across all states
-static std::atomic<std::int64_t> totalBytesAlloced(0);
-static std::atomic<std::int64_t> totalNumLuaAllocs(0);
-static std::atomic<std::int64_t> totalLuaAllocTime(0);
+static constexpr uint32_t maxAllocedBytes = 768u * (1024u * 1024u);
+static constexpr const char* maxAllocFmtStr = "[%s][handle=%s][OOM] synced=%d alloced=%u[b] maximum=%u[b]";
 
-static const unsigned int maxAllocedBytes = 768u * 1024u*1024u;
-static const char* maxAllocFmtStr = "%s: cannot allocate more memory! (%u bytes already used, %u bytes maximum)";
+// tracks allocations across all states
+static SLuaAllocInfo gLuaAllocInfo = {0};
 
 
 void* spring_lua_alloc(void* ud, void* ptr, size_t osize, size_t nsize)
 {
-	auto lcd = (luaContextData*) ud;
-	totalBytesAlloced -= osize;
-	totalBytesAlloced += nsize;
+	const luaContextData* lcd = (luaContextData*) ud;
+
+	gLuaAllocInfo.allocedBytes -= osize;
+	gLuaAllocInfo.allocedBytes += nsize;
 
 	if (nsize == 0) {
+		// deallocation; must return NULL
 		free(ptr);
-		return NULL;
+		return nullptr;
 	}
 
-	if ((nsize > osize) && (totalBytesAlloced > maxAllocedBytes)) {
-		// better kill Lua than whole engine
-		// NOTE: this will trigger luaD_throw --> exit(EXIT_FAILURE)
-		LOG_L(L_FATAL, maxAllocFmtStr, (lcd->owner->GetName()).c_str(), (unsigned int) totalBytesAlloced, maxAllocedBytes);
-		return NULL;
+	if ((nsize > osize) && (gLuaAllocInfo.allocedBytes.load() > maxAllocedBytes)) {
+		// (re)allocation
+		// better kill Lua than whole engine; instant desync if synced handle
+		// NOTE: this will trigger luaD_throw, which calls exit(EXIT_FAILURE)
+		char buf[1024] = {0};
+
+		SNPRINTF(buf, sizeof(buf), maxAllocFmtStr, __func__, spring_lua_getHandleName(lcd->owner), lcd->synced, (uint32_t) gLuaAllocInfo.allocedBytes, maxAllocedBytes);
+		LOG_L(L_FATAL, "%s", buf);
+		CLIENT_NETLOG(gLuaAllocInfo.localClientID, buf);
+		return nullptr;
 	}
 
 	#if (!defined(DEDICATED) && !defined(UNITSYNC) && !defined(BUILDING_AI))
@@ -188,34 +207,42 @@ void* spring_lua_alloc(void* ud, void* ptr, size_t osize, size_t nsize)
 	void* mem = realloc(ptr, nsize);
 	const spring_time t1 = spring_gettime();
 
-	totalNumLuaAllocs += 1;
-	totalLuaAllocTime += (t1 - t0).toMicroSecsi();
+	gLuaAllocInfo.numLuaAllocs += 1;
+	gLuaAllocInfo.luaAllocTime += (t1 - t0).toMicroSecsi();
 
 	return mem;
 	#else
+	// behaves like realloc when nsize!=0 and osize!=0 (ptr != NULL)
+	// behaves like malloc when nsize!=0 and osize==0 (ptr == NULL)
 	return (realloc(ptr, nsize));
 	#endif
 }
 
-void spring_lua_alloc_get_stats(SLuaInfo* info)
+void spring_lua_alloc_get_stats(SLuaAllocInfo* info)
 {
-	info->allocedBytes = totalBytesAlloced;
-	info->numLuaAllocs = totalNumLuaAllocs;
-	info->luaAllocTime = totalLuaAllocTime;
+	info->allocedBytes.store(gLuaAllocInfo.allocedBytes.load());
+	info->numLuaAllocs.store(gLuaAllocInfo.numLuaAllocs.load());
+	info->luaAllocTime.store(gLuaAllocInfo.luaAllocTime.load());
+
 #if (ENABLE_USERSTATE_LOCKS != 0)
-	info->numLuaStates = mutexes.size() - coroutines.size();
+	info->numLuaStates.store(mutexes.size() - coroutines.size();
 #else
-	info->numLuaStates = 0;
+	info->numLuaStates.store(0);
 #endif
 }
 
-void spring_lua_alloc_update_stats(bool clear)
+void spring_lua_alloc_update_stats(int localClientID, int clearStatsFrame)
 {
-	if (clear) {
-		totalNumLuaAllocs = 0;
-		totalLuaAllocTime = 0;
-	}
+	gLuaAllocInfo.localClientID = localClientID;
+
+	gLuaAllocInfo.numLuaAllocs.store(gLuaAllocInfo.numLuaAllocs * (1 - clearStatsFrame));
+	gLuaAllocInfo.luaAllocTime.store(gLuaAllocInfo.luaAllocTime * (1 - clearStatsFrame));
 }
+
+
+
+
+
 
 //////////////////////////////////////////////////////////
 ////// Custom synced float to string
@@ -244,24 +271,27 @@ static constexpr std::array<double, 11> v = {
 
 static constexpr inline double Pow10d(unsigned i)
 {
-	return (i<v.size()) ? v[i] : std::pow(double(10), i);
+	return (i < v.size()) ? v[i] : std::pow(double(10), i);
 }
 
 
 static const inline int FastLog10(const float f)
 {
 	assert(f != 0.0f); // log10(0) = -inf
-	if (f>=1.f && f<(SPRING_INT64_MAX >> 1)) {
-		const std::int64_t i = f;
-		int log10 = 0;
-		std::int64_t n = 10;
-		while (i >= n) {
-			++log10;
-			n *= 10;
-		}
-		return log10;
+
+	if (f < 1.0f || f >= (SPRING_INT64_MAX >> 1))
+		return std::floor(std::log10(f));
+
+	const std::int64_t i = f;
+	      std::int64_t n = 10;
+
+	int log10 = 0;
+	while (i >= n) {
+		++log10;
+		n *= 10;
 	}
-	return std::floor(std::log10(f));
+
+	return log10;
 }
 
 
@@ -284,11 +314,10 @@ static inline int PrintIntPart(char* buf, float f, const bool carrierBit = false
 		return sprintf(buf, "%d", int(f) + carrierBit);
 	} else
 #endif
-	if (f < (SPRING_INT64_MAX - carrierBit)) {
+	if (f < (SPRING_INT64_MAX - carrierBit))
 		return sprintf64(buf, std::int64_t(f) + carrierBit); // much faster than printing a float!
-	} else {
-		return sprintf(buf, "%1.0f", f + carrierBit);
-	}
+
+	return sprintf(buf, "%1.0f", f + carrierBit);
 }
 
 
@@ -333,25 +362,22 @@ static inline bool HandleRounding(float* fractF, int log10, int charsInStdNotati
 	// We don't handle the fract rounding itself!
 
 	int iDigits = 1;
-	if (!scienceNotation) {
-		if (log10 >= 0) {
-			iDigits = charsInStdNotation;
-		}
-	}
+	if (!scienceNotation && log10 >= 0)
+		iDigits = charsInStdNotation;
 
 	int fDigits = std::max(0, nDigits - (iDigits + 1)); // excluding dot
-	if (precision >= 0) {
+	if (precision >= 0)
 		fDigits = precision;
-	}
 
+	// check fractional part against the rounding limit
 	// 1 -> 0.95   -%.1f-> 1.0
 	// 2 -> 0.995  -%.2f-> 1.00
 	// 3 -> 0.9995 -%.3f-> 1.000
-	const float roundLimit = 1.f - 0.5f * std::pow(0.1f, fDigits);
-	if (*fractF >= roundLimit) {
+	if (*fractF >= (1.0f - 0.5f * std::pow(0.1f, fDigits))) {
 		*fractF = 0.0f;
 		return true;
 	}
+
 	return false;
 }
 
@@ -398,12 +424,13 @@ void spring_lua_ftoa(float f, char* buf, int precision)
 	if ((charsInStdNotation > nDigits) && (precision == -1)) {
 		e10 = log10;
 		nDigits -= 4; // space needed for "e+01"
-		f *= std::pow(10.f, -e10);
+		f *= std::pow(10.0f, -e10);
 	}
-	const bool scienceNotation = (e10 != 0);
 
 	float truncF;
 	float fractF = std::modf(f, &truncF);
+
+	const bool scienceNotation = (e10 != 0);
 	const bool carrierBit = HandleRounding(&fractF, log10, charsInStdNotation, nDigits, scienceNotation, precision);
 
 	int iDigits = PrintIntPart(buf, truncF, carrierBit);
@@ -430,9 +457,10 @@ void spring_lua_ftoa(float f, char* buf, int precision)
 		buf += fDigits;
 	}
 
-	if (scienceNotation) {
-		sprintf(buf, "e%+02d", e10);
-	}
+	if (!scienceNotation)
+		return;
+
+	sprintf(buf, "e%+02d", e10);
 }
 
 
@@ -479,3 +507,4 @@ void spring_lua_format(float f, const char* fmt, char* buf)
 	// copy the float string into dst
 	memcpy(buf, bufC, len+1);
 }
+

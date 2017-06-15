@@ -407,10 +407,15 @@ static void DrawInfoText()
 	}
 
 	{
-		SLuaInfo luaInfo = {0, 0, 0, 0};
+		SLuaAllocInfo luaInfo = {0};
 		spring_lua_alloc_get_stats(&luaInfo);
 
-		font->glFormat(0.01f, 0.14f, 0.5f, DBG_FONT_FLAGS, luaFmtStr, luaInfo.allocedBytes / 1024.0f / 1024.0f, luaInfo.numLuaAllocs / 1000, luaInfo.luaAllocTime, luaInfo.numLuaStates);
+		const    float allocMegs = luaInfo.allocedBytes.load() / 1024.0f / 1024.0f;
+		const uint32_t kiloAlloc = luaInfo.numLuaAllocs.load() / 1000;
+		const uint32_t allocTime = luaInfo.luaAllocTime.load();
+		const uint32_t numStates = luaInfo.numLuaStates.load();
+
+		font->glFormat(0.01f, 0.14f, 0.5f, DBG_FONT_FLAGS, luaFmtStr, allocMegs, kiloAlloc, allocTime, numStates);
 	}
 
 	{

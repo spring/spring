@@ -3,6 +3,8 @@
 #ifndef SPRING_LUA_USER_H
 #define SPRING_LUA_USER_H
 
+#include <atomic>
+
 #include "lua.h"
 
 extern void LuaCreateMutex(lua_State* L);
@@ -12,18 +14,20 @@ extern void LuaMutexLock(lua_State* L);
 extern void LuaMutexUnlock(lua_State* L);
 extern void LuaMutexYield(lua_State* L);
 
-extern const char* spring_lua_getName(lua_State* L);
+extern const char* spring_lua_getHandleName(lua_State* L);
 
-struct SLuaInfo {
-	unsigned int allocedBytes;
-	unsigned int numLuaAllocs;
-	unsigned int luaAllocTime;
-	unsigned int numLuaStates;
+struct SLuaAllocInfo {
+	int localClientID;
+
+	std::atomic<uint64_t> allocedBytes;
+	std::atomic<uint64_t> numLuaAllocs;
+	std::atomic<uint64_t> luaAllocTime;
+	std::atomic<uint64_t> numLuaStates;
 };
 
 extern void* spring_lua_alloc(void* ud, void* ptr, size_t osize, size_t nsize);
-extern void spring_lua_alloc_get_stats(SLuaInfo* info);
-extern void spring_lua_alloc_update_stats(bool);
+extern void spring_lua_alloc_get_stats(SLuaAllocInfo* info);
+extern void spring_lua_alloc_update_stats(int thisClientID, int clearStatsFrame);
 
 
 extern void spring_lua_ftoa(float f, char *buf, int precision = -1);

@@ -137,10 +137,10 @@ CONFIG(float, GuiOpacity).defaultValue(0.8f).minimumValue(0.0f).maximumValue(1.0
 CONFIG(std::string, InputTextGeo).defaultValue("");
 
 
-CGame* game = NULL;
+CGame* game = nullptr;
 
 
-CR_BIND(CGame, (std::string(""), std::string(""), NULL))
+CR_BIND(CGame, (std::string(""), std::string(""), nullptr))
 
 CR_REG_METADATA(CGame, (
 	CR_IGNORED(finishedLoading),
@@ -249,9 +249,9 @@ CGame::CGame(const std::string& mapName, const std::string& modName, ILoadSaveHa
 	, skipOldSpeed(0.0f)
 	, skipOldUserSpeed(0.0f)
 	, speedControl(-1)
-	, consoleHistory(NULL)
-	, worldDrawer(NULL)
-	, defsParser(NULL)
+	, consoleHistory(nullptr)
+	, worldDrawer(nullptr)
+	, defsParser(nullptr)
 	, saveFile(saveFile)
 	, finishedLoading(false)
 	, gameOver(false)
@@ -1537,7 +1537,7 @@ void CGame::SimFrame() {
 	// clear allocator statistics periodically
 	// note: allocator itself should do this (so that
 	// stats are reliable when paused) but see LuaUser
-	spring_lua_alloc_update_stats((gs->frameNum % GAME_SPEED) == 0);
+	spring_lua_alloc_update_stats(gu->myPlayerNum, (gs->frameNum % GAME_SPEED) == 0);
 
 #ifdef TRACE_SYNC
 	tracefile << "New frame:" << gs->frameNum << " " << gsRNG.GetLastSeed() << "\n";
