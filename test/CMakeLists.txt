@@ -50,6 +50,7 @@ Else  (NOT Boost_FOUND)
 			"${ENGINE_SOURCE_DIR}/System/Log/FramePrefixer.cpp"
 			"${ENGINE_SOURCE_DIR}/System/Log/ConsoleSink.cpp"
 			"${ENGINE_SOURCE_DIR}/System/Log/StreamSink.cpp"
+			"${ENGINE_SOURCE_DIR}/Net/NetLog.cpp"
 		)
 
 	Add_Custom_Target(tests)
@@ -343,8 +344,7 @@ endif()
 			unitsync
 		)
 
-	set(test_flags "-DUNITSYNC")
-	add_spring_test(${test_name} "${test_src}" "${test_libs}" "${test_flags}")
+	add_spring_test(${test_name} "${test_src}" "${test_libs}" "")
 	add_dependencies(test_${test_name} springcontent.sdz)
 
 ################################################################################

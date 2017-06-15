@@ -81,6 +81,7 @@ set(main_files
 	"${ENGINE_SRC_ROOT}/System/Threading/ThreadPool.cpp"
 	"${ENGINE_SRC_ROOT}/System/UriParser.cpp"
 	"${ENGINE_SRC_ROOT}/System/StringUtil.cpp"
+	"${ENGINE_SRC_ROOT}/Net/NetLog.cpp"
 	)
 if (WIN32)
 	LIST(APPEND main_files "${ENGINE_SRC_ROOT}/System/Platform/Win/WinVersion.cpp")

@@ -17,6 +17,7 @@
 #include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/MoveTypes/MoveMath/MoveMath.h"
 #include "Net/Protocol/NetProtocol.h"
+#include "Net/NetLog.h"
 #include "System/Threading/ThreadPool.h" // for_mt
 #include "System/TimeProfiler.h"
 #include "System/Config/ConfigHandler.h"

@@ -11,12 +11,6 @@
 
 #include "Game/GameVersion.h"
 
-#if (!defined(DEDICATED) && !defined(UNITSYNC) && !defined(BUILDING_AI) && !defined(UNIT_TEST))
-#define CLIENT_NETLOG(p, m) clientNet->Send(CBaseNetProtocol::Get().SendLogMsg((p), (m)))
-#else
-#define CLIENT_NETLOG(p, m)
-#endif
-
 namespace netcode
 {
 	class RawPacket;

@@ -16,21 +16,18 @@ extern void LuaMutexYield(lua_State* L);
 
 extern const char* spring_lua_getHandleName(lua_State* L);
 
-struct SLuaAllocState {
+struct SLuaAllocInfo {
+	int localClientID;
+
 	std::atomic<uint64_t> allocedBytes;
 	std::atomic<uint64_t> numLuaAllocs;
 	std::atomic<uint64_t> luaAllocTime;
 	std::atomic<uint64_t> numLuaStates;
 };
 
-struct SLuaAllocError {
-	char msgBuf[1024];
-};
-
 extern void* spring_lua_alloc(void* ud, void* ptr, size_t osize, size_t nsize);
-extern void spring_lua_alloc_get_stats(SLuaAllocState* state);
-extern bool spring_lua_alloc_get_error(SLuaAllocError* error);
-extern void spring_lua_alloc_update_stats(int clearStatsFrame);
+extern void spring_lua_alloc_get_stats(SLuaAllocInfo* info);
+extern void spring_lua_alloc_update_stats(int thisClientID, int clearStatsFrame);
 
 
 extern void spring_lua_ftoa(float f, char *buf, int precision = -1);
