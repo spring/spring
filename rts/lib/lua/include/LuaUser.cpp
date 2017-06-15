@@ -198,7 +198,10 @@ void* spring_lua_alloc(void* ud, void* ptr, size_t osize, size_t nsize)
 
 		SNPRINTF(buf, sizeof(buf), maxAllocFmtStr, __func__, spring_lua_getHandleName(lcd->owner), lcd->synced, (uint32_t) gLuaAllocInfo.allocedBytes, maxAllocedBytes);
 		LOG_L(L_FATAL, "%s", buf);
+		#if (!defined(DEDICATED) && !defined(UNITSYNC) && !defined(BUILDING_AI) && !defined(UNIT_TEST))
 		CLIENT_NETLOG(gLuaAllocInfo.localClientID, buf);
+		#endif
+
 		return nullptr;
 	}
 
