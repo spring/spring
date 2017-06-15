@@ -343,7 +343,7 @@ endif()
 			unitsync
 		)
 
-	add_spring_test(${test_name} "${test_src}" "${test_libs}" "")
+	add_spring_test(${test_name} "${test_src}" "${test_libs}" "-DUNITSYNC")
 	add_dependencies(test_${test_name} springcontent.sdz)
 
 ################################################################################
