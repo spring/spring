@@ -8,6 +8,7 @@
 #include "Lua/LuaParser.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "Rendering/GlobalRendering.h"
+#include "Rendering/Textures/S3OTextureHandler.h"
 #include "System/StringUtil.h"
 #include "System/Log/ILog.h"
 #include "System/Exceptions.h"
@@ -22,10 +23,7 @@
 #include "lib/assimp/include/assimp/postprocess.h"
 #include "lib/assimp/include/assimp/Importer.hpp"
 #include "lib/assimp/include/assimp/DefaultLogger.hpp"
-#include "Rendering/Textures/S3OTextureHandler.h"
-#ifndef BITMAP_NO_OPENGL
-	#include "Rendering/GL/myGL.h"
-#endif
+
 
 
 #define IS_QNAN(f) (f != f)
@@ -179,13 +177,8 @@ S3DModel CAssParser::Load(const std::string& modelFilePath)
 	importer.SetIOHandler(new AssVFSSystem());
 	// speed-up processing by skipping things we don't need
 	importer.SetPropertyInteger(AI_CONFIG_PP_RVC_FLAGS, ASS_IMPORTER_OPTIONS);
-
-#ifndef BITMAP_NO_OPENGL
-	{
-		importer.SetPropertyInteger(AI_CONFIG_PP_SLM_VERTEX_LIMIT,   maxVertices);
-		importer.SetPropertyInteger(AI_CONFIG_PP_SLM_TRIANGLE_LIMIT, maxIndices / 3);
-	}
-#endif
+	importer.SetPropertyInteger(AI_CONFIG_PP_SLM_VERTEX_LIMIT,   maxVertices);
+	importer.SetPropertyInteger(AI_CONFIG_PP_SLM_TRIANGLE_LIMIT, maxIndices / 3);
 
 	// Read the model file to build a scene object
 	LOG_SL(LOG_SECTION_MODEL, L_INFO, "Importing model file: %s", modelFilePath.c_str());
