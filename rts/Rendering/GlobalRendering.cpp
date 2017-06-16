@@ -946,14 +946,14 @@ bool CGlobalRendering::CheckGLContextVersion(const int2& minCtx) const
 
 static inline const char* glDebugMessageSourceName(GLenum msgSrce) {
 	switch (msgSrce) {
-		case GL_DEBUG_SOURCE_API            : return          "API"; break;
-		case GL_DEBUG_SOURCE_WINDOW_SYSTEM  : return "WindowSystem"; break;
-		case GL_DEBUG_SOURCE_SHADER_COMPILER: return       "Shader"; break;
-		case GL_DEBUG_SOURCE_THIRD_PARTY    : return    "3rd Party"; break;
-		case GL_DEBUG_SOURCE_APPLICATION    : return  "Application"; break;
-		case GL_DEBUG_SOURCE_OTHER          : return        "other"; break;
-		case GL_DONT_CARE                   : return     "dontcare"; break;
-		default                             :                      ; break;
+		case GL_DEBUG_SOURCE_API            : return             "API"; break;
+		case GL_DEBUG_SOURCE_WINDOW_SYSTEM  : return   "WINDOW_SYSTEM"; break;
+		case GL_DEBUG_SOURCE_SHADER_COMPILER: return "SHADER_COMPILER"; break;
+		case GL_DEBUG_SOURCE_THIRD_PARTY    : return     "THIRD_PARTY"; break;
+		case GL_DEBUG_SOURCE_APPLICATION    : return     "APPLICATION"; break;
+		case GL_DEBUG_SOURCE_OTHER          : return           "OTHER"; break;
+		case GL_DONT_CARE                   : return       "DONT_CARE"; break;
+		default                             :                         ; break;
 	}
 
 	return "unknown";
@@ -961,16 +961,16 @@ static inline const char* glDebugMessageSourceName(GLenum msgSrce) {
 
 static inline const char* glDebugMessageTypeName(GLenum msgType) {
 	switch (msgType) {
-		case GL_DEBUG_TYPE_ERROR              : return       "error"; break;
-		case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR: return  "deprecated"; break;
-		case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR : return   "undefined"; break;
-		case GL_DEBUG_TYPE_PORTABILITY        : return "portability"; break;
-		case GL_DEBUG_TYPE_PERFORMANCE        : return "performance"; break;
-		case GL_DEBUG_TYPE_MARKER             : return      "marker"; break;
-		case GL_DEBUG_TYPE_PUSH_GROUP         : return   "pushgroup"; break;
-		case GL_DEBUG_TYPE_POP_GROUP          : return    "popgroup"; break;
-		case GL_DEBUG_TYPE_OTHER              : return       "other"; break;
-		case GL_DONT_CARE                     : return    "dontcare"; break;
+		case GL_DEBUG_TYPE_ERROR              : return       "ERROR"; break;
+		case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR: return  "DEPRECATED"; break;
+		case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR : return   "UNDEFINED"; break;
+		case GL_DEBUG_TYPE_PORTABILITY        : return "PORTABILITY"; break;
+		case GL_DEBUG_TYPE_PERFORMANCE        : return "PERFORMANCE"; break;
+		case GL_DEBUG_TYPE_MARKER             : return      "MARKER"; break;
+		case GL_DEBUG_TYPE_PUSH_GROUP         : return  "PUSH_GROUP"; break;
+		case GL_DEBUG_TYPE_POP_GROUP          : return   "POP_GROUP"; break;
+		case GL_DEBUG_TYPE_OTHER              : return       "OTHER"; break;
+		case GL_DONT_CARE                     : return   "DONT_CARE"; break;
 		default                               :                     ; break;
 	}
 
@@ -979,11 +979,11 @@ static inline const char* glDebugMessageTypeName(GLenum msgType) {
 
 static inline const char* glDebugMessageSeverityName(GLenum msgSevr) {
 	switch (msgSevr) {
-		case GL_DEBUG_SEVERITY_HIGH  : return     "high"; break;
-		case GL_DEBUG_SEVERITY_MEDIUM: return   "medium"; break;
-		case GL_DEBUG_SEVERITY_LOW   : return      "low"; break;
-		case GL_DONT_CARE            : return "dontcare"; break;
-		default                      :                  ; break;
+		case GL_DEBUG_SEVERITY_HIGH  : return      "HIGH"; break;
+		case GL_DEBUG_SEVERITY_MEDIUM: return    "MEDIUM"; break;
+		case GL_DEBUG_SEVERITY_LOW   : return       "LOW"; break;
+		case GL_DONT_CARE            : return "DONT_CARE"; break;
+		default                      :                   ; break;
 	}
 
 	return "unknown";
