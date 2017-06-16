@@ -960,9 +960,15 @@ bool CGlobalRendering::CheckGLContextVersion(const int2& minCtx) const
 #define GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR   GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR_ARB
 #define GL_DEBUG_TYPE_PORTABILITY          GL_DEBUG_TYPE_PORTABILITY_ARB
 #define GL_DEBUG_TYPE_PERFORMANCE          GL_DEBUG_TYPE_PERFORMANCE_ARB
+#if (defined(GL_DEBUG_TYPE_MARKER_ARB) && defined(GL_DEBUG_TYPE_PUSH_GROUP_ARB) && defined(GL_DEBUG_TYPE_POP_GROUP_ARB))
 #define GL_DEBUG_TYPE_MARKER               GL_DEBUG_TYPE_MARKER_ARB
 #define GL_DEBUG_TYPE_PUSH_GROUP           GL_DEBUG_TYPE_PUSH_GROUP_ARB
 #define GL_DEBUG_TYPE_POP_GROUP            GL_DEBUG_TYPE_POP_GROUP_ARB
+#else
+#define GL_DEBUG_TYPE_MARKER               -1
+#define GL_DEBUG_TYPE_PUSH_GROUP           -1
+#define GL_DEBUG_TYPE_POP_GROUP            -1
+#endif
 #define GL_DEBUG_TYPE_OTHER                GL_DEBUG_TYPE_OTHER_ARB
 
 #define GL_DEBUG_SEVERITY_HIGH             GL_DEBUG_SEVERITY_HIGH_ARB
@@ -994,7 +1000,7 @@ static inline const char* glDebugMessageSourceName(GLenum msgSrce) {
 		default                             :                         ; break;
 	}
 
-	return "unknown";
+	return "UNKNOWN";
 }
 
 static inline const char* glDebugMessageTypeName(GLenum msgType) {
@@ -1012,7 +1018,7 @@ static inline const char* glDebugMessageTypeName(GLenum msgType) {
 		default                               :                     ; break;
 	}
 
-	return "unknown";
+	return "UNKNOWN";
 }
 
 static inline const char* glDebugMessageSeverityName(GLenum msgSevr) {
@@ -1024,7 +1030,7 @@ static inline const char* glDebugMessageSeverityName(GLenum msgSevr) {
 		default                      :                   ; break;
 	}
 
-	return "unknown";
+	return "UNKNOWN";
 }
 
 static void _GL_APIENTRY glDebugMessageCallbackFunc(
