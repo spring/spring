@@ -7,9 +7,6 @@
 
 #include "LuaInclude.h"
 #include "Lua/LuaHandle.h"
-#if 0
-#include "Net/Protocol/NetProtocol.h"
-#endif
 
 #include "System/myMath.h"
 
@@ -158,8 +155,8 @@ void LuaMutexYield(lua_State* L)
 ///////////////////////////////////////////////////////////////////////////
 //
 
-const char* spring_lua_getHandleName(CLuaHandle* h) {
-	return ((h->GetName()).c_str());
+const char* spring_lua_getHandleName(const CLuaHandle* h) {
+	return ((h != nullptr)? (h->GetName()).c_str(): "<null>");
 }
 
 const char* spring_lua_getHandleName(lua_State* L)
@@ -178,12 +175,28 @@ const char* spring_lua_getHandleName(lua_State* L)
 // Custom Memory Allocator
 //
 static constexpr uint32_t maxAllocedBytes = 768u * (1024u * 1024u);
-static constexpr const char* maxAllocFmtStr = "[%s][handle=%s][OOM] synced=%d alloced=%u[b] maximum=%u[b]";
+static constexpr const char* maxAllocFmtStr = "\n\t[%s][handle=%s][OOM] synced=%d {alloced,maximum}={%u,%u}bytes";
 
 // tracks allocations across all states
 static SLuaAllocState gLuaAllocState = {};
-static SLuaAllocError gLuaAllocError = {{0}};
+static SLuaAllocError gLuaAllocError = {};
 
+
+void spring_lua_alloc_log_error(const luaContextData* lcd)
+{
+	const CLuaHandle* lho = lcd->owner;
+	const char* lhn = spring_lua_getHandleName(lho);
+	const char* fmt = maxAllocFmtStr;
+
+	SLuaAllocState& s = gLuaAllocState;
+	SLuaAllocError& e = gLuaAllocError;
+
+	if (e.msgPtr == nullptr)
+		e.msgPtr = &e.msgBuf[0];
+
+	// append to buffer until it fills up or get_error is called
+	e.msgPtr += SNPRINTF(e.msgPtr, sizeof(e.msgBuf) - (e.msgPtr - &e.msgBuf[0]), fmt, __func__, lhn, lcd->synced, uint32_t(s.allocedBytes), maxAllocedBytes);
+}
 
 void* spring_lua_alloc(void* ud, void* ptr, size_t osize, size_t nsize)
 {
@@ -202,14 +215,7 @@ void* spring_lua_alloc(void* ud, void* ptr, size_t osize, size_t nsize)
 		// (re)allocation
 		// better kill Lua than whole engine; instant desync if synced handle
 		// NOTE: this will trigger luaD_throw, which calls exit(EXIT_FAILURE)
-		#if 0
-		SNPRINTF(gLuaAllocError.msgBuf, sizeof(gLuaAllocError.msgBuf), maxAllocFmtStr, __func__, spring_lua_getHandleName(lcd->owner), lcd->synced, (uint32_t) gLuaAllocState.allocedBytes, maxAllocedBytes);
-		LOG_L(L_FATAL, "%s", gLuaAllocError.msgBuf);
-		CLIENT_NETLOG(gLuaAllocState.localClientID, gLuaAllocError.msgBuf);
-		#else
-		SNPRINTF(gLuaAllocError.msgBuf, sizeof(gLuaAllocError.msgBuf), maxAllocFmtStr, __func__, spring_lua_getHandleName(lcd->owner), lcd->synced, (uint32_t) gLuaAllocState.allocedBytes, maxAllocedBytes);
-		#endif
-
+		spring_lua_alloc_log_error(lcd);
 		return nullptr;
 	}
 
@@ -247,8 +253,11 @@ bool spring_lua_alloc_get_error(SLuaAllocError* error)
 	if (gLuaAllocError.msgBuf[0] == 0)
 		return false;
 
+	// copy and clear
 	std::memcpy(error->msgBuf, gLuaAllocError.msgBuf, sizeof(error->msgBuf));
 	std::memset(gLuaAllocError.msgBuf, 0, sizeof(gLuaAllocError.msgBuf));
+
+	gLuaAllocError.msgPtr = &gLuaAllocError.msgBuf[0];
 	return true;
 }
 

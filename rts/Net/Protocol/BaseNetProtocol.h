@@ -12,9 +12,9 @@
 #include "Game/GameVersion.h"
 
 #if (!defined(DEDICATED) && !defined(UNITSYNC) && !defined(BUILDING_AI) && !defined(UNIT_TEST))
-#define CLIENT_NETLOG(p, m) clientNet->Send(CBaseNetProtocol::Get().SendLogMsg((p), (m)))
+#define CLIENT_NETLOG(p, l, m) clientNet->Send(CBaseNetProtocol::Get().SendLogMsg((p), (l), (m)))
 #else
-#define CLIENT_NETLOG(p, m)
+#define CLIENT_NETLOG(p, l, m)
 #endif
 
 namespace netcode
@@ -91,8 +91,8 @@ enum NETMSG {
 	NETMSG_SD_RESET         = 45,
 #endif // SYNCDEBUG
 
-	NETMSG_LOGMSG           = 49, // uint8_t myPlayerNum, std::string message
-	NETMSG_LUAMSG           = 50, // /* uint16_t messageSize */, uint8_t myPlayerNum, uint16_t script, uint8_t mode, std::vector<uint8_t> msg
+	NETMSG_LOGMSG           = 49, // uint8_t myPlayerNum, uint8_t logMsgLvl, std::string strData
+	NETMSG_LUAMSG           = 50, // /* uint16_t messageSize */, uint8_t myPlayerNum, uint16_t script, uint8_t mode, std::vector<uint8_t> rawData
 
 	NETMSG_TEAM             = 51, // uint8_t myPlayerNum, uint8_t action, uint8_t parameter1
 	NETMSG_GAMEDATA         = 52, // /* uint8_t messageSize */, std::string setupText, std::string script, std::string map, int32_t mapChecksum,
@@ -188,8 +188,8 @@ public:
 	PacketType SendStartPos(uint8_t myPlayerNum, uint8_t teamNum, uint8_t readyState, float x, float y, float z);
 	PacketType SendPlayerInfo(uint8_t myPlayerNum, float cpuUsage, int32_t ping);
 	PacketType SendPlayerLeft(uint8_t myPlayerNum, uint8_t bIntended);
-	PacketType SendLogMsg(uint8_t myPlayerNum, const std::string& msg);
-	PacketType SendLuaMsg(uint8_t myPlayerNum, uint16_t script, uint8_t mode, const std::vector<uint8_t>& msg);
+	PacketType SendLogMsg(uint8_t myPlayerNum, uint8_t logMsgLvl, const std::string& strData);
+	PacketType SendLuaMsg(uint8_t myPlayerNum, uint16_t script, uint8_t mode, const std::vector<uint8_t>& rawData);
 	PacketType SendCurrentFrameProgress(int32_t frameNum);
 
 	PacketType SendPlayerStat(uint8_t myPlayerNum, const PlayerStatistics& currentStats);

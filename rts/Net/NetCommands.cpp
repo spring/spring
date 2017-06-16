@@ -217,7 +217,6 @@ void CGame::ClientReadNet()
 {
 	// look ahead so we can adapt consumeSpeedMult to network fluctuations
 	UpdateNumQueuedSimFrames();
-
 	UpdateNetMessageProcessingTimeLeft();
 
 	const spring_time msgProcEndTime = spring_gettime() + spring_msecs(GetNetMessageProcessingTimeLimit());
@@ -834,11 +833,12 @@ void CGame::ClientReadNet()
 
 			case NETMSG_LOGMSG: {
 				try {
-					netcode::UnpackPacket unpack(packet, 1);
+					netcode::UnpackPacket unpack(packet, sizeof(uint8_t));
 
 					std::uint16_t packetSize;
 					std::uint8_t playerNum;
-					std::string logMsg;
+					std::uint8_t logLevel;
+					std::string logString;
 
 					unpack >> packetSize;
 					if (packetSize != packet->length)
@@ -848,9 +848,22 @@ void CGame::ClientReadNet()
 					if (!playerHandler->IsValidPlayer(playerNum))
 						throw netcode::UnpackPacketException("invalid player number");
 
-					unpack >> logMsg;
+					unpack >> logLevel;
+					unpack >> logString;
 
-					LOG("[Game::%s][LOGMSG] sender=\"%s\" string=\"%s\"", __func__, playerHandler->Player(playerNum)->name.c_str(), logMsg.c_str());
+					const CPlayer* player = playerHandler->Player(playerNum);
+
+					const char* fmtStr = "[Game::%s][LOGMSG] sender=\"%s\" string=\"%s\"";
+					const char* logStr = logString.c_str();
+
+					switch (logLevel) {
+						case LOG_LEVEL_INFO   : { LOG_L(L_INFO   , fmtStr, __func__, player->name.c_str(), logStr); } break;
+						case LOG_LEVEL_DEBUG  : { LOG_L(L_DEBUG  , fmtStr, __func__, player->name.c_str(), logStr); } break;
+						case LOG_LEVEL_ERROR  : { LOG_L(L_ERROR  , fmtStr, __func__, player->name.c_str(), logStr); } break;
+						case LOG_LEVEL_FATAL  : { LOG_L(L_FATAL  , fmtStr, __func__, player->name.c_str(), logStr); } break;
+						case LOG_LEVEL_NOTICE : { LOG_L(L_NOTICE , fmtStr, __func__, player->name.c_str(), logStr); } break;
+						case LOG_LEVEL_WARNING: { LOG_L(L_WARNING, fmtStr, __func__, player->name.c_str(), logStr); } break;
+					}
 				} catch (const netcode::UnpackPacketException& ex) {
 					LOG_L(L_ERROR, "[Game::%s][NETMSG_LOGMSG] exception \"%s\"", __func__, ex.what());
 				}
@@ -858,7 +871,7 @@ void CGame::ClientReadNet()
 
 			case NETMSG_LUAMSG: {
 				try {
-					netcode::UnpackPacket unpack(packet, 1);
+					netcode::UnpackPacket unpack(packet, sizeof(uint8_t));
 
 					std::uint16_t packetSize;
 					std::uint8_t playerNum;

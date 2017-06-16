@@ -1261,7 +1261,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 
 		case NETMSG_LOGMSG: {
 			try {
-				netcode::UnpackPacket pckt(packet, 3);
+				netcode::UnpackPacket pckt(packet, sizeof(uint8_t) + sizeof(uint16_t));
 				uint8_t playerNum;
 
 				pckt >> playerNum;
@@ -1278,7 +1278,7 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 		} break;
 		case NETMSG_LUAMSG: {
 			try {
-				netcode::UnpackPacket pckt(packet, 3);
+				netcode::UnpackPacket pckt(packet, sizeof(uint8_t) + sizeof(uint16_t));
 				uint8_t playerNum;
 
 				pckt >> playerNum;

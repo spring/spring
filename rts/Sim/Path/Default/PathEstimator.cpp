@@ -1009,7 +1009,7 @@ std::uint32_t CPathEstimator::CalcChecksum() const
 		sha512::dump_digest(shaBytes, hexChars); // hexify(hash)
 
 		SNPRINTF(msgChars.data(), msgChars.size(), "[PE::%s][BLK_SIZE=%d][SHA_DATA=%s]", __func__, BLOCK_SIZE, hexChars.data());
-		CLIENT_NETLOG(gu->myPlayerNum, msgChars.data());
+		CLIENT_NETLOG(gu->myPlayerNum, LOG_LEVEL_INFO, msgChars.data());
 	}
 	#endif
 

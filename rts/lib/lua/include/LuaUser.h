@@ -24,7 +24,9 @@ struct SLuaAllocState {
 };
 
 struct SLuaAllocError {
-	char msgBuf[1024];
+	// includes space for multiple messages, since we do not record them immediately
+	char msgBuf[16384] = {0};
+	char* msgPtr = nullptr;
 };
 
 extern void* spring_lua_alloc(void* ud, void* ptr, size_t osize, size_t nsize);

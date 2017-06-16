@@ -375,9 +375,9 @@ PacketType CBaseNetProtocol::SendPlayerLeft(uint8_t myPlayerNum, uint8_t bIntend
 }
 
 
-PacketType CBaseNetProtocol::SendLogMsg(uint8_t myPlayerNum, const std::string& msg)
+PacketType CBaseNetProtocol::SendLogMsg(uint8_t myPlayerNum, uint8_t logMsgLvl, const std::string& strData)
 {
-	const uint32_t payloadSize = sizeof(myPlayerNum) + (msg.size() + 1);
+	const uint32_t payloadSize = sizeof(myPlayerNum) + sizeof(logMsgLvl) + (strData.size() + 1);
 	const uint32_t headerSize = sizeof(uint8_t) + sizeof(uint16_t);
 	const uint32_t packetSize = headerSize + payloadSize;
 
@@ -385,13 +385,13 @@ PacketType CBaseNetProtocol::SendLogMsg(uint8_t myPlayerNum, const std::string& 
 		throw netcode::PackPacketException("[BaseNetProto::SendLogMsg] maximum packet-size exceeded");
 
 	PackPacket* packet = new PackPacket(packetSize, NETMSG_LOGMSG);
-	*packet << static_cast<uint16_t>(packetSize) << myPlayerNum << msg;
+	*packet << static_cast<uint16_t>(packetSize) << myPlayerNum << logMsgLvl << strData;
 	return PacketType(packet);
 }
 
-PacketType CBaseNetProtocol::SendLuaMsg(uint8_t myPlayerNum, uint16_t script, uint8_t mode, const std::vector<uint8_t>& msg)
+PacketType CBaseNetProtocol::SendLuaMsg(uint8_t myPlayerNum, uint16_t script, uint8_t mode, const std::vector<uint8_t>& rawData)
 {
-	const uint32_t payloadSize = sizeof(myPlayerNum) + sizeof(script) + sizeof(mode) + msg.size();
+	const uint32_t payloadSize = sizeof(myPlayerNum) + sizeof(script) + sizeof(mode) + rawData.size();
 	const uint32_t headerSize = sizeof(uint8_t) + sizeof(uint16_t);
 	const uint32_t packetSize = headerSize + payloadSize;
 
@@ -399,7 +399,7 @@ PacketType CBaseNetProtocol::SendLuaMsg(uint8_t myPlayerNum, uint16_t script, ui
 		throw netcode::PackPacketException("[BaseNetProto::SendLuaMsg] maximum packet-size exceeded");
 
 	PackPacket* packet = new PackPacket(packetSize, NETMSG_LUAMSG);
-	*packet << static_cast<uint16_t>(packetSize) << myPlayerNum << script << mode << msg;
+	*packet << static_cast<uint16_t>(packetSize) << myPlayerNum << script << mode << rawData;
 	return PacketType(packet);
 }
 

@@ -1047,7 +1047,7 @@ bool CGame::Update()
 
 	// When video recording do step by step simulation, so each simframe gets a corresponding videoframe
 	// FIXME: SERVER ALREADY DOES THIS BY ITSELF
-	if (globalRendering->isVideoCapturing && playing && gameServer != nullptr)
+	if (playing && globalRendering->isVideoCapturing && gameServer != nullptr)
 		gameServer->CreateNewFrame(false, true);
 
 	ENTER_SYNCED_CODE();
@@ -1065,11 +1065,11 @@ bool CGame::Update()
 	LEAVE_SYNCED_CODE();
 
 	{
-		SLuaAllocError error;
+		SLuaAllocError error = {};
 
 		if (spring_lua_alloc_get_error(&error)) {
 			LOG_L(L_FATAL, "%s", error.msgBuf);
-			CLIENT_NETLOG(gu->myPlayerNum, error.msgBuf);
+			CLIENT_NETLOG(gu->myPlayerNum, LOG_LEVEL_FATAL, error.msgBuf);
 		}
 	}
 
