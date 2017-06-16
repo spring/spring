@@ -1068,8 +1068,13 @@ bool CGame::Update()
 		SLuaAllocError error = {};
 
 		if (spring_lua_alloc_get_error(&error)) {
-			LOG_L(L_FATAL, "%s", error.msgBuf);
-			CLIENT_NETLOG(gu->myPlayerNum, LOG_LEVEL_FATAL, error.msgBuf);
+			// convert the "abc\ndef\n..." buffer into "abc", "def", ... chunks
+			for (char *ptr = &error.msgBuf[0], *tmp = nullptr; (tmp = strstr(ptr, "\n")) != nullptr; ptr = tmp + 1) {
+				*tmp = 0;
+
+				LOG_L(L_FATAL, "%s", error.msgBuf);
+				CLIENT_NETLOG(gu->myPlayerNum, LOG_LEVEL_FATAL, error.msgBuf);
+			}
 		}
 	}
 

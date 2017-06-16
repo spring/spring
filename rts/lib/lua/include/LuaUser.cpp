@@ -175,7 +175,7 @@ const char* spring_lua_getHandleName(lua_State* L)
 // Custom Memory Allocator
 //
 static constexpr uint32_t maxAllocedBytes = 768u * (1024u * 1024u);
-static constexpr const char* maxAllocFmtStr = "\n\t[%s][handle=%s][OOM] synced=%d {alloced,maximum}={%u,%u}bytes";
+static constexpr const char* maxAllocFmtStr = "[%s][handle=%s][OOM] synced=%d {alloced,maximum}={%u,%u}bytes\n";
 
 // tracks allocations across all states
 static SLuaAllocState gLuaAllocState = {};
@@ -185,6 +185,7 @@ static SLuaAllocError gLuaAllocError = {};
 void spring_lua_alloc_log_error(const luaContextData* lcd)
 {
 	const CLuaHandle* lho = lcd->owner;
+
 	const char* lhn = spring_lua_getHandleName(lho);
 	const char* fmt = maxAllocFmtStr;
 
