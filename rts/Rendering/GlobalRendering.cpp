@@ -965,9 +965,9 @@ bool CGlobalRendering::CheckGLContextVersion(const int2& minCtx) const
 #define GL_DEBUG_TYPE_PUSH_GROUP           GL_DEBUG_TYPE_PUSH_GROUP_ARB
 #define GL_DEBUG_TYPE_POP_GROUP            GL_DEBUG_TYPE_POP_GROUP_ARB
 #else
-#define GL_DEBUG_TYPE_MARKER               -1
-#define GL_DEBUG_TYPE_PUSH_GROUP           -1
-#define GL_DEBUG_TYPE_POP_GROUP            -1
+#define GL_DEBUG_TYPE_MARKER               -1u
+#define GL_DEBUG_TYPE_PUSH_GROUP           -2u
+#define GL_DEBUG_TYPE_POP_GROUP            -3u
 #endif
 #define GL_DEBUG_TYPE_OTHER                GL_DEBUG_TYPE_OTHER_ARB
 
