@@ -944,6 +944,9 @@ bool CGlobalRendering::CheckGLContextVersion(const int2& minCtx) const
 	#define _GL_APIENTRY
 #endif
 
+
+#if (defined(GL_ARB_debug_output) && !defined(HEADLESS))
+
 #ifndef GL_DEBUG_SOURCE_API
 #define GL_DEBUG_SOURCE_API                GL_DEBUG_SOURCE_API_ARB
 #define GL_DEBUG_SOURCE_WINDOW_SYSTEM      GL_DEBUG_SOURCE_WINDOW_SYSTEM_ARB
@@ -974,6 +977,10 @@ bool CGlobalRendering::CheckGLContextVersion(const int2& minCtx) const
 #define glDebugMessageCallback  glDebugMessageCallbackARB
 #define glDebugMessageControl   glDebugMessageControlARB
 #endif
+
+constexpr static std::array<GLenum,  7> msgSrceEnums = {GL_DONT_CARE, GL_DEBUG_SOURCE_API, GL_DEBUG_SOURCE_WINDOW_SYSTEM, GL_DEBUG_SOURCE_SHADER_COMPILER, GL_DEBUG_SOURCE_THIRD_PARTY, GL_DEBUG_SOURCE_APPLICATION, GL_DEBUG_SOURCE_OTHER};
+constexpr static std::array<GLenum, 10> msgTypeEnums = {GL_DONT_CARE, GL_DEBUG_TYPE_ERROR, GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR, GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR, GL_DEBUG_TYPE_PORTABILITY, GL_DEBUG_TYPE_PERFORMANCE, GL_DEBUG_TYPE_MARKER, GL_DEBUG_TYPE_PUSH_GROUP, GL_DEBUG_TYPE_POP_GROUP, GL_DEBUG_TYPE_OTHER};
+constexpr static std::array<GLenum,  4> msgSevrEnums = {GL_DONT_CARE, GL_DEBUG_SEVERITY_LOW, GL_DEBUG_SEVERITY_MEDIUM, GL_DEBUG_SEVERITY_HIGH};
 
 static inline const char* glDebugMessageSourceName(GLenum msgSrce) {
 	switch (msgSrce) {
@@ -1020,7 +1027,6 @@ static inline const char* glDebugMessageSeverityName(GLenum msgSevr) {
 	return "unknown";
 }
 
-
 static void _GL_APIENTRY glDebugMessageCallbackFunc(
 	GLenum msgSrce,
 	GLenum msgType,
@@ -1030,7 +1036,6 @@ static void _GL_APIENTRY glDebugMessageCallbackFunc(
 	const GLchar* dbgMessage,
 	const GLvoid* userParam
 ) {
-	#if (defined(GL_ARB_debug_output) && !defined(HEADLESS))
 	switch (msgID) {
 		case 131185: { return; } break; // "Buffer detailed info: Buffer object 260 (bound to GL_PIXEL_UNPACK_BUFFER_ARB, usage hint is GL_STREAM_DRAW) has been mapped in DMA CACHED memory."
 		default: {} break;
@@ -1046,18 +1051,14 @@ static void _GL_APIENTRY glDebugMessageCallbackFunc(
 		return;
 
 	CrashHandler::Stacktrace(Threading::GetCurrentThread(), "rendering", LOG_LEVEL_WARNING);
-	#endif
 }
+#endif
 
 
 bool CGlobalRendering::ToggleGLDebugOutput(unsigned int msgSrceIdx, unsigned int msgTypeIdx, unsigned int msgSevrIdx)
 {
 	const static bool dbgOutput = configHandler->GetBool("DebugGL");
 	const static bool dbgTraces = configHandler->GetBool("DebugGLStacktraces");
-
-	constexpr static std::array<GLenum,  7> msgSrceEnums = {GL_DONT_CARE, GL_DEBUG_SOURCE_API, GL_DEBUG_SOURCE_WINDOW_SYSTEM, GL_DEBUG_SOURCE_SHADER_COMPILER, GL_DEBUG_SOURCE_THIRD_PARTY, GL_DEBUG_SOURCE_APPLICATION, GL_DEBUG_SOURCE_OTHER};
-	constexpr static std::array<GLenum, 10> msgTypeEnums = {GL_DONT_CARE, GL_DEBUG_TYPE_ERROR, GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR, GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR, GL_DEBUG_TYPE_PORTABILITY, GL_DEBUG_TYPE_PERFORMANCE, GL_DEBUG_TYPE_MARKER, GL_DEBUG_TYPE_PUSH_GROUP, GL_DEBUG_TYPE_POP_GROUP, GL_DEBUG_TYPE_OTHER};
-	constexpr static std::array<GLenum,  4> msgSevrEnums = {GL_DONT_CARE, GL_DEBUG_SEVERITY_LOW, GL_DEBUG_SEVERITY_MEDIUM, GL_DEBUG_SEVERITY_HIGH};
 
 	if (!dbgOutput) {
 		LOG("[GR::%s] OpenGL debug-context not installed (dbgErrors=%d dbgTraces=%d)", __func__, glDebugErrors, dbgTraces);
@@ -1081,7 +1082,7 @@ bool CGlobalRendering::ToggleGLDebugOutput(unsigned int msgSrceIdx, unsigned int
 
 		LOG("[GR::%s] OpenGL debug-message callback enabled (source=%s type=%s severity=%s)", __func__, msgSrceStr, msgTypeStr, msgSevrStr);
 	} else {
-		glDebugMessageCallbackARB(nullptr, nullptr);
+		glDebugMessageCallback(nullptr, nullptr);
 		glDisable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 
 		LOG("[GR::%s] OpenGL debug-message callback disabled", __func__);
