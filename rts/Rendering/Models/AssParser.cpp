@@ -7,9 +7,9 @@
 
 #include "Lua/LuaParser.h"
 #include "Sim/Misc/CollisionVolume.h"
+#include "Rendering/GlobalRendering.h"
 #include "System/StringUtil.h"
 #include "System/Log/ILog.h"
-#include "System/Platform/errorhandler.h"
 #include "System/Exceptions.h"
 #include "System/ScopedFPUSettings.h"
 #include "System/FileSystem/FileHandler.h"
@@ -127,13 +127,10 @@ public:
 
 CAssParser::CAssParser()
 {
-#ifndef BITMAP_NO_OPENGL
-	maxIndices = 1024;
-	maxVertices = 1024;
-	// FIXME returns non-optimal data, at best compute it ourselves (pre-TL cache size!)
-	glGetIntegerv(GL_MAX_ELEMENTS_INDICES,  &maxIndices);
-	glGetIntegerv(GL_MAX_ELEMENTS_VERTICES, &maxVertices);
-#endif
+	// FIXME: non-optimal, maybe compute these ourselves (pre-TL cache size!)
+	maxIndices = std::max(globalRendering->glslMaxRecommendedIndices, 1024);
+	maxVertices = std::max(globalRendering->glslMaxRecommendedVertices, 1024);
+
 	Assimp::DefaultLogger::create("", Assimp::Logger::VERBOSE);
 	// Create a logger for debugging model loading issues
 	Assimp::DefaultLogger::get()->attachStream(new AssLogStream(), ASS_LOGGING_OPTIONS);

@@ -215,7 +215,7 @@ struct S3DModel
 
 	S3DModel& operator = (const S3DModel& m) = delete;
 	S3DModel& operator = (S3DModel&& m) {
-		name = std::move(m.name);
+		name    = std::move(m.name   );
 		texs[0] = std::move(m.texs[0]);
 		texs[1] = std::move(m.texs[1]);
 
@@ -263,8 +263,9 @@ struct S3DModel
 			stack.pop_back();
 			pieces.push_back(p);
 
-			for (S3DModelPiece* c: p->children) {
-				stack.push_back(c);
+			// add children in reverse for the correct DF traversal order
+			for (size_t n = 0; n < p->children.size(); n++) {
+				stack.push_back(p->children[p->children.size() - n - 1]);
 			}
 		}
 	}
