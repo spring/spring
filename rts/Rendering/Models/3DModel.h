@@ -123,7 +123,7 @@ public:
 	void Shatter(float, int, int, int, const float3, const float3, const CMatrix44f&) const;
 
 	void SetPieceMatrix(const CMatrix44f& m) {
-		pieceMatrix = ComposeTransform(offset, ZeroVector, scales) * m;
+		pieceMatrix = m * ComposeTransform(offset, ZeroVector, scales);
 
 		for (S3DModelPiece* c: children) {
 			c->SetPieceMatrix(pieceMatrix);
@@ -170,7 +170,7 @@ public:
 	S3DModelPiece* parent;
 	CollisionVolume colvol;
 
-	CMatrix44f pieceMatrix;
+	CMatrix44f pieceMatrix;    /// bind-pose transform, including baked rots
 	CMatrix44f bakedMatrix;    /// baked local-space rotations
 
 	float3 offset;             /// local (piece-space) offset wrt. parent piece
