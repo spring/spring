@@ -1004,8 +1004,8 @@ public:
 			"Allows modifying the members of a group") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-
 		const char firstChar = action.GetArgs()[0];
+
 		if ((firstChar >= '0') && (firstChar <= '9')) {
 			const int teamId = (int) (firstChar - '0');
 			size_t firstCmdChar = action.GetArgs().find_first_not_of(" \t\n\r", 1);
@@ -1033,9 +1033,9 @@ public:
 	{}
 
 	bool Execute(const UnsyncedAction& action) const {
-		if (!action.IsRepeat()) {
+		if (!action.IsRepeat())
 			return grouphandlers[gu->myTeam]->GroupCommand(groupId);
-		}
+
 		return false;
 	}
 
@@ -1074,9 +1074,9 @@ class ChatActionExecutor : public IUnsyncedActionExecutor {
 
 public:
 	bool Execute(const UnsyncedAction& action) const {
-		if (setUserInputPrefix) {
+		if (setUserInputPrefix)
 			game->userInputPrefix = userInputPrefix;
-		}
+
 		game->userWriting = true;
 		game->userPrompt = "Say: ";
 		game->userInput = game->userInputPrefix;
@@ -1090,7 +1090,6 @@ public:
 	}
 
 	static void RegisterCommandVariants() {
-
 		unsyncedGameCommands->AddActionExecutor(new ChatActionExecutor("",     "",   false));
 		unsyncedGameCommands->AddActionExecutor(new ChatActionExecutor("All",  "",   true));
 		unsyncedGameCommands->AddActionExecutor(new ChatActionExecutor("Ally", "a:", true));
@@ -1185,7 +1184,18 @@ public:
 	DebugGLActionExecutor() : IUnsyncedActionExecutor("DebugGL", "Enable/Disable OpenGL debug-context output") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		globalRendering->ToggleGLDebugOutput();
+		// append zeros so all args can be safely omitted
+		std::istringstream buf(action.GetArgs() + " 0 0 0");
+
+		unsigned int msgSrceIdx = 0;
+		unsigned int msgTypeIdx = 0;
+		unsigned int msgSevrIdx = 0;
+
+		buf >> msgSrceIdx;
+		buf >> msgTypeIdx;
+		buf >> msgSevrIdx;
+
+		globalRendering->ToggleGLDebugOutput(msgSrceIdx, msgTypeIdx, msgSevrIdx);
 		return true;
 	}
 };
@@ -1219,7 +1229,6 @@ public:
 			"Switch the sound output system (currently only OpenAL / NullAudio)") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-
 		// toggle
 		LogSystemStatus("Sound", !sound->ChangeOutput());
 		return true;
@@ -1237,8 +1246,8 @@ public:
 
 	bool Execute(const UnsyncedAction& action) const {
 		std::string channel;
-		int enable;
 		std::istringstream buf(action.GetArgs());
+		int enable;
 		buf >> channel;
 		buf >> enable;
 

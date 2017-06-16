@@ -467,7 +467,7 @@ void CGlobalRendering::PostInit() {
 	QueryGLMaxVals();
 
 	LogVersionInfo(sdlVersionStr, glVidMemStr);
-	ToggleGLDebugOutput();
+	ToggleGLDebugOutput(0, 0, 0);
 }
 
 void CGlobalRendering::SwapBuffers(bool allowSwapBuffers, bool clearErrors)
@@ -944,47 +944,72 @@ bool CGlobalRendering::CheckGLContextVersion(const int2& minCtx) const
 	#define _GL_APIENTRY
 #endif
 
-void _GL_APIENTRY glDebugMessageCallbackFunc(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const GLvoid* userParam)
-{
+static inline const char* glDebugMessageSourceName(GLenum msgSrce) {
+	switch (msgSrce) {
+		case GL_DEBUG_SOURCE_API            : return          "API"; break;
+		case GL_DEBUG_SOURCE_WINDOW_SYSTEM  : return "WindowSystem"; break;
+		case GL_DEBUG_SOURCE_SHADER_COMPILER: return       "Shader"; break;
+		case GL_DEBUG_SOURCE_THIRD_PARTY    : return    "3rd Party"; break;
+		case GL_DEBUG_SOURCE_APPLICATION    : return  "Application"; break;
+		case GL_DEBUG_SOURCE_OTHER          : return        "other"; break;
+		case GL_DONT_CARE                   : return     "dontcare"; break;
+		default                             :                      ; break;
+	}
+
+	return "unknown";
+}
+
+static inline const char* glDebugMessageTypeName(GLenum msgType) {
+	switch (msgType) {
+		case GL_DEBUG_TYPE_ERROR              : return       "error"; break;
+		case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR: return  "deprecated"; break;
+		case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR : return   "undefined"; break;
+		case GL_DEBUG_TYPE_PORTABILITY        : return "portability"; break;
+		case GL_DEBUG_TYPE_PERFORMANCE        : return "performance"; break;
+		case GL_DEBUG_TYPE_MARKER             : return      "marker"; break;
+		case GL_DEBUG_TYPE_PUSH_GROUP         : return   "pushgroup"; break;
+		case GL_DEBUG_TYPE_POP_GROUP          : return    "popgroup"; break;
+		case GL_DEBUG_TYPE_OTHER              : return       "other"; break;
+		case GL_DONT_CARE                     : return    "dontcare"; break;
+		default                               :                     ; break;
+	}
+
+	return "unknown";
+}
+
+static inline const char* glDebugMessageSeverityName(GLenum msgSevr) {
+	switch (msgSevr) {
+		case GL_DEBUG_SEVERITY_HIGH  : return     "high"; break;
+		case GL_DEBUG_SEVERITY_MEDIUM: return   "medium"; break;
+		case GL_DEBUG_SEVERITY_LOW   : return      "low"; break;
+		case GL_DONT_CARE            : return "dontcare"; break;
+		default                      :                  ; break;
+	}
+
+	return "unknown";
+}
+
+
+static void _GL_APIENTRY glDebugMessageCallbackFunc(
+	GLenum msgSrce,
+	GLenum msgType,
+	GLuint msgID,
+	GLenum msgSevr,
+	GLsizei length,
+	const GLchar* dbgMessage,
+	const GLvoid* userParam
+) {
 	#if (defined(GL_ARB_debug_output) && !defined(HEADLESS))
-	switch (id) {
+	switch (msgID) {
 		case 131185: { return; } break; // "Buffer detailed info: Buffer object 260 (bound to GL_PIXEL_UNPACK_BUFFER_ARB, usage hint is GL_STREAM_DRAW) has been mapped in DMA CACHED memory."
 		default: {} break;
 	}
 
-	const char*   sourceStr = "";
-	const char*     typeStr = "";
-	const char* severityStr = "";
-	const char*  messageStr = message;
+	const char* msgSrceStr = glDebugMessageSourceName(msgSrce);
+	const char* msgTypeStr = glDebugMessageTypeName(msgType);
+	const char* msgSevrStr = glDebugMessageSeverityName(msgSevr);
 
-	switch (source) {
-		case GL_DEBUG_SOURCE_API_ARB            : sourceStr =          "API"; break;
-		case GL_DEBUG_SOURCE_WINDOW_SYSTEM_ARB  : sourceStr = "WindowSystem"; break;
-		case GL_DEBUG_SOURCE_SHADER_COMPILER_ARB: sourceStr =       "Shader"; break;
-		case GL_DEBUG_SOURCE_THIRD_PARTY_ARB    : sourceStr =    "3rd Party"; break;
-		case GL_DEBUG_SOURCE_APPLICATION_ARB    : sourceStr =  "Application"; break;
-		case GL_DEBUG_SOURCE_OTHER_ARB          : sourceStr =        "other"; break;
-		default                                 : sourceStr =      "unknown";
-	}
-
-	switch (type) {
-		case GL_DEBUG_TYPE_ERROR_ARB              : typeStr =       "error"; break;
-		case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR_ARB: typeStr =  "deprecated"; break;
-		case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR_ARB : typeStr =   "undefined"; break;
-		case GL_DEBUG_TYPE_PORTABILITY_ARB        : typeStr = "portability"; break;
-		case GL_DEBUG_TYPE_PERFORMANCE_ARB        : typeStr = "performance"; break;
-		case GL_DEBUG_TYPE_OTHER_ARB              : typeStr =       "other"; break;
-		default                                   : typeStr =     "unknown";
-	}
-
-	switch (severity) {
-		case GL_DEBUG_SEVERITY_HIGH_ARB  : severityStr =    "high"; break;
-		case GL_DEBUG_SEVERITY_MEDIUM_ARB: severityStr =  "medium"; break;
-		case GL_DEBUG_SEVERITY_LOW_ARB   : severityStr =     "low"; break;
-		default                          : severityStr = "unknown";
-	}
-
-	LOG_L(L_INFO, "OpenGL: source<%s> type<%s> id<%u> severity<%s>:\n%s", sourceStr, typeStr, id, severityStr, messageStr);
+	LOG_L(L_WARNING, "[OPENGL_DEBUG] id=%u source=%s type=%s severity=%s msg=\"%s\"", msgID, msgSrceStr, msgTypeStr, msgSevrStr, dbgMessage);
 
 	if ((userParam == nullptr) || !(*reinterpret_cast<const bool*>(userParam)))
 		return;
@@ -994,10 +1019,14 @@ void _GL_APIENTRY glDebugMessageCallbackFunc(GLenum source, GLenum type, GLuint 
 }
 
 
-bool CGlobalRendering::ToggleGLDebugOutput()
+bool CGlobalRendering::ToggleGLDebugOutput(unsigned int msgSrceIdx, unsigned int msgTypeIdx, unsigned int msgSevrIdx)
 {
 	const static bool dbgOutput = configHandler->GetBool("DebugGL");
 	const static bool dbgTraces = configHandler->GetBool("DebugGLStacktraces");
+
+	constexpr static std::array<GLenum,  7> msgSrceEnums = {GL_DONT_CARE, GL_DEBUG_SOURCE_API, GL_DEBUG_SOURCE_WINDOW_SYSTEM, GL_DEBUG_SOURCE_SHADER_COMPILER, GL_DEBUG_SOURCE_THIRD_PARTY, GL_DEBUG_SOURCE_APPLICATION, GL_DEBUG_SOURCE_OTHER};
+	constexpr static std::array<GLenum, 10> msgTypeEnums = {GL_DONT_CARE, GL_DEBUG_TYPE_ERROR, GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR, GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR, GL_DEBUG_TYPE_PORTABILITY, GL_DEBUG_TYPE_PERFORMANCE, GL_DEBUG_TYPE_MARKER, GL_DEBUG_TYPE_PUSH_GROUP, GL_DEBUG_TYPE_POP_GROUP, GL_DEBUG_TYPE_OTHER};
+	constexpr static std::array<GLenum,  4> msgSevrEnums = {GL_DONT_CARE, GL_DEBUG_SEVERITY_LOW, GL_DEBUG_SEVERITY_MEDIUM, GL_DEBUG_SEVERITY_HIGH};
 
 	if (!dbgOutput) {
 		LOG("[GR::%s] OpenGL debug-context not installed (dbgErrors=%d dbgTraces=%d)", __func__, glDebugErrors, dbgTraces);
@@ -1006,19 +1035,23 @@ bool CGlobalRendering::ToggleGLDebugOutput()
 
 	#if (defined(GL_ARB_debug_output) && !defined(HEADLESS))
 	if ((glDebug = !glDebug)) {
+		const char* msgSrceStr = glDebugMessageSourceName  (msgSrceEnums[msgSrceIdx %= msgSrceEnums.size()]);
+		const char* msgTypeStr = glDebugMessageTypeName    (msgTypeEnums[msgTypeIdx %= msgTypeEnums.size()]);
+		const char* msgSevrStr = glDebugMessageSeverityName(msgSevrEnums[msgSevrIdx %= msgSevrEnums.size()]);
+
 		// install OpenGL debug message callback; typecast is a workaround
 		// for #4510 (change in callback function signature with GLEW 1.11)
 		// use SYNCHRONOUS output, we want our callback to run in the same
 		// thread as the bugged GL call (for proper stacktraces)
 		// CB userParam is const, but has to be specified sans qualifiers
-		glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
-		glDebugMessageCallbackARB((GLDEBUGPROCARB) &glDebugMessageCallbackFunc, (void*) &dbgTraces);
-		glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
+		glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+		glDebugMessageCallback((GLDEBUGPROC) &glDebugMessageCallbackFunc, (void*) &dbgTraces);
+		glDebugMessageControl(msgSrceEnums[msgSrceIdx], msgTypeEnums[msgTypeIdx], msgSevrEnums[msgSevrIdx], 0, nullptr, GL_TRUE);
 
-		LOG("[GR::%s] OpenGL debug-message callback enabled", __func__);
+		LOG("[GR::%s] OpenGL debug-message callback enabled (source=%s type=%s severity=%s)", __func__, msgSrceStr, msgTypeStr, msgSevrStr);
 	} else {
 		glDebugMessageCallbackARB(nullptr, nullptr);
-		glDisable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
+		glDisable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 
 		LOG("[GR::%s] OpenGL debug-message callback disabled", __func__);
 	}

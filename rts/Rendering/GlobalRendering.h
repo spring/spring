@@ -58,7 +58,7 @@ public:
 
 	bool CheckGLMultiSampling() const;
 	bool CheckGLContextVersion(const int2& minCtx) const;
-	bool ToggleGLDebugOutput();
+	bool ToggleGLDebugOutput(unsigned int msgSrceIdx, unsigned int msgTypeIdx, unsigned int msgSevrIdx);
 
 public:
 	/**
