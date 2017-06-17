@@ -431,7 +431,6 @@ endif()
 	set(test_name Printf)
 	Set(test_src
 			"${CMAKE_CURRENT_SOURCE_DIR}/other/testPrintf.cpp"
-			"${ENGINE_SOURCE_DIR}/lib/lua/include/LuaUser.cpp"
 			"${ENGINE_SOURCE_DIR}/System/Misc/SpringTime.cpp"
 			"${ENGINE_SOURCE_DIR}/System/TimeProfiler.cpp"
 			${sources_engine_System_Threading}
@@ -439,6 +438,7 @@ endif()
 		)
 	set(test_libs
 			streflop
+			lua
 			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
 			${Boost_SYSTEM_LIBRARY}
 			${Boost_CHRONO_LIBRARY_WITH_RT}
