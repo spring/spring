@@ -334,6 +334,7 @@ endif()
 	set(test_name UnitSync)
 	Set(test_src
 			"${CMAKE_CURRENT_SOURCE_DIR}/unitsync/testUnitSync.cpp"
+			"${ENGINE_SOURCE_DIR}/Lua/LuaMemPool.cpp"
 			${test_Log_sources}
 		)
 
@@ -431,6 +432,7 @@ endif()
 	set(test_name Printf)
 	Set(test_src
 			"${CMAKE_CURRENT_SOURCE_DIR}/other/testPrintf.cpp"
+			"${ENGINE_SOURCE_DIR}/Lua/LuaMemPool.cpp"
 			"${ENGINE_SOURCE_DIR}/System/Misc/SpringTime.cpp"
 			"${ENGINE_SOURCE_DIR}/System/TimeProfiler.cpp"
 			${sources_engine_System_Threading}
