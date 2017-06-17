@@ -3,16 +3,20 @@
 #ifndef LUA_CONTEXT_DATA_H
 #define LUA_CONTEXT_DATA_H
 
+#include "LuaMemPool.h"
+#if (!defined(UNITSYNC) && !defined(DEDICATED))
 #include "LuaShaders.h"
 #include "LuaTextures.h"
 #include "LuaFBOs.h"
 #include "LuaRBOs.h"
 #include "LuaDisplayLists.h"
+#endif
 #include "System/EventClient.h"
 #include "System/Log/ILog.h"
 #include "System/Threading/SpringThreading.h"
 
 class CLuaHandle;
+class LuaMemPool;
 class LuaParser;
 
 
@@ -183,7 +187,14 @@ public:
 	, readTeam(0)
 	, readAllyTeam(0)
 	, selectTeam(CEventClient::NoAccessTeam)
+
+	, memPool(new LuaMemPool())
 	, parser(nullptr) {}
+
+	~luaContextData() {
+		delete memPool;
+		memPool = nullptr;
+	}
 
 	void Clear() {
 		#if (!defined(UNITSYNC) && !defined(DEDICATED))
@@ -213,6 +224,7 @@ public:
 	int  readTeam;
 	int  readAllyTeam;
 	int  selectTeam;
+
 #if (!defined(UNITSYNC) && !defined(DEDICATED))
 	LuaShaders shaders;
 	LuaTextures textures;
@@ -222,6 +234,8 @@ public:
 
 	GLMatrixStateTracker glMatrixTracker;
 #endif
+
+	LuaMemPool* memPool;
 	LuaParser* parser;
 };
 

@@ -7,6 +7,7 @@
 
 #include "LuaInclude.h"
 #include "Lua/LuaHandle.h"
+#include "Lua/LuaMemPool.h"
 
 #include "System/myMath.h"
 
@@ -183,7 +184,6 @@ static constexpr const char* maxAllocFmtStr = "[%s][handle=%s][OOM] synced=%d {a
 static SLuaAllocState gLuaAllocState = {};
 static SLuaAllocError gLuaAllocError = {};
 
-
 void spring_lua_alloc_log_error(const luaContextData* lcd)
 {
 	const CLuaHandle* lho = lcd->owner;
@@ -203,14 +203,15 @@ void spring_lua_alloc_log_error(const luaContextData* lcd)
 
 void* spring_lua_alloc(void* ud, void* ptr, size_t osize, size_t nsize)
 {
-	const luaContextData* lcd = (luaContextData*) ud;
+	luaContextData* lcd = static_cast<luaContextData*>(ud);
+	LuaMemPool* lmp = lcd->memPool;
 
 	gLuaAllocState.allocedBytes -= osize;
 	gLuaAllocState.allocedBytes += nsize;
 
 	if (nsize == 0) {
 		// deallocation; must return NULL
-		free(ptr);
+		lmp->Free(ptr, osize);
 		return nullptr;
 	}
 
@@ -222,8 +223,11 @@ void* spring_lua_alloc(void* ud, void* ptr, size_t osize, size_t nsize)
 		return nullptr;
 	}
 
+	// ptr is NULL if and only if osize is zero
+	// behaves like realloc when nsize!=0 and osize!=0 (ptr != NULL)
+	// behaves like malloc when nsize!=0 and osize==0 (ptr == NULL)
 	const spring_time t0 = spring_gettime();
-	void* mem = realloc(ptr, nsize);
+	void* mem = lmp->Realloc(ptr, nsize, osize);
 	const spring_time t1 = spring_gettime();
 
 	gLuaAllocState.numLuaAllocs += 1;

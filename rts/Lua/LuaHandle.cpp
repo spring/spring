@@ -74,8 +74,7 @@ void CLuaHandle::PushTracebackFuncToRegistry(lua_State* L)
 
 static int handlepanic(lua_State* L)
 {
-	std::string err = luaL_optsstring(L, 1, "lua paniced");
-	throw content_error(err);
+	throw content_error(luaL_optsstring(L, 1, "lua paniced"));
 }
 
 
