@@ -9,8 +9,8 @@
 
 LuaMemPool::LuaMemPool()
 {
-	nextFreeChunk.reserve(1024);
-	poolNumChunks.reserve(1024);
+	nextFreeChunk.reserve(16384);
+	poolNumChunks.reserve(16384);
 
 	#if 1
 	allocBlocks.reserve(1024);
@@ -92,6 +92,7 @@ void LuaMemPool::Free(void* ptr, size_t size)
 {
 	#ifdef UNITSYNC
 	::operator delete(ptr);
+	return;
 	#endif
 
 	if (ptr == nullptr)
