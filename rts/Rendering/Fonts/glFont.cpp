@@ -26,7 +26,6 @@ bool CglFont::threadSafety = false;
 CglFont* font = nullptr;
 CglFont* smallFont = nullptr;
 
-static const unsigned char nullChar = 0;
 static const float4        white(1.00f, 1.00f, 1.00f, 0.95f);
 static const float4  darkOutline(0.05f, 0.05f, 0.05f, 0.95f);
 static const float4 lightOutline(0.95f, 0.95f, 0.95f, 0.8f);

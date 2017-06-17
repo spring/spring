@@ -37,9 +37,8 @@ bool CRoamMeshDrawer::forceTessellate[2] = {false, false};
 
 
 
-CRoamMeshDrawer::CRoamMeshDrawer(CSMFReadMap* rm, CSMFGroundDrawer* gd)
+CRoamMeshDrawer::CRoamMeshDrawer(CSMFGroundDrawer* gd)
 	: CEventClient("[CRoamMeshDrawer]", 271989, false)
-	, smfReadMap(rm)
 	, smfGroundDrawer(gd)
 	, lastGroundDetail{0, 0}
 {

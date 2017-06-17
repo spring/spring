@@ -151,11 +151,11 @@ IMeshDrawer* CSMFGroundDrawer::SwitchMeshDrawer(int wantedMode)
 		} break;
 		case SMF_MESHDRAWER_BASIC: {
 			LOG("Switching to Basic Mesh Rendering");
-			meshDrawer = new CBasicMeshDrawer(smfMap, this);
+			meshDrawer = new CBasicMeshDrawer(this);
 		} break;
 		default: {
 			LOG("Switching to ROAM Mesh Rendering");
-			meshDrawer = new CRoamMeshDrawer(smfMap, this);
+			meshDrawer = new CRoamMeshDrawer(this);
 		} break;
 	}
 

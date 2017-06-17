@@ -258,7 +258,6 @@ private:
 
 	bool advShading;
 
-	bool drawBeingBuiltModels;
 	bool useDistToGroundForIcons;
 
 private:

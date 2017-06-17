@@ -12,7 +12,6 @@
 
 
 
-class CSMFReadMap;
 class CSMFGroundDrawer;
 class CCamera;
 
@@ -46,7 +45,7 @@ public:
 		MESH_COUNT  = 2,
 	};
 
-	CRoamMeshDrawer(CSMFReadMap* rm, CSMFGroundDrawer* gd);
+	CRoamMeshDrawer(CSMFGroundDrawer* gd);
 	~CRoamMeshDrawer();
 
 	void Update();
@@ -64,7 +63,6 @@ private:
 	bool Tessellate(std::vector<Patch>& patches, const CCamera* cam, int viewRadius, bool shadowPass);
 
 private:
-	CSMFReadMap* smfReadMap;
 	CSMFGroundDrawer* smfGroundDrawer;
 
 	int numPatchesX;

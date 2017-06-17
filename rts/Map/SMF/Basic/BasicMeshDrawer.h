@@ -11,7 +11,6 @@
 #include "Rendering/GL/VBO.h"
 #include "System/EventClient.h"
 
-class CSMFReadMap;
 class CSMFGroundDrawer;
 class CCamera;
 
@@ -22,7 +21,7 @@ public:
 	int  GetReadAllyTeam() const override { return AllAccessTeam; }
 
 public:
-	CBasicMeshDrawer(CSMFReadMap* rm, CSMFGroundDrawer* gd);
+	CBasicMeshDrawer(CSMFGroundDrawer* gd);
 	~CBasicMeshDrawer();
 
 	static constexpr int32_t PATCH_SIZE = 128; // must match SMFReadMap::bigSquareSize
@@ -77,7 +76,6 @@ private:
 	std::array<VBO, LOD_LEVELS> lodSquareIndexBuffers;
 	std::array<VBO, LOD_LEVELS> lodBorderIndexBuffers;
 
-	CSMFReadMap* smfReadMap;
 	CSMFGroundDrawer* smfGroundDrawer;
 };
 

@@ -53,9 +53,8 @@ static MeshPatchVisTestDrawer patchVisTestDrawer;
 
 
 
-CBasicMeshDrawer::CBasicMeshDrawer(CSMFReadMap* rm, CSMFGroundDrawer* gd)
+CBasicMeshDrawer::CBasicMeshDrawer(CSMFGroundDrawer* gd)
 	: CEventClient("[CBasicMeshDrawer]", 717171, false)
-	, smfReadMap(rm)
 	, smfGroundDrawer(gd)
 {
 	eventHandler.AddClient(this);
