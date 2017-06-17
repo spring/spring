@@ -6,6 +6,7 @@
 #include <new>
 
 #include "LuaMemPool.h"
+#include "System/Log/ILog.h"
 
 // if 1, places an upper limit on pool allocation size
 // needed most when free chunks are stored in an array
@@ -34,6 +35,11 @@ LuaMemPool::~LuaMemPool()
 	#endif
 }
 
+void LuaMemPool::LogStats(const char* handle) const
+{
+	LOG("[LuaMemPool::%s][handle=%s] {Int,Ext,Rec}Allocs={%lu,%lu,%lu}", __func__, handle, allocStats[ALLOC_INT], allocStats[ALLOC_EXT], allocStats[ALLOC_REC]);
+}
+
 
 void* LuaMemPool::Alloc(size_t size)
 {
@@ -42,11 +48,14 @@ void* LuaMemPool::Alloc(size_t size)
 	#endif
 
 	#if (CHECK_MAX_ALLOC_SIZE == 1)
-	if (!AllocFromPool(size = std::max(size, size_t(MIN_ALLOC_SIZE))))
+	if (!AllocFromPool(size)) {
+		allocStats[ALLOC_EXT] += 1;
 		return ::operator new(size);
-	#else
-	size = std::max(size, size_t(MIN_ALLOC_SIZE));
+	}
 	#endif
+
+	size = std::max(size, size_t(MIN_ALLOC_SIZE));
+	allocStats[ALLOC_INT] += 1;
 
 	auto nextFreeChunkPair = std::make_pair(nextFreeChunk.find(size), false);
 
@@ -57,6 +66,7 @@ void* LuaMemPool::Alloc(size_t size)
 
 	if (ptr != nullptr) {
 		(nextFreeChunkPair.first)->second = (*(void**) ptr);
+		allocStats[ALLOC_REC] += 1;
 		return ptr;
 	}
 
@@ -83,11 +93,9 @@ void* LuaMemPool::Alloc(size_t size)
 
 	*(void**) &newBytes[(numChunks - 1) * size] = nullptr;
 
-	ptr = newBlock;
-
-	nextFreeChunk[size] = (*(void**) ptr);
+	nextFreeChunk[size] = (*(void**) newBlock);
 	poolNumChunks[size] *= 2; // geometric increase
-	return ptr;
+	return newBlock;
 }
 
 void* LuaMemPool::Realloc(void* ptr, size_t nsize, size_t osize)
@@ -115,13 +123,13 @@ void LuaMemPool::Free(void* ptr, size_t size)
 		return;
 
 	#if (CHECK_MAX_ALLOC_SIZE == 1)
-	if (!AllocFromPool(size = std::max(size, size_t(MIN_ALLOC_SIZE)))) {
+	if (!AllocFromPool(size)) {
 		::operator delete(ptr);
 		return;
 	}
-	#else
-	size = std::max(size, size_t(MIN_ALLOC_SIZE));
 	#endif
+
+	size = std::max(size, size_t(MIN_ALLOC_SIZE));
 
 	*(void**) ptr = nextFreeChunk[size];
 	nextFreeChunk[size] = ptr;

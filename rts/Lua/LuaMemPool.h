@@ -17,6 +17,8 @@ public:
 	void* Realloc(void* ptr, size_t nsize, size_t osize);
 	void Free(void* ptr, size_t size);
 
+	void LogStats(const char* handle) const;
+
 private:
 	static constexpr size_t MIN_ALLOC_SIZE = sizeof(void*);
 	static constexpr size_t MAX_ALLOC_SIZE = (1024 * 1024) - 1;
@@ -33,6 +35,14 @@ private:
 	#if 1
 	std::vector<void*> allocBlocks;
 	#endif
+
+	enum {
+		ALLOC_INT = 0, // internal
+		ALLOC_EXT = 1, // external
+		ALLOC_REC = 2, // recycled
+	};
+
+	size_t allocStats[3] = {0, 0, 0};
 };
 
 #endif

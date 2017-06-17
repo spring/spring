@@ -43,6 +43,11 @@ public:
 	, parser(nullptr) {}
 
 	~luaContextData() {
+		// raw cast; LuaHandle is not a known type here
+		// owner-less LCD's are common and uninteresting
+		if (owner != nullptr)
+			memPool->LogStats((((CEventClient*) owner)->GetName()).c_str());
+
 		delete memPool;
 		memPool = nullptr;
 	}
