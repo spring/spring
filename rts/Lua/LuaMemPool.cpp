@@ -7,6 +7,14 @@
 
 #include "LuaMemPool.h"
 
+// if 1, places an upper limit on pool allocation size
+// needed most when free chunks are stored in an array
+// rather than a hmap since the former would be highly
+// sparse; it also prevents the larger (ie more rarely
+// requested, so not often recycled either) allocations
+// from accumulating
+#define CHECK_MAX_ALLOC_SIZE 1
+
 LuaMemPool::LuaMemPool()
 {
 	nextFreeChunk.reserve(16384);
@@ -33,23 +41,31 @@ void* LuaMemPool::Alloc(size_t size)
 	return ::operator new(size);
 	#endif
 
-	if (!CanAlloc(size = std::max(size, size_t(MIN_ALLOC_SIZE))))
+	#if (CHECK_MAX_ALLOC_SIZE == 1)
+	if (!AllocFromPool(size = std::max(size, size_t(MIN_ALLOC_SIZE))))
 		return ::operator new(size);
+	#else
+	size = std::max(size, size_t(MIN_ALLOC_SIZE));
+	#endif
 
-	if (nextFreeChunk.find(size) == nextFreeChunk.end())
-		nextFreeChunk[size] = nullptr;
+	auto nextFreeChunkPair = std::make_pair(nextFreeChunk.find(size), false);
 
-	void* ptr = nextFreeChunk[size];
+	if (nextFreeChunkPair.first == nextFreeChunk.end())
+		nextFreeChunkPair = nextFreeChunk.insert(size, nullptr);
+
+	void* ptr = (nextFreeChunkPair.first)->second;
 
 	if (ptr != nullptr) {
-		nextFreeChunk[size] = (*(void**) ptr);
+		(nextFreeChunkPair.first)->second = (*(void**) ptr);
 		return ptr;
 	}
 
-	if (poolNumChunks.find(size) == poolNumChunks.end())
-		poolNumChunks[size] = 16;
+	auto poolNumChunksPair = std::make_pair(poolNumChunks.find(size), false);
 
-	const size_t numChunks = poolNumChunks[size];
+	if (poolNumChunksPair.first == poolNumChunks.end())
+		poolNumChunksPair = poolNumChunks.insert(size, 16);
+
+	const size_t numChunks = (poolNumChunksPair.first)->second;
 	const size_t numBytes = size * numChunks;
 
 	void* newBlock = ::operator new(numBytes);
@@ -98,10 +114,14 @@ void LuaMemPool::Free(void* ptr, size_t size)
 	if (ptr == nullptr)
 		return;
 
-	if (!CanAlloc(size = std::max(size, size_t(MIN_ALLOC_SIZE)))) {
+	#if (CHECK_MAX_ALLOC_SIZE == 1)
+	if (!AllocFromPool(size = std::max(size, size_t(MIN_ALLOC_SIZE)))) {
 		::operator delete(ptr);
 		return;
 	}
+	#else
+	size = std::max(size, size_t(MIN_ALLOC_SIZE));
+	#endif
 
 	*(void**) ptr = nextFreeChunk[size];
 	nextFreeChunk[size] = ptr;

@@ -21,7 +21,10 @@ private:
 	static constexpr size_t MIN_ALLOC_SIZE = sizeof(void*);
 	static constexpr size_t MAX_ALLOC_SIZE = (1024 * 1024) - 1;
 
-	static bool CanAlloc(size_t size) { return (size <= MAX_ALLOC_SIZE); }
+	// Lua code tends to perform many smaller *short-lived* allocations
+	// this frees us from having to handle all possible sizes, just the
+	// most common
+	static bool AllocFromPool(size_t size) { return (size <= MAX_ALLOC_SIZE); }
 
 private:
 	spring::unsynced_map<size_t, void*> nextFreeChunk;
