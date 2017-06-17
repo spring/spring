@@ -16,10 +16,12 @@
 #endif
 
 #include "System/Log/ILog.h"
+#include "System/Misc/SpringTime.h"
 
-#if (!defined(DEDICATED) && !defined(UNITSYNC) && !defined(BUILDING_AI))
-	#include "System/Misc/SpringTime.h"
+#if defined(DEDICATED) || defined(UNITSYNC) || defined(BUILDING_AI)
+#error liblua should be built only once!
 #endif
+
 
 
 
@@ -220,7 +222,6 @@ void* spring_lua_alloc(void* ud, void* ptr, size_t osize, size_t nsize)
 		return nullptr;
 	}
 
-	#if (!defined(DEDICATED) && !defined(UNITSYNC) && !defined(BUILDING_AI))
 	const spring_time t0 = spring_gettime();
 	void* mem = realloc(ptr, nsize);
 	const spring_time t1 = spring_gettime();
@@ -229,11 +230,6 @@ void* spring_lua_alloc(void* ud, void* ptr, size_t osize, size_t nsize)
 	gLuaAllocState.luaAllocTime += (t1 - t0).toMicroSecsi();
 
 	return mem;
-	#else
-	// behaves like realloc when nsize!=0 and osize!=0 (ptr != NULL)
-	// behaves like malloc when nsize!=0 and osize==0 (ptr == NULL)
-	return (realloc(ptr, nsize));
-	#endif
 }
 
 void spring_lua_alloc_get_stats(SLuaAllocState* state)
