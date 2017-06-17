@@ -5,24 +5,12 @@
 
 #include <vector>
 
-#include "Rendering/GL/myGL.h"
-
-struct SMatrixStateData {
-	SMatrixStateData(): mode(GL_MODELVIEW), 
-						modelView(0), 
-						projection(0),
-						texture(0) {}
-	int mode;
-	int modelView;
-	int projection;
-	int texture;
-};
+#include "Rendering/GL/MatrixStateTracker.h"
 
 class CLuaDisplayLists {
 	public:
 		CLuaDisplayLists() { Clear(); }
-		~CLuaDisplayLists()
-		{
+		~CLuaDisplayLists() {
 			// free the display lists
 			// NOTE:
 			//   it is not an error to delete a list with id=0, but we might
