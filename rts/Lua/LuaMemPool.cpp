@@ -9,11 +9,8 @@
 
 LuaMemPool::LuaMemPool()
 {
-	// note: indices [0, MIN_ALLOC_SIZE - 1] are unused	
-	for (size_t i = 0; i < (MAX_ALLOC_SIZE + 1); i++) {
-		nextFreeChunk[i] = nullptr;
-		poolNumChunks[i] = 16;
-	}
+	nextFreeChunk.reserve(1024);
+	poolNumChunks.reserve(1024);
 
 	#if 1
 	allocBlocks.reserve(1024);
@@ -32,8 +29,15 @@ LuaMemPool::~LuaMemPool()
 
 void* LuaMemPool::Alloc(size_t size)
 {
+	#ifdef UNITSYNC
+	return ::operator new(size);
+	#endif
+
 	if (!CanAlloc(size = std::max(size, size_t(MIN_ALLOC_SIZE))))
 		return ::operator new(size);
+
+	if (nextFreeChunk.find(size) == nextFreeChunk.end())
+		nextFreeChunk[size] = nullptr;
 
 	void* ptr = nextFreeChunk[size];
 
@@ -42,8 +46,11 @@ void* LuaMemPool::Alloc(size_t size)
 		return ptr;
 	}
 
-	const size_t numBytes = size * poolNumChunks[size];
-	const size_t numChunks = poolNumChunks[size] - 1;
+	if (poolNumChunks.find(size) == poolNumChunks.end())
+		poolNumChunks[size] = 16;
+
+	const size_t numChunks = poolNumChunks[size];
+	const size_t numBytes = size * numChunks;
 
 	void* newBlock = ::operator new(numBytes);
 	uint8_t* newBytes = reinterpret_cast<uint8_t*>(newBlock);
@@ -54,11 +61,11 @@ void* LuaMemPool::Alloc(size_t size)
 
 	// new allocation; construct chain of chunks within the memory block
 	// (this requires the block size to be at least MIN_ALLOC_SIZE bytes)
-	for (size_t i = 0; i < numChunks; ++i) {
+	for (size_t i = 0; i < (numChunks - 1); ++i) {
 		*(void**) &newBytes[i * size] = (void*) &newBytes[(i + 1) * size];
 	}
 
-	*(void**) &newBytes[numChunks * size] = nullptr;
+	*(void**) &newBytes[(numChunks - 1) * size] = nullptr;
 
 	ptr = newBlock;
 
@@ -83,6 +90,10 @@ void* LuaMemPool::Realloc(void* ptr, size_t nsize, size_t osize)
 
 void LuaMemPool::Free(void* ptr, size_t size)
 {
+	#ifdef UNITSYNC
+	::operator delete(ptr);
+	#endif
+
 	if (ptr == nullptr)
 		return;
 

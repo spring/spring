@@ -6,6 +6,8 @@
 #include <cstddef>
 #include <vector>
 
+#include "System/UnorderedMap.hpp"
+
 class LuaMemPool {
 public:
 	LuaMemPool();
@@ -22,8 +24,8 @@ private:
 	static bool CanAlloc(size_t size) { return (size <= MAX_ALLOC_SIZE); }
 
 private:
-	void* nextFreeChunk[MAX_ALLOC_SIZE + 1];
-	size_t poolNumChunks[MAX_ALLOC_SIZE + 1];
+	spring::unsynced_map<size_t, void*> nextFreeChunk;
+	spring::unsynced_map<size_t, size_t> poolNumChunks;
 
 	#if 1
 	std::vector<void*> allocBlocks;
