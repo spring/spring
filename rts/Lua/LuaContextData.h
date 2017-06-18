@@ -46,7 +46,7 @@ public:
 		// raw cast; LuaHandle is not a known type here
 		// owner-less LCD's are common and uninteresting
 		if (owner != nullptr)
-			memPool->LogStats((((CEventClient*) owner)->GetName()).c_str());
+			memPool->LogStats((((CEventClient*) owner)->GetName()).c_str(), synced? "synced": "unsynced");
 
 		delete memPool;
 		memPool = nullptr;

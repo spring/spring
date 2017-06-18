@@ -17,7 +17,7 @@ public:
 	void* Realloc(void* ptr, size_t nsize, size_t osize);
 	void Free(void* ptr, size_t size);
 
-	void LogStats(const char* handle) const;
+	void LogStats(const char* handle, const char* lctype) const;
 
 private:
 	static constexpr size_t MIN_ALLOC_SIZE = sizeof(void*);

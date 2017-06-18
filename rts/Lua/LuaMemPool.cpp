@@ -35,12 +35,13 @@ LuaMemPool::~LuaMemPool()
 	#endif
 }
 
-void LuaMemPool::LogStats(const char* handle) const
+void LuaMemPool::LogStats(const char* handle, const char* lctype) const
 {
 	LOG(
-		"[LuaMemPool::%s][handle=%s] {Int,Ext,Rec}Allocs={%lu,%lu,%lu}",
+		"[LuaMemPool::%s][handle=%s (%s)] {Int,Ext,Rec}Allocs={%lu,%lu,%lu}",
 		__func__,
 		handle,
+		lctype,
 		(unsigned long) allocStats[ALLOC_INT],
 		(unsigned long) allocStats[ALLOC_EXT],
 		(unsigned long) allocStats[ALLOC_REC]
