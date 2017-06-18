@@ -45,7 +45,7 @@ void CTriNodePool::InitPools(bool shadowPass, size_t newPoolSize)
 			pools[shadowPass].emplace_back(thrPoolSize + (thrPoolSize & 1));
 		}
 	} catch (const std::bad_alloc& e) {
-		LOG_L(L_FATAL, "[TriNodePool::%s] bad_alloc exception \"%s\" (numThreads=%d newPoolSize=%zu)", __func__, e.what(), numThreads, newPoolSize);
+		LOG_L(L_FATAL, "[TriNodePool::%s] bad_alloc exception \"%s\" (numThreads=%d newPoolSize=%lu)", __func__, e.what(), numThreads, (unsigned long) newPoolSize);
 
 		// try again after reducing the wanted pool-size by a quarter
 		InitPools(shadowPass, MAX_POOL_SIZE = (newPoolSize - (newPoolSize >> 2)));

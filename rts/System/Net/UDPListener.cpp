@@ -47,7 +47,7 @@ UDPListener::UDPListener(int port, const std::string& ip): acceptNewConnections(
 
 UDPListener::~UDPListener() {
 	for (const auto& p: dropMap) {
-		LOG("[%s] dropped %zu packets from unknown IP %s", __func__, p.second, (p.first).c_str());
+		LOG("[%s] dropped %lu packets from unknown IP %s", __func__, p.second, (p.first).c_str());
 	}
 }
 

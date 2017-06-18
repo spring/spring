@@ -36,7 +36,7 @@ CVFSHandler::CVFSHandler()
 
 CVFSHandler::~CVFSHandler()
 {
-	LOG_L(L_INFO, "[%s] #archives=%zu", __FUNCTION__, archives.size());
+	LOG_L(L_INFO, "[%s] #archives=%lu", __FUNCTION__, (long unsigned) archives.size());
 
 	for (auto i = archives.begin(); i != archives.end(); ++i) {
 		LOG_L(L_INFO, "\tarchive=%s (%p)", (i->first).c_str(), i->second);
