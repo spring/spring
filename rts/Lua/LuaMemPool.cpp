@@ -19,9 +19,20 @@
 #define CHECK_MAX_ALLOC_SIZE 1
 
 
+// global, affects all pool instances
+bool LuaMemPool::enabled = false;
+
 static std::vector<LuaMemPool*> gPools;
 static std::vector<size_t> gIndcs;
 static spring::mutex gMutex;
+
+
+// Lua code tends to perform many smaller *short-lived* allocations
+// this frees us from having to handle all possible sizes, just the
+// most common
+static bool AllocInternal(size_t size) { return ((size * CHECK_MAX_ALLOC_SIZE) <= LuaMemPool::MAX_ALLOC_SIZE); }
+static bool AllocExternal(size_t size) { return (!LuaMemPool::enabled || !AllocInternal(size)); }
+
 
 LuaMemPool* LuaMemPool::AcquirePtr()
 {
@@ -55,6 +66,7 @@ void LuaMemPool::ReleasePtr(LuaMemPool* p)
 	gMutex.unlock();
 }
 
+void LuaMemPool::InitStatic(bool enable) { LuaMemPool::enabled = enable; }
 void LuaMemPool::KillStatic()
 {
 	for (LuaMemPool*& p: gPools) {
@@ -69,6 +81,9 @@ void LuaMemPool::KillStatic()
 
 LuaMemPool::LuaMemPool(size_t lmpIndex): globalIndex(lmpIndex)
 {
+	if (!LuaMemPool::enabled)
+		return;
+
 	freeChunksTable.reserve(16384);
 	chunkCountTable.reserve(16384);
 
@@ -86,11 +101,12 @@ LuaMemPool::~LuaMemPool()
 void LuaMemPool::LogStats(const char* handle, const char* lctype) const
 {
 	LOG(
-		"[LuaMemPool::%s][handle=%s (%s)] idx=%lu {Int,Ext,Rec}Allocs={%lu,%lu,%lu}",
+		"[LuaMemPool::%s][handle=%s (%s)] index=%lu blocks=%lu {int,ext,rec}Allocs={%lu,%lu,%lu}",
 		__func__,
 		handle,
 		lctype,
 		(unsigned long) globalIndex,
+		(unsigned long) allocBlocks.size(),
 		(unsigned long) allocStats[ALLOC_INT],
 		(unsigned long) allocStats[ALLOC_EXT],
 		(unsigned long) allocStats[ALLOC_REC]
@@ -111,16 +127,10 @@ void LuaMemPool::DeleteBlocks()
 
 void* LuaMemPool::Alloc(size_t size)
 {
-	#ifdef UNITSYNC
-	return ::operator new(size);
-	#endif
-
-	#if (CHECK_MAX_ALLOC_SIZE == 1)
-	if (!AllocFromPool(size)) {
+	if (AllocExternal(size)) {
 		allocStats[ALLOC_EXT] += 1;
 		return ::operator new(size);
 	}
-	#endif
 
 	size = std::max(size, size_t(MIN_ALLOC_SIZE));
 	allocStats[ALLOC_INT] += 1;
@@ -141,7 +151,7 @@ void* LuaMemPool::Alloc(size_t size)
 	auto chunkCountTablePair = std::make_pair(chunkCountTable.find(size), false);
 
 	if (chunkCountTablePair.first == chunkCountTable.end())
-		chunkCountTablePair = chunkCountTable.insert(size, 16);
+		chunkCountTablePair = chunkCountTable.insert(size, 8);
 
 	const size_t numChunks = (chunkCountTablePair.first)->second;
 	const size_t numBytes = size * numChunks;
@@ -182,20 +192,13 @@ void* LuaMemPool::Realloc(void* ptr, size_t nsize, size_t osize)
 
 void LuaMemPool::Free(void* ptr, size_t size)
 {
-	#ifdef UNITSYNC
-	::operator delete(ptr);
-	return;
-	#endif
-
 	if (ptr == nullptr)
 		return;
 
-	#if (CHECK_MAX_ALLOC_SIZE == 1)
-	if (!AllocFromPool(size)) {
+	if (AllocExternal(size)) {
 		::operator delete(ptr);
 		return;
 	}
-	#endif
 
 	size = std::max(size, size_t(MIN_ALLOC_SIZE));
 

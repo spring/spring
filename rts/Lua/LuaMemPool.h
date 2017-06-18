@@ -22,6 +22,8 @@ public:
 public:
 	static LuaMemPool* AcquirePtr();
 	static void ReleasePtr(LuaMemPool* p);
+
+	static void InitStatic(bool enable);
 	static void KillStatic();
 
 public:
@@ -37,22 +39,17 @@ public:
 		allocStats[ALLOC_REC] = 0;
 	}
 
-private:
+public:
 	static constexpr size_t MIN_ALLOC_SIZE = sizeof(void*);
 	static constexpr size_t MAX_ALLOC_SIZE = (1024 * 1024) - 1;
 
-	// Lua code tends to perform many smaller *short-lived* allocations
-	// this frees us from having to handle all possible sizes, just the
-	// most common
-	static bool AllocFromPool(size_t size) { return (size <= MAX_ALLOC_SIZE); }
+	static bool enabled;
 
 private:
 	spring::unsynced_map<size_t, void*> freeChunksTable;
 	spring::unsynced_map<size_t, size_t> chunkCountTable;
 
-	#if 1
 	std::vector<void*> allocBlocks;
-	#endif
 
 	enum {
 		ALLOC_INT = 0, // internal

@@ -93,6 +93,7 @@
 
 CONFIG(unsigned, SetCoreAffinity).defaultValue(0).safemodeValue(1).description("Defines a bitmask indicating which CPU cores the main-thread should use.");
 CONFIG(unsigned, SetCoreAffinitySim).defaultValue(0).safemodeValue(1).description("Defines a bitmask indicating which CPU cores the sim-thread should use.");
+CONFIG(bool, UseLuaMemPools).defaultValue(true).description("Whether Lua VM memory allocations are made from pools.");
 CONFIG(bool, UseHighResTimer).defaultValue(false).description("On Windows, sets whether Spring will use low- or high-resolution timer functions for tasks like graphical interpolation between game frames.");
 CONFIG(int, PathingThreadCount).defaultValue(0).safemodeValue(1).minimumValue(0);
 
@@ -204,6 +205,7 @@ bool SpringApp::Initialize()
 	CLogOutput::LogSystemInfo();
 
 	CMyMath::Init();
+	LuaMemPool::InitStatic(configHandler->GetBool("UseLuaMemPools"));
 
 	globalRendering = new CGlobalRendering();
 	globalRendering->SetFullScreen(configHandler->GetBool("Fullscreen"), FLAGS_window, FLAGS_fullscreen);
@@ -880,6 +882,7 @@ void SpringApp::ShutDown(bool fromRun)
 	spring::SafeDelete(pregame);
 
 	spring::SafeDelete(luaMenuController);
+	LuaMemPool::KillStatic();
 
 	LOG("[SpringApp::%s][3]", __func__);
 	spring::SafeDelete(clientNet);
