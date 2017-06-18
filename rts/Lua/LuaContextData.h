@@ -24,6 +24,8 @@ public:
 	luaContextData()
 	: owner(nullptr)
 	, luamutex(nullptr)
+	, memPool(LuaMemPool::AcquirePtr())
+	, parser(nullptr)
 
 	, synced(false)
 	, allowChanges(false)
@@ -39,8 +41,7 @@ public:
 	, readAllyTeam(0)
 	, selectTeam(CEventClient::NoAccessTeam)
 
-	, memPool(LuaMemPool::AcquirePtr())
-	, parser(nullptr) {}
+	{}
 
 	~luaContextData() {
 		// raw cast; LuaHandle is not a known type here
@@ -50,6 +51,13 @@ public:
 
 		LuaMemPool::ReleasePtr(memPool);
 	}
+
+	luaContextData(const luaContextData& lcd) = delete;
+	luaContextData(luaContextData&& lcd) = delete;
+
+	luaContextData& operator = (const luaContextData& lcd) = delete;
+	luaContextData& operator = (luaContextData&& lcd) = delete;
+
 
 	void Clear() {
 		#if (!defined(UNITSYNC) && !defined(DEDICATED))
@@ -65,22 +73,31 @@ public:
 	CLuaHandle* owner;
 	spring::recursive_mutex* luamutex;
 
+	LuaMemPool* memPool;
+	LuaParser* parser;
+
 	bool synced;
 	bool allowChanges;
 	bool drawingEnabled;
 
-	int running; //< is currently running? (0: not running; >0: is running)
+	// greater than 0 if currently running a callin; 0 if not
+	int running;
 
 	// permission rights
 	bool fullCtrl;
 	bool fullRead;
 
-	int  ctrlTeam;
-	int  readTeam;
-	int  readAllyTeam;
-	int  selectTeam;
+	int ctrlTeam;
+	int readTeam;
+	int readAllyTeam;
+	int selectTeam;
 
 #if (!defined(UNITSYNC) && !defined(DEDICATED))
+	// NOTE:
+	//   engine and unitsync will not agree on sizeof(luaContextData)
+	//   compiler is not free to rearrange struct members, so declare
+	//   any members used by both *ABOVE* this block (to make casting
+	//   safe)
 	LuaShaders shaders;
 	LuaTextures textures;
 	LuaFBOs fbos;
@@ -89,9 +106,6 @@ public:
 
 	GLMatrixStateTracker glMatrixTracker;
 #endif
-
-	LuaMemPool* memPool;
-	LuaParser* parser;
 };
 
 
