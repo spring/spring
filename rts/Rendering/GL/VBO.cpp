@@ -188,7 +188,7 @@ void VBO::Resize(GLsizeiptr _size, GLenum _usage)
 
 		const GLenum err = glGetError();
 		if (err != GL_NO_ERROR) {
-			LOG_L(L_ERROR, "[VBO::%s(size=%lu,usage=%u)] id=%u tgt=0x%x err=0x%x", __func__, (unsigned long) size, usage, vboId, curBoundTarget, err);
+			LOG_L(L_ERROR, "[VBO::%s(size=%zu,usage=%u)] id=%u tgt=0x%x err=0x%x", __func__, size, usage, vboId, curBoundTarget, err);
 			Unbind();
 
 			VBOused = false; // disable VBO and fallback to VA/sysmem
@@ -225,7 +225,7 @@ void VBO::New(GLsizeiptr _size, GLenum _usage, const void* data_)
 		return;
 
 	if (immutableStorage && size != 0) {
-		LOG_L(L_ERROR, "[VBO::%s(size=%lu,usage=0x%x,data=%p)] cannot recreate persistent storage buffer", __func__, (unsigned long) size, usage, data);
+		LOG_L(L_ERROR, "[VBO::%s(size=%zu,usage=0x%x,data=%p)] cannot recreate persistent storage buffer", __func__, size, usage, data);
 		return;
 	}
 
@@ -247,7 +247,7 @@ void VBO::New(GLsizeiptr _size, GLenum _usage, const void* data_)
 
 		const GLenum err = glGetError();
 		if (err != GL_NO_ERROR) {
-			LOG_L(L_ERROR, "[VBO::%s(size=%lu,usage=0x%x,data=%p)] id=%u tgt=0x%x err=0x%x", __func__, (unsigned long) size, usage, data, vboId, curBoundTarget, err);
+			LOG_L(L_ERROR, "[VBO::%s(size=%zu,usage=0x%x,data=%p)] id=%u tgt=0x%x err=0x%x", __func__, size, usage, data, vboId, curBoundTarget, err);
 			Unbind();
 
 			VBOused = false; // disable VBO and fallback to VA/sysmem

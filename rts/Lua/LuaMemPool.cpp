@@ -37,7 +37,7 @@ LuaMemPool::~LuaMemPool()
 
 void LuaMemPool::LogStats(const char* handle) const
 {
-	LOG("[LuaMemPool::%s][handle=%s] {Int,Ext,Rec}Allocs={%lu,%lu,%lu}", __func__, handle, allocStats[ALLOC_INT], allocStats[ALLOC_EXT], allocStats[ALLOC_REC]);
+	LOG("[LuaMemPool::%s][handle=%s] {Int,Ext,Rec}Allocs={%zu,%zu,%zu}", __func__, handle, allocStats[ALLOC_INT], allocStats[ALLOC_EXT], allocStats[ALLOC_REC]);
 }
 
 

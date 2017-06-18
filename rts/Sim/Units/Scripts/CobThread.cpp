@@ -112,7 +112,7 @@ int CCobThread::CheckStack(unsigned int size, bool warn)
 	if (warn) {
 		static char msg[512];
 		static const char* fmt =
-			"stack-size mismatch: need %u but have %lu arguments "
+			"stack-size mismatch: need %u but have %zu arguments "
 			"(too many passed to function or too few returned?)";
 		SNPRINTF(msg, sizeof(msg), fmt, size, stack.size());
 		ShowError(msg);

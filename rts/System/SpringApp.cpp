@@ -756,7 +756,7 @@ void SpringApp::Reload(const std::string script)
 	// clean changed configs
 	configHandler->Update();
 
-	LOG("[SpringApp::%s][12] #script=%lu", __func__, (unsigned long) script.size());
+	LOG("[SpringApp::%s][12] #script=%zu", __func__, script.size());
 
 	if (script.empty()) {
 		// if no script, drop back to menu
