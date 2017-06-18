@@ -32,8 +32,7 @@ LuaMemPool* LuaMemPool::AcquirePtr()
 		gMutex.lock();
 
 		if (gIndcs.empty()) {
-			gIndcs.push_back(gPools.size());
-			gPools.push_back(pool = new LuaMemPool(gIndcs.back()));
+			gPools.push_back(pool = new LuaMemPool(gPools.size()));
 		} else {
 			pool = gPools[gIndcs.back()];
 			gIndcs.pop_back();
@@ -80,9 +79,7 @@ LuaMemPool::LuaMemPool(size_t lmpIndex): globalIndex(lmpIndex)
 
 LuaMemPool::~LuaMemPool()
 {
-	#if 1
 	DeleteBlocks();
-	#endif
 }
 
 
@@ -103,9 +100,11 @@ void LuaMemPool::LogStats(const char* handle, const char* lctype) const
 
 void LuaMemPool::DeleteBlocks()
 {
+	#if 1
 	for (void* p: allocBlocks) {
 		::operator delete(p);
 	}
+	#endif
 
 	ClearStats();
 }
