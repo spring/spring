@@ -34,6 +34,8 @@ CLuaMenuController::CLuaMenuController(const std::string& menuName)
 CLuaMenuController::~CLuaMenuController()
 {
 	CLuaMenu::FreeHandler();
+	// call this here since LuaMenu is the last handle to go
+	LuaMemPool::KillStatic();
 
 	spring::SafeDelete(mouse);
 	spring::SafeDelete(infoConsole);

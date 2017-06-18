@@ -335,6 +335,8 @@ endif()
 	Set(test_src
 			"${CMAKE_CURRENT_SOURCE_DIR}/unitsync/testUnitSync.cpp"
 			"${ENGINE_SOURCE_DIR}/Lua/LuaMemPool.cpp"
+			"${ENGINE_SOURCE_DIR}/System/Misc/SpringTime.cpp"
+			${sources_engine_System_Threading}
 			${test_Log_sources}
 		)
 

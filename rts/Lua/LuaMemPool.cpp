@@ -6,7 +6,9 @@
 #include <new>
 
 #include "LuaMemPool.h"
+#include "System/SafeUtil.h"
 #include "System/Log/ILog.h"
+#include "System/Threading/SpringThreading.h"
 
 // if 1, places an upper limit on pool allocation size
 // needed most when free chunks are stored in an array
@@ -16,10 +18,60 @@
 // from accumulating
 #define CHECK_MAX_ALLOC_SIZE 1
 
-LuaMemPool::LuaMemPool()
+
+static std::vector<LuaMemPool*> gPools;
+static std::vector<size_t> gIndcs;
+static spring::mutex gMutex;
+
+LuaMemPool* LuaMemPool::AcquirePtr()
 {
-	nextFreeChunk.reserve(16384);
-	poolNumChunks.reserve(16384);
+	LuaMemPool* pool = nullptr;
+
+	{
+		// caller can be any thread; cf LuaParser context-data ctors
+		gMutex.lock();
+
+		if (gIndcs.empty()) {
+			gIndcs.push_back(gPools.size());
+			gPools.push_back(pool = new LuaMemPool(gIndcs.back()));
+		} else {
+			pool = gPools[gIndcs.back()];
+			gIndcs.pop_back();
+		}
+
+		gMutex.unlock();
+	}
+
+	return pool;
+}
+
+void LuaMemPool::ReleasePtr(LuaMemPool* p)
+{
+	// only wipe statistics; blocks will be reused
+	// p->LogStats("", "");
+	p->ClearStats();
+
+	gMutex.lock();
+	gIndcs.push_back(p->globalIndex);
+	gMutex.unlock();
+}
+
+void LuaMemPool::KillStatic()
+{
+	for (LuaMemPool*& p: gPools) {
+		spring::SafeDelete(p);
+	}
+
+	gPools.clear();
+	gIndcs.clear();
+}
+
+
+
+LuaMemPool::LuaMemPool(size_t lmpIndex): globalIndex(lmpIndex)
+{
+	freeChunksTable.reserve(16384);
+	chunkCountTable.reserve(16384);
 
 	#if 1
 	allocBlocks.reserve(1024);
@@ -29,25 +81,34 @@ LuaMemPool::LuaMemPool()
 LuaMemPool::~LuaMemPool()
 {
 	#if 1
-	for (void* p: allocBlocks) {
-		::operator delete(p);
-	}
+	DeleteBlocks();
 	#endif
 }
+
 
 void LuaMemPool::LogStats(const char* handle, const char* lctype) const
 {
 	LOG(
-		"[LuaMemPool::%s][handle=%s (%s)] {Int,Ext,Rec}Allocs={%lu,%lu,%lu}",
+		"[LuaMemPool::%s][handle=%s (%s)] idx=%lu {Int,Ext,Rec}Allocs={%lu,%lu,%lu}",
 		__func__,
 		handle,
 		lctype,
+		(unsigned long) globalIndex,
 		(unsigned long) allocStats[ALLOC_INT],
 		(unsigned long) allocStats[ALLOC_EXT],
 		(unsigned long) allocStats[ALLOC_REC]
 	);
 }
 
+
+void LuaMemPool::DeleteBlocks()
+{
+	for (void* p: allocBlocks) {
+		::operator delete(p);
+	}
+
+	ClearStats();
+}
 
 void* LuaMemPool::Alloc(size_t size)
 {
@@ -65,25 +126,25 @@ void* LuaMemPool::Alloc(size_t size)
 	size = std::max(size, size_t(MIN_ALLOC_SIZE));
 	allocStats[ALLOC_INT] += 1;
 
-	auto nextFreeChunkPair = std::make_pair(nextFreeChunk.find(size), false);
+	auto freeChunksTablePair = std::make_pair(freeChunksTable.find(size), false);
 
-	if (nextFreeChunkPair.first == nextFreeChunk.end())
-		nextFreeChunkPair = nextFreeChunk.insert(size, nullptr);
+	if (freeChunksTablePair.first == freeChunksTable.end())
+		freeChunksTablePair = freeChunksTable.insert(size, nullptr);
 
-	void* ptr = (nextFreeChunkPair.first)->second;
+	void* ptr = (freeChunksTablePair.first)->second;
 
 	if (ptr != nullptr) {
-		(nextFreeChunkPair.first)->second = (*(void**) ptr);
+		(freeChunksTablePair.first)->second = (*(void**) ptr);
 		allocStats[ALLOC_REC] += 1;
 		return ptr;
 	}
 
-	auto poolNumChunksPair = std::make_pair(poolNumChunks.find(size), false);
+	auto chunkCountTablePair = std::make_pair(chunkCountTable.find(size), false);
 
-	if (poolNumChunksPair.first == poolNumChunks.end())
-		poolNumChunksPair = poolNumChunks.insert(size, 16);
+	if (chunkCountTablePair.first == chunkCountTable.end())
+		chunkCountTablePair = chunkCountTable.insert(size, 16);
 
-	const size_t numChunks = (poolNumChunksPair.first)->second;
+	const size_t numChunks = (chunkCountTablePair.first)->second;
 	const size_t numBytes = size * numChunks;
 
 	void* newBlock = ::operator new(numBytes);
@@ -101,8 +162,8 @@ void* LuaMemPool::Alloc(size_t size)
 
 	*(void**) &newBytes[(numChunks - 1) * size] = nullptr;
 
-	nextFreeChunk[size] = (*(void**) newBlock);
-	poolNumChunks[size] *= 2; // geometric increase
+	freeChunksTable[size] = (*(void**) newBlock);
+	chunkCountTable[size] *= 2; // geometric increase
 	return newBlock;
 }
 
@@ -139,7 +200,7 @@ void LuaMemPool::Free(void* ptr, size_t size)
 
 	size = std::max(size, size_t(MIN_ALLOC_SIZE));
 
-	*(void**) ptr = nextFreeChunk[size];
-	nextFreeChunk[size] = ptr;
+	*(void**) ptr = freeChunksTable[size];
+	freeChunksTable[size] = ptr;
 }
 

@@ -39,17 +39,16 @@ public:
 	, readAllyTeam(0)
 	, selectTeam(CEventClient::NoAccessTeam)
 
-	, memPool(new LuaMemPool())
+	, memPool(LuaMemPool::AcquirePtr())
 	, parser(nullptr) {}
 
 	~luaContextData() {
 		// raw cast; LuaHandle is not a known type here
-		// owner-less LCD's are common and uninteresting
+		// ownerless LCD's are common and uninteresting
 		if (owner != nullptr)
 			memPool->LogStats((((CEventClient*) owner)->GetName()).c_str(), synced? "synced": "unsynced");
 
-		delete memPool;
-		memPool = nullptr;
+		LuaMemPool::ReleasePtr(memPool);
 	}
 
 	void Clear() {
