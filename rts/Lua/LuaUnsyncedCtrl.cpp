@@ -928,20 +928,16 @@ int LuaUnsyncedCtrl::SetTeamColor(lua_State* L)
 
 int LuaUnsyncedCtrl::AssignMouseCursor(lua_State* L)
 {
-	const string cmdName  = luaL_checksstring(L, 1);
-	const string fileName = luaL_checksstring(L, 2);
+	const std::string& cmdName  = luaL_checksstring(L, 1);
+	const std::string& fileName = luaL_checksstring(L, 2);
+
+	const CMouseCursor::HotSpot hotSpot = (luaL_optboolean(L, 4, false))? CMouseCursor::TopLeft: CMouseCursor::Center;
 
 	const bool overwrite = luaL_optboolean(L, 3, true);
-
-	CMouseCursor::HotSpot hotSpot = CMouseCursor::Center;
-	if (luaL_optboolean(L, 4, false)) {
-		hotSpot = CMouseCursor::TopLeft;
-	}
-
-	const bool worked = mouse->AssignMouseCursor(cmdName, fileName, hotSpot, overwrite);
+	const bool assigned = mouse->AssignMouseCursor(cmdName, fileName, hotSpot, overwrite);
 
 	if (!CLuaHandle::GetHandleSynced(L)) {
-		lua_pushboolean(L, worked);
+		lua_pushboolean(L, assigned);
 		return 1;
 	}
 

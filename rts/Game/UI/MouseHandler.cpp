@@ -76,27 +76,31 @@ static CInputReceiver*& activeReceiver = CInputReceiver::GetActiveReceiverRef();
 CMouseHandler::CMouseHandler()
 	: lastx(-1)
 	, lasty(-1)
+	, activeButtonIdx(-1)
+	, activeCursorIdx(-1)
+
 	, locked(false)
 	, wasLocked(false)
 	, offscreen(false)
-	, doubleClickTime(0.0f)
-	, scrollWheelSpeed(0.0f)
-	, activeButton(-1)
-	, dir(ZeroVector)
-	, crossSize(0.0f)
-	, crossAlpha(0.0f)
-	, crossMoveScale(0.0f)
-	, cursorText("")
-	, currentCursor(nullptr)
-	, lastClicked(nullptr)
-	, cursorScale(1.0f)
+
 	, hide(true)
 	, hwHide(true)
 	, hardwareCursor(false)
 	, invertMouse(false)
+
+	, cursorScale(1.0f)
 	, dragScrollThreshold(0.0f)
 	, scrollx(0.0f)
 	, scrolly(0.0f)
+
+	, doubleClickTime(0.0f)
+	, scrollWheelSpeed(0.0f)
+
+	, crossSize(0.0f)
+	, crossAlpha(0.0f)
+	, crossMoveScale(0.0f)
+
+	, lastClicked(nullptr)
 {
 	const int2 mousepos = IMouseInput::GetInstance()->GetPos();
 	lastx = mousepos.x;
@@ -153,7 +157,7 @@ void CMouseHandler::ReloadCursors()
 	const CMouseCursor::HotSpot mCenter  = CMouseCursor::Center;
 	const CMouseCursor::HotSpot mTopLeft = CMouseCursor::TopLeft;
 
-	currentCursor = nullptr;
+	activeCursorIdx = -1;
 
 	loadedCursors.clear();
 	loadedCursors.reserve(32);
@@ -219,13 +223,15 @@ void CMouseHandler::ReloadCursors()
 	AssignMouseCursor("Wait",         "cursorwait",       mCenter,  false);
 
 	// the default cursor must exist
-	if (cursorCommandMap.find("") == cursorCommandMap.end()) {
+	const auto defCursorIt = cursorCommandMap.find("");
+
+	if (defCursorIt == cursorCommandMap.end()) {
 		throw content_error(
 			"Unable to load default cursor. Check that you have the required\n"
 			"content packages installed in your Spring \"base/\" directory.\n");
 	}
 
-	currentCursor = &loadedCursors[ cursorCommandMap[""] ];
+	activeCursorIdx = defCursorIt->second;
 }
 
 
@@ -260,10 +266,10 @@ void CMouseHandler::MouseMove(int x, int y, int dx, int dy)
 		playerHandler->Player(gu->myPlayerNum)->currentStats.mousePixels += movedPixels;
 
 	if (activeReceiver != nullptr)
-		activeReceiver->MouseMove(x, y, dx, dy, activeButton);
+		activeReceiver->MouseMove(x, y, dx, dy, activeButtonIdx);
 
 	if (inMapDrawer != nullptr && inMapDrawer->IsDrawMode())
-		inMapDrawer->MouseMove(x, y, dx, dy, activeButton);
+		inMapDrawer->MouseMove(x, y, dx, dy, activeButtonIdx);
 
 	if (buttons[SDL_BUTTON_MIDDLE].pressed && (activeReceiver == NULL) && camHandler != nullptr) {
 		camHandler->GetCurrentController().MouseMove(float3(dx, dy, invertMouse ? -1.0f : 1.0f));
@@ -293,7 +299,7 @@ void CMouseHandler::MousePress(int x, int y, int button)
 	bp.dir      = dir;
 	bp.movement = 0;
 
-	activeButton = button;
+	activeButtonIdx = button;
 
 	if (activeReceiver && activeReceiver->MousePress(x, y, button))
 		return;
@@ -688,7 +694,7 @@ void CMouseHandler::ToggleHwCursor(const bool& enable)
 	if (hardwareCursor) {
 		hwHide = true;
 	} else {
-		mouseInput->SetWMMouseCursor(NULL);
+		mouseInput->SetWMMouseCursor(nullptr);
 		SDL_ShowCursor(SDL_DISABLE);
 	}
 	cursorText = "none";
@@ -697,35 +703,37 @@ void CMouseHandler::ToggleHwCursor(const bool& enable)
 
 /******************************************************************************/
 
-void CMouseHandler::ChangeCursor(const std::string& cmdName, const float& scale)
+void CMouseHandler::ChangeCursor(const std::string& cmdName, const float scale)
 {
 	newCursor = cmdName;
 	cursorScale = scale;
 }
 
 
-void CMouseHandler::SetCursor(const std::string& cmdName, const bool& forceRebind)
+void CMouseHandler::SetCursor(const std::string& cmdName, const bool forceRebind)
 {
 	if ((cursorText == cmdName) && !forceRebind)
 		return;
 
 	cursorText = cmdName;
 	const auto it = cursorCommandMap.find(cmdName);
+
 	if (it != cursorCommandMap.end()) {
-		currentCursor = &loadedCursors[it->second];
+		activeCursorIdx = it->second;
 	} else {
-		currentCursor = &loadedCursors[ cursorCommandMap[""] ];
+		activeCursorIdx = cursorCommandMap[""];
 	}
 
-	if (hardwareCursor && !hide) {
-		if (currentCursor->IsHWValid()) {
-			hwHide = false;
-			currentCursor->BindHwCursor(); // calls SDL_ShowCursor(SDL_ENABLE);
-		} else {
-			hwHide = true;
-			SDL_ShowCursor(SDL_DISABLE);
-			mouseInput->SetWMMouseCursor(nullptr);
-		}
+	if (!hardwareCursor || hide)
+		return;
+
+	if (loadedCursors[activeCursorIdx].IsHWValid()) {
+		hwHide = false;
+		loadedCursors[activeCursorIdx].BindHwCursor(); // calls SDL_ShowCursor(SDL_ENABLE);
+	} else {
+		hwHide = true;
+		SDL_ShowCursor(SDL_DISABLE);
+		mouseInput->SetWMMouseCursor(nullptr);
 	}
 }
 
@@ -827,7 +835,7 @@ void CMouseHandler::DrawFPSCursor()
 
 void CMouseHandler::DrawCursor()
 {
-	assert(currentCursor != nullptr);
+	assert(activeCursorIdx != -1);
 
 	if (guihandler != nullptr)
 		guihandler->DrawCentroidCursor();
@@ -857,30 +865,30 @@ void CMouseHandler::DrawCursor()
 	if (hide)
 		return;
 
-	if (hardwareCursor && currentCursor->IsHWValid())
+	if (hardwareCursor && loadedCursors[activeCursorIdx].IsHWValid())
 		return;
 
 	// draw the 'software' cursor
 	if (cursorScale >= 0.0f) {
-		currentCursor->Draw(lastx, lasty, cursorScale);
+		loadedCursors[activeCursorIdx].Draw(lastx, lasty, cursorScale);
 		return;
 	}
 
 	// hovered minimap, show default cursor and draw `special` cursor scaled-down bottom right of the default one
-	const size_t ncIndex = cursorFileMap["cursornormal"];
+	const size_t normalCursorIndex = cursorFileMap["cursornormal"];
 
-	if (ncIndex == 0) {
-		currentCursor->Draw(lastx, lasty, -cursorScale);
+	if (normalCursorIndex == 0) {
+		loadedCursors[activeCursorIdx].Draw(lastx, lasty, -cursorScale);
 		return;
 	}
 
-	CMouseCursor& nc = loadedCursors[ncIndex];
-	nc.Draw(lastx, lasty, 1.0f);
+	CMouseCursor& normalCursor = loadedCursors[normalCursorIndex];
+	normalCursor.Draw(lastx, lasty, 1.0f);
 
-	if (currentCursor == &nc)
+	if (activeCursorIdx == normalCursorIndex)
 		return;
 
-	currentCursor->Draw(lastx + nc.GetMaxSizeX(), lasty + nc.GetMaxSizeY(), -cursorScale);
+	loadedCursors[activeCursorIdx].Draw(lastx + normalCursor.GetMaxSizeX(), lasty + normalCursor.GetMaxSizeY(), -cursorScale);
 }
 
 
@@ -910,24 +918,18 @@ bool CMouseHandler::AssignMouseCursor(
 	if (!newCursor.IsValid())
 		return false;
 
-	// assign the new cursor
+	const int commandCursorIdx = haveCmd? cmdIt->second: -1;
+
+	// assign the new cursor and remap indices
 	loadedCursors.emplace_back();
 	loadedCursors.back() = std::move(newCursor);
 
 	cursorFileMap[fileName] = loadedCursors.size() - 1;
 	cursorCommandMap[cmdName] = loadedCursors.size() - 1;
 
-	if (haveCmd) {
-		CMouseCursor& oldCursor = loadedCursors[cmdIt->second];
-
-		assert(haveFile);
-		cursorFileMap.erase(fileIt);
-		cursorCommandMap.erase(cmdIt);
-
-		// switch to the null-cursor
-		if (currentCursor == &oldCursor)
-			SetCursor("none", true);
-	}
+	// switch to the null-cursor if our active one is being (re)assigned
+	if (activeCursorIdx == commandCursorIdx)
+		SetCursor("none", true);
 
 	return true;
 }
@@ -950,7 +952,7 @@ bool CMouseHandler::ReplaceMouseCursor(
 	loadedCursors[fileIt->second] = std::move(newCursor);
 
 	// update current cursor if necessary
-	if (currentCursor == &loadedCursors[fileIt->second])
+	if (activeCursorIdx == fileIt->second)
 		SetCursor(cursorText, true);
 
 	return true;

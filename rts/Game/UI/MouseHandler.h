@@ -25,7 +25,7 @@ public:
 
 	static CMouseHandler* GetOrReloadInstance();
 
-	void ChangeCursor(const std::string& cmdName, const float& scale = 1.0f);
+	void ChangeCursor(const std::string& cmdName, const float scale = 1.0f);
 	void ReloadCursors();
 
 	void Update();
@@ -70,9 +70,20 @@ public:
 	/// @see ConfigHandler::ConfigNotifyCallback
 	void ConfigNotify(const std::string& key, const std::string& value);
 
+private:
+	void SetCursor(const std::string& cmdName, const bool forceRebind = false);
+
+	static void GetSelectionBoxCoeff(const float3& pos1, const float3& dir1, const float3& pos2, const float3& dir2, float2& topright, float2& btmleft);
+
+	void DrawScrollCursor();
+	void DrawFPSCursor();
+
+
 public:
 	int lastx;
 	int lasty;
+	int activeButtonIdx;
+	int activeCursorIdx;
 
 	bool locked;
 	/// Stores if the mouse was locked or not before going into direct control,
@@ -80,8 +91,27 @@ public:
 	bool wasLocked;
 	bool offscreen;
 
+private:
+	bool hide;
+	bool hwHide;
+	bool hardwareCursor;
+	bool invertMouse;
+
+	float cursorScale;
+	float dragScrollThreshold;
+
+	float scrollx;
+	float scrolly;
+
+public:
 	float doubleClickTime;
 	float scrollWheelSpeed;
+
+	/// locked mouse indicator size
+	float crossSize;
+	float crossAlpha;
+	float crossMoveScale;
+
 
 	struct ButtonPressEvt {
 		bool pressed;
@@ -96,44 +126,17 @@ public:
 	};
 
 	ButtonPressEvt buttons[NUM_BUTTONS + 1]; /// One-bottomed.
-	int activeButton;
 	float3 dir;
-
-	/// locked mouse indicator size
-	float crossSize;
-	float crossAlpha;
-	float crossMoveScale;
-
-private:
-	void SetCursor(const std::string& cmdName, const bool& forceRebind = false);
-
-	static void GetSelectionBoxCoeff(const float3& pos1, const float3& dir1, const float3& pos2, const float3& dir2, float2& topright, float2& btmleft);
-
-	void DrawScrollCursor();
-	void DrawFPSCursor();
 
 private:
 	std::string newCursor; /// cursor changes are delayed
 	std::string cursorText; /// current cursor name
 
-	CMouseCursor* currentCursor;
-	const CUnit* lastClicked;
-
-	float cursorScale;
-
-	bool hide;
-	bool hwHide;
-	bool hardwareCursor;
-	bool invertMouse;
-
-	float dragScrollThreshold;
-
-	float scrollx;
-	float scrolly;
-
 	std::vector<CMouseCursor> loadedCursors;
 	spring::unordered_map<std::string, size_t> cursorFileMap;
 	spring::unordered_map<std::string, size_t> cursorCommandMap;
+
+	const CUnit* lastClicked;
 };
 
 extern CMouseHandler* mouse;

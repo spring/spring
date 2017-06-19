@@ -341,10 +341,8 @@ void CMouseCursor::Update()
 	}
 
 	while (animTime > frames[currentFrame].endTime) {
-		currentFrame++;
-		if (currentFrame >= int(frames.size())) {
-			currentFrame = 0;
-		}
+		currentFrame += 1;
+		currentFrame %= frames.size();
 	}
 }
 
