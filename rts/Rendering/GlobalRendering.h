@@ -52,6 +52,7 @@ public:
 	void ReadWindowPosAndSize();
 	void SaveWindowPosAndSize();
 	void UpdateGLConfigs();
+	void UpdateGLGeometry();
 
 	int2 GetScreenCenter() const { return {viewPosX + (viewSizeX >> 1), viewPosY + (viewSizeY >> 1)}; }
 	int2 GetWantedViewSize(const bool fullscreen);
@@ -59,6 +60,7 @@ public:
 	bool CheckGLMultiSampling() const;
 	bool CheckGLContextVersion(const int2& minCtx) const;
 	bool ToggleGLDebugOutput(unsigned int msgSrceIdx, unsigned int msgTypeIdx, unsigned int msgSevrIdx);
+	void InitGLState();
 
 public:
 	/**

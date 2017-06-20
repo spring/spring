@@ -153,7 +153,7 @@ DEFINE_bool     (oldmenu,                                  false, "Start the old
 
 
 
-int spring::exitCode = spring::EXIT_CODE_NORMAL;
+int spring::exitCode = spring::EXIT_CODE_SUCCESS;
 
 static unsigned int numReloads = 0;
 static unsigned int numShutDowns = 0;
@@ -196,7 +196,7 @@ SpringApp::~SpringApp()
  * @brief Initializes the SpringApp instance
  * @return whether initialization was successful
  */
-bool SpringApp::Initialize()
+bool SpringApp::Init()
 {
 	assert(configHandler != nullptr);
 	FileSystemInitializer::InitializeLogOutput();
@@ -249,7 +249,10 @@ bool SpringApp::Initialize()
 
 	// Init OpenGL
 	globalRendering->PostInit();
-	InitOpenGL();
+	globalRendering->UpdateGLConfigs();
+	globalRendering->UpdateGLGeometry();
+	globalRendering->InitGLState();
+	UpdateInterfaceGeometry();
 
 	// ArchiveScanner uses for_mt --> needs thread-count set
 	// (employ all available threads, then switch to default)
@@ -326,60 +329,15 @@ void SpringApp::SaveWindowPosAndSize()
 }
 
 
-void SpringApp::SetupViewportGeometry()
+void SpringApp::UpdateInterfaceGeometry()
 {
-	globalRendering->ReadWindowPosAndSize();
-	globalRendering->SetDualScreenParams();
-	globalRendering->UpdateViewPortGeometry();
-	globalRendering->UpdatePixelGeometry();
-
 	const int vpx = globalRendering->viewPosX;
 	const int vpy = globalRendering->winSizeY - globalRendering->viewSizeY - globalRendering->viewPosY;
 
-	if (agui::gui != nullptr)
-		agui::gui->UpdateScreenGeometry(globalRendering->viewSizeX, globalRendering->viewSizeY, vpx, vpy);
+	if (agui::gui == nullptr)
+		return;
 
-	glViewport(globalRendering->viewPosX, globalRendering->viewPosY, globalRendering->viewSizeX, globalRendering->viewSizeY);
-	gluPerspective(45.0f, globalRendering->aspectRatio, 2.8f, CGlobalRendering::MAX_VIEW_RANGE);
-}
-
-
-/**
- * Initializes OpenGL
- */
-void SpringApp::InitOpenGL()
-{
-	globalRendering->UpdateGLConfigs();
-
-	// setup viewport
-	SetupViewportGeometry();
-
-	// Initialize some GL states
-	glShadeModel(GL_SMOOTH);
-	glClearDepth(1.0f);
-	glEnable(GL_DEPTH_TEST);
-	glDepthFunc(GL_LEQUAL);
-	#ifdef GL_ARB_clip_control
-	// avoid precision loss with default DR transform
-	glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE);
-	#endif
-
-	if (globalRendering->CheckGLMultiSampling()) {
-		glEnable(GL_MULTISAMPLE);
-	} else {
-		glDisable(GL_MULTISAMPLE);
-	}
-
-	// FFP model lighting
-	glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 0.0f);
-	glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, 0);
-
-	// Clear Window
-	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	globalRendering->SwapBuffers(true, true);
-	globalRendering->LogDisplayMode();
+	agui::gui->UpdateScreenGeometry(globalRendering->viewSizeX, globalRendering->viewSizeY, vpx, vpy);
 }
 
 
@@ -608,7 +566,7 @@ void SpringApp::LoadSpringMenu()
 	#ifdef HEADLESS
 		handleerror(nullptr,
 			"The headless version of the engine can not be run in interactive mode.\n"
-			"Please supply a start-script, save- or demo-file.", "ERROR", MBF_OK|MBF_EXCL);
+			"Please supply a start-script, save- or demo-file.", "ERROR", MBF_OK | MBF_EXCL);
 	#endif
 		// not a memory-leak: SelectMenu deletes itself on start
 		activeController = new SelectMenu(clientSetup);
@@ -809,8 +767,8 @@ int SpringApp::Run()
 
 	// note: exceptions thrown by other threads are *not* caught here
 	try {
-		if (!Initialize())
-			return -1;
+		if (!Init())
+			return spring::EXIT_CODE_FAILURE;
 
 		while (!gu->globalQuit) {
 			Watchdog::ClearTimer(WDT_MAIN);
@@ -820,9 +778,7 @@ int SpringApp::Run()
 				// copy; reloadScript is cleared by ResetState
 				Reload(gu->reloadScript);
 			} else {
-				if (!Update()) {
-					break;
-				}
+				gu->globalQuit |= (!Update());
 			}
 		}
 	} CATCH_SPRING_ERRORS
@@ -835,7 +791,7 @@ int SpringApp::Run()
 	try {
 		if (globalRendering != nullptr) {
 			SaveWindowPosAndSize();
-			ShutDown(true);
+			Kill(true);
 		}
 	} CATCH_SPRING_ERRORS
 
@@ -851,7 +807,7 @@ int SpringApp::Run()
 /**
  * Deallocates and shuts down engine
  */
-void SpringApp::ShutDown(bool fromRun)
+void SpringApp::Kill(bool fromRun)
 {
 	assert(Threading::IsMainThread());
 
@@ -931,11 +887,16 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 				case SDL_WINDOWEVENT_MOVED: {
 					SaveWindowPosAndSize();
 				} break;
-				//case SDL_WINDOWEVENT_RESIZED: //this is event is always preceded by:
+				// case SDL_WINDOWEVENT_RESIZED: // always preceded by CHANGED
 				case SDL_WINDOWEVENT_SIZE_CHANGED: {
 					Watchdog::ClearTimer(WDT_MAIN, true);
+
 					SaveWindowPosAndSize();
-					InitOpenGL();
+					globalRendering->UpdateGLConfigs();
+					globalRendering->UpdateGLGeometry();
+					globalRendering->InitGLState();
+					UpdateInterfaceGeometry();
+
 					activeController->ResizeEvent();
 					mouseInput->InstallWndCallback();
 				} break;

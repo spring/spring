@@ -5,8 +5,9 @@
 
 namespace spring {
 	enum {
-		EXIT_CODE_NORMAL  =  0,
+		EXIT_CODE_FAILURE = -2,
 		EXIT_CODE_DESYNC  = -1,
+		EXIT_CODE_SUCCESS =  0,
 		EXIT_CODE_TIMEOUT =  1,
 	};
 

@@ -891,13 +891,50 @@ void CGlobalRendering::UpdateGLConfigs()
 	VSync.SetInterval();
 
 	const float lodBias = configHandler->GetFloat("TextureLODBias");
+	const float absBias = math::fabs(lodBias);
 
-	if (math::fabs(lodBias) > 0.01f) {
-		glTexEnvf(GL_TEXTURE_FILTER_CONTROL, GL_TEXTURE_LOD_BIAS, lodBias);
-	} else {
-		glTexEnvf(GL_TEXTURE_FILTER_CONTROL, GL_TEXTURE_LOD_BIAS, 0.0f);
-	}
+	glTexEnvf(GL_TEXTURE_FILTER_CONTROL, GL_TEXTURE_LOD_BIAS, lodBias * (absBias > 0.01f));
 }
+
+void CGlobalRendering::UpdateGLGeometry()
+{
+	ReadWindowPosAndSize();
+	SetDualScreenParams();
+	UpdateViewPortGeometry();
+	UpdatePixelGeometry();
+}
+
+void CGlobalRendering::InitGLState()
+{
+	glShadeModel(GL_SMOOTH);
+	glClearDepth(1.0f);
+	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LEQUAL);
+	#ifdef GL_ARB_clip_control
+	// avoid precision loss with default DR transform
+	glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE);
+	#endif
+
+	if (CheckGLMultiSampling()) {
+		glEnable(GL_MULTISAMPLE);
+	} else {
+		glDisable(GL_MULTISAMPLE);
+	}
+
+	// FFP model lighting
+	glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 0.0f);
+	glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, 0);
+
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	glViewport(viewPosX, viewPosY, viewSizeX, viewSizeY);
+	gluPerspective(45.0f, aspectRatio, 2.8f, MAX_VIEW_RANGE);
+
+	SwapBuffers(true, true);
+	LogDisplayMode();
+}
+
 
 /**
  * @brief multisample verify
