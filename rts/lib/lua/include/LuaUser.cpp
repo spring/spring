@@ -245,7 +245,8 @@ void spring_lua_alloc_get_stats(SLuaAllocState* state)
 #if (ENABLE_USERSTATE_LOCKS != 0)
 	state->numLuaStates.store(mutexes.size() - coroutines.size();
 #else
-	state->numLuaStates.store(0);
+	// excludes LuaIntro, but stats are only viewable after it has gone
+	state->numLuaStates.store(LuaMemPool::GetSharedPoolConstPtr()->GetSharedCount());
 #endif
 }
 

@@ -38,7 +38,7 @@ static bool AllocExternal(size_t size) { return (!LuaMemPool::enabled || !AllocI
 
 LuaMemPool* LuaMemPool::AcquirePtr(bool shared)
 {
-	LuaMemPool* p = &gSharedPool;
+	LuaMemPool* p = GetSharedPoolPtr();
 
 	if (!shared) {
 		// caller can be any thread; cf LuaParser context-data ctors
@@ -56,19 +56,19 @@ LuaMemPool* LuaMemPool::AcquirePtr(bool shared)
 	}
 
 	// only wipe statistics; blocks will be recycled
-	p->ClearStats((p->sharedCount += shared) <= 1);
+	p->ClearStats((p->GetSharedCount() += shared) <= 1);
 	return p;
 }
 
 void LuaMemPool::ReleasePtr(LuaMemPool* p)
 {
-	if (p == &gSharedPool) {
-		p->sharedCount -= 1;
+	if (p == GetSharedPoolPtr()) {
+		p->GetSharedCount() -= 1;
 		return;
 	}
 
 	gMutex.lock();
-	gIndcs.push_back(p->globalIndex);
+	gIndcs.push_back(p->GetGlobalIndex());
 	gMutex.unlock();
 }
 
@@ -82,6 +82,8 @@ void LuaMemPool::KillStatic()
 	gPools.clear();
 	gIndcs.clear();
 }
+
+LuaMemPool* LuaMemPool::GetSharedPoolPtr() { return &gSharedPool; }
 
 
 

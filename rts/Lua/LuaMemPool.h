@@ -26,6 +26,9 @@ public:
 	static void InitStatic(bool enable);
 	static void KillStatic();
 
+	static const LuaMemPool* GetSharedPoolConstPtr() { return (GetSharedPoolPtr()); }
+	static       LuaMemPool* GetSharedPoolPtr();
+
 public:
 	void DeleteBlocks();
 	void* Alloc(size_t size);
@@ -40,6 +43,10 @@ public:
 		allocStats[STAT_NCB] *= (1 - b);
 		allocStats[STAT_NBB] *= (1 - b);
 	}
+
+	size_t  GetGlobalIndex() const { return globalIndex; }
+	size_t  GetSharedCount() const { return sharedCount; }
+	size_t& GetSharedCount()       { return sharedCount; }
 
 public:
 	static constexpr size_t MIN_ALLOC_SIZE = sizeof(void*);
