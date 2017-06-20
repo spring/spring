@@ -43,6 +43,8 @@ LuaParser::LuaParser(const string& _fileName, const string& _fileModes, const st
 	, fileModes(_fileModes)
 	, accessModes(_accessModes)
 
+	, D(false)
+
 	, initDepth(0)
 	, rootRef(LUA_NOREF)
 	, currentRef(LUA_NOREF)
@@ -65,6 +67,8 @@ LuaParser::LuaParser(const string& _textChunk, const string& _accessModes, const
 	, fileModes("")
 	, textChunk(_textChunk)
 	, accessModes(_accessModes)
+
+	, D(false)
 
 	, initDepth(0)
 	, rootRef(LUA_NOREF)

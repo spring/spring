@@ -22,6 +22,8 @@
 // global, affects all pool instances
 bool LuaMemPool::enabled = false;
 
+static LuaMemPool gSharedPool(-1);
+
 static std::vector<LuaMemPool*> gPools;
 static std::vector<size_t> gIndcs;
 static spring::mutex gMutex;
@@ -34,32 +36,36 @@ static bool AllocInternal(size_t size) { return ((size * CHECK_MAX_ALLOC_SIZE) <
 static bool AllocExternal(size_t size) { return (!LuaMemPool::enabled || !AllocInternal(size)); }
 
 
-LuaMemPool* LuaMemPool::AcquirePtr()
+LuaMemPool* LuaMemPool::AcquirePtr(bool shared)
 {
-	LuaMemPool* pool = nullptr;
+	LuaMemPool* p = &gSharedPool;
 
-	{
+	if (!shared) {
 		// caller can be any thread; cf LuaParser context-data ctors
+		// (the shared pool must *not* be used by different threads)
 		gMutex.lock();
 
 		if (gIndcs.empty()) {
-			gPools.push_back(pool = new LuaMemPool(gPools.size()));
+			gPools.push_back(p = new LuaMemPool(gPools.size()));
 		} else {
-			pool = gPools[gIndcs.back()];
+			p = gPools[gIndcs.back()];
 			gIndcs.pop_back();
 		}
 
 		gMutex.unlock();
 	}
 
-	return pool;
+	// only wipe statistics; blocks will be recycled
+	p->ClearStats((p->sharedCount += shared) <= 1);
+	return p;
 }
 
 void LuaMemPool::ReleasePtr(LuaMemPool* p)
 {
-	// only wipe statistics; blocks will be reused
-	// p->LogStats("", "");
-	p->ClearStats();
+	if (p == &gSharedPool) {
+		p->sharedCount -= 1;
+		return;
+	}
 
 	gMutex.lock();
 	gIndcs.push_back(p->globalIndex);
@@ -101,12 +107,13 @@ LuaMemPool::~LuaMemPool()
 void LuaMemPool::LogStats(const char* handle, const char* lctype) const
 {
 	LOG(
-		"[LuaMemPool::%s][handle=%s (%s)] index=%lu blocks=%lu {int,ext,rec}Allocs={%lu,%lu,%lu} {chunk,block}Bytes={%lu,%lu}",
+		"[LuaMemPool::%s][handle=%s (%s)] index=%lu {blocks,sizes}={%lu,%lu} {int,ext,rec}Allocs={%lu,%lu,%lu} {chunk,block}Bytes={%lu,%lu}",
 		__func__,
 		handle,
 		lctype,
 		(unsigned long) globalIndex,
 		(unsigned long) allocBlocks.size(),
+		(unsigned long) chunkCountTable.size(),
 		(unsigned long) allocStats[STAT_NIA],
 		(unsigned long) allocStats[STAT_NEA],
 		(unsigned long) allocStats[STAT_NRA],
@@ -124,7 +131,7 @@ void LuaMemPool::DeleteBlocks()
 	}
 	#endif
 
-	ClearStats();
+	ClearStats(true);
 }
 
 void* LuaMemPool::Alloc(size_t size)

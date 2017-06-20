@@ -83,6 +83,7 @@ CLuaHandle::CLuaHandle(const string& _name, int _order, bool _userMode, bool _sy
 	: CEventClient(_name, _order, _synced)
 	, userMode(_userMode)
 	, killMe(false)
+	, D(_name != "LuaIntro") // LoadingMT=1 protection
 	, callinErrors(0)
 {
 	D.owner = this;
@@ -90,7 +91,7 @@ CLuaHandle::CLuaHandle(const string& _name, int _order, bool _userMode, bool _sy
 	L = LUA_OPEN(&D);
 
 	L_GC = lua_newthread(L);
-	luaL_ref(L,LUA_REGISTRYINDEX);
+	luaL_ref(L, LUA_REGISTRYINDEX);
 
 	// needed for engine traceback
 	PushTracebackFuncToRegistry(L);

@@ -20,7 +20,7 @@ public:
 	LuaMemPool& operator = (LuaMemPool&& p) = delete;
 
 public:
-	static LuaMemPool* AcquirePtr();
+	static LuaMemPool* AcquirePtr(bool shared);
 	static void ReleasePtr(LuaMemPool* p);
 
 	static void InitStatic(bool enable);
@@ -33,12 +33,12 @@ public:
 	void Free(void* ptr, size_t size);
 
 	void LogStats(const char* handle, const char* lctype) const;
-	void ClearStats() {
-		allocStats[STAT_NIA] = 0;
-		allocStats[STAT_NEA] = 0;
-		allocStats[STAT_NRA] = 0;
-		allocStats[STAT_NCB] = 0;
-		allocStats[STAT_NBB] = 0;
+	void ClearStats(bool b) {
+		allocStats[STAT_NIA] *= (1 - b);
+		allocStats[STAT_NEA] *= (1 - b);
+		allocStats[STAT_NRA] *= (1 - b);
+		allocStats[STAT_NCB] *= (1 - b);
+		allocStats[STAT_NBB] *= (1 - b);
 	}
 
 public:
@@ -63,6 +63,7 @@ private:
 
 	size_t allocStats[5] = {0, 0, 0, 0, 0};
 	size_t globalIndex = 0;
+	size_t sharedCount = 0;
 };
 
 #endif
