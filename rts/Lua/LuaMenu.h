@@ -9,6 +9,7 @@
 class CLuaMenu : public CLuaHandle
 {
 public:
+	static bool CanLoadHandler() { return true; }
 	static bool ReloadHandler() { return (FreeHandler(), LoadFreeHandler()); } // NOTE the ','
 	static bool LoadFreeHandler() { return (LoadHandler() || FreeHandler()); }
 

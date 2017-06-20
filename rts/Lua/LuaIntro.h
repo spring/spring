@@ -11,30 +11,31 @@ struct lua_State;
 
 class CLuaIntro : public CLuaHandle
 {
-	public:
-		static bool ReloadHandler() { return (FreeHandler(), LoadFreeHandler()); } // NOTE the ','
-		static bool LoadFreeHandler() { return (LoadHandler() || FreeHandler()); }
+public:
+	static bool CanLoadHandler() { return true; }
+	static bool ReloadHandler() { return (FreeHandler(), LoadFreeHandler()); } // NOTE the ','
+	static bool LoadFreeHandler() { return (LoadHandler() || FreeHandler()); }
 
-		static bool LoadHandler();
-		static bool FreeHandler();
+	static bool LoadHandler();
+	static bool FreeHandler();
 
-	public: // call-ins
-		void DrawLoadScreen();
-		void LoadProgress(const std::string& msg, const bool replace_lastline);
+public: // call-ins
+	void DrawLoadScreen();
+	void LoadProgress(const std::string& msg, const bool replace_lastline);
 
-		void GamePreload() override;
+	void GamePreload() override;
 
-	protected:
-		CLuaIntro();
-		virtual ~CLuaIntro();
+protected:
+	CLuaIntro();
+	virtual ~CLuaIntro();
 
-		std::string LoadFile(const std::string& filename) const;
+	std::string LoadFile(const std::string& filename) const;
 
-	private:
-		static bool LoadUnsyncedCtrlFunctions(lua_State* L);
-		static bool LoadUnsyncedReadFunctions(lua_State* L);
-		static bool LoadSyncedReadFunctions(lua_State* L);
-		static bool RemoveSomeOpenGLFunctions(lua_State* L);
+private:
+	static bool LoadUnsyncedCtrlFunctions(lua_State* L);
+	static bool LoadUnsyncedReadFunctions(lua_State* L);
+	static bool LoadSyncedReadFunctions(lua_State* L);
+	static bool RemoveSomeOpenGLFunctions(lua_State* L);
 };
 
 

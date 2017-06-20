@@ -90,8 +90,10 @@ namespace {
 		{                                                   \
 			std::lock_guard<spring::mutex> lk(m_singleton); \
                                                             \
-			if (HandlerInstance != NULL)                    \
+			if (HandlerInstance != nullptr)                 \
 				return (HandlerInstance->IsValid());        \
+			if (!HandlerType::CanLoadHandler())             \
+				return false;                               \
                                                             \
 			HandlerInstance = new HandlerType();            \
 			return (HandlerInstance->IsValid());            \
@@ -102,7 +104,7 @@ namespace {
 	bool HandlerType::FreeHandler() {                    \
 		std::lock_guard<spring::mutex> lk(m_singleton);  \
                                                          \
-		if (HandlerInstance == NULL)                     \
+		if (HandlerInstance == nullptr)                  \
 			return false;                                \
                                                          \
 		auto* inst = HandlerInstance;                    \

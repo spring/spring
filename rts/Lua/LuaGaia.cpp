@@ -3,27 +3,17 @@
 #include "LuaGaia.h"
 
 #include "LuaInclude.h"
-
 #include "LuaUtils.h"
-#include "LuaSyncedCtrl.h"
-#include "LuaSyncedRead.h"
-#include "LuaUnitDefs.h"
-#include "LuaWeaponDefs.h"
-#include "LuaOpenGL.h"
 
-#include "Rendering/UnitDrawer.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "Sim/Units/Unit.h"
-#include "Sim/Units/UnitDef.h"
-#include "Sim/Units/CommandAI/Command.h"
-#include "System/FileSystem/FileHandler.h"
+#include "System/FileSystem/FileHandler.h" // SPRING_VFS*
 #include "System/FileSystem/FileSystem.h"
 #include "System/StringUtil.h"
 #include "System/Threading/SpringThreading.h"
 
 
-CLuaGaia* luaGaia = NULL;
+CLuaGaia* luaGaia = nullptr;
 
 static const char* LuaGaiaSyncedFilename   = "LuaGaia/main.lua";
 static const char* LuaGaiaUnsyncedFilename = "LuaGaia/draw.lua";
@@ -57,23 +47,14 @@ CLuaGaia::CLuaGaia()
 	Init(LuaGaiaSyncedFilename, LuaGaiaUnsyncedFilename, SPRING_VFS_MAP_BASE);
 }
 
-
 CLuaGaia::~CLuaGaia()
 {
-	luaGaia = NULL;
+	luaGaia = nullptr;
 }
 
 
-bool CLuaGaia::AddSyncedCode(lua_State* L)
+bool CLuaGaia::CanLoadHandler()
 {
-	return true;
+	return (gs->useLuaGaia && (FileSystem::FileExists(LuaGaiaSyncedFilename) || FileSystem::FileExists(LuaGaiaUnsyncedFilename)));
 }
 
-
-bool CLuaGaia::AddUnsyncedCode(lua_State* L)
-{
-	return true;
-}
-
-/******************************************************************************/
-/******************************************************************************/

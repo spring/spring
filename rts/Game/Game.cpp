@@ -709,10 +709,8 @@ void CGame::LoadLua()
 	loadscreen->SetLoadMessage("Loading LuaRules");
 	CLuaRules::LoadFreeHandler();
 
-	if (gs->useLuaGaia) {
-		loadscreen->SetLoadMessage("Loading LuaGaia");
-		CLuaGaia::LoadFreeHandler();
-	}
+	loadscreen->SetLoadMessage("Loading LuaGaia");
+	CLuaGaia::LoadFreeHandler();
 
 	LEAVE_SYNCED_CODE();
 
