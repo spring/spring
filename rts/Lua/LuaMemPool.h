@@ -34,9 +34,11 @@ public:
 
 	void LogStats(const char* handle, const char* lctype) const;
 	void ClearStats() {
-		allocStats[ALLOC_INT] = 0;
-		allocStats[ALLOC_EXT] = 0;
-		allocStats[ALLOC_REC] = 0;
+		allocStats[STAT_NIA] = 0;
+		allocStats[STAT_NEA] = 0;
+		allocStats[STAT_NRA] = 0;
+		allocStats[STAT_NCB] = 0;
+		allocStats[STAT_NBB] = 0;
 	}
 
 public:
@@ -52,12 +54,14 @@ private:
 	std::vector<void*> allocBlocks;
 
 	enum {
-		ALLOC_INT = 0, // internal
-		ALLOC_EXT = 1, // external
-		ALLOC_REC = 2, // recycled
+		STAT_NIA = 0, // number of internal allocs
+		STAT_NEA = 1, // number of external allocs
+		STAT_NRA = 2, // number of recycled allocs
+		STAT_NCB = 3, // number of chunk bytes currently in use
+		STAT_NBB = 4, // number of block bytes alloced in total
 	};
 
-	size_t allocStats[3] = {0, 0, 0};
+	size_t allocStats[5] = {0, 0, 0, 0, 0};
 	size_t globalIndex = 0;
 };
 

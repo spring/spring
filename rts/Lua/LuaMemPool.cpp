@@ -101,15 +101,17 @@ LuaMemPool::~LuaMemPool()
 void LuaMemPool::LogStats(const char* handle, const char* lctype) const
 {
 	LOG(
-		"[LuaMemPool::%s][handle=%s (%s)] index=%lu blocks=%lu {int,ext,rec}Allocs={%lu,%lu,%lu}",
+		"[LuaMemPool::%s][handle=%s (%s)] index=%lu blocks=%lu {int,ext,rec}Allocs={%lu,%lu,%lu} {chunk,block}Bytes={%lu,%lu}",
 		__func__,
 		handle,
 		lctype,
 		(unsigned long) globalIndex,
 		(unsigned long) allocBlocks.size(),
-		(unsigned long) allocStats[ALLOC_INT],
-		(unsigned long) allocStats[ALLOC_EXT],
-		(unsigned long) allocStats[ALLOC_REC]
+		(unsigned long) allocStats[STAT_NIA],
+		(unsigned long) allocStats[STAT_NEA],
+		(unsigned long) allocStats[STAT_NRA],
+		(unsigned long) allocStats[STAT_NCB],
+		(unsigned long) allocStats[STAT_NBB]
 	);
 }
 
@@ -128,12 +130,12 @@ void LuaMemPool::DeleteBlocks()
 void* LuaMemPool::Alloc(size_t size)
 {
 	if (AllocExternal(size)) {
-		allocStats[ALLOC_EXT] += 1;
+		allocStats[STAT_NEA] += 1;
 		return ::operator new(size);
 	}
 
-	size = std::max(size, size_t(MIN_ALLOC_SIZE));
-	allocStats[ALLOC_INT] += 1;
+	allocStats[STAT_NIA] += 1;
+	allocStats[STAT_NCB] += (size = std::max(size, size_t(MIN_ALLOC_SIZE)));
 
 	auto freeChunksTablePair = std::make_pair(freeChunksTable.find(size), false);
 
@@ -144,7 +146,8 @@ void* LuaMemPool::Alloc(size_t size)
 
 	if (ptr != nullptr) {
 		(freeChunksTablePair.first)->second = (*(void**) ptr);
-		allocStats[ALLOC_REC] += 1;
+
+		allocStats[STAT_NRA] += 1;
 		return ptr;
 	}
 
@@ -173,6 +176,8 @@ void* LuaMemPool::Alloc(size_t size)
 
 	freeChunksTable[size] = (*(void**) newBlock);
 	chunkCountTable[size] *= 2; // geometric increase
+
+	allocStats[STAT_NBB] += numBytes;
 	return newBlock;
 }
 
@@ -200,7 +205,7 @@ void LuaMemPool::Free(void* ptr, size_t size)
 		return;
 	}
 
-	size = std::max(size, size_t(MIN_ALLOC_SIZE));
+	allocStats[STAT_NCB] -= (size = std::max(size, size_t(MIN_ALLOC_SIZE)));
 
 	*(void**) ptr = freeChunksTable[size];
 	freeChunksTable[size] = ptr;
