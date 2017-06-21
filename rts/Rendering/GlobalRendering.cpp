@@ -346,7 +346,7 @@ bool CGlobalRendering::CreateGLContext(const int2& minCtx)
 
 bool CGlobalRendering::CreateWindowAndContext(const char* title, bool minimized)
 {
-	if ((SDL_Init(SDL_INIT_VIDEO) == -1)) {
+	if (SDL_Init(SDL_INIT_VIDEO) == -1) {
 		LOG_L(L_FATAL, "[GR::%s] error \"%s\" initializing SDL", __func__, SDL_GetError());
 		return false;
 	}
