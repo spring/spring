@@ -67,9 +67,8 @@ CSmokeProjectile2::CSmokeProjectile2(
 	ageSpeed = 1 / ttl;
 	checkCol = false;
 	castShadow = true;
-	if ((pos.y - CGround::GetApproximateHeight(pos.x, pos.z, false)) > 10) {
-		useAirLos = true;
-	}
+	useAirLos |= ((pos.y - CGround::GetApproximateHeight(pos.x, pos.z, false)) > 10.0f);
+
 	glowFalloff = 4.5f + guRNG.NextFloat() * 6;
 	textureNum = (int)(guRNG.NextInt(projectileDrawer->smoketex.size()));
 }
@@ -78,11 +77,8 @@ CSmokeProjectile2::CSmokeProjectile2(
 
 void CSmokeProjectile2::Init(const CUnit* owner, const float3& offset)
 {
-	if (offset.y - CGround::GetApproximateHeight(offset.x, offset.z, false) > 10)
-		useAirLos = true;
-
-	if (!owner)
-		alwaysVisible = true;
+	useAirLos |= (offset.y - CGround::GetApproximateHeight(offset.x, offset.z, false) > 10.0f);
+	alwaysVisible |= (owner == nullptr);
 
 	wantedPos += offset;
 

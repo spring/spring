@@ -189,10 +189,10 @@ WEAPONTAG(bool, visibleShieldRepulse).externalName("shield.visibleRepulse").fall
 	.defaultValue(false).description("Is the (hard-coded) repulse effect rendered or not?");
 WEAPONTAG(int, visibleShieldHitFrames).externalName("shield.visibleHitFrames").fallbackName("visibleShieldHitFrames")
 	.defaultValue(0).description("The number of frames a shield becomes visible for when hit.");
-WEAPONTAG(float3, shieldBadColor).externalName("shield.badColor").fallbackName("shieldBadColor")
-	.defaultValue(float3(1.0f, 0.5f, 0.5f)).description("The RGB colour the shield transitions to as its hit-points are reduced towards 0.");
-WEAPONTAG(float3, shieldGoodColor).externalName("shield.goodColor").fallbackName("shieldGoodColor")
-	.defaultValue(float3(0.5f, 0.5f, 1.0f)).description("The RGB colour the shield transitions to as its hit-points are regenerated towards its maximum power.");
+WEAPONTAG(float4, shieldBadColor).externalName("shield.badColor").fallbackName("shieldBadColor")
+	.defaultValue(float4(1.0f, 0.5f, 0.5f, 1.0f)).description("The RGBA colour the shield transitions to as its hit-points are reduced towards 0.");
+WEAPONTAG(float4, shieldGoodColor).externalName("shield.goodColor").fallbackName("shieldGoodColor")
+	.defaultValue(float4(0.5f, 0.5f, 1.0f, 1.0f)).description("The RGBA colour the shield transitions to as its hit-points are regenerated towards its maximum power.");
 WEAPONTAG(float, shieldAlpha).externalName("shield.alpha").fallbackName("shieldAlpha")
 	.defaultValue(0.2f).description("The alpha transparency of the shield whilst it is visible.");
 WEAPONTAG(std::string, shieldArmorTypeName).externalName("shield.armorType").fallbackName("shieldArmorType")

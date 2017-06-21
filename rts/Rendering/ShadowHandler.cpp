@@ -421,7 +421,7 @@ static CMatrix44f ComposeLightMatrix(const ISkyLight* light)
 	CMatrix44f lightMatrix;
 
 	// sun direction is in world-space, invert it
-	lightMatrix.SetZ(-(light->GetLightDir()));
+	lightMatrix.SetZ(-float3(light->GetLightDir()));
 	lightMatrix.SetX(((lightMatrix.GetZ()).cross(   UpVector       )).ANormalize());
 	lightMatrix.SetY(((lightMatrix.GetX()).cross(lightMatrix.GetZ())).ANormalize());
 

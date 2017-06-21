@@ -552,9 +552,11 @@ static bool InitParamMap()
 	ADD_FLOAT("shieldGoodColorR",       wd.shieldGoodColor.x);
 	ADD_FLOAT("shieldGoodColorG",       wd.shieldGoodColor.y);
 	ADD_FLOAT("shieldGoodColorB",       wd.shieldGoodColor.z);
+	ADD_FLOAT("shieldGoodColorA",       wd.shieldGoodColor.w);
 	ADD_FLOAT("shieldBadColorR",        wd.shieldBadColor.x);
 	ADD_FLOAT("shieldBadColorG",        wd.shieldBadColor.y);
 	ADD_FLOAT("shieldBadColorB",        wd.shieldBadColor.z);
+	ADD_FLOAT("shieldBadColorA",        wd.shieldBadColor.w);
 	ADD_FLOAT("shieldAlpha",            wd.shieldAlpha);
 
 	ADD_INT("shieldInterceptType",      wd.shieldInterceptType);

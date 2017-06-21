@@ -6,7 +6,7 @@
 #include "Sim/Misc/DamageArray.h"
 #include "Sim/Misc/GuiSoundSet.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileTypes.h"
-#include "System/float3.h"
+#include "System/float4.h"
 #include "System/UnorderedMap.hpp"
 
 struct AtlasedTexture;
@@ -171,8 +171,8 @@ public:
 	float shieldPowerRegenEnergy;    // how much energy is needed to regenerate power per second
 	float shieldStartingPower;       // how much power the shield has when first created
 	int   shieldRechargeDelay;       // number of frames to delay recharging by after each hit
-	float3 shieldGoodColor;          // color when shield at full power
-	float3 shieldBadColor;           // color when shield is empty
+	float4 shieldGoodColor;          // color when shield at full power
+	float4 shieldBadColor;           // color when shield is empty
 	float shieldAlpha;               // shield alpha value
 	int shieldArmorType;             // armor type for the damage table
 	std::string shieldArmorTypeName; // name of the armor type

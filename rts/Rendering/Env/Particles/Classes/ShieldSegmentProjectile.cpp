@@ -122,7 +122,7 @@ bool ShieldSegmentCollection::AllowDrawing()
 
 	//FIXME if Lua wants to draw the shield itself, we should draw all GL_QUADS in the `va` vertexArray first.
 	// but doing so for each shield might reduce the performance.
-	// so might use a branch-predicion? -> save last return value and if it is true draw `va` before calling eventHandler.DrawShield() ??FIXME
+	// so might use a branch-predicion? -> save last return value and if it is true draw `va` before calling eventHandler.DrawShield()
 	if (eventHandler.DrawShield(shield->owner, shield))
 		return allowDrawing;
 
@@ -142,9 +142,9 @@ void ShieldSegmentCollection::UpdateColor()
 	const WeaponDef* shieldDef = shield->weaponDef;
 
 	// lerp between badColor and goodColor based on shield's current power
-	const float colorMix = std::min(1.0f, shield->GetCurPower() / std::max(1.0f, shieldDef->shieldPower));
+	const float relPower = shield->GetCurPower() / std::max(1.0f, shieldDef->shieldPower);
+	const float lrpColor = std::min(1.0f, relPower);
 
-	const float3 colorf = mix(shieldDef->shieldBadColor, shieldDef->shieldGoodColor, colorMix);
 	float alpha = shieldDef->visibleShield * shieldDef->shieldAlpha;
 
 	if (shield->GetHitFrames() > 0 && shieldDef->visibleShieldHitFrames > 0) {
@@ -154,12 +154,7 @@ void ShieldSegmentCollection::UpdateColor()
 		alpha = std::min(alpha, 1.0f);
 	}
 
-	color = SColor(
-		colorf.x * alpha,
-		colorf.y * alpha,
-		colorf.z * alpha,
-		alpha
-	);
+	color = SColor(mix(shieldDef->shieldBadColor, shieldDef->shieldGoodColor, lrpColor) * alpha);
 }
 
 

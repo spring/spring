@@ -143,28 +143,22 @@ bool CPlasmaRepulser::IncomingProjectile(CWeaponProjectile* p, const float3& hit
 
 	if (weaponDef->shieldRepulser) {
 		// bounce the projectile
-		const int type = p->ShieldRepulse(weaponMuzzlePos,
-			weaponDef->shieldForce,
-			weaponDef->shieldMaxSpeed);
+		switch (p->ShieldRepulse(weaponMuzzlePos, weaponDef->shieldForce, weaponDef->shieldMaxSpeed)) {
+			case 0: { return false; } break;
+			case 1: {
+				owner->UseEnergy(weaponDef->shieldEnergyUse);
 
-		if (type == 0) {
-			return false;
-		} else if (type == 1) {
-			owner->UseEnergy(weaponDef->shieldEnergyUse);
+				curPower -= (shieldDamage * (weaponDef->shieldPower != 0.0f));
+			} break;
+			default: {
+				// NOTE:
+				//   all weapons except Lasers do only (1 / GAME_SPEED) damage
+				//   (Lasers are insta-bounced, others spend time "inside" the
+				//   shield dealing damage every frame)
+				owner->UseEnergy(weaponDef->shieldEnergyUse / GAME_SPEED);
 
-			if (weaponDef->shieldPower != 0) {
-				curPower -= shieldDamage;
-			}
-		} else {
-			//FIXME why do all weapons except LASERs do only (1 / GAME_SPEED) damage???
-			// because they go inside and take time to get pushed back
-			// during that time they deal damage every frame
-			// so in total they do their nominal damage each second
-			// on the other hand lasers get insta-bounced in 1 frame
-			// regardless of shield pushing power
-			owner->UseEnergy(weaponDef->shieldEnergyUse / GAME_SPEED);
-
-			curPower -= ((shieldDamage / GAME_SPEED) * (weaponDef->shieldPower != 0.0f));
+				curPower -= ((shieldDamage / GAME_SPEED) * (weaponDef->shieldPower != 0.0f));
+			} break;
 		}
 
 		if (spring::VectorInsertUnique(repulsedProjectiles, p, true)) {
@@ -172,30 +166,29 @@ bool CPlasmaRepulser::IncomingProjectile(CWeaponProjectile* p, const float3& hit
 			AddDeathDependence(p, DEPENDENCE_REPULSED);
 
 			if (weaponDef->visibleShieldRepulse) {
-				const float colorMix = std::min(1.0f, curPower / std::max(1.0f, weaponDef->shieldPower));
-				const float3 color =
-					(weaponDef->shieldGoodColor * colorMix) +
-					(weaponDef->shieldBadColor * (1.0f - colorMix));
+				const float relPower = curPower / std::max(1.0f, weaponDef->shieldPower);
+				const float lrpColor = std::min(1.0f, relPower);
 
-				projMemPool.alloc<CRepulseGfx>(owner, p, radius, color);
+				projMemPool.alloc<CRepulseGfx>(owner, p, radius, mix(weaponDef->shieldBadColor, weaponDef->shieldGoodColor, lrpColor));
 			}
 		}
 
 		if (defHitFrames > 0)
 			hitFrames = defHitFrames;
 
-	} else {
-		// kill the projectile
-		if (owner->UseEnergy(weaponDef->shieldEnergyUse)) {
-			curPower -= (shieldDamage * (weaponDef->shieldPower != 0.0f));
+		return false;
+	}
 
-			p->Collision();
+	// kill the projectile
+	if (owner->UseEnergy(weaponDef->shieldEnergyUse)) {
+		curPower -= (shieldDamage * (weaponDef->shieldPower != 0.0f));
 
-			if (defHitFrames > 0)
-				hitFrames = defHitFrames;
+		p->Collision();
 
-			return true;
-		}
+		if (defHitFrames > 0)
+			hitFrames = defHitFrames;
+
+		return true;
 	}
 
 	return false;
