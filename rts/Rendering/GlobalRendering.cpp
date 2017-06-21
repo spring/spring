@@ -303,10 +303,10 @@ bool CGlobalRendering::CreateGLContext(const int2& minCtx)
 	if ((glContext = SDL_GL_CreateContext(window)) != nullptr)
 		return true;
 
-	const char* frmts[] = {"[GR::%s] error \"%s\" creating GL%d.%d %s-context", "[GR::%s] created GL%d.%d %s-context"};
+	const char* frmts[] = {"[GR::%s] error (\"%s\") creating GL%d.%d %s-context", "[GR::%s] created GL%d.%d %s-context"};
 	const char* profs[] = {"compatibility", "core"};
 
-	char buf[1024];
+	char buf[1024] = {0};
 	SNPRINTF(buf, sizeof(buf), frmts[false], __func__, SDL_GetError(), minCtx.x, minCtx.y, profs[forceCoreContext]);
 
 	for (const int2 tmpCtx: glCtxs) {
@@ -346,8 +346,7 @@ bool CGlobalRendering::CreateGLContext(const int2& minCtx)
 
 bool CGlobalRendering::CreateWindowAndContext(const char* title, bool minimized)
 {
-	// the crash reporter should be catching errors, not SDL
-	if ((SDL_Init(SDL_INIT_VIDEO | SDL_INIT_NOPARACHUTE) == -1)) {
+	if ((SDL_Init(SDL_INIT_VIDEO) == -1)) {
 		LOG_L(L_FATAL, "[GR::%s] error \"%s\" initializing SDL", __func__, SDL_GetError());
 		return false;
 	}
@@ -419,7 +418,7 @@ bool CGlobalRendering::CreateWindowAndContext(const char* title, bool minimized)
 		return false;
 
 	if (!CheckGLContextVersion(minCtx)) {
-		handleerror(nullptr, "minimum OpenGL version-requirement not satisfied, aborting", "ERROR", MBF_OK | MBF_EXCL);
+		handleerror(nullptr, "minimum required OpenGL version not supported, aborting", "ERROR", MBF_OK | MBF_EXCL);
 		return false;
 	}
 
