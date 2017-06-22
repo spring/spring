@@ -686,9 +686,9 @@ float3 CMiniMap::GetMapPosition(int x, int y) const
 	//   (x = dim.x, y = dim.y) maps to world-coors (mapX, h, mapZ)
 	//   (x =     0, y = dim.y) maps to world-coors (   0, h, mapZ)
 	const float sx = Clamp(float(x -                               tmpPos.x            ) / curDim.x, 0.0f, 1.0f);
-	const float sy = Clamp(float(y - (globalRendering->viewSizeY - tmpPos.y - curDim.y)) / curDim.y, 0.0f, 1.0f);
+	const float sz = Clamp(float(y - (globalRendering->viewSizeY - tmpPos.y - curDim.y)) / curDim.y, 0.0f, 1.0f);
 
-	return {mapX, readMap->GetCurrMaxHeight(), mapZ};
+	return {mapX * sx, readMap->GetCurrMaxHeight(), mapZ * sz};
 }
 
 
