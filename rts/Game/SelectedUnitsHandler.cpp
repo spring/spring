@@ -828,8 +828,7 @@ void CSelectedUnitsHandler::DrawCommands()
 	lineDrawer.SetupLineStipple();
 
 	glEnable(GL_BLEND);
-	glBlendFunc((GLenum)cmdColors.QueuedBlendSrc(),
-	            (GLenum)cmdColors.QueuedBlendDst());
+	glBlendFunc((GLenum) cmdColors.QueuedBlendSrc(), (GLenum) cmdColors.QueuedBlendDst());
 
 	glLineWidth(cmdColors.QueuedLineWidth());
 
@@ -861,30 +860,27 @@ void CSelectedUnitsHandler::DrawCommands()
 // CMouseHandler::GetCurrentTooltip --> GetTooltip
 std::string CSelectedUnitsHandler::GetTooltip()
 {
-	std::string s = "";
+	std::string s;
+
 	{
-		if (!selectedUnits.empty()) {
-			const CUnit* unit = unitHandler->GetUnit(*selectedUnits.begin());
-			const CTeam* team = nullptr;
-
-			// show the player name instead of unit name if it has FBI tag showPlayerName
-			if (unit->unitDef->showPlayerName) {
-				team = teamHandler->Team(unit->team);
-				s = team->GetControllerName();
-			} else {
-				s = unit->tooltip;
-			}
-		}
-
-		if (selectedUnits.empty()) {
+		if (selectedUnits.empty())
 			return s;
+
+		const CUnit* unit = unitHandler->GetUnit(*selectedUnits.begin());
+		const CTeam* team = nullptr;
+
+		// show the player name instead of unit name if it has FBI tag showPlayerName
+		if (unit->unitDef->showPlayerName) {
+			team = teamHandler->Team(unit->team);
+			s = team->GetControllerName();
+		} else {
+			s = unit->tooltip;
 		}
 	}
 
-	const string custom = eventHandler.WorldTooltip(NULL, NULL, NULL);
-	if (!custom.empty()) {
+	const std::string custom = std::move(eventHandler.WorldTooltip(nullptr, nullptr, nullptr));
+	if (!custom.empty())
 		return custom;
-	}
 
 	{
 		#define NO_TEAM -32

@@ -3437,20 +3437,22 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 		glDisable(GL_ALPHA_TEST);
 	}
 
-	float3 cameraPos=camera->GetPos();
-	float3 mouseDir=mouse->dir;
+	float3 tracePos = camera->GetPos();
+	float3 traceDir = mouse->dir;
 
 	// setup for minimap proxying
-	const bool minimapCoords =
-		(minimap->ProxyMode() ||
-		 ((activeReceiver != this) && !game->hideInterface &&
-		  (GetReceiverAt(mouse->lastx, mouse->lasty) == minimap)));
-	if (minimapCoords) {
-		cameraPos = minimap->GetMapPosition(mouse->lastx, mouse->lasty);
-		mouseDir = -UpVector;
-		if (miniMapMarker && minimap->FullProxy() &&
-		    !onMinimap && !minimap->GetMinimized()) {
-			DrawMiniMapMarker(cameraPos);
+	const bool minimapInput = (activeReceiver != this && GetReceiverAt(mouse->lastx, mouse->lasty) == minimap);
+	const bool minimapCoors = (minimap->ProxyMode() || (!game->hideInterface && minimapInput));
+
+	if (minimapCoors) {
+		// if drawing on the minimap, start at the world-coordinate
+		// position mapped to by mouse->last{x,y} and trace straight
+		// down
+		tracePos = minimap->GetMapPosition(mouse->lastx, mouse->lasty);
+		traceDir = -UpVector;
+
+		if (miniMapMarker && minimap->FullProxy() && !onMinimap && !minimap->GetMinimized()) {
+			DrawMiniMapMarker(tracePos);
 		}
 	}
 
@@ -3458,6 +3460,7 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 	if (activeMousePress) {
 		int cmdIndex = -1;
 		int button = SDL_BUTTON_LEFT;
+
 		if ((inCommand >= 0) && ((size_t)inCommand < commands.size())) {
 			cmdIndex = inCommand;
 		} else {
@@ -3475,13 +3478,13 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 					if (mouse->buttons[button].movement > 30) {
 						float maxSize = 1000000.0f;
 						float sizeDiv = 0.0f;
-						if (!cmdDesc.params.empty()) {
+
+						if (cmdDesc.params.size() > 0)
 							maxSize = atof(cmdDesc.params[0].c_str());
-							if (cmdDesc.params.size() > 1) {
-								sizeDiv = atof(cmdDesc.params[1].c_str());
-							}
-						}
-						DrawFront(button, maxSize, sizeDiv, onMinimap, cameraPos, mouseDir);
+						if (cmdDesc.params.size() > 1)
+							sizeDiv = atof(cmdDesc.params[1].c_str());
+
+						DrawFront(button, maxSize, sizeDiv, onMinimap, tracePos, traceDir);
 					}
 					break;
 				}
@@ -3504,13 +3507,13 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 						if (dist < 0.0f)
 							break;
 
-						const float dist2 = CGround::LineGroundCol(cameraPos, cameraPos + mouseDir * globalRendering->viewRange * 1.4f, false);
+						const float dist2 = CGround::LineGroundCol(tracePos, tracePos + traceDir * globalRendering->viewRange * 1.4f, false);
 
 						if (dist2 < 0.0f)
 							break;
 
 						const float3 pos = mouse->buttons[button].camPos + mouse->buttons[button].dir * dist;
-						const float3 pos2 = cameraPos + mouseDir * dist2;
+						const float3 pos2 = tracePos + traceDir * dist2;
 
 						const float* color;
 
@@ -3526,7 +3529,7 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 							case CMD_UNLOAD_UNITS: { color = cmdColors.unload;      break; }
 							case CMD_CAPTURE:      { color = cmdColors.capture;     break; }
 							default: {
-								static const float grey[4] = { 0.5f, 0.5f, 0.5f, 0.5f };
+								static constexpr float grey[4] = { 0.5f, 0.5f, 0.5f, 0.5f };
 								color = grey;
 							}
 						}
@@ -3538,7 +3541,8 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 						} else {
 							glColor4f(color[0], color[1], color[2], 0.5f);
 							glBegin(GL_TRIANGLE_FAN);
-							const int divs = 256;
+
+							constexpr int divs = 256;
 							for (int i = 0; i <= divs; ++i) {
 								const float radians = math::TWOPI * (float)i / (float)divs;
 								float3 p(pos.x, 0.0f, pos.z);
@@ -3563,16 +3567,16 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 						if (dist1 < 0.0f)
 							break;
 
-						const float dist2 = CGround::LineGroundCol(cameraPos, cameraPos + mouseDir * globalRendering->viewRange * 1.4f, false);
+						const float dist2 = CGround::LineGroundCol(tracePos, tracePos + traceDir * globalRendering->viewRange * 1.4f, false);
 
 						if (dist2 < 0.0f)
 							break;
 
 						const float3 pos1 = mouse->buttons[button].camPos+mouse->buttons[button].dir * dist1;
-						const float3 pos2 = cameraPos + mouseDir * dist2;
+						const float3 pos2 = tracePos + traceDir * dist2;
 
 						if (!onMinimap) {
-							DrawSelectBox(pos1, pos2, cameraPos);
+							DrawSelectBox(pos1, pos2, tracePos);
 						} else {
 							glColor4f(1.0f, 0.0f, 0.0f, 0.5f);
 							glBegin(GL_QUADS);
@@ -3590,34 +3594,34 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 	}
 
 	if (!onMinimap) {
-		glBlendFunc((GLenum)cmdColors.SelectedBlendSrc(),
-								(GLenum)cmdColors.SelectedBlendDst());
+		glBlendFunc((GLenum) cmdColors.SelectedBlendSrc(), (GLenum) cmdColors.SelectedBlendDst());
 		glLineWidth(cmdColors.SelectedLineWidth());
 	} else {
 		glLineWidth(1.49f);
 	}
 
 	// draw the ranges for the unit that is being pointed at
-	const CUnit* pointedAt = NULL;
+	const CUnit* pointedAt = nullptr;
 
 	if (GetQueueKeystate()) {
 		const CUnit* unit = nullptr;
 		const CFeature* feature = nullptr;
 
-		if (minimapCoords) {
-			unit = minimap->GetSelectUnit(cameraPos);
+		if (minimapCoors) {
+			unit = minimap->GetSelectUnit(tracePos);
 		} else {
 			// ignore the returned distance, we don't care about it here
-			TraceRay::GuiTraceRay(cameraPos, mouseDir, globalRendering->viewRange * 1.4f, NULL, unit, feature, false);
+			TraceRay::GuiTraceRay(tracePos, traceDir, globalRendering->viewRange * 1.4f, nullptr, unit, feature, false);
 		}
 
 		if (unit && ((unit->losStatus[gu->myAllyTeam] & LOS_INLOS) || gu->spectatingFullView)) {
 			pointedAt = unit;
+
 			const UnitDef* unitdef = unit->unitDef;
 			const bool enemyUnit = ((unit->allyteam != gu->myAllyTeam) && !gu->spectatingFullView);
-			if (enemyUnit && unitdef->decoyDef) {
+
+			if (enemyUnit && unitdef->decoyDef)
 				unitdef = unitdef->decoyDef;
-			}
 
 			DrawUnitDefRanges(unit, unitdef, unit->pos);
 
@@ -3625,8 +3629,7 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 			if (unitdef->maxWeaponRange > 0) {
 				glDisable(GL_DEPTH_TEST);
 				glColor4fv(cmdColors.rangeAttack);
-				glBallisticCircle(unit->pos, unitdef->maxWeaponRange,
-				                  unit->weapons[0], 40);
+				glBallisticCircle(unit->pos, unitdef->maxWeaponRange, unit->weapons[0], 40);
 				glEnable(GL_DEPTH_TEST);
 			}
 			// draw decloak distance
@@ -3645,20 +3648,22 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 					glSurfaceCircle(unit->pos, unit->decloakDistance, 40);
 				}
 			}
+
 			// draw interceptor range
 			if (unitdef->maxCoverage > 0.0f) {
-				const CWeapon* w = NULL; //will be checked if any missiles are ready
-				if (!enemyUnit) {
-					w = unit->stockpileWeapon;
-					if (w != NULL && !w->weaponDef->interceptor) {
-						w = NULL; //if this isn't the interceptor, then don't use it
-					}
-				} //shows as on if enemy, a non-stockpiled weapon, or if the stockpile has a missile
-				if (enemyUnit || (w == NULL) || w->numStockpiled) {
+				const CWeapon* w = enemyUnit? unit->stockpileWeapon: nullptr; // will be checked if any missiles are ready
+
+				// if this isn't the interceptor, then don't use it
+				if (w != nullptr && !w->weaponDef->interceptor)
+					w = nullptr;
+
+				// shows as on if enemy, a non-stockpiled weapon, or if the stockpile has a missile
+				if (!enemyUnit || (w == nullptr) || w->numStockpiled) {
 					glColor4fv(cmdColors.rangeInterceptorOn);
 				} else {
 					glColor4fv(cmdColors.rangeInterceptorOff);
 				}
+
 				glSurfaceCircle(unit->pos, unitdef->maxCoverage, 40);
 			}
 		}
@@ -3694,14 +3699,14 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 		const UnitDef* unitdef = unitDefHandler->GetUnitDefByID(-commands[inCommand].id);
 
 		if (unitdef != nullptr) {
-			const float dist = CGround::LineGroundWaterCol(cameraPos, mouseDir, globalRendering->viewRange * 1.4f, unitdef->floatOnWater, false);
+			const float dist = CGround::LineGroundWaterCol(tracePos, traceDir, globalRendering->viewRange * 1.4f, unitdef->floatOnWater, false);
 
 			if (dist > 0.0f) {
 				const CMouseHandler::ButtonPressEvt& bp = mouse->buttons[SDL_BUTTON_LEFT];
 				const float bpDist = CGround::LineGroundWaterCol(bp.camPos, bp.dir, globalRendering->viewRange * 1.4f, unitdef->floatOnWater, false);
 
 				// get the build information
-				const float3 cPos = cameraPos + mouseDir * dist;
+				const float3 cPos = tracePos + traceDir * dist;
 				const float3 bPos = bp.camPos + bp.dir * bpDist;
 
 				std::vector<BuildInfo> buildInfos;
@@ -3710,11 +3715,11 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 					const BuildInfo cInfo = BuildInfo(unitdef, cPos, buildFacing);
 					const BuildInfo bInfo = BuildInfo(unitdef, bPos, buildFacing);
 
-					buildInfos = std::move(GetBuildPos(bInfo, cInfo, cameraPos, mouseDir));
+					buildInfos = std::move(GetBuildPos(bInfo, cInfo, tracePos, traceDir));
 				} else {
 					const BuildInfo bi(unitdef, cPos, buildFacing);
 
-					buildInfos = std::move(GetBuildPos(bi, bi, cameraPos, mouseDir));
+					buildInfos = std::move(GetBuildPos(bi, bi, tracePos, traceDir));
 				}
 
 				for (auto bpi = buildInfos.cbegin(); bpi != buildInfos.cend(); ++bpi) {
@@ -3778,7 +3783,8 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 	}
 
 	// draw range circles if attack orders are imminent
-	int defcmd = GetDefaultCommand(mouse->lastx, mouse->lasty, cameraPos, mouseDir);
+	const int defcmd = GetDefaultCommand(mouse->lastx, mouse->lasty, tracePos, traceDir);
+
 	if ((inCommand >= 0 && (size_t)inCommand<commands.size() && commands[inCommand].id == CMD_ATTACK) ||
 		(inCommand == -1 && defcmd > 0 && commands[defcmd].id == CMD_ATTACK)
 	) {

@@ -1113,27 +1113,25 @@ int LuaOpenGL::GetViewSizes(lua_State* L)
 
 int LuaOpenGL::SlaveMiniMap(lua_State* L)
 {
-	if (!minimap) {
+	if (minimap == nullptr)
 		return 0;
-	}
-//	CheckDrawingEnabled(L, __FUNCTION__);
-	const bool mode = luaL_checkboolean(L, 1);
-	if (minimap) {
-		minimap->SetSlaveMode(mode);
-	}
+
+//	CheckDrawingEnabled(L, __func__);
+	minimap->SetSlaveMode(luaL_checkboolean(L, 1));
 	return 0;
 }
 
 
 int LuaOpenGL::ConfigMiniMap(lua_State* L)
 {
-	if (!minimap) {
+	if (minimap == nullptr)
 		return 0;
-	}
+
 	const int px = luaL_checkint(L, 1);
 	const int py = luaL_checkint(L, 2);
 	const int sx = luaL_checkint(L, 3);
 	const int sy = luaL_checkint(L, 4);
+
 	minimap->SetGeometry(px, py, sx, sy);
 	return 0;
 }
@@ -1141,24 +1139,20 @@ int LuaOpenGL::ConfigMiniMap(lua_State* L)
 
 int LuaOpenGL::DrawMiniMap(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
-	if (!minimap) {
+	CheckDrawingEnabled(L, __func__);
+
+	if (minimap == nullptr)
 		return 0;
-	}
-	if (drawMode != DRAW_SCREEN) {
-		luaL_error(L,
-			"gl.DrawMiniMap() can only be used within DrawScreenItems()");
-	}
-	if (!minimap->GetSlaveMode()) {
-		luaL_error(L,
-			"gl.DrawMiniMap() can only be used if the minimap is in slave mode");
-	}
 
-	bool transform = luaL_optboolean(L, 1, true);
+	if (drawMode != DRAW_SCREEN)
+		luaL_error(L, "gl.DrawMiniMap() can only be used within DrawScreenItems()");
 
-	if (transform) {
+	if (!minimap->GetSlaveMode())
+		luaL_error(L, "gl.DrawMiniMap() can only be used if the minimap is in slave mode");
+
+	if (luaL_optboolean(L, 1, true)) {
 		glPushMatrix();
-		glScalef(globalRendering->viewSizeX,globalRendering->viewSizeY,1.0f);
+		glScalef(globalRendering->viewSizeX, globalRendering->viewSizeY, 1.0f);
 
 		minimap->DrawForReal(true);
 
@@ -1166,6 +1160,7 @@ int LuaOpenGL::DrawMiniMap(lua_State* L)
 	} else {
 		minimap->DrawForReal(false);
 	}
+
 	return 0;
 }
 
