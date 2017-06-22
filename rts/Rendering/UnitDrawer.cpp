@@ -486,16 +486,17 @@ void CUnitDrawer::DrawUnitIcons()
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_BLEND);
 	glEnable(GL_ALPHA_TEST);
-	glAlphaFunc(GL_GREATER, 0.5f);
+	glAlphaFunc(GL_GREATER, 0.05f);
 
-	if ((globalRendering->fsaaLevel >= 6) && GLEW_ARB_multisample)
+	// A2C effectiveness is limited below four samples
+	if (globalRendering->msaaLevel >= 4)
 		glEnable(GL_SAMPLE_ALPHA_TO_COVERAGE_ARB);
 
 	for (CUnit* u: iconUnits) {
-		DrawIcon(u, !gu->spectatingFullView &&
-			!(u->losStatus[gu->myAllyTeam] & LOS_INLOS) &&
-			(u->losStatus[gu->myAllyTeam] & (LOS_PREVLOS | LOS_CONTRADAR)) != (LOS_PREVLOS | LOS_CONTRADAR)
-		);
+		const unsigned short closBits = (u->losStatus[gu->myAllyTeam] & (LOS_INLOS                  ));
+		const unsigned short plosBits = (u->losStatus[gu->myAllyTeam] & (LOS_PREVLOS | LOS_CONTRADAR));
+
+		DrawIcon(u, !gu->spectatingFullView && closBits == 0 && plosBits != (LOS_PREVLOS | LOS_CONTRADAR));
 	}
 
 	glPopAttrib();

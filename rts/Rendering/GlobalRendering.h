@@ -144,11 +144,11 @@ public:
 	int forceSwapBuffers;
 
 	/**
-	 * @brief FSAA
+	 * @brief MSAA
 	 *
-	 * Level of full-screen anti-aliasing
+	 * Level of multisample anti-aliasing
 	 */
-	int fsaaLevel;
+	int msaaLevel;
 
 	/**
 	 * @brief maxTextureSize

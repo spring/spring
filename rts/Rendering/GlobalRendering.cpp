@@ -31,7 +31,8 @@ CONFIG(bool, DebugGLStacktraces).defaultValue(false).description("Create a stack
 
 CONFIG(int, GLContextMajorVersion).defaultValue(4).minimumValue(4).maximumValue(4);
 CONFIG(int, GLContextMinorVersion).defaultValue(1).minimumValue(0).maximumValue(5);
-CONFIG(int, FSAALevel).defaultValue(0).minimumValue(0).maximumValue(32).description("If >0 enables FullScreen AntiAliasing.");
+CONFIG(int, FSAALevel).defaultValue(0).minimumValue(0).maximumValue(32).description("Deprecated, set MSAALevel instead.");
+CONFIG(int, MSAALevel).defaultValue(0).minimumValue(0).maximumValue(32).description("Enables multisample anti-aliasing; 'level' is the number of samples used.");
 
 CONFIG(int, ForceDisableShaders).defaultValue(0).minimumValue(0).maximumValue(1);
 CONFIG(int, ForceCoreContext).defaultValue(0).minimumValue(0).maximumValue(1);
@@ -103,7 +104,7 @@ CR_REG_METADATA(CGlobalRendering, (
 	CR_IGNORED(forceCoreContext),
 	CR_IGNORED(forceSwapBuffers),
 
-	CR_IGNORED(fsaaLevel),
+	CR_IGNORED(msaaLevel),
 	CR_IGNORED(maxTextureSize),
 	CR_IGNORED(gpuMemorySize),
 	CR_IGNORED(maxTexAnisoLvl),
@@ -178,7 +179,8 @@ CGlobalRendering::CGlobalRendering()
 	, forceCoreContext(configHandler->GetInt("ForceCoreContext"))
 	, forceSwapBuffers(configHandler->GetInt("ForceSwapBuffers"))
 
-	, fsaaLevel(configHandler->GetInt("FSAALevel"))
+	// fallback
+	, msaaLevel(std::max(configHandler->GetInt("MSAALevel"), configHandler->GetInt("FSAALevel")))
 	, maxTextureSize(2048)
 	, gpuMemorySize(0)
 	, maxTexAnisoLvl(0.0f)
@@ -238,7 +240,7 @@ CGlobalRendering::~CGlobalRendering()
 
 bool CGlobalRendering::CreateSDLWindow(const int2& winRes, const int2& minRes, const char* title)
 {
-	const int aaLvls[] = {fsaaLevel, fsaaLevel / 2, fsaaLevel / 4, fsaaLevel / 8, fsaaLevel / 16, fsaaLevel / 32, 0};
+	const int aaLvls[] = {msaaLevel, msaaLevel / 2, msaaLevel / 4, msaaLevel / 8, msaaLevel / 16, msaaLevel / 32, 0};
 	const int zbBits[] = {24, 32, 16};
 
 	uint32_t sdlFlags = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE;
@@ -389,11 +391,11 @@ bool CGlobalRendering::CreateWindowAndContext(const char* title, bool minimized)
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, minCtx.y);
 
 
-	if (fsaaLevel > 0) {
+	if (msaaLevel > 0) {
 		if (softGL != nullptr)
-			LOG_L(L_WARNING, "FSAALevel > 0 and LIBGL_ALWAYS_SOFTWARE set, this will very likely crash!");
+			LOG_L(L_WARNING, "MSAALevel > 0 and LIBGL_ALWAYS_SOFTWARE set, this will very likely crash!");
 
-		make_even_number(fsaaLevel);
+		make_even_number(msaaLevel);
 	}
 
 	if (!CreateSDLWindow(winRes, minRes, title))
@@ -914,7 +916,8 @@ void CGlobalRendering::InitGLState()
 	glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE);
 	#endif
 
-	if (CheckGLMultiSampling()) {
+	// MSAA rasterization
+	if ((msaaLevel *= CheckGLMultiSampling()) != 0) {
 		glEnable(GL_MULTISAMPLE);
 	} else {
 		glDisable(GL_MULTISAMPLE);
@@ -943,7 +946,7 @@ void CGlobalRendering::InitGLState()
  */
 bool CGlobalRendering::CheckGLMultiSampling() const
 {
-	if (fsaaLevel == 0)
+	if (msaaLevel == 0)
 		return false;
 	if (!GLEW_ARB_multisample)
 		return false;
