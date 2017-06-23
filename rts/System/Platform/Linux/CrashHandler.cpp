@@ -359,6 +359,16 @@ static uintptr_t ExtractAddr(const StackFrame& frame)
 	return addr;
 }
 
+static bool ContainsDriverSo(const std::string& path)
+{
+	static std::vector<std::string> drivers({"libGLcore.so", "psb_dri.so", "i965_dri.so", "fglrx_dri.so", "amdgpu_dri.so", "libnvidia-glcore.so" });
+	for(const std::string& driver: drivers) {
+		if (path.find(driver) != std::string::npos)
+			return true;
+	}
+	return false;
+}
+
 /**
  * @brief TranslateStackTrace
  * @param stacktrace These are the lines and addresses produced by backtrace_symbols()
@@ -384,11 +394,10 @@ static void TranslateStackTrace(bool* aiCrash, StackTrace& stacktrace, const int
 		LOG_L(L_DEBUG, "symbol = \"%s\", path = \"%s\", absPath = \"%s\", addr = 0x%lx", it->symbol.c_str(), path.c_str(), absPath.c_str(), it->addr);
 
 		// check if there are known sources of fail on the stack
-		containsDriverSo = (containsDriverSo || (path.find("libGLcore.so") != std::string::npos));
-		containsDriverSo = (containsDriverSo || (path.find("psb_dri.so") != std::string::npos));
-		containsDriverSo = (containsDriverSo || (path.find("i965_dri.so") != std::string::npos));
-		containsDriverSo = (containsDriverSo || (path.find("fglrx_dri.so") != std::string::npos));
-		containsDriverSo = (containsDriverSo || (path.find("amdgpu_dri.so") != std::string::npos));
+		if (!containsDriverSo) {
+			containsDriverSo |= ContainsDriverSo(path);
+		}
+
 		if (!containsAIInterfaceSo && (absPath.find("Interfaces") != std::string::npos)) {
 			containsAIInterfaceSo = true;
 		}
