@@ -155,6 +155,10 @@ void CFactory::SlowUpdate(void)
 
 
 void CFactory::StartBuild(const UnitDef* buildeeDef) {
+	if (isDead) {
+		return;
+	}
+
 	const float3& buildPos = CalcBuildPos();
 	const bool blocked = groundBlockingObjectMap->GroundBlocked(buildPos, this);
 
