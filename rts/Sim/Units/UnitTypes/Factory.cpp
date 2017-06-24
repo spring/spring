@@ -52,15 +52,6 @@ CFactory::CFactory():
 {
 }
 
-CFactory::~CFactory() {
-	// there is a race condition that allows StartBuild to create a nanoframe
-	// after KillUnit has cleared curBuild. that nanoframe is destroyed here.
-	if (curBuild != nullptr) {
-		curBuild->KillUnit(nullptr, false, true);
-		curBuild = nullptr;
-	}
-}
-
 void CFactory::KillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed, bool showDeathSequence)
 {
 	if (curBuild != nullptr) {

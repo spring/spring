@@ -18,7 +18,6 @@ public:
 	CR_DECLARE(CFactory)
 
 	CFactory();
-	~CFactory();
 
 	void StartBuild(const UnitDef* buildeeDef);
 	void UpdateBuild(CUnit* buildee);
