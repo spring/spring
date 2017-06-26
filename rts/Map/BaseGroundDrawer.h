@@ -65,6 +65,9 @@ public:
 	float LODScaleRefraction;
 	float LODScaleTerrainReflection;
 
+	float spPolygonOffsetScale = -1.0f;
+	float spPolygonOffsetUnits = -1.0f;
+
 	int jamColor[3];
 	int losColor[3];
 	int radarColor[3];

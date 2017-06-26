@@ -8,7 +8,12 @@ uniform vec3 treeOffset;
 #define MAX_TREE_HEIGHT 60.0
 #endif
 
-varying vec4 vertexShadowClipPos;
+#ifdef SHADOWGEN_PROGRAM_MAP
+varying mat4 shadowViewMat;
+varying mat4 shadowProjMat;
+varying vec4 vertexModelPos;
+#endif
+
 
 void main() {
 	#ifdef SHADOWGEN_PROGRAM_TREE_NEAR
@@ -17,12 +22,19 @@ void main() {
 	vec3 offsetVec = vec3(0.0, 0.0, 0.0);
 	#endif
 
+
+	#ifdef SHADOWGEN_PROGRAM_MAP
+	shadowViewMat = gl_ModelViewMatrix;
+	shadowProjMat = gl_ProjectionMatrix;
+	vertexModelPos = gl_Vertex + vec4(offsetVec, 0.0);
+	#endif
+
 	vec4 vertexPos = gl_Vertex + vec4(offsetVec, 0.0);
 	vec4 vertexShadowPos = gl_ModelViewMatrix * vertexPos;
 		vertexShadowPos.xy *= (inversesqrt(abs(vertexShadowPos.xy) + shadowParams.zz) + shadowParams.ww);
 		vertexShadowPos.xy += shadowParams.xy;
 
-	gl_Position = vertexShadowClipPos = gl_ProjectionMatrix * vertexShadowPos;
+	gl_Position = gl_ProjectionMatrix * vertexShadowPos;
 
 
 	#ifdef SHADOWGEN_PROGRAM_MODEL

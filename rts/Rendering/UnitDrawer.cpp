@@ -93,6 +93,20 @@ static const void KillShadowTex(const CS3OTextureHandler::S3OTexMat*) {
 }
 
 
+static const void BindShadowTexAtlas(const CS3OTextureHandler::S3OTexMat*) {
+	glActiveTexture(GL_TEXTURE0);
+	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, texturehandler3DO->GetAtlasTex2ID());
+}
+
+static const void KillShadowTexAtlas(const CS3OTextureHandler::S3OTexMat*) {
+	glBindTexture(GL_TEXTURE_2D, 0);
+	glDisable(GL_TEXTURE_2D);
+	glActiveTexture(GL_TEXTURE0);
+}
+
+
+
 static const void PushRenderState3DO() {
 	BindOpaqueTexAtlas(nullptr);
 
@@ -140,7 +154,7 @@ static const BindTexFunc opaqueTexBindFuncs[MODELTYPE_OTHER] = {
 };
 
 static const BindTexFunc shadowTexBindFuncs[MODELTYPE_OTHER] = {
-	BindShadowTexDummy, // 3DO (no-op)
+	BindShadowTexAtlas, // 3DO
 	BindShadowTex,      // S3O
 	BindShadowTex,      // OBJ
 	BindShadowTex,      // ASS
@@ -152,7 +166,7 @@ static const BindTexFunc* bindModelTexFuncs[] = {
 };
 
 static const KillTexFunc shadowTexKillFuncs[MODELTYPE_OTHER] = {
-	KillShadowTexDummy, // 3DO (no-op)
+	KillShadowTexAtlas, // 3DO
 	KillShadowTex,      // S3O
 	KillShadowTex,      // OBJ
 	KillShadowTex,      // ASS
@@ -377,14 +391,12 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 
 	// first do the deferred pass; conditional because
 	// most of the water renderers use their own FBO's
-	if (drawDeferred && !drawReflection && !drawRefraction) {
+	if (drawDeferred && !drawReflection && !drawRefraction)
 		LuaObjectDrawer::DrawDeferredPass(LUAOBJ_UNIT);
-	}
 
 	// now do the regular forward pass
-	if (drawForward) {
+	if (drawForward)
 		DrawOpaquePass(false, drawReflection, drawRefraction);
-	}
 
 	farTextureHandler->Draw();
 
@@ -417,10 +429,13 @@ void CUnitDrawer::DrawOpaqueUnits(int modelType, bool drawReflection, bool drawR
 {
 	const auto& unitBin = opaqueModelRenderers[modelType]->GetUnitBin();
 
-	for (auto unitBinIt = unitBin.cbegin(); unitBinIt != unitBin.cend(); ++unitBinIt) {
-		BindModelTypeTexture(modelType, unitBinIt->first);
+	for (const auto& unitBinPair: unitBin) {
+		const auto& unitSet = unitBinPair.second;
+		const int textureType = unitBinPair.first;
 
-		for (CUnit* unit: unitBinIt->second) {
+		BindModelTypeTexture(modelType, textureType);
+
+		for (CUnit* unit: unitSet) {
 			DrawOpaqueUnit(unit, drawReflection, drawRefraction);
 		}
 	}
@@ -573,12 +588,13 @@ void CUnitDrawer::DrawOpaqueUnitShadow(CUnit* unit) {
 void CUnitDrawer::DrawOpaqueUnitsShadow(int modelType) {
 	const auto& unitBin = opaqueModelRenderers[modelType]->GetUnitBin();
 
-	for (const auto& unitBinP: unitBin) {
-		const auto& unitSet = unitBinP.second;
-		const int textureType = unitBinP.first;
+	for (const auto& unitBinPair: unitBin) {
+		const auto& unitSet = unitBinPair.second;
+		const int textureType = unitBinPair.first;
 
-		BindModelTypeTexture(modelType, textureType);
-		// shadowTexBindFuncs[modelType](texturehandlerS3O->GetTexture(textureType));
+		// only need to bind the atlas once for 3DO's, but KISS
+		assert((modelType == MODELTYPE_3DO) == (textureType == -1));
+		shadowTexBindFuncs[modelType](texturehandlerS3O->GetTexture(textureType));
 
 		for (const auto& unitSetP: unitSet) {
 			DrawOpaqueUnitShadow(unitSetP);

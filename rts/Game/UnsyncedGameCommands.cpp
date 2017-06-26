@@ -314,6 +314,24 @@ public:
 	}
 };
 
+class MapShadowPolyOffsetActionExecutor: public IUnsyncedActionExecutor {
+public:
+	MapShadowPolyOffsetActionExecutor(): IUnsyncedActionExecutor("MapShadowPolyOffset", "") {}
+
+	bool Execute(const UnsyncedAction& action) const {
+		std::istringstream buf(action.GetArgs() + " 0.0 0.0");
+
+		float& pofs = (readMap->GetGroundDrawer())->spPolygonOffsetScale;
+		float& pofu = (readMap->GetGroundDrawer())->spPolygonOffsetUnits;
+
+		buf >> pofs;
+		buf >> pofu;
+
+		LOG("MapShadowPolygonOffset{Scale,Units}={%f,%f}", pofs, pofu);
+		return true;
+	}
+};
+
 
 
 class WaterActionExecutor : public IUnsyncedActionExecutor {
@@ -3056,6 +3074,7 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new SelectCycleActionExecutor());
 	AddActionExecutor(new DeselectActionExecutor());
 	AddActionExecutor(new ShadowsActionExecutor());
+	AddActionExecutor(new MapShadowPolyOffsetActionExecutor());
 	AddActionExecutor(new MapMeshDrawerActionExecutor());
 	AddActionExecutor(new MapBorderActionExecutor());
 	AddActionExecutor(new WaterActionExecutor());

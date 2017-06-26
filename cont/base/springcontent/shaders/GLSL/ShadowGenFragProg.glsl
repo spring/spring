@@ -1,12 +1,25 @@
 uniform sampler2D alphaMaskTex;
 
-varying vec4 vertexShadowClipPos;
+uniform vec4 shadowParams;
+uniform vec2 alphaParams;
+
+varying mat4 shadowViewMat;
+varying mat4 shadowProjMat;
+varying vec4 vertexModelPos;
+
 
 void main() {
-	if (texture2D(alphaMaskTex, gl_TexCoord[0].st).a <= 0.5)
+	if (texture2D(alphaMaskTex, gl_TexCoord[0].st).a <= alphaParams.x)
 		discard;
 
-	#if 0
+	#if 1
+	// note: voids the glPolygonOffset calls
+	vec4 vertexShadowPos = shadowViewMat * vertexModelPos;
+		vertexShadowPos.xy *= (inversesqrt(abs(vertexShadowPos.xy) + shadowParams.zz) + shadowParams.ww);
+		vertexShadowPos.xy += shadowParams.xy;
+		vertexShadowPos.z  += 0.00250;
+	vec4 vertexShadowClipPos = shadowProjMat * vertexShadowPos;
+
 	float  nearDepth = gl_DepthRange.near;
 	float   farDepth = gl_DepthRange.far;
 	float depthRange = gl_DepthRange.diff; // far - near

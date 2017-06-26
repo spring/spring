@@ -427,9 +427,8 @@ void CSMFGroundDrawer::DrawBorder(const DrawPass::e drawPass)
 
 	glEnable(GL_BLEND);
 
-		if (wireframe) {
+		if (wireframe)
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-		}
 
 		/*
 		if (mapRendering->voidWater && (drawPass != DrawPass::WaterReflection)) {
@@ -446,9 +445,8 @@ void CSMFGroundDrawer::DrawBorder(const DrawPass::e drawPass)
 		}
 		*/
 
-		if (wireframe) {
+		if (wireframe)
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-		}
 
 	glDisable(GL_BLEND);
 
@@ -477,10 +475,12 @@ void CSMFGroundDrawer::DrawShadowPass()
 	Shader::IProgramObject* po = shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MAP);
 
 	glEnable(GL_POLYGON_OFFSET_FILL);
+	glPolygonOffset(spPolygonOffsetScale, spPolygonOffsetUnits); // dz*s + r*u
 
-	glPolygonOffset(-1.0f, -1.0f);
+		// also render the border geometry to prevent light-visible backfaces
 		po->Enable();
 			meshDrawer->DrawMesh(DrawPass::Shadow);
+			meshDrawer->DrawBorderMesh(DrawPass::Shadow);
 		po->Disable();
 
 	glDisable(GL_POLYGON_OFFSET_FILL);

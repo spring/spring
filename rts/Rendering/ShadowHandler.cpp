@@ -211,19 +211,24 @@ void CShadowHandler::LoadShadowGenShaderProgs()
 	if (globalRendering->haveGLSL) {
 		for (int i = 0; i < SHADOWGEN_PROGRAM_LAST; i++) {
 			Shader::IProgramObject* po = sh->CreateProgramObject("[ShadowHandler]", shadowGenProgHandles[i] + "GLSL", false);
-			Shader::IShaderObject* vso = sh->CreateShaderObject("GLSL/ShadowGenVertProg.glsl", shadowGenProgDefines[i] + extraDef, GL_VERTEX_SHADER);
-			// Shader::IShaderObject* fso = sh->CreateShaderObject("GLSL/ShadowGenFragProg.glsl", shadowGenProgDefines[i] + extraDef, GL_FRAGMENT_SHADER);
 
-			po->AttachShaderObject(vso);
-			// po->AttachShaderObject(fso);
+			if (i == SHADOWGEN_PROGRAM_MAP) {
+				po->AttachShaderObject(sh->CreateShaderObject("GLSL/ShadowGenVertProg.glsl", shadowGenProgDefines[i] + extraDef, GL_VERTEX_SHADER));
+				po->AttachShaderObject(sh->CreateShaderObject("GLSL/ShadowGenFragProg.glsl", shadowGenProgDefines[i] + extraDef, GL_FRAGMENT_SHADER));
+			} else {
+				po->AttachShaderObject(sh->CreateShaderObject("GLSL/ShadowGenVertProg.glsl", shadowGenProgDefines[i] + extraDef, GL_VERTEX_SHADER));
+			}
+
 			po->Link();
 			po->SetUniformLocation("shadowParams");  // idx 0
 			po->SetUniformLocation("cameraDirX");    // idx 1, used by SHADOWGEN_PROGRAM_TREE_NEAR
 			po->SetUniformLocation("cameraDirY");    // idx 2, used by SHADOWGEN_PROGRAM_TREE_NEAR
 			po->SetUniformLocation("treeOffset");    // idx 3, used by SHADOWGEN_PROGRAM_TREE_NEAR
 			po->SetUniformLocation("alphaMaskTex");  // idx 4
+			po->SetUniformLocation("alphaParams");   // idx 5, used by SHADOWGEN_PROGRAM_MAP
 			po->Enable();
 			po->SetUniform1i(4, 0); // alphaMaskTex
+			po->SetUniform2f(5, mapInfo->map.voidAlphaMin, 0.0f); // alphaParams
 			po->Disable();
 			po->Validate();
 
@@ -356,8 +361,8 @@ void CShadowHandler::DrawShadowPasses()
 
 	glPushAttrib(GL_POLYGON_BIT | GL_ENABLE_BIT);
 		glEnable(GL_CULL_FACE);
-
 		glCullFace(GL_BACK);
+
 			eventHandler.DrawWorldShadow();
 
 			if ((shadowGenBits & SHADOWGEN_BIT_TREE) != 0) {
@@ -373,14 +378,19 @@ void CShadowHandler::DrawShadowPasses()
 				featureDrawer->DrawShadowPass();
 			}
 
-		glCullFace(GL_FRONT);
-			// cull front-faces during the terrain shadow pass: sun direction
-			// can be set so oblique that geometry back-faces are visible (eg.
-			// from hills near map edges) from its POV
-			// (could just disable culling of terrain faces, but we also want
-			// to prevent overdraw in such low-angle passes)
+		// cull front-faces during the terrain shadow pass: sun direction
+		// can be set so oblique that geometry back-faces are visible (eg.
+		// from hills near map edges) from its POV
+		//
+		// not the best idea, causes acne when projecting the shadow-map
+		// (rasterizing back-faces writes different depth values) and is
+		// no longer required since border geometry will fully hide them
+		// (could just disable culling of terrain faces entirely, but we
+		// also want to prevent overdraw in low-angle passes)
+		// glCullFace(GL_FRONT);
 			if ((shadowGenBits & SHADOWGEN_BIT_MAP) != 0)
 				readMap->GetGroundDrawer()->DrawShadowPass();
+
 	glPopAttrib();
 
 	inShadowPass = false;
