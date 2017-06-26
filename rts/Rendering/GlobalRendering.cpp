@@ -29,8 +29,8 @@
 CONFIG(bool, DebugGL).defaultValue(false).description("Enables GL debug-context and output. (see GL_ARB_debug_output)");
 CONFIG(bool, DebugGLStacktraces).defaultValue(false).description("Create a stacktrace when an OpenGL error occurs");
 
-CONFIG(int, GLContextMajorVersion).defaultValue(3).minimumValue(3).maximumValue(4);
-CONFIG(int, GLContextMinorVersion).defaultValue(0).minimumValue(0).maximumValue(5);
+CONFIG(int, GLContextMajorVersion).defaultValue(4).minimumValue(4).maximumValue(4);
+CONFIG(int, GLContextMinorVersion).defaultValue(1).minimumValue(0).maximumValue(5);
 CONFIG(int, FSAALevel).defaultValue(0).minimumValue(0).maximumValue(32).description("Deprecated, set MSAALevel instead.");
 CONFIG(int, MSAALevel).defaultValue(0).minimumValue(0).maximumValue(32).description("Enables multisample anti-aliasing; 'level' is the number of samples used.");
 
