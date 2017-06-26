@@ -10,7 +10,7 @@ varying vec4 vertexModelPos;
 
 void main() {
 	#if 0
-	// TODO: bind this
+	// TODO: bind this (as for models)
 	if (texture2D(alphaMaskTex, gl_TexCoord[0].st).a <= alphaParams.x)
 		discard;
 	#endif
@@ -28,8 +28,13 @@ void main() {
 	float depthRange = gl_DepthRange.diff; // far - near
 	float  clipDepth = vertexShadowClipPos.z / vertexShadowClipPos.w;
 
+	#if (SUPPORT_CLIP_CONTROL == 1)
+	// shadow PM is pre-adjusted
+	gl_FragDepth = ((depthRange * clipDepth) + nearDepth;
+	#else
 	// useful to keep around
 	gl_FragDepth = ((depthRange * clipDepth) + nearDepth + farDepth) * 0.5;
+	#endif
 
 	#else
 

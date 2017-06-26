@@ -17,13 +17,13 @@
 #include "Rendering/Env/ITreeDrawer.h"
 #include "Rendering/GL/FBO.h"
 #include "Rendering/GL/myGL.h"
-#include "Rendering/GL/VertexArray.h"
 #include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/Shaders/Shader.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
 #include "System/Matrix44f.h"
 #include "System/myMath.h"
+#include "System/StringUtil.h"
 #include "System/Log/ILog.h"
 
 #define SHADOWMATRIX_NONLINEAR 0
@@ -201,22 +201,19 @@ void CShadowHandler::LoadShadowGenShaderProgs()
 		"#define SHADOWGEN_PROGRAM_PROJECTILE\n",
 	};
 
-	static const std::string extraDef =
-	#if (SHADOWMATRIX_NONLINEAR == 1)
-		"#define SHADOWMATRIX_NONLINEAR 0\n";
-	#else
-		"#define SHADOWMATRIX_NONLINEAR 1\n";
-	#endif
+	static const std::string extraDefs =
+		("#define SHADOWMATRIX_NONLINEAR " + IntToString(SHADOWMATRIX_NONLINEAR) + "\n") +
+		("#define SUPPORT_CLIP_CONTROL " + IntToString(globalRendering->supportClipControl) + "\n");
 
 	if (globalRendering->haveGLSL) {
 		for (int i = 0; i < SHADOWGEN_PROGRAM_LAST; i++) {
 			Shader::IProgramObject* po = sh->CreateProgramObject("[ShadowHandler]", shadowGenProgHandles[i] + "GLSL", false);
 
 			if (i == SHADOWGEN_PROGRAM_MAP) {
-				po->AttachShaderObject(sh->CreateShaderObject("GLSL/ShadowGenVertProg.glsl", shadowGenProgDefines[i] + extraDef, GL_VERTEX_SHADER));
-				po->AttachShaderObject(sh->CreateShaderObject("GLSL/ShadowGenFragProg.glsl", shadowGenProgDefines[i] + extraDef, GL_FRAGMENT_SHADER));
+				po->AttachShaderObject(sh->CreateShaderObject("GLSL/ShadowGenVertProg.glsl", shadowGenProgDefines[i] + extraDefs, GL_VERTEX_SHADER));
+				po->AttachShaderObject(sh->CreateShaderObject("GLSL/ShadowGenFragProg.glsl", shadowGenProgDefines[i] + extraDefs, GL_FRAGMENT_SHADER));
 			} else {
-				po->AttachShaderObject(sh->CreateShaderObject("GLSL/ShadowGenVertProg.glsl", shadowGenProgDefines[i] + extraDef, GL_VERTEX_SHADER));
+				po->AttachShaderObject(sh->CreateShaderObject("GLSL/ShadowGenVertProg.glsl", shadowGenProgDefines[i] + extraDefs, GL_VERTEX_SHADER));
 			}
 
 			po->Link();
