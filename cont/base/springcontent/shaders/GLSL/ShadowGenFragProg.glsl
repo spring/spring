@@ -9,11 +9,14 @@ varying vec4 vertexModelPos;
 
 
 void main() {
+	#if 0
+	// TODO: bind this
 	if (texture2D(alphaMaskTex, gl_TexCoord[0].st).a <= alphaParams.x)
 		discard;
+	#endif
 
 	#if 1
-	// note: voids the glPolygonOffset calls
+	// note: voids glPolygonOffset calls
 	vec4 vertexShadowPos = shadowViewMat * vertexModelPos;
 		vertexShadowPos.xy *= (inversesqrt(abs(vertexShadowPos.xy) + shadowParams.zz) + shadowParams.ww);
 		vertexShadowPos.xy += shadowParams.xy;
