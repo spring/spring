@@ -15,14 +15,14 @@ struct CollisionQuery;
 
 namespace Collision {
 	enum {
-		NOENEMIES    = 1,
-		NOFRIENDLIES = 2,
-		NOFEATURES   = 4,
-		NONEUTRALS   = 8,
-		NOGROUND     = 16,
-		NOCLOAKED    = 32,
-		BOOLEAN      = 64, // skip further tests after the first collision (unused)
-		NOUNITS = NOENEMIES | NOFRIENDLIES | NONEUTRALS
+		NOENEMIES    = 1 << 0,
+		NOFRIENDLIES = 1 << 1,
+		NOFEATURES   = 1 << 2,
+		NONEUTRALS   = 1 << 3,
+		NOGROUND     = 1 << 4,
+		NOCLOAKED    = 1 << 5,
+		NONOTINLOS   = 1 << 6,
+		NOUNITS      = NOENEMIES | NOFRIENDLIES | NONEUTRALS
 	};
 }
 
@@ -32,16 +32,26 @@ namespace TraceRay {
 		float dist;
 	};
 
-	// TODO: extend with allyTeam param s.t. we can add Collision::NO{LOS,RADAR}, etc.
 	float TraceRay(
-		const float3& start,
+		const float3& pos,
 		const float3& dir,
-		float length,
+		float traceLength,
 		int avoidFlags,
 		const CUnit* owner,
 		CUnit*& hitUnit,
 		CFeature*& hitFeature,
-		CollisionQuery* hitColQuery = 0x0
+		CollisionQuery* hitColQuery = nullptr
+	);
+	float TraceRay(
+		const float3& pos,
+		const float3& dir,
+		float traceLength,
+		int avoidFlags,
+		int allyTeam,
+		const CUnit* owner,
+		CUnit*& hitUnit,
+		CFeature*& hitFeature,
+		CollisionQuery* hitColQuery
 	);
 
 	void TraceRayShields(

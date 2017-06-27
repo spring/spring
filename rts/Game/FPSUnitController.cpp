@@ -41,43 +41,43 @@ FPSUnitController::FPSUnitController()
 
 
 void FPSUnitController::Update() {
-	const int piece = controllee->script->AimFromWeapon(0);
-	const float3 relPos = controllee->script->GetPiecePos(piece);
-	const float3 pos = controllee->GetObjectSpacePos(relPos) + (UpVector * 7.0f);
+	const float3 relPos = controllee->script->GetPiecePos(controllee->script->AimFromWeapon(0));
+	const float3 absPos = controllee->GetObjectSpacePos(relPos) + (UpVector * 7.0f);
 
-	oldDCpos = pos;
+	oldDCpos = absPos;
 
-	CUnit* hitUnit;
-	CFeature* hitFeature;
+	CUnit* hitUnit = nullptr;
+	CFeature* hitFeature = nullptr;
 
 	// SYNCED, do NOT use GuiTraceRay which also checks gu->spectatingFullView
-	float hitDist = TraceRay::TraceRay(pos, viewDir, controllee->maxRange, Collision::NOCLOAKED, controllee, hitUnit, hitFeature);
+	float hitDist = TraceRay::TraceRay(absPos, viewDir, controllee->maxRange, Collision::NONOTINLOS, controllee, hitUnit, hitFeature);
 
-	if (hitUnit != NULL) {
+	if (hitUnit != nullptr) {
 		targetUnit = hitUnit;
 		targetDist = hitDist;
 		targetPos  = hitUnit->pos;
 
-		if (!mouse2) {
+		if (!mouse2)
 			controllee->AttackUnit(hitUnit, true, true, true);
-		}
-	} else {
-		hitDist = std::min(hitDist, controllee->maxRange * 0.95f);
 
-		targetUnit = NULL;
-		targetDist = hitDist;
-		targetPos  = pos + viewDir * targetDist;
-
-		if (!mouse2) {
-			// if a target position is in range, but not on the ground,
-			// projectiles can gain extra flighttime and travel further
-			//
-			// NOTE: CWeapon::AttackGround checks range via TryTarget
-			if ((targetPos.y - CGround::GetHeightReal(targetPos.x, targetPos.z)) <= SQUARE_SIZE) {
-				controllee->AttackGround(targetPos, true, true, true);
-			}
-		}
+		return;
 	}
+
+	targetUnit = nullptr;
+	targetDist = (hitDist = std::min(hitDist, controllee->maxRange * 0.95f));
+	targetPos  = absPos + viewDir * targetDist;
+
+	if (mouse2)
+		return;
+
+	// if a target position is in range, but not on the ground,
+	// projectiles can gain extra flighttime and travel further
+	//
+	// NOTE: CWeapon::AttackGround checks range via TryTarget
+	if ((targetPos.y - CGround::GetHeightReal(targetPos.x, targetPos.z)) > SQUARE_SIZE)
+		return;
+
+	controllee->AttackGround(targetPos, true, true, true);
 }
 
 
@@ -91,9 +91,8 @@ void FPSUnitController::RecvStateUpdate(const unsigned char* buf) {
 
 	const bool newMouse2 = !!(buf[2] & (1 << 5));
 
-	if (!mouse2 && newMouse2 && controllee != NULL) {
-		controllee->AttackUnit(NULL, true, true, true);
-	}
+	if (!mouse2 && newMouse2 && controllee != nullptr)
+		controllee->AttackUnit(nullptr, true, true, true);
 
 	mouse2 = newMouse2;
 
@@ -118,7 +117,7 @@ void FPSUnitController::SendStateUpdate() {
 	state |= ((mouseButtons[SDL_BUTTON_LEFT ].pressed) * (1 << 4));
 	state |= ((mouseButtons[SDL_BUTTON_RIGHT].pressed) * (1 << 5));
 
-	shortint2 hp = GetHAndPFromVector(camera->GetDir());
+	const shortint2 hp = GetHAndPFromVector(camera->GetDir());
 
 	if (hp.x != oldHeading || hp.y != oldPitch || state != oldState) {
 		oldHeading = hp.x;
