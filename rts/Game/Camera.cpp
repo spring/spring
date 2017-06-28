@@ -8,8 +8,9 @@
 #include "System/myMath.h"
 #include "System/float3.h"
 #include "System/Matrix44f.h"
-#include "Rendering/GlobalRendering.h"
 #include "System/Config/ConfigHandler.h"
+#include "Rendering/GlobalRendering.h"
+#include "Rendering/GL/myGL.h"
 
 
 CONFIG(float, EdgeMoveWidth)
@@ -63,6 +64,11 @@ CCamera::CCamera(unsigned int cameraType)
 	memset(rotState, 0, sizeof(rotState));
 
 	SetVFOV(45.0f);
+
+	#ifdef GL_ARB_clip_control
+	clipControlMatrix.Translate(FwdVector * 0.5f);
+	clipControlMatrix.Scale(OnesVector - (FwdVector * 0.5f));
+	#endif
 }
 
 void CCamera::CopyState(const CCamera* cam)
@@ -153,16 +159,17 @@ void CCamera::UpdateFrustum()
 	frustumPlanes[FRUSTUM_PLANE_FRN] = -forward;
 	frustumPlanes[FRUSTUM_PLANE_BCK] =  forward;
 
-	if (camType != CAMTYPE_VISCUL) {
-		// vis-culling is always performed from player's (or light's)
-		// POV but also happens during e.g. cubemap generation; copy
-		// over the frustum planes we just calculated above such that
-		// GetFrustumSides can be called by all parties interested in
-		// VC
-		//
-		// note that this is the only place where VISCUL is updated!
-		cameras[CAMTYPE_VISCUL].CopyState(&cameras[camType]);
-	}
+	if (camType == CAMTYPE_VISCUL)
+		return;
+
+	// vis-culling is always performed from player's (or light's)
+	// POV but also happens during e.g. cubemap generation; copy
+	// over the frustum planes we just calculated above such that
+	// GetFrustumSides can be called by all parties interested in
+	// VC
+	//
+	// note that this is the only place where VISCUL is updated!
+	cameras[CAMTYPE_VISCUL].CopyState(&cameras[camType]);
 }
 
 void CCamera::UpdateMatrices(unsigned int vsx, unsigned int vsy, float var)
@@ -459,6 +466,8 @@ inline void CCamera::glFrustumSpring(
 	projectionMatrix[13] =   0.0f;
 	projectionMatrix[14] = -(2.0f * zf * zn) / (zf - zn);
 	projectionMatrix[15] =   0.0f;
+
+	projectionMatrix = clipControlMatrix * projectionMatrix;
 }
 
 // same as glOrtho(-1, 1, -1, 1, zn, zf) plus glScalef(sx, sy, 1)
@@ -507,6 +516,8 @@ inline void CCamera::glOrthoSpring(
 	projectionMatrix[13] = ty;
 	projectionMatrix[14] = tz;
 	projectionMatrix[15] = 1.0f;
+
+	projectionMatrix = clipControlMatrix * projectionMatrix;
 }
 
 inline void CCamera::gluLookAtSpring(const float3& eye, const float3& center, const float3& up)

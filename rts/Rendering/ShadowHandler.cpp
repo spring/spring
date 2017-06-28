@@ -85,35 +85,34 @@ void CShadowHandler::Init()
 	//   0: disable, but still check if the hardware is able to run them
 	// > 0: enabled (by default for all shadow-casting geometry if equal to 1)
 	if (shadowConfig < 0) {
-		LOG("[%s] shadow rendering is disabled (config-value %d)", __FUNCTION__, shadowConfig);
+		LOG("[%s] shadow rendering is disabled (config-value %d)", __func__, shadowConfig);
 		return;
 	}
 
 	if (shadowConfig > 0)
 		shadowGenBits = SHADOWGEN_BIT_MODEL | SHADOWGEN_BIT_MAP | SHADOWGEN_BIT_PROJ | SHADOWGEN_BIT_TREE;
 
-	if (shadowConfig > 1) {
+	if (shadowConfig > 1)
 		shadowGenBits &= (~shadowConfig);
-	}
 
 	// no warnings when running headless
 	if (SpringVersion::IsHeadless())
 		return;
 
 	if (!globalRendering->haveARB && !globalRendering->haveGLSL) {
-		LOG_L(L_WARNING, "[%s] GPU does not support either ARB or GLSL shaders for shadow rendering", __FUNCTION__);
+		LOG_L(L_WARNING, "[%s] GPU does not support either ARB or GLSL shaders for shadow rendering", __func__);
 		return;
 	}
 
 	if (!globalRendering->haveGLSL) {
 		if (!GLEW_ARB_shadow || !GLEW_ARB_depth_texture || !GLEW_ARB_texture_env_combine) {
-			LOG_L(L_WARNING, "[%s] required OpenGL ARB-extensions missing for shadow rendering", __FUNCTION__);
+			LOG_L(L_WARNING, "[%s] required OpenGL ARB-extensions missing for shadow rendering", __func__);
 			// NOTE: these should only be relevant for FFP shadows
 			// return;
 		}
 		if (!GLEW_ARB_shadow_ambient) {
 			// can't use arbitrary texvals in case the depth comparison op fails (only 0)
-			LOG_L(L_WARNING, "[%s] \"ARB_shadow_ambient\" extension missing (will probably make shadows darker than they should be)", __FUNCTION__);
+			LOG_L(L_WARNING, "[%s] \"ARB_shadow_ambient\" extension missing (will probably make shadows darker than they should be)", __func__);
 		}
 	}
 
@@ -122,13 +121,12 @@ void CShadowHandler::Init()
 		// free any resources allocated by InitDepthTarget()
 		FreeTextures();
 
-		LOG_L(L_ERROR, "[%s] failed to initialize depth-texture FBO", __FUNCTION__);
+		LOG_L(L_ERROR, "[%s] failed to initialize depth-texture FBO", __func__);
 		return;
 	}
 
-	if (tmpFirstInit) {
+	if (tmpFirstInit)
 		shadowsSupported = true;
-	}
 
 	if (shadowConfig == 0) {
 		// free any resources allocated by InitDepthTarget()
@@ -138,27 +136,15 @@ void CShadowHandler::Init()
 		return;
 	}
 
-	// same as glOrtho(-1, 1,  -1, 1,  -1, 1); just inverts Z
-	// projMatrix[SHADOWMAT_TYPE_DRAWING].LoadIdentity();
-	// projMatrix[SHADOWMAT_TYPE_DRAWING].SetZ(-FwdVector);
-
-	// same as glOrtho(0, 1,  0, 1,  0, -1); maps [0,1] to [-1,1]
-	projMatrix[SHADOWMAT_TYPE_DRAWING].LoadIdentity();
-	#ifdef GL_ARB_clip_control
-	projMatrix[SHADOWMAT_TYPE_DRAWING].Translate(FwdVector * 0.5f);
-	projMatrix[SHADOWMAT_TYPE_DRAWING].Scale(OnesVector - (FwdVector * 0.5f));
-	#endif
-	projMatrix[SHADOWMAT_TYPE_DRAWING].Translate(-OnesVector);
-	projMatrix[SHADOWMAT_TYPE_DRAWING].Scale(OnesVector * 2.0f);
-
-	LoadShadowGenShaderProgs();
+	LoadProjectionMatrix(CCamera::GetCamera(CCamera::CAMTYPE_SHADOW));
+	LoadShadowGenShaders();
 }
 
 void CShadowHandler::Kill()
 {
 	FreeTextures();
 	shaderHandler->ReleaseProgramObjects("[ShadowHandler]");
-	shadowGenProgs.clear();
+	shadowGenProgs.fill(nullptr);
 }
 
 void CShadowHandler::FreeTextures() {
@@ -174,11 +160,26 @@ void CShadowHandler::FreeTextures() {
 
 
 
-void CShadowHandler::LoadShadowGenShaderProgs()
+void CShadowHandler::LoadProjectionMatrix(const CCamera* shadowCam)
+{
+	const CMatrix44f& ccm = shadowCam->GetClipControlMatrix();
+	      CMatrix44f& spm = projMatrix[SHADOWMAT_TYPE_DRAWING];
+
+	// same as glOrtho(-1, 1,  -1, 1,  -1, 1); just inverts Z
+	// spm.LoadIdentity();
+	// spm.SetZ(-FwdVector);
+
+	// same as glOrtho(0, 1,  0, 1,  0, -1); maps [0,1] to [-1,1]
+	spm.Translate(-OnesVector);
+	spm.Scale(OnesVector * 2.0f);
+
+	// if using ZTO clip-space, cancel out the above remap for Z
+	spm = ccm * spm;
+}
+
+void CShadowHandler::LoadShadowGenShaders()
 {
 	#define sh shaderHandler
-	shadowGenProgs.resize(SHADOWGEN_PROGRAM_LAST);
-
 	static const std::string shadowGenProgNames[SHADOWGEN_PROGRAM_LAST] = {
 		"ARB/unit_genshadow.vp",
 		"ARB/groundshadow.vp",
@@ -255,7 +256,7 @@ bool CShadowHandler::InitDepthTarget()
 	// it turns the shadow render buffer in a buffer with color
 	bool useColorTexture = false;
 	if (!fb.IsValid()) {
-		LOG_L(L_ERROR, "[%s] framebuffer not valid", __FUNCTION__);
+		LOG_L(L_ERROR, "[%s] framebuffer not valid", __func__);
 		return false;
 	}
 
@@ -263,7 +264,7 @@ bool CShadowHandler::InitDepthTarget()
 
 	glGenTextures(1, &shadowTexture);
 	glBindTexture(GL_TEXTURE_2D, shadowTexture);
-	const float one[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+	constexpr float one[4] = {1.0f, 1.0f, 1.0f, 1.0f};
 	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, one);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
@@ -271,7 +272,7 @@ bool CShadowHandler::InitDepthTarget()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 	if (useColorTexture) {
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, shadowMapSize, shadowMapSize, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, shadowMapSize, shadowMapSize, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
 
 		fb.AttachTexture(shadowTexture);
 
@@ -279,7 +280,7 @@ bool CShadowHandler::InitDepthTarget()
 		glReadBuffer(GL_COLOR_ATTACHMENT0_EXT);
 	} else {
 		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32, shadowMapSize, shadowMapSize, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32, shadowMapSize, shadowMapSize, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
 
 		fb.AttachTexture(shadowTexture, GL_TEXTURE_2D, GL_DEPTH_ATTACHMENT_EXT);
 
@@ -315,7 +316,7 @@ bool CShadowHandler::WorkaroundUnsupportedFboRenderTargets()
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 		const GLint texFormat = globalRendering->support24bitDepthBuffers ? GL_DEPTH_COMPONENT24 : GL_DEPTH_COMPONENT16;
 		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);
-		glTexImage2D(GL_TEXTURE_2D, 0, texFormat, shadowMapSize, shadowMapSize, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+		glTexImage2D(GL_TEXTURE_2D, 0, texFormat, shadowMapSize, shadowMapSize, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
 		fb.AttachTexture(shadowTexture, GL_TEXTURE_2D, GL_DEPTH_ATTACHMENT_EXT);
 		status = fb.CheckStatus("SHADOW-GL_CLAMP_TO_EDGE");
 		if (status)
@@ -331,7 +332,7 @@ bool CShadowHandler::WorkaroundUnsupportedFboRenderTargets()
 		// 1st: try the smallest unsupported format (4bit per pixel)
 		glGenTextures(1, &dummyColorTexture);
 		glBindTexture(GL_TEXTURE_2D, dummyColorTexture);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA4, shadowMapSize, shadowMapSize, 0, GL_ALPHA, GL_UNSIGNED_BYTE, NULL);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA4, shadowMapSize, shadowMapSize, 0, GL_ALPHA, GL_UNSIGNED_BYTE, nullptr);
 		fb.AttachTexture(dummyColorTexture);
 		status = fb.CheckStatus("SHADOW-GL_ALPHA4");
 		if (status)
