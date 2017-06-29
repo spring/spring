@@ -28,7 +28,7 @@ public:
 	 *
 	 * Sets SDL video mode options/settings
 	 */
-	bool CreateWindowAndContext(const char* title, bool minimized);
+	bool CreateWindowAndContext(const char* title, bool hidden);
 	bool CreateSDLWindow(const int2& winRes, const int2& minRes, const char* title);
 	bool CreateGLContext(const int2& minCtx);
 	void DestroyWindowAndContext();

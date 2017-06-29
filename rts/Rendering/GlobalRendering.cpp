@@ -29,8 +29,8 @@
 CONFIG(bool, DebugGL).defaultValue(false).description("Enables GL debug-context and output. (see GL_ARB_debug_output)");
 CONFIG(bool, DebugGLStacktraces).defaultValue(false).description("Create a stacktrace when an OpenGL error occurs");
 
-CONFIG(int, GLContextMajorVersion).defaultValue(3).minimumValue(3).maximumValue(4);
-CONFIG(int, GLContextMinorVersion).defaultValue(0).minimumValue(0).maximumValue(5);
+CONFIG(int, GLContextMajorVersion).defaultValue(4).minimumValue(4).maximumValue(4);
+CONFIG(int, GLContextMinorVersion).defaultValue(1).minimumValue(0).maximumValue(5);
 CONFIG(int, FSAALevel).defaultValue(0).minimumValue(0).maximumValue(32).description("Deprecated, set MSAALevel instead.");
 CONFIG(int, MSAALevel).defaultValue(0).minimumValue(0).maximumValue(32).description("Enables multisample anti-aliasing; 'level' is the number of samples used.");
 
@@ -359,7 +359,7 @@ bool CGlobalRendering::CreateGLContext(const int2& minCtx)
 	return ((glContext = SDL_GL_CreateContext(window)) != nullptr);
 }
 
-bool CGlobalRendering::CreateWindowAndContext(const char* title, bool minimized)
+bool CGlobalRendering::CreateWindowAndContext(const char* title, bool hidden)
 {
 	if (SDL_Init(SDL_INIT_VIDEO) == -1) {
 		LOG_L(L_FATAL, "[GR::%s] error \"%s\" initializing SDL", __func__, SDL_GetError());
@@ -415,9 +415,14 @@ bool CGlobalRendering::CreateWindowAndContext(const char* title, bool minimized)
 	if (!CreateSDLWindow(winRes, minRes, title))
 		return false;
 
+	#if 0
 	// do not use SDL_HideWindow since that also removes the taskbar entry
 	if (minimized)
 		SDL_MinimizeWindow(window);
+	#else
+	if (hidden)
+		SDL_HideWindow(window);
+	#endif
 	// make extra sure the maximized-flag is set
 	else if (winRes == maxRes)
 		SDL_MaximizeWindow(window);

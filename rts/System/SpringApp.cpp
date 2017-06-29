@@ -115,7 +115,7 @@ CONFIG(std::string, DefaultStartScript).defaultValue("").description("filename o
 DEFINE_bool_EX  (sync_version,       "sync-version",       false, "Display program sync version (for online gaming)");
 DEFINE_bool     (fullscreen,                               false, "Run in fullscreen mode");
 DEFINE_bool     (window,                                   false, "Run in windowed mode");
-DEFINE_bool     (minimise,                                 false, "Start in background (minimised)");
+DEFINE_bool     (hidden,                                   false, "Start in background (minimised, no taskbar entry)");
 DEFINE_bool     (nocolor,                                  false, "Disables colorized stdout");
 DEFINE_string   (server,                                   "",    "Set listening IP for server");
 DEFINE_bool     (textureatlas,                             false, "Dump each finalized textureatlas in textureatlasN.tga");
@@ -296,7 +296,7 @@ bool SpringApp::InitWindow(const char* title)
 	Threading::SetThreadName("gpu-driver");
 
 	// raises an error-prompt in case of failure
-	if (!globalRendering->CreateWindowAndContext(title, FLAGS_minimise))
+	if (!globalRendering->CreateWindowAndContext(title, FLAGS_hidden))
 		return false;
 
 	// Something in SDL_SetVideoMode (OpenGL drivers?) messes with the FPU control word.
