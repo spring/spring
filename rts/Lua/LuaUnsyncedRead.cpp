@@ -1890,6 +1890,9 @@ int LuaUnsyncedRead::GetActivePage(lua_State* L)
 
 int LuaUnsyncedRead::GetMouseState(lua_State* L)
 {
+	if (mouse == nullptr)
+		return 0;
+
 	lua_pushnumber(L, mouse->lastx - globalRendering->viewPosX);
 	lua_pushnumber(L, globalRendering->viewSizeY - mouse->lasty - 1);
 
@@ -1903,6 +1906,9 @@ int LuaUnsyncedRead::GetMouseState(lua_State* L)
 
 int LuaUnsyncedRead::GetMouseCursor(lua_State* L)
 {
+	if (mouse == nullptr)
+		return 0;
+
 	lua_pushsstring(L, mouse->GetCurrentCursor());
 	lua_pushnumber(L, mouse->GetCurrentCursorScale());
 	return 2;
