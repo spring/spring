@@ -30,7 +30,7 @@ void main() {
 
 	#if (SUPPORT_CLIP_CONTROL == 1)
 	// shadow PM is pre-adjusted
-	gl_FragDepth = ((depthRange * clipDepth) + nearDepth;
+	gl_FragDepth = (depthRange * clipDepth) + nearDepth;
 	#else
 	// useful to keep around
 	gl_FragDepth = ((depthRange * clipDepth) + nearDepth + farDepth) * 0.5;
@@ -42,4 +42,3 @@ void main() {
 	gl_FragDepth = gl_FragCoord.z;
 	#endif
 }
-
