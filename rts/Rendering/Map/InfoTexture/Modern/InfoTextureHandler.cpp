@@ -77,17 +77,18 @@ void CInfoTextureHandler::DisableCurrentMode()
 {
 	if (returnToLOS && (GetMode() != "los")) {
 		// return to LOS-mode if it was active before
-		infoTex->SwitchMode("los");
+		SetMode("los");
 	} else {
-		returnToLOS = false;
-		infoTex->SwitchMode("");
+		// otherwise disable overlay entirely
+		SetMode("");
 	}
 }
 
 
 void CInfoTextureHandler::SetMode(const std::string& name)
 {
-	returnToLOS |= (name == "los");
+	returnToLOS &= (name !=      "");
+	returnToLOS |= (name ==   "los");
 	inMetalMode  = (name == "metal");
 
 	infoTex->SwitchMode(name);
