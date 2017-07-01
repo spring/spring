@@ -303,11 +303,12 @@ WeaponDef::WeaponDef(const LuaTable& wdTable, const std::string& name_, int id_)
 
 	//FIXME may be smarter to merge the collideXYZ tags with avoidXYZ and removing the collisionFlags tag (and move the code into CWeapon)?
 	collisionFlags = 0;
-	collisionFlags |= (Collision::NOENEMIES    * (!wdTable.GetBool("collideEnemy",    true)));
-	collisionFlags |= (Collision::NOFRIENDLIES * (!wdTable.GetBool("collideFriendly", true)));
-	collisionFlags |= (Collision::NOFEATURES   * (!wdTable.GetBool("collideFeature",  true)));
-	collisionFlags |= (Collision::NONEUTRALS   * (!wdTable.GetBool("collideNeutral",  true)));
-	collisionFlags |= (Collision::NOGROUND     * (!wdTable.GetBool("collideGround",   true)));
+	collisionFlags |= (Collision::NOENEMIES    * (!wdTable.GetBool("collideEnemy",     true)));
+	collisionFlags |= (Collision::NOFRIENDLIES * (!wdTable.GetBool("collideFriendly",  true)));
+	collisionFlags |= (Collision::NOFEATURES   * (!wdTable.GetBool("collideFeature",   true)));
+	collisionFlags |= (Collision::NONEUTRALS   * (!wdTable.GetBool("collideNeutral",   true)));
+	collisionFlags |= (Collision::NOFIREBASES  * (!wdTable.GetBool("collideFireBase", false)));
+	collisionFlags |= (Collision::NOGROUND     * (!wdTable.GetBool("collideGround",    true)));
 
 	//FIXME defaults depend on other tags
 	{

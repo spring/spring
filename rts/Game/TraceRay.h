@@ -19,9 +19,10 @@ namespace Collision {
 		NOFRIENDLIES = 1 << 1,
 		NOFEATURES   = 1 << 2,
 		NONEUTRALS   = 1 << 3,
-		NOGROUND     = 1 << 4,
-		NOCLOAKED    = 1 << 5,
-		NONOTINLOS   = 1 << 6,
+		NOFIREBASES  = 1 << 4, // ignored by rays
+		NOGROUND     = 1 << 5,
+		NOCLOAKED    = 1 << 6,
+		NONOTINLOS   = 1 << 7,
 		NOUNITS      = NOENEMIES | NOFRIENDLIES | NONEUTRALS
 	};
 }

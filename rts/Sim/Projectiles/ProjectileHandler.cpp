@@ -399,6 +399,36 @@ void CProjectileHandler::AddProjectile(CProjectile* p)
 
 
 
+static bool CheckProjectileCollisionFlags(const CProjectile* p, const CUnit* u)
+{
+	if (teamHandler->IsValidAllyTeam(p->GetAllyteamID())) {
+		const bool noFriendsBit = ((p->GetCollisionFlags() & Collision::NOFRIENDLIES) != 0);
+		const bool noEnemiesBit = ((p->GetCollisionFlags() & Collision::NOENEMIES   ) != 0);
+		const bool friendlyFire = teamHandler->AlliedAllyTeams(p->GetAllyteamID(), u->allyteam);
+
+		if (noFriendsBit && friendlyFire)
+			return false;
+
+		if (noEnemiesBit && !friendlyFire)
+			return false;
+	}
+
+	if ((p->GetCollisionFlags() & Collision::NONEUTRALS) != 0 && u->IsNeutral())
+		return false;
+
+	if ((p->GetCollisionFlags() & Collision::NOFIREBASES) != 0) {
+		const CUnit* owner = p->owner();
+		const CUnit* trans = (owner != nullptr)? owner->GetTransporter(): nullptr;
+
+		// check if the unit being collided with is occupied by p's owner
+		if (u == trans && trans->unitDef->isFirePlatform)
+			return false;
+	}
+
+	return true;
+}
+
+
 void CProjectileHandler::CheckUnitCollisions(
 	CProjectile* p,
 	std::vector<CUnit*>& tempUnits,
@@ -419,22 +449,12 @@ void CProjectileHandler::CheckUnitCollisions(
 		if (!unit->HasCollidableStateBit(CSolidObject::CSTATE_BIT_PROJECTILES))
 			continue;
 
-		if (teamHandler->IsValidAllyTeam(p->GetAllyteamID())) {
-			if (p->GetCollisionFlags() & Collision::NOFRIENDLIES) {
-				if ( teamHandler->AlliedAllyTeams(p->GetAllyteamID(), unit->allyteam)) { continue; }
-			}
-			if (p->GetCollisionFlags() & Collision::NOENEMIES) {
-				if (!teamHandler->AlliedAllyTeams(p->GetAllyteamID(), unit->allyteam)) { continue; }
-			}
-			if (p->GetCollisionFlags() & Collision::NONEUTRALS) {
-				if (unit->IsNeutral()) { continue; }
-			}
-		}
+		if (!CheckProjectileCollisionFlags(p, unit))
+			continue;
 
 		if (CCollisionHandler::DetectHit(unit, unit->GetTransformMatrix(true), ppos0, ppos1, &cq)) {
-			if (cq.GetHitPiece() != NULL) {
+			if (cq.GetHitPiece() != nullptr)
 				unit->SetLastHitPiece(cq.GetHitPiece(), gs->frameNum);
-			}
 
 			if (!cq.InsideHit()) {
 				p->SetPosition(cq.GetHitPos());
@@ -471,9 +491,8 @@ void CProjectileHandler::CheckFeatureCollisions(
 			continue;
 
 		if (CCollisionHandler::DetectHit(feature, feature->GetTransformMatrix(true), ppos0, ppos1, &cq)) {
-			if (cq.GetHitPiece() != NULL) {
+			if (cq.GetHitPiece() != nullptr)
 				feature->SetLastHitPiece(cq.GetHitPiece(), gs->frameNum);
-			}
 
 			if (!cq.InsideHit()) {
 				p->SetPosition(cq.GetHitPos());
@@ -530,7 +549,7 @@ void CProjectileHandler::CheckUnitFeatureCollisions(ProjectileContainer& pc)
 	static std::vector<CFeature*> tempFeatures;
 	static std::vector<CPlasmaRepulser*> tempRepulsers;
 
-	for (size_t i=0; i<pc.size(); ++i) {
+	for (size_t i = 0; i < pc.size(); ++i) {
 		CProjectile* p = pc[i];
 
 		if (!p->checkCol) continue;
@@ -541,12 +560,9 @@ void CProjectileHandler::CheckUnitFeatureCollisions(ProjectileContainer& pc)
 
 		quadField->GetUnitsAndFeaturesColVol(p->pos, p->radius + p->speed.w, tempUnits, tempFeatures, &tempRepulsers);
 
-		CheckShieldCollisions(p, tempRepulsers, ppos0, ppos1);
-		tempRepulsers.clear();
-		CheckUnitCollisions(p, tempUnits, ppos0, ppos1);
-		tempUnits.clear();
-		CheckFeatureCollisions(p, tempFeatures, ppos0, ppos1);
-		tempFeatures.clear();
+		CheckShieldCollisions(p, tempRepulsers, ppos0, ppos1); tempRepulsers.clear();
+		CheckUnitCollisions(p, tempUnits, ppos0, ppos1); tempUnits.clear();
+		CheckFeatureCollisions(p, tempFeatures, ppos0, ppos1); tempFeatures.clear();
 	}
 }
 

@@ -1028,13 +1028,11 @@ void CUnit::SlowUpdate()
 		static_cast<AMoveType*>(moveType)->SlowUpdate();
 
 		const bool b0 = (paralyzeDamage <= (modInfo.paralyzeOnMaxHealth? maxHealth: health));
-		const bool b1 = (transporter == NULL || !transporter->unitDef->IsTransportUnit() ||
-			transporter->unitDef->isFirePlatform);
+		const bool b1 = (transporter == nullptr || !transporter->unitDef->IsTransportUnit() || transporter->unitDef->isFirePlatform);
 
 		// de-stun only if we are not (still) inside a non-firebase transport
-		if (b0 && b1) {
+		if (b0 && b1)
 			SetStunned(false);
-		}
 
 		SlowUpdateCloak(true);
 		return;
@@ -1043,11 +1041,7 @@ void CUnit::SlowUpdate()
 	if (selfDCountdown > 0) {
 		if ((selfDCountdown -= 1) == 0) {
 			// avoid unfinished buildings making an explosion
-			if (!beingBuilt) {
-				KillUnit(nullptr, true, false);
-			} else {
-				KillUnit(nullptr, false, true);
-			}
+			KillUnit(nullptr, !beingBuilt, beingBuilt);
 			return;
 		}
 		if ((selfDCountdown & 1) && (team == gu->myTeam) && !gu->spectating) {
