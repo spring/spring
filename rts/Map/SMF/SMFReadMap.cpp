@@ -330,16 +330,15 @@ void CSMFReadMap::CreateNormalTex()
 {
 #if (SSMF_UNCOMPRESSED_NORMALS == 0)
 	GLenum texFormat = GL_LUMINANCE_ALPHA16F_ARB;
-	if (configHandler->GetBool("GroundNormalTextureHighPrecision")) {
+
+	if (configHandler->GetBool("GroundNormalTextureHighPrecision"))
 		texFormat = GL_LUMINANCE_ALPHA32F_ARB;
-	}
 #endif
 
 	normalsTex.SetRawSize(int2(mapDims.mapxp1, mapDims.mapyp1));
 
-	if (!globalRendering->supportNPOTs) {
+	if (!globalRendering->supportNonPowerOfTwoTex)
 		normalsTex.SetRawSize(int2(next_power_of_2(mapDims.mapxp1), next_power_of_2(mapDims.mapyp1)));
-	}
 
 	glGenTextures(1, normalsTex.GetIDPtr());
 	glBindTexture(GL_TEXTURE_2D, normalsTex.GetID());

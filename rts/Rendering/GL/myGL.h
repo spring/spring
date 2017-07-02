@@ -39,6 +39,12 @@
 	#define GL_INVALID_INDEX -1
 #endif
 
+#if (defined(GLEW_ARB_clip_control) && !defined(HEADLESS))
+#define ENABLE_CLIP_CONTROL 1
+#else
+#define ENABLE_CLIP_CONTROL 0
+#endif
+
 
 static inline void glVertexf3(const float3& v)    { glVertex3f(v.r, v.g, v.b); }
 static inline void glColorf3(const float3& v)     { glColor3f(v.r, v.g, v.b); }
@@ -49,7 +55,7 @@ static inline void glSecondaryColorf3(const float3& v) { glSecondaryColor3f(v.r,
 static inline void glColorf4(const float3& v, const float alpha) { glColor4f(v.r, v.g, v.b, alpha); }
 static inline void glUniformf3(const GLint location, const float3& v) { glUniform3f(location, v.r, v.g, v.b); }
 
-#if defined(GL_ARB_clip_control) && !defined(HEADLESS)
+#if (ENABLE_CLIP_CONTROL == 1)
 #undef glOrtho
 #undef gluOrtho2D
 #undef glFrustum

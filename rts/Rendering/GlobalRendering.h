@@ -222,19 +222,20 @@ public:
 	/**
 	 * @brief if the GPU (drivers) support NonPowerOfTwoTextures
 	 *
-	 * Especially some ATI cards report that they support NPOTs, but they don't (or just very limited).
+	 * Especially some ATI cards report that they support NPOTs, but don't (or just very limited).
 	 */
-	bool supportNPOTs;
+	bool supportNonPowerOfTwoTex;
+	bool supportTextureQueryLOD;
 
 	/**
-	 * @brief support24bitDepthBuffers
+	 * @brief support24bitDepthBuffer
 	 *
-	 * if GL_DEPTH_COMPONENT24 is supported (many ATIs don't do so)
+	 * if GL_DEPTH_COMPONENT24 is supported (many ATIs don't)
 	 */
-	bool support24bitDepthBuffers;
+	bool support24bitDepthBuffer;
 
 	bool supportRestartPrimitive;
-	bool supportClipControl;
+	bool supportClipSpaceControl;
 
 	/**
 	 * Shader capabilities

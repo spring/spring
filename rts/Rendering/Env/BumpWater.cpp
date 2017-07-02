@@ -175,7 +175,7 @@ CBumpWater::CBumpWater()
 	anisotropy   = configHandler->GetFloat("BumpWaterAnisotropy");
 	depthCopy    = configHandler->GetBool("BumpWaterUseDepthTexture");
 	depthBits    = configHandler->GetInt("BumpWaterDepthBits");
-	if ((depthBits == 24) && !globalRendering->support24bitDepthBuffers)
+	if ((depthBits == 24) && !globalRendering->support24bitDepthBuffer)
 		depthBits = 16;
 	blurRefl     = configHandler->GetBool("BumpWaterBlurReflection");
 	shoreWaves   = (configHandler->GetBool("BumpWaterShoreWaves")) && waterRendering->shoreWaves;
@@ -297,7 +297,7 @@ CBumpWater::CBumpWater()
 		//! ATIs do not have GLSL support for texrects
 		if (GLEW_ARB_texture_rectangle && !globalRendering->atiHacks) {
 			target = GL_TEXTURE_RECTANGLE_ARB;
-		} else if (!globalRendering->supportNPOTs) {
+		} else if (!globalRendering->supportNonPowerOfTwoTex) {
 			screenTextureX = next_power_of_2(screenTextureX);
 			screenTextureY = next_power_of_2(screenTextureY);
 		}

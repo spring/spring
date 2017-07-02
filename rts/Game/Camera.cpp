@@ -65,7 +65,7 @@ CCamera::CCamera(unsigned int cameraType)
 
 	SetVFOV(45.0f);
 
-	#ifdef GL_ARB_clip_control
+	#if (ENABLE_CLIP_CONTROL == 1)
 	clipControlMatrix.Translate(FwdVector * 0.5f);
 	clipControlMatrix.Scale(OnesVector - (FwdVector * 0.5f));
 	#endif

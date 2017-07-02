@@ -130,10 +130,11 @@ CR_REG_METADATA(CGlobalRendering, (
 	CR_IGNORED(haveNvidia),
 
 	CR_IGNORED(atiHacks),
-	CR_IGNORED(supportNPOTs),
-	CR_IGNORED(support24bitDepthBuffers),
+	CR_IGNORED(supportNonPowerOfTwoTex),
+	CR_IGNORED(supportTextureQueryLOD),
+	CR_IGNORED(support24bitDepthBuffer),
 	CR_IGNORED(supportRestartPrimitive),
-	CR_IGNORED(supportClipControl),
+	CR_IGNORED(supportClipSpaceControl),
 	CR_IGNORED(haveARB),
 	CR_IGNORED(haveGLSL),
 	CR_IGNORED(glslMaxVaryings),
@@ -215,10 +216,11 @@ CGlobalRendering::CGlobalRendering()
 	, haveIntel(false)
 	, haveNvidia(false)
 	, atiHacks(false)
-	, supportNPOTs(false)
-	, support24bitDepthBuffers(false)
+	, supportNonPowerOfTwoTex(false)
+	, supportTextureQueryLOD(false)
+	, support24bitDepthBuffer(false)
 	, supportRestartPrimitive(false)
-	, supportClipControl(false)
+	, supportClipSpaceControl(false)
 	, haveARB(false)
 	, haveGLSL(false)
 
@@ -546,8 +548,8 @@ void CGlobalRendering::SetGLSupportFlags()
 
 	haveARB   = GLEW_ARB_vertex_program && GLEW_ARB_fragment_program;
 	haveGLSL  = (glGetString(GL_SHADING_LANGUAGE_VERSION) != nullptr);
-	haveGLSL &= GLEW_ARB_vertex_shader && GLEW_ARB_fragment_shader;
-	haveGLSL &= !!GLEW_VERSION_2_0; // we want OpenGL 2.0 core functions
+	haveGLSL &= (GLEW_ARB_vertex_shader && GLEW_ARB_fragment_shader);
+	haveGLSL &= GLEW_VERSION_2_0; // we want OpenGL 2.0 core functions
 
 	#ifndef HEADLESS
 	if (!haveARB || !haveGLSL)
@@ -581,7 +583,8 @@ void CGlobalRendering::SetGLSupportFlags()
 	}
 
 	// ATI's x-series doesn't support NPOTs, hd-series does
-	supportNPOTs = GLEW_ARB_texture_non_power_of_two && (!haveATI || (glRenderer.find(" x") == std::string::npos && glRenderer.find(" 9") == std::string::npos));
+	supportNonPowerOfTwoTex = GLEW_ARB_texture_non_power_of_two && (!haveATI || (glRenderer.find(" x") == std::string::npos && glRenderer.find(" 9") == std::string::npos));
+	supportTextureQueryLOD = GLEW_ARB_texture_query_lod;
 
 
 	for (size_t n = 0; (n < sizeof(globalRenderingInfo.glVersionShort) && globalRenderingInfo.glVersion[n] != 0); n++) {
@@ -614,10 +617,10 @@ void CGlobalRendering::SetGLSupportFlags()
 
 
 	#ifdef GLEW_NV_primitive_restart
-	supportRestartPrimitive = !!(GLEW_NV_primitive_restart);
+	supportRestartPrimitive = GLEW_NV_primitive_restart;
 	#endif
-	#ifdef GL_ARB_clip_control
-	supportClipControl = !!(GL_ARB_clip_control);
+	#if (ENABLE_CLIP_CONTROL == 1)
+	supportClipSpaceControl = GLEW_ARB_clip_control;
 	#endif
 
 	// detect if GL_DEPTH_COMPONENT24 is supported (many ATIs don't;
@@ -628,14 +631,14 @@ void CGlobalRendering::SetGLSupportFlags()
 		GLint state = 0;
 		glTexImage2D(GL_PROXY_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, 16, 16, 0, GL_LUMINANCE, GL_FLOAT, nullptr);
 		glGetTexLevelParameteriv(GL_PROXY_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &state);
-		support24bitDepthBuffers = (state > 0);
+		support24bitDepthBuffer = (state > 0);
 		#else
 		if (FBO::IsSupported() && !atiHacks) {
 			FBO fbo;
 			fbo.Bind();
 			fbo.CreateRenderBuffer(GL_COLOR_ATTACHMENT0_EXT, GL_RGBA8, 16, 16);
 			fbo.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT,  GL_DEPTH_COMPONENT24, 16, 16);
-			support24bitDepthBuffers = (fbo.GetStatus() == GL_FRAMEBUFFER_COMPLETE_EXT);
+			support24bitDepthBuffer = (fbo.GetStatus() == GL_FRAMEBUFFER_COMPLETE_EXT);
 			fbo.Unbind();
 		}
 		#endif
@@ -710,13 +713,14 @@ void CGlobalRendering::LogVersionInfo(const char* sdlVersionStr, const char* glV
 	LOG("\tGPU memory  : %s", glVidMemStr);
 	LOG("\tSwapInterval: %d", SDL_GL_GetSwapInterval());
 	LOG("\t");
-	LOG("\tARB shader support       : %i", haveARB);
-	LOG("\tGLSL shader support      : %i", haveGLSL);
-	LOG("\tFBO extension support    : %i", FBO::IsSupported());
-	LOG("\tNPOT-texture support     : %i", supportNPOTs);
-	LOG("\t24-bit Z-buffer support  : %i", support24bitDepthBuffers);
-	LOG("\tprimitive-restart support: %i", supportRestartPrimitive);
-	LOG("\tclip-control support     : %i", supportClipControl);
+	LOG("\tARB shader support        : %i", haveARB);
+	LOG("\tGLSL shader support       : %i", haveGLSL);
+	LOG("\tFBO extension support     : %i", FBO::IsSupported());
+	LOG("\tNPOT-texture support      : %i (%i)", supportNonPowerOfTwoTex, glewIsExtensionSupported("GL_ARB_texture_non_power_of_two"));
+	LOG("\ttexture query-LOD support : %i (%i)", supportTextureQueryLOD, glewIsExtensionSupported("GL_ARB_texture_query_lod"));
+	LOG("\t24-bit Z-buffer support   : %i (-)", support24bitDepthBuffer);
+	LOG("\tprimitive-restart support : %i (%i)", supportRestartPrimitive, glewIsExtensionSupported("GL_NV_primitive_restart"));
+	LOG("\tclip-space control support: %i (%i)", supportClipSpaceControl, glewIsExtensionSupported("GL_ARB_clip_control"));
 	LOG("\t");
 	LOG("\tmax. FBO samples             : %i", FBO::GetMaxSamples());
 	LOG("\tmax. texture size            : %i", maxTextureSize);
@@ -918,7 +922,7 @@ void CGlobalRendering::InitGLState()
 	glClearDepth(1.0f);
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LEQUAL);
-	#ifdef GL_ARB_clip_control
+	#if (ENABLE_CLIP_CONTROL == 1)
 	// avoid precision loss with default DR transform
 	glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE);
 	#endif

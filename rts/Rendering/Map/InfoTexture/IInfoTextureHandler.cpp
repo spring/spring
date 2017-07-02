@@ -16,14 +16,11 @@ void IInfoTextureHandler::Create()
 {
 	if (
 		globalRendering->haveGLSL &&
-		globalRendering->supportNPOTs &&
+		globalRendering->supportNonPowerOfTwoTex &&
+		globalRendering->supportTextureQueryLOD &&
 		FBO::IsSupported() &&
-		GLEW_ARB_texture_query_lod &&
 		glewIsSupported("GL_VERSION_3_0")
 	) {
-		// only available as of GL3.0
-		assert(glGenerateMipmap != nullptr);
-
 		try {
 			infoTextureHandler = new CInfoTextureHandler();
 		} catch (const opengl_error& glerr) {
