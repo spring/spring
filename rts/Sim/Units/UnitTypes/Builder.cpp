@@ -487,13 +487,14 @@ void CBuilder::SetRepairTarget(CUnit* target)
 
 	if (!target->groundLevelled) {
 		//resume levelling the ground
-		tx1 = (int)max((float)0,(target->pos.x - (target->unitDef->xsize*0.5f*SQUARE_SIZE))/SQUARE_SIZE);
-		tx2 = min(mapDims.mapx,tx1+target->unitDef->xsize);
-		tz1 = (int)max((float)0,(target->pos.z - (target->unitDef->zsize*0.5f*SQUARE_SIZE))/SQUARE_SIZE);
-		tz2 = min(mapDims.mapy,tz1+target->unitDef->zsize);
+		tx1 = (int)std::max(0.0f, (target->pos.x - (target->xsize * 0.5f * SQUARE_SIZE)) / SQUARE_SIZE);
+		tz1 = (int)std::max(0.0f, (target->pos.z - (target->zsize * 0.5f * SQUARE_SIZE)) / SQUARE_SIZE);
+		tx2 = std::min(mapDims.mapx, tx1 + target->xsize);
+		tz2 = std::min(mapDims.mapy, tz1 + target->zsize);
+
 		terraformCenter = target->pos;
 		terraformRadius = (tx1 - tx2) * SQUARE_SIZE;
-		terraformType=Terraform_Building;
+		terraformType = Terraform_Building;
 		terraforming = true;
 	}
 
@@ -591,22 +592,22 @@ void CBuilder::StartRestore(float3 centerPos, float radius)
 
 void CBuilder::StopBuild(bool callScript)
 {
-	if (curBuild)
+	if (curBuild != nullptr)
 		DeleteDeathDependence(curBuild, DEPENDENCE_BUILD);
-	if (curReclaim)
+	if (curReclaim != nullptr)
 		DeleteDeathDependence(curReclaim, DEPENDENCE_RECLAIM);
-	if (helpTerraform)
+	if (helpTerraform != nullptr)
 		DeleteDeathDependence(helpTerraform, DEPENDENCE_TERRAFORM);
-	if (curResurrect)
+	if (curResurrect != nullptr)
 		DeleteDeathDependence(curResurrect, DEPENDENCE_RESURRECT);
-	if (curCapture)
+	if (curCapture != nullptr)
 		DeleteDeathDependence(curCapture, DEPENDENCE_CAPTURE);
 
-	curBuild = 0;
-	curReclaim = 0;
-	helpTerraform = 0;
-	curResurrect = 0;
-	curCapture = 0;
+	curBuild = nullptr;
+	curReclaim = nullptr;
+	helpTerraform = nullptr;
+	curResurrect = nullptr;
+	curCapture = nullptr;
 
 	terraforming = false;
 
@@ -642,9 +643,9 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo, CFeature*& feature, bool& waitSt
 			// the buildee is *not* guaranteed to be the unit
 			// closest to us
 			CSolidObject* o = groundBlockingObjectMap->GroundBlocked(buildInfo.pos);
-			CUnit* u = NULL;
+			CUnit* u = nullptr;
 
-			if (o != NULL) {
+			if (o != nullptr) {
 				u = dynamic_cast<CUnit*>(o);
 			} else {
 				// <pos> might map to a non-blocking portion
@@ -652,7 +653,7 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo, CFeature*& feature, bool& waitSt
 				u = CGameHelper::GetClosestFriendlyUnit(NULL, buildInfo.pos, buildDistance, allyteam);
 			}
 
-			if (u != NULL && CanAssistUnit(u, buildInfo.def)) {
+			if (u != nullptr && CanAssistUnit(u, buildInfo.def)) {
 				curBuild = u;
 				AddDeathDependence(u, DEPENDENCE_BUILD);
 				ScriptStartBuilding(u->pos, false);
@@ -676,19 +677,19 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo, CFeature*& feature, bool& waitSt
 	CUnit* buildee = unitLoader->LoadUnit(buildeeParams);
 
 	// floating structures don't terraform the seabed
-	const bool onWater = (buildee->FloatOnWater() && buildee->IsInWater());
+	const bool buildeeOnWater = (buildee->FloatOnWater() && buildee->IsInWater());
+	const bool allowTerraform = (!mapDamage->disabled && buildeeDef->levelGround);
+	const bool  skipTerraform = (buildeeOnWater || buildeeDef->IsAirUnit() || !buildeeDef->IsImmobileUnit());
 
-	if (mapDamage->disabled || !buildeeDef->levelGround || onWater ||
-	    buildeeDef->IsAirUnit() || !buildeeDef->IsImmobileUnit()
-	) {
+	if (!allowTerraform || skipTerraform) {
 		// skip the terraforming job
 		buildee->terraformLeft = 0;
 		buildee->groundLevelled = true;
 	} else {
-		tx1 = (int)max(        0.0f, (buildee->pos.x - (buildeeDef->xsize * 0.5f * SQUARE_SIZE)) / SQUARE_SIZE);
-		tx2 =      min(mapDims.mapx,             tx1 +  buildeeDef->xsize                                     );
-		tz1 = (int)max(        0.0f, (buildee->pos.z - (buildeeDef->zsize * 0.5f * SQUARE_SIZE)) / SQUARE_SIZE);
-		tz2 =      min(mapDims.mapy,             tz1 +  buildeeDef->zsize                                     );
+		tx1 = (int)std::max(0.0f, (buildee->pos.x - (buildee->xsize * 0.5f * SQUARE_SIZE)) / SQUARE_SIZE);
+		tz1 = (int)std::max(0.0f, (buildee->pos.z - (buildee->zsize * 0.5f * SQUARE_SIZE)) / SQUARE_SIZE);
+		tx2 = std::min(mapDims.mapx, tx1 + buildee->xsize);
+		tz2 = std::min(mapDims.mapy, tz1 + buildee->zsize);
 
 		buildee->terraformLeft = CalculateBuildTerraformCost(buildInfo);
 		buildee->groundLevelled = false;
