@@ -25,10 +25,10 @@ CONFIG(bool,  CamSpringEdgeRotate).defaultValue(false).description("Rotate camer
 
 
 CSpringController::CSpringController()
-: rot(2.677f, 0.f, 0.f)
+: rot(2.677f, 0.0f, 0.0f)
 , curDist(float3(mapDims.mapx * 0.5f, 0.0f, mapDims.mapy * 0.55f).Length2D() * 1.5f * SQUARE_SIZE)
 , maxDist(std::max(mapDims.mapx, mapDims.mapy) * SQUARE_SIZE * 1.333f)
-, oldDist(0.f)
+, oldDist(0.0f)
 , zoomBack(false)
 , cursorZoomIn(configHandler->GetBool("CamSpringZoomInToMousePos"))
 , cursorZoomOut(configHandler->GetBool("CamSpringZoomOutFromMousePos"))
@@ -49,7 +49,7 @@ void CSpringController::KeyMove(float3 move)
 		return;
 	}
 
-	move *= 200.f;
+	move *= 200.0f;
 	const float3 flatForward = (dir * XZVector).ANormalize();
 	pos += (camera->GetRight() * move.x + flatForward * move.y) * pixelSize * 2.0f * scrollSpeed;
 	Update();
@@ -91,16 +91,19 @@ void CSpringController::MouseWheelMove(float move)
 	const float curDistPre = curDist;
 
 	// tilt the camera if CTRL is pressed, otherwise zoom
+	// no tweening during tilt, position is not fixed but
+	// moves along an arc segment
 	if (KeyInput::GetKeyModState(KMOD_CTRL)) {
-		rot.x = Clamp(rot.x - (move * shiftSpeed * 0.005f), math::PI * 0.51f, math::PI * 0.99f);
-		camHandler->CameraTransition(0.25f);
+		rot.x -= (move * shiftSpeed * 0.005f);
 	} else {
+		// depends on curDist
 		const float3 curCamPos = GetPos();
 
 		curDist *= scaledMove;
 		curDist = std::min(curDist, maxDist);
 
 		float zoomTransTime = 0.25f;
+
 		if (move < 0.0f) {
 			// ZOOM IN - to mouse cursor or along our own forward dir
 			zoomTransTime = ZoomIn(curCamPos, float2(curDistPre, scaledMove));
@@ -108,6 +111,7 @@ void CSpringController::MouseWheelMove(float move)
 			// ZOOM OUT - from mid screen
 			zoomTransTime = ZoomOut(curCamPos, float2(curDistPre, scaledMove));
 		}
+
 		camHandler->CameraTransition(zoomTransTime);
 	}
 
@@ -115,10 +119,8 @@ void CSpringController::MouseWheelMove(float move)
 }
 
 
-float CSpringController::ZoomIn(
-	const float3& curCamPos,
-	const float2& zoomParams
-) {
+float CSpringController::ZoomIn(const float3& curCamPos, const float2& zoomParams)
+{
 	if (KeyInput::GetKeyModState(KMOD_ALT) && zoomBack) {
 		// instazoom in to standard view
 		curDist = oldDist;
@@ -130,7 +132,7 @@ float CSpringController::ZoomIn(
 	if (!cursorZoomIn)
 		return 0.25f;
 
-	const float zoomInDist = CGround::LineGroundCol(curCamPos, curCamPos + mouse->dir * 150000.f, false);
+	const float zoomInDist = CGround::LineGroundCol(curCamPos, curCamPos + mouse->dir * 150000.0f, false);
 
 	if (zoomInDist <= 0.0f)
 		return 0.25f;
@@ -142,7 +144,7 @@ float CSpringController::ZoomIn(
 	const float3 wantedCamPos = zoomedCamPos - mouse->dir * zoomInDist * zoomParams.y;
 
 	// figure out how far we will end up from the ground at new wanted point
-	const float newDist = CGround::LineGroundCol(wantedCamPos, wantedCamPos + dir * 150000.f, false);
+	const float newDist = CGround::LineGroundCol(wantedCamPos, wantedCamPos + dir * 150000.0f, false);
 
 	if (newDist > 0.0f)
 		pos = wantedCamPos + dir * (curDist = newDist);
@@ -150,10 +152,8 @@ float CSpringController::ZoomIn(
 	return 0.25f;
 }
 
-float CSpringController::ZoomOut(
-	const float3& curCamPos,
-	const float2& zoomParams
-) {
+float CSpringController::ZoomOut(const float3& curCamPos, const float2& zoomParams)
+{
 	if (KeyInput::GetKeyModState(KMOD_ALT)) {
 		// instazoom out to maximum height
 		if (!zoomBack) {
@@ -161,11 +161,10 @@ float CSpringController::ZoomOut(
 			zoomBack = true;
 		}
 
-		rot = float3(2.677f, rot.y, 0.f);
+		rot = float3(2.677f, rot.y, 0.0f);
 		pos.x = mapDims.mapx * SQUARE_SIZE * 0.5f;
 		pos.z = mapDims.mapy * SQUARE_SIZE * 0.55f; // somewhat longer toward bottom
 		curDist = pos.Length2D() * 1.5f;
-
 		return 1.0f;
 	}
 
@@ -174,7 +173,7 @@ float CSpringController::ZoomOut(
 	if (!cursorZoomOut)
 		return 0.25f;
 
-	const float zoomInDist = CGround::LineGroundCol(curCamPos, curCamPos + mouse->dir * 150000.f, false);
+	const float zoomInDist = CGround::LineGroundCol(curCamPos, curCamPos + mouse->dir * 150000.0f, false);
 
 	if (zoomInDist <= 0.0f)
 		return 0.25f;
@@ -183,7 +182,7 @@ float CSpringController::ZoomOut(
 	const float3 zoomedCamPos =    curCamPos + mouse->dir * zoomInDist;
 	const float3 wantedCamPos = zoomedCamPos - mouse->dir * zoomInDist * zoomParams.y;
 
-	const float newDist = CGround::LineGroundCol(wantedCamPos, wantedCamPos + dir * 150000.f, false);
+	const float newDist = CGround::LineGroundCol(wantedCamPos, wantedCamPos + dir * 150000.0f, false);
 
 	if (newDist > 0.0f)
 		pos = wantedCamPos + dir * (curDist = newDist);
@@ -196,13 +195,14 @@ float CSpringController::ZoomOut(
 void CSpringController::Update()
 {
 	pos.ClampInMap();
-	pos.y = CGround::GetHeightReal(pos.x, pos.z, false);
 
+	pos.y = CGround::GetHeightReal(pos.x, pos.z, false);
 	rot.x = Clamp(rot.x, math::PI * 0.51f, math::PI * 0.99f);
+
 	camera->SetRot(float3(rot.x, GetAzimuth(), rot.z));
 	dir = camera->GetDir();
 
-	curDist = Clamp(curDist, 20.f, maxDist);
+	curDist = Clamp(curDist, 20.0f, maxDist);
 	pixelSize = (camera->GetTanHalfFov() * 2.0f) / globalRendering->viewSizeY * curDist * 2.0f;
 
 	scrollSpeed = configHandler->GetInt("CamSpringScrollSpeed") * 0.1f;
@@ -212,17 +212,15 @@ void CSpringController::Update()
 
 static float GetRotationWithCardinalLock(float rot)
 {
-	static float cardinalDirLockWidth = 0.2f;
+	constexpr float cardinalDirLockWidth = 0.2f;
 
-	rot /= math::HALFPI;
-
-	const float rotMoved = std::abs(rot) - cardinalDirLockWidth * 0.5f;
+	const float rotMoved = std::abs(rot /= math::HALFPI) - cardinalDirLockWidth * 0.5f;
 	const float numerator = std::trunc(rotMoved);
 
 	const float fract = rotMoved - numerator;
-	const float b = 1.f / (1.f - cardinalDirLockWidth);
-	const float c = 1.f - b;
-	const float fx = (fract > cardinalDirLockWidth) ? fract * b + c : 0.f;
+	const float b = 1.0f / (1.0f - cardinalDirLockWidth);
+	const float c = 1.0f - b;
+	const float fx = (fract > cardinalDirLockWidth) ? fract * b + c : 0.0f;
 
 	return std::copysign(numerator + fx, rot) * math::HALFPI;
 }
@@ -254,9 +252,9 @@ float CSpringController::GetAzimuth() const
 
 float3 CSpringController::GetPos() const
 {
-	float3 cpos = pos - dir * curDist;
-	cpos.y = std::max(cpos.y, CGround::GetHeightAboveWater(cpos.x, cpos.z, false) + 5.0f);
-	return cpos;
+	const float3 cvec = dir * curDist;
+	const float3 cpos = pos - cvec;
+	return {cpos.x, std::max(cpos.y, CGround::GetHeightAboveWater(cpos.x, cpos.z, false) + 5.0f), cpos.z};
 }
 
 
