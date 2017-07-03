@@ -300,3 +300,8 @@ void CLogOutput::LogSystemInfo()
 	LOG("============== </User System> ==============");
 }
 
+void CLogOutput::LogExceptionInfo(const char* src, const char* msg)
+{
+	LOG_L(L_ERROR, "[%s] exception \"%s\"", src, msg);
+}
+

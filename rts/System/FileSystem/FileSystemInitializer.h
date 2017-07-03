@@ -10,11 +10,16 @@ public:
 	/// call in defined order!
 	static void PreInitializeConfigHandler(const std::string& configSource = "", const bool safemode = false);
 	static void InitializeLogOutput(const std::string& filename = "");
-	static void Initialize();
+	static bool Initialize(bool* retPtr = nullptr);
 	static void Cleanup(bool deallocConfigHandler = true);
 
+	static bool Initialized() { return initialized; }
+	static bool AbortedInit() { return abortedInit; }
+	static bool DoneIniting() { return (Initialized() || AbortedInit()); }
+
 private:
-	static bool initialized;
+	static volatile bool initialized;
+	static volatile bool abortedInit;
 };
 
 #endif // FILE_SYSTEM_INITIALIZER_H

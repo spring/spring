@@ -159,9 +159,7 @@ static unsigned int numShutDowns = 0;
 SpringApp::SpringApp(int argc, char** argv)
 {
 	// initializes configHandler which we need
-	std::string binaryName = argv[0];
-
-	gflags::SetUsageMessage("Usage: " + binaryName + " [options] [path_to_script.txt or demo.sdfz]");
+	gflags::SetUsageMessage("Usage: " + std::string(argv[0]) + " [options] [path_to_script.txt or demo.sdfz]");
 	gflags::SetVersionString(SpringVersion::GetFull());
 	gflags::ParseCommandLineFlags(&argc, &argv, true);
 	ParseCmdLine(argc, argv);
@@ -182,6 +180,7 @@ SpringApp::~SpringApp()
 	spring_clock::PopTickRate();
 }
 
+
 /**
  * @brief Initializes the SpringApp instance
  * @return whether initialization was successful
@@ -200,26 +199,9 @@ bool SpringApp::Init()
 	globalRendering = new CGlobalRendering();
 	globalRendering->SetFullScreen(FLAGS_window, FLAGS_fullscreen);
 
-#if !(defined(WIN32) || defined(__APPLE__) || defined(HEADLESS))
-	// this MUST run before any other X11 call (esp. those by SDL!)
-	// we need it to make calls to X11 threadsafe
-	if (!XInitThreads()) {
-		LOG_L(L_FATAL, "Xlib is not thread safe");
+	if (!InitPlatformLibs())
 		return false;
-	}
-#endif
 
-#if defined(WIN32) && defined(__GNUC__)
-	// load QTCreator's gdb helper dll; a variant of this should also work on other OSes
-	{
-		// don't display a dialog box if gdb helpers aren't found
-		UINT olderrors = SetErrorMode(SEM_FAILCRITICALERRORS);
-		if (LoadLibrary("gdbmacros.dll"))
-			LOG_L(L_DEBUG, "QT Creator's gdbmacros.dll loaded");
-
-		SetErrorMode(olderrors);
-	}
-#endif
 	// Initialize crash reporting
 	CrashHandler::Install();
 	good_fpu_control_registers(__func__);
@@ -243,12 +225,11 @@ bool SpringApp::Init()
 	globalRendering->UpdateGLGeometry();
 	globalRendering->InitGLState();
 	UpdateInterfaceGeometry();
+	LoadFonts();
+	ClearScreen();
 
-	// ArchiveScanner uses for_mt --> needs thread-count set
-	// (employ all available threads, then switch to default)
-	ThreadPool::SetMaximumThreadCount();
-	FileSystemInitializer::Initialize();
-	ThreadPool::SetDefaultThreadCount();
+	if (!InitFileSystem())
+		return false;
 
 	// Multithreading & Affinity
 	Threading::SetThreadName("spring-main"); // set default threadname for pstree
@@ -263,7 +244,6 @@ bool SpringApp::Init()
 
 	// GUIs
 	agui::InitGui();
-	LoadFonts();
 	keyCodes = new CKeyCodes();
 
 	CNamedTextures::Init();
@@ -279,10 +259,74 @@ bool SpringApp::Init()
 
 	// Create CGameSetup and CPreGame objects
 	Startup();
+	return true;
+}
+
+
+bool SpringApp::InitPlatformLibs()
+{
+#if !(defined(WIN32) || defined(__APPLE__) || defined(HEADLESS))
+	// MUST run before any other X11 call (including
+	// those by SDL) to make calls to X11 threadsafe
+	if (!XInitThreads()) {
+		LOG_L(L_FATAL, "[%s] Xlib is not threadsafe", __func__);
+		return false;
+	}
+#endif
+
+#if defined(WIN32) && defined(__GNUC__)
+	// load QTCreator's gdb helper dll; a variant of this should also work on other OSes
+	{
+		// surpress dialog box if gdb helpers aren't found
+		const UINT oldErrorMode = SetErrorMode(SEM_FAILCRITICALERRORS);
+
+		if (LoadLibrary("gdbmacros.dll"))
+			LOG_L(L_DEBUG, "[%s] QTCreator's gdbmacros.dll loaded", __func__);
+
+		SetErrorMode(oldErrorMode);
+	}
+#endif
 
 	return true;
 }
 
+bool SpringApp::InitFileSystem()
+{
+	bool ret = false;
+
+	// ArchiveScanner uses for_mt, so must set a thread-count
+	// (employ all available threads, then switch to default)
+	ThreadPool::SetMaximumThreadCount();
+
+	#ifndef HEADLESS
+	// threaded initialization so the window does not freeze
+	// FileSystem is mostly self-contained, don't need locks
+	spring::thread fsInitThread(FileSystemInitializer::Initialize, &ret);
+
+
+	const float4 color = {1.0f, 0.0f, 0.0f, 1.0f};
+	const float3 coors = {0.5f, 0.5f, globalRendering->viewSizeY / 35.0f};
+
+	for (spring_time t0 = spring_now(), t1 = t0; !FileSystemInitializer::DoneIniting(); t1 = spring_now()) {
+		glClear(GL_COLOR_BUFFER_BIT);
+
+		font->Begin();
+		font->SetTextColor(color.x, color.y, color.z, color.w);
+		font->glFormat(coors.x, coors.y, coors.z, FONT_CENTER | FONT_NORM, "Scanning Archives (%ds)...", (t1 - t0).toSecsi());
+		font->End();
+
+		globalRendering->SwapBuffers(true, true);
+	}
+
+
+	fsInitThread.join();
+	#else
+	FileSystemInitializer::Initialize(&ret);
+	#endif
+
+	ThreadPool::SetDefaultThreadCount();
+	return ret;
+}
 
 /**
  * @return whether window initialization succeeded
@@ -334,27 +378,30 @@ void SpringApp::UpdateInterfaceGeometry()
 void SpringApp::LoadFonts()
 {
 	// Initialize font
-	const std::string fontFile = configHandler->GetString("FontFile");
+	const std::string largeFontFile = configHandler->GetString(     "FontFile");
 	const std::string smallFontFile = configHandler->GetString("SmallFontFile");
-	const int fontSize = configHandler->GetInt("FontSize");
+
+	const static std::string installBroken = "\", did you forget to run make install?";
+
+	const int largeFontSize = configHandler->GetInt(     "FontSize");
 	const int smallFontSize = configHandler->GetInt("SmallFontSize");
-	const int outlineWidth = configHandler->GetInt("FontOutlineWidth");
-	const float outlineWeight = configHandler->GetFloat("FontOutlineWeight");
+	const int largeOutlineWidth = configHandler->GetInt(     "FontOutlineWidth");
 	const int smallOutlineWidth = configHandler->GetInt("SmallFontOutlineWidth");
+	const float largeOutlineWeight = configHandler->GetFloat(     "FontOutlineWeight");
 	const float smallOutlineWeight = configHandler->GetFloat("SmallFontOutlineWeight");
 
 	spring::SafeDelete(font);
 	spring::SafeDelete(smallFont);
-	font = CglFont::LoadFont(fontFile, fontSize, outlineWidth, outlineWeight);
+
+	font = CglFont::LoadFont(largeFontFile, largeFontSize, largeOutlineWidth, largeOutlineWeight);
 	smallFont = CglFont::LoadFont(smallFontFile, smallFontSize, smallOutlineWidth, smallOutlineWeight);
 
-	const static std::string installBroken = ", installation of spring broken? did you run make install?";
-	if (!font) {
-		throw content_error(std::string("Failed to load FontFile: ") + fontFile + installBroken);
-	}
-	if (!smallFont) {
-		throw content_error(std::string("Failed to load SmallFontFile: ") + smallFontFile + installBroken);
-	}
+	if (font == nullptr)
+		throw content_error("Failed to load FontFile \"" + largeFontFile + installBroken);
+
+	if (smallFont == nullptr)
+		throw content_error("Failed to load SmallFontFile \"" + smallFontFile + installBroken);
+
 }
 
 // initialize basic systems for command line help / output

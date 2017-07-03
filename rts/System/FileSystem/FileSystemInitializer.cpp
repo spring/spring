@@ -11,7 +11,8 @@
 
 
 
-bool FileSystemInitializer::initialized = false;
+volatile bool FileSystemInitializer::initialized = false;
+volatile bool FileSystemInitializer::abortedInit = false;
 
 void FileSystemInitializer::PreInitializeConfigHandler(const std::string& configSource, const bool safemode)
 {
@@ -30,10 +31,15 @@ void FileSystemInitializer::InitializeLogOutput(const std::string& filename)
 }
 
 
-void FileSystemInitializer::Initialize()
+bool FileSystemInitializer::Initialize(bool* retPtr)
 {
+	bool ret = false;
+
+	if (retPtr == nullptr)
+		retPtr = &ret;
+
 	if (initialized)
-		return;
+		return ((*retPtr) = true);
 
 	try {
 		Platform::SetOrigCWD();
@@ -49,12 +55,15 @@ void FileSystemInitializer::Initialize()
 		// even if we end up here, do not clean up configHandler yet
 		// since it can already have early observers registered that
 		// do not remove themselves until exit
+		logOutput.LogExceptionInfo("FileSystemInit", ex.what());
 		Cleanup(false);
-		throw;
+		abortedInit = true;
 	} catch (...) {
 		Cleanup(false);
-		throw;
+		abortedInit = true;
 	}
+
+	return ((*retPtr) = (initialized && !abortedInit));
 }
 
 void FileSystemInitializer::Cleanup(bool deallocConfigHandler)
