@@ -1512,24 +1512,25 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 					break;
 				}
 				case TEAMMSG_JOIN_TEAM: {
-					const unsigned newTeam    = inbuf[3];
-					const bool isNewTeamValid = (newTeam < teams.size());
+					const unsigned newTeamID = inbuf[3];
+
+					const bool isNewTeamValid = (newTeamID < teams.size());
 					const bool isSinglePlayer = (players.size() <= 1);
 
-					if (isNewTeamValid && (isSinglePlayer || cheating)) {
-						// joining the team is ok
-					} else {
-						Message(spring::format(NoTeamChange, players[player].name.c_str(), player));
+					if (!isNewTeamValid || (!isSinglePlayer && !cheating)) {
+						Message(spring::format(NoTeamChange, players[player].name.c_str(), player, newTeamID));
 						break;
 					}
-					Broadcast(CBaseNetProtocol::Get().SendJoinTeam(player, newTeam));
 
-					players[player].team      = newTeam;
+					// player can join this team
+					Broadcast(CBaseNetProtocol::Get().SendJoinTeam(player, newTeamID));
+
+					players[player].team      = newTeamID;
 					players[player].spectator = false;
 
-					if (!teams[newTeam].HasLeader()) {
-						teams[newTeam].SetLeader(player);
-					}
+					if (!teams[newTeamID].HasLeader())
+						teams[newTeamID].SetLeader(player);
+
 					break;
 				}
 				case TEAMMSG_TEAM_DIED: {

@@ -907,11 +907,13 @@ public:
 
 	bool Execute(const UnsyncedAction& action) const {
 		const int teamId = atoi(action.GetArgs().c_str());
+
 		if (teamHandler->IsValidTeam(teamId)) {
 			clientNet->Send(CBaseNetProtocol::Get().SendJoinTeam(gu->myPlayerNum, teamId));
 		} else {
-			LOG_L(L_WARNING, "/Team: wrong syntax (which is '/Team %%teamid')");
+			LOG_L(L_WARNING, "[%s] team %d does not exist", __func__, teamId);
 		}
+
 		return true;
 	}
 };
@@ -921,7 +923,7 @@ public:
 class SpectatorActionExecutor : public IUnsyncedActionExecutor {
 public:
 	SpectatorActionExecutor() : IUnsyncedActionExecutor("Spectator",
-			"Lets the local user give up controll over a team, and start spectating") {}
+			"Lets the local user give up control over a team, and start spectating") {}
 
 	bool Execute(const UnsyncedAction& action) const {
 		if (gu->spectating)
