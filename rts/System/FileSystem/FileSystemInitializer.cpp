@@ -31,15 +31,10 @@ void FileSystemInitializer::InitializeLogOutput(const std::string& filename)
 }
 
 
-bool FileSystemInitializer::Initialize(bool* retPtr)
+bool FileSystemInitializer::Initialize()
 {
-	bool ret = false;
-
-	if (retPtr == nullptr)
-		retPtr = &ret;
-
 	if (initialized)
-		return ((*retPtr) = true);
+		return true;
 
 	try {
 		Platform::SetOrigCWD();
@@ -63,7 +58,7 @@ bool FileSystemInitializer::Initialize(bool* retPtr)
 		abortedInit = true;
 	}
 
-	return ((*retPtr) = (initialized && !abortedInit));
+	return (initialized && !abortedInit);
 }
 
 void FileSystemInitializer::Cleanup(bool deallocConfigHandler)
