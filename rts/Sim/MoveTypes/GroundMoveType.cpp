@@ -127,6 +127,7 @@ CR_REG_METADATA(CGroundMoveType, (
 
 	CR_MEMBER(reversing),
 	CR_MEMBER(idling),
+	CR_MEMBER(pushResistant),
 	CR_MEMBER(canReverse),
 	CR_MEMBER(useMainHeading),
 	CR_MEMBER(useRawMovement),
@@ -141,8 +142,9 @@ CR_REG_METADATA(CGroundMoveType, (
 
 static CGroundMoveType::MemberData gmtMemberData = {
 	{
-		std::pair<unsigned int,  bool*>{MEMBER_LITERAL_HASH(      "atGoal"), nullptr},
-		std::pair<unsigned int,  bool*>{MEMBER_LITERAL_HASH( "atEndOfPath"), nullptr},
+		std::pair<unsigned int,  bool*>{MEMBER_LITERAL_HASH(       "atGoal"), nullptr},
+		std::pair<unsigned int,  bool*>{MEMBER_LITERAL_HASH(  "atEndOfPath"), nullptr},
+		std::pair<unsigned int,  bool*>{MEMBER_LITERAL_HASH("pushResistant"), nullptr},
 	},
 	{
 		std::pair<unsigned int, short*>{MEMBER_LITERAL_HASH("minScriptChangeHeading"), nullptr},
@@ -201,6 +203,7 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 
 	reversing(false),
 	idling(false),
+	pushResistant((owner != nullptr) && owner->unitDef->pushResistant),
 	canReverse((owner != nullptr) && (owner->unitDef->rSpeed > 0.0f)),
 	useMainHeading(false),
 	useRawMovement(false),
@@ -738,10 +741,11 @@ bool CGroundMoveType::CanApplyImpulse(const float3& impulse)
 	//   arbitrary hardcoded amount of impulse (possibly across several frames),
 	//   but enter it on any vector that causes speed to become misaligned with
 	//   frontdir
-	// TODO (95.0+):
+	// TODO
 	//   there should probably be a configurable minimum-impulse below which the
 	//   unit does not react at all but also does NOT "store" the impulse like a
-	//   small-charge capacitor
+	//   small-charge capacitor, or a more physically-based approach (|N*m*g*cf|
+	//   > |impulse/dt|) could be used
 	//
 	const bool startSkidding = StartSkidding(newSpeed, skidDir);
 	const bool startFlying = StartFlying(newSpeed, CGround::GetNormal(owner->pos.x, owner->pos.z));
@@ -1123,8 +1127,7 @@ float3 CGroundMoveType::GetObstacleAvoidanceDir(const float3& desiredDir) {
 
 	const vector<CSolidObject*>& objects = quadField->GetSolidsExact(avoider->pos, avoidanceRadius, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS);
 
-	for (vector<CSolidObject*>::const_iterator oi = objects.begin(); oi != objects.end(); ++oi) {
-		const CSolidObject* avoidee = *oi;
+	for (const CSolidObject* avoidee: objects) {
 		const MoveDef* avoideeMD = avoidee->moveDef;
 		const UnitDef* avoideeUD = dynamic_cast<const UnitDef*>(avoidee->GetDef());
 
@@ -1132,7 +1135,7 @@ float3 CGroundMoveType::GetObstacleAvoidanceDir(const float3& desiredDir) {
 		if (avoidee == owner)
 			continue;
 		// do not avoid statics (it interferes too much with PFS)
-		if (avoideeMD == NULL)
+		if (avoideeMD == nullptr)
 			continue;
 		// ignore aircraft (or flying ground units)
 		if (avoidee->IsInAir() || avoidee->IsFlying())
@@ -1142,8 +1145,8 @@ float3 CGroundMoveType::GetObstacleAvoidanceDir(const float3& desiredDir) {
 		if (!CMoveMath::CrushResistant(*avoiderMD, avoidee))
 			continue;
 
-		const bool avoideeMobile  = (avoideeMD != NULL);
-		const bool avoideeMovable = (avoideeUD != NULL && !avoideeUD->pushResistant);
+		const bool avoideeMobile  = (avoideeMD != nullptr);
+		const bool avoideeMovable = (avoideeUD != nullptr && !static_cast<const CUnit*>(avoidee)->moveType->IsPushResistant());
 
 		const float3 avoideeVector = (avoider->pos + avoider->speed) - (avoidee->pos + avoidee->speed);
 
@@ -1928,8 +1931,8 @@ void CGroundMoveType::HandleUnitCollisions(
 		//   to the other as a static obstacle so the tags still have some effect
 		pushCollider = pushCollider && (alliedCollision || modInfo.allowPushingEnemyUnits || !collider->blockEnemyPushing);
 		pushCollidee = pushCollidee && (alliedCollision || modInfo.allowPushingEnemyUnits || !collidee->blockEnemyPushing);
-		pushCollider = pushCollider && (!collider->beingBuilt && !collider->UsingScriptMoveType() && !colliderUD->pushResistant);
-		pushCollidee = pushCollidee && (!collidee->beingBuilt && !collidee->UsingScriptMoveType() && !collideeUD->pushResistant);
+		pushCollider = pushCollider && (!collider->beingBuilt && !collider->UsingScriptMoveType() && !collider->moveType->IsPushResistant());
+		pushCollidee = pushCollidee && (!collidee->beingBuilt && !collidee->UsingScriptMoveType() && !collidee->moveType->IsPushResistant());
 
 		if ((!collideeMobile && !collideeUD->IsAirUnit()) || (!pushCollider && !pushCollidee)) {
 			// building (always axis-aligned, possibly has a yardmap)
@@ -2479,6 +2482,7 @@ void CGroundMoveType::InitMemberPtrs(MemberData* memberData)
 {
 	memberData->bools[0].second = &atGoal;
 	memberData->bools[1].second = &atEndOfPath;
+	memberData->bools[2].second = &pushResistant;
 
 	memberData->shorts[0].second = &minScriptChangeHeading;
 

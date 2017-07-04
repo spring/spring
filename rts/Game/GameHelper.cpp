@@ -18,10 +18,10 @@
 #include "Sim/Misc/DamageArray.h"
 #include "Sim/Misc/GeometricObjects.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
-#include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/ModInfo.h"
+#include "Sim/MoveTypes/MoveType.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/MoveTypes/MoveMath/MoveMath.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
@@ -819,22 +819,20 @@ void CGameHelper::GetEnemyUnitsNoLosTest(const float3& pos, float searchRadius, 
 
 void CGameHelper::BuggerOff(float3 pos, float radius, bool spherical, bool forced, int teamId, CUnit* excludeUnit)
 {
-	//copy on purpose since BuggerOff can call risky stuff
+	// copy on purpose since BuggerOff can call risky stuff
 	const std::vector<CUnit*> units = quadField->GetUnitsExact(pos, radius + SQUARE_SIZE, spherical);
 	const int allyTeamId = teamHandler->AllyTeam(teamId);
 
-	for (std::vector<CUnit*>::const_iterator ui = units.begin(); ui != units.end(); ++ui) {
-		CUnit* u = *ui;
-
+	for (CUnit* u: units) {
+		if (u == excludeUnit)
+			continue;
 		// don't send BuggerOff commands to enemy units
-		const int uAllyTeamId = u->allyteam;
-		const bool allied = (
-				teamHandler->Ally(uAllyTeamId,  allyTeamId) ||
-				teamHandler->Ally(allyTeamId, uAllyTeamId));
+		if (!teamHandler->Ally(u->allyteam, allyTeamId) && !teamHandler->Ally(allyTeamId, u->allyteam))
+			continue;
+		if (!forced && (u->moveType->IsPushResistant() || u->UsingScriptMoveType()))
+			continue;
 
-		if ((u != excludeUnit) && allied && ((!u->unitDef->pushResistant && !u->UsingScriptMoveType()) || forced)) {
-			u->commandAI->BuggerOff(pos, radius + SQUARE_SIZE);
-		}
+		u->commandAI->BuggerOff(pos, radius + SQUARE_SIZE);
 	}
 }
 
@@ -843,17 +841,18 @@ float3 CGameHelper::Pos2BuildPos(const BuildInfo& buildInfo, bool synced)
 {
 	float3 pos;
 
-	static const int HALFMAP_SQ = SQUARE_SIZE * 2;
+	constexpr int BUILDMAP_SQ = SQUARE_SIZE * 2;
 
+	// snap build-positions to 16-elmo grid
 	if (buildInfo.GetXSize() & 2)
-		pos.x = math::floor((buildInfo.pos.x              ) / (HALFMAP_SQ)) * HALFMAP_SQ + SQUARE_SIZE;
+		pos.x = math::floor((buildInfo.pos.x              ) / (BUILDMAP_SQ)) * BUILDMAP_SQ + SQUARE_SIZE;
 	else
-		pos.x = math::floor((buildInfo.pos.x + SQUARE_SIZE) / (HALFMAP_SQ)) * HALFMAP_SQ;
+		pos.x = math::floor((buildInfo.pos.x + SQUARE_SIZE) / (BUILDMAP_SQ)) * BUILDMAP_SQ;
 
 	if (buildInfo.GetZSize() & 2)
-		pos.z = math::floor((buildInfo.pos.z              ) / (HALFMAP_SQ)) * HALFMAP_SQ + SQUARE_SIZE;
+		pos.z = math::floor((buildInfo.pos.z              ) / (BUILDMAP_SQ)) * BUILDMAP_SQ + SQUARE_SIZE;
 	else
-		pos.z = math::floor((buildInfo.pos.z + SQUARE_SIZE) / (HALFMAP_SQ)) * HALFMAP_SQ;
+		pos.z = math::floor((buildInfo.pos.z + SQUARE_SIZE) / (BUILDMAP_SQ)) * BUILDMAP_SQ;
 
 	pos.y = CGameHelper::GetBuildHeight(pos, buildInfo.def, synced);
 	return pos;
