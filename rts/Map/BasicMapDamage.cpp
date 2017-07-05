@@ -174,8 +174,6 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength, float radius)
 			eb.tz2 = unit->mapPos.y + unit->zsize;
 		}
 	}
-
-	explosions.push_back(e);
 }
 
 void CBasicMapDamage::RecalcArea(int x1, int x2, int y1, int y2)
