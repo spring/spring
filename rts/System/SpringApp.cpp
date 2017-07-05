@@ -305,16 +305,16 @@ bool SpringApp::InitFileSystem()
 
 
 	const float4 color = {1.0f, 0.0f, 0.0f, 1.0f};
-	const float4 coors = {0.5f, 0.5f, globalRendering->viewSizeY / 35.0f, std::max(35.0f / globalRendering->viewSizeY, 0.04f)};
+	const float4 coors = {0.5f, 0.5f, 25.0f, 0.04f};
 
 	for (spring_time t0 = spring_now(), t1 = t0; !FileSystemInitializer::DoneIniting(); t1 = spring_now()) {
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		font->Begin();
 		font->SetTextColor(color.x, color.y, color.z, color.w);
-		font->glFormat(coors.x - 0.1f, coors.y                 , coors.z, FONT_NORM, "[Initializing File System]");
-		font->glFormat(coors.x - 0.1f, coors.y - coors.w * 1.0f, coors.z, FONT_NORM, "* archives scanned: %u", CArchiveScanner::GetNumScannedArchives());
-		font->glFormat(coors.x - 0.1f, coors.y - coors.w * 2.0f, coors.z, FONT_NORM, "*  seconds elapsed: %.1f", (t1 - t0).toSecsf());
+		font->glFormat(coors.x - 0.125f, coors.y                 , coors.z, FONT_NORM, "[Initializing Virtual File System]");
+		font->glFormat(coors.x - 0.120f, coors.y - coors.w * 1.0f, coors.z, FONT_NORM, "* archives scanned: %u", CArchiveScanner::GetNumScannedArchives());
+		font->glFormat(coors.x - 0.120f, coors.y - coors.w * 2.0f, coors.z, FONT_NORM, "* scantime elapsed: %.1fms", (t1 - t0).toMilliSecsf());
 		font->End();
 
 		globalRendering->SwapBuffers(true, true);
