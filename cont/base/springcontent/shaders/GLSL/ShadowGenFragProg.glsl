@@ -7,6 +7,11 @@ varying mat4 shadowViewMat;
 varying mat4 shadowProjMat;
 varying vec4 vertexModelPos;
 
+#if (SUPPORT_DEPTH_LAYOUT == 1)
+// preserve early-z performance if possible
+layout(depth_unchanged) out float gl_FragDepth;
+#endif
+
 
 void main() {
 	#if 0
@@ -15,7 +20,7 @@ void main() {
 		discard;
 	#endif
 
-	#if 1
+	#if (SHADOWGEN_PER_FRAGMENT == 1)
 	// note: voids glPolygonOffset calls
 	vec4 vertexShadowPos = shadowViewMat * vertexModelPos;
 		vertexShadowPos.xy *= (inversesqrt(abs(vertexShadowPos.xy) + shadowParams.zz) + shadowParams.ww);
@@ -29,16 +34,16 @@ void main() {
 	float  clipDepth = vertexShadowClipPos.z / vertexShadowClipPos.w;
 
 	#if (SUPPORT_CLIP_CONTROL == 1)
-	// shadow PM is pre-adjusted
+	// ZTO; shadow PM is pre-adjusted
 	gl_FragDepth = (depthRange * clipDepth) + nearDepth;
 	#else
-	// useful to keep around
+	// NOTO; useful to keep around
 	gl_FragDepth = ((depthRange * clipDepth) + nearDepth + farDepth) * 0.5;
 	#endif
 
 	#else
 
-	// no-op, but breaks early-z
+	// no-op
 	gl_FragDepth = gl_FragCoord.z;
 	#endif
 }

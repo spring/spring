@@ -4,6 +4,7 @@
 #define _GLOBAL_RENDERING_INFO_H
 
 #include <SDL_version.h>
+#include "System/type2.h"
 
 struct GlobalRenderingInfo {
 	const char* gpuName;
@@ -17,6 +18,8 @@ struct GlobalRenderingInfo {
 
 	char glVersionShort[256];
 	char glslVersionShort[256];
+
+	int2 glContextVersion;
 
 	SDL_version sdlVersionCompiled;
 	SDL_version sdlVersionLinked;

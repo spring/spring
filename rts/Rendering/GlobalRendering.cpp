@@ -135,6 +135,7 @@ CR_REG_METADATA(CGlobalRendering, (
 	CR_IGNORED(support24bitDepthBuffer),
 	CR_IGNORED(supportRestartPrimitive),
 	CR_IGNORED(supportClipSpaceControl),
+	CR_IGNORED(supportFragDepthLayout),
 	CR_IGNORED(haveARB),
 	CR_IGNORED(haveGLSL),
 	CR_IGNORED(glslMaxVaryings),
@@ -221,6 +222,7 @@ CGlobalRendering::CGlobalRendering()
 	, support24bitDepthBuffer(false)
 	, supportRestartPrimitive(false)
 	, supportClipSpaceControl(false)
+	, supportFragDepthLayout(false)
 	, haveARB(false)
 	, haveGLSL(false)
 
@@ -622,6 +624,8 @@ void CGlobalRendering::SetGLSupportFlags()
 	#if (ENABLE_CLIP_CONTROL == 1)
 	supportClipSpaceControl = GLEW_ARB_clip_control;
 	#endif
+	supportFragDepthLayout = (globalRenderingInfo.glContextVersion.x >= 4 && globalRenderingInfo.glContextVersion.y >= 2);
+
 
 	// detect if GL_DEPTH_COMPONENT24 is supported (many ATIs don't;
 	// they seem to support GL_DEPTH_COMPONENT24 for static textures
@@ -961,10 +965,13 @@ bool CGlobalRendering::CheckGLMultiSampling() const
 		return false;
 	if (!GLEW_ARB_multisample)
 		return false;
+
 	GLint buffers = 0;
 	GLint samples = 0;
+
 	glGetIntegerv(GL_SAMPLE_BUFFERS, &buffers);
 	glGetIntegerv(GL_SAMPLES, &samples);
+
 	return (buffers != 0 && samples != 0);
 }
 
@@ -974,8 +981,12 @@ bool CGlobalRendering::CheckGLContextVersion(const int2& minCtx) const
 	return true;
 	#else
 	int2 tmpCtx = {0, 0};
+
 	glGetIntegerv(GL_MAJOR_VERSION, &tmpCtx.x);
 	glGetIntegerv(GL_MINOR_VERSION, &tmpCtx.y);
+
+	globalRenderingInfo.glContextVersion = tmpCtx;
+
 	// compare major * 10 + minor s.t. 4.1 evaluates as larger than 3.2
 	return ((tmpCtx.x * 10 + tmpCtx.y) >= (minCtx.x * 10 + minCtx.y));
 	#endif

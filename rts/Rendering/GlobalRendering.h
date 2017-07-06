@@ -236,6 +236,7 @@ public:
 
 	bool supportRestartPrimitive;
 	bool supportClipSpaceControl;
+	bool supportFragDepthLayout;
 
 	/**
 	 * Shader capabilities
