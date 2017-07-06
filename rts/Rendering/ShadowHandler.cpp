@@ -171,6 +171,7 @@ void CShadowHandler::LoadProjectionMatrix(const CCamera* shadowCam)
 	// spm.SetZ(-FwdVector);
 
 	// same as glOrtho(0, 1,  0, 1,  0, -1); maps [0,1] to [-1,1]
+	spm.LoadIdentity();
 	spm.Translate(-OnesVector);
 	spm.Scale(OnesVector * 2.0f);
 
