@@ -318,6 +318,10 @@ bool SpringApp::InitFileSystem()
 		font->End();
 
 		globalRendering->SwapBuffers(true, true);
+
+		// prevent WM's from assuming the window is unresponsive and
+		// (in recent versions of Windows) generating a kill-request
+		SDL_PollEvent(nullptr);
 	}
 
 
@@ -327,6 +331,8 @@ bool SpringApp::InitFileSystem()
 	#endif
 
 	ThreadPool::SetDefaultThreadCount();
+	// see InputHandler::PushEvents
+	streflop::streflop_init<streflop::Simple>();
 	return ret;
 }
 
