@@ -91,7 +91,9 @@ echo "${versionInfo}" > ./VERSION
 rm -rf	${dir}/.git \
 	${dir}/.gitignore \
 	${dir}/.gitmodules \
-	${dir}/.mailmap
+	${dir}/.mailmap \
+	${dir}/tools/pr-downloader/src/lsl \
+	${dir}/tools/pr-downloader/src/lib/cimg
 
 cd ..
 # XXX use git-archive instead? (submodules may cause a bit trouble with it)
