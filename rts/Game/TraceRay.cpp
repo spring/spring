@@ -248,29 +248,32 @@ float TraceRay(
 				for (CUnit* u: quad.units) {
 					if (u == owner)
 						continue;
+
 					if (!u->HasCollidableStateBit(CSolidObject::CSTATE_BIT_QUADMAPRAYS))
 						continue;
-					if (scanForAllies && u->allyteam == owner->allyteam)
-						continue;
-					if (scanForEnemies && u->allyteam != owner->allyteam)
-						continue;
-					if (scanForNeutrals && u->IsNeutral())
-						continue;
-					if (scanForCloaked && u->IsCloaked())
-						continue;
-					if (scanForNotInLOS && (u->losStatus[allyTeam] & LOS_INLOS) == 0)
+
+					bool doHitTest = false;
+
+					doHitTest |= (scanForAllies   && u->allyteam == owner->allyteam);
+					doHitTest |= (scanForEnemies  && u->allyteam != owner->allyteam);
+					doHitTest |= (scanForNeutrals && u->IsNeutral());
+					doHitTest |= (scanForCloaked  && u->IsCloaked());
+					doHitTest |= (scanForNotInLOS && (u->losStatus[allyTeam] & LOS_INLOS) == 0);
+
+					if (!doHitTest)
 						continue;
 
 					if (CCollisionHandler::DetectHit(u, u->GetTransformMatrix(true), pos, pos + dir * traceLength, &cq, true)) {
 						const float len = cq.GetHitPosDist(pos, dir);
 
 						// we want the closest unit (intersection point) on the ray
-						if (len < traceLength) {
-							traceLength = len;
+						if (len >= traceLength)
+							continue;
 
-							hitUnit = u;
-							*hitColQuery = cq;
-						}
+						traceLength = len;
+
+						hitUnit = u;
+						*hitColQuery = cq;
 					}
 				}
 			}
