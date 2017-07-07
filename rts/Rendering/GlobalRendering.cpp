@@ -725,6 +725,7 @@ void CGlobalRendering::LogVersionInfo(const char* sdlVersionStr, const char* glV
 	LOG("\t24-bit Z-buffer support   : %i (-)", support24bitDepthBuffer);
 	LOG("\tprimitive-restart support : %i (%i)", supportRestartPrimitive, glewIsExtensionSupported("GL_NV_primitive_restart"));
 	LOG("\tclip-space control support: %i (%i)", supportClipSpaceControl, glewIsExtensionSupported("GL_ARB_clip_control"));
+	LOG("\tfrag-depth layout support : %i (-)", supportFragDepthLayout);
 	LOG("\t");
 	LOG("\tmax. FBO samples             : %i", FBO::GetMaxSamples());
 	LOG("\tmax. texture size            : %i", maxTextureSize);
@@ -985,6 +986,7 @@ bool CGlobalRendering::CheckGLContextVersion(const int2& minCtx) const
 	glGetIntegerv(GL_MAJOR_VERSION, &tmpCtx.x);
 	glGetIntegerv(GL_MINOR_VERSION, &tmpCtx.y);
 
+	// keep this for convenience
 	globalRenderingInfo.glContextVersion = tmpCtx;
 
 	// compare major * 10 + minor s.t. 4.1 evaluates as larger than 3.2
