@@ -37,7 +37,7 @@ namespace TraceRay {
 		const float3& pos,
 		const float3& dir,
 		float traceLength,
-		int avoidFlags,
+		int traceFlags,
 		const CUnit* owner,
 		CUnit*& hitUnit,
 		CFeature*& hitFeature,
@@ -47,7 +47,7 @@ namespace TraceRay {
 		const float3& pos,
 		const float3& dir,
 		float traceLength,
-		int avoidFlags,
+		int traceFlags,
 		int allyTeam,
 		const CUnit* owner,
 		CUnit*& hitUnit,
@@ -85,7 +85,7 @@ namespace TraceRay {
 		float length,
 		float spread,
 		int allyteam,
-		int avoidFlags,
+		int traceFlags,
 		CUnit* owner);
 
 	/**
@@ -100,7 +100,7 @@ namespace TraceRay {
 		float quadratic,
 		float spread,
 		int allyteam,
-		int avoidFlags,
+		int traceFlags,
 		CUnit* owner);
 }
 

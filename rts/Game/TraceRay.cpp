@@ -173,22 +173,26 @@ float TraceRay(
 	const float3& pos,
 	const float3& dir,
 	float traceLength,
-	int avoidFlags,
+	int traceFlags,
 	int allyTeam,
 	const CUnit* owner,
 	CUnit*& hitUnit,
 	CFeature*& hitFeature,
 	CollisionQuery* hitColQuery
 ) {
-	const bool noEnemies  = ((avoidFlags & Collision::NOENEMIES   ) != 0);
-	const bool noAllies   = ((avoidFlags & Collision::NOFRIENDLIES) != 0);
-	const bool noFeatures = ((avoidFlags & Collision::NOFEATURES  ) != 0);
-	const bool noNeutrals = ((avoidFlags & Collision::NONEUTRALS  ) != 0);
-	const bool noGround   = ((avoidFlags & Collision::NOGROUND    ) != 0);
-	const bool noCloaked  = ((avoidFlags & Collision::NOCLOAKED   ) != 0);
-	const bool noNotInLOS = ((avoidFlags & Collision::NONOTINLOS  ) != 0);
-
-	const bool noUnits = noEnemies && noAllies && noNeutrals;
+	// NOTE:
+	//   the bits here and in Test*Cone are interpreted as "do not scan for {enemy,friendly,...}
+	//   objects in quads" rather than "return false if ray hits an {enemy,friendly,...} object"
+	//   consequently a weapon with (e.g.) avoidFriendly=true that wants to check whether it has
+	//   a free line of fire should *not* set the NOFRIENDLIES bit in its trace-flags, etc
+	const bool scanForEnemies  = ((traceFlags & Collision::NOENEMIES   ) == 0);
+	const bool scanForAllies   = ((traceFlags & Collision::NOFRIENDLIES) == 0);
+	const bool scanForFeatures = ((traceFlags & Collision::NOFEATURES  ) == 0);
+	const bool scanForNeutrals = ((traceFlags & Collision::NONEUTRALS  ) == 0);
+	const bool scanForGround   = ((traceFlags & Collision::NOGROUND    ) == 0);
+	const bool scanForCloaked  = ((traceFlags & Collision::NOCLOAKED   ) == 0);
+	const bool scanForNotInLOS = ((traceFlags & Collision::NONOTINLOS  ) == 0);
+	const bool scanForAnyUnits = scanForEnemies || scanForAllies || scanForNeutrals || scanForCloaked || scanForNotInLOS;
 
 	hitFeature = nullptr;
 	hitUnit = nullptr;
@@ -196,7 +200,7 @@ float TraceRay(
 	if (dir == ZeroVector)
 		return -1.0f;
 
-	if (!noFeatures || !noUnits) {
+	if (scanForFeatures || scanForAnyUnits) {
 		CollisionQuery cq;
 
 		const auto& quads = quadField->GetQuadsOnRay(pos, dir, traceLength);
@@ -207,7 +211,7 @@ float TraceRay(
 			hitColQuery = &cq;
 
 		// feature intersection
-		if (!noFeatures) {
+		if (scanForFeatures) {
 			for (const int quadIdx: quads) {
 				const CQuadField::Quad& quad = quadField->GetQuad(quadIdx);
 
@@ -218,7 +222,7 @@ float TraceRay(
 					if (!f->HasCollidableStateBit(CSolidObject::CSTATE_BIT_QUADMAPRAYS))
 						continue;
 
-					if (noNotInLOS && !f->IsInLosForAllyTeam(allyTeam))
+					if (scanForNotInLOS && !f->IsInLosForAllyTeam(allyTeam))
 						continue;
 
 					if (CCollisionHandler::DetectHit(f, f->GetTransformMatrix(true), pos, pos + dir * traceLength, &cq, true)) {
@@ -237,7 +241,7 @@ float TraceRay(
 		}
 
 		// unit intersection
-		if (!noUnits) {
+		if (scanForAnyUnits) {
 			for (const int quadIdx: quads) {
 				const CQuadField::Quad& quad = quadField->GetQuad(quadIdx);
 
@@ -246,15 +250,15 @@ float TraceRay(
 						continue;
 					if (!u->HasCollidableStateBit(CSolidObject::CSTATE_BIT_QUADMAPRAYS))
 						continue;
-					if (noAllies && u->allyteam == owner->allyteam)
+					if (scanForAllies && u->allyteam == owner->allyteam)
 						continue;
-					if (noEnemies && u->allyteam != owner->allyteam)
+					if (scanForEnemies && u->allyteam != owner->allyteam)
 						continue;
-					if (noNeutrals && u->IsNeutral())
+					if (scanForNeutrals && u->IsNeutral())
 						continue;
-					if (noCloaked && u->IsCloaked())
+					if (scanForCloaked && u->IsCloaked())
 						continue;
-					if (noNotInLOS && (u->losStatus[allyTeam] & LOS_INLOS) == 0)
+					if (scanForNotInLOS && (u->losStatus[allyTeam] & LOS_INLOS) == 0)
 						continue;
 
 					if (CCollisionHandler::DetectHit(u, u->GetTransformMatrix(true), pos, pos + dir * traceLength, &cq, true)) {
@@ -277,7 +281,7 @@ float TraceRay(
 		}
 	}
 
-	if (!noGround) {
+	if (scanForGround) {
 		// ground intersection
 		const float groundLength = CGround::LineGroundCol(pos, pos + dir * traceLength);
 
@@ -467,7 +471,7 @@ bool TestCone(
 	float length,
 	float spread,
 	int allyteam,
-	int avoidFlags,
+	int traceFlags,
 	CUnit* owner
 ) {
 	const auto& quads = quadField->GetQuadsOnRay(from, dir, length);
@@ -475,14 +479,14 @@ bool TestCone(
 	if (quads.empty())
 		return true;
 
-	const bool noAllies   = ((avoidFlags & Collision::NOFRIENDLIES) != 0);
-	const bool noNeutrals = ((avoidFlags & Collision::NONEUTRALS  ) != 0);
-	const bool noFeatures = ((avoidFlags & Collision::NOFEATURES  ) != 0);
+	const bool scanForAllies   = ((traceFlags & Collision::NOFRIENDLIES) == 0);
+	const bool scanForNeutrals = ((traceFlags & Collision::NONEUTRALS  ) == 0);
+	const bool scanForFeatures = ((traceFlags & Collision::NOFEATURES  ) == 0);
 
 	for (const int quadIdx: quads) {
 		const CQuadField::Quad& quad = quadField->GetQuad(quadIdx);
 
-		if (!noAllies) {
+		if (scanForAllies) {
 			for (const CUnit* u: quad.teamUnits[allyteam]) {
 				if (u == owner)
 					continue;
@@ -494,7 +498,7 @@ bool TestCone(
 			}
 		}
 
-		if (!noNeutrals) {
+		if (scanForNeutrals) {
 			for (const CUnit* u: quad.units) {
 				if (!u->IsNeutral())
 					continue;
@@ -508,7 +512,7 @@ bool TestCone(
 			}
 		}
 
-		if (!noFeatures) {
+		if (scanForFeatures) {
 			for (const CFeature* f: quad.features) {
 				if (!f->HasCollidableStateBit(CSolidObject::CSTATE_BIT_QUADMAPRAYS))
 					continue;
@@ -532,22 +536,23 @@ bool TestTrajectoryCone(
 	float quadratic,
 	float spread,
 	int allyteam,
-	int avoidFlags,
+	int traceFlags,
 	CUnit* owner
 ) {
 	const auto& quads = quadField->GetQuadsOnRay(from, dir, length);
+
 	if (quads.empty())
 		return true;
 
-	const bool noAllies   = ((avoidFlags & Collision::NOFRIENDLIES) != 0);
-	const bool noNeutrals = ((avoidFlags & Collision::NONEUTRALS  ) != 0);
-	const bool noFeatures = ((avoidFlags & Collision::NOFEATURES  ) != 0);
+	const bool scanForAllies   = ((traceFlags & Collision::NOFRIENDLIES) == 0);
+	const bool scanForNeutrals = ((traceFlags & Collision::NONEUTRALS  ) == 0);
+	const bool scanForFeatures = ((traceFlags & Collision::NOFEATURES  ) == 0);
 
 	for (const int quadIdx: quads) {
 		const CQuadField::Quad& quad = quadField->GetQuad(quadIdx);
 
 		// friendly units in this quad
-		if (!noAllies) {
+		if (scanForAllies) {
 			for (const CUnit* u: quad.teamUnits[allyteam]) {
 				if (u == owner)
 					continue;
@@ -561,7 +566,7 @@ bool TestTrajectoryCone(
 		}
 
 		// neutral units in this quad
-		if (!noNeutrals) {
+		if (scanForNeutrals) {
 			for (const CUnit* u: quad.units) {
 				if (!u->IsNeutral())
 					continue;
@@ -576,7 +581,7 @@ bool TestTrajectoryCone(
 		}
 
 		// features in this quad
-		if (!noFeatures) {
+		if (scanForFeatures) {
 			for (const CFeature* f: quad.features) {
 				if (!f->HasCollidableStateBit(CSolidObject::CSTATE_BIT_QUADMAPRAYS))
 					continue;

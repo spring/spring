@@ -980,10 +980,7 @@ bool CWeapon::HaveFreeLineOfFire(const float3 srcPos, const float3 tgtPos, const
 	}
 
 	// friendly, neutral & feature check
-	if (TraceRay::TestCone(srcPos, tgtDir, length, spread, owner->allyteam, avoidFlags, owner))
-		return false;
-
-	return true;
+	return (!TraceRay::TestCone(srcPos, tgtDir, length, spread, owner->allyteam, avoidFlags, owner));
 }
 
 

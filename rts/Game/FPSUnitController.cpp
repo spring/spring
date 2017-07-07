@@ -50,7 +50,7 @@ void FPSUnitController::Update() {
 	CFeature* hitFeature = nullptr;
 
 	// SYNCED, do NOT use GuiTraceRay which also checks gu->spectatingFullView
-	float hitDist = TraceRay::TraceRay(absPos, viewDir, controllee->maxRange, Collision::NONOTINLOS, controllee, hitUnit, hitFeature);
+	float hitDist = TraceRay::TraceRay(absPos, viewDir, controllee->maxRange, ~Collision::NONOTINLOS, controllee, hitUnit, hitFeature);
 
 	if (hitUnit != nullptr) {
 		targetUnit = hitUnit;
