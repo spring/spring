@@ -54,7 +54,7 @@ typedef   void   (GLAPIENTRY *   glOrthoFuncPtr) (GLdouble left, GLdouble right,
 typedef   void   (GLAPIENTRY *gluOrtho2DFuncPtr) (GLdouble left, GLdouble right, GLdouble bottom, GLdouble top);
 typedef   void   (GLAPIENTRY * glFrustumFuncPtr) (GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble near, GLdouble far);
 
-static inline void __spring_glOrtho(GLdouble l, GLdouble r,  GLdouble b, GLdouble t,  GLdouble n, GLdouble f) {
+static inline void GLAPIENTRY __spring_glOrtho(GLdouble l, GLdouble r,  GLdouble b, GLdouble t,  GLdouble n, GLdouble f) {
 	#ifndef UNIT_TEST
 	glTranslatef(0.0f, 0.0f, 0.5f);
 	glScalef(1.0f, 1.0f, 0.5f);
@@ -63,8 +63,8 @@ static inline void __spring_glOrtho(GLdouble l, GLdouble r,  GLdouble b, GLdoubl
 	#error myGL.h included in unit-test?
 	#endif
 }
-static inline void __spring_gluOrtho2D(GLdouble l, GLdouble r,  GLdouble b, GLdouble t) { __spring_glOrtho(l, r, b, t, -1.0, 1.0); }
-static inline void __spring_glFrustum(GLdouble l, GLdouble r,  GLdouble b, GLdouble t,  GLdouble n, GLdouble f) {
+static inline void GLAPIENTRY __spring_gluOrtho2D(GLdouble l, GLdouble r,  GLdouble b, GLdouble t) { __spring_glOrtho(l, r, b, t, -1.0, 1.0); }
+static inline void GLAPIENTRY __spring_glFrustum(GLdouble l, GLdouble r,  GLdouble b, GLdouble t,  GLdouble n, GLdouble f) {
 	#ifndef UNIT_TEST
 	glTranslatef(0.0f, 0.0f, 0.5f);
 	glScalef(1.0f, 1.0f, 0.5f);
