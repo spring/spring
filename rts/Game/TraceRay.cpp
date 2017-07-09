@@ -191,8 +191,8 @@ float TraceRay(
 	const bool scanForNeutrals = ((traceFlags & Collision::NONEUTRALS  ) == 0);
 	const bool scanForGround   = ((traceFlags & Collision::NOGROUND    ) == 0);
 	const bool scanForCloaked  = ((traceFlags & Collision::NOCLOAKED   ) == 0);
-	const bool scanForNotInLOS = ((traceFlags & Collision::NONOTINLOS  ) == 0);
-	const bool scanForAnyUnits = scanForEnemies || scanForAllies || scanForNeutrals || scanForCloaked || scanForNotInLOS;
+
+	const bool scanForAnyUnits = scanForEnemies || scanForAllies || scanForNeutrals || scanForCloaked;
 
 	hitFeature = nullptr;
 	hitUnit = nullptr;
@@ -220,9 +220,6 @@ float TraceRay(
 					//   if f is non-blocking, ProjectileHandler will not test
 					//   for collisions with projectiles so we can skip it here
 					if (!f->HasCollidableStateBit(CSolidObject::CSTATE_BIT_QUADMAPRAYS))
-						continue;
-
-					if (scanForNotInLOS && !f->IsInLosForAllyTeam(allyTeam))
 						continue;
 
 					if (CCollisionHandler::DetectHit(f, f->GetTransformMatrix(true), pos, pos + dir * traceLength, &cq, true)) {
@@ -258,7 +255,6 @@ float TraceRay(
 					doHitTest |= (scanForEnemies  && u->allyteam != owner->allyteam);
 					doHitTest |= (scanForNeutrals && u->IsNeutral());
 					doHitTest |= (scanForCloaked  && u->IsCloaked());
-					doHitTest |= (scanForNotInLOS && (u->losStatus[allyTeam] & LOS_INLOS) == 0);
 
 					if (!doHitTest)
 						continue;

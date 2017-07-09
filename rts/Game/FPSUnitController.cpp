@@ -49,10 +49,11 @@ void FPSUnitController::Update() {
 	CUnit* hitUnit = nullptr;
 	CFeature* hitFeature = nullptr;
 
+	// target-lock onto any unit (allied, enemy, neutral, ...) that is visible
 	// SYNCED, do NOT use GuiTraceRay which also checks gu->spectatingFullView
-	float hitDist = TraceRay::TraceRay(absPos, viewDir, controllee->maxRange, ~Collision::NONOTINLOS, controllee, hitUnit, hitFeature);
+	float hitDist = TraceRay::TraceRay(absPos, viewDir, controllee->maxRange, ~Collision::NOUNITS, controllee, hitUnit, hitFeature);
 
-	if (hitUnit != nullptr) {
+	if (hitUnit != nullptr && hitUnit->IsInLosForAllyTeam(controllee->allyteam)) {
 		targetUnit = hitUnit;
 		targetDist = hitDist;
 		targetPos  = hitUnit->pos;

@@ -22,7 +22,6 @@ namespace Collision {
 		NOFIREBASES  = 1 << 4, // ignored by rays
 		NOGROUND     = 1 << 5,
 		NOCLOAKED    = 1 << 6,
-		NONOTINLOS   = 1 << 7,
 		NOUNITS      = NOENEMIES | NOFRIENDLIES | NONEUTRALS
 	};
 }

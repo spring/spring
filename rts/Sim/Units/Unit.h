@@ -168,6 +168,8 @@ public:
 	void SetStunned(bool stun);
 	bool IsStunned() const { return stunned; }
 
+	bool IsInLosForAllyTeam(int allyTeam) const { return ((losStatus[allyTeam] & LOS_INLOS) != 0); }
+
 	void SetLosStatus(int allyTeam, unsigned short newStatus);
 	unsigned short CalcLosStatus(int allyTeam);
 	void UpdateLosStatus(int allyTeam);
