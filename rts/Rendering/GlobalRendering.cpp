@@ -7,7 +7,6 @@
 
 #include "GlobalRendering.h"
 #include "GlobalRenderingInfo.h"
-
 #include "Rendering/VerticalSync.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/FBO.h"
@@ -621,8 +620,10 @@ void CGlobalRendering::SetGLSupportFlags()
 	#ifdef GLEW_NV_primitive_restart
 	supportRestartPrimitive = GLEW_NV_primitive_restart;
 	#endif
-	#if (ENABLE_CLIP_CONTROL == 1)
-	supportClipSpaceControl = GLEW_ARB_clip_control;
+	#ifdef GLEW_ARB_clip_control
+	// use this only if we have a head-context; it came into existence with GL4.5
+	supportClipSpaceControl |= GLEW_ARB_clip_control;
+	supportClipSpaceControl &= (globalRenderingInfo.glContextVersion.x >= 4 && globalRenderingInfo.glContextVersion.y >= 5);
 	#endif
 	supportFragDepthLayout = (globalRenderingInfo.glContextVersion.x >= 4 && globalRenderingInfo.glContextVersion.y >= 2);
 
@@ -927,9 +928,11 @@ void CGlobalRendering::InitGLState()
 	glClearDepth(1.0f);
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LEQUAL);
-	#if (ENABLE_CLIP_CONTROL == 1)
+
+	#ifdef GLEW_ARB_clip_control
 	// avoid precision loss with default DR transform
-	glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE);
+	if (supportClipSpaceControl)
+		glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE);
 	#endif
 
 	// MSAA rasterization

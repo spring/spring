@@ -12,7 +12,10 @@
 //windows workarrounds
 #undef KeyPress
 #undef KeyRelease
+#else
+#include <unistd.h> // isatty
 #endif
+
 
 #include "Rendering/GL/myGL.h"
 #include "System/SpringApp.h"
@@ -20,13 +23,14 @@
 #include "aGui/Gui.h"
 #include "ExternalAI/IAILibraryManager.h"
 #include "Game/Benchmark.h"
+#include "Game/Camera.h"
 #include "Game/ClientSetup.h"
 #include "Game/GameSetup.h"
 #include "Game/GameVersion.h"
 #include "Game/GameController.h"
 #include "Game/Game.h"
 #include "Game/GlobalUnsynced.h"
-#include "Game/LoadScreen.h"
+#include "Game/LoadScreen.h" // XInitThreads via X11/Xlib
 #include "Game/PreGame.h"
 #include "Game/UI/KeyBindings.h"
 #include "Game/UI/KeyCodes.h"
@@ -82,12 +86,6 @@
 #include "System/Threading/ThreadPool.h"
 
 #include "lib/luasocket/src/restrictions.h"
-
-#ifdef WIN32
-	#include "System/Platform/Win/WinVersion.h"
-#else
-	#include <unistd.h>
-#endif
 
 
 
@@ -224,6 +222,7 @@ bool SpringApp::Init()
 	globalRendering->UpdateGLConfigs();
 	globalRendering->UpdateGLGeometry();
 	globalRendering->InitGLState();
+	CCamera::InitializeStatic();
 	UpdateInterfaceGeometry();
 	LoadFonts();
 	ClearScreen();

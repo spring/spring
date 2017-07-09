@@ -63,8 +63,6 @@ CCameraHandler* camHandler = nullptr;
 
 CCameraHandler::CCameraHandler()
 {
-	CCamera::InitializeStatic();
-
 	camTransState.startFOV  = 90.0f;
 	camTransState.timeStart =  0.0f;
 	camTransState.timeEnd   =  0.0f;

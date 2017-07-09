@@ -39,12 +39,6 @@
 	#define GL_INVALID_INDEX -1
 #endif
 
-#if (defined(GLEW_ARB_clip_control) && !defined(HEADLESS))
-#define ENABLE_CLIP_CONTROL 1
-#else
-#define ENABLE_CLIP_CONTROL 0
-#endif
-
 
 static inline void glVertexf3(const float3& v)    { glVertex3f(v.r, v.g, v.b); }
 static inline void glColorf3(const float3& v)     { glColor3f(v.r, v.g, v.b); }
@@ -55,10 +49,11 @@ static inline void glSecondaryColorf3(const float3& v) { glSecondaryColor3f(v.r,
 static inline void glColorf4(const float3& v, const float alpha) { glColor4f(v.r, v.g, v.b, alpha); }
 static inline void glUniformf3(const GLint location, const float3& v) { glUniform3f(location, v.r, v.g, v.b); }
 
-#if (ENABLE_CLIP_CONTROL == 1)
-#undef glOrtho
-#undef gluOrtho2D
-#undef glFrustum
+
+
+typedef   void   (*   glOrthoFuncPtr) (GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble near, GLdouble far);
+typedef   void   (*gluOrtho2DFuncPtr) (GLdouble left, GLdouble right, GLdouble bottom, GLdouble top);
+typedef   void   (* glFrustumFuncPtr) (GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble near, GLdouble far);
 
 static inline void __spring_glOrtho(GLdouble l, GLdouble r,  GLdouble b, GLdouble t,  GLdouble n, GLdouble f) {
 	glTranslatef(0.0f, 0.0f, 0.5f);
@@ -72,11 +67,19 @@ static inline void __spring_glFrustum(GLdouble l, GLdouble r,  GLdouble b, GLdou
 	glFrustum(l, r,  b, t,  n, f);
 }
 
-#define glOrtho __spring_glOrtho
-#define gluOrtho2D __spring_gluOrtho2D
-#define glFrustum __spring_glFrustum
+static    glOrthoFuncPtr    glOrthoFuncs[2] = {glOrtho, __spring_glOrtho};
+static gluOrtho2DFuncPtr gluOrtho2DFuncs[2] = {gluOrtho2D, __spring_gluOrtho2D};
+static  glFrustumFuncPtr  glFrustumFuncs[2] = {glFrustum, __spring_glFrustum};
 
-#endif
+#undef glOrtho
+#undef gluOrtho2D
+#undef glFrustum
+
+#define glOrtho       glOrthoFuncs[globalRendering->supportClipSpaceControl]
+#define gluOrtho2D gluOrtho2DFuncs[globalRendering->supportClipSpaceControl]
+#define glFrustum   glFrustumFuncs[globalRendering->supportClipSpaceControl]
+
+
 
 void WorkaroundATIPointSizeBug();
 void SetTexGen(const float scaleX, const float scaleZ, const float offsetX, const float offsetZ);

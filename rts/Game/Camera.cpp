@@ -5,12 +5,11 @@
 #include "Camera.h"
 #include "UI/MouseHandler.h"
 #include "Map/ReadMap.h"
+#include "Rendering/GlobalRendering.h"
 #include "System/myMath.h"
 #include "System/float3.h"
 #include "System/Matrix44f.h"
 #include "System/Config/ConfigHandler.h"
-#include "Rendering/GlobalRendering.h"
-#include "Rendering/GL/myGL.h"
 
 
 CONFIG(float, EdgeMoveWidth)
@@ -28,9 +27,17 @@ static CCamera cameras[CCamera::CAMTYPE_COUNT];
 
 void CCamera::SetActiveCamera(unsigned int camType) { cameras[CAMTYPE_ACTIVE].SetCamType(camType); }
 void CCamera::InitializeStatic() {
+	CMatrix44f clipCtrlMatrix;
+
+	if (globalRendering->supportClipSpaceControl) {
+		clipCtrlMatrix.Translate(FwdVector * 0.5f);
+		clipCtrlMatrix.Scale(OnesVector - (FwdVector * 0.5f));
+	}
+
 	// initialize all global cameras
 	for (unsigned int i = CAMTYPE_PLAYER; i < CAMTYPE_COUNT; i++) {
 		cameras[i].SetCamType(i);
+		cameras[i].SetClipCtrlMatrix(clipCtrlMatrix);
 	}
 
 	SetActiveCamera(CAMTYPE_PLAYER);
@@ -64,11 +71,6 @@ CCamera::CCamera(unsigned int cameraType)
 	memset(rotState, 0, sizeof(rotState));
 
 	SetVFOV(45.0f);
-
-	#if (ENABLE_CLIP_CONTROL == 1)
-	clipControlMatrix.Translate(FwdVector * 0.5f);
-	clipControlMatrix.Scale(OnesVector - (FwdVector * 0.5f));
-	#endif
 }
 
 void CCamera::CopyState(const CCamera* cam)

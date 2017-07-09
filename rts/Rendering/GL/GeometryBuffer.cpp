@@ -43,12 +43,12 @@ void GL::GeometryBuffer::Clear() const {
 
 void GL::GeometryBuffer::SetDepthRange(float nearDepth, float farDepth) const {
 	#if 0
-	#if (ENABLE_CLIP_CONTROL == 1)
-	// TODO: need to inform shaders about this, modify PM instead
-	glDepthRangef(nearDepth, farDepth);
-	glClearDepth(farDepth);
-	glDepthFunc((nearDepth <= farDepth)? GL_LEQUAL: GL_GREATER);
-	#endif
+	if (globalRendering->supportClipSpaceControl) {
+		// TODO: need to inform shaders about this, modify PM instead
+		glDepthRangef(nearDepth, farDepth);
+		glClearDepth(farDepth);
+		glDepthFunc((nearDepth <= farDepth)? GL_LEQUAL: GL_GREATER);
+	}
 	#else
 	glClearDepth(std::max(nearDepth, farDepth));
 	glDepthFunc(GL_LEQUAL);
