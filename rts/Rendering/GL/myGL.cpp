@@ -238,16 +238,6 @@ bool ShowDriverWarning(const char* glVendor, const char* glRenderer)
 		return true;
 	}
 
-	if (gpuModel.find("mesa ") != np || gpuModel.find("gallium ") != np) {
-		const char* msg =
-			"You are using an open-source (Mesa / Gallium) graphics card driver, "
-			"which may not work well with the Spring engine.\n\nIf you experience "
-			"problems, switch to proprietary drivers or try \"spring --safemode\".\n";
-
-		LOG_L(L_WARNING, "%s", msg);
-		Platform::MsgBox(msg, "Warning", MBF_EXCL);
-		return true;
-	}
 #endif
 
 	return true;
