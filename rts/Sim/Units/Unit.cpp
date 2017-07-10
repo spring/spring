@@ -558,77 +558,8 @@ void CUnit::ForcedKillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed, b
 
 	isDead = true;
 
-	//release attached units
-	for (TransportedUnit& tu: transportedUnits) {
-		CUnit* transportee = tu.unit;
-		assert(transportee != this);
-
-		if (transportee->isDead)
-			continue;
-
-		transportee->SetTransporter(nullptr);
-		transportee->DeleteDeathDependence(this, DEPENDENCE_TRANSPORTER);
-		transportee->UpdateVoidState(false);
-
-		if (!unitDef->releaseHeld) {
-			if (!selfDestruct) {
-				// we don't want transportees to leave a corpse
-				transportee->DoDamage(DamageArray(1e6f), ZeroVector, NULL, -DAMAGE_EXTSOURCE_KILLED, -1);
-			}
-
-			transportee->KillUnit(attacker, selfDestruct, reclaimed);
-		} else {
-			// NOTE: game's responsibility to deal with edge-cases now
-			transportee->Move(transportee->pos.cClampInBounds(), false);
-
-			// if this transporter uses the piece-underneath-ground
-			// method to "hide" transportees, place transportee near
-			// the transporter's place of death
-			if (transportee->pos.y < CGround::GetHeightReal(transportee->pos.x, transportee->pos.z)) {
-				const float r1 = transportee->radius + radius;
-				const float r2 = r1 * std::max(unitDef->unloadSpread, 1.0f);
-
-				// try to unload in a presently unoccupied spot
-				// (if no such spot, unload on transporter wreck)
-				for (int i = 0; i < 10; ++i) {
-					float3 pos = transportee->pos;
-					pos.x += (gsRNG.NextFloat() * 2.0f * r2 - r2);
-					pos.z += (gsRNG.NextFloat() * 2.0f * r2 - r2);
-					pos.y = CGround::GetHeightReal(pos.x, pos.z);
-
-					if (!pos.IsInBounds())
-						continue;
-
-					if (quadField->NoSolidsExact(pos, transportee->radius + 2.0f, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS)) {
-						transportee->Move(pos, false);
-						break;
-					}
-				}
-			} else {
-				if (transportee->unitDef->IsGroundUnit()) {
-					transportee->SetPhysicalStateBit(CSolidObject::PSTATE_BIT_FLYING);
-					transportee->SetPhysicalStateBit(CSolidObject::PSTATE_BIT_SKIDDING);
-				}
-			}
-
-			transportee->moveType->SlowUpdate();
-			transportee->moveType->LeaveTransport();
-
-			// issue a move order so that units dropped from flying
-			// transports won't try to return to their pick-up spot
-			if (unitDef->canfly && transportee->unitDef->canmove) {
-				transportee->commandAI->GiveCommand(Command(CMD_MOVE, transportee->pos));
-			}
-
-			transportee->SetStunned(transportee->paralyzeDamage > (modInfo.paralyzeOnMaxHealth? transportee->maxHealth: transportee->health));
-			transportee->SetVelocityAndSpeed(speed * (0.5f + 0.5f * gsRNG.NextFloat()));
-
-			eventHandler.UnitUnloaded(transportee, this);
-		}
-	}
-
-	transportedUnits.clear();
-
+	// release attached units
+	ReleaseTransportees(attacker, selfDestruct, reclaimed);
 
 	// pre-destruction event; unit may be kept around for its death sequence
 	eventHandler.UnitDestroyed(this, attacker);
@@ -819,14 +750,15 @@ void CUnit::Update()
 
 	UpdatePhysicalState(0.1f);
 	UpdatePosErrorParams(true, false);
+	UpdateTransportees(); // none if already dead
 
 	if (beingBuilt)
 		return;
+	if (isDead)
+		return;
 
-	if (travelPeriod != 0.0f) {
-		travel += speed.w;
-		travel = math::fmod(travel, travelPeriod);
-	}
+	if (travelPeriod != 0.0f)
+		travel = math::fmod(travel += speed.w, travelPeriod);
 
 	recentDamage *= 0.9f;
 	flankingBonusMobility += flankingBonusMobilityAdd;
@@ -836,38 +768,37 @@ void CUnit::Update()
 		for (CWeapon* w: weapons) {
 			++(w->reloadStatus);
 		}
+
 		return;
 	}
 
-	restTime++;
-	outOfMapTime = (pos.IsInBounds())? 0: outOfMapTime + 1;
+	restTime += 1;
+	outOfMapTime += 1;
+	outOfMapTime *= (!pos.IsInBounds());
+}
 
-
-	if (isDead)
-		return;
-
+void CUnit::UpdateTransportees()
+{
 	for (TransportedUnit& tu: transportedUnits) {
 		CUnit* transportee = tu.unit;
-		int piece = tu.piece;
 
 		transportee->mapSquare = mapSquare;
 
 		float3 relPiecePos = ZeroVector;
 		float3 absPiecePos = pos;
 
-		if (piece >= 0) {
-			relPiecePos = script->GetPiecePos(piece);
+		if (tu.piece >= 0) {
+			relPiecePos = script->GetPiecePos(tu.piece);
 			absPiecePos = this->GetObjectSpacePos(relPiecePos);
 		}
 
 		if (unitDef->holdSteady) {
 			// slave transportee orientation to piece
-			if (piece >= 0) {
+			if (tu.piece >= 0) {
 				const CMatrix44f& transMat = GetTransformMatrix(true);
-				const CMatrix44f& pieceMat = script->GetPieceMatrix(piece);
-				const CMatrix44f  slaveMat = transMat * pieceMat;
+				const CMatrix44f& pieceMat = script->GetPieceMatrix(tu.piece);
 
-				transportee->SetDirVectors(slaveMat);
+				transportee->SetDirVectors(transMat * pieceMat);
 			}
 		} else {
 			// slave transportee orientation to body
@@ -886,6 +817,97 @@ void CUnit::Update()
 			quadField->MovedUnit(transportee);
 		}
 	}
+}
+
+void CUnit::ReleaseTransportees(CUnit* attacker, bool selfDestruct, bool reclaimed)
+{
+	for (TransportedUnit& tu: transportedUnits) {
+		CUnit* transportee = tu.unit;
+		assert(transportee != this);
+
+		if (transportee->isDead)
+			continue;
+
+		transportee->SetTransporter(nullptr);
+		transportee->DeleteDeathDependence(this, DEPENDENCE_TRANSPORTER);
+		transportee->UpdateVoidState(false);
+
+		if (!unitDef->releaseHeld) {
+			// we don't want transportees to leave a corpse
+			if (!selfDestruct)
+				transportee->DoDamage(DamageArray(1e6f), ZeroVector, nullptr, -DAMAGE_EXTSOURCE_KILLED, -1);
+
+			transportee->KillUnit(attacker, selfDestruct, reclaimed);
+		} else {
+			// NOTE: game's responsibility to deal with edge-cases now
+			transportee->Move(transportee->pos.cClampInBounds(), false);
+
+			// if this transporter uses the piece-underneath-ground
+			// method to "hide" transportees, place transportee near
+			// the transporter's place of death
+			if (transportee->pos.y < CGround::GetHeightReal(transportee->pos.x, transportee->pos.z)) {
+				const float r1 = transportee->radius + radius;
+				const float r2 = r1 * std::max(unitDef->unloadSpread, 1.0f);
+
+				// try to unload in a presently unoccupied spot
+				// (if no such spot, unload on transporter wreck)
+				for (int i = 0; i < 10; ++i) {
+					float3 pos = transportee->pos;
+					pos.x += (gsRNG.NextFloat() * 2.0f * r2 - r2);
+					pos.z += (gsRNG.NextFloat() * 2.0f * r2 - r2);
+					pos.y = CGround::GetHeightReal(pos.x, pos.z);
+
+					if (!pos.IsInBounds())
+						continue;
+
+					if (quadField->NoSolidsExact(pos, transportee->radius + 2.0f, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS)) {
+						transportee->Move(pos, false);
+						break;
+					}
+				}
+			} else {
+				if (transportee->unitDef->IsGroundUnit()) {
+					transportee->SetPhysicalStateBit(CSolidObject::PSTATE_BIT_FLYING);
+					transportee->SetPhysicalStateBit(CSolidObject::PSTATE_BIT_SKIDDING);
+				}
+			}
+
+			transportee->moveType->SlowUpdate();
+			transportee->moveType->LeaveTransport();
+
+			// issue a move order so that units dropped from flying
+			// transports won't try to return to their pick-up spot
+			if (unitDef->canfly && transportee->unitDef->canmove) {
+				transportee->commandAI->GiveCommand(Command(CMD_MOVE, transportee->pos));
+			}
+
+			transportee->SetStunned(transportee->paralyzeDamage > (modInfo.paralyzeOnMaxHealth? transportee->maxHealth: transportee->health));
+			transportee->SetVelocityAndSpeed(speed * (0.5f + 0.5f * gsRNG.NextFloat()));
+
+			eventHandler.UnitUnloaded(transportee, this);
+		}
+	}
+
+	transportedUnits.clear();
+}
+
+void CUnit::TransporteeKilled(const CObject* o)
+{
+	const auto pred = [&](const TransportedUnit& tu) { return (tu.unit == o); };
+	const auto iter = std::find_if(transportedUnits.begin(), transportedUnits.end(), pred);
+
+	if (iter == transportedUnits.end())
+		return;
+
+	const CUnit* unit = iter->unit;
+
+	transportCapacityUsed -= (unit->xsize / SPRING_FOOTPRINT_SCALE);
+	transportMassUsed -= unit->mass;
+
+	SetMass(mass - unit->mass);
+
+	*iter = transportedUnits.back();
+	transportedUnits.pop_back();
 }
 
 void CUnit::UpdateResources()
@@ -1777,20 +1799,7 @@ void CUnit::SetLastAttacker(CUnit* attacker)
 
 void CUnit::DependentDied(CObject* o)
 {
-	for (TransportedUnit& tu: transportedUnits) {
-		if (tu.unit != o)
-			continue;
-
-		const CUnit* unit = tu.unit;
-
-		transportCapacityUsed -= unit->xsize / SPRING_FOOTPRINT_SCALE;
-		transportMassUsed -= unit->mass;
-		SetMass(mass - unit->mass);
-
-		tu = transportedUnits.back();
-		transportedUnits.pop_back();
-		break;
-	}
+	TransporteeKilled(o);
 
 	if (o == curTarget.unit) { DropCurrentAttackTarget(); }
 	if (o == soloBuilder)    { soloBuilder  = nullptr; }
@@ -2622,9 +2631,8 @@ bool CUnit::DetachUnitCore(CUnit* unit)
 		unit->SetTransporter(nullptr);
 		unit->unloadingTransportId = id;
 
-		if (dynamic_cast<CHoverAirMoveType*>(moveType)) {
+		if (dynamic_cast<CHoverAirMoveType*>(moveType) != nullptr)
 			unit->moveType->useHeading = true;
-		}
 
 		// de-stun detaching units in case we are not a fire-platform
 		unit->SetStunned(unit->paralyzeDamage > (modInfo.paralyzeOnMaxHealth? unit->maxHealth: unit->health));
