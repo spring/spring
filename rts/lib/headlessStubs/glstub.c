@@ -500,6 +500,7 @@ GLAPI void APIENTRY glPolygonOffset(GLfloat factor, GLfloat units) {}
 
 GLAPI void APIENTRY glPrimitiveRestartIndexNV(GLuint index) {}
 GLAPI void APIENTRY glGetCompressedTexImage(GLenum target, GLint lod, GLvoid * img) {}
+GLAPI void APIENTRY glDepthRange(GLdouble nearVal, GLdouble farVal) {}
 
 #ifdef __cplusplus
 } // extern "C"
