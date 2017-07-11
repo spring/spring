@@ -101,11 +101,11 @@ Lua:
  - Add Spring.{Set,Get}VideoCapturingMode() - this doesn't actually record the game in any way,
    it just regulates the framerate and interpolations.
  - add Engine and Platform global tables currently containing the following keys:
-	 Engine.version: string
-	 Engine.versionFull: string
-	 Engine.versionPatchSet: string
-	 Engine.buildFlags: string
-	 Engine.wordSize: number
+     Engine.version: string
+     Engine.versionFull: string
+     Engine.versionPatchSet: string
+     Engine.buildFlags: string
+     Engine.wordSize: number
 
      Platform.gpu: string, full GPU device name
      Platform.gpuVendor: string, one of "Nvidia", "Intel", "ATI", "Mesa", "Unknown"
@@ -123,8 +123,8 @@ Lua:
      Platform.sdlVersionLinkedMajor: number
      Platform.sdlVersionLinkedMinor: number
      Platform.sdlVersionLinkedPatch: number
-	 Platform.glSupportNonPowerOfTwoTex: boolean
-	 Platform.glSupportTextureQueryLOD: boolean
+     Platform.glSupportNonPowerOfTwoTex: boolean
+     Platform.glSupportTextureQueryLOD: boolean
      Platform.glSupport24bitDepthBuffer: boolean
      Platform.glSupportRestartPrimitive: boolean
      Platform.glSupportClipSpaceControl: boolean
