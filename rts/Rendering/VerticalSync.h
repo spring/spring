@@ -5,16 +5,16 @@
 
 class CVerticalSync {
 public:
-	CVerticalSync();
-	~CVerticalSync();
+	CVerticalSync(): interval(0) {}
 
-	void SetInterval();
-	void SetInterval(int i, bool updateConf = true);
-	void ConfigNotify(const std::string& key, const std::string& value);
-	int  GetInterval() const { return interval; }
+	void WrapNotifyOnChange();
+	void WrapRemoveObserver();
 
 	void Toggle();
-	void Delay() const;
+	void SetInterval();
+	void SetInterval(int i);
+	void ConfigNotify(const std::string& key, const std::string& value);
+	int  GetInterval() const { return interval; }
 
 	static CVerticalSync* GetInstance();
 

@@ -242,12 +242,14 @@ CGlobalRendering::CGlobalRendering()
 	, window(nullptr)
 	, glContext(nullptr)
 {
+	verticalSync->WrapNotifyOnChange();
 	configHandler->NotifyOnChange(this, {"TextureLODBias", "Fullscreen", "WindowBorderless"});
 }
 
 CGlobalRendering::~CGlobalRendering()
 {
 	configHandler->RemoveObserver(this);
+	verticalSync->WrapRemoveObserver();
 	DestroyWindowAndContext();
 }
 
@@ -511,9 +513,7 @@ void CGlobalRendering::SwapBuffers(bool allowSwapBuffers, bool clearErrors)
 
 	const spring_time pre = spring_now();
 
-	verticalSync->Delay();
 	SDL_GL_SwapWindow(window);
-
 	eventHandler.DbgTimingInfo(TIMING_SWAP, pre, spring_now());
 }
 

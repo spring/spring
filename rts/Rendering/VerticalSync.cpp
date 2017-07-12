@@ -13,6 +13,9 @@
 static constexpr int MAX_ADAPTIVE_INTERVAL = -6;
 static constexpr int MAX_STANDARD_INTERVAL = +6;
 
+static CVerticalSync instance;
+
+
 CONFIG(int, VSync).
 	defaultValue(0).
 	minimumValue(MAX_ADAPTIVE_INTERVAL).
@@ -24,27 +27,26 @@ CONFIG(int, VSync).
 
 CVerticalSync* CVerticalSync::GetInstance()
 {
-	static CVerticalSync instance;
 	return &instance;
 }
 
-CVerticalSync::CVerticalSync()
- : interval(0)
+void CVerticalSync::WrapNotifyOnChange()
 {
 	configHandler->NotifyOnChange(this, {"VSync"});
 }
 
-CVerticalSync::~CVerticalSync()
+void CVerticalSync::WrapRemoveObserver()
 {
+	// can't do this in the dtor because VerticalSync outlives configHandler
 	configHandler->RemoveObserver(this);
 }
 
 void CVerticalSync::ConfigNotify(const std::string& key, const std::string& value)
 {
-	SetInterval(configHandler->GetInt("VSync"), false);
+	SetInterval(configHandler->GetInt("VSync"));
 }
 
-void CVerticalSync::Delay() const {}
+
 void CVerticalSync::Toggle()
 {
 	// no-arg switch, select smallest interval
@@ -57,11 +59,14 @@ void CVerticalSync::Toggle()
 }
 
 void CVerticalSync::SetInterval() { SetInterval(configHandler->GetInt("VSync")); }
-void CVerticalSync::SetInterval(int i, bool updateConf)
+void CVerticalSync::SetInterval(int i)
 {
-	if (updateConf) {
-		configHandler->Set("VSync", interval = Clamp(i, MAX_ADAPTIVE_INTERVAL, MAX_STANDARD_INTERVAL));
-	}
+	// recursion is already prevented (Set only notifies on changed
+	// values), this just avoids making the SDL calls a second time
+	if ((i = Clamp(i, MAX_ADAPTIVE_INTERVAL, MAX_STANDARD_INTERVAL)) == interval)
+		return;
+
+	configHandler->Set("VSync", interval = i);
 
 	#if defined HEADLESS
 	return;
