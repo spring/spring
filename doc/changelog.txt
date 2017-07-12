@@ -132,7 +132,7 @@ Lua:
      Platform.osName: string, full name of the OS
      Platform.osFamily: string, one of "Windows", "Linux", "MacOSX", "FreeBSD", "Unknown"
  ! Game.{version,versionFull,versionPatchSet,buildFlags} now reside in the Engine table
-   Engine.wordSize indicates the build type and is either 4 or 8 (or 0 in synced code)
+   Engine.wordSize indicates the build type and is either 32 or 64 (or 0 in synced code)
  - Spring.SetWaterParams() can now be used without /cheat for modifying unsynced values.
  - Implemented gl.GetWaterRendering() to expose access to water rendering variables.
  ! Removed water rendering parameters from LuaConstGame, as they're no longer const.
