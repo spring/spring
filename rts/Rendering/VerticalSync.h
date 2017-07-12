@@ -5,15 +5,17 @@
 
 class CVerticalSync {
 public:
-	CVerticalSync(): interval(0) {}
+	CVerticalSync();
+	~CVerticalSync();
 
 	void SetInterval();
 	void SetInterval(int i);
+	void ConfigNotify(const std::string& key, const std::string& value);
 	int  GetInterval() const { return interval; }
 
 	void Toggle();
 	void Delay() const;
-	
+
 private:
 	int interval;
 };

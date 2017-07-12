@@ -1,5 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include <string>
 
 #include "VerticalSync.h"
 #include "GL/myGL.h"
@@ -24,9 +25,25 @@ CONFIG(int, VSync).
 
 CVerticalSync VSync;
 
+CVerticalSync::CVerticalSync()
+ : interval(0)
+{
+	configHandler->NotifyOnChange(this, {"VSync"});
+}
+
+CVerticalSync::~CVerticalSync()
+{
+	configHandler->RemoveObserver(this);
+}
+
+void CVerticalSync::ConfigNotify(const std::string& key, const std::string& value)
+{
+	SetInterval();
+}
 
 void CVerticalSync::Delay() const {}
-void CVerticalSync::Toggle() {
+void CVerticalSync::Toggle()
+{
 	// no-arg switch, select smallest interval
 	switch (Clamp(SDL_GL_GetSwapInterval(), -1, 1)) {
 		case -1: { SetInterval( 0); } break;
