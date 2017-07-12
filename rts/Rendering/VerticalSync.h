@@ -9,17 +9,19 @@ public:
 	~CVerticalSync();
 
 	void SetInterval();
-	void SetInterval(int i);
+	void SetInterval(int i, bool updateConf = true);
 	void ConfigNotify(const std::string& key, const std::string& value);
 	int  GetInterval() const { return interval; }
 
 	void Toggle();
 	void Delay() const;
 
+	static CVerticalSync* GetInstance();
+
 private:
 	int interval;
 };
 
-extern CVerticalSync VSync;
+#define verticalSync (CVerticalSync::GetInstance())
 
 #endif /* VSYNC_H */

@@ -2114,9 +2114,9 @@ public:
 
 	bool Execute(const UnsyncedAction& action) const {
 		if (action.GetArgs().empty()) {
-			VSync.Toggle();
+			verticalSync->Toggle();
 		} else {
-			VSync.SetInterval(atoi(action.GetArgs().c_str()));
+			verticalSync->SetInterval(atoi(action.GetArgs().c_str()));
 		}
 		return true;
 	}

@@ -22,8 +22,11 @@ CONFIG(int, VSync).
 		" Modes are -N (adaptive), +N (standard), or 0 (disabled)."
 	);
 
-
-CVerticalSync VSync;
+CVerticalSync* CVerticalSync::GetInstance()
+{
+	static CVerticalSync instance;
+	return &instance;
+}
 
 CVerticalSync::CVerticalSync()
  : interval(0)
@@ -38,7 +41,7 @@ CVerticalSync::~CVerticalSync()
 
 void CVerticalSync::ConfigNotify(const std::string& key, const std::string& value)
 {
-	SetInterval();
+	SetInterval(configHandler->GetInt("VSync"), false);
 }
 
 void CVerticalSync::Delay() const {}
@@ -54,9 +57,11 @@ void CVerticalSync::Toggle()
 }
 
 void CVerticalSync::SetInterval() { SetInterval(configHandler->GetInt("VSync")); }
-void CVerticalSync::SetInterval(int i)
+void CVerticalSync::SetInterval(int i, bool updateConf)
 {
-	configHandler->Set("VSync", interval = Clamp(i, MAX_ADAPTIVE_INTERVAL, MAX_STANDARD_INTERVAL));
+	if (updateConf) {
+		configHandler->Set("VSync", interval = Clamp(i, MAX_ADAPTIVE_INTERVAL, MAX_STANDARD_INTERVAL));
+	}
 
 	#if defined HEADLESS
 	return;

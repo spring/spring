@@ -511,7 +511,7 @@ void CGlobalRendering::SwapBuffers(bool allowSwapBuffers, bool clearErrors)
 
 	const spring_time pre = spring_now();
 
-	VSync.Delay();
+	verticalSync->Delay();
 	SDL_GL_SwapWindow(window);
 
 	eventHandler.DbgTimingInfo(TIMING_SWAP, pre, spring_now());
@@ -908,7 +908,7 @@ void CGlobalRendering::SaveWindowPosAndSize()
 void CGlobalRendering::UpdateGLConfigs()
 {
 	// re-read configuration value
-	VSync.SetInterval();
+	verticalSync->SetInterval();
 
 	const float lodBias = configHandler->GetFloat("TextureLODBias");
 	const float absBias = math::fabs(lodBias);
