@@ -7,13 +7,6 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
 
-#if defined HEADLESS
-#elif defined WIN32
-	#include <GL/wglew.h>
-#elif !defined(__APPLE__)
-	#include <GL/glxew.h>
-#endif
-
 #include <SDL_video.h>
 
 static constexpr int MAX_ADAPTIVE_INTERVAL = -6;
