@@ -2337,14 +2337,11 @@ void CUnit::Activate()
 	activated = true;
 	script->Activate();
 
-	if (unitDef->targfac) {
+	if (unitDef->targfac)
 		losHandler->DecreaseAllyTeamRadarErrorSize(allyteam);
-	}
 
-
-	if (losStatus[gu->myAllyTeam] & LOS_INLOS) {
+	if (IsInLosForAllyTeam(gu->myAllyTeam))
 		Channels::General->PlayRandomSample(unitDef->sounds.activate, this);
-	}
 }
 
 
@@ -2356,14 +2353,11 @@ void CUnit::Deactivate()
 	activated = false;
 	script->Deactivate();
 
-	if (unitDef->targfac) {
+	if (unitDef->targfac)
 		losHandler->IncreaseAllyTeamRadarErrorSize(allyteam);
-	}
 
-
-	if (losStatus[gu->myAllyTeam] & LOS_INLOS) {
+	if (IsInLosForAllyTeam(gu->myAllyTeam))
 		Channels::General->PlayRandomSample(unitDef->sounds.deactivate, this);
-	}
 }
 
 

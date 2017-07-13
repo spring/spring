@@ -306,6 +306,7 @@ Bugfixes:
  - fix #5396 (units lacking sensors on fire-platforms)
  - fix #5339 (crash when placing a geothermal)
  - fix #5338 (grid-patterns in unsynced heightmap)    
+ - fix #5644 (send BuggerOff notes from opened-but-blocked factories again)
 
 
 
@@ -2285,7 +2286,7 @@ Sim:
  - make target locking optional via meta-key
 
 GameServer:
- - support start-scripts of arbitrary size (still not advised to use scripts bugger than 256kB, and we won't optimize anything related to such huge scripts)
+ - support start-scripts of arbitrary size (still not advised to use scripts bigger than 256kB, and we won't optimize anything related to such huge scripts)
 
 UnitDefs:
  - make cloakCostMoving default to cloakCost
@@ -3095,7 +3096,7 @@ Engine / General:
  - fix some more memory-leaks
  - prevent equal unsynced random seeds
  - fix SetUnitRotation
- - fix enemy units responding to bugger off
+ - fix enemy units responding to BuggerOff directives
  - apply damage wrt. impacted piece if usePieceCollisionVolumes == 1
  - make CBitmap::ReverseYAxis() more efficient
  - remove excess elements from BasicMapDamage::craterTable

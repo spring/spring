@@ -784,9 +784,8 @@ bool CBuilder::ScriptStartBuilding(float3 pos, bool silent)
 		script->StartBuilding(ClampRad(h - heading * TAANG2RAD), p - pitch);
 	}
 
-	if ((!silent || inBuildStance) && losStatus[gu->myAllyTeam] & LOS_INLOS) {
+	if ((!silent || inBuildStance) && IsInLosForAllyTeam(gu->myAllyTeam))
 		Channels::General->PlayRandomSample(unitDef->sounds.build, pos);
-	}
 
 	return inBuildStance;
 }
