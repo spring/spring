@@ -232,6 +232,7 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(ResetState);
 	REGISTER_LUA_CFUNC(ResetMatrices);
 	REGISTER_LUA_CFUNC(Clear);
+	REGISTER_LUA_CFUNC(SwapBuffers);
 	REGISTER_LUA_CFUNC(Lighting);
 	REGISTER_LUA_CFUNC(ShadeModel);
 	REGISTER_LUA_CFUNC(Scissor);
@@ -239,9 +240,9 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(ColorMask);
 	REGISTER_LUA_CFUNC(DepthMask);
 	REGISTER_LUA_CFUNC(DepthTest);
-	if (GLEW_NV_depth_clamp) {
+	if (GLEW_NV_depth_clamp)
 		REGISTER_LUA_CFUNC(DepthClamp);
-	}
+
 	REGISTER_LUA_CFUNC(Culling);
 	REGISTER_LUA_CFUNC(LogicOp);
 	REGISTER_LUA_CFUNC(Fog);
@@ -250,12 +251,10 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(Blending);
 	REGISTER_LUA_CFUNC(BlendEquation);
 	REGISTER_LUA_CFUNC(BlendFunc);
-	if (GLEW_EXT_blend_equation_separate) {
+	if (GLEW_EXT_blend_equation_separate)
 		REGISTER_LUA_CFUNC(BlendEquationSeparate);
-	}
-	if (GLEW_EXT_blend_func_separate) {
+	if (GLEW_EXT_blend_func_separate)
 		REGISTER_LUA_CFUNC(BlendFuncSeparate);
-	}
 
 	REGISTER_LUA_CFUNC(Material);
 	REGISTER_LUA_CFUNC(Color);
@@ -290,9 +289,9 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 		REGISTER_LUA_CFUNC(DeleteTextureFBO);
 		REGISTER_LUA_CFUNC(RenderToTexture);
 	}
-	if (IS_GL_FUNCTION_AVAILABLE(glGenerateMipmapEXT)) {
+	if (IS_GL_FUNCTION_AVAILABLE(glGenerateMipmapEXT))
 		REGISTER_LUA_CFUNC(GenerateMipmap);
-	}
+
 	REGISTER_LUA_CFUNC(ActiveTexture);
 	REGISTER_LUA_CFUNC(TexEnv);
 	REGISTER_LUA_CFUNC(MultiTexEnv);
@@ -391,9 +390,8 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetWaterRendering);
 	REGISTER_LUA_CFUNC(GetMapRendering);
 
-	if (canUseShaders) {
+	if (canUseShaders)
 		LuaShaders::PushEntries(L);
-	}
 
 	if (GLEW_EXT_framebuffer_object) {
 	 	LuaFBOs::PushEntries(L);
@@ -3466,47 +3464,56 @@ int LuaOpenGL::MultiTexGen(lua_State* L)
 	return 0;
 }
 
-
 /******************************************************************************/
+
 
 int LuaOpenGL::Clear(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 
 	const int args = lua_gettop(L); // number of arguments
-	if ((args < 1) || !lua_isnumber(L, 1)) {
+
+	if ((args < 1) || !lua_isnumber(L, 1))
 		luaL_error(L, "Incorrect arguments to gl.Clear()");
-	}
 
 	const GLbitfield bits = (GLbitfield)lua_tonumber(L, 1);
-	if (args == 5) {
-		if (!lua_isnumber(L, 2) || !lua_isnumber(L, 3) ||
-		    !lua_isnumber(L, 4) || !lua_isnumber(L, 5)) {
-			luaL_error(L, "Incorrect arguments to Clear()");
-		}
-		if (bits == GL_COLOR_BUFFER_BIT) {
-			glClearColor((GLfloat)lua_tonumber(L, 2), (GLfloat)lua_tonumber(L, 3),
-			             (GLfloat)lua_tonumber(L, 4), (GLfloat)lua_tonumber(L, 5));
-		}
-		else if (bits == GL_ACCUM_BUFFER_BIT) {
-			glClearAccum((GLfloat)lua_tonumber(L, 2), (GLfloat)lua_tonumber(L, 3),
-			             (GLfloat)lua_tonumber(L, 4), (GLfloat)lua_tonumber(L, 5));
-		}
-	}
-	else if (args == 2) {
-		if (!lua_isnumber(L, 2)) {
-			luaL_error(L, "Incorrect arguments to gl.Clear()");
-		}
-		if (bits == GL_DEPTH_BUFFER_BIT) {
-			glClearDepth((GLfloat)lua_tonumber(L, 2));
-		}
-		else if (bits == GL_STENCIL_BUFFER_BIT) {
-			glClearStencil((GLint)lua_tonumber(L, 2));
-		}
+
+	switch (args) {
+		case 5: {
+			if (!lua_isnumber(L, 2) || !lua_isnumber(L, 3) || !lua_isnumber(L, 4) || !lua_isnumber(L, 5))
+				luaL_error(L, "Incorrect arguments to gl.Clear(bits, r, g, b, a)");
+
+			switch (bits) {
+				case GL_COLOR_BUFFER_BIT: { glClearColor((GLfloat)lua_tonumber(L, 2), (GLfloat)lua_tonumber(L, 3), (GLfloat)lua_tonumber(L, 4), (GLfloat)lua_tonumber(L, 5)); } break;
+				case GL_ACCUM_BUFFER_BIT: { glClearAccum((GLfloat)lua_tonumber(L, 2), (GLfloat)lua_tonumber(L, 3), (GLfloat)lua_tonumber(L, 4), (GLfloat)lua_tonumber(L, 5)); } break;
+				default: {} break;
+			}
+		} break;
+		case 2: {
+			if (!lua_isnumber(L, 2))
+				luaL_error(L, "Incorrect arguments to gl.Clear(bits, val)");
+
+			switch (bits) {
+				case GL_DEPTH_BUFFER_BIT: { glClearDepth((GLfloat)lua_tonumber(L, 2)); } break;
+				case GL_STENCIL_BUFFER_BIT: { glClearStencil((GLint)lua_tonumber(L, 2)); } break;
+				default: {} break;
+			}
+		} break;
 	}
 
 	glClear(bits);
+	return 0;
+}
 
+int LuaOpenGL::SwapBuffers(lua_State* L)
+{
+	CheckDrawingEnabled(L, __func__);
+
+	// only meant for frame-limited LuaMenu's that want identical content in both buffers
+	if (!CLuaHandle::GetHandle(L)->PersistOnReload())
+		return 0;
+
+	globalRendering->SwapBuffers(true, true);
 	return 0;
 }
 

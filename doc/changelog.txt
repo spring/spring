@@ -142,6 +142,7 @@ Lua:
  - add Spring.{Set,Get}{Unit,Feature}SelectionVolumeData callouts
  ! remove Spring.SetSunParameters and Spring.SetSunManualControl
  ! remove gl.Smoothing
+ - add gl.SwapBuffers callout for LuaMenu
  - add Game.envDamageTypes table containing {def}IDs of environmental-damage sources (patch by Sprunk)
  - add Spring.{Get,Set}ConfigFloat callouts
  - add Spring.{Set,Get}{Unit,Feature}SelectionVolumeData callouts

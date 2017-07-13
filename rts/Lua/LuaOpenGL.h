@@ -167,6 +167,7 @@ class LuaOpenGL {
 		static int ResetState(lua_State* L);
 		static int ResetMatrices(lua_State* L);
 		static int Clear(lua_State* L);
+		static int SwapBuffers(lua_State* L);
 
 		static int Lighting(lua_State* L);
 		static int ShadeModel(lua_State* L);
