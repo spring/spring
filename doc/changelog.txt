@@ -5,8 +5,8 @@ Spring changelog
 -- 104.0 --------------------------------------------------------
 Major:
  - Add LuaMenu - an unsynced stripped down Lua environment that starts before the game is loaded and persists through reload
-   this environment receives the Draw{Genesis,ScreenEffects,ScreenPost} callins as well
-   as a special AllowDraw FPS regulator which enables these if true is returned from it
+   this environment receives the Draw{Genesis,Screen,ScreenPost} callins as well as
+   a special AllowDraw FPS regulator which enables these if true is returned from it
    (otherwise they are called once every 30 seconds)
  ! make GL3.0 the minimum required OpenGL version; Intel G45's and other relics are now banned
    (any driver that claims support for this *and* shaders is allowed to run Spring unimpeded)
