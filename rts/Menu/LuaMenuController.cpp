@@ -102,9 +102,12 @@ bool CLuaMenuController::Draw()
 
 	if (allowDraw || forceDraw) {
 		ClearScreen();
+
 		eventHandler.DrawGenesis();
 		eventHandler.DrawScreen();
 		mouse->DrawCursor();
+		eventHandler.DrawScreenPost();
+
 		lastDrawFrameTime = spring_gettime();
 		return true;
 	}
