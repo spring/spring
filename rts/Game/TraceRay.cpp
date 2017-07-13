@@ -31,41 +31,41 @@
  * @return true if object <o> is in the firing cone, false otherwise
  */
 inline static bool TestConeHelper(
-	const float3& pos3D,
-	const float3& dir3D,
+	const float3& tstPos,
+	const float3& tstDir,
 	const float length,
 	const float spread,
-	const CSolidObject* obj)
-{
+	const CSolidObject* obj
+) {
 	const CollisionVolume* cv = &obj->collisionVolume;
 
-	const float3 objVec3D = cv->GetWorldSpacePos(obj) - pos3D;
-	const float  objDst1D = Clamp(objVec3D.dot(dir3D), 0.0f, length);
-	const float  coneSize = math::fabs(objDst1D) * spread + 1.0f;
+	const float3 cvRelVec = cv->GetWorldSpacePos(obj) - tstPos;
+	const float  cvRelDst = Clamp(cvRelVec.dot(tstDir), 0.0f, length);
+	const float  coneSize = cvRelDst * spread + 1.0f;
 
 	// theoretical impact position assuming no spread
-	const float3 expVec3D = dir3D * objDst1D;
-	const float3 expPos3D = pos3D + expVec3D;
+	const float3 hitVec = tstDir * cvRelDst;
+	const float3 hitPos = tstPos + hitVec;
 
 	bool ret = false;
 
 	if (obj->GetBlockingMapID() < unitHandler->MaxUnits()) {
 		// obj is a unit
-		if (!ret) { ret = ((cv->GetPointSurfaceDistance(static_cast<const CUnit*>(obj), nullptr,    pos3D) - coneSize) <= 0.0f); }
-		if (!ret) { ret = ((cv->GetPointSurfaceDistance(static_cast<const CUnit*>(obj), nullptr, expPos3D) - coneSize) <= 0.0f); }
+		if (!ret) { ret = ((cv->GetPointSurfaceDistance(static_cast<const CUnit*>(obj), nullptr, tstPos) - coneSize) <= 0.0f); }
+		if (!ret) { ret = ((cv->GetPointSurfaceDistance(static_cast<const CUnit*>(obj), nullptr, hitPos) - coneSize) <= 0.0f); }
 	} else {
 		// obj is a feature
-		if (!ret) { ret = ((cv->GetPointSurfaceDistance(static_cast<const CFeature*>(obj), nullptr,    pos3D) - coneSize) <= 0.0f); }
-		if (!ret) { ret = ((cv->GetPointSurfaceDistance(static_cast<const CFeature*>(obj), nullptr, expPos3D) - coneSize) <= 0.0f); }
+		if (!ret) { ret = ((cv->GetPointSurfaceDistance(static_cast<const CFeature*>(obj), nullptr, tstPos) - coneSize) <= 0.0f); }
+		if (!ret) { ret = ((cv->GetPointSurfaceDistance(static_cast<const CFeature*>(obj), nullptr, hitPos) - coneSize) <= 0.0f); }
 	}
 
 	if (globalRendering->drawdebugtraceray) {
 		#define go geometricObjects
 
 		if (ret) {
-			go->SetColor(go->AddLine(expPos3D - (UpVector * expPos3D.dot(UpVector)), expPos3D, 3, 1, GAME_SPEED), 1.0f, 0.0f, 0.0f, 1.0f);
+			go->SetColor(go->AddLine(hitPos - (UpVector * hitPos.dot(UpVector)), hitPos, 3, 1, GAME_SPEED), 1.0f, 0.0f, 0.0f, 1.0f);
 		} else {
-			go->SetColor(go->AddLine(expPos3D - (UpVector * expPos3D.dot(UpVector)), expPos3D, 3, 1, GAME_SPEED), 0.0f, 1.0f, 0.0f, 1.0f);
+			go->SetColor(go->AddLine(hitPos - (UpVector * hitPos.dot(UpVector)), hitPos, 3, 1, GAME_SPEED), 0.0f, 1.0f, 0.0f, 1.0f);
 		}
 
 		#undef go
@@ -79,22 +79,22 @@ inline static bool TestConeHelper(
  * @return true if object <o> is in the firing trajectory, false otherwise
  */
 inline static bool TestTrajectoryConeHelper(
-	const float3& pos3D,
-	const float3& dir2D,
+	const float3& tstPos,
+	const float3& tstDir, // 2D
 	float length,
 	float linear,
 	float quadratic,
 	float spread,
 	float baseSize,
-	const CSolidObject* obj)
-{
+	const CSolidObject* obj
+) {
 	// trajectory is a parabola f(x)=a*x*x + b*x with
 	// parameters a = quadratic, b = linear, and c = 0
 	// (x = objDst1D, negative values represent objects
 	// "behind" the testee whose collision volumes might
 	// still be intersected by its trajectory arc)
 	//
-	// firing-cone is centered along dir2D with radius
+	// firing-cone is centered along tstDir with radius
 	// <x * spread + baseSize> (usually baseSize != 0
 	// so weapons with spread = 0 will test against a
 	// cylinder, not an infinitely thin line as safety
@@ -104,7 +104,7 @@ inline static bool TestTrajectoryConeHelper(
 	// return true iff the world-space point <x, f(x)>
 	// lies on or inside the object's collision volume
 	// (where 'x' is actually the projected xz-distance
-	// to the object's colvol-center along dir2D)
+	// to the object's colvol-center along tstDir)
 	//
 	// !NOTE!:
 	//   THE TRAJECTORY CURVE MIGHT STILL INTERSECT
@@ -112,28 +112,27 @@ inline static bool TestTrajectoryConeHelper(
 	//   SO THIS CAN GENERATE FALSE NEGATIVES
 	const CollisionVolume* cv = &obj->collisionVolume;
 
-	const float3 objVec3D = cv->GetWorldSpacePos(obj) - pos3D;
-	const float  objDst1D = Clamp(objVec3D.dot(dir2D), 0.0f, length);
-	const float  coneSize = math::fabs(objDst1D) * spread + baseSize;
+	const float3 cvRelVec = cv->GetWorldSpacePos(obj) - tstPos;
+	const float  cvRelDst = Clamp(cvRelVec.dot(tstDir), 0.0f, length);
+	const float  coneSize = cvRelDst * spread + baseSize;
 
 	// theoretical impact position assuming no spread
 	// note that unlike TestConeHelper these positions
 	// lie along curve f(x) here, not a straight line
-	// (if 1D object-distance is 0, pos3D == expPos3D)
-	const float3 expVec2D = dir2D * objDst1D;
-	const float3 expPos2D = pos3D + expVec2D;
-	const float3 expPos3D = expPos2D + (UpVector * (quadratic * objDst1D * objDst1D + linear * objDst1D));
+	// (if object-distance is 0, tstPos == hitPos)
+	const float3 hitVec = tstDir * cvRelDst;
+	const float3 hitPos = (tstPos + hitVec) + (UpVector * (quadratic * cvRelDst * cvRelDst + linear * cvRelDst));
 
 	bool ret = false;
 
 	if (obj->GetBlockingMapID() < unitHandler->MaxUnits()) {
 		// first test the muzzle-position, then the impact-position
 		// (if neither is inside obstacle's CV, the weapon can fire)
-		if (!ret) { ret = ((cv->GetPointSurfaceDistance(static_cast<const CUnit*>(obj), nullptr,    pos3D) - coneSize) <= 0.0f); }
-		if (!ret) { ret = ((cv->GetPointSurfaceDistance(static_cast<const CUnit*>(obj), nullptr, expPos3D) - coneSize) <= 0.0f); }
+		if (!ret) { ret = ((cv->GetPointSurfaceDistance(static_cast<const CUnit*>(obj), nullptr, tstPos) - coneSize) <= 0.0f); }
+		if (!ret) { ret = ((cv->GetPointSurfaceDistance(static_cast<const CUnit*>(obj), nullptr, hitPos) - coneSize) <= 0.0f); }
 	} else {
-		if (!ret) { ret = ((cv->GetPointSurfaceDistance(static_cast<const CFeature*>(obj), nullptr,    pos3D) - coneSize) <= 0.0f); }
-		if (!ret) { ret = ((cv->GetPointSurfaceDistance(static_cast<const CFeature*>(obj), nullptr, expPos3D) - coneSize) <= 0.0f); }
+		if (!ret) { ret = ((cv->GetPointSurfaceDistance(static_cast<const CFeature*>(obj), nullptr, tstPos) - coneSize) <= 0.0f); }
+		if (!ret) { ret = ((cv->GetPointSurfaceDistance(static_cast<const CFeature*>(obj), nullptr, hitPos) - coneSize) <= 0.0f); }
 	}
 
 
@@ -143,9 +142,9 @@ inline static bool TestTrajectoryConeHelper(
 		#define go geometricObjects
 
 		if (ret) {
-			go->SetColor(go->AddLine(expPos2D, expPos3D, 3, 1, GAME_SPEED), 1.0f, 0.0f, 0.0f, 1.0f);
+			go->SetColor(go->AddLine(tstPos + hitVec, hitPos, 3, 1, GAME_SPEED), 1.0f, 0.0f, 0.0f, 1.0f);
 		} else {
-			go->SetColor(go->AddLine(expPos2D, expPos3D, 3, 1, GAME_SPEED), 0.0f, 1.0f, 0.0f, 1.0f);
+			go->SetColor(go->AddLine(tstPos + hitVec, hitPos, 3, 1, GAME_SPEED), 0.0f, 1.0f, 0.0f, 1.0f);
 		}
 
 		#undef go
@@ -226,12 +225,13 @@ float TraceRay(
 						const float len = cq.GetHitPosDist(pos, dir);
 
 						// we want the closest feature (intersection point) on the ray
-						if (len < traceLength) {
-							traceLength = len;
+						if (len >= traceLength)
+							continue;
 
-							hitFeature = f;
-							*hitColQuery = cq;
-						}
+						traceLength = len;
+
+						hitFeature = f;
+						*hitColQuery = cq;
 					}
 				}
 			}
@@ -274,6 +274,7 @@ float TraceRay(
 				}
 			}
 
+			// units override features, so feature != null implies no unit was hit
 			if (hitUnit != nullptr)
 				hitFeature = nullptr;
 

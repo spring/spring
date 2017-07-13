@@ -963,23 +963,31 @@ bool CWeapon::HaveFreeLineOfFire(const float3 srcPos, const float3 tgtPos, const
 	if (length == 0.0f)
 		return true;
 
-	// ground check
-	if ((avoidFlags & Collision::NOGROUND) == 0) {
-		// NOTE:
-		//   ballistic weapons (Cannon / Missile icw. trajectoryHeight) do not call this,
-		//   they rely on TrajectoryGroundCol with an external check for the NOGROUND flag
-		CUnit* unit = nullptr;
-		CFeature* feature = nullptr;
+	CUnit* unit = nullptr;
+	CFeature* feature = nullptr;
 
-		const float gdst = TraceRay::TraceRay(srcPos, tgtDir, length, ~Collision::NOGROUND, owner, unit, feature);
-		const float3 gpos = srcPos + tgtDir * gdst;
+	// ground check
+	// NOTE:
+	//   ballistic weapons (Cannon / Missile icw. trajectoryHeight) override this part,
+	//   they rely on TrajectoryGroundCol with an external check for the NOGROUND flag
+	if ((avoidFlags & Collision::NOGROUND) == 0) {
+		const float gndDst = TraceRay::TraceRay(srcPos, tgtDir, length, ~Collision::NOGROUND, owner, unit, feature);
+		const float tgtDst = tgtPos.SqDistance(srcPos + tgtDir * gndDst);
 
 		// true iff ground does not block the ray of length <length> from <srcPos> along <tgtDir>
-		if ((gdst > 0.0f) && (gpos.SqDistance(tgtPos) > Square(damages->damageAreaOfEffect)))
+		if ((gndDst > 0.0f) && (tgtDst > Square(damages->damageAreaOfEffect)))
 			return false;
+
+		unit = nullptr;
+		feature = nullptr;
 	}
 
 	// friendly, neutral & feature check
+	// for projectiles that do not or barely spread out with distance
+	// this reduces to a ray intersection, which is also more accurate
+	if (spread < 0.001f && TraceRay::TraceRay(srcPos, tgtDir, length, avoidFlags, owner, unit, feature) > 0.0f)
+		return ((unit == nullptr || unit == trg.unit) && feature == nullptr);
+
 	return (!TraceRay::TestCone(srcPos, tgtDir, length, spread, owner->allyteam, avoidFlags, owner));
 }
 
