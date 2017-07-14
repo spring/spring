@@ -1401,13 +1401,11 @@ void CMobileCAI::ExecuteUnloadUnit(Command& c)
 
 bool CMobileCAI::AllowedCommand(const Command& c, bool fromSynced)
 {
-	if (!CCommandAI::AllowedCommand(c, fromSynced)) {
+	if (!CCommandAI::AllowedCommand(c, fromSynced))
 		return false;
-	}
 
-	if (!owner->unitDef->IsTransportUnit()) {
+	if (!owner->unitDef->IsTransportUnit())
 		return true;
-	}
 
 	switch (c.GetID()) {
 		case CMD_UNLOAD_UNIT:
@@ -1429,7 +1427,7 @@ bool CMobileCAI::AllowedCommand(const Command& c, bool fromSynced)
 
 			if (c.GetParamsCount() >= 4) {
 				// find unload positions for transportees (WHY can this run in unsynced context?)
-				for (const CUnit::TransportedUnit& tu: transportees) {
+				for (const auto& tu: transportees) {
 					const CUnit* u = tu.unit;
 
 					const float radius = (c.GetID() == CMD_UNLOAD_UNITS)? c.GetParam(3): 0.0f;
@@ -1437,13 +1435,12 @@ bool CMobileCAI::AllowedCommand(const Command& c, bool fromSynced)
 
 					float3 foundPos;
 
-					if (FindEmptySpot(c.GetPos(0), radius, spread, foundPos, u, fromSynced)) {
+					if (FindEmptySpot(u, c.GetPos(0), radius, spread, foundPos, fromSynced))
 						return true;
-					}
+
 					 // FIXME: support arbitrary unloading order for other unload types also
-					if (owner->unitDef->transportUnloadMethod != UNLOAD_LAND) {
+					if (owner->unitDef->transportUnloadMethod != UNLOAD_LAND)
 						return false;
-					}
 				}
 
 				// no empty spot found for any transported unit
@@ -1458,53 +1455,61 @@ bool CMobileCAI::AllowedCommand(const Command& c, bool fromSynced)
 }
 
 
-bool CMobileCAI::FindEmptySpot(const float3& center, float radius, float spread, float3& found, const CUnit* unitToUnload, bool fromSynced)
+bool CMobileCAI::FindEmptySpot(const CUnit* unloadee, const float3& center, float radius, float spread, float3& found, bool fromSynced)
 {
-	const MoveDef* moveDef = unitToUnload->moveDef;
+	const UnitDef* unitDef = owner->unitDef;
+	const MoveDef* moveDef = unloadee->moveDef;
 
-	const bool isAirTrans = (dynamic_cast<AAirMoveType*>(owner->moveType) != NULL);
-	const float amax = std::max(100.0f, std::min(1000.0f, (radius * radius / 100.0f)));
+	const float sqSpreadDiv = (spread * spread) / 100.0f;
+	const float maxAttempts = Clamp(sqSpreadDiv, 100.0f, 1000.0f);
 
-	spread = std::max(1.0f, math::ceil(spread / SQUARE_SIZE)) * SQUARE_SIZE;
+	// radius is the size of the command unloading-zone (e.g. dragged by player);
+	// spread is the maximum distance from <center> that a unit can be unloaded
+	// (which also has to respect radius)
+	spread = Clamp(spread, 1.0f * SQUARE_SIZE, radius);
 
-	// more attempts for large unloading zone
-	for (int a = 0; a < amax; ++a) {
+	// more attempts for larger unloading zones
+	for (int a = 0; a < maxAttempts; ++a) {
 		float3 delta;
-		float3 pos;
+		float3 pos = -OnesVector;
 
-		const float bmax = std::max(10, a / 10);
+		const int bmax = std::max(10, a / 10);
 
-		for (int b = 0; b < bmax; ++b) {
-			// FIXME: using a deterministic technique might be better, since it would allow an unload command to be tested for validity from unsynced (with predictable results)
-			const float ang = math::TWOPI * (fromSynced ? gsRNG.NextFloat() : guRNG.NextFloat());
-			const float len = math::sqrt(fromSynced ? gsRNG.NextFloat() : guRNG.NextFloat());
+		for (int b = 0; (b < bmax && !pos.IsInBounds()); ++b) {
+			// uniform polar-coordinate sampling
+			// FIXME:
+			//   using a deterministic technique might be better, since it would allow an
+			//   unload command to be tested for validity from unsynced (with predictable
+			//   results)
+			const float len = (fromSynced? gsRNG.NextFloat(): guRNG.NextFloat());
+			const float ang = (fromSynced? gsRNG.NextFloat(): guRNG.NextFloat());
+			const float  sr = math::sqrt(len);
 
-			delta.x = len * math::sin(ang);
-			delta.z = len * math::cos(ang);
-			pos = center + delta * radius;
-			if (pos.IsInBounds())
-				break;
+			delta.x = sr * math::cos(ang * math::TWOPI) * spread;
+			delta.z = sr * math::sin(ang * math::TWOPI) * spread;
+			pos = center + delta;
 		}
 
 		if (!pos.IsInBounds())
 			continue;
 
 		// returns loading height in pos.y
-		if (!owner->CanLoadUnloadAtPos(pos, unitToUnload, &pos.y))
+		if (!owner->CanLoadUnloadAtPos(pos, unloadee, &pos.y))
 			continue;
 
-		// adjust to middle pos
-		pos.y -= unitToUnload->radius;
+		// adjust to mid-position
+		pos.y -= unloadee->radius;
 
 		// don't unload unit on too-steep slopes
-		if (moveDef != NULL && CGround::GetSlope(pos.x, pos.z) > moveDef->maxSlope)
+		if (moveDef != nullptr && CGround::GetSlope(pos.x, pos.z) > moveDef->maxSlope)
 			continue;
 
-		const std::vector<CSolidObject*>& units = quadField->GetSolidsExact(pos, spread, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS);
+		const std::vector<CSolidObject*>& units = quadField->GetSolidsExact(pos, unloadee->radius * 2.0f, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS);
 
-		if (isAirTrans && (units.size() > 1 || (units.size() == 1 && units[0] != owner)))
+		if (unitDef->IsAirUnit() && (units.size() > 1 || (units.size() == 1 && units[0] != owner)))
 			continue;
-		if (!isAirTrans && !units.empty())
+		// ground-transports want the sampled position to be entirely free
+		if (!unitDef->IsAirUnit() && !units.empty())
 			continue;
 
 		found = pos;
@@ -1517,21 +1522,20 @@ bool CMobileCAI::FindEmptySpot(const float3& center, float radius, float spread,
 
 CUnit* CMobileCAI::FindUnitToTransport(float3 center, float radius)
 {
-	CUnit* bestUnit = NULL;
+	CUnit* bestUnit = nullptr;
 	float bestDist = std::numeric_limits<float>::max();
 
-	const std::vector<CUnit*>& units = quadField->GetUnitsExact(center, radius);
-
-	for (std::vector<CUnit*>::const_iterator ui = units.begin(); ui != units.end(); ++ui) {
-		CUnit* unit = (*ui);
-		float dist = unit->pos.SqDistance2D(owner->pos);
+	for (CUnit* unit: quadField->GetUnitsExact(center, radius)) {
+		const float dist = unit->pos.SqDistance2D(owner->pos);
 
 		if (unit->loadingTransportId != -1 && unit->loadingTransportId != owner->id) {
-			CUnit* trans = unitHandler->GetUnitUnsafe(unit->loadingTransportId);
-			if ((trans != NULL) && teamHandler->AlliedTeams(owner->team, trans->team)) {
-				continue; // don't refuse to load comm only because the enemy is trying to nap it at the same time
-			}
+			const CUnit* trans = unitHandler->GetUnitUnsafe(unit->loadingTransportId);
+
+			// don't refuse to load a unit if an enemy transport is trying to at the same time
+			if ((trans != nullptr) && teamHandler->AlliedTeams(owner->team, trans->team))
+				continue;
 		}
+
 		if (dist >= bestDist)
 			continue;
 		if (!owner->CanTransport(unit))
@@ -1622,7 +1626,7 @@ bool CMobileCAI::SpotIsClearIgnoreSelf(float3 pos, CUnit* unitToUnload)
 
 bool CMobileCAI::FindEmptyDropSpots(float3 startpos, float3 endpos, std::vector<float3>& dropSpots)
 {
-	if (dynamic_cast<CHoverAirMoveType*>(owner->moveType) == NULL)
+	if (dynamic_cast<CHoverAirMoveType*>(owner->moveType) == nullptr)
 		return false;
 
 	const float maxDist = startpos.SqDistance(endpos);
@@ -1638,11 +1642,11 @@ bool CMobileCAI::FindEmptyDropSpots(float3 startpos, float3 endpos, std::vector<
 		const float3 gap = spreadVector * ti->unit->radius;
 		nextPos += gap;
 
-		if (startpos.SqDistance(nextPos) > maxDist) {
+		if (startpos.SqDistance(nextPos) > maxDist)
 			break;
-		}
 
 		nextPos.y = CGround::GetHeightAboveWater(nextPos.x, nextPos.z);
+
 		// check landing spot is ok for landing on
 		if (!SpotIsClear(nextPos, ti->unit))
 			continue;
@@ -1652,7 +1656,7 @@ bool CMobileCAI::FindEmptyDropSpots(float3 startpos, float3 endpos, std::vector<
 		++ti;
 	}
 
-	return dropSpots.size() > 0;
+	return (!dropSpots.empty());
 }
 
 
@@ -1665,21 +1669,24 @@ void CMobileCAI::UnloadUnits_Land(Command& c)
 
 	for (const CUnit::TransportedUnit& tu: transportees) {
 		const float3 pos = c.GetPos(0);
+
 		const float radius = c.params[3];
 		const float spread = (tu.unit)->radius * owner->unitDef->unloadSpread;
 
-		if (FindEmptySpot(pos, radius, spread, unloadPos, tu.unit)) {
-			transportee = tu.unit; break;
+		if (FindEmptySpot(tu.unit, pos, radius, spread, unloadPos)) {
+			transportee = tu.unit;
+			break;
 		}
 	}
 
-	if (transportee != NULL) {
+	if (transportee != nullptr) {
 		Command c2(CMD_UNLOAD_UNIT, c.options | INTERNAL_ORDER, unloadPos);
 		c2.PushParam(transportee->id);
 		commandQue.push_front(c2);
 		SlowUpdate();
 		return;
 	}
+
 	StopMoveAndFinishCommand();
 }
 
@@ -1716,6 +1723,7 @@ void CMobileCAI::UnloadUnits_LandFlood(Command& c)
 {
 	float3 pos = c.GetPos(0);
 	float3 found;
+
 	const float radius = c.params[3];
 	const float dist = std::max(64.0f, owner->unitDef->loadingRadius - radius);
 
@@ -1729,7 +1737,7 @@ void CMobileCAI::UnloadUnits_LandFlood(Command& c)
 	const CUnit* transportee = transportees[0].unit;
 
 	const float spread = transportee->radius * owner->unitDef->unloadSpread;
-	const bool canUnload = FindEmptySpot(pos, radius, spread, found, transportee);
+	const bool canUnload = FindEmptySpot(transportee, pos, radius, spread, found);
 
 	if (canUnload) {
 		Command c2(CMD_UNLOAD_UNIT, c.options | INTERNAL_ORDER, found);
@@ -1801,7 +1809,7 @@ void CMobileCAI::UnloadLand(Command& c)
 					// if a new spot cannot be found, don't unload at all
 					float3 newWantedPos;
 
-					if (FindEmptySpot(wantedPos, std::max(16.0f * SQUARE_SIZE, transportee->radius * 4.0f), transportee->radius, newWantedPos, transportee)) {
+					if (FindEmptySpot(transportee, wantedPos, std::max(16.0f * SQUARE_SIZE, transportee->radius * 4.0f), transportee->radius, newWantedPos)) {
 						c.SetPos(0, newWantedPos);
 						SetGoal(newWantedPos + UpVector * transportee->model->height, owner->pos);
 						return;

@@ -453,7 +453,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	isFirePlatform    = udTable.GetBool("isFirePlatform",    false);
 	isAirBase         = udTable.GetBool("isAirBase",         false);
 	loadingRadius     = udTable.GetFloat("loadingRadius",    220.0f);
-	unloadSpread      = udTable.GetFloat("unloadSpread",     1.0f);
+	unloadSpread      = udTable.GetFloat("unloadSpread",     5.0f);
 	transportMass     = udTable.GetFloat("transportMass",    100000.0f);
 	minTransportMass  = udTable.GetFloat("minTransportMass", 0.0f);
 	holdSteady        = udTable.GetBool("holdSteady",        false);

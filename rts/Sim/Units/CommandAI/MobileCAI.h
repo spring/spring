@@ -60,7 +60,7 @@ public:
 	virtual bool CanWeaponAutoTarget(const CWeapon* weapon) const;
 
 	void SetTransportee(CUnit* unit);
-	bool FindEmptySpot(const float3& center, float radius, float spread, float3& found, const CUnit* unitToUnload, bool fromSynced = true);
+	bool FindEmptySpot(const CUnit* unitToUnload, const float3& center, float radius, float spread, float3& found, bool fromSynced = true);
 	bool FindEmptyDropSpots(float3 startpos, float3 endpos, std::vector<float3>& dropSpots);
 	CUnit* FindUnitToTransport(float3 center, float radius);
 	bool LoadStillValid(CUnit* unit);
