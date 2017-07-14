@@ -1464,8 +1464,8 @@ bool CMobileCAI::FindEmptySpot(const CUnit* unloadee, const float3& center, floa
 	const float maxAttempts = Clamp(sqSpreadDiv, 100.0f, 1000.0f);
 
 	// radius is the size of the command unloading-zone (e.g. dragged by player);
-	// spread is the maximum distance from <center> that a unit can be unloaded
-	// (which also has to respect radius)
+	// spread is the *minimum* distance between any pair of unloaded units which
+	// also has to respect radius
 	spread = Clamp(spread, 1.0f * SQUARE_SIZE, radius);
 
 	// more attempts for larger unloading zones
@@ -1485,8 +1485,8 @@ bool CMobileCAI::FindEmptySpot(const CUnit* unloadee, const float3& center, floa
 			const float ang = (fromSynced? gsRNG.NextFloat(): guRNG.NextFloat());
 			const float  sr = math::sqrt(len);
 
-			delta.x = sr * math::cos(ang * math::TWOPI) * spread;
-			delta.z = sr * math::sin(ang * math::TWOPI) * spread;
+			delta.x = sr * math::cos(ang * math::TWOPI) * radius;
+			delta.z = sr * math::sin(ang * math::TWOPI) * radius;
 			pos = center + delta;
 		}
 
@@ -1504,7 +1504,10 @@ bool CMobileCAI::FindEmptySpot(const CUnit* unloadee, const float3& center, floa
 		if (moveDef != nullptr && CGround::GetSlope(pos.x, pos.z) > moveDef->maxSlope)
 			continue;
 
-		const std::vector<CSolidObject*>& units = quadField->GetSolidsExact(pos, unloadee->radius * 2.0f, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS);
+		// passing spread as query-radius ensures units are spaced at least
+		// this far apart, since <units> will be non-empty if pos is closer
+		// to a previous unloadee than <spread> elmos
+		const std::vector<CSolidObject*>& units = quadField->GetSolidsExact(pos, spread, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS);
 
 		if (unitDef->IsAirUnit() && (units.size() > 1 || (units.size() == 1 && units[0] != owner)))
 			continue;
