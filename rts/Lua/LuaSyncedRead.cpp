@@ -99,11 +99,6 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	LuaPushNamedNumber(L, "ALLY_UNITS",  AllyUnits);
 	LuaPushNamedNumber(L, "ENEMY_UNITS", EnemyUnits);
 
-#define REGISTER_LUA_CFUNC(x) \
-	lua_pushstring(L, #x);      \
-	lua_pushcfunction(L, x);    \
-	lua_rawset(L, -3)
-
 	// READ routines, sync safe
 	REGISTER_LUA_CFUNC(IsCheatingEnabled);
 	REGISTER_LUA_CFUNC(IsGodModeEnabled);

@@ -10,10 +10,6 @@ struct lua_State;
 
 class LuaFonts {
 	public:
-		LuaFonts();
-		~LuaFonts();
-
-	public:
 		static bool PushEntries(lua_State* L);
 
 	private: // helpers

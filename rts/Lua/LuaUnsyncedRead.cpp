@@ -81,16 +81,6 @@ const int CMD_INDEX_OFFSET = 1; // starting index for command descriptions
 
 bool LuaUnsyncedRead::PushEntries(lua_State* L)
 {
-#define REGISTER_LUA_CFUNC(x) \
-	lua_pushstring(L, #x);      \
-	lua_pushcfunction(L, x);    \
-	lua_rawset(L, -3)
-
-#define REGISTER_NAMED_LUA_CFUNC(x,name) \
-	lua_pushstring(L, #name);      \
-	lua_pushcfunction(L, x);    \
-	lua_rawset(L, -3)
-
 	REGISTER_LUA_CFUNC(IsReplay);
 	REGISTER_LUA_CFUNC(GetReplayLength);
 
@@ -143,9 +133,10 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetLocalTeamID);
 	REGISTER_LUA_CFUNC(GetLocalAllyTeamID);
 
-	REGISTER_NAMED_LUA_CFUNC(GetLocalPlayerID,   GetMyPlayerID);
-	REGISTER_NAMED_LUA_CFUNC(GetLocalTeamID,     GetMyTeamID);
-	REGISTER_NAMED_LUA_CFUNC(GetLocalAllyTeamID, GetMyAllyTeamID);
+	// aliases
+	REGISTER_NAMED_LUA_CFUNC("GetMyPlayerID", GetLocalPlayerID);
+	REGISTER_NAMED_LUA_CFUNC("GetMyTeamID", GetLocalTeamID);
+	REGISTER_NAMED_LUA_CFUNC("GetMyAllyTeamID", GetLocalAllyTeamID);
 
 	REGISTER_LUA_CFUNC(GetSpectatingState);
 

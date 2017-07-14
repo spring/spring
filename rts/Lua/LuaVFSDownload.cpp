@@ -11,13 +11,10 @@
 #include "System/FileSystem/DataDirLocater.h"
 
 #include "LuaInclude.h"
+#include "LuaUtils.h"
 
 /******************************************************************************/
 /******************************************************************************/
-#define REGISTER_LUA_CFUNC(x) \
-        lua_pushstring(L, #x);      \
-        lua_pushcfunction(L, x);    \
-        lua_rawset(L, -3)
 
 struct dlEvent {
 	int id;

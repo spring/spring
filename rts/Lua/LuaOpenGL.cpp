@@ -212,13 +212,6 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 {
 	LuaOpenGLUtils::ResetState();
 
-#define REGISTER_LUA_CFUNC(x)       \
-	do {                            \
-		lua_pushstring(L, #x);      \
-		lua_pushcfunction(L, x);    \
-		lua_rawset(L, -3);          \
-	} while (false)
-
 	REGISTER_LUA_CFUNC(HasExtension);
 	REGISTER_LUA_CFUNC(GetNumber);
 	REGISTER_LUA_CFUNC(GetString);
@@ -416,15 +409,15 @@ void LuaOpenGL::ResetGLState()
 	glDisable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LEQUAL);
 	glDepthMask(GL_FALSE);
-	if (GLEW_NV_depth_clamp) {
+	if (GLEW_NV_depth_clamp)
 		glDisable(GL_DEPTH_CLAMP_NV);
-	}
+
 	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
 	glEnable(GL_BLEND);
-	if (IS_GL_FUNCTION_AVAILABLE(glBlendEquation)) {
+	if (IS_GL_FUNCTION_AVAILABLE(glBlendEquation))
 		glBlendEquation(GL_FUNC_ADD);
-	}
+
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	glDisable(GL_ALPHA_TEST);
@@ -448,9 +441,8 @@ void LuaOpenGL::ResetGLState()
 
 	glDisable(GL_STENCIL_TEST);
 	glStencilMask(~0);
-	if (GLEW_EXT_stencil_two_side) {
+	if (GLEW_EXT_stencil_two_side)
 		glDisable(GL_STENCIL_TEST_TWO_SIDE_EXT);
-	}
 
 	// FIXME -- multitexturing
 	glDisable(GL_TEXTURE_2D);
@@ -473,9 +465,9 @@ void LuaOpenGL::ResetGLState()
 	glLineWidth(1.0f);
 	glPointSize(1.0f);
 
-	if (globalRendering->haveGLSL) {
+	if (globalRendering->haveGLSL)
 		glDisable(GL_POINT_SPRITE);
-	}
+
 	if (globalRendering->haveGLSL) {
 		GLfloat atten[3] = { 1.0f, 0.0f, 0.0f };
 		glPointParameterfv(GL_POINT_DISTANCE_ATTENUATION, atten);

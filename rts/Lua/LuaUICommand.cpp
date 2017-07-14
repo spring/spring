@@ -18,11 +18,6 @@
 
 bool LuaUICommand::PushEntries(lua_State* L)
 {
-#define REGISTER_LUA_CFUNC(x) \
-	lua_pushstring(L, #x);      \
-	lua_pushcfunction(L, x);    \
-	lua_rawset(L, -3)
-
 	REGISTER_LUA_CFUNC(GetUICommands);
 // 	REGISTER_LUA_CFUNC(RegisterUICommand);
 // 	REGISTER_LUA_CFUNC(DeregisterUICommand);

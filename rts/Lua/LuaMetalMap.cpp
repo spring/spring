@@ -4,8 +4,7 @@
 #include "LuaMetalMap.h"
 
 #include "LuaInclude.h"
-
-#include "LuaHandle.h"
+#include "LuaUtils.h"
 #include "Map/MetalMap.h"
 #include "Map/ReadMap.h"
 
@@ -14,27 +13,15 @@
 
 bool LuaMetalMap::PushReadEntries(lua_State* L)
 {
-#define REGISTER_LUA_CFUNC(x) \
-	lua_pushstring(L, #x);      \
-	lua_pushcfunction(L, x);    \
-	lua_rawset(L, -3)
-
 	REGISTER_LUA_CFUNC(GetMetalMapSize);
 	REGISTER_LUA_CFUNC(GetMetalAmount);
 	REGISTER_LUA_CFUNC(GetMetalExtraction);
-
 	return true;
 }
 
 bool LuaMetalMap::PushCtrlEntries(lua_State* L)
 {
-#define REGISTER_LUA_CFUNC(x) \
-	lua_pushstring(L, #x);      \
-	lua_pushcfunction(L, x);    \
-	lua_rawset(L, -3)
-
 	REGISTER_LUA_CFUNC(SetMetalAmount);
-
 	return true;
 }
 

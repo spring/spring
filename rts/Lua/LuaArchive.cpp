@@ -21,16 +21,6 @@
 
 bool LuaArchive::PushEntries(lua_State* L)
 {
-#define REGISTER_LUA_CFUNC(x) \
-	lua_pushstring(L, #x);      \
-	lua_pushcfunction(L, x);    \
-	lua_rawset(L, -3)
-
-#define REGISTER_NAMED_LUA_CFUNC(x,name) \
-	lua_pushstring(L, #name);      \
-	lua_pushcfunction(L, x);    \
-	lua_rawset(L, -3)
-
 	REGISTER_LUA_CFUNC(GetMaps);
 	REGISTER_LUA_CFUNC(GetGames);
 	REGISTER_LUA_CFUNC(GetAllArchives);

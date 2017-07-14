@@ -890,27 +890,16 @@ void CLuaUnitScript::EndBurst(int weaponNum) { Call(LUAFN_EndBurst, weaponNum + 
 /******************************************************************************/
 
 
-static void PushEntry(lua_State* L, const char* name, lua_CFunction fun)
-{
-	lua_pushstring(L, name);
-	lua_pushcfunction(L, fun);
-	lua_rawset(L, -3);
-}
-
-
 bool CLuaUnitScript::PushEntries(lua_State* L)
 {
 	{
 		// reset these in case we were reloaded
-		activeUnit = NULL;
-		activeScript = NULL;
+		activeUnit = nullptr;
+		activeScript = nullptr;
 	}
 
 	lua_pushstring(L, "UnitScript");
 	lua_newtable(L);
-
-#define REGISTER_LUA_CFUNC(x) \
-	PushEntry(L, #x, x)
 
 	REGISTER_LUA_CFUNC(CreateScript);
 	REGISTER_LUA_CFUNC(UpdateCallIn);

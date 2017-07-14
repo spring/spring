@@ -35,20 +35,14 @@ bool LuaFBOs::PushEntries(lua_State* L)
 {
 	CreateMetatable(L);
 
-#define REGISTER_LUA_CFUNC(x) \
-	lua_pushstring(L, #x);      \
-	lua_pushcfunction(L, x);    \
-	lua_rawset(L, -3)
-
 	REGISTER_LUA_CFUNC(CreateFBO);
 	REGISTER_LUA_CFUNC(DeleteFBO);
 	REGISTER_LUA_CFUNC(IsValidFBO);
 	REGISTER_LUA_CFUNC(ActiveFBO);
 	REGISTER_LUA_CFUNC(UnsafeSetFBO);
 
-	if (GLEW_EXT_framebuffer_blit) {
+	if (GLEW_EXT_framebuffer_blit)
 		REGISTER_LUA_CFUNC(BlitFBO);
-	}
 
 	return true;
 }
