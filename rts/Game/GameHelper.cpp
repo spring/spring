@@ -1321,7 +1321,7 @@ bool CGameHelper::CheckTerrainConstraints(
 	if (unitDef->IsImmobileUnit()) {
 		// check maxHeightDif constraint for structures
 		//
-		// if structure us capable of floating, only factor in
+		// if structure is capable of floating, only factor in
 		// the height difference IF terrain is above sea-level
 		slopeCheck |= (unitDef->floatOnWater && groundHeight <= 0.0f);
 		slopeCheck |= (std::abs(wantedHeight - groundHeight) <= unitDef->maxHeightDif);
