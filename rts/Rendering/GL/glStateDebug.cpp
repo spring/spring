@@ -18,39 +18,39 @@ static spring::unordered_set<std::string> errorsSet;
 
 template<typename T, typename F>
 static void VERIFYGL(F func, GLenum pname, T defaultValue, std::string pstr, std::string area) {
-	if (CGLStateChecker::errorsSet.find(area + pstr) == CGLStateChecker::errorsSet.end()) {
+	if (errorsSet.find(area + pstr) == errorsSet.end()) {
 		T _temp;
 		func(pname, &_temp);
 		if (_temp != defaultValue) {
 			LOG_L(L_ERROR, "%s was not set correctly when %s: %f", pstr.c_str(), area.c_str(), (float) _temp);
-			LOG_L(L_ERROR, "last time set here: %s", CGLStateChecker::lastSet[pstr].c_str());
-			CGLStateChecker::errorsSet.insert(area + pstr);
+			LOG_L(L_ERROR, "last time set here: %s", lastSet[pstr].c_str());
+			errorsSet.insert(area + pstr);
 		}
 	}
 }
 
 template<typename T, typename F>
 static void VERIFYGL2(F func, GLenum pname, T default0, T default1, std::string pstr, std::string area) {
-	if (CGLStateChecker::errorsSet.find(area + pstr) == CGLStateChecker::errorsSet.end()) {
+	if (errorsSet.find(area + pstr) == errorsSet.end()) {
 		T _temp[4];
 		func(pname, _temp);
 		if (_temp[0] != default0 || _temp[1] != default1) {
 			LOG_L(L_ERROR, "%s was not set correctly when %s: %f %f", pstr.c_str(), area.c_str(), (float) _temp[0], (float) _temp[1]);
-			LOG_L(L_ERROR, "last time set here: %s", CGLStateChecker::lastSet[pstr].c_str());
-			CGLStateChecker::errorsSet.insert(area + pstr);
+			LOG_L(L_ERROR, "last time set here: %s", lastSet[pstr].c_str());
+			errorsSet.insert(area + pstr);
 		}
 	}
 }
 
 template<typename T, typename F>
 static void VERIFYGL4(F func, GLenum pname, T default0, T default1, T default2, T default3, std::string pstr, std::string area) {
-	if (CGLStateChecker::errorsSet.find(area + pstr) == CGLStateChecker::errorsSet.end()) {
+	if (errorsSet.find(area + pstr) == errorsSet.end()) {
 		T _temp[4];
 		func(pname, _temp);
 		if (_temp[0] != default0 || _temp[1] != default1 || _temp[2] != default2 || _temp[3] != default3) {
 			LOG_L(L_ERROR, "%s was not set correctly when %s: %f %f %f %f", pstr.c_str(), area.c_str(), (float) _temp[0], (float) _temp[1], (float) _temp[2], (float) _temp[3]);
-			LOG_L(L_ERROR, "last time set here: %s", CGLStateChecker::lastSet[pstr].c_str());
-			CGLStateChecker::errorsSet.insert(area + pstr);
+			LOG_L(L_ERROR, "last time set here: %s", lastSet[pstr].c_str());
+			errorsSet.insert(area + pstr);
 		}
 	}
 }
@@ -67,7 +67,7 @@ static void VERIFYGL4(F func, GLenum pname, T default0, T default1, T default2, 
 void _wrap_glEnable(GLenum pname, std::string pstr, std::string location)
 {
 	if (Threading::IsMainThread())
-		CGLStateChecker::lastSet[pstr] = location;
+		lastSet[pstr] = location;
 
 	glEnable(pname);
 }
@@ -75,7 +75,7 @@ void _wrap_glEnable(GLenum pname, std::string pstr, std::string location)
 void _wrap_glDisable(GLenum pname, std::string pstr, std::string location)
 {
 	if (Threading::IsMainThread())
-		CGLStateChecker::lastSet[pstr] = location;
+		lastSet[pstr] = location;
 
 	glDisable(pname);
 }
@@ -83,10 +83,10 @@ void _wrap_glDisable(GLenum pname, std::string pstr, std::string location)
 void _wrap_glBlendFunc(GLenum sfactor, GLenum dfactor, std::string location)
 {
 	if (Threading::IsMainThread()) {
-		CGLStateChecker::lastSet["GL_BLEND_SRC_RGB"] = location;
-		CGLStateChecker::lastSet["GL_BLEND_SRC_ALPHA"] = location;
-		CGLStateChecker::lastSet["GL_BLEND_DST_RGB"] = location;
-		CGLStateChecker::lastSet["GL_BLEND_DST_ALPHA"] = location;
+		lastSet["GL_BLEND_SRC_RGB"] = location;
+		lastSet["GL_BLEND_SRC_ALPHA"] = location;
+		lastSet["GL_BLEND_DST_RGB"] = location;
+		lastSet["GL_BLEND_DST_ALPHA"] = location;
 	}
 	glBlendFunc(sfactor, dfactor);
 }
@@ -94,10 +94,10 @@ void _wrap_glBlendFunc(GLenum sfactor, GLenum dfactor, std::string location)
 void _wrap_glBlendFuncSeparate(GLenum srcRGB, GLenum dstRGB, GLenum srcAlpha, GLenum dstAlpha, std::string location)
 {
 	if (Threading::IsMainThread()) {
-		CGLStateChecker::lastSet["GL_BLEND_SRC_RGB"] = location;
-		CGLStateChecker::lastSet["GL_BLEND_SRC_ALPHA"] = location;
-		CGLStateChecker::lastSet["GL_BLEND_DST_RGB"] = location;
-		CGLStateChecker::lastSet["GL_BLEND_DST_ALPHA"] = location;
+		lastSet["GL_BLEND_SRC_RGB"] = location;
+		lastSet["GL_BLEND_SRC_ALPHA"] = location;
+		lastSet["GL_BLEND_DST_RGB"] = location;
+		lastSet["GL_BLEND_DST_ALPHA"] = location;
 	}
 	glBlendFuncSeparate(srcRGB, dstRGB, srcAlpha, dstAlpha);
 }
@@ -105,7 +105,7 @@ void _wrap_glBlendFuncSeparate(GLenum srcRGB, GLenum dstRGB, GLenum srcAlpha, GL
 void _wrap_glColor3f(GLfloat red, GLfloat green, GLfloat blue, std::string location)
 {
 	if (Threading::IsMainThread())
-		CGLStateChecker::lastSet["GL_CURRENT_COLOR"] = location;
+		lastSet["GL_CURRENT_COLOR"] = location;
 
 	glColor3f(red, green, blue);
 }
@@ -113,7 +113,7 @@ void _wrap_glColor3f(GLfloat red, GLfloat green, GLfloat blue, std::string locat
 void _wrap_glColor4f(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha, std::string location)
 {
 	if (Threading::IsMainThread())
-		CGLStateChecker::lastSet["GL_CURRENT_COLOR"] = location;
+		lastSet["GL_CURRENT_COLOR"] = location;
 
 	glColor4f(red, green, blue, alpha);
 }
@@ -121,7 +121,7 @@ void _wrap_glColor4f(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha, st
 void _wrap_glColor4fv(const GLfloat *v, std::string location)
 {
 	if (Threading::IsMainThread())
-		CGLStateChecker::lastSet["GL_CURRENT_COLOR"] = location;
+		lastSet["GL_CURRENT_COLOR"] = location;
 
 	glColor4fv(v);
 }
@@ -129,7 +129,7 @@ void _wrap_glColor4fv(const GLfloat *v, std::string location)
 void _wrap_glDepthMask(GLboolean flag, std::string location)
 {
 	if (Threading::IsMainThread())
-		CGLStateChecker::lastSet["GL_DEPTH_WRITEMASK"] = location;
+		lastSet["GL_DEPTH_WRITEMASK"] = location;
 
 	glDepthMask(flag);
 }
@@ -138,7 +138,7 @@ void _wrap_glDepthMask(GLboolean flag, std::string location)
 void _wrap_glDepthFunc(GLenum func, std::string location)
 {
 	if (Threading::IsMainThread())
-		CGLStateChecker::lastSet["GL_DEPTH_FUNC"] = location;
+		lastSet["GL_DEPTH_FUNC"] = location;
 
 	glDepthFunc(func);
 }
@@ -146,7 +146,7 @@ void _wrap_glDepthFunc(GLenum func, std::string location)
 void _wrap_glColorMask(GLboolean red, GLboolean green, GLboolean blue, GLboolean alpha, std::string location)
 {
 	if (Threading::IsMainThread())
-		CGLStateChecker::lastSet["GL_COLOR_WRITEMASK"] = location;
+		lastSet["GL_COLOR_WRITEMASK"] = location;
 
 	glColorMask(red, green, blue, alpha);
 }
