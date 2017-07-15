@@ -1283,8 +1283,8 @@ bool CGameHelper::CheckTerrainConstraints(
 	float groundSlope,
 	float* clampedHeight
 ) {
-	bool heightCheck =  true;
-	bool  slopeCheck = false;
+	bool depthCheck =  true;
+	bool slopeCheck = false;
 
 	// can fail if LuaMoveCtrl has changed a unit's MoveDef (UnitDef::pathType is not updated)
 	// assert(pathType == -1u || moveDef == moveDefHandler->GetMoveDefByPathType(pathType));
@@ -1330,9 +1330,9 @@ bool CGameHelper::CheckTerrainConstraints(
 	}
 
 	// <groundHeight> must lie in the range [-maxDepth, -minDepth]
-	heightCheck &= (groundHeight >= -maxDepth);
-	heightCheck &= (groundHeight <= -minDepth);
+	depthCheck &= (groundHeight >= -maxDepth);
+	depthCheck &= (groundHeight <= -minDepth);
 
-	return (heightCheck && slopeCheck);
+	return (depthCheck && slopeCheck);
 }
 

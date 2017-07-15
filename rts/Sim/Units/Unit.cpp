@@ -2664,9 +2664,8 @@ bool CUnit::DetachUnit(CUnit* unit)
 		// erase command queue unless it's a wait command
 		const CCommandQueue& queue = unit->commandAI->commandQue;
 
-		if (unitDef->IsTransportUnit() && (queue.empty() || (queue.front().GetID() != CMD_WAIT))) {
+		if (unitDef->IsTransportUnit() && (queue.empty() || (queue.front().GetID() != CMD_WAIT)))
 			unit->commandAI->GiveCommand(Command(CMD_STOP));
-		}
 
 		return true;
 	}
@@ -2681,9 +2680,8 @@ bool CUnit::DetachUnitFromAir(CUnit* unit, const float3& pos)
 		unit->Drop(this->pos, this->frontdir, this);
 
 		// add an additional move command for after we land
-		if (unitDef->IsTransportUnit() && unit->unitDef->canmove) {
+		if (unitDef->IsTransportUnit() && unit->unitDef->canmove)
 			unit->commandAI->GiveCommand(Command(CMD_MOVE, pos));
-		}
 
 		return true;
 	}
@@ -2705,6 +2703,7 @@ float CUnit::GetTransporteeWantedHeight(const float3& wantedPos, const CUnit* un
 	bool isAllowedTerrain = true;
 
 	float wantedHeight = unit->pos.y;
+	float wantedSlope = 90.0f;
 	float clampedHeight = wantedHeight;
 
 	const UnitDef* transporteeUnitDef = unit->unitDef;
@@ -2714,8 +2713,9 @@ float CUnit::GetTransporteeWantedHeight(const float3& wantedPos, const CUnit* un
 		// if unit is being transported, set <clampedHeight>
 		// to the altitude at which to UNload the transportee
 		wantedHeight = CGround::GetHeightReal(wantedPos.x, wantedPos.z);
+		wantedSlope = CGround::GetSlope(wantedPos.x, wantedPos.z);
 
-		if ((isAllowedTerrain = CGameHelper::CheckTerrainConstraints(transporteeUnitDef, transporteeMoveDef, wantedHeight, wantedHeight, 90.0f, &clampedHeight))) {
+		if ((isAllowedTerrain = CGameHelper::CheckTerrainConstraints(transporteeUnitDef, transporteeMoveDef, wantedHeight, wantedHeight, wantedSlope, &clampedHeight))) {
 			if (transporteeMoveDef != nullptr) {
 				// transportee is a mobile ground unit
 				switch (transporteeMoveDef->speedModClass) {
