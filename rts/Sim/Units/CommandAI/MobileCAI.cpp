@@ -13,7 +13,6 @@
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/MoveTypes/AAirMoveType.h"
 #include "Sim/MoveTypes/HoverAirMoveType.h"
-#include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
@@ -1460,7 +1459,6 @@ bool CMobileCAI::AllowedCommand(const Command& c, bool fromSynced)
 bool CMobileCAI::FindEmptySpot(const CUnit* unloadee, const float3& center, float radius, float spread, float3& found, bool fromSynced)
 {
 	const UnitDef* unitDef = owner->unitDef;
-	const MoveDef* moveDef = unloadee->moveDef;
 
 	const float sqSpreadDiv = (spread * spread) / 100.0f;
 	const float maxAttempts = Clamp(sqSpreadDiv, 100.0f, 1000.0f);
