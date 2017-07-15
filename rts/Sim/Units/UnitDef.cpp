@@ -825,39 +825,6 @@ void UnitDef::SetNoCost(bool noCost)
 	}
 }
 
-bool UnitDef::CheckTerrainConstraints(const MoveDef* moveDef, float rawHeight, float* clampedHeight) const {
-	// can fail if LuaMoveCtrl has changed a unit's MoveDef (UnitDef::pathType is not updated)
-	// assert(pathType == -1u || moveDef == moveDefHandler->GetMoveDefByPathType(pathType));
-
-	float minDepth = MoveDef::GetDefaultMinWaterDepth();
-	float maxDepth = MoveDef::GetDefaultMaxWaterDepth();
-
-	if (moveDef != nullptr) {
-		// we are a mobile ground-unit, use MoveDef limits
-		if (moveDef->speedModClass == MoveDef::Ship) {
-			minDepth = moveDef->depth;
-		} else {
-			maxDepth = moveDef->depth;
-		}
-	} else {
-		if (!canfly) {
-			// we are a building, use UnitDef limits
-			minDepth = this->minWaterDepth;
-			maxDepth = this->maxWaterDepth;
-		} else {
-			// submerging or floating aircraft
-			maxDepth *= canSubmerge;
-			maxDepth *= (1 - floatOnWater);
-		}
-	}
-
-	if (clampedHeight != nullptr)
-		*clampedHeight = Clamp(rawHeight, -maxDepth, -minDepth);
-
-	// <rawHeight> must lie in the range [-maxDepth, -minDepth]
-	return (rawHeight >= -maxDepth && rawHeight <= -minDepth);
-}
-
 bool UnitDef::HasBomberWeapon() const {
 	if (weapons.empty())
 		return false;
@@ -867,4 +834,3 @@ bool UnitDef::HasBomberWeapon() const {
 	return (weapons[0].def->IsAircraftWeapon());
 }
 
-/******************************************************************************/

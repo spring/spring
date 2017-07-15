@@ -2702,7 +2702,7 @@ bool CUnit::CanLoadUnloadAtPos(const float3& wantedPos, const CUnit* unit, float
 }
 
 float CUnit::GetTransporteeWantedHeight(const float3& wantedPos, const CUnit* unit, bool* allowedPos) const {
-	bool isAllowedHeight = true;
+	bool isAllowedTerrain = true;
 
 	float wantedHeight = unit->pos.y;
 	float clampedHeight = wantedHeight;
@@ -2715,7 +2715,7 @@ float CUnit::GetTransporteeWantedHeight(const float3& wantedPos, const CUnit* un
 		// to the altitude at which to UNload the transportee
 		wantedHeight = CGround::GetHeightReal(wantedPos.x, wantedPos.z);
 
-		if ((isAllowedHeight = transporteeUnitDef->CheckTerrainConstraints(transporteeMoveDef, wantedHeight, &clampedHeight))) {
+		if ((isAllowedTerrain = CGameHelper::CheckTerrainConstraints(transporteeUnitDef, transporteeMoveDef, wantedHeight, wantedHeight, 90.0f, &clampedHeight))) {
 			if (transporteeMoveDef != nullptr) {
 				// transportee is a mobile ground unit
 				switch (transporteeMoveDef->speedModClass) {
@@ -2744,8 +2744,8 @@ float CUnit::GetTransporteeWantedHeight(const float3& wantedPos, const CUnit* un
 			bi.pos = CGameHelper::Pos2BuildPos(bi, true);
 			CFeature* f = nullptr;
 
-			if (isAllowedHeight && (!CGameHelper::TestUnitBuildSquare(bi, f, -1, true) || f != nullptr))
-				isAllowedHeight = false;
+			if (isAllowedTerrain && (!CGameHelper::TestUnitBuildSquare(bi, f, -1, true) || f != nullptr))
+				isAllowedTerrain = false;
 		}
 	}
 
@@ -2758,10 +2758,10 @@ float CUnit::GetTransporteeWantedHeight(const float3& wantedPos, const CUnit* un
 	// land units on shore --> would require too many special cases
 	// therefore restrict its use to transport aircraft
 	if (this->moveDef == nullptr)
-		isAllowedHeight &= unitDef->CheckTerrainConstraints(nullptr, rawContactHeight, &modContactHeight);
+		isAllowedTerrain &= CGameHelper::CheckTerrainConstraints(unitDef, nullptr, rawContactHeight, rawContactHeight, 90.0f, &modContactHeight);
 
 	if (allowedPos != nullptr)
-		*allowedPos = isAllowedHeight;
+		*allowedPos = isAllowedTerrain;
 
 	return modContactHeight;
 }

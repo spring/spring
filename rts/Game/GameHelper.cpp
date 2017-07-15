@@ -1167,23 +1167,12 @@ CGameHelper::BuildSquareStatus CGameHelper::TestBuildSquare(
 	const int sqz = unsigned(pos.z) / SQUARE_SIZE;
 	const float groundHeight = CGround::GetApproximateHeightUnsafe(sqx, sqz, synced);
 
-	if (!unitDef->CheckTerrainConstraints(moveDef, groundHeight))
+	if (!CheckTerrainConstraints(unitDef, moveDef, pos.y, groundHeight, CGround::GetSlope(sqx, sqz, synced)))
 		return BUILDSQUARE_BLOCKED;
 
 	if (!buildingMaskMap->TestTileMaskUnsafe(sqx >> 1, sqz >> 1, unitDef->buildingMask))
 		return BUILDSQUARE_BLOCKED;
 
-
-	// check maxHeightDif constraint (structures only)
-	//
-	// if we are capable of floating, only test local
-	// height difference IF terrain is above sea-level
-	if (unitDef->IsImmobileUnit()) {
-		if (!unitDef->floatOnWater || groundHeight > 0.0f) {
-			if (std::abs(pos.y - groundHeight) > unitDef->maxHeightDif)
-				return BUILDSQUARE_BLOCKED;
-		}
-	}
 
 	BuildSquareStatus ret = BUILDSQUARE_OPEN;
 	const int yardxpos = unsigned(pos.x + (SQUARE_SIZE >> 1)) / SQUARE_SIZE;
@@ -1284,5 +1273,66 @@ Command CGameHelper::GetBuildCommand(const float3& pos, const float3& dir) {
 
 	Command c(CMD_STOP);
 	return c;
+}
+
+bool CGameHelper::CheckTerrainConstraints(
+	const UnitDef* unitDef,
+	const MoveDef* moveDef,
+	float wantedHeight,
+	float groundHeight,
+	float groundSlope,
+	float* clampedHeight
+) {
+	bool heightCheck =  true;
+	bool  slopeCheck = false;
+
+	// can fail if LuaMoveCtrl has changed a unit's MoveDef (UnitDef::pathType is not updated)
+	// assert(pathType == -1u || moveDef == moveDefHandler->GetMoveDefByPathType(pathType));
+
+	float minDepth = MoveDef::GetDefaultMinWaterDepth();
+	float maxDepth = MoveDef::GetDefaultMaxWaterDepth();
+	float maxSlope = 90.0f; // NB: aircraft use this too
+
+	if (moveDef != nullptr) {
+		// we are a mobile ground-unit, use MoveDef limits
+		if (moveDef->speedModClass == MoveDef::Ship) {
+			minDepth = moveDef->depth;
+		} else {
+			maxDepth = moveDef->depth;
+		}
+
+		maxSlope = moveDef->maxSlope;
+	} else {
+		if (!unitDef->canfly) {
+			// we are a building, use UnitDef limits
+			minDepth = unitDef->minWaterDepth;
+			maxDepth = unitDef->maxWaterDepth;
+		} else {
+			// submerging or floating aircraft
+			maxDepth *= unitDef->canSubmerge;
+			maxDepth *= (1 - unitDef->floatOnWater);
+		}
+	}
+
+	if (clampedHeight != nullptr)
+		*clampedHeight = Clamp(groundHeight, -maxDepth, -minDepth);
+
+
+	if (unitDef->IsImmobileUnit()) {
+		// check maxHeightDif constraint for structures
+		//
+		// if structure us capable of floating, only factor in
+		// the height difference IF terrain is above sea-level
+		slopeCheck |= (unitDef->floatOnWater && groundHeight <= 0.0f);
+		slopeCheck |= (std::abs(wantedHeight - groundHeight) <= unitDef->maxHeightDif);
+	} else {
+		slopeCheck |= (groundSlope <= maxSlope);
+	}
+
+	// <groundHeight> must lie in the range [-maxDepth, -minDepth]
+	heightCheck &= (groundHeight >= -maxDepth);
+	heightCheck &= (groundHeight <= -minDepth);
+
+	return (heightCheck && slopeCheck);
 }
 
