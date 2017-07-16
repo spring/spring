@@ -865,45 +865,55 @@ void CBumpWater::UpdateCoastmap()
 	coastFBO.AttachTexture(coastTexture, GL_TEXTURE_2D, GL_COLOR_ATTACHMENT0_EXT);
 	glMultiTexCoord2i(GL_TEXTURE2, 0, 0);
 
+	// need this to avoid "Calling glEnd from the current immediate mode state is invalid."
+	// (if coastmapAtlasRects contains no actual coastline rects no vertices are submitted
+	// between glBegin and glEnd)
+	unsigned int numCoastRects = 0;
+
 	glBegin(GL_QUADS);
 	for (const CoastAtlasRect& r: coastmapAtlasRects) {
 		glTexCoord4f(r.tx1, r.ty1, 0.0f, 0.0f); glVertex2f(r.x1, r.y1);
 		glTexCoord4f(r.tx1, r.ty2, 0.0f, 1.0f); glVertex2f(r.x1, r.y2);
 		glTexCoord4f(r.tx2, r.ty2, 1.0f, 1.0f); glVertex2f(r.x2, r.y2);
 		glTexCoord4f(r.tx2, r.ty1, 1.0f, 0.0f); glVertex2f(r.x2, r.y1);
+		numCoastRects += r.isCoastline;
 	}
 	glEnd();
 
-	if (atlasX > 0 && atlasY > 0) {
+	if (numCoastRects > 0 && atlasX > 0 && atlasY > 0) {
 		int n = 0;
 		for (int i = 0; i < 5; ++i) {
 			coastFBO.AttachTexture(coastUpdateTexture, GL_TEXTURE_2D, GL_COLOR_ATTACHMENT0_EXT);
 			glViewport(0, 0, atlasX, atlasY);
 			glMultiTexCoord2i(GL_TEXTURE2, 1, ++n);
 
-			glBegin(GL_QUADS);
-			for (const CoastAtlasRect& r: coastmapAtlasRects) {
-				if (!r.isCoastline) continue;
-				glTexCoord4f(r.x1, r.y1, 0.0f, 0.0f); glVertex2f(r.tx1, r.ty1);
-				glTexCoord4f(r.x1, r.y2, 0.0f, 1.0f); glVertex2f(r.tx1, r.ty2);
-				glTexCoord4f(r.x2, r.y2, 1.0f, 1.0f); glVertex2f(r.tx2, r.ty2);
-				glTexCoord4f(r.x2, r.y1, 1.0f, 0.0f); glVertex2f(r.tx2, r.ty1);
+			{
+				glBegin(GL_QUADS);
+				for (const CoastAtlasRect& r: coastmapAtlasRects) {
+					if (!r.isCoastline) continue;
+					glTexCoord4f(r.x1, r.y1, 0.0f, 0.0f); glVertex2f(r.tx1, r.ty1);
+					glTexCoord4f(r.x1, r.y2, 0.0f, 1.0f); glVertex2f(r.tx1, r.ty2);
+					glTexCoord4f(r.x2, r.y2, 1.0f, 1.0f); glVertex2f(r.tx2, r.ty2);
+					glTexCoord4f(r.x2, r.y1, 1.0f, 0.0f); glVertex2f(r.tx2, r.ty1);
+				}
+				glEnd();
 			}
-			glEnd();
 
 			coastFBO.AttachTexture(coastTexture, GL_TEXTURE_2D, GL_COLOR_ATTACHMENT0_EXT);
 			glViewport(0, 0, mapDims.mapx, mapDims.mapy);
 			glMultiTexCoord2i(GL_TEXTURE2, 0, ++n);
 
-			glBegin(GL_QUADS);
-			for (const CoastAtlasRect& r: coastmapAtlasRects) {
-				if (!r.isCoastline) continue;
-				glTexCoord4f(r.tx1, r.ty1, 0.0f, 0.0f); glVertex2f(r.x1, r.y1);
-				glTexCoord4f(r.tx1, r.ty2, 0.0f, 1.0f); glVertex2f(r.x1, r.y2);
-				glTexCoord4f(r.tx2, r.ty2, 1.0f, 1.0f); glVertex2f(r.x2, r.y2);
-				glTexCoord4f(r.tx2, r.ty1, 1.0f, 0.0f); glVertex2f(r.x2, r.y1);
+			{
+				glBegin(GL_QUADS);
+				for (const CoastAtlasRect& r: coastmapAtlasRects) {
+					if (!r.isCoastline) continue;
+					glTexCoord4f(r.tx1, r.ty1, 0.0f, 0.0f); glVertex2f(r.x1, r.y1);
+					glTexCoord4f(r.tx1, r.ty2, 0.0f, 1.0f); glVertex2f(r.x1, r.y2);
+					glTexCoord4f(r.tx2, r.ty2, 1.0f, 1.0f); glVertex2f(r.x2, r.y2);
+					glTexCoord4f(r.tx2, r.ty1, 1.0f, 0.0f); glVertex2f(r.x2, r.y1);
+				}
+				glEnd();
 			}
-			glEnd();
 		}
 	}
 

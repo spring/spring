@@ -1114,6 +1114,7 @@ static void _GL_APIENTRY glDebugMessageCallbackFunc(
 	const GLvoid* userParam
 ) {
 	switch (msgID) {
+		case 131169: { return; } break; // "Framebuffer detailed info: The driver allocated storage for renderbuffer N."
 		case 131185: { return; } break; // "Buffer detailed info: Buffer object 260 (bound to GL_PIXEL_UNPACK_BUFFER_ARB, usage hint is GL_STREAM_DRAW) has been mapped in DMA CACHED memory."
 		default: {} break;
 	}
