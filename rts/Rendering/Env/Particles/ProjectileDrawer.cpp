@@ -173,26 +173,25 @@ CProjectileDrawer::CProjectileDrawer(): CEventClient("[CProjectileDrawer]", 1234
 		smoketex.push_back(smokeTex);
 	}
 
-#define GETTEX(t, b) (&textureAtlas->GetTextureWithBackup((t), (b)))
-	sbtrailtex         = GETTEX("sbtrailtexture",         "smoketrail"    );
-	missiletrailtex    = GETTEX("missiletrailtexture",    "smoketrail"    );
-	muzzleflametex     = GETTEX("muzzleflametexture",     "explo"         );
-	repulsetex         = GETTEX("repulsetexture",         "explo"         );
-	dguntex            = GETTEX("dguntexture",            "flare"         );
-	flareprojectiletex = GETTEX("flareprojectiletexture", "flare"         );
-	sbflaretex         = GETTEX("sbflaretexture",         "flare"         );
-	missileflaretex    = GETTEX("missileflaretexture",    "flare"         );
-	beamlaserflaretex  = GETTEX("beamlaserflaretexture",  "flare"         );
-	bubbletex          = GETTEX("bubbletexture",          "circularthingy");
-	geosquaretex       = GETTEX("geosquaretexture",       "circularthingy");
-	gfxtex             = GETTEX("gfxtexture",             "circularthingy");
-	projectiletex      = GETTEX("projectiletexture",      "circularthingy");
-	repulsegfxtex      = GETTEX("repulsegfxtexture",      "circularthingy");
-	sphereparttex      = GETTEX("sphereparttexture",      "circularthingy");
-	torpedotex         = GETTEX("torpedotexture",         "circularthingy");
-	wrecktex           = GETTEX("wrecktexture",           "circularthingy");
-	plasmatex          = GETTEX("plasmatexture",          "circularthingy");
-#undef GETTEX
+
+	sbtrailtex         = &textureAtlas->GetTextureWithBackup("sbtrailtexture",         "smoketrail"    );
+	missiletrailtex    = &textureAtlas->GetTextureWithBackup("missiletrailtexture",    "smoketrail"    );
+	muzzleflametex     = &textureAtlas->GetTextureWithBackup("muzzleflametexture",     "explo"         );
+	repulsetex         = &textureAtlas->GetTextureWithBackup("repulsetexture",         "explo"         );
+	dguntex            = &textureAtlas->GetTextureWithBackup("dguntexture",            "flare"         );
+	flareprojectiletex = &textureAtlas->GetTextureWithBackup("flareprojectiletexture", "flare"         );
+	sbflaretex         = &textureAtlas->GetTextureWithBackup("sbflaretexture",         "flare"         );
+	missileflaretex    = &textureAtlas->GetTextureWithBackup("missileflaretexture",    "flare"         );
+	beamlaserflaretex  = &textureAtlas->GetTextureWithBackup("beamlaserflaretexture",  "flare"         );
+	bubbletex          = &textureAtlas->GetTextureWithBackup("bubbletexture",          "circularthingy");
+	geosquaretex       = &textureAtlas->GetTextureWithBackup("geosquaretexture",       "circularthingy");
+	gfxtex             = &textureAtlas->GetTextureWithBackup("gfxtexture",             "circularthingy");
+	projectiletex      = &textureAtlas->GetTextureWithBackup("projectiletexture",      "circularthingy");
+	repulsegfxtex      = &textureAtlas->GetTextureWithBackup("repulsegfxtexture",      "circularthingy");
+	sphereparttex      = &textureAtlas->GetTextureWithBackup("sphereparttexture",      "circularthingy");
+	torpedotex         = &textureAtlas->GetTextureWithBackup("torpedotexture",         "circularthingy");
+	wrecktex           = &textureAtlas->GetTextureWithBackup("wrecktexture",           "circularthingy");
+	plasmatex          = &textureAtlas->GetTextureWithBackup("plasmatexture",          "circularthingy");
 
 
 	if (!groundFXAtlas->Finalize())
