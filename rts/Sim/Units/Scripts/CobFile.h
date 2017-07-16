@@ -15,12 +15,14 @@ class CFileHandler;
 class CCobFile
 {
 public:
-	CCobFile(CFileHandler& in, std::string name);
-	~CCobFile();
+	CCobFile(CFileHandler& in, const std::string& scriptName);
 
 	int GetFunctionId(const std::string& name);
 
+public:
+	int numStaticVars;
 
+	std::vector<int> code;
 	std::vector<std::string> scriptNames;
 	std::vector<int> scriptOffsets;
 	/// Assumes that the scripts are sorted by offset in the file
@@ -30,8 +32,7 @@ public:
 	std::vector<int> sounds;
 	std::vector<LuaHashString> luaScripts;
 	spring::unordered_map<std::string, int> scriptMap;
-	int* code;
-	int numStaticVars;
+
 	std::string name;
 };
 

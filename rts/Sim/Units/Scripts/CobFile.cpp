@@ -12,7 +12,7 @@
 #include <algorithm>
 #include <locale>
 #include <cctype>
-#include <string.h>
+#include <cstring>
 
 
 //The following structure is taken from http://visualta.tauniverse.com/Downloads/ta-cob-fmt.txt
@@ -82,29 +82,39 @@ do {									\
 } while (0)
 
 
-CCobFile::CCobFile(CFileHandler &in, string name)
+static std::vector<char> cobFileData;
+
+
+CCobFile::CCobFile(CFileHandler& in, const std::string& scriptName)
 {
-	char *cobdata = NULL;
+	numStaticVars = 0;
 
-	this->name = name;
+	name.assign(scriptName);
+	scriptIndex.resize(COBFN_Last + (MAX_WEAPONS_PER_UNIT * COBFN_Weapon_Funcs), -1);
 
-	//Figure out size needed and allocate it
-	int size = in.FileSize();
+	// figure out size needed and allocate it
+	const int size = in.FileSize();
 
-	// Handle errors (this is fairly fatal..)
+	// handle errors (this is fairly fatal..)
 	if (size < 0) {
-		LOG_L(L_FATAL, "Could not find script for unit %s", name.c_str());
-		exit(0);
+		LOG_L(L_FATAL, "[%s] could not find script \"%s\"", __func__, name.c_str());
+		return;
 	}
 
-	cobdata = new char[size];
+	cobFileData.clear();
+	cobFileData.resize(size);
 
-	//Read the entire thing, we will need it
-	in.Read(cobdata, size);
+	// read the entire thing, we will need it
+	in.Read(cobFileData.data(), size);
 
-	//Time to parse
+	// time to parse
 	COBHeader ch;
-	READ_COBHEADER(ch,cobdata);
+	READ_COBHEADER(ch, cobFileData.data());
+
+	if (ch.NumberOfScripts == 0) {
+		LOG_L(L_WARNING, "[%s] script \"%s\" is empty", __func__, name.c_str());
+		return;
+	}
 
 	// prepare
 	luaScripts.reserve(ch.NumberOfScripts);
@@ -114,92 +124,81 @@ CCobFile::CCobFile(CFileHandler &in, string name)
 	pieceNames.reserve(ch.NumberOfPieces);
 
 	for (int i = 0; i < ch.NumberOfScripts; ++i) {
-		int ofs;
-
-		ofs = *(int *)&cobdata[ch.OffsetToScriptNameOffsetArray + i * 4];
+		int ofs = *(int *) &cobFileData[ch.OffsetToScriptNameOffsetArray + i * 4];
 		swabDWordInPlace(ofs);
-		const string s = &cobdata[ofs];
+		const std::string s = &cobFileData[ofs];
 		scriptNames.push_back(s);
+
 		if (s.find("lua_") == 0) {
 			luaScripts.push_back(LuaHashString(s.substr(4)));
 		} else {
 			luaScripts.push_back(LuaHashString(""));
 		}
 
-		ofs = *(int *)&cobdata[ch.OffsetToScriptCodeIndexArray + i * 4];
+		ofs = *(int *) &cobFileData[ch.OffsetToScriptCodeIndexArray + i * 4];
 		swabDWordInPlace(ofs);
 		scriptOffsets.push_back(ofs);
 	}
 
-	//Check for zero-length scripts
+	// check for zero-length scripts
 	for (int i = 0; i < ch.NumberOfScripts - 1; ++i) {
 		scriptLengths.push_back(scriptOffsets[i + 1] - scriptOffsets[i]);
 	}
+
 	scriptLengths.push_back(ch.TotalScriptLen - scriptOffsets[ch.NumberOfScripts - 1]);
 
 
 	for (int i = 0; i < ch.NumberOfPieces; ++i) {
-		int ofs;
-
-		ofs = *(int *)&cobdata[ch.OffsetToPieceNameOffsetArray + i * 4];
+		int ofs = *(int *) &cobFileData[ch.OffsetToPieceNameOffsetArray + i * 4];
 		swabDWordInPlace(ofs);
-		string s = StringToLower(&cobdata[ofs]);
-		pieceNames.push_back(s);
+		pieceNames.emplace_back(StringToLower(&cobFileData[ofs]));
 	}
 
-	int code_octets = size - ch.OffsetToScriptCode;
-	int code_ints = (code_octets) / 4 + 4;
-	code = new int[code_ints];
-	memcpy(code, &cobdata[ch.OffsetToScriptCode], code_octets);
-	for (int i = 0; i < code_ints; i++) {
+	const int codeBytes = size - ch.OffsetToScriptCode;
+	const int codeWords = codeBytes / 4 + 4;
+	code.resize(codeWords);
+	memcpy(code.data(), &cobFileData[ch.OffsetToScriptCode], codeBytes);
+	for (int i = 0; i < codeWords; i++) {
 		swabDWordInPlace(code[i]);
 	}
 
 	numStaticVars = ch.NumberOfStaticVars;
 
-	// If this is a TA:K script, read the sound names
+	// if this is a TA:K script, read the sound names
 	if (ch.VersionSignature == 6) {
 		sounds.reserve(ch.NumberOfSounds);
-		for (int i = 0; i < ch.NumberOfSounds; ++i) {
-			int ofs;
-			ofs = *(int *)&cobdata[ch.OffsetToSoundNameArray + i * 4];
-			/* TODO This probably isn't correct. */
-			swabDWordInPlace(ofs);
-			string s = &cobdata[ofs];
 
-			if (sound->HasSoundItem(s))
+		for (int i = 0; i < ch.NumberOfSounds; ++i) {
+			int ofs = *(int *) &cobFileData[ch.OffsetToSoundNameArray + i * 4];
+			// FIXME: this probably isn't correct
+			swabDWordInPlace(ofs);
+
+			const std::string s = &cobFileData[ofs];
+
+			if (sound->HasSoundItem(s)) {
 				sounds.push_back(sound->GetSoundId(s));
-			else
-			{
+			} else {
 				// Load the wave file and store the ID for future use
-				s = "sounds/" + s + ".wav";
-				sounds.push_back(sound->GetSoundId(s));
+				sounds.push_back(sound->GetSoundId("sounds/" + s + ".wav"));
 			}
 		}
 	}
 
-	delete[] cobdata;
 
-	//Create a reverse mapping (name->int)
+	// create a reverse mapping (name->int)
 	for (unsigned int i = 0; i < scriptNames.size(); ++i) {
 		scriptMap[scriptNames[i]] = i;
 	}
 
-	//Map common function names to indices
-	const spring::unordered_map<string, int>& nameMap = CCobUnitScriptNames::GetScriptMap();
-	scriptIndex.resize(COBFN_Last + (MAX_WEAPONS_PER_UNIT * COBFN_Weapon_Funcs), -1);
+	// map common function names to indices
+	const spring::unordered_map<std::string, int>& nameMap = CCobUnitScriptNames::GetScriptMap();
+
 	for (auto it = nameMap.begin(); it != nameMap.end(); ++it) {
 		const int fn = GetFunctionId(it->first);
 		if (fn >= 0) {
 			scriptIndex[it->second] = fn;
 		}
 	}
-}
-
-
-CCobFile::~CCobFile()
-{
-	delete[] code;
 }
 
 

@@ -265,6 +265,7 @@ Bugfixes:
  - fix LosHandler::UnitLoaded removing LOS from non-stunned units
  - fix calling alSourcePlay even if alSourceQueueBuffers produced an error
  - fix CheckEnlargeDrawArray for VA_TYPE's larger than 10 floats
+ - fix crash if unit is assigned an empty COB-script
  - do not bitshift negative values (undefined behavior)
  - catch invalid CmdDesc indices in GuiHandler::DrawButtons
  - insert missing eventHandler.RemoveClient call in RoamMeshDrawer
