@@ -128,8 +128,8 @@ void CInfoTextureHandler::Update()
 	for (auto& p: infoTextures) {
 		CPboInfoTexture* tex = p.second;
 
-		// force first update; hides visible uninitialized texmem
-		if (firstUpdate || tex->IsUpdateNeeded())
+		// force first update except for combiner; hides visible uninitialized texmem
+		if ((firstUpdate && tex != infoTex) || tex->IsUpdateNeeded())
 			tex->Update();
 	}
 
