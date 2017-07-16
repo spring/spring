@@ -22,10 +22,14 @@ CR_REG_METADATA(AtlasedTexture, (CR_MEMBER(x), CR_MEMBER(y), CR_MEMBER(z), CR_ME
 // texture spacing in the atlas (in pixels)
 #define TEXMARGIN 2
 
+
+static AtlasedTexture dummy;
+
 bool CTextureAtlas::debug;
 
+
 CTextureAtlas::CTextureAtlas(unsigned int allocType)
-	: atlasAllocator(NULL)
+	: atlasAllocator(nullptr)
 	, atlasTexID(0)
 	, initialized(false)
 	, freeTexture(true)
@@ -39,6 +43,7 @@ CTextureAtlas::CTextureAtlas(unsigned int allocType)
 	atlasAllocator->SetNonPowerOfTwo(globalRendering->supportNonPowerOfTwoTex);
 	// atlasAllocator->SetMaxSize(globalRendering->maxTextureSize, globalRendering->maxTextureSize);
 
+	textures.reserve(256);
 	memTextures.reserve(128);
 }
 
@@ -193,22 +198,28 @@ void CTextureAtlas::BindTexture()
 
 bool CTextureAtlas::TextureExists(const std::string& name)
 {
-	return textures.find(StringToLower(name)) != textures.end();
+	return (textures.find(StringToLower(name)) != textures.end());
 }
 
 
 AtlasedTexture& CTextureAtlas::GetTexture(const std::string& name)
 {
-	return textures[StringToLower(name)];
+	if (TextureExists(name))
+		return textures[StringToLower(name)];
+
+	return dummy;
 }
 
 
 AtlasedTexture& CTextureAtlas::GetTextureWithBackup(const std::string& name, const std::string& backupName)
 {
-	if (textures.find(StringToLower(name)) != textures.end())
+	if (TextureExists(name))
 		return textures[StringToLower(name)];
 
-	return textures[StringToLower(backupName)];
+	if (TextureExists(backupName))
+		return textures[StringToLower(backupName)];
+
+	return dummy;
 }
 
 int2 CTextureAtlas::GetSize() const {

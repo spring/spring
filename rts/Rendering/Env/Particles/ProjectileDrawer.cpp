@@ -34,6 +34,7 @@
 #include "System/EventHandler.h"
 #include "System/Exceptions.h"
 #include "System/Log/ILog.h"
+#include "System/SafeUtil.h"
 #include "System/StringUtil.h"
 
 
@@ -151,9 +152,8 @@ CProjectileDrawer::CProjectileDrawer(): CEventClient("[CProjectileDrawer]", 1234
 		ParseAtlasTextures(false, mapResGroundFXTexturesTable, blockedTexNames, groundFXAtlas);
 	}
 
-	if (!textureAtlas->Finalize()) {
-		LOG_L(L_ERROR, "Could not finalize projectile-texture atlas. Use less/smaller textures.");
-	}
+	if (!textureAtlas->Finalize())
+		LOG_L(L_ERROR, "Could not finalize projectile-texture atlas. Use fewer/smaller textures.");
 
 	flaretex        = &textureAtlas->GetTexture("flare");
 	explotex        = &textureAtlas->GetTexture("explo");
@@ -195,9 +195,8 @@ CProjectileDrawer::CProjectileDrawer(): CEventClient("[CProjectileDrawer]", 1234
 #undef GETTEX
 
 
-	if (!groundFXAtlas->Finalize()) {
-		LOG_L(L_ERROR, "Could not finalize groundFX texture atlas. Use less/smaller textures.");
-	}
+	if (!groundFXAtlas->Finalize())
+		LOG_L(L_ERROR, "Could not finalize groundFX texture atlas. Use fewer/smaller textures.");
 
 	groundflashtex = &groundFXAtlas->GetTexture("groundflash");
 	groundringtex = &groundFXAtlas->GetTexture("groundring");
@@ -240,11 +239,11 @@ CProjectileDrawer::~CProjectileDrawer() {
 	eventHandler.RemoveClient(this);
 
 	glDeleteTextures(8, perlinBlendTex);
-	delete textureAtlas;
-	delete groundFXAtlas;
+	spring::SafeDelete(textureAtlas);
+	spring::SafeDelete(groundFXAtlas);
 
 	for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-		delete modelRenderers[modelType];
+		spring::SafeDelete(modelRenderers[modelType]);
 	}
 
 	renderProjectiles.clear();
@@ -256,8 +255,8 @@ void CProjectileDrawer::ParseAtlasTextures(
 	const bool blockTextures,
 	const LuaTable& textureTable,
 	spring::unordered_set<std::string>& blockedTextures,
-	CTextureAtlas* textureAtlas)
-{
+	CTextureAtlas* texAtlas
+) {
 	std::vector<std::string> subTables;
 	spring::unordered_map<std::string, std::string> texturesMap;
 
@@ -274,7 +273,7 @@ void CProjectileDrawer::ParseAtlasTextures(
 			blockedTextures.insert(textureName);
 
 		if (blockTextures || (blockedTextures.find(textureName) == blockedTextures.end()))
-			textureAtlas->AddTexFromFile(texturesMapIt->first, "bitmaps/" + texturesMapIt->second);
+			texAtlas->AddTexFromFile(texturesMapIt->first, "bitmaps/" + texturesMapIt->second);
 	}
 
 	texturesMap.clear();
@@ -294,7 +293,7 @@ void CProjectileDrawer::ParseAtlasTextures(
 				blockedTextures.insert(textureName);
 
 			if (blockTextures || (blockedTextures.find(textureName) == blockedTextures.end()))
-				textureAtlas->AddTexFromFile(texturesMapIt->first, "bitmaps/" + texturesMapIt->second);
+				texAtlas->AddTexFromFile(texturesMapIt->first, "bitmaps/" + texturesMapIt->second);
 		}
 
 		texturesMap.clear();
@@ -305,10 +304,10 @@ void CProjectileDrawer::LoadWeaponTextures() {
 	// post-process the synced weapon-defs to set unsynced fields
 	// (this requires CWeaponDefHandler to have been initialized)
 	for (WeaponDef& wd: weaponDefHandler->weaponDefs) {
-		wd.visuals.texture1 = NULL;
-		wd.visuals.texture2 = NULL;
-		wd.visuals.texture3 = NULL;
-		wd.visuals.texture4 = NULL;
+		wd.visuals.texture1 = nullptr;
+		wd.visuals.texture2 = nullptr;
+		wd.visuals.texture3 = nullptr;
+		wd.visuals.texture4 = nullptr;
 
 		if (wd.type == "Cannon") {
 			wd.visuals.texture1 = plasmatex;
@@ -359,10 +358,10 @@ void CProjectileDrawer::LoadWeaponTextures() {
 		}
 
 		// override the textures if we have specified names for them
-		if (wd.visuals.texNames[0] != "") { wd.visuals.texture1 = &textureAtlas->GetTexture(wd.visuals.texNames[0]); }
-		if (wd.visuals.texNames[1] != "") { wd.visuals.texture2 = &textureAtlas->GetTexture(wd.visuals.texNames[1]); }
-		if (wd.visuals.texNames[2] != "") { wd.visuals.texture3 = &textureAtlas->GetTexture(wd.visuals.texNames[2]); }
-		if (wd.visuals.texNames[3] != "") { wd.visuals.texture4 = &textureAtlas->GetTexture(wd.visuals.texNames[3]); }
+		if (!wd.visuals.texNames[0].empty()) { wd.visuals.texture1 = &textureAtlas->GetTexture(wd.visuals.texNames[0]); }
+		if (!wd.visuals.texNames[1].empty()) { wd.visuals.texture2 = &textureAtlas->GetTexture(wd.visuals.texNames[1]); }
+		if (!wd.visuals.texNames[2].empty()) { wd.visuals.texture3 = &textureAtlas->GetTexture(wd.visuals.texNames[2]); }
+		if (!wd.visuals.texNames[3].empty()) { wd.visuals.texture4 = &textureAtlas->GetTexture(wd.visuals.texNames[3]); }
 
 		if (!wd.visuals.ptrailExpGenTag.empty()) {
 			// these can only be custom EG's so prefix is not required game-side
@@ -650,12 +649,12 @@ void CProjectileDrawer::DrawShadowPass()
 
 	if (fxVA->drawIndex() > 0) {
 		glEnable(GL_TEXTURE_2D);
-		textureAtlas->BindTexture();
 		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 		glAlphaFunc(GL_GREATER, 0.3f);
 		glEnable(GL_ALPHA_TEST);
 		glShadeModel(GL_SMOOTH);
 
+		textureAtlas->BindTexture();
 		fxVA->DrawArrayTC(GL_QUADS);
 	}
 
@@ -714,7 +713,7 @@ void CProjectileDrawer::DrawGroundFlashes()
 	if (gfc.empty())
 		return;
 
-	static const GLfloat black[] = {0.0f, 0.0f, 0.0f, 0.0f};
+	static constexpr GLfloat black[] = {0.0f, 0.0f, 0.0f, 0.0f};
 
 	glDepthMask(GL_FALSE);
 	glEnable(GL_BLEND);
