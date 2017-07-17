@@ -3970,7 +3970,8 @@ static void PackCommandQueue(lua_State* L, const CCommandQueue& commands, size_t
 	if (count == -1u)
 		count = commands.size();
 
-	lua_createtable(L, count, 0);
+	// count can exceed the queue size, clamp
+	lua_createtable(L, std::min(count, commands.size()), 0);
 
 	// {[1] = cq[0], [2] = cq[1], ...}
 	for (auto ci = commands.begin(); ci != commands.end(); ++ci) {
