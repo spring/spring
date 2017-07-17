@@ -372,7 +372,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	rSpeed = math::fabs(rSpeed);
 
 	fireState = udTable.GetInt("fireState", canFireControl? FIRESTATE_NONE: FIRESTATE_FIREATWILL);
-	fireState = std::min(fireState, int(FIRESTATE_FIREATWILL));
+	fireState = std::min(fireState, int(FIRESTATE_FIREATNEUTRAL));
 	moveState = udTable.GetInt("moveState", (canmove && speed > 0.0f)? MOVESTATE_NONE: MOVESTATE_MANEUVER);
 	moveState = std::min(moveState, int(MOVESTATE_ROAM));
 
