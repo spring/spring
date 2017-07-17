@@ -1311,14 +1311,14 @@ void CUnitScript::SetUnitVal(int val, int param)
 		} break;
 
 		case STANDINGMOVEORDERS: {
-			if (param >= 0 && param <= 2) {
+			if (param >= 0 && param <= MOVESTATE_ROAM) {
 				Command c(CMD_MOVE_STATE, 0, param);
 				unit->commandAI->GiveCommand(c);
 			}
 		} break;
 
 		case STANDINGFIREORDERS: {
-			if (param >= 0 && param <= 2) {
+			if (param >= 0 && param <= FIRESTATE_FIREATNEUTRAL) {
 				Command c(CMD_FIRE_STATE, 0, param);
 				unit->commandAI->GiveCommand(c);
 			}
