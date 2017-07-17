@@ -201,7 +201,7 @@ Rendering
  - limit number of ground-scar decals to 4096
  - fix jagged shadows on maps with oblique sun-directions
  - fix grass not receiving shadows; unify groundShadowDensity application
- - fix grass being rendered black outside LOS
+ - fix grass being rendered black in metal-view
  - use clip-control (when possible) to improve depthbuffer precision
  - micro-optimize LuaMatBinSet sorting
  - make shader-flag handling more lightweight
