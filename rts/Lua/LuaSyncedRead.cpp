@@ -3964,14 +3964,13 @@ static void PackCommand(lua_State* L, const Command& cmd)
 
 static void PackCommandQueue(lua_State* L, const CCommandQueue& commands, size_t count)
 {
-	lua_createtable(L, commands.size(), 0);
-
 	size_t c = 0;
 
 	// get the desired number of commands to return
-	if (count == -1u) {
+	if (count == -1u)
 		count = commands.size();
-	}
+
+	lua_createtable(L, count, 0);
 
 	// {[1] = cq[0], [2] = cq[1], ...}
 	for (auto ci = commands.begin(); ci != commands.end(); ++ci) {
