@@ -166,10 +166,10 @@ int LuaShaders::GetShaderLog(lua_State* L)
 /******************************************************************************/
 
 enum {
-	UNIFORM_TYPE_INT          = 0, // includes arrays
-	UNIFORM_TYPE_FLOAT        = 1, // includes arrays
-	UNIFORM_TYPE_FLOAT_MATRIX = 2,
-	UNIFORM_TYPE_MIXED        = 3, // includes arrays; float or int
+	UNIFORM_TYPE_MIXED        = 0, // includes arrays; float or int
+	UNIFORM_TYPE_INT          = 1, // includes arrays
+	UNIFORM_TYPE_FLOAT        = 2, // includes arrays
+	UNIFORM_TYPE_FLOAT_MATRIX = 3,
 };
 
 static void ParseUniformType(lua_State* L, int loc, int type)
@@ -236,13 +236,15 @@ static void ParseUniformType(lua_State* L, int loc, int type)
 
 static bool ParseUniformsTable(
 	lua_State* L,
-	const char* fieldName,
 	const std::vector<ActiveUniform>& activeUniforms,
 	const std::function<bool(const ActiveUniform&, const ActiveUniform&)>& uniformPred,
 	int index,
 	int type,
 	GLuint progName
 ) {
+	constexpr const char* fieldNames[] = {"uniform", "uniformInt", "uniformFloat", "uniformMatrix"};
+	          const char* fieldName    = fieldNames[type];
+
 	lua_getfield(L, index, fieldName);
 
 	ActiveUniform tmpUniform;
@@ -295,7 +297,10 @@ static bool ParseUniformsTable(
 				case GL_FLOAT_MAT3: { type = UNIFORM_TYPE_FLOAT_MATRIX; } break;
 				case GL_FLOAT_MAT4: { type = UNIFORM_TYPE_FLOAT_MATRIX; } break;
 
-				default: {} break;
+				default: {
+					LOG_L(L_WARNING, "[%s] value for uniform \"%s\" from table \"%s\" (GL-type 0x%x) set as int", __func__, name.c_str(), fieldName, iter->type);
+					type = UNIFORM_TYPE_INT;
+				} break;
 			}
 
 			ParseUniformType(L, loc, type);
@@ -334,10 +339,10 @@ static bool ParseUniformSetupTables(lua_State* L, int index, GLuint progName)
 
 	bool ret = true;
 
-	if (ret && !ParseUniformsTable(L, "uniform",       uniforms, uniformPred, index, UNIFORM_TYPE_MIXED,        progName)) ret = false;
-	if (ret && !ParseUniformsTable(L, "uniformFloat",  uniforms, uniformPred, index, UNIFORM_TYPE_FLOAT,        progName)) ret = false;
-	if (ret && !ParseUniformsTable(L, "uniformInt",    uniforms, uniformPred, index, UNIFORM_TYPE_INT,          progName)) ret = false;
-	if (ret && !ParseUniformsTable(L, "uniformMatrix", uniforms, uniformPred, index, UNIFORM_TYPE_FLOAT_MATRIX, progName)) ret = false;
+	if (ret && !ParseUniformsTable(L, uniforms, uniformPred, index, UNIFORM_TYPE_MIXED,        progName)) ret = false;
+	if (ret && !ParseUniformsTable(L, uniforms, uniformPred, index, UNIFORM_TYPE_INT,          progName)) ret = false;
+	if (ret && !ParseUniformsTable(L, uniforms, uniformPred, index, UNIFORM_TYPE_FLOAT,        progName)) ret = false;
+	if (ret && !ParseUniformsTable(L, uniforms, uniformPred, index, UNIFORM_TYPE_FLOAT_MATRIX, progName)) ret = false;
 
 	glUseProgram(currentProgram);
 	return ret;
