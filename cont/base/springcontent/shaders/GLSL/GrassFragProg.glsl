@@ -8,6 +8,7 @@ uniform sampler2D bladeTex;
 uniform sampler2DShadow shadowMap;
 uniform float groundShadowDensity;
 #endif
+uniform float infoTexIntensityMul;
 
 #ifdef HAVE_INFOTEX
 uniform sampler2D infoMap;
@@ -59,7 +60,8 @@ void main() {
 #endif
 
 #ifdef HAVE_INFOTEX
-	gl_FragColor.rgb += texture2D(infoMap, shadingTexCoords.st).rgb - 0.5;
+	gl_FragColor.rgb += (texture2D(infoMap, shadingTexCoords.st).rgb * infoTexIntensityMul);
+	gl_FragColor.rgb -= (vec3(0.5, 0.5, 0.5) * float(infoTexIntensityMul == 1.0));
 #endif
 
 	gl_FragColor.rgb = mix(gl_Fog.color.rgb, gl_FragColor.rgb, gl_FogFragCoord);

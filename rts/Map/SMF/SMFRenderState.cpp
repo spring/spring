@@ -307,7 +307,7 @@ void SMFRenderStateFFP::Enable(const CSMFGroundDrawer* smfGroundDrawer, const Dr
 		glBindTexture(GL_TEXTURE_2D, smfMap->GetShadingTexture());
 		glMultiTexCoord4f(GL_TEXTURE2_ARB, 1.0f, 1.0f, 1.0f, 1.0f); // fix nvidia bug with gltexgen
 
-		if (infoTextureHandler->GetMode() == "metal") {
+		if (infoTextureHandler->InMetalMode()) {
 			// increase brightness for metal spots
 			glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB, GL_ADD_SIGNED_ARB);
 			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_ARB);
