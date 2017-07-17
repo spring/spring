@@ -274,9 +274,12 @@ static bool ParseUniformsTable(
 
 			// should only need to auto-correct if type == UNIFORM_TYPE_MIXED, but GL debug-errors say otherwise
 			switch (iter->type) {
-				case GL_SAMPLER_1D: { type = UNIFORM_TYPE_INT; } break;
-				case GL_SAMPLER_2D: { type = UNIFORM_TYPE_INT; } break;
-				case GL_SAMPLER_3D: { type = UNIFORM_TYPE_INT; } break;
+				case GL_SAMPLER_1D       : { type = UNIFORM_TYPE_INT; } break;
+				case GL_SAMPLER_2D       : { type = UNIFORM_TYPE_INT; } break;
+				case GL_SAMPLER_3D       : { type = UNIFORM_TYPE_INT; } break;
+				case GL_SAMPLER_1D_SHADOW: { type = UNIFORM_TYPE_INT; } break;
+				case GL_SAMPLER_2D_SHADOW: { type = UNIFORM_TYPE_INT; } break;
+				case GL_SAMPLER_CUBE     : { type = UNIFORM_TYPE_INT; } break;
 
 				case GL_INT     : { type = UNIFORM_TYPE_INT; } break;
 				case GL_INT_VEC2: { type = UNIFORM_TYPE_INT; } break;
