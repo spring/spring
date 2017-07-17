@@ -31,7 +31,8 @@ CR_REG_METADATA(CPlasmaRepulser, (
 
 	CR_MEMBER(quads),
 	CR_MEMBER(collisionVolume),
-	CR_MEMBER(tempNum)
+	CR_MEMBER(tempNum),
+	CR_MEMBER(deltaPos)
 ))
 
 
@@ -108,10 +109,13 @@ void CPlasmaRepulser::Update()
 		hitFrames--;
 
 	UpdateWeaponVectors();
-	//
-	collisionVolume.SetOffsets((weaponMuzzlePos - owner->midPos));
+
+	collisionVolume.SetOffsets(weaponMuzzlePos - owner->midPos);
 	if (weaponMuzzlePos != lastPos)
 		quadField->MovedRepulser(this);
+
+	if (lastPos != ZeroVector)
+		deltaPos = weaponMuzzlePos - lastPos;
 
 	lastPos = weaponMuzzlePos;
 

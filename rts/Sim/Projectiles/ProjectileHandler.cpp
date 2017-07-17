@@ -534,7 +534,14 @@ void CProjectileHandler::CheckShieldCollisions(
 		if (!repulser->CanIntercept(wdef->interceptedByShieldType, p->GetAllyteamID()))
 			continue;
 
-		if (CCollisionHandler::DetectHit(repulser->owner, &repulser->collisionVolume, repulser->owner->GetTransformMatrix(true), ppos0, ppos1, &cq)) {
+		// we sometimes get false inside hits due to the movement of the shield
+		// a very hacky solution is to increase the ray that's intersecting
+		// by the last movement of the shield.
+		// it's not 100% accurate so there's a bit of a FIXME here to do a real solution
+		// (keep track in the projectile which shields it's in)
+
+		const float3 effectivePPos0 = ppos0 + (ppos0 - ppos1) * repulser->deltaPos.Length();
+		if (CCollisionHandler::DetectHit(repulser->owner, &repulser->collisionVolume, repulser->owner->GetTransformMatrix(true), effectivePPos0, ppos1, &cq)) {
 			if (!cq.InsideHit() || !repulser->weaponDef->exteriorShield || repulser->IsRepulsing(wpro)) {
 				if (repulser->IncomingProjectile(wpro, cq.GetHitPos()))
 					return;
