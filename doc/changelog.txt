@@ -83,10 +83,11 @@ Sim:
    checks for this property now first query a unit's MoveDef
    (if any) so that ship->tank and similar substitutions via
    MoveCtrl.SetMoveDef behave as expected
- - Spring.CreateUnit with canBeAssisted=false (patch by Sprunk)
+ - make Spring.CreateUnit smarter (patch by Sprunk)
    if a builderID parameter is passed to Spring.CreateUnit, the new unit
    will consider that its solo-builder if it has canBeAssisted=false set
  - EMGCannon now obeys flightTime override (patch by Sprunk)
+ - allow setting runtime/initial firestate to 3 [FIREATNEUTRAL] from COB and unitdefs (patch by Sprunk)
  - change a weapon reaiming-tolerance constant from 20 radians to 20 degrees (patch by Sprunk)
  - experiment with larger medium-resolution PFS blocksize (16*SQUARE_SIZE vs 8*SQUARE_SIZE)
  - bump the default unloadSpread multiplier from 1 to 5
