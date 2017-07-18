@@ -363,9 +363,16 @@ bool UnitDrawerStateGLSL::Init(const CUnitDrawer* ud) {
 		modelShaders[n]->SetUniform1i(3, 3); // reflectTex  (idx 3, texunit 3)
 		modelShaders[n]->SetUniform1i(4, 4); // specularTex (idx 4, texunit 4)
 		modelShaders[n]->SetUniform3fv(5, &sky->GetLight()->GetLightDir().x);
+		modelShaders[n]->SetUniform3fv(6, &camera->GetPos()[0]);
+		modelShaders[n]->SetUniformMatrix4fv(7, false, camera->GetViewMatrix());
+		modelShaders[n]->SetUniformMatrix4fv(8, false, camera->GetViewMatrixInverse());
+		modelShaders[n]->SetUniform4f(9, 0.0f, 0.0f, 0.0f, 0.0f);
+		modelShaders[n]->SetUniform4f(10, 0.0f, 0.0f, 0.0f, 0.0f);
 		modelShaders[n]->SetUniform3fv(11, &sunLighting->modelAmbientColor[0]);
 		modelShaders[n]->SetUniform3fv(12, &sunLighting->modelDiffuseColor[0]);
 		modelShaders[n]->SetUniform1f(13, sunLighting->modelShadowDensity);
+		modelShaders[n]->SetUniformMatrix4fv(14, false, shadowHandler->GetShadowMatrixRaw());
+		modelShaders[n]->SetUniform4fv(15, &(shadowHandler->GetShadowParams().x));
 		// modelShaders[n]->SetUniform1f(16, 0.0f); // alphaPass
 		modelShaders[n]->Disable();
 		modelShaders[n]->Validate();
