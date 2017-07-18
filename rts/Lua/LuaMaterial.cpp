@@ -17,6 +17,12 @@
 #include "System/Log/ILog.h"
 #include "System/StringUtil.h"
 
+struct ActiveUniform {
+	GLint size = 0;
+	GLenum type = 0;
+	GLchar name[512] = {0};
+};
+
 struct LuaMatBinPtrLessThan {
 	bool operator()(const LuaMatBin* a, const LuaMatBin* b) const {
 		const LuaMaterial* ma = static_cast<const LuaMaterial*>(a);
@@ -35,7 +41,7 @@ LuaMatBinPtrLessThan matBinCmp;
 //  Helper
 //
 
-static const char* GlUniformTypeToString(const GLenum uType)
+static const char* GLUniformTypeToString(const GLenum uType)
 {
 	switch (uType) {
 		case      GL_FLOAT: return "float";
@@ -50,6 +56,7 @@ static const char* GlUniformTypeToString(const GLenum uType)
 		case GL_FLOAT_MAT3: return "mat3";
 		case GL_FLOAT_MAT4: return "mat4";
 	}
+
 	return "unknown";
 }
 
@@ -287,7 +294,7 @@ void LuaMaterial::Parse(
 			continue;
 		}
 
-		LOG_L(L_WARNING, "LuaMaterial: incorrect key \"%s\"", key.c_str());
+		LOG_L(L_WARNING, "[LuaMaterial::%s] incorrect key \"%s\"", __func__, key.c_str());
 	}
 }
 
@@ -501,7 +508,7 @@ void LuaMaterial::Print(const string& indent) const
 //  LuaMatUniforms
 //
 
-spring::unsynced_map<LuaMatUniforms::IUniform*, std::string> LuaMatUniforms::GetUniformsAndStandardName()
+spring::unsynced_map<LuaMatUniforms::IUniform*, std::string> LuaMatUniforms::GetEngineUniformNamePairs()
 {
 	return {
 		{&viewMatrix,    "ViewMatrix"},
@@ -522,8 +529,7 @@ spring::unsynced_map<LuaMatUniforms::IUniform*, std::string> LuaMatUniforms::Get
 	};
 }
 
-
-spring::unsynced_map<std::string, LuaMatUniforms::IUniform*> LuaMatUniforms::GetUniformsAndPossibleNames()
+spring::unsynced_map<std::string, LuaMatUniforms::IUniform*> LuaMatUniforms::GetEngineNameUniformPairs()
 {
 	return {
 		{"Camera",                  &viewMatrix},
@@ -566,88 +572,132 @@ void LuaMatUniforms::AutoLink(LuaMatShader* shader)
 	if (!shader->IsCustomType())
 		return;
 
-	for (const auto& p: GetUniformsAndPossibleNames()) {
-		if (p.second->IsValid())
+	for (const auto& p: GetEngineNameUniformPairs()) {
+		IUniform* u = p.second;
+		ActiveUniform au;
+
+		if (u->IsValid())
 			continue;
 
-		// try CamelCase
-		p.second->loc = glGetUniformLocation(shader->openglID, p.first.c_str());
-		if (p.second->IsValid()) continue;
+		std::memset(au.name, 0, sizeof(au.name));
+		std::strncpy(au.name, p.first.c_str(), std::min(sizeof(au.name) - 1, p.first.size()));
 
-		// try camelCase
-		std::string s = p.first; s[0] = tolower(s[0]);
-		p.second->loc = glGetUniformLocation(shader->openglID, s.c_str());
-		if (p.second->IsValid()) continue;
+		{
+			// try getting location by CamelCase name, e.g. "ViewMatrix"
+			au.name[0] = std::toupper(au.name[0]);
 
-		// try lowercase
-		StringToLowerInPlace(s);
-		p.second->loc = glGetUniformLocation(shader->openglID, s.c_str());
+			if (u->SetLoc(glGetUniformLocation(shader->openglID, au.name)))
+				continue;
+		}
+		{
+			// try getting location by camelCase name, e.g. "viewMatrix"
+			au.name[0] = std::tolower(au.name[0]);
+
+			if (u->SetLoc(glGetUniformLocation(shader->openglID, au.name)))
+				continue;
+		}
+
+		// assume this uniform is not in the standard-set, mark as invalid for Execute
+		u->SetLoc(GL_INVALID_INDEX);
 	}
 }
 
 
 void LuaMatUniforms::Validate(LuaMatShader* s)
 {
+	constexpr const char* fmts[3] = {
+		"[LuaMatUniforms::%s] engine shaders prohibit the usage of uniform \"%s\"",
+		"[LuaMatUniforms::%s] missing \"TeamColor\" uniform",
+		"[LuaMatUniforms::%s] incorrect uniform-type for \"%s\" at location %d (declared %s, expected %s)",
+	};
+
 	if (!s->IsCustomType()) {
 		// print warning when uniforms are given for engine shaders
-		for (const auto& p: GetUniformsAndStandardName()) {
+		for (const auto& p: GetEngineUniformNamePairs()) {
 			if (!p.first->IsValid())
 				continue;
 
-			LOG_L(L_WARNING, "LuaMaterial: engine shaders prohibit the usage of uniform \"%s\"", p.second.c_str());
+			LOG_L(L_WARNING, fmts[0], __func__, p.second.c_str());
 		}
+
 		return;
 	}
 
 	// print warning when teamcolor is not bound
-	if (!teamColor.IsValid()) {
-		LOG_L(L_WARNING, "LuaMaterial: missing TeamColor uniform");
-	}
+	if (!teamColor.IsValid())
+		LOG_L(L_WARNING, fmts[1], __func__);
 
-	// check uniform types
-	for (const auto& p: GetUniformsAndStandardName()) {
-		if (!p.first->IsValid())
+
+	const decltype(GetEngineNameUniformPairs())& uniforms = GetEngineNameUniformPairs();
+	      decltype(uniforms.end()) uniformsIt;
+
+
+	ActiveUniform au;
+
+	GLsizei numUniforms = 0;
+	GLsizei uniformIndx = 0;
+
+	glGetProgramiv(s->openglID, GL_ACTIVE_UNIFORMS, &numUniforms);
+
+	while (uniformIndx < numUniforms) {
+		glGetActiveUniform(s->openglID, uniformIndx++, sizeof(au.name) - 1, nullptr, &au.size, &au.type, au.name);
+
+		// check if active uniform is in the standard-set
+		au.name[0] = std::toupper(au.name[0]);
+		uniformsIt = uniforms.find(au.name);
+
+		if (uniformsIt == uniforms.end()) {
+			au.name[0] = std::tolower(au.name[0]);
+			uniformsIt = uniforms.find(au.name);
+		}
+
+		if (uniformsIt == uniforms.end())
 			continue;
 
-		GLint size = 0;
-		GLenum uniformType = 0;
-		glGetActiveUniform(s->openglID, p.first->loc, 0, nullptr, &size, &uniformType, nullptr);
 
-		if (p.first->GetType() == uniformType)
+		// if so, check if its type matches the expected type
+		const GLint uniformLoc = (uniformsIt->second)->loc;
+		const GLenum expectedType = (uniformsIt->second)->GetType();
+
+		if (au.type == expectedType)
 			continue;
 
-		LOG_L(L_WARNING, "LuaMaterial: incorrect uniform type for \"%s\", got: %s expected: %s", p.second.c_str(), GlUniformTypeToString(uniformType), GlUniformTypeToString(p.first->GetType()));
+		LOG_L(L_WARNING, fmts[2], __func__, au.name, uniformLoc,  GLUniformTypeToString(au.type), GLUniformTypeToString(expectedType));
 	}
 }
 
 
 void LuaMatUniforms::Parse(lua_State* L, const int tableIdx)
 {
-	auto uniformAndNames = GetUniformsAndPossibleNames();
-	decltype(uniformAndNames) uniformAndNamesLower;
-	for (auto& p: uniformAndNames) {
-		uniformAndNamesLower[StringToLower(p.first)] = p.second;
+	decltype(GetEngineNameUniformPairs()) lcNameUniformPairs;
+
+	for (const auto& p: GetEngineNameUniformPairs()) {
+		lcNameUniformPairs[ StringToLower(p.first) ] = p.second;
 	}
 
 	for (lua_pushnil(L); lua_next(L, tableIdx) != 0; lua_pop(L, 1)) {
 		if (!lua_israwstring(L, -2) || !lua_isnumber(L, -1))
 			continue;
 
-		// get the lua table key
-		// and remove the "loc" at the end (cameraPosLoc -> camerapos)
-		std::string uniformLocStr = luaL_tosstring(L, -2);
-		StringToLowerInPlace(uniformLocStr);
-		if (StringEndsWith(uniformLocStr, "loc")) {
-			uniformLocStr.resize(uniformLocStr.size() - 3);
-		}
+		// convert LuaMaterial key to lower-case and remove the
+		// "loc" postfix from it ("cameraPosLoc" -> "camerapos")
+		std::string uniformLocStr = StringToLower(luaL_tosstring(L, -2));
 
-		const auto uniformLocIt = uniformAndNamesLower.find(uniformLocStr);
-		if (uniformLocIt == uniformAndNamesLower.end()) {
-			LOG_L(L_WARNING, "LuaMaterial: unknown uniform \"%s\"", lua_tostring(L, -2));
+		if (StringEndsWith(uniformLocStr, "loc"))
+			uniformLocStr.resize(uniformLocStr.size() - 3);
+
+		const auto uniformLocIt = lcNameUniformPairs.find(uniformLocStr);
+
+		if (uniformLocIt == lcNameUniformPairs.end()) {
+			LOG_L(L_WARNING, "[LuaMatUniforms::%s] unknown uniform \"%s\"", __func__, uniformLocStr.c_str());
 			continue;
 		}
 
-		uniformLocIt->second->loc = static_cast<GLint>(lua_tonumber(L, -1));
+		if ((uniformLocIt->second)->SetLoc(static_cast<GLint>(lua_tonumber(L, -1))))
+			continue;
+
+		// could log this too, but would be confusing without the shader/material name
+		// LOG_L(L_WARNING, "[LuaMatUniforms::%s] unused uniform \"%s\"", __func__, uniformLocStr.c_str());
 	}
 }
 
@@ -821,7 +871,7 @@ LuaMatHandler::~LuaMatHandler()
 LuaMatRef LuaMatHandler::GetRef(const LuaMaterial& mat)
 {
 	if ((mat.type < 0) || (mat.type >= LUAMAT_TYPE_COUNT)) {
-		LOG_L(L_WARNING, "LuaMatHandler::GetRef() untyped material");
+		LOG_L(L_WARNING, "[LuaMatHandler::%s] untyped material %d", __func__, mat.type);
 		return LuaMatRef();
 	}
 

@@ -11,7 +11,6 @@
 #include "LuaUtils.h"
 
 #include "Game/Camera.h"
-#include "Rendering/ShadowHandler.h"
 #include "System/Log/ILog.h"
 #include "System/StringUtil.h"
 
@@ -700,16 +699,16 @@ int LuaShaders::GetActiveUniforms(lua_State* L)
 	lua_newtable(L);
 
 	for (GLint i = 0; i < uniformCount; i++) {
-		ActiveUniform u;
+		ActiveUniform au;
 		GLsizei length;
 
-		glGetActiveUniform(progName, i, sizeof(u.name), &length, &u.size, &u.type, u.name);
+		glGetActiveUniform(progName, i, sizeof(au.name), &length, &au.size, &au.type, au.name);
 
 		lua_newtable(L); {
-			HSTR_PUSH_STRING(L, "name",   u.name);
-			HSTR_PUSH_STRING(L, "type",   UniformTypeString(u.type));
+			HSTR_PUSH_STRING(L, "name",   au.name);
+			HSTR_PUSH_STRING(L, "type",   UniformTypeString(au.type));
 			HSTR_PUSH_NUMBER(L, "length", length);
-			HSTR_PUSH_NUMBER(L, "size",   u.size);
+			HSTR_PUSH_NUMBER(L, "size",   au.size);
 		}
 		lua_rawseti(L, -2, i + 1);
 	}

@@ -257,6 +257,7 @@ Bugfixes:
  - fix UnitDamaged events following UnitDestroyed
  - fix BuilderCAI crash when parsing invalid build-commands
  - fix canBeAssisted-check in Builder::StartBuild
+ - fix ATI uniform-type validation for LuaMaterials
  - fix ATI driver crash with BumpWater (on any map without a coastline) in TextureAtlas generation
  - fix crash in AdvTreeDrawer on ARB-only junkware
  - fix crash in InfoTextureHandler on ARB-only junkware
