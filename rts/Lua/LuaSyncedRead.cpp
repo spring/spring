@@ -3536,9 +3536,9 @@ int LuaSyncedRead::GetUnitWeaponHaveFreeLineOfFire(lua_State* L)
 
 		break;
 	case 2+3+0: // target XYZ, source default
-		tgtPos.x = luaL_optnumber(L, 3);
-		tgtPos.y = luaL_optnumber(L, 4);
-		tgtPos.z = luaL_optnumber(L, 5);
+		tgtPos.x = lua_tonumber(L, 3);
+		tgtPos.y = lua_tonumber(L, 4);
+		tgtPos.z = lua_tonumber(L, 5);
 		srcPos = weapon->GetAimFromPos();
 
 		break;
