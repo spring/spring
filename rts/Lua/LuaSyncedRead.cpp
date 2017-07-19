@@ -3512,22 +3512,47 @@ int LuaSyncedRead::GetUnitWeaponHaveFreeLineOfFire(lua_State* L)
 	const CWeapon* weapon = unit->weapons[weaponNum];
 	const CUnit* enemy = nullptr;
 
-	float3 srcPos = weapon->GetAimFromPos();
+	float3 srcPos;
 	float3 tgtPos;
 
-	if (lua_gettop(L) <= 3) {
+	switch (lua_gettop(L)) {
+
+	case 2+1+0: // target ID; source default
 		if ((enemy = ParseUnit(L, __func__, 3)) == nullptr)
 			return 0;
 
 		tgtPos = weapon->GetUnitLeadTargetPos(enemy);
-	} else {
-		srcPos.x = luaL_optnumber(L, 3, srcPos.x);
-		srcPos.y = luaL_optnumber(L, 4, srcPos.y);
-		srcPos.z = luaL_optnumber(L, 5, srcPos.z);
+		srcPos = weapon->GetAimFromPos();
 
-		tgtPos.x = luaL_optnumber(L, 6, 0.0f);
-		tgtPos.y = luaL_optnumber(L, 7, 0.0f);
-		tgtPos.z = luaL_optnumber(L, 8, 0.0f);
+		break;
+	case 2+1+3: // target ID, source XYZ
+		if ((enemy = ParseUnit(L, __func__, 3)) == nullptr)
+			return 0;
+
+		tgtPos = weapon->GetUnitLeadTargetPos(enemy);
+		srcPos.x = lua_tonumber(L, 4);
+		srcPos.y = lua_tonumber(L, 5);
+		srcPos.z = lua_tonumber(L, 6);
+
+		break;
+	case 2+3+0: // target XYZ, source default
+		tgtPos.x = luaL_optnumber(L, 3);
+		tgtPos.y = luaL_optnumber(L, 4);
+		tgtPos.z = luaL_optnumber(L, 5);
+		srcPos = weapon->GetAimFromPos();
+
+		break;
+	case 2+3+3: // target XYZ, source XYZ
+		srcPos.x = lua_tonumber(L, 3);
+		srcPos.y = lua_tonumber(L, 4);
+		srcPos.z = lua_tonumber(L, 5);
+		tgtPos.x = lua_tonumber(L, 6);
+		tgtPos.y = lua_tonumber(L, 7);
+		tgtPos.z = lua_tonumber(L, 8);
+
+		break;
+	default: // invalid params
+		return 0;
 	}
 
 	lua_pushboolean(L, weapon->HaveFreeLineOfFire(srcPos, tgtPos, SWeaponTarget(enemy, tgtPos, true)));
