@@ -228,7 +228,7 @@ bool CBitmap::Load(std::string const& filename, unsigned char defaultAlpha)
 	channels = 4;
 
 	CFileHandler file(filename);
-	if (file.FileExists() == false) {
+	if (!file.FileExists()) {
 		AllocDummy();
 		return false;
 	}
@@ -255,7 +255,7 @@ bool CBitmap::Load(std::string const& filename, unsigned char defaultAlpha)
 
 		ilDisable(IL_ORIGIN_SET);
 
-		if (success == false) {
+		if (!success) {
 			AllocDummy();
 			return false;
 		}
@@ -281,9 +281,9 @@ bool CBitmap::Load(std::string const& filename, unsigned char defaultAlpha)
 	ilDeleteImages(1, &imageID);
 
 	if (noAlpha) {
-		for (int y=0; y < ysize; ++y) {
-			for (int x=0; x < xsize; ++x) {
-				mem[((y*xsize+x) * 4) + 3] = defaultAlpha;
+		for (int y = 0; y < ysize; ++y) {
+			for (int x = 0; x < xsize; ++x) {
+				mem[((y * xsize + x) * 4) + 3] = defaultAlpha;
 			}
 		}
 	}

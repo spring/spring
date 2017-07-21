@@ -44,10 +44,10 @@
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Fonts/glFont.h"
 #include "Rendering/GL/FBO.h"
+#include "Rendering/Textures/Bitmap.h"
 #include "Rendering/Textures/NamedTextures.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Misc/DefinitionTag.h"
-#include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
@@ -66,6 +66,7 @@
 #include "System/creg/creg_runtime_tests.h"
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/DataDirLocater.h"
+#include "System/FileSystem/DataDirsAccess.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/FileSystem/FileSystemInitializer.h"
@@ -107,6 +108,7 @@ CONFIG(float, SmallFontOutlineWeight).defaultValue(10.0f).description("see FontO
 
 CONFIG(std::string, name).defaultValue(UnnamedPlayerName).description("Sets your name in the game. Since this is overridden by lobbies with your lobby username when playing, it usually only comes up when viewing replays or starting the engine directly for testing purposes.");
 CONFIG(std::string, DefaultStartScript).defaultValue("").description("filename of script.txt to use when no command line parameters are specified.");
+CONFIG(std::string, SplashScreenDir).defaultValue(".");
 
 
 
@@ -148,6 +150,80 @@ static unsigned int numShutDowns = 0;
 
 
 
+// initialize basic systems for command line help / output
+static void ConsolePrintInitialize(const std::string& configSource, bool safemode)
+{
+	spring_clock::PushTickRate(false);
+	spring_time::setstarttime(spring_time::gettime(true));
+
+	LOG_DISABLE();
+	FileSystemInitializer::PreInitializeConfigHandler(configSource, safemode);
+	FileSystemInitializer::InitializeLogOutput();
+	LOG_ENABLE();
+}
+
+#ifndef HEADLESS
+static void ShowSplashScreen(const std::string& splashScreenFile)
+{
+	CVertexArray* va = GetVertexArray();
+	CBitmap bmp;
+
+	if (bmp.Load(splashScreenFile)) {
+		bmp.ReverseYAxis();
+	} else {
+		bmp.AllocDummy({0, 0, 0, 0});
+	}
+
+	constexpr const char* fmtStrs[3] = {
+		"[Initializing Virtual File System]",
+		"* archives scanned: %u",
+		"* scantime elapsed: %.1fms",
+	};
+
+	const unsigned int splashTex = bmp.CreateTexture();
+	const unsigned int fontFlags = FONT_NORM | FONT_SCALE;
+
+	const float4 color = {1.0f, 1.0f, 1.0f, 1.0f};
+	const float4 coors = {0.5f, 0.1f, 0.8f, 0.04f};
+
+	const float textWidth = font->GetTextWidth(fmtStrs[0]);
+	const float normWidth = textWidth * globalRendering->pixelX * font->GetSize() * coors.z;
+
+	glPushAttrib(GL_ENABLE_BIT);
+	glEnable(GL_TEXTURE_2D);
+
+	for (spring_time t0 = spring_now(), t1 = t0; !FileSystemInitializer::Initialized(); t1 = spring_now()) {
+		glClear(GL_COLOR_BUFFER_BIT);
+
+		glBindTexture(GL_TEXTURE_2D, splashTex);
+		va->Initialize();
+		va->AddVertex2dT({ZeroVector.x, ZeroVector.y}, {0.0f, 0.0f});
+		va->AddVertex2dT({  UpVector.x,   UpVector.y}, {0.0f, 1.0f});
+		va->AddVertex2dT({  XYVector.x,   XYVector.y}, {1.0f, 1.0f});
+		va->AddVertex2dT({ RgtVector.x,  RgtVector.y}, {1.0f, 0.0f});
+		va->DrawArray2dT(GL_QUADS);
+
+		font->Begin();
+		font->SetTextColor(color.x, color.y, color.z, color.w);
+		font->glFormat(coors.x - normWidth * 0.500f, coors.y                           , coors.z, fontFlags, fmtStrs[0]);
+		font->glFormat(coors.x - normWidth * 0.475f, coors.y - coors.w * coors.z * 1.0f, coors.z, fontFlags, fmtStrs[1], CArchiveScanner::GetNumScannedArchives());
+		font->glFormat(coors.x - normWidth * 0.475f, coors.y - coors.w * coors.z * 2.0f, coors.z, fontFlags, fmtStrs[2], (t1 - t0).toMilliSecsf());
+		font->End();
+
+		globalRendering->SwapBuffers(true, true);
+
+		// prevent WM's from assuming the window is unresponsive and
+		// (in recent versions of Windows) generating a kill-request
+		SDL_PollEvent(nullptr);
+	}
+
+	glPopAttrib();
+	glDeleteTextures(1, &splashTex);
+}
+#endif
+
+
+
 /**
  * Initializes SpringApp variables
  *
@@ -168,6 +244,9 @@ SpringApp::SpringApp(int argc, char** argv)
 	// be done before SDL_Init, we are not using SDL_GetTicks
 	// as our clock anymore)
 	spring_time::setstarttime(spring_time::gettime(true));
+
+	// gu does not exist yet, pre-seed for ShowSplashScreen
+	guRNG.Seed(CGlobalUnsyncedRNG::rng_val_type(&argc));
 }
 
 /**
@@ -300,29 +379,19 @@ bool SpringApp::InitFileSystem()
 	#ifndef HEADLESS
 	// threaded initialization s.t. the window gets CPU time
 	// FileSystem is mostly self-contained, don't need locks
+	// (at this point neither the platform CWD nor data-dirs
+	// have been set yet by FSI, can only use absolute paths)
+	const std::string cwd = std::move(FileSystem::EnsurePathSepAtEnd(FileSystemAbstraction::GetCwd()));
+	const std::string ssd = std::move(FileSystem::EnsurePathSepAtEnd(configHandler->GetString("SplashScreenDir")));
+
+	std::vector<std::string> splashScreenFiles(dataDirsAccess.FindFiles(FileSystem::IsAbsolutePath(ssd)? ssd: cwd + ssd, "*.png", 0));
 	spring::thread fsInitThread(FileSystemInitializer::InitializeThr, &ret);
 
-
-	const float4 color = {1.0f, 0.0f, 0.0f, 1.0f};
-	const float4 coors = {0.5f, 0.5f, 25.0f, 0.04f};
-
-	for (spring_time t0 = spring_now(), t1 = t0; !FileSystemInitializer::DoneIniting(); t1 = spring_now()) {
-		glClear(GL_COLOR_BUFFER_BIT);
-
-		font->Begin();
-		font->SetTextColor(color.x, color.y, color.z, color.w);
-		font->glFormat(coors.x - 0.125f, coors.y                 , coors.z, FONT_NORM, "[Initializing Virtual File System]");
-		font->glFormat(coors.x - 0.120f, coors.y - coors.w * 1.0f, coors.z, FONT_NORM, "* archives scanned: %u", CArchiveScanner::GetNumScannedArchives());
-		font->glFormat(coors.x - 0.120f, coors.y - coors.w * 2.0f, coors.z, FONT_NORM, "* scantime elapsed: %.1fms", (t1 - t0).toMilliSecsf());
-		font->End();
-
-		globalRendering->SwapBuffers(true, true);
-
-		// prevent WM's from assuming the window is unresponsive and
-		// (in recent versions of Windows) generating a kill-request
-		SDL_PollEvent(nullptr);
+	if (!splashScreenFiles.empty()) {
+		ShowSplashScreen(splashScreenFiles[ guRNG.NextInt(splashScreenFiles.size()) ]);
+	} else {
+		ShowSplashScreen("");
 	}
-
 
 	fsInitThread.join();
 	#else
@@ -409,17 +478,6 @@ void SpringApp::LoadFonts()
 	if (smallFont == nullptr)
 		throw content_error("Failed to load SmallFontFile \"" + smallFontFile + installBroken);
 
-}
-
-// initialize basic systems for command line help / output
-static void ConsolePrintInitialize(const std::string& configSource, bool safemode)
-{
-	spring_clock::PushTickRate(false);
-	spring_time::setstarttime(spring_time::gettime(true));
-	LOG_DISABLE();
-	FileSystemInitializer::PreInitializeConfigHandler(configSource, safemode);
-	FileSystemInitializer::InitializeLogOutput();
-	LOG_ENABLE();
 }
 
 

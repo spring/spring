@@ -36,7 +36,7 @@ Misc:
  - turn LoadDefs content_error exceptions into clean exits
  - set modType to an integer (not string) value in base-content modinfo.lua's
  - do not auto-add springcontent dependency to non-game "mod" archives
- - downgrade non-writeable springsettings files to a warning
+ - downgrade non-writeable springsettings.cfg's to a warning
  - allow maps to not supply a type-map; one fewer exception to worry about
  - improve RNG statistical quality; sampled ints can now also exceed 0x7fff
  - make the *nix CrashHandler compile on ARM; do not use cpuid on non-x86 builds
@@ -210,6 +210,9 @@ Rendering
  - outsource vsync regulation to SDL2
 
 UI:
+ - show a splash-screen while initializing VFS; randomly chosen from any
+   .png images found under SplashScreenDir defined in springsettings.cfg
+   (if SplashScreenDir is a relative path, Spring's CWD will be prepended)
  - Add FPSClampPos config for whether the engine should verify the camera doesn't hit ground/go too far
    this and other FPS camera configs can be changed midgame and will affect the next frame drawn.
  - Add OverheadMaxHeightFactor config - a float multiplier for maximum overhead camera height.
@@ -279,7 +282,7 @@ Bugfixes:
  - fix #3515 (better error-messages for the /team command)
  - fix #5200 (broken ctrl+mousewheel tilt transitions with 'Spring' camera)
  - fix #5258 (custom selection volumes)
- - fix #5632 (show a slightly more interesting black screen on startup)
+ - fix #5632 (don't show just a black screen on startup)
  - fix #5629 (make footprint-terraforming respect buildee's actual facing)
  - fix #4447 (FPS-mode locking onto out-of-LOS units)
  - fix #4074 (equalize UnitDamaged parameters for LuaUI and LuaRules)

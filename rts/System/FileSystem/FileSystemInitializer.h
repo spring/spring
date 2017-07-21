@@ -14,13 +14,12 @@ public:
 	static void InitializeThr(bool* retPtr) { *retPtr = Initialize(); }
 	static void Cleanup(bool deallocConfigHandler = true);
 
-	static bool Initialized() { return initialized; }
-	static bool AbortedInit() { return abortedInit; }
-	static bool DoneIniting() { return (Initialized() || AbortedInit()); }
+	// either result counts
+	static bool Initialized() { return (initSuccess || initFailure); }
 
 private:
-	static volatile bool initialized;
-	static volatile bool abortedInit;
+	static volatile bool initSuccess;
+	static volatile bool initFailure;
 };
 
 #endif // FILE_SYSTEM_INITIALIZER_H
