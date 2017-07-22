@@ -1063,7 +1063,9 @@ int LuaUnsyncedRead::GetSelectedUnits(lua_State* L)
 
 int LuaUnsyncedRead::GetSelectedUnitsSorted(lua_State* L)
 {
-	std::vector< std::pair<int, std::vector<const CUnit*> > > unitDefMap;
+	static std::vector< std::pair<int, std::vector<const CUnit*> > > unitDefMap;
+
+	unitDefMap.clear();
 	unitDefMap.resize(unitDefHandler->unitDefs.size() + 1);
 
 	int numDefKeys = 0;
@@ -1109,7 +1111,9 @@ int LuaUnsyncedRead::GetSelectedUnitsSorted(lua_State* L)
 
 int LuaUnsyncedRead::GetSelectedUnitsCounts(lua_State* L)
 {
-	std::vector< std::pair<int, int> > countMap;
+	static std::vector< std::pair<int, int> > countMap;
+
+	countMap.clear();
 	countMap.resize(unitDefHandler->unitDefs.size() + 1, {0, 0});
 
 	int numDefKeys = 0;
