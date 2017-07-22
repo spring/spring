@@ -1066,6 +1066,8 @@ int LuaUnsyncedRead::GetSelectedUnitsSorted(lua_State* L)
 	std::vector< std::pair<int, std::vector<const CUnit*> > > unitDefMap;
 	unitDefMap.resize(unitDefHandler->unitDefs.size() + 1);
 
+	int numDefKeys = 0;
+
 	for (const int unitID: selectedUnitsHandler.selectedUnits) {
 		const CUnit* unit = unitHandler->GetUnit(unitID);
 		const UnitDef* unitDef = unit->unitDef;
@@ -1077,29 +1079,30 @@ int LuaUnsyncedRead::GetSelectedUnitsSorted(lua_State* L)
 	// { [number unitDefID] = { [1] = [number unitID], ...}, ... }
 	lua_createtable(L, 0, unitDefMap.size());
 
-	for (auto mit = unitDefMap.begin(); mit != unitDefMap.end(); ++mit) {
-		const std::pair<int, std::vector<const CUnit*> >& p = *mit;
+	for (const std::pair<int, std::vector<const CUnit*> >& p: unitDefMap) {
 		const std::vector<const CUnit*>& v = p.second;
 
 		if (v.empty())
 			continue;
 
-		// inner array-table
-		lua_createtable(L, v.size(), 0);
-
 		{
+			// inner array-table
+			lua_createtable(L, v.size(), 0);
+
 			for (unsigned int i = 0; i < v.size(); i++) {
 				lua_pushnumber(L, v[i]->id);
 				lua_rawseti(L, -2, i + 1);
 			}
+
+			// push the UnitDef index
+			lua_rawseti(L, -2, p.first);
 		}
 
-		// push the UnitDef index
-		lua_rawseti(L, -2, mit->first);
+		numDefKeys += 1;
 	}
 
 	// UnitDef ID keys are not necessarily consecutive
-	HSTR_PUSH_NUMBER(L, "n", unitDefMap.size());
+	HSTR_PUSH_NUMBER(L, "n", numDefKeys);
 	return 1;
 }
 
@@ -1108,6 +1111,8 @@ int LuaUnsyncedRead::GetSelectedUnitsCounts(lua_State* L)
 {
 	std::vector< std::pair<int, int> > countMap;
 	countMap.resize(unitDefHandler->unitDefs.size() + 1, {0, 0});
+
+	int numDefKeys = 0;
 
 	// tally the types
 	for (const int unitID: selectedUnitsHandler.selectedUnits) {
@@ -1121,16 +1126,18 @@ int LuaUnsyncedRead::GetSelectedUnitsCounts(lua_State* L)
 	// { [number unitDefID] = number count, ... }
 	lua_createtable(L, 0, countMap.size());
 
-	for (auto mit = countMap.begin(); mit != countMap.end(); ++mit) {
-		if (mit->second == 0)
+	for (const std::pair<int, int>& p: countMap) {
+		if (p.second == 0)
 			continue;
 
-		lua_pushnumber(L, mit->second); // push the UnitDef unit count (value)
-		lua_rawseti(L, -2, mit->first); // push the UnitDef index (key)
+		lua_pushnumber(L, p.second); // push the UnitDef unit count (value)
+		lua_rawseti(L, -2, p.first); // push the UnitDef index (key)
+
+		numDefKeys += 1;
 	}
 
 	// UnitDef ID keys are not necessarily consecutive
-	HSTR_PUSH_NUMBER(L, "n", countMap.size());
+	HSTR_PUSH_NUMBER(L, "n", numDefKeys);
 	return 1;
 }
 
@@ -1168,11 +1175,8 @@ int LuaUnsyncedRead::HaveAdvShading(lua_State* L)
 
 int LuaUnsyncedRead::GetWaterMode(lua_State* L)
 {
-	const int mode = water->GetID();
-	const char* modeName = water->GetName();
-
-	lua_pushnumber(L, mode);
-	lua_pushstring(L, modeName);
+	lua_pushnumber(L, water->GetID());
+	lua_pushstring(L, water->GetName());
 	return 2;
 }
 
