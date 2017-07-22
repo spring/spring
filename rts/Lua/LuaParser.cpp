@@ -470,8 +470,15 @@ int LuaParser::TimeCheck(lua_State* L)
 
 /******************************************************************************/
 
-// seeding makes little sense inside LuaParser execution
-int LuaParser::RandomSeed(lua_State* L) { return (DummyRandomSeed(L)); }
+int LuaParser::RandomSeed(lua_State* L)
+{
+	#if (!defined(UNITSYNC) && !defined(DEDICATED))
+		gsRNG.SetSeed(luaL_checkint(L, -1), false);
+		return 0;
+	#else
+		return DummyRandomSeed(L);
+	#endif
+}
 int LuaParser::Random(lua_State* L)
 {
 	// both US and DS depend on LuaParser via MapParser, etc
