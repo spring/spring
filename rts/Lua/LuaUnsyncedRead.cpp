@@ -1077,12 +1077,15 @@ int LuaUnsyncedRead::GetSelectedUnitsSorted(lua_State* L)
 	// { [number unitDefID] = { [1] = [number unitID], ...}, ... }
 	lua_createtable(L, 0, unitDefMap.size());
 
+	int numDefs = 0;
 	for (auto mit = unitDefMap.begin(); mit != unitDefMap.end(); ++mit) {
 		const std::pair<int, std::vector<const CUnit*> >& p = *mit;
 		const std::vector<const CUnit*>& v = p.second;
 
 		if (v.empty())
 			continue;
+
+		numDefs++;
 
 		// inner array-table
 		lua_createtable(L, v.size(), 0);
@@ -1099,7 +1102,7 @@ int LuaUnsyncedRead::GetSelectedUnitsSorted(lua_State* L)
 	}
 
 	// UnitDef ID keys are not necessarily consecutive
-	HSTR_PUSH_NUMBER(L, "n", unitDefMap.size());
+	HSTR_PUSH_NUMBER(L, "n", numDefs);
 	return 1;
 }
 
@@ -1121,16 +1124,18 @@ int LuaUnsyncedRead::GetSelectedUnitsCounts(lua_State* L)
 	// { [number unitDefID] = number count, ... }
 	lua_createtable(L, 0, countMap.size());
 
+	int numTypes = 0;
 	for (auto mit = countMap.begin(); mit != countMap.end(); ++mit) {
 		if (mit->second == 0)
 			continue;
 
+		numTypes++;
 		lua_pushnumber(L, mit->second); // push the UnitDef unit count (value)
 		lua_rawseti(L, -2, mit->first); // push the UnitDef index (key)
 	}
 
 	// UnitDef ID keys are not necessarily consecutive
-	HSTR_PUSH_NUMBER(L, "n", countMap.size());
+	HSTR_PUSH_NUMBER(L, "n", numTypes);
 	return 1;
 }
 
