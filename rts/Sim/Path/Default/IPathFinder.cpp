@@ -203,8 +203,7 @@ IPath::SearchResult IPathFinder::InitSearch(const MoveDef& moveDef, const CPathF
 
 	dirtyBlocks.push_back(mStartBlockIdx);
 
-	// start a new search and
-	// add the starting block to the open-blocks-queue
+	// start a new search and add the starting block to the open-blocks-queue
 	openBlockBuffer.SetSize(0);
 	PathNode* ob = openBlockBuffer.GetNode(openBlockBuffer.GetSize());
 		ob->fCost   = 0.0f;
@@ -218,15 +217,16 @@ IPath::SearchResult IPathFinder::InitSearch(const MoveDef& moveDef, const CPathF
 	mGoalHeuristic = pfDef.Heuristic(square.x, square.y, BLOCK_SIZE);
 
 	// perform the search
-	const IPath::SearchResult result = DoSearch(moveDef, pfDef, owner);
+	const IPath::SearchResult rawResult = DoRawSearch(moveDef, pfDef, owner);
+	const IPath::SearchResult ipfResult = (rawResult == IPath::Error)? DoSearch(moveDef, pfDef, owner): rawResult;
 
-	if (result == IPath::Ok)
-		return result;
+	if (ipfResult == IPath::Ok)
+		return ipfResult;
 	if (mGoalBlockIdx != mStartBlockIdx)
-		return result;
+		return ipfResult;
 
 	// if start and goal are within the same block, but distinct squares
 	// or considered a single point for search purposes, then we probably
 	// can not get closer
-	return (!isStartGoal || startInGoal)? IPath::CantGetCloser: result;
+	return (!isStartGoal || startInGoal)? IPath::CantGetCloser: ipfResult;
 }

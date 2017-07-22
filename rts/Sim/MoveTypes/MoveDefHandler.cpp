@@ -40,6 +40,7 @@ CR_REG_METADATA(MoveDef, (
 
 	CR_MEMBER(avoidMobilesOnPath),
 	CR_MEMBER(allowTerrainCollisions),
+	CR_MEMBER(allowRawMovement),
 
 	CR_MEMBER(heatMapping),
 	CR_MEMBER(flowMapping),
@@ -178,6 +179,7 @@ MoveDef::MoveDef()
 
 	, avoidMobilesOnPath(true)
 	, allowTerrainCollisions(true)
+	, allowRawMovement(false)
 
 	, heatMapping(true)
 	, flowMapping(true)
@@ -244,6 +246,7 @@ MoveDef::MoveDef(const LuaTable& moveDefTable, int moveDefID) {
 
 	avoidMobilesOnPath = moveDefTable.GetBool("avoidMobilesOnPath", true);
 	allowTerrainCollisions = moveDefTable.GetBool("allowTerrainCollisions", true);
+	allowRawMovement = moveDefTable.GetBool("allowRawMovement", false);
 
 	heatMapping = moveDefTable.GetBool("heatMapping", false);
 	flowMapping = moveDefTable.GetBool("flowMapping", true);

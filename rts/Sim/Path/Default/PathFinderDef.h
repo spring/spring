@@ -19,6 +19,7 @@ public:
 
 	virtual bool WithinConstraints(unsigned int xSquare, unsigned int zSquare) const = 0;
 	void DisableConstraint(bool b) { constraintDisabled = b; }
+	void AllowRawPathSearch(bool b) { allowRawPath = b; }
 
 	bool IsGoal(unsigned int xSquare, unsigned int zSquare) const;
 	float Heuristic(unsigned int xSquare, unsigned int zSquare, unsigned int blockSize) const;
@@ -30,6 +31,8 @@ public:
 	float3 goal;
 
 	float sqGoalRadius;
+	float maxRawPathLen;
+	float minRawSpeedMod;
 
 	// if true, do not need to generate any waypoints
 	bool startInGoalRadius;
@@ -38,6 +41,7 @@ public:
 	bool testMobile;
 	bool needPath;
 	bool exactPath;
+	bool allowRawPath;
 	bool dirIndependent;
 	bool synced;
 

@@ -163,7 +163,9 @@ IPath::SearchResult CPathManager::ArrangePath(
 			if (heurGoalDist2D > searchDistances[n])
 				continue;
 
+			// enable raw search only for fully high-res paths
 			pfDef->DisableConstraint(!useConstraints[n]);
+			pfDef->AllowRawPathSearch(n == PATH_MAX_RES);
 
 			const IPath::SearchResult currResult = pathFinders[n]->GetPath(*moveDef, *pfDef, caller, startPos, *pathObjects[n], nodeLimits[n]);
 

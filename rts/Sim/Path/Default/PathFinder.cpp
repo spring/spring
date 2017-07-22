@@ -68,6 +68,60 @@ const float3* CPathFinder::GetDirectionVectorsTable3D() { return (&PF_DIRECTION_
 
 
 
+IPath::SearchResult CPathFinder::DoRawSearch(
+	const MoveDef& moveDef,
+	const CPathFinderDef& pfDef,
+	const CSolidObject* owner
+) {
+	if (!moveDef.allowRawMovement || !pfDef.allowRawPath)
+		return IPath::Error;
+
+	const int2 strtBlk = BlockIdxToPos(mStartBlockIdx);
+	const int2 goalBlk = {int(pfDef.goalSquareX), int(pfDef.goalSquareZ)};
+	const int2 diffBlk = goalBlk - strtBlk;
+	// const int2 goalBlk = BlockIdxToPos(mGoalBlockIdx);
+
+	const float pathLen = math::sqrt(Square(diffBlk.x) + Square(diffBlk.y));
+	const float testLen = math::ceil(pathLen);
+
+	const float2 step = {diffBlk.x / pathLen, diffBlk.y / pathLen};
+	// const float2 mods = {CMoveMath::GetPosSpeedMod(moveDef, strtBlk.x, strtBlk.y), CMoveMath::GetPosSpeedMod(moveDef, goalBlk.x, goalBlk.y)};
+	const float2 lims = {pfDef.maxRawPathLen, pfDef.minRawSpeedMod};
+
+	if (pathLen > lims.x)
+		return IPath::Error;
+
+	int2 testBlk;
+	int2 prevBlk = {-1, -1};
+
+	// NOTE:
+	//   no need to integrate with backtracking in FinishSearch
+	//   the final "path" only contains startPos which is consumed
+	//   immediately, after which NextWayPoint keeps returning the
+	//   goal until owner reaches it
+	for (float i = 0.0f; i <= testLen; i += 1.0f) {
+		testBlk = strtBlk + step * i;
+
+		assert(std::abs(testBlk.x - prevBlk.x) <= 1);
+		assert(std::abs(testBlk.y - prevBlk.y) <= 1);
+
+		if (testBlk == prevBlk)
+			continue;
+		if (testBlk == goalBlk)
+			break;
+
+		if ((blockCheckFunc(moveDef, testBlk.x, testBlk.y, owner) & CMoveMath::BLOCK_STRUCTURE) != 0)
+			return IPath::Error;
+
+		if (CMoveMath::GetPosSpeedMod(moveDef, testBlk.x, testBlk.y) <= lims.y)
+			return IPath::Error;
+
+		prevBlk = testBlk;
+	}
+
+	return IPath::Ok;
+}
+
 IPath::SearchResult CPathFinder::DoSearch(
 	const MoveDef& moveDef,
 	const CPathFinderDef& pfDef,
@@ -351,7 +405,7 @@ IPath::SearchResult CPathFinder::FinishSearch(const MoveDef& moveDef, const CPat
 		}
 	}
 
-	// Adds the cost of the path.
+	// copy the path-cost
 	foundPath.pathCost = blockStates.fCost[mGoalBlockIdx];
 
 	return IPath::Ok;

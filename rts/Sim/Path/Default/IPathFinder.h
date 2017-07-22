@@ -76,6 +76,7 @@ protected:
 	void ResetSearch();
 
 protected: // pure virtuals
+	virtual IPath::SearchResult DoRawSearch(const MoveDef&, const CPathFinderDef&, const CSolidObject* owner) { return IPath::Error; }
 	virtual IPath::SearchResult DoSearch(const MoveDef&, const CPathFinderDef&, const CSolidObject* owner) = 0;
 
 	/**

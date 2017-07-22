@@ -29,8 +29,8 @@ struct MoveDef {
 		bool testTerrain = true,
 		bool testObjects = true,
 		bool centerOnly = false,
-		float* minSpeedMod = NULL,
-		int* maxBlockBit = NULL
+		float* minSpeedMod = nullptr,
+		int* maxBlockBit = nullptr
 	) const;
 	bool TestMoveSquare(
 		const CSolidObject* collider,
@@ -39,8 +39,8 @@ struct MoveDef {
 		bool testTerrain = true,
 		bool testObjects = true,
 		bool centerOnly = false,
-		float* minSpeedMod = NULL,
-		int* maxBlockBit = NULL
+		float* minSpeedMod = nullptr,
+		int* maxBlockBit = nullptr
 	) const;
 
 	// aircraft and buildings defer to UnitDef::floatOnWater
@@ -130,6 +130,7 @@ struct MoveDef {
 	/// otherwise, since they are never initialized)
 	bool avoidMobilesOnPath;
 	bool allowTerrainCollisions;
+	bool allowRawMovement;
 
 	/// do we leave heat and avoid any left by others?
 	bool heatMapping;

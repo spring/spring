@@ -8,7 +8,11 @@
 
 CPathFinderDef::CPathFinderDef(const float3& goalCenter, float goalRadius, float sqGoalDistance)
 : goal(goalCenter)
+
 , sqGoalRadius(goalRadius * goalRadius)
+, maxRawPathLen(std::numeric_limits<float>::max())
+, minRawSpeedMod(0.0f)
+
 , constraintDisabled(false)
 , testMobile(true)
 , needPath(true)
@@ -21,6 +25,7 @@ CPathFinderDef::CPathFinderDef(const float3& goalCenter, float goalRadius, float
 // regenerating after a terrain change) paths, so prefer to
 // keep PF and PE in sync
 , exactPath(false)
+, allowRawPath(false)
 , dirIndependent(false)
 , synced(true)
 {

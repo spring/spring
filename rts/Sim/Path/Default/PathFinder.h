@@ -30,6 +30,7 @@ public:
 
 protected: // IPathFinder impl
 	/// Performs the actual search.
+	IPath::SearchResult DoRawSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, const CSolidObject* owner);
 	IPath::SearchResult DoSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, const CSolidObject* owner);
 
 	/**
