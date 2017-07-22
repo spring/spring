@@ -27,6 +27,13 @@ bool LuaConstPlatform::PushEntries(lua_State* L)
 	LuaPushNamedNumber(L, "sdlVersionLinkedMinor", globalRenderingInfo.sdlVersionLinked.minor);
 	LuaPushNamedNumber(L, "sdlVersionLinkedPatch", globalRenderingInfo.sdlVersionLinked.patch);
 
+	LuaPushNamedBool(L, "glSupportNonPowerOfTwoTex", globalRendering->supportNonPowerOfTwoTex);
+	LuaPushNamedBool(L, "glSupportTextureQueryLOD" , globalRendering->supportTextureQueryLOD);
+	LuaPushNamedBool(L, "glSupport24bitDepthBuffer", globalRendering->support24bitDepthBuffer);
+	LuaPushNamedBool(L, "glSupportRestartPrimitive", globalRendering->supportRestartPrimitive);
+	LuaPushNamedBool(L, "glSupportClipSpaceControl", globalRendering->supportClipSpaceControl);
+	LuaPushNamedBool(L, "glSupportFragDepthLayout" , globalRendering->supportFragDepthLayout);
+
 	LuaPushNamedString(L, "osName", Platform::GetOS());
 	LuaPushNamedString(L, "osFamily", Platform::GetOSFamily());
 

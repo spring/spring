@@ -228,7 +228,7 @@ bool CBitmap::Load(std::string const& filename, unsigned char defaultAlpha)
 	channels = 4;
 
 	CFileHandler file(filename);
-	if (file.FileExists() == false) {
+	if (!file.FileExists()) {
 		AllocDummy();
 		return false;
 	}
@@ -255,7 +255,7 @@ bool CBitmap::Load(std::string const& filename, unsigned char defaultAlpha)
 
 		ilDisable(IL_ORIGIN_SET);
 
-		if (success == false) {
+		if (!success) {
 			AllocDummy();
 			return false;
 		}
@@ -281,9 +281,9 @@ bool CBitmap::Load(std::string const& filename, unsigned char defaultAlpha)
 	ilDeleteImages(1, &imageID);
 
 	if (noAlpha) {
-		for (int y=0; y < ysize; ++y) {
-			for (int x=0; x < xsize; ++x) {
-				mem[((y*xsize+x) * 4) + 3] = defaultAlpha;
+		for (int y = 0; y < ysize; ++y) {
+			for (int x = 0; x < xsize; ++x) {
+				mem[((y * xsize + x) * 4) + 3] = defaultAlpha;
 			}
 		}
 	}
@@ -514,7 +514,7 @@ unsigned int CBitmap::CreateTexture(float aniso, bool mipmaps) const
 	// jcnossen: Some drivers return "2.0" as a version string,
 	// but switch to software rendering for non-power-of-two textures.
 	// GL_ARB_texture_non_power_of_two indicates that the hardware will actually support it.
-	if (!globalRendering->supportNPOTs && (xsize != next_power_of_2(xsize) || ysize != next_power_of_2(ysize))) {
+	if (!globalRendering->supportNonPowerOfTwoTex && (xsize != next_power_of_2(xsize) || ysize != next_power_of_2(ysize))) {
 		CBitmap bm = CreateRescaled(next_power_of_2(xsize), next_power_of_2(ysize));
 		return bm.CreateTexture(aniso, mipmaps);
 	}

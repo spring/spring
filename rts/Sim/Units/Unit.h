@@ -135,6 +135,10 @@ public:
 	/// push the new wind to the script
 	void UpdateWind(float x, float z, float strength);
 
+	void UpdateTransportees();
+	void ReleaseTransportees(CUnit* attacker, bool selfDestruct, bool reclaimed);
+	void TransporteeKilled(const CObject* o);
+
 	void AddExperience(float exp);
 
 	void SetMass(float newMass);
@@ -167,6 +171,8 @@ public:
 
 	void SetStunned(bool stun);
 	bool IsStunned() const { return stunned; }
+
+	bool IsInLosForAllyTeam(int allyTeam) const { return ((losStatus[allyTeam] & LOS_INLOS) != 0); }
 
 	void SetLosStatus(int allyTeam, unsigned short newStatus);
 	unsigned short CalcLosStatus(int allyTeam);

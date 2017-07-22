@@ -1814,10 +1814,9 @@ function widgetHandler:UnitCmdDone(unitID, unitDefID, unitTeam, cmdID, cmdParams
 end
 
 
-function widgetHandler:UnitDamaged(unitID, unitDefID, unitTeam,
-                                   damage, paralyzer)
+function widgetHandler:UnitDamaged(unitID, unitDefID, unitTeam, damage, paralyzer, weaponDefID, projectileID)
   for _,w in ipairs(self.UnitDamagedList) do
-    w:UnitDamaged(unitID, unitDefID, unitTeam, damage, paralyzer)
+    w:UnitDamaged(unitID, unitDefID, unitTeam, damage, paralyzer, weaponDefID, projectileID)
   end
   return
 end

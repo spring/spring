@@ -9,6 +9,7 @@
 #include "System/FileSystem/FileHandler.h"
 #include "System/Exceptions.h"
 #include "System/StringUtil.h"
+#include "System/FileSystem/VFSHandler.h"
 
 #include <cstring> // strcpy,memset
 #include <sstream>
@@ -168,6 +169,7 @@ void CMapGenerator::GenerateMapInfo(CVirtualArchive* archive)
 	CVirtualFile* fileMapInfo = archive->AddFile("mapinfo.lua");
 
 	//Open template mapinfo.lua
+	vfsHandler->AddArchive(CArchiveScanner::GetSpringBaseContentName(), false);
 	const std::string luaTemplate = "mapgenerator/mapinfo_template.lua";
 	CFileHandler fh(luaTemplate, SPRING_VFS_PWD_ALL);
 	if (!fh.FileExists())
@@ -186,9 +188,9 @@ void CMapGenerator::GenerateMapInfo(CVirtualArchive* archive)
 	startPosString = ss.str();
 
 	//Replace tags in mapinfo.lua
-	StringReplace(luaInfo, "${NAME}", setup->mapName);
-	StringReplace(luaInfo, "${DESCRIPTION}", GetMapDescription());
-	StringReplace(luaInfo, "${START_POSITIONS}", startPosString);
+	luaInfo = StringReplace(luaInfo, "${NAME}", setup->mapName);
+	luaInfo = StringReplace(luaInfo, "${DESCRIPTION}", GetMapDescription());
+	luaInfo = StringReplace(luaInfo, "${START_POSITIONS}", startPosString);
 
 	//Copy to filebuffer
 	fileMapInfo->buffer.assign(luaInfo.begin(), luaInfo.end());

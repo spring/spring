@@ -7,7 +7,6 @@
 
 #include "GlobalRendering.h"
 #include "GlobalRenderingInfo.h"
-
 #include "Rendering/VerticalSync.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/FBO.h"
@@ -29,12 +28,13 @@
 CONFIG(bool, DebugGL).defaultValue(false).description("Enables GL debug-context and output. (see GL_ARB_debug_output)");
 CONFIG(bool, DebugGLStacktraces).defaultValue(false).description("Create a stacktrace when an OpenGL error occurs");
 
-CONFIG(int, GLContextMajorVersion).defaultValue(4).minimumValue(4).maximumValue(4);
-CONFIG(int, GLContextMinorVersion).defaultValue(1).minimumValue(0).maximumValue(5);
+CONFIG(int, GLContextMajorVersion).defaultValue(3).minimumValue(3).maximumValue(4);
+CONFIG(int, GLContextMinorVersion).defaultValue(0).minimumValue(0).maximumValue(5);
 CONFIG(int, FSAALevel).defaultValue(0).minimumValue(0).maximumValue(32).description("Deprecated, set MSAALevel instead.");
 CONFIG(int, MSAALevel).defaultValue(0).minimumValue(0).maximumValue(32).description("Enables multisample anti-aliasing; 'level' is the number of samples used.");
 
 CONFIG(int, ForceDisableShaders).defaultValue(0).minimumValue(0).maximumValue(1);
+CONFIG(int, ForceDisableClipCtrl).defaultValue(0).minimumValue(0).maximumValue(1);
 CONFIG(int, ForceCoreContext).defaultValue(0).minimumValue(0).maximumValue(1);
 CONFIG(int, ForceSwapBuffers).defaultValue(1).minimumValue(0).maximumValue(1);
 CONFIG(int, AtiHacks).defaultValue(-1).headlessValue(0).minimumValue(-1).maximumValue(1).description("Enables graphics drivers workarounds for users with ATI video cards.\n -1:=runtime detect, 0:=off, 1:=on");
@@ -46,6 +46,18 @@ CONFIG(bool, DualScreenMiniMapOnLeft).defaultValue(false).description("When set,
 CONFIG(bool, TeamNanoSpray).defaultValue(true).headlessValue(false);
 CONFIG(float, TextureLODBias).defaultValue(0.0f).minimumValue(-4.0f).maximumValue(4.0f);
 CONFIG(int, MinimizeOnFocusLoss).defaultValue(0).minimumValue(0).maximumValue(1).description("When set to 1 minimize Window if it loses key focus when in fullscreen mode.");
+
+CONFIG(bool, Fullscreen).defaultValue(true).headlessValue(false).description("Sets whether the game will run in fullscreen, as opposed to a window. For Windowed Fullscreen of Borderless Window, set this to 0, WindowBorderless to 1, and WindowPosX and WindowPosY to 0.");
+CONFIG(bool, WindowBorderless).defaultValue(false).description("When set and Fullscreen is 0, will put the game in Borderless Window mode, also known as Windowed Fullscreen. When using this, it is generally best to also set WindowPosX and WindowPosY to 0");
+CONFIG(bool, BlockCompositing).defaultValue(false).safemodeValue(true).description("Disables kwin compositing to fix tearing, possible fixes low FPS in windowed mode, too.");
+
+CONFIG(int, XResolution).defaultValue(0).headlessValue(8).minimumValue(0).description("Sets the width of the game screen. If set to 0 Spring will autodetect the current resolution of your desktop.");
+CONFIG(int, YResolution).defaultValue(0).headlessValue(8).minimumValue(0).description("Sets the height of the game screen. If set to 0 Spring will autodetect the current resolution of your desktop.");
+CONFIG(int, XResolutionWindowed).defaultValue(0).headlessValue(8).minimumValue(0).description("See XResolution, just for windowed.");
+CONFIG(int, YResolutionWindowed).defaultValue(0).headlessValue(8).minimumValue(0).description("See YResolution, just for windowed.");
+CONFIG(int, WindowPosX).defaultValue(32).description("Sets the horizontal position of the game window, if Fullscreen is 0. When WindowBorderless is set, this should usually be 0.");
+CONFIG(int, WindowPosY).defaultValue(32).description("Sets the vertical position of the game window, if Fullscreen is 0. When WindowBorderless is set, this should usually be 0.");
+
 
 /**
  * @brief global rendering
@@ -83,7 +95,6 @@ CR_REG_METADATA(CGlobalRendering, (
 	CR_MEMBER(drawFrame),
 	CR_MEMBER(FPS),
 
-	CR_IGNORED(winState),
 	CR_IGNORED(screenSizeX),
 	CR_IGNORED(screenSizeY),
 	CR_IGNORED(winPosX),
@@ -119,10 +130,12 @@ CR_REG_METADATA(CGlobalRendering, (
 	CR_IGNORED(haveNvidia),
 
 	CR_IGNORED(atiHacks),
-	CR_IGNORED(supportNPOTs),
-	CR_IGNORED(support24bitDepthBuffers),
+	CR_IGNORED(supportNonPowerOfTwoTex),
+	CR_IGNORED(supportTextureQueryLOD),
+	CR_IGNORED(support24bitDepthBuffer),
 	CR_IGNORED(supportRestartPrimitive),
-	CR_IGNORED(supportClipControl),
+	CR_IGNORED(supportClipSpaceControl),
+	CR_IGNORED(supportFragDepthLayout),
 	CR_IGNORED(haveARB),
 	CR_IGNORED(haveGLSL),
 	CR_IGNORED(glslMaxVaryings),
@@ -150,7 +163,6 @@ CGlobalRendering::CGlobalRendering()
 	, drawFrame(1)
 	, FPS(1.0f)
 
-	, winState(configHandler->GetInt("WindowState"))
 	, screenSizeX(1)
 	, screenSizeY(1)
 
@@ -205,10 +217,12 @@ CGlobalRendering::CGlobalRendering()
 	, haveIntel(false)
 	, haveNvidia(false)
 	, atiHacks(false)
-	, supportNPOTs(false)
-	, support24bitDepthBuffers(false)
+	, supportNonPowerOfTwoTex(false)
+	, supportTextureQueryLOD(false)
+	, support24bitDepthBuffer(false)
 	, supportRestartPrimitive(false)
-	, supportClipControl(false)
+	, supportClipSpaceControl(false)
+	, supportFragDepthLayout(false)
 	, haveARB(false)
 	, haveGLSL(false)
 
@@ -228,12 +242,14 @@ CGlobalRendering::CGlobalRendering()
 	, window(nullptr)
 	, glContext(nullptr)
 {
+	verticalSync->WrapNotifyOnChange();
 	configHandler->NotifyOnChange(this, {"TextureLODBias", "Fullscreen", "WindowBorderless"});
 }
 
 CGlobalRendering::~CGlobalRendering()
 {
 	configHandler->RemoveObserver(this);
+	verticalSync->WrapRemoveObserver();
 	DestroyWindowAndContext();
 }
 
@@ -245,10 +261,13 @@ bool CGlobalRendering::CreateSDLWindow(const int2& winRes, const int2& minRes, c
 
 	uint32_t sdlFlags = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE;
 
+	// note:
+	//   passing the minimized-flag is useless (state is not saved if minimized)
+	//   and has no effect anyway, setting a minimum size for a window overrides
+	//   it while disabling the SetWindowMinimumSize call still results in a 1x1
+	//   window on the desktop
 	sdlFlags |= (SDL_WINDOW_FULLSCREEN_DESKTOP * borderless + SDL_WINDOW_FULLSCREEN * (1 - borderless)) * fullScreen;
 	sdlFlags |= (SDL_WINDOW_BORDERLESS * borderless);
-	sdlFlags |= (SDL_WINDOW_MAXIMIZED * (winState == WINSTATE_MAXIMIZED));
-	sdlFlags |= (SDL_WINDOW_MINIMIZED * (winState == WINSTATE_MINIMIZED));
 
 	for (size_t i = 0; i < (sizeof(aaLvls) / sizeof(aaLvls[0])) && (window == nullptr); i++) {
 		if (i > 0 && aaLvls[i] == aaLvls[i - 1])
@@ -346,7 +365,7 @@ bool CGlobalRendering::CreateGLContext(const int2& minCtx)
 	return ((glContext = SDL_GL_CreateContext(window)) != nullptr);
 }
 
-bool CGlobalRendering::CreateWindowAndContext(const char* title, bool minimized)
+bool CGlobalRendering::CreateWindowAndContext(const char* title, bool hidden)
 {
 	if (SDL_Init(SDL_INIT_VIDEO) == -1) {
 		LOG_L(L_FATAL, "[GR::%s] error \"%s\" initializing SDL", __func__, SDL_GetError());
@@ -363,7 +382,8 @@ bool CGlobalRendering::CreateWindowAndContext(const char* title, bool minimized)
 	const char* softGL = getenv("LIBGL_ALWAYS_SOFTWARE");
 
 	// get wanted resolution and context-version
-	const int2 winRes = GetWantedViewSize(fullScreen);
+	const int2 winRes = GetCfgWinRes(fullScreen);
+	const int2 maxRes = GetMaxWinRes();
 	const int2 minRes = {minWinSizeX, minWinSizeY};
 	const int2 minCtx = (mesaGL != nullptr && std::strlen(mesaGL) >= 3)?
 		int2{                  std::max(mesaGL[0] - '0', 3),                   std::max(mesaGL[2] - '0', 0)}:
@@ -401,8 +421,17 @@ bool CGlobalRendering::CreateWindowAndContext(const char* title, bool minimized)
 	if (!CreateSDLWindow(winRes, minRes, title))
 		return false;
 
+	#if 0
+	// do not use SDL_HideWindow since that also removes the taskbar entry
 	if (minimized)
+		SDL_MinimizeWindow(window);
+	#else
+	if (hidden)
 		SDL_HideWindow(window);
+	#endif
+	// make extra sure the maximized-flag is set
+	else if (winRes == maxRes)
+		SDL_MaximizeWindow(window);
 
 	if (configHandler->GetInt("MinimizeOnFocusLoss") == 0)
 		SDL_SetHint(SDL_HINT_VIDEO_MINIMIZE_ON_FOCUS_LOSS, "0");
@@ -426,7 +455,6 @@ bool CGlobalRendering::CreateWindowAndContext(const char* title, bool minimized)
 
 	// redundant, but harmless
 	SDL_GL_MakeCurrent(window, glContext);
-
 	SDL_DisableScreenSaver();
 	return true;
 }
@@ -485,9 +513,7 @@ void CGlobalRendering::SwapBuffers(bool allowSwapBuffers, bool clearErrors)
 
 	const spring_time pre = spring_now();
 
-	VSync.Delay();
 	SDL_GL_SwapWindow(window);
-
 	eventHandler.DbgTimingInfo(TIMING_SWAP, pre, spring_now());
 }
 
@@ -524,8 +550,8 @@ void CGlobalRendering::SetGLSupportFlags()
 
 	haveARB   = GLEW_ARB_vertex_program && GLEW_ARB_fragment_program;
 	haveGLSL  = (glGetString(GL_SHADING_LANGUAGE_VERSION) != nullptr);
-	haveGLSL &= GLEW_ARB_vertex_shader && GLEW_ARB_fragment_shader;
-	haveGLSL &= !!GLEW_VERSION_2_0; // we want OpenGL 2.0 core functions
+	haveGLSL &= (GLEW_ARB_vertex_shader && GLEW_ARB_fragment_shader);
+	haveGLSL &= GLEW_VERSION_2_0; // we want OpenGL 2.0 core functions
 
 	#ifndef HEADLESS
 	if (!haveARB || !haveGLSL)
@@ -559,7 +585,8 @@ void CGlobalRendering::SetGLSupportFlags()
 	}
 
 	// ATI's x-series doesn't support NPOTs, hd-series does
-	supportNPOTs = GLEW_ARB_texture_non_power_of_two && (!haveATI || (glRenderer.find(" x") == std::string::npos && glRenderer.find(" 9") == std::string::npos));
+	supportNonPowerOfTwoTex = GLEW_ARB_texture_non_power_of_two && (!haveATI || (glRenderer.find(" x") == std::string::npos && glRenderer.find(" 9") == std::string::npos));
+	supportTextureQueryLOD = GLEW_ARB_texture_query_lod;
 
 
 	for (size_t n = 0; (n < sizeof(globalRenderingInfo.glVersionShort) && globalRenderingInfo.glVersion[n] != 0); n++) {
@@ -592,11 +619,16 @@ void CGlobalRendering::SetGLSupportFlags()
 
 
 	#ifdef GLEW_NV_primitive_restart
-	supportRestartPrimitive = !!(GLEW_NV_primitive_restart);
+	supportRestartPrimitive = GLEW_NV_primitive_restart;
 	#endif
-	#ifdef GL_ARB_clip_control
-	supportClipControl = !!(GL_ARB_clip_control);
+	#ifdef GLEW_ARB_clip_control
+	// use this only if we have a head-context; it came into existence with GL4.5
+	supportClipSpaceControl |= GLEW_ARB_clip_control;
+	supportClipSpaceControl &= (globalRenderingInfo.glContextVersion.x >= 4 && globalRenderingInfo.glContextVersion.y >= 5);
+	supportClipSpaceControl &= (configHandler->GetInt("ForceDisableClipCtrl") == 0);
 	#endif
+	supportFragDepthLayout = (globalRenderingInfo.glContextVersion.x >= 4 && globalRenderingInfo.glContextVersion.y >= 2);
+
 
 	// detect if GL_DEPTH_COMPONENT24 is supported (many ATIs don't;
 	// they seem to support GL_DEPTH_COMPONENT24 for static textures
@@ -606,14 +638,14 @@ void CGlobalRendering::SetGLSupportFlags()
 		GLint state = 0;
 		glTexImage2D(GL_PROXY_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, 16, 16, 0, GL_LUMINANCE, GL_FLOAT, nullptr);
 		glGetTexLevelParameteriv(GL_PROXY_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &state);
-		support24bitDepthBuffers = (state > 0);
+		support24bitDepthBuffer = (state > 0);
 		#else
 		if (FBO::IsSupported() && !atiHacks) {
 			FBO fbo;
 			fbo.Bind();
 			fbo.CreateRenderBuffer(GL_COLOR_ATTACHMENT0_EXT, GL_RGBA8, 16, 16);
 			fbo.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT,  GL_DEPTH_COMPONENT24, 16, 16);
-			support24bitDepthBuffers = (fbo.GetStatus() == GL_FRAMEBUFFER_COMPLETE_EXT);
+			support24bitDepthBuffer = (fbo.GetStatus() == GL_FRAMEBUFFER_COMPLETE_EXT);
 			fbo.Unbind();
 		}
 		#endif
@@ -688,13 +720,15 @@ void CGlobalRendering::LogVersionInfo(const char* sdlVersionStr, const char* glV
 	LOG("\tGPU memory  : %s", glVidMemStr);
 	LOG("\tSwapInterval: %d", SDL_GL_GetSwapInterval());
 	LOG("\t");
-	LOG("\tARB shader support       : %i", haveARB);
-	LOG("\tGLSL shader support      : %i", haveGLSL);
-	LOG("\tFBO extension support    : %i", FBO::IsSupported());
-	LOG("\tNPOT-texture support     : %i", supportNPOTs);
-	LOG("\t24-bit Z-buffer support  : %i", support24bitDepthBuffers);
-	LOG("\tprimitive-restart support: %i", supportRestartPrimitive);
-	LOG("\tclip-control support     : %i", supportClipControl);
+	LOG("\tARB shader support        : %i", haveARB);
+	LOG("\tGLSL shader support       : %i", haveGLSL);
+	LOG("\tFBO extension support     : %i", FBO::IsSupported());
+	LOG("\tNPOT-texture support      : %i (%i)", supportNonPowerOfTwoTex, glewIsExtensionSupported("GL_ARB_texture_non_power_of_two"));
+	LOG("\ttexture query-LOD support : %i (%i)", supportTextureQueryLOD, glewIsExtensionSupported("GL_ARB_texture_query_lod"));
+	LOG("\t24-bit Z-buffer support   : %i (-)", support24bitDepthBuffer);
+	LOG("\tprimitive-restart support : %i (%i)", supportRestartPrimitive, glewIsExtensionSupported("GL_NV_primitive_restart"));
+	LOG("\tclip-space control support: %i (%i)", supportClipSpaceControl, glewIsExtensionSupported("GL_ARB_clip_control"));
+	LOG("\tfrag-depth layout support : %i (-)", supportFragDepthLayout);
 	LOG("\t");
 	LOG("\tmax. FBO samples             : %i", FBO::GetMaxSamples());
 	LOG("\tmax. texture size            : %i", maxTextureSize);
@@ -730,10 +764,12 @@ void CGlobalRendering::LogDisplayMode() const
 }
 
 
-void CGlobalRendering::SetFullScreen(bool configFullScreen, bool cmdLineWindowed, bool cmdLineFullScreen)
+void CGlobalRendering::SetFullScreen(bool cliWindowed, bool cliFullScreen)
 {
-	fullScreen = (configFullScreen && !cmdLineWindowed  );
-	fullScreen = (configFullScreen ||  cmdLineFullScreen);
+	const bool cfgFullScreen = configHandler->GetBool("Fullscreen");
+
+	fullScreen = (cfgFullScreen && !cliWindowed  );
+	fullScreen = (cfgFullScreen ||  cliFullScreen);
 
 	configHandler->Set("Fullscreen", fullScreen);
 }
@@ -751,11 +787,11 @@ void CGlobalRendering::ConfigNotify(const std::string& key, const std::string& v
 	borderless = configHandler->GetBool("WindowBorderless");
 	fullScreen = configHandler->GetBool("Fullscreen");
 
-	const int2 res = GetWantedViewSize(fullScreen);
+	const int2 res = GetCfgWinRes(fullScreen);
 
 	SDL_SetWindowSize(window, res.x, res.y);
-	SDL_SetWindowFullscreen(window, (borderless? SDL_WINDOW_FULLSCREEN_DESKTOP: SDL_WINDOW_FULLSCREEN) * fullScreen);
 	SDL_SetWindowPosition(window, configHandler->GetInt("WindowPosX"), configHandler->GetInt("WindowPosY"));
+	SDL_SetWindowFullscreen(window, (borderless? SDL_WINDOW_FULLSCREEN_DESKTOP: SDL_WINDOW_FULLSCREEN) * fullScreen);
 	SDL_SetWindowBordered(window, borderless ? SDL_FALSE : SDL_TRUE);
 	WindowManagerHelper::SetWindowResizable(window, !borderless && !fullScreen);
 	// set size again in an attempt to fix some bugs
@@ -763,32 +799,30 @@ void CGlobalRendering::ConfigNotify(const std::string& key, const std::string& v
 }
 
 
-int2 CGlobalRendering::GetWantedViewSize(const bool fullscreen)
+int2 CGlobalRendering::GetMaxWinRes() const {
+	SDL_DisplayMode dmode;
+	SDL_GetDesktopDisplayMode(0, &dmode);
+	return {dmode.w, dmode.h};
+}
+
+int2 CGlobalRendering::GetCfgWinRes(bool fullScrn) const
 {
 	static const char* xsKeys[2] = {"XResolutionWindowed", "XResolution"};
 	static const char* ysKeys[2] = {"YResolutionWindowed", "YResolution"};
 
-	int2 res = {configHandler->GetInt(xsKeys[fullscreen]), configHandler->GetInt(ysKeys[fullscreen])};
+	int2 res = {configHandler->GetInt(xsKeys[fullScrn]), configHandler->GetInt(ysKeys[fullScrn])};
 
-	if (res.x <= 0 || res.y <= 0) {
-		// copy Native Desktop Resolution if user did not specify a value
-		// SDL2 can do this itself if size{X,Y} are set to zero but fails
-		// with Display Cloning and similar, causing DVI monitors to only
-		// run at (e.g.) 640x400 and HDMI devices at full-HD
-		// TODO: make screen configurable?
-		SDL_DisplayMode dmode;
-		SDL_GetDesktopDisplayMode(0, &dmode);
-
-		res.x = dmode.w;
-		res.y = dmode.h;
-	}
+	// copy Native Desktop Resolution if user did not specify a value
+	// SDL2 can do this itself if size{X,Y} are set to zero but fails
+	// with Display Cloning and similar, causing DVI monitors to only
+	// run at (e.g.) 640x400 and HDMI devices at full-HD
+	// TODO: make screen configurable?
+	if (res.x <= 0 || res.y <= 0)
+		res = GetMaxWinRes();
 
 	// limit minimum window size in windowed mode
-	if (!fullscreen) {
-		res.x = std::max(res.x, minWinSizeX);
-		res.y = std::max(res.y, minWinSizeY);
-	}
-
+	res.x = std::max(res.x, minWinSizeX * (1 - fullScrn));
+	res.y = std::max(res.y, minWinSizeY * (1 - fullScrn));
 	return res;
 }
 
@@ -818,21 +852,6 @@ void CGlobalRendering::UpdatePixelGeometry()
 	pixelY = 1.0f / viewSizeY;
 
 	aspectRatio = viewSizeX / float(viewSizeY);
-}
-
-void CGlobalRendering::UpdateWindowState()
-{
-	// FIXME
-	// reading window state fails if it is changed via the window manager, like clicking on the titlebar (2013)
-	// https://bugzilla.libsdl.org/show_bug.cgi?id=1508 & https://bugzilla.libsdl.org/show_bug.cgi?id=2282
-	// happens on linux too!
-	const int state = WindowManagerHelper::GetWindowState(window);
-
-	winState  = WINSTATE_DEFAULT;
-	winState += WINSTATE_MAXIMIZED * ((state & SDL_WINDOW_MAXIMIZED) != 0);
-	winState += WINSTATE_MINIMIZED * ((state & SDL_WINDOW_MINIMIZED) != 0);
-
-	assert(winState <= WINSTATE_MINIMIZED);
 }
 
 
@@ -872,11 +891,11 @@ void CGlobalRendering::SaveWindowPosAndSize()
 	if (fullScreen)
 		return;
 
-	// don't automatically save minimized states
-	if (winState != WINSTATE_MINIMIZED)
-		configHandler->Set("WindowState", winState);
-
-	if (winState != WINSTATE_DEFAULT)
+	// do not save if minimized
+	// note that maximized windows are automagically restored; SDL2
+	// apparently detects if the resolution is maximal and sets the
+	// flag (but we also check if winRes equals maxRes to be safe)
+	if ((SDL_GetWindowFlags(window) & SDL_WINDOW_MINIMIZED) != 0)
 		return;
 
 	configHandler->Set("WindowPosX", winPosX);
@@ -889,7 +908,7 @@ void CGlobalRendering::SaveWindowPosAndSize()
 void CGlobalRendering::UpdateGLConfigs()
 {
 	// re-read configuration value
-	VSync.SetInterval();
+	verticalSync->SetInterval();
 
 	const float lodBias = configHandler->GetFloat("TextureLODBias");
 	const float absBias = math::fabs(lodBias);
@@ -908,12 +927,17 @@ void CGlobalRendering::UpdateGLGeometry()
 void CGlobalRendering::InitGLState()
 {
 	glShadeModel(GL_SMOOTH);
+
 	glClearDepth(1.0f);
+	glDepthRange(0.0f, 1.0f);
+
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LEQUAL);
-	#ifdef GL_ARB_clip_control
+
+	#ifdef GLEW_ARB_clip_control
 	// avoid precision loss with default DR transform
-	glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE);
+	if (supportClipSpaceControl)
+		glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE);
 	#endif
 
 	// MSAA rasterization
@@ -950,10 +974,13 @@ bool CGlobalRendering::CheckGLMultiSampling() const
 		return false;
 	if (!GLEW_ARB_multisample)
 		return false;
+
 	GLint buffers = 0;
 	GLint samples = 0;
+
 	glGetIntegerv(GL_SAMPLE_BUFFERS, &buffers);
 	glGetIntegerv(GL_SAMPLES, &samples);
+
 	return (buffers != 0 && samples != 0);
 }
 
@@ -963,8 +990,13 @@ bool CGlobalRendering::CheckGLContextVersion(const int2& minCtx) const
 	return true;
 	#else
 	int2 tmpCtx = {0, 0};
+
 	glGetIntegerv(GL_MAJOR_VERSION, &tmpCtx.x);
 	glGetIntegerv(GL_MINOR_VERSION, &tmpCtx.y);
+
+	// keep this for convenience
+	globalRenderingInfo.glContextVersion = tmpCtx;
+
 	// compare major * 10 + minor s.t. 4.1 evaluates as larger than 3.2
 	return ((tmpCtx.x * 10 + tmpCtx.y) >= (minCtx.x * 10 + minCtx.y));
 	#endif
@@ -1082,6 +1114,7 @@ static void _GL_APIENTRY glDebugMessageCallbackFunc(
 	const GLvoid* userParam
 ) {
 	switch (msgID) {
+		case 131169: { return; } break; // "Framebuffer detailed info: The driver allocated storage for renderbuffer N."
 		case 131185: { return; } break; // "Buffer detailed info: Buffer object 260 (bound to GL_PIXEL_UNPACK_BUFFER_ARB, usage hint is GL_STREAM_DRAW) has been mapped in DMA CACHED memory."
 		default: {} break;
 	}

@@ -959,25 +959,22 @@ void CLuaHandle::UnitDamaged(
 	if (!cmdStr.GetGlobalFunc(L))
 		return;
 
-	int argCount = 5;
+	int argCount = 7;
 
 	lua_pushnumber(L, unit->id);
 	lua_pushnumber(L, unit->unitDef->id);
 	lua_pushnumber(L, unit->team);
 	lua_pushnumber(L, damage);
 	lua_pushboolean(L, paralyzer);
+	// these two do not count as information leaks
+	lua_pushnumber(L, weaponDefID);
+	lua_pushnumber(L, projectileID);
 
-	if (GetHandleFullRead(L)) {
-		lua_pushnumber(L, weaponDefID);
-		lua_pushnumber(L, projectileID);
-		argCount += 2;
-
-		if (attacker != nullptr) {
-			lua_pushnumber(L, attacker->id);
-			lua_pushnumber(L, attacker->unitDef->id);
-			lua_pushnumber(L, attacker->team);
-			argCount += 3;
-		}
+	if (attacker != nullptr && GetHandleFullRead(L)) {
+		lua_pushnumber(L, attacker->id);
+		lua_pushnumber(L, attacker->unitDef->id);
+		lua_pushnumber(L, attacker->team);
+		argCount += 3;
 	}
 
 	// call the routine

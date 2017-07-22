@@ -368,7 +368,7 @@ void DebugDrawerAI::TexSet::Clear() {
 }
 
 int DebugDrawerAI::TexSet::AddTexture(const float* data, int w, int h) {
-	if (!globalRendering->supportNPOTs && (w != next_power_of_2(w) || h != next_power_of_2(h)))
+	if (!globalRendering->supportNonPowerOfTwoTex && (w != next_power_of_2(w) || h != next_power_of_2(h)))
 		return 0;
 
 	textures.emplace(curTexHandle, TexSet::Texture(w, h, data));

@@ -454,7 +454,7 @@ void DataDirLocater::Check()
 				"- the SPRING_DATADIR environment variable,\n"
 			#ifdef WIN32
 				"- a SpringData=C:/path/to/data declaration in spring's config file ./springsettings.cfg\n"
-				"- by giving you write access to the installation directory";
+				"- by giving your user-account write access to the installation directory";
 			#else
 				"- a SpringData=/path/to/data declaration in ~/.springrc or\n"
 				"- the configuration file /etc/spring/datadir";

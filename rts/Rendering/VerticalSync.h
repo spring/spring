@@ -7,17 +7,21 @@ class CVerticalSync {
 public:
 	CVerticalSync(): interval(0) {}
 
-	void SetInterval();
-	void SetInterval(int i);
-	int  GetInterval() const { return interval; }
+	void WrapNotifyOnChange();
+	void WrapRemoveObserver();
 
 	void Toggle();
-	void Delay() const;
-	
+	void SetInterval();
+	void SetInterval(int i);
+	void ConfigNotify(const std::string& key, const std::string& value);
+	int  GetInterval() const { return interval; }
+
+	static CVerticalSync* GetInstance();
+
 private:
 	int interval;
 };
 
-extern CVerticalSync VSync;
+#define verticalSync (CVerticalSync::GetInstance())
 
 #endif /* VSYNC_H */

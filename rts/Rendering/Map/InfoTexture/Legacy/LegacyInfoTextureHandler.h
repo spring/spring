@@ -40,6 +40,8 @@ public:
 
 public:
 	bool IsEnabled() const override;
+	bool InMetalMode() const override { return (drawMode == drawMetal); }
+
 	void DisableCurrentMode() override;
 	void SetMode(const std::string& name) override;
 	void ToggleMode(const std::string& name) override;

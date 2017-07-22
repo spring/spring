@@ -117,10 +117,15 @@ public:
 public:
 	struct IUniform {
 		static_assert(GL_INVALID_INDEX == -1, "glGetUniformLocation is defined to return -1 (GL_INVALID_INDEX) for invalid names");
+
 		IUniform(): loc(GL_INVALID_INDEX) {}
+
 		virtual bool CanExec() const = 0;
 		virtual GLenum GetType() const = 0;
+
+		bool SetLoc(GLint i) { return ((loc = i) != GL_INVALID_INDEX); }
 		bool IsValid() const { return (loc != GL_INVALID_INDEX); }
+
 	public:
 		GLint loc;
 	};
@@ -131,6 +136,7 @@ private:
 		bool CanExec() const { return (loc != GL_INVALID_INDEX); }
 		bool Execute(const Type val) const { return (CanExec() && RawExec(val)); }
 		bool RawExec(const Type val) const { glUniformMatrix4fv(loc, 1, GL_FALSE, val); return true; }
+
 		GLenum GetType() const { return GL_FLOAT_MAT4; }
 	};
 
@@ -145,6 +151,7 @@ private:
 				default: { return false; } break;
 			}
 		}
+
 		GLenum GetType() const {
 			switch (Size) {
 				case 3: return GL_FLOAT_VEC3;
@@ -154,12 +161,13 @@ private:
 		}
 	};
 
-	template<typename Type> struct UniformInt : public IUniform { //FIXME why typed?? all are mapped to signed ints!
+	template<typename Type> struct UniformInt : public IUniform {
 	public:
 		UniformInt(): cur(Type(0)), prv(Type(0)) {}
 		bool CanExec() const { return (loc != -1 && cur != prv); } //FIXME a shader might be bound to multiple materials in that case we cannot rely on this!
 		bool Execute(const Type val) { cur = val; return (CanExec() && RawExec(val)); }
 		bool RawExec(const Type val) { glUniform1i(loc, prv = val); return true; }
+
 		GLenum GetType() const { return GL_INT; }
 	public:
 		Type cur;
@@ -167,8 +175,8 @@ private:
 	};
 
 private:
-	spring::unsynced_map<IUniform*, std::string> GetUniformsAndStandardName();
-	spring::unsynced_map<std::string, IUniform*> GetUniformsAndPossibleNames();
+	spring::unsynced_map<IUniform*, std::string> GetEngineUniformNamePairs();
+	spring::unsynced_map<std::string, IUniform*> GetEngineNameUniformPairs();
 
 public:
 	UniformMat<CMatrix44f> viewMatrix;

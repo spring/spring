@@ -28,7 +28,7 @@ public:
 	 *
 	 * Sets SDL video mode options/settings
 	 */
-	bool CreateWindowAndContext(const char* title, bool minimized);
+	bool CreateWindowAndContext(const char* title, bool hidden);
 	bool CreateSDLWindow(const int2& winRes, const int2& minRes, const char* title);
 	bool CreateGLContext(const int2& minCtx);
 	void DestroyWindowAndContext();
@@ -42,20 +42,20 @@ public:
 	void LogVersionInfo(const char* sdlVersionStr, const char* glVidMemStr) const;
 	void LogDisplayMode() const;
 
-	void SetFullScreen(bool configFullScreen, bool cmdLineWindowed, bool cmdLineFullScreen);
+	void SetFullScreen(bool cliWindowed, bool cliFullScreen);
 	// Notify on Fullscreen/WindowBorderless change
 	void ConfigNotify(const std::string& key, const std::string& value);
 	void SetDualScreenParams();
 	void UpdateViewPortGeometry();
 	void UpdatePixelGeometry();
-	void UpdateWindowState();
 	void ReadWindowPosAndSize();
 	void SaveWindowPosAndSize();
 	void UpdateGLConfigs();
 	void UpdateGLGeometry();
 
 	int2 GetScreenCenter() const { return {viewPosX + (viewSizeX >> 1), viewPosY + (viewSizeY >> 1)}; }
-	int2 GetWantedViewSize(const bool fullscreen);
+	int2 GetMaxWinRes() const;
+	int2 GetCfgWinRes(bool fullScrn) const;
 
 	bool CheckGLMultiSampling() const;
 	bool CheckGLContextVersion(const int2& minCtx) const;
@@ -90,14 +90,6 @@ public:
 	/// Frames Per Second
 	float FPS;
 
-
-	/// the window state (0=normal,1=maximized,2=minimized)
-	enum {
-		WINSTATE_DEFAULT   = 0,
-		WINSTATE_MAXIMIZED = 1,
-		WINSTATE_MINIMIZED = 2
-	};
-	int winState;
 
 	/// the screen size in pixels
 	int screenSizeX;
@@ -230,19 +222,21 @@ public:
 	/**
 	 * @brief if the GPU (drivers) support NonPowerOfTwoTextures
 	 *
-	 * Especially some ATI cards report that they support NPOTs, but they don't (or just very limited).
+	 * Especially some ATI cards report that they support NPOTs, but don't (or just very limited).
 	 */
-	bool supportNPOTs;
+	bool supportNonPowerOfTwoTex;
+	bool supportTextureQueryLOD;
 
 	/**
-	 * @brief support24bitDepthBuffers
+	 * @brief support24bitDepthBuffer
 	 *
-	 * if GL_DEPTH_COMPONENT24 is supported (many ATIs don't do so)
+	 * if GL_DEPTH_COMPONENT24 is supported (many ATIs don't)
 	 */
-	bool support24bitDepthBuffers;
+	bool support24bitDepthBuffer;
 
 	bool supportRestartPrimitive;
-	bool supportClipControl;
+	bool supportClipSpaceControl;
+	bool supportFragDepthLayout;
 
 	/**
 	 * Shader capabilities

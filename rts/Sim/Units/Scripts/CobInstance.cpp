@@ -53,7 +53,7 @@ CR_REG_METADATA(CCobInstance, (
 
 inline bool CCobInstance::HasFunction(int id) const
 {
-	return script->scriptIndex[id] >= 0;
+	return (script->scriptIndex.size() > id && script->scriptIndex[id] >= 0);
 }
 
 //Used by creg

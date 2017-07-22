@@ -99,11 +99,6 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	LuaPushNamedNumber(L, "ALLY_UNITS",  AllyUnits);
 	LuaPushNamedNumber(L, "ENEMY_UNITS", EnemyUnits);
 
-#define REGISTER_LUA_CFUNC(x) \
-	lua_pushstring(L, #x);      \
-	lua_pushcfunction(L, x);    \
-	lua_rawset(L, -3)
-
 	// READ routines, sync safe
 	REGISTER_LUA_CFUNC(IsCheatingEnabled);
 	REGISTER_LUA_CFUNC(IsGodModeEnabled);
@@ -3969,14 +3964,14 @@ static void PackCommand(lua_State* L, const Command& cmd)
 
 static void PackCommandQueue(lua_State* L, const CCommandQueue& commands, size_t count)
 {
-	lua_createtable(L, commands.size(), 0);
-
 	size_t c = 0;
 
 	// get the desired number of commands to return
-	if (count == -1u) {
+	if (count == -1u)
 		count = commands.size();
-	}
+
+	// count can exceed the queue size, clamp
+	lua_createtable(L, std::min(count, commands.size()), 0);
 
 	// {[1] = cq[0], [2] = cq[1], ...}
 	for (auto ci = commands.begin(); ci != commands.end(); ++ci) {

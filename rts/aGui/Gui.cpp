@@ -7,6 +7,7 @@
 #include <SDL_events.h>
 
 #include "GuiElement.h"
+#include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/myGL.h"
 #include "System/Log/ILog.h"
 

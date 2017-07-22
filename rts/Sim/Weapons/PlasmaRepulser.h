@@ -44,6 +44,7 @@ public:
 	std::vector<int> quads;
 	CollisionVolume collisionVolume;
 	int tempNum;
+	float3 deltaPos;
 
 private:
 	void FireImpl(const bool scriptCall) override final {}

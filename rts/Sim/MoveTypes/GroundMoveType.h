@@ -22,7 +22,7 @@ public:
 	~CGroundMoveType();
 
 	struct MemberData {
-		std::array<std::pair<unsigned int,  bool*>, 2>  bools;
+		std::array<std::pair<unsigned int,  bool*>, 3>  bools;
 		std::array<std::pair<unsigned int, short*>, 1> shorts;
 		std::array<std::pair<unsigned int, float*>, 9> floats;
 	};
@@ -51,7 +51,8 @@ public:
 	bool SetMemberValue(unsigned int memberHash, void* memberValue) override;
 
 	bool OnSlope(float minSlideTolerance);
-	bool IsReversing() const override { return reversing;}
+	bool IsReversing() const override { return reversing; }
+	bool IsPushResistant() const override { return pushResistant; }
 	bool WantToStop() const { return (pathID == 0 && !useRawMovement); }
 
 
@@ -186,6 +187,7 @@ private:
 
 	bool reversing;
 	bool idling;
+	bool pushResistant;
 	bool canReverse;
 	bool useMainHeading;                /// if true, turn toward mainHeadingPos until weapons[0] can TryTarget() it
 	bool useRawMovement;                /// if true, move towards goal without invoking PFS

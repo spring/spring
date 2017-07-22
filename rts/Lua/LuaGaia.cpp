@@ -8,7 +8,7 @@
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "System/FileSystem/FileHandler.h" // SPRING_VFS*
-#include "System/FileSystem/FileSystem.h"
+#include "System/FileSystem/VFSHandler.h"
 #include "System/StringUtil.h"
 #include "System/Threading/SpringThreading.h"
 
@@ -31,8 +31,7 @@ DECL_FREE_HANDLER(CLuaGaia, luaGaia)
 /******************************************************************************/
 /******************************************************************************/
 
-CLuaGaia::CLuaGaia()
-: CLuaHandleSynced("LuaGaia", LUA_HANDLE_ORDER_GAIA)
+CLuaGaia::CLuaGaia(): CLuaHandleSynced("LuaGaia", LUA_HANDLE_ORDER_GAIA)
 {
 	if (!IsValid())
 		return;
@@ -55,6 +54,6 @@ CLuaGaia::~CLuaGaia()
 
 bool CLuaGaia::CanLoadHandler()
 {
-	return (gs->useLuaGaia && (FileSystem::FileExists(LuaGaiaSyncedFilename) || FileSystem::FileExists(LuaGaiaUnsyncedFilename)));
+	return (gs->useLuaGaia && (vfsHandler->FileExists(LuaGaiaSyncedFilename, CVFSHandler::Map) || vfsHandler->FileExists(LuaGaiaUnsyncedFilename, CVFSHandler::Map)));
 }
 

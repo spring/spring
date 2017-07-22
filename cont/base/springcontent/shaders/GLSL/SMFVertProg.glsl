@@ -1,3 +1,5 @@
+#version 130
+
 #define SMF_TEXSQR_SIZE 1024.0
 #define SMF_DETAILTEX_RES 0.02
 

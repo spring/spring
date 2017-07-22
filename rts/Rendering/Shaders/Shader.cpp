@@ -312,15 +312,6 @@ namespace Shader {
 		UniformState* us = &(it.first->second);
 		us->SetLocation(GetUniformLoc(name));
 
-	#if DEBUG
-		if (us->IsLocationValid())
-			us->SetType(GetUniformType(us->GetLocation()));
-
-		// make sure hash is unique
-		for (const auto us2: uniformStates)
-			assert(us2.first != hash || us2.second.GetName() == name);
-	#endif
-
 		return us;
 	}
 
@@ -588,10 +579,11 @@ namespace Shader {
 			glDeleteProgram(oldProgID);
 	}
 
-	int GLSLProgramObject::GetUniformType(const int loc) {
+	int GLSLProgramObject::GetUniformType(const int idx) {
 		GLint size = 0;
 		GLenum type = 0;
-		glGetActiveUniform(objID, loc, 0, nullptr, &size, &type, nullptr);
+		// NB: idx can not be a *location* returned by glGetUniformLoc except on Nvidia
+		glGetActiveUniform(objID, idx, 0, nullptr, &size, &type, nullptr);
 		assert(size == 1); // arrays aren't handled yet
 		return type;
 	}

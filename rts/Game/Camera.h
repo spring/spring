@@ -108,6 +108,7 @@ public:
 	const std::vector<FrustumLine>& GetPosFrustumSides() const { return frustumLines[FRUSTUM_SIDE_POS]; }
 	const std::vector<FrustumLine>& GetNegFrustumSides() const { return frustumLines[FRUSTUM_SIDE_NEG]; }
 
+	void SetClipCtrlMatrix(const CMatrix44f& mat) { clipControlMatrix = mat; }
 	void SetProjMatrix(const CMatrix44f& mat) { projectionMatrix = mat; }
 	void SetViewMatrix(const CMatrix44f& mat) {
 		viewMatrix = mat;
@@ -128,6 +129,7 @@ public:
 	const CMatrix44f& GetViewProjectionMatrix() const { return viewProjectionMatrix; }
 	const CMatrix44f& GetViewProjectionMatrixInverse() const { return viewProjectionMatrixInverse; }
 	const CMatrix44f& GetBillBoardMatrix() const { return billboardMatrix; }
+	const CMatrix44f& GetClipControlMatrix() const { return clipControlMatrix; }
 
 	void LoadMatrices() const;
 	void LoadViewPort() const;
@@ -230,6 +232,7 @@ private:
 	CMatrix44f viewProjectionMatrix;
 	CMatrix44f viewProjectionMatrixInverse;
 	CMatrix44f billboardMatrix;
+	CMatrix44f clipControlMatrix;
 
 	// positive sides [0], negative sides [1]
 	std::vector<FrustumLine> frustumLines[2];

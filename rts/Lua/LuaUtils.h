@@ -190,8 +190,7 @@ static inline void LuaPushNamedNil(lua_State* L,
 }
 
 
-static inline void LuaPushNamedBool(lua_State* L,
-                             const string& key, bool value)
+static inline void LuaPushNamedBool(lua_State* L, const string& key, bool value)
 {
 	lua_pushsstring(L, key);
 	lua_pushboolean(L, value);
@@ -199,8 +198,7 @@ static inline void LuaPushNamedBool(lua_State* L,
 }
 
 
-static inline void LuaPushNamedNumber(lua_State* L,
-                               const string& key, lua_Number value)
+static inline void LuaPushNamedNumber(lua_State* L, const string& key, lua_Number value)
 {
 	lua_pushsstring(L, key);
 	lua_pushnumber(L, value);
@@ -208,8 +206,7 @@ static inline void LuaPushNamedNumber(lua_State* L,
 }
 
 
-static inline void LuaPushNamedString(lua_State* L,
-                               const string& key, const string& value)
+static inline void LuaPushNamedString(lua_State* L, const string& key, const string& value)
 {
 	lua_pushsstring(L, key);
 	lua_pushsstring(L, value);
@@ -217,13 +214,23 @@ static inline void LuaPushNamedString(lua_State* L,
 }
 
 
-static inline void LuaPushNamedCFunc(lua_State* L,
-                              const string& key, int (*func)(lua_State*))
+static inline void LuaPushNamedCFunc(lua_State* L, const string& key, lua_CFunction func)
 {
 	lua_pushsstring(L, key);
 	lua_pushcfunction(L, func);
 	lua_rawset(L, -3);
 }
+
+static inline void LuaPushRawNamedCFunc(lua_State* L, const char* key, lua_CFunction func)
+{
+	lua_pushstring(L, key);
+	lua_pushcfunction(L, func);
+	lua_rawset(L, -3);
+}
+
+#define REGISTER_LUA_CFUNC(func)                LuaPushRawNamedCFunc(L, #func,        func)
+#define REGISTER_NAMED_LUA_CFUNC(name, func)    LuaPushRawNamedCFunc(L,  name,        func)
+#define REGISTER_SCOPED_LUA_CFUNC(scope, func)  LuaPushRawNamedCFunc(L, #func, scope::func)
 
 
 static inline void LuaInsertDualMapPair(lua_State* L, const string& name, int number)

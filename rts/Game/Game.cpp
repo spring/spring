@@ -552,14 +552,21 @@ void CGame::PreLoadSimulation()
 
 void CGame::PostLoadSimulation()
 {
-	loadscreen->SetLoadMessage("Loading Weapon Definitions");
-	weaponDefHandler = new CWeaponDefHandler(defsParser);
-
-	loadscreen->SetLoadMessage("Loading Unit Definitions");
-	unitDefHandler = new CUnitDefHandler(defsParser);
-
-	loadscreen->SetLoadMessage("Loading Feature Definitions");
-	featureDefHandler = new CFeatureDefHandler(defsParser);
+	{
+		ScopedOnceTimer timer("Game::PostLoadSim (WeaponDefs)");
+		loadscreen->SetLoadMessage("Loading Weapon Definitions");
+		weaponDefHandler = new CWeaponDefHandler(defsParser);
+	}
+	{
+		ScopedOnceTimer timer("Game::PostLoadSim (UnitDefs)");
+		loadscreen->SetLoadMessage("Loading Unit Definitions");
+		unitDefHandler = new CUnitDefHandler(defsParser);
+	}
+	{
+		ScopedOnceTimer timer("Game::PostLoadSim (FeatureDefs)");
+		loadscreen->SetLoadMessage("Loading Feature Definitions");
+		featureDefHandler = new CFeatureDefHandler(defsParser);
+	}
 
 	CUnit::InitStatic();
 	CCommandAI::InitCommandDescriptionCache();

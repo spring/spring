@@ -316,7 +316,7 @@ void CBeamLaser::FireInternal(float3 curDir)
 	for (int tries = 0; tries < 5 && tryAgain; ++tries) {
 		float beamLength = TraceRay::TraceRay(curPos, curDir, maxLength - curLength, collisionFlags, owner, hitUnit, hitFeature, &hitColQuery);
 
-		if (hitUnit != NULL && teamHandler->AlliedTeams(hitUnit->team, owner->team)) {
+		if (hitUnit != nullptr && teamHandler->AlliedTeams(hitUnit->team, owner->team)) {
 			if (sweepFireState.IsSweepFiring() && !sweepFireState.DamageAllies()) {
 				doDamage = false; break;
 			}
@@ -326,6 +326,7 @@ void CBeamLaser::FireInternal(float3 curDir)
 			// terminate beam at water surface if necessary
 			if ((curDir.y < 0.0f) && ((curPos.y + curDir.y * beamLength) <= 0.0f)) {
 				beamLength = curPos.y / -curDir.y;
+
 				hitUnit = nullptr;
 				hitFeature = nullptr;
 			}
@@ -341,6 +342,7 @@ void CBeamLaser::FireInternal(float3 curDir)
 		for (const TraceRay::SShieldDist& sd: hitShields) {
 			if (sd.dist < beamLength && sd.rep->IncomingBeam(this, curPos, curPos + (curDir * sd.dist), salvoDamageMult)) {
 				beamLength = sd.dist;
+
 				hitUnit = nullptr;
 				hitFeature = nullptr;
 				hitShield = sd.rep;
@@ -350,9 +352,13 @@ void CBeamLaser::FireInternal(float3 curDir)
 
 		// same as hitColQuery.GetHitPos() if no water or shield in way
 		hitPos = curPos + curDir * beamLength;
+
 		if (hitShield != nullptr && hitShield->weaponDef->shieldRepulser) {
+			// reflect
 			const float3 normal = (hitPos - hitShield->weaponMuzzlePos).Normalize();
-			newDir = curDir - normal * normal.dot(curDir) * 2;
+			const float3 prjDir = normal * normal.dot(curDir) * 2.0f;
+
+			newDir = curDir - prjDir;
 			tryAgain = true;
 		} else {
 			tryAgain = false;

@@ -81,16 +81,6 @@ const int CMD_INDEX_OFFSET = 1; // starting index for command descriptions
 
 bool LuaUnsyncedRead::PushEntries(lua_State* L)
 {
-#define REGISTER_LUA_CFUNC(x) \
-	lua_pushstring(L, #x);      \
-	lua_pushcfunction(L, x);    \
-	lua_rawset(L, -3)
-
-#define REGISTER_NAMED_LUA_CFUNC(x,name) \
-	lua_pushstring(L, #name);      \
-	lua_pushcfunction(L, x);    \
-	lua_rawset(L, -3)
-
 	REGISTER_LUA_CFUNC(IsReplay);
 	REGISTER_LUA_CFUNC(GetReplayLength);
 
@@ -143,9 +133,10 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetLocalTeamID);
 	REGISTER_LUA_CFUNC(GetLocalAllyTeamID);
 
-	REGISTER_NAMED_LUA_CFUNC(GetLocalPlayerID,   GetMyPlayerID);
-	REGISTER_NAMED_LUA_CFUNC(GetLocalTeamID,     GetMyTeamID);
-	REGISTER_NAMED_LUA_CFUNC(GetLocalAllyTeamID, GetMyAllyTeamID);
+	// aliases
+	REGISTER_NAMED_LUA_CFUNC("GetMyPlayerID", GetLocalPlayerID);
+	REGISTER_NAMED_LUA_CFUNC("GetMyTeamID", GetLocalTeamID);
+	REGISTER_NAMED_LUA_CFUNC("GetMyAllyTeamID", GetLocalAllyTeamID);
 
 	REGISTER_LUA_CFUNC(GetSpectatingState);
 
@@ -1722,11 +1713,9 @@ int LuaUnsyncedRead::GetSoundEffectParams(lua_State* L)
 
 int LuaUnsyncedRead::GetFPS(lua_State* L)
 {
-	if (globalRendering) {
-		lua_pushnumber(L, (int)globalRendering->FPS);
-	} else {
-		lua_pushnumber(L, 0);
-	}
+	assert(globalRendering != nullptr);
+	// true FPS is never fractional, but the calculation averages over time
+	lua_pushnumber(L, int(globalRendering->FPS));
 	return 1;
 }
 
@@ -1744,9 +1733,8 @@ int LuaUnsyncedRead::GetGameSpeed(lua_State* L)
 
 int LuaUnsyncedRead::GetActiveCommand(lua_State* L)
 {
-	if (guihandler == NULL) {
+	if (guihandler == nullptr)
 		return 0;
-	}
 
 	const vector<SCommandDescription>& cmdDescs = guihandler->commands;
 	const int cmdDescCount = (int)cmdDescs.size();
@@ -1765,9 +1753,8 @@ int LuaUnsyncedRead::GetActiveCommand(lua_State* L)
 
 int LuaUnsyncedRead::GetDefaultCommand(lua_State* L)
 {
-	if (guihandler == NULL) {
+	if (guihandler == nullptr)
 		return 0;
-	}
 
 	const int defCmd = guihandler->GetDefaultCommand(mouse->lastx, mouse->lasty);
 
@@ -1787,9 +1774,8 @@ int LuaUnsyncedRead::GetDefaultCommand(lua_State* L)
 
 int LuaUnsyncedRead::GetActiveCmdDescs(lua_State* L)
 {
-	if (guihandler == NULL) {
+	if (guihandler == nullptr)
 		return 0;
-	}
 
 	const vector<SCommandDescription>& cmdDescs = guihandler->commands;
 	const int cmdDescCount = (int)cmdDescs.size();
@@ -1807,9 +1793,9 @@ int LuaUnsyncedRead::GetActiveCmdDescs(lua_State* L)
 
 int LuaUnsyncedRead::GetActiveCmdDesc(lua_State* L)
 {
-	if (guihandler == NULL) {
+	if (guihandler == nullptr)
 		return 0;
-	}
+
 	const int cmdIndex = luaL_checkint(L, 1) - CMD_INDEX_OFFSET;
 
 	const vector<SCommandDescription>& cmdDescs = guihandler->commands;
@@ -1824,9 +1810,9 @@ int LuaUnsyncedRead::GetActiveCmdDesc(lua_State* L)
 
 int LuaUnsyncedRead::GetCmdDescIndex(lua_State* L)
 {
-	if (guihandler == NULL) {
+	if (guihandler == nullptr)
 		return 0;
-	}
+
 	const int cmdId = luaL_checkint(L, 1);
 
 	const vector<SCommandDescription>& cmdDescs = guihandler->commands;
@@ -1890,6 +1876,9 @@ int LuaUnsyncedRead::GetActivePage(lua_State* L)
 
 int LuaUnsyncedRead::GetMouseState(lua_State* L)
 {
+	assert(mouse != nullptr);
+	assert(globalRendering != nullptr);
+
 	lua_pushnumber(L, mouse->lastx - globalRendering->viewPosX);
 	lua_pushnumber(L, globalRendering->viewSizeY - mouse->lasty - 1);
 
@@ -1903,6 +1892,8 @@ int LuaUnsyncedRead::GetMouseState(lua_State* L)
 
 int LuaUnsyncedRead::GetMouseCursor(lua_State* L)
 {
+	assert(mouse != nullptr);
+
 	lua_pushsstring(L, mouse->GetCurrentCursor());
 	lua_pushnumber(L, mouse->GetCurrentCursorScale());
 	return 2;
@@ -1911,8 +1902,7 @@ int LuaUnsyncedRead::GetMouseCursor(lua_State* L)
 
 int LuaUnsyncedRead::GetMouseStartPosition(lua_State* L)
 {
-	if (mouse == nullptr)
-		return 0;
+	assert(mouse != nullptr);
 
 	const int button = luaL_checkint(L, 1);
 
@@ -2062,9 +2052,9 @@ int LuaUnsyncedRead::GetPressedKeys(lua_State* L)
 
 int LuaUnsyncedRead::GetInvertQueueKey(lua_State* L)
 {
-	if (guihandler == NULL) {
+	if (guihandler == nullptr)
 		return 0;
-	}
+
 	lua_pushboolean(L, guihandler->GetInvertQueueKey());
 	return 1;
 }
@@ -2072,9 +2062,8 @@ int LuaUnsyncedRead::GetInvertQueueKey(lua_State* L)
 
 int LuaUnsyncedRead::GetKeyCode(lua_State* L)
 {
-	if (keyCodes == NULL) {
+	if (keyCodes == nullptr)
 		return 0;
-	}
 
 	const int keycode = keyCodes->GetCode(luaL_checksstring(L, 1));
 	lua_pushnumber(L, SDL21_keysyms(keycode));
@@ -2085,8 +2074,8 @@ int LuaUnsyncedRead::GetKeyCode(lua_State* L)
 int LuaUnsyncedRead::GetKeySymbol(lua_State* L)
 {
 	const int keycode = SDL12_keysyms(luaL_checkint(L, 1));
-	lua_pushsstring(L, (keyCodes != NULL)? keyCodes->GetName(keycode): "");
-	lua_pushsstring(L, (keyCodes != NULL)? keyCodes->GetDefaultName(keycode): "");
+	lua_pushsstring(L, (keyCodes != nullptr)? keyCodes->GetName(keycode): "");
+	lua_pushsstring(L, (keyCodes != nullptr)? keyCodes->GetDefaultName(keycode): "");
 	return 2;
 }
 
@@ -2097,7 +2086,7 @@ int LuaUnsyncedRead::GetKeyBindings(lua_State* L)
 
 	if (!ks.Parse(luaL_checksstring(L, 1)))
 		return 0;
-	if (keyBindings == NULL)
+	if (keyBindings == nullptr)
 		return 0;
 
 	const CKeyBindings::ActionList& actions = keyBindings->GetActionList(ks);
@@ -2120,7 +2109,7 @@ int LuaUnsyncedRead::GetKeyBindings(lua_State* L)
 
 int LuaUnsyncedRead::GetActionHotKeys(lua_State* L)
 {
-	if (keyBindings == NULL)
+	if (keyBindings == nullptr)
 		return 0;
 
 	const CKeyBindings::HotkeyList& hotkeys = keyBindings->GetHotkeys(luaL_checksstring(L, 1));
@@ -2138,9 +2127,9 @@ int LuaUnsyncedRead::GetActionHotKeys(lua_State* L)
 
 int LuaUnsyncedRead::GetGroupList(lua_State* L)
 {
-	if (grouphandlers[gu->myTeam] == NULL) {
+	if (grouphandlers[gu->myTeam] == nullptr)
 		return 0;
-	}
+
 	lua_newtable(L);
 
 	unsigned int count = 0;
@@ -2149,7 +2138,7 @@ int LuaUnsyncedRead::GetGroupList(lua_State* L)
 	vector<CGroup*>::const_iterator git;
 	for (git = groups.begin(); git != groups.end(); ++git) {
 		const CGroup* group = *git;
-		if ((group != NULL) && !group->units.empty()) {
+		if ((group != nullptr) && !group->units.empty()) {
 			lua_pushnumber(L, group->units.size());
 			lua_rawseti(L, -2, group->id);
 			count++;

@@ -471,7 +471,7 @@ void CDecalsDrawerGL4::GenerateAtlasTexture()
 	GetFallbacks(textures);
 
 	CQuadtreeAtlasAlloc atlas;
-	atlas.SetNonPowerOfTwo(globalRendering->supportNPOTs);
+	atlas.SetNonPowerOfTwo(globalRendering->supportNonPowerOfTwoTex);
 	atlas.SetMaxSize(globalRendering->maxTextureSize, globalRendering->maxTextureSize);
 	for (auto it = textures.begin(); it != textures.end(); ++it) {
 		if (it->second.id == 0)

@@ -89,25 +89,32 @@ void CFactory::Update()
 		// factory is under construction, cannot build anything yet
 		CUnit::Update();
 
-		#if 1
 		// this can happen if we started being reclaimed *while* building a
 		// unit, in which case our buildee can either be allowed to finish
 		// construction (by assisting builders) or has to be killed --> the
 		// latter is easier
-		if (curBuild != nullptr) {
+		if (curBuild != nullptr)
 			StopBuild();
-		}
-		#endif
 
 		return;
 	}
 
 
 	if (curBuildDef != nullptr) {
+		// if there is a unit blocking the factory's exit while
+		// open and already in build-stance, StartBuild returns
+		// early whereas while *closed* (!open) a blockee causes
+		// CanOpenYard to return false so the Activate callin is
+		// never called
+		// the radius can not be too large or assisting (mobile)
+		// builders around the factory will be disturbed by this
+		if ((gs->frameNum & (UNIT_SLOWUPDATE_RATE >> 1)) == 0)
+			CGameHelper::BuggerOff(pos + frontdir * radius * 0.5f, radius * 0.5f, true, true, team, this);
+
 		if (!yardOpen && !IsStunned()) {
 			if (groundBlockingObjectMap->CanOpenYard(this)) {
-				script->Activate();
-				groundBlockingObjectMap->OpenBlockingYard(this);
+				groundBlockingObjectMap->OpenBlockingYard(this); // set yardOpen
+				script->Activate(); // set buildStance
 
 				// make sure the idle-check does not immediately trigger
 				// (scripts have 7 seconds to set inBuildStance to true)
@@ -125,7 +132,7 @@ void CFactory::Update()
 		FinishBuild(curBuild);
 	}
 
-	const bool wantClose = (!IsStunned() && yardOpen && (gs->frameNum >= (lastBuildUpdateFrame + GAME_SPEED * 7)));
+	const bool wantClose = (!IsStunned() && yardOpen && (gs->frameNum >= (lastBuildUpdateFrame + GAME_SPEED * (UNIT_SLOWUPDATE_RATE >> 1))));
 	const bool closeYard = (wantClose && curBuild == nullptr && groundBlockingObjectMap->CanCloseYard(this));
 
 	if (closeYard) {
@@ -136,21 +143,6 @@ void CFactory::Update()
 
 	CBuilding::Update();
 }
-
-/*
-void CFactory::SlowUpdate(void)
-{
-	// this (ancient) code was intended to keep vicinity around factories clear
-	// so units could exit more easily among crowds of assisting builders, etc.
-	// it is unneeded now that units can flow / push through a non-moving crowd
-	// (so we no longer have to override CBuilding::SlowUpdate either)
-	if (transporter == NULL) {
-		CGameHelper::BuggerOff(pos - float3(0.01f, 0, 0.02f), radius, true, true, team, NULL);
-	}
-
-	CBuilding::SlowUpdate();
-}
-*/
 
 
 
@@ -165,8 +157,7 @@ void CFactory::StartBuild(const UnitDef* buildeeDef) {
 	//
 	// it might rarely be the case that a unit got stuck inside the factory
 	// or died right after completion and left some wreckage, but that is up
-	// to players to fix (we no longer broadcast BuggerOff directives, since
-	// those are indiscriminate and ineffective)
+	// to players to fix
 	if (blocked)
 		return;
 

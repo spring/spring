@@ -112,11 +112,6 @@ const int CMD_INDEX_OFFSET = 1; // starting index for command descriptions
 
 bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 {
-#define REGISTER_LUA_CFUNC(x) \
-	lua_pushstring(L, #x);      \
-	lua_pushcfunction(L, x);    \
-	lua_rawset(L, -3)
-
 	REGISTER_LUA_CFUNC(Echo);
 	REGISTER_LUA_CFUNC(Log);
 

@@ -31,20 +31,20 @@ CR_REG_METADATA(AMoveType, (
 AMoveType::AMoveType(CUnit* owner):
 	owner(owner),
 
-	goalPos(owner? owner->pos: ZeroVector),
-	oldPos(owner? owner->pos: ZeroVector),
+	goalPos((owner != nullptr)? owner->pos: ZeroVector),
+	oldPos((owner != nullptr)? owner->pos: ZeroVector),
 	oldSlowUpdatePos(oldPos),
 
 	useHeading(true),
 
 	progressState(Done),
 
-	maxSpeed(owner? owner->unitDef->speed / GAME_SPEED : 0.0f),
-	maxSpeedDef(owner? owner->unitDef->speed / GAME_SPEED : 0.0f),
-	maxWantedSpeed(owner? owner->unitDef->speed / GAME_SPEED : 0.0f),
+	maxSpeed((owner != nullptr)? owner->unitDef->speed / GAME_SPEED : 0.0f),
+	maxSpeedDef((owner != nullptr)? owner->unitDef->speed / GAME_SPEED : 0.0f),
+	maxWantedSpeed((owner != nullptr)? owner->unitDef->speed / GAME_SPEED : 0.0f),
 
 	maneuverLeash(500.0f),
-	waterline(owner? owner->unitDef->waterline: 0.0f)
+	waterline((owner != nullptr)? owner->unitDef->waterline: 0.0f)
 {
 }
 

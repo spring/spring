@@ -18,10 +18,10 @@
 #include "Sim/Misc/DamageArray.h"
 #include "Sim/Misc/GeometricObjects.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
-#include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/ModInfo.h"
+#include "Sim/MoveTypes/MoveType.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/MoveTypes/MoveMath/MoveMath.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
@@ -819,22 +819,20 @@ void CGameHelper::GetEnemyUnitsNoLosTest(const float3& pos, float searchRadius, 
 
 void CGameHelper::BuggerOff(float3 pos, float radius, bool spherical, bool forced, int teamId, CUnit* excludeUnit)
 {
-	//copy on purpose since BuggerOff can call risky stuff
+	// copy on purpose since BuggerOff can call risky stuff
 	const std::vector<CUnit*> units = quadField->GetUnitsExact(pos, radius + SQUARE_SIZE, spherical);
 	const int allyTeamId = teamHandler->AllyTeam(teamId);
 
-	for (std::vector<CUnit*>::const_iterator ui = units.begin(); ui != units.end(); ++ui) {
-		CUnit* u = *ui;
-
+	for (CUnit* u: units) {
+		if (u == excludeUnit)
+			continue;
 		// don't send BuggerOff commands to enemy units
-		const int uAllyTeamId = u->allyteam;
-		const bool allied = (
-				teamHandler->Ally(uAllyTeamId,  allyTeamId) ||
-				teamHandler->Ally(allyTeamId, uAllyTeamId));
+		if (!teamHandler->Ally(u->allyteam, allyTeamId) && !teamHandler->Ally(allyTeamId, u->allyteam))
+			continue;
+		if (!forced && (u->moveType->IsPushResistant() || u->UsingScriptMoveType()))
+			continue;
 
-		if ((u != excludeUnit) && allied && ((!u->unitDef->pushResistant && !u->UsingScriptMoveType()) || forced)) {
-			u->commandAI->BuggerOff(pos, radius + SQUARE_SIZE);
-		}
+		u->commandAI->BuggerOff(pos, radius + SQUARE_SIZE);
 	}
 }
 
@@ -843,17 +841,18 @@ float3 CGameHelper::Pos2BuildPos(const BuildInfo& buildInfo, bool synced)
 {
 	float3 pos;
 
-	static const int HALFMAP_SQ = SQUARE_SIZE * 2;
+	constexpr int BUILDMAP_SQ = SQUARE_SIZE * 2;
 
+	// snap build-positions to 16-elmo grid
 	if (buildInfo.GetXSize() & 2)
-		pos.x = math::floor((buildInfo.pos.x              ) / (HALFMAP_SQ)) * HALFMAP_SQ + SQUARE_SIZE;
+		pos.x = math::floor((buildInfo.pos.x              ) / (BUILDMAP_SQ)) * BUILDMAP_SQ + SQUARE_SIZE;
 	else
-		pos.x = math::floor((buildInfo.pos.x + SQUARE_SIZE) / (HALFMAP_SQ)) * HALFMAP_SQ;
+		pos.x = math::floor((buildInfo.pos.x + SQUARE_SIZE) / (BUILDMAP_SQ)) * BUILDMAP_SQ;
 
 	if (buildInfo.GetZSize() & 2)
-		pos.z = math::floor((buildInfo.pos.z              ) / (HALFMAP_SQ)) * HALFMAP_SQ + SQUARE_SIZE;
+		pos.z = math::floor((buildInfo.pos.z              ) / (BUILDMAP_SQ)) * BUILDMAP_SQ + SQUARE_SIZE;
 	else
-		pos.z = math::floor((buildInfo.pos.z + SQUARE_SIZE) / (HALFMAP_SQ)) * HALFMAP_SQ;
+		pos.z = math::floor((buildInfo.pos.z + SQUARE_SIZE) / (BUILDMAP_SQ)) * BUILDMAP_SQ;
 
 	pos.y = CGameHelper::GetBuildHeight(pos, buildInfo.def, synced);
 	return pos;
@@ -1168,23 +1167,12 @@ CGameHelper::BuildSquareStatus CGameHelper::TestBuildSquare(
 	const int sqz = unsigned(pos.z) / SQUARE_SIZE;
 	const float groundHeight = CGround::GetApproximateHeightUnsafe(sqx, sqz, synced);
 
-	if (!unitDef->CheckTerrainConstraints(moveDef, groundHeight))
+	if (!CheckTerrainConstraints(unitDef, moveDef, pos.y, groundHeight, CGround::GetSlope(sqx, sqz, synced)))
 		return BUILDSQUARE_BLOCKED;
 
 	if (!buildingMaskMap->TestTileMaskUnsafe(sqx >> 1, sqz >> 1, unitDef->buildingMask))
 		return BUILDSQUARE_BLOCKED;
 
-
-	// check maxHeightDif constraint (structures only)
-	//
-	// if we are capable of floating, only test local
-	// height difference IF terrain is above sea-level
-	if (unitDef->IsImmobileUnit()) {
-		if (!unitDef->floatOnWater || groundHeight > 0.0f) {
-			if (std::abs(pos.y - groundHeight) > unitDef->maxHeightDif)
-				return BUILDSQUARE_BLOCKED;
-		}
-	}
 
 	BuildSquareStatus ret = BUILDSQUARE_OPEN;
 	const int yardxpos = unsigned(pos.x + (SQUARE_SIZE >> 1)) / SQUARE_SIZE;
@@ -1285,5 +1273,66 @@ Command CGameHelper::GetBuildCommand(const float3& pos, const float3& dir) {
 
 	Command c(CMD_STOP);
 	return c;
+}
+
+bool CGameHelper::CheckTerrainConstraints(
+	const UnitDef* unitDef,
+	const MoveDef* moveDef,
+	float wantedHeight,
+	float groundHeight,
+	float groundSlope,
+	float* clampedHeight
+) {
+	bool depthCheck =  true;
+	bool slopeCheck = false;
+
+	// can fail if LuaMoveCtrl has changed a unit's MoveDef (UnitDef::pathType is not updated)
+	// assert(pathType == -1u || moveDef == moveDefHandler->GetMoveDefByPathType(pathType));
+
+	float minDepth = MoveDef::GetDefaultMinWaterDepth();
+	float maxDepth = MoveDef::GetDefaultMaxWaterDepth();
+	float maxSlope = 90.0f; // NB: aircraft use this too
+
+	if (moveDef != nullptr) {
+		// we are a mobile ground-unit, use MoveDef limits
+		if (moveDef->speedModClass == MoveDef::Ship) {
+			minDepth = moveDef->depth;
+		} else {
+			maxDepth = moveDef->depth;
+		}
+
+		maxSlope = moveDef->maxSlope;
+	} else {
+		if (!unitDef->canfly) {
+			// we are a building, use UnitDef limits
+			minDepth = unitDef->minWaterDepth;
+			maxDepth = unitDef->maxWaterDepth;
+		} else {
+			// submerging or floating aircraft
+			maxDepth *= unitDef->canSubmerge;
+			maxDepth *= (1 - unitDef->floatOnWater);
+		}
+	}
+
+	if (clampedHeight != nullptr)
+		*clampedHeight = Clamp(groundHeight, -maxDepth, -minDepth);
+
+
+	if (unitDef->IsImmobileUnit()) {
+		// check maxHeightDif constraint for structures
+		//
+		// if structure is capable of floating, only factor in
+		// the height difference IF terrain is above sea-level
+		slopeCheck |= (unitDef->floatOnWater && groundHeight <= 0.0f);
+		slopeCheck |= (std::abs(wantedHeight - groundHeight) <= unitDef->maxHeightDif);
+	} else {
+		slopeCheck |= (groundSlope <= maxSlope);
+	}
+
+	// <groundHeight> must lie in the range [-maxDepth, -minDepth]
+	depthCheck &= (groundHeight >= -maxDepth);
+	depthCheck &= (groundHeight <= -minDepth);
+
+	return (depthCheck && slopeCheck);
 }
 

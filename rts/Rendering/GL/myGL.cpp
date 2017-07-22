@@ -17,10 +17,10 @@
 #include "Rendering/Textures/Bitmap.h"
 #include "System/Log/ILog.h"
 #include "System/Exceptions.h"
+#include "System/StringUtil.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/Platform/MessageBox.h"
-#include "System/type2.h"
 
 #define SDL_BPP(fmt) SDL_BITSPERPIXEL((fmt))
 
@@ -175,9 +175,9 @@ bool GetAvailableVideoRAM(GLint* memory, const char* glVendor)
 		case 'A': { if (!GetVideoMemInfoATI (memInfo)) return false; } break; // "ATI" or "AMD"
 		case 'X': { if (!GetVideoMemInfoMESA(memInfo)) return false; } break; // "X.org"
 		case 'M': { if (!GetVideoMemInfoMESA(memInfo)) return false; } break; // "Mesa"
+		case 'V': { if (!GetVideoMemInfoMESA(memInfo)) return false; } break; // "VMware" (also ships a Mesa variant)
 		case 'I': {                                    return false; } break; // "Intel"
-		case 'T': {                                    return false; } break; // "Tungsten"
-		case 'V': {                                    return false; } break; // "VMware"
+		case 'T': {                                    return false; } break; // "Tungsten" (old, acquired by VMware)
 		default : {                                    return false; } break;
 	}
 
@@ -197,12 +197,13 @@ bool ShowDriverWarning(const char* glVendor, const char* glRenderer)
 	assert(glRenderer != nullptr);
 
 	// print out warnings for really crappy graphic cards/drivers
-	const std::string& gpuVendor = glVendor;
-	const std::string& gpuModel  = glRenderer;
+	const std::string& gpuVendor = StringToLower(glVendor);
+	const std::string& gpuModel  = StringToLower(glRenderer);
 
 	constexpr size_t np = std::string::npos;
 
-	if (gpuVendor.find("Microsoft") != np || gpuVendor.find("unknown") != np) {
+	// should be unreachable since context will fail to be created
+	if (gpuVendor.find("microsoft") != np || gpuVendor.find("unknown") != np) {
 		const char* msg =
 			"No OpenGL drivers installed on your system. Please visit your\n"
 			"GPU vendor's website (listed below) and download these first.\n\n"
@@ -215,7 +216,7 @@ bool ShowDriverWarning(const char* glVendor, const char* glRenderer)
 		return false;
 	}
 
-	if ((gpuVendor == "SiS") || (gpuModel.find("Intel") != np && (gpuModel.find(" 945G") != np || gpuModel.find(" 915G") != np))) {
+	if ((gpuVendor == "sis") || (gpuModel.find("intel") != np && (gpuModel.find(" 945g") != np || gpuModel.find(" 915g") != np))) {
 		const char* msg =
 			"Your graphics card is insufficient to properly run the Spring engine.\n\n"
 			"If you experience crashes or poor performance, upgrade to better hardware "
@@ -227,16 +228,16 @@ bool ShowDriverWarning(const char* glVendor, const char* glRenderer)
 		return true;
 	}
 
-	if (gpuModel.find(  "mesa ") != np || gpuModel.find("gallium ") != np) {
+	if (gpuVendor.find("vmware") != np) {
 		const char* msg =
-			"You are using an open-source (Mesa / Gallium) graphics card driver, "
-			"which may not work well with the Spring engine.\n\nIf you experience "
-			"problems, switch to proprietary drivers or try \"spring --safemode\".\n";
+			"Running Spring with virtualized drivers can result in severely degraded "
+			"performance and is discouraged. Prefer to use your host operating system.";
 
 		LOG_L(L_WARNING, "%s", msg);
 		Platform::MsgBox(msg, "Warning", MBF_EXCL);
 		return true;
 	}
+
 #endif
 
 	return true;

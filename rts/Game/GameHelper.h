@@ -107,6 +107,15 @@ public:
 	static float GetBuildHeight(const float3& pos, const UnitDef* unitdef, bool synced = true);
 	static Command GetBuildCommand(const float3& pos, const float3& dir);
 
+	static bool CheckTerrainConstraints(
+		const UnitDef* unitDef,
+		const MoveDef* moveDef,
+		float wantedHeight,
+		float groundHeight,
+		float groundSlope,
+		float* clampedHeight = nullptr
+	);
+
 	/**
 	 * @param minDist measured in 1/(SQUARE_SIZE * 2) = 1/16 of full map resolution.
 	 */

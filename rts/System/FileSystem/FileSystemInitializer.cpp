@@ -11,7 +11,8 @@
 
 
 
-bool FileSystemInitializer::initialized = false;
+volatile bool FileSystemInitializer::initSuccess = false;
+volatile bool FileSystemInitializer::initFailure = false;
 
 void FileSystemInitializer::PreInitializeConfigHandler(const std::string& configSource, const bool safemode)
 {
@@ -30,10 +31,10 @@ void FileSystemInitializer::InitializeLogOutput(const std::string& filename)
 }
 
 
-void FileSystemInitializer::Initialize()
+bool FileSystemInitializer::Initialize()
 {
-	if (initialized)
-		return;
+	if (initSuccess)
+		return true;
 
 	try {
 		Platform::SetOrigCWD();
@@ -44,25 +45,30 @@ void FileSystemInitializer::Initialize()
 		archiveScanner = new CArchiveScanner();
 		vfsHandler = new CVFSHandler();
 
-		initialized = true;
+		initSuccess = true;
 	} catch (const std::exception& ex) {
 		// even if we end up here, do not clean up configHandler yet
 		// since it can already have early observers registered that
 		// do not remove themselves until exit
+		logOutput.LogExceptionInfo("FileSystemInit", ex.what());
 		Cleanup(false);
-		throw;
+		initFailure = true;
 	} catch (...) {
 		Cleanup(false);
-		throw;
+		initFailure = true;
 	}
+
+	return (initSuccess && !initFailure);
 }
 
 void FileSystemInitializer::Cleanup(bool deallocConfigHandler)
 {
-	if (initialized) {
+	if (initSuccess) {
 		spring::SafeDelete(archiveScanner);
 		spring::SafeDelete(vfsHandler);
-		initialized = false;
+
+		initSuccess = false;
+		initFailure = false;
 	}
 
 	if (deallocConfigHandler) {

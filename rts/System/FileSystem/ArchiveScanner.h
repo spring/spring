@@ -117,6 +117,7 @@ public:
 
 	static const char* GetMapHelperContentName() { return "Map Helper v1"; }
 	static const char* GetSpringBaseContentName() { return "Spring content v1"; }
+	static uint32_t GetNumScannedArchives();
 
 	std::vector<std::string> GetMaps() const;
 	std::vector<ArchiveData> GetPrimaryMods() const;
@@ -130,6 +131,7 @@ public:
 	unsigned int GetSingleArchiveChecksum(const std::string& name);
 	/// Calculate checksum of the given archive and all its dependencies
 	unsigned int GetArchiveCompleteChecksum(const std::string& name);
+
 	/// like GetArchiveCompleteChecksum, throws exception if mismatch
 	void CheckArchive(const std::string& name, unsigned checksum);
 	void ScanArchive(const std::string& fullName, bool checksum = false);

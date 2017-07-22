@@ -314,6 +314,24 @@ public:
 	}
 };
 
+class MapShadowPolyOffsetActionExecutor: public IUnsyncedActionExecutor {
+public:
+	MapShadowPolyOffsetActionExecutor(): IUnsyncedActionExecutor("MapShadowPolyOffset", "") {}
+
+	bool Execute(const UnsyncedAction& action) const {
+		std::istringstream buf(action.GetArgs() + " 0.0 0.0");
+
+		float& pofs = (readMap->GetGroundDrawer())->spPolygonOffsetScale;
+		float& pofu = (readMap->GetGroundDrawer())->spPolygonOffsetUnits;
+
+		buf >> pofs;
+		buf >> pofu;
+
+		LOG("MapShadowPolygonOffset{Scale,Units}={%f,%f}", pofs, pofu);
+		return true;
+	}
+};
+
 
 
 class WaterActionExecutor : public IUnsyncedActionExecutor {
@@ -889,11 +907,13 @@ public:
 
 	bool Execute(const UnsyncedAction& action) const {
 		const int teamId = atoi(action.GetArgs().c_str());
+
 		if (teamHandler->IsValidTeam(teamId)) {
 			clientNet->Send(CBaseNetProtocol::Get().SendJoinTeam(gu->myPlayerNum, teamId));
 		} else {
-			LOG_L(L_WARNING, "/Team: wrong syntax (which is '/Team %%teamid')");
+			LOG_L(L_WARNING, "[%s] team %d does not exist", __func__, teamId);
 		}
+
 		return true;
 	}
 };
@@ -903,7 +923,7 @@ public:
 class SpectatorActionExecutor : public IUnsyncedActionExecutor {
 public:
 	SpectatorActionExecutor() : IUnsyncedActionExecutor("Spectator",
-			"Lets the local user give up controll over a team, and start spectating") {}
+			"Lets the local user give up control over a team, and start spectating") {}
 
 	bool Execute(const UnsyncedAction& action) const {
 		if (gu->spectating)
@@ -2094,9 +2114,9 @@ public:
 
 	bool Execute(const UnsyncedAction& action) const {
 		if (action.GetArgs().empty()) {
-			VSync.Toggle();
+			verticalSync->Toggle();
 		} else {
-			VSync.SetInterval(atoi(action.GetArgs().c_str()));
+			verticalSync->SetInterval(atoi(action.GetArgs().c_str()));
 		}
 		return true;
 	}
@@ -3056,6 +3076,7 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new SelectCycleActionExecutor());
 	AddActionExecutor(new DeselectActionExecutor());
 	AddActionExecutor(new ShadowsActionExecutor());
+	AddActionExecutor(new MapShadowPolyOffsetActionExecutor());
 	AddActionExecutor(new MapMeshDrawerActionExecutor());
 	AddActionExecutor(new MapBorderActionExecutor());
 	AddActionExecutor(new WaterActionExecutor());

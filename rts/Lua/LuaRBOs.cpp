@@ -28,11 +28,6 @@ bool LuaRBOs::PushEntries(lua_State* L)
 {
 	CreateMetatable(L);
 
-#define REGISTER_LUA_CFUNC(x) \
-	lua_pushstring(L, #x);      \
-	lua_pushcfunction(L, x);    \
-	lua_rawset(L, -3)
-
 	REGISTER_LUA_CFUNC(CreateRBO);
 	REGISTER_LUA_CFUNC(DeleteRBO);
 

@@ -62,11 +62,6 @@ bool LuaPathFinder::PushEntries(lua_State* L)
 
 	CreatePathMetatable(L);
 
-#define REGISTER_LUA_CFUNC(x)   \
-	lua_pushstring(L, #x);      \
-	lua_pushcfunction(L, x);    \
-	lua_rawset(L, -3)
-
 	REGISTER_LUA_CFUNC(RequestPath);
 	REGISTER_LUA_CFUNC(InitPathNodeCostsArray);
 	REGISTER_LUA_CFUNC(FreePathNodeCostsArray);

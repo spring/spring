@@ -52,10 +52,7 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_ARCHIVESCANNER)
  * but mapping them all, every time to make the list is)
  */
 
-const int INTERNAL_VER = 11;
-
-CArchiveScanner* archiveScanner = nullptr;
-
+constexpr int INTERNAL_VER = 11;
 
 
 /*
@@ -115,6 +112,8 @@ const spring::unordered_map<std::string, int> metaDirClasses = {
 	{ "weapons/", 2},   // used by lobbies (disabled units list)
 };
 
+
+CArchiveScanner* archiveScanner = nullptr;
 
 
 /*
@@ -352,19 +351,18 @@ bool CArchiveScanner::ArchiveData::GetInfoValueBool(const std::string& key) cons
 
 
 
-spring::recursive_mutex mutex;
+static spring::recursive_mutex scannerMutex;
+static std::atomic<uint32_t> numScannedArchives{0};
+
 
 /*
  * CArchiveScanner
  */
 
-CArchiveScanner::CArchiveScanner()
-: isDirty(false)
+CArchiveScanner::CArchiveScanner(): isDirty(false)
 {
-
 	// the "cache" dir is created in DataDirLocater
-	cachefile = FileSystem::EnsurePathSepAtEnd(FileSystem::GetCacheDir()) + IntToString(INTERNAL_VER, "ArchiveCache%i.lua");
-	ReadCacheData(GetFilepath());
+	ReadCacheData(cachefile = FileSystem::EnsurePathSepAtEnd(FileSystem::GetCacheDir()) + IntToString(INTERNAL_VER, "ArchiveCache%i.lua"));
 	ScanAllDirs();
 }
 
@@ -376,10 +374,16 @@ CArchiveScanner::~CArchiveScanner()
 	}
 }
 
+uint32_t CArchiveScanner::GetNumScannedArchives()
+{
+	// needs to be a static since archiveScanner remains null until ctor returns
+	return (numScannedArchives.load());
+}
+
 
 void CArchiveScanner::ScanAllDirs()
 {
-	std::lock_guard<spring::recursive_mutex> lck(mutex);
+	std::lock_guard<spring::recursive_mutex> lck(scannerMutex);
 	const std::vector<std::string>& datadirs = dataDirLocater.GetDataDirPaths();
 	std::vector<std::string> scanDirs;
 	scanDirs.reserve(datadirs.size());
@@ -400,7 +404,7 @@ void CArchiveScanner::ScanAllDirs()
 
 void CArchiveScanner::ScanDirs(const std::vector<std::string>& scanDirs)
 {
-	std::lock_guard<spring::recursive_mutex> lck(mutex);
+	std::lock_guard<spring::recursive_mutex> lck(scannerMutex);
 	std::deque<std::string> foundArchives;
 
 	isDirty = true;
@@ -541,6 +545,7 @@ void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 	unsigned modifiedTime = 0;
 	if (CheckCachedData(fullName, &modifiedTime, doChecksum))
 		return;
+
 	isDirty = true;
 
 	const std::string& fn    = FileSystem::GetFilename(fullName);
@@ -557,11 +562,15 @@ void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 		ba.modified = modifiedTime;
 		ba.updated = true;
 		ba.problem = "Unable to open archive";
+
+		// does not count as a scan
+		// numScannedArchives += 1;
 		return;
 	}
 
 	std::string error;
-	std::string mapfile;
+	std::string arMapFile; // file in archive with "smf" or "sm3" extension
+	std::string miMapFile; // value for the 'mapfile' key parsed from mapinfo
 
 	const bool hasModinfo = ar->FileExists("modinfo.lua");
 	const bool hasMapinfo = ar->FileExists("mapinfo.lua");
@@ -570,16 +579,18 @@ void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 	ArchiveInfo ai;
 	ArchiveData& ad = ai.archiveData;
 
+	// execute the respective .lua, otherwise assume this archive is a map
 	if (hasMapinfo) {
 		ScanArchiveLua(ar.get(), "mapinfo.lua", ai, error);
-		if (ad.GetMapFile().empty()) {
-			LOG_L(L_WARNING, "%s: mapfile isn't set in mapinfo.lua, please set it for faster loading!", fullName.c_str());
-			mapfile = SearchMapFile(ar.get(), error);
+
+		if ((miMapFile = ad.GetMapFile()).empty()) {
+			LOG_L(L_WARNING, "%s: set the 'mapfile' key in mapinfo.lua for faster loading!", fullName.c_str());
+			arMapFile = SearchMapFile(ar.get(), error);
 		}
 	} else if (hasModinfo) {
 		ScanArchiveLua(ar.get(), "modinfo.lua", ai, error);
 	} else {
-		mapfile = SearchMapFile(ar.get(), error);
+		arMapFile = SearchMapFile(ar.get(), error);
 	}
 
 	if (!CheckCompression(ar.get(), fullName, error)) {
@@ -592,19 +603,22 @@ void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 		ba.modified = modifiedTime;
 		ba.updated = true;
 		ba.problem = error;
+
+		// does count as a scan
+		numScannedArchives += 1;
 		return;
 	}
 
-	if (hasMapinfo || !mapfile.empty()) {
+	if (hasMapinfo || !arMapFile.empty()) {
 		// map archive
-		if (ad.GetName().empty()) {
+		if ((ad.GetName()).empty()) {
 			// FIXME The name will never be empty, if version is set (see HACK in ArchiveData)
-			ad.SetInfoItemValueString("name_pure", FileSystem::GetBasename(mapfile));
-			ad.SetInfoItemValueString("name", FileSystem::GetBasename(mapfile));
+			ad.SetInfoItemValueString("name_pure", FileSystem::GetBasename(arMapFile));
+			ad.SetInfoItemValueString("name", FileSystem::GetBasename(arMapFile));
 		}
 
-		if (ad.GetMapFile().empty())
-			ad.SetInfoItemValueString("mapfile", mapfile);
+		if (miMapFile.empty())
+			ad.SetInfoItemValueString("mapfile", arMapFile);
 
 		AddDependency(ad.GetDependencies(), GetMapHelperContentName());
 		ad.SetInfoItemValueInteger("modType", modtype::map);
@@ -628,6 +642,8 @@ void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 	ai.updated = true;
 	ai.checksum = (doChecksum) ? GetCRC(fullName) : 0;
 	archiveInfos[lcfn] = ai;
+
+	numScannedArchives += 1;
 }
 
 
@@ -828,7 +844,7 @@ void CArchiveScanner::ComputeChecksumForArchive(const std::string& filePath)
 
 void CArchiveScanner::ReadCacheData(const std::string& filename)
 {
-	std::lock_guard<spring::recursive_mutex> lck(mutex);
+	std::lock_guard<spring::recursive_mutex> lck(scannerMutex);
 	if (!FileSystem::FileExists(filename)) {
 		LOG_L(L_INFO, "ArchiveCache %s doesn't exist", filename.c_str());
 		return;
@@ -858,7 +874,7 @@ void CArchiveScanner::ReadCacheData(const std::string& filename)
 		ai.origName = name;
 		ai.path     = curArchive.GetString("path", "");
 
-		// do not use LuaTable.GetInt() for 32-bit integers, the Spring lua
+		// do not use LuaTable.GetInt() for 32-bit integers: the Spring lua
 		// library uses 32-bit floats to represent numbers, which can only
 		// represent 2^24 consecutive integers
 		ai.modified = strtoul(curArchive.GetString("modified", "0").c_str(), 0, 10);
@@ -907,7 +923,7 @@ void FilterDep(std::vector<std::string>& deps, const std::string& exclude)
 
 void CArchiveScanner::WriteCacheData(const std::string& filename)
 {
-	std::lock_guard<spring::recursive_mutex> lck(mutex);
+	std::lock_guard<spring::recursive_mutex> lck(scannerMutex);
 	if (!isDirty)
 		return;
 
@@ -1010,6 +1026,7 @@ std::vector<CArchiveScanner::ArchiveData> CArchiveScanner::GetPrimaryMods() cons
 
 	for (auto i = archiveInfos.cbegin(); i != archiveInfos.cend(); ++i) {
 		const ArchiveData& aid = i->second.archiveData;
+
 		if ((!aid.GetName().empty()) && (aid.GetModType() == modtype::primary)) {
 			// Add the archive the mod is in as the first dependency
 			ArchiveData md = aid;
@@ -1029,6 +1046,7 @@ std::vector<CArchiveScanner::ArchiveData> CArchiveScanner::GetAllMods() const
 
 	for (auto i = archiveInfos.cbegin(); i != archiveInfos.cend(); ++i) {
 		const ArchiveData& aid = i->second.archiveData;
+
 		if ((!aid.GetName().empty()) && aid.IsGame()) {
 			// Add the archive the mod is in as the first dependency
 			ArchiveData md = aid;
@@ -1169,6 +1187,7 @@ std::vector<std::string> CArchiveScanner::GetMaps() const
 	for (const auto& p: archiveInfos) {
 		const ArchiveInfo& ai = p.second;
 		const ArchiveData& ad = ai.archiveData;
+
 		if (!(ad.GetName().empty()) && ad.IsMap())
 			ret.push_back(ad.GetNameVersioned());
 	}
@@ -1192,8 +1211,7 @@ std::string CArchiveScanner::MapNameToMapFile(const std::string& s) const
 unsigned int CArchiveScanner::GetSingleArchiveChecksum(const std::string& filePath)
 {
 	ComputeChecksumForArchive(filePath);
-	std::string lcname = FileSystem::GetFilename(filePath);
-	StringToLowerInPlace(lcname);
+	const std::string lcname = std::move(StringToLower(FileSystem::GetFilename(filePath)));
 
 	const auto aii = archiveInfos.find(lcname);
 	if (aii == archiveInfos.end()) {

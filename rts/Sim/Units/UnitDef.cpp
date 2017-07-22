@@ -372,7 +372,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	rSpeed = math::fabs(rSpeed);
 
 	fireState = udTable.GetInt("fireState", canFireControl? FIRESTATE_NONE: FIRESTATE_FIREATWILL);
-	fireState = std::min(fireState, int(FIRESTATE_FIREATWILL));
+	fireState = std::min(fireState, int(FIRESTATE_FIREATNEUTRAL));
 	moveState = udTable.GetInt("moveState", (canmove && speed > 0.0f)? MOVESTATE_NONE: MOVESTATE_MANEUVER);
 	moveState = std::min(moveState, int(MOVESTATE_ROAM));
 
@@ -453,7 +453,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	isFirePlatform    = udTable.GetBool("isFirePlatform",    false);
 	isAirBase         = udTable.GetBool("isAirBase",         false);
 	loadingRadius     = udTable.GetFloat("loadingRadius",    220.0f);
-	unloadSpread      = udTable.GetFloat("unloadSpread",     1.0f);
+	unloadSpread      = udTable.GetFloat("unloadSpread",     5.0f);
 	transportMass     = udTable.GetFloat("transportMass",    100000.0f);
 	minTransportMass  = udTable.GetFloat("minTransportMass", 0.0f);
 	holdSteady        = udTable.GetBool("holdSteady",        false);
@@ -825,39 +825,6 @@ void UnitDef::SetNoCost(bool noCost)
 	}
 }
 
-bool UnitDef::CheckTerrainConstraints(const MoveDef* moveDef, float rawHeight, float* clampedHeight) const {
-	// can fail if LuaMoveCtrl has changed a unit's MoveDef (UnitDef::pathType is not updated)
-	// assert(pathType == -1u || moveDef == moveDefHandler->GetMoveDefByPathType(pathType));
-
-	float minDepth = MoveDef::GetDefaultMinWaterDepth();
-	float maxDepth = MoveDef::GetDefaultMaxWaterDepth();
-
-	if (moveDef != nullptr) {
-		// we are a mobile ground-unit, use MoveDef limits
-		if (moveDef->speedModClass == MoveDef::Ship) {
-			minDepth = moveDef->depth;
-		} else {
-			maxDepth = moveDef->depth;
-		}
-	} else {
-		if (!canfly) {
-			// we are a building, use UnitDef limits
-			minDepth = this->minWaterDepth;
-			maxDepth = this->maxWaterDepth;
-		} else {
-			// submerging or floating aircraft
-			maxDepth *= canSubmerge;
-			maxDepth *= (1 - floatOnWater);
-		}
-	}
-
-	if (clampedHeight != nullptr)
-		*clampedHeight = Clamp(rawHeight, -maxDepth, -minDepth);
-
-	// <rawHeight> must lie in the range [-maxDepth, -minDepth]
-	return (rawHeight >= -maxDepth && rawHeight <= -minDepth);
-}
-
 bool UnitDef::HasBomberWeapon() const {
 	if (weapons.empty())
 		return false;
@@ -867,4 +834,3 @@ bool UnitDef::HasBomberWeapon() const {
 	return (weapons[0].def->IsAircraftWeapon());
 }
 
-/******************************************************************************/

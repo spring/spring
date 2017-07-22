@@ -32,11 +32,6 @@ bool LuaSyncedMoveCtrl::PushMoveCtrl(lua_State* L)
 	lua_pushliteral(L, "MoveCtrl");
 	lua_newtable(L);
 
-#define REGISTER_LUA_CFUNC(x) \
-	lua_pushstring(L, #x);      \
-	lua_pushcfunction(L, x);    \
-	lua_rawset(L, -3)
-
 	REGISTER_LUA_CFUNC(IsEnabled);
 
 	REGISTER_LUA_CFUNC(Enable);

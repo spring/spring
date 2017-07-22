@@ -12,7 +12,10 @@
 //windows workarrounds
 #undef KeyPress
 #undef KeyRelease
+#else
+#include <unistd.h> // isatty
 #endif
+
 
 #include "Rendering/GL/myGL.h"
 #include "System/SpringApp.h"
@@ -20,13 +23,14 @@
 #include "aGui/Gui.h"
 #include "ExternalAI/IAILibraryManager.h"
 #include "Game/Benchmark.h"
+#include "Game/Camera.h"
 #include "Game/ClientSetup.h"
 #include "Game/GameSetup.h"
 #include "Game/GameVersion.h"
 #include "Game/GameController.h"
 #include "Game/Game.h"
 #include "Game/GlobalUnsynced.h"
-#include "Game/LoadScreen.h"
+#include "Game/LoadScreen.h" // XInitThreads via X11/Xlib
 #include "Game/PreGame.h"
 #include "Game/UI/KeyBindings.h"
 #include "Game/UI/KeyCodes.h"
@@ -40,10 +44,10 @@
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Fonts/glFont.h"
 #include "Rendering/GL/FBO.h"
+#include "Rendering/Textures/Bitmap.h"
 #include "Rendering/Textures/NamedTextures.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Misc/DefinitionTag.h"
-#include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
@@ -62,6 +66,7 @@
 #include "System/creg/creg_runtime_tests.h"
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/DataDirLocater.h"
+#include "System/FileSystem/DataDirsAccess.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/FileSystem/FileSystemInitializer.h"
@@ -83,12 +88,6 @@
 
 #include "lib/luasocket/src/restrictions.h"
 
-#ifdef WIN32
-	#include "System/Platform/Win/WinVersion.h"
-#else
-	#include <unistd.h>
-#endif
-
 
 
 CONFIG(unsigned, SetCoreAffinity).defaultValue(0).safemodeValue(1).description("Defines a bitmask indicating which CPU cores the main-thread should use.");
@@ -99,6 +98,7 @@ CONFIG(int, PathingThreadCount).defaultValue(0).safemodeValue(1).minimumValue(0)
 
 CONFIG(std::string, FontFile).defaultValue("fonts/FreeSansBold.otf").description("Sets the font of Spring engine text.");
 CONFIG(std::string, SmallFontFile).defaultValue("fonts/FreeSansBold.otf").description("Sets the font of Spring engine small text.");
+
 CONFIG(int, FontSize).defaultValue(23).description("Sets the font size (in pixels) of the MainMenu and more.");
 CONFIG(int, SmallFontSize).defaultValue(14).description("Sets the font size (in pixels) of the engine GUIs and more.");
 CONFIG(int, FontOutlineWidth).defaultValue(3).description("Sets the width of the black outline around Spring engine text, such as the title screen version number, clock, and basic UI. Does not affect LuaUI elements.");
@@ -106,26 +106,16 @@ CONFIG(float, FontOutlineWeight).defaultValue(25.0f).description("Sets the opaci
 CONFIG(int, SmallFontOutlineWidth).defaultValue(2).description("see FontOutlineWidth");
 CONFIG(float, SmallFontOutlineWeight).defaultValue(10.0f).description("see FontOutlineWeight");
 
-CONFIG(bool, Fullscreen).defaultValue(true).headlessValue(false).description("Sets whether the game will run in fullscreen, as opposed to a window. For Windowed Fullscreen of Borderless Window, set this to 0, WindowBorderless to 1, and WindowPosX and WindowPosY to 0.");
-CONFIG(int, XResolution).defaultValue(0).headlessValue(8).minimumValue(0).description("Sets the width of the game screen. If set to 0 Spring will autodetect the current resolution of your desktop.");
-CONFIG(int, YResolution).defaultValue(0).headlessValue(8).minimumValue(0).description("Sets the height of the game screen. If set to 0 Spring will autodetect the current resolution of your desktop.");
-CONFIG(int, XResolutionWindowed).defaultValue(0).headlessValue(8).minimumValue(0).description("See XResolution, just for windowed.");
-CONFIG(int, YResolutionWindowed).defaultValue(0).headlessValue(8).minimumValue(0).description("See YResolution, just for windowed.");
-CONFIG(int, WindowPosX).defaultValue(32).description("Sets the horizontal position of the game window, if Fullscreen is 0. When WindowBorderless is set, this should usually be 0.");
-CONFIG(int, WindowPosY).defaultValue(32).description("Sets the vertical position of the game window, if Fullscreen is 0. When WindowBorderless is set, this should usually be 0.");
-CONFIG(int, WindowState).defaultValue(CGlobalRendering::WINSTATE_MAXIMIZED);
-CONFIG(bool, WindowBorderless).defaultValue(false).description("When set and Fullscreen is 0, will put the game in Borderless Window mode, also known as Windowed Fullscreen. When using this, it is generally best to also set WindowPosX and WindowPosY to 0");
-CONFIG(bool, BlockCompositing).defaultValue(false).safemodeValue(true).description("Disables kwin compositing to fix tearing, possible fixes low FPS in windowed mode, too.");
-
 CONFIG(std::string, name).defaultValue(UnnamedPlayerName).description("Sets your name in the game. Since this is overridden by lobbies with your lobby username when playing, it usually only comes up when viewing replays or starting the engine directly for testing purposes.");
 CONFIG(std::string, DefaultStartScript).defaultValue("").description("filename of script.txt to use when no command line parameters are specified.");
+CONFIG(std::string, SplashScreenDir).defaultValue(".");
 
 
 
 DEFINE_bool_EX  (sync_version,       "sync-version",       false, "Display program sync version (for online gaming)");
 DEFINE_bool     (fullscreen,                               false, "Run in fullscreen mode");
 DEFINE_bool     (window,                                   false, "Run in windowed mode");
-DEFINE_bool     (minimise,                                 false, "Start in background (minimised)");
+DEFINE_bool     (hidden,                                   false, "Start in background (minimised, no taskbar entry)");
 DEFINE_bool     (nocolor,                                  false, "Disables colorized stdout");
 DEFINE_string   (server,                                   "",    "Set listening IP for server");
 DEFINE_bool     (textureatlas,                             false, "Dump each finalized textureatlas in textureatlasN.tga");
@@ -160,6 +150,80 @@ static unsigned int numShutDowns = 0;
 
 
 
+// initialize basic systems for command line help / output
+static void ConsolePrintInitialize(const std::string& configSource, bool safemode)
+{
+	spring_clock::PushTickRate(false);
+	spring_time::setstarttime(spring_time::gettime(true));
+
+	LOG_DISABLE();
+	FileSystemInitializer::PreInitializeConfigHandler(configSource, safemode);
+	FileSystemInitializer::InitializeLogOutput();
+	LOG_ENABLE();
+}
+
+#ifndef HEADLESS
+static void ShowSplashScreen(const std::string& splashScreenFile)
+{
+	CVertexArray* va = GetVertexArray();
+	CBitmap bmp;
+
+	if (bmp.Load(splashScreenFile)) {
+		bmp.ReverseYAxis();
+	} else {
+		bmp.AllocDummy({0, 0, 0, 0});
+	}
+
+	constexpr const char* fmtStrs[3] = {
+		"[Initializing Virtual File System]",
+		"* archives scanned: %u",
+		"* scantime elapsed: %.1fms",
+	};
+
+	const unsigned int splashTex = bmp.CreateTexture();
+	const unsigned int fontFlags = FONT_NORM | FONT_SCALE;
+
+	const float4 color = {1.0f, 1.0f, 1.0f, 1.0f};
+	const float4 coors = {0.5f, 0.1f, 0.8f, 0.04f};
+
+	const float textWidth = font->GetTextWidth(fmtStrs[0]);
+	const float normWidth = textWidth * globalRendering->pixelX * font->GetSize() * coors.z;
+
+	glPushAttrib(GL_ENABLE_BIT);
+	glEnable(GL_TEXTURE_2D);
+
+	for (spring_time t0 = spring_now(), t1 = t0; !FileSystemInitializer::Initialized(); t1 = spring_now()) {
+		glClear(GL_COLOR_BUFFER_BIT);
+
+		glBindTexture(GL_TEXTURE_2D, splashTex);
+		va->Initialize();
+		va->AddVertex2dT({ZeroVector.x, ZeroVector.y}, {0.0f, 0.0f});
+		va->AddVertex2dT({  UpVector.x,   UpVector.y}, {0.0f, 1.0f});
+		va->AddVertex2dT({  XYVector.x,   XYVector.y}, {1.0f, 1.0f});
+		va->AddVertex2dT({ RgtVector.x,  RgtVector.y}, {1.0f, 0.0f});
+		va->DrawArray2dT(GL_QUADS);
+
+		font->Begin();
+		font->SetTextColor(color.x, color.y, color.z, color.w);
+		font->glFormat(coors.x - normWidth * 0.500f, coors.y                           , coors.z, fontFlags, fmtStrs[0]);
+		font->glFormat(coors.x - normWidth * 0.475f, coors.y - coors.w * coors.z * 1.0f, coors.z, fontFlags, fmtStrs[1], CArchiveScanner::GetNumScannedArchives());
+		font->glFormat(coors.x - normWidth * 0.475f, coors.y - coors.w * coors.z * 2.0f, coors.z, fontFlags, fmtStrs[2], (t1 - t0).toMilliSecsf());
+		font->End();
+
+		globalRendering->SwapBuffers(true, true);
+
+		// prevent WM's from assuming the window is unresponsive and
+		// (in recent versions of Windows) generating a kill-request
+		SDL_PollEvent(nullptr);
+	}
+
+	glPopAttrib();
+	glDeleteTextures(1, &splashTex);
+}
+#endif
+
+
+
 /**
  * Initializes SpringApp variables
  *
@@ -169,9 +233,7 @@ static unsigned int numShutDowns = 0;
 SpringApp::SpringApp(int argc, char** argv)
 {
 	// initializes configHandler which we need
-	std::string binaryName = argv[0];
-
-	gflags::SetUsageMessage("Usage: " + binaryName + " [options] [path_to_script.txt or demo.sdfz]");
+	gflags::SetUsageMessage("Usage: " + std::string(argv[0]) + " [options] [path_to_script.txt or demo.sdfz]");
 	gflags::SetVersionString(SpringVersion::GetFull());
 	gflags::ParseCommandLineFlags(&argc, &argv, true);
 	ParseCmdLine(argc, argv);
@@ -182,6 +244,9 @@ SpringApp::SpringApp(int argc, char** argv)
 	// be done before SDL_Init, we are not using SDL_GetTicks
 	// as our clock anymore)
 	spring_time::setstarttime(spring_time::gettime(true));
+
+	// gu does not exist yet, pre-seed for ShowSplashScreen
+	guRNG.Seed(CGlobalUnsyncedRNG::rng_val_type(&argc));
 }
 
 /**
@@ -191,6 +256,7 @@ SpringApp::~SpringApp()
 {
 	spring_clock::PopTickRate();
 }
+
 
 /**
  * @brief Initializes the SpringApp instance
@@ -208,28 +274,11 @@ bool SpringApp::Init()
 	LuaMemPool::InitStatic(configHandler->GetBool("UseLuaMemPools"));
 
 	globalRendering = new CGlobalRendering();
-	globalRendering->SetFullScreen(configHandler->GetBool("Fullscreen"), FLAGS_window, FLAGS_fullscreen);
+	globalRendering->SetFullScreen(FLAGS_window, FLAGS_fullscreen);
 
-#if !(defined(WIN32) || defined(__APPLE__) || defined(HEADLESS))
-	// this MUST run before any other X11 call (esp. those by SDL!)
-	// we need it to make calls to X11 threadsafe
-	if (!XInitThreads()) {
-		LOG_L(L_FATAL, "Xlib is not thread safe");
+	if (!InitPlatformLibs())
 		return false;
-	}
-#endif
 
-#if defined(WIN32) && defined(__GNUC__)
-	// load QTCreator's gdb helper dll; a variant of this should also work on other OSes
-	{
-		// don't display a dialog box if gdb helpers aren't found
-		UINT olderrors = SetErrorMode(SEM_FAILCRITICALERRORS);
-		if (LoadLibrary("gdbmacros.dll"))
-			LOG_L(L_DEBUG, "QT Creator's gdbmacros.dll loaded");
-
-		SetErrorMode(olderrors);
-	}
-#endif
 	// Initialize crash reporting
 	CrashHandler::Install();
 	good_fpu_control_registers(__func__);
@@ -252,13 +301,13 @@ bool SpringApp::Init()
 	globalRendering->UpdateGLConfigs();
 	globalRendering->UpdateGLGeometry();
 	globalRendering->InitGLState();
+	CCamera::InitializeStatic();
 	UpdateInterfaceGeometry();
+	LoadFonts();
+	ClearScreen();
 
-	// ArchiveScanner uses for_mt --> needs thread-count set
-	// (employ all available threads, then switch to default)
-	ThreadPool::SetMaximumThreadCount();
-	FileSystemInitializer::Initialize();
-	ThreadPool::SetDefaultThreadCount();
+	if (!InitFileSystem())
+		return false;
 
 	// Multithreading & Affinity
 	Threading::SetThreadName("spring-main"); // set default threadname for pstree
@@ -273,7 +322,6 @@ bool SpringApp::Init()
 
 	// GUIs
 	agui::InitGui();
-	LoadFonts();
 	keyCodes = new CKeyCodes();
 
 	CNamedTextures::Init();
@@ -289,10 +337,72 @@ bool SpringApp::Init()
 
 	// Create CGameSetup and CPreGame objects
 	Startup();
+	return true;
+}
+
+
+bool SpringApp::InitPlatformLibs()
+{
+#if !(defined(WIN32) || defined(__APPLE__) || defined(HEADLESS))
+	// MUST run before any other X11 call (including
+	// those by SDL) to make calls to X11 threadsafe
+	if (!XInitThreads()) {
+		LOG_L(L_FATAL, "[%s] Xlib is not threadsafe", __func__);
+		return false;
+	}
+#endif
+
+#if defined(WIN32) && defined(__GNUC__)
+	// load QTCreator's gdb helper dll; a variant of this should also work on other OSes
+	{
+		// surpress dialog box if gdb helpers aren't found
+		const UINT oldErrorMode = SetErrorMode(SEM_FAILCRITICALERRORS);
+
+		if (LoadLibrary("gdbmacros.dll"))
+			LOG_L(L_DEBUG, "[%s] QTCreator's gdbmacros.dll loaded", __func__);
+
+		SetErrorMode(oldErrorMode);
+	}
+#endif
 
 	return true;
 }
 
+bool SpringApp::InitFileSystem()
+{
+	bool ret = false;
+
+	// ArchiveScanner uses for_mt, so must set a thread-count
+	// (employ all available threads, then switch to default)
+	ThreadPool::SetMaximumThreadCount();
+
+	#ifndef HEADLESS
+	// threaded initialization s.t. the window gets CPU time
+	// FileSystem is mostly self-contained, don't need locks
+	// (at this point neither the platform CWD nor data-dirs
+	// have been set yet by FSI, can only use absolute paths)
+	const std::string cwd = std::move(FileSystem::EnsurePathSepAtEnd(FileSystemAbstraction::GetCwd()));
+	const std::string ssd = std::move(FileSystem::EnsurePathSepAtEnd(configHandler->GetString("SplashScreenDir")));
+
+	std::vector<std::string> splashScreenFiles(dataDirsAccess.FindFiles(FileSystem::IsAbsolutePath(ssd)? ssd: cwd + ssd, "*.png", 0));
+	spring::thread fsInitThread(FileSystemInitializer::InitializeThr, &ret);
+
+	if (!splashScreenFiles.empty()) {
+		ShowSplashScreen(splashScreenFiles[ guRNG.NextInt(splashScreenFiles.size()) ]);
+	} else {
+		ShowSplashScreen("");
+	}
+
+	fsInitThread.join();
+	#else
+	FileSystemInitializer::InitializeThr(&ret);
+	#endif
+
+	ThreadPool::SetDefaultThreadCount();
+	// see InputHandler::PushEvents
+	streflop::streflop_init<streflop::Simple>();
+	return ret;
+}
 
 /**
  * @return whether window initialization succeeded
@@ -306,7 +416,7 @@ bool SpringApp::InitWindow(const char* title)
 	Threading::SetThreadName("gpu-driver");
 
 	// raises an error-prompt in case of failure
-	if (!globalRendering->CreateWindowAndContext(title, FLAGS_minimise))
+	if (!globalRendering->CreateWindowAndContext(title, FLAGS_hidden))
 		return false;
 
 	// Something in SDL_SetVideoMode (OpenGL drivers?) messes with the FPU control word.
@@ -344,38 +454,30 @@ void SpringApp::UpdateInterfaceGeometry()
 void SpringApp::LoadFonts()
 {
 	// Initialize font
-	const std::string fontFile = configHandler->GetString("FontFile");
+	const std::string largeFontFile = configHandler->GetString(     "FontFile");
 	const std::string smallFontFile = configHandler->GetString("SmallFontFile");
-	const int fontSize = configHandler->GetInt("FontSize");
+
+	const static std::string installBroken = "\", did you forget to run make install?";
+
+	const int largeFontSize = configHandler->GetInt(     "FontSize");
 	const int smallFontSize = configHandler->GetInt("SmallFontSize");
-	const int outlineWidth = configHandler->GetInt("FontOutlineWidth");
-	const float outlineWeight = configHandler->GetFloat("FontOutlineWeight");
+	const int largeOutlineWidth = configHandler->GetInt(     "FontOutlineWidth");
 	const int smallOutlineWidth = configHandler->GetInt("SmallFontOutlineWidth");
+	const float largeOutlineWeight = configHandler->GetFloat(     "FontOutlineWeight");
 	const float smallOutlineWeight = configHandler->GetFloat("SmallFontOutlineWeight");
 
 	spring::SafeDelete(font);
 	spring::SafeDelete(smallFont);
-	font = CglFont::LoadFont(fontFile, fontSize, outlineWidth, outlineWeight);
+
+	font = CglFont::LoadFont(largeFontFile, largeFontSize, largeOutlineWidth, largeOutlineWeight);
 	smallFont = CglFont::LoadFont(smallFontFile, smallFontSize, smallOutlineWidth, smallOutlineWeight);
 
-	const static std::string installBroken = ", installation of spring broken? did you run make install?";
-	if (!font) {
-		throw content_error(std::string("Failed to load FontFile: ") + fontFile + installBroken);
-	}
-	if (!smallFont) {
-		throw content_error(std::string("Failed to load SmallFontFile: ") + smallFontFile + installBroken);
-	}
-}
+	if (font == nullptr)
+		throw content_error("Failed to load FontFile \"" + largeFontFile + installBroken);
 
-// initialize basic systems for command line help / output
-static void ConsolePrintInitialize(const std::string& configSource, bool safemode)
-{
-	spring_clock::PushTickRate(false);
-	spring_time::setstarttime(spring_time::gettime(true));
-	LOG_DISABLE();
-	FileSystemInitializer::PreInitializeConfigHandler(configSource, safemode);
-	FileSystemInitializer::InitializeLogOutput();
-	LOG_ENABLE();
+	if (smallFont == nullptr)
+		throw content_error("Failed to load SmallFontFile \"" + smallFontFile + installBroken);
+
 }
 
 

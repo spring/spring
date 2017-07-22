@@ -28,7 +28,7 @@ const std::string PlayerResigned = "Player %s resigned from the game: %s";
 
 const std::string NoStartposChange = "%s tried to change his startposition illegally";
 const std::string NoHelperAI = "%s (%d) is using a helper AI illegally";
-const std::string NoTeamChange = "%s (%d) tried to change his team illegally";
+const std::string NoTeamChange = "%s (%d) tried to change to non-existent team %d";
 const std::string NoAICreated = "%s (%d) tried to control team %i with an AI illegally";
 const std::string NoAIChangeState = "%s (%d) tried to change the state of an AI (%i) controlling team %i to state %i illegally";
 
