@@ -168,11 +168,10 @@ static void ShowSplashScreen(const std::string& splashScreenFile)
 	CVertexArray* va = GetVertexArray();
 	CBitmap bmp;
 
-	if (bmp.Load(splashScreenFile)) {
-		bmp.ReverseYAxis();
-	} else {
+	// passing an empty name would cause bmp FileHandler to also
+	// search inside the VFS since its default mode is RAW_FIRST
+	if (splashScreenFile.empty() || !bmp.Load(splashScreenFile))
 		bmp.AllocDummy({0, 0, 0, 0});
-	}
 
 	constexpr const char* fmtStrs[3] = {
 		"[Initializing Virtual File System]",
@@ -197,10 +196,10 @@ static void ShowSplashScreen(const std::string& splashScreenFile)
 
 		glBindTexture(GL_TEXTURE_2D, splashTex);
 		va->Initialize();
-		va->AddVertex2dT({ZeroVector.x, ZeroVector.y}, {0.0f, 0.0f});
-		va->AddVertex2dT({  UpVector.x,   UpVector.y}, {0.0f, 1.0f});
-		va->AddVertex2dT({  XYVector.x,   XYVector.y}, {1.0f, 1.0f});
-		va->AddVertex2dT({ RgtVector.x,  RgtVector.y}, {1.0f, 0.0f});
+		va->AddVertex2dT({ZeroVector.x, 1.0f - ZeroVector.y}, {0.0f, 0.0f});
+		va->AddVertex2dT({  UpVector.x, 1.0f -   UpVector.y}, {0.0f, 1.0f});
+		va->AddVertex2dT({  XYVector.x, 1.0f -   XYVector.y}, {1.0f, 1.0f});
+		va->AddVertex2dT({ RgtVector.x, 1.0f -  RgtVector.y}, {1.0f, 0.0f});
 		va->DrawArray2dT(GL_QUADS);
 
 		font->Begin();
