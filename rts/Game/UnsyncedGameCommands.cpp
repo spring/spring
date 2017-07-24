@@ -2711,12 +2711,13 @@ public:
 
 	bool Execute(const UnsyncedAction& action) const {
 		if (action.GetArgs().find('@') == string::npos) {
-			CInputReceiver* ir = NULL;
-			if (!game->hideInterface) {
+			CInputReceiver* ir = nullptr;
+
+			if (!game->hideInterface && !mouse->offscreen)
 				ir = CInputReceiver::GetReceiverAt(mouse->lastx, mouse->lasty);
-			}
 
 			float3 givePos;
+
 			if (ir == minimap) {
 				givePos = minimap->GetMapPosition(mouse->lastx, mouse->lasty);
 			} else {

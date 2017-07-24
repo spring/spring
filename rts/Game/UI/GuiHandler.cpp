@@ -1065,11 +1065,12 @@ void CGuiHandler::SetCursorIcon() const
 	string newCursor = "cursornormal";
 	float cursorScale = 1.0f;
 
-	CInputReceiver* ir = NULL;
-	if (!game->hideInterface)
+	CInputReceiver* ir = nullptr;
+
+	if (!game->hideInterface && !mouse->offscreen)
 		ir = GetReceiverAt(mouse->lastx, mouse->lasty);
 
-	if ((ir != NULL) && (ir != minimap)) {
+	if ((ir != nullptr) && (ir != minimap)) {
 		mouse->ChangeCursor(newCursor, cursorScale);
 		return;
 	}
@@ -1083,9 +1084,9 @@ void CGuiHandler::SetCursorIcon() const
 		const SCommandDescription& cmdDesc = commands[inCommand];
 
 		if (!cmdDesc.mouseicon.empty()) {
-			newCursor=cmdDesc.mouseicon;
+			newCursor = cmdDesc.mouseicon;
 		} else {
-			newCursor=cmdDesc.name;
+			newCursor = cmdDesc.name;
 		}
 
 		if (useMinimap && (cmdDesc.id < 0)) {
@@ -1096,7 +1097,8 @@ void CGuiHandler::SetCursorIcon() const
 			bi.pos = CGameHelper::Pos2BuildPos(bi, false);
 			// if an unit (enemy), is not in LOS, then TestUnitBuildSquare()
 			// does not consider it when checking for position blocking
-			CFeature* feature = NULL;
+			CFeature* feature = nullptr;
+
 			if (!CGameHelper::TestUnitBuildSquare(bi, feature, gu->myAllyTeam, false)) {
 				newCursor = "BuildBad";
 			} else {
@@ -1110,27 +1112,26 @@ void CGuiHandler::SetCursorIcon() const
 	}
 	else if (!useMinimap || minimap->FullProxy()) {
 		int defcmd;
-		if (mouse->buttons[SDL_BUTTON_RIGHT].pressed &&
-				((activeReceiver == this) || (minimap->ProxyMode()))) {
+
+		if (mouse->buttons[SDL_BUTTON_RIGHT].pressed && ((activeReceiver == this) || (minimap->ProxyMode()))) {
 			defcmd = defaultCmdMemory;
 		} else {
 			defcmd = GetDefaultCommand(mouse->lastx, mouse->lasty);
 		}
+
 		if ((defcmd >= 0) && ((size_t)defcmd < commands.size())) {
 			const SCommandDescription& cmdDesc = commands[defcmd];
+
 			if (!cmdDesc.mouseicon.empty()) {
-				newCursor=cmdDesc.mouseicon;
+				newCursor = cmdDesc.mouseicon;
 			} else {
-				newCursor=cmdDesc.name;
+				newCursor = cmdDesc.name;
 			}
 		}
 	}
 
-	if (gatherMode &&
-	    ((newCursor == "Move") ||
-	    (newCursor == "Fight"))) {
+	if (gatherMode && ((newCursor == "Move") || (newCursor == "Fight")))
 		newCursor = "GatherWait";
-	}
 
 	mouse->ChangeCursor(newCursor, cursorScale);
 }
@@ -1652,7 +1653,7 @@ int CGuiHandler::GetDefaultCommand(int x, int y, const float3& cameraPos, const 
 {
 	CInputReceiver* ir = nullptr;
 
-	if (!game->hideInterface)
+	if (!game->hideInterface && !mouse->offscreen)
 		ir = GetReceiverAt(x, y);
 
 	if ((ir != nullptr) && (ir != minimap))
@@ -3441,7 +3442,7 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 	float3 traceDir = mouse->dir;
 
 	// setup for minimap proxying
-	const bool minimapInput = (activeReceiver != this && GetReceiverAt(mouse->lastx, mouse->lasty) == minimap);
+	const bool minimapInput = (activeReceiver != this && !mouse->offscreen && GetReceiverAt(mouse->lastx, mouse->lasty) == minimap);
 	const bool minimapCoors = (minimap->ProxyMode() || (!game->hideInterface && minimapInput));
 
 	if (minimapCoors) {

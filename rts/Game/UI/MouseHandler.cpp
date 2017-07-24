@@ -550,17 +550,22 @@ void CMouseHandler::DrawSelectionBox()
 // CTooltipConsole::Draw --> CMouseHandler::GetCurrentTooltip
 std::string CMouseHandler::GetCurrentTooltip()
 {
-	std::string s;
+	if (!offscreen) {
+		std::string s;
 
-	if (luaInputReceiver->IsAbove(lastx, lasty)) {
-		s = std::move(luaInputReceiver->GetTooltip(lastx, lasty));
+		if (luaInputReceiver->IsAbove(lastx, lasty)) {
+			s = std::move(luaInputReceiver->GetTooltip(lastx, lasty));
 
-		if (!s.empty())
-			return s;
-	}
+			if (!s.empty())
+				return s;
+		}
 
-	for (CInputReceiver* recv: CInputReceiver::GetReceivers()) {
-		if (recv != nullptr && recv->IsAbove(lastx, lasty)) {
+		for (CInputReceiver* recv: CInputReceiver::GetReceivers()) {
+			if (recv == nullptr)
+				continue;
+			if (!recv->IsAbove(lastx, lasty))
+				continue;
+
 			s = std::move(recv->GetTooltip(lastx, lasty));
 
 			if (!s.empty())
@@ -577,22 +582,22 @@ std::string CMouseHandler::GetCurrentTooltip()
 	if (!buildTip.empty())
 		return buildTip;
 
-	const float range = (globalRendering->viewRange * 1.4f);
+	const float range = globalRendering->viewRange * 1.4f;
 	float dist = 0.0f;
 
 	const CUnit* unit = nullptr;
 	const CFeature* feature = nullptr;
 
 	{
-		dist = TraceRay::GuiTraceRay(camera->GetPos(), dir, range, NULL, unit, feature, true, false, true);
+		dist = TraceRay::GuiTraceRay(camera->GetPos(), dir, range, nullptr, unit, feature, true, false, true);
 
-		if (unit)    return CTooltipConsole::MakeUnitString(unit);
-		if (feature) return CTooltipConsole::MakeFeatureString(feature);
+		if (unit    != nullptr) return CTooltipConsole::MakeUnitString(unit);
+		if (feature != nullptr) return CTooltipConsole::MakeFeatureString(feature);
 	}
 
-	const string selTip = selectedUnitsHandler.GetTooltip();
+	const string selTip = std::move(selectedUnitsHandler.GetTooltip());
 
-	if (selTip != "")
+	if (!selTip.empty())
 		return selTip;
 
 	if (dist <= range)
