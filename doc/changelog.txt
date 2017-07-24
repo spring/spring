@@ -216,8 +216,9 @@ UI:
  - Add FPSClampPos config for whether the engine should verify the camera doesn't hit ground/go too far
    this and other FPS camera configs can be changed midgame and will affect the next frame drawn.
  - Add OverheadMaxHeightFactor config - a float multiplier for maximum overhead camera height.
+ - skip the IsAbove test/callin for input-receivers when mouse is offscreen
  - show warning if VMware Mesa drivers are installed
- - avoid "Invalid thread number 0" if window creation fails
+ - avoid "Invalid thread number 0" errors if window creation fails
  - rename the 'minimised' CLI flag to 'hidden'
  - prevent window from being considered unresponsive during startup
  - make shift+esc drop to LuaMenu from PreGame

@@ -53,15 +53,19 @@ void CInputReceiver::CollectGarbage()
 	prvInputReceivers.swap(nxtInputReceivers);
 }
 
-CInputReceiver* CInputReceiver::GetReceiverAt(int x,int y)
+CInputReceiver* CInputReceiver::GetReceiverAt(int x, int y)
 {
-	if (luaInputReceiver != nullptr && luaInputReceiver->IsAbove(x,y))
+	// always ask Lua first
+	if (luaInputReceiver != nullptr && luaInputReceiver->IsAbove(x, y))
 		return luaInputReceiver;
 
 	for (CInputReceiver* recv: GetReceivers()) {
-		if (recv != nullptr && recv->IsAbove(x,y)) {
-			return recv;
-		}
+		if (recv == nullptr)
+			continue;
+		if (!recv->IsAbove(x, y))
+			continue;
+
+		return recv;
 	}
 
 	return nullptr;
