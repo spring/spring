@@ -718,11 +718,13 @@ void CGlobalRendering::LogVersionInfo(const char* sdlVersionStr, const char* glV
 	LOG("\tGLSL version: %s", globalRenderingInfo.glslVersion);
 	LOG("\tGLEW version: %s", globalRenderingInfo.glewVersion);
 	LOG("\tGPU memory  : %s", glVidMemStr);
-	LOG("\tSwapInterval: %d", SDL_GL_GetSwapInterval());
+	LOG("\tSDL swap-int: %d", SDL_GL_GetSwapInterval());
 	LOG("\t");
 	LOG("\tARB shader support        : %i", haveARB);
 	LOG("\tGLSL shader support       : %i", haveGLSL);
 	LOG("\tFBO extension support     : %i", FBO::IsSupported());
+	LOG("\tNVX GPU mem-info support  : %i", glewIsExtensionSupported("GL_NVX_gpu_memory_info"));
+	LOG("\tATI GPU mem-info support  : %i", glewIsExtensionSupported("GL_ATI_meminfo"));
 	LOG("\tNPOT-texture support      : %i (%i)", supportNonPowerOfTwoTex, glewIsExtensionSupported("GL_ARB_texture_non_power_of_two"));
 	LOG("\ttexture query-LOD support : %i (%i)", supportTextureQueryLOD, glewIsExtensionSupported("GL_ARB_texture_query_lod"));
 	LOG("\t24-bit Z-buffer support   : %i (-)", support24bitDepthBuffer);
@@ -741,7 +743,6 @@ void CGlobalRendering::LogVersionInfo(const char* sdlVersionStr, const char* glV
 	LOG("\t");
 	LOG("\tenable ATI-hacks : %i", atiHacks);
 	LOG("\tcompress MIP-maps: %i", compressTextures);
-
 }
 
 void CGlobalRendering::LogDisplayMode() const
