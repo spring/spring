@@ -118,11 +118,12 @@ static bool GetVideoMemInfoNV(GLint* memInfo)
 
 static bool GetVideoMemInfoATI(GLint* memInfo)
 {
-	#if (defined(GL_ATI_meminfo) || defined(GLEW_ATI_meminfo))
-	if (!GL_ATI_meminfo && !GLEW_ATI_meminfo)
+	#if (defined(GLEW_ATI_meminfo))
+	if (!GLEW_ATI_meminfo)
 		return false;
 
-	for (uint32_t param: {GL_VBO_FREE_MEMORY_ATI, GL_TEXTURE_FREE_MEMORY_ATI, GL_RENDERBUFFER_FREE_MEMORY_ATI}) {
+	// these are not disjoint, don't sum
+	for (uint32_t param: {/*GL_VBO_FREE_MEMORY_ATI,*/ GL_TEXTURE_FREE_MEMORY_ATI/*, GL_RENDERBUFFER_FREE_MEMORY_ATI*/}) {
 		glGetIntegerv(param, &memInfo[0]);
 
 		memInfo[4] += (memInfo[0] + memInfo[2]); // total main plus aux. memory free in pool
