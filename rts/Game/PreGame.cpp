@@ -60,12 +60,15 @@ using std::string;
 
 CONFIG(bool, DemoFromDemo).defaultValue(false);
 
+static char mapChecksumMsgBuf[1024] = {0};
+static char modChecksumMsgBuf[1024] = {0};
+
 CPreGame* pregame = nullptr;
 
 CPreGame::CPreGame(std::shared_ptr<ClientSetup> setup)
 	: clientSetup(setup)
 	, savefile(nullptr)
-	, timer(spring_gettime())
+	, connectTimer(spring_gettime())
 	, wantDemo(true)
 {
 	assert(clientNet == nullptr);
@@ -157,7 +160,7 @@ bool CPreGame::Draw()
 		if (clientSetup->isHost)
 			font->glFormat(0.5f, 0.48f, 2.0f, FONT_CENTER | FONT_SCALE | FONT_NORM, "Waiting for server to start");
 		else
-			font->glFormat(0.5f, 0.48f, 2.0f, FONT_CENTER | FONT_SCALE | FONT_NORM, "Connecting to server (%ds)", (spring_gettime() - timer).toSecsi());
+			font->glFormat(0.5f, 0.48f, 2.0f, FONT_CENTER | FONT_SCALE | FONT_NORM, "Connecting to server (%ds)", (spring_gettime() - connectTimer).toSecsi());
 	} else {
 		font->glPrint(0.5f, 0.48f, 2.0f, FONT_CENTER | FONT_SCALE | FONT_NORM, "Waiting for server response");
 	}
@@ -211,7 +214,7 @@ void CPreGame::AddGameSetupArchivesToVFS(const CGameSetup* setup, bool mapOnly)
 void CPreGame::StartServer(const std::string& setupscript)
 {
 	assert(gameServer == nullptr);
-	ScopedOnceTimer startserver("PreGame::StartServer");
+	ScopedOnceTimer timer("PreGame::StartServer");
 
 	std::shared_ptr<GameData> startGameData(new GameData());
 	std::shared_ptr<CGameSetup> startGameSetup(new CGameSetup());
@@ -304,7 +307,7 @@ void CPreGame::UpdateClientNet()
 					LOG("[PreGame::%s] server requested quit or rejected connection (reason \"%s\")", __func__, message.c_str());
 					handleerror(nullptr, "server requested quit or rejected connection: " + message, "Quit message", MBF_OK | MBF_EXCL);
 				} catch (const netcode::UnpackPacketException& ex) {
-					LOG_L(L_ERROR, "[PreGame::%s] invalid NETMSG_{QUIT,REJECT_CONNECT} packet (exception \"%s\")", __func__, ex.what());
+					LOG_L(L_ERROR, "[PreGame::%s][NETMSG_{QUIT,REJECT_CONNECT}] exception \"%s\"", __func__, ex.what());
 				}
 			} break;
 
@@ -316,9 +319,9 @@ void CPreGame::UpdateClientNet()
 					netcode::UnpackPacket pckt(packet, 3);
 					std::string name;
 
-					unsigned char playerNum;
-					unsigned char spectator;
-					unsigned char team;
+					uint8_t playerNum;
+					uint8_t spectator;
+					uint8_t team;
 
 					// since the >> operator uses dest size to extract data from
 					// the packet, we need to use temp variables of the same
@@ -333,16 +336,16 @@ void CPreGame::UpdateClientNet()
 					player.spectator = spectator;
 					player.team = team;
 					player.playerNum = playerNum;
-					// add ourself, to avoid crashing if our player num gets
-					// queried we will receive the same message later, in the
-					// game class, which is the global broadcast version
-					// the global broadcast will overwrite the user with the
-					// same values as here
+
+					// add ourselves to avoid crashing if our player-num gets queried
+					// we will receive this message a second time (the global broadcast
+					// version) which will overwrite the player with the same values as
+					// set here
 					playerHandler->AddPlayer(player);
 
 					LOG("[PreGame::%s] added new player %s with number %d to team %d", __func__, name.c_str(), player.playerNum, player.team);
 				} catch (const netcode::UnpackPacketException& ex) {
-					LOG_L(L_ERROR, "[PreGame::%s] got invalid NETMSG_CREATE_NEWPLAYER: %s", __func__, ex.what());
+					LOG_L(L_ERROR, "[PreGame::%s][NETMSG_CREATE_NEWPLAYER] exception \"%s\"", __func__, ex.what());
 				}
 			} break;
 
@@ -360,7 +363,7 @@ void CPreGame::UpdateClientNet()
 				if (gameSetup == nullptr)
 					throw content_error("No game data received from server");
 
-				const unsigned char playerNum = packet->data[1];
+				const uint8_t playerNum = packet->data[1];
 
 				if (!playerHandler->IsValidPlayer(playerNum))
 					throw content_error("Invalid player number received from server");
@@ -372,11 +375,48 @@ void CPreGame::UpdateClientNet()
 				// respond with the client data
 				clientNet->Send(CBaseNetProtocol::Get().SendClientData(playerNum, ClientData::GetCompressed()));
 
+				CLIENT_NETLOG(gu->myPlayerNum, LOG_LEVEL_INFO, mapChecksumMsgBuf);
+				CLIENT_NETLOG(gu->myPlayerNum, LOG_LEVEL_INFO, modChecksumMsgBuf);
+
 				CLoadScreen::CreateInstance(gameSetup->MapFile(), modArchive, savefile);
 
 				assert(pregame == this);
 				spring::SafeDelete(pregame);
 				return;
+			} break;
+
+			case NETMSG_LOGMSG: {
+				try {
+					// this might arrive from GameDataReceived before Game exists
+					netcode::UnpackPacket unpack(packet, sizeof(uint8_t));
+
+					std::uint16_t packetSize;
+					std::uint8_t playerNum;
+					std::uint8_t logLevel;
+					std::string logString;
+
+					unpack >> packetSize;
+					if (packetSize != packet->length)
+						throw netcode::UnpackPacketException("invalid size");
+
+					unpack >> playerNum;
+					if (!playerHandler->IsValidPlayer(playerNum))
+						throw netcode::UnpackPacketException("invalid player number");
+
+					unpack >> logLevel;
+					unpack >> logString;
+
+					assert(logLevel == LOG_LEVEL_INFO);
+
+					const CPlayer* player = playerHandler->Player(playerNum);
+
+					const char* fmtStr = "[PreGame::%s][LOGMSG] sender=\"%s\" string=\"%s\"";
+					const char* logStr = logString.c_str();
+
+					LOG_L(L_INFO, fmtStr, __func__, player->name.c_str(), logStr);
+				} catch (const netcode::UnpackPacketException& ex) {
+					LOG_L(L_ERROR, "[PreGame::%s][NETMSG_LOGMSG] exception \"%s\"", __func__, ex.what());
+				}
 			} break;
 
 			default: {
@@ -442,7 +482,7 @@ void CPreGame::StartServerForDemo(const std::string& demoName)
 
 void CPreGame::ReadDataFromDemo(const std::string& demoName)
 {
-	ScopedOnceTimer startserver("PreGame::ReadDataFromDemo");
+	ScopedOnceTimer timer("PreGame::ReadDataFromDemo");
 	assert(gameServer == nullptr);
 	LOG("[PreGame::%s] pre-scanning demo file for game data...", __func__);
 	CDemoReader scanner(demoName, 0.0f);
@@ -465,7 +505,7 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 
 void CPreGame::GameDataReceived(std::shared_ptr<const netcode::RawPacket> packet)
 {
-	ScopedOnceTimer startserver("PreGame::GameDataReceived");
+	ScopedOnceTimer timer("PreGame::GameDataReceived");
 
 	try {
 		// in demos, gameData is first new'ed in ReadDataFromDemo()
@@ -499,31 +539,45 @@ void CPreGame::GameDataReceived(std::shared_ptr<const netcode::RawPacket> packet
 	// some sanity checks
 	for (int p = 0; p < playerHandler->ActivePlayers(); ++p) {
 		const CPlayer* player = playerHandler->Player(p);
-		if (!playerHandler->IsValidPlayer(player->playerNum)) {
+
+		if (!playerHandler->IsValidPlayer(player->playerNum))
 			throw content_error("Invalid player in game data");
-		}
-		if (!teamHandler->IsValidTeam(player->team)) {
+
+		if (!teamHandler->IsValidTeam(player->team))
 			throw content_error("Invalid team in game data");
-		}
-		if (!teamHandler->IsValidAllyTeam(teamHandler->AllyTeam(player->team))) { // TODO: seems not to make sense really
+
+		// TODO: seems not to make sense really
+		if (!teamHandler->IsValidAllyTeam(teamHandler->AllyTeam(player->team)))
 			throw content_error("Invalid ally team in game data");
-		}
+
 	}
 
-	// Load archives into VFS
+	// load archives into VFS
 	AddGameSetupArchivesToVFS(gameSetup, false);
 
-	// Check checksums of map & game
+	// check checksums of map & game
+	// mismatches happen on dedicated servers between host and clients
+	// we want to know whether the *locally calculated* checksums also
+	// differ among clients so use the opportunity to send them
+	// NOTE: gu->myPlayerNum is not valid yet, GameData arrives first
+	std::pair<unsigned int, unsigned int> mapChecksums = {gameData->GetMapChecksum(), 0};
+	std::pair<unsigned int, unsigned int> modChecksums = {gameData->GetModChecksum(), 0};
+
 	try {
-		archiveScanner->CheckArchive(gameSetup->mapName, gameData->GetMapChecksum());
+		archiveScanner->CheckArchive(gameSetup->mapName, mapChecksums.first, mapChecksums.second);
 	} catch (const content_error& ex) {
-		LOG_L(L_WARNING, "Incompatible map-checksum: %s", ex.what());
+		LOG_L(L_WARNING, "[PreGame::%s] %s", __func__, ex.what());
 	}
 	try {
-		archiveScanner->CheckArchive(modArchive, gameData->GetModChecksum());
+		archiveScanner->CheckArchive(modArchive, modChecksums.first, modChecksums.second);
 	} catch (const content_error& ex) {
-		LOG_L(L_WARNING, "Incompatible game-checksum: %s", ex.what());
+		LOG_L(L_WARNING, "[PreGame::%s] %s", __func__, ex.what());
 	}
+
+	std::memset(mapChecksumMsgBuf, 0, sizeof(mapChecksumMsgBuf));
+	std::memset(modChecksumMsgBuf, 0, sizeof(modChecksumMsgBuf));
+	std::snprintf(mapChecksumMsgBuf, sizeof(mapChecksumMsgBuf), "[PreGame::%s][map-checksums={0x%x,0x%x}]", __func__, mapChecksums.first, mapChecksums.second);
+	std::snprintf(modChecksumMsgBuf, sizeof(modChecksumMsgBuf), "[PreGame::%s][mod-checksums={0x%x,0x%x}]", __func__, modChecksums.first, modChecksums.second);
 
 	// script.txt allows to disable demo file recording (host only, used for menu)
 	if (clientSetup->isHost && !gameSetup->recordDemo)

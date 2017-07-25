@@ -73,7 +73,8 @@ private:
 	std::string modArchive;
 	ILoadSaveHandler* savefile;
 
-	spring_time timer;
+	spring_time connectTimer;
+
 	bool wantDemo;
 };
 
