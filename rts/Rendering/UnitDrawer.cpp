@@ -533,6 +533,7 @@ bool CUnitDrawer::CanDrawOpaqueUnit(
 		return false;
 	if (unit->IsInVoid())
 		return false;
+	// unit will be drawn as icon instead
 	if (unit->isIcon)
 		return false;
 
@@ -653,9 +654,8 @@ void CUnitDrawer::DrawShadowPass()
 
 void CUnitDrawer::DrawIcon(CUnit* unit, bool useDefaultIcon)
 {
-	// for radar icons; normal void-units are already filtered
-	if (unit->IsInVoid())
-		return;
+	// iconUnits should not never contain void-space units, see UpdateUnitIconState
+	assert(!unit->IsInVoid());
 
 	// If the icon is to be drawn as a radar blip, we want to get the default icon.
 	const icon::CIconData* iconData = nullptr;
@@ -1477,6 +1477,9 @@ inline void CUnitDrawer::UpdateUnitIconState(CUnit* unit) {
 	if (unit->noDraw)
 		return;
 	if (unit->IsInVoid())
+		return;
+	// drawing icons is cheap but not free, avoid a perf-hit when many are offscreen
+	if (!camera->InView(unit->drawMidPos, unit->GetDrawRadius()))
 		return;
 
 	iconUnits.push_back(unit);
