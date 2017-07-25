@@ -202,9 +202,9 @@ void CGameServer::Initialize()
 	rng.Seed((myGameData->GetSetupText()).length());
 
 	// start network
-	if (!myGameSetup->onlyLocal) {
+	if (!myGameSetup->onlyLocal)
 		UDPNet.reset(new netcode::UDPListener(myClientSetup->hostPort, myClientSetup->hostIP));
-	}
+
 	AddAutohostInterface(StringToLower(configHandler->GetString("AutohostIP")), configHandler->GetInt("AutohostPort"));
 	Message(spring::format(ServerStart, myClientSetup->hostPort), false);
 
@@ -2523,7 +2523,7 @@ void CGameServer::UpdateLoop()
 		while (!quitServer) {
 			spring_msecs(loopSleepTime).sleep(true);
 
-			if (UDPNet)
+			if (UDPNet != nullptr)
 				UDPNet->Update();
 
 			std::lock_guard<spring::recursive_mutex> scoped_lock(gameServerMutex);
@@ -2531,27 +2531,25 @@ void CGameServer::UpdateLoop()
 			Update();
 		}
 
-		if (hostif)
+		if (hostif != nullptr)
 			hostif->SendQuit();
 
 		Broadcast(CBaseNetProtocol::Get().SendQuit("Server shutdown"));
 
-		if (!reloadingServer) {
-			// this is to make sure the Flush has any effect at all (we don't want a forced flush)
-			// when reloading, we can assume there is only a local client and skip the sleep()'s
+		// this is to make sure the Flush has any effect at all (we don't want a forced flush)
+		// when reloading, we can assume there is only a local client and skip the sleep()'s
+		if (!reloadingServer && !myGameSetup->onlyLocal)
 			spring_sleep(spring_msecs(500));
-		}
 
 		// flush the quit messages to reduce ugly network error messages on the client side
 		for (GameParticipant& p: players) {
-			if (p.link)
+			if (p.link != nullptr)
 				p.link->Flush();
 		}
 
-		if (!reloadingServer) {
-			// now let clients close their connections
+		// now let clients close their connections
+		if (!reloadingServer && !myGameSetup->onlyLocal)
 			spring_sleep(spring_msecs(1500));
-		}
 
 	} CATCH_SPRING_ERRORS
 }
