@@ -1237,22 +1237,21 @@ unsigned int CArchiveScanner::GetArchiveCompleteChecksum(const std::string& name
 	return checksum;
 }
 
-void CArchiveScanner::CheckArchive(const std::string& name, unsigned checksum)
+void CArchiveScanner::CheckArchive(const std::string& name, unsigned int hostChecksum, unsigned int& localChecksum)
 {
-	unsigned localChecksum = GetArchiveCompleteChecksum(name);
+	if ((localChecksum = GetArchiveCompleteChecksum(name)) == hostChecksum)
+		return;
 
-	if (localChecksum != checksum) {
-		char msg[1024];
-		sprintf(
-			msg,
-			"Checksum of %s (checksum 0x%x) differs from the host's copy (checksum 0x%x). "
-			"This may be caused by a corrupted download or there may even "
-			"be 2 different versions in circulation. Make sure you and the host have installed "
-			"the chosen archive and its dependencies and consider redownloading it.",
-			name.c_str(), localChecksum, checksum);
+	char msg[1024];
+	sprintf(
+		msg,
+		"Archive %s (checksum 0x%x) differs from the host's copy (checksum 0x%x). "
+		"This may be caused by a corrupted download or there may even be two "
+		"different versions in circulation. Make sure you and the host have installed "
+		"the chosen archive and its dependencies and consider redownloading it.",
+		name.c_str(), localChecksum, hostChecksum);
 
-		throw content_error(msg);
-	}
+	throw content_error(msg);
 }
 
 std::string CArchiveScanner::GetArchivePath(const std::string& name) const
