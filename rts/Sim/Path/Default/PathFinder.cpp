@@ -83,6 +83,7 @@ IPath::SearchResult CPathFinder::DoRawSearch(
 
 	const float pathLen = math::sqrt(Square(diffBlk.x) + Square(diffBlk.y));
 	const float testLen = math::ceil(pathLen);
+	const float halfLen = math::floor(testLen * 0.5f);
 
 	const float2 step = {diffBlk.x / pathLen, diffBlk.y / pathLen};
 	// const float2 mods = {CMoveMath::GetPosSpeedMod(moveDef, strtBlk.x, strtBlk.y), CMoveMath::GetPosSpeedMod(moveDef, goalBlk.x, goalBlk.y)};
@@ -91,32 +92,47 @@ IPath::SearchResult CPathFinder::DoRawSearch(
 	if (pathLen > lims.x)
 		return IPath::Error;
 
-	int2 testBlk;
-	int2 prevBlk = {-1, -1};
+	int2 fwdTestBlk;
+	int2 revTestBlk;
+	int2 fwdPrevBlk = {-1, -1};
+	int2 revPrevBlk = {-1, -1};
 
+	// test bidirectionally so bad goal-squares cause early exits
 	// NOTE:
 	//   no need to integrate with backtracking in FinishSearch
 	//   the final "path" only contains startPos which is consumed
 	//   immediately, after which NextWayPoint keeps returning the
 	//   goal until owner reaches it
-	for (float i = 0.0f; i <= testLen; i += 1.0f) {
-		testBlk = strtBlk + step * i;
+	for (float i = 0.0f, j = testLen; i <= halfLen; ) {
+		assert(fwdPrevBlk.x == -1 || std::abs(fwdTestBlk.x - fwdPrevBlk.x) <= 1);
+		assert(fwdPrevBlk.y == -1 || std::abs(fwdTestBlk.y - fwdPrevBlk.y) <= 1);
+		assert(revPrevBlk.x == -1 || std::abs(revTestBlk.x - revPrevBlk.x) <= 1);
+		assert(revPrevBlk.y == -1 || std::abs(revTestBlk.y - revPrevBlk.y) <= 1);
 
-		assert(std::abs(testBlk.x - prevBlk.x) <= 1);
-		assert(std::abs(testBlk.y - prevBlk.y) <= 1);
+		if ((fwdTestBlk = strtBlk + step * i) != fwdPrevBlk) {
+			if ((blockCheckFunc(moveDef, fwdTestBlk.x, fwdTestBlk.y, owner) & CMoveMath::BLOCK_STRUCTURE) != 0)
+				return IPath::Error;
+			if (CMoveMath::GetPosSpeedMod(moveDef, fwdTestBlk.x, fwdTestBlk.y) <= lims.y)
+				return IPath::Error;
 
-		if (testBlk == prevBlk)
-			continue;
-		if (testBlk == goalBlk)
+			fwdPrevBlk = fwdTestBlk;
+		}
+
+		// odd-length tests meet in the middle
+		if (i >= j)
 			break;
 
-		if ((blockCheckFunc(moveDef, testBlk.x, testBlk.y, owner) & CMoveMath::BLOCK_STRUCTURE) != 0)
-			return IPath::Error;
+		if ((revTestBlk = strtBlk + step * j) != revPrevBlk) {
+			if ((blockCheckFunc(moveDef, revTestBlk.x, revTestBlk.y, owner) & CMoveMath::BLOCK_STRUCTURE) != 0)
+				return IPath::Error;
+			if (CMoveMath::GetPosSpeedMod(moveDef, revTestBlk.x, revTestBlk.y) <= lims.y)
+				return IPath::Error;
 
-		if (CMoveMath::GetPosSpeedMod(moveDef, testBlk.x, testBlk.y) <= lims.y)
-			return IPath::Error;
+			revPrevBlk = revTestBlk;
+		}
 
-		prevBlk = testBlk;
+		i += 1.0f;
+		j -= 1.0f;
 	}
 
 	return IPath::Ok;
