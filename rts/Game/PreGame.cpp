@@ -372,7 +372,7 @@ void CPreGame::UpdateClientNet()
 
 				LOG("[PreGame::%s] received user number %i (team %i, allyteam %i), creating load-screen", __func__, gu->myPlayerNum, gu->myTeam, gu->myAllyTeam);
 
-				// respond with the client data
+				// respond with the client data and content checksums
 				clientNet->Send(CBaseNetProtocol::Get().SendClientData(playerNum, ClientData::GetCompressed()));
 
 				CLIENT_NETLOG(gu->myPlayerNum, LOG_LEVEL_INFO, mapChecksumMsgBuf);
@@ -383,40 +383,6 @@ void CPreGame::UpdateClientNet()
 				assert(pregame == this);
 				spring::SafeDelete(pregame);
 				return;
-			} break;
-
-			case NETMSG_LOGMSG: {
-				try {
-					// this might arrive from GameDataReceived before Game exists
-					netcode::UnpackPacket unpack(packet, sizeof(uint8_t));
-
-					std::uint16_t packetSize;
-					std::uint8_t playerNum;
-					std::uint8_t logLevel;
-					std::string logString;
-
-					unpack >> packetSize;
-					if (packetSize != packet->length)
-						throw netcode::UnpackPacketException("invalid size");
-
-					unpack >> playerNum;
-					if (!playerHandler->IsValidPlayer(playerNum))
-						throw netcode::UnpackPacketException("invalid player number");
-
-					unpack >> logLevel;
-					unpack >> logString;
-
-					assert(logLevel == LOG_LEVEL_INFO);
-
-					const CPlayer* player = playerHandler->Player(playerNum);
-
-					const char* fmtStr = "[PreGame::%s][LOGMSG] sender=\"%s\" string=\"%s\"";
-					const char* logStr = logString.c_str();
-
-					LOG_L(L_INFO, fmtStr, __func__, player->name.c_str(), logStr);
-				} catch (const netcode::UnpackPacketException& ex) {
-					LOG_L(L_ERROR, "[PreGame::%s][NETMSG_LOGMSG] exception \"%s\"", __func__, ex.what());
-				}
 			} break;
 
 			default: {
