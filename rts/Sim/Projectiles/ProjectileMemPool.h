@@ -7,9 +7,9 @@
 #include "Sim/Misc/GlobalConstants.h"
 
 #if (defined(__x86_64) || defined(__x86_64__))
-typedef StaticMemPool<MAX_PROJECTILES, 840> ProjMemPool;
+typedef StaticMemPool<MAX_PROJECTILES, 868> ProjMemPool;
 #else
-typedef DynMemPool<840> ProjMemPool;
+typedef DynMemPool<868> ProjMemPool;
 #endif
 
 extern ProjMemPool projMemPool;

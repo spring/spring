@@ -575,29 +575,39 @@ void CProjectileHandler::CheckUnitFeatureCollisions(ProjectileContainer& pc)
 
 void CProjectileHandler::CheckGroundCollisions(ProjectileContainer& pc)
 {
-	for (size_t i=0; i<pc.size(); ++i) {
+	for (size_t i = 0; i < pc.size(); ++i) {
 		CProjectile* p = pc[i];
+
 		if (!p->checkCol)
 			continue;
 
-		// NOTE: if <p> is a MissileProjectile and does not
-		// have selfExplode set, it will never be removed (!)
+		// NOTE:
+		//   if <p> is a MissileProjectile and does not have
+		//   selfExplode set, tbis will cause it to never be
+		//   removed (!)
 		if (p->GetCollisionFlags() & Collision::NOGROUND)
 			continue;
 
-		// NOTE: don't add p->radius to groundHeight, or most
-		// projectiles will collide with the ground too early
+		// don't collide with ground yet if last update scheduled a bounce
+		if (p->weapon && static_cast<const CWeaponProjectile*>(p)->HasScheduledBounce())
+			continue;
+
+		// NOTE:
+		//   don't add p->radius to groundHeight, or most (esp. modelled)
+		//   projectiles will collide with the ground one or more frames
+		//   too early
 		const float groundHeight = CGround::GetHeightReal(p->pos.x, p->pos.z);
+
 		const bool belowGround = (p->pos.y < groundHeight);
 		const bool insideWater = (p->pos.y <= 0.0f && !belowGround);
 		const bool ignoreWater = p->ignoreWater;
 
 		if (belowGround || (insideWater && !ignoreWater)) {
 			// if position has dropped below terrain or into water
-			// where we cannot live, adjust it and explode us now
+			// where we can not live, adjust it and explode us now
 			// (if the projectile does not set deleteMe = true, it
 			// will keep hugging the terrain)
-			p->pos.y = groundHeight * belowGround;
+			p->SetPosition(p->pos * XZVector + UpVector * groundHeight * belowGround);
 			p->Collision();
 		}
 	}
