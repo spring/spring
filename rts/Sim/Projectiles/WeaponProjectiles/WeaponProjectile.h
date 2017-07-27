@@ -62,7 +62,7 @@ public:
 	void SetBeingIntercepted(bool b) { targeted = b; }
 	bool IsBeingIntercepted() const { return targeted; }
 	bool CanBeInterceptedBy(const WeaponDef*) const;
-
+	bool HasScheduledBounce() const { return bounced; }
 	bool TraveledRange() const;
 
 	const DynDamageArray* damages;
@@ -85,9 +85,13 @@ protected:
 	/// true if we are an interceptable projectile
 	// and an interceptor projectile is on the way
 	bool targeted;
+	bool bounced;
 
 	float3 startPos;
 	float3 targetPos;
+
+	float3 bounceHitPos;
+	float3 bounceParams;
 };
 
 #endif /* WEAPON_PROJECTILE_H */

@@ -277,6 +277,7 @@ Bugfixes:
  - catch invalid CmdDesc indices in GuiHandler::DrawButtons
  - insert missing eventHandler.RemoveClient call in RoamMeshDrawer
 
+ - fix #5658 (projectiles applying two position-updates while bounced)
  - fix #5630 (free line-of-fire detection failure)
  - fix #5287 (help units in firebases with a collideFireBase weapondef flag)
  - fix #2970 ("pushResistant" is now accepted by MoveCtrl.SetGroundMoveTypeData)
