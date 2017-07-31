@@ -4,14 +4,9 @@
 
 #include <cassert>
 
-CBufferedArchive::CBufferedArchive(const std::string& name, bool cache)
-	: IArchive(name)
+CBufferedArchive::CBufferedArchive(const std::string& name, bool cache): IArchive(name)
 {
 	caching = cache;
-}
-
-CBufferedArchive::~CBufferedArchive()
-{
 }
 
 bool CBufferedArchive::GetFile(unsigned int fid, std::vector<std::uint8_t>& buffer)
@@ -19,13 +14,11 @@ bool CBufferedArchive::GetFile(unsigned int fid, std::vector<std::uint8_t>& buff
 	std::lock_guard<spring::mutex> lck(archiveLock);
 	assert(IsFileId(fid));
 
-	if (!caching) {
-		return GetFileImpl(fid,buffer);
-	}
+	if (!caching)
+		return GetFileImpl(fid, buffer);
 
-	if (fid >= cache.size()) {
-		cache.resize(fid + 1);
-	}
+	if (fid >= cache.size())
+		cache.resize(std::max(size_t(fid + 1), cache.size() * 2));
 
 	if (!cache[fid].populated) {
 		cache[fid].exists = GetFileImpl(fid, cache[fid].data);
