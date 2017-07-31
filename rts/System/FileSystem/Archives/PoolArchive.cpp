@@ -18,8 +18,7 @@
 #include "System/Log/ILog.h"
 
 
-CPoolArchiveFactory::CPoolArchiveFactory()
-	: IArchiveFactory("sdp")
+CPoolArchiveFactory::CPoolArchiveFactory(): IArchiveFactory("sdp")
 {
 }
 
@@ -29,127 +28,131 @@ IArchive* CPoolArchiveFactory::DoCreateArchive(const std::string& filePath) cons
 }
 
 
-static unsigned int parse_int32(unsigned char c[4])
+
+static uint32_t parse_uint32(uint8_t c[4])
 {
-	unsigned int i = 0;
+	uint32_t i = 0;
 	i = c[0] << 24 | i;
 	i = c[1] << 16 | i;
-	i = c[2] << 8  | i;
-	i = c[3] << 0  | i;
+	i = c[2] <<  8 | i;
+	i = c[3] <<  0 | i;
 	return i;
 }
 
 static bool gz_really_read(gzFile file, voidp buf, unsigned int len)
 {
-	return gzread(file, (char*)buf, len) == len;
+	return (gzread(file, reinterpret_cast<char*>(buf), len) == len);
 }
 
-CPoolArchive::CPoolArchive(const std::string& name)
-	: CBufferedArchive(name)
-	, isOpen(false)
+
+
+CPoolArchive::CPoolArchive(const std::string& name): CBufferedArchive(name)
 {
 	char c_name[255];
-	unsigned char c_md5[16];
-	unsigned char c_crc32[4];
-	unsigned char c_size[4];
-	unsigned char length;
+	uint8_t c_md5sum[16];
+	uint8_t c_crc32[4];
+	uint8_t c_size[4];
+	uint8_t length;
 
 	gzFile in = gzopen(name.c_str(), "rb");
-	if (in == NULL) {
-		throw content_error(std::string("couldn't open ") + name);
-	}
 
-	while (true) {
+	if (in == nullptr)
+		throw content_error("[" + std::string(__func__) + "] could not open " + name);
 
-		if (!gz_really_read(in, &length, 1)) {
-			if (gzeof(in)) {
-				isOpen = true;
-			}
-			break;
-		}
+	files.reserve(1024);
+	stats.reserve(1024);
+
+	while (gz_really_read(in, &length, 1)) {
 		if (!gz_really_read(in, &c_name, length)) break;
-		if (!gz_really_read(in, &c_md5, 16)) break;
+		if (!gz_really_read(in, &c_md5sum, 16)) break;
 		if (!gz_really_read(in, &c_crc32, 4)) break;
 		if (!gz_really_read(in, &c_size, 4)) break;
 
-		FileData* f = new FileData;
-		f->name = std::string(c_name, length);
-		std::memcpy(&f->md5, &c_md5, 16);
-		f->crc32 = parse_int32(c_crc32);
-		f->size = parse_int32(c_size);
+		files.emplace_back();
+		stats.emplace_back();
+		FileData& f = files.back();
+		FileStat& s = stats.back();
 
-		files.push_back(f);
-		lcNameIndex[f->name] = files.size() - 1;
+		f.name = std::move(std::string(c_name, length));
+		std::memcpy(&f.md5sum, &c_md5sum, 16);
+		f.crc32 = parse_uint32(c_crc32);
+		f.size = parse_uint32(c_size);
+
+		s.fileIndx = files.size() - 1;
+		s.readTime = 0;
+
+		lcNameIndex[f.name] = files.size() - 1;
 	}
+
+	isOpen = gzeof(in);
 	gzclose(in);
 }
 
 CPoolArchive::~CPoolArchive()
 {
-	std::vector<FileData*>::iterator fi;
-	for (fi = files.begin(); fi < files.end(); ++fi) {
-		delete *fi;
+	const std::string& name = GetArchiveName();
+	const std::pair<uint64_t, uint64_t>& sums = GetSums();
+
+	const unsigned long numZipFiles = files.size();
+	const unsigned long sumInflSize = sums.first / 1024;
+	const unsigned long sumReadTime = sums.second / (1000 * 1000);
+
+	LOG_L(L_INFO, "[%s] name=\"%s\" numZipFiles=%lu sumInflSize=%lukb sumReadTime=%lums", __func__, name.c_str(), numZipFiles, sumInflSize, sumReadTime);
+
+	std::partial_sort(stats.begin(), stats.begin() + std::min(stats.size(), size_t(10)), stats.end());
+
+	// show top-10 worst access times
+	for (size_t n = 0; n < std::min(stats.size(), size_t(10)); n++) {
+		const FileStat& s = stats[n];
+		const FileData& f = files[s.fileIndx];
+
+		const unsigned long indx = s.fileIndx;
+		const unsigned long time = s.readTime / (1000 * 1000);
+
+		LOG_L(L_INFO, "\tfile=\"%s\" indx=%lu inflSize=%ukb readTime=%lums", f.name.c_str(), indx, f.size / 1024, time);
 	}
 }
-
-bool CPoolArchive::IsOpen()
-{
-	return isOpen;
-}
-
-unsigned int CPoolArchive::NumFiles() const
-{
-	return files.size();
-}
-
-void CPoolArchive::FileInfo(unsigned int fid, std::string& name, int& size) const
-{
-	assert(IsFileId(fid));
-	name = files[fid]->name;
-	size = files[fid]->size;
-}
-
-unsigned int CPoolArchive::GetCrc32(unsigned int fid)
-{
-	assert(IsFileId(fid));
-	return files[fid]->crc32;
-}
-
 
 bool CPoolArchive::GetFileImpl(unsigned int fid, std::vector<std::uint8_t>& buffer)
 {
 	assert(IsFileId(fid));
 
-	FileData* f = files[fid];
+	FileData* f = &files[fid];
+	FileStat* s = &stats[fid];
 
-	char table[] = "0123456789abcdef";
+	constexpr const char table[] = "0123456789abcdef";
 	char c_hex[32];
+
 	for (int i = 0; i < 16; ++i) {
-		c_hex[2 * i]     = table[(f->md5[i] >> 4) & 0xf];
-		c_hex[2 * i + 1] = table[ f->md5[i]       & 0xf];
+		c_hex[2 * i    ] = table[(f->md5sum[i] >> 4) & 0xf];
+		c_hex[2 * i + 1] = table[ f->md5sum[i]       & 0xf];
 	}
-	std::string prefix(c_hex,      2);
-	std::string postfix(c_hex + 2, 30);
 
-	std::ostringstream accu;
-	accu << "pool/" << prefix << "/" << postfix << ".gz";
-	std::string rpath = accu.str();
+	const std::string prefix(c_hex,      2);
+	const std::string postfix(c_hex + 2, 30);
 
-	FileSystem::FixSlashes(rpath);
-	std::string path = dataDirsAccess.LocateFile(rpath);
+	      std::string rpath = "pool/" + prefix + "/" + postfix + ".gz";
+	const std::string  path = dataDirsAccess.LocateFile(FileSystem::FixSlashes(rpath));
+
+	const spring_time startTime = spring_now();
+
+
 	gzFile in = gzopen(path.c_str(), "rb");
-	if (in == NULL){
+
+	if (in == nullptr)
 		return false;
-	}
 
-	unsigned int len = f->size;
-	buffer.resize(len);
+	buffer.clear();
+	buffer.resize(f->size);
 
-	int bytesread = (len == 0) ? 0 : gzread(in, (char *)&buffer[0], len);
+	const int bytesRead = (buffer.empty()) ? 0 : gzread(in, reinterpret_cast<char*>(buffer.data()), f->size);
 	gzclose(in);
 
-	if (bytesread != len) {
-		LOG_L(L_ERROR, "couldn't read %s", path.c_str());
+
+	s->readTime = (spring_now() - startTime).toNanoSecsi();
+
+	if (bytesRead != buffer.size()) {
+		LOG_L(L_ERROR, "[PoolArchive::%s] could not read file \"%s\"", __func__, path.c_str());
 		buffer.clear();
 		return false;
 	}

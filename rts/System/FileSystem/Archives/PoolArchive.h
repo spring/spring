@@ -43,31 +43,31 @@ private:
  * Technical details
  * -----------------
  * The pool system uses two directories, to be found in the root of a spring
- * data directory, pool and packages. They may look as follows:
- * /pool/00/00756ec29fe8fc9d3da9b711e76bc9.gz
- * /pool/00/3427d26f419dabe74eaf7b865407b8.gz
- * ...
- * /pool/01/
- * /pool/02/
- * ...
- * /pool/ff/
- * /packages/a3b3adc55e48aa8ffb723b669d177d2f.sdp
- * /packages/c8c74d288a3b7000638d5bd8e02292bb.sdp
- * ...
- * /packages/selected.list
+ * data directory, called "pool" and "packages". They may look as follows:
+ *   /pool/00/00756ec29fe8fc9d3da9b711e76bc9.gz
+ *   /pool/00/3427d26f419dabe74eaf7b865407b8.gz
+ *   ...
+ *   /pool/01/
+ *   /pool/02/
+ *   ...
+ *   /pool/ff/
+ *   /packages/a3b3adc55e48aa8ffb723b669d177d2f.sdp
+ *   /packages/c8c74d288a3b7000638d5bd8e02292bb.sdp
+ *   ...
+ *   /packages/selected.list
  *
  * Each .sdp file under packages represents one archive.
- * An .sdp file is only an index, referencing all the files it contains.
- * This referenced files, the real content of this archive is in the pool dir.
- * The splitting up into the 00 till ff sub-dirs is only to prevent possible
- * problems with file-system limits for maximum files per directory (eg. FAT32).
- * /pool/\<first 2 hex chars\>/\<last 30 hex chars\>.gz
- * Format of the .sdp (index) files:
- * There is one entry per indexed file. These are repeated until EOF.
- * The format of one such entry:
- * \<1 byte real file name length\>\<real file name\>\<16 byte MD5 digest\>\<4 byte CRC32\>\<4 byte file size\>
- * The 16 bytes MD5 digest is the reference to the 32 Hex char file name
- * under pool, which contains the content.
+ * An .sdp file is only an index referencing all the files it contains.
+ * The real content of this archive is in the pool directory, split up
+ * into 0x00-0xff sub-dirs to avoid filesystem limits (e.g. the maximum
+ * number of files per directory for FAT32).
+ *   /pool/\<first 2 hex chars\>/\<last 30 hex chars\>.gz
+ *
+ * The .sdp (index) file contains one entry per indexed file. These are
+ * repeated until EOF and formatted as follows:
+ *   \<1 byte real file name length\>\<real file name\>\<16 byte MD5 digest\>\<4 byte CRC32\>\<4 byte file size\>
+ * The 16-byte MD5 digest is the reference to the 32 hex-char filename
+ * under pool/ which contains the content.
  *
  * @author Chris Clearwater (det) <chris@detrino.org>
  */
@@ -75,27 +75,54 @@ class CPoolArchive : public CBufferedArchive
 {
 public:
 	CPoolArchive(const std::string& name);
-	virtual ~CPoolArchive();
+	~CPoolArchive();
 
-	virtual bool IsOpen();
+	bool IsOpen() override { return isOpen; }
 
-	virtual unsigned NumFiles() const;
-	virtual void FileInfo(unsigned int fid, std::string& name, int& size) const;
-	virtual unsigned GetCrc32(unsigned int fid);
+	unsigned NumFiles() const override { return (files.size()); }
+	void FileInfo(unsigned int fid, std::string& name, int& size) const override {
+		assert(IsFileId(fid));
+		name = files[fid].name;
+		size = files[fid].size;
+	}
+	unsigned GetCrc32(unsigned int fid) override {
+		assert(IsFileId(fid));
+		return files[fid].crc32;
+	}
 
 protected:
-	virtual bool GetFileImpl(unsigned int fid, std::vector<std::uint8_t>& buffer);
+	bool GetFileImpl(unsigned int fid, std::vector<std::uint8_t>& buffer) override;
+
+	std::pair<uint64_t, uint64_t> GetSums() const {
+		std::pair<uint64_t, uint64_t> p;
+
+		for (size_t n = 0; n < files.size(); n++) {
+			p.first  += files[n].size;
+			p.second += stats[n].readTime;
+		}
+
+		return p;
+	}
 
 	struct FileData {
 		std::string name;
-		unsigned char md5[16];
-		unsigned int crc32;
-		unsigned int size;
+		uint8_t md5sum[16];
+		uint32_t crc32;
+		uint32_t size;
+	};
+	struct FileStat {
+		// inverted cmp for descending order
+		bool operator < (const FileStat& s) const { return (readTime > s.readTime); }
+
+		uint64_t fileIndx;
+		uint64_t readTime;
 	};
 
 private:
-	bool isOpen;
-	std::vector<FileData*> files;
+	bool isOpen = false;
+
+	std::vector<FileData> files;
+	std::vector<FileStat> stats;
 };
 
 #endif // _POOL_ARCHIVE_H
