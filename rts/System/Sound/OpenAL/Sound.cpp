@@ -605,35 +605,47 @@ size_t CSound::LoadSoundBuffer(const std::string& path)
 	if (id > 0)
 		return id; // file is loaded already
 
-	CFileHandler file(path);
+	// initial ctor Open is a no-op
+	static CFileHandler file("", "");
+
+	file.Close();
+	file.Open(path, SPRING_VFS_RAW_FIRST);
 
 	if (!file.FileExists()) {
-		LOG_L(L_ERROR, "Unable to open audio file: %s", path.c_str());
+		file.Close();
+		LOG_L(L_ERROR, "[%s] unable to open audio file \"%s\"", __func__, path.c_str());
 		return 0;
 	}
 
-	std::vector<std::uint8_t> buf(file.FileSize());
-	file.Read(&buf[0], file.FileSize());
+	// safe, caller locks
+	static std::vector<std::uint8_t> buf;
+
+	buf.clear();
+	buf.resize(file.FileSize());
+	// copy file into buffer
+	file.Read(buf.data(), file.FileSize());
+	file.Close();
 
 	std::shared_ptr<SoundBuffer> buffer(new SoundBuffer());
 	bool success = false;
-	const std::string ending = file.GetFileExt();
+	const std::string ending = std::move(file.GetFileExt());
 
+	// TODO: load asynchronously
 	if (ending == "wav") {
 		success = buffer->LoadWAV(path, buf);
 	} else if (ending == "ogg") {
 		success = buffer->LoadVorbis(path, buf);
 	} else {
-		LOG_L(L_WARNING, "CSound::LoadALBuffer: unknown audio format: %s", ending.c_str());
+		LOG_L(L_WARNING, "[%s] unknown audio format \"%s\"", __func__, ending.c_str());
 	}
 
-	CheckError("CSound::LoadALBuffer");
+	CheckError("CSound::LoadSoundBuffer");
 	if (!success) {
-		LOG_L(L_WARNING, "Failed to load file: %s", path.c_str());
+		LOG_L(L_WARNING, "[%s] failed to load file \"%s\"", __func__, path.c_str());
 		return 0;
 	}
 
-	return SoundBuffer::Insert(buffer);
+	return (SoundBuffer::Insert(buffer));
 }
 
 void CSound::NewFrame()
