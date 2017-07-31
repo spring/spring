@@ -16,7 +16,7 @@ class CBufferedArchive : public IArchive
 {
 public:
 	CBufferedArchive(const std::string& name, bool cache = true);
-	virtual ~CBufferedArchive();
+	virtual ~CBufferedArchive() {}
 
 	virtual bool GetFile(unsigned int fid, std::vector<std::uint8_t>& buffer);
 
@@ -24,14 +24,28 @@ protected:
 	virtual bool GetFileImpl(unsigned int fid, std::vector<std::uint8_t>& buffer) = 0;
 
 	spring::mutex archiveLock; // neither 7zip nor zlib are threadsafe
-	struct FileBuffer
-	{
-		FileBuffer() : populated(false), exists(false) {};
-		bool populated; // cause a file may be 0 bytes big
+
+	struct FileBuffer {
+		FileBuffer(): populated(false), exists(false) {}
+		FileBuffer(const FileBuffer& fb) = delete;
+		FileBuffer(FileBuffer&& fb) { *this = std::move(fb); }
+
+		FileBuffer& operator = (const FileBuffer& fb) = delete;
+		FileBuffer& operator = (FileBuffer&& fb) {
+			populated = fb.populated;
+			exists = fb.exists;
+
+			data = std::move(fb.data);
+			return *this;
+		}
+
+		bool populated; // files may be empty (0 bytes)
 		bool exists;
 		std::vector<std::uint8_t> data;
 	};
+
 	std::vector<FileBuffer> cache; // cache[fileId]
+
 private:
 	bool caching;
 };
