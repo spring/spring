@@ -557,13 +557,13 @@ void WeaponDef::LoadSound(
 	const LuaTable& wdTable,
 	const std::string& soundKey,
 	const unsigned int soundIdx,
-	std::vector<GuiSoundSet::Data>& soundData)
-{
+	std::vector<GuiSoundSet::Data>& soundData
+) {
 	string name = "";
 	int id = -1;
 	float volume = -1.0f;
 
-	soundData.push_back(GuiSoundSet::Data(name, id, volume));
+	soundData.emplace_back(name, id, volume);
 	assert(soundIdx < soundData.size());
 	assert(soundData[soundIdx].id == -1);
 
