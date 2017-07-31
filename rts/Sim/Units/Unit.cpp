@@ -1919,6 +1919,9 @@ bool CUnit::SetGroup(CGroup* newGroup, bool fromFactory, bool autoSelect)
 
 bool CUnit::AddBuildPower(CUnit* builder, float amount)
 {
+	if (isDead || IsCrashing())
+		return false;
+
 	// stop decaying on building AND reclaim
 	lastNanoAdd = gs->frameNum;
 
@@ -1991,9 +1994,6 @@ bool CUnit::AddBuildPower(CUnit* builder, float amount)
 		}
 	} else {
 		// reclaim
-		if (isDead || IsCrashing())
-			return false;
-
 		if (!AllowedReclaim(builder)) {
 			builder->DependentDied(this);
 			return false;
