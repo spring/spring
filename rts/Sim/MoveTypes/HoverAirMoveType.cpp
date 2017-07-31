@@ -408,9 +408,10 @@ void CHoverAirMoveType::UpdateHovering()
 	randomWind.x = randomWind.x * 0.9f + (gsRNG.NextFloat() - 0.5f) * 0.5f;
 	randomWind.z = randomWind.z * 0.9f + (gsRNG.NextFloat() - 0.5f) * 0.5f;
 
-	// randomly drift (but not too far from goal-position)
+	// randomly drift (but not too far from goal-position; a larger
+	// deviation causes a larger wantedSpeed back in its direction)
 	wantedSpeed = (randomWind * math::fabs(owner->unitDef->dlHoverFactor) * 0.5f);
-	wantedSpeed += (smoothstep(0.0f, 20.0f * 20.0f, (goalPos - owner->pos)) * (goalPos - owner->pos));
+	wantedSpeed += (smoothstep(0.0f, 20.0f * 20.0f, float3::fabs(goalPos - owner->pos)) * (goalPos - owner->pos));
 
 	UpdateAirPhysics();
 	#endif
