@@ -6,12 +6,10 @@
 #include <deque>
 #include <string>
 
+#include "3DModel.h"
 #include "System/UnorderedMap.hpp"
 #include "System/Threading/SpringThreading.h"
 
-
-struct S3DModel;
-struct S3DModelPiece;
 
 class IModelParser
 {

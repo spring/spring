@@ -201,7 +201,8 @@ bool ShowDriverWarning(const char* glVendor, const char* glRenderer)
 	const std::string& gpuVendor = StringToLower(glVendor);
 	const std::string& gpuModel  = StringToLower(glRenderer);
 
-	constexpr size_t np = std::string::npos;
+	// MSVC can't have npos as a constexpr :(
+	const size_t np = std::string::npos;
 
 	// should be unreachable since context will fail to be created
 	if (gpuVendor.find("microsoft") != np || gpuVendor.find("unknown") != np) {

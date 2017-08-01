@@ -17,6 +17,8 @@
 #include "System/Log/ILog.h"
 #include "System/StringUtil.h"
 
+#include <cctype>
+
 struct ActiveUniform {
 	GLint size = 0;
 	GLenum type = 0;

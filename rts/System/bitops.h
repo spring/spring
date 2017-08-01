@@ -10,6 +10,10 @@
 #ifndef _BITOPS_H
 #define _BITOPS_H
 
+#ifdef _MSC_VER
+#include <intrin.h>
+#endif
+
 /**
  * @brief Next power of 2
  * @param x The number to be rounded

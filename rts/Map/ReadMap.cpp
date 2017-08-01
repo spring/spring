@@ -65,13 +65,13 @@ CR_REG_METADATA(CReadMap, (
 	CR_IGNORED(heightMapSyncedPtr),
 	CR_IGNORED(heightMapUnsyncedPtr),
 
-	#if 0
+	/*
 	CR_IGNORED(originalHeightMap),
 	CR_IGNORED(centerHeightMap),
 	CR_IGNORED(mipCenterHeightMaps),
-	#endif
+	*/
 	CR_IGNORED(mipPointerHeightMaps),
-	#if 0
+	/*
 	CR_IGNORED(visVertexNormals),
 	CR_IGNORED(faceNormalsSynced),
 	CR_IGNORED(faceNormalsUnsynced),
@@ -80,7 +80,7 @@ CR_REG_METADATA(CReadMap, (
 	CR_IGNORED(centerNormals2D),
 	CR_IGNORED(slopeMap),
 	CR_IGNORED(typeMap),
-	#endif
+	*/
 
 	CR_IGNORED(sharedCornerHeightMaps),
 	CR_IGNORED(sharedCenterHeightMaps),
@@ -91,12 +91,12 @@ CR_REG_METADATA(CReadMap, (
 	CR_IGNORED(unsyncedHeightMapUpdates),
 	CR_IGNORED(unsyncedHeightMapUpdatesTemp),
 
-	#if 0
-		#ifdef USE_UNSYNCED_HEIGHTMAP
-		CR_IGNORED(  syncedHeightMapDigests),
-		CR_IGNORED(unsyncedHeightMapDigests),
-		#endif
+	/*
+	#ifdef USE_UNSYNCED_HEIGHTMAP
+	CR_IGNORED(  syncedHeightMapDigests),
+	CR_IGNORED(unsyncedHeightMapDigests),
 	#endif
+	*/
 
 	CR_POSTLOAD(PostLoad),
 	CR_SERIALIZER(Serialize)
