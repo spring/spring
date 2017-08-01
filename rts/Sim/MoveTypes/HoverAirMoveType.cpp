@@ -404,11 +404,14 @@ void CHoverAirMoveType::UpdateHovering()
 	UpdateAirPhysics();
 	#endif
 
+	#if 1
 	// Random hovering is disabled because it breaks transport loading.
 	// TODO: Re-enable random wind.
-	#if 0
-	randomWind.x = randomWind.x * 0.9f + (gsRNG.NextFloat() - 0.5f) * 0.5f;
-	randomWind.z = randomWind.z * 0.9f + (gsRNG.NextFloat() - 0.5f) * 0.5f;
+	randomWind.x = 0.0f;
+	randomWind.z = 0.0f;
+
+//	randomWind.x = randomWind.x * 0.9f + (gsRNG.NextFloat() - 0.5f) * 0.5f;
+//	randomWind.z = randomWind.z * 0.9f + (gsRNG.NextFloat() - 0.5f) * 0.5f;
 
 	// randomly drift (but not too far from goal-position; a larger
 	// deviation causes a larger wantedSpeed back in its direction)
