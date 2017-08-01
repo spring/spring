@@ -324,6 +324,7 @@ Bugfixes:
  - fix #5644 (send BuggerOff notes from opened-but-blocked factories again)
  - fix #4745 (broken transport-unloading with non-zero unloadSpread)
  - fix #4481 (check MoveDef maxSlope for units built by mobile constructors)
+ - fix #4827 (idle gunships jiggling away from their position)
 
 
 
