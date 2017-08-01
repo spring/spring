@@ -404,7 +404,9 @@ void CHoverAirMoveType::UpdateHovering()
 	UpdateAirPhysics();
 	#endif
 
-	#if 1
+	// Random hovering is disabled because it breaks transport loading.
+	// TODO: Re-enable random wind.
+	#if 0
 	randomWind.x = randomWind.x * 0.9f + (gsRNG.NextFloat() - 0.5f) * 0.5f;
 	randomWind.z = randomWind.z * 0.9f + (gsRNG.NextFloat() - 0.5f) * 0.5f;
 
@@ -454,6 +456,8 @@ void CHoverAirMoveType::UpdateFlying()
 				const bool isTransporter = owner->unitDef->IsTransportUnit();
 				const bool hasLoadCmds = isTransporter && (topCmdID == CMD_LOAD_ONTO || topCmdID == CMD_LOAD_UNITS);
 				// [?] transport aircraft need some time to detect that they can pickup
+				// This looks like a dirty hack to give the transport a chance to hover near the unit to be loaded.
+				// TODO: Remove wait frames
 				const bool canLoad = isTransporter && (++waitCounter < ((GAME_SPEED << 1) - 5));
 				const bool isBusy = IsUnitBusy(owner);
 
@@ -465,6 +469,8 @@ void CHoverAirMoveType::UpdateFlying()
 							wantedHeight = orgWantedHeight;
 						}
 
+						// Hovering here can lead to goalPos never being reached
+						// TODO: Remove hovering state before transport loading
 						SetState(AIRCRAFT_HOVERING);
 					} else {
 						if (!isBusy) {
