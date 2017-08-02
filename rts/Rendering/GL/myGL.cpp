@@ -193,44 +193,20 @@ bool GetAvailableVideoRAM(GLint* memory, const char* glVendor)
 
 bool ShowDriverWarning(const char* glVendor, const char* glRenderer)
 {
-#ifndef DEBUG
 	assert(glVendor != nullptr);
 	assert(glRenderer != nullptr);
 
-	// print out warnings for really crappy graphic cards/drivers
-	const std::string& gpuVendor = StringToLower(glVendor);
-	const std::string& gpuModel  = StringToLower(glRenderer);
+	const std::string& _glVendor = StringToLower(glVendor);
+	// const std::string& _glRenderer = StringToLower(glRenderer);
 
-	// MSVC can't have npos as a constexpr :(
-	const size_t np = std::string::npos;
-
-	// should be unreachable since context will fail to be created
-	if (gpuVendor.find("microsoft") != np || gpuVendor.find("unknown") != np) {
-		const char* msg =
-			"No OpenGL drivers installed on your system. Please visit your\n"
-			"GPU vendor's website (listed below) and download these first.\n\n"
-			" * Nvidia: http://www.nvidia.com\n"
-			" * AMD: http://support.amd.com\n"
-			" * Intel: http://downloadcenter.intel.com";
-
-		LOG_L(L_WARNING, "%s", msg);
-		Platform::MsgBox(msg, "Warning", MBF_EXCL);
+	// should be unreachable
+	// note that checking for Microsoft stubs is no longer required
+	// (context-creation will fail if no vendor-specific or pre-GL3
+	// drivers are installed)
+	if (_glVendor.find("unknown") != std::string::npos)
 		return false;
-	}
 
-	if ((gpuVendor == "sis") || (gpuModel.find("intel") != np && (gpuModel.find(" 945g") != np || gpuModel.find(" 915g") != np))) {
-		const char* msg =
-			"Your graphics card is insufficient to properly run the Spring engine.\n\n"
-			"If you experience crashes or poor performance, upgrade to better hardware "
-			"or try \"spring --safemode\" to test if your issues are caused by wrong "
-			"settings.\n";
-
-		LOG_L(L_WARNING, "%s", msg);
-		Platform::MsgBox(msg, "Warning", MBF_EXCL);
-		return true;
-	}
-
-	if (gpuVendor.find("vmware") != np) {
+	if (_glVendor.find("vmware") != std::string::npos) {
 		const char* msg =
 			"Running Spring with virtualized drivers can result in severely degraded "
 			"performance and is discouraged. Prefer to use your host operating system.";
@@ -239,8 +215,6 @@ bool ShowDriverWarning(const char* glVendor, const char* glRenderer)
 		Platform::MsgBox(msg, "Warning", MBF_EXCL);
 		return true;
 	}
-
-#endif
 
 	return true;
 }
