@@ -1470,11 +1470,11 @@ int CLuaHandleSynced::CallAsTeam(lua_State* L)
 		}
 		// ctrl
 		CLuaHandle::SetHandleCtrlTeam(L, teamID);
-		CLuaHandle::SetHandleFullCtrl(L, prevCtrlTeam == CEventClient::AllAccessTeam);
+		CLuaHandle::SetHandleFullCtrl(L, teamID == CEventClient::AllAccessTeam);
 		// read
 		CLuaHandle::SetHandleReadTeam(L, teamID);
 		CLuaHandle::SetHandleReadAllyTeam(L, (teamID < 0) ? teamID : teamHandler->AllyTeam(teamID));
-		CLuaHandle::SetHandleFullRead(L, prevReadAllyTeam == CEventClient::AllAccessTeam);
+		CLuaHandle::SetHandleFullRead(L, teamID == CEventClient::AllAccessTeam);
 		// select
 		CLuaHandle::SetHandleSelectTeam(L, teamID);
 	}
@@ -1492,12 +1492,12 @@ int CLuaHandleSynced::CallAsTeam(lua_State* L)
 
 			if (key == "ctrl") {
 				CLuaHandle::SetHandleCtrlTeam(L, teamID);
-				CLuaHandle::SetHandleFullCtrl(L, prevCtrlTeam == CEventClient::AllAccessTeam);
+				CLuaHandle::SetHandleFullCtrl(L, teamID == CEventClient::AllAccessTeam);
 			}
 			else if (key == "read") {
 				CLuaHandle::SetHandleReadTeam(L, teamID);
 				CLuaHandle::SetHandleReadAllyTeam(L, (teamID < 0) ? teamID : teamHandler->AllyTeam(teamID));
-				CLuaHandle::SetHandleFullRead(L, prevReadAllyTeam == CEventClient::AllAccessTeam);
+				CLuaHandle::SetHandleFullRead(L, teamID == CEventClient::AllAccessTeam);
 			}
 			else if (key == "select") {
 				CLuaHandle::SetHandleSelectTeam(L, teamID);

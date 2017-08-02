@@ -54,11 +54,25 @@ CR_REG_METADATA(CHoverAirMoveType, (
 
 
 
-static bool IsUnitBusy(const CUnit* u) {
+static bool UnitIsBusy(const CCommandAI* cai) {
 	// queued move-commands (or active build/repair/etc-commands) mean unit has to stay airborne
-	const auto& cai = u->commandAI;
 	return (cai->inCommand || cai->HasMoreMoveCommands(false));
 }
+
+static bool UnitHasLoadCmd(const CCommandAI* cai) {
+	const auto& que = cai->commandQue;
+	const auto& cmd = (que.empty())? Command(CMD_STOP): que.front();
+
+	// NOTE:
+	//   CMD_LOAD_ONTO is not tested here, HAMT is rarely a transport*ee*
+	//   and only transport*er*s can be given the CMD_LOAD_UNITS command
+	return (cmd.GetID() == CMD_LOAD_UNITS);
+}
+
+static bool UnitIsBusy(const CUnit* u) { return (UnitIsBusy(u->commandAI)); }
+static bool UnitHasLoadCmd(const CUnit* u) { return (UnitHasLoadCmd(u->commandAI)); }
+
+
 
 CHoverAirMoveType::CHoverAirMoveType(CUnit* owner) :
 	AAirMoveType(owner),
@@ -285,7 +299,7 @@ void CHoverAirMoveType::ExecuteStop()
 
 	switch (aircraftState) {
 		case AIRCRAFT_TAKEOFF: {
-			if (CanLand(IsUnitBusy(owner))) {
+			if (CanLand(UnitIsBusy(owner))) {
 				SetState(AIRCRAFT_LANDING);
 				// trick to land directly
 				waitCounter = GAME_SPEED;
@@ -294,7 +308,7 @@ void CHoverAirMoveType::ExecuteStop()
 		} // fall through
 		case AIRCRAFT_FLYING: {
 
-			if (CanLand(IsUnitBusy(owner))) {
+			if (CanLand(UnitIsBusy(owner))) {
 				SetState(AIRCRAFT_LANDING);
 			} else {
 				SetState(AIRCRAFT_HOVERING);
@@ -302,7 +316,7 @@ void CHoverAirMoveType::ExecuteStop()
 		} break;
 
 		case AIRCRAFT_LANDING: {
-			if (!CanLand(IsUnitBusy(owner)))
+			if (!CanLand(UnitIsBusy(owner)))
 				SetState(AIRCRAFT_HOVERING);
 
 		} break;
@@ -310,7 +324,7 @@ void CHoverAirMoveType::ExecuteStop()
 		case AIRCRAFT_CRASHING: {} break;
 
 		case AIRCRAFT_HOVERING: {
-			if (CanLand(IsUnitBusy(owner))) {
+			if (CanLand(UnitIsBusy(owner))) {
 				// land immediately, otherwise keep hovering
 				SetState(AIRCRAFT_LANDING);
 				waitCounter = GAME_SPEED;
@@ -410,7 +424,8 @@ void CHoverAirMoveType::UpdateHovering()
 
 	// randomly drift (but not too far from goal-position; a larger
 	// deviation causes a larger wantedSpeed back in its direction)
-	wantedSpeed = (randomWind * math::fabs(owner->unitDef->dlHoverFactor) * 0.5f);
+	// when not picking up a transportee
+	wantedSpeed = (randomWind * math::fabs(owner->unitDef->dlHoverFactor) * 0.5f * (1 - UnitHasLoadCmd(owner)));
 	wantedSpeed += (smoothstep(0.0f, 20.0f * 20.0f, float3::fabs(goalPos - owner->pos)) * (goalPos - owner->pos));
 
 	UpdateAirPhysics();
@@ -447,23 +462,19 @@ void CHoverAirMoveType::UpdateFlying()
 	if (closeToGoal) {
 		switch (flyState) {
 			case FLY_CRUISING: {
-				const auto& cmdQue = owner->commandAI->commandQue;
-				const int topCmdID = cmdQue.empty() ? 0 : cmdQue.front().GetID();
-
-				// NOTE: should CMD_LOAD_ONTO be here?
 				const bool isTransporter = owner->unitDef->IsTransportUnit();
-				const bool hasLoadCmds = isTransporter && (topCmdID == CMD_LOAD_ONTO || topCmdID == CMD_LOAD_UNITS);
+				const bool hasLoadCmds = isTransporter && UnitHasLoadCmd(owner);
+
 				// [?] transport aircraft need some time to detect that they can pickup
 				const bool canLoad = isTransporter && (++waitCounter < ((GAME_SPEED << 1) - 5));
-				const bool isBusy = IsUnitBusy(owner);
+				const bool isBusy = UnitIsBusy(owner);
 
 				if (!CanLand(isBusy) || (canLoad && hasLoadCmds)) {
 					wantedSpeed = ZeroVector;
 
 					if (isTransporter) {
-						if (waitCounter > (GAME_SPEED << 1)) {
+						if (waitCounter > (GAME_SPEED << 1))
 							wantedHeight = orgWantedHeight;
-						}
 
 						SetState(AIRCRAFT_HOVERING);
 					} else {
@@ -553,7 +564,7 @@ void CHoverAirMoveType::UpdateFlying()
 		wantedSpeed = (goalVec / goalDist) * goalSpeed;
 	} else {
 		// switch to hovering (if !CanLand()))
-		if (!IsUnitBusy(owner)) {
+		if (!UnitIsBusy(owner)) {
 			ExecuteStop();
 		} else {
 			wantedSpeed = ZeroVector;

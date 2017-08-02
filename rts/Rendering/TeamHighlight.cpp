@@ -13,6 +13,7 @@
 #include "System/GlobalConfig.h"
 #include "System/UnorderedMap.hpp"
 
+#include <algorithm>
 #include <climits>
 
 

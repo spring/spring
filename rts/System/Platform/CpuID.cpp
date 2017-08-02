@@ -66,10 +66,10 @@ namespace springproc {
 	{
 		int regs[REG_CNT] = {0};
 		__cpuid(regs, *a);
-		*a = features[0];
-		*b = features[1];
-		*c = features[2];
-		*d = features[3];
+		*a = regs[0];
+		*b = regs[1];
+		*c = regs[2];
+		*d = regs[3];
 	}
 
 #else

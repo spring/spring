@@ -2,6 +2,7 @@
 
 #include "GeometryBuffer.h"
 #include "Rendering/GlobalRendering.h"
+#include <algorithm>
 #include <cstring> //memset
 
 void GL::GeometryBuffer::Init(bool ctor) {

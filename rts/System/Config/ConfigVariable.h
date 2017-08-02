@@ -4,6 +4,7 @@
 #define CONFIG_VALUE_H
 
 #include "System/Misc/NonCopyable.h"
+#include <algorithm>
 #include <map>
 #include <string>
 #include "System/StringConvertibleOptionalValue.h"
