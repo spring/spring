@@ -122,8 +122,8 @@ CUnitHandler::~CUnitHandler()
 
 void CUnitHandler::DeleteScripts()
 {
-	// Predelete scripts since they sometimes call models
-	// which are already gone by KillSimulation.
+	// predelete scripts since they sometimes reference (pieces
+	// of) models, which are already gone before KillSimulation
 	for (CUnit* u: activeUnits) {
 		u->DeleteScript();
 	}
@@ -132,21 +132,33 @@ void CUnitHandler::DeleteScripts()
 
 void CUnitHandler::InsertActiveUnit(CUnit* unit)
 {
-	const unsigned int insertionPos = gsRNG.NextFloat() * activeUnits.size();
-
 	idPool.AssignID(unit);
 
 	assert(unit->id < units.size());
 	assert(units[unit->id] == nullptr);
 
-	assert(insertionPos >= 0 && insertionPos <= activeUnits.size());
+	#if 0
+	// randomized insertion is supposed to break up peak loads
+	// during the (staggered) SlowUpdate step, but also causes
+	// more jumping around in memory for regular Updates
+	// in larger games (where it would matter most) the order
+	// of insertion is essentially guaranteed to be random by
+	// interleaved player actions anyway, and if needed could
+	// also be achieved by periodic shuffling
+	const unsigned int insertionPos = gsRNG.NextInt(activeUnits.size());
+
+	assert(insertionPos < activeUnits.size());
 	activeUnits.insert(activeUnits.begin() + insertionPos, unit);
 
-	if (insertionPos <= activeSlowUpdateUnit)
-		++activeSlowUpdateUnit;
+	// do not (slow)update the same unit twice if the new one
+	// gets inserted behind our current iterator position and
+	// right-shifts the rest
+	activeSlowUpdateUnit += (insertionPos <= activeSlowUpdateUnit);
+	activeUpdateUnit += (insertionPos <= activeUpdateUnit);
 
-	if (insertionPos <= activeUpdateUnit)
-		++activeUpdateUnit;
+	#else
+	activeUnits.push_back(unit);
+	#endif
 
 	units[unit->id] = unit;
 }
@@ -261,7 +273,7 @@ void CUnitHandler::Update()
 
 	{
 		// Delete dead units
-		for (activeUpdateUnit = 0; activeUpdateUnit < activeUnits.size();++activeUpdateUnit) {
+		for (activeUpdateUnit = 0; activeUpdateUnit < activeUnits.size(); ++activeUpdateUnit) {
 			CUnit* unit = activeUnits[activeUpdateUnit];
 
 			if (!unit->deathScriptFinished)
@@ -295,9 +307,7 @@ void CUnitHandler::Update()
 			activeSlowUpdateUnit = 0;
 
 		// stagger the SlowUpdate's
-		unsigned int n = (activeUnits.size() / UNIT_SLOWUPDATE_RATE) + 1;
-
-		for (; activeSlowUpdateUnit < activeUnits.size() && n != 0; ++activeSlowUpdateUnit) {
+		for (unsigned int n = (activeUnits.size() / UNIT_SLOWUPDATE_RATE) + 1; (activeSlowUpdateUnit < activeUnits.size() && n != 0); ++activeSlowUpdateUnit) {
 			CUnit* unit = activeUnits[activeSlowUpdateUnit];
 
 			UNIT_SANITY_CHECK(unit);
@@ -313,7 +323,7 @@ void CUnitHandler::Update()
 	{
 		SCOPED_TIMER("Sim::Unit::Update");
 
-		for (activeUpdateUnit = 0; activeUpdateUnit < activeUnits.size();++activeUpdateUnit) {
+		for (activeUpdateUnit = 0; activeUpdateUnit < activeUnits.size(); ++activeUpdateUnit) {
 			CUnit* unit = activeUnits[activeUpdateUnit];
 			UNIT_SANITY_CHECK(unit);
 			unit->Update();
@@ -325,7 +335,7 @@ void CUnitHandler::Update()
 	{
 		SCOPED_TIMER("Sim::Unit::Weapon");
 
-		for (activeUpdateUnit = 0; activeUpdateUnit < activeUnits.size();++activeUpdateUnit) {
+		for (activeUpdateUnit = 0; activeUpdateUnit < activeUnits.size(); ++activeUpdateUnit) {
 			CUnit* unit = activeUnits[activeUpdateUnit];
 			if (unit->CanUpdateWeapons()) {
 				for (CWeapon* w: unit->weapons) {
