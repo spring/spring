@@ -2671,20 +2671,17 @@ int LuaSyncedCtrl::RemoveBuildingDecal(lua_State* L)
 
 int LuaSyncedCtrl::AddGrass(lua_State* L)
 {
-	float3 pos(luaL_checkfloat(L, 1), 0.0f, luaL_checkfloat(L, 2));
-	pos.ClampInBounds();
+	const float3 pos(luaL_checkfloat(L, 1), 0.0f, luaL_checkfloat(L, 2));
 
-	grassDrawer->AddGrass(pos);
+	grassDrawer->AddGrass(pos.cClampInBounds());
 	return 0;
 }
 
-
 int LuaSyncedCtrl::RemoveGrass(lua_State* L)
 {
-	float3 pos(luaL_checkfloat(L, 1), 0.0f, luaL_checkfloat(L, 2));
-	pos.ClampInBounds();
+	const float3 pos(luaL_checkfloat(L, 1), 0.0f, luaL_checkfloat(L, 2));
 
-	grassDrawer->RemoveGrass(pos);
+	grassDrawer->RemoveGrass(pos.cClampInBounds());
 	return 0;
 }
 
