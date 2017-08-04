@@ -291,6 +291,7 @@ Bugfixes:
  - fix #2855 #5092 #5180 (jagged terrain shadows)
  - fix #5619 (area-commands not drawn on minimap)
  - fix #5617 (enable non-binary alpha-testing for unit icons)
+ - fix #5684 (Spring.{Add,Remove}Grass updates not taking effect until camera is moved)
  - fix #4164 (shield{Good,Bad}Color are RGBA float4's now)
  - fix #5587 (units in sharp holes sinking underground if also skidding)
  - fix #4723 (EmitSfx crash when referencing effect not defined in unitdef)

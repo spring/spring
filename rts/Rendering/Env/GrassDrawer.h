@@ -4,6 +4,8 @@
 #define GRASSDRAWER_H
 
 #include <vector>
+
+#include "Rendering/GL/VertexArray.h"
 #include "System/float3.h"
 #include "System/EventClient.h"
 
@@ -45,17 +47,21 @@ public:
 	};
 	struct GrassStruct {
 		GrassStruct()
-			: posX(0)
+			: va(128)
+			, posX(0)
 			, posZ(0)
-			, va(nullptr)
 			, lastSeen(0)
-			, lastDist(0.f)
+			, lastFar(0)
+			, lastDist(0.0f)
 		{}
-		~GrassStruct();
 
-		int posX, posZ;
-		CVertexArray* va;
+		CVertexArray va;
+
+		int posX;
+		int posZ;
+
 		int lastSeen;
+		int lastFar;
 		float lastDist;
 	};
 
@@ -87,15 +93,17 @@ protected:
 protected:
 	friend class CGrassBlockDrawer;
 
-	bool grassOff;
-
 	int blocksX;
 	int blocksY;
 
 	unsigned int grassDL;
 	unsigned int grassBladeTex;
 	unsigned int farTex;
-	CVertexArray* farnearVA;
+
+	CVertexArray farnearVA;
+
+	std::vector<GrassStruct> grass;
+	std::vector<unsigned char> grassMap;
 
 	std::vector<Shader::IProgramObject*> grassShaders;
 	Shader::IProgramObject* grassShader;
@@ -109,13 +117,13 @@ protected:
 	float3 oldCamPos;
 	float3 oldCamDir;
 	int lastVisibilityUpdate;
-	bool updateBillboards;
 
-	std::vector<GrassStruct> grass;
-	unsigned char* grassMap;
+	bool grassOff;
+	bool updateBillboards;
+	bool updateVisibility;
 };
 
-extern CGrassDrawer* grassDrawer; //FIXME can be nullptr
+extern CGrassDrawer* grassDrawer;
 
 
 #endif /* GRASSDRAWER_H */
