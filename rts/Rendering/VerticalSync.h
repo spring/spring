@@ -5,8 +5,6 @@
 
 class CVerticalSync {
 public:
-	CVerticalSync(): interval(0) {}
-
 	void WrapNotifyOnChange();
 	void WrapRemoveObserver();
 
@@ -19,7 +17,8 @@ public:
 	static CVerticalSync* GetInstance();
 
 private:
-	int interval;
+	// must start at a value that can not occur in config; see SetInterval
+	int interval = -1000;
 };
 
 #define verticalSync (CVerticalSync::GetInstance())
