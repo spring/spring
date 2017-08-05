@@ -211,7 +211,7 @@ Rendering
 
 UI:
  - show a splash-screen while initializing VFS; randomly chosen from any
-   .png images found under SplashScreenDir defined in springsettings.cfg
+   .png or .jpg images found under SplashScreenDir defined in springsettings.cfg
    (if SplashScreenDir is a relative path, Spring's CWD will be prepended)
  - Add FPSClampPos config for whether the engine should verify the camera doesn't hit ground/go too far
    this and other FPS camera configs can be changed midgame and will affect the next frame drawn.

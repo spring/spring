@@ -384,6 +384,9 @@ bool SpringApp::InitFileSystem()
 	const std::string ssd = std::move(FileSystem::EnsurePathSepAtEnd(configHandler->GetString("SplashScreenDir")));
 
 	std::vector<std::string> splashScreenFiles(dataDirsAccess.FindFiles(FileSystem::IsAbsolutePath(ssd)? ssd: cwd + ssd, "*.png", 0));
+	std::vector<std::string> jpg(dataDirsAccess.FindFiles(FileSystem::IsAbsolutePath(ssd)? ssd: cwd + ssd, "*.jpg", 0));
+	splashScreenFiles.insert(std::end(splashScreenFiles), std::begin(jpg), std::end(jpg));
+
 	spring::thread fsInitThread(FileSystemInitializer::InitializeThr, &ret);
 
 	if (!splashScreenFiles.empty()) {
