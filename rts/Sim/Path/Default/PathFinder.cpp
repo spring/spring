@@ -78,61 +78,63 @@ IPath::SearchResult CPathFinder::DoRawSearch(
 
 	const int2 strtBlk = BlockIdxToPos(mStartBlockIdx);
 	const int2 goalBlk = {int(pfDef.goalSquareX), int(pfDef.goalSquareZ)};
-	const int2 diffBlk = goalBlk - strtBlk;
+	const int2 diffBlk = {std::abs(goalBlk.x - strtBlk.x), std::abs(goalBlk.y - strtBlk.y)};
+	// has not been set yet, DoSearch is called after us
 	// const int2 goalBlk = BlockIdxToPos(mGoalBlockIdx);
 
-	const float pathLen = math::sqrt(Square(diffBlk.x) + Square(diffBlk.y));
-	const float testLen = math::ceil(pathLen);
-	const float halfLen = math::floor(testLen * 0.5f);
-
-	const float2 step = {diffBlk.x / pathLen, diffBlk.y / pathLen};
-	// const float2 mods = {CMoveMath::GetPosSpeedMod(moveDef, strtBlk.x, strtBlk.y), CMoveMath::GetPosSpeedMod(moveDef, goalBlk.x, goalBlk.y)};
-	const float2 lims = {pfDef.maxRawPathLen, pfDef.minRawSpeedMod};
-
-	if (pathLen > lims.x)
+	if ((Square(diffBlk.x) + Square(diffBlk.y)) > Square(pfDef.maxRawPathLen))
 		return IPath::Error;
 
-	int2 fwdTestBlk;
-	int2 revTestBlk;
-	int2 fwdPrevBlk = {-1, -1};
-	int2 revPrevBlk = {-1, -1};
+
+	constexpr auto StepFunc = [](const int2& dir, const int2& dif, int2& pos, int2& err) {
+		pos.x += (dir.x * (err.y >= 0));
+		pos.y += (dir.y * (err.y <= 0));
+		err.x -= (dif.y * (err.y >= 0));
+		err.x += (dif.x * (err.y <= 0));
+	};
+
+	const int2 fwdStepDir = int2{(goalBlk.x > strtBlk.x), (goalBlk.y > strtBlk.y)} * 2 - int2{1, 1};
+	const int2 revStepDir = int2{(strtBlk.x > goalBlk.x), (strtBlk.y > goalBlk.y)} * 2 - int2{1, 1};
+
+	int2 blkStepCtr = {diffBlk.x + diffBlk.y, diffBlk.x + diffBlk.y};
+	int2 fwdStepErr = {diffBlk.x - diffBlk.y, diffBlk.x - diffBlk.y};
+	int2 revStepErr = fwdStepErr;
+	int2 fwdTestBlk = strtBlk;
+	int2 revTestBlk = goalBlk;
 
 	// test bidirectionally so bad goal-squares cause early exits
 	// NOTE:
-	//   no need to integrate with backtracking in FinishSearch
+	//   no need for integration with backtracking in FinishSearch
 	//   the final "path" only contains startPos which is consumed
 	//   immediately, after which NextWayPoint keeps returning the
 	//   goal until owner reaches it
-	for (float i = 0.0f, j = testLen; i <= halfLen; ) {
-		assert(fwdPrevBlk.x == -1 || std::abs(fwdTestBlk.x - fwdPrevBlk.x) <= 1);
-		assert(fwdPrevBlk.y == -1 || std::abs(fwdTestBlk.y - fwdPrevBlk.y) <= 1);
-		assert(revPrevBlk.x == -1 || std::abs(revTestBlk.x - revPrevBlk.x) <= 1);
-		assert(revPrevBlk.y == -1 || std::abs(revTestBlk.y - revPrevBlk.y) <= 1);
-
-		if ((fwdTestBlk = strtBlk + step * i) != fwdPrevBlk) {
+	for (blkStepCtr += int2{1, 1}; (blkStepCtr.x > 0 && blkStepCtr.y > 0); blkStepCtr -= int2{1, 1}) {
+		{
 			if ((blockCheckFunc(moveDef, fwdTestBlk.x, fwdTestBlk.y, owner) & CMoveMath::BLOCK_STRUCTURE) != 0)
 				return IPath::Error;
-			if (CMoveMath::GetPosSpeedMod(moveDef, fwdTestBlk.x, fwdTestBlk.y) <= lims.y)
+			if (CMoveMath::GetPosSpeedMod(moveDef, fwdTestBlk.x, fwdTestBlk.y) <= pfDef.minRawSpeedMod)
 				return IPath::Error;
-
-			fwdPrevBlk = fwdTestBlk;
 		}
 
-		// odd-length tests meet in the middle
-		if (i >= j)
-			break;
-
-		if ((revTestBlk = strtBlk + step * j) != revPrevBlk) {
+		{
 			if ((blockCheckFunc(moveDef, revTestBlk.x, revTestBlk.y, owner) & CMoveMath::BLOCK_STRUCTURE) != 0)
 				return IPath::Error;
-			if (CMoveMath::GetPosSpeedMod(moveDef, revTestBlk.x, revTestBlk.y) <= lims.y)
+			if (CMoveMath::GetPosSpeedMod(moveDef, revTestBlk.x, revTestBlk.y) <= pfDef.minRawSpeedMod)
 				return IPath::Error;
-
-			revPrevBlk = revTestBlk;
 		}
 
-		i += 1.0f;
-		j -= 1.0f;
+		// NOTE: for odd-length paths, center square is tested twice
+		if ((std::abs(fwdTestBlk.x - revTestBlk.x) <= 1) && (std::abs(fwdTestBlk.y - revTestBlk.y) <= 1))
+			break;
+
+		StepFunc(fwdStepDir, diffBlk * 2, fwdTestBlk, fwdStepErr);
+		StepFunc(revStepDir, diffBlk * 2, revTestBlk, revStepErr);
+
+		// skip if exactly crossing a vertex (in either direction)
+		blkStepCtr.x -= (fwdStepErr.y == 0);
+		blkStepCtr.y -= (revStepErr.y == 0);
+		fwdStepErr.y  = fwdStepErr.x;
+		revStepErr.y  = revStepErr.x;
 	}
 
 	return IPath::Ok;
@@ -146,7 +148,7 @@ IPath::SearchResult CPathFinder::DoSearch(
 	bool foundGoal = false;
 
 	while (!openBlocks.empty() && (openBlockBuffer.GetSize() < maxBlocksToBeSearched)) {
-		// Get the open square with lowest expected path-cost.
+		// get the open square with lowest expected path-cost
 		PathNode* openSquare = const_cast<PathNode*>(openBlocks.top());
 		openBlocks.pop();
 
@@ -154,7 +156,7 @@ IPath::SearchResult CPathFinder::DoSearch(
 		if (blockStates.fCost[openSquare->nodeNum] != openSquare->fCost)
 			continue;
 
-		// Check if the goal is reached.
+		// check if the goal has been reached
 		if (pfDef.IsGoal(openSquare->nodePos.x, openSquare->nodePos.y)) {
 			mGoalBlockIdx = openSquare->nodeNum;
 			mGoalHeuristic = 0.0f;
@@ -397,17 +399,18 @@ IPath::SearchResult CPathFinder::FinishSearch(const MoveDef& moveDef, const CPat
 
 		// for path adjustment (cutting corners)
 		// make sure we don't match anything
-		std::deque<int2> previous = {square, square};
+		std::deque<int2> prvSquares = {square, square};
 
 		while (true) {
 			foundPath.squares.push_back(square);
 			foundPath.path.emplace_back(square.x * SQUARE_SIZE, CMoveMath::yLevel(moveDef, square.x, square.y), square.y * SQUARE_SIZE);
 
 			// try to cut corners
-			AdjustFoundPath(moveDef, foundPath, previous, square);
+			assert(prvSquares.size() == 2);
+			AdjustFoundPath(moveDef, foundPath, prvSquares[0], prvSquares[1], square);
 
-			previous.pop_front();
-			previous.push_back(square);
+			prvSquares.pop_front();
+			prvSquares.push_back(square);
 
 			if (blockIdx == mStartBlockIdx)
 				break;
@@ -457,59 +460,53 @@ void CPathFinder::SmoothMidWaypoint(
 	const int tstSqrIdx = BlockPosToIdx(testSqr);
 	const int prvSqrIdx = BlockPosToIdx(prevSqr);
 
-	if (
-		   ((blockStates.nodeMask[tstSqrIdx] & PATHOPT_BLOCKED) == 0)
-		&& (blockStates.fCost[tstSqrIdx] <= COSTMOD * blockStates.fCost[prvSqrIdx])
-	) {
-		const float3& p2 = foundPath.path[foundPath.path.size() - 3];
-		      float3& p1 = foundPath.path[foundPath.path.size() - 2];
-		const float3& p0 = foundPath.path[foundPath.path.size() - 1];
+	if ((blockStates.nodeMask[tstSqrIdx] & PATHOPT_BLOCKED) != 0)
+		return;
+	if (blockStates.fCost[tstSqrIdx] > (COSTMOD * blockStates.fCost[prvSqrIdx]))
+		return;
 
-		FixupPath3Pts(moveDef, p0, p1, p2);
-	}
+	const float3& p2 = foundPath.path[foundPath.path.size() - 3];
+	      float3& p1 = foundPath.path[foundPath.path.size() - 2];
+	const float3& p0 = foundPath.path[foundPath.path.size() - 1];
+
+	FixupPath3Pts(moveDef, p0, p1, p2);
 }
 
 /*
- * This function takes the current & the last 2 waypoints and detects when they form
- * a "soft" curve. And if so, it takes the mid waypoint of those 3 and smooths it
- * between the one before and the current waypoint (so the soft curve gets even smoother).
- * Hint: hard curves (e.g. `move North then West`) can't and will not smoothed. Only soft ones
- *  like `move North then North-West` can.
+ * This function takes the current and previous two waypoints and detects when they form a
+ * "soft" (45 degrees, i.e. north-then-northwest) curve. If so, it then smooths the middle
+ * waypoint to decrease the angle between p1-p2 and p2-p0. Hard turns like north-then-west
+ * can and will not be smoothed.
  */
 void CPathFinder::AdjustFoundPath(
 	const MoveDef& moveDef,
 	IPath::Path& foundPath,
-	const std::deque<int2>& previous,
-	int2 curSquare
+	const int2& p1, // two squares before p0 (current)
+	const int2& p2, // one square before p0 (current)
+	const int2& p0
 ) const {
-	assert(previous.size() == 2);
-	const int2& p1 = previous[0]; // two before curSquare
-	const int2& p2 = previous[1]; // one before curSquare
-
-	int2 dirNow = (p2 - curSquare);
-	int2 dirPrv = (p1 - curSquare) - dirNow;
-	assert(dirNow.x % PATH_NODE_SPACING == 0);
-	assert(dirNow.y % PATH_NODE_SPACING == 0);
-	assert(dirPrv.x % PATH_NODE_SPACING == 0);
-	assert(dirPrv.y % PATH_NODE_SPACING == 0);
-	dirNow /= PATH_NODE_SPACING;
-	dirPrv /= PATH_NODE_SPACING;
+	int2 curDir = (p2 - p0);
+	int2 prvDir = (p1 - p0) - curDir; // FIXME?
+	assert((curDir.x % PATH_NODE_SPACING) == 0);
+	assert((curDir.y % PATH_NODE_SPACING) == 0);
+	assert((prvDir.x % PATH_NODE_SPACING) == 0);
+	assert((prvDir.y % PATH_NODE_SPACING) == 0);
+	curDir /= PATH_NODE_SPACING;
+	prvDir /= PATH_NODE_SPACING;
 
 	if (foundPath.path.size() < 3)
 		return;
 
 	for (unsigned pathDir = PATHDIR_LEFT; pathDir < PATH_DIRECTIONS; ++pathDir) {
-		// find the pathDir
-		if (dirNow != PE_DIRECTION_VECTORS[pathDir])
+		// find the pathDir matching the p2-p0 segment
+		if (curDir != PE_DIRECTION_VECTORS[pathDir])
 			continue;
 
-		// only smooth "soft" curves (e.g. `move North-East then North`)
-		if (
-			   (dirPrv == PE_DIRECTION_VECTORS[(pathDir + PATH_DIRECTIONS - 1) % PATH_DIRECTIONS])
-			|| (dirPrv == PE_DIRECTION_VECTORS[(pathDir                   + 1) % PATH_DIRECTIONS])
-		) {
-			SmoothMidWaypoint(curSquare + (dirPrv * PATH_NODE_SPACING), p2, moveDef, foundPath);
-		}
+		const bool lhTurn = (prvDir == PE_DIRECTION_VECTORS[(pathDir + PATH_DIRECTIONS - 1) % PATH_DIRECTIONS]);
+		const bool rhTurn = (prvDir == PE_DIRECTION_VECTORS[(pathDir                   + 1) % PATH_DIRECTIONS]);
+
+		if (rhTurn || lhTurn)
+			SmoothMidWaypoint(p0 + (prvDir * PATH_NODE_SPACING), p2, moveDef, foundPath);
 
 		break;
 	}

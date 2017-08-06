@@ -89,8 +89,9 @@ private:
 	void AdjustFoundPath(
 		const MoveDef&,
 		IPath::Path&,
-		const std::deque<int2>& previous,
-		int2 curSquare
+		const int2& p1,
+		const int2& p2,
+		const int2& p0
 	) const;
 
 	inline void SmoothMidWaypoint(
