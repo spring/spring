@@ -86,7 +86,7 @@ IPath::SearchResult CPathFinder::DoRawSearch(
 		return IPath::Error;
 
 
-	constexpr auto StepFunc = [](const int2& dir, const int2& dif, int2& pos, int2& err) {
+	const/*expr*/ auto StepFunc = [](const int2& dir, const int2& dif, int2& pos, int2& err) {
 		pos.x += (dir.x * (err.y >= 0));
 		pos.y += (dir.y * (err.y <= 0));
 		err.x -= (dif.y * (err.y >= 0));
