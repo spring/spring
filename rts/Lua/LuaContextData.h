@@ -21,10 +21,10 @@ class LuaParser;
 
 struct luaContextData {
 public:
-	luaContextData(bool sharedPool)
+	luaContextData(bool sharedPool, bool stateOwned)
 	: owner(nullptr)
 	, luamutex(nullptr)
-	, memPool(LuaMemPool::AcquirePtr(sharedPool))
+	, memPool(LuaMemPool::AcquirePtr(sharedPool, stateOwned))
 	, parser(nullptr)
 
 	, synced(false)
@@ -49,7 +49,7 @@ public:
 		if (owner != nullptr)
 			memPool->LogStats((((CEventClient*) owner)->GetName()).c_str(), synced? "synced": "unsynced");
 
-		LuaMemPool::ReleasePtr(memPool);
+		LuaMemPool::ReleasePtr(memPool, owner);
 	}
 
 	luaContextData(const luaContextData& lcd) = delete;

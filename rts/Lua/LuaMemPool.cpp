@@ -26,6 +26,7 @@ static LuaMemPool gSharedPool(-1);
 
 static std::vector<LuaMemPool*> gPools;
 static std::vector<size_t> gIndcs;
+static std::atomic<size_t> gCount = {0};
 static spring::mutex gMutex;
 
 
@@ -35,10 +36,12 @@ static spring::mutex gMutex;
 static bool AllocInternal(size_t size) { return ((size * CHECK_MAX_ALLOC_SIZE) <= LuaMemPool::MAX_ALLOC_SIZE); }
 static bool AllocExternal(size_t size) { return (!LuaMemPool::enabled || !AllocInternal(size)); }
 
+size_t LuaMemPool::GetPoolCount() { return (gCount.load()); }
 
-LuaMemPool* LuaMemPool::AcquirePtr(bool shared)
+LuaMemPool* LuaMemPool::GetSharedPtr() { return &gSharedPool; }
+LuaMemPool* LuaMemPool::AcquirePtr(bool shared, bool owned)
 {
-	LuaMemPool* p = GetSharedPoolPtr();
+	LuaMemPool* p = GetSharedPtr();
 
 	if (!shared) {
 		// caller can be any thread; cf LuaParser context-data ctors
@@ -56,13 +59,24 @@ LuaMemPool* LuaMemPool::AcquirePtr(bool shared)
 	}
 
 	// only wipe statistics; blocks will be recycled
-	p->ClearStats((p->GetSharedCount() += shared) <= 1);
+	// p->ClearStats((p->GetSharedCount() += shared) <= 1);
+
+	// wipe statistics and blocks if we are the first to request p
+	if ((p->GetSharedCount() += shared) <= 1) {
+		p->Clear();
+		p->Reserve(16384);
+	}
+
+	// track the number of active state-owned pools (for /debug)
+	gCount += owned;
 	return p;
 }
 
-void LuaMemPool::ReleasePtr(LuaMemPool* p)
+void LuaMemPool::ReleasePtr(LuaMemPool* p, const CLuaHandle* o)
 {
-	if (p == GetSharedPoolPtr()) {
+	gCount -= (o != nullptr);
+
+	if (p == GetSharedPtr()) {
 		p->GetSharedCount() -= 1;
 		return;
 	}
@@ -72,6 +86,7 @@ void LuaMemPool::ReleasePtr(LuaMemPool* p)
 	gMutex.unlock();
 }
 
+void LuaMemPool::FreeShared() { gSharedPool.Clear(); }
 void LuaMemPool::InitStatic(bool enable) { LuaMemPool::enabled = enable; }
 void LuaMemPool::KillStatic()
 {
@@ -83,8 +98,6 @@ void LuaMemPool::KillStatic()
 	gIndcs.clear();
 }
 
-LuaMemPool* LuaMemPool::GetSharedPoolPtr() { return &gSharedPool; }
-
 
 
 LuaMemPool::LuaMemPool(size_t lmpIndex): globalIndex(lmpIndex)
@@ -92,17 +105,7 @@ LuaMemPool::LuaMemPool(size_t lmpIndex): globalIndex(lmpIndex)
 	if (!LuaMemPool::enabled)
 		return;
 
-	freeChunksTable.reserve(16384);
-	chunkCountTable.reserve(16384);
-
-	#if 1
-	allocBlocks.reserve(1024);
-	#endif
-}
-
-LuaMemPool::~LuaMemPool()
-{
-	DeleteBlocks();
+	Reserve(16384);
 }
 
 
@@ -131,9 +134,9 @@ void LuaMemPool::DeleteBlocks()
 	for (void* p: allocBlocks) {
 		::operator delete(p);
 	}
-	#endif
 
-	ClearStats(true);
+	allocBlocks.clear();
+	#endif
 }
 
 void* LuaMemPool::Alloc(size_t size)

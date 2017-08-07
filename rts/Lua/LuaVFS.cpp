@@ -96,14 +96,14 @@ bool LuaVFS::PushUnsynced(lua_State* L)
 const string LuaVFS::GetModes(lua_State* L, int index, bool synced)
 {
 	const char* defMode = SPRING_VFS_RAW_FIRST;
-	if (synced && !CLuaHandle::GetDevMode()) {
+
+	if (synced && !CLuaHandle::GetDevMode())
 		defMode = SPRING_VFS_ZIP;
-	}
 
 	string modes = luaL_optstring(L, index, defMode);
-	if (synced && !CLuaHandle::GetDevMode()) {
+
+	if (synced && !CLuaHandle::GetDevMode())
 		modes = CFileHandler::ForbidModes(modes, SPRING_VFS_RAW SPRING_VFS_MENU);
-	}
 
 	return modes;
 }
@@ -111,18 +111,16 @@ const string LuaVFS::GetModes(lua_State* L, int index, bool synced)
 
 /******************************************************************************/
 
-static bool LoadFileWithModes(const string& filename, string& data,
-                             const string& modes)
+static bool LoadFileWithModes(const string& filename, string& data, const string& modes)
 {
 	CFileHandler fh(filename, modes);
-	if (!fh.FileExists()) {
+
+	if (!fh.FileExists())
 		return false;
-	}
+
 	data.clear();
-	if (!fh.LoadStringData(data)) {
-		return false;
-	}
-	return true;
+
+	return (fh.LoadStringData(data));
 }
 
 
@@ -205,15 +203,11 @@ int LuaVFS::UnsyncInclude(lua_State* L)
 int LuaVFS::LoadFile(lua_State* L, bool synced)
 {
 	const string filename = luaL_checkstring(L, 1);
-	if (!LuaIO::IsSimplePath(filename)) {
-		// the path may point to a file or dir outside of any data-dir
-//FIXME		return 0;
-	}
-
-	const string modes = GetModes(L, 2, synced);
+	// the path may point to a file or dir outside of any data-dir
+	// if (!LuaIO::IsSimplePath(filename)) return 0;
 
 	string data;
-	if (LoadFileWithModes(filename, data, modes)) {
+	if (LoadFileWithModes(filename, data, GetModes(L, 2, synced))) {
 		lua_pushsstring(L, data);
 		return 1;
 	}
@@ -241,14 +235,9 @@ int LuaVFS::FileExists(lua_State* L, bool synced)
 
 	// FIXME: return 0, keep searches within the Spring directory
 	// the path may point to a file or dir outside of any data-dir
-	if (!LuaIO::IsSimplePath(filename)) {}
+	// if (!LuaIO::IsSimplePath(filename)) return 0;
 
-	const std::string& modes = GetModes(L, 2, synced);
-
-	//CFileHandler fh(filename, modes);
-	//lua_pushboolean(L, fh.FileExists());
-
-	lua_pushboolean(L, CFileHandler::FileExists(filename, modes));
+	lua_pushboolean(L, CFileHandler::FileExists(filename, GetModes(L, 2, synced)));
 	return 1;
 }
 
@@ -273,7 +262,7 @@ int LuaVFS::DirList(lua_State* L, bool synced)
 
 	// FIXME: return 0, keep searches within the Spring directory
 	// the path may point to a file or dir outside of any data-dir
-	if (!LuaIO::IsSimplePath(dir)) {}
+	// if (!LuaIO::IsSimplePath(dir)) return 0;
 
 	const std::string& pattern = luaL_optstring(L, 2, "*");
 	const std::string& modes = GetModes(L, 3, synced);
@@ -303,7 +292,7 @@ int LuaVFS::SubDirs(lua_State* L, bool synced)
 
 	// FIXME: return 0, keep searches within the Spring directory
 	// the path may point to a file or dir outside of any data-dir
-	if (!LuaIO::IsSimplePath(dir)) {}
+	// if (!LuaIO::IsSimplePath(dir)) return 0;
 
 	const std::string& pattern = luaL_optstring(L, 2, "*");
 	const std::string& modes = GetModes(L, 3, synced);
