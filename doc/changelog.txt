@@ -245,6 +245,7 @@ Bugfixes:
  - fix ScopedMtTimer thread-safety
  - fix LosMap thread-safety
  - fix PathTexture thread-safety
+ - fix RoamMeshDrawer thread-safety
  - fix race-condition between screenshot counter and libIL
  - fix sound-thread occasionally accessing a deleted pointer on exit
  - fix double-free in CBitmap's move-ctor for DDS images

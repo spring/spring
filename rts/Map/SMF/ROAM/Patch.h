@@ -135,8 +135,8 @@ protected:
 
 private:
 	// recursive functions
-	bool Split(TriTreeNode* tri);
-	void RecursTessellate(TriTreeNode* tri, const int2 left, const int2 right, const int2 apex, const int node);
+	bool Split(CTriNodePool* triPool, TriTreeNode* tri);
+	void RecursTessellate(CTriNodePool* triPool, TriTreeNode* tri, const int2 left, const int2 right, const int2 apex, const int node);
 	void RecursRender(const TriTreeNode* tri, const int2 left, const int2 right, const int2 apex);
 
 	float RecursComputeVariance(
@@ -168,7 +168,6 @@ private:
 
 	// which variance we are currently using [only valid during the Tessellate and ComputeVariance passes]
 	float* currentVariance;
-	CTriNodePool* currentPool;
 
 	// does the variance-tree need to be recalculated for this Patch?
 	bool isDirty;
