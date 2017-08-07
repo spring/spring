@@ -8,10 +8,11 @@
 
 #include "System/UnorderedMap.hpp"
 
+class CLuaHandle;
 class LuaMemPool {
 public:
 	LuaMemPool(size_t lmpIndex);
-	~LuaMemPool();
+	~LuaMemPool() { Clear(); }
 
 	LuaMemPool(const LuaMemPool& p) = delete;
 	LuaMemPool(LuaMemPool&& p) = delete;
@@ -20,16 +21,32 @@ public:
 	LuaMemPool& operator = (LuaMemPool&& p) = delete;
 
 public:
-	static LuaMemPool* AcquirePtr(bool shared);
-	static void ReleasePtr(LuaMemPool* p);
+	static size_t GetPoolCount();
 
+	static LuaMemPool* GetSharedPtr();
+	static LuaMemPool* AcquirePtr(bool shared, bool owned);
+	static void ReleasePtr(LuaMemPool* p, const CLuaHandle* o);
+
+	static void FreeShared();
 	static void InitStatic(bool enable);
 	static void KillStatic();
 
-	static const LuaMemPool* GetSharedPoolConstPtr() { return (GetSharedPoolPtr()); }
-	static       LuaMemPool* GetSharedPoolPtr();
-
 public:
+	void Clear() {
+		DeleteBlocks();
+		ClearStats(true);
+		ClearTables();
+	}
+
+	void Reserve(size_t size) {
+		freeChunksTable.reserve(size);
+		chunkCountTable.reserve(size);
+
+		#if 1
+		allocBlocks.reserve(size / 16);
+		#endif
+	}
+
 	void DeleteBlocks();
 	void* Alloc(size_t size);
 	void* Realloc(void* ptr, size_t nsize, size_t osize);
@@ -42,6 +59,11 @@ public:
 		allocStats[STAT_NRA] *= (1 - b);
 		allocStats[STAT_NCB] *= (1 - b);
 		allocStats[STAT_NBB] *= (1 - b);
+	}
+
+	void ClearTables() {
+		freeChunksTable.clear();
+		chunkCountTable.clear();
 	}
 
 	size_t  GetGlobalIndex() const { return globalIndex; }

@@ -83,7 +83,11 @@ CLuaHandle::CLuaHandle(const string& _name, int _order, bool _userMode, bool _sy
 	: CEventClient(_name, _order, _synced)
 	, userMode(_userMode)
 	, killMe(false)
-	, D(_name != "LuaIntro") // LoadingMT=1 protection
+	// no shared pool for LuaIntro to protect against LoadingMT=1
+	// do not use it for LuaMenu either; too many blocks allocated
+	// by *other* states end up not being recycled so we clear the
+	// shared pool on reload
+	, D(_name != "LuaIntro" && name != "LuaMenu", true)
 	, callinErrors(0)
 {
 	D.owner = this;
