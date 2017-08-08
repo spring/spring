@@ -5060,7 +5060,7 @@ int LuaSyncedRead::GetTerrainTypeData(lua_State* L)
 int LuaSyncedRead::GetGrass(lua_State* L)
 {
 	const float3 pos(luaL_checkfloat(L, 1), 0.0f, luaL_checkfloat(L, 2));
-	lua_pushnumber(L, grassDrawer->GetGrass(pos.cClampInBounds()));
+	lua_pushboolean(L, grassDrawer->GetGrass(pos.cClampInBounds()));
 	return 1;
 }
 
