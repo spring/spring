@@ -157,18 +157,20 @@ float COggStream::GetTotalTime()
 // display Ogg info and comments
 void COggStream::DisplayInfo()
 {
-	LOG("version:           %d", vorbisInfo->version);
-	LOG("channels:          %d", vorbisInfo->channels);
-	LOG("time (sec):        %lf", ov_time_total(&ovFile, -1));
-	LOG("rate (Hz):         %ld", vorbisInfo->rate);
-	LOG("bitrate (upper):   %ld", vorbisInfo->bitrate_upper);
-	LOG("bitrate (nominal): %ld", vorbisInfo->bitrate_nominal);
-	LOG("bitrate (lower):   %ld", vorbisInfo->bitrate_lower);
-	LOG("bitrate (window):  %ld", vorbisInfo->bitrate_window);
-	LOG("vendor:            %s", vendor.c_str());
+	LOG("[OggStream::%s]", __func__);
+	LOG("\tversion:           %d", vorbisInfo->version);
+	LOG("\tchannels:          %d", vorbisInfo->channels);
+	LOG("\ttime (sec):        %lf", ov_time_total(&ovFile, -1));
+	LOG("\trate (Hz):         %ld", vorbisInfo->rate);
+	LOG("\tbitrate (upper):   %ld", vorbisInfo->bitrate_upper);
+	LOG("\tbitrate (nominal): %ld", vorbisInfo->bitrate_nominal);
+	LOG("\tbitrate (lower):   %ld", vorbisInfo->bitrate_lower);
+	LOG("\tbitrate (window):  %ld", vorbisInfo->bitrate_window);
+	LOG("\tvendor:            %s", vendor.c_str());
+	LOG("\ttags:              %lu", static_cast<unsigned long>(vorbisTags.size()));
 
 	for (const std::string& s: vorbisTags) {
-		LOG("%s", s.c_str());
+		LOG("\t\t%s", s.c_str());
 	}
 }
 
@@ -179,10 +181,20 @@ void COggStream::ReleaseBuffers()
 	stopped = true;
 	paused = false;
 
+	#if 0
 	EmptyBuffers();
+	#else
+	// alDeleteBuffers fails with AL_INVALID_OPERATION if either buffer
+	// is still bound to source, while alSourceUnqueueBuffers sometimes
+	// generates an AL_INVALID_VALUE but doesn't appear to be necessary
+	// since we can just detach both of them directly
+	alSourcei(source, AL_BUFFER, AL_NONE);
+	CheckError("[COggStream::ReleaseBuffers][1]");
+	#endif
 
 	alDeleteBuffers(2, buffers);
-	CheckError("[COggStream::ReleaseBuffers]");
+	CheckError("[COggStream::ReleaseBuffers][2]");
+	memset(buffers, 0, sizeof(buffers));
 
 	ov_clear(&ovFile);
 }
@@ -309,9 +321,12 @@ bool COggStream::DecodeStream(ALuint buffer)
 }
 
 
-// dequeue any buffers pending on source
+// dequeue any buffers pending on source (unused, see ReleaseBuffers)
 void COggStream::EmptyBuffers()
 {
+	assert(source != 0);
+
+	#if 1
 	int queuedBuffers = 0;
 
 	alGetSourcei(source, AL_BUFFERS_QUEUED, &queuedBuffers);
@@ -322,6 +337,13 @@ void COggStream::EmptyBuffers()
 
 		alSourceUnqueueBuffers(source, 1, &buffer);
 		CheckError("[COggStream::EmptyBuffers][2]");
+		// done by caller
+		// alDeleteBuffers(1, &buffer);
 	}
+	#else
+	// assumes both are still pending
+	alSourceUnqueueBuffers(source, 2, buffers);
+	CheckError("[COggStream::EmptyBuffers]");
+	#endif
 }
 

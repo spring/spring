@@ -231,18 +231,18 @@ void Patch::VBOUploadVertices()
 // Split a single Triangle and link it into the mesh.
 // Will correctly force-split diamonds.
 //
-bool Patch::Split(CTriNodePool* triPool, TriTreeNode* tri)
+bool Patch::Split(TriTreeNode* tri)
 {
 	// we are already split, no need to do it again
 	if (!tri->IsLeaf())
 		return true;
 
-	// if this triangle is not in a proper diamond, force split our base neighbor
+	// if this triangle is not in a proper diamond, force split our base-neighbor
 	if (tri->BaseNeighbor != nullptr && (tri->BaseNeighbor->BaseNeighbor != tri))
-		Split(triPool, tri->BaseNeighbor);
+		Split(tri->BaseNeighbor);
 
 	// create children and link into mesh, or make this triangle a leaf
-	if (!triPool->Allocate(tri->LeftChild, tri->RightChild))
+	if (!curTriPool->Allocate(tri->LeftChild, tri->RightChild))
 		return false;
 
 	assert(tri->IsBranch());
@@ -288,7 +288,7 @@ bool Patch::Split(CTriNodePool* triPool, TriTreeNode* tri)
 			tri->RightChild->LeftNeighbor = tri->BaseNeighbor->LeftChild;
 		} else {
 			// base Neighbor (in a diamond with us) was not split yet, do so now
-			Split(triPool, tri->BaseNeighbor);
+			Split(tri->BaseNeighbor);
 		}
 	} else {
 		// edge triangle, trivial case
@@ -304,7 +304,7 @@ bool Patch::Split(CTriNodePool* triPool, TriTreeNode* tri)
 // Tessellate a Patch.
 // Will continue to split until the variance metric is met.
 //
-void Patch::RecursTessellate(CTriNodePool* triPool, TriTreeNode* tri, const int2 left, const int2 right, const int2 apex, const int node)
+void Patch::RecursTessellate(TriTreeNode* tri, const int2 left, const int2 right, const int2 apex, const int node)
 {
 	// bail if we can not tessellate further in at least one dimension
 	if ((abs(left.x - right.x) <= 1) && (abs(left.y - right.y) <= 1))
@@ -329,14 +329,14 @@ void Patch::RecursTessellate(CTriNodePool* triPool, TriTreeNode* tri, const int2
 	if (triVariance <= 1.0f)
 		return;
 
-	Split(triPool, tri);
+	Split(tri);
 
 	if (tri->IsBranch()) {
 		// triangle was split, also try to split its children
 		const int2 center = {(left.x + right.x) >> 1, (left.y + right.y) >> 1};
 
-		RecursTessellate(triPool, tri->LeftChild,  apex,  left, center, (node << 1)    );
-		RecursTessellate(triPool, tri->RightChild, right, apex, center, (node << 1) + 1);
+		RecursTessellate(tri->LeftChild,  apex,  left, center, (node << 1)    );
+		RecursTessellate(tri->RightChild, right, apex, center, (node << 1) + 1);
 	}
 }
 
@@ -487,8 +487,10 @@ bool Patch::Tessellate(const float3& camPos, int viewRadius, bool shadowPass)
 	midPos.z = (coors.y + PATCH_SIZE / 2) * SQUARE_SIZE;
 	midPos.y = (readMap->GetCurrMinHeight() + readMap->GetCurrMaxHeight()) * 0.5f;
 
-	// Tessellate is called from multiple threads; this can not be a member
-	CTriNodePool* curTriPool = CTriNodePool::GetPool(shadowPass);
+	// Tessellate is called from multiple threads during both passes
+	// caller ensures that two patches that are neighbors or share a
+	// neighbor are never touched concurrently (crucial for ::Split)
+	curTriPool = CTriNodePool::GetPool(shadowPass);
 
 	// MAGIC NUMBER 1: scale factor to reduce LOD with camera distance
 	camDistLODFactor  = midPos.distance(camPos);
@@ -510,7 +512,7 @@ bool Patch::Tessellate(const float3& camPos, int viewRadius, bool shadowPass)
 		const int2 rght = {coors.x + PATCH_SIZE, coors.y             };
 		const int2 apex = {coors.x,              coors.y             };
 
-		RecursTessellate(curTriPool, &baseLeft, left, rght, apex, 1);
+		RecursTessellate(&baseLeft, left, rght, apex, 1);
 	}
 	{
 		currentVariance = &varianceRight[0];
@@ -519,7 +521,7 @@ bool Patch::Tessellate(const float3& camPos, int viewRadius, bool shadowPass)
 		const int2 rght = {coors.x,              coors.y + PATCH_SIZE};
 		const int2 apex = {coors.x + PATCH_SIZE, coors.y + PATCH_SIZE};
 
-		RecursTessellate(curTriPool, &baseRight, left, rght, apex, 1);
+		RecursTessellate(&baseRight, left, rght, apex, 1);
 	}
 
 	return (!curTriPool->OutOfNodes());
