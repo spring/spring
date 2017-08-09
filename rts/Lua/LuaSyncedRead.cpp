@@ -23,6 +23,7 @@
 #include "Map/MapDamage.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
+#include "Rendering/Env/GrassDrawer.h"
 #include "Rendering/Models/IModelParser.h"
 #include "Sim/Misc/DamageArrayHandler.h"
 #include "Sim/Misc/SideParser.h"
@@ -305,6 +306,7 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetGroundBlocked);
 	REGISTER_LUA_CFUNC(GetGroundExtremes);
 	REGISTER_LUA_CFUNC(GetTerrainTypeData);
+	REGISTER_LUA_CFUNC(GetGrass);
 
 	REGISTER_LUA_CFUNC(GetSmoothMeshHeight);
 
@@ -5053,6 +5055,13 @@ int LuaSyncedRead::GetTerrainTypeData(lua_State* L)
 		return 0;
 
 	return (PushTerrainTypeData(L, &mapInfo->terrainTypes[tti], false));
+}
+
+int LuaSyncedRead::GetGrass(lua_State* L)
+{
+	const float3 pos(luaL_checkfloat(L, 1), 0.0f, luaL_checkfloat(L, 2));
+	lua_pushnumber(L, grassDrawer->GetGrass(pos.cClampInBounds()));
+	return 1;
 }
 
 /******************************************************************************/

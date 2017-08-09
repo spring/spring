@@ -1064,6 +1064,19 @@ void CGrassDrawer::RemoveGrass(const float3& pos)
 	ResetPos(pos);
 }
 
+unsigned char CGrassDrawer::GetGrass(const float3& pos)
+{
+	if (grassOff)
+		return -1;
+
+	const int x = int(pos.x) / GSSSQ;
+	const int z = int(pos.z) / GSSSQ;
+	assert(x >= 0 && x < (mapDims.mapx / grassSquareSize));
+	assert(z >= 0 && z < (mapDims.mapy / grassSquareSize));
+
+	return grassMap[z * mapDims.mapx / grassSquareSize + x];
+}
+
 
 void CGrassDrawer::UnsyncedHeightMapUpdate(const SRectangle& rect)
 {

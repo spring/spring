@@ -192,6 +192,7 @@ Lua:
  - block Spring.GetRadarErrorParams for enemy allyteams (patch by Sprunk)
  - implement Path.GetPathNodeCosts
  - Spring.GetMouseState now returns a sixth value indicating if the cursor is offscreen
+ - add Spring.GetGrass(x, y) -> 0|1 to obtain grass map information
 
 Rendering
  - add new terrain-mesh renderer (faster than existing code, but does not respect cliffs well)
@@ -322,7 +323,7 @@ Bugfixes:
  - fix #5423 (random number generation in defs.lua)
  - fix #5396 (units lacking sensors on fire-platforms)
  - fix #5339 (crash when placing a geothermal)
- - fix #5338 (grid-patterns in unsynced heightmap)    
+ - fix #5338 (grid-patterns in unsynced heightmap)
  - fix #5644 (send BuggerOff notes from opened-but-blocked factories again)
  - fix #4745 (broken transport-unloading with non-zero unloadSpread)
  - fix #4481 (check MoveDef maxSlope for units built by mobile constructors)

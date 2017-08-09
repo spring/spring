@@ -28,6 +28,7 @@ public:
 	void AddGrass(const float3& pos);
 	void ResetPos(const float3& pos);
 	void RemoveGrass(const float3& pos);
+	unsigned char GetGrass(const float3& pos);
 
 	void ChangeDetail(int detail);
 
