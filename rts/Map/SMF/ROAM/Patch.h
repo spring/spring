@@ -43,8 +43,8 @@ struct TriTreeNode
 	{}
 
 	// all non-leaf nodes have both children, so just check for one
-	bool IsLeaf() const { return (LeftChild == nullptr); }
-	bool IsBranch() const { return (RightChild != nullptr); }
+	bool IsLeaf() const { assert(RightChild == nullptr); return (LeftChild == nullptr); }
+	bool IsBranch() const { assert(LeftChild != nullptr); return (RightChild != nullptr); }
 
 	TriTreeNode* LeftChild;
 	TriTreeNode* RightChild;
@@ -135,8 +135,8 @@ protected:
 
 private:
 	// recursive functions
-	bool Split(CTriNodePool* triPool, TriTreeNode* tri);
-	void RecursTessellate(CTriNodePool* triPool, TriTreeNode* tri, const int2 left, const int2 right, const int2 apex, const int node);
+	bool Split(TriTreeNode* tri);
+	void RecursTessellate(TriTreeNode* tri, const int2 left, const int2 right, const int2 apex, const int node);
 	void RecursRender(const TriTreeNode* tri, const int2 left, const int2 right, const int2 apex);
 
 	float RecursComputeVariance(
@@ -165,6 +165,9 @@ private:
 	static RenderMode renderMode;
 
 	CSMFGroundDrawer* smfGroundDrawer;
+
+	// pool used during Tessellate; each invoked Split allocates from this
+	CTriNodePool* curTriPool;
 
 	// which variance we are currently using [only valid during the Tessellate and ComputeVariance passes]
 	float* currentVariance;
