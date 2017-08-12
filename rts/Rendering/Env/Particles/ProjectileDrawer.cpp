@@ -631,6 +631,7 @@ void CProjectileDrawer::DrawShadowPass()
 	Shader::IProgramObject* po =
 		shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_PROJECTILE);
 
+	glPushAttrib(GL_ENABLE_BIT);
 	glDisable(GL_TEXTURE_2D);
 	po->Enable();
 
@@ -652,6 +653,7 @@ void CProjectileDrawer::DrawShadowPass()
 		glAlphaFunc(GL_GREATER, 0.3f);
 		glEnable(GL_ALPHA_TEST);
 		glShadeModel(GL_SMOOTH);
+		// glDisable(GL_CULL_FACE);
 
 		textureAtlas->BindTexture();
 		fxVA->DrawArrayTC(GL_QUADS);
@@ -659,8 +661,7 @@ void CProjectileDrawer::DrawShadowPass()
 
 	po->Disable();
 	glShadeModel(GL_FLAT);
-	glDisable(GL_ALPHA_TEST);
-	glDisable(GL_TEXTURE_2D);
+	glPopAttrib();
 }
 
 

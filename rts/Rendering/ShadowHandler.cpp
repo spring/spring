@@ -480,11 +480,17 @@ void CShadowHandler::SetShadowMatrix(CCamera* playerCam, CCamera* shadowCam)
 	//
 	// we have two options: either place the camera such that it *looks at* projMidPos
 	// (along lightMatrix.GetZ()) or such that it is *at or behind* projMidPos looking
-	// in the inverse direction (the latter is chosen here)
+	// in the inverse direction (the latter is chosen here since this matrix determines
+	// the shadow-camera's position and thereby terrain tessellation shadow-LOD)
+	// NOTE:
+	//   should be -X-Z, but particle-quads are sensitive to right being flipped
+	//   we can omit inverting X (does not impact VC) or disable PD face-culling
+	//   or just let objects end up behind znear since InView only tests against
+	//   zfar
 	viewMatrix[SHADOWMAT_TYPE_CULLING].LoadIdentity();
-	viewMatrix[SHADOWMAT_TYPE_CULLING].SetX(-std::move(lightMatrix.GetX()));
-	viewMatrix[SHADOWMAT_TYPE_CULLING].SetY( std::move(lightMatrix.GetY()));
-	viewMatrix[SHADOWMAT_TYPE_CULLING].SetZ(-std::move(lightMatrix.GetZ()));
+	viewMatrix[SHADOWMAT_TYPE_CULLING].SetX(std::move(lightMatrix.GetX()));
+	viewMatrix[SHADOWMAT_TYPE_CULLING].SetY(std::move(lightMatrix.GetY()));
+	viewMatrix[SHADOWMAT_TYPE_CULLING].SetZ(std::move(lightMatrix.GetZ()));
 	viewMatrix[SHADOWMAT_TYPE_CULLING].SetPos(projMidPos[2]);
 	#endif
 

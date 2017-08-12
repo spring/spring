@@ -22,7 +22,7 @@ CONFIG(bool, EdgeMoveDynamic)
 
 
 
-// cameras[ACTIVE] just stores which of the others is active
+// cameras[ACTIVE] is just used to store which of the others is active
 static CCamera cameras[CCamera::CAMTYPE_COUNT];
 
 void CCamera::SetActiveCamera(unsigned int camType) { cameras[CAMTYPE_ACTIVE].SetCamType(camType); }
@@ -37,6 +37,7 @@ void CCamera::InitializeStatic() {
 	// initialize all global cameras
 	for (unsigned int i = CAMTYPE_PLAYER; i < CAMTYPE_COUNT; i++) {
 		cameras[i].SetCamType(i);
+		cameras[i].SetProjType((i == CAMTYPE_SHADOW)? PROJTYPE_ORTHO: PROJTYPE_PERSP);
 		cameras[i].SetClipCtrlMatrix(clipCtrlMatrix);
 	}
 
@@ -48,7 +49,7 @@ CCamera* CCamera::GetActiveCamera() { return (GetCamera(cameras[CAMTYPE_ACTIVE].
 
 
 
-CCamera::CCamera(unsigned int cameraType)
+CCamera::CCamera(unsigned int cameraType, unsigned int projectionType)
 	: pos(ZeroVector)
 	, rot(ZeroVector)
 	, forward(FwdVector)
@@ -62,7 +63,7 @@ CCamera::CCamera(unsigned int cameraType)
 	, tiltOffset(ZeroVector)
 
 	, camType(cameraType)
-	, projType((cameraType == CAMTYPE_SHADOW)? PROJTYPE_ORTHO: PROJTYPE_PERSP)
+	, projType(projectionType)
 {
 	assert(cameraType < CAMTYPE_COUNT);
 
