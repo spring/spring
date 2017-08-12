@@ -63,7 +63,7 @@ public:
 	};
 
 public:
-	CCamera(unsigned int cameraType = CAMTYPE_PLAYER);
+	CCamera(unsigned int cameraType = CAMTYPE_PLAYER, unsigned int projectionType = PROJTYPE_PERSP);
 
 	void CopyState(const CCamera*);
 	void CopyStateReflect(const CCamera*);
@@ -171,7 +171,9 @@ public:
 	*/
 
 	unsigned int GetCamType() const { return camType; }
+	unsigned int GetProjType() const { return projType; }
 	unsigned int SetCamType(unsigned int ct) { return (camType = ct); }
+	unsigned int SetProjType(unsigned int pt) { return (projType = pt); }
 
 
 	static void InitializeStatic();
