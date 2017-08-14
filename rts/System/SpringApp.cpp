@@ -769,14 +769,22 @@ void SpringApp::Reload(const std::string script)
 
 	LOG("[SpringApp::%s][5]", __func__);
 
-	LuaVFSDownload::Free();
+	// do not stop running downloads when reloading
+	LuaVFSDownload::Free(false);
 	spring::SafeDelete(battery);
 
 	LOG("[SpringApp::%s][6]", __func__);
 
+	#if 0
 	// note: technically we only need to use RemoveArchive
 	FileSystemInitializer::Cleanup(false);
 	FileSystemInitializer::Initialize();
+	#else
+	// do not cleanup+reinit; LuaVFS thread might see NULL while scanner is temporarily gone
+	// handling that in ScanAllDirs would leave the archive-cache incomplete, which also has
+	// implications for sync
+	FileSystemInitializer::Reload();
+	#endif
 
 	LOG("[SpringApp::%s][7]", __func__);
 
