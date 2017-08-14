@@ -706,7 +706,7 @@ bool CAICallback::IsUnitNeutral(int unitId) {
 	bool isNeutral = false;
 
 	verify();
-	const CUnit* unit = GetInLosUnit(unitId);
+	const CUnit* unit = GetInLosAndRadarUnit(unitId);
 	if (unit) {
 		isNeutral = unit->IsNeutral();
 	}
@@ -850,25 +850,23 @@ static inline bool unit_IsFriendly(const CUnit* unit) {
 }
 
 /// You have to set myAllyTeamId before calling this function. NOT thread safe!
-static inline bool unit_IsInLos(const CUnit* unit) {
-
+static inline bool unit_IsInSensor(const CUnit* unit, const unsigned short losFlags) {
 	// Skip in-sensor-range test if the unit is allied with our team.
 	// This prevents errors where an allied unit is starting to build,
 	// but is not yet (technically) in LOS, because LOS was not yet updated,
 	// and thus would be invisible for us, without the ally check.
 	return (teamHandler->Ally(myAllyTeamId, unit->allyteam)
-			|| ((unit->losStatus[myAllyTeamId] & LOS_INLOS) != 0));
+			|| ((unit->losStatus[myAllyTeamId] & losFlags) != 0));
+}
+
+/// You have to set myAllyTeamId before calling this function. NOT thread safe!
+static inline bool unit_IsInLos(const CUnit* unit) {
+	return unit_IsInSensor(unit, LOS_INLOS);
 }
 
 /// You have to set myAllyTeamId before calling this function. NOT thread safe!
 static inline bool unit_IsInRadar(const CUnit* unit) {
-
-	// Skip in-sensor-range test if the unit is allied with our team.
-	// This prevents errors where an allied unit is starting to build,
-	// but is not yet (technically) in LOS, because LOS was not yet updated,
-	// and thus would be invisible for us, without the ally check.
-	return (teamHandler->Ally(myAllyTeamId, unit->allyteam)
-			|| ((unit->losStatus[myAllyTeamId] & LOS_INRADAR) != 0));
+	return unit_IsInSensor(unit, LOS_INRADAR);
 }
 
 /// You have to set myAllyTeamId before calling this function. NOT thread safe!
@@ -878,12 +876,12 @@ static inline bool unit_IsEnemyAndInLos(const CUnit* unit) {
 
 /// You have to set myAllyTeamId before calling this function. NOT thread safe!
 static inline bool unit_IsEnemyAndInLosOrRadar(const CUnit* unit) {
-	return (unit_IsEnemy(unit) && (unit_IsInLos(unit) || unit_IsInRadar(unit)));
+	return (unit_IsEnemy(unit) && ((unit->losStatus[myAllyTeamId] & (LOS_INLOS | LOS_INRADAR)) != 0));
 }
 
 /// You have to set myAllyTeamId before calling this function. NOT thread safe!
-static inline bool unit_IsNeutralAndInLos(const CUnit* unit) {
-	return (unit_IsNeutral(unit) && unit_IsInLos(unit));
+static inline bool unit_IsNeutralAndInLosOrRadar(const CUnit* unit) {
+	return (unit_IsNeutral(unit) && (unit_IsInSensor(unit, LOS_INLOS | LOS_INRADAR)));
 }
 
 int CAICallback::GetEnemyUnits(int* unitIds, int unitIds_max)
@@ -931,7 +929,7 @@ int CAICallback::GetNeutralUnits(int* unitIds, int unitIds_max)
 {
 	verify();
 	myAllyTeamId = teamHandler->AllyTeam(team);
-	return FilterUnitsVector(unitHandler->GetActiveUnits(), unitIds, unitIds_max, &unit_IsNeutralAndInLos);
+	return FilterUnitsVector(unitHandler->GetActiveUnits(), unitIds, unitIds_max, &unit_IsNeutralAndInLosOrRadar);
 }
 
 int CAICallback::GetNeutralUnits(int* unitIds, const float3& pos, float radius, int unitIds_max)
@@ -939,7 +937,7 @@ int CAICallback::GetNeutralUnits(int* unitIds, const float3& pos, float radius, 
 	verify();
 	const std::vector<CUnit*>& units = quadField->GetUnitsExact(pos, radius);
 	myAllyTeamId = teamHandler->AllyTeam(team);
-	return FilterUnitsVector(units, unitIds, unitIds_max, &unit_IsNeutralAndInLos);
+	return FilterUnitsVector(units, unitIds, unitIds_max, &unit_IsNeutralAndInLosOrRadar);
 }
 
 
