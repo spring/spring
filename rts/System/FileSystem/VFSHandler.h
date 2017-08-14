@@ -87,6 +87,8 @@ public:
 	 */
 	bool RemoveArchive(const std::string& archiveName);
 
+	void DeleteArchives();
+
 protected:
 	struct FileData {
 		IArchive* ar;

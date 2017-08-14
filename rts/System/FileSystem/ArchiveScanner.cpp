@@ -182,7 +182,7 @@ CArchiveScanner::ArchiveData::ArchiveData(const LuaTable& archiveTable, bool fro
 		if (name.find(version) == std::string::npos) {
 			SetInfoItemValueString("name", name + " " + version);
 		} else if (!fromCache) {
-			LOG_L(L_WARNING, "Invalid Name detected, please contact the author of the archive to remove the Version from the Name: %s, Version: %s", name.c_str(), version.c_str());
+			LOG_L(L_WARNING, "[%s] version \"%s\" included in name \"%s\"", __func__, version.c_str(), name.c_str());
 		}
 	}
 
@@ -369,9 +369,10 @@ CArchiveScanner::CArchiveScanner(): isDirty(false)
 
 CArchiveScanner::~CArchiveScanner()
 {
-	if (isDirty) {
-		WriteCacheData(GetFilepath());
-	}
+	if (!isDirty)
+		return;
+
+	WriteCacheData(GetFilepath());
 }
 
 uint32_t CArchiveScanner::GetNumScannedArchives()
@@ -381,22 +382,44 @@ uint32_t CArchiveScanner::GetNumScannedArchives()
 }
 
 
+void CArchiveScanner::Reload()
+{
+	// {Read,Write,Scan}* all grab this too but we need the entire reloading-sequence to appear atomic
+	std::lock_guard<spring::recursive_mutex> lck(scannerMutex);
+
+	// dtor
+	if (isDirty)
+		WriteCacheData(GetFilepath());
+
+	archiveInfos.clear();
+	brokenArchives.clear();
+	cachefile.clear();
+
+	// ctor
+	ReadCacheData(cachefile = FileSystem::EnsurePathSepAtEnd(FileSystem::GetCacheDir()) + IntToString(INTERNAL_VER, "ArchiveCache%i.lua"));
+	ScanAllDirs();
+}
+
 void CArchiveScanner::ScanAllDirs()
 {
 	std::lock_guard<spring::recursive_mutex> lck(scannerMutex);
-	const std::vector<std::string>& datadirs = dataDirLocater.GetDataDirPaths();
+
+	const std::vector<std::string>& dataDirs = dataDirLocater.GetDataDirPaths();
 	std::vector<std::string> scanDirs;
-	scanDirs.reserve(datadirs.size());
-	for (auto d = datadirs.rbegin(); d != datadirs.rend(); ++d) {
+	scanDirs.reserve(dataDirs.size());
+
+	for (auto d = dataDirs.rbegin(); d != dataDirs.rend(); ++d) {
 		scanDirs.push_back(*d + "maps");
 		scanDirs.push_back(*d + "base");
 		scanDirs.push_back(*d + "games");
 		scanDirs.push_back(*d + "packages");
 	}
+
 	// ArchiveCache has been parsed at this point --> archiveInfos is populated
 #if !defined(DEDICATED) && !defined(UNITSYNC)
 	ScopedOnceTimer foo("CArchiveScanner::ScanAllDirs");
 #endif
+
 	ScanDirs(scanDirs);
 	WriteCacheData(GetFilepath());
 }
@@ -554,7 +577,7 @@ void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 
 	std::unique_ptr<IArchive> ar(archiveLoader.OpenArchive(fullName));
 	if (ar == nullptr || !ar->IsOpen()) {
-		LOG_L(L_WARNING, "Unable to open archive: %s", fullName.c_str());
+		LOG_L(L_WARNING, "[AS::%s] unable to open archive \"%s\"", __func__, fullName.c_str());
 
 		// record it as broken, so we don't need to look inside everytime
 		BrokenArchive& ba = brokenArchives[lcfn];
@@ -584,7 +607,7 @@ void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 		ScanArchiveLua(ar.get(), "mapinfo.lua", ai, error);
 
 		if ((miMapFile = ad.GetMapFile()).empty()) {
-			LOG_L(L_WARNING, "%s: set the 'mapfile' key in mapinfo.lua for faster loading!", fullName.c_str());
+			LOG_L(L_WARNING, "[AS::%s] set the 'mapfile' key in mapinfo.lua of archive \"%s\" for faster loading!", __func__, fullName.c_str());
 			arMapFile = SearchMapFile(ar.get(), error);
 		}
 	} else if (hasModinfo) {
@@ -595,7 +618,7 @@ void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 
 	if (!CheckCompression(ar.get(), fullName, error)) {
 		// for some reason, the archive is marked as broken
-		LOG_L(L_WARNING, "Failed to scan %s (%s)", fullName.c_str(), error.c_str());
+		LOG_L(L_WARNING, "[AS::%s] failed to scan \"%s\" (%s)", __func__, fullName.c_str(), error.c_str());
 
 		// record it as broken, so we don't need to look inside everytime
 		BrokenArchive& ba = brokenArchives[lcfn];
@@ -691,7 +714,7 @@ bool CArchiveScanner::CheckCachedData(const std::string& fullName, unsigned* mod
 		}
 
 		if (ai.updated) {
-			LOG_L(L_ERROR, "Found a \"%s\" already in \"%s\", ignoring.", fullName.c_str(), (ai.path + ai.origName).c_str());
+			LOG_L(L_ERROR, "[AS::%s] found a \"%s\" already in \"%s\", ignoring.", __func__, fullName.c_str(), (ai.path + ai.origName).c_str());
 
 			if (baseContentArchives.find(aii->first) == baseContentArchives.end())
 				return true; // ignore
@@ -846,13 +869,13 @@ void CArchiveScanner::ReadCacheData(const std::string& filename)
 {
 	std::lock_guard<spring::recursive_mutex> lck(scannerMutex);
 	if (!FileSystem::FileExists(filename)) {
-		LOG_L(L_INFO, "ArchiveCache %s doesn't exist", filename.c_str());
+		LOG_L(L_INFO, "[AS::%s] ArchiveCache %s doesn't exist", __func__, filename.c_str());
 		return;
 	}
 
 	LuaParser p(filename, SPRING_VFS_RAW, SPRING_VFS_BASE);
 	if (!p.Execute()) {
-		LOG_L(L_ERROR, "Failed to parse ArchiveCache: %s", p.GetErrorLog().c_str());
+		LOG_L(L_ERROR, "[AS::%s] failed to parse ArchiveCache: %s", __func__, p.GetErrorLog().c_str());
 		return;
 	}
 
@@ -929,7 +952,7 @@ void CArchiveScanner::WriteCacheData(const std::string& filename)
 
 	FILE* out = fopen(filename.c_str(), "wt");
 	if (out == nullptr) {
-		LOG_L(L_ERROR, "Failed to write to \"%s\"!", filename.c_str());
+		LOG_L(L_ERROR, "[AS::%s] failed to write to \"%s\"!", __func__, filename.c_str());
 		return;
 	}
 
@@ -1007,7 +1030,7 @@ void CArchiveScanner::WriteCacheData(const std::string& filename)
 	fprintf(out, "return archiveCache\n");
 
 	if (fclose(out) == EOF)
-		LOG_L(L_ERROR, "Failed to write to \"%s\"!", filename.c_str());
+		LOG_L(L_ERROR, "[AS::%s] failed to write to \"%s\"!", __func__, filename.c_str());
 
 	isDirty = false;
 }

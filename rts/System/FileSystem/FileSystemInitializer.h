@@ -13,6 +13,7 @@ public:
 	static bool Initialize();
 	static void InitializeThr(bool* retPtr) { *retPtr = Initialize(); }
 	static void Cleanup(bool deallocConfigHandler = true);
+	static void Reload();
 
 	// either result counts
 	static bool Initialized() { return (initSuccess || initFailure); }

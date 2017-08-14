@@ -75,3 +75,11 @@ void FileSystemInitializer::Cleanup(bool deallocConfigHandler)
 		ConfigHandler::Deallocate();
 	}
 }
+
+void FileSystemInitializer::Reload()
+{
+	// repopulated by PreGame, etc
+	vfsHandler->DeleteArchives();
+	archiveScanner->Reload();
+}
+

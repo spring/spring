@@ -31,17 +31,13 @@ CVFSHandler* vfsHandler = nullptr;
 
 CVFSHandler::CVFSHandler()
 {
-	LOG_L(L_DEBUG, "CVFSHandler::CVFSHandler()");
+	LOG_L(L_DEBUG, "[%s]", __func__);
 }
 
 CVFSHandler::~CVFSHandler()
 {
-	LOG_L(L_INFO, "[%s] #archives=%lu", __FUNCTION__, (long unsigned) archives.size());
-
-	for (auto i = archives.begin(); i != archives.end(); ++i) {
-		LOG_L(L_INFO, "\tarchive=%s (%p)", (i->first).c_str(), i->second);
-		delete i->second;
-	}
+	LOG_L(L_INFO, "[%s] #archives=%lu", __func__, (long unsigned) archives.size());
+	DeleteArchives();
 }
 
 CVFSHandler::Section CVFSHandler::GetModeSection(char mode)
@@ -81,9 +77,7 @@ static const std::string GetArchivePath(const std::string& name){
 
 bool CVFSHandler::AddArchive(const std::string& archiveName, bool overwrite)
 {
-	LOG_L(L_DEBUG,
-		"AddArchive(arName = \"%s\", overwrite = %s)",
-		archiveName.c_str(), overwrite ? "true" : "false");
+	LOG_L(L_DEBUG, "[VFSH::%s(arName=\"%s\", overwrite=%s)]", __func__, archiveName.c_str(), overwrite ? "true" : "false");
 
 	const CArchiveScanner::ArchiveData& ad = archiveScanner->GetArchiveData(archiveName);
 	const Section section = GetModTypeSection(ad.GetModType());
@@ -97,7 +91,7 @@ bool CVFSHandler::AddArchive(const std::string& archiveName, bool overwrite)
 
 	if (ar == nullptr) {
 		if ((ar = archiveLoader.OpenArchive(archivePath)) == nullptr) {
-			LOG_L(L_ERROR, "AddArchive: Failed to open archive '%s' (path '%s', type %d).", archiveName.c_str(), archivePath.c_str(), ad.GetModType());
+			LOG_L(L_ERROR, "[VFSH::%s] failed to open archive '%s' (path '%s', type %d).", __func__, archiveName.c_str(), archivePath.c_str(), ad.GetModType());
 			return false;
 		}
 		archives[archivePath] = ar;
@@ -111,13 +105,13 @@ bool CVFSHandler::AddArchive(const std::string& archiveName, bool overwrite)
 
 		if (!overwrite) {
 			if (files[section].find(name) != files[section].end()) {
-				LOG_L(L_DEBUG, "%s (skipping, exists)", name.c_str());
+				LOG_L(L_DEBUG, "[VFSH::%s] skipping \"%s\", exists", __func__, name.c_str());
 				continue;
 			}
 
-			LOG_L(L_DEBUG, "%s (adding, does not exist)", name.c_str());
+			LOG_L(L_DEBUG, "[VFSH::%s] adding \"%s\", does not exist", __func__, name.c_str());
 		} else {
-			LOG_L(L_DEBUG, "%s (overriding)", name.c_str());
+			LOG_L(L_DEBUG, "[VFSH::%s] overriding \"%s\"", __func__, name.c_str());
 		}
 
 		FileData d;
@@ -154,7 +148,7 @@ bool CVFSHandler::RemoveArchive(const std::string& archiveName)
 	assert(section < Section::Count);
 	assert(!archivePath.empty());
 
-	LOG_L(L_DEBUG, "RemoveArchive(archiveName = \"%s\")", archivePath.c_str());
+	LOG_L(L_DEBUG, "[VFHS::%s(archiveName=\"%s\")]", __func__, archivePath.c_str());
 
 	const auto it = archives.find(archivePath);
 
@@ -170,7 +164,7 @@ bool CVFSHandler::RemoveArchive(const std::string& archiveName)
 	// remove the files loaded from the archive-to-remove
 	for (auto f = files[section].begin(); f != files[section].end(); ) {
 		if (f->second.ar == ar) {
-			LOG_L(L_DEBUG, "%s (removing)", f->first.c_str());
+			LOG_L(L_DEBUG, "[VFHS::%s] removing \"%s\"", __func__, f->first.c_str());
 			f = files[section].erase(f);
 		} else {
 			 ++f;
@@ -183,10 +177,26 @@ bool CVFSHandler::RemoveArchive(const std::string& archiveName)
 	return true;
 }
 
+void CVFSHandler::DeleteArchives()
+{
+	LOG_L(L_INFO, "[VFSH::%s]", __func__);
+
+	for (const auto& p: archives) {
+		LOG_L(L_INFO, "\tarchive=%s (%p)", (p.first).c_str(), p.second);
+		delete p.second;
+	}
+
+	archives.clear();
+
+	for (auto& fdm: files) {
+		fdm.clear();
+	}
+}
+
 
 std::string CVFSHandler::GetNormalizedPath(const std::string& rawPath)
 {
-	std::string path = StringToLower(rawPath);
+	std::string path = std::move(StringToLower(rawPath));
 	FileSystem::ForwardSlashes(path);
 	return path;
 }
@@ -209,18 +219,18 @@ bool CVFSHandler::LoadFile(const std::string& filePath, std::vector<std::uint8_t
 {
 	assert(section < Section::Count);
 
-	LOG_L(L_DEBUG, "LoadFile(filePath = \"%s\", )", filePath.c_str());
+	LOG_L(L_DEBUG, "[VFSH::%s(filePath=\"%s\", )]", __func__, filePath.c_str());
 
 	const std::string& normalizedPath = GetNormalizedPath(filePath);
 	const FileData* fileData = GetFileData(normalizedPath, section);
 
 	if (fileData == nullptr) {
-		LOG_L(L_DEBUG, "LoadFile: File '%s' does not exist in VFS.", filePath.c_str());
+		LOG_L(L_DEBUG, "[VFHS::%s] file \"%s\" does not exist in VFS", __func__, filePath.c_str());
 		return false;
 	}
 
 	if (!fileData->ar->GetFile(normalizedPath, buffer)) {
-		LOG_L(L_DEBUG, "LoadFile: File '%s' does not exist in archive.", filePath.c_str());
+		LOG_L(L_DEBUG, "[VFHS::%s] file \"%s\" does not exist in archive", __func__, filePath.c_str());
 		return false;
 	}
 
@@ -232,7 +242,7 @@ bool CVFSHandler::FileExists(const std::string& filePath, Section section)
 {
 	assert(section < Section::Count);
 
-	LOG_L(L_DEBUG, "FileExists(filePath = \"%s\", )", filePath.c_str());
+	LOG_L(L_DEBUG, "[VFSH::%s(filePath=\"%s\", )]", __func__, filePath.c_str());
 
 	const std::string& normalizedPath = GetNormalizedPath(filePath);
 	const FileData* fileData = GetFileData(normalizedPath, section);
@@ -253,7 +263,7 @@ std::vector<std::string> CVFSHandler::GetFilesInDir(const std::string& rawDir, S
 {
 	assert(section < Section::Count);
 
-	LOG_L(L_DEBUG, "GetFilesInDir(rawDir = \"%s\")", rawDir.c_str());
+	LOG_L(L_DEBUG, "[VFSH::%s(rawDir=\"%s\")]", __func__, rawDir.c_str());
 
 	std::vector<std::string> ret;
 	std::string dir = GetNormalizedPath(rawDir);
@@ -288,7 +298,7 @@ std::vector<std::string> CVFSHandler::GetFilesInDir(const std::string& rawDir, S
 			continue;
 
 		ret.push_back(name);
-		LOG_L(L_DEBUG, "%s", name.c_str());
+		LOG_L(L_DEBUG, "\t%s", name.c_str());
 	}
 
 	return ret;
@@ -299,7 +309,7 @@ std::vector<std::string> CVFSHandler::GetDirsInDir(const std::string& rawDir, Se
 {
 	assert(section < Section::Count);
 
-	LOG_L(L_DEBUG, "GetDirsInDir(rawDir = \"%s\")", rawDir.c_str());
+	LOG_L(L_DEBUG, "[VFSH::%s(rawDir=\"%s\")]", __func__, rawDir.c_str());
 
 	std::vector<std::string> ret;
 	std::set<std::string> dirs;
@@ -338,7 +348,7 @@ std::vector<std::string> CVFSHandler::GetDirsInDir(const std::string& rawDir, Se
 
 	for (auto it = dirs.cbegin(); it != dirs.cend(); ++it) {
 		ret.push_back(*it);
-		LOG_L(L_DEBUG, "%s", it->c_str());
+		LOG_L(L_DEBUG, "\t%s", it->c_str());
 	}
 
 	return ret;
