@@ -699,7 +699,7 @@ void UnitDef::ParseWeaponsTable(const LuaTable& weaponsTable)
 			}
 		}
 
-		weapons.push_back(UnitDefWeapon(wd, wTable));
+		weapons.emplace_back(wd, wTable);
 
 		maxWeaponRange = std::max(maxWeaponRange, wd->range);
 

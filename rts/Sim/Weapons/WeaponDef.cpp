@@ -103,7 +103,7 @@ WEAPONDUMMYTAG(float, flighttime).defaultValue(0).scaleValue(GAME_SPEED).descrip
 WEAPONTAG(float, turnrate).defaultValue(0.0f).scaleValue(float(TAANG2RAD) / GAME_SPEED);
 WEAPONTAG(float, heightBoostFactor).defaultValue(-1.0f);
 WEAPONTAG(float, proximityPriority).defaultValue(1.0f);
-WEAPONTAG(bool, allowNonBlockingAim).defaultValue(false).description("When false, the weapon is blocked from fireing till AimWeapon() returns.");
+WEAPONTAG(bool, allowNonBlockingAim).defaultValue(false).description("When false, the weapon is blocked from firing until AimWeapon() returns.");
 
 // Target Error
 TAGFUNCTION(AccuracyToSin, float, math::sin(x * math::PI / 0xafff)) // should really be tan but TA seem to cap it somehow, should also be 7fff or ffff theoretically but neither seems good
