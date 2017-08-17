@@ -85,8 +85,13 @@ void CDemoRecorder::WriteDemoFile()
 		gzclose(file);
 	};
 
+	#ifndef WIN32
 	// NOTE: can not use ThreadPool for this directly here, workers are already gone
+	// FIXME: does not currently (august 2017) compile on Windows mingw buildbots
 	ThreadPool::AddExtJob(spring::thread(std::move(func), file, std::move(data)));
+	#else
+	ThreadPool::AddExtJob(std::move(std::async(std::launch::async, std::move(func), file, std::move(data))));
+	#endif
 }
 
 void CDemoRecorder::WriteSetupText(const std::string& text)
