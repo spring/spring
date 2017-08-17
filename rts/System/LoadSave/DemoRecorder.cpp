@@ -17,6 +17,8 @@
 #include "System/Log/ILog.h"
 #include "System/Threading/ThreadPool.h"
 
+#undef CreateDirectory
+
 // server and client memory-streams
 static std::unique_ptr<std::stringstream> demoStreams[2] = {nullptr, nullptr};
 
