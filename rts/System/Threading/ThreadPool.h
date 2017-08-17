@@ -5,6 +5,7 @@
 
 #ifndef THREADPOOL
 #include  <functional>
+#include "System/Threading/SpringThreading.h"
 
 namespace ThreadPool {
 	template<class F, class... Args>
@@ -12,6 +13,10 @@ namespace ThreadPool {
 	{
 		f(args ...);
 	}
+
+	static inline void AddExtJob(spring::thread&& t) { t.join(); }
+	static inline void AddExtJob(std::future<void>&& f) { f.get(); }
+	static inline void ClearExtJobs() {}
 
 	static inline void SetMaximumThreadCount() {}
 	static inline void SetDefaultThreadCount() {}
@@ -33,12 +38,10 @@ static inline void for_mt(int start, int end, int step, const std::function<void
 	}
 }
 
-
 static inline void for_mt(int start, int end, const std::function<void(const int i)>&& f)
 {
 	for_mt(start, end, 1, std::move(f));
 }
-
 
 static inline void for_mt2(int start, int end, unsigned worksize, const std::function<void(const int i)>&& f)
 {
@@ -50,7 +53,6 @@ static inline void parallel(const std::function<void()>&& f)
 {
 	f();
 }
-
 
 template<class F, class G>
 static inline auto parallel_reduce(F&& f, G&& g) -> typename std::result_of<F()>::type
@@ -82,6 +84,10 @@ namespace ThreadPool {
 	template<class F, class... Args>
 	static auto Enqueue(F&& f, Args&&... args)
 	-> std::shared_ptr<std::future<typename std::result_of<F(Args...)>::type>>;
+
+	void AddExtJob(spring::thread&& t);
+	void AddExtJob(std::future<void>&& f);
+	void ClearExtJobs();
 
 	void PushTaskGroup(ITaskGroup* taskGroup);
 	void PushTaskGroup(std::shared_ptr<ITaskGroup>&& taskGroup);

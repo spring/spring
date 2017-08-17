@@ -12,6 +12,7 @@
 #include "Game/GameVersion.h"
 #include "Game/GlobalUnsynced.h"
 #include "Game/WaitCommandsAI.h"
+#include "Game/UI/Groups/GroupHandler.h"
 #include "Net/GameServer.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Units/UnitHandler.h"
@@ -24,17 +25,16 @@
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/Wind.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "Sim/Units/CommandAI/BuilderCAI.h"
 #include "Sim/Units/CommandAI/CommandDescription.h"
 #include "Sim/Units/Scripts/CobEngine.h"
 #include "Sim/Units/Scripts/UnitScriptEngine.h"
 #include "Sim/Units/Scripts/NullUnitScript.h"
-#include "Game/UI/Groups/GroupHandler.h"
 #include "System/SafeUtil.h"
 #include "System/Platform/errorhandler.h"
 #include "System/FileSystem/DataDirsAccess.h"
 #include "System/FileSystem/FileQueryFlags.h"
 #include "System/FileSystem/GZFileHandler.h"
+#include "System/Threading/ThreadPool.h"
 #include "System/creg/Serializer.h"
 #include "System/Exceptions.h"
 #include "System/Log/ILog.h"
@@ -125,7 +125,7 @@ static void ReadString(std::istream& s, std::string& str)
 void CCregLoadSaveHandler::SaveGame(const std::string& path)
 {
 #ifdef USING_CREG
-	LOG("Saving game");
+	LOG("[LSH::%s] saving game to \"%s\"", __func__, path.c_str());
 
 	try {
 		std::stringstream oss;
@@ -158,30 +158,40 @@ void CCregLoadSaveHandler::SaveGame(const std::string& path)
 			PrintSize("AIs", ((int)oss.tellp()) - aiStart);
 		}
 
-		gzFile file = gzopen(dataDirsAccess.LocateFile(path, FileQueryFlags::WRITE).c_str(), "wb9");
-		if (file == nullptr) {
-			LOG_L(L_ERROR, "Save failed: couldn't open file");
-			return;
+		{
+			gzFile file = gzopen(dataDirsAccess.LocateFile(path, FileQueryFlags::WRITE).c_str(), "wb9");
+
+			if (file == nullptr) {
+				LOG_L(L_ERROR, "[LSH::%s] could not open save-file", __func__);
+				return;
+			}
+
+			std::string data = std::move(oss.str());
+			std::function<void(gzFile, std::string&&)> func = [](gzFile file, std::string&& data) {
+				gzwrite(file, data.c_str(), data.size());
+				gzflush(file, Z_FINISH);
+				gzclose(file);
+			};
+
+			// gzFile is just a plain typedef (struct gzFile_s {}* gzFile), can be copied
+			// need to keep a reference to the future around or its destructor will block
+			ThreadPool::AddExtJob(std::move(std::async(std::launch::async, std::move(func), file, std::move(data))));
 		}
-		const std::string data = oss.str();
-		gzwrite(file, data.c_str(), data.size());
-		gzflush(file, Z_FINISH);
-		gzclose(file);
 
 		//FIXME add lua state
 	} catch (const content_error& ex) {
-		LOG_L(L_ERROR, "Save failed(content error): %s", ex.what());
+		LOG_L(L_ERROR, "[LSH::%s] content error \"%s\"", __func__, ex.what());
 	} catch (const std::exception& ex) {
-		LOG_L(L_ERROR, "Save failed: %s", ex.what());
+		LOG_L(L_ERROR, "[LSH::%s] exception \"%s\"", __func__, ex.what());
 	} catch (const char*& exStr) {
-		LOG_L(L_ERROR, "Save failed: %s", exStr);
+		LOG_L(L_ERROR, "[LSH::%s] cstr error \"%s\"", __func__, exStr);
 	} catch (const std::string& str) {
-		LOG_L(L_ERROR, "Save failed: %s", str.c_str());
+		LOG_L(L_ERROR, "[LSH::%s] str error \"%s\"", __func__, str.c_str());
 	} catch (...) {
-		LOG_L(L_ERROR, "Save failed(unknown error)");
+		LOG_L(L_ERROR, "[LSH::%s] unknown error", __func__);
 	}
 #else //USING_CREG
-	LOG_L(L_ERROR, "Save failed: creg is disabled");
+	LOG_L(L_ERROR, "[LSH::%s] creg is disabled", __func__);
 #endif //USING_CREG
 }
 

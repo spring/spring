@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-
 #include <algorithm>
 #include <array>
 #include <cstdio>
@@ -52,7 +51,7 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_ARCHIVESCANNER)
  * but mapping them all, every time to make the list is)
  */
 
-constexpr int INTERNAL_VER = 11;
+constexpr int INTERNAL_VER = 12;
 
 
 /*
