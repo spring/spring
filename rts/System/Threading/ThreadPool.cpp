@@ -56,6 +56,10 @@ struct ThreadStats {
 
 
 
+// external background threads which are only joined on exit
+static std::vector< spring::thread > extThreads;
+static std::vector< std::future<void> > extFutures;
+
 // global [idx = 0] and smaller per-thread [idx > 0] queues; the latter are
 // for tasks that want to execute on specific threads, e.g. parallel_reduce
 // note: std::shared_ptr<T> can not be made atomic, queues must store T*'s
@@ -607,6 +611,54 @@ void SetDefaultThreadCount()
 
 		Threading::SetAffinityHelper("Main", mainAffinity & mainCoreAffinity);
 	}
+}
+
+
+
+void AddExtJob(spring::thread&& t) {
+	for (auto& et: extThreads) {
+		if (et.joinable())
+			continue;
+
+		et = std::move(t);
+		return;
+	}
+
+	extThreads.emplace_back(std::move(t));
+}
+
+void AddExtJob(std::future<void>&& f) {
+	for (auto& ef: extFutures) {
+		// find a future whose (void) result is already available, without blocking
+		if (ef.wait_until(std::chrono::system_clock::now() + std::chrono::seconds(0)) != std::future_status::ready)
+			continue;
+
+		ef = std::move(f);
+		return;
+	}
+
+	extFutures.emplace_back(std::move(f));
+}
+
+static void JoinExtThreads() {
+	for (auto& t: extThreads) {
+		t.join();
+	}
+
+	extThreads.clear();
+}
+
+static void GetExtFutures() {
+	for (auto& f: extFutures) {
+		f.get();
+	}
+
+	extFutures.clear();
+}
+
+void ClearExtJobs() {
+	JoinExtThreads();
+	GetExtFutures();
 }
 
 }

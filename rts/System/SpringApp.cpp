@@ -978,6 +978,7 @@ void SpringApp::Kill(bool fromRun)
 	// also gets rid of configHandler
 	FileSystemInitializer::Cleanup();
 	DataDirLocater::FreeInstance();
+	ThreadPool::ClearExtJobs();
 
 	LOG("[SpringApp::%s][8]", __func__);
 	Watchdog::DeregisterThread(WDT_MAIN);
