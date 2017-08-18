@@ -12,10 +12,6 @@
 #define _localtime64(x) localtime(x)
 #endif
 
-#ifdef GetCurrentTime
-#undef GetCurrentTime
-#endif
-
 class CTimeUtil
 {
 public:

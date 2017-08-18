@@ -17,7 +17,13 @@
 #include "System/Log/ILog.h"
 #include "System/Threading/ThreadPool.h"
 
+#ifdef CreateDirectory
 #undef CreateDirectory
+#endif
+
+#ifdef GetCurrentTime
+#undef GetCurrentTime
+#endif
 
 // server and client memory-streams
 static std::unique_ptr<std::stringstream> demoStreams[2] = {nullptr, nullptr};
