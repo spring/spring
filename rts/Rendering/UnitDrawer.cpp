@@ -77,9 +77,6 @@ static const void BindOpaqueTexAtlas(const CS3OTextureHandler::S3OTexMat*) {
 }
 static const void BindOpaqueTexDummy(const CS3OTextureHandler::S3OTexMat*) {}
 
-static const void BindShadowTexDummy(const CS3OTextureHandler::S3OTexMat*) {}
-static const void KillShadowTexDummy(const CS3OTextureHandler::S3OTexMat*) {}
-
 static const void BindShadowTex(const CS3OTextureHandler::S3OTexMat* textureMat) {
 	glActiveTexture(GL_TEXTURE0);
 	glEnable(GL_TEXTURE_2D);
