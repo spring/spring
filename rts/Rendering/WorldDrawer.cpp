@@ -173,11 +173,9 @@ void CWorldDrawer::Update(bool newSimFrame)
 
 void CWorldDrawer::GenerateIBLTextures() const
 {
-	SCOPED_GMARKER("Draw::World::GenerateIBLTextures");
 
 	if (shadowHandler->ShadowsLoaded()) {
 		SCOPED_TIMER("Draw::World::CreateShadows");
-		SCOPED_GMARKER("Draw::World::CreateShadows");
 		game->SetDrawMode(CGame::gameShadowDraw);
 		shadowHandler->CreateShadows();
 		game->SetDrawMode(CGame::gameNormalDraw);
@@ -185,24 +183,20 @@ void CWorldDrawer::GenerateIBLTextures() const
 
 	{
 		SCOPED_TIMER("Draw::World::UpdateReflTex");
-		SCOPED_GMARKER("Draw::World::UpdateReflTex");
 		cubeMapHandler->UpdateReflectionTexture();
 	}
 
 	if (sky->GetLight()->Update()) {
 		{
 			SCOPED_TIMER("Draw::World::UpdateSpecTex");
-			SCOPED_GMARKER("Draw::World::UpdateSpecTex");
 			cubeMapHandler->UpdateSpecularTexture();
 		}
 		{
 			SCOPED_TIMER("Draw::World::UpdateSkyTex");
-			SCOPED_GMARKER("Draw::World::UpdateSkyTex");
 			sky->UpdateSkyTexture();
 		}
 		{
 			SCOPED_TIMER("Draw::World::UpdateShadingTexture");
-			SCOPED_GMARKER("Draw::World::UpdateShadingTexture");
 			readMap->UpdateShadingTexture();
 		}
 	}
@@ -232,7 +226,6 @@ void CWorldDrawer::ResetMVPMatrices() const
 void CWorldDrawer::Draw() const
 {
 	SCOPED_TIMER("Draw::World");
-	SCOPED_GMARKER("Draw::World");
 
 	glClearColor(sky->fogColor[0], sky->fogColor[1], sky->fogColor[2], 0.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
@@ -250,7 +243,6 @@ void CWorldDrawer::Draw() const
 
 	{
 		SCOPED_TIMER("Draw::World::Projectiles");
-		SCOPED_GMARKER("Draw::World::Projectiles");
 		projectileDrawer->Draw(false);
 	}
 
@@ -258,7 +250,6 @@ void CWorldDrawer::Draw() const
 
 	{
 		SCOPED_TIMER("Draw::World::DrawWorld");
-		SCOPED_GMARKER("Draw::World::DrawWorld");
 		eventHandler.DrawWorld();
 	}
 
@@ -276,18 +267,15 @@ void CWorldDrawer::DrawOpaqueObjects() const
 	if (globalRendering->drawGround) {
 		{
 			SCOPED_TIMER("Draw::World::Terrain");
-			SCOPED_GMARKER("Draw::World::Terrain");
 			gd->Draw(DrawPass::Normal);
 		}
 		{
 			SCOPED_TIMER("Draw::World::Decals");
-			SCOPED_GMARKER("Draw::World::Decals");
 			groundDecals->Draw();
 			projectileDrawer->DrawGroundFlashes();
 		}
 		{
 			SCOPED_TIMER("Draw::World::Foliage");
-			SCOPED_GMARKER("Draw::World::Foliage");
 			grassDrawer->Draw();
 			treeDrawer->Draw();
 		}
@@ -296,7 +284,6 @@ void CWorldDrawer::DrawOpaqueObjects() const
 
 	// run occlusion query here so it has more time to finish before UpdateWater
 	if (globalRendering->drawWater && !mapRendering->voidWater) {
-		SCOPED_GMARKER("Draw::World::Water::OcclusionQuery");
 		water->OcclusionQuery();
 	}
 
@@ -308,7 +295,6 @@ void CWorldDrawer::DrawOpaqueObjects() const
 
 	{
 		SCOPED_TIMER("Draw::World::Models::Opaque");
-		SCOPED_GMARKER("Draw::World::Models::Opaque");
 		unitDrawer->Draw(false);
 		featureDrawer->Draw();
 
@@ -327,7 +313,6 @@ void CWorldDrawer::DrawAlphaObjects() const
 	static const double abovePlaneEq[4] = {0.0f,  1.0f, 0.0f, 0.0f};
 
 	{
-		SCOPED_GMARKER("Draw::World::Models::Alpha");
 		SCOPED_TIMER("Draw::World::Models::Alpha");
 		// clip in model-space
 		glPushMatrix();
@@ -346,14 +331,12 @@ void CWorldDrawer::DrawAlphaObjects() const
 	// draw water (in-between)
 	if (globalRendering->drawWater && !mapRendering->voidWater) {
 		SCOPED_TIMER("Draw::World::Water");
-		SCOPED_GMARKER("Draw::World::Water");
 
 		water->UpdateWater(game);
 		water->Draw();
 	}
 
 	{
-		SCOPED_GMARKER("Draw::World::Models::Alpha");
 		SCOPED_TIMER("Draw::World::Models::Alpha");
 		glPushMatrix();
 		glLoadIdentity();
@@ -371,7 +354,6 @@ void CWorldDrawer::DrawAlphaObjects() const
 
 void CWorldDrawer::DrawMiscObjects() const
 {
-	SCOPED_GMARKER("Draw::World::Misc");
 
 	{
 		// note: duplicated in CMiniMap::DrawWorldStuff()
@@ -402,7 +384,6 @@ void CWorldDrawer::DrawMiscObjects() const
 
 void CWorldDrawer::DrawBelowWaterOverlay() const
 {
-	SCOPED_GMARKER("Draw::World::BelowWaterOverlay");
 
 	if (!globalRendering->drawWater)
 		return;

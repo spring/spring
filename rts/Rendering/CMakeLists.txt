@@ -63,7 +63,6 @@ SET(sources_engine_Rendering
 		"${CMAKE_CURRENT_SOURCE_DIR}/GL/VertexArrayRange.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/GL/VBO.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/GL/glExtra.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/GL/glMarkers.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/GL/myGL.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/GlobalRendering.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/GroundFlash.cpp"
