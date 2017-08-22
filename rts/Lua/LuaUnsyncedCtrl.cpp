@@ -3094,7 +3094,7 @@ int LuaUnsyncedCtrl::SetDecalAlpha(lua_State* L)
 		return 0;
 
 	auto decal = decalsGl4->GetDecalByIdx(luaL_checkint(L, 1));
-	decal.rot = luaL_checkfloat(L, 2);
+	decal.alpha = luaL_checkfloat(L, 2);
 	decal.Invalidate();
 	return 0;
 }
