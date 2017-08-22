@@ -156,14 +156,15 @@ void CBuilder::Update()
 
 			switch (terraformType) {
 				case Terraform_Building:
-					if (curBuild != NULL) {
-						if (curBuild->terraformLeft <= 0)
+					if (curBuild != nullptr) {
+						if (curBuild->terraformLeft <= 0.0f)
 							terraformScale = 0.0f;
 						else
 							terraformScale = (terraformSpeed + terraformHelp) / curBuild->terraformLeft;
 
 						curBuild->terraformLeft -= (terraformSpeed + terraformHelp);
-						terraformHelp = 0;
+
+						terraformHelp = 0.0f;
 						terraformScale = std::min(terraformScale, 1.0f);
 
 						// prevent building from timing out while terraforming for it
@@ -180,6 +181,7 @@ void CBuilder::Update()
 
 						if (curBuild->terraformLeft <= 0.0f) {
 							terraforming = false;
+
 							mapDamage->RecalcArea(tx1, tx2, tz1, tz2);
 							curBuild->groundLevelled = true;
 
@@ -196,7 +198,8 @@ void CBuilder::Update()
 						terraformScale = (terraformSpeed + terraformHelp) / myTerraformLeft;
 
 					myTerraformLeft -= (terraformSpeed + terraformHelp);
-					terraformHelp = 0;
+
+					terraformHelp = 0.0f;
 					terraformScale = std::min(terraformScale, 1.0f);
 
 					for (int z = tz1; z <= tz2; z++) {
@@ -211,6 +214,7 @@ void CBuilder::Update()
 
 					if (myTerraformLeft <= 0.0f) {
 						terraforming = false;
+
 						mapDamage->RecalcArea(tx1, tx2, tz1, tz2);
 						StopBuild();
 					}
@@ -263,7 +267,7 @@ void CBuilder::Update()
 				}
 			}
 		}
-		else if (helpTerraform != NULL && inBuildStance) {
+		else if (helpTerraform != nullptr && inBuildStance) {
 			if (helpTerraform->terraforming) {
 				ScriptDecloak(true);
 
@@ -271,11 +275,11 @@ void CBuilder::Update()
 				CreateNanoParticle(helpTerraform->terraformCenter, helpTerraform->terraformRadius * 0.5f, false);
 			} else {
 				DeleteDeathDependence(helpTerraform, DEPENDENCE_TERRAFORM);
-				helpTerraform = NULL;
+				helpTerraform = nullptr;
 				StopBuild(true);
 			}
 		}
-		else if (curBuild != NULL && cai->IsInBuildRange(curBuild)) {
+		else if (curBuild != nullptr && cai->IsInBuildRange(curBuild)) {
 			if (fCommand.GetID() == CMD_WAIT) {
 				if (curBuild->buildProgress < 1.0f) {
 					// prevent buildee from decaying (we cannot call StopBuild here)
@@ -286,7 +290,7 @@ void CBuilder::Update()
 					StopBuild();
 				}
 			} else {
-				if (curBuild->soloBuilder != NULL && (curBuild->soloBuilder != this)) {
+				if (curBuild->soloBuilder != nullptr && (curBuild->soloBuilder != this)) {
 					StopBuild();
 				} else {
 					if (inBuildStance || true) {
@@ -331,7 +335,7 @@ void CBuilder::Update()
 				}
 			}
 		}
-		else if (curReclaim != NULL && f3SqDist(curReclaim->pos, pos) < Square(buildDistance + curReclaim->radius) && inBuildStance) {
+		else if (curReclaim != nullptr && f3SqDist(curReclaim->pos, pos) < Square(buildDistance + curReclaim->radius) && inBuildStance) {
 			if (fCommand.GetID() == CMD_WAIT) {
 				StopBuild();
 			} else {
@@ -342,13 +346,13 @@ void CBuilder::Update()
 				}
 			}
 		}
-		else if (curResurrect != NULL && f3SqDist(curResurrect->pos, pos) < Square(buildDistance + curResurrect->radius) && inBuildStance) {
+		else if (curResurrect != nullptr && f3SqDist(curResurrect->pos, pos) < Square(buildDistance + curResurrect->radius) && inBuildStance) {
 			const UnitDef* ud = curResurrect->udef;
 
 			if (fCommand.GetID() == CMD_WAIT) {
 				StopBuild();
 			} else {
-				if (ud != NULL) {
+				if (ud != nullptr) {
 					if ((modInfo.reclaimMethod != 1) && (curResurrect->reclaimLeft < 1)) {
 						// This corpse has been reclaimed a little, need to restore
 						// the resources before we can let the player resurrect it.
@@ -420,7 +424,7 @@ void CBuilder::Update()
 				}
 			}
 		}
-		else if (curCapture != NULL && f3SqDist(curCapture->pos, pos) < Square(buildDistance + curCapture->radius) && inBuildStance) {
+		else if (curCapture != nullptr && f3SqDist(curCapture->pos, pos) < Square(buildDistance + curCapture->radius) && inBuildStance) {
 			if (fCommand.GetID() == CMD_WAIT) {
 				StopBuild();
 			} else {
@@ -467,9 +471,9 @@ void CBuilder::Update()
 
 void CBuilder::SlowUpdate()
 {
-	if (terraforming) {
+	if (terraforming)
 		mapDamage->RecalcArea(tx1,tx2,tz1,tz2);
-	}
+
 	CUnit::SlowUpdate();
 }
 
@@ -486,7 +490,7 @@ void CBuilder::SetRepairTarget(CUnit* target)
 	AddDeathDependence(curBuild, DEPENDENCE_BUILD);
 
 	if (!target->groundLevelled) {
-		//resume levelling the ground
+		// resume levelling the ground
 		tx1 = (int)std::max(0.0f, (target->pos.x - (target->xsize * 0.5f * SQUARE_SIZE)) / SQUARE_SIZE);
 		tz1 = (int)std::max(0.0f, (target->pos.z - (target->zsize * 0.5f * SQUARE_SIZE)) / SQUARE_SIZE);
 		tx2 = std::min(mapDims.mapx, tx1 + target->xsize);
@@ -504,24 +508,21 @@ void CBuilder::SetRepairTarget(CUnit* target)
 
 void CBuilder::SetReclaimTarget(CSolidObject* target)
 {
-	if (dynamic_cast<CFeature*>(target) != NULL && !static_cast<CFeature*>(target)->def->reclaimable) {
+	if (dynamic_cast<CFeature*>(target) != nullptr && !static_cast<CFeature*>(target)->def->reclaimable)
 		return;
-	}
 
 	CUnit* recUnit = dynamic_cast<CUnit*>(target);
 
-	if (recUnit != NULL && !recUnit->unitDef->reclaimable) {
+	if (recUnit != nullptr && !recUnit->unitDef->reclaimable)
 		return;
-	}
 
-	if (curReclaim == target || this == target) {
+	if (curReclaim == target || this == target)
 		return;
-	}
 
 	StopBuild(false);
 	TempHoldFire(CMD_RECLAIM);
 
-	reclaimingUnit = (recUnit != NULL);
+	reclaimingUnit = (recUnit != nullptr);
 	curReclaim = target;
 
 	AddDeathDependence(curReclaim, DEPENDENCE_RECLAIM);
@@ -531,7 +532,7 @@ void CBuilder::SetReclaimTarget(CSolidObject* target)
 
 void CBuilder::SetResurrectTarget(CFeature* target)
 {
-	if (curResurrect == target || target->udef == NULL)
+	if (curResurrect == target || target->udef == nullptr)
 		return;
 
 	StopBuild(false);
@@ -620,6 +621,8 @@ void CBuilder::StopBuild(bool callScript)
 
 bool CBuilder::StartBuild(BuildInfo& buildInfo, CFeature*& feature, bool& waitStance)
 {
+	const CUnit* prvBuild = curBuild;
+
 	StopBuild(false);
 	TempHoldFire(-1);
 
@@ -650,12 +653,14 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo, CFeature*& feature, bool& waitSt
 			} else {
 				// <pos> might map to a non-blocking portion
 				// of the buildee's yardmap, fallback check
-				u = CGameHelper::GetClosestFriendlyUnit(NULL, buildInfo.pos, buildDistance, allyteam);
+				u = CGameHelper::GetClosestFriendlyUnit(nullptr, buildInfo.pos, buildDistance, allyteam);
 			}
 
 			if (u != nullptr && CanAssistUnit(u, buildInfo.def)) {
-				curBuild = u;
-				AddDeathDependence(u, DEPENDENCE_BUILD);
+				// StopBuild sets this to false, fix it here if picking up the same buildee again
+				terraforming = (u == prvBuild && u->terraformLeft > 0.0f);
+
+				AddDeathDependence(curBuild = u, DEPENDENCE_BUILD);
 				ScriptStartBuilding(u->pos, false);
 				return true;
 			}
@@ -683,7 +688,7 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo, CFeature*& feature, bool& waitSt
 
 	if (!allowTerraform || skipTerraform) {
 		// skip the terraforming job
-		buildee->terraformLeft = 0;
+		buildee->terraformLeft = 0.0f;
 		buildee->groundLevelled = true;
 	} else {
 		tx1 = (int)std::max(0.0f, (buildee->pos.x - (buildee->xsize * 0.5f * SQUARE_SIZE)) / SQUARE_SIZE);
@@ -701,18 +706,11 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo, CFeature*& feature, bool& waitSt
 	}
 
 	buildee->SetSoloBuilder(this);
+	AddDeathDependence(curBuild = buildee, DEPENDENCE_BUILD);
 
-	AddDeathDependence(buildee, DEPENDENCE_BUILD);
-	curBuild = buildee;
-
-	/* The ground isn't going to be terraformed.
-	 * When the building is completed, it'll 'pop'
-	 * into the correct height for the (un-flattened)
-	 * terrain it's on.
-	 *
-	 * To prevent this visual artifact, put the building
-	 * at the 'right' height to begin with.
-	 */
+	// if the ground is not going to be terraformed the buildee would
+	// 'pop' to the correct height over the (un-flattened) terrain on
+	// completion, so put it there to begin with
 	curBuild->moveType->SlowUpdate();
 	return true;
 }
