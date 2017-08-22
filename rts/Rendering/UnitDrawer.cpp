@@ -591,7 +591,7 @@ void CUnitDrawer::DrawOpaqueUnitsShadow(int modelType) {
 		const int textureType = unitBinPair.first;
 
 		// only need to bind the atlas once for 3DO's, but KISS
-		assert((modelType == MODELTYPE_3DO) == (textureType == -1));
+		assert((modelType != MODELTYPE_3DO) || (textureType == 0));
 		shadowTexBindFuncs[modelType](texturehandlerS3O->GetTexture(textureType));
 
 		for (const auto& unitSetP: unitSet) {
