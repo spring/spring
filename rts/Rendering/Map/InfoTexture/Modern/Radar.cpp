@@ -41,6 +41,7 @@ CRadarTexture::CRadarTexture()
 	}
 
 	const std::string vertexCode = R"(
+		#version 120
 		varying vec2 texCoord;
 
 		void main() {
@@ -50,6 +51,7 @@ CRadarTexture::CRadarTexture()
 	)";
 
 	const std::string fragmentCode = R"(
+		#version 120
 		uniform sampler2D texLoS;
 		uniform sampler2D texRadar;
 		uniform sampler2D texJammer;
