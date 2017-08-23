@@ -56,6 +56,7 @@ CallInsList = {
   "UnitLeftLos",
   "UnitLoaded",
   "UnitUnloaded",
+  "UnitHarvestStorageFull",
 
   "UnitEnteredWater",
   "UnitEnteredAir",
