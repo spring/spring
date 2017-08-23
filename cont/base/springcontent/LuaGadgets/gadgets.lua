@@ -1550,6 +1550,12 @@ function gadgetHandler:StockpileChanged(unitID, unitDefID, unitTeam,
   return
 end
 
+function gadgetHandler:UnitHarvestStorageFull(unitID, unitDefID, unitTeam)
+  for _,g in r_ipairs(self.UnitHarvestStorageFullList) do
+    g:UnitHarvestStorageFull(unitID, unitDefID, unitTeam)
+  end
+  return
+end
 
 --------------------------------------------------------------------------------
 --
