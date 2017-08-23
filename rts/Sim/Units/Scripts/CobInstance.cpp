@@ -603,11 +603,10 @@ void CCobInstance::ThreadCallback(ThreadCallbackType type, int retCode, int cbPa
 		// (otherwise its value is -1 regardless of Killed being present which
 		// means *no* wreck will be spawned)
 		case CBKilled:
-			unit->deathScriptFinished = true;
-			unit->delayedWreckLevel = retCode;
+			unit->KilledScriptFinished(retCode);
 			break;
 		case CBAimWeapon:
-			unit->weapons[cbParam]->angleGood = (retCode == 1);
+			unit->weapons[cbParam]->AimScriptFinished(retCode == 1);
 			break;
 		case CBAimShield:
 			static_cast<CPlasmaRepulser*>(unit->weapons[cbParam])->SetEnabled(retCode != 0);

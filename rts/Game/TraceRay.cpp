@@ -293,6 +293,7 @@ float TraceRay(
 		}
 	}
 
+	// no intersection if no decrease in length
 	return traceLength;
 }
 
