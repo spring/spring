@@ -144,6 +144,7 @@ local flexCallIns = {
   'UnitCloaked',
   'UnitDecloaked',
   'UnitMoveFailed',
+  'UnitHarvestStorageFull',
   'RecvLuaMsg',
   'StockpileChanged',
   'DrawGenesis',
@@ -1940,6 +1941,13 @@ end
 function widgetHandler:UnitMoveFailed(unitID, unitDefID, unitTeam)
   for _,w in ipairs(self.UnitMoveFailedList) do
     w:UnitMoveFailed(unitID, unitDefID, unitTeam)
+  end
+  return
+end
+
+function widgetHandler:UnitHarvestStorageFull(unitID, unitDefID, unitTeam)
+  for _,w in ipairs(self.UnitHarvestStorageFullList) do
+    w:UnitHarvestStorageFull(unitID, unitDefID, unitTeam)
   end
   return
 end
