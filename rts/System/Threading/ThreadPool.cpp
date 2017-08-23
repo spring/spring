@@ -628,14 +628,17 @@ void AddExtJob(spring::thread&& t) {
 }
 
 void AddExtJob(std::future<void>&& f) {
+	#ifndef WIN32
 	for (auto& ef: extFutures) {
 		// find a future whose (void) result is already available, without blocking
+		// FIXME: does not currently (august 2017) compile on Windows mingw buildbots
 		if (ef.wait_until(std::chrono::system_clock::now() + std::chrono::seconds(0)) != std::future_status::ready)
 			continue;
 
 		ef = std::move(f);
 		return;
 	}
+	#endif
 
 	extFutures.emplace_back(std::move(f));
 }

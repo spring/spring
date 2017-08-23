@@ -533,7 +533,7 @@ void CLuaUnitScript::Killed()
 	const int fn = LUAFN_Killed;
 
 	if (!HasFunction(fn)) {
-		unit->deathScriptFinished = true;
+		unit->KilledScriptFinished(unit->delayedWreckLevel);
 		return;
 	}
 
@@ -553,8 +553,7 @@ void CLuaUnitScript::Killed()
 	// In this case the return value is the delayedWreckLevel.
 	if (lua_israwnumber(L, -1)) {
 		inKilled = false;
-		unit->deathScriptFinished = true;
-		unit->delayedWreckLevel = lua_toint(L, -1);
+		unit->KilledScriptFinished(lua_toint(L, -1));
 	}
 	else if (!lua_isnoneornil(L, -1)) {
 		const std::string& fname = CLuaUnitScriptNames::GetScriptName(fn);
@@ -563,7 +562,7 @@ void CLuaUnitScript::Killed()
 		RemoveCallIn(fname);
 
 		// without this we would end up with zombie units
-		unit->deathScriptFinished = true;
+		unit->KilledScriptFinished(unit->delayedWreckLevel);
 	}
 
 	lua_pop(L, 1);
@@ -1398,16 +1397,15 @@ int CLuaUnitScript::WaitForMove(lua_State* L)
 
 int CLuaUnitScript::SetDeathScriptFinished(lua_State* L)
 {
-	if (activeUnit == NULL || activeScript == nullptr)
+	if (activeUnit == nullptr || activeScript == nullptr)
 		return 0;
 
 	CLuaUnitScript* script = dynamic_cast<CLuaUnitScript*>(activeScript);
 
-	if (script == NULL || !script->inKilled)
+	if (script == nullptr || !script->inKilled)
 		luaL_error(L, "%s(): not a Lua unit script or 'Killed' not called", __func__);
 
-	activeUnit->deathScriptFinished = true;
-	activeUnit->delayedWreckLevel = luaL_optint(L, 1, -1);
+	activeUnit->KilledScriptFinished(luaL_optint(L, 1, -1));
 	return 0;
 }
 

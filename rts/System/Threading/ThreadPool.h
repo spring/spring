@@ -523,7 +523,10 @@ public:
 		if (!isFinished)
 			return true;
 
+		// P2TG's are never actually in the queue, let WFF terminate
+		inTaskQueue.store(false);
 		remainingTasks.store(0);
+
 		childTasks.clear();
 		return false;
 	}

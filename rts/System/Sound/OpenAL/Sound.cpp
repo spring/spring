@@ -418,11 +418,13 @@ void CSound::UpdateThread(int maxSounds)
 	ALCcontext* curContext = alcGetCurrentContext();
 	ALCdevice* curDevice = alcGetContextsDevice(curContext);
 
-	LOG("[Sound::%s][4]", __func__);
+	LOG("[Sound::%s][4] ctx=%p dev=%p", __func__, curContext, curDevice);
 
 	alcMakeContextCurrent(nullptr);
 	alcDestroyContext(curContext);
 	alcCloseDevice(curDevice);
+
+	LOG("[Sound::%s][5]", __func__);
 }
 
 void CSound::Update()

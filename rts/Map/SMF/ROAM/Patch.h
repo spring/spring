@@ -43,8 +43,9 @@ struct TriTreeNode
 	{}
 
 	// all non-leaf nodes have both children, so just check for one
-	bool IsLeaf() const { assert(RightChild == nullptr); return (LeftChild == nullptr); }
-	bool IsBranch() const { assert(LeftChild != nullptr); return (RightChild != nullptr); }
+	bool IsValid() const { return ((LeftChild == nullptr && RightChild == nullptr) || (LeftChild != nullptr && RightChild != nullptr)); }
+	bool IsLeaf() const { assert(IsValid()); return (LeftChild == nullptr); }
+	bool IsBranch() const { assert(IsValid()); return (RightChild != nullptr); }
 
 	TriTreeNode* LeftChild;
 	TriTreeNode* RightChild;

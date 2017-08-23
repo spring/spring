@@ -332,8 +332,6 @@ namespace DebugColVolDrawer
 		if (!enable)
 			return;
 
-		SCOPED_GMARKER("DebugColVolDrawer::Draw");
-
 		glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
 			glDisable(GL_LIGHTING);
 			glDisable(GL_LIGHT0);

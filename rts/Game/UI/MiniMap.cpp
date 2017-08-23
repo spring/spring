@@ -860,8 +860,6 @@ void CMiniMap::ApplyConstraintsMatrix() const
 
 void CMiniMap::Update()
 {
-	SCOPED_GMARKER("CMiniMap::Update");
-
 	// need this because UpdateTextureCache sets curPos={0,0}
 	// (while calling DrawForReal, which can reach GetMapPos)
 	tmpPos = curPos;
