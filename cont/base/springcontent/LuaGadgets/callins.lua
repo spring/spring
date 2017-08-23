@@ -74,6 +74,7 @@ CALLIN_LIST = {
 	"UnitEnteredWater",        -- FIXME: not implemented by base GH
 	"UnitLeftWater",           -- FIXME: not implemented by base GH
 	"UnitCommand",
+	"UnitHarvestStorageFull",
 
 	-- weapon callins
 	"StockpileChanged",
