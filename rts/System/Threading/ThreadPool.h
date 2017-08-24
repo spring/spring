@@ -132,25 +132,25 @@ public:
 	uint64_t ExecuteLoop(int tid, bool wffCall) {
 		const spring_time t0 = spring_now();
 
-		// if this is a for-task, execute a *single* slice
-		// and re-insert such that other threads can share
-		// the work (otherwise all slices would be handled
-		// by *one* worker, although in practice this still
-		// occurs since WaitForFinished suffers no latency)
-		if (!wffCall && IsSliceTask() && ExecuteStep()) {
-			ThreadPool::PushTaskGroup(this);
-			return ((spring_now() - t0).toNanoSecsi());
-		}
-
 		while (ExecuteStep());
 
 		const spring_time t1 = spring_now();
 		const spring_time dt = t1 - t0;
 
-		if (!wffCall) {
-			// do not set this from WFF, defeats the purpose
-			assert(inTaskQueue.load());
+		if (IsSliceTask()) {
+			// inTaskQueue would be set to false prematurely by the
+			// first slice to finish, let it be handled by WFF which
+			// blocks until all threads are
+			if (!wffCall)
+				return (dt.toNanoSecsi());
+
 			inTaskQueue.store(false);
+		} else {
+			// do not set this to false from WFF, defeats the purpose
+			if (!wffCall) {
+				assert(inTaskQueue.load());
+				inTaskQueue.store(wffCall);
+			}
 		}
 
 		if (SelfDelete()) {
@@ -699,8 +699,19 @@ static inline void for_mt(int start, int end, int step, F&& f)
 
 	assert(taskGroup->IsInJobQueue());
 
-	ThreadPool::PushTaskGroup(taskGroup); // note: ForTask re-queues itself for each slice
-	ThreadPool::WaitForFinished(taskGroup); // make calling thread also run ExecuteLoop
+	#if 0
+	ThreadPool::PushTaskGroup(taskGroup);
+	#else
+	// store the group in all worker queues s.t. each executes a slice
+	for (size_t i = 1; i < ThreadPool::GetNumThreads(); ++i) {
+		taskGroup->wantedThread.store(i);
+		ThreadPool::PushTaskGroup(taskGroup);
+	}
+	#endif
+
+	// make calling thread also run ExecuteLoop
+	ThreadPool::WaitForFinished(taskGroup);
+
 }
 
 template <typename F>
