@@ -306,11 +306,6 @@ void CWeapon::UpdateAim()
 	// weapon finished a previously started AimWeapon thread and wants to
 	// fire, but target is no longer within contraints --> wait for re-aim
 	angleGood &= targetAngleConstraint;
-	// NOTE:
-	//   this should not need to be here, but many legacy scripts do not
-	//   seem to define Aim*Ary in COB for units with onlyForward weapons
-	//   (so angleGood is never set to true) -- REMOVE AFTER 90.0
-	angleGood |= (onlyForward && targetAngleConstraint);
 
 	// reaim weapon when needed
 	ReAimWeapon();
