@@ -270,7 +270,7 @@ bool CBuilder::AssistTerraform(const Command&)
 {
 	CBuilder* helpTerraformee = helpTerraform;
 
-	if (helpTerraform == nullptr || !inBuildStance)
+	if (helpTerraformee == nullptr || !inBuildStance)
 		return false;
 
 	if (!helpTerraformee->terraforming) {
@@ -291,7 +291,7 @@ bool CBuilder::UpdateBuild(const Command& fCommand)
 	CUnit* curBuildee = curBuild;
 	CBuilderCAI* cai = static_cast<CBuilderCAI*>(commandAI);
 
-	if (curBuild == nullptr || !cai->IsInBuildRange(curBuild))
+	if (curBuildee == nullptr || !cai->IsInBuildRange(curBuildee))
 		return false;
 
 	if (fCommand.GetID() == CMD_WAIT) {
@@ -359,7 +359,7 @@ bool CBuilder::UpdateReclaim(const Command& fCommand)
 	// and reset curReclaim to null (which would crash CreateNanoParticle)
 	CSolidObject* curReclaimee = curReclaim;
 
-	if (curReclaim == nullptr || f3SqDist(curReclaim->pos, pos) >= Square(buildDistance + curReclaim->radius) || !inBuildStance)
+	if (curReclaimee == nullptr || f3SqDist(curReclaimee->pos, pos) >= Square(buildDistance + curReclaimee->radius) || !inBuildStance)
 		return false;
 
 	if (fCommand.GetID() == CMD_WAIT) {
@@ -381,9 +381,7 @@ bool CBuilder::UpdateResurrect(const Command& fCommand)
 	CBuilderCAI* cai = static_cast<CBuilderCAI*>(commandAI);
 	CFeature* curResurrectee = curResurrect;
 
-	const UnitDef* ud = curResurrectee->udef;
-
-	if (curResurrect == nullptr || f3SqDist(curResurrect->pos, pos) >= Square(buildDistance + curResurrect->radius) || !inBuildStance)
+	if (curResurrectee == nullptr || f3SqDist(curResurrectee->pos, pos) >= Square(buildDistance + curResurrectee->radius) || !inBuildStance)
 		return false;
 
 	if (fCommand.GetID() == CMD_WAIT) {
@@ -391,7 +389,7 @@ bool CBuilder::UpdateResurrect(const Command& fCommand)
 		return true;
 	}
 
-	if (ud == nullptr) {
+	if (curResurrectee->udef == nullptr) {
 		StopBuild(true);
 		return true;
 	}
@@ -403,11 +401,13 @@ bool CBuilder::UpdateResurrect(const Command& fCommand)
 		return true;
 	}
 
+	const UnitDef* resurrecteeDef = curResurrectee->udef;
+
 	// corpse has been restored, begin resurrection
-	const float step = resurrectSpeed / ud->buildTime;
+	const float step = resurrectSpeed / resurrecteeDef->buildTime;
 
 	const bool resurrectAllowed = eventHandler.AllowFeatureBuildStep(this, curResurrectee, step);
-	const bool canExecResurrect = (resurrectAllowed && UseEnergy(ud->energy * step * modInfo.resurrectEnergyCostFactor));
+	const bool canExecResurrect = (resurrectAllowed && UseEnergy(resurrecteeDef->energy * step * modInfo.resurrectEnergyCostFactor));
 
 	if (canExecResurrect) {
 		curResurrectee->resurrectProgress += step;
@@ -423,10 +423,10 @@ bool CBuilder::UpdateResurrect(const Command& fCommand)
 		// resurrect finished and we are the first
 		curResurrectee->UnBlock();
 
-		UnitLoadParams resurrecteeParams = {ud, this, curResurrectee->pos, ZeroVector, -1, team, curResurrectee->buildFacing, false, false};
+		UnitLoadParams resurrecteeParams = {resurrecteeDef, this, curResurrectee->pos, ZeroVector, -1, team, curResurrectee->buildFacing, false, false};
 		CUnit* resurrectee = unitLoader->LoadUnit(resurrecteeParams);
 
-		assert(ud == resurrectee->unitDef);
+		assert(resurrecteeDef == resurrectee->unitDef);
 		resurrectee->SetSoloBuilder(this);
 
 		// TODO: make configurable if this should happen
@@ -471,7 +471,7 @@ bool CBuilder::UpdateCapture(const Command& fCommand)
 {
 	CUnit* curCapturee = curCapture;
 
-	if (curCapture == nullptr || f3SqDist(curCapture->pos, pos) >= Square(buildDistance + curCapture->radius) || !inBuildStance)
+	if (curCapturee == nullptr || f3SqDist(curCapturee->pos, pos) >= Square(buildDistance + curCapturee->radius) || !inBuildStance)
 		return false;
 
 	if (fCommand.GetID() == CMD_WAIT) {
