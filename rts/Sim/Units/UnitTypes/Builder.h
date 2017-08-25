@@ -11,6 +11,7 @@
 
 struct UnitDef;
 struct BuildInfo;
+struct Command;
 class CFeature;
 class CSolidObject;
 
@@ -41,6 +42,13 @@ public:
 	void Update();
 	void SlowUpdate();
 	void DependentDied(CObject* o);
+
+	bool UpdateTerraform(const Command& fCommand);
+	bool AssistTerraform(const Command& fCommand);
+	bool UpdateBuild(const Command& fCommand);
+	bool UpdateReclaim(const Command& fCommand);
+	bool UpdateResurrect(const Command& fCommand);
+	bool UpdateCapture(const Command& fCommand);
 
 	bool StartBuild(BuildInfo& buildInfo, CFeature*& feature, bool& waitStance);
 	float CalculateBuildTerraformCost(BuildInfo& buildInfo);
