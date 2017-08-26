@@ -559,8 +559,7 @@ void WeaponDef::LoadSound(
 	const unsigned int soundIdx,
 	std::vector<GuiSoundSet::Data>& soundData
 ) {
-	string name = "";
-	int id = -1;
+	std::string name;
 	float volume = -1.0f;
 
 	soundData.emplace_back(name, id, volume);
@@ -583,10 +582,7 @@ void WeaponDef::LoadSound(
 	if (name.empty())
 		return;
 
-	if ((id = CommonDefHandler::LoadSoundFile(name)) <= 0)
-		return;
-
-	soundData[soundIdx] = GuiSoundSet::Data(name, id, volume);
+	soundData[soundIdx] = GuiSoundSet::Data(name, -1, volume);
 }
 
 

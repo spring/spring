@@ -15,6 +15,7 @@
 #include "System/FileSystem/VFSHandler.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/StringUtil.h"
+#include "System/TimeProfiler.h"
 #include "../tools/pr-downloader/src/pr-downloader.h"
 
 
@@ -131,10 +132,12 @@ int LuaVFS::Include(lua_State* L, bool synced)
 {
 	const std::string& filename = luaL_checkstring(L, 1);
 
-	if (!LuaIO::IsSimplePath(filename)) {
-		// the path may point to a file or dir outside of any data-dir
-		//FIXME: return 0;
-	}
+	#if 0
+	ScopedOnceTimer timer("LuaVFS::Include(" + filename + ")");
+	#endif
+
+	// the path may point to a file or dir outside of any data-dir
+	// if (!LuaIO::IsSimplePath(filename)) return 0;
 
 	bool hasCustomEnv = false;
 	if (!lua_isnoneornil(L, 2)) {
