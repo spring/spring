@@ -7,6 +7,7 @@
 #include "System/Sound/ISound.h"
 #include "System/Log/ILog.h"
 
+#include <algorithm>
 #include <array>
 
 static const std::array<std::string, 2> soundExts = {"wav", "ogg"};
@@ -18,7 +19,7 @@ int CommonDefHandler::LoadSoundFile(const std::string& fileName)
 	// unlike constructing a CFileHandler this does not read the data
 	// into memory; faster for large files and many small individually
 	// compressed sounds (e.g. in pool archives)
-	const bool foundExt = (std::find(soundExts.begin(), soundExts.end(), soundExt) != soundExts.end());
+	const bool foundExt = (std::find(soundExts.cbegin(), soundExts.cend(), soundExt) != soundExts.cend());
 	const bool haveFile = (foundExt && CFileHandler::FileExists(fileName, SPRING_VFS_RAW_FIRST));
 	const bool haveItem = (haveFile || sound->HasSoundItem(fileName));
 
