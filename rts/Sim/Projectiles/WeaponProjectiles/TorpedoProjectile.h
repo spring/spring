@@ -11,21 +11,26 @@ class CTorpedoProjectile : public CWeaponProjectile
 public:
 	// creg only
 	CTorpedoProjectile() { }
-
 	CTorpedoProjectile(const ProjectileParams& params);
 
 	void Update() override;
 	void Draw(CVertexArray* va) override;
 
-	int GetProjectilesCount() const override;
+	int GetProjectilesCount() const override { return 8; }
 
 	void SetIgnoreError(bool b) { ignoreError = b; }
+
 private:
+	float3 UpdateTargetingPos();
+	float3 UpdateTargetingDir(const float3& targetObjVel);
+
+private:
+	bool ignoreError;
 
 	float tracking;
-	bool ignoreError;
 	float maxSpeed;
 	int nextBubble;
+
 	float texx;
 	float texy;
 };

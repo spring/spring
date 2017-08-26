@@ -136,6 +136,7 @@ void CCannon::FireImpl(const bool scriptCall)
 
 	ProjectileParams params = GetProjectileParams();
 	params.pos = weaponMuzzlePos;
+	params.end = currentTargetPos;
 	params.speed = dir * projectileSpeed;
 	params.ttl = ttl;
 	params.gravity = gravity;
@@ -145,9 +146,8 @@ void CCannon::FireImpl(const bool scriptCall)
 
 void CCannon::SlowUpdate()
 {
-	if (weaponDef->highTrajectory == 2 && owner->useHighTrajectory != highTrajectory) {
+	if (weaponDef->highTrajectory == 2 && owner->useHighTrajectory != highTrajectory)
 		highTrajectory = owner->useHighTrajectory;
-	}
 
 	CWeapon::SlowUpdate();
 }
