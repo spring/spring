@@ -5,6 +5,7 @@
 #ifdef __linux__
 #include <unistd.h>
 #include <dlfcn.h> // for dladdr(), dlopen()
+#include <sys/statvfs.h>
 
 #elif WIN32
 #include <io.h>
@@ -120,18 +121,8 @@ namespace Platform
 		if (!origCWD.empty())
 			return origCWD;
 
-		#ifdef WIN32
-		char* buf = _getcwd(nullptr, 0);
-		#else
-		char* buf = getcwd(nullptr, 0);
-		#endif
-
-		if (buf == nullptr)
-			return origCWD;
-
-		origCWD.assign(buf); // copy
+		origCWD = std::move(FileSystemAbstraction::GetCwd());
 		FileSystemAbstraction::EnsurePathSepAtEnd(origCWD);
-		free(buf);
 		return origCWD;
 	}
 
@@ -392,9 +383,33 @@ namespace Platform
 	}
 
 
-	unsigned int NativeWordSize() { return (sizeof(void*)); }
-	unsigned int SystemWordSize() { return ((Is32BitEmulation())? 8: NativeWordSize()); }
-	unsigned int DequeChunkSize() {
+	uint64_t FreeDiskSpace(const std::string& path) {
+		#ifdef WIN32
+		ULARGE_INTEGER bytesFree;
+
+		if (!GetDiskFreeSpaceEx(path.c_str(), &bytesFree, nullptr, nullptr))
+			return 0;
+
+		return (bytesFree / (1024 * 1024));
+
+		#else
+
+		struct statvfs st;
+
+		if (statvfs(path.c_str(), &st) != 0)
+			return 0;
+
+		if (st.f_frsize != 0)
+			return ((st.f_frsize * st.f_bavail) / (1024 * 1024));
+
+		return ((st.f_bsize * st.f_bavail) / (1024 * 1024));
+		#endif
+	}
+
+
+	uint32_t NativeWordSize() { return (sizeof(void*)); }
+	uint32_t SystemWordSize() { return ((Is32BitEmulation())? 8: NativeWordSize()); }
+	uint32_t DequeChunkSize() {
 		std::deque<int> q = {0, 1};
 		for (int i = 1; ((&q[i] - &q[i - 1]) == 1); q.push_back(++i));
 		return (q.size() - 1);

@@ -209,12 +209,7 @@ void CUnitDefHandler::LoadSounds(const LuaTable& soundsTable, GuiSoundSet& gsoun
 
 void CUnitDefHandler::LoadSound(GuiSoundSet& gsound, const string& fileName, const float volume)
 {
-	const int id = LoadSoundFile(fileName);
-
-	if (id == 0)
-		return;
-
-	gsound.sounds.emplace_back(fileName, id, volume);
+	gsound.sounds.emplace_back(fileName, -1, volume);
 }
 
 

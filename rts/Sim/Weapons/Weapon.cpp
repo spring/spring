@@ -1127,9 +1127,9 @@ ProjectileParams CWeapon::GetProjectileParams()
 	params.weaponDef = weaponDef;
 
 	switch (currentTarget.type) {
-		case Target_None: { } break;
-		case Target_Unit: { params.target = currentTarget.unit; } break;
-		case Target_Pos:  { } break;
+		case Target_None     : {                                          } break;
+		case Target_Unit     : { params.target = currentTarget.unit;      } break;
+		case Target_Pos      : {                                          } break;
 		case Target_Intercept: { params.target = currentTarget.intercept; } break;
 	}
 

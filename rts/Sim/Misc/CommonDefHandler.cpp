@@ -7,42 +7,30 @@
 #include "System/Sound/ISound.h"
 #include "System/Log/ILog.h"
 
+#include <algorithm>
+#include <array>
+
+static const std::array<std::string, 2> soundExts = {"wav", "ogg"};
+
 int CommonDefHandler::LoadSoundFile(const std::string& fileName)
 {
-	const std::string extension = std::move(FileSystem::GetExtension(fileName));
-	bool hasFile = false;
+	const std::string soundExt = std::move(FileSystem::GetExtension(fileName));
 
-	#if 0
-	if (extension == "wav" || extension == "ogg") {
-		CFileHandler raw(fileName);
-		hasFile = raw.FileExists();
-	}
-	#else
-	// this does not read the data into memory; faster for large
-	// files and many small individually compressed sounds (e.g.
-	// in pool archives)
-	if (extension == "wav" || extension == "ogg")
-		hasFile = CFileHandler::FileExists(fileName, SPRING_VFS_RAW_FIRST);
-	#endif
+	// unlike constructing a CFileHandler this does not read the data
+	// into memory; faster for large files and many small individually
+	// compressed sounds (e.g. in pool archives)
+	const bool foundExt = (std::find(soundExts.cbegin(), soundExts.cend(), soundExt) != soundExts.cend());
+	const bool haveFile = (foundExt && CFileHandler::FileExists(fileName, SPRING_VFS_RAW_FIRST));
+	const bool haveItem = (haveFile || sound->HasSoundItem(fileName));
 
-	if (!hasFile && !sound->HasSoundItem(fileName)) {
-		// try wav if extension is missing
-		const std::string soundFile = "sounds/" + fileName + ((extension.empty())? ".wav": "");
+	if (haveItem)
+		return (sound->GetSoundId(fileName));
 
-		#if 0
-		CFileHandler fh(soundFile);
+	const std::string soundFile = "sounds/" + fileName + ((soundExt.empty())? ".wav": "");
 
-		// we have a valid soundfile: store name, ID, and default volume
-		if (fh.FileExists())
-			return (sound->GetSoundId(soundFile));
-		#else
-		if (CFileHandler::FileExists(soundFile, SPRING_VFS_RAW_FIRST))
-			return (sound->GetSoundId(soundFile));
-		#endif
+	if (CFileHandler::FileExists(soundFile, SPRING_VFS_RAW_FIRST))
+		return (sound->GetSoundId(soundFile));
 
-		LOG_L(L_WARNING, "[%s] could not load sound \"%s\" from {Unit,Weapon}Def", __func__, fileName.c_str());
-		return 0;
-	}
-
-	return (sound->GetSoundId(fileName));
+	LOG_L(L_WARNING, "[%s] could not load sound \"%s\" from {Unit,Weapon}Def", __func__, fileName.c_str());
+	return 0;
 }

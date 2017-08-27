@@ -1707,8 +1707,7 @@ int LuaSyncedCtrl::SetUnitMaxRange(lua_State* L)
 	if (unit == nullptr)
 		return 0;
 
-	const float maxRange = max(0.0f, luaL_checkfloat(L, 2));
-	unit->maxRange = maxRange;
+	unit->maxRange = std::max(0.0f, luaL_checkfloat(L, 2));
 	return 0;
 }
 
@@ -1720,8 +1719,7 @@ int LuaSyncedCtrl::SetUnitExperience(lua_State* L)
 	if (unit == nullptr)
 		return 0;
 
-	const float experience = max(0.0f, luaL_checkfloat(L, 2));
-	unit->AddExperience(experience - unit->experience);
+	unit->AddExperience(std::max(0.0f, luaL_checkfloat(L, 2)) - unit->experience);
 	return 0;
 }
 

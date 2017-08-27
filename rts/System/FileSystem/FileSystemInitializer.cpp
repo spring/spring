@@ -18,6 +18,7 @@ void FileSystemInitializer::PreInitializeConfigHandler(const std::string& config
 {
 	dataDirLocater.LocateDataDirs();
 	dataDirLocater.ChangeCwdToWriteDir();
+
 	ConfigHandler::Instantiate(configSource, safemode);
 }
 

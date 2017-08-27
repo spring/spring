@@ -98,9 +98,9 @@ CWeaponProjectile::CWeaponProjectile(const ProjectileParams& params)
 	CSolidObject* so = nullptr;
 	CWeaponProjectile* po = nullptr;
 
-	if ((so = dynamic_cast<CSolidObject*>(target)) != nullptr) {
+	if ((so = dynamic_cast<CSolidObject*>(target)) != nullptr)
 		AddDeathDependence(so, DEPENDENCE_WEAPONTARGET);
-	}
+
 	if ((po = dynamic_cast<CWeaponProjectile*>(target)) != nullptr) {
 		po->SetBeingIntercepted(po->IsBeingIntercepted() || weaponDef->interceptSolo);
 		AddDeathDependence(po, DEPENDENCE_INTERCEPTTARGET);
@@ -121,9 +121,10 @@ CWeaponProjectile::CWeaponProjectile(const ProjectileParams& params)
 
 	if (ownerID != -1u && weaponNum != -1u) {
 		const CUnit* owner = unitHandler->GetUnit(ownerID);
-		if (owner != nullptr && weaponNum < owner->weapons.size()) {
+
+		if (owner != nullptr && weaponNum < owner->weapons.size())
 			damages = DynDamageArray::IncRef(owner->weapons[weaponNum]->damages);
-		}
+
 	}
 	if (damages == nullptr)
 		damages = DynDamageArray::IncRef(&weaponDef->damages);
@@ -140,9 +141,10 @@ CWeaponProjectile::CWeaponProjectile(const ProjectileParams& params)
 
 	ASSERT_SYNCED(id);
 
-	if (weaponDef->targetable) {
-		interceptHandler.AddInterceptTarget(this, targetPos);
-	}
+	if (!weaponDef->targetable)
+		return;
+
+	interceptHandler.AddInterceptTarget(this, targetPos);
 }
 
 
@@ -203,9 +205,9 @@ void CWeaponProjectile::Collision(CFeature* feature)
 			impactDir = targetPos - startPos;
 		}
 
-		if (gsRNG.NextFloat() < weaponDef->fireStarter) {
+		if (gsRNG.NextFloat() < weaponDef->fireStarter)
 			feature->StartFire();
-		}
+
 	} else {
 		if (hitscan) {
 			impactPos = targetPos;
@@ -254,9 +256,8 @@ void CWeaponProjectile::UpdateInterception()
 	// we are the interceptor, point us toward the interceptee pos each frame
 	// (normally not needed, subclasses handle it directly in their Update()'s
 	// *until* our owner dies)
-	if (owner() == nullptr) {
+	if (owner() == nullptr)
 		targetPos = po->pos + po->speed;
-	}
 
 	if (hitscan) {
 		if (ClosestPointOnLine(startPos, targetPos, po->pos).SqDistance(po->pos) < Square(weaponDef->collisionSize)) {
@@ -348,9 +349,10 @@ bool CWeaponProjectile::CanBeInterceptedBy(const WeaponDef* wd) const
 
 void CWeaponProjectile::DependentDied(CObject* o)
 {
-	if (o == target) {
-		target = nullptr;
-	}
+	if (o != target)
+		return;
+
+	target = nullptr;
 }
 
 

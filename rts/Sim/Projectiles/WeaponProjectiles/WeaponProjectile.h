@@ -39,9 +39,8 @@ public:
 	void PostLoad();
 
 	void SetTargetObject(CWorldObject* newTarget) {
-		if (newTarget != NULL) {
+		if (newTarget != nullptr)
 			targetPos = newTarget->pos;
-		}
 
 		target = newTarget;
 	}
