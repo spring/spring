@@ -88,9 +88,10 @@ bool Is64Bit();
 bool Is32BitEmulation();
 bool IsRunningInGDB();
 
-unsigned int NativeWordSize(); // compiled process code
-unsigned int SystemWordSize(); // host operating system
-unsigned int DequeChunkSize();
+uint64_t FreeDiskSpace(const std::string& path);
+uint32_t NativeWordSize(); // compiled process code
+uint32_t SystemWordSize(); // host operating system
+uint32_t DequeChunkSize();
 
 
 /**

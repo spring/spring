@@ -47,7 +47,7 @@
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/Textures/NamedTextures.h"
 #include "Rendering/Textures/TextureAtlas.h"
-#include "Sim/Misc/DefinitionTag.h"
+#include "Sim/Misc/DefinitionTag.h" // DefType
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
@@ -237,6 +237,10 @@ SpringApp::SpringApp(int argc, char** argv)
 	gflags::ParseCommandLineFlags(&argc, &argv, true);
 	ParseCmdLine(argc, argv);
 
+	FileSystemInitializer::InitializeLogOutput();
+	CLogOutput::LogConfigInfo();
+	CLogOutput::LogSystemInfo();
+
 	spring_clock::PushTickRate(configHandler->GetBool("UseHighResTimer"));
 	// set the Spring "epoch" to be whatever value the first
 	// call to gettime() returns, should not be 0 (can safely
@@ -263,12 +267,6 @@ SpringApp::~SpringApp()
  */
 bool SpringApp::Init()
 {
-	assert(configHandler != nullptr);
-	FileSystemInitializer::InitializeLogOutput();
-
-	CLogOutput::LogConfigInfo();
-	CLogOutput::LogSystemInfo();
-
 	CMyMath::Init();
 	LuaMemPool::InitStatic(configHandler->GetBool("UseLuaMemPools"));
 
@@ -346,7 +344,7 @@ bool SpringApp::InitPlatformLibs()
 	// MUST run before any other X11 call (including
 	// those by SDL) to make calls to X11 threadsafe
 	if (!XInitThreads()) {
-		LOG_L(L_FATAL, "[%s] Xlib is not threadsafe", __func__);
+		LOG_L(L_FATAL, "[SpringApp::%s] Xlib is not threadsafe", __func__);
 		return false;
 	}
 #endif
@@ -358,7 +356,7 @@ bool SpringApp::InitPlatformLibs()
 		const UINT oldErrorMode = SetErrorMode(SEM_FAILCRITICALERRORS);
 
 		if (LoadLibrary("gdbmacros.dll"))
-			LOG_L(L_DEBUG, "[%s] QTCreator's gdbmacros.dll loaded", __func__);
+			LOG_L(L_DEBUG, "[SpringApp::%s] QTCreator's gdbmacros.dll loaded", __func__);
 
 		SetErrorMode(oldErrorMode);
 	}
@@ -487,6 +485,9 @@ void SpringApp::LoadFonts()
  */
 void SpringApp::ParseCmdLine(int argc, char* argv[])
 {
+	if (argc >= 2)
+		inputFile = argv[1];
+
 #ifndef WIN32
 	if (!FLAGS_nocolor && (getenv("SPRING_NOCOLOR") == NULL)) {
 		// don't colorize, if our output is piped to a diff tool or file
@@ -523,17 +524,15 @@ void SpringApp::ParseCmdLine(int argc, char* argv[])
 		DefType::OutputTagMap();
 		exit(EXIT_SUCCESS);
 	}
-	if (FLAGS_list_ceg_classes) {
-		const int res = CCustomExplosionGenerator::OutputProjectileClassInfo() ? EXIT_SUCCESS : EXIT_FAILURE;
-		exit(res);
-	}
+	if (FLAGS_list_ceg_classes)
+		exit(CCustomExplosionGenerator::OutputProjectileClassInfo() ? EXIT_SUCCESS : EXIT_FAILURE);
 
 	// Runtime Tests
 	if (FLAGS_test_creg) {
 #ifdef USING_CREG
 		exit(creg::RuntimeTest() ? EXIT_SUCCESS : EXIT_FAILURE);
 #else
-		LOG_L(L_ERROR, "Creg is not enabled!\n");
+		LOG_L(L_ERROR, "[SpringApp::%s] CREG is not enabled!\n", __func__);
 		exit(EXIT_FAILURE); //Do not fail tests
 #endif
 	}
@@ -550,7 +549,7 @@ void SpringApp::ParseCmdLine(int argc, char* argv[])
 		exit(EXIT_SUCCESS);
 	}
 
-	//LOG("[%s] command-line args: \"%s\"", __func__, cmdline->GetCmdLine().c_str());
+	// if this fails, configHandler remains null
 	FileSystemInitializer::PreInitializeConfigHandler(FLAGS_config, FLAGS_safemode);
 
 	if (FLAGS_textureatlas)
@@ -566,10 +565,6 @@ void SpringApp::ParseCmdLine(int argc, char* argv[])
 			CBenchmark::startFrame = FLAGS_benchmarkstart * 60 * GAME_SPEED;
 
 		CBenchmark::endFrame = CBenchmark::startFrame + FLAGS_benchmark * 60 * GAME_SPEED;
-	}
-
-	if (argc >= 2) {
-		inputFile = argv[1];
 	}
 }
 

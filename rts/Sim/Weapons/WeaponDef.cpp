@@ -5,7 +5,6 @@
 #include "Game/TraceRay.h"
 #include "Rendering/Models/IModelParser.h"
 #include "Rendering/Textures/ColorMap.h"
-#include "Sim/Misc/CommonDefHandler.h"
 #include "Sim/Misc/DamageArrayHandler.h"
 #include "Sim/Misc/DefinitionTag.h"
 #include "Sim/Misc/GlobalConstants.h"

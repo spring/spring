@@ -119,6 +119,8 @@ public:
 	 */
 	void ChangeCwdToWriteDir();
 
+	void CreateCacheDir(const std::string& cacheDir);
+
 private:
 	void AddCurWorkDir();
 	void AddPortableDir();
