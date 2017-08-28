@@ -120,7 +120,7 @@ bool CBuilder::CanAssistUnit(const CUnit* u, const UnitDef* def) const
 	if (!unitDef->canAssist)
 		return false;
 
-	return ((def == nullptr || u->unitDef == def) && u->beingBuilt && (u->buildProgress < 1.0f) && (!u->soloBuilder || u->soloBuilder == this));
+	return ((def == nullptr || u->unitDef == def) && u->beingBuilt && (u->buildProgress < 1.0f) && (u->soloBuilder == nullptr || u->soloBuilder == this));
 }
 
 
@@ -427,7 +427,7 @@ bool CBuilder::UpdateResurrect(const Command& fCommand)
 		CUnit* resurrectee = unitLoader->LoadUnit(resurrecteeParams);
 
 		assert(resurrecteeDef == resurrectee->unitDef);
-		resurrectee->SetSoloBuilder(this);
+		resurrectee->SetSoloBuilder(this, resurrecteeDef);
 
 		// TODO: make configurable if this should happen
 		resurrectee->health *= 0.05f;
@@ -780,7 +780,10 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo, CFeature*& feature, bool& waitSt
 		terraformCenter = buildee->pos;
 	}
 
-	buildee->SetSoloBuilder(this);
+	// pass the *builder*'s udef for checking canBeAssisted; if buildee
+	// happens to be a non-assistable factory then it would also become
+	// impossible to *construct* with multiple builders
+	buildee->SetSoloBuilder(this, this->unitDef);
 	AddDeathDependence(curBuild = buildee, DEPENDENCE_BUILD);
 
 	// if the ground is not going to be terraformed the buildee would

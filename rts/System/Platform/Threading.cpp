@@ -53,10 +53,6 @@ namespace Threading {
 
 	void DetectCores()
 	{
-		static bool inited = false;
-		if (inited)
-			return;
-
 	#if defined(__APPLE__) || defined(__FreeBSD__)
 		// no-op
 
@@ -72,7 +68,6 @@ namespace Threading {
 	#endif
 
 		GetPhysicalCpuCores(); // (uses a static, too)
-		inited = true;
 	}
 
 

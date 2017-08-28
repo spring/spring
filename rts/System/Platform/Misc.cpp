@@ -13,6 +13,7 @@
 #include <process.h>
 #include <shlobj.h>
 #include <shlwapi.h>
+
 #ifndef SHGFP_TYPE_CURRENT
 	#define SHGFP_TYPE_CURRENT 0
 #endif
@@ -390,7 +391,7 @@ namespace Platform
 		if (!GetDiskFreeSpaceEx(path.c_str(), &bytesFree, nullptr, nullptr))
 			return 0;
 
-		return (bytesFree / (1024 * 1024));
+		return (bytesFree.QuadPart / (1024 * 1024));
 
 		#else
 

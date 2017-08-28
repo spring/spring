@@ -1770,15 +1770,15 @@ void CUnit::DropCurrentAttackTarget()
 }
 
 
-void CUnit::SetSoloBuilder(CUnit* builder)
+bool CUnit::SetSoloBuilder(CUnit* builder, const UnitDef* buildeeDef)
 {
 	if (builder == nullptr)
-		return;
-	if (unitDef->canBeAssisted)
-		return;
+		return false;
+	if (buildeeDef->canBeAssisted)
+		return false;
 
-	soloBuilder = builder;
-	AddDeathDependence(builder, DEPENDENCE_BUILDER);
+	AddDeathDependence(soloBuilder = builder, DEPENDENCE_BUILDER);
+	return true;
 }
 
 void CUnit::SetLastAttacker(CUnit* attacker)

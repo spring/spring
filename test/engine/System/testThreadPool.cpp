@@ -14,25 +14,33 @@
 #define BOOST_TEST_MODULE ThreadPool
 #include <boost/test/unit_test.hpp>
 
-BOOST_GLOBAL_FIXTURE(InitSpringTime);
-
 
 // BOOST.TEST is not threadsafe
 #define SAFE_BOOST_CHECK( P )                \
 	do {                                     \
 		std::lock_guard<spring::mutex> _(m); \
-		BOOST_CHECK( ( P ) );                \
+		BOOST_CHECK( (P) );                  \
 	} while (0);
 
+struct do_once {
+	do_once() { printf("[%s]\n", __func__); Threading::DetectCores(); } // make GetMaxThreads() work
+	~do_once() { printf("[%s]\n", __func__); ThreadPool::SetThreadCount(0); } // cleanup after last test
+};
+
+BOOST_GLOBAL_FIXTURE(InitSpringTime);
+BOOST_GLOBAL_FIXTURE(do_once);
+
+
+// static do_once o;
 static spring::mutex m;
 
 static constexpr int NUM_RUNS = 5000;
-static const int NUM_THREADS = ThreadPool::GetMaxThreads();
+static           int NUM_THREADS = 0;
 
 
 BOOST_AUTO_TEST_CASE( test_for_mt )
 {
-	LOG("[%s::test_for_mt] NUM_THREADS=%d", __func__, NUM_THREADS);
+	LOG("[%s::test_for_mt] {NUM,MAX}_THREADS={%d,%d}", __func__, NUM_THREADS = ThreadPool::GetMaxThreads(), ThreadPool::MAX_THREADS);
 
 	std::atomic<int> cnt(0);
 
@@ -330,15 +338,4 @@ BOOST_AUTO_TEST_CASE( test_parallel_gtn_cost )
 
 	LOG("[%s::test_parallel_gtn_cost] %.6fms (avg)", __func__, totalCost / threads);
 }
-
-
-struct do_once {
-	do_once() {}
-	~do_once() {
-		// cleanup
-		ThreadPool::SetThreadCount(0);
-	}
-};
-
-BOOST_GLOBAL_FIXTURE(do_once);
 
