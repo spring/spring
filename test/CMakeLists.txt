@@ -370,12 +370,7 @@ endif()
 			${Boost_SYSTEM_LIBRARY}
 			${WINMM_LIBRARY}
 		)
-if(WIN32)
-	# FIXME: sometimes fails on windows
-	add_spring_test(${test_name} "${test_src}" "${test_libs}" "-DUNITSYNC")
-else()
-	add_spring_test(${test_name} "${test_src}" "${test_libs}" "-DTHREADPOOL -DUNITSYNC")
-endif()
+add_spring_test(${test_name} "${test_src}" "${test_libs}" "-DTHREADPOOL -DUNITSYNC")
 
 
 
