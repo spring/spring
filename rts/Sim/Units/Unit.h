@@ -198,7 +198,7 @@ public:
 		int piece;
 	};
 
-	void SetSoloBuilder(CUnit* builder);
+	bool SetSoloBuilder(CUnit* builder, const UnitDef* buildeeDef);
 	void SetLastAttacker(CUnit* attacker);
 
 	void SetTransporter(CUnit* trans) { transporter = trans; }

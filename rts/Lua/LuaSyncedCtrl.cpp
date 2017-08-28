@@ -1260,7 +1260,7 @@ int LuaSyncedCtrl::CreateUnit(lua_State* L)
 	if (unit == nullptr)
 		return 0;
 
-	unit->SetSoloBuilder(builder);
+	unit->SetSoloBuilder(builder, unitDef);
 
 	lua_pushnumber(L, unit->id);
 	return 1;
