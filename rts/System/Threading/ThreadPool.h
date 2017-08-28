@@ -209,8 +209,8 @@ public:
 private:
 	static std::atomic_uint lastId;
 
-	uint32_t id;
-	uint64_t ts; // timestamp (ns)
+	std::atomic<uint32_t> id;
+	std::atomic<uint64_t> ts; // timestamp (ns)
 };
 
 
