@@ -103,9 +103,8 @@ ConfigHandlerImpl::ConfigHandlerImpl(const std::vector<std::string>& locations, 
 
 	sources.push_back(writableSource);
 
-	std::vector<std::string>::const_iterator loc = locations.begin();
-	++loc; // skip writableSource
-	for (; loc != locations.end(); ++loc) {
+	// skip writableSource
+	for (auto loc = ++(locations.cbegin()); loc != locations.cend(); ++loc) {
 		sources.push_back(new FileConfigSource(*loc));
 	}
 #ifdef DEDICATED
@@ -385,10 +384,9 @@ void ConfigHandler::Instantiate(const std::string configSource, const bool safem
 	assert(!locations.empty());
 
 	// log here so unitsync shows configuration source(s), too
-	std::vector<std::string>::const_iterator loc = locations.begin();
-	LOG("Using configuration source: \"%s\"", loc->c_str());
-	for (++loc; loc != locations.end(); ++loc) {
-		LOG("Using additional configuration source: \"%s\"", loc->c_str());
+	LOG("Using writeable configuration source: \"%s\"", locations[0].c_str());
+	for (auto loc = ++(locations.cbegin()); loc != locations.cend(); ++loc) {
+		LOG("Using additional read-only configuration source: \"%s\"", loc->c_str());
 	}
 
 	configHandler = new ConfigHandlerImpl(locations, safemode);
