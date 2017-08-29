@@ -519,10 +519,10 @@ void SetThreadCount(int wantedNumThreads)
 		}
 
 		for (bool async: {false, true}) {
-			const float pSumExecTime = (pSumExecTimes[async] / (1000 * 1000));
-			const float pSumWaitTime = (pSumWaitTimes[async] / (1000 * 1000));
-			const float pAvgExecTime = (pSumExecTimes[async] / (1000 * 1000)) / std::max(pNumTasksRun[async], uint64_t(1));
-			const float pAvgWaitTime = (pSumWaitTimes[async] / (1000 * 1000)) / std::max(pNumTasksRun[async], uint64_t(1));
+			const float pSumExecTime =  pSumExecTimes[async] * 1e-6f;
+			const float pSumWaitTime =  pSumWaitTimes[async] * 1e-6f;
+			const float pAvgExecTime = (pSumExecTimes[async] * 1e-6f) / std::max(pNumTasksRun[async], uint64_t(1));
+			const float pAvgWaitTime = (pSumWaitTimes[async] * 1e-6f) / std::max(pNumTasksRun[async], uint64_t(1));
 
 			LOG(fmts[2], async, curNumThreads, pNumTasksRun[async],  pSumExecTime, pAvgExecTime,  pSumWaitTime, pAvgWaitTime);
 
@@ -532,15 +532,15 @@ void SetThreadCount(int wantedNumThreads)
 				if (ts.numTasksRun == 0)
 					continue;
 
-				const float tSumExecTime = ts.sumExecTime / (1000 * 1000); // ms
-				const float tSumWaitTime = ts.sumWaitTime / (1000 * 1000); // ms
-				const float tMinExecTime = ts.minExecTime / (1000 * 1000); // ms
-				const float tMinWaitTime = ts.minWaitTime / (1000 * 1000); // ms
-				const float tMaxExecTime = ts.maxExecTime / (1000 * 1000); // ms
-				const float tMaxWaitTime = ts.maxWaitTime / (1000 * 1000); // ms
+				const float tSumExecTime = ts.sumExecTime * 1e-6f; // ms
+				const float tSumWaitTime = ts.sumWaitTime * 1e-6f; // ms
+				const float tMinExecTime = ts.minExecTime * 1e-6f; // ms
+				const float tMinWaitTime = ts.minWaitTime * 1e-6f; // ms
+				const float tMaxExecTime = ts.maxExecTime * 1e-6f; // ms
+				const float tMaxWaitTime = ts.maxWaitTime * 1e-6f; // ms
 				const float tAvgExecTime = tSumExecTime / std::max(ts.numTasksRun, uint64_t(1));
 				const float tAvgWaitTime = tSumWaitTime / std::max(ts.numTasksRun, uint64_t(1));
-				const float tRelExecFrac = (ts.numTasksRun * 100) / std::max(pNumTasksRun[async], uint64_t(1));
+				const float tRelExecFrac = (ts.numTasksRun * 1e2f) / std::max(pNumTasksRun[async], uint64_t(1));
 
 				LOG(fmts[3], i, ts.numTasksRun, tRelExecFrac,  tSumExecTime, tMinExecTime, tMaxExecTime, tAvgExecTime,  tSumWaitTime, tMinWaitTime, tMaxWaitTime, tAvgWaitTime);
 			}
