@@ -162,6 +162,12 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(DestroyFeature);
 	REGISTER_LUA_CFUNC(TransferFeature);
 
+	REGISTER_LUA_CFUNC(CreateUnitIKChain);
+	REGISTER_LUA_CFUNC(SetUnitIKActive);
+	REGISTER_LUA_CFUNC(SetUnitIKGoal);
+	REGISTER_LUA_CFUNC(SetUnitIKPieceLimits);
+	REGISTER_LUA_CFUNC(SetUnitIKPieceSpeed);
+
 	REGISTER_LUA_CFUNC(SetUnitCosts);
 	REGISTER_LUA_CFUNC(SetUnitResourcing);
 	REGISTER_LUA_CFUNC(SetUnitTooltip);
@@ -676,6 +682,7 @@ int LuaSyncedCtrl::KillTeam(lua_State* L)
 	team->Died();
 	return 0;
 }
+
 
 int LuaSyncedCtrl::AssignPlayerToTeam(lua_State* L)
 {
@@ -1360,6 +1367,167 @@ int LuaSyncedCtrl::TransferUnit(lua_State* L)
 }
 
 /******************************************************************************/
+//Gets UnitID, startPiece, endPiece
+int LuaSyncedCtrl::CreateUnitIKChain(lua_State* L){
+
+	CheckAllowGameChanges(L);
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+
+	if (unit == NULL) {
+		return 0;
+	}
+
+	if (lua_isnumber(L,2) && lua_isnumber(L,3) )
+	{
+		LocalModelPiece* startPiece = ParseObjectLocalModelPiece(L, unit, 2); 
+		LocalModelPiece* endPiece = ParseObjectLocalModelPiece(L, unit, 3); 
+
+		if (startPiece == NULL){
+			luaL_error(L, "Startpiece of kinematikChain incorrekt");	
+			return 0;
+		}
+		if (endPiece == NULL){
+			luaL_error(L, "Endpiece of kinematikChain incorrekt");
+			return 0;	
+		}
+
+	lua_pushnumber(L,  unit->CreateIKChain(startPiece, startPiece->scriptPieceIndex, endPiece->scriptPieceIndex));
+	return 1;
+	}
+	
+	luaL_error(L, "CreateUnitIKChain has missing/ wrong arguments");	
+	return 0;
+}
+
+int LuaSyncedCtrl::SetUnitIKActive (lua_State* L){
+
+	CheckAllowGameChanges(L);
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		luaL_error(L, "SetUnitIKActive not a valid UnitID");	
+		return 0;
+	}
+
+	if (lua_isnumber(L,2) == false || unit->isValidIKChain(lua_tofloat(L,2)) == false){
+		luaL_error(L, "Invalid IK ID in SetUnitIKActive");	
+		return 0;
+	}
+
+	if (lua_isnumber(L,2) && lua_isboolean(L,3)){
+			unit->SetIKActive(lua_tofloat(L,2),lua_toboolean(L,3));	
+			return 0;
+		}else{
+			luaL_error(L, "SetUnitIKActive has missing/ wrong arguments");	
+		}
+	return 0;
+}
+
+
+//Sets IKChainID, Active, Goal
+int LuaSyncedCtrl::SetUnitIKGoal(lua_State* L)
+{
+	CheckAllowGameChanges(L);
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		luaL_error(L, "SetUnitIKGoal not a valid UnitID");	
+		return 0;
+	}
+
+	if (lua_isnumber(L,2) &&lua_isnumber(L,3)	&&  lua_isnumber(L,4) && lua_isnumber(L,5))
+	{
+		
+	if (lua_isnumber(L,2) == false || unit->isValidIKChain(lua_tofloat(L,2)) == false){
+		luaL_error(L, "Invalid IK ID as #2 argument");	
+		return 0;
+	}
+	bool isWorldCoordinate= false;
+	if (lua_isboolean(L,6)==true ){	isWorldCoordinate = true;}
+
+
+		unit->SetIKGoal(lua_tofloat(L,2),lua_tofloat(L,3),lua_tofloat(L,4),lua_tofloat(L,5), isWorldCoordinate);
+		return 0;
+	}
+	luaL_error(L, "SetUnitIKGoal has missing/ wrong arguments");	
+	return 0;
+}
+
+int LuaSyncedCtrl::SetUnitIKPieceSpeed(lua_State* L)
+{
+	CheckAllowGameChanges(L);
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+
+	if ( lua_isnumber(L,2) && //IkchainID
+		 lua_isnumber(L,3) && //PieceID
+		(lua_isnumber(L,4) &&  lua_isnumber(L,5) && lua_isnumber(L,6)))
+		{
+			//check wether this is a correct ikID
+			if (unit->isValidIKChain(lua_tofloat(L,2)) == false){
+				luaL_error(L, "Invalid IK ID as #2 argument");	
+				return 0;
+			}
+
+			//check wether this is a correct piece
+			if (unit->isValidIKChainPiece(lua_tofloat(L,2),lua_tofloat(L,3)) == false) {
+				luaL_error(L, "Invalid piece ID in SetUnitIKPieceSpeed");	
+				return 0;
+			}
+
+
+			unit->SetIKPieceSpeed(lua_tofloat(L,2),lua_tofloat(L,3), lua_tofloat(L,4),lua_tofloat(L,5),lua_tofloat(L,6));
+			return 0;
+		}
+	luaL_error(L, "SetUnitIKPieceSpeed has missing/ wrong arguments");	
+	return 0;
+}
+
+
+//Sets the Pieces Limitation regarding what joint type it is 
+int LuaSyncedCtrl::SetUnitIKPieceLimits(lua_State* L)
+{
+	CheckAllowGameChanges(L);
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+
+
+	if (lua_isnumber(L,2) && //IkchainID
+		//IK-Node Limitations
+		lua_isnumber(L,3)) //PieceIDs
+	{
+		//check wether this is a correct ikID
+		if (unit->isValidIKChain(lua_tofloat(L,2)) == false) {
+			luaL_error(L, "SetUnitIKPieceLimits #2 argument is not valid ikID");	
+			return 0;
+		}
+		//check wether this is a correct piece
+		if (unit->isValidIKChainPiece(lua_tofloat(L,2),lua_tofloat(L,3)) == false) {
+			luaL_error(L, "SetUnitIKPieceLimits #3 argument is invalid Piece");	
+
+			return 0;
+		}
+
+		if ( lua_isnumber(L,4) &&  	lua_isnumber(L,5)  	//Limitx and upX
+		  && lua_isnumber(L,6) && 	lua_isnumber(L,7)	//Limity and upy
+		  && lua_isnumber(L,8) && 	lua_isnumber(L,9))  //Limitz and upz
+		{
+		unit->SetIKPieceLimit(	lua_tofloat(L,2),lua_tofloat(L,3), //ikID, pieceID
+								lua_tofloat(L,4),lua_tofloat(L,5), 
+								lua_tofloat(L,6),lua_tofloat(L,7),
+								lua_tofloat(L,8),lua_tofloat(L,9)
+								);
+		return 0;
+		}
+
+	}	
+	luaL_error(L, "SetUnitIKPieceLimits has missing/ wrong arguments");	
+	return 0;
+}
+
+
 
 int LuaSyncedCtrl::SetUnitCosts(lua_State* L)
 {

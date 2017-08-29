@@ -57,6 +57,12 @@ class LuaSyncedCtrl
 		static int DestroyFeature(lua_State* L);
 		static int TransferFeature(lua_State* L);
 
+		static int CreateUnitIKChain(lua_State* L);
+		static int SetUnitIKActive(lua_State* L);
+		static int SetUnitIKGoal(lua_State* L);
+		static int SetUnitIKPieceLimits(lua_State* L);
+		static int SetUnitIKPieceSpeed(lua_State* L);
+
 		static int SetUnitCosts(lua_State* L);
 		static int SetUnitTooltip(lua_State* L);
 		static int SetUnitHealth(lua_State* L);
