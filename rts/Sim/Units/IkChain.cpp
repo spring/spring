@@ -43,11 +43,20 @@ void IkChain::SetTransformation(float valX, float valY, float valZ)
 	
 }
 
+void IkChain::determinateInitialDirection(void){
+	bFirstSegment = false;
+	
+	vecDefaultlDirection =  segments[1].get_end_point() - segments[0].get_end_point();
+	}
+	
+
 //recursive explore the model and find the end of the IK-Chain
 bool IkChain::recPiecePathExplore(  LocalModelPiece* parentLocalModelPiece, 
 									unsigned int parentPiece,
 									unsigned int endPieceNumber, 
 									int depth){
+										
+									
 	//Get DecendantsNumber
 	for (auto piece = (*parentLocalModelPiece).children.begin(); piece !=  (*parentLocalModelPiece).children.end(); ++piece) 
 		{
@@ -72,7 +81,12 @@ bool IkChain::recPiecePathExplore(  LocalModelPiece* parentLocalModelPiece,
 									depth+1 ) == true)
 			{
 			//   std::cout<<"Piece at :"<< depth << " piecnr - > "<<((*piece))->scriptPieceIndex <<std::endl;
-
+					
+					//we assume correctness and determinate the initial armconfig
+			if (bFirstSegment)  determinateInitialDirection()
+	
+				
+				
 				//Get the magnitude of the bone - extract the startPoint of the successor
 				float3 posBase = segments[depth+1].piece->GetAbsolutePos();
 
@@ -343,7 +357,6 @@ void IkChain::solve( float  life_count)
 		    break;
 		}
 	}
-
 
 	applyIkTransformation(OVERRIDE);
    }

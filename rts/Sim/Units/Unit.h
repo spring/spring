@@ -21,6 +21,9 @@ class CWeapon;
 class CUnitScript;
 class DamageArray;
 class DynDamageArray;
+class IkChain;
+
+
 struct SolidObjectDef;
 struct UnitDef;
 struct UnitLoadParams;
@@ -67,7 +70,27 @@ public:
 	virtual void DoDamage(const DamageArray& damages, const float3& impulse, CUnit* attacker, int weaponDefID, int projectileID);
 	virtual void DoWaterDamage();
 	virtual void FinishedBuilding(bool postInit);
-
+	
+	float ikIDPool = 0;
+	
+	IkChain * getIKChain(float ikID);
+	
+	float CreateIKChain(LocalModelPiece* startPiece, unsigned int startPieceID, unsigned int  endPieceID);
+	void SetIKActive(float ikID, bool Active);
+	void SetIKGoal(float ikID, float goalX, float goalY, float goalZ, bool isWorldCoordinate);
+	void SetIKPieceSpeed(float ikID, float pieceID, float velX, float velY, float velZ);
+	void SetIKPieceLimit(	float ikID, 
+							float ikPieceID, 
+							float limX, 
+							float limUpX,
+							float limY, 
+							float limUpY,	
+							float limZ,
+							float limUpZ);
+							
+	bool isValidIKChain(float ikID);
+	bool isValidIKChainPiece(float ikID, float pieceID);
+	
 	void ApplyDamage(CUnit* attacker, const DamageArray& damages, float& baseDamage, float& experienceMod);
 	void ApplyImpulse(const float3& impulse);
 
@@ -243,6 +266,9 @@ public:
 public:
 	const UnitDef* unitDef;
 
+	///IK-Chains of the various Bones
+	std::vector<IkChain*> IkChains;
+	
 	/// Our shield weapon, NULL if we have none
 	CWeapon* shieldWeapon;
 	/// Our weapon with stockpiled ammo, NULL if we have none

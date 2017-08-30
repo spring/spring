@@ -26,7 +26,8 @@ class IkChain
 
 public:
 	enum AnimType {ANone = -1, ATurn = 0, ASpin = 1, AMove = 2};
-	//Yes, diffrent axis as in the luacode- deal with it
+	
+	
 	enum Axis {xAxis = 0, yAxis = 1, zAxis =2 };
 	///Constructors 
 	IkChain();
@@ -95,6 +96,15 @@ public:
 
 	//Vector containing the Segments
 	std::vector <Segment> segments;
+	
+	// determinates the initial direction of the  ik-system
+	void determinateInitialDirection(void);
+	
+	//First Segment
+	bool bFirstSegment = true;
+	
+	//Initial Default direction of the Kinematik system
+	Point3f vecDefaultlDirection;
 
 	//Size of Segment
 	//int segment_size ;

@@ -1,6 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "UnitDef.h"
+#include "IkChain.h"
 #include "Unit.h"
 #include "UnitHandler.h"
 #include "UnitDefHandler.h"
@@ -196,6 +197,7 @@ CUnit::CUnit()
 
 , selfDCountdown(0)
 , cegDamage(1)
+, ikIDPool(0)
 
 , noMinimap(false)
 , leaveTracks(false)
@@ -261,6 +263,10 @@ CUnit::~CUnit()
 	spring::SafeDestruct(commandAI);
 	spring::SafeDestruct(moveType);
 	spring::SafeDestruct(prevMoveType);
+	//delete all existing IK-Chains
+	for (IkChain* ik: IkChains){
+		delete ik;
+	}
 
 	// ScriptCallback may reference weapons, so delete the script first
 	CWeaponLoader::FreeWeapons(this);
@@ -502,6 +508,117 @@ void CUnit::PostLoad()
 }
 
 
+
+//////////////////////////////////////////////////////////////////////
+//Returns true if the ikID is found in this Unit
+
+bool CUnit::isValidIKChain(float ikID){
+	if (IkChains.empty()) return false;
+	
+	for (auto ik = IkChains.cbegin(); ik != IkChains.cend(); ++ik) {
+
+				if ((*ik)->IkChainID == ikID) {
+					return true;
+				}
+			}
+	return false;
+}
+
+
+
+bool CUnit::isValidIKChainPiece(float ikID, float pieceID){
+	if (IkChains.empty()) return false;
+
+	IkChain* ik = getIKChain(ikID);
+
+	if (ik == NULL) return false;
+
+	return (*ik).isValidIKPiece(pieceID);
+}
+
+//returns the IKChain if existing, else NULL
+//in O(n)- which is okay for a small list
+IkChain* CUnit::getIKChain( float ikID)
+{
+	if (IkChains.empty()) return NULL;
+
+	for (auto ik = IkChains.cbegin(); ik != IkChains.cend(); ++ik) {		
+				if ((*ik)->IkChainID == ikID)  {
+					return (*ik);
+				}
+			}
+
+	return NULL;
+}
+
+//Create the IKChain and return the ikID
+float CUnit::CreateIKChain(LocalModelPiece* startPiece, unsigned int startPieceID, unsigned int endPieceID)
+{
+	//ikIds are unique per Unit
+	ikIDPool+= 1;
+	IkChain * kinematIkChain= new IkChain((int)ikIDPool, this, startPiece, startPieceID, endPieceID);
+	IkChains.push_back(kinematIkChain);
+	kinematIkChain->print();
+	return kinematIkChain->IkChainID;	
+}
+
+//Activates or deactivates the IK-Chain
+void CUnit::SetIKActive(float ikID, bool Active){
+	IkChain* ik = getIKChain(ikID);
+	
+	if (ik){
+		(*ik).SetActive(Active);
+		(*ik).GoalChanged=true;
+	}
+};
+
+//Defines the TargetsCoords in UnitSpace
+void CUnit::SetIKGoal(float ikID, float goalX, float goalY, float goalZ, bool isWorldCoordinate){
+	IkChain* ik = getIKChain(ikID);
+	
+	if (ik){
+	(*ik).goalPoint[0]	= goalX;
+	(*ik).goalPoint[1]	= goalY;
+	(*ik).goalPoint[2]	= goalZ;	
+	(*ik).GoalChanged 	= true;
+	(*ik).isWorldCoordinate = isWorldCoordinate;
+	(*ik).print();
+	}
+};
+
+//TODO SetIKTime(float ikID, float time)
+
+//Sets the Per Piece Velocity per Axis
+void CUnit::SetIKPieceSpeed(float ikID, float ikPieceID, float velX, float velY, float velZ){
+	IkChain* ik = getIKChain(ikID);
+	
+	if (ik){
+	(*ik).segments[(int)ikPieceID].velocity[0]= velX;
+	(*ik).segments[(int)ikPieceID].velocity[1]= velY;	
+	(*ik).segments[(int)ikPieceID].velocity[2]= velZ;
+	}
+};
+//Defines a Joint Rotation Limit for each axis 
+void CUnit::SetIKPieceLimit(float ikID, 
+							float ikPieceID, 
+							float limX, 
+							float limUpX,
+							float limY, 
+							float limUpY,	
+							float limZ,
+							float limUpZ){
+	IkChain* ik = getIKChain(ikID);
+	
+	if (ik){
+		(*ik).segments[(int)ikPieceID].setLimitJoint( 	limX, 
+														limUpX,
+														limY, 
+														limUpY,	
+														limZ,
+														limUpZ);
+
+	}
+};
 //////////////////////////////////////////////////////////////////////
 //
 
@@ -758,6 +875,16 @@ void CUnit::Update()
 	restTime += 1;
 	outOfMapTime += 1;
 	outOfMapTime *= (!pos.IsInBounds());
+	//Solve aktive Kinmatik Chains
+	if (IkChains.size()> 0){
+			for (auto ik = IkChains.cbegin(); ik != IkChains.cend(); ++ik) {
+				IkChain* ikChain =(*ik); 
+
+				if (ikChain->IKActive && (ikChain->GoalChanged || ikChain->isWorldCoordinate)) {
+						ikChain->solve(100);	//TODO replce fixed attemptnumber	
+					}
+			}
+	}
 }
 
 void CUnit::UpdateTransportees()
