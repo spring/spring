@@ -106,7 +106,7 @@ float3 CTorpedoProjectile::UpdateTargetingDir(const float3& targetObjVel)
 	if (targetDirDif.Length() < tracking) {
 		dir = targetLeadDir;
 	} else {
-		// <tracking> is the projectile's turn-rate
+		// <tracking> is the projectile's turn-rate, zero if TorpedoLauncher is non-tracking
 		targetDirDif = (targetDirDif - (dir * targetDirDif.dot(dir))).SafeNormalize();
 		dir = (dir + (targetDirDif * tracking)).SafeNormalize();
 	}

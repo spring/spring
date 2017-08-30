@@ -427,8 +427,7 @@ float CBuilderCAI::GetBuildOptionRadius(const UnitDef* ud, int cmdId)
 void CBuilderCAI::CancelRestrictedUnit()
 {
 	if (owner->team == gu->myTeam) {
-		LOG_L(L_WARNING, "%s: Build failed, unit type limit reached",
-				owner->unitDef->humanName.c_str());
+		LOG_L(L_WARNING, "%s: Build failed, unit type limit reached", owner->unitDef->humanName.c_str());
 		eventHandler.LastMessagePosition(owner->pos);
 	}
 	StopMoveAndFinishCommand();
@@ -620,84 +619,85 @@ void CBuilderCAI::ExecuteBuildCmd(Command& c)
 		// keep moving until 3D distance to buildPos is LEQ our buildDistance
 		MoveInBuildRange(build.pos, 0.0f);
 
-		if (!ownerBuilder->curBuild && !ownerBuilder->terraforming) {
+		if (ownerBuilder->curBuild == nullptr && !ownerBuilder->terraforming) {
 			building = false;
 			StopMoveAndFinishCommand();
+			return;
 		}
-		// This can only be true if two builders started building
-		// the restricted unit in the same simulation frame
-		else if (unitHandler->unitsByDefs[owner->team][build.def->id].size() > build.def->maxThisUnit) {
-			building = false;
-			ownerBuilder->StopBuild();
-			CancelRestrictedUnit();
+
+		return;
+	}
+
+	build.pos = CGameHelper::Pos2BuildPos(build, true);
+
+	// keep moving until 3D distance to buildPos is LEQ our buildDistance
+	if (MoveInBuildRange(build.pos, 0.0f, true)) {
+		if (IsBuildPosBlocked(build)) {
+			StopMoveAndFinishCommand();
+			return;
 		}
-	} else {
-		if (unitHandler->unitsByDefs[owner->team][build.def->id].size() >= build.def->maxThisUnit) {
-			// unit restricted, don't bother moving all the way
-			// to the construction site first before telling us
-			// (since greyed-out icons can still be clicked etc,
-			// would be better to prevent that but doesn't cover
-			// cases where the limit is reached while a builder
-			// is en-route)
+
+		if (!eventHandler.AllowUnitCreation(build.def, owner, &build)) {
+			StopMoveAndFinishCommand();
+			return;
+		}
+
+		if (teamHandler->Team(owner->team)->AtUnitLimit())
+			return;
+
+		CFeature* f = nullptr;
+
+		bool inWaitStance = false;
+		bool limitReached = false;
+
+		if (ownerBuilder->StartBuild(build, f, inWaitStance, limitReached) || (++buildRetries > 30)) {
+			building = true;
+			return;
+		}
+		// we can't reliably check if the unit-limit has been reached until
+		// the builder has reached the construction site, which is somewhat
+		// annoying (since greyed-out icons can still be clicked, etc)
+		if (limitReached) {
 			CancelRestrictedUnit();
 			StopMove();
 			return;
 		}
 
-		build.pos = CGameHelper::Pos2BuildPos(build, true);
+		if (f != nullptr && (!build.def->isFeature || build.def->wreckName != f->def->name)) {
+			inCommand = false;
+			ReclaimFeature(f);
+			return;
+		}
+		if (!inWaitStance) {
+			const float fpSqRadius = (build.def->xsize * build.def->xsize + build.def->zsize * build.def->zsize);
+			const float fpRadius = (math::sqrt(fpSqRadius) * 0.5f) * SQUARE_SIZE;
 
-		// keep moving until 3D distance to buildPos is LEQ our buildDistance
-		if (MoveInBuildRange(build.pos, 0.0f, true)) {
-			if (IsBuildPosBlocked(build)) {
-				StopMoveAndFinishCommand();
-				return;
-			}
+			// tell everything within the radius of the soon-to-be buildee
+			// to get out of the way; using the model radius is not correct
+			// because this can be shorter than half the footprint diagonal
+			CGameHelper::BuggerOff(build.pos, std::max(buildeeRadius, fpRadius), false, true, owner->team, nullptr);
+			NonMoving();
+			return;
+		}
 
-			if (!eventHandler.AllowUnitCreation(build.def, owner, &build)) {
-				StopMoveAndFinishCommand();
-				return;
-			}
+		return;
+	}
 
-			if (teamHandler->Team(owner->team)->AtUnitLimit())
-				return;
 
-			CFeature* f = nullptr;
+	if (owner->moveType->progressState == AMoveType::Failed) {
+		if (++buildRetries > 5) {
+			StopMoveAndFinishCommand();
+			return;
+		}
+	}
 
-			bool waitstance = false;
-			if (ownerBuilder->StartBuild(build, f, waitstance) || (++buildRetries > 30)) {
-				building = true;
-			}
-			else if (f != nullptr && (!build.def->isFeature || build.def->wreckName != f->def->name)) {
-				inCommand = false;
-				ReclaimFeature(f);
-			}
-			else if (!waitstance) {
-				const float fpSqRadius = (build.def->xsize * build.def->xsize + build.def->zsize * build.def->zsize);
-				const float fpRadius = (math::sqrt(fpSqRadius) * 0.5f) * SQUARE_SIZE;
-
-				// tell everything within the radius of the soon-to-be buildee
-				// to get out of the way; using the model radius is not correct
-				// because this can be shorter than half the footprint diagonal
-				CGameHelper::BuggerOff(build.pos, std::max(buildeeRadius, fpRadius), false, true, owner->team, nullptr);
-				NonMoving();
-			}
-		} else {
-			if (owner->moveType->progressState == AMoveType::Failed) {
-				if (++buildRetries > 5) {
-					StopMoveAndFinishCommand();
-					return;
-				}
-			}
-
-			// we are on the way to the buildpos, meanwhile it can happen
-			// that another builder already finished our buildcmd or blocked
-			// the buildpos with another building (skip our buildcmd then)
-			if ((++randomCounter % 5) == 0) {
-				if (IsBuildPosBlocked(build)) {
-					StopMoveAndFinishCommand();
-					return;
-				}
-			}
+	// we are on the way to the buildpos, meanwhile it can happen
+	// that another builder already finished our buildcmd or blocked
+	// the buildpos with another building (skip our buildcmd then)
+	if ((++randomCounter % 5) == 0) {
+		if (IsBuildPosBlocked(build)) {
+			StopMoveAndFinishCommand();
+			return;
 		}
 	}
 }

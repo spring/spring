@@ -21,18 +21,10 @@ private:
 	void PreInit(const UnitLoadParams& params);
 
 public:
-	inline float f3Dist(const float3& a, const float3& b) const {
-		return range3D ? a.distance(b) : a.distance2D(b);
-	}
-	inline float f3SqDist(const float3& a, const float3& b) const {
-		return range3D ? a.SqDistance(b) : a.SqDistance2D(b);
-	}
-	inline float f3Len(const float3& a) const {
-		return range3D ? a.Length() : a.Length2D();
-	}
-	inline float f3SqLen(const float3& a) const {
-		return range3D ? a.SqLength() : a.SqLength2D();
-	}
+	inline float f3Dist(const float3& a, const float3& b) const { return (f3Len(a - b)); }
+	inline float f3SqDist(const float3& a, const float3& b) const { return (f3SqLen(a - b)); }
+	inline float f3Len(const float3& a) const { return (range3D ? a.Length() : a.Length2D()); }
+	inline float f3SqLen(const float3& a) const { return (range3D ? a.SqLength() : a.SqLength2D()); }
 
 public:
 	CR_DECLARE(CBuilder)
@@ -50,7 +42,7 @@ public:
 	bool UpdateResurrect(const Command& fCommand);
 	bool UpdateCapture(const Command& fCommand);
 
-	bool StartBuild(BuildInfo& buildInfo, CFeature*& feature, bool& waitStance);
+	bool StartBuild(BuildInfo& buildInfo, CFeature*& feature, bool& inWaitStance, bool& limitReached);
 	float CalculateBuildTerraformCost(BuildInfo& buildInfo);
 	void StopBuild(bool callScript = true);
 	void SetRepairTarget(CUnit* target);
@@ -63,7 +55,7 @@ public:
 	void SetResurrectTarget(CFeature* feature);
 	void SetCaptureTarget(CUnit* unit);
 
-	bool CanAssistUnit(const CUnit* u, const UnitDef* def = NULL) const;
+	bool CanAssistUnit(const CUnit* u, const UnitDef* def = nullptr) const;
 	bool CanRepairUnit(const CUnit* u) const;
 
 	const NanoPieceCache& GetNanoPieceCache() const { return nanoPieceCache; }
