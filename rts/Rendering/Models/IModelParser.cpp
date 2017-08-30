@@ -1,20 +1,20 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "IModelParser.h"
-#include "3DModel.h"
-#include "3DModelLog.h"
 #include "3DOParser.h"
 #include "S3OParser.h"
 #include "OBJParser.h"
 #include "AssParser.h"
+#include "Game/GlobalUnsynced.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
+#include "Net/Protocol/NetProtocol.h" // NETLOG
 #include "Sim/Misc/CollisionVolume.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/Log/ILog.h"
 #include "System/StringUtil.h"
 #include "System/Exceptions.h"
-#include "System/MainDefines.h"
+#include "System/MainDefines.h" // SNPRINTF
 #include "System/SafeUtil.h"
 #include "System/Threading/ThreadPool.h"
 #include "lib/assimp/include/assimp/Importer.hpp"
@@ -292,7 +292,12 @@ S3DModel CModelLoader::ParseModel(const std::string& name, const std::string& pa
 		try {
 			model = std::move(parser->Load(path));
 		} catch (const content_error& ex) {
-			LOG_L(L_ERROR, "could not load model \"%s\" (reason: %s)", name.c_str(), ex.what());
+			char buf[1024];
+
+			SNPRINTF(buf, sizeof(buf), "could not load model \"%s\" (reason: %s)", name.c_str(), ex.what());
+			LOG_L(L_ERROR, "%s", buf);
+			CLIENT_NETLOG(gu->myPlayerNum, LOG_LEVEL_INFO, buf);
+
 			model.numPieces = 0;
 		}
 	} else {

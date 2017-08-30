@@ -46,11 +46,11 @@ spring::recursive_mutex soundMutex;
 
 CSound::CSound()
 	: listenerNeedsUpdate(false)
-	, soundThread(nullptr)
 	, soundThreadQuit(false)
 	, canLoadDefs(false)
 {
 	std::lock_guard<spring::recursive_mutex> lck(soundMutex);
+
 	mute = false;
 	appIsIconified = false;
 	pitchAdjust = configHandler->GetBool("PitchAdjust");
@@ -67,8 +67,10 @@ CSound::CSound()
 	SoundBuffer::Initialise();
 	soundItems.push_back(nullptr);
 
-	soundThread = new spring::thread();
-	*soundThread = Threading::CreateNewThread(std::bind(&CSound::UpdateThread, this, configHandler->GetInt("MaxSounds")));
+	// NB: for some reason, this is initially AL_INVALID_OPERATION and persists
+	CheckError("[Sound]");
+
+	soundThread = std::move(Threading::CreateNewThread(std::bind(&CSound::UpdateThread, this, configHandler->GetInt("MaxSounds"))));
 
 	configHandler->NotifyOnChange(this, {"snd_volmaster", "snd_eaxpreset", "snd_filter", "UseEFX", "snd_volgeneral", "snd_volunitreply", "snd_volbattle", "snd_volui", "snd_volmusic", "PitchAdjust"});
 }
@@ -78,14 +80,12 @@ CSound::~CSound()
 	soundThreadQuit = true;
 	configHandler->RemoveObserver(this);
 
-	LOG_L(L_INFO, "[%s][1] soundThread=%p", __FUNCTION__, soundThread);
+	LOG("[%s][1] soundThread=%p", __func__, &soundThread);
 
-	if (soundThread != nullptr) {
-		soundThread->join();
-		spring::SafeDelete(soundThread);
-	}
+	if (soundThread.joinable())
+		soundThread.join();
 
-	LOG_L(L_INFO, "[%s][2]", __FUNCTION__);
+	LOG("[%s][2]", __func__);
 
 	for (SoundItem* item: soundItems)
 		delete item;
@@ -93,7 +93,7 @@ CSound::~CSound()
 	soundItems.clear();
 	SoundBuffer::Deinitialise();
 
-	LOG_L(L_INFO, "[%s][3]", __FUNCTION__);
+	LOG("[%s][3]", __func__);
 }
 
 bool CSound::HasSoundItem(const std::string& name) const
@@ -111,11 +111,9 @@ size_t CSound::GetSoundId(const std::string& name)
 	if (soundSources.empty())
 		return 0;
 
-	auto it = soundMap.find(name);
-	if (it != soundMap.end()) {
-		// sounditem found
+	const auto it = soundMap.find(name);
+	if (it != soundMap.end())
 		return it->second;
-	}
 
 	const auto itemDefIt = soundItemDefsMap.find(StringToLower(name));
 
@@ -129,7 +127,7 @@ size_t CSound::GetSoundId(const std::string& name)
 		return MakeItemFromDef(temp);
 	}
 
-	LOG_L(L_ERROR, "CSound::GetSoundId: could not find sound: %s", name.c_str());
+	LOG_L(L_ERROR, "[Sound::%s] could not find sound \"%s\"", __func__, name.c_str());
 	return 0;
 }
 
@@ -155,9 +153,8 @@ CSoundSource* CSound::GetNextBestSource(bool lock)
 
 	// find a free source; pointer remains valid until thread exits
 	for (CSoundSource& src: soundSources) {
-		if (!src.IsPlaying(false)) {
+		if (!src.IsPlaying(false))
 			return &src;
-		}
 	}
 
 	// check the next best free source
@@ -188,77 +185,74 @@ void CSound::PitchAdjust(const float newPitch)
 void CSound::ConfigNotify(const std::string& key, const std::string& value)
 {
 	std::lock_guard<spring::recursive_mutex> lck(soundMutex);
-	if (key == "snd_volmaster")
-	{
+
+	if (key == "snd_volmaster") {
 		masterVolume = std::atoi(value.c_str()) * 0.01f;
+
 		if (!mute && !appIsIconified)
 			alListenerf(AL_GAIN, masterVolume);
+
+		return;
 	}
-	else if (key == "snd_eaxpreset")
-	{
+	if (key == "snd_eaxpreset") {
 		efx->SetPreset(value);
+		return;
 	}
-	else if (key == "snd_filter")
-	{
+	if (key == "snd_filter") {
 		float gainlf = 1.0f;
 		float gainhf = 1.0f;
 		sscanf(value.c_str(), "%f %f", &gainlf, &gainhf);
 		efx->sfxProperties.filter_props_f[AL_LOWPASS_GAIN]   = gainlf;
 		efx->sfxProperties.filter_props_f[AL_LOWPASS_GAINHF] = gainhf;
 		efx->CommitEffects();
+		return;
 	}
-	else if (key == "UseEFX")
-	{
-		bool enable = (std::atoi(value.c_str()) != 0);
-		if (enable)
+	if (key == "UseEFX") {
+		if (std::atoi(value.c_str()) != 0)
 			efx->Enable();
 		else
 			efx->Disable();
+
+		return;
 	}
-	else if (key == "snd_volgeneral")
-	{
+	if (key == "snd_volgeneral") {
 		Channels::General->SetVolume(std::atoi(value.c_str()) * 0.01f);
+		return;
 	}
-	else if (key == "snd_volunitreply")
-	{
+	if (key == "snd_volunitreply") {
 		Channels::UnitReply->SetVolume(std::atoi(value.c_str()) * 0.01f);
+		return;
 	}
-	else if (key == "snd_volbattle")
-	{
+	if (key == "snd_volbattle") {
 		Channels::Battle->SetVolume(std::atoi(value.c_str()) * 0.01f);
+		return;
 	}
-	else if (key == "snd_volui")
-	{
+	if (key == "snd_volui") {
 		Channels::UserInterface->SetVolume(std::atoi(value.c_str()) * 0.01f);
+		return;
 	}
-	else if (key == "snd_volmusic")
-	{
+	if (key == "snd_volmusic") {
 		Channels::BGMusic->SetVolume(std::atoi(value.c_str()) * 0.01f);
+		return;
 	}
-	else if (key == "PitchAdjust")
-	{
-		bool tempPitchAdjust = (std::atoi(value.c_str()) != 0);
+	if (key == "PitchAdjust") {
+		const bool tempPitchAdjust = (std::atoi(value.c_str()) != 0);
 		if (!tempPitchAdjust)
-			PitchAdjust(1.0);
+			PitchAdjust(1.0f);
 		pitchAdjust = tempPitchAdjust;
+		return;
 	}
 }
 
 bool CSound::Mute()
 {
 	std::lock_guard<spring::recursive_mutex> lck(soundMutex);
-	mute = !mute;
 
-	if (mute)
+	if ((mute = !mute))
 		alListenerf(AL_GAIN, 0.0f);
 	else
 		alListenerf(AL_GAIN, masterVolume);
 
-	return mute;
-}
-
-bool CSound::IsMuted() const
-{
 	return mute;
 }
 
@@ -277,122 +271,120 @@ void CSound::Iconified(bool state)
 }
 
 
-void CSound::InitThread(int maxSounds)
+
+void CSound::InitThread(int cfgMaxSounds)
 {
-	assert(maxSounds > 0);
+	assert(cfgMaxSounds > 0);
 
 	{
 		std::lock_guard<spring::recursive_mutex> lck(soundMutex);
+		// if empty, open default device
+		std::string configDeviceName;
 
-		// alc... will create its own thread it will copy the name from the current thread.
-		// Later we finally rename `our` audio thread.
-		Threading::SetThreadName("openal");
+		LOG("[Sound::%s][1]", __func__);
 
-		// NULL -> default device
-		const ALchar* deviceName = nullptr;
-		std::string configDeviceName = "";
-
-		// we do not want to set a default for snd_device,
-		// so we do it like this ...
-		if (configHandler->IsSet("snd_device")) {
+		// call IsSet; we do not want to create a default for snd_device
+		if (configHandler->IsSet("snd_device"))
 			configDeviceName = configHandler->GetString("snd_device");
-			deviceName = configDeviceName.c_str();
+
+		ALCdevice* device = nullptr;
+		ALCcontext* context = nullptr;
+
+		if (!configDeviceName.empty()) {
+			LOG("[Sound::%s][2] opening configured device \"%s\"", __func__, configDeviceName.c_str());
+
+			device = alcOpenDevice(configDeviceName.c_str());
+			CheckError("[Sound::Init::OpenCfgDevice]");
 		}
+		if (device == nullptr) {
+			LOG("[Sound::%s][2] opening default device", __func__);
 
-		ALCdevice* device = alcOpenDevice(deviceName);
-
-		if ((device == nullptr) && (deviceName != nullptr)) {
-			LOG_L(L_WARNING, "[Sound::%s] could not open the sound device \"%s\", trying the default device ...", __func__, deviceName);
-			configDeviceName = "";
-			deviceName = nullptr;
-			device = alcOpenDevice(deviceName);
+			device = alcOpenDevice(nullptr);
+			CheckError("[Sound::Init::OpenDefDevice]");
 		}
 
 		if (device == nullptr) {
-			LOG_L(L_ERROR, "[%s] could not open a sound device, disabling sounds", __func__);
-			CheckError("CSound::InitAL");
+			LOG_L(L_ERROR, "[%s][2] failed to open device", __func__);
+
 			// fall back to NullSound
 			soundThreadQuit = true;
 			return;
-		} else {
-			ALCcontext* context = alcCreateContext(device, nullptr);
+		}
 
-			if (context != nullptr) {
-				alcMakeContextCurrent(context);
-				CheckError("CSound::CreateContext");
+		context = alcCreateContext(device, nullptr);
+		CheckError("[Sound::Init::CreateContext]");
+		LOG("[Sound::%s][3] device=%p context=%p", __func__, device, context);
+
+		if (context == nullptr) {
+			LOG_L(L_ERROR, "[Sound::%s][3] failed to create context", __func__);
+			alcCloseDevice(device);
+
+			soundThreadQuit = true;
+			return;
+		}
+
+		if (!alcMakeContextCurrent(context)) {
+			LOG_L(L_ERROR, "[Sound::%s][3] failed to set current context", __func__);
+			alcDestroyContext(context);
+			alcCloseDevice(device);
+
+			soundThreadQuit = true;
+			return;
+		}
+
+		{
+			LOG("[Sound::%s][4][OpenAL API Info]", __func__);
+			LOG("  Vendor:         %s", (const char*) alGetString(AL_VENDOR));
+			LOG("  Version:        %s", (const char*) alGetString(AL_VERSION));
+			LOG("  Renderer:       %s", (const char*) alGetString(AL_RENDERER));
+			LOG("  AL Extensions:  %s", (const char*) alGetString(AL_EXTENSIONS));
+			LOG("  ALC Extensions: %s", (const char*) alcGetString(device, ALC_EXTENSIONS));
+			// same as renderer
+			// LOG("  Implementation: %s", (const char*) alcGetString(device, ALC_DEVICE_SPECIFIER));
+			LOG("  Devices:");
+
+			const bool hasAllEnumExt = alcIsExtensionPresent(nullptr, "ALC_ENUMERATE_ALL_EXT");
+			const bool hasDefEnumExt = alcIsExtensionPresent(nullptr, "ALC_ENUMERATION_EXT");
+
+			if (hasAllEnumExt || hasDefEnumExt) {
+				const char* deviceSpecStr = alcGetString(nullptr, hasAllEnumExt? ALC_ALL_DEVICES_SPECIFIER: ALC_DEVICE_SPECIFIER);
+
+				while (*deviceSpecStr != '\0') {
+					LOG("    [%s]", deviceSpecStr);
+					while (*deviceSpecStr++ != '\0');
+				}
 			} else {
-				alcCloseDevice(device);
-				LOG_L(L_ERROR, "[Sound::%s] could not create OpenAL audio context", __func__);
-				// fall back to NullSound
-				soundThreadQuit = true;
-				return;
+				LOG("    [N/A]");
 			}
 		}
 
-		maxSounds = GetMaxMonoSources(device, maxSounds);
+		// generate sound sources; after this <soundSources> never changes size
+		GenSources(GetMaxMonoSources(device, cfgMaxSounds));
 
 		{
-			LOG("[Sound::%s] OpenAL info:", __func__);
-
-			const bool hasAllEnum = alcIsExtensionPresent(nullptr, "ALC_ENUMERATE_ALL_EXT");
-			const bool hasEnumExt = alcIsExtensionPresent(nullptr, "ALC_ENUMERATION_EXT");
-
-			if (hasAllEnum || hasEnumExt) {
-				LOG("  Available Devices:");
-				const char* deviceSpecifier = alcGetString(nullptr, hasAllEnum ? ALC_ALL_DEVICES_SPECIFIER : ALC_DEVICE_SPECIFIER);
-
-				while (*deviceSpecifier != '\0') {
-					LOG("              %s", deviceSpecifier);
-					while (*deviceSpecifier++ != '\0');
-				}
-
-				LOG("  Device:     %s", (const char*)alcGetString(device, ALC_DEVICE_SPECIFIER));
-			}
-
-			LOG("  Vendor:         %s", (const char*)alGetString(AL_VENDOR));
-			LOG("  Version:        %s", (const char*)alGetString(AL_VERSION));
-			LOG("  Renderer:       %s", (const char*)alGetString(AL_RENDERER));
-			LOG("  AL Extensions:  %s", (const char*)alGetString(AL_EXTENSIONS));
-			LOG("  ALC Extensions: %s", (const char*)alcGetString(device, ALC_EXTENSIONS));
-		}
-		{
-			// generate sound sources; after this <soundSources> never changes size
-			soundSources.clear();
-			soundSources.reserve(maxSounds);
-
-			for (int i = 0; i < maxSounds; i++) {
-				soundSources.emplace_back();
-
-				if (!soundSources[i].IsValid()) {
-					soundSources.pop_back();
-					maxSounds = soundSources.size();
-
-					LOG_L(L_WARNING, "[Sound::%s] your hardware/driver can not handle more than %i soundsources", __func__, maxSounds);
-					break;
-				}
-			}
-
-			LOG("  Max Sounds: %i", maxSounds);
+			// set distance model (sound attenuation)
+			alDistanceModel(AL_INVERSE_DISTANCE_CLAMPED);
+			alDopplerFactor(0.2f);
+			alListenerf(AL_GAIN, masterVolume);
+			CheckError("[Sound::Init]");
 		}
 
 		efx = new CEFX(device);
-
-		// Set distance model (sound attenuation)
-		alDistanceModel(AL_INVERSE_DISTANCE_CLAMPED);
-		alDopplerFactor(0.2f);
-
-		alListenerf(AL_GAIN, masterVolume);
+		CheckError("[Sound::Init::EFX]");
 	}
 
 	canLoadDefs = true;
 }
 
 __FORCE_ALIGN_STACK__
-void CSound::UpdateThread(int maxSounds)
+void CSound::UpdateThread(int cfgMaxSounds)
 {
-	InitThread(maxSounds);
+	LOG("[Sound::%s][1] cfgMaxSounds=%d", __func__, cfgMaxSounds);
 
-	LOG("[Sound::%s][1] maxSounds=%d", __func__, maxSounds);
+	// OpenAL will create its own thread and copy the current's name
+	Threading::SetThreadName("openal");
+
+	InitThread(cfgMaxSounds);
 
 	Threading::SetThreadName("audio");
 	Watchdog::RegisterThread(WDT_AUDIO);
@@ -400,8 +392,8 @@ void CSound::UpdateThread(int maxSounds)
 	LOG("[Sound::%s][2]", __func__);
 
 	while (!soundThreadQuit) {
-		constexpr int FREQ_IN_HZ = 30;
-		spring::this_thread::sleep_for(std::chrono::milliseconds(1000 / FREQ_IN_HZ));
+		// update at roughly 30Hz
+		spring::this_thread::sleep_for(std::chrono::milliseconds(1000 / GAME_SPEED));
 		Watchdog::ClearTimer(WDT_AUDIO);
 		Update();
 	}
@@ -434,7 +426,7 @@ void CSound::Update()
 	for (CSoundSource& source: soundSources)
 		source.Update();
 
-	CheckError("CSound::Update");
+	CheckError("[Sound::Update]");
 	UpdateListenerReal();
 }
 
@@ -506,7 +498,7 @@ void CSound::UpdateListenerReal()
 
 	ALfloat ListenerOri[] = {camDir.x, camDir.y, camDir.z, camUp.x, camUp.y, camUp.z};
 	alListenerfv(AL_ORIENTATION, ListenerOri);
-	CheckError("CSound::UpdateListener");
+	CheckError("[Sound::UpdateListener]");
 }
 
 
@@ -641,7 +633,7 @@ size_t CSound::LoadSoundBuffer(const std::string& path)
 		LOG_L(L_WARNING, "[%s] unknown audio format \"%s\"", __func__, ending.c_str());
 	}
 
-	CheckError("CSound::LoadSoundBuffer");
+	CheckError("[Sound::LoadSoundBuffer]");
 	if (!success) {
 		LOG_L(L_WARNING, "[%s] failed to load file \"%s\"", __func__, path.c_str());
 		return 0;
@@ -659,27 +651,46 @@ void CSound::NewFrame()
 }
 
 
-// try to get the maximum number of supported sounds, this is similar to code CSound::UpdateThread
-// but should be more safe
-int CSound::GetMaxMonoSources(ALCdevice* device, int maxSounds)
+
+// try to get the maximum number of supported sounds; feeds into GenSources
+int CSound::GetMaxMonoSources(ALCdevice* device, int cfgMaxSounds)
 {
 	ALCint size;
 	alcGetIntegerv(device, ALC_ATTRIBUTES_SIZE, 1, &size);
 	std::vector<ALCint> attrs(size);
 	alcGetIntegerv(device, ALC_ALL_ATTRIBUTES, size, &attrs[0]);
 
-	for (int i = 0; i < attrs.size(); ++i) {
+	for (size_t i = 0; i < (attrs.size() - 1); ++i) {
 		if (attrs[i] != ALC_MONO_SOURCES)
 			continue;
 
-		const int maxMonoSources = attrs.at(i + 1);
+		const int alMaxSounds = attrs[i + 1];
 
-		if (maxMonoSources < maxSounds)
-			LOG_L(L_WARNING, "Hardware supports only %d Sound sources, MaxSounds=%d, using Hardware Limit", maxMonoSources, maxSounds);
+		if (alMaxSounds < cfgMaxSounds)
+			LOG_L(L_WARNING, "[Sound::%s] cfgMaxSounds=%d but alMaxSounds=%d", __func__, cfgMaxSounds, alMaxSounds);
 
-		return std::min(maxSounds, maxMonoSources);
+		return std::min(cfgMaxSounds, alMaxSounds);
 	}
 
-	return maxSounds;
+	return cfgMaxSounds;
+}
+
+void CSound::GenSources(int alMaxSounds)
+{
+	soundSources.clear();
+	soundSources.reserve(alMaxSounds);
+
+	for (int i = 0; i < alMaxSounds; i++) {
+		soundSources.emplace_back();
+
+		if (soundSources[i].IsValid())
+			continue;
+
+		soundSources.pop_back();
+
+		// should be unreachable
+		LOG_L(L_WARNING, "[Sound::%s] alMaxSounds=%d but numSources=%d", __func__, alMaxSounds, int(soundSources.size()));
+		break;
+	}
 }
 

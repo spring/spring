@@ -464,7 +464,7 @@ void SetThreadCount(int wantedNumThreads)
 	const int wtdNumThreads = Clamp(wantedNumThreads, 1, GetMaxThreads());
 
 	const char* fmts[4] = {
-		"[ThreadPool::%s][1] wanted=%d current=%d maximum=%d",
+		"[ThreadPool::%s][1] wanted=%d current=%d maximum=%d (init=%d)",
 		"[ThreadPool::%s][2] workers=%lu",
 		"\t[async=%d] threads=%d tasks=%lu {sum,avg}{exec,wait}time={{%.3f, %.3f}, {%.3f, %.3f}}ms",
 		"\t\tthread=%d tasks=%lu (%3.3f%%) {sum,min,max,avg}{exec,wait}time={{%.3f, %.3f, %.3f, %.3f}, {%.3f, %.3f, %.3f, %.3f}}ms",
@@ -475,7 +475,7 @@ void SetThreadCount(int wantedNumThreads)
 	uint64_t pSumExecTimes[2] = {0lu, 0lu};
 	uint64_t pSumWaitTimes[2] = {0lu, 0lu};
 
-	LOG(fmts[0], __func__, wantedNumThreads, curNumThreads, GetMaxThreads());
+	LOG(fmts[0], __func__, wantedNumThreads, curNumThreads, GetMaxThreads(), workerThreads[false].empty());
 
 	if (workerThreads[false].empty()) {
 		assert(workerThreads[true].empty());
@@ -488,13 +488,13 @@ void SetThreadCount(int wantedNumThreads)
 		#ifdef USE_TASK_STATS_TRACKING
 		for (bool async: {false, true}) {
 			for (int i = 0; i < MAX_THREADS; i++) {
-				threadStats[async][i].numTasksRun =  0lu;
-				threadStats[async][i].sumExecTime =  0lu;
-				threadStats[async][i].minExecTime = -1lu;
-				threadStats[async][i].maxExecTime =  0lu;
-				threadStats[async][i].sumWaitTime =  0lu;
-				threadStats[async][i].minWaitTime = -1lu;
-				threadStats[async][i].maxWaitTime =  0lu;
+				threadStats[async][i].numTasksRun = std::numeric_limits<uint64_t>::min();
+				threadStats[async][i].sumExecTime = std::numeric_limits<uint64_t>::min();
+				threadStats[async][i].minExecTime = std::numeric_limits<uint64_t>::max();
+				threadStats[async][i].maxExecTime = std::numeric_limits<uint64_t>::min();
+				threadStats[async][i].sumWaitTime = std::numeric_limits<uint64_t>::min();
+				threadStats[async][i].minWaitTime = std::numeric_limits<uint64_t>::max();
+				threadStats[async][i].maxWaitTime = std::numeric_limits<uint64_t>::min();
 			}
 		}
 		#endif

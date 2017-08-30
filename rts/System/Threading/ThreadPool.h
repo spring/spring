@@ -184,7 +184,7 @@ public:
 	}
 
 	uint32_t GetId() const { return id; }
-	uint64_t GetDeltaTime(const spring_time t) const { return (t.toNanoSecsi() - ts); }
+	uint64_t GetDeltaTime(const spring_time t) const { return (std::max(ts.load(), uint64_t(t.toNanoSecsi())) - ts); }
 
 	void UpdateId() { id = lastId.fetch_add(1); }
 	void SetTimeStamp(const spring_time t) { ts = t.toNanoSecsi(); }
@@ -209,8 +209,8 @@ public:
 private:
 	static std::atomic_uint lastId;
 
-	uint32_t id;
-	uint64_t ts; // timestamp (ns)
+	std::atomic<uint32_t> id;
+	std::atomic<uint64_t> ts; // timestamp (ns)
 };
 
 

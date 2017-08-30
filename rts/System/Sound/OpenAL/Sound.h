@@ -40,7 +40,7 @@ public:
 	virtual void PitchAdjust(const float newPitch);
 
 	virtual bool Mute();
-	virtual bool IsMuted() const;
+	virtual bool IsMuted() const { return mute; }
 
 	virtual void Iconified(bool state);
 
@@ -57,12 +57,14 @@ private:
 	typedef spring::unordered_map<std::string, SoundItemNameMap> SoundItemDefsMap;
 
 private:
-	void InitThread(int maxSounds);
-	void UpdateThread(int maxSounds);
+	void InitThread(int cfgMaxSounds);
+	void UpdateThread(int cfgMaxSounds);
 
 	void Update();
-	int GetMaxMonoSources(ALCdevice* device, int maxSounds);
 	void UpdateListenerReal();
+
+	int GetMaxMonoSources(ALCdevice* device, int cfgMaxSounds);
+	void GenSources(int alMaxSounds);
 
 	size_t MakeItemFromDef(const SoundItemNameMap& itemDef);
 	size_t LoadSoundBuffer(const std::string& filename);
@@ -90,7 +92,7 @@ private:
 	SoundItemNameMap defaultItemNameMap;
 	SoundItemDefsMap soundItemDefsMap;
 
-	spring::thread* soundThread;
+	spring::thread soundThread;
 
 	volatile bool soundThreadQuit;
 	volatile bool canLoadDefs;

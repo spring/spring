@@ -694,7 +694,7 @@ void CBuilder::StopBuild(bool callScript)
 }
 
 
-bool CBuilder::StartBuild(BuildInfo& buildInfo, CFeature*& feature, bool& waitStance)
+bool CBuilder::StartBuild(BuildInfo& buildInfo, CFeature*& feature, bool& inWaitStance, bool& limitReached)
 {
 	const CUnit* prvBuild = curBuild;
 
@@ -748,7 +748,11 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo, CFeature*& feature, bool& waitSt
 			return false;
 	}
 
-	if ((waitStance = !ScriptStartBuilding(buildInfo.pos, true)))
+	// at this point we know the builder is going to create a new unit, bail if at the limit
+	if ((limitReached = (unitHandler->unitsByDefs[team][buildInfo.def->id].size() >= buildInfo.def->maxThisUnit)))
+		return false;
+
+	if ((inWaitStance = !ScriptStartBuilding(buildInfo.pos, true)))
 		return false;
 
 	const UnitDef* buildeeDef = buildInfo.def;
