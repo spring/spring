@@ -291,13 +291,11 @@ void CSound::InitThread(int cfgMaxSounds)
 			LOG("[Sound::%s][2] opening configured device \"%s\"", __func__, configDeviceName.c_str());
 
 			device = alcOpenDevice(configDeviceName.c_str());
-			CheckError("[Sound::Init::OpenCfgDevice]");
 		}
 		if (device == nullptr) {
 			LOG("[Sound::%s][2] opening default device", __func__);
 
 			device = alcOpenDevice(nullptr);
-			CheckError("[Sound::Init::OpenDefDevice]");
 		}
 
 		if (device == nullptr) {
@@ -309,7 +307,6 @@ void CSound::InitThread(int cfgMaxSounds)
 		}
 
 		context = alcCreateContext(device, nullptr);
-		CheckError("[Sound::Init::CreateContext]");
 		LOG("[Sound::%s][3] device=%p context=%p", __func__, device, context);
 
 		if (context == nullptr) {
@@ -328,6 +325,7 @@ void CSound::InitThread(int cfgMaxSounds)
 			soundThreadQuit = true;
 			return;
 		}
+		CheckError("[Sound::Init::MakeContextCurrent]");
 
 		{
 			LOG("[Sound::%s][4][OpenAL API Info]", __func__);
