@@ -561,7 +561,7 @@ void WeaponDef::LoadSound(
 	std::string name;
 	float volume = -1.0f;
 
-	soundData.emplace_back(name, id, volume);
+	soundData.emplace_back(name, -1, volume);
 	assert(soundIdx < soundData.size());
 	assert(soundData[soundIdx].id == -1);
 
