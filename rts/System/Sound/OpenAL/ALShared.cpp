@@ -3,11 +3,16 @@
 #include "ALShared.h"
 
 #include "System/Sound/SoundLog.h"
+#include <alc.h>
 
 #include <stddef.h>
+#include <cassert>
 
 bool CheckError(const char* msg)
 {
+	// alGetError() always returns an error without context -> don't call it
+	assert(alcGetCurrentContext() != nullptr);
+
 	ALenum e = alGetError();
 	const char* err;
 	switch(e) {
