@@ -67,9 +67,6 @@ CSound::CSound()
 	SoundBuffer::Initialise();
 	soundItems.push_back(nullptr);
 
-	// NB: for some reason, this is initially AL_INVALID_OPERATION and persists
-	CheckError("[Sound]");
-
 	soundThread = std::move(Threading::CreateNewThread(std::bind(&CSound::UpdateThread, this, configHandler->GetInt("MaxSounds"))));
 
 	configHandler->NotifyOnChange(this, {"snd_volmaster", "snd_eaxpreset", "snd_filter", "UseEFX", "snd_volgeneral", "snd_volunitreply", "snd_volbattle", "snd_volui", "snd_volmusic", "PitchAdjust"});
