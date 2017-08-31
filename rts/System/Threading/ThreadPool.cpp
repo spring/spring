@@ -467,7 +467,7 @@ void SetThreadCount(int wantedNumThreads)
 		"[ThreadPool::%s][1] wanted=%d current=%d maximum=%d (init=%d)",
 		"[ThreadPool::%s][2] workers=%lu",
 		"\t[async=%d] threads=%d tasks=%lu {sum,avg}{exec,wait}time={{%.3f, %.3f}, {%.3f, %.3f}}ms",
-		"\t\tthread=%d tasks=%lu (%3.3f%%) {sum,min,max,avg}{exec,wait}time={{%.3f, %.3f, %.3f, %.3f}, {%.3f, %.3f, %.3f, %.3f}}ms",
+		"\t\tthread=%d tasks=%lu {sum,min,max,avg}{exec,wait}time={{%.3f, %.3f, %.3f, %.3f}, {%.3f, %.3f, %.3f, %.3f}}ms",
 	};
 
 	// total number of tasks executed by pool; total time spent in DoTask
@@ -540,9 +540,8 @@ void SetThreadCount(int wantedNumThreads)
 				const float tMaxWaitTime = ts.maxWaitTime * 1e-6f; // ms
 				const float tAvgExecTime = tSumExecTime / std::max(ts.numTasksRun, uint64_t(1));
 				const float tAvgWaitTime = tSumWaitTime / std::max(ts.numTasksRun, uint64_t(1));
-				const float tRelExecFrac = (ts.numTasksRun * 1e2f) / std::max(pNumTasksRun[async], uint64_t(1));
 
-				LOG(fmts[3], i, ts.numTasksRun, tRelExecFrac,  tSumExecTime, tMinExecTime, tMaxExecTime, tAvgExecTime,  tSumWaitTime, tMinWaitTime, tMaxWaitTime, tAvgWaitTime);
+				LOG(fmts[3], i, ts.numTasksRun,  tSumExecTime, tMinExecTime, tMaxExecTime, tAvgExecTime,  tSumWaitTime, tMinWaitTime, tMaxWaitTime, tAvgWaitTime);
 			}
 		}
 	}
