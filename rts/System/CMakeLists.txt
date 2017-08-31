@@ -181,6 +181,7 @@ IF     (APPLE)
 	MakeGlobalVar(sources_engine_System_Threading ${sources_engine_System_Threading} ${sources_engine_System_Threading_Mac})
 	MakeGlobalVar(sources_engine_System
 			${sources_engine_System}
+			${sources_engine_System_Platform_Mac}
 			${sources_engine_System_Threading}
 		)
 ELSEIF (UNIX)
