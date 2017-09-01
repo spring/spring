@@ -14,6 +14,8 @@ CPathFinderDef::CPathFinderDef(const float3& goalCenter, float goalRadius, float
 , minRawSpeedMod(0.0f)
 
 , constraintDisabled(false)
+, skipSubSearches(false)
+
 , testMobile(true)
 , needPath(true)
 // if true, units will not even try to move if their max-res

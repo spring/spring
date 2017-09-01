@@ -74,7 +74,7 @@ CPathEstimator::CPathEstimator(IPathFinder* pf, unsigned int BLOCK_SIZE, const s
 	if (parentPE != nullptr)
 		parentPE->nextPathEstimator = childPE;
 
-	// precalc for FindOffset()
+	// precalc for FindBlockPosOffset()
 	{
 		offsetBlocksSortedByCost.reserve(BLOCK_SIZE * BLOCK_SIZE);
 		for (unsigned int z = 0; z < BLOCK_SIZE; ++z) {
@@ -258,9 +258,10 @@ void CPathEstimator::CalculateBlockOffsets(unsigned int blockIdx, unsigned int t
 	for (unsigned int i = 0; i < moveDefHandler->GetNumMoveDefs(); i++) {
 		const MoveDef* md = moveDefHandler->GetMoveDefByPathType(i);
 
-		if (md->udRefCount > 0) {
-			blockStates.peNodeOffsets[md->pathType][blockIdx] = FindOffset(*md, blockPos.x, blockPos.y);
-		}
+		if (md->udRefCount == 0)
+			continue;
+
+		blockStates.peNodeOffsets[md->pathType][blockIdx] = FindBlockPosOffset(*md, blockPos.x, blockPos.y);
 	}
 }
 
@@ -282,9 +283,10 @@ void CPathEstimator::EstimatePathCosts(unsigned int blockIdx, unsigned int threa
 	for (unsigned int i = 0; i < moveDefHandler->GetNumMoveDefs(); i++) {
 		const MoveDef* md = moveDefHandler->GetMoveDefByPathType(i);
 
-		if (md->udRefCount > 0) {
-			CalculateVertices(*md, blockPos, threadNum);
-		}
+		if (md->udRefCount == 0)
+			continue;
+
+		CalcVertexPathCosts(*md, blockPos, threadNum);
 	}
 }
 
@@ -292,7 +294,7 @@ void CPathEstimator::EstimatePathCosts(unsigned int blockIdx, unsigned int threa
 /**
  * Move around the blockPos a bit, so we `surround` unpassable blocks.
  */
-int2 CPathEstimator::FindOffset(const MoveDef& moveDef, unsigned int blockX, unsigned int blockZ) const
+int2 CPathEstimator::FindBlockPosOffset(const MoveDef& moveDef, unsigned int blockX, unsigned int blockZ) const
 {
 	// lower corner position of block
 	const unsigned int lowerX = blockX * BLOCK_SIZE;
@@ -305,8 +307,8 @@ int2 CPathEstimator::FindOffset(const MoveDef& moveDef, unsigned int blockX, uns
 	// search for an accessible position within this block
 	/*for (unsigned int z = 0; z < BLOCK_SIZE; ++z) {
 		for (unsigned int x = 0; x < BLOCK_SIZE; ++x) {
-			float speedMod = CMoveMath::GetPosSpeedMod(moveDef, lowerX + x, lowerZ + z);
-			bool curblock = (speedMod == 0.0f) || CMoveMath::IsBlockedStructure(moveDef, lowerX + x, lowerZ + z, nullptr);
+			const float speedMod = CMoveMath::GetPosSpeedMod(moveDef, lowerX + x, lowerZ + z);
+			const bool curblock = (speedMod == 0.0f) || CMoveMath::IsBlockedStructure(moveDef, lowerX + x, lowerZ + z, nullptr);
 
 			if (!curblock) {
 				const float dx = x - (float)(BLOCK_SIZE - 1) * 0.5f;
@@ -322,9 +324,9 @@ int2 CPathEstimator::FindOffset(const MoveDef& moveDef, unsigned int blockX, uns
 		}
 	}*/
 
-	// Equal code
-	// just that we have sorted the squares by their baseCost, so
-	// can early exit, when it increases above our current best one.
+	// same as above, but with squares sorted by their baseCost
+	// s.t. we can exit early when a square exceeds our current
+	// best
 	// Performance: tests showed that only ~60% need to be tested
 	for (const SOffsetBlock& ob: offsetBlocksSortedByCost) {
 		if (ob.cost >= bestCost)
@@ -351,34 +353,30 @@ int2 CPathEstimator::FindOffset(const MoveDef& moveDef, unsigned int blockX, uns
 
 
 /**
- * Calculate all vertices connected from the given block
+ * Calculate costs of paths to all vertices connected from the given block
  */
-void CPathEstimator::CalculateVertices(const MoveDef& moveDef, int2 block, unsigned int thread)
+void CPathEstimator::CalcVertexPathCosts(const MoveDef& moveDef, int2 block, unsigned int threadNum)
 {
 	// see code comment of GetBlockVertexOffset() for more info why those directions are choosen
-	CalculateVertex(moveDef, block, PATHDIR_LEFT,     thread);
-	CalculateVertex(moveDef, block, PATHDIR_LEFT_UP,  thread);
-	CalculateVertex(moveDef, block, PATHDIR_UP,       thread);
-	CalculateVertex(moveDef, block, PATHDIR_RIGHT_UP, thread);
+	CalcVertexPathCost(moveDef, block, PATHDIR_LEFT,     threadNum);
+	CalcVertexPathCost(moveDef, block, PATHDIR_LEFT_UP,  threadNum);
+	CalcVertexPathCost(moveDef, block, PATHDIR_UP,       threadNum);
+	CalcVertexPathCost(moveDef, block, PATHDIR_RIGHT_UP, threadNum);
 }
 
-
-/**
- * Calculate requested vertex
- */
-void CPathEstimator::CalculateVertex(
+void CPathEstimator::CalcVertexPathCost(
 	const MoveDef& moveDef,
 	int2 parentBlock,
-	unsigned int direction,
-	unsigned int threadNum)
-{
-	const int2 childBlock = parentBlock + PE_DIRECTION_VECTORS[direction];
+	unsigned int pathDir,
+	unsigned int threadNum
+) {
+	const int2 childBlock = parentBlock + PE_DIRECTION_VECTORS[pathDir];
 	const unsigned int parentBlockNbr = BlockPosToIdx(parentBlock);
 	const unsigned int childBlockNbr  = BlockPosToIdx(childBlock);
 	const unsigned int vertexNbr =
 		moveDef.pathType * blockStates.GetSize() * PATH_DIRECTION_VERTICES +
 		parentBlockNbr * PATH_DIRECTION_VERTICES +
-		direction;
+		pathDir;
 
 	// outside map?
 	if ((unsigned)childBlock.x >= nbrOfBlocks.x || (unsigned)childBlock.y >= nbrOfBlocks.y) {
@@ -416,10 +414,11 @@ void CPathEstimator::CalculateVertex(
 	// since CPathFinder::GetPath() is not thread-safe, use
 	// this thread's "private" CPathFinder instance (rather
 	// than locking pathFinder->GetPath()) if we are in one
-	pfDef.testMobile     = false;
-	pfDef.needPath       = false;
-	pfDef.exactPath      = true;
-	pfDef.dirIndependent = true;
+	pfDef.skipSubSearches = true;
+	pfDef.testMobile      = false;
+	pfDef.needPath        = false;
+	pfDef.exactPath       = true;
+	pfDef.dirIndependent  = true;
 
 	IPath::Path path;
 	IPath::SearchResult result = pathFinders[threadNum]->GetPath(moveDef, pfDef, nullptr, startPos, path, MAX_SEARCHED_NODES_PF >> 2);
@@ -441,6 +440,7 @@ void CPathEstimator::MapChanged(unsigned int x1, unsigned int z1, unsigned int x
 	// find the upper and lower corner of the rectangular area
 	const auto mmx = std::minmax(x1, x2);
 	const auto mmz = std::minmax(z1, z2);
+
 	const int lowerX = Clamp(int(mmx.first  / BLOCK_SIZE) - 1, 0, int(nbrOfBlocks.x - 1));
 	const int upperX = Clamp(int(mmx.second / BLOCK_SIZE) + 1, 0, int(nbrOfBlocks.x - 1));
 	const int lowerZ = Clamp(int(mmz.first  / BLOCK_SIZE) - 1, 0, int(nbrOfBlocks.y - 1));
@@ -482,8 +482,8 @@ void CPathEstimator::Update()
 		const int progressiveUpdates = updatedBlocks.size() * numMoveDefs * modInfo.pfUpdateRate;
 		const int MIN_BLOCKS_TO_UPDATE = std::max<int>(BLOCKS_TO_UPDATE >> 1, 4U);
 		const int MAX_BLOCKS_TO_UPDATE = std::max<int>(BLOCKS_TO_UPDATE << 1, MIN_BLOCKS_TO_UPDATE);
-		blocksToUpdate = Clamp(progressiveUpdates, MIN_BLOCKS_TO_UPDATE, MAX_BLOCKS_TO_UPDATE);
 
+		blocksToUpdate = Clamp(progressiveUpdates, MIN_BLOCKS_TO_UPDATE, MAX_BLOCKS_TO_UPDATE);
 		blockUpdatePenalty = std::max(0, blockUpdatePenalty - blocksToUpdate);
 
 		if (blockUpdatePenalty > 0)
@@ -491,7 +491,6 @@ void CPathEstimator::Update()
 
 		// we have to update blocks for all movedefs (cause PATHOPT_OBSOLETE is per block and not movedef)
 		consumeBlocks = int(progressiveUpdates != 0) * int(ceil(float(blocksToUpdate) / numMoveDefs)) * numMoveDefs;
-
 		blockUpdatePenalty += consumeBlocks;
 	}
 
@@ -525,8 +524,11 @@ void CPathEstimator::Update()
 		// issue repathing for all active movedefs
 		for (unsigned int i = 0; i < numMoveDefs; i++) {
 			const MoveDef* md = moveDefHandler->GetMoveDefByPathType(i);
-			if (md->udRefCount > 0)
-				consumedBlocks.emplace_back(pos, md);
+
+			if (md->udRefCount == 0)
+				continue;
+
+			consumedBlocks.emplace_back(pos, md);
 		}
 
 		// inform dependent pathEstimator that we change vertex cost of those blocks
@@ -545,17 +547,17 @@ void CPathEstimator::Update()
 			const SingleBlock sb = consumedBlocks[n];
 			const int blockN = BlockPosToIdx(sb.blockPos);
 			const MoveDef* currBlockMD = sb.moveDef;
-			blockStates.peNodeOffsets[currBlockMD->pathType][blockN] = FindOffset(*currBlockMD, sb.blockPos.x, sb.blockPos.y);
+			blockStates.peNodeOffsets[currBlockMD->pathType][blockN] = FindBlockPosOffset(*currBlockMD, sb.blockPos.x, sb.blockPos.y);
 		});
 	}
 
-	// CalculateVertices (not threadsafe)
+	// CalcVertexPathCosts (not threadsafe)
 	{
-		SCOPED_TIMER("Sim::Path::Estimator::CalculateVertices");
+		SCOPED_TIMER("Sim::Path::Estimator::CalcVertexPathCosts");
 		for (unsigned int n = 0; n < consumedBlocks.size(); ++n) {
 			// copy the next block in line
 			const SingleBlock sb = consumedBlocks[n];
-			CalculateVertices(*sb.moveDef, sb.blockPos);
+			CalcVertexPathCosts(*sb.moveDef, sb.blockPos);
 		}
 	}
 }
@@ -637,8 +639,8 @@ IPath::SearchResult CPathEstimator::DoSearch(const MoveDef& moveDef, const CPath
 		//   basically the same condition as in TestBlock, except needed for the
 		//   rare case that <ob> is the first block expanded *and* contains goal
 		if (peDef.IsGoal(bSquare.x, bSquare.y) || (runBlkSearch = peDef.IsGoal(gSquare.x, gSquare.y))) {
-			if (runBlkSearch && testedBlocks == 0)
-				canReachGoal = (DoBlockSearch(owner, moveDef, bSquare, gSquare) == IPath::Ok);
+			if (runBlkSearch)
+				canReachGoal = (testedBlocks != 0 || DoBlockSearch(owner, moveDef, bSquare, gSquare) == IPath::Ok);
 
 			if (canReachGoal) {
 				mGoalBlockIdx = ob->nodeNum;
@@ -731,16 +733,18 @@ bool CPathEstimator::TestBlock(
 		return false;
 	}
 
-	// check if the block is out of constraints
 	const int2 square = blockStates.peNodeOffsets[moveDef.pathType][testBlockIdx];
-	if (!peDef.WithinConstraints(square.x, square.y)) {
+
+	// check if the block is outside constraints
+	if (!peDef.WithinConstraints(square)) {
 		blockStates.nodeMask[testBlockIdx] |= PATHOPT_BLOCKED;
 		dirtyBlocks.push_back(testBlockIdx);
 		return false;
 	}
 
-	// constraintDisabled is a hackish way to make sure we don't check this in CalculateVertices
-	if (testBlockPos == goalBlockPos && peDef.needPath) {
+	if (!peDef.skipSubSearches && testBlockPos == goalBlockPos) {
+		// must skip goal sub-searches during CalcVertexPathCosts
+		//
 		// if we have expanded the goal-block, check if a valid
 		// max-resolution path exists (from where we entered it
 		// to the actual goal position) since there might still

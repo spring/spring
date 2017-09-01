@@ -17,7 +17,9 @@ public:
 	CPathFinderDef(const float3& goalCenter, float goalRadius, float sqGoalDistance);
 	virtual ~CPathFinderDef() {}
 
+	virtual bool WithinConstraints(const int2 square) const { return (WithinConstraints(square.x, square.y)); }
 	virtual bool WithinConstraints(unsigned int xSquare, unsigned int zSquare) const = 0;
+
 	void DisableConstraint(bool b) { constraintDisabled = b; }
 	void AllowRawPathSearch(bool b) { allowRawPath = b; }
 
@@ -37,6 +39,7 @@ public:
 	// if true, do not need to generate any waypoints
 	bool startInGoalRadius;
 	bool constraintDisabled;
+	bool skipSubSearches;
 
 	bool testMobile;
 	bool needPath;
