@@ -9,7 +9,10 @@
 CPathFinderDef::CPathFinderDef(const float3& goalCenter, float goalRadius, float sqGoalDistance)
 : goal(goalCenter)
 , sqGoalRadius(goalRadius * goalRadius)
+
 , constraintDisabled(false)
+, skipSubSearches(false)
+
 , testMobile(true)
 , needPath(true)
 // if true, units will not even try to move if their max-res
