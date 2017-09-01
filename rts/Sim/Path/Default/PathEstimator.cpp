@@ -572,6 +572,38 @@ void CPathEstimator::AddCache(const IPath::Path* path, const IPath::SearchResult
 }
 
 
+
+IPath::SearchResult CPathEstimator::DoBlockSearch(
+	const CSolidObject* owner,
+	const MoveDef& moveDef,
+	const int2 s,
+	const int2 g
+) {
+	const float3 sw = float3(s.x * SQUARE_SIZE, 0, s.y * SQUARE_SIZE);
+	const float3 gw = float3(g.x * SQUARE_SIZE, 0, g.y * SQUARE_SIZE);
+
+	return (DoBlockSearch(owner, moveDef, sw, gw));
+}
+
+IPath::SearchResult CPathEstimator::DoBlockSearch(
+	const CSolidObject* owner,
+	const MoveDef& moveDef,
+	const float3 sw,
+	const float3 gw
+) {
+	IPath::Path path;
+	CRectangularSearchConstraint pfDef = CRectangularSearchConstraint(sw, gw, 8.0f, BLOCK_SIZE); // sets goalSquare{X,Z}
+
+	pfDef.testMobile     = false;
+	pfDef.needPath       = false;
+	pfDef.exactPath      = true;
+	pfDef.dirIndependent = true;
+
+	// search within the rectangle defined by sw and gw, corners snapped to the PE grid
+	return (pathFinder->GetPath(moveDef, pfDef, owner, sw, path, MAX_SEARCHED_NODES_PF >> 3));
+}
+
+
 /**
  * Performs the actual search.
  */
@@ -596,11 +628,24 @@ IPath::SearchResult CPathEstimator::DoSearch(const MoveDef& moveDef, const CPath
 		const int2 bSquare = blockStates.peNodeOffsets[moveDef.pathType][ob->nodeNum];
 		const int2 gSquare = ob->nodePos * BLOCK_SIZE + goalSqrOffset;
 
-		if (peDef.IsGoal(bSquare.x, bSquare.y) || peDef.IsGoal(gSquare.x, gSquare.y)) {
-			mGoalBlockIdx = ob->nodeNum;
-			mGoalHeuristic = 0.0f;
-			foundGoal = true;
-			break;
+		bool runBlkSearch = false;
+		bool canReachGoal =  true;
+
+		// NOTE:
+		//   this is a radius-based check, so gSquare can be considered the goal
+		//   even if it can not be reached (via a maximum-res path) from bSquare
+		//   basically the same condition as in TestBlock, except needed for the
+		//   rare case that <ob> is the first block expanded *and* contains goal
+		if (peDef.IsGoal(bSquare.x, bSquare.y) || (runBlkSearch = peDef.IsGoal(gSquare.x, gSquare.y))) {
+			if (runBlkSearch && testedBlocks == 0)
+				canReachGoal = (DoBlockSearch(owner, moveDef, bSquare, gSquare) == IPath::Ok);
+
+			if (canReachGoal) {
+				mGoalBlockIdx = ob->nodeNum;
+				mGoalHeuristic = 0.0f;
+				foundGoal = true;
+				break;
+			}
 		}
 
 		// no, test the 8 surrounding blocks
@@ -696,8 +741,6 @@ bool CPathEstimator::TestBlock(
 
 	// constraintDisabled is a hackish way to make sure we don't check this in CalculateVertices
 	if (testBlockPos == goalBlockPos && peDef.needPath) {
-		IPath::Path path;
-
 		// if we have expanded the goal-block, check if a valid
 		// max-resolution path exists (from where we entered it
 		// to the actual goal position) since there might still
@@ -712,14 +755,7 @@ bool CPathEstimator::TestBlock(
 		const float3 gWorldPos = peDef.goal;
 
 		if (sWorldPos.SqDistance2D(gWorldPos) > peDef.sqGoalRadius) {
-			CRectangularSearchConstraint pfDef = CRectangularSearchConstraint(sWorldPos, gWorldPos, peDef.sqGoalRadius, BLOCK_SIZE); // sets goalSquare{X,Z}
-			pfDef.testMobile     = false;
-			pfDef.needPath       = false;
-			pfDef.exactPath      = true;
-			pfDef.dirIndependent = true;
-			const IPath::SearchResult searchRes = pathFinder->GetPath(moveDef, pfDef, owner, sWorldPos, path, MAX_SEARCHED_NODES_PF >> 3);
-
-			if (searchRes != IPath::Ok) {
+			if (DoBlockSearch(owner, moveDef, sWorldPos, gWorldPos) != IPath::Ok) {
 				// we cannot set PATHOPT_BLOCKED here either, result
 				// depends on direction of entry from the parent node
 				//

@@ -66,7 +66,10 @@ public:
 	static const int2* GetDirectionVectorsTable();
 
 protected: // IPathFinder impl
+	IPath::SearchResult DoBlockSearch(const CSolidObject* owner, const MoveDef& moveDef, const int2 s, const int2 g);
+	IPath::SearchResult DoBlockSearch(const CSolidObject* owner, const MoveDef& moveDef, const float3 sw, const float3 gw);
 	IPath::SearchResult DoSearch(const MoveDef&, const CPathFinderDef&, const CSolidObject* owner);
+
 	bool TestBlock(
 		const MoveDef& moveDef,
 		const CPathFinderDef& pfDef,

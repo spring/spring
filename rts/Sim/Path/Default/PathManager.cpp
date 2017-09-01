@@ -158,7 +158,6 @@ IPath::SearchResult CPathManager::ArrangePath(
 		// with constraints disabled for all three since these break search
 		// completeness (CPU usage is still limited by MAX_SEARCHED_NODES_*)
 		for (int n = PATH_MAX_RES; n >= PATH_LOW_RES; n--) {
-
 			// distance-limits are in ascending order
 			if (heurGoalDist2D > searchDistances[n])
 				continue;
@@ -166,7 +165,6 @@ IPath::SearchResult CPathManager::ArrangePath(
 			pfDef->DisableConstraint(!useConstraints[n]);
 
 			const IPath::SearchResult currResult = pathFinders[n]->GetPath(*moveDef, *pfDef, caller, startPos, *pathObjects[n], nodeLimits[n]);
-
 
 			// note: GEQ s.t. MED-OK will be preferred over LOW-OK, etc
 			if (currResult >= bestResult)
