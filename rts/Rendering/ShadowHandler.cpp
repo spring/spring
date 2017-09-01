@@ -270,8 +270,6 @@ bool CShadowHandler::InitDepthTarget()
 		return false;
 	}
 
-	fb.Bind();
-
 	glGenTextures(1, &shadowTexture);
 	glBindTexture(GL_TEXTURE_2D, shadowTexture);
 	constexpr float one[4] = {1.0f, 1.0f, 1.0f, 1.0f};
@@ -284,6 +282,7 @@ bool CShadowHandler::InitDepthTarget()
 	if (useColorTexture) {
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, shadowMapSize, shadowMapSize, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
 
+		fb.Bind();
 		fb.AttachTexture(shadowTexture);
 
 		glDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
@@ -292,6 +291,8 @@ bool CShadowHandler::InitDepthTarget()
 		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32, shadowMapSize, shadowMapSize, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
 
+		// Mesa complains about an incomplete FBO if calling Bind before TexImage (?)
+		fb.Bind();
 		fb.AttachTexture(shadowTexture, GL_TEXTURE_2D, GL_DEPTH_ATTACHMENT_EXT);
 
 		glDrawBuffer(GL_NONE);
