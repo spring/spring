@@ -67,9 +67,6 @@ CSound::CSound()
 	SoundBuffer::Initialise();
 	soundItems.push_back(nullptr);
 
-	// NB: for some reason, this is initially AL_INVALID_OPERATION and persists
-	CheckError("[Sound]");
-
 	soundThread = std::move(Threading::CreateNewThread(std::bind(&CSound::UpdateThread, this, configHandler->GetInt("MaxSounds"))));
 
 	configHandler->NotifyOnChange(this, {"snd_volmaster", "snd_eaxpreset", "snd_filter", "UseEFX", "snd_volgeneral", "snd_volunitreply", "snd_volbattle", "snd_volui", "snd_volmusic", "PitchAdjust"});
@@ -294,13 +291,11 @@ void CSound::InitThread(int cfgMaxSounds)
 			LOG("[Sound::%s][2] opening configured device \"%s\"", __func__, configDeviceName.c_str());
 
 			device = alcOpenDevice(configDeviceName.c_str());
-			CheckError("[Sound::Init::OpenCfgDevice]");
 		}
 		if (device == nullptr) {
 			LOG("[Sound::%s][2] opening default device", __func__);
 
 			device = alcOpenDevice(nullptr);
-			CheckError("[Sound::Init::OpenDefDevice]");
 		}
 
 		if (device == nullptr) {
@@ -312,7 +307,6 @@ void CSound::InitThread(int cfgMaxSounds)
 		}
 
 		context = alcCreateContext(device, nullptr);
-		CheckError("[Sound::Init::CreateContext]");
 		LOG("[Sound::%s][3] device=%p context=%p", __func__, device, context);
 
 		if (context == nullptr) {
@@ -331,6 +325,7 @@ void CSound::InitThread(int cfgMaxSounds)
 			soundThreadQuit = true;
 			return;
 		}
+		CheckError("[Sound::Init::MakeContextCurrent]");
 
 		{
 			LOG("[Sound::%s][4][OpenAL API Info]", __func__);

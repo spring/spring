@@ -238,8 +238,6 @@ SpringApp::SpringApp(int argc, char** argv)
 	ParseCmdLine(argc, argv);
 
 	FileSystemInitializer::InitializeLogOutput();
-	CLogOutput::LogConfigInfo();
-	CLogOutput::LogSystemInfo();
 
 	spring_clock::PushTickRate(configHandler->GetBool("UseHighResTimer"));
 	// set the Spring "epoch" to be whatever value the first
@@ -247,6 +245,9 @@ SpringApp::SpringApp(int argc, char** argv)
 	// be done before SDL_Init, we are not using SDL_GetTicks
 	// as our clock anymore)
 	spring_time::setstarttime(spring_time::gettime(true));
+
+	CLogOutput::LogConfigInfo();
+	CLogOutput::LogSystemInfo();
 
 	// gu does not exist yet, pre-seed for ShowSplashScreen
 	guRNG.Seed(CGlobalUnsyncedRNG::rng_val_type(&argc));
