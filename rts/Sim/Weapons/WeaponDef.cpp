@@ -558,30 +558,28 @@ void WeaponDef::LoadSound(
 	const unsigned int soundIdx,
 	std::vector<GuiSoundSet::Data>& soundData
 ) {
-	std::string name;
-	float volume = -1.0f;
+	soundData.emplace_back("", -1, -1.0f);
+	GuiSoundSet::Data& data = soundData.back();
 
-	soundData.emplace_back(name, -1, volume);
 	assert(soundIdx < soundData.size());
 	assert(soundData[soundIdx].id == -1);
 
 	if (soundKey == "soundStart") {
-		name   = wdTable.GetString(soundKey, "");
-		volume = wdTable.GetFloat(soundKey + "Volume", -1.0f);
-	}
-	else if (soundKey == "soundHitDry") {
-		name   = wdTable.GetString(soundKey, wdTable.GetString("soundHit", ""));
-		volume = wdTable.GetFloat(soundKey + "Volume", wdTable.GetFloat("soundHitVolume", -1.0f));
-	}
-	else if (soundKey == "soundHitWet") {
-		name   = wdTable.GetString(soundKey, wdTable.GetString("soundHit", ""));
-		volume = wdTable.GetFloat(soundKey + "Volume", wdTable.GetFloat("soundHitVolume", -1.0f));
-	}
-
-	if (name.empty())
+		data.name   = wdTable.GetString(soundKey, "");
+		data.volume = wdTable.GetFloat(soundKey + "Volume", -1.0f);
 		return;
+	}
 
-	soundData[soundIdx] = GuiSoundSet::Data(name, -1, volume);
+	if (soundKey == "soundHitDry") {
+		data.name   = wdTable.GetString(soundKey, wdTable.GetString("soundHit", ""));
+		data.volume = wdTable.GetFloat(soundKey + "Volume", wdTable.GetFloat("soundHitVolume", -1.0f));
+		return;
+	}
+	if (soundKey == "soundHitWet") {
+		data.name   = wdTable.GetString(soundKey, wdTable.GetString("soundHit", ""));
+		data.volume = wdTable.GetFloat(soundKey + "Volume", wdTable.GetFloat("soundHitVolume", -1.0f));
+		return;
+	}
 }
 
 
