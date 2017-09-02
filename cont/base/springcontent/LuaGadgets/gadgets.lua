@@ -1482,6 +1482,38 @@ function gadgetHandler:UnitLeftLos(unitID, unitTeam, allyTeam, unitDefID)
 end
 
 
+function gadgetHandler:UnitEnteredWater(unitID, unitDefID, unitTeam)
+  for _,g in r_ipairs(self.UnitEnteredWaterList) do
+    g:UnitEnteredWater(unitID, unitDefID, unitTeam)
+  end
+  return
+end
+
+
+function gadgetHandler:UnitLeftWater(unitID, unitDefID, unitTeam)
+  for _,g in r_ipairs(self.UnitLeftWaterList) do
+    g:UnitLeftWater(unitID, unitDefID, unitTeam)
+  end
+  return
+end
+
+
+function gadgetHandler:UnitEnteredAir(unitID, unitDefID, unitTeam)
+  for _,g in r_ipairs(self.UnitEnteredAirList) do
+    g:UnitEnteredAir(unitID, unitDefID, unitTeam)
+  end
+  return
+end
+
+
+function gadgetHandler:UnitLeftAir(unitID, unitDefID, unitTeam)
+  for _,g in r_ipairs(self.UnitLeftAirList) do
+    g:UnitLeftAir(unitID, unitDefID, unitTeam)
+  end
+  return
+end
+
+
 function gadgetHandler:UnitSeismicPing(x, y, z, strength,
                                        allyTeam, unitID, unitDefID)
   for _,g in r_ipairs(self.UnitSeismicPingList) do
