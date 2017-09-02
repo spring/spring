@@ -103,9 +103,9 @@ void GL::GeometryBuffer::DrawDebug(const unsigned int texID, const float2 texMin
 }
 
 bool GL::GeometryBuffer::Create(const int2 size) {
-	buffer.Bind();
+	unsigned int n = 0;
 
-	for (unsigned int n = 0; n < ATTACHMENT_COUNT; n++) {
+	for (; n < ATTACHMENT_COUNT; n++) {
 		glGenTextures(1, &bufferTextureIDs[n]);
 		glBindTexture(GL_TEXTURE_2D, bufferTextureIDs[n]);
 
@@ -116,14 +116,17 @@ bool GL::GeometryBuffer::Create(const int2 size) {
 
 		if (n == ATTACHMENT_ZVALTEX) {
 			glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, size.x, size.y, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, size.x, size.y, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
 			bufferAttachments[n] = GL_DEPTH_ATTACHMENT_EXT;
 		} else {
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size.x, size.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size.x, size.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 			bufferAttachments[n] = GL_COLOR_ATTACHMENT0_EXT + n;
 		}
+	}
 
-		buffer.AttachTexture(bufferTextureIDs[n], GL_TEXTURE_2D, bufferAttachments[n]);
+	// sic; Mesa complains about an incomplete FBO if calling Bind before TexImage (?)
+	for (buffer.Bind(); n > 0; n--) {
+		buffer.AttachTexture(bufferTextureIDs[n - 1], GL_TEXTURE_2D, bufferAttachments[n - 1]);
 	}
 
 	glBindTexture(GL_TEXTURE_2D, 0);

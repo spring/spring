@@ -45,17 +45,21 @@ spring::recursive_mutex soundMutex;
 
 
 CSound::CSound()
-	: listenerNeedsUpdate(false)
+	: masterVolume(0.0f)
+
+	, listenerNeedsUpdate(false)
+	, mute(false)
+	, appIsIconified(false)
+	, pitchAdjust(false)
+
 	, soundThreadQuit(false)
 	, canLoadDefs(false)
 {
 	std::lock_guard<spring::recursive_mutex> lck(soundMutex);
 
-	mute = false;
-	appIsIconified = false;
+	masterVolume = configHandler->GetInt("snd_volmaster") * 0.01f;
 	pitchAdjust = configHandler->GetBool("PitchAdjust");
 
-	masterVolume = configHandler->GetInt("snd_volmaster") * 0.01f;
 	Channels::General->SetVolume(configHandler->GetInt("snd_volgeneral") * 0.01f);
 	Channels::UnitReply->SetVolume(configHandler->GetInt("snd_volunitreply") * 0.01f);
 	Channels::UnitReply->SetMaxConcurrent(1);
