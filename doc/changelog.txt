@@ -15,6 +15,7 @@ Major:
 
 Misc:
  - Assorted bugfixes and optimisations
+ - force regeneration of ArchiveCache
  - Implement VFS modes - VFS.MOD, VFS.MAP & VFS.BASE now actually work. Added VFS.MENU
  ! base archives now have modtype of 4 and menu archive have modtype of 5
  ! one letter command-line flags (e.g. -g instead of --game) are removed
@@ -30,7 +31,9 @@ Misc:
  - do not spawn VFS initialization threads if WorkerThreadCount=0
  - rebase ThreadPool on a lock-free taskqueue; make IO-bound work unable to block execution of other tasks
  - reduce ThreadPool worker-count right after VFS initialization
- - take screenshots via ThreadPool
+ - asyncify writing screenshots via ThreadPool
+ - asyncify demo/savegame compression
+ - defer loading *Def sounds until simulation asks for them
  - use pcall in LuaUtils::Echo
  - catch all exceptions in Game::Load and make it non-interruptable
  - turn LoadDefs content_error exceptions into clean exits
@@ -48,7 +51,9 @@ Misc:
  - add ForceDisableClipCtrl config-option
  - add NETMSG_LOGMSG for synced logging
  - netlog Lua memory allocation failures
+ - netlog model parsing failures
  - netlog SHA512 digests over cached path-estimator data
+ - enforce a minimum of 1GB free disk-space (to prevent cache corruption)
  - log 'Warning: Dropping packet from unknown IP' only once per IP
  - filter out consecutive duplicated log-messages; add LogRepeatLimit config-option
  - fix inverted los-test logic in AI GetProperty callback (patch by rlcevg)
@@ -83,6 +88,7 @@ Sim:
    checks for this property now first query a unit's MoveDef
    (if any) so that ship->tank and similar substitutions via
    MoveCtrl.SetMoveDef behave as expected
+ - disable randomized hovering during CMD_LOAD_UNITS for air-transports
  - make Spring.CreateUnit smarter (patch by Sprunk)
    if a builderID parameter is passed to Spring.CreateUnit, the new unit
    will consider that its solo-builder if it has canBeAssisted=false set
@@ -203,6 +209,7 @@ Rendering
  - fix jagged shadows on maps with oblique sun-directions
  - fix grass not receiving shadows; unify groundShadowDensity application
  - fix grass being rendered black in metal-view
+ - fix particle shadows
  - use clip-control (when possible) to improve depthbuffer precision
  - micro-optimize LuaMatBinSet sorting
  - make shader-flag handling more lightweight
@@ -233,6 +240,7 @@ UI:
  - add fallbacks for common context-creation failures; catch inadequate
    desktop video-modes; turn exceptions during {window,context}-creation
    into friendlier popups
+ - remove old warnings about junk GPU drivers that can no longer appear
  - downgrade from throwing exception to warning for missing scar-textures
  - extend and organize the information shown in /debug
  ! rename '/roam' to '/mapmeshdrawer' which cycles through the renderers
@@ -247,8 +255,10 @@ Bugfixes:
  - fix LosMap thread-safety
  - fix PathTexture thread-safety
  - fix RoamMeshDrawer thread-safety
+ - fix LuaVFSDownload thread-safety during reload
  - fix race-condition between screenshot counter and libIL
  - fix sound-thread occasionally accessing a deleted pointer on exit
+ - fix sound-buffer deletion while buffers were still bound to sources
  - fix double-free in CBitmap's move-ctor for DDS images
  - fix wrong number of pool-threads being spawned on reload
  - fix runaway Text::WrapInPlace string-allocation
@@ -279,6 +289,13 @@ Bugfixes:
  - catch invalid CmdDesc indices in GuiHandler::DrawButtons
  - insert missing eventHandler.RemoveClient call in RoamMeshDrawer
 
+ - fix #5730 (crash during nano-particle creation by builders under specific circumstances)
+ - fix #5728 (canBeAssisted=false factories only being buildable by one constructor at a time)
+ - fix #5721 (structures created via AI orders sometimes not leveling ground)
+ - fix #5715 (zero-spread weapons avoiding non-target enemies)
+ - fix #5690 (Spring.GetProjectileTarget returning <0,0,0> for cannons with ground-attack orders)
+ - fix #5519 (path-estimator failure if start- and goal-coordinates mapped to the same block)
+ - fix #5684 (Spring.{Add,Remove}Grass updates not taking effect until camera is moved)
  - fix #5658 (projectiles applying two position-updates while bounced)
  - fix #5630 (free line-of-fire detection failure)
  - fix #5287 (help units in firebases with a collideFireBase weapondef flag)
@@ -326,8 +343,10 @@ Bugfixes:
  - fix #5338 (grid-patterns in unsynced heightmap)
  - fix #5644 (send BuggerOff notes from opened-but-blocked factories again)
  - fix #4745 (broken transport-unloading with non-zero unloadSpread)
+ - fix #4971 (constructors not assisting if simultaneously given orders to build count-restricted units)
  - fix #4481 (check MoveDef maxSlope for units built by mobile constructors)
  - fix #4827 (idle gunships jiggling away from their position)
+ - fix #4232 (gunships snapping to horizontal attitude when ordered to stop after attacking)
 
 
 
