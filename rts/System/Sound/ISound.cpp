@@ -16,7 +16,7 @@
 #include "OpenAL/AudioChannel.h"
 #endif
 
-#include "System/Misc/SpringTime.h" //FIXME: remove this
+#include "System/TimeProfiler.h"
 #include "System/SafeUtil.h"
 
 CONFIG(bool, Sound).defaultValue(true).description("Select the Sound driver, true = OpenAL, false = NullAudio");
@@ -46,46 +46,54 @@ ISound::ISound()
 
 void ISound::Initialize(bool forceNullSound)
 {
-	if (singleton == nullptr) {
+	if (singleton != nullptr) {
+		LOG_L(L_WARNING, "[ISound::%s] already initialized!", __func__);
+		return;
+	}
+
 #ifndef NO_SOUND
-		if (!IsNullAudio() && !forceNullSound) {
-			Channels::BGMusic = new AudioChannel();
-			Channels::General = new AudioChannel();
-			Channels::Battle = new AudioChannel();
-			Channels::UnitReply = new AudioChannel();
-			Channels::UserInterface = new AudioChannel();
+	if (!IsNullAudio() && !forceNullSound) {
+		Channels::BGMusic = new AudioChannel();
+		Channels::General = new AudioChannel();
+		Channels::Battle = new AudioChannel();
+		Channels::UnitReply = new AudioChannel();
+		Channels::UserInterface = new AudioChannel();
+
+		{
+			ScopedOnceTimer timer("ISound::Init::New");
 			singleton = new CSound();
+		}
+		{
+			ScopedOnceTimer timer("ISound::Init::Dev");
 
 			// sound device is initialized in a thread, must wait
 			// for it to finish (otherwise LoadSoundDefs can fail)
 			while (!singleton->CanLoadSoundDefs()) {
-				spring_sleep(spring_msecs(100));
+				LOG("[ISound::%s] spawning sound-thread (%ldms)", __func__, (timer.GetDuration()).toMilliSecsi());
 
 				if (singleton->SoundThreadQuit()) {
 					// no device or context found, fallback
 					ChangeOutput(true); break;
 				}
+
+				spring_sleep(spring_msecs(100));
 			}
-		} else
-#endif // NO_SOUND
-		{
-			Channels::BGMusic = new NullAudioChannel();
-			Channels::General = new NullAudioChannel();
-			Channels::Battle = new NullAudioChannel();
-			Channels::UnitReply = new NullAudioChannel();
-			Channels::UserInterface = new NullAudioChannel();
-			singleton = new NullSound();
 		}
-	} else {
-		LOG_L(L_WARNING, "Sound is already initialized!");
+	} else
+#endif // NO_SOUND
+	{
+		Channels::BGMusic = new NullAudioChannel();
+		Channels::General = new NullAudioChannel();
+		Channels::Battle = new NullAudioChannel();
+		Channels::UnitReply = new NullAudioChannel();
+		Channels::UserInterface = new NullAudioChannel();
+		singleton = new NullSound();
 	}
 }
 
 void ISound::Shutdown()
 {
-	ISound* tmpSound = singleton;
-	singleton = nullptr;
-	spring::SafeDelete(tmpSound);
+	spring::SafeDelete(singleton);
 
 	spring::SafeDelete(Channels::BGMusic);
 	spring::SafeDelete(Channels::General);
@@ -103,10 +111,10 @@ bool ISound::IsNullAudio()
 
 bool ISound::ChangeOutput(bool forceNullSound)
 {
-	if (IsNullAudio()) {
-		//FIXME: on reload, sound-ids change (depends on order when they are requested, see GetSoundId()/GetSoundItem()
-		LOG_L(L_ERROR, "re-enabling sound isn't supported yet, expect problems!");
-	}
+	// FIXME: on reload, sound-ids change (depends on order when they are requested, see GetSoundId()/GetSoundItem()
+	if (IsNullAudio())
+		LOG_L(L_ERROR, "[ISound::%s] re-enabling sound isn't supported yet, expect problems!", __func__);
+
 	Shutdown();
 	configHandler->Set("Sound", IsNullAudio() || forceNullSound);
 	Initialize(forceNullSound);

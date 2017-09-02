@@ -188,11 +188,12 @@ void AudioChannel::StreamPlay(const std::string& filepath, float volume, bool en
 	if (curStreamSrc == nullptr)
 		curStreamSrc = sound->GetNextBestSource(); // may return 0 if no sources available
 
-	if (curStreamSrc) {
-		// insert first, PlayStream may invoke Stop immediately thus setting curStreamSrc to NULL
-		curSources.insert(curStreamSrc);
-		curStreamSrc->PlayStream(this, filepath, volume);
-	}
+	if (curStreamSrc == nullptr)
+		return;
+
+	// insert first, PlayStream may invoke Stop immediately thus setting curStreamSrc to NULL
+	curSources.insert(curStreamSrc);
+	curStreamSrc->PlayStream(this, filepath, volume);
 }
 
 void AudioChannel::StreamPause()

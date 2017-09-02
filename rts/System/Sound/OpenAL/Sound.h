@@ -70,29 +70,28 @@ private:
 	size_t LoadSoundBuffer(const std::string& filename);
 
 private:
-	float masterVolume;
-
-	bool mute;
-
-	/// we do not play if minimized / iconified
-	bool appIsIconified;
-	bool pitchAdjust;
-
+	spring::thread soundThread;
 	spring::unordered_map<std::string, size_t> soundMap; // <name, id>
 	std::vector<SoundItem*> soundItems;
 	std::vector<CSoundSource> soundSources; // fixed-size
+
+	SoundItemNameMap defaultItemNameMap;
+	SoundItemDefsMap soundItemDefsMap;
+
+	float masterVolume;
 
 	/// unscaled
 	float3 myPos;
 	float3 camDir;
 	float3 camUp;
 	float3 prevVelocity;
+
 	bool listenerNeedsUpdate;
+	bool mute;
 
-	SoundItemNameMap defaultItemNameMap;
-	SoundItemDefsMap soundItemDefsMap;
-
-	spring::thread soundThread;
+	/// we do not play if minimized / iconified
+	bool appIsIconified;
+	bool pitchAdjust;
 
 	volatile bool soundThreadQuit;
 	volatile bool canLoadDefs;
