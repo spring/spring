@@ -242,7 +242,7 @@ namespace Shader {
 		res->log   = glslGetLog(res->id);
 
 		if (!res->valid) {
-			const std::string& name = srcFile.find("void main()") ? "unknown" : srcFile;
+			const std::string& name = srcFile.find("void main()") != std::string::npos ? "unknown" : srcFile;
 			LOG_L(L_WARNING, "[GLSL-SO::%s] shader-object name: %s, compile-log:\n%s\n", __FUNCTION__, name.c_str(), res->log.c_str());
 			LOG_L(L_WARNING, "\n%s%s%s%s%s%s%s", sources[0], sources[1], sources[2], sources[3], sources[4], sources[5], sources[6]);
 		}
