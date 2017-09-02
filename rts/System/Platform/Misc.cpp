@@ -398,7 +398,7 @@ namespace Platform
 		struct statvfs st;
 
 		if (statvfs(path.c_str(), &st) != 0)
-			return 0;
+			return -1;
 
 		if (st.f_frsize != 0)
 			return ((st.f_frsize * st.f_bavail) / (1024 * 1024));
