@@ -533,6 +533,8 @@ static void TranslateStackTrace(bool* aiCrash, StackTrace& stacktrace, const int
 	return;
 }
 
+#endif  // !(__APPLE__)
+
 static void LogStacktrace(const int logLevel, StackTrace& stacktrace)
 {
 	int colFileline = 0;
@@ -576,7 +578,6 @@ static void LogStacktrace(const int logLevel, StackTrace& stacktrace)
 	}
 }
 
-#endif  // !(__APPLE__)
 
 
 __FORCE_ALIGN_STACK__
