@@ -462,10 +462,8 @@ void DataDirLocater::Check()
 		throw content_error(errstr);
 	}
 
-#ifndef UNITSYNC
 	if (Platform::FreeDiskSpace(writeDir->path) <= 1024)
 		throw content_error("not enough free space on drive containing writeable data-directory");
-#endif
 
 	ChangeCwdToWriteDir();
 	CreateCacheDir(writeDir->path + FileSystem::GetCacheDir());
