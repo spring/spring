@@ -25,6 +25,7 @@
 #include <stdlib.h>
 #include <dlfcn.h> // for dladdr(), dlopen()
 #include <climits> // for PATH_MAX
+#include <sys/statvfs.h>
 
 #elif defined __FreeBSD__
 #include <unistd.h>
