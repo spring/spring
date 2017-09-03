@@ -3,7 +3,7 @@
 # and debug symbols older than ${DBG_AGE}.
 # ${DBG_AGE} must be smaller than or equal to ${AGE}.
 
-AGE=180
+AGE=120
 DBG_AGE=30
 ZIP_AGE=10
 
