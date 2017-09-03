@@ -191,7 +191,7 @@ void CVertexArray::AddVertex2dTC(float x, float y, float tx, float ty, const uns
 //////////////////////////////////////////////////////////////////////
 
 void CVertexArray::CheckEndStrip() {
-	if (stripArrayPos == stripArray || ((ptrdiff_t) * (stripArrayPos - 1)) != ((char*) drawArrayPos - (char*) drawArray))
+	if (stripArrayPos == stripArray || ((std::ptrdiff_t) * (stripArrayPos - 1)) != ((char*) drawArrayPos - (char*) drawArray))
 		EndStrip();
 }
 
