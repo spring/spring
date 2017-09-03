@@ -11,6 +11,7 @@
 #include "System/Platform/Linux/CrashHandler.cpp"
 #include <libproc.h>
 #include <limits.h>
+#include <unistd.h>
 
 #define ADDR2LINE "atos"
 
