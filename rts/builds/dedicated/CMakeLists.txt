@@ -73,12 +73,11 @@ INCLUDE_DIRECTORIES(${ENGINE_SRC_ROOT_DIR}/lib/asio/include)
 
 
 ### Assemble sources
-IF	(UNIX)
+IF	(APPLE)
 	SET(sources_engine_Platform_CrashHandler
 		${ENGINE_SRC_ROOT_DIR}/System/Platform/CpuID.cpp
 		${ENGINE_SRC_ROOT_DIR}/System/Platform/Threading.cpp
-		${ENGINE_SRC_ROOT_DIR}/System/Platform/Linux/CrashHandler.cpp
-		${ENGINE_SRC_ROOT_DIR}/System/Platform/Linux/ThreadSupport.cpp)
+		${ENGINE_SRC_ROOT_DIR}/System/Platform/Mac/CrashHandler.cpp)
 ELSEIF	(WIN32)
 	SET(sources_engine_Platform_CrashHandler
 		${ENGINE_SRC_ROOT_DIR}/System/Platform/Win/seh.cpp
@@ -87,7 +86,8 @@ ELSE	()
 	SET(sources_engine_Platform_CrashHandler
 		${ENGINE_SRC_ROOT_DIR}/System/Platform/CpuID.cpp
 		${ENGINE_SRC_ROOT_DIR}/System/Platform/Threading.cpp
-		${ENGINE_SRC_ROOT_DIR}/System/Platform/Mac/CrashHandler.cpp)
+		${ENGINE_SRC_ROOT_DIR}/System/Platform/Linux/CrashHandler.cpp
+		${ENGINE_SRC_ROOT_DIR}/System/Platform/Linux/ThreadSupport.cpp)
 ENDIF	()
 
 SET(system_files

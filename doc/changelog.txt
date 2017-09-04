@@ -247,6 +247,10 @@ UI:
  - add '/debugglerrors' command (enables per-frame glGetError reporting)
  - add '/debuggl x y z' command (requires DebugGL=1) where x=source,y=type,z=severity
  - add '/wire{model,sky,tree,water}' debug commands
+ ! change default bindings for chatswitch* actions
+   alt+ctrl+(a,a) now toggles chatswitchally
+   alt+ctrl+(s,s) now toggles chatswitchspec
+   chatswitchall now has to be bound manually
 
 Bugfixes:
  - fix LuaParser thread-safety

@@ -151,7 +151,7 @@ void COffscreenGLContext::WorkerThreadPost()
 {
 	CGLError err = CGLSetCurrentContext(cglWorkerCtx);
 	if (kCGLNoError != err) {
-		LOG_L(L_ERROR, CGLErrorString(err));
+		LOG_L(L_ERROR, "%s", CGLErrorString(err));
 		throw opengl_error("Could not activate worker rendering context");
 	}
 }
@@ -161,7 +161,7 @@ void COffscreenGLContext::WorkerThreadFree()
 {
 	CGLError err = CGLSetCurrentContext(NULL);
 	if (kCGLNoError != err) {
-		LOG_L(L_ERROR, CGLErrorString(err));
+		LOG_L(L_ERROR, "%s", CGLErrorString(err));
 		throw opengl_error("Could not deactivate worker rendering context");
 	}
 }

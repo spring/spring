@@ -2,7 +2,7 @@
 
 #include "System/Platform/MessageBox.h"
 
-#if !defined(DEDICATED) && !defined(HEADLESS)
+#if 0 //!defined(DEDICATED) && !defined(HEADLESS)
 #include <CoreFoundation/CFBase.h>
 #include <CoreFoundation/CFString.h>
 #include <CoreFoundation/CFUserNotification.h>
@@ -17,7 +17,7 @@ namespace Platform {
  */
 void MsgBox(const std::string& message, const std::string& caption, const unsigned int& flags)
 {
-#if !defined(DEDICATED) && !defined(HEADLESS)
+#if 0 //!defined(DEDICATED) && !defined(HEADLESS)
 	CFStringRef cf_caption = CFStringCreateWithCString(NULL, caption.c_str(), caption.size());
 	CFStringRef cf_message = CFStringCreateWithCString(NULL, message.c_str(), message.size());
 

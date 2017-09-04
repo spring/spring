@@ -25,6 +25,7 @@
 #include <stdlib.h>
 #include <dlfcn.h> // for dladdr(), dlopen()
 #include <climits> // for PATH_MAX
+#include <sys/statvfs.h>
 
 #elif defined __FreeBSD__
 #include <unistd.h>
@@ -401,9 +402,9 @@ namespace Platform
 			return -1;
 
 		if (st.f_frsize != 0)
-			return ((st.f_frsize * st.f_bavail) / (1024 * 1024));
+			return (((uint64_t)st.f_frsize * st.f_bavail) / (1024 * 1024));
 
-		return ((st.f_bsize * st.f_bavail) / (1024 * 1024));
+		return (((uint64_t)st.f_bsize * st.f_bavail) / (1024 * 1024));
 		#endif
 	}
 

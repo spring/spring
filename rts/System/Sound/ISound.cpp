@@ -69,7 +69,7 @@ void ISound::Initialize(bool forceNullSound)
 			// sound device is initialized in a thread, must wait
 			// for it to finish (otherwise LoadSoundDefs can fail)
 			while (!singleton->CanLoadSoundDefs()) {
-				LOG("[ISound::%s] spawning sound-thread (%ldms)", __func__, (timer.GetDuration()).toMilliSecsi());
+				LOG("[ISound::%s] spawning sound-thread (%.1fms)", __func__, (timer.GetDuration()).toMilliSecsf());
 
 				if (singleton->SoundThreadQuit()) {
 					// no device or context found, fallback

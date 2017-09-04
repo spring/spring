@@ -27,7 +27,7 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_KEY_BINDINGS)
 CONFIG(int, KeyChainTimeout).defaultValue(750).minimumValue(0).description("Timeout in milliseconds waiting for a key chain shortcut.");
 
 
-CKeyBindings* keyBindings = NULL;
+CKeyBindings* keyBindings = nullptr;
 
 
 struct DefaultBinding {
@@ -35,7 +35,7 @@ struct DefaultBinding {
 	const char* action;
 };
 
-static const std::vector<DefaultBinding> defaultBindings = {
+static const DefaultBinding defaultBindings[] = {
 	{            "esc", "quitmessage" },
 	{      "Shift+esc", "quitmenu"    },
 	{ "Ctrl+Shift+esc", "quitforce"   },
@@ -53,9 +53,10 @@ static const std::vector<DefaultBinding> defaultBindings = {
 	{         "Any+tab", "toggleoverview" },
 
 	{               "Any+enter", "chat"           },
-	{     "Ctrl+ctrl,Ctrl+ctrl", "chatswitchall"  },
-	{         "Alt+alt,Alt+alt", "chatswitchally" },
-	{ "Shift+shift,Shift+shift", "chatswitchspec" },
+	// leave this unbound, takes as many keypresses as exiting ally/spec modes
+	// { "Alt+ctrl+z,Alt+ctrl+z", "chatswitchall"  },
+	{ "Alt+ctrl+a,Alt+ctrl+a", "chatswitchally" },
+	{ "Alt+ctrl+s,Alt+ctrl+s", "chatswitchspec" },
 
 	{       "Any+tab", "edit_complete"  },
 	{ "Any+backspace", "edit_backspace" },
@@ -719,9 +720,8 @@ void CKeyBindings::Print() const
 bool CKeyBindings::Save(const std::string& filename) const
 {
 	FILE* out = fopen(filename.c_str(), "wt");
-	if (out == NULL) {
+	if (out == nullptr)
 		return false;
-	}
 
 	const bool success = FileSave(out);
 	fclose(out);
@@ -731,9 +731,8 @@ bool CKeyBindings::Save(const std::string& filename) const
 
 bool CKeyBindings::FileSave(FILE* out) const
 {
-	if (out == NULL) {
+	if (out == nullptr)
 		return false;
-	}
 
 	// clear the defaults
 	fprintf(out, "\n");
