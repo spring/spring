@@ -5,7 +5,7 @@
 set -e
 . buildbot/slave/validation/tests-env.sh
 
-mkdir -p "${DOWNLOADDIR}" "${CONTENT_DIR}/LuaUI/Widgets" "${CONTENT_DIR}/LuaUI/Config"
+mkdir -p "${DOWNLOADDIR}" "${CONTENT_DIR}/LuaUI/Widgets" "${CONTENT_DIR}/LuaUI/Config" "${CONTENT_DIR}/LuaUI/Widgets_BA"
 
 PRDL="time ${TESTDIR}/usr/local/bin/pr-downloader --filesystem-writepath=$DOWNLOADDIR"
 # get the name of the latest versions
@@ -29,7 +29,9 @@ done
 
 #copy widget + config
 cp -suv ${SOURCEDIR}/test/validation/LuaUI/Widgets/test.lua ${CONTENT_DIR}/LuaUI/Widgets/test.lua
+cp -suv ${SOURCEDIR}/test/validation/LuaUI/Widgets/test.lua ${CONTENT_DIR}/LuaUI/Widgets_BA/test.lua
 cp -v ${SOURCEDIR}/test/validation/LuaUI/Config/ZK_data.lua ${CONTENT_DIR}/LuaUI/Config/ZK_data.lua
+cp -v ${SOURCEDIR}/test/validation/LuaUI/Config/ZK_data.lua ${CONTENT_DIR}/LuaUI/Config/BA.lua
 
 # adjust springsettings.cfg
 (
