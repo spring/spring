@@ -11,7 +11,7 @@
 #include "System/Platform/Misc.h"
 
 #ifdef UNITSYNC
-static void ErrorMessageBox(const std::string&, const std::string&, unsigned int) {}
+void ErrorMessageBox(const std::string&, const std::string&, unsigned int) {}
 #endif
 
 
