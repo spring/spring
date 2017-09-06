@@ -5,7 +5,7 @@
  * ARB_vertex_buffer_object class implementation
  */
 
-#include <assert.h>
+#include <cassert>
 #include <vector>
 
 #include "VBO.h"
@@ -26,7 +26,6 @@ bool VBO::IsVBOSupported()
 	return (GLEW_ARB_vertex_buffer_object && GLEW_ARB_map_buffer_range && configHandler->GetBool("UseVBO"));
 }
 
-
 /**
  * Returns if the current gpu drivers support PixelBufferObjects
  */
@@ -35,36 +34,32 @@ bool VBO::IsPBOSupported()
 	return (GLEW_EXT_pixel_buffer_object && GLEW_ARB_map_buffer_range && configHandler->GetBool("UsePBO"));
 }
 
-
 bool VBO::IsSupported() const
 {
-	if (defTarget == GL_PIXEL_UNPACK_BUFFER) {
-		return IsPBOSupported();
-	} else {
-		return IsVBOSupported();
-	}
+	return ((defTarget == GL_PIXEL_UNPACK_BUFFER)? IsPBOSupported(): IsVBOSupported());
 }
 
 
-VBO::VBO(GLenum _defTarget, const bool storage) : vboId(0), VBOused(true)
+VBO::VBO(GLenum _defTarget, const bool storage) : vboId(0), isSupported(true)
 {
 	bound = false;
 	mapped = false;
 	data = nullptr;
-	size = 0;
+	bufSize = 0;
+	memSize = 0;
 	curBoundTarget = _defTarget;
 	defTarget = _defTarget;
 	usage = GL_STREAM_DRAW;
 	nullSizeMapped = false;
 
-	VBOused = IsSupported();
+	isSupported = IsSupported();
 	immutableStorage = storage;
 
 #ifdef GLEW_ARB_buffer_storage
 	if (immutableStorage && !GLEW_ARB_buffer_storage) {
 		//note: We can't fallback to traditional BufferObjects, cause then we would have to map/unmap on each change.
 		//      Only sysram/cpu VAs give an equivalent behaviour.
-		VBOused = false;
+		isSupported = false;
 		immutableStorage = false;
 		//LOG_L(L_ERROR, "VBO/PBO: cannot create immutable storage, gpu drivers missing support for it!");
 	}
@@ -93,13 +88,14 @@ VBO& VBO::operator=(VBO&& other)
 	std::swap(bound, other.bound);
 	std::swap(mapped, other.mapped);
 	std::swap(data, other.data);
-	std::swap(size, other.size);
+	std::swap(bufSize, other.bufSize);
+	std::swap(memSize, other.memSize);
 	std::swap(curBoundTarget, other.curBoundTarget);
 	std::swap(defTarget, other.defTarget);
 	std::swap(usage, other.usage);
 	std::swap(nullSizeMapped, other.nullSizeMapped);
 
-	std::swap(VBOused, other.VBOused);
+	std::swap(isSupported, other.isSupported);
 	std::swap(immutableStorage, other.immutableStorage);
 
 	return *this;
@@ -111,7 +107,7 @@ void VBO::Bind(GLenum target) const
 	assert(!bound);
 
 	bound = true;
-	if (VBOused) {
+	if (isSupported) {
 		curBoundTarget = target;
 		glBindBuffer(target, GetId());
 	}
@@ -122,45 +118,46 @@ void VBO::Unbind() const
 {
 	assert(bound);
 
-	if (VBOused) {
+	if (isSupported)
 		glBindBuffer(curBoundTarget, 0);
-	}
 
 	bound = false;
 }
 
 
-void VBO::Resize(GLsizeiptr _size, GLenum _usage)
+void VBO::Resize(GLsizeiptr newSize, GLenum newUsage)
 {
 	assert(bound);
 	assert(!mapped);
 
 	// no size change -> nothing to do
-	if (_size == size && _usage == usage)
+	if (newSize == bufSize && newUsage == usage)
 		return;
 
 	// first call: no *BO exists yet to copy old data from, so use ::New() (faster)
-	if (size == 0)
-		return New(_size, usage, nullptr);
+	if (bufSize == 0)
+		return New(newSize, usage, nullptr);
 
-	assert(_size > size);
-	auto osize = size;
-	size = _size;
-	usage = _usage;
+	assert(newSize > bufSize);
 
-	if (VBOused) {
+	const size_t oldSize = bufSize;
+	bufSize = newSize;
+	usage = newUsage;
+
+	if (isSupported) {
 		glClearErrors("VBO", __func__, globalRendering->glDebugErrors);
-		auto oldBoundTarget = curBoundTarget;
+		const GLenum oldBoundTarget = curBoundTarget;
 
 	#ifdef GLEW_ARB_copy_buffer
 		if (GLEW_ARB_copy_buffer) {
 			VBO vbo(GL_COPY_WRITE_BUFFER, immutableStorage);
+
 			vbo.Bind(GL_COPY_WRITE_BUFFER);
-			vbo.New(size, GL_STREAM_DRAW);
+			vbo.New(bufSize, GL_STREAM_DRAW);
 
 			// gpu internal copy (fast)
-			if (osize > 0)
-				glCopyBufferSubData(curBoundTarget, GL_COPY_WRITE_BUFFER, 0, 0, osize);
+			if (oldSize > 0)
+				glCopyBufferSubData(curBoundTarget, GL_COPY_WRITE_BUFFER, 0, 0, oldSize);
 
 			vbo.Unbind();
 			Unbind();
@@ -174,11 +171,11 @@ void VBO::Resize(GLsizeiptr _size, GLenum _usage)
 
 			VBO vbo(oldBoundTarget, immutableStorage);
 			vbo.Bind(oldBoundTarget);
-			vbo.New(size, GL_STREAM_DRAW);
+			vbo.New(bufSize, GL_STREAM_DRAW);
 			void* memdst = vbo.MapBuffer(GL_WRITE_ONLY);
 
 			// cpu download & copy (slow)
-			memcpy(memdst, memsrc, osize);
+			memcpy(memdst, memsrc, oldSize);
 			vbo.UnmapBuffer(); vbo.Unbind();
 			Bind(); UnmapBuffer(); Unbind();
 
@@ -188,102 +185,105 @@ void VBO::Resize(GLsizeiptr _size, GLenum _usage)
 
 		const GLenum err = glGetError();
 		if (err != GL_NO_ERROR) {
-			LOG_L(L_ERROR, "[VBO::%s(size=%lu,usage=%u)] id=%u tgt=0x%x err=0x%x", __func__, (unsigned long) size, usage, vboId, curBoundTarget, err);
+			LOG_L(L_ERROR, "[VBO::%s(size=%lu,usage=%u)] id=%u tgt=0x%x err=0x%x", __func__, (unsigned long) bufSize, usage, vboId, curBoundTarget, err);
 			Unbind();
 
 			// disable VBO and fallback to VA/sysmem
-			VBOused = false;
+			isSupported = false;
 			immutableStorage = false;
 
 			// FIXME: copy old vbo data to sysram
 			Bind();
-			Resize(_size, usage);
+			Resize(newSize, usage);
 		}
 
 		return;
 	}
 
-	{
-		auto newdata = new GLubyte[size];
-		assert(newdata != nullptr);
+
+	if (bufSize > memSize) {
+		// grow the buffer if needed, only bufSize is adjusted when shrinking it
+		GLubyte* newData = new GLubyte[memSize = bufSize];
+		assert(newData != nullptr);
 
 		if (data != nullptr) {
-			memcpy(newdata, data, osize);
+			memcpy(newData, data, oldSize);
 			delete[] data;
 		}
 
-		data = newdata;
+		data = newData;
 	}
 }
 
 
-void VBO::New(GLsizeiptr new_size, GLenum new_usage, const void* new_data)
+void VBO::New(GLsizeiptr newSize, GLenum newUsage, const void* newData)
 {
 	assert(bound);
-	assert(!mapped || (new_data == nullptr && new_size == size && new_usage == usage));
+	assert(!mapped || (newData == nullptr && newSize == bufSize && newUsage == usage));
 
 	// no-op new, allows e.g. repeated Bind+New with persistent buffers
-	if (new_data == nullptr && new_size == size && new_usage == usage)
+	if (newData == nullptr && newSize == bufSize && newUsage == usage)
 		return;
 
-	if (immutableStorage && size != 0) {
-		LOG_L(L_ERROR, "[VBO::%s(size=%lu,usage=0x%x,data=%p)] cannot recreate persistent storage buffer", __func__, (unsigned long) size, usage, data);
+	if (immutableStorage && bufSize != 0) {
+		LOG_L(L_ERROR, "[VBO::%s(size=%lu,usage=0x%x,data=%p)] cannot recreate persistent storage buffer", __func__, (unsigned long) bufSize, usage, data);
 		return;
 	}
 
-	if (VBOused) {
+	if (isSupported) {
 		glClearErrors("VBO", __func__, globalRendering->glDebugErrors);
 
 	#ifdef GLEW_ARB_buffer_storage
 		if (immutableStorage) {
-			glBufferStorage(curBoundTarget, new_size, new_data, new_usage = GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT | GL_DYNAMIC_STORAGE_BIT);
+			glBufferStorage(curBoundTarget, newSize, newData, newUsage = GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT | GL_DYNAMIC_STORAGE_BIT);
 		} else
 	#endif
 		{
-			glBufferData(curBoundTarget, new_size, new_data, new_usage);
+			glBufferData(curBoundTarget, newSize, newData, newUsage);
 		}
 
 		const GLenum err = glGetError();
 		if (err != GL_NO_ERROR) {
-			LOG_L(L_ERROR, "[VBO::%s(size=%lu,usage=0x%x,data=%p)] id=%u tgt=0x%x err=0x%x", __func__, (unsigned long) size, usage, data, vboId, curBoundTarget, err);
+			LOG_L(L_ERROR, "[VBO::%s(size=%lu,usage=0x%x,data=%p)] id=%u tgt=0x%x err=0x%x", __func__, (unsigned long) bufSize, usage, data, vboId, curBoundTarget, err);
 			Unbind();
 
 			// disable VBO and fallback to VA/sysmem
-			VBOused = false;
+			isSupported = false;
 			immutableStorage = false;
 
 			Bind(curBoundTarget);
-			New(new_size, new_usage, new_data);
+			New(newSize, newUsage, newData);
 		}
 
-		size = new_size;
-		usage = new_usage;
+		bufSize = newSize;
+		usage = newUsage;
 		return;
 	}
 
 
-	usage = new_usage;
+	usage = newUsage;
+	bufSize = newSize;
 
-	if (new_size > size) {
+	if (newSize > memSize) {
 		delete[] data;
 
 		// prevent a dead-pointer in case of an OOM exception on the next line
 		data = nullptr;
-		data = new GLubyte[size = new_size];
+		data = new GLubyte[memSize = bufSize];
 
-		if (new_data == nullptr)
+		if (newData == nullptr)
 			return;
 
 		assert(data != nullptr);
-		memcpy(data, new_data, new_size);
+		memcpy(data, newData, newSize);
 	} else {
 		// keep the larger buffer; reduces fragmentation from repeated New's
-		memset(data, 0, size = new_size);
+		memset(data, 0, memSize);
 
-		if (new_data == nullptr)
+		if (newData == nullptr)
 			return;
 
-		memcpy(data, new_data, new_size);
+		memcpy(data, newData, newSize);
 	}
 }
 
@@ -291,14 +291,14 @@ void VBO::New(GLsizeiptr new_size, GLenum new_usage, const void* new_data)
 GLubyte* VBO::MapBuffer(GLbitfield access)
 {
 	assert(!mapped);
-	return MapBuffer(0, size, access);
+	return MapBuffer(0, bufSize, access);
 }
 
 
-GLubyte* VBO::MapBuffer(GLintptr offset, GLsizeiptr _size, GLbitfield access)
+GLubyte* VBO::MapBuffer(GLintptr offset, GLsizeiptr size, GLbitfield access)
 {
 	assert(!mapped);
-	assert(offset + _size <= size);
+	assert(offset + size <= bufSize);
 	mapped = true;
 
 	// glMapBuffer & glMapBufferRange use different flags for their access argument
@@ -321,21 +321,20 @@ GLubyte* VBO::MapBuffer(GLintptr offset, GLsizeiptr _size, GLbitfield access)
 		default: break;
 	}
 
-	if (_size == 0) {
+	if (size == 0) {
 		// nvidia incorrectly returns GL_INVALID_VALUE when trying to call glMapBufferRange with size zero
 		// so catch it ourselves
 		nullSizeMapped = true;
-		return NULL;
+		return nullptr;
 	}
 
-	if (VBOused) {
-		GLubyte* ptr = (GLubyte*)glMapBufferRange(curBoundTarget, offset, _size, access);
+	if (isSupported) {
+		GLubyte* ptr = (GLubyte*)glMapBufferRange(curBoundTarget, offset, size, access);
 		assert(ptr);
 		return ptr;
-	} else {
-		assert(data);
-		return data + offset;
 	}
+	assert(data);
+	return data + offset;
 }
 
 
@@ -343,14 +342,11 @@ void VBO::UnmapBuffer()
 {
 	assert(mapped);
 
-	if (nullSizeMapped) {
+	if (nullSizeMapped)
 		nullSizeMapped = false;
-	} else
-	if (VBOused) {
+	else if (isSupported)
 		glUnmapBuffer(curBoundTarget);
-	}
-	else {
-	}
+
 	mapped = false;
 }
 
@@ -362,23 +358,23 @@ void VBO::Invalidate()
 
 #ifdef GLEW_ARB_invalidate_subdata
 	// OpenGL4 way
-	if (VBOused && GLEW_ARB_invalidate_subdata) {
+	if (isSupported && GLEW_ARB_invalidate_subdata) {
 		glInvalidateBufferData(GetId());
 		return;
 	}
 #endif
-	if (VBOused && globalRendering->atiHacks) {
+	if (isSupported && globalRendering->atiHacks) {
 		Unbind();
 		glDeleteBuffers(1, &vboId);
 		glGenBuffers(1, &vboId);
 		Bind();
-		size = -size; // else New() would early-exit
-		New(-size, usage, nullptr);
+		bufSize = -bufSize; // else New() would early-exit
+		New(-bufSize, usage, nullptr);
 		return;
 	}
 
 	// note: allocating memory doesn't actually block the memory it just makes room in _virtual_ memory space
-	New(size, usage, nullptr);
+	New(bufSize, usage, nullptr);
 }
 
 
@@ -386,10 +382,12 @@ const GLvoid* VBO::GetPtr(GLintptr offset) const
 {
 	assert(bound);
 
-	if (VBOused) {
-		return (GLvoid*)((char*)NULL + (offset));
-	} else {
-		if (!data) return nullptr;
-		return (GLvoid*)(data + offset);
-	}
+	if (isSupported)
+		return (GLvoid*)((char*)nullptr + (offset));
+
+	if (data == nullptr)
+		return nullptr;
+
+	return (GLvoid*)(data + offset);
 }
+

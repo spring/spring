@@ -146,7 +146,7 @@ DEFINE_bool     (oldmenu,                                  false, "Start the old
 int spring::exitCode = spring::EXIT_CODE_SUCCESS;
 
 static unsigned int numReloads = 0;
-static unsigned int numShutDowns = 0;
+static unsigned int numKilleds = 0;
 
 
 
@@ -909,6 +909,20 @@ int SpringApp::Run()
 
 
 
+int SpringApp::PostKill(const Threading::Error& e)
+{
+	if (Threading::IsMainThread())
+		return -1;
+
+	// checked by Run() after Init()
+	Threading::SetThreadError(e);
+
+	if (gu == nullptr)
+		return 0;
+
+	return (gu->globalQuit = true);
+}
+
 /**
  * Deallocates and shuts down engine
  */
@@ -916,12 +930,14 @@ void SpringApp::Kill(bool fromRun)
 {
 	assert(Threading::IsMainThread());
 
-	if (numShutDowns > 0) {
+	if (numKilleds > 0) {
 		assert(!fromRun);
 		return;
 	}
+	if (!fromRun)
+		Watchdog::ClearTimer();
 
-	numShutDowns += 1;
+	numKilleds += 1;
 
 	LOG("[SpringApp::%s][1] fromRun=%d", __func__, fromRun);
 	ThreadPool::SetThreadCount(0);
@@ -950,7 +966,7 @@ void SpringApp::Kill(bool fromRun)
 	spring::SafeDelete(gameServer);
 	spring::SafeDelete(gameSetup);
 
-	LOG("[SpringApp::%s][4]", __func__);
+	LOG("[SpringApp::%s][4] font=%p", __func__, font);
 	spring::SafeDelete(keyCodes);
 	agui::FreeGui();
 	spring::SafeDelete(font);
@@ -981,7 +997,7 @@ void SpringApp::Kill(bool fromRun)
 	Watchdog::Uninstall();
 	LOG("[SpringApp::%s][9]", __func__);
 
-	numShutDowns -= 1;
+	numKilleds -= 1;
 }
 
 
