@@ -7,6 +7,7 @@
 #include "System/LogOutput.h"
 #include "System/SafeUtil.h"
 #include "System/Config/ConfigHandler.h"
+#include "System/Platform/errorhandler.h"
 #include "System/Platform/Misc.h"
 
 
@@ -48,15 +49,19 @@ bool FileSystemInitializer::Initialize()
 
 		initSuccess = true;
 	} catch (const std::exception& ex) {
+		// abort VFS-init thread
+		initFailure = true;
+
 		// even if we end up here, do not clean up configHandler yet
 		// since it can already have early observers registered that
 		// do not remove themselves until exit
-		logOutput.LogExceptionInfo("FileSystemInit", ex.what());
 		Cleanup(false);
-		initFailure = true;
+		ErrorMessageBox(ex.what(), "Spring: caught std::exception", MBF_OK | MBF_EXCL);
 	} catch (...) {
-		Cleanup(false);
 		initFailure = true;
+
+		Cleanup(false);
+		ErrorMessageBox("", "Spring: caught generic exception", MBF_OK | MBF_EXCL);
 	}
 
 	return (initSuccess && !initFailure);

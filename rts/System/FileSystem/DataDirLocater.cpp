@@ -463,7 +463,7 @@ void DataDirLocater::Check()
 	}
 
 	if (Platform::FreeDiskSpace(writeDir->path) <= 1024)
-		throw content_error("not enough free space on drive containing writeable data-directory");
+		throw content_error("not enough free space on drive containing writeable data-directory " + writeDir->path);
 
 	ChangeCwdToWriteDir();
 	CreateCacheDir(writeDir->path + FileSystem::GetCacheDir());

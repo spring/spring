@@ -11,6 +11,10 @@ class CGameController;
 
 union SDL_Event;
 
+namespace Threading {
+	struct Error;
+};
+
 /**
  * @brief Spring App
  *
@@ -22,6 +26,7 @@ public:
 	SpringApp(int argc, char** argv);
 	~SpringApp();
 
+	static int PostKill(const Threading::Error&);
 	static void Kill(bool fromRun);                 //!< Shuts down application
 
 private:
