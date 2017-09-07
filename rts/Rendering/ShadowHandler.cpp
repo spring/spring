@@ -456,7 +456,7 @@ static CMatrix44f ComposeScaleMatrix(const float4 scales)
 void CShadowHandler::SetShadowMatrix(CCamera* playerCam, CCamera* shadowCam)
 {
 	const CMatrix44f lightMatrix = std::move(ComposeLightMatrix(sky->GetLight()));
-	const CMatrix44f scaleMatrix = std::move(ComposeScaleMatrix(GetShadowProjectionScales(playerCam, -lightMatrix.GetZ())));
+	const CMatrix44f scaleMatrix = std::move(ComposeScaleMatrix(GetShadowProjectionScales(playerCam, lightMatrix)));
 
 	// convert xy-diameter to radius
 	shadowCam->SetFrustumScales(shadowProjScales * float4(0.5f, 0.5f, 1.0f, 1.0f));
@@ -628,7 +628,7 @@ void CShadowHandler::CreateShadows()
 
 
 
-float4 CShadowHandler::GetShadowProjectionScales(CCamera* cam, const float3& projDir) {
+float4 CShadowHandler::GetShadowProjectionScales(CCamera* cam, const CMatrix44f& projMat) {
 	float4 projScales;
 	float2 projRadius;
 
@@ -654,14 +654,14 @@ float4 CShadowHandler::GetShadowProjectionScales(CCamera* cam, const float3& pro
 	//
 	switch (shadowProMode) {
 		case SHADOWPROMODE_CAM_CENTER: {
-			projScales.x = GetOrthoProjectedFrustumRadius(cam, projMidPos[2]);
+			projScales.x = GetOrthoProjectedFrustumRadius(cam, projMat, projMidPos[2]);
 		} break;
 		case SHADOWPROMODE_MAP_CENTER: {
-			projScales.x = GetOrthoProjectedMapRadius(projDir, projMidPos[2]);
+			projScales.x = GetOrthoProjectedMapRadius(-projMat.GetZ(), projMidPos[2]);
 		} break;
 		case SHADOWPROMODE_MIX_CAMMAP: {
-			projRadius.x = GetOrthoProjectedFrustumRadius(cam, projMidPos[0]);
-			projRadius.y = GetOrthoProjectedMapRadius(projDir, projMidPos[1]);
+			projRadius.x = GetOrthoProjectedFrustumRadius(cam, projMat, projMidPos[0]);
+			projRadius.y = GetOrthoProjectedMapRadius(-projMat.GetZ(), projMidPos[1]);
 			projScales.x = std::min(projRadius.x, projRadius.y);
 
 			// pick the center position (0 or 1) for which radius is smallest
@@ -730,20 +730,60 @@ float CShadowHandler::GetOrthoProjectedMapRadius(const float3& sunDir, float3& p
 	return curMapDiameter;
 }
 
-float CShadowHandler::GetOrthoProjectedFrustumRadius(CCamera* cam, float3& projPos) {
+float CShadowHandler::GetOrthoProjectedFrustumRadius(CCamera* cam, const CMatrix44f& projMat, float3& projPos) {
+	// two sides, two points per side (plus one extra for MBS radius)
+	float3 frustumPoints[2 * 2 + 1];
+
+	#if 0
+	{
+		projPos = CalcShadowProjectionPos(cam, &frustumPoints[0]);
+
+		// calculate radius of the minimally-bounding sphere around projected frustum
+		for (unsigned int n = 0; n < 4; n++) {
+			frustumPoints[4].x = std::max(frustumPoints[4].x, (frustumPoints[n] - projPos).SqLength());
+		}
+
+		const float maxMapDiameter = readMap->GetBoundingRadius() * 2.0f;
+		const float frustumDiameter = std::sqrt(frustumPoints[4].x) * 2.0f;
+
+		return (std::min(maxMapDiameter, frustumDiameter));
+	}
+	#else
+	{
+		CMatrix44f frustumProjMat;
+		frustumProjMat.SetX(projMat.GetX());
+		frustumProjMat.SetY(projMat.GetY());
+		frustumProjMat.SetZ(projMat.GetZ());
+		frustumProjMat.SetPos(projPos = CalcShadowProjectionPos(cam, &frustumPoints[0]));
+
+		// find projected width along x-axis (.x := xmin, .y := xmax)
+		float2 xbounds = {std::numeric_limits<float>::max(), -std::numeric_limits<float>::max()};
+
+		for (unsigned int n = 0; n < 4; n++) {
+			frustumPoints[n] = frustumProjMat * frustumPoints[n];
+
+			xbounds.x = std::min(xbounds.x, frustumPoints[n].x);
+			xbounds.y = std::max(xbounds.y, frustumPoints[n].x);
+		}
+
+		return (std::min(readMap->GetBoundingRadius() * 2.0f, xbounds.y - xbounds.x));
+	}
+	#endif
+}
+
+float3 CShadowHandler::CalcShadowProjectionPos(CCamera* cam, float3* frustumPoints)
+{
+	float3 projPos;
+	float3 frustumCenter;
+
 	cam->GetFrustumSides(0.0f, 0.0f, 1.0f, true);
 	cam->ClipFrustumLines(true, -100.0f, mapDims.mapy * SQUARE_SIZE + 100.0f);
 
 	const std::vector<CCamera::FrustumLine>& sides = cam->GetNegFrustumSides();
 
+	// if this happens, radius should reduce to zero
 	if (sides.empty())
-		return 0.0f;
-
-	// two sides, two points per side
-	float3 frustumPoints[2 * 2];
-
-	// .w := radius
-	float4 frustumCenter;
+		return projPos;
 
 	// only need points on these lines
 	const unsigned int planes[] = {CCamera::FRUSTUM_PLANE_LFT, CCamera::FRUSTUM_PLANE_RGT};
@@ -768,19 +808,10 @@ float CShadowHandler::GetOrthoProjectedFrustumRadius(CCamera* cam, float3& projP
 		frustumCenter += frustumPoints[n * 2 + 1];
 	}
 
-	projPos.x = frustumCenter.x / 4.0f;
-	projPos.z = frustumCenter.z / 4.0f;
+	projPos.x = frustumCenter.x * 0.25f;
+	projPos.z = frustumCenter.z * 0.25f;
 	projPos.y = CGround::GetHeightReal(projPos.x, projPos.z, false);
-
-	// calculate the radius of the minimally-bounding sphere around the projected frustum
-	for (unsigned int n = 0; n < 4; n++) {
-		frustumCenter.w = std::max(frustumCenter.w, (frustumPoints[n] - projPos).SqLength());
-	}
-
-	const float maxMapDiameter = readMap->GetBoundingRadius() * 2.0f;
-	const float frustumDiameter = std::sqrt(frustumCenter.w) * 2.0f;
-
-	return (std::min(maxMapDiameter, frustumDiameter));
+	return projPos;
 }
 
 
