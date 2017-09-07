@@ -10,6 +10,9 @@
 #include "System/Platform/errorhandler.h"
 #include "System/Platform/Misc.h"
 
+#ifdef UNITSYNC
+void ErrorMessageBox(const std::string&, const std::string&, unsigned int) {}
+#endif
 
 
 volatile bool FileSystemInitializer::initSuccess = false;

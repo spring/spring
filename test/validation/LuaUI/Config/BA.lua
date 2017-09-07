@@ -1,0 +1,5 @@
+
+return {
+	allowUserWidgets = true,
+}
+		
