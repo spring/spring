@@ -756,17 +756,21 @@ float CShadowHandler::GetOrthoProjectedFrustumRadius(CCamera* cam, const CMatrix
 		frustumProjMat.SetZ(projMat.GetZ());
 		frustumProjMat.SetPos(projPos = CalcShadowProjectionPos(cam, &frustumPoints[0]));
 
-		// find projected width along x-axis (.x := xmin, .y := xmax)
+		// find projected width along {x,z}-axes (.x := min, .y := max)
 		float2 xbounds = {std::numeric_limits<float>::max(), -std::numeric_limits<float>::max()};
+		float2 zbounds = {std::numeric_limits<float>::max(), -std::numeric_limits<float>::max()};
 
 		for (unsigned int n = 0; n < 4; n++) {
 			frustumPoints[n] = frustumProjMat * frustumPoints[n];
 
 			xbounds.x = std::min(xbounds.x, frustumPoints[n].x);
 			xbounds.y = std::max(xbounds.y, frustumPoints[n].x);
+			zbounds.x = std::min(zbounds.x, frustumPoints[n].z);
+			zbounds.y = std::max(zbounds.y, frustumPoints[n].z);
 		}
 
-		return (std::min(readMap->GetBoundingRadius() * 2.0f, xbounds.y - xbounds.x));
+		// factor in z-bounds to prevent clipping
+		return (std::min(readMap->GetBoundingRadius() * 2.0f, std::max(xbounds.y - xbounds.x, zbounds.y - zbounds.x)));
 	}
 	#endif
 }
