@@ -36,6 +36,7 @@ static const char* glLibWarning =
 	"Please try upgrading it. Specifically recommended is the latest version. "
 	"Make sure to use a driver removal utility before installing other drivers.";
 
+static const char* addrFmt = "(%d) %s [0x%08lX]";
 static const char* errFmt =
 	"Spring has crashed:\n  %s.\n\n"
 	"A stacktrace has been written to:\n  %s";
@@ -146,7 +147,7 @@ inline static void StacktraceInline(const char* threadName, LPEXCEPTION_POINTERS
 	HANDLE thread = hThread;
 
 	DWORD64 dwModBase = 0;
-	DWORD dwModAddr = 0;
+	DWORD64 dwModAddr = 0;
 	DWORD MachineType = 0;
 
 	const bool wdThread = (hThread != INVALID_HANDLE_VALUE);
@@ -252,15 +253,11 @@ inline static void StacktraceInline(const char* threadName, LPEXCEPTION_POINTERS
 
 	{
 		// retrieve program-counter and starting stack-frame address
-		unsigned long pc = 0;
-		unsigned long sp = 0;
-		unsigned long fp = 0;
-
 		#ifdef _M_IX86
 		MachineType = IMAGE_FILE_MACHINE_I386;
-		pc = frame.AddrPC.Offset = context.Eip;
-		sp = frame.AddrStack.Offset = context.Esp;
-		fp = frame.AddrFrame.Offset = context.Ebp;
+		frame.AddrPC.Offset = context.Eip;
+		frame.AddrStack.Offset = context.Esp;
+		frame.AddrFrame.Offset = context.Ebp;
 		#elif _M_X64
 		MachineType = IMAGE_FILE_MACHINE_AMD64;
 		pc = frame.AddrPC.Offset = context.Rip;
@@ -274,8 +271,12 @@ inline static void StacktraceInline(const char* threadName, LPEXCEPTION_POINTERS
 		frame.AddrStack.Mode = AddrModeFlat;
 		frame.AddrFrame.Mode = AddrModeFlat;
 
+		const void* pc = reinterpret_cast<const void*>(frame.AddrPC.Offset);
+		const void* sp = reinterpret_cast<const void*>(frame.AddrStack.Offset);
+		const void* fp = reinterpret_cast<const void*>(frame.AddrFrame.Offset);
+
 		// log initial context
-		LOG_I(logLevel, "[ProgCtr=%lu StackPtr=%lu FramePtr=%lu]", pc, sp, fp);
+		LOG_I(logLevel, "[ProgCtr=%p StackPtr=%p FramePtr=%p]", pc, sp, fp);
 	}
 
 
@@ -303,7 +304,7 @@ inline static void StacktraceInline(const char* threadName, LPEXCEPTION_POINTERS
 		pSym->SizeOfStruct = sizeof(SYMBOL_INFO);
 		pSym->MaxNameLen = SYMLENGTH;
 
-		// Check if we have symbols, only works on VC (mingw doesn't have a compatible file format)
+		// check if we have symbols, only works on VC (mingw doesn't have a compatible file format)
 		if (SymFromAddr(process, frame.AddrPC.Offset, nullptr, pSym)) {
 			IMAGEHLP_LINE64 line = {0};
 			line.SizeOfStruct = sizeof(line);
@@ -324,7 +325,7 @@ inline static void StacktraceInline(const char* threadName, LPEXCEPTION_POINTERS
 				dwModAddr = frame.AddrPC.Offset - dwModBase;
 			}
 
-			SNPRINTF(traceBuffer + numFrames * BUFFER_SIZE, BUFFER_SIZE, "(%d) %s [0x%08lX]", numFrames, modName, dwModAddr);
+			SNPRINTF(traceBuffer + numFrames * BUFFER_SIZE, BUFFER_SIZE, addrFmt, numFrames, modName, dwModAddr);
 		}
 
 		{
