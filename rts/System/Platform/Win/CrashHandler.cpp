@@ -10,7 +10,6 @@
 #include "System/Log/ILog.h"
 #include "System/Log/LogSinkHandler.h"
 #include "System/LogOutput.h"
-#include "Net/Protocol/NetProtocol.h"
 #include "seh.h"
 #include "System/StringUtil.h"
 #include "System/SafeCStrings.h"
@@ -18,23 +17,37 @@
 #include <new>
 
 
-#define BUFFER_SIZE 2048
-#define MAX_STACK_DEPTH 4096
+#define BUFFER_SIZE 1024
 
 namespace CrashHandler {
 
 CRITICAL_SECTION stackLock;
 bool imageHelpInitialised = false;
-int stackLockInit() { InitializeCriticalSection(&stackLock); return 0; }
-int dummyStackLock = stackLockInit();
+
+static int stackLockInit() { InitializeCriticalSection(&stackLock); return 0; }
+const int dummyStackLock = stackLockInit();
+
+// 1MB buffer (1K lines of 1K chars each) should be enough for any trace
+static char traceBuffer[BUFFER_SIZE * BUFFER_SIZE];
+
+static const char* aiLibWarning = "This stack trace indicates a problem with a skirmish AI.";
+static const char* glLibWarning =
+	"This stack trace indicates a problem with your graphics card driver. "
+	"Please try upgrading it. Specifically recommended is the latest version. "
+	"Make sure to use a driver removal utility before installing other drivers.";
+
+static const char* errFmt =
+	"Spring has crashed:\n  %s.\n\n"
+	"A stacktrace has been written to:\n  %s";
+
+
+
 
 static void SigAbrtHandler(int signal)
 {
-	// cause an exception if on windows
 	LOG_L(L_ERROR, "Spring received an ABORT signal");
 
 	OutputStacktrace();
-
 	ErrorMessageBox("Abort / abnormal termination", "Spring: Fatal Error", MBF_OK | MBF_CRASH);
 }
 
@@ -69,28 +82,33 @@ static const char* ExceptionName(DWORD exceptionCode)
 }
 
 
+
 bool InitImageHlpDll()
 {
 	if (imageHelpInitialised)
 		return true;
 
 	char userSearchPath[8];
-	STRCPY_T(userSearchPath, 8, ".");
+
+	userSearchPath[0] = '.';
+	userSearchPath[1] = '\0';
+
 	// Initialize IMAGEHLP.DLL
 	// Note: For some strange reason it doesn't work ~4 times after it was loaded&unloaded the first time.
-	int i = 0;
-	do {
+	for (int i = 0; i < 20; i++) {
 		if (SymInitialize(GetCurrentProcess(), userSearchPath, TRUE)) {
 			SymSetOptions(SYMOPT_LOAD_LINES);
 
 			imageHelpInitialised = true;
 			return true;
 		}
+
 		SymCleanup(GetCurrentProcess());
-		i++;
-	} while (i<20);
+	}
+
 	return false;
 }
+
 
 
 /** Callback for SymEnumerateModules */
@@ -108,224 +126,265 @@ bool InitImageHlpDll()
 	}
 #endif // _MSC_VER >= 1500
 
-static DWORD __stdcall AllocTest(void *param) {
+
+
+#if 0
+static DWORD __stdcall AllocTest(void* param) {
 	GlobalFree(GlobalAlloc(GMEM_FIXED, 16384));
 	return 0;
 }
+#endif
+
+
 
 /** Print out a stacktrace. */
-inline static void StacktraceInline(const char *threadName, LPEXCEPTION_POINTERS e, HANDLE hThread = INVALID_HANDLE_VALUE, const int logLevel = LOG_LEVEL_ERROR)
+inline static void StacktraceInline(const char* threadName, LPEXCEPTION_POINTERS e, HANDLE hThread = INVALID_HANDLE_VALUE, const int logLevel = LOG_LEVEL_ERROR)
 {
-	STACKFRAME64 sf;
-	HANDLE process, thread;
-	DWORD64 dwModBase;
-	DWORD dwModAddrToPrint;
-	BOOL more = FALSE;
-	int count = 0;
-	char modname[MAX_PATH];
+	STACKFRAME64 frame;
+	HANDLE process = GetCurrentProcess();
+	HANDLE thread = hThread;
+	CONTEXT context;
+	DWORD64 dwModBase = 0;
+	DWORD dwModAddr = 0;
+	DWORD MachineType = 0;
 
-	process = GetCurrentProcess();
+	bool suspended = (hThread != INVALID_HANDLE_VALUE);
 
-	if (threadName != NULL) {
+	bool aiLibFound = false;
+	bool glLibFound = false;
+
+	int numFrames = 0;
+	char modName[MAX_PATH];
+
+	ZeroMemory(&frame, sizeof(frame));
+	ZeroMemory(&context, sizeof(CONTEXT));
+	// memset(&context, 0, sizeof(CONTEXT));
+	memset(traceBuffer, 0, sizeof(traceBuffer));
+
+	// NOTE: this line is parsed by the stacktrans script
+	if (threadName != nullptr) {
 		LOG_I(logLevel, "Stacktrace (%s) for Spring %s:", threadName, (SpringVersion::GetFull()).c_str());
 	} else {
 		LOG_I(logLevel, "Stacktrace for Spring %s:", (SpringVersion::GetFull()).c_str());
 	}
 
-	bool suspended = false;
-	CONTEXT c;
-	if (e) {
-		c = *e->ContextRecord;
+	if (e != nullptr) {
+		// reached when an exception occurs
+		context = *e->ContextRecord;
 		thread = GetCurrentThread();
 	} else if (hThread != INVALID_HANDLE_VALUE) {
+		#if 0
 		for (int allocIter = 0; ; ++allocIter) {
-			HANDLE allocThread = CreateThread(NULL, 0, &AllocTest, NULL, CREATE_SUSPENDED, NULL);
+			HANDLE allocThread = CreateThread(nullptr, 0, &AllocTest, nullptr, CREATE_SUSPENDED, nullptr);
+
 			SuspendThread(hThread);
 			ResumeThread(allocThread);
+
+			// wait until the state of the alloc-test thread becomes "signaled"
+			// if it does, then we know Global{Alloc,Free} can be called safely
+			// (not needed anymore, trace-buffer is not allocated dynamically)
 			if (WaitForSingleObject(allocThread, 10) == WAIT_OBJECT_0) {
 				CloseHandle(allocThread);
 				break;
 			}
+
 			ResumeThread(hThread);
+
+			// wait another 10ms
 			if (WaitForSingleObject(allocThread, 10) != WAIT_OBJECT_0)
 				TerminateThread(allocThread, 0);
+
 			CloseHandle(allocThread);
+
 			if (allocIter < 10)
 				continue;
-			LOG_I(logLevel, "Stacktrace failed, allocator deadlock");
+
+			LOG_I(logLevel, "[stacktrace failed, allocator deadlock]");
+			return;
+		}
+		#endif
+
+		// reached when watchdog triggers, suspend thread (it might be in an infinite loop)
+		if (SuspendThread(hThread) == DWORD(-1)) {
+			LOG_I(logLevel, "[failed to suspend thread]");
 			return;
 		}
 
-		suspended = true;
-		memset(&c, 0, sizeof(CONTEXT));
-		c.ContextFlags = CONTEXT_FULL;
+		context.ContextFlags = CONTEXT_FULL;
 
-		if (!GetThreadContext(hThread, &c)) {
+		if (!GetThreadContext(hThread, &context)) {
 			ResumeThread(hThread);
-			LOG_I(logLevel, "Stacktrace failed, failed to get context");
+			LOG_I(logLevel, "[failed to get thread context]");
 			return;
 		}
-		thread = hThread;
-	}
-	else {
+	} else {
+		// fallback; get context directly from CPU-registers
 #ifdef _M_IX86
-		ZeroMemory( &c, sizeof( CONTEXT ) );
-		c.ContextFlags = CONTEXT_CONTROL;
+		context.ContextFlags = CONTEXT_CONTROL;
+
 #ifdef _MSC_VER
-		__asm
-		{
+		// MSVC
+		__asm {
 			call func;
 			func: pop eax;
-			mov [c.Eip], eax;
-			mov [c.Ebp], ebp;
-			mov [c.Esp], esp;
+			mov [context.Eip], eax;
+			mov [context.Ebp], ebp;
+			mov [context.Esp], esp;
 		}
 #else
+		// GCC
 		DWORD eip, esp, ebp;
 		__asm__ __volatile__ ("call func; func: pop %%eax; mov %%eax, %0;" : "=m" (eip) : : "%eax" );
 		__asm__ __volatile__ ("mov %%ebp, %0;" : "=m" (ebp) : : );
 		__asm__ __volatile__ ("mov %%esp, %0;" : "=m" (esp) : : );
-		c.Eip=eip;
-		c.Ebp=ebp;
-		c.Esp=esp;
+
+		context.Eip = eip;
+		context.Ebp = ebp;
+		context.Esp = esp;
 #endif
+
 #else
-		RtlCaptureContext( &c );
+		RtlCaptureContext(&context);
 #endif
 		thread = GetCurrentThread();
 	}
 
-	DWORD MachineType = 0;
-	ZeroMemory(&sf, sizeof(sf));
-#ifdef _M_IX86
-	MachineType = IMAGE_FILE_MACHINE_I386;
-	sf.AddrPC.Offset = c.Eip;
-	sf.AddrStack.Offset = c.Esp;
-	sf.AddrFrame.Offset = c.Ebp;
-#elif _M_X64
-	MachineType = IMAGE_FILE_MACHINE_AMD64;
-	sf.AddrPC.Offset = c.Rip;
-	sf.AddrStack.Offset = c.Rsp;
-	sf.AddrFrame.Offset = c.Rsp;
-#else
-	#error "CrashHandler: Unsupported platform"
-#endif
-	sf.AddrPC.Mode = AddrModeFlat;
-	sf.AddrStack.Mode = AddrModeFlat;
-	sf.AddrFrame.Mode = AddrModeFlat;
 
-	// use globalalloc to reduce risk for allocator related deadlock
-	char* printstrings = (char*)GlobalAlloc(GMEM_FIXED, 0);
 
-	bool containsOglDll = false;
-	while (true) {
-		more = StackWalk64(
-			MachineType,
-			process,
-			thread,
-			&sf,
-			&c,
-			NULL,
-			SymFunctionTableAccess64,
-			SymGetModuleBase64,
-			NULL
-		);
-		if (!more || /*sf.AddrFrame.Offset == 0 ||*/ count > MAX_STACK_DEPTH) {
+	{
+		// retrieve program-counter and starting stack-frame address
+		unsigned long pc = 0;
+		unsigned long sp = 0;
+		unsigned long fp = 0;
+
+		#ifdef _M_IX86
+		MachineType = IMAGE_FILE_MACHINE_I386;
+		pc = frame.AddrPC.Offset = context.Eip;
+		sp = frame.AddrStack.Offset = context.Esp;
+		fp = frame.AddrFrame.Offset = context.Ebp;
+		#elif _M_X64
+		MachineType = IMAGE_FILE_MACHINE_AMD64;
+		pc = frame.AddrPC.Offset = context.Rip;
+		sp = frame.AddrStack.Offset = context.Rsp;
+		fp = frame.AddrFrame.Offset = context.Rsp;
+		#else
+		#error "CrashHandler: Unsupported platform"
+		#endif
+
+		frame.AddrPC.Mode = AddrModeFlat;
+		frame.AddrStack.Mode = AddrModeFlat;
+		frame.AddrFrame.Mode = AddrModeFlat;
+
+		// log initial context
+		LOG_I(logLevel, "[ProgCtr=%lu StackPtr=%lu FramePtr=%lu]", pc, sp, fp);
+	}
+
+
+	while (StackWalk64(MachineType, process, thread, &frame, &context, nullptr, SymFunctionTableAccess64, SymGetModuleBase64, nullptr)) {
+		#if 0
+		if (frame.AddrFrame.Offset == 0)
 			break;
-		}
+		#endif
+		if (numFrames >= BUFFER_SIZE)
+			break;
 
-		dwModBase = SymGetModuleBase64(process, sf.AddrPC.Offset);
 
-		if (dwModBase) {
-			GetModuleFileName((HINSTANCE)dwModBase, modname, MAX_PATH);
+		if ((dwModBase = SymGetModuleBase64(process, frame.AddrPC.Offset)) != 0) {
+			GetModuleFileName((HINSTANCE) dwModBase, modName, MAX_PATH);
 		} else {
-			strcpy(modname, "Unknown");
+			strcpy(modName, "Unknown");
 		}
 
-		char* printstringsnew = (char*) GlobalAlloc(GMEM_FIXED, (count + 1) * BUFFER_SIZE);
-		memcpy(printstringsnew, printstrings, count * BUFFER_SIZE);
-		GlobalFree(printstrings);
-		printstrings = printstringsnew;
+
 
 #ifdef _MSC_VER
 		const int SYMLENGTH = 4096;
 		char symbuf[sizeof(SYMBOL_INFO) + SYMLENGTH];
-		PSYMBOL_INFO pSym = reinterpret_cast<SYMBOL_INFO*>(symbuf);
 
+		PSYMBOL_INFO pSym = reinterpret_cast<SYMBOL_INFO*>(symbuf);
 		pSym->SizeOfStruct = sizeof(SYMBOL_INFO);
 		pSym->MaxNameLen = SYMLENGTH;
 
 		// Check if we have symbols, only works on VC (mingw doesn't have a compatible file format)
-		if (SymFromAddr(process, sf.AddrPC.Offset, nullptr, pSym)) {
-			IMAGEHLP_LINE64 line = { 0 };
+		if (SymFromAddr(process, frame.AddrPC.Offset, nullptr, pSym)) {
+			IMAGEHLP_LINE64 line = {0};
 			line.SizeOfStruct = sizeof(line);
 
 			DWORD displacement;
-			SymGetLineFromAddr64(GetCurrentProcess(), sf.AddrPC.Offset, &displacement, &line);
+			SymGetLineFromAddr64(GetCurrentProcess(), frame.AddrPC.Offset, &displacement, &line);
 
-			SNPRINTF(printstrings + count * BUFFER_SIZE, BUFFER_SIZE, "(%d) %s:%u %s [0x%08llX]", count , line.FileName ? line.FileName : "<unknown>", line.LineNumber, pSym->Name, sf.AddrPC.Offset);
+			SNPRINTF(traceBuffer + numFrames * BUFFER_SIZE, BUFFER_SIZE, "(%d) %s:%u %s [0x%08llX]", numFrames , line.FileName ? line.FileName : "<unknown>", line.LineNumber, pSym->Name, frame.AddrPC.Offset);
 		} else 
 #endif
 		{
-			// This is the code path taken on MinGW, and VC if no debugging syms are found.
-			if (strstr(modname, ".exe")) {
-				// for the .exe, we need the absolute address
-				dwModAddrToPrint = sf.AddrPC.Offset;
+			// this is the code path taken on MinGW, and MSVC if no debugging syms are found
+			// for the .exe we need the absolute address while for DLLs we need the module's
+			// internal/relative address
+			if (strstr(modName, ".exe") != nullptr) {
+				dwModAddr = frame.AddrPC.Offset;
 			} else {
-				// for DLLs, we need the module-internal/relative address
-				dwModAddrToPrint = sf.AddrPC.Offset - dwModBase;
+				dwModAddr = frame.AddrPC.Offset - dwModBase;
 			}
-			SNPRINTF(printstrings + count * BUFFER_SIZE, BUFFER_SIZE, "(%d) %s [0x%08lX]", count, modname, dwModAddrToPrint);
+
+			SNPRINTF(traceBuffer + numFrames * BUFFER_SIZE, BUFFER_SIZE, "(%d) %s [0x%08lX]", numFrames, modName, dwModAddr);
 		}
 
-		// OpenGL lib names (ATI): "atioglxx.dll" "atioglx2.dll"
-		containsOglDll |= strstr(modname, "atiogl") != nullptr;
-		// OpenGL lib names (Nvidia): "nvoglnt.dll" "nvoglv32.dll" "nvoglv64.dll" (last one is a guess)
-		containsOglDll |= strstr(modname, "nvogl") != nullptr;
-		// OpenGL lib names (Intel): "ig4dev32.dll" "ig4dev64.dll" "ig4icd32.dll"
-		containsOglDll |= strstr(modname, "ig4") != nullptr;
-		// OpenGL lib names (Intel)
-		containsOglDll |= strstr(modname, "ig75icd32.dll") != nullptr;
+		{
+			aiLibFound |= (strstr(modName, "SkirmishAI.dll") != nullptr);
+		}
+		{
+			// OpenGL lib names (ATI): "atioglxx.dll" "atioglx2.dll"
+			glLibFound |= (strstr(modName, "atiogl") != nullptr);
+			// OpenGL lib names (Nvidia): "nvoglnt.dll" "nvoglv32.dll" "nvoglv64.dll" (last one is a guess)
+			glLibFound |= (strstr(modName, "nvogl") != nullptr);
+			// OpenGL lib names (Intel): "ig4dev32.dll" "ig4dev64.dll" "ig4icd32.dll"
+			glLibFound |= (strstr(modName, "ig4") != nullptr);
+			// OpenGL lib names (Intel)
+			glLibFound |= (strstr(modName, "ig75icd32.dll") != nullptr);
+		}
 
-		++count;
+		++numFrames;
 	}
 
-	if (suspended) {
+
+	if (suspended)
 		ResumeThread(hThread);
-	}
 
-	if (containsOglDll) {
-		LOG_I(logLevel, "This stack trace indicates a problem with your graphic card driver. "
-		      "Please try upgrading or downgrading it. "
-		      "Specifically recommended is the latest driver, and one that is as old as your graphic card. "
-		      "Make sure to use a driver removal utility, before installing other drivers.");
-	}
+	if (aiLibFound)
+		LOG_I(logLevel, "%s", aiLibWarning);
+	if (glLibFound)
+		LOG_I(logLevel, "%s", glLibWarning);
 
-	for (int i = 0; i < count; ++i) {
-		LOG_I(logLevel, "%s", printstrings + i * BUFFER_SIZE);
+	for (int i = 0; i < numFrames; ++i) {
+		LOG_I(logLevel, "%s", traceBuffer + i * BUFFER_SIZE);
 	}
-
-	GlobalFree(printstrings);
 }
 
-static void Stacktrace(const char *threadName, LPEXCEPTION_POINTERS e, HANDLE hThread = INVALID_HANDLE_VALUE, const int logLevel = LOG_LEVEL_ERROR) {
+
+// internally called, lock should already be held
+static void Stacktrace(const char* threadName, LPEXCEPTION_POINTERS e, HANDLE hThread, const int logLevel) {
 	StacktraceInline(threadName, e, hThread, logLevel);
 }
 
-
+// externally called
 void Stacktrace(Threading::NativeThreadHandle thread, const std::string& threadName, const int logLevel)
 {
-	Stacktrace(threadName.c_str(), NULL, thread, logLevel);
+	// caller has to Prepare
+	// EnterCriticalSection(&stackLock);
+	StacktraceInline(threadName.c_str(), nullptr, thread, logLevel);
+	// caller has to Cleanup
+	// LeaveCriticalSection(&stackLock);
 }
 
-void PrepareStacktrace(const int logLevel) {
-	EnterCriticalSection( &stackLock );
 
+
+void PrepareStacktrace(const int logLevel) {
+	EnterCriticalSection(&stackLock);
 	InitImageHlpDll();
 
 	// Record list of loaded DLLs.
 	LOG_I(logLevel, "DLL information:");
-	SymEnumerateModules(GetCurrentProcess(), (PSYM_ENUMMODULES_CALLBACK)EnumModules, NULL);
+	SymEnumerateModules(GetCurrentProcess(), (PSYM_ENUMMODULES_CALLBACK)EnumModules, nullptr);
 }
 
 void CleanupStacktrace(const int logLevel) {
@@ -334,56 +393,53 @@ void CleanupStacktrace(const int logLevel) {
 	SymCleanup(GetCurrentProcess());
 	imageHelpInitialised = false;
 
-	LeaveCriticalSection( &stackLock );
+	LeaveCriticalSection(&stackLock);
 }
 
 void OutputStacktrace() {
 	LOG_L(L_ERROR, "Error handler invoked for Spring %s.", (SpringVersion::GetFull()).c_str());
 
 	PrepareStacktrace();
-
-	Stacktrace(NULL, NULL);
-
+	Stacktrace(nullptr, nullptr, INVALID_HANDLE_VALUE, LOG_LEVEL_ERROR);
 	CleanupStacktrace();
 }
+
+
 
 void NewHandler() {
 	LOG_L(L_ERROR, "Failed to allocate memory"); // make sure this ends up in the log also
 
 	OutputStacktrace();
-
 	ErrorMessageBox("Failed to allocate memory", "Spring: Fatal Error", MBF_OK | MBF_CRASH);
 }
+
+
 
 /** Called by windows if an exception happens. */
 LONG CALLBACK ExceptionHandler(LPEXCEPTION_POINTERS e)
 {
-	// Prologue.
+	// prologue
 	logSinkHandler.SetSinking(false);
 	LOG_L(L_ERROR, "Spring %s has crashed.", (SpringVersion::GetFull()).c_str());
 	PrepareStacktrace();
 
-	const std::string error(ExceptionName(e->ExceptionRecord->ExceptionCode));
+	const char* errStr = ExceptionName(e->ExceptionRecord->ExceptionCode);
+	char errBuf[2048];
 
-	// Print exception info.
-	LOG_L(L_ERROR, "Exception: %s (0x%08lx)", error.c_str(), e->ExceptionRecord->ExceptionCode);
+	LOG_L(L_ERROR, "Exception: %s (0x%08lx)", errStr, e->ExceptionRecord->ExceptionCode);
 	LOG_L(L_ERROR, "Exception Address: 0x%p", (PVOID) e->ExceptionRecord->ExceptionAddress);
 
-	// Print stacktrace.
-	StacktraceInline(NULL, e); // inline: avoid modifying the stack, it might confuse StackWalk when using the context record passed to ExceptionHandler
-
+	// print trace inline: avoids modifying the stack which might confuse
+	// StackWalk when using the context record passed to ExceptionHandler
+	StacktraceInline(nullptr, e);
 	CleanupStacktrace();
 
-	// Only the first crash is of any real interest
+	// only the first crash is of any real interest
 	CrashHandler::Remove();
 
-	// Inform user.
-	std::ostringstream buf;
-	buf << "Spring has crashed:\n"
-		<< "  " << error << ".\n\n"
-		<< "A stacktrace has been written to:\n"
-		<< "  " << logOutput.GetFilePath();
-	ErrorMessageBox(buf.str(), "Spring: Unhandled exception", MBF_OK | MBF_CRASH); //calls exit()!
+	// inform user about the exception
+	SNPRINTF(errBuf, sizeof(errBuf), errFmt, errStr, (logOutput.GetFilePath()).c_str());
+	ErrorMessageBox(errBuf, "Spring: Unhandled exception", MBF_OK | MBF_CRASH); //calls exit()!
 
 	// this seems to silently close the application
 	return EXCEPTION_EXECUTE_HANDLER;
@@ -397,6 +453,7 @@ LONG CALLBACK ExceptionHandler(LPEXCEPTION_POINTERS e)
 }
 
 
+
 /** Install crash handler. */
 void Install()
 {
@@ -405,13 +462,13 @@ void Install()
 	std::set_new_handler(NewHandler);
 }
 
-
 /** Uninstall crash handler. */
 void Remove()
 {
-	SetUnhandledExceptionFilter(NULL);
+	SetUnhandledExceptionFilter(nullptr);
 	signal(SIGABRT, SIG_DFL);
-	std::set_new_handler(NULL);
+	std::set_new_handler(nullptr);
 }
 
 }; // namespace CrashHandler
+

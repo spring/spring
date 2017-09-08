@@ -1129,7 +1129,9 @@ static void _GL_APIENTRY glDebugMessageCallbackFunc(
 	if ((userParam == nullptr) || !(*reinterpret_cast<const bool*>(userParam)))
 		return;
 
+	CrashHandler::PrepareStacktrace();
 	CrashHandler::Stacktrace(Threading::GetCurrentThread(), "rendering", LOG_LEVEL_WARNING);
+	CrashHandler::CleanupStacktrace();
 }
 #endif
 
