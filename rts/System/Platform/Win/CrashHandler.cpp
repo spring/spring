@@ -351,9 +351,9 @@ inline static void StacktraceInline(const char* threadName, LPEXCEPTION_POINTERS
 		ResumeThread(hThread);
 
 	if (aiLibFound)
-		LOG_I(logLevel, aiLibWarning);
+		LOG_I(logLevel, "%s", aiLibWarning);
 	if (glLibFound)
-		LOG_I(logLevel, glLibWarning);
+		LOG_I(logLevel, "%s", glLibWarning);
 
 	for (int i = 0; i < numFrames; ++i) {
 		LOG_I(logLevel, "%s", traceBuffer + i * BUFFER_SIZE);
