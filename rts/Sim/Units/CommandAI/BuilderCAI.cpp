@@ -78,7 +78,7 @@ static std::string GetUnitDefBuildOptionToolTip(const UnitDef* ud, bool disabled
 
 CBuilderCAI::CBuilderCAI():
 	CMobileCAI(),
-	ownerBuilder(NULL),
+	ownerBuilder(nullptr),
 	building(false),
 	cachedRadiusId(0),
 	cachedRadius(0),
@@ -319,23 +319,21 @@ bool CBuilderCAI::MoveInBuildRange(const float3& objPos, float objRadius, const 
 }
 
 
-bool CBuilderCAI::IsBuildPosBlocked(const BuildInfo& build, const CUnit** nanoFrame) const
+bool CBuilderCAI::IsBuildPosBlocked(const BuildInfo& bi, const CUnit** nanoFrame) const
 {
-	CFeature* feature = NULL;
-	CGameHelper::BuildSquareStatus status = CGameHelper::TestUnitBuildSquare(build, feature, owner->allyteam, true);
+	CFeature* feature = nullptr;
+	CGameHelper::BuildSquareStatus status = CGameHelper::TestUnitBuildSquare(bi, feature, owner->allyteam, true);
 
-	if (feature != NULL && build.def->isFeature && build.def->wreckName == feature->def->name) {
-		// buildjob is a feature and it is finished already
+	// buildjob is a feature and it is finished already
+	if (feature != nullptr && bi.def->isFeature && bi.def->wreckName == feature->def->name)
 		return true;
-	}
 
-	if (status != CGameHelper::BUILDSQUARE_BLOCKED) {
-		// open area, reclaimable feature or movable unit
+	// open area, reclaimable feature or movable unit
+	if (status != CGameHelper::BUILDSQUARE_BLOCKED)
 		return false;
-	}
 
 	// status is blocked, check if there is a foreign object in the way
-	const CSolidObject* s = groundBlockingObjectMap->GroundBlocked(build.pos);
+	const CSolidObject* s = groundBlockingObjectMap->GroundBlocked(bi.pos);
 
 	// just ourselves, does not count
 	if (s == owner)
@@ -346,12 +344,12 @@ bool CBuilderCAI::IsBuildPosBlocked(const BuildInfo& build, const CUnit** nanoFr
 	// if a *unit* object is not present, then either
 	// there is a feature or the terrain is unsuitable
 	// (in the former case feature must be reclaimable)
-	if (u == NULL)
-		return (feature == NULL || !feature->def->reclaimable);
+	if (u == nullptr)
+		return (feature == nullptr || !feature->def->reclaimable);
 
 	// figure out if object is soft- or hard-blocking
 	if (u->beingBuilt) {
-		if (!ownerBuilder->CanAssistUnit(u, build.def)) {
+		if (!ownerBuilder->CanAssistUnit(u, bi.def)) {
 			if (u->immobile) {
 				// we can't or don't want assist finishing the nanoframe
 				return true;
@@ -362,7 +360,7 @@ bool CBuilderCAI::IsBuildPosBlocked(const BuildInfo& build, const CUnit** nanoFr
 		}
 
 		// unfinished nanoframe, assist it
-		if (nanoFrame != NULL && teamHandler->Ally(owner->allyteam, u->allyteam))
+		if (nanoFrame != nullptr && teamHandler->Ally(owner->allyteam, u->allyteam))
 			*nanoFrame = u;
 
 		return false;
@@ -376,23 +374,23 @@ bool CBuilderCAI::IsBuildPosBlocked(const BuildInfo& build, const CUnit** nanoFr
 
 inline bool CBuilderCAI::OutOfImmobileRange(const Command& cmd) const
 {
-	if (owner->unitDef->canmove) {
-		return false; // builder can move
-	}
-	if (((cmd.options & INTERNAL_ORDER) == 0) || (cmd.params.size() != 1)) {
-		return false; // not an internal object targetted command
-	}
+	// builder can move
+	if (owner->unitDef->canmove)
+		return false;
+
+	// not an internal object targetted command
+	if (((cmd.options & INTERNAL_ORDER) == 0) || (cmd.params.size() != 1))
+		return false;
 
 	const int objID = cmd.params[0];
 	const CWorldObject* obj = unitHandler->GetUnit(objID);
 
-	if (obj == NULL) {
+	if (obj == nullptr) {
 		// features don't move, but maybe the unit was transported?
 		obj = featureHandler->GetFeature(objID - unitHandler->MaxUnits());
 
-		if (obj == NULL) {
+		if (obj == nullptr)
 			return false;
-		}
 	}
 
 	switch (cmd.GetID()) {
@@ -400,26 +398,27 @@ inline bool CBuilderCAI::OutOfImmobileRange(const Command& cmd) const
 		case CMD_RECLAIM:
 		case CMD_RESURRECT:
 		case CMD_CAPTURE: {
-			if (!IsInBuildRange(obj)) {
+			if (!IsInBuildRange(obj))
 				return true;
-			}
+
 			break;
 		}
 	}
+
 	return false;
 }
 
 
 float CBuilderCAI::GetBuildOptionRadius(const UnitDef* ud, int cmdId)
 {
-	float radius;
-	if (cachedRadiusId == cmdId) {
-		radius = cachedRadius;
-	} else {
+	float radius = cachedRadius;
+
+	if (cachedRadiusId != cmdId) {
 		radius = ud->GetModelRadius();
 		cachedRadius = radius;
 		cachedRadiusId = cmdId;
 	}
+
 	return radius;
 }
 
@@ -474,14 +473,14 @@ void CBuilderCAI::GiveCommandReal(const Command& c, bool fromSynced)
 			}
 		}
 
-		const CUnit* nanoFrame = NULL;
+		const CUnit* nanoFrame = nullptr;
 
 		// check if the buildpos is blocked
 		if (IsBuildPosBlocked(bi, &nanoFrame))
 			return;
 
 		// if it is a nanoframe help to finish it
-		if (nanoFrame != NULL) {
+		if (nanoFrame != nullptr) {
 			Command c2(CMD_REPAIR, c.options | INTERNAL_ORDER, nanoFrame->id);
 			CMobileCAI::GiveCommandReal(c2, fromSynced);
 			CMobileCAI::GiveCommandReal(c, fromSynced);
@@ -604,13 +603,13 @@ void CBuilderCAI::ExecuteBuildCmd(Command& c)
 			return;
 		}
 
+		// <build> is never parsed (except in PostLoad) so just copy it
+		build = bi;
 		inCommand = true;
 	}
 
 	assert(build.def != nullptr);
 	assert(build.def->id == -c.GetID() && build.def->id != 0);
-
-	const float buildeeRadius = GetBuildOptionRadius(build.def, c.GetID());
 
 	if (building) {
 		// keep moving until 3D distance to buildPos is LEQ our buildDistance
@@ -666,6 +665,7 @@ void CBuilderCAI::ExecuteBuildCmd(Command& c)
 			return;
 		}
 		if (!inWaitStance) {
+			const float buildeeRadius = GetBuildOptionRadius(build.def, c.GetID());
 			const float fpSqRadius = (build.def->xsize * build.def->xsize + build.def->zsize * build.def->zsize);
 			const float fpRadius = (math::sqrt(fpSqRadius) * 0.5f) * SQUARE_SIZE;
 

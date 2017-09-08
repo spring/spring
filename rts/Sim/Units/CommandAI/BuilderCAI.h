@@ -111,9 +111,9 @@ private:
 	bool MoveInBuildRange(const CWorldObject* obj, const bool checkMoveTypeForFailed = false);
 	bool MoveInBuildRange(const float3& pos, float radius, const bool checkMoveTypeForFailed = false);
 
-	bool IsBuildPosBlocked(const BuildInfo& build, const CUnit** nanoFrame) const;
-	bool IsBuildPosBlocked(const BuildInfo& build) const {
-		const CUnit* u = NULL;
+	bool IsBuildPosBlocked(const BuildInfo& bi, const CUnit** nanoFrame) const;
+	bool IsBuildPosBlocked(const BuildInfo& bi) const {
+		const CUnit* u = nullptr;
 		return IsBuildPosBlocked(build, &u);
 	}
 
