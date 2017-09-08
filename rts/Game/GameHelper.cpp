@@ -1049,8 +1049,8 @@ CGameHelper::BuildSquareStatus CGameHelper::TestUnitBuildSquare(
 	std::vector<float3>* canbuildpos,
 	std::vector<float3>* featurepos,
 	std::vector<float3>* nobuildpos,
-	const std::vector<Command>* commands)
-{
+	const std::vector<Command>* commands
+) {
 	feature = nullptr;
 
 	const int xsize = buildInfo.GetXSize();

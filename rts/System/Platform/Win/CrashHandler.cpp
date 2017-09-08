@@ -141,14 +141,15 @@ static DWORD __stdcall AllocTest(void* param) {
 inline static void StacktraceInline(const char* threadName, LPEXCEPTION_POINTERS e, HANDLE hThread = INVALID_HANDLE_VALUE, const int logLevel = LOG_LEVEL_ERROR)
 {
 	STACKFRAME64 frame;
+	CONTEXT context;
 	HANDLE process = GetCurrentProcess();
 	HANDLE thread = hThread;
-	CONTEXT context;
+
 	DWORD64 dwModBase = 0;
 	DWORD dwModAddr = 0;
 	DWORD MachineType = 0;
 
-	bool suspended = (hThread != INVALID_HANDLE_VALUE);
+	const bool wdThread = (hThread != INVALID_HANDLE_VALUE);
 
 	bool aiLibFound = false;
 	bool glLibFound = false;
@@ -158,7 +159,6 @@ inline static void StacktraceInline(const char* threadName, LPEXCEPTION_POINTERS
 
 	ZeroMemory(&frame, sizeof(frame));
 	ZeroMemory(&context, sizeof(CONTEXT));
-	// memset(&context, 0, sizeof(CONTEXT));
 	memset(traceBuffer, 0, sizeof(traceBuffer));
 
 	// NOTE: this line is parsed by the stacktrans script
@@ -172,7 +172,7 @@ inline static void StacktraceInline(const char* threadName, LPEXCEPTION_POINTERS
 		// reached when an exception occurs
 		context = *e->ContextRecord;
 		thread = GetCurrentThread();
-	} else if (hThread != INVALID_HANDLE_VALUE) {
+	} else if (wdThread) {
 		#if 0
 		for (int allocIter = 0; ; ++allocIter) {
 			HANDLE allocThread = CreateThread(nullptr, 0, &AllocTest, nullptr, CREATE_SUSPENDED, nullptr);
@@ -250,7 +250,6 @@ inline static void StacktraceInline(const char* threadName, LPEXCEPTION_POINTERS
 	}
 
 
-
 	{
 		// retrieve program-counter and starting stack-frame address
 		unsigned long pc = 0;
@@ -294,7 +293,6 @@ inline static void StacktraceInline(const char* threadName, LPEXCEPTION_POINTERS
 		} else {
 			strcpy(modName, "Unknown");
 		}
-
 
 
 #ifdef _MSC_VER
@@ -347,7 +345,7 @@ inline static void StacktraceInline(const char* threadName, LPEXCEPTION_POINTERS
 	}
 
 
-	if (suspended)
+	if (wdThread)
 		ResumeThread(hThread);
 
 	if (aiLibFound)

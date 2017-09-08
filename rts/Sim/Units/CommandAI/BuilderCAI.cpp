@@ -581,14 +581,16 @@ void CBuilderCAI::ExecuteBuildCmd(Command& c)
 		//   need at least 3 parameters or BuildInfo will fail to parse
 		//   this usually indicates a malformed command inserted by Lua
 		//   (most common with patrolling pseudo-factory hubs)
+		if (!bi.Parse(c)) {
+			StopMoveAndFinishCommand();
+			return;
+		}
+
+		#if 1
+		// snap build-position to multiples of SQUARE_SIZE plus a half-square offset (4, 12, 20, ...)
 		bi.pos.x = math::floor(c.params[0] / SQUARE_SIZE + 0.5f) * SQUARE_SIZE;
 		bi.pos.z = math::floor(c.params[2] / SQUARE_SIZE + 0.5f) * SQUARE_SIZE;
-		bi.pos.y = c.params[1];
-
-		if (c.params.size() == 4)
-			bi.buildFacing = abs((int)c.params[3]) % NUM_FACINGS;
-
-		bi.def = unitDefHandler->GetUnitDefByID(-c.GetID());
+		#endif
 
 		CFeature* f = nullptr;
 		CGameHelper::TestUnitBuildSquare(bi, f, owner->allyteam, true);
@@ -603,11 +605,6 @@ void CBuilderCAI::ExecuteBuildCmd(Command& c)
 		}
 
 		inCommand = true;
-
-		if (!build.Parse(c)) {
-			StopMoveAndFinishCommand();
-			return;
-		}
 	}
 
 	assert(build.def != nullptr);
