@@ -253,16 +253,20 @@ inline static void StacktraceInline(const char* threadName, LPEXCEPTION_POINTERS
 
 	{
 		// retrieve program-counter and starting stack-frame address
+		unsigned long pc = 0;
+		unsigned long sp = 0;
+		unsigned long fp = 0;
+
 		#ifdef _M_IX86
 		MachineType = IMAGE_FILE_MACHINE_I386;
-		frame.AddrPC.Offset = context.Eip;
-		frame.AddrStack.Offset = context.Esp;
-		frame.AddrFrame.Offset = context.Ebp;
+		pc = frame.AddrPC.Offset = context.Eip;
+		sp = frame.AddrStack.Offset = context.Esp;
+		fp = frame.AddrFrame.Offset = context.Ebp;
 		#elif _M_X64
 		MachineType = IMAGE_FILE_MACHINE_AMD64;
-		frame.AddrPC.Offset = context.Rip;
-		frame.AddrStack.Offset = context.Rsp;
-		frame.AddrFrame.Offset = context.Rsp;
+		pc = frame.AddrPC.Offset = context.Rip;
+		sp = frame.AddrStack.Offset = context.Rsp;
+		fp = frame.AddrFrame.Offset = context.Rsp;
 		#else
 		#error "CrashHandler: Unsupported platform"
 		#endif
@@ -272,7 +276,7 @@ inline static void StacktraceInline(const char* threadName, LPEXCEPTION_POINTERS
 		frame.AddrFrame.Mode = AddrModeFlat;
 
 		// log initial context
-		LOG_I(logLevel, "[ProgCtr=%ld StackPtr=%ld FramePtr=%ld]", frame.AddrPC.Offset, frame.AddrStack.Offset, frame.AddrFrame.Offset);
+		LOG_I(logLevel, "[ProgCtr=%lu StackPtr=%lu FramePtr=%lu]", pc, sp, fp);
 	}
 
 
