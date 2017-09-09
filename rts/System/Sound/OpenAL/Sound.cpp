@@ -297,7 +297,7 @@ void CSound::InitThread(int cfgMaxSounds)
 			device = alcOpenDevice(configDeviceName.c_str());
 		}
 		if (device == nullptr) {
-			LOG("[Sound::%s][2] opening default device", __func__);
+			LOG("[Sound::%s][2] opening default device \"%s\"", __func__, alcGetString(nullptr, ALC_DEFAULT_DEVICE_SPECIFIER));
 
 			device = alcOpenDevice(nullptr);
 		}
