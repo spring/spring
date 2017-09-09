@@ -260,9 +260,9 @@ inline static void StacktraceInline(const char* threadName, LPEXCEPTION_POINTERS
 		frame.AddrFrame.Offset = context.Ebp;
 		#elif _M_X64
 		MachineType = IMAGE_FILE_MACHINE_AMD64;
-		pc = frame.AddrPC.Offset = context.Rip;
-		sp = frame.AddrStack.Offset = context.Rsp;
-		fp = frame.AddrFrame.Offset = context.Rsp;
+		frame.AddrPC.Offset = context.Rip;
+		frame.AddrStack.Offset = context.Rsp;
+		frame.AddrFrame.Offset = context.Rsp;
 		#else
 		#error "CrashHandler: Unsupported platform"
 		#endif
