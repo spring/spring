@@ -137,7 +137,7 @@ CBuilderCAI::CBuilderCAI(CUnit* owner):
 
 		c.action    = "reclaim";
 		c.name      = "Reclaim";
-		c.tooltip   = c.name + ": Sucks in the metal/energy content of a unit/feature and add it to your storage";
+		c.tooltip   = c.name + ": Sucks in the metal/energy content of a unit/feature\nand add it to your storage";
 		c.mouseicon = c.name;
 		possibleCommands.push_back(commandDescriptionCache->GetPtr(c));
 	}
