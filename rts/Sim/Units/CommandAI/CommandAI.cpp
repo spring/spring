@@ -249,7 +249,7 @@ CCommandAI::CCommandAI(CUnit* owner):
 
 		c.action    = "firestate";
 		c.name      = "Fire state";
-		c.tooltip   = c.name + ": Sets under what conditions an\n unit will start to fire at enemy units\n without an explicit attack order";
+		c.tooltip   = c.name + ": Sets under what conditions an\nunit will start to fire at enemy units\nwithout an explicit attack order";
 		c.mouseicon = c.name;
 
 		c.params.push_back(IntToString(FIRESTATE_FIREATWILL));
@@ -270,7 +270,7 @@ CCommandAI::CCommandAI(CUnit* owner):
 
 		c.action    = "movestate";
 		c.name      = "Move state";
-		c.tooltip   = c.name + ": Sets how far out of its way\n an unit will move to attack enemies";
+		c.tooltip   = c.name + ": Sets how far out of its way\nan unit will move to attack enemies";
 		c.mouseicon = c.name;
 
 		c.params.push_back(IntToString(MOVESTATE_MANEUVER));
@@ -293,7 +293,7 @@ CCommandAI::CCommandAI(CUnit* owner):
 
 		c.action    = "repeat";
 		c.name      = "Repeat";
-		c.tooltip   = c.name + ": If on, the unit will continuously\n push finished orders to the end of its\n order queue";
+		c.tooltip   = c.name + ": If on, the unit will continuously\npush finished orders to the end of its\norder queue";
 		c.mouseicon = c.name;
 
 		c.params.push_back("0");
@@ -313,7 +313,7 @@ CCommandAI::CCommandAI(CUnit* owner):
 
 		c.action    = "trajectory";
 		c.name      = "Trajectory";
-		c.tooltip   = c.name + ": If set to high, weapons that\n support it will try to fire in a higher\n trajectory than usual (experimental)";
+		c.tooltip   = c.name + ": If set to high, weapons that\nsupport it will try to fire in a higher\ntrajectory than usual (experimental)";
 		c.mouseicon = c.name;
 
 		c.params.push_back("0");
