@@ -82,14 +82,14 @@ public:
 
 	/**
 	 * Adds an archive to the VFS.
-	 * @param override determines whether in case of a  conflict, the existing
+	 * @param override determines whether in case of a conflict, the existing
 	 *   entry in the VFS is overwritten or not.
 	 */
 	bool AddArchive(const std::string& archiveName, bool overwrite);
 
 	/**
 	 * Adds an archive and all of its dependencies to the VFS.
-	 * @param override determines whether in case of a  conflict, the existing
+	 * @param override determines whether in case of a conflict, the existing
 	 *   entry in the VFS is overwritten or not.
 	 */
 	bool AddArchiveWithDeps(const std::string& archiveName, bool overwrite);

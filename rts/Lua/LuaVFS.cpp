@@ -10,10 +10,11 @@
 #include "LuaIO.h"
 #include "LuaUtils.h"
 #include "LuaZip.h"
-#include "System/FileSystem/FileHandler.h"
+#include "System/FileSystem/Archives/VirtualArchive.h"
 #include "System/FileSystem/ArchiveScanner.h"
-#include "System/FileSystem/VFSHandler.h"
+#include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
+#include "System/FileSystem/VFSHandler.h"
 #include "System/StringUtil.h"
 #include "System/TimeProfiler.h"
 #include "../tools/pr-downloader/src/pr-downloader.h"
@@ -53,6 +54,18 @@ bool LuaVFS::PushCommon(lua_State* L)
 
 	HSTR_PUSH_CFUNC(L, "ZlibDecompress", ZlibDecompress);
 	HSTR_PUSH_CFUNC(L, "CalculateHash", CalculateHash);
+
+	HSTR_PUSH_CFUNC(L, "CreateVirtualArchive", CreateVirtualArchive);
+	HSTR_PUSH_CFUNC(L, "FinalizeVirtualArchive", FinalizeVirtualArchive);
+	HSTR_PUSH_CFUNC(L, "RemoveVirtualArchive", RemoveVirtualArchive);
+	HSTR_PUSH_CFUNC(L, "HasVirtualArchive", HasVirtualArchive);
+	HSTR_PUSH_CFUNC(L, "GetAllVirtualArchives", GetAllVirtualArchives);
+	HSTR_PUSH_CFUNC(L, "WriteVirtualArchiveToDisk", WriteVirtualArchiveToDisk);
+
+	HSTR_PUSH_CFUNC(L, "AddVirtualFile", AddVirtualFile);
+	HSTR_PUSH_CFUNC(L, "HasVirtualFile", HasVirtualFile);
+	HSTR_PUSH_CFUNC(L, "GetAllVirtualFiles", GetAllVirtualFiles);
+	HSTR_PUSH_CFUNC(L, "WriteToVirtualFile", WriteToVirtualFile);
 
 	return true;
 }
@@ -526,6 +539,155 @@ int LuaVFS::CalculateHash(lua_State* L)
 	return 1;
 }
 
+int LuaVFS::CreateVirtualArchive(lua_State* L)
+{
+	const std::string& archiveName = luaL_checksstring(L, 1);
+
+	CVirtualArchive* archive = virtualArchiveFactory->AddArchive(archiveName);
+	if (archive == nullptr) {
+		luaL_error(L, "Failed to create archive: %s", archiveName.c_str());
+		lua_pushboolean(L, false);
+		return 1;
+	}
+
+	lua_pushboolean(L, true);
+	return 1;
+}
+
+int LuaVFS::FinalizeVirtualArchive(lua_State* L)
+{
+	const std::string& archiveName = luaL_checksstring(L, 1);
+
+	CVirtualArchive* archive = virtualArchiveFactory->GetArchive(archiveName);
+	if (archive == nullptr) {
+		return luaL_error(L, "No such archive: %s", archiveName.c_str());
+	}
+	const std::string archivePath = archiveName + "." + virtualArchiveFactory->GetDefaultExtension();
+	archiveScanner->ScanArchive(archivePath);
+	//vfsHandler->AddArchiveWithDeps(archiveName, false);
+	vfsHandler->AddArchive(archiveName, false);
+
+	lua_pushboolean(L, true);
+	return 1;
+}
+
+int LuaVFS::RemoveVirtualArchive(lua_State* L)
+{
+	const std::string& archiveName = luaL_checksstring(L, 1);
+
+	bool success = virtualArchiveFactory->RemoveArchive(archiveName);
+
+	lua_pushboolean(L, success);
+	return 1;
+}
+
+int LuaVFS::HasVirtualArchive(lua_State* L)
+{
+	const std::string& archiveName = luaL_checksstring(L, 1);
+
+	CVirtualArchive* archive = virtualArchiveFactory->GetArchive(archiveName);
+
+	lua_pushboolean(L, archive != nullptr);
+	return 1;
+}
+
+int LuaVFS::GetAllVirtualArchives(lua_State* L)
+{
+	const auto& archiveMap = virtualArchiveFactory->GetAllArchives();
+	lua_createtable(L, archiveMap.size(), 0);
+
+	unsigned int count = 0;
+	for (const auto& kv: archiveMap) {
+		lua_pushsstring(L, kv.first);
+		lua_rawseti(L, -2, ++count);
+	}
+	return 1;
+}
+
+int LuaVFS::WriteVirtualArchiveToDisk(lua_State* L)
+{
+	const std::string& archiveName = luaL_checksstring(L, 1);
+	const std::string& path = luaL_checksstring(L, 2);
+
+	LOG("WriteToDisk: %s %s", archiveName.c_str(), path.c_str());
+
+	CVirtualArchive* archive = virtualArchiveFactory->GetArchive(archiveName);
+	if (archive == nullptr) {
+		return luaL_error(L, "No such archive: %s", archiveName.c_str());
+	}
+	archive->WriteToFile();
+
+	return 0;
+}
+
+int LuaVFS::AddVirtualFile(lua_State* L)
+{
+	const std::string& archiveName = luaL_checksstring(L, 1);
+	const std::string& filePath = luaL_checksstring(L, 2);
+
+	CVirtualArchive* archive = virtualArchiveFactory->GetArchive(archiveName);
+	if (archive == nullptr) {
+		return luaL_error(L, "No such archive: %s", archiveName.c_str());
+	}
+
+	CVirtualFile* file = archive->AddFile(filePath);
+	lua_pushboolean(L, file != nullptr);
+	return 1;
+}
+
+int LuaVFS::HasVirtualFile(lua_State* L)
+{
+	const std::string& archiveName = luaL_checksstring(L, 1);
+	const std::string& filePath = luaL_checksstring(L, 2);
+
+	CVirtualArchive* archive = virtualArchiveFactory->GetArchive(archiveName);
+	if (archive == nullptr) {
+		return luaL_error(L, "No such archive: %s", archiveName.c_str());
+	}
+
+	lua_pushboolean(L, archive->GetFile(filePath) != nullptr);
+	return 1;
+}
+
+int LuaVFS::GetAllVirtualFiles(lua_State* L)
+{
+	const std::string& archiveName = luaL_checksstring(L, 1);
+
+	CVirtualArchive* archive = virtualArchiveFactory->GetArchive(archiveName);
+	if (archive == nullptr) {
+		return luaL_error(L, "No such archive: %s", archiveName.c_str());
+	}
+
+	lua_createtable(L, archive->NumFiles(), 0);
+
+	unsigned int count = 0;
+	for (const auto& kv: archive->GetNameIndex()) {
+		lua_pushsstring(L, kv.first);
+		lua_rawseti(L, -2, ++count);
+	}
+	return 1;
+}
+
+int LuaVFS::WriteToVirtualFile(lua_State* L)
+{
+	const std::string& archiveName = luaL_checksstring(L, 1);
+	const std::string& filePath = luaL_checksstring(L, 2);
+	const std::string& data = luaL_checksstring(L, 3);
+
+	CVirtualArchive* archive = virtualArchiveFactory->GetArchive(archiveName);
+	if (archive == nullptr) {
+		return luaL_error(L, "No such archive: %s", archiveName.c_str());
+	}
+
+	CVirtualFile* file = archive->GetFile(filePath);
+	if (file == nullptr) {
+		return luaL_error(L, "No such file: %s", filePath.c_str());
+	}
+
+	file->buffer.insert(file->buffer.end(), (std::uint8_t*)data.c_str(), (std::uint8_t*)data.c_str() + data.size());
+	return 0;
+}
+
 /******************************************************************************/
 /******************************************************************************/
 //
@@ -633,4 +795,3 @@ int LuaVFS::UnpackF32(lua_State* L) { return UnpackType<float>(L);           }
 
 /******************************************************************************/
 /******************************************************************************/
-

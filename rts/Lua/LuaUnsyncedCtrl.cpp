@@ -40,6 +40,7 @@
 #include "Map/BaseGroundTextures.h"
 #include "Net/Protocol/NetProtocol.h"
 #include "Net/GameServer.h"
+#include "Map/Generation/LuaMapGenerator.h"
 #include "Rendering/Env/ISky.h"
 #include "Rendering/Env/SunLighting.h"
 #include "Rendering/Env/WaterRendering.h"
@@ -76,6 +77,7 @@
 #include "System/StringUtil.h"
 #include "System/Sound/ISound.h"
 #include "System/Sound/ISoundChannels.h"
+#include "System/FileSystem/VFSHandler.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/DataDirLocater.h"
 #include "System/FileSystem/FileSystem.h"
@@ -227,6 +229,7 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(Restart);
 	REGISTER_LUA_CFUNC(Start);
 	REGISTER_LUA_CFUNC(Quit);
+	REGISTER_LUA_CFUNC(GenerateMap);
 
 	REGISTER_LUA_CFUNC(SetWMIcon);
 	REGISTER_LUA_CFUNC(SetWMCaption);
@@ -2147,6 +2150,102 @@ int LuaUnsyncedCtrl::Start(lua_State* L)
 		lua_pushboolean(L, false);
 		return 1;
 	}
+
+	return 0;
+}
+
+int LuaUnsyncedCtrl::GenerateMap(lua_State* L)
+{
+	if (!lua_istable(L, 1)) {
+		luaL_error(L, "Incorrect arguments to GenerateMap()");
+	}
+
+	// parameters used to generate the map
+	CMapGeneratorInfo genInfo;
+	genInfo.mapSeed = 0;
+	genInfo.mapName = "Unnamed map";
+	std::vector<float> hm;
+	std::vector<float> diffuseMap;
+	std::vector<float> mm;
+
+	genInfo.startPositions.push_back(int2(20, 20));
+	genInfo.startPositions.push_back(int2(500, 500));
+	for (lua_pushnil(L); lua_next(L, 1) != 0; lua_pop(L, 1)) {
+		if (!lua_israwstring(L, -2))
+			continue;
+
+		const string& key = lua_tostring(L, -2);
+
+		if (lua_isnumber(L, -1)) {
+			const float value = lua_tofloat(L, -1);
+			if (key == "sizeX") {
+				genInfo.mapSize.x = value;
+			} else if (key == "sizeZ") {
+				genInfo.mapSize.y = value;
+			} else {
+				luaL_error(L, "Unknown scalar key %s", key.c_str());
+			}
+		}
+
+		else if (lua_istable(L, -1)) {
+			if (key == "heightMap") {
+				LuaUtils::ParseFloatVector(L, -1, hm);
+			} else if (key == "diffuseMap") {
+				LuaUtils::ParseFloatVector(L, -1, diffuseMap);
+			} else if (key == "metalMap") {
+				LuaUtils::ParseFloatVector(L, -1, mm);
+			} else if (key == "startPosition") {
+			} else {
+				luaL_error(L, "Unknown table key %s", key.c_str());
+			}
+		}
+
+		else if (lua_isstring(L, -1)) {
+			const std::string value = lua_tostring(L, -1);
+			if (key == "mapName") {
+				genInfo.mapName = value;
+			} else if (key == "mapDescription") {
+				genInfo.mapDescription = value;
+			} else {
+				luaL_error(L, "Unknown string key %s", key.c_str());
+			}
+		}
+	}
+	LOG("GENERATING MAP");
+
+	// generate map
+	CLuaMapGenerator gen(genInfo);
+	LOG("Init");
+	gen.Init();
+
+	LOG("Assign vectors");
+	int2 gs = gen.GetGridSize();
+
+	std::vector<float>& heightMap = gen.GetHeightMap();
+	std::vector<float>& metalMap = gen.GetMetalMap();
+	//std::vector<char>& tileData = gen.GetTileData();
+	printf("Lua heightmap size: %d, %d\n", hm.size(), heightMap.size());
+	printf("Lua metalMap size: %d, %d\n", mm.size(), metalMap.size());
+	printf("Grid size: %d, %d\n", gs.x, gs.y);
+	heightMap = hm;
+	metalMap = mm;
+	// for (int i = 0; i < diffuseMap.size(); i++) {
+	// 	tileData[i] = Clamp(255 * diffuseMap[i], 0.f, 255.f);
+	// }
+
+	LOG("Generate");
+	gen.Generate();
+
+	LOG("GENERATING COMPLETE");
+	//
+	// LOG("RELOADING MAPINFO: %s", genInfo.mapName.c_str());
+	// //gameSetup->mapName = genInfo.mapName;
+	// //LOG("MAP NAME: %s", gameSetup->mapName.c_str());
+	// //LOG("MAP FILE: %s", gameSetup->MapFile().c_str());
+	// std::string mapFile = archiveScanner->MapNameToMapFile(genInfo.mapName);
+	// mapInfo = new CMapInfo(mapFile, genInfo.mapName);
+	// LOG("RELOAD COMPLETE");
+	//vfsHandler->AddArchiveWithDeps(genInfo.mapName, false);
 
 	return 0;
 }

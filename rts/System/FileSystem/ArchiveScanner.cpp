@@ -13,6 +13,7 @@
 #include "ArchiveLoader.h"
 #include "DataDirLocater.h"
 #include "Archives/IArchive.h"
+#include "Archives/VirtualArchive.h"
 #include "FileFilter.h"
 #include "DataDirsAccess.h"
 #include "FileSystem.h"
@@ -368,10 +369,10 @@ CArchiveScanner::CArchiveScanner(): isDirty(false)
 
 CArchiveScanner::~CArchiveScanner()
 {
-	if (!isDirty)
-		return;
-
-	WriteCacheData(GetFilepath());
+	if (isDirty) {
+		WriteCacheData(GetFilepath());
+	}
+	virtualArchiveFactory->Clear();
 }
 
 uint32_t CArchiveScanner::GetNumScannedArchives()
@@ -658,13 +659,18 @@ void CArchiveScanner::ScanArchive(const std::string& fullName, bool doChecksum)
 		error = "missing modinfo.lua/mapinfo.lua";
 	}
 
+
+	if (ad.GetNameVersioned() == "") {
+		ad.SetInfoItemValueString("name_pure", FileSystem::GetBasename(fn.c_str()));
+		ad.SetInfoItemValueString("name", FileSystem::GetBasename(fn.c_str()));
+	}
+
 	ai.path = fpath;
 	ai.modified = modifiedTime;
 	ai.origName = fn;
 	ai.updated = true;
 	ai.checksum = (doChecksum) ? GetCRC(fullName) : 0;
 	archiveInfos[lcfn] = ai;
-
 	numScannedArchives += 1;
 }
 
@@ -1223,9 +1229,16 @@ std::string CArchiveScanner::MapNameToMapFile(const std::string& s) const
 	const auto pred = [&s](const decltype(archiveInfos)::value_type& p) { return ((p.second).archiveData.GetNameVersioned() == s); };
 	const auto iter = std::find_if(archiveInfos.cbegin(), archiveInfos.cend(), pred);
 
-	if (iter != archiveInfos.cend())
-		return ((iter->second).archiveData.GetMapFile());
 
+	if (iter != archiveInfos.cend()) {
+		if ((iter->second).archiveData.GetMapFile().empty()) {
+			return "maps/generated.smf";
+		} else {
+			return ((iter->second).archiveData.GetMapFile());
+		}
+	}
+
+	printf("NOT FOUND %s\n", s.c_str());
 	LOG_SL(LOG_SECTION_ARCHIVESCANNER, L_WARNING, "map file of %s not found", s.c_str());
 	return s;
 }
@@ -1300,7 +1313,9 @@ std::string CArchiveScanner::NameFromArchive(const std::string& archiveName) con
 std::string CArchiveScanner::ArchiveFromName(const std::string& name) const
 {
 	// std::pair<std::string, ArchiveInfo>
-	const auto pred = [&name](const decltype(archiveInfos)::value_type& p) { return ((p.second).archiveData.GetNameVersioned() == name); };
+	const auto pred = [&name](const decltype(archiveInfos)::value_type& p) {
+		return (p.second).archiveData.GetNameVersioned() == name;
+	};
 	const auto iter = std::find_if(archiveInfos.cbegin(), archiveInfos.cend(), pred);
 
 	if (iter != archiveInfos.cend())
@@ -1350,4 +1365,3 @@ int CArchiveScanner::GetMetaFileClass(const std::string& filePath)
 
 	return 0;
 }
-

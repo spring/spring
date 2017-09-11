@@ -11,39 +11,88 @@
 
 CVirtualArchiveFactory* virtualArchiveFactory;
 
+///////////////////////////////
+// CVirtualArchiveFactory start
+///////////////////////////////
 CVirtualArchiveFactory::CVirtualArchiveFactory() : IArchiveFactory("sva")
 {
 	virtualArchiveFactory = this;
 }
 
+void CVirtualArchiveFactory::Clear()
+{
+	for (auto& kv : archives) {
+		delete kv.second;
+	}
+	archives.clear();
+}
+
 CVirtualArchiveFactory::~CVirtualArchiveFactory()
 {
-	virtualArchiveFactory = 0;
+	Clear();
+	virtualArchiveFactory = nullptr;
 }
 
 CVirtualArchive* CVirtualArchiveFactory::AddArchive(const std::string& fileName)
 {
+	if (archives.find(fileName) != archives.end()) {
+		LOG("AddArchive: Archive with name %s already exists.", fileName.c_str());
+		return nullptr;
+	}
 	CVirtualArchive* archive = new CVirtualArchive(fileName);
-	archives.push_back(archive);
+	archives[fileName] = archive;
 	return archive;
+}
+
+CVirtualArchive* CVirtualArchiveFactory::GetArchive(const std::string& fileName) const
+{
+	auto it = archives.find(fileName);
+	if (it != archives.end()) {
+		return it->second;
+	}
+
+	return nullptr;
+}
+
+bool CVirtualArchiveFactory::RemoveArchive(const std::string& fileName)
+{
+	auto it = archives.find(fileName);
+	if (it == archives.end()) {
+		LOG("RemoveArchive: No such archive %s.", fileName.c_str());
+		return false;
+	}
+
+	CVirtualArchive* archive = it->second;
+	delete archive;
+	archives.erase(it);
+
+	return true;
+}
+
+const std::map<std::string, CVirtualArchive*>& CVirtualArchiveFactory::GetAllArchives() const
+{
+	return archives;
 }
 
 IArchive* CVirtualArchiveFactory::DoCreateArchive(const std::string& fileName) const
 {
 	const std::string baseName = FileSystem::GetBasename(fileName);
 
-	for(std::vector<CVirtualArchive*>::const_iterator it = archives.begin(); it != archives.end(); ++it)
-	{
-		CVirtualArchive* archive = *it;
-		if(archive->GetFileName() == baseName)
-		{
-			return archive->Open();
-		}
+	CVirtualArchive* archive = GetArchive(baseName);
+
+	if (archive != nullptr) {
+		return archive->Open();
 	}
 
-	return 0;
+	return nullptr;
 }
+///////////////////////////////
+// CVirtualArchiveFactory end
+///////////////////////////////
 
+////////////////////////////
+// CVirtualArchiveOpen start
+////////////////////////////
 CVirtualArchiveOpen::CVirtualArchiveOpen(CVirtualArchive* archive, const std::string& fileName) : IArchive(fileName), archive(archive)
 {
 	//Set subclass name index to archive's index (doesn't update while archive is open)
@@ -65,28 +114,32 @@ unsigned int CVirtualArchiveOpen::NumFiles() const
 	return archive->NumFiles();
 }
 
-bool CVirtualArchiveOpen::GetFile( unsigned int fid, std::vector<std::uint8_t>& buffer )
+bool CVirtualArchiveOpen::GetFile(unsigned int fid, std::vector<std::uint8_t>& buffer)
 {
 	return archive->GetFile(fid, buffer);
 }
 
-void CVirtualArchiveOpen::FileInfo( unsigned int fid, std::string& name, int& size ) const
+void CVirtualArchiveOpen::FileInfo(unsigned int fid, std::string& name, int& size) const
 {
 	return archive->FileInfo(fid, name, size);
 }
+////////////////////////////
+// CVirtualArchiveOpen end
+////////////////////////////
 
+////////////////////////
+// CVirtualArchive start
+////////////////////////
 CVirtualArchive::CVirtualArchive(const std::string& fileName) : fileName(fileName)
 {
 }
 
 CVirtualArchive::~CVirtualArchive()
 {
-	for(std::vector<CVirtualFile*>::iterator it = files.begin(); it != files.end(); ++it)
-	{
-		delete *it;
+	for (auto& kv : files) {
+		delete kv;
 	}
 	files.clear();
-
 }
 
 CVirtualArchiveOpen* CVirtualArchive::Open()
@@ -99,9 +152,11 @@ unsigned int CVirtualArchive::NumFiles() const
 	return files.size();
 }
 
-bool CVirtualArchive::GetFile( unsigned int fid, std::vector<std::uint8_t>& buffer )
+bool CVirtualArchive::GetFile(unsigned int fid, std::vector<std::uint8_t>& buffer)
 {
-	if(fid >= files.size()) return false;
+	if (fid >= files.size()) {
+		return false;
+	}
 
 	CVirtualFile* file = files[fid];
 	buffer = file->buffer;
@@ -109,7 +164,7 @@ bool CVirtualArchive::GetFile( unsigned int fid, std::vector<std::uint8_t>& buff
 	return true;
 }
 
-void CVirtualArchive::FileInfo( unsigned int fid, std::string& name, int& size ) const
+void CVirtualArchive::FileInfo(unsigned int fid, std::string& name, int& size) const
 {
 	assert(fid < files.size());
 
@@ -120,13 +175,24 @@ void CVirtualArchive::FileInfo( unsigned int fid, std::string& name, int& size )
 
 CVirtualFile* CVirtualArchive::AddFile(const std::string& name)
 {
-	unsigned int fidcounter = files.size();
-	CVirtualFile* file = new CVirtualFile(fidcounter, name);
+	uint fid = files.size();
+
+	CVirtualFile* file = new CVirtualFile(fid, name);
 	files.push_back(file);
 
-	lcNameIndex[name] = fidcounter;
+	lcNameIndex[name] = fid;
 
 	return file;
+}
+
+CVirtualFile* CVirtualArchive::GetFile(const std::string& name)
+{
+	auto it = lcNameIndex.find(name);
+	if (it != lcNameIndex.end()) {
+		return files[it->second];
+	}
+
+	return nullptr;
 }
 
 void CVirtualArchive::WriteToFile()
@@ -135,16 +201,12 @@ void CVirtualArchive::WriteToFile()
 	LOG("Writing zip file for virtual archive %s to %s", fileName.c_str(), zipFilePath.c_str());
 
 	zipFile zip = zipOpen(zipFilePath.c_str(), APPEND_STATUS_CREATE);
-	if(!zip)
-	{
+	if (!zip) {
 		LOG("Could not open zip file %s for writing", zipFilePath.c_str());
 		return;
 	}
 
-	for(std::vector<CVirtualFile*>::iterator it = files.begin(); it != files.end(); ++it)
-	{
-		CVirtualFile* file = *it;
-
+	for (const CVirtualFile* file : files) {
 		zipOpenNewFileInZip(zip, file->GetName().c_str(), NULL, NULL, 0, NULL, 0, NULL, Z_DEFLATED, Z_BEST_COMPRESSION);
 		zipWriteInFileInZip(zip, file->buffer.empty() ? NULL : &file->buffer[0], file->buffer.size());
 		zipCloseFileInZip(zip);
@@ -152,7 +214,13 @@ void CVirtualArchive::WriteToFile()
 
 	zipClose(zip, NULL);
 }
+////////////////////////
+// CVirtualArchive end
+////////////////////////
 
+/////////////////////////
+// CVirtualArchive start
+/////////////////////////
 CVirtualFile::CVirtualFile(int fid, const std::string& name) : name(name), fid(fid)
 {
 
@@ -162,3 +230,6 @@ CVirtualFile::~CVirtualFile()
 {
 
 }
+/////////////////////////
+// CVirtualArchive end
+/////////////////////////

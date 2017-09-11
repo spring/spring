@@ -7,36 +7,81 @@
 #include "System/FileSystem/Archives/VirtualArchive.h"
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/FileHandler.h"
+#include "System/FileSystem/VFSHandler.h"
 #include "System/Exceptions.h"
 #include "System/StringUtil.h"
-#include "System/FileSystem/VFSHandler.h"
+
+#include "Lua/LuaParser.h"
+#include "Lua/LuaUnsyncedCtrl.h"
+#include "Lua/LuaVFS.h"
+#include "Lua/LuaSyncedRead.h"
 
 #include <cstring> // strcpy,memset
 #include <sstream>
+#include <cstring>
 
-CMapGenerator::CMapGenerator(const CGameSetup* setup) : setup(setup)
+CMapGenerator::CMapGenerator(const std::string& mName, int mSeed) :
+	mapName(mName),
+	mapSeed(mSeed)
 {
 }
 
-void CMapGenerator::Generate()
+void CMapGenerator::MaybeGenerate() {
+	CFileHandler fmapGen("mapgen.lua", SPRING_VFS_MAP_BASE);
+	if (fmapGen.FileExists()) {
+		LuaParser mapGen("mapgen.lua", SPRING_VFS_MAP_BASE, SPRING_VFS_MAP_BASE);
+
+		mapGen.GetTable("Spring");
+			mapGen.AddFunc("GenerateMap", LuaUnsyncedCtrl::GenerateMap);
+			mapGen.AddFunc("GetMapOptions", LuaSyncedRead::GetMapOptions);
+		mapGen.EndTable();
+
+		mapGen.GetTable("VFS");
+			mapGen.AddFunc("Include",    LuaVFS::SyncInclude);
+			mapGen.AddFunc("LoadFile",   LuaVFS::SyncLoadFile);
+			mapGen.AddFunc("FileExists", LuaVFS::SyncFileExists);
+			mapGen.AddFunc("DirList",    LuaVFS::SyncDirList);
+			mapGen.AddFunc("SubDirs",    LuaVFS::SyncSubDirs);
+
+			mapGen.AddFunc("CreateVirtualArchive", LuaVFS::CreateVirtualArchive);
+			mapGen.AddFunc("FinalizeVirtualArchive", LuaVFS::FinalizeVirtualArchive);
+			mapGen.AddFunc("RemoveVirtualArchive", LuaVFS::RemoveVirtualArchive);
+			mapGen.AddFunc("HasVirtualArchive", LuaVFS::HasVirtualArchive);
+			mapGen.AddFunc("GetAllVirtualArchives", LuaVFS::GetAllVirtualArchives);
+			mapGen.AddFunc("WriteVirtualArchiveToDisk", LuaVFS::WriteVirtualArchiveToDisk);
+
+			mapGen.AddFunc("AddVirtualFile", LuaVFS::AddVirtualFile);
+			mapGen.AddFunc("HasVirtualFile", LuaVFS::HasVirtualFile);
+			mapGen.AddFunc("GetAllVirtualFiles", LuaVFS::GetAllVirtualFiles);
+			mapGen.AddFunc("WriteToVirtualFile", LuaVFS::WriteToVirtualFile);
+		mapGen.EndTable();
+
+		mapGen.Execute();
+	}
+}
+
+
+void CMapGenerator::Init()
 {
 	// create archive for map
-	CVirtualArchive* archive = virtualArchiveFactory->AddArchive(setup->mapName);
+	archive = virtualArchiveFactory->AddArchive(mapName);
 
 	// create arrays that can be filled by top class
 	const int2 gridSize = GetGridSize();
 
 	heightMap.resize((gridSize.x + 1) * (gridSize.y + 1));
 	metalMap.resize((gridSize.x + 1) * (gridSize.y + 1));
+}
 
-	// generate map and fill archive files
+void CMapGenerator::Generate()
+{
 	GenerateMap();
 	GenerateSMF(archive);
-	GenerateMapInfo(archive);
+	// /GenerateMapInfo(archive);
 	GenerateSMT(archive);
 
 	// add archive to VFS
-	archiveScanner->ScanArchive(setup->mapName + "." + virtualArchiveFactory->GetDefaultExtension());
+	archiveScanner->ScanArchive(mapName + "." + virtualArchiveFactory->GetDefaultExtension());
 
 	// write to disk for testing
 	// archive->WriteToFile();
@@ -54,7 +99,7 @@ void CMapGenerator::SetToBuffer(CVirtualFile* file, const void* data, int size, 
 
 void CMapGenerator::GenerateSMF(CVirtualArchive* archive)
 {
-	CVirtualFile* fileSMF = archive->AddFile("maps/generated.smf");
+	CVirtualFile* fileSMF = archive->AddFile("maps/" + mapName + ".smf");
 
 	SMFHeader smfHeader;
 	MapTileHeader smfTile;
@@ -63,7 +108,7 @@ void CMapGenerator::GenerateSMF(CVirtualArchive* archive)
 	//--- Make SMFHeader ---
 	std::strcpy(smfHeader.magic, "spring map file");
 	smfHeader.version = 1;
-	smfHeader.mapid = 0x524d4746 ^ (int)setup->mapSeed;
+	smfHeader.mapid = 0x524d4746 ^ (int)mapSeed;
 
 	//Set settings
 	smfHeader.mapx = GetGridSize().x;
@@ -72,10 +117,10 @@ void CMapGenerator::GenerateSMF(CVirtualArchive* archive)
 	smfHeader.texelPerSquare = 8;
 	smfHeader.tilesize = 32;
 	smfHeader.minHeight = -100;
-	smfHeader.maxHeight = 0x1000;
+	smfHeader.maxHeight = 0x4000;
 
 	constexpr int32_t numSmallTiles = 1; //2087; //32 * 32 * (mapSize.x  / 2) * (mapSize.y / 2);
-	constexpr char smtFileName[] = "generated.smt";
+	const char* smtFileName = (mapName + ".smt").c_str();
 
 	//--- Extra headers ---
 	ExtraHeader vegHeader;
@@ -133,16 +178,20 @@ void CMapGenerator::GenerateSMF(CVirtualArchive* archive)
 		heightmapPtr[x] = int16_t(Clamp(heightMap[x], heightMin, heightMax) - heightMin) * heightMul;
 	}
 
-	std::memset(typemapPtr.data(), 0, typemapSize);
-
 	/*for (u32 x = 0; x < smfHeader.mapx; x++) {
 		for (u32 y = 0; y < smfHeader.mapy; y++) {
 			u32 index = tilemapPtr[]
 		}
 	}*/
 
+	std::memset(typemapPtr.data(), 0, typemapSize);
 	std::memset(tilemapPtr.data(), 0, tilemapSize);
 	std::memset(metalmapPtr.data(), 0, metalmapSize);
+
+	for (int x = 0; x < metalmapDimensions; x++) {
+		metalmapPtr[x] = uint8_t(metalMap[x]);
+	}
+	//std::memcpy(metalmapPtr.data(), &metalMap, sizeof(uint8_t));
 
 	//--- Write to final buffer ---
 	AppendToBuffer(fileSMF, smfHeader);
@@ -188,7 +237,7 @@ void CMapGenerator::GenerateMapInfo(CVirtualArchive* archive)
 	startPosString = ss.str();
 
 	//Replace tags in mapinfo.lua
-	luaInfo = StringReplace(luaInfo, "${NAME}", setup->mapName);
+	luaInfo = StringReplace(luaInfo, "${NAME}", mapName);
 	luaInfo = StringReplace(luaInfo, "${DESCRIPTION}", GetMapDescription());
 	luaInfo = StringReplace(luaInfo, "${START_POSITIONS}", startPosString);
 
@@ -198,7 +247,7 @@ void CMapGenerator::GenerateMapInfo(CVirtualArchive* archive)
 
 void CMapGenerator::GenerateSMT(CVirtualArchive* archive)
 {
-	CVirtualFile* fileSMT = archive->AddFile("maps/generated.smt");
+	CVirtualFile* fileSMT = archive->AddFile("maps/" + mapName + ".smt");
 
 	constexpr int32_t tileSize = 32;
 	constexpr int32_t tileBPP = 3;

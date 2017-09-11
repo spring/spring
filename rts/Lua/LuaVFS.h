@@ -14,7 +14,7 @@ class LuaVFS {
 		static bool PushSynced(lua_State* L);
 		static bool PushUnsynced(lua_State* L);
 
-	private:
+	public:
 		static const string GetModes(lua_State* L, int index, bool synced);
 
 		static bool PushCommon(lua_State* L);
@@ -43,19 +43,21 @@ class LuaVFS {
 		static int SevenZipFolder(lua_State* L, const string& folderPath, const string& zipFilePath, bool includeFolder, const string& modes);
 		/**
 		@brief Permanent mapping of files into VFS (only from unsynced)
-		
+
 		LuaParameters: (string Filename), (unsigned int checksum, optional)
 		*/
 		static int MapArchive(lua_State* L);
 		/**
 		@brief Unmaps archives mapped with MapArchive from VFS (only from unsynced)
-		
+
 		LuaParameters: (string Filename)
 		*/
 		static int UnmapArchive(lua_State* L);
 
 		static int ZlibCompress(lua_State* L);
 		static int ZlibDecompress(lua_State* L);
+
+		static int CalculateHash(lua_State* L);
 
 		// string packing utilities
 		static int PackU8(lua_State* L);
@@ -72,8 +74,18 @@ class LuaVFS {
 		static int UnpackS16(lua_State* L);
 		static int UnpackS32(lua_State* L);
 		static int UnpackF32(lua_State* L);
-		
-		static int CalculateHash(lua_State* L);
+
+		static int CreateVirtualArchive(lua_State* L);
+		static int FinalizeVirtualArchive(lua_State* L);
+		static int RemoveVirtualArchive(lua_State* L);
+		static int HasVirtualArchive(lua_State* L);
+		static int GetAllVirtualArchives(lua_State* L);
+		static int WriteVirtualArchiveToDisk(lua_State* L);
+
+		static int AddVirtualFile(lua_State* L);
+		static int HasVirtualFile(lua_State* L);
+		static int GetAllVirtualFiles(lua_State* L);
+		static int WriteToVirtualFile(lua_State* L);
 };
 
 

@@ -3,7 +3,6 @@
 #ifndef _MAP_GENERATOR_H_
 #define _MAP_GENERATOR_H_
 
-#include "Game/GameSetup.h"
 #include "System/type2.h"
 #include "Map/SMF/SMFReadMap.h"
 
@@ -14,15 +13,21 @@ class CMapGenerator
 public:
 	virtual ~CMapGenerator() {}
 
+	void Init();
 	void Generate();
+	static void MaybeGenerate();
 
-protected:
-	CMapGenerator(const CGameSetup* setup);
-
-	const CGameSetup* const setup;
+public:
+	CMapGenerator(const std::string& mapName, int mapSeed);
 
 	std::vector<float>& GetHeightMap()
 	{ return heightMap; }
+
+	std::vector<float>& GetMetalMap()
+	{ return metalMap; }
+
+	std::vector<char>& GetTileData()
+	{ return tileData; }
 
 	virtual int2 GetGridSize() const
 	{ return int2(GetMapSize().x * CSMFReadMap::bigSquareSize, GetMapSize().y * CSMFReadMap::bigSquareSize); }
@@ -48,9 +53,15 @@ private:
 	virtual const std::vector<int2>& GetStartPositions() const = 0;
 	virtual const std::string& GetMapDescription() const = 0;
 
+	std::vector<char>  tileData;
 	std::vector<float> heightMap;
 	std::vector<float> metalMap;
+	std::string mapName;
+	int mapSeed;
 
+	CVirtualArchive* archive;
+
+	const int tileSize = 32;
 };
 
 #endif // _MAP_GENERATOR_H_

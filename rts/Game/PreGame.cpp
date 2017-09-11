@@ -224,7 +224,8 @@ void CPreGame::StartServer(const std::string& setupscript)
 		throw content_error("No map selected in startscript");
 
 	if (startGameSetup->mapSeed != 0) {
-		CSimpleMapGenerator gen(startGameSetup.get());
+		CSimpleMapGenerator gen(startGameSetup->mapName, startGameSetup->mapSeed);
+		gen.Init();
 		gen.Generate();
 	}
 
@@ -558,4 +559,3 @@ void CPreGame::GameDataReceived(std::shared_ptr<const netcode::RawPacket> packet
 		LOG("PreGame::%s] recording demo to \"%s\"", __func__, (recorder->GetName()).c_str());
 	}
 }
-

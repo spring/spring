@@ -10,6 +10,7 @@
 #include "MetalMap.h"
 #include "Rendering/Env/MapRendering.h"
 #include "SMF/SMFReadMap.h"
+#include "Map/Generation/SimpleMapGenerator.h"
 #include "Game/LoadScreen.h"
 #include "System/bitops.h"
 #include "System/EventHandler.h"
@@ -141,6 +142,7 @@ MapTexture::~MapTexture() {
 
 CReadMap* CReadMap::LoadMap(const std::string& mapName)
 {
+	CMapGenerator::MaybeGenerate();
 	CReadMap* rm = nullptr;
 
 	if (FileSystem::GetExtension(mapName) == "sm3") {

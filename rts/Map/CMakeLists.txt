@@ -15,6 +15,7 @@ SET(sources_engine_Map
 		"${CMAKE_CURRENT_SOURCE_DIR}/ReadMap.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Generation/MapGenerator.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Generation/SimpleMapGenerator.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Generation/LuaMapGenerator.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/SMF/SMFGroundDrawer.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/SMF/SMFGroundTextures.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/SMF/SMFMapFile.cpp"
@@ -26,4 +27,3 @@ SET(sources_engine_Map
 		"${CMAKE_CURRENT_SOURCE_DIR}/SMF/ROAM/RoamMeshDrawer.cpp"
 		PARENT_SCOPE
 	)
-

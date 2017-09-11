@@ -305,6 +305,9 @@ class LuaOpenGL {
 
 		static int ReadPixels(lua_State* L);
 		static int SaveImage(lua_State* L);
+		static int TexImage(lua_State* L);
+		static int TexSubImage(lua_State* L);
+		static int ClearTexSubImage(lua_State* L);
 
 		static int CreateQuery(lua_State* L);
 		static int DeleteQuery(lua_State* L);

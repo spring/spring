@@ -28,7 +28,6 @@ std::string MapParser::GetMapConfigName(const std::string& mapFileName)
 	}
 }
 
-
 MapParser::MapParser(const std::string& mapFileName) : parser(NULL)
 {
 	const std::string mapConfig = GetMapConfigName(mapFileName);

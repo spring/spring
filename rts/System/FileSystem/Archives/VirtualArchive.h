@@ -5,7 +5,7 @@
 
 #include "ArchiveFactory.h"
 #include "IArchive.h"
-#include <vector>
+#include <map>
 #include <string>
 
 class CVirtualArchive;
@@ -17,17 +17,21 @@ class CVirtualArchiveFactory : public IArchiveFactory {
 public:
 	CVirtualArchiveFactory();
 	virtual ~CVirtualArchiveFactory();
+	void Clear();
 
 	/**
 	 * Registers and creates a new virtual archive to the factory
 	 * @param filePath Path with which the archive can be found and opened
 	 */
 	CVirtualArchive* AddArchive(const std::string& fileName);
+	CVirtualArchive* GetArchive(const std::string& fileName) const;
+	bool RemoveArchive(const std::string& fileName);
+	const std::map<std::string, CVirtualArchive*>& GetAllArchives() const;
 
 private:
 	IArchive* DoCreateArchive(const std::string& fileName) const;
 
-	std::vector<CVirtualArchive*> archives;
+	std::map<std::string, CVirtualArchive*> archives;
 };
 
 extern CVirtualArchiveFactory* virtualArchiveFactory;
@@ -67,8 +71,8 @@ public:
 
 	virtual bool IsOpen();
 	virtual unsigned int NumFiles() const;
-	virtual bool GetFile( unsigned int fid, std::vector<std::uint8_t>& buffer );
-	virtual void FileInfo( unsigned int fid, std::string& name, int& size ) const;
+	virtual bool GetFile(unsigned int fid, std::vector<std::uint8_t>& buffer);
+	virtual void FileInfo(unsigned int fid, std::string& name, int& size) const;
 
 private:
 	CVirtualArchive* archive;
@@ -85,12 +89,13 @@ public:
 
 	CVirtualArchiveOpen* Open();
 	CVirtualFile* AddFile(const std::string& file);
+	CVirtualFile* GetFile(const std::string& file);
 
 	unsigned int NumFiles() const;
-	bool GetFile( unsigned int fid, std::vector<std::uint8_t>& buffer );
-	void FileInfo( unsigned int fid, std::string& name, int& size ) const;
+	bool GetFile(unsigned int fid, std::vector<std::uint8_t>& buffer);
+	void FileInfo(unsigned int fid, std::string& name, int& size) const;
 
-	const std::string& GetFileName() const
+	const std::string& GetArchiveName() const
 	{ return fileName; }
 
 	const std::map<std::string, unsigned int>& GetNameIndex() const
@@ -103,8 +108,7 @@ private:
 
 	std::vector<CVirtualFile*> files;
 	std::string fileName;
-	std::map<std::string, unsigned int> lcNameIndex;
-
+	std::map<std::string, uint> lcNameIndex;
 };
 
 #endif // _VIRTUAL_ARCHIVE_H

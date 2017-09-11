@@ -8,8 +8,7 @@
 class CSimpleMapGenerator : public CMapGenerator
 {
 public:
-	CSimpleMapGenerator(const CGameSetup* setup);
-	virtual ~CSimpleMapGenerator();
+	CSimpleMapGenerator(const std::string& mapName, int mapSeed);
 
 private:
 	void GenerateInfo();

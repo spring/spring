@@ -2,14 +2,10 @@
 
 #include "SimpleMapGenerator.h"
 
-CSimpleMapGenerator::CSimpleMapGenerator(const CGameSetup* setup) : CMapGenerator(setup)
+CSimpleMapGenerator::CSimpleMapGenerator(const std::string& mapName, int mapSeed) :
+	CMapGenerator(mapName, mapSeed)
 {
 	GenerateInfo();
-}
-
-CSimpleMapGenerator::~CSimpleMapGenerator()
-{
-
 }
 
 void CSimpleMapGenerator::GenerateInfo()
@@ -30,7 +26,7 @@ void CSimpleMapGenerator::GenerateMap()
 	{
 		for(int y = 0; y < gs.y; y++)
 		{
-			map[y * gs.x + x] = 50.0f;
+			map[y * gs.x + x] = sin(y/10.0) * 30.0f + 100.0f + x / 5.0f;
 		}
 	}
 }
