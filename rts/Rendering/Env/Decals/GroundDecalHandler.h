@@ -133,7 +133,7 @@ public:
 	void SunChanged() override;
 	void RenderUnitCreated(const CUnit*, int cloaked) override;
 	void RenderUnitDestroyed(const CUnit*) override;
-	void RenderFeatureCreated(const CFeature* feature);
+	void RenderFeatureCreated(const CFeature* feature) override;
 	void RenderFeatureDestroyed(const CFeature* feature) override;
 	void FeatureMoved(const CFeature* feature, const float3& oldpos) override;
 	void UnitMoved(const CUnit* unit) override;

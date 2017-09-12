@@ -42,7 +42,7 @@ public:
 class CStandardGroundFlash : public CGroundFlash
 {
 public:
-	CR_DECLARE(CStandardGroundFlash)
+	CR_DECLARE_DERIVED(CStandardGroundFlash)
 
 	CStandardGroundFlash();
 	CStandardGroundFlash(const float3& pos, const GroundFlashInfo& info);

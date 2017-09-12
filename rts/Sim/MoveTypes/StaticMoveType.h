@@ -7,7 +7,7 @@
 
 class CStaticMoveType : public AMoveType
 {
-	CR_DECLARE(CStaticMoveType)
+	CR_DECLARE_DERIVED(CStaticMoveType)
 
 public:
 	CStaticMoveType(CUnit* unit) : AMoveType(unit) {}

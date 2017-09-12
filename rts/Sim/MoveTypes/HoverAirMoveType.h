@@ -9,7 +9,7 @@ struct float4;
 
 class CHoverAirMoveType: public AAirMoveType
 {
-	CR_DECLARE(CHoverAirMoveType)
+	CR_DECLARE_DERIVED(CHoverAirMoveType)
 public:
 	CHoverAirMoveType(CUnit* owner);
 
@@ -32,7 +32,7 @@ public:
 	AircraftState GetLandingState() const override { return AIRCRAFT_FLYING; }
 
 	// Main state handlers
-	void UpdateLanded();
+	void UpdateLanded() override;
 	void UpdateTakeoff();
 	void UpdateLanding();
 	void UpdateFlying();
@@ -57,7 +57,7 @@ private:
 	bool CanLandAt(const float3& pos) const;
 
 	void ExecuteStop();
-	void Takeoff();
+	void Takeoff() override;
 	void Land() override;
 
 	bool HandleCollisions(bool checkCollisions);
