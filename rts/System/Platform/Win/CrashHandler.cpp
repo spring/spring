@@ -43,7 +43,7 @@ static const char* glLibWarning =
 	"Please try upgrading it (specifically recommended is the latest version) "
 	"but make sure to use a driver removal utility first.";
 
-static const char* addrFmts = {
+static const char* addrFmts[2] = {
 	"\t(%d) %s:%u %s [0x%08llX]",
 	"\t(%d) %s [0x%08lX]"
 };
@@ -187,14 +187,14 @@ inline static void StacktraceInline(const char* threadName, LPEXCEPTION_POINTERS
 
 			for (int i = 0; i < 50; i++) {
 				if (suspendCntr != -2) {
-					LOG_I(logLevel, "\t[SuspendThread returned %d after %d iterations]", suspendCntr, i);
+					LOG_I(logLevel, "\t[SuspendThread returned %lu after %d iterations]", suspendCntr, i);
 					break;
 				}
 
 				std::this_thread::sleep_for(std::chrono::milliseconds(100));
 			}
 
-			LOG_I(logLevel, "\t[thread %s with count %d]", ((suspendCntr == -2)? "deadlocked": "suspended or still running"), suspendCntr);
+			LOG_I(logLevel, "\t[thread %s with count %lu]", ((suspendCntr == -2)? "deadlocked": "suspended or still running"), suspendCntr);
 		} else {
 			// should never happen
 			LOG_I(logLevel, "\t[attempted to suspend hang-detector thread]");
