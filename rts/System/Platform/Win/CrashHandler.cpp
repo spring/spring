@@ -21,7 +21,12 @@
 
 
 #define BUFFER_SIZE 1024
-#define LOG_RAW_LINE(level, fmt, ...) fprintf(logFile, fmt, ##__VA_ARGS__);
+#define LOG_RAW_LINE(level, fmt, ...) do {                                   \
+	fprintf((level >= LOG_LEVEL_ERROR)? stderr: stdout, fmt, ##__VA_ARGS__); \
+	fprintf((level >= LOG_LEVEL_ERROR)? stderr: stdout, "\n"              ); \
+	fprintf(logFile, fmt, ##__VA_ARGS__);                                    \
+	fprintf(logFile, "\n"              );                                    \
+} while (false)
 // #define LOG_RAW_LINE(level, fmt, ...) LOG_I(level, fmt, ##__VA_ARGS__);
 
 namespace CrashHandler {
