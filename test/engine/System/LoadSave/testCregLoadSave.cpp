@@ -13,9 +13,8 @@
 
 
 
-class EmbeddedObj {
-	CR_DECLARE(EmbeddedObj);
-	virtual ~EmbeddedObj()
+struct EmbeddedObj {
+	CR_DECLARE_STRUCT(EmbeddedObj);
 	int value;
 };
 
