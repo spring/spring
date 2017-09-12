@@ -23,6 +23,7 @@ public:
 	 * @brief Constructor assigning standard values
 	 */
 	PlayerBase();
+	virtual ~PlayerBase() {}
 
 	void SetValue(const std::string& key, const std::string& value);
 	const customOpts& GetAllValues() const {

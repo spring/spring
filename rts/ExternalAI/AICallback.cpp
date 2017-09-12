@@ -865,11 +865,6 @@ static inline bool unit_IsInLos(const CUnit* unit) {
 }
 
 /// You have to set myAllyTeamId before calling this function. NOT thread safe!
-static inline bool unit_IsInRadar(const CUnit* unit) {
-	return unit_IsInSensor(unit, LOS_INRADAR);
-}
-
-/// You have to set myAllyTeamId before calling this function. NOT thread safe!
 static inline bool unit_IsEnemyAndInLos(const CUnit* unit) {
 	return (unit_IsEnemy(unit) && unit_IsInLos(unit));
 }

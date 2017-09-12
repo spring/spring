@@ -39,16 +39,15 @@ public:
 	~AssVFSSystem() { }
 
 	// Check whether a specific file exists
-	bool Exists( const char* pFile) const;
+	bool Exists( const char* pFile) const override;
 
 	// Get the path delimiter character we'd like to get
-	char getOsSeparator() const;
-	bool ComparePaths (const std::string& one, const std::string& second) const;
+	char getOsSeparator() const override;
 
 	// open a custom stream
-	Assimp::IOStream* Open( const char* pFile, const char* pMode  = "rb" );
+	Assimp::IOStream* Open( const char* pFile, const char* pMode  = "rb" ) override;
 
-	void Close( Assimp::IOStream* pFile);
+	void Close( Assimp::IOStream* pFile) override;
 };
 
 #endif // ASS_IO_H

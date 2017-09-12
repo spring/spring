@@ -16,7 +16,13 @@
 #define USE_TRIANGLE_STRIPS 1
 #define USE_MIPMAP_BUFFERS  0
 #define USE_PACKED_BUFFERS  1
-#define USE_MAPPED_BUFFERS  (defined(GLEW_ARB_buffer_storage) && defined(GL_MAP_PERSISTENT_BIT))
+
+#if (defined(GLEW_ARB_buffer_storage) && defined(GL_MAP_PERSISTENT_BIT))
+#define USE_MAPPED_BUFFERS 1
+#else
+#define USE_MAPPED_BUFFERS 0
+#endif
+
 
 // do not use GL_MAP_UNSYNCHRONIZED_BIT in either case; causes slow driver sync
 #if (USE_MAPPED_BUFFERS)

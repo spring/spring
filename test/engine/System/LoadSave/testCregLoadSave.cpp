@@ -15,6 +15,7 @@
 
 class EmbeddedObj {
 	CR_DECLARE(EmbeddedObj);
+	virtual ~EmbeddedObj()
 	int value;
 };
 

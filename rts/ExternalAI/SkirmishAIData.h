@@ -20,6 +20,7 @@ class SkirmishAIData : public SkirmishAIBase {
 	CR_DECLARE(SkirmishAIData)
 
 public:
+	virtual ~SkirmishAIData() {}
 	std::string shortName;
 	std::string version;
 	std::vector<std::string> optionKeys;
