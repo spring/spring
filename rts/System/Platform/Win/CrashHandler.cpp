@@ -25,7 +25,7 @@
 namespace CrashHandler {
 
 static std::function<void(HANDLE, DWORD*)> suspendFunc = [](HANDLE thr, DWORD* ret) { *ret = SuspendThread(thr); };
-static std::thread suspendThrd = std::move(std::thread([]() { return 0; })); // pre-allocate stack
+static std::thread suspendThrd;
 
 
 CRITICAL_SECTION stackLock;
@@ -479,6 +479,10 @@ LONG CALLBACK ExceptionHandler(LPEXCEPTION_POINTERS e)
 /** Install crash handler. */
 void Install()
 {
+	// pre-allocate stack
+	suspendThrd = std::move(std::thread([]() { return 0; }));
+	suspendThrd.join();
+
 	SetUnhandledExceptionFilter(ExceptionHandler);
 	signal(SIGABRT, SigAbrtHandler);
 	std::set_new_handler(NewHandler);
