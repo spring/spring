@@ -14,12 +14,19 @@
 #include "System/StringUtil.h"
 #include "System/SafeCStrings.h"
 #include "Game/GameVersion.h"
-#include <new>
+
+#include <new> // set_new_handler
+#include <chrono>
+#include <thread>
 
 
 #define BUFFER_SIZE 1024
 
 namespace CrashHandler {
+
+static std::function<void(HANDLE, DWORD*)> suspendFunc = [](HANDLE thr, DWORD* ret) { *ret = SuspendThread(thr); };
+static std::thread suspendThrd = std::move(std::thread([]() { return 0; })); // pre-allocate stack
+
 
 CRITICAL_SECTION stackLock;
 bool imageHelpInitialised = false;
@@ -30,27 +37,22 @@ const int dummyStackLock = stackLockInit();
 // 1MB buffer (1K lines of 1K chars each) should be enough for any trace
 static char traceBuffer[BUFFER_SIZE * BUFFER_SIZE];
 
-static const char* aiLibWarning = "This stack trace indicates a problem with a skirmish AI.";
+static const char* aiLibWarning = "This stacktrace indicates a problem with a skirmish AI.";
 static const char* glLibWarning =
-	"This stack trace indicates a problem with your graphics card driver. "
-	"Please try upgrading it. Specifically recommended is the latest version. "
-	"Make sure to use a driver removal utility before installing other drivers.";
+	"This stacktrace indicates a problem with your graphics card driver. "
+	"Please try upgrading it (specifically recommended is the latest version) "
+	"but make sure to use a driver removal utility first.";
 
-static const char* addrFmt = "(%d) %s [0x%08lX]";
+static const char* addrFmts = {
+	"\t(%d) %s:%u %s [0x%08llX]",
+	"\t(%d) %s [0x%08lX]"
+};
 static const char* errFmt =
 	"Spring has crashed:\n  %s.\n\n"
 	"A stacktrace has been written to:\n  %s";
 
 
 
-
-static void SigAbrtHandler(int signal)
-{
-	LOG_L(L_ERROR, "Spring received an ABORT signal");
-
-	OutputStacktrace();
-	ErrorMessageBox("Abort / abnormal termination", "Spring: Fatal Error", MBF_OK | MBF_CRASH);
-}
 
 /** Convert exception code to human readable string. */
 static const char* ExceptionName(DWORD exceptionCode)
@@ -100,8 +102,7 @@ bool InitImageHlpDll()
 		if (SymInitialize(GetCurrentProcess(), userSearchPath, TRUE)) {
 			SymSetOptions(SYMOPT_LOAD_LINES);
 
-			imageHelpInitialised = true;
-			return true;
+			return (imageHelpInitialised = true);
 		}
 
 		SymCleanup(GetCurrentProcess());
@@ -129,26 +130,20 @@ bool InitImageHlpDll()
 
 
 
-#if 0
-static DWORD __stdcall AllocTest(void* param) {
-	GlobalFree(GlobalAlloc(GMEM_FIXED, 16384));
-	return 0;
-}
-#endif
-
-
-
 /** Print out a stacktrace. */
 inline static void StacktraceInline(const char* threadName, LPEXCEPTION_POINTERS e, HANDLE hThread = INVALID_HANDLE_VALUE, const int logLevel = LOG_LEVEL_ERROR)
 {
 	STACKFRAME64 frame;
 	CONTEXT context;
-	HANDLE process = GetCurrentProcess();
 	HANDLE thread = hThread;
 
-	DWORD64 dwModBase = 0;
-	DWORD64 dwModAddr = 0;
-	DWORD MachineType = 0;
+	const HANDLE process = GetCurrentProcess();
+	const HANDLE cThread = GetCurrentThread();
+
+	DWORD64 dwModBase =  0;
+	DWORD64 dwModAddr =  0;
+	DWORD machineType =  0;
+	DWORD suspendCntr = -2;
 
 	const bool wdThread = (hThread != INVALID_HANDLE_VALUE);
 
@@ -160,6 +155,7 @@ inline static void StacktraceInline(const char* threadName, LPEXCEPTION_POINTERS
 
 	ZeroMemory(&frame, sizeof(frame));
 	ZeroMemory(&context, sizeof(CONTEXT));
+	memset(modName, 0, sizeof(modName));
 	memset(traceBuffer, 0, sizeof(traceBuffer));
 
 	// NOTE: this line is parsed by the stacktrans script
@@ -172,52 +168,67 @@ inline static void StacktraceInline(const char* threadName, LPEXCEPTION_POINTERS
 	if (e != nullptr) {
 		// reached when an exception occurs
 		context = *e->ContextRecord;
-		thread = GetCurrentThread();
+		thread = cThread;
 	} else if (wdThread) {
-		#if 0
-		for (int allocIter = 0; ; ++allocIter) {
-			HANDLE allocThread = CreateThread(nullptr, 0, &AllocTest, nullptr, CREATE_SUSPENDED, nullptr);
+		context.ContextFlags = CONTEXT_FULL;
 
-			SuspendThread(hThread);
-			ResumeThread(allocThread);
+		assert(Threading::IsWatchDogThread());
+		assert(!CompareObjectHandles(hThread, cThread));
 
-			// wait until the state of the alloc-test thread becomes "signaled"
-			// if it does, then we know Global{Alloc,Free} can be called safely
-			// (not needed anymore, trace-buffer is not allocated dynamically)
-			if (WaitForSingleObject(allocThread, 10) == WAIT_OBJECT_0) {
-				CloseHandle(allocThread);
-				break;
+		if (hThread != cThread) {
+			LOG_I(logLevel, "\t[attempting to suspend thread]");
+
+			// FIXME:
+			//   SuspendThread? occasionally seems to hang the hang-detector
+			//   (which obviously never passes its own handle to Stacktrace)
+			//   risk an allocator deadlock and make the suspend call from a
+			//   helper thread
+			suspendThrd = std::move(std::thread(suspendFunc, hThread, &suspendCntr));
+
+			for (int i = 0; i < 50; i++) {
+				if (suspendCntr != -2) {
+					LOG_I(logLevel, "\t[SuspendThread returned %d after %d iterations]", suspendCntr, i);
+					break;
+				}
+
+				std::this_thread::sleep_for(std::chrono::milliseconds(100));
 			}
 
-			ResumeThread(hThread);
-
-			// wait another 10ms
-			if (WaitForSingleObject(allocThread, 10) != WAIT_OBJECT_0)
-				TerminateThread(allocThread, 0);
-
-			CloseHandle(allocThread);
-
-			if (allocIter < 10)
-				continue;
-
-			LOG_I(logLevel, "[stacktrace failed, allocator deadlock]");
+			LOG_I(logLevel, "\t[thread %s with count %d]", ((suspendCntr == -2)? "deadlocked": "suspended or still running"), suspendCntr);
+		} else {
+			// should never happen
+			LOG_I(logLevel, "\t[attempted to suspend hang-detector thread]");
 			return;
 		}
-		#endif
 
+		// if still -2 after 50 sleeps, assume a deadlock and try to get the context anyway
+		if (suspendCntr == -1) {
+			LOG_I(logLevel, "\t[failed to suspend thread]");
+			suspendThrd.join();
+			return;
+		}
+
+		if (GetThreadContext(hThread, &context) == 0) {
+			LOG_I(logLevel, "\t[failed to get thread context]");
+			ResumeThread(hThread);
+			suspendThrd.join();
+			return;
+		}
+
+
+		#if 0
 		// reached when watchdog triggers, suspend thread (it might be in an infinite loop)
 		if (SuspendThread(hThread) == DWORD(-1)) {
 			LOG_I(logLevel, "[failed to suspend thread]");
 			return;
 		}
 
-		context.ContextFlags = CONTEXT_FULL;
-
-		if (!GetThreadContext(hThread, &context)) {
-			ResumeThread(hThread);
+		if (GetThreadContext(hThread, &context) == 0) {
 			LOG_I(logLevel, "[failed to get thread context]");
+			ResumeThread(hThread);
 			return;
 		}
+		#endif
 	} else {
 		// fallback; get context directly from CPU-registers
 #ifdef _M_IX86
@@ -247,19 +258,19 @@ inline static void StacktraceInline(const char* threadName, LPEXCEPTION_POINTERS
 #else
 		RtlCaptureContext(&context);
 #endif
-		thread = GetCurrentThread();
+		thread = cThread;
 	}
 
 
 	{
 		// retrieve program-counter and starting stack-frame address
 		#ifdef _M_IX86
-		MachineType = IMAGE_FILE_MACHINE_I386;
+		machineType = IMAGE_FILE_MACHINE_I386;
 		frame.AddrPC.Offset = context.Eip;
 		frame.AddrStack.Offset = context.Esp;
 		frame.AddrFrame.Offset = context.Ebp;
 		#elif _M_X64
-		MachineType = IMAGE_FILE_MACHINE_AMD64;
+		machineType = IMAGE_FILE_MACHINE_AMD64;
 		frame.AddrPC.Offset = context.Rip;
 		frame.AddrStack.Offset = context.Rsp;
 		frame.AddrFrame.Offset = context.Rsp;
@@ -276,11 +287,11 @@ inline static void StacktraceInline(const char* threadName, LPEXCEPTION_POINTERS
 		const void* fp = reinterpret_cast<const void*>(frame.AddrFrame.Offset);
 
 		// log initial context
-		LOG_I(logLevel, "[ProgCtr=%p StackPtr=%p FramePtr=%p]", pc, sp, fp);
+		LOG_I(logLevel, "\t[ProgCtr=%p StackPtr=%p FramePtr=%p]", pc, sp, fp);
 	}
 
 
-	while (StackWalk64(MachineType, process, thread, &frame, &context, nullptr, SymFunctionTableAccess64, SymGetModuleBase64, nullptr)) {
+	while (StackWalk64(machineType, process, thread, &frame, &context, nullptr, SymFunctionTableAccess64, SymGetModuleBase64, nullptr)) {
 		#if 0
 		if (frame.AddrFrame.Offset == 0)
 			break;
@@ -312,7 +323,7 @@ inline static void StacktraceInline(const char* threadName, LPEXCEPTION_POINTERS
 			DWORD displacement;
 			SymGetLineFromAddr64(GetCurrentProcess(), frame.AddrPC.Offset, &displacement, &line);
 
-			SNPRINTF(traceBuffer + numFrames * BUFFER_SIZE, BUFFER_SIZE, "(%d) %s:%u %s [0x%08llX]", numFrames , line.FileName ? line.FileName : "<unknown>", line.LineNumber, pSym->Name, frame.AddrPC.Offset);
+			SNPRINTF(traceBuffer + numFrames * BUFFER_SIZE, BUFFER_SIZE, addrFmts[0], numFrames , line.FileName ? line.FileName : "<unknown>", line.LineNumber, pSym->Name, frame.AddrPC.Offset);
 		} else 
 #endif
 		{
@@ -325,7 +336,7 @@ inline static void StacktraceInline(const char* threadName, LPEXCEPTION_POINTERS
 				dwModAddr = frame.AddrPC.Offset - dwModBase;
 			}
 
-			SNPRINTF(traceBuffer + numFrames * BUFFER_SIZE, BUFFER_SIZE, addrFmt, numFrames, modName, dwModAddr);
+			SNPRINTF(traceBuffer + numFrames * BUFFER_SIZE, BUFFER_SIZE, addrFmts[1], numFrames, modName, dwModAddr);
 		}
 
 		{
@@ -357,6 +368,9 @@ inline static void StacktraceInline(const char* threadName, LPEXCEPTION_POINTERS
 	for (int i = 0; i < numFrames; ++i) {
 		LOG_I(logLevel, "%s", traceBuffer + i * BUFFER_SIZE);
 	}
+
+	if (suspendThrd.joinable())
+		suspendThrd.join();
 }
 
 
@@ -388,7 +402,7 @@ void PrepareStacktrace(const int logLevel) {
 
 void CleanupStacktrace(const int logLevel) {
 	LOG_CLEANUP();
-	// Unintialize IMAGEHLP.DLL
+	// Uninitialize IMAGEHLP.DLL
 	SymCleanup(GetCurrentProcess());
 	imageHelpInitialised = false;
 
@@ -411,6 +425,15 @@ void NewHandler() {
 	OutputStacktrace();
 	ErrorMessageBox("Failed to allocate memory", "Spring: Fatal Error", MBF_OK | MBF_CRASH);
 }
+
+static void SigAbrtHandler(int signal)
+{
+	LOG_L(L_ERROR, "Spring received an ABORT signal");
+
+	OutputStacktrace();
+	ErrorMessageBox("Abort / abnormal termination", "Spring: Fatal Error", MBF_OK | MBF_CRASH);
+}
+
 
 
 
@@ -467,6 +490,10 @@ void Remove()
 	SetUnhandledExceptionFilter(nullptr);
 	signal(SIGABRT, SIG_DFL);
 	std::set_new_handler(nullptr);
+
+	// prevent a std::terminate if we never suspended
+	if (suspendThrd.joinable())
+		suspendThrd.join();
 }
 
 }; // namespace CrashHandler
