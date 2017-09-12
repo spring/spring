@@ -21,6 +21,8 @@
 
 
 #define BUFFER_SIZE 1024
+#define LOG_RAW_LINE(level, fmt, ...) fprintf(logFile, fmt, ##__VA_ARGS__);
+// #define LOG_RAW_LINE(level, fmt, ...) LOG_I(level, fmt, ##__VA_ARGS__);
 
 namespace CrashHandler {
 
@@ -50,6 +52,8 @@ static const char* addrFmts[2] = {
 static const char* errFmt =
 	"Spring has crashed:\n  %s.\n\n"
 	"A stacktrace has been written to:\n  %s";
+
+static FILE* logFile = nullptr;
 
 
 
@@ -117,13 +121,13 @@ bool InitImageHlpDll()
 #if _MSC_VER >= 1500
 	static BOOL CALLBACK EnumModules(PCSTR moduleName, ULONG baseOfDll, PVOID userContext)
 	{
-		LOG_L(L_ERROR, "0x%08lx\t%s", baseOfDll, moduleName);
+		LOG_RAW_LINE(LOG_LEVEL_ERROR, "0x%08lx\t%s", baseOfDll, moduleName);
 		return TRUE;
 	}
 #else // _MSC_VER >= 1500
 	static BOOL CALLBACK EnumModules(LPSTR moduleName, DWORD baseOfDll, PVOID userContext)
 	{
-		LOG_L(L_ERROR, "0x%08lx\t%s", baseOfDll, moduleName);
+		LOG_RAW_LINE(LOG_LEVEL_ERROR, "0x%08lx\t%s", baseOfDll, moduleName);
 		return TRUE;
 	}
 #endif // _MSC_VER >= 1500
@@ -157,12 +161,13 @@ inline static void StacktraceInline(const char* threadName, LPEXCEPTION_POINTERS
 	ZeroMemory(&context, sizeof(CONTEXT));
 	memset(modName, 0, sizeof(modName));
 	memset(traceBuffer, 0, sizeof(traceBuffer));
+	assert(logFile != nullptr);
 
 	// NOTE: this line is parsed by the stacktrans script
 	if (threadName != nullptr) {
-		LOG_I(logLevel, "Stacktrace (%s) for Spring %s:", threadName, (SpringVersion::GetFull()).c_str());
+		LOG_RAW_LINE(logLevel, "Stacktrace (%s) for Spring %s:", threadName, (SpringVersion::GetFull()).c_str());
 	} else {
-		LOG_I(logLevel, "Stacktrace for Spring %s:", (SpringVersion::GetFull()).c_str());
+		LOG_RAW_LINE(logLevel, "Stacktrace for Spring %s:", (SpringVersion::GetFull()).c_str());
 	}
 
 	if (e != nullptr) {
@@ -176,7 +181,7 @@ inline static void StacktraceInline(const char* threadName, LPEXCEPTION_POINTERS
 		assert(!CompareObjectHandles(hThread, cThread));
 
 		if (hThread != cThread) {
-			LOG_I(logLevel, "\t[attempting to suspend thread]");
+			LOG_RAW_LINE(logLevel, "\t[attempting to suspend thread]");
 
 			// FIXME:
 			//   SuspendThread? occasionally seems to hang the hang-detector
@@ -187,29 +192,29 @@ inline static void StacktraceInline(const char* threadName, LPEXCEPTION_POINTERS
 
 			for (int i = 0; i < 50; i++) {
 				if (suspendCntr != -2) {
-					LOG_I(logLevel, "\t[SuspendThread returned %lu after %d iterations]", suspendCntr, i);
+					LOG_RAW_LINE(logLevel, "\t[SuspendThread returned %lu after %d iterations]", suspendCntr, i);
 					break;
 				}
 
 				std::this_thread::sleep_for(std::chrono::milliseconds(100));
 			}
 
-			LOG_I(logLevel, "\t[thread %s with count %lu]", ((suspendCntr == -2)? "deadlocked": "suspended or still running"), suspendCntr);
+			LOG_RAW_LINE(logLevel, "\t[thread %s with count %lu]", ((suspendCntr == -2)? "deadlocked": "suspended or still running"), suspendCntr);
 		} else {
 			// should never happen
-			LOG_I(logLevel, "\t[attempted to suspend hang-detector thread]");
+			LOG_RAW_LINE(logLevel, "\t[attempted to suspend hang-detector thread]");
 			return;
 		}
 
 		// if still -2 after 50 sleeps, assume a deadlock and try to get the context anyway
 		if (suspendCntr == -1) {
-			LOG_I(logLevel, "\t[failed to suspend thread]");
+			LOG_RAW_LINE(logLevel, "\t[failed to suspend thread]");
 			suspendThrd.join();
 			return;
 		}
 
 		if (GetThreadContext(hThread, &context) == 0) {
-			LOG_I(logLevel, "\t[failed to get thread context]");
+			LOG_RAW_LINE(logLevel, "\t[failed to get thread context]");
 			ResumeThread(hThread);
 			suspendThrd.join();
 			return;
@@ -219,12 +224,12 @@ inline static void StacktraceInline(const char* threadName, LPEXCEPTION_POINTERS
 		#if 0
 		// reached when watchdog triggers, suspend thread (it might be in an infinite loop)
 		if (SuspendThread(hThread) == DWORD(-1)) {
-			LOG_I(logLevel, "[failed to suspend thread]");
+			LOG_RAW_LINE(logLevel, "\t[failed to suspend thread]");
 			return;
 		}
 
 		if (GetThreadContext(hThread, &context) == 0) {
-			LOG_I(logLevel, "[failed to get thread context]");
+			LOG_RAW_LINE(logLevel, "\t[failed to get thread context]");
 			ResumeThread(hThread);
 			return;
 		}
@@ -287,7 +292,7 @@ inline static void StacktraceInline(const char* threadName, LPEXCEPTION_POINTERS
 		const void* fp = reinterpret_cast<const void*>(frame.AddrFrame.Offset);
 
 		// log initial context
-		LOG_I(logLevel, "\t[ProgCtr=%p StackPtr=%p FramePtr=%p]", pc, sp, fp);
+		LOG_RAW_LINE(logLevel, "\t[ProgCtr=%p StackPtr=%p FramePtr=%p]", pc, sp, fp);
 	}
 
 
@@ -361,12 +366,12 @@ inline static void StacktraceInline(const char* threadName, LPEXCEPTION_POINTERS
 		ResumeThread(hThread);
 
 	if (aiLibFound)
-		LOG_I(logLevel, "%s", aiLibWarning);
+		LOG_RAW_LINE(logLevel, "%s", aiLibWarning);
 	if (glLibFound)
-		LOG_I(logLevel, "%s", glLibWarning);
+		LOG_RAW_LINE(logLevel, "%s", glLibWarning);
 
 	for (int i = 0; i < numFrames; ++i) {
-		LOG_I(logLevel, "%s", traceBuffer + i * BUFFER_SIZE);
+		LOG_RAW_LINE(logLevel, "%s", traceBuffer + i * BUFFER_SIZE);
 	}
 
 	if (suspendThrd.joinable())
@@ -395,8 +400,12 @@ void PrepareStacktrace(const int logLevel) {
 	EnterCriticalSection(&stackLock);
 	InitImageHlpDll();
 
+	// sidestep any kind of hidden allocation which might cause a deadlock
+	// this does mean the "[f=123456] Error:" prefixes will not be present
+	logFile = fopen((logOutput.GetFilePath()).c_str(), "a");
+
 	// Record list of loaded DLLs.
-	LOG_I(logLevel, "DLL information:");
+	LOG_RAW_LINE(logLevel, "DLL information:");
 	SymEnumerateModules(GetCurrentProcess(), (PSYM_ENUMMODULES_CALLBACK)EnumModules, nullptr);
 }
 
@@ -406,11 +415,12 @@ void CleanupStacktrace(const int logLevel) {
 	SymCleanup(GetCurrentProcess());
 	imageHelpInitialised = false;
 
+	fclose(logFile);
 	LeaveCriticalSection(&stackLock);
 }
 
 void OutputStacktrace() {
-	LOG_L(L_ERROR, "Error handler invoked for Spring %s.", (SpringVersion::GetFull()).c_str());
+	LOG_RAW_LINE(LOG_LEVEL_ERROR, "Error handler invoked for Spring %s.", (SpringVersion::GetFull()).c_str());
 
 	PrepareStacktrace();
 	Stacktrace(nullptr, nullptr, INVALID_HANDLE_VALUE, LOG_LEVEL_ERROR);
@@ -420,7 +430,7 @@ void OutputStacktrace() {
 
 
 void NewHandler() {
-	LOG_L(L_ERROR, "Failed to allocate memory"); // make sure this ends up in the log also
+	LOG_RAW_LINE(LOG_LEVEL_ERROR, "Failed to allocate memory"); // make sure this ends up in the log also
 
 	OutputStacktrace();
 	ErrorMessageBox("Failed to allocate memory", "Spring: Fatal Error", MBF_OK | MBF_CRASH);
@@ -428,7 +438,7 @@ void NewHandler() {
 
 static void SigAbrtHandler(int signal)
 {
-	LOG_L(L_ERROR, "Spring received an ABORT signal");
+	LOG_RAW_LINE(LOG_LEVEL_ERROR, "Spring received an ABORT signal");
 
 	OutputStacktrace();
 	ErrorMessageBox("Abort / abnormal termination", "Spring: Fatal Error", MBF_OK | MBF_CRASH);
@@ -442,14 +452,14 @@ LONG CALLBACK ExceptionHandler(LPEXCEPTION_POINTERS e)
 {
 	// prologue
 	logSinkHandler.SetSinking(false);
-	LOG_L(L_ERROR, "Spring %s has crashed.", (SpringVersion::GetFull()).c_str());
+	LOG_RAW_LINE(LOG_LEVEL_ERROR, "Spring %s has crashed.", (SpringVersion::GetFull()).c_str());
 	PrepareStacktrace();
 
 	const char* errStr = ExceptionName(e->ExceptionRecord->ExceptionCode);
 	char errBuf[2048];
 
-	LOG_L(L_ERROR, "Exception: %s (0x%08lx)", errStr, e->ExceptionRecord->ExceptionCode);
-	LOG_L(L_ERROR, "Exception Address: 0x%p", (PVOID) e->ExceptionRecord->ExceptionAddress);
+	LOG_RAW_LINE(LOG_LEVEL_ERROR, "Exception: %s (0x%08lx)", errStr, e->ExceptionRecord->ExceptionCode);
+	LOG_RAW_LINE(LOG_LEVEL_ERROR, "Exception Address: 0x%p", (PVOID) e->ExceptionRecord->ExceptionAddress);
 
 	// print trace inline: avoids modifying the stack which might confuse
 	// StackWalk when using the context record passed to ExceptionHandler
