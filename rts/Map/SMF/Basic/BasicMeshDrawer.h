@@ -48,11 +48,11 @@ public:
 		std::array<uint32_t, 1> uhmUpdateFrames;
 	};
 
-	void Update();
+	void Update() override;
 	void UnsyncedHeightMapUpdate(const SRectangle& rect) override;
 
-	void DrawMesh(const DrawPass::e& drawPass);
-	void DrawBorderMesh(const DrawPass::e& drawPass);
+	void DrawMesh(const DrawPass::e& drawPass) override;
+	void DrawBorderMesh(const DrawPass::e& drawPass) override;
 
 private:
 	void UploadPatchSquareGeometry(uint32_t n, uint32_t px, uint32_t py, const float* chm, const float3* cnm);

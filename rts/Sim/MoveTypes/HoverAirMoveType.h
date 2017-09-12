@@ -22,14 +22,14 @@ public:
 	void KeepPointingTo(float3 pos, float distance, bool aggressive) override;
 	void StopMoving(bool callScript = false, bool hardStop = false, bool cancelRaw = false) override;
 
-	bool SetMemberValue(unsigned int memberHash, void* memberValue);
+	bool SetMemberValue(unsigned int memberHash, void* memberValue) override;
 
 	void ForceHeading(short h);
 	void SetGoal(const float3& pos, float distance = 0.0f) override;
-	void SetState(AircraftState newState);
+	void SetState(AircraftState newState) override;
 	void SetAllowLanding(bool b);
 
-	AircraftState GetLandingState() const { return AIRCRAFT_FLYING; }
+	AircraftState GetLandingState() const override { return AIRCRAFT_FLYING; }
 
 	// Main state handlers
 	void UpdateLanded();
@@ -58,7 +58,7 @@ private:
 
 	void ExecuteStop();
 	void Takeoff();
-	void Land();
+	void Land() override;
 
 	bool HandleCollisions(bool checkCollisions);
 

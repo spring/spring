@@ -228,7 +228,7 @@ public:
 	}
 
 	bool IsAsyncTask() const override { return true; }
-	bool SelfDelete() const { return (selfDelete.load()); }
+	bool SelfDelete() const override { return (selfDelete.load()); }
 	bool ExecuteStep() override {
 		// note: *never* called from WaitForFinished
 		(*task)();

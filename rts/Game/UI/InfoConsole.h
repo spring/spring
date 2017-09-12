@@ -20,16 +20,16 @@ public:
 	CInfoConsole();
 	virtual ~CInfoConsole();
 
-	void Update();
-	void Draw();
+	void Update() override;
+	void Draw() override;
 	void PushNewLinesToEventHandler();
 
 	void RecordLogMessage(int level, const std::string& section, const std::string& text) override;
 
-	bool WantsEvent(const std::string& eventName) {
+	bool WantsEvent(const std::string& eventName) override {
 		return (eventName == "LastMessagePosition");
 	}
-	void LastMessagePosition(const float3& pos);
+	void LastMessagePosition(const float3& pos) override;
 	const float3& GetMsgPos(const float3& defaultPos = ZeroVector);
 	unsigned int GetMsgPosCount() const { return lastMsgPositions.size(); }
 
