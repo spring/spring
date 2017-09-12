@@ -267,10 +267,6 @@ void CBeamLaser::FireInternal(float3 curDir)
 	float actualRange = range;
 	float rangeMod = 1.0f;
 
-	if (!owner->unitDef->IsImmobileUnit()) {
-		// help units fire while chasing
-		rangeMod = 1.3f;
-	}
 	if (owner->UnderFirstPersonControl()) {
 		rangeMod = 0.95f;
 	}
