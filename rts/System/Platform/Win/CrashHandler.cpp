@@ -19,7 +19,7 @@
 
 #include <new> // set_new_handler
 #include <chrono>
-#include <deque>
+#include <array>
 
 
 #define MAX_FRAMES 1024
@@ -32,10 +32,6 @@
 // #define LOG_RAW_LINE(level, fmt, ...) LOG_I(level, fmt, ##__VA_ARGS__);
 
 namespace CrashHandler {
-
-static std::function<void(HANDLE, DWORD*)> suspendFunc = [](HANDLE thr, DWORD* ret) { *ret = SuspendThread(thr); };
-static spring::thread suspendThrd;
-
 
 CRITICAL_SECTION stackLock;
 bool imageHelpInitialised = false;
@@ -186,7 +182,7 @@ inline static void StacktraceInline(const char* threadName, LPEXCEPTION_POINTERS
 	const void* initialSP;
 	const void* initialFP;
 
-	std::vector<StacktraceLine> stacktraceLines(MAX_FRAMES);
+	std::array<StacktraceLine, MAX_FRAMES> stacktraceLines;
 
 	ZeroMemory(&frame, sizeof(frame));
 	ZeroMemory(&context, sizeof(CONTEXT));
@@ -368,7 +364,6 @@ inline static void StacktraceInline(const char* threadName, LPEXCEPTION_POINTERS
 				dwModAddr = frame.AddrPC.Offset - dwModBase;
 			}
 
-			stacktraceLines.emplace_back();
 			StacktraceLine& stl = stacktraceLines[numFrames];
 
 			stl.type = 1;
@@ -537,10 +532,6 @@ LONG CALLBACK ExceptionHandler(LPEXCEPTION_POINTERS e)
 /** Install crash handler. */
 void Install()
 {
-	// pre-allocate stack
-	suspendThrd = std::move(spring::thread([]() { return 0; }));
-	suspendThrd.join();
-
 	SetUnhandledExceptionFilter(ExceptionHandler);
 	signal(SIGABRT, SigAbrtHandler);
 	std::set_new_handler(NewHandler);
@@ -552,10 +543,6 @@ void Remove()
 	SetUnhandledExceptionFilter(nullptr);
 	signal(SIGABRT, SIG_DFL);
 	std::set_new_handler(nullptr);
-
-	// prevent a std::terminate if we never suspended
-	if (suspendThrd.joinable())
-		suspendThrd.join();
 }
 
 }; // namespace CrashHandler
