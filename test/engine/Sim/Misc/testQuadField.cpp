@@ -26,6 +26,9 @@ BOOST_AUTO_TEST_CASE( QuadField )
 
 	int2 mapDims = int2(WIDTH, HEIGHT);
 	CQuadField qf(mapDims, SQUARE_SIZE);
+
+	// necessary for QuadFieldQuery
+	quadField = &qf;
 	int bitmap[WIDTH * HEIGHT];
 
 	bool fail = false;
@@ -64,11 +67,13 @@ BOOST_AUTO_TEST_CASE( QuadField )
 		plot(start + dir * length);
 
 		// #2: raytrace via QuadField
-		QuadFieldQuery qfQuery;
-		qf.GetQuadsOnRay(qfQuery, start * SQUARE_SIZE, dir, length * SQUARE_SIZE);
-		assert( std::adjacent_find(qfQuery.quads->begin(), qfQuery.quads->end()) == qfQuery.quads->end() ); // check for duplicates
-		for (int qi: *qfQuery.quads) {
-			bitmap[qi] |= 2;
+		{
+			QuadFieldQuery qfQuery;
+			qf.GetQuadsOnRay(qfQuery, start * SQUARE_SIZE, dir, length * SQUARE_SIZE);
+			assert( std::adjacent_find(qfQuery.quads->begin(), qfQuery.quads->end()) == qfQuery.quads->end() ); // check for duplicates
+			for (int qi: *qfQuery.quads) {
+				bitmap[qi] |= 2;
+			}
 		}
 
 		// check if #1 & #2 iterate same quads
