@@ -10,6 +10,7 @@
 #include "System/Log/ILog.h"
 #include "System/Log/LogSinkHandler.h"
 #include "System/LogOutput.h"
+#include "System/Threading/SpringThreading.h"
 #include "seh.h"
 #include "System/StringUtil.h"
 #include "System/SafeCStrings.h"
@@ -17,7 +18,6 @@
 
 #include <new> // set_new_handler
 #include <chrono>
-#include <thread>
 
 
 #define BUFFER_SIZE 1024
@@ -32,7 +32,7 @@
 namespace CrashHandler {
 
 static std::function<void(HANDLE, DWORD*)> suspendFunc = [](HANDLE thr, DWORD* ret) { *ret = SuspendThread(thr); };
-static std::thread suspendThrd;
+static spring::thread suspendThrd;
 
 
 CRITICAL_SECTION stackLock;
@@ -193,7 +193,7 @@ inline static void StacktraceInline(const char* threadName, LPEXCEPTION_POINTERS
 			//   (which obviously never passes its own handle to Stacktrace)
 			//   risk an allocator deadlock and make the suspend call from a
 			//   helper thread
-			suspendThrd = std::move(std::thread(suspendFunc, hThread, &suspendCntr));
+			suspendThrd = std::move(spring::thread(suspendFunc, hThread, &suspendCntr));
 
 			for (int i = 0; i < 50; i++) {
 				if (suspendCntr != -2) {
@@ -201,7 +201,7 @@ inline static void StacktraceInline(const char* threadName, LPEXCEPTION_POINTERS
 					break;
 				}
 
-				std::this_thread::sleep_for(std::chrono::milliseconds(100));
+				spring::this_thread::sleep_for(std::chrono::milliseconds(100));
 			}
 
 			LOG_RAW_LINE(logLevel, "\t[thread %s with count %lu]", ((suspendCntr == -2)? "deadlocked": "suspended or still running"), suspendCntr);
@@ -495,7 +495,7 @@ LONG CALLBACK ExceptionHandler(LPEXCEPTION_POINTERS e)
 void Install()
 {
 	// pre-allocate stack
-	suspendThrd = std::move(std::thread([]() { return 0; }));
+	suspendThrd = std::move(spring::thread([]() { return 0; }));
 	suspendThrd.join();
 
 	SetUnhandledExceptionFilter(ExceptionHandler);
