@@ -64,9 +64,10 @@ BOOST_AUTO_TEST_CASE( QuadField )
 		plot(start + dir * length);
 
 		// #2: raytrace via QuadField
-		const std::vector<int>& quads = qf.GetQuadsOnRay(start * SQUARE_SIZE, dir, length * SQUARE_SIZE);
-		assert( std::adjacent_find(quads.begin(), quads.end()) == quads.end() ); // check for duplicates
-		for (int qi: quads) {
+		QuadFieldQuery qfQuery;
+		qf.GetQuadsOnRay(qfQuery, start * SQUARE_SIZE, dir, length * SQUARE_SIZE);
+		assert( std::adjacent_find(qfQuery.quads->begin(), qfQuery.quads->end()) == qfQuery.quads->end() ); // check for duplicates
+		for (int qi: *qfQuery.quads) {
 			bitmap[qi] |= 2;
 		}
 
