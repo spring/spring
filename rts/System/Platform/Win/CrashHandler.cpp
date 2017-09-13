@@ -417,11 +417,11 @@ void PrepareStacktrace(const int logLevel) {
 
 void CleanupStacktrace(const int logLevel) {
 	LOG_CLEANUP();
+
 	// Uninitialize IMAGEHLP.DLL
 	SymCleanup(GetCurrentProcess());
 	imageHelpInitialised = false;
 
-	fclose(logFile);
 	LeaveCriticalSection(&stackLock);
 }
 
