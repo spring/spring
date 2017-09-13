@@ -8,6 +8,7 @@
 #include "System/Platform/CrashHandler.h"
 #include "System/Platform/errorhandler.h"
 #include "System/Log/ILog.h"
+#include "System/Log/FileSink.h"
 #include "System/Log/LogSinkHandler.h"
 #include "System/LogOutput.h"
 #include "System/Threading/SpringThreading.h"
@@ -407,7 +408,7 @@ void PrepareStacktrace(const int logLevel) {
 
 	// sidestep any kind of hidden allocation which might cause a deadlock
 	// this does mean the "[f=123456] Error:" prefixes will not be present
-	logFile = fopen((logOutput.GetFilePath()).c_str(), "a");
+	logFile = log_file_getLogFileStream((logOutput.GetFilePath()).c_str());
 
 	// Record list of loaded DLLs.
 	LOG_RAW_LINE(logLevel, "DLL information:");
@@ -455,7 +456,7 @@ static void SigAbrtHandler(int signal)
 /** Called by windows if an exception happens. */
 LONG CALLBACK ExceptionHandler(LPEXCEPTION_POINTERS e)
 {
-	// prologue
+	// prologue; disable registered sinks (info-console, ...)
 	logSinkHandler.SetSinking(false);
 	LOG_RAW_LINE(LOG_LEVEL_ERROR, "Spring %s has crashed.", (SpringVersion::GetFull()).c_str());
 	PrepareStacktrace();

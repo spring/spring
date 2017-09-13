@@ -17,7 +17,7 @@
 
 namespace {
 	struct LogFileDetails {
-		LogFileDetails(FILE* outStream = NULL, const std::string& sections = "",
+		LogFileDetails(FILE* outStream = nullptr, const std::string& sections = "",
 				int minLevel = LOG_LEVEL_ALL, int flushLevel = LOG_LEVEL_ERROR)
 			: outStream(outStream)
 			, sections(sections)
@@ -127,7 +127,7 @@ namespace {
 		const logFiles_t& logFiles = log_file_getLogFiles();
 
 		for (auto lfi = logFiles.begin(); lfi != logFiles.end(); ++lfi) {
-			if (lfi->second.IsLogging(level, section) && (lfi->second.GetOutStream() != NULL)) {
+			if (lfi->second.IsLogging(level, section) && (lfi->second.GetOutStream() != nullptr)) {
 				log_file_writeToFile(lfi->second.GetOutStream(), record, lfi->second.FlushOnWrite(level));
 			}
 		}
@@ -140,7 +140,7 @@ namespace {
 		const logFiles_t& logFiles = log_file_getLogFiles();
 
 		for (auto lfi = logFiles.begin(); lfi != logFiles.end(); ++lfi) {
-			if (lfi->second.GetOutStream() != NULL) {
+			if (lfi->second.GetOutStream() != nullptr) {
 				fflush(lfi->second.GetOutStream());
 			}
 		}
@@ -177,11 +177,11 @@ void log_file_addLogFile(
 	int minLevel,
 	int flushLevel
 ) {
-	assert(filePath != NULL);
+	assert(filePath != nullptr);
 
 	logFiles_t& logFiles = log_file_getLogFiles();
 
-	const std::string sectionsStr = (sections == NULL) ? "" : sections;
+	const std::string sectionsStr = (sections == nullptr) ? "" : sections;
 	const std::string filePathStr = filePath;
 	const auto lfi = logFiles.find(filePathStr);
 
@@ -191,18 +191,33 @@ void log_file_addLogFile(
 
 	FILE* tmpStream = fopen(filePath, "w");
 
-	if (tmpStream == NULL) {
+	if (tmpStream == nullptr) {
 		LOG_L(L_ERROR, "Failed to open log file for writing: %s", filePath);
 		return;
 	}
 
-	setvbuf(tmpStream, NULL, _IOFBF, (BUFSIZ < 8192) ? BUFSIZ : 8192); // limit buffer to 8kB
+	setvbuf(tmpStream, nullptr, _IOFBF, (BUFSIZ < 8192) ? BUFSIZ : 8192); // limit buffer to 8kB
 
 	logFiles[filePathStr] = LogFileDetails(tmpStream, sectionsStr, minLevel, flushLevel);
 }
 
+
+FILE* log_file_getLogFileStream(const char* filePath) {
+	const logFiles_t& logFiles = log_file_getLogFiles();
+
+	for (const auto& p: logFiles) {
+		if (strcmp((p.first).c_str(), filePath) != 0)
+			continue;
+
+		return ((p.second).GetOutStream());
+	}
+
+	return nullptr;
+}
+
+
 void log_file_removeLogFile(const char* filePath) {
-	assert(filePath != NULL);
+	assert(filePath != nullptr);
 
 	logFiles_t& logFiles = log_file_getLogFiles();
 

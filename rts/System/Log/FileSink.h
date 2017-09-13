@@ -33,6 +33,8 @@ extern "C" {
 void log_file_addLogFile(const char* filePath, const char* sections = NULL,
 		int minLevel = LOG_LEVEL_ALL, int flushLevel = LOG_LEVEL_ERROR);
 
+FILE* log_file_getLogFileStream(const char* filePath);
+
 void log_file_removeLogFile(const char* filePath);
 
 void log_file_removeAllLogFiles();
