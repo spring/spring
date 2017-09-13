@@ -19,9 +19,10 @@
 
 #include <new> // set_new_handler
 #include <chrono>
+#include <deque>
 
 
-#define BUFFER_SIZE 1024
+#define MAX_FRAMES 1024
 #define LOG_RAW_LINE(level, fmt, ...) do {                                   \
 	fprintf((level >= LOG_LEVEL_ERROR)? stderr: stdout, fmt, ##__VA_ARGS__); \
 	fprintf((level >= LOG_LEVEL_ERROR)? stderr: stdout, "\n"              ); \
@@ -43,8 +44,6 @@ static int stackLockInit() { InitializeCriticalSection(&stackLock); return 0; }
 const int dummyStackLock = stackLockInit();
 
 // 1MB buffer (1K lines of 1K chars each) should be enough for any trace
-static char traceBuffer[BUFFER_SIZE * BUFFER_SIZE];
-
 static const char* aiLibWarning = "This stacktrace indicates a problem with a skirmish AI.";
 static const char* glLibWarning =
 	"This stacktrace indicates a problem with your graphics card driver. "
@@ -138,6 +137,26 @@ bool InitImageHlpDll()
 	}
 #endif // _MSC_VER >= 1500
 
+#ifdef _MSC_VER
+#define SYMLENGTH 4096
+#endif
+
+// printing while the thread is suspended apparently does
+// allocations, which in turn cause deadlocks.
+// to circumvent this we store all relevant information
+// and only print after the thread is resumed
+struct StacktraceLine {
+	int type;
+
+	char modName[MAX_PATH];
+	DWORD dwModAddr;
+#ifdef _MSC_VER
+	char fileName[MAX_PATH];
+	DWORD lineNumber;
+	char symName[SYMLENGTH];
+	DWORD64 pcOffset;
+#endif
+};
 
 
 /** Print out a stacktrace. */
@@ -163,10 +182,15 @@ inline static void StacktraceInline(const char* threadName, LPEXCEPTION_POINTERS
 	int numFrames = 0;
 	char modName[MAX_PATH];
 
+	const void* initialPC;
+	const void* initialSP;
+	const void* initialFP;
+
+	std::vector<StacktraceLine> stacktraceLines(MAX_FRAMES);
+
 	ZeroMemory(&frame, sizeof(frame));
 	ZeroMemory(&context, sizeof(CONTEXT));
 	memset(modName, 0, sizeof(modName));
-	memset(traceBuffer, 0, sizeof(traceBuffer));
 	assert(logFile != nullptr);
 
 	// NOTE: this line is parsed by the stacktrans script
@@ -194,18 +218,15 @@ inline static void StacktraceInline(const char* threadName, LPEXCEPTION_POINTERS
 			//   (which obviously never passes its own handle to Stacktrace)
 			//   risk an allocator deadlock and make the suspend call from a
 			//   helper thread
-			suspendThrd = std::move(spring::thread(suspendFunc, hThread, &suspendCntr));
+			suspendCntr = SuspendThread(hThread);
 
 			for (int i = 0; i < 50; i++) {
 				if (suspendCntr != -2) {
-					LOG_RAW_LINE(logLevel, "\t[SuspendThread returned %lu after %d iterations]", suspendCntr, i);
 					break;
 				}
 
 				spring::this_thread::sleep_for(std::chrono::milliseconds(100));
 			}
-
-			LOG_RAW_LINE(logLevel, "\t[thread %s with count %lu]", ((suspendCntr == -2)? "deadlocked": "suspended or still running"), suspendCntr);
 		} else {
 			// should never happen
 			LOG_RAW_LINE(logLevel, "\t[attempted to suspend hang-detector thread]");
@@ -215,14 +236,12 @@ inline static void StacktraceInline(const char* threadName, LPEXCEPTION_POINTERS
 		// if still -2 after 50 sleeps, assume a deadlock and try to get the context anyway
 		if (suspendCntr == -1) {
 			LOG_RAW_LINE(logLevel, "\t[failed to suspend thread]");
-			suspendThrd.join();
 			return;
 		}
 
 		if (GetThreadContext(hThread, &context) == 0) {
-			LOG_RAW_LINE(logLevel, "\t[failed to get thread context]");
 			ResumeThread(hThread);
-			suspendThrd.join();
+			LOG_RAW_LINE(logLevel, "\t[failed to get thread context]");
 			return;
 		}
 
@@ -235,8 +254,8 @@ inline static void StacktraceInline(const char* threadName, LPEXCEPTION_POINTERS
 		}
 
 		if (GetThreadContext(hThread, &context) == 0) {
-			LOG_RAW_LINE(logLevel, "\t[failed to get thread context]");
 			ResumeThread(hThread);
+			LOG_RAW_LINE(logLevel, "\t[failed to get thread context]");
 			return;
 		}
 		#endif
@@ -293,12 +312,9 @@ inline static void StacktraceInline(const char* threadName, LPEXCEPTION_POINTERS
 		frame.AddrStack.Mode = AddrModeFlat;
 		frame.AddrFrame.Mode = AddrModeFlat;
 
-		const void* pc = reinterpret_cast<const void*>(frame.AddrPC.Offset);
-		const void* sp = reinterpret_cast<const void*>(frame.AddrStack.Offset);
-		const void* fp = reinterpret_cast<const void*>(frame.AddrFrame.Offset);
-
-		// log initial context
-		LOG_RAW_LINE(logLevel, "\t[ProgCtr=%p StackPtr=%p FramePtr=%p]", pc, sp, fp);
+		initialPC = reinterpret_cast<const void*>(frame.AddrPC.Offset);
+		initialSP = reinterpret_cast<const void*>(frame.AddrStack.Offset);
+		initialFP = reinterpret_cast<const void*>(frame.AddrFrame.Offset);
 	}
 
 
@@ -307,7 +323,7 @@ inline static void StacktraceInline(const char* threadName, LPEXCEPTION_POINTERS
 		if (frame.AddrFrame.Offset == 0)
 			break;
 		#endif
-		if (numFrames >= BUFFER_SIZE)
+		if (numFrames >= MAX_FRAMES)
 			break;
 
 
@@ -319,7 +335,6 @@ inline static void StacktraceInline(const char* threadName, LPEXCEPTION_POINTERS
 
 
 #ifdef _MSC_VER
-		const int SYMLENGTH = 4096;
 		char symbuf[sizeof(SYMBOL_INFO) + SYMLENGTH];
 
 		PSYMBOL_INFO pSym = reinterpret_cast<SYMBOL_INFO*>(symbuf);
@@ -334,7 +349,13 @@ inline static void StacktraceInline(const char* threadName, LPEXCEPTION_POINTERS
 			DWORD displacement;
 			SymGetLineFromAddr64(GetCurrentProcess(), frame.AddrPC.Offset, &displacement, &line);
 
-			SNPRINTF(traceBuffer + numFrames * BUFFER_SIZE, BUFFER_SIZE, addrFmts[0], numFrames , line.FileName ? line.FileName : "<unknown>", line.LineNumber, pSym->Name, frame.AddrPC.Offset);
+			StacktraceLine& stl = stacktraceLines[numFrames];
+
+			stl.type = 0;
+			strncpy(stl.fileName, line.FileName ? line.FileName : "<unknown>", MAX_PATH);
+			stl.lineNumber = line.LineNumber;
+			strncpy(stl.symName, pSym->Name, SYMLENGTH);
+			stl.pcOffset = frame.AddrPC.Offset;
 		} else
 #endif
 		{
@@ -347,7 +368,12 @@ inline static void StacktraceInline(const char* threadName, LPEXCEPTION_POINTERS
 				dwModAddr = frame.AddrPC.Offset - dwModBase;
 			}
 
-			SNPRINTF(traceBuffer + numFrames * BUFFER_SIZE, BUFFER_SIZE, addrFmts[1], numFrames, modName, dwModAddr);
+			stacktraceLines.emplace_back();
+			StacktraceLine& stl = stacktraceLines[numFrames];
+
+			stl.type = 1;
+			strncpy(stl.modName, modName, MAX_PATH);
+			stl.dwModAddr = dwModAddr;
 		}
 
 		{
@@ -371,17 +397,33 @@ inline static void StacktraceInline(const char* threadName, LPEXCEPTION_POINTERS
 	if (wdThread)
 		ResumeThread(hThread);
 
+	// log initial context
+	LOG_RAW_LINE(logLevel, "\t[ProgCtr=%p StackPtr=%p FramePtr=%p]", initialPC, initialSP, initialFP);
 	if (aiLibFound)
 		LOG_RAW_LINE(logLevel, "%s", aiLibWarning);
 	if (glLibFound)
 		LOG_RAW_LINE(logLevel, "%s", glLibWarning);
 
 	for (int i = 0; i < numFrames; ++i) {
-		LOG_RAW_LINE(logLevel, "%s", traceBuffer + i * BUFFER_SIZE);
+		const StacktraceLine& stl = stacktraceLines[i];
+		switch (stl.type) {
+#ifdef _MSC_VER
+			case 0: {
+				LOG_RAW_LINE(logLevel, addrFmts[stl.type], i, stl.fileName, stl.lineNumber, stl.symName, stl.pcOffset);
+				break;
+			}
+#endif
+			case 1: {
+				LOG_RAW_LINE(logLevel, addrFmts[stl.type], i, stl.modName, stl.dwModAddr);
+				break;
+			}
+			default: {
+				assert(false);
+				break;
+			}
+		}
 	}
 
-	if (suspendThrd.joinable())
-		suspendThrd.join();
 }
 
 
