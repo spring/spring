@@ -31,13 +31,13 @@ public:
 			pages.emplace_back();
 
 			i = pages.size() - 1;
-			m = &pages[curr_page_index = i][0];
+			m = pages[curr_page_index = i].data();
 			p = new (m) T(std::forward<A>(a)...);
 		} else {
 			// must pop before ctor runs; objects can be created recursively
 			i = spring::VectorBackPop(indcs);
 
-			m = &pages[curr_page_index = i][0];
+			m = pages[curr_page_index = i].data();
 			p = new (m) T(std::forward<A>(a)...);
 		}
 
@@ -57,7 +57,7 @@ public:
 		const auto pair = std::pair<void*, size_t>{iter->first, iter->second};
 
 		spring::SafeDestruct(p);
-		std::memset(&pages[pair.second][0], 0, page_size());
+		std::memset(pages[pair.second].data(), 0, page_size());
 
 		// must push after dtor runs, since that can trigger *another* ctor call
 		// by proxy (~CUnit -> ~CObject -> DependentDied -> CommandAI::FinishCmd
@@ -96,7 +96,7 @@ public:
 	}
 
 private:
-	std::deque< uint8_t[S] > pages;
+	std::deque<std::array<uint8_t,S>> pages;
 	std::vector<size_t> indcs;
 
 	// <pointer, page index> (non-intrusive)
@@ -128,11 +128,11 @@ public:
 
 		if (free_page_count == 0) {
 			i = used_page_count++;
-			m = &pages[curr_page_index = i][0];
+			m = pages[curr_page_index = i].data();
 			p = new (m) T(std::forward<A>(a)...);
 		} else {
 			i = indcs[--free_page_count];
-			m = &pages[curr_page_index = i][0];
+			m = pages[curr_page_index = i].data();
 			p = new (m) T(std::forward<A>(a)...);
 		}
 
@@ -178,8 +178,8 @@ public:
 
 	void reserve(size_t) {} // no-op
 	void clear() {
-		std::memset(&pages[0], 0, total_size());
-		std::memset(&indcs[0], 0, num_pages());
+		std::memset(pages.data(), 0, total_size());
+		std::memset(indcs.data(), 0, num_pages());
 
 		used_page_count = 0;
 		free_page_count = 0;
@@ -190,7 +190,7 @@ public:
 	}
 
 private:
-	std::array<uint8_t[S], N> pages;
+	std::array<std::array<uint8_t, S>, N> pages;
 	std::array<size_t, N> indcs;
 
 	size_t used_page_count = 0;
