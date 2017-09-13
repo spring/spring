@@ -97,17 +97,18 @@ void CFireProjectile::Update()
 		}
 		if (!(ttl & 31)) {
 			// copy on purpose, since the below can call Lua
-			const std::vector<CFeature*> features = quadField->GetFeaturesExact(emitPos + wind.GetCurrentWind() * 0.7f, emitRadius * 2);
-			const std::vector<CUnit*> units = quadField->GetUnitsExact(emitPos + wind.GetCurrentWind() * 0.7f, emitRadius * 2);
+			QuadFieldQuery qfQuery;
+			quadField->GetFeaturesExact(qfQuery, emitPos + wind.GetCurrentWind() * 0.7f, emitRadius * 2);
+			quadField->GetUnitsExact(qfQuery, emitPos + wind.GetCurrentWind() * 0.7f, emitRadius * 2);
 
-			for (CFeature* f: features) {
+			for (CFeature* f: *qfQuery.features) {
 				if (gsRNG.NextFloat() > 0.8f) {
 					f->StartFire();
 				}
 			}
 
 			const DamageArray fireDmg(30);
-			for (CUnit* u: units) {
+			for (CUnit* u: *qfQuery.units) {
 				u->DoDamage(fireDmg, ZeroVector, NULL, -CSolidObject::DAMAGE_EXTSOURCE_FIRE, -1);
 			}
 		}

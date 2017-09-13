@@ -564,9 +564,10 @@ bool CStrafeAirMoveType::HandleCollisions(bool checkCollisions) {
 		// check for collisions if not being built or not taking off
 		if (checkCollisions) {
 			// copy on purpose, since the below can call Lua
-			const std::vector<CUnit*> nearUnits = quadField->GetUnitsExact(pos, owner->radius + 6);
+			QuadFieldQuery qfQuery;
+			quadField->GetUnitsExact(qfQuery, pos, owner->radius + 6);
 
-			for (CUnit* unit: nearUnits) {
+			for (CUnit* unit: *qfQuery.units) {
 				const bool unloadingUnit = (unit->unloadingTransportId == owner->id);
 				const bool unloadingOwner = (owner->unloadingTransportId == unit->id);
 

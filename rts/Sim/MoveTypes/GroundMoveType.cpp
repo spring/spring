@@ -931,15 +931,14 @@ void CGroundMoveType::CheckCollisionSkid()
 
 	const UnitDef* colliderUD = collider->unitDef;
 	// copy on purpose, since the below can call Lua
-	const vector<CUnit*> nearUnits = quadField->GetUnitsExact(pos, collider->radius);
-	const vector<CFeature*> nearFeatures = quadField->GetFeaturesExact(pos, collider->radius);
+	QuadFieldQuery qfQuery;
+	quadField->GetUnitsExact(qfQuery, pos, collider->radius);
+	quadField->GetFeaturesExact(qfQuery, pos, collider->radius);
 
 	vector<CUnit*>::const_iterator ui;
 	vector<CFeature*>::const_iterator fi;
 
-	for (ui = nearUnits.begin(); ui != nearUnits.end(); ++ui) {
-		CUnit* collidee = *ui;
-
+	for (CUnit* collidee: *qfQuery.units) {
 		if (!collidee->HasCollidableStateBit(CSolidObject::CSTATE_BIT_SOLIDOBJECTS))
 			continue;
 
@@ -1009,9 +1008,7 @@ void CGroundMoveType::CheckCollisionSkid()
 		}
 	}
 
-	for (fi = nearFeatures.begin(); fi != nearFeatures.end(); ++fi) {
-		CFeature* collidee = *fi;
-
+	for (CFeature* collidee: *qfQuery.features) {
 		if (!collidee->HasCollidableStateBit(CSolidObject::CSTATE_BIT_SOLIDOBJECTS))
 			continue;
 
@@ -1125,9 +1122,10 @@ float3 CGroundMoveType::GetObstacleAvoidanceDir(const float3& desiredDir) {
 	const float avoidanceRadius = std::max(currentSpeed, 1.0f) * (avoider->radius * 2.0f);
 	const float avoiderRadius = FOOTPRINT_RADIUS(avoiderMD->xsize, avoiderMD->zsize, 1.0f);
 
-	const vector<CSolidObject*>& objects = quadField->GetSolidsExact(avoider->pos, avoidanceRadius, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS);
+	QuadFieldQuery qfQuery;
+	quadField->GetSolidsExact(qfQuery, avoider->pos, avoidanceRadius, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS);
 
-	for (const CSolidObject* avoidee: objects) {
+	for (const CSolidObject* avoidee: *qfQuery.solids) {
 		const MoveDef* avoideeMD = avoidee->moveDef;
 		const UnitDef* avoideeUD = dynamic_cast<const UnitDef*>(avoidee->GetDef());
 
@@ -1804,13 +1802,14 @@ void CGroundMoveType::HandleUnitCollisions(
 	const float searchRadius = colliderSpeed + (colliderRadius * 2.0f);
 
 	// copy on purpose, since the below can call Lua
-	const std::vector<CUnit*> nearUnits = quadField->GetUnitsExact(collider->pos, searchRadius);
+	QuadFieldQuery qfQuery;
+	quadField->GetUnitsExact(qfQuery, collider->pos, searchRadius);
 
 	// NOTE: probably too large for most units (eg. causes tree falling animations to be skipped)
 	const int dirSign = Sign(int(!reversing));
 	const float3 crushImpulse = collider->speed * collider->mass * dirSign;
 
-	for (CUnit* collidee: nearUnits) {
+	for (CUnit* collidee: *qfQuery.units) {
 		if (collidee == collider) continue;
 		if (collidee->IsSkidding()) continue;
 		if (collidee->IsFlying()) continue;
@@ -2022,14 +2021,13 @@ void CGroundMoveType::HandleFeatureCollisions(
 	const float searchRadius = colliderSpeed + (colliderRadius * 2.0f);
 
 	// copy on purpose, since DoDamage below can call Lua
-	const std::vector<CFeature*> nearFeatures = quadField->GetFeaturesExact(collider->pos, searchRadius);
-	      std::vector<CFeature*>::const_iterator fit;
+	QuadFieldQuery qfQuery;
+	quadField->GetFeaturesExact(qfQuery, collider->pos, searchRadius);
 
 	const int dirSign = Sign(int(!reversing));
 	const float3 crushImpulse = collider->speed * collider->mass * dirSign;
 
-	for (fit = nearFeatures.begin(); fit != nearFeatures.end(); ++fit) {
-		CFeature* collidee = const_cast<CFeature*>(*fit);
+	for (CFeature* collidee: *qfQuery.features) {
 		// const FeatureDef* collideeFD = collidee->def;
 
 		// use the collidee's Feature (not FeatureDef) footprint as radius

@@ -1477,9 +1477,9 @@ int CBuilderCAI::FindReclaimTarget(const float3& pos, float radius, unsigned cha
 	int rid = -1;
 
 	if (recUnits || recEnemy || recEnemyOnly) {
-		const std::vector<CUnit*>& units = quadField->GetUnitsExact(pos, radius, false);
-		for (std::vector<CUnit*>::const_iterator ui = units.begin(); ui != units.end(); ++ui) {
-			const CUnit* u = *ui;
+		QuadFieldQuery qfQuery;
+		quadField->GetUnitsExact(qfQuery, pos, radius, false);
+		for (const CUnit* u: *qfQuery.units) {
 
 			if (u == owner)
 				continue;
@@ -1517,10 +1517,10 @@ int CBuilderCAI::FindReclaimTarget(const float3& pos, float radius, unsigned cha
 	if ((!best || !stationary) && !recEnemyOnly) {
 		best = NULL;
 		const CTeam* team = teamHandler->Team(owner->team);
-		const std::vector<CFeature*>& features = quadField->GetFeaturesExact(pos, radius, false);
+		QuadFieldQuery qfQuery;
+		quadField->GetFeaturesExact(qfQuery, pos, radius, false);
 		bool metal = false;
-		for (std::vector<CFeature*>::const_iterator fi = features.begin(); fi != features.end(); ++fi) {
-			const CFeature* f = *fi;
+		for (const CFeature* f: *qfQuery.features) {
 			if (f->def->reclaimable && (recSpecial || f->def->autoreclaim) &&
 				(!recNonRez || !(f->def->destructable && f->udef != NULL))
 			) {
@@ -1588,13 +1588,13 @@ bool CBuilderCAI::FindResurrectableFeatureAndResurrect(const float3& pos,
                                                        unsigned char options,
 													   bool freshOnly)
 {
-	const std::vector<CFeature*> &features = quadField->GetFeaturesExact(pos, radius, false);
+	QuadFieldQuery qfQuery;
+	quadField->GetFeaturesExact(qfQuery, pos, radius, false);
 
 	const CFeature* best = NULL;
 	float bestDist = 1.0e30f;
 
-	for (std::vector<CFeature*>::const_iterator fi = features.begin(); fi != features.end(); ++fi) {
-		const CFeature* f = *fi;
+	for (const CFeature* f: *qfQuery.features) {
 		if (f->def->destructable && f->udef != NULL) {
 			if (!f->IsInLosForAllyTeam(owner->allyteam)) {
 				continue;
@@ -1631,16 +1631,15 @@ bool CBuilderCAI::FindCaptureTargetAndCapture(const float3& pos, float radius,
                                               unsigned char options,
 											  bool healthyOnly)
 {
-	const std::vector<CUnit*> &cu = quadField->GetUnitsExact(pos, radius, false);
+	QuadFieldQuery qfQuery;
+	quadField->GetUnitsExact(qfQuery, pos, radius, false);
 	std::vector<CUnit*>::const_iterator ui;
 
 	const CUnit* best = NULL;
 	float bestDist = 1.0e30f;
 	bool stationary = false;
 
-	for (ui = cu.begin(); ui != cu.end(); ++ui) {
-		CUnit* unit = *ui;
-
+	for (const CUnit* unit: *qfQuery.units) {
 		if ((((options & CONTROL_KEY) && owner->team != unit->team) ||
 			!teamHandler->Ally(owner->allyteam, unit->allyteam)) && (unit != owner) &&
 			(unit->losStatus[owner->allyteam] & (LOS_INRADAR|LOS_INLOS)) &&
@@ -1680,7 +1679,8 @@ bool CBuilderCAI::FindRepairTargetAndRepair(const float3& pos, float radius,
                                             bool attackEnemy,
 											bool builtOnly)
 {
-	const std::vector<CUnit*>& cu = quadField->GetUnitsExact(pos, radius, false);
+	QuadFieldQuery qfQuery;
+	quadField->GetUnitsExact(qfQuery, pos, radius, false);
 	const CUnit* bestUnit = NULL;
 
 	const float maxSpeed = owner->moveType->GetMaxSpeed();
@@ -1691,9 +1691,7 @@ bool CBuilderCAI::FindRepairTargetAndRepair(const float3& pos, float radius,
 	bool trySelfRepair = false;
 	bool stationary = false;
 
-	for (std::vector<CUnit*>::const_iterator ui = cu.begin(); ui != cu.end(); ++ui) {
-		const CUnit* unit = *ui;
-
+	for (const CUnit* unit: *qfQuery.units) {
 		if (teamHandler->Ally(owner->allyteam, unit->allyteam)) {
 			if (!haveEnemy && (unit->health < unit->maxHealth)) {
 				// don't help allies build unless set on roam

@@ -656,12 +656,13 @@ void CFeature::EmitGeoSmoke()
 {
 	if ((gs->frameNum + id % 5) % 5 == 0) {
 		// Find the unit closest to the geothermal
-		const vector<CSolidObject*>& objs = quadField->GetSolidsExact(pos, 0.0f, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS);
+		QuadFieldQuery qfQuery;
+		quadField->GetSolidsExact(qfQuery, pos, 0.0f, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS);
 		float bestDist = std::numeric_limits<float>::max();
 
 		CSolidObject* so = nullptr;
 
-		for (CSolidObject* obj: objs) {
+		for (CSolidObject* obj: *qfQuery.solids) {
 			const float dist = (obj->pos - pos).SqLength();
 
 			if (dist > bestDist)

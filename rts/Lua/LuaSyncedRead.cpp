@@ -2013,8 +2013,7 @@ int LuaSyncedRead::GetTeamUnitCount(lua_State* L)
 			lua_createtable(L, units.size(), 0);                    \
 		}                                                           \
                                                                     \
-		for (auto it = units.cbegin(); it != units.cend(); ++it) {  \
-			const CUnit* unit = *it;                                \
+		for (const CUnit* unit: units) {                   \
                                                                     \
 			ALLEGIANCE_TEST;                                        \
 			CUSTOM_TEST;                                            \
@@ -2085,7 +2084,9 @@ int LuaSyncedRead::GetUnitsInRectangle(lua_State* L)
 
 #define RECTANGLE_TEST ; // no test, GetUnitsExact is sufficient
 
-	const vector<CUnit*>& units = quadField->GetUnitsExact(mins, maxs);
+	QuadFieldQuery qfQuery;
+	quadField->GetUnitsExact(qfQuery, mins, maxs);
+	const auto& units = (*qfQuery.units);
 
 	if (allegiance >= 0) {
 		if (IsAlliedTeam(L, allegiance)) {
@@ -2132,7 +2133,9 @@ int LuaSyncedRead::GetUnitsInBox(lua_State* L)
 		continue;                     \
 	}
 
-	const vector<CUnit*>& units = quadField->GetUnitsExact(mins, maxs);
+	QuadFieldQuery qfQuery;
+	quadField->GetUnitsExact(qfQuery, mins, maxs);
+	const auto& units = (*qfQuery.units);
 
 	if (allegiance >= 0) {
 		if (IsAlliedTeam(L, allegiance)) {
@@ -2180,7 +2183,9 @@ int LuaSyncedRead::GetUnitsInCylinder(lua_State* L)
 		continue;                                 \
 	}                                           \
 
-	const vector<CUnit*>& units = quadField->GetUnitsExact(mins, maxs);
+	QuadFieldQuery qfQuery;
+	quadField->GetUnitsExact(qfQuery, mins, maxs);
+	const auto& units = (*qfQuery.units);
 
 	if (allegiance >= 0) {
 		if (IsAlliedTeam(L, allegiance)) {
@@ -2232,7 +2237,9 @@ int LuaSyncedRead::GetUnitsInSphere(lua_State* L)
 		continue;                                 \
 	}                                           \
 
-	const vector<CUnit*>& units = quadField->GetUnitsExact(mins, maxs);
+	QuadFieldQuery qfQuery;
+	quadField->GetUnitsExact(qfQuery, mins, maxs);
+	const auto& units = (*qfQuery.units);
 
 	if (allegiance >= 0) {
 		if (IsAlliedTeam(L, allegiance)) {
@@ -2450,8 +2457,9 @@ int LuaSyncedRead::GetFeaturesInRectangle(lua_State* L)
 	const float3 mins(xmin, 0.0f, zmin);
 	const float3 maxs(xmax, 0.0f, zmax);
 
-	const vector<CFeature*>& rectFeatures = quadField->GetFeaturesExact(mins, maxs);
-	ProcessFeatures(L, rectFeatures);
+	QuadFieldQuery qfQuery;
+	quadField->GetFeaturesExact(qfQuery, mins, maxs);
+	ProcessFeatures(L, *qfQuery.features);
 	return 1;
 }
 
@@ -2464,8 +2472,9 @@ int LuaSyncedRead::GetFeaturesInSphere(lua_State* L)
 
 	const float3 pos(x, y, z);
 
-	const vector<CFeature*>& sphFeatures = quadField->GetFeaturesExact(pos, rad, true);
-	ProcessFeatures(L, sphFeatures);
+	QuadFieldQuery qfQuery;
+	quadField->GetFeaturesExact(qfQuery, pos, rad, true);
+	ProcessFeatures(L, *qfQuery.features);
 	return 1;
 }
 
@@ -2477,8 +2486,9 @@ int LuaSyncedRead::GetFeaturesInCylinder(lua_State* L)
 
 	const float3 pos(x, 0, z);
 
-	const vector<CFeature*>& cylFeatures = quadField->GetFeaturesExact(pos, rad, false);
-	ProcessFeatures(L, cylFeatures);
+	QuadFieldQuery qfQuery;
+	quadField->GetFeaturesExact(qfQuery, pos, rad, false);
+	ProcessFeatures(L, *qfQuery.features);
 	return 1;
 }
 
@@ -2495,8 +2505,9 @@ int LuaSyncedRead::GetProjectilesInRectangle(lua_State* L)
 	const float3 mins(xmin, 0.0f, zmin);
 	const float3 maxs(xmax, 0.0f, zmax);
 
-	const vector<CProjectile*>& rectProjectiles = quadField->GetProjectilesExact(mins, maxs);
-	const unsigned int rectProjectileCount = rectProjectiles.size();
+	QuadFieldQuery qfQuery;
+	quadField->GetProjectilesExact(qfQuery, mins, maxs);
+	const unsigned int rectProjectileCount = qfQuery.projectiles->size();
 	unsigned int arrayIndex = 1;
 
 	lua_createtable(L, rectProjectileCount, 0);
@@ -2504,7 +2515,7 @@ int LuaSyncedRead::GetProjectilesInRectangle(lua_State* L)
 	if (CLuaHandle::GetHandleReadAllyTeam(L) < 0) {
 		if (CLuaHandle::GetHandleFullRead(L)) {
 			for (unsigned int i = 0; i < rectProjectileCount; i++) {
-				const CProjectile* pro = rectProjectiles[i];
+				const CProjectile* pro = (*qfQuery.projectiles)[i];
 
 				// filter out unsynced projectiles, the SyncedRead
 				// projecile Get* functions accept only synced ID's
@@ -2523,7 +2534,7 @@ int LuaSyncedRead::GetProjectilesInRectangle(lua_State* L)
 		}
 	} else {
 		for (unsigned int i = 0; i < rectProjectileCount; i++) {
-			const CProjectile* pro = rectProjectiles[i];
+			const CProjectile* pro = (*qfQuery.projectiles)[i];
 
 			// see above
 			if (!pro->synced)

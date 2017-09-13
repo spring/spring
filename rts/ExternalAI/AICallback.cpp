@@ -897,9 +897,10 @@ int CAICallback::GetEnemyUnits(int* unitIds, const float3& pos, float radius,
 		int unitIds_max)
 {
 	verify();
-	const std::vector<CUnit*>& units = quadField->GetUnitsExact(pos, radius);
+	QuadFieldQuery qfQuery;
+	quadField->GetUnitsExact(qfQuery, pos, radius);
 	myAllyTeamId = teamHandler->AllyTeam(team);
-	return FilterUnitsVector(units, unitIds, unitIds_max, &unit_IsEnemyAndInLos);
+	return FilterUnitsVector(*qfQuery.units, unitIds, unitIds_max, &unit_IsEnemyAndInLos);
 }
 
 
@@ -914,9 +915,10 @@ int CAICallback::GetFriendlyUnits(int* unitIds, const float3& pos, float radius,
 		int unitIds_max)
 {
 	verify();
-	const std::vector<CUnit*>& units = quadField->GetUnitsExact(pos, radius);
+	QuadFieldQuery qfQuery;
+	quadField->GetUnitsExact(qfQuery, pos, radius);
 	myAllyTeamId = teamHandler->AllyTeam(team);
-	return FilterUnitsVector(units, unitIds, unitIds_max, &unit_IsFriendly);
+	return FilterUnitsVector(*qfQuery.units, unitIds, unitIds_max, &unit_IsFriendly);
 }
 
 
@@ -930,9 +932,10 @@ int CAICallback::GetNeutralUnits(int* unitIds, int unitIds_max)
 int CAICallback::GetNeutralUnits(int* unitIds, const float3& pos, float radius, int unitIds_max)
 {
 	verify();
-	const std::vector<CUnit*>& units = quadField->GetUnitsExact(pos, radius);
+	QuadFieldQuery qfQuery;
+	quadField->GetUnitsExact(qfQuery, pos, radius);
 	myAllyTeamId = teamHandler->AllyTeam(team);
-	return FilterUnitsVector(units, unitIds, unitIds_max, &unit_IsNeutralAndInLosOrRadar);
+	return FilterUnitsVector(*qfQuery.units, unitIds, unitIds_max, &unit_IsNeutralAndInLosOrRadar);
 }
 
 
@@ -1252,14 +1255,12 @@ int CAICallback::GetFeatures(int* featureIds, int featureIds_sizeMax, const floa
 	int featureIds_size = 0;
 
 	verify();
-	const std::vector<CFeature*>& ft = quadField->GetFeaturesExact(pos, radius);
+	QuadFieldQuery qfQuery;
+	quadField->GetFeaturesExact(qfQuery, pos, radius);
 	const int allyteam = teamHandler->AllyTeam(team);
 
 	std::vector<CFeature*>::const_iterator it;
-	for (it = ft.begin(); (it != ft.end()) && (featureIds_size < featureIds_sizeMax); ++it) {
-		const CFeature* f = *it;
-		assert(f);
-
+	for (const CFeature* f: *qfQuery.features) {
 		if (f->IsInLosForAllyTeam(allyteam)) {
 			// if it is NULL, the caller only wants to know
 			// the number of features

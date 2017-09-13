@@ -351,14 +351,15 @@ void CGameHelper::Explosion(const CExplosionParams& params) {
 template<typename TFilter, typename TQuery>
 static inline void QueryUnits(TFilter filter, TQuery& query)
 {
-	const auto& quads = quadField->GetQuads(query.pos, query.radius);
+	QuadFieldQuery qfQuery;
+	quadField->GetQuads(qfQuery, query.pos, query.radius);
 	const int tempNum = gs->GetTempNum();
 
 	for (int t = 0; t < teamHandler->ActiveAllyTeams(); ++t) { //FIXME
 		if (!filter.Team(t))
 			continue;
 
-		for (const int qi: quads) {
+		for (const int qi: *qfQuery.quads) {
 			const auto& allyTeamUnits = quadField->GetQuad(qi).teamUnits[t];
 
 			for (CUnit* u: allyTeamUnits) {
@@ -645,14 +646,15 @@ void CGameHelper::GenerateWeaponTargets(const CWeapon* weapon, const CUnit* avoi
 	const bool paralyzer  = (weapon->damages->paralyzeDamageTime != 0);
 
 	// copy on purpose since the below calls lua
-	const std::vector<int> quads = quadField->GetQuads(pos, radius + (aHeight - std::max(0.0f, readMap->GetInitMinHeight())) * heightMod);
+	QuadFieldQuery qfQuery;
+	quadField->GetQuads(qfQuery, pos, radius + (aHeight - std::max(0.0f, readMap->GetInitMinHeight())) * heightMod);
 	const int tempNum = gs->GetTempNum();
 
 	for (int t = 0; t < teamHandler->ActiveAllyTeams(); ++t) {
 		if (teamHandler->Ally(owner->allyteam, t))
 			continue;
 
-		for (const int qi: quads) {
+		for (const int qi: *qfQuery.quads) {
 			const std::vector<CUnit*>& allyTeamUnits = quadField->GetQuad(qi).teamUnits[t];
 
 			for (CUnit* targetUnit: allyTeamUnits) {
@@ -820,10 +822,11 @@ void CGameHelper::GetEnemyUnitsNoLosTest(const float3& pos, float searchRadius, 
 void CGameHelper::BuggerOff(float3 pos, float radius, bool spherical, bool forced, int teamId, CUnit* excludeUnit)
 {
 	// copy on purpose since BuggerOff can call risky stuff
-	const std::vector<CUnit*> units = quadField->GetUnitsExact(pos, radius + SQUARE_SIZE, spherical);
+	QuadFieldQuery qfQuery;
+	quadField->GetUnitsExact(qfQuery, pos, radius + SQUARE_SIZE, spherical);
 	const int allyTeamId = teamHandler->AllyTeam(teamId);
 
-	for (CUnit* u: units) {
+	for (CUnit* u: *qfQuery.units) {
 		if (u == excludeUnit)
 			continue;
 		// don't send BuggerOff commands to enemy units
@@ -1074,18 +1077,19 @@ CGameHelper::BuildSquareStatus CGameHelper::TestUnitBuildSquare(
 	if (buildInfo.def->needGeo) {
 		canBuild = BUILDSQUARE_BLOCKED;
 
-		const std::vector<CFeature*>& features = quadField->GetFeaturesExact(pos, std::max(xsize, zsize) * 6);
+		QuadFieldQuery qfQuery;
+		quadField->GetFeaturesExact(qfQuery, pos, std::max(xsize, zsize) * 6);
 
 		const int mindx = xsize * (SQUARE_SIZE >> 1) - (SQUARE_SIZE >> 1);
 		const int mindz = zsize * (SQUARE_SIZE >> 1) - (SQUARE_SIZE >> 1);
 
 		// look for a nearby geothermal feature if we need one
-		for (std::vector<CFeature*>::const_iterator fi = features.begin(); fi != features.end(); ++fi) {
-			if (!(*fi)->def->geoThermal)
+		for (const CFeature* f: *qfQuery.features) {
+			if (!f->def->geoThermal)
 				continue;
 
-			const float dx = math::fabs((*fi)->pos.x - pos.x);
-			const float dz = math::fabs((*fi)->pos.z - pos.z);
+			const float dx = math::fabs(f->pos.x - pos.x);
+			const float dz = math::fabs(f->pos.z - pos.z);
 
 			if (dx < mindx && dz < mindz) {
 				canBuild = BUILDSQUARE_OPEN;

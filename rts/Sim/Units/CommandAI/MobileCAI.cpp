@@ -1503,12 +1503,13 @@ bool CMobileCAI::FindEmptySpot(const CUnit* unloadee, const float3& center, floa
 		// passing spread as query-radius ensures units are spaced at least
 		// this far apart, since <units> will be non-empty if pos is closer
 		// to a previous unloadee than <spread> elmos
-		const std::vector<CSolidObject*>& units = quadField->GetSolidsExact(pos, spread, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS);
+		QuadFieldQuery qfQuery;
+		quadField->GetSolidsExact(qfQuery, pos, spread, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS);
 
-		if (unitDef->IsAirUnit() && (units.size() > 1 || (units.size() == 1 && units[0] != owner)))
+		if (unitDef->IsAirUnit() && (qfQuery.solids->size() > 1 || (qfQuery.solids->size() == 1 && (*qfQuery.solids)[0] != owner)))
 			continue;
 		// ground-transports want the sampled position to be entirely free
-		if (!unitDef->IsAirUnit() && !units.empty())
+		if (!unitDef->IsAirUnit() && !qfQuery.solids->empty())
 			continue;
 
 		found = pos;
@@ -1523,8 +1524,10 @@ CUnit* CMobileCAI::FindUnitToTransport(float3 center, float radius)
 {
 	CUnit* bestUnit = nullptr;
 	float bestDist = std::numeric_limits<float>::max();
-
-	for (CUnit* unit: quadField->GetUnitsExact(center, radius)) {
+	
+	QuadFieldQuery qfQuery;
+	quadField->GetUnitsExact(qfQuery, center, radius);
+	for (CUnit* unit: *qfQuery.units) {
 		const float dist = unit->pos.SqDistance2D(owner->pos);
 
 		if (unit->loadingTransportId != -1 && unit->loadingTransportId != owner->id) {
@@ -1597,9 +1600,10 @@ bool CMobileCAI::SpotIsClearIgnoreSelf(float3 pos, CUnit* unloadee)
 
 	const float radius = std::max(1.0f, math::ceil(unloadee->radius / SQUARE_SIZE)) * SQUARE_SIZE;
 
-	const std::vector<CSolidObject*>& units = quadField->GetSolidsExact(pos, radius, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS);
+	QuadFieldQuery qfQuery;
+	quadField->GetSolidsExact(qfQuery, pos, radius, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS);
 
-	for (auto objectsIt = units.begin(); objectsIt != units.end(); ++objectsIt) {
+	for (auto objectsIt = qfQuery.solids->begin(); objectsIt != qfQuery.solids->end(); ++objectsIt) {
 		// check if the units are in the transport
 		bool found = false;
 

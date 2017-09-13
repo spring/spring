@@ -202,7 +202,8 @@ float TraceRay(
 	if (scanForFeatures || scanForAnyUnits) {
 		CollisionQuery cq;
 
-		const auto& quads = quadField->GetQuadsOnRay(pos, dir, traceLength);
+		QuadFieldQuery qfQuery;
+		quadField->GetQuadsOnRay(qfQuery, pos, dir, traceLength);
 
 		// locally point somewhere non-NULL; we cannot pass hitColQuery
 		// to DetectHit directly because each call resets it internally
@@ -211,7 +212,7 @@ float TraceRay(
 
 		// feature intersection
 		if (scanForFeatures) {
-			for (const int quadIdx: quads) {
+			for (const int quadIdx: *qfQuery.quads) {
 				const CQuadField::Quad& quad = quadField->GetQuad(quadIdx);
 
 				for (CFeature* f: quad.features) {
@@ -239,7 +240,7 @@ float TraceRay(
 
 		// unit intersection
 		if (scanForAnyUnits) {
-			for (const int quadIdx: quads) {
+			for (const int quadIdx: *qfQuery.quads) {
 				const CQuadField::Quad& quad = quadField->GetQuad(quadIdx);
 
 				for (CUnit* u: quad.units) {
@@ -307,9 +308,10 @@ void TraceRayShields(
 ) {
 	CollisionQuery cq;
 
-	const auto& quads = quadField->GetQuadsOnRay(start, dir, length);
+	QuadFieldQuery qfQuery;
+	quadField->GetQuadsOnRay(qfQuery, start, dir, length);
 
-	for (const int quadIdx: quads) {
+	for (const int quadIdx: *qfQuery.quads) {
 		const CQuadField::Quad& quad = quadField->GetQuad(quadIdx);
 
 		for (CPlasmaRepulser* r: quad.repulsers) {
@@ -372,9 +374,10 @@ float GuiTraceRay(
 
 	CollisionQuery cq;
 
-	const auto& quads = quadField->GetQuadsOnRay(start, dir, length);
+	QuadFieldQuery qfQuery;
+	quadField->GetQuadsOnRay(qfQuery, start, dir, length);
 
-	for (const int quadIdx: quads) {
+	for (const int quadIdx: *qfQuery.quads) {
 		const CQuadField::Quad& quad = quadField->GetQuad(quadIdx);
 
 		// Unit Intersection
@@ -475,16 +478,17 @@ bool TestCone(
 	int traceFlags,
 	CUnit* owner
 ) {
-	const auto& quads = quadField->GetQuadsOnRay(from, dir, length);
+	QuadFieldQuery qfQuery;
+	quadField->GetQuadsOnRay(qfQuery, from, dir, length);
 
-	if (quads.empty())
+	if (qfQuery.quads->empty())
 		return true;
 
 	const bool scanForAllies   = ((traceFlags & Collision::NOFRIENDLIES) == 0);
 	const bool scanForNeutrals = ((traceFlags & Collision::NONEUTRALS  ) == 0);
 	const bool scanForFeatures = ((traceFlags & Collision::NOFEATURES  ) == 0);
 
-	for (const int quadIdx: quads) {
+	for (const int quadIdx: *qfQuery.quads) {
 		const CQuadField::Quad& quad = quadField->GetQuad(quadIdx);
 
 		if (scanForAllies) {
@@ -540,16 +544,17 @@ bool TestTrajectoryCone(
 	int traceFlags,
 	CUnit* owner
 ) {
-	const auto& quads = quadField->GetQuadsOnRay(from, dir, length);
+	QuadFieldQuery qfQuery;
+	quadField->GetQuadsOnRay(qfQuery, from, dir, length);
 
-	if (quads.empty())
+	if (qfQuery.quads->empty())
 		return true;
 
 	const bool scanForAllies   = ((traceFlags & Collision::NOFRIENDLIES) == 0);
 	const bool scanForNeutrals = ((traceFlags & Collision::NONEUTRALS  ) == 0);
 	const bool scanForFeatures = ((traceFlags & Collision::NOFEATURES  ) == 0);
 
-	for (const int quadIdx: quads) {
+	for (const int quadIdx: *qfQuery.quads) {
 		const CQuadField::Quad& quad = quadField->GetQuad(quadIdx);
 
 		// friendly units in this quad

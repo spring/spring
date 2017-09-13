@@ -4363,8 +4363,9 @@ EXPORT(int) skirmishAiCallback_getFeatures(int skirmishAIId, int* featureIds, in
 EXPORT(int) skirmishAiCallback_getFeaturesIn(int skirmishAIId, float* pos_posF3, float radius, int* featureIds, int featureIdsMaxSize) {
 	if (skirmishAiCallback_Cheats_isEnabled(skirmishAIId)) {
 		// cheating
-		const std::vector<CFeature*>& fset = quadField->GetFeaturesExact(pos_posF3, radius);
-		const int featureIdsRealSize = fset.size();
+		QuadFieldQuery qfQuery;
+		quadField->GetFeaturesExact(qfQuery, pos_posF3, radius);
+		const int featureIdsRealSize = qfQuery.features->size();
 
 		int featureIdsSize = featureIdsRealSize;
 
@@ -4373,8 +4374,7 @@ EXPORT(int) skirmishAiCallback_getFeaturesIn(int skirmishAIId, float* pos_posF3,
 
 			size_t f = 0;
 
-			for (auto it = fset.cbegin(); it != fset.cend() && f < featureIdsSize; ++it) {
-				const CFeature* feature = *it;
+			for (const CFeature* feature: *qfQuery.features) {
 
 				assert(feature != nullptr);
 				featureIds[f++] = feature->id;
