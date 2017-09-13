@@ -30,10 +30,10 @@ public:
 	static void CreateInstance(const std::string& mapName, const std::string& modName, ILoadSaveHandler* saveFile);
 	static void DeleteInstance();
 
-	bool Draw();
-	bool Update();
+	bool Draw() override;
+	bool Update() override;
 
-	void ResizeEvent();
+	void ResizeEvent() override;
 
 	int KeyReleased(int k) override;
 	int KeyPressed(int k, bool isRepeat) override;

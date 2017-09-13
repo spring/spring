@@ -92,13 +92,13 @@ public:
 	CGroundDecalHandler();
 	~CGroundDecalHandler();
 
-	void Draw();
+	void Draw() override;
 
-	void GhostCreated(CSolidObject* object, GhostSolidObject* gb);
-	void GhostDestroyed(GhostSolidObject* gb);
+	void GhostCreated(CSolidObject* object, GhostSolidObject* gb) override;
+	void GhostDestroyed(GhostSolidObject* gb) override;
 
 	void RemoveSolidObject(CSolidObject* object, GhostSolidObject* gb);
-	void ForceRemoveSolidObject(CSolidObject* object);
+	void ForceRemoveSolidObject(CSolidObject* object) override;
 	static void RemoveTrack(CUnit* unit);
 
 	void OnDecalLevelChanged() override {}
@@ -115,7 +115,7 @@ private:
 
 public:
 	// CEventClient
-	bool WantsEvent(const std::string& eventName) {
+	bool WantsEvent(const std::string& eventName) override {
 		return
 			(eventName == "SunChanged") ||
 			(eventName == "RenderUnitCreated") ||
@@ -127,21 +127,21 @@ public:
 			(eventName == "UnitLoaded") ||
 			(eventName == "UnitUnloaded");
 	}
-	bool GetFullRead() const { return true; }
-	int GetReadAllyTeam() const { return AllAccessTeam; }
+	bool GetFullRead() const override { return true; }
+	int GetReadAllyTeam() const override { return AllAccessTeam; }
 
-	void SunChanged();
-	void RenderUnitCreated(const CUnit*, int cloaked);
-	void RenderUnitDestroyed(const CUnit*);
-	void RenderFeatureCreated(const CFeature* feature);
-	void RenderFeatureDestroyed(const CFeature* feature);
-	void FeatureMoved(const CFeature* feature, const float3& oldpos);
-	void UnitMoved(const CUnit* unit);
-	void UnitLoaded(const CUnit* unit, const CUnit* transport);
-	void UnitUnloaded(const CUnit* unit, const CUnit* transport);
+	void SunChanged() override;
+	void RenderUnitCreated(const CUnit*, int cloaked) override;
+	void RenderUnitDestroyed(const CUnit*) override;
+	void RenderFeatureCreated(const CFeature* feature) override;
+	void RenderFeatureDestroyed(const CFeature* feature) override;
+	void FeatureMoved(const CFeature* feature, const float3& oldpos) override;
+	void UnitMoved(const CUnit* unit) override;
+	void UnitLoaded(const CUnit* unit, const CUnit* transport) override;
+	void UnitUnloaded(const CUnit* unit, const CUnit* transport) override;
 
 	// IExplosionListener
-	void ExplosionOccurred(const CExplosionParams& event);
+	void ExplosionOccurred(const CExplosionParams& event) override;
 
 public:
 	struct SolidObjectDecalType {

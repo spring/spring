@@ -75,7 +75,7 @@ protected:
  */
 class CSphereParticleSpawner : public CSimpleParticleSystem
 {
-	CR_DECLARE(CSphereParticleSpawner)
+	CR_DECLARE_DERIVED(CSphereParticleSpawner)
 
 public:
 	CSphereParticleSpawner() {}

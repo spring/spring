@@ -42,7 +42,7 @@ public:
 class CStandardGroundFlash : public CGroundFlash
 {
 public:
-	CR_DECLARE(CStandardGroundFlash)
+	CR_DECLARE_DERIVED(CStandardGroundFlash)
 
 	CStandardGroundFlash();
 	CStandardGroundFlash(const float3& pos, const GroundFlashInfo& info);
@@ -120,7 +120,7 @@ private:
 class CSeismicGroundFlash : public CGroundFlash
 {
 public:
-	CR_DECLARE(CSeismicGroundFlash)
+	CR_DECLARE_DERIVED(CSeismicGroundFlash)
 
 	CSeismicGroundFlash(
 		const float3& _pos,

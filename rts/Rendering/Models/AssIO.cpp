@@ -80,11 +80,6 @@ char AssVFSSystem::getOsSeparator() const
 	return '/';
 }
 
-bool AssVFSSystem::ComparePaths (const std::string& one, const std::string& second) const
-{
-	return one == second; // too naive? probably should convert to absolute paths
-}
-
 // open a custom stream
 Assimp::IOStream* AssVFSSystem::Open( const char* pFile, const char* pMode)
 {

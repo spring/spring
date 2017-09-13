@@ -277,8 +277,6 @@ bool SpringApp::Init()
 	if (!InitPlatformLibs())
 		return false;
 
-	// Initialize crash reporting
-	CrashHandler::Install();
 	good_fpu_control_registers(__func__);
 
 	// GlobalConfig
@@ -870,6 +868,9 @@ int SpringApp::Run()
 {
 	Threading::Error* thrErr = nullptr;
 
+	// initialize crash reporting
+	CrashHandler::Install();
+
 	// note: exceptions thrown by other threads are *not* caught here
 	try {
 		if (!Init())
@@ -903,6 +904,9 @@ int SpringApp::Run()
 	// no exception from main, but a thread might have thrown *during* ShutDown
 	if ((thrErr = Threading::GetThreadError()) != nullptr)
 		ErrorMessageBox("  [thread] " + thrErr->message, thrErr->caption, thrErr->flags);
+
+	// cleanup signal handlers, etc
+	CrashHandler::Remove();
 
 	return spring::exitCode;
 }

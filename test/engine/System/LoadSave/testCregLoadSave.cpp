@@ -13,8 +13,8 @@
 
 
 
-class EmbeddedObj {
-	CR_DECLARE(EmbeddedObj);
+struct EmbeddedObj {
+	CR_DECLARE_STRUCT(EmbeddedObj);
 	int value;
 };
 

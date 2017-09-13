@@ -7,7 +7,7 @@
 
 class CScriptMoveType : public AMoveType
 {
-	CR_DECLARE(CScriptMoveType)
+	CR_DECLARE_DERIVED(CScriptMoveType)
 
 	public:
 		CScriptMoveType(CUnit* owner);

@@ -9,7 +9,7 @@ struct float4;
 
 class CHoverAirMoveType: public AAirMoveType
 {
-	CR_DECLARE(CHoverAirMoveType)
+	CR_DECLARE_DERIVED(CHoverAirMoveType)
 public:
 	CHoverAirMoveType(CUnit* owner);
 
@@ -22,17 +22,17 @@ public:
 	void KeepPointingTo(float3 pos, float distance, bool aggressive) override;
 	void StopMoving(bool callScript = false, bool hardStop = false, bool cancelRaw = false) override;
 
-	bool SetMemberValue(unsigned int memberHash, void* memberValue);
+	bool SetMemberValue(unsigned int memberHash, void* memberValue) override;
 
 	void ForceHeading(short h);
 	void SetGoal(const float3& pos, float distance = 0.0f) override;
-	void SetState(AircraftState newState);
+	void SetState(AircraftState newState) override;
 	void SetAllowLanding(bool b);
 
-	AircraftState GetLandingState() const { return AIRCRAFT_FLYING; }
+	AircraftState GetLandingState() const override { return AIRCRAFT_FLYING; }
 
 	// Main state handlers
-	void UpdateLanded();
+	void UpdateLanded() override;
 	void UpdateTakeoff();
 	void UpdateLanding();
 	void UpdateFlying();
@@ -57,8 +57,8 @@ private:
 	bool CanLandAt(const float3& pos) const;
 
 	void ExecuteStop();
-	void Takeoff();
-	void Land();
+	void Takeoff() override;
+	void Land() override;
 
 	bool HandleCollisions(bool checkCollisions);
 

@@ -74,18 +74,8 @@ void CFreeController::SetTrackingInfo(const float3& target, float radius)
 	trackPos = target;
 	trackRadius = radius;
 
-	// lock the view direction to the target
-	const float3 diff(trackPos - pos);
-	const float rads = math::atan2(diff.x, diff.z);
-	const float len2D = diff.Length2D();
-
-	camera->SetRotY(rads);
-
-	if (math::fabs(len2D) <= 0.001f) {
-		camera->SetRotX(0.0f);
-	} else {
-		camera->SetRotX(math::atan2((trackPos.y - pos.y), len2D));
-	}
+	// lock the view direction (yaw, pitch) to the target
+	camera->SetDir((trackPos - pos).Normalize());
 }
 
 
@@ -177,8 +167,8 @@ void CFreeController::Update()
 		if (goForward) {
 			const float dist = max(0.1f, diff.Length());
 			const float nomDist = 512.0f;
-			float speedScale = (dist / nomDist);
-			speedScale = max(0.25f, min(16.0f, speedScale));
+			const float speedScale = Clamp(dist / nomDist, 0.25f, 16.0f);
+
 			const float delta = -vel.x * (ft * speedScale);
 			const float newDist = max(trackRadius, (dist + delta));
 			const float scale = (newDist / dist);
@@ -239,10 +229,11 @@ void CFreeController::Update()
 	}
 
 	// angular clamps
-	if (rot.x >= math::PI || rot.x<=0) {
+	if (rot.x >= math::PI || rot.x <= 0.0f) {
 		rot.x = Clamp(rot.x, 0.001f, math::PI - 0.001f);
-		camera->SetRotX(rot.x);
 		avel.x = 0.0f;
+
+		camera->SetRotX(rot.x);
 	}
 
 	// setup for the next loop

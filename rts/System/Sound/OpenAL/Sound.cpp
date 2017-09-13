@@ -297,7 +297,7 @@ void CSound::InitThread(int cfgMaxSounds)
 			device = alcOpenDevice(configDeviceName.c_str());
 		}
 		if (device == nullptr) {
-			LOG("[Sound::%s][2] opening default device", __func__);
+			LOG("[Sound::%s][2] opening default device \"%s\"", __func__, alcGetString(nullptr, ALC_DEFAULT_DEVICE_SPECIFIER));
 
 			device = alcOpenDevice(nullptr);
 		}
@@ -380,13 +380,13 @@ void CSound::UpdateThread(int cfgMaxSounds)
 {
 	LOG("[Sound::%s][1] cfgMaxSounds=%d", __func__, cfgMaxSounds);
 
+	// InitThread can hang, pre-register
+	Watchdog::RegisterThread(WDT_AUDIO);
+
 	// OpenAL will create its own thread and copy the current's name
 	Threading::SetThreadName("openal");
-
 	InitThread(cfgMaxSounds);
-
 	Threading::SetThreadName("audio");
-	Watchdog::RegisterThread(WDT_AUDIO);
 
 	LOG("[Sound::%s][2]", __func__);
 

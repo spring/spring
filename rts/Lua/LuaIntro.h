@@ -20,8 +20,8 @@ public:
 	static bool FreeHandler();
 
 public: // call-ins
-	void DrawLoadScreen();
-	void LoadProgress(const std::string& msg, const bool replace_lastline);
+	void DrawLoadScreen() override;
+	void LoadProgress(const std::string& msg, const bool replace_lastline) override;
 
 	void GamePreload() override;
 

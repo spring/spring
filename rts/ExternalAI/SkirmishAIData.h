@@ -17,7 +17,7 @@
  * @see Game/GameSetup
  */
 class SkirmishAIData : public SkirmishAIBase {
-	CR_DECLARE(SkirmishAIData)
+	CR_DECLARE_DERIVED(SkirmishAIData)
 
 public:
 	std::string shortName;
