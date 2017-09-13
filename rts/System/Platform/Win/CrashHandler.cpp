@@ -183,7 +183,7 @@ inline static void StacktraceInline(const char* threadName, LPEXCEPTION_POINTERS
 		context.ContextFlags = CONTEXT_FULL;
 
 		assert(Threading::IsWatchDogThread());
-		assert(!CompareObjectHandles(hThread, cThread));
+		//assert(!CompareObjectHandles(hThread, cThread));
 
 		if (hThread != cThread) {
 			LOG_RAW_LINE(logLevel, "\t[attempting to suspend thread]");
@@ -334,7 +334,7 @@ inline static void StacktraceInline(const char* threadName, LPEXCEPTION_POINTERS
 			SymGetLineFromAddr64(GetCurrentProcess(), frame.AddrPC.Offset, &displacement, &line);
 
 			SNPRINTF(traceBuffer + numFrames * BUFFER_SIZE, BUFFER_SIZE, addrFmts[0], numFrames , line.FileName ? line.FileName : "<unknown>", line.LineNumber, pSym->Name, frame.AddrPC.Offset);
-		} else 
+		} else
 #endif
 		{
 			// this is the code path taken on MinGW, and MSVC if no debugging syms are found
