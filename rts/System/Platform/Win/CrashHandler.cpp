@@ -19,8 +19,12 @@
 
 #include <new> // set_new_handler
 #include <chrono>
-#include <array>
+#include <vector>
 
+
+#ifdef _MSC_VER
+#define SYMLENGTH 4096
+#endif
 
 #define MAX_FRAMES 1024
 #define LOG_RAW_LINE(level, fmt, ...) do {                                   \
@@ -31,15 +35,33 @@
 } while (false)
 // #define LOG_RAW_LINE(level, fmt, ...) LOG_I(level, fmt, ##__VA_ARGS__);
 
+
 namespace CrashHandler {
 
-CRITICAL_SECTION stackLock;
-bool imageHelpInitialised = false;
+// printing while the thread is suspended apparently does
+// allocations, which in turn cause deadlocks.
+// to circumvent this we store all relevant information
+// and only print after the thread is resumed
+struct StacktraceLine {
+	int type;
 
-static int stackLockInit() { InitializeCriticalSection(&stackLock); return 0; }
-const int dummyStackLock = stackLockInit();
+	char modName[MAX_PATH];
+	DWORD dwModAddr;
+#ifdef _MSC_VER
+	char fileName[MAX_PATH];
+	DWORD lineNumber;
+	char symName[SYMLENGTH];
+	DWORD64 pcOffset;
+#endif
+};
 
-// 1MB buffer (1K lines of 1K chars each) should be enough for any trace
+static std::vector<StacktraceLine> stacktraceLines;
+
+
+static CRITICAL_SECTION stackLock;
+static bool imageHelpInitialised = false;
+
+
 static const char* aiLibWarning = "This stacktrace indicates a problem with a skirmish AI.";
 static const char* glLibWarning =
 	"This stacktrace indicates a problem with your graphics card driver. "
@@ -133,26 +155,6 @@ bool InitImageHlpDll()
 	}
 #endif // _MSC_VER >= 1500
 
-#ifdef _MSC_VER
-#define SYMLENGTH 4096
-#endif
-
-// printing while the thread is suspended apparently does
-// allocations, which in turn cause deadlocks.
-// to circumvent this we store all relevant information
-// and only print after the thread is resumed
-struct StacktraceLine {
-	int type;
-
-	char modName[MAX_PATH];
-	DWORD dwModAddr;
-#ifdef _MSC_VER
-	char fileName[MAX_PATH];
-	DWORD lineNumber;
-	char symName[SYMLENGTH];
-	DWORD64 pcOffset;
-#endif
-};
 
 
 /** Print out a stacktrace. */
@@ -168,7 +170,6 @@ inline static void StacktraceInline(const char* threadName, LPEXCEPTION_POINTERS
 	DWORD64 dwModBase =  0;
 	DWORD64 dwModAddr =  0;
 	DWORD machineType =  0;
-	DWORD suspendCntr = -2;
 
 	const bool wdThread = (hThread != INVALID_HANDLE_VALUE);
 
@@ -182,11 +183,10 @@ inline static void StacktraceInline(const char* threadName, LPEXCEPTION_POINTERS
 	const void* initialSP;
 	const void* initialFP;
 
-	std::array<StacktraceLine, MAX_FRAMES> stacktraceLines;
-
 	ZeroMemory(&frame, sizeof(frame));
 	ZeroMemory(&context, sizeof(CONTEXT));
 	memset(modName, 0, sizeof(modName));
+	memset(stacktraceLines.data(), 0, stacktraceLines.size() * sizeof(StacktraceLine));
 	assert(logFile != nullptr);
 
 	// NOTE: this line is parsed by the stacktrans script
@@ -201,36 +201,19 @@ inline static void StacktraceInline(const char* threadName, LPEXCEPTION_POINTERS
 		context = *e->ContextRecord;
 		thread = cThread;
 	} else if (wdThread) {
+		// reached when watchdog triggers, suspend thread (it might be in an infinite loop)
 		context.ContextFlags = CONTEXT_FULL;
 
 		assert(Threading::IsWatchDogThread());
-		//assert(!CompareObjectHandles(hThread, cThread));
+		// assert(!CompareObjectHandles(hThread, cThread));
 
-		if (hThread != cThread) {
-			LOG_RAW_LINE(logLevel, "\t[attempting to suspend thread]");
-
-			// FIXME:
-			//   SuspendThread? occasionally seems to hang the hang-detector
-			//   (which obviously never passes its own handle to Stacktrace)
-			//   risk an allocator deadlock and make the suspend call from a
-			//   helper thread
-			suspendCntr = SuspendThread(hThread);
-
-			for (int i = 0; i < 50; i++) {
-				if (suspendCntr != -2) {
-					break;
-				}
-
-				spring::this_thread::sleep_for(std::chrono::milliseconds(100));
-			}
-		} else {
+		if (hThread == cThread) {
 			// should never happen
 			LOG_RAW_LINE(logLevel, "\t[attempted to suspend hang-detector thread]");
 			return;
 		}
 
-		// if still -2 after 50 sleeps, assume a deadlock and try to get the context anyway
-		if (suspendCntr == -1) {
+		if (SuspendThread(hThread) == -1) {
 			LOG_RAW_LINE(logLevel, "\t[failed to suspend thread]");
 			return;
 		}
@@ -240,21 +223,6 @@ inline static void StacktraceInline(const char* threadName, LPEXCEPTION_POINTERS
 			LOG_RAW_LINE(logLevel, "\t[failed to get thread context]");
 			return;
 		}
-
-
-		#if 0
-		// reached when watchdog triggers, suspend thread (it might be in an infinite loop)
-		if (SuspendThread(hThread) == DWORD(-1)) {
-			LOG_RAW_LINE(logLevel, "\t[failed to suspend thread]");
-			return;
-		}
-
-		if (GetThreadContext(hThread, &context) == 0) {
-			ResumeThread(hThread);
-			LOG_RAW_LINE(logLevel, "\t[failed to get thread context]");
-			return;
-		}
-		#endif
 	} else {
 		// fallback; get context directly from CPU-registers
 #ifdef _M_IX86
@@ -330,6 +298,8 @@ inline static void StacktraceInline(const char* threadName, LPEXCEPTION_POINTERS
 		}
 
 
+		StacktraceLine& stl = stacktraceLines[numFrames];
+
 #ifdef _MSC_VER
 		char symbuf[sizeof(SYMBOL_INFO) + SYMLENGTH];
 
@@ -344,8 +314,6 @@ inline static void StacktraceInline(const char* threadName, LPEXCEPTION_POINTERS
 
 			DWORD displacement;
 			SymGetLineFromAddr64(GetCurrentProcess(), frame.AddrPC.Offset, &displacement, &line);
-
-			StacktraceLine& stl = stacktraceLines[numFrames];
 
 			stl.type = 0;
 			strncpy(stl.fileName, line.FileName ? line.FileName : "<unknown>", MAX_PATH);
@@ -363,8 +331,6 @@ inline static void StacktraceInline(const char* threadName, LPEXCEPTION_POINTERS
 			} else {
 				dwModAddr = frame.AddrPC.Offset - dwModBase;
 			}
-
-			StacktraceLine& stl = stacktraceLines[numFrames];
 
 			stl.type = 1;
 			strncpy(stl.modName, modName, MAX_PATH);
@@ -394,6 +360,7 @@ inline static void StacktraceInline(const char* threadName, LPEXCEPTION_POINTERS
 
 	// log initial context
 	LOG_RAW_LINE(logLevel, "\t[ProgCtr=%p StackPtr=%p FramePtr=%p]", initialPC, initialSP, initialFP);
+
 	if (aiLibFound)
 		LOG_RAW_LINE(logLevel, "%s", aiLibWarning);
 	if (glLibFound)
@@ -532,9 +499,15 @@ LONG CALLBACK ExceptionHandler(LPEXCEPTION_POINTERS e)
 /** Install crash handler. */
 void Install()
 {
+	InitializeCriticalSection(&stackLock);
+
 	SetUnhandledExceptionFilter(ExceptionHandler);
 	signal(SIGABRT, SigAbrtHandler);
 	std::set_new_handler(NewHandler);
+
+	// pre-allocate since doing so after a bad_alloc exception can fail
+	// NB: MAX_FRAMES * sizeof(StacktraceLine) is too big for the stack
+	stacktraceLines.resize(MAX_FRAMES);
 }
 
 /** Uninstall crash handler. */
@@ -543,6 +516,8 @@ void Remove()
 	SetUnhandledExceptionFilter(nullptr);
 	signal(SIGABRT, SIG_DFL);
 	std::set_new_handler(nullptr);
+
+	DeleteCriticalSection(&stackLock);
 }
 
 }; // namespace CrashHandler
