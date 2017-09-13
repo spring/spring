@@ -8,7 +8,9 @@
  * It routes all (or a subset of) the log records to zero or more log files.
  */
 
+#include <stdio.h> // FILE
 #include <stdlib.h> // for NULL
+
 #include "Level.h" // for LOG_LEVEL_ALL
 
 #ifdef __cplusplus
