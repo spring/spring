@@ -428,14 +428,19 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 
 					const int obBlockNr = obz * peNumBlocks.x + obx;
 					const int vertexNr = vertexBaseNr + blockNr * PATH_DIRECTION_VERTICES + GetBlockVertexOffset(dir, peNumBlocks.x);
-					const float cost = (pe->vertexCosts[vertexNr] * PATH_NODE_SPACING) / pe->BLOCK_SIZE;
+
+					const float rawCost = pe->vertexCosts[vertexNr];
+					const float nrmCost = (rawCost * PATH_NODE_SPACING) / pe->BLOCK_SIZE;
+
+					if (rawCost >= PATHCOST_INFINITY)
+						continue;
 
 					float3 p2;
 						p2.x = (blockStates.peNodeOffsets[md->pathType][obBlockNr].x) * SQUARE_SIZE;
 						p2.z = (blockStates.peNodeOffsets[md->pathType][obBlockNr].y) * SQUARE_SIZE;
 						p2.y = CGround::GetHeightAboveWater(p2.x, p2.z, false) + 10.0f;
 
-					glColor3f(1.0f / std::sqrt(cost), 1.0f / cost, 0.75f * drawLowResPE);
+					glColor3f(1.0f / std::sqrt(nrmCost), 1.0f / nrmCost, 0.75f * drawLowResPE);
 					glVertexf3(p1);
 					glVertexf3(p2);
 				}
@@ -467,8 +472,13 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 
 					const int obBlockNr = obz * peNumBlocks.x + obx;
 					const int vertexNr = vertexBaseNr + blockNr * PATH_DIRECTION_VERTICES + GetBlockVertexOffset(dir, peNumBlocks.x);
+
 					// rescale so numbers remain near 1.0 (more readable)
-					const float cost = (pe->vertexCosts[vertexNr] * PATH_NODE_SPACING) / pe->BLOCK_SIZE;
+					const float rawCost = pe->vertexCosts[vertexNr];
+					const float nrmCost = (rawCost * PATH_NODE_SPACING) / pe->BLOCK_SIZE;
+
+					if (rawCost >= PATHCOST_INFINITY)
+						continue;
 
 					float3 p2;
 						p2.x = (blockStates.peNodeOffsets[md->pathType][obBlockNr].x) * SQUARE_SIZE;
@@ -483,8 +493,8 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 					if (camera->GetPos().SqDistance(p2) >= (1000.0f * 1000.0f))
 						continue;
 
-					font->SetTextColor(1.0f, 1.0f / cost, 0.75f * drawLowResPE, 1.0f);
-					font->glWorldPrint(p2, 5.0f, FloatToString(cost, "f(%.2f)"));
+					font->SetTextColor(1.0f, 1.0f / nrmCost, 0.75f * drawLowResPE, 1.0f);
+					font->glWorldPrint(p2, 5.0f, FloatToString(nrmCost, "f(%.2f)"));
 				}
 			}
 		}
