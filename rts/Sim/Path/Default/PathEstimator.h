@@ -57,6 +57,8 @@ public:
 	 */
 	void Update();
 
+	IPathFinder* GetParent() override { return pathFinder; }
+
 	/**
 	 * Returns a checksum that can be used to check if every player has the same
 	 * path data.
@@ -132,10 +134,10 @@ private:
 	std::atomic<std::int64_t> costBlockNum;
 	spring::barrier* pathBarrier;
 
-	IPathFinder* pathFinder;
+	IPathFinder* pathFinder; // parent (PF if BLOCK_SIZE is 16, PE[16] if 32)
 	CPathCache* pathCache[2]; // [0] = !synced, [1] = synced
 
-	std::vector<IPathFinder*> pathFinders;
+	std::vector<IPathFinder*> pathFinders; // InitEstimator helpers
 	std::vector<spring::thread*> threads;
 
 	// next lower-resolution estimator

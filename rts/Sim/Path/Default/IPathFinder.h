@@ -68,6 +68,8 @@ public:
 		const unsigned int maxNodes
 	);
 
+	virtual IPathFinder* GetParent() { return nullptr; }
+
 protected:
 	IPath::SearchResult InitSearch(const MoveDef&, const CPathFinderDef&, const CSolidObject* owner);
 

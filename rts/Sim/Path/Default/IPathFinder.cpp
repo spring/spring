@@ -32,22 +32,22 @@ int2 IPathFinder::PE_DIRECTION_VECTORS[PATH_DIRECTIONS] = {
 
 //FIXME why not use PATHDIR_* consts and merge code with top one
 int2 IPathFinder::PF_DIRECTION_VECTORS_2D[PATH_DIRECTIONS << 1] = {
-	int2(0, 0),
+	int2( 0,                      0                    ),
 	int2(+1 * PATH_NODE_SPACING,  0 * PATH_NODE_SPACING), // PATHOPT_LEFT
 	int2(-1 * PATH_NODE_SPACING,  0 * PATH_NODE_SPACING), // PATHOPT_RIGHT
-	int2(0, 0),                                           // PATHOPT_LEFT | PATHOPT_RIGHT
+	int2( 0,                      0                    ), // PATHOPT_LEFT | PATHOPT_RIGHT
 	int2( 0 * PATH_NODE_SPACING, +1 * PATH_NODE_SPACING), // PATHOPT_UP
 	int2(+1 * PATH_NODE_SPACING, +1 * PATH_NODE_SPACING), // PATHOPT_LEFT | PATHOPT_UP
 	int2(-1 * PATH_NODE_SPACING, +1 * PATH_NODE_SPACING), // PATHOPT_RIGHT | PATHOPT_UP
-	int2(0, 0),                                           // PATHOPT_LEFT | PATHOPT_RIGHT | PATHOPT_UP
+	int2( 0,                      0                    ), // PATHOPT_LEFT | PATHOPT_RIGHT | PATHOPT_UP
 	int2( 0 * PATH_NODE_SPACING, -1 * PATH_NODE_SPACING), // PATHOPT_DOWN
 	int2(+1 * PATH_NODE_SPACING, -1 * PATH_NODE_SPACING), // PATHOPT_LEFT | PATHOPT_DOWN
 	int2(-1 * PATH_NODE_SPACING, -1 * PATH_NODE_SPACING), // PATHOPT_RIGHT | PATHOPT_DOWN
-	int2(0, 0),
-	int2(0, 0),
-	int2(0, 0),
-	int2(0, 0),
-	int2(0, 0),
+	int2( 0,                      0                    ),
+	int2( 0,                      0                    ),
+	int2( 0,                      0                    ),
+	int2( 0,                      0                    ),
+	int2( 0,                      0                    ),
 };
 
 

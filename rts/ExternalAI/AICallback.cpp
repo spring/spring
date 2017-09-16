@@ -1226,75 +1226,81 @@ bool CAICallback::UnitBeingBuilt(int unitId)
 	return beingBuilt;
 }
 
-int CAICallback::GetFeatures(int* featureIds, int featureIds_sizeMax)
+
+
+int CAICallback::GetFeatures(int* featureIds, int maxFeatureIDs)
 {
-	int numFeatures = 0;
+	int numFeatureIDs = 0;
 
 	verify();
 	const int allyteam = teamHandler->AllyTeam(team);
 
-	const auto& activeFeatureIDs = featureHandler->GetActiveFeatureIDs();
-	for (const int featureID: activeFeatureIDs) {
+	// non-spatial query
+	for (const int featureID: featureHandler->GetActiveFeatureIDs()) {
+		if (numFeatureIDs >= maxFeatureIDs)
+			break;
+
 		const CFeature* f = featureHandler->GetFeature(featureID);
+
 		assert(f != nullptr);
 
-		if (f->IsInLosForAllyTeam(allyteam)) {
-			// if NULL, caller only wants to know the number of features
-			if (featureIds != nullptr)
-				featureIds[numFeatures] = f->id;
+		if (!f->IsInLosForAllyTeam(allyteam))
+			continue;
 
-			numFeatures++;
-		}
+		// if array is NULL, caller only wants to know the number of features
+		if (featureIds != nullptr)
+			featureIds[numFeatureIDs] = f->id;
+
+		numFeatureIDs++;
 	}
 
-	return numFeatures;
+	return numFeatureIDs;
 }
 
-int CAICallback::GetFeatures(int* featureIds, int featureIds_sizeMax, const float3& pos, float radius)
+int CAICallback::GetFeatures(int* featureIds, int maxFeatureIDs, const float3& pos, float radius)
 {
-	int featureIds_size = 0;
+	int numFeatureIDs = 0;
 
 	verify();
 	QuadFieldQuery qfQuery;
 	quadField->GetFeaturesExact(qfQuery, pos, radius);
 	const int allyteam = teamHandler->AllyTeam(team);
 
-	std::vector<CFeature*>::const_iterator it;
 	for (const CFeature* f: *qfQuery.features) {
-		if (f->IsInLosForAllyTeam(allyteam)) {
-			// if it is NULL, the caller only wants to know
-			// the number of features
-			if (featureIds != NULL) {
-				featureIds[featureIds_size] = f->id;
-			}
-			featureIds_size++;
-		}
+		if (numFeatureIDs >= maxFeatureIDs)
+			break;
+
+		if (!f->IsInLosForAllyTeam(allyteam))
+			continue;
+
+		// if array is NULL, caller only wants to know the number of features
+		if (featureIds != nullptr)
+			featureIds[numFeatureIDs] = f->id;
+
+		numFeatureIDs++;
 	}
 
-	return featureIds_size;
+	return numFeatureIDs;
 }
+
+
 
 const FeatureDef* CAICallback::GetFeatureDef(int featureId)
 {
-	const FeatureDef* featureDef = NULL;
-
 	verify();
 
+	const FeatureDef* featureDef = nullptr;
 	const CFeature* f = featureHandler->GetFeature(featureId);
 
-	if (f) {
-		const int allyteam = teamHandler->AllyTeam(team);
-		if (f->IsInLosForAllyTeam(allyteam)) {
-			featureDef = f->def;
-		}
-	}
+	if (f != nullptr && f->IsInLosForAllyTeam(teamHandler->AllyTeam(team)))
+		featureDef = f->def;
 
 	return featureDef;
 }
 const FeatureDef* CAICallback::GetFeatureDefById(int featureDefId)
 {
 	// NOTE: this function is never called, implemented in SSkirmishAICallbackImpl
-	return NULL;
+	return nullptr;
 }
 
 float CAICallback::GetFeatureHealth(int featureId)
