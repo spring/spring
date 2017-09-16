@@ -183,6 +183,12 @@ private:
 	std::deque<DelayedInstance> delayedTerraQue;
 	std::deque<SLosInstance*> losUpdate;
 	std::deque<SLosInstance*> losCache;
+
+	std::vector<SLosInstance*> losRemove;
+	std::vector<SLosInstance*> losAdd;
+	std::vector<SLosInstance*> losDeleted;
+	std::vector<SLosInstance*> losRecalc;
+
 	static constexpr int CACHE_SIZE = 4096;
 };
 
