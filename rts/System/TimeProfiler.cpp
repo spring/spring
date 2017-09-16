@@ -223,8 +223,8 @@ void CTimeProfiler::ResetState() {
 	profile.clear();
 	sortedProfile.clear();
 	#ifdef THREADPOOL
-	profileCore.clear();
-	profileCore.resize(ThreadPool::GetMaxThreads());
+	threadProfile.clear();
+	threadProfile.resize(ThreadPool::GetMaxThreads());
 	#endif
 
 	profileColorRNG.Seed(spring_tomsecs(lastBigUpdate = spring_gettime()));
@@ -234,6 +234,16 @@ void CTimeProfiler::ResetState() {
 
 	enabled = false;
 }
+
+void CTimeProfiler::ToggleLock(bool lock)
+{
+	if (lock) {
+		profileMutex.lock();
+	} else {
+		profileMutex.unlock();
+	}
+}
+
 
 void CTimeProfiler::Update()
 {
@@ -393,7 +403,7 @@ void CTimeProfiler::AddTimeRaw(
 ) {
 #ifdef THREADPOOL
 	if (threadTimer)
-		profileCore[ThreadPool::GetThreadNum()].emplace_back(startTime, spring_gettime());
+		threadProfile[ThreadPool::GetThreadNum()].emplace_back(startTime, spring_gettime());
 #endif
 
 	auto pi = profile.find(name);

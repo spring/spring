@@ -109,6 +109,7 @@ public:
 	}
 
 	void ResetState();
+	void ToggleLock(bool lock);
 
 	void Update();
 	void UpdateRaw();
@@ -173,7 +174,7 @@ public:
 	spring::unordered_map<std::string, TimeRecord> profile;
 
 	std::vector< std::pair<std::string, TimeRecord> > sortedProfile;
-	std::vector< std::deque< std::pair<spring_time, spring_time> > > profileCore;
+	std::vector< std::deque< std::pair<spring_time, spring_time> > > threadProfile;
 
 private:
 	spring_time lastBigUpdate;

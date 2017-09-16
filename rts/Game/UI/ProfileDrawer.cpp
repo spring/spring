@@ -33,7 +33,7 @@ static const float lineHeight = 0.017f;
 
 static const auto DBG_FONT_FLAGS = (FONT_SCALE | FONT_NORM | FONT_SHADOW);
 
-typedef std::pair<spring_time,spring_time> TimeSlice;
+typedef std::pair<spring_time, spring_time> TimeSlice;
 static std::deque<TimeSlice> vidFrames;
 static std::deque<TimeSlice> simFrames;
 static std::deque<TimeSlice> lgcFrames;
@@ -108,47 +108,60 @@ static void DrawTimeSlice(std::deque<TimeSlice>& frames, const spring_time curTi
 static void DrawThreadBarcode()
 {
 	const float maxHist_f = 4.0f;
+	const float drawArea[4] = {0.01f, 0.30f, (start_x * 0.5f), 0.35f};
+
 	const spring_time curTime = spring_now();
 	const spring_time maxHist = spring_secs(maxHist_f);
-	auto& coreProf = profiler.profileCore;
-	const auto numThreads = coreProf.size();
 
-	const float drawArea[4] = {0.01f, 0.30f, (start_x / 2), 0.35f};
+	auto& threadProfs = profiler.threadProfile;
+	const size_t numThreads = threadProfs.size();
 
-	// background
 	CVertexArray* va = GetVertexArray();
-	va->Initialize();
-		va->AddVertex0(drawArea[0] - 10 * globalRendering->pixelX, drawArea[1] - 10 * globalRendering->pixelY, 0.0f);
-		va->AddVertex0(drawArea[0] - 10 * globalRendering->pixelX, drawArea[3] + 10 * globalRendering->pixelY, 0.0f);
-		va->AddVertex0(drawArea[2] + 10 * globalRendering->pixelX, drawArea[3] + 10 * globalRendering->pixelY, 0.0f);
-		va->AddVertex0(drawArea[2] + 10 * globalRendering->pixelX, drawArea[1] - 10 * globalRendering->pixelY, 0.0f);
-	glColor4f(0.0f, 0.0f, 0.0f, 0.5f);
-	va->DrawArray0(GL_QUADS);
 
-	// title
-	font->glFormat(drawArea[0], drawArea[3], 0.7f, FONT_TOP | DBG_FONT_FLAGS, "ThreadPool (%.0fsec)", maxHist_f);
-
-	// bars
-	glColor4f(1.0f, 0.0f, 0.0f, 0.6f);
-	int i = 0;
-	for (auto& frames: coreProf) {
-		float drawArea2[4] = {drawArea[0], 0.f, drawArea[2], 0.0f};
-		drawArea2[1] = drawArea[1] + ((drawArea[3] - drawArea[1]) / numThreads) * i++;
-		drawArea2[3] = drawArea[1] + ((drawArea[3] - drawArea[1]) / numThreads) * i - 4 * globalRendering->pixelY;
-		DrawTimeSlice(frames, curTime, maxHist, drawArea2);
+	{
+		// background
+		va->Initialize();
+			va->AddVertex0(drawArea[0] - 10 * globalRendering->pixelX, drawArea[1] - 10 * globalRendering->pixelY, 0.0f);
+			va->AddVertex0(drawArea[0] - 10 * globalRendering->pixelX, drawArea[3] + 10 * globalRendering->pixelY, 0.0f);
+			va->AddVertex0(drawArea[2] + 10 * globalRendering->pixelX, drawArea[3] + 10 * globalRendering->pixelY, 0.0f);
+			va->AddVertex0(drawArea[2] + 10 * globalRendering->pixelX, drawArea[1] - 10 * globalRendering->pixelY, 0.0f);
+		glColor4f(0.0f, 0.0f, 0.0f, 0.5f);
+		va->DrawArray0(GL_QUADS);
 	}
+	{
+		// title
+		font->glFormat(drawArea[0], drawArea[3], 0.7f, FONT_TOP | DBG_FONT_FLAGS, "ThreadPool (%.0fsec)", maxHist_f);
+	}
+	{
+		// need to lock; DrawTimeSlice pop_back()'s old entries from
+		// threadProf while ~ScopedMtTimer can modify it concurrently
+		profiler.ToggleLock(true);
 
-	// feeder
-	va = GetVertexArray();
-	va->Initialize();
-		const float r = (curTime % maxHist).toSecsf() / maxHist_f;
-		const float xf = drawArea[0] + r * (drawArea[2] - drawArea[0]);
-		va->AddVertex0(xf                              , drawArea[1], 0.0f);
-		va->AddVertex0(xf                              , drawArea[3], 0.0f);
-		va->AddVertex0(xf + 5 * globalRendering->pixelX, drawArea[3], 0.0f);
-		va->AddVertex0(xf + 5 * globalRendering->pixelX, drawArea[1], 0.0f);
-	glColor3f(1.0f, 0.0f, 0.0f);
-	va->DrawArray0(GL_QUADS);
+		// bars
+		glColor4f(1.0f, 0.0f, 0.0f, 0.6f);
+		int i = 0;
+		for (auto& threadProf: threadProfs) {
+			float drawArea2[4] = {drawArea[0], 0.0f, drawArea[2], 0.0f};
+			drawArea2[1] = drawArea[1] + ((drawArea[3] - drawArea[1]) / numThreads) * i++;
+			drawArea2[3] = drawArea[1] + ((drawArea[3] - drawArea[1]) / numThreads) * i - (4 * globalRendering->pixelY);
+			DrawTimeSlice(threadProf, curTime, maxHist, drawArea2);
+		}
+
+		profiler.ToggleLock(false);
+	}
+	{
+		// feeder
+		va = GetVertexArray();
+		va->Initialize();
+			const float r = (curTime % maxHist).toSecsf() / maxHist_f;
+			const float xf = drawArea[0] + r * (drawArea[2] - drawArea[0]);
+			va->AddVertex0(xf                              , drawArea[1], 0.0f);
+			va->AddVertex0(xf                              , drawArea[3], 0.0f);
+			va->AddVertex0(xf + 5 * globalRendering->pixelX, drawArea[3], 0.0f);
+			va->AddVertex0(xf + 5 * globalRendering->pixelX, drawArea[1], 0.0f);
+		glColor3f(1.0f, 0.0f, 0.0f);
+		va->DrawArray0(GL_QUADS);
+	}
 }
 
 
@@ -212,8 +225,9 @@ static void DrawFrameBarcode()
 		va->AddVertex0(xf + 10 * globalRendering->pixelX, drawArea[1], 0.0f);
 
 		// draw scale (horizontal bar that indicates 30FPS timing length)
-		const float xs1 = drawArea[2] - 1.f/(30.f*maxHist_f) * (drawArea[2] - drawArea[0]);
-		const float xs2 = drawArea[2] +               0.0f * (drawArea[2] - drawArea[0]);
+		const float xs1 = drawArea[2] - 1.0f / (30.0f * maxHist_f) * (drawArea[2] - drawArea[0]);
+		const float xs2 = drawArea[2] + 0.0f                       * (drawArea[2] - drawArea[0]);
+
 		va->AddVertex0(xs1, drawArea[3] +  2 * globalRendering->pixelY, 0.0f);
 		va->AddVertex0(xs1, drawArea[3] + 10 * globalRendering->pixelY, 0.0f);
 		va->AddVertex0(xs2, drawArea[3] + 10 * globalRendering->pixelY, 0.0f);
