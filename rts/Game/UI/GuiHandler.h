@@ -113,7 +113,7 @@ public:
 	int buildSpacing;
 
 private:
-	void GiveCommand(Command& cmd, bool fromUser = true);
+	void GiveCommand(const Command& cmd, bool fromUser = true);
 	void GiveCommandsNow();
 	bool LayoutCustomIcons(bool useSelectionPage);
 	void ResizeIconArray(size_t size);
