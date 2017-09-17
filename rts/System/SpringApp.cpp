@@ -915,6 +915,17 @@ int SpringApp::Run()
 
 int SpringApp::PostKill(const Threading::Error& e)
 {
+	if (e.Empty()) {
+		if (Threading::IsMainThread())
+			return (Watchdog::DeregisterThread(WDT_MAIN));
+		if (Threading::IsGameLoadThread())
+			return (Watchdog::DeregisterThread(WDT_LOAD));
+		if (Threading::IsAudioThread())
+			return (Watchdog::DeregisterThread(WDT_AUDIO));
+
+		return 0;
+	}
+
 	if (Threading::IsMainThread())
 		return -1;
 

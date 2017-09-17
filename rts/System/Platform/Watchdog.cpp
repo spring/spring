@@ -223,7 +223,7 @@ namespace Watchdog
 	}
 
 
-	void DeregisterThread(WatchdogThreadnum num)
+	bool DeregisterThread(WatchdogThreadnum num)
 	{
 		std::lock_guard<spring::mutex> lock(wdmutex);
 
@@ -231,7 +231,7 @@ namespace Watchdog
 
 		if (num >= WDT_COUNT || registeredThreads[num] == nullptr || (threadInfo = registeredThreads[num])->numreg == 0) {
 			LOG_L(L_ERROR, "[Watchdog::%s] Invalid thread number %u", __func__, num);
-			return;
+			return false;
 		}
 
 		threadSlots[num].primary = false;
@@ -249,6 +249,7 @@ namespace Watchdog
 			memset(threadInfo, 0, sizeof(WatchDogThreadInfo));
 
 		registeredThreads[num] = &registeredThreadsData[WDT_COUNT];
+		return true;
 	}
 
 

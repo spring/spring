@@ -31,7 +31,7 @@ namespace Watchdog
 
 	//! Call these in the threads you want to monitor
 	void RegisterThread(WatchdogThreadnum num, bool primary = false);
-	void DeregisterThread(WatchdogThreadnum num);
+	bool DeregisterThread(WatchdogThreadnum num);
 }
 
 #endif // _WATCHDOG_H

@@ -123,14 +123,19 @@ namespace Threading {
 	 * Used to detect the main-thread which runs SDL, GL, Input, Sim, ...
 	 */
 	void SetMainThread();
+	void SetGameLoadThread();
+	void SetAudioThread();
+	void SetWatchDogThread();
+
 	bool IsMainThread();
 	bool IsMainThread(NativeThreadId threadID);
 
-	void SetGameLoadThread();
 	bool IsGameLoadThread();
 	bool IsGameLoadThread(NativeThreadId threadID);
 
-	void SetWatchDogThread();
+	bool IsAudioThread();
+	bool IsAudioThread(NativeThreadId threadID);
+
 	bool IsWatchDogThread();
 	bool IsWatchDogThread(NativeThreadId threadID);
 
@@ -145,6 +150,8 @@ namespace Threading {
 	struct Error {
 		Error() : flags(0) {}
 		Error(const std::string& _caption, const std::string& _message, const unsigned int _flags) : caption(_caption), message(_message), flags(_flags) {}
+
+		bool Empty() const { return (caption.empty() && message.empty() && flags == 0); }
 
 		std::string caption;
 		std::string message;
