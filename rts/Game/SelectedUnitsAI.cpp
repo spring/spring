@@ -602,16 +602,17 @@ void CSelectedUnitsHandlerAI::SelectCircleUnits(
 	if (p == NULL)
 		return;
 
-	const std::vector<CUnit*>& tmpUnits = quadField->GetUnitsExact(pos, radius, false);
+	QuadFieldQuery qfQuery;
+	quadField->GetUnitsExact(qfQuery, pos, radius, false);
 
 	const float radiusSqr = radius * radius;
-	const unsigned int count = tmpUnits.size();
+	const unsigned int count = qfQuery.units->size();
 	const int allyTeam = teamHandler->AllyTeam(p->team);
 
 	units.reserve(count);
 
 	for (unsigned int i = 0; i < count; i++) {
-		CUnit* unit = tmpUnits[i];
+		CUnit* unit = (*qfQuery.units)[i];
 
 		if (unit == NULL)
 			continue;
@@ -650,15 +651,16 @@ void CSelectedUnitsHandlerAI::SelectRectangleUnits(
 	const float3 mins(std::min(pos0.x, pos1.x), 0.0f, std::min(pos0.z, pos1.z));
 	const float3 maxs(std::max(pos0.x, pos1.x), 0.0f, std::max(pos0.z, pos1.z));
 
-	const std::vector<CUnit*>& tmpUnits = quadField->GetUnitsExact(mins, maxs);
+	QuadFieldQuery qfQuery;
+	quadField->GetUnitsExact(qfQuery, mins, maxs);
 
-	const unsigned int count = tmpUnits.size();
+	const unsigned int count = qfQuery.units->size();
 	const int allyTeam = teamHandler->AllyTeam(p->team);
 
 	units.reserve(count);
 
 	for (unsigned int i = 0; i < count; i++) {
-		const CUnit* unit = tmpUnits[i];
+		const CUnit* unit = (*qfQuery.units)[i];
 
 		if (unit == NULL)
 			continue;

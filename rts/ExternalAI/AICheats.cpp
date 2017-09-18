@@ -179,9 +179,10 @@ int CAICheats::GetEnemyUnits(int* unitIds, int unitIds_max)
 
 int CAICheats::GetEnemyUnits(int* unitIds, const float3& pos, float radius, int unitIds_max)
 {
-	const std::vector<CUnit*>& units = quadField->GetUnitsExact(pos, radius);
+	QuadFieldQuery qfQuery;
+	quadField->GetUnitsExact(qfQuery, pos, radius);
 	myAllyTeamId = teamHandler->AllyTeam(ai->GetTeamId());
-	return FilterUnitsVector(units, unitIds, unitIds_max, &unit_IsEnemy);
+	return FilterUnitsVector(*qfQuery.units, unitIds, unitIds_max, &unit_IsEnemy);
 }
 
 int CAICheats::GetNeutralUnits(int* unitIds, int unitIds_max)
@@ -191,8 +192,9 @@ int CAICheats::GetNeutralUnits(int* unitIds, int unitIds_max)
 
 int CAICheats::GetNeutralUnits(int* unitIds, const float3& pos, float radius, int unitIds_max)
 {
-	const std::vector<CUnit*>& units = quadField->GetUnitsExact(pos, radius);
-	return FilterUnitsVector(units, unitIds, unitIds_max, &unit_IsNeutral);
+	QuadFieldQuery qfQuery;
+	quadField->GetUnitsExact(qfQuery, pos, radius);
+	return FilterUnitsVector(*qfQuery.units, unitIds, unitIds_max, &unit_IsNeutral);
 }
 
 int CAICheats::GetFeatures(int* features, int max) const {

@@ -1,11 +1,9 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "Threading.h"
-#include "Game/GameController.h"
 #include "System/bitops.h"
 #include "System/Log/ILog.h"
 #include "System/Platform/CpuID.h"
-#include "System/Platform/CrashHandler.h"
 
 #ifndef DEDICATED
 	#include "System/Sync/FPUCheck.h"
@@ -35,10 +33,12 @@ namespace Threading {
 
 	static bool haveMainThreadID = false;
 	static bool haveGameLoadThreadID = false;
+	static bool haveAudioThreadID = false;
 	static bool haveWatchDogThreadID = false;
 
 	static NativeThreadId nativeMainThreadID;
 	static NativeThreadId nativeGameLoadThreadID;
+	static NativeThreadId nativeAudioThreadID;
 	static NativeThreadId nativeWatchDogThreadID;
 
 	thread_local std::shared_ptr<Threading::ThreadControls> threadCtls;
@@ -210,10 +210,7 @@ namespace Threading {
 		return cpuid.getTotalNumCores();
 	}
 
-
-	bool HasHyperThreading() {
-		return (GetLogicalCpuCores() > GetPhysicalCpuCores());
-	}
+	bool HasHyperThreading() { return (GetLogicalCpuCores() > GetPhysicalCpuCores()); }
 
 
 	void SetThreadScheduler()
@@ -308,6 +305,8 @@ namespace Threading {
 		return localthread;
 	}
 
+
+
 	void SetMainThread() {
 		if (!haveMainThreadID) {
 			haveMainThreadID = true;
@@ -318,48 +317,44 @@ namespace Threading {
 		SetCurrentThreadControls(false);
 	}
 
-	bool IsMainThread() {
-		return NativeThreadIdsEqual(Threading::GetCurrentThreadId(), nativeMainThreadID);
-	}
-	bool IsMainThread(NativeThreadId threadID) {
-		return NativeThreadIdsEqual(threadID, Threading::nativeMainThreadID);
-	}
-
-
-
 	void SetGameLoadThread() {
 		if (!haveGameLoadThreadID) {
 			haveGameLoadThreadID = true;
-			// springGameLoadThreadID = spring::this_thread::get_id();
 			nativeGameLoadThreadID = Threading::GetCurrentThreadId();
 		}
 
 		SetCurrentThreadControls(true);
 	}
 
-	bool IsGameLoadThread() {
-		return NativeThreadIdsEqual(Threading::GetCurrentThreadId(), nativeGameLoadThreadID);
-	}
-	bool IsGameLoadThread(NativeThreadId threadID) {
-		return NativeThreadIdsEqual(threadID, Threading::nativeGameLoadThreadID);
-	}
+	void SetAudioThread() {
+		if (!haveAudioThreadID) {
+			haveAudioThreadID = true;
+			nativeAudioThreadID = Threading::GetCurrentThreadId();
+		}
 
-
+		SetCurrentThreadControls(false);
+	}
 
 	void SetWatchDogThread() {
 		if (!haveWatchDogThreadID) {
 			haveWatchDogThreadID = true;
-			// springWatchDogThreadID = spring::this_thread::get_id();
 			nativeWatchDogThreadID = Threading::GetCurrentThreadId();
 		}
 	}
 
-	bool IsWatchDogThread() {
-		return NativeThreadIdsEqual(Threading::GetCurrentThreadId(), nativeWatchDogThreadID);
-	}
-	bool IsWatchDogThread(NativeThreadId threadID) {
-		return NativeThreadIdsEqual(threadID, Threading::nativeWatchDogThreadID);
-	}
+	bool IsMainThread(NativeThreadId threadID) { return NativeThreadIdsEqual(threadID, nativeMainThreadID); }
+	bool IsMainThread(                       ) { return IsMainThread(Threading::GetCurrentThreadId()); }
+
+	bool IsGameLoadThread(NativeThreadId threadID) { return NativeThreadIdsEqual(threadID, nativeGameLoadThreadID); }
+	bool IsGameLoadThread(                       ) { return IsGameLoadThread(Threading::GetCurrentThreadId()); }
+
+	bool IsAudioThread(NativeThreadId threadID) { return NativeThreadIdsEqual(threadID, nativeAudioThreadID); }
+	bool IsAudioThread(                       ) { return IsAudioThread(Threading::GetCurrentThreadId()); }
+
+	bool IsWatchDogThread(NativeThreadId threadID) { return NativeThreadIdsEqual(threadID, nativeWatchDogThreadID); }
+	bool IsWatchDogThread(                       ) { return IsWatchDogThread(Threading::GetCurrentThreadId()); }
+
+
 
 	void SetThreadName(const std::string& newname)
 	{

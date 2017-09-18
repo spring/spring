@@ -828,11 +828,10 @@ void CWaitCommandsAI::DeathWait::SelectAreaUnits(
 	const float3 mins(std::min(pos0.x, pos1.x), 0.0f, std::min(pos0.z, pos1.z));
 	const float3 maxs(std::max(pos0.x, pos1.x), 0.0f, std::max(pos0.z, pos1.z));
 
-	const std::vector<CUnit*>& tmpUnits = quadField->GetUnitsExact(mins, maxs);
+	QuadFieldQuery qfQuery;
+	quadField->GetUnitsExact(qfQuery, mins, maxs);
 
-	for (unsigned int i = 0; i < tmpUnits.size(); i++) {
-		const CUnit* unit = tmpUnits[i];
-
+	for (const CUnit* unit: *qfQuery.units) {
 		if (enemies && teamHandler->Ally(unit->allyteam, gu->myAllyTeam))
 			continue;
 

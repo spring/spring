@@ -11,7 +11,7 @@ class CMouseCursor;
 
 class IHwCursor {
 	public:
-		virtual void PushImage(int xsize, int ysize, void* mem) = 0;
+		virtual void PushImage(int xsize, int ysize, const void* mem) = 0;
 		virtual void SetDelay(float delay) = 0;
 		virtual void PushFrame(int index, float delay) = 0;
 		virtual void Finish() = 0;

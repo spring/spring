@@ -128,11 +128,12 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength, float radius)
 		}
 	}
 
-	const std::vector<CUnit*>& units = quadField->GetUnitsExact(pos, radius);
+	QuadFieldQuery qfQuery;
+	quadField->GetUnitsExact(qfQuery, pos, radius);
 
 	// calculate how much to raise or lower buildings in the explosion radius
 	// (while still keeping the ground below them flat)
-	for (const CUnit* unit: units) {
+	for (const CUnit* unit: *qfQuery.units) {
 		if (!unit->blockHeightChanges)
 			continue;
 		if (!unit->IsBlocking())

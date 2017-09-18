@@ -35,14 +35,19 @@ public:
 	void Seek(int pos, std::ios_base::seekdir where = std::ios_base::beg);
 
 	static bool FileExists(const std::string& filePath, const std::string& modes);
-	bool FileExists() const;
+	// true if any of TryReadFrom{RawFS,PWD,VFS} succeed
+	bool FileExists() const { return (fileSize >= 0); }
+	// true if (and only if) TryReadFromVFS succeeds
+	bool IsBuffered() const { return (!fileBuffer.empty()); }
 
 	bool Eof() const;
 	int GetPos();
-	int FileSize() const;
+	int FileSize() const { return fileSize; }
 
 	bool LoadStringData(std::string& data);
 	std::string GetFileExt() const;
+
+	std::vector<std::uint8_t>& GetBuffer() { return fileBuffer; }
 
 	static bool InReadDir(const std::string& path);
 	static bool InWriteDir(const std::string& path);

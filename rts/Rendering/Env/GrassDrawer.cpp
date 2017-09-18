@@ -232,7 +232,7 @@ CGrassDrawer::CGrassDrawer()
 			grassBladeTexBM.Alloc(256,64);
 
 			for (int a = 0; a < 16; ++a) {
-				CreateGrassBladeTex(&grassBladeTexBM.mem[a * 16 * 4]);
+				CreateGrassBladeTex(&grassBladeTexBM.GetRawMem()[a * 16 * 4]);
 			}
 		}
 		//grassBladeTexBM.Save("blade.png", false);

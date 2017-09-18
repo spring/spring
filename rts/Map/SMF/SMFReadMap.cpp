@@ -262,10 +262,10 @@ void CSMFReadMap::CreateSplatDetailTextures()
 		if (!splatDetailNormalTextureBM.Load(mapInfo->smf.splatDetailNormalTexNames[i])) {
 			splatDetailNormalTextureBM.channels = 4;
 			splatDetailNormalTextureBM.Alloc(1, 1);
-			splatDetailNormalTextureBM.mem[0] = 127; // RGB is packed standard normal map
-			splatDetailNormalTextureBM.mem[1] = 127;
-			splatDetailNormalTextureBM.mem[2] = 255; // With a single upward (+Z) pointing vector
-			splatDetailNormalTextureBM.mem[3] = 127; // Alpha is diffuse as in old-style detail textures
+			splatDetailNormalTextureBM.GetRawMem()[0] = 127; // RGB is packed standard normal map
+			splatDetailNormalTextureBM.GetRawMem()[1] = 127;
+			splatDetailNormalTextureBM.GetRawMem()[2] = 255; // With a single upward (+Z) pointing vector
+			splatDetailNormalTextureBM.GetRawMem()[3] = 127; // Alpha is diffuse as in old-style detail textures
 		}
 
 		splatNormalTextures[i].SetRawTexID(splatDetailNormalTextureBM.CreateTexture(texAnisotropyLevels[true], true));
@@ -851,9 +851,13 @@ const char* CSMFReadMap::GetFeatureTypeName(int typeID) { return file.GetFeature
 unsigned char* CSMFReadMap::GetInfoMap(const std::string& name, MapBitmapInfo* bmInfo)
 {
 	char failMsg[512];
+
 	// get size
 	file.GetInfoMapSize(name, bmInfo);
-	if (bmInfo->width <= 0) return NULL;
+
+	if (bmInfo->width <= 0)
+		return nullptr;
+
 	unsigned char* data = new unsigned char[bmInfo->width * bmInfo->height];
 
 	CBitmap infomapBM;
@@ -866,26 +870,26 @@ unsigned char* CSMFReadMap::GetInfoMap(const std::string& name, MapBitmapInfo* b
 		texName = mapInfo->smf.grassmapTexName;
 	}
 
-	if (!texName.empty() && !infomapBM.LoadGrayscale(texName)) {
+	if (!texName.empty() && !infomapBM.LoadGrayscale(texName))
 		throw content_error("[CSMFReadMap::GetInfoMap] cannot load: " + texName);
-	}
 
-	if (!infomapBM.mem.empty()) {
+	if (!infomapBM.Empty()) {
 		if (infomapBM.xsize == bmInfo->width && infomapBM.ysize == bmInfo->height) {
-			memcpy( data, &infomapBM.mem[0], bmInfo->width * bmInfo->height);
+			memcpy(data, infomapBM.GetRawMem(), bmInfo->width * bmInfo->height);
 			return data;
 		}
 		sprintf(failMsg, "[CSMFReadMap::GetInfoMap] Invalid image dimensions: %s %ix%i != %ix%i",
 			texName.c_str(), infomapBM.xsize, infomapBM.ysize,
 			bmInfo->width, bmInfo->height);
-		throw content_error( failMsg );
+		throw content_error(failMsg);
 	}
 
 	// get data
 	if (!file.ReadInfoMap(name, data)) {
 		delete[] data;
-		data = NULL;
+		data = nullptr;
 	}
+
 	return data;
 }
 

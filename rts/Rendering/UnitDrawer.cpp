@@ -908,21 +908,21 @@ void CUnitDrawer::UpdateGhostedBuildings()
 		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 			auto& dgb = deadGhostBuildings[allyTeam][modelType];
 
-			for (auto it = dgb.begin(); it != dgb.end(); ) {
-				GhostSolidObject* gso = *it;
+			for (int i = 0; i < dgb.size(); /*no-op*/) {
+				GhostSolidObject* gso = dgb[i];
 
 				if (!losHandler->InLos(gso->pos, allyTeam)) {
-					++it;
+					++i;
 					continue;
 				}
 
 				// obtained LOS on the ghost of a dead building
 				if (!gso->DecRef()) {
 					groundDecals->GhostDestroyed(gso);
-					spring::SafeDelete(*it);
+					spring::SafeDelete(gso);
 				}
 
-				*it = dgb.back();
+				dgb[i] = dgb.back();
 				dgb.pop_back();
 			}
 		}

@@ -382,21 +382,26 @@ static STex LoadTexture(const std::string& name)
 		fullName = std::string("unittextures/") + fileName;
 
 	CBitmap bm;
-	if (!bm.Load(fullName)) {
+	if (!bm.Load(fullName))
 		throw content_error("Could not load ground decal \"" + fileName + "\"");
-	}
+
 	if (FileSystem::GetExtension(fullName) == "bmp") {
 		// bitmaps don't have an alpha channel
 		// so use: red := brightness & green := alpha
+		const unsigned char* rmem = bm.GetRawMem();
+		      unsigned char* wmem = bm.GetRawMem();
+
 		for (int y = 0; y < bm.ysize; ++y) {
 			for (int x = 0; x < bm.xsize; ++x) {
 				const int index = ((y * bm.xsize) + x) * 4;
-				const auto brightness = bm.mem[index + 0];
-				const auto alpha      = bm.mem[index + 1];
-				bm.mem[index + 0] = (brightness * 90) / 255;
-				bm.mem[index + 1] = (brightness * 60) / 255;
-				bm.mem[index + 2] = (brightness * 30) / 255;
-				bm.mem[index + 3] = alpha;
+
+				const auto brightness = rmem[index + 0];
+				const auto alpha      = rmem[index + 1];
+
+				wmem[index + 0] = (brightness * 90) / 255;
+				wmem[index + 1] = (brightness * 60) / 255;
+				wmem[index + 2] = (brightness * 30) / 255;
+				wmem[index + 3] = alpha;
 			}
 		}
 	}

@@ -84,7 +84,14 @@ static void ExitSpringProcess(const std::string& msg, const std::string& caption
 
 void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigned int flags)
 {
-	#if !defined(DEDICATED) && !defined(HEADLESS)
+	#if (!defined(DEDICATED))
+	// the thread that throws up this message-box will be blocked
+	// until it is clicked away which can cause spurious detected
+	// hangs, so deregister it here (by passing an empty error)
+	SpringApp::PostKill({});
+	#endif
+
+	#if (!defined(DEDICATED) && !defined(HEADLESS))
 	Platform::MsgBox(msg, caption, flags);
 	#endif
 

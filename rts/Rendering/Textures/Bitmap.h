@@ -28,8 +28,8 @@ public:
 	~CBitmap();
 
 	void Alloc(int w, int h, int c);
-	void Alloc(int w, int h);
-	void AllocDummy(const SColor fill = SColor(255,0,0,255));
+	void Alloc(int w, int h) { Alloc(w, h, channels); }
+	void AllocDummy(const SColor fill = SColor(255, 0, 0, 255));
 
 	/// Load data from a file on the VFS
 	bool Load(std::string const& filename, unsigned char defaultAlpha = 255);
@@ -37,6 +37,8 @@ public:
 	bool LoadGrayscale(std::string const& filename);
 	bool Save(std::string const& filename, bool opaque = true, bool logged = false) const;
 	bool SaveFloat(std::string const& filename) const;
+
+	bool Empty() const { return (mem.empty()); }
 
 	unsigned int CreateTexture(float aniso = 0.0f, bool mipmaps = false) const;
 	unsigned int CreateMipMapTexture(float aniso = 0.0f) const { return (CreateTexture(aniso, true)); }
@@ -59,16 +61,25 @@ public:
 	 */
 	SDL_Surface* CreateSDLSurface();
 
-	std::vector<unsigned char> mem;
-	int xsize;
-	int ysize;
-	int channels;
+	const unsigned char* GetRawMem() const { return (mem.data()); }
+	      unsigned char* GetRawMem()       { return (mem.data()); }
+
+
+	int32_t xsize;
+	int32_t ysize;
+	int32_t channels;
+	uint64_t memIndx;
+
+	#ifndef BITMAP_NO_OPENGL
+	int32_t textype; //! GL_TEXTURE_2D, GL_TEXTURE_CUBE_MAP, ...
+
+	nv_dds::CDDSImage* ddsimage;
+	#endif // !BITMAP_NO_OPENGL
+
 	bool compressed;
 
-#ifndef BITMAP_NO_OPENGL
-	int textype; //! GL_TEXTURE_2D, GL_TEXTURE_CUBE_MAP, ...
-	nv_dds::CDDSImage* ddsimage;
-#endif // !BITMAP_NO_OPENGL
+private:
+	std::vector<unsigned char> mem;
 
 public:
 	CBitmap CanvasResize(const int newx, const int newy, const bool center = true) const;

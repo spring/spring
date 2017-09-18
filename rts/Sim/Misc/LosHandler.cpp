@@ -456,17 +456,18 @@ void ILosType::Update()
 	if (losUpdate.empty())
 		return;
 
-	std::vector<SLosInstance*> losRemove;
-	std::vector<SLosInstance*> losAdd;
-	std::vector<SLosInstance*> losDeleted;
-	std::vector<SLosInstance*> losRecalc;
 
+	losRemove.clear();
 	losRemove.reserve(losUpdate.size());
+	losAdd.clear();
 	losAdd.reserve(losUpdate.size());
+	losDeleted.clear();
 	losDeleted.reserve(losUpdate.size());
 
-	if (algoType == LOS_ALGO_RAYCAST)
+	if (algoType == LOS_ALGO_RAYCAST) {
+		losRecalc.clear();
 		losRecalc.reserve(losUpdate.size());
+	}
 
 	// filter the updates into their subparts
 	for (SLosInstance* li: losUpdate) {

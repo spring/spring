@@ -163,12 +163,6 @@ bool CFileHandler::FileExists(const std::string& filePath, const std::string& mo
 }
 
 
-bool CFileHandler::FileExists() const
-{
-	return (fileSize >= 0);
-}
-
-
 int CFileHandler::Read(void* buf, int length)
 {
 	if (ifs.is_open()) {
@@ -238,12 +232,6 @@ bool CFileHandler::Eof() const
 		return (filePos >= fileSize);
 
 	return true;
-}
-
-
-int CFileHandler::FileSize() const
-{
-	return fileSize;
 }
 
 

@@ -95,15 +95,15 @@ CDynWater::CDynWater()
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F_ARB, 64, 64, 0, GL_RGBA, GL_FLOAT, temp);
 
 	CBitmap foam;
-	if (!foam.Load(waterRendering->foamTexture)) {
+	if (!foam.Load(waterRendering->foamTexture))
 		throw content_error("Could not load foam from file " + waterRendering->foamTexture);
-	}
-	if ((count_bits_set(foam.xsize) != 1) || (count_bits_set(foam.ysize) != 1)) {
+
+	if ((count_bits_set(foam.xsize) != 1) || (count_bits_set(foam.ysize) != 1))
 		throw content_error("Foam texture not power of two!");
-	}
+
 	unsigned char* scrap = new unsigned char[foam.xsize * foam.ysize * 4];
 	for (int a = 0; a < (foam.xsize * foam.ysize); ++a) {
-		scrap[a] = foam.mem[a*4];
+		scrap[a] = foam.GetRawMem()[a * 4];
 	}
 
 	glGenTextures(1, &foamTex);
@@ -223,26 +223,28 @@ CDynWater::CDynWater()
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, temp3);
 
 	CBitmap bm;
-	if (!bm.Load("bitmaps/boatshape.bmp")) {
+	if (!bm.Load("bitmaps/boatshape.bmp"))
 		throw content_error("Could not load boatshape from file bitmaps/boatshape.bmp");
-	}
+
 	for (int a = 0; a < (bm.xsize * bm.ysize); ++a) {
-		bm.mem[a*4 + 2] = bm.mem[a*4];
-		bm.mem[a*4 + 3] = bm.mem[a*4];
+		bm.GetRawMem()[a * 4 + 2] = bm.GetRawMem()[a * 4];
+		bm.GetRawMem()[a * 4 + 3] = bm.GetRawMem()[a * 4];
 	}
 	boatShape = bm.CreateTexture();
 
 	CBitmap bm2;
-	if (!bm.Load("bitmaps/hovershape.bmp")) {
+	if (!bm.Load("bitmaps/hovershape.bmp"))
 		throw content_error("Could not load hovershape from file bitmaps/hovershape.bmp");
-	}
+
 	for (int a = 0; a < (bm2.xsize * bm2.ysize); ++a) {
-		bm2.mem[a*4 + 2] = bm2.mem[a*4];
-		bm2.mem[a*4 + 3] = bm2.mem[a*4];
+		bm2.GetRawMem()[a * 4 + 2] = bm2.GetRawMem()[a * 4];
+		bm2.GetRawMem()[a * 4 + 3] = bm2.GetRawMem()[a * 4];
 	}
 	hoverShape = bm2.CreateTexture();
 
-	delete[] temp; temp = NULL;
+	delete[] temp;
+	temp = nullptr;
+
 	glGenFramebuffersEXT(1, &frameBuffer);
 
 	reflectFBO.Bind();

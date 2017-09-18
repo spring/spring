@@ -755,18 +755,20 @@ void CGroundDecalHandler::LoadScarTexture(const std::string& file, uint8_t* buf,
 	if (bm.ysize != 256 || bm.xsize != 256)
 		bm = bm.CreateRescaled(256, 256);
 
+	const unsigned char* rmem = bm.GetRawMem();
+
 	if (FileSystem::GetExtension(file) == "bmp") {
 		// bitmaps don't have an alpha channel, use red=brightness and green=alpha
 		for (int y = 0; y < bm.ysize; ++y) {
 			for (int x = 0; x < bm.xsize; ++x) {
 				const int memIndex = ((y * bm.xsize) + x) * 4;
 				const int bufIndex = (((y + yoffset) * 512) + x + xoffset) * 4;
-				const int brightness = bm.mem[memIndex + 0];
+				const int brightness = rmem[memIndex + 0];
 
 				buf[bufIndex + 0] = (brightness * 90) / 255;
 				buf[bufIndex + 1] = (brightness * 60) / 255;
 				buf[bufIndex + 2] = (brightness * 30) / 255;
-				buf[bufIndex + 3] = bm.mem[memIndex + 1];
+				buf[bufIndex + 3] = rmem[memIndex + 1];
 			}
 		}
 	} else {
@@ -774,7 +776,7 @@ void CGroundDecalHandler::LoadScarTexture(const std::string& file, uint8_t* buf,
 		for (int y = 0; y < bm.ysize; ++y) {
 			const int memIndex = (y * bm.xsize) * 4;
 			const int bufIndex = (((y + yoffset) * 512) + xoffset) * 4;
-			memcpy(&buf[bufIndex], &bm.mem[memIndex], bm.xsize * sizeof(SColor));
+			memcpy(&buf[bufIndex], &rmem[memIndex], bm.xsize * sizeof(SColor));
 		}
 	}
 }

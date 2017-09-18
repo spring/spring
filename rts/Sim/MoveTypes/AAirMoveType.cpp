@@ -214,7 +214,8 @@ void AAirMoveType::CheckForCollision()
 	const SyncedFloat3& forward = owner->frontdir;
 
 	const float3 midTestPos = pos + forward * 121.0f;
-	const std::vector<CUnit*>& others = quadField->GetUnitsExact(midTestPos, 115.0f);
+	QuadFieldQuery qfQuery;
+	quadField->GetUnitsExact(qfQuery, midTestPos, 115.0f);
 
 	float dist = 200.0f;
 
@@ -224,7 +225,7 @@ void AAirMoveType::CheckForCollision()
 		lastColWarningType = 0;
 	}
 
-	for (CUnit* unit: others) {
+	for (CUnit* unit: *qfQuery.units) {
 		if (unit == owner || !unit->unitDef->canfly) {
 			continue;
 		}
@@ -254,7 +255,7 @@ void AAirMoveType::CheckForCollision()
 		return;
 	}
 
-	for (CUnit* u: others) {
+	for (CUnit* u: *qfQuery.units) {
 		if (u == owner)
 			continue;
 		if ((u->midPos - pos).SqLength() < (dist * dist)) {

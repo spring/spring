@@ -57,6 +57,8 @@ public:
 	 */
 	void Update();
 
+	IPathFinder* GetParent() override { return parentPathFinder; }
+
 	/**
 	 * Returns a checksum that can be used to check if every player has the same
 	 * path data.
@@ -102,7 +104,7 @@ private:
 	void InitEstimator(const std::string& cacheFileName, const std::string& mapName);
 	void InitBlocks();
 
-	void CalcOffsetsAndPathCosts(unsigned int threadNum);
+	void CalcOffsetsAndPathCosts(unsigned int threadNum, spring::barrier* pathBarrier);
 	void CalculateBlockOffsets(unsigned int, unsigned int);
 	void EstimatePathCosts(unsigned int, unsigned int);
 
@@ -130,16 +132,13 @@ private:
 
 	std::atomic<std::int64_t> offsetBlockNum;
 	std::atomic<std::int64_t> costBlockNum;
-	spring::barrier* pathBarrier;
 
-	IPathFinder* pathFinder;
+	IPathFinder* parentPathFinder; // parent (PF if BLOCK_SIZE is 16, PE[16] if 32)
+	CPathEstimator* nextPathEstimator; // next lower-resolution estimator
 	CPathCache* pathCache[2]; // [0] = !synced, [1] = synced
 
-	std::vector<IPathFinder*> pathFinders;
-	std::vector<spring::thread*> threads;
-
-	// next lower-resolution estimator
-	CPathEstimator* nextPathEstimator;
+	std::vector<IPathFinder*> pathFinders; // InitEstimator helpers
+	std::vector<spring::thread> threads;
 
 	std::vector<float> maxSpeedMods;
 	std::vector<float> vertexCosts;
@@ -153,6 +152,13 @@ private:
 		int2 offset;
 		SOffsetBlock(const float _cost, const int x, const int y) : cost(_cost), offset(x,y) {}
 	};
+	struct SingleBlock {
+		int2 blockPos;
+		const MoveDef* moveDef;
+		SingleBlock(const int2& pos, const MoveDef* md) : blockPos(pos), moveDef(md) {}
+	};
+
+	std::vector<SingleBlock> consumedBlocks;
 	std::vector<SOffsetBlock> offsetBlocksSortedByCost;
 };
 

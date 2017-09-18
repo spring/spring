@@ -27,13 +27,13 @@
 #endif
 
 #define MAX_FRAMES 1024
-#define LOG_RAW_LINE(level, fmt, ...) do {                                   \
+#define DBG_LOG_RAW_LINE(level, fmt, ...) do {                               \
 	fprintf((level >= LOG_LEVEL_ERROR)? stderr: stdout, fmt, ##__VA_ARGS__); \
 	fprintf((level >= LOG_LEVEL_ERROR)? stderr: stdout, "\n"              ); \
 	fprintf(logFile, fmt, ##__VA_ARGS__);                                    \
 	fprintf(logFile, "\n"              );                                    \
 } while (false)
-// #define LOG_RAW_LINE(level, fmt, ...) LOG_I(level, fmt, ##__VA_ARGS__);
+#define LOG_RAW_LINE(level, fmt, ...) LOG_I(level, fmt, ##__VA_ARGS__);
 
 
 namespace CrashHandler {
@@ -358,13 +358,13 @@ inline static void StacktraceInline(const char* threadName, LPEXCEPTION_POINTERS
 	if (wdThread)
 		ResumeThread(hThread);
 
-	// log initial context
-	LOG_RAW_LINE(logLevel, "\t[ProgCtr=%p StackPtr=%p FramePtr=%p]", initialPC, initialSP, initialFP);
-
 	if (aiLibFound)
 		LOG_RAW_LINE(logLevel, "%s", aiLibWarning);
 	if (glLibFound)
 		LOG_RAW_LINE(logLevel, "%s", glLibWarning);
+
+	// log initial context
+	LOG_RAW_LINE(logLevel, "\t[ProgCtr=%p StackPtr=%p FramePtr=%p]", initialPC, initialSP, initialFP);
 
 	for (int i = 0; i < numFrames; ++i) {
 		const StacktraceLine& stl = stacktraceLines[i];
@@ -372,20 +372,16 @@ inline static void StacktraceInline(const char* threadName, LPEXCEPTION_POINTERS
 #ifdef _MSC_VER
 			case 0: {
 				LOG_RAW_LINE(logLevel, addrFmts[stl.type], i, stl.fileName, stl.lineNumber, stl.symName, stl.pcOffset);
-				break;
-			}
+			} break;
 #endif
 			case 1: {
 				LOG_RAW_LINE(logLevel, addrFmts[stl.type], i, stl.modName, stl.dwModAddr);
-				break;
-			}
+			} break;
 			default: {
 				assert(false);
-				break;
-			}
+			} break;
 		}
 	}
-
 }
 
 

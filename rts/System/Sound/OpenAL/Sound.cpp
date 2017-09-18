@@ -380,6 +380,7 @@ void CSound::UpdateThread(int cfgMaxSounds)
 {
 	LOG("[Sound::%s][1] cfgMaxSounds=%d", __func__, cfgMaxSounds);
 
+	Threading::SetAudioThread();
 	// InitThread can hang, pre-register
 	Watchdog::RegisterThread(WDT_AUDIO);
 

@@ -55,16 +55,18 @@ void CAdvTreeGenerator::Init()
 	glDisable(GL_CULL_FACE);
 
 	unsigned char(* tree)[2048][4] = new unsigned char[256][2048][4];
+	const unsigned char* rmem = bm.GetRawMem();
+
 	memset(tree[0][0], 128, 256 * 2048 * 4);
 	for (int y = 0; y < 256; y++) {
 		for (int x = 0; x < 256; x++) {
-			tree[y][x][0] = bm.mem[(y * 256 + x) * 4    ];
-			tree[y][x][1] = bm.mem[(y * 256 + x) * 4 + 1];
-			tree[y][x][2] = bm.mem[(y * 256 + x) * 4 + 2];
+			tree[y][x][0] = rmem[(y * 256 + x) * 4    ];
+			tree[y][x][1] = rmem[(y * 256 + x) * 4 + 1];
+			tree[y][x][2] = rmem[(y * 256 + x) * 4 + 2];
 			tree[y][x][3] = 255;
-			tree[y][x + 1024][0] = (unsigned char)(bm.mem[(y * 256 + x) * 4    ] * 0.6f);
-			tree[y][x + 1024][1] = (unsigned char)(bm.mem[(y * 256 + x) * 4 + 1] * 0.6f);
-			tree[y][x + 1024][2] = (unsigned char)(bm.mem[(y * 256 + x) * 4 + 2] * 0.6f);
+			tree[y][x + 1024][0] = (unsigned char)(rmem[(y * 256 + x) * 4    ] * 0.6f);
+			tree[y][x + 1024][1] = (unsigned char)(rmem[(y * 256 + x) * 4 + 1] * 0.6f);
+			tree[y][x + 1024][2] = (unsigned char)(rmem[(y * 256 + x) * 4 + 2] * 0.6f);
 			tree[y][x + 1024][3] = 255;
 		}
 	}
@@ -85,7 +87,7 @@ void CAdvTreeGenerator::Init()
 	glBindTexture(GL_TEXTURE_2D, leafTex);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
-	glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, bm.xsize, bm.ysize, GL_RGBA, GL_UNSIGNED_BYTE, &bm.mem[0]);
+	glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, bm.xsize, bm.ysize, GL_RGBA, GL_UNSIGNED_BYTE, bm.GetRawMem());
 
 	CreateLeafTex(leafTex, 256, 0, tree);
 	CreateLeafTex(leafTex, 512, 0, tree);
