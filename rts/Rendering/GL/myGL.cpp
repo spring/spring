@@ -494,22 +494,27 @@ static unsigned int LoadProgram(GLenum target, const char* filename, const char*
 		return ret;
 
 	CFileHandler file(std::string("shaders/") + filename);
-	if (!file.FileExists ()) {
+	if (!file.FileExists()) {
 		char c[512];
 		SNPRINTF(c, 512, "[myGL::LoadProgram] Cannot find %s-program file '%s'", program_type, filename);
 		throw content_error(c);
 	}
 
-	std::vector<char> fbuf(file.FileSize() + 1);
+	// buffer does not need to be null-terminated
+	std::vector<unsigned char> fbuf;
 
-	file.Read(fbuf.data(), fbuf.size() - 1);
-	fbuf.back() = '\0';
+	if (!file.IsBuffered()) {
+		fbuf.resize(file.FileSize(), 0);
+		file.Read(fbuf.data(), fbuf.size());
+	} else {
+		fbuf = std::move(file.GetBuffer());
+	}
 
 	glGenProgramsARB(1, &ret);
 	glBindProgramARB(target, ret);
-	glProgramStringARB(target, GL_PROGRAM_FORMAT_ASCII_ARB, fbuf.size() - 1, fbuf.data());
+	glProgramStringARB(target, GL_PROGRAM_FORMAT_ASCII_ARB, fbuf.size() - (fbuf.back() == '\0'), fbuf.data());
 
-	if (CheckParseErrors(target, filename, fbuf.data()))
+	if (CheckParseErrors(target, filename, reinterpret_cast<char*>(fbuf.data())))
 		ret = 0;
 
 	return ret;
