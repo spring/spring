@@ -23,6 +23,8 @@ if [ "$(cat /proc/sys/kernel/core_uses_pid)" != "1" ]; then
 	exit 1
 fi
 
+echo "Env: GAME=$GAME MAP=$MAP AI=$AI AIVER=$AIVER"
+
 # enable core dumps
 ulimit -c unlimited
 
