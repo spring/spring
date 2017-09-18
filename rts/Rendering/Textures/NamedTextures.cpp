@@ -248,17 +248,17 @@ namespace CNamedTextures {
 				if ((xbits != 1 || ybits != 1) && (!GLEW_ARB_texture_non_power_of_two || (globalRendering->atiHacks && nearest)))
 					bitmap = bitmap.CreateRescaled(next_power_of_2(bitmap.xsize),next_power_of_2(bitmap.ysize));
 
-				glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, bitmap.xsize, bitmap.ysize, int(border), GL_RGBA, GL_UNSIGNED_BYTE, &bitmap.mem[0]);
+				glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, bitmap.xsize, bitmap.ysize, int(border), GL_RGBA, GL_UNSIGNED_BYTE, bitmap.GetRawMem());
 			} else {
 				//! MIPMAPPING (default)
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
 				if ((xbits == 1 && ybits == 1) || GLEW_ARB_texture_non_power_of_two) {
-					glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, bitmap.xsize, bitmap.ysize, GL_RGBA, GL_UNSIGNED_BYTE, &bitmap.mem[0]);
+					glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, bitmap.xsize, bitmap.ysize, GL_RGBA, GL_UNSIGNED_BYTE, bitmap.GetRawMem());
 				} else {
 					//! glu auto resizes to next POT
-					gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA8, bitmap.xsize, bitmap.ysize, GL_RGBA, GL_UNSIGNED_BYTE, &bitmap.mem[0]);
+					gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA8, bitmap.xsize, bitmap.ysize, GL_RGBA, GL_UNSIGNED_BYTE, bitmap.GetRawMem());
 				}
 			}
 

@@ -146,7 +146,7 @@ CMiniMap::CMiniMap()
 		glBindTexture(GL_TEXTURE_2D, buttonsTexture);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8,
 								 bitmap.xsize, bitmap.ysize, 0,
-								 GL_RGBA, GL_UNSIGNED_BYTE, &bitmap.mem[0]);
+								 GL_RGBA, GL_UNSIGNED_BYTE, bitmap.GetRawMem());
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 		if (unfiltered) {

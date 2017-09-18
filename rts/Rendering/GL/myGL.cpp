@@ -266,9 +266,8 @@ void glSaveTexture(const GLuint textureID, const char* filename)
 	assert(format == GL_RGBA8);
 
 	CBitmap bmp;
-	bmp.channels = 4;
-	bmp.Alloc(sizeX,sizeY);
-	glGetTexImage(target,0,GL_RGBA,GL_UNSIGNED_BYTE, &bmp.mem[0]);
+	bmp.Alloc(sizeX, sizeY, 4);
+	glGetTexImage(target, 0, GL_RGBA, GL_UNSIGNED_BYTE, bmp.GetRawMem());
 	bmp.Save(filename, false);
 }
 

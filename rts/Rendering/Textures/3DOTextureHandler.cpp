@@ -97,11 +97,14 @@ C3DOTextureHandler::C3DOTextureHandler()
 		const size_t foundy = atlasAlloc->GetEntry(it->name).y;
 		const float4 texCoords = atlasAlloc->GetTexCoords(it->name);
 
+		const unsigned char* rmem1 = curtex1.GetRawMem();
+		const unsigned char* rmem2 = curtex2.GetRawMem();
+
 		for (int y = 0; y < curtex1.ysize; ++y) {
 			for (int x = 0; x < curtex1.xsize; ++x) {
 				for (int col = 0; col < 4; ++col) {
-					bigtex1[(((foundy + y) * curAtlasSize.x + (foundx + x)) * 4) + col] = curtex1.mem[(((y * curtex1.xsize) + x) * 4) + col];
-					bigtex2[(((foundy + y) * curAtlasSize.x + (foundx + x)) * 4) + col] = curtex2.mem[(((y * curtex1.xsize) + x) * 4) + col];
+					bigtex1[(((foundy + y) * curAtlasSize.x + (foundx + x)) * 4) + col] = rmem1[(((y * curtex1.xsize) + x) * 4) + col];
+					bigtex2[(((foundy + y) * curAtlasSize.x + (foundx + x)) * 4) + col] = rmem2[(((y * curtex1.xsize) + x) * 4) + col];
 				}
 			}
 		}
@@ -205,16 +208,16 @@ std::vector<TexFile> C3DOTextureHandler::LoadTexFiles()
 		TexFile texFile;
 		texFile.name = "ta_color" + IntToString(a, "%i");
 		texFile.tex.Alloc(1, 1);
-		texFile.tex.mem[0] = palette[a][0];
-		texFile.tex.mem[1] = palette[a][1];
-		texFile.tex.mem[2] = palette[a][2];
-		texFile.tex.mem[3] = 0; // teamcolor
+		texFile.tex.GetRawMem()[0] = palette[a][0];
+		texFile.tex.GetRawMem()[1] = palette[a][1];
+		texFile.tex.GetRawMem()[2] = palette[a][2];
+		texFile.tex.GetRawMem()[3] = 0; // teamcolor
 
 		texFile.tex2.Alloc(1, 1);
-		texFile.tex2.mem[0] = 0;  // self illum
-		texFile.tex2.mem[1] = 30; // reflectivity
-		texFile.tex2.mem[2] =  0;
-		texFile.tex2.mem[3] = 255;
+		texFile.tex2.GetRawMem()[0] = 0;  // self illum
+		texFile.tex2.GetRawMem()[1] = 30; // reflectivity
+		texFile.tex2.GetRawMem()[2] =  0;
+		texFile.tex2.GetRawMem()[3] = 255;
 
 		texFiles.push_back(texFile);
 	}
@@ -245,22 +248,25 @@ TexFile C3DOTextureHandler::CreateTex(const std::string& name, const std::string
 	CBitmap* tex1 = &texFile.tex;
 	CBitmap* tex2 = &texFile.tex2;
 
-	for (int a = 0; a < (tex1->ysize * tex1->xsize); ++a) {
-		tex2->mem[a*4 + 0] = 0;
-		tex2->mem[a*4 + 1] = tex1->mem[a*4 + 3]; // move reflectivity to texture2
-		tex2->mem[a*4 + 2] = 0;
-		tex2->mem[a*4 + 3] = 255;
+	unsigned char* wmem1 = tex1->GetRawMem();
+	unsigned char* wmem2 = tex2->GetRawMem();
 
-		tex1->mem[a*4 + 3] = 0;
+	for (int a = 0; a < (tex1->ysize * tex1->xsize); ++a) {
+		wmem2[a*4 + 0] = 0;
+		wmem2[a*4 + 1] = wmem1[a*4 + 3]; // move reflectivity to texture2
+		wmem2[a*4 + 2] = 0;
+		wmem2[a*4 + 3] = 255;
+
+		wmem1[a*4 + 3] = 0;
 
 		if (teamcolor) {
 			//purple = teamcolor
-			if ((tex1->mem[a*4] == tex1->mem[a*4 + 2]) && (tex1->mem[a*4+1] == 0)) {
-				unsigned char lum = tex1->mem[a*4];
-				tex1->mem[a*4 + 0] = 0;
-				tex1->mem[a*4 + 1] = 0;
-				tex1->mem[a*4 + 2] = 0;
-				tex1->mem[a*4 + 3] = (unsigned char)(std::min(255.0f, lum * 1.5f));
+			if ((wmem1[a*4] == wmem1[a*4 + 2]) && (wmem1[a*4+1] == 0)) {
+				const unsigned char lum = wmem1[a*4];
+				wmem1[a*4 + 0] = 0;
+				wmem1[a*4 + 1] = 0;
+				wmem1[a*4 + 2] = 0;
+				wmem1[a*4 + 3] = (unsigned char)(std::min(255.0f, lum * 1.5f));
 			}
 		}
 	}

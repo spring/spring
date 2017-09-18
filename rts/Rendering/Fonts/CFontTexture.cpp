@@ -665,7 +665,10 @@ void CFontTexture::UpdateTexture()
 {
 #ifndef HEADLESS
 	std::lock_guard<spring::recursive_mutex> lk(m);
-	if (curTextureUpdate == lastTextureUpdate) return;
+
+	if (curTextureUpdate == lastTextureUpdate)
+		return;
+
 	lastTextureUpdate = curTextureUpdate;
 	texWidth  = wantedTexWidth;
 	texHeight = wantedTexHeight;
@@ -674,27 +677,31 @@ void CFontTexture::UpdateTexture()
 	if (atlasUpdateShadow) {
 		atlasUpdateShadow->Blur(outlineSize, outlineWeight);
 		assert((atlasUpdate->xsize * atlasUpdate->ysize) % sizeof(int) == 0);
-		auto src = reinterpret_cast<int*>(&atlasUpdateShadow->mem[0]);
-		auto dst = reinterpret_cast<int*>(&atlasUpdate->mem[0]);
+
+		auto src = reinterpret_cast<int*>(atlasUpdateShadow->GetRawMem());
+		auto dst = reinterpret_cast<int*>(atlasUpdate->GetRawMem());
 		auto size = (atlasUpdate->xsize * atlasUpdate->ysize) / sizeof(int);
+
 		assert (atlasUpdateShadow->mem.size() / sizeof(int) == size);
 		assert (atlasUpdate->mem.size() / sizeof(int) == size);
-		for (int i=0; i<size; ++i) {
+
+		for (int i = 0; i < size; ++i) {
 			dst[i] |= src[i];
 		}
+
 		delete atlasUpdateShadow;
-		atlasUpdateShadow = NULL;
+		atlasUpdateShadow = nullptr;
 	}
 
 
 	glPushAttrib(GL_PIXEL_MODE_BIT | GL_TEXTURE_BIT);
 		// update texture atlas
 		glBindTexture(GL_TEXTURE_2D, texture);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, texWidth, texHeight, 0, GL_ALPHA, GL_UNSIGNED_BYTE, &atlasUpdate->mem[0]);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, texWidth, texHeight, 0, GL_ALPHA, GL_UNSIGNED_BYTE, atlasUpdate->GetRawMem());
 
 		// update texture space dlist (this affects already compiled dlists too!)
 		glNewList(textureSpaceMatrix, GL_COMPILE);
-		glScalef(1.f/texWidth, 1.f/texHeight, 1.f);
+		glScalef(1.0f / texWidth, 1.0f / texHeight, 1.0f);
 		glEndList();
 	glPopAttrib();
 #endif

@@ -521,14 +521,18 @@ unsigned int LegacyTrackHandler::LoadTexture(const std::string& name)
 	if (FileSystem::GetExtension(fullName) == "bmp") {
 		// bitmaps don't have an alpha channel
 		// so use: red := brightness & green := alpha
+		const unsigned char* rmem = bm.GetRawMem();
+		      unsigned char* wmem = bm.GetRawMem();
+
 		for (int y = 0; y < bm.ysize; ++y) {
 			for (int x = 0; x < bm.xsize; ++x) {
 				const int index = ((y * bm.xsize) + x) * 4;
-				bm.mem[index + 3]    = bm.mem[index + 1];
-				const int brightness = bm.mem[index + 0];
-				bm.mem[index + 0] = (brightness * 90) / 255;
-				bm.mem[index + 1] = (brightness * 60) / 255;
-				bm.mem[index + 2] = (brightness * 30) / 255;
+				const int brightness = rmem[index + 0];
+
+				wmem[index + 3] = rmem[index + 1];
+				wmem[index + 0] = (brightness * 90) / 255;
+				wmem[index + 1] = (brightness * 60) / 255;
+				wmem[index + 2] = (brightness * 30) / 255;
 			}
 		}
 	}

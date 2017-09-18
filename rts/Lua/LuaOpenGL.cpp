@@ -4197,13 +4197,15 @@ int LuaOpenGL::SaveImage(lua_State* L)
 	bitmap.Alloc(width, height);
 
 	if (!gray16b) {
-		glReadPixels(x, y, width, height, GL_RGBA, GL_UNSIGNED_BYTE, &bitmap.mem[0]);
-		if (!yflip) bitmap.ReverseYAxis();
+		glReadPixels(x, y, width, height, GL_RGBA, GL_UNSIGNED_BYTE, bitmap.GetRawMem());
+		if (!yflip)
+			bitmap.ReverseYAxis();
 		lua_pushboolean(L, bitmap.Save(filename, !alpha));
 	} else {
 		// single channel only!
-		glReadPixels(x, y, width, height, GL_LUMINANCE, GL_FLOAT, &bitmap.mem[0]);
-		if (!yflip) bitmap.ReverseYAxis();
+		glReadPixels(x, y, width, height, GL_LUMINANCE, GL_FLOAT, bitmap.GetRawMem());
+		if (!yflip)
+			bitmap.ReverseYAxis();
 		lua_pushboolean(L, bitmap.SaveFloat(filename));
 	}
 
