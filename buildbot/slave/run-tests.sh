@@ -8,7 +8,7 @@ which nproc &> /dev/null && NUM_CORES=`nproc`
 
 set +e #maybe limit is already lower, do not abort if so
 ulimit -t $((300 + NUM_CORES * 100))
-ulimit -m 900000
+ulimit -m 1200000
 #ulimit -v 4000000
 set -e
 
