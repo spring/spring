@@ -203,8 +203,7 @@ IPath::SearchResult IPathFinder::InitSearch(const MoveDef& moveDef, const CPathF
 
 	dirtyBlocks.push_back(mStartBlockIdx);
 
-	// start a new search and
-	// add the starting block to the open-blocks-queue
+	// start a new search and add the starting block to the open-blocks-queue
 	openBlockBuffer.SetSize(0);
 	PathNode* ob = openBlockBuffer.GetNode(openBlockBuffer.GetSize());
 		ob->fCost   = 0.0f;

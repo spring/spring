@@ -125,10 +125,12 @@ CRectangularSearchConstraint::CRectangularSearchConstraint(
 	unsigned int startBlockZ = startPos.z / SQUARE_SIZE;
 	unsigned int  goalBlockX =  goalPos.x / SQUARE_SIZE;
 	unsigned int  goalBlockZ =  goalPos.z / SQUARE_SIZE;
-	startBlockX -= startBlockX % blockSize;
-	startBlockZ -= startBlockZ % blockSize;
-	 goalBlockX -=  goalBlockX % blockSize;
-	 goalBlockZ -=  goalBlockZ % blockSize;
+
+	// align to PE-grid
+	startBlockX -= (startBlockX % blockSize);
+	startBlockZ -= (startBlockZ % blockSize);
+	 goalBlockX -= ( goalBlockX % blockSize);
+	 goalBlockZ -= ( goalBlockZ % blockSize);
 
 	startBlockRect.x1 = startBlockX;
 	startBlockRect.z1 = startBlockZ;
