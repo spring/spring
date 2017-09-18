@@ -682,8 +682,8 @@ void CFontTexture::UpdateTexture()
 		auto dst = reinterpret_cast<int*>(atlasUpdate->GetRawMem());
 		auto size = (atlasUpdate->xsize * atlasUpdate->ysize) / sizeof(int);
 
-		assert (atlasUpdateShadow->mem.size() / sizeof(int) == size);
-		assert (atlasUpdate->mem.size() / sizeof(int) == size);
+		assert (atlasUpdateShadow->GetMemSize() / sizeof(int) == size);
+		assert (atlasUpdate->GetMemSize() / sizeof(int) == size);
 
 		for (int i = 0; i < size; ++i) {
 			dst[i] |= src[i];

@@ -321,8 +321,8 @@ void CHwWinCursor::Finish()
 	int squaresize = GetBestCursorSize(std::max(xmaxsize, ymaxsize));
 
 	//resize images
-	for (ImageData id: icons)
-		resizeImage(id, squaresize, squaresize);
+	for (ImageData& id: icons)
+		resizeImage(&id, squaresize, squaresize);
 
 	const int riffsize  = 32 + sizeof(AnihStructure) + (frames.size()+2) * 2 * sizeof(DWORD);
 	const int iconssize = icons.size() * (2*sizeof(DWORD) + 3*sizeof(WORD) +
