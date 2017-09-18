@@ -3,7 +3,7 @@
 #ifndef QUAD_FIELD_H
 #define QUAD_FIELD_H
 
-#include <deque>
+#include <array>
 #include <vector>
 #include "System/Misc/NonCopyable.h"
 
@@ -21,6 +21,15 @@ struct QuadFieldQuery;
 template<typename T>
 class ExclusiveVectors {
 public:
+	// There should at most be 2 concurrent users of each vector type
+	// using 3 to be safe, increase this number if the assertions below
+	// fail
+	static constexpr int MAX_CONCURRENT_VECTORS = 3;
+	ExclusiveVectors() {
+		for (auto& v: vectors){
+			v.first = false;
+		}
+	}
 	std::vector<T>* GetVector() {
 		for (auto& v: vectors){
 			if (v.first)
@@ -30,12 +39,8 @@ public:
 			v.second.clear();
 			return &v.second;
 		}
-		vectors.emplace_back();
-		// There shouldn't be too many concurrent users of each vector type
-		assert(vectors.size() < 4);
-		auto &v = vectors.back();
-		v.first = true;
-		return &v.second;
+		assert(false);
+		return nullptr;
 	}
 
 	void ReleaseVector(std::vector<T>* released) {
@@ -52,7 +57,7 @@ public:
 		assert(false);
 	}
 
-	std::deque<std::pair<bool, std::vector<T>>> vectors;
+	std::array<std::pair<bool, std::vector<T>>, MAX_CONCURRENT_VECTORS> vectors;
 };
 
 
