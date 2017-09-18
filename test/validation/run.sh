@@ -42,9 +42,12 @@ ulimit -t 300
 # delete path cache
 rm -rf ~/.config/spring/cache/
 
-# start up the client in background
-$RUNCLIENT "$1 --nocolor" &
-PID_CLIENT=$!
+if [ "$GAME" != "devgame:test" ];
+then
+	# start up the client in background
+	$RUNCLIENT "$1 --nocolor" &
+	PID_CLIENT=$!
+fi
 
 # start host
 echo "Starting Host"
@@ -60,20 +63,26 @@ echo waiting for host to exit, pid: $PID_HOST
 wait $PID_HOST
 EXIT=$?
 
-echo waiting for client to exit, pid: $PID_CLIENT
-# get spring client process exit code / wait for exit
-wait $PID_CLIENT
-EXITCHILD=$?
 
-#reenable abbort on error
-set -e
-
-# exit with exit code of server/client if failed
-if [ $EXITCHILD -ne 0 ];
+if [ "$GAME" != "devgame:test" ];
 then
-	echo Client exited with $EXITCHILD
-	exit $EXITCHILD
+	echo waiting for client to exit, pid: $PID_CLIENT
+	# get spring client process exit code / wait for exit
+	wait $PID_CLIENT
+	EXITCHILD=$?
+
+	#reenable abbort on error
+	set -e
+
+	# exit with exit code of server/client if failed
+	if [ $EXITCHILD -ne 0 ];
+	then
+		echo Client exited with $EXITCHILD
+		exit $EXITCHILD
+	fi
+
 fi
 
+echo Server exited with $EXIT
 exit $EXIT
 
