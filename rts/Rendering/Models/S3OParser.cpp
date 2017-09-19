@@ -20,15 +20,20 @@
 S3DModel CS3OParser::Load(const std::string& name)
 {
 	CFileHandler file(name);
-	if (!file.FileExists()) {
+	std::vector<unsigned char> fileBuf;
+
+	if (!file.FileExists())
 		throw content_error("[S3OParser] could not find model-file " + name);
+
+	if (!file.IsBuffered()) {
+		fileBuf.resize(file.FileSize(), 0);
+		file.Read(fileBuf.data(), fileBuf.size());
+	} else {
+		fileBuf = std::move(file.GetBuffer());
 	}
 
-	std::vector<unsigned char> fileBuf(file.FileSize());
-	file.Read(&fileBuf[0], file.FileSize());
-
 	S3OHeader header;
-	memcpy(&header, &fileBuf[0], sizeof(header));
+	memcpy(&header, fileBuf.data(), sizeof(header));
 	header.swap();
 
 	S3DModel model;
@@ -42,7 +47,7 @@ S3DModel CS3OParser::Load(const std::string& name)
 
 	texturehandlerS3O->PreloadTexture(&model);
 
-	model.FlattenPieceTree(LoadPiece(&model, nullptr, &fileBuf[0], header.rootPiece));
+	model.FlattenPieceTree(LoadPiece(&model, nullptr, fileBuf.data(), header.rootPiece));
 
 	// set after the extrema are known
 	model.radius = (header.radius <= 0.01f)? model.CalcDrawRadius(): header.radius;

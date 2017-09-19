@@ -141,10 +141,14 @@ S3DModel C3DOParser::Load(const std::string& name)
 	if (!file.FileExists())
 		throw content_error("[3DOParser] could not find model-file " + name);
 
-	fileBuf.resize(file.FileSize(), 0);
+	if (!file.IsBuffered()) {
+		fileBuf.resize(file.FileSize(), 0);
 
-	if (file.Read(&fileBuf[0], file.FileSize()) == 0)
-		throw content_error("[3DOParser] failed to read model-file " + name);
+		if (file.Read(fileBuf.data(), fileBuf.size()) == 0)
+			throw content_error("[3DOParser] failed to read model-file " + name);
+	} else {
+		fileBuf = std::move(file.GetBuffer());
+	}
 
 	S3DModel model;
 		model.name = name;
