@@ -135,8 +135,10 @@ IPath::SearchResult CPathManager::ArrangePath(
 	assert(MAX_SEARCHED_NODES_PF <= 65536u);
 	assert(MAXRES_SEARCH_DISTANCE <= 50.0f);
 
-	const unsigned int nodeLimits[] = {MAX_SEARCHED_NODES_PE >> 3, MAX_SEARCHED_NODES_PE >> 3, MAX_SEARCHED_NODES_PF >> 3};
-	const bool useConstraints[] = {false, false, false};
+	constexpr unsigned int nodeLimits[] = {MAX_SEARCHED_NODES_PE >> 3, MAX_SEARCHED_NODES_PE >> 3, MAX_SEARCHED_NODES_PF >> 3};
+
+	constexpr bool useConstraints[] = {false, false, false};
+	constexpr bool allowRawSearch[] = {false, false, false};
 
 	IPathFinder* pathFinders[] = {lowResPE, medResPE, maxResPF};
 	IPath::Path* pathObjects[] = {&newPath->lowResPath, &newPath->medResPath, &newPath->maxResPath};
@@ -154,29 +156,42 @@ IPath::SearchResult CPathManager::ArrangePath(
 	};
 
 	{
-		// try each pathfinder in order from MAX to LOW limited by distance,
-		// with constraints disabled for all three since these break search
-		// completeness (CPU usage is still limited by MAX_SEARCHED_NODES_*)
-		for (int n = PATH_MAX_RES; n >= PATH_LOW_RES; n--) {
-			// distance-limits are in ascending order
-			if (heurGoalDist2D > searchDistances[n])
-				continue;
+		if (heurGoalDist2D <= (MAXRES_SEARCH_DISTANCE * 1.25f)) {
+			pfDef->AllowRawPathSearch( true);
+			pfDef->AllowDefPathSearch(false); // block default search
 
-			// enable raw search only for fully high-res paths
-			pfDef->DisableConstraint(!useConstraints[n]);
-			pfDef->AllowRawPathSearch(n == PATH_MAX_RES);
+			// only the max-res CPathFinder implements DoRawSearch
+			bestResult = pathFinders[PATH_MAX_RES]->GetPath(*moveDef, *pfDef, caller, startPos, *pathObjects[PATH_MAX_RES], nodeLimits[PATH_MAX_RES]);
+			bestSearch = PATH_MAX_RES;
 
-			const IPath::SearchResult currResult = pathFinders[n]->GetPath(*moveDef, *pfDef, caller, startPos, *pathObjects[n], nodeLimits[n]);
+			pfDef->AllowRawPathSearch(false);
+			pfDef->AllowDefPathSearch( true);
+		}
 
-			// note: GEQ s.t. MED-OK will be preferred over LOW-OK, etc
-			if (currResult >= bestResult)
-				continue;
+		if (bestResult != IPath::Ok) {
+			// try each pathfinder in order from MAX to LOW limited by distance,
+			// with constraints disabled for all three since these break search
+			// completeness (CPU usage is still limited by MAX_SEARCHED_NODES_*)
+			for (int n = PATH_MAX_RES; n >= PATH_LOW_RES; n--) {
+				// distance-limits are in ascending order
+				if (heurGoalDist2D > searchDistances[n])
+					continue;
 
-			bestResult = currResult;
-			bestSearch = n;
+				pfDef->DisableConstraint(!useConstraints[n]);
+				pfDef->AllowRawPathSearch(allowRawSearch[n]);
 
-			if (currResult == IPath::Ok)
-				break;
+				const IPath::SearchResult currResult = pathFinders[n]->GetPath(*moveDef, *pfDef, caller, startPos, *pathObjects[n], nodeLimits[n]);
+
+				// note: GEQ s.t. MED-OK will be preferred over LOW-OK, etc
+				if (currResult >= bestResult)
+					continue;
+
+				bestResult = currResult;
+				bestSearch = n;
+
+				if (currResult == IPath::Ok)
+					break;
+			}
 		}
 	}
 

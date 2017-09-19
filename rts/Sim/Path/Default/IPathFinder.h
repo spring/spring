@@ -33,8 +33,8 @@ public:
 
 	unsigned int GetBlockSize() const { return BLOCK_SIZE; }
 	int2 GetNumBlocks() const { return nbrOfBlocks; }
-	int2 BlockIdxToPos(const unsigned idx)  const { return int2(idx % nbrOfBlocks.x, idx / nbrOfBlocks.x); }
-	int  BlockPosToIdx(const int2 pos) const { return pos.y * nbrOfBlocks.x + pos.x; }
+	int2 BlockIdxToPos(const unsigned idx) const { return int2(idx % nbrOfBlocks.x, idx / nbrOfBlocks.x); }
+	int  BlockPosToIdx(const int2 pos) const { return (pos.y * nbrOfBlocks.x + pos.x); }
 
 
 	/**
@@ -77,7 +77,7 @@ protected:
 	/// Clear things up from last search.
 	void ResetSearch();
 
-protected: // pure virtuals
+protected:
 	virtual IPath::SearchResult DoRawSearch(const MoveDef&, const CPathFinderDef&, const CSolidObject* owner) { return IPath::Error; }
 	virtual IPath::SearchResult DoSearch(const MoveDef&, const CPathFinderDef&, const CSolidObject* owner) = 0;
 
@@ -101,7 +101,7 @@ protected: // pure virtuals
 	 *
 	 * Perform adjustment of waypoints so not all turns are 90 or 45 degrees.
 	 */
-	virtual IPath::SearchResult FinishSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, IPath::Path& path) const = 0;
+	virtual void FinishSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, IPath::Path& path) const = 0;
 
 
 	virtual const CPathCache::CacheItem& GetCache(

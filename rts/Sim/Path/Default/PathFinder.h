@@ -28,7 +28,7 @@ public:
 
 	typedef CMoveMath::BlockType (*BlockCheckFunc)(const MoveDef&, int, int, const CSolidObject*);
 
-protected: // IPathFinder impl
+protected:
 	/// Performs the actual search.
 	IPath::SearchResult DoRawSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, const CSolidObject* owner);
 	IPath::SearchResult DoSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, const CSolidObject* owner);
@@ -52,7 +52,7 @@ protected: // IPathFinder impl
 	 *
 	 * Perform adjustment of waypoints so not all turns are 90 or 45 degrees.
 	 */
-	IPath::SearchResult FinishSearch(const MoveDef&, const CPathFinderDef&, IPath::Path&) const;
+	void FinishSearch(const MoveDef&, const CPathFinderDef&, IPath::Path&) const;
 
 	const CPathCache::CacheItem& GetCache(
 		const int2 strtBlock,

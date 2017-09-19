@@ -22,6 +22,7 @@ public:
 
 	void DisableConstraint(bool b) { constraintDisabled = b; }
 	void AllowRawPathSearch(bool b) { allowRawPath = b; }
+	void AllowDefPathSearch(bool b) { allowDefPath = b; }
 
 	bool IsGoal(unsigned int xSquare, unsigned int zSquare) const;
 	float Heuristic(unsigned int xSquare, unsigned int zSquare, unsigned int blockSize) const;
@@ -45,9 +46,11 @@ public:
 	bool needPath;
 	bool exactPath;
 	bool allowRawPath;
+	bool allowDefPath;
 	bool dirIndependent;
 	bool synced;
 
+	// heightmap-coors
 	unsigned int goalSquareX;
 	unsigned int goalSquareZ;
 };

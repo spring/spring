@@ -4,7 +4,6 @@
 #include "PathFinderDef.h"
 #include "PathLog.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
-#include "Sim/Objects/SolidObject.h"
 #include "System/Log/ILog.h"
 
 
@@ -144,7 +143,7 @@ IPath::SearchResult IPathFinder::GetPath(
 	}
 
 	// start up a new search
-	IPath::SearchResult result = InitSearch(moveDef, pfDef, owner);
+	const IPath::SearchResult result = InitSearch(moveDef, pfDef, owner);
 
 	// if search was successful, generate new path
 	if (result == IPath::Ok || result == IPath::GoalOutOfRange) {
@@ -193,8 +192,8 @@ IPath::SearchResult IPathFinder::InitSearch(const MoveDef& moveDef, const CPathF
 	// no, clean the system from last search
 	ResetSearch();
 
-	// mark and store the start-block
-	blockStates.nodeMask[mStartBlockIdx] &= PATHOPT_OBSOLETE; // clear all except PATHOPT_OBSOLETE
+	// mark and store the start-block; clear all bits except PATHOPT_OBSOLETE
+	blockStates.nodeMask[mStartBlockIdx] &= PATHOPT_OBSOLETE;
 	blockStates.nodeMask[mStartBlockIdx] |= PATHOPT_OPEN;
 	blockStates.fCost[mStartBlockIdx] = 0.0f;
 	blockStates.gCost[mStartBlockIdx] = 0.0f;
@@ -217,8 +216,8 @@ IPath::SearchResult IPathFinder::InitSearch(const MoveDef& moveDef, const CPathF
 	mGoalHeuristic = pfDef.Heuristic(square.x, square.y, BLOCK_SIZE);
 
 	// perform the search
-	const IPath::SearchResult rawResult = DoRawSearch(moveDef, pfDef, owner);
-	const IPath::SearchResult ipfResult = (rawResult == IPath::Error)? DoSearch(moveDef, pfDef, owner): rawResult;
+	const IPath::SearchResult rawResult = (pfDef.allowRawPath                             )? DoRawSearch(moveDef, pfDef, owner): IPath::Error;
+	const IPath::SearchResult ipfResult = (pfDef.allowDefPath && rawResult == IPath::Error)? DoSearch(moveDef, pfDef, owner): rawResult;
 
 	if (ipfResult == IPath::Ok)
 		return ipfResult;
@@ -230,3 +229,4 @@ IPath::SearchResult IPathFinder::InitSearch(const MoveDef& moveDef, const CPathF
 	// can not get closer
 	return (!isStartGoal || startInGoal)? IPath::CantGetCloser: ipfResult;
 }
+

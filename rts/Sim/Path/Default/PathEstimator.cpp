@@ -556,9 +556,7 @@ void CPathEstimator::Update()
 	{
 		SCOPED_TIMER("Sim::Path::Estimator::CalcVertexPathCosts");
 		for (unsigned int n = 0; n < consumedBlocks.size(); ++n) {
-			// copy the next block in line
-			const SingleBlock sb = consumedBlocks[n];
-			CalcVertexPathCosts(*sb.moveDef, sb.blockPos);
+			CalcVertexPathCosts(*consumedBlocks[n].moveDef, consumedBlocks[n].blockPos);
 		}
 	}
 }
@@ -594,7 +592,7 @@ IPath::SearchResult CPathEstimator::DoBlockSearch(
 	const float3 sw,
 	const float3 gw
 ) {
-	// always use max-res search for this
+	// always use max-res (in addition to raw) search for this
 	IPathFinder* pf = (BLOCK_SIZE == 32)? parentPathFinder->GetParent(): parentPathFinder;
 	CRectangularSearchConstraint pfDef = CRectangularSearchConstraint(sw, gw, 8.0f, BLOCK_SIZE); // sets goalSquare{X,Z}
 	IPath::Path path;
@@ -602,6 +600,7 @@ IPath::SearchResult CPathEstimator::DoBlockSearch(
 	pfDef.testMobile     = false;
 	pfDef.needPath       = false;
 	pfDef.exactPath      = true;
+	pfDef.allowRawPath   = true;
 	pfDef.dirIndependent = true;
 
 	// search within the rectangle defined by sw and gw, corners snapped to the PE grid
@@ -843,11 +842,8 @@ bool CPathEstimator::TestBlock(
 /**
  * Recreate the path taken to the goal
  */
-IPath::SearchResult CPathEstimator::FinishSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, IPath::Path& foundPath) const
+void CPathEstimator::FinishSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, IPath::Path& foundPath) const
 {
-	// set some additional information
-	foundPath.pathCost = blockStates.fCost[mGoalBlockIdx] - mGoalHeuristic;
-
 	if (pfDef.needPath) {
 		unsigned int blockIdx = mGoalBlockIdx;
 		unsigned int numNodes = 0;
@@ -894,12 +890,11 @@ IPath::SearchResult CPathEstimator::FinishSearch(const MoveDef& moveDef, const C
 			blockIdx = BlockPosToIdx(BlockIdxToPos(blockIdx) - PE_DIRECTION_VECTORS[pathDir]);
 		}
 
-		if (numNodes > 0) {
+		if (!foundPath.path.empty())
 			foundPath.pathGoal = foundPath.path[0];
-		}
 	}
 
-	return IPath::Ok;
+	foundPath.pathCost = blockStates.fCost[mGoalBlockIdx] - mGoalHeuristic;
 }
 
 

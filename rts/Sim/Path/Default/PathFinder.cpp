@@ -73,7 +73,7 @@ IPath::SearchResult CPathFinder::DoRawSearch(
 	const CPathFinderDef& pfDef,
 	const CSolidObject* owner
 ) {
-	if (!moveDef.allowRawMovement || !pfDef.allowRawPath)
+	if (!moveDef.allowRawMovement)
 		return IPath::Error;
 
 	const int2 strtBlk = BlockIdxToPos(mStartBlockIdx);
@@ -374,10 +374,10 @@ bool CPathFinder::TestBlock(
 }
 
 
-IPath::SearchResult CPathFinder::FinishSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, IPath::Path& foundPath) const
+void CPathFinder::FinishSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, IPath::Path& foundPath) const
 {
-	// backtrack
 	if (pfDef.needPath) {
+		// backtrack
 		int2 square = BlockIdxToPos(mGoalBlockIdx);
 
 		unsigned int blockIdx = mGoalBlockIdx;
@@ -419,15 +419,11 @@ IPath::SearchResult CPathFinder::FinishSearch(const MoveDef& moveDef, const CPat
 			blockIdx = BlockPosToIdx(square);
 		}
 
-		if (numNodes > 0) {
+		if (!foundPath.path.empty())
 			foundPath.pathGoal = foundPath.path[0];
-		}
 	}
 
-	// copy the path-cost
 	foundPath.pathCost = blockStates.fCost[mGoalBlockIdx];
-
-	return IPath::Ok;
 }
 
 

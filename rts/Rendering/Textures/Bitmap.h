@@ -64,7 +64,7 @@ public:
 	const unsigned char* GetRawMem() const { return (mem.data()); }
 	      unsigned char* GetRawMem()       { return (mem.data()); }
 
-	size_t GetMemSize() { return mem.size(); }
+	size_t GetMemSize() const { return mem.size(); }
 
 
 	int32_t xsize;

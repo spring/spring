@@ -28,6 +28,7 @@ CPathFinderDef::CPathFinderDef(const float3& goalCenter, float goalRadius, float
 // keep PF and PE in sync
 , exactPath(false)
 , allowRawPath(false)
+, allowDefPath(true)
 , dirIndependent(false)
 , synced(true)
 {
