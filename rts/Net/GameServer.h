@@ -3,17 +3,15 @@
 #ifndef _GAME_SERVER_H
 #define _GAME_SERVER_H
 
-#include <memory>
-#include <memory>
-
-#include <string>
-#include <map>
-#include <deque>
-#include <set>
-#include <array>
-#include <vector>
-
 #include <asio/ip/udp.hpp>
+
+#include <memory>
+#include <string>
+#include <array>
+#include <deque>
+#include <map>
+#include <set>
+#include <vector>
 
 #include "Game/GameData.h"
 #include "Sim/Misc/GlobalConstants.h"
