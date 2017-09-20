@@ -576,25 +576,27 @@ void CGameServer::Broadcast(std::shared_ptr<const netcode::RawPacket> packet)
 	if (canReconnect || allowSpecJoin || !gameHasStarted)
 		AddToPacketCache(packet);
 
-	if (demoRecorder != NULL)
+	if (demoRecorder != nullptr)
 		demoRecorder->SaveToDemo(packet->data, packet->length, GetDemoTime());
 }
 
-void CGameServer::Message(const std::string& message, bool broadcast)
+void CGameServer::Message(const std::string& message, bool broadcast, bool internal)
 {
-	if (broadcast) {
-		Broadcast(CBaseNetProtocol::Get().SendSystemMessage(SERVER_PLAYER, message));
+	if (!internal) {
+		if (broadcast) {
+			Broadcast(CBaseNetProtocol::Get().SendSystemMessage(SERVER_PLAYER, message));
+		}
+		else if (HasLocalClient()) {
+			// host should see
+			players[localClientNumber].SendData(CBaseNetProtocol::Get().SendSystemMessage(SERVER_PLAYER, message));
+		}
+		if (hostif != nullptr)
+			hostif->Message(message);
 	}
-	else if (HasLocalClient()) {
-		// host should see
-		players[localClientNumber].SendData(CBaseNetProtocol::Get().SendSystemMessage(SERVER_PLAYER, message));
-	}
-	if (hostif)
-		hostif->Message(message);
 
-#ifdef DEDICATED
+	#ifdef DEDICATED
 	LOG("%s", message.c_str());
-#endif
+	#endif
 }
 
 void CGameServer::PrivateMessage(int playerNum, const std::string& message) {
@@ -1807,11 +1809,11 @@ void CGameServer::ProcessPacket(const unsigned playerNum, std::shared_ptr<const 
 
 void CGameServer::HandleConnectionAttempts()
 {
-	while (UDPNet && UDPNet->HasIncomingConnections()) {
+	while (UDPNet != nullptr && UDPNet->HasIncomingConnections()) {
 		std::shared_ptr<netcode::UDPConnection> prev = UDPNet->PreviewConnection().lock();
 		std::shared_ptr<const RawPacket> packet = prev->GetData();
 
-		if (!packet) {
+		if (packet == nullptr) {
 			UDPNet->RejectConnection();
 			continue;
 		}
@@ -1840,16 +1842,37 @@ void CGameServer::HandleConnectionAttempts()
 			msg >> netloss;
 
 			if (netversion != NETWORK_VERSION)
-				throw netcode::UnpackPacketException(spring::format("Wrong network version: %d, required version: %d", (int)netversion, (int)NETWORK_VERSION));
+				throw netcode::UnpackPacketException(spring::format("Wrong network version: received %d, required %d", (int)netversion, (int)NETWORK_VERSION));
 
 			BindConnection(name, passwd, version, false, UDPNet->AcceptConnection(), reconnect, netloss);
 		} catch (const netcode::UnpackPacketException& ex) {
-			const std::string msg = spring::format(ConnectionReject, ex.what());
-			prev->Unmute();
-			prev->SendData(CBaseNetProtocol::Get().SendRejectConnect(msg));
-			prev->SendData(CBaseNetProtocol::Get().SendQuit(msg)); //FIXME backward compatibility (remove ~2017)
-			prev->Flush(true);
-			Message(msg);
+			const asio::ip::udp::endpoint endp = prev->GetEndpoint();
+			const asio::ip::address addr = endp.address();
+
+			const std::string str = addr.to_string();
+			const std::string msg = spring::format(ConnectionReject, str.c_str(), ex.what());
+
+			auto  pair = std::make_pair(rejectedConnections.find(str), false);
+			auto& iter = pair.first;
+
+			if (iter == rejectedConnections.end()) {
+				pair = rejectedConnections.insert(std::make_pair(str, 0));
+				iter = pair.first;
+			}
+
+			if (iter->second < 5) {
+				rejectedConnections.insert(std::make_pair(str, iter->second + 1));
+
+				prev->Unmute();
+				prev->SendData(CBaseNetProtocol::Get().SendRejectConnect(msg));
+				prev->Flush(true);
+
+				Message(msg);
+			} else {
+				// silently drop
+				Message(msg, false, true);
+			}
+
 			UDPNet->RejectConnection();
 		}
 	}

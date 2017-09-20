@@ -3,16 +3,15 @@
 #ifndef _GAME_SERVER_H
 #define _GAME_SERVER_H
 
-#include <memory>
-#include <memory>
+// #include <asio/ip/udp.hpp>
 
+#include <memory>
 #include <string>
-#include <map>
-#include <deque>
-#include <set>
 #include <array>
+#include <deque>
+#include <map>
+#include <set>
 #include <vector>
-#include <list>
 
 #include "Game/GameData.h"
 #include "Sim/Misc/GlobalConstants.h"
@@ -169,7 +168,7 @@ private:
 	 */
 	void SkipTo(int targetFrameNum);
 
-	void Message(const std::string& message, bool broadcast = true);
+	void Message(const std::string& message, bool broadcast = true, bool internal = false);
 	void PrivateMessage(int playerNum, const std::string& message);
 
 	void AddToPacketCache(std::shared_ptr<const netcode::RawPacket>& pckt);
@@ -216,6 +215,9 @@ private:
 
 	std::array< std::pair<spring_time, uint32_t>, MAX_PLAYERS> clientDrawFilter;
 	std::array< std::pair<       bool,     bool>, MAX_PLAYERS> clientMuteFilter;
+
+	// std::map<asio::ip::udp::endpoint, int> rejectedConnections;
+	std::map<std::string, int> rejectedConnections;
 
 	float medianCpu;
 	int medianPing;
