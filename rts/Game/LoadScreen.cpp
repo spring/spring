@@ -6,7 +6,6 @@
 #include "Rendering/GL/myGL.h"
 #include "LoadScreen.h"
 #include "Game.h"
-#include "GameVersion.h"
 #include "GlobalUnsynced.h"
 #include "Game/Players/Player.h"
 #include "Game/Players/PlayerHandler.h"
@@ -339,16 +338,6 @@ bool CLoadScreen::Draw()
 			font->End();
 		}
 	}
-
-	// Always render Spring's license notice
-	font->Begin();
-		font->SetOutlineColor(0.0f,0.0f,0.0f,0.65f);
-		font->SetTextColor(1.0f,1.0f,1.0f,1.0f);
-		font->glFormat(0.5f,0.06f, globalRendering->viewSizeY / 35.0f, FONT_OUTLINE | FONT_CENTER | FONT_NORM,
-				"Spring %s", SpringVersion::GetFull().c_str());
-		font->glFormat(0.5f,0.02f, globalRendering->viewSizeY / 50.0f, FONT_OUTLINE | FONT_CENTER | FONT_NORM,
-			"This program is distributed under the GNU General Public License, see doc/LICENSE for more info");
-	font->End();
 
 	if (!mtLoading)
 		globalRendering->SwapBuffers(true, false);

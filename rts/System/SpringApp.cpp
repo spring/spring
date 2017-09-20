@@ -173,20 +173,31 @@ static void ShowSplashScreen(const std::string& splashScreenFile)
 	if (splashScreenFile.empty() || !bmp.Load(splashScreenFile))
 		bmp.AllocDummy({0, 0, 0, 0});
 
-	constexpr const char* fmtStrs[3] = {
+	constexpr const char* fmtStrs[5] = {
 		"[Initializing Virtual File System]",
 		"* archives scanned: %u",
 		"* scantime elapsed: %.1fms",
+		"Spring %s",
+		"This program is distributed under the GNU General Public License, see doc/LICENSE for more info",
 	};
+
+	char versionStrBuf[512];
+
+	memset(versionStrBuf, 0, sizeof(versionStrBuf));
+	snprintf(versionStrBuf, sizeof(versionStrBuf), fmtStrs[3], (SpringVersion::GetFull()).c_str());
 
 	const unsigned int splashTex = bmp.CreateTexture();
 	const unsigned int fontFlags = FONT_NORM | FONT_SCALE;
 
 	const float4 color = {1.0f, 1.0f, 1.0f, 1.0f};
-	const float4 coors = {0.5f, 0.1f, 0.8f, 0.04f};
+	const float4 coors = {0.5f, 0.175f, 0.8f, 0.04f}; // x, y, scale, space
 
-	const float textWidth = font->GetTextWidth(fmtStrs[0]);
-	const float normWidth = textWidth * globalRendering->pixelX * font->GetSize() * coors.z;
+	const float textWidth[3] = {font->GetTextWidth(fmtStrs[0]), font->GetTextWidth(fmtStrs[4]), font->GetTextWidth(versionStrBuf)};
+	const float normWidth[3] = {
+		textWidth[0] * globalRendering->pixelX * font->GetSize() * coors.z,
+		textWidth[1] * globalRendering->pixelX * font->GetSize() * coors.z,
+		textWidth[2] * globalRendering->pixelX * font->GetSize() * coors.z,
+	};
 
 	glPushAttrib(GL_ENABLE_BIT);
 	glEnable(GL_TEXTURE_2D);
@@ -204,9 +215,17 @@ static void ShowSplashScreen(const std::string& splashScreenFile)
 
 		font->Begin();
 		font->SetTextColor(color.x, color.y, color.z, color.w);
-		font->glFormat(coors.x - normWidth * 0.500f, coors.y                           , coors.z, fontFlags, fmtStrs[0]);
-		font->glFormat(coors.x - normWidth * 0.475f, coors.y - coors.w * coors.z * 1.0f, coors.z, fontFlags, fmtStrs[1], CArchiveScanner::GetNumScannedArchives());
-		font->glFormat(coors.x - normWidth * 0.475f, coors.y - coors.w * coors.z * 2.0f, coors.z, fontFlags, fmtStrs[2], (t1 - t0).toMilliSecsf());
+		font->glFormat(coors.x - (normWidth[0] * 0.500f), coors.y                             , coors.z, fontFlags, fmtStrs[0]);
+		font->glFormat(coors.x - (normWidth[0] * 0.475f), coors.y - (coors.w * coors.z * 1.0f), coors.z, fontFlags, fmtStrs[1], CArchiveScanner::GetNumScannedArchives());
+		font->glFormat(coors.x - (normWidth[0] * 0.475f), coors.y - (coors.w * coors.z * 2.0f), coors.z, fontFlags, fmtStrs[2], (t1 - t0).toMilliSecsf());
+		font->End();
+
+		// always render Spring's license notice
+		font->Begin();
+		font->SetOutlineColor(0.0f, 0.0f, 0.0f, 0.65f);
+		font->SetTextColor(color.x, color.y, color.z, color.w);
+		font->glFormat(coors.x - (normWidth[2] * 0.5f), coors.y * 0.5f - (coors.w * coors.z * 1.0f), coors.z, fontFlags | FONT_OUTLINE, versionStrBuf);
+		font->glFormat(coors.x - (normWidth[1] * 0.5f), coors.y * 0.5f - (coors.w * coors.z * 2.0f), coors.z, fontFlags | FONT_OUTLINE, fmtStrs[4]);
 		font->End();
 
 		globalRendering->SwapBuffers(true, true);
