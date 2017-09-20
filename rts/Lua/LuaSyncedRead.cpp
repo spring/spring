@@ -1084,7 +1084,7 @@ int LuaSyncedRead::GetTeamList(lua_State* L)
 
 int LuaSyncedRead::GetPlayerList(lua_State* L)
 {
-	int teamID = -1;
+	int teamID = CEventClient::AllAccessTeam;
 	bool active = false;
 
 	if (lua_isnumber(L, 1)) {
@@ -1119,11 +1119,17 @@ int LuaSyncedRead::GetPlayerList(lua_State* L)
 		if (active && !player->active)
 			continue;
 
+		if (teamID >= 0 && player->spectator)
+			continue;
 
-		if ((teamID < 0) || (player->team == teamID)) {
-			lua_pushnumber(L, p);
-			lua_rawseti(L, -2, count++);
-		}
+		if (teamID == CEventClient::NoAccessTeam && !player->spectator)
+			continue;
+
+		if ((teamID != CEventClient::AllAccessTeam) && (player->team != teamID))
+			continue;
+
+		lua_pushnumber(L, p);
+		lua_rawseti(L, -2, count++);
 	}
 
 	return 1;
