@@ -25,6 +25,7 @@ Misc:
  - don't record non-essential profile data in the background if not in /debug mode; reset profiler on reload
  - replace dozens of STL containers with faster custom alternatives
  - use pooled memory allocations in several engine components
+ - make Use{V,P}BO=0 reuse buffers when downsized
  - recycle audio-stream buffer memory
  - recycle demo-streams across reloads
  - write demos before destroying game on shutdown in case the latter CTD's
@@ -33,6 +34,7 @@ Misc:
  - reduce ThreadPool worker-count right after VFS initialization
  - asyncify writing screenshots via ThreadPool
  - asyncify demo/savegame compression
+ - disable hang-detection when showing a message box
  - defer loading *Def sounds until simulation asks for them
  - use pcall in LuaUtils::Echo
  - catch all exceptions in Game::Load and make it non-interruptable
@@ -97,6 +99,9 @@ Sim:
  - change a weapon reaiming-tolerance constant from 20 radians to 20 degrees (patch by Sprunk)
  - experiment with larger medium-resolution PFS blocksize (16*SQUARE_SIZE vs 8*SQUARE_SIZE)
  - bump the default unloadSpread multiplier from 1 to 5
+ - incorporate native "raw move" (straight-line path) support
+   inert by default; enable by adding allowRawMovement = true
+   to a MoveDef table
 
 Lua:
  ! Undeprecate {unit,feature}def.modelname and add .modeltype and .modelpath to
@@ -251,6 +256,8 @@ UI:
    alt+ctrl+(a,a) now toggles chatswitchally
    alt+ctrl+(s,s) now toggles chatswitchspec
    chatswitchall now has to be bound manually
+ - allow area commands to be extended off-map
+ - fix tracking-mode with Free camera
 
 Bugfixes:
  - fix LuaParser thread-safety
@@ -260,6 +267,7 @@ Bugfixes:
  - fix PathTexture thread-safety
  - fix RoamMeshDrawer thread-safety
  - fix LuaVFSDownload thread-safety during reload
+ - fix deadlocks in Windows crash-handler
  - fix race-condition between screenshot counter and libIL
  - fix sound-thread occasionally accessing a deleted pointer on exit
  - fix sound-buffer deletion while buffers were still bound to sources
@@ -289,6 +297,7 @@ Bugfixes:
  - fix calling alSourcePlay even if alSourceQueueBuffers produced an error
  - fix CheckEnlargeDrawArray for VA_TYPE's larger than 10 floats
  - fix crash if unit is assigned an empty COB-script
+ - fix potential buffer-overflow in GetFeatures AI callback
  - do not bitshift negative values (undefined behavior)
  - catch invalid CmdDesc indices in GuiHandler::DrawButtons
  - insert missing eventHandler.RemoveClient call in RoamMeshDrawer
@@ -317,6 +326,7 @@ Bugfixes:
  - fix #5684 (Spring.{Add,Remove}Grass updates not taking effect until camera is moved)
  - fix #4164 (shield{Good,Bad}Color are RGBA float4's now)
  - fix #5587 (units in sharp holes sinking underground if also skidding)
+ - fix #5502 (crash with malformed build-commands)
  - fix #4723 (EmitSfx crash when referencing effect not defined in unitdef)
  - fix #4940 ("Recompressing Map Tiles with ETC1" load-stage triggering watchdog)
  - fix #5403 (extra ShieldPreDamaged parameters)
@@ -337,6 +347,7 @@ Bugfixes:
  - fix #5412 (GameRulesParams persisting through Spring.Reload)
  - fix #5493 (crash while reloading with LoadingMT=1)
  - fix #5463 (failing to connect to server sends user back to LuaMenu)
+ - fix #5544 (classified)
  - fix #5468 (classified)
  - fix #5461 (classified)
  - fix #5404 (MoveCtrl.SetGunshipMoveTypeData crash if called for a non-gunship unit)
@@ -6564,3 +6575,4 @@ Unitsync:
 -- 0.40b2 --------------------------------------
 
 First public release
+
