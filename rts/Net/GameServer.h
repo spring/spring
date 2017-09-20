@@ -3,7 +3,7 @@
 #ifndef _GAME_SERVER_H
 #define _GAME_SERVER_H
 
-#include <asio/ip/udp.hpp>
+// #include <asio/ip/udp.hpp>
 
 #include <memory>
 #include <string>
@@ -216,7 +216,8 @@ private:
 	std::array< std::pair<spring_time, uint32_t>, MAX_PLAYERS> clientDrawFilter;
 	std::array< std::pair<       bool,     bool>, MAX_PLAYERS> clientMuteFilter;
 
-	std::map<asio::ip::udp::endpoint, int> rejectedConnections;
+	// std::map<asio::ip::udp::endpoint, int> rejectedConnections;
+	std::map<std::string, int> rejectedConnections;
 
 	float medianCpu;
 	int medianPing;

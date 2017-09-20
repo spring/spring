@@ -1846,18 +1846,22 @@ void CGameServer::HandleConnectionAttempts()
 
 			BindConnection(name, passwd, version, false, UDPNet->AcceptConnection(), reconnect, netloss);
 		} catch (const netcode::UnpackPacketException& ex) {
+			const asio::ip::udp::endpoint endp = prev->GetEndpoint();
+			const asio::ip::address addr = endp.address();
+
+			const std::string str = addr.to_string();
 			const std::string msg = spring::format(ConnectionReject, ex.what());
 
-			auto  pair = std::make_pair(rejectedConnections.find(prev->GetEndpoint()), false);
+			auto  pair = std::make_pair(rejectedConnections.find(str), false);
 			auto& iter = pair.first;
 
 			if (iter == rejectedConnections.end()) {
-				pair = rejectedConnections.insert(std::make_pair(prev->GetEndpoint(), 0));
+				pair = rejectedConnections.insert(std::make_pair(str, 0));
 				iter = pair.first;
 			}
 
 			if (iter->second < 5) {
-				rejectedConnections.insert(std::make_pair(prev->GetEndpoint(), iter->second + 1));
+				rejectedConnections.insert(std::make_pair(str, iter->second + 1));
 
 				prev->Unmute();
 				prev->SendData(CBaseNetProtocol::Get().SendRejectConnect(msg));
