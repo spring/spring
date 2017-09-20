@@ -20,7 +20,7 @@ const std::string NoSyncResponse = "Error: Player %s did not send sync checksum 
 const std::string SyncError = "Sync error for %s in frame %d (got %x, correct is %x)";
 const std::string NoSyncCheck = "Warning: Sync checking disabled!";
 
-const std::string ConnectionReject = "Connection attempt rejected: %s";
+const std::string ConnectionReject = "Connection attempt rejected from %s: %s";
 const std::string WrongPlayer = "Got message %d from %d claiming to be from %d";
 const std::string PlayerJoined = "%s %s finished loading and is now ingame";
 const std::string PlayerLeft = "%s %s left the game: %s";

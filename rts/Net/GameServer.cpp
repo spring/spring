@@ -1850,7 +1850,7 @@ void CGameServer::HandleConnectionAttempts()
 			const asio::ip::address addr = endp.address();
 
 			const std::string str = addr.to_string();
-			const std::string msg = spring::format(ConnectionReject, ex.what());
+			const std::string msg = spring::format(ConnectionReject, str.c_str(), ex.what());
 
 			auto  pair = std::make_pair(rejectedConnections.find(str), false);
 			auto& iter = pair.first;
