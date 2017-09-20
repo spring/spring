@@ -1089,25 +1089,19 @@ int LuaSyncedRead::GetPlayerList(lua_State* L)
 
 	if (lua_isnumber(L, 1)) {
 		teamID = lua_toint(L, 1);
-		if (lua_isboolean(L, 2)) {
-			active = lua_toboolean(L, 2);
-		}
+		active = lua_isboolean(L, 2)? lua_toboolean(L, 2): active;
 	}
 	else if (lua_isboolean(L, 1)) {
 		active = lua_toboolean(L, 1);
-		if (lua_isnumber(L, 2)) {
-			teamID = lua_toint(L, 2);
-		}
+		teamID = lua_isnumber(L, 2)? lua_toint(L, 2): teamID;
 	}
 
-	if (teamID >= teamHandler->ActiveTeams()) {
+	if (teamID >= teamHandler->ActiveTeams())
 		return 0;
-	}
 
-	lua_newtable(L);
-	int count = 1;
+	lua_createtable(L, playerHandler->ActivePlayers(), 0);
 
-	for (int p = 0; p < playerHandler->ActivePlayers(); p++) {
+	for (int p = 0, count = 1; p < playerHandler->ActivePlayers(); p++) {
 		const CPlayer* player = playerHandler->Player(p);
 
 		if (player == nullptr)
@@ -1118,12 +1112,16 @@ int LuaSyncedRead::GetPlayerList(lua_State* L)
 
 		if (active && !player->active)
 			continue;
-
-
-		if ((teamID < 0) || (player->team == teamID)) {
-			lua_pushnumber(L, p);
-			lua_rawseti(L, -2, count++);
+		if (teamID >= 0) {
+			// exclude specs for normal team ID's
+			if (player->spectator)
+				continue;
+			if (player->team != teamID)
+				continue;
 		}
+
+		lua_pushnumber(L, p);
+		lua_rawseti(L, -2, count++);
 	}
 
 	return 1;

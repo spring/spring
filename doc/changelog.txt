@@ -204,6 +204,7 @@ Lua:
  - implement Path.GetPathNodeCosts
  - Spring.GetMouseState now returns a sixth value indicating if the cursor is offscreen
  - add Spring.GetGrass(x, y) -> 0|1 to obtain grass map information
+ ! exclude spectators from Spring.GetPlayerList if given a normal (id >= 0) team arg
 
 Rendering
  - add new terrain-mesh renderer (faster than existing code, but does not respect cliffs well)
