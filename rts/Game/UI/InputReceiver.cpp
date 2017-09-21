@@ -13,13 +13,9 @@ CInputReceiver* CInputReceiver::activeReceiver = nullptr;
 CInputReceiver::CInputReceiver(Where w)
 {
 	switch (w) {
-		case FRONT: {
-			GetReceivers().push_front(this);
-		} break;
-		case BACK: {
-			GetReceivers().push_back(this);
-		} break;
-		default: break;
+		case FRONT: { GetReceivers().push_front(this); } break;
+		case BACK: { GetReceivers().push_back(this); } break;
+		default: {} break;
 	}
 }
 
@@ -45,12 +41,28 @@ void CInputReceiver::CollectGarbage()
 	std::deque<CInputReceiver*> nxtInputReceivers;
 
 	for (CInputReceiver* r: prvInputReceivers) {
-		if (r != nullptr) {
-			nxtInputReceivers.push_back(r);
-		}
+		if (r == nullptr)
+			continue;
+
+		nxtInputReceivers.push_back(r);
 	}
 
 	prvInputReceivers.swap(nxtInputReceivers);
+}
+
+void CInputReceiver::DrawReceivers()
+{
+	std::deque<CInputReceiver*>& receivers = GetReceivers();
+
+	// draw back to front
+	for (auto it = receivers.rbegin(); it != receivers.rend(); ++it) {
+		CInputReceiver* r = *it;
+
+		if (r == nullptr)
+			continue;
+
+		r->Draw();
+	}
 }
 
 CInputReceiver* CInputReceiver::GetReceiverAt(int x, int y)

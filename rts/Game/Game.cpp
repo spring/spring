@@ -1373,19 +1373,20 @@ void CGame::DrawInputReceivers()
 {
 
 	glEnable(GL_TEXTURE_2D);
-	if (!hideInterface) {
-		SCOPED_TIMER("Draw::Screen::DrawScreen");
-		luaInputReceiver->Draw();
-	}
 
-	SCOPED_TIMER("Draw::Screen::InputReceivers");
 	if (!hideInterface) {
-		for (CInputReceiver* recv: CInputReceiver::GetReceivers()) {
-			if (recv != nullptr) {
-				recv->Draw();
-			}
+		{
+			SCOPED_TIMER("Draw::Screen::InputReceivers");
+			CInputReceiver::DrawReceivers();
+		}
+		{
+			// this has MANUAL ordering, draw it last (front-most)
+			SCOPED_TIMER("Draw::Screen::DrawScreen");
+			luaInputReceiver->Draw();
 		}
 	} else {
+		SCOPED_TIMER("Draw::Screen::Minimap");
+
 		if (globalRendering->dualScreenMode) {
 			// minimap is on its own screen, so always draw it
 			minimap->Draw();

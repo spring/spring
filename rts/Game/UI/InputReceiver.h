@@ -32,7 +32,7 @@ public:
 	virtual std::string GetTooltip(int x, int y) { return "No tooltip defined"; }
 
 	static void CollectGarbage();
-	static CInputReceiver* GetReceiverAt(int x, int y);
+	static void DrawReceivers();
 
 	struct ContainerBox {
 		ContainerBox(): x1(0.0f), y1(0.0f), x2(0.0f), y2(0.0f) {}
@@ -78,7 +78,9 @@ public:
 
 	static float guiAlpha;
 
+	static CInputReceiver* GetReceiverAt(int x, int y);
 	static CInputReceiver*& GetActiveReceiverRef() { return activeReceiver; }
+
 	static std::deque<CInputReceiver*>& GetReceivers() {
 		// This construct fixes order of initialization between different
 		// compilation units using inputReceivers. (mantis #34)
