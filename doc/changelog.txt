@@ -303,6 +303,7 @@ Bugfixes:
  - catch invalid CmdDesc indices in GuiHandler::DrawButtons
  - insert missing eventHandler.RemoveClient call in RoamMeshDrawer
 
+ - fix #5778 (crash when reloading with QTPFS)
  - fix #5730 (crash during nano-particle creation by builders under specific circumstances)
  - fix #5728 (canBeAssisted=false factories only being buildable by one constructor at a time)
  - fix #5721 (structures created via AI orders sometimes not leveling ground)
