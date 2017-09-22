@@ -1522,7 +1522,7 @@ int CBuilderCAI::FindReclaimTarget(const float3& pos, float radius, unsigned cha
 		bool metal = false;
 		for (const CFeature* f: *qfQuery.features) {
 			if (f->def->reclaimable && (recSpecial || f->def->autoreclaim) &&
-				(!recNonRez || !(f->def->destructable && f->udef != NULL))
+				(!recNonRez || f->udef == nullptr)
 			) {
 				if (recSpecial && metal && f->def->metal <= 0.0) {
 					continue;
@@ -1595,7 +1595,7 @@ bool CBuilderCAI::FindResurrectableFeatureAndResurrect(const float3& pos,
 	float bestDist = 1.0e30f;
 
 	for (const CFeature* f: *qfQuery.features) {
-		if (f->def->destructable && f->udef != NULL) {
+		if (f->udef != nullptr) {
 			if (!f->IsInLosForAllyTeam(owner->allyteam)) {
 				continue;
 			}
