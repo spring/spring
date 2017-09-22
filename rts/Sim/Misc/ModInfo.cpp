@@ -78,7 +78,8 @@ void CModInfo::ResetState()
 	featureVisibility = FEATURELOS_NONE;
 
 	pathFinderSystem = PFS_TYPE_DEFAULT;
-	pfUpdateRate     = 0.0f;
+	pfRawDistMult    = 1.25f;
+	pfUpdateRate     = 0.007f;
 
 	allowTake = true;
 }
@@ -97,17 +98,15 @@ void CModInfo::Init(const char* modArchive)
 	description = md.GetDescription();
 
 	// initialize the parser
-	LuaParser parser("gamedata/modrules.lua",
-	                 SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
+	LuaParser parser("gamedata/modrules.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
 	// customize the defs environment
 	parser.GetTable("Spring");
 	parser.AddFunc("GetModOptions", LuaSyncedRead::GetModOptions);
 	parser.EndTable();
 	parser.Execute();
 
-	if (!parser.IsValid()) {
+	if (!parser.IsValid())
 		LOG_L(L_ERROR, "Failed loading mod-rules, using defaults; error: %s", parser.GetErrorLog().c_str());
-	}
 
 	const LuaTable& root = parser.GetRoot();
 
@@ -116,7 +115,8 @@ void CModInfo::Init(const char* modArchive)
 		const LuaTable& system = root.SubTable("system");
 
 		pathFinderSystem = system.GetInt("pathFinderSystem", PFS_TYPE_DEFAULT) % PFS_NUM_TYPES;
-		pfUpdateRate = system.GetFloat("pathFinderUpdateRate", 0.007f);
+		pfRawDistMult = system.GetFloat("pathFinderRawDistMult", pfRawDistMult);
+		pfUpdateRate = system.GetFloat("pathFinderUpdateRate", pfUpdateRate);
 
 		allowTake = system.GetBool("allowTake", true);
 	}
@@ -239,27 +239,19 @@ void CModInfo::Init(const char* modArchive)
 		// losMipLevel is used as index to readMap->mipHeightmaps,
 		// so the max value is CReadMap::numHeightMipMaps - 1
 		losMipLevel = los.GetInt("losMipLevel", 1);
-
 		// airLosMipLevel doesn't have such restrictions, it's just used in various
 		// bitshifts with signed integers
 		airMipLevel = los.GetInt("airMipLevel", 1);
-
 		radarMipLevel = los.GetInt("radarMipLevel", 2);
 
-		if ((losMipLevel < 0) || (losMipLevel > 6)) {
-			throw content_error("Sensors\\Los\\LosMipLevel out of bounds. "
-				                "The minimum value is 0. The maximum value is 6.");
-		}
+		if ((losMipLevel < 0) || (losMipLevel > 6))
+			throw content_error("Sensors\\Los\\LosMipLevel out of bounds. The minimum value is 0. The maximum value is 6.");
 
-		if ((radarMipLevel < 0) || (radarMipLevel > 6)) {
-			throw content_error("Sensors\\Los\\RadarMipLevel out of bounds. "
-						"The minimum value is 0. The maximum value is 6.");
-		}
+		if ((radarMipLevel < 0) || (radarMipLevel > 6))
+			throw content_error("Sensors\\Los\\RadarMipLevel out of bounds. The minimum value is 0. The maximum value is 6.");
 
-		if ((airMipLevel < 0) || (airMipLevel > 30)) {
-			throw content_error("Sensors\\Los\\AirLosMipLevel out of bounds. "
-				                "The minimum value is 0. The maximum value is 30.");
-		}
+		if ((airMipLevel < 0) || (airMipLevel > 30))
+			throw content_error("Sensors\\Los\\AirLosMipLevel out of bounds. The minimum value is 0. The maximum value is 30.");
 	}
 }
 

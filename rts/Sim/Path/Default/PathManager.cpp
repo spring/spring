@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-
 #include "PathManager.h"
 #include "PathConstants.h"
 #include "PathFinder.h"
@@ -10,12 +9,11 @@
 #include "PathLog.h"
 #include "PathMemPool.h"
 #include "Map/MapInfo.h"
-#include "Sim/Objects/SolidObjectDef.h"
+#include "Sim/Misc/ModInfo.h"
+#include "Sim/Objects/SolidObject.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
 #include "System/Log/ILog.h"
-#include "System/myMath.h"
 #include "System/TimeProfiler.h"
-#include "System/SafeUtil.h"
 
 
 
@@ -156,7 +154,7 @@ IPath::SearchResult CPathManager::ArrangePath(
 	};
 
 	{
-		if (heurGoalDist2D <= (MAXRES_SEARCH_DISTANCE * 1.25f)) {
+		if (heurGoalDist2D <= (MAXRES_SEARCH_DISTANCE * modInfo.pfRawDistMult)) {
 			pfDef->AllowRawPathSearch( true);
 			pfDef->AllowDefPathSearch(false); // block default search
 
@@ -424,6 +422,8 @@ void CPathManager::MedRes2MaxRes(MultiPath& multiPath, const float3& startPos, c
 	// define the search
 	CCircularSearchConstraint rangedGoalDef(startPos, goalPos, 0.0f, 2.0f, Square(MAXRES_SEARCH_DISTANCE));
 	rangedGoalDef.synced = synced;
+	// FIXME: this should work
+	// rangedGoalDef.allowRawPath = true;
 
 	// Perform the search.
 	// If this is the final improvement of the path, then use the original goal.
