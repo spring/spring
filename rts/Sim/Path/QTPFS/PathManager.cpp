@@ -521,8 +521,8 @@ void QTPFS::PathManager::ExecQueuedNodeLayerUpdates(unsigned int layerNum, bool 
 
 
 std::string QTPFS::PathManager::GetCacheDirName(std::uint32_t mapCheckSum, std::uint32_t modCheckSum) const {
-	static const std::string ver = IntToString(QTPFS_CACHE_VERSION, "%04x");
-	static const std::string dir = FileSystem::GetCacheDir() + "/QTPFS/" + ver + "/" +
+	const std::string ver = IntToString(QTPFS_CACHE_VERSION, "%04x");
+	const std::string dir = FileSystem::GetCacheDir() + "/QTPFS/" + ver + "/" +
 		IntToString(mapCheckSum, "%08x") + "-" +
 		IntToString(modCheckSum, "%08x") + "/";
 
