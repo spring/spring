@@ -1586,7 +1586,7 @@ bool CBuilderCAI::FindReclaimTargetAndReclaim(const float3& pos, float radius, u
 bool CBuilderCAI::FindResurrectableFeatureAndResurrect(const float3& pos,
                                                        float radius,
                                                        unsigned char options,
-													   bool freshOnly)
+                                                       bool freshOnly)
 {
 	QuadFieldQuery qfQuery;
 	quadField->GetFeaturesExact(qfQuery, pos, radius, false);
@@ -1599,7 +1599,7 @@ bool CBuilderCAI::FindResurrectableFeatureAndResurrect(const float3& pos,
 			if (!f->IsInLosForAllyTeam(owner->allyteam)) {
 				continue;
 			}
-			if (freshOnly && f->reclaimLeft < 1.0f && f->resurrectProgress <= 0.0f) {
+			if (freshOnly && f->reclaimLeft < 1.0f) {
 				continue;
 			}
 			float dist = f3SqDist(f->pos, owner->pos);
