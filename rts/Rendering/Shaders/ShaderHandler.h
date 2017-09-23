@@ -15,9 +15,9 @@ namespace Shader {
 
 class CShaderHandler {
 public:
-	typedef spring::unordered_map<std::string, Shader::IProgramObject*> ProgramObjMap;
-	typedef spring::unordered_map<std::string, Shader::IProgramObject*>::iterator ProgramObjMapIt;
-	typedef spring::unordered_map<std::string, ProgramObjMap> ProgramTable;
+	typedef spring::unsynced_map<std::string, Shader::IProgramObject*> ProgramObjMap;
+	typedef spring::unsynced_map<std::string, Shader::IProgramObject*>::iterator ProgramObjMapIt;
+	typedef spring::unsynced_map<std::string, ProgramObjMap> ProgramTable;
 
 	~CShaderHandler();
 
@@ -68,7 +68,7 @@ public:
 		}
 
 	private:
-		spring::unordered_map<size_t, GLuint> cache;
+		spring::unsynced_map<size_t, GLuint> cache;
 	};
 
 	const ShaderCache& GetShaderCache() const { return shaderCache; }

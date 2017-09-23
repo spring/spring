@@ -77,7 +77,7 @@ private:
 	int lastCode;
 
 	// maps names to textureVec indices
-	spring::unordered_map<std::string, size_t> textureMap;
+	spring::unsynced_map<std::string, size_t> textureMap;
 
 	std::vector<Texture> textureVec;
 	std::vector<size_t> freeIndices;
