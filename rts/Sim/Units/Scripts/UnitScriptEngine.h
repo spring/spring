@@ -8,6 +8,7 @@
 #include "System/creg/creg_cond.h"
 #include <vector>
 
+struct UnitDef;
 class CUnit;
 class CUnitScript;
 
@@ -21,10 +22,11 @@ protected:
 	void CheckForDuplicates(const char* name, const CUnitScript* instance);
 
 public:
-	CUnitScriptEngine();
-	~CUnitScriptEngine();
+	CUnitScriptEngine(): currentScript(nullptr) {}
+
 	void AddInstance(CUnitScript* instance);
 	void RemoveInstance(CUnitScript* instance);
+	void ReloadScripts(const UnitDef* udef);
 	void Tick(int deltaTime);
 
 	static void InitStatic();

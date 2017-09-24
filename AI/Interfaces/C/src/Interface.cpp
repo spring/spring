@@ -9,8 +9,7 @@
 #include "ExternalAI/Interface/SAIInterfaceLibrary.h"
 #include "ExternalAI/Interface/SSkirmishAILibrary.h"
 #include "ExternalAI/Interface/SAIInterfaceCallback.h"
-
-#include "System/Util.h"
+#include "System/StringUtil.h"
 
 CInterface::CInterface(int interfaceId, const SAIInterfaceCallback* callback):
 	interfaceId(interfaceId),

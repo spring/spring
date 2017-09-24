@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-
 #include "WakeProjectile.h"
+
 #include "Game/Camera.h"
 #include "Game/GlobalUnsynced.h"
 #include "Rendering/GlobalRendering.h"
@@ -9,8 +9,10 @@
 #include "Rendering/Env/IWater.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
+#include "Sim/Projectiles/ProjectileMemPool.h"
+#include "System/myMath.h"
 
-CR_BIND_DERIVED(CWakeProjectile, CProjectile, )
+CR_BIND_DERIVED_POOL(CWakeProjectile, CProjectile, , projMemPool.alloc, projMemPool.free)
 
 CR_REG_METADATA(CWakeProjectile,(
 	CR_MEMBER(alpha),
@@ -44,8 +46,8 @@ CWakeProjectile::CWakeProjectile(
 {
 	this->pos.y = 0.0f;
 	this->speed.y = 0.0f;
-	rotation = gu->RandFloat() * PI*2;
-	rotSpeed = (gu->RandFloat() - 0.5f) * PI*2*0.01f;
+	rotation = guRNG.NextFloat() * math::TWOPI;
+	rotSpeed = (guRNG.NextFloat() - 0.5f) * math::TWOPI * 0.01f;
 	checkCol = false;
 	if (water->BlockWakeProjectiles()) {
 		this->alpha = 0;
@@ -62,6 +64,14 @@ void CWakeProjectile::Update()
 	size += sizeExpansion;
 	drawRadius = size;
 
+	#if 0
+	alpha += (alphaAdd * (alphaAddTime != 0));
+	alphaAddTime -= 1;
+
+	alpha = std::max(alpha, 0.0f);
+	deleteMe |= (alpha <= 0.0f);
+	#endif
+
 	if (alphaAddTime != 0) {
 		alpha += alphaAdd;
 		--alphaAddTime;
@@ -71,9 +81,8 @@ void CWakeProjectile::Update()
 	}
 }
 
-void CWakeProjectile::Draw()
+void CWakeProjectile::Draw(CVertexArray* va)
 {
-	inArray = true;
 	unsigned char col[4];
 	col[0] = (unsigned char) (255 * alpha);
 	col[1] = (unsigned char) (255 * alpha);

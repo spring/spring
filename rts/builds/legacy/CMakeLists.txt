@@ -72,13 +72,14 @@ LIST(APPEND engineLibraries ${sound-impl})
 LIST(APPEND engineLibraries engineSystemNet)
 LIST(APPEND engineLibraries ${engineCommonLibraries})
 LIST(APPEND engineLibraries engineaGui)
-LIST(APPEND engineLibraries ${Boost_THREAD_LIBRARY})
 LIST(APPEND engineLibraries ${SPRING_SIM_LIBRARIES})
 LIST(APPEND engineLibraries engineSim)
 LIST(APPEND engineLibraries pr-downloader_static)
 
 ### Assemble external incude dirs
 LIST(APPEND engineIncludes ${OPENAL_INCLUDE_DIR})
+LIST(APPEND engineIncludes ${ENGINE_SRC_ROOT_DIR}/lib/asio/include)
+LIST(APPEND engineIncludes ${ENGINE_SRC_ROOT_DIR}/lib/slimsig/include)
 
 INCLUDE_DIRECTORIES(${engineIncludes})
 

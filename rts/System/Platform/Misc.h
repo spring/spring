@@ -14,8 +14,8 @@ namespace Platform
  * For security reasons we change the CWD to Spring's write-dir (most of the time it's the home-dir), so we need to cache the PWD/CWD.
  * @return path to the CWD, with trailing path separator
  */
-std::string GetOrigCWD();
-void SetOrigCWD();
+const std::string& GetOrigCWD();
+const std::string& SetOrigCWD();
 
 /**
  * Returns the path to the current users dir for storing application settings.
@@ -80,10 +80,19 @@ std::string GetModuleFile(std::string moduleName = "");
 std::string GetModulePath(const std::string& moduleName = "");
 
 std::string GetOS();
+std::string GetOSFamily();
+std::string GetWordSizeStr();
+
 
 bool Is64Bit();
 bool Is32BitEmulation();
 bool IsRunningInGDB();
+
+uint64_t FreeDiskSpace(const std::string& path);
+uint32_t NativeWordSize(); // compiled process code
+uint32_t SystemWordSize(); // host operating system
+uint32_t DequeChunkSize();
+
 
 /**
  * Executes a native binary, file and args have to be not escaped!

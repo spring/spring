@@ -4,7 +4,7 @@
 #include "LegacyCpp/CommandQueue.h"
 #include "LegacyCpp/MoveData.h"
 #include "CUtils/Util.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include "System/SafeCStrings.h"
 #include <stdio.h>
 //#include <direct.h>	// mkdir function (windows)

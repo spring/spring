@@ -11,6 +11,10 @@
 #include "Game/GameData.h"
 #include "Game/GameVersion.h"
 #include "Net/GameServer.h"
+#include "System/Exceptions.h"
+#include "System/GlobalConfig.h"
+#include "System/GlobalRNG.h"
+#include "System/Config/ConfigHandler.h"
 #include "System/FileSystem/DataDirLocater.h"
 #include "System/FileSystem/FileSystemInitializer.h"
 #include "System/FileSystem/ArchiveScanner.h"
@@ -21,17 +25,12 @@
 #include "System/Log/ILog.h"
 #include "System/Log/DefaultFilter.h"
 #include "System/LogOutput.h"
-#include "System/Platform/CmdLineParams.h"
+#include "System/Misc/SpringTime.h"
 #include "System/Platform/CrashHandler.h"
 #include "System/Platform/errorhandler.h"
 #include "System/Platform/Threading.h"
-#include "System/Config/ConfigHandler.h"
-#include "System/Misc/SpringTime.h"
-#include "System/GlobalConfig.h"
-#include "System/Exceptions.h"
-#include "System/UnsyncedRNG.h"
 
-
+#include <gflags/gflags.h>
 
 #define LOG_SECTION_DEDICATED_SERVER "DedicatedServer"
 LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_DEDICATED_SERVER)
@@ -42,87 +41,64 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_DEDICATED_SERVER)
 #endif
 #define LOG_SECTION_CURRENT LOG_SECTION_DEDICATED_SERVER
 
+DEFINE_bool_EX  (sync_version,     "sync-version",     false, "Display program sync version (for online gaming)");
+DEFINE_string   (config,                               "",    "Exclusive configuration file");
+DEFINE_bool_EX  (list_config_vars, "list-config-vars", false, "Dump a list of config vars and meta data to stdout");
+DEFINE_bool     (isolation,                            false, "Limit the data-dir (games & maps) scanner to one directory");
+DEFINE_string_EX(isolation_dir,    "isolation-dir",    "",    "Specify the isolation-mode data-dir (see --isolation)");
+DEFINE_bool     (nocolor,                              false, "Disables colorized stdout");
+DEFINE_uint32   (sleeptime,                            1,     "Number of seconds to sleep between game-over checks");
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
-void ParseCmdLine(CmdLineParams& cmdLine, std::string& scriptName)
+void ParseCmdLine(int argc, char* argv[], std::string& scriptName)
 {
 	#undef  LOG_SECTION_CURRENT
 	#define LOG_SECTION_CURRENT LOG_SECTION_DEFAULT
 
-	cmdLine.AddSwitch(0,   "sync-version",       "Display program sync version (for online gaming)");
-	cmdLine.AddString('C', "config",             "Exclusive configuration file");
-	cmdLine.AddSwitch(0,   "list-config-vars",   "Dump a list of config vars and meta data to stdout");
-	cmdLine.AddSwitch('i', "isolation",          "Limit the data-dir (games & maps) scanner to one directory");
-	cmdLine.AddString(0,   "isolation-dir",      "Specify the isolation-mode data-dir (see --isolation)");
-	cmdLine.AddSwitch(0,   "nocolor",            "Disables colorized stdout");
-	cmdLine.AddSwitch('q', "quiet",              "Ignore unrecognized arguments");
-	cmdLine.AddInt   (0,   "sleeptime",          "Number of seconds to sleep between game-over checks");
-
-	try {
-		cmdLine.Parse();
-	} catch (const CmdLineParams::unrecognized_option& err) {
-		LOG_L(L_ERROR, "%s\n", err.what());
-		if (!cmdLine.IsSet("quiet")) {
-			cmdLine.PrintUsage();
-			exit(EXIT_FAILURE);
-		}
-	}
-
 #ifndef WIN32
-	if (!cmdLine.IsSet("nocolor") && (getenv("SPRING_NOCOLOR") == NULL)) {
+	if (!FLAGS_nocolor && (getenv("SPRING_NOCOLOR") == nullptr)) {
 		// don't colorize, if our output is piped to a diff tool or file
 		if (isatty(fileno(stdout)))
 			log_console_colorizedOutput(true);
 	}
 #endif
-
-	if (cmdLine.IsSet("help")) {
-		cmdLine.PrintUsage();
-		exit(0);
-	}
-	if (cmdLine.IsSet("version")) {
-		LOG("%s", (SpringVersion::GetFull()).c_str());
-		exit(0);
-	}
-	if (cmdLine.IsSet("sync-version")) {
+	if (FLAGS_sync_version) {
 		LOG("%s", (SpringVersion::GetSync()).c_str());
 		exit(0);
 	}
 
+	if (argc >= 2)
+		scriptName = argv[1];
 
-	scriptName = cmdLine.GetInputFile();
-
-	if (scriptName.empty() && !cmdLine.IsSet("list-config-vars")) {
-		cmdLine.PrintUsage();
+	if (scriptName.empty() && !FLAGS_list_config_vars) {
+		gflags::ShowUsageWithFlags(argv[0]);
 		exit(1);
 	}
 
-	if (cmdLine.IsSet("isolation")) {
+	if (FLAGS_isolation)
 		dataDirLocater.SetIsolationMode(true);
+
+	if (!FLAGS_isolation_dir.empty()) {
+		dataDirLocater.SetIsolationMode(true);
+		dataDirLocater.SetIsolationModeDir(FLAGS_isolation_dir);
 	}
 
-	if (cmdLine.IsSet("isolation-dir")) {
-		dataDirLocater.SetIsolationMode(true);
-		dataDirLocater.SetIsolationModeDir(cmdLine.GetString("isolation-dir"));
-	}
 
-	const std::string configSource = cmdLine.IsSet("config") ? cmdLine.GetString("config") : "";
-
-	if (cmdLine.IsSet("list-config-vars")) {
+	if (FLAGS_list_config_vars) {
 		LOG_DISABLE();
-		FileSystemInitializer::PreInitializeConfigHandler(configSource);
+		FileSystemInitializer::PreInitializeConfigHandler(FLAGS_config);
 		FileSystemInitializer::InitializeLogOutput();
 		LOG_ENABLE();
 		ConfigVariable::OutputMetaDataMap();
 		exit(0);
 	}
 
-	LOG("Run: %s", cmdLine.GetCmdLine().c_str());
-	FileSystemInitializer::PreInitializeConfigHandler(configSource);
+	//LOG("Run: %s", cmdLine.GetCmdLine().c_str());
+	FileSystemInitializer::PreInitializeConfigHandler(FLAGS_config);
 
 	#undef  LOG_SECTION_CURRENT
 	#define LOG_SECTION_CURRENT LOG_SECTION_DEDICATED_SERVER
@@ -139,15 +115,16 @@ int main(int argc, char* argv[])
 		// since we are not using SDL_GetTicks as our clock anymore)
 		spring_time::setstarttime(spring_time::gettime(true));
 
-		CmdLineParams cmdLine(argc, argv);
 		CLogOutput::LogSystemInfo();
 
 		std::string scriptName;
 		std::string scriptText;
 		std::string binaryName = argv[0];
 
-		cmdLine.SetUsageDescription("Usage: " + binaryName + " [options] path_to_script.txt");
-		ParseCmdLine(cmdLine, scriptName);
+		gflags::SetUsageMessage("Usage: " + binaryName + " [options] path_to_script.txt");
+		gflags::SetVersionString(SpringVersion::GetFull());
+		gflags::ParseCommandLineFlags(&argc, &argv, true);
+		ParseCmdLine(argc, argv, scriptName);
 
 		GlobalConfig::Instantiate();
 		FileSystemInitializer::InitializeLogOutput();
@@ -159,12 +136,10 @@ int main(int argc, char* argv[])
 		LOG("report any errors to Mantis or the forums.");
 		LOG("loading script from file: %s", scriptName.c_str());
 
-		CGameServer* server = NULL;
-
 		// server will take ownership of these
-		boost::shared_ptr<ClientSetup> dsClientSetup(new ClientSetup());
-		boost::shared_ptr<GameData> dsGameData(new GameData());
-		boost::shared_ptr<CGameSetup> dsGameSetup(new CGameSetup());
+		std::shared_ptr<ClientSetup> dsClientSetup(new ClientSetup());
+		std::shared_ptr<GameData> dsGameData(new GameData());
+		std::shared_ptr<CGameSetup> dsGameSetup(new CGameSetup());
 
 		CFileHandler fh(scriptName);
 
@@ -183,13 +158,13 @@ int main(int argc, char* argv[])
 		}
 
 		// Create the server, it will run in a separate thread
-		UnsyncedRNG rng;
+		CGlobalUnsyncedRNG rng;
 
-		const unsigned sleepTime = cmdLine.IsSet("sleeptime")? cmdLine.GetInt("sleeptime"): 1;
-		const unsigned randSeed = time(NULL) % ((spring_gettime().toNanoSecsi() + 1) * 9007);
+		const unsigned sleepTime = FLAGS_sleeptime;
+		const unsigned randSeed = time(nullptr) % ((spring_gettime().toNanoSecsi() + 1) * 9007);
 
 		rng.Seed(randSeed);
-		dsGameData->SetRandomSeed(rng.RandInt());
+		dsGameData->SetRandomSeed(rng.NextInt());
 
 		//  Use script provided hashes if they exist
 		if (dsGameSetup->mapHash != 0) {
@@ -199,9 +174,9 @@ int main(int argc, char* argv[])
 			dsGameData->SetMapChecksum(archiveScanner->GetArchiveCompleteChecksum(dsGameSetup->mapName));
 
 			CFileHandler f("maps/" + dsGameSetup->mapName);
-			if (!f.FileExists()) {
+			if (!f.FileExists())
 				vfsHandler->AddArchiveWithDeps(dsGameSetup->mapName, false);
-			}
+
 			dsGameSetup->LoadStartPositions(); // full mode
 		}
 
@@ -215,41 +190,39 @@ int main(int argc, char* argv[])
 
 		LOG("starting server...");
 
-		dsGameData->SetSetupText(dsGameSetup->setupText);
-		server = new CGameServer(dsClientSetup, dsGameData, dsGameSetup);
+		{
+			dsGameData->SetSetupText(dsGameSetup->setupText);
+			CGameServer server(dsClientSetup, dsGameData, dsGameSetup);
 
-		while (!server->HasGameID()) {
-			// wait until gameID has been generated or
-			// a timeout occurs (if no clients connect)
-			if (server->HasFinished()) {
-				break;
+			while (!server.HasGameID()) {
+				// wait until gameID has been generated or
+				// a timeout occurs (if no clients connect)
+				if (server.HasFinished())
+					break;
+
+				spring_sleep(spring_secs(sleepTime));
 			}
 
-			spring_sleep(spring_secs(sleepTime));
-		}
+			while (!server.HasFinished()) {
+				static bool printData = (server.GetDemoRecorder() != nullptr);
 
-		while (!server->HasFinished()) {
-			static bool printData = (server->GetDemoRecorder() != NULL);
+				if (printData) {
+					printData = false;
 
-			if (printData) {
-				printData = false;
+					const std::unique_ptr<CDemoRecorder>& demoRec = server.GetDemoRecorder();
+					const std::uint8_t* gameID = (demoRec->GetFileHeader()).gameID;
 
-				const boost::scoped_ptr<CDemoRecorder>& demoRec = server->GetDemoRecorder();
-				const boost::uint8_t* gameID = (demoRec->GetFileHeader()).gameID;
+					LOG("recording demo: %s", (demoRec->GetName()).c_str());
+					LOG("using mod: %s", (dsGameSetup->modName).c_str());
+					LOG("using map: %s", (dsGameSetup->mapName).c_str());
+					LOG("GameID: %02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x", gameID[0], gameID[1], gameID[2], gameID[3], gameID[4], gameID[5], gameID[6], gameID[7], gameID[8], gameID[9], gameID[10], gameID[11], gameID[12], gameID[13], gameID[14], gameID[15]);
+				}
 
-				LOG("recording demo: %s", (demoRec->GetName()).c_str());
-				LOG("using mod: %s", (dsGameSetup->modName).c_str());
-				LOG("using map: %s", (dsGameSetup->mapName).c_str());
-				LOG("GameID: %02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x", gameID[0], gameID[1], gameID[2], gameID[3], gameID[4], gameID[5], gameID[6], gameID[7], gameID[8], gameID[9], gameID[10], gameID[11], gameID[12], gameID[13], gameID[14], gameID[15]);
+				spring_secs(sleepTime).sleep(true);
 			}
-
-			spring_sleep(spring_secs(sleepTime));
 		}
 
 		LOG("exiting");
-
-		delete server;
-
 		FileSystemInitializer::Cleanup();
 		GlobalConfig::Deallocate();
 		DataDirLocater::FreeInstance();
@@ -259,7 +232,7 @@ int main(int argc, char* argv[])
 	}
 	CATCH_SPRING_ERRORS
 
-	return GetExitCode();
+	return 0;
 }
 
 #if defined(WIN32) && !defined(_MSC_VER)

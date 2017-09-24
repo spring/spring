@@ -18,17 +18,36 @@ CONFIG(int, FPSScrollSpeed).defaultValue(10);
 CONFIG(float, FPSMouseScale).defaultValue(0.01f);
 CONFIG(bool, FPSEnabled).defaultValue(true);
 CONFIG(float, FPSFOV).defaultValue(45.0f);
+CONFIG(bool, FPSClampPos).defaultValue(true);
 
 
 CFPSController::CFPSController()
 	: oldHeight(300)
 {
+	ConfigUpdate();
+	dir = camera->GetDir();
+	Update();
+
+	configHandler->NotifyOnChange(this, {"FPSScrollSpeed", "FPSMouseScale", "FPSEnabled", "FPSFOV", "FPSClampPos"});
+}
+
+CFPSController::~CFPSController()
+{
+	configHandler->RemoveObserver(this);
+}
+
+void CFPSController::ConfigUpdate()
+{
 	scrollSpeed = configHandler->GetInt("FPSScrollSpeed") * 0.1f;
 	mouseScale = configHandler->GetFloat("FPSMouseScale");
 	enabled = configHandler->GetBool("FPSEnabled");
 	fov = configHandler->GetFloat("FPSFOV");
-	dir = camera->GetDir();
-	Update();
+	clampPos = configHandler->GetBool("FPSClampPos");
+}
+
+void CFPSController::ConfigNotify(const std::string& key, const std::string& value)
+{
+	ConfigUpdate();
 }
 
 
@@ -43,7 +62,7 @@ void CFPSController::KeyMove(float3 move)
 void CFPSController::MouseMove(float3 move)
 {
 	camera->SetRotY(camera->GetRot().y + mouseScale * move.x);
-	camera->SetRotX(Clamp(camera->GetRot().x + mouseScale * move.y * move.z, 0.01f, PI * 0.99f));
+	camera->SetRotX(Clamp(camera->GetRot().x + mouseScale * move.y * move.z, 0.01f, math::PI * 0.99f));
 	dir = camera->GetDir();
 	Update();
 }
@@ -64,7 +83,7 @@ void CFPSController::MouseWheelMove(float move)
 
 void CFPSController::Update()
 {
-	if (!gu->fpsMode) {
+	if (!gu->fpsMode && clampPos) {
 		const float margin = 0.01f;
 		const float xMin = margin;
 		const float zMin = margin;

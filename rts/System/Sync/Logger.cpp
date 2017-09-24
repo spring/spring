@@ -12,7 +12,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include "Logger.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include "System/SafeCStrings.h"
 
 #ifdef _MSC_VER
@@ -57,7 +57,7 @@ extern "C" void get_executable_name(char *output, int size);
  */
 void CLogger::AddLine(const char* fmt, ...)
 {
-	boost::recursive_mutex::scoped_lock scoped_lock(logmutex);
+	std::lock_guard<spring::recursive_mutex> scoped_lock(logmutex);
 	char buf[500]; // same size as buffer in infolog
 
 	va_list argp;
@@ -83,7 +83,7 @@ void CLogger::AddLine(const char* fmt, ...)
  */
 void CLogger::CloseSession()
 {
-	boost::recursive_mutex::scoped_lock scoped_lock(logmutex);
+	std::lock_guard<spring::recursive_mutex> scoped_lock(logmutex);
 
 	if (logfile || !buffer.empty()) {
 		FlushBuffer();
@@ -102,7 +102,7 @@ void CLogger::CloseSession()
  */
 void CLogger::FlushBuffer()
 {
-	boost::recursive_mutex::scoped_lock scoped_lock(logmutex);
+	std::lock_guard<spring::recursive_mutex> scoped_lock(logmutex);
 
 	char buf1[4096], buf2[4096];
 	char* nl;

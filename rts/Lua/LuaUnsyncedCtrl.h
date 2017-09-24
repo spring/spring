@@ -3,8 +3,6 @@
 #ifndef LUA_UNSYNCED_CTRL_H
 #define LUA_UNSYNCED_CTRL_H
 
-#include "Sim/Units/UnitSet.h"
-
 struct lua_State;
 
 // MinGW defines this for a WINAPI function
@@ -56,6 +54,7 @@ class LuaUnsyncedCtrl {
 		static int SetDrawGround(lua_State* L);
 		static int SetDrawGroundDeferred(lua_State* L);
 		static int SetDrawModelsDeferred(lua_State* L);
+		static int SetVideoCapturingMode(lua_State* L);
 
 		static int SetWaterParams(lua_State* L);
 		static int SetSoundEffectParams(lua_State* L);
@@ -75,8 +74,10 @@ class LuaUnsyncedCtrl {
 		static int SetUnitNoMinimap(lua_State* L);
 		static int SetUnitNoSelect(lua_State* L);
 		static int SetUnitLeaveTracks(lua_State* L);
+		static int SetUnitSelectionVolumeData(lua_State* L);
 		static int SetFeatureNoDraw(lua_State* L);
 		static int SetFeatureFade(lua_State* L);
+		static int SetFeatureSelectionVolumeData(lua_State* L);
 
 		static int AddUnitIcon(lua_State* L);
 		static int FreeUnitIcon(lua_State* L);
@@ -90,6 +91,8 @@ class LuaUnsyncedCtrl {
 
 		static int GetConfigInt(lua_State* L);
 		static int SetConfigInt(lua_State* L);
+		static int GetConfigFloat(lua_State* L);
+		static int SetConfigFloat(lua_State* L);
 		static int GetConfigString(lua_State* L);
 		static int SetConfigString(lua_State* L);
 
@@ -98,6 +101,7 @@ class LuaUnsyncedCtrl {
 		static int Reload(lua_State* L);
 		static int Restart(lua_State* L);
 		static int Start(lua_State* L);
+		static int Quit(lua_State* L);
 
 		static int SetWMIcon(lua_State* L);
 		static int SetWMCaption(lua_State* L);
@@ -137,6 +141,7 @@ class LuaUnsyncedCtrl {
 		static int SendLuaUIMsg(lua_State* L);
 		static int SendLuaGaiaMsg(lua_State* L);
 		static int SendLuaRulesMsg(lua_State* L);
+		static int SendLuaMenuMsg(lua_State* L);
 
 		static int SetLastMessagePosition(lua_State* L);
 
@@ -151,9 +156,8 @@ class LuaUnsyncedCtrl {
 
 		static int SetAtmosphere(lua_State* L);
 		static int SetSunLighting(lua_State* L);
-		static int SetSunParameters(lua_State* L);
-		static int SetSunManualControl(lua_State* L);
 		static int SetSunDirection(lua_State* L);
+		static int SetMapRenderingParams(lua_State* L);
 
 		static int SendSkirmishAIMessage(lua_State* L);
 

@@ -11,13 +11,14 @@ class CFireBallProjectile : public CWeaponProjectile
 	CR_DECLARE_DERIVED(CFireBallProjectile)
 	CR_DECLARE_SUB(Spark)
 public:
+	// creg only
 	CFireBallProjectile() { }
 	CFireBallProjectile(const ProjectileParams& params);
 
-	void Draw() override;
+	void Draw(CVertexArray* va) override;
 	void Update() override;
 
-	virtual int GetProjectilesCount() const override;
+	int GetProjectilesCount() const override;
 
 	void Collision() override;
 
@@ -33,7 +34,6 @@ public:
 
 private:
 	spark_list_type sparks;
-
 	void EmitSpark();
 };
 

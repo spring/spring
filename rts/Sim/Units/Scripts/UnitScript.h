@@ -56,7 +56,10 @@ protected:
 	typedef std::vector<AnimInfo> AnimContainerType;
 	typedef AnimContainerType::iterator AnimContainerTypeIt;
 
+	typedef bool(CUnitScript::*TickAnimFunc)(int, LocalModelPiece&, AnimInfo&);
+
 	AnimContainerType anims[AMove + 1];
+
 
 	bool hasSetSFXOccupy;
 	bool hasRockUnit;
@@ -119,8 +122,12 @@ public:
 	      CUnit* GetUnit()       { return unit; }
 	const CUnit* GetUnit() const { return unit; }
 
-	bool Tick(int deltaTime);
-	void TickAnims(int deltaTime, AnimType type, std::vector<AnimInfo>& doneAnims);
+	bool Tick(int tickRate);
+	// note: must copy-and-set here (LMP dirty flag, etc)
+	bool TickMoveAnim(int tickRate, LocalModelPiece& lmp, AnimInfo& ai) { float3 pos = lmp.GetPosition(); const bool ret = MoveToward(pos[ai.axis], ai.dest, ai.speed / tickRate); lmp.SetPosition(pos); return ret; }
+	bool TickTurnAnim(int tickRate, LocalModelPiece& lmp, AnimInfo& ai) { float3 rot = lmp.GetRotation(); const bool ret = TurnToward(rot[ai.axis], ai.dest, ai.speed / tickRate); lmp.SetRotation(rot); return ret; }
+	bool TickSpinAnim(int tickRate, LocalModelPiece& lmp, AnimInfo& ai) { float3 rot = lmp.GetRotation(); const bool ret = DoSpin(rot[ai.axis], ai.dest, ai.speed, ai.accel, tickRate); lmp.SetRotation(rot); return ret; }
+	void TickAnims(int tickRate, const TickAnimFunc& tickAnimFunc, AnimContainerType& liveAnims, AnimContainerType& doneAnims);
 
 	// animation, used by CCobThread
 	void Spin(int piece, int axis, float speed, float accel);
@@ -134,7 +141,11 @@ public:
 
 	// misc, used by CCobThread and callouts for Lua unitscripts
 	void SetVisibility(int piece, bool visible);
-	void EmitSfx(int type, int piece);
+
+	bool EmitSfx(int sfxType, int sfxPiece);
+	bool EmitRelSFX(int sfxType, const float3& relPos, const float3& relDir);
+	bool EmitAbsSFX(int sfxType, const float3& absPos, const float3& absDir, const float3& relDir = FwdVector);
+
 	void AttachUnit(int piece, int unit);
 	void DropUnit(int unit);
 	void Explode(int piece, int flags);
@@ -185,6 +196,9 @@ public:
 	virtual void Destroy() = 0;
 	virtual void StartMoving(bool reversing) = 0;
 	virtual void StopMoving() = 0;
+	virtual void StartSkidding(const float3&) = 0;
+	virtual void StopSkidding() = 0;
+	virtual void ChangeHeading(short deltaHeading) = 0;
 	virtual void StartUnload() = 0;
 	virtual void EndTransport() = 0;
 	virtual void StartBuilding() = 0;

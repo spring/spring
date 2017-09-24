@@ -5,22 +5,24 @@
 
 #include <vector>
 #include <string>
-#include <map>
 
 #include "Lua/LuaHashString.h"
 #include "CobScriptNames.h"
+#include "System/UnorderedMap.hpp"
 
 class CFileHandler;
 
 class CCobFile
 {
 public:
-	CCobFile(CFileHandler& in, std::string name);
-	~CCobFile();
+	CCobFile(CFileHandler& in, const std::string& scriptName);
 
 	int GetFunctionId(const std::string& name);
 
+public:
+	int numStaticVars;
 
+	std::vector<int> code;
 	std::vector<std::string> scriptNames;
 	std::vector<int> scriptOffsets;
 	/// Assumes that the scripts are sorted by offset in the file
@@ -28,10 +30,9 @@ public:
 	std::vector<std::string> pieceNames;
 	std::vector<int> scriptIndex;
 	std::vector<int> sounds;
-	std::map<std::string, int> scriptMap;
 	std::vector<LuaHashString> luaScripts;
-	int* code;
-	int numStaticVars;
+	spring::unordered_map<std::string, int> scriptMap;
+
 	std::string name;
 };
 

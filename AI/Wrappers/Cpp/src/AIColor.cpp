@@ -2,7 +2,7 @@
 
 #include "AIColor.h"
 
-#include "System/maindefines.h"
+#include "System/MainDefines.h"
 
 #include <string>
 #include <cassert>

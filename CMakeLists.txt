@@ -11,6 +11,11 @@ set(CMAKE_USER_MAKE_RULES_OVERRIDE "${CMAKE_MODULES_SPRING}/OverrideFlags.cmake"
 
 project(Spring)
 
+# dummy so that qtcreator shows all files (even those of windows)
+if(CMAKE_VERSION VERSION_GREATER 3.1.2)
+	add_library(platform_sources EXCLUDE_FROM_ALL "")
+endif()
+
 # includes rts/build/cmake/Util.cmake & rts/build/cmake/PreferStaticLibs.cmake
 INCLUDE(Util)
 INCLUDE(PreferStaticLibs)
@@ -158,6 +163,8 @@ else  (UNIX AND NOT MINGW)
 		set(Boost_USE_STATIC_LIBS ON)
 		set(GLEW_STATIC ON)
 		set(EXE_FLAGS WIN32)
+	else()
+		INCLUDE_DIRECTORIES(rts/lib/mingw-std-threads)
 	endif()
 endif (UNIX AND NOT MINGW)
 
@@ -244,25 +251,8 @@ endif (USE_LIBSQUISH)
 
 
 
-FIND_PACKAGE(Boost 1.51.0 COMPONENTS thread regex program_options system chrono signals filesystem REQUIRED)
-FIND_PACKAGE(Boost 1.51.0 COMPONENTS timer)
+FIND_PACKAGE(Boost 1.51.0 COMPONENTS regex system REQUIRED)
 INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
-
-# boost::chrono depends on clock_gettime which we need to link ourself when boost is static linked
-Set(Boost_CHRONO_LIBRARY_WITH_RT ${Boost_CHRONO_LIBRARY})
-IF    (UNIX AND NOT MINGW)
-	FIND_LIBRARY(REALTIME_LIBRARY rt)
-
-	IF    (PREFER_STATIC_LIBS AND NOT EXISTS "${REALTIME_LIBRARY}")
-		MESSAGE(FATAL_ERROR "librt.[so|a] not found! Needed by std/boost chrono when static linked!")
-	ENDIF (PREFER_STATIC_LIBS AND NOT EXISTS "${REALTIME_LIBRARY}")
-
-	# zydox buildslave seems to have problems to autolink it from dynlinked boost libs
-	#  so always link it (won't hurt cause std/boost chrono need it never the less)
-	if    (EXISTS "${REALTIME_LIBRARY}")
-		LIST(APPEND Boost_CHRONO_LIBRARY_WITH_RT ${REALTIME_LIBRARY})
-	ENDIF (EXISTS "${REALTIME_LIBRARY}")
-ENDIF (UNIX AND NOT MINGW)
 
 # Note the missing REQUIRED, as headless & dedi may not depend on those.
 #  So req. checks are done in the build target's CMakeLists.txt.
@@ -364,9 +354,9 @@ endif(THREADPOOL)
 if(NOT MSVC)
 	### SigNan
 	option(DEBUG_SIGNAL_NANS "Enable NaN-Signaling" ${DEBUG_BUILD})
-	if (DEBUG_SIGNAL_NANS)
+	if (DEBUG_SIGNAL_NANS AND CMAKE_COMPILER_IS_GNUCXX)
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsignaling-nans")
-	endif(DEBUG_SIGNAL_NANS)
+	endif()
 
 
 	### CompileTime Warnings
@@ -395,9 +385,21 @@ if(DEBUG_LUANAN)
 endif()
 
 
-### streflop
-add_definitions(-DSTREFLOP_SSE) # would break AI compiling, but is undefined in ./AI/CMakeLists.txt
 
+### streflop
+option(ENABLE_STREFLOP "build Spring with streflop support (REQUIRED FOR MULTIPLAYER)" TRUE)
+
+if (ENABLE_STREFLOP)
+## note: is removed in ./AI/CMakeLists.txt since it would break AI compilation
+add_definitions(-DSTREFLOP_SSE)
+else ()
+add_definitions(-DNOT_USING_STREFLOP)
+endif ()
+
+
+
+### Asio
+add_definitions(-DASIO_STANDALONE)
 
 ### compiler specific flags
 set(CXX_FLAGS_DEBUG_ADDITIONAL "")
@@ -408,7 +410,7 @@ if    ($ENV{CXX} MATCHES "icpc")
 	set(CXX_FLAGS_DEBUG_ADDITIONAL "-g -debug full")
 elseif (CMAKE_COMPILER_IS_GNUCXX)
 	if    (UNIX)
-		CHECK_AND_ADD_FLAGS(CMAKE_CXX_FLAGS "-fdiagnostics-color=always")
+		CHECK_AND_ADD_FLAGS(CMAKE_CXX_FLAGS "-fdiagnostics-color=auto")
 	endif (UNIX)
 
 	if    (MARCH_FLAG)
@@ -441,7 +443,7 @@ if    (MSVC)
 	set(CMAKE_CXX_FLAGS_RELWITHDEBINFO  "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} /O2 /Ob2 /GL /MP ${MSVC_CXX_FLAGS} ${CXX_RELWITHDEBINFO_DEFINES}")
 	set(CMAKE_CXX_FLAGS_RELEASE         "${CMAKE_CXX_FLAGS_RELEASE}        /O2 /Ob2 /GL /MP ${MSVC_CXX_FLAGS} ${CXX_RELEASE_DEFINES}")
 	set(CMAKE_CXX_FLAGS_PROFILE         "${CMAKE_CXX_FLAGS_PROFILE}        /O2 /Ob2 /GL /MP ${MSVC_CXX_FLAGS} ${CXX_PROFILE_DEFINES}")
-	
+
 	set(CMAKE_EXE_LINKER_FLAGS_RELEASE        "${CMAKE_EXE_LINKER_FLAGS_RELEASE}        /LTCG")
 	set(CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO "${CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO} /LTCG")
 	set(CMAKE_CXX_FLAGS_PROFILE               "${CMAKE_CXX_FLAGS_PROFILE} /LTCG")
@@ -476,6 +478,7 @@ else  (MSVC)
 
 	if     (MINGW)
 		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static -static-libgcc -static-libstdc++ -Wl,--enable-auto-import")
+		set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -static -static-libgcc -static-libstdc++ -Wl,--enable-auto-import")
 		if    (BUILD_BITS EQUAL 32)
 			# Increase memory limit from 2GB to 3GB on 32bit Windows and 2GB->4GB on 64bit Windows (assuming spring.exe is 32bit)
 			# http://msdn.microsoft.com/en-us/library/windows/desktop/aa366778(v=vs.85).aspx
@@ -504,27 +507,51 @@ Endif(EXISTS "${CMAKE_SOURCE_DIR}/.git")
 # Generate the version files
 Set(VERSION_GENERATE_DIR "${CMAKE_BINARY_DIR}")
 
-Set_Source_Files_Properties(
+Set(VERSION_GENERATE_SOURCES
 		"${VERSION_GENERATE_DIR}/src-generated/engine/System/VersionGenerated.h"
 		"${VERSION_GENERATE_DIR}/VERSION"
-		PROPERTIES GENERATED TRUE
 	)
+
+Set_Source_Files_Properties(
+	${VERSION_GENERATE_SOURCES}
+	PROPERTIES GENERATED TRUE
+)
 
 # This is always executed (on every run of "make"),
 # but the actual version files are only written in case of a change
 # in the version info they use, or in the template file content.
-Add_Custom_Target(generateVersionFiles)
-Add_Custom_Command(TARGET generateVersionFiles
-	COMMAND "${CMAKE_COMMAND}"
-		"-DSOURCE_ROOT=${CMAKE_SOURCE_DIR}"
-		"-DCMAKE_MODULES_SPRING=${CMAKE_MODULES_SPRING}"
-		"-DGENERATE_DIR=${VERSION_GENERATE_DIR}"
-		"-DVERSION_ADDITIONAL=${VERSION_ADDITIONAL}"
-		-P "${CMAKE_MODULES_SPRING}/ConfigureVersion.cmake"
-		"${VERSION_GENERATE_DIR}"
-	COMMENT
-		"  Configuring Version files ..." VERBATIM
+IF (MSVC)
+	Add_Custom_Command(
+		OUTPUT ${VERSION_GENERATE_SOURCES}
+		COMMAND "${CMAKE_COMMAND}"
+			"-DSOURCE_ROOT=${CMAKE_SOURCE_DIR}"
+			"-DCMAKE_MODULES_SPRING=${CMAKE_MODULES_SPRING}"
+			"-DGENERATE_DIR=${VERSION_GENERATE_DIR}"
+			"-DVERSION_ADDITIONAL=${VERSION_ADDITIONAL}"
+			-P "${CMAKE_MODULES_SPRING}/ConfigureVersion.cmake"
+			"${VERSION_GENERATE_DIR}"
+		COMMENT
+			"  Configuring Version files ..." VERBATIM
+		)
+	Add_Custom_Target(generateVersionFiles DEPENDS ${VERSION_GENERATE_SOURCES})
+ELSE (MSVC)
+	# This is always executed (on every run of "make"),
+	# but the actual version files are only written in case of a change
+	# in the version info they use, or in the template file content.
+	Add_Custom_Target(generateVersionFiles)
+	Add_Custom_Command(TARGET generateVersionFiles
+		COMMAND "${CMAKE_COMMAND}"
+			"-DSOURCE_ROOT=${CMAKE_SOURCE_DIR}"
+			"-DCMAKE_MODULES_SPRING=${CMAKE_MODULES_SPRING}"
+			"-DGENERATE_DIR=${VERSION_GENERATE_DIR}"
+			"-DVERSION_ADDITIONAL=${VERSION_ADDITIONAL}"
+			-P "${CMAKE_MODULES_SPRING}/ConfigureVersion.cmake"
+			"${VERSION_GENERATE_DIR}"
+		COMMENT
+			"  Configuring Version files ..." VERBATIM
 	)
+
+ENDIF (MSVC)
 
 Add_Dependencies(generateSources generateVersionFiles)
 

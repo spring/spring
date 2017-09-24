@@ -22,12 +22,11 @@ public:
 		float slowdown,
 		const float3& color
 	);
-	virtual ~CDirtProjectile();
 
-	virtual void Draw() override;
-	virtual void Update() override;
+	void Draw(CVertexArray* va) override;
+	void Update() override;
 
-	virtual int GetProjectilesCount() const override;
+	int GetProjectilesCount() const override;
 
 	static bool GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo);
 

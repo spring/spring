@@ -26,10 +26,10 @@ public:
 	);
 
 	void Update() override;
-	void Draw() override;
+	void Draw(CVertexArray* va) override;
 	void Init(const CUnit* owner, const float3& offset) override;
 
-	virtual int GetProjectilesCount() const override;
+	int GetProjectilesCount() const override;
 
 	static bool GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo);
 

@@ -142,9 +142,10 @@ public:
 	/// 2 - gaia/allied features visible, 3 - all features visible
 	int featureVisibility;
 
-	// Path Finder
+	// PFS
 	/// which pathfinder system (DEFAULT/legacy or QTPFS) the mod will use
 	int pathFinderSystem;
+	float pfRawDistMult;
 	float pfUpdateRate;
 
 	bool allowTake;

@@ -6,8 +6,7 @@
 #define MDL_TYPE(o) (o->model->type)
 #define TEX_TYPE(o) (o->model->textureType)
 
-#include <unordered_map>
-
+#include "System/UnorderedMap.hpp"
 #include "Rendering/Models/3DModel.h"
 
 class CUnit;
@@ -45,9 +44,9 @@ protected:
 	typedef std::vector<CProjectile*> ProjectileSet;
 
 	// textureType ==> modelSet
-	typedef std::unordered_map<int,       UnitSet>       UnitRenderBin;
-	typedef std::unordered_map<int,    FeatureSet>    FeatureRenderBin;
-	typedef std::unordered_map<int, ProjectileSet> ProjectileRenderBin;
+	typedef spring::unordered_map<int,       UnitSet>       UnitRenderBin;
+	typedef spring::unordered_map<int,    FeatureSet>    FeatureRenderBin;
+	typedef spring::unordered_map<int, ProjectileSet> ProjectileRenderBin;
 
 	UnitRenderBin units;              // all opaque or all cloaked
 	FeatureRenderBin features;        // all (opaque and fade) or all shadow

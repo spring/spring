@@ -2,11 +2,13 @@
 
 
 #include <cstdlib>
+#include <cstring> // memcpy
 
 #include "ReadMap.h"
 #include "MapDamage.h"
 #include "MapInfo.h"
 #include "MetalMap.h"
+#include "Rendering/Env/MapRendering.h"
 // #include "SM3/SM3Map.h"
 #include "SMF/SMFReadMap.h"
 #include "Game/LoadScreen.h"
@@ -14,14 +16,14 @@
 #include "System/EventHandler.h"
 #include "System/Exceptions.h"
 #include "System/myMath.h"
-#include "System/TimeProfiler.h"
-#include "System/ThreadPool.h"
+#include "System/Threading/ThreadPool.h"
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
+#include "System/Log/ILog.h"
 #include "System/Misc/RectangleOptimizer.h"
 #include "System/Sync/HsiehHash.h"
-#include "System/Util.h"
+#include "System/SafeUtil.h"
 
 #ifdef USE_UNSYNCED_HEIGHTMAP
 #include "Game/GlobalUnsynced.h"
@@ -33,18 +35,6 @@
 //////////////////////////////////////////////////////////////////////
 
 
-// assigned to in CGame::CGame ("readMap = CReadMap::LoadMap(mapname)")
-CReadMap* readMap = nullptr;
-MapDimensions mapDims;
-
-
-#ifdef USE_UNSYNCED_HEIGHTMAP
-	#define	HEIGHTMAP_DIGESTS \
-		CR_MEMBER(syncedHeightMapDigests), \
-		CR_MEMBER(unsyncedHeightMapDigests),
-#else
-	#define HEIGHTMAP_DIGESTS
-#endif
 
 CR_BIND(MapDimensions, ())
 CR_REG_METADATA(MapDimensions, (
@@ -71,33 +61,72 @@ CR_REG_METADATA(CReadMap, (
 	CR_IGNORED(currHeightBounds),
 	CR_IGNORED(boundingRadius),
 	CR_IGNORED(mapChecksum),
+
 	CR_IGNORED(heightMapSyncedPtr),
 	CR_IGNORED(heightMapUnsyncedPtr),
+
+	/*
 	CR_IGNORED(originalHeightMap),
 	CR_IGNORED(centerHeightMap),
 	CR_IGNORED(mipCenterHeightMaps),
+	*/
 	CR_IGNORED(mipPointerHeightMaps),
+	/*
 	CR_IGNORED(visVertexNormals),
 	CR_IGNORED(faceNormalsSynced),
 	CR_IGNORED(faceNormalsUnsynced),
 	CR_IGNORED(centerNormalsSynced),
 	CR_IGNORED(centerNormalsUnsynced),
-	CR_IGNORED(centerNormals2DSynced),
-	CR_IGNORED(centerNormals2DUnsynced),
+	CR_IGNORED(centerNormals2D),
 	CR_IGNORED(slopeMap),
+	CR_IGNORED(typeMap),
+	*/
+
 	CR_IGNORED(sharedCornerHeightMaps),
 	CR_IGNORED(sharedCenterHeightMaps),
 	CR_IGNORED(sharedFaceNormals),
 	CR_IGNORED(sharedCenterNormals),
-	CR_IGNORED(sharedCenterNormals2D),
 	CR_IGNORED(sharedSlopeMaps),
-	CR_MEMBER(typeMap),
-	CR_MEMBER(unsyncedHeightMapUpdates),
-	CR_MEMBER(unsyncedHeightMapUpdatesTemp),
-	HEIGHTMAP_DIGESTS
+
+	CR_IGNORED(unsyncedHeightMapUpdates),
+	CR_IGNORED(unsyncedHeightMapUpdatesTemp),
+
+	/*
+	#ifdef USE_UNSYNCED_HEIGHTMAP
+	CR_IGNORED(  syncedHeightMapDigests),
+	CR_IGNORED(unsyncedHeightMapDigests),
+	#endif
+	*/
+
 	CR_POSTLOAD(PostLoad),
 	CR_SERIALIZER(Serialize)
 ))
+
+
+
+// initialized in CGame::LoadMap
+CReadMap* readMap = nullptr;
+
+MapDimensions mapDims;
+
+std::vector<float> CReadMap::originalHeightMap;
+std::vector<float> CReadMap::centerHeightMap;
+std::array<std::vector<float>, CReadMap::numHeightMipMaps - 1> CReadMap::mipCenterHeightMaps;
+
+std::vector<float3> CReadMap::visVertexNormals;
+std::vector<float3> CReadMap::faceNormalsSynced;
+std::vector<float3> CReadMap::faceNormalsUnsynced;
+std::vector<float3> CReadMap::centerNormalsSynced;
+std::vector<float3> CReadMap::centerNormalsUnsynced;
+
+std::vector<float> CReadMap::slopeMap;
+std::vector<uint8_t> CReadMap::typeMap;
+std::vector<float3> CReadMap::centerNormals2D;
+
+#ifdef USE_UNSYNCED_HEIGHTMAP
+std::vector<uint8_t> CReadMap::  syncedHeightMapDigests;
+std::vector<uint8_t> CReadMap::unsyncedHeightMapDigests;
+#endif
 
 
 
@@ -111,42 +140,41 @@ MapTexture::~MapTexture() {
 
 
 
-CReadMap* CReadMap::LoadMap(const std::string& mapname)
+CReadMap* CReadMap::LoadMap(const std::string& mapName)
 {
 	CReadMap* rm = nullptr;
 
-	if (FileSystem::GetExtension(mapname) == "sm3") {
+	if (FileSystem::GetExtension(mapName) == "sm3") {
 		throw content_error("[CReadMap::LoadMap] SM3 maps are no longer supported as of Spring 95.0");
-		// rm = new CSM3ReadMap(mapname);
+		// rm = new CSM3ReadMap(mapName);
 	} else {
-		// assume SMF format by default
-		rm = new CSMFReadMap(mapname);
+		// assume SMF format by default; calls ::Initialize
+		rm = new CSMFReadMap(mapName);
 	}
 
 	if (rm == nullptr)
 		return nullptr;
 
-	/* read metal- and type-map */
+	// read metal- and type-map
 	MapBitmapInfo mbi;
 	MapBitmapInfo tbi;
 
 	unsigned char* metalmapPtr = rm->GetInfoMap("metal", &mbi);
 	unsigned char* typemapPtr = rm->GetInfoMap("type", &tbi);
 
-	assert(mbi.width == (mapDims.mapx >> 1));
-	assert(mbi.height == (mapDims.mapy >> 1));
-
+	assert(mbi.width == mapDims.hmapx);
+	assert(mbi.height == mapDims.hmapy);
 	rm->metalMap = new CMetalMap(metalmapPtr, mbi.width, mbi.height, mapInfo->map.maxMetal);
 
 	if (metalmapPtr != nullptr)
 		rm->FreeInfoMap("metal", metalmapPtr);
 
-	if (typemapPtr && tbi.width == (mapDims.mapx >> 1) && tbi.height == (mapDims.mapy >> 1)) {
-		assert(mapDims.hmapx == tbi.width && mapDims.hmapy == tbi.height);
-		rm->typeMap.resize(tbi.width * tbi.height);
-		memcpy(&rm->typeMap[0], typemapPtr, tbi.width * tbi.height);
-	} else
-		throw content_error("[CReadMap::LoadMap] bad/no terrain typemap");
+	if (typemapPtr != nullptr && tbi.width == mapDims.hmapx && tbi.height == mapDims.hmapy) {
+		assert(!typeMap.empty());
+		memcpy(typeMap.data(), typemapPtr, typeMap.size());
+	} else {
+		LOG_L(L_WARNING, "[CReadMap::%s] missing or illegal typemap for \"%s\" (dims=<%d,%d>)", __func__, mapName.c_str(), tbi.width, tbi.height);
+	}
 
 	if (typemapPtr != nullptr)
 		rm->FreeInfoMap("type", typemapPtr);
@@ -158,22 +186,44 @@ CReadMap* CReadMap::LoadMap(const std::string& mapname)
 void CReadMap::Serialize(creg::ISerializer* s)
 {
 	// using integers so we can xor the original heightmap with the
-	// current one - should compress significantly better.
-	      float* shm  = const_cast<float*>(GetCornerHeightMapSynced());
-	      int*   ishm  = reinterpret_cast<int*>(shm);
-	const int*   ioshm = reinterpret_cast<const int*>(GetOriginalHeightMapSynced());
+	// current one (affected by Lua, explosions, etc) - long runs of
+	// zeros for unchanged squares should compress significantly better.
+	      int32_t*  ichms = reinterpret_cast<      int32_t*>(const_cast<float*>(GetCornerHeightMapSynced()));
+	const int32_t* iochms = reinterpret_cast<const int32_t*>(GetOriginalHeightMapSynced());
 
-	int height;
+	// LuaSynced can also touch the typemap, serialize it (manually)
+	MapBitmapInfo tbi;
+
+	      uint8_t*  itm = typeMap.data();
+	const uint8_t* iotm = GetInfoMap("type", &tbi);
+
+	assert(!typeMap.empty());
+	assert(typeMap.size() == (tbi.width * tbi.height));
+
+	int32_t height;
+	uint8_t type;
+
 	if (s->IsWriting()) {
-		for (unsigned int i = 0; i < mapDims.mapxp1 * mapDims.mapyp1; i++) {
-			height = ishm[i] ^ ioshm[i];
-			s->Serialize(&height, sizeof(int));
+		for (unsigned int i = 0; i < (mapDims.mapxp1 * mapDims.mapyp1); i++) {
+			height = ichms[i] ^ iochms[i];
+			s->Serialize(&height, sizeof(int32_t));
+		}
+
+		for (unsigned int i = 0; i < (mapDims.hmapx * mapDims.hmapy); i++) {
+			type = itm[i] ^ iotm[i];
+			s->Serialize(&type, sizeof(uint8_t));
 		}
 	} else {
-		for (unsigned int i = 0; i < mapDims.mapxp1 * mapDims.mapyp1; i++) {
-			s->Serialize(&height, sizeof(int));
-			ishm[i] = height ^ ioshm[i];
+		for (unsigned int i = 0; i < (mapDims.mapxp1 * mapDims.mapyp1); i++) {
+			s->Serialize(&height, sizeof(int32_t));
+			ichms[i] = height ^ iochms[i];
 		}
+
+		for (unsigned int i = 0; i < (mapDims.hmapx * mapDims.hmapy); i++) {
+			s->Serialize(&type, sizeof(uint8_t));
+			itm[i] = type ^ iotm[i];
+		}
+
 		mapDamage->RecalcArea(2, mapDims.mapx - 3, 2, mapDims.mapy - 3);
 	}
 
@@ -198,18 +248,17 @@ void CReadMap::PostLoad()
 	sharedCenterNormals[0] = &centerNormalsUnsynced[0];
 	sharedCenterNormals[1] = &centerNormalsSynced[0];
 
-	sharedCenterNormals2D[0] = &centerNormals2DUnsynced[0];
-	sharedCenterNormals2D[1] = &centerNormals2DSynced[0];
-
 	sharedSlopeMaps[0] = &slopeMap[0]; // NO UNSYNCED VARIANT
 	sharedSlopeMaps[1] = &slopeMap[0];
 
 	//FIXME reconstruct
-	/*mipPointerHeightMaps.resize(numHeightMipMaps, nullptr);
+	/*
+	mipPointerHeightMaps.fill(nullptr);
 	mipPointerHeightMaps[0] = &centerHeightMap[0];
 	for (int i = 1; i < numHeightMipMaps; i++) {
 		mipPointerHeightMaps[i] = &mipCenterHeightMaps[i - 1][0];
-	}*/
+	}
+	*/
 }
 #endif //USING_CREG
 
@@ -226,7 +275,7 @@ CReadMap::CReadMap()
 
 CReadMap::~CReadMap()
 {
-	SafeDelete(metalMap);
+	spring::SafeDelete(metalMap);
 }
 
 
@@ -248,6 +297,7 @@ void CReadMap::Initialize()
 			((( mapDims.mapxp1)   * mapDims.mapyp1          * sizeof(float3))        / 1024) +   // VisVertexNormals
 			((  mapDims.mapx      * mapDims.mapy            * sizeof(float))         / 1024) +   // centerHeightMap
 			((  mapDims.hmapx     * mapDims.hmapy           * sizeof(float))         / 1024) +   // slopeMap
+			((  mapDims.hmapx     * mapDims.hmapy           * sizeof(uint8_t))       / 1024) +   // typeMap
 			((  mapDims.hmapx     * mapDims.hmapy           * sizeof(float))         / 1024) +   // MetalMap::extractionMap
 			((  mapDims.hmapx     * mapDims.hmapy           * sizeof(unsigned char)) / 1024);    // MetalMap::metalMap
 
@@ -263,25 +313,39 @@ void CReadMap::Initialize()
 	float3::maxxpos = mapDims.mapx * SQUARE_SIZE - 1;
 	float3::maxzpos = mapDims.mapy * SQUARE_SIZE - 1;
 
+	originalHeightMap.clear();
 	originalHeightMap.resize(mapDims.mapxp1 * mapDims.mapyp1);
+	faceNormalsSynced.clear();
 	faceNormalsSynced.resize(mapDims.mapx * mapDims.mapy * 2);
+	faceNormalsUnsynced.clear();
 	faceNormalsUnsynced.resize(mapDims.mapx * mapDims.mapy * 2);
+	centerNormalsSynced.clear();
 	centerNormalsSynced.resize(mapDims.mapx * mapDims.mapy);
+	centerNormalsUnsynced.clear();
 	centerNormalsUnsynced.resize(mapDims.mapx * mapDims.mapy);
-	centerNormals2DSynced.resize(mapDims.mapx * mapDims.mapy);
-	centerNormals2DUnsynced.resize(mapDims.mapx * mapDims.mapy);
+	centerNormals2D.clear();
+	centerNormals2D.resize(mapDims.mapx * mapDims.mapy);
+	centerHeightMap.clear();
 	centerHeightMap.resize(mapDims.mapx * mapDims.mapy);
 
-	mipCenterHeightMaps.resize(numHeightMipMaps - 1);
-	mipPointerHeightMaps.resize(numHeightMipMaps, nullptr);
+	mipPointerHeightMaps.fill(nullptr);
 	mipPointerHeightMaps[0] = &centerHeightMap[0];
 
 	for (int i = 1; i < numHeightMipMaps; i++) {
+		mipCenterHeightMaps[i - 1].clear();
 		mipCenterHeightMaps[i - 1].resize((mapDims.mapx >> i) * (mapDims.mapy >> i));
+
 		mipPointerHeightMaps[i] = &mipCenterHeightMaps[i - 1][0];
 	}
 
+	slopeMap.clear();
 	slopeMap.resize(mapDims.hmapx * mapDims.hmapy);
+
+	// by default, all squares are set to terrain-type 0
+	typeMap.clear();
+	typeMap.resize(mapDims.hmapx * mapDims.hmapy, 0);
+
+	visVertexNormals.clear();
 	visVertexNormals.resize(mapDims.mapxp1 * mapDims.mapyp1);
 
 	// note: if USE_UNSYNCED_HEIGHTMAP is false, then
@@ -307,14 +371,17 @@ void CReadMap::Initialize()
 		sharedCenterNormals[0] = &centerNormalsUnsynced[0];
 		sharedCenterNormals[1] = &centerNormalsSynced[0];
 
-		sharedCenterNormals2D[0] = &centerNormals2DUnsynced[0];
-		sharedCenterNormals2D[1] = &centerNormals2DSynced[0];
-
 		sharedSlopeMaps[0] = &slopeMap[0]; // NO UNSYNCED VARIANT
 		sharedSlopeMaps[1] = &slopeMap[0];
 	}
 
 	mapChecksum = CalcHeightmapChecksum();
+
+	syncedHeightMapDigests.clear();
+	unsyncedHeightMapDigests.clear();
+
+	// not callable here because losHandler is still NULL, deferred to Game::PostLoadSim
+	// InitHeightMapDigestVectors();
 	UpdateHeightMapSynced(SRectangle(0, 0, mapDims.mapx, mapDims.mapy), true);
 
 	// FIXME can't call that yet cause sky & skyLight aren't created yet (crashes in SMFReadMap.cpp)
@@ -409,48 +476,49 @@ void CReadMap::UpdateDraw(bool firstCall)
 }
 
 
-void CReadMap::UpdateHeightMapSynced(SRectangle rect, bool initialize)
+void CReadMap::UpdateHeightMapSynced(SRectangle hmRect, bool initialize)
 {
-	if (rect.GetArea() <= 0) {
-		// do not bother with zero-area updates
+	// do not bother with zero-area updates
+	if (hmRect.GetArea() <= 0)
 		return;
-	}
 
-	rect.x1 = std::max(         0, rect.x1 - 1);
-	rect.z1 = std::max(         0, rect.z1 - 1);
-	rect.x2 = std::min(mapDims.mapxm1, rect.x2 + 1);
-	rect.z2 = std::min(mapDims.mapym1, rect.z2 + 1);
+	hmRect.x1 = std::max(             0, hmRect.x1 - 1);
+	hmRect.z1 = std::max(             0, hmRect.z1 - 1);
+	hmRect.x2 = std::min(mapDims.mapxm1, hmRect.x2 + 1);
+	hmRect.z2 = std::min(mapDims.mapym1, hmRect.z2 + 1);
 
-	UpdateCenterHeightmap(rect, initialize);
-	UpdateMipHeightmaps(rect, initialize);
-	UpdateFaceNormals(rect, initialize);
-	UpdateSlopemap(rect, initialize); // must happen after UpdateFaceNormals()!
+	UpdateCenterHeightmap(hmRect, initialize);
+	UpdateMipHeightmaps(hmRect, initialize);
+	UpdateFaceNormals(hmRect, initialize);
+	UpdateSlopemap(hmRect, initialize); // must happen after UpdateFaceNormals()!
 
-#ifdef USE_UNSYNCED_HEIGHTMAP
-	// push the unsynced update
-	if (initialize) {
-		// push 1st update through without LOS check
-		unsyncedHeightMapUpdates.push_back(rect);
+	assert(initialize == (losHandler == nullptr));
+
+	#ifdef USE_UNSYNCED_HEIGHTMAP
+	// push the unsynced update; initial one without LOS check
+	if (losHandler == nullptr) {
+		unsyncedHeightMapUpdates.push_back(hmRect);
 	} else {
-		InitHeightMapDigestsVectors();
+		#ifdef USE_HEIGHTMAP_DIGESTS
+		// convert heightmap rectangle to LOS-map space
+		const int2 losSquareSize = losHandler->los.size;
+		const SRectangle lmRect = hmRect * (SQUARE_SIZE * losHandler->los.invDiv);
 
-		const int losSquaresX = losHandler->los.size.x; // size of LOS square in heightmap coords
-		const SRectangle& lm = rect * (SQUARE_SIZE * losHandler->los.invDiv); // LOS space
-
-		// we updated the heightmap so change their digest (byte-overflow is intentional!)
-		for (int lmx = lm.x1; lmx <= lm.x2; ++lmx) {
-			for (int lmz = lm.z1; lmz <= lm.z2; ++lmz) {
-				const int idx = lmx + lmz * (losSquaresX + 1);
-				assert(idx < syncedHeightMapDigests.size());
-				syncedHeightMapDigests[idx]++;
+		// heightmap updated, increment digests (byte-overflow is intentional!)
+		for (int lmx = lmRect.x1; lmx <= lmRect.x2; ++lmx) {
+			for (int lmz = lmRect.z1; lmz <= lmRect.z2; ++lmz) {
+				const int losMapIdx = lmx + lmz * (losSquareSize.x + 1);
+				assert(losMapIdx < syncedHeightMapDigests.size());
+				syncedHeightMapDigests[losMapIdx]++;
 			}
 		}
+		#endif
 
-		HeightMapUpdateLOSCheck(rect);
+		HeightMapUpdateLOSCheck(hmRect);
 	}
-#else
-	unsyncedHeightMapUpdates.push_back(rect);
-#endif
+	#else
+	unsyncedHeightMapUpdates.push_back(hmRect);
+	#endif
 }
 
 
@@ -506,8 +574,8 @@ void CReadMap::UpdateFaceNormals(const SRectangle& rect, bool initialize)
 {
 	const float* heightmapSynced = GetCornerHeightMapSynced();
 
-	const int z1 = std::max(         0, rect.z1 - 1);
-	const int x1 = std::max(         0, rect.x1 - 1);
+	const int z1 = std::max(             0, rect.z1 - 1);
+	const int x1 = std::max(             0, rect.x1 - 1);
 	const int z2 = std::min(mapDims.mapym1, rect.z2 + 1);
 	const int x2 = std::min(mapDims.mapxm1, rect.x2 + 1);
 
@@ -558,14 +626,13 @@ void CReadMap::UpdateFaceNormals(const SRectangle& rect, bool initialize)
 			faceNormalsSynced[(y * mapDims.mapx + x) * 2 + 1] = fnBR;
 			// square-normal
 			centerNormalsSynced[y * mapDims.mapx + x] = (fnTL + fnBR).Normalize();
-			centerNormals2DSynced[y * mapDims.mapx + x] = (fnTL + fnBR).Normalize2D();
+			centerNormals2D[y * mapDims.mapx + x] = (fnTL + fnBR).Normalize2D();
 
 			#ifdef USE_UNSYNCED_HEIGHTMAP
 			if (initialize) {
 				faceNormalsUnsynced[(y * mapDims.mapx + x) * 2    ] = faceNormalsSynced[(y * mapDims.mapx + x) * 2    ];
 				faceNormalsUnsynced[(y * mapDims.mapx + x) * 2 + 1] = faceNormalsSynced[(y * mapDims.mapx + x) * 2 + 1];
 				centerNormalsUnsynced[y * mapDims.mapx + x] = centerNormalsSynced[y * mapDims.mapx + x];
-				centerNormals2DUnsynced[y * mapDims.mapx + x] = centerNormals2DSynced[y * mapDims.mapx + x];
 			}
 			#endif
 		}
@@ -575,9 +642,9 @@ void CReadMap::UpdateFaceNormals(const SRectangle& rect, bool initialize)
 
 void CReadMap::UpdateSlopemap(const SRectangle& rect, bool initialize)
 {
-	const int sx = std::max(0, (rect.x1 / 2) - 1);
+	const int sx = std::max(0,                 (rect.x1 / 2) - 1);
 	const int ex = std::min(mapDims.hmapx - 1, (rect.x2 / 2) + 1);
-	const int sy = std::max(0, (rect.z1 / 2) - 1);
+	const int sy = std::max(0,                 (rect.z1 / 2) - 1);
 	const int ey = std::min(mapDims.hmapy - 1, (rect.z2 / 2) + 1);
 
 	for (int y = sy; y <= ey; y++) {
@@ -615,111 +682,123 @@ void CReadMap::UpdateSlopemap(const SRectangle& rect, bool initialize)
 }
 
 
-/// split the update into multiple invididual (los-square) chunks:
-void CReadMap::HeightMapUpdateLOSCheck(const SRectangle& rect)
+/// split the update into multiple invididual (los-square) chunks
+void CReadMap::HeightMapUpdateLOSCheck(const SRectangle& hmRect)
 {
-	InitHeightMapDigestsVectors();
-	const int losSqSize = losHandler->los.divisor / SQUARE_SIZE; // size of LOS square in heightmap coords
-	const SRectangle& lm = rect * (SQUARE_SIZE * losHandler->los.invDiv); // LOS space
+	// size of LOS square in heightmap coords; divisor is SQUARE_SIZE * 2^mipLevel
+	const int losSqSize = losHandler->los.divisor / SQUARE_SIZE;
 
-	for (int lmz = lm.z1; lmz <= lm.z2; ++lmz) {
+	const SRectangle& lmRect = hmRect * (SQUARE_SIZE * losHandler->los.invDiv); // LOS space
+	const auto PushRect = [&](SRectangle& subRect, int hmx, int hmz) {
+		if (subRect.GetArea() > 0) {
+			subRect.ClampIn(hmRect);
+			unsyncedHeightMapUpdates.push_back(subRect);
+			subRect = SRectangle(hmx + losSqSize, hmz,  hmx + losSqSize, hmz + losSqSize);
+		} else {
+			subRect.x1 = hmx + losSqSize;
+			subRect.x2 = hmx + losSqSize;
+		}
+	};
+
+	for (int lmz = lmRect.z1; lmz <= lmRect.z2; ++lmz) {
 		const int hmz = lmz * losSqSize;
-		      int hmx = lm.x1 * losSqSize;
+		      int hmx = lmRect.x1 * losSqSize;
 
-		SRectangle subrect(hmx, hmz, hmx, hmz + losSqSize);
-		#define PUSH_RECT \
-			if (subrect.GetArea() > 0) { \
-				subrect.ClampIn(rect); \
-				unsyncedHeightMapUpdates.push_back(subrect); \
-				subrect = SRectangle(hmx + losSqSize, hmz, hmx + losSqSize, hmz + losSqSize); \
-			} else { \
-				subrect.x1 = hmx + losSqSize; \
-				subrect.x2 = hmx + losSqSize; \
-			}
+		SRectangle subRect(hmx, hmz,  hmx, hmz + losSqSize);
 
-		for (int lmx = lm.x1; lmx <= lm.x2; ++lmx) {
+		for (int lmx = lmRect.x1; lmx <= lmRect.x2; ++lmx) {
 			hmx = lmx * losSqSize;
 
 			#ifdef USE_UNSYNCED_HEIGHTMAP
 			if (!(gu->spectatingFullView || losHandler->InLos(SquareToFloat3(hmx, hmz), gu->myAllyTeam))) {
-				PUSH_RECT
+				PushRect(subRect, hmx, hmz);
 				continue;
 			}
 			#endif
 
 			if (!HasHeightMapChanged(lmx, lmz)) {
-				PUSH_RECT
+				PushRect(subRect, hmx, hmz);
 				continue;
 			}
 
 			// update rectangle size
-			subrect.x2 = hmx + losSqSize;
+			subRect.x2 = hmx + losSqSize;
 		}
 
-		PUSH_RECT
+		PushRect(subRect, hmx, hmz);
 	}
 }
 
 
-void CReadMap::InitHeightMapDigestsVectors()
+void CReadMap::InitHeightMapDigestVectors(const int2 losMapSize)
 {
-#ifdef USE_UNSYNCED_HEIGHTMAP
-	if (syncedHeightMapDigests.empty()) {
-		const int size = (losHandler->los.size.x + 1) * (losHandler->los.size.y + 1);
-		syncedHeightMapDigests.resize(size, 0);
-		unsyncedHeightMapDigests.resize(size, 0);
-	}
+#if (defined(USE_HEIGHTMAP_DIGESTS) && defined(USE_UNSYNCED_HEIGHTMAP))
+	assert(losHandler != nullptr);
+	assert(syncedHeightMapDigests.empty());
+
+	const int xsize = losMapSize.x + 1;
+	const int ysize = losMapSize.y + 1;
+
+	syncedHeightMapDigests.clear();
+	syncedHeightMapDigests.resize(xsize * ysize, 0);
+	unsyncedHeightMapDigests.clear();
+	unsyncedHeightMapDigests.resize(xsize * ysize, 0);
 #endif
 }
 
 
 bool CReadMap::HasHeightMapChanged(const int lmx, const int lmy)
 {
-#ifdef USE_UNSYNCED_HEIGHTMAP
-	const int losSquaresX = losHandler->los.size.x;
-	const int idx = lmx + lmy * (losSquaresX + 1);
-	assert(idx < syncedHeightMapDigests.size() && idx >= 0);
-	const bool heightmapChanged = (unsyncedHeightMapDigests[idx] != syncedHeightMapDigests[idx]);
-	if (heightmapChanged) {
-		unsyncedHeightMapDigests[idx] = syncedHeightMapDigests[idx];
+#if (defined(USE_HEIGHTMAP_DIGESTS) && defined(USE_UNSYNCED_HEIGHTMAP))
+	const int2 losSquares = losHandler->los.size;
+	const int losMapIdx = lmx + lmy * (losSquares.x + 1);
+
+	assert(losMapIdx < syncedHeightMapDigests.size() && losMapIdx >= 0);
+
+	if (unsyncedHeightMapDigests[losMapIdx] != syncedHeightMapDigests[losMapIdx]) {
+		unsyncedHeightMapDigests[losMapIdx] = syncedHeightMapDigests[losMapIdx];
+		return true;
 	}
-	return heightmapChanged;
+
+	return false;
 #else
 	return true;
 #endif
 }
 
 
-void CReadMap::UpdateLOS(const SRectangle& rect)
-{
 #ifdef USE_UNSYNCED_HEIGHTMAP
+void CReadMap::UpdateLOS(const SRectangle& hmRect)
+{
 	if (gu->spectatingFullView)
 		return;
 
 	// currently we use the LOS for view updates (alternatives are AirLOS and/or radar)
 	// cause the others use different resolutions we must check it here for safety
 	// (if you want to use another source you need to change the res. of syncedHeightMapDigests etc.)
-	assert(rect.GetWidth() <= losHandler->los.divisor / SQUARE_SIZE);
+	assert(hmRect.GetWidth() <= (losHandler->los.divisor / SQUARE_SIZE));
+	assert(losHandler != nullptr);
 
+	SRectangle hmPoint = hmRect;
 	//HACK: UpdateLOS() is called for single LOS squares, but we use <= in HeightMapUpdateLOSCheck().
 	// This would make our update area 4x as large, so we need to make the rectangle a point. Better
 	// would be to use < instead of <= everywhere.
-	SRectangle r = rect;
-	r.x2 = r.x1;
-	r.z2 = r.z1;
+	//FIXME: this actually causes spikes in the UHM
+	// hmPoint.x2 = hmPoint.x1;
+	// hmPoint.z2 = hmPoint.z1;
 
-	HeightMapUpdateLOSCheck(rect);
-#endif
+	HeightMapUpdateLOSCheck(hmPoint);
 }
-
 
 void CReadMap::BecomeSpectator()
 {
-#ifdef USE_UNSYNCED_HEIGHTMAP
 	HeightMapUpdateLOSCheck(SRectangle(0, 0, mapDims.mapx, mapDims.mapy));
-#endif
 }
+#else
+void CReadMap::UpdateLOS(const SRectangle& hmRect) {}
+void CReadMap::BecomeSpectator() {}
+#endif
 
-bool CReadMap::HasVisibleWater() const { return (!mapInfo->map.voidWater && !IsAboveWater()); }
-bool CReadMap::HasOnlyVoidWater() const { return (mapInfo->map.voidWater && IsUnderWater()); }
 
+bool CReadMap::HasVisibleWater() const { return (!mapRendering->voidWater && !IsAboveWater()); }
+bool CReadMap::HasOnlyVoidWater() const { return (mapRendering->voidWater && IsUnderWater()); }

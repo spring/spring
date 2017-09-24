@@ -32,6 +32,7 @@ class SkirmishAIBase : public TeamController {
 	CR_DECLARE(SkirmishAIBase)
 
 public:
+	virtual ~SkirmishAIBase() {}
 	typedef std::map<std::string, std::string> customOpts;
 
 	/**

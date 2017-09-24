@@ -4,7 +4,7 @@
 #define _CONNECTION_H
 
 #include <string>
-#include <boost/shared_ptr.hpp>
+#include <memory>
 
 #include "RawPacket.h"
 
@@ -25,7 +25,7 @@ public:
 	 *
 	 * Use this, since it does not need memcpy'ing
 	 */
-	virtual void SendData(boost::shared_ptr<const RawPacket> data) = 0;
+	virtual void SendData(std::shared_ptr<const RawPacket> data) = 0;
 
 	virtual bool HasIncomingData() const = 0;
 
@@ -35,14 +35,14 @@ public:
 	 * @param ahead How many packets to look ahead. A typical usage would be:
 	 *   for (int ahead = 0; (packet = conn->Peek(ahead)); ++ahead) {}
 	 */
-	virtual boost::shared_ptr<const RawPacket> Peek(unsigned ahead) const = 0;
+	virtual std::shared_ptr<const RawPacket> Peek(unsigned ahead) const = 0;
 
 	/**
 	 * @brief use this to recieve ready data
 	 * @return a network message encapsulated in a RawPacket,
 	 *   or NULL if there are no more messages available.
 	 */
-	virtual boost::shared_ptr<const RawPacket> GetData() = 0;
+	virtual std::shared_ptr<const RawPacket> GetData() = 0;
 
 	/**
 	 * @brief Deletes a packet from the buffer

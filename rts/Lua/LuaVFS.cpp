@@ -2,13 +2,9 @@
 
 
 #include <cmath>
-#include <zlib.h>
-#include <boost/regex.hpp>
 
 #include "LuaVFS.h"
-
 #include "LuaInclude.h"
-
 #include "LuaHandle.h"
 #include "LuaHashString.h"
 #include "LuaIO.h"
@@ -18,10 +14,9 @@
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/VFSHandler.h"
 #include "System/FileSystem/FileSystem.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
+#include "System/TimeProfiler.h"
 #include "../tools/pr-downloader/src/pr-downloader.h"
-
-using std::min;
 
 
 /******************************************************************************/
@@ -33,6 +28,7 @@ bool LuaVFS::PushCommon(lua_State* L)
 	HSTR_PUSH_STRING(L, "MOD",       SPRING_VFS_MOD);
 	HSTR_PUSH_STRING(L, "MAP",       SPRING_VFS_MAP);
 	HSTR_PUSH_STRING(L, "BASE",      SPRING_VFS_BASE);
+	HSTR_PUSH_STRING(L, "MENU",      SPRING_VFS_MENU);
 	HSTR_PUSH_STRING(L, "ZIP",       SPRING_VFS_ZIP);
 	HSTR_PUSH_STRING(L, "RAW_FIRST", SPRING_VFS_RAW_FIRST);
 	HSTR_PUSH_STRING(L, "ZIP_FIRST", SPRING_VFS_ZIP_FIRST);
@@ -55,7 +51,7 @@ bool LuaVFS::PushCommon(lua_State* L)
 	HSTR_PUSH_CFUNC(L, "UnpackF32", UnpackF32);
 
 	HSTR_PUSH_CFUNC(L, "ZlibDecompress", ZlibDecompress);
-	HSTR_PUSH_CFUNC(L, "CalculateHash",        CalculateHash);
+	HSTR_PUSH_CFUNC(L, "CalculateHash", CalculateHash);
 
 	return true;
 }
@@ -79,15 +75,15 @@ bool LuaVFS::PushUnsynced(lua_State* L)
 {
 	PushCommon(L);
 
-	HSTR_PUSH_CFUNC(L, "Include",		UnsyncInclude);
-	HSTR_PUSH_CFUNC(L, "LoadFile",		UnsyncLoadFile);
-	HSTR_PUSH_CFUNC(L, "FileExists",	UnsyncFileExists);
-	HSTR_PUSH_CFUNC(L, "DirList",		UnsyncDirList);
-	HSTR_PUSH_CFUNC(L, "SubDirs",		UnsyncSubDirs);
-	HSTR_PUSH_CFUNC(L, "UseArchive",	UseArchive);
-	HSTR_PUSH_CFUNC(L, "CompressFolder",	CompressFolder);
-	HSTR_PUSH_CFUNC(L, "MapArchive",	MapArchive);
-	HSTR_PUSH_CFUNC(L, "UnmapArchive",	UnmapArchive);
+	HSTR_PUSH_CFUNC(L, "Include",        UnsyncInclude);
+	HSTR_PUSH_CFUNC(L, "LoadFile",       UnsyncLoadFile);
+	HSTR_PUSH_CFUNC(L, "FileExists",     UnsyncFileExists);
+	HSTR_PUSH_CFUNC(L, "DirList",        UnsyncDirList);
+	HSTR_PUSH_CFUNC(L, "SubDirs",        UnsyncSubDirs);
+	HSTR_PUSH_CFUNC(L, "UseArchive",     UseArchive);
+	HSTR_PUSH_CFUNC(L, "CompressFolder", CompressFolder);
+	HSTR_PUSH_CFUNC(L, "MapArchive",     MapArchive);
+	HSTR_PUSH_CFUNC(L, "UnmapArchive",   UnmapArchive);
 
 	HSTR_PUSH_CFUNC(L, "ZlibCompress", ZlibCompress);
 
@@ -101,14 +97,14 @@ bool LuaVFS::PushUnsynced(lua_State* L)
 const string LuaVFS::GetModes(lua_State* L, int index, bool synced)
 {
 	const char* defMode = SPRING_VFS_RAW_FIRST;
-	if (synced && !CLuaHandle::GetDevMode()) {
+
+	if (synced && !CLuaHandle::GetDevMode())
 		defMode = SPRING_VFS_ZIP;
-	}
 
 	string modes = luaL_optstring(L, index, defMode);
-	if (synced && !CLuaHandle::GetDevMode()) {
-		modes = CFileHandler::ForbidModes(modes, SPRING_VFS_RAW);
-	}
+
+	if (synced && !CLuaHandle::GetDevMode())
+		modes = CFileHandler::ForbidModes(modes, SPRING_VFS_RAW SPRING_VFS_MENU);
 
 	return modes;
 }
@@ -116,18 +112,16 @@ const string LuaVFS::GetModes(lua_State* L, int index, bool synced)
 
 /******************************************************************************/
 
-static bool LoadFileWithModes(const string& filename, string& data,
-                             const string& modes)
+static bool LoadFileWithModes(const string& filename, string& data, const string& modes)
 {
 	CFileHandler fh(filename, modes);
-	if (!fh.FileExists()) {
+
+	if (!fh.FileExists())
 		return false;
-	}
+
 	data.clear();
-	if (!fh.LoadStringData(data)) {
-		return false;
-	}
-	return true;
+
+	return (fh.LoadStringData(data));
 }
 
 
@@ -136,11 +130,14 @@ static bool LoadFileWithModes(const string& filename, string& data,
 
 int LuaVFS::Include(lua_State* L, bool synced)
 {
-	const string filename = luaL_checkstring(L, 1);
-	if (!LuaIO::IsSimplePath(filename)) {
-		// the path may point to a file or dir outside of any data-dir
-//FIXME		return 0;
-	}
+	const std::string& filename = luaL_checkstring(L, 1);
+
+	#if 0
+	ScopedOnceTimer timer("LuaVFS::Include(" + filename + ")");
+	#endif
+
+	// the path may point to a file or dir outside of any data-dir
+	// if (!LuaIO::IsSimplePath(filename)) return 0;
 
 	bool hasCustomEnv = false;
 	if (!lua_isnoneornil(L, 2)) {
@@ -151,13 +148,10 @@ int LuaVFS::Include(lua_State* L, bool synced)
 		hasCustomEnv = true;
 	}
 
-	const string modes = GetModes(L, 3, synced);
-
-	string code;
-	if (!LoadFileWithModes(filename, code, modes)) {
+	std::string code;
+	if (!LoadFileWithModes(filename, code, GetModes(L, 3, synced))) {
 		char buf[1024];
-		SNPRINTF(buf, sizeof(buf),
-			 "Include() could not load '%s'", filename.c_str());
+		SNPRINTF(buf, sizeof(buf), "Include() could not load '%s'", filename.c_str());
 		lua_pushstring(L, buf);
  		lua_error(L);
 	}
@@ -165,8 +159,7 @@ int LuaVFS::Include(lua_State* L, bool synced)
 	int error = luaL_loadbuffer(L, code.c_str(), code.size(), filename.c_str());
 	if (error != 0) {
 		char buf[1024];
-		SNPRINTF(buf, sizeof(buf), "error = %i, %s, %s",
-		         error, filename.c_str(), lua_tostring(L, -1));
+		SNPRINTF(buf, sizeof(buf), "error = %i, %s, %s", error, filename.c_str(), lua_tostring(L, -1));
 		lua_pushstring(L, buf);
 		lua_error(L);
 	}
@@ -179,24 +172,19 @@ int LuaVFS::Include(lua_State* L, bool synced)
 	}
 
 	// set the include fenv to the current function's fenv
-	if (lua_setfenv(L, -2) == 0) {
+	if (lua_setfenv(L, -2) == 0)
 		luaL_error(L, "Include(): error with setfenv");
-	}
 
 	const int paramTop = lua_gettop(L) - 1;
 
-	error = lua_pcall(L, 0, LUA_MULTRET, 0);
-
-	if (error != 0) {
+	if ((error = lua_pcall(L, 0, LUA_MULTRET, 0)) != 0) {
 		char buf[1024];
-		SNPRINTF(buf, sizeof(buf), "error = %i, %s, %s",
-		         error, filename.c_str(), lua_tostring(L, -1));
+		SNPRINTF(buf, sizeof(buf), "error = %i, %s, %s", error, filename.c_str(), lua_tostring(L, -1));
 		lua_pushstring(L, buf);
 		lua_error(L);
 	}
 
 	// FIXME -- adjust stack?
-
 	return lua_gettop(L) - paramTop;
 }
 
@@ -218,15 +206,11 @@ int LuaVFS::UnsyncInclude(lua_State* L)
 int LuaVFS::LoadFile(lua_State* L, bool synced)
 {
 	const string filename = luaL_checkstring(L, 1);
-	if (!LuaIO::IsSimplePath(filename)) {
-		// the path may point to a file or dir outside of any data-dir
-//FIXME		return 0;
-	}
-
-	const string modes = GetModes(L, 2, synced);
+	// the path may point to a file or dir outside of any data-dir
+	// if (!LuaIO::IsSimplePath(filename)) return 0;
 
 	string data;
-	if (LoadFileWithModes(filename, data, modes)) {
+	if (LoadFileWithModes(filename, data, GetModes(L, 2, synced))) {
 		lua_pushsstring(L, data);
 		return 1;
 	}
@@ -250,18 +234,13 @@ int LuaVFS::UnsyncLoadFile(lua_State* L)
 
 int LuaVFS::FileExists(lua_State* L, bool synced)
 {
-	const string filename = luaL_checkstring(L, 1);
-	if (!LuaIO::IsSimplePath(filename)) {
-		// the path may point to a file or dir outside of any data-dir
-//FIXME		return 0;
-	}
+	const std::string& filename = luaL_checkstring(L, 1);
 
-	const string modes = GetModes(L, 2, synced);
+	// FIXME: return 0, keep searches within the Spring directory
+	// the path may point to a file or dir outside of any data-dir
+	// if (!LuaIO::IsSimplePath(filename)) return 0;
 
-	//CFileHandler fh(filename, modes);
-	//lua_pushboolean(L, fh.FileExists());
-
-	lua_pushboolean(L, CFileHandler::FileExists(filename, modes));
+	lua_pushboolean(L, CFileHandler::FileExists(filename, GetModes(L, 2, synced)));
 	return 1;
 }
 
@@ -282,14 +261,14 @@ int LuaVFS::UnsyncFileExists(lua_State* L)
 
 int LuaVFS::DirList(lua_State* L, bool synced)
 {
-	const string dir = luaL_checkstring(L, 1);
-	// keep searches within the Spring directory
-	if (!LuaIO::IsSimplePath(dir)) {
-		// the path may point to a file or dir outside of any data-dir
-//FIXME		return 0;
-	}
-	const string pattern = luaL_optstring(L, 2, "*");
-	const string modes = GetModes(L, 3, synced);
+	const std::string& dir = luaL_checkstring(L, 1);
+
+	// FIXME: return 0, keep searches within the Spring directory
+	// the path may point to a file or dir outside of any data-dir
+	// if (!LuaIO::IsSimplePath(dir)) return 0;
+
+	const std::string& pattern = luaL_optstring(L, 2, "*");
+	const std::string& modes = GetModes(L, 3, synced);
 
 	LuaUtils::PushStringVector(L, CFileHandler::DirList(dir, pattern, modes));
 	return 1;
@@ -312,14 +291,14 @@ int LuaVFS::UnsyncDirList(lua_State* L)
 
 int LuaVFS::SubDirs(lua_State* L, bool synced)
 {
-	const string dir = luaL_checkstring(L, 1);
-	// keep searches within the Spring directory
-	if (!LuaIO::IsSimplePath(dir)) {
-		// the path may point to a file or dir outside of any data-dir
-//FIXME		return 0;
-	}
-	const string pattern = luaL_optstring(L, 2, "*");
-	const string modes = GetModes(L, 3, synced);
+	const std::string& dir = luaL_checkstring(L, 1);
+
+	// FIXME: return 0, keep searches within the Spring directory
+	// the path may point to a file or dir outside of any data-dir
+	// if (!LuaIO::IsSimplePath(dir)) return 0;
+
+	const std::string& pattern = luaL_optstring(L, 2, "*");
+	const std::string& modes = GetModes(L, 3, synced);
 
 	LuaUtils::PushStringVector(L, CFileHandler::SubDirs(dir, pattern, modes));
 	return 1;
@@ -343,57 +322,53 @@ int LuaVFS::UnsyncSubDirs(lua_State* L)
 
 int LuaVFS::UseArchive(lua_State* L)
 {
-	const string filename = luaL_checkstring(L, 1);
-	if (!LuaIO::IsSimplePath(filename)) {
-		// the path may point to a file or dir outside of any data-dir
-		//FIXME		return 0;
-	}
+	const std::string& filename = luaL_checkstring(L, 1);
+
+	// FIXME: return 0, keep searches within the Spring directory
+	// the path may point to a file or dir outside of any data-dir
+	if (!LuaIO::IsSimplePath(filename)) {}
+
 
 	int funcIndex = 2;
-	if (CLuaHandle::GetHandleSynced(L)) {
+	if (CLuaHandle::GetHandleSynced(L))
 		return 0;
-	}
 
-	if (!lua_isfunction(L, funcIndex)) {
+	if (!lua_isfunction(L, funcIndex))
 		return 0;
-	}
 
 	string fileData;
 	CFileHandler f(filename, SPRING_VFS_RAW);
-	if (!f.FileExists()) {
+	if (!f.FileExists())
 		return 0;
-	}
 
 	CVFSHandler* oldHandler = vfsHandler;
-	vfsHandler = new CVFSHandler;
+	CVFSHandler  tmpHandler;
+
+	vfsHandler = &tmpHandler;
 	vfsHandler->AddArchive(filename, false);
 
 	const int error = lua_pcall(L, lua_gettop(L) - funcIndex, LUA_MULTRET, 0);
 
-	delete vfsHandler;
 	vfsHandler = oldHandler;
 
-	if (error != 0) {
+	if (error != 0)
 		lua_error(L);
-	}
 
-	return lua_gettop(L) - funcIndex + 1;
+	return (lua_gettop(L) - funcIndex + 1);
 }
 
 int LuaVFS::MapArchive(lua_State* L)
 {
-	if (CLuaHandle::GetHandleSynced(L)) {
-		// only from unsynced
+	// only from unsynced
+	if (CLuaHandle::GetHandleSynced(L))
 		return 0;
-	}
 
 	const int args = lua_gettop(L); // number of arguments
-	const std::string filename = archiveScanner->ArchiveFromName(luaL_checkstring(L, 1));
+	const std::string& filename = archiveScanner->ArchiveFromName(luaL_checkstring(L, 1));
 
-	if (!LuaIO::IsSimplePath(filename)) {
-		// the path may point to a file or dir outside of any data-dir
+	// the path may point to a file or dir outside of any data-dir
+	if (!LuaIO::IsSimplePath(filename))
 		return 0;
-	}
 
 	CFileHandler f(filename, SPRING_VFS_RAW);
 
@@ -440,17 +415,15 @@ int LuaVFS::MapArchive(lua_State* L)
 
 int LuaVFS::UnmapArchive(lua_State* L)
 {
-	if (CLuaHandle::GetHandleSynced(L)) {
-		// only from unsynced
+	// only from unsynced
+	if (CLuaHandle::GetHandleSynced(L))
 		return 0;
-	}
 
-	const std::string filename = archiveScanner->ArchiveFromName(luaL_checkstring(L, 1));
+	const std::string& filename = archiveScanner->ArchiveFromName(luaL_checkstring(L, 1));
 
-	if (!LuaIO::IsSimplePath(filename)) {
-		// the path may point to a file or dir outside of any data-dir
+	// the path may point to a file or dir outside of any data-dir
+	if (!LuaIO::IsSimplePath(filename))
 		return 0;
-	}
 
 	if (!vfsHandler->RemoveArchive(filename)) {
 		std::ostringstream buf;
@@ -471,26 +444,27 @@ int LuaVFS::UnmapArchive(lua_State* L)
 
 int LuaVFS::CompressFolder(lua_State* L)
 {
-	const string folderPath = luaL_checkstring(L, 1);
+	const std::string& folderPath = luaL_checkstring(L, 1);
+	const std::string& archiveType = luaL_optstring(L, 2, "zip");
 
-	const string archiveType = luaL_optstring(L, 2, "zip");
-	if (archiveType != "zip" && archiveType != "7z") { //TODO: add 7z support
+	if (archiveType != "zip" && archiveType != "7z") //TODO: add 7z support
 		luaL_error(L, ("Unsupported archive type " + archiveType).c_str());
-	}
 
 	 // "sdz" is the default type if not specified
-	const string compressedFilePath = luaL_optstring(L, 3, (folderPath + ".sdz").c_str());
-	const bool includeFolder = luaL_optboolean(L, 4, false);
-	const string modes = GetModes(L, 5, false);
+	const std::string& compressedFilePath = luaL_optstring(L, 3, (folderPath + ".sdz").c_str());
+	const std::string& modes = GetModes(L, 5, false);
 
-	if (CFileHandler::FileExists(compressedFilePath, modes)) {
+	const bool includeFolder = luaL_optboolean(L, 4, false);
+
+	if (CFileHandler::FileExists(compressedFilePath, modes))
 		luaL_error(L, ("File already exists " + compressedFilePath).c_str());
-	}
+
 	if (archiveType == "zip") {
 		LuaZipFolder::ZipFolder(L, folderPath, compressedFilePath, includeFolder, modes);
 	} else if (archiveType == "7z") {
 		SevenZipFolder(L, folderPath, compressedFilePath, includeFolder, modes);
 	}
+
 	return 0;
 }
 
@@ -498,59 +472,51 @@ int LuaVFS::CompressFolder(lua_State* L)
 
 int LuaVFS::SevenZipFolder(lua_State* L, const string& folderPath, const string& zipFilePath, bool includeFolder, const string& modes)
 {
-	luaL_error(L, "Seven zip compression is not implemented yet.");
+	luaL_error(L, "7z-compression is not implemented yet.");
 	return 0;
 }
 
 
 int LuaVFS::ZlibCompress(lua_State* L)
 {
-	size_t inLen;
-	const char* inData = luaL_checklstring(L, 1, &inLen);
+	size_t inSize;
+	const std::uint8_t* inData = reinterpret_cast<const std::uint8_t*>(luaL_checklstring(L, 1, &inSize));
 
-	long unsigned bufsize = compressBound(inLen);
-	std::vector<boost::uint8_t> compressed(bufsize, 0);
-	const int error = compress(&compressed[0], &bufsize, (const boost::uint8_t*)inData, inLen);
-	if (error == Z_OK)
-	{
-		lua_pushlstring(L, (const char*)&compressed[0], bufsize);
+	const std::vector<std::uint8_t> compressed = std::move(zlib::deflate(inData, inSize));
+
+	if (!compressed.empty()) {
+		lua_pushlstring(L, reinterpret_cast<const char*>(compressed.data()), compressed.size());
 		return 1;
 	}
-	else
-	{
-		return luaL_error(L, "Error while compressing");
-	}
-}
 
+	return luaL_error(L, "Error while compressing");
+}
 
 int LuaVFS::ZlibDecompress(lua_State* L)
 {
-	size_t inLen;
-	const char* inData = luaL_checklstring(L, 1, &inLen);
+	size_t inSize;
+	const std::uint8_t* inData = reinterpret_cast<const std::uint8_t*>(luaL_checklstring(L, 1, &inSize));
 
-	long unsigned bufsize = std::max(luaL_optint(L, 2, 65000), 0);
+	const std::vector<std::uint8_t> uncompressed = std::move(zlib::inflate(inData, inSize));
 
-	std::vector<boost::uint8_t> uncompressed(bufsize, 0);
-	const int error = uncompress(&uncompressed[0], &bufsize, (const boost::uint8_t*)inData, inLen);
-	if (error == Z_OK)
-	{
-		lua_pushlstring(L, (const char*)&uncompressed[0], bufsize);
+	if (!uncompressed.empty()) {
+		lua_pushlstring(L, reinterpret_cast<const char*>(uncompressed.data()), uncompressed.size());
 		return 1;
 	}
-	else
-	{
-		return luaL_error(L, "Error while decompressing");
-	}
+
+	return luaL_error(L, "Error while decompressing");
 }
+
 
 int LuaVFS::CalculateHash(lua_State* L)
 {
-	const std::string sstr = luaL_checksstring(L, 1);
-	const unsigned int hashType = luaL_checkint(L, 2);
-	char* hash = CalcHash(sstr.c_str(), sstr.size(), hashType);
-	if (hash == NULL) {
+	const std::string& sstr = luaL_checksstring(L, 1);
+
+	char* hash = CalcHash(sstr.c_str(), sstr.size(), luaL_checkint(L, 2));
+
+	if (hash == nullptr)
 		return luaL_error(L, "Unsupported hash type");
-	}
+
 	lua_pushsstring(L, std::string(hash));
 	free(hash);
 	return 1;
@@ -565,7 +531,7 @@ int LuaVFS::CalculateHash(lua_State* L)
 template <typename T>
 int PackType(lua_State* L)
 {
-	vector<T> vals;
+	std::vector<T> vals;
 
 	if (lua_istable(L, 1)) {
 		for (int i = 1;
@@ -573,20 +539,18 @@ int PackType(lua_State* L)
 		     lua_pop(L, 1), i++) {
 			vals.push_back((T)lua_tonumber(L, -1));
 		}
-	}
-	else {
+	} else {
 		const int args = lua_gettop(L);
 		for (int i = 1; i <= args; i++) {
-			if (!lua_isnumber(L, i)) {
+			if (!lua_isnumber(L, i))
 				break;
-			}
+
 			vals.push_back((T)lua_tonumber(L, i));
 		}
 	}
 
-	if (vals.empty()) {
+	if (vals.empty())
 		return 0;
-	}
 
 	const int bufSize = sizeof(T) * vals.size();
 	char* buf = new char[bufSize];
@@ -594,19 +558,19 @@ int PackType(lua_State* L)
 		memcpy(buf + (i * sizeof(T)), &vals[i], sizeof(T));
 	}
 	lua_pushlstring(L, buf, bufSize);
-	delete[] buf;
 
+	delete[] buf;
 	return 1;
 }
 
 
-int LuaVFS::PackU8(lua_State*  L) { return PackType<boost::uint8_t>(L);  }
-int LuaVFS::PackU16(lua_State* L) { return PackType<boost::uint16_t>(L); }
-int LuaVFS::PackU32(lua_State* L) { return PackType<boost::uint32_t>(L); }
-int LuaVFS::PackS8(lua_State*  L) { return PackType<boost::int8_t>(L);   }
-int LuaVFS::PackS16(lua_State* L) { return PackType<boost::int16_t>(L);  }
-int LuaVFS::PackS32(lua_State* L) { return PackType<boost::int32_t>(L);  }
-int LuaVFS::PackF32(lua_State* L) { return PackType<float>(L);           }
+int LuaVFS::PackU8 (lua_State* L) { return PackType<std::uint8_t >(L); }
+int LuaVFS::PackU16(lua_State* L) { return PackType<std::uint16_t>(L); }
+int LuaVFS::PackU32(lua_State* L) { return PackType<std::uint32_t>(L); }
+int LuaVFS::PackS8 (lua_State* L) { return PackType<std::int8_t  >(L); }
+int LuaVFS::PackS16(lua_State* L) { return PackType<std::int16_t >(L); }
+int LuaVFS::PackS32(lua_State* L) { return PackType<std::int32_t >(L); }
+int LuaVFS::PackF32(lua_State* L) { return PackType<     float   >(L); }
 
 
 /******************************************************************************/
@@ -614,58 +578,52 @@ int LuaVFS::PackF32(lua_State* L) { return PackType<float>(L);           }
 template <typename T>
 int UnpackType(lua_State* L)
 {
-	if (!lua_isstring(L, 1)) {
+	if (!lua_isstring(L, 1))
 		return 0;
-	}
+
 	size_t len;
 	const char* str = lua_tolstring(L, 1, &len);
 
 	if (lua_isnumber(L, 2)) {
 		const int pos = lua_toint(L, 2);
-		if ((pos < 1) || ((size_t)pos >= len)) {
+		if ((pos < 1) || ((size_t)pos >= len))
 			return 0;
-		}
+
 		const int offset = (pos - 1);
 		str += offset;
 		len -= offset;
 	}
 
 	const size_t eSize = sizeof(T);
-	if (len < eSize) {
+	if (len < eSize)
 		return 0;
-	}
 
 	if (!lua_isnumber(L, 3)) {
-		const T value = *((T*)str);
-		lua_pushnumber(L, value);
-		return 1;
-	}
-	else {
-		const size_t maxCount = (len / eSize);
-		int tableCount = lua_toint(L, 3);
-		if (tableCount < 0) {
-			tableCount = maxCount;
-		}
-		tableCount = min((int)maxCount, tableCount);
-		lua_newtable(L);
-		for (int i = 0; i < tableCount; i++) {
-			const T value = *(((T*)str) + i);
-			lua_pushnumber(L, value);
-			lua_rawseti(L, -2, (i + 1));
-		}
+		lua_pushnumber(L, *(reinterpret_cast<const T*>(str)));
 		return 1;
 	}
 
-	return 0;
+	const size_t maxCount = len / eSize;
+	int tableCount = lua_toint(L, 3);
+	if (tableCount < 0)
+		tableCount = maxCount;
+
+	tableCount = std::min((int)maxCount, tableCount);
+	lua_newtable(L);
+	for (int i = 0; i < tableCount; i++) {
+		lua_pushnumber(L, *(reinterpret_cast<const T*>(str) + i));
+		lua_rawseti(L, -2, (i + 1));
+	}
+	return 1;
 }
 
 
-int LuaVFS::UnpackU8(lua_State*  L) { return UnpackType<boost::uint8_t>(L);  }
-int LuaVFS::UnpackU16(lua_State* L) { return UnpackType<boost::uint16_t>(L); }
-int LuaVFS::UnpackU32(lua_State* L) { return UnpackType<boost::uint32_t>(L); }
-int LuaVFS::UnpackS8(lua_State*  L) { return UnpackType<boost::int8_t>(L);   }
-int LuaVFS::UnpackS16(lua_State* L) { return UnpackType<boost::int16_t>(L);  }
-int LuaVFS::UnpackS32(lua_State* L) { return UnpackType<boost::int32_t>(L);  }
+int LuaVFS::UnpackU8(lua_State*  L) { return UnpackType<std::uint8_t>(L);  }
+int LuaVFS::UnpackU16(lua_State* L) { return UnpackType<std::uint16_t>(L); }
+int LuaVFS::UnpackU32(lua_State* L) { return UnpackType<std::uint32_t>(L); }
+int LuaVFS::UnpackS8(lua_State*  L) { return UnpackType<std::int8_t>(L);   }
+int LuaVFS::UnpackS16(lua_State* L) { return UnpackType<std::int16_t>(L);  }
+int LuaVFS::UnpackS32(lua_State* L) { return UnpackType<std::int32_t>(L);  }
 int LuaVFS::UnpackF32(lua_State* L) { return UnpackType<float>(L);           }
 
 

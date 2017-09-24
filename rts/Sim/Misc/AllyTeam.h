@@ -4,9 +4,10 @@
 #define ALLY_TEAM_H
 
 #include <string>
-#include <map>
 #include <vector>
+
 #include "System/creg/creg_cond.h"
+#include "System/UnorderedMap.hpp"
 
 
 class AllyTeam
@@ -16,7 +17,7 @@ class AllyTeam
 public:
 	AllyTeam();
 
-	typedef std::map<std::string, std::string> customOpts;
+	typedef spring::unordered_map<std::string, std::string> customOpts;
 	void SetValue(const std::string& key, const std::string& value);
 	const customOpts& GetAllValues() const
 	{

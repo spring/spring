@@ -16,7 +16,7 @@
 #include "Sim/Units/UnitTypes/Factory.h"
 #include "System/Log/ILog.h"
 #include "System/creg/STL_Map.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include "System/EventHandler.h"
 #include "System/Exceptions.h"
 

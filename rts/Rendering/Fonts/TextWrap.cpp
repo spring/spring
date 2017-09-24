@@ -5,12 +5,27 @@
 #include "FontLogSection.h"
 #include "System/Log/ILog.h"
 #include "System/myMath.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 
 
-static const char32_t ellipsisUTF16 = 0x2026;
-static const std::string ellipsisUTF8 = UnicodeToUtf8(ellipsisUTF16);
 static const char32_t spaceUTF16    = 0x20;
+static const char32_t ellipsisUTF16 = 0x2026;
+static const std::string ellipsisUTF8 = utf8::FromUnicode(ellipsisUTF16);
+
+static constexpr const char* spaceStringTable[1 + 10] = {
+	"",
+	" ",
+	"  ",
+	"   ",
+	"    ",
+	"     ",
+	"      ",
+	"       ",
+	"        ",
+	"         ",
+	"          ",
+};
+
 
 
 /*******************************************************************************/
@@ -93,10 +108,9 @@ static inline float GetPenalty(const char32_t& c, unsigned int strpos, unsigned 
 	} else if (IsUpperCase(c)) {
 		// uppercase char
 		return 1.0f + (strlen - strpos)*0.75;
-	} else {
-		// any special chars
-		return Square(dist / 4);
 	}
+
+	// any special chars
 	return Square(dist / 4);
 }
 
@@ -136,7 +150,7 @@ CTextWrap::word CTextWrap::SplitWord(CTextWrap::word& w, float wantedWidth, bool
 		int i = 0;
 		float min_penalty = 1e9;
 		unsigned int goodbreak = 0;
-		char32_t c = Utf8GetNextChar(w.text,i);
+		char32_t c = utf8::GetNextChar(w.text,i);
 		const GlyphInfo* curGlyph = &GetGlyph(c);
 		const GlyphInfo* nextGlyph = curGlyph;
 
@@ -144,7 +158,7 @@ CTextWrap::word CTextWrap::SplitWord(CTextWrap::word& w, float wantedWidth, bool
 			const int lastCharPos = i;
 			const char32_t co     = c;
 			curGlyph = nextGlyph;
-			c = Utf8GetNextChar(w.text,i);
+			c = utf8::GetNextChar(w.text,i);
 			nextGlyph = &GetGlyph(c);
 			width += GetKerning(*curGlyph, *nextGlyph);
 
@@ -549,6 +563,9 @@ int CTextWrap::WrapInPlace(std::u8string& text, float _fontSize, float maxWidth,
 	const float maxWidthf  = maxWidth / _fontSize;
 	const float maxHeightf = maxHeight / _fontSize;
 
+	// includes the empty string
+	constexpr size_t numSpaceStrings = sizeof(spaceStringTable) / sizeof(spaceStringTable[0]);
+
 	std::list<word> words;
 	std::list<colorcode> colorcodes;
 
@@ -558,22 +575,30 @@ int CTextWrap::WrapInPlace(std::u8string& text, float _fontSize, float maxWidth,
 	RemergeColorCodes(&words, colorcodes);
 
 	// create the wrapped string
-	text = "";
+	text.clear();
+	text.reserve(words.size());
+
 	if (words.empty())
 		return 0;
+
 	unsigned int numlines = 1;
-	for (auto& w: words) {
+
+	for (const auto& w: words) {
 		if (w.isSpace) {
-			for (unsigned int j = 0; j < w.numSpaces; ++j) {
-				text += " ";
+			if (w.numSpaces < numSpaceStrings) {
+				text.append(spaceStringTable[w.numSpaces]);
+			} else {
+				text.append(spaceStringTable[numSpaceStrings - 1]);
+				text.append(w.numSpaces - (numSpaceStrings - 1), ' ');
 			}
 		} else if (w.isLineBreak) {
-			text += "\x0d\x0a";
+			text.append("\x0d\x0a");
 			numlines++;
 		} else {
-			text += w.text;
+			text.append(w.text);
 		}
 	}
+
 	return numlines;
 }
 

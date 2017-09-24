@@ -3,21 +3,40 @@
 #include <cstdlib>
 
 #include "PathFinderDef.h"
+#include "PathConstants.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
 
+CPathFinderDef::CPathFinderDef(const float3& startPos, const float3& goalPos, float goalRadius, float sqGoalDistance)
+: wsStartPos(startPos)
+, wsGoalPos(goalPos)
 
-CPathFinderDef::CPathFinderDef(const float3& goalCenter, float goalRadius, float sqGoalDistance)
-: goal(goalCenter)
 , sqGoalRadius(goalRadius * goalRadius)
+, maxRawPathLen(std::numeric_limits<float>::max())
+, minRawSpeedMod(0.0f)
+
 , constraintDisabled(false)
+, skipSubSearches(false)
+
 , testMobile(true)
 , needPath(true)
-, exactPath(true)
+// if true, units will not even try to move if their max-res
+// PF goal is inside (or surrounded by) an impassable region
+// if false, units will get as close as possible and may end
+// up stuck or flip-flop between waypoints from backtracking
+//
+// false mirrors the PE behavior when requesting (not while
+// regenerating after a terrain change) paths, so prefer to
+// keep PF and PE in sync
+, exactPath(false)
+, allowRawPath(false)
+, allowDefPath(true)
 , dirIndependent(false)
 , synced(true)
 {
-	goalSquareX = goalCenter.x / SQUARE_SIZE;
-	goalSquareZ = goalCenter.z / SQUARE_SIZE;
+	startSquareX = wsStartPos.x / SQUARE_SIZE;
+	startSquareZ = wsStartPos.z / SQUARE_SIZE;
+	goalSquareX = wsGoalPos.x / SQUARE_SIZE;
+	goalSquareZ = wsGoalPos.z / SQUARE_SIZE;
 
 	// make sure that the goal can be reached with 2-square resolution
 	sqGoalRadius = std::max(sqGoalRadius, SQUARE_SIZE * SQUARE_SIZE * 2.0f);
@@ -25,19 +44,26 @@ CPathFinderDef::CPathFinderDef(const float3& goalCenter, float goalRadius, float
 }
 
 // returns true when the goal is within our defined range
-bool CPathFinderDef::IsGoal(unsigned int xSquare, unsigned int zSquare) const {
-	return (SquareToFloat3(xSquare, zSquare).SqDistance2D(goal) <= sqGoalRadius);
+bool CPathFinderDef::IsGoal(uint32_t squareX, uint32_t squareZ) const {
+	return (SquareToFloat3(squareX, squareZ).SqDistance2D(wsGoalPos) <= sqGoalRadius);
 }
 
 // returns distance to goal center in heightmap-squares
-float CPathFinderDef::Heuristic(unsigned int xSquare, unsigned int zSquare) const
-{
-	const float dx = std::abs(int(xSquare) - int(goalSquareX));
-	const float dz = std::abs(int(zSquare) - int(goalSquareZ));
+float CPathFinderDef::Heuristic(
+	uint32_t srcSquareX,
+	uint32_t srcSquareZ,
+	uint32_t tgtSquareX,
+	uint32_t tgtSquareZ,
+	uint32_t blockSize
+) const {
+	(void) blockSize;
 
-	// grid is 8-connected, so use octile distance
-	constexpr const float C1 = 1.0f;
-	constexpr const float C2 = 1.4142f - (2.0f * C1);
+	const float dx = std::abs(int(srcSquareX) - int(tgtSquareX));
+	const float dz = std::abs(int(srcSquareZ) - int(tgtSquareZ));
+
+	// grid is 8-connected, so use octile distance metric
+	constexpr const float C1 = (1.0f    / PATH_NODE_SPACING);
+	constexpr const float C2 = (1.4142f / PATH_NODE_SPACING) - (2.0f * C1);
 	return ((dx + dz) * C1 + std::min(dx, dz) * C2);
 }
 
@@ -51,15 +77,15 @@ bool CPathFinderDef::IsGoalBlocked(const MoveDef& moveDef, const CMoveMath::Bloc
 	if (sqGoalRadius >= r0 && sqGoalRadius > r1)
 		return false;
 
-	return ((CMoveMath::IsBlocked(moveDef, goal, owner) & blockMask) != 0);
+	return ((CMoveMath::IsBlocked(moveDef, wsGoalPos, owner) & blockMask) != 0);
 }
 
-int2 CPathFinderDef::GoalSquareOffset(unsigned int blockSize) const {
-	const unsigned int blockPixelSize = blockSize * SQUARE_SIZE;
+int2 CPathFinderDef::GoalSquareOffset(uint32_t blockSize) const {
+	const uint32_t blockPixelSize = blockSize * SQUARE_SIZE;
 
 	int2 offset;
-		offset.x = (unsigned(goal.x) % blockPixelSize) / SQUARE_SIZE;
-		offset.y = (unsigned(goal.z) % blockPixelSize) / SQUARE_SIZE;
+		offset.x = (unsigned(wsGoalPos.x) % blockPixelSize) / SQUARE_SIZE;
+		offset.y = (unsigned(wsGoalPos.z) % blockPixelSize) / SQUARE_SIZE;
 
 	return offset;
 }
@@ -74,12 +100,12 @@ CCircularSearchConstraint::CCircularSearchConstraint(
 	const float3& goal,
 	float goalRadius,
 	float searchSize,
-	unsigned int extraSize
-): CPathFinderDef(goal, goalRadius, start.SqDistance2D(goal))
+	uint32_t extraSize
+): CPathFinderDef(start, goal, goalRadius, start.SqDistance2D(goal))
 {
 	// calculate the center and radius of the constrained area
-	const unsigned int startX = start.x / SQUARE_SIZE;
-	const unsigned int startZ = start.z / SQUARE_SIZE;
+	const uint32_t startX = start.x / SQUARE_SIZE;
+	const uint32_t startZ = start.z / SQUARE_SIZE;
 
 	const float3 halfWay = (start + goal) * 0.5f;
 
@@ -100,22 +126,24 @@ CRectangularSearchConstraint::CRectangularSearchConstraint(
 	const float3 startPos,
 	const float3 goalPos,
 	float sqRadius,
-	unsigned int blockSize
-): CPathFinderDef(goalPos, 0.0f, startPos.SqDistance2D(goalPos))
+	uint32_t blockSize
+): CPathFinderDef(startPos, goalPos, 0.0f, startPos.SqDistance2D(goalPos))
 {
 	sqGoalRadius = std::max(sqRadius, sqGoalRadius);
 
 	// construct the rectangular areas containing {start,goal}Pos
 	// (nodes are constrained to these when a PE uses the max-res
 	// PF to cache costs)
-	unsigned int startBlockX = startPos.x / SQUARE_SIZE;
-	unsigned int startBlockZ = startPos.z / SQUARE_SIZE;
-	unsigned int  goalBlockX =  goalPos.x / SQUARE_SIZE;
-	unsigned int  goalBlockZ =  goalPos.z / SQUARE_SIZE;
-	startBlockX -= startBlockX % blockSize;
-	startBlockZ -= startBlockZ % blockSize;
-	 goalBlockX -=  goalBlockX % blockSize;
-	 goalBlockZ -=  goalBlockZ % blockSize;
+	uint32_t startBlockX = startPos.x / SQUARE_SIZE;
+	uint32_t startBlockZ = startPos.z / SQUARE_SIZE;
+	uint32_t  goalBlockX =  goalPos.x / SQUARE_SIZE;
+	uint32_t  goalBlockZ =  goalPos.z / SQUARE_SIZE;
+
+	// align to PE-grid
+	startBlockX -= (startBlockX % blockSize);
+	startBlockZ -= (startBlockZ % blockSize);
+	 goalBlockX -= ( goalBlockX % blockSize);
+	 goalBlockZ -= ( goalBlockZ % blockSize);
 
 	startBlockRect.x1 = startBlockX;
 	startBlockRect.z1 = startBlockZ;

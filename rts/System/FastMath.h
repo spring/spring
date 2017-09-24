@@ -6,22 +6,14 @@
 #ifndef DEDICATED_NOSSE
 #include <xmmintrin.h>
 #endif
-#include <boost/cstdint.hpp>
+#include <cinttypes>
+
 #include "lib/streflop/streflop_cond.h"
-#include "System/maindefines.h"
+#include "System/MainDefines.h"
+#include "System/MathConstants.h"
 
 #ifdef _MSC_VER
 #define __builtin_sqrtf sqrt_sse
-#endif
-
-#ifdef __GNUC__
-	#define _const __attribute__((const))
-	#define _pure __attribute__((pure))
-	#define _warn_unused_result __attribute__((warn_unused_result))
-#else
-	#define _const
-	#define _pure
-	#define _warn_unused_result
 #endif
 
 /**
@@ -62,12 +54,12 @@ namespace fastmath {
 		vec = _mm_rsqrt_ss(vec);
 		return _mm_cvtss_f32(vec);
 #else
-		return isqrt_nosse(x);
+		return fastmath::isqrt_nosse(x);
 #endif
 	}
 
 	/**
-	* @brief Sync-safe. Calculates square root with using SSE instructions.
+	* @brief Sync-safe. Calculates square root using SSE instructions.
 	*
 	* Slower than std::sqrtf, much faster than streflop
 	*/
@@ -79,7 +71,12 @@ namespace fastmath {
 		vec = _mm_sqrt_ss(vec);
 		return _mm_cvtss_f32(vec);
 #else
-		return sqrt(x);
+	#if STREFLOP_ENABLED
+		return streflop::sqrt(x);
+	#else
+		// not in synced context, pick either fm or std
+		return fastmath::sqrt_builtin(x);
+	#endif
 #endif
 	}
 
@@ -101,7 +98,7 @@ namespace fastmath {
 	*/
 	inline float isqrt_nosse(float x) {
 		float xh = 0.5f * x;
-		boost::int32_t i = *(boost::int32_t*) &x;
+		std::int32_t i = *(std::int32_t*) &x;
 		// "magic number" which makes a very good first guess
 		i = 0x5f375a86 - (i >> 1);
 		x = *(float*) &i;
@@ -121,7 +118,7 @@ namespace fastmath {
 	*/
 	inline float isqrt2_nosse(float x) {
 		float xh = 0.5f * x;
-		boost::int32_t i = *(boost::int32_t*) &x;
+		std::int32_t i = *(std::int32_t*) &x;
 		// "magic number" which makes a very good first guess
 		i = 0x5f375a86 - (i >> 1);
 		x = *(float*) &i;
@@ -148,7 +145,7 @@ namespace fastmath {
 	* Use with care.
 	*/
 	inline float apxsqrt(float x) {
-		return x * isqrt_nosse(x);
+		return x * fastmath::isqrt_nosse(x);
 	}
 
 	/**
@@ -157,74 +154,11 @@ namespace fastmath {
 	* Use with care. This should be a little bit better, albeit slower, than fastmath::sqrt.
 	*/
 	inline float apxsqrt2(float x) {
-		return x * isqrt2_nosse(x);
+		return x * fastmath::isqrt2_nosse(x);
 	}
 
 
 	/****************** Trigonometric functions ******************/
-
-	/**
-	* @brief Pi
-	*
-	* Cherry flavored.
-	*/
-	static const float PI = 3.141592654f;
-
-	/**
-	* @brief Half of pi
-	*
-	* Pi divided by two
-	*/
-	static const float HALFPI = PI / 2.0f;
-
-	/**
-	* @brief Pi times two
-	*
-	* Pi times two
-	*/
-	static const float PI2 = PI * 2.0f;
-
-	/**
-	* @brief Four divided by pi
-	*
-	* Four over pi
-	*/
-	static const float PIU4 = 4.0f / PI;
-
-	/**
-	* @brief Negative four divided by pi squared
-	*
-	* Negative four over (pi squared)
-	*/
-	static const float PISUN4 = -4.0f / (PI * PI);
-
-	/**
-	* @brief reciprocal of pi
-	*
-	* One over (pi times two)
-	*/
-	static const float INVPI2 = 1.0f / PI2;
-
-	/**
-	* @brief negative half pi
-	*
-	* -pi / 2
-	*/
-	static const float NEGHALFPI = -HALFPI;
-
-	/**
-	* @brief square root of two
-	*
-	* sqrt(2)
-	*/
-	static const float SQRT2 = 1.41421356237f;
-
-	/**
-	* @brief Degree (300) to Radians (2pi)
-	*
-	* 360 / (2*PI)
-	*/
-	static const float DEG_TO_RAD = 180.f / PI;
 
 	/**
 	* @brief calculates the sine of x
@@ -239,14 +173,14 @@ namespace fastmath {
 	inline float sin(float x) {
 		/* range reduce to -PI ... PI, as the approximation
 		method only works well for that range. */
-		x = x - ((int)(x * INVPI2)) * PI2;
-		if (x > HALFPI) {
-			x = -x + PI;
-		} else if (x < NEGHALFPI ) {
-			x = -x - PI;
+		x = x - ((int)(x * math::INVPI2)) * math::TWOPI;
+		if (x > math::HALFPI) {
+			x = -x + math::PI;
+		} else if (x < math::NEGHALFPI ) {
+			x = -x - math::PI;
 		}
 		/* approximation */
-		x = (PIU4) * x + (PISUN4) * x * math::fabs(x);
+		x = (math::PIU4) * x + (math::PISUN4) * x * math::fabs(x);
 		x = 0.225f * (x * math::fabs(x) - x) + x;
 		return x;
 	}
@@ -257,7 +191,7 @@ namespace fastmath {
 	* Adds half of pi to x and then uses the sine method.
 	*/
 	inline float cos(float x) {
-		return sin(x + HALFPI);
+		return fastmath::sin(x + math::HALFPI);
 	}
 
 
@@ -274,22 +208,16 @@ namespace fastmath {
 	}
 }
 
-using fastmath::PI;
+
 namespace math {
 	// override streflop with faster sqrt!
 	float sqrt(float x) _const;
-	inline float sqrt(float x) {
-		return fastmath::sqrt_sse(x);
-	}
 	float sqrtf(float x) _const;
-	inline float sqrtf(float x) {
-		return fastmath::sqrt_sse(x);
-	}
-
 	float isqrt(float x) _const;
-	inline float isqrt(float x) {
-		return fastmath::isqrt2_nosse(x);
-	}
+
+	inline float sqrt(float x) { return fastmath::sqrt_sse(x); }
+	inline float sqrtf(float x) { return fastmath::sqrt_sse(x); }
+	inline float isqrt(float x) { return fastmath::isqrt2_nosse(x); }
 
 	using fastmath::floor;
 }

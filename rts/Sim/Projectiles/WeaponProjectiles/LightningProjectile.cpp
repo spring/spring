@@ -8,13 +8,14 @@
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
+#include "Sim/Projectiles/ProjectileMemPool.h"
 #include "Sim/Weapons/WeaponDef.h"
 
 #ifdef TRACE_SYNC
 	#include "System/Sync/SyncTracer.h"
 #endif
 
-CR_BIND_DERIVED(CLightningProjectile, CWeaponProjectile, )
+CR_BIND_DERIVED_POOL(CLightningProjectile, CWeaponProjectile, , projMemPool.alloc, projMemPool.free)
 
 CR_REG_METADATA(CLightningProjectile,(
 	CR_SETFLAG(CF_Synced),
@@ -38,8 +39,8 @@ CLightningProjectile::CLightningProjectile(const ProjectileParams& params): CWea
 	displacements2[0] = 0.0f;
 
 	for (size_t d = 1; d < displacements_size; ++d) {
-		displacements[d]  = (gs->randFloat() - 0.5f) * drawRadius * 0.05f;
-		displacements2[d] = (gs->randFloat() - 0.5f) * drawRadius * 0.05f;
+		displacements[d]  = (gsRNG.NextFloat() - 0.5f) * drawRadius * 0.05f;
+		displacements2[d] = (gsRNG.NextFloat() - 0.5f) * drawRadius * 0.05f;
 	}
 
 #ifdef TRACE_SYNC
@@ -58,16 +59,15 @@ void CLightningProjectile::Update()
 	}
 
 	for (size_t d = 1; d < displacements_size; ++d) {
-		displacements[d]  += (gs->randFloat() - 0.5f) * 0.3f;
-		displacements2[d] += (gs->randFloat() - 0.5f) * 0.3f;
+		displacements[d]  += (gsRNG.NextFloat() - 0.5f) * 0.3f;
+		displacements2[d] += (gsRNG.NextFloat() - 0.5f) * 0.3f;
 	}
 
 	UpdateInterception();
 }
 
-void CLightningProjectile::Draw()
+void CLightningProjectile::Draw(CVertexArray* va)
 {
-	inArray = true;
 	unsigned char col[4];
 	col[0] = (unsigned char) (color.x * 255);
 	col[1] = (unsigned char) (color.y * 255);

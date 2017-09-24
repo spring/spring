@@ -4,8 +4,9 @@
 
 #include "Rendering/GL/myGL.h"
 #include "Sim/Projectiles/ExpGenSpawnableMemberInfo.h"
+#include "Sim/Projectiles/ProjectileMemPool.h"
 
-CR_BIND_DERIVED(CTracerProjectile, CProjectile, )
+CR_BIND_DERIVED_POOL(CTracerProjectile, CProjectile, , projMemPool.alloc, projMemPool.free)
 
 CR_REG_METADATA(CTracerProjectile,
 (
@@ -58,11 +59,9 @@ void CTracerProjectile::Update()
 	deleteMe |= (length < 0.0f);
 }
 
-void CTracerProjectile::Draw()
+void CTracerProjectile::Draw(CVertexArray* va)
 {
-	if (drawLength > 3) {
-		drawLength = 3;
-	}
+	drawLength = std::min(drawLength, 3.0f);
 
 	glTexCoord2f(1.0f/16, 1.0f/16);
 	glColor4f(1, 1, 0.1f, 0.4f);

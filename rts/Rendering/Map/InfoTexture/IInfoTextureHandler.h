@@ -22,8 +22,11 @@ public:
 	virtual ~IInfoTextureHandler() {}
 
 	virtual void Update() = 0;
+
 public:
 	virtual bool IsEnabled() const = 0;
+	virtual bool InMetalMode() const = 0;
+
 	virtual void DisableCurrentMode() = 0;
 	virtual void SetMode(const std::string& name) = 0;
 	virtual void ToggleMode(const std::string& name) = 0;

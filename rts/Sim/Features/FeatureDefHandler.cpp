@@ -9,7 +9,7 @@
 #include "Sim/Objects/SolidObject.h"
 #include "System/Exceptions.h"
 #include "System/Log/ILog.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 
 CFeatureDefHandler* featureDefHandler = NULL;
 
@@ -127,6 +127,8 @@ FeatureDef* CFeatureDefHandler::CreateFeatureDef(const LuaTable& fdTable, const 
 	// as feature->radius (for feature <---> projectile
 	// interactions)
 	fd.ParseCollisionVolume(fdTable);
+	fd.ParseSelectionVolume(fdTable);
+
 
 	fd.upright = fdTable.GetBool("upright", false);
 
@@ -167,7 +169,7 @@ FeatureDef* CFeatureDefHandler::CreateDefaultTreeFeatureDef(const std::string& n
 	fd.name = name;
 	fd.description = "Tree";
 	fd.mass = 20;
-	fd.collisionVolume = CollisionVolume("", ZeroVector, ZeroVector);
+	fd.collisionVolume = CollisionVolume('s', 'z', ZeroVector, ZeroVector);
 	return &fd;
 }
 
@@ -192,7 +194,7 @@ FeatureDef* CFeatureDefHandler::CreateDefaultGeoFeatureDef(const std::string& na
 	fd.name = name;
 	fd.mass = CSolidObject::DEFAULT_MASS;
 	// geothermal features have no physical map presence
-	fd.collisionVolume = CollisionVolume("", ZeroVector, ZeroVector);
+	fd.collisionVolume = CollisionVolume('s', 'z', ZeroVector, ZeroVector);
 	return &fd;
 }
 
@@ -208,10 +210,8 @@ const FeatureDef* CFeatureDefHandler::GetFeatureDef(string name, const bool show
 	if (fi != featureDefs.end())
 		return &featureDefsVector[fi->second];
 
-	if (showError) {
-		LOG_L(L_ERROR, "[%s] could not find FeatureDef \"%s\"",
-				__FUNCTION__, name.c_str());
-	}
+	if (showError)
+		LOG_L(L_ERROR, "[%s] could not find FeatureDef \"%s\"", __func__, name.c_str());
 
 	return nullptr;
 }

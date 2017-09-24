@@ -8,7 +8,7 @@
 
 #include "FileQueryFlags.h"
 
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include "System/Log/ILog.h"
 #include "System/Exceptions.h"
 
@@ -18,7 +18,6 @@
 #include <errno.h>
 #include <string.h>
 #include <boost/regex.hpp>
-#include <boost/filesystem.hpp>
 
 #ifndef _WIN32
 	#include <dirent.h>
@@ -30,7 +29,7 @@
 	#include <io.h>
 	#include <direct.h>
 	#include <fstream>
-	// Win-API redifines these, which breaks things
+	// Win-API redefines these, which breaks things
 	#if defined(CreateDirectory)
 		#undef CreateDirectory
 	#endif
@@ -68,16 +67,11 @@ bool FileSystemAbstraction::IsFSRoot(const std::string& p)
 	return isFsRoot;
 }
 
-bool FileSystemAbstraction::IsPathSeparator(char aChar) {
-	return ((aChar == cPS_WIN32) || (aChar == cPS_POSIX));
-}
+bool FileSystemAbstraction::IsPathSeparator(char aChar) { return ((aChar == cPS_WIN32) || (aChar == cPS_POSIX)); }
+bool FileSystemAbstraction::IsNativePathSeparator(char aChar) { return (aChar == cPS); }
 
-bool FileSystemAbstraction::IsNativePathSeparator(char aChar) {
-	return (aChar == cPS);
-}
-
-bool FileSystemAbstraction::HasPathSepAtEnd(const std::string& path) {
-
+bool FileSystemAbstraction::HasPathSepAtEnd(const std::string& path)
+{
 	bool pathSepAtEnd = false;
 
 	if (!path.empty()) {
@@ -87,29 +81,32 @@ bool FileSystemAbstraction::HasPathSepAtEnd(const std::string& path) {
 	return pathSepAtEnd;
 }
 
-void FileSystemAbstraction::EnsurePathSepAtEnd(std::string& path) {
-
+std::string& FileSystemAbstraction::EnsurePathSepAtEnd(std::string& path)
+{
 	if (path.empty()) {
 		path += "." sPS;
 	} else if (!HasPathSepAtEnd(path)) {
 		path += cPS;
 	}
-}
-std::string FileSystemAbstraction::EnsurePathSepAtEnd(const std::string& path) {
 
+	return path;
+}
+std::string FileSystemAbstraction::EnsurePathSepAtEnd(const std::string& path)
+{
 	std::string pathCopy(path);
 	EnsurePathSepAtEnd(pathCopy);
 	return pathCopy;
 }
 
-void FileSystemAbstraction::EnsureNoPathSepAtEnd(std::string& path) {
-
+void FileSystemAbstraction::EnsureNoPathSepAtEnd(std::string& path)
+{
 	if (HasPathSepAtEnd(path)) {
 		path.resize(path.size() - 1);
 	}
 }
-std::string FileSystemAbstraction::EnsureNoPathSepAtEnd(const std::string& path) {
 
+std::string FileSystemAbstraction::EnsureNoPathSepAtEnd(const std::string& path)
+{
 	std::string pathCopy(path);
 	EnsureNoPathSepAtEnd(pathCopy);
 	return pathCopy;
@@ -145,33 +142,29 @@ std::string FileSystemAbstraction::GetParent(const std::string& path)
 
 	static const char* PATH_SEP_REGEX = sPS_POSIX sPS_WIN32;
 	const std::string::size_type slashPos = parent.find_last_of(PATH_SEP_REGEX);
-	if (slashPos == std::string::npos) {
-		parent = "";
-	} else {
-		parent.resize(slashPos + 1);
-	}
 
+	if (slashPos == std::string::npos)
+		return "";
+
+	parent.resize(slashPos + 1);
 	return parent;
 }
 
 size_t FileSystemAbstraction::GetFileSize(const std::string& file)
 {
-	size_t fileSize = -1;
-
 	struct stat info;
-	if ((stat(file.c_str(), &info) == 0) && (!S_ISDIR(info.st_mode))) {
-		fileSize = info.st_size;
-	}
 
-	return fileSize;
+	if ((stat(file.c_str(), &info) == 0) && (!S_ISDIR(info.st_mode)))
+		return info.st_size;
+
+	return -1;
 }
 
 bool FileSystemAbstraction::IsReadableFile(const std::string& file)
 {
 	// Exclude directories!
-	if (!FileExists(file)) {
+	if (!FileExists(file))
 		return false;
-	}
 
 #ifdef WIN32
 	return (_access(StripTrailingSlashes(file).c_str(), 4) == 0);
@@ -180,22 +173,31 @@ bool FileSystemAbstraction::IsReadableFile(const std::string& file)
 #endif
 }
 
+unsigned int FileSystemAbstraction::GetFileModificationTime(const std::string& file)
+{
+	struct stat info;
+
+	if (stat(file.c_str(), &info) != 0) {
+		LOG_L(L_WARNING, "Failed to get last modification time of file '%s' (error '%s')", file.c_str(), strerror(errno));
+		return 0;
+	}
+
+	return info.st_mtime;
+}
+
 std::string FileSystemAbstraction::GetFileModificationDate(const std::string& file)
 {
-	try {
-		const boost::filesystem::path f(file);
-		const std::time_t t = boost::filesystem::last_write_time(f);
-		struct tm* clock = std::gmtime(&t);
+	const std::time_t t = GetFileModificationTime(file);
 
-		const size_t cTime_size = 20;
-		char cTime[cTime_size];
-		SNPRINTF(cTime, cTime_size, "%d%02d%02d%02d%02d%02d", 1900+clock->tm_year, clock->tm_mon, clock->tm_mday, clock->tm_hour, clock->tm_min, clock->tm_sec);
-		return cTime;
-	} catch (const boost::filesystem::filesystem_error& ex) {
-		LOG_L(L_WARNING, "Failed fetching last modification time from file: %s", file.c_str());
-		LOG_L(L_WARNING, "Error is: \"%s\"", ex.what());
+	if (t == 0)
 		return "";
-	}
+
+	const struct tm* clk = std::gmtime(&t);
+	const char* fmt = "%d%02d%02d%02d%02d%02d";
+
+	char buf[20];
+	SNPRINTF(buf, sizeof(buf), fmt, 1900 + clk->tm_year, clk->tm_mon, clk->tm_mday, clk->tm_hour, clk->tm_min, clk->tm_sec);
+	return buf;
 }
 
 
@@ -239,54 +241,59 @@ bool FileSystemAbstraction::IsAbsolutePath(const std::string& path)
 bool FileSystemAbstraction::MkDir(const std::string& dir)
 {
 	// First check if directory exists. We'll return success if it does.
-	if (DirExists(dir)) {
+	if (DirExists(dir))
 		return true;
-	}
 
 
 	// If it doesn't exist we try to mkdir it and return success if that succeeds.
 #ifndef _WIN32
-	bool dirCreated = (::mkdir(dir.c_str(), S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH) == 0);
+	const bool dirCreated = (::mkdir(dir.c_str(), S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH) == 0);
 #else
-	bool dirCreated = (::_mkdir(StripTrailingSlashes(dir).c_str()) == 0);
+	const bool dirCreated = (::_mkdir(StripTrailingSlashes(dir).c_str()) == 0);
 #endif
 
-	if (!dirCreated) {
+	if (!dirCreated)
 		LOG_L(L_WARNING, "Could not create directory %s: %s", dir.c_str(), strerror(errno));
-	}
 
 	return dirCreated;
 }
 
+
 bool FileSystemAbstraction::DeleteFile(const std::string& file)
 {
-	try {
-		const boost::filesystem::path f(file);
-		// same as posix remove(), but on windows that func doesn't allow deletion of dirs
-		// so it's easier to use boost from the start
-		return (boost::filesystem::remove_all(f) >= 1);
-	} catch (const boost::filesystem::filesystem_error& ex) {
-		LOG_L(L_WARNING, "Could not delete file %s: %s", file.c_str(), ex.what());
+#ifdef WIN32
+	if (DirExists(file)) {
+		if (!RemoveDirectory(StripTrailingSlashes(file).c_str())) {
+			LPSTR messageBuffer = nullptr;
+			FormatMessageA(
+				FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+				nullptr, GetLastError(), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR) &messageBuffer, 0, nullptr);
+			LOG_L(L_WARNING, "Could not delete directory %s: %s", file.c_str(), messageBuffer);
+			LocalFree(messageBuffer);
+			return false;
+		}
+		return true;
+	}
+#endif
+	if (remove(file.c_str()) != 0) {
+		LOG_L(L_WARNING, "Could not delete file %s: %s", file.c_str(), strerror(errno));
 		return false;
 	}
+
+	return true;
 }
+
 
 bool FileSystemAbstraction::FileExists(const std::string& file)
 {
 	struct stat info;
-	const int ret = stat(file.c_str(), &info);
-	bool fileExists = ((ret == 0 && !S_ISDIR(info.st_mode)));
-	return fileExists;
+	return ((stat(file.c_str(), &info) == 0 && !S_ISDIR(info.st_mode)));
 }
 
 bool FileSystemAbstraction::DirExists(const std::string& dir)
 {
-	try {
-		const boost::filesystem::path p(dir);
-		return boost::filesystem::exists(p) && boost::filesystem::is_directory(p);
-	} catch (const boost::filesystem::filesystem_error& ex) {
-		return false;
-	}
+	struct stat info;
+	return ((stat(StripTrailingSlashes(dir).c_str(), &info) == 0 && S_ISDIR(info.st_mode)));
 }
 
 
@@ -301,24 +308,28 @@ bool FileSystemAbstraction::DirIsWritable(const std::string& dir)
 
 	std::string testfile = dir + "\\__$testfile42$.test";
 	std::ofstream os(testfile.c_str());
-	if (os.fail()) {
+
+	if (os.fail())
 		return false;
-	}
+
 	const char* testdata = "THIS IS A TEST";
 	os << testdata;
 	os.close();
 
 	// this part should only be needed when there is no manifest embedded
 	std::ifstream is(testfile.c_str());
-	if (is.fail()) {
+
+	if (is.fail())
 		return false; // the file most likely exists in the virtual store
-	}
+
 	std::string input;
 	getline(is, input);
+
 	if (input != testdata) {
 		unlink(testfile.c_str());
 		return false;
 	}
+
 	is.close();
 	unlink(testfile.c_str());
 	return true;
@@ -330,33 +341,87 @@ bool FileSystemAbstraction::DirIsWritable(const std::string& dir)
 
 bool FileSystemAbstraction::ComparePaths(const std::string& path1, const std::string& path2)
 {
-	try {
-		const boost::filesystem::path p1(path1);
-		const boost::filesystem::path p2(path2);
-		return boost::filesystem::equivalent(p1, p2);
-	} catch (const boost::filesystem::filesystem_error& ex) {
+#ifndef WIN32
+	struct stat info1, info2;
+	const int ret1 = stat(path1.c_str(), &info1);
+	const int ret2 = stat(path2.c_str(), &info2);
+
+	// If either files doesn't exist, return false
+	if (ret1 || ret2)
+		return false;
+
+	return (info1.st_dev == info2.st_dev) && (info1.st_ino == info2.st_ino);
+#else
+	HANDLE h1 = CreateFile(
+		path1.c_str(),
+		0,
+		FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
+		0,
+		OPEN_EXISTING,
+		FILE_FLAG_BACKUP_SEMANTICS,
+		0);
+
+	if (h1 == INVALID_HANDLE_VALUE)
+		return false;
+
+	HANDLE h2 = CreateFile(
+		path2.c_str(),
+		0,
+		FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
+		0,
+		OPEN_EXISTING,
+		FILE_FLAG_BACKUP_SEMANTICS,
+		0);
+
+	if (h2 == INVALID_HANDLE_VALUE) {
+		CloseHandle(h1);
 		return false;
 	}
+
+	BY_HANDLE_FILE_INFORMATION info1, info2;
+	if (!GetFileInformationByHandle(h1, &info1)) {
+		CloseHandle(h1);
+		CloseHandle(h2);
+		return false;
+	}
+
+	if (!GetFileInformationByHandle(h2, &info2)) {
+		CloseHandle(h1);
+		CloseHandle(h2);
+		return false;
+	}
+
+	CloseHandle(h1);
+	CloseHandle(h2);
+
+	return
+		info1.dwVolumeSerialNumber == info2.dwVolumeSerialNumber
+		&& info1.nFileIndexHigh == info2.nFileIndexHigh
+		&& info1.nFileIndexLow == info2.nFileIndexLow
+		&& info1.nFileSizeHigh == info2.nFileSizeHigh
+		&& info1.nFileSizeLow == info2.nFileSizeLow
+		&& info1.ftLastWriteTime.dwLowDateTime
+		== info2.ftLastWriteTime.dwLowDateTime
+		&& info1.ftLastWriteTime.dwHighDateTime
+		== info2.ftLastWriteTime.dwHighDateTime;
+#endif
 }
 
 
 std::string FileSystemAbstraction::GetCwd()
 {
-	std::string cwd = "";
-
 #ifndef _WIN32
 	#define GETCWD getcwd
 #else
 	#define GETCWD _getcwd
 #endif
 
-	const size_t path_maxSize = 1024;
-	char path[path_maxSize];
-	if (GETCWD(path, path_maxSize) != NULL) {
-		cwd = path;
-	}
+	char path[1024];
 
-	return cwd;
+	if (GETCWD(path, sizeof(path)) != nullptr)
+		return path;
+
+	return "";
 }
 
 void FileSystemAbstraction::ChDir(const std::string& dir)
@@ -380,8 +445,8 @@ static void FindFiles(std::vector<std::string>& matches, const std::string& data
 
 	if (hFind != INVALID_HANDLE_VALUE) {
 		do {
-			if(strcmp(wfd.cFileName,".") && strcmp(wfd.cFileName ,"..")) {
-				if(!(wfd.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY)) {
+			if (strcmp(wfd.cFileName,".") && strcmp(wfd.cFileName ,"..")) {
+				if (!(wfd.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY)) {
 					if ((flags & FileQueryFlags::ONLY_DIRS) == 0) {
 						if (boost::regex_match(wfd.cFileName, regexPattern)) {
 							matches.push_back(dir + wfd.cFileName);
@@ -405,37 +470,39 @@ static void FindFiles(std::vector<std::string>& matches, const std::string& data
 	DIR* dp;
 	struct dirent* ep;
 
-	if (!(dp = opendir((datadir + dir).c_str()))) {
+	if ((dp = opendir((datadir + dir).c_str())) == nullptr)
 		return;
-	}
 
 	while ((ep = readdir(dp))) {
 		// exclude hidden files
-		if (ep->d_name[0] != '.') {
-			// is it a file? (we just treat sockets / pipes / fifos / character&block devices as files...)
-			// (need to stat because d_type is DT_UNKNOWN on linux :-/)
-			struct stat info;
-			if (stat((datadir + dir + ep->d_name).c_str(), &info) == 0) {
-				if (!S_ISDIR(info.st_mode)) {
-					if ((flags & FileQueryFlags::ONLY_DIRS) == 0) {
-						if (boost::regex_match(ep->d_name, regexPattern)) {
-							matches.push_back(dir + ep->d_name);
-						}
-					}
-				} else {
-					// or a directory?
-					if (flags & FileQueryFlags::INCLUDE_DIRS) {
-						if (boost::regex_match(ep->d_name, regexPattern)) {
-							matches.push_back(dir + ep->d_name + "/");
-						}
-					}
-					if (flags & FileQueryFlags::RECURSE) {
-						FindFiles(matches, datadir, dir + ep->d_name + "/", regexPattern, flags);
-					}
+		if (ep->d_name[0] == '.')
+			continue;
+
+		// is it a file? (we just treat sockets / pipes / fifos / character&block devices as files...)
+		// (need to stat because d_type is DT_UNKNOWN on linux :-/)
+		struct stat info;
+		if (stat((datadir + dir + ep->d_name).c_str(), &info) != 0)
+			continue;
+
+		if (!S_ISDIR(info.st_mode)) {
+			if ((flags & FileQueryFlags::ONLY_DIRS) == 0) {
+				if (boost::regex_match(ep->d_name, regexPattern)) {
+					matches.push_back(dir + ep->d_name);
 				}
+			}
+		} else {
+			// or a directory?
+			if (flags & FileQueryFlags::INCLUDE_DIRS) {
+				if (boost::regex_match(ep->d_name, regexPattern)) {
+					matches.push_back(dir + ep->d_name + "/");
+				}
+			}
+			if (flags & FileQueryFlags::RECURSE) {
+				FindFiles(matches, datadir, dir + ep->d_name + "/", regexPattern, flags);
 			}
 		}
 	}
+
 	closedir(dp);
 #endif
 }

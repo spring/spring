@@ -1,14 +1,14 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include <string.h>
+#include <cstring>
 
 #include "Camera.h"
 #include "UI/MouseHandler.h"
 #include "Map/ReadMap.h"
+#include "Rendering/GlobalRendering.h"
 #include "System/myMath.h"
 #include "System/float3.h"
 #include "System/Matrix44f.h"
-#include "Rendering/GlobalRendering.h"
 #include "System/Config/ConfigHandler.h"
 
 
@@ -21,17 +21,38 @@ CONFIG(bool, EdgeMoveDynamic)
 	.description("If EdgeMove scrolling speed should fade with edge distance.");
 
 
-CCamera* CCamera::camTypes[CCamera::CAMTYPE_COUNT] = {nullptr};
+
+// cameras[ACTIVE] is just used to store which of the others is active
+static CCamera cameras[CCamera::CAMTYPE_COUNT];
+
+void CCamera::SetActiveCamera(unsigned int camType) { cameras[CAMTYPE_ACTIVE].SetCamType(camType); }
+void CCamera::InitializeStatic() {
+	CMatrix44f clipCtrlMatrix;
+
+	if (globalRendering->supportClipSpaceControl) {
+		clipCtrlMatrix.Translate(FwdVector * 0.5f);
+		clipCtrlMatrix.Scale(OnesVector - (FwdVector * 0.5f));
+	}
+
+	// initialize all global cameras
+	for (unsigned int i = CAMTYPE_PLAYER; i < CAMTYPE_COUNT; i++) {
+		cameras[i].SetCamType(i);
+		cameras[i].SetProjType((i == CAMTYPE_SHADOW)? PROJTYPE_ORTHO: PROJTYPE_PERSP);
+		cameras[i].SetClipCtrlMatrix(clipCtrlMatrix);
+	}
+
+	SetActiveCamera(CAMTYPE_PLAYER);
+}
+
+CCamera* CCamera::GetCamera(unsigned int camType) { return &cameras[camType]; }
+CCamera* CCamera::GetActiveCamera() { return (GetCamera(cameras[CAMTYPE_ACTIVE].GetCamType())); }
 
 
-//////////////////////////////////////////////////////////////////////
-// Construction/Destruction
-//////////////////////////////////////////////////////////////////////
 
-CCamera::CCamera(unsigned int cameraType)
+CCamera::CCamera(unsigned int cameraType, unsigned int projectionType)
 	: pos(ZeroVector)
 	, rot(ZeroVector)
-	, forward(RgtVector)
+	, forward(FwdVector)
 	, up(UpVector)
 	, fov(0.0f)
 	, halfFov(0.0f)
@@ -42,9 +63,9 @@ CCamera::CCamera(unsigned int cameraType)
 	, tiltOffset(ZeroVector)
 
 	, camType(cameraType)
-	, projType((cameraType == CAMTYPE_SHADOW)? PROJTYPE_ORTHO: PROJTYPE_PERSP)
+	, projType(projectionType)
 {
-	assert(cameraType < CAMTYPE_ACTIVE);
+	assert(cameraType < CAMTYPE_COUNT);
 
 	memset(viewport, 0, 4 * sizeof(int));
 	memset(movState, 0, sizeof(movState));
@@ -141,16 +162,17 @@ void CCamera::UpdateFrustum()
 	frustumPlanes[FRUSTUM_PLANE_FRN] = -forward;
 	frustumPlanes[FRUSTUM_PLANE_BCK] =  forward;
 
-	if (camType != CAMTYPE_VISCUL) {
-		// vis-culling is always performed from player's (or light's)
-		// POV but also happens during e.g. cubemap generation; copy
-		// over the frustum planes we just calculated above such that
-		// GetFrustumSides can be called by all parties interested in
-		// VC
-		//
-		// note that this is the only place where VISCUL is updated!
-		camTypes[CAMTYPE_VISCUL]->CopyState(camTypes[camType]);
-	}
+	if (camType == CAMTYPE_VISCUL)
+		return;
+
+	// vis-culling is always performed from player's (or light's)
+	// POV but also happens during e.g. cubemap generation; copy
+	// over the frustum planes we just calculated above such that
+	// GetFrustumSides can be called by all parties interested in
+	// VC
+	//
+	// note that this is the only place where VISCUL is updated!
+	cameras[CAMTYPE_VISCUL].CopyState(&cameras[camType]);
 }
 
 void CCamera::UpdateMatrices(unsigned int vsx, unsigned int vsy, float var)
@@ -312,14 +334,14 @@ bool CCamera::InView(const float3& p, float radius) const
 void CCamera::SetVFOV(const float angle)
 {
 	fov = angle;
-	halfFov = (fov * 0.5f) * (PI / 180.f);
+	halfFov = (fov * 0.5f) * math::DEG_TO_RAD;
 	tanHalfFov = math::tan(halfFov);
 }
 
 float CCamera::GetHFOV() const {
 	const float hAspect = (viewport[2] * 1.0f) / viewport[3];
 	const float fovFact = math::tan(fov * 0.5f) * hAspect;
-	return (2.0f * math::atan(fovFact) * (180.0f / PI));
+	return (2.0f * math::atan(fovFact) * math::RAD_TO_DEG);
 }
 
 
@@ -360,9 +382,9 @@ float3 CCamera::GetRgtFromRot(const float3 r)
 	//   fwd=(0,-1,0) -> rot=GetRotFromDir(fwd)=( PI, PI, 0.0) -> GetRgtFromRot(rot)=(+1.0, 0.0, 0.0)
 	//
 	float3 rgt;
-	rgt.x = std::sin(HALFPI - r.z) *   std::sin(r.y + HALFPI);
-	rgt.z = std::sin(HALFPI - r.z) * (-std::cos(r.y + HALFPI));
-	rgt.y = std::cos(HALFPI - r.z);
+	rgt.x = std::sin(math::HALFPI - r.z) *   std::sin(r.y + math::HALFPI);
+	rgt.z = std::sin(math::HALFPI - r.z) * (-std::cos(r.y + math::HALFPI));
+	rgt.y = std::cos(math::HALFPI - r.z);
 	return rgt;
 }
 
@@ -447,6 +469,8 @@ inline void CCamera::glFrustumSpring(
 	projectionMatrix[13] =   0.0f;
 	projectionMatrix[14] = -(2.0f * zf * zn) / (zf - zn);
 	projectionMatrix[15] =   0.0f;
+
+	projectionMatrix = clipControlMatrix * projectionMatrix;
 }
 
 // same as glOrtho(-1, 1, -1, 1, zn, zf) plus glScalef(sx, sy, 1)
@@ -495,6 +519,8 @@ inline void CCamera::glOrthoSpring(
 	projectionMatrix[13] = ty;
 	projectionMatrix[14] = tz;
 	projectionMatrix[15] = 1.0f;
+
+	projectionMatrix = clipControlMatrix * projectionMatrix;
 }
 
 inline void CCamera::gluLookAtSpring(const float3& eye, const float3& center, const float3& up)

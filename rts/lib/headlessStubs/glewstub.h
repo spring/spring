@@ -79,7 +79,8 @@ GLenum glewInit();
 
 const GLubyte* glewGetString(GLenum name);
 
-GLboolean glewIsSupported (const char* name);
+GLboolean glewIsSupported(const char* name);
+GLboolean glewIsExtensionSupported(const char* name);
 
 #ifdef __cplusplus
 } // extern "C"

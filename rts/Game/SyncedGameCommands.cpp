@@ -28,7 +28,7 @@
 #include "Sim/Units/Unit.h"
 #include "System/FileSystem/SimpleParser.h"
 #include "System/Log/ILog.h"
-#include "System/Util.h"
+#include "System/SafeUtil.h"
 
 #include <string>
 #include <vector>
@@ -362,18 +362,21 @@ public:
 		//ASSERT_SYNCED(float3(gu->myPlayerNum, gu->myPlayerNum, gu->myPlayerNum));
 
 		for (int i = unitHandler->MaxUnits() - 1; i >= 0; --i) {
-			if (unitHandler->units[i]) {
-				if (action.GetPlayerID() == gu->myPlayerNum) {
-					++unitHandler->units[i]->midPos.x; // and desync...
-					++unitHandler->units[i]->midPos.x;
-				} else {
-					// execute the same amount of flops on any other player,
-					// but do not desync (it is a NOP)
-					++unitHandler->units[i]->midPos.x;
-					--unitHandler->units[i]->midPos.x;
-				}
-				break;
+			CUnit* u = unitHandler->GetUnit(i);
+
+			if (u == nullptr)
+				continue;
+
+			if (action.GetPlayerID() == gu->myPlayerNum) {
+				++u->midPos.x; // and desync...
+				++u->midPos.x;
+			} else {
+				// execute the same amount of flops on any other player,
+				// but do not desync (it is a NOP)
+				++u->midPos.x;
+				--u->midPos.x;
 			}
+			break;
 		}
 		LOG_L(L_ERROR, "Desyncing in frame %d.", gs->frameNum);
 		return true;
@@ -510,7 +513,7 @@ void SyncedGameCommands::CreateInstance() {
 
 void SyncedGameCommands::DestroyInstance() {
 	if (singleton != NULL) {
-		SafeDelete(singleton);
+		spring::SafeDelete(singleton);
 	} else {
 		// this might happen during shutdown after an unclean init
 		LOG_L(L_WARNING, "SyncedGameCommands singleton was not initialized or is already destroyed");

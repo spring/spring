@@ -11,20 +11,21 @@ using std::string;
 
 class CLuaGaia : public CLuaHandleSynced
 {
-	public:
-		static bool ReloadHandler() { return (FreeHandler(), LoadFreeHandler()); } // NOTE the ','
-		static bool LoadFreeHandler() { return (LoadHandler() || FreeHandler()); }
+public:
+	static bool CanLoadHandler();
+	static bool ReloadHandler() { return (FreeHandler(), LoadFreeHandler()); } // NOTE the ','
+	static bool LoadFreeHandler() { return (LoadHandler() || FreeHandler()); }
 
-		static bool LoadHandler();
-		static bool FreeHandler();
+	static bool LoadHandler();
+	static bool FreeHandler();
 
-	protected:
-		bool AddSyncedCode(lua_State* L);
-		bool AddUnsyncedCode(lua_State* L);
+protected:
+	bool AddSyncedCode(lua_State* L) { return true; }
+	bool AddUnsyncedCode(lua_State* L) { return true; }
 
-	private:
-		CLuaGaia();
-		virtual ~CLuaGaia();
+private:
+	CLuaGaia();
+	virtual ~CLuaGaia();
 };
 
 

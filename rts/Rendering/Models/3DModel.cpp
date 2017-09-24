@@ -2,26 +2,25 @@
 
 #include "3DModel.h"
 
-
-#include "3DOParser.h"
-#include "S3OParser.h"
 #include "Game/GlobalUnsynced.h"
 #include "Rendering/GL/myGL.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "System/Exceptions.h"
-#include "System/Util.h"
+#include "System/SafeUtil.h"
 
 #include <algorithm>
 #include <cctype>
+#include <cstring>
 
-CR_BIND(LocalModelPiece, (NULL))
+CR_BIND(LocalModelPiece, (nullptr))
 CR_REG_METADATA(LocalModelPiece, (
 	CR_MEMBER(pos),
 	CR_MEMBER(rot),
 	CR_MEMBER(dir),
 	CR_MEMBER(colvol),
 	CR_MEMBER(scriptSetVisible),
+	CR_MEMBER(blockScriptAnims),
 	CR_MEMBER(lmodelPieceIndex),
 	CR_MEMBER(scriptPieceIndex),
 	CR_MEMBER(parent),
@@ -40,7 +39,6 @@ CR_REG_METADATA(LocalModelPiece, (
 
 CR_BIND(LocalModel, )
 CR_REG_METADATA(LocalModel, (
-	CR_IGNORED(lodCount), //FIXME?
 	CR_MEMBER(pieces),
 
 	CR_IGNORED(boundingVolume),
@@ -51,13 +49,15 @@ CR_REG_METADATA(LocalModel, (
 /** ****************************************************************************************************
  * S3DModel
  */
-void S3DModel::DeletePieces(S3DModelPiece* piece)
+void S3DModel::DeletePieces()
 {
-	for (unsigned int n = 0; n < piece->GetChildCount(); n++) {
-		DeletePieces(piece->GetChild(n));
+	assert(!pieces.empty());
+
+	for (size_t n = 0; n < pieces.size(); n++) {
+		spring::SafeDelete(pieces[n]);
 	}
 
-	delete piece;
+	pieces.clear();
 }
 
 
@@ -66,18 +66,6 @@ void S3DModel::DeletePieces(S3DModelPiece* piece)
  * S3DModelPiece
  */
 
-S3DModelPiece::S3DModelPiece()
-	: parent(NULL)
-	, axisMapType(AXIS_MAPPING_XYZ)
-	, scales(OnesVector)
-	, mins(DEF_MIN_SIZE)
-	, maxs(DEF_MAX_SIZE)
-	, rotAxisSigns(-OnesVector)
-	, hasIdentityRot(true)
-	, dispListID(0)
-{
-}
-
 S3DModelPiece::~S3DModelPiece()
 {
 	glDeleteLists(dispListID, 1);
@@ -85,29 +73,19 @@ S3DModelPiece::~S3DModelPiece()
 
 void S3DModelPiece::CreateDispList()
 {
-	dispListID = glGenLists(1);
-	glNewList(dispListID, GL_COMPILE);
+	glNewList(dispListID = glGenLists(1), GL_COMPILE);
 	DrawForList();
 	glEndList();
 }
 
 void S3DModelPiece::DrawStatic() const
 {
-	CMatrix44f mat;
-
-	// get the static transform (sans script influences)
-	ComposeTransform(mat, offset, ZeroVector, scales);
+	if (!HasGeometryData())
+		return;
 
 	glPushMatrix();
-	glMultMatrixf(mat);
-
-	if (HasGeometryData())
-		glCallList(dispListID);
-
-	for (unsigned int n = 0; n < children.size(); n++) {
-		children[n]->DrawStatic();
-	}
-
+	glMultMatrixf(pieceMatrix);
+	glCallList(dispListID);
 	glPopMatrix();
 }
 
@@ -116,28 +94,17 @@ float3 S3DModelPiece::GetEmitPos() const
 {
 	switch (GetVertexCount()) {
 		case 0:
-		case 1: {
-			return ZeroVector;
-		} break;
-		default: {
-			return GetVertexPos(0);
-		} break;
+		case 1: { return ZeroVector; } break;
+		default: { return GetVertexPos(0); } break;
 	}
 }
-
 
 float3 S3DModelPiece::GetEmitDir() const
 {
 	switch (GetVertexCount()) {
-		case 0: {
-			return FwdVector;
-		} break;
-		case 1: {
-			return GetVertexPos(0);
-		} break;
-		default: {
-			return GetVertexPos(1) - GetVertexPos(0);
-		} break;
+		case 0: { return FwdVector; } break;
+		case 1: { return GetVertexPos(0); } break;
+		default: { return (GetVertexPos(1) - GetVertexPos(0)); } break;
 	}
 }
 
@@ -160,30 +127,26 @@ void S3DModelPiece::CreateShatterPieces()
 
 void S3DModelPiece::CreateShatterPiecesVariation(const int num)
 {
-	const std::vector<unsigned>& indices = GetVertexIndices();
+	typedef  std::pair<S3DModelPiecePart::RenderData, std::vector<unsigned> >  ShatterPartDataPair;
+	typedef  std::array< ShatterPartDataPair, S3DModelPiecePart::SHATTER_MAX_PARTS>  ShatterPartsBuffer;
 
-	// we just operate on a buffer
-	// (cause the indices aren't needed once the buffer has been created)
-	struct ShatterPartDataBuffer : S3DModelPiecePart::RenderData {
-		std::vector<unsigned> indices;
-	};
-	std::vector<ShatterPartDataBuffer> shatterPartsBuf;
+	// operate on a buffer; indices are not needed once VBO has been created
+	ShatterPartsBuffer shatterPartsBuf;
 
-	// initialize splitter parts
-	shatterPartsBuf.resize(S3DModelPiecePart::SHATTER_MAX_PARTS);
-	for (auto& cp: shatterPartsBuf) {
-		cp.dir = gu->RandVector().ANormalize();
+	for (ShatterPartDataPair& cp: shatterPartsBuf) {
+		cp.first.dir = (guRNG.NextVector()).ANormalize();
 	}
 
 	// helper
-	auto GetPolygonDir = [&](const size_t idx) -> float3
+	const std::vector<unsigned>& indices = GetVertexIndices();
+	const auto GetPolygonDir = [&](const size_t idx) -> float3
 	{
 		float3 midPos;
-		for (int j: {0,1,2}) {
-			midPos += GetVertexPos(indices[idx + j]);
-		}
+		midPos += GetVertexPos(indices[idx + 0]);
+		midPos += GetVertexPos(indices[idx + 1]);
+		midPos += GetVertexPos(indices[idx + 2]);
 		midPos *= 0.333f;
-		return midPos.ANormalize();
+		return (midPos.ANormalize());
 	};
 
 	// add vertices to splitter parts
@@ -191,49 +154,71 @@ void S3DModelPiece::CreateShatterPiecesVariation(const int num)
 		const float3& dir = GetPolygonDir(i);
 
 		// find the closest shatter part (the one that points into same dir)
-		float md = -2.f;
-		ShatterPartDataBuffer* mcp = nullptr;
-		for (auto& cp: shatterPartsBuf) {
-			if (cp.dir.dot(dir) < md)
+		float md = -2.0f;
+
+		ShatterPartDataPair* mcp = nullptr;
+		S3DModelPiecePart::RenderData* rd = nullptr;
+
+		for (ShatterPartDataPair& cp: shatterPartsBuf) {
+			rd = &cp.first;
+
+			if (rd->dir.dot(dir) < md)
 				continue;
 
-			md = cp.dir.dot(dir);
+			md = rd->dir.dot(dir);
 			mcp = &cp;
 		}
 
-		mcp->indices.push_back(indices[i + 0]);
-		mcp->indices.push_back(indices[i + 1]);
-		mcp->indices.push_back(indices[i + 2]);
+		(mcp->second).push_back(indices[i + 0]);
+		(mcp->second).push_back(indices[i + 1]);
+		(mcp->second).push_back(indices[i + 2]);
 	}
 
-	// fill the vertex index vbo
-	const auto isize = indices.size() * sizeof(unsigned int);
-	auto* memVBO = reinterpret_cast<unsigned char*>(vboShatterIndices.MapBuffer(num * isize, isize, GL_WRITE_ONLY));
-	size_t curVboPos = 0;
-	for (auto& cp: shatterPartsBuf) {
-		cp.indexCount = cp.indices.size();
-		cp.vboOffset  = num * isize + curVboPos;
-		if (cp.indexCount > 0) {
-			memcpy(memVBO + curVboPos, &cp.indices[0], cp.indexCount * sizeof(unsigned int));
-			curVboPos    += cp.indexCount * sizeof(unsigned int);
+	{
+		// fill the vertex index vbo
+		const size_t isize = indices.size() * sizeof(unsigned int);
+		size_t vboPos = 0;
+
+		auto* vboMem = reinterpret_cast<unsigned char*>(vboShatterIndices.MapBuffer(num * isize, isize, GL_WRITE_ONLY));
+
+		for (ShatterPartDataPair& cp: shatterPartsBuf) {
+			S3DModelPiecePart::RenderData& rd = cp.first;
+
+			rd.indexCount = (cp.second).size();
+			rd.vboOffset  = num * isize + vboPos;
+
+			if (rd.indexCount > 0) {
+				memcpy(vboMem + vboPos, &(cp.second)[0], rd.indexCount * sizeof(unsigned int));
+				vboPos += (rd.indexCount * sizeof(unsigned int));
+			}
 		}
-	}
-	vboShatterIndices.UnmapBuffer();
 
-	// delete empty splitter parts
-	for (int i = shatterPartsBuf.size() - 1; i >= 0; --i) {
-		auto& cp = shatterPartsBuf[i];
-		if (cp.indexCount == 0) {
-			cp = std::move(shatterPartsBuf.back());
-			shatterPartsBuf.pop_back();
+		vboShatterIndices.UnmapBuffer();
+	}
+
+	{
+		// delete empty splitter parts
+		size_t backIdx = shatterPartsBuf.size() - 1;
+
+		for (size_t j = 0; j < shatterPartsBuf.size() && j < backIdx; ) {
+			const ShatterPartDataPair& cp = shatterPartsBuf[j];
+			const S3DModelPiecePart::RenderData& rd = cp.first;
+
+			if (rd.indexCount == 0) {
+				std::swap(shatterPartsBuf[j], shatterPartsBuf[backIdx--]);
+				continue;
+			}
+
+			j++;
 		}
-	}
 
+		shatterParts[num].renderData.clear();
+		shatterParts[num].renderData.reserve(backIdx + 1);
 
-	// finish: copy buffer to actual memory
-	shatterParts[num].renderData.reserve(shatterPartsBuf.size());
-	for (const auto& cp: shatterPartsBuf) {
-		shatterParts[num].renderData.push_back(cp);
+		// finish: copy buffer to actual memory
+		for (size_t n = 0; n <= backIdx; n++) {
+			shatterParts[num].renderData.push_back(shatterPartsBuf[n].first);
+		}
 	}
 }
 
@@ -261,7 +246,7 @@ void LocalModel::DrawPieces() const
 
 void LocalModel::DrawPiecesLOD(unsigned int lod) const
 {
-	if (lod > lodCount)
+	if (!luaMaterialData.ValidLOD(lod))
 		return;
 
 	for (const auto& p: pieces) {
@@ -269,25 +254,14 @@ void LocalModel::DrawPiecesLOD(unsigned int lod) const
 	}
 }
 
-void LocalModel::SetLODCount(unsigned int count)
+void LocalModel::SetLODCount(unsigned int lodCount)
 {
 	assert(Initialized());
-	lodCount = count;
 
 	luaMaterialData.SetLODCount(lodCount);
 	pieces[0].SetLODCount(lodCount);
 }
 
-
-void LocalModel::SetOriginalPieces(const S3DModelPiece* mp, int& idx)
-{
-	pieces[idx].original = mp;
-	pieces[idx++].dispListID = mp->GetDisplayListID();
-
-	for (unsigned int i = 0; i < mp->GetChildCount(); i++) {
-		SetOriginalPieces(mp->GetChild(i), idx);
-	}
-}
 
 void LocalModel::SetModel(const S3DModel* model, bool initialize)
 {
@@ -295,29 +269,33 @@ void LocalModel::SetModel(const S3DModel* model, bool initialize)
 	assert(model != nullptr);
 	assert(model->numPieces >= 1);
 
-	// Only update the pieces
 	if (!initialize) {
 		assert(pieces.size() == model->numPieces);
-		int idx = 0;
-		SetOriginalPieces(model->GetRootPiece(), idx);
-		assert (idx == model->numPieces);
-		pieces[0].UpdateMatricesRec(true);
+
+		// PostLoad; only update the pieces
+		for (size_t n = 0; n < pieces.size(); n++) {
+			S3DModelPiece* omp = model->GetPiece(n);
+
+			pieces[n].original = omp;
+			pieces[n].dispListID = omp->GetDisplayListID();
+		}
+
+		pieces[0].UpdateChildMatricesRec(true);
 		UpdateBoundingVolume();
 		return;
 	}
 
-	assert(pieces.size() == 0);
+	assert(pieces.empty());
 
-	lodCount = 0;
-
+	pieces.clear();
 	pieces.reserve(model->numPieces);
 
 	CreateLocalModelPieces(model->GetRootPiece());
 
 	// must recursively update matrices here too: for features
 	// LocalModel::Update is never called, but they might have
-	// baked piece rotations (if .dae)
-	pieces[0].UpdateMatricesRec(false);
+	// baked piece rotations (in the case of .dae)
+	pieces[0].UpdateChildMatricesRec(false);
 	UpdateBoundingVolume();
 
 	assert(pieces.size() == model->numPieces);
@@ -325,7 +303,7 @@ void LocalModel::SetModel(const S3DModel* model, bool initialize)
 
 LocalModelPiece* LocalModel::CreateLocalModelPieces(const S3DModelPiece* mpParent)
 {
-	LocalModelPiece* lmpChild = NULL;
+	LocalModelPiece* lmpChild = nullptr;
 
 	// construct an LMP(mp) in-place
 	pieces.emplace_back(mpParent);
@@ -338,14 +316,15 @@ LocalModelPiece* LocalModel::CreateLocalModelPieces(const S3DModelPiece* mpParen
 	// CobInstance::MapScriptToModelPieces does the remapping (if any)
 	assert(lmpParent->GetLModelPieceIndex() == lmpParent->GetScriptPieceIndex());
 
-	for (unsigned int i = 0; i < mpParent->GetChildCount(); i++) {
-		lmpChild = CreateLocalModelPieces(mpParent->GetChild(i));
+	for (const S3DModelPiece* mpChild: mpParent->children) {
+		lmpChild = CreateLocalModelPieces(mpChild);
 		lmpChild->SetParent(lmpParent);
 		lmpParent->AddChild(lmpChild);
 	}
 
 	return lmpParent;
 }
+
 
 void LocalModel::UpdateBoundingVolume()
 {
@@ -417,19 +396,20 @@ LocalModelPiece::LocalModelPiece(const S3DModelPiece* piece)
 	, dirty(true)
 
 	, scriptSetVisible(piece->HasGeometryData())
+	, blockScriptAnims(false)
 
 	, lmodelPieceIndex(-1)
 	, scriptPieceIndex(-1)
 
 	, original(piece)
-	, parent(NULL) // set later
+	, parent(nullptr) // set later
 {
-	assert(piece != NULL);
+	assert(piece != nullptr);
 
 	pos = piece->offset;
 	dir = piece->GetEmitDir();
 
-	UpdateMatrix();
+	pieceSpaceMat = std::move(CalcPieceSpaceMatrix(pos, rot, original->scales));
 	dispListID = piece->GetDisplayListID();
 
 	children.reserve(piece->children.size());
@@ -437,35 +417,43 @@ LocalModelPiece::LocalModelPiece(const S3DModelPiece* piece)
 
 void LocalModelPiece::SetDirty() {
 	dirty = true;
+
 	for (LocalModelPiece* child: children) {
-		if (!child->dirty)
-			child->SetDirty();
+		if (child->dirty)
+			continue;
+		child->SetDirty();
 	}
 }
 
-void LocalModelPiece::UpdateMatrix() const
-{
-	original->ComposeTransform(pieceSpaceMat.LoadIdentity(), pos, rot, original->scales);
+void LocalModelPiece::SetPosOrRot(const float3& src, float3& dst) {
+	if (blockScriptAnims)
+		return;
+	if (!dirty && !dst.same(src))
+		SetDirty();
+
+	dst = src;
 }
 
-void LocalModelPiece::UpdateMatricesRec(bool updateChildMatrices) const
+
+void LocalModelPiece::UpdateChildMatricesRec(bool updateChildMatrices) const
 {
 	if (dirty) {
 		dirty = false;
-		UpdateMatrix();
 		updateChildMatrices = true;
+
+		pieceSpaceMat = std::move(CalcPieceSpaceMatrix(pos, rot, original->scales));
 	}
 
 	if (updateChildMatrices) {
 		modelSpaceMat = pieceSpaceMat;
 
-		if (parent != NULL) {
+		if (parent != nullptr) {
 			modelSpaceMat >>= parent->modelSpaceMat;
 		}
 	}
 
 	for (unsigned int i = 0; i < children.size(); i++) {
-		children[i]->UpdateMatricesRec(updateChildMatrices);
+		children[i]->UpdateChildMatricesRec(updateChildMatrices);
 	}
 }
 
@@ -475,12 +463,12 @@ void LocalModelPiece::UpdateParentMatricesRec() const
 		parent->UpdateParentMatricesRec();
 
 	dirty = false;
-	UpdateMatrix();
+
+	pieceSpaceMat = std::move(CalcPieceSpaceMatrix(pos, rot, original->scales));
 	modelSpaceMat = pieceSpaceMat;
+
 	if (parent != nullptr)
 		modelSpaceMat >>= parent->modelSpaceMat;
-
-	return;
 }
 
 
@@ -524,12 +512,9 @@ bool LocalModelPiece::GetEmitDirPos(float3& emitPos, float3& emitDir) const
 	if (original == nullptr)
 		return false;
 
-	emitPos = GetModelSpaceMatrix() * original->GetEmitPos();
-	emitDir = GetModelSpaceMatrix() * float4(original->GetEmitDir(), 0.f);
-
 	// note: actually OBJECT_TO_WORLD but transform is the same
-	emitPos *= WORLD_TO_OBJECT_SPACE;
-	emitDir *= WORLD_TO_OBJECT_SPACE;
+	emitPos = GetModelSpaceMatrix() *        original->GetEmitPos()        * WORLD_TO_OBJECT_SPACE;
+	emitDir = GetModelSpaceMatrix() * float4(original->GetEmitDir(), 0.0f) * WORLD_TO_OBJECT_SPACE;
 	return true;
 }
 

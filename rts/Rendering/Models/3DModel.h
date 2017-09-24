@@ -28,14 +28,6 @@ enum ModelType {
 	MODELTYPE_ASS   = 3, // Model loaded by Assimp library
 	MODELTYPE_OTHER = 4  // For future use. Still used in some parts of code.
 };
-enum AxisMappingType {
-	AXIS_MAPPING_XYZ = 0,
-	AXIS_MAPPING_ZXY = 1,
-	AXIS_MAPPING_YZX = 2,
-	AXIS_MAPPING_XZY = 3,
-	AXIS_MAPPING_ZYX = 4,
-	AXIS_MAPPING_YXZ = 5,
-};
 
 struct CollisionVolume;
 struct S3DModel;
@@ -86,7 +78,16 @@ public:
  */
 
 struct S3DModelPiece {
-	S3DModelPiece();
+	S3DModelPiece()
+		: parent(nullptr)
+		, scales(OnesVector)
+		, mins(DEF_MIN_SIZE)
+		, maxs(DEF_MAX_SIZE)
+		, dispListID(0)
+		, hasBakedMat(false)
+		, dummyPadding(false)
+	{}
+
 	virtual ~S3DModelPiece();
 
 	virtual float3 GetEmitPos() const;
@@ -102,69 +103,61 @@ struct S3DModelPiece {
 	virtual void BindVertexAttribVBOs() const = 0;
 	virtual void UnbindVertexAttribVBOs() const = 0;
 
+	void BindShatterIndexVBO() const { vboShatterIndices.Bind(GL_ELEMENT_ARRAY_BUFFER); }
+	void UnbindShatterIndexVBO() const { vboShatterIndices.Unbind(); }
+
+	const VBO& GetIndexVBO() const { return vboIndices; }
+	const VBO& GetAttribVBO() const { return vboAttributes; }
+	const VBO& GetShatterIndexVBO() const { return vboShatterIndices; }
+
 protected:
 	virtual void DrawForList() const = 0;
 	virtual const std::vector<unsigned>& GetVertexIndices() const = 0;
 
 public:
-	void DrawStatic() const; //< draw piece and children statically (ie. without script-transforms)
+	void DrawStatic() const;
 	void CreateDispList();
 	unsigned int GetDisplayListID() const { return dispListID; }
 
 	void CreateShatterPieces();
 	void Shatter(float, int, int, int, const float3, const float3, const CMatrix44f&) const;
 
-	CMatrix44f& ComposeRotation(CMatrix44f& m, const float3& r) const {
-		switch (axisMapType) {
-			case AXIS_MAPPING_XYZ: {
-				// default Spring rotation-order [YPR=YXZ]
-				m.RotateEulerYXZ(r * rotAxisSigns);
-			} break;
+	void SetPieceMatrix(const CMatrix44f& m) {
+		pieceMatrix = m * ComposeTransform(offset, ZeroVector, scales);
 
-			case AXIS_MAPPING_XZY: {
-				// y- and z-angles swapped wrt MAPPING_XYZ; ?? rotation-order [RPY=ZXY]
-				m.RotateEulerZXY(float3(r.x * rotAxisSigns.x, r.z * rotAxisSigns.z, r.y * rotAxisSigns.y));
-			} break;
-
-			case AXIS_MAPPING_YXZ:
-			case AXIS_MAPPING_YZX:
-			case AXIS_MAPPING_ZXY:
-			case AXIS_MAPPING_ZYX: {
-				// FIXME: implement
-			} break;
+		for (S3DModelPiece* c: children) {
+			c->SetPieceMatrix(pieceMatrix);
 		}
-
-		return m;
 	}
-
-	void ComposeTransform(CMatrix44f& m, const float3& t, const float3& r, const float3& s) const {
-
-		// note: translating + rotating is faster than
-		// matrix-multiplying (but the branching hurts)
-		//
-		// NOTE: ORDER MATTERS (T(baked + script) * R(baked) * R(script) * S(baked))
-		if (!t.same(ZeroVector)) { m = m.Translate(t); }
-		if (!hasIdentityRot) { m *= bakedRotMatrix; }
-		if (!r.same(ZeroVector)) { m = ComposeRotation(m, r); }
-		if (!s.same(OnesVector)) { m = m.Scale(s); }
-	}
-
-	void SetModelMatrix(const CMatrix44f& m) {
-		// assimp only
-		bakedRotMatrix = m;
-		hasIdentityRot = m.IsIdentity();
+	void SetBakedMatrix(const CMatrix44f& m) {
+		bakedMatrix = m;
+		hasBakedMat = !m.IsIdentity();
 		assert(m.IsOrthoNormal());
+	}
+
+	CMatrix44f ComposeTransform(const float3& t, const float3& r, const float3& s) const {
+		CMatrix44f m;
+
+		// NOTE:
+		//   ORDER MATTERS (T(baked + script) * R(baked) * R(script) * S(baked))
+		//   translating + rotating + scaling is faster than matrix-multiplying
+		//   m is identity so m.SetPos(t)==m.Translate(t) but with fewer instrs
+		m.SetPos(t);
+
+		if (hasBakedMat)
+			m *= bakedMatrix;
+
+		// default Spring rotation-order [YPR=Y,X,Z]
+		m.RotateEulerYXZ(-r);
+		m.Scale(s);
+		return m;
 	}
 
 	void SetCollisionVolume(const CollisionVolume& cv) { colvol = cv; }
 	const CollisionVolume* GetCollisionVolume() const { return &colvol; }
 	      CollisionVolume* GetCollisionVolume()       { return &colvol; }
 
-	unsigned int GetChildCount() const { return children.size(); }
-	S3DModelPiece* GetChild(unsigned int i) const { return children[i]; }
-
 	bool HasGeometryData() const { return (GetVertexDrawIndexCount() >= 3); }
-	bool HasIdentityRotation() const { return hasIdentityRot; }
 
 private:
 	void CreateShatterPiecesVariation(const int num);
@@ -177,26 +170,24 @@ public:
 	S3DModelPiece* parent;
 	CollisionVolume colvol;
 
-	AxisMappingType axisMapType;
+	CMatrix44f pieceMatrix;    /// bind-pose transform, including baked rots
+	CMatrix44f bakedMatrix;    /// baked local-space rotations
 
 	float3 offset;             /// local (piece-space) offset wrt. parent piece
 	float3 goffset;            /// global (model-space) offset wrt. root piece
 	float3 scales;             /// baked uniform scaling factors (assimp-only)
 	float3 mins;
 	float3 maxs;
-	float3 rotAxisSigns;
 
 protected:
-	CMatrix44f bakedRotMatrix; /// baked local-space rotations (assimp-only)
-	bool hasIdentityRot;       /// if bakedRotMatrix is identity
+	VBO vboIndices;
+	VBO vboAttributes;
+	VBO vboShatterIndices;
 
 	unsigned int dispListID;
 
-	VBO vboIndices;
-	VBO vboAttributes;
-
-public:
-	VBO vboShatterIndices;
+	bool hasBakedMat;
+	bool dummyPadding;
 };
 
 
@@ -216,23 +207,84 @@ struct S3DModel
 		, mins(DEF_MIN_SIZE)
 		, maxs(DEF_MAX_SIZE)
 		, relMidPos(ZeroVector)
-
-		, rootPiece(NULL)
 	{
 	}
 
-	S3DModelPiece* GetRootPiece() const { return rootPiece; }
+	S3DModel(const S3DModel& m) = delete;
+	S3DModel(S3DModel&& m) { *this = std::move(m); }
 
-	void SetRootPiece(S3DModelPiece* p) { rootPiece = p; }
-	void DrawStatic() const { rootPiece->DrawStatic(); }
-	void DeletePieces(S3DModelPiece* piece);
+	S3DModel& operator = (const S3DModel& m) = delete;
+	S3DModel& operator = (S3DModel&& m) {
+		name    = std::move(m.name   );
+		texs[0] = std::move(m.texs[0]);
+		texs[1] = std::move(m.texs[1]);
 
-	// default value; gets cached in WorldObject (projectiles use this)
-	float GetDrawRadius() const { return ((maxs - mins).Length() * 0.5f); }
+		id = m.id;
+		numPieces = m.numPieces;
+		textureType = m.textureType;
+
+		type = m.type;
+
+		radius = m.radius;
+		height = m.height;
+
+		mins = m.mins;
+		maxs = m.maxs;
+		relMidPos = m.relMidPos;
+
+		pieces = std::move(m.pieces);
+		return *this;
+	}
+
+	S3DModelPiece* GetPiece(size_t i) const { assert(i < pieces.size()); return pieces[i]; }
+	S3DModelPiece* GetRootPiece() const { return (GetPiece(0)); }
+
+	void AddPiece(S3DModelPiece* p) { pieces.push_back(p); }
+	void DrawStatic() const {
+		// draw pieces in their static bind-pose (ie. without script-transforms)
+		for (const S3DModelPiece* piece: pieces) {
+			piece->DrawStatic();
+		}
+	}
+
+	void SetPieceMatrices() { pieces[0]->SetPieceMatrix(CMatrix44f()); }
+	void DeletePieces();
+	void FlattenPieceTree(S3DModelPiece* root) {
+		assert(root != nullptr);
+
+		pieces.clear();
+		pieces.reserve(numPieces);
+
+		std::vector<S3DModelPiece*> stack = {root};
+
+		while (!stack.empty()) {
+			S3DModelPiece* p = stack.back();
+
+			stack.pop_back();
+			pieces.push_back(p);
+
+			// add children in reverse for the correct DF traversal order
+			for (size_t n = 0; n < p->children.size(); n++) {
+				stack.push_back(p->children[p->children.size() - n - 1]);
+			}
+		}
+	}
+
+	// default values set by parsers; radius is also cached in WorldObject::drawRadius (used by projectiles)
+	float CalcDrawRadius() const { return ((maxs - mins).Length() * 0.5f); }
+	float CalcDrawHeight() const { return (maxs.y - mins.y); }
+	float GetDrawRadius() const { return radius; }
+	float GetDrawHeight() const { return height; }
+
+	float3 CalcDrawMidPos() const { return ((maxs + mins) * 0.5f); }
+	float3 GetDrawMidPos() const { return relMidPos; }
 
 public:
 	std::string name;
 	std::string texs[NUM_MODEL_TEXTURES];
+
+	// flattened tree; pieces[0] is the root
+	std::vector<S3DModelPiece*> pieces;
 
 	int id;                     /// unsynced ID, starting with 1
 	int numPieces;
@@ -246,8 +298,6 @@ public:
 	float3 mins;
 	float3 maxs;
 	float3 relMidPos;
-
-	S3DModelPiece* rootPiece;   /// The piece at the base of the model hierarchy
 };
 
 
@@ -261,9 +311,8 @@ struct LocalModelPiece
 {
 	CR_DECLARE_STRUCT(LocalModelPiece)
 
-	LocalModelPiece() : dirty(true) {}
+	LocalModelPiece(): dirty(true) {}
 	LocalModelPiece(const S3DModelPiece* piece);
-	~LocalModelPiece() {}
 
 	void AddChild(LocalModelPiece* c) { children.push_back(c); }
 	void RemoveChild(LocalModelPiece* c) { children.erase(std::find(children.begin(), children.end(), c)); }
@@ -278,19 +327,43 @@ struct LocalModelPiece
 	void DrawLOD(unsigned int lod) const;
 	void SetLODCount(unsigned int count);
 
-	void UpdateMatrix() const;
-	void UpdateMatricesRec(bool updateChildMatrices) const;
+
+	// on-demand functions
+	void UpdateChildMatricesRec(bool updateChildMatrices) const;
 	void UpdateParentMatricesRec() const;
+
+	CMatrix44f CalcPieceSpaceMatrixRaw(const float3& p, const float3& r, const float3& s) const { return (original->ComposeTransform(p, r, s)); }
+	CMatrix44f CalcPieceSpaceMatrix(const float3& p, const float3& r, const float3& s) const {
+		if (blockScriptAnims)
+			return pieceSpaceMat;
+		return (CalcPieceSpaceMatrixRaw(p, r, s));
+	}
 
 	// note: actually OBJECT_TO_WORLD but transform is the same
 	float3 GetAbsolutePos() const { return (GetModelSpaceMatrix().GetPos() * WORLD_TO_OBJECT_SPACE); }
 
 	bool GetEmitDirPos(float3& emitPos, float3& emitDir) const;
 
-	void SetPosition(const float3& p) { if (!dirty && !pos.same(p)) SetDirty(); pos = p; }
-	void SetRotation(const float3& r) { if (!dirty && !rot.same(r)) SetDirty(); rot = r; }
-	void SetDirection(const float3& d) { dir = d; } // unused
+
 	void SetDirty();
+	void SetPosOrRot(const float3& src, float3& dst); // anim-script only
+	void SetPosition(const float3& p) { SetPosOrRot(p, pos); } // anim-script only
+	void SetRotation(const float3& r) { SetPosOrRot(r, rot); } // anim-script only
+
+	bool SetPieceSpaceMatrix(const CMatrix44f& mat) {
+		if ((blockScriptAnims = (mat.GetX() != ZeroVector))) {
+			pieceSpaceMat = mat;
+
+			// neither of these are used outside of animation scripts, and
+			// GetEulerAngles wants a matrix created by PYR rotation while
+			// <rot> is YPR
+			// pos = mat.GetPos();
+			// rot = mat.GetEulerAnglesLftHand();
+			return true;
+		}
+
+		return false;
+	}
 
 	const float3& GetPosition() const { return pos; }
 	const float3& GetRotation() const { return rot; }
@@ -305,17 +378,18 @@ struct LocalModelPiece
 private:
 	float3 pos; // translation relative to parent LMP, *INITIALLY* equal to original->offset
 	float3 rot; // orientation relative to parent LMP, in radians (updated by scripts)
-	float3 dir; // direction (same as emitdir)
+	float3 dir; // cached copy of original->GetEmitDir()
 
 	mutable CMatrix44f pieceSpaceMat; // transform relative to parent LMP (SYNCED), combines <pos> and <rot>
-	mutable CMatrix44f modelSpaceMat; // transform relative to root LMP (SYNCED)
+	mutable CMatrix44f modelSpaceMat; // transform relative to root LMP (SYNCED), chained pieceSpaceMat's
 
 	CollisionVolume colvol;
 
 	mutable bool dirty;
 
 public:
-	bool scriptSetVisible;  // TODO: add (visibility) maxradius!
+	bool scriptSetVisible; // TODO: add (visibility) maxradius!
+	bool blockScriptAnims; // if true, Set{Position,Rotation} are ignored for this piece
 
 	unsigned int lmodelPieceIndex; // index of this piece into LocalModel::pieces
 	unsigned int scriptPieceIndex; // index of this piece into UnitScript::pieces
@@ -333,12 +407,8 @@ struct LocalModel
 {
 	CR_DECLARE_STRUCT(LocalModel)
 
-	LocalModel() {
-		lodCount = 0;
-	}
-	~LocalModel() {
-		pieces.clear();
-	}
+	LocalModel() {}
+	~LocalModel() { pieces.clear(); }
 
 
 	bool HasPiece(unsigned int i) const { return (i < pieces.size()); }
@@ -373,11 +443,8 @@ struct LocalModel
 	}
 
 	void SetModel(const S3DModel* model, bool initialize = true);
-	void SetLODCount(unsigned int count);
+	void SetLODCount(unsigned int lodCount);
 	void UpdateBoundingVolume();
-
-	void SetOriginalPieces(const S3DModelPiece* mp, int& idx);
-
 
 	void GetBoundingBoxVerts(std::vector<float3>& verts) const {
 		verts.resize(8 + 2); GetBoundingBoxVerts(&verts[0]);
@@ -410,8 +477,6 @@ private:
 	void DrawPiecesLOD(unsigned int lod) const;
 
 public:
-	unsigned int lodCount;
-
 	std::vector<LocalModelPiece> pieces;
 
 private:

@@ -1,12 +1,12 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include <boost/cstdint.hpp>
 #include <SDL_keycode.h>
 
 #include "GroupHandler.h"
 #include "Group.h"
 #include "Game/SelectedUnitsHandler.h"
 #include "Game/CameraHandler.h"
+#include "Sim/Units/UnitHandler.h"
 #include "System/creg/STL_Set.h"
 #include "System/Log/ILog.h"
 #include "System/Input/KeyInput.h"
@@ -46,24 +46,26 @@ CGroupHandler::~CGroupHandler()
 void CGroupHandler::Update()
 {
 	{
-		for (std::vector<CGroup*>::iterator gi = groups.begin(); gi != groups.end(); ++gi) {
-			if ((*gi) != NULL) {
+		for (CGroup* g: groups) {
+			if (g != nullptr) {
 				// Update may invoke RemoveGroup, but this will only NULL the element, so there will be no iterator invalidation here
-				(*gi)->Update();
+				g->Update();
 			}
 		}
 	}
 
-	std::set<int> grpChg;
 	{
 		if (changedGroups.empty())
 			return;
 
+		std::vector<int> grpChg;
+
+		// swap containers to prevent recursion through lua
 		changedGroups.swap(grpChg);
-	}
-	// this batching mechanism is to prevent lua related readlocks for MT
-	for (std::set<int>::iterator i = grpChg.begin(); i != grpChg.end(); ++i) {
-		eventHandler.GroupChanged(*i);
+
+		for (int i: grpChg) {
+			eventHandler.GroupChanged(i);
+		}
 	}
 }
 
@@ -91,40 +93,46 @@ bool CGroupHandler::GroupCommand(int num, const std::string& cmd)
 	CGroup* group = groups[num];
 
 	if ((cmd == "set") || (cmd == "add")) {
-		if (cmd == "set") {
+		if (cmd == "set")
 			group->ClearUnits();
-		}
-		const CUnitSet& selUnits = selectedUnitsHandler.selectedUnits;
-		CUnitSet::const_iterator ui;
-		for(ui = selUnits.begin(); ui != selUnits.end(); ++ui) {
-			(*ui)->SetGroup(group);
+
+		for (const int unitID: selectedUnitsHandler.selectedUnits) {
+			CUnit* u = unitHandler->GetUnit(unitID);
+
+			if (u == nullptr) {
+				assert(false);
+				continue;
+			}
+
+			// change group, but do not call SUH::AddUnit while iterating
+			u->SetGroup(group, false, false);
 		}
 	}
 	else if (cmd == "selectadd")  {
 		// do not select the group, just add its members to the current selection
-		CUnitSet::const_iterator ui;
-		for (ui = group->units.begin(); ui != group->units.end(); ++ui) {
-			selectedUnitsHandler.AddUnit(*ui);
+		for (const int unitID: group->units) {
+			selectedUnitsHandler.AddUnit(unitHandler->GetUnit(unitID));
 		}
 		return true;
 	}
 	else if (cmd == "selectclear")  {
 		// do not select the group, just remove its members from the current selection
-		CUnitSet::const_iterator ui;
-		for (ui = group->units.begin(); ui != group->units.end(); ++ui) {
-			selectedUnitsHandler.RemoveUnit(*ui);
+		for (const int unitID: group->units) {
+			selectedUnitsHandler.RemoveUnit(unitHandler->GetUnit(unitID));
 		}
 		return true;
 	}
 	else if (cmd == "selecttoggle")  {
 		// do not select the group, just toggle its members with the current selection
-		const CUnitSet& selUnits = selectedUnitsHandler.selectedUnits;
-		CUnitSet::const_iterator ui;
-		for (ui = group->units.begin(); ui != group->units.end(); ++ui) {
-			if (selUnits.find(*ui) == selUnits.end()) {
-				selectedUnitsHandler.AddUnit(*ui);
+		const auto& selUnits = selectedUnitsHandler.selectedUnits;
+
+		for (const int unitID: group->units) {
+			CUnit* unit = unitHandler->GetUnit(unitID);
+
+			if (selUnits.find(unitID) == selUnits.end()) {
+				selectedUnitsHandler.AddUnit(unit);
 			} else {
-				selectedUnitsHandler.RemoveUnit(*ui);
+				selectedUnitsHandler.RemoveUnit(unit);
 			}
 		}
 		return true;
@@ -164,9 +172,10 @@ void CGroupHandler::RemoveGroup(CGroup* group)
 		LOG_L(L_WARNING, "Trying to remove hot-key group %i", group->id);
 		return;
 	}
-	if (selectedUnitsHandler.IsGroupSelected(group->id)) {
+
+	if (selectedUnitsHandler.IsGroupSelected(group->id))
 		selectedUnitsHandler.ClearSelected();
-	}
+
 	groups[group->id] = NULL;
 	freeGroups.push_back(group->id);
 	delete group;
@@ -174,5 +183,5 @@ void CGroupHandler::RemoveGroup(CGroup* group)
 
 void CGroupHandler::PushGroupChange(int id)
 {
-	changedGroups.insert(id);
+	spring::VectorInsertUnique(changedGroups, id, true);
 }

@@ -11,8 +11,9 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ExpGenSpawnableMemberInfo.h"
+#include "Sim/Projectiles/ProjectileMemPool.h"
 
-CR_BIND_DERIVED(CDirtProjectile, CProjectile, )
+CR_BIND_DERIVED_POOL(CDirtProjectile, CProjectile, , projMemPool.alloc, projMemPool.free)
 
 CR_REG_METADATA(CDirtProjectile,
 (
@@ -63,8 +64,6 @@ CDirtProjectile::CDirtProjectile() :
 	texture = projectileDrawer->randdotstex;
 }
 
-CDirtProjectile::~CDirtProjectile()
-{}
 
 void CDirtProjectile::Update()
 {
@@ -74,23 +73,19 @@ void CDirtProjectile::Update()
 	alpha = std::max(alpha - alphaFalloff, 0.0f);
 	size += sizeExpansion;
 
-	if (CGround::GetApproximateHeight(pos.x, pos.z, false) - 40.0f > pos.y) {
-		deleteMe = true;
-	}
-	if (alpha <= 0.0f) {
-		deleteMe = true;
-	}
+	deleteMe |= (CGround::GetApproximateHeight(pos.x, pos.z, false) - 40.0f > pos.y);
+	deleteMe |= (alpha <= 0.0f);
 }
 
-void CDirtProjectile::Draw()
+void CDirtProjectile::Draw(CVertexArray* va)
 {
 	float partAbove = (pos.y / (size * camera->GetUp().y));
-	if (partAbove < -1) {
+
+	if (partAbove < -1.0f)
 		return;
-	} else if (partAbove > 1) {
-		partAbove = 1;
-	}
-	inArray = true;
+
+	partAbove = std::min(partAbove, 1.0f);
+
 	unsigned char col[4];
 	col[0] = (unsigned char) (color.x * alpha);
 	col[1] = (unsigned char) (color.y * alpha);

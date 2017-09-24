@@ -7,7 +7,7 @@
 // Released under GPL license: see LICENSE.html for more information.
 // -------------------------------------------------------------------------
 
-#include "System/Util.h"
+#include "System/SafeUtil.h"
 #include "AAIBuildTable.h"
 #include "AAI.h"
 #include "AAIBrain.h"
@@ -186,9 +186,9 @@ AAIBuildTable::~AAIBuildTable(void)
 		min_buildtime.clear();
 		min_value.clear();
 
-		/*SafeDeleteArray(max_builder_buildtime);
-		SafeDeleteArray(max_builder_cost);
-		SafeDeleteArray(max_builder_buildspeed);*/
+		/*spring::SafeDeleteArray(max_builder_buildtime);
+		spring::SafeDeleteArray(max_builder_cost);
+		spring::SafeDeleteArray(max_builder_buildspeed);*/
 
 		avg_speed.clear();
 		max_speed.clear();
@@ -500,7 +500,7 @@ void AAIBuildTable::Init()
 			else if(GetUnitDef(i).movedata)
 			{
 				// ground units
-				if(GetUnitDef(i).movedata->moveFamily == MoveData::Tank || 
+				if(GetUnitDef(i).movedata->moveFamily == MoveData::Tank ||
 					GetUnitDef(i).movedata->moveFamily == MoveData::KBot ||
 					GetUnitDef(i).movedata->moveFamily == MoveData::Hover)
 				{
@@ -850,7 +850,7 @@ void AAIBuildTable::PrecacheStats()
 		// precache efficiency of metalmakers
 		for(list<int>::iterator i = units_of_category[METAL_MAKER][s].begin(); i != units_of_category[METAL_MAKER][s].end(); ++i) {
 			if (GetUnitDef(*i).makesMetal <= 0.1f) {
-				units_static[*i].efficiency[0] = 12.0f/600.0f; //FIXME: this somehow is broken... 
+				units_static[*i].efficiency[0] = 12.0f/600.0f; //FIXME: this somehow is broken...
 			} else {
 				units_static[*i].efficiency[0] = GetUnitDef(*i).makesMetal/(GetUnitDef(*i).energyUpkeep+1);
 			}
@@ -2299,7 +2299,7 @@ int AAIBuildTable::GetSubmarineAssault(int side, float power, float sea_eff, flo
 		{
 			my_ranking = power * combat_eff[c] / max_power;
 			my_ranking -= cost * unit->cost / max_cost;
-			my_ranking += SafeDivide(efficiency * (SafeDivide(combat_eff[c], unit->cost)), max_efficiency);
+			my_ranking += spring::SafeDivide(efficiency * (spring::SafeDivide(combat_eff[c], unit->cost)), max_efficiency);
 			my_ranking += range * unit->range / max_range;
 			my_ranking += speed * GetUnitDef(*i).speed / max_speed;
 			my_ranking += 0.1f * ((float)(rand()%randomness));
@@ -2308,7 +2308,7 @@ int AAIBuildTable::GetSubmarineAssault(int side, float power, float sea_eff, flo
 		{
 			my_ranking = power * combat_eff[c] / max_power;
 			my_ranking -= cost * unit->cost / max_cost;
-			my_ranking += SafeDivide(efficiency * (SafeDivide(combat_eff[c], unit->cost)), max_efficiency);
+			my_ranking += spring::SafeDivide(efficiency * (spring::SafeDivide(combat_eff[c], unit->cost)), max_efficiency);
 			my_ranking += range * unit->range / max_range;
 			my_ranking += speed * GetUnitDef(*i).speed / max_speed;
 			my_ranking += 0.1f * ((float)(rand()%randomness));
@@ -2907,23 +2907,6 @@ float AAIBuildTable::GetMaxDamage(int unit_id)
 	return max_damage;
 }
 
-// declaration is in aidef.h
-void ReplaceExtension(const char *n, char *dst, int s, const char *ext)
-{
-	unsigned int l = strlen (n);
-
-	unsigned int a=l-1;
-	while (n[a] && n[a]!='.' && a>0)
-		a--;
-
-	strncpy (dst, "", s);
-	if (a>s-sizeof("")) a=s-sizeof("");
-	memcpy (&dst [sizeof ("")-1], n, a);
-	dst[a+sizeof("")]=0;
-
-	strncat (dst, ext, s);
-}
-
 float AAIBuildTable::GetFactoryRating(int def_id)
 {
 	// check if value already chached
@@ -3317,9 +3300,9 @@ void AAIBuildTable::BuildBuilderFor(int building_def_id)
 		// prevent ai from ordering too many builders of the same type/commanders/builders that cant be built atm
 		if(units_dynamic[*builder].active + units_dynamic[*builder].under_construction + units_dynamic[*builder].requested < cfg->MAX_BUILDERS_PER_TYPE)
 		{
-			my_rating = buildspeed * SafeDivide(GetUnitDef(*builder).buildSpeed, max_buildspeed)
-				- SafeDivide(GetUnitDef(*builder).buildTime, max_buildtime)
-				- cost * SafeDivide(units_static[*builder].cost, max_cost);
+			my_rating = buildspeed * spring::SafeDivide(GetUnitDef(*builder).buildSpeed, max_buildspeed)
+				- spring::SafeDivide(GetUnitDef(*builder).buildTime, max_buildtime)
+				- cost * spring::SafeDivide(units_static[*builder].cost, max_cost);
 
 			// prefer builders that can be built atm
 			if(units_dynamic[*builder].constructorsAvailable > 0)

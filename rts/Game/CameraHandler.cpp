@@ -61,29 +61,8 @@ CONFIG(float, CamTimeExponent)
 CCameraHandler* camHandler = nullptr;
 
 
-static void CreateGlobalCams() {
-	// create all global cameras
-	for (unsigned int i = CCamera::CAMTYPE_PLAYER; i < CCamera::CAMTYPE_ACTIVE; i++) {
-		CCamera::SetCamera(i, new CCamera(i));
-	}
-
-	CCamera::SetCamera(CCamera::CAMTYPE_ACTIVE, CCamera::GetCamera(CCamera::CAMTYPE_PLAYER));
-}
-
-static void RemoveGlobalCams() {
-	// remove all global cameras
-	for (unsigned int i = CCamera::CAMTYPE_PLAYER; i < CCamera::CAMTYPE_ACTIVE; i++) {
-		delete CCamera::GetCamera(i); CCamera::SetCamera(i, nullptr);
-	}
-
-	CCamera::SetCamera(CCamera::CAMTYPE_ACTIVE, nullptr);
-}
-
-
 CCameraHandler::CCameraHandler()
 {
-	CreateGlobalCams();
-
 	camTransState.startFOV  = 90.0f;
 	camTransState.timeStart =  0.0f;
 	camTransState.timeEnd   =  0.0f;
@@ -136,8 +115,6 @@ CCameraHandler::~CCameraHandler()
 		delete camControllers.back();
 		camControllers.pop_back();
 	}
-
-	RemoveGlobalCams();
 }
 
 

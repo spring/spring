@@ -1,3 +1,5 @@
+#version 130
+
 #define SMF_TEXSQR_SIZE 1024.0
 #define SMF_DETAILTEX_RES 0.02
 
@@ -14,12 +16,14 @@ varying vec2 diffuseTexCoords;
 void main() {
 	// calc some lighting variables
 	vec3 viewDir = vec3(gl_ModelViewMatrixInverse * vec4(0.0, 0.0, 0.0, 1.0));
+
 	viewDir = normalize(viewDir - gl_Vertex.xyz);
 	halfDir = normalize(lightDir.xyz + viewDir);
+
 	vertexWorldPos = gl_Vertex;
 
 	// calc texcoords
-	diffuseTexCoords = (floor(gl_Vertex.xz) / SMF_TEXSQR_SIZE) - vec2(texSquare);
+	diffuseTexCoords = (floor(vertexWorldPos.xz) / SMF_TEXSQR_SIZE) - vec2(texSquare);
 
 	// transform vertex pos
 	gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;

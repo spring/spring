@@ -5,7 +5,6 @@
 
 #include <vector>
 #include <sstream>
-#include <list>
 #include <zlib.h>
 
 #include "Demo.h"
@@ -25,10 +24,8 @@ public:
 	void WriteSetupText(const std::string& text);
 	void SaveToDemo(const unsigned char* buf, const unsigned length, const float modGameTime);
 
-	/**
-	@brief assign a map name for the demo file
-	*/
-	void SetName(const std::string& mapName, const std::string& modName, bool serverDemo);
+	void SetStream();
+	void SetName(const std::string& mapName, const std::string& modName);
 	const std::string& GetName() const { return demoName; }
 
 	void SetGameID(const unsigned char* buf);
@@ -37,7 +34,7 @@ public:
 	void AddNewPlayer(const std::string& name, int playerNum);
 	void InitializeStats(int numPlayers, int numTeams);
 	void SetPlayerStats(int playerNum, const PlayerStatistics& stats);
-	void SetTeamStats(int teamNum, const std::list< TeamStatistics >& stats);
+	void SetTeamStats(int teamNum, const std::vector<TeamStatistics>& stats);
 	void SetWinningAllyTeams(const std::vector<unsigned char>& winningAllyTeams);
 
 private:
@@ -50,10 +47,12 @@ private:
 
 private:
 	gzFile file;
-	std::stringstream demoStream;
+
 	std::vector<PlayerStatistics> playerStats;
 	std::vector< std::vector<TeamStatistics> > teamStats;
 	std::vector<unsigned char> winningAllyTeams;
+
+	bool isServerDemo;
 };
 
 

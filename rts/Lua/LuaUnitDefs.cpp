@@ -1,7 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-
-#include <set>
 #include <string>
 #include <vector>
 #include <map>
@@ -27,7 +25,7 @@
 #include "Sim/Weapons/WeaponDef.h"
 #include "System/FileSystem/SimpleParser.h"
 #include "System/Log/ILog.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 
 
 static ParamMap paramMap;
@@ -291,10 +289,10 @@ static int SafeIconType(lua_State* L, const void* data)
 
 static int CustomParamsTable(lua_State* L, const void* data)
 {
-	const map<string, string>& params = *((const map<string, string>*)data);
+	const spring::unordered_map<std::string, std::string>& params = *((const spring::unordered_map<std::string, std::string>*)data);
 	lua_newtable(L);
-	map<string, string>::const_iterator it;
-	for (it = params.begin(); it != params.end(); ++it) {
+
+	for (auto it = params.cbegin(); it != params.cend(); ++it) {
 		lua_pushsstring(L, it->first);
 		lua_pushsstring(L, it->second);
 		lua_rawset(L, -3);
@@ -305,14 +303,15 @@ static int CustomParamsTable(lua_State* L, const void* data)
 
 static int BuildOptions(lua_State* L, const void* data)
 {
-	const map<int, string>& buildOptions = *((const map<int, string>*)data);
-	const map<string, int>& unitMap = unitDefHandler->unitDefIDsByName;
+	const spring::unordered_map<int, std::string>& buildOptions = *((const spring::unordered_map<int, std::string>*)data);
+	const spring::unordered_map<std::string, int>& unitMap = unitDefHandler->unitDefIDsByName;
 
 	lua_newtable(L);
 	int count = 0;
-	map<int, string>::const_iterator it;
-	for (it = buildOptions.begin(); it != buildOptions.end(); ++it) {
-		map<string, int>::const_iterator fit = unitMap.find(it->second);
+
+	for (auto it = buildOptions.cbegin(); it != buildOptions.cend(); ++it) {
+		const auto fit = unitMap.find(it->second);
+
 		if (fit != unitMap.end()) {
 			count++;
 			lua_pushnumber(L, count);
@@ -506,6 +505,14 @@ static int ModelName(lua_State* L, const void* data) {
 	return (LuaUtils::PushModelName(L, static_cast<const SolidObjectDef*>(data)));
 }
 
+static int ModelType(lua_State* L, const void* data) {
+	return (LuaUtils::PushModelType(L, static_cast<const SolidObjectDef*>(data)));
+}
+
+static int ModelPath(lua_State* L, const void* data) {
+	return (LuaUtils::PushModelPath(L, static_cast<const SolidObjectDef*>(data)));
+}
+
 static int ModelHeight(lua_State* L, const void* data) {
 	return (LuaUtils::PushModelHeight(L, static_cast<const SolidObjectDef*>(data), true));
 }
@@ -565,7 +572,7 @@ static int ReturnNil(lua_State* L, const void* data) {
 
 static bool InitParamMap()
 {
-	paramMap.clear();
+	spring::clear_unordered_map(paramMap);
 
 	paramMap["next"]  = DataElement(READONLY_TYPE);
 	paramMap["pairs"] = DataElement(READONLY_TYPE);
@@ -609,6 +616,7 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_FUNCTION("stockpileWeaponDef", ud.stockpileWeaponDef, WeaponDefToID);
 	ADD_FUNCTION("iconType",           ud.iconType,           SafeIconType);
 	ADD_FUNCTION("collisionVolume",    ud.collisionVolume,    ColVolTable);
+	ADD_FUNCTION("selectionVolume",    ud.selectionVolume,    ColVolTable);
 
 	ADD_FUNCTION("isTransport", ud, IsTransportUnit);
 	ADD_FUNCTION("isImmobile", ud, IsImmobileUnit);
@@ -626,6 +634,8 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_FUNCTION("isBomberAirUnit", ud, IsBomberAirUnit);
 
 	ADD_FUNCTION("modelname", ud, ModelName);
+	ADD_FUNCTION("modeltype", ud, ModelType);
+	ADD_FUNCTION("modelpath", ud, ModelPath);
 	ADD_FUNCTION("height", ud, ModelHeight);
 	ADD_FUNCTION("radius", ud, ModelRadius);
 

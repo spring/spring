@@ -11,12 +11,12 @@ InputHandler::InputHandler()
 
 void InputHandler::PushEvent(const SDL_Event& ev)
 {
-	sig(ev);
+	sig.emit(ev);
 }
 
 void InputHandler::PushEvents()
 {
-	SCOPED_TIMER("InputHandler::PushEvents");
+	SCOPED_TIMER("Misc::InputHandler::PushEvents");
 	SDL_Event event;
 
 	while (SDL_PollEvent(&event)) {
@@ -27,7 +27,7 @@ void InputHandler::PushEvents()
 }
 
 
-boost::signals2::connection InputHandler::AddHandler(SignalType::slot_function_type handler)
+InputHandler::SignalType::connection_type InputHandler::AddHandler(SignalType::callback handler)
 {
 	return sig.connect(handler);
 }

@@ -19,6 +19,11 @@ class LuaShaders {
 		LuaShaders();
 		~LuaShaders();
 
+		void Clear() {
+			programs.clear();
+			unused.clear();
+		}
+
 		std::string errorLog;
 
 		GLuint GetProgramName(unsigned int progIdx) const;

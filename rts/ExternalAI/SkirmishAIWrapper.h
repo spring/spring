@@ -25,9 +25,9 @@ class float3;
  * Basically converts function calls to AIEvents,
  * which are then sent ot the AI.
  */
-class CSkirmishAIWrapper : public CObject {
+class CSkirmishAIWrapper {
 private:
-	CR_DECLARE(CSkirmishAIWrapper)
+	CR_DECLARE_STRUCT(CSkirmishAIWrapper)
 
 	void CreateCallback();
 

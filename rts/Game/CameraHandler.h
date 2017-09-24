@@ -3,11 +3,11 @@
 #ifndef _CAMERA_HANDLER_H
 #define _CAMERA_HANDLER_H
 
-#include <unordered_map>
 #include <vector>
 #include <string>
 
 #include "Camera/CameraController.h"
+#include "System/UnorderedMap.hpp"
 #include "Console.h"
 
 class CCamera;
@@ -96,8 +96,8 @@ private:
 	std::vector<CCameraController*> camControllers;
 	std::vector<unsigned int> controllerStack;
 
-	std::unordered_map<std::string, ViewData> viewDataMap;
-	std::unordered_map<std::string, unsigned int> nameModeMap;
+	spring::unordered_map<std::string, ViewData> viewDataMap;
+	spring::unordered_map<std::string, unsigned int> nameModeMap;
 };
 
 extern CCameraHandler* camHandler;

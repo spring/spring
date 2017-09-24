@@ -1,16 +1,21 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include <cassert>
+#include <cstddef>
+
 #include "ALShared.h"
 
 #include "System/Sound/SoundLog.h"
-
-#include <stddef.h>
+#include <alc.h>
 
 bool CheckError(const char* msg)
 {
-	ALenum e = alGetError();
+	// alGetError() always returns an error without context -> don't call it
+	assert(alcGetCurrentContext() != nullptr);
+
+	const ALenum e = alGetError();
 	const char* err;
-	switch(e) {
+	switch (e) {
 		case AL_INVALID_NAME:
 			err = "AL_INVALID_NAME";
 			break;

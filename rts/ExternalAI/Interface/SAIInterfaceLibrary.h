@@ -88,7 +88,7 @@ extern "C" {
  */
 #if !defined BUILDING_AI
 
-#include "System/exportdefines.h"
+#include "System/ExportDefines.h"
 //#include "ELevelOfSupport.h"
 
 //enum ELevelOfSupport;

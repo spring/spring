@@ -23,7 +23,8 @@ extern "C" {
 #endif
 
 #include "System/Log/Level.h"
-#include "System/exportdefines.h"
+#include "System/ExportDefines.h"
+
 #include <stdbool.h> /* bool, true, false */
 
 typedef void (CALLING_CONV *logfunction)(int id, const char* section, int level, const char* msg);

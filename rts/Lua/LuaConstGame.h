@@ -10,4 +10,5 @@ class LuaConstGame {
 		static bool PushEntries(lua_State* L);
 };
 
-#endif /* LUA_CONST_GAME_H */
+#endif
+

@@ -11,8 +11,9 @@
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Projectiles/ExpGenSpawnableMemberInfo.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
+#include "Sim/Projectiles/ProjectileMemPool.h"
 
-CR_BIND_DERIVED(CNanoProjectile, CProjectile, )
+CR_BIND_DERIVED_POOL(CNanoProjectile, CProjectile, , projMemPool.alloc, projMemPool.free)
 
 CR_REG_METADATA(CNanoProjectile,
 (
@@ -41,14 +42,14 @@ CNanoProjectile::CNanoProjectile(float3 pos, float3 speed, int lifeTime, SColor 
 	drawSorted = false;
 	drawRadius = 3;
 
-	if (projectileHandler != NULL) {
+	if (projectileHandler != nullptr) {
 		projectileHandler->currentNanoParticles += 1;
 	}
 }
 
 CNanoProjectile::~CNanoProjectile()
 {
-	if (projectileHandler != NULL) {
+	if (projectileHandler != nullptr) {
 		projectileHandler->currentNanoParticles -= 1;
 	}
 }
@@ -57,15 +58,11 @@ CNanoProjectile::~CNanoProjectile()
 void CNanoProjectile::Update()
 {
 	pos += speed;
-	if (gs->frameNum >= deathFrame) {
-		deleteMe = true;
-	}
+	deleteMe |= (gs->frameNum >= deathFrame);
 }
 
-void CNanoProjectile::Draw()
+void CNanoProjectile::Draw(CVertexArray* va)
 {
-	inArray = true;
-
 	const auto* gfxt = projectileDrawer->gfxtex;
 	va->AddVertexTC(drawPos - camera->GetRight() * drawRadius - camera->GetUp() * drawRadius, gfxt->xstart, gfxt->ystart, color);
 	va->AddVertexTC(drawPos + camera->GetRight() * drawRadius - camera->GetUp() * drawRadius, gfxt->xend,   gfxt->ystart, color);

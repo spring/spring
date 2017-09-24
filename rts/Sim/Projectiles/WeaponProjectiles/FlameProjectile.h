@@ -9,14 +9,16 @@ class CFlameProjectile : public CWeaponProjectile
 {
 	CR_DECLARE_DERIVED(CFlameProjectile)
 public:
+	// creg only
 	CFlameProjectile() { }
+
 	CFlameProjectile(const ProjectileParams& params);
 
 	void Update() override;
-	void Draw() override;
+	void Draw(CVertexArray* va) override;
 	void Collision() override;
 
-	virtual int GetProjectilesCount() const override;
+	int GetProjectilesCount() const override;
 
 	int ShieldRepulse(const float3& shieldPos, float shieldForce, float shieldMaxSpeed) override;
 

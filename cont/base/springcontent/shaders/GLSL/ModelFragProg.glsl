@@ -14,6 +14,8 @@
 
 #if (USE_SHADOWS == 1)
   uniform sampler2DShadow shadowTex;
+  uniform mat4 shadowMatrix;
+  uniform vec4 shadowParams;
   uniform float shadowDensity;
 #endif
 
@@ -38,17 +40,16 @@
 
 
 
-float GetShadowCoeff(vec4 shadowCoors)
-{
+float GetShadowCoeff(float zBias) {
 	#if (USE_SHADOWS == 1)
-	float coeff = shadow2DProj(shadowTex, shadowCoors).r;
+	vec4 vertexShadowPos = shadowMatrix * vertexWorldPos;
+		vertexShadowPos.xy *= (inversesqrt(abs(vertexShadowPos.xy) + shadowParams.zz) + shadowParams.ww);
+		vertexShadowPos.xy += shadowParams.xy;
+		vertexShadowPos.z  += zBias;
 
-	coeff  = (1.0 - coeff);
-	coeff *= shadowDensity;
-	return (1.0 - coeff);
-	#else
-	return 1.0;
+	return mix(1.0, shadow2DProj(shadowTex, vertexShadowPos).r, shadowDensity);
 	#endif
+	return 1.0;
 }
 
 vec3 DynamicLighting(vec3 normal, vec3 diffuse, vec3 specular) {
@@ -110,7 +111,8 @@ void main(void)
 	vec3 specular   = textureCube(specularTex, reflectDir).rgb * extraColor.g * 4.0;
 	vec3 reflection = textureCube(reflectTex,  reflectDir).rgb;
 
-	float shadow = GetShadowCoeff(gl_TexCoord[1] + vec4(0.0, 0.0, -0.00005, 0.0));
+
+	float shadow = GetShadowCoeff(-0.00005);
 	float alpha = teamColor.a * extraColor.a; // apply one-bit mask
 
 	// no highlights if in shadow; decrease light to ambient level

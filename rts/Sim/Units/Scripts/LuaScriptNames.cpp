@@ -3,17 +3,12 @@
 #include "LuaScriptNames.h"
 #include "Sim/Misc/GlobalConstants.h"
 
-using std::map;
-using std::pair;
-using std::string;
-using std::vector;
-
 // script function-indices never change, so this is fine wrt. reloading
-static vector<string> scriptNames;
-static map<string, int> scriptMap;
+static std::vector<std::string> scriptNames;
+static spring::unordered_map<std::string, int> scriptMap;
 
 
-const vector<string>& CLuaUnitScriptNames::GetScriptNames()
+const std::vector<std::string>& CLuaUnitScriptNames::GetScriptNames()
 {
 	if (!scriptNames.empty())
 		return scriptNames;
@@ -23,6 +18,9 @@ const vector<string>& CLuaUnitScriptNames::GetScriptNames()
 	scriptNames[LUAFN_Destroy]       = "Destroy";
 	scriptNames[LUAFN_StartMoving]   = "StartMoving";
 	scriptNames[LUAFN_StopMoving]    = "StopMoving";
+	scriptNames[LUAFN_StartSkidding] = "StartSkidding";
+	scriptNames[LUAFN_StopSkidding]  = "StopSkidding";
+	scriptNames[LUAFN_ChangeHeading] = "ChangeHeading";
 	scriptNames[LUAFN_Activate]      = "Activate";
 	scriptNames[LUAFN_Killed]        = "Killed";
 	scriptNames[LUAFN_Deactivate]    = "Deactivate";
@@ -69,18 +67,18 @@ const vector<string>& CLuaUnitScriptNames::GetScriptNames()
 }
 
 
-const std::map<std::string, int>& CLuaUnitScriptNames::GetScriptMap()
+const spring::unordered_map<std::string, int>& CLuaUnitScriptNames::GetScriptMap()
 {
 	if (!scriptMap.empty())
 		return scriptMap;
 
-	const vector<string>& n = GetScriptNames();
+	const std::vector<std::string>& n = GetScriptNames();
 
 	for (size_t i = 0; i < n.size(); ++i) {
-		scriptMap.insert(pair<string, int>(n[i], i));
+		scriptMap.insert(std::pair<std::string, int>(n[i], i));
 	}
 
-	//for (std::map<string, int>::const_iterator it = scriptMap.begin(); it != scriptMap.end(); ++it) {
+	//for (auto it = scriptMap.cbegin(); it != scriptMap.cend(); ++it) {
 	//	LOG_L(L_DEBUG, "LUAFN: %s -> %3d", it->first.c_str(), it->second);
 	//}
 
@@ -90,8 +88,8 @@ const std::map<std::string, int>& CLuaUnitScriptNames::GetScriptMap()
 
 int CLuaUnitScriptNames::GetScriptNumber(const std::string& fname)
 {
-	const map<string, int>& scriptMap = GetScriptMap();
-	const map<string, int>::const_iterator it = scriptMap.find(fname);
+	const auto& scriptMap = GetScriptMap();
+	const auto it = scriptMap.find(fname);
 
 	if (it != scriptMap.end())
 		return it->second;
@@ -99,9 +97,9 @@ int CLuaUnitScriptNames::GetScriptNumber(const std::string& fname)
 	return -1;
 }
 
-const string& CLuaUnitScriptNames::GetScriptName(int num)
+const std::string& CLuaUnitScriptNames::GetScriptName(int num)
 {
-	const static string empty;
+	const static std::string empty;
 	const std::vector<std::string>& n = GetScriptNames();
 
 	if (num >= 0 && num < int(n.size()))
@@ -109,3 +107,4 @@ const string& CLuaUnitScriptNames::GetScriptName(int num)
 
 	return empty;
 }
+

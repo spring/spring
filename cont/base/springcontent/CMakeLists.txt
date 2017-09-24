@@ -8,6 +8,7 @@ set(FILES
 	shaders/GLSL/infoMetal.lua
 	shaders/GLSL/infoPath.lua
 	shaders/GLSL/ShadowGenVertProg.glsl
+	shaders/GLSL/ShadowGenFragProg.glsl
 	shaders/GLSL/TreeFragProg.glsl
 	shaders/GLSL/terrainCommon.glsl
 	shaders/GLSL/SMFFragProg.glsl

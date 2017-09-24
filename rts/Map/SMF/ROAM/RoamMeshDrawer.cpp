@@ -9,7 +9,7 @@
 #include "Rendering/ShadowHandler.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "System/Rectangle.h"
-#include "System/ThreadPool.h"
+#include "System/Threading/ThreadPool.h"
 #include "System/TimeProfiler.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
@@ -37,18 +37,18 @@ bool CRoamMeshDrawer::forceTessellate[2] = {false, false};
 
 
 
-CRoamMeshDrawer::CRoamMeshDrawer(CSMFReadMap* rm, CSMFGroundDrawer* gd)
+CRoamMeshDrawer::CRoamMeshDrawer(CSMFGroundDrawer* gd)
 	: CEventClient("[CRoamMeshDrawer]", 271989, false)
-	, smfReadMap(rm)
 	, smfGroundDrawer(gd)
 	, lastGroundDetail{0, 0}
 {
 	eventHandler.AddClient(this);
 
-	// set ROAM upload mode (VA,DL,VBO)
+	// set patch upload-mode (VA,DL,VBO)
 	Patch::SwitchRenderMode(configHandler->GetInt("ROAM"));
+
 	for (unsigned int i = MESH_NORMAL; i <= MESH_SHADOW; i++) {
-		CTriNodePool::InitPools(i);
+		CTriNodePool::InitPools(i == MESH_SHADOW);
 	}
 
 	numPatchesX = mapDims.mapx / PATCH_SIZE;
@@ -83,16 +83,10 @@ CRoamMeshDrawer::CRoamMeshDrawer(CSMFReadMap* rm, CSMFGroundDrawer* gd)
 		unsigned int patchIdx = 0;
 
 		// gather corner patches
-		borderPatches[i][patchIdx++] = &patches[                                  (              0)];
-
-		if (numPatchesX > 1)
-			borderPatches[i][patchIdx++] = &patches[                                  (numPatchesX - 1)];
-
-		if (numPatchesY > 1)
-			borderPatches[i][patchIdx++] = &patches[(numPatchesY - 1) * numPatchesX + (              0)];
-
-		if (numPatchesX > 1 && numPatchesY > 1)
-			borderPatches[i][patchIdx++] = &patches[(numPatchesY - 1) * numPatchesX + (numPatchesX - 1)];
+		                                        borderPatches[i][patchIdx++] = &patches[                                  (              0)];
+		if (numPatchesX > 1                   ) borderPatches[i][patchIdx++] = &patches[                                  (numPatchesX - 1)];
+		if (numPatchesY > 1                   ) borderPatches[i][patchIdx++] = &patches[(numPatchesY - 1) * numPatchesX + (              0)];
+		if (numPatchesX > 1 && numPatchesY > 1) borderPatches[i][patchIdx++] = &patches[(numPatchesY - 1) * numPatchesX + (numPatchesX - 1)];
 
 		// gather x-border patches
 		for (int py = 1; py < (numPatchesY - 1); ++py) {
@@ -110,11 +104,7 @@ CRoamMeshDrawer::CRoamMeshDrawer(CSMFReadMap* rm, CSMFGroundDrawer* gd)
 
 CRoamMeshDrawer::~CRoamMeshDrawer()
 {
-	configHandler->Set("ROAM", (int)Patch::renderMode);
-
-	for (unsigned int i = MESH_NORMAL; i <= MESH_SHADOW; i++) {
-		CTriNodePool::FreePools(i);
-	}
+	eventHandler.RemoveClient(this);
 }
 
 
@@ -137,7 +127,7 @@ void CRoamMeshDrawer::Update()
 
 	{
 		// Check if a retessellation is needed
-		SCOPED_TIMER("ROAM::ComputeVariance");
+		//SCOPED_TIMER("ROAM::ComputeVariance");
 
 		for (int i = 0; i < (numPatchesX * numPatchesY); ++i) {
 			//FIXME multithread? don't retessellate on small heightmap changes?
@@ -181,14 +171,14 @@ void CRoamMeshDrawer::Update()
 		return;
 
 	{
-		SCOPED_TIMER("ROAM::Tessellate");
+		//SCOPED_TIMER("ROAM::Tessellate");
 
 		Reset(shadowPass);
 		forceTessellate[shadowPass] = Tessellate(patchMeshGrid[shadowPass], cam, smfGroundDrawer->GetGroundDetail(), shadowPass);
 	}
 
 	{
-		SCOPED_TIMER("ROAM::GenerateIndexArray");
+		//SCOPED_TIMER("ROAM::GenerateIndexArray");
 
 		for_mt(0, patches.size(), [&patches, &cam](const int i) {
 			Patch* p = &patches[i];
@@ -200,7 +190,7 @@ void CRoamMeshDrawer::Update()
 	}
 
 	{
-		SCOPED_TIMER("ROAM::Upload");
+		//SCOPED_TIMER("ROAM::Upload");
 
 		for (Patch& p: patches) {
 			if (p.IsVisible(cam)) {
@@ -226,6 +216,8 @@ void CRoamMeshDrawer::DrawMesh(const DrawPass::e& drawPass)
 	//   Updating for all passes produces the optimal tessellation per
 	//   camera but consumes far too many cycles; force any non-shadow
 	//   pass to reuse MESH_NORMAL
+	SCOPED_TIMER(drawPass == DrawPass::Normal ? "Draw::World::Terrain::ROAM" : "Misc::ROAM");
+
 	switch (drawPass) {
 		case DrawPass::Normal: { Update(); } break;
 		case DrawPass::Shadow: { Update(); } break;
@@ -322,42 +314,62 @@ void CRoamMeshDrawer::Reset(bool shadowPass)
 bool CRoamMeshDrawer::Tessellate(std::vector<Patch>& patches, const CCamera* cam, int viewRadius, bool shadowPass)
 {
 	// create an approximate tessellated mesh of the landscape
-	// hint: threading just helps a little with huge cpu usage in retessellation, still better than nothing
+	//
+	//   px 0 1 2   3 4 5 . .
+	//   z  _________
+	//   0 |0|1|2 | 0 . .
+	//   1 |3|4|5 | 3 . .
+	//   2 |6|7|8 | 6 . .
+	//     |
+	//   3 |0|1|2 | 0 . .
+	//   4  . . .   . . .
+	//   5  . . .   . . .
+	//   .
+	//   .
+	// each patch is connected to 2, 3, or 4 neighbors via its two base-triangles
+	// tessellation can extend into these neighbors so patches sharing a neighbor
+	// can not be touched concurrently without expensive locking, must split the
+	// update into 3x3 sub-blocks instead s.t. only patches with equal sub-block
+	// indices ([0,8]) are tessellated in parallel
+	// note that both numPatchesX and numPatchesY must be larger than or equal to
+	// 4 for this to be even barely worth it; threading with 9 (!) for_mt's has a
+	// high setup-cost
+	std::atomic<bool> forceTess{false};
 
-	//  _____
-	// |0|_|_|..
-	// |_|_|_|..
-	// |_|_|8|..
-	//  .....
-	// split the patches in 3x3 sized blocks. The tessellation itself can
-	// extend into the neighbor patches (check Patch::Split). So we could
-	// not multi-thread the whole loop w/o mutexes (in ::Split).
-	// But instead we take a safety distance between the thread's working
-	// area (which is 2 patches), so they don't conflict with each other.
-	bool forceTess = false;
+	if (numPatchesX >= 4 && numPatchesY >= 4) {
+		for (int blkIdx = 0; blkIdx < (3 * 3); ++blkIdx) {
+			for_mt(0, patches.size(), [&](const int pi) {
+				Patch& p = patches[pi];
 
-	for (int idx = 0; idx < 9; ++idx) {
-		for_mt(0, patches.size(), [&](const int i) {
-			Patch* p = &patches[i];
+				// convert (RM) grid-coors to subblock-index
+				const int  px = pi % numPatchesX;
+				const int  pz = pi / numPatchesX;
+				const int sbx = px % 3;
+				const int sbz = pz % 3;
+				const int sbi = sbx + (sbz * 3);
 
-			const int X = p->coors.x;
-			const int Z = p->coors.y;
-			const int subindex = (X % 3) + (Z % 3) * 3;
+				if (sbi != blkIdx)
+					return;
 
-			if (subindex != idx)
-				return;
+				if (!p.IsVisible(cam))
+					return;
 
-			if (!p->IsVisible(cam))
-				return;
+				forceTess = forceTess || (!p.Tessellate(cam->GetPos(), viewRadius, shadowPass));
+			});
 
-			forceTess |= (!p->Tessellate(cam->GetPos(), viewRadius, shadowPass));
-		});
+			if (forceTess)
+				return true;
+		}
+	} else {
+		for (Patch& p: patches) {
+			if (!p.IsVisible(cam))
+				continue;
 
-		if (forceTess)
-			return true;
+			forceTess = forceTess || (!p.Tessellate(cam->GetPos(), viewRadius, shadowPass));
+		}
 	}
 
-	return false;
+	return forceTess;
 }
 
 

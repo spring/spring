@@ -17,7 +17,7 @@
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "System/myMath.h"
 #include "System/Log/ILog.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 
 #include <cassert>
 #define AUTO_GENERATE_ATTACK_ORDERS 1
@@ -566,14 +566,14 @@ bool CAirCAI::SelectNewAreaAttackTargetOrPos(const Command& ac)
 	CGameHelper::GetEnemyUnits(pos, radius, owner->allyteam, enemyUnitIDs);
 
 	if (enemyUnitIDs.empty()) {
-		float3 attackPos = pos + (gs->randVector() * radius);
+		float3 attackPos = pos + (gsRNG.NextVector() * radius);
 		attackPos.y = CGround::GetHeightAboveWater(attackPos.x, attackPos.z);
 
 		owner->AttackGround(attackPos, (ac.options & INTERNAL_ORDER) == 0, false);
 		SetGoal(attackPos, owner->pos);
 	} else {
 		// note: the range of randFloat() is inclusive of 1.0f
-		const unsigned int unitIdx = std::min<int>(gs->randFloat() * enemyUnitIDs.size(), enemyUnitIDs.size() - 1);
+		const unsigned int unitIdx = std::min<int>(gsRNG.NextFloat() * enemyUnitIDs.size(), enemyUnitIDs.size() - 1);
 		const unsigned int unitID = enemyUnitIDs[unitIdx];
 
 		CUnit* targetUnit = unitHandler->GetUnitUnsafe(unitID);

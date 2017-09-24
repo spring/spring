@@ -1101,9 +1101,9 @@ function gadgetHandler:AllowCommand(unitID, unitDefID, unitTeam,
   return true
 end
 
-function gadgetHandler:AllowStartPosition(cx, cy, cz, playerID, readyState, rx, ry, rz)
+function gadgetHandler:AllowStartPosition(playerID, teamID, readyState, cx, cy, cz, rx, ry, rz)
   for _,g in r_ipairs(self.AllowStartPositionList) do
-    if (not g:AllowStartPosition(cx, cy, cz, playerID, readyState, rx, ry, rz)) then
+    if (not g:AllowStartPosition(playerID, teamID, readyState, cx, cy, cz, rx, ry, rz)) then
       return false
     end
   end
@@ -1482,6 +1482,38 @@ function gadgetHandler:UnitLeftLos(unitID, unitTeam, allyTeam, unitDefID)
 end
 
 
+function gadgetHandler:UnitEnteredWater(unitID, unitDefID, unitTeam)
+  for _,g in r_ipairs(self.UnitEnteredWaterList) do
+    g:UnitEnteredWater(unitID, unitDefID, unitTeam)
+  end
+  return
+end
+
+
+function gadgetHandler:UnitLeftWater(unitID, unitDefID, unitTeam)
+  for _,g in r_ipairs(self.UnitLeftWaterList) do
+    g:UnitLeftWater(unitID, unitDefID, unitTeam)
+  end
+  return
+end
+
+
+function gadgetHandler:UnitEnteredAir(unitID, unitDefID, unitTeam)
+  for _,g in r_ipairs(self.UnitEnteredAirList) do
+    g:UnitEnteredAir(unitID, unitDefID, unitTeam)
+  end
+  return
+end
+
+
+function gadgetHandler:UnitLeftAir(unitID, unitDefID, unitTeam)
+  for _,g in r_ipairs(self.UnitLeftAirList) do
+    g:UnitLeftAir(unitID, unitDefID, unitTeam)
+  end
+  return
+end
+
+
 function gadgetHandler:UnitSeismicPing(x, y, z, strength,
                                        allyTeam, unitID, unitDefID)
   for _,g in r_ipairs(self.UnitSeismicPingList) do
@@ -1550,6 +1582,12 @@ function gadgetHandler:StockpileChanged(unitID, unitDefID, unitTeam,
   return
 end
 
+function gadgetHandler:UnitHarvestStorageFull(unitID, unitDefID, unitTeam)
+  for _,g in r_ipairs(self.UnitHarvestStorageFullList) do
+    g:UnitHarvestStorageFull(unitID, unitDefID, unitTeam)
+  end
+  return
+end
 
 --------------------------------------------------------------------------------
 --
@@ -1644,11 +1682,24 @@ end
 --  Shield call-ins
 --
 
-function gadgetHandler:ShieldPreDamaged(proID, proOwnerID, shieldEmitterWeaponNum, shieldCarrierUnitID, bounceProjectile, beamEmitterWeaponNum, beamEmitterUnitID)
-
+function gadgetHandler:ShieldPreDamaged(
+  proID,
+  proOwnerID,
+  shieldEmitterWeapNum,
+  shieldCarrierUnitID,
+  bounceProj,
+  beamEmitterWeapNum,
+  beamEmitterUnitID,
+  spx,
+  spy,
+  spz,
+  hpx,
+  hpy,
+  hpz
+)
   for _,g in r_ipairs(self.ShieldPreDamagedList) do
     -- first gadget to handle this consumes the event
-    if (g:ShieldPreDamaged(proID, proOwnerID, shieldEmitterWeaponNum, shieldCarrierUnitID, bounceProjectile, beamEmitterWeaponNum, beamEmitterUnitID)) then
+    if (g:ShieldPreDamaged(proID, proOwnerID, shieldEmitterWeapNum, shieldCarrierUnitID, bounceProj, beamEmitterWeapNum, beamEmitterUnitID, spx, spy, spz, hpx, hpy, hpz)) then
       return true
     end
   end
@@ -1722,6 +1773,12 @@ function gadgetHandler:DrawWorldPreUnit()
   end
 end
 
+function gadgetHandler:DrawWorldPreParticles()
+  for _,g in r_ipairs(self.DrawWorldPreParticlesList) do
+    g:DrawWorldPreParticles()
+  end
+end
+
 function gadgetHandler:DrawWorldShadow()
   for _,g in r_ipairs(self.DrawWorldShadowList) do
     g:DrawWorldShadow()
@@ -1780,6 +1837,12 @@ function gadgetHandler:DrawScreenEffects(vsx, vsy)
   return
 end
 
+function gadgetHandler:DrawScreenPost(vsx, vsy)
+  for _,g in r_ipairs(self.DrawScreenPostList) do
+    g:DrawScreenPost(vsx, vsy)
+  end
+  return
+end
 
 function gadgetHandler:DrawScreen(vsx, vsy)
   for _,g in r_ipairs(self.DrawScreenList) do

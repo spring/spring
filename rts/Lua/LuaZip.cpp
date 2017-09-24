@@ -34,7 +34,8 @@
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileQueryFlags.h"
 #include "System/FileSystem/FileSystem.h"
-#include "System/Util.h"
+#include "System/SafeUtil.h"
+#include "System/StringUtil.h"
 #include "minizip/zip.h"
 #include <cstring>
 #include <sstream>
@@ -321,11 +322,11 @@ int LuaZipFileReader::meta_gc(lua_State* L)
 	ZipFileReaderUserdata* f = toreader(L);
 
 	if (f->stream) {
-		SafeDelete(f->stream);
+		spring::SafeDelete(f->stream);
 	}
 
 	if (f->archive && !f->dontClose) {
-		SafeDelete(f->archive);
+		spring::SafeDelete(f->archive);
 		lua_pushboolean(L, 1);
 		return 1;
 	}
@@ -343,7 +344,7 @@ int LuaZipFileReader::meta_open(lua_State* L)
 		luaL_error(L, "zip not open");
 	}
 
-	std::vector<boost::uint8_t> buf;
+	std::vector<std::uint8_t> buf;
 	const bool result = f->archive->GetFile(name, buf);
 
 	f->stream = new std::stringstream(std::string((char*) &*buf.begin(), buf.size()), std::ios_base::in);

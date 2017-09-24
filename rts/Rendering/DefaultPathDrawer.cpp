@@ -34,7 +34,7 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Map/InfoTexture/Legacy/LegacyInfoTextureHandler.h"
 #include "System/myMath.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 
 #define PE_EXTRA_DEBUG_OVERLAYS 1
 
@@ -296,11 +296,8 @@ void DefaultPathDrawer::Draw() const {
 	glDisable(GL_LIGHTING);
 	glLineWidth(3);
 
-	const std::map<unsigned int, CPathManager::MultiPath*>& pathMap = pm->pathMap;
-	std::map<unsigned int, CPathManager::MultiPath*>::const_iterator pi;
-
-	for (pi = pathMap.begin(); pi != pathMap.end(); ++pi) {
-		const CPathManager::MultiPath* path = pi->second;
+	for (const auto& p: pm->pathMap) {
+		const CPathManager::MultiPath& multiPath = p.second;
 
 		glBegin(GL_LINE_STRIP);
 
@@ -308,26 +305,26 @@ void DefaultPathDrawer::Draw() const {
 
 			// draw low-res segments of <path> (green)
 			glColor4f(0.0f, 0.0f, 1.0f, 1.0f);
-			for (PathIt pvi = path->lowResPath.path.begin(); pvi != path->lowResPath.path.end(); ++pvi) {
+			for (PathIt pvi = multiPath.lowResPath.path.begin(); pvi != multiPath.lowResPath.path.end(); ++pvi) {
 				float3 pos = *pvi; pos.y += 5; glVertexf3(pos);
 			}
 
 			// draw med-res segments of <path> (blue)
 			glColor4f(0.0f, 1.0f, 0.0f, 1.0f);
-			for (PathIt pvi = path->medResPath.path.begin(); pvi != path->medResPath.path.end(); ++pvi) {
+			for (PathIt pvi = multiPath.medResPath.path.begin(); pvi != multiPath.medResPath.path.end(); ++pvi) {
 				float3 pos = *pvi; pos.y += 5; glVertexf3(pos);
 			}
 
 			// draw max-res segments of <path> (red)
 			glColor4f(1.0f, 0.0f, 0.0f, 1.0f);
-			for (PathIt pvi = path->maxResPath.path.begin(); pvi != path->maxResPath.path.end(); ++pvi) {
+			for (PathIt pvi = multiPath.maxResPath.path.begin(); pvi != multiPath.maxResPath.path.end(); ++pvi) {
 				float3 pos = *pvi; pos.y += 5; glVertexf3(pos);
 			}
 
 		glEnd();
 
 		// visualize the path definition (goal, radius)
-		Draw(path->peDef);
+		Draw(&multiPath.peDef);
 	}
 
 	glLineWidth(1);
@@ -341,7 +338,7 @@ void DefaultPathDrawer::Draw(const CPathFinderDef* pfd) const {
 	} else {
 		glColor4f(0.0f, 1.0f, 1.0f, 1.0f);
 	}
-	glSurfaceCircle(pfd->goal, std::sqrt(pfd->sqGoalRadius), 20);
+	glSurfaceCircle(pfd->wsGoalPos, std::sqrt(pfd->sqGoalRadius), 20);
 }
 
 void DefaultPathDrawer::Draw(const CPathFinder* pf) const {
@@ -431,14 +428,19 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 
 					const int obBlockNr = obz * peNumBlocks.x + obx;
 					const int vertexNr = vertexBaseNr + blockNr * PATH_DIRECTION_VERTICES + GetBlockVertexOffset(dir, peNumBlocks.x);
-					const float cost = (pe->vertexCosts[vertexNr] * PATH_NODE_SPACING) / pe->BLOCK_SIZE;
+
+					const float rawCost = pe->vertexCosts[vertexNr];
+					const float nrmCost = (rawCost * PATH_NODE_SPACING) / pe->BLOCK_SIZE;
+
+					if (rawCost >= PATHCOST_INFINITY)
+						continue;
 
 					float3 p2;
 						p2.x = (blockStates.peNodeOffsets[md->pathType][obBlockNr].x) * SQUARE_SIZE;
 						p2.z = (blockStates.peNodeOffsets[md->pathType][obBlockNr].y) * SQUARE_SIZE;
 						p2.y = CGround::GetHeightAboveWater(p2.x, p2.z, false) + 10.0f;
 
-					glColor3f(1.0f / std::sqrt(cost), 1.0f / cost, 0.75f * drawLowResPE);
+					glColor3f(1.0f / std::sqrt(nrmCost), 1.0f / nrmCost, 0.75f * drawLowResPE);
 					glVertexf3(p1);
 					glVertexf3(p2);
 				}
@@ -470,8 +472,13 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 
 					const int obBlockNr = obz * peNumBlocks.x + obx;
 					const int vertexNr = vertexBaseNr + blockNr * PATH_DIRECTION_VERTICES + GetBlockVertexOffset(dir, peNumBlocks.x);
+
 					// rescale so numbers remain near 1.0 (more readable)
-					const float cost = (pe->vertexCosts[vertexNr] * PATH_NODE_SPACING) / pe->BLOCK_SIZE;
+					const float rawCost = pe->vertexCosts[vertexNr];
+					const float nrmCost = (rawCost * PATH_NODE_SPACING) / pe->BLOCK_SIZE;
+
+					if (rawCost >= PATHCOST_INFINITY)
+						continue;
 
 					float3 p2;
 						p2.x = (blockStates.peNodeOffsets[md->pathType][obBlockNr].x) * SQUARE_SIZE;
@@ -486,8 +493,8 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 					if (camera->GetPos().SqDistance(p2) >= (1000.0f * 1000.0f))
 						continue;
 
-					font->SetTextColor(1.0f, 1.0f / cost, 0.75f * drawLowResPE, 1.0f);
-					font->glWorldPrint(p2, 5.0f, FloatToString(cost, "f(%.2f)"));
+					font->SetTextColor(1.0f, 1.0f / nrmCost, 0.75f * drawLowResPE, 1.0f);
+					font->glWorldPrint(p2, 5.0f, FloatToString(nrmCost, "f(%.2f)"));
 				}
 			}
 		}

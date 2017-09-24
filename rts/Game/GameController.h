@@ -11,21 +11,24 @@ public:
 	CGameController();
 	virtual ~CGameController();
 
-	virtual bool Draw();
-	virtual bool Update();
-	virtual int KeyPressed(int key, bool isRepeat);
-	virtual int KeyReleased(int key);
+	virtual bool Draw() { return true; }
+	virtual bool Update() { return true; }
+	virtual int KeyPressed(int key, bool isRepeat) { return 0; }
+	virtual int KeyReleased(int key) { return 0; }
+	virtual int TextInput(const std::string& utf8Text) { return 0; }
 	virtual void ResizeEvent() {}
 
+	void PasteClipboard();
+
+public:
 	/// true if user is writing
 	bool userWriting;
 	/// current writing position
 	int  writingPos;
 	bool ignoreNextChar;
+
 	std::string userInput;
 	std::string userPrompt;
-
-	void PasteClipboard();
 };
 
 extern CGameController* activeController;

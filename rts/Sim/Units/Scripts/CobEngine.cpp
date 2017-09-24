@@ -3,10 +3,8 @@
 
 #include "CobEngine.h"
 #include "CobThread.h"
-#include "CobInstance.h"
 #include "CobFile.h"
 #include "System/FileSystem/FileHandler.h"
-#include "System/TimeProfiler.h"
 
 
 CCobEngine* cobEngine = nullptr;
@@ -63,7 +61,7 @@ CCobEngine::~CCobEngine()
 CCobFileHandler::~CCobFileHandler()
 {
 	//Free all cobfiles
-	for (std::map<std::string, CCobFile *>::iterator i = cobFiles.begin(); i != cobFiles.end(); ++i) {
+	for (auto i = cobFiles.begin(); i != cobFiles.end(); ++i) {
 		delete i->second;
 	}
 }
@@ -93,14 +91,12 @@ void CCobEngine::TickThread(CCobThread* thread)
 	if (!thread->Tick())
 		delete thread;
 
-	curThread = NULL;
+	curThread = nullptr;
 }
 
 
 void CCobEngine::Tick(int deltaTime)
 {
-	SCOPED_TIMER("CobEngine::Tick");
-
 	currentTime += deltaTime;
 
 	// Advance all running threads
@@ -122,7 +118,7 @@ void CCobEngine::Tick(int deltaTime)
 	if (!sleeping.empty()) {
 		CCobThread* cur = sleeping.top();
 
-		while ((cur != NULL) && (cur->GetWakeTime() < currentTime)) {
+		while ((cur != nullptr) && (cur->GetWakeTime() < currentTime)) {
 			// Start with removing the executing thread from the queue
 			sleeping.pop();
 
@@ -141,15 +137,15 @@ void CCobEngine::Tick(int deltaTime)
 			if (!sleeping.empty())
 				cur = sleeping.top();
 			else
-				cur = NULL;
+				cur = nullptr;
 		}
 	}
 }
 
 
-void CCobEngine::ShowScriptError(const string& msg)
+void CCobEngine::ShowScriptError(const std::string& msg)
 {
-	if (curThread)
+	if (curThread != nullptr)
 		curThread->ShowError(msg);
 	else
 		LOG_L(L_ERROR, "%s outside script execution", msg.c_str());
@@ -159,31 +155,32 @@ void CCobEngine::ShowScriptError(const string& msg)
 /******************************************************************************/
 /******************************************************************************/
 
-CCobFile* CCobFileHandler::GetCobFile(const string& name)
+CCobFile* CCobFileHandler::GetCobFile(const std::string& name)
 {
-	//Already known?
-	map<string, CCobFile *>::iterator i;
-	if ((i = cobFiles.find(name)) != cobFiles.end()) {
+	const auto i = cobFiles.find(name);
+
+	if (i != cobFiles.end())
 		return i->second;
-	}
 
 	CFileHandler f(name);
-	if (!f.FileExists()) {
-		return NULL;
-	}
-	CCobFile *cf = new CCobFile(f, name);
+
+	if (!f.FileExists())
+		return nullptr;
+
+	// must use new here, pointers are leaked to CobInstance
+	CCobFile* cf = new CCobFile(f, name);
 
 	cobFiles[name] = cf;
 	return cf;
 }
 
 
-CCobFile* CCobFileHandler::ReloadCobFile(const string& name)
+CCobFile* CCobFileHandler::ReloadCobFile(const std::string& name)
 {
-	map<string, CCobFile *>::iterator it = cobFiles.find(name);
-	if (it == cobFiles.end()) {
+	const auto it = cobFiles.find(name);
+
+	if (it == cobFiles.end())
 		return GetCobFile(name);
-	}
 
 	delete it->second;
 	cobFiles.erase(it);
@@ -192,13 +189,14 @@ CCobFile* CCobFileHandler::ReloadCobFile(const string& name)
 }
 
 
-const CCobFile* CCobFileHandler::GetScriptAddr(const string& name) const
+const CCobFile* CCobFileHandler::GetScriptAddr(const std::string& name) const
 {
-	map<string, CCobFile *>::const_iterator it = cobFiles.find(name);
-	if (it != cobFiles.end()) {
+	const auto it = cobFiles.find(name);
+
+	if (it != cobFiles.end())
 		return it->second;
-	}
-	return NULL;
+
+	return nullptr;
 }
 
 

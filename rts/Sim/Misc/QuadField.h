@@ -3,8 +3,9 @@
 #ifndef QUAD_FIELD_H
 #define QUAD_FIELD_H
 
+#include <array>
 #include <vector>
-#include <boost/noncopyable.hpp>
+#include "System/Misc/NonCopyable.h"
 
 #include "System/creg/creg_cond.h"
 #include "System/float3.h"
@@ -15,9 +16,53 @@ class CFeature;
 class CProjectile;
 class CSolidObject;
 class CPlasmaRepulser;
+struct QuadFieldQuery;
+
+template<typename T>
+class ExclusiveVectors {
+public:
+	// There should at most be 2 concurrent users of each vector type
+	// using 3 to be safe, increase this number if the assertions below
+	// fail
+	static constexpr int MAX_CONCURRENT_VECTORS = 3;
+	ExclusiveVectors() {
+		for (auto& v: vectors){
+			v.first = false;
+		}
+	}
+	std::vector<T>* GetVector() {
+		for (auto& v: vectors){
+			if (v.first)
+				continue;
+
+			v.first = true;
+			v.second.clear();
+			return &v.second;
+		}
+		assert(false);
+		return nullptr;
+	}
+
+	void ReleaseVector(std::vector<T>* released) {
+		if (released == nullptr)
+			return;
+
+		for (auto& v: vectors){
+			if (&v.second != released)
+				continue;
+
+			v.first = false;
+			return;
+		}
+		assert(false);
+	}
+
+	std::array<std::pair<bool, std::vector<T>>, MAX_CONCURRENT_VECTORS> vectors;
+};
 
 
-class CQuadField : boost::noncopyable
+
+class CQuadField : spring::noncopyable
 {
 	CR_DECLARE_STRUCT(CQuadField)
 	CR_DECLARE_SUB(Quad)
@@ -35,9 +80,9 @@ needed to support dynamic resizing (not used yet)
 	CQuadField(int2 mapDims, int quad_size);
 	~CQuadField();
 
-	const std::vector<int>& GetQuads(float3 pos, float radius);
-	const std::vector<int>& GetQuadsRectangle(const float3& mins, const float3& maxs);
-	const std::vector<int>& GetQuadsOnRay(const float3& start, const float3& dir, float length);
+	void GetQuads(QuadFieldQuery& qfq, float3 pos, float radius);
+	void GetQuadsRectangle(QuadFieldQuery& qfq, const float3& mins, const float3& maxs);
+	void GetQuadsOnRay(QuadFieldQuery& qfq, const float3& start, const float3& dir, float length);
 
 	void GetUnitsAndFeaturesColVol(
 		const float3& pos,
@@ -51,34 +96,35 @@ needed to support dynamic resizing (not used yet)
 	 * Returns all units within @c radius of @c pos,
 	 * and treats each unit as a 3D point object
 	 */
-	const std::vector<CUnit*>& GetUnits(const float3& pos, float radius);
+	void GetUnits(QuadFieldQuery& qfq, const float3& pos, float radius);
 	/**
 	 * Returns all units within @c radius of @c pos,
 	 * takes the 3D model radius of each unit into account,
  	 * and performs the search within a sphere or cylinder depending on @c spherical
 	 */
-	const std::vector<CUnit*>& GetUnitsExact(const float3& pos, float radius, bool spherical = true);
+	void GetUnitsExact(QuadFieldQuery& qfq, const float3& pos, float radius, bool spherical = true);
 	/**
 	 * Returns all units within the rectangle defined by
 	 * mins and maxs, which extends infinitely along the y-axis
 	 */
-	const std::vector<CUnit*>& GetUnitsExact(const float3& mins, const float3& maxs);
+	void GetUnitsExact(QuadFieldQuery& qfq, const float3& mins, const float3& maxs);
 	/**
 	 * Returns all features within @c radius of @c pos,
 	 * takes the 3D model radius of each feature into account,
 	 * and performs the search within a sphere or cylinder depending on @c spherical
 	 */
-	const std::vector<CFeature*>& GetFeaturesExact(const float3& pos, float radius, bool spherical = true);
+	void GetFeaturesExact(QuadFieldQuery& qfq, const float3& pos, float radius, bool spherical = true);
 	/**
 	 * Returns all features within the rectangle defined by
 	 * mins and maxs, which extends infinitely along the y-axis
 	 */
-	const std::vector<CFeature*>& GetFeaturesExact(const float3& mins, const float3& maxs);
+	void GetFeaturesExact(QuadFieldQuery& qfq, const float3& mins, const float3& maxs);
 
-	const std::vector<CProjectile*>& GetProjectilesExact(const float3& pos, float radius);
-	const std::vector<CProjectile*>& GetProjectilesExact(const float3& mins, const float3& maxs);
+	void GetProjectilesExact(QuadFieldQuery& qfq, const float3& pos, float radius);
+	void GetProjectilesExact(QuadFieldQuery& qfq, const float3& mins, const float3& maxs);
 
-	const std::vector<CSolidObject*>& GetSolidsExact(
+	void GetSolidsExact(
+		QuadFieldQuery& qfq,
 		const float3& pos,
 		const float radius,
 		const unsigned int physicalStateBits = 0xFFFFFFFF,
@@ -104,6 +150,12 @@ needed to support dynamic resizing (not used yet)
 
 	void MovedRepulser(CPlasmaRepulser* repulser);
 	void RemoveRepulser(CPlasmaRepulser* repulser);
+
+	void ReleaseVector(std::vector<CUnit*>* v       ) { tempUnits.ReleaseVector(v); }
+	void ReleaseVector(std::vector<CFeature*>* v    ) { tempFeatures.ReleaseVector(v); }
+	void ReleaseVector(std::vector<CProjectile*>* v ) { tempProjectiles.ReleaseVector(v); }
+	void ReleaseVector(std::vector<CSolidObject*>* v) { tempSolids.ReleaseVector(v); }
+	void ReleaseVector(std::vector<int>* v          ) { tempQuads.ReleaseVector(v); }
 
 	struct Quad {
 		CR_DECLARE_STRUCT(Quad)
@@ -151,11 +203,11 @@ private:
 	std::vector<Quad> baseQuads;
 
 	// preallocated vectors for Get*Exact functions
-	std::vector<CUnit*> tempUnits;
-	std::vector<CFeature*> tempFeatures;
-	std::vector<CProjectile*> tempProjectiles;
-	std::vector<CSolidObject*> tempSolids;
-	std::vector<int> tempQuads;
+	ExclusiveVectors<CUnit*> tempUnits;
+	ExclusiveVectors<CFeature*> tempFeatures;
+	ExclusiveVectors<CProjectile*> tempProjectiles;
+	ExclusiveVectors<CSolidObject*> tempSolids;
+	ExclusiveVectors<int> tempQuads;
 
 	int numQuadsX;
 	int numQuadsZ;
@@ -165,5 +217,20 @@ private:
 };
 
 extern CQuadField* quadField;
+
+struct QuadFieldQuery {
+	~QuadFieldQuery() {
+		quadField->ReleaseVector(units);
+		quadField->ReleaseVector(features);
+		quadField->ReleaseVector(projectiles);
+		quadField->ReleaseVector(solids);
+		quadField->ReleaseVector(quads);
+	}
+	std::vector<CUnit*>* units = nullptr;
+	std::vector<CFeature*>* features = nullptr;
+	std::vector<CProjectile*>* projectiles = nullptr;
+	std::vector<CSolidObject*>* solids = nullptr;
+	std::vector<int>* quads = nullptr;
+};
 
 #endif /* QUAD_FIELD_H */

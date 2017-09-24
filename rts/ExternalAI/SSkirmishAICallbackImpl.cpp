@@ -19,6 +19,7 @@
 #include "Map/MapInfo.h"
 #include "Lua/LuaRulesParams.h"
 #include "Lua/LuaHandleSynced.h"
+#include "Sim/Features/Feature.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/UnitHandler.h"
@@ -78,7 +79,7 @@ static void checkSkirmishAIId(int skirmishAIId) {
 }
 
 static int fillCMap(
-	const std::map<std::string,std::string>* map,
+	const spring::unordered_map<std::string,std::string>* map,
 	const char* cMapKeys[],
 	const char* cMapValues[]
 ) {
@@ -231,7 +232,7 @@ static inline const UnitDef* getUnitDefById(int skirmishAIId, int unitDefId) {
 
 static inline const MoveDef* getUnitDefMoveDefById(int skirmishAIId, int unitDefId) {
 	const unsigned int mdType = getUnitDefById(skirmishAIId, unitDefId)->pathType;
-	const MoveDef* moveDef = (mdType != -1U)? moveDefHandler->GetMoveDefByPathType(mdType): NULL;
+	const MoveDef* moveDef = (mdType != -1U)? moveDefHandler->GetMoveDefByPathType(mdType): nullptr;
 
 	// NOTE There is a callback method to check whether MoveData is available, use it.
 	return moveDef;
@@ -2031,7 +2032,7 @@ EXPORT(int) skirmishAiCallback_Map_getSlopeMap(int skirmishAIId,
 EXPORT(int) skirmishAiCallback_Map_get##name##Map(int skirmishAIId,	\
 		int* sensor##Values, int sensor##ValuesMaxSize) {	\
 \
-	static const int sensor##ValuesRealSize = losHandler->sensor.size.x * losHandler->sensor.size.y;	\
+	const int sensor##ValuesRealSize = losHandler->sensor.size.x * losHandler->sensor.size.y;	\
 \
 	int sensor##ValuesSize = sensor##ValuesRealSize;	\
 \
@@ -2949,14 +2950,16 @@ EXPORT(bool) skirmishAiCallback_UnitDef_isAbleToMove(int skirmishAIId, int unitD
 }
 
 EXPORT(bool) skirmishAiCallback_UnitDef_isAbleToHover(int skirmishAIId, int unitDefId) {
-	const UnitDef* ud = getUnitDefById(skirmishAIId, unitDefId);
-	const MoveDef* md = (ud->pathType != -1U)? moveDefHandler->GetMoveDefByPathType(ud->pathType): NULL;
+	const MoveDef* md = getUnitDefMoveDefById(skirmishAIId, unitDefId);
 
-	return ((md != NULL)? (md->speedModClass == MoveDef::Hover): false);
+	return ((md != nullptr) ? (md->speedModClass == MoveDef::Hover) : false);
 }
 
 EXPORT(bool) skirmishAiCallback_UnitDef_isFloater(int skirmishAIId, int unitDefId) {
-	return getUnitDefById(skirmishAIId, unitDefId)->floatOnWater;
+	const UnitDef* ud = getUnitDefById(skirmishAIId, unitDefId);
+	const MoveDef* md = (ud->pathType != -1U)? moveDefHandler->GetMoveDefByPathType(ud->pathType): nullptr;
+
+	return ((md != nullptr) ? md->FloatOnWater() : ud->floatOnWater);
 }
 
 EXPORT(bool) skirmishAiCallback_UnitDef_isBuilder(int skirmishAIId, int unitDefId) {
@@ -3471,7 +3474,7 @@ EXPORT(int) skirmishAiCallback_UnitDef_getBuildOptions(
 	int* unitDefIds,
 	int unitDefIdsMaxSize
 ) {
-	const std::map<int,std::string>& bo = getUnitDefById(skirmishAIId, unitDefId)->buildOptions;
+	const auto& bo = getUnitDefById(skirmishAIId, unitDefId)->buildOptions;
 	const int unitDefIdsRealSize = bo.size();
 
 	size_t unitDefIdsSize = unitDefIdsRealSize;
@@ -3495,7 +3498,7 @@ EXPORT(int) skirmishAiCallback_UnitDef_getCustomParams(
 	const char** keys,
 	const char** values
 ) {
-	const std::map<std::string,std::string>& ps = getUnitDefById(skirmishAIId, unitDefId)->customParams;
+	const auto& ps = getUnitDefById(skirmishAIId, unitDefId)->customParams;
 	const size_t paramsRealSize = ps.size();
 
 	if ((keys != nullptr) && (values != nullptr))
@@ -4018,7 +4021,7 @@ EXPORT(int) skirmishAiCallback_Unit_getLastUserOrderFrame(int skirmishAIId, int 
 	if (!isControlledByLocalPlayer(skirmishAIId))
 		return -1;
 
-	return unitHandler->units[unitId]->commandAI->lastUserCommand;
+	return unitHandler->GetUnit(unitId)->commandAI->lastUserCommand;
 }
 
 EXPORT(int) skirmishAiCallback_Unit_getWeapons(int skirmishAIId, int unitId) {
@@ -4097,7 +4100,7 @@ EXPORT(int) skirmishAiCallback_getTeamUnits(int skirmishAIId, int* unitIds, int 
 
 	const int teamId = skirmishAIId_teamId[skirmishAIId];
 
-	for (CUnit* u: unitHandler->activeUnits) {
+	for (const CUnit* u: unitHandler->GetActiveUnits()) {
 		if (u->team != teamId)
 			continue;
 
@@ -4317,12 +4320,11 @@ EXPORT(int) skirmishAiCallback_FeatureDef_getCustomParams(
 	const char** keys,
 	const char** values
 ) {
-	const std::map<std::string,std::string>& ps = getFeatureDefById(skirmishAIId, featureDefId)->customParams;
+	const auto& ps = getFeatureDefById(skirmishAIId, featureDefId)->customParams;
 	const size_t paramsRealSize = ps.size();
 
-	if ((keys != nullptr) && (values != nullptr)) {
+	if ((keys != nullptr) && (values != nullptr))
 		fillCMap(&ps, keys, values);
-	}
 
 	return paramsRealSize;
 }
@@ -4333,8 +4335,8 @@ EXPORT(int) skirmishAiCallback_FeatureDef_getCustomParams(
 EXPORT(int) skirmishAiCallback_getFeatures(int skirmishAIId, int* featureIds, int featureIdsMaxSize) {
 	if (skirmishAiCallback_Cheats_isEnabled(skirmishAIId)) {
 		// cheating
-		const CFeatureSet& fset = featureHandler->GetActiveFeatures();
-		const int featureIdsRealSize = fset.size();
+		const auto& activeFeatureIDs = featureHandler->GetActiveFeatureIDs();
+		const int featureIdsRealSize = activeFeatureIDs.size();
 
 		int featureIdsSize = featureIdsRealSize;
 
@@ -4343,8 +4345,8 @@ EXPORT(int) skirmishAiCallback_getFeatures(int skirmishAIId, int* featureIds, in
 
 			size_t f = 0;
 
-			for (auto it = fset.cbegin(); it != fset.cend() && f < featureIdsSize; ++it) {
-				const CFeature* feature = *it;
+			for (auto it = activeFeatureIDs.cbegin(); it != activeFeatureIDs.cend() && f < featureIdsSize; ++it) {
+				const CFeature* feature = featureHandler->GetFeature(*it);
 
 				assert(feature != nullptr);
 				featureIds[f++] = feature->id;
@@ -4361,8 +4363,9 @@ EXPORT(int) skirmishAiCallback_getFeatures(int skirmishAIId, int* featureIds, in
 EXPORT(int) skirmishAiCallback_getFeaturesIn(int skirmishAIId, float* pos_posF3, float radius, int* featureIds, int featureIdsMaxSize) {
 	if (skirmishAiCallback_Cheats_isEnabled(skirmishAIId)) {
 		// cheating
-		const std::vector<CFeature*>& fset = quadField->GetFeaturesExact(pos_posF3, radius);
-		const int featureIdsRealSize = fset.size();
+		QuadFieldQuery qfQuery;
+		quadField->GetFeaturesExact(qfQuery, pos_posF3, radius);
+		const int featureIdsRealSize = qfQuery.features->size();
 
 		int featureIdsSize = featureIdsRealSize;
 
@@ -4371,8 +4374,7 @@ EXPORT(int) skirmishAiCallback_getFeaturesIn(int skirmishAIId, float* pos_posF3,
 
 			size_t f = 0;
 
-			for (auto it = fset.cbegin(); it != fset.cend() && f < featureIdsSize; ++it) {
-				const CFeature* feature = *it;
+			for (const CFeature* feature: *qfQuery.features) {
 
 				assert(feature != nullptr);
 				featureIds[f++] = feature->id;
@@ -4994,12 +4996,11 @@ EXPORT(bool) skirmishAiCallback_WeaponDef_isDynDamageInverted(int skirmishAIId, 
 EXPORT(int) skirmishAiCallback_WeaponDef_getCustomParams(int skirmishAIId, int weaponDefId,
 		const char** keys, const char** values) {
 
-	const std::map<std::string,std::string>& ps = getWeaponDefById(skirmishAIId, weaponDefId)->customParams;
+	const auto& ps = getWeaponDefById(skirmishAIId, weaponDefId)->customParams;
 	const size_t paramsRealSize = ps.size();
 
-	if ((keys != NULL) && (values != NULL)) {
+	if ((keys != nullptr) && (values != nullptr))
 		fillCMap(&ps, keys, values);
-	}
 
 	return paramsRealSize;
 }

@@ -3,13 +3,13 @@
 #ifndef LUA_HANDLE_SYNCED
 #define LUA_HANDLE_SYNCED
 
-#include <map>
 #include <string>
-using std::map;
+
 using std::string;
 
 #include "LuaHandle.h"
 #include "LuaRulesParams.h"
+#include "System/UnorderedMap.hpp"
 
 struct lua_State;
 class LuaSyncedCtrl;
@@ -64,7 +64,7 @@ class CSyncedLuaHandle : public CLuaHandle
 		bool AllowResourceTransfer(int oldTeam, int newTeam, const string& type, float amount);
 		bool AllowDirectUnitControl(int playerID, const CUnit* unit);
 		bool AllowBuilderHoldFire(const CUnit* unit, int action);
-		bool AllowStartPosition(int playerID, unsigned char readyState, const float3& clampedPos, const float3& rawPickPos);
+		bool AllowStartPosition(int playerID, int teamID, unsigned char readyState, const float3& clampedPos, const float3& rawPickPos);
 
 		bool TerraformComplete(const CUnit* unit, const CUnit* build);
 		bool MoveCtrlNotify(const CUnit* unit, int data);
@@ -87,7 +87,8 @@ class CSyncedLuaHandle : public CLuaHandle
 			int projectileID,
 			bool paralyzer,
 			float* newDamage,
-			float* impulseMult);
+			float* impulseMult
+		);
 
 		bool FeaturePreDamaged(
 			const CFeature* feature,
@@ -96,7 +97,8 @@ class CSyncedLuaHandle : public CLuaHandle
 			int weaponDefID,
 			int projectileID,
 			float* newDamage,
-			float* impulseMult);
+			float* impulseMult
+		);
 
 		bool ShieldPreDamaged(
 			const CProjectile* projectile,
@@ -104,7 +106,10 @@ class CSyncedLuaHandle : public CLuaHandle
 			const CUnit* shieldCarrier,
 			bool bounceProjectile,
 			const CWeapon* beamEmitter,
-			const CUnit* beamCarrier);
+			const CUnit* beamCarrier,
+			const float3& startPos,
+			const float3& hitPos
+		);
 
 		bool SyncedActionFallback(const string& line, int playerID);
 
@@ -122,7 +127,7 @@ class CSyncedLuaHandle : public CLuaHandle
 	protected:
 		CLuaHandleSynced& base;
 
-		map<string, string> textCommands; // name, help
+		spring::unordered_map<string, string> textCommands; // name, help
 
 	private:
 		int origNextRef;
@@ -229,7 +234,8 @@ class CLuaHandleSynced
 		CUnsyncedLuaHandle unsyncedLuaHandle;
 
 	public:
-		static const LuaRulesParams::Params&  GetGameParams() { return gameParams; }
+		static void ClearGameParams() { spring::clear_unordered_map(gameParams); }
+		static const LuaRulesParams::Params& GetGameParams() { return gameParams; }
 
 	private:
 		//FIXME: add to CREG?

@@ -3,10 +3,10 @@
 #ifndef LUAUNITSCRIPT_H
 #define LUAUNITSCRIPT_H
 
-#include <map>
 #include "UnitScript.h"
 #include "NullUnitScript.h"
 #include "Sim/Units/Unit.h"
+#include "System/UnorderedMap.hpp"
 
 class CLuaHandle;
 struct lua_State;
@@ -29,17 +29,19 @@ private:
 	// contrary to COB the list of functions may differ per unit,
 	// so the LUAFN_* -> function mapping can differ per unit too.
 	std::vector<int> scriptIndex;
-	std::map<std::string, int> scriptNames;
+	spring::unordered_map<std::string, int> scriptNames;
 
 	// used to enforce SetDeathScriptFinished can only be used inside Killed
 	bool inKilled;
 
-protected:
-	void ShowScriptError(const std::string& msg) override;
-
-	// only called from CreateScript, instance can not be created from C++
+public:
+	// note: instance can not logically be created from outside CreateScript
+	// the ctor and dtor still have to be public because scripts are pooled
 	CLuaUnitScript(lua_State* L, CUnit* unit);
 	virtual ~CLuaUnitScript();
+
+protected:
+	void ShowScriptError(const std::string& msg) override;
 
 	int UpdateCallIn();
 	void UpdateCallIn(const std::string& fname, int ref);
@@ -99,6 +101,9 @@ public:
 	void Destroy() override;
 	void StartMoving(bool reversing) override;
 	void StopMoving() override;
+	void StartSkidding(const float3& vel) override;
+	void StopSkidding() override;
+	void ChangeHeading(short deltaHeading) override;
 	void StartUnload() override;
 	void EndTransport() override;
 	void StartBuilding() override;

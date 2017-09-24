@@ -13,16 +13,9 @@
 /******************************************************************************/
 /******************************************************************************/
 
-LuaRBOs::LuaRBOs()
-{
-}
-
-
 LuaRBOs::~LuaRBOs()
 {
-	set<RBO*>::const_iterator it;
-	for (it = rbos.begin(); it != rbos.end(); ++it) {
-		const RBO* rbo = *it;
+	for (const RBO* rbo: rbos) {
 		glDeleteRenderbuffersEXT(1, &rbo->id);
 	}
 }
@@ -34,11 +27,6 @@ LuaRBOs::~LuaRBOs()
 bool LuaRBOs::PushEntries(lua_State* L)
 {
 	CreateMetatable(L);
-
-#define REGISTER_LUA_CFUNC(x) \
-	lua_pushstring(L, #x);      \
-	lua_pushcfunction(L, x);    \
-	lua_rawset(L, -3)
 
 	REGISTER_LUA_CFUNC(CreateRBO);
 	REGISTER_LUA_CFUNC(DeleteRBO);
@@ -72,6 +60,7 @@ const LuaRBOs::RBO* LuaRBOs::GetLuaRBO(lua_State* L, int index)
 
 void LuaRBOs::RBO::Init()
 {
+	index  = -1u;
 	id     = 0;
 	target = GL_RENDERBUFFER_EXT;
 	format = GL_RGBA;
@@ -82,14 +71,24 @@ void LuaRBOs::RBO::Init()
 
 void LuaRBOs::RBO::Free(lua_State* L)
 {
-	if (id == 0) {
+	if (id == 0)
 		return;
-	}
 
 	glDeleteRenderbuffersEXT(1, &id);
 	id = 0;
 
-	CLuaHandle::GetActiveRBOs(L).rbos.erase(this);
+	{
+		// get rid of the userdatum
+		LuaRBOs& activeRBOs = CLuaHandle::GetActiveRBOs(L);
+		auto& rbos = activeRBOs.rbos;
+
+		assert(index < rbos.size());
+		assert(rbos[index] == this);
+
+		rbos[index] = rbos.back();
+		rbos[index]->index = index;
+		rbos.pop_back();
+	}
 }
 
 
@@ -107,18 +106,15 @@ int LuaRBOs::meta_gc(lua_State* L)
 int LuaRBOs::meta_index(lua_State* L)
 {
 	const RBO* rbo = static_cast<RBO*>(luaL_checkudata(L, 1, "RBO"));
-	const string key = luaL_checkstring(L, 2);
-	if (key == "valid") {
-		lua_pushboolean(L, glIsRenderbufferEXT(rbo->id));
-	}
-	else if (key == "target") { lua_pushnumber(L, rbo->target); }
-	else if (key == "format") { lua_pushnumber(L, rbo->format); }
-	else if (key == "xsize")  { lua_pushnumber(L, rbo->xsize);  }
-	else if (key == "ysize")  { lua_pushnumber(L, rbo->ysize);  }
-	else {
-		return 0;
-	}
-	return 1;
+	const std::string& key = luaL_checkstring(L, 2);
+
+	if (key ==  "valid") { lua_pushboolean(L, glIsRenderbufferEXT(rbo->id)); return 1; }
+	if (key == "target") { lua_pushnumber(L, rbo->target); return 1; }
+	if (key == "format") { lua_pushnumber(L, rbo->format); return 1; }
+	if (key ==  "xsize") { lua_pushnumber(L, rbo->xsize ); return 1; }
+	if (key ==  "ysize") { lua_pushnumber(L, rbo->ysize ); return 1; }
+
+	return 0;
 }
 
 
@@ -170,7 +166,11 @@ int LuaRBOs::CreateRBO(lua_State* L)
 	lua_setmetatable(L, -2);
 
 	if (rboPtr->id != 0) {
-		CLuaHandle::GetActiveRBOs(L).rbos.insert(rboPtr);
+		LuaRBOs& activeRBOs = CLuaHandle::GetActiveRBOs(L);
+		auto& rbos = activeRBOs.rbos;
+
+		rbos.push_back(rboPtr);
+		rboPtr->index = rbos.size() - 1;
 	}
 
 	return 1;

@@ -17,7 +17,7 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
 #include "System/TdfParser.h"
-#include "System/Util.h"
+#include "System/SafeUtil.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/Platform/byteorder.h"
 
@@ -114,13 +114,11 @@ CSM3ReadMap::~CSM3ReadMap()
 
 void CSM3ReadMap::ConfigNotify(const std::string& key, const std::string& value)
 {
-	if (key == "Shadows") {
-		bool drawShadows = (std::atoi(value.c_str()) > 0);
+	bool drawShadows = (configHandler->GetInt("Shadows") > 0);
 
-		if (renderer->config.useShadowMaps != drawShadows) {
-			renderer->config.useShadowMaps = drawShadows;
-			renderer->ReloadShaders();
-		}
+	if (renderer->config.useShadowMaps != drawShadows) {
+		renderer->config.useShadowMaps = drawShadows;
+		renderer->ReloadShaders();
 	}
 }
 
@@ -163,11 +161,11 @@ void CSM3ReadMap::InitGroundDrawer() {
 
 	groundDrawer = new CSM3GroundDrawer(this);
 
-	configHandler->NotifyOnChange(this);
+	configHandler->NotifyOnChange(this, {"Shadows"});
 }
 
 void CSM3ReadMap::KillGroundDrawer() {
-	SafeDelete(groundDrawer);
+	spring::SafeDelete(groundDrawer);
 }
 
 
@@ -310,8 +308,8 @@ void CSM3ReadMap::LoadFeatureData()
 		for (int a=0;a<numFeatures;a++) {
 			MapFeatureInfo& fi = featureInfo[a];
 			fi.featureType = featureTypes.size()-1;
-			fi.pos.x = gs->randFloat() * mapDims.mapx * SQUARE_SIZE;
-			fi.pos.z = gs->randFloat() * mapDims.mapy * SQUARE_SIZE;
+			fi.pos.x = gsRNG.NextFloat() * mapDims.mapx * SQUARE_SIZE;
+			fi.pos.z = gsRNG.NextFloat() * mapDims.mapy * SQUARE_SIZE;
 			fi.rotation = 0.0f;
 		}
 	}*/

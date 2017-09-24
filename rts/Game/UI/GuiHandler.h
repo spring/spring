@@ -4,8 +4,7 @@
 #define GUI_HANDLER_H
 
 #include <vector>
-#include <map>
-#include <set>
+
 #include "KeySet.h"
 #include "InputReceiver.h"
 #include "MouseHandler.h"
@@ -26,7 +25,6 @@ struct SCommandDescription;
 class CGuiHandler : public CInputReceiver {
 public:
 	CGuiHandler();
-	virtual ~CGuiHandler();
 
 	void Update();
 
@@ -43,7 +41,7 @@ public:
 		// We can not use default params for this,
 		// because they get initialized at compile-time,
 		// where camera and mouse are still undefined.
-		MouseRelease(x, y, button, camera->GetPos(), ::mouse->dir);
+		MouseRelease(x, y, button, camera->GetPos(), mouse->dir);
 	}
 	void MouseRelease(int x, int y, int button, const float3& cameraPos, const float3& mouseDir);
 	bool IsAbove(int x, int y);
@@ -56,14 +54,14 @@ public:
 		// We can not use default params for this,
 		// because they get initialized at compile-time,
 		// where camera and mouse are still undefined.
-		return GetCommand(mouseX, mouseY, buttonHint, preview, camera->GetPos(), ::mouse->dir);
+		return GetCommand(mouseX, mouseY, buttonHint, preview, camera->GetPos(), mouse->dir);
 	}
 	Command GetCommand(int mouseX, int mouseY, int buttonHint, bool preview, const float3& cameraPos, const float3& mouseDir);
 	/// startInfo.def has to be endInfo.def
 	std::vector<BuildInfo> GetBuildPos(const BuildInfo& startInfo, const BuildInfo& endInfo, const float3& cameraPos, const float3& mouseDir);
 
-	bool EnableLuaUI(bool);
-	bool DisableLuaUI();
+	bool EnableLuaUI(bool enableCommand);
+	bool DisableLuaUI(bool layoutIcons = true);
 
 	bool LoadConfig(const std::string& cfg);
 	bool LoadDefaultConfig() { return (LoadConfig(DEFAULT_GUI_CONFIG)); }
@@ -115,10 +113,10 @@ public:
 	int buildSpacing;
 
 private:
-	void GiveCommand(Command& cmd, bool fromUser = true);
+	void GiveCommand(const Command& cmd, bool fromUser = true);
 	void GiveCommandsNow();
 	bool LayoutCustomIcons(bool useSelectionPage);
-	void ResizeIconArray(unsigned int size);
+	void ResizeIconArray(size_t size);
 	void AppendPrevAndNext(std::vector<SCommandDescription>& cmds);
 	void ConvertCommands(std::vector<SCommandDescription>& cmds);
 
@@ -240,10 +238,8 @@ private:
 		Box selection;
 	};
 	std::vector<IconInfo> icons;
-	unsigned int iconsSize;
+	// number of slots taken up in <icons>
 	int iconsCount;
-
-	std::map<std::string, unsigned int> textureMap; // fileName, glTextureID
 
 	int failedSound;
 

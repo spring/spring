@@ -22,15 +22,17 @@ public:
 	);
 
 	void Update() override;
-	void Draw() override;
+	void Draw(CVertexArray* va) override;
 
-	virtual int GetProjectilesCount() const override;
+	int GetProjectilesCount() const override;
 
 private:
 	float alpha;
 	float alphaFalloff;
 	float alphaAdd;
+
 	int alphaAddTime;
+
 	float size;
 	float sizeExpansion;
 	float rotation;

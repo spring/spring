@@ -1,6 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include <fstream>
+#include <set>
 
 #include "Game/Camera/CameraController.h"
 #include "Game/Camera.h"
@@ -20,18 +21,8 @@
 #include "System/Log/ILog.h"
 #include "System/myMath.h"
 #include "System/FileSystem/DataDirsAccess.h"
-#include <boost/cstdint.hpp>
 
 CSelectionKeyHandler* selectionKeys;
-
-CSelectionKeyHandler::CSelectionKeyHandler()
-	: selectNumber(0)
-{
-}
-
-CSelectionKeyHandler::~CSelectionKeyHandler()
-{
-}
 
 std::string CSelectionKeyHandler::ReadToken(std::string& str)
 {
@@ -152,9 +143,13 @@ namespace
 		std::set<int> prevTypes;
 		void Prepare() {
 			prevTypes.clear();
-			const CUnitSet& tu = selectedUnitsHandler.selectedUnits;
-			for (CUnitSet::const_iterator si = tu.begin(); si != tu.end(); ++si) {
-				prevTypes.insert((*si)->unitDef->id);
+
+			const auto& selUnits = selectedUnitsHandler.selectedUnits;
+
+			for (const int unitID: selUnits) {
+				const CUnit* u = unitHandler->GetUnit(unitID);
+				const UnitDef* ud = u->unitDef;
+				prevTypes.insert(ud->id);
 			}
 		},
 	)
@@ -214,78 +209,78 @@ void CSelectionKeyHandler::DoSelection(std::string selectString)
 	std::list<CUnit*> selection;
 
 //	guicontroller->AddText(selectString.c_str());
-	std::string s=ReadToken(selectString);
+	std::string s = std::move(ReadToken(selectString));
 
-	if(s=="AllMap"){
+	if (s == "AllMap") {
 		if (!gu->spectatingFullSelect) {
 			// team units
-			for(CUnit* unit: teamHandler->Team(gu->myTeam)->units){
+			for (CUnit* unit: teamHandler->Team(gu->myTeam)->units) {
 				selection.push_back(unit);
 			}
 		} else {
 			// all units
-			for (CUnit *unit: unitHandler->activeUnits){
+			for (CUnit* unit: unitHandler->GetActiveUnits()) {
 				selection.push_back(unit);
 			}
 		}
-	} else if(s=="Visible"){
+	} else if (s == "Visible") {
 		if (!gu->spectatingFullSelect) {
 			// team units in viewport
-			for(CUnit* unit: teamHandler->Team(gu->myTeam)->units){
-				if (camera->InView(unit->midPos,unit->radius)){
+			for (CUnit* unit: teamHandler->Team(gu->myTeam)->units) {
+				if (camera->InView(unit->midPos, unit->radius))
 					selection.push_back(unit);
-				}
 			}
 		} else {
 		  // all units in viewport
-			for (CUnit *unit: unitHandler->activeUnits){
-				if (camera->InView(unit->midPos,unit->radius)){
+			for (CUnit* unit: unitHandler->GetActiveUnits()) {
+				if (camera->InView(unit->midPos,unit->radius))
 					selection.push_back(unit);
-				}
 			}
 		}
-	} else if(s=="FromMouse" || s=="FromMouseC"){
+	} else if (s == "FromMouse" || s == "FromMouseC") {
 		// FromMouse uses distance from a point on the ground,
 		// so essentially a selection sphere.
 		// FromMouseC uses a cylinder shaped volume for selection,
 		// so the heights of the units do not matter.
 		const bool cylindrical = (s == "FromMouseC");
-		ReadDelimiter(selectString);
-		float maxDist=atof(ReadToken(selectString).c_str());
 
-		float dist = CGround::LineGroundCol(camera->GetPos(), camera->GetPos() + mouse->dir * 8000, false);
-		float3 mp=camera->GetPos()+mouse->dir*dist;
-		if (cylindrical) {
-			mp.y = 0;
-		}
+		ReadDelimiter(selectString);
+
+		const float maxDist = atof(ReadToken(selectString).c_str());
+		const float dist = CGround::LineGroundCol(camera->GetPos(), camera->GetPos() + mouse->dir * 8000, false);
+
+		float3 mp = camera->GetPos() + mouse->dir * dist;
+
+		if (cylindrical)
+			mp.y = 0.0f;
 
 		if (!gu->spectatingFullSelect) {
-		  // team units in mouse range
-			for(CUnit* unit: teamHandler->Team(gu->myTeam)->units){
+			// team units in mouse range
+			for (CUnit* unit: teamHandler->Team(gu->myTeam)->units){
 				float3 up = unit->pos;
-				if (cylindrical) {
-					up.y = 0;
-				}
-				if(mp.SqDistance(up) < Square(maxDist)){
+				if (cylindrical)
+					up.y = 0.0f;
+
+				if (mp.SqDistance(up) < Square(maxDist))
 					selection.push_back(unit);
-				}
 			}
 		} else {
-		  // all units in mouse range
-			for(CUnit *unit: unitHandler->activeUnits){
+			// all units in mouse range
+			for (CUnit* unit: unitHandler->GetActiveUnits()) {
 				float3 up = unit->pos;
-				if (cylindrical) {
-					up.y = 0;
-				}
-				if(mp.SqDistance(up)<Square(maxDist)){
+
+				if (cylindrical)
+					up.y = 0.0f;
+
+				if (mp.SqDistance(up)<Square(maxDist))
 					selection.push_back(unit);
-				}
 			}
 		}
-	} else if(s=="PrevSelection"){
-		CUnitSet* su=&selectedUnitsHandler.selectedUnits;
-		for(CUnitSet::iterator ui=su->begin();ui!=su->end();++ui){
-			selection.push_back(*ui);
+	} else if (s == "PrevSelection") {
+		const auto& selUnits = selectedUnitsHandler.selectedUnits;
+
+		for (const int unitID: selUnits) {
+			selection.push_back(unitHandler->GetUnit(unitID));
 		}
 	} else {
 		LOG_L(L_WARNING, "Unknown source token %s", s.c_str());
@@ -294,127 +289,143 @@ void CSelectionKeyHandler::DoSelection(std::string selectString)
 
 	ReadDelimiter(selectString);
 
-	while(true){
-		std::string s=ReadDelimiter(selectString);
-		if(s=="+")
+	while (true) {
+		std::string filter = std::move(ReadDelimiter(selectString));
+
+		if (filter == "+")
 			break;
 
-		s=ReadToken(selectString);
+		filter = std::move(ReadToken(selectString));
 
-		bool _not=false;
+		bool _not = false;
 
-		if(s=="Not"){
-			_not=true;
+		if (filter == "Not") {
+			_not = true;
 			ReadDelimiter(selectString);
-			s=ReadToken(selectString);
+			filter = std::move(ReadToken(selectString));
 		}
 
 		Filter::Map& filters = Filter::all();
-		Filter::Map::iterator f = filters.find(s);
+		Filter::Map::iterator f = filters.find(filter);
 
 		if (f != filters.end()) {
 			f->second->Prepare();
+
 			for (int i = 0; i < f->second->numArgs; ++i) {
 				ReadDelimiter(selectString);
 				f->second->SetParam(i, ReadToken(selectString));
 			}
-			std::list<CUnit*>::iterator ui = selection.begin();
+
+			auto ui = selection.begin();
+
 			while (ui != selection.end()) {
 				if (f->second->ShouldIncludeUnit(*ui) ^ _not) {
 					++ui;
-				}
-				else {
-					std::list<CUnit*>::iterator prev = ui++;
+				} else {
+					const auto prev = ui++;
 					selection.erase(prev);
 				}
 			}
-		}
-		else {
-			LOG_L(L_WARNING, "Unknown token in filter %s", s.c_str());
+		} else {
+			LOG_L(L_WARNING, "Unknown token in filter %s", filter.c_str());
 			return;
 		}
 	}
 
 	ReadDelimiter(selectString);
-	s=ReadToken(selectString);
+	s = std::move(ReadToken(selectString));
 
-	if(s=="ClearSelection"){
+	if (s == "ClearSelection") {
 		selectedUnitsHandler.ClearSelected();
 
 		ReadDelimiter(selectString);
-		s=ReadToken(selectString);
+		s = ReadToken(selectString);
 	}
 
-	if(s=="SelectAll"){
-		for (std::list<CUnit*>::iterator ui=selection.begin();ui!=selection.end();++ui)
-			selectedUnitsHandler.AddUnit(*ui);
-	} else if(s=="SelectOne"){
-		if(selection.empty())
+	if (s == "SelectAll") {
+		for (CUnit* u: selection)
+			selectedUnitsHandler.AddUnit(u);
+
+		return;
+	}
+
+	if (s == "SelectOne") {
+		if (selection.empty())
 			return;
-		if(++selectNumber>=selection.size())
-			selectNumber=0;
+		if (++selectNumber >= selection.size())
+			selectNumber = 0;
 
-		CUnit* sel = NULL;
-		int a=0;
-		for (std::list<CUnit*>::iterator ui=selection.begin();ui!=selection.end() && a<=selectNumber;++ui,++a)
-			sel=*ui;
+		CUnit* sel = nullptr;
+		int a = 0;
+		for (auto ui = selection.begin(); ui != selection.end() && a <= selectNumber; ++ui, ++a)
+			sel = *ui;
 
-		if (sel == NULL)
+		if (sel == nullptr)
 			return;
 
 		selectedUnitsHandler.AddUnit(sel);
 		camHandler->CameraTransition(0.8f);
+
 		if (camHandler->GetCurrentControllerNum() != CCameraHandler::CAMERA_MODE_FIRSTPERSON) {
 			camHandler->GetCurrentController().SetPos(sel->pos);
 		} else {
-			//fps camera
-			if (camera->GetRot().x > -1.f)
-				camera->SetRotX(-1.f);
+			// FPS camera
+			if (camera->GetRot().x > -1.0f)
+				camera->SetRotX(-1.0f);
 
-			camHandler->GetCurrentController().SetPos(sel->pos - camera->GetDir() * 800);
-		}
-	} else if(s=="SelectNum"){
-		ReadDelimiter(selectString);
-		int num=atoi(ReadToken(selectString).c_str());
-
-		if(selection.empty())
-			return;
-
-		if(selectNumber>=selection.size())
-			selectNumber=0;
-
-		std::list<CUnit*>::iterator ui=selection.begin();
-		for (int a=0;a<selectNumber;++a)
-			++ui;
-		for (int a=0;a<num;++ui,++a){
-			if(ui==selection.end())
-				ui=selection.begin();
-			selectedUnitsHandler.AddUnit(*ui);
+			camHandler->GetCurrentController().SetPos(sel->pos - camera->GetDir() * 800.0f);
 		}
 
-		selectNumber+=num;
-	} else if(s=="SelectPart"){
-		ReadDelimiter(selectString);
-		float part=atof(ReadToken(selectString).c_str())*0.01f;//convert from percent
-		int num=(int)(selection.size()*part);
+		return;
+	}
 
-		if(selection.empty())
+	if (s == "SelectNum") {
+		ReadDelimiter(selectString);
+		const int num = atoi(ReadToken(selectString).c_str());
+
+		if (selection.empty())
 			return;
 
-		if(selectNumber>=selection.size())
-			selectNumber=0;
+		if (selectNumber >= selection.size())
+			selectNumber = 0;
 
-		std::list<CUnit*>::iterator ui = selection.begin();
+		auto ui = selection.begin();
 		for (int a = 0; a < selectNumber; ++a)
 			++ui;
-		for(int a=0;a<num;++ui,++a){
-			if(ui==selection.end())
-				ui=selection.begin();
+		for (int a = 0; a < num; ++ui, ++a) {
+			if (ui == selection.end())
+				ui = selection.begin();
 			selectedUnitsHandler.AddUnit(*ui);
 		}
 
-		selectNumber+=num;
-	} else {
-		LOG_L(L_WARNING, "Unknown token in conclusion %s", s.c_str());
+		selectNumber += num;
+		return;
 	}
+
+	if (s == "SelectPart") {
+		ReadDelimiter(selectString);
+
+		const float part = atof(ReadToken(selectString).c_str()) * 0.01f;//convert from percent
+		const int num = (int)(selection.size() * part);
+
+		if (selection.empty())
+			return;
+
+		if (selectNumber >= selection.size())
+			selectNumber = 0;
+
+		auto ui = selection.begin();
+		for (int a = 0; a < selectNumber; ++a)
+			++ui;
+		for (int a = 0; a < num; ++ui, ++a) {
+			if (ui == selection.end())
+				ui = selection.begin();
+			selectedUnitsHandler.AddUnit(*ui);
+		}
+
+		selectNumber += num;
+		return;
+	}
+
+	LOG_L(L_WARNING, "Unknown token in conclusion %s", s.c_str());
 }

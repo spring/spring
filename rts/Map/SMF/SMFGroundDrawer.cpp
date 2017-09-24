@@ -7,11 +7,14 @@
 #include "Game/Camera.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
+#include "Map/SMF/Basic/BasicMeshDrawer.h"
 #include "Map/SMF/Legacy/LegacyMeshDrawer.h"
 #include "Map/SMF/ROAM/RoamMeshDrawer.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/Env/ISky.h"
+#include "Rendering/Env/WaterRendering.h"
+#include "Rendering/Env/MapRendering.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Shaders/Shader.h"
@@ -20,9 +23,16 @@
 #include "System/FastMath.h"
 #include "System/Log/ILog.h"
 #include "System/myMath.h"
-#include "System/TimeProfiler.h"
 
-CONFIG(int, GroundDetail).defaultValue(60).headlessValue(0).minimumValue(0).maximumValue(200).description("Controls how detailed the map geometry will be. On lowered settings, cliffs may appear to be jagged or \"melting\".");
+static constexpr int MIN_GROUND_DETAIL[] = {                               0,   4};
+static constexpr int MAX_GROUND_DETAIL[] = {CBasicMeshDrawer::LOD_LEVELS - 1, 200};
+
+CONFIG(int, GroundDetail)
+	.defaultValue(60)
+	.headlessValue(0)
+	.minimumValue(MIN_GROUND_DETAIL[1])
+	.maximumValue(MAX_GROUND_DETAIL[1])
+	.description("Controls how detailed the map geometry will be. On lowered settings, cliffs may appear to be jagged or \"melting\".");
 CONFIG(bool, MapBorder).defaultValue(true).description("Draws a solid border at the edges of the map.");
 
 
@@ -30,23 +40,27 @@ CONFIG(int, MaxDynamicMapLights)
 	.defaultValue(1)
 	.minimumValue(0);
 
-CONFIG(bool, AdvMapShading).defaultValue(true).safemodeValue(false).description("Enable shaders for terrain rendering and enable so more effects.");
+CONFIG(bool, AdvMapShading).defaultValue(true).safemodeValue(false).description("Enable shaders for terrain rendering.");
 CONFIG(bool, AllowDeferredMapRendering).defaultValue(false).safemodeValue(false);
+
 
 CONFIG(int, ROAM)
 	.defaultValue(Patch::VBO)
 	.safemodeValue(Patch::DL)
 	.minimumValue(0)
 	.maximumValue(Patch::VA)
-	.description("Use ROAM for terrain mesh rendering. 0:=disable ROAM, 1=VBO mode, 2=DL mode, 3=VA mode");
+	.description("Use ROAM for terrain mesh rendering: 0 to disable, {1=VBO,2=DL,3=VA}-mode to enable.");
 
 
 CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
 	: smfMap(rm)
-	, meshDrawer(NULL)
+	, meshDrawer(nullptr)
 {
+	drawerMode = (configHandler->GetInt("ROAM") != 0)? SMF_MESHDRAWER_ROAM: SMF_MESHDRAWER_BASIC;
+	groundDetail = configHandler->GetInt("GroundDetail");
+
 	groundTextures = new CSMFGroundTextures(smfMap);
-	meshDrawer = SwitchMeshDrawer((configHandler->GetInt("ROAM") != 0) ? SMF_MESHDRAWER_ROAM : SMF_MESHDRAWER_LEGACY);
+	meshDrawer = SwitchMeshDrawer(drawerMode);
 
 	smfRenderStates.resize(RENDER_STATE_CNT, nullptr);
 	smfRenderStates[RENDER_STATE_SSP] = ISMFRenderState::GetInstance(globalRendering->haveARB, globalRendering->haveGLSL, false);
@@ -60,8 +74,6 @@ CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
 	drawForward = true;
 	drawDeferred = geomBuffer.Valid();
 	drawMapEdges = configHandler->GetBool("MapBorder");
-
-	groundDetail = configHandler->GetInt("GroundDetail");
 
 
 	// NOTE:
@@ -84,7 +96,7 @@ CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
 	waterPlaneDispLists[0] = 0;
 	waterPlaneDispLists[1] = 0;
 
-	if (mapInfo->water.hasWaterPlane) {
+	if (waterRendering->hasWaterPlane) {
 		glNewList((waterPlaneDispLists[0] = glGenLists(1)), GL_COMPILE);
 		CreateWaterPlanes(true);
 		glEndList();
@@ -101,17 +113,16 @@ CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
 
 CSMFGroundDrawer::~CSMFGroundDrawer()
 {
-	// if ROAM _was_ enabled, the configvar is written in CRoamMeshDrawer's dtor
-	if (dynamic_cast<CRoamMeshDrawer*>(meshDrawer) == nullptr)
-		configHandler->Set("ROAM", 0);
+	// remember which ROAM-mode was enabled (if any)
+	configHandler->Set("ROAM", (dynamic_cast<CRoamMeshDrawer*>(meshDrawer) != nullptr)? Patch::GetRenderMode(): 0);
 
 	smfRenderStates[RENDER_STATE_FFP]->Kill(); ISMFRenderState::FreeInstance(smfRenderStates[RENDER_STATE_FFP]);
 	smfRenderStates[RENDER_STATE_SSP]->Kill(); ISMFRenderState::FreeInstance(smfRenderStates[RENDER_STATE_SSP]);
 	smfRenderStates[RENDER_STATE_LUA]->Kill(); ISMFRenderState::FreeInstance(smfRenderStates[RENDER_STATE_LUA]);
 	smfRenderStates.clear();
 
-	SafeDelete(groundTextures);
-	SafeDelete(meshDrawer);
+	spring::SafeDelete(groundTextures);
+	spring::SafeDelete(meshDrawer);
 
 	// individually generated, individually deleted
 	glDeleteLists(waterPlaneDispLists[0], 1);
@@ -120,30 +131,32 @@ CSMFGroundDrawer::~CSMFGroundDrawer()
 
 
 
-IMeshDrawer* CSMFGroundDrawer::SwitchMeshDrawer(int mode)
+IMeshDrawer* CSMFGroundDrawer::SwitchMeshDrawer(int wantedMode)
 {
-	const int curMode = ((dynamic_cast<CRoamMeshDrawer*>(meshDrawer) != nullptr) ? SMF_MESHDRAWER_ROAM : SMF_MESHDRAWER_LEGACY);
-
-	// mode == -1: toggle modes
-	if (mode < 0) {
-		mode = curMode + 1;
-		mode %= SMF_MESHDRAWER_LAST;
+	// toggle
+	if (wantedMode <= -1) {
+		wantedMode = drawerMode + 1;
+		wantedMode %= SMF_MESHDRAWER_LAST;
 	}
 
-	if ((curMode == mode) && (meshDrawer != nullptr))
+	if ((wantedMode == drawerMode) && (meshDrawer != nullptr))
 		return meshDrawer;
 
-	delete meshDrawer;
+	spring::SafeDelete(meshDrawer);
 
-	switch (mode) {
-		case SMF_MESHDRAWER_LEGACY:
+	switch ((drawerMode = wantedMode)) {
+		case SMF_MESHDRAWER_LEGACY: {
 			LOG("Switching to Legacy Mesh Rendering");
 			meshDrawer = new CLegacyMeshDrawer(smfMap, this);
-			break;
-		default:
+		} break;
+		case SMF_MESHDRAWER_BASIC: {
+			LOG("Switching to Basic Mesh Rendering");
+			meshDrawer = new CBasicMeshDrawer(this);
+		} break;
+		default: {
 			LOG("Switching to ROAM Mesh Rendering");
-			meshDrawer = new CRoamMeshDrawer(smfMap, this);
-			break;
+			meshDrawer = new CRoamMeshDrawer(this);
+		} break;
 	}
 
 	return meshDrawer;
@@ -170,13 +183,13 @@ void CSMFGroundDrawer::CreateWaterPlanes(bool camOufOfMap) {
 	};
 
 	const unsigned char planeColor[4] = {
-		(unsigned char)(255 * mapInfo->water.planeColor[0]),
-		(unsigned char)(255 * mapInfo->water.planeColor[1]),
-		(unsigned char)(255 * mapInfo->water.planeColor[2]),
+		(unsigned char)(255 * waterRendering->planeColor[0]),
+		(unsigned char)(255 * waterRendering->planeColor[1]),
+		(unsigned char)(255 * waterRendering->planeColor[2]),
 		 255
 	};
 
-	const float alphainc = fastmath::PI2 / 32;
+	const float alphainc = math::TWOPI / 32;
 	float alpha,r1,r2;
 
 	float3 p(0.0f, 0.0f, 0.0f);
@@ -195,7 +208,7 @@ void CSMFGroundDrawer::CreateWaterPlanes(bool camOufOfMap) {
 		} else {
 			r2 = (n+1)*(n+1) * size;
 		}
-		for (alpha = 0.0f; (alpha - fastmath::PI2) < alphainc ; alpha += alphainc) {
+		for (alpha = 0.0f; (alpha - math::TWOPI) < alphainc ; alpha += alphainc) {
 			p.x = r1 * fastmath::sin(alpha) + 2 * xsize;
 			p.z = r1 * fastmath::cos(alpha) + 2 * ysize;
 			va->AddVertexC(p, planeColor );
@@ -215,8 +228,8 @@ inline void CSMFGroundDrawer::DrawWaterPlane(bool drawWaterReflection) {
 		return;
 
 	glPushMatrix();
-	glTranslatef(0.f, std::min(-200.0f, smfMap->GetCurrMinHeight() - 400.0f), 0.f);
-	glCallList(waterPlaneDispLists[camera->GetPos().IsInBounds() && !mapInfo->map.voidWater]);
+	glTranslatef(0.0f, std::min(-200.0f, smfMap->GetCurrMinHeight() - 400.0f), 0.0f);
+	glCallList(waterPlaneDispLists[camera->GetPos().IsInBounds() && !mapRendering->voidWater]);
 	glPopMatrix();
 }
 
@@ -272,6 +285,7 @@ void CSMFGroundDrawer::DrawDeferredPass(const DrawPass::e& drawPass, bool alphaT
 
 	{
 		geomBuffer.Bind();
+		geomBuffer.SetDepthRange(1.0f, 0.0f);
 		geomBuffer.Clear();
 
 		smfRenderStates[RENDER_STATE_SEL]->SetCurrentShader(DrawPass::TerrainDeferred);
@@ -294,6 +308,7 @@ void CSMFGroundDrawer::DrawDeferredPass(const DrawPass::e& drawPass, bool alphaT
 		smfRenderStates[RENDER_STATE_SEL]->Disable(this, drawPass);
 		smfRenderStates[RENDER_STATE_SEL]->SetCurrentShader(DrawPass::Normal);
 
+		geomBuffer.SetDepthRange(0.0f, 1.0f);
 		geomBuffer.UnBind();
 	}
 
@@ -316,9 +331,11 @@ void CSMFGroundDrawer::DrawForwardPass(const DrawPass::e& drawPass, bool alphaTe
 		smfRenderStates[RENDER_STATE_SEL]->SetCurrentShader(drawPass);
 		smfRenderStates[RENDER_STATE_SEL]->Enable(this, drawPass);
 
-		if (wireframe) {
+		glPushAttrib((GL_ENABLE_BIT * alphaTest) | (GL_POLYGON_BIT * wireframe));
+
+		if (wireframe)
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-		}
+
 		if (alphaTest) {
 			glEnable(GL_ALPHA_TEST);
 			glAlphaFunc(GL_GREATER, mapInfo->map.voidAlphaMin);
@@ -329,12 +346,7 @@ void CSMFGroundDrawer::DrawForwardPass(const DrawPass::e& drawPass, bool alphaTe
 
 		meshDrawer->DrawMesh(drawPass);
 
-		if (alphaTest) {
-			glDisable(GL_ALPHA_TEST);
-		}
-		if (wireframe) {
-			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-		}
+		glPopAttrib();
 
 		smfRenderStates[RENDER_STATE_SEL]->Disable(this, drawPass);
 		smfRenderStates[RENDER_STATE_SEL]->SetCurrentShader(DrawPass::Normal);
@@ -358,22 +370,21 @@ void CSMFGroundDrawer::Draw(const DrawPass::e& drawPass)
 		// do the deferred pass first, will allow us to re-use
 		// its output at some future point and eventually draw
 		// the entire map deferred
-		DrawDeferredPass(drawPass, mapInfo->map.voidGround || (mapInfo->map.voidWater && drawPass != DrawPass::WaterReflection));
+		DrawDeferredPass(drawPass, mapRendering->voidGround || (mapRendering->voidWater && drawPass != DrawPass::WaterReflection));
 	}
 
 	if (drawForward) {
-		DrawForwardPass(drawPass, mapInfo->map.voidGround || (mapInfo->map.voidWater && drawPass != DrawPass::WaterReflection));
+		DrawForwardPass(drawPass, mapRendering->voidGround || (mapRendering->voidWater && drawPass != DrawPass::WaterReflection));
 	}
 
 	glDisable(GL_CULL_FACE);
 
 	if (drawPass == DrawPass::Normal) {
-		if (mapInfo->water.hasWaterPlane) {
+		if (waterRendering->hasWaterPlane) {
 			DrawWaterPlane(false);
 		}
 
 		if (drawMapEdges) {
-			SCOPED_TIMER("CSMFGroundDrawer::DrawBorder");
 			DrawBorder(drawPass);
 		}
 	}
@@ -416,12 +427,11 @@ void CSMFGroundDrawer::DrawBorder(const DrawPass::e drawPass)
 
 	glEnable(GL_BLEND);
 
-		if (wireframe) {
+		if (wireframe)
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-		}
 
 		/*
-		if (mapInfo->map.voidWater && (drawPass != DrawPass::WaterReflection)) {
+		if (mapRendering->voidWater && (drawPass != DrawPass::WaterReflection)) {
 			glEnable(GL_ALPHA_TEST);
 			glAlphaFunc(GL_GREATER, 0.9f);
 		}
@@ -430,14 +440,13 @@ void CSMFGroundDrawer::DrawBorder(const DrawPass::e drawPass)
 		meshDrawer->DrawBorderMesh(drawPass);
 
 		/*
-		if (mapInfo->map.voidWater && (drawPass != DrawPass::WaterReflection)) {
+		if (mapRendering->voidWater && (drawPass != DrawPass::WaterReflection)) {
 			glDisable(GL_ALPHA_TEST);
 		}
 		*/
 
-		if (wireframe) {
+		if (wireframe)
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-		}
 
 	glDisable(GL_BLEND);
 
@@ -466,10 +475,12 @@ void CSMFGroundDrawer::DrawShadowPass()
 	Shader::IProgramObject* po = shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MAP);
 
 	glEnable(GL_POLYGON_OFFSET_FILL);
+	glPolygonOffset(spPolygonOffsetScale, spPolygonOffsetUnits); // dz*s + r*u
 
-	glPolygonOffset(-1.0f, -1.0f);
+		// also render the border geometry to prevent light-visible backfaces
 		po->Enable();
 			meshDrawer->DrawMesh(DrawPass::Shadow);
+			meshDrawer->DrawBorderMesh(DrawPass::Shadow);
 		po->Disable();
 
 	glDisable(GL_POLYGON_OFFSET_FILL);
@@ -532,28 +543,13 @@ bool CSMFGroundDrawer::UpdateGeometryBuffer(bool init)
 
 
 
-void CSMFGroundDrawer::IncreaseDetail()
-{
-	configHandler->Set("GroundDetail", groundDetail += 2);
-	LOG("GroundDetail is now %i", groundDetail);
-}
-
-void CSMFGroundDrawer::DecreaseDetail()
-{
-	if (groundDetail > 4) {
-		configHandler->Set("GroundDetail", groundDetail -= 2);
-		LOG("GroundDetail is now %i", groundDetail);
-	}
-}
-
 void CSMFGroundDrawer::SetDetail(int newGroundDetail)
 {
-	if (newGroundDetail < 4)
-		newGroundDetail = 4;
+	const int minGroundDetail = MIN_GROUND_DETAIL[drawerMode != SMF_MESHDRAWER_BASIC];
+	const int maxGroundDetail = MAX_GROUND_DETAIL[drawerMode != SMF_MESHDRAWER_BASIC];
 
-	groundDetail = newGroundDetail;
-	configHandler->Set("GroundDetail", groundDetail);
-	LOG("GroundDetail is now %i", groundDetail);
+	configHandler->Set("GroundDetail", groundDetail = Clamp(newGroundDetail, minGroundDetail, maxGroundDetail));
+	LOG("GroundDetail%s set to %i", ((drawerMode == SMF_MESHDRAWER_BASIC)? "[Bias]": ""), groundDetail);
 }
 
 
@@ -583,6 +579,5 @@ int CSMFGroundDrawer::GetGroundDetail(const DrawPass::e& drawPass) const
 			break;
 	}
 
-	return std::max(4, detail);
+	return detail;
 }
-

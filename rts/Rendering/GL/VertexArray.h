@@ -81,7 +81,24 @@ public:
 
 public:
 	CVertexArray(unsigned int maxVerts = 1 << 16);
+	CVertexArray(const CVertexArray& va) = delete;
+	CVertexArray(CVertexArray&& va) { *this = std::move(va); }
+
 	virtual ~CVertexArray();
+
+	CVertexArray& operator = (const CVertexArray& va) = delete;
+	CVertexArray& operator = (CVertexArray&& va) {
+		drawArray     = va.drawArray;     va.drawArray     = nullptr;
+		drawArrayPos  = va.drawArrayPos;  va.drawArrayPos  = nullptr;
+		drawArraySize = va.drawArraySize; va.drawArraySize = nullptr;
+
+		stripArray     = va.stripArray;     va.stripArray     = nullptr;
+		stripArrayPos  = va.stripArrayPos;  va.stripArrayPos  = nullptr;
+		stripArraySize = va.stripArraySize; va.stripArraySize = nullptr;
+
+		maxVertices = va.maxVertices;
+		return *this;
+	}
 
 	bool IsReady() const;
 	void Initialize();
@@ -150,7 +167,7 @@ public:
 protected:
 	void DrawArrays(const GLenum mode, const unsigned int stride);
 	void DrawArraysCallback(const GLenum mode, const unsigned int stride, StripCallback callback, void* data);
-	inline void CheckEnlargeDrawArray();
+	inline void CheckEnlargeDrawArray(size_t bytesNeeded);
 	void EnlargeStripArray();
 	void EnlargeDrawArray();
 	inline void CheckEndStrip();

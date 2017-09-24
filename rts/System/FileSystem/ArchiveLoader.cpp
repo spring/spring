@@ -14,7 +14,7 @@
 #include "FileSystem.h"
 #include "DataDirsAccess.h"
 
-#include "System/Util.h"
+#include "System/SafeUtil.h"
 
 
 CArchiveLoader::CArchiveLoader()
@@ -31,7 +31,7 @@ CArchiveLoader::~CArchiveLoader()
 {
 	std::map<std::string, IArchiveFactory*>::iterator afi;
 	for (afi = archiveFactories.begin(); afi != archiveFactories.end(); ++afi) {
-		SafeDelete(afi->second);
+		spring::SafeDelete(afi->second);
 	}
 }
 

@@ -4,12 +4,12 @@
 #define _COMMAND_AI_H
 
 #include <vector>
-#include <set>
 
 #include "System/Object.h"
 #include "CommandDescription.h"
 #include "CommandQueue.h"
 #include "System/float3.h"
+#include "System/UnorderedSet.hpp"
 
 class CUnit;
 class CFeature;
@@ -77,9 +77,8 @@ public:
 	 * @brief Returns commands that overlap c, but will not be canceled by c
 	 * @return a vector containing commands that overlap c
 	 */
-	std::vector<Command> GetOverlapQueued(const Command& c);
-	std::vector<Command> GetOverlapQueued(const Command& c,
-	                                      CCommandQueue& queue);
+	std::vector<Command> GetOverlapQueued(const Command& c) const;
+	std::vector<Command> GetOverlapQueued(const Command& c, const CCommandQueue& queue) const;
 
 	const std::vector<const SCommandDescription*>& GetPossibleCommands() const { return possibleCommands; }
 
@@ -116,7 +115,7 @@ public:
 	CWeapon* stockpileWeapon;
 
 	std::vector<const SCommandDescription*> possibleCommands;
-	std::set<int> nonQueingCommands;
+	spring::unordered_set<int> nonQueingCommands;
 
 	CCommandQueue commandQue;
 
@@ -152,7 +151,8 @@ protected:
 	void DrawDefaultCommand(const Command& c) const;
 
 private:
-	std::set<CObject*> commandDeathDependences;
+	// FIXME make synced?
+	spring::unsynced_set<CObject*> commandDeathDependences;
 	/**
 	 * continuously set to some non-zero value while target is in radar
 	 * decremented by 1 every SlowUpdate (!), command is canceled when

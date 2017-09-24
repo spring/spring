@@ -6,6 +6,7 @@
 #include "System/Object.h"
 #include "System/float3.h"
 #include "System/float4.h"
+#include <algorithm>
 
 namespace GL {
 	struct Light: public CObject {
@@ -41,8 +42,11 @@ namespace GL {
 		}
 
 		void ClearDeathDependencies() {
-			for (CObject* obj: GetListening(DEPENDENCE_LIGHT)) {
-				DeleteDeathDependence(obj, DEPENDENCE_LIGHT);
+			// modified by DeleteDeathDependence
+			const auto& listeningObjs = GetListening(DEPENDENCE_LIGHT);
+
+			while (!listeningObjs.empty()) {
+				DeleteDeathDependence(listeningObjs.back(), DEPENDENCE_LIGHT);
 			}
 		}
 

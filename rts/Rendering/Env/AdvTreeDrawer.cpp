@@ -1,7 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "AdvTreeDrawer.h"
-#include "AdvTreeGenerator.h"
 #include "Game/Camera.h"
 #include "Game/GlobalUnsynced.h"
 #include "Map/BaseGroundDrawer.h"
@@ -45,13 +44,16 @@ static const float HALF_MAX_TREE_HEIGHT   = MAX_TREE_HEIGHT * 0.5f;
 
 CAdvTreeDrawer::CAdvTreeDrawer(): ITreeDrawer()
 {
-	if (!GLEW_ARB_vertex_program || !FBO::IsSupported())
-		throw content_error("ADVTREE: missing OpenGL features!");
+	if (!FBO::IsSupported())
+		throw content_error("[AdvTreeDrawer] missing FBO support");
+
+	if (!globalRendering->haveARB && !globalRendering->haveGLSL)
+		throw content_error("[AdvTreeDrawer] missing shader support");
 
 	LoadTreeShaders();
 
-	treeGen = new CAdvTreeGenerator();
-	treeGen->CreateFarTex(treeShaders[TREE_PROGRAM_NEAR_BASIC]);
+	treeGen.Init();
+	treeGen.CreateFarTex(treeShaders[TREE_PROGRAM_NEAR_BASIC]);
 
 	oldTreeDistance = 4;
 	lastListClean = 0;
@@ -69,8 +71,6 @@ CAdvTreeDrawer::~CAdvTreeDrawer()
 			glDeleteLists(tss.farDispList, 1);
 		}
 	}
-
-	delete treeGen;
 
 	shaderHandler->ReleaseProgramObjects("[TreeDrawer]");
 	treeShaders.clear();
@@ -169,7 +169,7 @@ void CAdvTreeDrawer::LoadTreeShaders() {
 		treeShaders[TREE_PROGRAM_NEAR_SHADOW]->Enable();
 		treeShaders[TREE_PROGRAM_NEAR_SHADOW]->SetUniform3fv(3, &sunLighting->groundAmbientColor[0]);
 		treeShaders[TREE_PROGRAM_NEAR_SHADOW]->SetUniform3fv(4, &sunLighting->groundDiffuseColor[0]);
-		treeShaders[TREE_PROGRAM_NEAR_SHADOW]->SetUniform1f(9, 1.0f - (sky->GetLight()->GetGroundShadowDensity() * 0.5f));
+		treeShaders[TREE_PROGRAM_NEAR_SHADOW]->SetUniform1f(9, 1.0f - (sunLighting->groundShadowDensity * 0.5f));
 		treeShaders[TREE_PROGRAM_NEAR_SHADOW]->SetUniform1i(10, 0);
 		treeShaders[TREE_PROGRAM_NEAR_SHADOW]->SetUniform1i(11, 1);
 		treeShaders[TREE_PROGRAM_NEAR_SHADOW]->Disable();
@@ -177,7 +177,7 @@ void CAdvTreeDrawer::LoadTreeShaders() {
 
 		treeShaders[TREE_PROGRAM_DIST_SHADOW]->Enable();
 		treeShaders[TREE_PROGRAM_DIST_SHADOW]->SetUniform3fv(3, &sunLighting->groundAmbientColor[0]);
-		treeShaders[TREE_PROGRAM_DIST_SHADOW]->SetUniform1f(9, 1.0f - (sky->GetLight()->GetGroundShadowDensity() * 0.5f));
+		treeShaders[TREE_PROGRAM_DIST_SHADOW]->SetUniform1f(9, 1.0f - (sunLighting->groundShadowDensity * 0.5f));
 		treeShaders[TREE_PROGRAM_DIST_SHADOW]->SetUniform1i(10, 0);
 		treeShaders[TREE_PROGRAM_DIST_SHADOW]->SetUniform1i(11, 1);
 		treeShaders[TREE_PROGRAM_DIST_SHADOW]->Disable();
@@ -336,8 +336,7 @@ struct CAdvTreeSquareDrawer : public CReadMap::IQuadDrawer
 
 void CAdvTreeSquareDrawer::DrawQuad(int x, int y)
 {
-	const int treesX = td->treesX;
-	ITreeDrawer::TreeSquareStruct* tss = &td->treeSquares[(y * treesX) + x];
+	ITreeDrawer::TreeSquareStruct* tss = &td->treeSquares[(y * td->NumTreesX()) + x];
 
 	if ((abs(cy - y) <= 2) && (abs(cx - x) <= 2) && drawDetailed) {
 		// skip the closest squares
@@ -455,17 +454,15 @@ void CAdvTreeSquareDrawer::DrawQuad(int x, int y)
 
 
 
-void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
+void CAdvTreeDrawer::Draw(float treeDistance)
 {
 	// trees are never drawn in any special (non-opaque) pass
 	CCamera* cam = CCamera::GetCamera(CCamera::CAMTYPE_PLAYER);
-	Shader::IProgramObject* treeShader = NULL;
+	Shader::IProgramObject* treeShader = nullptr;
 
-	const int activeFarTex = treeGen->farTex[cam->GetDir().z >= 0.0f];
-	const bool drawDetailed = ((treeDistance >= 4.0f) || drawReflection);
+	const int activeFarTex = treeGen.farTex[cam->GetDir().z >= 0.0f];
+	const bool drawDetailed = (treeDistance >= 4.0f);
 
-	glPushAttrib(GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-	glEnable(GL_ALPHA_TEST);
 	glEnable(GL_TEXTURE_2D);
 	glDepthMask(GL_TRUE);
 
@@ -486,7 +483,7 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 		} else {
 			treeShader->SetUniformTarget(GL_FRAGMENT_PROGRAM_ARB);
 			treeShader->SetUniform4f(10, sunLighting->groundAmbientColor.x, sunLighting->groundAmbientColor.y, sunLighting->groundAmbientColor.z, 1.0f);
-			treeShader->SetUniform4f(11, 0.0f, 0.0f, 0.0f, 1.0f - (sky->GetLight()->GetGroundShadowDensity() * 0.5f));
+			treeShader->SetUniform4f(11, 0.0f, 0.0f, 0.0f, 1.0f - (sunLighting->groundShadowDensity * 0.5f));
 			treeShader->SetUniformTarget(GL_VERTEX_PROGRAM_ARB);
 
 			glMatrixMode(GL_MATRIX0_ARB);
@@ -527,10 +524,10 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 
 			glActiveTexture(GL_TEXTURE1);
 			glEnable(GL_TEXTURE_2D);
-			glBindTexture(GL_TEXTURE_2D, treeGen->barkTex);
+			glBindTexture(GL_TEXTURE_2D, treeGen.barkTex);
 			glActiveTexture(GL_TEXTURE0);
 		} else {
-			glBindTexture(GL_TEXTURE_2D, treeGen->barkTex);
+			glBindTexture(GL_TEXTURE_2D, treeGen.barkTex);
 
 			treeShader = treeShaders[TREE_PROGRAM_NEAR_BASIC];
 			treeShader->Enable();
@@ -594,11 +591,11 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 
 					if (type < 8) {
 						dy = 0.5f;
-						dispList = treeGen->pineDL + type;
+						dispList = treeGen.pineDL + type;
 					} else {
 						type -= 8;
 						dy = 0.0f;
-						dispList = treeGen->leafDL + type;
+						dispList = treeGen.leafDL + type;
 					}
 
 					if (camDist < (SQUARE_SIZE * SQUARE_SIZE * 110 * 110)) {
@@ -651,7 +648,7 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 			if (!cam->InView(pos + (UpVector * (MAX_TREE_HEIGHT / 2.0f)), MAX_TREE_HEIGHT / 2.0f))
 				continue;
 
-			const float ang = fti->fallPos * PI;
+			const float ang = fti->fallPos * math::PI;
 
 			const float3 yvec(fti->dir.x * std::sin(ang), std::cos(ang), fti->dir.z * std::sin(ang));
 			const float3 zvec((yvec.cross(-RgtVector)).ANormalize());
@@ -666,10 +663,10 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 			int dispList = 0;
 
 			if (type < 8) {
-				dispList = treeGen->pineDL + type;
+				dispList = treeGen.pineDL + type;
 			} else {
 				type -= 8;
-				dispList = treeGen->leafDL + type;
+				dispList = treeGen.leafDL + type;
 			}
 
 			glCallList(dispList);
@@ -726,9 +723,6 @@ void CAdvTreeDrawer::Draw(float treeDistance, bool drawReflection)
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);
 		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
 	}
-
-	glPopAttrib();
-
 
 
 	// clean out squares from memory that are no longer visible
@@ -805,13 +799,11 @@ struct CAdvTreeSquareShadowPassDrawer: public CReadMap::IQuadDrawer
 
 void CAdvTreeSquareShadowPassDrawer::DrawQuad(int x, int y)
 {
-	const int treesX = td->treesX;
-	ITreeDrawer::TreeSquareStruct* tss = &td->treeSquares[(y * treesX) + x];
+	ITreeDrawer::TreeSquareStruct* tss = &td->treeSquares[(y * td->NumTreesX()) + x];
 
-	if ((abs(cy - y) <= 2) && (abs(cx - x) <= 2) && drawDetailed) {
-		// skip the closest squares
+	// skip the closest squares
+	if ((abs(cy - y) <= 2) && (abs(cx - x) <= 2) && drawDetailed)
 		return;
-	}
 
 	float3 dif;
 		dif.x = camera->GetPos().x - ((x * SQUARE_SIZE * TREE_SQUARE_SIZE) + (SQUARE_SIZE * TREE_SQUARE_SIZE / 2));
@@ -913,11 +905,14 @@ void CAdvTreeSquareShadowPassDrawer::DrawQuad(int x, int y)
 
 void CAdvTreeDrawer::DrawShadowPass()
 {
+	if (!drawTrees)
+		return;
+
 	CCamera* cam = CCamera::GetCamera(CCamera::CAMTYPE_SHADOW);
-	Shader::IProgramObject* po = NULL;
+	Shader::IProgramObject* po = nullptr;
 
 	const float treeDistance = oldTreeDistance;
-	const int activeFarTex = (cam->GetDir().z < 0.0f)? treeGen->farTex[0] : treeGen->farTex[1];
+	const int activeFarTex = (cam->GetDir().z < 0.0f)? treeGen.farTex[0] : treeGen.farTex[1];
 	const bool drawDetailed = (treeDistance >= 4.0f);
 
 	glActiveTexture(GL_TEXTURE0);
@@ -946,7 +941,7 @@ void CAdvTreeDrawer::DrawShadowPass()
 		const int ystart = Clamp(cy - 2, 0, mapDims.mapy / TREE_SQUARE_SIZE - 1);
 		const int yend   = Clamp(cy + 2, 0, mapDims.mapy / TREE_SQUARE_SIZE - 1);
 
-		glBindTexture(GL_TEXTURE_2D, treeGen->barkTex);
+		glBindTexture(GL_TEXTURE_2D, treeGen.barkTex);
 		glEnable(GL_TEXTURE_2D);
 
 		po = shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_TREE_NEAR);
@@ -999,11 +994,11 @@ void CAdvTreeDrawer::DrawShadowPass()
 
 					if (type < 8) {
 						dy = 0.5f;
-						dispList = treeGen->pineDL + type;
+						dispList = treeGen.pineDL + type;
 					} else {
 						type -= 8;
 						dy = 0;
-						dispList = treeGen->leafDL + type;
+						dispList = treeGen.leafDL + type;
 					}
 
 					if (camDist < SQUARE_SIZE * SQUARE_SIZE * 110 * 110) {
@@ -1050,7 +1045,7 @@ void CAdvTreeDrawer::DrawShadowPass()
 			if (!cam->InView(pos + (UpVector * (MAX_TREE_HEIGHT / 2.0f)), MAX_TREE_HEIGHT / 2.0f))
 				continue;
 
-			const float ang = fti->fallPos * PI;
+			const float ang = fti->fallPos * math::PI;
 
 			const float3 yvec(fti->dir.x * std::sin(ang), std::cos(ang), fti->dir.z * std::sin(ang));
 			const float3 zvec((yvec.cross(RgtVector)).ANormalize());
@@ -1065,10 +1060,10 @@ void CAdvTreeDrawer::DrawShadowPass()
 			int dispList;
 
 			if (type < 8) {
-				dispList = treeGen->pineDL + type;
+				dispList = treeGen.pineDL + type;
 			} else {
 				type -= 8;
-				dispList = treeGen->leafDL + type;
+				dispList = treeGen.leafDL + type;
 			}
 
 			glCallList(dispList);

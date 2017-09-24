@@ -4,9 +4,10 @@
 #define _ARCHIVE_SCANNER_H
 
 #include <string>
-#include <vector>
-#include <list>
+#include <deque>
 #include <map>
+#include <vector>
+
 #include "System/Info.h"
 
 class IArchive;
@@ -27,9 +28,14 @@ class LuaTable;
 
 namespace modtype
 {
-	static const int primary = 1;
-	static const int hidden = 0;
-	static const int map = 3;
+	enum {
+		hidden = 0,
+		primary = 1,
+		reserved = 2,
+		map = 3,
+		base = 4,
+		menu = 5
+	};
 }
 
 class CArchiveScanner
@@ -57,7 +63,8 @@ public:
 		std::string GetShortGame() const { return GetInfoValueString("shortGame"); }     /// ex:  TA
 		std::string GetDescription() const { return GetInfoValueString("description"); } /// ex:  Little units blowing up other little units
 		std::string GetMapFile() const { return GetInfoValueString("mapFile"); }         /// in case its a map, store location of smf/sm3 file
-		int GetModType() const { return GetInfoValueInteger("modType"); }                /// 1=primary, 0=hidden, 3=map
+		int GetModType() const { return GetInfoValueInteger("modType"); }                /// 0=hidden, 1=primary, (2=unused), 3=map, 4=base, 5=menu
+		bool GetOnlyLocal() const { return GetInfoValueBool("onlyLocal"); }              /// if true spring will not listen for incoming connections
 
 		const std::map<std::string, InfoItem>& GetInfo() const { return info; }
 		std::vector<InfoItem> GetInfoItems() const;
@@ -75,6 +82,11 @@ public:
 
 		bool IsValid(std::string& error) const;
 		bool IsEmpty() const { return info.empty(); }
+
+		bool IsMap() const { const int mt = GetModType(); return (mt == modtype::map); }
+		bool IsGame() const { const int mt = GetModType(); return (mt == modtype::hidden || mt == modtype::primary); }
+		bool IsBase() const { const int mt = GetModType(); return (mt == modtype::base); }
+		bool IsMenu() const { const int mt = GetModType(); return (mt == modtype::menu); }
 
 		static bool IsReservedKey(const std::string& keyLower);
 		static std::string GetKeyDescription(const std::string& keyLower);
@@ -101,24 +113,30 @@ public:
 	~CArchiveScanner();
 
 public:
-	const std::string& GetFilepath() const;
+	const std::string& GetFilepath() const { return cachefile; }
+
+	static const char* GetMapHelperContentName() { return "Map Helper v1"; }
+	static const char* GetSpringBaseContentName() { return "Spring content v1"; }
+	static uint32_t GetNumScannedArchives();
 
 	std::vector<std::string> GetMaps() const;
 	std::vector<ArchiveData> GetPrimaryMods() const;
 	std::vector<ArchiveData> GetAllMods() const;
 	std::vector<ArchiveData> GetAllArchives() const;
 
-	std::vector<std::string> GetAllArchivesUsedBy(const std::string& root, int depth = 0) const;
+	std::vector<std::string> GetAllArchivesUsedBy(const std::string& rootArchive) const;
 
 public:
 	/// checksum of the given archive (without dependencies)
 	unsigned int GetSingleArchiveChecksum(const std::string& name);
 	/// Calculate checksum of the given archive and all its dependencies
 	unsigned int GetArchiveCompleteChecksum(const std::string& name);
+
 	/// like GetArchiveCompleteChecksum, throws exception if mismatch
-	void CheckArchive(const std::string& name, unsigned checksum);
+	void CheckArchive(const std::string& name, unsigned int hostChecksum, unsigned int& localChecksum);
 	void ScanArchive(const std::string& fullName, bool checksum = false);
 	void ScanAllDirs();
+	void Reload();
 
 	std::string ArchiveFromName(const std::string& s) const;
 	std::string NameFromArchive(const std::string& s) const;
@@ -129,8 +147,7 @@ public:
 
 
 private:
-	struct ArchiveInfo
-	{
+	struct ArchiveInfo {
 		ArchiveInfo()
 			: modified(0)
 			, checksum(0)
@@ -144,8 +161,7 @@ private:
 		unsigned int checksum;
 		bool updated;
 	};
-	struct BrokenArchive
-	{
+	struct BrokenArchive {
 		BrokenArchive()
 			: modified(0)
 			, updated(false)
@@ -157,8 +173,8 @@ private:
 	};
 
 private:
-	void ScanDirs(const std::vector<std::string>& dirs, bool checksum = false);
-	void ScanDir(const std::string& curPath, std::list<std::string>* foundArchives);
+	void ScanDirs(const std::vector<std::string>& dirs);
+	void ScanDir(const std::string& curPath, std::deque<std::string>& foundArchives);
 
 	/// scan mapinfo / modinfo lua files
 	bool ScanArchiveLua(IArchive* ar, const std::string& fileName, ArchiveInfo& ai, std::string& err);
@@ -202,8 +218,8 @@ private:
 	 *         1 if the file is a first class meta-file,
 	 *         2 if the file is a second class meta-file
 	 */
-	static unsigned char GetMetaFileClass(const std::string& filePath);
-	static bool CheckCompression(const IArchive* ar,const std::string& fullName, std::string& error);
+	static int GetMetaFileClass(const std::string& filePath);
+	static bool CheckCompression(const IArchive* ar, const std::string& fullName, std::string& error);
 
 private:
 	std::map<std::string, ArchiveInfo> archiveInfos;

@@ -8,9 +8,8 @@
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/myGL.h"
 #include "Game/GlobalUnsynced.h"
-#include "Game/UI/MouseHandler.h"
 #include "Gui.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 
 namespace agui
 {
@@ -160,7 +159,7 @@ bool List::MouseUpdate(int x, int y)
 		{
 			if (nCurIndex == place && (clickedTime + spring_msecs(250)) > spring_now())
 			{
-				FinishSelection();
+				FinishSelection.emit();
 			}
 			clickedTime = spring_now();
 			place = nCurIndex;
@@ -434,7 +433,7 @@ bool List::KeyPressed(int k, bool isRepeat)
 		query = query.substr(0, query.length() - 1);
 		return Filter(true);
 	} else if (k == SDLK_RETURN) {
-		FinishSelection();
+		FinishSelection.emit();
 		return true;
 	} else if ((k & ~0xFF) != 0) {
 		// This prevents isalnum from asserting on msvc debug crt

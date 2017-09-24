@@ -11,40 +11,48 @@
 #include "Sim/Misc/GlobalSynced.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/GlobalConfig.h"
+#include "System/UnorderedMap.hpp"
 
+#include <algorithm>
 #include <climits>
 
 
 bool CTeamHighlight::highlight = false;
-std::map<int, int> CTeamHighlight::oldColors;
+static spring::unordered_map<int, int> oldColors;
 
-void CTeamHighlight::Enable(unsigned currentTime) {
+void CTeamHighlight::Enable(unsigned currentTime)
+{
+	if (!highlight)
+		return;
 
-	if (highlight) {
-		for (int i = 0; i < teamHandler->ActiveTeams(); ++i) {
-			CTeam* t = teamHandler->Team(i);
-			if (t->highlight > 0.0f) {
-				oldColors[i] = *(int *)t->color;
-				float s = (float)(currentTime & 255) * 4.0f / 255.0f;
-				int c =(int)(255.0f * ((s > 2.0f) ? 3.0f - s : s - 1.0f));
-				c *= t->highlight;
-				for (int n = 0; n < 3; ++n) {
-					t->color[n] = std::max(0, std::min(t->color[n] + c , 255));
-				}
-			}
+	for (int i = 0; i < teamHandler->ActiveTeams(); ++i) {
+		CTeam* t = teamHandler->Team(i);
+
+		if (t->highlight <= 0.0f)
+			continue;
+
+		oldColors[i] = *(int *)t->color;
+		float s = (float)(currentTime & 255) * 4.0f / 255.0f;
+		int c = (int)(255.0f * ((s > 2.0f) ? 3.0f - s : s - 1.0f));
+		c *= t->highlight;
+
+		for (int n = 0; n < 3; ++n) {
+			t->color[n] = std::max(0, std::min(t->color[n] + c , 255));
 		}
 	}
 }
 
-void CTeamHighlight::Disable() {
+void CTeamHighlight::Disable()
+{
+	if (oldColors.empty())
+		return;
 
-	if (!oldColors.empty()) {
-		for (std::map<int, int>::iterator i = oldColors.begin(); i != oldColors.end(); ++i) {
-			CTeam* team = teamHandler->Team((*i).first);
-			*(int*)team->color = (*i).second;
-		}
-		oldColors.clear();
+	for (auto i = oldColors.begin(); i != oldColors.end(); ++i) {
+		CTeam* team = teamHandler->Team((*i).first);
+		*(int*)team->color = (*i).second;
 	}
+
+	oldColors.clear();
 }
 
 void CTeamHighlight::Update(int frameNum) {

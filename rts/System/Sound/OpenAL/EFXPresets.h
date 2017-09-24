@@ -4,14 +4,15 @@
 #define _EFX_PRESETS_H_
 
 #include <string>
-#include <map>
-#include "System/float3.h"
+
 #include <al.h>
 #include <efx.h>
 
+#include "System/float3.h"
+#include "System/UnorderedMap.hpp"
 
-struct EAXSfxProps
-{
+struct EAXSfxProps {
+	EAXSfxProps() {}
 	EAXSfxProps(
 		ALfloat _density,
 		ALfloat _diffusion,
@@ -36,45 +37,39 @@ struct EAXSfxProps
 		ALfloat _lfReference,
 		ALfloat _roomRollOffFactor,
 		ALboolean _decayHFLimit
-	)
-	{
-		properties_f[AL_EAXREVERB_DENSITY] = _density;
-		properties_f[AL_EAXREVERB_DIFFUSION] = _diffusion;
-		properties_f[AL_EAXREVERB_GAIN] = _gain;
-		properties_f[AL_EAXREVERB_GAINHF] = _gainHF;
-		properties_f[AL_EAXREVERB_GAINLF] = _gainLF;
-		properties_f[AL_EAXREVERB_DECAY_TIME] = _decayTime;
-		properties_i[AL_EAXREVERB_DECAY_HFLIMIT] = _decayHFLimit;
-		properties_f[AL_EAXREVERB_DECAY_HFRATIO] = _decayHFRatio;
-		properties_f[AL_EAXREVERB_DECAY_LFRATIO] = _decayLFRatio;
-		properties_f[AL_EAXREVERB_REFLECTIONS_GAIN] = _reflectionGain;
-		properties_f[AL_EAXREVERB_REFLECTIONS_DELAY] = _reflectionDelay;
-		properties_v[AL_EAXREVERB_REFLECTIONS_PAN] = _reflectionPan;
-		properties_f[AL_EAXREVERB_LATE_REVERB_GAIN] = _lateReverbGain;
-		properties_f[AL_EAXREVERB_LATE_REVERB_DELAY] = _lateReverbDelay;
-		properties_v[AL_EAXREVERB_LATE_REVERB_PAN] = _lateReverbPan;
-		properties_f[AL_EAXREVERB_ECHO_TIME] = _echoTime;
-		properties_f[AL_EAXREVERB_ECHO_DEPTH] = _echoDepth;
-		properties_f[AL_EAXREVERB_MODULATION_TIME] = _modTime;
-		properties_f[AL_EAXREVERB_MODULATION_DEPTH] = _modDepth;
-		properties_f[AL_EAXREVERB_AIR_ABSORPTION_GAINHF] = _airAbsorptionGainHF;
-		properties_f[AL_EAXREVERB_HFREFERENCE] = _hfReference;
-		properties_f[AL_EAXREVERB_LFREFERENCE] = _lfReference;
-		properties_f[AL_EAXREVERB_ROOM_ROLLOFF_FACTOR] = _roomRollOffFactor;
+	) {
+		reverb_props_f[AL_EAXREVERB_DENSITY] = _density;
+		reverb_props_f[AL_EAXREVERB_DIFFUSION] = _diffusion;
+		reverb_props_f[AL_EAXREVERB_GAIN] = _gain;
+		reverb_props_f[AL_EAXREVERB_GAINHF] = _gainHF;
+		reverb_props_f[AL_EAXREVERB_GAINLF] = _gainLF;
+		reverb_props_f[AL_EAXREVERB_DECAY_TIME] = _decayTime;
+		reverb_props_i[AL_EAXREVERB_DECAY_HFLIMIT] = _decayHFLimit;
+		reverb_props_f[AL_EAXREVERB_DECAY_HFRATIO] = _decayHFRatio;
+		reverb_props_f[AL_EAXREVERB_DECAY_LFRATIO] = _decayLFRatio;
+		reverb_props_f[AL_EAXREVERB_REFLECTIONS_GAIN] = _reflectionGain;
+		reverb_props_f[AL_EAXREVERB_REFLECTIONS_DELAY] = _reflectionDelay;
+		reverb_props_v[AL_EAXREVERB_REFLECTIONS_PAN] = _reflectionPan;
+		reverb_props_f[AL_EAXREVERB_LATE_REVERB_GAIN] = _lateReverbGain;
+		reverb_props_f[AL_EAXREVERB_LATE_REVERB_DELAY] = _lateReverbDelay;
+		reverb_props_v[AL_EAXREVERB_LATE_REVERB_PAN] = _lateReverbPan;
+		reverb_props_f[AL_EAXREVERB_ECHO_TIME] = _echoTime;
+		reverb_props_f[AL_EAXREVERB_ECHO_DEPTH] = _echoDepth;
+		reverb_props_f[AL_EAXREVERB_MODULATION_TIME] = _modTime;
+		reverb_props_f[AL_EAXREVERB_MODULATION_DEPTH] = _modDepth;
+		reverb_props_f[AL_EAXREVERB_AIR_ABSORPTION_GAINHF] = _airAbsorptionGainHF;
+		reverb_props_f[AL_EAXREVERB_HFREFERENCE] = _hfReference;
+		reverb_props_f[AL_EAXREVERB_LFREFERENCE] = _lfReference;
+		reverb_props_f[AL_EAXREVERB_ROOM_ROLLOFF_FACTOR] = _roomRollOffFactor;
 
-		filter_properties_f[AL_LOWPASS_GAIN] = 1.0f;
-		filter_properties_f[AL_LOWPASS_GAINHF] = 1.0f;
+		filter_props_f[AL_LOWPASS_GAIN] = 1.0f;
+		filter_props_f[AL_LOWPASS_GAINHF] = 1.0f;
 	}
 
-	EAXSfxProps() {}
-
-	// Reverb
-	std::map<ALuint, ALfloat> properties_f;
-	std::map<ALuint, ALint>   properties_i;
-	std::map<ALuint, float3>  properties_v;
-
-	// Filter
-	std::map<ALuint, ALfloat> filter_properties_f;
+	spring::unsynced_map<ALuint, ALfloat> reverb_props_f;
+	spring::unsynced_map<ALuint, ALint>   reverb_props_i;
+	spring::unsynced_map<ALuint, float3>  reverb_props_v;
+	spring::unsynced_map<ALuint, ALfloat> filter_props_f;
 };
 
 namespace EFXParamTypes {
@@ -85,12 +80,12 @@ namespace EFXParamTypes {
 	};
 }
 
-extern std::map<std::string, EAXSfxProps> eaxPresets;
+extern spring::unsynced_map<std::string, EAXSfxProps> eaxPresets;
 
-extern std::map<ALuint, unsigned> alParamType;
-extern std::map<std::string, ALuint> nameToALParam;
-extern std::map<ALuint, std::string> alParamToName;
-extern std::map<std::string, ALuint> nameToALFilterParam;
-extern std::map<ALuint, std::string> alFilterParamToName;
+extern spring::unsynced_map<ALuint, unsigned> alParamType;
+extern spring::unsynced_map<std::string, ALuint> nameToALParam;
+extern spring::unsynced_map<ALuint, std::string> alParamToName;
+extern spring::unsynced_map<std::string, ALuint> nameToALFilterParam;
+extern spring::unsynced_map<ALuint, std::string> alFilterParamToName;
 
 #endif // _EFX_PRESETS_H_

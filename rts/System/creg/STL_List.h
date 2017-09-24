@@ -15,7 +15,7 @@ namespace creg {
 	template<typename T>
 	struct ListType : public IType
 	{
-		ListType(boost::shared_ptr<IType> t):elemType(t) {}
+		ListType(std::shared_ptr<IType> t):elemType(t) {}
 		~ListType() {}
 
 		void Serialize(ISerializer* s, void* inst) {
@@ -41,15 +41,15 @@ namespace creg {
 		std::string GetName() const { return "list<" + elemType->GetName() + ">"; }
 		size_t GetSize() const { return sizeof(T); }
 
-		boost::shared_ptr<IType> elemType;
+		std::shared_ptr<IType> elemType;
 	};
 
 
 	// List type
 	template<typename T>
 	struct DeduceType< std::list<T> > {
-		static boost::shared_ptr<IType> Get() {
-			return boost::shared_ptr<IType>(new ListType< std::list<T> >(DeduceType<T>::Get()));
+		static std::shared_ptr<IType> Get() {
+			return std::shared_ptr<IType>(new ListType< std::list<T> >(DeduceType<T>::Get()));
 		}
 	};
 }

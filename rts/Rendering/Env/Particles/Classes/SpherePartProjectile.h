@@ -22,10 +22,10 @@ public:
 		const float3& color
 	);
 
-	void Draw() override;
+	void Draw(CVertexArray* va) override;
 	void Update() override;
 
-	virtual int GetProjectilesCount() const override;
+	int GetProjectilesCount() const override;
 
 	static void CreateSphere(
 		const CUnit* owner,
@@ -33,7 +33,7 @@ public:
 		float alpha,
 		float expansionSpeed,
 		float3 pos,
-		float3 color = float3(0.8, 0.8, 0.6)
+		float3 color = float3(0.8f, 0.8f, 0.6f)
 	);
 
 private:
@@ -64,7 +64,7 @@ public:
 
 	void Init(const CUnit* owner, const float3& offset) override;
 
-	virtual int GetProjectilesCount() const override;
+	int GetProjectilesCount() const override;
 
 	static bool GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo);
 

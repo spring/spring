@@ -161,7 +161,7 @@ if   (CMAKE_COMPILER_IS_GNUCXX)
 		ERROR_VARIABLE linkerVersion
 	)
 	set(hasGold FALSE)
-	if (${linkerVersion} MATCHES "gold")
+	if ("${linkerVersion}" MATCHES "gold")
 		set(hasGold TRUE)
 	endif()
 

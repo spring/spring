@@ -1,9 +1,9 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-
 #include "Feature.h"
 #include "FeatureDef.h"
 #include "FeatureDefHandler.h"
+#include "FeatureMemPool.h"
 #include "FeatureHandler.h"
 #include "Game/GlobalUnsynced.h"
 #include "Map/Ground.h"
@@ -16,6 +16,7 @@
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Projectiles/FireProjectile.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
+#include "Rendering/Env/Particles/Classes/BubbleProjectile.h"
 #include "Rendering/Env/Particles/Classes/GeoThermSmokeProjectile.h"
 #include "Rendering/Env/Particles/Classes/SmokeProjectile.h"
 #include "Sim/Units/UnitDef.h"
@@ -25,25 +26,29 @@
 #include "System/myMath.h"
 #include "System/creg/DefTypes.h"
 #include "System/Log/ILog.h"
-#include <assert.h>
 
 
-CR_BIND_DERIVED(CFeature, CSolidObject, )
+CR_BIND_DERIVED_POOL(CFeature, CSolidObject, , featureMemPool.alloc, featureMemPool.free)
 
 CR_REG_METADATA(CFeature, (
 	CR_MEMBER(isRepairingBeforeResurrect),
 	CR_MEMBER(inUpdateQue),
 	CR_MEMBER(deleteMe),
+	CR_MEMBER(alphaFade),
+
+	CR_MEMBER(drawAlpha),
 	CR_MEMBER(resurrectProgress),
+	CR_MEMBER(reclaimTime),
 	CR_MEMBER(reclaimLeft),
 	CR_MEMBER(resources),
-	CR_MEMBER(lastReclaim),
-	CR_MEMBER(drawQuad),
-	CR_MEMBER(drawFlag),
-	CR_MEMBER(drawAlpha),
-	CR_MEMBER(alphaFade),
+
+	CR_MEMBER(lastReclaimFrame),
 	CR_MEMBER(fireTime),
 	CR_MEMBER(smokeTime),
+
+	CR_MEMBER(drawQuad),
+	CR_MEMBER(drawFlag),
+
 	CR_MEMBER(def),
 	CR_MEMBER(udef),
 	CR_MEMBER(moveCtrl),
@@ -69,27 +74,32 @@ CR_REG_METADATA_SUB(CFeature,MoveCtrl,(
 
 CFeature::CFeature()
 : CSolidObject()
+
 , isRepairingBeforeResurrect(false)
 , inUpdateQue(false)
 , deleteMe(false)
+, alphaFade(true)
+
+, drawAlpha(1.0f)
 , resurrectProgress(0.0f)
+, reclaimTime(0.0f)
 , reclaimLeft(1.0f)
-, lastReclaim(0)
 , resources(0.0f, 1.0f)
+
+, lastReclaimFrame(0)
+, fireTime(0)
+, smokeTime(0)
 
 , drawQuad(-2)
 , drawFlag(-1)
 
-, drawAlpha(1.0f)
-, alphaFade(true)
-
-, fireTime(0)
-, smokeTime(0)
-, def(NULL)
-, udef(NULL)
-, myFire(NULL)
-, solidOnTop(NULL)
+, def(nullptr)
+, udef(nullptr)
+, myFire(nullptr)
+, solidOnTop(nullptr)
 {
+	assert(featureMemPool.alloced(this));
+
 	crushable = true;
 	immobile = true;
 }
@@ -100,9 +110,9 @@ CFeature::~CFeature()
 	UnBlock();
 	quadField->RemoveFeature(this);
 
-	if (myFire != NULL) {
+	if (myFire != nullptr) {
 		myFire->StopFire();
-		myFire = NULL;
+		myFire = nullptr;
 	}
 
 	if (def->geoThermal) {
@@ -173,6 +183,7 @@ void CFeature::Initialize(const FeatureLoadParams& params)
 	mass = def->mass;
 	health = def->health;
 	maxHealth = def->health;
+	reclaimTime = def->reclaimTime;
 
 	resources = SResourcePack(def->metal, def->energy);
 
@@ -204,7 +215,7 @@ void CFeature::Initialize(const FeatureLoadParams& params)
 		} break;
 
 		case DRAWTYPE_MODEL: {
-			if ((model = def->LoadModel()) != NULL) {
+			if ((model = def->LoadModel()) != nullptr) {
 				SetMidAndAimPos(model->relMidPos, model->relMidPos, true);
 				SetRadiusAndHeight(model);
 
@@ -230,12 +241,12 @@ void CFeature::Initialize(const FeatureLoadParams& params)
 	UpdateMidAndAimPos();
 	UpdateTransformAndPhysState();
 
-	collisionVolume = def->collisionVolume;
 
-	if (collisionVolume.DefaultToSphere())
-		collisionVolume.InitSphere(radius);
-	if (collisionVolume.DefaultToFootPrint())
-		collisionVolume.InitBox(float3(xsize * SQUARE_SIZE, height, zsize * SQUARE_SIZE));
+	collisionVolume = def->collisionVolume;
+	selectionVolume = def->selectionVolume;
+
+	collisionVolume.InitDefault(float4(radius, height,  xsize * SQUARE_SIZE, zsize * SQUARE_SIZE));
+	selectionVolume.InitDefault(float4(radius, height,  xsize * SQUARE_SIZE, zsize * SQUARE_SIZE));
 
 
 	// feature does not have an assigned ID yet
@@ -280,7 +291,7 @@ bool CFeature::AddBuildPower(CUnit* builder, float amount)
 		const CTeam* builderTeam = teamHandler->Team(builder->team);
 
 		// Work out how much to try to put back, based on the speed this unit would reclaim at.
-		const float step = amount / def->reclaimTime;
+		const float step = amount / reclaimTime;
 
 		// Work out how much that will cost
 		const float metalUse  = step * def->metal;
@@ -292,15 +303,16 @@ bool CFeature::AddBuildPower(CUnit* builder, float amount)
 			builder->UseMetal(metalUse);
 			builder->UseEnergy(energyUse);
 
-			reclaimLeft += step;
 			resources.metal  += metalUse;
 			resources.energy += energyUse;
 			resources.metal  = std::min(resources.metal, def->metal);
 			resources.energy = std::min(resources.energy, def->energy);
 
+			reclaimLeft = Clamp(reclaimLeft + step, 0.0f, 1.0f);
+
 			if (reclaimLeft >= 1.0f) {
-				isRepairingBeforeResurrect = false; // They can start reclaiming it again if they so wish
-				reclaimLeft = 1;
+				// feature can start being reclaimed again
+				isRepairingBeforeResurrect = false;
 			} else if (reclaimLeft <= 0.0f) {
 				// this can happen when a mod tampers the feature in AllowFeatureBuildStep
 				featureHandler->DeleteFeature(this);
@@ -326,10 +338,10 @@ bool CFeature::AddBuildPower(CUnit* builder, float amount)
 		return false;
 
 	// make sure several units cant reclaim at once on a single feature
-	if ((modInfo.multiReclaim == 0) && (lastReclaim == gs->frameNum))
+	if ((modInfo.multiReclaim == 0) && (lastReclaimFrame == gs->frameNum))
 		return true;
 
-	const float step = (-amount) / def->reclaimTime;
+	const float step = (-amount) / reclaimTime;
 
 	if (!eventHandler.AllowFeatureBuildStep(builder, this, -step))
 		return false;
@@ -379,10 +391,10 @@ bool CFeature::AddBuildPower(CUnit* builder, float amount)
 
 	resources  -= order.add;
 	reclaimLeft = reclaimLeftTemp;
-	lastReclaim = gs->frameNum;
+	lastReclaimFrame = gs->frameNum;
 
 	// Has the reclaim finished?
-	if (reclaimLeft <= 0) {
+	if (reclaimLeft <= 0.0f) {
 		featureHandler->DeleteFeature(this);
 		return false;
 	}
@@ -406,7 +418,7 @@ void CFeature::DoDamage(
 
 	// features have no armor-type, so use default damage
 	float baseDamage = damages.GetDefault();
-	float impulseMult = float((def->drawType >= DRAWTYPE_TREE) || (udef != NULL && !udef->IsImmobileUnit()));
+	float impulseMult = float((def->drawType >= DRAWTYPE_TREE) || (udef != nullptr && !udef->IsImmobileUnit()));
 
 	if (eventHandler.FeaturePreDamaged(this, attacker, baseDamage, weaponDefID, projectileID, &baseDamage, &impulseMult))
 		return;
@@ -424,10 +436,10 @@ void CFeature::DoDamage(
 	eventHandler.FeatureDamaged(this, attacker, baseDamage, weaponDefID, projectileID);
 
 	if (health <= 0.0f && def->destructable) {
-		FeatureLoadParams params = {featureDefHandler->GetFeatureDefByID(def->deathFeatureDefID), NULL, pos, speed, -1, team, -1, heading, buildFacing, 0};
-		CFeature* deathFeature = featureHandler->CreateWreckage(params, 0, false);
+		FeatureLoadParams params = {featureDefHandler->GetFeatureDefByID(def->deathFeatureDefID), nullptr, pos, speed, -1, team, -1, heading, buildFacing, 0, 0};
+		CFeature* deathFeature = featureHandler->CreateWreckage(params);
 
-		if (deathFeature != NULL) {
+		if (deathFeature != nullptr) {
 			// if a partially reclaimed corpse got blasted,
 			// ensure its wreck is not worth the full amount
 			// (which might be more than the amount remaining)
@@ -605,8 +617,13 @@ bool CFeature::Update()
 
 	if (smokeTime != 0) {
 		if (!((gs->frameNum + id) & 3) && projectileHandler->GetParticleSaturation() < 0.7f) {
-			new CSmokeProjectile(NULL, midPos + gu->RandVector() * radius * 0.3f,
-				gu->RandVector() * 0.3f + UpVector, smokeTime / 6 + 20, 6, 0.4f, 0.5f);
+			if (pos.y < 0.0f) {
+				projMemPool.alloc<CBubbleProjectile>(nullptr, midPos + guRNG.NextVector() * radius * 0.3f,
+					guRNG.NextVector() * 0.3f + UpVector, smokeTime / 6 + 20, 6, 0.4f, 0.5f);
+			} else {
+				projMemPool.alloc<CSmokeProjectile> (nullptr, midPos + guRNG.NextVector() * radius * 0.3f,
+					guRNG.NextVector() * 0.3f + UpVector, smokeTime / 6 + 20, 6, 0.4f, 0.5f);
+			}
 		}
 	}
 	if (fireTime == 1)
@@ -628,10 +645,10 @@ void CFeature::StartFire()
 	if (fireTime != 0 || !def->burnable)
 		return;
 
-	fireTime = 200 + (int)(gs->randFloat() * GAME_SPEED);
+	fireTime = 200 + (int)(gsRNG.NextFloat() * GAME_SPEED);
 	featureHandler->SetFeatureUpdateable(this);
 
-	myFire = new CFireProjectile(midPos, UpVector, 0, 300, 70, radius * 0.8f, 20.0f);
+	myFire = projMemPool.alloc<CFireProjectile>(midPos, UpVector, nullptr, 300, 70, radius * 0.8f, 20.0f);
 }
 
 
@@ -639,23 +656,26 @@ void CFeature::EmitGeoSmoke()
 {
 	if ((gs->frameNum + id % 5) % 5 == 0) {
 		// Find the unit closest to the geothermal
-		const vector<CSolidObject*>& objs = quadField->GetSolidsExact(pos, 0.0f, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS);
+		QuadFieldQuery qfQuery;
+		quadField->GetSolidsExact(qfQuery, pos, 0.0f, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS);
 		float bestDist = std::numeric_limits<float>::max();
 
 		CSolidObject* so = nullptr;
 
-		for (CSolidObject* obj: objs) {
+		for (CSolidObject* obj: *qfQuery.solids) {
 			const float dist = (obj->pos - pos).SqLength();
 
-			if (dist < bestDist)  {
-				bestDist = dist; so = obj;
-			}
+			if (dist > bestDist)
+				continue;
+
+			bestDist = dist;
+			so = obj;
 		}
 
 		if (so != solidOnTop) {
-			if (solidOnTop)
+			if (solidOnTop != nullptr)
 				DeleteDeathDependence(solidOnTop, DEPENDENCE_SOLIDONTOP);
-			if (so)
+			if (so != nullptr)
 				AddDeathDependence(so, DEPENDENCE_SOLIDONTOP);
 		}
 
@@ -665,15 +685,16 @@ void CFeature::EmitGeoSmoke()
 	// Hide the smoke if there is a geothermal unit on the vent
 	const CUnit* u = dynamic_cast<CUnit*>(solidOnTop);
 
-	if (u == NULL || !u->unitDef->needGeo) {
-		const float partSat = !(gs->frameNum & 3) ? 1.0f : 0.7f;
-		if (projectileHandler->GetParticleSaturation() < partSat) {
-			const float3 pPos = gu->RandVector() * 10.0f + float3(pos.x, pos.y - 10.0f, pos.z);
-			const float3 pSpeed = (gu->RandVector() * 0.5f) + (UpVector * 2.0f);
+	if (u != nullptr && u->unitDef->needGeo)
+		return;
 
-			new CGeoThermSmokeProjectile(pPos, pSpeed, int(50 + gu->RandFloat() * 7), this);
-		}
-	}
+	if (projectileHandler->GetParticleSaturation() >= (!(gs->frameNum & 3) ? 1.0f : 0.7f))
+		return;
+
+	const float3 pPos = guRNG.NextVector() * 10.0f + float3(pos.x, pos.y - 10.0f, pos.z);
+	const float3 pSpeed = (guRNG.NextVector() * 0.5f) + (UpVector * 2.0f);
+
+	projMemPool.alloc<CGeoThermSmokeProjectile>(pPos, pSpeed, int(50 + guRNG.NextFloat() * 7), this);
 }
 
 

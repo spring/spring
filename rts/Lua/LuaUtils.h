@@ -89,9 +89,13 @@ class LuaUtils {
 		static int PushModelRadius(lua_State* L, const SolidObjectDef* def, bool isUnitDef);
 		static int PushFeatureModelDrawType(lua_State* L, const FeatureDef* def);
 		static int PushModelName(lua_State* L, const SolidObjectDef* def);
+		static int PushModelType(lua_State* L, const SolidObjectDef* def);
+		static int PushModelPath(lua_State* L, const SolidObjectDef* def);
 
 		static int PushModelTable(lua_State* L, const SolidObjectDef* def);
 		static int PushColVolTable(lua_State* L, const CollisionVolume* vol);
+		static int PushColVolData(lua_State* L, const CollisionVolume* vol);
+		static int ParseColVolData(lua_State* L, int idx, CollisionVolume* vol);
 
 		static void PushCommandParamsTable(lua_State* L, const Command& cmd, bool subtable);
 		static void PushCommandOptionsTable(lua_State* L, const Command& cmd, bool subtable);
@@ -186,8 +190,7 @@ static inline void LuaPushNamedNil(lua_State* L,
 }
 
 
-static inline void LuaPushNamedBool(lua_State* L,
-                             const string& key, bool value)
+static inline void LuaPushNamedBool(lua_State* L, const string& key, bool value)
 {
 	lua_pushsstring(L, key);
 	lua_pushboolean(L, value);
@@ -195,8 +198,7 @@ static inline void LuaPushNamedBool(lua_State* L,
 }
 
 
-static inline void LuaPushNamedNumber(lua_State* L,
-                               const string& key, lua_Number value)
+static inline void LuaPushNamedNumber(lua_State* L, const string& key, lua_Number value)
 {
 	lua_pushsstring(L, key);
 	lua_pushnumber(L, value);
@@ -204,8 +206,7 @@ static inline void LuaPushNamedNumber(lua_State* L,
 }
 
 
-static inline void LuaPushNamedString(lua_State* L,
-                               const string& key, const string& value)
+static inline void LuaPushNamedString(lua_State* L, const string& key, const string& value)
 {
 	lua_pushsstring(L, key);
 	lua_pushsstring(L, value);
@@ -213,13 +214,23 @@ static inline void LuaPushNamedString(lua_State* L,
 }
 
 
-static inline void LuaPushNamedCFunc(lua_State* L,
-                              const string& key, int (*func)(lua_State*))
+static inline void LuaPushNamedCFunc(lua_State* L, const string& key, lua_CFunction func)
 {
 	lua_pushsstring(L, key);
 	lua_pushcfunction(L, func);
 	lua_rawset(L, -3);
 }
+
+static inline void LuaPushRawNamedCFunc(lua_State* L, const char* key, lua_CFunction func)
+{
+	lua_pushstring(L, key);
+	lua_pushcfunction(L, func);
+	lua_rawset(L, -3);
+}
+
+#define REGISTER_LUA_CFUNC(func)                LuaPushRawNamedCFunc(L, #func,        func)
+#define REGISTER_NAMED_LUA_CFUNC(name, func)    LuaPushRawNamedCFunc(L,  name,        func)
+#define REGISTER_SCOPED_LUA_CFUNC(scope, func)  LuaPushRawNamedCFunc(L, #func, scope::func)
 
 
 static inline void LuaInsertDualMapPair(lua_State* L, const string& name, int number)
@@ -231,6 +242,24 @@ static inline void LuaInsertDualMapPair(lua_State* L, const string& name, int nu
 	lua_pushsstring(L, name);
 	lua_rawset(L, -3);
 }
+
+
+
+static inline const char* LuaErrorString(int error)
+{
+	const char* ret = "";
+
+	switch (error) {
+		case LUA_ERRMEM   : { ret = "LUA_ERRMEM"   ; } break;
+		case LUA_ERRRUN   : { ret = "LUA_ERRRUN"   ; } break;
+		case LUA_ERRERR   : { ret = "LUA_ERRERR"   ; } break;
+		case LUA_ERRSYNTAX: { ret = "LUA_ERRSYNTAX"; } break;
+		default           : { ret = "LUA_ERRNOIDEA"; } break;
+	}
+
+	return ret;
+}
+
 
 
 static inline bool FullCtrl(const lua_State* L)

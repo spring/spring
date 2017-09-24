@@ -3,13 +3,13 @@
 #ifndef SKIRMISH_AI_DATA_H
 #define SKIRMISH_AI_DATA_H
 
+#include <string>
+#include <vector>
+
 #include "ExternalAI/SkirmishAIBase.h"
 
 #include "System/creg/creg_cond.h"
-
-#include <string>
-#include <vector>
-#include <map>
+#include "System/UnorderedMap.hpp"
 
 
 /**
@@ -17,13 +17,13 @@
  * @see Game/GameSetup
  */
 class SkirmishAIData : public SkirmishAIBase {
-	CR_DECLARE(SkirmishAIData)
+	CR_DECLARE_DERIVED(SkirmishAIData)
 
 public:
 	std::string shortName;
 	std::string version;
 	std::vector<std::string> optionKeys;
-	std::map<std::string, std::string> options;
+	spring::unordered_map<std::string, std::string> options;
 
 	bool isLuaAI;
 

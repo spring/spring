@@ -9,7 +9,7 @@
 
 #include "TimeUtil.h"
 #include "Util.h"
-#include "System/maindefines.h"
+#include "System/MainDefines.h"
 #include "System/SafeCStrings.h"
 
 

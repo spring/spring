@@ -69,11 +69,12 @@ CALLIN_LIST = {
 	"UnitFeatureCollision",
 	"UnitMoveFailed",
 	"UnitMoved",               -- FIXME: not exposed to Lua yet (as of 95.0)
-	"UnitEnteredAir",          -- FIXME: not implemented by base GH
-	"UnitLeftAir",             -- FIXME: not implemented by base GH
-	"UnitEnteredWater",        -- FIXME: not implemented by base GH
-	"UnitLeftWater",           -- FIXME: not implemented by base GH
+	"UnitEnteredAir",
+	"UnitLeftAir",
+	"UnitEnteredWater",
+	"UnitLeftWater",
 	"UnitCommand",
+	"UnitHarvestStorageFull",
 
 	-- weapon callins
 	"StockpileChanged",
@@ -124,6 +125,7 @@ CALLIN_LIST = {
 	"DrawGenesis",
 	"DrawWorld",
 	"DrawWorldPreUnit",
+	"DrawWorldPreParticles",
 	"DrawWorldShadow",
 	"DrawWorldReflection",
 	"DrawWorldRefraction",
@@ -133,6 +135,7 @@ CALLIN_LIST = {
 	"DrawUnitsPostDeferred",
 	"DrawFeaturesPostDeferred",
 	"DrawScreenEffects",
+	"DrawScreenPost",
 	"DrawScreen",
 	"DrawInMiniMap",
 

@@ -7,7 +7,7 @@
 #include <stdexcept>
 #include <assert.h>
 
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include "System/Log/ILog.h"
 
 
@@ -94,7 +94,7 @@ unsigned int CZipArchive::GetCrc32(unsigned int fid)
 // To simplify things, files are always read completely into memory from
 // the zip-file, since zlib does not provide any way of reading more
 // than one file at a time
-bool CZipArchive::GetFileImpl(unsigned int fid, std::vector<boost::uint8_t>& buffer)
+bool CZipArchive::GetFileImpl(unsigned int fid, std::vector<std::uint8_t>& buffer)
 {
 	// Prevent opening files on missing/invalid archives
 	if (!zip) {

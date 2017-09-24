@@ -33,11 +33,13 @@ public:
 	float4 groundDiffuseColor; // RGB
 	float4 groundSpecularColor; // RBG
 
-	float4 unitAmbientColor;
-	float4 unitDiffuseColor;
-	float4 unitSpecularColor; // RGB
+	float4 modelAmbientColor;
+	float4 modelDiffuseColor;
+	float4 modelSpecularColor; // RGB
 
-	float  specularExponent;
+	float specularExponent;
+	float groundShadowDensity;
+	float modelShadowDensity;
 };
 
 extern CSunLighting sunLightingInst;

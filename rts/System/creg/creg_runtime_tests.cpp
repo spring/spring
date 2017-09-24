@@ -3,7 +3,7 @@
 #include "creg_runtime_tests.h"
 #include "creg_cond.h"
 #include "System/myMath.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include "System/Log/ILog.h"
 #include <vector>
 #include <map>
@@ -122,7 +122,7 @@ static bool TestCregClasses3()
 		const size_t classSize = c->size;
 
 		creg::Class::Member alignmentFixMember;
-		std::vector<const creg::Class::Member*> memberMap(classSize, NULL);
+		std::vector<const creg::Class::Member*> memberMap(classSize, nullptr);
 
 		// create `map` of the class
 		for (const creg::Class* c_base = c; c_base; c_base = c_base->base()) {
@@ -130,8 +130,12 @@ static bool TestCregClasses3()
 				const size_t memberOffset = m.offset;
 				const size_t typeSize = m.type->GetSize();
 
-				for (int i = 0; i < typeSize; ++i) {
-					memberMap[memberOffset + i] = &m;
+				if ((memberOffset + typeSize) > classSize) {
+					LOG_L(L_WARNING, "  Member %s of class %s (typeSize=%lu) has offset=%lu greater than classSize=%lu", m.name, className.c_str(), (unsigned long) typeSize, (unsigned long) memberOffset, (unsigned long) classSize);
+				} else {
+					for (int i = 0; i < typeSize; ++i) {
+						memberMap[memberOffset + i] = &m;
+					}
 				}
 			}
 		}
@@ -140,23 +144,23 @@ static bool TestCregClasses3()
 		if (c->base() || !c->GetDerivedClasses().empty() || c->binder->hasVTable) {
 			assert(memberMap.size() >= sizeof(void*));
 			for (int i = 0; i < sizeof(void*); ++i) {
-				if (!memberMap[i])
+				if (memberMap[i] == nullptr)
 					memberMap[i] = &alignmentFixMember;
 			}
 		}
 
 		// class alignment itself
 		for (int i = 1; i <= c->alignment; ++i) {
-			if (!memberMap[classSize - i])
+			if (memberMap[classSize - i] == nullptr)
 				memberMap[classSize - i] = &alignmentFixMember;
 		}
 
 		// member alignments
 		for (int i = 0; i < classSize; ++i) {
 			const creg::Class::Member* m = memberMap[i];
-			if (m && (m != &alignmentFixMember)) {
+			if (m != nullptr && (m != &alignmentFixMember)) {
 				for (int j = 1; j <= m->alignment - 1; ++j) {
-					if ((i - j) >= 0 && !memberMap[i - j])
+					if ((i - j) >= 0 && memberMap[i - j] == nullptr)
 						memberMap[i - j] = &alignmentFixMember;
 				}
 			}
@@ -164,25 +168,24 @@ static bool TestCregClasses3()
 
 		// find unregistered members
 		bool unRegisteredMembers = false;
-		const creg::Class::Member* prevMember = NULL;
-		const creg::Class::Member* nextMember = NULL;
+		const creg::Class::Member* prevMember = nullptr;
+		const creg::Class::Member* nextMember = nullptr;
 		for (int i = 0; i < classSize; ++i) {
-			if (!memberMap[i]) {
+			if (memberMap[i] == nullptr) {
 				unRegisteredMembers = true;
 
 				int holeSize = 0;
-				nextMember = NULL;
+				nextMember = nullptr;
 				for (int j = i + 1; j < classSize; ++j) {
 					holeSize++;
-					if (memberMap[j] && (memberMap[j] != &alignmentFixMember)) {
+					if (memberMap[j] != nullptr && (memberMap[j] != &alignmentFixMember)) {
 						nextMember = memberMap[j];
 						i = j;
 						break;
 					}
 				}
-				if (!nextMember) {
+				if (nextMember == nullptr)
 					i = classSize - 1;
-				}
 
 				if (prevMember && nextMember) {
 					LOG_L(L_WARNING, "  Missing member(s) in class %s, between %s & %s, ~%i byte(s)", className.c_str(), prevMember->name, nextMember->name, holeSize);
@@ -244,12 +247,13 @@ static bool TestCregClasses3()
 static bool TestCregClasses4()
 {
 	PreCregTest("CREG: Test4 (Incorrect Usage of CR_DECLARE vs. CR_DECLARE_STRUCT)");
-	LOG("  Note, CR_DECLARE_STRUCT is for plain structs only without a vTable and/or inheritance.");
-	LOG("  While CR_DECLARE should be used for derived classes (both sub & base!).");
-	LOG("  It adds a virtual method! And so a vTable if there isn't one already.");
+	LOG("  CR_DECLARE_STRUCT is for plain structs without a vTable while");
+	LOG("  CR_DECLARE should be used for classes that have virtual members.");
+	LOG("  The latter adds a virtual method and a vTable if there isn't one already.");
 	LOG("  This vTable has the size of a pointer and changes the size of the class.");
-	LOG("  AND SO CR_DECLARE IS NOT USABLE FOR `COMPACT` STRUCTS AS FLOAT3/4, RECT, ...!");
-	LOG("  Instead use CR_DECLARE_STRUCT for all inherited classes of those and register the members of their baseclass, too.");
+	LOG("  CR_DECLARE IS NOT USABLE FOR `COMPACT` STRUCTS AS FLOAT3/4, RECT, ...!");
+	LOG("  Instead use CR_DECLARE_STRUCT for all inherited classes of those and");
+	LOG("  register the members of their baseclass, too.");
 
 	int fineClasses = 0;
 	int brokenClasses = 0;

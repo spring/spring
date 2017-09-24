@@ -2,6 +2,7 @@
 
 #include "System/Log/ILog.h"
 #include "System/TimeProfiler.h"
+#include "System/Misc/SpringTime.h"
 #include "lib/streflop/streflop_cond.h"
 #include "lib/lua/include/LuaUser.h"
 
@@ -15,6 +16,7 @@
 
 #define BOOST_TEST_MODULE Printf
 #include <boost/test/unit_test.hpp>
+BOOST_GLOBAL_FIXTURE(InitSpringTime);
 
 
 static char s[128];
@@ -54,6 +56,7 @@ static const std::vector<std::pair<float, const char*>> testNumbers = {
 	{1000000000, "1000000000"},
 	{10000000000, "1.0e+10"},
 	{1e22, "1.0e+22"}, // larger than max int64!
+	{9999968252998916767744.0f, "1.0e+22"}, // carry in scientific notation
 	{std::pow(2, 24), "16777216"},
 	{std::numeric_limits<int>::max(), "2147483648"},
 	{std::numeric_limits<float>::max(), "3.4028e+38"},
@@ -81,7 +84,7 @@ BOOST_AUTO_TEST_CASE( SpringFormat )
 
 	// printf & spring output should be equal when a precision is specified
 
-	LOG("");
+	LOG("\n");
 	LOG("--------------------");
 	LOG("-- spring_lua_format");
 	LOG("%40s %40s", "[spring]", "[printf]");
@@ -124,7 +127,7 @@ BOOST_AUTO_TEST_CASE( SpringFormat )
 
 BOOST_AUTO_TEST_CASE( Printf )
 {
-	LOG("");
+	LOG("\n");
 	LOG("----------------------");
 	LOG("-- printf comparisions");
 #ifdef _WIN32
@@ -162,7 +165,7 @@ BOOST_AUTO_TEST_CASE( Printf )
 
 BOOST_AUTO_TEST_CASE( Roundings )
 {
-	LOG("");
+	LOG("\n");
 	LOG("----------------");
 	LOG("-- roundings");
 
@@ -186,7 +189,7 @@ BOOST_AUTO_TEST_CASE( Roundings )
 
 BOOST_AUTO_TEST_CASE( Precision )
 {
-	LOG("");
+	LOG("\n");
 	LOG("----------------");
 	LOG("-- precision");
 
@@ -238,7 +241,7 @@ BOOST_AUTO_TEST_CASE( Precision )
 
 BOOST_AUTO_TEST_CASE( Performance )
 {
-	LOG("");
+	LOG("\n");
 	LOG("----------------");
 	LOG("-- performance");
 

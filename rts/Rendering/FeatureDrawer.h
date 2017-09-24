@@ -19,8 +19,6 @@ namespace GL {
 
 class CFeatureDrawer: public CEventClient
 {
-	typedef std::vector<CFeature*> FeatureSet;
-
 public:
 	CFeatureDrawer();
 	~CFeatureDrawer();
@@ -34,7 +32,7 @@ public:
 	void DrawAlphaPass();
 
 	void DrawFeatureNoTrans(const CFeature* feature, unsigned int preList, unsigned int postList, bool lodCall, bool noLuaCall);
-	void DrawFeature(const CFeature*, unsigned int preList, unsigned int postList, bool lodCall, bool noLuaCall);
+	void DrawFeatureTrans(const CFeature*, unsigned int preList, unsigned int postList, bool lodCall, bool noLuaCall);
 
 	/// LuaOpenGL::Feature{Raw}: draw a single feature with full state setup
 	void PushIndividualState(const CFeature* feature, bool deferredPass);

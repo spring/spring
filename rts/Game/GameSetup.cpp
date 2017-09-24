@@ -3,10 +3,11 @@
 #include "GameSetup.h"
 #include "Map/MapParser.h"
 #include "Sim/Misc/GlobalConstants.h"
+#include "System/GlobalRNG.h"
 #include "System/TdfParser.h"
-#include "System/UnsyncedRNG.h"
 #include "System/Exceptions.h"
-#include "System/Util.h"
+#include "System/SpringFormat.h"
+#include "System/StringUtil.h"
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/RapidHandler.h"
 #include "System/Sync/HsiehHash.h"
@@ -18,7 +19,6 @@
 #include <cctype>
 #include <cstring>
 #include <fstream>
-#include <boost/format.hpp>
 
 CR_BIND(CGameSetup,)
 CR_REG_METADATA(CGameSetup, (
@@ -56,6 +56,7 @@ CR_REG_METADATA(CGameSetup, (
 	CR_IGNORED(recordDemo),
 	CR_IGNORED(demoName),
 	CR_IGNORED(saveName),
+	CR_IGNORED(menuName),
 
 	CR_IGNORED(playerRemap),
 	CR_IGNORED(teamRemap),
@@ -121,9 +122,9 @@ bool CGameSetup::LoadSavedScript(const std::string& file, const std::string& scr
 }
 
 
-const std::map<std::string, std::string>& CGameSetup::GetMapOptions()
+const spring::unordered_map<std::string, std::string>& CGameSetup::GetMapOptions()
 {
-	static std::map<std::string, std::string> dummyOptions;
+	static spring::unordered_map<std::string, std::string> dummyOptions;
 
 	if (gameSetup != nullptr)
 		return gameSetup->GetMapOptionsCont();
@@ -131,9 +132,9 @@ const std::map<std::string, std::string>& CGameSetup::GetMapOptions()
 	return dummyOptions;
 }
 
-const std::map<std::string, std::string>& CGameSetup::GetModOptions()
+const spring::unordered_map<std::string, std::string>& CGameSetup::GetModOptions()
 {
-	static std::map<std::string, std::string> dummyOptions;
+	static spring::unordered_map<std::string, std::string> dummyOptions;
 
 	if (gameSetup != nullptr)
 		return gameSetup->GetModOptionsCont();
@@ -209,10 +210,9 @@ void CGameSetup::ResetState()
 	demoName.clear();
 	saveName.clear();
 
-
-	playerRemap.clear();
-	teamRemap.clear();
-	allyteamRemap.clear();
+	spring::clear_unordered_map(playerRemap);
+	spring::clear_unordered_map(teamRemap);
+	spring::clear_unordered_map(allyteamRemap);
 
 	playerStartingData.clear();
 	teamStartingData.clear();
@@ -220,10 +220,10 @@ void CGameSetup::ResetState()
 	skirmishAIStartingData.clear();
 	mutatorsList.clear();
 
-	restrictedUnits.clear();
+	spring::clear_unordered_map(restrictedUnits);
 
-	mapOptions.clear();
-	modOptions.clear();
+	spring::clear_unordered_map(mapOptions);
+	spring::clear_unordered_map(modOptions);
 }
 
 void CGameSetup::PostLoad()
@@ -278,7 +278,7 @@ void CGameSetup::LoadStartPositions(bool withoutMap)
 
 	if (startPosType == StartPos_Random) {
 		// Server syncs these later, so we can use unsynced rng
-		UnsyncedRNG rng;
+		CGlobalUnsyncedRNG rng;
 		rng.Seed(HsiehHash(setupText.c_str(), setupText.length(), 1234567));
 		std::random_shuffle(teamStartNum.begin(), teamStartNum.end(), rng);
 	}
@@ -301,7 +301,7 @@ void CGameSetup::LoadMutators(const TdfParser& file, std::vector<std::string>& m
 	}
 }
 
-void CGameSetup::LoadPlayers(const TdfParser& file, std::set<std::string>& nameList)
+void CGameSetup::LoadPlayers(const TdfParser& file, spring::unordered_set<std::string>& nameList)
 {
 	assert(numDemoPlayers == 0);
 
@@ -322,9 +322,9 @@ void CGameSetup::LoadPlayers(const TdfParser& file, std::set<std::string>& nameL
 
 		// do checks for sanity
 		if (playerBase.name.empty())
-			throw content_error(str( boost::format("GameSetup: No name given for Player %i") %a ));
+			throw content_error(spring::format("GameSetup: No name given for Player %i", a));
 		if (nameList.find(playerBase.name) != nameList.end())
-			throw content_error(str(boost::format("GameSetup: Player %i has name %s which is already taken")  %a %playerBase.name.c_str() ));
+			throw content_error(spring::format("GameSetup: Player %i has name %s which is already taken", a, playerBase.name.c_str()));
 
 		numDemoPlayers += playerBase.isFromDemo;
 
@@ -344,7 +344,7 @@ void CGameSetup::LoadPlayers(const TdfParser& file, std::set<std::string>& nameL
 	LOG_L(L_WARNING, _STPF_ " players in GameSetup script (NumPlayers says %i)", playerStartingData.size(), playerCount);
 }
 
-void CGameSetup::LoadSkirmishAIs(const TdfParser& file, std::set<std::string>& nameList)
+void CGameSetup::LoadSkirmishAIs(const TdfParser& file, spring::unordered_set<std::string>& nameList)
 {
 	// i = AI index in game (no gaps), a = AI index in script
 	for (int a = 0; a < MAX_PLAYERS; ++a) {
@@ -406,14 +406,9 @@ void CGameSetup::LoadTeams(const TdfParser& file)
 			continue;
 
 		TeamBase teamBase;
+		teamBase.SetDefaultColor(a);
 
-		// Get default color from palette (based on "color" tag)
-		for (size_t num = 0; num < 3; ++num)
-			teamBase.color[num] = TeamBase::teamDefaultColor[a][num];
-
-		teamBase.color[3] = 255;
-
-		for (auto it: file.GetAllValues(section))
+		for (const auto& it: file.GetAllValues(section))
 			teamBase.SetValue(it.first, it.second);
 
 		teamStartingData.push_back(teamBase);
@@ -512,7 +507,7 @@ void CGameSetup::RemapTeams()
 			playerStartingData[a].team = 0;
 		} else {
 			if (teamRemap.find(playerStartingData[a].team) == teamRemap.end())
-				throw content_error( str(boost::format("GameSetup: Player %i belong to wrong team: %i") %a %playerStartingData[a].team) );
+				throw content_error(spring::format("GameSetup: Player %i belong to wrong team: %i", a, playerStartingData[a].team));
 
 			playerStartingData[a].team = teamRemap[playerStartingData[a].team];
 		}
@@ -563,13 +558,13 @@ bool CGameSetup::Init(const std::string& buf)
 	modName     = file.SGetValueDef("",  "GAME\\Gametype");
 	mapName     = file.SGetValueDef("",  "GAME\\MapName");
 	saveName    = file.SGetValueDef("",  "GAME\\Savefile");
+	menuName    = file.SGetValueDef("",  "GAME\\MenuName");
 	demoName    = file.SGetValueDef("",  "GAME\\Demofile");
 	hostDemo    = !demoName.empty();
 
 	file.GetTDef(gameStartDelay, 4u, "GAME\\GameStartDelay");
 
 	file.GetDef(recordDemo,          "1", "GAME\\RecordDemo");
-	file.GetDef(onlyLocal,           "0", "GAME\\OnlyLocal");
 	file.GetDef(useLuaGaia,          "1", "GAME\\ModOptions\\LuaGaia");
 	file.GetDef(noHelperAIs,         "0", "GAME\\ModOptions\\NoHelperAIs");
 	file.GetDef(maxUnitsPerTeam, "32000", "GAME\\ModOptions\\MaxUnits");
@@ -592,7 +587,8 @@ bool CGameSetup::Init(const std::string& buf)
 	startPosType = std::min(startPosType, StartPos_Last);
 
 	// Read subsections
-	std::set<std::string> playersNameList;
+	spring::unordered_set<std::string> playersNameList;
+
 	LoadPlayers(file, playersNameList);
 	LoadSkirmishAIs(file, playersNameList);
 	LoadTeams(file);
@@ -609,6 +605,7 @@ bool CGameSetup::Init(const std::string& buf)
 	// Postprocessing
 	modName = GetRapidPackageFromTag(modName);
 	modName = archiveScanner->NameFromArchive(modName);
+	file.GetDef(onlyLocal, (archiveScanner->GetArchiveData(modName).GetOnlyLocal() ? "1" : "0"), "GAME\\OnlyLocal");
 
 	return true;
 }

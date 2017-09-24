@@ -88,6 +88,7 @@ public:
 	virtual void DoWaterDamage();
 	virtual void FinishedBuilding(bool postInit);
 
+	void ApplyDamage(CUnit* attacker, const DamageArray& damages, float& baseDamage, float& experienceMod);
 	void ApplyImpulse(const float3& impulse);
 
 	bool AttackUnit(CUnit* unit, bool isUserTarget, bool wantManualFire, bool fpsMode = false);
@@ -134,6 +135,10 @@ public:
 	/// push the new wind to the script
 	void UpdateWind(float x, float z, float strength);
 
+	void UpdateTransportees();
+	void ReleaseTransportees(CUnit* attacker, bool selfDestruct, bool reclaimed);
+	void TransporteeKilled(const CObject* o);
+
 	void AddExperience(float exp);
 
 	void SetMass(float newMass);
@@ -153,8 +158,10 @@ public:
 
 	void UpdatePosErrorParams(bool updateError, bool updateDelta);
 
-	bool UsingScriptMoveType() const { return (prevMoveType != NULL); }
-	bool UnderFirstPersonControl() const { return (fpsControlPlayer != NULL); }
+	bool UsingScriptMoveType() const { return (prevMoveType != nullptr); }
+	bool UnderFirstPersonControl() const { return (fpsControlPlayer != nullptr); }
+
+	bool FloatOnWater() const;
 
 	bool IsNeutral() const { return neutral; }
 	bool IsCloaked() const { return isCloaked; }
@@ -164,6 +171,8 @@ public:
 
 	void SetStunned(bool stun);
 	bool IsStunned() const { return stunned; }
+
+	bool IsInLosForAllyTeam(int allyTeam) const { return ((losStatus[allyTeam] & LOS_INLOS) != 0); }
 
 	void SetLosStatus(int allyTeam, unsigned short newStatus);
 	unsigned short CalcLosStatus(int allyTeam);
@@ -189,6 +198,7 @@ public:
 		int piece;
 	};
 
+	bool SetSoloBuilder(CUnit* builder, const UnitDef* buildeeDef);
 	void SetLastAttacker(CUnit* attacker);
 
 	void SetTransporter(CUnit* trans) { transporter = trans; }
@@ -201,11 +211,12 @@ public:
 	bool DetachUnitCore(CUnit* unit);
 	bool DetachUnitFromAir(CUnit* unit, const float3& pos); ///< moves to position after
 
-	bool CanLoadUnloadAtPos(const float3& wantedPos, const CUnit* unit, float* wantedHeightPtr = NULL) const;
-	float GetTransporteeWantedHeight(const float3& wantedPos, const CUnit* unit, bool* ok = NULL) const;
+	bool CanLoadUnloadAtPos(const float3& wantedPos, const CUnit* unit, float* wantedHeightPtr = nullptr) const;
+	float GetTransporteeWantedHeight(const float3& wantedPos, const CUnit* unit, bool* ok = nullptr) const;
 	short GetTransporteeWantedHeading(const CUnit* unit) const;
 
 public:
+	void KilledScriptFinished(int wreckLevel) { deathScriptFinished = true; delayedWreckLevel = wreckLevel; }
 	void ForcedKillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed, bool showDeathSequence = true);
 	virtual void KillUnit(CUnit* attacker, bool selfDestruct, bool reclaimed, bool showDeathSequence = true);
 	virtual void IncomingMissile(CMissileProjectile* missile);
@@ -224,7 +235,7 @@ protected:
 	float GetFlankingDamageBonus(const float3& attackDir);
 
 public: // unsynced methods
-	bool SetGroup(CGroup* newGroup, bool fromFactory = false);
+	bool SetGroup(CGroup* newGroup, bool fromFactory = false, bool autoSelect = true);
 
 public:
 	static void  SetExpMultiplier(float value) { expMultiplier = value; }
@@ -250,8 +261,6 @@ public:
 public:
 	const UnitDef* unitDef;
 
-	std::vector<CWeapon*> weapons;
-
 	/// Our shield weapon, NULL if we have none
 	CWeapon* shieldWeapon;
 	/// Our weapon with stockpiled ammo, NULL if we have none
@@ -261,24 +270,13 @@ public:
 	const DynDamageArray* deathExpDamages;
 
 	CUnit* soloBuilder;
-	/// last attacker
 	CUnit* lastAttacker;
 
-	/// last frame unit was attacked by other unit
-	int lastAttackFrame;
-	/// last time this unit fired a weapon
-	int lastFireWeapon;
-
-	/// current attackee
-	SWeaponTarget curTarget;
+	/// player who is currently FPS'ing this unit
+	CPlayer* fpsControlPlayer;
 
 	/// transport that the unit is currently in
 	CUnit* transporter;
-
-	//Transporter stuff
-	int transportCapacityUsed;
-	float transportMassUsed;
-	std::vector<TransportedUnit> transportedUnits;
 
 	AMoveType* moveType;
 	AMoveType* prevMoveType;
@@ -286,19 +284,36 @@ public:
 	CCommandAI* commandAI;
 	CUnitScript* script;
 
+	/// current attackee
+	SWeaponTarget curTarget;
+
+
+	// sufficient for the largest UnitScript (CLuaUnitScript)
+	uint8_t usMemBuffer[240];
+	// sufficient for the largest AMoveType (CGroundMoveType)
+	// need two buffers since ScriptMoveType might be enabled
+	uint8_t amtMemBuffer[490];
+	uint8_t smtMemBuffer[370];
+	// sufficient for the largest CommandAI type (CBuilderCAI)
+	// knowing the exact CAI object size here is not required;
+	// static asserts will catch any overflow
+	uint8_t caiMemBuffer[700];
+
+
+	std::vector<CWeapon*> weapons;
+
 	/// which squares the unit can currently observe
 	std::vector<SLosInstance*> los;
 
 	/// indicate the los/radar status the allyteam has on this unit
 	std::vector<unsigned short> losStatus;
 
-	/// player who is currently FPS'ing this unit
-	CPlayer* fpsControlPlayer;
-
 	/// quads the unit is part of
 	std::vector<int> quads;
 
-	std::vector<CMissileProjectile*> incomingMissiles; //FIXME make std::set?
+	std::vector<TransportedUnit> transportedUnits;
+	std::vector<CMissileProjectile*> incomingMissiles;
+
 
 	float3 deathSpeed;
 	float3 lastMuzzleFlameDir;
@@ -309,6 +324,7 @@ public:
 	/// used for innacuracy with radars etc
 	float3 posErrorVector;
 	float3 posErrorDelta;
+
 
 	int featureDefID; // FeatureDef id of the wreck we spawn on death
 
@@ -340,17 +356,24 @@ public:
 	bool groundLevelled;
 	/// how much terraforming is left to do
 	float terraformLeft;
+	/// How much reapir power has been added to this recently
+	float repairAmount;
+
+	/// last frame unit was attacked by other unit
+	int lastAttackFrame;
+	/// last time this unit fired a weapon
+	int lastFireWeapon;
 
 	/// if we arent built on for a while start decaying
 	int lastNanoAdd;
 	int lastFlareDrop;
 
-	/// How much reapir power has been added to this recently
-	float repairAmount;
-
 	/// id of transport that the unit is about to be picked up by
 	int loadingTransportId;
 	int unloadingTransportId;
+
+	int transportCapacityUsed;
+	float transportMassUsed;
 
 
 	/// used by constructing units
@@ -420,12 +443,6 @@ public:
 	SResourcePack resourcesUseOld;
 	SResourcePack resourcesMakeOld;
 
-	/// energy added each halftick
-	float energyTickMake; //FIXME???
-
-	/// how much metal the unit currently extracts from the ground
-	float metalExtract;
-
 	/// the amount of storage the unit contributes to the team
 	SResourcePack storage;
 
@@ -434,6 +451,13 @@ public:
 	SResourcePack harvested;
 
 	SResourcePack cost;
+
+	/// energy added each halftick
+	float energyTickMake; //FIXME???
+
+	/// how much metal the unit currently extracts from the ground
+	float metalExtract;
+
 	float buildTime;
 
 	/// decaying value of how much damage the unit has taken recently (for severity of death)

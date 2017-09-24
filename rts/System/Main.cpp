@@ -8,7 +8,6 @@
 
 
 #include "System/SpringApp.h"
-
 #include "System/Exceptions.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/Platform/errorhandler.h"
@@ -16,20 +15,15 @@
 #include "System/Platform/Misc.h"
 #include "System/Log/ILog.h"
 
+#include <clocale>
+#include <cstdlib>
+
 #ifdef WIN32
 	#include "lib/SOP/SOP.hpp" // NvOptimus
-
-	#include <stdlib.h>
-	#include <process.h>
-	#define setenv(k,v,o) SetEnvironmentVariable(k,v)
 #endif
-
-
 
 int Run(int argc, char* argv[])
 {
-	int ret = -1;
-
 #ifdef __MINGW32__
 	// For the MinGW backtrace() implementation we need to know the stack end.
 	{
@@ -39,23 +33,14 @@ int Run(int argc, char* argv[])
 	}
 #endif
 
+	// already the default, but be explicit for locale-dependent functions (atof,strtof,...)
+	setlocale(LC_NUMERIC, "C");
+
 	Threading::DetectCores();
 	Threading::SetMainThread();
 
-	// run
-	try {
-		SpringApp app(argc, argv);
-		ret = app.Run();
-	} CATCH_SPRING_ERRORS
-
-	// check if (a thread in) Spring crashed, if so display an error message
-	Threading::Error* err = Threading::GetThreadError();
-
-	if (err != NULL) {
-		ErrorMessageBox(" error: " + err->message, err->caption, err->flags, true);
-	}
-
-	return ret;
+	SpringApp app(argc, argv);
+	return (app.Run());
 }
 
 
@@ -63,19 +48,19 @@ int Run(int argc, char* argv[])
  * Always run on dedicated GPU
  * @return true when restart is required with new env vars
  */
+#if !defined(PROFILE) && !defined(HEADLESS)
 static bool SetNvOptimusProfile(const std::string& processFileName)
 {
 #ifdef WIN32
 	if (SOP_CheckProfile("Spring"))
 		return false;
 
-	const bool profileChanged = (SOP_SetProfile("Spring", processFileName) == SOP_RESULT_CHANGE);
-
 	// on Windows execvp breaks lobbies (new process: new PID)
-	return (false && profileChanged);
+	return (false && (SOP_SetProfile("Spring", processFileName) == SOP_RESULT_CHANGE));
 #endif
 	return false;
 }
+#endif
 
 
 

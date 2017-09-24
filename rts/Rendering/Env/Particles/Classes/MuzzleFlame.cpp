@@ -7,9 +7,10 @@
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
+#include "Sim/Projectiles/ProjectileMemPool.h"
 
 
-CR_BIND_DERIVED(CMuzzleFlame, CProjectile, )
+CR_BIND_DERIVED_POOL(CMuzzleFlame, CProjectile, , projMemPool.alloc, projMemPool.free)
 
 CR_REG_METADATA(CMuzzleFlame,(
 	CR_MEMBER(size),
@@ -35,14 +36,10 @@ CMuzzleFlame::CMuzzleFlame(const float3& pos, const float3& speed, const float3&
 	randSmokeDir.resize(numSmoke);
 
 	for (int a = 0; a < numSmoke; ++a) {
-		randSmokeDir[a] = dir + gu->RandFloat() * 0.4f;
+		randSmokeDir[a] = dir + guRNG.NextFloat() * 0.4f;
 	}
 }
 
-CMuzzleFlame::~CMuzzleFlame()
-{
-//	delete[] randSmokeDir;
-}
 
 void CMuzzleFlame::Update()
 {
@@ -53,9 +50,8 @@ void CMuzzleFlame::Update()
 	pos += speed;
 }
 
-void CMuzzleFlame::Draw()
+void CMuzzleFlame::Draw(CVertexArray* va)
 {
-	inArray = true;
 	unsigned char col[4];
 	float alpha = std::max(0.0f, 1 - (age / (4 + size * 30)));
 	float modAge = fastmath::apxsqrt(static_cast<float>(age + 2));

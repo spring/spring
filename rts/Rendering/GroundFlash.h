@@ -21,12 +21,12 @@ public:
 	CGroundFlash();
 
 	virtual ~CGroundFlash() {}
-	virtual void Draw() {}
+	virtual void Draw(CVertexArray* va) {}
 	/// @return false when it should be deleted
 	virtual bool Update() { return false; }
 	virtual void Init(const CUnit* owner, const float3& offset) {}
 
-	float3 CalcNormal(const float3 midPos, const float3 camDir, const float quadSize) const;
+	float3 CalcNormal(const float3 midPos, const float3 camDir, float quadSize) const;
 
 protected:
 	static bool GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo);
@@ -35,8 +35,6 @@ public:
 	float size;
 	bool depthTest;
 	bool depthMask;
-
-	static CVertexArray* va;
 };
 
 
@@ -44,7 +42,7 @@ public:
 class CStandardGroundFlash : public CGroundFlash
 {
 public:
-	CR_DECLARE(CStandardGroundFlash)
+	CR_DECLARE_DERIVED(CStandardGroundFlash)
 
 	CStandardGroundFlash();
 	CStandardGroundFlash(const float3& pos, const GroundFlashInfo& info);
@@ -60,8 +58,8 @@ public:
 
 	void InitCommon(const float3& _pos, const float3& _color);
 
-	void Draw();
-	bool Update();
+	void Draw(CVertexArray* va) override;
+	bool Update() override;
 
 	static bool GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo);
 
@@ -96,7 +94,7 @@ public:
 	CSimpleGroundFlash();
 
 	void Init(const CUnit* owner, const float3& offset) override;
-	void Draw() override;
+	void Draw(CVertexArray* va) override;
 	bool Update() override;
 
 	static bool GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo);
@@ -122,7 +120,7 @@ private:
 class CSeismicGroundFlash : public CGroundFlash
 {
 public:
-	CR_DECLARE(CSeismicGroundFlash)
+	CR_DECLARE_DERIVED(CSeismicGroundFlash)
 
 	CSeismicGroundFlash(
 		const float3& _pos,
@@ -134,9 +132,9 @@ public:
 		const float3& _color
 	);
 
-	void Draw();
+	void Draw(CVertexArray* va) override;
 	/// @return false when it should be deleted
-	bool Update();
+	bool Update() override;
 
 private:
 	float3 side1;

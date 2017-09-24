@@ -18,7 +18,7 @@
 #include "Sim/Units/Unit.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
-#include "System/Util.h"
+#include "System/SafeUtil.h"
 
 
 #define USE_OBJECT_RENDERING_BUCKETS
@@ -113,7 +113,7 @@ static float GetLODFloat(const std::string& name)
 {
 	// NOTE: the inverse of the value is used
 	const float value = std::max(0.0f, configHandler->GetFloat(name));
-	const float recip = SafeDivide(1.0f, value);
+	const float recip = spring::SafeDivide(1.0f, value);
 	return recip;
 }
 
@@ -223,10 +223,10 @@ void LuaObjectDrawer::Init()
 	eventFuncs[LUAOBJ_FEATURE] = &CEventHandler::DrawFeaturesPostDeferred;
 
 	unitDrawFuncs[false] = &CUnitDrawer::DrawUnitNoTrans;
-	unitDrawFuncs[ true] = &CUnitDrawer::DrawUnit;
+	unitDrawFuncs[ true] = &CUnitDrawer::DrawUnitTrans;
 
 	featureDrawFuncs[false] = &CFeatureDrawer::DrawFeatureNoTrans;
-	featureDrawFuncs[ true] = &CFeatureDrawer::DrawFeature;
+	featureDrawFuncs[ true] = &CFeatureDrawer::DrawFeatureTrans;
 
 	drawDeferredAllowed = configHandler->GetBool("AllowDeferredModelRendering");
 	bufferClearAllowed = configHandler->GetBool("AllowDeferredModelBufferClear");
@@ -250,7 +250,7 @@ void LuaObjectDrawer::Kill()
 	featureDrawFuncs[ true] = nullptr;
 
 	assert(geomBuffer != nullptr);
-	SafeDelete(geomBuffer);
+	spring::SafeDelete(geomBuffer);
 }
 
 
@@ -463,6 +463,8 @@ void LuaObjectDrawer::DrawDeferredPass(LuaObjType objType)
 	// note: should also set this during the map pass (in SMFGD)
 	game->SetDrawMode(CGame::gameDeferredDraw);
 	geomBuffer->Bind();
+	geomBuffer->SetDepthRange(1.0f, 0.0f);
+
 	// reset the buffer (since we do not perform a single pass
 	// writing both units and features into it at the same time)
 	// this however forces Lua to execute two shading passes and
@@ -484,6 +486,7 @@ void LuaObjectDrawer::DrawDeferredPass(LuaObjType objType)
 		} break;
 	}
 
+	geomBuffer->SetDepthRange(0.0f, 1.0f);
 	geomBuffer->UnBind();
 	game->SetDrawMode(CGame::gameNormalDraw);
 

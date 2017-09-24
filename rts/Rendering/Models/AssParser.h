@@ -4,11 +4,12 @@
 #define ASS_PARSER_H
 
 #include <vector>
-#include <map>
+
 #include "3DModel.h"
 #include "IModelParser.h"
 #include "System/float3.h"
 #include "System/type2.h"
+#include "System/UnorderedMap.hpp"
 
 
 struct aiNode;
@@ -30,6 +31,7 @@ struct SAssPiece: public S3DModelPiece
 
 	unsigned int GetVertexCount() const override { return vertices.size(); }
 	unsigned int GetVertexDrawIndexCount() const override { return indices.size(); }
+
 	const float3& GetVertexPos(const int idx) const override { return vertices[idx].pos; }
 	const float3& GetNormal(const int idx) const override { return vertices[idx].normal; }
 	const std::vector<unsigned>& GetVertexIndices() const override { return indices; }
@@ -48,17 +50,18 @@ public:
 class CAssParser: public IModelParser
 {
 public:
-	typedef std::map<std::string, S3DModelPiece*> ModelPieceMap;
-	typedef std::map<SAssPiece*, std::string> ParentNameMap;
+	typedef spring::unordered_map<std::string, S3DModelPiece*> ModelPieceMap;
+	typedef spring::unordered_map<std::string, std::string> ParentNameMap;
 
 	CAssParser();
 	~CAssParser();
-	S3DModel* Load(const std::string& modelFileName);
-	ModelType GetType() const { return MODELTYPE_ASS; }
-private:
 
-	GLint maxIndices;
-	GLint maxVertices;
+	S3DModel Load(const std::string& modelFileName);
+	ModelType GetType() const { return MODELTYPE_ASS; }
+
+private:
+	unsigned int maxIndices;
+	unsigned int maxVertices;
 
 	static void SetPieceName(
 		SAssPiece* piece,

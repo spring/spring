@@ -220,6 +220,7 @@ class LuaSyncedRead {
 		static int GetGroundBlocked(lua_State* L);
 		static int GetGroundExtremes(lua_State* L);
 		static int GetTerrainTypeData(lua_State* L);
+		static int GetGrass(lua_State* L);
 
 		static int GetSmoothMeshHeight(lua_State* L);
 

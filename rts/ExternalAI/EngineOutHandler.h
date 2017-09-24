@@ -24,8 +24,8 @@ struct SSkirmishAICallback;
 
 void handleAIException(const char* description);
 
-class CEngineOutHandler : public CObject {
-	CR_DECLARE(CEngineOutHandler)
+class CEngineOutHandler {
+	CR_DECLARE_STRUCT(CEngineOutHandler)
 
 
 public:
@@ -74,7 +74,7 @@ public:
 
 
 	// Skirmish AI stuff
-	void CreateSkirmishAI(const size_t skirmishAIId);
+	void CreateSkirmishAI(const uint8_t skirmishAIId);
 	/**
 	 * Sets a local Skirmish AI dieing.
 	 * Do not call this if you want to kill a local AI, but use
@@ -83,7 +83,7 @@ public:
 	 * @see CSkirmishAIHandler::SetLocalSkirmishAIDieing()
 	 * @see DestroySkirmishAI()
 	 */
-	void SetSkirmishAIDieing(const size_t skirmishAIId);
+	void SetSkirmishAIDieing(const uint8_t skirmishAIId);
 	/**
 	 * Destructs a local Skirmish AI for real.
 	 * Do not call this if you want to kill a local AI, but use
@@ -92,10 +92,10 @@ public:
 	 * @see SetSkirmishAIDieing()
 	 * @see CSkirmishAIHandler::SetLocalSkirmishAIDieing()
 	 */
-	void DestroySkirmishAI(const size_t skirmishAIId);
+	void DestroySkirmishAI(const uint8_t skirmishAIId);
 
-	void Load(std::istream* s);
-	void Save(std::ostream* s);
+	void Load(std::istream* s, const uint8_t skirmishAIId);
+	void Save(std::ostream* s, const uint8_t skirmishAIId);
 
 private:
 	typedef std::vector<uint8_t> ids_t;
@@ -103,13 +103,13 @@ private:
 	typedef std::map<int, ids_t> team_ais_t;
 
 	/// Contains all local Skirmish AIs, indexed by their ID
-	id_ai_t id_skirmishAI;
+	id_ai_t hostSkirmishAIs;
 
 	/**
 	 * Array mapping team IDs to local Skirmish AI instances.
 	 * There can be multiple Skirmish AIs per team.
 	 */
-	team_ais_t team_skirmishAIs;
+	team_ais_t teamSkirmishAIs;
 };
 
 #define eoh CEngineOutHandler::GetInstance()

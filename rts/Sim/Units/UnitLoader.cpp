@@ -7,12 +7,6 @@
 #include "UnitDefHandler.h"
 #include "UnitHandler.h"
 
-#include "Scripts/UnitScript.h"
-
-#include "UnitTypes/Builder.h"
-#include "UnitTypes/ExtractorBuilding.h"
-#include "UnitTypes/Factory.h"
-
 #include "CommandAI/AirCAI.h"
 #include "CommandAI/BuilderCAI.h"
 #include "CommandAI/CommandAI.h"
@@ -33,6 +27,8 @@
 #include "System/Log/ILog.h"
 #include "System/Platform/Watchdog.h"
 
+
+
 CUnitLoader* CUnitLoader::GetInstance()
 {
 	// NOTE: UnitLoader has no internal state, so this is fine wrt. reloading
@@ -40,84 +36,73 @@ CUnitLoader* CUnitLoader::GetInstance()
 	return &instance;
 }
 
+CCommandAI* CUnitLoader::NewCommandAI(CUnit* u, const UnitDef* ud)
+{
+	static_assert(sizeof(CFactoryCAI) <= sizeof(u->caiMemBuffer), "");
+	static_assert(sizeof(CBuilderCAI) <= sizeof(u->caiMemBuffer), "");
+	static_assert(sizeof(    CAirCAI) <= sizeof(u->caiMemBuffer), "");
+	static_assert(sizeof( CMobileCAI) <= sizeof(u->caiMemBuffer), "");
+	static_assert(sizeof( CCommandAI) <= sizeof(u->caiMemBuffer), "");
 
+	if (ud->IsFactoryUnit())
+		return (new (u->caiMemBuffer) CFactoryCAI(u));
+
+	if (ud->IsMobileBuilderUnit() || ud->IsStaticBuilderUnit())
+		return (new (u->caiMemBuffer) CBuilderCAI(u));
+
+	// non-hovering fighter or bomber aircraft; coupled to StrafeAirMoveType
+	if (ud->IsStrafingAirUnit())
+		return (new (u->caiMemBuffer) CAirCAI(u));
+	// all other aircraft; coupled to HoverAirMoveType
+	if (ud->IsAirUnit())
+		return (new (u->caiMemBuffer) CMobileCAI(u));
+
+	if (ud->IsGroundUnit() || ud->IsTransportUnit())
+		return (new (u->caiMemBuffer) CMobileCAI(u));
+
+	return (new (u->caiMemBuffer) CCommandAI(u));
+}
 
 CUnit* CUnitLoader::LoadUnit(const std::string& name, const UnitLoadParams& params)
 {
 	const_cast<UnitLoadParams&>(params).unitDef = unitDefHandler->GetUnitDefByName(name);
 
-	if (params.unitDef == NULL)
+	if (params.unitDef == nullptr)
 		throw content_error("Couldn't find unittype " +  name);
 
 	return (LoadUnit(params));
 }
 
-
-CUnit* CUnitLoader::LoadUnit(const UnitLoadParams& cparams)
+CUnit* CUnitLoader::LoadUnit(const UnitLoadParams& params)
 {
-	CUnit* unit = NULL;
-	UnitLoadParams& params = const_cast<UnitLoadParams&>(cparams);
+	CUnit* unit = nullptr;
 
 	{
 		const UnitDef* ud = params.unitDef;
 
-		if (ud == NULL)
+		if (ud == nullptr)
 			return unit;
 		// need to check this BEFORE creating the instance
-		if (!unitHandler->CanAddUnit(cparams.unitID))
+		if (!unitHandler->CanAddUnit(params.unitID))
 			return unit;
 
 		if (params.teamID < 0) {
-			// FIXME use gs->gaiaTeamID ?  (once it is always enabled)
-			if ((params.teamID = teamHandler->GaiaTeamID()) < 0)
-				throw content_error("Invalid team and no gaia team to put unit in");
+			if (teamHandler->GaiaTeamID() < 0) {
+				LOG_L(L_WARNING, "[%s] invalid team %d and no Gaia-team", __func__, params.teamID);
+				return unit;
+			}
+
+			const_cast<UnitLoadParams&>(params).teamID = teamHandler->GaiaTeamID();
 		}
 
-		if (ud->IsFactoryUnit()) {
-			// special static builder structures that can always be given
-			// move orders (which are passed on to all mobile buildees)
-			unit = new CFactory();
-		} else if (ud->IsMobileBuilderUnit() || ud->IsStaticBuilderUnit()) {
-			// all other types of non-structure "builders", including hubs and
-			// nano-towers (the latter should not have any build-options at all,
-			// whereas the former should be unable to build any mobile units)
-			unit = new CBuilder();
-		} else if (ud->IsBuildingUnit()) {
-			// static non-builder structures
-			if (ud->IsExtractorUnit()) {
-				unit = new CExtractorBuilding();
-			} else {
-				unit = new CBuilding();
-			}
-		} else {
-			// regular mobile unit
-			unit = new CUnit();
-		}
+		unit = CUnitHandler::NewUnit(ud);
 
 		unit->PreInit(params);
-
-		if (ud->IsFactoryUnit()) {
-			new CFactoryCAI(unit);
-		} else if (ud->IsMobileBuilderUnit() || ud->IsStaticBuilderUnit()) {
-			new CBuilderCAI(unit);
-		} else if (ud->IsStrafingAirUnit()) {
-			// non-hovering fighter or bomber aircraft; coupled to StrafeAirMoveType
-			new CAirCAI(unit);
-		} else if (ud->IsAirUnit()) {
-			// all other aircraft; coupled to HoverAirMoveType
-			new CMobileCAI(unit);
-		} else if (ud->IsGroundUnit() || ud->IsTransportUnit()) {
-			new CMobileCAI(unit);
-		} else {
-			new CCommandAI(unit);
-		}
+		unit->PostInit(params.builder);
 	}
 
-	unit->PostInit(params.builder);
-
-	if (params.flattenGround) {
+	if (params.flattenGround)
 		FlattenGround(unit);
-	}
 
 	return unit;
 }
@@ -213,7 +198,7 @@ void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amoun
 
 			const UnitLoadParams unitParams = {
 				ud,
-				NULL,
+				nullptr,
 
 				float3(px, CGround::GetHeightReal(px, pz), pz),
 				ZeroVector,
@@ -248,12 +233,12 @@ void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amoun
 		const UnitDef* unitDef = unitDefHandler->GetUnitDefByName(objectName);
 		const FeatureDef* featureDef = featureDefHandler->GetFeatureDef(objectName, false);
 
-		if (unitDef == NULL && featureDef == NULL) {
+		if (unitDef == nullptr && featureDef == nullptr) {
 			LOG_L(L_WARNING, "[%s] %s is not a valid object-name", __FUNCTION__, objectName.c_str());
 			return;
 		}
 
-		if (unitDef != NULL) {
+		if (unitDef != nullptr) {
 			const int xsize = unitDef->xsize;
 			const int zsize = unitDef->zsize;
 			const int squareSize = math::ceil(math::sqrt((float) numRequestedUnits));
@@ -274,7 +259,7 @@ void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amoun
 
 					const UnitLoadParams unitParams = {
 						unitDef,
-						NULL,
+						nullptr,
 
 						float3(px, CGround::GetHeightReal(px, pz), pz),
 						ZeroVector,
@@ -295,10 +280,9 @@ void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amoun
 					__FUNCTION__, numRequestedUnits, objectName.c_str(), team);
 		}
 
-		if (featureDef != NULL) {
-			if (featureAllyTeam < 0) {
+		if (featureDef != nullptr) {
+			if (featureAllyTeam < 0)
 				team = -1; // default to world features
-			}
 
 			const int xsize = featureDef->xsize;
 			const int zsize = featureDef->zsize;
@@ -320,7 +304,7 @@ void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amoun
 					Watchdog::ClearPrimaryTimers();
 					FeatureLoadParams params = {
 						featureDef,
-						NULL,
+						nullptr,
 
 						featurePos,
 						ZeroVector,
@@ -331,6 +315,7 @@ void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amoun
 						0, // rotation
 						FACING_SOUTH,
 
+						0, // wreckLevels
 						0, // smokeTime
 					};
 
@@ -352,13 +337,18 @@ void CUnitLoader::GiveUnits(const std::string& objectName, float3 pos, int amoun
 void CUnitLoader::FlattenGround(const CUnit* unit)
 {
 	const UnitDef* unitDef = unit->unitDef;
-	const float groundheight = CGround::GetHeightReal(unit->pos.x, unit->pos.z);
+	// const MoveDef* moveDef = unit->moveDef;
 
-	if (mapDamage->disabled) return;
-	if (!unitDef->levelGround) return;
-	if (unitDef->IsAirUnit()) return;
-	if (!unitDef->IsImmobileUnit()) return;
-	if (unitDef->floatOnWater && groundheight <= 0.0f) return;
+	if (mapDamage->disabled)
+		return;
+	if (!unitDef->levelGround)
+		return;
+	if (unitDef->IsAirUnit())
+		return;
+	if (!unitDef->IsImmobileUnit())
+		return;
+	if (unit->FloatOnWater() && unit->IsInWater())
+		return;
 
 	// if we are float-capable, only flatten
 	// if the terrain here is above sea level
@@ -383,13 +373,17 @@ void CUnitLoader::FlattenGround(const CUnit* unit)
 void CUnitLoader::RestoreGround(const CUnit* unit)
 {
 	const UnitDef* unitDef = unit->unitDef;
-	const float groundheight = CGround::GetHeightReal(unit->pos.x, unit->pos.z);
 
-	if (mapDamage->disabled) return;
-	if (!unitDef->levelGround) return;
-	if (unitDef->IsAirUnit()) return;
-	if (!unitDef->IsImmobileUnit()) return;
-	if (unitDef->floatOnWater && groundheight <= 0.0f) return;
+	if (mapDamage->disabled)
+		return;
+	if (!unitDef->levelGround)
+		return;
+	if (unitDef->IsAirUnit())
+		return;
+	if (!unitDef->IsImmobileUnit())
+		return;
+	if (unit->FloatOnWater() && unit->IsInWater())
+		return;
 
 	BuildInfo bi(unitDef, unit->pos, unit->buildFacing);
 	bi.pos = CGameHelper::Pos2BuildPos(bi, true);
@@ -430,3 +424,4 @@ void CUnitLoader::RestoreGround(const CUnit* unit)
 
 	mapDamage->RecalcArea(tx1, tx2, tz1, tz2);
 }
+

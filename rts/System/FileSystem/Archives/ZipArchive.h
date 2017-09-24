@@ -48,8 +48,8 @@ protected:
 		unsigned int crc;
 	};
 	std::vector<FileData> fileData;
-	
-	virtual bool GetFileImpl(unsigned int fid, std::vector<boost::uint8_t>& buffer);
+
+	virtual bool GetFileImpl(unsigned int fid, std::vector<std::uint8_t>& buffer);
 };
 
 #endif // _ZIP_ARCHIVE_H

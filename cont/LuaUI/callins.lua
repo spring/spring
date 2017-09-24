@@ -56,6 +56,7 @@ CallInsList = {
   "UnitLeftLos",
   "UnitLoaded",
   "UnitUnloaded",
+  "UnitHarvestStorageFull",
 
   "UnitEnteredWater",
   "UnitEnteredAir",
@@ -68,10 +69,12 @@ CallInsList = {
   "DrawGenesis",
   "DrawWorld",
   "DrawWorldPreUnit",
+  "DrawWorldPreParticles",
   "DrawWorldShadow",
   "DrawWorldReflection",
   "DrawWorldRefraction",
   "DrawScreenEffects",
+  "DrawScreenPost",
   "DrawScreen",
   "DrawInMiniMap",
 

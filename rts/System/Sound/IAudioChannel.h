@@ -21,13 +21,10 @@ class IAudioChannel {
 protected:
 	IAudioChannel();
 public:
-	virtual ~IAudioChannel();
+	virtual ~IAudioChannel() {}
 
 	virtual void Enable(bool newState) = 0;
-	bool IsEnabled() const
-	{
-		return enabled;
-	}
+	bool IsEnabled() const { return enabled; }
 
 	/**
 	 * @param newVolume [0.0, 1.0]
@@ -36,10 +33,7 @@ public:
 	/**
 	 * @return [0.0, 1.0]
 	 */
-	float GetVolume() const
-	{
-		return volume;
-	}
+	float GetVolume() const { return volume; }
 
 	virtual void PlaySample(size_t id, float volume = 1.0f) = 0;
 	virtual void PlaySample(size_t id, const float3& p, float volume = 1.0f) = 0;
@@ -68,15 +62,9 @@ public:
 	virtual float StreamGetTime() = 0;
 	virtual float StreamGetPlayTime() = 0;
 
-	void UpdateFrame() {
-		emmitsThisFrame = 0;
-	}
-	void SetMaxEmmits(unsigned max) {
-		emmitsPerFrame = max;
-	}
-	void SetMaxConcurrent(unsigned max) {
-		maxConcurrentSources = max;
-	}
+	void UpdateFrame() { emitsThisFrame = 0; }
+	void SetMaxEmits(unsigned max) { emitsPerFrame = max; }
+	void SetMaxConcurrent(unsigned max) { maxConcurrentSources = max; }
 
 protected:
 	virtual void FindSourceAndPlay(size_t id, const float3& p, const float3& velocity, float volume, bool relative) = 0;
@@ -89,8 +77,8 @@ public:
 	bool enabled;
 
 protected:
-	unsigned emmitsPerFrame;
-	unsigned emmitsThisFrame;
+	unsigned emitsPerFrame;
+	unsigned emitsThisFrame;
 	unsigned maxConcurrentSources;
 };
 

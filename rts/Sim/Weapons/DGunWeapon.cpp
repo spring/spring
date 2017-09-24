@@ -2,30 +2,20 @@
 
 #include "DGunWeapon.h"
 #include "WeaponDef.h"
+#include "WeaponMemPool.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
 #include "Sim/Units/Unit.h"
 
-CR_BIND_DERIVED(CDGunWeapon, CWeapon, (NULL, NULL))
+CR_BIND_DERIVED_POOL(CDGunWeapon, CWeapon, , weaponMemPool.alloc, weaponMemPool.free)
 CR_REG_METADATA(CDGunWeapon, )
-
-CDGunWeapon::CDGunWeapon(CUnit* owner, const WeaponDef* def): CWeapon(owner, def)
-{
-}
-
-
-float CDGunWeapon::GetPredictedImpactTime(float3 p) const
-{
-	// user has to manually predict
-	return 0;
-}
 
 
 void CDGunWeapon::FireImpl(const bool scriptCall)
 {
 	float3 dir = wantedDir;
 
-	dir += (gs->randVector() * SprayAngleExperience() + SalvoErrorExperience());
+	dir += (gsRNG.NextVector() * SprayAngleExperience() + SalvoErrorExperience());
 	dir.Normalize();
 
 	ProjectileParams params = GetProjectileParams();

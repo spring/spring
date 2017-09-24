@@ -9,7 +9,7 @@
 
 #include "WordCompletion.h"
 #include "System/Log/ILog.h"
-#include "System/Util.h"
+#include "System/SafeUtil.h"
 
 #include <stdexcept>
 #include <algorithm>
@@ -26,7 +26,7 @@ void CWordCompletion::CreateInstance() {
 
 void CWordCompletion::DestroyInstance() {
 	if (singleton != NULL) {
-		SafeDelete(singleton);
+		spring::SafeDelete(singleton);
 	} else {
 		throw std::logic_error("WordCompletion singleton was not initialized or is already destroyed");
 	}

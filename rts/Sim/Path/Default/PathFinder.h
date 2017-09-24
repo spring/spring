@@ -11,24 +11,26 @@
 #include "IPathFinder.h"
 #include "PathConstants.h"
 #include "PathDataTypes.h"
+#include "Sim/MoveTypes/MoveMath/MoveMath.h"
 #include "Sim/Objects/SolidObject.h"
 
 struct MoveDef;
 class CPathFinderDef;
 
-
 class CPathFinder: public IPathFinder {
 public:
-	CPathFinder();
+	CPathFinder(bool threadSafe = true);
 
-	static void InitDirectionVectorsTable();
-	static void InitDirectionCostsTable();
+	static void InitStatic();
 
 	static const   int2* GetDirectionVectorsTable2D();
 	static const float3* GetDirectionVectorsTable3D();
 
-protected: // IPathFinder impl
+	typedef CMoveMath::BlockType (*BlockCheckFunc)(const MoveDef&, int, int, const CSolidObject*);
+
+protected:
 	/// Performs the actual search.
+	IPath::SearchResult DoRawSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, const CSolidObject* owner);
 	IPath::SearchResult DoSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, const CSolidObject* owner);
 
 	/**
@@ -50,9 +52,9 @@ protected: // IPathFinder impl
 	 *
 	 * Perform adjustment of waypoints so not all turns are 90 or 45 degrees.
 	 */
-	IPath::SearchResult FinishSearch(const MoveDef&, const CPathFinderDef&, IPath::Path&) const;
+	void FinishSearch(const MoveDef&, const CPathFinderDef&, IPath::Path&) const;
 
-	const CPathCache::CacheItem* GetCache(
+	const CPathCache::CacheItem& GetCache(
 		const int2 strtBlock,
 		const int2 goalBlock,
 		float goalRadius,
@@ -60,7 +62,7 @@ protected: // IPathFinder impl
 		const bool synced
 	) const {
 		// only cache in Estimator! (cause of flow & heatmapping etc.)
-		return nullptr;
+		return dummyCacheItem;
 	}
 
 	void AddCache(
@@ -87,18 +89,20 @@ private:
 	void AdjustFoundPath(
 		const MoveDef&,
 		IPath::Path&,
-		const float3 nextPoint,
-		std::deque<int2>& previous,
-		int2 square
+		const int2& p1,
+		const int2& p2,
+		const int2& p0
 	) const;
 
 	inline void SmoothMidWaypoint(
-		const int2 testsqr,
-		const int2 prvsqr,
+		const int2 testSqr,
+		const int2 prevSqr,
 		const MoveDef& moveDef,
-		IPath::Path& foundPath,
-		const float3 nextPoint
+		IPath::Path& foundPath
 	) const;
+
+	BlockCheckFunc blockCheckFunc;
+	CPathCache::CacheItem dummyCacheItem;
 };
 
 #endif // PATH_FINDER_H

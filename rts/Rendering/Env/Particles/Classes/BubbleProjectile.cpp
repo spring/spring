@@ -10,8 +10,9 @@
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ExpGenSpawnableMemberInfo.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
+#include "Sim/Projectiles/ProjectileMemPool.h"
 
-CR_BIND_DERIVED(CBubbleProjectile, CProjectile, )
+CR_BIND_DERIVED_POOL(CBubbleProjectile, CProjectile, , projMemPool.alloc, projMemPool.free)
 
 CR_REG_METADATA(CBubbleProjectile, (
 	CR_MEMBER_BEGINFLAG(CM_Config),
@@ -52,11 +53,6 @@ CBubbleProjectile::CBubbleProjectile(
 	checkCol = false;
 }
 
-CBubbleProjectile::~CBubbleProjectile()
-{
-
-}
-
 
 void CBubbleProjectile::Update()
 {
@@ -81,9 +77,8 @@ void CBubbleProjectile::Update()
 	}
 }
 
-void CBubbleProjectile::Draw()
+void CBubbleProjectile::Draw(CVertexArray* va)
 {
-	inArray = true;
 	unsigned char col[4];
 	col[0] = (unsigned char)(255 * alpha);
 	col[1] = (unsigned char)(255 * alpha);

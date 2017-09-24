@@ -7,7 +7,7 @@
 #include "CommandQueue.h"
 
 #include <string>
-#include <map>
+#include "System/UnorderedMap.hpp"
 
 class CUnit;
 class CFeature;
@@ -35,7 +35,7 @@ public:
 
 	CCommandQueue newUnitCommands;
 
-	std::map<int, int> buildOptions;
+	spring::unordered_map<int, int> buildOptions;
 
 private:
 	void UpdateIconName(int id, const int& numQueued);

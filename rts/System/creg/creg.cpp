@@ -5,13 +5,13 @@
  * Classes for serialization of registrated class instances
  */
 
-#include <unordered_map>
 #include <vector>
 #include <string>
 #include <string.h>
 
 #include "creg_cond.h"
-#include "System/Util.h"
+#include "System/UnorderedMap.hpp"
+#include "System/StringUtil.h"
 #include "System/Sync/HsiehHash.h"
 
 
@@ -21,7 +21,8 @@ using namespace creg;
 // some local statics, needed cause we work with global static vars
 // -------------------------------------------------------------------
 
-static std::unordered_map<const Class*, std::vector<Class*>>& derivedClasses()
+//FIXME - Allow synced order traversal
+static spring::unsynced_map<const Class*, std::vector<Class*>>& derivedClasses()
 {
 	// note: we cannot save this in `class Class`, cause those are created with
 	//   global statics, and those have an arbitrary init order. And when a Class
@@ -30,13 +31,13 @@ static std::unordered_map<const Class*, std::vector<Class*>>& derivedClasses()
 	//   So we cannot access other's Class' members that early in the loading
 	//   stage, that's solved with these local static vars, which get created
 	//   on access.
-	static std::unordered_map<const Class*, std::vector<Class*>> m;
+	static spring::unsynced_map<const Class*, std::vector<Class*>> m;
 	return m;
 }
 
-static std::unordered_map<std::string, Class*>& mapNameToClass()
+static spring::unsynced_map<std::string, Class*>& mapNameToClass()
 {
-	static std::unordered_map<std::string, Class*> m;
+	static spring::unsynced_map<std::string, Class*> m;
 	return m;
 }
 
@@ -52,7 +53,7 @@ static std::vector<Class*>& classes()
 
 ClassBinder::ClassBinder(const char* className, ClassFlags cf,
 		ClassBinder* baseClsBinder, void (*memberRegistrator)(creg::Class*), int instanceSize, int instanceAlignment, bool hasVTable, bool isCregStruct,
-		void (*constructorProc)(void* inst), void (*destructorProc)(void* inst))
+		void (*constructorProc)(void* inst), void (*destructorProc)(void* inst), void* (*allocProc)(), void (*freeProc)(void* instance))
 	: class_(className)
 	, base(baseClsBinder)
 	, flags(cf)
@@ -63,6 +64,8 @@ ClassBinder::ClassBinder(const char* className, ClassFlags cf,
 	, isCregStruct(isCregStruct)
 	, constructor(constructorProc)
 	, destructor(destructorProc)
+	, poolAlloc(allocProc)
+	, poolFree(freeProc)
 {
 	class_.binder = this;
 	class_.size = instanceSize;
@@ -167,7 +170,7 @@ void Class::SetFlag(ClassFlags flag)
 	binder->flags = (ClassFlags) (binder->flags | flag);
 }
 
-void Class::AddMember(const char* name, boost::shared_ptr<IType> type, unsigned int offset, int alignment)
+void Class::AddMember(const char* name, std::shared_ptr<IType> type, unsigned int offset, int alignment)
 {
 	assert(!FindMember(name, false));
 
@@ -206,21 +209,30 @@ void Class::SetMemberFlag(const char* name, ClassMemberFlag f)
 
 void* Class::CreateInstance()
 {
-	void* inst = ::operator new(binder->size);
-
-	if (binder->constructor) {
-		binder->constructor(inst);
+	void* inst;
+	if (binder->poolAlloc) {
+		inst = binder->poolAlloc();
+	} else {
+		inst = ::operator new(binder->size);
+		if (binder->constructor) {
+			binder->constructor(inst);
+		}
 	}
+
 	return inst;
 }
 
 void Class::DeleteInstance(void* inst)
 {
-	if (binder->destructor) {
-		binder->destructor(inst);
-	}
+	if (binder->poolFree) {
+		binder->poolFree(inst);
+	} else {
+		if (binder->destructor) {
+			binder->destructor(inst);
+		}
 
-	::operator delete(inst);
+		::operator delete(inst);
+	}
 }
 
 void Class::CalculateChecksum(unsigned int& checksum)

@@ -34,11 +34,11 @@
 #include "System/Log/ILog.h"
 #include "System/myMath.h"
 #include "System/TimeProfiler.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
+#include "System/UnorderedMap.hpp"
 
-#include <unordered_map>
 #include <numeric>
 
 
@@ -99,7 +99,7 @@ struct STex {
 };
 
 typedef float4 SAtlasTex;
-static std::unordered_map<std::string, SAtlasTex> atlasTexs;
+static spring::unordered_map<std::string, SAtlasTex> atlasTexs;
 
 
 static std::string GetExtraTextureName(const std::string& s)
@@ -116,7 +116,7 @@ bool CDecalsDrawerGL4::Decal::IsValid() const
 
 bool CDecalsDrawerGL4::Decal::InView() const
 {
-	return camera->InView(pos, std::max(size.x, size.y) * fastmath::SQRT2);
+	return camera->InView(pos, std::max(size.x, size.y) * math::SQRT2);
 }
 
 
@@ -338,7 +338,7 @@ void CDecalsDrawerGL4::DetectMaxDecals()
 	decals.resize(maxDecals);
 	freeIds.resize(maxDecals - 1); // idx = 0 is invalid, so -1
 	std::iota(freeIds.begin(), freeIds.end(), 1); // start with 1, 0 is illegal
-	std::random_shuffle(freeIds.begin(), freeIds.end());
+	std::random_shuffle(freeIds.begin(), freeIds.end(), guRNG);
 	groups.reserve(maxDecalGroups);
 }
 
@@ -382,21 +382,26 @@ static STex LoadTexture(const std::string& name)
 		fullName = std::string("unittextures/") + fileName;
 
 	CBitmap bm;
-	if (!bm.Load(fullName)) {
+	if (!bm.Load(fullName))
 		throw content_error("Could not load ground decal \"" + fileName + "\"");
-	}
+
 	if (FileSystem::GetExtension(fullName) == "bmp") {
 		// bitmaps don't have an alpha channel
 		// so use: red := brightness & green := alpha
+		const unsigned char* rmem = bm.GetRawMem();
+		      unsigned char* wmem = bm.GetRawMem();
+
 		for (int y = 0; y < bm.ysize; ++y) {
 			for (int x = 0; x < bm.xsize; ++x) {
 				const int index = ((y * bm.xsize) + x) * 4;
-				const auto brightness = bm.mem[index + 0];
-				const auto alpha      = bm.mem[index + 1];
-				bm.mem[index + 0] = (brightness * 90) / 255;
-				bm.mem[index + 1] = (brightness * 60) / 255;
-				bm.mem[index + 2] = (brightness * 30) / 255;
-				bm.mem[index + 3] = alpha;
+
+				const auto brightness = rmem[index + 0];
+				const auto alpha      = rmem[index + 1];
+
+				wmem[index + 0] = (brightness * 90) / 255;
+				wmem[index + 1] = (brightness * 60) / 255;
+				wmem[index + 2] = (brightness * 30) / 255;
+				wmem[index + 3] = alpha;
 			}
 		}
 	}
@@ -405,7 +410,7 @@ static STex LoadTexture(const std::string& name)
 }
 
 
-static inline void GetBuildingDecals(std::unordered_map<std::string, STex>& textures)
+static inline void GetBuildingDecals(spring::unordered_map<std::string, STex>& textures)
 {
 	for (UnitDef& unitDef: unitDefHandler->unitDefs) {
 		SolidObjectDecalDef& decalDef = unitDef.decalDef;
@@ -425,7 +430,7 @@ static inline void GetBuildingDecals(std::unordered_map<std::string, STex>& text
 }
 
 
-static inline void GetGroundScars(std::unordered_map<std::string, STex>& textures)
+static inline void GetGroundScars(spring::unordered_map<std::string, STex>& textures)
 {
 	LuaParser resourcesParser("gamedata/resources.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
 	if (!resourcesParser.Execute()) {
@@ -449,7 +454,7 @@ static inline void GetGroundScars(std::unordered_map<std::string, STex>& texture
 }
 
 
-static inline void GetFallbacks(std::unordered_map<std::string, STex>& textures)
+static inline void GetFallbacks(spring::unordered_map<std::string, STex>& textures)
 {
 	auto CREATE_SINGLE_COLOR = [](SColor c) -> STex {
 		CBitmap bm;
@@ -465,13 +470,13 @@ static inline void GetFallbacks(std::unordered_map<std::string, STex>& textures)
 
 void CDecalsDrawerGL4::GenerateAtlasTexture()
 {
-	std::unordered_map<std::string, STex> textures;
+	spring::unordered_map<std::string, STex> textures;
 	GetBuildingDecals(textures);
 	GetGroundScars(textures);
 	GetFallbacks(textures);
 
 	CQuadtreeAtlasAlloc atlas;
-	atlas.SetNonPowerOfTwo(globalRendering->supportNPOTs);
+	atlas.SetNonPowerOfTwo(globalRendering->supportNonPowerOfTwoTex);
 	atlas.SetMaxSize(globalRendering->maxTextureSize, globalRendering->maxTextureSize);
 	for (auto it = textures.begin(); it != textures.end(); ++it) {
 		if (it->second.id == 0)
@@ -712,8 +717,6 @@ void CDecalsDrawerGL4::Draw()
 {
 	trackHandler.Draw();
 
-	SCOPED_TIMER("DecalsDrawerGL4::Draw");
-
 	if (!GetDrawDecals())
 		return;
 
@@ -791,7 +794,7 @@ void CDecalsDrawerGL4::Draw()
 		CMatrix44f sm = shadowHandler->GetShadowMatrix();
 		sm.GetPos() += float3(0.5f, 0.5f, 0.0f);
 		decalShader->SetUniformMatrix4x4("shadowMatrix", false, sm.m);
-		decalShader->SetUniform("shadowDensity", sky->GetLight()->GetGroundShadowDensity());
+		decalShader->SetUniform("shadowDensity", sunLighting->groundShadowDensity);
 	}
 
 	// Draw
@@ -864,8 +867,7 @@ void CDecalsDrawerGL4::UpdateDecalsVBO()
 
 void CDecalsDrawerGL4::Update()
 {
-	SCOPED_TIMER("DecalsDrawerGL4::Update");
-
+	SCOPED_TIMER("Update::Update::DecalsDrawerGL4");
 	UpdateOverlap();
 	OptimizeGroups();
 	UpdateDecalsVBO();
@@ -874,7 +876,7 @@ void CDecalsDrawerGL4::Update()
 
 void CDecalsDrawerGL4::GameFrame(int n)
 {
-	SCOPED_TIMER("DecalsDrawerGL4::Update");
+	SCOPED_TIMER("Sim::GameFrame::DecalsDrawerGL4");
 
 	for (int idx: alphaDecayingDecals) {
 		Decal& d = decals[idx];
@@ -928,8 +930,8 @@ static inline bool Overlap(const CDecalsDrawerGL4::SDecalGroup& g1, const CDecal
 
 static inline bool Overlap(const CDecalsDrawerGL4::Decal& d1, const CDecalsDrawerGL4::Decal& d2)
 {
-	const float hsize1 = std::max(d1.size.x, d1.size.y) * fastmath::SQRT2;
-	const float hsize2 = std::max(d2.size.x, d2.size.y) * fastmath::SQRT2;
+	const float hsize1 = std::max(d1.size.x, d1.size.y) * math::SQRT2;
+	const float hsize2 = std::max(d2.size.x, d2.size.y) * math::SQRT2;
 	const float3 diff  = d1.pos - d2.pos;
 
 	if (std::abs(diff.x) > (hsize1 + hsize2))
@@ -943,7 +945,7 @@ static inline bool Overlap(const CDecalsDrawerGL4::SDecalGroup& g, const CDecals
 {
 	const float3 hsize1 = (g.boundAABB[1] - g.boundAABB[0]) * 0.5f;
 	const float3 mid1   = g.boundAABB[0] + hsize1;
-	const float hsize2  = std::max(d.size.x, d.size.y) * fastmath::SQRT2;
+	const float hsize2  = std::max(d.size.x, d.size.y) * math::SQRT2;
 	const float3 diff   = mid1 - d.pos;
 
 	if (std::abs(diff.x) > (hsize1.x + hsize2))
@@ -1099,7 +1101,7 @@ static void DRAW_DECAL(CVertexArray* va, const CDecalsDrawerGL4::Decal* d)
 {
 	CMatrix44f m;
 	m.Translate(d->pos.x, d->pos.z, 0.0f);
-	m.RotateZ(d->rot * fastmath::DEG_TO_RAD);
+	m.RotateZ(d->rot * math::DEG_TO_RAD);
 	float2 dsize = d->size;
 	// make sure it is at least 1x1 pixels!
 	dsize.x = std::max(dsize.x, std::ceil( float(mapDims.mapx * SQUARE_SIZE) / CDecalsDrawerGL4::OVERLAP_TEST_TEXTURE_SIZE ));
@@ -1383,7 +1385,7 @@ void CDecalsDrawerGL4::GetWorstRatedDecal(int* idx, float* rating, const bool in
 
 int CDecalsDrawerGL4::CreateLuaDecal()
 {
-	SCOPED_TIMER("DecalsDrawerGL4::Update");
+	//SCOPED_TIMER("DecalsDrawerGL4::Update");
 
 	if (freeIds.empty()) { // try to make space for new one
 		// current worst decal is inview, try to find a better one (at best outside of view)
@@ -1407,7 +1409,7 @@ int CDecalsDrawerGL4::CreateLuaDecal()
 
 int CDecalsDrawerGL4::NewDecal(const Decal& d)
 {
-	SCOPED_TIMER("DecalsDrawerGL4::Update");
+	//SCOPED_TIMER("DecalsDrawerGL4::Update");
 
 	if (freeIds.empty()) {
 		// early-exit: all decals are `better` than the new one -> don't add
@@ -1456,7 +1458,7 @@ void CDecalsDrawerGL4::FreeDecal(int idx)
 	if (idx == 0)
 		return;
 
-	SCOPED_TIMER("DecalsDrawerGL4::Update");
+	//SCOPED_TIMER("DecalsDrawerGL4::Update");
 
 	Decal& d = decals[idx];
 	if ((d.owner == nullptr) && (d.type == Decal::BUILDING)) {
@@ -1518,7 +1520,7 @@ static inline bool ExplosionInAirLos(const CExplosionParams& event)
 		const auto p = event.pos;
 		const auto r = event.craterAreaOfEffect;
 		for (int i = r * 0.3f; i >= 0; --i) {
-			if (losHandler->InAirLos(p + (gu->rng.RandVector2D() * r), gu->myAllyTeam))
+			if (losHandler->InAirLos(p + (guRNG.NextVector2D() * r), gu->myAllyTeam))
 				return true;
 		}
 	}
@@ -1544,11 +1546,11 @@ void CDecalsDrawerGL4::AddExplosion(float3 pos, float damage, float radius)
 
 	Decal d;
 	d.pos    = pos;
-	d.rot    = gu->RandFloat() * fastmath::PI2;
-	d.size.x = radius * fastmath::SQRT2;
+	d.rot    = guRNG.NextFloat() * math::TWOPI;
+	d.size.x = radius * math::SQRT2;
 	d.size.y = d.size.x;
 	d.alpha  = Clamp(damage / 255.0f, 0.75f, 1.0f);
-	d.SetTexture(IntToString((gu->RandInt() & 3) + 1)); // pick one of 4 scar textures
+	d.SetTexture(IntToString((guRNG.NextInt() & 3) + 1)); // pick one of 4 scar textures
 	d.type  = Decal::EXPLOSION;
 	d.owner = nullptr;
 	d.generation = gs->frameNum;
@@ -1568,7 +1570,7 @@ void CDecalsDrawerGL4::CreateBuildingDecal(const CSolidObject* object)
 
 	Decal d;
 	d.pos   = object->pos;
-	d.rot   = GetRadFromXY(object->frontdir.x, object->frontdir.z) - fastmath::HALFPI;
+	d.rot   = GetRadFromXY(object->frontdir.x, object->frontdir.z) - math::HALFPI;
 	d.size  = float2(sizex * SQUARE_SIZE, sizey * SQUARE_SIZE);
 	d.alpha = 1.0f;
 	d.alphaFalloff = decalDef.groundDecalDecaySpeed;

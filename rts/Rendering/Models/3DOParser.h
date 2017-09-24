@@ -3,15 +3,15 @@
 #ifndef SPRING_3DOPARSER_H
 #define SPRING_3DOPARSER_H
 
+#include <vector>
+#include <string>
+
 #include "3DModel.h"
 #include "IModelParser.h"
 
-#include "System/float3.h"
 #include "Rendering/Textures/3DOTextureHandler.h"
-
-#include <vector>
-#include <string>
-#include <set>
+#include "System/float3.h"
+#include "System/UnorderedSet.hpp"
 
 
 
@@ -107,7 +107,7 @@ public:
 public:
 	C3DOParser();
 
-	S3DModel* Load(const std::string& name);
+	S3DModel Load(const std::string& name);
 
 private:
 	S3DOPiece* LoadPiece(S3DModel* model, int pos, S3DOPiece* parent, int* numobj, const std::vector<unsigned char>& fileBuf);
@@ -119,7 +119,7 @@ private:
 	void GetVertexes(_3DObject* o, S3DOPiece* object, const std::vector<unsigned char>& fileBuf);
 
 private:
-	std::set<std::string> teamtex;
+	spring::unordered_set<std::string> teamtex;
 
 };
 

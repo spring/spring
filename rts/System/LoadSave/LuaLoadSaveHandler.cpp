@@ -7,6 +7,7 @@
 
 #include "minizip/zip.h"
 
+#include "ExternalAI/SkirmishAIHandler.h"
 #include "ExternalAI/EngineOutHandler.h"
 #include "Game/GameSetup.h"
 #include "Lua/LuaZip.h"
@@ -21,6 +22,8 @@
 #include "System/EventHandler.h"
 #include "System/Exceptions.h"
 #include "System/Log/ILog.h"
+#include "System/StringUtil.h"
+#include "System/SafeUtil.h"
 
 
 
@@ -118,12 +121,15 @@ void CLuaLoadSaveHandler::SaveGameStartInfo()
 
 void CLuaLoadSaveHandler::SaveAIData()
 {
-	// Save to a stringstream first, to be able to use current interface.
-	// FIXME: maybe expose richer stream to AI interface?
-	//        (e.g. one file in the zip per AI?)
-	std::stringstream aidata;
-	eoh->Save(&aidata);
-	SaveEntireFile(FILE_AIDATA, "AI data", aidata.str().data(), aidata.tellp());
+	for (const auto& ai: skirmishAIHandler.GetAllSkirmishAIs()) {
+		std::stringstream aiData;
+		eoh->Save(&aiData, ai.first);
+
+		const std::string aiSection = FILE_AIDATA + IntToString(ai.first, ".%i");
+		const std::string aiDataStr = aiData.str();
+
+		SaveEntireFile(aiSection.c_str(), "AI data", aiDataStr.data(), aiData.tellp());
+	}
 }
 
 
@@ -206,14 +212,20 @@ void CLuaLoadSaveHandler::LoadEventClients()
 
 void CLuaLoadSaveHandler::LoadAIData()
 {
-	std::stringstream aidata(LoadEntireFile(FILE_AIDATA));
-	eoh->Load(&aidata);
+	for (const auto& ai: skirmishAIHandler.GetAllSkirmishAIs()) {
+		const std::string aiSection = FILE_AIDATA + IntToString(ai.first, ".%i");
+		const std::string aiDataFile = LoadEntireFile(aiSection);
+
+		std::stringstream aiData(aiDataFile);
+
+		eoh->Load(&aiData, ai.first);
+	}
 }
 
 
 void CLuaLoadSaveHandler::LoadHeightmap()
 {
-	std::vector<boost::uint8_t> buf;
+	std::vector<std::uint8_t> buf;
 
 	if (loadfile->GetFile(FILE_HEIGHTMAP, buf)) {
 		const int size = mapDims.mapxp1 * mapDims.mapyp1;
@@ -234,7 +246,7 @@ void CLuaLoadSaveHandler::LoadHeightmap()
 
 std::string CLuaLoadSaveHandler::LoadEntireFile(const std::string& file)
 {
-	std::vector<boost::uint8_t> buf;
+	std::vector<std::uint8_t> buf;
 	if (loadfile->GetFile(file, buf)) {
 		return std::string((char*) &*buf.begin(), buf.size());
 	}

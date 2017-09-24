@@ -4,20 +4,23 @@
 #define VSYNC_H
 
 class CVerticalSync {
-	public:
-		CVerticalSync();
-		~CVerticalSync();
+public:
+	void WrapNotifyOnChange();
+	void WrapRemoveObserver();
 
-		void Init();
-		void SetInterval(int interval);
-		int  GetInterval() const { return interval; }
+	void Toggle();
+	void SetInterval();
+	void SetInterval(int i);
+	void ConfigNotify(const std::string& key, const std::string& value);
+	int  GetInterval() const { return interval; }
 
-		void Delay() const;
-		
-	private:
-		int interval;
+	static CVerticalSync* GetInstance();
+
+private:
+	// must start at a value that can not occur in config; see SetInterval
+	int interval = -1000;
 };
 
-extern CVerticalSync VSync;
+#define verticalSync (CVerticalSync::GetInstance())
 
 #endif /* VSYNC_H */

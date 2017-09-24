@@ -7,9 +7,10 @@
 
 #include "Lua/LuaParser.h"
 #include "Sim/Misc/CollisionVolume.h"
-#include "System/Util.h"
+#include "Rendering/GlobalRendering.h"
+#include "Rendering/Textures/S3OTextureHandler.h"
+#include "System/StringUtil.h"
 #include "System/Log/ILog.h"
-#include "System/Platform/errorhandler.h"
 #include "System/Exceptions.h"
 #include "System/ScopedFPUSettings.h"
 #include "System/FileSystem/FileHandler.h"
@@ -22,15 +23,10 @@
 #include "lib/assimp/include/assimp/postprocess.h"
 #include "lib/assimp/include/assimp/Importer.hpp"
 #include "lib/assimp/include/assimp/DefaultLogger.hpp"
-#include "Rendering/Textures/S3OTextureHandler.h"
-#ifndef BITMAP_NO_OPENGL
-	#include "Rendering/GL/myGL.h"
-#endif
+
 
 
 #define IS_QNAN(f) (f != f)
-static const float DEGTORAD = PI / 180.0f;
-static const float RADTODEG = 180.0f / PI;
 
 // triangulate guarantees the most complex mesh is a triangle
 // sortbytype ensure only 1 type of primitive type per mesh is used
@@ -61,7 +57,7 @@ static const unsigned int ASS_LOGGING_OPTIONS =
 
 static inline float3 aiVectorToFloat3(const aiVector3D v)
 {
-	// default (AssImp's internal coordinate-system matches Spring's!)
+	// no-op; AssImp's internal coordinate-system matches Spring's modulo handedness
 	return float3(v.x, v.y, v.z);
 
 	// Blender --> Spring
@@ -72,19 +68,13 @@ static inline CMatrix44f aiMatrixToMatrix(const aiMatrix4x4t<float>& m)
 {
 	CMatrix44f n;
 
-	// a{1, ..., 4} represent the first column of an AssImp matrix
-	// b{1, ..., 4} represent the second column of an AssImp matrix
-	// AssImp matrix data (colums) is transposed wrt. Spring's data
-	n[ 0] = m.a1; n[ 1] = m.a2; n[ 2] = m.a3; n[ 3] = m.a4;
-	n[ 4] = m.b1; n[ 5] = m.b2; n[ 6] = m.b3; n[ 7] = m.b4;
-	n[ 8] = m.c1; n[ 9] = m.c2; n[10] = m.c3; n[11] = m.c4;
-	n[12] = m.d1; n[13] = m.d2; n[14] = m.d3; n[15] = m.d4;
+	n[ 0] = m.a1; n[ 1] = m.a2; n[ 2] = m.a3; n[ 3] = m.a4; // 1st column
+	n[ 4] = m.b1; n[ 5] = m.b2; n[ 6] = m.b3; n[ 7] = m.b4; // 2nd column
+	n[ 8] = m.c1; n[ 9] = m.c2; n[10] = m.c3; n[11] = m.c4; // 3rd column
+	n[12] = m.d1; n[13] = m.d2; n[14] = m.d3; n[15] = m.d4; // 4th column
 
-	// AssImp (row-major) --> Spring (column-major)
+	// AssImp (row-major, RH) --> Spring (column-major, LH)
 	return (n.Transpose());
-
-	// default
-	// return (CMatrix44f(n.GetPos(), n.GetX(), n.GetY(), n.GetZ()));
 
 	// Blender --> Spring
 	// return (CMatrix44f(n.GetPos(), n.GetX(), n.GetZ(), -n.GetY()));
@@ -133,15 +123,12 @@ public:
 };
 
 
-CAssParser::CAssParser() :
- maxIndices(1024),
- maxVertices(1024)
+CAssParser::CAssParser()
 {
-#ifndef BITMAP_NO_OPENGL
-	// FIXME returns non-optimal data, at best compute it ourselves (pre-TL cache size!)
-	glGetIntegerv(GL_MAX_ELEMENTS_INDICES,  &maxIndices);
-	glGetIntegerv(GL_MAX_ELEMENTS_VERTICES, &maxVertices);
-#endif
+	// FIXME: non-optimal, maybe compute these ourselves (pre-TL cache size!)
+	maxIndices = std::max(globalRendering->glslMaxRecommendedIndices, 1024);
+	maxVertices = std::max(globalRendering->glslMaxRecommendedVertices, 1024);
+
 	Assimp::DefaultLogger::create("", Assimp::Logger::VERBOSE);
 	// Create a logger for debugging model loading issues
 	Assimp::DefaultLogger::get()->attachStream(new AssLogStream(), ASS_LOGGING_OPTIONS);
@@ -153,53 +140,45 @@ CAssParser::~CAssParser()
 }
 
 
-S3DModel* CAssParser::Load(const std::string& modelFilePath)
+S3DModel CAssParser::Load(const std::string& modelFilePath)
 {
 	LOG_SL(LOG_SECTION_MODEL, L_INFO, "Loading model: %s", modelFilePath.c_str());
 
 	const std::string& modelPath = FileSystem::GetDirectory(modelFilePath);
 	const std::string& modelName = FileSystem::GetBasename(modelFilePath);
 
-	// Load the lua metafile. This contains properties unique to Spring models and must return a table
+	// load the lua metafile containing properties unique to Spring models (must return a table)
 	std::string metaFileName = modelFilePath + ".lua";
 
-	if (!CFileHandler::FileExists(metaFileName, SPRING_VFS_ZIP)) {
-		// Try again without the model file extension
+	// try again without the model file extension
+	if (!CFileHandler::FileExists(metaFileName, SPRING_VFS_ZIP))
 		metaFileName = modelPath + '/' + modelName + ".lua";
-	}
-	if (!CFileHandler::FileExists(metaFileName, SPRING_VFS_ZIP)) {
+
+	if (!CFileHandler::FileExists(metaFileName, SPRING_VFS_ZIP))
 		LOG_SL(LOG_SECTION_MODEL, L_INFO, "No meta-file '%s'. Using defaults.", metaFileName.c_str());
-	}
 
-	LuaParser metaFileParser(metaFileName, SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
+	LuaParser metaFileParser(metaFileName, SPRING_VFS_ZIP, SPRING_VFS_ZIP);
 
-	if (!metaFileParser.Execute()) {
+	if (!metaFileParser.Execute())
 		LOG_SL(LOG_SECTION_MODEL, L_INFO, "'%s': %s. Using defaults.", metaFileName.c_str(), metaFileParser.GetErrorLog().c_str());
-	}
 
-	// Get the (root-level) model table
+	// get the (root-level) model table
 	const LuaTable& modelTable = metaFileParser.GetRoot();
 
-	if (!modelTable.IsValid()) {
+	if (!modelTable.IsValid())
 		LOG_SL(LOG_SECTION_MODEL, L_INFO, "No valid model metadata in '%s' or no meta-file", metaFileName.c_str());
-	}
 
 
-	// Create a model importer instance
+	// create a model importer instance
 	Assimp::Importer importer;
 
 
-	// Give the importer an IO class that handles Spring's VFS
+	// give the importer an IO class that handles Spring's VFS
 	importer.SetIOHandler(new AssVFSSystem());
-	// Speed-up processing by skipping things we don't need
+	// speed-up processing by skipping things we don't need
 	importer.SetPropertyInteger(AI_CONFIG_PP_RVC_FLAGS, ASS_IMPORTER_OPTIONS);
-
-#ifndef BITMAP_NO_OPENGL
-	{
-		importer.SetPropertyInteger(AI_CONFIG_PP_SLM_VERTEX_LIMIT,   maxVertices);
-		importer.SetPropertyInteger(AI_CONFIG_PP_SLM_TRIANGLE_LIMIT, maxIndices / 3);
-	}
-#endif
+	importer.SetPropertyInteger(AI_CONFIG_PP_SLM_VERTEX_LIMIT,   maxVertices);
+	importer.SetPropertyInteger(AI_CONFIG_PP_SLM_TRIANGLE_LIMIT, maxIndices / 3);
 
 	// Read the model file to build a scene object
 	LOG_SL(LOG_SECTION_MODEL, L_INFO, "Importing model file: %s", modelFilePath.c_str());
@@ -224,32 +203,32 @@ S3DModel* CAssParser::Load(const std::string& modelFilePath)
 	ModelPieceMap pieceMap;
 	ParentNameMap parentMap;
 
-	S3DModel* model = new S3DModel();
-	model->name = modelFilePath;
-	model->type = MODELTYPE_ASS;
+	S3DModel model;
+	model.name = modelFilePath;
+	model.type = MODELTYPE_ASS;
 
 	// Load textures
-	FindTextures(model, scene, modelTable, modelPath, modelName);
-	LOG_SL(LOG_SECTION_MODEL, L_INFO, "Loading textures. Tex1: '%s' Tex2: '%s'", model->texs[0].c_str(), model->texs[1].c_str());
+	FindTextures(&model, scene, modelTable, modelPath, modelName);
+	LOG_SL(LOG_SECTION_MODEL, L_INFO, "Loading textures. Tex1: '%s' Tex2: '%s'", model.texs[0].c_str(), model.texs[1].c_str());
 
-	texturehandlerS3O->PreloadTexture(model, modelTable.GetBool("fliptextures", true), modelTable.GetBool("invertteamcolor", true));
+	texturehandlerS3O->PreloadTexture(&model, modelTable.GetBool("fliptextures", true), modelTable.GetBool("invertteamcolor", true));
 
 	// Load all pieces in the model
 	LOG_SL(LOG_SECTION_MODEL, L_INFO, "Loading pieces from root node '%s'", scene->mRootNode->mName.data);
-	LoadPiece(model, scene->mRootNode, scene, modelTable, pieceMap, parentMap);
+	LoadPiece(&model, scene->mRootNode, scene, modelTable, pieceMap, parentMap);
 
 	// Update piece hierarchy based on metadata
-	BuildPieceHierarchy(model, pieceMap, parentMap);
-	CalculateModelProperties(model, modelTable);
+	BuildPieceHierarchy(&model, pieceMap, parentMap);
+	CalculateModelProperties(&model, modelTable);
 
 	// Verbose logging of model properties
-	LOG_SL(LOG_SECTION_MODEL, L_DEBUG, "model->name: %s", model->name.c_str());
-	LOG_SL(LOG_SECTION_MODEL, L_DEBUG, "model->numobjects: %d", model->numPieces);
-	LOG_SL(LOG_SECTION_MODEL, L_DEBUG, "model->radius: %f", model->radius);
-	LOG_SL(LOG_SECTION_MODEL, L_DEBUG, "model->height: %f", model->height);
-	LOG_SL(LOG_SECTION_MODEL, L_DEBUG, "model->mins: (%f,%f,%f)", model->mins[0], model->mins[1], model->mins[2]);
-	LOG_SL(LOG_SECTION_MODEL, L_DEBUG, "model->maxs: (%f,%f,%f)", model->maxs[0], model->maxs[1], model->maxs[2]);
-	LOG_SL(LOG_SECTION_MODEL, L_INFO, "Model %s Imported.", model->name.c_str());
+	LOG_SL(LOG_SECTION_MODEL, L_DEBUG, "model->name: %s", model.name.c_str());
+	LOG_SL(LOG_SECTION_MODEL, L_DEBUG, "model->numobjects: %d", model.numPieces);
+	LOG_SL(LOG_SECTION_MODEL, L_DEBUG, "model->radius: %f", model.radius);
+	LOG_SL(LOG_SECTION_MODEL, L_DEBUG, "model->height: %f", model.height);
+	LOG_SL(LOG_SECTION_MODEL, L_DEBUG, "model->mins: (%f,%f,%f)", model.mins[0], model.mins[1], model.mins[2]);
+	LOG_SL(LOG_SECTION_MODEL, L_DEBUG, "model->maxs: (%f,%f,%f)", model.maxs[0], model.maxs[1], model.maxs[2]);
+	LOG_SL(LOG_SECTION_MODEL, L_INFO, "Model %s Imported.", model.name.c_str());
 	return model;
 }
 
@@ -298,6 +277,10 @@ void CAssParser::LoadPieceTransformations(
 	// process transforms
 	pieceNode->mTransformation.Decompose(aiScaleVec, aiRotateQuat, aiTransVec);
 
+	const aiMatrix3x3t<float> aiBakedRotMatrix = aiRotateQuat.GetMatrix();
+	const aiMatrix4x4t<float> aiBakedMatrix = aiMatrix4x4t<float>(aiBakedRotMatrix);
+	CMatrix44f bakedMatrix = aiMatrixToMatrix(aiBakedMatrix);
+
 	// metadata-scaling
 	piece->scales   = pieceTable.GetFloat3("scale", aiVectorToFloat3(aiScaleVec));
 	piece->scales.x = pieceTable.GetFloat("scalex", piece->scales.x);
@@ -322,13 +305,13 @@ void CAssParser::LoadPieceTransformations(
 	//   together with the (baked) aiRotateQuad they determine the
 	//   model's pose *before* any animations execute
 	//
-	// float3 pieceRotAngles = pieceTable.GetFloat3("rotate", aiQuaternionToRadianAngles(aiRotateQuat) * RADTODEG);
-	float3 pieceRotAngles = pieceTable.GetFloat3("rotate", ZeroVector);
+	// float3 bakedRotAngles = pieceTable.GetFloat3("rotate", aiQuaternionToRadianAngles(aiRotateQuat) * math::RAD_TO_DEG);
+	float3 bakedRotAngles = pieceTable.GetFloat3("rotate", ZeroVector);
 
-	pieceRotAngles.x = pieceTable.GetFloat("rotatex", pieceRotAngles.x);
-	pieceRotAngles.y = pieceTable.GetFloat("rotatey", pieceRotAngles.y);
-	pieceRotAngles.z = pieceTable.GetFloat("rotatez", pieceRotAngles.z);
-	pieceRotAngles  *= DEGTORAD;
+	bakedRotAngles.x = pieceTable.GetFloat("rotatex", bakedRotAngles.x);
+	bakedRotAngles.y = pieceTable.GetFloat("rotatey", bakedRotAngles.y);
+	bakedRotAngles.z = pieceTable.GetFloat("rotatez", bakedRotAngles.z);
+	bakedRotAngles  *= math::DEG_TO_RAD;
 
 	LOG_SL(LOG_SECTION_PIECE, L_INFO,
 		"(%d:%s) Assimp offset (%f,%f,%f), rotate (%f,%f,%f,%f), scale (%f,%f,%f)",
@@ -341,51 +324,18 @@ void CAssParser::LoadPieceTransformations(
 		"(%d:%s) Relative offset (%f,%f,%f), rotate (%f,%f,%f), scale (%f,%f,%f)",
 		model->numPieces, piece->name.c_str(),
 		piece->offset.x, piece->offset.y, piece->offset.z,
-		pieceRotAngles.x, pieceRotAngles.y, pieceRotAngles.z,
+		bakedRotAngles.x, bakedRotAngles.y, bakedRotAngles.z,
 		piece->scales.x, piece->scales.y, piece->scales.z
 	);
 
-	// NOTE:
-	//   at least collada (.dae) files generated by Blender are stored
-	//   in a coordinate-system that differs from the standard formats
-	//   (3DO, S3O, ...) for which existing tools have prior knowledge
-	//   of Spring's convention, but AssImp's internal system happens
-	//   to match our own so we need no explicit conversion
+	// construct 'baked' piece-space transform
 	//
-	//   we allow overriding the (baked) ROOT rotational transform and
-	//   the rotation-axis mapping used by animation scripts because it
-	//   can be a benefit to create models wrt. a different orientation
-	//   than that of the 3D editor (but re-modelling / re-exporting is
-	//   always preferred!)
-	//
-	//   .dae  : x=Rgt, y=-Fwd, z= Up, as=(-1, -1, 1), am=AXIS_XZY (if Z_UP)
-	//   .dae  : x=Rgt, y=-Fwd, z= Up, as=(-1, -1, 1), am=AXIS_XZY (if Y_UP) [!?]
-	//   .blend: ????
-	CMatrix44f bakedMatrix = aiMatrixToMatrix(aiMatrix4x4t<float>(aiRotateQuat.GetMatrix()));
-
-	if (piece == model->GetRootPiece()) {
-		const float3 xaxis = pieceTable.GetFloat3("xaxis", bakedMatrix.GetX());
-		const float3 yaxis = pieceTable.GetFloat3("yaxis", bakedMatrix.GetY());
-		const float3 zaxis = pieceTable.GetFloat3("zaxis", bakedMatrix.GetZ());
-
-		if (math::fabs(xaxis.SqLength() - yaxis.SqLength()) < 0.01f && math::fabs(yaxis.SqLength() - zaxis.SqLength()) < 0.01f) {
-			bakedMatrix = CMatrix44f(ZeroVector, xaxis, yaxis, zaxis);
-		}
-	}
-
-	piece->rotAxisSigns = pieceTable.GetFloat3("rotAxisSigns", float3(-OnesVector));
-	piece->axisMapType = AxisMappingType(pieceTable.GetInt("rotAxisMap", AXIS_MAPPING_XYZ));
-
-	// construct 'baked' part of the piece-space matrix
-	// AssImp order is translate * rotate * scale * v;
-	// we leave the translation and scale parts out and
-	// put those in <offset> and <scales> --> transform
-	// is just R instead of T * R * S
+	// AssImp order is Translate * Rotate * Scale * v; the
+	// translation and scale parts are split into <offset>
+	// and <scales> so the baked part reduces to R
 	//
 	// note: for all non-AssImp models this is identity!
-	//
-	piece->ComposeRotation(bakedMatrix, pieceRotAngles);
-	piece->SetModelMatrix(bakedMatrix);
+	piece->SetBakedMatrix(bakedMatrix.RotateEulerYXZ(-bakedRotAngles));
 }
 
 void CAssParser::SetPieceName(
@@ -431,7 +381,7 @@ void CAssParser::SetPieceParentName(
 ) {
 	// Get parent name from metadata or model
 	if (pieceTable.KeyExists("parent")) {
-		parentMap[piece] = pieceTable.GetString("parent", "");
+		parentMap[piece->name] = pieceTable.GetString("parent", "");
 		return;
 	}
 
@@ -440,11 +390,11 @@ void CAssParser::SetPieceParentName(
 
 	if (pieceNode->mParent->mParent != nullptr) {
 		// parent is not the root
-		parentMap[piece] = std::string(pieceNode->mParent->mName.data);
+		parentMap[piece->name] = std::string(pieceNode->mParent->mName.data);
 	} else {
 		// parent is the root (which must already exist)
 		assert(model->GetRootPiece() != nullptr);
-		parentMap[piece] = (model->GetRootPiece())->name;
+		parentMap[piece->name] = (model->GetRootPiece())->name;
 	}
 }
 
@@ -558,10 +508,9 @@ SAssPiece* CAssParser::LoadPiece(
 	SAssPiece* piece = new SAssPiece();
 
 	if (pieceNode->mParent == nullptr) {
-		// set the model's root piece ASAP, needed later
+		// set the model's root piece ASAP, needed in SetPiece*Name
 		assert(pieceNode == scene->mRootNode);
-		assert(model->GetRootPiece() == nullptr);
-		model->SetRootPiece(piece);
+		model->AddPiece(piece);
 	}
 
 	SetPieceName(piece, model, pieceNode, pieceMap);
@@ -571,9 +520,8 @@ SAssPiece* CAssParser::LoadPiece(
 	// Load additional piece properties from metadata
 	const LuaTable& pieceTable = modelTable.SubTable("pieces").SubTable(piece->name);
 
-	if (pieceTable.IsValid()) {
+	if (pieceTable.IsValid())
 		LOG_SL(LOG_SECTION_PIECE, L_INFO, "Found metadata for piece '%s'", piece->name.c_str());
-	}
 
 
 	LoadPieceTransformations(piece, model, pieceNode, pieceTable);
@@ -582,7 +530,7 @@ SAssPiece* CAssParser::LoadPiece(
 
 	{
 		// operator[] creates an empty string if piece is not in map
-		const auto parentNameIt = parentMap.find(piece);
+		const auto parentNameIt = parentMap.find(piece->name);
 		const std::string& parentName = (parentNameIt != parentMap.end())? (parentNameIt->second).c_str(): "[null]";
 
 		// Verbose logging of piece properties
@@ -607,7 +555,7 @@ void CAssParser::BuildPieceHierarchy(S3DModel* model, ModelPieceMap& pieceMap, c
 	const char* fmt1 = "Missing piece '%s' declared as parent of '%s'.";
 	const char* fmt2 = "Missing root piece (parent of orphan '%s')";
 
-	// Loop through all pieces and create missing hierarchy info
+	// loop through all pieces and create missing hierarchy info
 	for (auto it = pieceMap.cbegin(); it != pieceMap.cend(); ++it) {
 		SAssPiece* piece = static_cast<SAssPiece*>(it->second);
 
@@ -617,12 +565,13 @@ void CAssParser::BuildPieceHierarchy(S3DModel* model, ModelPieceMap& pieceMap, c
 			continue;
 		}
 
-		const auto parentNameIt = parentMap.find(piece);
+		const auto parentNameIt = parentMap.find(piece->name);
 
 		if (parentNameIt != parentMap.end()) {
 			const std::string& parentName = parentNameIt->second;
 			const auto pieceIt = pieceMap.find(parentName);
 
+			// re-assign this piece to a different parent
 			if (pieceIt != pieceMap.end()) {
 				piece->parent = pieceIt->second;
 				piece->parent->children.push_back(piece);
@@ -633,22 +582,23 @@ void CAssParser::BuildPieceHierarchy(S3DModel* model, ModelPieceMap& pieceMap, c
 			continue;
 		}
 
-		// a piece with no named parent that isn't the root (orphan)
-		// link these to the root piece if it exists (which it should)
+		// piece with no named parent that isn't the root (orphaned)
+		// link it to the root piece which has already been pre-added
 		if ((piece->parent = model->GetRootPiece()) == nullptr) {
 			LOG_SL(LOG_SECTION_PIECE, L_ERROR, fmt2, piece->name.c_str());
 		} else {
 			piece->parent->children.push_back(piece);
 		}
 	}
+
+	model->FlattenPieceTree(model->GetRootPiece());
 }
 
 
 // Iterate over the model and calculate its overall dimensions
 void CAssParser::CalculateModelDimensions(S3DModel* model, S3DModelPiece* piece)
 {
-	CMatrix44f scaleRotMat;
-	piece->ComposeTransform(scaleRotMat, ZeroVector, ZeroVector, piece->scales);
+	const CMatrix44f scaleRotMat = std::move(piece->ComposeTransform(ZeroVector, ZeroVector, piece->scales));
 
 	// cannot set this until parent relations are known, so either here or in BuildPieceHierarchy()
 	piece->goffset = scaleRotMat.Mul(piece->offset) + ((piece->parent != nullptr)? piece->parent->goffset: ZeroVector);
@@ -657,26 +607,26 @@ void CAssParser::CalculateModelDimensions(S3DModel* model, S3DModelPiece* piece)
 	model->mins = float3::min(piece->goffset + piece->mins, model->mins);
 	model->maxs = float3::max(piece->goffset + piece->maxs, model->maxs);
 
-	piece->SetCollisionVolume(CollisionVolume("box", piece->maxs - piece->mins, (piece->maxs + piece->mins) * 0.5f));
+	piece->SetCollisionVolume(CollisionVolume('b', 'z', piece->maxs - piece->mins, (piece->maxs + piece->mins) * 0.5f));
 
 	// Repeat with children
-	for (unsigned int i = 0; i < piece->children.size(); i++) {
-		CalculateModelDimensions(model, piece->children[i]);
+	for (S3DModelPiece* childPiece: piece->children) {
+		CalculateModelDimensions(model, childPiece);
 	}
 }
 
 // Calculate model radius from the min/max extents
 void CAssParser::CalculateModelProperties(S3DModel* model, const LuaTable& modelTable)
 {
-	CalculateModelDimensions(model, model->rootPiece);
+	CalculateModelDimensions(model, model->pieces[0]);
 
 	model->mins = modelTable.GetFloat3("mins", model->mins);
 	model->maxs = modelTable.GetFloat3("maxs", model->maxs);
 
-	model->radius = modelTable.GetFloat("radius", (model->maxs   - model->mins  ).Length() * 0.5f);
-	model->height = modelTable.GetFloat("height", (model->maxs.y - model->mins.y)                );
+	model->radius = modelTable.GetFloat("radius", model->CalcDrawRadius());
+	model->height = modelTable.GetFloat("height", model->CalcDrawHeight());
 
-	model->relMidPos = modelTable.GetFloat3("midpos", (model->maxs + model->mins) * 0.5f);
+	model->relMidPos = modelTable.GetFloat3("midpos", model->CalcDrawMidPos());
 }
 
 
@@ -707,9 +657,9 @@ static std::string FindTextureByRegex(const std::string& regex_path, const std::
 	//FIXME instead of ".*" only check imagetypes!
 	const std::vector<std::string>& files = CFileHandler::FindFiles(regex_path, regex + ".*");
 
-	if (!files.empty()) {
+	if (!files.empty())
 		return FindTexture(FileSystem::GetFilename(files[0]), "", "");
-	}
+
 	return "";
 }
 
@@ -730,7 +680,6 @@ void CAssParser::FindTextures(
 	if (model->texs[1].empty()) model->texs[1] = FindTextureByRegex(modelPath, "tex2");
 	if (model->texs[0].empty()) model->texs[0] = FindTextureByRegex(modelPath, "diffuse");
 	if (model->texs[1].empty()) model->texs[1] = FindTextureByRegex(modelPath, "glow"); // lowest-priority name
-
 
 	// 2. gather model-defined textures of first material (medium priority)
 	if (scene->mNumMaterials > 0) {

@@ -7,22 +7,12 @@
 #include "Sim/Units/BuildInfo.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitLoader.h"
+#include "Sim/Units/UnitMemPool.h"
 #include "System/myMath.h"
 
-CR_BIND_DERIVED(CBuilding, CUnit, )
 
+CR_BIND_DERIVED_POOL(CBuilding, CUnit, , unitMemPool.alloc, unitMemPool.free)
 CR_REG_METADATA(CBuilding, )
-
-//////////////////////////////////////////////////////////////////////
-// Construction/Destruction
-//////////////////////////////////////////////////////////////////////
-
-CBuilding::CBuilding()
-{
-	immobile = true;
-}
-
-
 
 void CBuilding::PreInit(const UnitLoadParams& params)
 {

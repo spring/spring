@@ -14,26 +14,27 @@ public:
 	CRepulseGfx() { }
 	CRepulseGfx(
 		CUnit* owner,
-		CProjectile* repulsed,
-		float maxDist,
-		const float3& color
+		CProjectile* repulsee,
+		float maxOwnerDist,
+		const float4& gfxColor
 	);
-	~CRepulseGfx();
 
-	void Draw() override;
+	void Draw(CVertexArray* va) override;
 	void Update() override;
 
-	virtual int GetProjectilesCount() const override;
+	int GetProjectilesCount() const override { return 20; }
 
 	void DependentDied(CObject* o) override;
 
 private:
 	CProjectile* repulsed;
-	float sqMaxDist;
-	int age;
-	float3 color;
 
-	float difs[25];
+	int age;
+
+	float sqMaxOwnerDist;
+	float vertexDists[25];
+
+	float4 color;
 };
 
 #endif // REPULSE_GFX_H

@@ -11,13 +11,15 @@
 #include "Rendering/Env/ISky.h"
 #include "Rendering/Env/SkyLight.h"
 #include "Rendering/Env/SunLighting.h"
+#include "Rendering/Env/WaterRendering.h"
+#include "Rendering/Env/MapRendering.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/Shaders/Shader.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "System/Config/ConfigHandler.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 
 #define SMF_TEXSQUARE_SIZE 1024.0f
 
@@ -122,8 +124,8 @@ bool SMFRenderStateGLSL::Init(const CSMFGroundDrawer* smfGroundDrawer) {
 		for (unsigned int n = GLSL_SHADER_STANDARD; n <= GLSL_SHADER_DEFERRED; n++) {
 			// load from VFS files
 			glslShaders[n] = shaderHandler->CreateProgramObject("[SMFGroundDrawer::VFS]", names[n], false);
-			glslShaders[n]->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/SMFVertProg.glsl", "#version 120\n" + defs, GL_VERTEX_SHADER));
-			glslShaders[n]->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/SMFFragProg.glsl", "#version 120\n" + defs, GL_FRAGMENT_SHADER));
+			glslShaders[n]->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/SMFVertProg.glsl", defs, GL_VERTEX_SHADER));
+			glslShaders[n]->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/SMFFragProg.glsl", defs, GL_FRAGMENT_SHADER));
 		}
 	}
 
@@ -168,12 +170,12 @@ void SMFRenderStateGLSL::Update(
 		// const int2 specTexSize = smfMap->GetTextureSize(MAP_SSMF_SPECULAR_TEX);
 
 		for (unsigned int n = GLSL_SHADER_STANDARD; n <= GLSL_SHADER_DEFERRED; n++) {
-			glslShaders[n]->SetFlag("SMF_VOID_WATER",                       mapInfo->map.voidWater);
-			glslShaders[n]->SetFlag("SMF_VOID_GROUND",                      mapInfo->map.voidGround);
+			glslShaders[n]->SetFlag("SMF_VOID_WATER",                       mapRendering->voidWater);
+			glslShaders[n]->SetFlag("SMF_VOID_GROUND",                      mapRendering->voidGround);
 			glslShaders[n]->SetFlag("SMF_SPECULAR_LIGHTING",               (smfMap->GetSpecularTexture() != 0));
 			glslShaders[n]->SetFlag("SMF_DETAIL_TEXTURE_SPLATTING",        (smfMap->GetSplatDistrTexture() != 0 && smfMap->GetSplatDetailTexture() != 0));
 			glslShaders[n]->SetFlag("SMF_DETAIL_NORMAL_TEXTURE_SPLATTING", (smfMap->GetSplatDistrTexture() != 0 && smfMap->HaveSplatNormalTexture()));
-			glslShaders[n]->SetFlag("SMF_DETAIL_NORMAL_DIFFUSE_ALPHA",      smfMap->HaveDetailNormalDiffuseAlpha());
+			glslShaders[n]->SetFlag("SMF_DETAIL_NORMAL_DIFFUSE_ALPHA",      mapRendering->splatDetailNormalDiffuseAlpha);
 			glslShaders[n]->SetFlag("SMF_WATER_ABSORPTION",                 smfMap->HasVisibleWater());
 			glslShaders[n]->SetFlag("SMF_SKY_REFLECTIONS",                 (smfMap->GetSkyReflectModTexture() != 0));
 			glslShaders[n]->SetFlag("SMF_BLEND_NORMALS",                   (smfMap->GetBlendNormalsTexture() != 0));
@@ -228,14 +230,17 @@ void SMFRenderStateGLSL::Update(
 			glslShaders[n]->SetUniform3v("groundDiffuseColor",  &sunLighting->groundDiffuseColor[0]);
 			glslShaders[n]->SetUniform3v("groundSpecularColor", &sunLighting->groundSpecularColor[0]);
 			glslShaders[n]->SetUniform  ("groundSpecularExponent", sunLighting->specularExponent);
-			glslShaders[n]->SetUniform  ("groundShadowDensity", sky->GetLight()->GetGroundShadowDensity());
+			glslShaders[n]->SetUniform  ("groundShadowDensity", sunLighting->groundShadowDensity);
 
-			glslShaders[n]->SetUniform3v("waterMinColor",    &mapInfo->water.minColor[0]);
-			glslShaders[n]->SetUniform3v("waterBaseColor",   &mapInfo->water.baseColor[0]);
-			glslShaders[n]->SetUniform3v("waterAbsorbColor", &mapInfo->water.absorb[0]);
+			glslShaders[n]->SetUniformMatrix4x4("shadowMat", false, shadowHandler->GetShadowMatrixRaw());
+			glslShaders[n]->SetUniform4v("shadowParams", &(shadowHandler->GetShadowParams().x));
 
-			glslShaders[n]->SetUniform4v("splatTexScales", &mapInfo->splats.texScales[0]);
-			glslShaders[n]->SetUniform4v("splatTexMults", &mapInfo->splats.texMults[0]);
+			glslShaders[n]->SetUniform3v("waterMinColor",    &waterRendering->minColor[0]);
+			glslShaders[n]->SetUniform3v("waterBaseColor",   &waterRendering->baseColor[0]);
+			glslShaders[n]->SetUniform3v("waterAbsorbColor", &waterRendering->absorb[0]);
+
+			glslShaders[n]->SetUniform4v("splatTexScales", &mapRendering->splatTexScales[0]);
+			glslShaders[n]->SetUniform4v("splatTexMults", &mapRendering->splatTexMults[0]);
 
 			glslShaders[n]->SetUniform("infoTexIntensityMul", 1.0f);
 
@@ -302,7 +307,7 @@ void SMFRenderStateFFP::Enable(const CSMFGroundDrawer* smfGroundDrawer, const Dr
 		glBindTexture(GL_TEXTURE_2D, smfMap->GetShadingTexture());
 		glMultiTexCoord4f(GL_TEXTURE2_ARB, 1.0f, 1.0f, 1.0f, 1.0f); // fix nvidia bug with gltexgen
 
-		if (infoTextureHandler->GetMode() == "metal") {
+		if (infoTextureHandler->InMetalMode()) {
 			// increase brightness for metal spots
 			glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB, GL_ADD_SIGNED_ARB);
 			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_ARB);
@@ -438,7 +443,7 @@ void SMFRenderStateARB::Enable(const CSMFGroundDrawer* smfGroundDrawer, const Dr
 	arbShaders[ARB_SHADER_CURRENT]->SetUniform4f(14, 0.02f, 0.02f, 0, 1);
 	arbShaders[ARB_SHADER_CURRENT]->SetUniformTarget(GL_FRAGMENT_PROGRAM_ARB);
 	arbShaders[ARB_SHADER_CURRENT]->SetUniform4f(10, ambientColor.x, ambientColor.y, ambientColor.z, 1);
-	arbShaders[ARB_SHADER_CURRENT]->SetUniform4f(11, 0, 0, 0, sky->GetLight()->GetGroundShadowDensity());
+	arbShaders[ARB_SHADER_CURRENT]->SetUniform4f(11, 0, 0, 0, sunLighting->groundShadowDensity);
 
 	glMatrixMode(GL_MATRIX0_ARB);
 	glLoadMatrixf(shadowHandler->GetShadowMatrixRaw());
@@ -496,7 +501,7 @@ void SMFRenderStateGLSL::Enable(const CSMFGroundDrawer* smfGroundDrawer, const D
 	glslShaders[GLSL_SHADER_CURRENT]->SetUniform3v("cameraPos", &camera->GetPos()[0]);
 	glslShaders[GLSL_SHADER_CURRENT]->SetUniformMatrix4x4("shadowMat", false, shadowHandler->GetShadowMatrixRaw());
 	glslShaders[GLSL_SHADER_CURRENT]->SetUniform4v("shadowParams", &(shadowHandler->GetShadowParams().x));
-	glslShaders[GLSL_SHADER_CURRENT]->SetUniform("infoTexIntensityMul", float(infoTextureHandler->GetMode() == "metal") + 1.0f);
+	glslShaders[GLSL_SHADER_CURRENT]->SetUniform("infoTexIntensityMul", float(infoTextureHandler->InMetalMode()) + 1.0f);
 
 	// already on the MV stack at this point
 	glLoadIdentity();
@@ -588,17 +593,16 @@ void SMFRenderStateGLSL::SetCurrentShader(const DrawPass::e& drawPass) {
 
 void SMFRenderStateARB::UpdateCurrentShaderSky(const ISkyLight* skyLight) const {
 	arbShaders[ARB_SHADER_CURRENT]->Enable();
-	arbShaders[ARB_SHADER_CURRENT]->SetUniform4f(11, 0, 0, 0, skyLight->GetGroundShadowDensity());
+	arbShaders[ARB_SHADER_CURRENT]->SetUniform4f(11, 0, 0, 0, sunLighting->groundShadowDensity);
 	arbShaders[ARB_SHADER_CURRENT]->Disable();
 }
 
 void SMFRenderStateGLSL::UpdateCurrentShaderSky(const ISkyLight* skyLight) const {
 	glslShaders[GLSL_SHADER_CURRENT]->Enable();
 	glslShaders[GLSL_SHADER_CURRENT]->SetUniform4v("lightDir", &skyLight->GetLightDir().x);
-	glslShaders[GLSL_SHADER_CURRENT]->SetUniform("groundShadowDensity", skyLight->GetGroundShadowDensity());
+	glslShaders[GLSL_SHADER_CURRENT]->SetUniform("groundShadowDensity", sunLighting->groundShadowDensity);
 	glslShaders[GLSL_SHADER_CURRENT]->SetUniform3v("groundAmbientColor",  &sunLighting->groundAmbientColor[0]);
 	glslShaders[GLSL_SHADER_CURRENT]->SetUniform3v("groundDiffuseColor",  &sunLighting->groundDiffuseColor[0]);
 	glslShaders[GLSL_SHADER_CURRENT]->SetUniform3v("groundSpecularColor", &sunLighting->groundSpecularColor[0]);
 	glslShaders[GLSL_SHADER_CURRENT]->Disable();
 }
-

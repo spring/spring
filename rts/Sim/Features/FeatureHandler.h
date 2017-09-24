@@ -3,16 +3,17 @@
 #ifndef _FEATURE_HANDLER_H
 #define _FEATURE_HANDLER_H
 
-#include <string>
+#include <deque>
 #include <vector>
 
-#include <boost/noncopyable.hpp>
+#include "System/float3.h"
+#include "System/Misc/NonCopyable.h"
 #include "System/creg/creg_cond.h"
-
-#include "FeatureSet.h"
+#include "System/UnorderedSet.hpp"
+#include "Sim/Features/Feature.h"
 #include "Sim/Misc/SimObjectIDPool.h"
 
-
+class CFeature;
 struct UnitDef;
 class LuaTable;
 struct FeatureDef;
@@ -31,20 +32,22 @@ struct FeatureLoadParams {
 	short int heading;
 	short int facing;
 
+	int wreckLevels;
 	int smokeTime;
 };
 
 class LuaParser;
-class CFeatureHandler : public boost::noncopyable
+class CFeatureHandler : public spring::noncopyable
 {
 	CR_DECLARE_STRUCT(CFeatureHandler)
 
 public:
-	CFeatureHandler() { }
+	CFeatureHandler();
 	~CFeatureHandler();
 
 	CFeature* LoadFeature(const FeatureLoadParams& params);
-	CFeature* CreateWreckage(const FeatureLoadParams& params, const int numWreckLevels, bool emitSmoke);
+	CFeature* CreateWreckage(const FeatureLoadParams& params);
+	CFeature* GetFeature(unsigned int id) { return ((id < features.size())? features[id]: nullptr); }
 
 	void Update();
 
@@ -52,39 +55,34 @@ public:
 	bool TryFreeFeatureID(int id);
 	bool AddFeature(CFeature* feature);
 	void DeleteFeature(CFeature* feature);
-	CFeature* GetFeature(int id);
 
 	void LoadFeaturesFromMap();
 
 	void SetFeatureUpdateable(CFeature* feature);
 	void TerrainChanged(int x1, int y1, int x2, int y2);
 
-	const CFeatureSet& GetActiveFeatures() const { return activeFeatures; }
+	const spring::unordered_set<int>& GetActiveFeatureIDs() const { return activeFeatureIDs; }
 
 private:
 	bool CanAddFeature(int id) const {
-		// do we want to be assigned a random ID? (in case
-		// idPool is empty, AddFeature will always allocate
-		// more)
+		// do we want to be assigned a random ID and are any left in pool?
 		if (id < 0)
 			return true;
 		// is this ID not already in use?
 		if (id < features.size())
-			return (features[id] == NULL);
-		// AddFeature will make new room for us
-		return true;
+			return (features[id] == nullptr);
+		// AddFeature will not make new room for us
+		return false;
 	}
-	bool NeedAllocateNewFeatureIDs(const CFeature* feature) const;
-	void AllocateNewFeatureIDs(const CFeature* feature);
+
 	void InsertActiveFeature(CFeature* feature);
 
 private:
 	SimObjectIDPool idPool;
 
-	std::vector<int> toBeFreedFeatureIDs;
-	CFeatureSet activeFeatures;
+	spring::unordered_set<int> activeFeatureIDs;
+	std::vector<int> deletedFeatureIDs;
 	std::vector<CFeature*> features;
-
 	std::vector<CFeature*> updateFeatures;
 };
 

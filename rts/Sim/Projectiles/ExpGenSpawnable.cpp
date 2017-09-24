@@ -2,6 +2,7 @@
 
 #include "ExpGenSpawnableMemberInfo.h"
 #include "ExpGenSpawner.h"
+#include "ProjectileMemPool.h"
 #include "Rendering/GroundFlash.h"
 #include "Rendering/Env/Particles/Classes/BitmapMuzzleFlame.h"
 #include "Rendering/Env/Particles/Classes/BubbleProjectile.h"
@@ -19,6 +20,18 @@
 
 CR_BIND_DERIVED_INTERFACE(CExpGenSpawnable, CWorldObject)
 CR_REG_METADATA(CExpGenSpawnable, )
+
+CExpGenSpawnable::CExpGenSpawnable(const float3& pos, const float3& spd)
+ : CWorldObject(pos, spd)
+{
+	assert(projMemPool.ctorCall());
+}
+
+CExpGenSpawnable::CExpGenSpawnable()
+ : CWorldObject()
+{
+	assert(projMemPool.alloced(this));
+}
 
 
 bool CExpGenSpawnable::GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo)
@@ -88,9 +101,9 @@ int CExpGenSpawnable::GetSpawnableID(const std::string& spawnableName)
 CExpGenSpawnable* CExpGenSpawnable::CreateSpawnable(int spawnableID)
 {
 	int i = 0;
-#define CHECK_SPAWNABLE(spawnable) \
-	if (spawnableID == i)          \
-		return new spawnable();    \
+#define CHECK_SPAWNABLE(spawnable)               \
+	if (spawnableID == i)                        \
+		return (projMemPool.alloc<spawnable>()); \
 	++i;
 
 	CHECK_ALL_SPAWNABLES()

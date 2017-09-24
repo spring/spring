@@ -30,13 +30,14 @@ static std::string CACHE_BASE("");
 
 CResourceMapAnalyzer::CResourceMapAnalyzer(int resourceId)
 	: resourceId(resourceId)
+	, numSpotsFound(-1)
+
 	, extractorRadius(-1.0f)
-	, numSpotsFound(0)
-	, vectoredSpots()
 	, averageIncome(0.0f)
-	, bufferSpot(ZeroVector)
+
 	, stopMe(false)
-	, maxSpots(0)
+
+	, maxSpots(10000)
 	, mapHeight(0)
 	, mapWidth(0)
 	, totalCells(0)
@@ -47,51 +48,21 @@ CResourceMapAnalyzer::CResourceMapAnalyzer(int resourceId)
 	, tempResources(0)
 	, coordX(0)
 	, coordZ(0)
-	, minIncomeForSpot(0)
+	, minIncomeForSpot(50)
 	, xtractorRadius(0)
 	, doubleRadius(0)
 {
-	if (CACHE_BASE.empty()) {
+	if (CACHE_BASE.empty())
 		CACHE_BASE = dataDirsAccess.LocateDir(FileSystem::GetCacheDir() + "/analyzedResourceMaps/", FileQueryFlags::WRITE | FileQueryFlags::CREATE_DIRS);
-	}
-
-	// from 0-255, the minimum percentage of resources a spot needs to have from
-	// the maximum to be saved, prevents crappier spots in between taken spaces
-	// (they are still perfectly valid and will generate resources mind you!)
-	minIncomeForSpot = 50;
-	// if more spots than that are found the map is considered a resource-map (eg. speed-metal), tweak this as needed
-	maxSpots = 10000;
-
-	const CResourceDescription* resource = resourceHandler->GetResource(resourceId);
-	extractorRadius = resource->extractorRadius;
-
-	// resource-map has 1/2 resolution of normal map
-	mapWidth = resourceHandler->GetResourceMapWidth(resourceId);
-	mapHeight = resourceHandler->GetResourceMapHeight(resourceId);
-
-	totalCells = mapHeight * mapWidth;
-	xtractorRadius = static_cast<int>(extractorRadius / 16);
-	doubleRadius = xtractorRadius * 2;
-	squareRadius = xtractorRadius * xtractorRadius;
-	doubleSquareRadius = doubleRadius * doubleRadius;
-
-	rexArrayA.resize(totalCells);
-	rexArrayB.resize(totalCells);
-	// used for drawing the TGA, not really needed with a couple of changes
-	rexArrayC.resize(totalCells);
-
-	tempAverage.resize(totalCells);
-
-	Init();
 }
 
 
 
 float3 CResourceMapAnalyzer::GetNearestSpot(int builderUnitId, const UnitDef* extractor) const {
 
-	CUnit* builder = unitHandler->units[builderUnitId];
+	CUnit* builder = unitHandler->GetUnit(builderUnitId);
 
-	if (builder == NULL) {
+	if (builder == nullptr) {
 		LOG_L(L_WARNING, "GetNearestSpot: Invalid unit ID: %i", builderUnitId);
 		return ERRORVECTOR;
 	}
@@ -107,7 +78,7 @@ float3 CResourceMapAnalyzer::GetNearestSpot(float3 fromPos, int team, const Unit
 	float3 bestSpot = ERRORVECTOR;
 
 	for (size_t i = 0; i < vectoredSpots.size(); ++i) {
-		if (extractor != NULL) {
+		if (extractor != nullptr) {
 			spotCoords = CGameHelper::ClosestBuildSite(team, extractor, vectoredSpots[i], maxDivergence, 2);
 		} else {
 			spotCoords = vectoredSpots[i];
@@ -140,11 +111,24 @@ float3 CResourceMapAnalyzer::GetNearestSpot(float3 fromPos, int team, const Unit
 
 
 void CResourceMapAnalyzer::Init() {
-
-	// Leave this line if you want to use this class
 	const CResourceDescription* resource = resourceHandler->GetResource(resourceId);
-	LOG("ResourceMapAnalyzer by Krogothe, initialized for resource %i(%s)",
-			resourceId, resource->name.c_str());
+
+	mapWidth = resourceHandler->GetResourceMapWidth(resourceId);
+	mapHeight = resourceHandler->GetResourceMapHeight(resourceId);
+
+	totalCells = mapHeight * mapWidth;
+	extractorRadius = resource->extractorRadius;
+	xtractorRadius = static_cast<int>(extractorRadius / (SQUARE_SIZE * 2));
+	doubleRadius = xtractorRadius * 2;
+	squareRadius = xtractorRadius * xtractorRadius;
+	doubleSquareRadius = doubleRadius * doubleRadius;
+
+	rexArrayA.resize(totalCells);
+	rexArrayB.resize(totalCells);
+	// used for drawing the TGA, not really needed with a couple of changes
+	rexArrayC.resize(totalCells);
+
+	tempAverage.resize(totalCells);
 
 	// if there's no available load file, create one and save it
 	if (!LoadResourceMap()) {
@@ -157,9 +141,6 @@ float CResourceMapAnalyzer::GetAverageIncome() const {
 	return averageIncome;
 }
 
-const std::vector<float3>& CResourceMapAnalyzer::GetSpots() const {
-	return vectoredSpots;
-}
 
 void CResourceMapAnalyzer::GetResourcePoints() {
 	std::vector<int> xend(doubleRadius + 1);
@@ -182,13 +163,11 @@ void CResourceMapAnalyzer::GetResourcePoints() {
 
 	// do the average
 	averageIncome = totalResourcesDouble / totalCells;
+	numSpotsFound = 0;
 
-	// quick test for no-resources-map:
-	if (totalResourcesDouble < 0.9) {
-		// the map does not have any resource, just stop
-		numSpotsFound = 0;
+	// if the map does not have any resource (quick test), just stop
+	if (totalResourcesDouble < 0.9)
 		return;
-	}
 
 	// Now work out how much resources each spot can make
 	// by adding up the resources from nearby spots
@@ -401,13 +380,13 @@ void CResourceMapAnalyzer::GetResourcePoints() {
 
 		if (tempResources < minIncomeForSpot) {
 			// if the spots get too crappy it will stop running the loops to speed it all up
-			stopMe = 1;
+			stopMe = true;
 		}
 
 		if (!stopMe) {
 			// format resource coords to game-coords
-			bufferSpot.x = coordX * 16 + 8;
-			bufferSpot.z = coordZ * 16 + 8;
+			bufferSpot.x = coordX * (SQUARE_SIZE * 2) + SQUARE_SIZE;
+			bufferSpot.z = coordZ * (SQUARE_SIZE * 2) + SQUARE_SIZE;
 			// gets the actual amount of resource an extractor can make
 			const CResourceDescription* resource = resourceHandler->GetResource(resourceId);
 			bufferSpot.y = tempResources * (resource->maxWorth) * maxResource / 255;
@@ -516,9 +495,6 @@ void CResourceMapAnalyzer::GetResourcePoints() {
 			}
 		}
 	}
-
-	// 0.95 used for reliability
-	// bool isResourceMap = (numSpotsFound > maxSpots * 0.95);
 }
 
 
@@ -536,19 +512,17 @@ void CResourceMapAnalyzer::SaveResourceMap() {
 	FILE* saveFile = fopen(cacheFileName.c_str(), "wb");
 
 	try {
-		if (saveFile == NULL) {
+		if (saveFile == nullptr)
 			throw std::runtime_error("failed to open file for writing");
-		}
 
+		assert(numSpotsFound != -1);
 		writeToFile(numSpotsFound, saveFile);
 		writeToFile(averageIncome, saveFile);
 		for (int i = 0; i < numSpotsFound; i++) {
 			writeToFile(vectoredSpots[i], saveFile);
 		}
 	} catch (const std::runtime_error& err) {
-		LOG_L(L_WARNING,
-				"Failed to save the analyzed resource-map to file %s, reason: %s",
-				cacheFileName.c_str(), err.what());
+		LOG_L(L_WARNING, "Failed to save the analyzed resource-map to file %s, reason: %s", cacheFileName.c_str(), err.what());
 	}
 
 	fclose(saveFile);
@@ -569,7 +543,7 @@ bool CResourceMapAnalyzer::LoadResourceMap() {
 
 	FILE* cacheFile = fopen(cacheFileName.c_str(), "rb");
 
-	if (cacheFile != NULL) {
+	if (cacheFile != nullptr) {
 		try {
 			fileReadChecked(&numSpotsFound, sizeof(int), 1, cacheFile);
 			vectoredSpots.resize(numSpotsFound);
@@ -579,9 +553,7 @@ bool CResourceMapAnalyzer::LoadResourceMap() {
 			}
 			loaded = true;
 		} catch (const std::runtime_error& err) {
-			LOG_L(L_WARNING,
-					"Failed to load the resource map cache from file %s: %s",
-					cacheFileName.c_str(), err.what());
+			LOG_L(L_WARNING, "Failed to load the resource map cache from file %s: %s", cacheFileName.c_str(), err.what());
 		}
 		fclose(cacheFile);
 	}

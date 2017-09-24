@@ -1,7 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include <SDL_keycode.h>
-#include <boost/cstdint.hpp>
 
 #include "OverheadController.h"
 
@@ -21,9 +20,9 @@ CONFIG(int, OverheadScrollSpeed).defaultValue(10);
 CONFIG(float, OverheadTiltSpeed).defaultValue(1.0f);
 CONFIG(bool, OverheadEnabled).defaultValue(true).headlessValue(false);
 CONFIG(float, OverheadFOV).defaultValue(45.0f);
+CONFIG(float, OverheadMaxHeightFactor).defaultValue(1.0f).description("float multiplier for maximum overhead camera height");
 
-
-static const float angleStep = fastmath::HALFPI / 14.f;
+static const float angleStep = math::HALFPI / 14.0f;
 
 
 COverheadController::COverheadController()
@@ -34,11 +33,8 @@ COverheadController::COverheadController()
 	, maxHeight(10000)
 	, angle(DEFAULT_ANGLE)
 {
-	middleClickScrollSpeed = configHandler->GetFloat("MiddleClickScrollSpeed");
-	scrollSpeed = configHandler->GetInt("OverheadScrollSpeed") * 0.1f;
-	tiltSpeed = configHandler->GetFloat("OverheadTiltSpeed");
-	enabled = configHandler->GetBool("OverheadEnabled");
-	fov = configHandler->GetFloat("OverheadFOV");
+	configHandler->NotifyOnChange(this, {"MiddleClickScrollSpeed", "OverheadScrollSpeed", "OverheadTiltSpeed", "OverheadEnabled", "OverheadFOV", "OverheadMaxHeightFactor"});
+	ConfigUpdate();
 
 	if (globalRendering) {
 		// make whole map visible
@@ -46,8 +42,27 @@ COverheadController::COverheadController()
 		height = CGround::GetHeightAboveWater(pos.x, pos.z, false) + (2.5f * h);
 	}
 
-	maxHeight = 9.5f * std::max(mapDims.mapx, mapDims.mapy);
 	Update();
+}
+
+COverheadController::~COverheadController()
+{
+	configHandler->RemoveObserver(this);
+}
+
+void COverheadController::ConfigUpdate()
+{
+	middleClickScrollSpeed = configHandler->GetFloat("MiddleClickScrollSpeed");
+	scrollSpeed = configHandler->GetInt("OverheadScrollSpeed") * 0.1f;
+	tiltSpeed = configHandler->GetFloat("OverheadTiltSpeed");
+	enabled = configHandler->GetBool("OverheadEnabled");
+	fov = configHandler->GetFloat("OverheadFOV");
+	maxHeight = 9.5f * std::max(mapDims.mapx, mapDims.mapy) * configHandler->GetFloat("OverheadMaxHeightFactor");
+}
+
+void COverheadController::ConfigNotify(const std::string & key, const std::string & value)
+{
+	ConfigUpdate();
 }
 
 void COverheadController::KeyMove(float3 move)
@@ -98,7 +113,7 @@ void COverheadController::MouseWheelMove(float move)
 	// from here to the end of the function (smoothed)
 	if (KeyInput::GetKeyModState(KMOD_CTRL)) {
 		angle += (move * tiltSpeed * shiftSpeed * 0.025f) * angleStep;
-		angle = Clamp(angle, 0.01f, fastmath::HALFPI);
+		angle = Clamp(angle, 0.01f, math::HALFPI);
 	} else {
 		if (move < 0.0f) {
 			// ZOOM IN to mouse cursor instead of mid screen
@@ -161,7 +176,7 @@ void COverheadController::Update()
 	pos.y = CGround::GetHeightAboveWater(pos.x, pos.z, false);
 	height = Clamp(height, 60.0f, maxHeight);
 
-	angle = Clamp(angle, 0.01f, fastmath::HALFPI);
+	angle = Clamp(angle, 0.01f, math::HALFPI);
 	dir = float3(0.0f, -fastmath::cos(angle), flipped ? fastmath::sin(angle) : -fastmath::sin(angle));
 	pixelSize = (camera->GetTanHalfFov() * 2.0f) / globalRendering->viewSizeY * height * 2.0f;
 }

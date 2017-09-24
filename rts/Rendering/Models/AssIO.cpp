@@ -8,7 +8,7 @@
 
 AssVFSStream::AssVFSStream(const std::string& pFile, const std::string& pMode)
 {
-	file = new CFileHandler(pFile, pMode);
+	file = new CFileHandler(pFile, SPRING_VFS_ZIP);
 }
 
 AssVFSStream::~AssVFSStream(void)
@@ -78,11 +78,6 @@ bool AssVFSSystem::Exists( const char* pFile) const
 char AssVFSSystem::getOsSeparator() const
 {
 	return '/';
-}
-
-bool AssVFSSystem::ComparePaths (const std::string& one, const std::string& second) const
-{
-	return one == second; // too naive? probably should convert to absolute paths
 }
 
 // open a custom stream

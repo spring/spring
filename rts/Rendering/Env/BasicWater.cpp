@@ -3,6 +3,7 @@
 
 #include "BasicWater.h"
 #include "ISky.h"
+#include "WaterRendering.h"
 
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Textures/Bitmap.h"
@@ -17,8 +18,8 @@
 CBasicWater::CBasicWater()
 {
 	CBitmap waterTexBM;
-	if (!waterTexBM.Load(mapInfo->water.texture)) {
-		LOG_L(L_WARNING, "[%s] could not read water texture from file \"%s\"", __FUNCTION__, mapInfo->water.texture.c_str());
+	if (!waterTexBM.Load(waterRendering->texture)) {
+		LOG_L(L_WARNING, "[%s] could not read water texture from file \"%s\"", __FUNCTION__, waterRendering->texture.c_str());
 
 		// fallback
 		waterTexBM.AllocDummy(SColor(0,0,255,255));
@@ -58,13 +59,13 @@ unsigned int CBasicWater::GenWaterQuadsList(unsigned int textureWidth, unsigned 
 	// Use better repeat setting of 1 repeat per 4096 mapx/mapy for the new
 	// ocean.jpg while retaining backward compatibility with old maps relying
 	// on 1 repeat per 1024 mapx/mapy. (changed 16/05/2007)
-	if (mapInfo->water.texture == "bitmaps/ocean.jpg") {
+	if (waterRendering->texture == "bitmaps/ocean.jpg") {
 		repeatX /= 4;
 		repeatY /= 4;
 	}
 
-	repeatX = (mapInfo->water.repeatX != 0 ? mapInfo->water.repeatX : repeatX) / 16;
-	repeatY = (mapInfo->water.repeatY != 0 ? mapInfo->water.repeatY : repeatY) / 16;
+	repeatX = (waterRendering->repeatX != 0 ? waterRendering->repeatX : repeatX) / 16;
+	repeatY = (waterRendering->repeatY != 0 ? waterRendering->repeatY : repeatY) / 16;
 
 	for (int y = 0; y < 16; y++) {
 		for (int x = 0; x < 16; x++) {
@@ -87,11 +88,12 @@ unsigned int CBasicWater::GenWaterQuadsList(unsigned int textureWidth, unsigned 
 
 void CBasicWater::Draw()
 {
-	if (!mapInfo->water.forceRendering && !readMap->HasVisibleWater())
+	if (!waterRendering->forceRendering && !readMap->HasVisibleWater())
 		return;
 
-	glPushAttrib(GL_FOG_BIT);
+	glPushAttrib(GL_FOG_BIT | GL_POLYGON_BIT);
 	sky->SetupFog();
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE * wireFrameMode + GL_FILL * (1 - wireFrameMode));
 	glCallList(displistID);
 	glPopAttrib();
 }

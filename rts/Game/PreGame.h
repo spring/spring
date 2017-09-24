@@ -4,7 +4,7 @@
 #define PREGAME_H
 
 #include <string>
-#include <boost/shared_ptr.hpp>
+#include <memory>
 
 #include "GameController.h"
 #include "System/Misc/SpringTime.h"
@@ -37,16 +37,17 @@ namespace netcode {
 class CPreGame : public CGameController
 {
 public:
-	CPreGame(boost::shared_ptr<ClientSetup> setup);
+	CPreGame(std::shared_ptr<ClientSetup> setup);
 	virtual ~CPreGame();
 
 	void LoadSetupscript(const std::string& script);
 	void LoadDemo(const std::string& demo);
 	void LoadSavefile(const std::string& save, bool usecreg);
 
-	bool Draw();
-	int KeyPressed(int k, bool isRepeat);
-	bool Update();
+	bool Draw() override;
+	bool Update() override;
+
+	int KeyPressed(int k, bool isRepeat) override;
 
 private:
 	void AddGameSetupArchivesToVFS(const CGameSetup* setup, bool mapOnly);
@@ -59,20 +60,21 @@ private:
 	/// receive network traffic
 	void UpdateClientNet();
 
-	void GameDataReceived(boost::shared_ptr<const netcode::RawPacket> packet);
+	void GameDataReceived(std::shared_ptr<const netcode::RawPacket> packet);
 
 	/**
 	@brief GameData we received from server
 
 	We won't start until we received this (NULL until GameDataReceived)
 	*/
-	boost::shared_ptr<GameData> gameData;
-	boost::shared_ptr<ClientSetup> clientSetup;
+	std::shared_ptr<GameData> gameData;
+	std::shared_ptr<ClientSetup> clientSetup;
 
 	std::string modArchive;
 	ILoadSaveHandler* savefile;
 
-	spring_time timer;
+	spring_time connectTimer;
+
 	bool wantDemo;
 };
 

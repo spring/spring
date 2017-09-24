@@ -1,11 +1,10 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include <boost/bind.hpp>
-#include <boost/thread.hpp>
-#include <boost/thread/condition.hpp>
-#include <boost/cstdint.hpp>
+#include <chrono>
+#include <cinttypes>
+#include <functional>
 
-#include "System/ThreadPool.h"
+#include "System/Threading/ThreadPool.h"
 
 #include "PathDefines.hpp"
 #include "PathManager.hpp"
@@ -23,9 +22,10 @@
 #include "System/FileSystem/FileSystem.h"
 #include "System/Log/ILog.h"
 #include "System/Platform/Threading.h"
+#include "System/Threading/SpringThreading.h"
 #include "System/Rectangle.h"
 #include "System/TimeProfiler.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 
 #ifdef GetTempPath
 #undef GetTempPath
@@ -42,7 +42,7 @@ namespace QTPFS {
 
 		void SetLoading(bool b) { loading = b; }
 		void AddLoadMessage(const std::string& msg) {
-			boost::mutex::scoped_lock loadMessageLock(loadMessageMutex);
+			std::lock_guard<spring::mutex> loadMessageLock(loadMessageMutex);
 			loadMessages.push_back(msg);
 		}
 		void SetLoadMessage(const std::string& msg) {
@@ -53,7 +53,7 @@ namespace QTPFS {
 			#endif
 		}
 		void SetLoadMessages() {
-			boost::mutex::scoped_lock loadMessageLock(loadMessageMutex);
+			std::lock_guard<spring::mutex> loadMessageLock(loadMessageMutex);
 
 			while (!loadMessages.empty()) {
 				SetLoadMessage(loadMessages.front());
@@ -62,7 +62,7 @@ namespace QTPFS {
 		}
 		void Loop() {
 			while (loading) {
-				boost::this_thread::sleep(boost::posix_time::millisec(50));
+				spring::this_thread::sleep_for(std::chrono::milliseconds(50));
 
 				// need this to be always executed after waking up
 				SetLoadMessages();
@@ -73,14 +73,14 @@ namespace QTPFS {
 		}
 
 	private:
-		std::list<std::string> loadMessages;
-		boost::mutex loadMessageMutex;
+		std::deque<std::string> loadMessages;
+		spring::mutex loadMessageMutex;
 
 		volatile bool loading;
 	};
 
 	static PMLoadScreen pmLoadScreen;
-	static boost::thread pmLoadThread;
+	static spring::thread pmLoadThread;
 
 	static size_t GetNumThreads() {
 		const size_t numThreads = std::max(0, configHandler->GetInt("PathingThreadCount"));
@@ -101,20 +101,17 @@ QTPFS::PathManager::PathManager() {
 }
 
 QTPFS::PathManager::~PathManager() {
-	std::list<IPathSearch*>::const_iterator searchesIt;
-	std::map<unsigned int, PathSearchTrace::Execution*>::const_iterator tracesIt;
-
 	for (unsigned int layerNum = 0; layerNum < nodeLayers.size(); layerNum++) {
 		nodeTrees[layerNum]->Delete();
 		nodeLayers[layerNum].Clear();
 
-		for (searchesIt = pathSearches[layerNum].begin(); searchesIt != pathSearches[layerNum].end(); ++searchesIt) {
+		for (auto searchesIt = pathSearches[layerNum].begin(); searchesIt != pathSearches[layerNum].end(); ++searchesIt) {
 			delete (*searchesIt);
 		}
 
 		pathSearches[layerNum].clear();
 	}
-	for (tracesIt = pathTraces.begin(); tracesIt != pathTraces.end(); ++tracesIt) {
+	for (auto tracesIt = pathTraces.begin(); tracesIt != pathTraces.end(); ++tracesIt) {
 		delete (tracesIt->second);
 	}
 
@@ -144,19 +141,19 @@ QTPFS::PathManager::~PathManager() {
 	#endif
 }
 
-boost::int64_t QTPFS::PathManager::Finalize() {
+std::int64_t QTPFS::PathManager::Finalize() {
 	const spring_time t0 = spring_gettime();
 
 	{
-		pmLoadThread = boost::thread(boost::bind(&PathManager::Load, this));
+		pmLoadThread = spring::thread(std::bind(&PathManager::Load, this));
 		pmLoadScreen.Loop();
 		pmLoadThread.join();
 
 		#ifdef QTPFS_ENABLE_THREADED_UPDATE
-		mutexThreadUpdate = new boost::mutex();
-		condThreadUpdate = new boost::condition_variable();
-		condThreadUpdated = new boost::condition_variable();
-		updateThread = new boost::thread(boost::bind(&PathManager::ThreadUpdate, this));
+		mutexThreadUpdate = new spring::mutex();
+		condThreadUpdate = new spring::condition_variable();
+		condThreadUpdated = new spring::condition_variable();
+		updateThread = new spring::thread(std::bind(&PathManager::ThreadUpdate, this));
 		#endif
 	}
 
@@ -190,8 +187,8 @@ void QTPFS::PathManager::Load() {
 	numPrevExecutedSearches.resize(teamHandler->ActiveTeams() + 1, 0);
 
 	{
-		const boost::uint32_t mapCheckSum = archiveScanner->GetArchiveCompleteChecksum(gameSetup->mapName);
-		const boost::uint32_t modCheckSum = archiveScanner->GetArchiveCompleteChecksum(gameSetup->modName);
+		const std::uint32_t mapCheckSum = archiveScanner->GetArchiveCompleteChecksum(gameSetup->mapName);
+		const std::uint32_t modCheckSum = archiveScanner->GetArchiveCompleteChecksum(gameSetup->modName);
 		const std::string& cacheDirName = GetCacheDirName(mapCheckSum, modCheckSum);
 
 		{
@@ -242,8 +239,8 @@ void QTPFS::PathManager::Load() {
 	}
 }
 
-boost::uint64_t QTPFS::PathManager::GetMemFootPrint() const {
-	boost::uint64_t memFootPrint = sizeof(PathManager);
+std::uint64_t QTPFS::PathManager::GetMemFootPrint() const {
+	std::uint64_t memFootPrint = sizeof(PathManager);
 
 	for (unsigned int i = 0; i < nodeLayers.size(); i++) {
 		memFootPrint += nodeLayers[i].GetMemFootPrint();
@@ -256,11 +253,11 @@ boost::uint64_t QTPFS::PathManager::GetMemFootPrint() const {
 
 
 
-void QTPFS::PathManager::SpawnBoostThreads(MemberFunc f, const SRectangle& r) {
-	static std::vector<boost::thread*> threads(std::min(GetNumThreads(), nodeLayers.size()), NULL);
+void QTPFS::PathManager::SpawnSpringThreads(MemberFunc f, const SRectangle& r) {
+	static std::vector<spring::thread*> threads(std::min(GetNumThreads(), nodeLayers.size()), NULL);
 
 	for (unsigned int threadNum = 0; threadNum < threads.size(); threadNum++) {
-		threads[threadNum] = new boost::thread(boost::bind(f, this, threadNum, threads.size(), r));
+		threads[threadNum] = new spring::thread(std::bind(f, this, threadNum, threads.size(), r));
 	}
 
 	for (unsigned int threadNum = 0; threadNum < threads.size(); threadNum++) {
@@ -316,7 +313,7 @@ void QTPFS::PathManager::InitNodeLayersThreaded(const SRectangle& rect) {
 		sprintf(loadMsg, fmtString, __FUNCTION__, GetNumThreads(), nodeLayers.size(), (haveCacheDir? "cached": "uncached"));
 		pmLoadScreen.AddLoadMessage(loadMsg);
 
-		SpawnBoostThreads(&PathManager::InitNodeLayersThread, rect);
+		SpawnSpringThreads(&PathManager::InitNodeLayersThread, rect);
 	}
 	#endif
 
@@ -385,7 +382,7 @@ void QTPFS::PathManager::UpdateNodeLayersThreaded(const SRectangle& rect) {
 	}
 	#else
 	{
-		SpawnBoostThreads(&PathManager::UpdateNodeLayersThread, rect);
+		SpawnSpringThreads(&PathManager::UpdateNodeLayersThread, rect);
 	}
 	#endif
 
@@ -523,9 +520,9 @@ void QTPFS::PathManager::ExecQueuedNodeLayerUpdates(unsigned int layerNum, bool 
 
 
 
-std::string QTPFS::PathManager::GetCacheDirName(boost::uint32_t mapCheckSum, boost::uint32_t modCheckSum) const {
-	static const std::string ver = IntToString(QTPFS_CACHE_VERSION, "%04x");
-	static const std::string dir = FileSystem::GetCacheDir() + "/QTPFS/" + ver + "/" +
+std::string QTPFS::PathManager::GetCacheDirName(std::uint32_t mapCheckSum, std::uint32_t modCheckSum) const {
+	const std::string ver = IntToString(QTPFS_CACHE_VERSION, "%04x");
+	const std::string dir = FileSystem::GetCacheDir() + "/QTPFS/" + ver + "/" +
 		IntToString(mapCheckSum, "%08x") + "-" +
 		IntToString(modCheckSum, "%08x") + "/";
 
@@ -570,10 +567,10 @@ void QTPFS::PathManager::Serialize(const std::string& cacheFileDir) {
 				// fstreams can not be easily locked however, see
 				// http://stackoverflow.com/questions/839856/
 				while (!FileSystem::FileExists(fileNames[i] + "-tmp")) {
-					boost::this_thread::sleep(boost::posix_time::millisec(100));
+					spring::this_thread::sleep_for(std::chrono::milliseconds(100));
 				}
 				while (FileSystem::GetFileSize(fileNames[i] + "-tmp") != sizeof(unsigned int)) {
-					boost::this_thread::sleep(boost::posix_time::millisec(100));
+					spring::this_thread::sleep_for(std::chrono::milliseconds(100));
 				}
 
 				fileStreams[i]->open((fileNames[i] + "-tmp").c_str(), std::ios::in | std::ios::binary);
@@ -581,10 +578,10 @@ void QTPFS::PathManager::Serialize(const std::string& cacheFileDir) {
 				fileStreams[i]->close();
 
 				while (!FileSystem::FileExists(fileNames[i])) {
-					boost::this_thread::sleep(boost::posix_time::millisec(100));
+					spring::this_thread::sleep_for(std::chrono::milliseconds(100));
 				}
 				while (FileSystem::GetFileSize(fileNames[i]) != fileSizes[i]) {
-					boost::this_thread::sleep(boost::posix_time::millisec(100));
+					spring::this_thread::sleep_for(std::chrono::milliseconds(100));
 				}
 			}
 			#else
@@ -632,8 +629,6 @@ void QTPFS::PathManager::Serialize(const std::string& cacheFileDir) {
 // note that this is called twice per object:
 // height-map changes, then blocking-map does
 void QTPFS::PathManager::TerrainChange(unsigned int x1, unsigned int z1,  unsigned int x2, unsigned int z2, unsigned int type) {
-	SCOPED_TIMER("PathManager::TerrainChange");
-
 	if (!IsFinalized())
 		return;
 
@@ -659,12 +654,12 @@ void QTPFS::PathManager::TerrainChange(unsigned int x1, unsigned int z1,  unsign
 
 
 void QTPFS::PathManager::Update() {
-	SCOPED_TIMER("PathManager::Update");
+	SCOPED_TIMER("Sim::Path");
 
 	#ifdef QTPFS_ENABLE_THREADED_UPDATE
 	streflop::streflop_init<streflop::Simple>();
 
-	boost::mutex::scoped_lock lock(*mutexThreadUpdate);
+	std::lock_guard<spring::mutex> lock(*mutexThreadUpdate);
 
 	// allow ThreadUpdate to run one iteration
 	condThreadUpdate->notify_one();
@@ -682,7 +677,7 @@ __FORCE_ALIGN_STACK__
 void QTPFS::PathManager::ThreadUpdate() {
 	#ifdef QTPFS_ENABLE_THREADED_UPDATE
 	while (!nodeLayers.empty()) {
-		boost::mutex::scoped_lock lock(*mutexThreadUpdate);
+		std::lock_guard<spring::mutex> lock(*mutexThreadUpdate);
 
 		// wait for green light from Update
 		condThreadUpdate->wait(lock);
@@ -747,8 +742,8 @@ void QTPFS::PathManager::ExecuteQueuedSearches(unsigned int pathType) {
 	NodeLayer& nodeLayer = nodeLayers[pathType];
 	PathCache& pathCache = pathCaches[pathType];
 
-	std::list<IPathSearch*>& searches = pathSearches[pathType];
-	std::list<IPathSearch*>::iterator searchesIt = searches.begin();
+	std::vector<IPathSearch*>& searches = pathSearches[pathType];
+	std::vector<IPathSearch*>::iterator searchesIt = searches.begin();
 
 	if (!searches.empty()) {
 		// execute pending searches collected via
@@ -762,8 +757,8 @@ void QTPFS::PathManager::ExecuteQueuedSearches(unsigned int pathType) {
 }
 
 bool QTPFS::PathManager::ExecuteSearch(
-	PathSearchList& searches,
-	PathSearchListIt& searchesIt,
+	PathSearchVect& searches,
+	PathSearchVectIt& searchesIt,
 	NodeLayer& nodeLayer,
 	PathCache& pathCache,
 	unsigned int pathType
@@ -771,19 +766,20 @@ bool QTPFS::PathManager::ExecuteSearch(
 	IPathSearch* search = *searchesIt;
 	IPath* path = pathCache.GetTempPath(search->GetID());
 
-	assert(search != NULL);
-	assert(path != NULL);
+	assert(search != nullptr);
+	assert(path != nullptr);
 
-	#define DeleteSearch(s, it) { \
-		*it = NULL;               \
-		it = searches.erase(it);  \
-		delete s;                 \
-	}
+	const auto DeleteSearch = [](IPathSearch* s, PathSearchVect& v, PathSearchVectIt& it) {
+		// ordering of still-queued searches is not relevant
+		*it = v.back();
+		v.pop_back();
+		delete s;
+	};
 
 	// temp-path might have been removed already via
 	// DeletePath before we got a chance to process it
 	if (path->GetID() == 0) {
-		DeleteSearch(search, searchesIt);
+		DeleteSearch(search, searches, searchesIt);
 		return false;
 	}
 
@@ -799,7 +795,7 @@ bool QTPFS::PathManager::ExecuteSearch(
 
 		if (sharedPathsIt != sharedPaths.end()) {
 			if (search->SharedFinalize(sharedPathsIt->second, path)) {
-				DeleteSearch(search, searchesIt);
+				DeleteSearch(search, searches, searchesIt);
 				return false;
 			}
 		}
@@ -832,7 +828,7 @@ bool QTPFS::PathManager::ExecuteSearch(
 		DeletePath(path->GetID());
 	}
 
-	DeleteSearch(search, searchesIt);
+	DeleteSearch(search, searches, searchesIt);
 	return true;
 }
 
@@ -974,7 +970,8 @@ unsigned int QTPFS::PathManager::RequestPath(
 	float radius,
 	bool synced)
 {
-	SCOPED_TIMER("PathManager::RequestPath");
+	// in misc since it is called from many points
+	SCOPED_TIMER("Misc::Path::RequestPath");
 
 	if (!IsFinalized())
 		return 0;
@@ -1013,7 +1010,8 @@ float3 QTPFS::PathManager::NextWayPoint(
 	float, // radius,
 	bool synced
 ) {
-	SCOPED_TIMER("PathManager::NextWayPoint");
+	// in misc since it is called from many points
+	SCOPED_TIMER("Misc::Path::NextWayPoint");
 
 	const PathTypeMap::const_iterator pathTypeIt = pathTypes.find(pathID);
 	const float3 noPathPoint = -XZVector;

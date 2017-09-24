@@ -4,38 +4,49 @@
 
 #include "FeatureDef.h"
 #include "FeatureDefHandler.h"
+#include "FeatureMemPool.h"
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
+#include "Sim/Misc/SimObjectMemPool.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Units/CommandAI/BuilderCAI.h"
 #include "System/creg/STL_Set.h"
 #include "System/EventHandler.h"
 #include "System/TimeProfiler.h"
-#include "System/Util.h"
-
-CFeatureHandler* featureHandler = NULL;
 
 /******************************************************************************/
 
 CR_BIND(CFeatureHandler, )
 CR_REG_METADATA(CFeatureHandler, (
 	CR_MEMBER(idPool),
-	CR_MEMBER(toBeFreedFeatureIDs),
-	CR_MEMBER(activeFeatures),
+	CR_MEMBER(deletedFeatureIDs),
+	CR_MEMBER(activeFeatureIDs),
 	CR_MEMBER(features),
 	CR_MEMBER(updateFeatures)
 ))
 
 /******************************************************************************/
 
-CFeatureHandler::~CFeatureHandler()
-{
-	for (CFeatureSet::iterator fi = activeFeatures.begin(); fi != activeFeatures.end(); ++fi) {
-		delete *fi;
+FeatureMemPool featureMemPool;
+
+CFeatureHandler* featureHandler = nullptr;
+
+
+CFeatureHandler::CFeatureHandler() {
+	features.resize(MAX_FEATURES, nullptr);
+	activeFeatureIDs.reserve(MAX_FEATURES);
+
+	featureMemPool.reserve(128);
+	idPool.Expand(0, features.size());
+}
+
+CFeatureHandler::~CFeatureHandler() {
+	for (const int featureID: activeFeatureIDs) {
+		featureMemPool.free(features[featureID]);
 	}
 
-	activeFeatures.clear();
-	features.clear();
+	// do not clear in ctor because creg-loaded objects would be wiped out
+	featureMemPool.clear();
 }
 
 
@@ -43,20 +54,23 @@ void CFeatureHandler::LoadFeaturesFromMap()
 {
 	// create map-specified feature instances
 	const int numFeatures = readMap->GetNumFeatures();
+
 	if (numFeatures == 0)
 		return;
+
 	std::vector<MapFeatureInfo> mfi;
 	mfi.resize(numFeatures);
 	readMap->GetFeatureInfo(&mfi[0]);
 
 	for (int a = 0; a < numFeatures; ++a) {
 		const FeatureDef* def = featureDefHandler->GetFeatureDef(readMap->GetFeatureTypeName(mfi[a].featureType), true);
+
 		if (def == nullptr)
 			continue;
 
 		FeatureLoadParams params = {
 			def,
-			NULL,
+			nullptr,
 
 			float3(mfi[a].pos.x, CGround::GetHeightReal(mfi[a].pos.x, mfi[a].pos.z), mfi[a].pos.z),
 			ZeroVector,
@@ -68,6 +82,7 @@ void CFeatureHandler::LoadFeaturesFromMap()
 			static_cast<short int>(mfi[a].rotation),
 			FACING_SOUTH,
 
+			0, // wreckLevels
 			0, // smokeTime
 		};
 
@@ -81,43 +96,22 @@ CFeature* CFeatureHandler::LoadFeature(const FeatureLoadParams& params) {
 	if (!CanAddFeature(params.featureID))
 		return nullptr;
 
-	// Initialize() calls AddFeature -> no memory-leak
-	CFeature* feature = new CFeature();
+	CFeature* feature = featureMemPool.alloc<CFeature>();
+
+	// calls back into AddFeature
 	feature->Initialize(params);
 	return feature;
 }
 
-
-bool CFeatureHandler::NeedAllocateNewFeatureIDs(const CFeature* feature) const
-{
-	if (feature->id < 0 && idPool.IsEmpty())
-		return true;
-	if (feature->id >= 0 && feature->id >= features.size())
-		return true;
-
-	return false;
-}
-
-void CFeatureHandler::AllocateNewFeatureIDs(const CFeature* feature)
-{
-	// if feature->id is non-negative, then allocate enough to
-	// make it a valid index (we have no hard MAX_FEATURES cap)
-	// and always make sure to at least double the pool
-	// note: WorldObject::id is signed, so block RHS underflow
-	const unsigned int numNewIDs = std::max(int(features.size()) + (128 * idPool.IsEmpty()), (feature->id + 1) - int(features.size()));
-
-	idPool.Expand(features.size(), numNewIDs);
-	features.resize(features.size() + numNewIDs, NULL);
-}
 
 void CFeatureHandler::InsertActiveFeature(CFeature* feature)
 {
 	idPool.AssignID(feature);
 
 	assert(feature->id < features.size());
-	assert(features[feature->id] == NULL);
+	assert(features[feature->id] == nullptr);
 
-	activeFeatures.insert(feature);
+	activeFeatureIDs.insert(feature->id);
 	features[feature->id] = feature;
 }
 
@@ -127,10 +121,6 @@ bool CFeatureHandler::AddFeature(CFeature* feature)
 {
 	// LoadFeature should make sure this is true
 	assert(CanAddFeature(feature->id));
-
-	if (NeedAllocateNewFeatureIDs(feature)) {
-		AllocateNewFeatureIDs(feature);
-	}
 
 	InsertActiveFeature(feature);
 	SetFeatureUpdateable(feature);
@@ -144,19 +134,8 @@ void CFeatureHandler::DeleteFeature(CFeature* feature)
 	feature->deleteMe = true;
 }
 
-CFeature* CFeatureHandler::GetFeature(int id)
-{
-	if (id >= 0 && id < features.size())
-		return features[id];
 
-	return nullptr;
-}
-
-
-CFeature* CFeatureHandler::CreateWreckage(
-	const FeatureLoadParams& cparams,
-	const int numWreckLevels,
-	bool emitSmoke)
+CFeature* CFeatureHandler::CreateWreckage(const FeatureLoadParams& cparams)
 {
 	const FeatureDef* fd = cparams.featureDef;
 
@@ -164,10 +143,9 @@ CFeature* CFeatureHandler::CreateWreckage(
 		return nullptr;
 
 	// move down the wreck-chain by <numWreckLevels> steps beyond <fd>
-	for (int i = 0; i < numWreckLevels; i++) {
-		if ((fd = featureDefHandler->GetFeatureDefByID(fd->deathFeatureDefID)) == nullptr) {
+	for (int i = 0; i < cparams.wreckLevels; i++) {
+		if ((fd = featureDefHandler->GetFeatureDefByID(fd->deathFeatureDefID)) == nullptr)
 			return nullptr;
-		}
 	}
 
 	if (!eventHandler.AllowFeatureCreation(fd, cparams.teamID, cparams.pos))
@@ -176,9 +154,11 @@ CFeature* CFeatureHandler::CreateWreckage(
 	if (!fd->modelName.empty()) {
 		FeatureLoadParams params = cparams;
 
-		params.unitDef = ((fd->resurrectable == 0) || (numWreckLevels > 0 && fd->resurrectable < 0)) ? nullptr: cparams.unitDef;
-		params.smokeTime = fd->smokeTime * emitSmoke;
+		params.unitDef = ((fd->resurrectable == 0) || (cparams.wreckLevels > 0 && fd->resurrectable < 0))? nullptr: cparams.unitDef;
 		params.featureDef = fd;
+
+		// for the CreateWreckage call, params.smokeTime acts as a multiplier
+		params.smokeTime = fd->smokeTime * cparams.smokeTime;
 
 		return (LoadFeature(params));
 	}
@@ -190,17 +170,20 @@ CFeature* CFeatureHandler::CreateWreckage(
 
 void CFeatureHandler::Update()
 {
-	SCOPED_TIMER("FeatureHandler::Update");
+	SCOPED_TIMER("Sim::Features");
 
 	if ((gs->frameNum & 31) == 0) {
-		toBeFreedFeatureIDs.erase(std::remove_if(toBeFreedFeatureIDs.begin(), toBeFreedFeatureIDs.end(),
-			[this](int id) { return this->TryFreeFeatureID(id); }
-		), toBeFreedFeatureIDs.end());
-	}
+		const auto& pred = [this](int id) { return (this->TryFreeFeatureID(id)); };
+		const auto& iter = std::remove_if(deletedFeatureIDs.begin(), deletedFeatureIDs.end(), pred);
 
-	updateFeatures.erase(std::remove_if(updateFeatures.begin(), updateFeatures.end(), 
-		[this](CFeature* feature) { return this->UpdateFeature(feature); }
-	), updateFeatures.end());
+		deletedFeatureIDs.erase(iter, deletedFeatureIDs.end());
+	}
+	{
+		const auto& pred = [this](CFeature* feature) { return (this->UpdateFeature(feature)); };
+		const auto& iter = std::remove_if(updateFeatures.begin(), updateFeatures.end(), pred);
+
+		updateFeatures.erase(iter, updateFeatures.end());
+	}
 }
 
 
@@ -227,23 +210,23 @@ bool CFeatureHandler::UpdateFeature(CFeature* feature)
 	if (feature->deleteMe) {
 		eventHandler.RenderFeatureDestroyed(feature);
 		eventHandler.FeatureDestroyed(feature);
-		toBeFreedFeatureIDs.push_back(feature->id);
-		activeFeatures.erase(feature);
-		features[feature->id] = NULL;
+
+		deletedFeatureIDs.push_back(feature->id);
+		activeFeatureIDs.erase(feature->id);
+
+		features[feature->id] = nullptr;
 
 		// ID must match parameter for object commands, just use this
 		CSolidObject::SetDeletingRefID(feature->GetBlockingMapID());
 		// destructor removes feature from update-queue
-		delete feature;
+		featureMemPool.free(feature);
 		CSolidObject::SetDeletingRefID(-1);
-
 		return true;
 	}
 
 	if (!feature->Update()) {
 		// feature is done updating itself, remove from queue
 		feature->inUpdateQue = false;
-
 		return true;
 	}
 
@@ -259,7 +242,7 @@ void CFeatureHandler::SetFeatureUpdateable(CFeature* feature)
 	}
 
 	// always true
-	feature->inUpdateQue = VectorInsertUnique(updateFeatures, feature);
+	feature->inUpdateQue = spring::VectorInsertUnique(updateFeatures, feature);
 }
 
 
@@ -268,9 +251,10 @@ void CFeatureHandler::TerrainChanged(int x1, int y1, int x2, int y2)
 	const float3 mins(x1 * SQUARE_SIZE, 0, y1 * SQUARE_SIZE);
 	const float3 maxs(x2 * SQUARE_SIZE, 0, y2 * SQUARE_SIZE);
 
-	const auto& quads = quadField->GetQuadsRectangle(mins, maxs);
+	QuadFieldQuery qfQuery;
+	quadField->GetQuadsRectangle(qfQuery, mins, maxs);
 
-	for (const int qi: quads) {
+	for (const int qi: *qfQuery.quads) {
 		for (CFeature* f: quadField->GetQuad(qi).features) {
 			// put this feature back in the update-queue
 			SetFeatureUpdateable(f);

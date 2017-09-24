@@ -3,14 +3,15 @@
 #include "LuaUI.h"
 
 #include "LuaInclude.h"
-
 #include "LuaUnsyncedCtrl.h"
 #include "LuaArchive.h"
 #include "LuaCallInCheck.h"
 #include "LuaConstGL.h"
 #include "LuaConstCMD.h"
 #include "LuaConstCMDTYPE.h"
+#include "LuaConstEngine.h"
 #include "LuaConstGame.h"
+#include "LuaConstPlatform.h"
 #include "LuaSyncedRead.h"
 #include "LuaInterCall.h"
 #include "LuaUnsyncedRead.h"
@@ -45,16 +46,13 @@
 #include "System/EventHandler.h"
 #include "System/Log/ILog.h"
 #include "System/FileSystem/FileHandler.h"
-#include "System/FileSystem/VFSHandler.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/FileSystem/FileSystem.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
+#include "System/Threading/SpringThreading.h"
 #include "lib/luasocket/src/luasocket.h"
 
-#include <mutex>
-#include <boost/thread/mutex.hpp>
-#include <stdio.h>
-#include <set>
+#include <cstdio>
 #include <cctype>
 
 CONFIG(bool, LuaSocketEnabled)
@@ -78,7 +76,7 @@ static const char* GetVFSMode(bool lockedAccess)
 		if (!CLuaHandle::GetDevMode()) {
 			accessMode = SPRING_VFS_MOD;
 		} else {
-			accessMode = SPRING_VFS_RAW SPRING_VFS_MOD;
+			accessMode = SPRING_VFS_RAW SPRING_VFS_ZIP;
 		}
 	}
 
@@ -88,7 +86,7 @@ static const char* GetVFSMode(bool lockedAccess)
 /******************************************************************************/
 /******************************************************************************/
 
-static boost::mutex m_singleton;
+static spring::mutex m_singleton;
 
 DECL_LOAD_HANDLER(CLuaUI, luaUI)
 DECL_FREE_HANDLER(CLuaUI, luaUI)
@@ -170,26 +168,28 @@ CLuaUI::CLuaUI()
 	AddBasicCalls(L); // into Global
 
 	// load the spring libraries
-	if (!LoadCFunctions(L)                                                 ||
-	    !AddEntriesToTable(L, "VFS",         LuaVFS::PushUnsynced)         ||
-	    !AddEntriesToTable(L, "VFS",       LuaZipFileReader::PushUnsynced) ||
-	    !AddEntriesToTable(L, "VFS",       LuaZipFileWriter::PushUnsynced) ||
-	    !AddEntriesToTable(L, "VFS",         LuaArchive::PushEntries)      ||
-	    !AddEntriesToTable(L, "UnitDefs",    LuaUnitDefs::PushEntries)     ||
-	    !AddEntriesToTable(L, "WeaponDefs",  LuaWeaponDefs::PushEntries)   ||
-	    !AddEntriesToTable(L, "FeatureDefs", LuaFeatureDefs::PushEntries)  ||
+	if (!LoadCFunctions(L)                                                      ||
+	    !AddEntriesToTable(L, "VFS",         LuaVFS::PushUnsynced)              ||
+	    !AddEntriesToTable(L, "VFS",         LuaZipFileReader::PushUnsynced)    ||
+	    !AddEntriesToTable(L, "VFS",         LuaZipFileWriter::PushUnsynced)    ||
+	    !AddEntriesToTable(L, "VFS",         LuaArchive::PushEntries)           ||
+	    !AddEntriesToTable(L, "UnitDefs",    LuaUnitDefs::PushEntries)          ||
+	    !AddEntriesToTable(L, "WeaponDefs",  LuaWeaponDefs::PushEntries)        ||
+	    !AddEntriesToTable(L, "FeatureDefs", LuaFeatureDefs::PushEntries)       ||
 	    !AddEntriesToTable(L, "Script",      LuaInterCall::PushEntriesUnsynced) ||
-	    !AddEntriesToTable(L, "Script",      LuaScream::PushEntries)       ||
-	    !AddEntriesToTable(L, "Spring",      LuaSyncedRead::PushEntries)   ||
-	    !AddEntriesToTable(L, "Spring",      LuaUnsyncedCtrl::PushEntries) ||
-	    !AddEntriesToTable(L, "Spring",      LuaUnsyncedRead::PushEntries) ||
-	    !AddEntriesToTable(L, "Spring",      LuaUICommand::PushEntries)    ||
-	    !AddEntriesToTable(L, "gl",          LuaOpenGL::PushEntries)       ||
-	    !AddEntriesToTable(L, "GL",          LuaConstGL::PushEntries)      ||
-	    !AddEntriesToTable(L, "Game",        LuaConstGame::PushEntries)    ||
-	    !AddEntriesToTable(L, "CMD",         LuaConstCMD::PushEntries)     ||
-	    !AddEntriesToTable(L, "CMDTYPE",     LuaConstCMDTYPE::PushEntries) ||
-	    !AddEntriesToTable(L, "LOG",         LuaUtils::PushLogEntries)     ||
+	    !AddEntriesToTable(L, "Script",      LuaScream::PushEntries)            ||
+	    !AddEntriesToTable(L, "Spring",      LuaSyncedRead::PushEntries)        ||
+	    !AddEntriesToTable(L, "Spring",      LuaUnsyncedCtrl::PushEntries)      ||
+	    !AddEntriesToTable(L, "Spring",      LuaUnsyncedRead::PushEntries)      ||
+	    !AddEntriesToTable(L, "Spring",      LuaUICommand::PushEntries)         ||
+	    !AddEntriesToTable(L, "gl",          LuaOpenGL::PushEntries)            ||
+	    !AddEntriesToTable(L, "GL",          LuaConstGL::PushEntries)           ||
+	    !AddEntriesToTable(L, "Engine",      LuaConstEngine::PushEntries)       ||
+	    !AddEntriesToTable(L, "Platform",    LuaConstPlatform::PushEntries)     ||
+	    !AddEntriesToTable(L, "Game",        LuaConstGame::PushEntries)         ||
+	    !AddEntriesToTable(L, "CMD",         LuaConstCMD::PushEntries)          ||
+	    !AddEntriesToTable(L, "CMDTYPE",     LuaConstCMDTYPE::PushEntries)      ||
+	    !AddEntriesToTable(L, "LOG",         LuaUtils::PushLogEntries)          ||
 	    !AddEntriesToTable(L, "VFS",         LuaVFSDownload::PushEntries)
 	) {
 		KillLua();
@@ -287,11 +287,6 @@ bool CLuaUI::LoadCFunctions(lua_State* L)
 {
 	lua_newtable(L);
 
-#define REGISTER_LUA_CFUNC(x) \
-	lua_pushstring(L, #x);      \
-	lua_pushcfunction(L, x);    \
-	lua_rawset(L, -3)
-
 	REGISTER_LUA_CFUNC(SetShockFrontFactors);
 
 	lua_setglobal(L, "Spring");
@@ -325,7 +320,7 @@ bool CLuaUI::ConfigCommand(const string& command) //FIXME rename to fit event na
 
 static inline float fuzzRand(float fuzz)
 {
-	return (1.0f + fuzz) - ((2.0f * fuzz) * (float)rand() / (float)RAND_MAX);
+	return (1.0f + fuzz) - ((2.0f * fuzz) * guRNG.NextFloat());
 }
 
 
@@ -333,7 +328,9 @@ void CLuaUI::ShockFront(const float3& pos, float power, float areaOfEffect, cons
 {
 	if (!haveShockFront)
 		return;
-	if (areaOfEffect < shockFrontMinArea && distMod == NULL)
+	if (power <= 0.0f)
+		return;
+	if (areaOfEffect < shockFrontMinArea && distMod == nullptr)
 		return;
 
 	float3 gap = (camera->GetPos() - pos);
@@ -341,7 +338,7 @@ void CLuaUI::ShockFront(const float3& pos, float power, float areaOfEffect, cons
 	const float shockFrontDistMod = this->shockFrontDistAdj;
 	float dist = gap.Length() + shockFrontDistMod;
 
-	if ((power /= (dist * dist)) < shockFrontMinPower && distMod == NULL)
+	if ((power /= (dist * dist)) < shockFrontMinPower && distMod == nullptr)
 		return;
 
 	LUA_CALL_IN_CHECK(L);
@@ -387,7 +384,7 @@ bool CLuaUI::LayoutButtons(int& xButtons, int& yButtons,
                            vector<ReStringPair>& reNamedCmds,
                            vector<ReStringPair>& reTooltipCmds,
                            vector<ReParamsPair>& reParamsCmds,
-                           map<int, int>& buttonList,
+                           spring::unordered_map<int, int>& buttonList,
                            string& menuName)
 {
 	customCmds.clear();
@@ -521,12 +518,12 @@ bool CLuaUI::BuildCmdDescTable(lua_State* L,
 }
 
 
-bool CLuaUI::GetLuaIntMap(lua_State* L, int index, map<int, int>& intMap)
+bool CLuaUI::GetLuaIntMap(lua_State* L, int index, spring::unordered_map<int, int>& intMap)
 {
 	const int table = index;
-	if (!lua_istable(L, table)) {
+	if (!lua_istable(L, table))
 		return false;
-	}
+
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 		if (!lua_isnumber(L, -1) || !lua_israwnumber(L, -2)) {
 			lua_pop(L, 2);
@@ -705,18 +702,16 @@ bool CLuaUI::GetLuaCmdDescList(lua_State* L, int index,
 int CLuaUI::SetShockFrontFactors(lua_State* L)
 {
 	luaUI->haveShockFront = true;
-	if (lua_isnumber(L, 1)) {
-		const float value = max(0.0f, lua_tofloat(L, 1));
-		luaUI->shockFrontMinArea = value;
-	}
-	if (lua_isnumber(L, 2)) {
-		const float value = max(0.0f, lua_tofloat(L, 2));
-		luaUI->shockFrontMinPower = value;
-	}
-	if (lua_isnumber(L, 3)) {
-		const float value = max(1.0f, lua_tofloat(L, 3));
-		luaUI->shockFrontDistAdj = value;
-	}
+
+	if (lua_isnumber(L, 1))
+		luaUI->shockFrontMinArea = std::max(0.0f, lua_tofloat(L, 1));
+
+	if (lua_isnumber(L, 2))
+		luaUI->shockFrontMinPower = std::max(0.0f, lua_tofloat(L, 2));
+
+	if (lua_isnumber(L, 3))
+		luaUI->shockFrontDistAdj = std::max(1.0f, lua_tofloat(L, 3));
+
 	return 0;
 }
 

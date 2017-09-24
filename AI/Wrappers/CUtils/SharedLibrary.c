@@ -16,8 +16,7 @@
 */
 
 #include "SharedLibrary.h"
-
-#include "System/maindefines.h"
+#include "System/MainDefines.h"
 
 #include <stdio.h>
 

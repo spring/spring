@@ -3,9 +3,9 @@
 #ifndef _VIDEO_CAPTURING_H
 #define _VIDEO_CAPTURING_H
 
-#include <boost/noncopyable.hpp>
+#include "System/Misc/NonCopyable.h"
 
-class IVideoCapturing : public boost::noncopyable {
+class IVideoCapturing : public spring::noncopyable {
 
 protected:
 	IVideoCapturing();

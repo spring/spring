@@ -17,9 +17,6 @@ struct lua_State;
  */
 class LuaScream {
 	public:
-		LuaScream();
-		~LuaScream();
-
 		static bool PushEntries(lua_State* L);
 
 	private: // metatable methods

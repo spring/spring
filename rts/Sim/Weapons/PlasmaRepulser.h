@@ -15,17 +15,16 @@ class CPlasmaRepulser: public CWeapon
 {
 	CR_DECLARE_DERIVED(CPlasmaRepulser)
 public:
-	CPlasmaRepulser(CUnit* owner, const WeaponDef* def);
+	CPlasmaRepulser(CUnit* owner = nullptr, const WeaponDef* def = nullptr);
 	~CPlasmaRepulser();
 
 	void Init() override final;
 	void DependentDied(CObject* o) override final;
-	bool HaveFreeLineOfFire(const float3 pos, const SWeaponTarget& trg, bool useMuzzle = false) const override final;
+	bool HaveFreeLineOfFire(const float3 srcPos, const float3 tgtPos, const SWeaponTarget& trg) const override final { return true; }
 
 	void Update() override final;
 	void SlowUpdate() override final;
 
-	bool IncomingBeam(const CWeapon* emitter, const float3& start, float damageMultiplier = 1.0f);
 
 	void SetEnabled(bool b) { isEnabled = b; }
 	void SetCurPower(float p) { curPower = p; }
@@ -38,12 +37,14 @@ public:
 	int GetHitFrames() const { return hitFrames; }
 	bool CanIntercept(unsigned interceptedType, int allyTeam) const;
 
-	bool IncomingProjectile(CWeaponProjectile* p);
+	bool IncomingBeam(const CWeapon* emitter, const float3& startPos, const float3& hitPos, float damageMultiplier);
+	bool IncomingProjectile(CWeaponProjectile* p, const float3& hitPos);
 
 	//collisions
 	std::vector<int> quads;
 	CollisionVolume collisionVolume;
 	int tempNum;
+	float3 deltaPos;
 
 private:
 	void FireImpl(const bool scriptCall) override final {}

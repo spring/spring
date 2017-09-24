@@ -3,7 +3,7 @@
 
 #include "StarburstProjectile.h"
 #include "Game/Camera.h"
-#include "Game/GameHelper.h"
+#include "Game/GlobalUnsynced.h"
 #include "Map/Ground.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
@@ -11,6 +11,7 @@
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
+#include "Sim/Projectiles/ProjectileMemPool.h"
 #include "Rendering/Env/Particles/Classes/SmokeTrailProjectile.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Weapons/WeaponDef.h"
@@ -36,7 +37,7 @@ CR_REG_METADATA_SUB(CStarburstProjectile, TracerPart, (
 ))
 
 
-CR_BIND_DERIVED(CStarburstProjectile, CWeaponProjectile, )
+CR_BIND_DERIVED_POOL(CStarburstProjectile, CWeaponProjectile, , projMemPool.alloc, projMemPool.free)
 CR_REG_METADATA(CStarburstProjectile, (
 	CR_SETFLAG(CF_Synced),
 	CR_MEMBER(tracking),
@@ -82,18 +83,16 @@ CStarburstProjectile::CStarburstProjectile(const ProjectileParams& params): CWea
 	projectileType = WEAPON_STARBURST_PROJECTILE;
 
 
-	if (weaponDef != NULL) {
+	if (weaponDef != nullptr) {
 		maxSpeed = weaponDef->projectilespeed;
 		ttl = weaponDef->flighttime;
 
 		// Default uptime is -1. Positive values override the weapondef.
-		if (uptime < 0) {
+		if (uptime < 0)
 			uptime = weaponDef->uptime * GAME_SPEED;
-		}
 
-		if (weaponDef->flighttime == 0) {
+		if (weaponDef->flighttime == 0)
 			ttl = std::min(3000.0f, uptime + weaponDef->range / maxSpeed + 100);
-		}
 	}
 
 	maxGoodDif = math::cos(tracking * 0.6f);
@@ -119,9 +118,8 @@ CStarburstProjectile::CStarburstProjectile(const ProjectileParams& params): CWea
 
 void CStarburstProjectile::Collision()
 {
-	if (weaponDef->visuals.smokeTrail) {
-		new CSmokeTrailProjectile(owner(), pos, oldSmoke, dir, oldSmokeDir, false, true, 7, SMOKE_TIME, 0.7f, weaponDef->visuals.texture2);
-	}
+	if (weaponDef->visuals.smokeTrail)
+		projMemPool.alloc<CSmokeTrailProjectile>(owner(), pos, oldSmoke, dir, oldSmokeDir, false, true, 7, SMOKE_TIME, 0.7f, weaponDef->visuals.texture2);
 
 	oldSmokeDir = dir;
 	CWeaponProjectile::Collision();
@@ -130,9 +128,8 @@ void CStarburstProjectile::Collision()
 
 void CStarburstProjectile::Collision(CUnit* unit)
 {
-	if (weaponDef->visuals.smokeTrail) {
-		new CSmokeTrailProjectile(owner(), pos, oldSmoke, dir, oldSmokeDir, false, true, 7, SMOKE_TIME, 0.7f, weaponDef->visuals.texture2);
-	}
+	if (weaponDef->visuals.smokeTrail)
+		projMemPool.alloc<CSmokeTrailProjectile>(owner(), pos, oldSmoke, dir, oldSmokeDir, false, true, 7, SMOKE_TIME, 0.7f, weaponDef->visuals.texture2);
 
 	oldSmokeDir = dir;
 	CWeaponProjectile::Collision(unit);
@@ -141,9 +138,8 @@ void CStarburstProjectile::Collision(CUnit* unit)
 
 void CStarburstProjectile::Collision(CFeature* feature)
 {
-	if (weaponDef->visuals.smokeTrail) {
-		new CSmokeTrailProjectile(owner(), pos, oldSmoke, dir, oldSmokeDir, false, true, 7, SMOKE_TIME, 0.7f, weaponDef->visuals.texture2);
-	}
+	if (weaponDef->visuals.smokeTrail)
+		projMemPool.alloc<CSmokeTrailProjectile>(owner(), pos, oldSmoke, dir, oldSmokeDir, false, true, 7, SMOKE_TIME, 0.7f, weaponDef->visuals.texture2);
 
 	oldSmokeDir = dir;
 	CWeaponProjectile::Collision(feature);
@@ -160,8 +156,9 @@ void CStarburstProjectile::Update()
 	if (target != nullptr && weaponDef->tracks) {
 		const CSolidObject* so = dynamic_cast<const CSolidObject*>(target);
 
-		if (so != NULL) {
+		if (so != nullptr) {
 			targetPos = so->aimPos;
+
 			if (allyteamID != -1 && !ignoreError) {
 				const CUnit* u = dynamic_cast<const CUnit*>(so);
 
@@ -175,13 +172,11 @@ void CStarburstProjectile::Update()
 		targetPos += aimError;
 	}
 
-	if (!luaMoveCtrl) {
+	if (!luaMoveCtrl)
 		UpdateTrajectory();
-	}
 
-	if (ttl > 0) {
+	if (ttl > 0)
 		explGenHandler->GenExplosion(cegID, pos, dir, ttl, damages->damageAreaOfEffect, 0.0f, NULL, NULL);
-	}
 
 
 	{
@@ -196,13 +191,11 @@ void CStarburstProjectile::Update()
 		unsigned int newsize = 0;
 
 		for (float aa = 0; aa < speed.w + 0.6f && newsize < MAX_NUM_AGEMODS; aa += TRACER_PARTS_STEP, ++newsize) {
-			const float ageMod = (missileAge < 20) ? 1.0f : (0.6f + (rand() * 0.8f) / RAND_MAX);
+			const float ageMod = (missileAge < 20) ? 1.0f : (0.6f + (guRNG.NextFloat() * 0.8f));
 			tracerPart->ageMods[newsize] = ageMod;
 		}
 
-		if (tracerPart->numAgeMods != newsize) {
-			tracerPart->numAgeMods = newsize;
-		}
+		tracerPart->numAgeMods = newsize;
 	}
 
 	age++;
@@ -216,7 +209,7 @@ void CStarburstProjectile::Update()
 		}
 
 		if ((age % 8) == 0) {
-			smokeTrail = new CSmokeTrailProjectile(
+			smokeTrail = projMemPool.alloc<CSmokeTrailProjectile>(
 				owner(),
 				pos,
 				oldSmoke,
@@ -301,10 +294,8 @@ void CStarburstProjectile::UpdateTrajectory()
 	SetPosition(pos + speed);
 }
 
-void CStarburstProjectile::Draw()
+void CStarburstProjectile::Draw(CVertexArray* va)
 {
-	inArray = true;
-
 	unsigned int part = curTracerPart;
 	const auto wt3 = weaponDef->visuals.texture3;
 	const auto wt1 = weaponDef->visuals.texture1;

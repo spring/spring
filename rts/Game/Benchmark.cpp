@@ -9,6 +9,7 @@
 #include "GlobalUnsynced.h"
 #include "UI/GuiHandler.h"
 #include "Rendering/GlobalRendering.h"
+#include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Features/FeatureHandler.h"
@@ -83,15 +84,13 @@ void CBenchmark::GameFrame(int gameFrame)
 
 	if (gameFrame >= startFrame) {
 		simFPS[gameFrame] = (gu->avgSimFrameTime == 0.0f)? 0.0f: 1000.0f / gu->avgSimFrameTime;
-		units[gameFrame] = unitHandler->units.size();
-		features[gameFrame] = featureHandler->GetActiveFeatures().size();
+		units[gameFrame] = (unitHandler->GetActiveUnits()).size();
+		features[gameFrame] = (featureHandler->GetActiveFeatureIDs()).size();
 		gameSpeed[gameFrame] = GAME_SPEED * gs->wantedSpeedFactor;
 		luaUsage[gameFrame] = profiler.GetPercent("Lua");
 	}
 
-	if (gameFrame == endFrame) {
-		gu->globalQuit = true;
-	}
+	gu->globalQuit |= (gameFrame == endFrame);
 }
 
 void CBenchmark::DrawWorld()

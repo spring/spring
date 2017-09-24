@@ -10,6 +10,7 @@
 #include "Sim/Objects/SolidObject.h"
 #include "Sim/Objects/SolidObjectDef.h"
 #include "System/float3.h"
+#include "System/UnorderedMap.hpp"
 
 
 struct Command;
@@ -47,9 +48,8 @@ public:
 	UnitDef();
 	~UnitDef();
 
-	bool DontLand() const { return dlHoverFactor >= 0.0f; }
+	bool DontLand() const { return (dlHoverFactor >= 0.0f); }
 	void SetNoCost(bool noCost);
-	bool CheckTerrainConstraints(const MoveDef* moveDef, float rawHeight, float* clampedHeight = NULL) const;
 
 	bool IsTransportUnit()     const { return (transportCapacity > 0 && transportMass > 0.0f); }
 	bool IsImmobileUnit()      const { return (pathType == -1U && !canfly && speed <= 0.0f); }
@@ -196,7 +196,7 @@ public:
 	std::vector<YardMapStatus> yardmap;
 
 	///< buildingMask used to disallow construction on certain map squares
-	boost::uint16_t buildingMask;
+	std::uint16_t buildingMask;
 
 	std::vector<std::string> modelCEGTags;
 	std::vector<std::string> pieceCEGTags;
@@ -205,7 +205,7 @@ public:
 	std::vector<unsigned int> modelExplGenIDs;
 	std::vector<unsigned int> pieceExplGenIDs;
 
-	std::map<int, std::string> buildOptions;
+	spring::unordered_map<int, std::string> buildOptions;
 
 	const WeaponDef* shieldWeaponDef;
 	const WeaponDef* stockpileWeaponDef;

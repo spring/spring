@@ -9,9 +9,10 @@
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
+#include "Sim/Projectiles/ProjectileMemPool.h"
 #include "Sim/Weapons/WeaponDef.h"
 
-CR_BIND_DERIVED(CFlameProjectile, CWeaponProjectile, )
+CR_BIND_DERIVED_POOL(CFlameProjectile, CWeaponProjectile, , projMemPool.alloc, projMemPool.free)
 
 CR_REG_METADATA(CFlameProjectile,(
 	CR_SETFLAG(CF_Synced),
@@ -65,20 +66,15 @@ void CFlameProjectile::Update()
 	drawRadius = radius * weaponDef->collisionSize;
 
 	curTime += invttl;
-	if (curTime > physLife) {
-		checkCol = false;
-	}
-	if (curTime > 1) {
-		curTime = 1;
-		deleteMe = true;
-	}
+	checkCol &= (curTime <= physLife);
+	curTime = std::min(curTime, 1.0f);
+	deleteMe |= (curTime >= 1.0f);
 
-	explGenHandler->GenExplosion(cegID, pos, speed, curTime, 0.0f, 0.0f, NULL, NULL);
+	explGenHandler->GenExplosion(cegID, pos, speed, curTime, 0.0f, 0.0f, nullptr, nullptr);
 }
 
-void CFlameProjectile::Draw()
+void CFlameProjectile::Draw(CVertexArray* va)
 {
-	inArray = true;
 	unsigned char col[4];
 	weaponDef->visuals.colorMap->GetColor(col, curTime);
 

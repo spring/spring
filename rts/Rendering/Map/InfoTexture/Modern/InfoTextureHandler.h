@@ -3,12 +3,12 @@
 #ifndef _INFO_TEXTURE_HANDLER_H
 #define _INFO_TEXTURE_HANDLER_H
 
+#include <string>
 
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "System/type2.h"
-#include <string>
-#include <unordered_map>
+#include "System/UnorderedMap.hpp"
 
 
 class CPboInfoTexture;
@@ -25,6 +25,8 @@ public:
 
 public:
 	bool IsEnabled() const override;
+	bool InMetalMode() const override { return inMetalMode; }
+
 	void DisableCurrentMode() override;
 	void SetMode(const std::string& name) override;
 	void ToggleMode(const std::string& name) override;
@@ -42,9 +44,14 @@ protected:
 	void AddInfoTexture(CPboInfoTexture*);
 
 protected:
-	bool returnToLOS;
-	std::unordered_map<std::string, CPboInfoTexture*> infoTextures;
-	CInfoTextureCombiner* infoTex;
+	bool returnToLOS = false;
+	bool inMetalMode = false;
+	bool firstUpdate =  true;
+
+	spring::unordered_map<std::string, CPboInfoTexture*> infoTextures;
+
+	// special; always non-NULL at runtime
+	CInfoTextureCombiner* infoTex = nullptr;
 };
 
 #endif // _INFO_TEXTURE_HANDLER_H

@@ -3,12 +3,8 @@
 #ifndef _GLOBAL_SYNCED_H
 #define _GLOBAL_SYNCED_H
 
-#include <algorithm>
-#include <string>
-
-#include "System/float3.h"
 #include "System/creg/creg_cond.h"
-#include "GlobalConstants.h"
+#include "System/GlobalRNG.h"
 
 
 class CGameSetup;
@@ -32,20 +28,8 @@ public:
 	void ResetState();
 	void LoadFromSetup(const CGameSetup*);
 
-	int    randInt();    //!< synced random int
-	float  randFloat();  //!< synced random float
-	float3 randVector(); //!< synced random vector
-
-	void SetRandSeed(unsigned int seed, bool init = false) {
-		randSeed = seed;
-		if (init) { initRandSeed = randSeed; }
-	}
-
-	unsigned int GetRandSeed()     const { return randSeed; }
-	unsigned int GetInitRandSeed() const { return initRandSeed; }
-
 	// Lua should never see the pre-simframe value
-	int GetLuaSimFrame() { return std::max(frameNum, 0); }
+	int GetLuaSimFrame() { return (frameNum > 0) ? frameNum : 0; }
 	int GetTempNum() { return tempNum++; }
 
 	// remains true until first SimFrame call
@@ -125,34 +109,6 @@ public:
 	bool useLuaGaia;
 
 private:
-	class SyncedRNG
-	{
-	public:
-		int operator()(unsigned N)
-		{
-			extern CGlobalSynced* gs;
-			return gs->randInt()%N;
-		};
-	};
-
-public:
-	static SyncedRNG rng;
-
-private:
-	/**
-	* @brief random seed
-	*
-	* Holds the synced random seed
-	*/
-	int randSeed;
-
-	/**
-	* @brief initial random seed
-	*
-	* Holds the synced initial random seed
-	*/
-	int initRandSeed;
-
 	/**
 	* @brief temp num
 	*
@@ -162,6 +118,9 @@ private:
 	int tempNum;
 };
 
+
 extern CGlobalSynced* gs;
+extern CGlobalSyncedRNG gsRNG;
 
 #endif // _GLOBAL_SYNCED_H
+

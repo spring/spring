@@ -15,12 +15,15 @@ class LuaUnsyncedRead {
 	public:
 		static int IsReplay(lua_State* L);
 		static int GetReplayLength(lua_State* L);
-		static int GetModUICtrl(lua_State* L);
+
+		static int GetGameName(lua_State* L);
+		static int GetMenuName(lua_State* L);
 
 		static int GetDrawFrame(lua_State* L);
 		static int GetFrameTimeOffset(lua_State* L);
 		static int GetLastUpdateSeconds(lua_State* L);
 		static int GetHasLag(lua_State* L);
+		static int GetVideoCapturingMode(lua_State* L);
 
 		static int GetViewGeometry(lua_State* L);
 		static int GetWindowGeometry(lua_State* L);
@@ -42,8 +45,10 @@ class LuaUnsyncedRead {
 		static int GetUnitNoDraw(lua_State* L);
 		static int GetUnitNoMinimap(lua_State* L);
 		static int GetUnitNoSelect(lua_State* L);
+		static int GetUnitSelectionVolumeData(lua_State* L);
 		static int GetFeatureLuaDraw(lua_State* L);
 		static int GetFeatureNoDraw(lua_State* L);
+		static int GetFeatureSelectionVolumeData(lua_State* L);
 
 		static int GetUnitTransformMatrix(lua_State* L);
 		static int GetUnitViewPosition(lua_State* L);

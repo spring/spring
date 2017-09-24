@@ -3,10 +3,8 @@
 #ifndef COLLISION_VOLUME_H
 #define COLLISION_VOLUME_H
 
-#include "System/float3.h"
+#include "System/float4.h"
 #include "System/creg/creg_cond.h"
-
-#include <string>
 
 // the positive x-axis points to the "left" in object-space and to the "right" in world-space
 // converting between them means flipping the sign of x-components of positions and directions
@@ -25,7 +23,7 @@ struct CollisionVolume
 
 public:
 	enum {
-		COLVOL_TYPE_ELLIPSOID =  0, // dummy, these become spheres or boxes
+		COLVOL_TYPE_ELLIPSOID =  0,
 		COLVOL_TYPE_CYLINDER  =  1,
 		COLVOL_TYPE_BOX       =  2,
 		COLVOL_TYPE_SPHERE    =  3,
@@ -44,7 +42,8 @@ public:
 	CollisionVolume();
 	CollisionVolume(const CollisionVolume* v) { *this = *v; }
 	CollisionVolume(
-		const std::string& cvTypeStr,
+		const char cvTypeChar,
+		const char cvAxisChar,
 		const float3& cvScales,
 		const float3& cvOffsets
 	);
@@ -53,12 +52,26 @@ public:
 
 	CollisionVolume& operator = (const CollisionVolume&);
 
+
 	/**
 	 * Called if a unit or feature does not define a custom volume.
-	 * @param radius the object's default radius
 	 */
-	void InitSphere(float radius);
-	void InitBox(const float3& scales, const float3& offsets = ZeroVector);
+	bool InitDefault(const float4& params) {
+		if (DefaultToSphere()) { InitSphere(params.x); return true; }
+		if (DefaultToFootPrint()) { InitBox(float3(params.z, params.y, params.w)); return true; }
+		return false;
+	}
+
+	// <r> is the object's default RADIUS (not its diameter),
+	// so we need to double it to get the full-length scales
+	void InitSphere(float radius) {
+		InitShape(OnesVector * radius * 2.0f, ZeroVector, COLVOL_TYPE_SPHERE, COLVOL_HITTEST_CONT, COLVOL_AXIS_Z);
+	}
+
+	void InitBox(const float3& scales, const float3& offsets = ZeroVector) {
+		InitShape(scales, offsets, COLVOL_TYPE_BOX, COLVOL_HITTEST_CONT, COLVOL_AXIS_Z);
+	}
+
 	void InitShape(
 		const float3& scales,
 		const float3& offsets,
@@ -66,6 +79,7 @@ public:
 		const int tType,
 		const int pAxis
 	);
+
 
 	void RescaleAxes(const float3& scales);
 	void SetAxisScales(const float3& scales);

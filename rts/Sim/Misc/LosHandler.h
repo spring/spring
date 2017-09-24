@@ -5,7 +5,7 @@
 
 #include <vector>
 #include <deque>
-#include <boost/noncopyable.hpp>
+
 #include "Map/Ground.h"
 #include "Sim/Misc/LosMap.h"
 #include "Sim/Objects/WorldObject.h"
@@ -13,7 +13,7 @@
 #include "System/type2.h"
 #include "System/Rectangle.h"
 #include "System/EventClient.h"
-#include <boost/unordered_map.hpp>
+#include "System/UnorderedMap.hpp"
 
 
 /**
@@ -68,11 +68,11 @@ public:
 	// helpers
 	int hashNum;
 	enum TLosStatus {
-		NONE = 0,
-		NEW  = 1,
-		REACTIVATE = 2,
-		RECALC = 4,
-		REMOVE = 8,
+		NONE       =  0,
+		NEW        =  1,
+		REACTIVATE =  2,
+		RECALC     =  4,
+		REMOVE     =  8,
 	};
 	int status;
 
@@ -130,7 +130,7 @@ public:
 	void Update();
 	void UpdateHeightMapSynced(SRectangle rect);
 	void RemoveUnit(CUnit* unit, bool delayed = false);
-	void UpdateUnit(CUnit* unit);
+	void UpdateUnit(CUnit* unit, bool ignore = false);
 
 private:
 	//void PostLoad();
@@ -168,7 +168,8 @@ public:
 	static size_t cacheHits;
 	static size_t cacheReactivated;
 
-	boost::unordered_multimap<int, SLosInstance*> instanceHash; // we intentionally use boost version here, gcc's one uses a linked listed and so is much slower
+	spring::unordered_map<int, std::vector<SLosInstance*> > instanceHash;
+
 	std::deque<SLosInstance> instances;
 	std::deque<int> freeIDs;
 
@@ -182,6 +183,12 @@ private:
 	std::deque<DelayedInstance> delayedTerraQue;
 	std::deque<SLosInstance*> losUpdate;
 	std::deque<SLosInstance*> losCache;
+
+	std::vector<SLosInstance*> losRemove;
+	std::vector<SLosInstance*> losAdd;
+	std::vector<SLosInstance*> losDeleted;
+	std::vector<SLosInstance*> losRecalc;
+
 	static constexpr int CACHE_SIZE = 4096;
 };
 
@@ -298,7 +305,7 @@ public:
 
 private:
 	static constexpr float defBaseRadarErrorSize = 96.0f;
-	static constexpr float defBaseRadarErrorMult = 20.f;
+	static constexpr float defBaseRadarErrorMult = 2.0f;
 
 	float baseRadarErrorSize;
 	float baseRadarErrorMult;

@@ -24,10 +24,11 @@
 #include "FileSystem.h"
 #include "CacheDir.h"
 #include "System/Exceptions.h"
-#include "System/maindefines.h" // for sPS, cPS, cPD
+#include "System/MainDefines.h" // for sPS, cPS, cPD
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
 #include "System/Platform/Misc.h"
+#include "System/SafeUtil.h"
 
 CONFIG(std::string, SpringData).defaultValue("")
 		.description("List of addidional data-directories, separated by ';' on windows, ':' on other OSs")
@@ -74,7 +75,7 @@ DataDir::DataDir(const std::string& path)
 
 DataDirLocater::DataDirLocater()
 	: isolationMode(false)
-	, writeDir(NULL)
+	, writeDir(nullptr)
 {
 	UpdateIsolationModeByEnvVar();
 }
@@ -86,7 +87,7 @@ void DataDirLocater::UpdateIsolationModeByEnvVar()
 	isolationModeDir = "";
 
 	const char* const envIsolation = getenv("SPRING_ISOLATED");
-	if (envIsolation != NULL) {
+	if (envIsolation != nullptr) {
 		SetIsolationMode(true);
 		SetIsolationModeDir(envIsolation);
 		return;
@@ -121,7 +122,7 @@ std::string DataDirLocater::SubstEnvVars(const std::string& in) const
 		if (r == EXIT_SUCCESS) {
 			if (pwordexp.we_wordc > 0) {
 				out = pwordexp.we_wordv[0];;
-				for (int w = 1; w < pwordexp.we_wordc; ++w) {
+				for (unsigned int w = 1; w < pwordexp.we_wordc; ++w) {
 					out += " ";
 					out += pwordexp.we_wordv[w];
 				}
@@ -223,25 +224,25 @@ void DataDirLocater::FilterUsableDataDirs()
 
 bool DataDirLocater::IsWriteableDir(DataDir* dataDir)
 {
-	if (FileSystem::DirExists(dataDir->path)) {
+	if (FileSystem::DirExists(dataDir->path))
 		return FileSystem::DirIsWritable(dataDir->path);
-	} else {
-		// it did not exist before, now it does and we just created it with
-		// rw access, so we just assume we still have read-write access ...
-		return FileSystem::CreateDirectory(dataDir->path);
-	}
-	return false;
+
+	// it did not exist before, now it does and we just created it with
+	// rw access, so we just assume we still have read-write access ...
+	return FileSystem::CreateDirectory(dataDir->path);
 }
 
 void DataDirLocater::FindWriteableDataDir()
 {
-	writeDir = NULL;
-	for (std::vector<DataDir>::iterator d = dataDirs.begin(); d != dataDirs.end(); ++d) {
-		if (IsWriteableDir(&*d)) {
-			d->writable = true;
-			writeDir = &*d;
-			break;
-		}
+	writeDir = nullptr;
+
+	for (DataDir& d: dataDirs) {
+		if (!IsWriteableDir(&d))
+			continue;
+
+		d.writable = true;
+		writeDir = &d;
+		break;
 	}
 }
 
@@ -282,8 +283,8 @@ void DataDirLocater::AddHomeDirs()
 	// fetch my documents path
 	TCHAR pathMyDocsC[MAX_PATH];
 	TCHAR pathAppDataC[MAX_PATH];
-	SHGetFolderPath(NULL, CSIDL_PERSONAL, NULL, SHGFP_TYPE_CURRENT, pathMyDocsC);
-	SHGetFolderPath(NULL, CSIDL_COMMON_APPDATA, NULL, SHGFP_TYPE_CURRENT, pathAppDataC);
+	SHGetFolderPath(nullptr, CSIDL_PERSONAL, nullptr, SHGFP_TYPE_CURRENT, pathMyDocsC);
+	SHGetFolderPath(nullptr, CSIDL_COMMON_APPDATA, nullptr, SHGFP_TYPE_CURRENT, pathAppDataC);
 	const std::string pathMyDocs = pathMyDocsC;
 	const std::string pathAppData = pathAppDataC;
 
@@ -388,14 +389,13 @@ void DataDirLocater::LocateDataDirs()
 
 	// LEVEL 1: User defined write dirs
 	{
-		if (!forcedWriteDir.empty()) {
+		if (!forcedWriteDir.empty())
 			AddDirs(forcedWriteDir);
-		}
 
 		const char* env = getenv("SPRING_WRITEDIR");
-		if (env && *env) {
+
+		if (env != nullptr && *env != 0)
 			AddDirs(env); // ENV{SPRING_WRITEDIR}
-		}
 	}
 
 	// LEVEL 2: automated dirs
@@ -408,9 +408,9 @@ void DataDirLocater::LocateDataDirs()
 		}
 	} else {
 		// LEVEL 2b: InstallDir, HomeDirs & Shared dirs
-		if (IsPortableMode()) {
+		if (IsPortableMode())
 			AddPortableDir();
-		}
+
 		AddHomeDirs();
 		//AddCurWorkDir();
 		AddEtcDirs();
@@ -420,13 +420,13 @@ void DataDirLocater::LocateDataDirs()
 	// LEVEL 3: additional custom data sources
 	{
 		const char* env = getenv("SPRING_DATADIR");
-		if (env && *env) {
+
+		if (env != nullptr && *env != 0)
 			AddDirs(env); // ENV{SPRING_DATADIR}
-		}
-		if (configHandler) {
-			// user defined in spring config (Linux: ~/.springrc, Windows: .\springsettings.cfg)
+
+		// user defined in spring config (Linux: ~/.springrc, Windows: .\springsettings.cfg)
+		if (configHandler != nullptr)
 			AddDirs(configHandler->GetString("SpringData"));
-		}
 	}
 
 	// Find the folder we save to
@@ -437,23 +437,24 @@ void DataDirLocater::LocateDataDirs()
 void DataDirLocater::Check()
 {
 	if (IsIsolationMode()) {
-		LOG("[DataDirs] Isolation Mode!");
+		LOG("[DataDirLocater::%s] Isolation Mode!", __func__);
 	} else
 	if (IsPortableMode()) {
-		LOG("[DataDirs] Portable Mode!");
+		LOG("[DataDirLocater::%s] Portable Mode!", __func__);
 	}
 
 	// Filter usable DataDirs
 	FilterUsableDataDirs();
 
-	if (!writeDir) {
+	if (writeDir == nullptr) {
 		// bail out
-		const std::string errstr = "Not a single writable data directory found!\n\n"
+		const std::string errstr =
+				"Not a single writable data directory found!\n\n"
 				"Configure a writable data directory using either:\n"
 				"- the SPRING_DATADIR environment variable,\n"
 			#ifdef WIN32
 				"- a SpringData=C:/path/to/data declaration in spring's config file ./springsettings.cfg\n"
-				"- by giving you write access to the installation directory";
+				"- by giving your user-account write access to the installation directory";
 			#else
 				"- a SpringData=/path/to/data declaration in ~/.springrc or\n"
 				"- the configuration file /etc/spring/datadir";
@@ -461,14 +462,20 @@ void DataDirLocater::Check()
 		throw content_error(errstr);
 	}
 
-	ChangeCwdToWriteDir();
+	if (Platform::FreeDiskSpace(writeDir->path) <= 1024)
+		throw content_error("not enough free space on drive containing writeable data-directory " + writeDir->path);
 
+	ChangeCwdToWriteDir();
+	CreateCacheDir(writeDir->path + FileSystem::GetCacheDir());
+}
+
+void DataDirLocater::CreateCacheDir(const std::string& cacheDir)
+{
 	// tag the cache dir
-	assert(writeDir);
-	const std::string cacheDir = writeDir->path + FileSystem::GetCacheDir();
-	if (FileSystem::CreateDirectory(cacheDir)) {
-		CacheDir::SetCacheDir(cacheDir, true);
-	}
+	if (!FileSystem::CreateDirectory(cacheDir))
+		return;
+
+	CacheDir::SetCacheDir(cacheDir, true);
 }
 
 
@@ -478,7 +485,7 @@ void DataDirLocater::ChangeCwdToWriteDir()
 	// Not only safety anymore, it's just easier if other code can safely assume that
 	// writeDir == current working directory
 	Platform::SetOrigCWD(); // save old cwd
-	FileSystem::ChDir(GetWriteDir()->path.c_str());
+	FileSystem::ChDir(writeDir->path);
 }
 
 
@@ -529,15 +536,12 @@ bool DataDirLocater::IsPortableMode()
 
 bool DataDirLocater::LooksLikeMultiVersionDataDir(const std::string& dirPath)
 {
-	bool looksLikeDataDir = false;
+	bool looksLikeDataDir = true;
 
-	if (FileSystem::DirExists(dirPath + "/maps")
-			&& FileSystem::DirExists(dirPath + "/games")
-			&& FileSystem::DirExists(dirPath + "/engines")
-			/*&& FileSystem::DirExists(dirPath + "/unitsyncs") TODO uncomment this if the new name for unitsync has been set */)
-	{
-		looksLikeDataDir = true;
-	}
+	looksLikeDataDir = looksLikeDataDir && FileSystem::DirExists(dirPath + "/maps");
+	looksLikeDataDir = looksLikeDataDir && FileSystem::DirExists(dirPath + "/games");
+	looksLikeDataDir = looksLikeDataDir && FileSystem::DirExists(dirPath + "/engines");
+	// looksLikeDataDir = looksLikeDataDir && FileSystem::DirExists(dirPath + "/unitsyncs"); TODO uncomment this if the new name for unitsync has been set
 
 	return looksLikeDataDir;
 }
@@ -545,11 +549,13 @@ bool DataDirLocater::LooksLikeMultiVersionDataDir(const std::string& dirPath)
 
 std::string DataDirLocater::GetWriteDirPath() const
 {
-	const DataDir* writedir = GetWriteDir();
-	if (!writeDir)
-		LOG_L(L_ERROR, "DataDirLocater::GetWriteDirPath() called before DataDirLocater::LocateDataDirs()");
-	assert(writedir && writedir->writable);
-	return writedir ? writedir->path : "";
+	if (writeDir == nullptr) {
+		LOG_L(L_ERROR, "[DataDirLocater::%s] called before DataDirLocater::LocateDataDirs()", __func__);
+		return "";
+	}
+
+	assert(writeDir->writable);
+	return writeDir->path;
 }
 
 
@@ -558,10 +564,8 @@ std::vector<std::string> DataDirLocater::GetDataDirPaths() const
 	assert(!dataDirs.empty());
 	std::vector<std::string> dataDirPaths;
 
-	const std::vector<DataDir>& datadirs = GetDataDirs();
-	std::vector<DataDir>::const_iterator ddi;
-	for (ddi = datadirs.begin(); ddi != datadirs.end(); ++ddi) {
-		dataDirPaths.push_back(ddi->path);
+	for (const DataDir& ddir: GetDataDirs()) {
+		dataDirPaths.push_back(ddir.path);
 	}
 
 	return dataDirPaths;
@@ -570,16 +574,14 @@ std::vector<std::string> DataDirLocater::GetDataDirPaths() const
 static DataDirLocater* instance = nullptr;
 DataDirLocater& DataDirLocater::GetInstance()
 {
-	if (instance == nullptr) {
+	if (instance == nullptr)
 		instance = new DataDirLocater();
-	}
+
 	return *instance;
 }
 
 void DataDirLocater::FreeInstance()
 {
-	assert(instance != nullptr); //don't free twice
-	delete instance;
-	instance = nullptr;
+	spring::SafeDelete(instance);
 }
 

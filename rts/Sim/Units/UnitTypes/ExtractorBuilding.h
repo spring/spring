@@ -3,6 +3,8 @@
 #ifndef _EXTRACTOR_BUILDING_H
 #define _EXTRACTOR_BUILDING_H
 
+#include <vector>
+
 #include "Building.h"
 
 class CExtractorBuilding : public CBuilding {
@@ -10,8 +12,11 @@ public:
 	CR_DECLARE(CExtractorBuilding)
 	CR_DECLARE_SUB(MetalSquareOfControl)
 
-	CExtractorBuilding();
-	virtual ~CExtractorBuilding();
+	CExtractorBuilding(): CBuilding() {
+		extractionRange = 0.0f;
+		extractionDepth = 0.0f;
+	}
+	~CExtractorBuilding();
 
 	void ResetExtraction();
 	void SetExtractionRangeAndDepth(float range, float depth);
@@ -35,7 +40,7 @@ protected:
 
 	float extractionRange, extractionDepth;
 	std::vector<MetalSquareOfControl> metalAreaOfControl;
-	std::list<CExtractorBuilding*> neighbours;
+	std::vector<CExtractorBuilding*> neighbours;
 
 	static float maxExtractionRange;
 };

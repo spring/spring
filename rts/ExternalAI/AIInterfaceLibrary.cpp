@@ -10,7 +10,7 @@
 
 #include "System/FileSystem/FileHandler.h"
 #include "System/Log/ILog.h"
-#include "System/Util.h"
+#include "System/SafeUtil.h"
 #include "IAILibraryManager.h"
 
 
@@ -36,7 +36,7 @@ CAIInterfaceLibrary::CAIInterfaceLibrary(const CAIInterfaceLibraryInfo& _info)
 
 CAIInterfaceLibrary::~CAIInterfaceLibrary() {
 	ReleaseStatic();
-	SafeDelete(sharedLib);
+	spring::SafeDelete(sharedLib);
 }
 
 void CAIInterfaceLibrary::InitStatic() {

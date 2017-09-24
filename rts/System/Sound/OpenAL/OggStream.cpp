@@ -1,8 +1,9 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include <cstring> //memset
+
 #include "OggStream.h"
 
-#include <string.h> //memset
 #include "System/FileSystem/FileHandler.h"
 #include "System/Sound/SoundLog.h"
 #include "ALShared.h"
@@ -10,97 +11,94 @@
 
 
 namespace VorbisCallbacks {
-	size_t VorbisStreamRead(void* ptr, size_t size, size_t nmemb, void* datasource)
+	// NOTE:
+	//   this buffer gets recycled by each new stream, across *all* audio-channels
+	//   as a result streams are limited to only ever being played within a single
+	//   channel (currently BGMusic), but cause far less memory fragmentation
+	// TODO:
+	//   can easily be fixed if necessary by giving each channel its own index and
+	//   passing that along to the callbacks via COggStream{::Play}
+	// CFileHandler fileBuffers[NUM_AUDIO_CHANNELS];
+	CFileHandler fileBuffer("", "");
+
+	size_t VorbisStreamReadCB(void* ptr, size_t size, size_t nmemb, void* datasource)
 	{
-		CFileHandler* buffer = static_cast<CFileHandler*>(datasource);
-		return buffer->Read(ptr, size * nmemb);
+		assert(datasource == &fileBuffer);
+		return fileBuffer.Read(ptr, size * nmemb);
 	}
 
-	int VorbisStreamClose(void* datasource)
+	int VorbisStreamCloseCB(void* datasource)
 	{
-		CFileHandler* buffer = static_cast<CFileHandler*>(datasource);
-		delete buffer;
+		assert(datasource == &fileBuffer);
+		fileBuffer.Close();
 		return 0;
 	}
 
-	int VorbisStreamSeek(void* datasource, ogg_int64_t offset, int whence)
+	int VorbisStreamSeekCB(void* datasource, ogg_int64_t offset, int whence)
 	{
-		CFileHandler* buffer = static_cast<CFileHandler*>(datasource);
-		if (whence == SEEK_SET)
-		{
-			buffer->Seek(offset, std::ios_base::beg);
-		}
-		else if (whence == SEEK_CUR)
-		{
-			buffer->Seek(offset, std::ios_base::cur);
-		}
-		else if (whence == SEEK_END)
-		{
-			buffer->Seek(offset, std::ios_base::end);
+		assert(datasource == &fileBuffer);
+
+		switch (whence) {
+			case SEEK_SET: { fileBuffer.Seek(offset, std::ios_base::beg); } break;
+			case SEEK_CUR: { fileBuffer.Seek(offset, std::ios_base::cur); } break;
+			case SEEK_END: { fileBuffer.Seek(offset, std::ios_base::end); } break;
+			default: {} break;
 		}
 
 		return 0;
 	}
 
-	long VorbisStreamTell(void* datasource)
+	long VorbisStreamTellCB(void* datasource)
 	{
-		CFileHandler* buffer = static_cast<CFileHandler*>(datasource);
-		return buffer->GetPos();
+		assert(datasource == &fileBuffer);
+		return (fileBuffer.GetPos());
 	}
-
 }
 
 
 
 COggStream::COggStream(ALuint _source)
-	: vorbisInfo(NULL)
+	: vorbisInfo(nullptr)
 	, source(_source)
 	, format(AL_FORMAT_MONO16)
 	, stopped(true)
 	, paused(false)
 {
-	for (unsigned i = 0; i < NUM_BUFFERS; ++i) {
-		buffers[i] = 0;
-	}
-	for (unsigned i = 0; i < BUFFER_SIZE; ++i) {
-		pcmDecodeBuffer[i] = 0;
-	}
+	memset(buffers, 0, NUM_BUFFERS * sizeof(buffers[0]));
+	memset(pcmDecodeBuffer, 0, BUFFER_SIZE * sizeof(pcmDecodeBuffer[0]));
 }
 
-COggStream::~COggStream()
-{
-	Stop();
-}
 
 // open an Ogg stream from a given file and start playing it
 void COggStream::Play(const std::string& path, float volume)
 {
-	if (!stopped) {
-		// we're already playing another stream
+	// we're already playing another stream
+	if (!stopped)
 		return;
-	}
 
 	vorbisTags.clear();
 
 	ov_callbacks vorbisCallbacks;
-		vorbisCallbacks.read_func  = VorbisCallbacks::VorbisStreamRead;
-		vorbisCallbacks.close_func = VorbisCallbacks::VorbisStreamClose;
-		vorbisCallbacks.seek_func  = VorbisCallbacks::VorbisStreamSeek;
-		vorbisCallbacks.tell_func  = VorbisCallbacks::VorbisStreamTell;
+	vorbisCallbacks.read_func  = VorbisCallbacks::VorbisStreamReadCB;
+	vorbisCallbacks.close_func = VorbisCallbacks::VorbisStreamCloseCB;
+	vorbisCallbacks.seek_func  = VorbisCallbacks::VorbisStreamSeekCB;
+	vorbisCallbacks.tell_func  = VorbisCallbacks::VorbisStreamTellCB;
 
-	CFileHandler* buf = new CFileHandler(path);
-	const int result = ov_open_callbacks(buf, &oggStream, NULL, 0, vorbisCallbacks);
+	VorbisCallbacks::fileBuffer.Open(path);
+
+	const int result = ov_open_callbacks(&VorbisCallbacks::fileBuffer, &ovFile, nullptr, 0, vorbisCallbacks);
+
 	if (result < 0) {
-		LOG_L(L_WARNING, "Could not open Ogg stream (reason: %s).",
-				ErrorString(result).c_str());
+		LOG_L(L_WARNING, "Could not open Ogg stream (reason: %s).", ErrorString(result).c_str());
+		VorbisCallbacks::fileBuffer.Close();
 		return;
 	}
 
 
-	vorbisInfo = ov_info(&oggStream, -1);
+	vorbisInfo = ov_info(&ovFile, -1);
+
 	{
-		vorbis_comment* vorbisComment;
-		vorbisComment = ov_comment(&oggStream, -1);
+		vorbis_comment* vorbisComment = ov_comment(&ovFile, -1);
 		vorbisTags.resize(vorbisComment->comments);
 
 		for (unsigned i = 0; i < vorbisComment->comments; ++i) {
@@ -117,7 +115,8 @@ void COggStream::Play(const std::string& path, float volume)
 		format = AL_FORMAT_STEREO16;
 	}
 
-	alGenBuffers(2, buffers); CheckError("COggStream::Play");
+	alGenBuffers(2, buffers);
+	CheckError("[COggStream::Play][1]");
 
 	if (!StartPlaying()) {
 		ReleaseBuffers();
@@ -126,49 +125,52 @@ void COggStream::Play(const std::string& path, float volume)
 		paused = false;
 	}
 
-	CheckError("COggStream::Play");
+	CheckError("[COggStream::Play][2]");
 }
 
-float COggStream::GetPlayTime() const
+// stops the currently playing stream
+void COggStream::Stop()
 {
-	return msecsPlayed.toSecsf();
+	if (stopped)
+		return;
+
+	ReleaseBuffers();
+
+	msecsPlayed = spring_nulltime;
+	lastTick = spring_gettime();
+
+	source = 0;
+	format = 0;
+	vorbisInfo = nullptr;
+
+	assert(!Valid());
 }
+
 
 float COggStream::GetTotalTime()
 {
-	return ov_time_total(&oggStream, -1);
+	return ov_time_total(&ovFile, -1);
 }
 
-bool COggStream::Valid() const
-{
-	return (vorbisInfo != 0);
-}
 
-bool COggStream::IsFinished()
-{
-	return !Valid() || (GetPlayTime() >= GetTotalTime());
-}
-
-const COggStream::TagVector& COggStream::VorbisTags() const
-{
-	return vorbisTags;
-}
 
 // display Ogg info and comments
 void COggStream::DisplayInfo()
 {
-	LOG("version:           %d", vorbisInfo->version);
-	LOG("channels:          %d", vorbisInfo->channels);
-	LOG("time (sec):        %lf", ov_time_total(&oggStream,-1));
-	LOG("rate (Hz):         %ld", vorbisInfo->rate);
-	LOG("bitrate (upper):   %ld", vorbisInfo->bitrate_upper);
-	LOG("bitrate (nominal): %ld", vorbisInfo->bitrate_nominal);
-	LOG("bitrate (lower):   %ld", vorbisInfo->bitrate_lower);
-	LOG("bitrate (window):  %ld", vorbisInfo->bitrate_window);
-	LOG("vendor:            %s", vendor.c_str());
+	LOG("[OggStream::%s]", __func__);
+	LOG("\tversion:           %d", vorbisInfo->version);
+	LOG("\tchannels:          %d", vorbisInfo->channels);
+	LOG("\ttime (sec):        %lf", ov_time_total(&ovFile, -1));
+	LOG("\trate (Hz):         %ld", vorbisInfo->rate);
+	LOG("\tbitrate (upper):   %ld", vorbisInfo->bitrate_upper);
+	LOG("\tbitrate (nominal): %ld", vorbisInfo->bitrate_nominal);
+	LOG("\tbitrate (lower):   %ld", vorbisInfo->bitrate_lower);
+	LOG("\tbitrate (window):  %ld", vorbisInfo->bitrate_window);
+	LOG("\tvendor:            %s", vendor.c_str());
+	LOG("\ttags:              %lu", static_cast<unsigned long>(vorbisTags.size()));
 
-	for (TagVector::const_iterator it = vorbisTags.begin(); it != vorbisTags.end(); ++it) {
-		LOG("%s", it->c_str());
+	for (const std::string& s: vorbisTags) {
+		LOG("\t\t%s", s.c_str());
 	}
 }
 
@@ -179,12 +181,22 @@ void COggStream::ReleaseBuffers()
 	stopped = true;
 	paused = false;
 
+	#if 0
 	EmptyBuffers();
+	#else
+	// alDeleteBuffers fails with AL_INVALID_OPERATION if either buffer
+	// is still bound to source, while alSourceUnqueueBuffers sometimes
+	// generates an AL_INVALID_VALUE but doesn't appear to be necessary
+	// since we can just detach both of them directly
+	alSourcei(source, AL_BUFFER, AL_NONE);
+	CheckError("[COggStream::ReleaseBuffers][1]");
+	#endif
 
 	alDeleteBuffers(2, buffers);
-	CheckError("COggStream::ReleaseBuffers");
+	CheckError("[COggStream::ReleaseBuffers][2]");
+	memset(buffers, 0, sizeof(buffers));
 
-	ov_clear(&oggStream);
+	ov_clear(&ovFile);
 }
 
 
@@ -195,13 +207,19 @@ bool COggStream::StartPlaying()
 	msecsPlayed = spring_nulltime;
 	lastTick = spring_gettime();
 
-	if (!DecodeStream(buffers[0])) { return false; }
-	if (!DecodeStream(buffers[1])) { return false; }
+	if (!DecodeStream(buffers[0]))
+		return false;
+	if (!DecodeStream(buffers[1]))
+		return false;
 
-	alSourceQueueBuffers(source, 2, buffers); CheckError("COggStream::StartPlaying");
-	alSourcePlay(source); CheckError("COggStream::StartPlaying");
+	alSourceQueueBuffers(source, 2, buffers);
 
-	return true;
+	// CheckError returns true if *no* error occurred
+	if (!CheckError("[COggStream::StartPlaying][1]"))
+		return false;
+
+	alSourcePlay(source);
+	return (CheckError("[COggStream::StartPlaying][2]"));
 }
 
 
@@ -214,24 +232,10 @@ bool COggStream::IsPlaying()
 	return (state == AL_PLAYING);
 }
 
-// stops the currently playing stream
-void COggStream::Stop()
-{
-	if (stopped) {
-		return;
-	}
-
-	ReleaseBuffers();
-	msecsPlayed = spring_nulltime;
-	vorbisInfo = NULL;
-	lastTick = spring_gettime();
-}
-
 bool COggStream::TogglePause()
 {
-	if (!stopped) {
+	if (!stopped)
 		paused = !paused;
-	}
 
 	return paused;
 }
@@ -248,34 +252,34 @@ bool COggStream::UpdateBuffers()
 
 	while (buffersProcessed-- > 0) {
 		ALuint buffer;
-		alSourceUnqueueBuffers(source, 1, &buffer); CheckError("COggStream::UpdateBuffers");
+
+		alSourceUnqueueBuffers(source, 1, &buffer);
+		CheckError("[COggStream::UpdateBuffers][1]");
 
 		// false if we've reached end of stream
-		active = DecodeStream(buffer);
-		if (active) {
-			alSourceQueueBuffers(source, 1, &buffer); CheckError("COggStream::UpdateBuffers");
+		if ((active = DecodeStream(buffer))) {
+			alSourceQueueBuffers(source, 1, &buffer);
+			CheckError("[COggStream::UpdateBuffers][2]");
 		}
 	}
-	CheckError("COggStream::UpdateBuffers");
 
-	return active;
+	return (active && CheckError("[COggStream::UpdateBuffers][3]"));
 }
 
 
 void COggStream::Update()
 {
-	if (stopped) {
+	if (stopped)
 		return;
-	}
 
-	spring_time tick = spring_gettime();
+	const spring_time tick = spring_gettime();
 
 	if (!paused) {
-		UpdateBuffers();
-
-		if (!IsPlaying()) {
+		// releasing buffers is only allowed once the source has actually
+		// stopped playing, since it might still be reading from the last
+		// decoded chunk
+		if (UpdateBuffers(), !IsPlaying())
 			ReleaseBuffers();
-		}
 
 		msecsPlayed += (tick - lastTick);
 	}
@@ -294,39 +298,52 @@ bool COggStream::DecodeStream(ALuint buffer)
 	int result = 0;
 
 	while (size < BUFFER_SIZE) {
-		result = ov_read(&oggStream, pcmDecodeBuffer + size, BUFFER_SIZE - size, 0, 2, 1, &section);
+		result = ov_read(&ovFile, pcmDecodeBuffer + size, BUFFER_SIZE - size, 0, 2, 1, &section);
 
 		if (result > 0) {
 			size += result;
-		} else {
-			if (result < 0) {
-				LOG_L(L_WARNING, "Error reading Ogg stream (%s)",
-						ErrorString(result).c_str());
-			} else {
-				break;
-			}
+			continue;
 		}
+
+		if (result < 0) {
+			LOG_L(L_WARNING, "Error reading Ogg stream (%s)", ErrorString(result).c_str());
+			continue;
+		}
+
+		break;
 	}
 
-	if (size == 0) {
+	if (size == 0)
 		return false;
-	}
 
 	alBufferData(buffer, format, pcmDecodeBuffer, size, vorbisInfo->rate);
-	CheckError("COggStream::DecodeStream");
-
-	return true;
+	return (CheckError("[COggStream::DecodeStream]"));
 }
 
 
-// dequeue any buffers pending on source
+// dequeue any buffers pending on source (unused, see ReleaseBuffers)
 void COggStream::EmptyBuffers()
 {
+	assert(source != 0);
+
+	#if 1
 	int queuedBuffers = 0;
-	alGetSourcei(source, AL_BUFFERS_QUEUED, &queuedBuffers); CheckError("COggStream::EmptyBuffers");
+
+	alGetSourcei(source, AL_BUFFERS_QUEUED, &queuedBuffers);
+	CheckError("[COggStream::EmptyBuffers][1]");
 
 	while (queuedBuffers-- > 0) {
 		ALuint buffer;
-		alSourceUnqueueBuffers(source, 1, &buffer); CheckError("COggStream::EmptyBuffers");
+
+		alSourceUnqueueBuffers(source, 1, &buffer);
+		CheckError("[COggStream::EmptyBuffers][2]");
+		// done by caller
+		// alDeleteBuffers(1, &buffer);
 	}
+	#else
+	// assumes both are still pending
+	alSourceUnqueueBuffers(source, 2, buffers);
+	CheckError("[COggStream::EmptyBuffers]");
+	#endif
 }
+

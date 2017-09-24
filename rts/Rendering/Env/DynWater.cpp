@@ -2,6 +2,8 @@
 
 
 #include "DynWater.h"
+#include "WaterRendering.h"
+
 #include "Game/Camera.h"
 #include "Game/GameHelper.h"
 #include "Game/GlobalUnsynced.h"
@@ -80,9 +82,9 @@ CDynWater::CDynWater()
 
 	for (int y = 0; y < 64; ++y) {
 		for (int x = 0; x < 64; ++x) {
-			temp[(y*64 + x)*4 + 0] = std::sin(x*PI*2.0f/64.0f) + ((x < 32) ? -1 : 1)*0.3f;
+			temp[(y*64 + x)*4 + 0] = std::sin(x*math::TWOPI/64.0f) + ((x < 32) ? -1 : 1)*0.3f;
 			temp[(y*64 + x)*4 + 1] = temp[(y*64 + x)*4 + 0];
-			temp[(y*64 + x)*4 + 2] = std::cos(x*PI*2.0f/64.0f) + ((x < 32) ? (16 - x) : (x - 48))/16.0f*0.3f;
+			temp[(y*64 + x)*4 + 2] = std::cos(x*math::TWOPI/64.0f) + ((x < 32) ? (16 - x) : (x - 48))/16.0f*0.3f;
 			temp[(y*64 + x)*4 + 3] = 0;
 		}
 	}
@@ -93,15 +95,15 @@ CDynWater::CDynWater()
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F_ARB, 64, 64, 0, GL_RGBA, GL_FLOAT, temp);
 
 	CBitmap foam;
-	if (!foam.Load(mapInfo->water.foamTexture)) {
-		throw content_error("Could not load foam from file " + mapInfo->water.foamTexture);
-	}
-	if ((count_bits_set(foam.xsize) != 1) || (count_bits_set(foam.ysize) != 1)) {
+	if (!foam.Load(waterRendering->foamTexture))
+		throw content_error("Could not load foam from file " + waterRendering->foamTexture);
+
+	if ((count_bits_set(foam.xsize) != 1) || (count_bits_set(foam.ysize) != 1))
 		throw content_error("Foam texture not power of two!");
-	}
+
 	unsigned char* scrap = new unsigned char[foam.xsize * foam.ysize * 4];
 	for (int a = 0; a < (foam.xsize * foam.ysize); ++a) {
-		scrap[a] = foam.mem[a*4];
+		scrap[a] = foam.GetRawMem()[a * 4];
 	}
 
 	glGenTextures(1, &foamTex);
@@ -132,7 +134,7 @@ CDynWater::CDynWater()
 	dwAddSplashFP    = LoadFragmentProgram("ARB/dwAddSplash.fp");
 	dwAddSplashVP    = LoadVertexProgram(  "ARB/dwAddSplash.vp");
 
-	waterSurfaceColor = mapInfo->water.surfaceColor;
+	waterSurfaceColor = waterRendering->surfaceColor;
 
 	for (int y = 0; y < 1024; ++y) {
 		for (int x = 0; x < 1024; ++x) {
@@ -221,26 +223,28 @@ CDynWater::CDynWater()
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, temp3);
 
 	CBitmap bm;
-	if (!bm.Load("bitmaps/boatshape.bmp")) {
+	if (!bm.Load("bitmaps/boatshape.bmp"))
 		throw content_error("Could not load boatshape from file bitmaps/boatshape.bmp");
-	}
+
 	for (int a = 0; a < (bm.xsize * bm.ysize); ++a) {
-		bm.mem[a*4 + 2] = bm.mem[a*4];
-		bm.mem[a*4 + 3] = bm.mem[a*4];
+		bm.GetRawMem()[a * 4 + 2] = bm.GetRawMem()[a * 4];
+		bm.GetRawMem()[a * 4 + 3] = bm.GetRawMem()[a * 4];
 	}
 	boatShape = bm.CreateTexture();
 
 	CBitmap bm2;
-	if (!bm.Load("bitmaps/hovershape.bmp")) {
+	if (!bm.Load("bitmaps/hovershape.bmp"))
 		throw content_error("Could not load hovershape from file bitmaps/hovershape.bmp");
-	}
+
 	for (int a = 0; a < (bm2.xsize * bm2.ysize); ++a) {
-		bm2.mem[a*4 + 2] = bm2.mem[a*4];
-		bm2.mem[a*4 + 3] = bm2.mem[a*4];
+		bm2.GetRawMem()[a * 4 + 2] = bm2.GetRawMem()[a * 4];
+		bm2.GetRawMem()[a * 4 + 3] = bm2.GetRawMem()[a * 4];
 	}
 	hoverShape = bm2.CreateTexture();
 
-	delete[] temp; temp = NULL;
+	delete[] temp;
+	temp = nullptr;
+
 	glGenFramebuffersEXT(1, &frameBuffer);
 
 	reflectFBO.Bind();
@@ -291,7 +295,7 @@ CDynWater::~CDynWater()
 
 void CDynWater::Draw()
 {
-	if (!mapInfo->water.forceRendering && !readMap->HasVisibleWater())
+	if (!waterRendering->forceRendering && !readMap->HasVisibleWater())
 		return;
 
 	glPushAttrib(GL_ENABLE_BIT);
@@ -324,6 +328,7 @@ void CDynWater::Draw()
 	glEnable(GL_FRAGMENT_PROGRAM_ARB);
 	glBindProgramARB(GL_VERTEX_PROGRAM_ARB, waterVP);
 	glEnable(GL_VERTEX_PROGRAM_ARB);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE * wireFrameMode + GL_FILL * (1 - wireFrameMode));
 
 	const float dx = float(globalRendering->viewSizeX) / globalRendering->viewSizeY * camera->GetTanHalfFov();
 	const float dy = float(globalRendering->viewSizeY) / globalRendering->viewSizeY * camera->GetTanHalfFov();
@@ -357,6 +362,7 @@ void CDynWater::Draw()
 
 	DrawOuterSurface();
 
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	glDisable(GL_FRAGMENT_PROGRAM_ARB);
 	glDisable(GL_VERTEX_PROGRAM_ARB);
 	glPopAttrib();
@@ -382,7 +388,7 @@ void CDynWater::Draw()
 
 void CDynWater::UpdateWater(CGame* game)
 {
-	if (!mapInfo->water.forceRendering && !readMap->HasVisibleWater())
+	if (!waterRendering->forceRendering && !readMap->HasVisibleWater())
 		return;
 
 	glPushAttrib(GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT | GL_FOG_BIT);
@@ -408,7 +414,7 @@ void CDynWater::UpdateWater(CGame* game)
 
 void CDynWater::Update()
 {
-	if (!mapInfo->water.forceRendering && !readMap->HasVisibleWater())
+	if (!waterRendering->forceRendering && !readMap->HasVisibleWater())
 		return;
 
 	oldCamPosBig = camPosBig;
@@ -486,19 +492,19 @@ void CDynWater::DrawRefraction(CGame* game)
 		0.0, -1.0, 0.0, 0.0, // models
 	};
 
-	const float3 oldsun = sunLighting->unitDiffuseColor;
-	const float3 oldambient = sunLighting->unitAmbientColor;
+	const float3 oldsun = sunLighting->modelDiffuseColor;
+	const float3 oldambient = sunLighting->modelAmbientColor;
 
-	sunLighting->unitDiffuseColor *= float3(0.5f, 0.7f, 0.9f);
-	sunLighting->unitAmbientColor *= float3(0.6f, 0.8f, 1.0f);
+	sunLighting->modelDiffuseColor *= float3(0.5f, 0.7f, 0.9f);
+	sunLighting->modelAmbientColor *= float3(0.6f, 0.8f, 1.0f);
 
 	DrawRefractions(&clipPlaneEqs[0], true, true);
 
 	glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 	glClearColor(sky->fogColor[0], sky->fogColor[1], sky->fogColor[2], 1);
 
-	sunLighting->unitDiffuseColor = oldsun;
-	sunLighting->unitAmbientColor = oldambient;
+	sunLighting->modelDiffuseColor = oldsun;
+	sunLighting->modelAmbientColor = oldambient;
 }
 
 void CDynWater::DrawWaves()
@@ -1301,4 +1307,3 @@ void CDynWater::DrawOuterSurface()
 
 	va->DrawArray0(GL_QUADS);
 }
-

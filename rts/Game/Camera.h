@@ -63,7 +63,7 @@ public:
 	};
 
 public:
-	CCamera(unsigned int cameraType);
+	CCamera(unsigned int cameraType = CAMTYPE_PLAYER, unsigned int projectionType = PROJTYPE_PERSP);
 
 	void CopyState(const CCamera*);
 	void CopyStateReflect(const CCamera*);
@@ -108,6 +108,7 @@ public:
 	const std::vector<FrustumLine>& GetPosFrustumSides() const { return frustumLines[FRUSTUM_SIDE_POS]; }
 	const std::vector<FrustumLine>& GetNegFrustumSides() const { return frustumLines[FRUSTUM_SIDE_NEG]; }
 
+	void SetClipCtrlMatrix(const CMatrix44f& mat) { clipControlMatrix = mat; }
 	void SetProjMatrix(const CMatrix44f& mat) { projectionMatrix = mat; }
 	void SetViewMatrix(const CMatrix44f& mat) {
 		viewMatrix = mat;
@@ -128,6 +129,7 @@ public:
 	const CMatrix44f& GetViewProjectionMatrix() const { return viewProjectionMatrix; }
 	const CMatrix44f& GetViewProjectionMatrixInverse() const { return viewProjectionMatrixInverse; }
 	const CMatrix44f& GetBillBoardMatrix() const { return billboardMatrix; }
+	const CMatrix44f& GetClipControlMatrix() const { return clipControlMatrix; }
 
 	void LoadMatrices() const;
 	void LoadViewPort() const;
@@ -169,19 +171,20 @@ public:
 	*/
 
 	unsigned int GetCamType() const { return camType; }
+	unsigned int GetProjType() const { return projType; }
+	unsigned int SetCamType(unsigned int ct) { return (camType = ct); }
+	unsigned int SetProjType(unsigned int pt) { return (projType = pt); }
 
 
-	static void SetCamera(unsigned int camType, CCamera* cam) { camTypes[camType] = cam; }
-	static void SetActiveCamera(unsigned int camType) { SetCamera(CAMTYPE_ACTIVE, GetCamera(camType)); }
+	static void InitializeStatic();
+	static void SetActiveCamera(unsigned int camType);
 
-	static CCamera* GetCamera(unsigned int camType) { return camTypes[camType]; }
-	static CCamera* GetActiveCamera() { return (GetCamera(CAMTYPE_ACTIVE)); }
+	static CCamera* GetCamera(unsigned int camType);
+	static CCamera* GetActiveCamera();
 
 	// sets the current active camera, returns the previous
 	static CCamera* GetSetActiveCamera(unsigned int camType) {
-		CCamera* cam = GetActiveCamera();
-		SetActiveCamera(camType);
-		return cam;
+		CCamera* cam = GetActiveCamera(); SetActiveCamera(camType); return cam;
 	}
 
 public:
@@ -231,11 +234,10 @@ private:
 	CMatrix44f viewProjectionMatrix;
 	CMatrix44f viewProjectionMatrixInverse;
 	CMatrix44f billboardMatrix;
+	CMatrix44f clipControlMatrix;
 
 	// positive sides [0], negative sides [1]
 	std::vector<FrustumLine> frustumLines[2];
-
-	static CCamera* camTypes[CAMTYPE_COUNT];
 
 	// CAMTYPE_*
 	unsigned int camType;
@@ -246,6 +248,6 @@ private:
 	bool rotState[4]; // unused
 };
 
-#define camera (CCamera::GetCamera(CCamera::CAMTYPE_ACTIVE))
+#define camera (CCamera::GetActiveCamera())
 #endif // _CAMERA_H
 

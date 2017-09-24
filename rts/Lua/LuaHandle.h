@@ -2,7 +2,7 @@
 
 #ifndef LUA_HANDLE_H
 #define LUA_HANDLE_H
-#include <boost/cstdint.hpp>
+#include <cinttypes>
 
 #include "System/EventClient.h"
 //FIXME#include "LuaArrays.h"
@@ -12,10 +12,10 @@
 
 #include <string>
 #include <vector>
-#include <set>
+
 using std::string;
 using std::vector;
-using std::set;
+
 
 
 #define LUA_HANDLE_ORDER_RULES            100
@@ -26,6 +26,7 @@ using std::set;
 #define LUA_HANDLE_ORDER_GAIA_UNSYNCED   1300
 #define LUA_HANDLE_ORDER_UI              2000
 #define LUA_HANDLE_ORDER_INTRO           3000
+#define LUA_HANDLE_ORDER_MENU            4000
 
 
 class CUnit;
@@ -70,10 +71,8 @@ class CLuaHandle : public CEventClient
 		static bool GetHandleSynced(const lua_State* L) { return GetLuaContextData(L)->synced; }
 
 		bool GetUserMode() const { return userMode; }
-		bool CheckModUICtrl() const { return GetModUICtrl() || GetUserMode(); }
 
 		static bool GetHandleUserMode(lua_State* L) { return (GetHandle(L))->GetUserMode(); }
-		static bool CheckModUICtrl(lua_State* L) { return GetModUICtrl() || GetHandleUserMode(L); }
 
 		static int GetHandleAllowChanges(const lua_State* L) { return GetLuaContextData(L)->allowChanges; }
 
@@ -88,14 +87,19 @@ class CLuaHandle : public CEventClient
 		bool IsRunning() const { return IsHandleRunning(L); }
 		bool IsValid() const { return (L != nullptr); }
 
+		// virtual bool PersistOnReload() const { return (GetName() == "LuaMenu"); }
+		virtual bool PersistOnReload() const { return false; }
+
 		//FIXME needed by LuaSyncedTable (can be solved cleaner?)
 		lua_State* GetLuaState() const { return L; }
 
+#if (!defined(UNITSYNC) && !defined(DEDICATED))
 		LuaShaders& GetShaders(const lua_State* L = NULL) { return GetLuaContextData(L)->shaders; }
 		LuaTextures& GetTextures(const lua_State* L = NULL) { return GetLuaContextData(L)->textures; }
 		LuaFBOs& GetFBOs(const lua_State* L = NULL) { return GetLuaContextData(L)->fbos; }
 		LuaRBOs& GetRBOs(const lua_State* L = NULL) { return GetLuaContextData(L)->rbos; }
 		CLuaDisplayLists& GetDisplayLists(const lua_State* L = NULL) { return GetLuaContextData(L)->displayLists; }
+#endif
 
 	public: // call-ins
 		bool WantsEvent(const string& name) override { return HasCallIn(L, name); }
@@ -205,7 +209,7 @@ class CLuaHandle : public CEventClient
 		bool GroupChanged(int groupID) override;
 
 		bool GameSetup(const string& state, bool& ready,
-		               const map<int, string>& playerStates) override;
+		               const std::vector< std::pair<int, std::string> >& playerStates) override;
 
 		const char* RecvSkirmishAIMessage(int aiID, const char* data, int inSize);
 
@@ -223,6 +227,7 @@ class CLuaHandle : public CEventClient
 		void DrawGenesis() override;
 		void DrawWorld() override;
 		void DrawWorldPreUnit() override;
+		void DrawWorldPreParticles() override;
 		void DrawWorldShadow() override;
 		void DrawWorldReflection() override;
 		void DrawWorldRefraction() override;
@@ -231,7 +236,9 @@ class CLuaHandle : public CEventClient
 		void DrawGroundPostDeferred() override;
 		void DrawUnitsPostDeferred() override;
 		void DrawFeaturesPostDeferred() override;
+		void DrawScreenCommon(const LuaHashString& cmdStr);
 		void DrawScreenEffects() override;
+		void DrawScreenPost()  override;
 		void DrawScreen() override;
 		void DrawInMiniMap() override;
 		void DrawInMiniMapBackground() override;
@@ -269,11 +276,11 @@ class CLuaHandle : public CEventClient
 		static bool AddEntriesToTable(lua_State* L, const char* name, bool (*entriesFunc)(lua_State*));
 
 		/// returns error code and sets traceback on error
-		int  RunCallInTraceback(lua_State* L, const LuaHashString* hs, int inArgs, int outArgs, int errFuncIndex, std::string& tracebackMsg, bool popErrFunc);
+		int  RunCallInTraceback(lua_State* L, const LuaHashString* hs, std::string* ts, int inArgs, int outArgs, int errFuncIndex, bool popErrFunc);
 		/// returns false and prints message to log on error
 		bool RunCallInTraceback(lua_State* L, const LuaHashString& hs, int inArgs, int outArgs, int errFuncIndex, bool popErrFunc = true);
 		/// returns false and and sets errormessage on error
-		bool RunCallIn(lua_State* L, int inArgs, int outArgs, std::string& errormessage);
+		bool RunCallInLUS(lua_State* L, std::string* ts, int inArgs, int outArgs);
 		/// returns false and prints message to log on error
 		bool RunCallIn(lua_State* L, const LuaHashString& hs, int inArgs, int outArgs);
 
@@ -315,23 +322,21 @@ class CLuaHandle : public CEventClient
 		static int CallOutIsEngineMinVersion(lua_State* L);
 
 	public: // static
+#if (!defined(UNITSYNC) && !defined(DEDICATED))
 		static inline LuaShaders& GetActiveShaders(lua_State* L) { return GetLuaContextData(L)->shaders; }
 		static inline LuaTextures& GetActiveTextures(lua_State* L) { return GetLuaContextData(L)->textures; }
 		static inline LuaFBOs& GetActiveFBOs(lua_State* L) { return GetLuaContextData(L)->fbos; }
 		static inline LuaRBOs& GetActiveRBOs(lua_State* L) { return GetLuaContextData(L)->rbos; }
 		static inline CLuaDisplayLists& GetActiveDisplayLists(lua_State* L) { return GetLuaContextData(L)->displayLists; }
+#endif
 
 		static void SetDevMode(bool value) { devMode = value; }
 		static bool GetDevMode() { return devMode; }
 
-		static void SetModUICtrl(bool value) { modUICtrl = value; }
-		static bool GetModUICtrl() { return modUICtrl; }
-
-		static void HandleLuaMsg(int playerID, int script, int mode, const std::vector<boost::uint8_t>& msg);
+		static void HandleLuaMsg(int playerID, int script, int mode, const std::vector<std::uint8_t>& msg);
 
 	protected: // static
 		static bool devMode; // allows real file access
-		static bool modUICtrl; // allows non-user scripts to use UI controls
 
 		// FIXME: because CLuaUnitScript needs to access RunCallIn
 		friend class CLuaUnitScript;
@@ -346,10 +351,9 @@ inline bool CLuaHandle::RunCallIn(lua_State* L, const LuaHashString& hs, int inA
 	return RunCallInTraceback(L, hs, inArgs, outArgs, 0, false);
 }
 
-
-inline bool CLuaHandle::RunCallIn(lua_State* L, int inArgs, int outArgs, std::string& errorMsg)
+inline bool CLuaHandle::RunCallInLUS(lua_State* L, std::string* ts, int inArgs, int outArgs)
 {
-	return RunCallInTraceback(L, NULL, inArgs, outArgs, 0, errorMsg, false);
+	return RunCallInTraceback(L, nullptr, ts, inArgs, outArgs, 0, false);
 }
 
 

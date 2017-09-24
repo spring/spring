@@ -17,21 +17,32 @@
 
 CBasicMapDamage::CBasicMapDamage()
 {
+	mapHardness = mapInfo->map.hardness;
+	disabled = false;
+
 	for (int a = 0; a <= CRATER_TABLE_SIZE; ++a) {
 		const float r  = a / float(CRATER_TABLE_SIZE);
-		const float c1 = math::cos((r - 0.1f) * (PI + 0.3f));
-		const float c2 = math::cos(std::max(0.0f, r * 3.0f - 2.0f) * PI);
+		const float c1 = math::cos((r - 0.1f) * (math::PI + 0.3f));
+		const float c2 = math::cos(std::max(0.0f, r * 3.0f - 2.0f) * math::PI);
 
 		// faked Sombrero hat, cut in half
 		craterTable[a] = c1 * (1.0f - r) * (0.5f + 0.5f * c2);
 	}
 
 	for (int a = 0; a < CMapInfo::NUM_TERRAIN_TYPES; ++a) {
-		invHardness[a] = 1.0f / mapInfo->terrainTypes[a].hardness;
+		rawHardness[a] = mapInfo->terrainTypes[a].hardness * mapHardness;
+		invHardness[a] = 1.0f / rawHardness[a];
 	}
 
-	mapHardness = mapInfo->map.hardness;
-	disabled = false;
+	weightTable[0] = 1.0f / 16.0f;
+	weightTable[1] = 2.0f / 16.0f;
+	weightTable[2] = 1.0f / 16.0f;
+	weightTable[3] = 2.0f / 16.0f;
+	weightTable[4] = 4.0f / 16.0f;
+	weightTable[5] = 2.0f / 16.0f;
+	weightTable[6] = 1.0f / 16.0f;
+	weightTable[7] = 2.0f / 16.0f;
+	weightTable[8] = 1.0f / 16.0f;
 }
 
 void CBasicMapDamage::Explosion(const float3& pos, float strength, float radius)
@@ -59,7 +70,7 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength, float radius)
 	const float* orgHeightMap = readMap->GetOriginalHeightMapSynced();
 	const unsigned char* typeMap = readMap->GetTypeMapSynced();
 
-	const float baseStrength = -math::pow(strength, 0.6f) * 3 / mapHardness;
+	const float baseStrength = -math::pow(strength, 0.6f) * 3.0f;
 	const float invRadius = 1.0f / radius;
 
 	// figure out how much height to add to each square
@@ -74,36 +85,55 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength, float radius)
 			}
 
 			// calculate the distance and normalize it
-			const float expDist = pos.distance2D(float3(x * SQUARE_SIZE, 0, y * SQUARE_SIZE));
+			const float expDist = pos.distance2D(float3(x * SQUARE_SIZE, 0.0f, y * SQUARE_SIZE));
 			const float relDist = std::min(1.0f, expDist * invRadius);
 
 			const unsigned int tableIdx = relDist * CRATER_TABLE_SIZE;
-			const unsigned int ttypeIdx = typeMap[(y / 2) * mapDims.hmapx + x / 2];
+			// const unsigned int ttypeIdx = typeMap[(y >> 1) * mapDims.hmapx + (x >> 1)];
 
-			float dif = baseStrength;
-			dif *= craterTable[tableIdx];
-			dif *= invHardness[ttypeIdx];
+
+			// prevent formation of spikes from isolated "soft spots"
+			// (one or two random squares with extremely low hardness
+			// surrounded by high-strength terrain)
+			float sumRawHardness = 0.0f;
+			float avgInvHardness = 0.0f;
+
+			for (int j = -1; j <= 1; j++) {
+				for (int i = -1; i <= 1; i++) {
+					const int tmz = Clamp((y >> 1) + j, 0, mapDims.hmapy - 1);
+					const int tmx = Clamp((x >> 1) + i, 0, mapDims.hmapx - 1);
+					const int tti = typeMap[tmz * mapDims.hmapx + tmx];
+					sumRawHardness += (rawHardness[tti] * weightTable[(j + 1) * 3 + (i + 1)]);
+				}
+			}
+
+			avgInvHardness = 1.0f / sumRawHardness;
+
 
 			// FIXME: compensate for flattened ground under dead buildings
-			const float prevDif =
-				curHeightMap[y * mapDims.mapxp1 + x] -
-				orgHeightMap[y * mapDims.mapxp1 + x];
+			const float prevDif = curHeightMap[y * mapDims.mapxp1 + x] - orgHeightMap[y * mapDims.mapxp1 + x];
+			      float explDif = baseStrength;
 
-			if ((prevDif * dif) > 0.0f)
-				dif /= ((math::fabs(prevDif) / EXPLOSION_LIFETIME) + 1);
+			explDif *= craterTable[tableIdx];
+			explDif *= avgInvHardness;
+			// explDif *= invHardness[ttypeIdx];
 
-			if (dif < -0.3f && strength > 200.0f)
+			if ((prevDif * explDif) > 0.0f)
+				explDif /= ((math::fabs(prevDif) / EXPLOSION_LIFETIME) + 1);
+
+			if (explDif < -0.3f && strength > 200.0f)
 				grassDrawer->RemoveGrass(float3(x * SQUARE_SIZE, 0.0f, y * SQUARE_SIZE));
 
-			e.squares.push_back(dif);
+			e.squares.push_back(explDif);
 		}
 	}
 
-	const std::vector<CUnit*>& units = quadField->GetUnitsExact(pos, radius);
+	QuadFieldQuery qfQuery;
+	quadField->GetUnitsExact(qfQuery, pos, radius);
 
 	// calculate how much to raise or lower buildings in the explosion radius
 	// (while still keeping the ground below them flat)
-	for (const CUnit* unit: units) {
+	for (const CUnit* unit: *qfQuery.units) {
 		if (!unit->blockHeightChanges)
 			continue;
 		if (!unit->IsBlocking())
@@ -118,53 +148,53 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength, float radius)
 				const float relDist = std::min(1.0f, expDist * invRadius);
 
 				const unsigned int tableIdx = relDist * CRATER_TABLE_SIZE;
-				const unsigned int ttypeIdx = typeMap[(z / 2) * mapDims.hmapx + x / 2];
+				const unsigned int ttypeIdx = typeMap[(z >> 1) * mapDims.hmapx + (x >> 1)];
 
-				float dif = baseStrength;
-				dif *= craterTable[tableIdx];
-				dif *= invHardness[ttypeIdx];
+				const float prevDif = curHeightMap[z * mapDims.mapxp1 + x] - orgHeightMap[z * mapDims.mapxp1 + x];
+				      float explDif = baseStrength;
 
-				const float prevDif =
-					curHeightMap[z * mapDims.mapxp1 + x] -
-					orgHeightMap[z * mapDims.mapxp1 + x];
+				explDif *= craterTable[tableIdx];
+				explDif *= invHardness[ttypeIdx];
 
-				if ((prevDif * dif) > 0.0f)
-					dif /= ((math::fabs(prevDif) / EXPLOSION_LIFETIME) + 1);
+				if ((prevDif * explDif) > 0.0f)
+					explDif /= ((math::fabs(prevDif) / EXPLOSION_LIFETIME) + 1);
 
-				totalDif += dif;
+				totalDif += explDif;
 			}
 		}
-
-		totalDif /= (unit->xsize * unit->zsize);
 
 		if (totalDif != 0.0f) {
 			e.buildings.emplace_back();
 
 			ExploBuilding& eb = e.buildings.back();
 			eb.id = unit->id;
-			eb.dif = totalDif;
+			eb.dif = totalDif / (unit->xsize * unit->zsize);
 			eb.tx1 = unit->mapPos.x;
 			eb.tx2 = unit->mapPos.x + unit->xsize;
 			eb.tz1 = unit->mapPos.y;
 			eb.tz2 = unit->mapPos.y + unit->zsize;
 		}
 	}
-
-	explosions.push_back(e);
 }
 
 void CBasicMapDamage::RecalcArea(int x1, int x2, int y1, int y2)
 {
 	readMap->UpdateHeightMapSynced(SRectangle(x1, y1, x2, y2));
 	featureHandler->TerrainChanged(x1, y1, x2, y2);
-	losHandler->UpdateHeightMapSynced(SRectangle(x1, y1, x2, y2));
-	pathManager->TerrainChange(x1, y1, x2, y2, TERRAINCHANGE_DAMAGE_RECALCULATION);
+	{
+		SCOPED_TIMER("Sim::BasicMapDamage::Los");
+		losHandler->UpdateHeightMapSynced(SRectangle(x1, y1, x2, y2));
+	}
+	{
+		SCOPED_TIMER("Sim::BasicMapDamage::Path");
+		pathManager->TerrainChange(x1, y1, x2, y2, TERRAINCHANGE_DAMAGE_RECALCULATION);
+	}
 }
 
 
 void CBasicMapDamage::Update()
 {
-	SCOPED_TIMER("BasicMapDamage::Update");
+	SCOPED_TIMER("Sim::BasicMapDamage");
 
 	for (Explo& e: explosions) {
 		if (e.ttl <= 0)
@@ -183,16 +213,17 @@ void CBasicMapDamage::Update()
 		for (const ExploBuilding& b: e.buildings) {
 			CUnit* unit = unitHandler->GetUnit(b.id);
 
-			if (unit != nullptr) {
-				// only change ground level if building is still here
-				for (int z = b.tz1; z < b.tz2; z++) {
-					for (int x = b.tx1; x < b.tx2; x++) {
-						readMap->AddHeight(z * mapDims.mapxp1 + x, b.dif);
-					}
-				}
+			if (unit == nullptr)
+				continue;
 
-				unit->Move(UpVector * b.dif, true);
+			// only change ground level if building is still here
+			for (int z = b.tz1; z < b.tz2; z++) {
+				for (int x = b.tx1; x < b.tx2; x++) {
+					readMap->AddHeight(z * mapDims.mapxp1 + x, b.dif);
+				}
 			}
+
+			unit->Move(UpVector * b.dif, true);
 		}
 
 		if (e.ttl == 0) {

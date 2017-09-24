@@ -3,28 +3,21 @@
 #include "ConfigHandler.h"
 #include "ConfigLocater.h"
 #include "ConfigSource.h"
-#include "System/Util.h"
+#include "System/ContainerUtil.h"
+#include "System/SafeUtil.h"
+#include "System/StringUtil.h"
 #include "System/Log/ILog.h"
+#include "System/UnorderedMap.hpp"
+#include "System/Threading/SpringThreading.h"
 
-#ifdef WIN32
-	#include <io.h>
-#endif
 #include <stdio.h>
 #include <string.h>
 
-#include <list>
 #include <stdexcept>
-
-#include <boost/thread/mutex.hpp>
 
 /******************************************************************************/
 
-using std::list;
-using std::map;
-using std::string;
-using std::vector;
-
-typedef map<string, string> StringMap;
+typedef std::map<std::string, std::string> StringMap;
 
 ConfigHandler* configHandler = NULL;
 
@@ -34,15 +27,15 @@ ConfigHandler* configHandler = NULL;
 class ConfigHandlerImpl : public ConfigHandler
 {
 public:
-	ConfigHandlerImpl(const vector<string>& locations, const bool safemode);
+	ConfigHandlerImpl(const std::vector<std::string>& locations, const bool safemode);
 	~ConfigHandlerImpl();
 
-	void SetString(const string& key, const string& value, bool useOverlay);
-	string GetString(const string& key) const;
-	bool IsSet(const string& key) const;
-	bool IsReadOnly(const string& key) const;
-	void Delete(const string& key);
-	string GetConfigFile() const;
+	void SetString(const std::string& key, const std::string& value, bool useOverlay);
+	std::string GetString(const std::string& key) const;
+	bool IsSet(const std::string& key) const;
+	bool IsReadOnly(const std::string& key) const;
+	void Delete(const std::string& key);
+	std::string GetConfigFile() const;
 	const StringMap GetData() const;
 	StringMap GetDataWithoutDefaults() const;
 	void Update();
@@ -50,39 +43,33 @@ public:
 
 protected:
 	struct NamedConfigNotifyCallback {
-		NamedConfigNotifyCallback(ConfigNotifyCallback c, void* h)
-		: callback(c)
-		, holder(h)
-		{}
+		NamedConfigNotifyCallback(ConfigNotifyCallback c, void* o): callback(c), observer(o) {}
+
 		ConfigNotifyCallback callback;
-		void* holder;
+		void* observer;
 	};
 
 protected:
-	void AddObserver(ConfigNotifyCallback observer, void* holder);
-	void RemoveObserver(void* holder);
+	void AddObserver(ConfigNotifyCallback callback, void* observer, const std::vector<std::string>& configs);
+	void RemoveObserver(void* observer);
 
 private:
 	void RemoveDefaults();
 
 	OverlayConfigSource* overlay;
 	FileConfigSource* writableSource;
-	vector<ReadOnlyConfigSource*> sources;
+	std::vector<ReadOnlyConfigSource*> sources;
 
 	// observer related
-	list<NamedConfigNotifyCallback> observers;
-	boost::mutex observerMutex;
+	spring::unsynced_map<std::string, std::vector<NamedConfigNotifyCallback>> configsToCallbacks;
+	spring::unsynced_map<void*, std::vector<std::string>> observersToConfigs;
+	spring::mutex observerMutex;
 	StringMap changedValues;
 	bool writingEnabled;
 };
 
 /******************************************************************************/
 
-#define for_each_source(it) \
-	for (vector<ReadOnlyConfigSource*>::iterator it = sources.begin(); it != sources.end(); ++it)
-
-#define for_each_source_const(it) \
-	for (vector<ReadOnlyConfigSource*>::const_iterator it = sources.begin(); it != sources.end(); ++it)
 
 /**
  * @brief Fills the list of sources based on locations.
@@ -91,7 +78,7 @@ private:
  * First there is the overlay, then one or more file sources, and the last
  * source(s) specify default values.
  */
-ConfigHandlerImpl::ConfigHandlerImpl(const vector<string>& locations, const bool safemode)
+ConfigHandlerImpl::ConfigHandlerImpl(const std::vector<std::string>& locations, const bool safemode)
 {
 	writingEnabled = true;
 	overlay = new OverlayConfigSource();
@@ -116,9 +103,8 @@ ConfigHandlerImpl::ConfigHandlerImpl(const vector<string>& locations, const bool
 
 	sources.push_back(writableSource);
 
-	vector<string>::const_iterator loc = locations.begin();
-	++loc; // skip writableSource
-	for (; loc != locations.end(); ++loc) {
+	// skip writableSource
+	for (auto loc = ++(locations.cbegin()); loc != locations.cend(); ++loc) {
 		sources.push_back(new FileConfigSource(*loc));
 	}
 #ifdef DEDICATED
@@ -137,9 +123,12 @@ ConfigHandlerImpl::ConfigHandlerImpl(const vector<string>& locations, const bool
 
 ConfigHandlerImpl::~ConfigHandlerImpl()
 {
-	assert(observers.empty()); //all observers have to be deregistered by RemoveObserver()
-	for_each_source(it) {
-		delete (*it);
+	//all observers have to be deregistered by RemoveObserver()
+	assert(configsToCallbacks.empty());
+	assert(observersToConfigs.empty());
+
+	for (ReadOnlyConfigSource* s: sources) {
+		delete s;
 	}
 }
 
@@ -158,24 +147,26 @@ void ConfigHandlerImpl::RemoveDefaults()
 {
 	StringMap defaults = sources.back()->GetData();
 
-	vector<ReadOnlyConfigSource*>::const_reverse_iterator rsource = sources.rbegin();
-	for (; rsource != sources.rend(); ++rsource) {
+	for (auto rsource = sources.crbegin(); rsource != sources.crend(); ++rsource) {
 		FileConfigSource* source = dynamic_cast<FileConfigSource*> (*rsource);
-		if (source != NULL) {
-			// Copy the map; we modify the original while iterating over the copy.
-			StringMap file = source->GetData();
-			for (StringMap::const_iterator it = file.begin(); it != file.end(); ++it) {
-				// Does the key exist in `defaults'?
-				StringMap::const_iterator pos = defaults.find(it->first);
-				if (pos != defaults.end() && pos->second == it->second) {
-					// Exists and value is equal => Delete.
-					source->Delete(it->first);
-				}
-				else {
-					// Doesn't exist or is not equal => Store new default.
-					// (It will be the default for the next FileConfigSource.)
-					defaults[it->first] = it->second;
-				}
+
+		if (source == nullptr)
+			continue;
+
+		// Copy the map; we modify the original while iterating over the copy.
+		const StringMap file = source->GetData();
+
+		for (auto it = file.cbegin(); it != file.cend(); ++it) {
+			// Does the key exist in `defaults'?
+			const auto pos = defaults.find(it->first);
+
+			if (pos != defaults.end() && pos->second == it->second) {
+				// Exists and value is equal => Delete.
+				source->Delete(it->first);
+			} else {
+				// Doesn't exist or is not equal => Store new default.
+				// (It will be the default for the next FileConfigSource.)
+				defaults[it->first] = it->second;
 			}
 		}
 	}
@@ -189,10 +180,13 @@ StringMap ConfigHandlerImpl::GetDataWithoutDefaults() const
 
 	for (auto rsource = sources.crbegin(); rsource != sources.crend(); ++rsource) {
 		const FileConfigSource* source = dynamic_cast<const FileConfigSource*> (*rsource);
-		if (source == nullptr) continue;
+
+		if (source == nullptr)
+			continue;
 
 		// Copy the map; we modify the original while iterating over the copy.
-		StringMap file = source->GetData();
+		const StringMap file = source->GetData();
+
 		for (auto it = file.cbegin(); it != file.cend(); ++it) {
 			const auto pos = defaults.find(it->first);
 			if (pos != defaults.end() && pos->second == it->second)
@@ -206,51 +200,55 @@ StringMap ConfigHandlerImpl::GetDataWithoutDefaults() const
 }
 
 
-void ConfigHandlerImpl::Delete(const string& key)
+void ConfigHandlerImpl::Delete(const std::string& key)
 {
-	for_each_source(it) {
+	for (ReadOnlyConfigSource* s: sources) {
 		// The alternative to the dynamic cast is to merge ReadWriteConfigSource
 		// with ReadOnlyConfigSource, but then DefaultConfigSource would have to
 		// violate Liskov Substitution Principle... (by blocking modifications)
-		ReadWriteConfigSource* rwcs = dynamic_cast<ReadWriteConfigSource*> (*it);
-		if (rwcs != NULL) {
-			rwcs->Delete(key);
-		}
+		ReadWriteConfigSource* rwcs = dynamic_cast<ReadWriteConfigSource*>(s);
+
+		if (rwcs == nullptr)
+			continue;
+
+		rwcs->Delete(key);
 	}
 }
 
-bool ConfigHandlerImpl::IsSet(const string& key) const
+bool ConfigHandlerImpl::IsSet(const std::string& key) const
 {
-	for_each_source_const(it) {
-		if ((*it)->IsSet(key)) {
-			return true;
-		}
+	for (const ReadOnlyConfigSource* s: sources) {
+		if (s->IsSet(key)) return true;
 	}
+
 	return false;
 }
 
-bool ConfigHandlerImpl::IsReadOnly(const string& key) const
+bool ConfigHandlerImpl::IsReadOnly(const std::string& key) const
 {
 	const ConfigVariableMetaData* meta = ConfigVariable::GetMetaData(key);
-	if (meta==NULL) {
+
+	if (meta == nullptr)
 		return false;
-	}
-	return meta->GetReadOnly().Get();
+
+	return (meta->GetReadOnly().Get());
 }
 
-string ConfigHandlerImpl::GetString(const string& key) const
+std::string ConfigHandlerImpl::GetString(const std::string& key) const
 {
 	const ConfigVariableMetaData* meta = ConfigVariable::GetMetaData(key);
 
-	for_each_source_const(it) {
-		if ((*it)->IsSet(key)) {
-			std::string value = (*it)->GetString(key);
-			if (meta != NULL) {
+	for (const ReadOnlyConfigSource* s: sources) {
+		if (s->IsSet(key)) {
+			std::string value = s->GetString(key);
+
+			if (meta != nullptr)
 				value = meta->Clamp(value);
-			}
+
 			return value;
 		}
 	}
+
 	throw std::runtime_error("ConfigHandler: Error: Key does not exist: " + key +
 			"\nPlease add the key to the list of allowed configuration values.");
 }
@@ -270,28 +268,26 @@ string ConfigHandlerImpl::GetString(const string& key) const
  * This would happen if e.g. unitsync and spring would access
  * the config file at the same time, if we would not lock.
  */
-void ConfigHandlerImpl::SetString(const string& key, const string& value, bool useOverlay)
+void ConfigHandlerImpl::SetString(const std::string& key, const std::string& value, bool useOverlay)
 {
 	// if we set something to be persisted,
 	// we do want to override the overlay value
-	if (!useOverlay) {
+	if (!useOverlay)
 		overlay->Delete(key);
-	}
 
 	// Don't do anything if value didn't change.
-	if (IsSet(key) && GetString(key) == value) {
+	if (IsSet(key) && GetString(key) == value)
 		return;
-	}
 
 	if (useOverlay) {
 		overlay->SetString(key, value);
-	}
-	else if (writingEnabled) {
-		vector<ReadOnlyConfigSource*>::const_iterator it = sources.begin();
-		bool deleted = false;
+	} else if (writingEnabled) {
+		std::vector<ReadOnlyConfigSource*>::const_iterator it = sources.begin();
 
 		++it; // skip overlay
 		++it; // skip writableSource
+
+		bool deleted = false;
 
 		for (; it != sources.end(); ++it) {
 			if ((*it)->IsSet(key)) {
@@ -311,50 +307,65 @@ void ConfigHandlerImpl::SetString(const string& key, const string& value, bool u
 		}
 	}
 
-	boost::mutex::scoped_lock lck(observerMutex);
+	std::lock_guard<spring::mutex> lck(observerMutex);
 	changedValues[key] = value;
 }
 
 void ConfigHandlerImpl::Update()
 {
-	boost::mutex::scoped_lock lck(observerMutex);
+	std::lock_guard<spring::mutex> lck(observerMutex);
+
 	for (StringMap::const_iterator ut = changedValues.begin(); ut != changedValues.end(); ++ut) {
-		const string& key = ut->first;
-		const string& value = ut->second;
-		for (list<NamedConfigNotifyCallback>::const_iterator it = observers.begin(); it != observers.end(); ++it) {
-			(it->callback)(key, value);
+		const std::string& key = ut->first;
+		const std::string& value = ut->second;
+
+		if (configsToCallbacks.find(key) != configsToCallbacks.end()) {
+			for (const NamedConfigNotifyCallback& ncnc: configsToCallbacks[key]) {
+				(ncnc.callback)(key, value);
+			}
 		}
 	}
+
 	changedValues.clear();
 }
 
-string ConfigHandlerImpl::GetConfigFile() const {
+std::string ConfigHandlerImpl::GetConfigFile() const {
 	return writableSource->GetFilename();
 }
 
 const StringMap ConfigHandlerImpl::GetData() const {
 	StringMap data;
-	for_each_source_const(it) {
-		const StringMap& sourceData = (*it)->GetData();
+	for (const ReadOnlyConfigSource* s: sources) {
+		const StringMap& sourceData = s->GetData();
 		// insert doesn't overwrite, so this preserves correct overrides
 		data.insert(sourceData.begin(), sourceData.end());
 	}
 	return data;
 }
 
-void ConfigHandlerImpl::AddObserver(ConfigNotifyCallback observer, void* holder) {
-	boost::mutex::scoped_lock lck(observerMutex);
-	observers.emplace_back(observer, holder);
+
+void ConfigHandlerImpl::AddObserver(ConfigNotifyCallback callback, void* observer, const std::vector<std::string>& configs) {
+	std::lock_guard<spring::mutex> lck(observerMutex);
+
+	for (const std::string& config: configs) {
+		configsToCallbacks[config].emplace_back(callback, observer);
+		observersToConfigs[observer].push_back(config);
+	}
 }
 
-void ConfigHandlerImpl::RemoveObserver(void* holder) {
-	boost::mutex::scoped_lock lck(observerMutex);
-	for (list<NamedConfigNotifyCallback>::iterator it = observers.begin(); it != observers.end(); ++it) {
-		if (it->holder == holder) {
-			observers.erase(it);
-			return;
-		}
+void ConfigHandlerImpl::RemoveObserver(void* observer) {
+	std::lock_guard<spring::mutex> lck(observerMutex);
+
+	for (const std::string& config: observersToConfigs[observer]) {
+		spring::VectorEraseIf(configsToCallbacks[config], [&](NamedConfigNotifyCallback& ncnc) {
+			return (ncnc.observer == observer);
+		});
+
+		if (configsToCallbacks[config].empty())
+			configsToCallbacks.erase(config);
 	}
+
+	observersToConfigs.erase(observer);
 }
 
 
@@ -364,7 +375,7 @@ void ConfigHandler::Instantiate(const std::string configSource, const bool safem
 {
 	Deallocate();
 
-	vector<string> locations;
+	std::vector<std::string> locations;
 	if (!configSource.empty()) {
 		locations.push_back(configSource);
 	} else {
@@ -373,10 +384,9 @@ void ConfigHandler::Instantiate(const std::string configSource, const bool safem
 	assert(!locations.empty());
 
 	// log here so unitsync shows configuration source(s), too
-	vector<string>::const_iterator loc = locations.begin();
-	LOG("Using configuration source: \"%s\"", loc->c_str());
-	for (++loc; loc != locations.end(); ++loc) {
-		LOG("Using additional configuration source: \"%s\"", loc->c_str());
+	LOG("Using writeable configuration source: \"%s\"", locations[0].c_str());
+	for (auto loc = ++(locations.cbegin()); loc != locations.cend(); ++loc) {
+		LOG("Using additional read-only configuration source: \"%s\"", loc->c_str());
 	}
 
 	configHandler = new ConfigHandlerImpl(locations, safemode);
@@ -386,7 +396,13 @@ void ConfigHandler::Instantiate(const std::string configSource, const bool safem
 
 void ConfigHandler::Deallocate()
 {
-	SafeDelete(configHandler);
+	spring::SafeDelete(configHandler);
 }
+
+bool ConfigHandler::Get(const std::string& key) const
+{
+	return StringToBool(GetString(key));
+}
+
 
 /******************************************************************************/

@@ -10,38 +10,17 @@
 #include "ExternalAI/IAILibraryManager.h"
 #include "ExternalAI/Interface/SSkirmishAILibrary.h"
 #include "System/FileSystem/ArchiveScanner.h"
+#include "System/FileSystem/RapidHandler.h"
 #include "System/FileSystem/VFSHandler.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 
 #include <string>
-
-// returns absolute filename for given archive name, empty if not found
-static const std::string GetFileName(const std::string& name){
-	if (name.empty())
-		return name;
-	const std::string& filename = archiveScanner->ArchiveFromName(name);
-	if (filename == name)
-		return "";
-	const std::string& path = archiveScanner->GetArchivePath(filename);
-	return path + filename;
-}
-
 
 /******************************************************************************/
 /******************************************************************************/
 
 bool LuaArchive::PushEntries(lua_State* L)
 {
-#define REGISTER_LUA_CFUNC(x) \
-	lua_pushstring(L, #x);      \
-	lua_pushcfunction(L, x);    \
-	lua_rawset(L, -3)
-
-#define REGISTER_NAMED_LUA_CFUNC(x,name) \
-	lua_pushstring(L, #name);      \
-	lua_pushcfunction(L, x);    \
-	lua_rawset(L, -3)
-
 	REGISTER_LUA_CFUNC(GetMaps);
 	REGISTER_LUA_CFUNC(GetGames);
 	REGISTER_LUA_CFUNC(GetAllArchives);
@@ -52,6 +31,8 @@ bool LuaArchive::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetArchiveReplaces);
 
 	REGISTER_LUA_CFUNC(GetArchiveChecksum);
+
+	REGISTER_LUA_CFUNC(GetNameFromRapidTag);
 
 	REGISTER_LUA_CFUNC(GetAvailableAIs);
 
@@ -210,24 +191,41 @@ int LuaArchive::GetArchiveChecksum(lua_State* L)
 	return 2;
 }
 
+
+/******************************************************************************/
+/******************************************************************************/
+
+int LuaArchive::GetNameFromRapidTag(lua_State* L)
+{
+	const std::string rapidName = luaL_checksstring(L, 1);
+	std::string archiveName = GetRapidPackageFromTag(rapidName);
+	if (archiveName != rapidName) {
+		archiveName = archiveScanner->NameFromArchive(archiveName);
+		lua_pushsstring(L, archiveName);
+		return 1;
+	} else {
+		return 0;
+	}
+}
+
 /******************************************************************************/
 /******************************************************************************/
 
 int LuaArchive::GetAvailableAIs(lua_State* L)
 {
-	const std::string gameArchivePath = GetFileName(luaL_optsstring(L, 1, ""));
-	const std::string mapArchivePath = GetFileName(luaL_optsstring(L, 2, ""));
+	const std::string gameArchiveName = luaL_optsstring(L, 1, "");
+	const std::string mapArchiveName = luaL_optsstring(L, 2, "");
 
 	// load selected archives to get lua ais
-	if (!gameArchivePath.empty()) {
-		vfsHandler->AddArchive(gameArchivePath, false);
+	if (!gameArchiveName.empty()) {
+		vfsHandler->AddArchive(gameArchiveName, false);
 	}
-	if (!mapArchivePath.empty()) {
-		vfsHandler->AddArchive(mapArchivePath, false);
+	if (!mapArchiveName.empty()) {
+		vfsHandler->AddArchive(mapArchiveName, false);
 	}
 
 	const IAILibraryManager::T_skirmishAIKeys& skirmishAIKeys = aiLibManager->GetSkirmishAIKeys();
-	std::vector< std::vector<InfoItem> > luaAIInfos = luaAIImplHandler.LoadInfos();	
+	std::vector< std::vector<InfoItem> > luaAIInfos = luaAIImplHandler.LoadInfos();
 
 	lua_createtable(L, skirmishAIKeys.size() + luaAIInfos.size(), 0);
 	unsigned int count = 0;
@@ -244,15 +242,15 @@ int LuaArchive::GetAvailableAIs(lua_State* L)
 		}
 		lua_rawseti(L, -2, ++count);
 	}
-	
+
 	// close archives
-	if (!mapArchivePath.empty()) {
-		vfsHandler->RemoveArchive(mapArchivePath);
+	if (!mapArchiveName.empty()) {
+		vfsHandler->RemoveArchive(mapArchiveName);
 	}
-	if (!gameArchivePath.empty()) {
-		vfsHandler->RemoveArchive(gameArchivePath);
+	if (!gameArchiveName.empty()) {
+		vfsHandler->RemoveArchive(gameArchiveName);
 	}
-	
+
 	IAILibraryManager::T_skirmishAIKeys::const_iterator i = skirmishAIKeys.begin();
 	IAILibraryManager::T_skirmishAIKeys::const_iterator e = skirmishAIKeys.end();
 
@@ -263,6 +261,6 @@ int LuaArchive::GetAvailableAIs(lua_State* L)
 		}
 		lua_rawseti(L, -2, ++count);
 	}
-	
+
 	return 1;
 }

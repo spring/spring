@@ -70,7 +70,7 @@ namespace SpringVersion
 	extern const std::string& GetBranch();
 
 	/// additional information (compiler flags, VCS revision etc.)
-	extern std::string GetAdditional();
+	extern const std::string& GetAdditional();
 
 	/// build options
 	extern const std::string& GetBuildEnvironment();
@@ -83,7 +83,7 @@ namespace SpringVersion
 
 	/// Returns true if this build is a "HEADLESS" build
 	extern bool IsHeadless();
-	
+
 	/// Returns true if this build is a "UNITSYNC" build
 	extern bool IsUnitsync();
 

@@ -3,7 +3,7 @@
 #ifndef INPUT_RECEIVER_H
 #define INPUT_RECEIVER_H
 
-#include <list>
+#include <deque>
 #include <string>
 
 #include "Rendering/GlobalRendering.h"
@@ -13,7 +13,8 @@ class CInputReceiver
 protected:
 	enum Where {
 		FRONT,
-		BACK
+		BACK,
+		MANUAL
 	};
 
 	CInputReceiver(Where w = FRONT);
@@ -31,18 +32,26 @@ public:
 	virtual std::string GetTooltip(int x, int y) { return "No tooltip defined"; }
 
 	static void CollectGarbage();
-	static CInputReceiver* GetReceiverAt(int x, int y);
+	static void DrawReceivers();
 
 	struct ContainerBox {
-		ContainerBox();
-		ContainerBox operator+(ContainerBox other) const;
+		ContainerBox(): x1(0.0f), y1(0.0f), x2(0.0f), y2(0.0f) {}
+		ContainerBox operator+(ContainerBox other) const {
+			ContainerBox b;
+			b.x1 = x1 + other.x1;
+			b.x2 = x1 + other.x2;
+			b.y1 = y1 + other.y1;
+			b.y2 = y1 + other.y2;
+			return b;
+		}
+
 		float x1;
 		float y1;
 		float x2;
 		float y2;
 	};
 	bool InBox(float x, float y, const ContainerBox& box) const;
-	void DrawBox(const ContainerBox& b, int how = -1);
+	void DrawBox(const ContainerBox& b, int polyMode = -1);
 
 	/// Transform from mouse X to OpenGL X value in screen pixels.
 	static float MouseX(int x) {
@@ -69,13 +78,19 @@ public:
 
 	static float guiAlpha;
 
+	static CInputReceiver* GetReceiverAt(int x, int y);
 	static CInputReceiver*& GetActiveReceiverRef() { return activeReceiver; }
+
+	static std::deque<CInputReceiver*>& GetReceivers() {
+		// This construct fixes order of initialization between different
+		// compilation units using inputReceivers. (mantis #34)
+		static std::deque<CInputReceiver*> sInputReceivers;
+		return sInputReceivers;
+	}
 
 protected:
 	static CInputReceiver* activeReceiver;
 };
-
-std::list<CInputReceiver*>& GetInputReceivers();
 
 #endif /* INPUT_RECEIVER_H */
 

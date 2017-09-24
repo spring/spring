@@ -62,18 +62,18 @@ void CPlayer::SetControlledTeams()
 		return;
 	}
 
-	if (!spectator) {
-		// my team
+	// my team
+	if (!spectator)
 		controlledTeams.insert(team);
-	}
 
 	// AI teams
-	const CSkirmishAIHandler::id_ai_t aiIds = skirmishAIHandler.GetAllSkirmishAIs();
-	for (CSkirmishAIHandler::id_ai_t::const_iterator ai = aiIds.begin(); ai != aiIds.end(); ++ai) {
-		const bool isHostedByUs = (ai->second.hostPlayer == playerNum);
-		if (isHostedByUs) {
-			controlledTeams.insert(ai->second.team);
-		}
+	for (const auto& p: skirmishAIHandler.GetAllSkirmishAIs()) {
+		const SkirmishAIData& sad = p.second;
+
+		if (sad.hostPlayer != playerNum)
+			continue;
+
+		controlledTeams.insert(sad.team);
 	}
 }
 
@@ -82,18 +82,19 @@ void CPlayer::UpdateControlledTeams()
 {
 	for (int p = 0; p < playerHandler->ActivePlayers(); p++) {
 		CPlayer* player = playerHandler->Player(p);
-		if (player) {
-			player->SetControlledTeams();
-		}
+
+		if (player == nullptr)
+			continue;
+
+		player->SetControlledTeams();
 	}
 }
 
 
 void CPlayer::StartSpectating()
 {
-	if (spectator) {
+	if (spectator)
 		return;
-	}
 
 	spectator = true;
 
@@ -106,7 +107,8 @@ void CPlayer::StartSpectating()
 		//FIXME use eventHandler?
 		CLuaUI::UpdateTeams();
 		selectedUnitsHandler.ClearSelected();
-		if(readMap != NULL) readMap->BecomeSpectator();
+		if (readMap != nullptr)
+			readMap->BecomeSpectator();
 		unitTracker.Disable();
 	}
 
@@ -139,9 +141,8 @@ void CPlayer::JoinTeam(int newTeam)
 
 void CPlayer::GameFrame(int frameNum)
 {
-	if (!active || (fpsController.GetControllee() == NULL)) {
+	if (!active || (fpsController.GetControllee() == nullptr))
 		return;
-	}
 
 	fpsController.Update();
 }
@@ -151,27 +152,25 @@ void CPlayer::GameFrame(int frameNum)
 void CPlayer::StartControllingUnit()
 {
 	CUnit* curControlleeUnit = fpsController.GetControllee();
-	CUnit* newControlleeUnit = NULL;
+	CUnit* newControlleeUnit = nullptr;
 
-	if (curControlleeUnit != NULL) {
+	if (curControlleeUnit != nullptr) {
 		// player released control
 		StopControllingUnit();
 	} else {
 		// player took control
 		const std::vector<int>& ourSelectedUnits = selectedUnitsHandler.netSelected[this->playerNum];
 
-		if (ourSelectedUnits.empty()) {
+		if (ourSelectedUnits.empty())
 			return;
-		}
 
 		// pick the first unit we have selected
 		newControlleeUnit = unitHandler->GetUnit(ourSelectedUnits[0]);
 
-		if (newControlleeUnit == NULL || newControlleeUnit->weapons.empty()) {
+		if (newControlleeUnit == nullptr || newControlleeUnit->weapons.empty())
 			return;
-		}
 
-		if (newControlleeUnit->fpsControlPlayer != NULL) {
+		if (newControlleeUnit->fpsControlPlayer != nullptr) {
 			if (this->playerNum == gu->myPlayerNum) {
 				LOG_L(L_WARNING,
 						"player %d (%s) is already controlling unit %d",
@@ -208,18 +207,17 @@ void CPlayer::StartControllingUnit()
 
 void CPlayer::StopControllingUnit()
 {
-	if (fpsController.GetControllee() == NULL || mouse == NULL) {
+	if (fpsController.GetControllee() == nullptr || mouse == nullptr)
 		return;
-	}
 
 	CPlayer* that = gu->GetMyPlayer();
 	CUnit* thatUnit = that->fpsController.GetControllee();
 	CUnit* thisUnit = this->fpsController.GetControllee();
 
 	// note: probably better to issue CMD_STOP via thisUnit->commandAI
-	thisUnit->AttackUnit(NULL, true, false, true);
-	thisUnit->fpsControlPlayer = NULL;
-	fpsController.SetControlleeUnit(NULL);
+	thisUnit->AttackUnit(nullptr, true, false, true);
+	thisUnit->fpsControlPlayer = nullptr;
+	fpsController.SetControlleeUnit(nullptr);
 	selectedUnitsHandler.ClearNetSelect(this->playerNum);
 
 	if (thatUnit == thisUnit) {

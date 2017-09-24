@@ -9,20 +9,28 @@ class CTorpedoProjectile : public CWeaponProjectile
 {
 	CR_DECLARE_DERIVED(CTorpedoProjectile)
 public:
+	// creg only
 	CTorpedoProjectile() { }
 	CTorpedoProjectile(const ProjectileParams& params);
 
 	void Update() override;
-	void Draw() override;
+	void Draw(CVertexArray* va) override;
 
-	virtual int GetProjectilesCount() const override;
+	int GetProjectilesCount() const override { return 8; }
 
 	void SetIgnoreError(bool b) { ignoreError = b; }
+
 private:
-	float tracking;
+	float3 UpdateTargetingPos();
+	float3 UpdateTargetingDir(const float3& targetObjVel);
+
+private:
 	bool ignoreError;
+
+	float tracking;
 	float maxSpeed;
 	int nextBubble;
+
 	float texx;
 	float texy;
 };

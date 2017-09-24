@@ -9,8 +9,9 @@
 #include "System/float3.h"
 #include "System/type2.h"
 
-#include <map>
+#include <array>
 #include <vector>
+
 
 class CUnit;
 class CWeapon;
@@ -22,8 +23,8 @@ struct MoveDef;
 struct BuildInfo;
 
 struct CExplosionParams {
-	const float3& pos;
-	const float3& dir;
+	const float3 pos;
+	const float3 dir;
 	const DamageArray& damages;
 	const WeaponDef* weaponDef;
 
@@ -58,9 +59,7 @@ public:
 		BUILDSQUARE_OPEN        = 3
 	};
 
-	CGameHelper();
-	~CGameHelper();
-
+	CGameHelper() {}
 	CGameHelper(const CGameHelper&) = delete; // no-copy
 
 	static void GetEnemyUnits(const float3& pos, float searchRadius, int searchAllyteam, std::vector<int>& found);
@@ -89,9 +88,8 @@ public:
 		const int2& zrange,
 		const UnitDef* unitDef,
 		const MoveDef* moveDef,
-		CFeature *&feature,
+		CFeature*& feature,
 		int allyteam,
-		boost::uint16_t mask,
 		bool synced
 	);
 
@@ -101,21 +99,31 @@ public:
 		CFeature*&,
 		int allyteam,
 		bool synced,
-		std::vector<float3>* canbuildpos = NULL,
-		std::vector<float3>* featurepos = NULL,
-		std::vector<float3>* nobuildpos = NULL,
-		const std::vector<Command>* commands = NULL
+		std::vector<float3>* canbuildpos = nullptr,
+		std::vector<float3>* featurepos = nullptr,
+		std::vector<float3>* nobuildpos = nullptr,
+		const std::vector<Command>* commands = nullptr
 	);
 	static float GetBuildHeight(const float3& pos, const UnitDef* unitdef, bool synced = true);
 	static Command GetBuildCommand(const float3& pos, const float3& dir);
+
+	static bool CheckTerrainConstraints(
+		const UnitDef* unitDef,
+		const MoveDef* moveDef,
+		float wantedHeight,
+		float groundHeight,
+		float groundSlope,
+		float* clampedHeight = nullptr
+	);
 
 	/**
 	 * @param minDist measured in 1/(SQUARE_SIZE * 2) = 1/16 of full map resolution.
 	 */
 	static float3 ClosestBuildSite(int team, const UnitDef* unitDef, float3 pos, float searchRadius, int minDist, int facing = 0);
 
-	static void GenerateWeaponTargets(const CWeapon* weapon, const CUnit* avoidUnit, std::multimap<float, CUnit*>& targets);
+	static void GenerateWeaponTargets(const CWeapon* weapon, const CUnit* avoidUnit, std::vector<std::pair<float, CUnit*>>& targets);
 
+	void Init();
 	void Update();
 
 	static float CalcImpulseScale(const DamageArray& damages, const float expDistanceMod);
@@ -148,17 +156,17 @@ public:
 
 private:
 	struct WaitingDamage {
-		WaitingDamage(int attacker, int target, const DamageArray& damage, const float3& impulse, const int _weaponID, const int _projectileID)
-		: target(target)
-		, attacker(attacker)
+		WaitingDamage(const DamageArray& _damage, const float3& _impulse, int _attackerID, int _targetID, int _weaponID, int _projectileID)
+		: attackerID(_attackerID)
+		, targetID(_targetID)
 		, weaponID(_weaponID)
 		, projectileID(_projectileID)
-		, damage(damage)
-		, impulse(impulse)
+		, damage(_damage)
+		, impulse(_impulse)
 		{}
 
-		int target;
-		int attacker;
+		int attackerID;
+		int targetID;
 		int weaponID;
 		int projectileID;
 
@@ -166,7 +174,8 @@ private:
 		float3 impulse;
 	};
 
-	std::vector< std::vector<WaitingDamage> > waitingDamageLists;
+	// note: size must be a power of two
+	std::array<std::vector<WaitingDamage>, 128> waitingDamages;
 };
 
 extern CGameHelper* helper;

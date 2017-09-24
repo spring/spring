@@ -29,41 +29,40 @@ CInMapDrawModel::CInMapDrawModel()
 	, numLines(0)
 {
 	drawQuads.resize(drawQuadsX * drawQuadsY);
+
+	for (int y = 0; y < drawQuadsY; y++) {
+		for (int x = 0; x < drawQuadsX; x++) {
+			drawQuads[y * drawQuadsX + x].points.reserve(16);
+			drawQuads[y * drawQuadsX + x].lines.reserve(16);
+		}
+	}
 }
 
 
-CInMapDrawModel::~CInMapDrawModel()
-{
-}
 
-bool CInMapDrawModel::MapDrawPrimitive::IsLocalPlayerAllowedToSee(const CInMapDrawModel* inMapDrawModel) const
+bool CInMapDrawModel::MapDrawPrimitive::IsVisibleToPlayer(bool drawAllMarks) const
 {
 	const int allyTeam = teamHandler->AllyTeam(teamID);
-	const bool allied =
-		(teamHandler->Ally(gu->myAllyTeam, allyTeam) &&
-		teamHandler->Ally(allyTeam, gu->myAllyTeam));
-	const bool maySee = (gu->spectating || (!spectator && allied) || inMapDrawModel->drawAllMarks);
 
-	return maySee;
+	const bool alliedAB = teamHandler->Ally(allyTeam, gu->myAllyTeam);
+	const bool alliedBA = teamHandler->Ally(gu->myAllyTeam, allyTeam);
+
+	return (gu->spectating || drawAllMarks || (!spectator && alliedAB && alliedBA));
 }
 
 
 bool CInMapDrawModel::AllowedMsg(const CPlayer* sender) const
 {
-	const int  team      = sender->team;
-	const int  allyteam  = teamHandler->AllyTeam(team);
-	const bool alliedMsg = (teamHandler->Ally(gu->myAllyTeam, allyteam) &&
-	                        teamHandler->Ally(allyteam, gu->myAllyTeam));
+	const int  allyTeam  = teamHandler->AllyTeam(sender->team);
 
-	if (!gu->spectating && (sender->spectator || !alliedMsg)) {
-		// we are playing and the guy sending the
-		// net-msg is a spectator or not an ally;
-		// cannot just ignore the message due to
-		// drawAllMarks mode considerations
-		return false;
-	}
+	const bool alliedAB = teamHandler->Ally(allyTeam, gu->myAllyTeam);
+	const bool alliedBA = teamHandler->Ally(gu->myAllyTeam, allyTeam);
+	const bool alliedMsg = alliedAB && alliedBA;
 
-	return true;
+	// if we are playing and the guy sending the message is
+	// a spectator (or not an ally), we can not just ignore
+	// it due to drawAllMarks mode considerations
+	return (gu->spectating || (!sender->spectator && alliedMsg));
 }
 
 
@@ -83,9 +82,8 @@ bool CInMapDrawModel::AddPoint(const float3& constPos, const std::string& label,
 
 	// event clients may process the point
 	// if their owner is allowed to see it
-	if (allowed && eventHandler.MapDrawCmd(playerID, MAPDRAW_POINT, &pos, NULL, &label)) {
+	if (allowed && eventHandler.MapDrawCmd(playerID, MAPDRAW_POINT, &pos, NULL, &label))
 		return false;
-	}
 
 
 	// let the engine handle it (disallowed
@@ -163,20 +161,21 @@ void CInMapDrawModel::EraseNear(const float3& constPos, int playerID)
 		for (int x = xStart; x <= xEnd; ++x) {
 			DrawQuad* dq = &drawQuads[(y * drawQuadsX) + x];
 
-			std::list<MapPoint>::iterator pi;
-			for (pi = dq->points.begin(); pi != dq->points.end(); /* none */) {
+			for (auto pi = dq->points.begin(); pi != dq->points.end(); /* none */) {
 				if (pi->GetPos().SqDistance2D(pos) < (radius*radius) && (pi->IsBySpectator() == sender->spectator)) {
-					pi = dq->points.erase(pi);
+					*pi = dq->points.back();
+					dq->points.pop_back();
 					numPoints--;
 				} else {
 					++pi;
 				}
 			}
-			std::list<MapLine>::iterator li;
-			for (li = dq->lines.begin(); li != dq->lines.end(); /* none */) {
+
+			for (auto li = dq->lines.begin(); li != dq->lines.end(); /* none */) {
 				// TODO maybe erase on pos2 too?
 				if (li->GetPos1().SqDistance2D(pos) < (radius*radius) && (li->IsBySpectator() == sender->spectator)) {
-					li = dq->lines.erase(li);
+					*li = dq->lines.back();
+					dq->lines.pop_back();
 					numLines--;
 				} else {
 					++li;

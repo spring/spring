@@ -6,7 +6,7 @@
 #include <vector>
 #include <list>
 #include <string>
-#include <boost/noncopyable.hpp>
+#include "System/Misc/NonCopyable.h"
 
 #include "Sim/Objects/SolidObject.h"
 #include "System/Matrix44f.h"
@@ -24,7 +24,7 @@ class CFireProjectile;
 
 
 
-class CFeature: public CSolidObject, public boost::noncopyable
+class CFeature: public CSolidObject, public spring::noncopyable
 {
 	CR_DECLARE(CFeature)
 
@@ -95,7 +95,7 @@ public:
 	bool UpdateVelocity(const float3& dragAccel, const float3& gravAccel, const float3& movMask, const float3& velMask);
 
 	void SetTransform(const CMatrix44f& m, bool synced) { transMatrix[synced] = m; }
-	void UpdateTransform(const float3& p, bool synced) { transMatrix[synced] = std::move(CMatrix44f(p, -rightdir, updir, frontdir)); }
+	void UpdateTransform(const float3& p, bool synced) { transMatrix[synced] = std::move(ComposeMatrix(p)); }
 	void UpdateTransformAndPhysState();
 	void UpdateQuadFieldPosition(const float3& moveVec);
 
@@ -117,7 +117,6 @@ private:
 	static int ChunkNumber(float f);
 
 public:
-
 	/**
 	 * This flag is used to stop a potential exploit involving tripping
 	 * a unit back and forth across a chunk boundary to get unlimited resources.
@@ -128,22 +127,21 @@ public:
 	bool isRepairingBeforeResurrect;
 	bool inUpdateQue;
 	bool deleteMe;
+	bool alphaFade; // unsynced
 
+	float drawAlpha; // unsynced
 	float resurrectProgress;
+	float reclaimTime;
 	float reclaimLeft;
-	int lastReclaim;
+
 	SResourcePack resources;
 
-	/// which drawQuad we are part of
-	int drawQuad;
-	/// one of FD_*_FLAG
-	int drawFlag;
-
-	float drawAlpha;
-	bool alphaFade;
-
+	int lastReclaimFrame;
 	int fireTime;
 	int smokeTime;
+
+	int drawQuad; /// which drawQuad we are part of (unsynced)
+	int drawFlag; /// one of FD_*_FLAG (unsynced)
 
 	const FeatureDef* def;
 	const UnitDef* udef; /// type of unit this feature should be resurrected to
@@ -152,7 +150,7 @@ public:
 
 	CFireProjectile* myFire;
 
-	/// the solid object that is on top of the geothermal
+	/// object on top of us if we are a geothermal vent
 	CSolidObject* solidOnTop;
 
 

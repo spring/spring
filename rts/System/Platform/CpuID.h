@@ -9,7 +9,7 @@
 	#define _noinline
 #endif
 
-#include <stdint.h>
+#include <cstdint>
 
 namespace springproc {
 	_noinline void ExecCPUID(unsigned int* a, unsigned int* b, unsigned int* c, unsigned int* d);
@@ -36,26 +36,26 @@ namespace springproc {
 	     Volume 2A: Instruction Set Reference, A-M"
 	      (64-ia-32-architectures-software-developer-vol-2a-manual.pdf) */
 
-	class CpuId {
-	 private:
+	class CPUID {
+	public:
+		CPUID();
+
+		/** Total number of cores in the system. This excludes SMT/HT 
+		    cores. */
+		int getTotalNumCores() const { return totalNumCores; }
+
+		/** Total number of physical processor dies in the system. */
+		int getTotalNumPackages() const { return totalNumPackages; }
+
+		uint64_t getCoreAffinityMask(int x) const { return affinityMaskOfCores[x & (maxProcessors - 1)]; }
+		uint64_t getPackageAffinityMask(int x) { return affinityMaskOfPackages[x & (maxProcessors - 1)]; }
+
+	private:
 		void getIdsAmd();
 		void getIdsIntel();
 		void setDefault();
 
-		int nbProcessors;
-		int coreTotalNumber;
-		int packageTotalNumber;
-
-		/** Array of the size coreTotalNumber, containing for each
-		    core the affinity mask. */
-		uint64_t *affinityMaskOfCores;
-		uint64_t *affinityMaskOfPackages;
-
-		////////////////////////
-		// Intel specific fields
-
-		uint32_t* processorApicIds;
-
+	private:
 		void getIdsIntelEnumerate();
 
 		void getMasksIntelLeaf11Enumerate();
@@ -63,6 +63,23 @@ namespace springproc {
 		void getMasksIntelLeaf1and4();
 
 		uint32_t getApicIdIntel();
+
+	private:
+		int numProcessors;
+		int totalNumCores;
+		int totalNumPackages;
+
+		static constexpr int maxProcessors = 64;
+
+		/** Array of the size coreTotalNumber, containing for each
+		    core the affinity mask. */
+		uint64_t affinityMaskOfCores[maxProcessors];
+		uint64_t affinityMaskOfPackages[maxProcessors];
+
+		////////////////////////
+		// Intel specific fields
+
+		uint32_t processorApicIds[maxProcessors];
 
 		uint32_t shiftCore;
 		uint32_t shiftPackage;
@@ -75,21 +92,6 @@ namespace springproc {
 
 		////////////////////////
 		// AMD specific fields
-
-		////////////////////////
-	 public:
-		CpuId();
-		~CpuId();
-
-		/** Total number of cores in the system. This excludes SMT/HT 
-		    cores. */
-		int getCoreTotalNumber();
-
-		/** Total number of physical processor dies in the system. */
-		int getPackageTotalNumber();
-
-		uint64_t getAffinityMaskOfCore(int x);
-		uint64_t getAffinityMaskOfPackage(int x);
 	};
 
 }

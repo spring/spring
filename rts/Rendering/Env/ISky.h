@@ -10,9 +10,10 @@
 struct MapTextureData;
 class ISky
 {
-public:
-	static ISky* GetSky();
+protected:
+	ISky();
 
+public:
 	virtual ~ISky();
 
 	virtual void Update() = 0;
@@ -29,9 +30,11 @@ public:
 	float GetCloudDensity() const { return cloudDensity; }
 
 	ISkyLight* GetLight() const { return skyLight; }
-	void SetLight(bool dynamic);
 
 	bool SunVisible(const float3 pos) const;
+
+	bool& WireFrameModeRef() { return wireFrameMode; }
+	bool& DynamicSkyRef() { return dynamicSky; }
 
 	/**
 	 * Sets up OpenGL to draw fog or not, according to the value of
@@ -40,12 +43,9 @@ public:
 	void SetupFog();
 
 public:
-	bool wireframe;
-	bool dynamicSky;
+	static ISky* GetSky();
 
-	float3 sundir1, sundir2; // (xvec, yvec) TODO: move these to SkyLight
-	float3 modSunDir;
-
+public:
 	float3 skyColor;
 	float3 sunColor;
 	float3 cloudColor;
@@ -56,9 +56,10 @@ public:
 	float cloudDensity;
 
 protected:
-	ISky();
-
 	ISkyLight* skyLight;
+
+	bool wireFrameMode;
+	bool dynamicSky;
 };
 
 extern ISky* sky;

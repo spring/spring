@@ -1,19 +1,20 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include <cctype>
+#include <cinttypes>
+
 #include "3DOParser.h"
 
 #include "Sim/Misc/CollisionVolume.h"
 #include "System/Exceptions.h"
-#include "System/Util.h"
+#include "System/UnorderedMap.hpp"
+#include "System/StringUtil.h"
 #include "System/Log/ILog.h"
-#include "System/FileSystem/VFSHandler.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/SimpleParser.h"
 #include "System/Platform/byteorder.h"
 #include "System/Sync/HsiehHash.h"
 
-#include <cctype>
-#include <boost/cstdint.hpp>
 
 
 #define SCALE_FACTOR_3DO (1.0f / 65536.0f)
@@ -132,36 +133,37 @@ C3DOParser::C3DOParser()
 }
 
 
-S3DModel* C3DOParser::Load(const std::string& name)
+S3DModel C3DOParser::Load(const std::string& name)
 {
 	CFileHandler file(name);
 	std::vector<unsigned char> fileBuf;
 
-	if (!file.FileExists()) {
+	if (!file.FileExists())
 		throw content_error("[3DOParser] could not find model-file " + name);
+
+	if (!file.IsBuffered()) {
+		fileBuf.resize(file.FileSize(), 0);
+
+		if (file.Read(fileBuf.data(), fileBuf.size()) == 0)
+			throw content_error("[3DOParser] failed to read model-file " + name);
+	} else {
+		fileBuf = std::move(file.GetBuffer());
 	}
 
-	fileBuf.resize(file.FileSize(), 0);
+	S3DModel model;
+		model.name = name;
+		model.type = MODELTYPE_3DO;
+		model.textureType = 0;
+		model.numPieces  = 0;
+		model.mins = DEF_MIN_SIZE;
+		model.maxs = DEF_MAX_SIZE;
 
-	if (file.Read(&fileBuf[0], file.FileSize()) == 0) {
-		throw content_error("[3DOParser] failed to read model-file " + name);
-	}
-
-	S3DModel* model = new S3DModel();
-		model->name = name;
-		model->type = MODELTYPE_3DO;
-		model->textureType = 0;
-		model->numPieces  = 0;
-		model->mins = DEF_MIN_SIZE;
-		model->maxs = DEF_MAX_SIZE;
-
-	S3DOPiece* rootPiece = LoadPiece(model, 0, NULL, &model->numPieces, fileBuf);
-	model->SetRootPiece(rootPiece);
+	model.FlattenPieceTree(LoadPiece(&model, 0, nullptr, &model.numPieces, fileBuf));
 
 	// set after the extrema are known
-	model->radius = (model->maxs   - model->mins  ).Length() * 0.5f;
-	model->height = (model->maxs.y - model->mins.y);
-	model->relMidPos = (model->maxs + model->mins) * 0.5f;
+	model.radius = model.CalcDrawRadius();
+	model.height = model.CalcDrawHeight();
+	model.relMidPos = model.CalcDrawMidPos();
 
 	return model;
 }
@@ -210,10 +212,10 @@ bool C3DOParser::IsBasePlate(S3DOPiece* obj, S3DOPrimitive* face)
 C3DOTextureHandler::UnitTexture* C3DOParser::GetTexture(S3DOPiece* obj, _Primitive* p, const std::vector<unsigned char>& fileBuf) const
 {
 	std::string texName;
+
 	if (p->OffsetToTextureName != 0) {
 		int unused;
-		texName = GET_TEXT(p->OffsetToTextureName, fileBuf, unused);
-		StringToLowerInPlace(texName);
+		texName = std::move(StringToLower(GET_TEXT(p->OffsetToTextureName, fileBuf, unused)));
 
 		if (teamtex.find(texName) == teamtex.end()) {
 			texName += "00";
@@ -226,8 +228,7 @@ C3DOTextureHandler::UnitTexture* C3DOParser::GetTexture(S3DOPiece* obj, _Primiti
 	if (tex != nullptr)
 		return tex;
 
-	LOG_L(L_WARNING, "[%s] unknown 3DO texture \"%s\" for piece \"%s\"",
-			__FUNCTION__, texName.c_str(), obj->name.c_str());
+	LOG_L(L_WARNING, "[%s] unknown 3DO texture \"%s\" for piece \"%s\"", __func__, texName.c_str(), obj->name.c_str());
 
 	// assign a dummy texture (the entire atlas)
 	return texturehandler3DO->Get3DOTexture("___dummy___");
@@ -236,12 +237,11 @@ C3DOTextureHandler::UnitTexture* C3DOParser::GetTexture(S3DOPiece* obj, _Primiti
 
 void C3DOParser::GetPrimitives(S3DOPiece* obj, int pos, int num, int excludePrim, const std::vector<unsigned char>& fileBuf)
 {
-	std::map<int,int> prevHashes;
+	spring::unordered_map<int, int> prevHashes;
 
-	for (int a=0; a<num; a++) {
-		if (a == excludePrim) {
+	for (int a = 0; a < num; a++) {
+		if (a == excludePrim)
 			continue;
-		}
 
 		_Primitive p;
 		int curOffset = pos + a * sizeof(_Primitive);
@@ -257,7 +257,7 @@ void C3DOParser::GetPrimitives(S3DOPiece* obj, int pos, int num, int excludePrim
 		// load vertex indices list
 		curOffset = p.OffsetToVertexIndexArray;
 		for (int b=0; b<p.NumberOfVertexIndexes; b++) {
-			boost::uint16_t w;
+			std::uint16_t w;
 			STREAM_READ(&w,2, fileBuf, curOffset);
 			swabWordInPlace(w);
 			sp.indices[b] = w;
@@ -311,34 +311,32 @@ S3DOPiece* C3DOParser::LoadPiece(S3DModel* model, int pos, S3DOPiece* parent, in
 		piece->offset.x =  me.XFromParent * SCALE_FACTOR_3DO;
 		piece->offset.y =  me.YFromParent * SCALE_FACTOR_3DO;
 		piece->offset.z = -me.ZFromParent * SCALE_FACTOR_3DO;
-		piece->goffset = piece->offset + ((parent != NULL)? parent->goffset: ZeroVector);
+		piece->goffset = piece->offset + ((parent != nullptr)? parent->goffset: ZeroVector);
 
 	GetVertexes(&me, piece, fileBuf);
 	GetPrimitives(piece, me.OffsetToPrimitiveArray, me.NumberOfPrimitives, ((pos == 0)? me.SelectionPrimitive: -1), fileBuf);
 	piece->CalcNormals();
 	piece->SetMinMaxExtends();
 
-	piece->emitPos = ZeroVector;
-	piece->emitDir = FwdVector;
-	if (piece->vertexPos.size() >= 2) {
-		piece->emitPos = piece->vertexPos[0];
-		piece->emitDir = piece->vertexPos[1] - piece->vertexPos[0];
-	} else 	if (piece->vertexPos.size() == 1) {
-		piece->emitDir = piece->vertexPos[0];
+	switch (piece->vertexPos.size()) {
+		case 0: { piece->emitDir = FwdVector; } break;
+		case 1: { piece->emitDir = piece->vertexPos[0]; } break;
+		default: {
+			piece->emitPos = piece->vertexPos[0];
+			piece->emitDir = piece->vertexPos[1] - piece->vertexPos[0];
+		} break;
 	}
 
 	model->mins = float3::min(piece->goffset + piece->mins, model->mins);
 	model->maxs = float3::max(piece->goffset + piece->maxs, model->maxs);
 
-	piece->SetCollisionVolume(CollisionVolume("box", piece->maxs - piece->mins, (piece->maxs + piece->mins) * 0.5f));
+	piece->SetCollisionVolume(CollisionVolume('b', 'z', piece->maxs - piece->mins, (piece->maxs + piece->mins) * 0.5f));
 
-	if (me.OffsetToChildObject > 0) {
+	if (me.OffsetToChildObject > 0)
 		piece->children.push_back(LoadPiece(model, me.OffsetToChildObject, piece, numobj, fileBuf));
-	}
 
-	if (me.OffsetToSiblingObject > 0) {
+	if (me.OffsetToSiblingObject > 0)
 		parent->children.push_back(LoadPiece(model, me.OffsetToSiblingObject, parent, numobj, fileBuf));
-	}
 
 	return piece;
 }

@@ -3,7 +3,7 @@
 #include "ProtocolDef.h"
 
 #include <string.h>
-#include <boost/format.hpp>
+#include "System/SpringFormat.h"
 
 #include "Exception.h"
 
@@ -53,7 +53,7 @@ int ProtocolDef::PacketLength(const unsigned char* const buf, const unsigned buf
 		return (slen >= 3) ? slen : -1;
 	}
 
-	throw network_error(str( boost::format("Invalid Message Length: %1%") %(unsigned int)msgid ));
+	throw network_error(spring::format("Invalid Message Length: %u", (unsigned int)msgid ));
 }
 
 bool ProtocolDef::IsValidLength(const int pktLength, const unsigned bufLength) const

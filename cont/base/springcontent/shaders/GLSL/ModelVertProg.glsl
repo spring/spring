@@ -2,13 +2,6 @@
 
 // note: gl_ModelViewMatrix actually only contains the
 // model matrix, view matrix is on the projection stack
-//
-// note: shadow-map texture coordinates should be generated
-// per fragment (the non-linear projection used can produce
-// shifting artefacts with large triangles due to the linear
-// interpolation of vertex positions), but this is a source
-// of acne itself
-
 
 // #define use_normalmapping
 // #define flip_normalmap
@@ -16,10 +9,6 @@
   //uniform mat4 cameraMat;
   //uniform mat4 cameraInv;
   uniform vec3 cameraPos;
-#if (USE_SHADOWS == 1)
-  uniform mat4 shadowMatrix;
-  uniform vec4 shadowParams;
-#endif
 
   varying vec4 vertexWorldPos;
   varying vec3 cameraDir;
@@ -49,11 +38,6 @@ void main(void)
 
 	vertexWorldPos = gl_ClipVertex;
 	cameraDir      = vertexWorldPos.xyz - cameraPos;
-
-#if (USE_SHADOWS == 1)
-	gl_TexCoord[1] = shadowMatrix * vertexWorldPos;
-	gl_TexCoord[1].st = gl_TexCoord[1].st * (inversesqrt( abs(gl_TexCoord[1].st) + shadowParams.z) + shadowParams.w) + shadowParams.xy;
-#endif
 
 	gl_TexCoord[0].st = gl_MultiTexCoord0.st;
 

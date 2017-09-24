@@ -25,7 +25,8 @@
 #include "System/TimeProfiler.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/FileSystem/FileSystem.h"
-#include "System/ThreadPool.h"
+#include "System/Platform/Watchdog.h"
+#include "System/Threading/ThreadPool.h" // for_mt
 
 using std::sprintf;
 
@@ -37,6 +38,18 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_SMF_GROUND_TEXTURES)
 	#undef LOG_SECTION_CURRENT
 #endif
 #define LOG_SECTION_CURRENT LOG_SECTION_SMF_GROUND_TEXTURES
+
+
+
+std::vector<CSMFGroundTextures::GroundSquare> CSMFGroundTextures::squares;
+
+std::vector<int> CSMFGroundTextures::tileMap;
+std::vector<char> CSMFGroundTextures::tiles;
+
+std::vector<float> CSMFGroundTextures::heightMaxima;
+std::vector<float> CSMFGroundTextures::heightMinima;
+std::vector<float> CSMFGroundTextures::stretchFactors;
+
 
 
 CSMFGroundTextures::GroundSquare::~GroundSquare()
@@ -75,8 +88,12 @@ void CSMFGroundTextures::LoadTiles(CSMFMapFile& file)
 	if (smfMap->tileCount <= 0) {
 		throw content_error("Error loading map: count of tiles is 0.");
 	}
+
+	tileMap.clear();
 	tileMap.resize(smfMap->tileCount);
+	tiles.clear();
 	tiles.resize(tileHeader.numTiles * SMALL_TILE_SIZE);
+	squares.clear();
 	squares.resize(smfMap->numBigTexX * smfMap->numBigTexY);
 
 	bool smtHeaderOverride = false;
@@ -188,8 +205,11 @@ void CSMFGroundTextures::ConvolveHeightMap(const int mapWidth, const int mipLeve
 	// 64 is the heightmap square-size at MIP level 1 (bigSquareSize >> 1)
 	static const int mipSquareSize = 64;
 
+	heightMaxima.clear();
 	heightMaxima.resize(nb, readMap->GetCurrMinHeight());
+	heightMinima.clear();
 	heightMinima.resize(nb, readMap->GetCurrMaxHeight());
+	stretchFactors.clear();
 	stretchFactors.resize(nb, 0.0f);
 
 	for (int y = 0; y < nby; ++y) {
@@ -255,6 +275,7 @@ bool CSMFGroundTextures::RecompressTilesIfNeeded()
 	// note 3: for both DXT1 & ETC1/2 blocksize is 8 bytes per 4x4 pixel block -> perfect for us :)
 
 	loadscreen->SetLoadMessage("Recompressing Map Tiles with ETC1");
+	Watchdog::ClearTimer(WDT_MAIN);
 
 	rg_etc1::pack_etc1_block_init();
 	rg_etc1::etc1_pack_params pack_params;

@@ -8,6 +8,7 @@ ELSE  (MINGW OR APPLE OR MSVC)
 ENDIF (MINGW OR APPLE OR MSVC)
 
 include_directories(${GLEW_INCLUDE_DIR})
+include_directories(${CMAKE_SOURCE_DIR}/rts/lib/slimsig/include)
 # This list was created using this *nix shell command:
 # > find . -name "*.cpp"" | sort
 add_library(engineaGui STATIC

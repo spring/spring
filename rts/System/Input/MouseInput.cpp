@@ -26,19 +26,25 @@
 #include "Game/UI/MouseHandler.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/FBO.h"
-#include "System/maindefines.h"
+#include "System/MainDefines.h"
+#include "System/SafeUtil.h"
 
-#include <boost/bind.hpp>
+#include <functional>
 #include <SDL_events.h>
 #include <SDL_syswm.h>
 
 
-IMouseInput* mouseInput = NULL;
+IMouseInput* mouseInput = nullptr;
 
 
 IMouseInput::IMouseInput()
 {
-	inputCon = input.AddHandler(boost::bind(&IMouseInput::HandleSDLMouseEvent, this, _1));
+	inputCon = input.AddHandler(std::bind(&IMouseInput::HandleSDLMouseEvent, this, std::placeholders::_1));
+}
+
+IMouseInput::~IMouseInput()
+{
+	inputCon.disconnect();
 }
 
 
@@ -47,38 +53,42 @@ bool IMouseInput::HandleSDLMouseEvent(const SDL_Event& event)
 	switch (event.type) {
 		case SDL_MOUSEMOTION: {
 			mousepos = int2(event.motion.x, event.motion.y);
-			if (mouse) {
+
+			if (mouse != nullptr)
 				mouse->MouseMove(mousepos.x, mousepos.y, event.motion.xrel, event.motion.yrel);
-			}
+
 		} break;
 		case SDL_MOUSEBUTTONDOWN: {
 			mousepos = int2(event.button.x, event.button.y);
-			if (mouse) {
+
+			if (mouse != nullptr)
 				mouse->MousePress(mousepos.x, mousepos.y, event.button.button);
-			}
+
 		} break;
 		case SDL_MOUSEBUTTONUP: {
 			mousepos = int2(event.button.x, event.button.y);
-			if (mouse) {
+
+			if (mouse != nullptr)
 				mouse->MouseRelease(mousepos.x, mousepos.y, event.button.button);
-			}
+
 		} break;
 		case SDL_MOUSEWHEEL: {
-			if (mouse) {
+			if (mouse != nullptr)
 				mouse->MouseWheel(event.wheel.y);
-			}
+
 		} break;
 		case SDL_WINDOWEVENT: {
 			if (event.window.event == SDL_WINDOWEVENT_LEAVE) {
-				// mouse left window (set mouse pos internally to window center to prevent endless scrolling)
-				mousepos.x = globalRendering->viewSizeX / 2;
-				mousepos.y = globalRendering->viewSizeY / 2;
-				if (mouse) {
-					mouse->MouseMove(mousepos.x, mousepos.y, 0, 0);
-				}
-			}
-		} break;
+				// mouse left window; set pos internally to center-pixel to prevent endless scrolling
+				mousepos = globalRendering->GetScreenCenter();
+
+				if (mouse != nullptr)
+					mouse->MouseMove(-mousepos.x, -mousepos.y, 0, 0);
+
+			} break;
+		}
 	}
+
 	return false;
 }
 
@@ -121,7 +131,7 @@ public:
 	{
 		SDL_SysWMinfo info;
 		SDL_VERSION(&info.version);
-		if(!SDL_GetWindowWMInfo(globalRendering->window, &info))
+		if (!SDL_GetWindowWMInfo(globalRendering->window, &info))
 			return;
 
 		wnd = info.info.win.window;
@@ -136,7 +146,7 @@ public:
 	CWin32MouseInput()
 	{
 		inst = this;
-		hCursor = NULL;
+		hCursor = nullptr;
 		sdl_wndproc = 0;
 		wnd = 0;
 		InstallWndCallback();
@@ -147,19 +157,17 @@ public:
 		SetWindowLongPtr(wnd, GWLP_WNDPROC, sdl_wndproc);
 	}
 };
-CWin32MouseInput* CWin32MouseInput::inst = NULL;
+CWin32MouseInput* CWin32MouseInput::inst = nullptr;
 #endif
 
 void IMouseInput::SetPos(int2 pos)
 {
-	if (!globalRendering->active) {
+	if (!globalRendering->active)
 		return;
-	}
 
-	if (pos.x == mousepos.x && pos.y == mousepos.y) {
-		// calling SDL_WarpMouse at 300fps eats ~5% cpu usage, so only update when needed
+	// calling SDL_WarpMouse at 300fps eats ~5% cpu usage, so only update when needed
+	if (pos.x == mousepos.x && pos.y == mousepos.y)
 		return;
-	}
 
 	mousepos = pos;
 
@@ -192,5 +200,5 @@ IMouseInput* IMouseInput::GetInstance()
 }
 
 void IMouseInput::FreeInstance(IMouseInput* mouseInp) {
-	delete mouseInp; mouseInput = NULL;
+	spring::SafeDelete(mouseInp);
 }

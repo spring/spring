@@ -4,14 +4,14 @@
 #define _GAME_SETUP_H
 
 #include <string>
-#include <map>
 #include <vector>
-#include <set>
 
 #include "Players/PlayerBase.h"
 #include "Sim/Misc/TeamBase.h"
 #include "Sim/Misc/AllyTeam.h"
 #include "ExternalAI/SkirmishAIData.h"
+#include "System/UnorderedMap.hpp"
+#include "System/UnorderedSet.hpp"
 #include "System/creg/creg_cond.h"
 
 class TdfParser;
@@ -27,8 +27,8 @@ public:
 	static bool LoadSavedScript(const std::string& file, const std::string& script);
 
 	// these return dummy containers if the global gameSetup instance is NULL
-	static const std::map<std::string, std::string>& GetMapOptions();
-	static const std::map<std::string, std::string>& GetModOptions();
+	static const spring::unordered_map<std::string, std::string>& GetMapOptions();
+	static const spring::unordered_map<std::string, std::string>& GetModOptions();
 	static const std::vector<PlayerBase>& GetPlayerStartingData();
 	static const std::vector<TeamBase>& GetTeamStartingData();
 	static const std::vector<AllyTeam>& GetAllyStartingData();
@@ -50,14 +50,14 @@ public:
 	void LoadStartPositions(bool withoutMap = false);
 
 	int GetRestrictedUnitLimit(const std::string& name, int defLimit) const {
-		const std::map<std::string, int>::const_iterator it = restrictedUnits.find(name);
+		const auto it = restrictedUnits.find(name);
 		if (it == restrictedUnits.end())
 			return defLimit;
 		return (it->second);
 	}
 
-	const std::map<std::string, std::string>& GetMapOptionsCont() const { return mapOptions; }
-	const std::map<std::string, std::string>& GetModOptionsCont() const { return modOptions; }
+	const spring::unordered_map<std::string, std::string>& GetMapOptionsCont() const { return mapOptions; }
+	const spring::unordered_map<std::string, std::string>& GetModOptionsCont() const { return modOptions; }
 	const std::vector<PlayerBase>& GetPlayerStartingDataCont() const { return playerStartingData; }
 	const std::vector<TeamBase>& GetTeamStartingDataCont() const { return teamStartingData; }
 	const std::vector<AllyTeam>& GetAllyStartingDataCont() const { return allyStartingData; }
@@ -84,11 +84,11 @@ private:
 	 * @pre numPlayers initialized
 	 * @post players loaded, numDemoPlayers initialized
 	 */
-	void LoadPlayers(const TdfParser& file, std::set<std::string>& nameList);
+	void LoadPlayers(const TdfParser& file, spring::unordered_set<std::string>& nameList);
 	/**
 	 * @brief Load LUA and Skirmish AIs.
 	 */
-	void LoadSkirmishAIs(const TdfParser& file, std::set<std::string>& nameList);
+	void LoadSkirmishAIs(const TdfParser& file, spring::unordered_set<std::string>& nameList);
 	/**
 	 * @brief Load teams and remove gaps in the team numbering.
 	 * @pre numTeams, hostDemo initialized
@@ -157,11 +157,12 @@ public:
 	std::string setupText;
 	std::string demoName;
 	std::string saveName;
+	std::string menuName;
 
 private:
-	std::map<int, int> playerRemap;
-	std::map<int, int> teamRemap;
-	std::map<int, int> allyteamRemap;
+	spring::unordered_map<int, int> playerRemap;
+	spring::unordered_map<int, int> teamRemap;
+	spring::unordered_map<int, int> allyteamRemap;
 
 	std::vector<PlayerBase> playerStartingData;
 	std::vector<TeamBase> teamStartingData;
@@ -169,10 +170,10 @@ private:
 	std::vector<SkirmishAIData> skirmishAIStartingData;
 	std::vector<std::string> mutatorsList;
 
-	std::map<std::string, int> restrictedUnits;
+	spring::unordered_map<std::string, int> restrictedUnits;
 
-	std::map<std::string, std::string> mapOptions;
-	std::map<std::string, std::string> modOptions;
+	spring::unordered_map<std::string, std::string> mapOptions;
+	spring::unordered_map<std::string, std::string> modOptions;
 };
 
 extern CGameSetup* gameSetup;

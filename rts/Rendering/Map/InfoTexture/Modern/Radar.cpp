@@ -9,7 +9,6 @@
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/ModInfo.h"
 #include "System/Exceptions.h"
-#include "System/TimeProfiler.h"
 #include "System/Log/ILog.h"
 
 
@@ -42,6 +41,7 @@ CRadarTexture::CRadarTexture()
 	}
 
 	const std::string vertexCode = R"(
+		#version 120
 		varying vec2 texCoord;
 
 		void main() {
@@ -51,6 +51,7 @@ CRadarTexture::CRadarTexture()
 	)";
 
 	const std::string fragmentCode = R"(
+		#version 120
 		uniform sampler2D texLoS;
 		uniform sampler2D texRadar;
 		uniform sampler2D texJammer;
@@ -189,6 +190,7 @@ void CRadarTexture::Update()
 	// Faster than doing it on the CPU! And uploading it as shorts would be slow, cause the GPU
 	// has no native support for them and so the transformation would happen on the CPU, too.
 	glActiveTexture(GL_TEXTURE1);
+	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, uploadTexRadar);
 	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, texSize.x, texSize.y, GL_RG, GL_UNSIGNED_BYTE, infoTexPBO.GetPtr());
 	glActiveTexture(GL_TEXTURE0);
@@ -203,6 +205,7 @@ void CRadarTexture::Update()
 	shader->Enable();
 	glDisable(GL_BLEND);
 	glActiveTexture(GL_TEXTURE2);
+	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, infoTextureHandler->GetInfoTexture("los")->GetTexture());
 	glBegin(GL_QUADS);
 		glVertex2f(-1.f, -1.f);
@@ -214,7 +217,13 @@ void CRadarTexture::Update()
 	glViewport(globalRendering->viewPosX,0,globalRendering->viewSizeX,globalRendering->viewSizeY);
 	FBO::Unbind();
 
+	// cleanup
+	glDisable(GL_TEXTURE_2D);
+	glActiveTexture(GL_TEXTURE1);
+	glDisable(GL_TEXTURE_2D);
+
 	// generate mipmaps
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, texture);
+	glGenerateMipmap(GL_TEXTURE_2D);
 }

@@ -19,12 +19,11 @@ public:
 		const float3& pos,
 		const float3& speed
 	);
-	~CGenericParticleProjectile();
 
-	virtual void Draw() override;
-	virtual void Update() override;
+	void Draw(CVertexArray* va) override;
+	void Update() override;
 
-	virtual int GetProjectilesCount() const override;
+	int GetProjectilesCount() const override;
 
 public:
 	float3 gravity;

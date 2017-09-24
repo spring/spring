@@ -2,20 +2,19 @@
 
 #include "LaserCannon.h"
 #include "WeaponDef.h"
+#include "WeaponMemPool.h"
 #include "Map/Ground.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 #include "System/myMath.h"
 
-CR_BIND_DERIVED(CLaserCannon, CWeapon, (NULL, NULL))
-
+CR_BIND_DERIVED_POOL(CLaserCannon, CWeapon, , weaponMemPool.alloc, weaponMemPool.free)
 CR_REG_METADATA(CLaserCannon,(
 	CR_MEMBER(color)
 ))
 
-CLaserCannon::CLaserCannon(CUnit* owner, const WeaponDef* def)
-	: CWeapon(owner, def)
+CLaserCannon::CLaserCannon(CUnit* owner, const WeaponDef* def): CWeapon(owner, def)
 {
 	//happens when loading
 	if (def != nullptr)
@@ -47,7 +46,7 @@ void CLaserCannon::FireImpl(const bool scriptCall)
 		dir = owner->frontdir;
 	}
 
-	dir += (gs->randVector() * SprayAngleExperience() + SalvoErrorExperience());
+	dir += (gsRNG.NextVector() * SprayAngleExperience() + SalvoErrorExperience());
 	dir.Normalize();
 
 	ProjectileParams params = GetProjectileParams();

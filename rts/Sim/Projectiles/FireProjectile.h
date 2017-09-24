@@ -4,7 +4,7 @@
 #define FIRE_PROJECTILE_H
 
 #include "Projectile.h"
-#include <list>
+#include <deque>
 
 
 class CFireProjectile : public CProjectile
@@ -12,7 +12,6 @@ class CFireProjectile : public CProjectile
 	CR_DECLARE_DERIVED(CFireProjectile)
 	CR_DECLARE_SUB(SubParticle)
 public:
-	CFireProjectile() { }
 	CFireProjectile(
 		const float3& pos,
 		const float3& spd,
@@ -23,11 +22,11 @@ public:
 		float particleSize
 	);
 
-	void Draw() override;
+	void Draw(CVertexArray* va) override;
 	void Update() override;
-	void StopFire();
+	void StopFire() { ttl = 0; }
 
-	virtual int GetProjectilesCount() const override;
+	int GetProjectilesCount() const override;
 
 public:
 	int ttl;
@@ -49,10 +48,12 @@ public:
 		int smokeType;
 	};
 
-	typedef std::list<SubParticle> part_list_type; //FIXME
+	std::deque<SubParticle> subParticles;
+	std::deque<SubParticle> subParticles2;
 
-	part_list_type subParticles;
-	part_list_type subParticles2;
+private:
+	CFireProjectile() { }
+
 };
 
 #endif // FIRE_PROJECTILE_H

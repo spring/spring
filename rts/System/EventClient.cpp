@@ -13,16 +13,13 @@ CEventClient::CEventClient(const std::string& _name, int _order, bool _synced)
 	, synced_(_synced)
 	, autoLinkEvents(false)
 {
-	// Note: virtual functions aren't available in the ctor!
+	// note: virtual functions aren't available in the ctor, can't autobind here
+	// eventHandler.AddClient() calls CEventClient::WantsEvent() which is virtual
 	//RegisterLinkedEvents(this);
 }
 
-
 CEventClient::~CEventClient()
 {
-	// No, we can't autobind all clients in the ctor.
-	// eventHandler.AddClient() calls CEventClient::WantsEvent() that is
-	// virtual and so not available during the initialization.
 	eventHandler.RemoveClient(this);
 }
 
@@ -34,12 +31,10 @@ bool CEventClient::WantsEvent(const std::string& eventName)
 
 	assert(!autoLinkedEvents.empty());
 
-	if (autoLinkedEvents[eventName]) {
-		//LOG("\"%s\" autolinks \"%s\"", GetName().c_str(), eventName.c_str());
-		return true;
-	}
+	const auto comp = [](const LinkPair& a, const LinkPair& b) { return (a.first < b.first); };
+	const auto iter = std::lower_bound(autoLinkedEvents.begin(), autoLinkedEvents.end(), LinkPair{eventName, false}, comp);
 
-	return false;
+	return (iter != autoLinkedEvents.end() && iter->second && iter->first == eventName);
 }
 
 
@@ -61,44 +56,11 @@ bool CEventClient::AllowResourceLevel(int teamID, const string& type, float leve
 bool CEventClient::AllowResourceTransfer(int oldTeam, int newTeam, const string& type, float amount) { return true; }
 bool CEventClient::AllowDirectUnitControl(int playerID, const CUnit* unit) { return true; }
 bool CEventClient::AllowBuilderHoldFire(const CUnit* unit, int action) { return true; }
-bool CEventClient::AllowStartPosition(int playerID, unsigned char readyState, const float3& clampedPos, const float3& rawPickPos) { return true; }
+bool CEventClient::AllowStartPosition(int playerID, int teamID, unsigned char readyState, const float3& clampedPos, const float3& rawPickPos) { return true; }
 
 bool CEventClient::TerraformComplete(const CUnit* unit, const CUnit* build) { return false; }
 bool CEventClient::MoveCtrlNotify(const CUnit* unit, int data) { return false; }
 
-int CEventClient::AllowWeaponTargetCheck(unsigned int attackerID, unsigned int attackerWeaponNum, unsigned int attackerWeaponDefID) { return -1; }
-bool CEventClient::AllowWeaponTarget(
-	unsigned int attackerID,
-	unsigned int targetID,
-	unsigned int attackerWeaponNum,
-	unsigned int attackerWeaponDefID,
-	float* targetPriority
-) { return true; }
-bool CEventClient::AllowWeaponInterceptTarget(const CUnit* interceptorUnit, const CWeapon* interceptorWeapon, const CProjectile* interceptorTarget) { return true; }
-bool CEventClient::UnitPreDamaged(
-	const CUnit* unit,
-	const CUnit* attacker,
-	float damage,
-	int weaponDefID,
-	int projectileID,
-	bool paralyzer,
-	float* newDamage,
-	float* impulseMult) { return false; }
-bool CEventClient::FeaturePreDamaged(
-	const CFeature* feature,
-	const CUnit* attacker,
-	float damage,
-	int weaponDefID,
-	int projectileID,
-	float* newDamage,
-	float* impulseMult) { return false; }
-bool CEventClient::ShieldPreDamaged(
-	const CProjectile* projectile,
-	const CWeapon* shieldEmitter,
-	const CUnit* shieldCarrier,
-	bool bounceProjectile,
-	const CWeapon* beamEmitter,
-	const CUnit* beamCarrier)  { return false; }
 
 
 bool CEventClient::SyncedActionFallback(const string& line, int playerID) { return false; }
@@ -162,7 +124,7 @@ void CEventClient::LastMessagePosition(const float3& pos) {}
 bool CEventClient::GroupChanged(int groupID) { return false; }
 
 bool CEventClient::GameSetup(const std::string& state, bool& ready,
-                             const map<int, std::string>& playerStates) { return false; }
+                             const std::vector< std::pair<int, std::string> >& playerStates) { return false; }
 
 std::string CEventClient::WorldTooltip(const CUnit* unit,
                                  const CFeature* feature,

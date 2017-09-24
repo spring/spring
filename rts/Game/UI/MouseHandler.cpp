@@ -38,12 +38,11 @@
 #include "System/Exceptions.h"
 #include "System/FastMath.h"
 #include "System/myMath.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include "System/Input/KeyInput.h"
 #include "System/Input/MouseInput.h"
 
 #include <algorithm>
-#include <boost/cstdint.hpp>
 
 // can't be up there since those contain conflicting definitions
 #include <SDL_mouse.h>
@@ -69,7 +68,7 @@ CONFIG(float, MouseDragScrollThreshold).defaultValue(0.3f);
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CMouseHandler* mouse = NULL;
+CMouseHandler* mouse = nullptr;
 
 static CInputReceiver*& activeReceiver = CInputReceiver::GetActiveReceiverRef();
 
@@ -77,25 +76,30 @@ static CInputReceiver*& activeReceiver = CInputReceiver::GetActiveReceiverRef();
 CMouseHandler::CMouseHandler()
 	: lastx(-1)
 	, lasty(-1)
+	, activeButtonIdx(-1)
+	, activeCursorIdx(-1)
+
 	, locked(false)
-	, doubleClickTime(0.0f)
-	, scrollWheelSpeed(0.0f)
-	, activeButton(-1)
-	, dir(ZeroVector)
 	, wasLocked(false)
-	, crossSize(0.0f)
-	, crossAlpha(0.0f)
-	, crossMoveScale(0.0f)
-	, cursorText("")
-	, currentCursor(NULL)
-	, cursorScale(1.0f)
+	, offscreen(false)
+
 	, hide(true)
 	, hwHide(true)
 	, hardwareCursor(false)
 	, invertMouse(false)
+
+	, cursorScale(1.0f)
 	, dragScrollThreshold(0.0f)
 	, scrollx(0.0f)
 	, scrolly(0.0f)
+
+	, doubleClickTime(0.0f)
+	, scrollWheelSpeed(0.0f)
+
+	, crossSize(0.0f)
+	, crossAlpha(0.0f)
+	, crossMoveScale(0.0f)
+
 	, lastClicked(nullptr)
 {
 	const int2 mousepos = IMouseInput::GetInstance()->GetPos();
@@ -108,9 +112,7 @@ CMouseHandler::CMouseHandler()
 		buttons[a].movement = 0;
 	}
 
-	LoadCursors();
-
-	currentCursor = cursorCommandMap[""];
+	ReloadCursors();
 
 #ifndef __APPLE__
 	hardwareCursor = configHandler->GetBool("HardwareCursor");
@@ -127,32 +129,48 @@ CMouseHandler::CMouseHandler()
 
 	dragScrollThreshold = configHandler->GetFloat("MouseDragScrollThreshold");
 
-	configHandler->NotifyOnChange(this);
+	configHandler->NotifyOnChange(this, {"MouseDragScrollThreshold", "ScrollWheelSpeed"});
 }
 
 CMouseHandler::~CMouseHandler()
 {
 	configHandler->RemoveObserver(this);
+
 	if (hwHide)
 		SDL_ShowCursor(SDL_ENABLE);
+}
 
-	std::map<std::string, CMouseCursor*>::iterator ci;
-	for (ci = cursorFileMap.begin(); ci != cursorFileMap.end(); ++ci) {
-		delete ci->second;
+CMouseHandler* CMouseHandler::GetOrReloadInstance()
+{
+	if (mouse == nullptr) {
+		mouse = new CMouseHandler();
+	} else {
+		mouse->ReloadCursors();
 	}
+
+	return mouse;
 }
 
 
-void CMouseHandler::LoadCursors()
+void CMouseHandler::ReloadCursors()
 {
 	const CMouseCursor::HotSpot mCenter  = CMouseCursor::Center;
 	const CMouseCursor::HotSpot mTopLeft = CMouseCursor::TopLeft;
 
-	CMouseCursor* nullCursor = CMouseCursor::GetNullCursor();
-	cursorCommandMap["none"] = nullCursor;
-	// Note: we intentionally don't add it there cause GetNullCursor() returns
-	//  a pointer to a static var, so it gets automatically deleted
-	//cursorFileMap["null"] = nullCursor;
+	activeCursorIdx = -1;
+
+	loadedCursors.clear();
+	loadedCursors.reserve(32);
+	// null-cursor; always lives at index 0
+	loadedCursors.emplace_back();
+
+	cursorCommandMap.clear();
+	cursorCommandMap.reserve(32);
+	cursorFileMap.clear();
+	cursorFileMap.reserve(32);
+
+	cursorCommandMap["none"] = loadedCursors.size() - 1;
+	cursorFileMap["null"] = loadedCursors.size() - 1;
 
 	AssignMouseCursor("",             "cursornormal",     mTopLeft, false);
 
@@ -205,11 +223,15 @@ void CMouseHandler::LoadCursors()
 	AssignMouseCursor("Wait",         "cursorwait",       mCenter,  false);
 
 	// the default cursor must exist
-	if (cursorCommandMap.find("") == cursorCommandMap.end()) {
+	const auto defCursorIt = cursorCommandMap.find("");
+
+	if (defCursorIt == cursorCommandMap.end()) {
 		throw content_error(
 			"Unable to load default cursor. Check that you have the required\n"
 			"content packages installed in your Spring \"base/\" directory.\n");
 	}
+
+	activeCursorIdx = defCursorIt->second;
 }
 
 
@@ -217,40 +239,39 @@ void CMouseHandler::LoadCursors()
 
 void CMouseHandler::MouseMove(int x, int y, int dx, int dy)
 {
-	//FIXME don't update with lock?
-	lastx = x;
-	lasty = y;
+	// FIXME: don't update if locked?
+	lastx = std::abs(x);
+	lasty = std::abs(y);
 
-	const int screenCenterX = globalRendering->viewSizeX / 2 + globalRendering->viewPosX;
-	const int screenCenterY = globalRendering->viewSizeY / 2 + globalRendering->viewPosY;
+	// MouseInput passes negative coordinates when cursor leaves the window
+	offscreen = (x < 0 && y < 0);
 
-	scrollx += lastx - screenCenterX;
-	scrolly += lasty - screenCenterY;
+	const int2 screenCenter = globalRendering->GetScreenCenter();
 
-	dir = hide ? camera->GetDir() : camera->CalcPixelDir(x,y);
+	scrollx += (lastx - screenCenter.x);
+	scrolly += (lasty - screenCenter.y);
 
-	if (locked) {
+	dir = hide ? camera->GetDir() : camera->CalcPixelDir(x, y);
+
+	if (locked && camHandler != nullptr) {
 		camHandler->GetCurrentController().MouseMove(float3(dx, dy, invertMouse ? -1.0f : 1.0f));
 		return;
 	}
 
-	const int movedPixels = (int)math::sqrt(float(dx*dx + dy*dy));
+	const int movedPixels = (int)fastmath::sqrt_sse(float(dx*dx + dy*dy));
 	buttons[SDL_BUTTON_LEFT].movement  += movedPixels;
 	buttons[SDL_BUTTON_RIGHT].movement += movedPixels;
 
-	if (!game->IsGameOver()) {
+	if (game != nullptr && !game->IsGameOver())
 		playerHandler->Player(gu->myPlayerNum)->currentStats.mousePixels += movedPixels;
-	}
 
-	if (activeReceiver) {
-		activeReceiver->MouseMove(x, y, dx, dy, activeButton);
-	}
+	if (activeReceiver != nullptr)
+		activeReceiver->MouseMove(x, y, dx, dy, activeButtonIdx);
 
-	if (inMapDrawer && inMapDrawer->IsDrawMode()) {
-		inMapDrawer->MouseMove(x, y, dx, dy, activeButton);
-	}
+	if (inMapDrawer != nullptr && inMapDrawer->IsDrawMode())
+		inMapDrawer->MouseMove(x, y, dx, dy, activeButtonIdx);
 
-	if (buttons[SDL_BUTTON_MIDDLE].pressed && (activeReceiver == NULL)) {
+	if (buttons[SDL_BUTTON_MIDDLE].pressed && (activeReceiver == NULL) && camHandler != nullptr) {
 		camHandler->GetCurrentController().MouseMove(float3(dx, dy, invertMouse ? -1.0f : 1.0f));
 		unitTracker.Disable();
 		return;
@@ -265,7 +286,7 @@ void CMouseHandler::MousePress(int x, int y, int button)
 
 	dir = hide ? camera->GetDir() : camera->CalcPixelDir(x, y);
 
-	if (!game->IsGameOver())
+	if (game != nullptr && !game->IsGameOver())
 		playerHandler->Player(gu->myPlayerNum)->currentStats.mouseClicks++;
 
 	ButtonPressEvt& bp = buttons[button];
@@ -278,7 +299,7 @@ void CMouseHandler::MousePress(int x, int y, int button)
 	bp.dir      = dir;
 	bp.movement = 0;
 
-	activeButton = button;
+	activeButtonIdx = button;
 
 	if (activeReceiver && activeReceiver->MousePress(x, y, button))
 		return;
@@ -291,13 +312,11 @@ void CMouseHandler::MousePress(int x, int y, int button)
 	// limited receivers for MMB
 	if (button == SDL_BUTTON_MIDDLE) {
 		if (!locked) {
-			if (luaInputReceiver != NULL) {
-				if (luaInputReceiver->MousePress(x, y, button)) {
-					activeReceiver = luaInputReceiver;
-					return;
-				}
+			if (luaInputReceiver->MousePress(x, y, button)) {
+				activeReceiver = luaInputReceiver;
+				return;
 			}
-			if ((minimap != NULL) && minimap->FullProxy()) {
+			if ((minimap != nullptr) && minimap->FullProxy()) {
 				if (minimap->MousePress(x, y, button)) {
 					activeReceiver = minimap;
 					return;
@@ -307,27 +326,26 @@ void CMouseHandler::MousePress(int x, int y, int button)
 		return;
 	}
 
-	std::list<CInputReceiver*>& inputReceivers = GetInputReceivers();
-	std::list<CInputReceiver*>::iterator ri;
-	if (!game->hideInterface) {
-		for (ri = inputReceivers.begin(); ri != inputReceivers.end(); ++ri) {
-			CInputReceiver* recv=*ri;
-			if (recv && recv->MousePress(x, y, button))
-			{
-				if (!activeReceiver)
+	if (luaInputReceiver->MousePress(x, y, button)) {
+		if (activeReceiver == nullptr)
+			activeReceiver = luaInputReceiver;
+		return;
+	}
+
+	if (game != nullptr && !game->hideInterface) {
+		for (CInputReceiver* recv: CInputReceiver::GetReceivers()) {
+			if (recv != nullptr && recv->MousePress(x, y, button)) {
+				if (activeReceiver == nullptr)
 					activeReceiver = recv;
+
 				return;
 			}
 		}
 	} else {
-		if (luaInputReceiver && luaInputReceiver->MousePress(x, y, button)) {
-			if (!activeReceiver)
-				activeReceiver = luaInputReceiver;
-			return;
-		}
-		if (guihandler && guihandler->MousePress(x,y,button)) {
-			if (!activeReceiver)
+		if (guihandler != nullptr && guihandler->MousePress(x, y, button)) {
+			if (activeReceiver == nullptr)
 				activeReceiver = guihandler; // for default (rmb) commands
+
 			return;
 		}
 	}
@@ -378,6 +396,7 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 		return;
 
 	dir = hide ? camera->GetDir() : camera->CalcPixelDir(x, y);
+
 	buttons[button].pressed = false;
 
 	if (inMapDrawer && inMapDrawer->IsDrawMode()){
@@ -385,10 +404,12 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 		return;
 	}
 
-	if (activeReceiver) {
+	if (activeReceiver != nullptr) {
 		activeReceiver->MouseRelease(x, y, button);
-		if(!buttons[SDL_BUTTON_LEFT].pressed && !buttons[SDL_BUTTON_MIDDLE].pressed && !buttons[SDL_BUTTON_RIGHT].pressed)
-			activeReceiver = NULL;
+
+		if (!buttons[SDL_BUTTON_LEFT].pressed && !buttons[SDL_BUTTON_MIDDLE].pressed && !buttons[SDL_BUTTON_RIGHT].pressed)
+			activeReceiver = nullptr;
+
 		return;
 	}
 
@@ -403,16 +424,17 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 		return;
 	}
 
-	if (gu->fpsMode) {
+	if (gu->fpsMode)
 		return;
-	}
+	// outside game, neither guiHandler nor quadField exist and TraceRay would crash
+	if (guihandler == nullptr)
+		return;
 
 	if ((button == SDL_BUTTON_LEFT) && !buttons[button].chorded) {
 		ButtonPressEvt& bp = buttons[SDL_BUTTON_LEFT];
 
-		if (!KeyInput::GetKeyModState(KMOD_SHIFT) && !KeyInput::GetKeyModState(KMOD_CTRL)) {
+		if (!KeyInput::GetKeyModState(KMOD_SHIFT) && !KeyInput::GetKeyModState(KMOD_CTRL))
 			selectedUnitsHandler.ClearSelected();
-		}
 
 		if (bp.movement > 4) {
 			// select box
@@ -457,24 +479,25 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 
 void CMouseHandler::MouseWheel(float delta)
 {
-	if (eventHandler.MouseWheel(delta>0.0f, delta)) {
+	if (eventHandler.MouseWheel(delta > 0.0f, delta))
 		return;
-	}
+
 	delta *= scrollWheelSpeed;
-	camHandler->GetCurrentController().MouseWheelMove(delta);
+
+	if (camHandler != nullptr)
+		camHandler->GetCurrentController().MouseWheelMove(delta);
 }
 
 
 void CMouseHandler::DrawSelectionBox()
 {
 	dir = hide ? camera->GetDir() : camera->CalcPixelDir(lastx, lasty);
-	if (activeReceiver) {
-		return;
-	}
 
-	if (gu->fpsMode) {
+	if (activeReceiver)
 		return;
-	}
+
+	if (gu->fpsMode)
+		return;
 
 	ButtonPressEvt& bp = buttons[SDL_BUTTON_LEFT];
 
@@ -527,46 +550,58 @@ void CMouseHandler::DrawSelectionBox()
 // CTooltipConsole::Draw --> CMouseHandler::GetCurrentTooltip
 std::string CMouseHandler::GetCurrentTooltip()
 {
-	std::string s;
-	std::list<CInputReceiver*>& inputReceivers = GetInputReceivers();
-	std::list<CInputReceiver*>::iterator ri;
-	for (ri = inputReceivers.begin(); ri != inputReceivers.end(); ++ri) {
-		CInputReceiver* recv=*ri;
-		if (recv && recv->IsAbove(lastx, lasty)) {
-			s = recv->GetTooltip(lastx, lasty);
-			if (s != "") {
+	if (!offscreen) {
+		std::string s;
+
+		if (luaInputReceiver->IsAbove(lastx, lasty)) {
+			s = std::move(luaInputReceiver->GetTooltip(lastx, lasty));
+
+			if (!s.empty())
 				return s;
-			}
+		}
+
+		for (CInputReceiver* recv: CInputReceiver::GetReceivers()) {
+			if (recv == nullptr)
+				continue;
+			if (!recv->IsAbove(lastx, lasty))
+				continue;
+
+			s = std::move(recv->GetTooltip(lastx, lasty));
+
+			if (!s.empty())
+				return s;
 		}
 	}
 
-	const string buildTip = guihandler->GetBuildTooltip();
-	if (!buildTip.empty()) {
-		return buildTip;
-	}
+	// outside game, neither guiHandler nor quadField exist and TraceRay would crash
+	if (guihandler == nullptr)
+		return "";
 
-	const float range = (globalRendering->viewRange * 1.4f);
+	const std::string& buildTip = guihandler->GetBuildTooltip();
+
+	if (!buildTip.empty())
+		return buildTip;
+
+	const float range = globalRendering->viewRange * 1.4f;
 	float dist = 0.0f;
 
 	const CUnit* unit = nullptr;
 	const CFeature* feature = nullptr;
 
 	{
-		dist = TraceRay::GuiTraceRay(camera->GetPos(), dir, range, NULL, unit, feature, true, false, true);
+		dist = TraceRay::GuiTraceRay(camera->GetPos(), dir, range, nullptr, unit, feature, true, false, true);
 
-		if (unit)    return CTooltipConsole::MakeUnitString(unit);
-		if (feature) return CTooltipConsole::MakeFeatureString(feature);
+		if (unit    != nullptr) return CTooltipConsole::MakeUnitString(unit);
+		if (feature != nullptr) return CTooltipConsole::MakeFeatureString(feature);
 	}
 
-	const string selTip = selectedUnitsHandler.GetTooltip();
-	if (selTip != "") {
+	const string selTip = std::move(selectedUnitsHandler.GetTooltip());
+
+	if (!selTip.empty())
 		return selTip;
-	}
 
-	if (dist <= range) {
-		const float3 pos = camera->GetPos() + (dir * dist);
-		return CTooltipConsole::MakeGroundString(pos);
-	}
+	if (dist <= range)
+		return CTooltipConsole::MakeGroundString(camera->GetPos() + (dir * dist));
 
 	return "";
 }
@@ -576,62 +611,73 @@ void CMouseHandler::Update()
 {
 	SetCursor(newCursor);
 
-	if (!hide) {
+	if (!hide)
 		return;
-	}
+
+	const int2 screenCenter = globalRendering->GetScreenCenter();
 
 	// Update MiddleClickScrolling
 	scrollx *= 0.5f;
 	scrolly *= 0.5f;
-	lastx = globalRendering->viewSizeX / 2 + globalRendering->viewPosX;
-	lasty = globalRendering->viewSizeY / 2 + globalRendering->viewPosY;
-	if (globalRendering->active) {
-		mouseInput->SetPos(int2(lastx, lasty));
-	}
+	lastx = screenCenter.x;
+	lasty = screenCenter.y;
+
+	if (!globalRendering->active)
+		return;
+
+	mouseInput->SetPos(screenCenter);
 }
 
 
 void CMouseHandler::WarpMouse(int x, int y)
 {
-	if (!locked) {
-		lastx = x + globalRendering->viewPosX;
-		lasty = y + globalRendering->viewPosY;
-		mouseInput->SetPos(int2(lastx, lasty));
-	}
+	if (locked)
+		return;
+
+	lastx = x + globalRendering->viewPosX;
+	lasty = y + globalRendering->viewPosY;
+
+	mouseInput->SetPos(int2(lastx, lasty));
 }
 
 
 void CMouseHandler::ShowMouse()
 {
-	if (hide) {
-		hide = false;
-		cursorText = "none"; // force hardware cursor rebinding (else we have standard b&w cursor)
+	if (!hide)
+		return;
 
-		// I don't use SDL_ShowCursor here 'cos it would cause a flicker with hwCursor
-		// (flicker caused by switching between default cursor and later the really one e.g. `attack`)
-		// instead update state and cursor at the same time
-		if (hardwareCursor) {
-			hwHide = true;
-		} else {
-			SDL_ShowCursor(SDL_DISABLE);
-		}
+	hide = false;
+	cursorText = "none"; // force hardware cursor rebinding (else we have standard b&w cursor)
+
+	// don't use SDL_ShowCursor here, it would cause a flicker with hwCursor
+	// (by switching between default cursor and later the real one, e.g. `attack`)
+	// instead update state and cursor at the same time
+	if (hardwareCursor) {
+		hwHide = true;
+	} else {
+		SDL_ShowCursor(SDL_DISABLE);
 	}
 }
 
 
 void CMouseHandler::HideMouse()
 {
-	if (!hide) {
-		hwHide = true;
-		SDL_ShowCursor(SDL_DISABLE);
-		mouseInput->SetWMMouseCursor(NULL);
-		scrollx = 0.f;
-		scrolly = 0.f;
-		lastx = globalRendering->viewSizeX / 2 + globalRendering->viewPosX;
-		lasty = globalRendering->viewSizeY / 2 + globalRendering->viewPosY;
-		mouseInput->SetPos(int2(lastx, lasty));
-		hide = true;
-	}
+	if (hide)
+		return;
+
+	hwHide = true;
+	SDL_ShowCursor(SDL_DISABLE);
+	mouseInput->SetWMMouseCursor(nullptr);
+
+	const int2 screenCenter = globalRendering->GetScreenCenter();
+
+	scrollx = 0.0f;
+	scrolly = 0.0f;
+	lastx = screenCenter.x;
+	lasty = screenCenter.y;
+
+	mouseInput->SetPos(screenCenter);
+	hide = true;
 }
 
 
@@ -653,7 +699,7 @@ void CMouseHandler::ToggleHwCursor(const bool& enable)
 	if (hardwareCursor) {
 		hwHide = true;
 	} else {
-		mouseInput->SetWMMouseCursor(NULL);
+		mouseInput->SetWMMouseCursor(nullptr);
 		SDL_ShowCursor(SDL_DISABLE);
 	}
 	cursorText = "none";
@@ -662,36 +708,37 @@ void CMouseHandler::ToggleHwCursor(const bool& enable)
 
 /******************************************************************************/
 
-void CMouseHandler::ChangeCursor(const std::string& cmdName, const float& scale)
+void CMouseHandler::ChangeCursor(const std::string& cmdName, const float scale)
 {
 	newCursor = cmdName;
 	cursorScale = scale;
 }
 
 
-void CMouseHandler::SetCursor(const std::string& cmdName, const bool& forceRebind)
+void CMouseHandler::SetCursor(const std::string& cmdName, const bool forceRebind)
 {
-	if ((cursorText == cmdName) && !forceRebind) {
+	if ((cursorText == cmdName) && !forceRebind)
 		return;
-	}
 
 	cursorText = cmdName;
-	map<string, CMouseCursor*>::iterator it = cursorCommandMap.find(cmdName);
+	const auto it = cursorCommandMap.find(cmdName);
+
 	if (it != cursorCommandMap.end()) {
-		currentCursor = it->second;
+		activeCursorIdx = it->second;
 	} else {
-		currentCursor = cursorCommandMap[""];
+		activeCursorIdx = cursorCommandMap[""];
 	}
 
-	if (hardwareCursor && !hide) {
-		if (currentCursor->hwValid) {
-			hwHide = false;
-			currentCursor->BindHwCursor(); // calls SDL_ShowCursor(SDL_ENABLE);
-		} else {
-			hwHide = true;
-			SDL_ShowCursor(SDL_DISABLE);
-			mouseInput->SetWMMouseCursor(NULL);
-		}
+	if (!hardwareCursor || hide)
+		return;
+
+	if (loadedCursors[activeCursorIdx].IsHWValid()) {
+		hwHide = false;
+		loadedCursors[activeCursorIdx].BindHwCursor(); // calls SDL_ShowCursor(SDL_ENABLE);
+	} else {
+		hwHide = true;
+		SDL_ShowCursor(SDL_DISABLE);
+		mouseInput->SetWMMouseCursor(nullptr);
 	}
 }
 
@@ -699,11 +746,8 @@ void CMouseHandler::SetCursor(const std::string& cmdName, const bool& forceRebin
 void CMouseHandler::UpdateCursors()
 {
 	// we update all cursors (for the command queue icons)
-	map<string, CMouseCursor *>::iterator it;
-	for (it = cursorFileMap.begin(); it != cursorFileMap.end(); ++it) {
-		if (it->second != NULL) {
-			it->second->Update();
-		}
+	for (auto it = cursorFileMap.begin(); it != cursorFileMap.end(); ++it) {
+		loadedCursors[it->second].Update();
 	}
 }
 
@@ -758,8 +802,6 @@ void CMouseHandler::DrawScrollCursor()
 			glVertex2f(   0.f,    0.f);
 	glEnd();
 
-	glEnable(GL_POINT_SMOOTH);
-
 	WorkaroundATIPointSizeBug();
 	glPointSize(crossSize * 0.6f);
 	glBegin(GL_POINTS);
@@ -776,14 +818,14 @@ void CMouseHandler::DrawFPSCursor()
 {
 	glDisable(GL_TEXTURE_2D);
 
-	const float wingHalf = fastmath::PI / 9.0f;
+	const float wingHalf = math::PI / 9.0f;
 	const int stepNumHalf = 2;
 	const float step = wingHalf / stepNumHalf;
 
 	glBegin(GL_TRIANGLES);
 		glColor4f(1.0f, 1.0f, 1.0f, 0.5f);
 
-		for (float angle = 0.0f; angle < fastmath::PI2; angle += fastmath::PI2 / 3.f) {
+		for (float angle = 0.0f; angle < math::TWOPI; angle += math::TWOPI / 3.f) {
 			for (int i = -stepNumHalf; i < stepNumHalf; i++) {
 				glVertex2f(0.1f * fastmath::sin(angle),                0.1f * fastmath::cos(angle));
 				glVertex2f(0.8f * fastmath::sin(angle +     i * step), 0.8f * fastmath::cos(angle +     i * step));
@@ -798,9 +840,9 @@ void CMouseHandler::DrawFPSCursor()
 
 void CMouseHandler::DrawCursor()
 {
-	assert(currentCursor);
+	assert(activeCursorIdx != -1);
 
-	if (guihandler)
+	if (guihandler != nullptr)
 		guihandler->DrawCentroidCursor();
 
 	if (locked) {
@@ -828,47 +870,47 @@ void CMouseHandler::DrawCursor()
 	if (hide)
 		return;
 
-	if (hardwareCursor && currentCursor->hwValid)
+	if (hardwareCursor && loadedCursors[activeCursorIdx].IsHWValid())
 		return;
 
 	// draw the 'software' cursor
 	if (cursorScale >= 0.0f) {
-		currentCursor->Draw(lastx, lasty, cursorScale);
+		loadedCursors[activeCursorIdx].Draw(lastx, lasty, cursorScale);
+		return;
 	}
-	else {
-		// hovered minimap, show default cursor and draw `special` cursor scaled-down bottom right of the default one
-		CMouseCursor* nc = cursorFileMap["cursornormal"];
-		if (nc == NULL) {
-			currentCursor->Draw(lastx, lasty, -cursorScale);
-		}
-		else {
-			nc->Draw(lastx, lasty, 1.0f);
-			if (currentCursor != nc) {
-				currentCursor->Draw(lastx + nc->GetMaxSizeX(),
-				                    lasty + nc->GetMaxSizeY(), -cursorScale);
-			}
-		}
+
+	// hovered minimap, show default cursor and draw `special` cursor scaled-down bottom right of the default one
+	const size_t normalCursorIndex = cursorFileMap["cursornormal"];
+
+	if (normalCursorIndex == 0) {
+		loadedCursors[activeCursorIdx].Draw(lastx, lasty, -cursorScale);
+		return;
 	}
+
+	CMouseCursor& normalCursor = loadedCursors[normalCursorIndex];
+	normalCursor.Draw(lastx, lasty, 1.0f);
+
+	if (activeCursorIdx == normalCursorIndex)
+		return;
+
+	loadedCursors[activeCursorIdx].Draw(lastx + normalCursor.GetMaxSizeX(), lasty + normalCursor.GetMaxSizeY(), -cursorScale);
 }
 
 
-bool CMouseHandler::AssignMouseCursor(const std::string& cmdName,
-                                      const std::string& fileName,
-                                      CMouseCursor::HotSpot hotSpot,
-                                      bool overwrite)
-{
-	std::map<std::string, CMouseCursor*>::iterator cmdIt;
-	std::map<std::string, CMouseCursor*>::iterator fileIt;
-
-	cmdIt = cursorCommandMap.find(cmdName);
-	fileIt = cursorFileMap.find(fileName);
+bool CMouseHandler::AssignMouseCursor(
+	const std::string& cmdName,
+	const std::string& fileName,
+	CMouseCursor::HotSpot hotSpot,
+	bool overwrite
+) {
+	const auto cmdIt = cursorCommandMap.find(cmdName);
+	const auto fileIt = cursorFileMap.find(fileName);
 
 	const bool haveCmd = (cmdIt != cursorCommandMap.end());
 	const bool haveFile = (fileIt != cursorFileMap.end());
 
-	if (haveCmd && !overwrite) {
+	if (haveCmd && !overwrite)
 		return false; // already assigned
-	}
 
 	if (haveFile) {
 		// cursor is already loaded, reuse it
@@ -876,82 +918,49 @@ bool CMouseHandler::AssignMouseCursor(const std::string& cmdName,
 		return true;
 	}
 
-	CMouseCursor* oldCursor = haveCmd ? cmdIt->second : NULL;
-	CMouseCursor* newCursor = CMouseCursor::New(fileName, hotSpot);
+	CMouseCursor newCursor = std::move(CMouseCursor::New(fileName, hotSpot));
 
-	if (newCursor == NULL) {
-		return false; // invalid cursor
-	}
-
-	cursorFileMap[fileName] = newCursor;
-
-	// assign the new cursor
-	cursorCommandMap[cmdName] = newCursor;
-
-	SafeDeleteCursor(oldCursor);
-	return true;
-}
-
-
-bool CMouseHandler::ReplaceMouseCursor(const string& oldName,
-                                       const string& newName,
-                                       CMouseCursor::HotSpot hotSpot)
-{
-	std::map<std::string, CMouseCursor*>::iterator fileIt;
-	fileIt = cursorFileMap.find(oldName);
-	if (fileIt == cursorFileMap.end()) {
+	if (!newCursor.IsValid())
 		return false;
-	}
 
-	CMouseCursor* newCursor = CMouseCursor::New(newName, hotSpot);
-	if (newCursor == NULL) {
-		return false; // leave the old one
-	}
+	const int commandCursorIdx = haveCmd? cmdIt->second: -1;
 
-	CMouseCursor* oldCursor = fileIt->second;
+	// assign the new cursor and remap indices
+	loadedCursors.emplace_back();
+	loadedCursors.back() = std::move(newCursor);
 
-	std::map<std::string, CMouseCursor*>& cmdMap = cursorCommandMap;
-	std::map<std::string, CMouseCursor*>::iterator cmdIt;
-	for (cmdIt = cmdMap.begin(); cmdIt != cmdMap.end(); ++cmdIt) {
-		if (cmdIt->second == oldCursor) {
-			cmdIt->second = newCursor;
-		}
-	}
+	cursorFileMap[fileName] = loadedCursors.size() - 1;
+	cursorCommandMap[cmdName] = loadedCursors.size() - 1;
 
-	fileIt->second = newCursor;
+	// switch to the null-cursor if our active one is being (re)assigned
+	if (activeCursorIdx == commandCursorIdx)
+		SetCursor("none", true);
 
-	if (currentCursor == oldCursor) {
-		SetCursor(cursorText, true);
-	}
-
-	delete oldCursor;
 	return true;
 }
 
+bool CMouseHandler::ReplaceMouseCursor(
+	const string& oldName,
+	const string& newName,
+	CMouseCursor::HotSpot hotSpot
+) {
+	const auto fileIt = cursorFileMap.find(oldName);
 
-void CMouseHandler::SafeDeleteCursor(CMouseCursor* cursor)
-{
-	std::map<std::string, CMouseCursor*>::iterator it;
+	if (fileIt == cursorFileMap.end())
+		return false;
 
-	for (it = cursorCommandMap.begin(); it != cursorCommandMap.end(); ++it) {
-		if (it->second == cursor) {
-			return; // being used, can't delete
-		}
-	}
+	CMouseCursor newCursor = std::move(CMouseCursor::New(newName, hotSpot));
 
-	for (it = cursorFileMap.begin(); it != cursorFileMap.end(); ) {
-		if (it->second == cursor) {
-			it = cursorFileMap.erase(it);
-		} else {
-			++it;
-		}
-	}
+	if (!newCursor.IsValid())
+		return false; // leave the old one
 
-	if (currentCursor == cursor) {
-		SetCursor("none", true);
-	}
+	loadedCursors[fileIt->second] = std::move(newCursor);
 
-	delete cursor;
+	// update current cursor if necessary
+	if (activeCursorIdx == fileIt->second)
+		SetCursor(cursorText, true);
+
+	return true;
 }
 
 
@@ -959,7 +968,6 @@ void CMouseHandler::SafeDeleteCursor(CMouseCursor* cursor)
 
 void CMouseHandler::ConfigNotify(const std::string& key, const std::string& value)
 {
-	if (key == "MouseDragScrollThreshold") {
-		dragScrollThreshold = atof(value.c_str());
-	}
+	dragScrollThreshold = configHandler->GetFloat("MouseDragScrollThreshold");
+	scrollWheelSpeed = configHandler->GetFloat("ScrollWheelSpeed");
 }

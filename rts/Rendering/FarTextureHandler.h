@@ -26,9 +26,11 @@ public:
 private:
 	bool HaveFarIcon(const CSolidObject* obj) const;
 	bool CheckResizeAtlas();
+
 	float2 GetTextureCoords(const int farTextureNum, const int orientation) const;
-	void DrawFarTexture(const CSolidObject* obj, CVertexArray*);
 	int2 GetTextureCoordsInt(const int farTextureNum, const int orientation) const;
+
+	void DrawFarTexture(const CSolidObject* obj, CVertexArray*);
 	void CreateFarTexture(const CSolidObject* obj);
 
 private:
@@ -42,7 +44,8 @@ private:
 		float3 texOffset;
 	};
 
-	std::vector<const CSolidObject*> drawQueue;
+	std::vector<const CSolidObject*> renderQueue;
+	std::vector<const CSolidObject*> createQueue;
 	std::vector< std::vector<CachedIcon> > iconCache;
 
 	FBO fbo;

@@ -98,4 +98,9 @@ int GetWindowState(SDL_Window* window)
 	return flags;
 }
 
+void SetWindowResizable(SDL_Window* window, bool resizable)
+{
+	// Probably not needed
+}
+
 }; // namespace WindowManagerHelper

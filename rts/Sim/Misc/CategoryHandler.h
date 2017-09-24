@@ -5,11 +5,12 @@
 
 #include <string>
 #include <vector>
-#include <map>
-#include <boost/noncopyable.hpp>
+
+#include "System/UnorderedMap.hpp"
+#include "System/Misc/NonCopyable.h"
 #include "System/creg/creg_cond.h"
 
-class CCategoryHandler : public boost::noncopyable
+class CCategoryHandler : public spring::noncopyable
 {
 	CR_DECLARE_STRUCT(CCategoryHandler)
 
@@ -51,7 +52,7 @@ private:
 private:
 	static CCategoryHandler* instance;
 
-	std::map<std::string, unsigned int> categories;
+	spring::unordered_map<std::string, unsigned int> categories;
 	unsigned int firstUnused;
 };
 

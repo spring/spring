@@ -94,6 +94,7 @@ class LuaSyncedCtrl
 		static int SetUnitCollisionVolumeData(lua_State* L);
 		static int SetUnitPieceCollisionVolumeData(lua_State* L);
 		static int SetUnitPieceParent(lua_State* L);
+		static int SetUnitPieceMatrix(lua_State* L);
 		static int SetUnitSensorRadius(lua_State* L);
 		static int SetUnitPosErrorParams(lua_State* L);
 
@@ -117,7 +118,9 @@ class LuaSyncedCtrl
 
 		static int SetFeatureAlwaysVisible(lua_State* L);
 		static int SetFeatureHealth(lua_State* L);
+		static int SetFeatureMaxHealth(lua_State* L);
 		static int SetFeatureReclaim(lua_State* L);
+		static int SetFeatureResources(lua_State* L);
 		static int SetFeatureResurrect(lua_State* L);
 
 		static int SetFeatureMoveCtrl(lua_State* L);
@@ -183,7 +186,9 @@ class LuaSyncedCtrl
 
 		static int SpawnProjectile(lua_State* L);
 		static int DeleteProjectile(lua_State* L);
+		static int SpawnExplosion(lua_State* L);
 		static int SpawnCEG(lua_State* L);
+		static int SpawnSFX(lua_State* L);
 
 		// LuaRules  (fullCtrl)
 		static int EditUnitCmdDesc(lua_State* L);

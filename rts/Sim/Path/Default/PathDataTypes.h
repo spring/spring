@@ -9,7 +9,7 @@
 
 #include "PathConstants.h"
 #include "System/type2.h"
-#include <boost/cstdint.hpp>
+#include <cinttypes>
 
 /// represents either a single square (PF) or a block of squares (PE)
 struct PathNode {
@@ -35,18 +35,14 @@ struct PathNode {
 /// functor to define node priority
 struct lessCost: public std::binary_function<PathNode*, PathNode*, bool> {
 	inline bool operator() (const PathNode* x, const PathNode* y) const {
-		return (x->fCost > y->fCost);
+		return (x->fCost == y->fCost) ? (x->gCost < y->gCost) : (x->fCost > y->fCost);
 	}
 };
 
 
 struct PathNodeBuffer {
 public:
-	PathNodeBuffer(): idx(0) {
-		for (int i = 0; i < MAX_SEARCHED_NODES; ++i) {
-			buffer[i] = PathNode();
-		}
-	}
+	PathNodeBuffer(): idx(0) {}
 
 	void SetSize(unsigned int i) { idx = i; }
 	unsigned int GetSize() const { return idx; }
@@ -63,52 +59,113 @@ private:
 
 
 struct PathNodeStateBuffer {
-	PathNodeStateBuffer(const int2& bufRes, const int2& mapRes)
-		: extraCostsOverlaySynced(NULL)
-		, extraCostsOverlayUnsynced(NULL)
-		, ps(mapRes / bufRes)
-		, br(bufRes)
-		, mr(mapRes)
-	{
+	PathNodeStateBuffer() {
+		#if !defined(_MSC_FULL_VER) || _MSC_FULL_VER > 180040000 // ensure that ::max() is constexpr
+		static_assert(PATHOPT_SIZE <= std::numeric_limits<std::uint8_t>::max(), "nodeMask basic type too small to hold PATHOPT bitmask");
+		#endif
+
+		Clear();
+	}
+
+	PathNodeStateBuffer(const PathNodeStateBuffer& pnsb) = delete;
+	PathNodeStateBuffer(PathNodeStateBuffer&& pnsb) { *this = std::move(pnsb); }
+
+	PathNodeStateBuffer& operator = (const PathNodeStateBuffer& pnsb) = delete;
+	PathNodeStateBuffer& operator = (PathNodeStateBuffer&& pnsb) {
+		fCost = std::move(pnsb.fCost);
+		gCost = std::move(pnsb.gCost);
+
+		nodeMask = std::move(pnsb.nodeMask);
+		peNodeOffsets = std::move(pnsb.peNodeOffsets);
+
+		extraCosts[ true] = std::move(pnsb.extraCosts[ true]);
+		extraCosts[false] = std::move(pnsb.extraCosts[false]);
+
+		extraCostsOverlay[ true] = pnsb.extraCostsOverlay[ true];
+		extraCostsOverlay[false] = pnsb.extraCostsOverlay[false];
+
+		pnsb.extraCostsOverlay[ true] = nullptr;
+		pnsb.extraCostsOverlay[false] = nullptr;
+
+		maxCosts[NODE_COST_F] = pnsb.maxCosts[NODE_COST_F];
+		maxCosts[NODE_COST_G] = pnsb.maxCosts[NODE_COST_G];
+		maxCosts[NODE_COST_H] = pnsb.maxCosts[NODE_COST_H];
+
+		ps = pnsb.ps;
+		br = pnsb.br;
+		mr = pnsb.mr;
+
+		er[ true] = pnsb.er[ true];
+		er[false] = pnsb.er[false];
+		return *this;
+	}
+
+
+	unsigned int GetSize() const { return fCost.size(); }
+
+	void Resize(const int2& bufRes, const int2& mapRes) {
+		ps = mapRes / bufRes;
+		br = bufRes;
+		mr = mapRes;
+
 		fCost.resize(br.x * br.y, PATHCOST_INFINITY);
 		gCost.resize(br.x * br.y, PATHCOST_INFINITY);
 		nodeMask.resize(br.x * br.y, 0);
 
-		// create on-demand
-		//extraCostSynced.resize(br.x * br.y, 0.0f);
-		//extraCostUnsynced.resize(br.x * br.y, 0.0f);
+		// created on-demand
+		// extraCosts[ true].resize(br.x * br.y, 0.0f);
+		// extraCosts[false].resize(br.x * br.y, 0.0f);
 
-		// Note: Full resolution buffer does not need those!
-		if (bufRes != mapRes) {
-			//peNodeOffsets.resize(); is done in PathEstimator
-		}
+		#if 0
+		// is done in PathEstimator, PF does not need these
+		if (bufRes != mapRes)
+			peNodeOffsets.resize(numPathTypes);
+		#endif
+	}
+
+	void Clear() {
+		fCost.clear();
+		gCost.clear();
+
+		nodeMask.clear();
+		peNodeOffsets.clear();
+
+		extraCosts[ true].clear();
+		extraCosts[false].clear();
+
+		extraCostsOverlay[ true] = nullptr;
+		extraCostsOverlay[false] = nullptr;
 
 		maxCosts[NODE_COST_F] = 0.0f;
 		maxCosts[NODE_COST_G] = 0.0f;
 		maxCosts[NODE_COST_H] = 0.0f;
-	}
 
-	unsigned int GetSize() const { return fCost.size(); }
+		ps        = {0, 0};
+		br        = {0, 0};
+		mr        = {0, 0};
+		er[ true] = {1, 1};
+		er[false] = {1, 1};
+	}
 
 	void ClearSquare(int idx) {
-		//assert(idx>=0 && idx<fCost.size());
+		// assert(idx >= 0 && idx < fCost.size());
 		fCost[idx] = PATHCOST_INFINITY;
 		gCost[idx] = PATHCOST_INFINITY;
-		nodeMask[idx] &= PATHOPT_OBSOLETE; // clear all except PATHOPT_OBSOLETE
+		// clear all bits except PATHOPT_OBSOLETE
+		nodeMask[idx] &= PATHOPT_OBSOLETE;
 	}
-	
+
 
 	/// size of the memory-region we hold allocated (excluding sizeof(*this))
 	unsigned int GetMemFootPrint() const {
 		unsigned int memFootPrint = 0;
 
-		if (!peNodeOffsets.empty()) {
+		if (!peNodeOffsets.empty())
 			memFootPrint += (peNodeOffsets.size() * (sizeof(std::vector<short2>) + peNodeOffsets[0].size() * sizeof(short2)));
-		}
 
-		memFootPrint += (nodeMask.size() * sizeof(boost::uint8_t));
+		memFootPrint += (nodeMask.size() * sizeof(std::uint8_t));
 		memFootPrint += ((fCost.size() + gCost.size()) * sizeof(float));
-		memFootPrint += ((extraCostSynced.size() + extraCostUnsynced.size()) * sizeof(float));
+		memFootPrint += ((extraCosts[true].size() + extraCosts[false].size()) * sizeof(float));
 
 		return memFootPrint;
 	}
@@ -118,61 +175,40 @@ struct PathNodeStateBuffer {
 
 	/// {@param xhm} and {@param zhm} are always passed in heightmap-coordinates
 	float GetNodeExtraCost(unsigned int xhm, unsigned int zhm, bool synced) const {
-		float c = 0.0f;
+		// downsample-factor
+		const int2 dsf = {mr.x / er[synced].x, mr.y / er[synced].y};
 
-		if (synced) {
-			if (extraCostsOverlaySynced != NULL) {
-				// (mr / sr) is the synced downsample-factor
-				c = extraCostsOverlaySynced[ (zhm / (mr.y / sr.y)) * sr.x  +  (xhm / (mr.x / sr.x)) ];
-			} else if (!extraCostSynced.empty()) {
-				c = extraCostSynced[ (zhm / ps.y) * br.x  +  (xhm / ps.x) ];
-			}
-		} else {
-			if (extraCostsOverlayUnsynced != NULL) {
-				// (mr / ur) is the unsynced downsample-factor
-				c = extraCostsOverlayUnsynced[ (zhm / (mr.y / ur.y)) * ur.x  +  (xhm / (mr.x / ur.x)) ];
-			} else if (!extraCostUnsynced.empty()) {
-				c = extraCostUnsynced[ (zhm / ps.y) * br.x  +  (xhm / ps.x) ];
-			}
-		}
+		const float* eco = nullptr;
+		const float* ecd = nullptr;
 
-		return c;
+		if ((eco = extraCostsOverlay[synced]) != nullptr)
+			return eco[ (zhm / dsf.y) * er[synced].x  +  (xhm / dsf.x) ];
+
+		// null if vector is empty
+		if ((ecd = extraCosts[synced].data()) != nullptr)
+			return ecd[ (zhm / ps.y) * br.x  +  (xhm / ps.x) ];
+
+		return 0.0f;
 	}
 
 	const float* GetNodeExtraCosts(bool synced) const {
-		if (synced) {
-			return extraCostsOverlaySynced;
-		} else {
-			return extraCostsOverlayUnsynced;
-		}
+		return extraCostsOverlay[synced];
 	}
 
 	void SetNodeExtraCost(unsigned int xhm, unsigned int zhm, float cost, bool synced) {
-		if (synced) {
-			if (extraCostSynced.empty())
-				extraCostSynced.resize(br.x * br.y, 0.0f); // alloc on-demand
+		auto& ecv = extraCosts[synced];
 
-			extraCostSynced[ (zhm / ps.y) * br.x  +  (xhm / ps.x) ] = cost;
-		} else {
-			if (extraCostUnsynced.empty())
-				extraCostUnsynced.resize(br.x * br.y, 0.0f); // alloc on-demand
+		if (ecv.empty())
+			ecv.resize(br.x * br.y, 0.0f); // alloc on-demand
 
-			extraCostUnsynced[ (zhm / ps.y) * br.x  +  (xhm / ps.x) ] = cost;
-		}
+		ecv[ (zhm / ps.y) * br.x  +  (xhm / ps.x) ] = cost;
 	}
 
 	void SetNodeExtraCosts(const float* costs, unsigned int sx, unsigned int sz, bool synced) {
-		if (synced) {
-			extraCostsOverlaySynced = costs;
+		extraCostsOverlay[synced] = costs;
 
-			sr.x = sx;
-			sr.y = sz;
-		} else {
-			extraCostsOverlayUnsynced = costs;
-
-			ur.x = sx;
-			ur.y = sz;
-		}
+		er[synced].x = sx;
+		er[synced].y = sz;
 	}
 
 public:
@@ -180,13 +216,10 @@ public:
 	std::vector<float> gCost;
 
 	/// bitmask of PATHOPT_{OPEN, ..., OBSOLETE} flags
-	std::vector<boost::uint8_t> nodeMask;
-#if !defined(_MSC_FULL_VER) || _MSC_FULL_VER > 180040000 // ensure that ::max() is constexpr
-	static_assert(PATHOPT_SIZE <= std::numeric_limits<boost::uint8_t>::max(), "nodeMask basic type to small to hold bitmask of PATHOPT");
-#endif
-	/// for the PE, maintains an array of the
-	/// best accessible offset (from its own center
-	/// position)
+	std::vector<std::uint8_t> nodeMask;
+
+	/// for the PE, maintains an array of the best accessible
+	/// offset (from a block's center position) per path-type
 	/// peNodeOffsets[pathType][blockIdx]
 	std::vector< std::vector<short2> > peNodeOffsets;
 
@@ -194,30 +227,29 @@ private:
 	// overlay-cost modifiers for nodes (when non-zero, these
 	// modify the behavior of GetPath() and GetNextWaypoint())
 	//
-	// <extraCostUnsynced> may not be read in synced context,
+	// <extraCosts[false]> may not be read in synced context,
 	// because AI's and unsynced Lua have write-access to it
-	// <extraCostSynced> may not be written in unsynced context
+	// <extraCosts[true]> may not be written in any unsynced
+	// context
 	//
 	// NOTE: if more than one local AI instance is active,
 	// each must undo its changes or they will be visible
 	// to the other AI's
-	// NOTE: don't make public cause we create those on-demand
-	std::vector<float> extraCostSynced;
-	std::vector<float> extraCostUnsynced;
+	// NOTE: not public, created on-demand
+	std::vector<float> extraCosts[2];
 
-	// if non-NULL, these override PathNodeState::extraCost{Synced, Unsynced}
-	// (NOTE: they can have arbitrary resolutions between 1 and mapDims.map{x,y})
-	const float* extraCostsOverlaySynced;
-	const float* extraCostsOverlayUnsynced;
+	// if non-NULL, these override the respective extraCosts vector
+	// (note that they can have arbitrary resolutions between 1 and
+	// mapDims.map{x,y})
+	const float* extraCostsOverlay[2];
 
 private:
-	float maxCosts[3];
+	float3 maxCosts;
 
-	int2 ps; ///< patch size (eg. 1 for PF, BLOCK_SIZE for PE); ignored when extraCosts != NULL
-	int2 br; ///< buffer resolution (equal to mr / ps); ignored when extraCosts != NULL
-	int2 mr; ///< heightmap resolution (equal to mapDims.map{x,y})
-	int2 sr; ///< extraCostsSynced resolution
-	int2 ur; ///< extraCostsUnsynced resolution
+	int2 ps;    ///< patch size (eg. 1 for PF, BLOCK_SIZE for PE); ignored when extraCosts != NULL
+	int2 br;    ///< buffer resolution (equal to mr / ps); ignored when extraCosts != NULL
+	int2 mr;    ///< heightmap resolution (equal to mapDims.map{x,y})
+	int2 er[2]; ///< extraCosts resolution
 };
 
 
@@ -233,7 +265,7 @@ public:
 	typedef const PathNode* const_reference;
 	typedef const PathNode* const* const_iterator;
 
-	// gcc 4.3 requires concepts, so provide them
+		// gcc 4.3 requires concepts, so provide them
 		value_type& operator [] (size_type idx) { return buf[idx]; }
 		const value_type& operator [] (size_type idx) const { return buf[idx]; }
 

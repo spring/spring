@@ -3,18 +3,19 @@
 #ifndef PATHESTIMATOR_H
 #define PATHESTIMATOR_H
 
+#include <atomic>
+#include <cinttypes>
+#include <deque>
 #include <string>
 #include <vector>
-#include <deque>
 
 #include "IPath.h"
 #include "IPathFinder.h"
 #include "PathConstants.h"
 #include "PathDataTypes.h"
 #include "System/float3.h"
+#include "System/Threading/SpringThreading.h"
 
-#include <boost/detail/atomic_count.hpp>
-#include <boost/cstdint.hpp>
 
 struct MoveDef;
 class CPathFinder;
@@ -22,12 +23,6 @@ class CPathEstimatorDef;
 class CPathFinderDef;
 class CPathCache;
 class CSolidObject;
-
-
-namespace boost {
-	class thread;
-	class barrier;
-}
 
 class CPathEstimator: public IPathFinder {
 public:
@@ -62,16 +57,21 @@ public:
 	 */
 	void Update();
 
+	IPathFinder* GetParent() override { return parentPathFinder; }
+
 	/**
 	 * Returns a checksum that can be used to check if every player has the same
 	 * path data.
 	 */
-	boost::uint32_t GetPathChecksum() const { return pathChecksum; }
+	std::uint32_t GetPathChecksum() const { return pathChecksum; }
 
 	static const int2* GetDirectionVectorsTable();
 
 protected: // IPathFinder impl
+	IPath::SearchResult DoBlockSearch(const CSolidObject* owner, const MoveDef& moveDef, const int2 s, const int2 g);
+	IPath::SearchResult DoBlockSearch(const CSolidObject* owner, const MoveDef& moveDef, const float3 sw, const float3 gw);
 	IPath::SearchResult DoSearch(const MoveDef&, const CPathFinderDef&, const CSolidObject* owner);
+
 	bool TestBlock(
 		const MoveDef& moveDef,
 		const CPathFinderDef& pfDef,
@@ -79,10 +79,11 @@ protected: // IPathFinder impl
 		const CSolidObject* owner,
 		const unsigned int pathOptDir,
 		const unsigned int blockStatus,
-		float speedMod);
-	IPath::SearchResult FinishSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, IPath::Path& path) const;
+		float speedMod
+	);
+	void FinishSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, IPath::Path& path) const;
 
-	const CPathCache::CacheItem* GetCache(
+	const CPathCache::CacheItem& GetCache(
 		const int2 strtBlock,
 		const int2 goalBlock,
 		float goalRadius,
@@ -101,21 +102,22 @@ protected: // IPathFinder impl
 	);
 
 private:
-	void InitEstimator(const std::string& cacheFileName, const std::string& map);
+	void InitEstimator(const std::string& cacheFileName, const std::string& mapName);
 	void InitBlocks();
 
-	void CalcOffsetsAndPathCosts(unsigned int threadNum);
+	void CalcOffsetsAndPathCosts(unsigned int threadNum, spring::barrier* pathBarrier);
 	void CalculateBlockOffsets(unsigned int, unsigned int);
 	void EstimatePathCosts(unsigned int, unsigned int);
 
-	int2 FindOffset(const MoveDef&, unsigned int, unsigned int) const;
-	void CalculateVertices(const MoveDef&, int2, unsigned int threadNum = 0);
-	void CalculateVertex(const MoveDef&, int2, unsigned int, unsigned int threadNum = 0);
+	int2 FindBlockPosOffset(const MoveDef&, unsigned int, unsigned int) const;
+	void CalcVertexPathCosts(const MoveDef&, int2, unsigned int threadNum = 0);
+	void CalcVertexPathCost(const MoveDef&, int2, unsigned int pathDir, unsigned int threadNum = 0);
 
-	bool ReadFile(const std::string& cacheFileName, const std::string& map);
-	void WriteFile(const std::string& cacheFileName, const std::string& map);
-	boost::uint32_t CalcChecksum() const;
-	unsigned int Hash() const;
+	bool ReadFile(const std::string& baseFileName, const std::string& mapName);
+	void WriteFile(const std::string& baseFileName, const std::string& mapName);
+
+	std::uint32_t CalcChecksum() const;
+	std::uint32_t CalcHash(const char* caller) const;
 
 private:
 	friend class CPathManager;
@@ -126,22 +128,23 @@ private:
 	unsigned int nextOffsetMessageIdx;
 	unsigned int nextCostMessageIdx;
 
-	boost::uint32_t pathChecksum;               ///< currently crc from the zip
+	std::uint32_t pathChecksum;
+	std::uint32_t fileHashCode;
 
-	boost::detail::atomic_count offsetBlockNum;
-	boost::detail::atomic_count costBlockNum;
-	boost::barrier* pathBarrier;
+	std::atomic<std::int64_t> offsetBlockNum;
+	std::atomic<std::int64_t> costBlockNum;
 
-	IPathFinder* pathFinder;
-	CPathCache* pathCache[2];                   /// [0] = !synced, [1] = synced
+	IPathFinder* parentPathFinder; // parent (PF if BLOCK_SIZE is 16, PE[16] if 32)
+	CPathEstimator* nextPathEstimator; // next lower-resolution estimator
+	CPathCache* pathCache[2]; // [0] = !synced, [1] = synced
 
-	std::vector<IPathFinder*> pathFinders;
-	std::vector<boost::thread*> threads;
+	std::vector<IPathFinder*> pathFinders; // InitEstimator helpers
+	std::vector<spring::thread> threads;
 
-	CPathEstimator* nextPathEstimator;
-
-	std::vector<float> vertexCosts;	
-	std::deque<int2> updatedBlocks;       /// Blocks that may need an update due to map changes.
+	std::vector<float> maxSpeedMods;
+	std::vector<float> vertexCosts;
+	/// blocks that may need an update due to map changes
+	std::deque<int2> updatedBlocks;
 
 	int blockUpdatePenalty;
 
@@ -150,6 +153,13 @@ private:
 		int2 offset;
 		SOffsetBlock(const float _cost, const int x, const int y) : cost(_cost), offset(x,y) {}
 	};
+	struct SingleBlock {
+		int2 blockPos;
+		const MoveDef* moveDef;
+		SingleBlock(const int2& pos, const MoveDef* md) : blockPos(pos), moveDef(md) {}
+	};
+
+	std::vector<SingleBlock> consumedBlocks;
 	std::vector<SOffsetBlock> offsetBlocksSortedByCost;
 };
 

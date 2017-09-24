@@ -7,7 +7,7 @@
 #include "SDL_keycode.h"
 #include "System/Log/ILog.h"
 #include "System/Platform/SDL1_keysym.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 
 CKeyCodes* keyCodes = NULL;
 

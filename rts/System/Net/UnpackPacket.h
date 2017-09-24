@@ -9,7 +9,7 @@
 #include <vector>
 #include <cstring>
 #include <stdexcept>
-#include <boost/shared_ptr.hpp>
+#include <memory>
 
 namespace netcode
 {
@@ -22,7 +22,7 @@ public:
 class UnpackPacket
 {
 public:
-	UnpackPacket(boost::shared_ptr<const RawPacket>, size_t skipBytes = 0);
+	UnpackPacket(std::shared_ptr<const RawPacket>, size_t skipBytes = 0);
 
 	template <typename T>
 	void operator>>(T& t)
@@ -61,7 +61,7 @@ public:
 	}
 
 private:
-	boost::shared_ptr<const RawPacket> pckt;
+	std::shared_ptr<const RawPacket> pckt;
 	size_t pos;
 };
 

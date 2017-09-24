@@ -24,7 +24,7 @@ class CBaseGroundDrawer
 {
 public:
 	CBaseGroundDrawer();
-	virtual ~CBaseGroundDrawer();
+	virtual ~CBaseGroundDrawer() {}
 	CBaseGroundDrawer(const CBaseGroundDrawer&) = delete; // no-copy
 
 	virtual void Draw(const DrawPass::e& drawPass) = 0;
@@ -49,8 +49,6 @@ public:
 	virtual const GL::GeometryBuffer* GetGeometryBuffer() const { return nullptr; }
 	virtual       GL::GeometryBuffer* GetGeometryBuffer()       { return nullptr; }
 
-	void DrawTrees(bool drawReflection = false) const;
-
 	bool DrawForward() const { return drawForward; }
 	bool DrawDeferred() const { return drawDeferred; }
 
@@ -66,6 +64,9 @@ public:
 	float LODScaleReflection;
 	float LODScaleRefraction;
 	float LODScaleTerrainReflection;
+
+	float spPolygonOffsetScale = 10.0f;
+	float spPolygonOffsetUnits = 10000.0f;
 
 	int jamColor[3];
 	int losColor[3];

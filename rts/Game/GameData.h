@@ -5,8 +5,8 @@
 
 #include <string>
 #include <vector>
-#include <boost/shared_ptr.hpp>
-#include <boost/cstdint.hpp>
+#include <cinttypes>
+#include <memory>
 
 namespace netcode {
 	class RawPacket;
@@ -17,15 +17,15 @@ class GameData
 public:
 	GameData();
 	GameData(const std::string& setup);
-	GameData(boost::shared_ptr<const netcode::RawPacket> pckt);
-	
+	GameData(std::shared_ptr<const netcode::RawPacket> pckt);
+
 	const netcode::RawPacket* Pack() const;
-	
+
 	void SetSetupText(const std::string& newSetup);
 	void SetMapChecksum(const unsigned checksum);
 	void SetModChecksum(const unsigned checksum);
 	void SetRandomSeed(const unsigned seed);
-	
+
 	const std::string& GetSetupText() const { return setupText; }
 	unsigned GetMapChecksum() const { return mapChecksum; }
 	unsigned GetModChecksum() const { return modChecksum; }
@@ -36,7 +36,7 @@ private:
 	// possible modifications by PreGame or GameServer
 	std::string setupText;
 
-	mutable std::vector<boost::uint8_t> compressed;
+	mutable std::vector<std::uint8_t> compressed;
 
 	unsigned mapChecksum;
 	unsigned modChecksum;

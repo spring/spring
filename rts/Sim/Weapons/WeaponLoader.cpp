@@ -1,6 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "WeaponLoader.h"
+#include "WeaponMemPool.h"
 #include "WeaponDef.h"
 #include "BeamLaser.h"
 #include "BombDropper.h"
@@ -18,20 +19,17 @@
 #include "StarburstLauncher.h"
 #include "TorpedoLauncher.h"
 
-#include "Game/TraceRay.h"
+#include "Game/TraceRay.h" // Collision::*
 #include "Sim/Misc/DamageArray.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
-#include "System/Exceptions.h"
-#include "System/Util.h"
 #include "System/Log/ILog.h"
 
-CWeaponLoader* CWeaponLoader::GetInstance()
-{
-	static CWeaponLoader instance;
-	return &instance;
-}
+WeaponMemPool weaponMemPool;
+
+void CWeaponLoader::InitStatic() { weaponMemPool.reserve(128); }
+void CWeaponLoader::KillStatic() { weaponMemPool.clear(); }
 
 
 
@@ -39,73 +37,95 @@ void CWeaponLoader::LoadWeapons(CUnit* unit)
 {
 	const UnitDef* unitDef = unit->unitDef;
 
-	      std::vector<CWeapon*>& weapons = unit->weapons;
-	const std::vector<UnitDefWeapon>& defWeapons = unitDef->weapons;
+	unit->weapons.reserve(unitDef->weapons.size());
 
-	weapons.reserve(defWeapons.size());
+	for (const UnitDefWeapon& defWeapon: unitDef->weapons) {
+		CWeapon* weapon = LoadWeapon(unit, defWeapon.def);
 
-	for (const UnitDefWeapon& defWeapon: defWeapons) {
-		CWeapon* weapon = LoadWeapon(unit, &defWeapon);
-		weapons.push_back(InitWeapon(unit, weapon, &defWeapon));
-		unit->maxRange = std::max(weapon->range, unit->maxRange);
+		weapon->SetWeaponNum(unit->weapons.size());
+		unit->weapons.push_back(weapon);
 	}
 }
 
-
-
-CWeapon* CWeaponLoader::LoadWeapon(CUnit* owner, const UnitDefWeapon* defWeapon)
+void CWeaponLoader::InitWeapons(CUnit* unit)
 {
-	CWeapon* weapon = NULL;
+	const UnitDef* unitDef = unit->unitDef;
 
-	const WeaponDef* weaponDef = defWeapon->def;
-	const std::string& weaponType = weaponDef->type;
-
-	if (StringToLower(weaponDef->name) == "noweapon") {
-		weapon = new CNoWeapon(owner, weaponDef);
-	} else if (weaponType == "Cannon") {
-		weapon = new CCannon(owner, weaponDef);
-	} else if (weaponType == "Rifle") {
-		weapon = new CRifle(owner, weaponDef);
-	} else if (weaponType == "Melee") {
-		weapon = new CMeleeWeapon(owner, weaponDef);
-	} else if (weaponType == "Shield") {
-		weapon = new CPlasmaRepulser(owner, weaponDef);
-	} else if (weaponType == "Flame") {
-		weapon = new CFlameThrower(owner, weaponDef);
-	} else if (weaponType == "MissileLauncher") {
-		weapon = new CMissileLauncher(owner, weaponDef);
-	} else if (weaponType == "AircraftBomb") {
-		weapon = new CBombDropper(owner, weaponDef, false);
-	} else if (weaponType == "TorpedoLauncher") {
-		if (owner->unitDef->canfly && !weaponDef->submissile) {
-			weapon = new CBombDropper(owner, weaponDef, true);
-		} else {
-			weapon = new CTorpedoLauncher(owner, weaponDef);
-		}
-	} else if (weaponType == "LaserCannon") {
-		weapon = new CLaserCannon(owner, weaponDef);
-	} else if (weaponType == "BeamLaser") {
-		weapon = new CBeamLaser(owner, weaponDef);
-	} else if (weaponType == "LightningCannon") {
-		weapon = new CLightningCannon(owner, weaponDef);
-	} else if (weaponType == "EmgCannon") {
-		weapon = new CEmgCannon(owner, weaponDef);
-	} else if (weaponType == "DGun") {
-		// NOTE: no special connection to UnitDef::canManualFire
-		// (any type of weapon may be slaved to the button which
-		// controls manual firing) or the CMD_MANUALFIRE command
-		weapon = new CDGunWeapon(owner, weaponDef);
-	} else if (weaponType == "StarburstLauncher") {
-		weapon = new CStarburstLauncher(owner, weaponDef);
-	} else {
-		weapon = new CNoWeapon(owner, weaponDef);
-		LOG_L(L_ERROR, "weapon-type %s unknown, using noweapon", weaponType.c_str());
+	for (size_t n = 0; n < unit->weapons.size(); n++) {
+		InitWeapon(unit, unit->weapons[n], &unitDef->weapons[n]);
 	}
-
-	return weapon;
 }
 
-CWeapon* CWeaponLoader::InitWeapon(CUnit* owner, CWeapon* weapon, const UnitDefWeapon* defWeapon)
+void CWeaponLoader::FreeWeapons(CUnit* unit)
+{
+	for (CWeapon*& w: unit->weapons) {
+		weaponMemPool.free(w);
+	}
+
+	unit->weapons.clear();
+}
+
+
+
+CWeapon* CWeaponLoader::LoadWeapon(CUnit* owner, const WeaponDef* weaponDef)
+{
+	if (weaponDef->isNulled)
+		return (weaponMemPool.alloc<CNoWeapon>(owner, weaponDef));
+
+	switch (weaponDef->type[0]) {
+		case 'C': { return (weaponMemPool.alloc<CCannon>(owner, weaponDef)); } break; // "Cannon"
+		case 'R': { return (weaponMemPool.alloc<CRifle >(owner, weaponDef)); } break; // "Rifle"
+
+		case 'M': {
+			// "Melee" or "MissileLauncher"
+			switch (weaponDef->type[1]) {
+				case 'e': { return (weaponMemPool.alloc<CMeleeWeapon    >(owner, weaponDef)); } break;
+				case 'i': { return (weaponMemPool.alloc<CMissileLauncher>(owner, weaponDef)); } break;
+			}
+		} break;
+		case 'S': {
+			// "Shield" or "StarburstLauncher"
+			switch (weaponDef->type[1]) {
+				case 'h': { return (weaponMemPool.alloc<CPlasmaRepulser   >(owner, weaponDef)); } break;
+				case 't': { return (weaponMemPool.alloc<CStarburstLauncher>(owner, weaponDef)); } break;
+			}
+		} break;
+
+		case 'F': { return (weaponMemPool.alloc<CFlameThrower>(owner, weaponDef       )); } break; // "Flame"
+		case 'A': { return (weaponMemPool.alloc<CBombDropper >(owner, weaponDef, false)); } break; // "AircraftBomb"
+
+		case 'T': {
+			// "TorpedoLauncher"
+			if (owner->unitDef->canfly && !weaponDef->submissile)
+				return (weaponMemPool.alloc<CBombDropper>(owner, weaponDef, true));
+
+			return (weaponMemPool.alloc<CTorpedoLauncher>(owner, weaponDef));
+		} break;
+		case 'L': {
+			// "LaserCannon" or "LightningCannon"
+			switch (weaponDef->type[1]) {
+				case 'a': { return (weaponMemPool.alloc<CLaserCannon    >(owner, weaponDef)); } break;
+				case 'i': { return (weaponMemPool.alloc<CLightningCannon>(owner, weaponDef)); } break;
+			}
+		} break;
+
+		case 'B': { return (weaponMemPool.alloc<CBeamLaser>(owner, weaponDef)); } break; // "BeamLaser"
+		case 'E': { return (weaponMemPool.alloc<CEmgCannon>(owner, weaponDef)); } break; // "EmgCannon"
+		case 'D': {
+			// "DGun"
+			// NOTE: no special connection to UnitDef::canManualFire
+			// (any type of weapon may be slaved to the button which
+			// controls manual firing) or the CMD_MANUALFIRE command
+			return (weaponMemPool.alloc<CDGunWeapon>(owner, weaponDef));
+		} break;
+		default: {} break;
+	}
+
+	LOG_L(L_ERROR, "[%s] unit \"%s\" has unknown weapon-type \"%s\", using NoWeapon", __func__, owner->unitDef->name.c_str(), weaponDef->type.c_str());
+	return (weaponMemPool.alloc<CNoWeapon>(owner, weaponDef));
+}
+
+void CWeaponLoader::InitWeapon(CUnit* owner, CWeapon* weapon, const UnitDefWeapon* defWeapon)
 {
 	const WeaponDef* weaponDef = defWeapon->def;
 
@@ -119,6 +139,9 @@ CWeapon* CWeaponLoader::InitWeapon(CUnit* owner, CWeapon* weapon, const UnitDefW
 	weapon->salvoDelay = int(weaponDef->salvodelay * GAME_SPEED);
 	weapon->projectilesPerShot = weaponDef->projectilespershot;
 
+	// TODO?
+	// weapon->dryHitSoundId = weaponDef->hitSound.getID(0);
+	// weapon->wetHitSoundId = weaponDef->hitSound.getID(1);
 	weapon->fireSoundId = weaponDef->fireSound.getID(0);
 	weapon->fireSoundVolume = weaponDef->fireSound.getVolume(0);
 
@@ -131,23 +154,23 @@ CWeapon* CWeaponLoader::InitWeapon(CUnit* owner, CWeapon* weapon, const UnitDefW
 	weapon->onlyTargetCategory = defWeapon->onlyTargetCat;
 
 	// can only slave to an already-loaded weapon
-	if (defWeapon->slavedTo > 0 && defWeapon->slavedTo <= owner->weapons.size()) {
+	if (defWeapon->slavedTo > 0 && defWeapon->slavedTo <= owner->weapons.size())
 		weapon->slavedTo = owner->weapons[defWeapon->slavedTo - 1];
-	}
 
 	weapon->heightBoostFactor = weaponDef->heightBoostFactor;
 	weapon->collisionFlags = weaponDef->collisionFlags;
 
-	if (!weaponDef->avoidNeutral)  weapon->avoidFlags |= Collision::NONEUTRALS;
-	if (!weaponDef->avoidFriendly) weapon->avoidFlags |= Collision::NOFRIENDLIES;
-	if (!weaponDef->avoidFeature)  weapon->avoidFlags |= Collision::NOFEATURES;
-	if (!weaponDef->avoidGround)   weapon->avoidFlags |= Collision::NOGROUND;
+	weapon->avoidFlags |= (Collision::NONEUTRALS   * (!weaponDef->avoidNeutral));
+	weapon->avoidFlags |= (Collision::NOFRIENDLIES * (!weaponDef->avoidFriendly));
+	weapon->avoidFlags |= (Collision::NOFEATURES   * (!weaponDef->avoidFeature));
+	weapon->avoidFlags |= (Collision::NOGROUND     * (!weaponDef->avoidGround));
 
 	weapon->damages = DynDamageArray::IncRef(&weaponDef->damages);
 
-	weapon->SetWeaponNum(owner->weapons.size());
+	// store availability of {Query,AimFrom}Weapon script functions, etc
 	weapon->Init();
 	weapon->UpdateRange(weaponDef->range);
-	return weapon;
+
+	owner->maxRange = std::max(weapon->range, owner->maxRange);
 }
 

@@ -6,9 +6,9 @@
 #include <vector>
 
 #include "Sim/Units/CommandAI/Command.h"
-#include "Sim/Units/UnitSet.h"
 #include "System/creg/creg_cond.h"
 #include "System/float3.h"
+#include "System/UnorderedSet.hpp"
 
 class CUnit;
 class CFeature;
@@ -46,7 +46,7 @@ private:
 
 public:
 	int id;
-	CUnitSet units;
+	spring::unordered_set<int> units;
 
 private:
 	CGroupHandler* handler;

@@ -4,11 +4,11 @@
 #define UNITDEFHANDLER_H
 
 #include <string>
-#include <map>
-#include <set>
 #include <vector>
 
 #include "Sim/Misc/CommonDefHandler.h"
+#include "System/UnorderedMap.hpp"
+#include "System/UnorderedSet.hpp"
 
 class LuaTable;
 struct UnitDef;
@@ -19,13 +19,14 @@ class CUnitDefHandler : CommonDefHandler
 {
 public:
 	CUnitDefHandler(LuaParser* defsParser);
-	~CUnitDefHandler();
 
 	void Init();
 	void ProcessDecoys();
 	void AssignTechLevels();
 
 	bool ToggleNoCost();
+
+	// NOTE: safe with unordered_map after ctor
 	const UnitDef* GetUnitDefByName(std::string name);
 	const UnitDef* GetUnitDefByID(int id);
 
@@ -42,12 +43,12 @@ public:
 
 	int PushNewUnitDef(const std::string& unitName, const LuaTable& udTable);
 
-	std::map<int, std::set<int> > decoyMap;
-	std::set<int> startUnitIDs;
+	spring::unordered_map<int, spring::unordered_set<int> > decoyMap;
+	spring::unordered_set<int> startUnitIDs;
 
 //protected: //FIXME UnitDef::*ExplGens,buildingDecalType,trackType are initialized in UnitDrawer.cpp
 	std::vector<UnitDef> unitDefs;
-	std::map<std::string, int> unitDefIDsByName;
+	spring::unordered_map<std::string, int> unitDefIDsByName;
 
 protected:
 	void UnitDefLoadSounds(UnitDef*, const LuaTable&);
@@ -61,7 +62,7 @@ protected:
 	void AssignTechLevel(UnitDef& ud, int level);
 
 private:
-	std::map<std::string, std::string> decoyNameMap;
+	spring::unordered_map<std::string, std::string> decoyNameMap;
 
 	bool noCost;
 };

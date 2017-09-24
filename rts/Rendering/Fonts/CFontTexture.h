@@ -2,13 +2,14 @@
 
 #ifndef _CFONTTEXTURE_H
 #define _CFONTTEXTURE_H
-#include <unordered_map>
-#include <unordered_set>
-#include <list>
+
 #include <string>
 #include <memory>
+
 #include "Rendering/Textures/IAtlasAllocator.h"
 #include "Rendering/Textures/RowAtlasAlloc.h"
+#include "System/UnorderedMap.hpp"
+#include "System/UnorderedSet.hpp"
 
 
 struct FT_FaceRec_;
@@ -106,10 +107,10 @@ private:
 	void LoadGlyph(std::shared_ptr<FontFace>& f, char32_t ch, unsigned index);
 
 protected:
-	std::unordered_map<char32_t, GlyphInfo> glyphs; // UTF16 -> GlyphInfo
+	spring::unsynced_map<char32_t, GlyphInfo> glyphs; // UTF16 -> GlyphInfo (boost::unordered_map does not compile)
+	spring::unsynced_map<uint32_t, float> kerningDynamic; // contains unicode kerning
 
 	float kerningPrecached[128 * 128]; // contains ASCII kerning
-	std::unordered_map<uint32_t, float> kerningDynamic; // contains unicode kerning
 
 	int outlineSize;
 	float outlineWeight;
@@ -129,12 +130,15 @@ public:
 private:
 	CBitmap* atlasUpdate;
 	CBitmap* atlasUpdateShadow;
+#ifndef HEADLESS
 	int lastTextureUpdate;
+	FT_Face face;
+#endif
 	int curTextureUpdate;
 
-	FT_Face face;
+
 	std::shared_ptr<FontFace> shFace;
-	std::unordered_set<std::shared_ptr<FontFace>> usedFallbackFonts;
+	spring::unsynced_set<std::shared_ptr<FontFace>> usedFallbackFonts;
 
 	CRowAtlasAlloc atlasAlloc;
 };

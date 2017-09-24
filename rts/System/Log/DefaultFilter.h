@@ -21,6 +21,8 @@ extern "C" {
  */
 
 
+void log_filter_setRepeatLimit(int limit);
+int log_filter_getRepeatLimit();
 
 /**
  * Sets the minimum level to log for all sections, including the default one.
@@ -44,7 +46,6 @@ void log_filter_global_setMinLevel(int level);
 int log_filter_global_getMinLevel();
 
 
-
 /**
  * Sets whether log messages for a certain section are logged or not.
  *
@@ -61,7 +62,7 @@ int log_filter_global_getMinLevel();
  * CAUTION: you may only use strings defined at compile-time.
  * @see #log_filter_section_getMinLevel
  */
-void log_filter_section_setMinLevel(const char* section, int level);
+void log_filter_section_setMinLevel(int level, const char* section);
 
 /**
  * Returns the minimum level to log for a certain section.
@@ -95,14 +96,14 @@ void log_enable_and_disable(const bool enable);
 #endif
 
 #ifdef __cplusplus
-#include <set>
+#include "System/UnorderedSet.hpp"
 
 
 /**
  * Returns the registered sections.
  * This is simply to be more C++ friendly.
  */
-std::set<const char*> log_filter_section_getRegisteredSet();
+spring::unsynced_set<const char*> log_filter_section_getRegisteredSet();
 
 const char* log_filter_section_getSectionCString(const char* section_cstr_tmp);
 

@@ -3,6 +3,7 @@
 #include "System/creg/STL_List.h"
 #include "System/creg/STL_Set.h"
 #include "PlasmaRepulser.h"
+#include "WeaponMemPool.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/TeamHandler.h"
@@ -15,10 +16,8 @@
 #include "Sim/Weapons/WeaponDef.h"
 #include "System/EventHandler.h"
 #include "System/myMath.h"
-#include "System/Util.h"
 
-CR_BIND_DERIVED(CPlasmaRepulser, CWeapon, (NULL, NULL))
-
+CR_BIND_DERIVED_POOL(CPlasmaRepulser, CWeapon, , weaponMemPool.alloc, weaponMemPool.free)
 CR_REG_METADATA(CPlasmaRepulser, (
 	CR_MEMBER(radius),
 	CR_MEMBER(sqRadius),
@@ -32,7 +31,8 @@ CR_REG_METADATA(CPlasmaRepulser, (
 
 	CR_MEMBER(quads),
 	CR_MEMBER(collisionVolume),
-	CR_MEMBER(tempNum)
+	CR_MEMBER(tempNum),
+	CR_MEMBER(deltaPos)
 ))
 
 
@@ -83,11 +83,6 @@ bool CPlasmaRepulser::IsActive() const
 	return isEnabled && !owner->IsStunned() && !owner->beingBuilt;
 }
 
-bool CPlasmaRepulser::HaveFreeLineOfFire(const float3 pos, const SWeaponTarget& trg, bool useMuzzle) const
-{
-	return true;
-}
-
 bool CPlasmaRepulser::CanIntercept(unsigned interceptedType, int allyTeam) const
 {
 	if ((weaponDef->shieldInterceptType & interceptedType) == 0)
@@ -114,9 +109,13 @@ void CPlasmaRepulser::Update()
 		hitFrames--;
 
 	UpdateWeaponVectors();
-	collisionVolume.SetOffsets((relWeaponMuzzlePos - owner->relMidPos) * WORLD_TO_OBJECT_SPACE);
+
+	collisionVolume.SetOffsets(weaponMuzzlePos - owner->midPos);
 	if (weaponMuzzlePos != lastPos)
 		quadField->MovedRepulser(this);
+
+	if (lastPos != ZeroVector)
+		deltaPos = weaponMuzzlePos - lastPos;
 
 	lastPos = weaponMuzzlePos;
 
@@ -124,13 +123,14 @@ void CPlasmaRepulser::Update()
 }
 
 // Returns true if the projectile is destroyed.
-bool CPlasmaRepulser::IncomingProjectile(CWeaponProjectile* p)
+bool CPlasmaRepulser::IncomingProjectile(CWeaponProjectile* p, const float3& hitPos)
 {
 	const int defHitFrames = weaponDef->visibleShieldHitFrames;
 	const int defRechargeDelay = weaponDef->shieldRechargeDelay;
 
 	// gadget handles the collision event, don't touch the projectile
-	if (eventHandler.ShieldPreDamaged(p, this, owner, weaponDef->shieldRepulser, nullptr, nullptr))
+	// start-pos only makes sense for beams, pass current p->pos here
+	if (eventHandler.ShieldPreDamaged(p, this, owner, weaponDef->shieldRepulser, nullptr, nullptr, p->pos, hitPos))
 		return false;
 
 	const DamageArray& damageArray = p->damages->GetDynamicDamages(p->GetStartPos(), p->pos);
@@ -148,63 +148,54 @@ bool CPlasmaRepulser::IncomingProjectile(CWeaponProjectile* p)
 
 	if (weaponDef->shieldRepulser) {
 		// bounce the projectile
-		const int type = p->ShieldRepulse(weaponMuzzlePos,
-			weaponDef->shieldForce,
-			weaponDef->shieldMaxSpeed);
+		switch (p->ShieldRepulse(weaponMuzzlePos, weaponDef->shieldForce, weaponDef->shieldMaxSpeed)) {
+			case 0: { return false; } break;
+			case 1: {
+				owner->UseEnergy(weaponDef->shieldEnergyUse);
 
-		if (type == 0) {
-			return false;
-		} else if (type == 1) {
-			owner->UseEnergy(weaponDef->shieldEnergyUse);
+				curPower -= (shieldDamage * (weaponDef->shieldPower != 0.0f));
+			} break;
+			default: {
+				// NOTE:
+				//   all weapons except Lasers do only (1 / GAME_SPEED) damage
+				//   (Lasers are insta-bounced, others spend time "inside" the
+				//   shield dealing damage every frame)
+				owner->UseEnergy(weaponDef->shieldEnergyUse / GAME_SPEED);
 
-			if (weaponDef->shieldPower != 0) {
-				curPower -= shieldDamage;
-			}
-		} else {
-			//FIXME why do all weapons except LASERs do only (1 / GAME_SPEED) damage???
-			// because they go inside and take time to get pushed back
-			// during that time they deal damage every frame
-			// so in total they do their nominal damage each second
-			// on the other hand lasers get insta-bounced in 1 frame
-			// regardless of shield pushing power
-			owner->UseEnergy(weaponDef->shieldEnergyUse / GAME_SPEED);
-
-			if (weaponDef->shieldPower != 0) {
-				curPower -= shieldDamage / GAME_SPEED;
-			}
+				curPower -= ((shieldDamage / GAME_SPEED) * (weaponDef->shieldPower != 0.0f));
+			} break;
 		}
-		const bool newRepulsed = VectorInsertUnique(repulsedProjectiles, p, true);
-		if (newRepulsed) {
+
+		if (spring::VectorInsertUnique(repulsedProjectiles, p, true)) {
+			// projectile was not repulsed before
 			AddDeathDependence(p, DEPENDENCE_REPULSED);
+
 			if (weaponDef->visibleShieldRepulse) {
-				// projectile was not added before
-				const float colorMix = std::min(1.0f, curPower / std::max(1.0f, weaponDef->shieldPower));
-				const float3 color =
-					(weaponDef->shieldGoodColor * colorMix) +
-					(weaponDef->shieldBadColor * (1.0f - colorMix));
+				const float relPower = curPower / std::max(1.0f, weaponDef->shieldPower);
+				const float lrpColor = std::min(1.0f, relPower);
 
-				new CRepulseGfx(owner, p, radius, color);
+				projMemPool.alloc<CRepulseGfx>(owner, p, radius, mix(weaponDef->shieldBadColor, weaponDef->shieldGoodColor, lrpColor));
 			}
 		}
 
-		if (defHitFrames > 0) {
+		if (defHitFrames > 0)
 			hitFrames = defHitFrames;
-		}
-	} else {
-		// kill the projectile
-		if (owner->UseEnergy(weaponDef->shieldEnergyUse)) {
-			if (weaponDef->shieldPower != 0) {
-				curPower -= shieldDamage;
-			}
 
-			p->Collision();
-
-			if (defHitFrames > 0) {
-				hitFrames = defHitFrames;
-			}
-			return true;
-		}
+		return false;
 	}
+
+	// kill the projectile
+	if (owner->UseEnergy(weaponDef->shieldEnergyUse)) {
+		curPower -= (shieldDamage * (weaponDef->shieldPower != 0.0f));
+
+		p->Collision();
+
+		if (defHitFrames > 0)
+			hitFrames = defHitFrames;
+
+		return true;
+	}
+
 	return false;
 }
 
@@ -217,13 +208,15 @@ void CPlasmaRepulser::SlowUpdate()
 }
 
 
-bool CPlasmaRepulser::IncomingBeam(const CWeapon* emitter, const float3& start, float damageMultiplier)
+bool CPlasmaRepulser::IncomingBeam(const CWeapon* emitter, const float3& startPos, const float3& hitPos, float damageMultiplier)
 {
 	// gadget handles the collision event, don't touch the projectile
-	if (eventHandler.ShieldPreDamaged(nullptr, this, owner, weaponDef->shieldRepulser, emitter, emitter->owner))
+	// note that startPos only equals the beam's true origin (which is
+	// p->GetStartPos()) if it did not get reflected
+	if (eventHandler.ShieldPreDamaged(nullptr, this, owner, weaponDef->shieldRepulser, emitter, emitter->owner, startPos, hitPos))
 		return false;
 
-	const DamageArray& damageArray = emitter->damages->GetDynamicDamages(start, weaponMuzzlePos);
+	const DamageArray& damageArray = emitter->damages->GetDynamicDamages(startPos, weaponMuzzlePos);
 	const float shieldDamage = damageArray.Get(weaponDef->shieldArmorType);
 
 	if (curPower < shieldDamage)
@@ -233,7 +226,7 @@ bool CPlasmaRepulser::IncomingBeam(const CWeapon* emitter, const float3& start, 
 	if (teamHandler->Team(owner->team)->res.energy < weaponDef->shieldEnergyUse)
 		return false;
 
-	if (weaponDef->shieldPower > 0)
+	if (weaponDef->shieldPower > 0.0f)
 		curPower -= shieldDamage * damageMultiplier;
 
 	return true;
@@ -242,6 +235,6 @@ bool CPlasmaRepulser::IncomingBeam(const CWeapon* emitter, const float3& start, 
 
 void CPlasmaRepulser::DependentDied(CObject* o)
 {
-	VectorErase(repulsedProjectiles, static_cast<CWeaponProjectile*>(o));
+	spring::VectorErase(repulsedProjectiles, static_cast<CWeaponProjectile*>(o));
 	CWeapon::DependentDied(o);
 }

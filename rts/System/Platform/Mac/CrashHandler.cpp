@@ -8,9 +8,10 @@
 #include <AvailabilityMacros.h>
 
 //! Same as Linux
-#include "System/Platform/Linux/CrashHandler.cpp"
+#include "System/Platform/Linux/CrashHandler.cpp" //FIXME: including .cpp
 #include <libproc.h>
 #include <limits.h>
+#include <unistd.h>
 
 #define ADDR2LINE "atos"
 
@@ -142,6 +143,8 @@ static void LogStacktrace(const int logLevel, StackTrace& stacktrace)
 // ### Unix(compliant) CrashHandler END
 #else
 // ### Fallback CrashHandler (old Apple) START
+
+#warning Fallback CrashHandler used
 
 namespace CrashHandler {
 	void Install() {}

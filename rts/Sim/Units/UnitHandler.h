@@ -46,16 +46,19 @@ public:
 	void RemoveBuilderCAI(CBuilderCAI*);
 
 	// note: negative ID's are implicitly converted
-	CUnit* GetUnitUnsafe(unsigned int unitID) const { return units[unitID]; }
-	CUnit* GetUnit(unsigned int unitID) const { return (unitID < MaxUnits()? units[unitID]: nullptr); }
+	CUnit* GetUnitUnsafe(unsigned int id) const { return units[id]; }
+	CUnit* GetUnit(unsigned int id) const { return ((id < MaxUnits())? units[id]: nullptr); }
 
-	const std::unordered_map<unsigned int, CBuilderCAI*>& GetBuilderCAIs() const { return builderCAIs; }
+	static CUnit* NewUnit(const UnitDef* ud);
+
+	const std::vector<CUnit*>& GetActiveUnits() const { return activeUnits; }
+	      std::vector<CUnit*>& GetActiveUnits()       { return activeUnits; }
+
+	const spring::unordered_map<unsigned int, CBuilderCAI*>& GetBuilderCAIs() const { return builderCAIs; }
 
 public:
 	// FIXME
-	std::vector<CUnit*> units;                        ///< used to get units from IDs (0 if not created)
 	std::vector<std::vector<std::vector<CUnit*>>> unitsByDefs; ///< units sorted by team and unitDef
-	std::vector<CUnit*> activeUnits;                  ///< used to get all active units
 
 private:
 	void DeleteUnit(CUnit* unit);
@@ -66,8 +69,11 @@ private:
 private:
 	SimObjectIDPool idPool;
 
+	std::vector<CUnit*> units;                         ///< used to get units from IDs (0 if not created)
+	std::vector<CUnit*> activeUnits;                   ///< used to get all active units
 	std::vector<CUnit*> unitsToBeRemoved;              ///< units that will be removed at start of next update
-	std::unordered_map<unsigned int, CBuilderCAI*> builderCAIs;
+
+	spring::unordered_map<unsigned int, CBuilderCAI*> builderCAIs;
 
 	size_t activeSlowUpdateUnit;  ///< first unit of batch that will be SlowUpdate'd this frame
 	size_t activeUpdateUnit;  ///< first unit of batch that will be SlowUpdate'd this frame

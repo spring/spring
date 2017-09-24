@@ -4,6 +4,7 @@
 
 #include "Projectile.h"
 #include "ProjectileHandler.h"
+#include "ProjectileMemPool.h"
 #include "Game/GlobalUnsynced.h"
 #include "Game/TraceRay.h"
 #include "Map/Ground.h"
@@ -37,10 +38,8 @@
 
 using namespace std;
 
-CONFIG(int, MaxParticles).defaultValue(3000).headlessValue(1).minimumValue(1);
+CONFIG(int, MaxParticles).defaultValue(10000).headlessValue(1).minimumValue(1);
 CONFIG(int, MaxNanoParticles).defaultValue(2000).headlessValue(1).minimumValue(1);
-
-CProjectileHandler* projectileHandler = NULL;
 
 
 CR_BIND(CProjectileHandler, )
@@ -66,9 +65,12 @@ CR_REG_METADATA(CProjectileHandler, (
 
 
 
-//////////////////////////////////////////////////////////////////////
-// Construction/Destruction
-//////////////////////////////////////////////////////////////////////
+// note: stores all ExpGenSpawnable types, not just projectiles
+ProjMemPool projMemPool;
+
+CProjectileHandler* projectileHandler = nullptr;
+
+
 
 CProjectileHandler::CProjectileHandler()
 : currentNanoParticles(0)
@@ -86,23 +88,26 @@ CProjectileHandler::CProjectileHandler()
 	maxParticles     = configHandler->GetInt("MaxParticles");
 	maxNanoParticles = configHandler->GetInt("MaxNanoParticles");
 
+	projMemPool.clear();
+	projMemPool.reserve(1024);
+
 	// preload some IDs
 	for (int i = 0; i < syncedProjectileIDs.size(); i++) {
 		freeSyncedIDs.push_back(i);
 	}
-	std::random_shuffle(freeSyncedIDs.begin(), freeSyncedIDs.end(), gs->rng);
+	std::random_shuffle(freeSyncedIDs.begin(), freeSyncedIDs.end(), gsRNG);
 
 	for (int i = 0; i < unsyncedProjectileIDs.size(); i++) {
 		freeUnsyncedIDs.push_back(i);
 	}
-	std::random_shuffle(freeUnsyncedIDs.begin(), freeUnsyncedIDs.end(), gu->rng);
+	std::random_shuffle(freeUnsyncedIDs.begin(), freeUnsyncedIDs.end(), guRNG);
 
 	for (int modelType = 0; modelType < MODELTYPE_OTHER; ++modelType) {
 		flyingPieces[modelType].reserve(1000);
 	}
 
 	// register ConfigNotify()
-	configHandler->NotifyOnChange(this);
+	configHandler->NotifyOnChange(this, {"MaxParticles", "MaxNanoParticles"});
 }
 
 CProjectileHandler::~CProjectileHandler()
@@ -112,21 +117,21 @@ CProjectileHandler::~CProjectileHandler()
 	{
 		// synced first, to avoid callback crashes
 		for (CProjectile* p: syncedProjectiles)
-			delete p;
+			projMemPool.free(p);
 
 		syncedProjectiles.clear();
 	}
 
 	{
 		for (CProjectile* p: unsyncedProjectiles)
-			delete p;
+			projMemPool.free(p);
 
 		unsyncedProjectiles.clear();
 	}
 
 	{
 		for (CGroundFlash* gf: groundFlashes)
-			delete gf;
+			projMemPool.free(gf);
 
 		groundFlashes.clear();
 	}
@@ -149,9 +154,6 @@ CProjectileHandler::~CProjectileHandler()
 
 void CProjectileHandler::ConfigNotify(const std::string& key, const std::string& value)
 {
-	if (key != "MaxParticles" && key != "MaxNanoParticles")
-		return;
-
 	maxParticles     = configHandler->GetInt("MaxParticles");
 	maxNanoParticles = configHandler->GetInt("MaxNanoParticles");
 }
@@ -171,11 +173,14 @@ static void MAPPOS_SANITY_CHECK(const float3 v)
 
 void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool synced)
 {
-	// WARNING: we can't use iters here cause ProjectileCreated and ProjectileDestroyed events
-	// may add new projectiles to the container!
+	// WARNING:
+	//   we can't use iterators here because ProjectileCreated
+	//   and ProjectileDestroyed events may add new projectiles
+	//   to the container!
 	for (size_t i = 0; i < pc.size(); /*no-op*/) {
 		CProjectile* p = pc[i];
-		assert(p);
+
+		assert(p != nullptr);
 		assert(p->synced == synced);
 #ifdef USING_CREG
 		assert(p->synced == !!(p->GetClass()->binder->flags & creg::CF_Synced));
@@ -190,16 +195,18 @@ void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool
 			p->callEvent = false;
 		}
 
-		// deletion
+		// deletion (FIXME: move outside of loop)
 		if (p->deleteMe) {
 			pc[i] = pc.back();
 			pc.pop_back();
+
 			eventHandler.RenderProjectileDestroyed(p);
 
-			if (synced) { //FIXME move outside of loop!
+			if (synced) {
 				eventHandler.ProjectileDestroyed(p, p->GetAllyteamID());
 				syncedProjectileIDs[p->id] = nullptr;
 				freeSyncedIDs.push_back(p->id);
+
 				ASSERT_SYNCED(p->pos);
 				ASSERT_SYNCED(p->id);
 			} else {
@@ -210,7 +217,7 @@ void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool
 			#endif
 			}
 
-			delete p;
+			projMemPool.free(p);
 			continue;
 		}
 
@@ -218,12 +225,12 @@ void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool
 		++i;
 	}
 
-	SCOPED_TIMER("ProjectileHandler::Update::PP");
+	SCOPED_TIMER("Sim::Projectiles::Update");
 
-	//WARNING: we can't use iters here cause p->Update() may add new projectiles to the container!
+	// WARNING: same as above but for p->Update()
 	for (size_t i = 0; i < pc.size(); ++i) {
 		CProjectile* p = pc[i];
-		assert(p);
+		assert(p != nullptr);
 
 		MAPPOS_SANITY_CHECK(p->pos);
 
@@ -246,19 +253,20 @@ static void UPDATE_PTR_CONTAINER(T& cont) {
 	size_t size = cont.size();
 
 	for (unsigned int i = 0; i < size; /*no-op*/) {
-		auto*& p = cont[i];
+		CGroundFlash*& gf = cont[i];
 
-		if (!p->Update()) {
-			delete p;
-			p = cont[size -= 1];
+		if (!gf->Update()) {
+			projMemPool.free(gf);
+			gf = cont[size -= 1];
 			continue;
 		}
 
 		++i;
 	}
 
-	//WARNING: check if the vector got enlarged while iterating, in that case
-	// we didn't update the newest items
+	// WARNING:
+	//   check if the vector was enlarged while iterating, in
+	//   which case we will have missed updating newest items
 	assert(cont.size() == origSize);
 
 	cont.erase(cont.begin() + size, cont.end());
@@ -296,7 +304,7 @@ static void UPDATE_REF_CONTAINER(T& cont) {
 void CProjectileHandler::Update()
 {
 	{
-		SCOPED_TIMER("ProjectileHandler::Update");
+		SCOPED_TIMER("Sim::Projectiles");
 
 		// particles
 		CheckCollisions(); // before :Update() to check if the particles move into stuff
@@ -313,7 +321,7 @@ void CProjectileHandler::Update()
 			UPDATE_REF_CONTAINER(fpc);
 
 			if (resortFlyingPieces[modelType]) {
-				std::sort(fpc.begin(), fpc.end());
+				std::stable_sort(fpc.begin(), fpc.end());
 			}
 		}
 	}
@@ -337,11 +345,13 @@ void CProjectileHandler::AddProjectile(CProjectile* p)
 	// already initialized?
 	assert(p->id < 0);
 	assert(p->callEvent);
-	std::deque<int>* freeIDs = NULL;
-	ProjectileMap* proIDs = NULL;
+
+	std::deque<int>* freeIDs = nullptr;
+	ProjectileMap* proIDs = nullptr;
 
 	if (p->synced) {
 		syncedProjectiles.push_back(p);
+
 		freeIDs = &freeSyncedIDs;
 		proIDs = &syncedProjectileIDs;
 		ASSERT_SYNCED(freeIDs->size());
@@ -350,6 +360,7 @@ void CProjectileHandler::AddProjectile(CProjectile* p)
 #if UNSYNCED_PROJ_NOEVENT
 		return;
 #endif
+
 		freeIDs = &freeUnsyncedIDs;
 		proIDs = &unsyncedProjectileIDs;
 	}
@@ -361,9 +372,9 @@ void CProjectileHandler::AddProjectile(CProjectile* p)
 			freeIDs->push_back(i);
 		}
 		if (p->synced) {
-			std::random_shuffle(freeIDs->begin(), freeIDs->end(), gs->rng);
+			std::random_shuffle(freeIDs->begin(), freeIDs->end(), gsRNG);
 		} else{
-			std::random_shuffle(freeIDs->begin(), freeIDs->end(), gu->rng);
+			std::random_shuffle(freeIDs->begin(), freeIDs->end(), guRNG);
 		}
 		proIDs->resize(newSize, nullptr);
 	}
@@ -388,6 +399,36 @@ void CProjectileHandler::AddProjectile(CProjectile* p)
 
 
 
+static bool CheckProjectileCollisionFlags(const CProjectile* p, const CUnit* u)
+{
+	if (teamHandler->IsValidAllyTeam(p->GetAllyteamID())) {
+		const bool noFriendsBit = ((p->GetCollisionFlags() & Collision::NOFRIENDLIES) != 0);
+		const bool noEnemiesBit = ((p->GetCollisionFlags() & Collision::NOENEMIES   ) != 0);
+		const bool friendlyFire = teamHandler->AlliedAllyTeams(p->GetAllyteamID(), u->allyteam);
+
+		if (noFriendsBit && friendlyFire)
+			return false;
+
+		if (noEnemiesBit && !friendlyFire)
+			return false;
+	}
+
+	if ((p->GetCollisionFlags() & Collision::NONEUTRALS) != 0 && u->IsNeutral())
+		return false;
+
+	if ((p->GetCollisionFlags() & Collision::NOFIREBASES) != 0) {
+		const CUnit* owner = p->owner();
+		const CUnit* trans = (owner != nullptr)? owner->GetTransporter(): nullptr;
+
+		// check if the unit being collided with is occupied by p's owner
+		if (u == trans && trans->unitDef->isFirePlatform)
+			return false;
+	}
+
+	return true;
+}
+
+
 void CProjectileHandler::CheckUnitCollisions(
 	CProjectile* p,
 	std::vector<CUnit*>& tempUnits,
@@ -408,22 +449,12 @@ void CProjectileHandler::CheckUnitCollisions(
 		if (!unit->HasCollidableStateBit(CSolidObject::CSTATE_BIT_PROJECTILES))
 			continue;
 
-		if (teamHandler->IsValidAllyTeam(p->GetAllyteamID())) {
-			if (p->GetCollisionFlags() & Collision::NOFRIENDLIES) {
-				if ( teamHandler->AlliedAllyTeams(p->GetAllyteamID(), unit->allyteam)) { continue; }
-			}
-			if (p->GetCollisionFlags() & Collision::NOENEMIES) {
-				if (!teamHandler->AlliedAllyTeams(p->GetAllyteamID(), unit->allyteam)) { continue; }
-			}
-			if (p->GetCollisionFlags() & Collision::NONEUTRALS) {
-				if (unit->IsNeutral()) { continue; }
-			}
-		}
+		if (!CheckProjectileCollisionFlags(p, unit))
+			continue;
 
 		if (CCollisionHandler::DetectHit(unit, unit->GetTransformMatrix(true), ppos0, ppos1, &cq)) {
-			if (cq.GetHitPiece() != NULL) {
+			if (cq.GetHitPiece() != nullptr)
 				unit->SetLastHitPiece(cq.GetHitPiece(), gs->frameNum);
-			}
 
 			if (!cq.InsideHit()) {
 				p->SetPosition(cq.GetHitPos());
@@ -460,9 +491,8 @@ void CProjectileHandler::CheckFeatureCollisions(
 			continue;
 
 		if (CCollisionHandler::DetectHit(feature, feature->GetTransformMatrix(true), ppos0, ppos1, &cq)) {
-			if (cq.GetHitPiece() != NULL) {
+			if (cq.GetHitPiece() != nullptr)
 				feature->SetLastHitPiece(cq.GetHitPiece(), gs->frameNum);
-			}
 
 			if (!cq.InsideHit()) {
 				p->SetPosition(cq.GetHitPos());
@@ -504,9 +534,16 @@ void CProjectileHandler::CheckShieldCollisions(
 		if (!repulser->CanIntercept(wdef->interceptedByShieldType, p->GetAllyteamID()))
 			continue;
 
-		if (CCollisionHandler::DetectHit(repulser->owner, &repulser->collisionVolume, repulser->owner->GetTransformMatrix(true), ppos0, ppos1, &cq)) {
+		// we sometimes get false inside hits due to the movement of the shield
+		// a very hacky solution is to increase the ray that's intersecting
+		// by the last movement of the shield.
+		// it's not 100% accurate so there's a bit of a FIXME here to do a real solution
+		// (keep track in the projectile which shields it's in)
+
+		const float3 effectivePPos0 = ppos0 + (ppos0 - ppos1) * repulser->deltaPos.Length();
+		if (CCollisionHandler::DetectHit(repulser->owner, &repulser->collisionVolume, repulser->owner->GetTransformMatrix(true), effectivePPos0, ppos1, &cq)) {
 			if (!cq.InsideHit() || !repulser->weaponDef->exteriorShield || repulser->IsRepulsing(wpro)) {
-				if (repulser->IncomingProjectile(wpro))
+				if (repulser->IncomingProjectile(wpro, cq.GetHitPos()))
 					return;
 			}
 		}
@@ -519,8 +556,9 @@ void CProjectileHandler::CheckUnitFeatureCollisions(ProjectileContainer& pc)
 	static std::vector<CFeature*> tempFeatures;
 	static std::vector<CPlasmaRepulser*> tempRepulsers;
 
-	for (size_t i=0; i<pc.size(); ++i) {
+	for (size_t i = 0; i < pc.size(); ++i) {
 		CProjectile* p = pc[i];
+
 		if (!p->checkCol) continue;
 		if ( p->deleteMe) continue;
 
@@ -529,40 +567,47 @@ void CProjectileHandler::CheckUnitFeatureCollisions(ProjectileContainer& pc)
 
 		quadField->GetUnitsAndFeaturesColVol(p->pos, p->radius + p->speed.w, tempUnits, tempFeatures, &tempRepulsers);
 
-		CheckShieldCollisions(p, tempRepulsers, ppos0, ppos1);
-		tempRepulsers.clear();
-		CheckUnitCollisions(p, tempUnits, ppos0, ppos1);
-		tempUnits.clear();
-		CheckFeatureCollisions(p, tempFeatures, ppos0, ppos1);
-		tempFeatures.clear();
+		CheckShieldCollisions(p, tempRepulsers, ppos0, ppos1); tempRepulsers.clear();
+		CheckUnitCollisions(p, tempUnits, ppos0, ppos1); tempUnits.clear();
+		CheckFeatureCollisions(p, tempFeatures, ppos0, ppos1); tempFeatures.clear();
 	}
 }
 
 void CProjectileHandler::CheckGroundCollisions(ProjectileContainer& pc)
 {
-	for (size_t i=0; i<pc.size(); ++i) {
+	for (size_t i = 0; i < pc.size(); ++i) {
 		CProjectile* p = pc[i];
+
 		if (!p->checkCol)
 			continue;
 
-		// NOTE: if <p> is a MissileProjectile and does not
-		// have selfExplode set, it will never be removed (!)
+		// NOTE:
+		//   if <p> is a MissileProjectile and does not have
+		//   selfExplode set, tbis will cause it to never be
+		//   removed (!)
 		if (p->GetCollisionFlags() & Collision::NOGROUND)
 			continue;
 
-		// NOTE: don't add p->radius to groundHeight, or most
-		// projectiles will collide with the ground too early
+		// don't collide with ground yet if last update scheduled a bounce
+		if (p->weapon && static_cast<const CWeaponProjectile*>(p)->HasScheduledBounce())
+			continue;
+
+		// NOTE:
+		//   don't add p->radius to groundHeight, or most (esp. modelled)
+		//   projectiles will collide with the ground one or more frames
+		//   too early
 		const float groundHeight = CGround::GetHeightReal(p->pos.x, p->pos.z);
+
 		const bool belowGround = (p->pos.y < groundHeight);
 		const bool insideWater = (p->pos.y <= 0.0f && !belowGround);
 		const bool ignoreWater = p->ignoreWater;
 
 		if (belowGround || (insideWater && !ignoreWater)) {
 			// if position has dropped below terrain or into water
-			// where we cannot live, adjust it and explode us now
+			// where we can not live, adjust it and explode us now
 			// (if the projectile does not set deleteMe = true, it
 			// will keep hugging the terrain)
-			p->pos.y = groundHeight * belowGround;
+			p->SetPosition(p->pos * XZVector + UpVector * groundHeight * belowGround);
 			p->Collision();
 		}
 	}
@@ -570,7 +615,7 @@ void CProjectileHandler::CheckGroundCollisions(ProjectileContainer& pc)
 
 void CProjectileHandler::CheckCollisions()
 {
-	SCOPED_TIMER("ProjectileHandler::Update::CheckCollisions");
+	SCOPED_TIMER("Sim::Projectiles::Collisions");
 
 	CheckUnitFeatureCollisions(syncedProjectiles); //! changes simulation state
 	CheckUnitFeatureCollisions(unsyncedProjectiles); //! does not change simulation state
@@ -619,7 +664,7 @@ void CProjectileHandler::AddNanoParticle(
 	const float l = fastmath::apxsqrt2(dif.SqLength());
 
 	dif /= l;
-	dif += gu->RandVector() * 0.15f;
+	dif += guRNG.NextVector() * 0.15f;
 
 	const float3 udColor = unitDef->nanoColor;
 	const uint8_t* tColor = (teamHandler->Team(teamNum))->color;
@@ -629,7 +674,7 @@ void CProjectileHandler::AddNanoParticle(
 		SColor(tColor[0], tColor[1], tColor[2], uint8_t(20)),
 	};
 
-	new CNanoProjectile(startPos, dif, int(l), colors[globalRendering->teamNanospray]);
+	projMemPool.alloc<CNanoProjectile>(startPos, dif, int(l), colors[globalRendering->teamNanospray]);
 }
 
 void CProjectileHandler::AddNanoParticle(
@@ -652,7 +697,7 @@ void CProjectileHandler::AddNanoParticle(
 	const float l = fastmath::apxsqrt2(dif.SqLength());
 	dif /= l;
 
-	float3 error = gu->RandVector() * (radius / l);
+	float3 error = guRNG.NextVector() * (radius / l);
 
 	const float3 udColor = unitDef->nanoColor;
 	const uint8_t* tColor = (teamHandler->Team(teamNum))->color;
@@ -663,9 +708,9 @@ void CProjectileHandler::AddNanoParticle(
 	};
 
 	if (!inverse) {
-		new CNanoProjectile(startPos, (dif + error) * 3, int(l / 3), colors[globalRendering->teamNanospray]);
+		projMemPool.alloc<CNanoProjectile>(startPos, (dif + error) * 3, int(l / 3), colors[globalRendering->teamNanospray]);
 	} else {
-		new CNanoProjectile(startPos + (dif + error) * l, -(dif + error) * 3, int(l / 3), colors[globalRendering->teamNanospray]);
+		projMemPool.alloc<CNanoProjectile>(startPos + (dif + error) * l, -(dif + error) * 3, int(l / 3), colors[globalRendering->teamNanospray]);
 	}
 }
 
@@ -694,7 +739,7 @@ float CProjectileHandler::GetParticleSaturation(const bool withRandomization) co
 	// use the random mult to weaken the max limit a little
 	// so the chance is better spread when being close to the limit
 	// i.e. when there are rockets that spam CEGs this gives smaller CEGs still a chance
-	return (GetCurrentParticles() / float(maxParticles)) * (1.f + int(withRandomization) * 0.3f * gu->RandFloat());
+	return (GetCurrentParticles() / float(maxParticles)) * (1.f + int(withRandomization) * 0.3f * guRNG.NextFloat());
 }
 
 int CProjectileHandler::GetCurrentParticles() const

@@ -6,11 +6,13 @@
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
+#include "Sim/Projectiles/ProjectileMemPool.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Weapons/PlasmaRepulser.h"
 #include "Sim/Weapons/WeaponDef.h"
 #include "System/EventHandler.h"
 #include "System/myMath.h"
+#include "System/UnorderedMap.hpp"
 
 
 CR_BIND(ShieldSegmentCollection, )
@@ -27,7 +29,8 @@ CR_REG_METADATA(ShieldSegmentCollection, (
 ))
 
 
-CR_BIND_DERIVED(ShieldSegmentProjectile, CProjectile, )
+CR_BIND_DERIVED_POOL(ShieldSegmentProjectile, CProjectile, , projMemPool.alloc, projMemPool.free)
+
 CR_REG_METADATA(ShieldSegmentProjectile, (
 	CR_IGNORED(collection),
 	CR_IGNORED(vertices),
@@ -36,7 +39,7 @@ CR_REG_METADATA(ShieldSegmentProjectile, (
 
 
 static std::vector<float3> spherevertices;
-static std::map<const AtlasedTexture*, std::vector<float2> > spheretexcoords;
+static spring::unsynced_map<const AtlasedTexture*, std::vector<float2> > spheretexcoords;
 
 
 
@@ -60,7 +63,7 @@ ShieldSegmentCollection::ShieldSegmentCollection(CPlasmaRepulser* shield_)
 		// Y*X segments, deleted by ProjectileHandler
 		for (int y = 0; y < NUM_SEGMENTS_Y; ++y) {
 			for (int x = 0; x < NUM_SEGMENTS_X; ++x) {
-				shieldSegments.push_back(new ShieldSegmentProjectile(this, wd, u->pos, x, y));
+				shieldSegments.push_back(projMemPool.alloc<ShieldSegmentProjectile>(this, wd, u->pos, x, y));
 			}
 		}
 
@@ -119,7 +122,7 @@ bool ShieldSegmentCollection::AllowDrawing()
 
 	//FIXME if Lua wants to draw the shield itself, we should draw all GL_QUADS in the `va` vertexArray first.
 	// but doing so for each shield might reduce the performance.
-	// so might use a branch-predicion? -> save last return value and if it is true draw `va` before calling eventHandler.DrawShield() ??FIXME
+	// so might use a branch-predicion? -> save last return value and if it is true draw `va` before calling eventHandler.DrawShield()
 	if (eventHandler.DrawShield(shield->owner, shield))
 		return allowDrawing;
 
@@ -139,9 +142,9 @@ void ShieldSegmentCollection::UpdateColor()
 	const WeaponDef* shieldDef = shield->weaponDef;
 
 	// lerp between badColor and goodColor based on shield's current power
-	const float colorMix = std::min(1.0f, shield->GetCurPower() / std::max(1.0f, shieldDef->shieldPower));
+	const float relPower = shield->GetCurPower() / std::max(1.0f, shieldDef->shieldPower);
+	const float lrpColor = std::min(1.0f, relPower);
 
-	const float3 colorf = mix(shieldDef->shieldBadColor, shieldDef->shieldGoodColor, colorMix);
 	float alpha = shieldDef->visibleShield * shieldDef->shieldAlpha;
 
 	if (shield->GetHitFrames() > 0 && shieldDef->visibleShieldHitFrames > 0) {
@@ -151,12 +154,7 @@ void ShieldSegmentCollection::UpdateColor()
 		alpha = std::min(alpha, 1.0f);
 	}
 
-	color = SColor(
-		colorf.x * alpha,
-		colorf.y * alpha,
-		colorf.z * alpha,
-		alpha
-	);
+	color = SColor(mix(shieldDef->shieldBadColor, shieldDef->shieldGoodColor, lrpColor) * alpha);
 }
 
 
@@ -231,13 +229,13 @@ const float3* ShieldSegmentProjectile::GetSegmentVertices(const int xpart, const
 			for (int xpart_ = 0; xpart_ < NUM_SEGMENTS_X; ++xpart_) {
 				const int segmentIdx = (xpart_ + ypart_ * NUM_SEGMENTS_X) * (NUM_VERTICES_X * NUM_VERTICES_Y);
 				for (int y = 0; y < NUM_VERTICES_Y; ++y) {
-					const float yp = (y + ypart_ * NUM_VERTICES_Y_M1) / float(NUM_SEGMENTS_Y * NUM_VERTICES_Y_M1) * PI - PI / 2;
+					const float yp = (y + ypart_ * NUM_VERTICES_Y_M1) / float(NUM_SEGMENTS_Y * NUM_VERTICES_Y_M1) * math::PI - math::HALFPI;
 					for (int x = 0; x < NUM_VERTICES_X; ++x) {
-						const float xp = (x + xpart_ * NUM_VERTICES_X_M1) / float(NUM_SEGMENTS_X * NUM_VERTICES_X_M1) * 2 * PI;
+						const float xp = (x + xpart_ * NUM_VERTICES_X_M1) / float(NUM_SEGMENTS_X * NUM_VERTICES_X_M1) * math::TWOPI;
 						const size_t vIdx = segmentIdx + y * NUM_VERTICES_X + x;
 
 						spherevertices[vIdx].x = std::sin(xp) * std::cos(yp);
-						spherevertices[vIdx].y =                 std::sin(yp);
+						spherevertices[vIdx].y =                std::sin(yp);
 						spherevertices[vIdx].z = std::cos(xp) * std::cos(yp);
 					}
 				}
@@ -251,7 +249,8 @@ const float3* ShieldSegmentProjectile::GetSegmentVertices(const int xpart, const
 
 const float2* ShieldSegmentProjectile::GetSegmentTexCoords(const AtlasedTexture* texture, const int xpart, const int ypart)
 {
-	std::map<const AtlasedTexture*, std::vector<float2> >::iterator fit = spheretexcoords.find(texture);
+	auto fit = spheretexcoords.find(texture);
+
 	if (fit == spheretexcoords.end()) {
 		std::vector<float2>& texcoords = spheretexcoords[texture];
 		texcoords.resize(NUM_SEGMENTS_Y * NUM_SEGMENTS_X * NUM_VERTICES_Y * NUM_VERTICES_X);
@@ -284,7 +283,7 @@ const float2* ShieldSegmentProjectile::GetSegmentTexCoords(const AtlasedTexture*
 
 void ShieldSegmentProjectile::Update()
 {
-	if (collection == NULL)
+	if (collection == nullptr)
 		return;
 
 	// use the "middle" vertex for z-ordering
@@ -292,7 +291,7 @@ void ShieldSegmentProjectile::Update()
 
 }
 
-void ShieldSegmentProjectile::Draw()
+void ShieldSegmentProjectile::Draw(CVertexArray* va)
 {
 	if (collection == nullptr)
 		return;
@@ -309,7 +308,6 @@ void ShieldSegmentProjectile::Draw()
 	const float3 shieldPos = collection->GetShieldDrawPos();
 	const float size = collection->GetSize();
 
-	inArray = true;
 	va->EnlargeArrays(NUM_VERTICES_Y * NUM_VERTICES_X * 4, 0, VA_SIZE_TC);
 
 	// draw all quads

@@ -4,17 +4,16 @@
 #define _GAME_H
 
 #include <string>
-#include <map>
 #include <vector>
 
 #include "GameController.h"
+#include "GameJobDispatcher.h"
 #include "Game/UI/KeySet.h"
+#include "System/UnorderedMap.hpp"
 #include "System/creg/creg_cond.h"
 #include "System/Misc/SpringTime.h"
 
-class JobDispatcher;
 class CConsoleHistory;
-class CInfoConsole;
 class LuaParser;
 class ILoadSaveHandler;
 class Action;
@@ -30,7 +29,7 @@ private:
 public:
 	CGame(const std::string& mapName, const std::string& modName, ILoadSaveHandler* saveFile);
 	virtual ~CGame();
-	void KillLua();
+	void KillLua(bool dtor);
 
 public:
 	enum GameDrawMode {
@@ -44,12 +43,14 @@ public:
 
 	struct PlayerTrafficInfo {
 		PlayerTrafficInfo() : total(0) {}
+
 		int total;
-		std::map<int, int> packets;
+
+		spring::unordered_map<int, int> packets;
 	};
 
 public:
-	void LoadGame(const std::string& mapName, bool threaded);
+	void LoadGame(const std::string& mapName);
 
 	/// show GameEnd-window, calculate mouse movement etc.
 	void GameEnd(const std::vector<unsigned char>& winningAllyTeams, bool timeout = false);
@@ -79,7 +80,7 @@ public:
 	bool IsGameOver() const { return gameOver; }
 	bool IsLagging(float maxLatency = 500.0f) const;
 
-	const std::map<int, PlayerTrafficInfo>& GetPlayerTraffic() const {
+	const spring::unordered_map<int, PlayerTrafficInfo>& GetPlayerTraffic() const {
 		return playerTraffic;
 	}
 	void AddTraffic(int playerID, int packetCode, int length);
@@ -102,13 +103,14 @@ public:
 	void ReloadGame();
 	void SaveGame(const std::string& filename, bool overwrite, bool usecreg);
 
-	void ResizeEvent();
+	void ResizeEvent() override;
 
 	void SetDrawMode(GameDrawMode mode) { gameDrawMode = mode; }
 	GameDrawMode GetDrawMode() const { return gameDrawMode; }
 
 private:
-	bool Draw();
+	bool Draw() override;
+	bool Update() override;
 	bool UpdateUnsynced(const spring_time currentTime);
 
 	void DrawSkip(bool blackscreen = true);
@@ -120,9 +122,11 @@ private:
 	void HandleChatMsg(const ChatMessage& msg);
 
 	/// Called when a key is released by the user
-	int KeyReleased(int k);
+	int KeyReleased(int k) override;
 	/// Called when the key is pressed by the user (can be called several times due to key repeat)
-	int KeyPressed(int k, bool isRepeat);
+	int KeyPressed(int k, bool isRepeat) override;
+	///
+	int TextInput(const std::string& utf8Text) override;
 
 	bool ActionPressed(unsigned int key, const Action& action, bool isRepeat);
 	bool ActionReleased(const Action& action);
@@ -140,7 +144,6 @@ private:
 	void UpdateNetMessageProcessingTimeLeft();
 	void SimFrame();
 	void StartPlaying();
-	bool Update();
 
 public:
 	GameDrawMode gameDrawMode;
@@ -161,6 +164,8 @@ public:
 	spring_time lastNetPacketProcessTime;
 	spring_time lastReceivedNetPacketTime;
 	spring_time lastSimFrameNetPacketTime;
+	spring_time lastUnsyncedUpdateTime;
+	spring_time skipLastDrawTime;
 
 	float updateDeltaSeconds;
 	/// Time in seconds, stops at game end
@@ -192,7 +197,7 @@ public:
 	std::string userInputPrefix;
 
 	/// <playerID, <packetCode, total bytes> >
-	std::map<int, PlayerTrafficInfo> playerTraffic;
+	spring::unordered_map<int, PlayerTrafficInfo> playerTraffic;
 
 	// to smooth out SimFrame calls
 	float msgProcTimeLeft;  ///< How many SimFrame() calls we still may do.
@@ -205,18 +210,16 @@ public:
 	bool skipSoundmute;
 	float skipOldSpeed;
 	float skipOldUserSpeed;
-	spring_time skipLastDrawTime;
 
 	/**
 	 * @see CGameServer#speedControl
 	 */
 	int speedControl;
 
-	CInfoConsole* infoConsole;
 	CConsoleHistory* consoleHistory;
 
 private:
-	JobDispatcher* jobDispatcher;
+	JobDispatcher jobDispatcher;
 
 	CWorldDrawer* worldDrawer;
 

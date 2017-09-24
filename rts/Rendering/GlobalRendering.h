@@ -7,7 +7,9 @@
 #include "System/Misc/SpringTime.h"
 #include "System/type2.h"
 
+struct SDL_version;
 struct SDL_Window;
+typedef void* SDL_GLContext;
 
 /**
  * @brief Globally accessible unsynced, rendering related data
@@ -20,16 +22,47 @@ class CGlobalRendering {
 
 public:
 	CGlobalRendering();
+	~CGlobalRendering();
+	/**
+	 * @return whether setting the video mode was successful
+	 *
+	 * Sets SDL video mode options/settings
+	 */
+	bool CreateWindowAndContext(const char* title, bool hidden);
+	bool CreateSDLWindow(const int2& winRes, const int2& minRes, const char* title);
+	bool CreateGLContext(const int2& minCtx);
+	void DestroyWindowAndContext();
 	void PostInit();
-	void SetFullScreen(bool configFullScreen, bool cmdLineWindowed, bool cmdLineFullScreen);
+	void SwapBuffers(bool allowSwapBuffers, bool clearErrors);
+
+	void CheckGLExtensions() const;
+	void SetGLSupportFlags();
+	void QueryVersionInfo(char (&sdlVersionStr)[64], char (&glVidMemStr)[64]);
+	void QueryGLMaxVals();
+	void LogVersionInfo(const char* sdlVersionStr, const char* glVidMemStr) const;
+	void LogDisplayMode() const;
+
+	void SetFullScreen(bool cliWindowed, bool cliFullScreen);
+	// Notify on Fullscreen/WindowBorderless change
+	void ConfigNotify(const std::string& key, const std::string& value);
 	void SetDualScreenParams();
 	void UpdateViewPortGeometry();
 	void UpdatePixelGeometry();
-	int2 GetWantedViewSize(const bool fullscreen);
+	void ReadWindowPosAndSize();
+	void SaveWindowPosAndSize();
+	void UpdateGLConfigs();
+	void UpdateGLGeometry();
 
-	bool SetGetDrawDebug(bool dbg) { const bool ret =       dbg; drawdebug = dbg; return ret; }
-	bool GetSetDrawDebug(bool dbg) { const bool ret = drawdebug; drawdebug = dbg; return ret; }
+	int2 GetScreenCenter() const { return {viewPosX + (viewSizeX >> 1), viewPosY + (viewSizeY >> 1)}; }
+	int2 GetMaxWinRes() const;
+	int2 GetCfgWinRes(bool fullScrn) const;
 
+	bool CheckGLMultiSampling() const;
+	bool CheckGLContextVersion(const int2& minCtx) const;
+	bool ToggleGLDebugOutput(unsigned int msgSrceIdx, unsigned int msgTypeIdx, unsigned int msgSevrIdx);
+	void InitGLState();
+
+public:
 	/**
 	 * @brief time offset
 	 *
@@ -57,13 +90,6 @@ public:
 	/// Frames Per Second
 	float FPS;
 
-	/// the window state (0=normal,1=maximized,2=minimized)
-	enum {
-		WINSTATE_DEFAULT   = 0,
-		WINSTATE_MAXIMIZED = 1,
-		WINSTATE_MINIMIZED = 2
-	};
-	int winState;
 
 	/// the screen size in pixels
 	int screenSizeX;
@@ -105,12 +131,16 @@ public:
 	float viewRange;
 
 
+	int forceDisableShaders;
+	int forceCoreContext;
+	int forceSwapBuffers;
+
 	/**
-	 * @brief FSAA
+	 * @brief MSAA
 	 *
-	 * Level of full-screen anti-aliasing
+	 * Level of multisample anti-aliasing
 	 */
-	int FSAA;
+	int msaaLevel;
 
 	/**
 	 * @brief maxTextureSize
@@ -118,6 +148,11 @@ public:
 	 * maximum 2D texture size
 	 */
 	int maxTextureSize;
+
+	int gpuMemorySize;
+
+	float maxTexAnisoLvl;
+
 
 	bool drawSky;
 	bool drawWater;
@@ -137,13 +172,10 @@ public:
 	 * Whether debugging info is drawn
 	 */
 	bool drawdebug;
-
-	/**
-	 * @brief draw debug
-	 *
-	 * Whether debugging info is drawn
-	 */
 	bool drawdebugtraceray;
+
+	bool glDebug;
+	bool glDebugErrors;
 
 	/**
 	 * Does the user want team colored nanospray?
@@ -157,6 +189,9 @@ public:
 	 * Whether the graphics need to be drawn
 	 */
 	bool active;
+
+	/// whether we're capturing video - relevant for frame timing
+	bool isVideoCapturing;
 
 	/**
 	 * @brief compressTextures
@@ -176,6 +211,7 @@ public:
 	bool haveIntel;
 	bool haveNvidia;
 
+
 	/**
 	 * @brief collection of some ATI bugfixes
 	 *
@@ -186,31 +222,27 @@ public:
 	/**
 	 * @brief if the GPU (drivers) support NonPowerOfTwoTextures
 	 *
-	 * Especially some ATI cards report that they support NPOTs, but they don't (or just very limited).
+	 * Especially some ATI cards report that they support NPOTs, but don't (or just very limited).
 	 */
-	bool supportNPOTs;
+	bool supportNonPowerOfTwoTex;
+	bool supportTextureQueryLOD;
 
 	/**
-	 * @brief support24bitDepthBuffers
+	 * @brief support24bitDepthBuffer
 	 *
-	 * if GL_DEPTH_COMPONENT24 is supported (many ATIs don't do so)
+	 * if GL_DEPTH_COMPONENT24 is supported (many ATIs don't)
 	 */
-	bool support24bitDepthBuffers;
+	bool support24bitDepthBuffer;
 
 	bool supportRestartPrimitive;
+	bool supportClipSpaceControl;
+	bool supportFragDepthLayout;
 
 	/**
 	 * Shader capabilities
 	 */
 	bool haveARB;
 	bool haveGLSL;
-
-	/**
-	 * @brief maxSmoothPointSize
-	 *
-	 * maximum smooth point size (driver might fallback in software rendering if larger)
-	 */
-	float maxSmoothPointSize;
 
 	/**
 	 * Shader capabilities
@@ -241,9 +273,13 @@ public:
 	 * @brief full-screen or windowed rendering
 	 */
 	bool fullScreen;
+	bool borderless;
 
+public:
 	SDL_Window* window;
+	SDL_GLContext glContext;
 
+public:
 	/**
 	* @brief max view range in elmos
 	*/
@@ -267,3 +303,4 @@ public:
 extern CGlobalRendering* globalRendering;
 
 #endif /* _GLOBAL_RENDERING_H */
+

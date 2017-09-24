@@ -11,11 +11,12 @@
 #include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/Units/BuildInfo.h"
 #include "Sim/Units/CommandAI/CommandDescription.h"
+#include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "System/Color.h"
 #include "System/Exceptions.h"
-#include "System/ThreadPool.h"
+#include "System/Threading/ThreadPool.h"
 #include "System/Log/ILog.h"
 
 
@@ -81,24 +82,27 @@ static inline const SColor& GetBuildColor(const BuildSquareStatus& status) {
 
 static SColor GetSpeedModColor(const float sm) {
 	SColor col(255, 0, 0);
+
 	if (sm > 0.0f) {
 		col.r = 255 - std::min(sm * 255.0f, 255.0f);
 		col.g = 255 - col.r;
+	} else {
+		col.b = 255;
 	}
+
 	return col;
 }
 
 
 const MoveDef* CPathTexture::GetSelectedMoveDef()
 {
-	if (forcedPathType >= 0) {
+	if (forcedPathType >= 0)
 		return moveDefHandler->GetMoveDefByPathType(forcedPathType);
-	}
 
 	const MoveDef* md = nullptr;
-	const CUnitSet& unitSet = selectedUnitsHandler.selectedUnits;
+	const auto& unitSet = selectedUnitsHandler.selectedUnits;
 	if (!unitSet.empty()) {
-		const CUnit* unit = *(unitSet.begin());
+		const CUnit* unit = unitHandler->GetUnit(*unitSet.begin());
 		md = unit->moveDef;
 	}
 	return md;
@@ -219,7 +223,9 @@ void CPathTexture::Update()
 	const bool losFullView = ((gu->spectating && gu->spectatingFullView) || losHandler->globalLOS[gu->myAllyTeam]);
 
 	if (ud != nullptr) {
-		for_mt(start, updateProcess, [&](const int y) {
+		// CGameHelper::TestUnitBuildSquare accesses QuadField which is not re-entrant
+		// for_mt(start, updateProcess, [&](const int y) {
+		for (int y = start; y < updateProcess; y++) {
 			for (int x = 0; x < texSize.x; ++x) {
 				const float3 pos = float3(x << 1, 0.0f, y << 1) * SQUARE_SIZE;
 				const int idx = y * texSize.x + x;
@@ -239,7 +245,7 @@ void CPathTexture::Update()
 
 				infoTexMem[idx - offset] = GetBuildColor(status);
 			}
-		});
+		}
 	} else if (md != NULL) {
 		for_mt(start, updateProcess, [&](const int y) {
 			for (int x = 0; x < texSize.x; ++x) {

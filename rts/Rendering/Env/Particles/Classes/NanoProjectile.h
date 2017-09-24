@@ -13,13 +13,13 @@ class CNanoProjectile : public CProjectile
 public:
 	CNanoProjectile();
 	CNanoProjectile(float3 pos, float3 speed, int lifeTime, SColor color);
-	virtual ~CNanoProjectile();
+	~CNanoProjectile();
 
 	void Update() override;
-	void Draw() override;
-	virtual void DrawOnMinimap(CVertexArray& lines, CVertexArray& points) override;
+	void Draw(CVertexArray* va) override;
+	void DrawOnMinimap(CVertexArray& lines, CVertexArray& points) override;
 
-	virtual int GetProjectilesCount() const override;
+	int GetProjectilesCount() const override;
 
 	static bool GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo);
 

@@ -10,6 +10,8 @@
 #include "Sim/Misc/TeamHandler.h"
 #include "System/bitops.h"
 
+#include <algorithm>
+
 static const float3 GRAPH_MIN_SCALE = float3( 1e9,  1e9, 0.0f);
 static const float3 GRAPH_MAX_SCALE = float3(-1e9, -1e9, 0.0f);
 
@@ -18,11 +20,11 @@ DebugDrawerAI::DebugDrawerAI(): draw(false) {
 	texsets.resize(teamHandler->ActiveTeams(), TexSet());
 }
 DebugDrawerAI::~DebugDrawerAI() {
-	for (std::vector<Graph>::iterator it = graphs.begin(); it != graphs.end(); ++it) {
-		(*it).Clear();
+	for (Graph& graph: graphs) {
+		graph.Clear();
 	}
-	for (std::vector<TexSet>::iterator it = texsets.begin(); it != texsets.end(); ++it) {
-		(*it).Clear();
+	for (TexSet& texSet: texsets) {
+		texSet.Clear();
 	}
 
 	graphs.clear();
@@ -37,37 +39,37 @@ DebugDrawerAI* DebugDrawerAI::GetInstance() {
 
 
 void DebugDrawerAI::Draw() {
-	if (!draw || !gu->spectating) {
+	if (!draw || !gu->spectating)
 		return;
-	}
 
 	assert(gu->myTeam < graphs.size());
 
-	if (!skirmishAIHandler.GetSkirmishAIsInTeam(gu->myTeam).empty()) {
-		glMatrixMode(GL_PROJECTION);
-		glPushMatrix();
-		glLoadIdentity();
-		glMatrixMode(GL_MODELVIEW);
-		glPushMatrix();
-		glLoadIdentity();
+	if (skirmishAIHandler.GetSkirmishAIsInTeam(gu->myTeam).empty())
+		return;
 
-		glPushAttrib(GL_CURRENT_BIT | GL_ENABLE_BIT);
+	glMatrixMode(GL_PROJECTION);
+	glPushMatrix();
+	glLoadIdentity();
+	glMatrixMode(GL_MODELVIEW);
+	glPushMatrix();
+	glLoadIdentity();
 
-		glDisable(GL_LIGHTING);
-		glDisable(GL_DEPTH_TEST);
-		glDisable(GL_TEXTURE_2D);
+	glPushAttrib(GL_CURRENT_BIT | GL_ENABLE_BIT);
 
-		// draw data for the (AI) team being spectated
-		graphs[gu->myTeam].Draw();
-		texsets[gu->myTeam].Draw();
+	glDisable(GL_LIGHTING);
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_TEXTURE_2D);
 
-		glPopAttrib();
+	// draw data for the (AI) team being spectated
+	graphs[gu->myTeam].Draw();
+	texsets[gu->myTeam].Draw();
 
-		glMatrixMode(GL_PROJECTION);
-		glPopMatrix();
-		glMatrixMode(GL_MODELVIEW);
-		glPopMatrix();
-	}
+	glPopAttrib();
+
+	glMatrixMode(GL_PROJECTION);
+	glPopMatrix();
+	glMatrixMode(GL_MODELVIEW);
+	glPopMatrix();
 }
 
 
@@ -84,16 +86,16 @@ void DebugDrawerAI::DelGraphPoints(int teamNum, int lineNum, int numPoints) {
 }
 
 void DebugDrawerAI::SetGraphPos(int teamNum, float x, float y) {
-	if (x < -1.0f || x > 1.0f) { return; }
-	if (y < -1.0f || y > 1.0f) { return; }
+	if (x < -1.0f || x > 1.0f) return;
+	if (y < -1.0f || y > 1.0f) return;
 
 	assert(teamNum < graphs.size());
 	graphs[teamNum].SetPos(x, y);
 }
 
 void DebugDrawerAI::SetGraphSize(int teamNum, float w, float h) {
-	if (w < 0.0f || w > 2.0f) { return; }
-	if (h < 0.0f || h > 2.0f) { return; }
+	if (w < 0.0f || w > 2.0f) return;
+	if (h < 0.0f || h > 2.0f) return;
 
 	assert(teamNum < graphs.size());
 	graphs[teamNum].SetSize(w, h);
@@ -127,15 +129,15 @@ void DebugDrawerAI::DelOverlayTexture(int teamNum, int texHandle) {
 }
 
 void DebugDrawerAI::SetOverlayTexturePos(int teamNum, int texHandle, float x, float y) {
-	if (x < -1.0f || x > 1.0f) { return; }
-	if (y < -1.0f || y > 1.0f) { return; }
+	if (x < -1.0f || x > 1.0f) return;
+	if (y < -1.0f || y > 1.0f) return;
 
 	assert(teamNum < texsets.size());
 	texsets[teamNum].SetTexturePos(texHandle, x, y);
 }
 void DebugDrawerAI::SetOverlayTextureSize(int teamNum, int texHandle, float w, float h) {
-	if (w < 0.0f || w > 2.0f) { return; }
-	if (h < 0.0f || h > 2.0f) { return; }
+	if (w < 0.0f || w > 2.0f) return;
+	if (h < 0.0f || h > 2.0f) return;
 
 	assert(teamNum < texsets.size());
 	texsets[teamNum].SetTextureSize(texHandle, w, h);
@@ -159,17 +161,16 @@ DebugDrawerAI::Graph::Graph(const float3& mins, const float3& maxs):
 }
 
 void DebugDrawerAI::Graph::AddPoint(int lineNum, float x, float y) {
-	if (lines.find(lineNum) == lines.end()) {
+	if (lines.find(lineNum) == lines.end())
 		lines[lineNum] = Graph::GraphLine(GRAPH_MIN_SCALE, GRAPH_MAX_SCALE);
-	}
 
-	Graph::GraphLine* line = &lines[lineNum];
+	Graph::GraphLine& line = lines[lineNum];
 
-	line->lineData.push_back(float3(x, y, 0.0f));
-	line->lineMin.x = std::min(line->lineMin.x, x);
-	line->lineMin.y = std::min(line->lineMin.y, y);
-	line->lineMax.x = std::max(line->lineMax.x, x);
-	line->lineMax.y = std::max(line->lineMax.y, y);
+	line.lineData.push_back(float3(x, y, 0.0f));
+	line.lineMin.x = std::min(line.lineMin.x, x);
+	line.lineMin.y = std::min(line.lineMin.y, y);
+	line.lineMax.x = std::max(line.lineMax.x, x);
+	line.lineMax.y = std::max(line.lineMax.y, y);
 
 	minScale.x = std::min(minScale.x, x);
 	minScale.y = std::min(minScale.y, y);
@@ -180,33 +181,29 @@ void DebugDrawerAI::Graph::AddPoint(int lineNum, float x, float y) {
 }
 
 void DebugDrawerAI::Graph::DelPoints(int lineNum, int numPoints) {
-	typedef std::map<int, Graph::GraphLine>::iterator LineIt;
-	typedef std::list<float3>::const_iterator ListIt;
+	auto lit = lines.find(lineNum);
 
-	LineIt lit = lines.find(lineNum);
-
-	if (lit == lines.end()) {
+	if (lit == lines.end())
 		return;
-	}
 
-	Graph::GraphLine* line = &(lit->second);
+	Graph::GraphLine& line = lit->second;
 
-	line->lineMin = GRAPH_MIN_SCALE;
-	line->lineMax = GRAPH_MAX_SCALE;
+	line.lineMin = GRAPH_MIN_SCALE;
+	line.lineMax = GRAPH_MAX_SCALE;
 
 	minScale = GRAPH_MIN_SCALE;
 	maxScale = GRAPH_MAX_SCALE;
 
-	for (int i = 0; (i < numPoints && !line->lineData.empty()); i++) {
-		line->lineData.pop_front();
+	for (int i = 0; (i < numPoints && !line.lineData.empty()); i++) {
+		line.lineData.pop_front();
 	}
 
 	// recalculate the line scales
-	for (ListIt dit = line->lineData.begin(); dit != line->lineData.end(); ++dit) {
-		line->lineMin.x = std::min(line->lineMin.x, (*dit).x);
-		line->lineMin.y = std::min(line->lineMin.y, (*dit).y);
-		line->lineMax.x = std::max(line->lineMax.x, (*dit).x);
-		line->lineMax.y = std::max(line->lineMax.y, (*dit).y);
+	for (auto dit = line.lineData.begin(); dit != line.lineData.end(); ++dit) {
+		line.lineMin.x = std::min(line.lineMin.x, (*dit).x);
+		line.lineMin.y = std::min(line.lineMin.y, (*dit).y);
+		line.lineMax.x = std::max(line.lineMax.x, (*dit).x);
+		line.lineMax.y = std::max(line.lineMax.y, (*dit).y);
 	}
 
 	// recalculate the graph scales
@@ -222,33 +219,31 @@ void DebugDrawerAI::Graph::DelPoints(int lineNum, int numPoints) {
 }
 
 void DebugDrawerAI::Graph::SetColor(int lineNum, const float3& c) {
-	if (lines.find(lineNum) == lines.end()) {
+	if (lines.find(lineNum) == lines.end())
 		lines[lineNum] = Graph::GraphLine(GRAPH_MIN_SCALE, GRAPH_MAX_SCALE);
-	}
 
 	lines[lineNum].lineColor = c;
 }
 
 void DebugDrawerAI::Graph::SetLabel(int lineNum, const std::string& s) {
-	if (lines.find(lineNum) == lines.end()) {
+	if (lines.find(lineNum) == lines.end())
 		lines[lineNum] = Graph::GraphLine(GRAPH_MIN_SCALE, GRAPH_MAX_SCALE);
-	}
 
-	lines[lineNum].lineLabel = s;
-	lines[lineNum].lineLabelSize = s.size();
-	lines[lineNum].lineLabelWidth = font->GetSize() * font->GetTextWidth(s);
-	lines[lineNum].lineLabelHeight = font->GetSize() * font->GetTextHeight(s);
+	Graph::GraphLine& line = lines[lineNum];
 
-	minLabelSize  = std::min(minLabelSize,  lines[lineNum].lineLabelSize);
-	maxLabelSize  = std::max(maxLabelSize,  lines[lineNum].lineLabelSize);
-	minLabelWidth = std::min(minLabelWidth, lines[lineNum].lineLabelWidth);
-	maxLabelWidth = std::max(maxLabelWidth, lines[lineNum].lineLabelWidth);
+	line.lineLabel = s;
+	line.lineLabelSize = s.size();
+	line.lineLabelWidth = font->GetSize() * font->GetTextWidth(s);
+	line.lineLabelHeight = font->GetSize() * font->GetTextHeight(s);
+
+	minLabelSize  = std::min(minLabelSize,  line.lineLabelSize);
+	maxLabelSize  = std::max(maxLabelSize,  line.lineLabelSize);
+	minLabelWidth = std::min(minLabelWidth, line.lineLabelWidth);
+	maxLabelWidth = std::max(maxLabelWidth, line.lineLabelWidth);
 }
 
 void DebugDrawerAI::Graph::Clear() {
-	typedef std::map<int, Graph::GraphLine>::iterator LineIt;
-
-	for (LineIt it = lines.begin(); it != lines.end(); ++it) {
+	for (auto it = lines.begin(); it != lines.end(); ++it) {
 		(it->second).lineData.clear();
 	}
 }
@@ -309,22 +304,18 @@ void DebugDrawerAI::Graph::Draw() {
 	}
 
 	{
-		typedef std::map<int, Graph::GraphLine>::const_iterator LineIt;
-		typedef std::list<float3>::const_iterator ListIt;
-
 		if (!lines.empty()) {
 			font->Begin();
 
 			int lineNum = 0;
 			float linePad = (1.0f / lines.size()) * 0.5f;
 
-			for (LineIt lit = lines.begin(); lit != lines.end(); ++lit) {
+			for (auto lit = lines.begin(); lit != lines.end(); ++lit) {
 				const Graph::GraphLine& line = lit->second;
-				const std::list<float3>& data = line.lineData;
+				const std::deque<float3>& data = line.lineData;
 
-				if (data.empty()) {
+				if (data.empty())
 					continue;
-				}
 
 				// right-outline the labels
 				const float sx = (maxLabelWidth / globalRendering->viewSizeX) * size.x;
@@ -342,8 +333,8 @@ void DebugDrawerAI::Graph::Draw() {
 				glLineWidth(line.lineWidth);
 				va->Initialize();
 
-				for (ListIt pit = data.begin(); pit != data.end(); ++pit) {
-					ListIt npit = pit; ++npit;
+				for (auto pit = data.begin(); pit != data.end(); ++pit) {
+					auto npit = pit; ++npit;
 
 					const float px1 = ((pit->x - minScale.x) / scale.x) * size.x;
 					const float py1 = ((pit->y - minScale.y) / scale.y) * size.y;
@@ -373,101 +364,98 @@ void DebugDrawerAI::Graph::Draw() {
 
 
 void DebugDrawerAI::TexSet::Clear() {
-	for (std::map<int, TexSet::Texture*>::iterator it = textures.begin(); it != textures.end(); ++it) {
-		delete (it->second);
-	}
-
 	textures.clear();
 }
 
 int DebugDrawerAI::TexSet::AddTexture(const float* data, int w, int h) {
-	if (!globalRendering->supportNPOTs && (w != next_power_of_2(w) || h != next_power_of_2(h))) {
+	if (!globalRendering->supportNonPowerOfTwoTex && (w != next_power_of_2(w) || h != next_power_of_2(h)))
 		return 0;
-	}
 
-	textures[curTexHandle] = new TexSet::Texture(w, h, data);
+	textures.emplace(curTexHandle, TexSet::Texture(w, h, data));
 	return (curTexHandle++);
 }
 
 void DebugDrawerAI::TexSet::UpdateTexture(int texHandle, const float* data, int x, int y, int w, int h) {
-	std::map<int, TexSet::Texture*>::iterator it = textures.find(texHandle);
+	auto it = textures.find(texHandle);
 
-	if (it == textures.end()) {
+	if (it == textures.end())
 		return;
-	}
 
-	if ((x + w) > (it->second)->GetWidth()) { return; }
-	if ((y + h) > (it->second)->GetHeight()) { return; }
+	if ((x + w) > (it->second).GetWidth())
+		return;
+	if ((y + h) > (it->second).GetHeight())
+		return;
 
-	glBindTexture(GL_TEXTURE_2D, (it->second)->GetID());
+	glBindTexture(GL_TEXTURE_2D, (it->second).GetID());
 	glTexSubImage2D(GL_TEXTURE_2D, 0, x, y, w, h, GL_RED, GL_FLOAT, data);
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void DebugDrawerAI::TexSet::DelTexture(int texHandle) {
-	std::map<int, TexSet::Texture*>::iterator it = textures.find(texHandle);
+	auto it = textures.find(texHandle);
 
-	if (it != textures.end()) {
-		delete (it->second);
-		textures.erase(it->first);
-	}
+	if (it == textures.end())
+		return;
+
+	textures.erase(it->first);
 }
 
 void DebugDrawerAI::TexSet::SetTexturePos(int texHandle, float x, float y) {
-	std::map<int, TexSet::Texture*>::iterator it = textures.find(texHandle);
+	auto it = textures.find(texHandle);
 
 	if (it != textures.end()) {
-		(it->second)->SetPos(float3(x, y, 0.0f));
+		(it->second).SetPos(float3(x, y, 0.0f));
 	}
 }
 void DebugDrawerAI::TexSet::SetTextureSize(int texHandle, float w, float h) {
-	std::map<int, TexSet::Texture*>::iterator it = textures.find(texHandle);
+	auto it = textures.find(texHandle);
 
 	if (it != textures.end()) {
-		(it->second)->SetSize(float3(w, h, 0.0f));
+		(it->second).SetSize(float3(w, h, 0.0f));
 	}
 }
 void DebugDrawerAI::TexSet::SetTextureLabel(int texHandle, const std::string& label) {
-	std::map<int, TexSet::Texture*>::iterator it = textures.find(texHandle);
+	auto it = textures.find(texHandle);
 
 	if (it != textures.end()) {
-		(it->second)->SetLabel(label);
+		(it->second).SetLabel(label);
 	}
 }
 
 
 
 void DebugDrawerAI::TexSet::Draw() {
-	if (!textures.empty()) {
-		glEnable(GL_TEXTURE_2D);
-		font->Begin();
-		font->SetTextColor(0.0f, 0.0f, 0.0f, 1.0f);
+	if (textures.empty())
+		return;
 
-		CVertexArray* va = GetVertexArray();
+	glEnable(GL_TEXTURE_2D);
+	font->Begin();
+	font->SetTextColor(0.0f, 0.0f, 0.0f, 1.0f);
 
-		for (std::map<int, TexSet::Texture*>::iterator it = textures.begin(); it != textures.end(); ++it) {
-			const TexSet::Texture* tex = it->second;
-			const float3& pos = tex->GetPos();
-			const float3& size = tex->GetSize();
+	CVertexArray* va = GetVertexArray();
 
-			glBindTexture(GL_TEXTURE_2D, tex->GetID());
-			va->Initialize();
-			va->AddVertexT(pos,                                0.0f, 1.0f);
-			va->AddVertexT(pos + float3(size.x,   0.0f, 0.0f), 1.0f, 1.0f);
-			va->AddVertexT(pos + float3(size.x, size.y, 0.0f), 1.0f, 0.0f);
-			va->AddVertexT(pos + float3(  0.0f, size.y, 0.0f), 0.0f, 0.0f);
-			va->DrawArrayT(GL_QUADS);
-			glBindTexture(GL_TEXTURE_2D, 0);
+	for (auto it = textures.begin(); it != textures.end(); ++it) {
+		const TexSet::Texture& tex = it->second;
+		const float3& pos = tex.GetPos();
+		const float3& size = tex.GetSize();
 
-			const float tx = pos.x + size.x * 0.5f - ((tex->GetLabelWidth() * 0.5f) / globalRendering->viewSizeX) * size.x;
-			const float ty = pos.y + size.y        + ((tex->GetLabelHeight() * 0.5f) / globalRendering->viewSizeY) * size.y;
+		glBindTexture(GL_TEXTURE_2D, tex.GetID());
+		va->Initialize();
+		va->AddVertexT(pos,                                0.0f, 1.0f);
+		va->AddVertexT(pos + float3(size.x,   0.0f, 0.0f), 1.0f, 1.0f);
+		va->AddVertexT(pos + float3(size.x, size.y, 0.0f), 1.0f, 0.0f);
+		va->AddVertexT(pos + float3(  0.0f, size.y, 0.0f), 0.0f, 0.0f);
+		va->DrawArrayT(GL_QUADS);
+		glBindTexture(GL_TEXTURE_2D, 0);
 
-			font->glFormat(tx, ty, 1.0f, FONT_SCALE | FONT_NORM, "%s", tex->GetLabel().c_str());
-		}
+		const float tx = pos.x + size.x * 0.5f - ((tex.GetLabelWidth() * 0.5f) / globalRendering->viewSizeX) * size.x;
+		const float ty = pos.y + size.y        + ((tex.GetLabelHeight() * 0.5f) / globalRendering->viewSizeY) * size.y;
 
-		font->End();
-		glDisable(GL_TEXTURE_2D);
+		font->glFormat(tx, ty, 1.0f, FONT_SCALE | FONT_NORM, "%s", (tex.GetLabel()).c_str());
 	}
+
+	font->End();
+	glDisable(GL_TEXTURE_2D);
 }
 
 
@@ -505,3 +493,4 @@ void DebugDrawerAI::TexSet::Texture::SetLabel(const std::string& s) {
 	labelWidth = font->GetSize() * font->GetTextWidth(s);
 	labelHeight = font->GetSize() * font->GetTextHeight(s);
 }
+

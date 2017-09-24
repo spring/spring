@@ -12,6 +12,12 @@
 	#define GBUFFER_MISCTEX_IDX 4
 #endif
 
+#if (GL_FRAGMENT_PRECISION_HIGH == 1)
+// ancient GL3 ATI drivers confuse GLSL for GLSL-ES and require this
+precision highp float;
+#else
+precision mediump float;
+#endif
 
 /***********************************************************************/
 // Consts
@@ -397,16 +403,12 @@ void main() {
 
 	#if !defined(DEFERRED_MODE) && defined(HAVE_SHADOWS)
 	{
-		vec2 p17 = shadowParams.zz;
-		vec2 p18 = shadowParams.ww;
-
 		vec4 vertexShadowPos = shadowMat * vertexWorldPos;
-			vertexShadowPos.st *= (inversesqrt(abs(vertexShadowPos.st) + p17) + p18);
-			vertexShadowPos.st += shadowParams.xy;
+			vertexShadowPos.xy *= (inversesqrt(abs(vertexShadowPos.xy) + shadowParams.zz) + shadowParams.ww);
+			vertexShadowPos.xy += shadowParams.xy;
 
 		// same as ARB shader: shadowCoeff = 1 - (1 - shadowCoeff) * groundShadowDensity
-		shadowCoeff = shadow2DProj(shadowTex, vertexShadowPos).r;
-		shadowCoeff = mix(1.0, shadowCoeff, groundShadowDensity);
+		shadowCoeff = mix(1.0, shadow2DProj(shadowTex, vertexShadowPos).r, groundShadowDensity);
 	}
 	#endif
 

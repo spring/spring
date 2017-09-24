@@ -26,7 +26,8 @@ void CWorldObject::SetRadiusAndHeight(const S3DModel* mdl)
 	// initial values; can be overridden by LSC::Set*RadiusAndHeight
 	SetRadiusAndHeight(mdl->radius, mdl->height);
 
-	// model->radius can be badly configured, set a more reliable DR
-	drawRadius = mdl->GetDrawRadius();
+	// model->radius defaults to this, but can be badly overridden
+	// we always want the (more reliable) auto-calculated DR value
+	drawRadius = mdl->CalcDrawRadius();
 }
 

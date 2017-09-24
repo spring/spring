@@ -12,9 +12,10 @@
 #include "Rendering/Env/Particles/ProjectileDrawer.h"
 #include "Sim/Projectiles/ExpGenSpawnableMemberInfo.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
+#include "Sim/Projectiles/ProjectileMemPool.h"
 #include "System/myMath.h"
 
-CR_BIND_DERIVED(CGroundFlash, CExpGenSpawnable, )
+CR_BIND_DERIVED_POOL(CGroundFlash, CExpGenSpawnable, , projMemPool.alloc, projMemPool.free)
 CR_REG_METADATA(CGroundFlash, (
  	CR_MEMBER_BEGINFLAG(CM_Config),
 		CR_MEMBER(size),
@@ -70,8 +71,6 @@ CR_REG_METADATA(CSimpleGroundFlash, (
 
 
 
-CVertexArray* CGroundFlash::va = nullptr;
-
 // CREG-only
 CGroundFlash::CGroundFlash()
 {
@@ -90,10 +89,11 @@ CGroundFlash::CGroundFlash(const float3& _pos): CExpGenSpawnable()
 	pos = _pos;
 }
 
-float3 CGroundFlash::CalcNormal(const float3 midPos, const float3 camDir, const float quadSize) const
+float3 CGroundFlash::CalcNormal(const float3 midPos, const float3 camDir, float quadSize) const
 {
-	// else ANormalize() fails!
-	assert(quadSize > 1.0f);
+	// no degenerate quads, otherwise ANormalize() fails
+	// assert(quadSize > 1.0f);
+	quadSize = std::max(quadSize, 1.0f);
 
 	float3 p0 = float3(midPos.x + quadSize, 0.0f, midPos.z           );
 	float3 p1 = float3(midPos.x - quadSize, 0.0f, midPos.z           );
@@ -212,7 +212,7 @@ bool CStandardGroundFlash::Update()
 	return (std::max(--ttl, 0) > 0);
 }
 
-void CStandardGroundFlash::Draw()
+void CStandardGroundFlash::Draw(CVertexArray* va)
 {
 	float iAlpha = Clamp(circleAlpha - (circleAlphaDec * globalRendering->timeOffset), 0.0f, 1.0f);
 
@@ -297,7 +297,7 @@ void CSimpleGroundFlash::Init(const CUnit* owner, const float3& offset)
 	projectileHandler->AddGroundFlash(this);
 }
 
-void CSimpleGroundFlash::Draw()
+void CSimpleGroundFlash::Draw(CVertexArray* va)
 {
 	unsigned char color[4] = {0, 0, 0, 0};
 	colorMap->GetColor(color, age);
@@ -370,7 +370,7 @@ CSeismicGroundFlash::CSeismicGroundFlash(
 	projectileHandler->AddGroundFlash(this);
 }
 
-void CSeismicGroundFlash::Draw()
+void CSeismicGroundFlash::Draw(CVertexArray* va)
 {
 	color.a = mix(255, int(255 * (ttl / (1.0f * fade))), (ttl < fade));
 

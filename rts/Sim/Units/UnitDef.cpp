@@ -18,7 +18,8 @@
 #include "System/Exceptions.h"
 #include "System/Log/ILog.h"
 #include "System/myMath.h"
-#include "System/Util.h"
+#include "System/SafeUtil.h"
+#include "System/StringUtil.h"
 
 /******************************************************************************/
 
@@ -47,7 +48,7 @@ UnitDefWeapon::UnitDefWeapon(const WeaponDef* weaponDef, const LuaTable& weaponT
 	//     <maxAngleDif> specifies the full-width arc,
 	//     but we want the half-width arc internally
 	//     (arcs are always symmetric around mainDir)
-	this->maxMainDirAngleDif = math::cos((weaponTable.GetFloat("maxAngleDif", 360.0f) * 0.5f) * (PI / 180.0f));
+	this->maxMainDirAngleDif = math::cos((weaponTable.GetFloat("maxAngleDif", 360.0f) * 0.5f) * math::DEG_TO_RAD);
 
 	const string& btcString = weaponTable.GetString("badTargetCategory", "");
 	const string& otcString = weaponTable.GetString("onlyTargetCategory", "");
@@ -352,7 +353,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	collide = udTable.GetBool("collide", true);
 
 	const float maxSlopeDeg = Clamp(udTable.GetFloat("maxSlope", 0.0f), 0.0f, 89.0f);
-	const float maxSlopeRad = maxSlopeDeg * (PI / 180.0f);
+	const float maxSlopeRad = maxSlopeDeg * math::DEG_TO_RAD;
 
 	// FIXME: kill the magic constant
 	maxHeightDif = 40.0f * math::tanf(maxSlopeRad);
@@ -371,13 +372,13 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	rSpeed = math::fabs(rSpeed);
 
 	fireState = udTable.GetInt("fireState", canFireControl? FIRESTATE_NONE: FIRESTATE_FIREATWILL);
-	fireState = std::min(fireState, int(FIRESTATE_FIREATWILL));
+	fireState = std::min(fireState, int(FIRESTATE_FIREATNEUTRAL));
 	moveState = udTable.GetInt("moveState", (canmove && speed > 0.0f)? MOVESTATE_NONE: MOVESTATE_MANEUVER);
 	moveState = std::min(moveState, int(MOVESTATE_ROAM));
 
 	flankingBonusMode = udTable.GetInt("flankingBonusMode", modInfo.flankingBonusModeDefault);
 	flankingBonusMax  = udTable.GetFloat("flankingBonusMax", 1.9f);
-	flankingBonusMin  = udTable.GetFloat("flankingBonusMin", 0.9);
+	flankingBonusMin  = udTable.GetFloat("flankingBonusMin", 0.9f);
 	flankingBonusDir  = udTable.GetFloat3("flankingBonusDir", FwdVector);
 	flankingBonusMobilityAdd = udTable.GetFloat("flankingBonusMobilityAdd", 0.01f);
 
@@ -440,7 +441,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	turnRate    = udTable.GetFloat("turnRate", 0.0f);
 	turnInPlace = udTable.GetBool("turnInPlace", true);
 	turnInPlaceSpeedLimit = turnRate / SPRING_CIRCLE_DIVS;
-	turnInPlaceSpeedLimit *= ((PI + PI) * SQUARE_SIZE);
+	turnInPlaceSpeedLimit *= (math::TWOPI * SQUARE_SIZE);
 	turnInPlaceSpeedLimit /= std::max(speed / GAME_SPEED, 1.0f);
 	turnInPlaceSpeedLimit = udTable.GetFloat("turnInPlaceSpeedLimit", std::min(speed, turnInPlaceSpeedLimit));
 	turnInPlaceAngleLimit = udTable.GetFloat("turnInPlaceAngleLimit", 0.0f);
@@ -452,14 +453,14 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	isFirePlatform    = udTable.GetBool("isFirePlatform",    false);
 	isAirBase         = udTable.GetBool("isAirBase",         false);
 	loadingRadius     = udTable.GetFloat("loadingRadius",    220.0f);
-	unloadSpread      = udTable.GetFloat("unloadSpread",     1.0f);
+	unloadSpread      = udTable.GetFloat("unloadSpread",     5.0f);
 	transportMass     = udTable.GetFloat("transportMass",    100000.0f);
 	minTransportMass  = udTable.GetFloat("minTransportMass", 0.0f);
 	holdSteady        = udTable.GetBool("holdSteady",        false);
 	releaseHeld       = udTable.GetBool("releaseHeld",       false);
 	cantBeTransported = udTable.GetBool("cantBeTransported", !RequireMoveDef());
 	transportByEnemy  = udTable.GetBool("transportByEnemy",  true);
-	fallSpeed         = udTable.GetFloat("fallSpeed",    0.2);
+	fallSpeed         = udTable.GetFloat("fallSpeed",    0.2f);
 	unitFallSpeed     = udTable.GetFloat("unitFallSpeed",  0);
 	transportUnloadMethod = udTable.GetInt("transportUnloadMethod" , 0);
 
@@ -504,7 +505,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	extractRange = mapInfo->map.extractorRadius * int(extractsMetal > 0.0f);
 
 	{
-		MoveDef* moveDef = NULL;
+		MoveDef* moveDef = nullptr;
 
 		// aircraft have MoveTypes but no MoveDef;
 		// static structures have no use for either
@@ -513,15 +514,15 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 			const std::string& moveClass = StringToLower(udTable.GetString("movementClass", ""));
 			const std::string errMsg = "WARNING: Couldn't find a MoveClass named " + moveClass + " (used in UnitDef: " + unitName + ")";
 
-			if ((moveDef = moveDefHandler->GetMoveDefByName(moveClass)) == NULL) {
-				throw content_error(errMsg); //! invalidate unitDef (this gets catched in ParseUnitDef!)
-			}
+			// invalidate this unitDef; caught in ParseUnitDef
+			if ((moveDef = moveDefHandler->GetMoveDefByName(moveClass)) == nullptr)
+				throw content_error(errMsg);
 
 			moveDef->udRefCount += 1;
 			this->pathType = moveDef->pathType;
 		}
 
-		if (moveDef == NULL) {
+		if (moveDef == nullptr) {
 			upright           |= !canfly;
 			floatOnWater      |= udTable.GetBool("floater", udTable.KeyExists("WaterLine"));
 
@@ -530,8 +531,6 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 		} else {
 			upright           |= (moveDef->speedModClass == MoveDef::Hover);
 			upright           |= (moveDef->speedModClass == MoveDef::Ship );
-			floatOnWater      |= (moveDef->speedModClass == MoveDef::Hover);
-			floatOnWater      |= (moveDef->speedModClass == MoveDef::Ship );
 
 			// we have a MoveDef, so pathType != -1 and IsGroundUnit() MUST be true
 			cantBeTransported |= (!modInfo.transportGround && moveDef->speedModClass == MoveDef::Tank );
@@ -598,7 +597,7 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	xsize = std::max(1 * SPRING_FOOTPRINT_SCALE, (udTable.GetInt("footprintX", 1) * SPRING_FOOTPRINT_SCALE));
 	zsize = std::max(1 * SPRING_FOOTPRINT_SCALE, (udTable.GetInt("footprintZ", 1) * SPRING_FOOTPRINT_SCALE));
 
-	buildingMask = (boost::uint16_t)udTable.GetInt("buildingMask", 1); //1st bit set to 1 constitutes for "normal building"
+	buildingMask = (std::uint16_t)udTable.GetInt("buildingMask", 1); //1st bit set to 1 constitutes for "normal building"
 	if (IsImmobileUnit()) {
 		CreateYardMap(udTable.GetString("yardMap", ""));
 	}
@@ -622,18 +621,14 @@ UnitDef::UnitDef(const LuaTable& udTable, const std::string& unitName, int id)
 	// initialize the (per-unitdef) collision-volume
 	// all CUnit instances hold a copy of this object
 	ParseCollisionVolume(udTable);
+	ParseSelectionVolume(udTable);
 
 
-	LuaTable buildsTable = udTable.SubTable("buildOptions");
-	if (buildsTable.IsValid()) {
-		for (int bo = 1; true; bo++) {
-			const string order = buildsTable.GetString(bo, "");
-			if (order.empty()) {
-				break;
-			}
-			buildOptions[bo] = order;
-		}
-	}
+	const LuaTable& buildsTable = udTable.SubTable("buildOptions");
+
+	if (buildsTable.IsValid())
+		buildsTable.GetMap(buildOptions);
+
 
 	const LuaTable& sfxTable = udTable.SubTable("SFXTypes");
 	const LuaTable& modelCEGTable = sfxTable.SubTable(     "explosionGenerators");
@@ -662,7 +657,7 @@ UnitDef::~UnitDef()
 {
 	if (buildPic != nullptr) {
 		buildPic->Free();
-		SafeDelete(buildPic);
+		spring::SafeDelete(buildPic);
 	}
 }
 
@@ -704,7 +699,7 @@ void UnitDef::ParseWeaponsTable(const LuaTable& weaponsTable)
 			}
 		}
 
-		weapons.push_back(UnitDefWeapon(wd, wTable));
+		weapons.emplace_back(wd, wTable);
 
 		maxWeaponRange = std::max(maxWeaponRange, wd->range);
 
@@ -731,14 +726,13 @@ void UnitDef::ParseWeaponsTable(const LuaTable& weaponsTable)
 
 void UnitDef::CreateYardMap(std::string yardMapStr)
 {
-	if (yardMapStr.empty()) {
-		// if a unit is immobile but does *not* have a yardmap
-		// defined, assume it is not supposed to be a building
-		// (so do not assign a default per facing)
+	// if a unit is immobile but does *not* have a yardmap
+	// defined, assume it is not supposed to be a building
+	// (so do not assign a default per facing)
+	if (yardMapStr.empty())
 		return;
-	} else {
-		yardmap.resize(xsize * zsize);
-	}
+
+	yardmap.resize(xsize * zsize);
 
 	StringToLowerInPlace(yardMapStr);
 
@@ -774,8 +768,7 @@ void UnitDef::CreateYardMap(std::string yardMapStr)
 			case 'f':
 			case 'o': ys = YARDMAP_BLOCKED; break;
 			default:
-				if (unknownChars.find_first_of(c) == std::string::npos)
-					unknownChars += c;
+				unknownChars += (unknownChars.find_first_of(c) == std::string::npos);
 		}
 
 		if (ymCopyIdx < defYardMap.size()) {
@@ -832,45 +825,12 @@ void UnitDef::SetNoCost(bool noCost)
 	}
 }
 
-bool UnitDef::CheckTerrainConstraints(const MoveDef* moveDef, float rawHeight, float* clampedHeight) const {
-	// can fail if LuaMoveCtrl has changed a unit's MoveDef (UnitDef::pathType is not updated)
-	// assert(pathType == -1u || moveDef == moveDefHandler->GetMoveDefByPathType(pathType));
-
-	float minDepth = MoveDef::GetDefaultMinWaterDepth();
-	float maxDepth = MoveDef::GetDefaultMaxWaterDepth();
-
-	if (moveDef != NULL) {
-		// we are a mobile ground-unit, use MoveDef limits
-		if (moveDef->speedModClass == MoveDef::Ship) {
-			minDepth = moveDef->depth;
-		} else {
-			maxDepth = moveDef->depth;
-		}
-	} else {
-		if (!canfly) {
-			// we are a building, use UnitDef limits
-			minDepth = this->minWaterDepth;
-			maxDepth = this->maxWaterDepth;
-		} else {
-			maxDepth *= canSubmerge;
-			maxDepth *= (1 - floatOnWater);
-		}
-	}
-
-	if (clampedHeight != NULL) {
-		*clampedHeight = Clamp(rawHeight, -maxDepth, -minDepth);
-	}
-
-	// <rawHeight> must lie in the range [-maxDepth, -minDepth]
-	return (rawHeight >= -maxDepth && rawHeight <= -minDepth);
-}
-
 bool UnitDef::HasBomberWeapon() const {
-	if (weapons.empty()) { return false; }
-	if (weapons[0].def == NULL) { return false; }
-	return
-		weapons[0].def->type == "AircraftBomb" ||
-		weapons[0].def->type == "TorpedoLauncher";
+	if (weapons.empty())
+		return false;
+	if (weapons[0].def == nullptr)
+		return false;
+
+	return (weapons[0].def->IsAircraftWeapon());
 }
 
-/******************************************************************************/

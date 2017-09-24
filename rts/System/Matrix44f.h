@@ -63,16 +63,18 @@ public:
 
 	/// general matrix inversion
 	bool InvertInPlace();
-	CMatrix44f Invert(bool* status = NULL) const;
+	CMatrix44f Invert(bool* status = nullptr) const;
 
 	/// affine matrix inversion
 	CMatrix44f& InvertAffineInPlace();
 	CMatrix44f  InvertAffine() const;
 
-	/// vector multiply
-	float3 operator* (const float3 v) const;
+	/// point/vector multiply
+	float3 operator* (const float3 v) const { return ((*this) * float4(v.x, v.y, v.z, 1.0f)); }
+	float4 operator* (const float4 v) const; // M*p (w=1) or M*v (w=0)
+
 	float3 Mul(const float3 v) const { return ((*this) * v); }
-	float4 operator* (const float4 v) const;
+	float4 Mul(const float4 v) const { return ((*this) * v); }
 
 	/// matrix multiply
 	CMatrix44f  operator  *  (const CMatrix44f& mat) const;

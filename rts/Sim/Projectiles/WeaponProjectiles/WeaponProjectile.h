@@ -22,7 +22,6 @@ class CWeaponProjectile : public CProjectile
 {
 	CR_DECLARE_DERIVED(CWeaponProjectile)
 public:
-	CWeaponProjectile() { }
 	CWeaponProjectile(const ProjectileParams& params);
 	virtual ~CWeaponProjectile();
 
@@ -40,9 +39,8 @@ public:
 	void PostLoad();
 
 	void SetTargetObject(CWorldObject* newTarget) {
-		if (newTarget != NULL) {
+		if (newTarget != nullptr)
 			targetPos = newTarget->pos;
-		}
 
 		target = newTarget;
 	}
@@ -63,12 +61,13 @@ public:
 	void SetBeingIntercepted(bool b) { targeted = b; }
 	bool IsBeingIntercepted() const { return targeted; }
 	bool CanBeInterceptedBy(const WeaponDef*) const;
-
+	bool HasScheduledBounce() const { return bounced; }
 	bool TraveledRange() const;
 
 	const DynDamageArray* damages;
 
 protected:
+	CWeaponProjectile() { }
 	void UpdateInterception();
 	virtual void UpdateGroundBounce();
 
@@ -85,9 +84,13 @@ protected:
 	/// true if we are an interceptable projectile
 	// and an interceptor projectile is on the way
 	bool targeted;
+	bool bounced;
 
 	float3 startPos;
 	float3 targetPos;
+
+	float3 bounceHitPos;
+	float3 bounceParams;
 };
 
 #endif /* WEAPON_PROJECTILE_H */

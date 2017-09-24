@@ -3,7 +3,7 @@
 #ifndef IN_MAP_DRAW_H
 #define IN_MAP_DRAW_H
 
-#include <boost/shared_ptr.hpp>
+#include <memory>
 #include <string>
 #include <vector>
 #include <list>
@@ -31,7 +31,7 @@ public:
 	void MouseRelease(int x, int y, int button);
 	void MouseMove(int x, int y, int dx, int dy, int button);
 	/** @return playerId */
-	int GotNetMsg(boost::shared_ptr<const netcode::RawPacket>& packet);
+	int GotNetMsg(std::shared_ptr<const netcode::RawPacket>& packet);
 
 	void SendPoint(const float3& pos, const std::string& label, bool fromLua);
 	void SendLine(const float3& pos1, const float3& pos2, bool fromLua);
@@ -40,8 +40,8 @@ public:
 
 	void PromptLabel(const float3& pos);
 
-	void GetPoints(std::vector<PointMarker>& points, int pointsSizeMax, const std::list<int>& teamIDs);
-	void GetLines(std::vector<LineMarker>& lines, int linesSizeMax, const std::list<int>& teamIDs);
+	void GetPoints(std::vector<PointMarker>& points, size_t maxPoints, const std::list<int>& teamIDs);
+	void GetLines(std::vector<LineMarker>& lines, size_t maxLines, const std::list<int>& teamIDs);
 
 	void SetDrawMode(bool drawMode) { this->drawMode = drawMode; }
 	bool IsDrawMode() const { return drawMode; }

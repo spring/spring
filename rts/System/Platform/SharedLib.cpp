@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #if defined BUILDING_AI
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #else // defined BUILDING_AI
 #include "System/Log/ILog.h"
 #endif // defined BUILDING_AI

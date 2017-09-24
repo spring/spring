@@ -29,14 +29,12 @@ using std::min;
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CAdvTreeGenerator* treeGen;
-
-CAdvTreeGenerator::CAdvTreeGenerator()
+void CAdvTreeGenerator::Init()
 {
 	LuaParser resourcesParser("gamedata/resources.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
-	if (!resourcesParser.Execute()) {
+
+	if (!resourcesParser.Execute())
 		LOG_L(L_ERROR, "%s", resourcesParser.GetErrorLog().c_str());
-	}
 
 	const LuaTable treesTable = resourcesParser.GetRoot().SubTable("graphics").SubTable("trees");
 
@@ -57,16 +55,18 @@ CAdvTreeGenerator::CAdvTreeGenerator()
 	glDisable(GL_CULL_FACE);
 
 	unsigned char(* tree)[2048][4] = new unsigned char[256][2048][4];
+	const unsigned char* rmem = bm.GetRawMem();
+
 	memset(tree[0][0], 128, 256 * 2048 * 4);
 	for (int y = 0; y < 256; y++) {
 		for (int x = 0; x < 256; x++) {
-			tree[y][x][0] = bm.mem[(y * 256 + x) * 4    ];
-			tree[y][x][1] = bm.mem[(y * 256 + x) * 4 + 1];
-			tree[y][x][2] = bm.mem[(y * 256 + x) * 4 + 2];
+			tree[y][x][0] = rmem[(y * 256 + x) * 4    ];
+			tree[y][x][1] = rmem[(y * 256 + x) * 4 + 1];
+			tree[y][x][2] = rmem[(y * 256 + x) * 4 + 2];
 			tree[y][x][3] = 255;
-			tree[y][x + 1024][0] = (unsigned char)(bm.mem[(y * 256 + x) * 4    ] * 0.6f);
-			tree[y][x + 1024][1] = (unsigned char)(bm.mem[(y * 256 + x) * 4 + 1] * 0.6f);
-			tree[y][x + 1024][2] = (unsigned char)(bm.mem[(y * 256 + x) * 4 + 2] * 0.6f);
+			tree[y][x + 1024][0] = (unsigned char)(rmem[(y * 256 + x) * 4    ] * 0.6f);
+			tree[y][x + 1024][1] = (unsigned char)(rmem[(y * 256 + x) * 4 + 1] * 0.6f);
+			tree[y][x + 1024][2] = (unsigned char)(rmem[(y * 256 + x) * 4 + 2] * 0.6f);
 			tree[y][x + 1024][3] = 255;
 		}
 	}
@@ -87,7 +87,7 @@ CAdvTreeGenerator::CAdvTreeGenerator()
 	glBindTexture(GL_TEXTURE_2D, leafTex);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
-	glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, bm.xsize, bm.ysize, GL_RGBA, GL_UNSIGNED_BYTE, &bm.mem[0]);
+	glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, bm.xsize, bm.ysize, GL_RGBA, GL_UNSIGNED_BYTE, bm.GetRawMem());
 
 	CreateLeafTex(leafTex, 256, 0, tree);
 	CreateLeafTex(leafTex, 512, 0, tree);
@@ -112,7 +112,7 @@ CAdvTreeGenerator::CAdvTreeGenerator()
 
 
 	leafDL = glGenLists(8);
-	srand(15U);
+
 	for (int a = 0; a < 8; ++a) {
 		va = GetVertexArray();
 		va->Initialize();
@@ -120,7 +120,7 @@ CAdvTreeGenerator::CAdvTreeGenerator()
 		barkva->Initialize();
 
 		glNewList(leafDL + a, GL_COMPILE);
-			float size = 0.65f + 0.2f * gu->RandFloat();
+			float size = 0.65f + 0.2f * guRNG.NextFloat();
 			MainTrunk(10, size * MAX_TREE_HEIGHT, size * 0.05f * MAX_TREE_HEIGHT);
 			va->DrawArrayTN(GL_QUADS);
 			barkva->DrawArrayTN(GL_TRIANGLE_STRIP);
@@ -128,14 +128,14 @@ CAdvTreeGenerator::CAdvTreeGenerator()
 	}
 
 	pineDL = glGenLists(8);
-	srand(15U);
+
 	for (int a = 0; a < 8; ++a) {
 		va = GetVertexArray();
 		va->Initialize();
 
 		glNewList(pineDL + a, GL_COMPILE);
-			float size = 0.7f + 0.2f * gu->RandFloat();
-			PineTree((int)(20 + 10 * gu->RandFloat()), MAX_TREE_HEIGHT * size);
+			float size = 0.7f + 0.2f * guRNG.NextFloat();
+			PineTree((int)(20 + 10 * guRNG.NextFloat()), MAX_TREE_HEIGHT * size);
 			va->DrawArrayTN(GL_TRIANGLES);
 		glEndList();
 	}
@@ -160,10 +160,11 @@ void CAdvTreeGenerator::DrawTrunk(const float3& start, const float3& end, const 
 
 	int numIter=(int)max(3.0f,size*10);
 	for(int a=0;a<=numIter;a++){
-		float angle=a/(float)numIter*2*PI;
-		float col=0.4f+(((orto1*std::sin(angle)+orto2*std::cos(angle)).dot(flatSun)))*0.3f;
-		barkva->AddVertexTN(start+orto1*std::sin(angle)*size+orto2*std::cos(angle)*size,angle/PI*0.125f*0.5f,0,float3(0,0,col));
-		barkva->AddVertexTN(end+orto1*std::sin(angle)*size*0.2f+orto2*std::cos(angle)*size*0.2f,angle/PI*0.125f*0.5f,3,float3(0,0,col));
+		float angle = a / (float)numIter * math::TWOPI;
+		float col = 0.4f + (((orto1 * std::sin(angle) + orto2 * std::cos(angle)).dot(flatSun))) * 0.3f;
+
+		barkva->AddVertexTN(start + orto1 * std::sin(angle) * size        + orto2 * std::cos(angle) * size       , angle / math::PI * 0.125f * 0.5f, 0, float3(0,0,col));
+		barkva->AddVertexTN(  end + orto1 * std::sin(angle) * size * 0.2f + orto2 * std::cos(angle) * size * 0.2f, angle / math::PI * 0.125f * 0.5f, 3, float3(0,0,col));
 	}
 	barkva->EndStrip();
 }
@@ -172,23 +173,23 @@ void CAdvTreeGenerator::MainTrunk(int numBranch,float height,float width)
 {
 	const float3 orto1 = RgtVector;
 	const float3 orto2 = FwdVector;
-	const float baseAngle = 2 * PI * gu->RandFloat();
+	const float baseAngle = math::TWOPI * guRNG.NextFloat();
 
 	DrawTrunk(ZeroVector, float3(0, height, 0), orto1, orto2, width);
 
 	for (int a = 0; a < numBranch; ++a) {
-		const float angle = baseAngle + (a * 3.88f) + 0.5f * gu->RandFloat();
+		const float angle = baseAngle + (a * 3.88f) + 0.5f * guRNG.NextFloat();
 		float3 dir = orto1 * std::sin(angle) + orto2 * std::cos(angle);
-			dir.y = 0.3f + 0.4f * gu->RandFloat();
+			dir.y = 0.3f + 0.4f * guRNG.NextFloat();
 			dir.ANormalize();
 		const float3 start(0, (a + 5) * height / (numBranch + 5), 0);
-		const float length = (height * (0.4f + 0.1f * gu->RandFloat())) * std::sqrt(float(numBranch - a) / numBranch);
+		const float length = (height * (0.4f + 0.1f * guRNG.NextFloat())) * std::sqrt(float(numBranch - a) / numBranch);
 
 		TrunkIterator(start, dir, length, length * 0.05f, 1);
 	}
 
 	for (int a = 0; a < 3; ++a) {
-		const float angle = (a * 3.88f) + 0.5f * gu->RandFloat();
+		const float angle = (a * 3.88f) + 0.5f * guRNG.NextFloat();
 		float3 dir = orto1*std::sin(angle)+orto2*std::cos(angle);
 			dir.y = 0.8f;
 			dir.ANormalize();
@@ -219,11 +220,11 @@ void CAdvTreeGenerator::TrunkIterator(const float3& start, const float3& dir, fl
 	if (depth == 0)
 		return;
 
-	const float dirDif = 0.8f * gu->RandFloat() + 1.0f;
+	const float dirDif = 0.8f * guRNG.NextFloat() + 1.0f;
 	const int numTrunks = (int) length * 5 / MAX_TREE_HEIGHT;
 
 	for (int a = 0; a < numTrunks; a++) {
-		const float angle = PI + float(a) * PI + 0.3f * gu->RandFloat();
+		const float angle = math::PI + float(a) * math::PI + 0.3f * guRNG.NextFloat();
 		const float newLength = length * (float(numTrunks - a) / (numTrunks + 1));
 
 		float3 newbase = start + dir * length * (float(a + 1) / (numTrunks + 1));
@@ -236,7 +237,7 @@ void CAdvTreeGenerator::TrunkIterator(const float3& start, const float3& dir, fl
 
 void CAdvTreeGenerator::CreateLeaves(const float3& start, const float3& dir, float length, float3& orto1,float3& orto2)
 {
-	const float baseRot = 2 * PI * gu->RandFloat();
+	const float baseRot = math::TWOPI * guRNG.NextFloat();
 	const int numLeaves = (int) length * 10 / MAX_TREE_HEIGHT;
 
 	float3 flatSun = sky->GetLight()->GetLightDir();
@@ -247,9 +248,9 @@ void CAdvTreeGenerator::CreateLeaves(const float3& start, const float3& dir, flo
 		npos.y = 0;
 		npos.ANormalize();
 
-		const float tex = (gu->RandInt() % 3) * 0.125f;
-		const float flipTex = (gu->RandInt() % 2) * 0.123f;
-		const float col = 0.5f + (npos.dot(flatSun) * 0.3f) + 0.1f * gu->RandFloat();
+		const float tex = (guRNG.NextInt(3)) * 0.125f;
+		const float flipTex = (guRNG.NextInt(2)) * 0.123f;
+		const float col = 0.5f + (npos.dot(flatSun) * 0.3f) + 0.1f * guRNG.NextFloat();
 
 		va->AddVertexTN(pos, 0.126f + tex + flipTex, 0.98f, float3( 0.09f * MAX_TREE_HEIGHT, -0.09f * MAX_TREE_HEIGHT, col));
 		va->AddVertexTN(pos, 0.249f + tex - flipTex, 0.98f, float3(-0.09f * MAX_TREE_HEIGHT, -0.09f * MAX_TREE_HEIGHT, col));
@@ -258,12 +259,12 @@ void CAdvTreeGenerator::CreateLeaves(const float3& start, const float3& dir, flo
 	};
 
 	for (int a = 0; a < numLeaves + 1; a++) {
-		const float angle = baseRot + a * 0.618f * 2 * PI;
+		const float angle = baseRot + a * 0.618f * math::TWOPI;
 
-		float3 pos = start + dir * length * (0.7f + 0.3f * gu->RandFloat());
+		float3 pos = start + dir * length * (0.7f + 0.3f * guRNG.NextFloat());
 		pos +=
 			(orto1 * std::sin(angle) + orto2 * std::cos(angle)) *
-			mix(gu->RandFloat(), std::sqrt((float) a + 1), 0.6f) *
+			mix(guRNG.NextFloat(), std::sqrt((float) a + 1), 0.6f) *
 			0.1f * MAX_TREE_HEIGHT;
 
 		if (pos.y < 0.2f * MAX_TREE_HEIGHT)
@@ -502,7 +503,7 @@ void CAdvTreeGenerator::CreateGranTexBranch(const float3& start, const float3& e
 	float3 orto=dir.cross(FwdVector);
 
 	glBegin(GL_QUADS);
-		float3 c = float3(gu->RandFloat(), gu->RandFloat(), gu->RandFloat());
+		float3 c = float3(guRNG.NextFloat(), guRNG.NextFloat(), guRNG.NextFloat());
 		c *= float3(0.02f, 0.05f, 0.01f);
 		c += float3(0.05f, 0.21f, 0.04f);
 		glColorf3(c);
@@ -518,14 +519,15 @@ void CAdvTreeGenerator::CreateGranTexBranch(const float3& start, const float3& e
 		glVertexf3(end+orto*0.001f);
 	glEnd();
 
-	float tipDist=0.025f;
-	float delta=0.013f;
-	int side=(rand()&1)*2-1;
-	while(tipDist < length * (0.15f * gu->RandFloat() + 0.83f)){
+	float tipDist = 0.025f;
+	float delta = 0.013f;
+	int side = (guRNG.NextInt() & 1) * 2 - 1;
+
+	while(tipDist < length * (0.15f * guRNG.NextFloat() + 0.83f)){
 		float3 bstart=start+dir*(length-tipDist);
-		float3 bdir=dir+orto*side*(1.0f + 0.7f * gu->RandFloat());
+		float3 bdir=dir+orto*side*(1.0f + 0.7f * guRNG.NextFloat());
 		bdir.ANormalize();
-		float3 bend=bstart+bdir*tipDist*((6-tipDist)*(0.10f + 0.05f * gu->RandFloat()));
+		float3 bend=bstart+bdir*tipDist*((6-tipDist)*(0.10f + 0.05f * guRNG.NextFloat()));
 		CreateGranTexBranch(bstart,bend);
 		side*=-1;
 		tipDist+=delta;
@@ -538,19 +540,19 @@ void CAdvTreeGenerator::PineTree(int numBranch, float height)
 	DrawPineTrunk(ZeroVector,float3(0,height,0),height*0.025f);
 	float3 orto1 = RgtVector;
 	float3 orto2 = FwdVector;
-	float baseAngle = 2 * PI *gu->RandFloat();
-	for(int a=0;a<numBranch;++a){
-		float sh = 0.2f + 0.2f * gu->RandFloat();
+	float baseAngle = math::TWOPI * guRNG.NextFloat();
+	for (int a = 0; a < numBranch; ++a) {
+		float sh = 0.2f + 0.2f * guRNG.NextFloat();
 		float h  = height * std::pow(sh + float(a)/numBranch * (1-sh), (float)0.7f);
-		float angle = baseAngle + (a * 0.618f + 0.1f * gu->RandFloat()) * 2 * PI;
+		float angle = baseAngle + (a * 0.618f + 0.1f * guRNG.NextFloat()) * math::TWOPI;
 		float3 dir(orto1 * std::sin(angle) + orto2 * std::cos(angle));
-		dir.y = (a - numBranch) * 0.01f - (0.2f + 0.2f * gu->RandFloat());
+		dir.y = (a - numBranch) * 0.01f - (0.2f + 0.2f * guRNG.NextFloat());
 		dir.ANormalize();
 		float size = std::sqrt((float)numBranch - a + 5) * 0.08f * MAX_TREE_HEIGHT;
 		DrawPineBranch(float3(0,h,0),dir,size);
 	}
 	//create the top
-	float col=0.55f + 0.2f * gu->RandFloat();
+	float col=0.55f + 0.2f * guRNG.NextFloat();
 	va->AddVertexTN(float3(0,height-0.09f*MAX_TREE_HEIGHT,0), 0.126f+0.5f, 0.02f, float3(0,0,col));
 	va->AddVertexTN(float3(0,height-0.03f*MAX_TREE_HEIGHT,0), 0.249f+0.5f, 0.02f, float3(0.05f*MAX_TREE_HEIGHT,0,col));
 	va->AddVertexTN(float3(0,height-0.03f*MAX_TREE_HEIGHT,0), 0.126f+0.5f, 0.98f, float3(-0.05f*MAX_TREE_HEIGHT,0,col));
@@ -570,18 +572,18 @@ void CAdvTreeGenerator::DrawPineTrunk(const float3 &start, const float3 &end, fl
 
 	int numIter=8;
 	for(int a=0;a<numIter;a++){
-		float angle=a/(float)numIter*2*PI;
-		float angle2=(a+1)/(float)numIter*2*PI;
+		float angle=a/(float)numIter * math::TWOPI;
+		float angle2=(a+1)/(float)numIter * math::TWOPI;
 		float col=0.45f+(((orto1*std::sin(angle)+orto2*std::cos(angle)).dot(flatSun)))*0.3f;
 		float col2=0.45f+(((orto1*std::sin(angle2)+orto2*std::cos(angle2)).dot(flatSun)))*0.3f;
 
-		va->AddVertexTN(start+orto1*std::sin(angle)*size+orto2*std::cos(angle)*size,           angle/PI*0.125f*0.5f+0.5f,  0, float3(0,0,col));
-		va->AddVertexTN(end+orto1*std::sin(angle)*size*0.1f+orto2*std::cos(angle)*size*0.1f,   angle/PI*0.125f*0.5f+0.5f,  3, float3(0,0,col));
-		va->AddVertexTN(start+orto1*std::sin(angle2)*size+orto2*std::cos(angle2)*size,         angle2/PI*0.125f*0.5f+0.5f, 0, float3(0,0,col2));
+		va->AddVertexTN(start+orto1*std::sin(angle)*size+orto2*std::cos(angle)*size,           angle / math::PI*0.125f*0.5f+0.5f, 0, float3(0,0,col));
+		va->AddVertexTN(end+orto1*std::sin(angle)*size*0.1f+orto2*std::cos(angle)*size*0.1f,   angle / math::PI*0.125f*0.5f+0.5f, 3, float3(0,0,col));
+		va->AddVertexTN(start+orto1*std::sin(angle2)*size+orto2*std::cos(angle2)*size,         angle2/ math::PI*0.125f*0.5f+0.5f, 0, float3(0,0,col2));
 
-		va->AddVertexTN(start+orto1*std::sin(angle2)*size+orto2*std::cos(angle2)*size,         angle2/PI*0.125f*0.5f+0.5f, 0, float3(0,0,col2));
-		va->AddVertexTN(end+orto1*std::sin(angle)*size*0.1f+orto2*std::cos(angle)*size*0.1f,   angle/PI*0.125f*0.5f+0.5f,  3, float3(0,0,col));
-		va->AddVertexTN(end+orto1*std::sin(angle2)*size*0.1f+orto2*std::cos(angle2)*size*0.1f, angle2/PI*0.125f*0.5f+0.5f, 3, float3(0,0,col2));
+		va->AddVertexTN(start+orto1*std::sin(angle2)*size+orto2*std::cos(angle2)*size,         angle2 / math::PI*0.125f*0.5f+0.5f, 0, float3(0,0,col2));
+		va->AddVertexTN(end+orto1*std::sin(angle)*size*0.1f+orto2*std::cos(angle)*size*0.1f,   angle  / math::PI*0.125f*0.5f+0.5f, 3, float3(0,0,col));
+		va->AddVertexTN(end+orto1*std::sin(angle2)*size*0.1f+orto2*std::cos(angle2)*size*0.1f, angle2 / math::PI*0.125f*0.5f+0.5f, 3, float3(0,0,col2));
 	}
 }
 
@@ -594,14 +596,14 @@ void CAdvTreeGenerator::DrawPineBranch(const float3 &start, const float3 &dir, f
 	orto1.ANormalize();
 	float3 orto2 = dir.cross(orto1);
 
-	float tex = 0.0f;//int(rand() * 3.0f/RAND_MAX) * 0.125f;
-	float baseCol = 0.4f + 0.3f * dir.dot(flatSun) + 0.1f * gu->RandFloat();
+	float tex = 0.0f; // int(guRNG.NextFloat() * 3.0f) * 0.125f;
+	float baseCol = 0.4f + 0.3f * dir.dot(flatSun) + 0.1f * guRNG.NextFloat();
 
-	float col1=baseCol + 0.2f * gu->RandFloat();
-	float col2=baseCol + 0.2f * gu->RandFloat();
-	float col3=baseCol + 0.2f * gu->RandFloat();
-	float col4=baseCol + 0.2f * gu->RandFloat();
-	float col5=baseCol + 0.2f * gu->RandFloat();
+	float col1=baseCol + 0.2f * guRNG.NextFloat();
+	float col2=baseCol + 0.2f * guRNG.NextFloat();
+	float col3=baseCol + 0.2f * guRNG.NextFloat();
+	float col4=baseCol + 0.2f * guRNG.NextFloat();
+	float col5=baseCol + 0.2f * guRNG.NextFloat();
 
 	va->AddVertexTN(start,                                               0.5f+0.126f+tex,  0.02f, float3(0,0,col1));
 	va->AddVertexTN(start+dir*size*0.5f+orto1*size*0.5f+orto2*size*0.2f, 0.5f+0.249f+tex,  0.02f, float3(0,0,col2));
@@ -645,25 +647,25 @@ void CAdvTreeGenerator::CreateLeafTex(unsigned int baseTex, int xpos, int ypos,u
 	glClearColor(0.0f,0.0f,0.0f,0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	float baseCol=0.8f + 0.2f * gu->RandFloat();
+	float baseCol=0.8f + 0.2f * guRNG.NextFloat();
 
 	for(int a=0;a<84;++a){
-		float xp=0.9f - 1.8f * gu->RandFloat();
-		float yp=0.9f - 1.8f * gu->RandFloat();
+		float xp=0.9f - 1.8f * guRNG.NextFloat();
+		float yp=0.9f - 1.8f * guRNG.NextFloat();
 
-		float rot=360 * gu->RandFloat();
+		float rot=360 * guRNG.NextFloat();
 
-		float rCol=0.7f + 0.3f * gu->RandFloat();
-		float gCol=0.7f + 0.3f * gu->RandFloat();
-		float bCol=0.7f + 0.3f * gu->RandFloat();
+		float rCol=0.7f + 0.3f * guRNG.NextFloat();
+		float gCol=0.7f + 0.3f * guRNG.NextFloat();
+		float bCol=0.7f + 0.3f * guRNG.NextFloat();
 
 		glPushMatrix();
 		glLoadIdentity();
 		glColor3f(baseCol*rCol,baseCol*gCol,baseCol*bCol);
 		glTranslatef(xp,yp,0);
 		glRotatef(rot,0,0,1);
-		glRotatef(360 * gu->RandFloat(),1,0,0);
-		glRotatef(360 * gu->RandFloat(),0,1,0);
+		glRotatef(360 * guRNG.NextFloat(),1,0,0);
+		glRotatef(360 * guRNG.NextFloat(),0,1,0);
 
 		glBegin(GL_QUADS);
 			glTexCoord2f(0,0); glVertex3f(-0.1f,-0.2f,0);

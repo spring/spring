@@ -42,9 +42,8 @@
 
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
-#include "System/Log/ILog.h"
 #include "System/myMath.h"
-#include "System/Util.h"
+#include "System/SafeUtil.h"
 
 #define UNIT_SHADOW_ALPHA_MASKING
 
@@ -70,11 +69,13 @@ static const void BindOpaqueTex(const CS3OTextureHandler::S3OTexMat* textureMat)
 	glBindTexture(GL_TEXTURE_2D, textureMat->tex1);
 }
 
-static const void BindOpaqueTexAtlas(const CS3OTextureHandler::S3OTexMat*) { texturehandler3DO->Set3doAtlases(); }
+static const void BindOpaqueTexAtlas(const CS3OTextureHandler::S3OTexMat*) {
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, texturehandler3DO->GetAtlasTex2ID());
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, texturehandler3DO->GetAtlasTex1ID());
+}
 static const void BindOpaqueTexDummy(const CS3OTextureHandler::S3OTexMat*) {}
-
-static const void BindShadowTexDummy(const CS3OTextureHandler::S3OTexMat*) {}
-static const void KillShadowTexDummy(const CS3OTextureHandler::S3OTexMat*) {}
 
 static const void BindShadowTex(const CS3OTextureHandler::S3OTexMat* textureMat) {
 	glActiveTexture(GL_TEXTURE0);
@@ -87,6 +88,20 @@ static const void KillShadowTex(const CS3OTextureHandler::S3OTexMat*) {
 	glDisable(GL_TEXTURE_2D);
 	glActiveTexture(GL_TEXTURE0);
 }
+
+
+static const void BindShadowTexAtlas(const CS3OTextureHandler::S3OTexMat*) {
+	glActiveTexture(GL_TEXTURE0);
+	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, texturehandler3DO->GetAtlasTex2ID());
+}
+
+static const void KillShadowTexAtlas(const CS3OTextureHandler::S3OTexMat*) {
+	glBindTexture(GL_TEXTURE_2D, 0);
+	glDisable(GL_TEXTURE_2D);
+	glActiveTexture(GL_TEXTURE0);
+}
+
 
 
 static const void PushRenderState3DO() {
@@ -136,7 +151,7 @@ static const BindTexFunc opaqueTexBindFuncs[MODELTYPE_OTHER] = {
 };
 
 static const BindTexFunc shadowTexBindFuncs[MODELTYPE_OTHER] = {
-	BindShadowTexDummy, // 3DO (no-op)
+	BindShadowTexAtlas, // 3DO
 	BindShadowTex,      // S3O
 	BindShadowTex,      // OBJ
 	BindShadowTex,      // ASS
@@ -148,7 +163,7 @@ static const BindTexFunc* bindModelTexFuncs[] = {
 };
 
 static const KillTexFunc shadowTexKillFuncs[MODELTYPE_OTHER] = {
-	KillShadowTexDummy, // 3DO (no-op)
+	KillShadowTexAtlas, // 3DO
 	KillShadowTex,      // S3O
 	KillShadowTex,      // OBJ
 	KillShadowTex,      // ASS
@@ -256,6 +271,7 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 
 	drawForward = true;
 	drawDeferred = (geomBuffer->Valid());
+	wireFrameMode = false;
 
 	// NOTE:
 	//   advShading can NOT change at runtime if initially false***
@@ -285,14 +301,22 @@ CUnitDrawer::~CUnitDrawer()
 
 	for (int allyTeam = 0; allyTeam < deadGhostBuildings.size(); ++allyTeam) {
 		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
-			for (GhostSolidObject* ghost: deadGhostBuildings[allyTeam][modelType]) {
+			auto& lgb = liveGhostBuildings[allyTeam][modelType];
+			auto& dgb = deadGhostBuildings[allyTeam][modelType];
+
+			for (auto it = dgb.begin(); it != dgb.end(); ++it) {
+				GhostSolidObject* gso = *it;
+
+				if (gso->DecRef())
+					continue;
+
 				// <ghost> might be the gbOwner of a decal; groundDecals is deleted after us
-				groundDecals->GhostDestroyed(ghost);
-				delete ghost;
+				groundDecals->GhostDestroyed(gso);
+				spring::SafeDelete(*it);
 			}
 
-			deadGhostBuildings[allyTeam][modelType].clear();
-			liveGhostBuildings[allyTeam][modelType].clear();
+			dgb.clear();
+			lgb.clear();
 		}
 	}
 	deadGhostBuildings.clear();
@@ -356,22 +380,18 @@ void CUnitDrawer::Update()
 
 void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 {
-	SCOPED_GMARKER("CUnitDrawer::Draw");
-
 	sky->SetupFog();
 
 	assert((CCamera::GetActiveCamera())->GetCamType() != CCamera::CAMTYPE_SHADOW);
 
 	// first do the deferred pass; conditional because
 	// most of the water renderers use their own FBO's
-	if (drawDeferred && !drawReflection && !drawRefraction) {
+	if (drawDeferred && !drawReflection && !drawRefraction)
 		LuaObjectDrawer::DrawDeferredPass(LUAOBJ_UNIT);
-	}
 
 	// now do the regular forward pass
-	if (drawForward) {
+	if (drawForward)
 		DrawOpaquePass(false, drawReflection, drawRefraction);
-	}
 
 	farTextureHandler->Draw();
 
@@ -404,10 +424,13 @@ void CUnitDrawer::DrawOpaqueUnits(int modelType, bool drawReflection, bool drawR
 {
 	const auto& unitBin = opaqueModelRenderers[modelType]->GetUnitBin();
 
-	for (auto unitBinIt = unitBin.cbegin(); unitBinIt != unitBin.cend(); ++unitBinIt) {
-		BindModelTypeTexture(modelType, unitBinIt->first);
+	for (const auto& unitBinPair: unitBin) {
+		const auto& unitSet = unitBinPair.second;
+		const int textureType = unitBinPair.first;
 
-		for (CUnit* unit: unitBinIt->second) {
+		BindModelTypeTexture(modelType, textureType);
+
+		for (CUnit* unit: unitSet) {
 			DrawOpaqueUnit(unit, drawReflection, drawRefraction);
 		}
 	}
@@ -428,7 +451,7 @@ inline void CUnitDrawer::DrawOpaqueUnit(CUnit* unit, bool drawReflection, bool d
 
 	// draw the unit with the default (non-Lua) material
 	SetTeamColour(unit->team);
-	DrawUnit(unit, 0, 0, false, false);
+	DrawUnitTrans(unit, 0, 0, false, false);
 }
 
 
@@ -449,7 +472,7 @@ void CUnitDrawer::DrawOpaqueAIUnit(const TempDrawUnit& unit)
 {
 	glPushMatrix();
 	glTranslatef3(unit.pos);
-	glRotatef(unit.rotation * (180.0f / PI), 0.0f, 1.0f, 0.0f);
+	glRotatef(unit.rotation * math::RAD_TO_DEG, 0.0f, 1.0f, 0.0f);
 
 	const UnitDef* def = unit.unitDef;
 	const S3DModel* mdl = def->model;
@@ -473,16 +496,17 @@ void CUnitDrawer::DrawUnitIcons()
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_BLEND);
 	glEnable(GL_ALPHA_TEST);
-	glAlphaFunc(GL_GREATER, 0.5f);
-	if ((globalRendering->FSAA >= 6) && GLEW_ARB_multisample) {
+	glAlphaFunc(GL_GREATER, 0.05f);
+
+	// A2C effectiveness is limited below four samples
+	if (globalRendering->msaaLevel >= 4)
 		glEnable(GL_SAMPLE_ALPHA_TO_COVERAGE_ARB);
-	}
 
 	for (CUnit* u: iconUnits) {
-		DrawIcon(u, !gu->spectatingFullView &&
-			!(u->losStatus[gu->myAllyTeam] & LOS_INLOS) &&
-			(u->losStatus[gu->myAllyTeam] & (LOS_PREVLOS | LOS_CONTRADAR)) != (LOS_PREVLOS | LOS_CONTRADAR)
-		);
+		const unsigned short closBits = (u->losStatus[gu->myAllyTeam] & (LOS_INLOS                  ));
+		const unsigned short plosBits = (u->losStatus[gu->myAllyTeam] & (LOS_PREVLOS | LOS_CONTRADAR));
+
+		DrawIcon(u, !gu->spectatingFullView && closBits == 0 && plosBits != (LOS_PREVLOS | LOS_CONTRADAR));
 	}
 
 	glPopAttrib();
@@ -504,6 +528,7 @@ bool CUnitDrawer::CanDrawOpaqueUnit(
 		return false;
 	if (unit->IsInVoid())
 		return false;
+	// unit will be drawn as icon instead
 	if (unit->isIcon)
 		return false;
 
@@ -552,19 +577,20 @@ void CUnitDrawer::DrawOpaqueUnitShadow(CUnit* unit) {
 	if (LuaObjectDrawer::AddShadowMaterialObject(unit, LUAOBJ_UNIT))
 		return;
 
-	DrawUnit(unit, 0, 0, false, false);
+	DrawUnitTrans(unit, 0, 0, false, false);
 }
 
 
 void CUnitDrawer::DrawOpaqueUnitsShadow(int modelType) {
 	const auto& unitBin = opaqueModelRenderers[modelType]->GetUnitBin();
 
-	for (const auto& unitBinP: unitBin) {
-		const auto& unitSet = unitBinP.second;
-		const int textureType = unitBinP.first;
+	for (const auto& unitBinPair: unitBin) {
+		const auto& unitSet = unitBinPair.second;
+		const int textureType = unitBinPair.first;
 
-		BindModelTypeTexture(modelType, textureType);
-		// shadowTexBindFuncs[modelType](texturehandlerS3O->GetTexture(textureType));
+		// only need to bind the atlas once for 3DO's, but KISS
+		assert((modelType != MODELTYPE_3DO) || (textureType == 0));
+		shadowTexBindFuncs[modelType](texturehandlerS3O->GetTexture(textureType));
 
 		for (const auto& unitSetP: unitSet) {
 			DrawOpaqueUnitShadow(unitSetP);
@@ -623,9 +649,8 @@ void CUnitDrawer::DrawShadowPass()
 
 void CUnitDrawer::DrawIcon(CUnit* unit, bool useDefaultIcon)
 {
-	// for radar icons; normal void-units are already filtered
-	if (unit->IsInVoid())
-		return;
+	// iconUnits should not never contain void-space units, see UpdateUnitIconState
+	assert(!unit->IsInVoid());
 
 	// If the icon is to be drawn as a radar blip, we want to get the default icon.
 	const icon::CIconData* iconData = nullptr;
@@ -691,7 +716,8 @@ void CUnitDrawer::DrawIcon(CUnit* unit, bool useDefaultIcon)
 
 void CUnitDrawer::SetupAlphaDrawing(bool deferredPass)
 {
-	glPushAttrib(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glPushAttrib(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_POLYGON_BIT);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE * wireFrameMode + GL_FILL * (1 - wireFrameMode));
 
 	unitDrawerStates[DRAWER_STATE_SEL] = const_cast<IUnitDrawerState*>(GetWantedDrawerState(true));
 	unitDrawerStates[DRAWER_STATE_SEL]->Enable(this, deferredPass && false, true);
@@ -715,8 +741,6 @@ void CUnitDrawer::ResetAlphaDrawing(bool deferredPass)
 
 void CUnitDrawer::DrawAlphaPass()
 {
-	SCOPED_GMARKER("CUnitDrawer::DrawAlphaPass");
-
 	{
 		SetupAlphaDrawing(false);
 
@@ -814,7 +838,7 @@ inline void CUnitDrawer::DrawAlphaUnit(CUnit* unit, int modelType, bool drawGhos
 
 	if ((losStatus & LOS_INLOS) || gu->spectatingFullView) {
 		SetTeamColour(unit->team, float2(alphaValues.x, 1.0f));
-		DrawUnit(unit, 0, 0, false, false);
+		DrawUnitTrans(unit, 0, 0, false, false);
 	}
 }
 
@@ -838,7 +862,7 @@ void CUnitDrawer::DrawAlphaAIUnit(const TempDrawUnit& unit)
 {
 	glPushMatrix();
 	glTranslatef3(unit.pos);
-	glRotatef(unit.rotation * (180.0f / PI), 0.0f, 1.0f, 0.0f);
+	glRotatef(unit.rotation * math::RAD_TO_DEG, 0.0f, 1.0f, 0.0f);
 
 	const UnitDef* def = unit.unitDef;
 	const S3DModel* mdl = def->model;
@@ -884,17 +908,22 @@ void CUnitDrawer::UpdateGhostedBuildings()
 		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 			auto& dgb = deadGhostBuildings[allyTeam][modelType];
 
-			for (auto it = dgb.begin(); it != dgb.end(); ) {
-				if (losHandler->InLos((*it)->pos, allyTeam)) {
-					// obtained LOS on the ghost of a dead building
-					groundDecals->GhostDestroyed(*it);
+			for (int i = 0; i < dgb.size(); /*no-op*/) {
+				GhostSolidObject* gso = dgb[i];
 
-					delete *it;
-					*it = dgb.back();
-					dgb.pop_back();
-				} else {
-					++it;
+				if (!losHandler->InLos(gso->pos, allyTeam)) {
+					++i;
+					continue;
 				}
+
+				// obtained LOS on the ghost of a dead building
+				if (!gso->DecRef()) {
+					groundDecals->GhostDestroyed(gso);
+					spring::SafeDelete(gso);
+				}
+
+				dgb[i] = dgb.back();
+				dgb.pop_back();
 			}
 		}
 	}
@@ -903,6 +932,7 @@ void CUnitDrawer::UpdateGhostedBuildings()
 void CUnitDrawer::DrawGhostedBuildings(int modelType)
 {
 	assert((unsigned) gu->myAllyTeam < deadGhostBuildings.size());
+
 	std::vector<GhostSolidObject*>& deadGhostedBuildings = deadGhostBuildings[gu->myAllyTeam][modelType];
 	std::vector<CUnit*>& liveGhostedBuildings = liveGhostBuildings[gu->myAllyTeam][modelType];
 
@@ -920,6 +950,7 @@ void CUnitDrawer::DrawGhostedBuildings(int modelType)
 
 			(*it)->model->DrawStatic();
 			glPopMatrix();
+			(*it)->lastDrawFrame = globalRendering->drawFrame;
 		}
 	}
 
@@ -935,7 +966,8 @@ void CUnitDrawer::DrawGhostedBuildings(int modelType)
 
 void CUnitDrawer::SetupOpaqueDrawing(bool deferredPass)
 {
-	glPushAttrib(GL_ENABLE_BIT);
+	glPushAttrib(GL_ENABLE_BIT | GL_POLYGON_BIT);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE * wireFrameMode + GL_FILL * (1 - wireFrameMode));
 
 	glCullFace(GL_BACK);
 	glEnable(GL_CULL_FACE);
@@ -1112,29 +1144,23 @@ void CUnitDrawer::PopIndividualOpaqueState(const CUnit* unit, bool deferredPass)
 
 void CUnitDrawer::DrawIndividual(const CUnit* unit, bool noLuaCall)
 {
-	const bool origDrawDebug = globalRendering->GetSetDrawDebug(false);
+	if (LuaObjectDrawer::DrawSingleObject(unit, LUAOBJ_UNIT /*, noLuaCall*/))
+		return;
 
-	if (!LuaObjectDrawer::DrawSingleObject(unit, LUAOBJ_UNIT /*, noLuaCall*/)) {
-		// set the full default state
-		PushIndividualOpaqueState(unit, false);
-		DrawUnit(unit, 0, 0, false, noLuaCall);
-		PopIndividualOpaqueState(unit, false);
-	}
-
-	globalRendering->GetSetDrawDebug(origDrawDebug);
+	// set the full default state
+	PushIndividualOpaqueState(unit, false);
+	DrawUnitTrans(unit, 0, 0, false, noLuaCall);
+	PopIndividualOpaqueState(unit, false);
 }
 
 void CUnitDrawer::DrawIndividualNoTrans(const CUnit* unit, bool noLuaCall)
 {
-	const bool origDrawDebug = globalRendering->GetSetDrawDebug(false);
+	if (LuaObjectDrawer::DrawSingleObjectNoTrans(unit, LUAOBJ_UNIT /*, noLuaCall*/))
+		return;
 
-	if (!LuaObjectDrawer::DrawSingleObjectNoTrans(unit, LUAOBJ_UNIT /*, noLuaCall*/)) {
-		PushIndividualOpaqueState(unit, false);
-		DrawUnitNoTrans(unit, 0, 0, false, noLuaCall);
-		PopIndividualOpaqueState(unit, false);
-	}
-
-	globalRendering->GetSetDrawDebug(origDrawDebug);
+	PushIndividualOpaqueState(unit, false);
+	DrawUnitNoTrans(unit, 0, 0, false, noLuaCall);
+	PopIndividualOpaqueState(unit, false);
 }
 
 
@@ -1417,7 +1443,7 @@ void CUnitDrawer::DrawUnitNoTrans(
 	}
 }
 
-void CUnitDrawer::DrawUnit(const CUnit* unit, unsigned int preList, unsigned int postList, bool lodCall, bool noLuaCall)
+void CUnitDrawer::DrawUnitTrans(const CUnit* unit, unsigned int preList, unsigned int postList, bool lodCall, bool noLuaCall)
 {
 	glPushMatrix();
 	glMultMatrixf(unit->GetTransformMatrix());
@@ -1444,6 +1470,9 @@ inline void CUnitDrawer::UpdateUnitIconState(CUnit* unit) {
 	if (unit->noDraw)
 		return;
 	if (unit->IsInVoid())
+		return;
+	// drawing icons is cheap but not free, avoid a perf-hit when many are offscreen
+	if (!camera->InView(unit->drawMidPos, unit->GetDrawRadius()))
 		return;
 
 	iconUnits.push_back(unit);
@@ -1722,7 +1751,7 @@ void CUnitDrawer::UpdateUnitMiniMapIcon(const CUnit* unit, bool forced, bool kil
 
 	if (!killed) {
 		if ((oldIcon != newIcon) || forced) {
-			VectorErase(unitsByIcon[oldIcon], unit);
+			spring::VectorErase(unitsByIcon[oldIcon], unit);
 			unitsByIcon[newIcon].push_back(unit);
 		}
 
@@ -1730,7 +1759,7 @@ void CUnitDrawer::UpdateUnitMiniMapIcon(const CUnit* unit, bool forced, bool kil
 		return;
 	}
 
-	VectorErase(unitsByIcon[oldIcon], unit);
+	spring::VectorErase(unitsByIcon[oldIcon], unit);
 }
 
 
@@ -1756,29 +1785,39 @@ void CUnitDrawer::RenderUnitDestroyed(const CUnit* unit) {
 	const UnitDef* unitDef = unit->unitDef;
 	const UnitDef* decoyDef = unitDef->decoyDef;
 
+	const bool addNewGhost = unitDef->IsBuildingUnit() && gameSetup->ghostedBuildings;
+
 	// TODO - make ghosted buildings per allyTeam - so they are correctly dealt with
 	// when spectating
+	GhostSolidObject* gso = nullptr;
+	// FIXME -- adjust decals for decoys? gets weird?
+	S3DModel* gsoModel = (decoyDef == nullptr)? u->model: decoyDef->LoadModel();
+
 	for (int allyTeam = 0; allyTeam < deadGhostBuildings.size(); ++allyTeam) {
-		if (unitDef->IsBuildingUnit() && gameSetup->ghostedBuildings &&
-			!(u->losStatus[allyTeam] & (LOS_INLOS | LOS_CONTRADAR)) &&
-			(u->losStatus[allyTeam] & (LOS_PREVLOS))
-		) {
-			// FIXME -- adjust decals for decoys? gets weird?
-			S3DModel* gbModel = (decoyDef == nullptr)? u->model: decoyDef->LoadModel();
+		const bool canSeeGhost = !(u->losStatus[allyTeam] & (LOS_INLOS | LOS_CONTRADAR)) && (u->losStatus[allyTeam] & (LOS_PREVLOS));
 
-			GhostSolidObject* gb = new GhostSolidObject();
-			gb->pos    = u->pos;
-			gb->model  = gbModel;
-			gb->decal  = nullptr;
-			gb->facing = u->buildFacing;
-			gb->dir    = u->frontdir;
-			gb->team   = u->team;
+		if (addNewGhost && canSeeGhost) {
+			if (gso == nullptr) {
+				gso = new GhostSolidObject();
+				gso->pos    = u->pos;
+				gso->model  = gsoModel;
+				gso->decal  = nullptr;
+				gso->facing = u->buildFacing;
+				gso->dir    = u->frontdir;
+				gso->team   = u->team;
+				gso->refCount = 0;
+				gso->lastDrawFrame = 0;
 
-			deadGhostBuildings[allyTeam][gbModel->type].push_back(gb);
+				groundDecals->GhostCreated(u, gso);
+			}
 
-			groundDecals->GhostCreated(u, gb);
+			// <gso> can be inserted for multiple allyteams
+			// (the ref-counter saves us come deletion time)
+			deadGhostBuildings[allyTeam][gsoModel->type].push_back(gso);
+			gso->IncRef();
 		}
-		VectorErase(liveGhostBuildings[allyTeam][MDL_TYPE(u)], u);
+
+		spring::VectorErase(liveGhostBuildings[allyTeam][MDL_TYPE(u)], u);
 	}
 
 	if (u->model != nullptr) {
@@ -1787,7 +1826,7 @@ void CUnitDrawer::RenderUnitDestroyed(const CUnit* unit) {
 		opaqueModelRenderers[MDL_TYPE(u)]->DelUnit(u);
 	}
 
-	VectorErase(unsortedUnits, u);
+	spring::VectorErase(unsortedUnits, u);
 
 	UpdateUnitMiniMapIcon(unit, false, true);
 	LuaObjectDrawer::SetObjectLOD(u, LUAOBJ_UNIT, 0);
@@ -1816,7 +1855,7 @@ void CUnitDrawer::UnitEnteredLos(const CUnit* unit, int allyTeam) {
 	CUnit* u = const_cast<CUnit*>(unit); //cleanup
 
 	if (gameSetup->ghostedBuildings && unit->unitDef->IsImmobileUnit())
-		VectorErase(liveGhostBuildings[allyTeam][MDL_TYPE(unit)], u);
+		spring::VectorErase(liveGhostBuildings[allyTeam][MDL_TYPE(unit)], u);
 
 	if (allyTeam != gu->myAllyTeam)
 		return;
@@ -1828,7 +1867,7 @@ void CUnitDrawer::UnitLeftLos(const CUnit* unit, int allyTeam) {
 	CUnit* u = const_cast<CUnit*>(unit); //cleanup
 
 	if (gameSetup->ghostedBuildings && unit->unitDef->IsImmobileUnit())
-		VectorInsertUnique(liveGhostBuildings[allyTeam][MDL_TYPE(unit)], u, true);
+		spring::VectorInsertUnique(liveGhostBuildings[allyTeam][MDL_TYPE(unit)], u, true);
 
 	if (allyTeam != gu->myAllyTeam)
 		return;
@@ -1903,7 +1942,7 @@ void CUnitDrawer::UpdateTempDrawUnits(std::vector<TempDrawUnit>& tempDrawUnits)
 {
 	for (unsigned int n = 0; n < tempDrawUnits.size(); /*no-op*/) {
 		if (tempDrawUnits[n].timeout <= gs->frameNum) {
-			// do not use VectorErase; we already know the index
+			// do not use spring::VectorErase; we already know the index
 			tempDrawUnits[n] = tempDrawUnits.back();
 			tempDrawUnits.pop_back();
 			continue;

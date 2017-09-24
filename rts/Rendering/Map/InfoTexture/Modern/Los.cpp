@@ -7,7 +7,6 @@
 #include "Rendering/Shaders/Shader.h"
 #include "Sim/Misc/LosHandler.h"
 #include "System/Exceptions.h"
-#include "System/TimeProfiler.h"
 #include "System/Log/ILog.h"
 
 

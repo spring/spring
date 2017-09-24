@@ -5,10 +5,10 @@
 
 #include <string>
 #include <vector>
-#include <map>
 
 #include "System/float3.h"
 #include "System/type2.h"
+#include "System/UnorderedMap.hpp"
 #include "MouseCursor.h"
 
 static const int NUM_BUTTONS = 10;
@@ -21,9 +21,12 @@ class CMouseHandler
 {
 public:
 	CMouseHandler();
-	virtual ~CMouseHandler();
+	~CMouseHandler();
 
-	void ChangeCursor(const std::string& cmdName, const float& scale = 1.0f);
+	static CMouseHandler* GetOrReloadInstance();
+
+	void ChangeCursor(const std::string& cmdName, const float scale = 1.0f);
+	void ReloadCursors();
 
 	void Update();
 	void UpdateCursors();
@@ -51,11 +54,12 @@ public:
 	                        CMouseCursor::HotSpot hotSpot);
 
 	const CMouseCursor* FindCursor(const std::string& cursorName) const {
-		std::map<std::string, CMouseCursor*>::const_iterator it = cursorCommandMap.find(cursorName);
-		if (it != cursorCommandMap.end()) {
-			return it->second;
-		}
-		return NULL;
+		const auto it = cursorCommandMap.find(cursorName);
+
+		if (it != cursorCommandMap.end())
+			return &loadedCursors[it->second];
+
+		return nullptr;
 	}
 
 	const std::string& GetCurrentCursor() const { return newCursor; }
@@ -66,14 +70,48 @@ public:
 	/// @see ConfigHandler::ConfigNotifyCallback
 	void ConfigNotify(const std::string& key, const std::string& value);
 
+private:
+	void SetCursor(const std::string& cmdName, const bool forceRebind = false);
+
+	static void GetSelectionBoxCoeff(const float3& pos1, const float3& dir1, const float3& pos2, const float3& dir2, float2& topright, float2& btmleft);
+
+	void DrawScrollCursor();
+	void DrawFPSCursor();
+
+
 public:
 	int lastx;
 	int lasty;
+	int activeButtonIdx;
+	int activeCursorIdx;
 
 	bool locked;
+	/// Stores if the mouse was locked or not before going into direct control,
+	/// so we can restore it when we return to normal.
+	bool wasLocked;
+	bool offscreen;
 
+private:
+	bool hide;
+	bool hwHide;
+	bool hardwareCursor;
+	bool invertMouse;
+
+	float cursorScale;
+	float dragScrollThreshold;
+
+	float scrollx;
+	float scrolly;
+
+public:
 	float doubleClickTime;
 	float scrollWheelSpeed;
+
+	/// locked mouse indicator size
+	float crossSize;
+	float crossAlpha;
+	float crossMoveScale;
+
 
 	struct ButtonPressEvt {
 		bool pressed;
@@ -88,50 +126,17 @@ public:
 	};
 
 	ButtonPressEvt buttons[NUM_BUTTONS + 1]; /// One-bottomed.
-	int activeButton;
 	float3 dir;
-
-	/// Stores if the mouse was locked or not before going into direct control,
-	/// so we can restore it when we return to normal.
-	bool wasLocked;
-
-	/// locked mouse indicator size
-	float crossSize;
-	float crossAlpha;
-	float crossMoveScale;
-
-private:
-	void SetCursor(const std::string& cmdName, const bool& forceRebind = false);
-
-	void SafeDeleteCursor(CMouseCursor* cursor);
-	void LoadCursors();
-
-	static void GetSelectionBoxCoeff(const float3& pos1, const float3& dir1, const float3& pos2, const float3& dir2, float2& topright, float2& btmleft);
-
-	void DrawScrollCursor();
-	void DrawFPSCursor();
 
 private:
 	std::string newCursor; /// cursor changes are delayed
 	std::string cursorText; /// current cursor name
-	CMouseCursor* currentCursor;
 
-	float cursorScale;
-
-	bool hide;
-	bool hwHide;
-	bool hardwareCursor;
-	bool invertMouse;
-
-	float dragScrollThreshold;
-
-	float scrollx;
-	float scrolly;
+	std::vector<CMouseCursor> loadedCursors;
+	spring::unordered_map<std::string, size_t> cursorFileMap;
+	spring::unordered_map<std::string, size_t> cursorCommandMap;
 
 	const CUnit* lastClicked;
-
-	std::map<std::string, CMouseCursor*> cursorFileMap;
-	std::map<std::string, CMouseCursor*> cursorCommandMap;
 };
 
 extern CMouseHandler* mouse;

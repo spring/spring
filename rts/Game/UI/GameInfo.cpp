@@ -14,7 +14,7 @@
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/Path/IPathManager.h"
 #include "System/FileSystem/FileSystem.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 
 #include <SDL_keycode.h>
 #include <cstdio>

@@ -3,7 +3,7 @@ If (MINGW)
 	RemoveFlag("-mwindows")
 EndIf (MINGW)
 
-FIND_PACKAGE(Boost 1.35.0 COMPONENTS unit_test_framework)
+FIND_PACKAGE(Boost 1.35.0 COMPONENTS unit_test_framework chrono thread system)
 
 If    (NOT Boost_FOUND)
 	Message(STATUS "Note: Unit tests will not be built: Boost::test library was not found")
@@ -11,12 +11,28 @@ Else  (NOT Boost_FOUND)
 	# defines spring_test_compile_fail macro
 	INCLUDE(${CMAKE_CURRENT_SOURCE_DIR}/tools/CompileFailTest/CompileFailTest.cmake)
 
+	# boost::chrono depends on clock_gettime which we need to link ourself when boost is static linked
+	Set(Boost_CHRONO_LIBRARY_WITH_RT ${Boost_CHRONO_LIBRARY})
+	IF    (UNIX AND NOT MINGW)
+		FIND_LIBRARY(REALTIME_LIBRARY rt)
+
+		IF    (PREFER_STATIC_LIBS AND NOT EXISTS "${REALTIME_LIBRARY}")
+			MESSAGE(FATAL_ERROR "librt.[so|a] not found! Needed by std/boost chrono when static linked!")
+		ENDIF (PREFER_STATIC_LIBS AND NOT EXISTS "${REALTIME_LIBRARY}")
+
+		# zydox buildslave seems to have problems to autolink it from dynlinked boost libs
+		#  so always link it (won't hurt cause std/boost chrono need it never the less)
+		if    (EXISTS "${REALTIME_LIBRARY}")
+			LIST(APPEND Boost_CHRONO_LIBRARY_WITH_RT ${REALTIME_LIBRARY})
+		ENDIF (EXISTS "${REALTIME_LIBRARY}")
+	ENDIF (UNIX AND NOT MINGW)
 
 	INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
 	INCLUDE_DIRECTORIES(${CMAKE_BINARY_DIR}/src-generated/engine)
 
 	SET(ENGINE_SOURCE_DIR "${CMAKE_SOURCE_DIR}/rts")
 	INCLUDE_DIRECTORIES(${ENGINE_SOURCE_DIR})
+	INCLUDE_DIRECTORIES(${ENGINE_SOURCE_DIR}/lib/asio/include)
 
 	If	(NOT (WIN32 OR Boost_USE_STATIC_LIBS))
 		#Win32 tests links static
@@ -71,6 +87,7 @@ if(NOT DEFINED ENV{CI})
 		"${ENGINE_SOURCE_DIR}/System/Net/UDPConnection.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/NullGlobalConfig.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/Nullerrorhandler.cpp"
+		${sources_engine_System_Threading}
 		${test_Log_sources}
 	)
 
@@ -143,8 +160,8 @@ endif()
 			"${ENGINE_SOURCE_DIR}/System/float3.cpp"
 			"${ENGINE_SOURCE_DIR}/System/float4.cpp"
 			"${ENGINE_SOURCE_DIR}/System/Misc/SpringTime.cpp"
-			"${ENGINE_SOURCE_DIR}/System/UnsyncedRNG.cpp"
 			"${ENGINE_SOURCE_DIR}/System/TimeProfiler.cpp"
+			${sources_engine_System_Threading}
 			${test_Log_sources}
 		)
 
@@ -167,8 +184,8 @@ endif()
 			"${ENGINE_SOURCE_DIR}/System/float3.cpp"
 			"${ENGINE_SOURCE_DIR}/System/float4.cpp"
 			"${ENGINE_SOURCE_DIR}/System/TimeProfiler.cpp"
-			"${ENGINE_SOURCE_DIR}/System/UnsyncedRNG.cpp"
 			"${ENGINE_SOURCE_DIR}/System/Misc/SpringTime.cpp"
+			${sources_engine_System_Threading}
 			${test_Log_sources}
 		)
 
@@ -210,7 +227,7 @@ endif()
 			"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/Misc/testSpringTime.cpp"
 			"${ENGINE_SOURCE_DIR}/System/Misc/SpringTime.cpp"
 			"${ENGINE_SOURCE_DIR}/System/TimeProfiler.cpp"
-			"${ENGINE_SOURCE_DIR}/System/UnsyncedRNG.cpp"
+			${sources_engine_System_Threading}
 			${test_Log_sources}
 		)
 
@@ -258,7 +275,7 @@ endif()
 	Set(test_src
 			"${ENGINE_SOURCE_DIR}/System/FileSystem/FileSystem.cpp"
 			"${ENGINE_SOURCE_DIR}/System/FileSystem/FileSystemAbstraction.cpp"
-			"${ENGINE_SOURCE_DIR}/System/Util.cpp"
+			"${ENGINE_SOURCE_DIR}/System/StringUtil.cpp"
 			"${ENGINE_SOURCE_DIR}/Game/GameVersion.cpp"
 			"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/FileSystem/TestFileSystem.cpp"
 			${test_Log_sources}
@@ -317,6 +334,9 @@ endif()
 	set(test_name UnitSync)
 	Set(test_src
 			"${CMAKE_CURRENT_SOURCE_DIR}/unitsync/testUnitSync.cpp"
+			"${ENGINE_SOURCE_DIR}/Lua/LuaMemPool.cpp"
+			"${ENGINE_SOURCE_DIR}/System/Misc/SpringTime.cpp"
+			${sources_engine_System_Threading}
 			${test_Log_sources}
 		)
 
@@ -326,7 +346,8 @@ endif()
 			unitsync
 		)
 
-	add_spring_test(${test_name} "${test_src}" "${test_libs}" "")
+	set(test_flags "-DUNITSYNC")
+	add_spring_test(${test_name} "${test_src}" "${test_libs}" "${test_flags}")
 	add_dependencies(test_${test_name} springcontent.sdz)
 
 ################################################################################
@@ -334,18 +355,14 @@ endif()
 	set(test_name ThreadPool)
 	Set(test_src
 			"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/testThreadPool.cpp"
-			"${ENGINE_SOURCE_DIR}/System/ThreadPool.cpp"
+			"${ENGINE_SOURCE_DIR}/System/Threading/ThreadPool.cpp"
 			"${ENGINE_SOURCE_DIR}/System/Misc/SpringTime.cpp"
-			"${ENGINE_SOURCE_DIR}/System/UnsyncedRNG.cpp"
 			"${ENGINE_SOURCE_DIR}/System/Platform/CpuID.cpp"
 			"${ENGINE_SOURCE_DIR}/System/Platform/Threading.cpp"
-
+			${sources_engine_System_Threading}
 			${test_Log_sources}
 		)
-	if(NOT WIN32)
-		LIST(APPEND test_src
-			"${ENGINE_SOURCE_DIR}/System/Platform/Linux/ThreadSupport.cpp")
-	endif()
+
 	set(test_libs
 			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
 			${Boost_THREAD_LIBRARY}
@@ -353,12 +370,7 @@ endif()
 			${Boost_SYSTEM_LIBRARY}
 			${WINMM_LIBRARY}
 		)
-if(WIN32)
-	# FIXME: sometimes fails on windows
-	add_spring_test(${test_name} "${test_src}" "${test_libs}" "-DUNITSYNC")
-else()
-	add_spring_test(${test_name} "${test_src}" "${test_libs}" "-DTHREADPOOL -DUNITSYNC")
-endif()
+add_spring_test(${test_name} "${test_src}" "${test_libs}" "-DTHREADPOOL -DUNITSYNC")
 
 
 
@@ -369,9 +381,8 @@ endif()
 			"${CMAKE_CURRENT_SOURCE_DIR}/other/testMutex.cpp"
 			"${ENGINE_SOURCE_DIR}/System/Misc/SpringTime.cpp"
 			"${ENGINE_SOURCE_DIR}/System/TimeProfiler.cpp"
-			"${ENGINE_SOURCE_DIR}/System/UnsyncedRNG.cpp"
-			${test_Log_sources}
 			${sources_engine_System_Threading}
+			${test_Log_sources}
 		)
 
 	set(test_libs
@@ -418,20 +429,21 @@ endif()
 	set(test_name Printf)
 	Set(test_src
 			"${CMAKE_CURRENT_SOURCE_DIR}/other/testPrintf.cpp"
-			"${ENGINE_SOURCE_DIR}/lib/lua/include/LuaUser.cpp"
+			"${ENGINE_SOURCE_DIR}/Lua/LuaMemPool.cpp"
 			"${ENGINE_SOURCE_DIR}/System/Misc/SpringTime.cpp"
-			"${ENGINE_SOURCE_DIR}/System/UnsyncedRNG.cpp"
 			"${ENGINE_SOURCE_DIR}/System/TimeProfiler.cpp"
-			${test_Log_sources}
 			${sources_engine_System_Threading}
+			${test_Log_sources}
 		)
 	set(test_libs
 			streflop
+			lua
 			${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
 			${Boost_SYSTEM_LIBRARY}
 			${Boost_CHRONO_LIBRARY_WITH_RT}
 			${Boost_THREAD_LIBRARY}
 			${WINMM_LIBRARY}
+			headlessStubs
 		)
 	set(test_flags "-DNOT_USING_CREG -DSTREFLOP_SSE -DBUILDING_AI")
 	add_spring_test(${test_name} "${test_src}" "${test_libs}" "${test_flags}")
@@ -444,10 +456,9 @@ endif()
 	Set(test_src
 			"${CMAKE_CURRENT_SOURCE_DIR}/engine/System/testSQRT.cpp"
 			"${ENGINE_SOURCE_DIR}/System/Misc/SpringTime.cpp"
-			"${ENGINE_SOURCE_DIR}/System/UnsyncedRNG.cpp"
 			"${ENGINE_SOURCE_DIR}/System/TimeProfiler.cpp"
-			${test_Log_sources}
 			${sources_engine_System_Threading}
+			${test_Log_sources}
 		)
 	set(test_libs
 			streflop

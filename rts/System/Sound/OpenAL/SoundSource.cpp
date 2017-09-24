@@ -17,18 +17,17 @@
 
 #include "Sim/Misc/GlobalConstants.h"
 #include "System/float3.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include "System/myMath.h"
 
 float CSoundSource::referenceDistance = 200.0f;
-float CSoundSource::globalPitch = 1.0;
+float CSoundSource::globalPitch = 1.0f;
 float CSoundSource::heightRolloffModifier = 1.0f;
-static const float ROLLOFF_FACTOR = 5.f;
+static const float ROLLOFF_FACTOR = 5.0f;
 
 CSoundSource::CSoundSource()
-	: curPlaying(NULL)
-	, curChannel(NULL)
-	, curStream(NULL)
+	: curPlaying(nullptr)
+	, curChannel(nullptr)
 	, curVolume(1.f)
 	, loopStop(1e9)
 	, in3D(false)
@@ -37,6 +36,7 @@ CSoundSource::CSoundSource()
 	, curHeightRolloffModifier(1)
 {
 	alGenSources(1, &id);
+
 	if (!CheckError("CSoundSource::CSoundSource")) {
 		id = 0;
 	} else {
@@ -64,7 +64,7 @@ void CSoundSource::Update()
 		asyncPlay = AsyncSoundItemData();
 	}
 
-	if (curPlaying) {
+	if (curPlaying != nullptr) {
 		if (in3D && (efxEnabled != efx->enabled)) {
 			alSourcef(id, AL_AIR_ABSORPTION_FACTOR, (efx->enabled) ? efx->GetAirAbsorptionFactor() : 0);
 			alSource3i(id, AL_AUXILIARY_SEND_FILTER, (efx->enabled) ? efx->sfxSlot : AL_EFFECTSLOT_NULL, 0, AL_FILTER_NULL);
@@ -82,12 +82,11 @@ void CSoundSource::Update()
 			Stop();
 	}
 
-	if (curStream) {
-		if (curStream->IsFinished()) {
+	if (curStream.Valid()) {
+		if (curStream.IsFinished()) {
 			Stop();
-		}
-		else {
-			curStream->Update();
+		} else {
+			curStream.Update();
 			CheckError("CSoundSource::Update");
 		}
 	}
@@ -102,27 +101,27 @@ void CSoundSource::Update()
 
 int CSoundSource::GetCurrentPriority() const
 {
-	if (asyncPlay.buffer != nullptr) {
+	if (asyncPlay.buffer != nullptr)
 		return asyncPlay.buffer->GetPriority();
-	}
-	else if (curStream) {
+
+	if (curStream.Valid())
 		return INT_MAX;
-	}
-	else if (!curPlaying) {
+
+	if (curPlaying == nullptr)
 		return INT_MIN;
-	}
-	return curPlaying->GetPriority();
+
+	return (curPlaying->GetPriority());
 }
 
 bool CSoundSource::IsPlaying(const bool checkOpenAl) const
 {
-	if (curStream)
+	if (curStream.Valid())
 		return true;
 
 	if (asyncPlay.buffer != nullptr)
 		return true;
 
-	if (!curPlaying)
+	if (curPlaying == nullptr)
 		return false;
 
 	// Calling OpenAL does a 100% chance for a L2 cache miss
@@ -140,16 +139,17 @@ bool CSoundSource::IsPlaying(const bool checkOpenAl) const
 void CSoundSource::Stop()
 {
 	alSourceStop(id);
-	if (curPlaying) {
+	if (curPlaying != nullptr) {
 		curPlaying->StopPlay();
-		curPlaying = NULL;
+		curPlaying = nullptr;
 	}
-	if (curStream) {
-		SafeDelete(curStream);
-	}
+
+	if (curStream.Valid())
+		curStream.Stop();
+
 	if (curChannel) {
 		IAudioChannel* oldChannel = curChannel;
-		curChannel = NULL;
+		curChannel = nullptr;
 		oldChannel->SoundSourceFinished(this);
 	}
 	CheckError("CSoundSource::Stop");
@@ -157,10 +157,12 @@ void CSoundSource::Stop()
 
 void CSoundSource::Play(IAudioChannel* channel, SoundItem* item, float3 pos, float3 velocity, float volume, bool relative)
 {
-	assert(!curStream);
+	assert(!curStream.Valid());
 	assert(channel);
+
 	if (!item->PlayNow())
 		return;
+
 	Stop();
 	curVolume = volume;
 	curPlaying = item;
@@ -225,11 +227,9 @@ void CSoundSource::Play(IAudioChannel* channel, SoundItem* item, float3 pos, flo
 	}
 	alSourcePlay(id);
 
-	if (item->buffer->GetId() == 0) {
-		LOG_L(L_WARNING,
-				"CSoundSource::Play: Empty buffer for item %s (file %s)",
-				item->name.c_str(), item->buffer->GetFilename().c_str());
-	}
+	if (item->buffer->GetId() == 0)
+		LOG_L(L_WARNING, "CSoundSource::Play: Empty buffer for item %s (file %s)", item->name.c_str(), item->buffer->GetFilename().c_str());
+
 	CheckError("CSoundSource::Play");
 }
 
@@ -250,8 +250,8 @@ void CSoundSource::PlayStream(IAudioChannel* channel, const std::string& file, f
 	//! stop any current playback
 	Stop();
 
-	if (!curStream)
-		curStream = new COggStream(id);
+	if (!curStream.Valid())
+		curStream = COggStream(id);
 
 	//! setup OpenAL params
 	curChannel = channel;
@@ -264,53 +264,58 @@ void CSoundSource::PlayStream(IAudioChannel* channel, const std::string& file, f
 	}
 	alSource3f(id, AL_POSITION,       0.0f, 0.0f, 0.0f);
 	alSourcef(id, AL_GAIN,            volume);
+	alSourcef(id, AL_PITCH,           globalPitch);
 	alSource3f(id, AL_VELOCITY,       0.0f,  0.0f,  0.0f);
 	alSource3f(id, AL_DIRECTION,      0.0f,  0.0f,  0.0f);
 	alSourcef(id, AL_ROLLOFF_FACTOR,  0.0f);
 	alSourcei(id, AL_SOURCE_RELATIVE, AL_TRUE);
 
-	//! COggStreams only appends buffers, giving errors when a buffer of another format is still assigned
+	// COggStreams only appends buffers, giving errors when a buffer of another format is still assigned
 	alSourcei(id, AL_BUFFER, AL_NONE);
-	curStream->Play(file, volume);
-	curStream->Update();
+	curStream.Play(file, volume);
+	curStream.Update();
 	CheckError("CSoundSource::Update");
 }
 
 void CSoundSource::StreamStop()
 {
-	if (curStream)
+	if (curStream.Valid())
 		Stop();
 }
 
 void CSoundSource::StreamPause()
 {
-	if (curStream) {
-		if (curStream->TogglePause())
-			alSourcePause(id);
-		else
-			alSourcePlay(id);
-	}
+	if (!curStream.Valid())
+		return;
+
+	if (curStream.TogglePause())
+		alSourcePause(id);
+	else
+		alSourcePlay(id);
 }
 
 float CSoundSource::GetStreamTime()
 {
-	return curStream ? curStream->GetTotalTime() : 0;
+	return (curStream.Valid())? curStream.GetTotalTime() : 0.0f;
 }
 
 float CSoundSource::GetStreamPlayTime()
 {
-	return curStream ? curStream->GetPlayTime() : 0;
+	return (curStream.Valid())? curStream.GetPlayTime() : 0.0f;
 }
 
 void CSoundSource::UpdateVolume()
 {
-	if (!curChannel)
+	if (curChannel == nullptr)
 		return;
 
-	if (curStream) {
+	if (curStream.Valid()) {
 		alSourcef(id, AL_GAIN, curVolume * curChannel->volume);
+		return;
 	}
-	else if (curPlaying) {
+	if (curPlaying != nullptr) {
 		alSourcef(id, AL_GAIN, curVolume * curPlaying->GetGain() * curChannel->volume);
+		return;
 	}
 }
+

@@ -61,15 +61,16 @@ private:
 		unsigned int texDrawFrame;
 	};
 
-	std::vector<GroundSquare> squares;
+	// note: intentionally declared static (see ReadMap)
+	static std::vector<GroundSquare> squares;
 
-	std::vector<int> tileMap;
-	std::vector<char> tiles;
+	static std::vector<int> tileMap;
+	static std::vector<char> tiles;
 
 	// FIXME? these are not updated at runtime
-	std::vector<float> heightMaxima;
-	std::vector<float> heightMinima;
-	std::vector<float> stretchFactors;
+	static std::vector<float> heightMaxima;
+	static std::vector<float> heightMinima;
+	static std::vector<float> stretchFactors;
 
 	// use Pixel Buffer Objects for async. uploading (DMA)
 	PBO pbo;

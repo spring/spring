@@ -14,8 +14,9 @@ struct ISMFRenderState;
 
 enum {
 	SMF_MESHDRAWER_LEGACY = 0,
-	SMF_MESHDRAWER_ROAM,
-	SMF_MESHDRAWER_LAST,
+	SMF_MESHDRAWER_BASIC  = 1,
+	SMF_MESHDRAWER_ROAM   = 2,
+	SMF_MESHDRAWER_LAST   = 3,
 };
 
 
@@ -49,8 +50,8 @@ public:
 	void SetupBigSquare(const int bigSquareX, const int bigSquareY);
 
 
-	void IncreaseDetail();
-	void DecreaseDetail();
+	void IncreaseDetail() { SetDetail(groundDetail + 1); }
+	void DecreaseDetail() { SetDetail(groundDetail - 1); }
 	void SetDetail(int newGroundDetail);
 	int GetGroundDetail(const DrawPass::e& drawPass = DrawPass::Normal) const;
 
@@ -62,7 +63,7 @@ public:
 	const GL::GeometryBuffer* GetGeometryBuffer() const { return &geomBuffer; }
 	      GL::GeometryBuffer* GetGeometryBuffer()       { return &geomBuffer; }
 
-	IMeshDrawer* SwitchMeshDrawer(int mode = -1);
+	IMeshDrawer* SwitchMeshDrawer(int wantedMode = -1);
 
 private:
 	ISMFRenderState* SelectRenderState(const DrawPass::e& drawPass);
@@ -78,6 +79,7 @@ protected:
 	CSMFReadMap* smfMap;
 	IMeshDrawer* meshDrawer;
 
+	int drawerMode;
 	int groundDetail;
 
 	GLuint waterPlaneDispLists[2];

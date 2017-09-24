@@ -3,6 +3,7 @@
 #ifndef READ_MAP_H
 #define READ_MAP_H
 
+#include <array>
 #include <vector>
 
 #include "MapTexture.h"
@@ -15,6 +16,7 @@
 #include "System/Misc/RectangleOptimizer.h"
 
 #define USE_UNSYNCED_HEIGHTMAP
+#define USE_HEIGHTMAP_DIGESTS
 
 class CMetalMap;
 class CCamera;
@@ -81,7 +83,7 @@ public:
 	CR_DECLARE_STRUCT(CReadMap)
 
 	static CReadMap* LoadMap(const std::string& mapname);
-	static inline unsigned char EncodeHeight(const float h) {
+	static inline uint8_t EncodeHeight(const float h) {
 		return std::max(0, 255 + int(10.0f * h));
 	}
 
@@ -89,12 +91,14 @@ public:
 	void Serialize(creg::ISerializer* s);
 	void PostLoad();
 
+	void InitHeightMapDigestVectors(const int2 losMapSize);
+
 	/**
 	 * calculates derived heightmap information
 	 * such as normals, centerheightmap and slopemap
 	 */
-	void UpdateHeightMapSynced(SRectangle rect, bool initialize = false);
-	void UpdateLOS(const SRectangle& rect);
+	void UpdateHeightMapSynced(SRectangle hmRect, bool initialize = false);
+	void UpdateLOS(const SRectangle& hmRect);
 	void BecomeSpectator();
 	void UpdateDraw(bool firstCall);
 
@@ -158,8 +162,9 @@ public:
 	const float* GetCenterHeightMapSynced() const { return &centerHeightMap[0]; }
 	const float* GetMIPHeightMapSynced(unsigned int mip) const { return mipPointerHeightMaps[mip]; }
 	const float* GetSlopeMapSynced() const { return &slopeMap[0]; }
-	const unsigned char* GetTypeMapSynced() const { return &typeMap[0]; }
-	      unsigned char* GetTypeMapSynced()       { return &typeMap[0]; }
+	const uint8_t* GetTypeMapSynced() const { return &typeMap[0]; }
+	      uint8_t* GetTypeMapSynced()       { return &typeMap[0]; }
+	const float3* GetCenterNormals2DSynced()  const { return &centerNormals2D[0]; }
 
 	/// unsynced only
 	const float3* GetVisVertexNormalsUnsynced() const { return &visVertexNormals[0]; }
@@ -168,12 +173,10 @@ public:
 	const float* GetCornerHeightMapSynced() const { return sharedCornerHeightMaps[true]; }
 	const float3* GetFaceNormalsSynced()    const { return sharedFaceNormals[true]; }
 	const float3* GetCenterNormalsSynced()  const { return sharedCenterNormals[true]; }
-	const float3* GetCenterNormals2DSynced()  const { return sharedCenterNormals2D[true]; }
 	/// unsynced versions
 	const float* GetCornerHeightMapUnsynced() const { return sharedCornerHeightMaps[false]; }
 	const float3* GetFaceNormalsUnsynced()    const { return sharedFaceNormals[false]; }
 	const float3* GetCenterNormalsUnsynced()  const { return sharedCenterNormals[false]; }
-	const float3* GetCenterNormals2DUnsynced()  const { return sharedCenterNormals2D[false]; }
 
 
 	/// shared interface
@@ -181,7 +184,6 @@ public:
 	const float* GetSharedCenterHeightMap(bool synced) const { return sharedCenterHeightMaps[synced]; }
 	const float3* GetSharedFaceNormals(bool synced) const { return sharedFaceNormals[synced]; }
 	const float3* GetSharedCenterNormals(bool synced) const { return sharedCenterNormals[synced]; }
-	const float3* GetSharedCenterNormals2D(bool synced) const { return sharedCenterNormals2D[synced]; }
 	const float* GetSharedSlopeMap(bool synced) const { return sharedSlopeMaps[synced]; }
 
 	/// if you modify the heightmap through these, call UpdateHeightMapSynced
@@ -211,13 +213,12 @@ private:
 	void UpdateFaceNormals(const SRectangle& rect, bool initialize);
 	void UpdateSlopemap(const SRectangle& rect, bool initialize);
 
-	inline void HeightMapUpdateLOSCheck(const SRectangle& rect);
+	inline void HeightMapUpdateLOSCheck(const SRectangle& hmRect);
 	inline bool HasHeightMapChanged(const int lmx, const int lmy);
-	inline void InitHeightMapDigestsVectors();
 
 public:
 	/// number of heightmap mipmaps, including full resolution
-	static const int numHeightMipMaps = 7;
+	static constexpr int numHeightMipMaps = 7;
 
 	/// Metal-density/height-map
 	CMetalMap* metalMap;
@@ -228,27 +229,30 @@ protected:
 	std::vector<float>* heightMapSyncedPtr;      //< size: (mapx+1)*(mapy+1) (per vertex) [SYNCED, updates on terrain deformation]
 	std::vector<float>* heightMapUnsyncedPtr;    //< size: (mapx+1)*(mapy+1) (per vertex) [UNSYNCED]
 
-	std::vector<float> originalHeightMap;        //< size: (mapx+1)*(mapy+1) (per vertex) [SYNCED, does NOT update on terrain deformation]
-	std::vector<float> centerHeightMap;          //< size: (mapx  )*(mapy  ) (per face) [SYNCED, updates on terrain deformation]
-	std::vector< std::vector<float> > mipCenterHeightMaps;
+
+	// note: intentionally declared static, s.t. repeated reloading to the same
+	// (or any smaller) map does not fragment the heap which invites bad_alloc's
+	static std::vector<float> originalHeightMap;        //< size: (mapx+1)*(mapy+1) (per vertex) [SYNCED, does NOT update on terrain deformation]
+	static std::vector<float> centerHeightMap;          //< size: (mapx  )*(mapy  ) (per face) [SYNCED, updates on terrain deformation]
+	static std::array<std::vector<float>, numHeightMipMaps - 1> mipCenterHeightMaps;
 
 	/**
-	 * array of pointers to heightmaps in different resolutions,
-	 * mipPointerHeightMaps[0  ] is full resolution (centerHeightMap),
+	 * array of pointers to heightmaps in different resolutions
+	 * mipPointerHeightMaps[0  ] is full resolution (centerHeightMap)
 	 * mipPointerHeightMaps[n+1] is half resolution of mipPointerHeightMaps[n] (mipCenterHeightMaps[n - 1])
 	 */
-	std::vector<float*> mipPointerHeightMaps;
+	std::array<float*, numHeightMipMaps> mipPointerHeightMaps;
 
-	std::vector<float3> visVertexNormals;      //< size:  (mapx + 1) * (mapy + 1), contains one vertex normal per corner-heightmap pixel [UNSYNCED]
-	std::vector<float3> faceNormalsSynced;     //< size: 2*mapx      *  mapy     , contains 2 normals per quad -> triangle strip [SYNCED]
-	std::vector<float3> faceNormalsUnsynced;   //< size: 2*mapx      *  mapy     , contains 2 normals per quad -> triangle strip [UNSYNCED]
-	std::vector<float3> centerNormalsSynced;   //< size:   mapx      *  mapy     , contains 1 interpolated normal per quad, same as (facenormal0+facenormal1).Normalize()) [SYNCED]
-	std::vector<float3> centerNormalsUnsynced;
-	std::vector<float3> centerNormals2DSynced;
-	std::vector<float3> centerNormals2DUnsynced;
+	static std::vector<float3> visVertexNormals;      //< size:  (mapx + 1) * (mapy + 1), contains one vertex normal per corner-heightmap pixel [UNSYNCED]
+	static std::vector<float3> faceNormalsSynced;     //< size: 2*mapx      *  mapy     , contains 2 normals per quad -> triangle strip [SYNCED]
+	static std::vector<float3> faceNormalsUnsynced;   //< size: 2*mapx      *  mapy     , contains 2 normals per quad -> triangle strip [UNSYNCED]
+	static std::vector<float3> centerNormalsSynced;   //< size:   mapx      *  mapy     , contains 1 interpolated normal per quad, same as (facenormal0+facenormal1).Normalize()) [SYNCED]
+	static std::vector<float3> centerNormalsUnsynced;
 
-	std::vector<float> slopeMap;               //< size: (mapx/2)    * (mapy/2)  , same as 1.0 - interpolate(centernomal[i]).y [SYNCED]
-	std::vector<unsigned char> typeMap;
+	static std::vector<float> slopeMap;               //< size: (mapx/2)    * (mapy/2)  , same as 1.0 - interpolate(centernomal[i]).y [SYNCED]
+	static std::vector<uint8_t> typeMap;
+	static std::vector<float3> centerNormals2D;
+
 
 	CRectangleOptimizer unsyncedHeightMapUpdates;
 	CRectangleOptimizer unsyncedHeightMapUpdatesTemp;
@@ -260,14 +264,15 @@ private:
 	const float* sharedCenterHeightMaps[2];
 	const float3* sharedFaceNormals[2];
 	const float3* sharedCenterNormals[2];
-	const float3* sharedCenterNormals2D[2];
 	const float* sharedSlopeMaps[2];
 
 #ifdef USE_UNSYNCED_HEIGHTMAP
-	/// used to filer LOS updates (so only update UHM on LOS updates when the heightmap was changed beforehand)
-	/// size: in LOS resolution
-	std::vector<unsigned char>   syncedHeightMapDigests;
-	std::vector<unsigned char> unsyncedHeightMapDigests;
+	/// these are not "digests", just simple rolling counters
+	/// for each LOS-map square the counter value indicates how many times
+	/// the synced heightmap block of squares corresponding to it has been
+	/// changed, s.t. UHM updates are only pushed when necessary
+	static std::vector<uint8_t>   syncedHeightMapDigests;
+	static std::vector<uint8_t> unsyncedHeightMapDigests;
 #endif
 
 	unsigned int mapChecksum;

@@ -14,9 +14,11 @@ class VBO
 {
 public:
 	VBO(GLenum defTarget = GL_ARRAY_BUFFER, const bool storage = false);
+	VBO(const VBO& other) = delete;
 	VBO(VBO&& other) { *this = std::move(other); }
 	virtual ~VBO();
 
+	VBO& operator=(const VBO& other) = delete;
 	VBO& operator=(VBO&& other);
 
 	bool IsSupported() const;
@@ -36,8 +38,8 @@ public:
 	 * @param data (optional) initialize the VBO with the data (the array must have minimum `size` length!)
 	 * @see http://www.opengl.org/sdk/docs/man/xhtml/glBufferData.xml
 	 */
-	void Resize(GLsizeiptr size, GLenum usage = GL_STREAM_DRAW);
-	void New(GLsizeiptr size, GLenum usage = GL_STREAM_DRAW, const void* data = nullptr);
+	void Resize(GLsizeiptr newSize, GLenum newUsage = GL_STREAM_DRAW);
+	void New(GLsizeiptr newSize, GLenum newUsage = GL_STREAM_DRAW, const void* newData = nullptr);
 	void Invalidate(); //< discards all current data (frees the memory w/o resizing)
 
 	/**
@@ -48,25 +50,26 @@ public:
 	void UnmapBuffer();
 
 	GLuint GetId() const {
-		if (VBOused && (vboId == 0)) glGenBuffers(1, &vboId);
+		if (isSupported && (vboId == 0)) glGenBuffers(1, &vboId);
 		return vboId;
 	}
 
-	size_t GetSize() const { return size; }
+	size_t GetSize() const { return bufSize; }
 	const GLvoid* GetPtr(GLintptr offset = 0) const;
 
 public:
 	mutable GLuint vboId;
-	size_t size;
+	size_t bufSize; // can be smaller than memSize
+	size_t memSize; // actual length of <data>; only set when !isSupported
 	mutable GLenum curBoundTarget;
 	GLenum defTarget;
 	GLenum usage;
 
 public:
-	bool VBOused;
+	bool isSupported; // if false, data is allocated in main memory
 	mutable bool bound;
 	bool mapped;
-	bool nullSizeMapped; //< Nvidia workaround
+	bool nullSizeMapped; // Nvidia workaround
 	bool immutableStorage;
 
 	GLubyte* data;

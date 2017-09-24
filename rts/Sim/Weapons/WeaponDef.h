@@ -3,12 +3,11 @@
 #ifndef _WEAPON_DEF_H
 #define _WEAPON_DEF_H
 
-#include <map>
-
-#include "System/float3.h"
 #include "Sim/Misc/DamageArray.h"
 #include "Sim/Misc/GuiSoundSet.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileTypes.h"
+#include "System/float4.h"
+#include "System/UnorderedMap.hpp"
 
 struct AtlasedTexture;
 class CColorMap;
@@ -24,11 +23,21 @@ public:
 	S3DModel* LoadModel();
 	S3DModel* LoadModel() const;
 
+	bool IsAircraftWeapon() const {
+		switch (projectileType) {
+			case WEAPON_TORPEDO_PROJECTILE:   { return (                 true); } break;
+			case WEAPON_EXPLOSIVE_PROJECTILE: { return (defInterceptType == 8); } break;
+			default: {} break;
+		}
+		return false;
+	}
+
 	bool IsHitScanWeapon() const {
 		switch (projectileType) {
 			case WEAPON_BEAMLASER_PROJECTILE:      { return true; } break;
 			case WEAPON_LARGEBEAMLASER_PROJECTILE: { return true; } break;
 			case WEAPON_LIGHTNING_PROJECTILE:      { return true; } break;
+			default: {} break;
 		}
 
 		return false;
@@ -91,6 +100,7 @@ public:
 	int id;
 	int tdfId;                  ///< the id= tag in the tdf
 
+	bool isNulled;
 	bool turret;
 	bool onlyForward;
 	bool allowNonBlockingAim;
@@ -104,6 +114,9 @@ public:
 
 	bool noAutoTarget;          ///< cant target stuff (for antinuke,dgun)
 	bool manualfire;            ///< if true, slave us to the ManualFire button
+
+	bool sweepFire;
+	bool canAttackGround;
 
 	bool interceptSolo;
 	int interceptor;            ///< if >= 1, weapon will fire at any interceptable projectiles
@@ -126,7 +139,7 @@ public:
 
 	bool selfExplode;
 	bool gravityAffected;
-	int highTrajectory;         ///< Per-weapon high traj setting, 0=low, 1=high, 2=unit
+	int highTrajectory;              ///< Per-weapon high traj setting, 0=low, 1=high, 2=unit
 	float myGravity;
 	bool noExplode;
 	float startvelocity;
@@ -135,9 +148,9 @@ public:
 
 	float projectilespeed;
 
-	float wobble;             ///< how much the missile will wobble around its course
-	float dance;              ///< how much the missile will dance
-	float trajectoryHeight;   ///< how high trajectory missiles will try to fly in
+	float wobble;                    ///< how much the missile will wobble around its course
+	float dance;                     ///< how much the missile will dance
+	float trajectoryHeight;          ///< how high trajectory missiles will try to fly in
 
 	bool largeBeamLaser;             // whether a BeamLaser should spawn LargeBeamLaserProjectile's or regular ones
 	bool laserHardStop;              // whether the shot should fade out or stop and contract at max-range (applies to LaserCannons only)
@@ -158,14 +171,15 @@ public:
 	float shieldPowerRegenEnergy;    // how much energy is needed to regenerate power per second
 	float shieldStartingPower;       // how much power the shield has when first created
 	int   shieldRechargeDelay;       // number of frames to delay recharging by after each hit
-	float3 shieldGoodColor;          // color when shield at full power
-	float3 shieldBadColor;           // color when shield is empty
+	float4 shieldGoodColor;          // color when shield at full power
+	float4 shieldBadColor;           // color when shield is empty
 	float shieldAlpha;               // shield alpha value
 	int shieldArmorType;             // armor type for the damage table
 	std::string shieldArmorTypeName; // name of the armor type
 
 	unsigned int shieldInterceptType;      // type of shield (bitfield)
 	unsigned int interceptedByShieldType;  // weapon can be affected by shields where (shieldInterceptType & interceptedByShieldType) is not zero
+	unsigned int defInterceptType;
 
 	bool avoidFriendly;     // if true, try to avoid friendly units while aiming
 	bool avoidFeature;      // if true, try to avoid features while aiming
@@ -198,12 +212,9 @@ public:
 	unsigned int projectileType;
 	unsigned int collisionFlags;
 
-	bool sweepFire;
-	bool canAttackGround;
-
 	float cameraShake;
 
-	std::map<std::string, std::string> customParams;
+	spring::unordered_map<std::string, std::string> customParams;
 
 	struct Visuals {
 		Visuals()

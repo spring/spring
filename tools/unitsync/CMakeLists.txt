@@ -38,7 +38,7 @@ ADD_DEFINITIONS(-DNOT_USING_CREG)
 ADD_DEFINITIONS(-DHEADLESS)
 ADD_DEFINITIONS(-DNO_SOUND)
 ADD_DEFINITIONS(-DBITMAP_NO_OPENGL)
-ADD_DEFINITIONS(-DENABLE_DEPRECATED_FUNCTIONS)
+#ADD_DEFINITIONS(-DENABLE_DEPRECATED_FUNCTIONS)
 REMOVE_DEFINITIONS(-DTHREADPOOL)
 
 set(ENGINE_SRC_ROOT "../../rts")
@@ -53,6 +53,8 @@ Include_Directories(${CMAKE_BINARY_DIR}/src-generated/engine)
 set(main_files
 	"${ENGINE_SRC_ROOT}/ExternalAI/LuaAIImplHandler.cpp"
 	"${ENGINE_SRC_ROOT}/Game/GameVersion.cpp"
+	"${ENGINE_SRC_ROOT}/Lua/LuaConstEngine.cpp"
+	"${ENGINE_SRC_ROOT}/Lua/LuaMemPool.cpp"
 	"${ENGINE_SRC_ROOT}/Lua/LuaParser.cpp"
 	"${ENGINE_SRC_ROOT}/Lua/LuaUtils.cpp"
 	"${ENGINE_SRC_ROOT}/Lua/LuaIO.cpp"
@@ -77,9 +79,9 @@ set(main_files
 	"${ENGINE_SRC_ROOT}/System/SafeVector.cpp"
 	"${ENGINE_SRC_ROOT}/System/SafeCStrings.c"
 	"${ENGINE_SRC_ROOT}/System/TdfParser.cpp"
-	"${ENGINE_SRC_ROOT}/System/ThreadPool.cpp"
+	"${ENGINE_SRC_ROOT}/System/Threading/ThreadPool.cpp"
 	"${ENGINE_SRC_ROOT}/System/UriParser.cpp"
-	"${ENGINE_SRC_ROOT}/System/Util.cpp"
+	"${ENGINE_SRC_ROOT}/System/StringUtil.cpp"
 	)
 if (WIN32)
 	LIST(APPEND main_files "${ENGINE_SRC_ROOT}/System/Platform/Win/WinVersion.cpp")

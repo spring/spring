@@ -4,10 +4,10 @@
 #include "AdvSky.h"
 
 #include "Game/Camera.h"
+#include "Game/GlobalUnsynced.h"
 #include "Map/MapInfo.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/VertexArray.h"
-#include "Rendering/Textures/Bitmap.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Exceptions.h"
@@ -64,8 +64,8 @@ CAdvSky::CAdvSky()
 	memset(thicknessTransform, 0, 1024);
 	memset(covers, 0, 4 * 32 * sizeof(float));
 
-	domeheight = std::cos(PI / 16) * 1.01f;
-	domeWidth = std::sin(2 * PI / 32) * 400 * 1.7f;
+	domeheight = std::cos(math::PI / 16) * 1.01f;
+	domeWidth = std::sin(math::TWOPI / 32) * 400 * 1.7f;
 
 	UpdateSkyDir();
 	InitSun();
@@ -190,27 +190,26 @@ CAdvSky::~CAdvSky()
 
 void CAdvSky::Draw()
 {
-	SCOPED_GMARKER("CAdvSky::Draw");
-
 	if (!globalRendering->drawSky)
 		return;
 
 	glDisable(GL_DEPTH_TEST);
 	glEnable(GL_BLEND);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE * wireFrameMode + GL_FILL * (1 - wireFrameMode));
 
 	glPushMatrix();
 	// glTranslatef3(camera->GetPos());
 	glMultMatrixf(CMatrix44f(camera->GetPos(), skydir1, UpVector, skydir2));
 
-	float3 modCamera=skydir1*camera->GetPos().x+skydir2*camera->GetPos().z;
+	const float3 modCamera = skydir1 * camera->GetPos().x + skydir2 * camera->GetPos().z;
 
 	glMatrixMode(GL_TEXTURE);
 	  glActiveTextureARB(GL_TEXTURE2_ARB);
 		glPushMatrix();
-		glTranslatef((gs->frameNum%20000)*0.00005f+modCamera.x*0.000025f,modCamera.z*0.000025f,0);
+		glTranslatef((gs->frameNum % 20000) * 0.00005f + modCamera.x * 0.000025f, modCamera.z * 0.000025f, 0);
 	  glActiveTextureARB(GL_TEXTURE3_ARB);
 		glPushMatrix();
-		glTranslatef((gs->frameNum%20000)*0.0020f+modCamera.x*0.001f,modCamera.z*0.001f,0);
+		glTranslatef((gs->frameNum % 20000) * 0.0020f + modCamera.x * 0.001f, modCamera.z * 0.001f, 0);
 	  glActiveTextureARB(GL_TEXTURE0_ARB);
 	glMatrixMode(GL_MODELVIEW);
 
@@ -226,6 +225,7 @@ void CAdvSky::Draw()
 
 	glPopMatrix();
 
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_BLEND);
 
@@ -234,8 +234,8 @@ void CAdvSky::Draw()
 
 float3 CAdvSky::GetCoord(int x, int y)
 {
-	float fy = ((float)y/Y_PART) * 2 * PI;
-	float fx = ((float)x/X_PART) * 2 * PI;
+	float fy = ((float)y/Y_PART) * math::TWOPI;
+	float fx = ((float)x/X_PART) * math::TWOPI;
 
 	return float3(
 		fastmath::sin(fy/32) * fastmath::sin(fx),
@@ -369,7 +369,7 @@ void CAdvSky::Update()
 	if (!dynamicSky)
 		return;
 
-	SCOPED_TIMER("AdvSky::Update");
+	SCOPED_TIMER("Update::WorldDrawer::AdvSky");
 
 	CreateDetailTex();
 
@@ -509,19 +509,17 @@ void CAdvSky::Update()
 	}
 }
 
-void CAdvSky::CreateRandMatrix(int **matrix,float mod)
+void CAdvSky::CreateRandMatrix(int** matrix, float /*mod*/)
 {
-	for(int a=0, *pmat=*matrix; a<32*32; ++a) {
-		float r = ((float)( rand() )) / (float)RAND_MAX;
-		*pmat++=((int)(r * 255.0f));
+	for (int a = 0, *pmat = *matrix; a < 32*32; ++a) {
+		*pmat++ = ((int)(guRNG.NextFloat() * 255.0f));
 	}
 }
 
-void CAdvSky::CreateRandDetailMatrix(unsigned char* matrix,int size)
+void CAdvSky::CreateRandDetailMatrix(unsigned char* matrix, int size)
 {
-	for(int a=0;a<size*size;a++){
-		float  r = ((float)( rand() )) / (float)RAND_MAX;
-		*matrix++=((int)(r * 255.0f));
+	for (int a = 0; a < size*size; a++) {
+		*matrix++ = ((int)(guRNG.NextFloat() * 255.0f));
 	}
 }
 
@@ -543,16 +541,14 @@ void CAdvSky::CreateTransformVectors()
 
 void CAdvSky::DrawSun()
 {
-	SCOPED_GMARKER("CAdvSky::DrawSun");
-
 	if (!globalRendering->drawSky)
 		return;
 	if (!SunVisible(camera->GetPos()))
 		return;
 
 	const float3 xzSunCameraPos =
-		sundir1 * camera->GetPos().x +
-		sundir2 * camera->GetPos().z;
+		skyLight->GetLightDirX() * camera->GetPos().x +
+		skyLight->GetLightDirZ() * camera->GetPos().z;
 	const float3 modSunColor = sunColor * skyLight->GetLightIntensity();
 
 	// sun-disc vertices might be clipped against the
@@ -637,8 +633,8 @@ void CAdvSky::UpdateSunFlare() {
 		glBegin(GL_TRIANGLE_STRIP);
 
 		for (int x = 0; x < 257; ++x) {
-			const float dx = std::sin(x * 2.0f * PI / 256.0f);
-			const float dy = std::cos(x * 2.0f * PI / 256.0f);
+			const float dx = std::sin(x * math::TWOPI / 256.0f);
+			const float dy = std::cos(x * math::TWOPI / 256.0f);
 			const float dz = 5.0f;
 
 			glTexCoord2f(x / 256.0f, 0.125f); glVertexf3(zdir * dz + xdir * dx * 0.0014f + ydir * dy * 0.0014f);
@@ -816,23 +812,8 @@ void CAdvSky::CreateDetailTex()
 }
 
 void CAdvSky::UpdateSunDir() {
-	const float3& L = skyLight->GetLightDir();
-
-	sundir2 = L;
-	sundir2.y = 0.0f;
-
-	if (sundir2.SqLength() == 0.0f)
-		sundir2.x = 1.0f;
-
-	sundir2.ANormalize();
-	sundir1 = sundir2.cross(UpVector);
-
-	modSunDir.x = 0.0f;
-	modSunDir.y = L.y;
-	modSunDir.z = std::sqrt(L.x * L.x + L.z * L.z);
-
 	sunTexCoordX = 0.5f;
-	sunTexCoordY = GetTexCoordFromDir(modSunDir);
+	sunTexCoordY = GetTexCoordFromDir(skyLight->CalcPolarLightDir());
 
 	UpdateSunFlare();
 }
@@ -846,7 +827,7 @@ void CAdvSky::UpdateSkyDir() {
 
 	skydir2.ANormalize();
 	skydir1 = skydir2.cross(UpVector);
-	skyAngle = GetRadFromXY(skydir2.x, skydir2.z) + PI / 2.0f;
+	skyAngle = GetRadFromXY(skydir2.x, skydir2.z) + math::HALFPI;
 }
 
 void CAdvSky::UpdateSkyTexture() {

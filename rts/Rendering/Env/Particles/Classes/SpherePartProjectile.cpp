@@ -7,8 +7,10 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ExpGenSpawnableMemberInfo.h"
+#include "Sim/Projectiles/ProjectileMemPool.h"
+#include "System/myMath.h"
 
-CR_BIND_DERIVED(CSpherePartProjectile, CProjectile, )
+CR_BIND_DERIVED_POOL(CSpherePartProjectile, CProjectile, , projMemPool.alloc, projMemPool.free)
 
 CR_REG_METADATA(CSpherePartProjectile, (
 	CR_MEMBER(centerPos),
@@ -51,9 +53,9 @@ CSpherePartProjectile::CSpherePartProjectile(
 	checkCol = false;
 
 	for(int y = 0; y < 5; ++y) {
-		const float yp = (y + ypart) / 16.0f*PI - PI/2;
+		const float yp = (y + ypart) / 16.0f*math::PI - math::HALFPI;
 		for (int x = 0; x < 5; ++x) {
-			float xp = (x + xpart) / 32.0f*2*PI;
+			float xp = (x + xpart) / 32.0f*math::TWOPI;
 			vectors[y*5 + x] = float3(std::sin(xp)*std::cos(yp), std::sin(yp), std::cos(xp)*std::cos(yp));
 		}
 	}
@@ -68,15 +70,12 @@ CSpherePartProjectile::CSpherePartProjectile(
 
 void CSpherePartProjectile::Update()
 {
-	age++;
-	if (age >= ttl) {
-		deleteMe = true;
-	}
+	deleteMe |= ((age += 1) >= ttl);
 	sphereSize += expansionSpeed;
-	pos = centerPos+vectors[12] * sphereSize;
+	pos = centerPos + vectors[12] * sphereSize;
 }
 
-void CSpherePartProjectile::Draw()
+void CSpherePartProjectile::Draw(CVertexArray* va)
 {
 	unsigned char col[4];
 	va->EnlargeArrays(4*4*4, 0, VA_SIZE_TC);
@@ -117,7 +116,7 @@ void CSpherePartProjectile::CreateSphere(const CUnit* owner, int ttl, float alph
 {
 	for (int y = 0; y < 16; y += 4) {
 		for (int x = 0; x < 32; x += 4) {
-			new CSpherePartProjectile(owner, pos, x, y, expansionSpeed, alpha, ttl, color);
+			projMemPool.alloc<CSpherePartProjectile>(owner, pos, x, y, expansionSpeed, alpha, ttl, color);
 		}
 	}
 }
@@ -136,7 +135,7 @@ CSpherePartSpawner::CSpherePartSpawner()
 }
 
 
-CR_BIND_DERIVED(CSpherePartSpawner, CProjectile, )
+CR_BIND_DERIVED_POOL(CSpherePartSpawner, CProjectile, , projMemPool.alloc, projMemPool.free)
 
 CR_REG_METADATA(CSpherePartSpawner,
 (

@@ -12,8 +12,9 @@
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Misc/Wind.h"
 #include "Sim/Projectiles/ExpGenSpawnableMemberInfo.h"
+#include "Sim/Projectiles/ProjectileMemPool.h"
 
-CR_BIND_DERIVED(CSmokeProjectile2, CProjectile, )
+CR_BIND_DERIVED_POOL(CSmokeProjectile2, CProjectile, , projMemPool.alloc, projMemPool.free)
 
 CR_REG_METADATA(CSmokeProjectile2,
 (
@@ -66,22 +67,18 @@ CSmokeProjectile2::CSmokeProjectile2(
 	ageSpeed = 1 / ttl;
 	checkCol = false;
 	castShadow = true;
-	if ((pos.y - CGround::GetApproximateHeight(pos.x, pos.z, false)) > 10) {
-		useAirLos = true;
-	}
-	glowFalloff = 4.5f + gu->RandFloat() * 6;
-	textureNum = (int)(gu->RandInt() % projectileDrawer->smoketex.size());
+	useAirLos |= ((pos.y - CGround::GetApproximateHeight(pos.x, pos.z, false)) > 10.0f);
+
+	glowFalloff = 4.5f + guRNG.NextFloat() * 6;
+	textureNum = (int)(guRNG.NextInt(projectileDrawer->smoketex.size()));
 }
 
 
 
 void CSmokeProjectile2::Init(const CUnit* owner, const float3& offset)
 {
-	if (offset.y - CGround::GetApproximateHeight(offset.x, offset.z, false) > 10)
-		useAirLos = true;
-
-	if (!owner)
-		alwaysVisible = true;
+	useAirLos |= (offset.y - CGround::GetApproximateHeight(offset.x, offset.z, false) > 10.0f);
+	alwaysVisible |= (owner == nullptr);
 
 	wantedPos += offset;
 
@@ -96,21 +93,19 @@ void CSmokeProjectile2::Update()
 	pos.x += (wantedPos.x - pos.x) * 0.07f;
 	pos.y += (wantedPos.y - pos.y) * 0.02f;
 	pos.z += (wantedPos.z - pos.z) * 0.07f;
+
 	age += ageSpeed;
 	size += sizeExpansion;
-	if (size < startSize) {
-		size += (startSize - size) * 0.2f;
-	}
+	size += ((startSize - size) * 0.2f * (size < startSize));
+
 	SetRadiusAndHeight(size, 0.0f);
-	if (age > 1) {
-		age = 1;
-		deleteMe = true;
-	}
+	age = std::min(age, 1.0f);
+
+	deleteMe |= (age >= 1.0f);
 }
 
-void CSmokeProjectile2::Draw()
+void CSmokeProjectile2::Draw(CVertexArray* va)
 {
-	inArray = true;
 	const float interAge = std::min(1.0f, age + ageSpeed * globalRendering->timeOffset);
 	unsigned char col[4];
 	unsigned char alpha;

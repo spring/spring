@@ -10,6 +10,7 @@ class COverheadController : public CCameraController
 {
 public:
 	COverheadController();
+	~COverheadController();
 
 	const std::string GetName() const { return "ta"; }
 
@@ -29,6 +30,9 @@ public:
 	bool SetState(const StateMap& sm);
 
 	bool flipped;
+
+	void ConfigNotify(const std::string& key, const std::string& value);
+	void ConfigUpdate();
 
 private:
 	float middleClickScrollSpeed;

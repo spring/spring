@@ -9,13 +9,14 @@
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
+#include "Sim/Projectiles/ProjectileMemPool.h"
 #include "Sim/Weapons/WeaponDef.h"
 
 #ifdef TRACE_SYNC
 	#include "System/Sync/SyncTracer.h"
 #endif
 
-CR_BIND_DERIVED(CExplosiveProjectile, CWeaponProjectile, )
+CR_BIND_DERIVED_POOL(CExplosiveProjectile, CWeaponProjectile, , projMemPool.alloc, projMemPool.free)
 
 CR_REG_METADATA(CExplosiveProjectile, (
 	CR_SETFLAG(CF_Synced),
@@ -58,7 +59,7 @@ void CExplosiveProjectile::Update()
 		Collision();
 	} else {
 		if (ttl > 0) {
-			explGenHandler->GenExplosion(cegID, pos, speed, ttl, damages->damageAreaOfEffect, 0.0f, NULL, NULL);
+			explGenHandler->GenExplosion(cegID, pos, speed, ttl, damages->damageAreaOfEffect, 0.0f, nullptr, nullptr);
 		}
 	}
 
@@ -74,14 +75,11 @@ void CExplosiveProjectile::Update()
 	UpdateInterception();
 }
 
-void CExplosiveProjectile::Draw()
+void CExplosiveProjectile::Draw(CVertexArray* va)
 {
-	if (model) {
-		// do not draw if a 3D model has been defined for us
+	// do not draw if a 3D model has been defined for us
+	if (model != nullptr)
 		return;
-	}
-
-	inArray = true;
 
 	unsigned char col[4] = {0};
 

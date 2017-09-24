@@ -3,9 +3,10 @@
 #ifndef LUA_DEFS_H
 #define LUA_DEFS_H
 
-#include <map>
+#include <cassert>
 #include <string>
-#include <assert.h>
+
+#include "System/UnorderedMap.hpp"
 
 enum DataType {
 	INT_TYPE,
@@ -39,7 +40,7 @@ struct DataElement {
 };
 
 
-typedef std::map<std::string, DataElement> ParamMap;
+typedef spring::unordered_map<std::string, DataElement> ParamMap;
 
 
 namespace {
@@ -48,11 +49,11 @@ namespace {
 		assert(valid_type);
 		return ERROR_TYPE;
 	}
-	template<> DataType GetDataType(unsigned)           { return INT_TYPE; }
-	template<> DataType GetDataType(int)                { return INT_TYPE; }
-	template<> DataType GetDataType(bool)               { return BOOL_TYPE; }
-	template<> DataType GetDataType(float)              { return FLOAT_TYPE; }
-	template<> DataType GetDataType(std::string)        { return STRING_TYPE; }
+	template<> inline DataType GetDataType(unsigned)           { return INT_TYPE; }
+	template<> inline DataType GetDataType(int)                { return INT_TYPE; }
+	template<> inline DataType GetDataType(bool)               { return BOOL_TYPE; }
+	template<> inline DataType GetDataType(float)              { return FLOAT_TYPE; }
+	template<> inline DataType GetDataType(std::string)        { return STRING_TYPE; }
 }
 
 #define ADDRESS(name) ((const char *)&name)
@@ -87,10 +88,12 @@ namespace {
 #define DECL_LOAD_HANDLER(HandlerType, HandlerInstance)     \
 	bool HandlerType::LoadHandler() {                       \
 		{                                                   \
-			std::lock_guard<boost::mutex> lk(m_singleton);  \
+			std::lock_guard<spring::mutex> lk(m_singleton); \
                                                             \
-			if (HandlerInstance != NULL)                    \
+			if (HandlerInstance != nullptr)                 \
 				return (HandlerInstance->IsValid());        \
+			if (!HandlerType::CanLoadHandler())             \
+				return false;                               \
                                                             \
 			HandlerInstance = new HandlerType();            \
 			return (HandlerInstance->IsValid());            \
@@ -99,9 +102,9 @@ namespace {
 
 #define DECL_FREE_HANDLER(HandlerType, HandlerInstance)  \
 	bool HandlerType::FreeHandler() {                    \
-		std::lock_guard<boost::mutex> lk(m_singleton);   \
+		std::lock_guard<spring::mutex> lk(m_singleton);  \
                                                          \
-		if (HandlerInstance == NULL)                     \
+		if (HandlerInstance == nullptr)                  \
 			return false;                                \
                                                          \
 		auto* inst = HandlerInstance;                    \

@@ -1,9 +1,0 @@
-this folder is a copy of https://github.com/spring/assimp
-
-to switch between repos, just rename .git to .git2 in this folder and vice versa.
-
-spring/assimp contains some changes to assimp to made it work with spring
-
-.gitignore is used to avoid adding not-needed files to the spring repo. when switching back to the git repo, do a "git clean -n -x -d". (and replace -n with -f if its fine)
-
-when updating spring/assimp please always create a new branch (another solution would be to do a --rebase...)!

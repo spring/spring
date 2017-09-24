@@ -12,8 +12,9 @@
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Misc/Wind.h"
 #include "Sim/Projectiles/ExpGenSpawnableMemberInfo.h"
+#include "Sim/Projectiles/ProjectileMemPool.h"
 
-CR_BIND_DERIVED(CSmokeProjectile, CProjectile, )
+CR_BIND_DERIVED_POOL(CSmokeProjectile, CProjectile, , projMemPool.alloc, projMemPool.free)
 
 CR_REG_METADATA(CSmokeProjectile,
 (
@@ -63,30 +64,20 @@ CSmokeProjectile::CSmokeProjectile(
 	ageSpeed = 1.0f / ttl;
 	checkCol = false;
 	castShadow = true;
-	textureNum = (int) (gu->RandInt() % projectileDrawer->smoketex.size());
+	textureNum = (int) (guRNG.NextInt(projectileDrawer->smoketex.size()));
 
-	if ((pos.y - CGround::GetApproximateHeight(pos.x, pos.z, false)) > 10) {
-		useAirLos = true;
-	}
-
-	if (!owner) {
-		alwaysVisible = true;
-	}
+	useAirLos |= ((pos.y - CGround::GetApproximateHeight(pos.x, pos.z, false)) > 10.0f);
+	alwaysVisible |= (owner == nullptr);
 }
 
 
 
 void CSmokeProjectile::Init(const CUnit* owner, const float3& offset)
 {
-	textureNum = (int) (gu->RandInt() % projectileDrawer->smoketex.size());
+	textureNum = (int) (guRNG.NextInt(projectileDrawer->smoketex.size()));
 
-	if (offset.y - CGround::GetApproximateHeight(offset.x, offset.z, false) > 10.0f) {
-		useAirLos = true;
-	}
-
-	if (!owner) {
-		alwaysVisible = true;
-	}
+	useAirLos |= (offset.y - CGround::GetApproximateHeight(offset.x, offset.z, false) > 10.0f);
+	alwaysVisible |= (owner == nullptr);
 
 	CProjectile::Init(owner, offset);
 }
@@ -97,19 +88,16 @@ void CSmokeProjectile::Update()
 	pos += wind.GetCurrentWind() * age * 0.05f;
 	age += ageSpeed;
 	size += sizeExpansion;
-	if (size < startSize) {
-		size+=(startSize-size) * 0.2f;
-	}
+	size += ((startSize - size) * 0.2f * (size < startSize));
+
 	drawRadius = size;
-	if (age > 1) {
-		age = 1;
-		deleteMe = true;
-	}
+	age = std::min(age, 1.0f);
+
+	deleteMe |= (age >= 1.0f);
 }
 
-void CSmokeProjectile::Draw()
+void CSmokeProjectile::Draw(CVertexArray* va)
 {
-	inArray = true;
 	unsigned char col[4];
 	unsigned char alpha = (unsigned char) ((1 - age) * 255);
 	col[0] = (unsigned char) (color * alpha);

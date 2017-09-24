@@ -29,18 +29,18 @@ CR_REG_METADATA(SCommandDescription, (
 bool SCommandDescription::operator != (const SCommandDescription& cd) const
 {
 	return id          != cd.id          ||
-		   type        != cd.type        ||
-		   name        != cd.name        ||
-		   action      != cd.action      ||
-		   iconname    != cd.iconname    ||
-		   mouseicon   != cd.mouseicon   ||
-		   tooltip     != cd.tooltip     ||
-		   queueing    != cd.queueing    ||
-		   hidden      != cd.hidden      ||
-		   disabled    != cd.disabled    ||
-		   showUnique  != cd.showUnique  ||
-		   onlyTexture != cd.onlyTexture ||
-		   params      != cd.params;
+	       type        != cd.type        ||
+	       name        != cd.name        ||
+	       action      != cd.action      ||
+	       iconname    != cd.iconname    ||
+	       mouseicon   != cd.mouseicon   ||
+	       tooltip     != cd.tooltip     ||
+	       queueing    != cd.queueing    ||
+	       hidden      != cd.hidden      ||
+	       disabled    != cd.disabled    ||
+	       showUnique  != cd.showUnique  ||
+	       onlyTexture != cd.onlyTexture ||
+	       params      != cd.params;
 }
 
 CCommandDescriptionCache* commandDescriptionCache = nullptr;
@@ -53,17 +53,17 @@ CR_REG_METADATA(CCommandDescriptionCache, (
 int CCommandDescriptionCache::CalcHash(const SCommandDescription& cd) const
 {
 	int hash = HsiehHash(&cd.id             , sizeof(cd.id)         , 0   );
-	hash     = HsiehHash(&cd.type           , sizeof(cd.type)       , hash);
-	hash     = HsiehHash(cd.name.data()     , cd.name.size()        , hash);
-	hash     = HsiehHash(cd.action.data()   , cd.action.size()      , hash);
-	hash     = HsiehHash(cd.iconname.data() , cd.iconname.size()    , hash);
-	hash     = HsiehHash(cd.mouseicon.data(), cd.mouseicon.size()   , hash);
-	hash     = HsiehHash(cd.tooltip.data()  , cd.tooltip.size()     , hash);
-	hash     = HsiehHash(&cd.queueing       , sizeof(cd.queueing)   , hash);
-	hash     = HsiehHash(&cd.hidden         , sizeof(cd.hidden)     , hash);
-	hash     = HsiehHash(&cd.disabled       , sizeof(cd.disabled)   , hash);
-	hash     = HsiehHash(&cd.showUnique     , sizeof(cd.showUnique) , hash);
-	hash     = HsiehHash(&cd.onlyTexture    , sizeof(cd.onlyTexture), hash);
+	    hash = HsiehHash(&cd.type           , sizeof(cd.type)       , hash);
+	    hash = HsiehHash(cd.name.data()     , cd.name.size()        , hash);
+	    hash = HsiehHash(cd.action.data()   , cd.action.size()      , hash);
+	    hash = HsiehHash(cd.iconname.data() , cd.iconname.size()    , hash);
+	    hash = HsiehHash(cd.mouseicon.data(), cd.mouseicon.size()   , hash);
+	    hash = HsiehHash(cd.tooltip.data()  , cd.tooltip.size()     , hash);
+	    hash = HsiehHash(&cd.queueing       , sizeof(cd.queueing)   , hash);
+	    hash = HsiehHash(&cd.hidden         , sizeof(cd.hidden)     , hash);
+	    hash = HsiehHash(&cd.disabled       , sizeof(cd.disabled)   , hash);
+	    hash = HsiehHash(&cd.showUnique     , sizeof(cd.showUnique) , hash);
+	    hash = HsiehHash(&cd.onlyTexture    , sizeof(cd.onlyTexture), hash);
 	for (const std::string& s: cd.params) {
 		hash = HsiehHash(s.data()           , s.size()              , hash);
 	}

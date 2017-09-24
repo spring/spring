@@ -4,14 +4,16 @@
 #define SPRING_APP
 
 #include <string>
-#include <boost/cstdint.hpp>
-#include <boost/shared_ptr.hpp>
+#include <memory>
 
-class CmdLineParams;
 class ClientSetup;
 class CGameController;
 
 union SDL_Event;
+
+namespace Threading {
+	struct Error;
+};
 
 /**
  * @brief Spring App
@@ -24,45 +26,42 @@ public:
 	SpringApp(int argc, char** argv);
 	~SpringApp();
 
-	int Run();                                      //!< Run game loop
-	void Reload(const std::string& script);
-
-	static void ShutDown();                         //!< Shuts down application
+	static int PostKill(const Threading::Error&);
+	static void Kill(bool fromRun);                 //!< Shuts down application
 
 private:
-	bool Initialize();                              //!< Initialize app
-	void ParseCmdLine(const std::string&);          //!< Parse command line
-	void Startup();                                 //!< Parses startup data (script etc.) and starts SelectMenu or PreGame
-	void StartScript(const std::string& inputFile); //!< Starts game from specified script.txt
-	void LoadSpringMenu();                          //!< Load menu (old or luaified depending on start parameters)
-	bool InitWindow(const char* title);             //!< Initializes window
-
-	int Update();                                   //!< Run simulation and draw
-
-	static void InitOpenGL();                       //!< Initializes OpenGL
 	static void LoadFonts();                        //!< Initialize glFonts (font & smallFont)
-	static bool CreateSDLWindow(const char* title); //!< Creates a SDL window
 
-	static void GetDisplayGeometry();
-	static void SetupViewportGeometry();
-	static void SaveWindowPosition();
+	static void UpdateInterfaceGeometry();
+	static void SaveWindowPosAndSize();
 
-	/**
-	 * @brief command line
-	 *
-	 * Pointer to instance of commandline parser
-	 */
-	boost::shared_ptr<CmdLineParams> cmdline;
-
-	// this gets passed along to PreGame (or SelectMenu then PreGame),
-	// and from thereon to GameServer if this client is also the host
-	boost::shared_ptr<ClientSetup> clientSetup;
+public:
+	int Run();                                      //!< Run game loop
 
 private:
-	bool MainEventHandler(const SDL_Event& ev);
+	bool Init();                                    //!< Initializes engine
+	bool InitWindow(const char* title);             //!< Initializes window
+	bool InitPlatformLibs();
+	bool InitFileSystem();
+	bool MainEventHandler(const SDL_Event& ev);     //!< Handles SDL input events
+	bool Update();                                  //!< Run simulation and rendering
+
+	void ParseCmdLine(int argc, char* argv[]);      //!< Parse command line
+	void Startup();                                 //!< Parses startup data (script etc.) and starts SelectMenu or PreGame
+	void StartScript(const std::string& script);    //!< Starts game from specified script.txt
+	void Reload(const std::string script);          //!< Returns from game back to menu, or directly starts a new game
+	void LoadSpringMenu();                          //!< Load menu (old or luaified depending on start parameters)
 
 	CGameController* RunScript(const std::string& buf);
 	CGameController* LoadSaveFile(const std::string& saveName); //!< Starts game from a specified save
+	CGameController* LoadDemoFile(const std::string& demoName); //!< Starts game from a specified demo
+
+private:
+	std::string inputFile;
+
+	// this gets passed along to PreGame (or SelectMenu then PreGame),
+	// and from thereon to GameServer if this client is also the host
+	std::shared_ptr<ClientSetup> clientSetup;
 };
 
 /**

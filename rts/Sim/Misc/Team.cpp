@@ -16,11 +16,9 @@
 #include "System/EventHandler.h"
 #include "System/Log/ILog.h"
 #include "System/MsgStrings.h"
-#include "System/Util.h"
 #include "System/creg/STL_Set.h"
 #include "System/creg/STL_List.h"
 #include "System/creg/STL_Map.h"
-#include "System/creg/STL_Set.h"
 
 
 CR_BIND_DERIVED(CTeam, TeamBase, )
@@ -69,6 +67,7 @@ CTeam::CTeam():
 	origColor(0, 0, 0, 0),
 	highlight(0.0f)
 {
+	statHistory.reserve(1024);
 	statHistory.push_back(TeamStatistics());
 }
 
@@ -386,7 +385,7 @@ void CTeam::SlowUpdate()
 
 void CTeam::AddUnit(CUnit* unit, AddType type)
 {
-	VectorInsertUnique(units, unit, false);
+	spring::VectorInsertUnique(units, unit, false);
 	switch (type) {
 		case AddBuilt: {
 			GetCurrentStats().unitsProduced++;
@@ -407,7 +406,7 @@ void CTeam::AddUnit(CUnit* unit, AddType type)
 void CTeam::RemoveUnit(CUnit* unit, RemoveType type)
 {
 	if (removeUnits)
-		VectorErase(units, unit);
+		spring::VectorErase(units, unit);
 
 	switch (type) {
 		case RemoveDied: {

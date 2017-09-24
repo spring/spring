@@ -16,21 +16,21 @@
 class COggStream
 {
 public:
-	typedef std::vector<std::string> TagVector;
-	COggStream(ALuint _source);
-	~COggStream();
+	COggStream(ALuint _source = 0);
+	~COggStream() { Stop(); }
 
 	void Play(const std::string& path, float volume);
 	void Stop();
-	bool TogglePause();
 	void Update();
 
-	float GetPlayTime() const;
+	float GetPlayTime() const { return (msecsPlayed.toSecsf()); }
 	float GetTotalTime();
-	bool Valid() const;
-	bool IsFinished();
 
-	const TagVector& VorbisTags() const;
+	bool TogglePause();
+	bool Valid() const { return (source != 0 && vorbisInfo != nullptr); }
+	bool IsFinished() { return !Valid() || (GetPlayTime() >= GetTotalTime()); }
+
+	const std::vector<std::string>& VorbisTags() const { return vorbisTags; }
 
 private:
 	void DisplayInfo();
@@ -48,11 +48,11 @@ private:
 	 */
 	bool UpdateBuffers();
 
-	OggVorbis_File oggStream;
+	OggVorbis_File ovFile;
 	vorbis_info* vorbisInfo;
 
-	static const unsigned int BUFFER_SIZE = (512 * 1024); // 512KB
-	static const unsigned int NUM_BUFFERS = 2;
+	static constexpr unsigned int BUFFER_SIZE = 512 * 1024; // 512KB
+	static constexpr unsigned int NUM_BUFFERS = 2;
 
 	char pcmDecodeBuffer[BUFFER_SIZE];
 

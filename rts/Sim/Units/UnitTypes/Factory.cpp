@@ -9,6 +9,8 @@
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/TeamHandler.h"
+#include "Sim/MoveTypes/MoveType.h"
+#include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Units/Scripts/UnitScript.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
@@ -16,7 +18,7 @@
 #include "Sim/Units/CommandAI/MobileCAI.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitLoader.h"
-#include "Sim/Units/UnitDefHandler.h"
+#include "Sim/Units/UnitMemPool.h"
 #include "System/EventHandler.h"
 #include "System/Matrix44f.h"
 #include "System/myMath.h"
@@ -26,8 +28,8 @@
 
 #include "Game/GlobalUnsynced.h"
 
-CR_BIND_DERIVED(CFactory, CBuilding, )
 
+CR_BIND_DERIVED_POOL(CFactory, CBuilding, , unitMemPool.alloc, unitMemPool.free)
 CR_REG_METADATA(CFactory, (
 	CR_MEMBER(buildSpeed),
 	CR_MEMBER(lastBuildUpdateFrame),
@@ -42,6 +44,7 @@ CR_REG_METADATA(CFactory, (
 //////////////////////////////////////////////////////////////////////
 
 CFactory::CFactory():
+	CBuilding(),
 	buildSpeed(100.0f),
 	curBuild(nullptr),
 	curBuildDef(nullptr),
@@ -86,25 +89,32 @@ void CFactory::Update()
 		// factory is under construction, cannot build anything yet
 		CUnit::Update();
 
-		#if 1
 		// this can happen if we started being reclaimed *while* building a
 		// unit, in which case our buildee can either be allowed to finish
 		// construction (by assisting builders) or has to be killed --> the
 		// latter is easier
-		if (curBuild != nullptr) {
+		if (curBuild != nullptr)
 			StopBuild();
-		}
-		#endif
 
 		return;
 	}
 
 
 	if (curBuildDef != nullptr) {
+		// if there is a unit blocking the factory's exit while
+		// open and already in build-stance, StartBuild returns
+		// early whereas while *closed* (!open) a blockee causes
+		// CanOpenYard to return false so the Activate callin is
+		// never called
+		// the radius can not be too large or assisting (mobile)
+		// builders around the factory will be disturbed by this
+		if ((gs->frameNum & (UNIT_SLOWUPDATE_RATE >> 1)) == 0)
+			CGameHelper::BuggerOff(pos + frontdir * radius * 0.5f, radius * 0.5f, true, true, team, this);
+
 		if (!yardOpen && !IsStunned()) {
 			if (groundBlockingObjectMap->CanOpenYard(this)) {
-				script->Activate();
-				groundBlockingObjectMap->OpenBlockingYard(this);
+				groundBlockingObjectMap->OpenBlockingYard(this); // set yardOpen
+				script->Activate(); // set buildStance
 
 				// make sure the idle-check does not immediately trigger
 				// (scripts have 7 seconds to set inBuildStance to true)
@@ -122,7 +132,7 @@ void CFactory::Update()
 		FinishBuild(curBuild);
 	}
 
-	const bool wantClose = (!IsStunned() && yardOpen && (gs->frameNum >= (lastBuildUpdateFrame + GAME_SPEED * 7)));
+	const bool wantClose = (!IsStunned() && yardOpen && (gs->frameNum >= (lastBuildUpdateFrame + GAME_SPEED * (UNIT_SLOWUPDATE_RATE >> 1))));
 	const bool closeYard = (wantClose && curBuild == nullptr && groundBlockingObjectMap->CanCloseYard(this));
 
 	if (closeYard) {
@@ -134,24 +144,12 @@ void CFactory::Update()
 	CBuilding::Update();
 }
 
-/*
-void CFactory::SlowUpdate(void)
-{
-	// this (ancient) code was intended to keep vicinity around factories clear
-	// so units could exit more easily among crowds of assisting builders, etc.
-	// it is unneeded now that units can flow / push through a non-moving crowd
-	// (so we no longer have to override CBuilding::SlowUpdate either)
-	if (transporter == NULL) {
-		CGameHelper::BuggerOff(pos - float3(0.01f, 0, 0.02f), radius, true, true, team, NULL);
-	}
-
-	CBuilding::SlowUpdate();
-}
-*/
-
 
 
 void CFactory::StartBuild(const UnitDef* buildeeDef) {
+	if (isDead)
+		return;
+
 	const float3& buildPos = CalcBuildPos();
 	const bool blocked = groundBlockingObjectMap->GroundBlocked(buildPos, this);
 
@@ -159,8 +157,7 @@ void CFactory::StartBuild(const UnitDef* buildeeDef) {
 	//
 	// it might rarely be the case that a unit got stuck inside the factory
 	// or died right after completion and left some wreckage, but that is up
-	// to players to fix (we no longer broadcast BuggerOff directives, since
-	// those are indiscriminate and ineffective)
+	// to players to fix
 	if (blocked)
 		return;
 
@@ -195,42 +192,44 @@ void CFactory::UpdateBuild(CUnit* buildee) {
 
 	// buildPiece is the rotating platform
 	const int buildPiece = script->QueryBuildInfo();
+
 	const float3& buildPos = CalcBuildPos(buildPiece);
 	const CMatrix44f& buildPieceMat = script->GetPieceMatrix(buildPiece);
+
 	const int buildPieceHeading = GetHeadingFromVector(buildPieceMat[2], buildPieceMat[10]); //! x.z, z.z
+	const int buildFaceHeading = GetHeadingFromFacing(buildFacing);
 
 	float3 buildeePos = buildPos;
 
+	// note: basically StaticMoveType::SlowUpdate()
+	if (buildee->FloatOnWater() && buildee->IsInWater())
+		buildeePos.y = -buildee->moveType->GetWaterline();
+
 	// rotate unit nanoframe with platform
-	buildee->heading = (-buildPieceHeading + GetHeadingFromFacing(buildFacing)) & (SPRING_CIRCLE_DIVS - 1);
-
-	if (buildee->unitDef->floatOnWater && (buildeePos.y <= 0.0f))
-		buildeePos.y = -buildee->unitDef->waterline;
-
 	buildee->Move(buildeePos, false);
-	buildee->UpdateDirVectors(false);
-	buildee->UpdateMidAndAimPos();
+	buildee->SetHeading((-buildPieceHeading + buildFaceHeading) & (SPRING_CIRCLE_DIVS - 1), false);
 
 	const CCommandQueue& queue = commandAI->commandQue;
 
 	if (!queue.empty() && (queue.front().GetID() == CMD_WAIT)) {
 		buildee->AddBuildPower(this, 0.0f);
-	} else {
-		if (buildee->AddBuildPower(this, buildSpeed)) {
-			CreateNanoParticle();
-		}
+		return;
 	}
+
+	if (!buildee->AddBuildPower(this, buildSpeed))
+		return;
+
+	CreateNanoParticle();
 }
 
 void CFactory::FinishBuild(CUnit* buildee) {
-	if (buildee->beingBuilt) { return; }
-	if (unitDef->fullHealthFactory && buildee->health < buildee->maxHealth) { return; }
+	if (buildee->beingBuilt)
+		return;
+	if (unitDef->fullHealthFactory && buildee->health < buildee->maxHealth)
+		return;
 
-	{
-		if (group && !buildee->group) {
-			buildee->SetGroup(group, true);
-		}
-	}
+	if (group != nullptr && buildee->group == nullptr)
+		buildee->SetGroup(group, true);
 
 	const CCommandAI* bcai = buildee->commandAI;
 	// if not idle, the buildee already has user orders
@@ -304,33 +303,39 @@ void CFactory::DependentDied(CObject* o)
 
 void CFactory::SendToEmptySpot(CUnit* unit)
 {
+	constexpr int numSteps = 100;
+
 	const float searchRadius = radius * 4.0f + unit->radius * 4.0f;
-	const int numSteps = 36;
+	const float searchAngle = math::PI / (numSteps * 0.5f);
 
-	const float3 exitPos = pos + frontdir*(radius + unit->radius);
-	float3 foundPos = pos + frontdir * searchRadius;
-	const float3 tempPos = foundPos;
+	const float3 exitPos = pos + frontdir * (radius + unit->radius);
+	const float3 tempPos = pos + frontdir * searchRadius;
 
-	for (int x = 0; x < numSteps; ++x) {
-		const float a = searchRadius * math::cos(x * PI / (numSteps * 0.5f));
-		const float b = searchRadius * math::sin(x * PI / (numSteps * 0.5f));
+	float3 foundPos = tempPos;
+
+	for (int i = 0; i < numSteps; ++i) {
+		const float a = searchRadius * math::cos(i * searchAngle);
+		const float b = searchRadius * math::sin(i * searchAngle);
 
 		float3 testPos = pos + frontdir * a + rightdir * b;
 
 		if (!testPos.IsInBounds())
 			continue;
-		// don't pick spots behind the factory (because
+		// don't pick spots behind the factory, because
 		// units will want to path through it when open
-		// which slows down production)
+		// (which slows down production)
 		if ((testPos - pos).dot(frontdir) < 0.0f)
 			continue;
 
 		testPos.y = CGround::GetHeightAboveWater(testPos.x, testPos.z);
 
-		if (quadField->NoSolidsExact(testPos, unit->radius * 1.5f, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS)) {
-			foundPos = testPos;
-			break;
-		}
+		if (!quadField->NoSolidsExact(testPos, unit->radius * 1.5f, 0xFFFFFFFF, CSolidObject::CSTATE_BIT_SOLIDOBJECTS))
+			continue;
+		if (unit->moveDef != nullptr && !unit->moveDef->TestMoveSquare(nullptr, testPos, ZeroVector, true, true))
+			continue;
+
+		foundPos = testPos;
+		break;
 	}
 
 	if (foundPos == tempPos) {
@@ -338,15 +343,24 @@ void CFactory::SendToEmptySpot(CUnit* unit)
 		// also make sure not to loop forever if we happen to be facing a map border
 		foundPos.y = 0.0f;
 
-		do {
-			const float x = ((gs->randInt() * 1.0f) / RANDINT_MAX) * numSteps;
-			const float a = searchRadius * math::cos(x * PI / (numSteps * 0.5f));
-			const float b = searchRadius * math::sin(x * PI / (numSteps * 0.5f));
+		for (int i = 0; i < numSteps; ++i) {
+			const float x = gsRNG.NextFloat() * numSteps;
+			const float a = searchRadius * math::cos(x * searchAngle);
+			const float b = searchRadius * math::sin(x * searchAngle);
 
 			foundPos.x = pos.x + frontdir.x * a + rightdir.x * b;
 			foundPos.z = pos.z + frontdir.z * a + rightdir.z * b;
-			foundPos.y += 1.0f;
-		} while ((!foundPos.IsInBounds() || (foundPos - pos).dot(frontdir) < 0.0f) && (foundPos.y < 100.0f));
+
+			if (!foundPos.IsInBounds())
+				continue;
+			if ((foundPos - pos).dot(frontdir) < 0.0f)
+				continue;
+
+			if (unit->moveDef != nullptr && !unit->moveDef->TestMoveSquare(nullptr, foundPos, ZeroVector, true, true))
+				continue;
+
+			break;
+		}
 
 		foundPos.y = CGround::GetHeightAboveWater(foundPos.x, foundPos.z);
 	}
@@ -354,7 +368,8 @@ void CFactory::SendToEmptySpot(CUnit* unit)
 	// first queue a temporary waypoint outside the factory
 	// (otherwise units will try to turn before exiting when
 	// foundPos lies behind exit and cause jams / get stuck)
-	// we assume this temporary point is not itself blocked
+	// we assume this temporary point is not itself blocked,
+	// unlike the second for which we do call TestMoveSquare
 	//
 	// NOTE:
 	//   MobileCAI::AutoGenerateTarget inserts a _third_
@@ -369,6 +384,8 @@ void CFactory::SendToEmptySpot(CUnit* unit)
 		Command c0(CMD_MOVE, SHIFT_KEY, exitPos);
 		unit->commandAI->GiveCommand(c0);
 	}
+
+	// second actual empty-spot waypoint
 	Command c1(CMD_MOVE, SHIFT_KEY, foundPos);
 	unit->commandAI->GiveCommand(c1);
 }
@@ -401,12 +418,12 @@ void CFactory::AssignBuildeeOrders(CUnit* unit) {
 		float3 tmpPos = unit->pos + (frontdir * this->radius * tmpDst);
 
 		if (buildFacing == FACING_NORTH || buildFacing == FACING_SOUTH) {
-			while ((tmpPos.z >= unit->pos.z - zs && tmpPos.z <= unit->pos.z + zs)) {
+			while ((tmpPos.z >= unit->pos.z - zs) && (tmpPos.z <= unit->pos.z + zs)) {
 				tmpDst += 0.5f;
 				tmpPos = unit->pos + (frontdir * this->radius * tmpDst);
 			}
 		} else {
-			while ((tmpPos.x >= unit->pos.x - xs && tmpPos.x <= unit->pos.x + xs)) {
+			while ((tmpPos.x >= unit->pos.x - xs) && (tmpPos.x <= unit->pos.x + xs)) {
 				tmpDst += 0.5f;
 				tmpPos = unit->pos + (frontdir * this->radius * tmpDst);
 			}
@@ -422,13 +439,13 @@ void CFactory::AssignBuildeeOrders(CUnit* unit) {
 		unitCAI->GiveCommand(c);
 
 		// copy factory orders for new unit
-		for (CCommandQueue::const_iterator ci = factoryCmdQue.begin(); ci != factoryCmdQue.end(); ++ci) {
+		for (auto ci = factoryCmdQue.begin(); ci != factoryCmdQue.end(); ++ci) {
 			Command c = *ci;
 			c.options |= SHIFT_KEY;
 
 			if (c.GetID() == CMD_MOVE) {
-				float xjit = gs->randFloat() * TWOPI;
-				float zjit = gs->randFloat() * TWOPI;
+				float xjit = gsRNG.NextFloat() * math::TWOPI;
+				float zjit = gsRNG.NextFloat() * math::TWOPI;
 
 				const float3 p1 = c.GetPos(0);
 				const float3 p2 = float3(p1.x + xjit, p1.y, p1.z + zjit);
@@ -450,8 +467,13 @@ void CFactory::AssignBuildeeOrders(CUnit* unit) {
 
 bool CFactory::ChangeTeam(int newTeam, ChangeType type)
 {
-	StopBuild();
-	return (CBuilding::ChangeTeam(newTeam, type));
+	if (!CBuilding::ChangeTeam(newTeam, type))
+		return false;
+
+	if (curBuild)
+		curBuild->ChangeTeam(newTeam, type);
+
+	return true;
 }
 
 

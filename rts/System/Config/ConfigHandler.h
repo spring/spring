@@ -5,13 +5,12 @@
 
 #include <string>
 #include <sstream>
+#include <vector>
 #include <map>
 
-#include <boost/function.hpp>
-#include <boost/bind.hpp>
+#include <functional>
 
 #include "ConfigVariable.h"
-#include "System/Util.h"
 
 /**
  * @brief Config handler interface
@@ -48,16 +47,16 @@ public:
 	 * application and the new value was read in a read-modify-write cycle.
 	 */
 	template<class T>
-	void NotifyOnChange(T* observer)
+	void NotifyOnChange(T* observer, const std::vector<std::string>& configs)
 	{
 		// issues: still needs to call configHandler->Get() on startup, automate it
-		AddObserver(boost::bind(&T::ConfigNotify, observer, _1, _2), (void*)observer);
+		AddObserver(std::bind(&T::ConfigNotify, observer, std::placeholders::_1, std::placeholders::_2), (void*) observer, configs);
 	}
 
 	template<class T>
 	void RemoveObserver(T* observer)
 	{
-		RemoveObserver((void*)observer);
+		RemoveObserver((void*) observer);
 	}
 
 
@@ -71,13 +70,18 @@ public:
 	}
 
 	/// @brief Get bool, throw if key not present
-	bool  GetBool(const std::string& key)     const { return Get(key); }
+	bool GetBool(const std::string& key) const { return (Get<bool>(key)); }
 	/// @brief Get int, throw if key not present
-	int   GetInt(const std::string& key)      const { return Get<int>(key); }
+	int GetInt(const std::string& key) const { return (Get<int>(key)); }
 	/// @brief Get int, throw if key not present
-	int   GetUnsigned(const std::string& key) const { return Get<unsigned>(key); }
+	int GetUnsigned(const std::string& key) const { return (Get<unsigned>(key)); }
 	/// @brief Get float, throw if key not present
-	float GetFloat(const std::string& key)    const { return Get<float>(key); }
+	float GetFloat(const std::string& key) const { return (Get<float>(key)); }
+
+	bool GetBoolSafe(const std::string& key, bool def) const { return (IsSet(key)? GetBool(key): def); }
+	int GetIntSafe(const std::string& key, int def) const { return (IsSet(key)? GetInt(key): def); }
+	float GetFloatSafe(const std::string& key, float def) const { return (IsSet(key)? GetFloat(key): def); }
+	std::string GetStringSafe(const std::string& key, const std::string& def) const { return (IsSet(key)? GetString(key): def); }
 
 public:
 	virtual ~ConfigHandler() {}
@@ -148,10 +152,10 @@ public:
 	virtual void EnableWriting(bool write) = 0;
 
 protected:
-	typedef boost::function<void(const std::string&, const std::string&)> ConfigNotifyCallback;
+	typedef std::function<void(const std::string&, const std::string&)> ConfigNotifyCallback;
 
-	virtual void AddObserver(ConfigNotifyCallback observer, void* holder) = 0;
-	virtual void RemoveObserver(void* holder) = 0;
+	virtual void AddObserver(ConfigNotifyCallback callback, void* observer, const std::vector<std::string>& configs) = 0;
+	virtual void RemoveObserver(void* observer) = 0;
 
 private:
 	/// @see GetString
@@ -166,10 +170,7 @@ private:
 
 	/// @see Get
 	/// @brief <bool> specialization of Get<> (we cannot use template spezialization here, so just overload it)
-	bool Get(const std::string& key) const
-	{
-		return StringToBool(GetString(key));
-	}
+	bool Get(const std::string& key) const;
 };
 
 extern ConfigHandler* configHandler;

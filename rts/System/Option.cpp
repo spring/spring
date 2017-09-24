@@ -5,7 +5,7 @@
 
 #include "System/Option.h"
 
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include "System/Exceptions.h"
 #include "System/Log/ILog.h"
 #include "System/FileSystem/FileSystem.h"

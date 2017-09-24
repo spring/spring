@@ -7,10 +7,10 @@
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/RapidHandler.h"
 #include "System/UriParser.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 
 #include <iostream>
-#include <boost/cstdint.hpp>
+#include <cinttypes>
 
 namespace ArchiveNameResolver {
 	//////////////////////////////////////////////////////////////////////////////
@@ -18,10 +18,10 @@ namespace ArchiveNameResolver {
 //  Helpers
 //
 
-	static boost::uint64_t ExtractVersionNumber(const std::string& version)
+	static std::uint64_t ExtractVersionNumber(const std::string& version)
 	{
 		std::istringstream iss(version);
-		boost::uint64_t versionInt = 0;
+		std::uint64_t versionInt = 0;
 		int num;
 		while (true) {
 			if (iss >> num) {
@@ -45,7 +45,7 @@ namespace ArchiveNameResolver {
 
 		std::string error;
 		if (aData.IsValid(error)) {
-			if (aData.GetModType() == modtype::primary) {
+			if (aData.IsGame()) {
 				*applicableName = lazyName;
 				return true;
 			}
@@ -62,12 +62,12 @@ namespace ArchiveNameResolver {
 
 		std::string matchingName;
 		std::string matchingVersion;
-		boost::uint64_t matchingVersionInt = 0;
+		std::uint64_t matchingVersionInt = 0;
 
 		for (std::vector<CArchiveScanner::ArchiveData>::const_iterator it = found.begin(); it != found.end(); ++it) {
 			if (lowerLazyName == StringToLower(it->GetShortName())) {
 				// find latest version of the game
-				boost::uint64_t versionInt = ExtractVersionNumber(it->GetVersion());
+				std::uint64_t versionInt = ExtractVersionNumber(it->GetVersion());
 
 				if (versionInt > matchingVersionInt) {
 					matchingName = it->GetNameVersioned();
@@ -103,7 +103,7 @@ namespace ArchiveNameResolver {
 		if (lazyName == "random") {
 			const std::vector<CArchiveScanner::ArchiveData>& games = archiveScanner->GetPrimaryMods();
 			if (!games.empty()) {
-				*applicableName = games[gu->RandInt() % games.size()].GetNameVersioned();
+				*applicableName = games[guRNG.NextInt(games.size())].GetNameVersioned();
 				return true;
 			}
 		}
@@ -118,7 +118,7 @@ namespace ArchiveNameResolver {
 
 		std::string error;
 		if (aData.IsValid(error)) {
-			if (aData.GetModType() == modtype::map) {
+			if (aData.IsMap()) {
 				*applicableName = lazyName;
 				return true;
 			}
@@ -181,7 +181,7 @@ namespace ArchiveNameResolver {
 		if (lazyName == "random") {
 			const std::vector<std::string>& maps = archiveScanner->GetMaps();
 			if (!maps.empty()) {
-				*applicableName = maps[gu->RandInt() % maps.size()];
+				*applicableName = maps[guRNG.NextInt(maps.size())];
 				return true;
 			}
 		}

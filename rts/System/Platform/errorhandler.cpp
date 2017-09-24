@@ -9,116 +9,92 @@
 #include "errorhandler.h"
 
 #include <string>
-#include <sstream>
-#include <boost/bind.hpp>
-#include <boost/thread.hpp>
-#include "Game/GlobalUnsynced.h"
+#include <functional>
+
 #include "System/Log/ILog.h"
 #include "System/Log/LogSinkHandler.h"
-#include "System/Util.h"
+#include "System/Threading/SpringThreading.h"
 
-#if !defined(DEDICATED) || defined(_MSC_VER)
+#if !defined(DEDICATED)
 	#include "System/SpringApp.h"
 	#include "System/Platform/Threading.h"
-	#include "System/Platform/Watchdog.h"
 #endif
 #if !defined(DEDICATED) && !defined(HEADLESS)
 	#include "System/Platform/MessageBox.h"
 #endif
 #ifdef DEDICATED
 	#include "Net/GameServer.h"
+	#include "System/SafeUtil.h"
 #endif
 
-static void ExitMessage(const std::string& msg, const std::string& caption, unsigned int flags, bool forced)
-{
-	logSinkHandler.SetSinking(false);
-	if (forced) {
-		LOG_L(L_ERROR, "[%s] failed to shutdown normally, exit forced", __FUNCTION__);
-	}
-	LOG_L(L_FATAL, "%s\n%s", caption.c_str(), msg.c_str());
 
-	if (!forced) {
-	#if !defined(DEDICATED) && !defined(HEADLESS)
-		Platform::MsgBox(msg, caption, flags);
-	#else
-		// no op
-	#endif
+static void ExitSpringProcessAux(bool waitForExit, bool exitSuccess)
+{
+	// wait 10 seconds before forcing the kill
+	for (unsigned int n = 0; (waitForExit && n < 10); ++n) {
+		spring::this_thread::sleep_for(std::chrono::seconds(1));
 	}
+
+	logSinkHandler.SetSinking(false);
 
 #ifdef _MSC_VER
-	if (forced)
-		TerminateProcess(GetCurrentProcess(), -1);
+	if (!exitSuccess)
+		TerminateProcess(GetCurrentProcess(), EXIT_FAILURE);
 #endif
-	exit(-1);
+
+	exit(EXIT_FAILURE);
 }
 
 
-volatile bool shutdownSucceeded = false;
-
-__FORCE_ALIGN_STACK__
-void ForcedExit(const std::string& msg, const std::string& caption, unsigned int flags) {
-
-	for (unsigned int n = 0; !shutdownSucceeded && (n < 10); ++n) {
-		boost::this_thread::sleep(boost::posix_time::seconds(1));
-	}
-
-	if (!shutdownSucceeded) {
-		ExitMessage(msg, caption, flags, true);
-	}
-}
-
-void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigned int flags, bool fromMain)
-{
 #ifdef DEDICATED
-	SafeDelete(gameServer);
-	ExitMessage(msg, caption, flags, false);
-	return;
-#else
-	LOG_L(L_ERROR, "[%s][1] msg=\"%s\" IsMainThread()=%d fromMain=%d", __FUNCTION__, msg.c_str(), Threading::IsMainThread(), fromMain);
+static void ExitSpringProcess(const std::string& msg, const std::string& caption, unsigned int flags)
+{
+	LOG_L(L_ERROR, "[%s] errorMsg=\"%s\" msgCaption=\"%s\"", __func__, msg.c_str(), caption.c_str());
 
-
-	// SpringApp::Shutdown is extremely likely to deadlock or end up waiting indefinitely if any
-	// MT thread has crashed or deviated from its normal execution path by throwing an exception
-	boost::thread* forcedExitThread = new boost::thread(boost::bind(&ForcedExit, msg, caption, flags));
-
-	// not the main thread (ie. not called from main::Run)
-	// --> leave a message for main and then interrupt it
-	if (!Threading::IsMainThread()) {
-		assert(!fromMain);
-
-		if (gu != NULL) {
-			// gu can be already deleted or not yet created!
-			gu->globalQuit = true;
-		}
-
-		Threading::Error err(caption, msg, flags);
-		Threading::SetThreadError(err);
-
-		// terminate thread
-		// FIXME: only the (separate) loading thread can catch thread_interrupted
-		throw boost::thread_interrupted();
-	}
-
-	LOG_L(L_ERROR, "[%s][2]", __FUNCTION__);
-
-	// exit any possibly threads (otherwise they would
-	// still run while the error messagebox is shown)
-	Watchdog::ClearTimer();
-	SpringApp::ShutDown();
-
-	LOG_L(L_ERROR, "[%s][3]", __FUNCTION__);
-
-	shutdownSucceeded = true;
-	forcedExitThread->join();
-	delete forcedExitThread;
-
-	LOG_L(L_ERROR, "[%s][4]", __FUNCTION__);
-
-	ExitMessage(msg, caption, flags, false);
-#endif
+	spring::SafeDelete(gameServer);
+	ExitSpringProcessAux(false, true);
 }
 
-static int exitcode = 0;
-void SetExitCode(int code) { exitcode = code; }
-int GetExitCode() { return exitcode; }
+#else
+
+static void ExitSpringProcess(const std::string& msg, const std::string& caption, unsigned int flags)
+{
+	LOG_L(L_ERROR, "[%s] errorMsg=\"%s\" msgCaption=\"%s\" mainThread=%d", __func__, msg.c_str(), caption.c_str(), Threading::IsMainThread());
+
+	switch (SpringApp::PostKill(Threading::Error(caption, msg, flags))) {
+		case -1: {
+			// main thread; either gets to ESPA first and cleans up our process or exit is forced by this
+			std::function<void()> forcedExitFunc = [&]() { ExitSpringProcessAux(true, false); };
+			spring::thread forcedExitThread = std::move(spring::thread(forcedExitFunc));
+
+			// .join can (very rarely) throw a no-such-process exception if it runs in parallel with exit
+			assert(forcedExitThread.joinable());
+			forcedExitThread.detach();
+
+			SpringApp::Kill(false);
+		} break;
+		case 0: {         } break; // thread failed to post, ESPA
+		case 1: { return; } break; // thread posted successfully
+	}
+
+	ExitSpringProcessAux(false, false);
+}
+#endif
+
+
+void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigned int flags)
+{
+	#if (!defined(DEDICATED))
+	// the thread that throws up this message-box will be blocked
+	// until it is clicked away which can cause spurious detected
+	// hangs, so deregister it here (by passing an empty error)
+	SpringApp::PostKill({});
+	#endif
+
+	#if (!defined(DEDICATED) && !defined(HEADLESS))
+	Platform::MsgBox(msg, caption, flags);
+	#endif
+
+	ExitSpringProcess(msg, caption, flags);
+}
 

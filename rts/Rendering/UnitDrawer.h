@@ -5,13 +5,13 @@
 
 #include <array>
 #include <vector>
-#include <unordered_map>
 
 #include "Rendering/GL/LightHandler.h"
 #include "Rendering/Models/3DModel.h"
 #include "Rendering/UnitDrawerState.hpp"
 #include "System/EventClient.h"
 #include "System/type2.h"
+#include "System/UnorderedMap.hpp"
 
 struct SolidObjectDef;
 struct UnitDef;
@@ -36,6 +36,11 @@ namespace GL {
 
 
 struct GhostSolidObject {
+public:
+	void IncRef() {        ( refCount++     ); }
+	bool DecRef() { return ((refCount--) > 1); }
+
+public:
 	SolidObjectGroundDecal* decal; //FIXME defined in legacy decal handler with a lot legacy stuff
 	S3DModel* model;
 
@@ -44,6 +49,8 @@ struct GhostSolidObject {
 
 	int facing; //FIXME replaced with dir-vector just legacy decal drawer uses this
 	int team;
+	int refCount;
+	int lastDrawFrame;
 };
 
 
@@ -99,7 +106,7 @@ public:
 	static void DrawUnitModelBeingBuiltOpaque(const CUnit* unit, bool noLuaCall);
 	// note: make these static?
 	void DrawUnitNoTrans(const CUnit* unit, unsigned int preList, unsigned int postList, bool lodCall, bool noLuaCall);
-	void DrawUnit(const CUnit* unit, unsigned int preList, unsigned int postList, bool lodCall, bool noLuaCall);
+	void DrawUnitTrans(const CUnit* unit, unsigned int preList, unsigned int postList, bool lodCall, bool noLuaCall);
 
 	void PushIndividualOpaqueState(const S3DModel* model, int teamID, bool deferredPass);
 	void PushIndividualAlphaState(const S3DModel* model, int teamID, bool deferredPass);
@@ -151,6 +158,7 @@ public:
 
 	bool UseAdvShading() const { return advShading; }
 	bool& UseAdvShadingRef() { return advShading; }
+	bool& WireFrameModeRef() { return wireFrameMode; }
 
 public:
 	struct TempDrawUnit {
@@ -246,10 +254,10 @@ public:
 private:
 	bool drawForward;
 	bool drawDeferred;
+	bool wireFrameMode;
 
 	bool advShading;
 
-	bool drawBeingBuiltModels;
 	bool useDistToGroundForIcons;
 
 private:
@@ -274,7 +282,7 @@ private:
 	/// units that are only rendered as icons this frame
 	std::vector<CUnit*> iconUnits;
 
-	std::unordered_map<icon::CIconData*, std::vector<const CUnit*> > unitsByIcon;
+	spring::unsynced_map<icon::CIconData*, std::vector<const CUnit*> > unitsByIcon;
 
 	// [0] := fallback shader-less rendering path
 	// [1] := default shader-driven rendering path

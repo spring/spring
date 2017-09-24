@@ -45,6 +45,8 @@ namespace GL {
 		void Bind() { assert(!dead && !bound); buffer.Bind(); bound = true; }
 		void UnBind() { assert(!dead && bound); buffer.Unbind(); bound = false; }
 
+		void SetDepthRange(float nearDepth, float farDepth) const;
+
 		int2 GetCurrSize() const { return currBufferSize; }
 		int2 GetPrevSize() const { return prevBufferSize; }
 

@@ -20,8 +20,9 @@ SET(ENGINE_SRC_ROOT_DIR "${CMAKE_SOURCE_DIR}/rts")
 
 
 ### Assemble libraries
-LIST(APPEND engineDedicatedLibraries ${Boost_REGEX_LIBRARY} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY})
-LIST(APPEND engineDedicatedLibraries lua archives 7zip ${SPRING_MINIZIP_LIBRARY} ${ZLIB_LIBRARY})
+LIST(APPEND engineDedicatedLibraries ${Boost_REGEX_LIBRARY})
+LIST(APPEND engineDedicatedLibraries ${Boost_SYSTEM_LIBRARY})
+LIST(APPEND engineDedicatedLibraries lua archives 7zip ${SPRING_MINIZIP_LIBRARY} ${ZLIB_LIBRARY} gflags)
 LIST(APPEND engineDedicatedLibraries headlessStubs engineSystemNet)
 LIST(APPEND engineDedicatedLibraries ${LIBUNWIND_LIBRARIES})
 
@@ -65,18 +66,18 @@ ENDIF (MINGW OR APPLE)
 
 ### Assemble the incude dirs
 INCLUDE_DIRECTORIES(${ENGINE_SRC_ROOT_DIR}/)
-INCLUDE_DIRECTORIES(${ENGINE_SRC_ROOT_DIR}/lib/lua/include/)
+INCLUDE_DIRECTORIES(${ENGINE_SRC_ROOT_DIR}/lib/lua/include)
 INCLUDE_DIRECTORIES(${ENGINE_SRC_ROOT_DIR}/lib/7zip)
+INCLUDE_DIRECTORIES(${ENGINE_SRC_ROOT_DIR}/lib/asio/include)
 
 
 
 ### Assemble sources
-IF	(UNIX)
+IF	(APPLE)
 	SET(sources_engine_Platform_CrashHandler
 		${ENGINE_SRC_ROOT_DIR}/System/Platform/CpuID.cpp
 		${ENGINE_SRC_ROOT_DIR}/System/Platform/Threading.cpp
-		${ENGINE_SRC_ROOT_DIR}/System/Platform/Linux/CrashHandler.cpp
-		${ENGINE_SRC_ROOT_DIR}/System/Platform/Linux/ThreadSupport.cpp)
+		${ENGINE_SRC_ROOT_DIR}/System/Platform/Mac/CrashHandler.cpp)
 ELSEIF	(WIN32)
 	SET(sources_engine_Platform_CrashHandler
 		${ENGINE_SRC_ROOT_DIR}/System/Platform/Win/seh.cpp
@@ -85,7 +86,8 @@ ELSE	()
 	SET(sources_engine_Platform_CrashHandler
 		${ENGINE_SRC_ROOT_DIR}/System/Platform/CpuID.cpp
 		${ENGINE_SRC_ROOT_DIR}/System/Platform/Threading.cpp
-		${ENGINE_SRC_ROOT_DIR}/System/Platform/Mac/CrashHandler.cpp)
+		${ENGINE_SRC_ROOT_DIR}/System/Platform/Linux/CrashHandler.cpp
+		${ENGINE_SRC_ROOT_DIR}/System/Platform/Linux/ThreadSupport.cpp)
 ENDIF	()
 
 SET(system_files
@@ -100,7 +102,6 @@ SET(system_files
 	${ENGINE_SRC_ROOT_DIR}/System/Config/ConfigVariable.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/CRC.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/Platform/errorhandler.cpp
-	${ENGINE_SRC_ROOT_DIR}/System/Platform/CmdLineParams.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/Platform/CpuID.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/Platform/Misc.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/Platform/ScopedFileLock.cpp
@@ -115,9 +116,8 @@ SET(system_files
 	${ENGINE_SRC_ROOT_DIR}/System/LoadSave/DemoRecorder.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/SafeCStrings.c
 	${ENGINE_SRC_ROOT_DIR}/System/SafeVector.cpp
-	${ENGINE_SRC_ROOT_DIR}/System/UnsyncedRNG.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/UriParser.cpp
-	${ENGINE_SRC_ROOT_DIR}/System/Util.cpp
+	${ENGINE_SRC_ROOT_DIR}/System/StringUtil.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/float4.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/Log/Backend.cpp
 	${ENGINE_SRC_ROOT_DIR}/System/Log/DefaultFilter.cpp
@@ -150,7 +150,9 @@ SET(engineDedicatedSources
 	${ENGINE_SRC_ROOT_DIR}/Sim/Misc/TeamBase.cpp
 	${ENGINE_SRC_ROOT_DIR}/Sim/Misc/TeamStatistics.cpp
 	${ENGINE_SRC_ROOT_DIR}/Sim/Misc/AllyTeam.cpp
+	${ENGINE_SRC_ROOT_DIR}/Lua/LuaConstEngine.cpp
 	${ENGINE_SRC_ROOT_DIR}/Lua/LuaIO.cpp
+	${ENGINE_SRC_ROOT_DIR}/Lua/LuaMemPool.cpp
 	${ENGINE_SRC_ROOT_DIR}/Lua/LuaParser.cpp
 	${ENGINE_SRC_ROOT_DIR}/Lua/LuaUtils.cpp
 	${ENGINE_SRC_ROOT_DIR}/Map/MapParser.cpp

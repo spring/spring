@@ -10,6 +10,7 @@
 #endif
 
 #include "ExpGenSpawnable.h"
+#include "ProjectileMemPool.h"
 #include "System/float3.h"
 #include "System/type2.h"
 
@@ -43,7 +44,7 @@ public:
 	virtual void Update();
 	virtual void Init(const CUnit* owner, const float3& offset) override;
 
-	virtual void Draw() {}
+	virtual void Draw(CVertexArray* va) {}
 	virtual void DrawOnMinimap(CVertexArray& lines, CVertexArray& points);
 
 	virtual int GetProjectilesCount() const = 0;
@@ -90,10 +91,6 @@ public:
 
 
 public:
-	static bool inArray;
-	static CVertexArray* va;
-	static void DrawArray();
-
 	bool synced;  ///< is this projectile part of the simulation?
 	bool weapon;  ///< is this a weapon projectile? (true implies synced true)
 	bool piece;   ///< is this a piece projectile? (true implies synced true)

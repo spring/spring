@@ -7,7 +7,7 @@
 #include <vector>
 #include <string>
 #include <fstream>
-#include <boost/cstdint.hpp>
+#include <cinttypes>
 
 #include "VFSModes.h"
 
@@ -25,23 +25,29 @@ class CFileHandler
 public:
 	CFileHandler(const char* fileName, const char* modes = SPRING_VFS_RAW_FIRST);
 	CFileHandler(const std::string& fileName, const std::string& modes = SPRING_VFS_RAW_FIRST);
-	virtual ~CFileHandler();
+	virtual ~CFileHandler() { Close(); }
 
 	void Open(const std::string& fileName, const std::string& modes = SPRING_VFS_RAW_FIRST);
+	void Close();
 
 	int Read(void* buf, int length);
 	int ReadString(void* buf, int length); //< stops after the first 0 char
 	void Seek(int pos, std::ios_base::seekdir where = std::ios_base::beg);
 
 	static bool FileExists(const std::string& filePath, const std::string& modes);
-	bool FileExists() const;
+	// true if any of TryReadFrom{RawFS,PWD,VFS} succeed
+	bool FileExists() const { return (fileSize >= 0); }
+	// true if (and only if) TryReadFromVFS succeeds
+	bool IsBuffered() const { return (!fileBuffer.empty()); }
 
 	bool Eof() const;
 	int GetPos();
-	int FileSize() const;
+	int FileSize() const { return fileSize; }
 
 	bool LoadStringData(std::string& data);
 	std::string GetFileExt() const;
+
+	std::vector<std::uint8_t>& GetBuffer() { return fileBuffer; }
 
 	static bool InReadDir(const std::string& path);
 	static bool InWriteDir(const std::string& path);
@@ -55,27 +61,21 @@ public:
 
 
 protected:
-	CFileHandler() : filePos(0), fileSize(-1) {} // for CGZFileHandler
+	CFileHandler() { Close(); } // for CGZFileHandler
 
 	virtual bool TryReadFromPWD(const std::string& fileName);
 	virtual bool TryReadFromRawFS(const std::string& fileName);
-	virtual bool TryReadFromModFS(const std::string& fileName);
-	bool TryReadFromMapFS(const std::string& fileName);
-	bool TryReadFromBaseFS(const std::string& fileName);
+	virtual bool TryReadFromVFS(const std::string& fileName, int section);
 
 	static bool InsertRawFiles(std::set<std::string>& fileSet, const std::string& path, const std::string& pattern);
-	static bool InsertModFiles(std::set<std::string>& fileSet, const std::string& path, const std::string& pattern);
-	static bool InsertMapFiles(std::set<std::string>& fileSet, const std::string& path, const std::string& pattern);
-	static bool InsertBaseFiles(std::set<std::string>& fileSet, const std::string& path, const std::string& pattern);
+	static bool InsertVFSFiles(std::set<std::string>& fileSet, const std::string& path, const std::string& pattern, int section);
 
 	static bool InsertRawDirs(std::set<std::string>& dirSet, const std::string& path, const std::string& pattern);
-	static bool InsertModDirs(std::set<std::string>& dirSet, const std::string& path, const std::string& pattern);
-	static bool InsertMapDirs(std::set<std::string>& dirSet, const std::string& path, const std::string& pattern);
-	static bool InsertBaseDirs(std::set<std::string>& dirSet, const std::string& path, const std::string& pattern);
+	static bool InsertVFSDirs(std::set<std::string>& dirSet, const std::string& path, const std::string& pattern, int section);
 
 	std::string fileName;
 	std::ifstream ifs;
-	std::vector<boost::uint8_t> fileBuffer;
+	std::vector<std::uint8_t> fileBuffer;
 	int filePos;
 	int fileSize;
 };

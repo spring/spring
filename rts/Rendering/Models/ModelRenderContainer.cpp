@@ -9,7 +9,6 @@
 #include "Sim/Projectiles/Projectile.h"
 #include "Sim/Units/Unit.h"
 #include "System/Log/ILog.h"
-#include "System/Util.h"
 
 #define LOG_SECTION_WORLD_OBJECT_MODEL_RENDERER "ModelRenderContainer"
 LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_WORLD_OBJECT_MODEL_RENDERER)
@@ -56,7 +55,7 @@ void IModelRenderContainer::AddUnit(const CUnit* u)
 	UnitSet& us = units[TEX_TYPE(u)];
 
 	// updating a unit's draw-position requires mutability
-	if (!VectorInsertUnique(us, const_cast<CUnit*>(u)))
+	if (!spring::VectorInsertUnique(us, const_cast<CUnit*>(u)))
 		assert(false);
 
 	numUnits += 1;
@@ -68,7 +67,7 @@ void IModelRenderContainer::DelUnit(const CUnit* u)
 
 	// Unit can be absent from this container, since we can't
 	// know in UnitDrawer.cpp whether it's cloaked or not.
-	if (VectorErase(us, const_cast<CUnit*>(u))) {
+	if (spring::VectorErase(us, const_cast<CUnit*>(u))) {
 		numUnits -= 1;
 	}
 
@@ -82,7 +81,7 @@ void IModelRenderContainer::AddFeature(const CFeature* f)
 {
 	FeatureSet& fs = features[TEX_TYPE(f)];
 
-	if (!VectorInsertUnique(fs, const_cast<CFeature*>(f)))
+	if (!spring::VectorInsertUnique(fs, const_cast<CFeature*>(f)))
 		assert(false);
 
 	numFeatures += 1;
@@ -92,7 +91,7 @@ void IModelRenderContainer::DelFeature(const CFeature* f)
 {
 	FeatureSet& fs = features[TEX_TYPE(f)];
 
-	if (VectorErase(fs, const_cast<CFeature*>(f))) {
+	if (spring::VectorErase(fs, const_cast<CFeature*>(f))) {
 		numFeatures -= 1;
 	}
 
@@ -107,7 +106,7 @@ void IModelRenderContainer::AddProjectile(const CProjectile* p)
 	ProjectileSet& ps = projectiles[TEX_TYPE(p)];
 
 	// updating a projectile's draw-position requires mutability
-	if (!VectorInsertUnique(ps, const_cast<CProjectile*>(p)))
+	if (!spring::VectorInsertUnique(ps, const_cast<CProjectile*>(p)))
 		assert(false);
 
 	numProjectiles += 1;
@@ -117,7 +116,7 @@ void IModelRenderContainer::DelProjectile(const CProjectile* p)
 {
 	ProjectileSet& ps = projectiles[TEX_TYPE(p)];
 
-	if (!VectorErase(ps, const_cast<CProjectile*>(p)))
+	if (!spring::VectorErase(ps, const_cast<CProjectile*>(p)))
 		assert(false);
 
 	numProjectiles -= 1;

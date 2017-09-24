@@ -2,7 +2,7 @@
 
 #include "Battery.h"
 #include "System/EventHandler.h"
-#include "System/ThreadPool.h"
+#include "System/Threading/ThreadPool.h"
 #include "System/Config/ConfigHandler.h"
 #include <SDL2/SDL_power.h>
 
@@ -28,30 +28,16 @@ CBattery::~CBattery()
 
 void CBattery::Update()
 {
-	// switch ThreadPool's busy-wait to sleep-wait to save more power
-
 	const spring_time now = spring_gettime();
 	if (next_check > now)
 		return;
 	next_check = now + spring_secs(5);
 
-	if (!ThreadPool::HasThreads())
-		return;
-
 	// SDL_GetPowerInfo() seems to cause a lag of (milli-)secs
 	// run it threaded, so that it doesn't block the mainthread
-	ThreadPool::enqueue([&]{
+	ThreadPool::Enqueue([&]{
 		int secs, pct;
-		bool newOnBattery = (SDL_GetPowerInfo(&secs, &pct) == SDL_POWERSTATE_ON_BATTERY);
-		if (newOnBattery == onBattery)
-			return;
-		onBattery = newOnBattery;
-
-		if (onBattery) {
-			ThreadPool::SetThreadSpinTime(0);
-		} else {
-			ThreadPool::SetThreadSpinTime(configHandler->GetUnsigned("WorkerThreadSpinTime"));
-		}
+		onBattery = (SDL_GetPowerInfo(&secs, &pct) == SDL_POWERSTATE_ON_BATTERY);
 	});
 }
 

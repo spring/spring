@@ -413,7 +413,7 @@ enum
 
 	inline bool isunorderedf(Simple x, Simple y) {return isunordered(x, y);}
 	inline bool isgreaterf(Simple x, Simple y) {return isgreater(x, y);}
-	inline bool isgreaterequalf(Simple x, Simple y) {return isgreaterequalf(x, y);}
+	inline bool isgreaterequalf(Simple x, Simple y) {return isgreaterequal(x, y);}
 	inline bool islessf(Simple x, Simple y) {return isless(x, y);}
 	inline bool islessequalf(Simple x, Simple y) {return islessequal(x, y);}
 	inline bool islessgreaterf(Simple x, Simple y) {return islessgreater(x, y);}

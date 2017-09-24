@@ -10,6 +10,7 @@ GAME="$1"
 MAP="$2"
 AI="$3"
 AIVERSION="$4"
+HOSTPORT="$5"
 
 cat <<EOD
 // a validation script
@@ -23,6 +24,7 @@ cat <<EOD
 	GameType=$GAME;
 
 	StartPosType=0;
+	HostPort=$HOSTPORT;
 	[mapoptions]
 	{
 	}

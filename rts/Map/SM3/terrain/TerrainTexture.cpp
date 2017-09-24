@@ -10,7 +10,7 @@
 #include "TerrainTexEnvCombine.h"
 #include "TerrainTextureGLSL.h"
 #include "Lightcalc.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include "System/Log/ILog.h"
 
 #include <cassert>

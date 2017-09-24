@@ -56,10 +56,9 @@ const std::string& GetBranch()
 	return patchSet;
 }
 
-std::string GetAdditional()
+inline const std::string CreateAdditionalVersion()
 {
 	std::string additional = SPRING_VERSION_ENGINE_ADDITIONAL;
-
 	additional += additional.empty() ? "" : " ";
 
 	additional += ""
@@ -119,6 +118,13 @@ std::string GetAdditional()
 	#define GV_ADD_SPACE " "
 #endif
 	;
+
+	return additional;
+}
+
+const std::string& GetAdditional()
+{
+	const static std::string additional(CreateAdditionalVersion());
 
 	return additional;
 }

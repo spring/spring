@@ -6,8 +6,9 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/ColorMap.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
+#include "Sim/Projectiles/ProjectileMemPool.h"
 
-CR_BIND_DERIVED(CGenericParticleProjectile, CProjectile, )
+CR_BIND_DERIVED_POOL(CGenericParticleProjectile, CProjectile, , projMemPool.alloc, projMemPool.free)
 
 CR_REG_METADATA(CGenericParticleProjectile,(
 	CR_MEMBER(gravity),
@@ -43,9 +44,6 @@ CGenericParticleProjectile::CGenericParticleProjectile(const CUnit* owner, const
 	deleteMe  = false;
 }
 
-CGenericParticleProjectile::~CGenericParticleProjectile()
-{
-}
 
 void CGenericParticleProjectile::Update()
 {
@@ -55,15 +53,11 @@ void CGenericParticleProjectile::Update()
 	life += decayrate;
 	size = size * sizeMod + sizeGrowth;
 
-	if (life > 1.0f) {
-		deleteMe = true;
-	}
+	deleteMe |= (life > 1.0f);
 }
 
-void CGenericParticleProjectile::Draw()
+void CGenericParticleProjectile::Draw(CVertexArray* va)
 {
-	inArray = true;
-
 	float3 dir1 = camera->GetRight();
 	float3 dir2 = camera->GetUp();
 	if (directional) {

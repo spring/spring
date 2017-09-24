@@ -53,6 +53,7 @@ CR_REG_METADATA(CSolidObject,
 
 	CR_MEMBER(localModel),
 	CR_MEMBER(collisionVolume),
+	CR_MEMBER(selectionVolume), // unsynced, could also be ignored
 	CR_MEMBER(lastHitPiece),
 
 	CR_IGNORED(groundDecal), // loaded from render*Created
@@ -139,8 +140,7 @@ CSolidObject::CSolidObject():
 
 void CSolidObject::PostLoad()
 {
-	model = GetDef()->LoadModel();
-	if (model == nullptr)
+	if ((model = GetDef()->LoadModel()) == nullptr)
 		return;
 
 	localModel.SetModel(model, false);
@@ -292,7 +292,7 @@ YardMapStatus CSolidObject::GetGroundBlockingMaskAtPos(float3 gpos) const
 		gpos.z += SQUARE_SIZE / 2;
 
 		frontv =  frontdir;
-		rightv = -rightdir; //??? spring's unit-rightdir is in real the LEFT vector :x
+		rightv = -rightdir; // world-space is RH, unit-space is LH
 	#else
 		// use old fixed space (4 facing dirs & ints for unit positions)
 
@@ -354,9 +354,9 @@ float3 CSolidObject::GetDragAccelerationVec(const float4& params) const
 	//
 	const float3 speedSignVec = float3(Sign(speed.x), Sign(speed.y), Sign(speed.z));
 	const float3 dragScaleVec = float3(
-		IsInAir()    * dragScales.x * (0.5f * params.x * params.z * (M_PI * sqRadius * 0.01f * 0.01f)), // air
-		IsInWater()  * dragScales.y * (0.5f * params.y * params.z * (M_PI * sqRadius * 0.01f * 0.01f)), // water
-		IsOnGround() * dragScales.z * (                  params.w * (                           mass))  // ground
+		IsInAir()    * dragScales.x * (0.5f * params.x * params.z * (math::PI * sqRadius * 0.01f * 0.01f)), // air
+		IsInWater()  * dragScales.y * (0.5f * params.y * params.z * (math::PI * sqRadius * 0.01f * 0.01f)), // water
+		IsOnGround() * dragScales.z * (                  params.w * (                               mass))  // ground
 	);
 
 	float3 dragAccelVec;

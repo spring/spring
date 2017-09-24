@@ -3,10 +3,10 @@
 #ifndef LUASCRIPTNAMES_H
 #define LUASCRIPTNAMES_H
 
-
-#include <map>
 #include <string>
 #include <vector>
+
+#include "System/UnorderedMap.hpp"
 
 
 // These are indices into an array of 'refs' (lua_ref / lua_unref)
@@ -16,6 +16,9 @@ enum {
 	LUAFN_Destroy,              // ( ) -> nil
 	LUAFN_StartMoving,          // ( reversing ) -> nil
 	LUAFN_StopMoving,           // ( ) -> nil
+	LUAFN_StartSkidding,        // ( vx, vy, vz) -> nil
+	LUAFN_StopSkidding,         // ( ) -> nil
+	LUAFN_ChangeHeading,        // ( deltaHeading ) -> nil
 	LUAFN_Activate,             // ( ) -> nil
 	LUAFN_Killed,               // ( recentDamage, maxHealth ) -> number delayedWreckLevel | nil
 	LUAFN_Deactivate,           // ( ) -> nil
@@ -60,7 +63,7 @@ class CLuaUnitScriptNames
 {
 public:
 	static const std::vector<std::string>& GetScriptNames(); // LUAFN_* -> string
-	static const std::map<std::string, int>& GetScriptMap(); // string -> LUAFN_*
+	static const spring::unordered_map<std::string, int>& GetScriptMap(); // string -> LUAFN_*
 
 	static int GetScriptNumber(const std::string& fname);
 	static const std::string& GetScriptName(int num);

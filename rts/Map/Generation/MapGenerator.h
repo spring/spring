@@ -12,7 +12,7 @@ class CVirtualArchive;
 class CMapGenerator
 {
 public:
-	virtual ~CMapGenerator();
+	virtual ~CMapGenerator() {}
 
 	void Generate();
 

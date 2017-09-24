@@ -4,7 +4,7 @@
 #define LINE_EDIT_H
 
 #include <string>
-#include <boost/signals2/signal.hpp>
+#include <slimsig/slimsig.h>
 
 #include "GuiElement.h"
 
@@ -15,17 +15,17 @@ class LineEdit : public GuiElement
 {
 public:
 	LineEdit(GuiElement* parent = NULL);
-	
+
 	std::string GetContent() const
 	{
 		return content;
 	};
 	void SetContent(const std::string& line, bool moveCursor = true);
-	
+
 	void SetFocus(bool focus);
 	void SetCrypt(bool focus);
 
-	boost::signals2::signal<void (void)> DefaultAction;
+	slimsig::signal<void (void)> DefaultAction;
 
 private:
 	virtual void DrawSelf();

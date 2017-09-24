@@ -4,14 +4,15 @@
 #define SOUNDITEM_H
 
 #include <string>
-#include <map>
-#include <boost/shared_ptr.hpp>
+#include <memory>
+
+#include "System/UnorderedMap.hpp"
 
 class SoundBuffer;
 
 /**
  * @brief A class representing a sound which can be played
- * 
+ *
  * This can be played by CSoundSource.
  * Each soundsource has exactly one SoundBuffer it wraps around, while one buffer can be shared among multiple Items.
  * You can adjust various playing parameters within this class, sou you can have 1 buffer and multiple SoundItems
@@ -21,29 +22,21 @@ class SoundItem
 {
 	friend class CSoundSource;
 public:
-	SoundItem(boost::shared_ptr<SoundBuffer> buffer, const std::map<std::string, std::string>& items);
+	SoundItem(std::shared_ptr<SoundBuffer> buffer, const spring::unordered_map<std::string, std::string>& items);
 
 	bool PlayNow();
 	void StopPlay();
-	float MaxDistance() const
-	{
-		return maxDist;
-	};
-	const std::string& Name() const
-	{
-		return name;
-	};
-	const int GetPriority() const
-	{
-		return priority;
-	};
-	
+
+	float MaxDistance() const { return maxDist; }
+	const std::string& Name() const { return name; }
+	const int GetPriority() const { return priority; }
+
 	float GetGain() const;
 	float GetPitch() const;
 
 private:
-	boost::shared_ptr<SoundBuffer> buffer;
-	/// unique identifier (if no name is specified, this will be the filename
+	std::shared_ptr<SoundBuffer> buffer;
+	/// unique identifier (if no name is specified, this will be the filename)
 	std::string name;
 
 	/// volume gain, applied to this sound

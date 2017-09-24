@@ -1,126 +1,89 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include <string>
 
 #include "VerticalSync.h"
 #include "GL/myGL.h"
+#include "System/myMath.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
 
-#if defined HEADLESS
-#elif defined WIN32
-	#include <GL/wglew.h>
-#elif !defined(__APPLE__)
-	#include <GL/glxew.h>
-#endif
+#include <SDL_video.h>
 
-CONFIG(int, VSync).defaultValue(0).minimumValue(0).description("Vertical synchronization, update render frames in monitor's refresh rate.\n <=0: off\n 1: enabled \n x: render with monitor-Hz/x FPS");
+static constexpr int MAX_ADAPTIVE_INTERVAL = -6;
+static constexpr int MAX_STANDARD_INTERVAL = +6;
 
-CVerticalSync VSync;
+static CVerticalSync instance;
 
 
-/******************************************************************************/
+CONFIG(int, VSync).
+	defaultValue(0).
+	minimumValue(MAX_ADAPTIVE_INTERVAL).
+	maximumValue(MAX_STANDARD_INTERVAL).
+	description(
+		"Synchronize buffer swaps with vertical blanking interval."
+		" Modes are -N (adaptive), +N (standard), or 0 (disabled)."
+	);
 
-CVerticalSync::CVerticalSync()
+CVerticalSync* CVerticalSync::GetInstance()
 {
-	interval = -1;
+	return &instance;
 }
 
-
-CVerticalSync::~CVerticalSync()
+void CVerticalSync::WrapNotifyOnChange()
 {
+	configHandler->NotifyOnChange(this, {"VSync"});
 }
 
+void CVerticalSync::WrapRemoveObserver()
+{
+	// can't do this in the dtor because VerticalSync outlives configHandler
+	configHandler->RemoveObserver(this);
+}
 
-/******************************************************************************/
-
-void CVerticalSync::Init()
+void CVerticalSync::ConfigNotify(const std::string& key, const std::string& value)
 {
 	SetInterval(configHandler->GetInt("VSync"));
 }
 
 
+void CVerticalSync::Toggle()
+{
+	// no-arg switch, select smallest interval
+	switch (Clamp(SDL_GL_GetSwapInterval(), -1, 1)) {
+		case -1: { SetInterval( 0); } break;
+		case  0: { SetInterval(+1); } break;
+		case +1: { SetInterval(-1); } break;
+		default: {} break;
+	}
+}
+
+void CVerticalSync::SetInterval() { SetInterval(configHandler->GetInt("VSync")); }
 void CVerticalSync::SetInterval(int i)
 {
-	i = std::max(0, i);
-
-	if (i == interval)
+	// recursion is already prevented (Set only notifies on changed
+	// values), this just avoids making the SDL calls a second time
+	if ((i = Clamp(i, MAX_ADAPTIVE_INTERVAL, MAX_STANDARD_INTERVAL)) == interval)
 		return;
 
-	configHandler->Set("VSync", i);
-	interval = i;
+	configHandler->Set("VSync", interval = i);
 
-#if defined HEADLESS
-
-#elif !defined(WIN32) && !defined(__APPLE__)
-	#ifdef GLXEW_EXT_swap_control
-		if (GLXEW_EXT_swap_control) {
-			//System 1
-			// This is the prefered way cause glXSwapIntervalEXT won't lock the thread until the OGL cmd queue is full!
-			// And so we can process SimFrames while waiting for VSync.
-			Display* dpy = glXGetCurrentDisplay();
-			GLXDrawable drawable = glXGetCurrentDrawable();
-		#ifdef GLXEW_EXT_swap_control_tear
-			// this enables so called `adaptive vsync` or also called late syncing (~ it won't vsync if FPS < monitor refresh rate)
-			if (GLXEW_EXT_swap_control_tear) {
-				if (interval != 0)
-					LOG("Using Adaptive VSync");
-				glXSwapIntervalEXT(dpy, drawable, -interval);
-			} else
-		#endif
-			{
-				if (interval != 0)
-					LOG("Using VSync");
-				glXSwapIntervalEXT(dpy, drawable, interval);
-			}
-		} else
+	#if defined HEADLESS
+	return;
 	#endif
-	if (!GLXEW_SGI_video_sync) {
-		interval = 0; // disable
-	} else {
-		if (interval != 0)
-			LOG("Using SGI VSync");
-	}
 
-#elif defined WIN32
-	if (WGLEW_EXT_swap_control) {
-		if (interval != 0)
-			LOG("Using VSync");
-		wglSwapIntervalEXT(interval);
-	}
-#endif
-
-	if (interval == 0)
-		LOG("VSync disabled");
-}
-
-
-/******************************************************************************/
-
-void CVerticalSync::Delay() const
-{
-#if defined HEADLESS
-
-#elif !defined(WIN32) && !defined(__APPLE__)
-	if (interval <= 0)
+	// adaptive (delay swap iff frame-rate > vblank-rate)
+	if (interval < 0 && SDL_GL_SetSwapInterval(interval) == 0) {
+		LOG("[VSync::%s] interval=%d (adaptive)", __func__, interval);
 		return;
-
-	#ifdef GLXEW_EXT_swap_control_tear
-		if (GLXEW_EXT_swap_control_tear)
-			return;
-	#endif
-	#ifdef GLXEW_EXT_swap_control
-		if (GLXEW_EXT_swap_control)
-			return;
-	#endif
-
-	GLuint frameCount;
-	if (glXGetVideoSyncSGI(&frameCount) == 0) {
-		//System 2
-		//Note: This locks the thread (similar to glFinish)!!!
-		glXWaitVideoSyncSGI(interval, (frameCount+1) % interval, &frameCount);
 	}
-#endif
+	// standard (<interval> vblanks per swap)
+	if (interval > 0 && SDL_GL_SetSwapInterval(interval) == 0) {
+		LOG("[VSync::%s] interval=%d (standard)", __func__, interval);
+		return;
+	}
+
+	// disabled (never wait for vblank)
+	SDL_GL_SetSwapInterval(0);
+	LOG("[VSync::%s] interval=%d (disabled)", __func__, interval);
 }
-
-
-/******************************************************************************/

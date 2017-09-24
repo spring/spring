@@ -8,7 +8,9 @@
  * It routes all (or a subset of) the log records to zero or more log files.
  */
 
+#include <stdio.h> // FILE
 #include <stdlib.h> // for NULL
+
 #include "Level.h" // for LOG_LEVEL_ALL
 
 #ifdef __cplusplus
@@ -32,6 +34,8 @@ extern "C" {
  */
 void log_file_addLogFile(const char* filePath, const char* sections = NULL,
 		int minLevel = LOG_LEVEL_ALL, int flushLevel = LOG_LEVEL_ERROR);
+
+FILE* log_file_getLogFileStream(const char* filePath);
 
 void log_file_removeLogFile(const char* filePath);
 

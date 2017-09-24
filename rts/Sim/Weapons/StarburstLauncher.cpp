@@ -2,13 +2,13 @@
 
 #include "StarburstLauncher.h"
 #include "WeaponDef.h"
+#include "WeaponMemPool.h"
 #include "Game/TraceRay.h"
 #include "Map/Ground.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
 #include "Sim/Units/Unit.h"
 
-CR_BIND_DERIVED(CStarburstLauncher, CWeapon, (NULL, NULL))
-
+CR_BIND_DERIVED_POOL(CStarburstLauncher, CWeapon, , weaponMemPool.alloc, weaponMemPool.free)
 CR_REG_METADATA(CStarburstLauncher, (
 	CR_MEMBER(uptime),
 	CR_MEMBER(tracking)
@@ -16,7 +16,7 @@ CR_REG_METADATA(CStarburstLauncher, (
 
 CStarburstLauncher::CStarburstLauncher(CUnit* owner, const WeaponDef* def): CWeapon(owner, def)
 {
-	//happens when loading
+	// null happens when loading
 	if (def != nullptr) {
 		tracking = weaponDef->turnrate * def->tracks;
 		uptime = (def->uptime * GAME_SPEED);
@@ -27,7 +27,7 @@ CStarburstLauncher::CStarburstLauncher(CUnit* owner, const WeaponDef* def): CWea
 void CStarburstLauncher::FireImpl(const bool scriptCall)
 {
 	const float3 speed = ((weaponDef->fixedLauncher)? weaponDir: UpVector) * weaponDef->startvelocity;
-	const float3 aimError = (gs->randVector() * SprayAngleExperience() + SalvoErrorExperience());
+	const float3 aimError = (gsRNG.NextVector() * SprayAngleExperience() + SalvoErrorExperience());
 
 	ProjectileParams params = GetProjectileParams();
 	params.pos = weaponMuzzlePos + UpVector * 2.0f;
@@ -41,13 +41,12 @@ void CStarburstLauncher::FireImpl(const bool scriptCall)
 	WeaponProjectileFactory::LoadProjectile(params);
 }
 
-bool CStarburstLauncher::HaveFreeLineOfFire(const float3 pos, const SWeaponTarget& trg, bool useMuzzle) const
+bool CStarburstLauncher::HaveFreeLineOfFire(const float3 srcPos, const float3 tgtPos, const SWeaponTarget& trg) const
 {
 	const float3& wdir = weaponDef->fixedLauncher? weaponDir: UpVector;
 
-	if (TraceRay::TestCone(weaponMuzzlePos, wdir, 100.0f, 0.0f, owner->allyteam, avoidFlags, owner)) {
+	if (TraceRay::TestCone(srcPos, wdir, 100.0f, 0.0f, owner->allyteam, avoidFlags, owner))
 		return false;
-	}
 
 	return true;
 }

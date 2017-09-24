@@ -6,7 +6,7 @@
 #include "Sim/Features/Feature.h"
 #include "System/Matrix44f.h"
 #include "System/myMath.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 
 CR_BIND(CollisionVolume, )
 CR_REG_METADATA(CollisionVolume, (
@@ -72,7 +72,8 @@ CollisionVolume& CollisionVolume::operator = (const CollisionVolume& v) {
 }
 
 CollisionVolume::CollisionVolume(
-	const std::string& cvTypeString,
+	const char cvTypeChar,
+	const char cvAxisChar,
 	const float3& cvScales,
 	const float3& cvOffsets
 ) {
@@ -82,24 +83,20 @@ CollisionVolume::CollisionVolume(
 	int cvType = COLVOL_TYPE_SPHERE;
 	int cvAxis = COLVOL_AXIS_Z;
 
-	if (!cvTypeString.empty()) {
-		const std::string& cvTypeStr = StringToLower(cvTypeString);
-		const std::string& cvTypePrefix = cvTypeStr.substr(0, 3);
+	switch (cvTypeChar) {
+		case 'E': case 'e': { cvType = COLVOL_TYPE_ELLIPSOID; } break; // "[E|e]ll..."
+		case 'C': case 'c': { cvType = COLVOL_TYPE_CYLINDER;  } break; // "[C|c]yl..."
+		case 'B': case 'b': { cvType = COLVOL_TYPE_BOX;       } break; // "[B|b]ox"
+		case 'S': case 's': { cvType = COLVOL_TYPE_SPHERE;    } break; // "[S|s]ph..."
+		default: {} break;
+	}
 
-		switch (cvTypePrefix[0]) {
-			case 'e': { cvType = COLVOL_TYPE_ELLIPSOID; } break; // "ell..."
-			case 'c': { cvType = COLVOL_TYPE_CYLINDER;  } break; // "cyl..."
-			case 'b': { cvType = COLVOL_TYPE_BOX;       } break; // "box"
-			case 's': { cvType = COLVOL_TYPE_SPHERE;    } break; // "sph..."
-		}
-
-		if (cvType == COLVOL_TYPE_CYLINDER) {
-			switch (cvTypeStr[cvTypeStr.size() - 1]) {
-				case 'x': { cvAxis = COLVOL_AXIS_X; } break;
-				case 'y': { cvAxis = COLVOL_AXIS_Y; } break;
-				case 'z': { cvAxis = COLVOL_AXIS_Z; } break;
-				default: {} break; // just use the z-axis
-			}
+	if (cvType == COLVOL_TYPE_CYLINDER) {
+		switch (cvAxisChar) {
+			case 'X': case 'x': { cvAxis = COLVOL_AXIS_X; } break;
+			case 'Y': case 'y': { cvAxis = COLVOL_AXIS_Y; } break;
+			case 'Z': case 'z': { cvAxis = COLVOL_AXIS_Z; } break;
+			default: {} break; // just use the z-axis
 		}
 	}
 
@@ -113,18 +110,6 @@ void CollisionVolume::PostLoad()
 	SetBoundingRadius();
 }
 
-
-void CollisionVolume::InitSphere(float radius)
-{
-	// <r> is the object's default RADIUS (not its diameter),
-	// so we need to double it to get the full-length scales
-	InitShape(OnesVector * radius * 2.0f, ZeroVector, COLVOL_TYPE_SPHERE, COLVOL_HITTEST_CONT, COLVOL_AXIS_Z);
-}
-
-void CollisionVolume::InitBox(const float3& scales, const float3& offsets)
-{
-	InitShape(scales, offsets, COLVOL_TYPE_BOX, COLVOL_HITTEST_CONT, COLVOL_AXIS_Z);
-}
 
 void CollisionVolume::InitShape(
 	const float3& scales,
@@ -215,8 +200,9 @@ void CollisionVolume::RescaleAxes(const float3& scales) {
 	fullAxisScales *= scales;
 	halfAxisScales *= scales;
 
+	// h*h --> h*h*s*s; 1/h --> 1/h/s = 1/(h*s)
 	halfAxisScalesSqr *= (scales * scales);
-	halfAxisScalesInv = OnesVector / scales;
+	halfAxisScalesInv /= scales;
 }
 
 void CollisionVolume::FixTypeAndScale(float3& scales) {
@@ -284,7 +270,7 @@ float CollisionVolume::GetPointSurfaceDistance(
 	} else {
 		// SObj::GetTransformMatrix does not include this
 		// (its translation component is pos, not midPos)
-		vm.Translate(obj->relMidPos * WORLD_TO_OBJECT_SPACE);
+		vm.Translate(obj->relMidPos);
 	}
 
 	vm.Translate(GetOffsets());
@@ -439,9 +425,9 @@ float CollisionVolume::GetEllipsoidDistance(const float3& pv) const
 		const float invDet = 1.0f / (a11 * a22 - a21 * a12);
 
 		theta += (a12 * d2 - a22 * d1) * invDet;
-		theta = Clamp(theta, 0.0f, HALFPI);
+		theta = Clamp(theta, 0.0f, math::HALFPI);
 		phi += (a21 * d1 - a11 * d2) * invDet;
-		phi = Clamp(phi, 0.0f, HALFPI);
+		phi = Clamp(phi, 0.0f, math::HALFPI);
 	}
 
 	return currDist;

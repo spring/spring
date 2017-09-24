@@ -7,39 +7,37 @@
 #include <vector>
 
 class PlayerRoster {
-	public:
-		enum SortType {
-			Disabled   = 0,
-			Allies     = 1,
-			TeamID     = 2,
-			PlayerName = 3,
-			PlayerCPU  = 4,
-			PlayerPing = 5
-		};
+public:
+	enum SortType {
+		Disabled   = 0,
+		Allies     = 1,
+		TeamID     = 2,
+		PlayerName = 3,
+		PlayerCPU  = 4,
+		PlayerPing = 5
+	};
+	typedef int (*SortFunc)(const int a, const int b);
 
-		PlayerRoster();
+	PlayerRoster();
 
-		const std::vector<int>& GetIndices(int* count, bool includePathingFlag = false) const;
+	const std::vector<int>& GetIndices(int* activePlayerCount, bool includePathingFlag = false, bool callerBlockResort = false);
 
-		bool SetSortTypeByName(const std::string& type);
-		bool SetSortTypeByCode(SortType type);
+	bool SetSortTypeByName(const std::string& type);
+	bool SetSortTypeByCode(SortType type);
 
-		SortType GetSortType() const;
-		const char* GetSortName();
+	SortType GetSortType() const { return compareType; }
+	const char* GetSortName() const;
 
-	private:
-		void SetCompareFunc();
+private:
+	void SetCompareFunc(SortType cmpType);
 
-	private:
-		SortType compareType;
-		int (*compareFunc)(const void* a, const void* b);
+private:
+	SortType compareType;
+	SortFunc compareFunc;
+
+	std::vector<int> playerIndices;
 };
 
-
-inline PlayerRoster::SortType PlayerRoster::GetSortType() const
-{
-	return compareType;
-}
 
 extern PlayerRoster playerRoster;
 

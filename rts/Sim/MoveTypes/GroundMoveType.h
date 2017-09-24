@@ -3,13 +3,15 @@
 #ifndef GROUNDMOVETYPE_H
 #define GROUNDMOVETYPE_H
 
+#include <array>
+
 #include "MoveType.h"
+#include "Sim/Path/IPathController.hpp"
 #include "System/Sync/SyncedFloat3.h"
 
 struct UnitDef;
 struct MoveDef;
 class CSolidObject;
-class IPathController;
 
 class CGroundMoveType : public AMoveType
 {
@@ -19,6 +21,12 @@ public:
 	CGroundMoveType(CUnit* owner);
 	~CGroundMoveType();
 
+	struct MemberData {
+		std::array<std::pair<unsigned int,  bool*>, 3>  bools;
+		std::array<std::pair<unsigned int, short*>, 1> shorts;
+		std::array<std::pair<unsigned int, float*>, 9> floats;
+	};
+
 	void PostLoad();
 
 	bool Update() override;
@@ -27,7 +35,7 @@ public:
 	void StartMovingRaw(const float3 moveGoalPos, float moveGoalRadius) override;
 	void StartMoving(float3 pos, float goalRadius) override;
 	void StartMoving(float3 pos, float goalRadius, float speed) override { StartMoving(pos, goalRadius); }
-	void StopMoving(bool callScript = false, bool hardStop = false) override;
+	void StopMoving(bool callScript = false, bool hardStop = false, bool cancelRaw = false) override;
 	bool IsMovingTowards(const float3& pos, float radius, bool checkProgress) const override {
 		return (goalPos == pos * XZVector && goalRadius == radius && (!checkProgress || progressState == Active));
 	}
@@ -39,10 +47,12 @@ public:
 	bool CanApplyImpulse(const float3&) override;
 	void LeaveTransport() override;
 
+	void InitMemberPtrs(MemberData* memberData);
 	bool SetMemberValue(unsigned int memberHash, void* memberValue) override;
 
 	bool OnSlope(float minSlideTolerance);
-	bool IsReversing() const override { return reversing;}
+	bool IsReversing() const override { return reversing; }
+	bool IsPushResistant() const override { return pushResistant; }
 	bool WantToStop() const { return (pathID == 0 && !useRawMovement); }
 
 
@@ -72,8 +82,8 @@ private:
 	float3 GetNewSpeedVector(const float hAcc, const float vAcc) const;
 
 	#define SQUARE(x) ((x) * (x))
-	bool StartSkidding(const float3& vel, const float3& dir) const { return ((SQUARE(vel.dot(dir)) + 0.01f) < (vel.SqLength() * 0.95f)); }
-	bool StopSkidding(const float3& vel, const float3& dir) const { return ((SQUARE(vel.dot(dir)) + 0.01f) >= (vel.SqLength() * 0.95f)); }
+	bool StartSkidding(const float3& vel, const float3& dir) const { return ((SQUARE(vel.dot(dir)) + 0.01f) < (vel.SqLength() * sqSkidSpeedMult)); }
+	bool StopSkidding(const float3& vel, const float3& dir) const { return ((SQUARE(vel.dot(dir)) + 0.01f) >= (vel.SqLength() * sqSkidSpeedMult)); }
 	bool StartFlying(const float3& vel, const float3& dir) const { return (vel.dot(dir) > 0.2f); }
 	bool StopFlying(const float3& vel, const float3& dir) const { return (vel.dot(dir) <= 0.2f); }
 	#undef SQUARE
@@ -139,7 +149,7 @@ private:
 	bool WantReverse(const float3& wpDir, const float3& ffDir) const;
 
 private:
-	IPathController* pathController;
+	GMTDefaultPathController pathController;
 
 	SyncedFloat3 currWayPoint;
 	SyncedFloat3 nextWayPoint;
@@ -148,11 +158,11 @@ private:
 	float3 flatFrontDir;
 	float3 lastAvoidanceDir;
 	float3 mainHeadingPos;
-	float3 skidRotVector;  /// vector orthogonal to skidDir
+	float3 skidRotVector;               /// vector orthogonal to skidDir
 
-	float turnRate; // maximum angular speed (angular units/frame)
-	float turnSpeed; // current angular speed (angular units/frame)
-	float turnAccel; // angular acceleration (angular units/frame^2)
+	float turnRate;                     /// maximum angular speed (angular units/frame)
+	float turnSpeed;                    /// current angular speed (angular units/frame)
+	float turnAccel;                    /// angular acceleration (angular units/frame^2)
 
 	float accRate;
 	float decRate;
@@ -161,6 +171,7 @@ private:
 	float maxReverseDist;
 	float minReverseAngle;
 	float maxReverseSpeed;
+	float sqSkidSpeedMult;
 
 	float wantedSpeed;
 	float currentSpeed;
@@ -176,22 +187,22 @@ private:
 
 	bool reversing;
 	bool idling;
+	bool pushResistant;
 	bool canReverse;
-	bool useMainHeading;   /// if true, turn toward mainHeadingPos until weapons[0] can TryTarget() it
-	bool useRawMovement;   /// if true, move towards goal without invoking PFS
+	bool useMainHeading;                /// if true, turn toward mainHeadingPos until weapons[0] can TryTarget() it
+	bool useRawMovement;                /// if true, move towards goal without invoking PFS
 
-	float skidRotSpeed;    /// rotational speed when skidding (radians / (GAME_SPEED frames))
-	float skidRotAccel;    /// rotational acceleration when skidding (radians / (GAME_SPEED frames^2))
+	float skidRotSpeed;                 /// rotational speed when skidding (radians / (GAME_SPEED frames))
+	float skidRotAccel;                 /// rotational acceleration when skidding (radians / (GAME_SPEED frames^2))
 
 	unsigned int pathID;
 	unsigned int nextObstacleAvoidanceFrame;
 
-	/// {in, de}creased every Update if idling is true/false and pathId != 0
-	unsigned int numIdlingUpdates;
-	/// {in, de}creased every SlowUpdate if idling is true/false and pathId != 0
-	unsigned int numIdlingSlowUpdates;
+	unsigned int numIdlingUpdates;      /// {in, de}creased every Update if idling is true/false and pathId != 0
+	unsigned int numIdlingSlowUpdates;  /// {in, de}creased every SlowUpdate if idling is true/false and pathId != 0
 
 	short wantedHeading;
+	short minScriptChangeHeading;       /// minimum required turn-angle before script->ChangeHeading is called
 };
 
 #endif // GROUNDMOVETYPE_H

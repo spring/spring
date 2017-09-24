@@ -822,6 +822,8 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 	declaredVarsCode    = "";
 	conversionCode_pre  = "";
 	conversionCode_post = "";
+	conversionCode_exc0 = "";
+	conversionCode_exc1 = "";
 	thrownExceptions    = "";
 	ommitMainCall       = 0;
 	
@@ -922,9 +924,9 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 	if (part_isErrorReturn(metaComment) && retType == "int") {
 		errorRetValueOk_m = part_getErrorReturnValueOk(metaComment);
 
-		conversionCode_post = conversionCode_post "\t" "if (" retVar_out_m " != " errorRetValueOk_m ") {" "\n";
-		conversionCode_post = conversionCode_post "\t\t" "throw CallbackAIException(\"" memName_m "\", " retVar_out_m ");" "\n";
-		conversionCode_post = conversionCode_post "\t" "}" "\n";
+		conversionCode_exc0 = conversionCode_exc0 "\t\t" "if (" retVar_out_m " != " errorRetValueOk_m ") {" "\n";
+		conversionCode_exc1 = conversionCode_exc1 "\t\t\t" "throw CallbackAIException(\"" memName_m "\", " retVar_out_m ");" "\n";
+		conversionCode_exc1 = conversionCode_exc1 "\t\t" "}" "\n";
 		thrownExceptions = thrownExceptions ", CallbackAIException" thrownExceptions;
 
 		retType = "void";
@@ -1141,6 +1143,10 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 				conversionCode_post = conversionCode_post "\n";
 				conversionCode_post = conversionCode_post "\t\t" "delete[] " _mapVar_keys   ";" "\n";
 				conversionCode_post = conversionCode_post "\t\t" "delete[] " _mapVar_values ";" "\n";
+				if (conversionCode_exc0 != "") {
+					conversionCode_exc0 = conversionCode_exc0 "\t\t\t" "delete[] " _mapVar_keys   ";" "\n";
+					conversionCode_exc0 = conversionCode_exc0 "\t\t\t" "delete[] " _mapVar_values ";" "\n";
+				}
 			}
 
 			retParamType = _mapType_int;
@@ -1321,8 +1327,13 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 
 		if (!_isRetSize) {
 			conversionCode_post = conversionCode_post "\t\t" "delete[] " _arrayPaNa ";" "\n";
+			if (conversionCode_exc0 != "") {
+				conversionCode_exc0 = conversionCode_exc0 "\t\t\t" "delete[] " _arrayPaNa ";" "\n";
+			}
 		}
 	}
+
+	conversionCode_post = conversionCode_exc0 conversionCode_exc1 conversionCode_post
 
 	firstLineEnd = ";";
 	mod_m = "";

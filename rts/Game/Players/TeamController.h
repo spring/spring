@@ -27,6 +27,7 @@ public:
 	TeamController() :
 		team(-1),
 		name("no name") {}
+	virtual ~TeamController() {}
 
 	/**
 	 * Id of the controlled team.

@@ -28,10 +28,13 @@ CR_REG_METADATA(CWeaponProjectile,(
 	CR_SETFLAG(CF_Synced),
 	CR_MEMBER(damages),
 	CR_MEMBER(targeted),
+	CR_MEMBER(bounced),
 	CR_MEMBER(weaponDef),
 	CR_MEMBER(target),
 	CR_MEMBER(targetPos),
 	CR_MEMBER(startPos),
+	CR_MEMBER(bounceHitPos),
+	CR_MEMBER(bounceParams),
 	CR_MEMBER(ttl),
 	CR_MEMBER(bounces),
 	CR_MEMBER(weaponNum),
@@ -51,6 +54,7 @@ CWeaponProjectile::CWeaponProjectile(const ProjectileParams& params)
 	, bounces(0)
 
 	, targeted(false)
+	, bounced(false)
 
 	, startPos(params.pos)
 	, targetPos(params.end)
@@ -91,24 +95,24 @@ CWeaponProjectile::CWeaponProjectile(const ProjectileParams& params)
 	alwaysVisible = weaponDef->visuals.alwaysVisible;
 	ignoreWater = weaponDef->waterweapon;
 
-	CSolidObject* so = NULL;
-	CWeaponProjectile* po = NULL;
+	CSolidObject* so = nullptr;
+	CWeaponProjectile* po = nullptr;
 
-	if ((so = dynamic_cast<CSolidObject*>(target)) != NULL) {
+	if ((so = dynamic_cast<CSolidObject*>(target)) != nullptr)
 		AddDeathDependence(so, DEPENDENCE_WEAPONTARGET);
-	}
-	if ((po = dynamic_cast<CWeaponProjectile*>(target)) != NULL) {
+
+	if ((po = dynamic_cast<CWeaponProjectile*>(target)) != nullptr) {
 		po->SetBeingIntercepted(po->IsBeingIntercepted() || weaponDef->interceptSolo);
 		AddDeathDependence(po, DEPENDENCE_INTERCEPTTARGET);
 	}
 
-	if (params.model != NULL) {
+	if (params.model != nullptr) {
 		model = params.model;
 	} else {
 		model = weaponDef->LoadModel();
 	}
 
-	if (params.owner == NULL) {
+	if (params.owner == nullptr) {
 		// the else-case (default) is handled in CProjectile::Init
 		ownerID = params.ownerID;
 		teamID = params.teamID;
@@ -117,9 +121,10 @@ CWeaponProjectile::CWeaponProjectile(const ProjectileParams& params)
 
 	if (ownerID != -1u && weaponNum != -1u) {
 		const CUnit* owner = unitHandler->GetUnit(ownerID);
-		if (owner != nullptr && weaponNum < owner->weapons.size()) {
+
+		if (owner != nullptr && weaponNum < owner->weapons.size())
 			damages = DynDamageArray::IncRef(owner->weapons[weaponNum]->damages);
-		}
+
 	}
 	if (damages == nullptr)
 		damages = DynDamageArray::IncRef(&weaponDef->damages);
@@ -136,9 +141,10 @@ CWeaponProjectile::CWeaponProjectile(const ProjectileParams& params)
 
 	ASSERT_SYNCED(id);
 
-	if (weaponDef->targetable) {
-		interceptHandler.AddInterceptTarget(this, targetPos);
-	}
+	if (!weaponDef->targetable)
+		return;
+
+	interceptHandler.AddInterceptTarget(this, targetPos);
 }
 
 
@@ -185,7 +191,7 @@ void CWeaponProjectile::Explode(
 
 void CWeaponProjectile::Collision()
 {
-	Collision((CFeature*) NULL);
+	Collision((CFeature*) nullptr);
 }
 
 void CWeaponProjectile::Collision(CFeature* feature)
@@ -193,15 +199,15 @@ void CWeaponProjectile::Collision(CFeature* feature)
 	float3 impactPos = pos;
 	float3 impactDir = speed;
 
-	if (feature != NULL) {
+	if (feature != nullptr) {
 		if (hitscan) {
 			impactPos = feature->pos;
 			impactDir = targetPos - startPos;
 		}
 
-		if (gs->randFloat() < weaponDef->fireStarter) {
+		if (gsRNG.NextFloat() < weaponDef->fireStarter)
 			feature->StartFire();
-		}
+
 	} else {
 		if (hitscan) {
 			impactPos = targetPos;
@@ -209,7 +215,7 @@ void CWeaponProjectile::Collision(CFeature* feature)
 		}
 	}
 
-	Explode(NULL, feature, impactPos, impactDir);
+	Explode(nullptr, feature, impactPos, impactDir);
 }
 
 void CWeaponProjectile::Collision(CUnit* unit)
@@ -217,7 +223,7 @@ void CWeaponProjectile::Collision(CUnit* unit)
 	float3 impactPos = pos;
 	float3 impactDir = speed;
 
-	if (unit != NULL) {
+	if (unit != nullptr) {
 		if (hitscan) {
 			impactPos = unit->pos;
 			impactDir = targetPos - startPos;
@@ -226,7 +232,7 @@ void CWeaponProjectile::Collision(CUnit* unit)
 		assert(false);
 	}
 
-	Explode(unit, NULL, impactPos, impactDir);
+	Explode(unit, nullptr, impactPos, impactDir);
 }
 
 void CWeaponProjectile::Update()
@@ -239,20 +245,19 @@ void CWeaponProjectile::Update()
 
 void CWeaponProjectile::UpdateInterception()
 {
-	if (target == NULL)
+	if (target == nullptr)
 		return;
 
 	CWeaponProjectile* po = dynamic_cast<CWeaponProjectile*>(target);
 
-	if (po == NULL)
+	if (po == nullptr)
 		return;
 
 	// we are the interceptor, point us toward the interceptee pos each frame
 	// (normally not needed, subclasses handle it directly in their Update()'s
 	// *until* our owner dies)
-	if (owner() == NULL) {
+	if (owner() == nullptr)
 		targetPos = po->pos + po->speed;
-	}
 
 	if (hitscan) {
 		if (ClosestPointOnLine(startPos, targetPos, po->pos).SqDistance(po->pos) < Square(weaponDef->collisionSize)) {
@@ -271,50 +276,56 @@ void CWeaponProjectile::UpdateInterception()
 
 void CWeaponProjectile::UpdateGroundBounce()
 {
+	#if 1
 	// projectile is not allowed to bounce on either surface
 	if (!weaponDef->groundBounce && !weaponDef->waterBounce)
 		return;
-	// max bounce already reached?
+	// maximum number of bounce already reached?
 	if ((bounces + 1) > weaponDef->numBounce)
 		return;
 	if (luaMoveCtrl)
 		return;
 	if (ttl <= 0)
 		return;
+	#endif
 
-	// water or ground bounce?
-	float3 normal;
-	bool bounced = false;
-	const float distWaterHit  = (pos.y > 0.0f && speed.y < 0.0f) ? (pos.y / -speed.y) : -1.0f;
-	const bool intersectWater = (distWaterHit >= 0.0f) && (distWaterHit <= 1.0f);
-	if (intersectWater && weaponDef->waterBounce) {
-		pos += speed * distWaterHit;
-		pos.y = 0.5f;
-		normal = CGround::GetNormalAboveWater(pos.x, pos.z);
-		bounced = true;
-	} else {
-		const float distGroundHit  = CGround::LineGroundCol(pos, pos + speed); //TODO use traj one for traj weapons?
-		const bool intersectGround = (distGroundHit >= 0.0f);
-		if (intersectGround && weaponDef->groundBounce) {
-			static const float dontTouchSurface = 0.99f;
-			pos += dir * distGroundHit * dontTouchSurface;
-			normal = CGround::GetNormal(pos.x, pos.z);
-			bounced = true;
+	if (!bounced) {
+		// projectile has already been updated by ProjectileHandler
+		// therefore if we detect a ground or water intersection here, it
+		// actually happens after this frame and should schedule a bounce
+		// for the next
+		const float groundDist = (weaponDef->groundBounce)? CGround::LineGroundCol(pos, pos + speed): -1.0f;
+		const float  waterDist = (weaponDef->waterBounce)? CGround::LinePlaneCol(pos, dir, speed.w, 0.0f): -1.0f;
+		const float bounceDist = std::min(mix(groundDist, speed.w * 10000.0f, groundDist < 0.0f), mix(waterDist, speed.w * 10000.0f, waterDist < 0.0f));
+
+		if ((bounced = (bounceDist >= 0.0f && bounceDist <= speed.w))) {
+			bounceHitPos = pos + dir * bounceDist;
+			bounceParams = {bounceDist, speed.w, std::min(1.0f, bounceDist / speed.w)};
 		}
+
+		return;
 	}
 
-	if (!bounced)
-		return;
+	{
+		// FIXME: ignoreWater?
+		const float3 bounceNormal = mix(CGround::GetNormal(bounceHitPos.x, bounceHitPos.z), UpVector, (bounceHitPos.y <= 0.0f));
 
-	// spawn CEG before bouncing, otherwise we might be too
-	// far up in the air if it has the (under)water flag set
-	explGenHandler->GenExplosion(weaponDef->bounceExplosionGeneratorID, pos, normal, speed.w, 1.0f, 1.0f, owner(), NULL);
+		const float moveDistance = bounceParams.y * (1.0f - bounceParams.z);
+		const float  normalSpeed = math::fabs(speed.dot(bounceNormal));
+
+		CWorldObject::SetVelocity(speed - (speed + bounceNormal * normalSpeed) * (1 - weaponDef->bounceSlip   ));
+		CWorldObject::SetVelocity(         speed + bounceNormal * normalSpeed  * (1 + weaponDef->bounceRebound));
+		SetVelocityAndSpeed(speed);
+		// the above changes speed.w so this would be marginally incorrect
+		// SetPosition(bounceHitPos + speed * (1.0f - bounceParams.z));
+		SetPosition(bounceHitPos + dir * moveDistance);
+
+		explGenHandler->GenExplosion(weaponDef->bounceExplosionGeneratorID, bounceHitPos, bounceNormal, speed.w, 1.0f, 1.0f, owner(), nullptr);
+
+		bounced = false;
+	}
 
 	++bounces;
-	const float dot = math::fabs(speed.dot(normal));
-	CWorldObject::SetVelocity(speed - (speed + normal * dot) * (1 - weaponDef->bounceSlip   ));
-	CWorldObject::SetVelocity(         speed + normal * dot  * (1 + weaponDef->bounceRebound));
-	SetVelocityAndSpeed(speed);
 }
 
 
@@ -338,9 +349,10 @@ bool CWeaponProjectile::CanBeInterceptedBy(const WeaponDef* wd) const
 
 void CWeaponProjectile::DependentDied(CObject* o)
 {
-	if (o == target) {
-		target = NULL;
-	}
+	if (o != target)
+		return;
+
+	target = nullptr;
 }
 
 

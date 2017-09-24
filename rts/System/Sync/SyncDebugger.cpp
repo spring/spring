@@ -3,21 +3,21 @@
 
 #ifdef SYNCDEBUG
 
+#include <cstring>
+
 #include "SyncDebugger.h"
 #include "Game/GlobalUnsynced.h"
 #include "Game/Players/PlayerHandler.h"
 #include "Game/Players/Player.h"
 #include "Net/Protocol/BaseNetProtocol.h"
-#include "Sim/Misc/GlobalSynced.h"
-#include "System/Log/ILog.h"
 #include "Net/Protocol/NetProtocol.h"
+#include "Sim/Misc/GlobalSynced.h"
+#include "System/UnorderedMap.hpp"
+#include "System/Log/ILog.h"
 
 #include "HsiehHash.h"
 #include "Logger.h"
 #include "SyncTracer.h"
-
-#include <string.h>
-#include <map>
 
 #ifndef WIN32
 	/* for backtrace() function */
@@ -195,10 +195,10 @@ bool CSyncDebugger::ServerReceived(const unsigned char* inbuf)
 					const unsigned* end = begin + HISTORY_SIZE;
 					players[player].checksumResponses.resize(HISTORY_SIZE);
 					std::copy(begin, end, players[player].checksumResponses.begin());
-					players[player].remoteFlop = *(boost::uint64_t*)&inbuf[4];
+					players[player].remoteFlop = *(std::uint64_t*)&inbuf[4];
 					assert(!players[player].checksumResponses.empty());
 					int i = 0;
-					while (i < playerHandler->ActivePlayers() && 
+					while (i < playerHandler->ActivePlayers() &&
 						(!players[i].checksumResponses.empty() ||
 						!playerHandler->Player(i)->active)) ++i;
 					if (i == playerHandler->ActivePlayers()) {
@@ -223,7 +223,7 @@ bool CSyncDebugger::ServerReceived(const unsigned char* inbuf)
 					players[player].remoteHistory.resize(size + BLOCK_SIZE);
 					std::copy(begin, end, players[player].remoteHistory.begin() + size);
 					int i = 0;
-					size += BLOCK_SIZE; 
+					size += BLOCK_SIZE;
 					while (i < playerHandler->ActivePlayers() &&
 						(size == players[i].remoteHistory.size() ||
 						!playerHandler->Player(i)->active)) ++i;
@@ -312,7 +312,7 @@ void CSyncDebugger::ClientSendChecksumResponse()
 void CSyncDebugger::ServerQueueBlockRequests()
 {
 	logger.AddLine("Server: queuing block requests");
-	boost::uint64_t correctFlop = 0;
+	std::uint64_t correctFlop = 0;
 	for (int j = 0; j < playerHandler->ActivePlayers(); ++j) {
 		if (correctFlop) {
 			if (players[j].remoteFlop != correctFlop)
@@ -423,8 +423,9 @@ void CSyncDebugger::ServerDumpStack()
 
 	// we make a pool of backtraces (to merge identical ones)
 	unsigned curBacktrace = 0;
-	std::map<unsigned, unsigned> checksumToIndex;
-	std::map<unsigned, unsigned> indexToHistPos;
+
+	spring::unordered_map<unsigned, unsigned> checksumToIndex;
+	spring::unordered_map<unsigned, unsigned> indexToHistPos;
 
 	// then loop from virtualPosInHistory to virtualHistorySize and from 0 to virtualPosInHistory.
 	for (unsigned i = virtualPosInHistory, c = 0; c < virtualHistorySize; ++i, ++c) {
@@ -432,7 +433,7 @@ void CSyncDebugger::ServerDumpStack()
 		if (i == virtualHistorySize) i = 0;
 		bool err = false;
 		for (int j = 0; j < playerHandler->ActivePlayers(); ++j) {
-			if (!playerHandler->Player(j)->active) 
+			if (!playerHandler->Player(j)->active)
 				continue;
 			if (correctChecksum && players[j].remoteHistory[i] != correctChecksum) {
 				if (historybt) {
@@ -440,7 +441,7 @@ void CSyncDebugger::ServerDumpStack()
 					blockNr = requestedBlocks[virtualBlockNr];
 					unsigned histPos = blockNr * BLOCK_SIZE + i % BLOCK_SIZE;
 					unsigned checksum = GetBacktraceChecksum(histPos);
-					std::map<unsigned, unsigned>::iterator it = checksumToIndex.find(checksum);
+					const auto it = checksumToIndex.find(checksum);
 					if (it == checksumToIndex.end()) {
 						++curBacktrace;
 						checksumToIndex[checksum] = curBacktrace;
@@ -478,7 +479,7 @@ void CSyncDebugger::ServerDumpStack()
 
 	if (historybt) {
 		// output backtraces we collected earlier this function
-		for (std::map<unsigned, unsigned>::iterator it = indexToHistPos.begin(); it != indexToHistPos.end(); ++it) {
+		for (auto it = indexToHistPos.cbegin(); it != indexToHistPos.cend(); ++it) {
 			logger.AddLine("Server: === Backtrace %u ===", it->first);
 			Backtrace(it->second, "Server: ");
 		}

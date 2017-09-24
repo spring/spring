@@ -12,6 +12,7 @@
 #include "Sim/Misc/GeometricObjects.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
+#include "Sim/Projectiles/ProjectileMemPool.h"
 #include "Rendering/Env/Particles/Classes/SmokeTrailProjectile.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
@@ -21,7 +22,7 @@
 
 const float CMissileProjectile::SMOKE_TIME = 60.0f;
 
-CR_BIND_DERIVED(CMissileProjectile, CWeaponProjectile, )
+CR_BIND_DERIVED_POOL(CMissileProjectile, CWeaponProjectile, , projMemPool.alloc, projMemPool.free)
 
 CR_REG_METADATA(CMissileProjectile,(
 	CR_SETFLAG(CF_Synced),
@@ -106,9 +107,8 @@ CMissileProjectile::CMissileProjectile(const ProjectileParams& params): CWeaponP
 
 void CMissileProjectile::Collision()
 {
-	if (weaponDef->visuals.smokeTrail) {
-		new CSmokeTrailProjectile(owner(), pos, oldSmoke, dir, oldDir, false, true, 7, SMOKE_TIME, 0.6f, weaponDef->visuals.texture2);
-	}
+	if (weaponDef->visuals.smokeTrail)
+		projMemPool.alloc<CSmokeTrailProjectile>(owner(), pos, oldSmoke, dir, oldDir, false, true, 7, SMOKE_TIME, 0.6f, weaponDef->visuals.texture2);
 
 	CWeaponProjectile::Collision();
 	oldSmoke = pos;
@@ -116,9 +116,8 @@ void CMissileProjectile::Collision()
 
 void CMissileProjectile::Collision(CUnit* unit)
 {
-	if (weaponDef->visuals.smokeTrail) {
-		new CSmokeTrailProjectile(owner(), pos, oldSmoke, dir, oldDir, false, true, 7, SMOKE_TIME, 0.6f, weaponDef->visuals.texture2);
-	}
+	if (weaponDef->visuals.smokeTrail)
+		projMemPool.alloc<CSmokeTrailProjectile>(owner(), pos, oldSmoke, dir, oldDir, false, true, 7, SMOKE_TIME, 0.6f, weaponDef->visuals.texture2);
 
 	CWeaponProjectile::Collision(unit);
 	oldSmoke = pos;
@@ -126,9 +125,8 @@ void CMissileProjectile::Collision(CUnit* unit)
 
 void CMissileProjectile::Collision(CFeature* feature)
 {
-	if (weaponDef->visuals.smokeTrail) {
-		new CSmokeTrailProjectile(owner(), pos, oldSmoke, dir, oldDir, false, true, 7, SMOKE_TIME, 0.6f, weaponDef->visuals.texture2);
-	}
+	if (weaponDef->visuals.smokeTrail)
+		projMemPool.alloc<CSmokeTrailProjectile>(owner(), pos, oldSmoke, dir, oldDir, false, true, 7, SMOKE_TIME, 0.6f, weaponDef->visuals.texture2);
 
 	CWeaponProjectile::Collision(feature);
 	oldSmoke = pos;
@@ -224,15 +222,13 @@ void CMissileProjectile::Update()
 		} else {
 			// only when TTL <= 0 do we (missiles)
 			// get influenced by gravity and drag
-			if (!luaMoveCtrl) {
+			if (!luaMoveCtrl)
 				SetVelocityAndSpeed((speed * 0.98f) + (UpVector * mygravity));
-			}
 		}
 	}
 
-	if (!luaMoveCtrl) {
+	if (!luaMoveCtrl)
 		SetPosition(pos + speed);
-	}
 
 	age++;
 	numParts++;
@@ -245,7 +241,7 @@ void CMissileProjectile::Update()
 		}
 
 		if ((age % 8) == 0) {
-			smokeTrail = new CSmokeTrailProjectile(
+			smokeTrail = projMemPool.alloc<CSmokeTrailProjectile>(
 				own,
 				pos, oldSmoke,
 				dir, oldDir,
@@ -271,7 +267,7 @@ void CMissileProjectile::UpdateWobble() {
 		return;
 
 	if ((--wobbleTime) <= 0) {
-		wobbleDif = (gs->randVector() - wobbleDir) * (1.0f / 16);
+		wobbleDif = (gsRNG.NextVector() - wobbleDir) * (1.0f / 16);
 		wobbleTime = 16;
 	}
 
@@ -289,7 +285,7 @@ void CMissileProjectile::UpdateDance() {
 		return;
 
 	if ((--danceTime) <= 0) {
-		danceMove = gs->randVector() * weaponDef->dance - danceCenter;
+		danceMove = gsRNG.NextVector() * weaponDef->dance - danceCenter;
 		danceCenter += danceMove;
 		danceTime = 8;
 	}
@@ -313,10 +309,8 @@ void CMissileProjectile::UpdateGroundBounce() {
 
 
 
-void CMissileProjectile::Draw()
+void CMissileProjectile::Draw(CVertexArray* va)
 {
-	inArray = true;
-
 	// rocket flare
 	const SColor lightYellow(255, 210, 180, 1);
 	const float fsize = radius * 0.4f;

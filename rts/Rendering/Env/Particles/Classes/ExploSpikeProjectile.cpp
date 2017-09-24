@@ -10,8 +10,9 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ExpGenSpawnableMemberInfo.h"
+#include "Sim/Projectiles/ProjectileMemPool.h"
 
-CR_BIND_DERIVED(CExploSpikeProjectile, CProjectile, )
+CR_BIND_DERIVED_POOL(CExploSpikeProjectile, CProjectile, , projMemPool.alloc, projMemPool.free)
 
 CR_REG_METADATA(CExploSpikeProjectile,
 (
@@ -52,7 +53,7 @@ CExploSpikeProjectile::CExploSpikeProjectile(
 	alphaDecay(alphaDecay),
 	color(1.0f, 0.8f, 0.5f)
 {
-	lengthGrowth = speed.w * (0.5f + gu->RandFloat() * 0.4f);
+	lengthGrowth = speed.w * (0.5f + guRNG.NextFloat() * 0.4f);
 
 	checkCol  = false;
 	useAirLos = true;
@@ -64,23 +65,18 @@ void CExploSpikeProjectile::Update()
 {
 	pos += speed;
 	length += lengthGrowth;
-	alpha -= alphaDecay;
+	alpha = std::max(0.0f, alpha - alphaDecay);
 
-	if (alpha <= 0) {
-		alpha = 0;
-		deleteMe = true;
-	}
+	deleteMe |= (alpha <= 0.0f);
 }
 
-void CExploSpikeProjectile::Draw()
+void CExploSpikeProjectile::Draw(CVertexArray* va)
 {
-	inArray = true;
-
 	const float3 dif = (pos - camera->GetPos()).ANormalize();
 	const float3 dir2 = (dif.cross(dir)).ANormalize();
 
 	unsigned char col[4];
-	const float a = std::max(0.0f, alpha-alphaDecay * globalRendering->timeOffset) * 255;
+	const float a = std::max(0.0f, alpha - alphaDecay * globalRendering->timeOffset) * 255.0f;
 	col[0] = (unsigned char)(a * color.x);
 	col[1] = (unsigned char)(a * color.y);
 	col[2] = (unsigned char)(a * color.z);
@@ -101,7 +97,7 @@ void CExploSpikeProjectile::Init(const CUnit* owner, const float3& offset)
 {
 	CProjectile::Init(owner, offset);
 
-	lengthGrowth = dir.Length() * (0.5f + gu->RandFloat() * 0.4f);
+	lengthGrowth = dir.Length() * (0.5f + guRNG.NextFloat() * 0.4f);
 	dir /= lengthGrowth;
 
 	SetRadiusAndHeight(length + lengthGrowth * alpha / alphaDecay, 0.0f);

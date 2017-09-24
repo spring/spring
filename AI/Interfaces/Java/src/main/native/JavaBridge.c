@@ -544,39 +544,6 @@ static bool java_createJavaVMInitArgs(struct JavaVMInitArgs* vm_args, const stru
 	simpleLog_logL(LOG_LEVEL_INFO, "JVM: JNI version: %#x", jniVersion);
 	vm_args->version = jniVersion;
 
-	// ### check if debug related JVM options should be used ###
-	// if false, the JVM creation will fail if an
-	// unknown or invalid option was specified
-	bool useDebugOptions = true;
-	const char* useDebugOptionsStr = "auto";
-	if (jvmProps != NULL) {
-		const char* useDebugOptionsFromCfg =
-				util_map_getValueByKey(
-				jvmProps->size, jvmProps->keys, jvmProps->values,
-				"jvm.useDebugOptions");
-		if (useDebugOptionsFromCfg != NULL) {
-			useDebugOptionsStr = useDebugOptionsFromCfg;
-		}
-	}
-	{
-		if (strcmp(useDebugOptionsStr, "auto") == 0
-				|| strcmp(useDebugOptionsStr, "Auto") == 0
-				|| strcmp(useDebugOptionsStr, "AUTO") == 0
-				|| strcmp(useDebugOptionsStr, "a") == 0
-				|| strcmp(useDebugOptionsStr, "A") == 0)
-		{
-			// auto
-#if       defined DEBUG
-			useDebugOptions = true;
-#else  // defined DEBUG
-			useDebugOptions = false;
-#endif // defined DEBUG
-		} else {
-			// true or false
-			useDebugOptions = util_strToBool(useDebugOptionsStr);
-		}
-	}
-
 	// ### check if unrecognized JVM options should be ignored ###
 	// if false, the JVM creation will fail if an
 	// unknown or invalid option was specified
@@ -673,8 +640,7 @@ static bool java_createJavaVMInitArgs(struct JavaVMInitArgs* vm_args, const stru
 		// ### add string options from the JVM config file with property name "jvm.option.x" ###
 		int i;
 		for (i=0; i < jvmProps->size; ++i) {
-			if (strcmp(jvmProps->keys[i], "jvm.option.x") == 0 ||
-					(useDebugOptions && (strcmp(jvmProps->keys[i], "jvm.option.debug.x") == 0))) {
+			if (strcmp(jvmProps->keys[i], "jvm.option.x") == 0) {
 				const char* const val = jvmProps->values[i];
 				const size_t val_size = strlen(val);
 				// ignore "-Djava.class.path=..."
@@ -689,8 +655,8 @@ static bool java_createJavaVMInitArgs(struct JavaVMInitArgs* vm_args, const stru
 		// ### ... or set default ones, if the JVM config file was not found ###
 		simpleLog_logL(LOG_LEVEL_WARNING, "JVM: properties file ("JVM_PROPERTIES_FILE") not found; using default options.");
 
-		strOptions[op++] = "-Xms4M";
-		strOptions[op++] = "-Xmx64M";
+		strOptions[op++] = "-Xms64M";
+		strOptions[op++] = "-Xmx512M";
 		strOptions[op++] = "-Xss512K";
 		strOptions[op++] = "-Xoss400K";
 

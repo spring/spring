@@ -26,7 +26,7 @@ namespace creg {
 	template<class T, class S, class C>
 	struct PQueueType : public IType
 	{
-		PQueueType(boost::shared_ptr<IType> t):elemType(t) {}
+		PQueueType(std::shared_ptr<IType> t):elemType(t) {}
 		~PQueueType() {}
 
 		void Serialize(ISerializer* s, void* inst) {
@@ -52,15 +52,15 @@ namespace creg {
 		std::string GetName() const { return "priority_queue<" + elemType->GetName() + ">"; }
 		size_t GetSize() const { return sizeof(std::priority_queue<T, S, C>); }
 
-		boost::shared_ptr<IType> elemType;
+		std::shared_ptr<IType> elemType;
 	};
 
 
 	// List type
 	template<class T, class S, class C>
 	struct DeduceType< std::priority_queue<T, S, C> > {
-		static boost::shared_ptr<IType> Get() {
-			return boost::shared_ptr<IType>(new PQueueType<T, S, C>(DeduceType<T>::Get()));
+		static std::shared_ptr<IType> Get() {
+			return std::shared_ptr<IType>(new PQueueType<T, S, C>(DeduceType<T>::Get()));
 		}
 	};
 }

@@ -164,9 +164,6 @@ bool LuaConstGL::PushEntries(lua_State* L)
 
 	// glHint() targets
 	PUSH_GL(FOG_HINT);
-	PUSH_GL(LINE_SMOOTH_HINT);
-	PUSH_GL(POINT_SMOOTH_HINT);
-	PUSH_GL(POLYGON_SMOOTH_HINT);
 	PUSH_GL(PERSPECTIVE_CORRECTION_HINT);
 	// glHint() modes
 	PUSH_GL(DONT_CARE);

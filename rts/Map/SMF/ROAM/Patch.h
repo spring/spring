@@ -4,8 +4,11 @@
 #define PATCH_H
 
 #include "Rendering/GL/myGL.h"
+#include "Game/Camera.h"
 #include "System/Rectangle.h"
 #include "System/type2.h"
+
+#include <array>
 #include <vector>
 
 
@@ -13,20 +16,22 @@ class CSMFGroundDrawer;
 class CCamera;
 
 
-// How many heightmap pixels a patch consists of
+// how many heightmap pixels a patch consists of
 #define PATCH_SIZE 128
 
-// Depth of variance tree: should be near SQRT(PATCH_SIZE) + 1
+// depth of variance tree; should be near SQRT(PATCH_SIZE) + 1
 #define VARIANCE_DEPTH (12)
 
-// How many TriTreeNodes should be allocated?
-#define POOL_SIZE      (500000)
+// how many TriTreeNodes should be reserved per pool
+// this is a reasonable baseline for *most* maps but
+// not guaranteed to suffice under all possible user
+// detail levels on every map in existence
+#define NEW_POOL_SIZE (1 << 20)
+// debug (simulates fast pool exhaustion)
+// #define NEW_POOL_SIZE (1 << 2)
 
 
-/**
- * TriTreeNode Struct
- * Store the triangle tree data, but no coordinates!
- */
+// stores the triangle-tree structure, but no coordinates
 struct TriTreeNode
 {
 	TriTreeNode()
@@ -37,15 +42,10 @@ struct TriTreeNode
 		, RightNeighbor(nullptr)
 	{}
 
-	bool IsLeaf() const {
-		// All non-leaf nodes have both children, so just check for one
-		return (LeftChild == nullptr);
-	}
-
-	bool IsBranch() const {
-		// All non-leaf nodes have both children, so just check for one
-		return (RightChild != nullptr);
-	}
+	// all non-leaf nodes have both children, so just check for one
+	bool IsValid() const { return ((LeftChild == nullptr && RightChild == nullptr) || (LeftChild != nullptr && RightChild != nullptr)); }
+	bool IsLeaf() const { assert(IsValid()); return (LeftChild == nullptr); }
+	bool IsBranch() const { assert(IsValid()); return (RightChild != nullptr); }
 
 	TriTreeNode* LeftChild;
 	TriTreeNode* RightChild;
@@ -56,16 +56,14 @@ struct TriTreeNode
 };
 
 
-/**
- * CTriNodePool class
- * Allocs a pool of TriTreeNodes, so we can reconstruct the whole tree w/o to dealloc the old nodes.
- * InitPools() creates for each worker thread its own pool to avoid locking.
- */
+
+// maintains a pool of TriTreeNodes, so we can (re)construct triangle-trees
+// without dynamically (de)allocating nodes (note that InitPools() actually
+// creates a pool for each worker thread to avoid locking)
 class CTriNodePool
 {
 public:
-	static void InitPools(bool shadowPass, size_t newPoolSize = POOL_SIZE);
-	static void FreePools(bool shadowPass);
+	static void InitPools(bool shadowPass, size_t newPoolSize = NEW_POOL_SIZE);
 	static void ResetAll(bool shadowPass);
 	inline static CTriNodePool* GetPool(bool shadowPass);
 
@@ -73,25 +71,20 @@ public:
 	CTriNodePool(const size_t poolSize);
 
 	void Reset();
-	void Allocate(TriTreeNode*& left, TriTreeNode*& right);
+	bool Allocate(TriTreeNode*& left, TriTreeNode*& right);
 
-	bool OutOfNodes() const {
-		return (m_NextTriNode >= pool.size());
-	}
+	bool OutOfNodes() const { return (nextTriNodeIdx >= pool.size()); }
 
 private:
 	std::vector<TriTreeNode> pool;
 
-	size_t m_NextTriNode; //< Index to next free TriTreeNode
+	// index of next free TriTreeNode
+	size_t nextTriNodeIdx;
 };
 
 
 
-
-/**
- * Patch Class
- * Store information needed at the Patch level
- */
+// stores information needed at the Patch level
 class Patch
 {
 public:
@@ -120,7 +113,7 @@ public:
 
 	void UpdateHeightMap(const SRectangle& rect = SRectangle(0, 0, PATCH_SIZE, PATCH_SIZE));
 
-	bool Tessellate(const float3& campos, int viewradius, bool shadowPass);
+	bool Tessellate(const float3& camPos, int viewRadius, bool shadowPass);
 	void ComputeVariance();
 
 	void GenerateIndices();
@@ -131,8 +124,11 @@ public:
 
 public:
 	static void SwitchRenderMode(int mode = -1);
+	static int GetRenderMode() { return renderMode; }
 
+	#if 0
 	void UpdateVisibility(CCamera* cam);
+	#endif
 	static void UpdateVisibility(CCamera* cam, std::vector<Patch>& patches, const int numPatchesX);
 
 protected:
@@ -140,7 +136,7 @@ protected:
 
 private:
 	// recursive functions
-	void Split(TriTreeNode* tri);
+	bool Split(TriTreeNode* tri);
 	void RecursTessellate(TriTreeNode* tri, const int2 left, const int2 right, const int2 apex, const int node);
 	void RecursRender(const TriTreeNode* tri, const int2 left, const int2 right, const int2 apex);
 
@@ -171,33 +167,38 @@ private:
 
 	CSMFGroundDrawer* smfGroundDrawer;
 
-	//< Which variance we are currently using. [Only valid during the Tessellate and ComputeVariance passes]
-	float* currentVariance;
-	CTriNodePool* currentPool;
+	// pool used during Tessellate; each invoked Split allocates from this
+	CTriNodePool* curTriPool;
 
-	//< Does the Variance Tree need to be recalculated for this Patch?
+	// which variance we are currently using [only valid during the Tessellate and ComputeVariance passes]
+	float* currentVariance;
+
+	// does the variance-tree need to be recalculated for this Patch?
 	bool isDirty;
 	bool vboVerticesUploaded;
 
 	float varianceMaxLimit;
-	float camDistLODFactor; //< defines the LOD falloff in camera distance
+	float camDistLODFactor; // defines the LOD falloff in camera distance
 
-	//< World coordinate offsets of this patch.
+	// world-coordinate offsets of this patch
 	int2 coors;
 
 
-	TriTreeNode baseLeft;  //< Left base triangle tree node
-	TriTreeNode baseRight; //< Right base triangle tree node
+	TriTreeNode baseLeft;  // left base-triangle tree node
+	TriTreeNode baseRight; // right base-triangle tree node
 
-	std::vector<float> varianceLeft;  //< Left variance tree
-	std::vector<float> varianceRight; //< Right variance tree
+	std::vector<float> varianceLeft;  // left variance tree
+	std::vector<float> varianceRight; // right variance tree
 
 	// TODO: remove for both the Displaylist and the VBO implementations (only really needed for VA's)
 	std::vector<float> vertices;
 	std::vector<unsigned int> indices;
 
-	//< frame on which this patch was last visible, per pass
-	std::vector<unsigned int> lastDrawFrames;
+	// frame on which this patch was last visible, per pass
+	// NOTE:
+	//   shadow-mesh patches are only ever viewed by one camera
+	//   normal-mesh patches can be viewed by *multiple* types!
+	std::array<unsigned int, CCamera::CAMTYPE_VISCUL> lastDrawFrames;
 
 
 	GLuint triList;

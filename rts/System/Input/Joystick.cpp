@@ -4,6 +4,7 @@
 #include "Joystick.h"
 
 #include <SDL.h>
+#include <functional>
 
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
@@ -38,6 +39,7 @@ void FreeJoystick() {
 		delete stick;
 		stick = NULL;
 	}
+	SDL_QuitSubSystem(SDL_INIT_JOYSTICK);
 }
 
 Joystick::Joystick()
@@ -55,7 +57,7 @@ Joystick::Joystick()
 	if (myStick)
 	{
 		LOG("Using joystick %i: %s", stickNum, SDL_JoystickName(myStick));
-		inputCon = input.AddHandler(boost::bind(&Joystick::HandleEvent, this, _1));
+		inputCon = input.AddHandler(std::bind(&Joystick::HandleEvent, this, std::placeholders::_1));
 	}
 	else
 	{
@@ -67,6 +69,8 @@ Joystick::~Joystick()
 {
 	if (myStick)
 		SDL_JoystickClose(myStick);
+	if (inputCon.connected())
+		inputCon.disconnect();
 }
 
 bool Joystick::HandleEvent(const SDL_Event& event)

@@ -6,9 +6,11 @@
 #include "System/myMath.h"
 #include "System/TimeProfiler.h"
 #include "System/Log/ILog.h"
+#include "System/Misc/SpringTime.h"
 
 #define BOOST_TEST_MODULE Float3
 #include <boost/test/unit_test.hpp>
+BOOST_GLOBAL_FIXTURE(InitSpringTime);
 
 
 static inline float randf() {

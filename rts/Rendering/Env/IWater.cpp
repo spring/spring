@@ -35,6 +35,7 @@ static std::vector<int> waterModes;
 IWater::IWater()
 	: drawReflection(false)
 	, drawRefraction(false)
+	, wireFrameMode(false)
 {
 	CExplosionCreator::AddExplosionListener(this);
 }
@@ -99,7 +100,7 @@ IWater* IWater::GetWater(IWater* curRenderer, int nxtRendererMode)
 				try {
 					nxtRenderer = new CDynWater();
 				} catch (const content_error& ex) {
-					SafeDelete(nxtRenderer);
+					spring::SafeDelete(nxtRenderer);
 					LOG_L(L_ERROR, "Loading Dynamic Water failed, error: %s", ex.what());
 				}
 			} break;
@@ -108,7 +109,7 @@ IWater* IWater::GetWater(IWater* curRenderer, int nxtRendererMode)
 				try {
 					nxtRenderer = new CBumpWater();
 				} catch (const content_error& ex) {
-					SafeDelete(nxtRenderer);
+					spring::SafeDelete(nxtRenderer);
 					LOG_L(L_ERROR, "Loading Bumpmapped Water failed, error: %s", ex.what());
 				}
 			} break;
@@ -117,7 +118,7 @@ IWater* IWater::GetWater(IWater* curRenderer, int nxtRendererMode)
 				try {
 					nxtRenderer = new CRefractWater();
 				} catch (const content_error& ex) {
-					SafeDelete(nxtRenderer);
+					spring::SafeDelete(nxtRenderer);
 					LOG_L(L_ERROR, "Loading Refractive Water failed, error: %s", ex.what());
 				}
 			} break;
@@ -126,7 +127,7 @@ IWater* IWater::GetWater(IWater* curRenderer, int nxtRendererMode)
 				try {
 					nxtRenderer = new CAdvWater();
 				} catch (const content_error& ex) {
-					SafeDelete(nxtRenderer);
+					spring::SafeDelete(nxtRenderer);
 					LOG_L(L_ERROR, "Loading Reflective Water failed, error: %s", ex.what());
 				}
 			} break;

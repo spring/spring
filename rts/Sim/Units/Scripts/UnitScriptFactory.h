@@ -3,7 +3,10 @@
 #ifndef UNITSCRIPTFACTORY_H
 #define UNITSCRIPTFACTORY_H
 
-#include <string>
+struct UnitDef;
+
+struct lua_State;
+class CCobFile;
 
 class CUnit;
 class CUnitScript;
@@ -11,7 +14,13 @@ class CUnitScript;
 class CUnitScriptFactory
 {
 public:
-	static CUnitScript* CreateScript(const std::string& name, CUnit* unit);
+	static void InitStatic();
+
+	static CUnitScript* CreateScript(CUnit* unit, const UnitDef* udef);
+
+	static CUnitScript* CreateCOBScript(CUnit* unit, CCobFile* F);
+	static CUnitScript* CreateLuaScript(CUnit* unit, lua_State* L);
 };
 
 #endif
+

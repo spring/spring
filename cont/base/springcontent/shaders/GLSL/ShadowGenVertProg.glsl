@@ -1,4 +1,4 @@
-uniform vec4 shadowParams;   // {x = xmid, y = ymid, z = p17, w = p18}
+uniform vec4 shadowParams;
 
 #ifdef SHADOWGEN_PROGRAM_TREE_NEAR
 uniform vec3 cameraDirX;
@@ -8,31 +8,41 @@ uniform vec3 treeOffset;
 #define MAX_TREE_HEIGHT 60.0
 #endif
 
+#ifdef SHADOWGEN_PROGRAM_MAP
+varying mat4 shadowViewMat;
+varying mat4 shadowProjMat;
+varying vec4 vertexModelPos;
+#endif
+
 
 void main() {
-	vec2 p17 = vec2(shadowParams.z, shadowParams.z);
-	vec2 p18 = vec2(shadowParams.w, shadowParams.w);
-
-	vec4 vertexPos = gl_Vertex;
-
 	#ifdef SHADOWGEN_PROGRAM_TREE_NEAR
-	vertexPos.xyz += treeOffset;
-	vertexPos.xyz += (cameraDirX * gl_Normal.x);
-	vertexPos.xyz += (cameraDirY * gl_Normal.y);
+	vec3 offsetVec = treeOffset + (cameraDirX * gl_Normal.x) + (cameraDirY * gl_Normal.y);
+	#else
+	vec3 offsetVec = vec3(0.0, 0.0, 0.0);
 	#endif
 
+
+	#ifdef SHADOWGEN_PROGRAM_MAP
+	shadowViewMat = gl_ModelViewMatrix;
+	shadowProjMat = gl_ProjectionMatrix;
+	vertexModelPos = gl_Vertex + vec4(offsetVec, 0.0);
+	#endif
+
+	vec4 vertexPos = gl_Vertex + vec4(offsetVec, 0.0);
 	vec4 vertexShadowPos = gl_ModelViewMatrix * vertexPos;
-		vertexShadowPos.st *= (inversesqrt(abs(vertexShadowPos.st) + p17) + p18);
-		vertexShadowPos.st += shadowParams.xy;
+		vertexShadowPos.xy *= (inversesqrt(abs(vertexShadowPos.xy) + shadowParams.zz) + shadowParams.ww);
+		vertexShadowPos.xy += shadowParams.xy;
 
 	gl_Position = gl_ProjectionMatrix * vertexShadowPos;
+
 
 	#ifdef SHADOWGEN_PROGRAM_MODEL
 	gl_TexCoord[0] = gl_MultiTexCoord0;
 	#endif
 
 	#ifdef SHADOWGEN_PROGRAM_MAP
-	// empty
+	// empty, uses TexGen
 	#endif
 
 	#ifdef SHADOWGEN_PROGRAM_TREE_NEAR

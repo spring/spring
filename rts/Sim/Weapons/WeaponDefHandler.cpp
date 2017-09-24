@@ -10,21 +10,21 @@
 #include "Lua/LuaParser.h"
 #include "Sim/Misc/DamageArrayHandler.h"
 #include "System/Exceptions.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include "System/Log/ILog.h"
 
 
-CWeaponDefHandler* weaponDefHandler = NULL;
+CWeaponDefHandler* weaponDefHandler = nullptr;
 
 
 CWeaponDefHandler::CWeaponDefHandler(LuaParser* defsParser)
 {
-	const LuaTable rootTable = defsParser->GetRoot().SubTable("WeaponDefs");
-	if (!rootTable.IsValid()) {
-		throw content_error("Error loading WeaponDefs");
-	}
+	const LuaTable& rootTable = defsParser->GetRoot().SubTable("WeaponDefs");
 
-	vector<string> weaponNames;
+	if (!rootTable.IsValid())
+		throw content_error("Error loading WeaponDefs");
+
+	std::vector<std::string> weaponNames;
 	rootTable.GetKeys(weaponNames);
 
 	weaponDefs.reserve(weaponNames.size());
@@ -38,19 +38,14 @@ CWeaponDefHandler::CWeaponDefHandler(LuaParser* defsParser)
 }
 
 
-CWeaponDefHandler::~CWeaponDefHandler()
-{
-}
-
-
 
 const WeaponDef* CWeaponDefHandler::GetWeaponDef(std::string weaponname) const
 {
 	StringToLowerInPlace(weaponname);
 
-	std::map<std::string,int>::const_iterator ii = weaponID.find(weaponname);
+	auto ii = weaponID.find(weaponname);
 	if (ii == weaponID.end())
-		return NULL;
+		return nullptr;
 
 	return &weaponDefs[ii->second];
 }
@@ -58,8 +53,8 @@ const WeaponDef* CWeaponDefHandler::GetWeaponDef(std::string weaponname) const
 
 const WeaponDef* CWeaponDefHandler::GetWeaponDefByID(int weaponDefId) const
 {
-	if ((weaponDefId < 0) || (weaponDefId >= weaponDefs.size())) {
-		return NULL;
-	}
+	if ((weaponDefId < 0) || (weaponDefId >= weaponDefs.size()))
+		return nullptr;
+
 	return &weaponDefs[weaponDefId];
 }

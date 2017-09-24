@@ -34,14 +34,11 @@ MakeGlobalVar(sources_engine_System_common
 		"${CMAKE_CURRENT_SOURCE_DIR}/Option.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Battery.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Clipboard.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/CmdLineParams.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/CpuID.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/errorhandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Misc.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/SharedLib.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/ScopedFileLock.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/SDL1_keysym.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Threading.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Watchdog.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/WindowManagerHelper.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Rectangle.cpp"
@@ -52,6 +49,7 @@ MakeGlobalVar(sources_engine_System_common
 		"${CMAKE_CURRENT_SOURCE_DIR}/Sync/DumpState.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Sync/FPUCheck.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Sync/Logger.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Sync/SHA512.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Sync/SyncChecker.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Sync/SyncDebugger.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Sync/SyncTracer.cpp"
@@ -59,12 +57,11 @@ MakeGlobalVar(sources_engine_System_common
 		"${CMAKE_CURRENT_SOURCE_DIR}/Sync/backtrace.c"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Sync/get_executable_name.c"
 		"${CMAKE_CURRENT_SOURCE_DIR}/TdfParser.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/ThreadPool.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Threading/ThreadPool.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/TimeProfiler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/TimeUtil.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/UnsyncedRNG.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/UriParser.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Util.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/StringUtil.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/type2.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/float3.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/float4.cpp"
@@ -117,21 +114,20 @@ MakeGlobalVar(sources_engine_System_Log_sinkFile
 MakeGlobalVar(sources_engine_System_Log_sinkOutputDebugString
 		"${CMAKE_CURRENT_SOURCE_DIR}/Log/OutputDebugStringSink.cpp"
 	)
-MakeGlobalVar(sources_engine_System_Platform_Linux
+Set(sources_engine_System_Platform_Linux
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Linux/CrashHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Linux/SoLib.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Linux/MessageBox.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Linux/WindowManagerHelper.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Linux/ThreadSupport.cpp"
 	)
-MakeGlobalVar(sources_engine_System_Platform_Mac
+Set(sources_engine_System_Platform_Mac
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Linux/SoLib.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Mac/MessageBox.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Mac/CrashHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Mac/WindowManagerHelper.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Linux/ThreadSupport.cpp"
 	)
-MakeGlobalVar(sources_engine_System_Platform_Windows
+Set(sources_engine_System_Platform_Windows
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Win/CrashHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Win/DllLib.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Win/MessageBox.cpp"
@@ -140,59 +136,77 @@ MakeGlobalVar(sources_engine_System_Platform_Windows
 		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Win/WindowManagerHelper.cpp"
 	)
 
-MakeGlobalVar(sources_engine_System_Threading_Linux
-		"${CMAKE_CURRENT_SOURCE_DIR}/Threading/Futex.cpp"
+Set(sources_engine_System_Threading_Mac
+		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Mac/Signal.cpp"
 	)
-MakeGlobalVar(sources_engine_System_Threading_Windows
-		"${CMAKE_CURRENT_SOURCE_DIR}/Threading/CriticalSection.cpp"
+Set(sources_engine_System_Threading_Linux
+		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Linux/Futex.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Linux/ThreadSupport.cpp"
 	)
+Set(sources_engine_System_Threading_Windows
+		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Win/CriticalSection.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Win/Future.cpp"
+	)
+
+
+if(CMAKE_VERSION VERSION_GREATER 3.1.2)
+	target_sources(platform_sources
+		PRIVATE
+			${sources_engine_System_Platform_Windows}
+			${sources_engine_System_Platform_Linux}
+			${sources_engine_System_Platform_Mac}
+			${sources_engine_System_Threading_Windows}
+			${sources_engine_System_Threading_Linux}
+			${sources_engine_System_Threading_Mac}
+		)
+endif()
+
+Set(sources_engine_System_Threading
+		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/CpuID.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Platform/Threading.cpp"
+	)
+
+Set(sources_engine_System
+		${sources_engine_System_common}
+		${sources_engine_System_creg}
+		${sources_engine_System_FileSystem}
+		${sources_engine_System_Log}
+		${sources_engine_System_Log_sinkConsole}
+		${sources_engine_System_Log_sinkFile}
+	)
+
 
 ### only use the target platform related directory
 IF     (APPLE)
+	MakeGlobalVar(sources_engine_System_Threading ${sources_engine_System_Threading} ${sources_engine_System_Threading_Mac})
 	MakeGlobalVar(sources_engine_System
-			${sources_engine_System_common}
-			${sources_engine_System_creg}
-			${sources_engine_System_FileSystem}
-			${sources_engine_System_Log}
-			${sources_engine_System_Log_sinkConsole}
-			${sources_engine_System_Log_sinkFile}
+			${sources_engine_System}
 			${sources_engine_System_Platform_Mac}
+			${sources_engine_System_Threading}
 		)
 ELSEIF (UNIX)
+	MakeGlobalVar(sources_engine_System_Threading ${sources_engine_System_Threading} ${sources_engine_System_Threading_Linux})
 	MakeGlobalVar(sources_engine_System
-			${sources_engine_System_common}
-			${sources_engine_System_creg}
-			${sources_engine_System_FileSystem}
-			${sources_engine_System_Log}
-			${sources_engine_System_Log_sinkConsole}
-			${sources_engine_System_Log_sinkFile}
+			${sources_engine_System}
 			${sources_engine_System_Platform_Linux}
-			${sources_engine_System_Threading_Linux}
+			${sources_engine_System_Threading}
 		)
-	MakeGlobalVar(sources_engine_System_Threading ${sources_engine_System_Threading_Linux})
+
 ELSEIF (WIN32)
+	MakeGlobalVar(sources_engine_System_Threading ${sources_engine_System_Threading} ${sources_engine_System_Threading_Windows})
 	MakeGlobalVar(sources_engine_System
-			${sources_engine_System_common}
-			${sources_engine_System_creg}
-			${sources_engine_System_FileSystem}
-			${sources_engine_System_Log}
-			${sources_engine_System_Log_sinkConsole}
-			${sources_engine_System_Log_sinkFile}
+			${sources_engine_System}
 			${sources_engine_System_Log_sinkOutputDebugString}
 			${sources_engine_System_Platform_Windows}
-			${sources_engine_System_Threading_Windows}
+			${sources_engine_System_Threading}
 		)
-	MakeGlobalVar(sources_engine_System_Threading ${sources_engine_System_Threading_Windows})
-ELSE   ()
+ELSE()
 	MakeGlobalVar(sources_engine_System
-			${sources_engine_System_common}
-			${sources_engine_System_creg}
-			${sources_engine_System_FileSystem}
-			${sources_engine_System_Log}
-			${sources_engine_System_Log_sinkConsole}
-			${sources_engine_System_Log_sinkFile}
+			${sources_engine_System}
+			${sources_engine_System_Threading}
 		)
 ENDIF  ()
+
 
 Add_Subdirectory(FileSystem)
 Add_Subdirectory(Net)

@@ -5,7 +5,7 @@
 #include "AIInterfaceKey.h"
 #include "Interface/aidefines.h"
 #include "Interface/SAIInterfaceLibrary.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include "System/Info.h"
 #include "System/Log/ILog.h"
 

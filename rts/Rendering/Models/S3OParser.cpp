@@ -10,45 +10,49 @@
 #include "Rendering/Textures/S3OTextureHandler.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "System/Exceptions.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include "System/Log/ILog.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/Platform/byteorder.h"
 
 
 
-S3DModel* CS3OParser::Load(const std::string& name)
+S3DModel CS3OParser::Load(const std::string& name)
 {
 	CFileHandler file(name);
-	if (!file.FileExists()) {
+	std::vector<unsigned char> fileBuf;
+
+	if (!file.FileExists())
 		throw content_error("[S3OParser] could not find model-file " + name);
+
+	if (!file.IsBuffered()) {
+		fileBuf.resize(file.FileSize(), 0);
+		file.Read(fileBuf.data(), fileBuf.size());
+	} else {
+		fileBuf = std::move(file.GetBuffer());
 	}
 
-	std::vector<unsigned char> fileBuf(file.FileSize());
-	file.Read(&fileBuf[0], file.FileSize());
-
 	S3OHeader header;
-	memcpy(&header, &fileBuf[0], sizeof(header));
+	memcpy(&header, fileBuf.data(), sizeof(header));
 	header.swap();
 
-	S3DModel* model = new S3DModel();
-		model->name = name;
-		model->type = MODELTYPE_S3O;
-		model->numPieces = 0;
-		model->texs[0] = (char*) &fileBuf[header.texture1];
-		model->texs[1] = (char*) &fileBuf[header.texture2];
-		model->mins = DEF_MIN_SIZE;
-		model->maxs = DEF_MAX_SIZE;
+	S3DModel model;
+		model.name = name;
+		model.type = MODELTYPE_S3O;
+		model.numPieces = 0;
+		model.texs[0] = (header.texture1 == 0)? "" : (char*) &fileBuf[header.texture1];
+		model.texs[1] = (header.texture2 == 0)? "" : (char*) &fileBuf[header.texture2];
+		model.mins = DEF_MIN_SIZE;
+		model.maxs = DEF_MAX_SIZE;
 
-	texturehandlerS3O->PreloadTexture(model);
+	texturehandlerS3O->PreloadTexture(&model);
 
-	SS3OPiece* rootPiece = LoadPiece(model, NULL, &fileBuf[0], header.rootPiece);
-	model->SetRootPiece(rootPiece);
+	model.FlattenPieceTree(LoadPiece(&model, nullptr, fileBuf.data(), header.rootPiece));
 
 	// set after the extrema are known
-	model->radius = (header.radius <= 0.01f)? (model->maxs   - model->mins  ).Length() * 0.5f: header.radius;
-	model->height = (header.height <= 0.01f)? (model->maxs.y - model->mins.y)                : header.height;
-	model->relMidPos = float3(header.midx, header.midy, header.midz);
+	model.radius = (header.radius <= 0.01f)? model.CalcDrawRadius(): header.radius;
+	model.height = (header.height <= 0.01f)? model.CalcDrawHeight(): header.height;
+	model.relMidPos = float3(header.midx, header.midy, header.midz);
 
 	return model;
 }
@@ -58,11 +62,10 @@ SS3OPiece* CS3OParser::LoadPiece(S3DModel* model, SS3OPiece* parent, unsigned ch
 	model->numPieces++;
 
 	// retrieve piece data
-	Piece* fp = (Piece*)&buf[offset];
-	fp->swap(); // Does it matter we mess with the original buffer here? Don't hope so.
+	Piece* fp = (Piece*)&buf[offset]; fp->swap();
 	Vertex* vertexList = reinterpret_cast<Vertex*>(&buf[fp->vertices]);
-	int*    indexList  = reinterpret_cast<int*>(&buf[fp->vertexTable]);
-	int*    childList  = reinterpret_cast<int*>(&buf[fp->children]);
+	const int* indexList = reinterpret_cast<int*>(&buf[fp->vertexTable]);
+	const int* childList = reinterpret_cast<int*>(&buf[fp->children]);
 
 	// create piece
 	SS3OPiece* piece = new SS3OPiece();
@@ -106,11 +109,12 @@ SS3OPiece* CS3OParser::LoadPiece(S3DModel* model, SS3OPiece* parent, unsigned ch
 		model->mins = float3::min(piece->goffset + piece->mins, model->mins);
 		model->maxs = float3::max(piece->goffset + piece->maxs, model->maxs);
 
-		piece->SetCollisionVolume(CollisionVolume("box", piece->maxs - piece->mins, (piece->maxs + piece->mins) * 0.5f));
+		piece->SetCollisionVolume(CollisionVolume('b', 'z', piece->maxs - piece->mins, (piece->maxs + piece->mins) * 0.5f));
 	}
 
 	// load children pieces
 	piece->children.reserve(fp->numchildren);
+
 	for (int a = 0; a < fp->numchildren; ++a) {
 		int childOffset = swabDWord(*(childList++));
 		SS3OPiece* childPiece = LoadPiece(model, piece, buf, childOffset);

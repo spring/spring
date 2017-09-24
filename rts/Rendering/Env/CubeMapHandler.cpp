@@ -298,9 +298,9 @@ void CubeMapHandler::CreateSpecularFacePart(
 		const float dot  = std::max(0.0f, dir.dot(sky->GetLight()->GetLightDir()));
 		const float spec = std::min(1.0f, std::pow(dot, sunLighting->specularExponent) + std::pow(dot, 3.0f) * 0.25f);
 
-		buf[x * 4 + 0] = (sunLighting->unitSpecularColor.x * spec * 255);
-		buf[x * 4 + 1] = (sunLighting->unitSpecularColor.y * spec * 255);
-		buf[x * 4 + 2] = (sunLighting->unitSpecularColor.z * spec * 255);
+		buf[x * 4 + 0] = (sunLighting->modelSpecularColor.x * spec * 255);
+		buf[x * 4 + 1] = (sunLighting->modelSpecularColor.y * spec * 255);
+		buf[x * 4 + 2] = (sunLighting->modelSpecularColor.z * spec * 255);
 		buf[x * 4 + 3] = 255;
 	}
 }

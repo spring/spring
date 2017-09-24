@@ -114,9 +114,11 @@ namespace nv_dds
         public:
             CSurface();
             CSurface(unsigned int w, unsigned int h, unsigned int d, unsigned int imgsize, const unsigned char *pixels);
-            CSurface(const CSurface &copy);
+            CSurface(const CSurface &copy): CSurface() { *this = copy; }
+            CSurface(CSurface &&surf): CSurface() { *this = std::move(surf); }
             CSurface &operator= (const CSurface &rhs);
-            virtual ~CSurface();
+            CSurface &operator= (CSurface &&rhs);
+            virtual ~CSurface() { clear(); }
 
             operator unsigned char*() const;
 
@@ -142,11 +144,12 @@ namespace nv_dds
         friend class CDDSImage;
 
         public:
-            CTexture();
+            CTexture(): CSurface() {}
             CTexture(unsigned int w, unsigned int h, unsigned int d, unsigned int imgsize, const unsigned char *pixels);
-            CTexture(const CTexture &copy);
+            CTexture(const CTexture &copy): CTexture() { *this = copy; }
+            CTexture(CTexture &&text): CTexture() { *this = std::move(text); }
             CTexture &operator= (const CTexture &rhs);
-            ~CTexture();
+            CTexture &operator= (CTexture &&rhs);
 
             void create(unsigned int w, unsigned int h, unsigned int d, unsigned int imgsize, const unsigned char *pixels);
             void clear();
@@ -159,9 +162,9 @@ namespace nv_dds
                 return m_mipmaps[index];
             }
 
-            inline void add_mipmap(const CSurface &mipmap)
+            inline void add_mipmap()
             {
-                m_mipmaps.push_back(mipmap);
+                m_mipmaps.emplace_back();
             }
 
             inline unsigned int get_num_mipmaps() const { return (unsigned int)m_mipmaps.size(); }
@@ -182,8 +185,28 @@ namespace nv_dds
     class CDDSImage
     {
         public:
-            CDDSImage();
-            ~CDDSImage();
+			CDDSImage();
+			CDDSImage(const CDDSImage& img) { *this = img; }
+			CDDSImage(CDDSImage&& img) { *this = std::move(img); }
+
+			CDDSImage& operator = (const CDDSImage& img) {
+				m_format = img.m_format;
+				m_components = img.m_components;
+				m_type = img.m_type;
+				m_valid = img.m_valid;
+
+				m_images = img.m_images;
+				return *this;
+			}
+			CDDSImage& operator = (CDDSImage&& img) {
+				m_format = img.m_format;
+				m_components = img.m_components;
+				m_type = img.m_type;
+				m_valid = img.m_valid;
+
+				m_images = std::move(img.m_images);
+				return *this;
+			}
 
             void create_textureFlat(unsigned int format, unsigned int components, const CTexture &baseImage);
             void create_texture3D(unsigned int format, unsigned int components, const CTexture &baseImage);

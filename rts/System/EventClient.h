@@ -3,10 +3,10 @@
 #ifndef EVENT_CLIENT_H
 #define EVENT_CLIENT_H
 
+#include <algorithm>
+#include <typeinfo>
 #include <string>
 #include <vector>
-#include <map>
-#include <typeinfo>
 
 #include "System/float3.h"
 #include "System/Misc/SpringTime.h"
@@ -19,7 +19,6 @@
 
 using std::string;
 using std::vector;
-using std::map;
 
 class CUnit;
 class CWeapon;
@@ -86,15 +85,19 @@ class CEventClient
 
 	protected:
 		friend class CEventHandler;
-		std::map<std::string, bool> autoLinkedEvents;
+		typedef std::pair<std::string, bool> LinkPair;
+
+		std::vector<LinkPair> autoLinkedEvents;
 
 		template <class T>
 		void RegisterLinkedEvents(T* foo) {
 			#define SETUP_EVENT(eventname, props) \
-				autoLinkedEvents[#eventname] = (typeid(&T::eventname) != typeid(&CEventClient::eventname));
+				autoLinkedEvents.push_back({#eventname, typeid(&T::eventname) != typeid(&CEventClient::eventname)});
 
 				#include "Events.def"
 			#undef SETUP_EVENT
+
+			std::stable_sort(autoLinkedEvents.begin(), autoLinkedEvents.end(), [](const LinkPair& a, const LinkPair& b) { return (a.first < b.first); });
 		}
 
 	public:
@@ -201,20 +204,20 @@ class CEventClient
 		virtual bool AllowResourceTransfer(int oldTeam, int newTeam, const string& type, float amount);
 		virtual bool AllowDirectUnitControl(int playerID, const CUnit* unit);
 		virtual bool AllowBuilderHoldFire(const CUnit* unit, int action);
-		virtual bool AllowStartPosition(int playerID, unsigned char readyState, const float3& clampedPos, const float3& rawPickPos);
+		virtual bool AllowStartPosition(int playerID, int teamID, unsigned char readyState, const float3& clampedPos, const float3& rawPickPos);
 
 		virtual bool TerraformComplete(const CUnit* unit, const CUnit* build);
 		virtual bool MoveCtrlNotify(const CUnit* unit, int data);
 
-		virtual int AllowWeaponTargetCheck(unsigned int attackerID, unsigned int attackerWeaponNum, unsigned int attackerWeaponDefID);
+		virtual int AllowWeaponTargetCheck(unsigned int attackerID, unsigned int attackerWeaponNum, unsigned int attackerWeaponDefID) { return -1; }
 		virtual bool AllowWeaponTarget(
 			unsigned int attackerID,
 			unsigned int targetID,
 			unsigned int attackerWeaponNum,
 			unsigned int attackerWeaponDefID,
 			float* targetPriority
-		);
-		virtual bool AllowWeaponInterceptTarget(const CUnit* interceptorUnit, const CWeapon* interceptorWeapon, const CProjectile* interceptorTarget);
+		) { return true; }
+		virtual bool AllowWeaponInterceptTarget(const CUnit* interceptorUnit, const CWeapon* interceptorWeapon, const CProjectile* interceptorTarget) { return true; }
 
 		virtual bool UnitPreDamaged(
 			const CUnit* unit,
@@ -224,7 +227,8 @@ class CEventClient
 			int projectileID,
 			bool paralyzer,
 			float* newDamage,
-			float* impulseMult);
+			float* impulseMult
+		) { return false; }
 
 		virtual bool FeaturePreDamaged(
 			const CFeature* feature,
@@ -233,7 +237,8 @@ class CEventClient
 			int weaponDefID,
 			int projectileID,
 			float* newDamage,
-			float* impulseMult);
+			float* impulseMult
+		) { return false; }
 
 		virtual bool ShieldPreDamaged(
 			const CProjectile* projectile,
@@ -241,7 +246,10 @@ class CEventClient
 			const CUnit* shieldCarrier,
 			bool bounceProjectile,
 			const CWeapon* beamEmitter,
-			const CUnit* beamCarrier);
+			const CUnit* beamCarrier,
+			const float3& startPos,
+			const float3& hitPos
+		) { return false; }
 
 		virtual bool SyncedActionFallback(const string& line, int playerID);
 		/// @}
@@ -284,7 +292,7 @@ class CEventClient
 		virtual bool GroupChanged(int groupID);
 
 		virtual bool GameSetup(const std::string& state, bool& ready,
-		                       const map<int, std::string>& playerStates);
+		                       const std::vector< std::pair<int, std::string> >& playerStates);
 
 		virtual std::string WorldTooltip(const CUnit* unit,
 		                                 const CFeature* feature,
@@ -302,6 +310,7 @@ class CEventClient
 		virtual void DrawGenesis() {}
 		virtual void DrawWorld() {}
 		virtual void DrawWorldPreUnit() {}
+		virtual void DrawWorldPreParticles() {}
 		virtual void DrawWorldShadow() {}
 		virtual void DrawWorldReflection() {}
 		virtual void DrawWorldRefraction() {}
@@ -311,6 +320,7 @@ class CEventClient
 		virtual void DrawUnitsPostDeferred() {}
 		virtual void DrawFeaturesPostDeferred() {}
 		virtual void DrawScreenEffects() {}
+		virtual void DrawScreenPost() {}
 		virtual void DrawScreen() {}
 		virtual void DrawInMiniMap() {}
 		virtual void DrawInMiniMapBackground() {}

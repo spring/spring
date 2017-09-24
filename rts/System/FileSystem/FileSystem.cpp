@@ -8,7 +8,7 @@
 #include "Game/GameVersion.h"
 #include "System/Log/ILog.h"
 #include "System/Platform/Win/win32.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 
 #include <boost/regex.hpp>
 

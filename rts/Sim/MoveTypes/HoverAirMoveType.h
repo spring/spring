@@ -9,29 +9,30 @@ struct float4;
 
 class CHoverAirMoveType: public AAirMoveType
 {
-	CR_DECLARE(CHoverAirMoveType)
+	CR_DECLARE_DERIVED(CHoverAirMoveType)
 public:
 	CHoverAirMoveType(CUnit* owner);
 
 	// MoveType interface
-	bool Update();
-	void SlowUpdate();
-	void StartMoving(float3 pos, float goalRadius);
-	void StartMoving(float3 pos, float goalRadius, float speed);
-	void KeepPointingTo(float3 pos, float distance, bool aggressive);
-	void StopMoving(bool callScript = false, bool hardStop = false);
+	bool Update() override;
+	void SlowUpdate() override;
 
-	bool SetMemberValue(unsigned int memberHash, void* memberValue);
+	void StartMoving(float3 pos, float goalRadius) override;
+	void StartMoving(float3 pos, float goalRadius, float speed) override;
+	void KeepPointingTo(float3 pos, float distance, bool aggressive) override;
+	void StopMoving(bool callScript = false, bool hardStop = false, bool cancelRaw = false) override;
+
+	bool SetMemberValue(unsigned int memberHash, void* memberValue) override;
 
 	void ForceHeading(short h);
-	void SetGoal(const float3& pos, float distance = 0.0f);
-	void SetState(AircraftState newState);
+	void SetGoal(const float3& pos, float distance = 0.0f) override;
+	void SetState(AircraftState newState) override;
 	void SetAllowLanding(bool b);
 
-	AircraftState GetLandingState() const { return AIRCRAFT_FLYING; }
+	AircraftState GetLandingState() const override { return AIRCRAFT_FLYING; }
 
 	// Main state handlers
-	void UpdateLanded();
+	void UpdateLanded() override;
 	void UpdateTakeoff();
 	void UpdateLanding();
 	void UpdateFlying();
@@ -39,7 +40,7 @@ public:
 	void UpdateHovering();
 
 	short GetWantedHeading() const { return wantedHeading; }
-	short GetForcedHeading() const { return forceHeadingTo; }
+	short GetForcedHeading() const { return forcedHeading; }
 
 	bool GetAllowLanding() const { return !dontLand; }
 
@@ -56,8 +57,8 @@ private:
 	bool CanLandAt(const float3& pos) const;
 
 	void ExecuteStop();
-	void Takeoff();
-	void Land();
+	void Takeoff() override;
+	void Land() override;
 
 	bool HandleCollisions(bool checkCollisions);
 
@@ -101,7 +102,7 @@ private:
 
 	/// TODO: Seems odd to use heading in unit, since we have toggled useHeading to false..
 	short wantedHeading;
-	short forceHeadingTo;
+	short forcedHeading;
 
 	/// need to pause between circling steps
 	int waitCounter;

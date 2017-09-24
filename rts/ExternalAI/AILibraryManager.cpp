@@ -9,7 +9,7 @@
 #include "SkirmishAILibraryInfo.h"
 #include "SkirmishAIData.h"
 
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include "System/Log/ILog.h"
 #include "System/Platform/errorhandler.h"
 #include "System/Platform/SharedLib.h"

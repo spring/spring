@@ -5,9 +5,10 @@
 #include "LuaInclude.h"
 #include "LuaHandle.h"
 #include "LuaHashString.h"
-#include "LuaUtils.h"
-#include "LuaTextures.h"
+#include "LuaMenu.h"
 #include "LuaOpenGLUtils.h"
+#include "LuaTextures.h"
+#include "LuaUtils.h"
 
 #include "ExternalAI/EngineOutHandler.h"
 #include "ExternalAI/SkirmishAIHandler.h"
@@ -40,6 +41,8 @@
 #include "Net/GameServer.h"
 #include "Rendering/Env/ISky.h"
 #include "Rendering/Env/SunLighting.h"
+#include "Rendering/Env/WaterRendering.h"
+#include "Rendering/Env/MapRendering.h"
 #include "Rendering/Env/IGroundDecalDrawer.h"
 #include "Rendering/Env/Decals/DecalsDrawerGL4.h"
 #include "Rendering/GL/myGL.h"
@@ -67,7 +70,9 @@
 #include "System/Log/ILog.h"
 #include "System/Net/PackPacket.h"
 #include "System/Platform/Misc.h"
-#include "System/Util.h"
+#include "System/SafeUtil.h"
+#include "System/UnorderedMap.hpp"
+#include "System/StringUtil.h"
 #include "System/Sound/ISound.h"
 #include "System/Sound/ISoundChannels.h"
 #include "System/FileSystem/FileHandler.h"
@@ -77,17 +82,15 @@
 #include "System/Platform/WindowManagerHelper.h"
 #include "System/Sync/HsiehHash.h"
 
-#include <boost/cstdint.hpp>
 
 #if !defined(HEADLESS) && !defined(NO_SOUND)
 #include "System/Sound/OpenAL/EFX.h"
 #include "System/Sound/OpenAL/EFXPresets.h"
 #endif
 
-#include <map>
-#include <set>
 #include <cctype>
 #include <cfloat>
+#include <cinttypes>
 
 #include <fstream>
 
@@ -109,11 +112,6 @@ const int CMD_INDEX_OFFSET = 1; // starting index for command descriptions
 
 bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 {
-#define REGISTER_LUA_CFUNC(x) \
-	lua_pushstring(L, #x);      \
-	lua_pushcfunction(L, x);    \
-	lua_rawset(L, -3)
-
 	REGISTER_LUA_CFUNC(Echo);
 	REGISTER_LUA_CFUNC(Log);
 
@@ -155,6 +153,7 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetDrawGround);
 	REGISTER_LUA_CFUNC(SetDrawGroundDeferred);
 	REGISTER_LUA_CFUNC(SetDrawModelsDeferred);
+	REGISTER_LUA_CFUNC(SetVideoCapturingMode);
 
 	REGISTER_LUA_CFUNC(SetWaterParams);
 
@@ -173,8 +172,10 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetUnitNoMinimap);
 	REGISTER_LUA_CFUNC(SetUnitNoSelect);
 	REGISTER_LUA_CFUNC(SetUnitLeaveTracks);
+	REGISTER_LUA_CFUNC(SetUnitSelectionVolumeData);
 	REGISTER_LUA_CFUNC(SetFeatureNoDraw);
 	REGISTER_LUA_CFUNC(SetFeatureFade);
+	REGISTER_LUA_CFUNC(SetFeatureSelectionVolumeData);
 
 	REGISTER_LUA_CFUNC(AddUnitIcon);
 	REGISTER_LUA_CFUNC(FreeUnitIcon);
@@ -203,6 +204,7 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SendLuaUIMsg);
 	REGISTER_LUA_CFUNC(SendLuaGaiaMsg);
 	REGISTER_LUA_CFUNC(SendLuaRulesMsg);
+	REGISTER_LUA_CFUNC(SendLuaMenuMsg);
 
 	REGISTER_LUA_CFUNC(LoadCmdColorsConfig);
 	REGISTER_LUA_CFUNC(LoadCtrlPanelConfig);
@@ -222,6 +224,7 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(Reload);
 	REGISTER_LUA_CFUNC(Restart);
 	REGISTER_LUA_CFUNC(Start);
+	REGISTER_LUA_CFUNC(Quit);
 
 	REGISTER_LUA_CFUNC(SetWMIcon);
 	REGISTER_LUA_CFUNC(SetWMCaption);
@@ -247,9 +250,8 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(SetAtmosphere);
 	REGISTER_LUA_CFUNC(SetSunLighting);
-	REGISTER_LUA_CFUNC(SetSunParameters);
-	REGISTER_LUA_CFUNC(SetSunManualControl);
 	REGISTER_LUA_CFUNC(SetSunDirection);
+	REGISTER_LUA_CFUNC(SetMapRenderingParams);
 
 	REGISTER_LUA_CFUNC(SendSkirmishAIMessage);
 
@@ -621,9 +623,8 @@ int LuaUnsyncedCtrl::SetSoundEffectParams(lua_State* L)
 		return 0;
 	}
 
-	if (!lua_istable(L, 1)) {
+	if (!lua_istable(L, 1))
 		luaL_error(L, "Incorrect arguments to SetSoundEffectParams()");
-	}
 
 	//! first parse the 'preset' key (so all following params use it as base and override it)
 	lua_pushliteral(L, "preset");
@@ -635,10 +636,7 @@ int LuaUnsyncedCtrl::SetSoundEffectParams(lua_State* L)
 	lua_pop(L, 1);
 
 
-	if (!efx->sfxProperties)
-		return 0;
-
-	EAXSfxProps* efxprops = efx->sfxProperties;
+	EAXSfxProps& efxprops = efx->sfxProperties;
 
 
 	//! parse pass filter
@@ -650,7 +648,7 @@ int LuaUnsyncedCtrl::SetSoundEffectParams(lua_State* L)
 				continue;
 
 			const string key = StringToLower(lua_tostring(L, -2));
-			std::map<std::string, ALuint>::iterator it = nameToALFilterParam.find(key);
+			const auto it = nameToALFilterParam.find(key);
 
 			if (it == nameToALFilterParam.end())
 				continue;
@@ -662,7 +660,7 @@ int LuaUnsyncedCtrl::SetSoundEffectParams(lua_State* L)
 			if (alParamType[param] != EFXParamTypes::FLOAT)
 				continue;
 
-			efxprops->filter_properties_f[param] = lua_tofloat(L, -1);
+			efxprops.filter_props_f[param] = lua_tofloat(L, -1);
 		}
 	}
 	lua_pop(L, 1);
@@ -676,29 +674,30 @@ int LuaUnsyncedCtrl::SetSoundEffectParams(lua_State* L)
 				continue;
 
 			const string key = StringToLower(lua_tostring(L, -2));
-			std::map<std::string, ALuint>::iterator it = nameToALParam.find(key);
+			const auto it = nameToALParam.find(key);
 
 			if (it == nameToALParam.end())
 				continue;
 
-			ALuint param = it->second;
+			const ALuint param = it->second;
+
 			if (lua_istable(L, -1)) {
 				if (alParamType[param] == EFXParamTypes::VECTOR) {
 					float3 v;
 
 					if (LuaUtils::ParseFloatArray(L, -1, &v[0], 3) >= 3) {
-						efxprops->properties_v[param] = v;
+						efxprops.reverb_props_v[param] = v;
 					}
 				}
 			}
 			else if (lua_isnumber(L, -1)) {
 				if (alParamType[param] == EFXParamTypes::FLOAT) {
-					efxprops->properties_f[param] = lua_tofloat(L, -1);
+					efxprops.reverb_props_f[param] = lua_tofloat(L, -1);
 				}
 			}
 			else if (lua_isboolean(L, -1)) {
 				if (alParamType[param] == EFXParamTypes::BOOL) {
-					efxprops->properties_i[param] = lua_toboolean(L, -1);
+					efxprops.reverb_props_i[param] = lua_toboolean(L, -1);
 				}
 			}
 		}
@@ -924,20 +923,16 @@ int LuaUnsyncedCtrl::SetTeamColor(lua_State* L)
 
 int LuaUnsyncedCtrl::AssignMouseCursor(lua_State* L)
 {
-	const string cmdName  = luaL_checksstring(L, 1);
-	const string fileName = luaL_checksstring(L, 2);
+	const std::string& cmdName  = luaL_checksstring(L, 1);
+	const std::string& fileName = luaL_checksstring(L, 2);
+
+	const CMouseCursor::HotSpot hotSpot = (luaL_optboolean(L, 4, false))? CMouseCursor::TopLeft: CMouseCursor::Center;
 
 	const bool overwrite = luaL_optboolean(L, 3, true);
-
-	CMouseCursor::HotSpot hotSpot = CMouseCursor::Center;
-	if (luaL_optboolean(L, 4, false)) {
-		hotSpot = CMouseCursor::TopLeft;
-	}
-
-	const bool worked = mouse->AssignMouseCursor(cmdName, fileName, hotSpot, overwrite);
+	const bool assigned = mouse->AssignMouseCursor(cmdName, fileName, hotSpot, overwrite);
 
 	if (!CLuaHandle::GetHandleSynced(L)) {
-		lua_pushboolean(L, worked);
+		lua_pushboolean(L, assigned);
 		return 1;
 	}
 
@@ -1031,7 +1026,7 @@ int LuaUnsyncedCtrl::SetDrawGroundDeferred(lua_State* L)
 
 	lua_pushboolean(L, gd->DrawDeferred());
 	lua_pushboolean(L, gd->DrawForward());
-	return 1;
+	return 2;
 }
 
 int LuaUnsyncedCtrl::SetDrawModelsDeferred(lua_State* L)
@@ -1051,104 +1046,120 @@ int LuaUnsyncedCtrl::SetDrawModelsDeferred(lua_State* L)
 }
 
 
+int LuaUnsyncedCtrl::SetVideoCapturingMode(lua_State* L)
+{
+	// NOTE the argument ordering
+	globalRendering->isVideoCapturing = !!luaL_checkboolean(L, 1);
+	return 0;
+}
+
+
 /******************************************************************************/
 
 int LuaUnsyncedCtrl::SetWaterParams(lua_State* L)
 {
-	if (!gs->cheatEnabled) {
-		LOG("SetWaterParams() needs cheating enabled");
-		return 0;
-	}
 	if (!lua_istable(L, 1)) {
 		luaL_error(L, "Incorrect arguments to SetWaterParams()");
 	}
 
-	CMapInfo::water_t& w = const_cast<CMapInfo*>(mapInfo)->water;
 	for (lua_pushnil(L); lua_next(L, 1) != 0; lua_pop(L, 1)) {
-		if (lua_israwstring(L, -2)) {
-			const string key = lua_tostring(L, -2);
-			if (lua_istable(L, -1)) {
-				float color[3];
-				const int size = LuaUtils::ParseFloatArray(L, -1, color, 3);
-				if (size >= 3) {
-					if (key == "absorb") {
-						w.absorb = color;
-					} else if (key == "baseColor") {
-						w.baseColor = color;
-					} else if (key == "minColor") {
-						w.minColor = color;
-					} else if (key == "surfaceColor") {
-						w.surfaceColor = color;
-					} else if (key == "diffuseColor") {
-						w.diffuseColor = color;
-					} else if (key == "specularColor") {
-						w.specularColor = color;
- 					} else if (key == "planeColor") {
-						w.planeColor.x = color[0];
-						w.planeColor.y = color[1];
-						w.planeColor.z = color[2];
-					}
+		if (!lua_israwstring(L, -2))
+			continue;
+
+		const string key = lua_tostring(L, -2);
+
+		if (lua_istable(L, -1)) {
+			float color[3];
+			const int size = LuaUtils::ParseFloatArray(L, -1, color, 3);
+			if (size >= 3) {
+				if (key == "absorb") {
+					waterRendering->absorb = color;
+				} else if (key == "baseColor") {
+					waterRendering->baseColor = color;
+				} else if (key == "minColor") {
+					waterRendering->minColor = color;
+				} else if (key == "surfaceColor") {
+					waterRendering->surfaceColor = color;
+				} else if (key == "diffuseColor") {
+					waterRendering->diffuseColor = color;
+				} else if (key == "specularColor") {
+					waterRendering->specularColor = color;
+					} else if (key == "planeColor") {
+					waterRendering->planeColor.x = color[0];
+					waterRendering->planeColor.y = color[1];
+					waterRendering->planeColor.z = color[2];
+				} else {
+					luaL_error(L, "Unknown array key %s", key.c_str());
 				}
+			} else {
+				luaL_error(L, "Unexpected size of %d for array key %s", size,  key.c_str());
 			}
-			else if (lua_israwstring(L, -1)) {
-				const std::string value = lua_tostring(L, -1);
-				if (key == "texture") {
-					w.texture = value;
-				} else if (key == "foamTexture") {
-					w.foamTexture = value;
-				} else if (key == "normalTexture") {
-					w.normalTexture = value;
-				}
+		}
+
+		else if (lua_israwstring(L, -1)) {
+			const std::string value = lua_tostring(L, -1);
+			if (key == "texture") {
+				waterRendering->texture = value;
+			} else if (key == "foamTexture") {
+				waterRendering->foamTexture = value;
+			} else if (key == "normalTexture") {
+				waterRendering->normalTexture = value;
+			} else {
+				luaL_error(L, "Unknown string key %s", key.c_str());
 			}
-			else if (lua_isnumber(L, -1)) {
-				const float value = lua_tofloat(L, -1);
-				if (key == "damage") {
-					w.damage = value;
-				} else if (key == "repeatX") {
-					w.repeatX = value;
-				} else if (key == "repeatY") {
-					w.repeatY = value;
-				} else if (key == "surfaceAlpha") {
-					w.surfaceAlpha = value;
-				} else if (key == "ambientFactor") {
-					w.ambientFactor = value;
-				} else if (key == "diffuseFactor") {
-					w.diffuseFactor = value;
-				} else if (key == "specularFactor") {
-					w.specularFactor = value;
-				} else if (key == "specularPower") {
-					w.specularPower = value;
-				} else if (key == "fresnelMin") {
-					w.fresnelMin = value;
-				} else if (key == "fresnelMax") {
-					w.fresnelMax = value;
-				} else if (key == "fresnelPower") {
-					w.fresnelPower = value;
-				} else if (key == "reflectionDistortion") {
-					w.reflDistortion = value;
-				} else if (key == "blurBase") {
-					w.blurBase = value;
-				} else if (key == "blurExponent") {
-					w.blurExponent = value;
-				} else if (key == "perlinStartFreq") {
-					w.perlinStartFreq = value;
-				} else if (key == "perlinLacunarity") {
-					w.perlinLacunarity = value;
-				} else if (key == "perlinAmplitude") {
-					w.perlinAmplitude = value;
-				} else if (key == "numTiles") {
-					w.numTiles = (unsigned char)value;
-				}
+		}
+
+		else if (lua_isnumber(L, -1)) {
+			const float value = lua_tofloat(L, -1);
+			if (key == "repeatX") {
+				waterRendering->repeatX = value;
+			} else if (key == "repeatY") {
+				waterRendering->repeatY = value;
+			} else if (key == "surfaceAlpha") {
+				waterRendering->surfaceAlpha = value;
+			} else if (key == "ambientFactor") {
+				waterRendering->ambientFactor = value;
+			} else if (key == "diffuseFactor") {
+				waterRendering->diffuseFactor = value;
+			} else if (key == "specularFactor") {
+				waterRendering->specularFactor = value;
+			} else if (key == "specularPower") {
+				waterRendering->specularPower = value;
+			} else if (key == "fresnelMin") {
+				waterRendering->fresnelMin = value;
+			} else if (key == "fresnelMax") {
+				waterRendering->fresnelMax = value;
+			} else if (key == "fresnelPower") {
+				waterRendering->fresnelPower = value;
+			} else if (key == "reflectionDistortion") {
+				waterRendering->reflDistortion = value;
+			} else if (key == "blurBase") {
+				waterRendering->blurBase = value;
+			} else if (key == "blurExponent") {
+				waterRendering->blurExponent = value;
+			} else if (key == "perlinStartFreq") {
+				waterRendering->perlinStartFreq = value;
+			} else if (key == "perlinLacunarity") {
+				waterRendering->perlinLacunarity = value;
+			} else if (key == "perlinAmplitude") {
+				waterRendering->perlinAmplitude = value;
+			} else if (key == "numTiles") {
+				waterRendering->numTiles = (unsigned char)value;
+			} else {
+				luaL_error(L, "Unknown scalar key %s", key.c_str());
 			}
-			else if (lua_isboolean(L, -1)) {
-				const bool value = lua_toboolean(L, -1);
-				if (key == "shoreWaves") {
-					w.shoreWaves = value;
-				} else if (key == "forceRendering") {
-					w.forceRendering = value;
-				} else if (key == "hasWaterPlane") {
-					w.hasWaterPlane = value;
-				}
+		}
+
+		else if (lua_isboolean(L, -1)) {
+			const bool value = lua_toboolean(L, -1);
+			if (key == "shoreWaves") {
+				waterRendering->shoreWaves = value;
+			} else if (key == "forceRendering") {
+				waterRendering->forceRendering = value;
+			} else if (key == "hasWaterPlane") {
+				waterRendering->hasWaterPlane = value;
+			} else {
+				luaL_error(L, "Unknown boolean key %s", key.c_str());
 			}
 		}
 	}
@@ -1605,8 +1616,9 @@ int LuaUnsyncedCtrl::SetUnitNoSelect(lua_State* L)
 
 	// deselect the unit if it's selected and shouldn't be
 	if (unit->noSelect) {
-		const CUnitSet& selUnits = selectedUnitsHandler.selectedUnits;
-		if (selUnits.find(unit) != selUnits.end()) {
+		const auto& selUnits = selectedUnitsHandler.selectedUnits;
+
+		if (selUnits.find(unit->id) != selUnits.end()) {
 			selectedUnitsHandler.RemoveUnit(unit);
 		}
 	}
@@ -1623,6 +1635,17 @@ int LuaUnsyncedCtrl::SetUnitLeaveTracks(lua_State* L)
 
 	unit->leaveTracks = lua_toboolean(L, 2);
 	return 0;
+}
+
+
+int LuaUnsyncedCtrl::SetUnitSelectionVolumeData(lua_State* L)
+{
+	CUnit* unit = ParseCtrlUnit(L, __FUNCTION__, 1);
+
+	if (unit == nullptr)
+		return 0;
+
+	return LuaUtils::ParseColVolData(L, 2, &unit->selectionVolume);
 }
 
 
@@ -1643,10 +1666,6 @@ int LuaUnsyncedCtrl::SetFeatureNoDraw(lua_State* L)
 
 int LuaUnsyncedCtrl::SetFeatureFade(lua_State* L)
 {
-	// block LuaUI
-	if (CLuaHandle::GetHandleUserMode(L))
-		return 0;
-
 	CFeature* feature = ParseCtrlFeature(L, __FUNCTION__, 1);
 
 	if (feature == nullptr)
@@ -1656,6 +1675,17 @@ int LuaUnsyncedCtrl::SetFeatureFade(lua_State* L)
 	return 0;
 }
 
+
+int LuaUnsyncedCtrl::SetFeatureSelectionVolumeData(lua_State* L)
+{
+	CFeature* feature = ParseCtrlFeature(L, __FUNCTION__, 1);
+
+	if (feature == nullptr)
+		return 0;
+
+
+	return LuaUtils::ParseColVolData(L, 2, &feature->selectionVolume);
+}
 
 
 /******************************************************************************/
@@ -1692,13 +1722,9 @@ int LuaUnsyncedCtrl::FreeUnitIcon(lua_State* L)
 // TODO: move this to LuaVFS?
 int LuaUnsyncedCtrl::ExtractModArchiveFile(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L)) {
-		return 0;
-	}
-
 	const string path = luaL_checkstring(L, 1);
 
-	CFileHandler fhVFS(path, SPRING_VFS_MOD);
+	CFileHandler fhVFS(path, SPRING_VFS_ZIP);
 	CFileHandler fhRAW(path, SPRING_VFS_RAW);
 
 	if (!fhVFS.FileExists()) {
@@ -1764,9 +1790,6 @@ int LuaUnsyncedCtrl::ExtractModArchiveFile(lua_State* L)
 
 int LuaUnsyncedCtrl::SendCommands(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L)) {
-		return 0;
-	}
 	if ((guihandler == NULL) || gs->noHelperAIs) {
 		return 0;
 	}
@@ -1812,9 +1835,6 @@ int LuaUnsyncedCtrl::SendCommands(lua_State* L)
 
 static int SetActiveCommandByIndex(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L)) {
-		return 0;
-	}
 	if (guihandler == NULL) {
 		return 0;
 	}
@@ -1845,9 +1865,6 @@ static int SetActiveCommandByIndex(lua_State* L)
 
 static int SetActiveCommandByAction(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L)) {
-		return 0;
-	}
 	if (guihandler == NULL) {
 		return 0;
 	}
@@ -1867,9 +1884,6 @@ static int SetActiveCommandByAction(lua_State* L)
 
 int LuaUnsyncedCtrl::SetActiveCommand(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L)) {
-		return 0;
-	}
 	if (guihandler == NULL) {
 		return 0;
 	}
@@ -1890,9 +1904,6 @@ int LuaUnsyncedCtrl::SetActiveCommand(lua_State* L)
 
 int LuaUnsyncedCtrl::LoadCmdColorsConfig(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L)) {
-		return 0;
-	}
 	const string cfg = luaL_checkstring(L, 1);
 	cmdColors.LoadConfigFromString(cfg);
 	return 0;
@@ -1901,9 +1912,6 @@ int LuaUnsyncedCtrl::LoadCmdColorsConfig(lua_State* L)
 
 int LuaUnsyncedCtrl::LoadCtrlPanelConfig(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L)) {
-		return 0;
-	}
 	if (guihandler == NULL) {
 		return 0;
 	}
@@ -1915,9 +1923,6 @@ int LuaUnsyncedCtrl::LoadCtrlPanelConfig(lua_State* L)
 
 int LuaUnsyncedCtrl::ForceLayoutUpdate(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L)) {
-		return 0;
-	}
 	if (guihandler == NULL) {
 		return 0;
 	}
@@ -1930,9 +1935,6 @@ int LuaUnsyncedCtrl::ForceLayoutUpdate(lua_State* L)
 
 int LuaUnsyncedCtrl::WarpMouse(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L)) {
-		return 0;
-	}
 	const int x = luaL_checkint(L, 1);
 	const int y = globalRendering->viewSizeY - luaL_checkint(L, 2) - 1;
 	mouse->WarpMouse(x, y);
@@ -1942,10 +1944,6 @@ int LuaUnsyncedCtrl::WarpMouse(lua_State* L)
 
 int LuaUnsyncedCtrl::SetMouseCursor(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L)) {
-		return 0;
-	}
-
 	const std::string& cursorName = luaL_checkstring(L, 1);
 	const float cursorScale = luaL_optfloat(L, 2, 1.0f);
 
@@ -1958,10 +1956,6 @@ int LuaUnsyncedCtrl::SetMouseCursor(lua_State* L)
 
 int LuaUnsyncedCtrl::SetClipboard(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L)) {
-		return 0;
-	}
-
 	SDL_SetClipboardText(luaL_checkstring(L, 1));
 	return 0;
 }
@@ -1970,13 +1964,6 @@ int LuaUnsyncedCtrl::SetClipboard(lua_State* L)
 
 int LuaUnsyncedCtrl::SetCameraOffset(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L)) {
-		return 0;
-	}
-	if (camera == NULL) {
-		return 0;
-	}
-
 	camera->posOffset.x = luaL_optfloat(L, 1, 0.0f);
 	camera->posOffset.y = luaL_optfloat(L, 2, 0.0f);
 	camera->posOffset.z = luaL_optfloat(L, 3, 0.0f);
@@ -2031,80 +2018,68 @@ int LuaUnsyncedCtrl::SetLosViewColors(lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 
-#define SET_IN_OVERLAY_WARNING \
-	if (lua_isboolean(L, 3)) { \
-		static bool shown = false; \
-		if (!shown) { \
-			LOG_L(L_WARNING, "%s: third parameter \"setInOverlay\" is deprecated", __FUNCTION__); \
-			shown = true; \
-		} \
-	}
-
 int LuaUnsyncedCtrl::GetConfigInt(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L)) {
-		// FIXME: why not put this in UnsyncedRead without the ModUICtrl restriction?
-		lua_pushnumber(L, 0);
-		return 1;
-	}
-	const string name = luaL_checkstring(L, 1);
-	const int def     = luaL_optint(L, 2, 0);
-	SET_IN_OVERLAY_WARNING;
-	const int value = configHandler->IsSet(name) ? configHandler->GetInt(name) : def;
-	lua_pushnumber(L, value);
+	lua_pushinteger(L, configHandler->GetIntSafe(luaL_checkstring(L, 1), luaL_optint(L, 2, 0)));
 	return 1;
 }
 
-int LuaUnsyncedCtrl::SetConfigInt(lua_State* L)
+int LuaUnsyncedCtrl::GetConfigFloat(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L)) {
-		return 0;
-	}
-	const string name = luaL_checkstring(L, 1);
-	const int value   = luaL_checkint(L, 2);
-	const bool useOverlay = luaL_optboolean(L, 3, false);
-	// don't allow to change a read-only variable
-	if (configHandler->IsReadOnly(name)) {
-		LOG_L(L_ERROR, "tried to set readonly (int) %s = %d", name.c_str(), value);
-		return 0;
-	}
-	configHandler->EnableWriting(globalConfig->luaWritableConfigFile);
-	configHandler->Set(name, value, useOverlay);
-	configHandler->EnableWriting(true);
-	return 0;
+	lua_pushnumber(L, configHandler->GetFloatSafe(luaL_checkstring(L, 1), luaL_optfloat(L, 2, 0.0f)));
+	return 1;
 }
 
 int LuaUnsyncedCtrl::GetConfigString(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L)) {
-		// FIXME: why not put this in UnsyncedRead without the ModUICtrl restriction?
-		lua_pushstring(L, "");
-		return 1;
-	}
-	const string name = luaL_checkstring(L, 1);
-	const string def  = luaL_optstring(L, 2, "");
-	SET_IN_OVERLAY_WARNING;
-	const string value = configHandler->IsSet(name) ? configHandler->GetString(name) : def;
-	lua_pushsstring(L, value);
+	lua_pushsstring(L, configHandler->GetStringSafe(luaL_checkstring(L, 1), luaL_optstring(L, 2, "")));
 	return 1;
 }
 
 
+int LuaUnsyncedCtrl::SetConfigInt(lua_State* L)
+{
+	const std::string& key = luaL_checkstring(L, 1);
+
+	// don't allow to change a read-only variable
+	if (configHandler->IsReadOnly(key)) {
+		LOG_L(L_ERROR, "[%s] key \"%s\" is read-only", __func__, key.c_str());
+		return 0;
+	}
+
+	configHandler->EnableWriting(globalConfig->luaWritableConfigFile);
+	configHandler->Set(key, luaL_checkint(L, 2), luaL_optboolean(L, 3, false));
+	configHandler->EnableWriting(true);
+	return 0;
+}
+
+int LuaUnsyncedCtrl::SetConfigFloat(lua_State* L)
+{
+	const std::string& key = luaL_checkstring(L, 1);
+
+	if (configHandler->IsReadOnly(key)) {
+		LOG_L(L_ERROR, "[%s] key \"%s\" is read-only", __func__, key.c_str());
+		return 0;
+	}
+
+	configHandler->EnableWriting(globalConfig->luaWritableConfigFile);
+	configHandler->Set(key, luaL_checkfloat(L, 2), luaL_optboolean(L, 3, false));
+	configHandler->EnableWriting(true);
+	return 0;
+}
+
 int LuaUnsyncedCtrl::SetConfigString(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L)) {
+	const std::string& key = luaL_checkstring(L, 1);
+	const std::string& val = luaL_checkstring(L, 2);
+
+	if (configHandler->IsReadOnly(key)) {
+		LOG_L(L_ERROR, "[%s] key \"%s\" is read-only", __func__, key.c_str());
 		return 0;
 	}
-	const string name  = luaL_checkstring(L, 1);
-	const string value = luaL_checkstring(L, 2);
-	const bool useOverlay = luaL_optboolean(L, 3, false);
-	// don't allow to change a read-only variable
-	if (configHandler->IsReadOnly(name)) {
-		LOG_L(L_ERROR, "tried to set readonly (string) %s = %s", name.c_str(), value.c_str());
-		return 0;
-	}
+
 	configHandler->EnableWriting(globalConfig->luaWritableConfigFile);
-	configHandler->SetString(name, value, useOverlay);
+	configHandler->SetString(key, val, luaL_optboolean(L, 3, false));
 	configHandler->EnableWriting(true);
 	return 0;
 }
@@ -2114,85 +2089,82 @@ int LuaUnsyncedCtrl::SetConfigString(lua_State* L)
 
 int LuaUnsyncedCtrl::CreateDir(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L)) {
-		return 0;
-	}
-	const string dir = luaL_checkstring(L, 1);
+	const std::string& dir = luaL_checkstring(L, 1);
 
 	// keep directories within the Spring directory
-	if ((dir[0] == '/') || (dir[0] == '\\') ||
-	    (strstr(dir.c_str(), "..") != NULL) ||
-	    ((dir.size() > 0) && (dir[1] == ':'))) {
-		luaL_error(L, "Invalid CreateDir() access: %s", dir.c_str());
-	}
-	const bool success = FileSystem::CreateDirectory(dir);
-	lua_pushboolean(L, success);
+	if (dir[0] == '/' || dir[0] == '\\' || dir[0] == '~')
+		luaL_error(L, "[%s][1] invalid access: %s", __func__, dir.c_str());
+	if (dir[0] == ' ' || dir[0] == '\t')
+		luaL_error(L, "[%s][2] invalid access: %s", __func__, dir.c_str());
+
+	if (strstr(dir.c_str(), "..") != nullptr)
+		luaL_error(L, "[%s][3] invalid access: %s", __func__, dir.c_str());
+
+	if (dir.size() > 1 && dir[1] == ':')
+		luaL_error(L, "[%s][4] invalid access: %s", __func__, dir.c_str());
+
+	lua_pushboolean(L, FileSystem::CreateDirectory(dir));
 	return 1;
 }
 
 
 /******************************************************************************/
 
-static int ReloadOrRestart(const std::string& springArgs, const std::string& scriptText, bool isStart=false) {
-	if (springArgs.empty() && !isStart) {
+static int ReloadOrRestart(const std::string& springArgs, const std::string& scriptText, bool newProcess) {
+	const std::string springFullName = Platform::GetProcessExecutableFile();
+	const std::string scriptFullName = dataDirLocater.GetWriteDirPath() + "script.txt";
+
+	if (!newProcess) {
 		// signal SpringApp
-		gameSetup->setupText = scriptText;
+		gu->reloadScript = scriptText;
 		gu->globalReload = true;
 
-		LOG("[%s] Spring \"%s\" should be reloading", __FUNCTION__, (Platform::GetProcessExecutableFile()).c_str());
-	} else {
-		const std::string springFullName = Platform::GetProcessExecutableFile();
-		const std::string scriptFullName = dataDirLocater.GetWriteDirPath() + "script.txt";
-
-		std::vector<std::string> processArgs;
-
-		// arguments to Spring binary given by Lua code, if any
-		if (!springArgs.empty()) {
-			processArgs.push_back(springArgs);
-		}
-
-		if (!scriptText.empty()) {
-			// create file 'script.txt' with contents given by Lua code
-			std::ofstream scriptFile(scriptFullName.c_str());
-
-			scriptFile.write(scriptText.c_str(), scriptText.size());
-			scriptFile.close();
-
-			processArgs.push_back(scriptFullName);
-		}
-		if (!isStart) {
-			#ifdef _WIN32
-				// else OpenAL crashes when using execvp
-				ISound::Shutdown();
-			#endif
-			// close local socket to avoid "bind: Address already in use"
-			SafeDelete(gameServer);
-		}
-
-		LOG("[%s] Spring \"%s\" should be restarting", __FUNCTION__, springFullName.c_str());
-		Platform::ExecuteProcess(springFullName, processArgs, isStart);
-
-		// only reached on failure
-		return 1;
+		LOG("[%s] Spring \"%s\" should be reloading", __func__, springFullName.c_str());
+		return 0;
 	}
 
-	return 0;
+	std::vector<std::string> processArgs;
+
+	#if 0
+	// arguments to Spring binary given by Lua code, if any
+	if (!springArgs.empty())
+		processArgs.push_back(springArgs);
+	#endif
+
+	if (!scriptText.empty()) {
+		// create file 'script.txt' with contents given by Lua code
+		std::ofstream scriptFile(scriptFullName.c_str());
+
+		scriptFile.write(scriptText.c_str(), scriptText.size());
+		scriptFile.close();
+
+		processArgs.push_back(scriptFullName);
+	}
+
+	#ifdef _WIN32
+	// else OpenAL crashes when using execvp
+	ISound::Shutdown();
+	#endif
+	// close local socket to avoid "bind: Address already in use"
+	spring::SafeDelete(gameServer);
+
+	LOG("[%s] Spring \"%s\" should be restarting", __func__, springFullName.c_str());
+	Platform::ExecuteProcess(springFullName, processArgs, newProcess);
+
+	// only reached on execvp failure
+	return 1;
 }
 
 
 int LuaUnsyncedCtrl::Reload(lua_State* L)
 {
-	return (ReloadOrRestart("", luaL_checkstring(L, 1)));
+	return (ReloadOrRestart("", luaL_checkstring(L, 1), false));
 }
 
 int LuaUnsyncedCtrl::Restart(lua_State* L)
 {
-	if (ReloadOrRestart(luaL_checkstring(L, 1), luaL_checkstring(L, 2)) != 0) {
-		lua_pushboolean(L, false);
-		return 1;
-	}
-
-	return 0;
+	// same as Reload now, cl-args are always ignored
+	return (ReloadOrRestart(luaL_checkstring(L, 1), luaL_checkstring(L, 2), false));
 }
 
 int LuaUnsyncedCtrl::Start(lua_State* L)
@@ -2202,6 +2174,13 @@ int LuaUnsyncedCtrl::Start(lua_State* L)
 		return 1;
 	}
 
+	return 0;
+}
+
+
+int LuaUnsyncedCtrl::Quit(lua_State* L)
+{
+	gu->globalQuit = true;
 	return 0;
 }
 
@@ -2231,34 +2210,29 @@ int LuaUnsyncedCtrl::SetWMCaption(lua_State* L)
 
 int LuaUnsyncedCtrl::SetUnitDefIcon(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L)) {
-		return 0;
-	}
+	const UnitDef* ud = unitDefHandler->GetUnitDefByID(luaL_checkint(L, 1));
 
-	const int unitDefID = luaL_checkint(L, 1);
-	const UnitDef* ud = unitDefHandler->GetUnitDefByID(unitDefID);
-	if (ud == NULL) {
+	if (ud == nullptr)
 		return 0;
-	}
 
 	ud->iconType = icon::iconHandler->GetIcon(luaL_checksstring(L, 2));
 
 	// set decoys to the same icon
-	std::map<int, std::set<int> >::const_iterator fit;
-
-	if (ud->decoyDef) {
+	if (ud->decoyDef != nullptr)
 		ud->decoyDef->iconType = ud->iconType;
-		fit = unitDefHandler->decoyMap.find(ud->decoyDef->id);
-	} else {
-		fit = unitDefHandler->decoyMap.find(ud->id);
-	}
-	if (fit != unitDefHandler->decoyMap.end()) {
-		const std::set<int>& decoySet = fit->second;
-		std::set<int>::const_iterator dit;
-		for (dit = decoySet.begin(); dit != decoySet.end(); ++dit) {
-  		const UnitDef* decoyDef = unitDefHandler->GetUnitDefByID(*dit);
-			decoyDef->iconType = ud->iconType;
-		}
+
+	// unordered_map<int, unordered_set<int> >
+	const auto& decoyMap = unitDefHandler->decoyMap;
+	const auto decoyMapIt = decoyMap.find((ud->decoyDef != nullptr)? ud->decoyDef->id: ud->id);
+
+	if (decoyMapIt == decoyMap.end())
+		return 0;
+
+	const auto& decoySet = decoyMapIt->second;
+
+	for (const int decoyDefID: decoySet) {
+		const UnitDef* decoyDef = unitDefHandler->GetUnitDefByID(decoyDefID);
+		decoyDef->iconType = ud->iconType;
 	}
 
 	return 0;
@@ -2267,15 +2241,10 @@ int LuaUnsyncedCtrl::SetUnitDefIcon(lua_State* L)
 
 int LuaUnsyncedCtrl::SetUnitDefImage(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L)) {
-		return 0;
-	}
+	const UnitDef* ud = unitDefHandler->GetUnitDefByID(luaL_checkint(L, 1));
 
-	const int unitDefID = luaL_checkint(L, 1);
-	const UnitDef* ud = unitDefHandler->GetUnitDefByID(unitDefID);
-	if (ud == NULL) {
+	if (ud == nullptr)
 		return 0;
-	}
 
 	if (lua_isnoneornil(L, 2)) {
 		// reset to default texture
@@ -2283,21 +2252,23 @@ int LuaUnsyncedCtrl::SetUnitDefImage(lua_State* L)
 		return 0;
 	}
 
-	if (!lua_israwstring(L, 2)) {
+	if (!lua_israwstring(L, 2))
+		return 0;
+
+	const std::string& texName = lua_tostring(L, 2);
+
+	if (texName[0] != LuaTextures::prefix) { // '!'
+		unitDefHandler->SetUnitDefImage(ud, texName);
 		return 0;
 	}
-	const string texName = lua_tostring(L, 2);
 
-	if (texName[0] == LuaTextures::prefix) { // '!'
-		LuaTextures& textures = CLuaHandle::GetActiveTextures(L);
-		const LuaTextures::Texture* tex = textures.GetInfo(texName);
-		if (tex == NULL) {
-			return 0;
-		}
-		unitDefHandler->SetUnitDefImage(ud, tex->id, tex->xsize, tex->ysize);
-	} else {
-		unitDefHandler->SetUnitDefImage(ud, texName);
-	}
+	const LuaTextures& textures = CLuaHandle::GetActiveTextures(L);
+	const LuaTextures::Texture* tex = textures.GetInfo(texName);
+
+	if (tex == nullptr)
+		return 0;
+
+	unitDefHandler->SetUnitDefImage(ud, tex->id, tex->xsize, tex->ysize);
 	return 0;
 }
 
@@ -2306,9 +2277,6 @@ int LuaUnsyncedCtrl::SetUnitDefImage(lua_State* L)
 
 int LuaUnsyncedCtrl::SetUnitGroup(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L))
-		return 0;
-
 	if (gs->noHelperAIs)
 		return 0;
 
@@ -2400,9 +2368,6 @@ static bool CanGiveOrders(const lua_State* L)
 
 int LuaUnsyncedCtrl::GiveOrder(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L))
-		return 0;
-
 	if (!CanGiveOrders(L))
 		return 1;
 
@@ -2418,9 +2383,6 @@ int LuaUnsyncedCtrl::GiveOrder(lua_State* L)
 
 int LuaUnsyncedCtrl::GiveOrderToUnit(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L))
-		return 0;
-
 	if (!CanGiveOrders(L)) {
 		lua_pushboolean(L, false);
 		return 1;
@@ -2443,9 +2405,6 @@ int LuaUnsyncedCtrl::GiveOrderToUnit(lua_State* L)
 
 int LuaUnsyncedCtrl::GiveOrderToUnitMap(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L))
-		return 0;
-
 	if (!CanGiveOrders(L)) {
 		lua_pushboolean(L, false);
 		return 1;
@@ -2474,9 +2433,6 @@ int LuaUnsyncedCtrl::GiveOrderToUnitMap(lua_State* L)
 
 int LuaUnsyncedCtrl::GiveOrderToUnitArray(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L))
-		return 0;
-
 	if (!CanGiveOrders(L)) {
 		lua_pushboolean(L, false);
 		return 1;
@@ -2505,9 +2461,6 @@ int LuaUnsyncedCtrl::GiveOrderToUnitArray(lua_State* L)
 
 int LuaUnsyncedCtrl::GiveOrderArrayToUnitMap(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L))
-		return 0;
-
 	if (!CanGiveOrders(L)) {
 		lua_pushboolean(L, false);
 		return 1;
@@ -2535,9 +2488,6 @@ int LuaUnsyncedCtrl::GiveOrderArrayToUnitMap(lua_State* L)
 
 int LuaUnsyncedCtrl::GiveOrderArrayToUnitArray(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L))
-		return 0;
-
 	if (!CanGiveOrders(L)) {
 		lua_pushboolean(L, false);
 		return 1;
@@ -2579,11 +2529,8 @@ static string GetRawMsg(lua_State* L, const char* caller, int index)
 
 int LuaUnsyncedCtrl::SendLuaUIMsg(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L)) {
-		return 0;
-	}
 	const string msg = GetRawMsg(L, __FUNCTION__, 1);
-	std::vector<boost::uint8_t> data(msg.size());
+	std::vector<std::uint8_t> data(msg.size());
 	std::copy(msg.begin(), msg.end(), data.begin());
 	const string mode = luaL_optstring(L, 2, "");
 	unsigned char modeNum = 0;
@@ -2607,11 +2554,8 @@ int LuaUnsyncedCtrl::SendLuaUIMsg(lua_State* L)
 
 int LuaUnsyncedCtrl::SendLuaGaiaMsg(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L)) {
-		return 0;
-	}
 	const string msg = GetRawMsg(L, __FUNCTION__, 1);
-	std::vector<boost::uint8_t> data(msg.size());
+	std::vector<std::uint8_t> data(msg.size());
 	std::copy(msg.begin(), msg.end(), data.begin());
 	try {
 		clientNet->Send(CBaseNetProtocol::Get().SendLuaMsg(gu->myPlayerNum, LUA_HANDLE_ORDER_GAIA, 0, data));
@@ -2624,11 +2568,8 @@ int LuaUnsyncedCtrl::SendLuaGaiaMsg(lua_State* L)
 
 int LuaUnsyncedCtrl::SendLuaRulesMsg(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L)) {
-		return 0;
-	}
 	const string msg = GetRawMsg(L, __FUNCTION__, 1);
-	std::vector<boost::uint8_t> data(msg.size());
+	std::vector<std::uint8_t> data(msg.size());
 	std::copy(msg.begin(), msg.end(), data.begin());
 	try {
 		clientNet->Send(CBaseNetProtocol::Get().SendLuaMsg(gu->myPlayerNum, LUA_HANDLE_ORDER_RULES, 0, data));
@@ -2638,14 +2579,19 @@ int LuaUnsyncedCtrl::SendLuaRulesMsg(lua_State* L)
 	return 0;
 }
 
+int LuaUnsyncedCtrl::SendLuaMenuMsg(lua_State* L)
+{
+	if (luaMenu != nullptr)
+		luaMenu->RecvLuaMsg(GetRawMsg(L, __FUNCTION__, 1), gu->myPlayerNum);
+
+	return 0;
+}
+
 
 /******************************************************************************/
 
 int LuaUnsyncedCtrl::SetShareLevel(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L))
-		return 0;
-
 	if (gu->spectating || gs->noHelperAIs || gs->PreSimFrame())
 		return 0;
 
@@ -2668,9 +2614,6 @@ int LuaUnsyncedCtrl::SetShareLevel(lua_State* L)
 
 int LuaUnsyncedCtrl::ShareResources(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L))
-		return 0;
-
 	if (gu->spectating || gs->noHelperAIs || gs->PreSimFrame())
 		return 0;
 
@@ -2728,9 +2671,6 @@ int LuaUnsyncedCtrl::SetLastMessagePosition(lua_State* L)
 
 int LuaUnsyncedCtrl::MarkerAddPoint(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L)) {
-		return 0;
-	}
 	if (inMapDrawer == NULL) {
 		return 0;
 	}
@@ -2752,9 +2692,6 @@ int LuaUnsyncedCtrl::MarkerAddPoint(lua_State* L)
 
 int LuaUnsyncedCtrl::MarkerAddLine(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L)) {
-		return 0;
-	}
 	if (inMapDrawer == NULL) {
 		return 0;
 	}
@@ -2778,9 +2715,6 @@ int LuaUnsyncedCtrl::MarkerAddLine(lua_State* L)
 
 int LuaUnsyncedCtrl::MarkerErasePosition(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L)) {
-		return 0;
-	}
 	if (inMapDrawer == NULL) {
 		return 0;
 	}
@@ -2799,10 +2733,6 @@ int LuaUnsyncedCtrl::MarkerErasePosition(lua_State* L)
 
 int LuaUnsyncedCtrl::SetDrawSelectionInfo(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L)) {
-		return 0;
-	}
-
 	if (guihandler)
 		guihandler->SetDrawSelectionInfo(luaL_checkboolean(L, 1));
 
@@ -2815,10 +2745,6 @@ int LuaUnsyncedCtrl::SetDrawSelectionInfo(lua_State* L)
 
 int LuaUnsyncedCtrl::SetBuildSpacing(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L)) {
-		return 0;
-	}
-
 	if (guihandler)
 		guihandler->SetBuildSpacing(luaL_checkinteger(L, 1));
 
@@ -2827,10 +2753,6 @@ int LuaUnsyncedCtrl::SetBuildSpacing(lua_State* L)
 
 int LuaUnsyncedCtrl::SetBuildFacing(lua_State* L)
 {
-	if (!CLuaHandle::CheckModUICtrl(L)) {
-		return 0;
-	}
-
 	if (guihandler)
 		guihandler->SetBuildFacing(luaL_checkint(L, 1));
 
@@ -2868,10 +2790,9 @@ int LuaUnsyncedCtrl::SetAtmosphere(lua_State* L)
 			} else {
 				luaL_error(L, "Unknown array key %s", key.c_str());
 			}
-			continue;
 		}
 
-		if (lua_isnumber(L, -1)) {
+		else if (lua_isnumber(L, -1)) {
 			if (key == "fogStart") {
 				sky->fogStart = lua_tofloat(L, -1);
 			} else if (key == "fogEnd") {
@@ -2879,18 +2800,22 @@ int LuaUnsyncedCtrl::SetAtmosphere(lua_State* L)
 			} else {
 				luaL_error(L, "Unknown scalar key %s", key.c_str());
 			}
-			continue;
 		}
 	}
 
 	return 0;
 }
 
+int LuaUnsyncedCtrl::SetSunDirection(lua_State* L)
+{
+	sky->GetLight()->SetLightDir(float4(luaL_checkfloat(L, 1), luaL_checkfloat(L, 2), luaL_checkfloat(L, 3), luaL_optfloat(L, 4, 1.0f)));
+	return 0;
+}
+
 int LuaUnsyncedCtrl::SetSunLighting(lua_State* L)
 {
-	if (!lua_istable(L, 1)) {
+	if (!lua_istable(L, 1))
 		luaL_error(L, "Incorrect arguments to SetSunLighting()");
-	}
 
 	CSunLighting sl = *sunLighting;
 
@@ -2922,45 +2847,53 @@ int LuaUnsyncedCtrl::SetSunLighting(lua_State* L)
 	return 0;
 }
 
-int LuaUnsyncedCtrl::SetSunParameters(lua_State* L)
+int LuaUnsyncedCtrl::SetMapRenderingParams(lua_State* L)
 {
-	DynamicSkyLight* dynSkyLight = dynamic_cast<DynamicSkyLight*>(sky->GetLight());
+	if (!lua_istable(L, 1)) {
+		luaL_error(L, "Incorrect arguments to SetMapRenderingParams()");
+	}
 
-	if (dynSkyLight == NULL)
-		return 0;
+	for (lua_pushnil(L); lua_next(L, 1) != 0; lua_pop(L, 1)) {
+		if (!lua_israwstring(L, -2))
+			continue;
 
-	const float4 sunDir(luaL_checkfloat(L, 1), luaL_checkfloat(L, 2), luaL_checkfloat(L, 3), luaL_checkfloat(L, 4));
-	const float startAngle = luaL_checkfloat(L, 5);
-	const float orbitTime = luaL_checkfloat(L, 6);
+		const string key = lua_tostring(L, -2);
 
-	dynSkyLight->SetLightParams(sunDir, startAngle, orbitTime);
+		if (lua_istable(L, -1)) {
+			float values[4];
+			const int size = LuaUtils::ParseFloatArray(L, -1, values, 4);
+			if (size == 4) {
+				if (key == "splatTexScales") {
+					mapRendering->splatTexScales = values;
+				} else if (key == "splatTexMults") {
+					mapRendering->splatTexMults = values;
+				} else {
+					luaL_error(L, "Unknown array key %s", key.c_str());
+				}
+			} else {
+				luaL_error(L, "Unexpected size of %d for array key %s", size,  key.c_str());
+			}
+		}
+
+		else if (lua_isboolean(L, -1)) {
+			const bool value = lua_toboolean(L, -1);
+			if (key == "voidWater") {
+				mapRendering->voidWater = value;
+			} else if (key == "voidGround") {
+				mapRendering->voidGround = value;
+			} else if (key == "splatDetailNormalDiffuseAlpha") {
+				mapRendering->splatDetailNormalDiffuseAlpha = value;
+			} else {
+				luaL_error(L, "Unknown boolean key %s", key.c_str());
+			}
+		}
+	}
+
+	CBaseGroundDrawer* groundDrawer = readMap->GetGroundDrawer();
+	groundDrawer->UpdateRenderState();
+
 	return 0;
 }
-
-int LuaUnsyncedCtrl::SetSunManualControl(lua_State* L)
-{
-	DynamicSkyLight* dynSkyLight = dynamic_cast<DynamicSkyLight*>(sky->GetLight());
-
-	if (dynSkyLight == NULL)
-		return 0;
-
-	dynSkyLight->SetLuaControl(luaL_checkboolean(L, 1));
-	return 0;
-}
-
-int LuaUnsyncedCtrl::SetSunDirection(lua_State* L)
-{
-	DynamicSkyLight* dynSkyLight = dynamic_cast<DynamicSkyLight*>(sky->GetLight());
-
-	if (dynSkyLight == NULL)
-		return 0;
-	if (!dynSkyLight->GetLuaControl())
-		return 0;
-
-	dynSkyLight->SetLightDir(float3(luaL_checkfloat(L, 1), luaL_checkfloat(L, 2), luaL_checkfloat(L, 3)));
-	return 0;
-}
-
 
 
 /******************************************************************************/
@@ -3021,7 +2954,7 @@ int LuaUnsyncedCtrl::SetLogSectionFilterLevel(lua_State* L) {
 		}
 	}
 
-	log_frontend_register_runtime_section(luaL_checkstring(L, 1), logLevel);
+	log_frontend_register_runtime_section(logLevel, luaL_checkstring(L, 1));
 	return 0;
 }
 
@@ -3161,9 +3094,7 @@ int LuaUnsyncedCtrl::SetDecalAlpha(lua_State* L)
 		return 0;
 
 	auto decal = decalsGl4->GetDecalByIdx(luaL_checkint(L, 1));
-	decal.rot = luaL_checkfloat(L, 2);
+	decal.alpha = luaL_checkfloat(L, 2);
 	decal.Invalidate();
 	return 0;
 }
-
-

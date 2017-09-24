@@ -32,11 +32,6 @@ bool LuaSyncedMoveCtrl::PushMoveCtrl(lua_State* L)
 	lua_pushliteral(L, "MoveCtrl");
 	lua_newtable(L);
 
-#define REGISTER_LUA_CFUNC(x) \
-	lua_pushstring(L, #x);      \
-	lua_pushcfunction(L, x);    \
-	lua_rawset(L, -3)
-
 	REGISTER_LUA_CFUNC(IsEnabled);
 
 	REGISTER_LUA_CFUNC(Enable);
@@ -134,9 +129,9 @@ static inline DerivedMoveType* ParseDerivedMoveType(lua_State* L, const char* ca
 
 int LuaSyncedMoveCtrl::IsEnabled(lua_State* L)
 {
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	CUnit* unit = ParseUnit(L, __func__, 1);
 
-	if (unit == NULL)
+	if (unit == nullptr)
 		return 0;
 
 	lua_pushboolean(L, unit->UsingScriptMoveType());
@@ -146,9 +141,9 @@ int LuaSyncedMoveCtrl::IsEnabled(lua_State* L)
 
 int LuaSyncedMoveCtrl::Enable(lua_State* L)
 {
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	CUnit* unit = ParseUnit(L, __func__, 1);
 
-	if (unit == NULL)
+	if (unit == nullptr)
 		return 0;
 
 	unit->EnableScriptMoveType();
@@ -158,9 +153,9 @@ int LuaSyncedMoveCtrl::Enable(lua_State* L)
 
 int LuaSyncedMoveCtrl::Disable(lua_State* L)
 {
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	CUnit* unit = ParseUnit(L, __func__, 1);
 
-	if (unit == NULL)
+	if (unit == nullptr)
 		return 0;
 
 	unit->DisableScriptMoveType();
@@ -172,9 +167,9 @@ int LuaSyncedMoveCtrl::Disable(lua_State* L)
 
 int LuaSyncedMoveCtrl::SetTag(lua_State* L)
 {
-	CScriptMoveType* moveType = ParseScriptMoveType(L, __FUNCTION__, 1);
+	CScriptMoveType* moveType = ParseScriptMoveType(L, __func__, 1);
 
-	if (moveType == NULL)
+	if (moveType == nullptr)
 		return 0;
 
 	moveType->tag = luaL_checkint(L, 2);
@@ -184,9 +179,9 @@ int LuaSyncedMoveCtrl::SetTag(lua_State* L)
 
 int LuaSyncedMoveCtrl::GetTag(lua_State* L)
 {
-	CScriptMoveType* moveType = ParseScriptMoveType(L, __FUNCTION__, 1);
+	CScriptMoveType* moveType = ParseScriptMoveType(L, __func__, 1);
 
-	if (moveType == NULL)
+	if (moveType == nullptr)
 		return 0;
 
 	lua_pushnumber(L, moveType->tag);
@@ -199,15 +194,14 @@ int LuaSyncedMoveCtrl::GetTag(lua_State* L)
 
 int LuaSyncedMoveCtrl::SetProgressState(lua_State* L)
 {
-	CScriptMoveType* moveType = ParseScriptMoveType(L, __FUNCTION__, 1);
+	CScriptMoveType* moveType = ParseScriptMoveType(L, __func__, 1);
 
-	if (moveType == NULL)
+	if (moveType == nullptr)
 		return 0;
 
 	const int args = lua_gettop(L); // number of arguments
-	if (args < 2) {
+	if (args < 2)
 		luaL_error(L, "Incorrect arguments to SetProgressState()");
-	}
 
 	if (lua_isnumber(L, 2)) {
 		const int state = lua_toint(L, 2);
@@ -239,9 +233,9 @@ int LuaSyncedMoveCtrl::SetProgressState(lua_State* L)
 
 int LuaSyncedMoveCtrl::SetExtrapolate(lua_State* L)
 {
-	CScriptMoveType* moveType = ParseScriptMoveType(L, __FUNCTION__, 1);
+	CScriptMoveType* moveType = ParseScriptMoveType(L, __func__, 1);
 
-	if (moveType == NULL)
+	if (moveType == nullptr)
 		return 0;
 
 	moveType->extrapolate = luaL_checkboolean(L, 2);
@@ -253,20 +247,14 @@ int LuaSyncedMoveCtrl::SetExtrapolate(lua_State* L)
 
 int LuaSyncedMoveCtrl::SetPhysics(lua_State* L)
 {
-	CScriptMoveType* moveType = ParseScriptMoveType(L, __FUNCTION__, 1);
+	CScriptMoveType* moveType = ParseScriptMoveType(L, __func__, 1);
 
-	if (moveType == NULL)
+	if (moveType == nullptr)
 		return 0;
 
-	const float3 pos(luaL_checkfloat(L, 2),
-	                 luaL_checkfloat(L, 3),
-	                 luaL_checkfloat(L, 4));
-	const float3 vel(luaL_checkfloat(L, 5),
-	                 luaL_checkfloat(L, 6),
-	                 luaL_checkfloat(L, 7));
-	const float3 rot(luaL_checkfloat(L, 8),
-	                 luaL_checkfloat(L, 9),
-	                 luaL_checkfloat(L, 10));
+	const float3 pos(luaL_checkfloat(L, 2), luaL_checkfloat(L, 3), luaL_checkfloat(L,  4));
+	const float3 vel(luaL_checkfloat(L, 5), luaL_checkfloat(L, 6), luaL_checkfloat(L,  7));
+	const float3 rot(luaL_checkfloat(L, 8), luaL_checkfloat(L, 9), luaL_checkfloat(L, 10));
 	ASSERT_SYNCED(pos);
 	ASSERT_SYNCED(vel);
 	ASSERT_SYNCED(rot);
@@ -277,9 +265,9 @@ int LuaSyncedMoveCtrl::SetPhysics(lua_State* L)
 
 int LuaSyncedMoveCtrl::SetPosition(lua_State* L)
 {
-	CScriptMoveType* moveType = ParseScriptMoveType(L, __FUNCTION__, 1);
+	CScriptMoveType* moveType = ParseScriptMoveType(L, __func__, 1);
 
-	if (moveType == NULL)
+	if (moveType == nullptr)
 		return 0;
 
 	const float3 pos(luaL_checkfloat(L, 2),
@@ -293,9 +281,9 @@ int LuaSyncedMoveCtrl::SetPosition(lua_State* L)
 
 int LuaSyncedMoveCtrl::SetVelocity(lua_State* L)
 {
-	CScriptMoveType* moveType = ParseScriptMoveType(L, __FUNCTION__, 1);
+	CScriptMoveType* moveType = ParseScriptMoveType(L, __func__, 1);
 
-	if (moveType == NULL)
+	if (moveType == nullptr)
 		return 0;
 
 	const float3 vel(luaL_checkfloat(L, 2),
@@ -309,9 +297,9 @@ int LuaSyncedMoveCtrl::SetVelocity(lua_State* L)
 
 int LuaSyncedMoveCtrl::SetRelativeVelocity(lua_State* L)
 {
-	CScriptMoveType* moveType = ParseScriptMoveType(L, __FUNCTION__, 1);
+	CScriptMoveType* moveType = ParseScriptMoveType(L, __func__, 1);
 
-	if (moveType == NULL)
+	if (moveType == nullptr)
 		return 0;
 
 	const float3 relVel(luaL_checkfloat(L, 2),
@@ -325,9 +313,9 @@ int LuaSyncedMoveCtrl::SetRelativeVelocity(lua_State* L)
 
 int LuaSyncedMoveCtrl::SetRotation(lua_State* L)
 {
-	CScriptMoveType* moveType = ParseScriptMoveType(L, __FUNCTION__, 1);
+	CScriptMoveType* moveType = ParseScriptMoveType(L, __func__, 1);
 
-	if (moveType == NULL)
+	if (moveType == nullptr)
 		return 0;
 
 	const float3 rot(luaL_checkfloat(L, 2),
@@ -348,9 +336,9 @@ int LuaSyncedMoveCtrl::SetRotationOffset(lua_State* L)
 
 int LuaSyncedMoveCtrl::SetRotationVelocity(lua_State* L)
 {
-	CScriptMoveType* moveType = ParseScriptMoveType(L, __FUNCTION__, 1);
+	CScriptMoveType* moveType = ParseScriptMoveType(L, __func__, 1);
 
-	if (moveType == NULL)
+	if (moveType == nullptr)
 		return 0;
 
 	const float3 rotVel(luaL_checkfloat(L, 2),
@@ -364,9 +352,9 @@ int LuaSyncedMoveCtrl::SetRotationVelocity(lua_State* L)
 
 int LuaSyncedMoveCtrl::SetHeading(lua_State* L)
 {
-	CScriptMoveType* moveType = ParseScriptMoveType(L, __FUNCTION__, 1);
+	CScriptMoveType* moveType = ParseScriptMoveType(L, __func__, 1);
 
-	if (moveType == NULL)
+	if (moveType == nullptr)
 		return 0;
 
 	const short heading = (short)luaL_checknumber(L, 2);
@@ -380,9 +368,9 @@ int LuaSyncedMoveCtrl::SetHeading(lua_State* L)
 
 int LuaSyncedMoveCtrl::SetTrackSlope(lua_State* L)
 {
-	CScriptMoveType* moveType = ParseScriptMoveType(L, __FUNCTION__, 1);
+	CScriptMoveType* moveType = ParseScriptMoveType(L, __func__, 1);
 
-	if (moveType == NULL)
+	if (moveType == nullptr)
 		return 0;
 
 	moveType->trackSlope = luaL_checkboolean(L, 2);
@@ -392,9 +380,9 @@ int LuaSyncedMoveCtrl::SetTrackSlope(lua_State* L)
 
 int LuaSyncedMoveCtrl::SetTrackGround(lua_State* L)
 {
-	CScriptMoveType* moveType = ParseScriptMoveType(L, __FUNCTION__, 1);
+	CScriptMoveType* moveType = ParseScriptMoveType(L, __func__, 1);
 
-	if (moveType == NULL)
+	if (moveType == nullptr)
 		return 0;
 
 	moveType->trackGround = luaL_checkboolean(L, 2);
@@ -404,9 +392,9 @@ int LuaSyncedMoveCtrl::SetTrackGround(lua_State* L)
 
 int LuaSyncedMoveCtrl::SetGroundOffset(lua_State* L)
 {
-	CScriptMoveType* moveType = ParseScriptMoveType(L, __FUNCTION__, 1);
+	CScriptMoveType* moveType = ParseScriptMoveType(L, __func__, 1);
 
-	if (moveType == NULL)
+	if (moveType == nullptr)
 		return 0;
 
 	moveType->groundOffset = luaL_checkfloat(L, 2);
@@ -416,9 +404,9 @@ int LuaSyncedMoveCtrl::SetGroundOffset(lua_State* L)
 
 int LuaSyncedMoveCtrl::SetGravity(lua_State* L)
 {
-	CScriptMoveType* moveType = ParseScriptMoveType(L, __FUNCTION__, 1);
+	CScriptMoveType* moveType = ParseScriptMoveType(L, __func__, 1);
 
-	if (moveType == NULL)
+	if (moveType == nullptr)
 		return 0;
 
 	moveType->gravityFactor = luaL_checkfloat(L, 2);
@@ -428,9 +416,9 @@ int LuaSyncedMoveCtrl::SetGravity(lua_State* L)
 
 int LuaSyncedMoveCtrl::SetDrag(lua_State* L)
 {
-	CScriptMoveType* moveType = ParseScriptMoveType(L, __FUNCTION__, 1);
+	CScriptMoveType* moveType = ParseScriptMoveType(L, __func__, 1);
 
-	if (moveType == NULL)
+	if (moveType == nullptr)
 		return 0;
 
 	moveType->drag = luaL_checkfloat(L, 2);
@@ -440,9 +428,9 @@ int LuaSyncedMoveCtrl::SetDrag(lua_State* L)
 
 int LuaSyncedMoveCtrl::SetWindFactor(lua_State* L)
 {
-	CScriptMoveType* moveType = ParseScriptMoveType(L, __FUNCTION__, 1);
+	CScriptMoveType* moveType = ParseScriptMoveType(L, __func__, 1);
 
-	if (moveType == NULL)
+	if (moveType == nullptr)
 		return 0;
 
 	moveType->windFactor = luaL_checkfloat(L, 2);
@@ -452,9 +440,9 @@ int LuaSyncedMoveCtrl::SetWindFactor(lua_State* L)
 
 int LuaSyncedMoveCtrl::SetLimits(lua_State* L)
 {
-	CScriptMoveType* moveType = ParseScriptMoveType(L, __FUNCTION__, 1);
+	CScriptMoveType* moveType = ParseScriptMoveType(L, __func__, 1);
 
-	if (moveType == NULL)
+	if (moveType == nullptr)
 		return 0;
 
 	const float3 mins(luaL_checkfloat(L, 2),
@@ -473,9 +461,9 @@ int LuaSyncedMoveCtrl::SetLimits(lua_State* L)
 
 int LuaSyncedMoveCtrl::SetNoBlocking(lua_State* L)
 {
-	CScriptMoveType* moveType = ParseScriptMoveType(L, __FUNCTION__, 1);
+	CScriptMoveType* moveType = ParseScriptMoveType(L, __func__, 1);
 
-	if (moveType == NULL)
+	if (moveType == nullptr)
 		return 0;
 
 	// marks or unmarks the unit on the blocking-map, but
@@ -487,9 +475,9 @@ int LuaSyncedMoveCtrl::SetNoBlocking(lua_State* L)
 
 int LuaSyncedMoveCtrl::SetShotStop(lua_State* L)
 {
-	CScriptMoveType* moveType = ParseScriptMoveType(L, __FUNCTION__, 1);
+	CScriptMoveType* moveType = ParseScriptMoveType(L, __func__, 1);
 
-	if (moveType == NULL)
+	if (moveType == nullptr)
 		return 0;
 
 	moveType->shotStop = luaL_checkboolean(L, 2);
@@ -499,9 +487,9 @@ int LuaSyncedMoveCtrl::SetShotStop(lua_State* L)
 
 int LuaSyncedMoveCtrl::SetSlopeStop(lua_State* L)
 {
-	CScriptMoveType* moveType = ParseScriptMoveType(L, __FUNCTION__, 1);
+	CScriptMoveType* moveType = ParseScriptMoveType(L, __func__, 1);
 
-	if (moveType == NULL)
+	if (moveType == nullptr)
 		return 0;
 
 	moveType->slopeStop = luaL_checkboolean(L, 2);
@@ -511,9 +499,9 @@ int LuaSyncedMoveCtrl::SetSlopeStop(lua_State* L)
 
 int LuaSyncedMoveCtrl::SetCollideStop(lua_State* L)
 {
-	CScriptMoveType* moveType = ParseScriptMoveType(L, __FUNCTION__, 1);
+	CScriptMoveType* moveType = ParseScriptMoveType(L, __func__, 1);
 
-	if (moveType == NULL)
+	if (moveType == nullptr)
 		return 0;
 
 	moveType->gndStop = luaL_checkboolean(L, 2); // FIXME
@@ -548,8 +536,8 @@ static int SetMoveTypeData(lua_State* L, AMoveType* moveType, const char* caller
 {
 	int numAssignedValues = 0;
 
-	if (moveType == NULL) {
-		luaL_error(L, "[%s] unit %d has incompatible movetype for %s", __FUNCTION__, lua_tonumber(L, 1), caller);
+	if (moveType == nullptr) {
+		luaL_error(L, "[%s] unit %d has incompatible movetype for %s", __func__, lua_tointeger(L, 1), caller);
 		return numAssignedValues;
 	}
 
@@ -563,7 +551,7 @@ static int SetMoveTypeData(lua_State* L, AMoveType* moveType, const char* caller
 					if (lua_israwstring(L, -2) && SetMoveTypeValue(L, moveType, -2, -1)) {
 						numAssignedValues++;
 					} else {
-						LOG_L(L_WARNING, "[%s] incompatible movetype key for %s", __FUNCTION__, caller);
+						LOG_L(L_WARNING, "[%s] incompatible movetype key for %s", __func__, caller);
 					}
 				}
 			}
@@ -574,7 +562,7 @@ static int SetMoveTypeData(lua_State* L, AMoveType* moveType, const char* caller
 			if (lua_isstring(L, 2) && SetMoveTypeValue(L, moveType, 2, 3)) {
 				numAssignedValues++;
 			} else {
-				LOG_L(L_WARNING, "[%s] incompatible movetype key for %s", __FUNCTION__, caller);
+				LOG_L(L_WARNING, "[%s] incompatible movetype key for %s", __func__, caller);
 			}
 		} break;
 	}
@@ -586,17 +574,17 @@ static int SetMoveTypeData(lua_State* L, AMoveType* moveType, const char* caller
 
 int LuaSyncedMoveCtrl::SetGunshipMoveTypeData(lua_State* L)
 {
-	return (SetMoveTypeData(L, ParseDerivedMoveType<CHoverAirMoveType>(L, __FUNCTION__, 1), __FUNCTION__));
+	return (SetMoveTypeData(L, ParseDerivedMoveType<CHoverAirMoveType>(L, __func__, 1), __func__));
 }
 
 int LuaSyncedMoveCtrl::SetAirMoveTypeData(lua_State* L)
 {
-	return (SetMoveTypeData(L, ParseDerivedMoveType<CStrafeAirMoveType>(L, __FUNCTION__, 1), __FUNCTION__));
+	return (SetMoveTypeData(L, ParseDerivedMoveType<CStrafeAirMoveType>(L, __func__, 1), __func__));
 }
 
 int LuaSyncedMoveCtrl::SetGroundMoveTypeData(lua_State* L)
 {
-	return (SetMoveTypeData(L, ParseDerivedMoveType<CGroundMoveType>(L, __FUNCTION__, 1), __FUNCTION__));
+	return (SetMoveTypeData(L, ParseDerivedMoveType<CGroundMoveType>(L, __func__, 1), __func__));
 }
 
 
@@ -606,7 +594,7 @@ int LuaSyncedMoveCtrl::SetGroundMoveTypeData(lua_State* L)
 
 int LuaSyncedMoveCtrl::SetMoveDef(lua_State* L)
 {
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	CUnit* unit = ParseUnit(L, __func__, 1);
 	MoveDef* moveDef = nullptr;
 
 	if (unit == nullptr) {
@@ -652,7 +640,7 @@ int LuaSyncedMoveCtrl::SetMoveDef(lua_State* L)
 	// note: if a unit (ID) is available, then its current MoveDef should always
 	// be taken over the MoveDef corresponding to its UnitDef::pathType wherever
 	// MoveDef properties are used in decision logic
-	lua_pushboolean(L, (unit->moveDef = moveDef) != NULL);
+	lua_pushboolean(L, (unit->moveDef = moveDef) != nullptr);
 	return 1;
 }
 

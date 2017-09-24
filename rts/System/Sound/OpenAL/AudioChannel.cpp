@@ -3,51 +3,46 @@
 #include "AudioChannel.h"
 
 #include "ALShared.h"
-#include "System/Sound/ISound.h"
 #include "SoundItem.h"
-#include "System/Sound/SoundLog.h"
 #include "SoundSource.h"
+#include "Game/GlobalUnsynced.h"
 #include "Sim/Misc/GuiSoundSet.h"
 #include "Sim/Objects/WorldObject.h"
+#include "System/Sound/ISound.h"
+#include "System/Sound/SoundLog.h"
+#include "System/Threading/SpringThreading.h"
 
 #include <climits>
 
-extern boost::recursive_mutex soundMutex;
+extern spring::recursive_mutex soundMutex;
 
-const size_t AudioChannel::MAX_STREAM_QUEUESIZE = 10;
-
-
-AudioChannel::AudioChannel()
-	: curStreamSrc(NULL)
-{
-}
 
 
 void AudioChannel::SetVolume(float newVolume)
 {
-	volume = std::max(newVolume, 0.f);
+	volume = std::max(newVolume, 0.0f);
 
-	if (cur_sources.empty())
+	if (curSources.empty())
 		return;
 
-	boost::recursive_mutex::scoped_lock lck(soundMutex);
+	std::lock_guard<spring::recursive_mutex> lck(soundMutex);
 
-	for (std::map<CSoundSource*, bool>::iterator it = cur_sources.begin(); it != cur_sources.end(); ++it) {
-		it->first->UpdateVolume();
+	for (auto it = curSources.begin(); it != curSources.end(); ++it) {
+		(*it)->UpdateVolume();
 	}
+
 	CheckError("AudioChannel::SetVolume");
 }
 
 
 void AudioChannel::Enable(bool newState)
 {
-	boost::recursive_mutex::scoped_lock lck(soundMutex);
+	std::lock_guard<spring::recursive_mutex> lck(soundMutex);
 
-	enabled = newState;
+	if ((enabled = newState))
+		return;
 
-	if (!enabled) {
-		SetVolume(0.f);
-	}
+	SetVolume(0.0f);
 }
 
 
@@ -55,21 +50,20 @@ void AudioChannel::SoundSourceFinished(CSoundSource* sndSource)
 {
 	if (curStreamSrc == sndSource) {
 		if (!streamQueue.empty()) {
-			StreamQueueItem& next = streamQueue.back();
-			StreamPlay(next.fileName, next.volume, false);
+			StreamPlay(streamQueue.back(), false);
 			streamQueue.pop_back();
 		} else {
-			curStreamSrc = NULL;
+			curStreamSrc = nullptr;
 		}
 	}
 
-	cur_sources.erase(sndSource);
+	curSources.erase(sndSource);
 }
 
 
 void AudioChannel::FindSourceAndPlay(size_t id, const float3& pos, const float3& velocity, float volume, bool relative)
 {
-	boost::recursive_mutex::scoped_lock lck(soundMutex);
+	std::lock_guard<spring::recursive_mutex> lck(soundMutex);
 
 	if (!enabled)
 		return;
@@ -79,47 +73,50 @@ void AudioChannel::FindSourceAndPlay(size_t id, const float3& pos, const float3&
 
 	// generate the sound item
 	SoundItem* sndItem = sound->GetSoundItem(id);
-	if (!sndItem) {
+
+	if (sndItem == nullptr) {
 		sound->numEmptyPlayRequests++;
 		return;
 	}
 
 	// check distance to listener
 	if (pos.distance(sound->GetListenerPos()) > sndItem->MaxDistance()) {
-		if (!relative) {
+		if (!relative)
 			return;
-		} else {
-			LOG("CSound::PlaySample: maxdist ignored for relative playback: %s", sndItem->Name().c_str());
-		}
+
+		LOG("CSound::PlaySample: maxdist ignored for relative playback: %s", sndItem->Name().c_str());
 	}
 
 	// don't spam to many sounds per frame
-	if (emmitsThisFrame >= emmitsPerFrame)
+	if (emitsThisFrame >= emitsPerFrame)
 		return;
-	emmitsThisFrame++;
+	emitsThisFrame++;
 
 	// check if the sound item is already played
-	if (cur_sources.size() >= maxConcurrentSources) {
-		CSoundSource* src = NULL;
+	if (curSources.size() >= maxConcurrentSources) {
+		CSoundSource* src = nullptr;
+
 		int prio = INT_MAX;
-		for (std::map<CSoundSource*, bool>::iterator it = cur_sources.begin(); it != cur_sources.end(); ++it) {
-			if (it->first->GetCurrentPriority() < prio) {
-				src  = it->first;
-				prio = it->first->GetCurrentPriority();
+
+		for (auto it = curSources.begin(); it != curSources.end(); ++it) {
+			if ((*it)->GetCurrentPriority() < prio) {
+				src  = *it;
+				prio = src->GetCurrentPriority();
 			}
 		}
 
-		if (src && prio <= sndItem->GetPriority()) {
-			src->Stop();
-		} else {
+		if (src == nullptr || prio > sndItem->GetPriority()) {
 			LOG_L(L_DEBUG, "CSound::PlaySample: Max concurrent sounds in channel reached! Dropping playback!");
 			return;
 		}
+
+		src->Stop();
 	}
 
 	// find a sound source to play the item in
 	CSoundSource* sndSource = sound->GetNextBestSource();
-	if (!sndSource || (sndSource->GetCurrentPriority() >= sndItem->GetPriority())) {
+
+	if (sndSource == nullptr || (sndSource->GetCurrentPriority() >= sndItem->GetPriority())) {
 		LOG_L(L_DEBUG, "CSound::PlaySample: Max sounds reached! Dropping playback!");
 		return;
 	}
@@ -128,7 +125,7 @@ void AudioChannel::FindSourceAndPlay(size_t id, const float3& pos, const float3&
 
 	// play the sound item
 	sndSource->PlayAsync(this, sndItem, pos, velocity, volume, relative);
-	cur_sources[sndSource] = true;
+	curSources.insert(sndSource);
 }
 
 void AudioChannel::PlaySample(size_t id, float volume)
@@ -160,11 +157,10 @@ void AudioChannel::PlayRandomSample(const GuiSoundSet& soundSet, const CWorldObj
 
 void AudioChannel::PlayRandomSample(const GuiSoundSet& soundSet, const float3& pos)
 {
-	const int soundIdx = soundSet.getRandomIdx();
-
-	if (soundIdx < 0)
+	if (soundSet.sounds.empty())
 		return;
 
+	const int soundIdx = guRNG.NextInt(soundSet.sounds.size());
 	const int soundID = soundSet.getID(soundIdx);
 	const float soundVol = soundSet.getVolume(soundIdx);
 
@@ -174,62 +170,64 @@ void AudioChannel::PlayRandomSample(const GuiSoundSet& soundSet, const float3& p
 
 void AudioChannel::StreamPlay(const std::string& filepath, float volume, bool enqueue)
 {
-	boost::recursive_mutex::scoped_lock lck(soundMutex);
+	std::lock_guard<spring::recursive_mutex> lck(soundMutex);
 
 	if (!enabled)
 		return;
 
-	if (curStreamSrc && enqueue) {
+	if (curStreamSrc != nullptr && enqueue) {
 		if (streamQueue.size() > MAX_STREAM_QUEUESIZE) {
 			streamQueue.resize(MAX_STREAM_QUEUESIZE);
-			streamQueue.pop_back(); //! make room for the new item
+			streamQueue.pop_back(); // make room for the new item
 		}
-		StreamQueueItem newItem(filepath, volume);
-		streamQueue.push_back(newItem);
+
+		streamQueue.emplace_back(filepath, volume);
 		return;
 	}
 
-	if (!curStreamSrc)
-		curStreamSrc = sound->GetNextBestSource(); //! may return 0 if no sources available
+	if (curStreamSrc == nullptr)
+		curStreamSrc = sound->GetNextBestSource(); // may return 0 if no sources available
 
-	if (curStreamSrc) {
-		cur_sources[curStreamSrc] = true; //! This one first, PlayStream may invoke Stop immediately thus setting curStreamSrc to NULL
-		curStreamSrc->PlayStream(this, filepath, volume);
-	}
+	if (curStreamSrc == nullptr)
+		return;
+
+	// insert first, PlayStream may invoke Stop immediately thus setting curStreamSrc to NULL
+	curSources.insert(curStreamSrc);
+	curStreamSrc->PlayStream(this, filepath, volume);
 }
 
 void AudioChannel::StreamPause()
 {
-	boost::recursive_mutex::scoped_lock lck(soundMutex);
+	std::lock_guard<spring::recursive_mutex> lck(soundMutex);
 
-	if (curStreamSrc)
+	if (curStreamSrc != nullptr)
 		curStreamSrc->StreamPause();
 }
 
 void AudioChannel::StreamStop()
 {
-	boost::recursive_mutex::scoped_lock lck(soundMutex);
+	std::lock_guard<spring::recursive_mutex> lck(soundMutex);
 
-	if (curStreamSrc)
+	if (curStreamSrc != nullptr)
 		curStreamSrc->StreamStop();
 }
 
 float AudioChannel::StreamGetTime()
 {
-	boost::recursive_mutex::scoped_lock lck(soundMutex);
+	std::lock_guard<spring::recursive_mutex> lck(soundMutex);
 
-	if (curStreamSrc)
+	if (curStreamSrc != nullptr)
 		return curStreamSrc->GetStreamTime();
-	else
-		return 0.0f;
+
+	return 0.0f;
 }
 
 float AudioChannel::StreamGetPlayTime()
 {
-	boost::recursive_mutex::scoped_lock lck(soundMutex);
+	std::lock_guard<spring::recursive_mutex> lck(soundMutex);
 
-	if (curStreamSrc)
+	if (curStreamSrc != nullptr)
 		return curStreamSrc->GetStreamPlayTime();
-	else
-		return 0.0f;
+
+	return 0.0f;
 }

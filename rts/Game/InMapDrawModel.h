@@ -5,7 +5,6 @@
 
 #include <string>
 #include <vector>
-#include <list>
 
 #include "System/float3.h"
 #include "System/creg/creg_cond.h"
@@ -26,7 +25,6 @@ public:
 	static const float QUAD_SCALE;
 
 	CInMapDrawModel();
-	~CInMapDrawModel();
 
 	void PostLoad();
 
@@ -38,12 +36,11 @@ public:
 	void EraseNear(const float3& pos, int playerID);
 	void EraseAll();
 
-	int GetNumPoints() const { return numPoints; }
-	int GetNumLines() const { return numLines; }
+	size_t GetNumPoints() const { return numPoints; }
+	size_t GetNumLines() const { return numLines; }
 
 
 	struct MapDrawPrimitive {
-
 	public:
 		MapDrawPrimitive(bool spectator, int teamID, const TeamController* teamController)
 			: spectator(spectator)
@@ -51,7 +48,7 @@ public:
 			, teamController(teamController)
 		{}
 
-		bool IsLocalPlayerAllowedToSee(const CInMapDrawModel* inMapDraw) const;
+		bool IsVisibleToPlayer(bool drawAllMarks) const;
 
 		/**
 		 * Was the creator of this map-drawing spectator at the time it was
@@ -121,8 +118,8 @@ public:
 	 * cell of a grid structure.
 	 */
 	struct DrawQuad {
-		std::list<CInMapDrawModel::MapPoint> points;
-		std::list<CInMapDrawModel::MapLine> lines;
+		std::vector<CInMapDrawModel::MapPoint> points;
+		std::vector<CInMapDrawModel::MapLine> lines;
 	};
 
 	int GetDrawQuadX() const { return drawQuadsX; }
@@ -139,9 +136,9 @@ private:
 	bool drawAllMarks;
 
 	/// total number of points
-	int numPoints;
+	size_t numPoints;
 	/// total number of lines
-	int numLines;
+	size_t numLines;
 };
 
 extern CInMapDrawModel* inMapDrawerModel;

@@ -3,17 +3,18 @@
 #ifndef PROJECTILE_DRAWER_HDR
 #define PROJECTILE_DRAWER_HDR
 
-#include "Rendering/GL/myGL.h"
 #include <array>
-#include <set>
 
+#include "Rendering/GL/myGL.h"
 #include "Rendering/GL/FBO.h"
 #include "Rendering/Models/3DModel.h"
 #include "Sim/Projectiles/ProjectileFunctors.h"
 #include "System/EventClient.h"
+#include "System/UnorderedSet.hpp"
 
 class CSolidObject;
 class CTextureAtlas;
+class CVertexArray;
 struct AtlasedTexture;
 class CGroundFlash;
 struct FlyingPiece;
@@ -26,8 +27,6 @@ class CProjectileDrawer: public CEventClient {
 public:
 	CProjectileDrawer();
 	~CProjectileDrawer();
-
-	typedef std::set<CProjectile*, ProjectileDistanceComparator> SortedProjectileSet;
 
 	void Draw(bool drawReflection, bool drawRefraction = false);
 	void DrawProjectilesMiniMap();
@@ -51,50 +50,53 @@ public:
 	void DecPerlinTexObjectCount() { perlinTexObjects--; }
 
 
-	CTextureAtlas* textureAtlas;  ///< texture atlas for projectiles
-	CTextureAtlas* groundFXAtlas; ///< texture atlas for ground fx
+	CVertexArray* fxVA = nullptr;
+	CVertexArray* gfVA = nullptr;
+
+	CTextureAtlas* textureAtlas = nullptr;  ///< texture atlas for projectiles
+	CTextureAtlas* groundFXAtlas = nullptr; ///< texture atlas for ground fx
 
 	// texture-coordinates for projectiles
-	AtlasedTexture* flaretex;
-	AtlasedTexture* dguntex;            ///< dgun texture
-	AtlasedTexture* flareprojectiletex; ///< texture used by flares that trick missiles
-	AtlasedTexture* sbtrailtex;         ///< default first section of starburst missile trail texture
-	AtlasedTexture* missiletrailtex;    ///< default first section of missile trail texture
-	AtlasedTexture* muzzleflametex;     ///< default muzzle flame texture
-	AtlasedTexture* repulsetex;         ///< texture of impact on repulsor
-	AtlasedTexture* sbflaretex;         ///< default starburst  missile flare texture
-	AtlasedTexture* missileflaretex;    ///< default missile flare texture
-	AtlasedTexture* beamlaserflaretex;  ///< default beam laser flare texture
-	AtlasedTexture* explotex;
-	AtlasedTexture* explofadetex;
-	AtlasedTexture* heatcloudtex;
-	AtlasedTexture* circularthingytex;
-	AtlasedTexture* bubbletex;          ///< torpedo trail texture
-	AtlasedTexture* geosquaretex;       ///< unknown use
-	AtlasedTexture* gfxtex;             ///< nanospray texture
-	AtlasedTexture* projectiletex;      ///< appears to be unused
-	AtlasedTexture* repulsegfxtex;      ///< used by repulsor
-	AtlasedTexture* sphereparttex;      ///< sphere explosion texture
-	AtlasedTexture* torpedotex;         ///< appears in-game as a 1 texel texture
-	AtlasedTexture* wrecktex;           ///< smoking explosion part texture
-	AtlasedTexture* plasmatex;          ///< default plasma texture
-	AtlasedTexture* laserendtex;
-	AtlasedTexture* laserfallofftex;
-	AtlasedTexture* randdotstex;
-	AtlasedTexture* smoketrailtex;
-	AtlasedTexture* waketex;
-	AtlasedTexture* perlintex;
-	AtlasedTexture* flametex;
+	AtlasedTexture* flaretex = nullptr;
+	AtlasedTexture* dguntex = nullptr;            ///< dgun texture
+	AtlasedTexture* flareprojectiletex = nullptr; ///< texture used by flares that trick missiles
+	AtlasedTexture* sbtrailtex = nullptr;         ///< default first section of starburst missile trail texture
+	AtlasedTexture* missiletrailtex = nullptr;    ///< default first section of missile trail texture
+	AtlasedTexture* muzzleflametex = nullptr;     ///< default muzzle flame texture
+	AtlasedTexture* repulsetex = nullptr;         ///< texture of impact on repulsor
+	AtlasedTexture* sbflaretex = nullptr;         ///< default starburst  missile flare texture
+	AtlasedTexture* missileflaretex = nullptr;    ///< default missile flare texture
+	AtlasedTexture* beamlaserflaretex = nullptr;  ///< default beam laser flare texture
+	AtlasedTexture* explotex = nullptr;
+	AtlasedTexture* explofadetex = nullptr;
+	AtlasedTexture* heatcloudtex = nullptr;
+	AtlasedTexture* circularthingytex = nullptr;
+	AtlasedTexture* bubbletex = nullptr;          ///< torpedo trail texture
+	AtlasedTexture* geosquaretex = nullptr;       ///< unknown use
+	AtlasedTexture* gfxtex = nullptr;             ///< nanospray texture
+	AtlasedTexture* projectiletex = nullptr;      ///< appears to be unused
+	AtlasedTexture* repulsegfxtex = nullptr;      ///< used by repulsor
+	AtlasedTexture* sphereparttex = nullptr;      ///< sphere explosion texture
+	AtlasedTexture* torpedotex = nullptr;         ///< appears in-game as a 1 texel texture
+	AtlasedTexture* wrecktex = nullptr;           ///< smoking explosion part texture
+	AtlasedTexture* plasmatex = nullptr;          ///< default plasma texture
+	AtlasedTexture* laserendtex = nullptr;
+	AtlasedTexture* laserfallofftex = nullptr;
+	AtlasedTexture* randdotstex = nullptr;
+	AtlasedTexture* smoketrailtex = nullptr;
+	AtlasedTexture* waketex = nullptr;
+	AtlasedTexture* perlintex = nullptr;
+	AtlasedTexture* flametex = nullptr;
 
-	AtlasedTexture* groundflashtex;
-	AtlasedTexture* groundringtex;
+	AtlasedTexture* groundflashtex = nullptr;
+	AtlasedTexture* groundringtex = nullptr;
 
-	AtlasedTexture* seismictex;
+	AtlasedTexture* seismictex = nullptr;
 
 	std::vector<const AtlasedTexture*> smoketex;
 
 private:
-	static void ParseAtlasTextures(const bool, const LuaTable&, std::set<std::string>&, CTextureAtlas*);
+	static void ParseAtlasTextures(const bool, const LuaTable&, spring::unordered_set<std::string>&, CTextureAtlas*);
 
 	void DrawProjectiles(int modelType, bool drawReflection, bool drawRefraction);
 	void DrawProjectilesShadow(int modelType);
@@ -126,11 +128,13 @@ private:
 	/// projectiles with a model
 	std::array<IModelRenderContainer*, MODELTYPE_OTHER> modelRenderers;
 
+	ProjectileDistanceComparator zSortCmp;
+
 	/**
-	 * z-sorted set of projectiles without models; used
+	 * distance-sorted projectiles without models; used
 	 * to render particle effects in back-to-front order
 	 */
-	SortedProjectileSet zSortedProjectiles;
+	std::vector<CProjectile*> zSortedProjectiles;
 	std::vector<CProjectile*> unsortedProjectiles;
 };
 

@@ -6,7 +6,7 @@
 #include "Rendering/Shaders/Shader.h"
 #include "Rendering/GlobalRendering.h"
 #include "System/Log/ILog.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 
 #include <cassert>
 
@@ -95,11 +95,11 @@ Shader::IProgramObject* CShaderHandler::GetProgramObject(const std::string& poCl
 
 Shader::IProgramObject* CShaderHandler::CreateProgramObject(const std::string& poClass, const std::string& poName, bool arbProgram) {
 	Shader::IProgramObject* po = Shader::nullProgramObject;
+	const char* poType = arbProgram? "ARB": "GLSL";
 
 	if (programObjects.find(poClass) != programObjects.end()) {
 		if (programObjects[poClass].find(poName) != programObjects[poClass].end()) {
-			LOG_L(L_WARNING, "[%s] There is already a shader program named \"%s\"!",
-					__FUNCTION__, poName.c_str());
+			LOG_L(L_WARNING, "[SH::%s] program-object \"%s\" already exists", __func__, poName.c_str());
 			return (programObjects[poClass][poName]);
 		}
 	} else {
@@ -107,19 +107,17 @@ Shader::IProgramObject* CShaderHandler::CreateProgramObject(const std::string& p
 	}
 
 	if (arbProgram) {
-		if (globalRendering->haveARB) {
+		if (globalRendering->haveARB)
 			po = new Shader::ARBProgramObject(poName);
-		}
+
 	} else {
-		if (globalRendering->haveGLSL) {
+		if (globalRendering->haveGLSL)
 			po = new Shader::GLSLProgramObject(poName);
-		}
+
 	}
 
-	if (po == Shader::nullProgramObject) {
-		LOG_L(L_ERROR, "[%s] Tried to create \"%s\" a %s shader program on hardware w/o support for it!",
-				__FUNCTION__, poName.c_str(), arbProgram ? "ARB" : "GLSL");
-	}
+	if (po == Shader::nullProgramObject)
+		LOG_L(L_ERROR, "[SH::%s] hardware does not support creating (%s) program-object \"%s\"", __func__, poType, poName.c_str());
 
 	programObjects[poClass][poName] = po;
 	return po;
@@ -136,24 +134,23 @@ Shader::IShaderObject* CShaderHandler::CreateShaderObject(const std::string& soN
 		case GL_FRAGMENT_PROGRAM_ARB: {
 			// assert(StringToLower(soName).find("arb") != std::string::npos);
 
-			if (globalRendering->haveARB) {
+			if (globalRendering->haveARB)
 				so = new Shader::ARBShaderObject(soType, soName);
-			}
+
 		} break;
 
 		default: {
 			// assume GLSL shaders by default
 			// assert(StringToLower(soName).find("arb") == std::string::npos);
 
-			if (globalRendering->haveGLSL) {
+			if (globalRendering->haveGLSL)
 				so = new Shader::GLSLShaderObject(soType, soName, soDefs);
-			}
+
 		} break;
 	}
 
 	if (so == Shader::nullShaderObject) {
-		LOG_L(L_ERROR, "[%s] Tried to create a shader (\"%s\") on hardware that does not support them!",
-			__FUNCTION__, soName.c_str());
+		LOG_L(L_ERROR, "[SH::%s] hardware does not support creating shader-object \"%s\"", __func__, soName.c_str());
 		return so;
 	}
 

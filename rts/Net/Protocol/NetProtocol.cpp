@@ -1,7 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include <boost/scoped_ptr.hpp>
-#include <boost/shared_ptr.hpp>
+#include <memory>
 
 // NOTE: these _must_ be included before NetProtocol.h due to some ambiguity in
 // Boost hash_float.hpp ("call of overloaded ‘ldexp(float&, int&)’ is ambiguous")
@@ -10,7 +9,6 @@
 
 #include "NetProtocol.h"
 
-#include "Game/GameData.h"
 #include "Game/GlobalUnsynced.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "System/Net/UnpackPacket.h"
@@ -23,11 +21,11 @@
 CONFIG(int, SourcePort).defaultValue(0);
 
 
-CNetProtocol* clientNet = NULL;
+CNetProtocol* clientNet = nullptr;
 
 CNetProtocol::CNetProtocol() : keepUpdating(false)
 {
-	demoRecorder.reset(NULL);
+	demoRecorder.reset(nullptr);
 }
 
 CNetProtocol::~CNetProtocol()
@@ -47,34 +45,32 @@ void CNetProtocol::InitClient(const char* server_addr, unsigned portnum, const s
 	userName = myName;
 	userPasswd = myPasswd;
 
-	netcode::UDPConnection* conn = new netcode::UDPConnection(configHandler->GetInt("SourcePort"), server_addr, portnum);
-	conn->Unmute();
-	serverConn.reset(conn);
+	serverConn.reset(new netcode::UDPConnection(configHandler->GetInt("SourcePort"), server_addr, portnum));
+	serverConn->Unmute();
 	serverConn->SendData(CBaseNetProtocol::Get().SendAttemptConnect(userName, userPasswd, myVersion, globalConfig->networkLossFactor));
 	serverConn->Flush(true);
 
-	LOG("Connecting to %s:%i using name %s", server_addr, portnum, myName.c_str());
+	LOG("[NetProto::%s] connecting to IP %s on port %i using name %s", __func__, server_addr, portnum, myName.c_str());
 }
 
 void CNetProtocol::InitLocalClient()
 {
-	serverConn.reset(new netcode::CLocalConnection);
+	serverConn.reset(new netcode::CLocalConnection());
 	serverConn->Flush();
 
-	LOG("Connecting to local server");
+	LOG("[NetProto::%s] connecting to local server", __func__);
 }
 
 
 void CNetProtocol::AttemptReconnect(const std::string& myVersion)
 {
-	netcode::UDPConnection* conn = new netcode::UDPConnection(*serverConn);
-	conn->Unmute();
-	conn->SendData(CBaseNetProtocol::Get().SendAttemptConnect(userName, userPasswd, myVersion, globalConfig->networkLossFactor, true));
-	conn->Flush(true);
+	netcode::UDPConnection conn(*serverConn);
 
-	LOG("Reconnecting to server... %ds", dynamic_cast<netcode::UDPConnection&>(*serverConn).GetReconnectSecs());
+	conn.Unmute();
+	conn.SendData(CBaseNetProtocol::Get().SendAttemptConnect(userName, userPasswd, myVersion, globalConfig->networkLossFactor, true));
+	conn.Flush(true);
 
-	delete conn;
+	LOG("[NetProto::%s] reconnecting to server... %ds", __func__, dynamic_cast<netcode::UDPConnection&>(*serverConn).GetReconnectSecs());
 }
 
 
@@ -96,7 +92,7 @@ std::string CNetProtocol::ConnectionStr() const
 	return serverConn->GetFullAddress();
 }
 
-boost::shared_ptr<const netcode::RawPacket> CNetProtocol::Peek(unsigned ahead) const
+std::shared_ptr<const netcode::RawPacket> CNetProtocol::Peek(unsigned ahead) const
 {
 	return serverConn->Peek(ahead);
 }
@@ -115,28 +111,29 @@ float CNetProtocol::GetPacketTime(int frameNum) const
 	return (gu->startTime + frameNum / (1.0f * GAME_SPEED));
 }
 
-boost::shared_ptr<const netcode::RawPacket> CNetProtocol::GetData(int frameNum)
+std::shared_ptr<const netcode::RawPacket> CNetProtocol::GetData(int frameNum)
 {
-	boost::shared_ptr<const netcode::RawPacket> ret = serverConn->GetData();
+	std::shared_ptr<const netcode::RawPacket> ret = serverConn->GetData();
 
-	if (ret.get() == NULL) { return ret; }
-	if (ret->data[0] == NETMSG_GAMEDATA) { return ret; }
+	if (ret.get() == nullptr)
+		return ret;
+	if (ret->data[0] == NETMSG_GAMEDATA)
+		return ret;
 
-	if (demoRecorder.get() != NULL) {
+	if (demoRecorder.get() != nullptr)
 		demoRecorder->SaveToDemo(ret->data, ret->length, GetPacketTime(frameNum));
-	}
 
 	return ret;
 }
 
-void CNetProtocol::Send(boost::shared_ptr<const netcode::RawPacket> pkt)
+void CNetProtocol::Send(std::shared_ptr<const netcode::RawPacket> pkt)
 {
 	serverConn->SendData(pkt);
 }
 
 void CNetProtocol::Send(const netcode::RawPacket* pkt)
 {
-	boost::shared_ptr<const netcode::RawPacket> ptr(pkt);
+	std::shared_ptr<const netcode::RawPacket> ptr(pkt);
 	Send(ptr);
 }
 

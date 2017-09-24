@@ -5,8 +5,8 @@
 
 #include <limits>
 #include <vector>
-#include <list> // for QTPFS_STAGGERED_LAYER_UPDATES
-#include <boost/cstdint.hpp>
+#include <deque> // for QTPFS_STAGGERED_LAYER_UPDATES
+#include <cinttypes>
 
 #include "System/Rectangle.h"
 #include "PathDefines.hpp"
@@ -82,8 +82,8 @@ namespace QTPFS {
 
 		SpeedBinType GetSpeedModBin(float absSpeedMod, float relSpeedMod) const;
 
-		boost::uint64_t GetMemFootPrint() const {
-			boost::uint64_t memFootPrint = sizeof(NodeLayer);
+		std::uint64_t GetMemFootPrint() const {
+			std::uint64_t memFootPrint = sizeof(NodeLayer);
 			memFootPrint += (curSpeedMods.size() * sizeof(SpeedModType));
 			memFootPrint += (oldSpeedMods.size() * sizeof(SpeedModType));
 			memFootPrint += (curSpeedBins.size() * sizeof(SpeedBinType));
@@ -101,7 +101,7 @@ namespace QTPFS {
 		std::vector<SpeedBinType> oldSpeedBins;
 
 		#ifdef QTPFS_STAGGERED_LAYER_UPDATES
-		std::list<LayerUpdate> layerUpdates;
+		std::deque<LayerUpdate> layerUpdates;
 		#endif
 
 		// NOTE:

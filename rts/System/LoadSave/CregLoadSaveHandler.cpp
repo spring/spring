@@ -3,6 +3,7 @@
 #include <sstream>
 #include <zlib.h>
 
+#include "ExternalAI/SkirmishAIHandler.h"
 #include "ExternalAI/EngineOutHandler.h"
 #include "CregLoadSaveHandler.h"
 #include "Map/ReadMap.h"
@@ -11,31 +12,33 @@
 #include "Game/GameVersion.h"
 #include "Game/GlobalUnsynced.h"
 #include "Game/WaitCommandsAI.h"
+#include "Game/UI/Groups/GroupHandler.h"
 #include "Net/GameServer.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Units/UnitHandler.h"
-#include "Sim/Misc/LosHandler.h"
+#include "Sim/Misc/BuildingMaskMap.h"
 #include "Sim/Misc/InterceptHandler.h"
+#include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/CategoryHandler.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/Wind.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "Sim/Units/CommandAI/BuilderCAI.h"
 #include "Sim/Units/CommandAI/CommandDescription.h"
 #include "Sim/Units/Scripts/CobEngine.h"
 #include "Sim/Units/Scripts/UnitScriptEngine.h"
 #include "Sim/Units/Scripts/NullUnitScript.h"
-#include "Game/UI/Groups/GroupHandler.h"
-
+#include "System/SafeUtil.h"
 #include "System/Platform/errorhandler.h"
 #include "System/FileSystem/DataDirsAccess.h"
 #include "System/FileSystem/FileQueryFlags.h"
 #include "System/FileSystem/GZFileHandler.h"
+#include "System/Threading/ThreadPool.h"
 #include "System/creg/Serializer.h"
 #include "System/Exceptions.h"
 #include "System/Log/ILog.h"
+
 
 
 CCregLoadSaveHandler::CCregLoadSaveHandler()
@@ -77,6 +80,7 @@ void CGameStateCollector::Serialize(creg::ISerializer* s)
 	s->SerializeObjectInstance(losHandler, losHandler->GetClass());
 	s->SerializeObjectInstance(&interceptHandler, interceptHandler.GetClass());
 	s->SerializeObjectInstance(CCategoryHandler::Instance(), CCategoryHandler::Instance()->GetClass());
+	s->SerializeObjectInstance(buildingMaskMap, buildingMaskMap->GetClass());
 	s->SerializeObjectInstance(projectileHandler, projectileHandler->GetClass());
 	s->SerializeObjectInstance(&waitCommandsAI, waitCommandsAI.GetClass());
 	s->SerializeObjectInstance(&wind, wind.GetClass());
@@ -121,9 +125,9 @@ static void ReadString(std::istream& s, std::string& str)
 void CCregLoadSaveHandler::SaveGame(const std::string& path)
 {
 #ifdef USING_CREG
-	LOG("Saving game");
-	try {
+	LOG("[LSH::%s] saving game to \"%s\"", __func__, path.c_str());
 
+	try {
 		std::stringstream oss;
 
 		// write our own header. SavePackage() will add its own
@@ -134,40 +138,60 @@ void CCregLoadSaveHandler::SaveGame(const std::string& path)
 
 		CGameStateCollector gsc = CGameStateCollector();
 
-		// save creg state
-		creg::COutputStreamSerializer os;
-		os.SavePackage(&oss, &gsc, gsc.GetClass());
-		PrintSize("Game", oss.tellp());
+		{
+			// save creg state
+			creg::COutputStreamSerializer os;
+			os.SavePackage(&oss, &gsc, gsc.GetClass());
+			PrintSize("Game", oss.tellp());
 
-		// save ai state
-		int aistart = oss.tellp();
-		eoh->Save(&oss);
-		PrintSize("AIs", ((int)oss.tellp()) - aistart);
+			// save AI state
+			const int aiStart = oss.tellp();
 
-		gzFile file = gzopen(dataDirsAccess.LocateFile(path, FileQueryFlags::WRITE).c_str(), "wb9");
-		if (file == nullptr) {
-			LOG_L(L_ERROR, "Save failed: couldn't open file");
-			return;
+			for (const auto& ai: skirmishAIHandler.GetAllSkirmishAIs()) {
+				std::stringstream aiData;
+				eoh->Save(&aiData, ai.first);
+
+				std::streamsize aiSize = aiData.tellp();
+				os.SerializeInt(&aiSize, sizeof(aiSize));
+				oss << aiData.rdbuf();
+			}
+			PrintSize("AIs", ((int)oss.tellp()) - aiStart);
 		}
-		const std::string data = oss.str();
-		gzwrite(file, data.c_str(), data.size());
-		gzflush(file, Z_FINISH);
-		gzclose(file);
+
+		{
+			gzFile file = gzopen(dataDirsAccess.LocateFile(path, FileQueryFlags::WRITE).c_str(), "wb9");
+
+			if (file == nullptr) {
+				LOG_L(L_ERROR, "[LSH::%s] could not open save-file", __func__);
+				return;
+			}
+
+			std::string data = std::move(oss.str());
+			std::function<void(gzFile, std::string&&)> func = [](gzFile file, std::string&& data) {
+				gzwrite(file, data.c_str(), data.size());
+				gzflush(file, Z_FINISH);
+				gzclose(file);
+			};
+
+			// gzFile is just a plain typedef (struct gzFile_s {}* gzFile), can be copied
+			// need to keep a reference to the future around or its destructor will block
+			ThreadPool::AddExtJob(std::move(std::async(std::launch::async, std::move(func), file, std::move(data))));
+		}
 
 		//FIXME add lua state
 	} catch (const content_error& ex) {
-		LOG_L(L_ERROR, "Save failed(content error): %s", ex.what());
+		LOG_L(L_ERROR, "[LSH::%s] content error \"%s\"", __func__, ex.what());
 	} catch (const std::exception& ex) {
-		LOG_L(L_ERROR, "Save failed: %s", ex.what());
+		LOG_L(L_ERROR, "[LSH::%s] exception \"%s\"", __func__, ex.what());
 	} catch (const char*& exStr) {
-		LOG_L(L_ERROR, "Save failed: %s", exStr);
+		LOG_L(L_ERROR, "[LSH::%s] cstr error \"%s\"", __func__, exStr);
 	} catch (const std::string& str) {
-		LOG_L(L_ERROR, "Save failed: %s", str.c_str());
+		LOG_L(L_ERROR, "[LSH::%s] str error \"%s\"", __func__, str.c_str());
 	} catch (...) {
-		LOG_L(L_ERROR, "Save failed(unknown error)");
+		LOG_L(L_ERROR, "[LSH::%s] unknown error", __func__);
 	}
 #else //USING_CREG
-	LOG_L(L_ERROR, "Save failed: creg is disabled");
+	LOG_L(L_ERROR, "[LSH::%s] creg is disabled", __func__);
 #endif //USING_CREG
 }
 
@@ -219,32 +243,36 @@ void CCregLoadSaveHandler::LoadGame()
 #ifdef USING_CREG
 	ENTER_SYNCED_CODE();
 
-	void* pGSC = NULL;
-	creg::Class* gsccls = NULL;
+	void* pGSC = nullptr;
+	creg::Class* gsccls = nullptr;
 
 	// load creg state
 	creg::CInputStreamSerializer inputStream;
 	inputStream.LoadPackage(iss, pGSC, gsccls);
 	assert(pGSC && gsccls == CGameStateCollector::StaticClass());
 
+	// the only job of gsc is to collect gamestate data
 	CGameStateCollector* gsc = static_cast<CGameStateCollector*>(pGSC);
-	delete gsc; // the only job of gsc is to collect gamestate data
-	gsc = NULL;
+	spring::SafeDelete(gsc);
 
 	// load ai state
-	eoh->Load(iss);
-	//for (int a=0; a < teamHandler->ActiveTeams(); a++) { // For old savegames
-	//	if (teamHandler->Team(a)->isDead && eoh->IsSkirmishAI(a)) {
-	//		eoh->DestroySkirmishAI(skirmishAIId(a), 2 /* = team died */);
-	//	}
-	//}
+	for (const auto& ai: skirmishAIHandler.GetAllSkirmishAIs()) {
+		std::streamsize aiSize;
+		inputStream.SerializeInt(&aiSize, sizeof(aiSize));
+
+		std::vector<char> buffer(aiSize);
+		std::stringstream aiData;
+		iss->read(buffer.data(), buffer.size());
+		aiData.write(buffer.data(), buffer.size());
+
+		eoh->Load(&aiData, ai.first);
+	}
 
 	// cleanup
-	delete iss;
-	iss = NULL;
+	spring::SafeDelete(iss);
 
 	gs->paused = false;
-	if (gameServer) {
+	if (gameServer != nullptr) {
 		gameServer->isPaused = false;
 		gameServer->syncErrorFrame = 0;
 	}

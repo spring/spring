@@ -129,6 +129,9 @@ setmetatable(handler, {
 			return actionHandler.oldSyntax
 		end
 
+		if type(key) ~= "string" then
+			return nil
+		end
 		local firstChar = key:sub(1,1)
 		if (firstChar == firstChar:upper() and self.knownCallIns[key]) then
 			return function(_, ...)
@@ -505,6 +508,8 @@ end
 -- Callin Closures
 
 local function InsertAddonCallIn(ciName, addon)
+	local ret = false
+
 	if (knownCallIns[ciName]) then
 		local f = addon[ciName]
 
@@ -518,29 +523,46 @@ local function InsertAddonCallIn(ciName, addon)
 		end
 
 		local swf = SafeWrapFunc(addon, f, ciName)
-		return handler.callInLists[ciName]:Insert(addon, swf)
+
+		assert(type(handler.callInLists[ciName]) == "table", "[InsertAddonCallIn][pre]")
+		ret = handler.callInLists[ciName]:Insert(addon, swf)
+		assert(type(handler.callInLists[ciName]) == "table", "[InsertAddonCallIn][post]")
 	elseif (handler.verbose) then
 		Spring.Log(LUA_NAME, "warning", "::InsertAddonCallIn: Unknown CallIn \"" .. ciName.. "\"")
 	end
-	return false
+
+	return ret
 end
 
 
 local function RemoveAddonCallIn(ciName, addon)
+	local ret = false
+
 	if (knownCallIns[ciName]) then
 		addon[ciName .. "__"] = nil
-		return handler.callInLists[ciName]:Remove(addon)
+
+		-- note: redundant lookup, RemoveAddonCallIns can just pass in the ciList
+		assert(type(handler.callInLists[ciName]) == "table", "[RemoveAddonCallIn][pre]")
+		ret = handler.callInLists[ciName]:Remove(addon)
+		assert(type(handler.callInLists[ciName]) == "table", "[RemoveAddonCallIn][post]")
 	elseif (handler.verbose) then
 		Spring.Log(LUA_NAME, "warning", "::RemoveAddonCallIn: Unknown CallIn \"" .. ciName.. "\"")
 	end
-	return false
+
+	return ret
 end
 
 
 local function RemoveAddonCallIns(addon)
+	assert(type(handler.callInLists) == "table")
+
 	for ciName,ciList in pairs(handler.callInLists) do
+		assert(type(ciList) == "table", "[RemoveAddonCallIns] pre-removing callin " .. ciName .. " from addon " .. addon._info.name)
 		handler:RemoveAddonCallIn(ciName, addon)
+		assert(type(ciList) == "table", "[RemoveAddonCallIns] post-removing callin " .. ciName .. " from addon " .. addon._info.name)
 	end
+
+	assert(type(handler.callInLists) == "table")
 end
 
 
@@ -693,7 +715,7 @@ handler[s"Remove%{Addon}"] = handler.Remove
 -- Save/Load addon related data
 
 function handler:LoadOrderList()
-	if (LUA_NAME ~= "LuaUI") then return end
+	if (LUA_NAME ~= "LuaUI" and LUA_NAME ~= "LuaMenu") then return end
 
 	if VFS.FileExists(ORDER_FILENAME) then
 		local success, rvalue = pcall(VFS.Include, ORDER_FILENAME, {math = {huge = math.huge}})
@@ -707,7 +729,7 @@ end
 
 
 function handler:SaveOrderList()
-	if (LUA_NAME ~= "LuaUI") then return end
+	if (LUA_NAME ~= "LuaUI" and LUA_NAME ~= "LuaMenu") then return end
 
 	--// update the current order
 	local i = 1
@@ -720,7 +742,7 @@ end
 
 
 function handler:LoadKnownData()
-	if (LUA_NAME ~= "LuaUI") then return end
+	if (LUA_NAME ~= "LuaUI" and LUA_NAME ~= "LuaMenu") then return end
 
 	if (handler.initialized) then --FIXME make the code below work even at runtime
 		error("Called handler:LoadKnownData after Initialization.", 2)
@@ -749,7 +771,7 @@ end
 
 
 function handler:SaveKnownData()
-	if (LUA_NAME ~= "LuaUI") then return end
+	if (LUA_NAME ~= "LuaUI" and LUA_NAME ~= "LuaMenu") then return end
 
 	local t = {}
 	for i,ki in pairs(handler.knownInfos) do
@@ -762,7 +784,7 @@ end
 
 
 function handler:LoadConfigData()
-	if (LUA_NAME ~= "LuaUI") then return end
+	if (LUA_NAME ~= "LuaUI" and LUA_NAME ~= "LuaMenu") then return end
 
 	if VFS.FileExists(CONFIG_FILENAME) then
 		handler.configData = VFS.Include(CONFIG_FILENAME, {})
@@ -772,7 +794,7 @@ end
 
 
 function handler:SaveAddonConfigData(addon)
-	if (LUA_NAME ~= "LuaUI") then return end
+	if (LUA_NAME ~= "LuaUI" and LUA_NAME ~= "LuaMenu") then return end
 
 	if (addon.GetConfigData) then
 		local name = addon._info.name
@@ -782,7 +804,7 @@ end
 
 
 function handler:SaveConfigData()
-	if (LUA_NAME ~= "LuaUI") then return end
+	if (LUA_NAME ~= "LuaUI" and LUA_NAME ~= "LuaMenu") then return end
 
 	handler:LoadConfigData()
 	for _,addon in handler.addons:iter() do
@@ -984,6 +1006,7 @@ function handler:UpdateCallIn(ciName)
 	end
 
 	local ciList = handler.callInLists[ciName]
+	assert(type(ciList) == "table")
 
 	if ((ciList.first) or
 	    (staticCallInList[ciName]) or

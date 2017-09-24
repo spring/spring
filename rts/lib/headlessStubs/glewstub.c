@@ -24,9 +24,8 @@ const GLubyte* glewGetString(GLenum name) {
 	}
 }
 
-GLboolean glewIsSupported (const char* name) {
-   return GL_FALSE;
-}
+GLboolean glewIsSupported(const char* name) { return GL_FALSE; }
+GLboolean glewIsExtensionSupported(const char* name) { return GL_FALSE; }
 
 GLenum glewInit() {
    //printf( "glewInit()\n"  );

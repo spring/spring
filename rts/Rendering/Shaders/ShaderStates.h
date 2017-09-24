@@ -3,13 +3,12 @@
 #ifndef SPRING_SHADER_STATES_HDR
 #define SPRING_SHADER_STATES_HDR
 
-#include "Rendering/GL/myGL.h"
-
-#include <boost/cstdint.hpp>
+#include <cinttypes>
 #include <string.h>
 #include <string>
-#include <unordered_map>
-#include <sstream>
+
+#include "Rendering/GL/myGL.h"
+#include "System/UnorderedMap.hpp"
 
 // NOTE:
 //   the hash used here collides too much on certain inputs (eg. team-color
@@ -22,8 +21,8 @@ namespace Shader {
 	struct UniformState {
 	private:
 		union {
-			boost::int32_t i[17];
-			float          f[17];
+			std::int32_t i[17];
+			float        f[17];
 		};
 
 		/// current glGetUniformLocation
@@ -124,23 +123,15 @@ namespace Shader {
 		}
 
 	public:
-		bool Set(const int v0, const int v1, const int v2, const int v3)
-			{ AssertType(GL_INT_VEC4); return Set_(v0, v1, v2, v3); }
-		bool Set(const int v0, const int v1, const int v2)
-			{ AssertType(GL_INT_VEC3); return Set_(v0, v1, v2,  0); }
-		bool Set(const int v0, const int v1)
-			{ AssertType(GL_INT_VEC2); return Set_(v0, v1,  0,  0); }
-		bool Set(const int v0)
-			{ AssertType(GL_INT     ); return Set_(v0,  0,  0,  0); }
+		bool Set(const int v0, const int v1, const int v2, const int v3) { AssertType(GL_INT_VEC4); return Set_(v0, v1, v2, v3); }
+		bool Set(const int v0, const int v1, const int v2              ) { AssertType(GL_INT_VEC3); return Set_(v0, v1, v2,  0); }
+		bool Set(const int v0, const int v1                            ) { AssertType(GL_INT_VEC2); return Set_(v0, v1,  0,  0); }
+		bool Set(const int v0                                          ) { AssertType(GL_INT     ); return Set_(v0,  0,  0,  0); }
 
-		bool Set(const float v0, const float v1, const float v2, const float v3)
-			{ AssertType(GL_FLOAT_VEC4); return Set_(v0, v1, v2, v3); }
-		bool Set(const float v0, const float v1, const float v2)
-			{ AssertType(GL_FLOAT_VEC3); return Set_(v0, v1, v2, 0.f); }
-		bool Set(const float v0, const float v1)
-			{ AssertType(GL_FLOAT_VEC2); return Set_(v0, v1, 0.f, 0.f); }
-		bool Set(const float v0)
-			{ AssertType(GL_FLOAT     ); return Set_(v0, 0.f, 0.f, 0.f); }
+		bool Set(const float v0, const float v1, const float v2, const float v3) { AssertType(GL_FLOAT_VEC4); return Set_(v0, v1, v2, v3); }
+		bool Set(const float v0, const float v1, const float v2                ) { AssertType(GL_FLOAT_VEC3); return Set_(v0, v1, v2, 0.f); }
+		bool Set(const float v0, const float v1                                ) { AssertType(GL_FLOAT_VEC2); return Set_(v0, v1, 0.f, 0.f); }
+		bool Set(const float v0                                                ) { AssertType(GL_FLOAT     ); return Set_(v0, 0.f, 0.f, 0.f); }
 
 		bool Set2v(const int* v) {
 			AssertType(GL_INT_VEC2);
@@ -221,104 +212,83 @@ namespace Shader {
 	};
 
 
-	struct SShaderFlagState {
+
+
+	struct ShaderFlags {
 	public:
-		SShaderFlagState() : updates(1), lastUpdates(0), lastHash(0) {}
-		virtual ~SShaderFlagState() {}
+		ShaderFlags() { Clear(); }
 
-		unsigned int GetHash();
+		std::string GetString() const {
+			char buf[8192] = {0};
+			char* ptr = &buf[0];
 
-		void ClearHash()
-		{
-			lastHash = 0;
-			updates = 1;
-			lastUpdates = 0;
+			#define PV(p) ((p).second).second
+			#define RC(p) reinterpret_cast<const char*>((p).first)
+
+			// boolean flags are checked via #ifdef's (not #if's) in a subset of shaders
+			for (const auto& p: bitFlags) { if (PV(p)) ptr += snprintf(ptr, sizeof(buf) - (ptr - buf), "#define %s\n"   , RC(p)       ); }
+			for (const auto& p: intFlags) {            ptr += snprintf(ptr, sizeof(buf) - (ptr - buf), "#define %s %d\n", RC(p), PV(p)); }
+			for (const auto& p: fltFlags) {            ptr += snprintf(ptr, sizeof(buf) - (ptr - buf), "#define %s %f\n", RC(p), PV(p)); }
+
+			#undef RC
+			#undef PV
+			return buf;
 		}
 
-		std::string GetString() const
-		{
-			std::ostringstream strbuf;
-			for (auto it = flags.begin(); it != flags.end(); ++it) {
-				strbuf << "#define " << it->first << " " << it->second << std::endl;
-			}
-			return strbuf.str();
+		unsigned int CalcHash() const;
+		unsigned int UpdateHash() { return (prvValUpdates = numValUpdates, flagHashValue = CalcHash()); }
+
+		void Clear() {
+			bitFlags.clear();
+			intFlags.clear();
+			fltFlags.clear();
+
+			numValUpdates = 0;
+			prvValUpdates = 0;
+			flagHashValue = 0;
 		}
 
+		void Set(const char* key, bool val) {
+			const auto it = bitFlags.find(key);
 
-		void ClearFlag(const std::string& flag)
-		{
-			++updates;
-			flags.erase(flag);
+			// new keys or changed values count as an update
+			// numBitUpdates += (it == bitFlags.end() || (it->second).second != val);
+			numValUpdates += (it == bitFlags.end() || (it->second).second != val);
+
+			bitFlags[key] = {(it == bitFlags.end())? strlen(key): (it->second).first, val};
 		}
 
+		void Set(const char* key, unsigned int val) { Set(key, int(val)); }
+		void Set(const char* key, int val) {
+			const auto it = intFlags.find(key);
 
-		template <typename T>
-		void SetFlag(const std::string& flag, const T newvalue)
-		{
-			++updates;
-			std::ostringstream buffer;
-			buffer << newvalue;
-			flags[flag] = buffer.str();
+			// numIntUpdates += (it == intFlags.end() || (it->second).second != val);
+			numValUpdates += (it == intFlags.end() || (it->second).second != val);
+
+			intFlags[key] = {(it == intFlags.end())? strlen(key): (it->second).first, val};
 		}
 
-		// specializations
-		void SetFlag(const std::string& flag, const std::string& newvalue)
-		{
-			++updates;
-			flags[flag] = newvalue;
+		void Set(const char* key, float val) {
+			const auto it = fltFlags.find(key);
+
+			// numFltUpdates += (it == fltFlags.end() || (it->second).second != val);
+			numValUpdates += (it == fltFlags.end() || (it->second).second != val);
+
+			fltFlags[key] = {(it == fltFlags.end())? strlen(key): (it->second).first, val};
 		}
 
-		void SetFlag(const std::string& flag, const bool enable)
-		{
-			if (enable) {
-				++updates;
-				flags[flag] = "";
-			} else {
-				ClearFlag(flag);
-			}
-		}
-
-
-		template<typename T>
-		T GetFlag(const std::string& flag) const
-		{
-			auto it = flags.find(flag);
-			if (it != flags.end()) {
-				std::istringstream buf(it->second);
-				T temp;
-				buf >> temp;
-				return temp;
-			}
-			return T();
-		}
-
-		bool GetFlagBool(const std::string& flag) const
-		{
-			return (flags.find(flag) != flags.end());
-		}
-
-		const std::string& GetFlagString(const std::string& flag) const
-		{
-			auto it = flags.find(flag);
-			if (it != flags.end()) {
-				return it->second;
-			} else {
-				static std::string nulstr;
-				return nulstr;
-			}
-		}
-
-		bool HasFlag(const std::string& flag) const
-		{
-			return (flags.find(flag) != flags.end());
-		}
+		bool HashSet() const { return (flagHashValue != 0); }
+		bool Updated() const { return (numValUpdates != prvValUpdates); }
 
 	private:
-		int updates;
-		int lastUpdates;
-		int lastHash;
-		std::unordered_map<std::string, std::string> flags;
-		//std::set<std::string> skipAutoUpdate;
+		// NOTE: *only* pointers to constant addresses are allowed (literals, globals)
+		spring::unsynced_map<const void*, std::pair<unsigned int,  bool> > bitFlags;
+		spring::unsynced_map<const void*, std::pair<unsigned int,   int> > intFlags;
+		spring::unsynced_map<const void*, std::pair<unsigned int, float> > fltFlags;
+
+		unsigned int numValUpdates;
+		unsigned int prvValUpdates;
+		unsigned int flagHashValue;
 	};
 }
 

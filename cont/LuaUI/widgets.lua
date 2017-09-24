@@ -144,15 +144,18 @@ local flexCallIns = {
   'UnitCloaked',
   'UnitDecloaked',
   'UnitMoveFailed',
+  'UnitHarvestStorageFull',
   'RecvLuaMsg',
   'StockpileChanged',
   'DrawGenesis',
   'DrawWorld',
   'DrawWorldPreUnit',
+  'DrawWorldPreParticles',
   'DrawWorldShadow',
   'DrawWorldReflection',
   'DrawWorldRefraction',
   'DrawScreenEffects',
+  'DrawScreenPost',
   'DrawInMiniMap',
   'RecvSkirmishAIMessage',
 }
@@ -504,6 +507,7 @@ function widgetHandler:NewWidget()
       __metatable = true,
     })
   end
+  widget._G = _G         -- the global table
   widget.WG = self.WG    -- the shared table
   widget.widget = widget -- easy self referencing
 
@@ -1273,6 +1277,13 @@ function widgetHandler:DrawWorldPreUnit()
   return
 end
 
+function widgetHandler:DrawWorldPreParticles()
+  for _,w in ripairs(self.DrawWorldPreParticlesList) do
+    w:DrawWorldPreParticles()
+  end
+  return
+end
+
 
 function widgetHandler:DrawWorldShadow()
   for _,w in ripairs(self.DrawWorldShadowList) do
@@ -1301,6 +1312,14 @@ end
 function widgetHandler:DrawScreenEffects(vsx, vsy)
   for _,w in ripairs(self.DrawScreenEffectsList) do
     w:DrawScreenEffects(vsx, vsy)
+  end
+  return
+end
+
+
+function widgetHandler:DrawScreenPost(vsx, vsy)
+  for _,w in ripairs(self.DrawScreenPostList) do
+    w:DrawScreenPost(vsx, vsy)
   end
   return
 end
@@ -1796,10 +1815,9 @@ function widgetHandler:UnitCmdDone(unitID, unitDefID, unitTeam, cmdID, cmdParams
 end
 
 
-function widgetHandler:UnitDamaged(unitID, unitDefID, unitTeam,
-                                   damage, paralyzer)
+function widgetHandler:UnitDamaged(unitID, unitDefID, unitTeam, damage, paralyzer, weaponDefID, projectileID)
   for _,w in ipairs(self.UnitDamagedList) do
-    w:UnitDamaged(unitID, unitDefID, unitTeam, damage, paralyzer)
+    w:UnitDamaged(unitID, unitDefID, unitTeam, damage, paralyzer, weaponDefID, projectileID)
   end
   return
 end
@@ -1923,6 +1941,13 @@ end
 function widgetHandler:UnitMoveFailed(unitID, unitDefID, unitTeam)
   for _,w in ipairs(self.UnitMoveFailedList) do
     w:UnitMoveFailed(unitID, unitDefID, unitTeam)
+  end
+  return
+end
+
+function widgetHandler:UnitHarvestStorageFull(unitID, unitDefID, unitTeam)
+  for _,w in ipairs(self.UnitHarvestStorageFullList) do
+    w:UnitHarvestStorageFull(unitID, unitDefID, unitTeam)
   end
   return
 end

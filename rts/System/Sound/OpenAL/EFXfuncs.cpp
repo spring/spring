@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "EFXfuncs.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 
 
 LPALGENEFFECTS alGenEffects = NULL;

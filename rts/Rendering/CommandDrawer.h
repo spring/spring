@@ -3,7 +3,7 @@
 #ifndef COMMAND_DRAWER_H
 #define COMMAND_DRAWER_H
 
-#include <set>
+#include "System/UnorderedSet.hpp"
 
 struct Command;
 class CCommandAI;
@@ -37,7 +37,7 @@ private:
 	void DrawDefaultCommand(const Command&, const CUnit*) const;
 
 private:
-	std::set<int> luaQueuedUnitSet;
+	spring::unordered_set<int> luaQueuedUnitSet;
 };
 
 #define commandDrawer (CommandDrawer::GetInstance())

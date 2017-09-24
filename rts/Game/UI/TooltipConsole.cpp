@@ -20,7 +20,7 @@
 #include "Sim/Units/UnitHandler.h"
 #include "System/EventHandler.h"
 #include "System/Config/ConfigHandler.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 
 
 CONFIG(std::string, TooltipGeometry).defaultValue("0.0 0.0 0.41 0.1");
@@ -285,7 +285,7 @@ std::string CTooltipConsole::MakeGroundString(const float3& pos)
 
 	const int px = pos.x / 16;
 	const int pz = pos.z / 16;
-	const int typeMapIdx = std::min(mapDims.hmapx * mapDims.hmapy - 1, std::max(0, pz * mapDims.hmapx + px));
+	const int typeMapIdx = Clamp(pz * mapDims.hmapx + px, 0, mapDims.hmapx * mapDims.hmapy - 1);
 	const unsigned char* typeMap = readMap->GetTypeMapSynced();
 	const CMapInfo::TerrainType* tt = &mapInfo->terrainTypes[typeMap[typeMapIdx]];
 

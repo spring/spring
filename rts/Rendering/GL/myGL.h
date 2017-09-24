@@ -8,19 +8,19 @@
 #define NOMINMAX
 #endif
 
-#include <string>
+
+
 #if       defined(HEADLESS)
 	#include "lib/headlessStubs/glewstub.h"
 #else
 	#include <GL/glew.h>
 #endif // defined(HEADLESS)
 
-// includes boost now!
+
 #include "System/float3.h"
 #include "System/float4.h"
 
 #include "glStateDebug.h"
-#include "glMarkers.h"
 
 #if       defined(HEADLESS)
 	// All OpenGL functions should always exists on HEADLESS.
@@ -49,10 +49,51 @@ static inline void glColorf4(const float3& v, const float alpha) { glColor4f(v.r
 static inline void glUniformf3(const GLint location, const float3& v) { glUniform3f(location, v.r, v.g, v.b); }
 
 
-void WorkaroundATIPointSizeBug();
-void SetTexGen(const float& scaleX, const float& scaleZ, const float& offsetX, const float& offsetZ);
+typedef   void   (*   glOrthoFuncPtr) (GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble near, GLdouble far);
+typedef   void   (*gluOrtho2DFuncPtr) (GLdouble left, GLdouble right, GLdouble bottom, GLdouble top);
+typedef   void   (* glFrustumFuncPtr) (GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble near, GLdouble far);
 
-void glSaveTexture(const GLuint textureID, const std::string& filename);
+static inline void __spring_glOrtho_noCC(GLdouble l, GLdouble r,  GLdouble b, GLdouble t,  GLdouble n, GLdouble f) { glOrtho(l, r, b, t, n, f); }
+static inline void __spring_glOrtho     (GLdouble l, GLdouble r,  GLdouble b, GLdouble t,  GLdouble n, GLdouble f) {
+	#ifndef UNIT_TEST
+	glTranslatef(0.0f, 0.0f, 0.5f);
+	glScalef(1.0f, 1.0f, 0.5f);
+	glOrtho(l, r,  b, t,  n, f);
+	#else
+	#error myGL.h included in unit-test?
+	#endif
+}
+
+static inline void __spring_gluOrtho2D_noCC(GLdouble l, GLdouble r,  GLdouble b, GLdouble t) { __spring_glOrtho_noCC(l, r, b, t, -1.0, 1.0); }
+static inline void __spring_gluOrtho2D     (GLdouble l, GLdouble r,  GLdouble b, GLdouble t) { __spring_glOrtho     (l, r, b, t, -1.0, 1.0); }
+
+static inline void __spring_glFrustum_noCC(GLdouble l, GLdouble r,  GLdouble b, GLdouble t,  GLdouble n, GLdouble f) { glFrustum(l, r, b, t, n, f); }
+static inline void __spring_glFrustum     (GLdouble l, GLdouble r,  GLdouble b, GLdouble t,  GLdouble n, GLdouble f) {
+	#ifndef UNIT_TEST
+	glTranslatef(0.0f, 0.0f, 0.5f);
+	glScalef(1.0f, 1.0f, 0.5f);
+	glFrustum(l, r,  b, t,  n, f);
+	#endif
+}
+
+static constexpr    glOrthoFuncPtr    glOrthoFuncs[2] = {__spring_glOrtho_noCC, __spring_glOrtho};
+static constexpr gluOrtho2DFuncPtr gluOrtho2DFuncs[2] = {__spring_gluOrtho2D_noCC, __spring_gluOrtho2D};
+static constexpr  glFrustumFuncPtr  glFrustumFuncs[2] = {__spring_glFrustum_noCC, __spring_glFrustum};
+
+#undef glOrtho
+#undef gluOrtho2D
+#undef glFrustum
+
+#define glOrtho       glOrthoFuncs[globalRendering->supportClipSpaceControl]
+#define gluOrtho2D gluOrtho2DFuncs[globalRendering->supportClipSpaceControl]
+#define glFrustum   glFrustumFuncs[globalRendering->supportClipSpaceControl]
+
+
+
+void WorkaroundATIPointSizeBug();
+void SetTexGen(const float scaleX, const float scaleZ, const float offsetX, const float offsetZ);
+
+void glSaveTexture(const GLuint textureID, const char* filename);
 void glSpringBindTextures(GLuint first, GLsizei count, const GLuint* textures);
 void glSpringTexStorage2D(const GLenum target, GLint levels, const GLint internalFormat, const GLsizei width, const GLsizei height);
 void glBuildMipmaps(const GLenum target, GLint internalFormat, const GLsizei width, const GLsizei height, const GLenum format, const GLenum type, const void* data);
@@ -65,13 +106,14 @@ bool ProgramStringIsNative(GLenum target, const char* filename);
 unsigned int LoadVertexProgram(const char* filename);
 unsigned int LoadFragmentProgram(const char* filename);
 
-void glClearErrors();
+void glClearErrors(const char* cls, const char* fnc, bool verbose = false);
 void glSafeDeleteProgram(GLuint program);
 
-void PrintAvailableResolutions();
+bool CheckAvailableVideoModes();
 
-void LoadExtensions();
-void UnloadExtensions();
+bool GetAvailableVideoRAM(GLint* memory, const char* glVendor);
+bool ShowDriverWarning(const char* glVendor, const char* glRenderer);
+
 
 class CVertexArray;
 CVertexArray* GetVertexArray();

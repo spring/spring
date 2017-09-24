@@ -16,7 +16,7 @@
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "System/Exceptions.h"
 #include "System/Log/ILog.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/Sound/ISound.h"
 
@@ -33,12 +33,12 @@ bool isblank(int c) {
 
 CUnitDefHandler::CUnitDefHandler(LuaParser* defsParser) : noCost(false)
 {
-	const LuaTable rootTable = defsParser->GetRoot().SubTable("UnitDefs");
-	if (!rootTable.IsValid()) {
-		throw content_error("Error loading UnitDefs");
-	}
+	const LuaTable& rootTable = defsParser->GetRoot().SubTable("UnitDefs");
 
-	vector<string> unitDefNames;
+	if (!rootTable.IsValid())
+		throw content_error("Error loading UnitDefs");
+
+	std::vector<std::string> unitDefNames;
 	rootTable.GetKeys(unitDefNames);
 
 	unitDefs.reserve(unitDefNames.size() + 1);
@@ -58,9 +58,6 @@ CUnitDefHandler::CUnitDefHandler(LuaParser* defsParser) : noCost(false)
 	AssignTechLevels();
 }
 
-
-CUnitDefHandler::~CUnitDefHandler()
-{ }
 
 
 int CUnitDefHandler::PushNewUnitDef(const std::string& unitName, const LuaTable& udTable)
@@ -99,35 +96,28 @@ int CUnitDefHandler::PushNewUnitDef(const std::string& unitName, const LuaTable&
 
 void CUnitDefHandler::CleanBuildOptions()
 {
+	std::vector<int> eraseOpts;
+
 	// remove invalid build options
 	for (int i = 1; i < unitDefs.size(); i++) {
 		UnitDef& ud = unitDefs[i];
-		map<int, string>& bo = ud.buildOptions;
-		map<int, string>::iterator it = bo.begin();
-		while (it != bo.end()) {
-			bool erase = false;
 
+		auto& buildOpts = ud.buildOptions;
+
+		eraseOpts.clear();
+		eraseOpts.reserve(buildOpts.size());
+
+		for (auto it = buildOpts.cbegin(); it != buildOpts.cend(); ++it) {
 			const UnitDef* bd = GetUnitDefByName(it->second);
-			if (bd == NULL) {
-				LOG_L(L_WARNING,
-						"removed the \"%s\" entry from the \"%s\" build menu",
-						it->second.c_str(), ud.name.c_str());
-				erase = true;
-			}
-			/*
-			else if (bd->maxThisUnit <= 0) {
-				// don't remove, just grey out the icon
-				erase = true; // silent removal
-			}
-			*/
 
-			if (erase) {
-				map<int, string>::iterator tmp = it;
-				++it;
-				bo.erase(tmp);
-			} else {
-				++it;
+			if (bd == nullptr /*|| bd->maxThisUnit <= 0*/) {
+				LOG_L(L_WARNING, "removed the \"%s\" entry from the \"%s\" build menu", it->second.c_str(), ud.name.c_str());
+				eraseOpts.push_back(it->first);
 			}
+		}
+
+		for (const int buildOptionID: eraseOpts) {
+			buildOpts.erase(buildOptionID);
 		}
 	}
 }
@@ -136,11 +126,10 @@ void CUnitDefHandler::CleanBuildOptions()
 void CUnitDefHandler::ProcessDecoys()
 {
 	// assign the decoy pointers, and build the decoy map
-	map<string, string>::const_iterator mit;
-	for (mit = decoyNameMap.begin(); mit != decoyNameMap.end(); ++mit) {
-		map<string, int>::iterator fakeIt, realIt;
-		fakeIt = unitDefIDsByName.find(mit->first);
-		realIt = unitDefIDsByName.find(mit->second);
+	for (auto mit = decoyNameMap.begin(); mit != decoyNameMap.end(); ++mit) {
+		auto fakeIt = unitDefIDsByName.find(mit->first);
+		auto realIt = unitDefIDsByName.find(mit->second);
+
 		if ((fakeIt != unitDefIDsByName.end()) && (realIt != unitDefIDsByName.end())) {
 			UnitDef& fake = unitDefs[fakeIt->second];
 			UnitDef& real = unitDefs[realIt->second];
@@ -156,11 +145,14 @@ void CUnitDefHandler::FindStartUnits()
 {
 	for (unsigned int i = 0; i < sideParser.GetCount(); i++) {
 		const std::string& startUnit = sideParser.GetStartUnit(i);
-		if (!startUnit.empty()) {
-			std::map<std::string, int>::iterator it = unitDefIDsByName.find(startUnit);
-			if (it != unitDefIDsByName.end()) {
-				startUnitIDs.insert(it->second);
-			}
+
+		if (startUnit.empty())
+			continue;
+
+		const auto it = unitDefIDsByName.find(startUnit);
+
+		if (it != unitDefIDsByName.end()) {
+			startUnitIDs.insert(it->second);
 		}
 	}
 }
@@ -192,19 +184,23 @@ void CUnitDefHandler::LoadSounds(const LuaTable& soundsTable, GuiSoundSet& gsoun
 	LuaTable sndTable = soundsTable.SubTable(soundName);
 	for (int i = 1; true; i++) {
 		LuaTable sndFileTable = sndTable.SubTable(i);
+
 		if (sndFileTable.IsValid()) {
 			fileName = sndFileTable.GetString("file", "");
+
 			if (!fileName.empty()) {
 				const float volume = sndFileTable.GetFloat("volume", 1.0f);
-				if (volume > 0.0f) {
+
+				if (volume > 0.0f)
 					LoadSound(gsound, fileName, volume);
-				}
+
 			}
 		} else {
 			fileName = sndTable.GetString(i, "");
-			if (fileName.empty()) {
+
+			if (fileName.empty())
 				break;
-			}
+
 			LoadSound(gsound, fileName, 1.0f);
 		}
 	}
@@ -213,12 +209,7 @@ void CUnitDefHandler::LoadSounds(const LuaTable& soundsTable, GuiSoundSet& gsoun
 
 void CUnitDefHandler::LoadSound(GuiSoundSet& gsound, const string& fileName, const float volume)
 {
-	const int id = LoadSoundFile(fileName);
-	if (id > 0)
-	{
-		GuiSoundSet::Data soundData(fileName, id, volume);
-		gsound.sounds.push_back(soundData);
-	}
+	gsound.sounds.emplace_back(fileName, -1, volume);
 }
 
 
@@ -226,10 +217,10 @@ const UnitDef* CUnitDefHandler::GetUnitDefByName(std::string name)
 {
 	StringToLowerInPlace(name);
 
-	std::map<std::string, int>::iterator it = unitDefIDsByName.find(name);
-	if (it == unitDefIDsByName.end()) {
-		return NULL;
-	}
+	const auto it = unitDefIDsByName.find(name);
+
+	if (it == unitDefIDsByName.end())
+		return nullptr;
 
 	return &unitDefs[it->second];
 }
@@ -237,9 +228,9 @@ const UnitDef* CUnitDefHandler::GetUnitDefByName(std::string name)
 
 const UnitDef* CUnitDefHandler::GetUnitDefByID(int defid)
 {
-	if ((defid <= 0) || (defid >= unitDefs.size())) {
-		return NULL;
-	}
+	if ((defid <= 0) || (defid >= unitDefs.size()))
+		return nullptr;
+
 	return &unitDefs[defid];
 }
 
@@ -326,8 +317,7 @@ bool CUnitDefHandler::ToggleNoCost()
 
 void CUnitDefHandler::AssignTechLevels()
 {
-	set<int>::iterator it;
-	for (it = startUnitIDs.begin(); it != startUnitIDs.end(); ++it) {
+	for (auto it = startUnitIDs.begin(); it != startUnitIDs.end(); ++it) {
 		AssignTechLevel(unitDefs[*it], 0);
 	}
 }
@@ -335,17 +325,15 @@ void CUnitDefHandler::AssignTechLevels()
 
 void CUnitDefHandler::AssignTechLevel(UnitDef& ud, int level)
 {
-	if ((ud.techLevel >= 0) && (ud.techLevel <= level)) {
+	if ((ud.techLevel >= 0) && (ud.techLevel <= level))
 		return;
-	}
 
 	ud.techLevel = level;
 
 	level++;
 
-	map<int, std::string>::const_iterator bo_it;
-	for (bo_it = ud.buildOptions.begin(); bo_it != ud.buildOptions.end(); ++bo_it) {
-		std::map<std::string, int>::const_iterator ud_it = unitDefIDsByName.find(bo_it->second);
+	for (auto bo_it = ud.buildOptions.begin(); bo_it != ud.buildOptions.end(); ++bo_it) {
+		const auto ud_it = unitDefIDsByName.find(bo_it->second);
 		if (ud_it != unitDefIDsByName.end()) {
 			AssignTechLevel(unitDefs[ud_it->second], level);
 		}

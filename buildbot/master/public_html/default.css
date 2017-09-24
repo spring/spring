@@ -136,10 +136,6 @@ td.idle,td.waiting,td.offline,td.building {
 }
 
 /* Console view styles */
-td.DevStatus > table {
-	table-layout: fixed;
-}
-
 td.DevRev {
 	padding: 4px 8px 4px 8px;
 	color: #333333;
@@ -268,10 +264,6 @@ td.Alt {
 	line-height: 20px;
 	margin-left: auto;
 	margin-right: auto;
-}
-
-.DevStatusBox a.notinbuilder {
-	border-style: none;
 }
 
 .DevSlaveBox {
@@ -535,11 +527,6 @@ table.info td.left {
 	text-align: left
 }
 
-table.info td .reason {
-    display:block;
-    font-weight: bold;
-}
-
 .alt {
 	background-color: #f6f6f6;
 }
@@ -568,30 +555,6 @@ span.stderr {
 
 span.header {
 	color: blue;
-}
-span.ansi30 {
-	color: black;
-}
-span.ansi31 {
-	color: red;
-}
-span.ansi32 {
-	color: green;
-}
-span.ansi33 {
-	color: orange;
-}
-span.ansi34 {
-	color: yellow;
-}
-span.ansi35 {
-	color: purple;
-}
-span.ansi36 {
-	color: blue;
-}
-span.ansi37 {
-	color: white;
 }
 
 /* revision & email */

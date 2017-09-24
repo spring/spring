@@ -5,27 +5,13 @@
 
 #include "System/creg/creg_cond.h"
 
-#include <boost/cstdint.hpp>
+#include <cinttypes>
 #include <cassert>
 
-// glibc's chrono is non monotonic/not steady atm (it depends on set timezone and can change at runtime!)
-// we don't want to specially handle all the problems caused by this, so just use boost version instead
-// not possible either: boost::chrono uses extremely broken HPE timers on Windows 7 (but so does std::)
-//
-// #define FORCE_CHRONO_TIMERS
-// #define FORCE_BOOST_CHRONO
+#undef gt
+#include <chrono>
+namespace chrono { using namespace std::chrono; }
 
-#if (__cplusplus > 199711L) && !defined(FORCE_BOOST_CHRONO) || defined(_MSC_VER)
-	#define SPRINGTIME_USING_STDCHRONO
-	#undef gt
-	#include <chrono>
-	namespace chrono { using namespace std::chrono; }
-#else
-	#define SPRINGTIME_USING_BOOST
-	#undef gt
-	#include <boost/chrono/include.hpp>
-	namespace chrono { using namespace boost::chrono; };
-#endif
 
 
 
@@ -38,26 +24,26 @@ namespace spring_clock {
 	//   ToSecs is inaccurate in that case
 	//   these cannot be written as integer divisions or tests
 	//   will fail because of intermediate conversions to FP32
-	template<typename T> static T ToSecs     (const boost::int64_t ns) { return (ns * 1e-9); }
-	template<typename T> static T ToMilliSecs(const boost::int64_t ns) { return (ns * 1e-6); }
-	template<typename T> static T ToMicroSecs(const boost::int64_t ns) { return (ns * 1e-3); }
-	template<typename T> static T ToNanoSecs (const boost::int64_t ns) { return (ns       ); }
+	template<typename T> static T ToSecs     (const std::int64_t ns) { return (ns * 1e-9); }
+	template<typename T> static T ToMilliSecs(const std::int64_t ns) { return (ns * 1e-6); }
+	template<typename T> static T ToMicroSecs(const std::int64_t ns) { return (ns * 1e-3); }
+	template<typename T> static T ToNanoSecs (const std::int64_t ns) { return (ns       ); }
 
 	// specializations
-	template<> boost::int64_t ToSecs     <boost::int64_t>(const boost::int64_t ns) { return (ns / boost::int64_t(1e9)); }
-	template<> boost::int64_t ToMilliSecs<boost::int64_t>(const boost::int64_t ns) { return (ns / boost::int64_t(1e6)); }
-	template<> boost::int64_t ToMicroSecs<boost::int64_t>(const boost::int64_t ns) { return (ns / boost::int64_t(1e3)); }
+	template<> std::int64_t ToSecs     <std::int64_t>(const std::int64_t ns) { return (ns / std::int64_t(1e9)); }
+	template<> std::int64_t ToMilliSecs<std::int64_t>(const std::int64_t ns) { return (ns / std::int64_t(1e6)); }
+	template<> std::int64_t ToMicroSecs<std::int64_t>(const std::int64_t ns) { return (ns / std::int64_t(1e3)); }
 
-	template<typename T> static boost::int64_t FromSecs     (const T  s) { return ( s * boost::int64_t(1e9)); }
-	template<typename T> static boost::int64_t FromMilliSecs(const T ms) { return (ms * boost::int64_t(1e6)); }
-	template<typename T> static boost::int64_t FromMicroSecs(const T us) { return (us * boost::int64_t(1e3)); }
-	template<typename T> static boost::int64_t FromNanoSecs (const T ns) { return (ns                      ); }
+	template<typename T> static std::int64_t FromSecs     (const T  s) { return ( s * std::int64_t(1e9)); }
+	template<typename T> static std::int64_t FromMilliSecs(const T ms) { return (ms * std::int64_t(1e6)); }
+	template<typename T> static std::int64_t FromMicroSecs(const T us) { return (us * std::int64_t(1e3)); }
+	template<typename T> static std::int64_t FromNanoSecs (const T ns) { return (ns                      ); }
 
 	void PushTickRate(bool hres = false);
 	void PopTickRate();
 
 	// number of ticks since clock epoch
-	boost::int64_t GetTicks();
+	std::int64_t GetTicks();
 	const char* GetName();
 }
 
@@ -68,7 +54,7 @@ struct spring_time {
 private:
 	CR_DECLARE_STRUCT(spring_time)
 
-	typedef boost::int64_t int64;
+	typedef std::int64_t int64;
 
 public:
 	spring_time(): x(0) {}
@@ -76,7 +62,9 @@ public:
 
 	spring_time& operator+=(const spring_time st)       { x += st.x; return *this; }
 	spring_time& operator-=(const spring_time st)       { x -= st.x; return *this; }
-	spring_time& operator%=(const spring_time mt)       { x %= mt.x; return *this;    }
+	spring_time& operator%=(const spring_time mt)       { x %= mt.x; return *this; }
+	spring_time& operator*=(const int n)                { x *= n; return *this; }
+	spring_time& operator*=(const float n)              { x *= n; return *this; }
 	spring_time   operator-(const spring_time st) const { return spring_time_native(x - st.x); }
 	spring_time   operator+(const spring_time st) const { return spring_time_native(x + st.x); }
 	spring_time   operator%(const spring_time mt) const { return spring_time_native(x % mt.x); }
@@ -84,6 +72,9 @@ public:
 	bool          operator>(const spring_time st) const { return (x >  st.x); }
 	bool         operator<=(const spring_time st) const { return (x <= st.x); }
 	bool         operator>=(const spring_time st) const { return (x >= st.x); }
+
+	spring_time   operator*(const int n)   const { return spring_time_native(x * n); }
+	spring_time   operator*(const float n) const { return spring_time_native(x * n); }
 
 	// short-hands
 	int64 toSecsi()        const { return (toSecs     <int64>()); }
@@ -106,7 +97,7 @@ public:
 	bool isDuration() const { return (x != 0); }
 	bool isTime() const { return (x > 0); }
 
-	void sleep();
+	void sleep(bool forceThreadSleep = false);
 	void sleep_until();
 
 
@@ -159,5 +150,15 @@ static const spring_time spring_nulltime(0);
 #define spring_difftime(now, before)  (now - before)
 #define spring_diffsecs(now, before)  ((now - before).toSecsi())
 #define spring_diffmsecs(now, before) ((now - before).toMilliSecsi())
+
+#ifdef UNIT_TEST
+struct InitSpringTime{
+	InitSpringTime()
+	{
+		spring_clock::PushTickRate(true);
+		spring_time::setstarttime(spring_time::gettime(true));
+	}
+};
+#endif
 
 #endif // SPRINGTIME_H

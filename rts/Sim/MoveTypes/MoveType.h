@@ -6,6 +6,7 @@
 #include "System/creg/creg_cond.h"
 #include "System/Object.h"
 #include "System/float3.h"
+#include <algorithm>
 
 class CUnit;
 
@@ -22,7 +23,7 @@ public:
 	virtual void StartMoving(float3 pos, float goalRadius, float speed) = 0;
 	virtual void KeepPointingTo(float3 pos, float distance, bool aggressive) = 0;
 	virtual void KeepPointingTo(CUnit* unit, float distance, bool aggressive);
-	virtual void StopMoving(bool callScript = false, bool hardStop = false) = 0;
+	virtual void StopMoving(bool callScript = false, bool hardStop = false, bool cancelRaw = false) = 0;
 	virtual bool CanApplyImpulse(const float3&) { return false; }
 	virtual void LeaveTransport() {}
 
@@ -43,6 +44,7 @@ public:
 	virtual void SetMaxSpeed(float speed) { maxSpeed = std::max(0.001f, speed); }
 	virtual void SetWantedMaxSpeed(float speed) { maxWantedSpeed = speed; }
 	virtual void SetManeuverLeash(float leashLength) { maneuverLeash = leashLength; }
+	virtual void SetWaterline(float depth) { waterline = depth; }
 
 	virtual bool Update() = 0;
 	virtual void SlowUpdate();
@@ -50,11 +52,13 @@ public:
 	virtual bool IsSkidding() const { return false; }
 	virtual bool IsFlying() const { return false; }
 	virtual bool IsReversing() const { return false; }
+	virtual bool IsPushResistant() const { return false; }
 
 	float GetMaxSpeed() const { return maxSpeed; }
 	float GetMaxSpeedDef() const { return maxSpeedDef; }
 	float GetMaxWantedSpeed() const { return maxWantedSpeed; }
 	float GetManeuverLeash() const { return maneuverLeash; }
+	float GetWaterline() const { return waterline; }
 
 	// The distance the unit will move before stopping,
 	// starting from given speed and applying maximum
@@ -89,6 +93,7 @@ protected:
 	float maxWantedSpeed;      // maximum speed (temporarily) set by a CMD_SET_WANTED_MAX_SPEED modifier command
 
 	float maneuverLeash;       // maximum distance away a target can be and still be chased
+	float waterline;
 };
 
 #endif // MOVETYPE_H

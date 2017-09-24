@@ -3,6 +3,7 @@
 #include "BeamLaser.h"
 #include "PlasmaRepulser.h"
 #include "WeaponDef.h"
+#include "WeaponMemPool.h"
 #include "Game/GameHelper.h"
 #include "Game/TraceRay.h"
 #include "Map/Ground.h"
@@ -21,7 +22,7 @@
 
 #define SWEEPFIRE_ENABLED 1
 
-CR_BIND_DERIVED(CBeamLaser, CWeapon, (NULL, NULL))
+CR_BIND_DERIVED_POOL(CBeamLaser, CWeapon, , weaponMemPool.alloc, weaponMemPool.free)
 
 CR_REG_METADATA(CBeamLaser,(
 	CR_MEMBER(color),
@@ -84,7 +85,7 @@ CBeamLaser::CBeamLaser(CUnit* owner, const WeaponDef* def)
 	: CWeapon(owner, def)
 	, salvoDamageMult(1.0f)
 {
-	//happens when loading
+	// null happens when loading
 	if (def != nullptr)
 		color = def->visuals.color;
 
@@ -285,14 +286,14 @@ void CBeamLaser::FireInternal(float3 curDir)
 	float3 newDir;
 
 	// objects at the end of the beam
-	CUnit* hitUnit = NULL;
-	CFeature* hitFeature = NULL;
-	CPlasmaRepulser* hitShield = NULL;
+	CUnit* hitUnit = nullptr;
+	CFeature* hitFeature = nullptr;
+	CPlasmaRepulser* hitShield = nullptr;
 	static std::vector<TraceRay::SShieldDist> hitShields;
 	CollisionQuery hitColQuery;
 
 	if (!sweepFireState.IsSweepFiring()) {
-		curDir += (gs->randVector() * SprayAngleExperience());
+		curDir += (gsRNG.NextVector() * SprayAngleExperience());
 		curDir.SafeNormalize();
 
 		// increase range if targets are searched for in a cylinder
@@ -315,7 +316,7 @@ void CBeamLaser::FireInternal(float3 curDir)
 	for (int tries = 0; tries < 5 && tryAgain; ++tries) {
 		float beamLength = TraceRay::TraceRay(curPos, curDir, maxLength - curLength, collisionFlags, owner, hitUnit, hitFeature, &hitColQuery);
 
-		if (hitUnit != NULL && teamHandler->AlliedTeams(hitUnit->team, owner->team)) {
+		if (hitUnit != nullptr && teamHandler->AlliedTeams(hitUnit->team, owner->team)) {
 			if (sweepFireState.IsSweepFiring() && !sweepFireState.DamageAllies()) {
 				doDamage = false; break;
 			}
@@ -325,8 +326,9 @@ void CBeamLaser::FireInternal(float3 curDir)
 			// terminate beam at water surface if necessary
 			if ((curDir.y < 0.0f) && ((curPos.y + curDir.y * beamLength) <= 0.0f)) {
 				beamLength = curPos.y / -curDir.y;
-				hitUnit = NULL;
-				hitFeature = NULL;
+
+				hitUnit = nullptr;
+				hitFeature = nullptr;
 			}
 		}
 
@@ -338,10 +340,11 @@ void CBeamLaser::FireInternal(float3 curDir)
 		TraceRay::TraceRayShields(this, curPos, curDir, beamLength, hitShields);
 
 		for (const TraceRay::SShieldDist& sd: hitShields) {
-			if(sd.dist < beamLength && sd.rep->IncomingBeam(this, curPos, salvoDamageMult)) {
+			if (sd.dist < beamLength && sd.rep->IncomingBeam(this, curPos, curPos + (curDir * sd.dist), salvoDamageMult)) {
 				beamLength = sd.dist;
-				hitUnit = NULL;
-				hitFeature = NULL;
+
+				hitUnit = nullptr;
+				hitFeature = nullptr;
 				hitShield = sd.rep;
 				break;
 			}
@@ -349,9 +352,13 @@ void CBeamLaser::FireInternal(float3 curDir)
 
 		// same as hitColQuery.GetHitPos() if no water or shield in way
 		hitPos = curPos + curDir * beamLength;
+
 		if (hitShield != nullptr && hitShield->weaponDef->shieldRepulser) {
+			// reflect
 			const float3 normal = (hitPos - hitShield->weaponMuzzlePos).Normalize();
-			newDir = curDir - normal * normal.dot(curDir) * 2;
+			const float3 prjDir = normal * normal.dot(curDir) * 2.0f;
+
+			newDir = curDir - prjDir;
 			tryAgain = true;
 		} else {
 			tryAgain = false;

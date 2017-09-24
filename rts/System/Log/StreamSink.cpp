@@ -26,7 +26,7 @@ extern "C" {
 ///@{
 
 /// Records a log entry
-void log_sink_record_stream(const char* section, int level, const char* record)
+void log_sink_record_stream(int level, const char* section, const char* record)
 {
 	if (logStreamInt != NULL) {
 		logStreamInt->write(record, strlen(record));

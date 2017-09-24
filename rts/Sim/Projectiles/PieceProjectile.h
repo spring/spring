@@ -25,7 +25,6 @@ class CPieceProjectile: public CProjectile
 	CR_DECLARE_DERIVED(CPieceProjectile)
 
 public:
-	CPieceProjectile() { }
 	CPieceProjectile(
 		CUnit* owner,
 		LocalModelPiece* piece,
@@ -36,7 +35,7 @@ public:
 	);
 
 	void Update() override;
-	void Draw() override;
+	void Draw(CVertexArray* va) override;
 	void DrawOnMinimap(CVertexArray& lines, CVertexArray& points) override;
 	void Collision() override;
 	void Collision(CUnit* unit) override;
@@ -47,6 +46,7 @@ public:
 	float GetDrawAngle() const;
 
 private:
+	CPieceProjectile() { }
 	float3 RandomVertexPos() const;
 	void Collision(CUnit* unit, CFeature* feature);
 

@@ -4,16 +4,12 @@
 #define _LOAD_SCREEN_H
 
 #include <string>
-#include <boost/thread/recursive_mutex.hpp>
 
 #include "GameController.h"
 #include "System/LoadSave/LoadSaveHandler.h"
 #include "System/OffscreenGLContext.h"
 #include "System/Misc/SpringTime.h"
-
-namespace boost {
-	class thread;
-}
+#include "System/Threading/SpringThreading.h"
 
 class CLoadScreen : public CGameController
 {
@@ -21,35 +17,32 @@ public:
 	void SetLoadMessage(const std::string& text, bool replace_lastline = false);
 
 	CLoadScreen(const std::string& mapName, const std::string& modName, ILoadSaveHandler* saveFile);
-	virtual ~CLoadScreen();
+	~CLoadScreen();
 
-	/// Splitt off from the ctor, casue this already uses GetInstance().
-	void Init();
+	bool Init(); /// split from ctor; uses GetInstance()
+	void Kill(); /// split from dtor
 
 public:
-	static CLoadScreen* GetInstance() {
-		assert(singleton);
-		return singleton;
-	}
+	// singleton can potentially be null, but only when
+	// accessed from Game::KillLua where we do not care
+	static CLoadScreen* GetInstance() { return singleton; }
+
 	static void CreateInstance(const std::string& mapName, const std::string& modName, ILoadSaveHandler* saveFile);
 	static void DeleteInstance();
 
-	bool Draw();
-	bool Update();
+	bool Draw() override;
+	bool Update() override;
 
-	void ResizeEvent();
+	void ResizeEvent() override;
 
-	/// Called when a key is released by the user
-	int KeyReleased(int k);
-	/// Called when the key is pressed by the user (can be called several times due to key repeat)
-	int KeyPressed(int k,bool isRepeat);
+	int KeyReleased(int k) override;
+	int KeyPressed(int k, bool isRepeat) override;
 
 
 private:
 	void RandomStartPicture(const std::string& sidePref);
 	void LoadStartPicture(const std::string& picture);
 	void UnloadStartPicture();
-	void Stop();
 
 private:
 	static CLoadScreen* singleton;
@@ -61,8 +54,8 @@ private:
 	std::string modName;
 	ILoadSaveHandler* saveFile;
 
-	boost::recursive_mutex mutex;
-	boost::thread* netHeartbeatThread;
+	spring::recursive_mutex mutex;
+	spring::thread* netHeartbeatThread;
 	COffscreenGLThread* gameLoadThread;
 
 	bool mtLoading;

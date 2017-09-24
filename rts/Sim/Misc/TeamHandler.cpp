@@ -7,7 +7,7 @@
 #include "Game/GameSetup.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/GlobalSynced.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 
 
 CR_BIND(CTeamHandler, )

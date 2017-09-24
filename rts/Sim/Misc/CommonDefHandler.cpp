@@ -7,41 +7,33 @@
 #include "System/Sound/ISound.h"
 #include "System/Log/ILog.h"
 
+#include <algorithm>
+#include <array>
+
+static const std::array<std::string, 2> soundExts = {"wav", "ogg"};
+
 int CommonDefHandler::LoadSoundFile(const std::string& fileName)
 {
-	const std::string extension = FileSystem::GetExtension(fileName);
-	bool hasFile = false;
-	if (extension == "wav" || extension == "ogg")
-	{
-		CFileHandler raw(fileName);
-		if (raw.FileExists())
-			hasFile = true;
+	if (!fileName.empty()) {
+		const std::string soundExt = std::move(FileSystem::GetExtension(fileName));
+
+		// unlike constructing a CFileHandler this does not read the data
+		// into memory; faster for large files and many small individually
+		// compressed sounds (e.g. in pool archives)
+		const bool foundExt = (std::find(soundExts.cbegin(), soundExts.cend(), soundExt) != soundExts.cend());
+		const bool haveFile = (foundExt && CFileHandler::FileExists(fileName, SPRING_VFS_RAW_FIRST));
+		const bool haveItem = (haveFile || sound->HasSoundItem(fileName));
+
+		if (haveItem)
+			return (sound->GetSoundId(fileName));
+
+		const std::string soundFile = "sounds/" + fileName + ((soundExt.empty())? ".wav": "");
+
+		if (CFileHandler::FileExists(soundFile, SPRING_VFS_RAW_FIRST))
+			return (sound->GetSoundId(soundFile));
+
+		LOG_L(L_WARNING, "[%s] could not load sound \"%s\" from {Unit,Weapon}Def", __func__, fileName.c_str());
 	}
 
-	if (!sound->HasSoundItem(fileName) && !hasFile)
-	{
-		std::string soundFile = "sounds/" + fileName;
-
-		if (extension.empty()) {
-			// extension missing, try wav
-			soundFile += ".wav";
-		}
-		CFileHandler fh(soundFile);
-		if (fh.FileExists()) {
-			// we have a valid soundfile: store name, ID, and default volume
-			const int id = sound->GetSoundId(soundFile);
-			return id;
-		}
-		else
-		{
-			LOG_L(L_WARNING, "Could not load sound from def: %s",
-					fileName.c_str());
-			return 0;
-		}
-	}
-	else
-	{
-		const int id = sound->GetSoundId(fileName);
-		return id;
-	}
+	return 0;
 }

@@ -82,7 +82,7 @@ void CFlareProjectile::Update()
 			lastSub = gs->frameNum;
 
 			for (CMissileProjectile* missile: owner->incomingMissiles) {
-				if (gs->randFloat() < owner->unitDef->flareEfficiency) {
+				if (gsRNG.NextFloat() < owner->unitDef->flareEfficiency) {
 					missile->SetTargetObject(this);
 					missile->AddDeathDependence(this, DEPENDENCE_DECOYTARGET);
 				}
@@ -95,18 +95,14 @@ void CFlareProjectile::Update()
 		}
 	}
 
-	if (gs->frameNum >= deathFrame) {
-		deleteMe = true;
-	}
+	deleteMe |= (gs->frameNum >= deathFrame);
 }
 
-void CFlareProjectile::Draw()
+void CFlareProjectile::Draw(CVertexArray* va)
 {
-	if (gs->frameNum <= activateFrame) {
+	if (gs->frameNum <= activateFrame)
 		return;
-	}
 
-	inArray = true;
 	unsigned char col[4];
 	float alpha = std::max(0.0f,1-(gs->frameNum-activateFrame)*alphaFalloff);
 	col[0] = (unsigned char) (alpha * 255);

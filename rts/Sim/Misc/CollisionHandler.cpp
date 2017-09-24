@@ -37,7 +37,7 @@ bool CCollisionHandler::DetectHit(
 
 bool CCollisionHandler::DetectHit(
 	const CSolidObject* o,
-	const CollisionVolume* v, // can be a foreign CV
+	const CollisionVolume* v, // can be foreign (not owned by o)
 	const CMatrix44f& m,
 	const float3 p0,
 	const float3 p1,
@@ -95,7 +95,7 @@ bool CCollisionHandler::Collision(
 		if (!hit) {
 			// transform into midpos-relative space
 			CMatrix44f mr = m;
-			mr.Translate(o->relMidPos * WORLD_TO_OBJECT_SPACE);
+			mr.Translate(o->relMidPos);
 			mr.Translate(v->GetOffsets());
 
 			hit = CCollisionHandler::Collision(v, mr, p);
@@ -143,7 +143,7 @@ bool CCollisionHandler::Collision(const CollisionVolume* v, const CMatrix44f& m,
 	// apply it to the projectile's position, then test
 	// if the transformed position lies within the axis-
 	// aligned collision volume
-	const CMatrix44f mInv = m.Invert();
+	const CMatrix44f mInv = m.InvertAffine();
 	const float3 pi = mInv.Mul(p);
 
 	bool hit = false;
@@ -216,7 +216,7 @@ bool CCollisionHandler::MouseHit(
 
 	// note: should mouse-rays care about
 	// IgnoreHits if object is not in void?
-	return (CCollisionHandler::Intersect(v, m, p0, p1, cq));
+	return (CCollisionHandler::Intersect(o, v, m, p0, p1, cq));
 }
 
 
@@ -315,8 +315,8 @@ bool CCollisionHandler::IntersectPieceTree(
 
 	// defer to IntersectBox for the early-out test; align OOBB
 	// to object's axes (unlike a regular CV this is positioned
-	// relative to o->pos, so do NOT include the extra relMidPos
-	// translation by scaling it to 0)
+	// relative to o->pos, so pass scale=0 to ignore the normal
+	// relMidPos translation)
 	if (!CCollisionHandler::Intersect(o, bv, m, p0, p1, cq, 0.0f))
 		return false;
 
@@ -332,13 +332,13 @@ inline bool CCollisionHandler::Intersect(
 	CollisionQuery* cq,
 	float s
 ) {
-	// transform into midpos-relative space (where the CV
-	// is positioned); we have to translate by relMidPos to
-	// get to midPos because GetTransformMatrix() only uses
-	// pos for all CSolidObject types
+	// transform into midpos-relative space where the CV is
+	// positioned; we have to translate by relMidPos to get
+	// to midPos because GetTransformMatrix() only uses pos
+	// for all CSolidObject types
 	//
 	CMatrix44f mr = m;
-	mr.Translate(o->relMidPos * WORLD_TO_OBJECT_SPACE * s);
+	mr.Translate(o->relMidPos * s);
 	mr.Translate(v->GetOffsets());
 
 	return (CCollisionHandler::Intersect(v, mr, p0, p1, cq));
@@ -348,7 +348,7 @@ bool CCollisionHandler::Intersect(const CollisionVolume* v, const CMatrix44f& m,
 {
 	numContTests += 1;
 
-	const CMatrix44f mInv = m.Invert();
+	const CMatrix44f mInv = m.InvertAffine();
 	const float3 pi0 = mInv.Mul(p0);
 	const float3 pi1 = mInv.Mul(p1);
 	bool intersect = false;
@@ -399,8 +399,8 @@ bool CCollisionHandler::IntersectEllipsoid(const CollisionVolume* v, const float
 {
 	// transform the volume-space points into (unit) sphere-space (requires fewer
 	// float-ops than solving the surface equation for arbitrary ellipsoid volumes)
-	const float3 pii0 = float3(pi0.x * v->GetHIScales().x, pi0.y * v->GetHIScales().y, pi0.z * v->GetHIScales().z);
-	const float3 pii1 = float3(pi1.x * v->GetHIScales().x, pi1.y * v->GetHIScales().y, pi1.z * v->GetHIScales().z);
+	const float3 pii0 = pi0 * v->GetHIScales();
+	const float3 pii1 = pi1 * v->GetHIScales();
 	const float rSq = 1.0f;
 
 	if (pii0.dot(pii0) <= rSq) {
@@ -417,11 +417,14 @@ bool CCollisionHandler::IntersectEllipsoid(const CollisionVolume* v, const float
 	// get the ray direction in unit-sphere space
 	const float3 dir = (pii1 - pii0).SafeNormalize();
 
-	// solves [ x^2 + y^2 + z^2 == r^2 ] for t
-	// (<A> represents dir.dot(dir), equal to 1
-	// since ray direction already normalized)
+	// solves [ x^2 + y^2 + z^2 == r^2 ] for t; closest
+	// point on ray is p(t) = p0 + (p1-p0)*t = p0 + d*t
+	// (A represents dir.dot(dir), which equals 1 since
+	// the ray direction is already normalized)
+	// const float A = (pii1 - pii0).dot(pii1 - pii0);
+	// const float B = 2.0f * pii0.dot(pii1 - pii0);
 	const float A = 1.0f;
-	const float B = 2.0f * (pii0).dot(dir);
+	const float B = 2.0f * pii0.dot(dir);
 	const float C = pii0.dot(pii0) - rSq;
 	const float D = (B * B) - (4.0f * A * C);
 
@@ -524,7 +527,7 @@ bool CCollisionHandler::IntersectCylinder(const CollisionVolume* v, const float3
 	float3 n1 = ZeroVector;
 
 	// (unit) cylinder-space to volume-space transformation
-	float3 inv(1.0f, 1.0f, 1.0f);
+	float3 inv = OnesVector;
 
 	// unit-cylinder surface equation params
 	float a = 0.0f;

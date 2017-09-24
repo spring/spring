@@ -22,10 +22,12 @@ SET(sources_engine_Rendering
 		"${CMAKE_CURRENT_SOURCE_DIR}/Env/CubeMapHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Env/DynWater.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Env/GrassDrawer.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Env/MapRendering.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Env/RefractWater.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Env/SkyBox.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Env/SkyLight.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Env/SunLighting.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/Env/WaterRendering.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Env/Decals/GroundDecalHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Env/Decals/DecalsDrawerGL4.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Env/Decals/LegacyTrackHandler.cpp"
@@ -61,9 +63,7 @@ SET(sources_engine_Rendering
 		"${CMAKE_CURRENT_SOURCE_DIR}/GL/VertexArrayRange.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/GL/VBO.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/GL/glExtra.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/GL/glMarkers.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/GL/myGL.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/GLContext.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/GlobalRendering.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/GroundFlash.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/CommandDrawer.cpp"
@@ -123,4 +123,3 @@ SET(sources_engine_Rendering
 		"${CMAKE_CURRENT_SOURCE_DIR}/Fonts/TextWrap.cpp"
 		PARENT_SCOPE
 	)
-

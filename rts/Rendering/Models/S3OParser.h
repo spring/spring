@@ -8,8 +8,6 @@
 
 #include "System/type2.h"
 
-#include <map>
-
 enum {
 	S3O_PRIMTYPE_TRIANGLES      = 0,
 	S3O_PRIMTYPE_TRIANGLE_STRIP = 1,
@@ -58,7 +56,7 @@ public:
 class CS3OParser: public IModelParser
 {
 public:
-	S3DModel* Load(const std::string& name);
+	S3DModel Load(const std::string& name);
 
 private:
 	SS3OPiece* LoadPiece(S3DModel*, SS3OPiece*, unsigned char* buf, int offset);

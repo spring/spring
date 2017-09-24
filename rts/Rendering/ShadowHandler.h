@@ -3,7 +3,7 @@
 #ifndef SHADOW_HANDLER_H
 #define SHADOW_HANDLER_H
 
-#include <vector>
+#include <array>
 
 #include "Rendering/GL/FBO.h"
 #include "System/float4.h"
@@ -87,16 +87,18 @@ private:
 	bool WorkaroundUnsupportedFboRenderTargets();
 
 	void DrawShadowPasses();
-	void LoadShadowGenShaderProgs();
+	void LoadProjectionMatrix(const CCamera* shadowCam);
+	void LoadShadowGenShaders();
 
 	void SetShadowMapSizeFactors();
 	void SetShadowMatrix(CCamera* playerCam, CCamera* shadowCam);
 	void SetShadowCamera(CCamera* shadowCam);
 
-	float4 GetShadowProjectionScales(CCamera*, const float3&);
+	float4 GetShadowProjectionScales(CCamera*, const CMatrix44f&);
+	float3 CalcShadowProjectionPos(CCamera*, float3*);
 
 	float GetOrthoProjectedMapRadius(const float3&, float3&);
-	float GetOrthoProjectedFrustumRadius(CCamera*, float3&);
+	float GetOrthoProjectedFrustumRadius(CCamera*, const CMatrix44f&, float3&);
 
 public:
 	int shadowConfig;
@@ -116,7 +118,7 @@ private:
 
 	// these project geometry into light-space
 	// to write the (FBO) depth-buffer texture
-	std::vector<Shader::IProgramObject*> shadowGenProgs;
+	std::array<Shader::IProgramObject*, SHADOWGEN_PROGRAM_LAST> shadowGenProgs;
 
 	float3 projMidPos[2 + 1];
 	float3 sunProjDir;

@@ -4,7 +4,8 @@
 #include "Wind.h"
 #include "GlobalSynced.h"
 #include "Sim/Units/Unit.h"
-#include "System/creg/STL_Map.h"
+#include "Sim/Units/UnitHandler.h"
+#include "System/ContainerUtil.h"
 #include "System/myMath.h"
 
 CR_BIND(CWind, )
@@ -21,7 +22,7 @@ CR_REG_METADATA(CWind, (
 	CR_MEMBER(oldWind),
 	CR_MEMBER(status),
 
-	CR_MEMBER(windGens)
+	CR_MEMBER(windGenIDs)
 ))
 
 
@@ -29,16 +30,6 @@ CR_REG_METADATA(CWind, (
 static const int WIND_UPDATE_RATE = 15 * GAME_SPEED;
 
 CWind wind;
-
-CWind::CWind()
-{
-	ResetState();
-}
-
-CWind::~CWind()
-{
-	windGens.clear();
-}
 
 void CWind::LoadWind(float minw, float maxw)
 {
@@ -58,30 +49,21 @@ void CWind::ResetState()
 	newWind = ZeroVector;
 	oldWind = ZeroVector;
 	status = 0;
-	windGens.clear();
+	windGenIDs.clear();
 }
 
 
 bool CWind::AddUnit(CUnit* u) {
-	std::map<int, CUnit*>::iterator it = windGens.find(u->id);
+	// duplicates should never happen, no need to check
+	spring::VectorInsertUnique(windGenIDs, u->id);
 
-	if (it != windGens.end())
-		return false;
-
-	windGens[u->id] = u;
 	// start pointing in direction of wind
 	u->UpdateWind(curDir.x, curDir.z, curStrength);
 	return true;
 }
 
 bool CWind::DelUnit(CUnit* u) {
-	std::map<int, CUnit*>::iterator it = windGens.find(u->id);
-
-	if (it == windGens.end())
-		return false;
-
-	windGens.erase(it);
-	return true;
+	return (spring::VectorErase(windGenIDs, u->id));
 }
 
 
@@ -100,8 +82,8 @@ void CWind::Update()
 		float newStrength = 0.0f;
 
 		do {
-			newWind.x -= (gs->randFloat() - 0.5f) * maxWind;
-			newWind.z -= (gs->randFloat() - 0.5f) * maxWind;
+			newWind.x -= (gsRNG.NextFloat() - 0.5f) * maxWind;
+			newWind.z -= (gsRNG.NextFloat() - 0.5f) * maxWind;
 			newStrength = newWind.Length();
 		} while (newStrength == 0.0f);
 
@@ -110,8 +92,8 @@ void CWind::Update()
 		newWind *= (newStrength = Clamp(newStrength, minWind, maxWind));
 
 		// update generators
-		for (std::map<int, CUnit*>::iterator it = windGens.begin(); it != windGens.end(); ++it) {
-			(it->second)->UpdateWind(newWind.x, newWind.z, newStrength);
+		for (const int unitID: windGenIDs) {
+			(unitHandler->GetUnit(unitID))->UpdateWind(newWind.x, newWind.z, newStrength);
 		}
 	} else {
 		const float mod = smoothstep(0.0f, 1.0f, status / float(WIND_UPDATE_RATE));
@@ -128,6 +110,5 @@ void CWind::Update()
 	}
 
 	status = (status + 1) % (WIND_UPDATE_RATE + 1);
-
 }
 

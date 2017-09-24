@@ -6,30 +6,13 @@
 #include "Sim/Misc/GlobalConstants.h"
 #include "System/type2.h"
 #include "System/float3.h"
+#include "System/MathConstants.h"
 
 #include <cmath> // std::fabs
 #include <algorithm> // std::{min,max}
 
-#ifdef __GNUC__
-	#define _const __attribute__((const))
-	#define _pure __attribute__((pure))
-	#define _warn_unused_result __attribute__((warn_unused_result))
-#else
-	#define _const
-	#define _pure
-	#define _warn_unused_result
-#endif
-
-#ifndef M_PI
-    #define M_PI       3.14159265358979323846
-#endif 
-
-
-static const float INVPI  = 1.0f / PI;
-static const float TWOPI  = 2.0f * PI;
-static const float HALFPI = 0.5f * PI;
-static const int SHORTINT_MAXVALUE  = 32768;
-static const int SPRING_CIRCLE_DIVS = (SHORTINT_MAXVALUE << 1);
+static constexpr int SHORTINT_MAXVALUE  = 32768;
+static constexpr int SPRING_CIRCLE_DIVS = (SHORTINT_MAXVALUE << 1);
 
 #define HEADING_CHECKSUM_1024 0x617a9968
 #define HEADING_CHECKSUM_4096 0x3d51b476

@@ -29,7 +29,7 @@
 #include "Sim/Weapons/PlasmaRepulser.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include "System/myMath.h"
 #include "System/Sound/ISoundChannels.h"
 #include "System/Sync/SyncTracer.h"
@@ -53,7 +53,7 @@ CR_REG_METADATA(CCobInstance, (
 
 inline bool CCobInstance::HasFunction(int id) const
 {
-	return script->scriptIndex[id] >= 0;
+	return (script->scriptIndex.size() > id && script->scriptIndex[id] >= 0);
 }
 
 //Used by creg
@@ -184,14 +184,14 @@ bool CCobInstance::HasTargetWeight(int weaponNum) const
 
 void CCobInstance::Create()
 {
-	// Calculate the max() of the available weapon reloadtimes
+	// calculate maximum reload-time of the available weapons
 	int maxReloadTime = 0;
 
-	for (vector<CWeapon*>::iterator i = unit->weapons.begin(); i != unit->weapons.end(); ++i) {
-		maxReloadTime = std::max(maxReloadTime, (*i)->reloadTime);
+	for (const CWeapon* w: unit->weapons) {
+		maxReloadTime = std::max(maxReloadTime, w->reloadTime);
 
 		#if 0
-		if (dynamic_cast<CBeamLaser*>(*i))
+		if (dynamic_cast<CBeamLaser*>(w))
 			maxReloadTime = 150; // ???
 		#endif
 	}
@@ -201,9 +201,8 @@ void CCobInstance::Create()
 
 	#if 0
 	// TA does some special handling depending on weapon count, Spring != TA
-	if (unit->weapons.size() > 1) {
+	if (unit->weapons.size() > 1)
 		maxReloadTime = std::max(maxReloadTime, 3000);
-	}
 	#endif
 
 	Call(COBFN_Create);
@@ -604,11 +603,10 @@ void CCobInstance::ThreadCallback(ThreadCallbackType type, int retCode, int cbPa
 		// (otherwise its value is -1 regardless of Killed being present which
 		// means *no* wreck will be spawned)
 		case CBKilled:
-			unit->deathScriptFinished = true;
-			unit->delayedWreckLevel = retCode;
+			unit->KilledScriptFinished(retCode);
 			break;
 		case CBAimWeapon:
-			unit->weapons[cbParam]->angleGood = (retCode == 1);
+			unit->weapons[cbParam]->AimScriptFinished(retCode == 1);
 			break;
 		case CBAimShield:
 			static_cast<CPlasmaRepulser*>(unit->weapons[cbParam])->SetEnabled(retCode != 0);

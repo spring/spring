@@ -8,9 +8,10 @@
 #include <string>
 #include <memory>
 #include <vector>
-#include <unordered_map>
 
 #include "ShaderStates.h"
+#include "Lua/LuaOpenGLUtils.h"
+#include "System/UnorderedMap.hpp"
 
 
 
@@ -36,29 +37,30 @@ namespace Shader {
 
 		virtual ~IShaderObject() {}
 
-		bool ReloadFromDisk();
 		virtual void Compile() {}
 		virtual void Release() {}
+
+		bool ReloadFromDisk();
+		bool IsValid() const { return valid; }
 
 		unsigned int GetObjID() const { return objID; }
 		unsigned int GetType() const { return type; }
 		unsigned int GetHash() const;
-		bool IsValid() const { return valid; }
+
 		const std::string& GetLog() const { return log; }
 
 		void SetDefinitions(const std::string& defs) { modDefStrs = defs; }
 
 	protected:
-		friend struct GLSLProgramObject;
 		unsigned int objID;
 		unsigned int type;
 
 		bool valid;
 
 		std::string srcFile;
-		std::string curShaderSrc;
-		std::string modDefStrs;
-		std::string rawDefStrs;
+		std::string srcText;
+		std::string rawDefStrs; // set via constructor only, constant
+		std::string modDefStrs; // set on reload from changed flags
 		std::string log;
 	};
 
@@ -97,7 +99,7 @@ namespace Shader {
 
 
 
-	struct IProgramObject : public SShaderFlagState {
+	struct IProgramObject {
 	public:
 		IProgramObject(const std::string& poName);
 		virtual ~IProgramObject() {}
@@ -114,8 +116,8 @@ namespace Shader {
 		/// create the whole shader from a lua file
 		bool LoadFromLua(const std::string& filename);
 
-		virtual void Enable();
-		virtual void Disable();
+		virtual void Enable() { bound = true; }
+		virtual void Disable() { bound = false; }
 		virtual void Link() = 0;
 		virtual bool Validate() = 0;
 		virtual void Release() = 0;
@@ -123,7 +125,7 @@ namespace Shader {
 		/// attach single shader objects (vertex, frag, ...) to the program
 		virtual void AttachShaderObject(IShaderObject* so) { shaderObjs.push_back(so); }
 
-		bool IsBound() const;
+		bool IsBound() const { return bound; }
 		bool IsValid() const { return valid; }
 		bool IsShaderAttached(const IShaderObject* so) const {
 			return (std::find(shaderObjs.begin(), shaderObjs.end(), so) != shaderObjs.end());
@@ -155,6 +157,9 @@ namespace Shader {
 		template<typename TK, typename TV> inline void SetUniformMatrix3x3(const TK& name, bool transp, const TV* v) { SetUniformMatrix3x3(GetUniformState(name), transp, v); }
 		template<typename TK, typename TV> inline void SetUniformMatrix4x4(const TK& name, bool transp, const TV* v) { SetUniformMatrix4x4(GetUniformState(name), transp, v); }
 
+		template<typename TV> void SetFlag(const char* key, TV val) { shaderFlags.Set(key, val); }
+
+
 		/// old interface
 		virtual void SetUniformTarget(int) {} //< only needed for ARB, for GLSL uniforms of vertex & frag shader are accessed in the same space
 		virtual void SetUniformLocation(const std::string&) {}
@@ -180,8 +185,8 @@ namespace Shader {
 		virtual void SetUniformMatrix4fv(int idx, bool transp, const float* v) {}
 
 	public:
-		/// interface to auto bind textures with the shader
-		void AddTextureBinding(const int index, const std::string& luaTexName);
+		/// interface to auto-bind textures with the shader
+		void AddTextureBinding(const int texUnit, const std::string& luaTexName);
 		void BindTextures() const;
 
 	protected:
@@ -211,14 +216,14 @@ namespace Shader {
 
 	private:
 		virtual int GetUniformLoc(const std::string& name) = 0;
-		virtual int GetUniformType(const int loc) = 0;
+		virtual int GetUniformType(const int idx) = 0;
 
 		UniformState* GetNewUniformState(const std::string name);
 		UniformState* GetUniformState(const std::string& name) {
 			const auto hash = hashString(name.c_str()); // never compiletime const (std::string is never a literal)
-			auto it = uniformStates.find(hash);
-			if (it != uniformStates.end())
-				return &it->second;
+			const auto iter = uniformStates.find(hash);
+			if (iter != uniformStates.end())
+				return &iter->second;
 			return GetNewUniformState(name);
 		}
 		UniformState* GetUniformState(const char* name) {
@@ -227,9 +232,9 @@ namespace Shader {
 			//          passing it to a function. I.e. foo.find(hashString(name)) would always
 			//          be runtime evaluated (even when `name` is a literal)!
 			const auto hash = hashString(name);
-			auto it = uniformStates.find(hash);
-			if (it != uniformStates.end())
-				return &it->second;
+			const auto iter = uniformStates.find(hash);
+			if (iter != uniformStates.end())
+				return &iter->second;
 			return GetNewUniformState(name);
 		}
 
@@ -238,21 +243,24 @@ namespace Shader {
 		std::string log;
 
 		unsigned int objID;
-		unsigned int curFlagsHash;
 
 		bool valid;
 		bool bound;
 
 		std::vector<IShaderObject*> shaderObjs;
 
+		ShaderFlags shaderFlags;
+
 	public:
-		std::unordered_map<std::size_t, UniformState, fast_hash> uniformStates;
-		std::unordered_map<int, std::string> textures;
+		spring::unsynced_map<std::size_t, UniformState, fast_hash> uniformStates;
+		spring::unsynced_map<int, LuaMatTexture> luaTextures;
 	};
+
 
 	struct NullProgramObject: public Shader::IProgramObject {
 	public:
 		NullProgramObject(const std::string& poName): IProgramObject(poName) {}
+
 		void Enable() {}
 		void Disable() {}
 		void Release() {}
@@ -261,7 +269,7 @@ namespace Shader {
 		void Link() {}
 
 		int GetUniformLoc(const std::string& name) { return -1; }
-		int GetUniformType(const int loc) { return -1; }
+		int GetUniformType(const int idx) { return -1; }
 
 		void SetUniform1i(int idx, int   v0) {}
 		void SetUniform2i(int idx, int   v0, int   v1) {}
@@ -280,18 +288,20 @@ namespace Shader {
 		void SetUniform4fv(int idx, const float* v) {}
 	};
 
+
 	struct ARBProgramObject: public Shader::IProgramObject {
 	public:
 		ARBProgramObject(const std::string& poName);
+
 		void Enable();
 		void Disable();
 		void Link();
-		void Release();
+		void Release() { IProgramObject::Release(); }
 		void Reload(bool reloadFromDisk, bool validate);
 		bool Validate() { return true; }
 
-		int GetUniformLoc(const std::string& name);
-		int GetUniformType(const int loc) { return -1; }
+		int GetUniformLoc(const std::string& name) { return -1; } // FIXME
+		int GetUniformType(const int idx) { return -1; }
 		void SetUniformTarget(int target);
 		int GetUnitformTarget();
 
@@ -315,10 +325,12 @@ namespace Shader {
 		int uniformTarget;
 	};
 
+
 	struct GLSLProgramObject: public Shader::IProgramObject {
 	public:
 		GLSLProgramObject(const std::string& poName);
-		~GLSLProgramObject();
+		~GLSLProgramObject() { Release(); }
+
 		void Enable();
 		void Disable();
 		void Link();
@@ -350,7 +362,7 @@ namespace Shader {
 		void SetUniformMatrix4fv(int idx, bool transp, const float* v);
 
 	private:
-		int GetUniformType(const int loc);
+		int GetUniformType(const int idx);
 		int GetUniformLoc(const std::string& name);
 
 		void SetUniform(UniformState* uState, int   v0);

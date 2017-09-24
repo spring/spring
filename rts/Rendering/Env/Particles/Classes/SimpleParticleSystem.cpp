@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-
 #include "SimpleParticleSystem.h"
 
 #include "GenericParticleProjectile.h"
@@ -11,10 +10,12 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/ColorMap.h"
 #include "Sim/Projectiles/ExpGenSpawnableMemberInfo.h"
+#include "Sim/Projectiles/ProjectileMemPool.h"
 #include "System/float3.h"
 #include "System/Log/ILog.h"
+#include "System/myMath.h"
 
-CR_BIND_DERIVED(CSimpleParticleSystem, CProjectile, )
+CR_BIND_DERIVED_POOL(CSimpleParticleSystem, CProjectile, , projMemPool.alloc, projMemPool.free)
 
 CR_REG_METADATA(CSimpleParticleSystem,
 (
@@ -79,10 +80,8 @@ CSimpleParticleSystem::CSimpleParticleSystem()
 	useAirLos = true;
 }
 
-void CSimpleParticleSystem::Draw()
+void CSimpleParticleSystem::Draw(CVertexArray* va)
 {
-	inArray = true;
-
 	va->EnlargeArrays(numParticles * 4, 0, VA_SIZE_TC);
 
 	if (directional) {
@@ -172,14 +171,14 @@ void CSimpleParticleSystem::Init(const CUnit* owner, const float3& offset)
 
 	particles.resize(numParticles);
 	for (auto& p: particles) {
-		float az = gu->RandFloat() * 2 * PI;
-		float ay = (emitRot + (emitRotSpread * gu->RandFloat())) * (PI / 180.0);
+		float az = guRNG.NextFloat() * math::TWOPI;
+		float ay = (emitRot + (emitRotSpread * guRNG.NextFloat())) * math::DEG_TO_RAD;
 
 		p.pos = offset;
-		p.speed = ((up * emitMul.y) * fastmath::cos(ay) - ((right * emitMul.x) * fastmath::cos(az) - (forward * emitMul.z) * fastmath::sin(az)) * fastmath::sin(ay)) * (particleSpeed + (gu->RandFloat() * particleSpeedSpread));
+		p.speed = ((up * emitMul.y) * fastmath::cos(ay) - ((right * emitMul.x) * fastmath::cos(az) - (forward * emitMul.z) * fastmath::sin(az)) * fastmath::sin(ay)) * (particleSpeed + (guRNG.NextFloat() * particleSpeedSpread));
 		p.life = 0;
-		p.decayrate = 1.0f / (particleLife + (gu->RandFloat() * particleLifeSpread));
-		p.size = particleSize + gu->RandFloat()*particleSizeSpread;
+		p.decayrate = 1.0f / (particleLife + (guRNG.NextFloat() * particleLifeSpread));
+		p.size = particleSize + guRNG.NextFloat()*particleSizeSpread;
 	}
 
 	drawRadius = (particleSpeed + particleSpeedSpread) * (particleLife * particleLifeSpread);
@@ -220,8 +219,7 @@ bool CSimpleParticleSystem::GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo
 }
 
 
-
-CR_BIND_DERIVED(CSphereParticleSpawner, CSimpleParticleSystem, )
+CR_BIND_DERIVED_POOL(CSphereParticleSpawner, CSimpleParticleSystem, , projMemPool.alloc, projMemPool.free)
 
 CR_REG_METADATA(CSphereParticleSpawner, )
 
@@ -242,16 +240,16 @@ void CSphereParticleSpawner::Init(const CUnit* owner, const float3& offset)
 	}
 
 	for (int i = 0; i < numParticles; i++) {
-		const float az = gu->RandFloat() * 2 * PI;
-		const float ay = (emitRot + emitRotSpread*gu->RandFloat()) * (PI / 180.0);
+		const float az = guRNG.NextFloat() * math::TWOPI;
+		const float ay = (emitRot + emitRotSpread*guRNG.NextFloat()) * math::DEG_TO_RAD;
 
-		const float3 pspeed = ((up * emitMul.y) * std::cos(ay) - ((right * emitMul.x) * std::cos(az) - (forward * emitMul.z) * std::sin(az)) * std::sin(ay)) * (particleSpeed + (gu->RandFloat() * particleSpeedSpread));
+		const float3 pspeed = ((up * emitMul.y) * std::cos(ay) - ((right * emitMul.x) * std::cos(az) - (forward * emitMul.z) * std::sin(az)) * std::sin(ay)) * (particleSpeed + (guRNG.NextFloat() * particleSpeedSpread));
 
-		CGenericParticleProjectile* particle = new CGenericParticleProjectile(owner, pos + offset, pspeed);
+		CGenericParticleProjectile* particle = projMemPool.alloc<CGenericParticleProjectile>(owner, pos + offset, pspeed);
 
-		particle->decayrate = 1.0f / (particleLife + gu->RandFloat() * particleLifeSpread);
+		particle->decayrate = 1.0f / (particleLife + guRNG.NextFloat() * particleLifeSpread);
 		particle->life = 0;
-		particle->size = particleSize + gu->RandFloat() * particleSizeSpread;
+		particle->size = particleSize + guRNG.NextFloat() * particleSizeSpread;
 
 		particle->texture = texture;
 		particle->colorMap = colorMap;

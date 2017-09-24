@@ -11,7 +11,7 @@
 #include "System/Log/ILog.h"
 #include "System/Exceptions.h"
 #include "System/myMath.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include "System/FileSystem/FileHandler.h"
 
 #if !defined(HEADLESS) && !defined(NO_SOUND)
@@ -20,7 +20,6 @@
 #endif
 
 #include <cassert>
-#include <cfloat>
 
 
 // Before delete, the const is const_cast'ed away. There are
@@ -189,16 +188,9 @@ void CMapInfo::ReadLight()
 {
 	const LuaTable& lightTable = parser->GetRoot().SubTable("lighting");
 
-	light.sunStartAngle = lightTable.GetFloat("sunStartAngle", 0.0f);
-	light.sunOrbitTime = lightTable.GetFloat("sunOrbitTime", 10 * GAME_SPEED);
-	light.sunDir = lightTable.GetFloat4("sunDir", float4(0.0f, 1.0f, 2.0f, FLT_MAX));
-
-	if (light.sunDir.w == FLT_MAX) {
-		// if four params are not specified for sundir, fallback to the old three param format
-		light.sunDir = lightTable.GetFloat3("sunDir", float3(0.0f, 1.0f, 2.0f));
-		light.sunDir.w = FLT_MAX;
-	}
-
+	// read the float4 direction first; keep it if the float3 value does not exist
+	light.sunDir =  lightTable.GetFloat4("sunDir", float4(0.0f, 1.0f, 2.0f, 1.0f));
+	light.sunDir = {lightTable.GetFloat3("sunDir", light.sunDir), light.sunDir.w};
 	light.sunDir.ANormalize();
 
 	light.groundAmbientColor  = lightTable.GetFloat3("groundAmbientColor", float3(0.5f, 0.5f, 0.5f));
@@ -206,15 +198,15 @@ void CMapInfo::ReadLight()
 	light.groundSpecularColor = lightTable.GetFloat3("groundSpecularColor", float3(0.1f, 0.1f, 0.1f));
 	light.groundShadowDensity = lightTable.GetFloat("groundShadowDensity", 0.8f);
 
-	light.unitAmbientColor  = lightTable.GetFloat3("unitAmbientColor", float3(0.4f, 0.4f, 0.4f));
-	light.unitDiffuseColor  = lightTable.GetFloat3("unitDiffuseColor", float3(0.7f, 0.7f, 0.7f));
-	light.unitSpecularColor = lightTable.GetFloat3("unitSpecularColor", light.unitDiffuseColor);
-	light.unitShadowDensity = lightTable.GetFloat("unitShadowDensity", 0.8f);
+	light.modelAmbientColor  = lightTable.GetFloat3("unitAmbientColor", float3(0.4f, 0.4f, 0.4f));
+	light.modelDiffuseColor  = lightTable.GetFloat3("unitDiffuseColor", float3(0.7f, 0.7f, 0.7f));
+	light.modelSpecularColor = lightTable.GetFloat3("unitSpecularColor", light.modelDiffuseColor);
+	light.modelShadowDensity = lightTable.GetFloat("unitShadowDensity", 0.8f);
 
 	light.specularExponent = lightTable.GetFloat("specularExponent", 100.0f);
 
 	light.groundShadowDensity = Clamp(light.groundShadowDensity, 0.0f, 1.0f);
-	light.unitShadowDensity   = Clamp(light.unitShadowDensity,   0.0f, 1.0f);
+	light.modelShadowDensity   = Clamp(light.modelShadowDensity,   0.0f, 1.0f);
 }
 
 
@@ -472,16 +464,14 @@ void CMapInfo::ReadSound()
 
 	efxprops = new EAXSfxProps();
 
-	const std::string presetname = soundTable.GetString("preset", "default");
-	std::map<std::string, EAXSfxProps>::const_iterator et = eaxPresets.find(presetname);
-	if (et != eaxPresets.end()) {
-		*efxprops = et->second;
-	}
+	const auto presetIt = eaxPresets.find(soundTable.GetString("preset", "default"));
 
-	std::map<std::string, ALuint>::const_iterator it;
+	if (presetIt != eaxPresets.end())
+		*efxprops = presetIt->second;
 
 	const LuaTable& filterTable = soundTable.SubTable("passfilter");
-	for (it = nameToALFilterParam.begin(); it != nameToALFilterParam.end(); ++it) {
+
+	for (auto it = nameToALFilterParam.cbegin(); it != nameToALFilterParam.cend(); ++it) {
 		const std::string& name = it->first;
 		const int luaType = filterTable.GetType(name);
 
@@ -489,17 +479,19 @@ void CMapInfo::ReadSound()
 			continue;
 		
 		const ALuint param = it->second;
-		const unsigned& type = alParamType[param];
+		const unsigned type = alParamType[param];
+
 		switch (type) {
 			case EFXParamTypes::FLOAT:
 				if (luaType == LuaTable::NUMBER)
-					efxprops->filter_properties_f[param] = filterTable.GetFloat(name, 0.f);
+					efxprops->filter_props_f[param] = filterTable.GetFloat(name, 0.0f);
 				break;
 		}
 	}
 
 	soundTable.SubTable("reverb");
-	for (it = nameToALParam.begin(); it != nameToALParam.end(); ++it) {
+
+	for (auto it = nameToALParam.begin(); it != nameToALParam.end(); ++it) {
 		const std::string& name = it->first;
 		const int luaType = filterTable.GetType(name);
 
@@ -507,19 +499,20 @@ void CMapInfo::ReadSound()
 			continue;
 
 		const ALuint param = it->second;
-		const unsigned& type = alParamType[param];
+		const unsigned type = alParamType[param];
+
 		switch (type) {
 			case EFXParamTypes::VECTOR:
 				if (luaType == LuaTable::TABLE)
-					efxprops->properties_v[param] = filterTable.GetFloat3(name, ZeroVector);
+					efxprops->reverb_props_v[param] = filterTable.GetFloat3(name, ZeroVector);
 				break;
 			case EFXParamTypes::FLOAT:
 				if (luaType == LuaTable::NUMBER)
-					efxprops->properties_f[param] = filterTable.GetFloat(name, 0.f);
+					efxprops->reverb_props_f[param] = filterTable.GetFloat(name, 0.0f);
 				break;
 			case EFXParamTypes::BOOL:
 				if (luaType == LuaTable::BOOLEAN)
-					efxprops->properties_i[param] = filterTable.GetBool(name, false);
+					efxprops->reverb_props_i[param] = filterTable.GetBool(name, false);
 				break;
 		}
 	}

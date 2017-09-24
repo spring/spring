@@ -1,6 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include <boost/cstdint.hpp>
+#include <cinttypes>
 #include <SDL_keycode.h>
 
 #include "FreeController.h"
@@ -58,9 +58,9 @@ CFreeController::CFreeController()
 	slide       = configHandler->GetFloat("CamFreeSlide");
 	gndOffset   = configHandler->GetFloat("CamFreeGroundOffset");
 	tiltSpeed   = configHandler->GetFloat("CamFreeTiltSpeed");
-	tiltSpeed   = tiltSpeed * (PI / 180.0);
+	tiltSpeed   = tiltSpeed * math::DEG_TO_RAD;
 	autoTilt    = configHandler->GetFloat("CamFreeAutoTilt");
-	autoTilt    = autoTilt * (PI / 180.0);
+	autoTilt    = autoTilt * math::DEG_TO_RAD;
 	velTime     = configHandler->GetFloat("CamFreeVelTime");
 	velTime     = max(0.1f, velTime);
 	avelTime    = configHandler->GetFloat("CamFreeAngVelTime");
@@ -74,18 +74,8 @@ void CFreeController::SetTrackingInfo(const float3& target, float radius)
 	trackPos = target;
 	trackRadius = radius;
 
-	// lock the view direction to the target
-	const float3 diff(trackPos - pos);
-	const float rads = math::atan2(diff.x, diff.z);
-	const float len2D = diff.Length2D();
-
-	camera->SetRotY(rads);
-
-	if (math::fabs(len2D) <= 0.001f) {
-		camera->SetRotX(0.0f);
-	} else {
-		camera->SetRotX(math::atan2((trackPos.y - pos.y), len2D));
-	}
+	// lock the view direction (yaw, pitch) to the target
+	camera->SetDir((trackPos - pos).Normalize());
 }
 
 
@@ -122,7 +112,7 @@ void CFreeController::Update()
 			const float3 hDir(std::sin(rot.y), 0.f, std::cos(rot.y));
 			const float3 gndNormal = CGround::GetSmoothNormal(pos.x, pos.z, false);
 			const float dot = gndNormal.dot(hDir);
-			const float gndRotX = (float)math::acos(dot) - (PI * 0.5f);
+			const float gndRotX = (float)math::acos(dot) - math::HALFPI;
 			const float rotXdiff = (gndRotX - rot.x);
 			autoTiltVel = (autoTilt * rotXdiff);
 		}
@@ -177,8 +167,8 @@ void CFreeController::Update()
 		if (goForward) {
 			const float dist = max(0.1f, diff.Length());
 			const float nomDist = 512.0f;
-			float speedScale = (dist / nomDist);
-			speedScale = max(0.25f, min(16.0f, speedScale));
+			const float speedScale = Clamp(dist / nomDist, 0.25f, 16.0f);
+
 			const float delta = -vel.x * (ft * speedScale);
 			const float newDist = max(trackRadius, (dist + delta));
 			const float scale = (newDist / dist);
@@ -239,10 +229,11 @@ void CFreeController::Update()
 	}
 
 	// angular clamps
-	if (rot.x >= fastmath::PI || rot.x<=0) {
-		rot.x = Clamp(rot.x, 0.001f, fastmath::PI - 0.001f);
-		camera->SetRotX(rot.x);
+	if (rot.x >= math::PI || rot.x <= 0.0f) {
+		rot.x = Clamp(rot.x, 0.001f, math::PI - 0.001f);
 		avel.x = 0.0f;
+
+		camera->SetRotX(rot.x);
 	}
 
 	// setup for the next loop
@@ -294,9 +285,9 @@ void CFreeController::KeyMove(float3 move)
 
 void CFreeController::MouseMove(float3 move)
 {
-	const boost::uint8_t prevAlt   = KeyInput::GetKeyModState(KMOD_ALT);
-	const boost::uint8_t prevCtrl  = KeyInput::GetKeyModState(KMOD_CTRL);
-	const boost::uint8_t prevShift = KeyInput::GetKeyModState(KMOD_SHIFT);
+	const std::uint8_t prevAlt   = KeyInput::GetKeyModState(KMOD_ALT);
+	const std::uint8_t prevCtrl  = KeyInput::GetKeyModState(KMOD_CTRL);
+	const std::uint8_t prevShift = KeyInput::GetKeyModState(KMOD_SHIFT);
 
 	KeyInput::SetKeyModState(KMOD_CTRL, !prevCtrl);
 	KeyInput::SetKeyModState(KMOD_ALT, (invertAlt == !prevAlt));
@@ -311,9 +302,9 @@ void CFreeController::MouseMove(float3 move)
 
 void CFreeController::ScreenEdgeMove(float3 move)
 {
-	const boost::uint8_t prevAlt   = KeyInput::GetKeyModState(KMOD_ALT);
-	const boost::uint8_t prevCtrl  = KeyInput::GetKeyModState(KMOD_CTRL);
-	const boost::uint8_t prevShift = KeyInput::GetKeyModState(KMOD_SHIFT);
+	const std::uint8_t prevAlt   = KeyInput::GetKeyModState(KMOD_ALT);
+	const std::uint8_t prevCtrl  = KeyInput::GetKeyModState(KMOD_CTRL);
+	const std::uint8_t prevShift = KeyInput::GetKeyModState(KMOD_SHIFT);
 
 	KeyInput::SetKeyModState(KMOD_ALT, (invertAlt == !prevAlt));
 	KeyMove(move);
@@ -326,8 +317,8 @@ void CFreeController::ScreenEdgeMove(float3 move)
 
 void CFreeController::MouseWheelMove(float move)
 {
-	const boost::uint8_t prevCtrl  = KeyInput::GetKeyModState(KMOD_CTRL);
-	const boost::uint8_t prevShift = KeyInput::GetKeyModState(KMOD_SHIFT);
+	const std::uint8_t prevCtrl  = KeyInput::GetKeyModState(KMOD_CTRL);
+	const std::uint8_t prevShift = KeyInput::GetKeyModState(KMOD_SHIFT);
 
 	KeyInput::SetKeyModState(KMOD_CTRL, 0);
 	KeyInput::SetKeyModState(KMOD_SHIFT, 1);
@@ -402,8 +393,8 @@ void CFreeController::GetState(StateMap& sm) const
 	sm["invertAlt"]   = invertAlt ? +1.0f : -1.0f;
 	sm["gndLock"]     = gndLock   ? +1.0f : -1.0f;
 
-	sm["rx"] = fastmath::HALFPI - rot.x;
-	sm["ry"] = fastmath::PI - rot.y;
+	sm["rx"] = math::HALFPI - rot.x;
+	sm["ry"] = math::PI - rot.y;
 	sm["rz"] = rot.z;
 
 	sm["vx"] = prevVel.x;
@@ -437,8 +428,8 @@ bool CFreeController::SetState(const StateMap& sm)
 	SetStateFloat(sm, "rx", rot.x);
 	SetStateFloat(sm, "ry", rot.y);
 	SetStateFloat(sm, "rz", rot.z);
-	rot.x = fastmath::HALFPI - rot.x;
-	rot.y = fastmath::PI - rot.y;
+	rot.x = math::HALFPI - rot.x;
+	rot.y = math::PI - rot.y;
 
 	SetStateFloat(sm, "vx", prevVel.x);
 	SetStateFloat(sm, "vy", prevVel.y);

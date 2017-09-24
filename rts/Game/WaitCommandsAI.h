@@ -3,20 +3,19 @@
 #ifndef WAIT_COMMANDS_AI_H
 #define WAIT_COMMANDS_AI_H
 
-#include <map>
-#include <set>
 #include <deque>
 #include <string>
+
 #include "System/Object.h"
 #include "System/Misc/SpringTime.h"
-#include "Sim/Units/UnitSet.h"
+#include "System/UnorderedMap.hpp"
+#include "System/UnorderedSet.hpp"
 
 class float3;
 class CObject;
 class CUnit;
 struct Command;
 class CCommandQueue;
-
 
 class CWaitCommandsAI {
 	CR_DECLARE_STRUCT(CWaitCommandsAI)
@@ -25,7 +24,10 @@ class CWaitCommandsAI {
 	CR_DECLARE_SUB(DeathWait)
 	CR_DECLARE_SUB(SquadWait)
 	CR_DECLARE_SUB(GatherWait)
+
 	public:
+		typedef spring::unordered_set<int> CUnitSet;
+
 		CWaitCommandsAI();
 		~CWaitCommandsAI();
 
@@ -56,7 +58,7 @@ class CWaitCommandsAI {
 
 	private:
 		typedef int KeyType;
-		typedef std::map<KeyType, Wait*> WaitMap;
+		typedef spring::unordered_map<KeyType, Wait*> WaitMap;
 		WaitMap waitMap;
 		WaitMap unackedMap;
 
@@ -89,8 +91,7 @@ class CWaitCommandsAI {
 				bool IsWaitingOn(const CUnit* unit) const;
 				void SendCommand(const Command& cmd, const CUnitSet& unitSet);
 				void SendWaitCommand(const CUnitSet& unitSet);
-				/// removes the pointed at unit and returns an iterator to the next unit in the set
-				CUnitSet::iterator RemoveUnitFromSet(CUnitSet::iterator it, CUnitSet& unitSet);
+
 			protected:
 				float code;
 				KeyType key;

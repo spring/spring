@@ -18,8 +18,7 @@ extern "C" {
  */
 ///@{
 
-typedef void (*log_sink_ptr)(const char* section, int level,
-		const char* record);
+typedef void (*log_sink_ptr)(int level, const char* section, const char* record);
 
 /// Start routing log records to the supplied sink
 void log_backend_registerSink(log_sink_ptr sink);

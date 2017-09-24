@@ -4,15 +4,15 @@
 #pragma warning(disable:4258)
 #endif
 
-#include <assert.h>
+#include <cassert>
 
 #include "BasicSky.h"
 
 #include "Game/Camera.h"
+#include "Game/GlobalUnsynced.h"
 #include "Map/MapInfo.h"
-#include "Map/ReadMap.h"
 #include "Rendering/GlobalRendering.h"
-#include "Rendering/Textures/Bitmap.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Matrix44f.h"
 #include "System/myMath.h"
@@ -64,8 +64,8 @@ CBasicSky::CBasicSky()
 	rawClouds=newmat2<int>(CLOUD_SIZE,CLOUD_SIZE);
 	blendMatrix=newmat3<int>(CLOUD_DETAIL,32,32);
 
-	domeheight=std::cos(PI/16)*1.01f;
-	domeWidth=std::sin(PI/16)*400*1.7f;
+	domeheight=std::cos(math::PI/16)*1.01f;
+	domeWidth=std::sin(math::PI/16)*400*1.7f;
 
 	UpdateSkyDir();
 	InitSun();
@@ -220,21 +220,17 @@ CBasicSky::~CBasicSky()
 
 void CBasicSky::Draw()
 {
-	SCOPED_GMARKER("CBasicSky::Draw");
-
 	if (!globalRendering->drawSky)
 		return;
 
 	glDisable(GL_DEPTH_TEST);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE * wireFrameMode + GL_FILL * (1 - wireFrameMode));
 
-	if (wireframe)
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
-	float3 modCamera=skydir1*camera->GetPos().x+skydir2*camera->GetPos().z;
+	const float3 modCamera = skydir1 * camera->GetPos().x + skydir2 * camera->GetPos().z;
 
 	glMatrixMode(GL_TEXTURE);
 		glPushMatrix();
-		glTranslatef((gs->frameNum%20000)*0.00005f+modCamera.x*0.000025f,modCamera.z*0.000025f,0);
+		glTranslatef((gs->frameNum % 20000) * 0.00005f + modCamera.x * 0.000025f, modCamera.z * 0.000025f, 0);
 	glMatrixMode(GL_MODELVIEW);
 		glPushMatrix();
 		// glTranslatef3(camera->GetPos());
@@ -247,9 +243,7 @@ void CBasicSky::Draw()
 	glMatrixMode(GL_MODELVIEW);
 		glPopMatrix();
 
-	if (wireframe)
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	glEnable(GL_DEPTH_TEST);
 
 	sky->SetupFog();
@@ -257,8 +251,8 @@ void CBasicSky::Draw()
 
 float3 CBasicSky::GetCoord(int x, int y)
 {
-	float fy = ((float)y/Y_PART) * 2 * PI;
-	float fx = ((float)x/X_PART) * 2 * PI;
+	float fy = ((float)y/Y_PART) * math::TWOPI;
+	float fx = ((float)x/X_PART) * math::TWOPI;
 
 	return float3(
 		fastmath::sin(fy/32) * fastmath::sin(fx),
@@ -361,7 +355,7 @@ void CBasicSky::Update()
 	if (!dynamicSky)
 		return;
 
-	SCOPED_TIMER("BasicSky::Update");
+	SCOPED_TIMER("Update::WorldDrawer::BasicSky");
 
 	static int kernel[CLOUD_SIZE/4*CLOUD_SIZE/4];
 
@@ -496,9 +490,8 @@ void CBasicSky::Update()
 
 void CBasicSky::CreateRandMatrix(int **matrix,float mod)
 {
-	for(int a=0, *pmat=*matrix; a<32*32; ++a) {
-		float r = ((float)( rand() )) / (float)RAND_MAX;
-		*pmat++=((int)( r * 255.0f ));
+	for (int a = 0, *pmat = *matrix; a < 32*32; ++a) {
+		*pmat++ = ((int)(guRNG.NextFloat() * 255.0f));
 	}
 }
 
@@ -520,16 +513,14 @@ void CBasicSky::CreateTransformVectors()
 
 void CBasicSky::DrawSun()
 {
-	SCOPED_GMARKER("CBasicSky::DrawSun");
-
 	if (!globalRendering->drawSky)
 		return;
 	if (!SunVisible(camera->GetPos()))
 		return;
 
 	const float3 xzSunCameraPos =
-		sundir1 * camera->GetPos().x +
-		sundir2 * camera->GetPos().z;
+		skyLight->GetLightDirX() * camera->GetPos().x +
+		skyLight->GetLightDirZ() * camera->GetPos().z;
 	const float3 modSunColor = sunColor * skyLight->GetLightIntensity();
 
 	// sun-disc vertices might be clipped against the
@@ -608,8 +599,8 @@ void CBasicSky::UpdateSunFlare() {
 		glBegin(GL_TRIANGLE_STRIP);
 
 		for (int x = 0; x < 257; ++x) {
-			const float dx = std::sin(x * 2.0f * PI / 256.0f);
-			const float dy = std::cos(x * 2.0f * PI / 256.0f);
+			const float dx = std::sin(x * math::TWOPI / 256.0f);
+			const float dy = std::cos(x * math::TWOPI / 256.0f);
 			const float dz = 5.0f;
 
 			glTexCoord2f(x / 256.0f, 0.25f); glVertexf3(zdir * dz + xdir * dx * 0.0014f + ydir * dy * 0.0014f);
@@ -696,24 +687,8 @@ void CBasicSky::CreateCover(int baseX, int baseY, float *buf)
 }
 
 void CBasicSky::UpdateSunDir() {
-	const float3& L = skyLight->GetLightDir();
-
-	sundir2 = L;
-	sundir2.y = 0.0f;
-
-	if (sundir2.SqLength() == 0.0f)
-		sundir2.x = 1.0f;
-
-	sundir2.ANormalize();
-	sundir1 = sundir2.cross(UpVector);
-
-	// polar-coordinate direction in yz-plane (sin(zenith-angle), radius)
-	modSunDir.x = 0.0f;
-	modSunDir.y = L.y;
-	modSunDir.z = std::sqrt(L.x * L.x + L.z * L.z);
-
 	sunTexCoordX = 0.5f;
-	sunTexCoordY = GetTexCoordFromDir(modSunDir);
+	sunTexCoordY = GetTexCoordFromDir(skyLight->CalcPolarLightDir());
 
 	// FIXME: expensive with dynamic sun
 	UpdateSunFlare();
@@ -728,7 +703,7 @@ void CBasicSky::UpdateSkyDir() {
 
 	skydir2.ANormalize();
 	skydir1 = skydir2.cross(UpVector);
-	skyAngle = GetRadFromXY(skydir2.x, skydir2.z) + PI / 2.0f; //FIXME Why the +PI/2???
+	skyAngle = GetRadFromXY(skydir2.x, skydir2.z) + math::HALFPI; //FIXME Why the +PI/2???
 }
 
 void CBasicSky::UpdateSkyTexture() {

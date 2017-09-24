@@ -4,9 +4,9 @@
 #define LUA_GL_H
 
 #include <string>
-#include <set>
-#include "Lua/LuaHandle.h"
+#include <vector>
 
+#include "Lua/LuaHandle.h"
 
 struct lua_State;
 
@@ -40,6 +40,11 @@ class LuaOpenGL {
 		static bool GetSafeMode() { return safeMode; }
 		static void SetSafeMode(bool value) { safeMode = value; }
 
+		#define NOOP_STATE_FUNCS(Name)    \
+		static void Enable  ## Name () {} \
+		static void Disable ## Name () {} \
+		static void Reset   ## Name () {}
+
 		static void EnableCommon(DrawMode);
 		static void ResetCommon(DrawMode);
 		static void DisableCommon(DrawMode);
@@ -56,6 +61,8 @@ class LuaOpenGL {
 		static void ResetDrawWorldPreUnit();
 		static void DisableDrawWorldPreUnit();
 
+		NOOP_STATE_FUNCS(DrawWorldPreParticles)
+
 		static void EnableDrawWorldShadow();
 		static void ResetDrawWorldShadow();
 		static void DisableDrawWorldShadow();
@@ -68,11 +75,6 @@ class LuaOpenGL {
 		static void ResetDrawWorldRefraction();
 		static void DisableDrawWorldRefraction();
 
-		#define NOOP_STATE_FUNCS(Name)    \
-		static void Enable  ## Name () {} \
-		static void Disable ## Name () {} \
-		static void Reset   ## Name () {}
-
 		// no-ops (should probably guard some state)
 		NOOP_STATE_FUNCS(DrawGroundPreForward)
 		NOOP_STATE_FUNCS(DrawGroundPreDeferred)
@@ -82,13 +84,22 @@ class LuaOpenGL {
 
 		#undef NOOP_STATE_FUNCS
 
-		static void EnableDrawScreenEffects();
-		static void ResetDrawScreenEffects();
-		static void DisableDrawScreenEffects();
+		static void EnableDrawScreenCommon();
+		static void ResetDrawScreenCommon();
+		static void DisableDrawScreenCommon();
 
-		static void EnableDrawScreen();
-		static void ResetDrawScreen();
-		static void DisableDrawScreen();
+		inline static void EnableDrawScreen() { EnableDrawScreenCommon(); }
+		inline static void ResetDrawScreen() { ResetDrawScreenCommon(); }
+		inline static void DisableDrawScreen() { DisableDrawScreenCommon(); }
+
+		inline static void EnableDrawScreenEffects() { EnableDrawScreenCommon(); }
+		inline static void ResetDrawScreenEffects() { ResetDrawScreenCommon(); }
+		inline static void DisableDrawScreenEffects() { DisableDrawScreenCommon(); }
+
+		inline static void EnableDrawScreenPost() { EnableDrawScreenCommon(); }
+		inline static void ResetDrawScreenPost() { ResetDrawScreenCommon(); }
+		inline static void DisableDrawScreenPost() { DisableDrawScreenCommon(); }
+
 
 		static void EnableDrawInMiniMap();
 		static void ResetDrawInMiniMap();
@@ -98,8 +109,8 @@ class LuaOpenGL {
 		static void ResetDrawInMiniMapBackground();
 		static void DisableDrawInMiniMapBackground();
 
-		inline static void InitMatrixState(lua_State* L, const LuaHashString* hs);
-		inline static void CheckMatrixState(lua_State* L, const LuaHashString* hs, int error);
+		inline static void InitMatrixState(lua_State* L, const char* fn);
+		inline static void CheckMatrixState(lua_State* L, const char* fn, int error);
 
 	protected:
 		static void ResetGLState();
@@ -129,7 +140,13 @@ class LuaOpenGL {
 		static float screenDistance;
 		static void (*resetMatrixFunc)(void);
 		static unsigned int resetStateList;
-		static std::set<unsigned int> occlusionQueries;
+
+		struct OcclusionQuery {
+			unsigned int index; // into LuaOpenGL::occlusionQueries
+			unsigned int id;
+		};
+
+		static std::vector<OcclusionQuery*> occlusionQueries;
 
 	private:
 		static void CheckDrawingEnabled(lua_State* L, const char* caller);
@@ -150,6 +167,7 @@ class LuaOpenGL {
 		static int ResetState(lua_State* L);
 		static int ResetMatrices(lua_State* L);
 		static int Clear(lua_State* L);
+		static int SwapBuffers(lua_State* L);
 
 		static int Lighting(lua_State* L);
 		static int ShadeModel(lua_State* L);
@@ -162,7 +180,6 @@ class LuaOpenGL {
 		static int Culling(lua_State* L);
 		static int LogicOp(lua_State* L);
 		static int Fog(lua_State* L);
-		static int Smoothing(lua_State* L);
 		static int AlphaTest(lua_State* L);
 		static int LineStipple(lua_State* L);
 		static int Blending(lua_State* L);
@@ -296,26 +313,28 @@ class LuaOpenGL {
 		static int GetGlobalTexCoords(lua_State* L);
 		static int GetShadowMapParams(lua_State* L);
 
-		static int GetSun(lua_State* L);
 		static int GetAtmosphere(lua_State* L);
+		static int GetSun(lua_State* L);
+		static int GetWaterRendering(lua_State* L);
+		static int GetMapRendering(lua_State* L);
 };
 
-inline void LuaOpenGL::InitMatrixState(lua_State* L, const LuaHashString* hs) {
+inline void LuaOpenGL::InitMatrixState(lua_State* L, const char* fn) {
 #if !defined(NDEBUG) && !defined(HEADLESS)
 	if (IsDrawingEnabled(L)) {
 		GLint curmode; // the matrix mode should be set to GL_MODELVIEW before calling any lua code
 		glGetIntegerv(GL_MATRIX_MODE, &curmode);
 		if (curmode != GL_MODELVIEW)
-			LOG_L(L_ERROR, "%s: Current matrix mode is not GL_MODELVIEW", (hs == NULL) ? "Unknown" : hs->GetString().c_str());
+			LOG_L(L_ERROR, "%s: Current matrix mode is not GL_MODELVIEW", fn);
 		glMatrixMode(GL_MODELVIEW);
 	}
 #endif
 }
 
-inline void LuaOpenGL::CheckMatrixState(lua_State* L, const LuaHashString* hs, int error) {
+inline void LuaOpenGL::CheckMatrixState(lua_State* L, const char* fn, int error) {
 	if (!GetLuaContextData(L)->glMatrixTracker.HasMatrixStateError())
 		return;
-	GetLuaContextData(L)->glMatrixTracker.HandleMatrixStateError(error, (hs == NULL) ? "Unknown" : hs->GetString().c_str());
+	GetLuaContextData(L)->glMatrixTracker.HandleMatrixStateError(error, fn);
 }
 
 #endif /* LUA_UNITDEFS_H */

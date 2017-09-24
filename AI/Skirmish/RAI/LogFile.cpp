@@ -16,7 +16,9 @@ cLogFile::cLogFile(IAICallback* cb, string sFilename, bool bAppend)
 	string sFilename_w;
 	const bool located = cRAI::LocateFile(cb, sFilename, sFilename_w, true);
 	if (!located) {
-		throw 11;
+		logFile = stderr;
+		fprintf(logFile, "RAI: Couldn't locate %s\n", sFilename.c_str());
+		return;
 	}
 
 	if( bAppend )
@@ -36,6 +38,8 @@ cLogFile::cLogFile(IAICallback* cb, string sFilename, bool bAppend)
 
 cLogFile::~cLogFile()
 {
+	if (logFile == stderr)
+		return;
 	fclose(logFile);
 //	logFile->close();
 //	delete logFile;

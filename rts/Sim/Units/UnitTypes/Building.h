@@ -13,7 +13,7 @@ class CBuilding : public CUnit
 public:
 	CR_DECLARE(CBuilding)
 
-	CBuilding();
+	CBuilding(): CUnit() { immobile = true; }
 	virtual ~CBuilding() {}
 
 	void PreInit(const UnitLoadParams& params);

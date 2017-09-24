@@ -57,8 +57,8 @@ namespace creg
 	// Vector type (vector<T>)
 	template<typename T>
 	struct DeduceType<safe_vector<T>> {
-		static boost::shared_ptr<IType> Get() {
-			return boost::shared_ptr<IType>(new DynamicArrayType<safe_vector<T> >(DeduceType<T>::Get()));
+		static std::shared_ptr<IType> Get() {
+			return std::shared_ptr<IType>(new DynamicArrayType<safe_vector<T> >(DeduceType<T>::Get()));
 		}
 	};
 }

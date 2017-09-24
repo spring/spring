@@ -1,10 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-
-#include <set>
 #include <string>
 #include <vector>
-#include <set>
 #include <map>
 #include <cctype>
 
@@ -24,7 +21,7 @@
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "System/FileSystem/SimpleParser.h"
 #include "System/Log/ILog.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include "Sim/Misc/GlobalSynced.h"
 
 
@@ -371,10 +368,10 @@ static int CategorySetFromBits(lua_State* L, const void* data)
 
 static int CustomParamsTable(lua_State* L, const void* data)
 {
-	const map<string, string>& params = *((const map<string, string>*)data);
+	const spring::unordered_map<std::string, std::string>& params = *((const spring::unordered_map<std::string, std::string>*)data);
 	lua_newtable(L);
-	map<string, string>::const_iterator it;
-	for (it = params.begin(); it != params.end(); ++it) {
+
+	for (auto it = params.cbegin(); it != params.cend(); ++it) {
 		lua_pushsstring(L, it->first);
 		lua_pushsstring(L, it->second);
 		lua_rawset(L, -3);
@@ -409,7 +406,7 @@ static int GuiSoundSetTable(lua_State* L, const void* data)
 
 static bool InitParamMap()
 {
-	paramMap.clear();
+	spring::clear_unordered_map(paramMap);
 
 	paramMap["next"]  = DataElement(READONLY_TYPE);
 	paramMap["pairs"] = DataElement(READONLY_TYPE);
@@ -555,9 +552,11 @@ static bool InitParamMap()
 	ADD_FLOAT("shieldGoodColorR",       wd.shieldGoodColor.x);
 	ADD_FLOAT("shieldGoodColorG",       wd.shieldGoodColor.y);
 	ADD_FLOAT("shieldGoodColorB",       wd.shieldGoodColor.z);
+	ADD_FLOAT("shieldGoodColorA",       wd.shieldGoodColor.w);
 	ADD_FLOAT("shieldBadColorR",        wd.shieldBadColor.x);
 	ADD_FLOAT("shieldBadColorG",        wd.shieldBadColor.y);
 	ADD_FLOAT("shieldBadColorB",        wd.shieldBadColor.z);
+	ADD_FLOAT("shieldBadColorA",        wd.shieldBadColor.w);
 	ADD_FLOAT("shieldAlpha",            wd.shieldAlpha);
 
 	ADD_INT("shieldInterceptType",      wd.shieldInterceptType);

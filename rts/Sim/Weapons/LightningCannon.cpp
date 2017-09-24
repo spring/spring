@@ -3,6 +3,7 @@
 #include "LightningCannon.h"
 #include "PlasmaRepulser.h"
 #include "WeaponDef.h"
+#include "WeaponMemPool.h"
 #include "Game/GameHelper.h"
 #include "Game/TraceRay.h"
 #include "Sim/Misc/CollisionHandler.h"
@@ -12,16 +13,14 @@
 
 #include <vector>
 
-CR_BIND_DERIVED(CLightningCannon, CWeapon, (NULL, NULL))
-
-CR_REG_METADATA(CLightningCannon,(
+CR_BIND_DERIVED_POOL(CLightningCannon, CWeapon, , weaponMemPool.alloc, weaponMemPool.free)
+CR_REG_METADATA(CLightningCannon, (
 	CR_MEMBER(color)
 ))
 
-CLightningCannon::CLightningCannon(CUnit* owner, const WeaponDef* def)
-	: CWeapon(owner, def)
+CLightningCannon::CLightningCannon(CUnit* owner, const WeaponDef* def): CWeapon(owner, def)
 {
-	//happens when loading
+	// null happens when loading
 	if (def != nullptr)
 		color = def->visuals.color;
 }
@@ -37,11 +36,11 @@ void CLightningCannon::FireImpl(const bool scriptCall)
 	float3 curDir = (currentTargetPos - weaponMuzzlePos).SafeNormalize();
 
 	curDir +=
-		(gs->randVector() * SprayAngleExperience() + SalvoErrorExperience());
+		(gsRNG.NextVector() * SprayAngleExperience() + SalvoErrorExperience());
 	curDir.Normalize();
 
-	CUnit* hitUnit = NULL;
-	CFeature* hitFeature = NULL;
+	CUnit* hitUnit = nullptr;
+	CFeature* hitFeature = nullptr;
 	CollisionQuery hitColQuery;
 
 	float boltLength = TraceRay::TraceRay(curPos, curDir, range, collisionFlags, owner, hitUnit, hitFeature, &hitColQuery);
@@ -50,8 +49,8 @@ void CLightningCannon::FireImpl(const bool scriptCall)
 		// terminate bolt at water surface if necessary
 		if ((curDir.y < 0.0f) && ((curPos.y + curDir.y * boltLength) <= 0.0f)) {
 			boltLength = curPos.y / -curDir.y;
-			hitUnit = NULL;
-			hitFeature = NULL;
+			hitUnit = nullptr;
+			hitFeature = nullptr;
 		}
 	}
 
@@ -59,17 +58,16 @@ void CLightningCannon::FireImpl(const bool scriptCall)
 	hitShields.clear();
 	TraceRay::TraceRayShields(this, curPos, curDir, range, hitShields);
 	for (const TraceRay::SShieldDist& sd: hitShields) {
-		if(sd.dist < boltLength && sd.rep->IncomingBeam(this, curPos)) {
+		if (sd.dist < boltLength && sd.rep->IncomingBeam(this, curPos, curPos + (curDir * sd.dist), 1.0f)) {
 			boltLength = sd.dist;
-			hitUnit = NULL;
-			hitFeature = NULL;
+			hitUnit = nullptr;
+			hitFeature = nullptr;
 			break;
 		}
 	}
 
-	if (hitUnit != NULL) {
+	if (hitUnit != nullptr)
 		hitUnit->SetLastHitPiece(hitColQuery.GetHitPiece(), gs->frameNum);
-	}
 
 	const DamageArray& damageArray = damages->GetDynamicDamages(weaponMuzzlePos, currentTargetPos);
 	const CExplosionParams params = {

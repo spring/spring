@@ -24,14 +24,14 @@ public:
 class PackPacket : public RawPacket
 {
 public:
-	PackPacket(const unsigned length);
-	PackPacket(const unsigned length, unsigned char msgID);
+	PackPacket(const uint32_t length);
+	PackPacket(const uint32_t length, uint8_t msgID);
 
 	template <typename T>
 	PackPacket& operator<<(const T& t) {
-		unsigned size = sizeof(T);
+		const uint32_t size = sizeof(T);
 		assert((size + pos) <= length);
-		*reinterpret_cast<T*>(data + pos) = t;
+		*reinterpret_cast<T*>(GetWritingPos()) = t;
 		pos += size;
 		return *this;
 	}
@@ -43,7 +43,7 @@ public:
 		const size_t size = vec.size() * sizeof(element);
 		assert((size + pos) <= length);
 		if (size > 0) {
-			std::memcpy((data+pos), (void*)(&vec[0]), size);
+			std::memcpy(GetWritingPos(), (void*)(vec.data()), size);
 			pos += size;
 		}
 		return *this;
@@ -52,22 +52,21 @@ public:
 #ifdef USE_SAFE_VECTOR
 	template <typename element>
 	PackPacket& operator<<(const safe_vector<element>& vec) {
-		const size_t size = vec.size()* sizeof(element);
+		const size_t size = vec.size() * sizeof(element);
 		assert((size + pos) <= length);
 		if (size > 0) {
-			std::memcpy((data+pos), (void*)(&vec[0]), size);
+			std::memcpy(GetWritingPos(), (void*)(vec.data()), size);
 			pos += size;
 		}
 		return *this;
 	}
 #endif
 
-	unsigned char* GetWritingPos() {
-		return data + pos;
-	}
+	uint8_t* GetWritingPos() { return (data + pos); }
 
 private:
-	unsigned pos;
+	uint8_t id;
+	uint32_t pos;
 };
 
 } // namespace netcode

@@ -27,7 +27,7 @@
 #include "AAISector.h"
 
 
-#include "System/Util.h"
+#include "System/SafeUtil.h"
 
 #include "LegacyCpp/IGlobalAICallback.h"
 #include "LegacyCpp/UnitDef.h"
@@ -115,11 +115,11 @@ AAI::~AAI()
 	}
 	build_tasks.clear();
 
-	// save mod learning data
+	// save game learning data
 	bt->SaveBuildTable(brain->GetGamePeriod(), map->map_type);
 
-	SafeDelete(am);
-	SafeDelete(af);
+	spring::SafeDelete(am);
+	spring::SafeDelete(af);
 
 	// delete unit groups
 	for(int i = 0; i <= MOBILE_CONSTRUCTOR; i++)
@@ -133,12 +133,12 @@ AAI::~AAI()
 	}
 
 
-	SafeDelete(brain);
-	SafeDelete(execute);
-	SafeDelete(ut);
-	SafeDelete(map);
-	SafeDelete(bt);
-	SafeDelete(profiler);
+	spring::SafeDelete(brain);
+	spring::SafeDelete(execute);
+	spring::SafeDelete(ut);
+	spring::SafeDelete(map);
+	spring::SafeDelete(bt);
+	spring::SafeDelete(profiler);
 
 	initialized = false;
 	fclose(file);
@@ -163,23 +163,13 @@ void AAI::InitAI(IGlobalAICallback* callback, int team)
 	// open log file
 	// this size equals the one used in "AIAICallback::GetValue(AIVAL_LOCATE_FILE_..."
 	char filename[2048];
-	char buffer[500];
-	char team_number[3];
-
-	SNPRINTF(team_number, 3, "%d", team);
-
-	STRCPY(buffer, "");
-	STRCAT(buffer, AILOG_PATH);
-	STRCAT(buffer, "AAI_log_team_");
-	STRCAT(buffer, team_number);
-	STRCAT(buffer, ".txt");
-	ReplaceExtension (buffer, filename, sizeof(filename), ".txt");
+	SNPRINTF(filename, 2048, "%sAAI_log_team_%d.txt", AILOG_PATH, team);
 
 	cb->GetValue(AIVAL_LOCATE_FILE_W, filename);
 
 	file = fopen(filename,"w");
 
-	Log("AAI %s running mod %s\n \n", AAI_VERSION, cb->GetModHumanName());
+	Log("AAI %s running game %s\n \n", AAI_VERSION, cb->GetModHumanName());
 
 	// load config file first
 	cfg->LoadConfig(this);
@@ -187,11 +177,11 @@ void AAI::InitAI(IGlobalAICallback* callback, int team)
 	if (!cfg->initialized)
 	{
 		std::string errorMsg =
-				std::string("Error: Could not load mod and/or general config file."
+				std::string("Error: Could not load game and/or general config file."
 					" For further information see the config file under: ") +
 				filename;
 		LogConsole("%s", errorMsg.c_str());
-		throw 1;
+		return;
 	}
 
 	// create buildtable
@@ -418,7 +408,7 @@ void AAI::UnitFinished(int unit)
 					ut->units[(*task)->builder_id].cons->ConstructionFinished();
 
 				build_tasks.erase(task);
-				SafeDelete(build_task);
+				spring::SafeDelete(build_task);
 				break;
 			}
 		}
@@ -811,7 +801,7 @@ void AAI::Update()
 	{
 		if (!(tick % 450))
 		{
-			LogConsole("Failed to initialize AAI! Please view ai log for further information and check if AAI supports this mod");
+			LogConsole("Failed to initialize AAI! Please view ai log for further information and check if AAI supports this game");
 		}
 
 		return;

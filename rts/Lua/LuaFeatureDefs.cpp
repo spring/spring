@@ -1,10 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-
-#include <set>
 #include <string>
 #include <vector>
-#include <set>
 #include <map>
 #include <cctype>
 
@@ -272,7 +269,7 @@ static int Pairs(lua_State* L)
 
 static int CustomParamsTable(lua_State* L, const void* data)
 {
-	const map<string, string>& params = *((const map<string, string>*)data);
+	const spring::unordered_map<std::string, std::string>& params = *((const spring::unordered_map<std::string, std::string>*)data);
 	lua_newtable(L);
 
 	for (auto it = params.cbegin(); it != params.cend(); ++it) {
@@ -292,6 +289,14 @@ static int ModelTable(lua_State* L, const void* data) {
 
 static int ModelName(lua_State* L, const void* data) {
 	return (LuaUtils::PushModelName(L, static_cast<const SolidObjectDef*>(data)));
+}
+
+static int ModelType(lua_State* L, const void* data) {
+	return (LuaUtils::PushModelType(L, static_cast<const SolidObjectDef*>(data)));
+}
+
+static int ModelPath(lua_State* L, const void* data) {
+	return (LuaUtils::PushModelPath(L, static_cast<const SolidObjectDef*>(data)));
 }
 
 static int ModelHeight(lua_State* L, const void* data) {
@@ -317,7 +322,7 @@ static int ColVolTable(lua_State* L, const void* data) {
 
 static bool InitParamMap()
 {
-	paramMap.clear();
+	spring::clear_unordered_map(paramMap);
 
 	paramMap["next"]  = DataElement(READONLY_TYPE);
 	paramMap["pairs"] = DataElement(READONLY_TYPE);
@@ -328,8 +333,11 @@ static bool InitParamMap()
 
 	ADD_FUNCTION("model", fd, ModelTable);
 	ADD_FUNCTION("collisionVolume", fd.collisionVolume, ColVolTable);
+	ADD_FUNCTION("selectionVolume", fd.selectionVolume, ColVolTable);
 
 	ADD_FUNCTION("modelname", fd, ModelName);
+	ADD_FUNCTION("modeltype", fd, ModelType);
+	ADD_FUNCTION("modelpath", fd, ModelPath);
 	ADD_FUNCTION("height", fd, ModelHeight);
 	ADD_FUNCTION("radius", fd, ModelRadius);
 	ADD_FUNCTION("drawTypeString", fd, ModelDrawType);

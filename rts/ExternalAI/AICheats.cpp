@@ -18,20 +18,16 @@
 #include "System/myMath.h"
 
 #include <vector>
-#include <list>
 
 #define CHECK_UNITID(id) ((unsigned)(id) < (unsigned)unitHandler->MaxUnits())
 #define CHECK_GROUPID(id) ((unsigned)(id) < (unsigned)gh->groups.size())
 
-CUnit* CAICheats::GetUnit(int unitId) const {
+CUnit* CAICheats::GetUnit(int unitId) const
+{
+	if (CHECK_UNITID(unitId))
+		return unitHandler->GetUnit(unitId);
 
-	CUnit* unit = NULL;
-
-	if (CHECK_UNITID(unitId)) {
-		unit = unitHandler->units[unitId];
-	}
-
-	return unit;
+	return nullptr;
 }
 
 
@@ -178,25 +174,27 @@ static inline bool unit_IsEnemy(CUnit* unit) {
 int CAICheats::GetEnemyUnits(int* unitIds, int unitIds_max)
 {
 	myAllyTeamId = teamHandler->AllyTeam(ai->GetTeamId());
-	return FilterUnitsVector(unitHandler->activeUnits, unitIds, unitIds_max, &unit_IsEnemy);
+	return FilterUnitsVector(unitHandler->GetActiveUnits(), unitIds, unitIds_max, &unit_IsEnemy);
 }
 
 int CAICheats::GetEnemyUnits(int* unitIds, const float3& pos, float radius, int unitIds_max)
 {
-	const std::vector<CUnit*>& units = quadField->GetUnitsExact(pos, radius);
+	QuadFieldQuery qfQuery;
+	quadField->GetUnitsExact(qfQuery, pos, radius);
 	myAllyTeamId = teamHandler->AllyTeam(ai->GetTeamId());
-	return FilterUnitsVector(units, unitIds, unitIds_max, &unit_IsEnemy);
+	return FilterUnitsVector(*qfQuery.units, unitIds, unitIds_max, &unit_IsEnemy);
 }
 
 int CAICheats::GetNeutralUnits(int* unitIds, int unitIds_max)
 {
-	return FilterUnitsVector(unitHandler->activeUnits, unitIds, unitIds_max, &unit_IsNeutral);
+	return FilterUnitsVector(unitHandler->GetActiveUnits(), unitIds, unitIds_max, &unit_IsNeutral);
 }
 
 int CAICheats::GetNeutralUnits(int* unitIds, const float3& pos, float radius, int unitIds_max)
 {
-	const std::vector<CUnit*>& units = quadField->GetUnitsExact(pos, radius);
-	return FilterUnitsVector(units, unitIds, unitIds_max, &unit_IsNeutral);
+	QuadFieldQuery qfQuery;
+	quadField->GetUnitsExact(qfQuery, pos, radius);
+	return FilterUnitsVector(*qfQuery.units, unitIds, unitIds_max, &unit_IsNeutral);
 }
 
 int CAICheats::GetFeatures(int* features, int max) const {
@@ -424,14 +422,15 @@ int CAICheats::HandleCommand(int commandId, void* data)
 			AIHCTraceRay* cmdData = static_cast<AIHCTraceRay*>(data);
 
 			if (CHECK_UNITID(cmdData->srcUID)) {
-				const CUnit* srcUnit = unitHandler->units[cmdData->srcUID];
-				CUnit* hitUnit = NULL;
-				CFeature* hitFeature = NULL;
+				const CUnit* srcUnit = unitHandler->GetUnit(cmdData->srcUID);
 
-				if (srcUnit != NULL) {
+				CUnit* hitUnit = nullptr;
+				CFeature* hitFeature = nullptr;
+
+				if (srcUnit != nullptr) {
 					//FIXME ignore features?
 					cmdData->rayLen = TraceRay::TraceRay(cmdData->rayPos, cmdData->rayDir, cmdData->rayLen, cmdData->flags, srcUnit, hitUnit, hitFeature);
-					cmdData->hitUID = (hitUnit != NULL)? hitUnit->id: -1;
+					cmdData->hitUID = (hitUnit != nullptr)? hitUnit->id: -1;
 				}
 			}
 
@@ -442,14 +441,15 @@ int CAICheats::HandleCommand(int commandId, void* data)
 			AIHCFeatureTraceRay* cmdData = static_cast<AIHCFeatureTraceRay*>(data);
 
 			if (CHECK_UNITID(cmdData->srcUID)) {
-				const CUnit* srcUnit = unitHandler->units[cmdData->srcUID];
-				CUnit* hitUnit = NULL;
-				CFeature* hitFeature = NULL;
+				const CUnit* srcUnit = unitHandler->GetUnit(cmdData->srcUID);
 
-				if (srcUnit != NULL) {
+				CUnit* hitUnit = nullptr;
+				CFeature* hitFeature = nullptr;
+
+				if (srcUnit != nullptr) {
 					//FIXME ignore units?
 					cmdData->rayLen = TraceRay::TraceRay(cmdData->rayPos, cmdData->rayDir, cmdData->rayLen, cmdData->flags, srcUnit, hitUnit, hitFeature);
-					cmdData->hitFID = (hitFeature != NULL)? hitFeature->id: -1;
+					cmdData->hitFID = (hitFeature != nullptr)? hitFeature->id: -1;
 				}
 			}
 

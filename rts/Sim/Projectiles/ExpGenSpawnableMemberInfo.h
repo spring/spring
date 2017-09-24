@@ -3,7 +3,7 @@
 #ifndef EXP_GEN_SPAWNABLE_MEMBER_INFO_H
 #define EXP_GEN_SPAWNABLE_MEMBER_INFO_H
 
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include "System/Sync/HsiehHash.h"
 
 //note the cast to CExpGenSpawnable that should deal with all kinds of inheritance

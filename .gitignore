@@ -62,6 +62,7 @@ progress.make
 /rts/build/vstudio10/Release with error catching
 /rts/build/vstudio10/Release+MT with error catching
 /rts/build/vstudio10/Syncdebug
+/_ReSharper.Caches
 
 # Windows libraries used by spring when compiling with MinGW
 # recommended: place the dir somewhere else, and specify with
@@ -141,3 +142,17 @@ progress.make
 *.vcxproj.filters
 *.vcxproj.user
 *.pyc
+Debug/
+Release/
+RelWithDebInfo/
+x64/
+*.sln
+*.db
+Spring.VC.VC.opendb
+
+# downloaded files
+/pool
+/maps
+/rapid
+/packages
+

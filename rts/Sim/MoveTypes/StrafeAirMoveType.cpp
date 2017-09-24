@@ -2,6 +2,7 @@
 
 
 #include "StrafeAirMoveType.h"
+#include "Game/GlobalUnsynced.h"
 #include "Game/Players/Player.h"
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
@@ -329,11 +330,11 @@ static int SelectLoopBackManeuver(
 		return CStrafeAirMoveType::MANEUVER_FLY_STRAIGHT;
 
 	if (groundDist > TurnRadius(turnRadius, spd.w)) {
-		if (math::fabs(frontdir.y) <= 0.2f && gs->randFloat() > 0.3f) {
+		if (math::fabs(frontdir.y) <= 0.2f && gsRNG.NextFloat() > 0.3f) {
 			return CStrafeAirMoveType::MANEUVER_IMMELMAN_INV;
 		}
 	} else {
-		if (frontdir.y > -0.2f && gs->randFloat() > 0.7f) {
+		if (frontdir.y > -0.2f && gsRNG.NextFloat() > 0.7f) {
 			return CStrafeAirMoveType::MANEUVER_IMMELMAN;
 		}
 	}
@@ -386,7 +387,7 @@ CStrafeAirMoveType::CStrafeAirMoveType(CUnit* owner):
 
 	wantedHeight =
 		(owner->unitDef->wantedHeight * 1.5f) +
-		((gs->randFloat() - 0.3f) * 15.0f * (isFighter? 2.0f: 1.0f));
+		((gsRNG.NextFloat() - 0.3f) * 15.0f * (isFighter? 2.0f: 1.0f));
 
 	orgWantedHeight = wantedHeight;
 
@@ -398,15 +399,15 @@ CStrafeAirMoveType::CStrafeAirMoveType(CUnit* owner):
 	useSmoothMesh = owner->unitDef->useSmoothMesh;
 
 	// FIXME: WHY ARE THESE RANDOMIZED?
-	maxRudder   *= (0.99f + gs->randFloat() * 0.02f);
-	maxElevator *= (0.99f + gs->randFloat() * 0.02f);
-	maxAileron  *= (0.99f + gs->randFloat() * 0.02f);
-	accRate     *= (0.99f + gs->randFloat() * 0.02f);
+	maxRudder   *= (0.99f + gsRNG.NextFloat() * 0.02f);
+	maxElevator *= (0.99f + gsRNG.NextFloat() * 0.02f);
+	maxAileron  *= (0.99f + gsRNG.NextFloat() * 0.02f);
+	accRate     *= (0.99f + gsRNG.NextFloat() * 0.02f);
 
-	crashAileron = 1.0f - (gs->randFloat() * gs->randFloat());
-	crashAileron *= ((gs->randInt() & 1)? -1.0f: 1.0f);
-	crashElevator = gs->randFloat();
-	crashRudder = gs->randFloat() - 0.5f;
+	crashAileron = 1.0f - (gsRNG.NextFloat() * gsRNG.NextFloat());
+	crashAileron *= ((gsRNG.NextInt(2) == 1)? -1.0f: 1.0f);
+	crashElevator = gsRNG.NextFloat();
+	crashRudder = gsRNG.NextFloat() - 0.5f;
 
 	lastRudderPos = 0.0f;
 	lastElevatorPos = 0.0f;
@@ -517,10 +518,10 @@ bool CStrafeAirMoveType::Update()
 
 			if ((CGround::GetHeightAboveWater(owner->pos.x, owner->pos.z) + 5.0f + owner->radius) > owner->pos.y) {
 				owner->ClearPhysicalStateBit(CSolidObject::PSTATE_BIT_CRASHING);
-				owner->KillUnit(NULL, true, false);
+				owner->KillUnit(nullptr, true, false);
 			}
 
-			new CSmokeProjectile(owner, owner->midPos, gs->randVector() * 0.08f, 100 + gs->randFloat() * 50, 5, 0.2f, 0.4f);
+			projMemPool.alloc<CSmokeProjectile>(owner, owner->midPos, guRNG.NextVector() * 0.08f, 100.0f + guRNG.NextFloat() * 50.0f, 5, 0.2f, 0.4f);
 		} break;
 		case AIRCRAFT_TAKEOFF:
 			UpdateTakeOff();
@@ -563,9 +564,10 @@ bool CStrafeAirMoveType::HandleCollisions(bool checkCollisions) {
 		// check for collisions if not being built or not taking off
 		if (checkCollisions) {
 			// copy on purpose, since the below can call Lua
-			const std::vector<CUnit*> nearUnits = quadField->GetUnitsExact(pos, owner->radius + 6);
+			QuadFieldQuery qfQuery;
+			quadField->GetUnitsExact(qfQuery, pos, owner->radius + 6);
 
-			for (CUnit* unit: nearUnits) {
+			for (CUnit* unit: *qfQuery.units) {
 				const bool unloadingUnit = (unit->unloadingTransportId == owner->id);
 				const bool unloadingOwner = (owner->unloadingTransportId == unit->id);
 
@@ -1297,7 +1299,7 @@ void CStrafeAirMoveType::StartMoving(float3 pos, float goalRadius, float speed)
 	SetGoal(pos);
 }
 
-void CStrafeAirMoveType::StopMoving(bool callScript, bool hardStop)
+void CStrafeAirMoveType::StopMoving(bool callScript, bool hardStop, bool)
 {
 	SetGoal(owner->pos);
 	ClearLandingPos();

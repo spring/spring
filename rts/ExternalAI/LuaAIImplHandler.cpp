@@ -5,7 +5,6 @@
 #include "Lua/LuaParser.h"
 #include "ExternalAI/Interface/SSkirmishAILibrary.h"
 //#include "ExternalAI/SkirmishAIKey.h"
-#include "System/FileSystem/VFSHandler.h"
 #include "System/Exceptions.h"
 
 #include <assert.h>

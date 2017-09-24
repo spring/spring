@@ -4,7 +4,7 @@
 
 #include "JvmLocater_common.h"
 
-#include "System/maindefines.h"
+#include "System/MainDefines.h"
 #include "System/SafeCStrings.h"
 
 #include <unistd.h>

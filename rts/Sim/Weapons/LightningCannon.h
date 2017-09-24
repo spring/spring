@@ -9,7 +9,7 @@ class CLightningCannon: public CWeapon
 {
 	CR_DECLARE_DERIVED(CLightningCannon)
 public:
-	CLightningCannon(CUnit* owner, const WeaponDef* def);
+	CLightningCannon(CUnit* owner = nullptr, const WeaponDef* def = nullptr);
 
 private:
 	void FireImpl(const bool scriptCall) override final;

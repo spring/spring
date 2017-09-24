@@ -7,6 +7,6 @@ set -e
 # don't abort on error
 set +e
 #run test
-HOME=${TESTDIR} ${SOURCEDIR}/test/validation/run.sh ${TESTDIR}/usr/local/bin/spring-headless script.txt
+HOME=${TESTDIR} GAME=${GAME} ${SOURCEDIR}/test/validation/run.sh ${TESTDIR}/usr/local/bin/spring-headless script.txt
 
 

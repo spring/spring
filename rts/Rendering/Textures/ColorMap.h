@@ -5,8 +5,6 @@
 
 #include <string>
 #include <vector>
-#include <map>
-#include <deque>
 
 #include "System/creg/creg_cond.h"
 #include "System/Color.h"
@@ -54,9 +52,6 @@ protected:
 	int nysize;
 
 	void LoadMap(const unsigned char* buf, int num);
-
-	static std::deque<CColorMap> colorMaps;
-	static std::map<std::string, CColorMap*> colorMapsMap;
 };
 
 #endif // COLOR_MAP_H

@@ -15,16 +15,18 @@ class CStarburstProjectile : public CWeaponProjectile
 	CR_DECLARE_SUB(TracerPart)
 
 public:
+	// creg only
 	CStarburstProjectile() { }
+
 	CStarburstProjectile(const ProjectileParams& params);
 
 	void Collision(CUnit* unit) override;
 	void Collision(CFeature* feature) override;
 	void Collision() override;
 	void Update() override;
-	void Draw() override;
+	void Draw(CVertexArray* va) override;
 
-	virtual int GetProjectilesCount() const override;
+	int GetProjectilesCount() const override;
 
 	int ShieldRepulse(const float3& shieldPos, float shieldForce, float shieldMaxSpeed) override;
 

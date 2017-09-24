@@ -5,12 +5,12 @@
 
 #include <string>
 #include <sstream>
-#include <boost/noncopyable.hpp>
+#include "System/Misc/NonCopyable.h"
 
 /**
  * @brief Untyped base class for TypedStringConvertibleOptionalValue.
  */
-class StringConvertibleOptionalValue : public boost::noncopyable
+class StringConvertibleOptionalValue : public spring::noncopyable
 {
 public:
 	StringConvertibleOptionalValue() : isSet(false) {}

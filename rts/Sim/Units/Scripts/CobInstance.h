@@ -8,15 +8,15 @@
 
 
 #define PACKXZ(x,z) (((int)(x) << 16)+((int)(z) & 0xffff))
-#define UNPACKX(xz) ((signed short)((boost::uint32_t)(xz) >> 16))
-#define UNPACKZ(xz) ((signed short)((boost::uint32_t)(xz) & 0xffff))
+#define UNPACKX(xz) ((signed short)((std::uint32_t)(xz) >> 16))
+#define UNPACKZ(xz) ((signed short)((std::uint32_t)(xz) & 0xffff))
 
 
 static const int COBSCALE = 65536;
 static const int COBSCALEHALF = COBSCALE / 2;
 static const float CORDDIV   = 1.0f / COBSCALE;
-static const float RAD2TAANG = COBSCALEHALF / PI;
-static const float TAANG2RAD = PI / COBSCALEHALF;
+static const float RAD2TAANG = COBSCALEHALF / math::PI;
+static const float TAANG2RAD = math::PI / COBSCALEHALF;
 
 
 class CCobThread;
@@ -122,11 +122,11 @@ public:
 	void WindChanged(float heading, float speed) override;
 	void ExtractionRateChanged(float speed) override;
 	void WorldRockUnit(const float3& rockDir) override {
-		RockUnit(unit->GetObjectSpaceVec(rockDir) * 500.f);
+		RockUnit(unit->GetObjectSpaceVec(rockDir) * 500.0f);
 	}
 	void RockUnit(const float3& rockDir) override;
 	void WorldHitByWeapon(const float3& hitDir, int weaponDefId, float& inoutDamage) override {
-		HitByWeapon(unit->GetObjectSpaceVec(hitDir) * 500.f, weaponDefId, inoutDamage);
+		HitByWeapon(unit->GetObjectSpaceVec(hitDir) * 500.0f, weaponDefId, inoutDamage);
 	}
 	void HitByWeapon(const float3& hitDir, int weaponDefId, float& inoutDamage) override;
 	void SetSFXOccupy(int curTerrainType) override;
@@ -142,6 +142,9 @@ public:
 	void Destroy() override;
 	void StartMoving(bool reversing) override;
 	void StopMoving() override;
+	void StartSkidding(const float3&) override { /* LUS-only */ }
+	void StopSkidding() override { /* LUS-only */ }
+	void ChangeHeading(short deltaHeading) override { /* LUS-only */ }
 	void StartUnload() override;
 	void EndTransport() override;
 	void StartBuilding() override;

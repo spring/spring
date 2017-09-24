@@ -6,15 +6,14 @@
 #include "Map/MapInfo.h"
 #include "MoveMath/MoveMath.h"
 #include "Sim/Misc/GlobalConstants.h"
-#include "System/creg/STL_Deque.h"
 #include "System/creg/STL_Map.h"
 #include "System/Exceptions.h"
 #include "System/CRC.h"
 #include "System/myMath.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 
 CR_BIND(MoveDef, ())
-CR_BIND(MoveDefHandler, (NULL))
+CR_BIND(MoveDefHandler, (nullptr))
 
 CR_REG_METADATA(MoveDef, (
 	CR_MEMBER(name),
@@ -41,6 +40,7 @@ CR_REG_METADATA(MoveDef, (
 
 	CR_MEMBER(avoidMobilesOnPath),
 	CR_MEMBER(allowTerrainCollisions),
+	CR_MEMBER(allowRawMovement),
 
 	CR_MEMBER(heatMapping),
 	CR_MEMBER(flowMapping),
@@ -66,7 +66,7 @@ static float DegreesToMaxSlope(float degrees)
 {
 	// Prevent MSVC from inlining stuff that would break the
 	// PE checksum compatibility between debug and release
-	static const float degToRad = PI / 180.0f;
+	static constexpr float degToRad = math::DEG_TO_RAD;
 
 	const float deg = Clamp(degrees, 0.0f, 60.0f) * 1.5f;
 	const float rad = deg * degToRad;
@@ -98,7 +98,7 @@ static MoveDef::SpeedModClass ParseSpeedModClass(const std::string& moveDefName,
 
 MoveDefHandler::MoveDefHandler(LuaParser* defsParser)
 {
-	const LuaTable rootTable = defsParser->GetRoot().SubTable("MoveDefs");
+	const LuaTable& rootTable = defsParser->GetRoot().SubTable("MoveDefs");
 
 	if (!rootTable.IsValid())
 		throw content_error("Error loading movement definitions");
@@ -114,11 +114,10 @@ MoveDefHandler::MoveDefHandler(LuaParser* defsParser)
 
 	moveDefs.reserve(rootTable.GetLength());
 	for (size_t num = 1; /* no test */; num++) {
-		const LuaTable moveDefTable = rootTable.SubTable(num);
+		const LuaTable& moveDefTable = rootTable.SubTable(num);
 
-		if (!moveDefTable.IsValid()) {
+		if (!moveDefTable.IsValid())
 			break;
-		}
 
 		moveDefs.emplace_back(moveDefTable, num);
 		const MoveDef& md = moveDefs.back();
@@ -140,10 +139,11 @@ MoveDefHandler::MoveDefHandler(LuaParser* defsParser)
 
 MoveDef* MoveDefHandler::GetMoveDefByName(const std::string& name)
 {
-	map<string, int>::const_iterator it = moveDefNames.find(name);
-	if (it == moveDefNames.end()) {
-		return NULL;
-	}
+	auto it = moveDefNames.find(name);
+
+	if (it == moveDefNames.end())
+		return nullptr;
+
 	return &moveDefs[it->second];
 }
 
@@ -179,6 +179,7 @@ MoveDef::MoveDef()
 
 	, avoidMobilesOnPath(true)
 	, allowTerrainCollisions(true)
+	, allowRawMovement(false)
 
 	, heatMapping(true)
 	, flowMapping(true)
@@ -245,6 +246,7 @@ MoveDef::MoveDef(const LuaTable& moveDefTable, int moveDefID) {
 
 	avoidMobilesOnPath = moveDefTable.GetBool("avoidMobilesOnPath", true);
 	allowTerrainCollisions = moveDefTable.GetBool("allowTerrainCollisions", true);
+	allowRawMovement = moveDefTable.GetBool("allowRawMovement", false);
 
 	heatMapping = moveDefTable.GetBool("heatMapping", false);
 	flowMapping = moveDefTable.GetBool("flowMapping", true);

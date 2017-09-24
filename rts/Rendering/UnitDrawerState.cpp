@@ -17,6 +17,7 @@
 #include "Sim/Misc/TeamHandler.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/myMath.h"
+#include "System/StringUtil.h"
 
 
 
@@ -136,9 +137,9 @@ void UnitDrawerStateFFP::Enable(const CUnitDrawer* ud, bool deferredPass, bool a
 	glEnable(GL_LIGHTING);
 	// only for the advshading=0 case
 	glLightfv(GL_LIGHT1, GL_POSITION, sky->GetLight()->GetLightDir());
-	glLightfv(GL_LIGHT1, GL_AMBIENT, sunLighting->unitAmbientColor);
-	glLightfv(GL_LIGHT1, GL_DIFFUSE, sunLighting->unitDiffuseColor);
-	glLightfv(GL_LIGHT1, GL_SPECULAR, sunLighting->unitAmbientColor);
+	glLightfv(GL_LIGHT1, GL_AMBIENT, sunLighting->modelAmbientColor);
+	glLightfv(GL_LIGHT1, GL_DIFFUSE, sunLighting->modelDiffuseColor);
+	glLightfv(GL_LIGHT1, GL_SPECULAR, sunLighting->modelSpecularColor);
 	glEnable(GL_LIGHT1);
 
 	CUnitDrawer::SetupBasicS3OTexture1();
@@ -254,12 +255,12 @@ void UnitDrawerStateARB::Enable(const CUnitDrawer* ud, bool deferredPass, bool a
 
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniformTarget(GL_VERTEX_PROGRAM_ARB);
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4fv(10, &sky->GetLight()->GetLightDir().x);
-	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4f(11, sunLighting->unitDiffuseColor.x, sunLighting->unitDiffuseColor.y, sunLighting->unitDiffuseColor.z, 0.0f);
-	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4f(12, sunLighting->unitAmbientColor.x, sunLighting->unitAmbientColor.y, sunLighting->unitAmbientColor.z, 1.0f); //!
+	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4f(11, sunLighting->modelDiffuseColor.x, sunLighting->modelDiffuseColor.y, sunLighting->modelDiffuseColor.z, 0.0f);
+	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4f(12, sunLighting->modelAmbientColor.x, sunLighting->modelAmbientColor.y, sunLighting->modelAmbientColor.z, 1.0f); //!
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4f(13, camera->GetPos().x, camera->GetPos().y, camera->GetPos().z, 0.0f);
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniformTarget(GL_FRAGMENT_PROGRAM_ARB);
-	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4f(10, 0.0f, 0.0f, 0.0f, sky->GetLight()->GetUnitShadowDensity());
-	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4f(11, sunLighting->unitAmbientColor.x, sunLighting->unitAmbientColor.y, sunLighting->unitAmbientColor.z, 1.0f);
+	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4f(10, 0.0f, 0.0f, 0.0f, sunLighting->modelShadowDensity);
+	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4f(11, sunLighting->modelAmbientColor.x, sunLighting->modelAmbientColor.y, sunLighting->modelAmbientColor.z, 1.0f);
 
 	glMatrixMode(GL_MATRIX0_ARB);
 	glLoadMatrixf(shadowHandler->GetShadowMatrixRaw());
@@ -362,9 +363,16 @@ bool UnitDrawerStateGLSL::Init(const CUnitDrawer* ud) {
 		modelShaders[n]->SetUniform1i(3, 3); // reflectTex  (idx 3, texunit 3)
 		modelShaders[n]->SetUniform1i(4, 4); // specularTex (idx 4, texunit 4)
 		modelShaders[n]->SetUniform3fv(5, &sky->GetLight()->GetLightDir().x);
-		modelShaders[n]->SetUniform3fv(11, &sunLighting->unitAmbientColor[0]);
-		modelShaders[n]->SetUniform3fv(12, &sunLighting->unitDiffuseColor[0]);
-		modelShaders[n]->SetUniform1f(13, sky->GetLight()->GetUnitShadowDensity());
+		modelShaders[n]->SetUniform3fv(6, &camera->GetPos()[0]);
+		modelShaders[n]->SetUniformMatrix4fv(7, false, camera->GetViewMatrix());
+		modelShaders[n]->SetUniformMatrix4fv(8, false, camera->GetViewMatrixInverse());
+		modelShaders[n]->SetUniform4f(9, 0.0f, 0.0f, 0.0f, 0.0f);
+		modelShaders[n]->SetUniform4f(10, 0.0f, 0.0f, 0.0f, 0.0f);
+		modelShaders[n]->SetUniform3fv(11, &sunLighting->modelAmbientColor[0]);
+		modelShaders[n]->SetUniform3fv(12, &sunLighting->modelDiffuseColor[0]);
+		modelShaders[n]->SetUniform1f(13, sunLighting->modelShadowDensity);
+		modelShaders[n]->SetUniformMatrix4fv(14, false, shadowHandler->GetShadowMatrixRaw());
+		modelShaders[n]->SetUniform4fv(15, &(shadowHandler->GetShadowParams().x));
 		// modelShaders[n]->SetUniform1f(16, 0.0f); // alphaPass
 		modelShaders[n]->Disable();
 		modelShaders[n]->Validate();
@@ -415,9 +423,9 @@ void UnitDrawerStateGLSL::UpdateCurrentShaderSky(const CUnitDrawer* ud, const IS
 	for (unsigned int n = MODEL_SHADER_NOSHADOW_STANDARD; n <= MODEL_SHADER_SHADOWED_DEFERRED; n++) {
 		modelShaders[n]->Enable();
 		modelShaders[n]->SetUniform3fv(5, &skyLight->GetLightDir().x);
-		modelShaders[n]->SetUniform3fv(11, &sunLighting->unitAmbientColor[0]);
-		modelShaders[n]->SetUniform3fv(12, &sunLighting->unitDiffuseColor[0]);
-		modelShaders[n]->SetUniform1f(13, skyLight->GetUnitShadowDensity());
+		modelShaders[n]->SetUniform3fv(11, &sunLighting->modelAmbientColor[0]);
+		modelShaders[n]->SetUniform3fv(12, &sunLighting->modelDiffuseColor[0]);
+		modelShaders[n]->SetUniform1f(13, sunLighting->modelShadowDensity);
 		modelShaders[n]->Disable();
 	}
 }

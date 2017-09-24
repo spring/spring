@@ -10,7 +10,7 @@
 #include "System/Exceptions.h"
 #include "System/Log/ILog.h"
 #include "System/FileSystem/FileHandler.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 
 #include <cassert>
 #include <sstream>
@@ -24,7 +24,7 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_OBJ_PARSER)
 #endif
 #define LOG_SECTION_CURRENT LOG_SECTION_OBJ_PARSER
 
-S3DModel* COBJParser::Load(const std::string& modelFileName)
+S3DModel COBJParser::Load(const std::string& modelFileName)
 {
 	std::string metaFileName = modelFileName.substr(0, modelFileName.find_last_of('.')) + ".lua";
 
@@ -38,7 +38,7 @@ S3DModel* COBJParser::Load(const std::string& modelFileName)
 		throw content_error("[OBJParser] could not find meta-file \"" + metaFileName + "\"");
 
 
-	LuaParser metaFileParser(metaFileName, SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
+	LuaParser metaFileParser(metaFileName, SPRING_VFS_ZIP, SPRING_VFS_ZIP);
 	metaFileParser.Execute();
 
 	if (!metaFileParser.IsValid())
@@ -48,36 +48,32 @@ S3DModel* COBJParser::Load(const std::string& modelFileName)
 	// get the (root-level) model table
 	const LuaTable& modelTable = metaFileParser.GetRoot();
 
-	S3DModel* model = new S3DModel();
-		model->name = modelFileName;
-		model->type = MODELTYPE_OBJ;
-		model->textureType = 0;
-		model->numPieces = 0;
-		model->mins = DEF_MIN_SIZE;
-		model->maxs = DEF_MAX_SIZE;
-		model->texs[0] = modelTable.GetString("tex1", "");
-		model->texs[1] = modelTable.GetString("tex2", "");
+	S3DModel model;
+		model.name = modelFileName;
+		model.type = MODELTYPE_OBJ;
+		model.textureType = 0;
+		model.numPieces = 0;
+		model.mins = DEF_MIN_SIZE;
+		model.maxs = DEF_MAX_SIZE;
+		model.texs[0] = modelTable.GetString("tex1", "");
+		model.texs[1] = modelTable.GetString("tex2", "");
 
 	// basic S3O-style texturing
-	texturehandlerS3O->PreloadTexture(model);
+	texturehandlerS3O->PreloadTexture(&model);
 
 	std::string modelData;
 	modelFile.LoadStringData(modelData);
 
-	if (ParseModelData(model, modelData, modelTable)) {
-		// set after the extrema are known
-		model->radius = modelTable.GetFloat("radius", (model->maxs   - model->mins  ).Length() * 0.5f);
-		model->height = modelTable.GetFloat("height", (model->maxs.y - model->mins.y)                );
-		model->relMidPos = modelTable.GetFloat3("midpos", (model->maxs + model->mins) * 0.5f);
-
-		assert(model->numPieces == modelTable.GetInt("numpieces", 0));
-		return model;
-	} else {
-		delete model;
+	if (!ParseModelData(&model, modelData, modelTable)) {
 		throw content_error("[OBJParser] failed to parse model-data \"" + modelFileName + "\"");
+		return model; // unreachable
 	}
 
-	return nullptr;
+	// set after the extrema are known
+	model.radius = modelTable.GetFloat("radius", model.CalcDrawRadius());
+	model.height = modelTable.GetFloat("height", model.CalcDrawHeight());
+	model.relMidPos = modelTable.GetFloat3("midpos", model.CalcDrawMidPos());
+	return model;
 }
 
 bool COBJParser::ParseModelData(S3DModel* model, const std::string& modelData, const LuaTable& metaData)
@@ -337,10 +333,8 @@ bool COBJParser::BuildModelPieceTree(
 		const PieceMap::const_iterator rootPieceIt = pieceMap.find(rootPieceName);
 
 		if (rootPieceIt != pieceMap.end()) {
-			rootPiece = rootPieceIt->second;
-			model->SetRootPiece(rootPiece);
-
-			BuildModelPieceTreeRec(model, rootPiece, pieceMap, rootPieceTable, globalVertexOffsets, localPieceOffsets);
+			BuildModelPieceTreeRec(model, rootPiece = rootPieceIt->second, pieceMap, rootPieceTable, globalVertexOffsets, localPieceOffsets);
+			model->FlattenPieceTree(rootPiece);
 			return true;
 		}
 	}
@@ -351,10 +345,8 @@ bool COBJParser::BuildModelPieceTree(
 		const PieceMap::const_iterator rootPieceIt = pieceMap.find(rootPieceName);
 
 		if (rootPieceIt != pieceMap.end()) {
-			rootPiece = rootPieceIt->second;
-			model->SetRootPiece(rootPiece);
-
-			BuildModelPieceTreeRec(model, rootPiece, pieceMap, rootPieceTable, globalVertexOffsets, localPieceOffsets);
+			BuildModelPieceTreeRec(model, rootPiece = rootPieceIt->second, pieceMap, rootPieceTable, globalVertexOffsets, localPieceOffsets);
+			model->FlattenPieceTree(rootPiece);
 			return true;
 		}
 	}
@@ -391,7 +383,7 @@ void COBJParser::BuildModelPieceTreeRec(
 	model->mins = float3::min(piece->goffset + piece->mins, model->mins);
 	model->maxs = float3::max(piece->goffset + piece->maxs, model->maxs);
 
-	piece->SetCollisionVolume(CollisionVolume("box", piece->maxs - piece->mins, (piece->maxs + piece->mins) * 0.5f));
+	piece->SetCollisionVolume(CollisionVolume('b', 'z', piece->maxs - piece->mins, (piece->maxs + piece->mins) * 0.5f));
 
 	std::vector<int> childPieceNumbers;
 	std::vector<std::string> childPieceNames;
@@ -400,49 +392,46 @@ void COBJParser::BuildModelPieceTreeRec(
 	pieceTable.GetKeys(childPieceNames);
 
 	if (!childPieceNames.empty()) {
-		for (std::vector<std::string>::const_iterator it = childPieceNames.begin(); it != childPieceNames.end(); ++it) {
+		for (auto it = childPieceNames.begin(); it != childPieceNames.end(); ++it) {
 			// NOTE: handle these better?
-			if ((*it) == "offset" || (*it) == "name") {
+			if ((*it) == "offset" || (*it) == "name")
 				continue;
-			}
 
 			const std::string& childPieceName = *it;
 			const LuaTable& childPieceTable = pieceTable.SubTable(childPieceName);
 
-			PieceMap::const_iterator pieceIt = pieceMap.find(childPieceName);
+			const auto pieceIt = pieceMap.find(childPieceName);
 
 			if (pieceIt == pieceMap.end()) {
 				throw content_error("[OBJParser] meta-data piece named \"" + childPieceName + "\" not defined in model");
 			} else {
 				SOBJPiece* childPiece = pieceIt->second;
 
-				assert(childPieceName == childPiece->name);
-
 				childPiece->parent = piece;
 				piece->children.push_back(childPiece);
 
+				assert(childPieceName == childPiece->name);
 				BuildModelPieceTreeRec(model, childPiece, pieceMap, childPieceTable, globalVertexOffsets, localPieceOffsets);
 			}
 		}
 	}
 
 	if (!childPieceNumbers.empty()) {
-		for (std::vector<int>::const_iterator it = childPieceNumbers.begin(); it != childPieceNumbers.end(); ++it) {
+		for (auto it = childPieceNumbers.begin(); it != childPieceNumbers.end(); ++it) {
 			const LuaTable& childPieceTable = pieceTable.SubTable(*it);
 			const std::string& childPieceName = childPieceTable.GetString("name", "");
 
-			PieceMap::const_iterator pieceIt = pieceMap.find(childPieceName);
+			const auto pieceIt = pieceMap.find(childPieceName);
 
 			if (pieceIt == pieceMap.end()) {
 				throw content_error("[OBJParser] meta-data piece named \"" + childPieceName + "\" not defined in model");
 			} else {
 				SOBJPiece* childPiece = pieceIt->second;
 
-				assert(childPieceName == childPiece->name);
-
 				childPiece->parent = piece;
 				piece->children.push_back(childPiece);
 
+				assert(childPieceName == childPiece->name);
 				BuildModelPieceTreeRec(model, childPiece, pieceMap, childPieceTable, globalVertexOffsets, localPieceOffsets);
 			}
 		}

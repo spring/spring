@@ -3,10 +3,12 @@
 #ifndef IATLAS_ALLOC_H
 #define IATLAS_ALLOC_H
 
+#include <string>
+
 #include "System/float4.h"
 #include "System/type2.h"
-#include <string>
-#include <map>
+#include "System/UnorderedMap.hpp"
+
 
 
 class IAtlasAllocator
@@ -83,7 +85,7 @@ protected:
 		void* data;
 	};
 
-	std::map<std::string, SAtlasEntry> entries;
+	spring::unordered_map<std::string, SAtlasEntry> entries;
 
 	int2 atlasSize;
 	int2 maxsize;

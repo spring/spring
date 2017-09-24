@@ -14,6 +14,7 @@
 #include "System/Platform/byteorder.h"
 #include "System/Exceptions.h"
 
+#include <algorithm>
 #include <fstream>
 #include <assert.h>
 #include <stdexcept>
@@ -21,7 +22,7 @@
 #include <vector>
 #include <string>
 #include <string.h>
-#include <boost/cstdint.hpp>
+#include <cinttypes>
 
 using namespace creg;
 using std::string;
@@ -83,43 +84,40 @@ static void WriteZStr(std::ostream& file, const std::string& str)
 	file.write(str.c_str(), str.length() + 1);
 }
 
-void WriteVarSizeUInt(std::ostream* stream, unsigned int val)
+
+template<typename T>
+void ReadVarSizeUInt(std::istream* stream, T* buf)
 {
-	if (val < 0x80) {
-		unsigned char a = val;
-		stream->write((char*)&a, sizeof(char));
-	} else if (val < 0x4000) {
-		unsigned char a = (val & 0x7F) | 0x80;
-		unsigned char b = val >> 7;
-		stream->write((char*)&a, sizeof(char));
-		stream->write((char*)&b, sizeof(char));
-	} else if (val < 0x40000000) {
-		unsigned char a = (val & 0x7F) | 0x80;
-		unsigned char b = ((val >> 7) & 0x7F) | 0x80;
-		unsigned short c = swabWord(val >> 14);
-		stream->write((char*)&a, sizeof(char));
-		stream->write((char*)&b, sizeof(char));
-		stream->write((char*)&c, sizeof(short));
-	} else throw "Cannot save varible-size int";
+	std::uint64_t val = 0;
+	unsigned offset = 0;
+	while (true) {
+		unsigned char a;
+		stream->read((char*)&a, sizeof(char));
+
+		val += ((std::uint64_t)(a & 0x7F)) << offset;
+		if ((a & 0x80) == 0)
+			break;
+
+		offset += 7;
+	}
+
+	*buf = val;
 }
 
-void ReadVarSizeUInt(std::istream* stream, unsigned int* buf)
+
+template<typename T>
+void WriteVarSizeUInt(std::ostream* stream, T val)
 {
-	unsigned char a;
-	stream->read((char*)&a, sizeof(char));
-	if (a & 0x80) {
-		unsigned char b;
-		stream->read((char*)&b, sizeof(char));
-		if (b & 0x80) {
-			unsigned short c;
-			stream->read((char*)&c, sizeof(short));
-			*buf = (a & 0x7F) | ((b & 0x7F) << 7) | (c << 14);
-		} else {
-			*buf = (a & 0x7F) | ((b & 0x7F) << 7);
-		}
-	} else {
-		*buf = a & 0x7F;
-	}
+	std::uint64_t v = val;
+	do {
+		unsigned char a = v & 0x7F;
+		v >>= 7;
+
+		if (v > 0)
+			a |= 0x80;
+
+		stream->write((char*)&a, sizeof(char));
+	} while (v > 0);
 }
 
 //-------------------------------------------------------------------------
@@ -154,6 +152,7 @@ void COutputStreamSerializer::SerializeObject(Class* c, void* ptr, ObjectRef* ob
 
 	ObjectMemberGroup omg;
 	omg.membersClass = c;
+	omg.size = 0;
 
 	for (uint a = 0; a < c->members.size(); a++)
 	{
@@ -255,17 +254,17 @@ void COutputStreamSerializer::SerializeInt(void* data, int byteSize)
 	// always save ints as 64bit
 	// cause of int-types might differ in size depending on platforms
 	// to make savegames compatible between those we need to so
-	boost::int64_t x = 0;
+	std::uint64_t x = 0;
 	switch (byteSize) {
-		case 1: { x = *(boost::int8_t* )data; break; }
-		case 2: { x = *(boost::int16_t*)data; break; }
-		case 4: { x = *(boost::int32_t*)data; break; }
-		case 8: { x = *(boost::int64_t*)data; break; }
+		case 1: { x = *(std::uint8_t* )data; break; }
+		case 2: { x = *(std::uint16_t*)data; break; }
+		case 4: { x = *(std::uint32_t*)data; break; }
+		case 8: { x = *(std::uint64_t*)data; break; }
 		default: {
 			throw "Unknown int type";
 		}
 	}
-	stream->write((char*)&x, 8);
+	WriteVarSizeUInt(stream, x);
 }
 
 
@@ -472,13 +471,13 @@ void CInputStreamSerializer::SerializeInt(void* data, int byteSize)
 	// always save ints as 64bit
 	// cause of int-types might differ in size depending on platforms
 	// to make savegames compatible between those we need to so
-	boost::int64_t x = 0;
-	stream->read((char*)&x, 8);
+	std::uint64_t x = 0;
+	ReadVarSizeUInt(stream, &x);
 	switch (byteSize) {
-		case 1: { *(boost::int8_t* )data = x; break; }
-		case 2: { *(boost::int16_t*)data = x; break; }
-		case 4: { *(boost::int32_t*)data = x; break; }
-		case 8: { *(boost::int64_t*)data = x; break; }
+		case 1: { *(std::uint8_t* )data = x; break; }
+		case 2: { *(std::uint16_t*)data = x; break; }
+		case 4: { *(std::uint32_t*)data = x; break; }
+		case 8: { *(std::uint64_t*)data = x; break; }
 		default: {
 			throw "Unknown int type";
 		}
@@ -500,8 +499,9 @@ void CInputStreamSerializer::SerializeObjectPtr(void** ptr, creg::Class* cls)
 			ufp.ptrAddr = ptr;
 			unfixedPointers.push_back(ufp);
 		}
-	} else
+	} else {
 		*ptr = NULL;
+	}
 }
 
 // Serialize an instance of an object embedded into another object

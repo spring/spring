@@ -14,7 +14,7 @@
 #include "AAIConfig.h"
 #include "AAISector.h"
 
-#include "System/Util.h"
+#include "System/SafeUtil.h"
 #include "LegacyCpp/UnitDef.h"
 using namespace springLegacyAI;
 
@@ -1991,7 +1991,7 @@ void AAIMap::SearchMetalSpots()
 	}
 	for (int i = 0; i != TotalCells; i++) // this will get the total metal a mex placed at each spot would make
 	{
-		MexArrayB[i] = SafeDivide(TempAverage[i] * 255,  MaxMetal);  //scale the metal so any map will have values 0-255, no matter how much metal it has
+		MexArrayB[i] = spring::SafeDivide(TempAverage[i] * 255,  MaxMetal);  //scale the metal so any map will have values 0-255, no matter how much metal it has
 	}
 
 
@@ -2080,7 +2080,7 @@ void AAIMap::SearchMetalSpots()
 									}
 								}
 							}
-							MexArrayB[y * MetalMapWidth + x] = SafeDivide(TotalMetal * 255, MaxMetal); //set that spots metal amount
+							MexArrayB[y * MetalMapWidth + x] = spring::SafeDivide(TotalMetal * 255, MaxMetal); //set that spots metal amount
 						}
 					}
 				}
@@ -2097,9 +2097,9 @@ void AAIMap::SearchMetalSpots()
 	else
 		metalMap = false;
 
-	SafeDeleteArray(MexArrayA);
-	SafeDeleteArray(MexArrayB);
-	SafeDeleteArray(TempAverage);
+	spring::SafeDeleteArray(MexArrayA);
+	spring::SafeDeleteArray(MexArrayB);
+	spring::SafeDeleteArray(TempAverage);
 }
 
 void AAIMap::UpdateRecon()

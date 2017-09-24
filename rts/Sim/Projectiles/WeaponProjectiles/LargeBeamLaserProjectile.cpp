@@ -7,11 +7,12 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
+#include "Sim/Projectiles/ProjectileMemPool.h"
 #include "Sim/Weapons/WeaponDef.h"
 #include "System/myMath.h"
 #include <cstring> //memset
 
-CR_BIND_DERIVED(CLargeBeamLaserProjectile, CWeaponProjectile, )
+CR_BIND_DERIVED_POOL(CLargeBeamLaserProjectile, CWeaponProjectile, , projMemPool.alloc, projMemPool.free)
 
 CR_REG_METADATA(CLargeBeamLaserProjectile,(
 	CR_SETFLAG(CF_Synced),
@@ -86,10 +87,8 @@ void CLargeBeamLaserProjectile::Update()
 	UpdateInterception();
 }
 
-void CLargeBeamLaserProjectile::Draw()
+void CLargeBeamLaserProjectile::Draw(CVertexArray* va)
 {
-	inArray = true;
-
 	const float3 midPos = (targetPos + startPos) * 0.5f;
 	const float3 cameraDir = (midPos - camera->GetPos()).SafeANormalize();
 	// beam's coor-system; degenerate if targetPos == startPos

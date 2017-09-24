@@ -53,13 +53,6 @@ CR_REG_METADATA(CProjectile,
 
 
 
-//////////////////////////////////////////////////////////////////////
-// Construction/Destruction
-//////////////////////////////////////////////////////////////////////
-bool CProjectile::inArray = false;
-CVertexArray* CProjectile::va = NULL;
-
-
 CProjectile::CProjectile()
 	: synced(false)
 	, weapon(false)
@@ -185,15 +178,6 @@ void CProjectile::Delete()
 void CProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
 {
 	points.AddVertexQC(pos, color4::whiteA);
-}
-
-
-void CProjectile::DrawArray()
-{
-	va->DrawArrayTC(GL_QUADS);
-	va = GetVertexArray();
-	va->Initialize();
-	inArray = false;
 }
 
 

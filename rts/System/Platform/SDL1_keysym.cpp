@@ -2,36 +2,11 @@
 
 #include "SDL1_keysym.h"
 #include <SDL_keycode.h>
-#include <unordered_map>
+
 #include "System/Log/ILog.h"
+#include "System/UnorderedMap.hpp"
 
-template<typename First, typename Second>
-class unordered_bimap {
-public:
-	typedef std::unordered_map<First, Second> first_type;
-	typedef std::unordered_map<Second, First> second_type;
-
-	first_type const& first() const { return first_; }
-	second_type const& second() const { return second_; }
-
-	unordered_bimap(const std::initializer_list<std::pair<const First, Second>> list)
-		: first_(list)
-	{
-		second_.reserve(list.size());
-		for (const auto& pair: list) {
-			if (second_.find(pair.second) == second_.end()) {
-				second_[pair.second] = pair.first;
-			}
-		}
-	}
-
-private:
-	const first_type first_;
-	      second_type second_;
-};
-
-
-static const unordered_bimap<int, int> SDL_keysym_bimap = {
+static const spring::unordered_bimap<int, int> SDL_keysym_bimap = {
 	{SDLK_UNKNOWN, 0},
 
 	{SDLK_RETURN, 13},

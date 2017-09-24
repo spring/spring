@@ -3,7 +3,6 @@ SET(headlessStubsSources
 		"glstub"
 		"glustub"
 		"sdlstub"
-		"sdlstub_cppbit"
 	)
 
 IF    (WIN32)
@@ -20,6 +19,5 @@ ELSE  (WIN32)
 ENDIF (WIN32)
 
 ADD_LIBRARY(headlessStubs STATIC EXCLUDE_FROM_ALL ${headlessStubsSources})
-TARGET_LINK_LIBRARIES(headlessStubs ${Boost_THREAD_LIBRARY} ${Boost_CHRONO_LIBRARY_WITH_RT})
 SET_TARGET_PROPERTIES(headlessStubs PROPERTIES COMPILE_FLAGS "${PIC_FLAG}")
 

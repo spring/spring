@@ -3,16 +3,13 @@
 #ifndef _SOUND_H_
 #define _SOUND_H_
 
-#include "System/Sound/ISound.h"
-
-#include <set>
 #include <string>
-#include <map>
 #include <vector>
-#include <boost/ptr_container/ptr_vector.hpp>
-#include <boost/thread/recursive_mutex.hpp>
 
+#include "System/Sound/ISound.h"
 #include "System/float3.h"
+#include "System/UnorderedMap.hpp"
+#include "System/Threading/SpringThreading.h"
 
 #include "SoundItem.h"
 
@@ -21,11 +18,6 @@ class SoundBuffer;
 class SoundItem;
 struct ALCdevice_struct;
 typedef struct ALCdevice_struct ALCdevice;
-
-namespace boost {
-	class thread;
-}
-
 
 /// Default sound system implementation (OpenAL)
 class CSound : public ISound
@@ -48,7 +40,7 @@ public:
 	virtual void PitchAdjust(const float newPitch);
 
 	virtual bool Mute();
-	virtual bool IsMuted() const;
+	virtual bool IsMuted() const { return mute; }
 
 	virtual void Iconified(bool state);
 
@@ -61,47 +53,45 @@ public:
 	const float3& GetListenerPos() const { return myPos; }
 
 private:
-	typedef std::map<std::string, std::string> soundItemDef;
-	typedef std::map<std::string, soundItemDef> soundItemDefMap;
+	typedef spring::unordered_map<std::string, std::string> SoundItemNameMap;
+	typedef spring::unordered_map<std::string, SoundItemNameMap> SoundItemDefsMap;
 
 private:
-	void StartThread(int maxSounds);
+	void InitThread(int cfgMaxSounds);
+	void UpdateThread(int cfgMaxSounds);
+
 	void Update();
-	int GetMaxMonoSources(ALCdevice* device, int maxSounds);
 	void UpdateListenerReal();
 
-	size_t MakeItemFromDef(const soundItemDef& itemDef);
+	int GetMaxMonoSources(ALCdevice* device, int cfgMaxSounds);
+	void GenSources(int alMaxSounds);
 
+	size_t MakeItemFromDef(const SoundItemNameMap& itemDef);
 	size_t LoadSoundBuffer(const std::string& filename);
 
 private:
+	spring::thread soundThread;
+	spring::unordered_map<std::string, size_t> soundMap; // <name, id>
+	std::vector<SoundItem*> soundItems;
+	std::vector<CSoundSource> soundSources; // fixed-size
+
+	SoundItemNameMap defaultItemNameMap;
+	SoundItemDefsMap soundItemDefsMap;
+
 	float masterVolume;
-
-	bool mute;
-
-	/// we do not play if minimized / iconified
-	bool appIsIconified;
-	bool pitchAdjust;
-
-	typedef std::map<std::string, size_t> soundMapT;
-	typedef std::vector<SoundItem*> soundVecT;
-	soundMapT soundMap;
-	soundVecT sounds;
 
 	/// unscaled
 	float3 myPos;
 	float3 camDir;
 	float3 camUp;
 	float3 prevVelocity;
+
 	bool listenerNeedsUpdate;
+	bool mute;
 
-	typedef boost::ptr_vector<CSoundSource> sourceVecT;
-	sourceVecT sources;
-
-	soundItemDef defaultItem;
-	soundItemDefMap soundItemDefs;
-
-	boost::thread* soundThread;
+	/// we do not play if minimized / iconified
+	bool appIsIconified;
+	bool pitchAdjust;
 
 	volatile bool soundThreadQuit;
 	volatile bool canLoadDefs;

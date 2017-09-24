@@ -14,7 +14,7 @@
 
 static const float EXPLOSION_SPEED = 2.f;
 
-
+//TODO: add to creg
 
 /////////////////////////////////////////////////////////////////////
 /// NEW S3O,OBJ,ASSIMP,... IMPLEMENTATION
@@ -37,19 +37,19 @@ FlyingPiece::FlyingPiece(
 
 	InitCommon(pos, speed, _pieceParams.x, _renderParams.y, _renderParams.x);
 
-	const S3DModelPiecePart& shatterPiecePart = piece->shatterParts[gu->RandInt() % piece->shatterParts.size()];
+	const S3DModelPiecePart& shatterPiecePart = piece->shatterParts[guRNG.NextInt(piece->shatterParts.size())];
 	const auto& shatterPieceData = shatterPiecePart.renderData;
 
 	splitterParts.reserve(shatterPieceData.size());
 	for (const auto& cp: shatterPieceData) {
-		if (gu->RandFloat() > _pieceParams.x)
+		if (guRNG.NextFloat() > _pieceParams.x)
 			continue;
 
-		const float3 flyDir = (cp.dir + (gu->RandVector() * 0.3f)).ANormalize();
+		const float3 flyDir = (cp.dir + (guRNG.NextVector() * 0.3f)).ANormalize();
 
 		splitterParts.emplace_back();
-		splitterParts.back().speed                = speed + flyDir * mix<float>(1.f, EXPLOSION_SPEED, gu->RandFloat());
-		splitterParts.back().rotationAxisAndSpeed = float4(gu->RandVector().ANormalize(), gu->RandFloat() * 0.1f);
+		splitterParts.back().speed                = speed + flyDir * mix<float>(1.f, EXPLOSION_SPEED, guRNG.NextFloat());
+		splitterParts.back().rotationAxisAndSpeed = float4(guRNG.NextVector().ANormalize(), guRNG.NextFloat() * 0.1f);
 		splitterParts.back().indexCount           = cp.indexCount;
 		splitterParts.back().vboOffset            = cp.vboOffset;
 	}
@@ -184,7 +184,7 @@ void FlyingPiece::CheckDrawStateChange(const FlyingPiece* prev) const
 			CUnitDrawer::BindModelTypeTexture(MODELTYPE_S3O, texture);
 
 		piece->BindVertexAttribVBOs();
-		piece->vboShatterIndices.Bind(GL_ELEMENT_ARRAY_BUFFER);
+		piece->BindShatterIndexVBO();
 		return;
 	}
 
@@ -195,17 +195,17 @@ void FlyingPiece::CheckDrawStateChange(const FlyingPiece* prev) const
 		CUnitDrawer::BindModelTypeTexture(MODELTYPE_S3O, texture);
 
 	if (piece != prev->piece) {
-		prev->piece->vboShatterIndices.Unbind();
+		prev->piece->UnbindShatterIndexVBO();
 		prev->piece->UnbindVertexAttribVBOs();
 		piece->BindVertexAttribVBOs();
-		piece->vboShatterIndices.Bind(GL_ELEMENT_ARRAY_BUFFER);
+		piece->BindShatterIndexVBO();
 	}
 }
 
 
 void FlyingPiece::EndDraw() const
 {
-	piece->vboShatterIndices.Unbind();
+	piece->UnbindShatterIndexVBO();
 	piece->UnbindVertexAttribVBOs();
 }
 
@@ -213,12 +213,15 @@ void FlyingPiece::EndDraw() const
 void FlyingPiece::Draw(const FlyingPiece* prev) const
 {
 	CheckDrawStateChange(prev);
+
 	const float3 dragFactors = GetDragFactors(); // speedDrag, gravityDrag, interAge
+	const VBO& shatterIndices = piece->GetShatterIndexVBO();
 
 	for (auto& cp: splitterParts) {
 		glPushMatrix();
 		glMultMatrixf(GetMatrixOf(cp, dragFactors));
-		glDrawRangeElements(GL_TRIANGLES, 0, piece->GetVertexCount() - 1, cp.indexCount, GL_UNSIGNED_INT, piece->vboShatterIndices.GetPtr(cp.vboOffset));
+		glDrawRangeElements(GL_TRIANGLES, 0, piece->GetVertexCount() - 1, cp.indexCount, GL_UNSIGNED_INT, shatterIndices.GetPtr(cp.vboOffset));
 		glPopMatrix();
 	}
 }
+

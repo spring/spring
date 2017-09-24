@@ -6,7 +6,9 @@
 #include "Map/Ground.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDef.h"
-#include "System/ThreadPool.h"
+#include "System/myMath.h"
+#include "System/Threading/ThreadPool.h"
+
 
 /**
  *  Draws a trigonometric circle in 'resolution' steps.
@@ -16,7 +18,7 @@ static void defSurfaceCircle(const float3& center, float radius, unsigned int re
 	CVertexArray* va=GetVertexArray();
 	va->Initialize();
 	for (unsigned int i = 0; i < res; ++i) {
-		const float radians = (2.0f * PI) * (float)i / (float)res;
+		const float radians = math::TWOPI * (float)i / (float)res;
 		float3 pos;
 		pos.x = center.x + (fastmath::sin(radians) * radius);
 		pos.z = center.z + (fastmath::cos(radians) * radius);
@@ -77,7 +79,7 @@ void glBallisticCircle(const float3& center, const float radius,
 	const float heightMod = weapon ? weapon->weaponDef->heightmod : 1.0f;
 
 	for_mt(0, resolution, [&](const int i) {
-		const float radians = (2.0f * PI) * (float)i / (float)resolution;
+		const float radians = math::TWOPI * (float)i / (float)resolution;
 		float rad = radius;
 		float sinR = fastmath::sin(radians);
 		float cosR = fastmath::cos(radians);
@@ -231,8 +233,8 @@ void glWireCylinder(unsigned int* listID, unsigned int numDivs, float zSize) {
 		for (unsigned int n = 0; n <= numDivs; n++) {
 			const unsigned int i = n % numDivs;
 
-			vertices[i].x = std::cos(i * ((PI + PI) / numDivs));
-			vertices[i].y = std::sin(i * ((PI + PI) / numDivs));
+			vertices[i].x = std::cos(i * (math::TWOPI / numDivs));
+			vertices[i].y = std::sin(i * (math::TWOPI / numDivs));
 			vertices[i].z = 0.0f;
 
 			glVertex3f(vertices[i].x, vertices[i].y, vertices[i].z);
@@ -281,8 +283,8 @@ void glWireSphere(unsigned int* listID, unsigned int numRows, unsigned int numCo
 
 	for (unsigned int row = 0; row <= numRows; row++) {
 		for (unsigned int col = 0; col < numCols; col++) {
-			const float a = (col * ((PI + PI) / numCols));
-			const float b = (row * ((PI     ) / numRows));
+			const float a = (col * (math::TWOPI / numCols));
+			const float b = (row * (math::PI    / numRows));
 
 			float3& v = vertices[row * numCols + col];
 

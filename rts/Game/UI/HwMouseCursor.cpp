@@ -48,15 +48,15 @@
 // no hardware cursor support for mac's and headless build
 class CHwDummyCursor : public IHwCursor {
 	public:
-		void PushImage(int xsize, int ysize, void* mem){};
-		void SetDelay(float delay){};
-		void PushFrame(int index, float delay){};
-		void Finish(){};
+		void PushImage(int xsize, int ysize, const void* mem) {}
+		void SetDelay(float delay) {}
+		void PushFrame(int index, float delay) {}
+		void Finish() {}
 
-		bool NeedsYFlip() {return false;};
+		bool NeedsYFlip() { return false; }
+		bool IsValid() { return false; }
 
-		bool IsValid(){return false;};
-		void Bind(){};
+		void Bind() {}
 };
 #elif defined(WIN32)
 class CHwWinCursor : public IHwCursor {
@@ -64,21 +64,20 @@ class CHwWinCursor : public IHwCursor {
 		CHwWinCursor();
 		~CHwWinCursor();
 
-		void PushImage(int xsize, int ysize, void* mem);
+		void PushImage(int xsize, int ysize, const void* mem);
 		void SetDelay(float delay);
 		void PushFrame(int index, float delay);
 		void Finish();
 
-		bool NeedsYFlip() {return true;};
+		bool NeedsYFlip() { return true; }
+		bool IsValid() { return (cursor != nullptr); }
 
 		void Bind();
 
-		bool IsValid() {return (cursor!=NULL);};
 	protected:
 		HCURSOR cursor;
-#ifndef _MSC_VER
-	#pragma push(pack,1)
-#endif
+
+	#pragma pack(push,1)
 		struct CursorDirectoryHeader {
 			byte  xsize,ysize,ncolors,reserved1;
 			short hotx,hoty;
@@ -94,9 +93,7 @@ class CHwWinCursor : public IHwCursor {
 		struct AnihStructure {
 			DWORD size,images,frames,width,height,bpp,planes,rate,flags;
 		};
-#ifndef _MSC_VER
-	#pragma pop(pack)
-#endif
+	#pragma pack(pop)
 
 	protected:
 		struct ImageData {
@@ -122,14 +119,14 @@ class CHwX11Cursor : public IHwCursor {
 		CHwX11Cursor();
 		~CHwX11Cursor();
 
-		void PushImage(int xsize, int ysize, void* mem);
+		void PushImage(int xsize, int ysize, const void* mem);
 		void SetDelay(float delay);
 		void PushFrame(int index, float delay);
 		void Finish();
 
-		bool NeedsYFlip() {return false;};
+		bool NeedsYFlip() { return false; }
+		bool IsValid() { return (cursor != 0); }
 
-		bool IsValid() {return (cursor!=0);};
 		void Bind();
 	protected:
 		int xmaxsize, ymaxsize;
@@ -167,51 +164,50 @@ IHwCursor* GetNewHwCursor()
 	// no hardware cursor support for mac's and headless build
 #elif defined(WIN32)
 
-void CHwWinCursor::PushImage(int xsize, int ysize, void* mem)
+void CHwWinCursor::PushImage(int xsize, int ysize, const void* mem)
 {
-	xmaxsize=std::max(xmaxsize,xsize);
-	ymaxsize=std::max(ymaxsize,ysize);
+	xmaxsize = std::max(xmaxsize, xsize);
+	ymaxsize = std::max(ymaxsize, ysize);
 
 	ImageData icon;
-	icon.data = new unsigned char[xsize*ysize*4];
+	icon.data = new unsigned char[xsize * ysize * 4];
 	icon.width = xsize;
 	icon.height = ysize;
-	memcpy(icon.data,mem,xsize*ysize*4);
+	memcpy(icon.data, mem, xsize * ysize * 4);
 
 	icons.push_back(icon);
 
 	frames.push_back(image_count);
-	framerates.push_back(std::max((int)(defFrameLength*60.0f),1));
+	framerates.push_back(std::max((int)(defFrameLength * 60.0f), 1));
 	image_count++;
 }
 
 void CHwWinCursor::SetDelay(float delay)
 {
-	int &last_item = framerates.back();
-	last_item = std::max((int)(delay*60.0f),1);
+	framerates.back() = std::max((int)(delay * 60.0f), 1);
 }
 
 void CHwWinCursor::PushFrame(int index, float delay)
 {
-	if (index>=image_count)
+	if (index >= image_count)
 		return;
 
 	frames.push_back((byte)index);
-	framerates.push_back(std::max((int)(delay*60.0f),1));
+	framerates.push_back(std::max((int)(delay * 60.0f), 1));
 }
 
-void CHwWinCursor::resizeImage(ImageData *image, int new_x, int new_y)
+void CHwWinCursor::resizeImage(ImageData* image, int new_x, int new_y)
 {
-	if (image->width==new_x && image->height==new_y)
+	if (image->width == new_x && image->height == new_y)
 		return;
 
-	unsigned char* newdata = new unsigned char[new_x*new_y*4];
-	memset(newdata, 0, new_x*new_y*4);
+	unsigned char* newdata = new unsigned char[new_x * new_y * 4];
+	memset(newdata, 0, new_x * new_y * 4);
 
 	for (int y = 0; y < image->height; ++y)
 		for (int x = 0; x < image->width; ++x)
 			for (int v = 0; v < 4; ++v)
-				newdata[((y + (new_y-image->height))*new_x+x)*4+v] = image->data[(y*image->width+x)*4+v];
+				newdata[((y + (new_y - image->height)) * new_x + x) * 4 + v] = image->data[(y * image->width + x) * 4 + v];
 
 	delete[] image->data;
 
@@ -227,24 +223,25 @@ void CHwWinCursor::buildIco(unsigned char* dst, ImageData &image)
 	const int ysize = image.height;
 
 	//small header needed in .ani
-	strcpy((char*)dst,"icon");
+	strcpy((char*)dst, "icon");
 	dst += 4;
 	DWORD* cursize = (DWORD*)&dst[0];
-	cursize[0] = 3*sizeof(WORD)+sizeof(CursorDirectoryHeader)+sizeof(CursorInfoHeader)+xsize*ysize*4+xsize*ysize/8;
+	cursize[0] = 3 * sizeof(WORD) + sizeof(CursorDirectoryHeader) + sizeof(CursorInfoHeader) + (xsize * ysize * 4) + (xsize * ysize / 8);
 	dst += 4;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// the following code writes a fully working .cur file in the memory (in a .ani container)
 
 	//file header
-	WORD* header = (WORD*)&dst[0]; int i=0;
+	int i = 0;
+	WORD* header = (WORD*)&dst[0];
 	header[i++] = 0;		//reserved
 	header[i++] = 2;		//is cursor
 	header[i++] = 1;		//number of cursor in this file
-	dst += 3*sizeof(WORD);
+	dst += 3 * sizeof(WORD);
 
 	CursorDirectoryHeader curHeader;
-	memset(&curHeader,0,sizeof(CursorDirectoryHeader));
+	memset(&curHeader, 0, sizeof(CursorDirectoryHeader));
 	curHeader.xsize  = (byte)xsize;		//width
 	curHeader.ysize  = (byte)ysize;		//height
 	curHeader.hotx   = hotx;
@@ -255,7 +252,7 @@ void CHwWinCursor::buildIco(unsigned char* dst, ImageData &image)
 	dst += sizeof(CursorDirectoryHeader);
 
 	CursorInfoHeader infoHeader;
-	memset(&infoHeader,0,sizeof(CursorInfoHeader));
+	memset(&infoHeader, 0, sizeof(CursorInfoHeader));
 	infoHeader.size   = 40;		//size of the infoHeader
 	infoHeader.width  = xsize;		//cursor width
 	infoHeader.height = ysize*2;		//cursor height + mask height
@@ -266,32 +263,33 @@ void CHwWinCursor::buildIco(unsigned char* dst, ImageData &image)
 
 	//copy colormap
 	unsigned char* src = image.data;
-	unsigned char* end = src+xsize*ysize*4;
-	do{
-		if (src[3]==0) {
-			dst[0] = dst[1] = dst[2] = dst[3] = 0;
-		}else{
-			dst[0]=src[2];      // B
-			dst[1]=src[1];      // G
-			dst[2]=src[0];      // R
-			dst[3]=src[3];      // A
-		}
-		dst+=4;
-		src+=4;
-	}while(src<end);
+	unsigned char* end = src + xsize * ysize * 4;
 
-	//create mask
+	do {
+		if (src[3] == 0) {
+			dst[0] = dst[1] = dst[2] = dst[3] = 0;
+		} else {
+			dst[0] = src[2];      // B
+			dst[1] = src[1];      // G
+			dst[2] = src[0];      // R
+			dst[3] = src[3];      // A
+		}
+		dst += 4;
+		src += 4;
+	} while (src < end);
+
+	// create mask
 	src -= xsize*ysize*4;
 	int b = 0;
-	do{
+	do {
 		dst[0] = 0x00;
-		for (b=0; b<8; b++) {
-			if (src[3]==0) //alpha greater zero?
-				dst[0] |= 128>>b;
-			src+=4;
+		for (b = 0; b < 8; b++) {
+			if (src[3] == 0) //alpha greater zero?
+				dst[0] |= (128 >> b);
+			src += 4;
 		}
 		dst++;
-	}while(src<end);
+	} while (src < end);
 
 /*	char fname[256];
 	SNPRINTF(fname, sizeof(fname), "mycursor%d.cur", ++savedcount);
@@ -317,14 +315,14 @@ void CHwWinCursor::Finish()
 	if (frames.empty())
 		return;
 
-	hotx = (hotSpot==CMouseCursor::TopLeft) ? 0 : (short)xmaxsize/2;
-	hoty = (hotSpot==CMouseCursor::TopLeft) ? 0 : (short)ymaxsize/2;
+	hotx = (hotSpot == CMouseCursor::TopLeft) ? 0 : (short)xmaxsize/2;
+	hoty = (hotSpot == CMouseCursor::TopLeft) ? 0 : (short)ymaxsize/2;
 
-	int squaresize = GetBestCursorSize( std::max(xmaxsize,ymaxsize) );
+	int squaresize = GetBestCursorSize(std::max(xmaxsize, ymaxsize));
 
 	//resize images
-	for (std::vector<ImageData>::iterator it=icons.begin(); it<icons.end(); ++it)
-		resizeImage(&*it,squaresize,squaresize);
+	for (ImageData& id: icons)
+		resizeImage(&id, squaresize, squaresize);
 
 	const int riffsize  = 32 + sizeof(AnihStructure) + (frames.size()+2) * 2 * sizeof(DWORD);
 	const int iconssize = icons.size() * (2*sizeof(DWORD) + 3*sizeof(WORD) +
@@ -467,24 +465,26 @@ void CHwX11Cursor::resizeImage(XcursorImage*& image, const int new_x, const int 
 	image = new_image;
 }
 
-void CHwX11Cursor::PushImage(int xsize, int ysize, void* mem)
+void CHwX11Cursor::PushImage(int xsize, int ysize, const void* mem)
 {
-	xmaxsize=std::max(xmaxsize,xsize);
-	ymaxsize=std::max(ymaxsize,ysize);
+	xmaxsize = std::max(xmaxsize, xsize);
+	ymaxsize = std::max(ymaxsize, ysize);
 
-	XcursorImage* image = XcursorImageCreate(xsize,ysize);
-	image->delay = (XcursorUInt)(defFrameLength*1000.0f);
-	char* dst=(char*)image->pixels;
-	char* src=(char*)mem;
-	char* end=src+xsize*ysize*4;
-	do{
-		dst[0]=src[2];      // B
-		dst[1]=src[1];      // G
-		dst[2]=src[0];      // R
-		dst[3]=src[3];      // A
-		dst+=4;
-		src+=4;
-	}while(src<end);
+	XcursorImage* image = XcursorImageCreate(xsize, ysize);
+	image->delay = (XcursorUInt) (defFrameLength * 1000.0f);
+
+	char* dst = (char*)image->pixels;
+	char* src = (char*)mem;
+	char* end = src + xsize * ysize * 4;
+
+	do {
+		dst[0] = src[2];      // B
+		dst[1] = src[1];      // G
+		dst[2] = src[0];      // R
+		dst[3] = src[3];      // A
+		dst += 4;
+		src += 4;
+	} while (src < end);
 
 	cimages.push_back(image);
 }
@@ -502,7 +502,7 @@ void CHwX11Cursor::PushFrame(int index, float delay)
 	if (cimages[index]->delay != delay) {
 		// make a copy of the existing one
 		XcursorImage* ci = cimages[index];
-		PushImage( ci->width, ci->height, ci->pixels );
+		PushImage(ci->width, ci->height, ci->pixels);
 		SetDelay(delay);
 	} else {
 		cimages.push_back( cimages[index] );
@@ -565,11 +565,12 @@ CHwX11Cursor::CHwX11Cursor()
 
 CHwX11Cursor::~CHwX11Cursor()
 {
-	for (std::vector<XcursorImage*>::iterator it=cimages.begin() ; it < cimages.end(); ++it )
-		XcursorImageDestroy(*it);
+	for (XcursorImage* img: cimages)
+		XcursorImageDestroy(img);
+
 	cimages.clear();
 
-	if (cursor!=0) {
+	if (cursor != 0) {
 		SDL_SysWMinfo info;
 		SDL_VERSION(&info.version);
 		if (!SDL_GetWindowWMInfo(globalRendering->window, &info)) {

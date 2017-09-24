@@ -50,7 +50,9 @@ private:
 	static const unsigned int EXPLOSION_LIFETIME = 10;
 
 	float craterTable[CRATER_TABLE_SIZE + 1];
+	float rawHardness[/*CMapInfo::NUM_TERRAIN_TYPES*/ 256];
 	float invHardness[/*CMapInfo::NUM_TERRAIN_TYPES*/ 256];
+	float weightTable[9];
 };
 
 #endif /* _BASIC_MAP_DAMAGE_H */

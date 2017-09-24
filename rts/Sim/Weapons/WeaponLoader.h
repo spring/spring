@@ -10,16 +10,17 @@ struct WeaponDef;
 
 class CWeaponLoader {
 public:
-	static CWeaponLoader* GetInstance();
+	static void InitStatic();
+	static void KillStatic();
 
-	void LoadWeapons(CUnit* unit);
+	static void LoadWeapons(CUnit* unit);
+	static void InitWeapons(CUnit* unit);
+	static void FreeWeapons(CUnit* unit);
 
 private:
-	CWeapon* LoadWeapon(CUnit* owner, const UnitDefWeapon* defWeapon);
-	CWeapon* InitWeapon(CUnit* owner, CWeapon* weapon, const UnitDefWeapon* defWeapon);
+	static CWeapon* LoadWeapon(CUnit* owner, const WeaponDef* weaponDef);
+	static void InitWeapon(CUnit* owner, CWeapon* weapon, const UnitDefWeapon* defWeapon);
 };
-
-#define weaponLoader (CWeaponLoader::GetInstance())
 
 #endif
 

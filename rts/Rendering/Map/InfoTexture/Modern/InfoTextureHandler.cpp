@@ -10,18 +10,15 @@
 #include "Path.h"
 #include "Radar.h"
 
-#include "System/TimeProfiler.h"
 
 
 
 CInfoTextureHandler::CInfoTextureHandler()
-: returnToLOS(false)
-, infoTex(nullptr)
 {
-	if (!infoTextureHandler)
+	if (infoTextureHandler == nullptr)
 		infoTextureHandler = this;
 
-	AddInfoTexture(new CInfoTextureCombiner());
+	AddInfoTexture(infoTex = new CInfoTextureCombiner());
 	AddInfoTexture(new CLosTexture());
 	AddInfoTexture(new CAirLosTexture());
 	AddInfoTexture(new CMetalTexture());
@@ -30,10 +27,10 @@ CInfoTextureHandler::CInfoTextureHandler()
 	AddInfoTexture(new CHeightTexture());
 	AddInfoTexture(new CPathTexture());
 
-	infoTex = dynamic_cast<CInfoTextureCombiner*>(GetInfoTexture("info"));
-	assert(infoTex);
-
-	Update();
+	// avoid calling this here, it introduces dependencies
+	// on engine components that have not been created yet
+	// (HeightMapTexture, GuiHandler, ...)
+	// Update();
 }
 
 
@@ -72,27 +69,27 @@ CInfoTexture* CInfoTextureHandler::GetInfoTexture(const std::string& name)
 
 bool CInfoTextureHandler::IsEnabled() const
 {
-	return infoTex->IsEnabled();
+	return (infoTex->IsEnabled());
 }
 
 
 void CInfoTextureHandler::DisableCurrentMode()
 {
-	if (returnToLOS && (infoTex->GetMode() != "los")) {
+	if (returnToLOS && (GetMode() != "los")) {
 		// return to LOS-mode if it was active before
-		infoTex->SwitchMode("los");
+		SetMode("los");
 	} else {
-		returnToLOS = false;
-		infoTex->SwitchMode("");
+		// otherwise disable overlay entirely
+		SetMode("");
 	}
 }
 
 
 void CInfoTextureHandler::SetMode(const std::string& name)
 {
-	if (name == "los") {
-		returnToLOS = true;
-	}
+	returnToLOS &= (name !=      "");
+	returnToLOS |= (name ==   "los");
+	inMetalMode  = (name == "metal");
 
 	infoTex->SwitchMode(name);
 }
@@ -101,7 +98,7 @@ void CInfoTextureHandler::SetMode(const std::string& name)
 void CInfoTextureHandler::ToggleMode(const std::string& name)
 {
 	if (infoTex->GetMode() == name)
-		return DisableCurrentMode();
+		return (DisableCurrentMode());
 
 	SetMode(name);
 }
@@ -109,26 +106,33 @@ void CInfoTextureHandler::ToggleMode(const std::string& name)
 
 const std::string& CInfoTextureHandler::GetMode() const
 {
-	return infoTex->GetMode();
+	return (infoTex->GetMode());
 }
-
 
 GLuint CInfoTextureHandler::GetCurrentInfoTexture() const
 {
-	return infoTex->GetTexture();
+	return (infoTex->GetTexture());
 }
-
 
 int2 CInfoTextureHandler::GetCurrentInfoTextureSize() const
 {
-	return infoTex->GetTexSize();
+	return (infoTex->GetTexSize());
 }
 
 
 void CInfoTextureHandler::Update()
 {
+	glActiveTexture(GL_TEXTURE0);
+	glEnable(GL_TEXTURE_2D);
+
 	for (auto& p: infoTextures) {
-		if (p.second->IsUpdateNeeded())
-			p.second->Update();
+		CPboInfoTexture* tex = p.second;
+
+		// force first update except for combiner; hides visible uninitialized texmem
+		if ((firstUpdate && tex != infoTex) || tex->IsUpdateNeeded())
+			tex->Update();
 	}
+
+	firstUpdate = false;
 }
+

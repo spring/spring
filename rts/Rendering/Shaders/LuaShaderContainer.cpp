@@ -8,7 +8,7 @@
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/Shaders/Shader.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include "System/Log/ILog.h"
 #include <sstream>
 
@@ -134,8 +134,8 @@ static void ParseShaderTable(
 
 static void LoadTextures(Shader::IProgramObject* program, const LuaTable* root)
 {
-	const LuaTable textures = root->SubTable("textures");
-	std::map<int, std::string> data;
+	const LuaTable& textures = root->SubTable("textures");
+	spring::unordered_map<int, std::string> data;
 	textures.GetMap(data);
 
 	for (const auto& p: data) {
@@ -153,7 +153,7 @@ bool LoadFromLua(Shader::IProgramObject* program, const std::string& filename)
 		return false;
 	}
 
-	LuaParser p(filename, SPRING_VFS_RAW_FIRST, SPRING_VFS_BASE);
+	LuaParser p(filename, SPRING_VFS_RAW_FIRST, SPRING_VFS_MOD_BASE);
 	p.SetLowerKeys(false);
 	p.SetLowerCppKeys(false);
 

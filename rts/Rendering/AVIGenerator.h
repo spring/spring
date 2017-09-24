@@ -5,19 +5,18 @@
 
 #ifdef WIN32
 
-#include <boost/thread/thread.hpp>
-#include <boost/thread/mutex.hpp>
-#include <boost/thread/condition.hpp>
-#include <boost/noncopyable.hpp>
+#include "System/Threading/SpringThreading.h"
+#include "System/Misc/NonCopyable.h"
 
 #include <windows.h>
 #include <vfw.h>
 
 #include <string>
-#include <list>
+#include <deque>
+#include <vector>
 
 
-class CAVIGenerator : boost::noncopyable {
+class CAVIGenerator : spring::noncopyable {
 public:
 
 	CAVIGenerator(const std::string& fileName, int videoSizeX, int videoSizeY, DWORD videoFPS);
@@ -31,6 +30,17 @@ public:
 
 	bool readOpenglPixelDataThreaded();
 
+private:
+	bool initVFW();
+
+	HRESULT InitAVICompressionEngine();
+	/// Adds a frame to the movie.
+	HRESULT AddFrame(unsigned char* pixelData);
+
+	void AVIGeneratorThreadProc();
+
+	/// Release streams allocated for movie compression.
+	void ReleaseAVICompressionEngine();
 
 private:
 	/// name of output file
@@ -47,29 +57,14 @@ private:
 
 	volatile bool quitAVIgen;
 
-	boost::thread* AVIThread;
-	boost::mutex AVIMutex;
-	boost::condition AVICondition;
+	spring::thread* AVIThread;
+	spring::mutex AVIMutex;
+	spring::condition_variable_any AVICondition;
 
-
-	std::list<unsigned char*> freeImageBuffers;
-	std::list<unsigned char*> imageBuffers;
+	std::deque< unsigned char* > freeImageBuffers;
+	std::deque< unsigned char* > imageBuffers;
 
 	unsigned char* readBuf;
-
-
-
-	bool initVFW();
-
-	HRESULT InitAVICompressionEngine();
-
-	/// Release streams allocated for movie compression.
-	void ReleaseAVICompressionEngine();
-
-	/// Adds a frame to the movie.
-	HRESULT AddFrame(unsigned char* pixelData);
-
-	void AVIGeneratorThreadProc();
 
 
 	/// frame counter
@@ -98,7 +93,6 @@ private:
 	typedef HIC (__stdcall *ICOpen_type)(DWORD, DWORD, UINT);
 
 
-
 	VideoForWindowsVersion_type VideoForWindowsVersion_ptr;
 	AVIFileInit_type AVIFileInit_ptr;
 	AVIFileOpenA_type AVIFileOpenA_ptr;
@@ -112,7 +106,6 @@ private:
 	ICCompressorChoose_type ICCompressorChoose_ptr;
 	ICCompressorFree_type ICCompressorFree_ptr;
 	ICOpen_type ICOpen_ptr;
-
 };
 
 #endif /* WIN32 */

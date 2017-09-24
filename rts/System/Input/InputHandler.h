@@ -3,7 +3,7 @@
 #ifndef INPUT_HANDLER_H
 #define INPUT_HANDLER_H
 
-#include <boost/signals2.hpp>
+#include <slimsig/slimsig.h>
 #include <SDL_events.h>
 
 /**
@@ -12,14 +12,15 @@
  */
 class InputHandler
 {
-	typedef boost::signals2::signal<void (const SDL_Event&)> SignalType;
 public:
+	typedef slimsig::signal<void (const SDL_Event&)> SignalType;
+
 	InputHandler();
 
 	void PushEvent(const SDL_Event& ev);
 	void PushEvents();
 
-	boost::signals2::connection AddHandler(SignalType::slot_function_type);
+	SignalType::connection_type AddHandler(SignalType::callback);
 
 private:
 	SignalType sig;

@@ -4,9 +4,7 @@
 #define CR_SET_TYPE_IMPL_H
 
 #include "creg_cond.h"
-
-#include <unordered_set>
-#define SPRING_HASH_SET std::unordered_set
+#include "System/UnorderedSet.hpp"
 
 #include <set>
 
@@ -18,11 +16,11 @@ namespace creg
 	template<typename T>
 	class SetType : public IType
 	{
-		boost::shared_ptr<IType> elemType;
+		std::shared_ptr<IType> elemType;
 	public:
 		typedef typename T::iterator iterator;
 
-		SetType(boost::shared_ptr<IType> elemType) : elemType(elemType) {}
+		SetType(std::shared_ptr<IType> elemType) : elemType(elemType) {}
 		~SetType() {}
 
 		void Serialize(ISerializer* s, void* instance)
@@ -52,22 +50,29 @@ namespace creg
 	// Set type
 	template<typename T, typename C>
 	struct DeduceType<std::set<T, C> > {
-		static boost::shared_ptr<IType> Get() {
-			return boost::shared_ptr<IType>(new SetType<std::set<T, C> >(DeduceType<T>::Get()));
+		static std::shared_ptr<IType> Get() {
+			return std::shared_ptr<IType>(new SetType<std::set<T, C> >(DeduceType<T>::Get()));
 		}
 	};
 	// Multiset
 	template<typename T>
 	struct DeduceType<std::multiset<T> > {
-		static boost::shared_ptr<IType> Get() {
-			return boost::shared_ptr<IType>(new SetType<std::multiset<T> >(DeduceType<T>::Get()));
+		static std::shared_ptr<IType> Get() {
+			return std::shared_ptr<IType>(new SetType<std::multiset<T> >(DeduceType<T>::Get()));
 		}
 	};
 	// Hash set
 	template<typename T>
-	struct DeduceType<SPRING_HASH_SET<T> > {
-		static boost::shared_ptr<IType> Get() {
-			return boost::shared_ptr<IType>(new SetType<SPRING_HASH_SET<T> >(DeduceType<T>::Get()));
+	struct DeduceType<spring::unordered_set<T> > {
+		static std::shared_ptr<IType> Get() {
+			return std::shared_ptr<IType>(new SetType<spring::unordered_set<T> >(DeduceType<T>::Get()));
+		}
+	};
+	// Unsynced Hash set
+	template<typename T>
+	struct DeduceType<spring::unsynced_set<T> > {
+		static std::shared_ptr<IType> Get() {
+			return std::shared_ptr<IType>(new SetType<spring::unsynced_set<T> >(DeduceType<T>::Get()));
 		}
 	};
 }

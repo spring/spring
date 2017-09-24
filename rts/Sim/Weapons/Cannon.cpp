@@ -1,6 +1,8 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include "Cannon.h"
+#include "WeaponDef.h"
+#include "WeaponMemPool.h"
 #include "Game/TraceRay.h"
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"
@@ -9,11 +11,10 @@
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
 #include "Sim/Units/Unit.h"
 #include "System/Sync/SyncTracer.h"
-#include "WeaponDefHandler.h"
 #include "System/myMath.h"
 #include "System/FastMath.h"
 
-CR_BIND_DERIVED(CCannon, CWeapon, (NULL, NULL))
+CR_BIND_DERIVED_POOL(CCannon, CWeapon, , weaponMemPool.alloc, weaponMemPool.free)
 
 CR_REG_METADATA(CCannon,(
 	CR_MEMBER(highTrajectory),
@@ -69,29 +70,26 @@ void CCannon::UpdateWantedDir()
 }
 
 
-bool CCannon::HaveFreeLineOfFire(const float3 pos, const SWeaponTarget& trg, bool useMuzzle) const
+bool CCannon::HaveFreeLineOfFire(const float3 srcPos, const float3 tgtPos, const SWeaponTarget& trg) const
 {
 	// assume we can still fire at partially submerged targets
-	if (!weaponDef->waterweapon && TargetUnderWater(pos, trg))
+	if (!weaponDef->waterweapon && TargetUnderWater(tgtPos, trg))
 		return false;
 
-	if (projectileSpeed == 0) {
+	if (projectileSpeed == 0.0f)
 		return true;
-	}
 
-	float3 dif(pos - weaponMuzzlePos);
+	float3 dif(tgtPos - srcPos);
 	float3 dir(GetWantedDir2(dif));
+	float3 flatDir(dif.x, 0.0f, dif.z);
 
-	if (dir.SqLength() == 0) {
+	if (dir.SqLength() == 0.0f)
 		return false;
-	}
 
-	float3 flatDir(dif.x, 0, dif.z);
-	float flatLength = flatDir.Length();
-	if (flatLength == 0) {
+	const float flatLength = flatDir.LengthNormalize();
+
+	if (flatLength == 0.0f)
 		return true;
-	}
-	flatDir /= flatLength;
 
 	const float linear = dir.y;
 	const float quadratic = gravity / (projectileSpeed * projectileSpeed) * 0.5f;
@@ -100,12 +98,11 @@ bool CCannon::HaveFreeLineOfFire(const float3 pos, const SWeaponTarget& trg, boo
 		-1.0f;
 	const float spread = (AccuracyExperience() + SprayAngleExperience()) * 0.6f * 0.9f;
 
-	if (groundDist > 0.0f) {
+	if (groundDist > 0.0f)
 		return false;
-	}
 
 	//FIXME add a forcedUserTarget (a forced fire mode enabled with meta key or something) and skip the test below then
-	if (TraceRay::TestTrajectoryCone(weaponMuzzlePos, flatDir, flatLength,
+	if (TraceRay::TestTrajectoryCone(srcPos, flatDir, flatLength,
 		dir.y, quadratic, spread, owner->allyteam, avoidFlags, owner)) {
 		return false;
 	}
@@ -118,7 +115,7 @@ void CCannon::FireImpl(const bool scriptCall)
 	float3 diff = currentTargetPos - weaponMuzzlePos;
 	float3 dir = (diff.SqLength() > 4.0f) ? GetWantedDir(diff) : diff; // prevent vertical aim when emit-sfx firing the weapon
 
-	dir += (gs->randVector() * SprayAngleExperience() + SalvoErrorExperience());
+	dir += (gsRNG.NextVector() * SprayAngleExperience() + SalvoErrorExperience());
 	dir.SafeNormalize();
 
 	int ttl = 0;
@@ -130,7 +127,7 @@ void CCannon::FireImpl(const bool scriptCall)
 	if (weaponDef->flighttime > 0) {
 		ttl = weaponDef->flighttime;
 	} else if (weaponDef->selfExplode) {
-		ttl = (predict + gs->randFloat() * 2.5f - 0.5f);
+		ttl = (predict + gsRNG.NextFloat() * 2.5f - 0.5f);
 	} else if ((weaponDef->groundBounce || weaponDef->waterBounce) && weaponDef->numBounce > 0) {
 		ttl = (predict * (1 + weaponDef->numBounce * weaponDef->bounceRebound));
 	} else {
@@ -139,6 +136,7 @@ void CCannon::FireImpl(const bool scriptCall)
 
 	ProjectileParams params = GetProjectileParams();
 	params.pos = weaponMuzzlePos;
+	params.end = currentTargetPos;
 	params.speed = dir * projectileSpeed;
 	params.ttl = ttl;
 	params.gravity = gravity;
@@ -148,9 +146,8 @@ void CCannon::FireImpl(const bool scriptCall)
 
 void CCannon::SlowUpdate()
 {
-	if (weaponDef->highTrajectory == 2 && owner->useHighTrajectory != highTrajectory) {
+	if (weaponDef->highTrajectory == 2 && owner->useHighTrajectory != highTrajectory)
 		highTrajectory = owner->useHighTrajectory;
-	}
 
 	CWeapon::SlowUpdate();
 }

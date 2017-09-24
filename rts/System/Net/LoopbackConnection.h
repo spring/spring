@@ -18,10 +18,10 @@ public:
 	CLoopbackConnection();
 	virtual ~CLoopbackConnection();
 
-	void SendData(boost::shared_ptr<const RawPacket> data);
+	void SendData(std::shared_ptr<const RawPacket> data);
 	bool HasIncomingData() const;
-	boost::shared_ptr<const RawPacket> Peek(unsigned ahead) const;
-	boost::shared_ptr<const RawPacket> GetData();
+	std::shared_ptr<const RawPacket> Peek(unsigned ahead) const;
+	std::shared_ptr<const RawPacket> GetData();
 	void DeleteBufferPacketAt(unsigned index);
 	void Flush(const bool forced);
 	bool CheckTimeout(int seconds, bool initial) const;
@@ -37,7 +37,7 @@ public:
 	std::string GetFullAddress() const;
 
 private:
-	std::deque< boost::shared_ptr<const RawPacket> > Data;
+	std::deque< std::shared_ptr<const RawPacket> > Data;
 };
 
 } // namespace netcode

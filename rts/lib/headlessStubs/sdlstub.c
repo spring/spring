@@ -12,12 +12,7 @@
 extern "C" {
 #endif
 
-// @see sdlstub_cppbit.cpp
-int stub_sdl_getSystemMilliSeconds();
-void stub_sdl_sleepMilliSeconds(int milliSeconds);
 
-
-static int startSystemMilliSeconds;
 static struct SDL_Surface stubSurface;
 static struct SDL_RWops stubRWops;
 static Uint8 stubKeyState[1];
@@ -30,8 +25,6 @@ extern DECLSPEC void SDLCALL SDL_free(void* p) {
 }
 
 extern DECLSPEC int SDLCALL SDL_Init(Uint32 flags) {
-
-	startSystemMilliSeconds = stub_sdl_getSystemMilliSeconds();
 
 	stubSurface.w = 512;
 	stubSurface.h = 512;
@@ -48,6 +41,9 @@ extern DECLSPEC int SDLCALL SDL_InitSubSystem(Uint32 flags) {
 	return 0;
 }
 
+extern DECLSPEC void SDLCALL SDL_QuitSubSystem(Uint32 flags) {
+}
+
 extern DECLSPEC const char* SDLCALL SDL_GetError() {
 	return "using the SDL stub library";
 }
@@ -60,6 +56,21 @@ extern DECLSPEC SDL_Window* SDLCALL SDL_CreateWindow(const char* title, int x, i
 	static int foo;
 	return (SDL_Window*)(&foo);
 }
+
+extern DECLSPEC void SDLCALL SDL_DestroyWindow(SDL_Window * window) {}
+extern DECLSPEC void SDLCALL SDL_MinimizeWindow(SDL_Window * window) {}
+extern DECLSPEC void SDLCALL SDL_MaximizeWindow(SDL_Window * window) {}
+
+extern DECLSPEC int SDLCALL SDL_GL_MakeCurrent(SDL_Window * window, SDL_GLContext context){
+	return 0;
+}
+
+extern DECLSPEC const char *SDLCALL SDL_GetWindowTitle(SDL_Window * window) {
+	return "";
+}
+
+extern DECLSPEC Uint32 SDLCALL SDL_GetWindowPixelFormat(SDL_Window* window) { return 0; }
+extern DECLSPEC const char* SDLCALL SDL_GetPixelFormatName(Uint32 format) { return ""; }
 
 extern DECLSPEC struct SDL_RWops* SDLCALL SDL_RWFromFile(const char* file, const char* mode) {
 	return &stubRWops;
@@ -84,14 +95,6 @@ extern DECLSPEC void SDLCALL SDL_FreeSurface(SDL_Surface* surface) {
 }
 
 extern DECLSPEC void SDLCALL SDL_GL_SwapWindow(SDL_Window* window) {
-}
-
-extern DECLSPEC void SDLCALL SDL_Delay(Uint32 ms) {
-	stub_sdl_sleepMilliSeconds(ms);
-}
-
-extern DECLSPEC Uint32 SDLCALL SDL_GetTicks() {
-	return stub_sdl_getSystemMilliSeconds() - startSystemMilliSeconds;
 }
 
 extern DECLSPEC void SDLCALL SDL_WarpMouseInWindow(SDL_Window* window, int x, int y) {
@@ -143,9 +146,13 @@ extern DECLSPEC int SDLCALL SDL_GL_GetAttribute(SDL_GLattr attr, int* value) {
 	return 0;
 }
 
+
 extern DECLSPEC SDL_GLContext SDLCALL SDL_GL_CreateContext(SDL_Window* window) {
 	static int foo;
 	return &foo;
+}
+
+extern DECLSPEC void SDLCALL SDL_GL_DeleteContext(SDL_GLContext context) {
 }
 
 
@@ -160,8 +167,8 @@ extern DECLSPEC Uint32 SDLCALL SDL_GetWindowFlags(SDL_Window* window) {
 	return 0;
 }
 
-extern DECLSPEC void SDLCALL SDL_DisableScreenSaver() {
-}
+extern DECLSPEC void SDLCALL SDL_EnableScreenSaver() {}
+extern DECLSPEC void SDLCALL SDL_DisableScreenSaver() {}
 
 extern DECLSPEC char* SDLCALL SDL_GetClipboardText() {
 	return "";
@@ -232,6 +239,10 @@ extern DECLSPEC int SDLCALL SDL_GetDesktopDisplayMode(int displayIndex, SDL_Disp
 	return 0;
 }
 
+extern DECLSPEC int SDLCALL SDL_GetCurrentDisplayMode(int displayIndex, SDL_DisplayMode* mode) {
+	return SDL_GetDesktopDisplayMode(0, mode);
+}
+
 extern DECLSPEC int SDLCALL SDL_GetWindowDisplayMode(SDL_Window* window, SDL_DisplayMode* mode) {
 	return SDL_GetDesktopDisplayMode(0, mode);
 }
@@ -274,6 +285,10 @@ extern DECLSPEC void SDL_SetWindowSize(SDL_Window * window, int w, int h) {
 
 extern DECLSPEC SDL_PowerState SDL_GetPowerInfo(int *secs, int *pct) {
 	return SDL_POWERSTATE_UNKNOWN;
+}
+
+extern DECLSPEC SDL_bool SDL_SetHint(const char* name, const char* value) {
+	return SDL_TRUE;
 }
 
 

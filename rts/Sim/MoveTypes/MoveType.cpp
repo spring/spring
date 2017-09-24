@@ -22,6 +22,7 @@ CR_REG_METADATA(AMoveType, (
 	CR_MEMBER(maxSpeedDef),
 	CR_MEMBER(maxWantedSpeed),
 	CR_MEMBER(maneuverLeash),
+	CR_MEMBER(waterline),
 
 	CR_MEMBER(useHeading),
 	CR_MEMBER(progressState)
@@ -30,19 +31,20 @@ CR_REG_METADATA(AMoveType, (
 AMoveType::AMoveType(CUnit* owner):
 	owner(owner),
 
-	goalPos(owner? owner->pos: ZeroVector),
-	oldPos(owner? owner->pos: ZeroVector),
+	goalPos((owner != nullptr)? owner->pos: ZeroVector),
+	oldPos((owner != nullptr)? owner->pos: ZeroVector),
 	oldSlowUpdatePos(oldPos),
 
 	useHeading(true),
 
 	progressState(Done),
 
-	maxSpeed(owner? owner->unitDef->speed / GAME_SPEED : 0.0f),
-	maxSpeedDef(owner? owner->unitDef->speed / GAME_SPEED : 0.0f),
-	maxWantedSpeed(owner? owner->unitDef->speed / GAME_SPEED : 0.0f),
+	maxSpeed((owner != nullptr)? owner->unitDef->speed / GAME_SPEED : 0.0f),
+	maxSpeedDef((owner != nullptr)? owner->unitDef->speed / GAME_SPEED : 0.0f),
+	maxWantedSpeed((owner != nullptr)? owner->unitDef->speed / GAME_SPEED : 0.0f),
 
-	maneuverLeash(500.0f)
+	maneuverLeash(500.0f),
+	waterline((owner != nullptr)? owner->unitDef->waterline: 0.0f)
 {
 }
 
@@ -80,7 +82,7 @@ void AMoveType::KeepPointingTo(CUnit* unit, float distance, bool aggressive)
 float AMoveType::CalcStaticTurnRadius() const {
 	// calculate a rough turn radius (not based on current speed)
 	const float turnFrames = SPRING_CIRCLE_DIVS / std::max(owner->unitDef->turnRate, 1.0f);
-	const float turnRadius = (maxSpeedDef * turnFrames) / (PI + PI);
+	const float turnRadius = (maxSpeedDef * turnFrames) / math::TWOPI;
 
 	return turnRadius;
 }
@@ -94,11 +96,13 @@ bool AMoveType::SetMemberValue(unsigned int memberHash, void* memberValue) {
 	#define          MAXSPEED_MEMBER_IDX 0
 	#define    MAXWANTEDSPEED_MEMBER_IDX 1
 	#define     MANEUVERLEASH_MEMBER_IDX 2
+	#define         WATERLINE_MEMBER_IDX 3
 
 	static const unsigned int floatMemberHashes[] = {
 		MEMBER_LITERAL_HASH(         "maxSpeed"),
 		MEMBER_LITERAL_HASH(   "maxWantedSpeed"),
 		MEMBER_LITERAL_HASH(    "maneuverLeash"),
+		MEMBER_LITERAL_HASH(        "waterline"),
 	};
 
 	#undef MEMBER_CHARPTR_HASH
@@ -125,7 +129,10 @@ bool AMoveType::SetMemberValue(unsigned int memberHash, void* memberValue) {
 		SetManeuverLeash(*reinterpret_cast<float*>(memberValue));
 		return true;
 	}
+	if (memberHash == floatMemberHashes[WATERLINE_MEMBER_IDX]) {
+		SetWaterline(*reinterpret_cast<float*>(memberValue));
+		return true;
+	}
 
 	return false;
 }
-

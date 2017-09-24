@@ -9,8 +9,12 @@
 #include "Game/GameSetup.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/GlobalConstants.h"
-#include "System/Util.h"
+#include "System/SafeUtil.h"
 #include "System/Log/FramePrefixer.h"
+
+#ifdef SYNCCHECK
+	#include "System/Sync/SyncChecker.h"
+#endif
 
 
 /**
@@ -18,8 +22,8 @@
  *
  * Global instance of CGlobalSynced
  */
-CGlobalSynced* gs = NULL;
-CGlobalSynced::SyncedRNG CGlobalSynced::rng;
+CGlobalSynced* gs = nullptr;
+CGlobalSyncedRNG gsRNG;
 
 
 CR_BIND(CGlobalSynced, )
@@ -36,10 +40,7 @@ CR_REG_METADATA(CGlobalSynced, (
 	CR_MEMBER(cheatEnabled),
 	CR_MEMBER(noHelperAIs),
 	CR_MEMBER(editDefsEnabled),
-	CR_MEMBER(useLuaGaia),
-
-	CR_MEMBER(randSeed),
-	CR_MEMBER(initRandSeed)
+	CR_MEMBER(useLuaGaia)
 ))
 
 
@@ -48,26 +49,27 @@ CR_REG_METADATA(CGlobalSynced, (
  */
 CGlobalSynced::CGlobalSynced()
 {
-	randSeed     = 18655;
-	initRandSeed = randSeed;
-
-	assert(teamHandler == NULL);
+	assert(teamHandler == nullptr);
 	ResetState();
 }
 
-
 CGlobalSynced::~CGlobalSynced()
 {
-	SafeDelete(teamHandler);
-	assert(teamHandler == NULL);
+	spring::SafeDelete(teamHandler);
+	assert(teamHandler == nullptr);
 
-	log_framePrefixer_setFrameNumReference(NULL);
+	log_framePrefixer_setFrameNumReference(nullptr);
 }
 
 
 void CGlobalSynced::ResetState() {
 	frameNum = -1; // first real frame is 0
 	tempNum  =  1;
+
+#ifdef SYNCCHECK
+	// reset checksum
+	CSyncChecker::NewFrame();
+#endif
 
 	speedFactor       = 1.0f;
 	wantedSpeedFactor = 1.0f;
@@ -80,6 +82,7 @@ void CGlobalSynced::ResetState() {
 	editDefsEnabled = false;
 	useLuaGaia      = true;
 
+	gsRNG.SetSeed(18655, true);
 	log_framePrefixer_setFrameNumReference(&frameNum);
 
 	if (teamHandler == NULL) {
@@ -101,42 +104,3 @@ void CGlobalSynced::LoadFromSetup(const CGameSetup* setup)
 	skirmishAIHandler.LoadFromSetup(*setup);
 }
 
-/**
- * @return synced random integer
- *
- * returns a synced random integer
- */
-int CGlobalSynced::randInt()
-{
-	randSeed = (randSeed * 214013L + 2531011L);
-	return (randSeed >> 16) & RANDINT_MAX;
-}
-
-/**
- * @return synced random float
- *
- * returns a synced random float
- */
-float CGlobalSynced::randFloat()
-{
-	randSeed = (randSeed * 214013L + 2531011L);
-	return float((randSeed >> 16) & RANDINT_MAX)/RANDINT_MAX;
-}
-
-/**
- * @return synced random vector
- *
- * returns a synced random vector
- */
-float3 CGlobalSynced::randVector()
-{
-	float3 ret;
-
-	do {
-		ret.x = randFloat() * 2.0f - 1.0f;
-		ret.y = randFloat() * 2.0f - 1.0f;
-		ret.z = randFloat() * 2.0f - 1.0f;
-	} while (ret.SqLength() > 1.0f);
-
-	return ret;
-}

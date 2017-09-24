@@ -9,7 +9,7 @@
 #include "System/FileSystem/DataDirsAccess.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/FileSystem/FileQueryFlags.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 
 
 CDirArchiveFactory::CDirArchiveFactory()
@@ -57,7 +57,7 @@ unsigned int CDirArchive::NumFiles() const
 	return searchFiles.size();
 }
 
-bool CDirArchive::GetFile(unsigned int fid, std::vector<boost::uint8_t>& buffer)
+bool CDirArchive::GetFile(unsigned int fid, std::vector<std::uint8_t>& buffer)
 {
 	assert(IsFileId(fid));
 

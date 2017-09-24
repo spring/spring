@@ -141,6 +141,15 @@ public:
 		rightdir.y = -matrix[1]; updir.y = matrix[5]; frontdir.y = matrix[ 9];
 		rightdir.z = -matrix[2]; updir.z = matrix[6]; frontdir.z = matrix[10];
 	}
+
+	void AddHeading(short deltaHeading, bool useGroundNormal) { SetHeading(heading + deltaHeading, useGroundNormal); }
+	void SetHeading(short worldHeading, bool useGroundNormal) {
+		heading = worldHeading;
+
+		UpdateDirVectors(useGroundNormal);
+		UpdateMidAndAimPos();
+	}
+
 	// update object's <heading> from current frontdir
 	// should always be called after a SetDirVectors()
 	void SetHeadingFromDirection();
@@ -149,6 +158,7 @@ public:
 	// NOTE: movetypes call this directly
 	void UpdateDirVectors(bool useGroundNormal);
 
+	CMatrix44f ComposeMatrix(const float3& p) const { return (CMatrix44f(p, -rightdir, updir, frontdir)); }
 	virtual CMatrix44f GetTransformMatrix(const bool synced = false) const = 0;
 
 	const CollisionVolume* GetCollisionVolume(const LocalModelPiece* lmp) const {
@@ -319,6 +329,7 @@ public:
 
 	LocalModel localModel;
 	CollisionVolume collisionVolume;
+	CollisionVolume selectionVolume;
 
 	const LocalModelPiece* lastHitPiece;        ///< piece that was last hit by a projectile
 	      SolidObjectGroundDecal* groundDecal;

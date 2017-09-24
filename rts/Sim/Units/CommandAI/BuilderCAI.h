@@ -4,11 +4,10 @@
 #define _BUILDER_CAI_H_
 
 #include "MobileCAI.h"
-#include "Sim/Units/UnitSet.h"
 #include "Sim/Units/BuildInfo.h"
 #include "System/Misc/BitwiseEnum.h"
+#include "System/UnorderedSet.hpp"
 
-#include <set>
 #include <string>
 
 class CUnit;
@@ -64,11 +63,11 @@ public:
 	bool IsInBuildRange(const float3& pos, const float radius) const;
 
 public:
-	std::set<int> buildOptions;
+	spring::unordered_set<int> buildOptions;
 
-	static CUnitSet reclaimers;
-	static CUnitSet featureReclaimers;
-	static CUnitSet resurrecters;
+	static spring::unordered_set<int> reclaimers;
+	static spring::unordered_set<int> featureReclaimers;
+	static spring::unordered_set<int> resurrecters;
 
 private:
 	enum ReclaimOptions {
@@ -112,9 +111,9 @@ private:
 	bool MoveInBuildRange(const CWorldObject* obj, const bool checkMoveTypeForFailed = false);
 	bool MoveInBuildRange(const float3& pos, float radius, const bool checkMoveTypeForFailed = false);
 
-	bool IsBuildPosBlocked(const BuildInfo& build, const CUnit** nanoFrame) const;
-	bool IsBuildPosBlocked(const BuildInfo& build) const {
-		const CUnit* u = NULL;
+	bool IsBuildPosBlocked(const BuildInfo& bi, const CUnit** nanoFrame) const;
+	bool IsBuildPosBlocked(const BuildInfo& bi) const {
+		const CUnit* u = nullptr;
 		return IsBuildPosBlocked(build, &u);
 	}
 

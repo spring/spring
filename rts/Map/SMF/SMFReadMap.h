@@ -142,7 +142,6 @@ public:
 		if (splatNormalTextures[3].GetID() != 0) return true;
 		return false;
 	}
-	bool HaveDetailNormalDiffuseAlpha() const { return haveDetailNormalDiffuseAlpha; }
 
 private:
 	void ParseHeader();
@@ -191,11 +190,12 @@ private:
 	CSMFGroundDrawer* groundDrawer;
 
 private:
-	std::vector<float> cornerHeightMapSynced;
-	std::vector<float> cornerHeightMapUnsynced;
+	// note: intentionally declared static (see ReadMap)
+	static std::vector<float> cornerHeightMapSynced;
+	static std::vector<float> cornerHeightMapUnsynced;
 
-	std::vector<unsigned char> shadingTexBuffer;
-	std::vector<unsigned char> waterHeightColors;
+	static std::vector<unsigned char> shadingTexBuffer;
+	static std::vector<unsigned char> waterHeightColors;
 
 private:
 	MapTexture grassShadingTex;       // specifies grass-blade modulation color (defaults to minimapTex)
@@ -227,7 +227,6 @@ private:
 	bool haveSpecularTexture;
 	bool haveSplatDetailDistribTexture; // true if we have both splatDetailTex and splatDistrTex
 	bool haveSplatNormalDistribTexture; // true if we have splatDistrTex and at least one splat[Detail]NormalTex
-	bool haveDetailNormalDiffuseAlpha;
 
 	bool shadingTexUpdateNeeded;
 };

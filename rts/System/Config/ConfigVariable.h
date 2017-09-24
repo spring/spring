@@ -3,7 +3,8 @@
 #ifndef CONFIG_VALUE_H
 #define CONFIG_VALUE_H
 
-#include <boost/noncopyable.hpp>
+#include "System/Misc/NonCopyable.h"
+#include <algorithm>
 #include <map>
 #include <string>
 #include "System/StringConvertibleOptionalValue.h"
@@ -16,7 +17,7 @@
  * That is, meta data of a type that does not depend on the declared type
  * of the config variable.
  */
-class ConfigVariableMetaData : public boost::noncopyable
+class ConfigVariableMetaData : public spring::noncopyable
 {
 public:
 	typedef TypedStringConvertibleOptionalValue<std::string> OptionalString;
@@ -133,7 +134,7 @@ protected:
  *   .readOnly(true);
  */
 template<typename T>
-class ConfigVariableBuilder : public boost::noncopyable
+class ConfigVariableBuilder : public spring::noncopyable
 {
 public:
 	ConfigVariableBuilder(ConfigVariableTypedMetaData<T>& data) : data(&data) {}

@@ -2,10 +2,7 @@
 
 //#include "System/Platform/Win/win32.h"
 
-#include <boost/cstdint.hpp>
-
-#include <string.h>
-#include <map>
+#include <cstring>
 
 #include "LuaUtils.h"
 #include "LuaConfig.h"
@@ -17,7 +14,8 @@
 #include "Sim/Units/CommandAI/CommandDescription.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/Log/ILog.h"
-#include "System/Util.h"
+#include "System/UnorderedMap.hpp"
+#include "System/StringUtil.h"
 
 #if !defined UNITSYNC && !defined DEDICATED && !defined BUILDING_AI
 	#include "System/TimeProfiler.h"
@@ -34,8 +32,8 @@ int LuaUtils::exportedDataSize = 0;
 /******************************************************************************/
 
 
-static bool CopyPushData(lua_State* dst, lua_State* src, int index, int depth, std::map<const void*, int>& alreadyCopied);
-static bool CopyPushTable(lua_State* dst, lua_State* src, int index, int depth, std::map<const void*, int>& alreadyCopied);
+static bool CopyPushData(lua_State* dst, lua_State* src, int index, int depth, spring::unsynced_map<const void*, int>& alreadyCopied);
+static bool CopyPushTable(lua_State* dst, lua_State* src, int index, int depth, spring::unsynced_map<const void*, int>& alreadyCopied);
 
 
 static inline int PosAbsLuaIndex(lua_State* src, int index)
@@ -47,7 +45,7 @@ static inline int PosAbsLuaIndex(lua_State* src, int index)
 }
 
 
-static bool CopyPushData(lua_State* dst, lua_State* src, int index, int depth, std::map<const void*, int>& alreadyCopied)
+static bool CopyPushData(lua_State* dst, lua_State* src, int index, int depth, spring::unsynced_map<const void*, int>& alreadyCopied)
 {
 	const int type = lua_type(src, index);
 	switch (type) {
@@ -93,7 +91,7 @@ static bool CopyPushData(lua_State* dst, lua_State* src, int index, int depth, s
 }
 
 
-static bool CopyPushTable(lua_State* dst, lua_State* src, int index, int depth, std::map<const void*, int>& alreadyCopied)
+static bool CopyPushTable(lua_State* dst, lua_State* src, int index, int depth, spring::unsynced_map<const void*, int>& alreadyCopied)
 {
 	const int table = PosAbsLuaIndex(src, index);
 
@@ -134,7 +132,7 @@ static bool CopyPushTable(lua_State* dst, lua_State* src, int index, int depth, 
 
 int LuaUtils::CopyData(lua_State* dst, lua_State* src, int count)
 {
-	SCOPED_TIMER("::CopyData");
+	SCOPED_TIMER("Lua::CopyData");
 
 	const int srcTop = lua_gettop(src);
 	const int dstTop = lua_gettop(dst);
@@ -147,7 +145,8 @@ int LuaUtils::CopyData(lua_State* dst, lua_State* src, int count)
 
 	// hold a map of all already copied tables in the lua's registry table
 	// needed for recursive tables, i.e. "local t = {}; t[t] = t"
-	std::map<const void*, int> alreadyCopied;
+	// the order of traversal doesn't matter so we can use an unsynced map
+	spring::unsynced_map<const void*, int> alreadyCopied;
 
 	const int startIndex = (srcTop - count + 1);
 	const int endIndex   = srcTop;
@@ -743,23 +742,31 @@ int LuaUtils::PushFeatureModelDrawType(lua_State* L, const FeatureDef* def)
 
 int LuaUtils::PushModelName(lua_State* L, const SolidObjectDef* def)
 {
-	// redundant with model.path
-	// lua_pushsstring(L, modelLoader.FindModelPath(def->modelName));
-	lua_pushsstring(L, "deprecated! use def.model.path instead!");
+	lua_pushsstring(L, def->modelName);
+	return 1;
+}
+
+int LuaUtils::PushModelType(lua_State* L, const SolidObjectDef* def)
+{
+	const std::string& modelPath = modelLoader.FindModelPath(def->modelName);
+	const std::string& modelType = StringToLower(FileSystem::GetExtension(modelPath));
+	lua_pushsstring(L, modelType);
+	return 1;
+}
+
+int LuaUtils::PushModelPath(lua_State* L, const SolidObjectDef* def)
+{
+	const std::string& modelPath = modelLoader.FindModelPath(def->modelName);
+	lua_pushsstring(L, modelPath);
 	return 1;
 }
 
 
 int LuaUtils::PushModelTable(lua_State* L, const SolidObjectDef* def) {
-	const std::string& modelPath = modelLoader.FindModelPath(def->modelName);
-	const std::string& modelType = StringToLower(FileSystem::GetExtension(modelPath));
 
 	const S3DModel* model = def->LoadModel();
 
 	lua_newtable(L);
-	HSTR_PUSH_STRING(L, "type", modelType);
-	HSTR_PUSH_STRING(L, "path", modelPath);
-	HSTR_PUSH_STRING(L, "name", def->modelName);
 
 	if (model != nullptr) {
 		// unit, or non-tree feature
@@ -832,6 +839,40 @@ int LuaUtils::PushColVolTable(lua_State* L, const CollisionVolume* vol) {
 	LuaPushNamedBool(L, "defaultToFootPrint", vol->DefaultToFootPrint());
 	LuaPushNamedBool(L, "defaultToPieceTree", vol->DefaultToPieceTree());
 	return 1;
+}
+
+int LuaUtils::PushColVolData(lua_State* L, const CollisionVolume* vol) {
+	lua_pushnumber(L, vol->GetScales().x);
+	lua_pushnumber(L, vol->GetScales().y);
+	lua_pushnumber(L, vol->GetScales().z);
+	lua_pushnumber(L, vol->GetOffsets().x);
+	lua_pushnumber(L, vol->GetOffsets().y);
+	lua_pushnumber(L, vol->GetOffsets().z);
+	lua_pushnumber(L, vol->GetVolumeType());
+	lua_pushnumber(L, int(vol->UseContHitTest()));
+	lua_pushnumber(L, vol->GetPrimaryAxis());
+	lua_pushboolean(L, vol->IgnoreHits());
+	return 10;
+}
+
+
+int LuaUtils::ParseColVolData(lua_State* L, int idx, CollisionVolume* vol)
+{
+	const float xs = luaL_checkfloat(L, idx++);
+	const float ys = luaL_checkfloat(L, idx++);
+	const float zs = luaL_checkfloat(L, idx++);
+	const float xo = luaL_checkfloat(L, idx++);
+	const float yo = luaL_checkfloat(L, idx++);
+	const float zo = luaL_checkfloat(L, idx++);
+	const int vType = luaL_checkint (L, idx++);
+	const int tType = luaL_checkint (L, idx++);
+	const int pAxis = luaL_checkint (L, idx++);
+
+	const float3 scales(xs, ys, zs);
+	const float3 offsets(xo, yo, zo);
+
+	vol->InitShape(scales, offsets, vType, tType, pAxis);
+	return 0;
 }
 
 
@@ -1121,58 +1162,66 @@ int LuaUtils::Next(const ParamMap& paramMap, lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 
-static std::string getprintf_msg(lua_State* L, int index)
+static void LogMsg(lua_State* L, const char* logSection, int logLevel, int argIndex)
 {
-	// copied from lua/src/lib/lbaselib.c
-	string msg = "";
-	const int args = lua_gettop(L); // number of arguments
+	// mostly copied from lua/src/lbaselib.cpp
+	std::string msg;
 
+	const int numArgs = lua_gettop(L);
+
+	// rely on Lua's own number formatting
 	lua_getglobal(L, "tostring");
 
-	for (int i = index; i <= args; i++) {
-		const char* s;
-		lua_pushvalue(L, -1);     // function to be called
-		lua_pushvalue(L, i);      // value to print
-		lua_call(L, 1, 1);
-		s = lua_tostring(L, -1);  // get result
-		if (i > index) {
-			msg += ", ";
+	if (numArgs != argIndex || !lua_istable(L, argIndex)) {
+		// print individual args
+		for (int i = argIndex; i <= numArgs; i++) {
+			lua_pushvalue(L, -1);     // function to be called
+			lua_pushvalue(L, i);      // value to print
+			lua_pcall(L, 1, 1, 0);
+
+			const char* s = lua_tostring(L, -1);  // get result
+
+			if (i > argIndex)
+				msg += ", ";
+			if (s != nullptr)
+				msg += s;
+
+			lua_pop(L, 1);            // pop result
 		}
-		msg += s;
-		lua_pop(L, 1);            // pop result
-	}
+	} else {
+		// print table values (array style)
+		msg = "TABLE: ";
 
-	if ((args != index) || !lua_istable(L, index)) {
-		return msg;
-	}
+		for (lua_pushnil(L); lua_next(L, argIndex) != 0; lua_pop(L, 1)) {
+			if (!lua_israwnumber(L, -2)) // only numeric keys
+				continue;
 
-	// print solo tables (array style)
-	msg = "TABLE: ";
-	bool first = true;
-	for (lua_pushnil(L); lua_next(L, index) != 0; lua_pop(L, 1)) {
-		if (lua_israwnumber(L, -2)) {  // only numeric keys
-			const char *s;
 			lua_pushvalue(L, -3);    // function to be called
 			lua_pushvalue(L, -2);    // value to print
-			lua_call(L, 1, 1);
-			s = lua_tostring(L, -1);  // get result
-			if (!first) {
+			lua_pcall(L, 1, 1, 0);
+
+			const char* s = lua_tostring(L, -1);  // get result
+
+			if ((msg.size() + 1) > sizeof("TABLE: "))
 				msg += ", ";
-			}
-			msg += s;
-			first = false;
+			if (s != nullptr)
+				msg += s;
+
 			lua_pop(L, 1);            // pop result
 		}
 	}
 
-	return msg;
+	if (logSection == nullptr) {
+		LOG("%s", msg.c_str());
+	} else {
+		LOG_SI(logSection, logLevel, "%s", msg.c_str());
+	}
 }
 
 
 int LuaUtils::Echo(lua_State* L)
 {
-	const std::string msg = getprintf_msg(L, 1);
-	LOG("%s", msg.c_str());
+	LogMsg(L, nullptr, -1, 1);
 	return 0;
 }
 
@@ -1238,8 +1287,7 @@ int LuaUtils::Log(lua_State* L)
 		return luaL_error(L, "Incorrect arguments to Spring.Log(logsection, loglevel, ...)");
 	}
 
-	const std::string msg = getprintf_msg(L, 3);
-	LOG_SI(section, loglevel, "%s", msg.c_str());
+	LogMsg(L, section, loglevel, 3);
 	return 0;
 }
 

@@ -3,12 +3,11 @@
 #ifndef EXPLOSION_GENERATOR_H
 #define EXPLOSION_GENERATOR_H
 
-#include <map>
 #include <string>
 #include <vector>
-#include <boost/shared_ptr.hpp>
 
 #include "Rendering/GroundFlashInfo.h"
+#include "System/UnorderedMap.hpp"
 
 #define CEG_PREFIX_STRING "custom:"
 
@@ -31,7 +30,7 @@ public:
 	std::string FindAlias(const std::string& className) const;
 
 private:
-	std::map<std::string, std::string> aliases;
+	spring::unordered_map<std::string, std::string> aliases;
 };
 
 
@@ -78,11 +77,11 @@ protected:
 
 	std::vector<IExplosionGenerator*> explosionGenerators;
 
-	std::map<std::string, unsigned int> expGenTagIdentMap;
-	std::map<unsigned int, std::string> expGenIdentTagMap;
+	spring::unordered_map<std::string, unsigned int> expGenTagIdentMap;
+	spring::unordered_map<unsigned int, std::string> expGenIdentTagMap;
 
-	typedef std::map<std::string, unsigned int>::const_iterator TagIdentMapConstIt;
-	typedef std::map<unsigned int, std::string>::const_iterator IdentTagMapConstIt;
+	typedef spring::unordered_map<std::string, unsigned int>::const_iterator TagIdentMapConstIt;
+	typedef spring::unordered_map<unsigned int, std::string>::const_iterator IdentTagMapConstIt;
 };
 
 

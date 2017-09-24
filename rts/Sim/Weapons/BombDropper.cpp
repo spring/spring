@@ -2,6 +2,7 @@
 
 #include "BombDropper.h"
 #include "WeaponDef.h"
+#include "WeaponMemPool.h"
 #include "Game/GameHelper.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/Team.h"
@@ -13,7 +14,7 @@
 #include "System/Log/ILog.h"
 
 
-CR_BIND_DERIVED(CBombDropper, CWeapon, (NULL, NULL, false))
+CR_BIND_DERIVED_POOL(CBombDropper, CWeapon, , weaponMemPool.alloc, weaponMemPool.free)
 
 CR_REG_METADATA(CBombDropper,(
 	CR_MEMBER(dropTorpedoes),
@@ -29,7 +30,7 @@ CBombDropper::CBombDropper(CUnit* owner, const WeaponDef* def, bool useTorps)
 	: CWeapon(owner, def)
 	, dropTorpedoes(useTorps)
 {
-	//happens when loading
+	// null happens when loading
 	if (def != nullptr) {
 		torpMoveRange = def->range * useTorps;
 		tracking = def->turnrate * def->tracks;
@@ -86,13 +87,6 @@ bool CBombDropper::TestTarget(const float3 pos, const SWeaponTarget& trg) const
 	return CWeapon::TestTarget(pos, trg);
 }
 
-bool CBombDropper::HaveFreeLineOfFire(const float3 pos, const SWeaponTarget& trg, bool useMuzzle) const
-{
-	// TODO: requires sampling parabola from aimFromPos down to dropPos
-	return true;
-}
-
-
 bool CBombDropper::TestRange(const float3 pos, const SWeaponTarget& trg) const
 {
 	// bombs always fall down
@@ -144,7 +138,7 @@ void CBombDropper::FireImpl(const bool scriptCall)
 
 		dir = dir.SafeNormalize();
 		// add a random spray
-		dir += (gs->randVector() * SprayAngleExperience() + SalvoErrorExperience());
+		dir += (gsRNG.NextVector() * SprayAngleExperience() + SalvoErrorExperience());
 		dir.y = std::min(0.0f, dir.y);
 		dir = dir.SafeNormalize();
 

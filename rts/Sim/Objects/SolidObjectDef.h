@@ -44,7 +44,9 @@ public:
 	S3DModel* LoadModel() const;
 	void PreloadModel() const;
 	float GetModelRadius() const;
-	void ParseCollisionVolume(const LuaTable& table);
+
+	void ParseCollisionVolume(const LuaTable& odTable);
+	void ParseSelectionVolume(const LuaTable& odTable);
 
 public:
 	int id;
@@ -69,14 +71,16 @@ public:
 
 	// must be mutable because models are lazy-loaded even for defs
 	mutable S3DModel* model;
+
 	CollisionVolume collisionVolume;
+	CollisionVolume selectionVolume;
 
 	SolidObjectDecalDef decalDef;
 
 	std::string name;      // eg. "arm_flash"
 	std::string modelName; // eg. "arm_flash.3do" (no path prefix)
 
-	std::map<std::string, std::string> customParams;
+	spring::unordered_map<std::string, std::string> customParams;
 };
 
 #endif

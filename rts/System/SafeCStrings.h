@@ -18,10 +18,10 @@ extern "C" {
 ///@{
 
 /// @see strncpy
-int safe_strcpy(char* destination, size_t destinationSize, const char* source);
+char* safe_strcpy(char* destination, size_t destinationSize, const char* source);
 
 /// @see strncat
-int safe_strcat(char* destination, size_t destinationSize, const char* source);
+char* safe_strcat(char* destination, size_t destinationSize, const char* source);
 
 #define STRCPY_T safe_strcpy
 #define STRCAT_T safe_strcat

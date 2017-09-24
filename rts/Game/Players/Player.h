@@ -7,9 +7,9 @@
 #include "PlayerStatistics.h"
 #include "Game/FPSUnitController.h"
 #include "System/creg/creg_cond.h"
+#include "System/UnorderedSet.hpp"
 
 #include <string>
-#include <set>
 
 class CPlayer;
 class CUnit;
@@ -65,7 +65,7 @@ public:
 	FPSUnitController fpsController;
 
 private:
-	std::set<int> controlledTeams;
+	spring::unordered_set<int> controlledTeams;
 };
 
 #endif /* PLAYER_H */

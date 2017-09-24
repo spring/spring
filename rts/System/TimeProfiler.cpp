@@ -1,150 +1,191 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include "System/TimeProfiler.h"
-
+#include <algorithm>
+#include <climits>
 #include <cstring>
-#include <boost/unordered_map.hpp>
-#include <boost/thread/mutex.hpp>
-#include <boost/thread/locks.hpp>
 
+#include "System/TimeProfiler.h"
+#include "System/GlobalRNG.h"
 #include "System/Log/ILog.h"
-#include "System/UnsyncedRNG.h"
+#include "System/Threading/SpringThreading.h"
+
 #ifdef THREADPOOL
-	#include "System/ThreadPool.h"
+	#include "System/Threading/ThreadPool.h"
 #endif
 
-static boost::mutex m;
-static std::map<int, std::string> hashToName;
-static std::map<int, int> refs;
+static spring::mutex profileMutex;
+static spring::unordered_map<int, std::string> hashToName;
+static spring::unordered_map<int, int> refCounters;
+
+static CGlobalUnsyncedRNG profileColorRNG;
 
 
 
-static unsigned hash_(const std::string& s)
-{
-	unsigned hash = s.size();
-	for (std::string::const_iterator it = s.begin(); it != s.end(); ++it) {
-		hash += *it;
-	}
-	return hash;
-}
-
-static unsigned hash_(const char* s)
+static unsigned HashString(const char* s, size_t n)
 {
 	unsigned hash = 0;
-	for (size_t i = 0; ; ++i) {
-		if (s[i]) {
-			hash += s[i];
-		} else {
-			unsigned len = i;
-			hash += len;
+
+	for (size_t i = 0; (i < n || n == std::string::npos); ++i) {
+		if (s[i] == 0)
 			break;
-		}
+
+		hash += s[i];
+		hash ^= (hash << 7) | (hash >> (sizeof(hash) * CHAR_BIT - 7));
 	}
+
 	return hash;
 }
 
+#if 0
+// unused
+static unsigned HashString(const std::string& s) {
+	return (HashString(s.c_str(), s.size()));
+}
 
-BasicTimer::BasicTimer(const std::string& myname)
-: hash(hash_(myname))
-, starttime(spring_gettime())
 
+
+BasicTimer::BasicTimer(const std::string& timerName)
+	: nameHash(HashString(timerName))
+	, startTime(spring_gettime())
+
+	, name(timerName)
 {
-	nameIterator = hashToName.find(hash);
-	if (nameIterator == hashToName.end()) {
-		nameIterator = hashToName.insert(std::pair<int,std::string>(hash, myname)).first;
+	const auto iter = hashToName.find(nameHash);
+
+	if (iter == hashToName.end()) {
+		hashToName.insert(std::pair<int, std::string>(nameHash, timerName)).first;
 	} else {
-		assert(nameIterator->second == myname);
+#ifdef DEBUG
+		if (iter->second != timerName) {
+			LOG_L(L_ERROR, "Timer hash collision: %s <=> %s", timerName.c_str(), iter->second.c_str());
+			assert(false);
+		}
+#endif
 	}
 }
+#endif
 
+BasicTimer::BasicTimer(const char* timerName)
+	: nameHash(HashString(timerName, std::string::npos))
+	, startTime(spring_gettime())
 
-BasicTimer::BasicTimer(const char* myname)
-: hash(hash_(myname))
-, starttime(spring_gettime())
-
+	, name(timerName)
 {
-	nameIterator = hashToName.find(hash);
-	if (nameIterator == hashToName.end()) {
-		nameIterator = hashToName.insert(std::pair<int,std::string>(hash, myname)).first;
+	const auto iter = hashToName.find(nameHash);
+
+	if (iter == hashToName.end()) {
+		hashToName.insert(std::pair<int, std::string>(nameHash, timerName)).first;
 	} else {
-		assert(nameIterator->second == myname);
+#ifdef DEBUG
+		if (iter->second != timerName) {
+			LOG_L(L_ERROR, "Timer hash collision: %s <=> %s", timerName, iter->second.c_str());
+			assert(false);
+		}
+#endif
 	}
 }
-
-
-const std::string& BasicTimer::GetName() const
-{
-	return nameIterator->second;
-}
-
 
 spring_time BasicTimer::GetDuration() const
 {
-	return spring_difftime(spring_gettime(), starttime);
+	return spring_difftime(spring_gettime(), startTime);
 }
 
 
-ScopedTimer::ScopedTimer(const std::string& name, bool autoShow)
+
+#if 0
+// unused
+ScopedTimer::ScopedTimer(const std::string& name, bool _autoShowGraph, bool _specialTimer)
 	: BasicTimer(name)
-	, autoShowGraph(autoShow)
 
+	, autoShowGraph(_autoShowGraph)
+	, specialTimer(_specialTimer)
 {
-	it = refs.find(hash);
-	if (it == refs.end()) {
-		it = refs.insert(std::pair<int,int>(hash, 0)).first;
-	}
-	++(it->second);
+	auto iter = refCounters.find(nameHash);
+
+	if (iter == refCounters.end())
+		iter = refCounters.insert(std::pair<int, int>(nameHash, 0)).first;
+
+	++(iter->second);
 }
+#endif
 
+ScopedTimer::ScopedTimer(const char* timerName, bool _autoShowGraph, bool _specialTimer)
+	: BasicTimer(timerName)
 
-ScopedTimer::ScopedTimer(const char* name, bool autoShow)
-	: BasicTimer(name)
-	, autoShowGraph(autoShow)
-
+	// Game::SendClientProcUsage depends on "Sim" and "Draw" percentages, BenchMark on "Lua"
+	// note that address-comparison is intended here, timer names are (and must be) literals
+	, autoShowGraph(_autoShowGraph)
+	, specialTimer(_specialTimer)
 {
-	it = refs.find(hash);
-	if (it == refs.end()) {
-		it = refs.insert(std::pair<int,int>(hash, 0)).first;
-	}
-	++(it->second);
-}
+	auto iter = refCounters.find(nameHash);
 
+	if (iter == refCounters.end())
+		iter = refCounters.insert(std::pair<int, int>(nameHash, 0)).first;
+
+	++(iter->second);
+}
 
 ScopedTimer::~ScopedTimer()
 {
-	int& ref = it->second;
-	if (--ref == 0)
-		profiler.AddTime(GetName(), GetDuration(), autoShowGraph);
+	// no avoiding a second lookup since iterators can be invalidated with unordered_map
+	auto iter = refCounters.find(nameHash);
+
+	assert(iter != refCounters.end());
+	assert(iter->second > 0);
+
+	if (--(iter->second) == 0) {
+		profiler.AddTime(GetName(), startTime, GetDuration(), autoShowGraph, specialTimer, false);
+	}
+}
+
+
+
+ScopedOnceTimer::ScopedOnceTimer(const char* timerName)
+	: startTime(spring_gettime())
+	, name(timerName)
+{
+}
+
+ScopedOnceTimer::ScopedOnceTimer(const std::string& timerName)
+	: startTime(spring_gettime())
+	, name(timerName)
+{
 }
 
 ScopedOnceTimer::~ScopedOnceTimer()
 {
-	LOG("%s: %i ms", GetName().c_str(), int(GetDuration().toMilliSecsi()));
+	LOG("[%s][%s] %ims", __func__, name.c_str(), int(GetDuration().toMilliSecsi()));
 }
 
-
-
-ScopedMtTimer::ScopedMtTimer(const std::string& name, bool autoShow)
-	: BasicTimer(name)
-	, autoShowGraph(autoShow)
+spring_time ScopedOnceTimer::GetDuration() const
 {
+	return spring_difftime(spring_gettime(), startTime);
 }
 
 
-ScopedMtTimer::ScopedMtTimer(const char* name, bool autoShow)
-	: BasicTimer(name)
-	, autoShowGraph(autoShow)
+
+#if 0
+// unused
+ScopedMtTimer::ScopedMtTimer(const std::string& timerName, bool _autoShowGraph)
+	// can not call BasicTimer's other ctor, accesses global map
+	// collisions for MT timers do not need to be checked anyway
+	: BasicTimer(spring_gettime())
+	, autoShowGraph(_autoShowGraph)
 {
+	name = timerName;
 }
+#endif
 
+ScopedMtTimer::ScopedMtTimer(const char* timerName, bool _autoShowGraph)
+	: BasicTimer(spring_gettime())
+	, autoShowGraph(_autoShowGraph)
+{
+	name = timerName;
+}
 
 ScopedMtTimer::~ScopedMtTimer()
 {
-	profiler.AddTime(GetName(), GetDuration(), autoShowGraph);
-#ifdef THREADPOOL
-	auto& list = profiler.profileCore[ThreadPool::GetThreadNum()];
-	list.emplace_back(starttime, spring_gettime());
-#endif
+	profiler.AddTime(GetName(), startTime, GetDuration(), autoShowGraph, false, true);
 }
 
 
@@ -153,19 +194,18 @@ ScopedMtTimer::~ScopedMtTimer()
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CTimeProfiler::CTimeProfiler():
-	lastBigUpdate(spring_gettime()),
-	currentPosition(0)
+CTimeProfiler::CTimeProfiler()
 {
-#ifdef THREADPOOL
-	profileCore.resize(ThreadPool::GetMaxThreads());
-#endif
+	ResetState();
 }
 
 CTimeProfiler::~CTimeProfiler()
 {
-	boost::unique_lock<boost::mutex> ulk(m, boost::defer_lock);
+	#if 0
+	// should not be needed, destructor runs after main returns and all threads are gone
+	std::unique_lock<spring::mutex> ulk(profileMutex, std::defer_lock);
 	while (!ulk.try_lock()) {}
+	#endif
 }
 
 CTimeProfiler& CTimeProfiler::GetInstance()
@@ -174,29 +214,79 @@ CTimeProfiler& CTimeProfiler::GetInstance()
 	return tp;
 }
 
-void CTimeProfiler::Update()
-{
-	//FIXME non-locking threadsafe
-	boost::unique_lock<boost::mutex> ulk(m, boost::defer_lock);
+
+void CTimeProfiler::ResetState() {
+	// grab lock; ThreadPool workers might already be running SCOPED_MT_TIMER
+	std::unique_lock<spring::mutex> ulk(profileMutex, std::defer_lock);
 	while (!ulk.try_lock()) {}
 
-	++currentPosition;
-	currentPosition &= TimeRecord::frames_size-1;
+	profile.clear();
+	sortedProfile.clear();
+	#ifdef THREADPOOL
+	threadProfile.clear();
+	threadProfile.resize(ThreadPool::GetMaxThreads());
+	#endif
+
+	profileColorRNG.Seed(spring_tomsecs(lastBigUpdate = spring_gettime()));
+
+	currentPosition = 0;
+	resortProfiles = 0;
+
+	enabled = false;
+}
+
+void CTimeProfiler::ToggleLock(bool lock)
+{
+	if (lock) {
+		profileMutex.lock();
+	} else {
+		profileMutex.unlock();
+	}
+}
+
+
+void CTimeProfiler::Update()
+{
+	if (!enabled) {
+		UpdateRaw();
+		ResortProfilesRaw();
+		RefreshProfilesRaw();
+		return;
+	}
+
+	// FIXME: non-locking threadsafe
+	std::unique_lock<spring::mutex> ulk(profileMutex, std::defer_lock);
+	while (!ulk.try_lock()) {}
+
+	UpdateRaw();
+	ResortProfilesRaw();
+	RefreshProfilesRaw();
+}
+
+void CTimeProfiler::UpdateRaw()
+{
+	currentPosition += 1;
+	currentPosition &= (TimeRecord::numFrames - 1);
+
 	for (auto& pi: profile) {
 		pi.second.frames[currentPosition] = spring_notime;
 	}
 
 	const spring_time curTime = spring_gettime();
 	const float timeDiff = spring_diffmsecs(curTime, lastBigUpdate);
-	if (timeDiff > 500.0f) // twice every second
-	{
+
+	if (timeDiff > 500.0f) {
+		// update percentages and peaks twice every second
 		for (auto& pi: profile) {
 			auto& p = pi.second;
+
 			p.percent = spring_tomsecs(p.current) / timeDiff;
 			p.current = spring_notime;
+
 			p.newLagPeak = false;
 			p.newPeak = false;
-			if(p.percent > p.peak) {
+
+			if (p.percent > p.peak) {
 				p.peak = p.percent;
 				p.newPeak = true;
 			}
@@ -206,62 +296,152 @@ void CTimeProfiler::Update()
 
 	if (curTime.toSecsi() % 6 == 0) {
 		for (auto& pi: profile) {
-			auto& p = pi.second;
-			p.maxLag *= 0.5f;
+			(pi.second).maxLag *= 0.5f;
 		}
 	}
 }
 
-float CTimeProfiler::GetPercent(const char* name)
+void CTimeProfiler::ResortProfilesRaw()
 {
-	boost::unique_lock<boost::mutex> ulk(m, boost::defer_lock);
-	while (!ulk.try_lock()) {}
+	if (resortProfiles > 0) {
+		resortProfiles = 0;
 
-	return profile[name].percent;
+		sortedProfile.clear();
+		sortedProfile.reserve(profile.size());
+
+		typedef std::pair<std::string, TimeRecord> TimeRecordPair;
+		typedef std::function<bool(const TimeRecordPair&, const TimeRecordPair&)> ProfileSortFunc;
+
+		const ProfileSortFunc sortFunc = [](const TimeRecordPair& a, const TimeRecordPair& b) { return (a.first < b.first); };
+
+		// either caller already has lock, or we are disabled and thread-safe
+		for (auto it = profile.begin(); it != profile.end(); ++it) {
+			sortedProfile.emplace_back(it->first, it->second);
+		}
+
+		std::sort(sortedProfile.begin(), sortedProfile.end(), sortFunc);
+	}
 }
 
-void CTimeProfiler::AddTime(const std::string& name, const spring_time time, const bool showGraph)
+
+void CTimeProfiler::RefreshProfiles()
 {
+	// ProfileDrawer calls this, and is only enabled when we are
+	assert(enabled);
+
+	// lock so nothing modifies *unsorted* profiles during the refresh
+	std::unique_lock<spring::mutex> ulk(profileMutex, std::defer_lock);
+	while (!ulk.try_lock()) {}
+
+	RefreshProfilesRaw();
+}
+
+void CTimeProfiler::RefreshProfilesRaw()
+{
+	// either called from ProfileDrawer or from Update; the latter
+	// makes the "/debuginfo profiling" command work when disabled
+	for (auto it = sortedProfile.begin(); it != sortedProfile.end(); ++it) {
+		TimeRecord& rec = it->second;
+
+		const bool showGraph = rec.showGraph;
+
+		rec = profile[it->first];
+		rec.showGraph = showGraph;
+	}
+}
+
+
+float CTimeProfiler::GetPercent(const char* name) const
+{
+	// if disabled, only special timers can pass AddTime
+	// all of those are non-threaded, so no need to lock
+	if (!enabled)
+		return (GetPercentRaw(name));
+
+	std::unique_lock<spring::mutex> ulk(profileMutex, std::defer_lock);
+	while (!ulk.try_lock()) {}
+
+	return (GetPercentRaw(name));
+}
+
+
+void CTimeProfiler::AddTime(
+	const std::string& name,
+	const spring_time startTime,
+	const spring_time deltaTime,
+	const bool showGraph,
+	const bool specialTimer,
+	const bool threadTimer
+) {
+	const spring_time t0 = spring_now();
+
+	if (!enabled) {
+		if (!specialTimer)
+			return;
+
+		assert(!threadTimer);
+		AddTimeRaw(name, startTime, deltaTime, showGraph, threadTimer);
+		AddTimeRaw("Misc::Profiler::AddTime", t0, spring_now() - t0, false, false);
+		return;
+	}
+
+	// acquire lock at the start; one inserting thread could
+	// cause a profile rehash and invalidate <pi> for another
+	std::unique_lock<spring::mutex> ulk(profileMutex, std::defer_lock);
+	while (!ulk.try_lock()) {}
+
+	AddTimeRaw(name, startTime, deltaTime, showGraph, threadTimer);
+	AddTimeRaw("Misc::Profiler::AddTime", t0, spring_now() - t0, false, false);
+}
+
+void CTimeProfiler::AddTimeRaw(
+	const std::string& name,
+	const spring_time startTime,
+	const spring_time deltaTime,
+	const bool showGraph,
+	const bool threadTimer
+) {
+#ifdef THREADPOOL
+	if (threadTimer)
+		threadProfile[ThreadPool::GetThreadNum()].emplace_back(startTime, spring_gettime());
+#endif
+
 	auto pi = profile.find(name);
+	auto& p = (pi != profile.end())? pi->second: profile[name];
+
+	// these are 0 if just created, works for both paths
+	p.total   += deltaTime;
+	p.current += deltaTime;
+
+	p.newLagPeak = (p.maxLag > 0.0f && deltaTime.toMilliSecsf() > p.maxLag);
+	p.maxLag     = std::max(p.maxLag, deltaTime.toMilliSecsf());
+
 	if (pi != profile.end()) {
 		// profile already exists
-		//FIXME use atomic ints
-		auto& p = pi->second;
-		p.total   += time;
-		p.current += time;
-		p.frames[currentPosition] += time;
-		if (p.maxLag < time.toMilliSecsf()) {
-			p.maxLag     = time.toMilliSecsf();
-			p.newLagPeak = true;
-		}
+		p.frames[currentPosition] += deltaTime;
 	} else {
-		boost::unique_lock<boost::mutex> ulk(m, boost::defer_lock);
-		while (!ulk.try_lock()) {}
-
-		// create a new profile
-		auto& p = profile[name];
-		p.total   = time;
-		p.current = time;
-		p.maxLag  = time.toMilliSecsf();
-		p.percent = 0;
-		memset(p.frames, 0, TimeRecord::frames_size * sizeof(unsigned));
-		static UnsyncedRNG rand;
-		rand.Seed(spring_tomsecs(spring_gettime()));
-		p.color.x = rand.RandFloat();
-		p.color.y = rand.RandFloat();
-		p.color.z = rand.RandFloat();
+		// new profile, new color
+		p.color.x = profileColorRNG.NextFloat();
+		p.color.y = profileColorRNG.NextFloat();
+		p.color.z = profileColorRNG.NextFloat();
 		p.showGraph = showGraph;
+
+		resortProfiles += 1;
 	}
 }
 
 void CTimeProfiler::PrintProfilingInfo() const
 {
+	if (sortedProfile.empty())
+		return;
+
 	LOG("%35s|%18s|%s", "Part", "Total Time", "Time of the last 0.5s");
 
-	for (auto pi = profile.begin(); pi != profile.end(); ++pi) {
+	for (auto pi = sortedProfile.begin(); pi != sortedProfile.end(); ++pi) {
 		const std::string& name = pi->first;
 		const TimeRecord& tr = pi->second;
 
 		LOG("%35s %16.2fms %5.2f%%", name.c_str(), tr.total.toMilliSecsf(), tr.percent * 100);
 	}
 }
+

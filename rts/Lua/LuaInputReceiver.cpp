@@ -7,63 +7,68 @@
 #include "System/EventHandler.h"
 
 
-LuaInputReceiver* luaInputReceiver = NULL;
-
-
-LuaInputReceiver::LuaInputReceiver()
-: CInputReceiver(FRONT)
+CLuaInputReceiver::CLuaInputReceiver()
+: CInputReceiver(MANUAL)
 {
 }
 
 
-LuaInputReceiver::~LuaInputReceiver()
+CLuaInputReceiver::~CLuaInputReceiver()
 {
 }
 
 
-bool LuaInputReceiver::KeyPressed(int key, bool isRepeat)
+CLuaInputReceiver* CLuaInputReceiver::GetInstace()
+{
+	static CLuaInputReceiver instance;
+
+	return &instance;
+}
+
+
+bool CLuaInputReceiver::KeyPressed(int key, bool isRepeat)
 {
 	return eventHandler.KeyPress(key, isRepeat);
 }
 
 
-bool LuaInputReceiver::KeyReleased(int key)
+bool CLuaInputReceiver::KeyReleased(int key)
 {
 	return eventHandler.KeyRelease(key);
 }
 
 
-bool LuaInputReceiver::MousePress(int x, int y, int button)
+bool CLuaInputReceiver::MousePress(int x, int y, int button)
 {
 	return eventHandler.MousePress(x, y, button);
 }
 
 
-void LuaInputReceiver::MouseMove(int x, int y, int dx, int dy, int button)
+void CLuaInputReceiver::MouseMove(int x, int y, int dx, int dy, int button)
 {
 	eventHandler.MouseMove(x, y, dx, dy, button);
 }
 
 
-void LuaInputReceiver::MouseRelease(int x, int y, int button)
+void CLuaInputReceiver::MouseRelease(int x, int y, int button)
 {
 	eventHandler.MouseRelease(x, y, button);
 }
 
 
-bool LuaInputReceiver::IsAbove(int x, int y)
+bool CLuaInputReceiver::IsAbove(int x, int y)
 {
 	return eventHandler.IsAbove(x, y);
 }
 
 
-std::string LuaInputReceiver::GetTooltip(int x, int y)
+std::string CLuaInputReceiver::GetTooltip(int x, int y)
 {
 	return eventHandler.GetTooltip(x, y);
 }
 
 
-void LuaInputReceiver::Draw()
+void CLuaInputReceiver::Draw()
 {
 	return eventHandler.DrawScreen();
 }

@@ -20,12 +20,11 @@ public:
 		const float temperature,
 		const float size
 	);
-	virtual ~CHeatCloudProjectile();
 
-	virtual void Draw() override;
-	virtual void Update() override;
+	void Draw(CVertexArray* va) override;
+	void Update() override;
 
-	virtual int GetProjectilesCount() const override;
+	int GetProjectilesCount() const override;
 
 	static bool GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo);
 

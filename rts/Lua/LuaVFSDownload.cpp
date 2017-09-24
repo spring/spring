@@ -3,128 +3,117 @@
 #include "System/EventHandler.h"
 
 #include "LuaVFSDownload.h"
-#include "System/Util.h"
+#include "System/SafeUtil.h"
 #include "System/EventHandler.h"
-#include "System/Platform/Threading.h"
-#include "System/Threading/SpringMutex.h"
+#include "System/Platform/Threading.h" // Is{Main,GameLoad}Thread
+#include "System/Threading/SpringThreading.h"
 #include "System/FileSystem/ArchiveScanner.h"
-
-#include <queue>
+#include "System/FileSystem/DataDirLocater.h"
 
 #include "LuaInclude.h"
-#include "../tools/pr-downloader/src/pr-downloader.h"
+#include "LuaUtils.h"
 
 /******************************************************************************/
 /******************************************************************************/
-#define REGISTER_LUA_CFUNC(x) \
-        lua_pushstring(L, #x);      \
-        lua_pushcfunction(L, x);    \
-        lua_rawset(L, -3)
-
-LuaVFSDownload* luavfsdownload = nullptr;
 
 struct dlEvent {
-	int ID;
+	int id;
 	virtual void processEvent() = 0;
 	virtual ~dlEvent(){}
 };
 
 struct dlStarted : public dlEvent {
 	void processEvent() {
-		eventHandler.DownloadStarted(ID);
+		eventHandler.DownloadStarted(id);
 	}
 };
 struct dlFinished : public dlEvent {
 	void processEvent() {
-		eventHandler.DownloadFinished(ID);
+		eventHandler.DownloadFinished(id);
 	}
 };
 struct dlFailed : public dlEvent {
 	int errorID;
 	void processEvent() {
-		eventHandler.DownloadFailed(ID, errorID);
+		eventHandler.DownloadFailed(id, errorID);
 	}
 };
 struct dlProgress : public dlEvent {
 	long downloaded;
 	long total;
 	void processEvent() {
-		eventHandler.DownloadProgress(ID, downloaded, total);
+		eventHandler.DownloadProgress(id, downloaded, total);
 	}
 };
 
-std::queue<dlEvent*> dlEventQueue;
+struct DownloadItem {
+	int id;
+	std::string filename;
+	DownloadEnum::Category cat;
+	DownloadItem() { }
+	DownloadItem(int id_, const std::string& filename, DownloadEnum::Category& cat) : id(id_), filename(filename), cat(cat) { }
+};
+
+
+struct DownloadQueue {
+public:
+	DownloadQueue(): thread(nullptr), breakLoop(false) {}
+	~DownloadQueue() { Join(); }
+
+	void Pump();
+	void Push(const DownloadItem& downloadItem);
+	bool Remove(int id);
+
+	void Join();
+private:
+	std::deque<DownloadItem> queue;
+	spring::mutex mutex;
+	spring::thread* thread;
+	bool breakLoop;
+} downloadQueue;
+
+std::deque<dlEvent*> dlEventQueue;
 spring::mutex dlEventQueueMutex;
 
 void AddQueueEvent(dlEvent* ev) {
-	dlEventQueueMutex.lock();
-	dlEventQueue.push(ev);
-	dlEventQueueMutex.unlock();
+	std::lock_guard<spring::mutex> lck(dlEventQueueMutex);
+	dlEventQueue.push_back(ev);
 }
 
-void QueueDownloadStarted(int ID) //queue from other thread download started event
+void QueueDownloadStarted(int id) //queue from other thread download started event
 {
 	dlStarted* ev = new dlStarted();
-	ev->ID = ID;
+	ev->id = id;
 	AddQueueEvent(ev);
 }
 
-void QueueDownloadFinished(int ID) //queue from other thread download started event
+void QueueDownloadFinished(int id) //queue from other thread download started event
 {
 	dlFinished* ev = new dlFinished();
-	ev->ID = ID;
+	ev->id = id;
 	AddQueueEvent(ev);
 }
 
-void QueueDownloadFailed(int ID, int errorID) //queue from other thread download started event
+void QueueDownloadFailed(int id, int errorID) //queue from other thread download started event
 {
 	dlFailed* ev = new dlFailed();
-	ev->ID = ID;
+	ev->id = id;
 	ev->errorID = errorID;
 	AddQueueEvent(ev);
 }
 
-void QueueDownloadProgress(int ID, long downloaded, long total) //queue from other thread download started event
+void QueueDownloadProgress(int id, long downloaded, long total) //queue from other thread download started event
 {
 	dlProgress* ev = new dlProgress();
-	ev->ID = ID;
+	ev->id = id;
 	ev->downloaded = downloaded;
 	ev->total = total;
 	AddQueueEvent(ev);
 }
 
 
-LuaVFSDownload::LuaVFSDownload():
-	CEventClient("[LuaVFSDownload]", 314161, false)
-{
-	eventHandler.AddClient(this);
-}
-
-LuaVFSDownload::~LuaVFSDownload()
-{
-	eventHandler.RemoveClient(this);
-}
-
-
-bool LuaVFSDownload::PushEntries(lua_State* L)
-{
-	REGISTER_LUA_CFUNC(DownloadArchive);
-	return true;
-}
-
-struct DownloadItem {
-	int ID;
-	std::string filename;
-	DownloadEnum::Category cat;
-	DownloadItem(int ID, const std::string& filename, DownloadEnum::Category& cat) : ID(ID), filename(filename), cat(cat) {
-	}
-};
-
 static int queueIDCount = -1;
 static int currentDownloadID = -1;
-static std::list<DownloadItem> queue;
-static bool isDownloading = false;
-spring::mutex queueMutex;
 
 void StartDownload();
 
@@ -132,14 +121,13 @@ void UpdateProgress(int done, int size) {
 	QueueDownloadProgress(currentDownloadID, done, size);
 }
 
-__FORCE_ALIGN_STACK__
-int Download(int ID, const std::string& filename, DownloadEnum::Category cat)
+
+int Download(int id, const std::string& filename, DownloadEnum::Category cat)
 {
-	currentDownloadID = ID;
+	currentDownloadID = id;
 	// FIXME: Progress is incorrectly updated when rapid is queried to check for existing packages.
 	SetDownloadListener(UpdateProgress);
 	LOG_L(L_DEBUG, "Going to download %s", filename.c_str());
-	DownloadInit();
 	const int count = DownloadSearch(cat, filename.c_str());
 	for (int i = 0; i < count; i++) {
 		DownloadAdd(i);
@@ -153,51 +141,154 @@ int Download(int ID, const std::string& filename, DownloadEnum::Category cat)
 	// TODO: count will be 1 when archives already exist. We should instead return a different result with DownloadFailed/DownloadFinished?
 	if (count == 0) { // there's nothing to download
 		result = 2;
-		QueueDownloadFailed(ID, result);
+		QueueDownloadFailed(id, result);
 	} else {
 		LOG_L(L_DEBUG, "Download finished %s", filename.c_str());
-		QueueDownloadStarted(ID);
+		QueueDownloadStarted(id);
 		result = DownloadStart();
 		// TODO: This works but there are errors spammed as it's trying to clear timers in the main thread, which this is not:
 		// Error: [Watchdog::ClearTimer(id)] Invalid thread 4 (_threadId=(nil))
 		archiveScanner->ScanAllDirs();
 	}
-	DownloadShutdown();
 
 	return result;
 }
 
-void StartDownload() {
-	isDownloading = true;
-	const DownloadItem downloadItem = queue.front();
-	queue.pop_front();
-	const std::string& filename = downloadItem.filename;
-	DownloadEnum::Category cat = downloadItem.cat;
-	int ID = downloadItem.ID;
-	if (!filename.empty()) {
-		LOG_L(L_DEBUG, "DOWNLOADING: %s", filename.c_str());
-	}
-	boost::thread {[ID, filename, cat]() {
-			const int result = Download(ID, filename, cat);
-			if (result == 0) {
-				QueueDownloadFinished(ID);
-			} else {
-				QueueDownloadFailed(ID, result);
-			}
 
-			queueMutex.lock();
-			if (!queue.empty()) {
-				queueMutex.unlock();
-				StartDownload();
-			} else {
-				isDownloading = false;
-				queueMutex.unlock();
-			}
-		}
-	}.detach();
+
+void DownloadQueue::Join()
+{
+	breakLoop = true;
+	if (thread != nullptr) {
+		thread->join();
+		spring::SafeDelete(thread);
+	}
+	breakLoop = false;
 }
 
+__FORCE_ALIGN_STACK__
+void DownloadQueue::Pump()
+{
+	while (!breakLoop) {
+		DownloadItem downloadItem;
+		{
+			std::lock_guard<spring::mutex> lck(mutex);
+			assert(queue.size() > 0);
+			downloadItem = queue.front();
+		}
+		const std::string& filename = downloadItem.filename;
+		DownloadEnum::Category cat = downloadItem.cat;
+		int id = downloadItem.id;
+
+		if (!filename.empty()) {
+			LOG_L(L_DEBUG, "DOWNLOADING: %s", filename.c_str());
+			const int result = Download(id, filename, cat);
+			if (result == 0) {
+				QueueDownloadFinished(id);
+			} else {
+				QueueDownloadFailed(id, result);
+			}
+		}
+
+		{
+			std::lock_guard<spring::mutex> lck(mutex);
+			queue.pop_front();
+			if(queue.empty())
+				break;
+		}
+	}
+}
+
+void DownloadQueue::Push(const DownloadItem& downloadItem)
+{
+	std::unique_lock<spring::mutex> lck(mutex);
+
+	if (queue.empty()) {
+		if (thread != nullptr) {
+			lck.unlock();
+
+			thread->join();
+			spring::SafeDelete(thread);
+
+			lck.lock();
+		}
+
+		// mutex is still locked, thread will block if it gets
+		// to queue.front() before we get to queue.push_back()
+		thread = new spring::thread(std::bind(&DownloadQueue::Pump, this));
+	}
+
+	queue.push_back(downloadItem);
+}
+
+bool DownloadQueue::Remove(int id)
+{
+	std::unique_lock<spring::mutex> lck(mutex);
+
+	for (auto it = queue.begin(); it != queue.end(); ++it) {
+		if (it->id != id) {
+			continue;
+		}
+
+		if (it == queue.begin()) {
+			SetAbortDownloads(true);
+			lck.unlock();
+			Join();
+			lck.lock();
+			SetAbortDownloads(false);
+			thread = new spring::thread(std::bind(&DownloadQueue::Pump, this));
+		} else {
+			queue.erase(it);
+		}
+		return true;
+	}
+	return false;
+}
+
+
+
 /******************************************************************************/
+
+bool LuaVFSDownload::PushEntries(lua_State* L)
+{
+	REGISTER_LUA_CFUNC(DownloadArchive);
+	REGISTER_LUA_CFUNC(AbortDownload);
+	return true;
+}
+
+
+LuaVFSDownload::LuaVFSDownload():
+	CEventClient("[LuaVFSDownload]", 314161, false)
+{
+	DownloadInit();
+	DownloadSetConfig(CONFIG_FILESYSTEM_WRITEPATH, dataDirLocater.GetWriteDirPath().c_str());
+}
+
+LuaVFSDownload::~LuaVFSDownload()
+{
+	DownloadShutdown();
+}
+
+void LuaVFSDownload::Init()
+{
+	eventHandler.AddClient(luaVFSDownload);
+}
+
+void LuaVFSDownload::Free(bool stopDownloads)
+{
+	eventHandler.RemoveClient(luaVFSDownload);
+	if (stopDownloads) {
+		SetAbortDownloads(true);
+		downloadQueue.Join();
+	}
+}
+
+
+LuaVFSDownload* LuaVFSDownload::GetInstance()
+{
+	static LuaVFSDownload instance;
+	return &instance;
+}
 
 int LuaVFSDownload::DownloadArchive(lua_State* L)
 {
@@ -219,32 +310,34 @@ int LuaVFSDownload::DownloadArchive(lua_State* L)
 	}
 
 	queueIDCount++;
-	queueMutex.lock();
-	queue.push_back(DownloadItem(queueIDCount, filename, cat));
-	queueMutex.unlock();
+	downloadQueue.Push(DownloadItem(queueIDCount, filename, cat));
 	eventHandler.DownloadQueued(queueIDCount, filename, categoryStr);
-	if (!isDownloading) {
-		if (queue.size() == 1) {
-			StartDownload();
-		}
-	}
 	return 0;
+}
+
+int LuaVFSDownload::AbortDownload(lua_State* L)
+{
+	const int id = luaL_checkint(L, 1);
+	bool removed = downloadQueue.Remove(id);
+	lua_pushboolean(L, removed);
+	return 1;
 }
 
 void LuaVFSDownload::Update()
 {
 	assert(Threading::IsMainThread() || Threading::IsGameLoadThread());
 	// only locks the mutex if the queue is not empty
-	if (!dlEventQueue.empty()) {
-		dlEventQueueMutex.lock();
-		dlEvent* ev;
-		while (!dlEventQueue.empty()) {
-			ev = dlEventQueue.front();
-			dlEventQueue.pop();
+	std::unique_lock<spring::mutex> lck(dlEventQueueMutex);
+	while (!dlEventQueue.empty()) {
+		dlEvent* ev = dlEventQueue.front();
+		dlEventQueue.pop_front();
+
+		{
+			dlEventQueueMutex.unlock();
 			ev->processEvent();
-			SafeDelete(ev);
+			spring::SafeDelete(ev);
+			dlEventQueueMutex.lock();
 		}
-		dlEventQueueMutex.unlock();
 	}
 }
 

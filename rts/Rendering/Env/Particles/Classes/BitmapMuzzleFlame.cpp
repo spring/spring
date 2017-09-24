@@ -1,6 +1,5 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-
 #include "BitmapMuzzleFlame.h"
 
 #include "Sim/Misc/GlobalSynced.h"
@@ -11,8 +10,10 @@
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ExpGenSpawnableMemberInfo.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
+#include "Sim/Projectiles/ProjectileMemPool.h"
+#include "System/myMath.h"
 
-CR_BIND_DERIVED(CBitmapMuzzleFlame, CProjectile, )
+CR_BIND_DERIVED_POOL(CBitmapMuzzleFlame, CProjectile, , projMemPool.alloc, projMemPool.free)
 
 CR_REG_METADATA(CBitmapMuzzleFlame,
 (
@@ -51,9 +52,8 @@ CBitmapMuzzleFlame::CBitmapMuzzleFlame()
 	deleteMe  = false;
 }
 
-void CBitmapMuzzleFlame::Draw()
+void CBitmapMuzzleFlame::Draw(CVertexArray* va)
 {
-	inArray = true;
 	life = (gs->frameNum - createTime + globalRendering->timeOffset) * invttl;
 
 	unsigned char col[4];
@@ -122,4 +122,3 @@ bool CBitmapMuzzleFlame::GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo)
 
 	return false;
 }
-

@@ -19,8 +19,8 @@
 #include "Rendering/Textures/Bitmap.h"
 #include "Sim/Units/UnitDef.h"
 #include "System/EventHandler.h"
-#include "System/Util.h"
 #include "System/TimeProfiler.h"
+#include "System/StringUtil.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/Log/ILog.h"
 
@@ -44,13 +44,13 @@ LegacyTrackHandler::~LegacyTrackHandler()
 
 	for (TrackType& tt: trackTypes) {
 		for (UnitTrackStruct* uts: tt.tracks)
-			VectorInsertUnique(tracksToBeDeleted, uts, true);
+			spring::VectorInsertUnique(tracksToBeDeleted, uts, true);
 
 		glDeleteTextures(1, &tt.texture);
 	}
 
 	for (auto ti = tracksToBeAdded.cbegin(); ti != tracksToBeAdded.cend(); ++ti)
-		VectorInsertUnique(tracksToBeDeleted, *ti, true);
+		spring::VectorInsertUnique(tracksToBeDeleted, *ti, true);
 
 	for (auto ti = tracksToBeDeleted.cbegin(); ti != tracksToBeDeleted.cend(); ++ti)
 		delete *ti;
@@ -101,7 +101,7 @@ void LegacyTrackHandler::LoadDecalShaders()
 		decalShaders[DECAL_SHADER_GLSL]->SetUniform1i(1, 1); // shadeTex  (idx 1, texunit 1)
 		decalShaders[DECAL_SHADER_GLSL]->SetUniform1i(2, 2); // shadowTex (idx 2, texunit 2)
 		decalShaders[DECAL_SHADER_GLSL]->SetUniform2f(3, 1.0f / (mapDims.pwr2mapx * SQUARE_SIZE), 1.0f / (mapDims.pwr2mapy * SQUARE_SIZE));
-		decalShaders[DECAL_SHADER_GLSL]->SetUniform1f(7, sky->GetLight()->GetGroundShadowDensity());
+		decalShaders[DECAL_SHADER_GLSL]->SetUniform1f(7, sunLighting->groundShadowDensity);
 		decalShaders[DECAL_SHADER_GLSL]->Disable();
 		decalShaders[DECAL_SHADER_GLSL]->Validate();
 
@@ -119,7 +119,7 @@ void LegacyTrackHandler::SunChanged()
 {
 	if (globalRendering->haveGLSL && decalShaders.size() > DECAL_SHADER_GLSL) {
 		decalShaders[DECAL_SHADER_GLSL]->Enable();
-		decalShaders[DECAL_SHADER_GLSL]->SetUniform1f(7, sky->GetLight()->GetGroundShadowDensity());
+		decalShaders[DECAL_SHADER_GLSL]->SetUniform1f(7, sunLighting->groundShadowDensity);
 		decalShaders[DECAL_SHADER_GLSL]->Disable();
 	}
 }
@@ -243,7 +243,7 @@ void LegacyTrackHandler::CleanTracks()
 				track->owner = nullptr;
 			}
 
-			VectorErase(*ttc.tracks, track);
+			spring::VectorErase(*ttc.tracks, track);
 			tracksToBeDeleted.push_back(track);
 		}
 	}
@@ -269,7 +269,7 @@ bool LegacyTrackHandler::GetDrawTracks() const
 
 void LegacyTrackHandler::Draw()
 {
-	SCOPED_TIMER("TracksDrawer");
+	SCOPED_TIMER("Draw::World::Decals::Tracks");
 
 	if (!GetDrawTracks())
 		return;
@@ -381,7 +381,7 @@ void LegacyTrackHandler::BindShader(const float3& ambientColor)
 		decalShaders[DECAL_SHADER_CURR]->SetUniform4f(10, 1.0f / (mapDims.pwr2mapx * SQUARE_SIZE), 1.0f / (mapDims.pwr2mapy * SQUARE_SIZE), 0.0f, 1.0f);
 		decalShaders[DECAL_SHADER_CURR]->SetUniformTarget(GL_FRAGMENT_PROGRAM_ARB);
 		decalShaders[DECAL_SHADER_CURR]->SetUniform4f(10, ambientColor.x, ambientColor.y, ambientColor.z, 1.0f);
-		decalShaders[DECAL_SHADER_CURR]->SetUniform4f(11, 0.0f, 0.0f, 0.0f, sky->GetLight()->GetGroundShadowDensity());
+		decalShaders[DECAL_SHADER_CURR]->SetUniform4f(11, 0.0f, 0.0f, 0.0f, sunLighting->groundShadowDensity);
 
 		glMatrixMode(GL_MATRIX0_ARB);
 		glLoadMatrixf(shadowHandler->GetShadowMatrixRaw());
@@ -472,7 +472,7 @@ void LegacyTrackHandler::AddTrack(CUnit* unit, const float3& newPos)
 		auto& decDef = unit->unitDef->decalDef;
 		auto& trType = trackTypes[decDef.trackDecalType];
 
-		VectorInsertUnique(trType.tracks, *unitTrack);
+		spring::VectorInsertUnique(trType.tracks, *unitTrack);
 	}
 
 	(*unitTrack)->lastUpdate = gs->frameNum;
@@ -521,14 +521,18 @@ unsigned int LegacyTrackHandler::LoadTexture(const std::string& name)
 	if (FileSystem::GetExtension(fullName) == "bmp") {
 		// bitmaps don't have an alpha channel
 		// so use: red := brightness & green := alpha
+		const unsigned char* rmem = bm.GetRawMem();
+		      unsigned char* wmem = bm.GetRawMem();
+
 		for (int y = 0; y < bm.ysize; ++y) {
 			for (int x = 0; x < bm.xsize; ++x) {
 				const int index = ((y * bm.xsize) + x) * 4;
-				bm.mem[index + 3]    = bm.mem[index + 1];
-				const int brightness = bm.mem[index + 0];
-				bm.mem[index + 0] = (brightness * 90) / 255;
-				bm.mem[index + 1] = (brightness * 60) / 255;
-				bm.mem[index + 2] = (brightness * 30) / 255;
+				const int brightness = rmem[index + 0];
+
+				wmem[index + 3] = rmem[index + 1];
+				wmem[index + 0] = (brightness * 90) / 255;
+				wmem[index + 1] = (brightness * 60) / 255;
+				wmem[index + 2] = (brightness * 30) / 255;
 			}
 		}
 	}

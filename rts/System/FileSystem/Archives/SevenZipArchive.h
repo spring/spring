@@ -37,9 +37,9 @@ public:
 	virtual ~CSevenZipArchive();
 
 	virtual bool IsOpen();
-	
+
 	virtual unsigned int NumFiles() const;
-	virtual bool GetFileImpl(unsigned int fid, std::vector<boost::uint8_t>& buffer);
+	virtual bool GetFileImpl(unsigned int fid, std::vector<std::uint8_t>& buffer);
 	virtual void FileInfo(unsigned int fid, std::string& name, int& size) const;
 	virtual bool HasLowReadingCost(unsigned int fid) const;
 	virtual unsigned GetCrc32(unsigned int fid);
@@ -95,7 +95,6 @@ private:
 		int packedSize;
 	};
 	int GetFileName(const CSzArEx* db, int i);
-	const char* GetErrorStr(int res);
 
 	std::vector<FileData> fileData;
 	UInt16 *tempBuf;

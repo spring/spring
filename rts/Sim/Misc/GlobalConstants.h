@@ -83,15 +83,25 @@ static constexpr int MAX_PLAYERS = 251;
 static constexpr int MAX_AIS = 255;
 
 /**
- * @brief max units
+ * @brief max units / features / projectiles
  *
- * Defines the absolute global maximum number of units allowed to exist in a
- * game at any time.
- * NOTE: This must be <= SHRT_MAX (32'766) because current network code
- * transmits unit-IDs as signed shorts. The effective global unit limit is
- * stored in UnitHandler::maxUnits, and is always clamped to this value.
+ * Defines the absolute global maximum number of simulation objects
+ * (units, features, projectiles) that are allowed to exist in a game
+ * at any time.
+ *
+ * NOTE:
+ * MAX_UNITS must be LEQ SHORT_MAX (32767) because current network code
+ * transmits unit IDs as signed shorts. The effective global unit limit
+ * is stored in UnitHandler::maxUnits, and always clamped to this value.
+ *
+ * All types of IDs are also passed to Lua callins, while feature IDs are
+ * additionally transmitted as (32-bit) floating-point command parameters,
+ * which further limits them to 1 << 24 (far beyond the realm of feasible
+ * runtime performance).
  */
 static constexpr int MAX_UNITS = 32000;
+static constexpr int MAX_FEATURES = 64000;
+static constexpr int MAX_PROJECTILES = 256000;
 
 /**
  * @brief max weapons per unit
@@ -100,12 +110,6 @@ static constexpr int MAX_UNITS = 32000;
  */
 static constexpr int MAX_WEAPONS_PER_UNIT = 32;
 
-/**
- * @brief randint max
- *
- * Defines the maximum random integer as 0x7fff.
- */
-static constexpr int RANDINT_MAX = 0x7fff;
 
 /**
  * maximum speed (elmos/frame) a unit is allowed to have outside the map
@@ -133,4 +137,12 @@ static constexpr float MAX_PROJECTILE_RANGE = 1e6f;
  */
 static constexpr float MAX_PROJECTILE_HEIGHT = 1e6f;
 
+/**
+ * maximum allowed sensor radius (LOS, airLOS, ...) of any unit, in elmos
+ * the value chosen is sufficient to cover a 40x40 map with room to spare
+ * from any point
+ */
+static constexpr int MAX_UNIT_SENSOR_RADIUS = 32768;
+
 #endif // _GLOBAL_CONSTANTS_H
+

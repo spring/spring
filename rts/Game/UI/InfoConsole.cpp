@@ -15,6 +15,9 @@
 CONFIG(int, InfoMessageTime).defaultValue(10).description("Timeout till old messages disappear from the ingame console.");
 CONFIG(std::string, InfoConsoleGeometry).defaultValue("0.26 0.96 0.41 0.205");
 
+CInfoConsole* infoConsole = nullptr;
+
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -64,7 +67,7 @@ void CInfoConsole::Draw()
 	if (!smallFont) return;
 	if (data.empty()) return;
 
-	boost::recursive_mutex::scoped_lock scoped_lock(infoConsoleMutex);
+	std::lock_guard<spring::recursive_mutex> scoped_lock(infoConsoleMutex);
 
 	if (guihandler && !guihandler->GetOutlineFonts()) {
 		// draw a black background when not using outlined font
@@ -103,7 +106,7 @@ void CInfoConsole::Draw()
 
 void CInfoConsole::Update()
 {
-	boost::recursive_mutex::scoped_lock scoped_lock(infoConsoleMutex);
+	std::lock_guard<spring::recursive_mutex> scoped_lock(infoConsoleMutex);
 	if (data.empty())
 		return;
 
@@ -134,7 +137,7 @@ void CInfoConsole::PushNewLinesToEventHandler()
 	std::deque<RawLine> newRawLines;
 
 	{
-		boost::recursive_mutex::scoped_lock scoped_lock(infoConsoleMutex);
+		std::lock_guard<spring::recursive_mutex> scoped_lock(infoConsoleMutex);
 
 		const int count = (int)rawData.size();
 		const int start = count - newLines;
@@ -154,7 +157,7 @@ void CInfoConsole::PushNewLinesToEventHandler()
 
 int CInfoConsole::GetRawLines(std::deque<RawLine>& lines)
 {
-	boost::recursive_mutex::scoped_lock scoped_lock(infoConsoleMutex);
+	std::lock_guard<spring::recursive_mutex> scoped_lock(infoConsoleMutex);
 	lines = rawData;
 	int tmp = newLines;
 	newLines = 0;
@@ -162,22 +165,20 @@ int CInfoConsole::GetRawLines(std::deque<RawLine>& lines)
 }
 
 
-void CInfoConsole::RecordLogMessage(const std::string& section, int level,
-			const std::string& text)
+void CInfoConsole::RecordLogMessage(int level, const std::string& section, const std::string& text)
 {
-	boost::recursive_mutex::scoped_lock scoped_lock(infoConsoleMutex);
+	std::lock_guard<spring::recursive_mutex> scoped_lock(infoConsoleMutex);
 
-	if (rawData.size() > maxRawLines) {
+	if (rawData.size() > maxRawLines)
 		rawData.pop_front();
-	}
-	if (newLines < maxRawLines) {
+
+	if (newLines < maxRawLines)
 		++newLines;
-	}
+
 	rawData.emplace_back(text, section, level, rawId++);
 
-	if (!smallFont) {
+	if (!smallFont)
 		return;
-	}
 
 	// !!! Warning !!!
 	// We must not remove elements from `data` here
@@ -187,9 +188,10 @@ void CInfoConsole::RecordLogMessage(const std::string& section, int level,
 	// possible that we delete a var that is used in
 	// Draw() & co, and so we might invalidate references
 	// (e.g. of std::strings) and cause SIGFAULTs!
-	const float maxWidth = (width  * globalRendering->viewSizeX) - (2 * border);
-	std::string wrappedText = smallFont->Wrap(text, fontSize, maxWidth);
-	std::list<std::string> lines = smallFont->SplitIntoLines(toustring(wrappedText));
+	const float maxWidth = (width * globalRendering->viewSizeX) - (2 * border);
+	const std::string& wrappedText = smallFont->Wrap(text, fontSize, maxWidth);
+
+	std::deque<std::string> lines = std::move(smallFont->SplitIntoLines(toustring(wrappedText)));
 
 	for (auto& line: lines) {
 		// add the line to the console

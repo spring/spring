@@ -35,6 +35,7 @@ public:
 	bool DrawReflectionPass() const { return drawReflection; }
 	bool DrawRefractionPass() const { return drawRefraction; }
 	bool BlockWakeProjectiles() const { return (GetID() == WATER_RENDERER_DYNAMIC); }
+	bool& WireFrameModeRef() { return wireFrameMode; }
 
 	static IWater* GetWater(IWater* curRenderer, int nxtRendererMode);
 
@@ -50,6 +51,7 @@ protected:
 protected:
 	bool drawReflection;
 	bool drawRefraction;
+	bool wireFrameMode;
 };
 
 extern IWater* water;

@@ -2,7 +2,7 @@
 
 #include "System/LogOutput.h"
 
-#include "System/Util.h"
+#include "System/StringUtil.h"
 #include "Game/GameVersion.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/FileSystem/FileSystem.h"
@@ -12,37 +12,42 @@
 #include "System/Log/Level.h"
 #include "System/Log/LogUtil.h"
 #include "System/Platform/Misc.h"
+#include "System/Platform/Threading.h"
+#include "System/UnorderedMap.hpp"
 
 #include <string>
-#include <set>
-#include <vector>
 #include <iostream>
-#include <fstream>
 #include <sstream>
 
 #include <cassert>
 #include <cstring>
 
-#include <boost/thread/recursive_mutex.hpp>
-
 
 /******************************************************************************/
 /******************************************************************************/
 
-CONFIG(bool, RotateLogFiles).defaultValue(false)
-		.description("rotate logfiles, old logfiles will be moved into the subfolder \"log\".");
+CONFIG(bool, RotateLogFiles)
+	.defaultValue(false)
+	.description("Rotate logfiles, old logfiles will be moved into the subfolder \"log\".");
 
-CONFIG(std::string, LogSections).defaultValue("")
-		.description("Comma seperated list of enabled logsections, see infolog.txt / console output for possible values");
+CONFIG(std::string, LogSections)
+	.defaultValue("")
+	.description("Comma-separated list of enabled logsections, see infolog.txt / console output for possible values.");
 
-CONFIG(int, LogFlushLevel).defaultValue(LOG_LEVEL_ERROR)
-		.description("Flush the logfile when level of message is above LogFlushLevel. i.e. ERROR is flushed as default, WARNING isn't.");
+
+CONFIG(int, LogFlushLevel)
+	.defaultValue(LOG_LEVEL_ERROR)
+	.description("Flush the logfile when a message's level exceeds this value. ERROR is flushed by default, WARNING is not.");
+
+CONFIG(int, LogRepeatLimit)
+	.defaultValue(10)
+	.description("Allow at most this many consecutive identical messages to be logged.");
 
 /******************************************************************************/
 /******************************************************************************/
 
-static std::map<std::string, int> GetEnabledSections() {
-	std::map<std::string, int> sectionLevelMap;
+static spring::unordered_map<std::string, int> GetEnabledSections() {
+	spring::unordered_map<std::string, int> sectionLevelMap;
 
 	std::string enabledSections = ",";
 	std::string envSections = ",";
@@ -133,11 +138,11 @@ static std::map<std::string, int> GetEnabledSections() {
 static void InitializeLogSections()
 {
 	// the new systems (ILog.h) log-sub-systems are called sections
-	const std::set<const char*>& registeredSections = log_filter_section_getRegisteredSet();
+	const auto& registeredSections = log_filter_section_getRegisteredSet();
 
 	// enabled sections is a superset of the ones specified in the
 	// environment and the ones specified in the configuration file.
-	const std::map<std::string, int>& enabledSections = GetEnabledSections();
+	const auto& enabledSections = GetEnabledSections();
 
 	std::stringstream availableLogSectionsStr;
 	std::stringstream enabledLogSectionsStr;
@@ -174,7 +179,7 @@ static void InitializeLogSections()
 		if (logLevel < 0)
 			continue;
 
-		log_filter_section_setMinLevel(*si, logLevel);
+		log_filter_section_setMinLevel(logLevel, *si);
 
 		enabledLogSectionsStr << ((numEnabledSections > 0)? ", ": "");
 		enabledLogSectionsStr << *si << "(" << log_util_levelToString(logLevel) << ")";
@@ -255,6 +260,7 @@ void CLogOutput::Initialize()
 	if (configHandler->GetBool("RotateLogFiles"))
 		RotateLogFile();
 
+	log_filter_setRepeatLimit(configHandler->GetInt("LogRepeatLimit")); // all sinks
 	log_file_addLogFile(filePath.c_str(), NULL, LOG_LEVEL_ALL, configHandler->GetInt("LogFlushLevel"));
 	InitializeLogSections();
 
@@ -263,19 +269,39 @@ void CLogOutput::Initialize()
 
 
 
+void CLogOutput::LogConfigInfo()
+{
+	LOG("============== <User Config> ==============");
+
+	// list user's non-default config; exclude non-engine tags
+	for (const auto& it: configHandler->GetDataWithoutDefaults()) {
+		if (ConfigVariable::GetMetaData(it.first) == nullptr)
+			continue;
+
+		LOG("  %s = %s", it.first.c_str(), it.second.c_str());
+	}
+
+	LOG("============== </User Config> ==============");
+
+}
+
 void CLogOutput::LogSystemInfo()
 {
-	LOG("Spring %s", SpringVersion::GetFull().c_str());
-	LOG("Build Environment: %s", SpringVersion::GetBuildEnvironment().c_str());
-	LOG("Compiler Version:  %s", SpringVersion::GetCompiler().c_str());
-	LOG("Operating System:  %s", Platform::GetOS().c_str());
+	LOG("============== <User System> ==============");
+	LOG("  Spring %s", SpringVersion::GetFull().c_str());
+	LOG("    Build Environment: %s", SpringVersion::GetBuildEnvironment().c_str());
+	LOG("     Compiler Version: %s", SpringVersion::GetCompiler().c_str());
+	LOG("     Operating System: %s", Platform::GetOS().c_str());
+	LOG("     Binary Word Size: %s", Platform::GetWordSizeStr().c_str());
+	LOG("     Deque Chunk Size: %u", Platform::DequeChunkSize());
+	LOG("        Process Clock: %s", spring_clock::GetName());
+	LOG("   Physical CPU Cores: %d", Threading::GetPhysicalCpuCores());
+	LOG("    Logical CPU Cores: %d", Threading::GetLogicalCpuCores());
+	LOG("============== </User System> ==============");
+}
 
-	if (Platform::Is64Bit()) {
-		LOG("Word Size:         64-bit (native mode)");
-	} else if (Platform::Is32BitEmulation()) {
-		LOG("Word Size:         32-bit (emulated)");
-	} else {
-		LOG("Word Size:         32-bit (native mode)");
-	}
+void CLogOutput::LogExceptionInfo(const char* src, const char* msg)
+{
+	LOG_L(L_ERROR, "[%s] exception \"%s\"", src, msg);
 }
 

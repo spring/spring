@@ -51,14 +51,13 @@ CPieceProjectile::CPieceProjectile(
 	explFlags(flags),
 	dispList((lmp != nullptr) ? lmp->dispListID : 0),
 	omp((lmp != nullptr) ? lmp->original : nullptr),
-	smokeTrail(NULL)
+	smokeTrail(nullptr)
 {
 	checkCol = false;
 
-	if (owner != NULL) {
-		if ((explFlags & PF_NoCEGTrail) == 0) {
-			explGenHandler->GenExplosion((cegID = owner->unitDef->GetPieceExplosionGeneratorID(gs->randInt())), pos, speed, 100, 0.0f, 0.0f, NULL, NULL);
-		}
+	if (owner != nullptr) {
+		if ((explFlags & PF_NoCEGTrail) == 0)
+			explGenHandler->GenExplosion((cegID = owner->unitDef->GetPieceExplosionGeneratorID(gsRNG.NextInt())), pos, speed, 100, 0.0f, 0.0f, NULL, NULL);
 
 		model = owner->model;
 		explFlags |= (PF_NoCEGTrail * (cegID == -1u));
@@ -74,8 +73,8 @@ CPieceProjectile::CPieceProjectile(
 	// LuaSynced{Ctrl, Read} exposure we treat
 	// them that way for consistency
 	spinAngle = 0.0f;
-	spinVec = gs->randVector().Normalize();
-	spinSpeed = gs->randFloat() * 20;
+	spinVec = gsRNG.NextVector().Normalize();
+	spinSpeed = gsRNG.NextFloat() * 20;
 
 	for (auto& ftp: fireTrailPoints) {
 		ftp.pos = pos;
@@ -97,7 +96,7 @@ CPieceProjectile::CPieceProjectile(
 void CPieceProjectile::Collision()
 {
 	Collision(nullptr, nullptr);
-	if (gs->randFloat() < 0.666f) { // give it a small chance to `ground bounce`
+	if (gsRNG.NextFloat() < 0.666f) { // give it a small chance to `ground bounce`
 		CProjectile::Collision();
 		return;
 	}
@@ -155,7 +154,7 @@ void CPieceProjectile::Collision(CUnit* unit, CFeature* feature)
 
 	if (explFlags & PF_Smoke) {
 		if (explFlags & PF_NoCEGTrail) {
-			smokeTrail = new CSmokeTrailProjectile(
+			smokeTrail = projMemPool.alloc<CSmokeTrailProjectile>(
 				owner(),
 				pos, oldSmokePos,
 				dir, oldSmokeDir,
@@ -178,7 +177,7 @@ float3 CPieceProjectile::RandomVertexPos() const
 {
 	if (omp == nullptr)
 		return ZeroVector;
-	#define rf gu->RandFloat()
+	#define rf guRNG.NextFloat()
 	return mix(omp->mins, omp->maxs, float3(rf,rf,rf));
 }
 
@@ -213,11 +212,11 @@ void CPieceProjectile::Update()
 		}
 
 		CMatrix44f m(pos);
-		m.Rotate(spinAngle * (PI / 180.0f), spinVec);
+		m.Rotate(spinAngle * math::DEG_TO_RAD, spinVec);
 		m.Translate(RandomVertexPos());
 
 		fireTrailPoints[0].pos  = m.GetPos();
-		fireTrailPoints[0].size = 1 + gu->RandFloat();
+		fireTrailPoints[0].size = 1 + guRNG.NextFloat();
 	}
 
 	if (explFlags & PF_Smoke) {
@@ -228,7 +227,7 @@ void CPieceProjectile::Update()
 		}
 
 		if ((age % 8) == 0) {
-			smokeTrail = new CSmokeTrailProjectile(
+			smokeTrail = projMemPool.alloc<CSmokeTrailProjectile>(
 				owner(),
 				pos, oldSmokePos,
 				dir, oldSmokeDir,
@@ -252,27 +251,27 @@ void CPieceProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
 }
 
 
-void CPieceProjectile::Draw()
+void CPieceProjectile::Draw(CVertexArray* va)
 {
-	if (explFlags & PF_Fire) {
-		inArray = true;
-		va->EnlargeArrays(NUM_TRAIL_PARTS * 4, 0, VA_SIZE_TC);
-		static const SColor lightOrange(1.f, 0.78f, 0.59f, 0.2f);
+	if ((explFlags & PF_Fire) == 0)
+		return;
 
-		for (unsigned int age = 0; age < NUM_TRAIL_PARTS; ++age) {
-			const float3 interPos = fireTrailPoints[age].pos;
-			const float size = fireTrailPoints[age].size;
+	va->EnlargeArrays(NUM_TRAIL_PARTS * 4, 0, VA_SIZE_TC);
+	static const SColor lightOrange(1.f, 0.78f, 0.59f, 0.2f);
 
-			const float alpha = 1.0f - (age * (1.0f / NUM_TRAIL_PARTS));
-			const float drawsize = (1.0f + age) * size;
-			const SColor col = lightOrange * alpha;
+	for (unsigned int age = 0; age < NUM_TRAIL_PARTS; ++age) {
+		const float3 interPos = fireTrailPoints[age].pos;
+		const float size = fireTrailPoints[age].size;
 
-			const auto eft = projectileDrawer->explofadetex;
-			va->AddVertexQTC(interPos - camera->GetRight() * drawsize-camera->GetUp() * drawsize, eft->xstart, eft->ystart, col);
-			va->AddVertexQTC(interPos + camera->GetRight() * drawsize-camera->GetUp() * drawsize, eft->xend,   eft->ystart, col);
-			va->AddVertexQTC(interPos + camera->GetRight() * drawsize+camera->GetUp() * drawsize, eft->xend,   eft->yend,   col);
-			va->AddVertexQTC(interPos - camera->GetRight() * drawsize+camera->GetUp() * drawsize, eft->xstart, eft->yend,   col);
-		}
+		const float alpha = 1.0f - (age * (1.0f / NUM_TRAIL_PARTS));
+		const float drawsize = (1.0f + age) * size;
+		const SColor col = lightOrange * alpha;
+
+		const auto eft = projectileDrawer->explofadetex;
+		va->AddVertexQTC(interPos - camera->GetRight() * drawsize-camera->GetUp() * drawsize, eft->xstart, eft->ystart, col);
+		va->AddVertexQTC(interPos + camera->GetRight() * drawsize-camera->GetUp() * drawsize, eft->xend,   eft->ystart, col);
+		va->AddVertexQTC(interPos + camera->GetRight() * drawsize+camera->GetUp() * drawsize, eft->xend,   eft->yend,   col);
+		va->AddVertexQTC(interPos - camera->GetRight() * drawsize+camera->GetUp() * drawsize, eft->xstart, eft->yend,   col);
 	}
 }
 

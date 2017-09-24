@@ -15,12 +15,11 @@ public:
 		const float3& v1, const float3& v2,
 		float w1, float w2
 	);
-	virtual ~CGeoSquareProjectile();
 
-	void Draw() override;
+	void Draw(CVertexArray* va) override;
 	void Update() override;
 
-	virtual int GetProjectilesCount() const override;
+	int GetProjectilesCount() const override;
 
 	void SetColor(float r, float g, float b, float a) {
 		this->r = r;

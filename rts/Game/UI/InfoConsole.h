@@ -8,11 +8,11 @@
 #include "System/EventClient.h"
 #include "System/Log/LogSinkHandler.h"
 #include "System/Misc/SpringTime.h"
+#include "System/Threading/SpringThreading.h"
 
 #include <deque>
 #include <string>
 #include <list>
-#include <boost/thread/recursive_mutex.hpp>
 
 class CInfoConsole: public CInputReceiver, public CEventClient, public ILogSink
 {
@@ -20,17 +20,16 @@ public:
 	CInfoConsole();
 	virtual ~CInfoConsole();
 
-	void Update();
-	void Draw();
+	void Update() override;
+	void Draw() override;
 	void PushNewLinesToEventHandler();
 
-	void RecordLogMessage(const std::string& section, int level,
-			const std::string& text);
+	void RecordLogMessage(int level, const std::string& section, const std::string& text) override;
 
-	bool WantsEvent(const std::string& eventName) {
+	bool WantsEvent(const std::string& eventName) override {
 		return (eventName == "LastMessagePosition");
 	}
-	void LastMessagePosition(const float3& pos);
+	void LastMessagePosition(const float3& pos) override;
 	const float3& GetMsgPos(const float3& defaultPos = ZeroVector);
 	unsigned int GetMsgPosCount() const { return lastMsgPositions.size(); }
 
@@ -71,7 +70,7 @@ private:
 	size_t newLines;
 	int rawId;
 
-	mutable boost::recursive_mutex infoConsoleMutex;
+	mutable spring::recursive_mutex infoConsoleMutex;
 
 	int lifetime;
 	float xpos;
@@ -83,5 +82,7 @@ private:
 
 	size_t maxLines;
 };
+
+extern CInfoConsole* infoConsole;
 
 #endif /* INFO_CONSOLE_H */

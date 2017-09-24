@@ -9,10 +9,10 @@ class CMeleeWeapon: public CWeapon
 {
 	CR_DECLARE_DERIVED(CMeleeWeapon)
 public:
-	CMeleeWeapon(CUnit* owner, const WeaponDef* def);
+	CMeleeWeapon(CUnit* owner = nullptr, const WeaponDef* def = nullptr): CWeapon(owner, def) {}
 
 private:
-	bool HaveFreeLineOfFire(const float3 pos, const SWeaponTarget& trg, bool useMuzzle = false) const override final;
+	bool HaveFreeLineOfFire(const float3 srcPos, const float3 tgtPos, const SWeaponTarget& trg) const override final { return true; }
 	void FireImpl(const bool scriptCall) override final;
 };
 

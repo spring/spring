@@ -72,11 +72,11 @@ AAIExecute::~AAIExecute(void)
 //		for(int i = 0; i < numOfFactories; ++i)
 //			buildques[i].clear();
 
-//		SafeDeleteArray(buildques);
+//		spring::SafeDeleteArray(buildques);
 //	}
 
 //	if(factory_table)
-//		SafeDeleteArray(factory_table);
+//		spring::SafeDeleteArray(factory_table);
 }
 
 

@@ -29,7 +29,6 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
 #include "System/myMath.h"
-#include "System/Util.h"
 
 #define DRAW_QUAD_SIZE 32
 
@@ -188,7 +187,7 @@ void CFeatureDrawer::RenderFeatureDestroyed(const CFeature* feature)
 	CFeature* f = const_cast<CFeature*>(feature);
 
 	if (f->def->drawType == DRAWTYPE_MODEL) {
-		VectorErase(unsortedFeatures, f);
+		spring::VectorErase(unsortedFeatures, f);
 	}
 	if (f->model && f->drawQuad >= 0) {
 		modelRenderers[f->drawQuad].GetRenderer(MDL_TYPE(f))->DelFeature(f);
@@ -253,8 +252,6 @@ inline void CFeatureDrawer::UpdateDrawPos(CFeature* f)
 
 void CFeatureDrawer::Draw()
 {
-	SCOPED_GMARKER("CFeatureDrawer::Draw");
-
 	sky->SetupFog();
 
 	// mark all features (in the quads we can see) with a FD_*_FLAG value
@@ -331,7 +328,7 @@ void CFeatureDrawer::DrawOpaqueFeatures(int modelType)
 
 				unitDrawer->SetTeamColour(f->team);
 
-				DrawFeature(f, 0, 0, false, false);
+				DrawFeatureTrans(f, 0, 0, false, false);
 			}
 		}
 	}
@@ -383,7 +380,7 @@ void CFeatureDrawer::DrawFeatureNoTrans(
 	}
 }
 
-void CFeatureDrawer::DrawFeature(const CFeature* feature, unsigned int preList, unsigned int postList, bool lodCall, bool noLuaCall)
+void CFeatureDrawer::DrawFeatureTrans(const CFeature* feature, unsigned int preList, unsigned int postList, bool lodCall, bool noLuaCall)
 {
 	glPushMatrix();
 	glMultMatrixf(feature->GetTransformMatrixRef());
@@ -412,37 +409,29 @@ void CFeatureDrawer::PopIndividualState(const CFeature* feature, bool deferredPa
 
 void CFeatureDrawer::DrawIndividual(const CFeature* feature, bool noLuaCall)
 {
-	const bool origDrawDebug = globalRendering->GetSetDrawDebug(false);
+	if (LuaObjectDrawer::DrawSingleObject(feature, LUAOBJ_FEATURE /*, noLuaCall*/))
+		return;
 
-	if (!LuaObjectDrawer::DrawSingleObject(feature, LUAOBJ_FEATURE /*, noLuaCall*/)) {
-		// set the full default state
-		PushIndividualState(feature, false);
-		DrawFeature(feature, 0, 0, false, noLuaCall);
-		PopIndividualState(feature, false);
-	}
-
-	globalRendering->GetSetDrawDebug(origDrawDebug);
+	// set the full default state
+	PushIndividualState(feature, false);
+	DrawFeatureTrans(feature, 0, 0, false, noLuaCall);
+	PopIndividualState(feature, false);
 }
 
 void CFeatureDrawer::DrawIndividualNoTrans(const CFeature* feature, bool noLuaCall)
 {
-	const bool origDrawDebug = globalRendering->GetSetDrawDebug(false);
+	if (LuaObjectDrawer::DrawSingleObjectNoTrans(feature, LUAOBJ_FEATURE /*, noLuaCall*/))
+		return;
 
-	if (!LuaObjectDrawer::DrawSingleObjectNoTrans(feature, LUAOBJ_FEATURE /*, noLuaCall*/)) {
-		PushIndividualState(feature, false);
-		DrawFeatureNoTrans(feature, 0, 0, false, noLuaCall);
-		PopIndividualState(feature, false);
-	}
-
-	globalRendering->GetSetDrawDebug(origDrawDebug);
+	PushIndividualState(feature, false);
+	DrawFeatureNoTrans(feature, 0, 0, false, noLuaCall);
+	PopIndividualState(feature, false);
 }
 
 
 
 void CFeatureDrawer::DrawAlphaPass()
 {
-	SCOPED_GMARKER("CFeatureDrawer::DrawAlphaPass");
-
 	inAlphaPass = true;
 	ffpAlphaMat = !(unitDrawer->GetWantedDrawerState(true))->CanDrawAlpha();
 
@@ -510,7 +499,7 @@ void CFeatureDrawer::DrawAlphaFeatures(int modelType)
 				unitDrawer->SetTeamColour(f->team, float2(f->drawAlpha, 1.0f));
 
 				setFeatureAlphaMatFuncs[ffpAlphaMat](f);
-				DrawFeature(f, 0, 0, false, false);
+				DrawFeatureTrans(f, 0, 0, false, false);
 			}
 		}
 	}

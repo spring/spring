@@ -8,7 +8,7 @@
 #include "Backend.h"
 #include "FramePrefixer.h"
 #include "Level.h" // for LOG_LEVEL_*
-#include "System/maindefines.h"
+#include "System/MainDefines.h"
 
 #include <cstdio>
 
@@ -34,8 +34,7 @@ void log_console_colorizedOutput(bool enable) {
 
 
 /// Records a log entry
-static void log_sink_record_console(const char* section, int level,
-		const char* record)
+static void log_sink_record_console(int level, const char* section, const char* record)
 {
 	char framePrefix[128] = {'\0'};
 	log_framePrefixer_createPrefix(framePrefix, sizeof(framePrefix));

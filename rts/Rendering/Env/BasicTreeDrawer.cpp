@@ -13,7 +13,7 @@
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Features/Feature.h"
 #include "System/Log/ILog.h"
-#include "System/Util.h"
+#include "System/StringUtil.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -140,7 +140,7 @@ struct CBasicTreeSquareDrawer : public CReadMap::IQuadDrawer
 	}
 
 	void DrawQuad(int x, int y) {
-		ITreeDrawer::TreeSquareStruct* tss = &td->treeSquares[(y * td->treesX) + x];
+		ITreeDrawer::TreeSquareStruct* tss = &td->treeSquares[(y * td->NumTreesX()) + x];
 
 		float3 dif;
 			dif.x = camera->GetPos().x - ((x * SQUARE_SIZE * TREE_SQUARE_SIZE) + (SQUARE_SIZE * TREE_SQUARE_SIZE / 2));
@@ -348,11 +348,10 @@ private:
 
 
 
-void CBasicTreeDrawer::Draw(float treeDistance, bool drawReflection)
+void CBasicTreeDrawer::Draw(float treeDistance)
 {
 	glBindTexture(GL_TEXTURE_2D, treetex);
 	glEnable(GL_TEXTURE_2D);
-	glEnable(GL_ALPHA_TEST);
 
 	sky->SetupFog();
 	glColor4f(1, 1, 1, 1);
@@ -411,10 +410,5 @@ void CBasicTreeDrawer::Draw(float treeDistance, bool drawReflection)
 			}
 		}
 	}
-
-	glDisable(GL_FOG);
-
-	glDisable(GL_BLEND);
-	glDisable(GL_ALPHA_TEST);
 }
 

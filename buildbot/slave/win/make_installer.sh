@@ -12,7 +12,6 @@ echo "Installing into $DEST"
 #Ultra settings, max number of threads taken from commandline.
 SEVENZIP="nice -19 ionice -c3 7z a -t7z -m0=lzma -mx=9 -mfb=64 -md=32m -ms=on -mmt=${2:-on}"
 SEVENZIP_NONSOLID="nice -19 ionice -c3 7z a -t7z -m0=lzma -mx=9 -mfb=64 -md=32m -ms=off -mmt=${2:-on}"
-ZIP="zip -r9"
 
 if [ -z $MINGWLIBS_PATH ]; then
 	echo 'MINGWLIBS_PATH is not set'
@@ -69,13 +68,6 @@ MIN_PORTABLE_ZIP=${TMP_PATH}/spring_${VERSION}_${PLATFORM}_minimal-portable.zip
 #create portable spring
 touch ${INSTALLDIR}/springsettings.cfg
 ${SEVENZIP} ${MIN_PORTABLE_ARCHIVE} ${INSTALLDIR}/* -xr!*.dbg &
-
-# TODO: remove creation of the zip package, when Zero-K Lobby switched to 7z (will save a lot of resources)
-# Update 2016/07/06 ZK is yet to support, so only stable releases will have a zipped archive,
-# and that's because we're feeling nice.
-if [ "$OUTPUTDIR" == "win32" ] && [ x${BRANCH} = xmaster ]; then
-	(cd ${INSTALLDIR} && ${ZIP} ${MIN_PORTABLE_ZIP} * -x spring-headless.exe \*.dbg) &
-fi
 
 # compress UnitTests
 ${SEVENZIP} ${UNITTEST_ARCHIVE} "${BUILDDIR}"/test/*.exe &

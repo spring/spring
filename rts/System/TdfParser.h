@@ -5,12 +5,14 @@
 
 #include <string>
 #include <vector>
-#include <map>
 #include <sstream>
 
 #include "System/Sync/SyncedPrimitiveIO.h"
 #include "System/Exceptions.h"
 #include "System/float3.h"
+#include "System/UnorderedMap.hpp"
+
+class LuaTable;
 
 /**
  * Used to parse TDF Config files.
@@ -20,8 +22,8 @@ class TdfParser
 {
 public:
 	struct TdfSection;
-	typedef std::map<std::string, std::string> valueMap_t;
-	typedef std::map<std::string, TdfSection*> sectionsMap_t;
+	typedef spring::unordered_map<std::string, std::string> valueMap_t;
+	typedef spring::unordered_map<std::string, TdfSection*> sectionsMap_t;
 
 	struct parse_error : public content_error
 	{
@@ -129,7 +131,8 @@ private:
 
 	std::vector<std::string> GetLocationVector(std::string const& location) const;
 
-	void parse_buffer(char const* buf, size_t size);
+	void ParseLuaTable(const LuaTable& table, TdfSection* currentSection);
+	void ParseBuffer(char const* buf, size_t size);
 
 public:
 	float3 GetFloat3(float3 def, std::string const& location) const;

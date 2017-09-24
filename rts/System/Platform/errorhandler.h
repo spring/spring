@@ -12,8 +12,6 @@
 #ifndef NO_CATCH_EXCEPTIONS
 #include <sstream>
 #endif
-#include <boost/thread/exceptions.hpp>
-#include <boost/system/system_error.hpp>
 #include "System/Exceptions.h"
 
 #define MBF_OK    1
@@ -34,62 +32,50 @@
  *                 - MBF_INFO : Info
  *                 - MBF_CRASH: Crash
  */
-void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigned int flags = MBF_OK, bool fromMain = false);
+void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigned int flags = MBF_OK);
 
-/**
- * sets springs exit code
- * @param code that will be returned by the executable
- * TODO: add enum / use it
- */
-void SetExitCode(int code);
-
-/**
- * returns the exit code
- */
-int GetExitCode();
 
 /**
  * Spring's common exception handler.
  */
 #define CATCH_SPRING_ERRORS_BASE                                                             \
 	catch (const content_error& e) {                                                         \
-		ErrorMessageBox(e.what(), "Spring: Incorrect/Missing content: ", MBF_OK | MBF_EXCL); \
+		ErrorMessageBox(e.what(), "Spring: caught content_error: ", MBF_OK | MBF_EXCL);      \
 	}                                                                                        \
 	catch (const opengl_error& e) {                                                          \
-		ErrorMessageBox(e.what(), "Spring: OpenGL content", MBF_OK | MBF_CRASH);             \
+		ErrorMessageBox(e.what(), "Spring: caught opengl_error: ", MBF_OK | MBF_CRASH);      \
 	}                                                                                        \
 	catch (const user_error& e) {                                                            \
-		ErrorMessageBox(e.what(), "Spring: Fatal Error (user)", MBF_OK | MBF_EXCL);          \
+		ErrorMessageBox(e.what(), "Spring: caught user_error: ", MBF_OK | MBF_EXCL);         \
 	}                                                                                        \
 	catch (const unsupported_error& e) {                                                     \
-		ErrorMessageBox(e.what(), "Spring: Hardware Problem: ", MBF_OK | MBF_CRASH);         \
+		ErrorMessageBox(e.what(), "Spring: caught unsupported_error: ", MBF_OK | MBF_CRASH); \
 	}                                                                                        \
-	catch (const network_error& e) {                                                     \
-		ErrorMessageBox(e.what(), "Spring: Network Error: ", MBF_OK | MBF_EXCL);         \
+	catch (const network_error& e) {                                                         \
+		ErrorMessageBox(e.what(), "Spring: caught network_error: ", MBF_OK | MBF_EXCL);      \
 	}
 
 /**
  * Spring's exception handler additions to BASE for non DEBUG builds.
  */
-#define CATCH_SPRING_ERRORS_EXTENDED                                                        \
-	catch (const boost::lock_error& e) {                                                    \
-		std::ostringstream ss;                                                              \
-		ss << e.native_error() << ": " << e.what();                                         \
-		ErrorMessageBox(ss.str(), "Spring: Fatal Error (boost-lock)", MBF_OK | MBF_CRASH);  \
-	}                                                                                       \
-	catch (const boost::system::system_error& e) {                                          \
-		std::ostringstream ss;                                                              \
-		ss << e.code().value() << ": " << e.what();                                         \
-		ErrorMessageBox(ss.str(), "Spring: Fatal Error (boost)", MBF_OK | MBF_CRASH);       \
-	}                                                                                       \
-	catch (const std::bad_alloc& e) {                                                       \
-		ErrorMessageBox(e.what(), "Spring: Fatal Error (out of memory)", MBF_OK | MBF_CRASH);     \
-	}                                                                                       \
-	catch (const std::exception& e) {                                                       \
-		ErrorMessageBox(e.what(), "Spring: Fatal Error (general)", MBF_OK | MBF_CRASH);     \
-	}                                                                                       \
-	catch (const char* e) {                                                                 \
-		ErrorMessageBox(e, "Spring: Fatal Error (legacy)", MBF_OK | MBF_CRASH);             \
+#define CATCH_SPRING_ERRORS_EXTENDED                                                          \
+	catch (const std::logic_error& e) {                                                       \
+		ErrorMessageBox(e.what(), "Spring: caught std::logic_error", MBF_OK | MBF_CRASH);     \
+	}                                                                                         \
+	catch (const std::bad_alloc& e) {                                                         \
+		ErrorMessageBox(e.what(), "Spring: caught std::bad_alloc", MBF_OK | MBF_CRASH);       \
+	}                                                                                         \
+	catch (const std::system_error& e) {                                                      \
+		ErrorMessageBox(e.what(), "Spring: caught std::system_error", MBF_OK | MBF_CRASH);    \
+	}                                                                                         \
+	catch (const std::runtime_error& e) {                                                     \
+		ErrorMessageBox(e.what(), "Spring: caught std::runtime_error", MBF_OK | MBF_CRASH);   \
+	}                                                                                         \
+	catch (const std::exception& e) {                                                         \
+		ErrorMessageBox(e.what(), "Spring: caught std::exception", MBF_OK | MBF_CRASH);       \
+	}                                                                                         \
+	catch (const char* e) {                                                                   \
+		ErrorMessageBox(e, "Spring: caught legacy exception", MBF_OK | MBF_CRASH);            \
 	}
 
 /**
