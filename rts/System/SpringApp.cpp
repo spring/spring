@@ -173,7 +173,9 @@ static void ShowSplashScreen(const std::string& splashScreenFile)
 	if (splashScreenFile.empty() || !bmp.Load(splashScreenFile))
 		bmp.AllocDummy({0, 0, 0, 0});
 
-	constexpr const char* fmtStrs[5] = {
+	// not constexpr to circumvent a VS bug
+	// https://developercommunity.visualstudio.com/content/problem/10720/constexpr-function-accessing-character-array-leads.html
+	const char* fmtStrs[5] = {
 		"[Initializing Virtual File System]",
 		"* archives scanned: %u",
 		"* scantime elapsed: %.1fms",
