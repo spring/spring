@@ -14,24 +14,30 @@ struct MoveDef;
 
 class CPathFinderDef {
 public:
-	CPathFinderDef(const float3& goalCenter, float goalRadius, float sqGoalDistance);
+	CPathFinderDef(const float3& startPos, const float3& goalPos, float goalRadius, float sqGoalDistance);
 	virtual ~CPathFinderDef() {}
 
 	virtual bool WithinConstraints(const int2 square) const { return (WithinConstraints(square.x, square.y)); }
-	virtual bool WithinConstraints(unsigned int xSquare, unsigned int zSquare) const = 0;
+	virtual bool WithinConstraints(uint32_t xSquare, uint32_t zSquare) const = 0;
 
 	void DisableConstraint(bool b) { constraintDisabled = b; }
 	void AllowRawPathSearch(bool b) { allowRawPath = b; }
 	void AllowDefPathSearch(bool b) { allowDefPath = b; }
 
-	bool IsGoal(unsigned int xSquare, unsigned int zSquare) const;
-	float Heuristic(unsigned int xSquare, unsigned int zSquare, unsigned int blockSize) const;
+	bool IsGoal(uint32_t squareX, uint32_t squareZ) const;
 	bool IsGoalBlocked(const MoveDef& moveDef, const CMoveMath::BlockType& blockMask, const CSolidObject* owner) const;
-	int2 GoalSquareOffset(unsigned int blockSize) const;
+
+	float Heuristic(uint32_t srcSquareX, uint32_t srcSquareZ, uint32_t tgtSquareX, uint32_t tgtSquareZ, uint32_t blockSize) const;
+	float Heuristic(uint32_t srcSquareX, uint32_t srcSquareZ, uint32_t blockSize) const {
+		return (Heuristic(srcSquareX, srcSquareZ, goalSquareX, goalSquareZ, blockSize));
+	}
+
+	int2 GoalSquareOffset(uint32_t blockSize) const;
 
 public:
-	// world-space goal position
-	float3 goal;
+	// world-space start and goal positions
+	float3 wsStartPos;
+	float3 wsGoalPos;
 
 	float sqGoalRadius;
 	float maxRawPathLen;
@@ -51,8 +57,10 @@ public:
 	bool synced;
 
 	// heightmap-coors
-	unsigned int goalSquareX;
-	unsigned int goalSquareZ;
+	uint32_t startSquareX;
+	uint32_t startSquareZ;
+	uint32_t goalSquareX;
+	uint32_t goalSquareZ;
 };
 
 
@@ -64,13 +72,13 @@ public:
 		const float3& goal = ZeroVector,
 		float goalRadius = 0.0f,
 		float searchSize = 0.0f,
-		unsigned int extraSize = 0
+		uint32_t extraSize = 0
 	);
 
 	// tests if a square is inside is the circular constrained area
 	// defined by the start and goal positions (note that this only
 	// saves CPU under certain conditions and destroys admissibility)
-	bool WithinConstraints(unsigned int xSquare, unsigned int zSquare) const {
+	bool WithinConstraints(uint32_t xSquare, uint32_t zSquare) const {
 		const int dx = halfWayX - xSquare;
 		const int dz = halfWayZ - zSquare;
 
@@ -78,9 +86,9 @@ public:
 	}
 
 private:
-	unsigned int halfWayX;
-	unsigned int halfWayZ;
-	unsigned int searchRadiusSq;
+	uint32_t halfWayX;
+	uint32_t halfWayZ;
+	uint32_t searchRadiusSq;
 };
 
 
@@ -92,10 +100,10 @@ public:
 		const float3 startPos,
 		const float3 goalPos,
 		float sqRadius,
-		unsigned int blockSize
+		uint32_t blockSize
 	);
 
-	bool WithinConstraints(unsigned int xSquare, unsigned int zSquare) const {
+	bool WithinConstraints(uint32_t xSquare, uint32_t zSquare) const {
 		if (startBlockRect.Inside(int2(xSquare, zSquare))) return true;
 		if ( goalBlockRect.Inside(int2(xSquare, zSquare))) return true;
 		return (constraintDisabled);

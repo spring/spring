@@ -707,30 +707,43 @@ bool CPathEstimator::TestBlock(
 	const int2 testBlockPos = openBlockPos + PE_DIRECTION_VECTORS[pathDir];
 	const int2 goalBlockPos = {int(peDef.goalSquareX / BLOCK_SIZE), int(peDef.goalSquareZ / BLOCK_SIZE)};
 
-	const unsigned int testBlockIdx = BlockPosToIdx(testBlockPos);
-
 	// bounds-check
-	if ((unsigned)testBlockPos.x >= nbrOfBlocks.x) return false;
-	if ((unsigned)testBlockPos.y >= nbrOfBlocks.y) return false;
+	if (static_cast<unsigned int>(testBlockPos.x) >= nbrOfBlocks.x)
+		return false;
+	if (static_cast<unsigned int>(testBlockPos.y) >= nbrOfBlocks.y)
+		return false;
+
+	// read precached vertex costs
+	const unsigned int openBlockIdx = BlockPosToIdx(openBlockPos);
+	const unsigned int testBlockIdx = BlockPosToIdx(testBlockPos);
 
 	// check if the block is unavailable
 	if (blockStates.nodeMask[testBlockIdx] & (PATHOPT_BLOCKED | PATHOPT_CLOSED))
 		return false;
 
-
-	// read precached vertex costs
-	const unsigned int parentBlockIdx = BlockPosToIdx(openBlockPos);
-	const unsigned int  childBlockIdx = BlockPosToIdx(testBlockPos);
 	const unsigned int  vertexBaseIdx = moveDef.pathType * nbrOfBlocks.x * nbrOfBlocks.y * PATH_DIRECTION_VERTICES;
 	const unsigned int  vertexCostIdx =
 		vertexBaseIdx +
-		parentBlockIdx * PATH_DIRECTION_VERTICES +
+		openBlockIdx * PATH_DIRECTION_VERTICES +
 		GetBlockVertexOffset(pathDir, nbrOfBlocks.x);
 
+	assert(testBlockIdx <blockStates.peNodeOffsets[moveDef.pathType].size());
 	assert(vertexCostIdx < vertexCosts.size());
 
+	// best accessible heightmap-coordinate within tested block
+	const int2 testBlockSquare = blockStates.peNodeOffsets[moveDef.pathType][testBlockIdx];
 
-	if (vertexCosts[vertexCostIdx] >= PATHCOST_INFINITY) {
+	// transition-cost from parent to tested child
+	float testVertexCost = vertexCosts[vertexCostIdx];
+
+
+	// this means we can not get from the parent VERTEX to the child
+	// but the latter might still be reachable from peDef.wsStartPos
+	// (if it is one of the first 8 expanded)
+	const bool infCostVertex = (testVertexCost >= PATHCOST_INFINITY);
+	const bool baseSetVertex = (testedBlocks <= 8);
+
+	if (infCostVertex) {
 		// warning: we cannot naively set PATHOPT_BLOCKED here;
 		// vertexCosts[] depends on the direction and nodeMask
 		// does not
@@ -740,42 +753,52 @@ bool CPathEstimator::TestBlock(
 		//
 		// blockStates.nodeMask[testBlockIdx] |= (PathDir2PathOpt(pathDir) | PATHOPT_BLOCKED);
 		// dirtyBlocks.push_back(testBlockIdx);
-		return false;
+		if (!baseSetVertex)
+			return false;
+		if (peDef.skipSubSearches)
+			return false;
+		if (DoBlockSearch(owner, moveDef, peDef.wsStartPos, SquareToFloat3(testBlockSquare.x, testBlockSquare.y)) != IPath::Ok)
+			return false;
+
+		testVertexCost = peDef.Heuristic(testBlockSquare.x, testBlockSquare.y, peDef.startSquareX, peDef.startSquareZ, BLOCK_SIZE);
 	}
 
-	const int2 square = blockStates.peNodeOffsets[moveDef.pathType][testBlockIdx];
 
 	// check if the block is outside constraints
-	if (!peDef.WithinConstraints(square)) {
+	if (!peDef.WithinConstraints(testBlockSquare)) {
 		blockStates.nodeMask[testBlockIdx] |= PATHOPT_BLOCKED;
 		dirtyBlocks.push_back(testBlockIdx);
 		return false;
 	}
 
-	if (!peDef.skipSubSearches && testBlockPos == goalBlockPos) {
-		// must skip goal sub-searches during CalcVertexPathCosts
-		//
-		// if we have expanded the goal-block, check if a valid
-		// max-resolution path exists (from where we entered it
-		// to the actual goal position) since there might still
-		// be impassable terrain in between
-		//
-		// const float3 gWorldPos = {testBlockPos.x * BLOCK_PIXEL_SIZE * 1.0f, 0.0f, testBlockPos.y * BLOCK_PIXEL_SIZE * 1.0f};
-		// const float3 sWorldPos = {openBlockPos.x * BLOCK_PIXEL_SIZE * 1.0f, 0.0f, openBlockPos.y * BLOCK_PIXEL_SIZE * 1.0f};
-		const int idx = BlockPosToIdx(testBlockPos);
-		const int2 testSquare = blockStates.peNodeOffsets[moveDef.pathType][idx];
+	if (!peDef.skipSubSearches) {
+		#if 0
+		if (infCostVertex && baseSetVertex && DoBlockSearch(owner, moveDef, peDef.wsStartPos, SquareToFloat3(testBlockSquare.x, testBlockSquare.y)) != IPath::Ok)
+			return false;
+		#endif
 
-		const float3 sWorldPos = SquareToFloat3(testSquare.x, testSquare.y);
-		const float3 gWorldPos = peDef.goal;
+		if (testBlockPos == goalBlockPos) {
+			// must skip goal sub-searches during CalcVertexPathCosts
+			//
+			// if we have expanded the goal-block, check if a valid
+			// max-resolution path exists (from where we entered it
+			// to the actual goal position) since there might still
+			// be impassable terrain in between
+			//
+			// const float3 gWorldPos = {testBlockPos.x * BLOCK_PIXEL_SIZE * 1.0f, 0.0f, testBlockPos.y * BLOCK_PIXEL_SIZE * 1.0f};
+			// const float3 sWorldPos = {openBlockPos.x * BLOCK_PIXEL_SIZE * 1.0f, 0.0f, openBlockPos.y * BLOCK_PIXEL_SIZE * 1.0f};
+			const float3 sWorldPos = SquareToFloat3(testBlockSquare.x, testBlockSquare.y);
+			const float3 gWorldPos = peDef.wsGoalPos;
 
-		if (sWorldPos.SqDistance2D(gWorldPos) > peDef.sqGoalRadius) {
-			if (DoBlockSearch(owner, moveDef, sWorldPos, gWorldPos) != IPath::Ok) {
-				// we cannot set PATHOPT_BLOCKED here either, result
-				// depends on direction of entry from the parent node
-				//
-				// blockStates.nodeMask[testBlockIdx] |= PATHOPT_BLOCKED;
-				// dirtyBlocks.push_back(testBlockIdx);
-				return false;
+			if (sWorldPos.SqDistance2D(gWorldPos) > peDef.sqGoalRadius) {
+				if (DoBlockSearch(owner, moveDef, sWorldPos, gWorldPos) != IPath::Ok) {
+					// we cannot set PATHOPT_BLOCKED here either, result
+					// depends on direction of entry from the parent node
+					//
+					// blockStates.nodeMask[testBlockIdx] |= PATHOPT_BLOCKED;
+					// dirtyBlocks.push_back(testBlockIdx);
+					return false;
+				}
 			}
 		}
 	}
@@ -791,12 +814,12 @@ bool CPathEstimator::TestBlock(
 	// maps where the average is ~1, it is better to divide hCost by the (initial)
 	// maximum modifier value
 	//
-	// const float flowCost  = (peDef.testMobile) ? (PathFlowMap::GetInstance())->GetFlowCost(square.x, square.y, moveDef, PathDir2PathOpt(pathDir)) : 0.0f;
-	const float   extraCost = blockStates.GetNodeExtraCost(square.x, square.y, peDef.synced);
-	const float    nodeCost = vertexCosts[vertexCostIdx] + extraCost;
+	// const float  flowCost = (peDef.testMobile) ? (PathFlowMap::GetInstance())->GetFlowCost(testBlockSquare.x, testBlockSquare.y, moveDef, PathDir2PathOpt(pathDir)) : 0.0f;
+	const float extraCost = blockStates.GetNodeExtraCost(testBlockSquare.x, testBlockSquare.y, peDef.synced);
+	const float  nodeCost = testVertexCost + extraCost;
 
 	const float gCost = parentOpenBlock->gCost + nodeCost;
-	const float hCost = peDef.Heuristic(square.x, square.y, BLOCK_SIZE) * maxSpeedMod;
+	const float hCost = peDef.Heuristic(testBlockSquare.x, testBlockSquare.y, BLOCK_SIZE) * maxSpeedMod;
 	const float fCost = gCost + hCost;
 
 	// already in the open set?

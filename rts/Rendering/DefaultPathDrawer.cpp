@@ -338,7 +338,7 @@ void DefaultPathDrawer::Draw(const CPathFinderDef* pfd) const {
 	} else {
 		glColor4f(0.0f, 1.0f, 1.0f, 1.0f);
 	}
-	glSurfaceCircle(pfd->goal, std::sqrt(pfd->sqGoalRadius), 20);
+	glSurfaceCircle(pfd->wsGoalPos, std::sqrt(pfd->sqGoalRadius), 20);
 }
 
 void DefaultPathDrawer::Draw(const CPathFinder* pf) const {

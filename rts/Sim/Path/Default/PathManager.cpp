@@ -422,7 +422,7 @@ void CPathManager::MedRes2MaxRes(MultiPath& multiPath, const float3& startPos, c
 	// define the search
 	CCircularSearchConstraint rangedGoalDef(startPos, goalPos, 0.0f, 2.0f, Square(MAXRES_SEARCH_DISTANCE));
 	rangedGoalDef.synced = synced;
-	// FIXME: this should work
+	// TODO
 	// rangedGoalDef.allowRawPath = true;
 
 	// Perform the search.
