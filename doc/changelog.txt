@@ -1,14 +1,17 @@
 Spring changelog
-(since 85.0: "!" prefix indicate backward compatibility broke)
+(since 85.0 a "!" prefix indicates backward compatibility broke)
 (numbers in brackets normally mean the mantis ticket ID)
 
 -- 105.0 --------------------------------------------------------
 Sim:
- - remove undocumented BeamLaser range modifier (30% extra for mobile units)
- - remove legacy (COB) hack allowing units with onlyForward weapons to fire regardless of AimWeapon status
+ - allow resurrecting indestructable features
+ - consider partially reclaimed wrecks nonfresh for area-resurrection commands
+ ! remove undocumented BeamLaser range modifier (provided 30% extra when firing at mobile units)
+ ! remove legacy (COB) hack allowing units with onlyForward weapons to fire regardless of AimWeapon status
 
 Misc:
- - make LuaVFSDownload rescan archives in main thread, when a download finishes instead of starts
+ - make LuaVFSDownload rescan archives in main thread, and do so when a download finishes (not when one starts)
+
 
 
 -- 104.0 --------------------------------------------------------
