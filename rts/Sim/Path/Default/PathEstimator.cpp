@@ -721,13 +721,13 @@ bool CPathEstimator::TestBlock(
 	if (blockStates.nodeMask[testBlockIdx] & (PATHOPT_BLOCKED | PATHOPT_CLOSED))
 		return false;
 
-	const unsigned int  vertexBaseIdx = moveDef.pathType * nbrOfBlocks.x * nbrOfBlocks.y * PATH_DIRECTION_VERTICES;
-	const unsigned int  vertexCostIdx =
+	const unsigned int vertexBaseIdx = moveDef.pathType * nbrOfBlocks.x * nbrOfBlocks.y * PATH_DIRECTION_VERTICES;
+	const unsigned int vertexCostIdx =
 		vertexBaseIdx +
 		openBlockIdx * PATH_DIRECTION_VERTICES +
 		GetBlockVertexOffset(pathDir, nbrOfBlocks.x);
 
-	assert(testBlockIdx <blockStates.peNodeOffsets[moveDef.pathType].size());
+	assert(testBlockIdx < blockStates.peNodeOffsets[moveDef.pathType].size());
 	assert(vertexCostIdx < vertexCosts.size());
 
 	// best accessible heightmap-coordinate within tested block

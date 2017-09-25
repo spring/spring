@@ -2,6 +2,10 @@ Spring changelog
 (since 85.0: "!" prefix indicate backward compatibility broke)
 (numbers in brackets normally mean the mantis ticket ID)
 
+-- 105.0 --------------------------------------------------------
+
+
+
 -- 104.0 --------------------------------------------------------
 Major:
  - Add LuaMenu - an unsynced stripped down Lua environment that starts before the game is loaded and persists through reload
@@ -303,6 +307,7 @@ Bugfixes:
  - catch invalid CmdDesc indices in GuiHandler::DrawButtons
  - insert missing eventHandler.RemoveClient call in RoamMeshDrawer
 
+ - fix #5759 (units flip-flopping between paths due to path-estimator expanding unreachable nodes)
  - fix #5778 (crash when reloading with QTPFS)
  - fix #5730 (crash during nano-particle creation by builders under specific circumstances)
  - fix #5728 (canBeAssisted=false factories only being buildable by one constructor at a time)
