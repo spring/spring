@@ -3,7 +3,8 @@ Spring changelog
 (numbers in brackets normally mean the mantis ticket ID)
 
 -- 105.0 --------------------------------------------------------
-
+Misc:
+ - make LuaVFSDownload rescan archives in main thread, when a download finishes instead of starts
 
 
 -- 104.0 --------------------------------------------------------
