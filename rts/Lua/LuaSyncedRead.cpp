@@ -3536,9 +3536,15 @@ int LuaSyncedRead::GetUnitWeaponHaveFreeLineOfFire(lua_State* L)
 		srcPos.y = luaL_optnumber(L, 4, srcPos.y);
 		srcPos.z = luaL_optnumber(L, 5, srcPos.z);
 
-		tgtPos.x = luaL_optnumber(L, 6, 0.0f);
-		tgtPos.y = luaL_optnumber(L, 7, 0.0f);
-		tgtPos.z = luaL_optnumber(L, 8, 0.0f);
+		if (lua_gettop(L) <= 6) {
+			if ((enemy = ParseUnit(L, __func__, 6)) == nullptr)
+				return 0;
+			tgtPos = weapon->GetUnitLeadTargetPos(enemy);
+		} else {
+			tgtPos.x = luaL_optnumber(L, 6, 0.0f);
+			tgtPos.y = luaL_optnumber(L, 7, 0.0f);
+			tgtPos.z = luaL_optnumber(L, 8, 0.0f);
+		}
 	}
 
 	lua_pushboolean(L, weapon->HaveFreeLineOfFire(srcPos, tgtPos, SWeaponTarget(enemy, tgtPos, true)));
