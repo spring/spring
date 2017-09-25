@@ -9,6 +9,9 @@ Sim:
  ! remove undocumented BeamLaser range modifier (provided 30% extra when firing at mobile units)
  ! remove legacy (COB) hack allowing units with onlyForward weapons to fire regardless of AimWeapon status
 
+Lua:
+ - allow specifying source by position but target by ID for Spring.GetUnitWeaponHaveFreeLineOfFire
+
 Misc:
  - make LuaVFSDownload rescan archives in main thread, and do so when a download finishes (not when one starts)
 

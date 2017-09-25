@@ -3526,19 +3526,43 @@ int LuaSyncedRead::GetUnitWeaponHaveFreeLineOfFire(lua_State* L)
 	float3 srcPos = weapon->GetAimFromPos();
 	float3 tgtPos;
 
-	if (lua_gettop(L) <= 3) {
-		if ((enemy = ParseUnit(L, __func__, 3)) == nullptr)
+	const auto ParsePos = [&L](int idx, int cnt, float* pos) {
+		for (int i = 0; i < cnt; i++) {
+			pos[i] = luaL_optnumber(L, idx + i, pos[i]);
+		}
+	};
+
+	switch (lua_gettop(L)) {
+		case 3: {
+			// [3] := targetID
+			if ((enemy = ParseUnit(L, __func__, 3)) == nullptr)
+				return 0;
+
+			tgtPos = weapon->GetUnitLeadTargetPos(enemy);
+		} break;
+		case 5: {
+			// [3,4,5] := srcPos
+			ParsePos(3, 3, &srcPos.x);
+		} break;
+
+		case 6: {
+			// [3,4,5] := srcPos, [6] := targetID
+			ParsePos(3, 3, &srcPos.x);
+
+			if ((enemy = ParseUnit(L, __func__, 6)) == nullptr)
+				return 0;
+
+			tgtPos = weapon->GetUnitLeadTargetPos(enemy);
+		} break;
+		case 8: {
+			// [3,4,5] := srcPos, [6,7,8] := tgtPos
+			ParsePos(3, 3, &srcPos.x);
+			ParsePos(6, 3, &tgtPos.x);
+		} break;
+
+		default: {
 			return 0;
-
-		tgtPos = weapon->GetUnitLeadTargetPos(enemy);
-	} else {
-		srcPos.x = luaL_optnumber(L, 3, srcPos.x);
-		srcPos.y = luaL_optnumber(L, 4, srcPos.y);
-		srcPos.z = luaL_optnumber(L, 5, srcPos.z);
-
-		tgtPos.x = luaL_optnumber(L, 6, 0.0f);
-		tgtPos.y = luaL_optnumber(L, 7, 0.0f);
-		tgtPos.z = luaL_optnumber(L, 8, 0.0f);
+		} break;
 	}
 
 	lua_pushboolean(L, weapon->HaveFreeLineOfFire(srcPos, tgtPos, SWeaponTarget(enemy, tgtPos, true)));
