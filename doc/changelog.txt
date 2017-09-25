@@ -3,6 +3,10 @@ Spring changelog
 (numbers in brackets normally mean the mantis ticket ID)
 
 -- 105.0 --------------------------------------------------------
+Sim:
+ - remove undocumented BeamLaser range modifier (30% extra for mobile units)
+ - remove legacy (COB) hack allowing units with onlyForward weapons to fire regardless of AimWeapon status
+
 Misc:
  - make LuaVFSDownload rescan archives in main thread, when a download finishes instead of starts
 

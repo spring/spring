@@ -310,7 +310,7 @@ void CWeapon::UpdateAim()
 	//   this should not need to be here, but many legacy scripts do not
 	//   seem to define Aim*Ary in COB for units with onlyForward weapons
 	//   (so angleGood is never set to true) -- REMOVE AFTER 90.0
-	angleGood |= (onlyForward && targetAngleConstraint);
+	// angleGood |= (onlyForward && targetAngleConstraint);
 
 	// reaim weapon when needed
 	ReAimWeapon();

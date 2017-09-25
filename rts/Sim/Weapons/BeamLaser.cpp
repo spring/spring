@@ -137,12 +137,8 @@ void CBeamLaser::UpdatePosAndMuzzlePos()
 
 float CBeamLaser::GetPredictedImpactTime(float3 p) const
 {
-	if (!weaponDef->beamburst) {
-		return salvoSize / 2;
-	} else {
-		// beamburst tracks the target during the burst so there's no need to lead
-		return 0;
-	}
+	// beamburst tracks the target during the burst so there's no need to lead
+	return (salvoSize * 0.5f * (1 - weaponDef->beamburst));
 }
 
 void CBeamLaser::UpdateSweep()
@@ -265,15 +261,7 @@ void CBeamLaser::FireImpl(const bool scriptCall)
 void CBeamLaser::FireInternal(float3 curDir)
 {
 	float actualRange = range;
-	float rangeMod = 1.0f;
-
-	if (!owner->unitDef->IsImmobileUnit()) {
-		// help units fire while chasing
-		rangeMod = 1.3f;
-	}
-	if (owner->UnderFirstPersonControl()) {
-		rangeMod = 0.95f;
-	}
+	float rangeMod = 1.0f - (0.05f * owner->UnderFirstPersonControl());
 
 	bool tryAgain = true;
 	bool doDamage = true;
@@ -387,12 +375,11 @@ void CBeamLaser::FireInternal(float3 curDir)
 	if (!doDamage)
 		return;
 
-	if (hitUnit != NULL) {
+	if (hitUnit != nullptr) {
 		hitUnit->SetLastHitPiece(hitColQuery.GetHitPiece(), gs->frameNum);
 
-		if (weaponDef->targetBorder > 0.0f) {
-			actualRange += (hitUnit->radius * weaponDef->targetBorder);
-		}
+		// FIXME? still assumes spherical CV's
+		actualRange += (hitUnit->radius * weaponDef->targetBorder * (weaponDef->targetBorder > 0.0f));
 	}
 
 	if (curLength < maxLength) {
