@@ -15,6 +15,19 @@
 void ErrorMessageBox(const std::string&, const std::string&, unsigned int) {}
 #endif
 
+#if (!defined(UNITSYNC) && !defined(DEDICATED))
+static void SetupThreadReg() {
+	Threading::SetFileSysThread();
+	Watchdog::RegisterThread(WDT_VFSI);
+}
+static void ClearThreadReg() {
+	Watchdog::DeregisterThread(WDT_VFSI);
+}
+#else
+static void SetupThreadReg() {}
+static void ClearThreadReg() {}
+#endif
+
 
 volatile bool FileSystemInitializer::initSuccess = false;
 volatile bool FileSystemInitializer::initFailure = false;
@@ -43,8 +56,7 @@ bool FileSystemInitializer::Initialize()
 		return true;
 
 	try {
-		Threading::SetFileSysThread();
-		Watchdog::RegisterThread(WDT_VFSI);
+		SetupThreadReg();
 		Platform::SetOrigCWD();
 
 		dataDirLocater.LocateDataDirs();
@@ -61,16 +73,16 @@ bool FileSystemInitializer::Initialize()
 		// even if we end up here, do not clean up configHandler yet
 		// since it can already have early observers registered that
 		// do not remove themselves until exit
-		Watchdog::DeregisterThread(WDT_VFSI);
+		ClearThreadReg();
 		ErrorMessageBox(ex.what(), "Spring: caught std::exception", MBF_OK | MBF_EXCL);
 	} catch (...) {
 		initFailure = true;
 
-		Watchdog::DeregisterThread(WDT_VFSI);
+		ClearThreadReg();
 		ErrorMessageBox("", "Spring: caught generic exception", MBF_OK | MBF_EXCL);
 	}
 
-	Watchdog::DeregisterThread(WDT_VFSI);
+	ClearThreadReg();
 
 	return (initSuccess && !initFailure);
 }
