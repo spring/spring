@@ -72,7 +72,6 @@
 #include "System/FileSystem/FileSystemInitializer.h"
 #include "System/Input/KeyInput.h"
 #include "System/Input/MouseInput.h"
-#include "System/Input/Joystick.h"
 #include "System/Log/ConsoleSink.h"
 #include "System/Log/ILog.h"
 #include "System/Log/DefaultFilter.h"
@@ -344,7 +343,6 @@ bool SpringApp::Init()
 	CNamedTextures::Init();
 	LuaOpenGL::Init();
 	ISound::Initialize();
-	InitJoystick();
 
 	// Lua socket restrictions
 	luaSocketRestrictions = new CLuaSocketRestrictions();
@@ -1012,7 +1010,6 @@ void SpringApp::Kill(bool fromRun)
 	CNamedTextures::Kill(true);
 	GlobalConfig::Deallocate();
 
-	FreeJoystick();
 	IMouseInput::FreeInstance(mouseInput);
 
 	LOG("[SpringApp::%s][6]", __func__);

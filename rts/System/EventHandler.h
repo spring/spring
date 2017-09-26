@@ -212,7 +212,6 @@ class CEventHandler
 		bool MousePress(int x, int y, int button);
 		void MouseRelease(int x, int y, int button);
 		bool MouseWheel(bool up, float value);
-		bool JoystickEvent(const std::string& event, int val1, int val2);
 		bool IsAbove(int x, int y);
 
 		std::string GetTooltip(int x, int y);

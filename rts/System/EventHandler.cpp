@@ -700,12 +700,6 @@ bool CEventHandler::MouseWheel(bool up, float value)
 	return false;
 }
 
-bool CEventHandler::JoystickEvent(const std::string& event, int val1, int val2)
-{
-	CONTROL_REVERSE_ITERATE_DEF_TRUE(JoystickEvent, event, val1, val2)
-	return false;
-}
-
 bool CEventHandler::IsAbove(int x, int y)
 {
 	CONTROL_REVERSE_ITERATE_DEF_TRUE(IsAbove, x, y)

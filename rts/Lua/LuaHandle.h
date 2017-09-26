@@ -196,7 +196,6 @@ class CLuaHandle : public CEventClient
 		bool MousePress(int x, int y, int button) override;
 		void MouseRelease(int x, int y, int button) override;
 		bool MouseWheel(bool up, float value) override;
-		bool JoystickEvent(const std::string& event, int val1, int val2) override;
 		bool IsAbove(int x, int y) override;
 		string GetTooltip(int x, int y) override;
 
