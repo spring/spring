@@ -9,6 +9,7 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/Platform/errorhandler.h"
 #include "System/Platform/Misc.h"
+#include "System/Platform/Watchdog.h"
 
 #ifdef UNITSYNC
 void ErrorMessageBox(const std::string&, const std::string&, unsigned int) {}
@@ -42,6 +43,8 @@ bool FileSystemInitializer::Initialize()
 		return true;
 
 	try {
+		Threading::SetFileSysThread();
+		Watchdog::RegisterThread(WDT_VFSI);
 		Platform::SetOrigCWD();
 
 		dataDirLocater.LocateDataDirs();
@@ -58,14 +61,16 @@ bool FileSystemInitializer::Initialize()
 		// even if we end up here, do not clean up configHandler yet
 		// since it can already have early observers registered that
 		// do not remove themselves until exit
-		Cleanup(false);
+		Watchdog::DeregisterThread(WDT_VFSI);
 		ErrorMessageBox(ex.what(), "Spring: caught std::exception", MBF_OK | MBF_EXCL);
 	} catch (...) {
 		initFailure = true;
 
-		Cleanup(false);
+		Watchdog::DeregisterThread(WDT_VFSI);
 		ErrorMessageBox("", "Spring: caught generic exception", MBF_OK | MBF_EXCL);
 	}
+
+	Watchdog::DeregisterThread(WDT_VFSI);
 
 	return (initSuccess && !initFailure);
 }
