@@ -68,8 +68,8 @@
 	SETUP_EVENT(UnitCloaked,    MANAGED_BIT)
 	SETUP_EVENT(UnitDecloaked,  MANAGED_BIT)
 
-	SETUP_EVENT(UnitUnitCollision,    MANAGED_BIT)
-	SETUP_EVENT(UnitFeatureCollision, MANAGED_BIT)
+	SETUP_EVENT(UnitUnitCollision,    MANAGED_BIT | CONTROL_BIT)
+	SETUP_EVENT(UnitFeatureCollision, MANAGED_BIT | CONTROL_BIT)
 	SETUP_EVENT(UnitMoved,            MANAGED_BIT)
 	SETUP_EVENT(UnitMoveFailed,       MANAGED_BIT)
 

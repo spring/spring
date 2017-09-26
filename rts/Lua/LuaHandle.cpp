@@ -1210,12 +1210,16 @@ void CLuaHandle::UnitDecloaked(const CUnit* unit)
 
 
 
-void CLuaHandle::UnitUnitCollision(const CUnit* collider, const CUnit* collidee)
+bool CLuaHandle::UnitUnitCollision(const CUnit* collider, const CUnit* collidee)
 {
 	// if empty, we are not a LuaHandleSynced
-	if (watchUnitDefs.empty()) return;
-	if (!watchUnitDefs[collider->unitDef->id]) return;
-	if (!watchUnitDefs[collidee->unitDef->id]) return;
+	if (watchUnitDefs.empty())
+		return false;
+
+	if (!watchUnitDefs[collider->unitDef->id])
+		return false;
+	if (!watchUnitDefs[collidee->unitDef->id])
+		return false;
 
 	LUA_CALL_IN_CHECK(L);
 	luaL_checkstack(L, 5, __func__);
@@ -1224,22 +1228,30 @@ void CLuaHandle::UnitUnitCollision(const CUnit* collider, const CUnit* collidee)
 	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
 	if (!cmdStr.GetGlobalFunc(L))
-		return;
+		return false;
 
 	lua_pushnumber(L, collider->id);
 	lua_pushnumber(L, collidee->id);
-	lua_pushboolean(L, false);
 
-	RunCallInTraceback(L, cmdStr, 3, 0, traceBack.GetErrFuncIdx(), false);
+	RunCallInTraceback(L, cmdStr, 2, 1, traceBack.GetErrFuncIdx(), false);
+
+	const bool ret = luaL_optboolean(L, -1, false);
+	lua_pop(L, 1);
+	return ret;
 }
 
-void CLuaHandle::UnitFeatureCollision(const CUnit* collider, const CFeature* collidee)
+bool CLuaHandle::UnitFeatureCollision(const CUnit* collider, const CFeature* collidee)
 {
-	// if empty, we are not a LuaHandleSynced
-	if (watchUnitDefs.empty()) return;
-	if (watchFeatureDefs.empty()) return;
-	if (!watchUnitDefs[collider->unitDef->id]) return;
-	if (!watchFeatureDefs[collidee->def->id]) return;
+	// if empty, we are not a LuaHandleSynced (and must always return false)
+	if (watchUnitDefs.empty())
+		return false;
+	if (watchFeatureDefs.empty())
+		return false;
+
+	if (!watchUnitDefs[collider->unitDef->id])
+		return false;
+	if (!watchFeatureDefs[collidee->def->id])
+		return false;
 
 	LUA_CALL_IN_CHECK(L);
 	luaL_checkstack(L, 5, __func__);
@@ -1248,20 +1260,25 @@ void CLuaHandle::UnitFeatureCollision(const CUnit* collider, const CFeature* col
 	const LuaUtils::ScopedDebugTraceBack traceBack(L);
 
 	if (!cmdStr.GetGlobalFunc(L))
-		return;
+		return false;
 
 	lua_pushnumber(L, collider->id);
 	lua_pushnumber(L, collidee->id);
-	lua_pushboolean(L, false);
 
-	RunCallInTraceback(L, cmdStr, 3, 0, traceBack.GetErrFuncIdx(), false);
+	RunCallInTraceback(L, cmdStr, 2, 1, traceBack.GetErrFuncIdx(), false);
+
+	const bool ret = luaL_optboolean(L, -1, false);
+	lua_pop(L, 1);
+	return ret;
 }
 
 void CLuaHandle::UnitMoveFailed(const CUnit* unit)
 {
-	// if empty, we are not a LuaHandleSynced
-	if (watchUnitDefs.empty()) return;
-	if (!watchUnitDefs[unit->unitDef->id]) return;
+	// if empty, we are not a LuaHandleSynced (and must always return false)
+	if (watchUnitDefs.empty())
+		return;
+	if (!watchUnitDefs[unit->unitDef->id])
+		return;
 
 	static const LuaHashString cmdStr(__func__);
 	UnitCallIn(cmdStr, unit);
@@ -1438,11 +1455,14 @@ bool CLuaHandle::Explosion(int weaponDefID, int projectileID, const float3& pos,
 {
 	// piece-projectile collision (*ALL* other
 	// explosion events pass valid weaponDefIDs)
-	if (weaponDefID < 0) return false;
+	if (weaponDefID < 0)
+		return false;
 
 	// if empty, we are not a LuaHandleSynced
-	if (watchWeaponDefs.empty()) return false;
-	if (!watchWeaponDefs[weaponDefID]) return false;
+	if (watchWeaponDefs.empty())
+		return false;
+	if (!watchWeaponDefs[weaponDefID])
+		return false;
 
 	LUA_CALL_IN_CHECK(L, false);
 	luaL_checkstack(L, 7, __func__);
