@@ -29,17 +29,19 @@
 
 
 namespace Threading {
-	static std::shared_ptr<Error> threadError;
+	enum {
+		THREAD_IDX_MAIN = 0,
+		THREAD_IDX_LOAD = 1,
+		THREAD_IDX_SND  = 2,
+		THREAD_IDX_VFSI = 3,
+		THREAD_IDX_WDOG = 4,
+		THREAD_IDX_LAST = 5,
+	};
 
-	static bool haveMainThreadID = false;
-	static bool haveGameLoadThreadID = false;
-	static bool haveAudioThreadID = false;
-	static bool haveWatchDogThreadID = false;
+	static bool cachedThreadIDs[THREAD_IDX_LAST] = {false, false, false, false, false};
+	static NativeThreadId nativeThreadIDs[THREAD_IDX_LAST] = {};
 
-	static NativeThreadId nativeMainThreadID;
-	static NativeThreadId nativeGameLoadThreadID;
-	static NativeThreadId nativeAudioThreadID;
-	static NativeThreadId nativeWatchDogThreadID;
+	static Error threadError;
 
 	thread_local std::shared_ptr<Threading::ThreadControls> threadCtls;
 
@@ -296,7 +298,7 @@ namespace Threading {
 		std::unique_lock<spring::mutex> lock(tempCtls.mutSuspend);
 		spring::thread localthread(std::bind(Threading::ThreadStart, taskFunc, ppCtlsReturn, &tempCtls));
 
-		// Wait so that we know the thread is running and fully initialized before returning.
+		// wait so that we know the thread is running and fully initialized before returning
 		tempCtls.condInitialized.wait(lock);
 #else
 		spring::thread localthread(taskFunc);
@@ -307,51 +309,42 @@ namespace Threading {
 
 
 
-	void SetMainThread() {
-		if (!haveMainThreadID) {
-			haveMainThreadID = true;
-			// springMainThreadID = spring::this_thread::get_id();
-			nativeMainThreadID = Threading::GetCurrentThreadId();
-		}
+	static void SetThread(unsigned int threadIndex, bool setControls, bool isLoadThread) {
+		// NOTE:
+		//   the ID's of LOAD and SND always have to be set unconditionally since
+		//   those two threads are joined and respawned when reloading, KISS here
+		//   (while other threads never call Set*Thread more than once making the
+		//   is-cached flags redundant anyway)
+		if (true || !cachedThreadIDs[threadIndex])
+			nativeThreadIDs[threadIndex] = Threading::GetCurrentThreadId();
 
-		SetCurrentThreadControls(false);
+		cachedThreadIDs[threadIndex] = true;
+
+		if (!setControls)
+			return;
+
+		SetCurrentThreadControls(isLoadThread);
 	}
 
-	void SetGameLoadThread() {
-		if (!haveGameLoadThreadID) {
-			haveGameLoadThreadID = true;
-			nativeGameLoadThreadID = Threading::GetCurrentThreadId();
-		}
+	void     SetMainThread() { SetThread(THREAD_IDX_MAIN,  true, false); }
+	void SetGameLoadThread() { SetThread(THREAD_IDX_LOAD,  true,  true); }
+	void    SetAudioThread() { SetThread(THREAD_IDX_SND ,  true, false); }
+	void  SetFileSysThread() { SetThread(THREAD_IDX_VFSI,  true, false); }
+	void SetWatchDogThread() { SetThread(THREAD_IDX_WDOG, false, false); }
 
-		SetCurrentThreadControls(true);
-	}
-
-	void SetAudioThread() {
-		if (!haveAudioThreadID) {
-			haveAudioThreadID = true;
-			nativeAudioThreadID = Threading::GetCurrentThreadId();
-		}
-
-		SetCurrentThreadControls(false);
-	}
-
-	void SetWatchDogThread() {
-		if (!haveWatchDogThreadID) {
-			haveWatchDogThreadID = true;
-			nativeWatchDogThreadID = Threading::GetCurrentThreadId();
-		}
-	}
-
-	bool IsMainThread(NativeThreadId threadID) { return NativeThreadIdsEqual(threadID, nativeMainThreadID); }
+	bool IsMainThread(NativeThreadId threadID) { return NativeThreadIdsEqual(threadID, nativeThreadIDs[THREAD_IDX_MAIN]); }
 	bool IsMainThread(                       ) { return IsMainThread(Threading::GetCurrentThreadId()); }
 
-	bool IsGameLoadThread(NativeThreadId threadID) { return NativeThreadIdsEqual(threadID, nativeGameLoadThreadID); }
+	bool IsGameLoadThread(NativeThreadId threadID) { return NativeThreadIdsEqual(threadID, nativeThreadIDs[THREAD_IDX_LOAD]); }
 	bool IsGameLoadThread(                       ) { return IsGameLoadThread(Threading::GetCurrentThreadId()); }
 
-	bool IsAudioThread(NativeThreadId threadID) { return NativeThreadIdsEqual(threadID, nativeAudioThreadID); }
+	bool IsAudioThread(NativeThreadId threadID) { return NativeThreadIdsEqual(threadID, nativeThreadIDs[THREAD_IDX_SND]); }
 	bool IsAudioThread(                       ) { return IsAudioThread(Threading::GetCurrentThreadId()); }
 
-	bool IsWatchDogThread(NativeThreadId threadID) { return NativeThreadIdsEqual(threadID, nativeWatchDogThreadID); }
+	bool IsFileSysThread(NativeThreadId threadID) { return NativeThreadIdsEqual(threadID, nativeThreadIDs[THREAD_IDX_VFSI]); }
+	bool IsFileSysThread(                       ) { return IsFileSysThread(Threading::GetCurrentThreadId()); }
+
+	bool IsWatchDogThread(NativeThreadId threadID) { return NativeThreadIdsEqual(threadID, nativeThreadIDs[THREAD_IDX_WDOG]); }
 	bool IsWatchDogThread(                       ) { return IsWatchDogThread(Threading::GetCurrentThreadId()); }
 
 
@@ -388,7 +381,7 @@ namespace Threading {
 	}
 
 
-	void SetThreadError(const Error& err) { threadError.reset(new Error(err)); }
-	Error* GetThreadError() { return (threadError.get()); }
+	void SetThreadError(const Error& err) { threadError = err; }
+	Error* GetThreadError() { return &threadError; }
 }
 
