@@ -163,8 +163,8 @@ class CEventClient
 		virtual void RenderUnitCreated(const CUnit* unit, int cloaked) {}
 		virtual void RenderUnitDestroyed(const CUnit* unit) {}
 
-		virtual bool UnitUnitCollision(const CUnit* collider, const CUnit* collidee) {}
-		virtual bool UnitFeatureCollision(const CUnit* collider, const CFeature* collidee) {}
+		virtual bool UnitUnitCollision(const CUnit* collider, const CUnit* collidee) { return false; }
+		virtual bool UnitFeatureCollision(const CUnit* collider, const CFeature* collidee) { return false; }
 		virtual void UnitMoved(const CUnit* unit) {}
 		virtual void UnitMoveFailed(const CUnit* unit) {}
 
