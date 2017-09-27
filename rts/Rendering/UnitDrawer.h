@@ -157,7 +157,6 @@ public:
 	bool DrawDeferred() const { return drawDeferred; }
 
 	bool UseAdvShading() const { return advShading; }
-	bool& UseAdvShadingRef() { return advShading; }
 	bool& WireFrameModeRef() { return wireFrameMode; }
 
 public:
