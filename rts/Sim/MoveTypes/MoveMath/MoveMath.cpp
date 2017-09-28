@@ -16,6 +16,8 @@
 bool CMoveMath::noHoverWaterMove = false;
 float CMoveMath::waterDamageCost = 0.0f;
 
+static constexpr int FOOTPRINT_XSTEP = 2;
+static constexpr int FOOTPRINT_ZSTEP = 2;
 
 
 float CMoveMath::yLevel(const MoveDef& moveDef, int xSqr, int zSqr)
@@ -116,12 +118,11 @@ CMoveMath::BlockType CMoveMath::IsBlockedNoSpeedModCheck(const MoveDef& moveDef,
 		return BLOCK_IMPASSABLE;
 
 	BlockType ret = BLOCK_NONE;
-	const int xstep = 2, zstep = 2;
 
 	// (footprints are point-symmetric around <xSquare, zSquare>)
-	for (int z = zmin; z <= zmax; z += zstep) {
+	for (int z = zmin; z <= zmax; z += FOOTPRINT_ZSTEP) {
 		const int zOffset = z * mapDims.mapx;
-		for (int x = xmin; x <= xmax; x += xstep) {
+		for (int x = xmin; x <= xmax; x += FOOTPRINT_XSTEP) {
 			const BlockingMapCell& cell = groundBlockingObjectMap->GetCellUnsafeConst(zOffset + x);
 			for (const CSolidObject* collidee: cell) {
 				ret |= ObjectBlockType(moveDef, collidee, collider);
@@ -272,14 +273,13 @@ CMoveMath::BlockType CMoveMath::RangeIsBlocked(const MoveDef& moveDef, int xmin,
 
 	BlockType ret = BLOCK_NONE;
 
-	const int xstep = 2, zstep = 2;
 	const int tempNum = gs->GetTempNum();
 
 	// (footprints are point-symmetric around <xSquare, zSquare>)
-	for (int z = zmin; z <= zmax; z += zstep) {
+	for (int z = zmin; z <= zmax; z += FOOTPRINT_ZSTEP) {
 		const int zOffset = z * mapDims.mapx;
 
-		for (int x = xmin; x <= xmax; x += xstep) {
+		for (int x = xmin; x <= xmax; x += FOOTPRINT_XSTEP) {
 			const BlockingMapCell& cell = groundBlockingObjectMap->GetCellUnsafeConst(zOffset + x);
 
 			for (CSolidObject* collidee: cell) {
