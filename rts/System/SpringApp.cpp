@@ -408,6 +408,10 @@ bool SpringApp::InitFileSystem()
 		ShowSplashScreen("");
 	}
 
+	// skip hangs while waiting for the popup to die and kill us
+	if (!ret)
+		Watchdog::DeregisterThread(WDT_MAIN);
+
 	fsInitThread.join();
 	#else
 	FileSystemInitializer::InitializeThr(&ret);
@@ -941,6 +945,8 @@ int SpringApp::PostKill(const Threading::Error& e)
 			return (Watchdog::DeregisterThread(WDT_LOAD));
 		if (Threading::IsAudioThread())
 			return (Watchdog::DeregisterThread(WDT_AUDIO));
+		if (Threading::IsFileSysThread())
+			return (Watchdog::DeregisterThread(WDT_VFSI));
 
 		return 0;
 	}

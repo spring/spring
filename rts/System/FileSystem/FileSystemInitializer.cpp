@@ -55,8 +55,9 @@ bool FileSystemInitializer::Initialize()
 	if (initSuccess)
 		return true;
 
+	SetupThreadReg();
+
 	try {
-		SetupThreadReg();
 		Platform::SetOrigCWD();
 
 		dataDirLocater.LocateDataDirs();
@@ -73,15 +74,14 @@ bool FileSystemInitializer::Initialize()
 		// even if we end up here, do not clean up configHandler yet
 		// since it can already have early observers registered that
 		// do not remove themselves until exit
-		ClearThreadReg();
 		ErrorMessageBox(ex.what(), "Spring: caught std::exception", MBF_OK | MBF_EXCL);
 	} catch (...) {
 		initFailure = true;
 
-		ClearThreadReg();
 		ErrorMessageBox("", "Spring: caught generic exception", MBF_OK | MBF_EXCL);
 	}
 
+	// in case of an exception, ErrorMessageBox takes care of this
 	ClearThreadReg();
 
 	return (initSuccess && !initFailure);
