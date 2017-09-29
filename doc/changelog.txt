@@ -21,6 +21,7 @@ Lua:
    returns the number of (kilo-)bytes used and (kilo-)allocations performed
    by the calling Lua state individually, as well as by all states globally
  - add Spring.GetVidMemUsage to LuaUnsyncedRead
+ - fix Spring.GetPlayerRoster sometimes excluding active players
 
 Misc:
  - remove joystick support
