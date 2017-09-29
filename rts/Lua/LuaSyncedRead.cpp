@@ -499,6 +499,7 @@ static int PushPieceCollisionVolumeData(lua_State* L, const CSolidObject* o)
 
 
 static int PushTerrainTypeData(lua_State* L, const CMapInfo::TerrainType* tt, bool groundInfo) {
+	lua_pushinteger(L, tt - &mapInfo->terrainTypes[0]); // index
 	lua_pushsstring(L, tt->name);
 
 	if (groundInfo) {
@@ -514,7 +515,7 @@ static int PushTerrainTypeData(lua_State* L, const CMapInfo::TerrainType* tt, bo
 	lua_pushnumber(L, tt->hoverSpeed);
 	lua_pushnumber(L, tt->shipSpeed);
 	lua_pushboolean(L, tt->receiveTracks);
-	return (7 + groundInfo);
+	return (8 + groundInfo);
 }
 
 static int GetWorldObjectVelocity(lua_State* L, const CWorldObject* o)
@@ -4983,9 +4984,9 @@ int LuaSyncedRead::GetGroundInfo(lua_State* L)
 
 	const int maxIndex = (mapDims.hmapx * mapDims.hmapy) - 1;
 	const int sqrIndex = std::min(maxIndex, (mapDims.hmapx * iz) + ix);
-	const int typeIndex = readMap->GetTypeMapSynced()[sqrIndex];
+	const int  ttIndex = readMap->GetTypeMapSynced()[sqrIndex];
 
-	assert(typeIndex < CMapInfo::NUM_TERRAIN_TYPES);
+	assert(ttIndex < CMapInfo::NUM_TERRAIN_TYPES);
 	assert(lua_gettop(L) == 2);
 
 	// LuaMetalMap::GetMetalAmount uses absolute indexing,
@@ -4994,7 +4995,7 @@ int LuaSyncedRead::GetGroundInfo(lua_State* L)
 	lua_pushnumber(L, ix);
 	lua_pushnumber(L, iz);
 
-	return (PushTerrainTypeData(L, &mapInfo->terrainTypes[typeIndex], true));
+	return (PushTerrainTypeData(L, &mapInfo->terrainTypes[ttIndex], true));
 }
 
 
