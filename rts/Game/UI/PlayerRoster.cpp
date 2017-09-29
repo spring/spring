@@ -96,7 +96,7 @@ const char* PlayerRoster::GetSortName() const
 }
 
 
-const std::vector<int>& PlayerRoster::GetIndices(int* activePlayerCount, bool includePathingFlag, bool callerBlockResort)
+const std::vector<int>& PlayerRoster::GetIndices(bool includePathingFlag, bool callerBlockResort)
 {
 	// if Disabled, compareFunc is a dummy so the indices are left alone
 	// assert(compareType != Disabled);
@@ -117,27 +117,7 @@ const std::vector<int>& PlayerRoster::GetIndices(int* activePlayerCount, bool in
 		std::sort(playerIndices.begin(), playerIndices.end(), [&](int aIdx, int bIdx) { return (compareFunc(aIdx, bIdx) <= 0); });
 	}
 
-	if (activePlayerCount == nullptr)
-		return playerIndices;
-
-
-	// set the count of active players
-	int& c = *activePlayerCount;
-
-	for (c = 0; c < playerHandler->ActivePlayers(); c++) {
-		assert(playerHandler->IsValidPlayer(playerIndices[c]));
-
-		const CPlayer* p = playerHandler->Player(playerIndices[c]);
-
-		if (p->active)
-			continue;
-
-		if (!gs->PreSimFrame())
-			break;
-		if (!includePathingFlag || p->ping != PATHING_FLAG)
-			break;
-	}
-
+	// caller should do filtering for active players
 	return playerIndices;
 }
 

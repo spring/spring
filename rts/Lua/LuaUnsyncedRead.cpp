@@ -2342,7 +2342,7 @@ int LuaUnsyncedRead::GetPlayerRoster(lua_State* L)
 	const bool includePathingFlag = luaL_optboolean(L, 2, false);
 
 	// get the sorted indices of *all* (including inactive) players
-	const std::vector<int>& playerIndices = playerRoster.GetIndices(nullptr, includePathingFlag);
+	const std::vector<int>& playerIndices = playerRoster.GetIndices(includePathingFlag);
 
 	// revert
 	playerRoster.SetSortTypeByCode(oldSortType);
