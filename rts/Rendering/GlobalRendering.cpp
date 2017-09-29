@@ -117,7 +117,6 @@ CR_REG_METADATA(CGlobalRendering, (
 
 	CR_IGNORED(msaaLevel),
 	CR_IGNORED(maxTextureSize),
-	CR_IGNORED(gpuMemorySize),
 	CR_IGNORED(maxTexAnisoLvl),
 
 	CR_IGNORED(active),
@@ -194,7 +193,6 @@ CGlobalRendering::CGlobalRendering()
 	// fallback
 	, msaaLevel(std::max(configHandler->GetInt("MSAALevel"), configHandler->GetInt("FSAALevel")))
 	, maxTextureSize(2048)
-	, gpuMemorySize(0)
 	, maxTexAnisoLvl(0.0f)
 
 	, drawSky(true)
@@ -675,37 +673,41 @@ void CGlobalRendering::QueryGLMaxVals()
 
 void CGlobalRendering::QueryVersionInfo(char (&sdlVersionStr)[64], char (&glVidMemStr)[64])
 {
-	SDL_VERSION(&globalRenderingInfo.sdlVersionCompiled);
-	SDL_GetVersion(&globalRenderingInfo.sdlVersionLinked);
+	auto& grInfo = globalRenderingInfo;
 
-	if ((globalRenderingInfo.glVersion   = (const char*) glGetString(GL_VERSION                 )) == nullptr) globalRenderingInfo.glVersion   = "unknown";
-	if ((globalRenderingInfo.glVendor    = (const char*) glGetString(GL_VENDOR                  )) == nullptr) globalRenderingInfo.glVendor    = "unknown";
-	if ((globalRenderingInfo.glRenderer  = (const char*) glGetString(GL_RENDERER                )) == nullptr) globalRenderingInfo.glRenderer  = "unknown";
-	if ((globalRenderingInfo.glslVersion = (const char*) glGetString(GL_SHADING_LANGUAGE_VERSION)) == nullptr) globalRenderingInfo.glslVersion = "unknown";
-	if ((globalRenderingInfo.glewVersion = (const char*) glewGetString(GLEW_VERSION             )) == nullptr) globalRenderingInfo.glewVersion = "unknown";
+	auto& sdlVC = grInfo.sdlVersionCompiled;
+	auto& sdlVL = grInfo.sdlVersionLinked;
 
-	if (!ShowDriverWarning(globalRenderingInfo.glVendor, globalRenderingInfo.glRenderer))
+	SDL_VERSION(&sdlVC);
+	SDL_GetVersion(&sdlVL);
+
+	if ((grInfo.glVersion   = (const char*) glGetString(GL_VERSION                 )) == nullptr) grInfo.glVersion   = "unknown";
+	if ((grInfo.glVendor    = (const char*) glGetString(GL_VENDOR                  )) == nullptr) grInfo.glVendor    = "unknown";
+	if ((grInfo.glRenderer  = (const char*) glGetString(GL_RENDERER                )) == nullptr) grInfo.glRenderer  = "unknown";
+	if ((grInfo.glslVersion = (const char*) glGetString(GL_SHADING_LANGUAGE_VERSION)) == nullptr) grInfo.glslVersion = "unknown";
+	if ((grInfo.glewVersion = (const char*) glewGetString(GLEW_VERSION             )) == nullptr) grInfo.glewVersion = "unknown";
+
+	if (!ShowDriverWarning(grInfo.glVendor, grInfo.glRenderer))
 		throw unsupported_error("OpenGL drivers not installed, aborting");
 
-	memset(globalRenderingInfo.glVersionShort, 0, sizeof(globalRenderingInfo.glVersionShort));
-	memset(globalRenderingInfo.glslVersionShort, 0, sizeof(globalRenderingInfo.glslVersionShort));
+	memset(grInfo.glVersionShort, 0, sizeof(grInfo.glVersionShort));
+	memset(grInfo.glslVersionShort, 0, sizeof(grInfo.glslVersionShort));
 
 	constexpr const char* sdlFmtStr = "%d.%d.%d (linked) / %d.%d.%d (compiled)";
 	constexpr const char* memFmtStr = "%iMB (total) / %iMB (available)";
 
 	SNPRINTF(sdlVersionStr, sizeof(sdlVersionStr), sdlFmtStr,
-		globalRenderingInfo.sdlVersionLinked.major, globalRenderingInfo.sdlVersionLinked.minor, globalRenderingInfo.sdlVersionLinked.patch,
-		globalRenderingInfo.sdlVersionCompiled.major, globalRenderingInfo.sdlVersionCompiled.minor, globalRenderingInfo.sdlVersionCompiled.patch
+		sdlVL.major, sdlVL.minor, sdlVL.patch,
+		sdlVC.major, sdlVC.minor, sdlVC.patch
 	);
 
-	GLint vidMemBuffer[2] = {0, 0};
+	if (!GetAvailableVideoRAM(&grInfo.gpuMemorySize.x, grInfo.glVendor))
+		return;
 
-	if (GetAvailableVideoRAM(vidMemBuffer, globalRenderingInfo.glVendor)) {
-		const GLint totalMemMB = vidMemBuffer[0] / 1024;
-		const GLint availMemMB = vidMemBuffer[1] / 1024;
+	const GLint totalMemMB = grInfo.gpuMemorySize.x / 1024;
+	const GLint availMemMB = grInfo.gpuMemorySize.y / 1024;
 
-		SNPRINTF(glVidMemStr, sizeof(glVidMemStr), memFmtStr, gpuMemorySize = totalMemMB, availMemMB);
-	}
+	SNPRINTF(glVidMemStr, sizeof(glVidMemStr), memFmtStr, totalMemMB, availMemMB);
 }
 
 void CGlobalRendering::LogVersionInfo(const char* sdlVersionStr, const char* glVidMemStr) const

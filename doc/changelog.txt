@@ -20,6 +20,7 @@ Lua:
  - add Spring.GetLuaMemoryUsage to LuaUnsyncedRead
    returns the number of (kilo-)bytes used and (kilo-)allocations performed
    by the calling Lua state individually, as well as by all states globally
+ - add Spring.GetVidMemUsage to LuaUnsyncedRead
 
 Misc:
  - remove joystick support

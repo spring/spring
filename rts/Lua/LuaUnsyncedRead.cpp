@@ -32,7 +32,7 @@
 #include "Map/ReadMap.h"
 #include "Menu/LuaMenuController.h"
 #include "Rendering/GlobalRendering.h"
-#include "Rendering/IconHandler.h"
+#include "Rendering/GlobalRenderingInfo.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/Env/IWater.h"
@@ -53,10 +53,9 @@
 #include "Sim/Units/CommandAI/CommandDescription.h"
 #include "Game/UI/Groups/Group.h"
 #include "Game/UI/Groups/GroupHandler.h"
-#include "Net/Protocol/NetProtocol.h"
+#include "Net/Protocol/NetProtocol.h" // NETMSG_*
 #include "System/Config/ConfigVariable.h"
 #include "System/Input/KeyInput.h"
-#include "System/LoadSave/demofile.h"
 #include "System/LoadSave/DemoReader.h"
 #include "System/Log/DefaultFilter.h"
 #include "System/Platform/SDL1_keysym.h"
@@ -87,7 +86,8 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetGameName);
 	REGISTER_LUA_CFUNC(GetMenuName);
 
-	REGISTER_LUA_CFUNC(GetLuaMemoryUsage);
+	REGISTER_LUA_CFUNC(GetLuaMemUsage);
+	REGISTER_LUA_CFUNC(GetVidMemUsage);
 
 	REGISTER_LUA_CFUNC(GetDrawFrame);
 	REGISTER_LUA_CFUNC(GetFrameTimeOffset);
@@ -365,7 +365,7 @@ int LuaUnsyncedRead::GetMenuName(lua_State* L)
 
 /******************************************************************************/
 
-int LuaUnsyncedRead::GetLuaMemoryUsage(lua_State* L)
+int LuaUnsyncedRead::GetLuaMemUsage(lua_State* L)
 {
 	const luaContextData* lcd = GetLuaContextData(L);
 
@@ -380,6 +380,17 @@ int LuaUnsyncedRead::GetLuaMemoryUsage(lua_State* L)
 	lua_pushnumber(L, lgs.allocedBytes / 1024.0f);
 	lua_pushnumber(L, lgs.numLuaAllocs / 1000.0f);
 	return 4;
+}
+
+int LuaUnsyncedRead::GetVidMemUsage(lua_State* L)
+{
+	int2 vidMemInfo;
+
+	GetAvailableVideoRAM(&vidMemInfo.x, globalRenderingInfo.glVendor);
+
+	lua_pushnumber(L, (vidMemInfo.x - vidMemInfo.y) / 1024.0f); // MB (used = total - free)
+	lua_pushnumber(L, (vidMemInfo.x               ) / 1024.0f); // MB
+	return 2;
 }
 
 /******************************************************************************/

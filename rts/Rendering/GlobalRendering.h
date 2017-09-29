@@ -149,8 +149,6 @@ public:
 	 */
 	int maxTextureSize;
 
-	int gpuMemorySize;
-
 	float maxTexAnisoLvl;
 
 

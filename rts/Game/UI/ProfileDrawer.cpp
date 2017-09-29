@@ -434,10 +434,11 @@ static void DrawInfoText()
 	}
 
 	{
-		int2 gpuInfo;
-		GetAvailableVideoRAM(&gpuInfo.x, globalRenderingInfo.glVendor);
+		int2 vidMemInfo;
 
-		font->glFormat(0.01f, 0.16f, 0.5f, DBG_FONT_FLAGS, gpuFmtStr, (gpuInfo.x - gpuInfo.y) / 1024.0f, gpuInfo.x / 1024.0f);
+		GetAvailableVideoRAM(&vidMemInfo.x, globalRenderingInfo.glVendor);
+
+		font->glFormat(0.01f, 0.16f, 0.5f, DBG_FONT_FLAGS, gpuFmtStr, (vidMemInfo.x - vidMemInfo.y) / 1024.0f, vidMemInfo.x / 1024.0f);
 	}
 
 	font->glFormat(0.01f, 0.18f, 0.5f, DBG_FONT_FLAGS, sopFmtStr,
