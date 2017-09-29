@@ -936,26 +936,16 @@ int SpringApp::Run()
 
 
 
-int SpringApp::PostKill(const Threading::Error& e)
+int SpringApp::PostKill(Threading::Error&& e)
 {
-	if (e.Empty()) {
-		if (Threading::IsMainThread())
-			return (Watchdog::DeregisterThread(WDT_MAIN));
-		if (Threading::IsGameLoadThread())
-			return (Watchdog::DeregisterThread(WDT_LOAD));
-		if (Threading::IsAudioThread())
-			return (Watchdog::DeregisterThread(WDT_AUDIO));
-		if (Threading::IsFileSysThread())
-			return (Watchdog::DeregisterThread(WDT_VFSI));
-
-		return 0;
-	}
+	if (e.Empty())
+		return (Watchdog::DeregisterCurrentThread());
 
 	if (Threading::IsMainThread())
 		return -1;
 
 	// checked by Run() after Init()
-	Threading::SetThreadError(e);
+	Threading::SetThreadError(std::move(e));
 
 	if (gu == nullptr)
 		return 0;

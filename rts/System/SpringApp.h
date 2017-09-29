@@ -26,7 +26,7 @@ public:
 	SpringApp(int argc, char** argv);
 	~SpringApp();
 
-	static int PostKill(const Threading::Error&);
+	static int PostKill(Threading::Error&&);
 	static void Kill(bool fromRun);                 //!< Shuts down application
 
 private:

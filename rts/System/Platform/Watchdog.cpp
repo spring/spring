@@ -236,6 +236,7 @@ namespace Watchdog
 
 		threadSlots[num].primary = false;
 		threadSlots[num].regorder = 0;
+
 		UpdateActiveThreads(threadInfo->threadid);
 
 		// reset the main thread's controls only if actually called from it;
@@ -250,6 +251,20 @@ namespace Watchdog
 
 		registeredThreads[num] = &registeredThreadsData[WDT_COUNT];
 		return true;
+	}
+
+	bool DeregisterCurrentThread()
+	{
+		if (Threading::IsMainThread())
+			return (DeregisterThread(WDT_MAIN));
+		if (Threading::IsGameLoadThread())
+			return (DeregisterThread(WDT_LOAD));
+		if (Threading::IsAudioThread())
+			return (DeregisterThread(WDT_AUDIO));
+		if (Threading::IsFileSysThread())
+			return (DeregisterThread(WDT_VFSI));
+
+		return false;
 	}
 
 

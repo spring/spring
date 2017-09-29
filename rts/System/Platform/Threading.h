@@ -154,6 +154,16 @@ namespace Threading {
 	struct Error {
 		Error() : flags(0) {}
 		Error(const std::string& _caption, const std::string& _message, const unsigned int _flags) : caption(_caption), message(_message), flags(_flags) {}
+		Error(const Error&) = delete;
+		Error(Error&& e) { *this = std::move(e); }
+
+		Error& operator = (const Error& e) = delete;
+		Error& operator = (Error&& e) {
+			caption = std::move(e.caption);
+			message = std::move(e.message);
+			flags = e.flags;
+			return *this;
+		}
 
 		bool Empty() const { return (caption.empty() && message.empty() && flags == 0); }
 
@@ -161,7 +171,8 @@ namespace Threading {
 		std::string message;
 		unsigned int flags;
 	};
-	void SetThreadError(const Error& err);
+
+	void SetThreadError(Error&& err);
 	Error* GetThreadError();
 }
 
