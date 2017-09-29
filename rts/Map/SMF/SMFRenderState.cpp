@@ -48,10 +48,6 @@ bool SMFRenderStateARB::Init(const CSMFGroundDrawer* smfGroundDrawer) {
 		// not possible to do (ARB) shader-based map rendering
 		return false;
 	}
-	if (!configHandler->GetBool("AdvMapShading")) {
-		// not allowed to do (ARB) shader-based map rendering
-		return false;
-	}
 
 	#define sh shaderHandler
 	arbShaders[ARB_SHADER_DEFAULT] = sh->CreateProgramObject("[SMFGroundDrawer]", "SMFShaderBaseARB", true);
@@ -97,10 +93,6 @@ bool SMFRenderStateARB::HasValidShader(const DrawPass::e& drawPass) const {
 bool SMFRenderStateGLSL::Init(const CSMFGroundDrawer* smfGroundDrawer) {
 	if (!globalRendering->haveGLSL) {
 		// not possible to do (GLSL) shader-based map rendering
-		return false;
-	}
-	if (!configHandler->GetBool("AdvMapShading")) {
-		// not allowed to do (GLSL) shader-based map rendering
 		return false;
 	}
 

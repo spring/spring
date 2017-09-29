@@ -20,6 +20,7 @@ Misc:
  - fix stale thread-id cache in watchdog after reload
  - make LuaVFSDownload rescan archives in main thread, and do so when a download finishes (not when one starts)
  - remove /adv{map,model}shading commands
+ - remove Adv{Map,Unit}Shading config-settings
 
 
 

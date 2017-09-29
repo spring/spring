@@ -211,10 +211,6 @@ bool UnitDrawerStateARB::Init(const CUnitDrawer* ud) {
 		// not possible to do (ARB) shader-based model rendering
 		return false;
 	}
-	if (!configHandler->GetBool("AdvUnitShading")) {
-		// not allowed to do (ARB) shader-based model rendering
-		return false;
-	}
 
 	// if GLEW_NV_vertex_program2 is supported, transparent objects are clipped against GL_CLIP_PLANE3
 	const char* vertProgNamesARB[2] = {"ARB/units3o.vp", "ARB/units3o2.vp"};
@@ -303,10 +299,6 @@ void UnitDrawerStateARB::SetNanoColor(const float4& color) const {
 bool UnitDrawerStateGLSL::Init(const CUnitDrawer* ud) {
 	if (!globalRendering->haveGLSL) {
 		// not possible to do (GLSL) shader-based model rendering
-		return false;
-	}
-	if (!configHandler->GetBool("AdvUnitShading")) {
-		// not allowed to do (GLSL) shader-based model rendering
 		return false;
 	}
 

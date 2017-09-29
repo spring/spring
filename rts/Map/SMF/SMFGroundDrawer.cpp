@@ -40,7 +40,6 @@ CONFIG(int, MaxDynamicMapLights)
 	.defaultValue(1)
 	.minimumValue(0);
 
-CONFIG(bool, AdvMapShading).defaultValue(true).safemodeValue(false).description("Enable shaders for terrain rendering.");
 CONFIG(bool, AllowDeferredMapRendering).defaultValue(false).safemodeValue(false);
 
 
@@ -77,10 +76,8 @@ CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
 
 
 	// NOTE:
-	//   advShading can NOT change at runtime if initially false
-	//   (see AdvMapShadingActionExecutor), so we will always use
-	//   states[FFP] (in ::Draw) in that special case and it does
-	//   not matter whether states[SSP] is initialized
+	//   advShading can NOT be changed at runtime, so states[FFP] will
+	//   always be used (in ::Draw) if states[SSP] is not initialized
 	if ((advShading = smfRenderStates[RENDER_STATE_SSP]->Init(this)))
 		smfRenderStates[RENDER_STATE_SSP]->Update(this, nullptr);
 
