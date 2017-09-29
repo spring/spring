@@ -15,6 +15,9 @@ Lua:
  - call gadgetHandler:Explosion for unsynced gadgets (but discard the return value)
  - allow specifying source by position but target by ID for Spring.GetUnitWeaponHaveFreeLineOfFire
  - allow setting terrain-type hardness and name via Spring.SetTerrainTypeData
+ ! return the terrain-type index from Spring.GetGroundInfo and Spring.GetTerrainTypeData
+   these functions now push [number index, string name, ...] rather than [string name, ...]
+   onto the stack
  - add Spring.GetLuaMemUsage to LuaUnsyncedRead
    returns the number of (kilo-)bytes used and (kilo-)allocations performed
    by the calling Lua state individually, as well as by all states globally
