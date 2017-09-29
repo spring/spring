@@ -2349,11 +2349,12 @@ int LuaUnsyncedRead::GetPlayerRoster(lua_State* L)
 
 	// push the active players
 	lua_createtable(L, playerIndices.size(), 0);
-	for (size_t i = 0, s = playerIndices.size(); i < s; i++) {
+	for (size_t i = 0, j = 1, s = playerIndices.size(); i < s; i++) {
 		if (!AddPlayerToRoster(L, playerIndices[i], true, includePathingFlag))
 			continue;
 
-		lua_rawseti(L, -2, i + 1);
+		// t[j] = {...}
+		lua_rawseti(L, -2, j++);
 	}
 
 	return 1;
