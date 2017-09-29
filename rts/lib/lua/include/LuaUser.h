@@ -3,8 +3,6 @@
 #ifndef SPRING_LUA_USER_H
 #define SPRING_LUA_USER_H
 
-#include <atomic>
-
 #include "lua.h"
 
 extern void LuaCreateMutex(lua_State* L);
@@ -16,13 +14,7 @@ extern void LuaMutexYield(lua_State* L);
 
 extern const char* spring_lua_getHandleName(lua_State* L);
 
-struct SLuaAllocState {
-	std::atomic<uint64_t> allocedBytes;
-	std::atomic<uint64_t> numLuaAllocs;
-	std::atomic<uint64_t> luaAllocTime;
-	std::atomic<uint64_t> numLuaStates;
-};
-
+struct SLuaAllocState;
 struct SLuaAllocError {
 	// includes space for multiple messages, since we do not record them immediately
 	char msgBuf[16384] = {0};

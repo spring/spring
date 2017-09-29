@@ -6,6 +6,7 @@
 #include "lib/streflop/streflop_cond.h"
 
 #include "LuaInclude.h"
+#include "Lua/LuaAllocState.h"
 #include "Lua/LuaHandle.h"
 #include "Lua/LuaMemPool.h"
 
@@ -181,7 +182,7 @@ static constexpr uint32_t maxAllocedBytes = 768u * (1024u * 1024u);
 static constexpr const char* maxAllocFmtStr = "[%s][handle=%s][OOM] synced=%d {alloced,maximum}={%u,%u}bytes\n";
 
 // tracks allocations across all states
-static SLuaAllocState gLuaAllocState = {};
+static SLuaAllocState gLuaAllocState = {{0}, {0}, {0}, {0}};
 static SLuaAllocError gLuaAllocError = {};
 
 void spring_lua_alloc_log_error(const luaContextData* lcd)
@@ -204,10 +205,13 @@ void spring_lua_alloc_log_error(const luaContextData* lcd)
 void* spring_lua_alloc(void* ud, void* ptr, size_t osize, size_t nsize)
 {
 	luaContextData* lcd = static_cast<luaContextData*>(ud);
+	SLuaAllocState* las = &lcd->allocState;
 	LuaMemPool* lmp = lcd->memPool;
 
 	gLuaAllocState.allocedBytes -= osize;
 	gLuaAllocState.allocedBytes += nsize;
+	las->allocedBytes -= osize;
+	las->allocedBytes += nsize;
 
 	if (nsize == 0) {
 		// deallocation; must return NULL
@@ -232,6 +236,8 @@ void* spring_lua_alloc(void* ud, void* ptr, size_t osize, size_t nsize)
 
 	gLuaAllocState.numLuaAllocs += 1;
 	gLuaAllocState.luaAllocTime += (t1 - t0).toMicroSecsi();
+	las->numLuaAllocs += 1;
+	las->luaAllocTime += (t1 - t0).toMicroSecsi();
 
 	return mem;
 }

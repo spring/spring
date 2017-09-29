@@ -17,6 +17,9 @@ Lua:
  ! return the terrain-type index from Spring.GetGroundInfo and Spring.GetTerrainTypeData
    these functions now push [number index, string name, ...] rather than [string name, ...]
    onto the stack
+ - add Spring.GetLuaMemoryUsage to LuaUnsyncedRead
+   returns the number of (kilo-)bytes used and (kilo-)allocations performed
+   by the calling Lua state individually, as well as by all states globally
 
 Misc:
  - remove joystick support

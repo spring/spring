@@ -87,6 +87,8 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetGameName);
 	REGISTER_LUA_CFUNC(GetMenuName);
 
+	REGISTER_LUA_CFUNC(GetLuaMemoryUsage);
+
 	REGISTER_LUA_CFUNC(GetDrawFrame);
 	REGISTER_LUA_CFUNC(GetFrameTimeOffset);
 	REGISTER_LUA_CFUNC(GetLastUpdateSeconds);
@@ -355,11 +357,29 @@ int LuaUnsyncedRead::GetGameName(lua_State* L)
 	return 1;
 }
 
-
 int LuaUnsyncedRead::GetMenuName(lua_State* L)
 {
 	lua_pushstring(L, luaMenuController->GetMenuName().c_str());
 	return 1;
+}
+
+/******************************************************************************/
+
+int LuaUnsyncedRead::GetLuaMemoryUsage(lua_State* L)
+{
+	const luaContextData* lcd = GetLuaContextData(L);
+
+	// handle and global stats
+	const SLuaAllocState* lhs = &lcd->allocState;
+	      SLuaAllocState  lgs;
+
+	spring_lua_alloc_get_stats(&lgs);
+
+	lua_pushnumber(L, lhs->allocedBytes / 1024.0f); // (kilo)bytes, can exceed 1<<24 otherwise
+	lua_pushnumber(L, lhs->numLuaAllocs / 1000.0f); // (kilo)allocs, ditto
+	lua_pushnumber(L, lgs.allocedBytes / 1024.0f);
+	lua_pushnumber(L, lgs.numLuaAllocs / 1000.0f);
+	return 4;
 }
 
 /******************************************************************************/
