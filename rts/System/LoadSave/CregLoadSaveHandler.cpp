@@ -166,7 +166,7 @@ void CCregLoadSaveHandler::SaveGame(const std::string& path)
 				return;
 			}
 
-			std::string data = std::move(oss.str());
+			std::string data = oss.str();
 			std::function<void(gzFile, std::string&&)> func = [](gzFile file, std::string&& data) {
 				gzwrite(file, data.c_str(), data.size());
 				gzflush(file, Z_FINISH);
@@ -175,7 +175,7 @@ void CCregLoadSaveHandler::SaveGame(const std::string& path)
 
 			// gzFile is just a plain typedef (struct gzFile_s {}* gzFile), can be copied
 			// need to keep a reference to the future around or its destructor will block
-			ThreadPool::AddExtJob(std::move(std::async(std::launch::async, std::move(func), file, std::move(data))));
+			ThreadPool::AddExtJob(std::async(std::launch::async, std::move(func), file, std::move(data)));
 		}
 
 		//FIXME add lua state

@@ -772,20 +772,20 @@ std::string CMiniMap::GetTooltip(int x, int y)
 			return "Minimize map";
 	}
 
-	const std::string buildTip = std::move(guihandler->GetBuildTooltip());
+	const std::string buildTip = guihandler->GetBuildTooltip();
 	if (!buildTip.empty())
 		return buildTip;
 
 	const float3 wpos = GetMapPosition(x, y);
 	const CUnit* unit = GetSelectUnit(wpos);
 	if (unit != nullptr)
-		return (std::move(CTooltipConsole::MakeUnitString(unit)));
+		return CTooltipConsole::MakeUnitString(unit);
 
-	const std::string selTip = std::move(selectedUnitsHandler.GetTooltip());
+	const std::string selTip = selectedUnitsHandler.GetTooltip();
 	if (!selTip.empty())
 		return selTip;
 
-	return (std::move(CTooltipConsole::MakeGroundString({wpos.x, CGround::GetHeightReal(wpos.x, wpos.z, false), wpos.z})));
+	return CTooltipConsole::MakeGroundString({wpos.x, CGround::GetHeightReal(wpos.x, wpos.z, false), wpos.z});
 }
 
 

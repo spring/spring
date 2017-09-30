@@ -387,7 +387,7 @@ namespace Watchdog
 		hangTimeout = spring_secs(hangTimeoutSecs);
 
 		// start the watchdog thread
-		hangDetectorThread = std::move(spring::thread(&HangDetectorLoop));
+		hangDetectorThread = spring::thread(&HangDetectorLoop);
 
 		LOG("[WatchDog%s] Installed (HangTimeout: %isec)", __func__, hangTimeoutSecs);
 	}

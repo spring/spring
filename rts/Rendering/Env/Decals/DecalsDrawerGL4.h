@@ -241,7 +241,7 @@ private:
 	bool useSSBO;
 
 	// used to turn off parallax mapping when fps drops too low
-	int laggedFrames;
+	//int laggedFrames;
 
 	// used to remove decals that are totally overlapped by others
 	int overlapStage;

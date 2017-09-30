@@ -36,7 +36,7 @@ struct TexFile {
 
 C3DOTextureHandler::C3DOTextureHandler()
 {
-	std::vector<TexFile> texfiles = std::move(LoadTexFiles());
+	std::vector<TexFile> texfiles = LoadTexFiles();
 
 	// TODO: make this use TextureAtlas directly
 	CTextureAtlas atlas;

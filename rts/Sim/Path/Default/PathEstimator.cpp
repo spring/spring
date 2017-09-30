@@ -174,7 +174,7 @@ void CPathEstimator::InitEstimator(const std::string& cacheFileName, const std::
 
 		for (unsigned int i = 1; i <= numExtraThreads; i++) {
 			pathFinders[i] = pfMemPool.alloc<CPathFinder>();
-			threads[i] = std::move(spring::thread(&CPathEstimator::CalcOffsetsAndPathCosts, this, i, &pathBarrier));
+			threads[i] = spring::thread(&CPathEstimator::CalcOffsetsAndPathCosts, this, i, &pathBarrier);
 		}
 
 		// Use the current thread as thread zero

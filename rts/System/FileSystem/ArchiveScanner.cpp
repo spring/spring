@@ -1233,7 +1233,7 @@ std::string CArchiveScanner::MapNameToMapFile(const std::string& s) const
 unsigned int CArchiveScanner::GetSingleArchiveChecksum(const std::string& filePath)
 {
 	ComputeChecksumForArchive(filePath);
-	const std::string lcname = std::move(StringToLower(FileSystem::GetFilename(filePath)));
+	const std::string lcname = StringToLower(FileSystem::GetFilename(filePath));
 
 	const auto aii = archiveInfos.find(lcname);
 	if (aii == archiveInfos.end()) {

@@ -65,7 +65,7 @@ static void ExitSpringProcess(const std::string& msg, const std::string& caption
 		case -1: {
 			// main thread; either gets to ESPA first and cleans up our process or exit is forced by this
 			std::function<void()> forcedExitFunc = [&]() { ExitSpringProcessAux(true, false); };
-			spring::thread forcedExitThread = std::move(spring::thread(forcedExitFunc));
+			spring::thread forcedExitThread = spring::thread(forcedExitFunc);
 
 			// .join can (very rarely) throw a no-such-process exception if it runs in parallel with exit
 			assert(forcedExitThread.joinable());

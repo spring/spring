@@ -191,7 +191,7 @@ void CInfoConsole::RecordLogMessage(int level, const std::string& section, const
 	const float maxWidth = (width * globalRendering->viewSizeX) - (2 * border);
 	const std::string& wrappedText = smallFont->Wrap(text, fontSize, maxWidth);
 
-	std::deque<std::string> lines = std::move(smallFont->SplitIntoLines(toustring(wrappedText)));
+	std::deque<std::string> lines = smallFont->SplitIntoLines(toustring(wrappedText));
 
 	for (auto& line: lines) {
 		// add the line to the console

@@ -123,7 +123,7 @@ namespace Platform
 		if (!origCWD.empty())
 			return origCWD;
 
-		origCWD = std::move(FileSystemAbstraction::GetCwd());
+		origCWD = FileSystemAbstraction::GetCwd();
 		FileSystemAbstraction::EnsurePathSepAtEnd(origCWD);
 		return origCWD;
 	}

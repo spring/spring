@@ -554,7 +554,7 @@ std::string CMouseHandler::GetCurrentTooltip()
 		std::string s;
 
 		if (luaInputReceiver->IsAbove(lastx, lasty)) {
-			s = std::move(luaInputReceiver->GetTooltip(lastx, lasty));
+			s = luaInputReceiver->GetTooltip(lastx, lasty);
 
 			if (!s.empty())
 				return s;
@@ -566,7 +566,7 @@ std::string CMouseHandler::GetCurrentTooltip()
 			if (!recv->IsAbove(lastx, lasty))
 				continue;
 
-			s = std::move(recv->GetTooltip(lastx, lasty));
+			s = recv->GetTooltip(lastx, lasty);
 
 			if (!s.empty())
 				return s;
@@ -595,7 +595,7 @@ std::string CMouseHandler::GetCurrentTooltip()
 		if (feature != nullptr) return CTooltipConsole::MakeFeatureString(feature);
 	}
 
-	const string selTip = std::move(selectedUnitsHandler.GetTooltip());
+	const string selTip = selectedUnitsHandler.GetTooltip();
 
 	if (!selTip.empty())
 		return selTip;
@@ -918,7 +918,7 @@ bool CMouseHandler::AssignMouseCursor(
 		return true;
 	}
 
-	CMouseCursor newCursor = std::move(CMouseCursor::New(fileName, hotSpot));
+	CMouseCursor newCursor = CMouseCursor::New(fileName, hotSpot);
 
 	if (!newCursor.IsValid())
 		return false;
@@ -949,7 +949,7 @@ bool CMouseHandler::ReplaceMouseCursor(
 	if (fileIt == cursorFileMap.end())
 		return false;
 
-	CMouseCursor newCursor = std::move(CMouseCursor::New(newName, hotSpot));
+	CMouseCursor newCursor = CMouseCursor::New(newName, hotSpot);
 
 	if (!newCursor.IsValid())
 		return false; // leave the old one

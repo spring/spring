@@ -249,10 +249,10 @@ S3DModel* CModelLoader::CreateModel(
 	const std::string& path,
 	bool preload
 ) {
-	S3DModel model = std::move(ParseModel(name, path));
+	S3DModel model = ParseModel(name, path);
 
 	if (model.numPieces == 0)
-		model = std::move(CreateDummyModel());
+		model = CreateDummyModel();
 
 	assert(model.GetRootPiece() != nullptr);
 	model.SetPieceMatrices();
@@ -261,14 +261,14 @@ S3DModel* CModelLoader::CreateModel(
 		CreateLists(&model);
 
 	// add (parsed or dummy) model to cache
-	model.id = models.size();
+	const size_t index = models.size();
+	model.id = index;
 
-	cache[name] = model.id;
-	cache[path] = model.id;
+	cache[name] = index;
+	cache[path] = index;
 
-	models.emplace_back();
-	models.back() = std::move(model);
-	return &models[model.id];
+	models.emplace_back(std::move(model));
+	return &models[index];
 }
 
 
@@ -290,7 +290,7 @@ S3DModel CModelLoader::ParseModel(const std::string& name, const std::string& pa
 
 	if (parser != nullptr) {
 		try {
-			model = std::move(parser->Load(path));
+			model = parser->Load(path);
 		} catch (const content_error& ex) {
 			char buf[1024];
 

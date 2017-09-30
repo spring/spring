@@ -259,7 +259,7 @@ std::vector<std::uint8_t> zlib::deflate(const std::uint8_t* inflData, unsigned l
 		deflData.clear();
 	}
 
-	return (std::move(deflData));
+	return deflData;
 }
 
 std::vector<std::uint8_t> zlib::inflate(const std::vector<std::uint8_t>& deflData) { return (zlib::inflate(deflData.data(), deflData.size())); }
@@ -286,6 +286,6 @@ std::vector<std::uint8_t> zlib::inflate(const std::uint8_t* deflData, unsigned l
 	inflData.resize(rawSize);
 	inflData.shrink_to_fit();
 
-	return (std::move(inflData));
+	return inflData;
 }
 #endif //UNITSYNC

@@ -396,8 +396,8 @@ bool SpringApp::InitFileSystem()
 	// FileSystem is mostly self-contained, don't need locks
 	// (at this point neither the platform CWD nor data-dirs
 	// have been set yet by FSI, can only use absolute paths)
-	const std::string cwd = std::move(FileSystem::EnsurePathSepAtEnd(FileSystemAbstraction::GetCwd()));
-	const std::string ssd = std::move(FileSystem::EnsurePathSepAtEnd(configHandler->GetString("SplashScreenDir")));
+	const std::string cwd = FileSystem::EnsurePathSepAtEnd(FileSystemAbstraction::GetCwd());
+	const std::string ssd = FileSystem::EnsurePathSepAtEnd(configHandler->GetString("SplashScreenDir"));
 
 	std::vector<std::string> splashScreenFiles(dataDirsAccess.FindFiles(FileSystem::IsAbsolutePath(ssd)? ssd: cwd + ssd, "*.{png,jpg}", 0));
 	spring::thread fsInitThread(FileSystemInitializer::InitializeThr, &ret);

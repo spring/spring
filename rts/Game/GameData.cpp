@@ -54,7 +54,7 @@ GameData::GameData(std::shared_ptr<const RawPacket> pckt)
 const netcode::RawPacket* GameData::Pack() const
 {
 	if (compressed.empty())
-		compressed = std::move(zlib::deflate(reinterpret_cast<const std::uint8_t*>(setupText.data()), setupText.size()));
+		compressed = zlib::deflate(reinterpret_cast<const std::uint8_t*>(setupText.data()), setupText.size());
 
 	assert(!compressed.empty());
 	assert(compressed.size() <= std::numeric_limits<std::uint16_t>::max());

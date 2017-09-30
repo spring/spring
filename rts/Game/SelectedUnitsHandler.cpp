@@ -876,7 +876,7 @@ std::string CSelectedUnitsHandler::GetTooltip()
 		}
 	}
 
-	const std::string custom = std::move(eventHandler.WorldTooltip(nullptr, nullptr, nullptr));
+	const std::string custom = eventHandler.WorldTooltip(nullptr, nullptr, nullptr);
 	if (!custom.empty())
 		return custom;
 

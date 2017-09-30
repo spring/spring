@@ -219,7 +219,7 @@ void DownloadQueue::Push(const DownloadItem& downloadItem)
 
 		// mutex is still locked, thread will block if it gets
 		// to queue.front() before we get to queue.push_back()
-		thread = std::move(spring::thread(&DownloadQueue::Pump, this));
+		thread = spring::thread(&DownloadQueue::Pump, this);
 	}
 
 	queue.push_back(downloadItem);
@@ -240,7 +240,7 @@ bool DownloadQueue::Remove(int id)
 			lck.lock();
 			SetAbortDownloads(false);
 
-			thread = std::move(spring::thread(&DownloadQueue::Pump, this));
+			thread = spring::thread(&DownloadQueue::Pump, this);
 		} else {
 			queue.erase(it);
 		}

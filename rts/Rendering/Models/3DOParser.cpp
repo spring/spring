@@ -215,7 +215,7 @@ C3DOTextureHandler::UnitTexture* C3DOParser::GetTexture(S3DOPiece* obj, _Primiti
 
 	if (p->OffsetToTextureName != 0) {
 		int unused;
-		texName = std::move(StringToLower(GET_TEXT(p->OffsetToTextureName, fileBuf, unused)));
+		texName = StringToLower(GET_TEXT(p->OffsetToTextureName, fileBuf, unused));
 
 		if (teamtex.find(texName) == teamtex.end()) {
 			texName += "00";

@@ -39,7 +39,7 @@ CMouseCursor::CMouseCursor()
 CMouseCursor::CMouseCursor(const std::string& name, HotSpot hs)
 {
 	// default-initialize
-	*this = std::move(CMouseCursor());
+	*this = CMouseCursor();
 
 	hwCursor = GetNewHwCursor();
 	hwCursor->hotSpot = (hotSpot = hs);

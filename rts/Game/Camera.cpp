@@ -391,8 +391,8 @@ float3 CCamera::GetRgtFromRot(const float3 r)
 
 void CCamera::UpdateDirsFromRot(const float3 r)
 {
-	forward  = std::move(GetFwdFromRot(r));
-	right    = std::move(GetRgtFromRot(r));
+	forward  = GetFwdFromRot(r);
+	right    = GetRgtFromRot(r);
 	up       = (right.cross(forward)).Normalize();
 }
 

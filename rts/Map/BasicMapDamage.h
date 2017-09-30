@@ -15,11 +15,11 @@ class CBasicMapDamage : public IMapDamage
 public:
 	CBasicMapDamage();
 
-	void Explosion(const float3& pos, float strength, float radius);
-	void RecalcArea(int x1, int x2, int y1, int y2);
+	void Explosion(const float3& pos, float strength, float radius) override;
+	void RecalcArea(int x1, int x2, int y1, int y2) override;
 	void TerrainTypeHardnessChanged(int ttIndex) override;
 	void TerrainTypeSpeedModChanged(int ttIndex) override;
-	void Update();
+	void Update() override;
 
 private:
 	struct ExploBuilding {

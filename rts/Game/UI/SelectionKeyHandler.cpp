@@ -209,7 +209,7 @@ void CSelectionKeyHandler::DoSelection(std::string selectString)
 	std::list<CUnit*> selection;
 
 //	guicontroller->AddText(selectString.c_str());
-	std::string s = std::move(ReadToken(selectString));
+	std::string s = ReadToken(selectString);
 
 	if (s == "AllMap") {
 		if (!gu->spectatingFullSelect) {
@@ -290,19 +290,19 @@ void CSelectionKeyHandler::DoSelection(std::string selectString)
 	ReadDelimiter(selectString);
 
 	while (true) {
-		std::string filter = std::move(ReadDelimiter(selectString));
+		std::string filter = ReadDelimiter(selectString);
 
 		if (filter == "+")
 			break;
 
-		filter = std::move(ReadToken(selectString));
+		filter = ReadToken(selectString);
 
 		bool _not = false;
 
 		if (filter == "Not") {
 			_not = true;
 			ReadDelimiter(selectString);
-			filter = std::move(ReadToken(selectString));
+			filter = ReadToken(selectString);
 		}
 
 		Filter::Map& filters = Filter::all();
@@ -333,7 +333,7 @@ void CSelectionKeyHandler::DoSelection(std::string selectString)
 	}
 
 	ReadDelimiter(selectString);
-	s = std::move(ReadToken(selectString));
+	s = ReadToken(selectString);
 
 	if (s == "ClearSelection") {
 		selectedUnitsHandler.ClearSelected();

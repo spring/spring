@@ -84,7 +84,7 @@ void CDemoRecorder::WriteDemoFile()
 	// any application-provided memory allocation routines must also be thread-safe. zlib's gz*
 	// functions use stdio library routines, and most of zlib's functions use the library memory
 	// allocation routines by default" (should be OK)
-	std::string data = std::move(demoStreams[isServerDemo]->str());
+	std::string data = demoStreams[isServerDemo]->str();
 	std::function<void(gzFile, std::string&&)> func = [](gzFile file, std::string&& data) {
 		gzwrite(file, data.c_str(), data.size());
 		gzflush(file, Z_FINISH);

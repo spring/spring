@@ -125,7 +125,7 @@ bool CVFSHandler::AddArchive(const std::string& archiveName, bool overwrite)
 
 bool CVFSHandler::AddArchiveWithDeps(const std::string& archiveName, bool overwrite)
 {
-	const std::vector<std::string> ars = std::move(archiveScanner->GetAllArchivesUsedBy(archiveName));
+	const std::vector<std::string> ars = archiveScanner->GetAllArchivesUsedBy(archiveName);
 
 	if (ars.empty())
 		throw content_error("Could not find any archives for '" + archiveName + "'.");
@@ -196,7 +196,7 @@ void CVFSHandler::DeleteArchives()
 
 std::string CVFSHandler::GetNormalizedPath(const std::string& rawPath)
 {
-	std::string path = std::move(StringToLower(rawPath));
+	std::string path = StringToLower(rawPath);
 	FileSystem::ForwardSlashes(path);
 	return path;
 }

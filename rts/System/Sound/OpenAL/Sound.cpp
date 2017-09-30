@@ -71,7 +71,7 @@ CSound::CSound()
 	SoundBuffer::Initialise();
 	soundItems.push_back(nullptr);
 
-	soundThread = std::move(Threading::CreateNewThread(std::bind(&CSound::UpdateThread, this, configHandler->GetInt("MaxSounds"))));
+	soundThread = Threading::CreateNewThread(std::bind(&CSound::UpdateThread, this, configHandler->GetInt("MaxSounds")));
 
 	configHandler->NotifyOnChange(this, {"snd_volmaster", "snd_eaxpreset", "snd_filter", "UseEFX", "snd_volgeneral", "snd_volunitreply", "snd_volbattle", "snd_volui", "snd_volmusic", "PitchAdjust"});
 }
@@ -622,7 +622,7 @@ size_t CSound::LoadSoundBuffer(const std::string& path)
 
 	std::shared_ptr<SoundBuffer> buffer(new SoundBuffer());
 	bool success = false;
-	const std::string ending = std::move(file.GetFileExt());
+	const std::string ending = file.GetFileExt();
 
 	// TODO: load asynchronously
 	if (ending == "wav") {

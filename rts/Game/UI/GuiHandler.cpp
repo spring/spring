@@ -3727,11 +3727,11 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 					const BuildInfo cInfo = BuildInfo(unitdef, cPos, buildFacing);
 					const BuildInfo bInfo = BuildInfo(unitdef, bPos, buildFacing);
 
-					buildInfos = std::move(GetBuildPos(bInfo, cInfo, tracePos, traceDir));
+					buildInfos = GetBuildPos(bInfo, cInfo, tracePos, traceDir);
 				} else {
 					const BuildInfo bi(unitdef, cPos, buildFacing);
 
-					buildInfos = std::move(GetBuildPos(bi, bi, tracePos, traceDir));
+					buildInfos = GetBuildPos(bi, bi, tracePos, traceDir);
 				}
 
 				for (auto bpi = buildInfos.cbegin(); bpi != buildInfos.cend(); ++bpi) {

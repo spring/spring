@@ -386,12 +386,12 @@ void CLoadScreen::SetLoadMessage(const std::string& text, bool replace_lastline)
 
 static string SelectPicture(const std::string& dir, const std::string& prefix)
 {
-	std::vector<std::string> prefPics = std::move(CFileHandler::FindFiles(dir, prefix + "*"));
+	std::vector<std::string> prefPics = CFileHandler::FindFiles(dir, prefix + "*");
 	std::vector<std::string> sidePics;
 
 	// add 'allside_' pictures if we don't have a prefix
 	if (!prefix.empty()) {
-		sidePics = std::move(CFileHandler::FindFiles(dir, "allside_*"));
+		sidePics = CFileHandler::FindFiles(dir, "allside_*");
 		prefPics.insert(prefPics.end(), sidePics.begin(), sidePics.end());
 	}
 
