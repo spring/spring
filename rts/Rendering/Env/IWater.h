@@ -11,7 +11,7 @@ class IWater : public IExplosionListener
 {
 public:
 	enum {
-		WATER_RENDERER_BASIC      = 0,
+		WATER_RENDERER_NULL       = 0,
 		WATER_RENDERER_REFLECTIVE = 1,
 		WATER_RENDERER_DYNAMIC    = 2,
 		WATER_RENDERER_REFL_REFR  = 3,

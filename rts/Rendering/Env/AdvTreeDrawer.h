@@ -19,10 +19,10 @@ public:
 	~CAdvTreeDrawer();
 
 	void LoadTreeShaders();
-	void Draw(float treeDistance);
-	void Update();
-	void AddFallingTree(int treeID, int treeType, const float3& pos, const float3& dir);
-	void DrawShadowPass();
+	void Draw(float treeDistance) override;
+	void Update() override;
+	void AddFallingTree(int treeID, int treeType, const float3& pos, const float3& dir) override;
+	void DrawShadowPass() override;
 
 	static void DrawTreeVertexA(CVertexArray* va, float3& ftpos, float dx, float dy);
 	static void DrawTreeVertex(CVertexArray* va, const float3& pos, float dx, float dy, bool enlarge = true);

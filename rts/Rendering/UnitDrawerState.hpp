@@ -17,7 +17,7 @@ namespace Shader {
 
 enum {
 	DRAWER_STATE_FFP = 0, // fixed-function path
-	DRAWER_STATE_SSP = 1, // standard-shader path (ARB/GLSL)
+	DRAWER_STATE_SSP = 1, // standard-shader path (GLSL)
 	DRAWER_STATE_SEL = 2, // selected path
 	DRAWER_STATE_CNT = 3,
 };

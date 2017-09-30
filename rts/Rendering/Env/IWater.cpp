@@ -2,7 +2,7 @@
 
 #include "IWater.h"
 #include "ISky.h"
-#include "BasicWater.h"
+#include "NullWater.h"
 #include "AdvWater.h"
 #include "BumpWater.h"
 #include "DynWater.h"
@@ -22,11 +22,11 @@
 
 CONFIG(int, Water)
 .defaultValue(IWater::WATER_RENDERER_REFLECTIVE)
-.safemodeValue(IWater::WATER_RENDERER_BASIC)
+.safemodeValue(IWater::WATER_RENDERER_NULL)
 .headlessValue(0)
 .minimumValue(0)
 .maximumValue(IWater::NUM_WATER_RENDERERS - 1)
-.description("Defines the type of water rendering. Can be set in game. Options are: 0 = Basic water, 1 = Reflective water, 2 = Reflective and Refractive water, 3 = Dynamic water, 4 = Bumpmapped water");
+.description("Defines the type of water rendering. Can be set in game. Options are: 0 = No water, 1 = Reflective water, 2 = Reflective and Refractive water, 3 = Dynamic water, 4 = Bumpmapped water");
 
 IWater* water = nullptr;
 static std::vector<int> waterModes;
@@ -69,18 +69,17 @@ IWater* IWater::GetWater(IWater* curRenderer, int nxtRendererMode)
 	IWater* nxtRenderer = nullptr;
 
 	// -1 cycles
-	if (nxtRendererMode < 0) {
+	if (nxtRendererMode < 0)
 		nxtRendererMode = (curRenderer == nullptr)? Clamp(configHandler->GetInt("Water"), 0, NUM_WATER_RENDERERS - 1): curRenderer->GetID() + 1;
-	}
+
 	nxtRendererMode %= NUM_WATER_RENDERERS;
 
 	if (curRenderer != nullptr) {
 		assert(water == curRenderer);
 
 		if (curRenderer->GetID() == nxtRendererMode) {
-			if (nxtRendererMode == IWater::WATER_RENDERER_BASIC) {
+			if (nxtRendererMode == IWater::WATER_RENDERER_NULL)
 				return curRenderer;
-			}
 		}
 
 		// note: rendering thread(s) can concurrently dereference the
@@ -135,7 +134,7 @@ IWater* IWater::GetWater(IWater* curRenderer, int nxtRendererMode)
 	}
 
 	if (nxtRenderer == nullptr)
-		nxtRenderer = new CBasicWater();
+		nxtRenderer = new CNullWater();
 
 	configHandler->Set("Water", nxtRenderer->GetID());
 	return nxtRenderer;

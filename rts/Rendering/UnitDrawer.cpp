@@ -973,7 +973,7 @@ void CUnitDrawer::SetupOpaqueDrawing(bool deferredPass)
 	glAlphaFunc(GL_GREATER, 0.5f);
 	glEnable(GL_ALPHA_TEST);
 
-	// pick base shaders (ARB/GLSL) or FFP; not used by custom-material models
+	// pick base shaders (GLSL) or FFP; not used by custom-material models
 	unitDrawerStates[DRAWER_STATE_SEL] = const_cast<IUnitDrawerState*>(GetWantedDrawerState(false));
 	unitDrawerStates[DRAWER_STATE_SEL]->Enable(this, deferredPass, false);
 

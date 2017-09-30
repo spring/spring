@@ -16,8 +16,6 @@ SET(sources_engine_Rendering
 		"${CMAKE_CURRENT_SOURCE_DIR}/Env/ITreeDrawer.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Env/IWater.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Env/BasicSky.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Env/BasicTreeDrawer.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Env/BasicWater.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Env/BumpWater.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Env/CubeMapHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Env/DynWater.cpp"
