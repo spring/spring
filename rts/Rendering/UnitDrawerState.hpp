@@ -25,7 +25,7 @@ enum {
 
 struct IUnitDrawerState {
 public:
-	static IUnitDrawerState* GetInstance(bool haveARB, bool haveGLSL);
+	static IUnitDrawerState* GetInstance(bool haveGLSL);
 	static void FreeInstance(IUnitDrawerState* state) { delete state; }
 
 	static void PushTransform(const CCamera* cam);
@@ -96,26 +96,6 @@ public:
 
 	void SetTeamColor(int team, const float2 alpha) const override;
 	void SetNanoColor(const float4& color) const override;
-};
-
-
-struct UnitDrawerStateARB: public IUnitDrawerState {
-public:
-	bool Init(const CUnitDrawer*) override;
-	void Kill() override;
-
-	bool CanEnable(const CUnitDrawer*) const override;
-
-	void Enable(const CUnitDrawer*, bool, bool) override;
-	void Disable(const CUnitDrawer*, bool) override;
-
-	void EnableTextures() const override;
-	void DisableTextures() const override;
-	void EnableShaders(const CUnitDrawer*) override;
-	void DisableShaders(const CUnitDrawer*) override;
-
-	void SetNanoColor(const float4& color) const override;
-	void SetTeamColor(int team, const float2 alpha) const override;
 };
 
 

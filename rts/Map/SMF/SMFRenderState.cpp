@@ -25,69 +25,17 @@
 
 
 
-ISMFRenderState* ISMFRenderState::GetInstance(bool haveARB, bool haveGLSL, bool luaShaders) {
+ISMFRenderState* ISMFRenderState::GetInstance(bool haveGLSL, bool luaShaders) {
 	ISMFRenderState* instance = nullptr;
 
-	if (!haveARB && !haveGLSL) {
+	if (!haveGLSL) {
 		instance = new SMFRenderStateFFP();
 	} else {
-		if (!haveGLSL) {
-			instance = new SMFRenderStateARB();
-		} else {
-			instance = new SMFRenderStateGLSL(luaShaders);
-		}
+		instance = new SMFRenderStateGLSL(luaShaders);
 	}
 
 	return instance;
 }
-
-
-
-bool SMFRenderStateARB::Init(const CSMFGroundDrawer* smfGroundDrawer) {
-	if (!globalRendering->haveARB) {
-		// not possible to do (ARB) shader-based map rendering
-		return false;
-	}
-
-	#define sh shaderHandler
-	arbShaders[ARB_SHADER_DEFAULT] = sh->CreateProgramObject("[SMFGroundDrawer]", "SMFShaderBaseARB", true);
-	arbShaders[ARB_SHADER_REFLECT] = sh->CreateProgramObject("[SMFGroundDrawer]", "SMFShaderReflARB", true);
-	arbShaders[ARB_SHADER_REFRACT] = sh->CreateProgramObject("[SMFGroundDrawer]", "SMFShaderRefrARB", true);
-	arbShaders[ARB_SHADER_CURRENT] = arbShaders[ARB_SHADER_DEFAULT];
-
-	arbShaders[ARB_SHADER_DEFAULT]->AttachShaderObject(sh->CreateShaderObject("ARB/ground.vp", "", GL_VERTEX_PROGRAM_ARB));
-	arbShaders[ARB_SHADER_DEFAULT]->AttachShaderObject(sh->CreateShaderObject("ARB/groundFPshadow.fp", "", GL_FRAGMENT_PROGRAM_ARB));
-	arbShaders[ARB_SHADER_DEFAULT]->Link();
-
-	arbShaders[ARB_SHADER_REFLECT]->AttachShaderObject(sh->CreateShaderObject("ARB/dwgroundreflectinverted.vp", "", GL_VERTEX_PROGRAM_ARB));
-	arbShaders[ARB_SHADER_REFLECT]->AttachShaderObject(sh->CreateShaderObject("ARB/groundFPshadow.fp", "", GL_FRAGMENT_PROGRAM_ARB));
-	arbShaders[ARB_SHADER_REFLECT]->Link();
-
-	arbShaders[ARB_SHADER_REFRACT]->AttachShaderObject(sh->CreateShaderObject("ARB/dwgroundrefract.vp", "", GL_VERTEX_PROGRAM_ARB));
-	arbShaders[ARB_SHADER_REFRACT]->AttachShaderObject(sh->CreateShaderObject("ARB/groundFPshadow.fp", "", GL_FRAGMENT_PROGRAM_ARB));
-	arbShaders[ARB_SHADER_REFRACT]->Link();
-	#undef sh
-
-	return true;
-}
-
-void SMFRenderStateARB::Kill() {
-	shaderHandler->ReleaseProgramObjects("[SMFGroundDrawer]");
-}
-
-bool SMFRenderStateARB::HasValidShader(const DrawPass::e& drawPass) const {
-	Shader::IProgramObject* shader = nullptr;
-
-	switch (drawPass) {
-		case DrawPass::Normal:          { shader = arbShaders[ARB_SHADER_CURRENT]; } break;
-		case DrawPass::WaterReflection: { shader = arbShaders[ARB_SHADER_REFLECT]; } break;
-		case DrawPass::WaterRefraction: { shader = arbShaders[ARB_SHADER_REFRACT]; } break;
-		default: {} break;
-	}
-
-	return (shader != nullptr && shader->IsValid());
-}
-
 
 
 bool SMFRenderStateGLSL::Init(const CSMFGroundDrawer* smfGroundDrawer) {
@@ -263,14 +211,6 @@ bool SMFRenderStateFFP::CanEnable(const CSMFGroundDrawer* smfGroundDrawer) const
 	return (!smfGroundDrawer->UseAdvShading());
 }
 
-bool SMFRenderStateARB::CanEnable(const CSMFGroundDrawer* smfGroundDrawer) const {
-	// NOTE:
-	//   ARB map shaders assume shadows are always on, so
-	//   SMFRenderStateARB can be used only when they are
-	//   in fact enabled (see Init)
-	return (smfGroundDrawer->UseAdvShading() && !infoTextureHandler->IsEnabled() && shadowHandler->ShadowsLoaded());
-}
-
 bool SMFRenderStateGLSL::CanEnable(const CSMFGroundDrawer* smfGroundDrawer) const {
 	return (smfGroundDrawer->UseAdvShading());
 }
@@ -410,68 +350,6 @@ void SMFRenderStateFFP::Disable(const CSMFGroundDrawer*, const DrawPass::e&) {
 
 
 
-void SMFRenderStateARB::Enable(const CSMFGroundDrawer* smfGroundDrawer, const DrawPass::e& drawPass) {
-	const CSMFReadMap* smfMap = smfGroundDrawer->GetReadMap();
-	const float3 ambientColor = sunLighting->groundAmbientColor * CGlobalRendering::SMF_INTENSITY_MULT;
-
-	#ifdef DYNWATER_OVERRIDE_VERTEX_PROGRAM
-	// CDynamicWater overrides smfShaderBaseARB during the reflection / refraction
-	// pass to distort underwater geometry, but because it's hard to maintain only
-	// a vertex shader when working with texture combiners we don't enable this
-	// note: we would also want to disable culling for these passes
-	if (arbShaders[ARB_SHADER_CURRENT] != arbShaders[ARB_SHADER_DEFAULT]) {
-		if (drawPass == DrawPass::WaterReflection) {
-			glAlphaFunc(GL_GREATER, 0.9f);
-			glEnable(GL_ALPHA_TEST);
-		}
-	}
-	#endif
-
-	arbShaders[ARB_SHADER_CURRENT]->Enable();
-	arbShaders[ARB_SHADER_CURRENT]->SetUniformTarget(GL_VERTEX_PROGRAM_ARB);
-	arbShaders[ARB_SHADER_CURRENT]->SetUniform4f(10, 1.0f / (mapDims.pwr2mapx * SQUARE_SIZE), 1.0f / (mapDims.pwr2mapy * SQUARE_SIZE), 0, 1);
-	arbShaders[ARB_SHADER_CURRENT]->SetUniform4f(12, 1.0f / smfMap->bigTexSize, 1.0f / smfMap->bigTexSize, 0, 1);
-	arbShaders[ARB_SHADER_CURRENT]->SetUniform4f(13, -math::floor(camera->GetPos().x * 0.02f), -math::floor(camera->GetPos().z * 0.02f), 0, 0);
-	arbShaders[ARB_SHADER_CURRENT]->SetUniform4f(14, 0.02f, 0.02f, 0, 1);
-	arbShaders[ARB_SHADER_CURRENT]->SetUniformTarget(GL_FRAGMENT_PROGRAM_ARB);
-	arbShaders[ARB_SHADER_CURRENT]->SetUniform4f(10, ambientColor.x, ambientColor.y, ambientColor.z, 1);
-	arbShaders[ARB_SHADER_CURRENT]->SetUniform4f(11, 0, 0, 0, sunLighting->groundShadowDensity);
-
-	glMatrixMode(GL_MATRIX0_ARB);
-	glLoadMatrixf(shadowHandler->GetShadowMatrixRaw());
-	glMatrixMode(GL_MODELVIEW);
-
-	glActiveTexture(GL_TEXTURE1); glBindTexture(GL_TEXTURE_2D, smfMap->GetShadingTexture());
-	glActiveTexture(GL_TEXTURE2); glBindTexture(GL_TEXTURE_2D, smfMap->GetDetailTexture());
-
-	assert(shadowHandler->ShadowsLoaded());
-	shadowHandler->SetupShadowTexSampler(GL_TEXTURE4);
-	glActiveTexture(GL_TEXTURE0);
-}
-
-void SMFRenderStateARB::Disable(const CSMFGroundDrawer*, const DrawPass::e& drawPass) {
-	arbShaders[ARB_SHADER_CURRENT]->Disable();
-
-	#ifdef DYNWATER_OVERRIDE_VERTEX_PROGRAM
-	if (arbShaders[ARB_SHADER_CURRENT] != arbShaders[ARB_SHADER_DEFAULT]) {
-		if (drawPass == DrawPass::WaterReflection) {
-			glDisable(GL_ALPHA_TEST);
-		}
-	}
-	#endif
-
-	glActiveTexture(GL_TEXTURE4);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);
-	glBindTexture(GL_TEXTURE_2D, 0);
-
-	glActiveTexture(GL_TEXTURE2); glBindTexture(GL_TEXTURE_2D, 0);
-	glActiveTexture(GL_TEXTURE1); glBindTexture(GL_TEXTURE_2D, 0);
-
-	glActiveTexture(GL_TEXTURE0);
-}
-
-
-
 void SMFRenderStateGLSL::Enable(const CSMFGroundDrawer* smfGroundDrawer, const DrawPass::e&) {
 	if (useLuaShaders) {
 		// use raw, GLSLProgramObject::Enable also calls RecompileIfNeeded
@@ -552,11 +430,6 @@ void SMFRenderStateFFP::SetSquareTexGen(const int sqx, const int sqy) const {
 	SetTexGen(1.0f / SMF_TEXSQUARE_SIZE, 1.0f / SMF_TEXSQUARE_SIZE, -sqx, -sqy);
 }
 
-void SMFRenderStateARB::SetSquareTexGen(const int sqx, const int sqy) const {
-	arbShaders[ARB_SHADER_CURRENT]->SetUniformTarget(GL_VERTEX_PROGRAM_ARB);
-	arbShaders[ARB_SHADER_CURRENT]->SetUniform4f(11, -sqx, -sqy, 0, 0);
-}
-
 void SMFRenderStateGLSL::SetSquareTexGen(const int sqx, const int sqy) const {
 	// needs to be set even for Lua shaders, is unknowable otherwise
 	// (works because SMFGroundDrawer::SetupBigSquare always calls us)
@@ -564,15 +437,6 @@ void SMFRenderStateGLSL::SetSquareTexGen(const int sqx, const int sqy) const {
 }
 
 
-
-void SMFRenderStateARB::SetCurrentShader(const DrawPass::e& drawPass) {
-	switch (drawPass) {
-		case DrawPass::Normal:          { arbShaders[ARB_SHADER_CURRENT] = arbShaders[ARB_SHADER_DEFAULT]; } break;
-		case DrawPass::WaterReflection: { arbShaders[ARB_SHADER_CURRENT] = arbShaders[ARB_SHADER_REFLECT]; } break;
-		case DrawPass::WaterRefraction: { arbShaders[ARB_SHADER_CURRENT] = arbShaders[ARB_SHADER_REFRACT]; } break;
-		default:                        {                                                                  } break;
-	}
-}
 
 void SMFRenderStateGLSL::SetCurrentShader(const DrawPass::e& drawPass) {
 	switch (drawPass) {
@@ -582,12 +446,6 @@ void SMFRenderStateGLSL::SetCurrentShader(const DrawPass::e& drawPass) {
 }
 
 
-
-void SMFRenderStateARB::UpdateCurrentShaderSky(const ISkyLight* skyLight) const {
-	arbShaders[ARB_SHADER_CURRENT]->Enable();
-	arbShaders[ARB_SHADER_CURRENT]->SetUniform4f(11, 0, 0, 0, sunLighting->groundShadowDensity);
-	arbShaders[ARB_SHADER_CURRENT]->Disable();
-}
 
 void SMFRenderStateGLSL::UpdateCurrentShaderSky(const ISkyLight* skyLight) const {
 	glslShaders[GLSL_SHADER_CURRENT]->Enable();

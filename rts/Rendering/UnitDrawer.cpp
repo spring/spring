@@ -257,8 +257,8 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 	lightHandler.Init(2U, configHandler->GetInt("MaxDynamicModelLights"));
 
 	unitDrawerStates.fill(nullptr);
-	unitDrawerStates[DRAWER_STATE_SSP] = IUnitDrawerState::GetInstance(globalRendering->haveARB, globalRendering->haveGLSL);
-	unitDrawerStates[DRAWER_STATE_FFP] = IUnitDrawerState::GetInstance(                   false,                     false);
+	unitDrawerStates[DRAWER_STATE_SSP] = IUnitDrawerState::GetInstance(globalRendering->haveGLSL);
+	unitDrawerStates[DRAWER_STATE_FFP] = IUnitDrawerState::GetInstance(                    false);
 
 	drawModelFuncs[0] = &CUnitDrawer::DrawUnitModelBeingBuiltOpaque;
 	drawModelFuncs[1] = &CUnitDrawer::DrawUnitModelBeingBuiltShadow;
@@ -995,7 +995,6 @@ void CUnitDrawer::ResetOpaqueDrawing(bool deferredPass)
 const IUnitDrawerState* CUnitDrawer::GetWantedDrawerState(bool alphaPass) const
 {
 	// proper alpha-rendering is only enabled with GLSL state
-	// (ARB shaders could technically also be used, but KISS)
 	const bool enableShaders =               unitDrawerStates[DRAWER_STATE_SSP]->CanEnable(this);
 	const bool permitShaders = !alphaPass || unitDrawerStates[DRAWER_STATE_SSP]->CanDrawAlpha();
 

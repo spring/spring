@@ -259,7 +259,7 @@ private:
 
 private:
 	enum DecalShaderProgram {
-		DECAL_SHADER_ARB,
+		DECAL_SHADER_NULL,
 		DECAL_SHADER_GLSL,
 		DECAL_SHADER_CURR,
 		DECAL_SHADER_LAST
@@ -267,7 +267,7 @@ private:
 
 	std::vector<SolidObjectDecalType> objectDecalTypes;
 
-	std::vector<Shader::IProgramObject*> decalShaders;
+	std::array<Shader::IProgramObject*, DECAL_SHADER_LAST> decalShaders;
 	std::vector<SolidObjectGroundDecal*> decalsToDraw;
 
 	std::vector<int> addedScars;

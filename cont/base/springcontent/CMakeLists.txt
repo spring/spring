@@ -28,45 +28,26 @@ set(FILES
 	shaders/GLSL/terrainSimpleCopyVS.glsl
 	shaders/GLSL/terrainVertexShader.glsl
 	shaders/GLSL/bumpWaterVS.glsl
-	shaders/ARB/groundshadow.vp
 	shaders/ARB/waterDynWave2.vp
-	shaders/ARB/units3o.vp
 	shaders/ARB/waterDynNormal.vp
-	shaders/ARB/dwgroundreflectinverted.vp
-	shaders/ARB/treeFarShadow.vp
 	shaders/ARB/waterDynNormal.fp
 	shaders/ARB/waterDynWave3.vp
 	shaders/ARB/clouds.fp
-	shaders/ARB/units3o.fp
 	shaders/ARB/water.fp
-	shaders/ARB/ground.vp
 	shaders/ARB/dwAddSplash.vp
 	shaders/ARB/waterDynNT.vp
-	shaders/ARB/treeShadow.vp
 	shaders/ARB/waterDynWave.vp
-	shaders/ARB/units3o2.vp
 	shaders/ARB/waterDyn.fp
 	shaders/ARB/waterRefractT2D.fp
-	shaders/ARB/dwgroundrefract.vp
-	shaders/ARB/unit_genshadow.vp
-	shaders/ARB/units3o_shadow.fp
-	shaders/ARB/treeFar.vp
 	shaders/ARB/waterRefractTR.fp
-	shaders/ARB/GroundDecalsSMF.fp
 	shaders/ARB/dwAddSplash.fp
 	shaders/ARB/waterDyn.vp
-	shaders/ARB/projectileshadow.vp
-	shaders/ARB/treeNS.vp
 	shaders/ARB/waterDynWave.fp
-	shaders/ARB/GroundDecals.vp
 	shaders/ARB/waterDynWave3.fp
 	shaders/ARB/GroundDecalsSM3.fp
 	shaders/ARB/waterDynWave2.fp
-	shaders/ARB/treeFPshadow.fp
-	shaders/ARB/groundFPshadow.fp
 	shaders/ARB/dwDetailNormal.fp
 	shaders/ARB/dwDetailNormal.vp
-	shaders/ARB/tree.vp
 	gamedata/unitdefs.lua
 	gamedata/explosion_alias.lua
 	gamedata/unitdefs_post.lua
