@@ -15,7 +15,7 @@ public:
 	void DrawSun() override {}
 
 	void UpdateSunDir() override {}
-	void UpdateSkyTexure() override {}
+	void UpdateSkyTexture() override {}
 };
 
 #endif
