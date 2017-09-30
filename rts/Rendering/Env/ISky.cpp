@@ -2,7 +2,7 @@
 
 
 #include "ISky.h"
-#include "BasicSky.h"
+#include "NullSky.h"
 #include "AdvSky.h"
 #include "SkyBox.h"
 #include "Game/TraceRay.h"
@@ -68,13 +68,13 @@ ISky* ISky::GetSky()
 			sky = new CAdvSky();
 		}
 	} catch (const content_error& ex) {
-		LOG_L(L_ERROR, "[%s] error: %s (falling back to BasicSky)", __FUNCTION__, ex.what());
+		LOG_L(L_ERROR, "[%s] error: %s (falling back to NullSky)", __func__, ex.what());
 
 		spring::SafeDelete(sky);
 	}
 
 	if (sky == nullptr)
-		sky = new CBasicSky();
+		sky = new CNullSky();
 
 	return sky;
 }
