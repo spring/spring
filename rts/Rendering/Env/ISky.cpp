@@ -1,14 +1,13 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-
 #include "ISky.h"
 #include "NullSky.h"
 #include "LuaSky.h"
 #include "SkyBox.h"
 #include "Game/TraceRay.h"
 #include "Map/MapInfo.h"
+#include "Rendering/GL/myGL.h"
 #include "Rendering/GlobalRendering.h"
-#include "System/Config/ConfigHandler.h"
 #include "System/Exceptions.h"
 #include "System/SafeUtil.h"
 #include "System/Log/ILog.h"
