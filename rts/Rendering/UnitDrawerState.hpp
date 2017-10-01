@@ -112,7 +112,7 @@ public:
 	bool Init(const CUnitDrawer*) override;
 	void Kill() override;
 
-	bool CanEnable(const CUnitDrawer*) const override;
+	bool CanEnable(const CUnitDrawer*) const override { return true; }
 	bool CanDrawAlpha() const override { return true; }
 	bool CanDrawDeferred() const  override { return true; }
 

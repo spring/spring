@@ -271,13 +271,8 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 	drawDeferred = (geomBuffer->Valid());
 	wireFrameMode = false;
 
-	// NOTE:
-	//   advShading can NOT change at runtime if initially false***
-	//   (see AdvModelShadingActionExecutor), so we will always use
-	//   FFP renderer-state (in ::Draw) in that special case and it
-	//   does not matter whether SSP renderer-state is initialized
-	//   *** except for DrawAlphaUnits
-	advShading = (unitDrawerStates[DRAWER_STATE_SSP]->Init(this) && cubeMapHandler->Init());
+	unitDrawerStates[DRAWER_STATE_SSP]->Init(this);
+	cubeMapHandler->Init(); // can only fail if FBO's are invalid
 
 	// note: state must be pre-selected before the first drawn frame
 	// Sun*Changed can be called first, e.g. if DynamicSun is enabled
@@ -288,6 +283,7 @@ CUnitDrawer::~CUnitDrawer()
 {
 	eventHandler.RemoveClient(this);
 
+	unitDrawerStates[DRAWER_STATE_NOP]->Kill(); IUnitDrawerState::FreeInstance(unitDrawerStates[DRAWER_STATE_NOP]);
 	unitDrawerStates[DRAWER_STATE_SSP]->Kill(); IUnitDrawerState::FreeInstance(unitDrawerStates[DRAWER_STATE_SSP]);
 
 	cubeMapHandler->Free();
@@ -740,9 +736,7 @@ void CUnitDrawer::DrawAlphaPass()
 {
 	{
 		SetupAlphaDrawing(false);
-
-		if (UseAdvShading())
-			glDisable(GL_ALPHA_TEST);
+		glDisable(GL_ALPHA_TEST);
 
 		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 			PushModelRenderState(modelType);
@@ -751,9 +745,7 @@ void CUnitDrawer::DrawAlphaPass()
 			PopModelRenderState(modelType);
 		}
 
-		if (UseAdvShading())
-			glEnable(GL_ALPHA_TEST);
-
+		glEnable(GL_ALPHA_TEST);
 		ResetAlphaDrawing(false);
 	}
 
@@ -980,7 +972,7 @@ void CUnitDrawer::SetupOpaqueDrawing(bool deferredPass)
 	//   when deferredPass is true we MUST be able to use the SSP render-state
 	//   all calling code (reached from DrawOpaquePass(deferred=true)) should
 	//   ensure this is the case
-	assert(!deferredPass || advShading);
+	assert(!deferredPass || true);
 	assert(!deferredPass || unitDrawerStates[DRAWER_STATE_SEL]->CanDrawDeferred());
 }
 

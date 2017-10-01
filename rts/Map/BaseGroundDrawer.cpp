@@ -20,7 +20,6 @@ CBaseGroundDrawer::CBaseGroundDrawer()
 	drawMapEdges = false;
 
 	wireframe = false;
-	advShading = false;
 
 	jamColor[0] = (int)(losColorScale * 0.1f);
 	jamColor[1] = (int)(losColorScale * 0.0f);

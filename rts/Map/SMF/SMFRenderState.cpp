@@ -196,12 +196,6 @@ bool SMFRenderStateGLSL::HasValidShader(const DrawPass::e& drawPass) const {
 
 
 
-bool SMFRenderStateGLSL::CanEnable(const CSMFGroundDrawer* smfGroundDrawer) const {
-	return (smfGroundDrawer->UseAdvShading());
-}
-
-
-
 void SMFRenderStateGLSL::Enable(const CSMFGroundDrawer* smfGroundDrawer, const DrawPass::e&) {
 	if (useLuaShaders) {
 		// use raw, GLSLProgramObject::Enable also calls RecompileIfNeeded

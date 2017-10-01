@@ -74,12 +74,8 @@ CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
 	drawDeferred = geomBuffer.Valid();
 	drawMapEdges = configHandler->GetBool("MapBorder");
 
-
-	// NOTE:
-	//   advShading can NOT be changed at runtime, so states[FFP] will
-	//   always be used (in ::Draw) if states[SSP] is not initialized
-	if ((advShading = smfRenderStates[RENDER_STATE_SSP]->Init(this)))
-		smfRenderStates[RENDER_STATE_SSP]->Update(this, nullptr);
+	smfRenderStates[RENDER_STATE_SSP]->Init(this);
+	smfRenderStates[RENDER_STATE_SSP]->Update(this, nullptr);
 
 	// always initialize this state; defer Update (allows re-use)
 	smfRenderStates[RENDER_STATE_LUA]->Init(this);
@@ -113,6 +109,7 @@ CSMFGroundDrawer::~CSMFGroundDrawer()
 	// remember which ROAM-mode was enabled (if any)
 	configHandler->Set("ROAM", (dynamic_cast<CRoamMeshDrawer*>(meshDrawer) != nullptr)? Patch::GetRenderMode(): 0);
 
+	smfRenderStates[RENDER_STATE_NOP]->Kill(); ISMFRenderState::FreeInstance(smfRenderStates[RENDER_STATE_NOP]);
 	smfRenderStates[RENDER_STATE_SSP]->Kill(); ISMFRenderState::FreeInstance(smfRenderStates[RENDER_STATE_SSP]);
 	smfRenderStates[RENDER_STATE_LUA]->Kill(); ISMFRenderState::FreeInstance(smfRenderStates[RENDER_STATE_LUA]);
 	smfRenderStates.clear();

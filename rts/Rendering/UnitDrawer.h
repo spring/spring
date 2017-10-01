@@ -156,7 +156,6 @@ public:
 	bool DrawForward() const { return drawForward; }
 	bool DrawDeferred() const { return drawDeferred; }
 
-	bool UseAdvShading() const { return advShading; }
 	bool& WireFrameModeRef() { return wireFrameMode; }
 
 public:
@@ -254,8 +253,6 @@ private:
 	bool drawForward;
 	bool drawDeferred;
 	bool wireFrameMode;
-
-	bool advShading;
 
 	bool useDistToGroundForIcons;
 

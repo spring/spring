@@ -52,7 +52,6 @@ public:
 	bool DrawForward() const { return drawForward; }
 	bool DrawDeferred() const { return drawDeferred; }
 
-	bool UseAdvShading() const { return advShading; }
 	bool WireFrameMode() const { return wireframe; }
 	bool& WireFrameModeRef() { return wireframe; }
 
@@ -82,7 +81,6 @@ protected:
 	bool drawMapEdges;
 
 	bool wireframe;
-	bool advShading;
 };
 
 #endif // _BASE_GROUND_DRAWER_H

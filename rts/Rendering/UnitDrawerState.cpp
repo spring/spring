@@ -200,10 +200,6 @@ void UnitDrawerStateGLSL::Kill() {
 	shaderHandler->ReleaseProgramObjects("[UnitDrawer]");
 }
 
-bool UnitDrawerStateGLSL::CanEnable(const CUnitDrawer* ud) const {
-	return (ud->UseAdvShading());
-}
-
 void UnitDrawerStateGLSL::Enable(const CUnitDrawer* ud, bool deferredPass, bool alphaPass) {
 	EnableCommon(ud, deferredPass);
 

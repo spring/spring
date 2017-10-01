@@ -87,7 +87,7 @@ public:
 	);
 
 	bool HasValidShader(const DrawPass::e& drawPass) const;
-	bool CanEnable(const CSMFGroundDrawer* smfGroundDrawer) const;
+	bool CanEnable(const CSMFGroundDrawer* smfGroundDrawer) const { return true; }
 	bool CanDrawForward() const { return true; }
 	bool CanDrawDeferred() const { return true; }
 
