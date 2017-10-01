@@ -512,6 +512,7 @@ void CGlobalRendering::SwapBuffers(bool allowSwapBuffers, bool clearErrors)
 
 void CGlobalRendering::CheckGLExtensions() const
 {
+	assert(GLEW_ARB_texture_compression);
 }
 
 void CGlobalRendering::SetGLSupportFlags()
@@ -584,7 +585,6 @@ void CGlobalRendering::SetGLSupportFlags()
 	// apply runtime texture compression for glBuildMipmaps?
 	// glCompressedTex*Image* must additionally be supported
 	// for DDS (SMF DXT1, etc)
-	assert(GLEW_ARB_texture_compression);
 	compressTextures = configHandler->GetBool("CompressTextures");
 
 

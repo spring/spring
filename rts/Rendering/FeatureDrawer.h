@@ -98,7 +98,6 @@ private:
 	// reuse Draw{Opaque}Feature{s} which sets team color
 	bool inAlphaPass;
 	bool inShadowPass;
-	bool ffpAlphaMat;
 
 private:
 	friend class CFeatureQuadDrawer;
