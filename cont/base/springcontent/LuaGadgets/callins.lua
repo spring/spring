@@ -123,6 +123,8 @@ CALLIN_LIST = {
 	"UnsyncedHeightMapUpdate", -- FIXME: not implemented by base GH
 
 	"DrawGenesis",
+	"DrawSky",
+	"DrawSun",
 	"DrawWorld",
 	"DrawWorldPreUnit",
 	"DrawWorldPreParticles",

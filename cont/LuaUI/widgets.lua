@@ -1258,15 +1258,25 @@ function widgetHandler:DrawGenesis()
   for _,w in ripairs(self.DrawGenesisList) do
     w:DrawGenesis()
   end
-  return
 end
 
+
+function widgetHandler:DrawSky()
+  for _,w in ripairs(self.DrawSkyList) do
+    w:DrawSky()
+  end
+end
+
+function widgetHandler:DrawSun()
+  for _,w in ripairs(self.DrawSunList) do
+    w:DrawSun()
+  end
+end
 
 function widgetHandler:DrawWorld()
   for _,w in ripairs(self.DrawWorldList) do
     w:DrawWorld()
   end
-  return
 end
 
 
@@ -1274,14 +1284,12 @@ function widgetHandler:DrawWorldPreUnit()
   for _,w in ripairs(self.DrawWorldPreUnitList) do
     w:DrawWorldPreUnit()
   end
-  return
 end
 
 function widgetHandler:DrawWorldPreParticles()
   for _,w in ripairs(self.DrawWorldPreParticlesList) do
     w:DrawWorldPreParticles()
   end
-  return
 end
 
 
@@ -1289,7 +1297,6 @@ function widgetHandler:DrawWorldShadow()
   for _,w in ripairs(self.DrawWorldShadowList) do
     w:DrawWorldShadow()
   end
-  return
 end
 
 
@@ -1297,7 +1304,6 @@ function widgetHandler:DrawWorldReflection()
   for _,w in ripairs(self.DrawWorldReflectionList) do
     w:DrawWorldReflection()
   end
-  return
 end
 
 
@@ -1305,7 +1311,6 @@ function widgetHandler:DrawWorldRefraction()
   for _,w in ripairs(self.DrawWorldRefractionList) do
     w:DrawWorldRefraction()
   end
-  return
 end
 
 
@@ -1313,7 +1318,6 @@ function widgetHandler:DrawScreenEffects(vsx, vsy)
   for _,w in ripairs(self.DrawScreenEffectsList) do
     w:DrawScreenEffects(vsx, vsy)
   end
-  return
 end
 
 
@@ -1321,7 +1325,6 @@ function widgetHandler:DrawScreenPost(vsx, vsy)
   for _,w in ripairs(self.DrawScreenPostList) do
     w:DrawScreenPost(vsx, vsy)
   end
-  return
 end
 
 
@@ -1329,7 +1332,6 @@ function widgetHandler:DrawInMiniMap(xSize, ySize)
   for _,w in ripairs(self.DrawInMiniMapList) do
     w:DrawInMiniMap(xSize, ySize)
   end
-  return
 end
 
 

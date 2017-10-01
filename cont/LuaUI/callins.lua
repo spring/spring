@@ -67,6 +67,8 @@ CallInsList = {
   "FeatureDestroyed",
 
   "DrawGenesis",
+  "DrawSky",
+  "DrawSun",
   "DrawWorld",
   "DrawWorldPreUnit",
   "DrawWorldPreParticles",

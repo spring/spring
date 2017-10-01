@@ -1732,6 +1732,18 @@ function gadgetHandler:DrawGenesis()
   end
 end
 
+function gadgetHandler:DrawSky()
+  for _,g in r_ipairs(self.DrawSkyList) do
+    g:DrawSky()
+  end
+end
+
+function gadgetHandler:DrawSun()
+  for _,g in r_ipairs(self.DrawSunList) do
+    g:DrawSun()
+  end
+end
+
 function gadgetHandler:DrawWorld()
   for _,g in r_ipairs(self.DrawWorldList) do
     g:DrawWorld()
