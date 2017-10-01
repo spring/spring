@@ -39,6 +39,7 @@ CONFIG(int, ForceSwapBuffers).defaultValue(1).minimumValue(0).maximumValue(1);
 CONFIG(int, AtiHacks).defaultValue(-1).headlessValue(0).minimumValue(-1).maximumValue(1).description("Enables graphics drivers workarounds for users with ATI video cards.\n -1:=runtime detect, 0:=off, 1:=on");
 
 // enabled in safemode, far more likely the gpu runs out of memory than this extension causes crashes!
+// (otherwise defaults to off because it reduces mipmap quality, smallest compressed level is bigger)
 CONFIG(bool, CompressTextures).defaultValue(false).safemodeValue(true).description("Runtime compress most textures to save VideoRAM.");
 CONFIG(bool, DualScreenMode).defaultValue(false).description("Sets whether to split the screen in half, with one half for minimap and one for main screen. Right side is for minimap unless DualScreenMiniMapOnLeft is set.");
 CONFIG(bool, DualScreenMiniMapOnLeft).defaultValue(false).description("When set, will make the left half of the screen the minimap when DualScreenMode is set.");
@@ -511,27 +512,6 @@ void CGlobalRendering::SwapBuffers(bool allowSwapBuffers, bool clearErrors)
 
 void CGlobalRendering::CheckGLExtensions() const
 {
-	char extMsg[2048] = {0};
-	char errMsg[2048] = {0};
-	char* ptr = &extMsg[0];
-
-	if (!GLEW_ARB_multitexture       ) ptr += snprintf(ptr, sizeof(extMsg) - (ptr - extMsg), " GL_ARB_multitexture");
-	if (!GLEW_ARB_texture_env_combine) ptr += snprintf(ptr, sizeof(extMsg) - (ptr - extMsg), " GL_ARB_texture_env_combine");
-	if (!GLEW_ARB_texture_compression) ptr += snprintf(ptr, sizeof(extMsg) - (ptr - extMsg), " GL_ARB_texture_compression");
-
-	if (extMsg[0] == 0)
-		return;
-
-	SNPRINTF(errMsg, sizeof(errMsg),
-		"Needed OpenGL extension(s) not found:\n"
-		"  %s\n\n"
-		"Update your graphics-card drivers!\n"
-		"  Graphics card:  %s\n"
-		"  OpenGL version: %s\n",
-		extMsg,
-		globalRenderingInfo.glRenderer,
-		globalRenderingInfo.glVersion);
-	throw unsupported_error(errMsg);
 }
 
 void CGlobalRendering::SetGLSupportFlags()
@@ -601,10 +581,11 @@ void CGlobalRendering::SetGLSupportFlags()
 		atiHacks |= (atiHacksCfg > 0); // user override
 	}
 
-	// runtime-compress textures? (also already required for SMF ground textures)
-	// default to off because it reduces quality, smallest mipmap level is bigger
-	if (GLEW_ARB_texture_compression)
-		compressTextures = configHandler->GetBool("CompressTextures");
+	// apply runtime texture compression for glBuildMipmaps?
+	// glCompressedTex*Image* must additionally be supported
+	// for DDS (SMF DXT1, etc)
+	assert(GLEW_ARB_texture_compression);
+	compressTextures = configHandler->GetBool("CompressTextures");
 
 
 	#ifdef GLEW_NV_primitive_restart
