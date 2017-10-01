@@ -295,9 +295,6 @@ void CGrassDrawer::ConfigNotify(const std::string& key, const std::string& value
 
 
 void CGrassDrawer::LoadGrassShaders() {
-	if (!globalRendering->haveGLSL)
-		return;
-
 	#define sh shaderHandler
 	grassShaders.resize(GRASS_PROGRAM_LAST, nullptr);
 
@@ -523,10 +520,9 @@ void CGrassDrawer::Update()
 		readMap->GridVisibility(nullptr, &blockDrawer, maxGrassDist, blockMapSize);
 
 		// ATI crashes w/o an error when shadows are enabled!?
-		static const bool shaders = globalRendering->haveGLSL;
-		       const bool shadows = (shadowHandler->ShadowsLoaded() && globalRendering->atiHacks);
+		const bool shadows = (shadowHandler->ShadowsLoaded() && globalRendering->atiHacks);
 
-		if (shaders && !shadows) {
+		if (!shadows) {
 			std::sort(blockDrawer.inviewFarGrass.begin(), blockDrawer.inviewFarGrass.end(), GrassSort);
 			std::sort(blockDrawer.inviewNearGrass.begin(), blockDrawer.inviewNearGrass.end(), GrassSortNear);
 			farnearVA.Initialize();
@@ -565,10 +561,9 @@ void CGrassDrawer::Draw()
 	}
 
 	// ATI crashes w/o an error when shadows are enabled!?
-	static const bool shaders = globalRendering->haveGLSL;
-	       const bool shadows = (shadowHandler->ShadowsLoaded() && globalRendering->atiHacks);
+	const bool shadows = (shadowHandler->ShadowsLoaded() && globalRendering->atiHacks);
 
-	if (shaders && !shadows && (!blockDrawer.inviewFarGrass.empty() || !blockDrawer.inviewNearGrass.empty())) {
+	if (!shadows && (!blockDrawer.inviewFarGrass.empty() || !blockDrawer.inviewNearGrass.empty())) {
 		SetupGlStateFar();
 			DrawFarBillboards(blockDrawer.inviewFarGrass);
 			DrawNearBillboards(blockDrawer.inviewNearGrass);
@@ -647,7 +642,7 @@ void CGrassDrawer::SetupGlStateNear()
 	}
 
 	// bind shader
-	if (globalRendering->haveGLSL) {
+	{
 		EnableShader(GRASS_PROGRAM_NEAR);
 
 		if (shadowHandler->ShadowsLoaded())
@@ -659,34 +654,6 @@ void CGrassDrawer::SetupGlStateNear()
 		glMatrixMode(GL_MODELVIEW);
 			glPushMatrix();
 			glLoadIdentity();
-	} else {
-		// FPP enable textures
-		glActiveTextureARB(GL_TEXTURE0_ARB);
-			glEnable(GL_TEXTURE_2D);
-		glActiveTextureARB(GL_TEXTURE1_ARB);
-			glEnable(GL_TEXTURE_2D);
-			glMultiTexCoord4f(GL_TEXTURE1_ARB, 1.0f,1.0f,1.0f,1.0f); // workaround a nvidia bug with TexGen
-			SetTexGen(1.0f / (mapDims.mapx * SQUARE_SIZE), 1.0f / (mapDims.mapy * SQUARE_SIZE), 0.0f, 0.0f);
-		glActiveTextureARB(GL_TEXTURE2_ARB);
-			glEnable(GL_TEXTURE_2D);
-			glMultiTexCoord4f(GL_TEXTURE2_ARB, 1.0f,1.0f,1.0f,1.0f); // workaround a nvidia bug with TexGen
-			SetTexGen(1.0f / (mapDims.pwr2mapx * SQUARE_SIZE), 1.0f / (mapDims.pwr2mapy * SQUARE_SIZE), 0.0f, 0.0f);
-			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_ARB);
-			glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB_ARB, GL_PREVIOUS_ARB);
-			glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB_ARB, GL_TEXTURE);
-			glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB, GL_MODULATE);
-			glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE_ARB, 2);
-		if (infoTextureHandler->IsEnabled()) {
-			glActiveTextureARB(GL_TEXTURE3_ARB);
-				glEnable(GL_TEXTURE_2D);
-				glMultiTexCoord4f(GL_TEXTURE3_ARB, 1.0f,1.0f,1.0f,1.0f); // workaround a nvidia bug with TexGen
-				SetTexGen(1.0f / (mapDims.pwr2mapx * SQUARE_SIZE), 1.0f / (mapDims.pwr2mapy * SQUARE_SIZE), 0.0f, 0.0f);
-				glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB, GL_ADD_SIGNED_ARB);
-				glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA_ARB, GL_MODULATE);
-				glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA_ARB, GL_PREVIOUS_ARB);
-				glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_ALPHA_ARB, GL_TEXTURE);
-				glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_ARB);
-		}
 	}
 
 	glActiveTextureARB(GL_TEXTURE0_ARB);
@@ -701,7 +668,7 @@ void CGrassDrawer::ResetGlStateNear()
 {
 	//CBaseGroundDrawer* gd = readMap->GetGroundDrawer();
 
-	if (globalRendering->haveGLSL) {
+	{
 		grassShader->Disable();
 
 		if (shadowHandler->ShadowsLoaded()) {
@@ -716,25 +683,6 @@ void CGrassDrawer::ResetGlStateNear()
 		glPopMatrix();
 		glMatrixMode(GL_MODELVIEW);
 		glPopMatrix();
-	} else {
-		glActiveTextureARB(GL_TEXTURE1_ARB);
-			glDisable(GL_TEXTURE_2D);
-			glDisable(GL_TEXTURE_GEN_S);
-			glDisable(GL_TEXTURE_GEN_T);
-		glActiveTextureARB(GL_TEXTURE2_ARB);
-			glDisable(GL_TEXTURE_2D);
-			glDisable(GL_TEXTURE_GEN_S);
-			glDisable(GL_TEXTURE_GEN_T);
-			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-			glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE_ARB, 1);
-		if (infoTextureHandler->IsEnabled()) {
-			glActiveTextureARB(GL_TEXTURE3_ARB);
-				glDisable(GL_TEXTURE_2D);
-				glDisable(GL_TEXTURE_GEN_S);
-				glDisable(GL_TEXTURE_GEN_T);
-				glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-		}
-		glActiveTextureARB(GL_TEXTURE0_ARB);
 	}
 
 	glDisable(GL_TEXTURE_2D);
@@ -744,8 +692,6 @@ void CGrassDrawer::ResetGlStateNear()
 
 void CGrassDrawer::SetupGlStateFar()
 {
-	assert(globalRendering->haveGLSL);
-
 	//glEnable(GL_ALPHA_TEST);
 	//glAlphaFunc(GL_GREATER, 0.01f);
 	glEnable(GL_BLEND);

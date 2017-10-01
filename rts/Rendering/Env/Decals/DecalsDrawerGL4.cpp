@@ -230,9 +230,6 @@ CDecalsDrawerGL4::CDecalsDrawerGL4()
 	if (!GLEW_ARB_vertex_array_object)
 		throw opengl_error(LOG_SECTION_DECALS_GL4 ": missing GL_ARB_vertex_array_object");
 
-	if (!globalRendering->haveGLSL)
-		throw opengl_error(LOG_SECTION_DECALS_GL4 ": missing GLSL");
-
 	if (!dynamic_cast<CSMFReadMap*>(readMap))
 		throw unsupported_error(LOG_SECTION_DECALS_GL4 ": only SMF supported");
 
@@ -241,9 +238,8 @@ CDecalsDrawerGL4::CDecalsDrawerGL4()
 
 	DetectMaxDecals();
 	LoadShaders();
-	if (!decalShader->IsValid()) {
+	if (!decalShader->IsValid())
 		throw opengl_error(LOG_SECTION_DECALS_GL4 ": cannot compile shader");
-	}
 
 	glGenTextures(1, &depthTex);
 	CreateBoundingBoxVBOs();

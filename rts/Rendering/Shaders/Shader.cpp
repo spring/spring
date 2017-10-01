@@ -158,7 +158,6 @@ namespace Shader {
 		const std::string& shSrcDefs
 	): IShaderObject(shType, shSrc)
 	{
-		assert(globalRendering->haveARB); // non-debug check is done in ShaderHandler
 		glGenProgramsARB(1, &objID);
 	}
 
@@ -198,7 +197,6 @@ namespace Shader {
 		const std::string& shSrcDefs
 	): IShaderObject(shType, shSrcFile, shSrcDefs)
 	{
-		assert(globalRendering->haveGLSL); // non-debug check is done in ShaderHandler
 	}
 
 	GLSLShaderObject::CompiledShaderObjectUniquePtr GLSLShaderObject::CompileShaderObject()

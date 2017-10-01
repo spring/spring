@@ -147,9 +147,6 @@ void CGroundDecalHandler::LoadDecalShaders() {
 	decalShaders[DECAL_SHADER_GLSL] = Shader::nullProgramObject;
 	decalShaders[DECAL_SHADER_CURR] = decalShaders[DECAL_SHADER_NULL];
 
-	if (!globalRendering->haveGLSL)
-		return;
-
 	decalShaders[DECAL_SHADER_GLSL] = sh->CreateProgramObject("[GroundDecalHandler]", "DecalShaderGLSL", false);
 
 	decalShaders[DECAL_SHADER_GLSL]->AttachShaderObject(sh->CreateShaderObject("GLSL/GroundDecalsVertProg.glsl", "",       GL_VERTEX_SHADER));
@@ -179,11 +176,9 @@ void CGroundDecalHandler::LoadDecalShaders() {
 }
 
 void CGroundDecalHandler::SunChanged() {
-	if (globalRendering->haveGLSL) {
-		decalShaders[DECAL_SHADER_GLSL]->Enable();
-		decalShaders[DECAL_SHADER_GLSL]->SetUniform1f(7, sunLighting->groundShadowDensity);
-		decalShaders[DECAL_SHADER_GLSL]->Disable();
-	}
+	decalShaders[DECAL_SHADER_GLSL]->Enable();
+	decalShaders[DECAL_SHADER_GLSL]->SetUniform1f(7, sunLighting->groundShadowDensity);
+	decalShaders[DECAL_SHADER_GLSL]->Disable();
 }
 
 static inline void AddQuadVertices(CVertexArray* va, int x, float* yv, int z, const float* uv, unsigned char* color)

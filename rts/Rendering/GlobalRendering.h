@@ -131,7 +131,6 @@ public:
 	float viewRange;
 
 
-	int forceDisableShaders;
 	int forceCoreContext;
 	int forceSwapBuffers;
 
@@ -235,12 +234,6 @@ public:
 	bool supportRestartPrimitive;
 	bool supportClipSpaceControl;
 	bool supportFragDepthLayout;
-
-	/**
-	 * Shader capabilities
-	 */
-	bool haveARB;
-	bool haveGLSL;
 
 	/**
 	 * Shader capabilities

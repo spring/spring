@@ -15,7 +15,7 @@ namespace Shader {
 }
 
 enum {
-	RENDER_STATE_FFP = 0, // fixed-function path
+	RENDER_STATE_NOP = 0, // no-op path
 	RENDER_STATE_SSP = 1, // standard-shader path (GLSL)
 	RENDER_STATE_LUA = 2, // Lua-shader path
 	RENDER_STATE_SEL = 3, // selected path
@@ -25,7 +25,7 @@ enum {
 
 struct ISMFRenderState {
 public:
-	static ISMFRenderState* GetInstance(bool haveGLSL, bool luaShader);
+	static ISMFRenderState* GetInstance(bool nopState, bool luaShader);
 	static void FreeInstance(ISMFRenderState* state) { delete state; }
 
 	virtual ~ISMFRenderState() {}
@@ -52,26 +52,25 @@ public:
 
 
 
-struct SMFRenderStateFFP: public ISMFRenderState {
-public:
-	bool Init(const CSMFGroundDrawer* smfGroundDrawer) { return false; }
-	void Kill() {}
+struct SMFRenderStateNOP: public ISMFRenderState {
+	bool Init(const CSMFGroundDrawer* smfGroundDrawer) override {}
+	void Kill() override {}
 	void Update(
 		const CSMFGroundDrawer* smfGroundDrawer,
 		const LuaMapShaderData* luaMapShaderData
-	) {}
+	) override {}
 
-	bool HasValidShader(const DrawPass::e& drawPass) const { return false; }
-	bool CanEnable(const CSMFGroundDrawer* smfGroundDrawer) const;
-	bool CanDrawForward() const { return true; }
-	bool CanDrawDeferred() const { return false; }
+	bool HasValidShader(const DrawPass::e& drawPass) const override { return false; }
+	bool CanEnable(const CSMFGroundDrawer* smfGroundDrawer) const override { return true; }
+	bool CanDrawForward() const override { return false; }
+	bool CanDrawDeferred() const  override { return false; }
 
-	void Enable(const CSMFGroundDrawer* smfGroundDrawer, const DrawPass::e& drawPass);
-	void Disable(const CSMFGroundDrawer* smfGroundDrawer, const DrawPass::e& drawPass);
+	void Enable(const CSMFGroundDrawer* smfGroundDrawer, const DrawPass::e& drawPass) override {}
+	void Disable(const CSMFGroundDrawer* smfGroundDrawer, const DrawPass::e& drawPass) override {}
 
-	void SetSquareTexGen(const int sqx, const int sqy) const;
-	void SetCurrentShader(const DrawPass::e& drawPass) {}
-	void UpdateCurrentShaderSky(const ISkyLight* skyLight) const {};
+	void SetSquareTexGen(const int sqx, const int sqy) const override;
+	void SetCurrentShader(const DrawPass::e& drawPass) override {}
+	void UpdateCurrentShaderSky(const ISkyLight* skyLight) const override {}
 };
 
 

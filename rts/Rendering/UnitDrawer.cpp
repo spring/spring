@@ -257,8 +257,8 @@ CUnitDrawer::CUnitDrawer(): CEventClient("[CUnitDrawer]", 271828, false)
 	lightHandler.Init(2U, configHandler->GetInt("MaxDynamicModelLights"));
 
 	unitDrawerStates.fill(nullptr);
-	unitDrawerStates[DRAWER_STATE_SSP] = IUnitDrawerState::GetInstance(globalRendering->haveGLSL);
-	unitDrawerStates[DRAWER_STATE_FFP] = IUnitDrawerState::GetInstance(                    false);
+	unitDrawerStates[DRAWER_STATE_NOP] = IUnitDrawerState::GetInstance( true);
+	unitDrawerStates[DRAWER_STATE_SSP] = IUnitDrawerState::GetInstance(false);
 
 	drawModelFuncs[0] = &CUnitDrawer::DrawUnitModelBeingBuiltOpaque;
 	drawModelFuncs[1] = &CUnitDrawer::DrawUnitModelBeingBuiltShadow;
@@ -289,7 +289,6 @@ CUnitDrawer::~CUnitDrawer()
 	eventHandler.RemoveClient(this);
 
 	unitDrawerStates[DRAWER_STATE_SSP]->Kill(); IUnitDrawerState::FreeInstance(unitDrawerStates[DRAWER_STATE_SSP]);
-	unitDrawerStates[DRAWER_STATE_FFP]->Kill(); IUnitDrawerState::FreeInstance(unitDrawerStates[DRAWER_STATE_FFP]);
 
 	cubeMapHandler->Free();
 
@@ -906,7 +905,7 @@ void CUnitDrawer::UpdateGhostedBuildings()
 		for (int modelType = MODELTYPE_3DO; modelType < MODELTYPE_OTHER; modelType++) {
 			auto& dgb = deadGhostBuildings[allyTeam][modelType];
 
-			for (int i = 0; i < dgb.size(); /*no-op*/) {
+			for (size_t i = 0; i < dgb.size(); /*no-op*/) {
 				GhostSolidObject* gso = dgb[i];
 
 				if (!losHandler->InLos(gso->pos, allyTeam)) {

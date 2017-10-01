@@ -475,60 +475,56 @@ void CSMFReadMap::UpdateFaceNormalsUnsynced(const SRectangle& update)
 
 void CSMFReadMap::UpdateNormalTexture(const SRectangle& update)
 {
-	// Update VertexNormalsTexture (not used by ARB shaders)
-	if (globalRendering->haveGLSL) {
-		// texture space is [0 .. mapDims.mapx] x [0 .. mapDims.mapy] (NPOT; vertex-aligned)
+	// Update VertexNormalsTexture;  texture space is [0 .. mapDims.mapx] x [0 .. mapDims.mapy] (NPOT; vertex-aligned)
+	float3* vvn = &visVertexNormals[0];
 
-		float3* vvn = &visVertexNormals[0];
+	// a heightmap update over (x1, y1) - (x2, y2) implies the
+	// normals change over (x1 - 1, y1 - 1) - (x2 + 1, y2 + 1)
+	const int minx = std::max(update.x1 - 1,           0);
+	const int minz = std::max(update.y1 - 1,            0);
+	const int maxx = std::min(update.x2 + 1, mapDims.mapx);
+	const int maxz = std::min(update.y2 + 1, mapDims.mapy);
 
-		// a heightmap update over (x1, y1) - (x2, y2) implies the
-		// normals change over (x1 - 1, y1 - 1) - (x2 + 1, y2 + 1)
-		const int minx = std::max(update.x1 - 1,           0);
-		const int minz = std::max(update.y1 - 1,            0);
-		const int maxx = std::min(update.x2 + 1, mapDims.mapx);
-		const int maxz = std::min(update.y2 + 1, mapDims.mapy);
+	const int xsize = (maxx - minx) + 1;
+	const int zsize = (maxz - minz) + 1;
 
-		const int xsize = (maxx - minx) + 1;
-		const int zsize = (maxz - minz) + 1;
+	// Note, it doesn't make sense to use a PBO here.
+	// Cause the upstreamed float32s need to be transformed to float16s, which seems to happen on the CPU!
+	static std::vector<float> pixels;
 
-		// Note, it doesn't make sense to use a PBO here.
-		// Cause the upstreamed float32s need to be transformed to float16s, which seems to happen on the CPU!
-		static std::vector<float> pixels;
+#if (SSMF_UNCOMPRESSED_NORMALS == 1)
+	pixels.clear();
+	pixels.resize(xsize * zsize * 4, 0.0f);
+#else
+	pixels.clear();
+	pixels.resize(xsize * zsize * 2, 0.0f);
+#endif
 
-	#if (SSMF_UNCOMPRESSED_NORMALS == 1)
-		pixels.clear();
-		pixels.resize(xsize * zsize * 4, 0.0f);
-	#else
-		pixels.clear();
-		pixels.resize(xsize * zsize * 2, 0.0f);
-	#endif
+	for (int z = minz; z <= maxz; z++) {
+		for (int x = minx; x <= maxx; x++) {
+			const float3& vertNormal = vvn[z * mapDims.mapxp1 + x];
 
-		for (int z = minz; z <= maxz; z++) {
-			for (int x = minx; x <= maxx; x++) {
-				const float3& vertNormal = vvn[z * mapDims.mapxp1 + x];
-
-			#if (SSMF_UNCOMPRESSED_NORMALS == 1)
-				pixels[((z - minz) * xsize + (x - minx)) * 4 + 0] = vertNormal.x;
-				pixels[((z - minz) * xsize + (x - minx)) * 4 + 1] = vertNormal.y;
-				pixels[((z - minz) * xsize + (x - minx)) * 4 + 2] = vertNormal.z;
-				pixels[((z - minz) * xsize + (x - minx)) * 4 + 3] = 1.0f;
-			#else
-				// note: y-coord is regenerated in the shader via "sqrt(1 - x*x - z*z)",
-				//   this gives us 2 solutions but we know that the y-coord always points
-				//   upwards, so we can reconstruct it in the shader.
-				pixels[((z - minz) * xsize + (x - minx)) * 2 + 0] = vertNormal.x;
-				pixels[((z - minz) * xsize + (x - minx)) * 2 + 1] = vertNormal.z;
-			#endif
-			}
+		#if (SSMF_UNCOMPRESSED_NORMALS == 1)
+			pixels[((z - minz) * xsize + (x - minx)) * 4 + 0] = vertNormal.x;
+			pixels[((z - minz) * xsize + (x - minx)) * 4 + 1] = vertNormal.y;
+			pixels[((z - minz) * xsize + (x - minx)) * 4 + 2] = vertNormal.z;
+			pixels[((z - minz) * xsize + (x - minx)) * 4 + 3] = 1.0f;
+		#else
+			// note: y-coord is regenerated in the shader via "sqrt(1 - x*x - z*z)",
+			//   this gives us 2 solutions but we know that the y-coord always points
+			//   upwards, so we can reconstruct it in the shader.
+			pixels[((z - minz) * xsize + (x - minx)) * 2 + 0] = vertNormal.x;
+			pixels[((z - minz) * xsize + (x - minx)) * 2 + 1] = vertNormal.z;
+		#endif
 		}
-
-		glBindTexture(GL_TEXTURE_2D, normalsTex.GetID());
-	#if (SSMF_UNCOMPRESSED_NORMALS == 1)
-		glTexSubImage2D(GL_TEXTURE_2D, 0, minx, minz, xsize, zsize, GL_RGBA, GL_FLOAT, &pixels[0]);
-	#else
-		glTexSubImage2D(GL_TEXTURE_2D, 0, minx, minz, xsize, zsize, GL_LUMINANCE_ALPHA, GL_FLOAT, &pixels[0]);
-	#endif
 	}
+
+	glBindTexture(GL_TEXTURE_2D, normalsTex.GetID());
+#if (SSMF_UNCOMPRESSED_NORMALS == 1)
+	glTexSubImage2D(GL_TEXTURE_2D, 0, minx, minz, xsize, zsize, GL_RGBA, GL_FLOAT, &pixels[0]);
+#else
+	glTexSubImage2D(GL_TEXTURE_2D, 0, minx, minz, xsize, zsize, GL_LUMINANCE_ALPHA, GL_FLOAT, &pixels[0]);
+#endif
 }
 
 
@@ -675,11 +671,10 @@ void CSMFReadMap::UpdateShadingTexture()
 	// with GLSL, the shading texture has very limited use (minimap etc) so we reduce the updaterate
 	//FIXME replace with a real check if glsl is used in terrain rendering!
 	//FIXME make configurable? or even FPS depending?
-	const int update_rate = (globalRendering->haveGLSL ? 64*64 : 64*128);
+	constexpr int updateRate = 64*64;
 
-	if (shadingTexUpdateProgress < 0) {
+	if (shadingTexUpdateProgress < 0)
 		return;
-	}
 
 	if (shadingTexUpdateProgress >= pixels) {
 		if (shadingTexUpdateNeeded) {
@@ -696,14 +691,14 @@ void CSMFReadMap::UpdateShadingTexture()
 	}
 
 	const int idx1 = shadingTexUpdateProgress;
-	const int idx2 = std::min(idx1 + update_rate, pixels - 1);
+	const int idx2 = std::min(idx1 + updateRate, pixels - 1);
 
 	for_mt(idx1, idx2+1, 1025, [&](const int idx){
 		const int idx3 = std::min(idx2, idx + 1024);
 		UpdateShadingTexPart(idx, idx3, &shadingTexBuffer[idx * 4]);
 	});
 
-	shadingTexUpdateProgress += update_rate;
+	shadingTexUpdateProgress += updateRate;
 }
 
 

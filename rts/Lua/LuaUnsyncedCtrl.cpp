@@ -1436,10 +1436,7 @@ int LuaUnsyncedCtrl::SetMapShader(lua_State* L)
 	if (CLuaHandle::GetHandleSynced(L))
 		return 0;
 
-	// SMF_RENDER_STATE_LUA only accepts GLSL shaders
-	if (!globalRendering->haveGLSL)
-		return 0;
-
+	// NB: SMF_RENDER_STATE_LUA only accepts GLSL shaders
 	const LuaShaders& shaders = CLuaHandle::GetActiveShaders(L);
 
 	CBaseGroundDrawer* groundDrawer = readMap->GetGroundDrawer();

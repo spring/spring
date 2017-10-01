@@ -100,12 +100,6 @@ void CShadowHandler::Init()
 	if (SpringVersion::IsHeadless())
 		return;
 
-	if (!globalRendering->haveGLSL) {
-		LOG_L(L_WARNING, "[%s] GPU does not support GLSL shaders for shadow rendering", __func__);
-		return;
-	}
-
-
 	if (!InitDepthTarget()) {
 		// free any resources allocated by InitDepthTarget()
 		FreeTextures();

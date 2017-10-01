@@ -62,9 +62,9 @@ CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
 	meshDrawer = SwitchMeshDrawer(drawerMode);
 
 	smfRenderStates.resize(RENDER_STATE_CNT, nullptr);
-	smfRenderStates[RENDER_STATE_SSP] = ISMFRenderState::GetInstance(globalRendering->haveGLSL, false);
-	smfRenderStates[RENDER_STATE_FFP] = ISMFRenderState::GetInstance(                    false, false);
-	smfRenderStates[RENDER_STATE_LUA] = ISMFRenderState::GetInstance(                     true,  true);
+	smfRenderStates[RENDER_STATE_NOP] = ISMFRenderState::GetInstance( true, false);
+	smfRenderStates[RENDER_STATE_SSP] = ISMFRenderState::GetInstance(false, false);
+	smfRenderStates[RENDER_STATE_LUA] = ISMFRenderState::GetInstance(false,  true);
 
 	// LH must be initialized before render-state is initialized
 	lightHandler.Init(2U, configHandler->GetInt("MaxDynamicMapLights"));
@@ -113,7 +113,6 @@ CSMFGroundDrawer::~CSMFGroundDrawer()
 	// remember which ROAM-mode was enabled (if any)
 	configHandler->Set("ROAM", (dynamic_cast<CRoamMeshDrawer*>(meshDrawer) != nullptr)? Patch::GetRenderMode(): 0);
 
-	smfRenderStates[RENDER_STATE_FFP]->Kill(); ISMFRenderState::FreeInstance(smfRenderStates[RENDER_STATE_FFP]);
 	smfRenderStates[RENDER_STATE_SSP]->Kill(); ISMFRenderState::FreeInstance(smfRenderStates[RENDER_STATE_SSP]);
 	smfRenderStates[RENDER_STATE_LUA]->Kill(); ISMFRenderState::FreeInstance(smfRenderStates[RENDER_STATE_LUA]);
 	smfRenderStates.clear();
@@ -235,7 +234,7 @@ inline void CSMFGroundDrawer::DrawWaterPlane(bool drawWaterReflection) {
 ISMFRenderState* CSMFGroundDrawer::SelectRenderState(const DrawPass::e& drawPass)
 {
 	// [0] := Lua GLSL, must have a valid shader for this pass
-	// [1] := default ARB *or* GLSL, same condition
+	// [1] := default GLSL, same condition
 	const unsigned int stateEnums[2] = {RENDER_STATE_LUA, RENDER_STATE_SSP};
 
 	for (unsigned int n = 0; n < 2; n++) {
@@ -250,7 +249,7 @@ ISMFRenderState* CSMFGroundDrawer::SelectRenderState(const DrawPass::e& drawPass
 	}
 
 	// fallback
-	return (smfRenderStates[RENDER_STATE_SEL] = smfRenderStates[RENDER_STATE_FFP]);
+	return (smfRenderStates[RENDER_STATE_SEL] = smfRenderStates[RENDER_STATE_NOP]);
 }
 
 bool CSMFGroundDrawer::HaveLuaRenderState() const
@@ -377,13 +376,11 @@ void CSMFGroundDrawer::Draw(const DrawPass::e& drawPass)
 	glDisable(GL_CULL_FACE);
 
 	if (drawPass == DrawPass::Normal) {
-		if (waterRendering->hasWaterPlane) {
+		if (waterRendering->hasWaterPlane)
 			DrawWaterPlane(false);
-		}
 
-		if (drawMapEdges) {
+		if (drawMapEdges)
 			DrawBorder(drawPass);
-		}
 	}
 }
 
@@ -394,21 +391,17 @@ void CSMFGroundDrawer::DrawBorder(const DrawPass::e drawPass)
 	glCullFace(GL_BACK);
 
 	ISMFRenderState* prvState = smfRenderStates[RENDER_STATE_SEL];
-
-	smfRenderStates[RENDER_STATE_SEL] = smfRenderStates[RENDER_STATE_FFP];
-	// smfRenderStates[RENDER_STATE_SEL]->Enable(this, drawPass);
+	// no need to enable, does nothing except for TexGen
+	smfRenderStates[RENDER_STATE_SEL] = smfRenderStates[RENDER_STATE_NOP];
 
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+
+	static constexpr GLfloat planeX[] = {0.005f, 0.0f, 0.005f, 0.5f};
+	static constexpr GLfloat planeZ[] = {0.0f, 0.005f, 0.0f, 0.5f};
 
 	glActiveTexture(GL_TEXTURE2);
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, smfMap->GetDetailTexture());
-
-	//glMultiTexCoord4f(GL_TEXTURE2_ARB, 1.0f, 1.0f, 1.0f, 1.0f);
-	//SetTexGen(1.0f / (mapDims.pwr2mapx * SQUARE_SIZE), 1.0f / (mapDims.pwr2mapy * SQUARE_SIZE), -0.5f / mapDims.pwr2mapx, -0.5f / mapDims.pwr2mapy);
-
-	static const GLfloat planeX[] = {0.005f, 0.0f, 0.005f, 0.5f};
-	static const GLfloat planeZ[] = {0.0f, 0.005f, 0.0f, 0.5f};
 
 	glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR);
 	glTexGenfv(GL_S, GL_EYE_PLANE, planeX);
@@ -420,42 +413,56 @@ void CSMFGroundDrawer::DrawBorder(const DrawPass::e drawPass)
 
 	glActiveTexture(GL_TEXTURE3); glDisable(GL_TEXTURE_2D);
 	glActiveTexture(GL_TEXTURE1); glDisable(GL_TEXTURE_2D);
-	glActiveTexture(GL_TEXTURE0); glEnable(GL_TEXTURE_2D); // needed for the non-shader case
+	glActiveTexture(GL_TEXTURE0); glEnable(GL_TEXTURE_2D);
 
 	glEnable(GL_BLEND);
 
 		if (wireframe)
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-		/*
+		#if 0
 		if (mapRendering->voidWater && (drawPass != DrawPass::WaterReflection)) {
 			glEnable(GL_ALPHA_TEST);
 			glAlphaFunc(GL_GREATER, 0.9f);
 		}
-		*/
+		#endif
 
+		// calls back into ::SetupBigSquare
 		meshDrawer->DrawBorderMesh(drawPass);
 
-		/*
-		if (mapRendering->voidWater && (drawPass != DrawPass::WaterReflection)) {
+		#if 0
+		if (mapRendering->voidWater && (drawPass != DrawPass::WaterReflection))
 			glDisable(GL_ALPHA_TEST);
-		}
-		*/
+		#endif
 
 		if (wireframe)
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 	glDisable(GL_BLEND);
 
+	glActiveTexture(GL_TEXTURE3);
+	glDisable(GL_TEXTURE_2D);
+	glDisable(GL_TEXTURE_GEN_S);
+	glDisable(GL_TEXTURE_GEN_T);
+	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+
 	glActiveTexture(GL_TEXTURE2);
 	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_TEXTURE_GEN_S);
 	glDisable(GL_TEXTURE_GEN_T);
+	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+
+	glActiveTexture(GL_TEXTURE1);
+	glDisable(GL_TEXTURE_2D);
+	glDisable(GL_TEXTURE_GEN_S);
+	glDisable(GL_TEXTURE_GEN_T);
+	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
 	glActiveTexture(GL_TEXTURE0);
+	glDisable(GL_TEXTURE_GEN_S);
+	glDisable(GL_TEXTURE_GEN_T);
 	glDisable(GL_TEXTURE_2D);
 
-	smfRenderStates[RENDER_STATE_SEL]->Disable(this, drawPass);
 	smfRenderStates[RENDER_STATE_SEL] = prvState;
 
 	glDisable(GL_CULL_FACE);

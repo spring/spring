@@ -74,9 +74,6 @@ void LegacyTrackHandler::LoadDecalShaders()
 	decalShaders[DECAL_SHADER_GLSL] = Shader::nullProgramObject;
 	decalShaders[DECAL_SHADER_CURR] = decalShaders[DECAL_SHADER_NULL];
 
-	if (!globalRendering->haveGLSL)
-		return;
-
 	decalShaders[DECAL_SHADER_GLSL] = sh->CreateProgramObject("[LegacyTrackHandler]", "DecalShaderGLSL", false);
 
 	decalShaders[DECAL_SHADER_GLSL]->AttachShaderObject(sh->CreateShaderObject("GLSL/GroundDecalsVertProg.glsl", "",       GL_VERTEX_SHADER));
@@ -107,11 +104,9 @@ void LegacyTrackHandler::LoadDecalShaders()
 
 void LegacyTrackHandler::SunChanged()
 {
-	if (globalRendering->haveGLSL) {
-		decalShaders[DECAL_SHADER_GLSL]->Enable();
-		decalShaders[DECAL_SHADER_GLSL]->SetUniform1f(7, sunLighting->groundShadowDensity);
-		decalShaders[DECAL_SHADER_GLSL]->Disable();
-	}
+	decalShaders[DECAL_SHADER_GLSL]->Enable();
+	decalShaders[DECAL_SHADER_GLSL]->SetUniform1f(7, sunLighting->groundShadowDensity);
+	decalShaders[DECAL_SHADER_GLSL]->Disable();
 }
 
 

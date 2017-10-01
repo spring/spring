@@ -33,7 +33,6 @@ CONFIG(int, GLContextMinorVersion).defaultValue(0).minimumValue(0).maximumValue(
 CONFIG(int, FSAALevel).defaultValue(0).minimumValue(0).maximumValue(32).description("Deprecated, set MSAALevel instead.");
 CONFIG(int, MSAALevel).defaultValue(0).minimumValue(0).maximumValue(32).description("Enables multisample anti-aliasing; 'level' is the number of samples used.");
 
-CONFIG(int, ForceDisableShaders).defaultValue(0).minimumValue(0).maximumValue(1);
 CONFIG(int, ForceDisableClipCtrl).defaultValue(0).minimumValue(0).maximumValue(1);
 CONFIG(int, ForceCoreContext).defaultValue(0).minimumValue(0).maximumValue(1);
 CONFIG(int, ForceSwapBuffers).defaultValue(1).minimumValue(0).maximumValue(1);
@@ -111,7 +110,6 @@ CR_REG_METADATA(CGlobalRendering, (
 	CR_IGNORED(zNear),
 	CR_IGNORED(viewRange),
 
-	CR_IGNORED(forceDisableShaders),
 	CR_IGNORED(forceCoreContext),
 	CR_IGNORED(forceSwapBuffers),
 
@@ -135,8 +133,6 @@ CR_REG_METADATA(CGlobalRendering, (
 	CR_IGNORED(supportRestartPrimitive),
 	CR_IGNORED(supportClipSpaceControl),
 	CR_IGNORED(supportFragDepthLayout),
-	CR_IGNORED(haveARB),
-	CR_IGNORED(haveGLSL),
 	CR_IGNORED(glslMaxVaryings),
 	CR_IGNORED(glslMaxAttributes),
 	CR_IGNORED(glslMaxDrawBuffers),
@@ -186,7 +182,6 @@ CGlobalRendering::CGlobalRendering()
 	, zNear(NEAR_PLANE)
 	, viewRange(MAX_VIEW_RANGE)
 
-	, forceDisableShaders(configHandler->GetInt("ForceDisableShaders"))
 	, forceCoreContext(configHandler->GetInt("ForceCoreContext"))
 	, forceSwapBuffers(configHandler->GetInt("ForceSwapBuffers"))
 
@@ -221,8 +216,6 @@ CGlobalRendering::CGlobalRendering()
 	, supportRestartPrimitive(false)
 	, supportClipSpaceControl(false)
 	, supportFragDepthLayout(false)
-	, haveARB(false)
-	, haveGLSL(false)
 
 	, glslMaxVaryings(0)
 	, glslMaxAttributes(0)
@@ -543,22 +536,20 @@ void CGlobalRendering::CheckGLExtensions() const
 
 void CGlobalRendering::SetGLSupportFlags()
 {
-	const std::string& glVendor = StringToLower(globalRenderingInfo.glVendor);
+	const std::string& glVendor   = StringToLower(globalRenderingInfo.glVendor);
 	const std::string& glRenderer = StringToLower(globalRenderingInfo.glRenderer);
 
-	haveARB   = GLEW_ARB_vertex_program && GLEW_ARB_fragment_program;
-	haveGLSL  = (glGetString(GL_SHADING_LANGUAGE_VERSION) != nullptr);
-	haveGLSL &= (GLEW_ARB_vertex_shader && GLEW_ARB_fragment_shader);
-	haveGLSL &= GLEW_VERSION_2_0; // we want OpenGL 2.0 core functions
+	// bool  arbShaderSupport = GLEW_ARB_vertex_program && GLEW_ARB_fragment_program;
+	bool glslShaderSupport = (glGetString(GL_SHADING_LANGUAGE_VERSION) != nullptr);
+
+	glslShaderSupport &= (GLEW_ARB_vertex_shader && GLEW_ARB_fragment_shader);
+	glslShaderSupport &= GLEW_VERSION_2_0; // we want OpenGL 2.0 core functions
 
 	#ifndef HEADLESS
-	if (!haveARB || !haveGLSL)
+	// for HL builds, all used GL functions are (hopefully) stubs so throwing is unnecessary
+	if (!glslShaderSupport)
 		throw unsupported_error("OpenGL shaders not supported, aborting");
 	#endif
-
-	// useful if a GPU claims to support GL4 and shaders but crashes (Intels...)
-	haveARB  &= !forceDisableShaders;
-	haveGLSL &= !forceDisableShaders;
 
 	haveATI    = (  glVendor.find(   "ati ") != std::string::npos) || (glVendor.find("amd ") != std::string::npos);
 	haveIntel  = (  glVendor.find(  "intel") != std::string::npos);
@@ -722,8 +713,6 @@ void CGlobalRendering::LogVersionInfo(const char* sdlVersionStr, const char* glV
 	LOG("\tGPU memory  : %s", glVidMemStr);
 	LOG("\tSDL swap-int: %d", SDL_GL_GetSwapInterval());
 	LOG("\t");
-	LOG("\tARB shader support        : %i", haveARB);
-	LOG("\tGLSL shader support       : %i", haveGLSL);
 	LOG("\tFBO extension support     : %i", FBO::IsSupported());
 	LOG("\tNVX GPU mem-info support  : %i", glewIsExtensionSupported("GL_NVX_gpu_memory_info"));
 	LOG("\tATI GPU mem-info support  : %i", glewIsExtensionSupported("GL_ATI_meminfo"));

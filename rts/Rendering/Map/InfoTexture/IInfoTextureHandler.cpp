@@ -15,7 +15,6 @@ IInfoTextureHandler* infoTextureHandler = nullptr;
 void IInfoTextureHandler::Create()
 {
 	if (
-		globalRendering->haveGLSL &&
 		globalRendering->supportNonPowerOfTwoTex &&
 		globalRendering->supportTextureQueryLOD &&
 		FBO::IsSupported() &&

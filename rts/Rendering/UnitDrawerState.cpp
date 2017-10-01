@@ -51,16 +51,11 @@ float4 IUnitDrawerState::GetTeamColor(int team, float alpha) {
 
 
 
-IUnitDrawerState* IUnitDrawerState::GetInstance(bool haveGLSL) {
-	IUnitDrawerState* instance = nullptr;
+IUnitDrawerState* IUnitDrawerState::GetInstance(bool nopState) {
+	if (nopState)
+		return (new UnitDrawerStateNOP());
 
-	if (!haveGLSL) {
-		instance = new UnitDrawerStateFFP();
-	} else {
-		instance = new UnitDrawerStateGLSL();
-	}
-
-	return instance;
+	return (new UnitDrawerStateGLSL());
 }
 
 
@@ -124,90 +119,7 @@ void IUnitDrawerState::DisableTexturesCommon() const {
 
 
 
-// note: never actually called, SSP-state is tested
-bool UnitDrawerStateFFP::CanEnable(const CUnitDrawer* ud) const {
-	return (!ud->UseAdvShading());
-}
-
-void UnitDrawerStateFFP::Enable(const CUnitDrawer* ud, bool deferredPass, bool alphaPass) {
-	glEnable(GL_LIGHTING);
-	// only for the advshading=0 case
-	glLightfv(GL_LIGHT1, GL_POSITION, sky->GetLight()->GetLightDir());
-	glLightfv(GL_LIGHT1, GL_AMBIENT, sunLighting->modelAmbientColor);
-	glLightfv(GL_LIGHT1, GL_DIFFUSE, sunLighting->modelDiffuseColor);
-	glLightfv(GL_LIGHT1, GL_SPECULAR, sunLighting->modelSpecularColor);
-	glEnable(GL_LIGHT1);
-
-	CUnitDrawer::SetupBasicS3OTexture1();
-	CUnitDrawer::SetupBasicS3OTexture0();
-
-	const float4 color = {1.0f, 1.0f, 1.0, mix(1.0f, ud->alphaValues.x, (1.0f * alphaPass))};
-
-	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, &color.x);
-	glColor4fv(&color.x);
-
-	PushTransform(camera);
-}
-
-void UnitDrawerStateFFP::Disable(const CUnitDrawer* ud, bool) {
-	PopTransform();
-
-	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-
-	glDisable(GL_LIGHTING);
-	glDisable(GL_LIGHT1);
-
-	CUnitDrawer::CleanupBasicS3OTexture1();
-	CUnitDrawer::CleanupBasicS3OTexture0();
-}
-
-
-void UnitDrawerStateFFP::EnableTextures() const {
-	glEnable(GL_LIGHTING);
-	glColor3f(1.0f, 1.0f, 1.0f);
-	glEnable(GL_TEXTURE_2D);
-	glActiveTexture(GL_TEXTURE1);
-	glEnable(GL_TEXTURE_2D);
-	glActiveTexture(GL_TEXTURE0);
-}
-
-void UnitDrawerStateFFP::DisableTextures() const {
-	glDisable(GL_LIGHTING);
-	glDisable(GL_TEXTURE_2D);
-	glActiveTexture(GL_TEXTURE1);
-	glDisable(GL_TEXTURE_2D);
-	glActiveTexture(GL_TEXTURE0);
-	glDisable(GL_TEXTURE_2D);
-}
-
-void UnitDrawerStateFFP::SetTeamColor(int team, const float2 alpha) const {
-	// non-shader case via texture combiners
-	const float4 m = {1.0f, 1.0f, 1.0f, alpha.x};
-
-	glActiveTexture(GL_TEXTURE0);
-	glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, std::move(GetTeamColor(team, alpha.x)));
-	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, &m.x);
-}
-
-void UnitDrawerStateFFP::SetNanoColor(const float4& color) const {
-	if (color.a > 0.0f) {
-		UnitDrawerStateFFP::DisableTextures();
-		glColorf4(color);
-	} else {
-		UnitDrawerStateFFP::EnableTextures();
-		glColorf3(OnesVector);
-	}
-}
-
-
-
-
 bool UnitDrawerStateGLSL::Init(const CUnitDrawer* ud) {
-	if (!globalRendering->haveGLSL) {
-		// not possible to do (GLSL) shader-based model rendering
-		return false;
-	}
-
 	#define sh shaderHandler
 
 	const GL::LightHandler* lightHandler = ud->GetLightHandler();

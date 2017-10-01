@@ -107,13 +107,9 @@ Shader::IProgramObject* CShaderHandler::CreateProgramObject(const std::string& p
 	}
 
 	if (arbProgram) {
-		if (globalRendering->haveARB)
-			po = new Shader::ARBProgramObject(poName);
-
+		po = new Shader::ARBProgramObject(poName);
 	} else {
-		if (globalRendering->haveGLSL)
-			po = new Shader::GLSLProgramObject(poName);
-
+		po = new Shader::GLSLProgramObject(poName);
 	}
 
 	if (po == Shader::nullProgramObject)
@@ -133,19 +129,13 @@ Shader::IShaderObject* CShaderHandler::CreateShaderObject(const std::string& soN
 		case GL_VERTEX_PROGRAM_ARB:
 		case GL_FRAGMENT_PROGRAM_ARB: {
 			// assert(StringToLower(soName).find("arb") != std::string::npos);
-
-			if (globalRendering->haveARB)
-				so = new Shader::ARBShaderObject(soType, soName);
-
+			so = new Shader::ARBShaderObject(soType, soName);
 		} break;
 
 		default: {
 			// assume GLSL shaders by default
 			// assert(StringToLower(soName).find("arb") == std::string::npos);
-
-			if (globalRendering->haveGLSL)
-				so = new Shader::GLSLShaderObject(soType, soName, soDefs);
-
+			so = new Shader::GLSLShaderObject(soType, soName, soDefs);
 		} break;
 	}
 

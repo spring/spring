@@ -47,9 +47,6 @@ CAdvTreeDrawer::CAdvTreeDrawer(): ITreeDrawer()
 	if (!FBO::IsSupported())
 		throw content_error("[AdvTreeDrawer] missing FBO support");
 
-	if (!globalRendering->haveGLSL)
-		throw content_error("[AdvTreeDrawer] missing shader support");
-
 	LoadTreeShaders();
 
 	treeGen.Init();

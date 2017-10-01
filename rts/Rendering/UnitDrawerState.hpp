@@ -16,7 +16,7 @@ namespace Shader {
 }
 
 enum {
-	DRAWER_STATE_FFP = 0, // fixed-function path
+	DRAWER_STATE_NOP = 0, // no-op path
 	DRAWER_STATE_SSP = 1, // standard-shader path (GLSL)
 	DRAWER_STATE_SEL = 2, // selected path
 	DRAWER_STATE_CNT = 3,
@@ -25,7 +25,7 @@ enum {
 
 struct IUnitDrawerState {
 public:
-	static IUnitDrawerState* GetInstance(bool haveGLSL);
+	static IUnitDrawerState* GetInstance(bool nopState);
 	static void FreeInstance(IUnitDrawerState* state) { delete state; }
 
 	static void PushTransform(const CCamera* cam);
@@ -84,18 +84,26 @@ protected:
 
 
 
-struct UnitDrawerStateFFP: public IUnitDrawerState {
+struct UnitDrawerStateNOP: public IUnitDrawerState {
 public:
-	bool CanEnable(const CUnitDrawer*) const override;
+	bool Init(const CUnitDrawer*) override {}
+	void Kill() override {}
 
-	void Enable(const CUnitDrawer*, bool, bool) override;
-	void Disable(const CUnitDrawer*, bool) override;
+	bool CanEnable(const CUnitDrawer*) const override { return true; }
+	bool CanDrawAlpha() const override { return false; }
+	bool CanDrawDeferred() const  override { return false; }
 
-	void EnableTextures() const override;
-	void DisableTextures() const override;
+	void Enable(const CUnitDrawer*, bool, bool) override {}
+	void Disable(const CUnitDrawer*, bool) override {}
 
-	void SetTeamColor(int team, const float2 alpha) const override;
-	void SetNanoColor(const float4& color) const override;
+	void EnableTextures() const override {}
+	void DisableTextures() const override {}
+	void EnableShaders(const CUnitDrawer*) override {}
+	void DisableShaders(const CUnitDrawer*) override {}
+
+	void UpdateCurrentShaderSky(const CUnitDrawer*, const ISkyLight*) const override {}
+	void SetTeamColor(int team, const float2 alpha) const override {}
+	void SetNanoColor(const float4& color) const override {}
 };
 
 

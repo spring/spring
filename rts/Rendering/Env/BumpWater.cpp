@@ -185,10 +185,6 @@ CBumpWater::CBumpWater()
 	useUniforms  = (configHandler->GetBool("BumpWaterUseUniforms"));
 
 	// CHECK HARDWARE
-	if (!globalRendering->haveGLSL) {
-		throw content_error("[" LOG_SECTION_BUMP_WATER "] your hardware/driver setup does not support GLSL");
-	}
-
 	shoreWaves = shoreWaves && (GLEW_EXT_framebuffer_object);
 	dynWaves   = dynWaves && (GLEW_EXT_framebuffer_object && GLEW_ARB_imaging);
 

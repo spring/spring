@@ -149,9 +149,6 @@ bool LoadFromLua(Shader::IProgramObject* program, const std::string& filename)
 {
 	// lua only supports glsl shaders
 	assert(dynamic_cast<Shader::GLSLProgramObject*>(program) != nullptr);
-	if (!globalRendering->haveGLSL) {
-		return false;
-	}
 
 	LuaParser p(filename, SPRING_VFS_RAW_FIRST, SPRING_VFS_MOD_BASE);
 	p.SetLowerKeys(false);
