@@ -32,7 +32,6 @@ set(FILES
 	shaders/ARB/waterDynNormal.vp
 	shaders/ARB/waterDynNormal.fp
 	shaders/ARB/waterDynWave3.vp
-	shaders/ARB/clouds.fp
 	shaders/ARB/water.fp
 	shaders/ARB/dwAddSplash.vp
 	shaders/ARB/waterDynNT.vp
