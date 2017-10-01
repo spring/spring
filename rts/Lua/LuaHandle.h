@@ -224,6 +224,8 @@ class CLuaHandle : public CEventClient
 		void ViewResize() override;
 
 		void DrawGenesis() override;
+		void DrawSky() override;
+		void DrawSun() override;
 		void DrawWorld() override;
 		void DrawWorldPreUnit() override;
 		void DrawWorldPreParticles() override;

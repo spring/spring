@@ -307,6 +307,8 @@ class CEventClient
 		virtual void ViewResize();
 
 		virtual void DrawGenesis() {}
+		virtual void DrawSky() {}
+		virtual void DrawSun() {}
 		virtual void DrawWorld() {}
 		virtual void DrawWorldPreUnit() {}
 		virtual void DrawWorldPreParticles() {}
@@ -324,10 +326,10 @@ class CEventClient
 		virtual void DrawInMiniMap() {}
 		virtual void DrawInMiniMapBackground() {}
 
-		virtual bool DrawUnit(const CUnit* unit);
-		virtual bool DrawFeature(const CFeature* feature);
-		virtual bool DrawShield(const CUnit* unit, const CWeapon* weapon);
-		virtual bool DrawProjectile(const CProjectile* projectile);
+		virtual bool DrawUnit(const CUnit* unit) { return false; }
+		virtual bool DrawFeature(const CFeature* feature) { return false; }
+		virtual bool DrawShield(const CUnit* unit, const CWeapon* weapon) { return false; }
+		virtual bool DrawProjectile(const CProjectile* projectile) { return false; }
 
 		virtual void GameProgress(int gameFrame);
 

@@ -22,6 +22,7 @@ Lua:
    by the calling Lua state individually, as well as by all states globally
  - add Spring.GetVidMemUsage to LuaUnsyncedRead
  - fix Spring.GetPlayerRoster sometimes excluding active players
+ - add DrawSky and DrawSun callins; available when a map has no skybox defined
 
 Misc:
  - remove joystick support
@@ -29,8 +30,14 @@ Misc:
  - fix stale thread-id cache in watchdog after reload
  - make LuaVFSDownload rescan archives in main thread, and do so when a download finishes (not when one starts)
  - account for raw search in AICallback::GetPathLength
+ - remove Basic{Sky,Water,TreeDrawer} (3DTrees is now always 1)
+ - remove /DynamicSky command and keybinding
+ - remove /{More,Less}Clouds commands
+ - remove 3DTrees config-setting
  - remove /adv{map,model}shading commands
  - remove Adv{Map,Unit}Shading config-settings
+ - remove ForceDisableShaders config-setting
+ - mandate GLSL support
 
 
 

@@ -3,7 +3,7 @@
 
 #include "ISky.h"
 #include "NullSky.h"
-#include "AdvSky.h"
+#include "LuaSky.h"
 #include "SkyBox.h"
 #include "Game/TraceRay.h"
 #include "Map/MapInfo.h"
@@ -12,8 +12,6 @@
 #include "System/Exceptions.h"
 #include "System/SafeUtil.h"
 #include "System/Log/ILog.h"
-
-CONFIG(bool, AdvSky).defaultValue(true).headlessValue(false).defaultValue(false).description("Enables High Resolution Clouds.");
 
 ISky* sky = nullptr;
 
@@ -24,11 +22,8 @@ ISky::ISky()
 	, fogColor(mapInfo->atmosphere.fogColor)
 	, fogStart(mapInfo->atmosphere.fogStart)
 	, fogEnd(mapInfo->atmosphere.fogEnd)
-	, cloudDensity(mapInfo->atmosphere.cloudDensity)
 	, skyLight(nullptr)
 	, wireFrameMode(false)
-	, dynamicSky(false)
-
 {
 	skyLight = new ISkyLight();
 }
@@ -64,8 +59,8 @@ ISky* ISky::GetSky()
 	try {
 		if (!mapInfo->atmosphere.skyBox.empty()) {
 			sky = new CSkyBox("maps/" + mapInfo->atmosphere.skyBox);
-		} else if (configHandler->GetBool("AdvSky")) {
-			sky = new CAdvSky();
+		} else {
+			sky = new CLuaSky();
 		}
 	} catch (const content_error& ex) {
 		LOG_L(L_ERROR, "[%s] error: %s (falling back to NullSky)", __func__, ex.what());

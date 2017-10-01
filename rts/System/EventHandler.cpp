@@ -549,28 +549,30 @@ void CEventHandler::GameProgress(int gameFrame)
 }
 
 
-#define DRAW_CALLIN(name)                                                   \
-	void CEventHandler:: Draw ## name ()                                    \
-	{                                                                       \
-		if (listDraw ## name.empty())                                       \
-			return;                                                         \
-                                                                            \
-		LuaOpenGL::EnableDraw ## name ();                                   \
-		listDraw ## name [0]->Draw ## name ();                              \
-                                                                            \
-		for (size_t i = 1; i < listDraw ## name.size(); ) {                 \
-			LuaOpenGL::ResetDraw ## name ();                                \
-			CEventClient* ec = listDraw ## name [i];                        \
-			ec-> Draw ## name ();                                           \
-                                                                            \
-			if (i < listDraw ## name.size() && ec == listDraw ## name [i])  \
-				++i;                                                        \
-		}                                                                   \
-                                                                            \
-		LuaOpenGL::DisableDraw ## name ();                                  \
+#define DRAW_CALLIN(name)                                                      \
+	void CEventHandler:: Draw ## name ()                                       \
+	{                                                                          \
+		if (listDraw ## name.empty())                                          \
+			return;                                                            \
+                                                                               \
+		LuaOpenGL::EnableDraw ## name ();                                      \
+		listDraw ## name [0]->Draw ## name ();                                 \
+                                                                               \
+		for (size_t i = 1; i < listDraw ## name.size(); ) {                    \
+			LuaOpenGL::ResetDraw ## name ();                                   \
+                                                                               \
+			CEventClient* ec = listDraw ## name [i];                           \
+			ec-> Draw ## name ();                                              \
+                                                                               \
+			i += (i < listDraw ## name.size() && ec == listDraw ## name [i]);  \
+		}                                                                      \
+                                                                               \
+		LuaOpenGL::DisableDraw ## name ();                                     \
   }
 
 DRAW_CALLIN(Genesis)
+DRAW_CALLIN(Sky)
+DRAW_CALLIN(Sun)
 DRAW_CALLIN(World)
 DRAW_CALLIN(WorldPreUnit)
 DRAW_CALLIN(WorldPreParticles)

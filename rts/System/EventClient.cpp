@@ -82,11 +82,6 @@ void CEventClient::ViewResize() {}
 
 bool CEventClient::DefaultCommand(const CUnit* unit, const CFeature* feature, int& cmd) { return false; }
 
-bool CEventClient::DrawUnit(const CUnit* unit) { return false; }
-bool CEventClient::DrawFeature(const CFeature* feature) { return false; }
-bool CEventClient::DrawShield(const CUnit* unit, const CWeapon* weapon) { return false; }
-bool CEventClient::DrawProjectile(const CProjectile* projectile) { return false; }
-
 void CEventClient::GameProgress(int gameFrame) {}
 
 void CEventClient::DrawLoadScreen() {}

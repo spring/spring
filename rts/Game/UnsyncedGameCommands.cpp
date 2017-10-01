@@ -1278,18 +1278,6 @@ public:
 
 
 
-class DynamicSkyActionExecutor : public IUnsyncedActionExecutor {
-public:
-	DynamicSkyActionExecutor() : IUnsyncedActionExecutor("DynamicSky", "Enable/Disable dynamic-sky rendering") {}
-
-	bool Execute(const UnsyncedAction& action) const {
-		LogSystemStatus("dynamic-sky rendering", sky->DynamicSkyRef() = !sky->DynamicSkyRef());
-		return true;
-	}
-};
-
-
-
 class SpeedControlActionExecutor : public IUnsyncedActionExecutor {
 public:
 	SpeedControlActionExecutor() : IUnsyncedActionExecutor("SpeedControl",
@@ -1448,40 +1436,6 @@ public:
 
 	bool Execute(const UnsyncedAction& action) const {
 		LOG("tree draw-distance decreased to %f", (treeDrawer->DecrDrawDistance() * 2.0f * SQUARE_SIZE * TREE_SQUARE_SIZE));
-		return true;
-	}
-};
-
-
-
-class MoreCloudsActionExecutor : public IUnsyncedActionExecutor {
-public:
-	MoreCloudsActionExecutor() : IUnsyncedActionExecutor("MoreClouds",
-			"Increases the density of clouds (lower performance)") {}
-
-	bool Execute(const UnsyncedAction& action) const {
-
-		sky->IncreaseCloudDensity();
-		ReportCloudDensity();
-		return true;
-	}
-
-	static void ReportCloudDensity() {
-		LOG("Cloud density %f", 1.0f / sky->GetCloudDensity());
-	}
-};
-
-
-
-class LessCloudsActionExecutor : public IUnsyncedActionExecutor {
-public:
-	LessCloudsActionExecutor() : IUnsyncedActionExecutor("LessClouds",
-			"Decreases the density of clouds (higher performance)") {}
-
-	bool Execute(const UnsyncedAction& action) const {
-
-		sky->DecreaseCloudDensity();
-		MoreCloudsActionExecutor::ReportCloudDensity();
 		return true;
 	}
 };
@@ -3100,7 +3054,6 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new SoundChannelEnableActionExecutor());
 	AddActionExecutor(new CreateVideoActionExecutor());
 	AddActionExecutor(new DrawTreesActionExecutor());
-	AddActionExecutor(new DynamicSkyActionExecutor());
 	AddActionExecutor(new SpeedControlActionExecutor());
 	AddActionExecutor(new GameInfoActionExecutor());
 	AddActionExecutor(new HideInterfaceActionExecutor());
@@ -3111,8 +3064,6 @@ void UnsyncedGameCommands::AddDefaultActionExecutors() {
 	AddActionExecutor(new GroundDetailActionExecutor());
 	AddActionExecutor(new MoreTreesActionExecutor());
 	AddActionExecutor(new LessTreesActionExecutor());
-	AddActionExecutor(new MoreCloudsActionExecutor());
-	AddActionExecutor(new LessCloudsActionExecutor());
 	AddActionExecutor(new SpeedUpActionExecutor());
 	AddActionExecutor(new SlowDownActionExecutor());
 	AddActionExecutor(new ControlUnitActionExecutor());

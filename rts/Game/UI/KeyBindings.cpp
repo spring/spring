@@ -189,7 +189,6 @@ static const DefaultBinding defaultBindings[] = {
 	{ "Any+f4",  "ShowMetalMap"          },
 	{ "Any+f5",  "HideInterface"         },
 	{ "Any+f6",  "MuteSound"             },
-	{ "Any+f7",  "DynamicSky"            },
 	{ "Any+l",   "togglelos"             },
 
 	{ "Ctrl+Shift+f8",  "savegame" },

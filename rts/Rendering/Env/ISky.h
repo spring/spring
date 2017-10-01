@@ -25,16 +25,11 @@ public:
 
 	virtual void SetLuaTexture(const MapTextureData& td) {}
 
-	void IncreaseCloudDensity() { cloudDensity *= 1.05f; }
-	void DecreaseCloudDensity() { cloudDensity *= 0.95f; }
-	float GetCloudDensity() const { return cloudDensity; }
-
 	ISkyLight* GetLight() const { return skyLight; }
 
 	bool SunVisible(const float3 pos) const;
 
 	bool& WireFrameModeRef() { return wireFrameMode; }
-	bool& DynamicSkyRef() { return dynamicSky; }
 
 	/**
 	 * Sets up OpenGL to draw fog or not, according to the value of
@@ -53,13 +48,11 @@ public:
 
 	float fogStart;
 	float fogEnd;
-	float cloudDensity;
 
 protected:
 	ISkyLight* skyLight;
 
 	bool wireFrameMode;
-	bool dynamicSky;
 };
 
 extern ISky* sky;
