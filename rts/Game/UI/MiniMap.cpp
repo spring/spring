@@ -847,12 +847,36 @@ void CMiniMap::DrawSurfaceSquare(const float3& pos, float xsize, float ysize)
 }
 
 
+void CMiniMap::EnterNormalizedCoors(bool pushMatrix, bool dualScreen) const
+{
+	if (pushMatrix)
+		glPushMatrix();
+
+	// switch to normalized minimap coords
+	if (dualScreen) {
+		glViewport(curPos.x, curPos.y, curDim.x, curDim.y);
+	} else {
+		glTranslatef(curPos.x * globalRendering->pixelX, curPos.y * globalRendering->pixelY, 0.0f);
+	}
+
+	glScalef(curDim.x * globalRendering->pixelX, curDim.y * globalRendering->pixelY, 1.0f);
+}
+
+void CMiniMap::LeaveNormalizedCoors(bool popMatrix, bool dualScreen) const
+{
+	if (popMatrix)
+		glPopMatrix();
+
+	if (dualScreen)
+		glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
+}
+
 void CMiniMap::ApplyConstraintsMatrix() const
 {
-	if (!renderToTexture) {
-		glTranslatef(curPos.x * globalRendering->pixelX, curPos.y * globalRendering->pixelY, 0.0f);
-		glScalef(curDim.x * globalRendering->pixelX, curDim.y * globalRendering->pixelY, 1.0f);
-	}
+	if (renderToTexture)
+		return;
+
+	EnterNormalizedCoors(false, false);
 }
 
 
@@ -928,20 +952,15 @@ void CMiniMap::ResizeTextureCache()
 		fboResolve.Bind();
 		fboResolve.AttachTexture(minimapTex);
 
-		if (!fboResolve.CheckStatus("MINIMAP-RESOLVE")) {
-			renderToTexture = false;
-			return;
-		}
-	} else {
-		// directly render to texture without multisampling (fallback solution)
-		fbo.Bind();
-		fbo.AttachTexture(minimapTex);
-
-		if (!fbo.CheckStatus("MINIMAP-RESOLVE")) {
-			renderToTexture = false;
-			return;
-		}
+		renderToTexture &= fboResolve.CheckStatus("MINIMAP-RESOLVE");
+		return;
 	}
+
+	// directly render to texture without multisampling (fallback solution)
+	fbo.Bind();
+	fbo.AttachTexture(minimapTex);
+
+	renderToTexture &= fbo.CheckStatus("MINIMAP-RESOLVE");
 }
 
 
@@ -1011,9 +1030,8 @@ void CMiniMap::Draw()
 		}
 
 		// draw the frameborder
-		if (!globalRendering->dualScreenMode && !maximized) {
+		if (!globalRendering->dualScreenMode && !maximized)
 			DrawFrame();
-		}
 
 		glPopAttrib();
 	}
@@ -1042,18 +1060,8 @@ void CMiniMap::DrawForReal(bool useGeom, bool updateTex)
 	glDisable(GL_TEXTURE_2D);
 	glMatrixMode(GL_MODELVIEW);
 
-	if (useGeom) {
-		glPushMatrix();
-
-		// switch to normalized minimap coords
-		if (globalRendering->dualScreenMode) {
-			glViewport(curPos.x, curPos.y, curDim.x, curDim.y);
-			glScalef(curDim.x * globalRendering->pixelX, curDim.y * globalRendering->pixelY, 1.0f);
-		} else {
-			glTranslatef(curPos.x * globalRendering->pixelX, curPos.y * globalRendering->pixelY, 0.0f);
-			glScalef(curDim.x * globalRendering->pixelX, curDim.y * globalRendering->pixelY, 1.0f);
-		}
-	}
+	if (useGeom)
+		EnterNormalizedCoors(true, globalRendering->dualScreenMode);
 
 	setSurfaceCircleFunc(DrawSurfaceCircle);
 	setSurfaceSquareFunc(DrawSurfaceSquare);
@@ -1077,7 +1085,7 @@ void CMiniMap::DrawForReal(bool useGeom, bool updateTex)
 	DrawWorldStuff();
 
 	if (useGeom)
-		glPopMatrix();
+		LeaveNormalizedCoors(true, false);
 
 	glPopAttrib();
 	glEnable(GL_TEXTURE_2D);
@@ -1087,17 +1095,13 @@ void CMiniMap::DrawForReal(bool useGeom, bool updateTex)
 	eventHandler.DrawInMiniMap();
 
 	if (!updateTex) {
-		glPushMatrix();
-			glTranslatef(curPos.x * globalRendering->pixelX, curPos.y * globalRendering->pixelY, 0.0f);
-			glScalef(curDim.x * globalRendering->pixelX, curDim.y * globalRendering->pixelY, 1.0f);
-			DrawCameraFrustumAndMouseSelection();
-		glPopMatrix();
+		EnterNormalizedCoors(true, false);
+		DrawCameraFrustumAndMouseSelection();
+		LeaveNormalizedCoors(true, false);
 	}
 
-	// Finish
-	// Reset of GL state
-	if (useGeom && globalRendering->dualScreenMode)
-		glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
+	// reset GL state after Lua
+	LeaveNormalizedCoors(false, useGeom && globalRendering->dualScreenMode);
 
 	// disable ClipPlanes
 	glDisable(GL_CLIP_PLANE0);
@@ -1364,9 +1368,8 @@ void CMiniMap::DrawButtons()
 
 void CMiniMap::DrawNotes()
 {
-	if (notes.empty()) {
+	if (notes.empty())
 		return;
-	}
 
 	const float baseSize = mapDims.mapx * SQUARE_SIZE;
 	CVertexArray* va = GetVertexArray();
@@ -1422,18 +1425,8 @@ bool CMiniMap::RenderCachedTexture(bool useGeom)
 	glEnable(GL_TEXTURE_2D);
 	glDisable(GL_BLEND);
 
-	if (useGeom) {
-		glPushMatrix();
-
-		// switch to normalized minimap coords
-		if (globalRendering->dualScreenMode) {
-			glViewport(curPos.x, curPos.y, curDim.x, curDim.y);
-			glScalef(curDim.x * globalRendering->pixelX, curDim.y * globalRendering->pixelY, 1.0f);
-		} else {
-			glTranslatef(curPos.x * globalRendering->pixelX, curPos.y * globalRendering->pixelY, 0.0f);
-			glScalef(curDim.x * globalRendering->pixelX, curDim.y * globalRendering->pixelY, 1.0f);
-		}
-	}
+	if (useGeom)
+		EnterNormalizedCoors(true, globalRendering->dualScreenMode);
 
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 	glBegin(GL_QUADS);
@@ -1447,13 +1440,7 @@ bool CMiniMap::RenderCachedTexture(bool useGeom)
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	DrawCameraFrustumAndMouseSelection();
-
-	if (useGeom)
-		glPopMatrix();
-
-	// Reset of GL state
-	if (useGeom && globalRendering->dualScreenMode)
-		glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
+	LeaveNormalizedCoors(useGeom, useGeom && globalRendering->dualScreenMode);
 
 	glDisable(GL_TEXTURE_2D);
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);

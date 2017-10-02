@@ -69,6 +69,8 @@ public:
 	const unsigned char* GetAllyTeamIconColor() const { return &allyColor[0]; }
 	const unsigned char* GetEnemyTeamIconColor() const { return &enemyColor[0]; }
 
+	void EnterNormalizedCoors(bool pushMatrix, bool dualScreen) const;
+	void LeaveNormalizedCoors(bool popMatrix, bool dualScreen) const;
 	void ApplyConstraintsMatrix() const;
 
 protected:
