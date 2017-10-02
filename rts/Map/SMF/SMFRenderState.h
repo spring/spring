@@ -53,7 +53,7 @@ public:
 
 
 struct SMFRenderStateNOP: public ISMFRenderState {
-	bool Init(const CSMFGroundDrawer* smfGroundDrawer) override {}
+	bool Init(const CSMFGroundDrawer* smfGroundDrawer) override { return true; }
 	void Kill() override {}
 	void Update(
 		const CSMFGroundDrawer* smfGroundDrawer,
