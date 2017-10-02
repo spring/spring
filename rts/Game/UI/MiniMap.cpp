@@ -1424,8 +1424,15 @@ bool CMiniMap::RenderCachedTexture(bool useGeom)
 
 	if (useGeom) {
 		glPushMatrix();
-		glTranslatef(curPos.x * globalRendering->pixelX, curPos.y * globalRendering->pixelY, 0.0f);
-		glScalef(curDim.x * globalRendering->pixelX, curDim.y * globalRendering->pixelY, 1.0f);
+
+		// switch to normalized minimap coords
+		if (globalRendering->dualScreenMode) {
+			glViewport(curPos.x, curPos.y, curDim.x, curDim.y);
+			glScalef(curDim.x * globalRendering->pixelX, curDim.y * globalRendering->pixelY, 1.0f);
+		} else {
+			glTranslatef(curPos.x * globalRendering->pixelX, curPos.y * globalRendering->pixelY, 0.0f);
+			glScalef(curDim.x * globalRendering->pixelX, curDim.y * globalRendering->pixelY, 1.0f);
+		}
 	}
 
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
@@ -1443,6 +1450,10 @@ bool CMiniMap::RenderCachedTexture(bool useGeom)
 
 	if (useGeom)
 		glPopMatrix();
+
+	// Reset of GL state
+	if (useGeom && globalRendering->dualScreenMode)
+		glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 
 	glDisable(GL_TEXTURE_2D);
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
