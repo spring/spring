@@ -23,6 +23,7 @@ Lua:
  - add Spring.GetVidMemUsage to LuaUnsyncedRead
  - fix Spring.GetPlayerRoster sometimes excluding active players
  - add DrawSky and DrawSun callins; available when a map has no skybox defined
+ - add DrawWater callin
 
 Misc:
  - remove joystick support

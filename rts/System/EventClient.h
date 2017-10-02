@@ -307,6 +307,7 @@ class CEventClient
 		virtual void ViewResize();
 
 		virtual void DrawGenesis() {}
+		virtual void DrawWater() {}
 		virtual void DrawSky() {}
 		virtual void DrawSun() {}
 		virtual void DrawWorld() {}

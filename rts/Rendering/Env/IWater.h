@@ -11,7 +11,7 @@ class IWater : public IExplosionListener
 {
 public:
 	enum {
-		WATER_RENDERER_NULL       = 0,
+		WATER_RENDERER_LUA        = 0,
 		WATER_RENDERER_REFLECTIVE = 1,
 		WATER_RENDERER_DYNAMIC    = 2,
 		WATER_RENDERER_REFL_REFR  = 3,
@@ -27,6 +27,7 @@ public:
 	virtual void UpdateWater(CGame* game) {}
 	virtual void OcclusionQuery() {}
 	virtual void AddExplosion(const float3& pos, float strength, float size) {}
+
 	virtual int  GetID() const { return -1; }
 	virtual const char* GetName() const { return ""; }
 

@@ -578,6 +578,7 @@ void CGlobalRendering::CheckGLExtensions() const
 
 	CHECK_EXT(GLEW_ARB_vertex_program); // VS-ARB
 	CHECK_EXT(GLEW_ARB_fragment_program); // FS-ARB
+	CHECK_EXT(GLEW_ARB_shading_language_100); // 2.0
 	CHECK_EXT(GLEW_ARB_vertex_shader); // 1.5 (VS-GLSL; core in 2.0)
 	CHECK_EXT(GLEW_ARB_fragment_shader); // 1.5 (FS-GLSL; core in 2.0)
 	CHECK_EXT(GLEW_ARB_geometry_shader4); // GS v4 (GL3.2)

@@ -1,11 +1,10 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-
+#include "RefractWater.h"
+#if 0
 #include "WaterRendering.h"
-
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/myGL.h"
-#include "RefractWater.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "System/bitops.h"
@@ -50,7 +49,7 @@ void CRefractWater::Draw()
 	glActiveTextureARB(GL_TEXTURE0_ARB);
 
 	// GL_TEXTURE_RECTANGLE uses texcoord range 0 to width, whereas GL_TEXTURE_2D uses 0 to 1
-	const float v[] = { 10.0f * globalRendering->viewSizeX, 10.0f * globalRendering->viewSizeY, 0.0f, 0.0f };
+	const float v[] = {10.0f * globalRendering->viewSizeX, 10.0f * globalRendering->viewSizeY, 0.0f, 0.0f};
 	glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, 2, v);
 
 	CAdvWater::Draw(false);
@@ -72,8 +71,8 @@ void CRefractWater::SetupWaterDepthTex()
 	glBindTexture(GL_TEXTURE_2D, readMap->GetShadingTexture()); // the shading texture has water depth encoded in alpha
 	glEnable(GL_TEXTURE_GEN_S);
 
-	const float splane[] = { 1.0f / (mapDims.pwr2mapx * SQUARE_SIZE), 0.0f, 0.0f, 0.0f };
-	const float tplane[] = { 0.0f, 0.0f, 1.0f / (mapDims.pwr2mapy * SQUARE_SIZE), 0.0f};
+	const float splane[] = {1.0f / (mapDims.pwr2mapx * SQUARE_SIZE), 0.0f, 0.0f, 0.0f};
+	const float tplane[] = {0.0f, 0.0f, 1.0f / (mapDims.pwr2mapy * SQUARE_SIZE), 0.0f};
 
 	glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
 	glTexGenfv(GL_S, GL_OBJECT_PLANE, splane);
@@ -82,3 +81,12 @@ void CRefractWater::SetupWaterDepthTex()
 	glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
 	glTexGenfv(GL_T, GL_OBJECT_PLANE, tplane);
 }
+
+#else
+
+CRefractWater::CRefractWater() {}
+CRefractWater::~CRefractWater() {}
+
+void CRefractWater::Draw() {}
+#endif
+

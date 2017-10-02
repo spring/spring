@@ -249,6 +249,7 @@ class CEventHandler
 
 		// see the DRAW_CALLIN macro for implementations
 		void DrawGenesis();
+		void DrawWater();
 		void DrawSky();
 		void DrawSun();
 		void DrawWorld();

@@ -571,6 +571,7 @@ void CEventHandler::GameProgress(int gameFrame)
   }
 
 DRAW_CALLIN(Genesis)
+DRAW_CALLIN(Water)
 DRAW_CALLIN(Sky)
 DRAW_CALLIN(Sun)
 DRAW_CALLIN(World)

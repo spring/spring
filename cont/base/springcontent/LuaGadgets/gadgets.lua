@@ -1732,6 +1732,12 @@ function gadgetHandler:DrawGenesis()
   end
 end
 
+function gadgetHandler:DrawWater()
+  for _,g in r_ipairs(self.DrawWaterList) do
+    g:DrawWater()
+  end
+end
+
 function gadgetHandler:DrawSky()
   for _,g in r_ipairs(self.DrawSkyList) do
     g:DrawSky()

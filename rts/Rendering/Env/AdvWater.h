@@ -10,7 +10,7 @@
 class CAdvWater : public IWater
 {
 public:
-	CAdvWater(bool loadShader = true);
+	CAdvWater();
 	virtual ~CAdvWater();
 	virtual int GetID() const { return WATER_RENDERER_REFLECTIVE; }
 	virtual const char* GetName() const { return "reflective"; }

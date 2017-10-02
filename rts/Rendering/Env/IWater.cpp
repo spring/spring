@@ -2,7 +2,7 @@
 
 #include "IWater.h"
 #include "ISky.h"
-#include "NullWater.h"
+#include "LuaWater.h"
 #include "AdvWater.h"
 #include "BumpWater.h"
 #include "DynWater.h"
@@ -22,7 +22,7 @@
 
 CONFIG(int, Water)
 .defaultValue(IWater::WATER_RENDERER_REFLECTIVE)
-.safemodeValue(IWater::WATER_RENDERER_NULL)
+.safemodeValue(IWater::WATER_RENDERER_LUA)
 .headlessValue(0)
 .minimumValue(0)
 .maximumValue(IWater::NUM_WATER_RENDERERS - 1)
@@ -60,10 +60,10 @@ IWater* IWater::GetWater(IWater* curRenderer, int nxtRendererMode)
 	static IWater tmpRenderer;
 	static bool allowedModes[NUM_WATER_RENDERERS] = {
 		true,
-		GLEW_ARB_fragment_program && ProgramStringIsNative(GL_FRAGMENT_PROGRAM_ARB, "ARB/water.fp"),
-		GLEW_ARB_fragment_program && GLEW_ARB_texture_float && ProgramStringIsNative(GL_FRAGMENT_PROGRAM_ARB, "ARB/waterDyn.fp"),
-		GLEW_ARB_fragment_program && GLEW_ARB_texture_rectangle,
-		GLEW_ARB_shading_language_100 && GLEW_ARB_fragment_shader && GLEW_ARB_vertex_shader,
+		ProgramStringIsNative(GL_FRAGMENT_PROGRAM_ARB, "ARB/water.fp") && false,
+		ProgramStringIsNative(GL_FRAGMENT_PROGRAM_ARB, "ARB/waterDyn.fp") && true,
+		false,
+		true,
 	};
 
 	IWater* nxtRenderer = nullptr;
@@ -78,7 +78,7 @@ IWater* IWater::GetWater(IWater* curRenderer, int nxtRendererMode)
 		assert(water == curRenderer);
 
 		if (curRenderer->GetID() == nxtRendererMode) {
-			if (nxtRendererMode == IWater::WATER_RENDERER_NULL)
+			if (nxtRendererMode == IWater::WATER_RENDERER_LUA)
 				return curRenderer;
 		}
 
@@ -134,7 +134,7 @@ IWater* IWater::GetWater(IWater* curRenderer, int nxtRendererMode)
 	}
 
 	if (nxtRenderer == nullptr)
-		nxtRenderer = new CNullWater();
+		nxtRenderer = new CLuaWater();
 
 	configHandler->Set("Water", nxtRenderer->GetID());
 	return nxtRenderer;

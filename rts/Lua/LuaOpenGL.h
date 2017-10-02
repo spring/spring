@@ -53,6 +53,7 @@ class LuaOpenGL {
 		static void ResetDrawGenesis();
 		static void DisableDrawGenesis();
 
+		NOOP_STATE_FUNCS(DrawWater)
 		NOOP_STATE_FUNCS(DrawSky)
 		NOOP_STATE_FUNCS(DrawSun)
 

@@ -1261,6 +1261,12 @@ function widgetHandler:DrawGenesis()
 end
 
 
+function widgetHandler:DrawWater()
+  for _,w in ripairs(self.DrawWaterList) do
+    w:DrawWater()
+  end
+end
+
 function widgetHandler:DrawSky()
   for _,w in ripairs(self.DrawSkyList) do
     w:DrawSky()

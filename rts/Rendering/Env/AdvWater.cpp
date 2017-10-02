@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-
 #include "AdvWater.h"
+#if 0
 #include "ISky.h"
 #include "WaterRendering.h"
 
@@ -16,12 +16,12 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CAdvWater::CAdvWater(bool loadShader)
+CAdvWater::CAdvWater()
 {
 	if (!FBO::IsSupported())
 		throw content_error("Water Error: missing FBO support");
 
-	std::vector<unsigned char> scrap(512 * 512 * 4);
+	unsigned char scrap[512 * 512 * 4];
 
 	glGenTextures(1, &reflectTexture);
 	glBindTexture(GL_TEXTURE_2D, reflectTexture);
@@ -56,10 +56,12 @@ CAdvWater::CAdvWater(bool loadShader)
 		for (int x = 0; x < 64; ++x) {
 			const float ang = 26.5f*math::DEG_TO_RAD;
 			const float pos = y*2+x;
+
 			scrap[(y*64 + x)*4 + 0] = (unsigned char)((fastmath::sin(pos*math::TWOPI / 64.0f)) * 128 * fastmath::sin(ang)) + 128;
 			scrap[(y*64 + x)*4 + 1] = (unsigned char)((fastmath::sin(pos*math::TWOPI / 64.0f)) * 128 * fastmath::cos(ang)) + 128;
 		}
 	}
+
 	glBindTexture(GL_TEXTURE_2D, rawBumpTexture[1]);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -69,19 +71,19 @@ CAdvWater::CAdvWater(bool loadShader)
 		for (int x = 0; x < 64; ++x) {
 			const float ang = -19.0f * math::DEG_TO_RAD;
 			const float pos = 3.0f * y - x;
+
 			scrap[(y*64 + x)*4 + 0] = (unsigned char)((fastmath::sin(pos*math::TWOPI / 64.0f)) * 128 * fastmath::sin(ang)) + 128;
 			scrap[(y*64 + x)*4 + 1] = (unsigned char)((fastmath::sin(pos*math::TWOPI / 64.0f)) * 128 * fastmath::cos(ang)) + 128;
 		}
 	}
+
 	glBindTexture(GL_TEXTURE_2D, rawBumpTexture[2]);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 64, 64, 0, GL_RGBA, GL_UNSIGNED_BYTE, &scrap[0]);
 
-	if (loadShader) {
-		// NOTE: needs a VP with OPTION ARB_position_invariant for clipping if !haveGLSL
-		waterFP = LoadFragmentProgram("ARB/water.fp");
-	}
+	// NOTE: needs a VP with OPTION ARB_position_invariant for clipping if !haveGLSL
+	waterFP = LoadFragmentProgram("ARB/water.fp");
 
 	waterSurfaceColor = waterRendering->surfaceColor;
 
@@ -337,3 +339,14 @@ void CAdvWater::UpdateWater(CGame* game)
 	glPopAttrib();
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
+
+#else
+
+CAdvWater::CAdvWater() {}
+CAdvWater::~CAdvWater() {}
+
+void CAdvWater::Draw() {}
+void CAdvWater::Draw(bool useBlending) {}
+void CAdvWater::UpdateWater(CGame* game) {}
+#endif
+
