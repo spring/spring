@@ -498,6 +498,11 @@ GLAPI void APIENTRY glLineWidth(GLfloat width) {}
 GLAPI void APIENTRY glColor3f(GLfloat red, GLfloat green, GLfloat blue ) {}
 GLAPI void APIENTRY glPolygonOffset(GLfloat factor, GLfloat units) {}
 
+GLAPI void APIENTRY glBeginConditionalRender(GLuint id, GLenum mode) {}
+GLAPI void APIENTRY glBeginConditionalRenderNV(GLuint id, GLenum mode) {}
+GLAPI void APIENTRY glEndConditionalRender() {}
+GLAPI void APIENTRY glEndConditionalRenderNV() {}
+
 GLAPI void APIENTRY glPrimitiveRestartIndex(GLuint index) {}
 GLAPI void APIENTRY glPrimitiveRestartIndexNV(GLuint index) {}
 GLAPI void APIENTRY glGetCompressedTexImage(GLenum target, GLint lod, GLvoid * img) {}

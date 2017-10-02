@@ -568,7 +568,7 @@ void CGlobalRendering::CheckGLExtensions() const
 	CHECK_EXT(GLEW_EXT_stencil_two_side); // 2.0
 
 	CHECK_EXT(GLEW_ARB_occlusion_query); // 1.5
-	CHECK_EXT(GLEW_ARB_occlusion_query2); // 3.3
+	CHECK_EXT(GLEW_ARB_occlusion_query2); // 3.3 (glBeginConditionalRender)
 
 	CHECK_EXT(GLEW_ARB_depth_clamp); // 3.2
 

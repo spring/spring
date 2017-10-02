@@ -1035,7 +1035,7 @@ void CBumpWater::Draw()
 		return;
 
 	if (occlusionQuery != 0) {
-		glBeginConditionalRenderNV(occlusionQuery, GL_QUERY_BY_REGION_WAIT_NV);
+		glBeginConditionalRender(occlusionQuery, GL_QUERY_BY_REGION_WAIT);
 		glBeginQuery(GL_ANY_SAMPLES_PASSED, occlusionQuery);
 	}
 
@@ -1109,7 +1109,7 @@ void CBumpWater::Draw()
 
 	if (occlusionQuery != 0) {
 		glEndQuery(GL_ANY_SAMPLES_PASSED);
-		glEndConditionalRenderNV();
+		glEndConditionalRender();
 	}
 }
 
