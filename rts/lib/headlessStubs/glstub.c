@@ -28,6 +28,9 @@ GLAPI void APIENTRY glDeleteBuffersARB(GLsizei n, const GLuint *buffers) {}
 GLAPI void APIENTRY glGenBuffersARB(GLsizei n, GLuint *buffers) {}
 GLAPI void APIENTRY glBindBufferARB(GLenum target, GLuint buffer) {}
 GLAPI void APIENTRY glBufferDataARB(GLenum target, GLsizeiptrARB size, const GLvoid *data, GLenum usage) {}
+GLAPI void APIENTRY glCopyBufferSubData(GLenum readTarget, GLenum writeTarget, GLintptr readOffset, GLintptr writeOffset, GLsizeiptr size) {}
+GLAPI void APIENTRY glCopyNamedBufferSubData(GLuint readBuffer, GLuint writeBuffer, GLintptr readOffset, GLintptr writeOffset, GLsizei size) {}
+
 
 GLAPI void APIENTRY glGenFramebuffersEXT(GLsizei n, GLuint *framebuffers) {}
 GLAPI GLenum APIENTRY glCheckFramebufferStatusEXT(GLenum target) {
