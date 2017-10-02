@@ -649,7 +649,10 @@ void CGlobalRendering::SetGLSupportFlags()
 	compressTextures = configHandler->GetBool("CompressTextures");
 
 
+	#ifdef GLEW_NV_primitive_restart
+	// not defined for headless builds
 	supportRestartPrimitive = GLEW_NV_primitive_restart;
+	#endif
 	#ifdef GLEW_ARB_clip_control
 	supportClipSpaceControl = GLEW_ARB_clip_control;
 	#endif
