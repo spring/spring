@@ -6,12 +6,14 @@
 #include "PathConstants.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
 
+constexpr float MAX_RAW_PATH_LEN = 1.8e19;  //math::sqrt(std::numeric_limits<float>::max())
+
 CPathFinderDef::CPathFinderDef(const float3& startPos, const float3& goalPos, float goalRadius, float sqGoalDistance)
 : wsStartPos(startPos)
 , wsGoalPos(goalPos)
 
 , sqGoalRadius(goalRadius * goalRadius)
-, maxRawPathLen(std::numeric_limits<float>::max())
+, maxRawPathLen(MAX_RAW_PATH_LEN)
 , minRawSpeedMod(0.0f)
 
 , constraintDisabled(false)
