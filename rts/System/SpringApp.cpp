@@ -177,7 +177,7 @@ static void ShowSplashScreen(const std::string& splashScreenFile)
 	const char* fmtStrs[5] = {
 		"[Initializing Virtual File System]",
 		"* archives scanned: %u",
-		"* scantime elapsed: %.1fms",
+		"* scantime elapsed: %.1fs",
 		"Spring %s",
 		"This program is distributed under the GNU General Public License, see doc/LICENSE for more info",
 	};
@@ -218,7 +218,7 @@ static void ShowSplashScreen(const std::string& splashScreenFile)
 		font->SetTextColor(color.x, color.y, color.z, color.w);
 		font->glFormat(coors.x - (normWidth[0] * 0.500f), coors.y                             , coors.z, fontFlags, fmtStrs[0]);
 		font->glFormat(coors.x - (normWidth[0] * 0.475f), coors.y - (coors.w * coors.z * 1.0f), coors.z, fontFlags, fmtStrs[1], CArchiveScanner::GetNumScannedArchives());
-		font->glFormat(coors.x - (normWidth[0] * 0.475f), coors.y - (coors.w * coors.z * 2.0f), coors.z, fontFlags, fmtStrs[2], (t1 - t0).toMilliSecsf());
+		font->glFormat(coors.x - (normWidth[0] * 0.475f), coors.y - (coors.w * coors.z * 2.0f), coors.z, fontFlags, fmtStrs[2], (t1 - t0).toSecsf());
 		font->End();
 
 		// always render Spring's license notice
