@@ -196,12 +196,6 @@ CGrassDrawer::CGrassDrawer()
 		return;
 	}
 
-	// needed to create the far tex
-	if (!GLEW_EXT_framebuffer_blit) {
-		grassOff = true;
-		return;
-	}
-
 	// load grass density from map
 	{
 		MapBitmapInfo grassbm;

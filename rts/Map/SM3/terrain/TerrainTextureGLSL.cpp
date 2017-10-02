@@ -133,13 +133,7 @@ public:
 
 		width = globalRendering->viewSizeX;
 		height = globalRendering->viewSizeY;
-		if (GLEW_ARB_texture_rectangle)
-			target = GL_TEXTURE_RECTANGLE_ARB;
-		else {
-			target = GL_TEXTURE_2D;
-			width = closest_pot(width);
-			height = closest_pot(height);
-		}
+		target = GL_TEXTURE_RECTANGLE_ARB;
 
 		name = "_buffer";
 
@@ -428,9 +422,7 @@ void ShaderBuilder::AddPPDefines(ShaderDef* sd, Shader& shader, uint passIndex)
 
 		if (passIndex == 1) {
 			shader.texts.push_back("#define DiffuseFromBuffer\n");
-
-			if (GLEW_ARB_texture_rectangle)
-				shader.texts.push_back("#define UseTextureRECT\n");
+			shader.texts.push_back("#define UseTextureRECT\n");
 		}
 	}
 

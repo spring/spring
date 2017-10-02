@@ -33,7 +33,8 @@ static int currentVertexArray = 0;
 
 CVertexArray* GetVertexArray()
 {
-	currentVertexArray = (currentVertexArray + 1) % vertexArrays.size();
+	currentVertexArray += 1;
+	currentVertexArray %= vertexArrays.size();
 	return &vertexArrays[currentVertexArray];
 }
 
@@ -146,8 +147,8 @@ static bool GetVideoMemInfoMESA(GLint* memInfo)
 
 	typedef PFNGLXQUERYCURRENTRENDERERINTEGERMESAPROC QCRIProc;
 
-	static constexpr const GLubyte* qcriProcName = (const GLubyte*) "glXQueryCurrentRendererIntegerMESA";
-	static           const QCRIProc qcriProcAddr = (QCRIProc) glXGetProcAddress(qcriProcName);
+	static const     char qcriProcName[] = "glXQueryCurrentRendererIntegerMESA";
+	static const QCRIProc qcriProcAddr   = (QCRIProc) glXGetProcAddress(reinterpret_cast<const GLubyte*>(qcriProcName));
 
 	if (qcriProcAddr == nullptr)
 		return false;
@@ -330,7 +331,7 @@ void glBuildMipmaps(const GLenum target, GLint internalFormat, const GLsizei wid
 
 	// create mipmapped texture
 
-	if (IS_GL_FUNCTION_AVAILABLE(glGenerateMipmap) && !globalRendering->atiHacks) {
+	if (!globalRendering->atiHacks) {
 		// newest method
 		glTexImage2D(target, 0, internalFormat, width, height, 0, format, type, data);
 		if (globalRendering->atiHacks) {
@@ -341,8 +342,7 @@ void glBuildMipmaps(const GLenum target, GLint internalFormat, const GLsizei wid
 			glGenerateMipmap(target);
 		}
 	} else if (GLEW_VERSION_1_4) {
-		// This required GL-1.4
-		// instead of using glu, we rely on glTexImage2D to create the Mipmaps.
+		// instead of using glu, rely on glTexImage2D to create the mipmaps (requires GL1.4)
 		glTexParameteri(target, GL_GENERATE_MIPMAP, GL_TRUE);
 		glTexImage2D(target, 0, internalFormat, width, height, 0, format, type, data);
 	} else {
@@ -486,11 +486,6 @@ static unsigned int LoadProgram(GLenum target, const char* filename, const char*
 {
 	GLuint ret = 0;
 
-	if (!GLEW_ARB_vertex_program)
-		return ret;
-	if (target == GL_FRAGMENT_PROGRAM_ARB && !GLEW_ARB_fragment_program)
-		return ret;
-
 	CFileHandler file(std::string("shaders/") + filename);
 	if (!file.FileExists()) {
 		char c[512];
@@ -525,14 +520,13 @@ unsigned int LoadVertexProgram(const char* filename)
 
 unsigned int LoadFragmentProgram(const char* filename)
 {
-
 	return LoadProgram(GL_FRAGMENT_PROGRAM_ARB, filename, "fragment");
 }
 
 
 void glSafeDeleteProgram(GLuint program)
 {
-	if (!GLEW_ARB_vertex_program || (program == 0))
+	if (program == 0)
 		return;
 
 	glDeleteProgramsARB(1, &program);

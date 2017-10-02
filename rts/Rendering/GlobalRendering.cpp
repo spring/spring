@@ -482,6 +482,9 @@ void CGlobalRendering::PostInit() {
 	char sdlVersionStr[64] = "";
 	char glVidMemStr[64] = "unknown";
 
+	if (!CheckGLEWContextVersion(globalRenderingInfo.glContextVersion))
+		throw (unsupported_error("GLEW version outdated, aborting"));
+
 	QueryVersionInfo(sdlVersionStr, glVidMemStr);
 	CheckGLExtensions();
 	SetGLSupportFlags();
@@ -512,25 +515,83 @@ void CGlobalRendering::SwapBuffers(bool allowSwapBuffers, bool clearErrors)
 
 void CGlobalRendering::CheckGLExtensions() const
 {
-	assert(GLEW_ARB_texture_compression);
+	const auto CheckExt = [](const char* extName, const bool extFlag) {
+		if (extFlag)
+			return;
+
+		char buf[512];
+		memset(buf, 0, sizeof(buf));
+		snprintf(buf, sizeof(buf), "OpenGL extension \"%s\" not supported, aborting", extName);
+		throw (unsupported_error(buf));
+	};
+
+	#ifndef HEADLESS
+	#define CHECK_EXT(ext) CheckExt(#ext, ext)
+
+	CHECK_EXT(GLEW_ARB_vertex_buffer_object); // 1.5 (VBO)
+	CHECK_EXT(GLEW_ARB_pixel_buffer_object); // 2.1 (PBO)
+	CHECK_EXT(GLEW_ARB_framebuffer_object); // 3.0 (FBO)
+	CHECK_EXT(GLEW_ARB_vertex_array_object); // 3.0 (VAO; core in 4.x)
+	CHECK_EXT(GLEW_ARB_uniform_buffer_object); // 3.1 (UBO)
+
+	#ifdef GLEW_ARB_buffer_storage
+	CHECK_EXT(GLEW_ARB_buffer_storage); // 4.4 (immutable storage)
+	#else
+	CheckExt("GLEW_ARB_buffer_storage", false);
+	#endif
+
+	CHECK_EXT(GLEW_ARB_copy_buffer); // 3.1 (glCopyBufferSubData)
+	CHECK_EXT(GLEW_ARB_map_buffer_range); // 3.0 (glMapBufferRange[ARB])
+	CHECK_EXT(GLEW_EXT_framebuffer_multisample); // 3.0 (multi-sampled FB's)
+	CHECK_EXT(GLEW_EXT_framebuffer_blit); // 3.0 (glBlitFramebuffer[EXT])
+
+	// not yet mandatory
+	// CHECK_EXT(GLEW_ARB_multi_bind); // 4.4
+	// CHECK_EXT(GLEW_ARB_texture_storage); // 4.2
+	// CHECK_EXT(GLEW_ARB_program_interface_query); // 4.3
+	// CHECK_EXT(GLEW_EXT_direct_state_access); // 3.3 (core in 4.5)
+	// CHECK_EXT(GLEW_ARB_invalidate_subdata); // 4.3 (glInvalidateBufferData)
+	// CHECK_EXT(GLEW_ARB_shader_storage_buffer_object); // 4.3 (glShaderStorageBlockBinding)
+	CHECK_EXT(GLEW_ARB_get_program_binary); // 4.1
+
+	CHECK_EXT(GLEW_ARB_texture_compression);
+	CHECK_EXT(GLEW_ARB_texture_float); // 3.0 (FP{16,32} textures)
+	CHECK_EXT(GLEW_ARB_texture_non_power_of_two); // 2.0 (NPOT textures)
+	CHECK_EXT(GLEW_ARB_texture_rectangle); // 3.0 (rectangular textures)
+	CHECK_EXT(GLEW_EXT_texture_filter_anisotropic); // 3.3 (AF; core in 4.6!)
+	CHECK_EXT(GLEW_ARB_imaging); // 1.2 (imaging subset; texture_*_clamp [GL_CLAMP_TO_EDGE] etc)
+	CHECK_EXT(GLEW_EXT_texture_edge_clamp); // 1.2
+	CHECK_EXT(GLEW_ARB_texture_border_clamp); // 1.3
+
+	CHECK_EXT(GLEW_EXT_blend_func_separate); // 1.4
+	CHECK_EXT(GLEW_EXT_blend_equation_separate); // 2.0
+	CHECK_EXT(GLEW_EXT_stencil_two_side); // 2.0
+
+	CHECK_EXT(GLEW_ARB_occlusion_query); // 1.5
+	CHECK_EXT(GLEW_ARB_occlusion_query2); // 3.3
+
+	CHECK_EXT(GLEW_ARB_depth_clamp); // 3.2
+
+	CHECK_EXT(GLEW_NV_primitive_restart); // 3.1
+	CHECK_EXT(GLEW_ARB_transform_feedback3); // 4.0 (VTF v3)
+	CHECK_EXT(GLEW_ARB_explicit_attrib_location); // 3.3
+
+	CHECK_EXT(GLEW_ARB_vertex_program); // VS-ARB
+	CHECK_EXT(GLEW_ARB_fragment_program); // FS-ARB
+	CHECK_EXT(GLEW_ARB_vertex_shader); // 1.5 (VS-GLSL; core in 2.0)
+	CHECK_EXT(GLEW_ARB_fragment_shader); // 1.5 (FS-GLSL; core in 2.0)
+	CHECK_EXT(GLEW_ARB_geometry_shader4); // GS v4 (GL3.2)
+
+	#undef CHECK_EXT
+	#else
+	// for HL builds, all used GL functions are stubs
+	#endif
 }
 
 void CGlobalRendering::SetGLSupportFlags()
 {
 	const std::string& glVendor   = StringToLower(globalRenderingInfo.glVendor);
 	const std::string& glRenderer = StringToLower(globalRenderingInfo.glRenderer);
-
-	// bool  arbShaderSupport = GLEW_ARB_vertex_program && GLEW_ARB_fragment_program;
-	bool glslShaderSupport = (glGetString(GL_SHADING_LANGUAGE_VERSION) != nullptr);
-
-	glslShaderSupport &= (GLEW_ARB_vertex_shader && GLEW_ARB_fragment_shader);
-	glslShaderSupport &= GLEW_VERSION_2_0; // we want OpenGL 2.0 core functions
-
-	#ifndef HEADLESS
-	// for HL builds, all used GL functions are (hopefully) stubs so throwing is unnecessary
-	if (!glslShaderSupport)
-		throw unsupported_error("OpenGL shaders not supported, aborting");
-	#endif
 
 	haveATI    = (  glVendor.find(   "ati ") != std::string::npos) || (glVendor.find("amd ") != std::string::npos);
 	haveIntel  = (  glVendor.find(  "intel") != std::string::npos);
@@ -588,15 +649,14 @@ void CGlobalRendering::SetGLSupportFlags()
 	compressTextures = configHandler->GetBool("CompressTextures");
 
 
-	#ifdef GLEW_NV_primitive_restart
 	supportRestartPrimitive = GLEW_NV_primitive_restart;
-	#endif
 	#ifdef GLEW_ARB_clip_control
-	// use this only if we have a head-context; it came into existence with GL4.5
-	supportClipSpaceControl |= GLEW_ARB_clip_control;
+	supportClipSpaceControl = GLEW_ARB_clip_control;
+	#endif
+	// CC did not exist as an extension before GL4.5, too recent to enforce
 	supportClipSpaceControl &= (globalRenderingInfo.glContextVersion.x >= 4 && globalRenderingInfo.glContextVersion.y >= 5);
 	supportClipSpaceControl &= (configHandler->GetInt("ForceDisableClipCtrl") == 0);
-	#endif
+
 	supportFragDepthLayout = (globalRenderingInfo.glContextVersion.x >= 4 && globalRenderingInfo.glContextVersion.y >= 2);
 
 
@@ -626,9 +686,7 @@ void CGlobalRendering::QueryGLMaxVals()
 {
 	// maximum 2D texture size
 	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTextureSize);
-
-	if (GLEW_EXT_texture_filter_anisotropic)
-		glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxTexAnisoLvl);
+	glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxTexAnisoLvl);
 
 	// some GLSL relevant information
 	glGetIntegerv(GL_MAX_UNIFORM_BUFFER_BINDINGS, &glslMaxUniformBufferBindings);
@@ -658,6 +716,11 @@ void CGlobalRendering::QueryVersionInfo(char (&sdlVersionStr)[64], char (&glVidM
 	if ((grInfo.glRenderer  = (const char*) glGetString(GL_RENDERER                )) == nullptr) grInfo.glRenderer  = "unknown";
 	if ((grInfo.glslVersion = (const char*) glGetString(GL_SHADING_LANGUAGE_VERSION)) == nullptr) grInfo.glslVersion = "unknown";
 	if ((grInfo.glewVersion = (const char*) glewGetString(GLEW_VERSION             )) == nullptr) grInfo.glewVersion = "unknown";
+
+	// should never be null with any driver, no harm in an extra check
+	// (absence of GLSL version string would indicate bigger problems)
+	if (std::strcmp(globalRenderingInfo.glslVersion, "unknown") == 0)
+		throw unsupported_error("OpenGL shaders not supported, aborting");
 
 	if (!ShowDriverWarning(grInfo.glVendor, grInfo.glRenderer))
 		throw unsupported_error("OpenGL drivers not installed, aborting");
@@ -972,6 +1035,55 @@ bool CGlobalRendering::CheckGLContextVersion(const int2& minCtx) const
 
 	// compare major * 10 + minor s.t. 4.1 evaluates as larger than 3.2
 	return ((tmpCtx.x * 10 + tmpCtx.y) >= (minCtx.x * 10 + minCtx.y));
+	#endif
+}
+
+bool CGlobalRendering::CheckGLEWContextVersion(const int2& curCtx) const
+{
+	#ifdef HEADLESS
+	return true;
+	#else
+	int2 tmpCtx = {0, 0};
+
+	// GLEW should know this GL version exists
+	switch (curCtx.x * 10 + curCtx.y) {
+		#ifdef GLEW_VERSION_3_0
+		case 30: { tmpCtx = curCtx * GLEW_VERSION_3_0; } break;
+		#endif
+		#ifdef GLEW_VERSION_3_1
+		case 31: { tmpCtx = curCtx * GLEW_VERSION_3_1; } break;
+		#endif
+		#ifdef GLEW_VERSION_3_2
+		case 32: { tmpCtx = curCtx * GLEW_VERSION_3_2; } break;
+		#endif
+		#ifdef GLEW_VERSION_3_3
+		case 33: { tmpCtx = curCtx * GLEW_VERSION_3_3; } break;
+		#endif
+		#ifdef GLEW_VERSION_4_0
+		case 40: { tmpCtx = curCtx * GLEW_VERSION_4_0; } break;
+		#endif
+		#ifdef GLEW_VERSION_4_1
+		case 41: { tmpCtx = curCtx * GLEW_VERSION_4_1; } break;
+		#endif
+		#ifdef GLEW_VERSION_4_2
+		case 42: { tmpCtx = curCtx * GLEW_VERSION_4_2; } break;
+		#endif
+		#ifdef GLEW_VERSION_4_3
+		case 43: { tmpCtx = curCtx * GLEW_VERSION_4_3; } break;
+		#endif
+		#ifdef GLEW_VERSION_4_4
+		case 44: { tmpCtx = curCtx * GLEW_VERSION_4_4; } break;
+		#endif
+		#ifdef GLEW_VERSION_4_5
+		case 45: { tmpCtx = curCtx * GLEW_VERSION_4_5; } break;
+		#endif
+		#ifdef GLEW_VERSION_4_6
+		case 46: { tmpCtx = curCtx * GLEW_VERSION_4_6; } break;
+		#endif
+		default: {} break;
+	}
+
+	return ((tmpCtx.x * 10 + tmpCtx.y) >= (curCtx.x * 10 + curCtx.y));
 	#endif
 }
 

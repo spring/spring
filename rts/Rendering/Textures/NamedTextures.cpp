@@ -245,7 +245,7 @@ namespace CNamedTextures {
 				}
 
 				//! Note: NPOTs + nearest filtering seems broken on ATIs
-				if ((xbits != 1 || ybits != 1) && (!GLEW_ARB_texture_non_power_of_two || (globalRendering->atiHacks && nearest)))
+				if ((xbits != 1 || ybits != 1) && (globalRendering->atiHacks && nearest))
 					bitmap = bitmap.CreateRescaled(next_power_of_2(bitmap.xsize),next_power_of_2(bitmap.ysize));
 
 				glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, bitmap.xsize, bitmap.ysize, int(border), GL_RGBA, GL_UNSIGNED_BYTE, bitmap.GetRawMem());
@@ -262,7 +262,7 @@ namespace CNamedTextures {
 				}
 			}
 
-			if (aniso && GLEW_EXT_texture_filter_anisotropic)
+			if (aniso)
 				glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, globalRendering->maxTexAnisoLvl);
 		}
 

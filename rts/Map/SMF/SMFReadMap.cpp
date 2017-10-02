@@ -317,7 +317,7 @@ void CSMFReadMap::CreateShadingTex()
 	if (texAnisotropyLevels[false] != 0.0f)
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, texAnisotropyLevels[false]);
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, mapDims.pwr2mapx, mapDims.pwr2mapy, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, mapDims.pwr2mapx, mapDims.pwr2mapy, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 
 	shadingTexBuffer.clear();
 	shadingTexBuffer.resize(mapDims.mapx * mapDims.mapy * 4, 0);
@@ -897,12 +897,6 @@ void CSMFReadMap::FreeInfoMap(const std::string& name, unsigned char *data)
 
 void CSMFReadMap::ConfigureTexAnisotropyLevels()
 {
-	if (!GLEW_EXT_texture_filter_anisotropic) {
-		texAnisotropyLevels[false] = 0.0f;
-		texAnisotropyLevels[ true] = 0.0f;
-		return;
-	}
-
 	const std::string cfgKeys[2] = {"SMFTexAniso", "SSMFTexAniso"};
 
 	for (unsigned int i = 0; i < 2; i++) {

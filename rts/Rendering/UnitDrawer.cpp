@@ -110,9 +110,7 @@ static const void PushRenderState3DO() {
 }
 
 static const void PushRenderStateS3O() {
-	if (globalRendering->supportRestartPrimitive) {
-		glPrimitiveRestartIndexNV(-1U);
-	}
+	glPrimitiveRestartIndex(-1U);
 }
 
 static const void PushRenderStateOBJ() { /* no-op */ }

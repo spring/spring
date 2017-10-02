@@ -40,9 +40,7 @@ bool LuaFBOs::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(IsValidFBO);
 	REGISTER_LUA_CFUNC(ActiveFBO);
 	REGISTER_LUA_CFUNC(UnsafeSetFBO);
-
-	if (GLEW_EXT_framebuffer_blit)
-		REGISTER_LUA_CFUNC(BlitFBO);
+	REGISTER_LUA_CFUNC(BlitFBO);
 
 	return true;
 }

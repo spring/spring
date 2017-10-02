@@ -37,6 +37,7 @@ Misc:
  - remove /adv{map,model}shading commands
  - remove Adv{Map,Unit}Shading config-settings
  - remove ForceDisableShaders config-setting
+ - remove Use{V,P}BO config-settings
  - mandate GLSL support
 
 

@@ -9,10 +9,6 @@
 #include "Rendering/GlobalRendering.h"
 #include "System/EventHandler.h"
 
-#ifndef glPrimitiveRestartIndex
-#define glPrimitiveRestartIndex glPrimitiveRestartIndexNV
-#endif
-
 #define USE_TRIANGLE_STRIPS 1
 #define USE_MIPMAP_BUFFERS  0
 #define USE_PACKED_BUFFERS  1

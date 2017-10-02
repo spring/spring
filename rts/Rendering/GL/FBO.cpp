@@ -22,15 +22,6 @@ GLint FBO::maxAttachments = 0;
 GLsizei FBO::maxSamples = -1;
 
 
-/**
- * Returns if the current gpu supports Framebuffer Objects
- */
-bool FBO::IsSupported()
-{
-	return (GLEW_EXT_framebuffer_object);
-}
-
-
 static GLint GetCurrentBoundFBO()
 {
 	GLint curFBO;
@@ -155,9 +146,6 @@ void FBO::DownloadAttachment(const GLenum attachment)
  */
 void FBO::GLContextLost()
 {
-	if (!IsSupported())
-		return;
-
 	GLint oldReadBuffer;
 
 	for (FBO* fbo: activeFBOs) {
@@ -185,9 +173,6 @@ void FBO::GLContextLost()
  */
 void FBO::GLContextReinit()
 {
-	if (!IsSupported())
-		return;
-
 	for (auto ti = fboTexData.begin(); ti != fboTexData.end(); ++ti) {
 		const FBO::TexData& tex = ti->second;
 
@@ -223,28 +208,12 @@ void FBO::GLContextReinit()
  */
 FBO::FBO() : fboId(0), reloadOnAltTab(false)
 {
-	if (!IsSupported())
-		return;
-
 	glGetIntegerv(GL_MAX_COLOR_ATTACHMENTS_EXT, &maxAttachments);
 
 	// set maxSamples once
 	if (maxSamples == -1) {
-		bool multisampleExtensionFound = false;
-
-	#ifdef GLEW_EXT_framebuffer_multisample
-		multisampleExtensionFound = multisampleExtensionFound || (GLEW_EXT_framebuffer_multisample && GLEW_EXT_framebuffer_blit);
-	#endif
-	#ifdef GLEW_ARB_framebuffer_object
-		multisampleExtensionFound = multisampleExtensionFound || GLEW_ARB_framebuffer_object;
-	#endif
-
-		if (multisampleExtensionFound) {
-			glGetIntegerv(GL_MAX_SAMPLES_EXT, &maxSamples);
-			maxSamples = std::max(0, maxSamples);
-		} else {
-			maxSamples = 0;
-		}
+		glGetIntegerv(GL_MAX_SAMPLES_EXT, &maxSamples);
+		maxSamples = std::max(0, maxSamples);
 	}
 
 	glGenFramebuffersEXT(1, &fboId);
@@ -264,9 +233,6 @@ FBO::FBO() : fboId(0), reloadOnAltTab(false)
  */
 FBO::~FBO()
 {
-	if (!IsSupported())
-		return;
-
 	glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, 0);
 	for (auto ri = rboIDs.begin(); ri != rboIDs.end(); ++ri) {
 		glDeleteRenderbuffersEXT(1, &(*ri));

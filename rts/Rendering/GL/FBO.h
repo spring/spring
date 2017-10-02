@@ -21,9 +21,9 @@ public:
 	/**
 	 * @brief IsSupported
 	 *
-	 * if FrameBuffers are supported by the current platform
+	 * if FrameBuffers are supported by the current platform (now checked on startup)
 	 */
-	static bool IsSupported();
+	static bool IsSupported() { return true; }
 
 	/**
 	 * @brief Constructor

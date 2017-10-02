@@ -207,21 +207,13 @@ void SS3OPiece::DrawForList() const
 			glDrawRangeElements(GL_TRIANGLES, 0, vertices.size() - 1, indices.size(), GL_UNSIGNED_INT, vboIndices.GetPtr());
 		} break;
 		case S3O_PRIMTYPE_TRIANGLE_STRIP: {
-			#ifdef GLEW_NV_primitive_restart
-			if (globalRendering->supportRestartPrimitive) {
-				// this is not compiled into display lists, but executed immediately
-				glPrimitiveRestartIndexNV(-1U);
-				glEnableClientState(GL_PRIMITIVE_RESTART_NV);
-			}
-			#endif
+			// this is not compiled into display lists, but executed immediately
+			glPrimitiveRestartIndex(-1U);
+			glEnableClientState(GL_PRIMITIVE_RESTART);
 
 			glDrawRangeElements(GL_TRIANGLE_STRIP, 0, vertices.size() - 1, indices.size(), GL_UNSIGNED_INT, vboIndices.GetPtr());
 
-			#ifdef GLEW_NV_primitive_restart
-			if (globalRendering->supportRestartPrimitive) {
-				glDisableClientState(GL_PRIMITIVE_RESTART_NV);
-			}
-			#endif
+			glDisableClientState(GL_PRIMITIVE_RESTART);
 		} break;
 		case S3O_PRIMTYPE_QUADS: {
 			glDrawRangeElements(GL_QUADS, 0, vertices.size() - 1, indices.size(), GL_UNSIGNED_INT, vboIndices.GetPtr());

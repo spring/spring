@@ -20,14 +20,11 @@ void VertexBuffer::Init(int bytesize)
 {
 	Free();
 
-	if (GLEW_ARB_vertex_buffer_object) {
-		data = NULL;
-		glGenBuffersARB(1, &id);
-	} else {
-		data = new char[bytesize];
-	}
+	data = nullptr;
+	glGenBuffersARB(1, &id);
+
 	size = bytesize;
-	totalBufferSize+=size;
+	totalBufferSize += size;
 }
 
 VertexBuffer::~VertexBuffer()
@@ -37,13 +34,10 @@ VertexBuffer::~VertexBuffer()
 
 void VertexBuffer::Free()
 {
-	if (id) {
-		glDeleteBuffersARB(1, &id);
-		id = 0;
-	} else {
-		delete [] data;
-	}
-	totalBufferSize-=size;
+	glDeleteBuffersARB(1, &id);
+	id = 0;
+
+	totalBufferSize -= size;
 }
 
 void* VertexBuffer::LockData()
@@ -55,9 +49,9 @@ void* VertexBuffer::LockData()
 		return glMapBufferARB(type, GL_WRITE_ONLY);*/
 		data = new char [size];
 		return data;
-	} else {
-		return data;
 	}
+
+	return data;
 }
 
 void VertexBuffer::UnlockData()

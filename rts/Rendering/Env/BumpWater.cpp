@@ -184,20 +184,15 @@ CBumpWater::CBumpWater()
 	dynWaves     = (configHandler->GetBool("BumpWaterDynamicWaves")) && (waterRendering->numTiles > 1);
 	useUniforms  = (configHandler->GetBool("BumpWaterUseUniforms"));
 
-	// CHECK HARDWARE
-	shoreWaves = shoreWaves && (GLEW_EXT_framebuffer_object);
-	dynWaves   = dynWaves && (GLEW_EXT_framebuffer_object && GLEW_ARB_imaging);
-
-
 	// LOAD TEXTURES
 	foamTexture   = LoadTexture(waterRendering->foamTexture);
 	normalTexture = LoadTexture(waterRendering->normalTexture , anisotropy , &normalTextureX, &normalTextureY);
 
 	//! caustic textures
-	const vector<string>& causticNames = waterRendering->causticTextures;
-	if (causticNames.empty()) {
+	const std::vector<string>& causticNames = waterRendering->causticTextures;
+	if (causticNames.empty())
 		throw content_error("[" LOG_SECTION_BUMP_WATER "] no caustic textures");
-	}
+
 	for (int i = 0; i < (int)causticNames.size(); ++i) {
 		caustTextures.push_back(LoadTexture(causticNames[i]));
 	}
@@ -291,7 +286,7 @@ CBumpWater::CBumpWater()
 	// CREATE TEXTURES
 	if ((refraction > 0) || depthCopy) {
 		//! ATIs do not have GLSL support for texrects
-		if (GLEW_ARB_texture_rectangle && !globalRendering->atiHacks) {
+		if (!globalRendering->atiHacks) {
 			target = GL_TEXTURE_RECTANGLE_ARB;
 		} else if (!globalRendering->supportNonPowerOfTwoTex) {
 			screenTextureX = next_power_of_2(screenTextureX);
@@ -305,13 +300,8 @@ CBumpWater::CBumpWater()
 		glBindTexture(target, refractTexture);
 		glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 		glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		if (GLEW_EXT_texture_edge_clamp) {
-			glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-			glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		} else {
-			glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP);
-			glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP);
-		}
+		glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		glTexImage2D(target, 0, GL_RGBA8, screenTextureX, screenTextureY, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 	}
 
@@ -321,13 +311,8 @@ CBumpWater::CBumpWater()
 		glBindTexture(GL_TEXTURE_2D, reflectTexture);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		if (GLEW_EXT_texture_edge_clamp) {
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		} else {
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-		}
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, reflTexSize, reflTexSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 	}
 
@@ -363,7 +348,7 @@ CBumpWater::CBumpWater()
 	}
 
 	// CREATE FBOs
-	if (GLEW_EXT_framebuffer_object) {
+	{
 		GLuint depthRBOFormat = GL_DEPTH_COMPONENT;
 		switch (depthBits) {
 			case 16: depthRBOFormat = GL_DEPTH_COMPONENT16; break;
@@ -551,29 +536,29 @@ CBumpWater::CBumpWater()
 	occlusionQueryResult = GL_TRUE;
 	wasVisibleLastFrame = true;
 
-#ifdef GLEW_ARB_occlusion_query2
-	if (GLEW_ARB_occlusion_query2 && configHandler->GetBool("BumpWaterOcclusionQuery")) {
-		GLint bitsSupported;
-		glGetQueryiv(GL_ANY_SAMPLES_PASSED, GL_QUERY_COUNTER_BITS, &bitsSupported);
-		if (bitsSupported > 0) {
-			glGenQueries(1, &occlusionQuery);
-		}
-	}
-#endif
+	if (!configHandler->GetBool("BumpWaterOcclusionQuery"))
+		return;
+
+	GLint bitsSupported;
+	glGetQueryiv(GL_ANY_SAMPLES_PASSED, GL_QUERY_COUNTER_BITS, &bitsSupported);
+
+	if (bitsSupported == 0)
+		return;
+
+	glGenQueries(1, &occlusionQuery);
 }
 
 
 CBumpWater::~CBumpWater()
 {
-	if (reflectTexture) {
+	if (reflectTexture != 0)
 		glDeleteTextures(1, &reflectTexture);
-	}
-	if (refractTexture) {
+
+	if (refractTexture != 0)
 		glDeleteTextures(1, &refractTexture);
-	}
-	if (depthCopy) {
+
+	if (depthCopy != 0)
 		glDeleteTextures(1, &depthTexture);
-	}
 
 	glDeleteTextures(1, &foamTexture);
 	glDeleteTextures(1, &normalTexture);
@@ -593,11 +578,8 @@ CBumpWater::~CBumpWater()
 		delete[] tileOffsets;
 	}
 
-#ifdef GLEW_ARB_occlusion_query2
-	if (occlusionQuery) {
+	if (occlusionQuery != 0)
 		glDeleteQueries(1, &occlusionQuery);
-	}
-#endif
 
 	shaderHandler->ReleaseProgramObjects("[BumpWater]");
 }
@@ -690,8 +672,8 @@ void CBumpWater::UpdateWater(CGame* game)
 	if (!waterRendering->forceRendering && !readMap->HasVisibleWater())
 		return;
 
-#ifdef GLEW_ARB_occlusion_query2
-	if (occlusionQuery && !wasVisibleLastFrame) {
+
+	if (occlusionQuery != 0 && !wasVisibleLastFrame) {
 		SCOPED_TIMER("Draw::World::Water::BumpWater");
 
 		glGetQueryObjectuiv(occlusionQuery, GL_QUERY_RESULT_AVAILABLE, &occlusionQueryResult);
@@ -700,14 +682,13 @@ void CBumpWater::UpdateWater(CGame* game)
 
 			wasVisibleLastFrame = !!occlusionQueryResult;
 
-			if (!occlusionQueryResult) {
+			if (!occlusionQueryResult)
 				return;
-			}
 		}
 
 		wasVisibleLastFrame = true;
 	}
-#endif
+
 
 	glPushAttrib(GL_FOG_BIT);
 	if (refraction > 1) DrawRefraction(game);
@@ -1053,12 +1034,10 @@ void CBumpWater::Draw()
 	if (!occlusionQueryResult || (!waterRendering->forceRendering && !readMap->HasVisibleWater()))
 		return;
 
-#ifdef GLEW_ARB_occlusion_query2
-	if (occlusionQuery) {
+	if (occlusionQuery != 0) {
 		glBeginConditionalRenderNV(occlusionQuery, GL_QUERY_BY_REGION_WAIT_NV);
 		glBeginQuery(GL_ANY_SAMPLES_PASSED, occlusionQuery);
 	}
-#endif
 
 	if (refraction == 1) {
 		//! _SCREENCOPY_ REFRACT TEXTURE
@@ -1127,12 +1106,11 @@ void CBumpWater::Draw()
 	if (refraction > 0)
 		glEnable(GL_BLEND);
 
-#ifdef GLEW_ARB_occlusion_query2
-	if (occlusionQuery) {
+
+	if (occlusionQuery != 0) {
 		glEndQuery(GL_ANY_SAMPLES_PASSED);
 		glEndConditionalRenderNV();
 	}
-#endif
 }
 
 
@@ -1203,7 +1181,6 @@ void CBumpWater::OcclusionQuery()
 	if (!occlusionQuery || (!waterRendering->forceRendering && !readMap->HasVisibleWater()))
 		return;
 
-#ifdef GLEW_ARB_occlusion_query2
 	glGetQueryObjectuiv(occlusionQuery, GL_QUERY_RESULT_AVAILABLE, &occlusionQueryResult);
 
 	if (occlusionQueryResult || !wasVisibleLastFrame) {
@@ -1229,5 +1206,4 @@ void CBumpWater::OcclusionQuery()
 		glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 		glDepthMask(GL_TRUE);
 	}
-#endif
 }

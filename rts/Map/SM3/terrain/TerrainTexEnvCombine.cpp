@@ -67,7 +67,6 @@ TexEnvStage::TexEnvStage()
 
 TexEnvSetupHandler::TexEnvSetupHandler()
 	: maxtu(0)
-	, hasDot3(!!GLEW_ARB_texture_env_dot3)
 	, lastShader(NULL)
 	, curSetup(NULL)
 {

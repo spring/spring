@@ -94,10 +94,8 @@ bool CIconHandler::AddIcon(const string& iconName, const string& textureName,
 			texID = bitmap.CreateMipMapTexture();
 			
 			glBindTexture(GL_TEXTURE_2D, texID);
-			const GLenum wrapMode = GLEW_EXT_texture_edge_clamp ?
-			                        GL_CLAMP_TO_EDGE : GL_CLAMP;
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapMode);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapMode);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 			xsize = bitmap.xsize;
 			ysize = bitmap.ysize;
 		} else {
@@ -189,11 +187,8 @@ unsigned int CIconHandler::GetDefaultTexture()
 	defTexID = bitmap.CreateTexture();
 
 	glBindTexture(GL_TEXTURE_2D, defTexID);
-
-	const GLenum wrapMode = GLEW_EXT_texture_edge_clamp ?
-													GL_CLAMP_TO_EDGE : GL_CLAMP;
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapMode);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapMode);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
 	return defTexID;
 }

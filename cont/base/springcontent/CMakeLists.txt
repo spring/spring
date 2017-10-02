@@ -37,7 +37,6 @@ set(FILES
 	shaders/ARB/waterDynNT.vp
 	shaders/ARB/waterDynWave.vp
 	shaders/ARB/waterDyn.fp
-	shaders/ARB/waterRefractT2D.fp
 	shaders/ARB/waterRefractTR.fp
 	shaders/ARB/dwAddSplash.fp
 	shaders/ARB/waterDyn.vp

@@ -166,11 +166,6 @@ namespace terrain {
 
 		if (cb) cb->PrintMsg("  parsing texture stages...");
 
-		if (!GLEW_ARB_multitexture)
-			throw std::runtime_error("No multitexture available");
-		if (!GLEW_ARB_texture_env_combine)
-			throw std::runtime_error("Texture env combine extension not available");
-
 		heightmapW = heightmap->w;
 		tdfParser = tdf;
 

@@ -33,18 +33,11 @@ HeightMapTexture::~HeightMapTexture()
 
 void HeightMapTexture::Init()
 {
-	if (readMap == NULL) {
+	if (readMap == nullptr)
 		return;
-	}
 
-	if (!configHandler->GetBool("HeightMapTexture")) {
+	if (!configHandler->GetBool("HeightMapTexture"))
 		return;
-	}
-
-	if (!GLEW_ARB_texture_float ||
-	    !GLEW_ARB_texture_non_power_of_two) {
-		return;
-	}
 
 	xSize = mapDims.mapxp1;
 	ySize = mapDims.mapyp1;

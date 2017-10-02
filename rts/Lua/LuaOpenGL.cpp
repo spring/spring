@@ -232,8 +232,7 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(ColorMask);
 	REGISTER_LUA_CFUNC(DepthMask);
 	REGISTER_LUA_CFUNC(DepthTest);
-	if (GLEW_NV_depth_clamp)
-		REGISTER_LUA_CFUNC(DepthClamp);
+	REGISTER_LUA_CFUNC(DepthClamp);
 
 	REGISTER_LUA_CFUNC(Culling);
 	REGISTER_LUA_CFUNC(LogicOp);
@@ -243,10 +242,8 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(Blending);
 	REGISTER_LUA_CFUNC(BlendEquation);
 	REGISTER_LUA_CFUNC(BlendFunc);
-	if (GLEW_EXT_blend_equation_separate)
-		REGISTER_LUA_CFUNC(BlendEquationSeparate);
-	if (GLEW_EXT_blend_func_separate)
-		REGISTER_LUA_CFUNC(BlendFuncSeparate);
+	REGISTER_LUA_CFUNC(BlendEquationSeparate);
+	REGISTER_LUA_CFUNC(BlendFuncSeparate);
 
 	REGISTER_LUA_CFUNC(Material);
 	REGISTER_LUA_CFUNC(Color);
@@ -258,11 +255,9 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(StencilMask);
 	REGISTER_LUA_CFUNC(StencilFunc);
 	REGISTER_LUA_CFUNC(StencilOp);
-	if (GLEW_EXT_stencil_two_side) {
-		REGISTER_LUA_CFUNC(StencilMaskSeparate);
-		REGISTER_LUA_CFUNC(StencilFuncSeparate);
-		REGISTER_LUA_CFUNC(StencilOpSeparate);
-	}
+	REGISTER_LUA_CFUNC(StencilMaskSeparate);
+	REGISTER_LUA_CFUNC(StencilFuncSeparate);
+	REGISTER_LUA_CFUNC(StencilOpSeparate);
 
 	REGISTER_LUA_CFUNC(LineWidth);
 	REGISTER_LUA_CFUNC(PointSize);
@@ -275,13 +270,12 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(DeleteTexture);
 	REGISTER_LUA_CFUNC(TextureInfo);
 	REGISTER_LUA_CFUNC(CopyToTexture);
-	if (GLEW_EXT_framebuffer_object) {
-		// FIXME: obsolete
-		REGISTER_LUA_CFUNC(DeleteTextureFBO);
-		REGISTER_LUA_CFUNC(RenderToTexture);
-	}
-	if (IS_GL_FUNCTION_AVAILABLE(glGenerateMipmapEXT))
-		REGISTER_LUA_CFUNC(GenerateMipmap);
+
+	// FIXME: obsolete
+	REGISTER_LUA_CFUNC(DeleteTextureFBO);
+	REGISTER_LUA_CFUNC(RenderToTexture);
+
+	REGISTER_LUA_CFUNC(GenerateMipmap);
 
 	REGISTER_LUA_CFUNC(ActiveTexture);
 	REGISTER_LUA_CFUNC(TexEnv);
@@ -365,12 +359,10 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(ReadPixels);
 	REGISTER_LUA_CFUNC(SaveImage);
 
-	if (GLEW_ARB_occlusion_query) {
-		REGISTER_LUA_CFUNC(CreateQuery);
-		REGISTER_LUA_CFUNC(DeleteQuery);
-		REGISTER_LUA_CFUNC(RunQuery);
-		REGISTER_LUA_CFUNC(GetQuery);
-	}
+	REGISTER_LUA_CFUNC(CreateQuery);
+	REGISTER_LUA_CFUNC(DeleteQuery);
+	REGISTER_LUA_CFUNC(RunQuery);
+	REGISTER_LUA_CFUNC(GetQuery);
 
 	REGISTER_LUA_CFUNC(GetGlobalTexNames);
 	REGISTER_LUA_CFUNC(GetGlobalTexCoords);
@@ -384,15 +376,11 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	if (canUseShaders)
 		LuaShaders::PushEntries(L);
 
-	if (GLEW_EXT_framebuffer_object) {
-	 	LuaFBOs::PushEntries(L);
-	 	LuaRBOs::PushEntries(L);
-	}
+ 	LuaFBOs::PushEntries(L);
+ 	LuaRBOs::PushEntries(L);
+	// TODO LuaVBOs::PushEntries(L);
 
 	LuaFonts::PushEntries(L);
-
-//FIXME		LuaVBOs::PushEntries(L);
-
 	return true;
 }
 
@@ -405,14 +393,12 @@ void LuaOpenGL::ResetGLState()
 	glDisable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LEQUAL);
 	glDepthMask(GL_FALSE);
-	if (GLEW_NV_depth_clamp)
-		glDisable(GL_DEPTH_CLAMP_NV);
+	glDisable(GL_DEPTH_CLAMP);
 
 	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
 	glEnable(GL_BLEND);
-	if (IS_GL_FUNCTION_AVAILABLE(glBlendEquation))
-		glBlendEquation(GL_FUNC_ADD);
+	glBlendEquation(GL_FUNC_ADD);
 
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -437,8 +423,7 @@ void LuaOpenGL::ResetGLState()
 
 	glDisable(GL_STENCIL_TEST);
 	glStencilMask(~0);
-	if (GLEW_EXT_stencil_two_side)
-		glDisable(GL_STENCIL_TEST_TWO_SIDE_EXT);
+	glDisable(GL_STENCIL_TEST_TWO_SIDE_EXT);
 
 	// FIXME -- multitexturing
 	glDisable(GL_TEXTURE_2D);
@@ -479,9 +464,7 @@ void LuaOpenGL::ResetGLState()
 	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, black);
 	glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 0.0f);
 
-	if (IS_GL_FUNCTION_AVAILABLE(glUseProgram)) {
-		glUseProgram(0);
-	}
+	glUseProgram(0);
 }
 
 
@@ -522,12 +505,11 @@ void LuaOpenGL::DisableCommon(DrawMode mode)
 	// FIXME  --  not needed by shadow or minimap
 	glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SINGLE_COLOR);
 	drawMode = DRAW_NONE;
-	if (safeMode) {
+	if (safeMode)
 		glPopAttrib();
-	}
-	if (IS_GL_FUNCTION_AVAILABLE(glUseProgram)) {
-		glUseProgram(0);
-	}
+
+	glUseProgram(0);
+
 }
 
 
@@ -547,9 +529,9 @@ void LuaOpenGL::EnableDrawGenesis()
 
 void LuaOpenGL::DisableDrawGenesis()
 {
-	if (safeMode) {
+	if (safeMode)
 		ResetGenesisMatrices();
-	}
+
 	RevertWorldLighting();
 	DisableCommon(DRAW_GENESIS);
 }
@@ -1081,7 +1063,7 @@ int LuaOpenGL::GetString(lua_State* L)
 
 int LuaOpenGL::ConfigScreen(lua_State* L)
 {
-//	CheckDrawingEnabled(L, __FUNCTION__);
+//	CheckDrawingEnabled(L, __func__);
 	screenWidth = luaL_checkfloat(L, 1);
 	screenDistance = luaL_checkfloat(L, 2);
 	return 0;
@@ -1158,7 +1140,7 @@ int LuaOpenGL::DrawMiniMap(lua_State* L)
 
 int LuaOpenGL::BeginText(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 	font->Begin();
 	return 0;
 }
@@ -1166,7 +1148,7 @@ int LuaOpenGL::BeginText(lua_State* L)
 
 int LuaOpenGL::EndText(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 	font->End();
 	return 0;
 }
@@ -1174,7 +1156,7 @@ int LuaOpenGL::EndText(lua_State* L)
 
 int LuaOpenGL::Text(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 
 	const int args = lua_gettop(L); // number of arguments
 
@@ -1354,9 +1336,9 @@ static void GLObjectShapeTextures(lua_State* L, const SolidObjectDef* def)
 
 int LuaOpenGL::UnitCommon(lua_State* L, bool applyTransform, bool callDrawUnit)
 {
-	LuaOpenGL::CheckDrawingEnabled(L, __FUNCTION__);
+	LuaOpenGL::CheckDrawingEnabled(L, __func__);
 
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	CUnit* unit = ParseUnit(L, __func__, 1);
 
 	if (unit == nullptr)
 		return 0;
@@ -1406,21 +1388,21 @@ int LuaOpenGL::UnitRaw(lua_State* L) { return (UnitCommon(L, false, false)); }
 
 int LuaOpenGL::UnitTextures(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 	GLObjectTextures(L, unitHandler->GetUnit(luaL_checkint(L, 1)));
 	return 0;
 }
 
 int LuaOpenGL::UnitShape(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 	GLObjectShape(L, unitDefHandler->GetUnitDefByID(luaL_checkint(L, 1)));
 	return 0;
 }
 
 int LuaOpenGL::UnitShapeTextures(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 	GLObjectShapeTextures(L, unitDefHandler->GetUnitDefByID(luaL_checkint(L, 1)));
 	return 0;
 }
@@ -1428,9 +1410,9 @@ int LuaOpenGL::UnitShapeTextures(lua_State* L)
 
 int LuaOpenGL::UnitMultMatrix(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 
-	const CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	const CUnit* unit = ParseUnit(L, __func__, 1);
 
 	if (unit == nullptr)
 		return 0;
@@ -1441,15 +1423,15 @@ int LuaOpenGL::UnitMultMatrix(lua_State* L)
 
 int LuaOpenGL::UnitPiece(lua_State* L)
 {
-	GLObjectPiece(L, ParseUnit(L, __FUNCTION__, 1));
+	GLObjectPiece(L, ParseUnit(L, __func__, 1));
 	return 0;
 }
 
 int LuaOpenGL::UnitPieceMatrix(lua_State* L) { return (UnitPieceMultMatrix(L)); }
 int LuaOpenGL::UnitPieceMultMatrix(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
-	GLObjectPieceMultMatrix(L, ParseUnit(L, __FUNCTION__, 1));
+	CheckDrawingEnabled(L, __func__);
+	GLObjectPieceMultMatrix(L, ParseUnit(L, __func__, 1));
 	return 0;
 }
 
@@ -1458,9 +1440,9 @@ int LuaOpenGL::UnitPieceMultMatrix(lua_State* L)
 
 int LuaOpenGL::FeatureCommon(lua_State* L, bool applyTransform, bool callDrawFeature)
 {
-	LuaOpenGL::CheckDrawingEnabled(L, __FUNCTION__);
+	LuaOpenGL::CheckDrawingEnabled(L, __func__);
 
-	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
+	CFeature* feature = ParseFeature(L, __func__, 1);
 
 	if (feature == nullptr)
 		return 0;
@@ -1510,21 +1492,21 @@ int LuaOpenGL::FeatureRaw(lua_State* L) { return (FeatureCommon(L, false, false)
 
 int LuaOpenGL::FeatureTextures(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 	GLObjectTextures(L, featureHandler->GetFeature(luaL_checkint(L, 1)));
 	return 0;
 }
 
 int LuaOpenGL::FeatureShape(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 	GLObjectShape(L, featureDefHandler->GetFeatureDefByID(luaL_checkint(L, 1)));
 	return 0;
 }
 
 int LuaOpenGL::FeatureShapeTextures(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 	GLObjectShapeTextures(L, featureDefHandler->GetFeatureDefByID(luaL_checkint(L, 1)));
 	return 0;
 }
@@ -1532,9 +1514,9 @@ int LuaOpenGL::FeatureShapeTextures(lua_State* L)
 
 int LuaOpenGL::FeatureMultMatrix(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 
-	const CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
+	const CFeature* feature = ParseFeature(L, __func__, 1);
 
 	if (feature == nullptr)
 		return 0;
@@ -1545,7 +1527,7 @@ int LuaOpenGL::FeatureMultMatrix(lua_State* L)
 
 int LuaOpenGL::FeaturePiece(lua_State* L)
 {
-	GLObjectPiece(L, ParseFeature(L, __FUNCTION__, 1));
+	GLObjectPiece(L, ParseFeature(L, __func__, 1));
 	return 0;
 }
 
@@ -1553,8 +1535,8 @@ int LuaOpenGL::FeaturePiece(lua_State* L)
 int LuaOpenGL::FeaturePieceMatrix(lua_State* L) { return (FeaturePieceMultMatrix(L)); }
 int LuaOpenGL::FeaturePieceMultMatrix(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
-	GLObjectPieceMultMatrix(L, ParseFeature(L, __FUNCTION__, 1));
+	CheckDrawingEnabled(L, __func__);
+	GLObjectPieceMultMatrix(L, ParseFeature(L, __func__, 1));
 	return 0;
 }
 
@@ -1564,10 +1546,10 @@ int LuaOpenGL::FeaturePieceMultMatrix(lua_State* L)
 
 int LuaOpenGL::DrawListAtUnit(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 
 	// is visible to current read team, is not an icon
-	const CUnit* unit = ParseDrawUnit(L, __FUNCTION__, 1);
+	const CUnit* unit = ParseDrawUnit(L, __func__, 1);
 
 	if (unit == NULL)
 		return 0;
@@ -1607,10 +1589,10 @@ int LuaOpenGL::DrawListAtUnit(lua_State* L)
 
 int LuaOpenGL::DrawFuncAtUnit(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 
 	// is visible to current read team, is not an icon
-	const CUnit* unit = ParseDrawUnit(L, __FUNCTION__, 1);
+	const CUnit* unit = ParseDrawUnit(L, __func__, 1);
 
 	if (unit == NULL)
 		return 0;
@@ -1644,7 +1626,7 @@ int LuaOpenGL::DrawFuncAtUnit(lua_State* L)
 
 int LuaOpenGL::DrawGroundCircle(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 	const int args = lua_gettop(L); // number of arguments
 	const float3 pos(luaL_checkfloat(L, 1),
 	                 luaL_checkfloat(L, 2),
@@ -1665,7 +1647,7 @@ int LuaOpenGL::DrawGroundCircle(lua_State* L)
 int LuaOpenGL::DrawGroundQuad(lua_State* L)
 {
 	// FIXME: incomplete (esp. texcoord clamping)
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 	const float x0 = luaL_checknumber(L, 1);
 	const float z0 = luaL_checknumber(L, 2);
 	const float x1 = luaL_checknumber(L, 3);
@@ -1842,7 +1824,7 @@ static bool ParseVertexData(lua_State* L, VertexData& vd)
 
 int LuaOpenGL::Shape(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 
 	if (!lua_istable(L, 2)) {
 		luaL_error(L, "Incorrect arguments to gl.Shape(type, elements[])");
@@ -1882,7 +1864,7 @@ int LuaOpenGL::Shape(lua_State* L)
 
 int LuaOpenGL::BeginEnd(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 
 	const int args = lua_gettop(L); // number of arguments
 	if ((args < 2) || !lua_isfunction(L, 2)) {
@@ -1912,7 +1894,7 @@ int LuaOpenGL::BeginEnd(lua_State* L)
 
 int LuaOpenGL::Vertex(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 
 	const int args = lua_gettop(L); // number of arguments
 
@@ -1974,7 +1956,7 @@ int LuaOpenGL::Vertex(lua_State* L)
 
 int LuaOpenGL::Normal(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 
 	const int args = lua_gettop(L); // number of arguments
 
@@ -2011,7 +1993,7 @@ int LuaOpenGL::Normal(lua_State* L)
 
 int LuaOpenGL::TexCoord(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 
 	const int args = lua_gettop(L); // number of arguments
 
@@ -2078,7 +2060,7 @@ int LuaOpenGL::TexCoord(lua_State* L)
 
 int LuaOpenGL::MultiTexCoord(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 
 	const int texNum = luaL_checkint(L, 1);
 	if ((texNum < 0) || (texNum >= MAX_TEXTURE_UNITS)) {
@@ -2151,7 +2133,7 @@ int LuaOpenGL::MultiTexCoord(lua_State* L)
 
 int LuaOpenGL::SecondaryColor(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 
 	const int args = lua_gettop(L); // number of arguments
 
@@ -2188,7 +2170,7 @@ int LuaOpenGL::SecondaryColor(lua_State* L)
 
 int LuaOpenGL::FogCoord(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 
 	const float value = luaL_checkfloat(L, 1);
 	glFogCoordf(value);
@@ -2198,7 +2180,7 @@ int LuaOpenGL::FogCoord(lua_State* L)
 
 int LuaOpenGL::EdgeFlag(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 
 	if (lua_isboolean(L, 1)) {
 		glEdgeFlag(lua_toboolean(L, 1));
@@ -2211,7 +2193,7 @@ int LuaOpenGL::EdgeFlag(lua_State* L)
 
 int LuaOpenGL::Rect(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 	const float x1 = luaL_checkfloat(L, 1);
 	const float y1 = luaL_checkfloat(L, 2);
 	const float x2 = luaL_checkfloat(L, 3);
@@ -2223,7 +2205,7 @@ int LuaOpenGL::Rect(lua_State* L)
 
 int LuaOpenGL::TexRect(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 
 	const int args = lua_gettop(L); // number of arguments
 
@@ -2280,7 +2262,7 @@ int LuaOpenGL::TexRect(lua_State* L)
 
 int LuaOpenGL::Color(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 
 	const int args = lua_gettop(L); // number of arguments
 	if (args < 1) {
@@ -2319,7 +2301,7 @@ int LuaOpenGL::Color(lua_State* L)
 
 int LuaOpenGL::Material(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 
 	const int args = lua_gettop(L); // number of arguments
 	if ((args != 1) || !lua_istable(L, 1)) {
@@ -2387,7 +2369,7 @@ int LuaOpenGL::Material(lua_State* L)
 
 int LuaOpenGL::ResetState(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 	glCallList(resetStateList);
 	return 0;
 }
@@ -2395,7 +2377,7 @@ int LuaOpenGL::ResetState(lua_State* L)
 
 int LuaOpenGL::ResetMatrices(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 
 	const int args = lua_gettop(L); // number of arguments
 	if (args != 0) {
@@ -2410,7 +2392,7 @@ int LuaOpenGL::ResetMatrices(lua_State* L)
 
 int LuaOpenGL::Lighting(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 	if (luaL_checkboolean(L, 1)) {
 		glEnable(GL_LIGHTING);
 	} else {
@@ -2422,7 +2404,7 @@ int LuaOpenGL::Lighting(lua_State* L)
 
 int LuaOpenGL::ShadeModel(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 	glShadeModel((GLenum)luaL_checkint(L, 1));
 	return 0;
 }
@@ -2430,7 +2412,7 @@ int LuaOpenGL::ShadeModel(lua_State* L)
 
 int LuaOpenGL::Scissor(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 
 	const int args = lua_gettop(L); // number of arguments
 	if (args == 1) {
@@ -2460,7 +2442,7 @@ int LuaOpenGL::Scissor(lua_State* L)
 
 int LuaOpenGL::Viewport(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 
 	const int x = luaL_checkint(L, 1);
 	const int y = luaL_checkint(L, 2);
@@ -2476,7 +2458,7 @@ int LuaOpenGL::Viewport(lua_State* L)
 
 int LuaOpenGL::ColorMask(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 
 	const int args = lua_gettop(L); // number of arguments
 	if (args == 1) {
@@ -2499,7 +2481,7 @@ int LuaOpenGL::ColorMask(lua_State* L)
 
 int LuaOpenGL::DepthMask(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 	if (luaL_checkboolean(L, 1)) {
 		glDepthMask(GL_TRUE);
 	} else {
@@ -2511,7 +2493,7 @@ int LuaOpenGL::DepthMask(lua_State* L)
 
 int LuaOpenGL::DepthTest(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 
 	const int args = lua_gettop(L); // number of arguments
 	if (args != 1) {
@@ -2538,12 +2520,12 @@ int LuaOpenGL::DepthTest(lua_State* L)
 
 int LuaOpenGL::DepthClamp(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 	luaL_checktype(L, 1, LUA_TBOOLEAN);
 	if (lua_toboolean(L, 1)) {
-		glEnable(GL_DEPTH_CLAMP_NV);
+		glEnable(GL_DEPTH_CLAMP);
 	} else {
-		glDisable(GL_DEPTH_CLAMP_NV);
+		glDisable(GL_DEPTH_CLAMP);
 	}
 	return 0;
 }
@@ -2551,7 +2533,7 @@ int LuaOpenGL::DepthClamp(lua_State* L)
 
 int LuaOpenGL::Culling(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 
 	const int args = lua_gettop(L); // number of arguments
 	if (args != 1) {
@@ -2578,7 +2560,7 @@ int LuaOpenGL::Culling(lua_State* L)
 
 int LuaOpenGL::LogicOp(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 
 	const int args = lua_gettop(L); // number of arguments
 	if (args != 1) {
@@ -2605,7 +2587,7 @@ int LuaOpenGL::LogicOp(lua_State* L)
 
 int LuaOpenGL::Fog(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 
 	if (luaL_checkboolean(L, 1)) {
 		glEnable(GL_FOG);
@@ -2618,7 +2600,7 @@ int LuaOpenGL::Fog(lua_State* L)
 
 int LuaOpenGL::Blending(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 
 	const int args = lua_gettop(L); // number of arguments
 	if (args == 1) {
@@ -2676,7 +2658,7 @@ int LuaOpenGL::Blending(lua_State* L)
 
 int LuaOpenGL::BlendEquation(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 	const GLenum mode = (GLenum)luaL_checkint(L, 1);
 	glBlendEquation(mode);
 	return 0;
@@ -2685,7 +2667,7 @@ int LuaOpenGL::BlendEquation(lua_State* L)
 
 int LuaOpenGL::BlendFunc(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 	const GLenum src = (GLenum)luaL_checkint(L, 1);
 	const GLenum dst = (GLenum)luaL_checkint(L, 2);
 	glBlendFunc(src, dst);
@@ -2695,7 +2677,7 @@ int LuaOpenGL::BlendFunc(lua_State* L)
 
 int LuaOpenGL::BlendEquationSeparate(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 	const GLenum modeRGB   = (GLenum)luaL_checkint(L, 1);
 	const GLenum modeAlpha = (GLenum)luaL_checkint(L, 2);
 	glBlendEquationSeparate(modeRGB, modeAlpha);
@@ -2705,7 +2687,7 @@ int LuaOpenGL::BlendEquationSeparate(lua_State* L)
 
 int LuaOpenGL::BlendFuncSeparate(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 	const GLenum srcRGB   = (GLenum)luaL_checkint(L, 1);
 	const GLenum dstRGB   = (GLenum)luaL_checkint(L, 2);
 	const GLenum srcAlpha = (GLenum)luaL_checkint(L, 3);
@@ -2718,7 +2700,7 @@ int LuaOpenGL::BlendFuncSeparate(lua_State* L)
 
 int LuaOpenGL::AlphaTest(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 
 	const int args = lua_gettop(L); // number of arguments
 	if (args == 1) {
@@ -2741,7 +2723,7 @@ int LuaOpenGL::AlphaTest(lua_State* L)
 
 int LuaOpenGL::PolygonMode(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 	const GLenum face = (GLenum)luaL_checkint(L, 1);
 	const GLenum mode = (GLenum)luaL_checkint(L, 2);
 	glPolygonMode(face, mode);
@@ -2751,7 +2733,7 @@ int LuaOpenGL::PolygonMode(lua_State* L)
 
 int LuaOpenGL::PolygonOffset(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 
 	const int args = lua_gettop(L); // number of arguments
 	if (args == 1) {
@@ -2782,7 +2764,7 @@ int LuaOpenGL::PolygonOffset(lua_State* L)
 
 int LuaOpenGL::StencilTest(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 	luaL_checktype(L, 1, LUA_TBOOLEAN);
 	if (lua_toboolean(L, 1)) {
 		glEnable(GL_STENCIL_TEST);
@@ -2795,7 +2777,7 @@ int LuaOpenGL::StencilTest(lua_State* L)
 
 int LuaOpenGL::StencilMask(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 	const GLuint mask = luaL_checkint(L, 1);
 	glStencilMask(mask);
 	return 0;
@@ -2804,7 +2786,7 @@ int LuaOpenGL::StencilMask(lua_State* L)
 
 int LuaOpenGL::StencilFunc(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 	const GLenum func = luaL_checkint(L, 1);
 	const GLint  ref  = luaL_checkint(L, 2);
 	const GLuint mask = luaL_checkint(L, 3);
@@ -2815,7 +2797,7 @@ int LuaOpenGL::StencilFunc(lua_State* L)
 
 int LuaOpenGL::StencilOp(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 	const GLenum fail  = luaL_checkint(L, 1);
 	const GLenum zfail = luaL_checkint(L, 2);
 	const GLenum zpass = luaL_checkint(L, 3);
@@ -2826,7 +2808,7 @@ int LuaOpenGL::StencilOp(lua_State* L)
 
 int LuaOpenGL::StencilMaskSeparate(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 	const GLenum face = luaL_checkint(L, 1);
 	const GLuint mask = luaL_checkint(L, 2);
 	glStencilMaskSeparate(face, mask);
@@ -2836,7 +2818,7 @@ int LuaOpenGL::StencilMaskSeparate(lua_State* L)
 
 int LuaOpenGL::StencilFuncSeparate(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 	const GLenum face = luaL_checkint(L, 1);
 	const GLenum func = luaL_checkint(L, 2);
 	const GLint  ref  = luaL_checkint(L, 3);
@@ -2848,7 +2830,7 @@ int LuaOpenGL::StencilFuncSeparate(lua_State* L)
 
 int LuaOpenGL::StencilOpSeparate(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 	const GLenum face  = luaL_checkint(L, 1);
 	const GLenum fail  = luaL_checkint(L, 2);
 	const GLenum zfail = luaL_checkint(L, 3);
@@ -2862,7 +2844,7 @@ int LuaOpenGL::StencilOpSeparate(lua_State* L)
 
 int LuaOpenGL::LineStipple(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 
 	const int args = lua_gettop(L); // number of arguments
 
@@ -2994,7 +2976,7 @@ int LuaOpenGL::Texture(lua_State* L)
 	// ...          --  named textures
 	//
 
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 
 	if (lua_gettop(L) < 1)
 		luaL_error(L, "Incorrect [number of] arguments to gl.Texture()");
@@ -3157,7 +3139,7 @@ int LuaOpenGL::TextureInfo(lua_State* L)
 
 int LuaOpenGL::CopyToTexture(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 
 	const std::string& texture = luaL_checkstring(L, 1);
 
@@ -3193,7 +3175,7 @@ int LuaOpenGL::CopyToTexture(lua_State* L)
 // FIXME: obsolete
 int LuaOpenGL::RenderToTexture(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 
 	const std::string& texture = luaL_checkstring(L, 1);
 
@@ -3241,7 +3223,7 @@ int LuaOpenGL::RenderToTexture(lua_State* L)
 
 int LuaOpenGL::GenerateMipmap(lua_State* L)
 {
-	//CheckDrawingEnabled(L, __FUNCTION__);
+	//CheckDrawingEnabled(L, __func__);
 	const std::string& texStr = luaL_checkstring(L, 1);
 
 	if (texStr[0] != LuaTextures::prefix) // '!'
@@ -3264,7 +3246,7 @@ int LuaOpenGL::GenerateMipmap(lua_State* L)
 
 int LuaOpenGL::ActiveTexture(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 
 	const int args = lua_gettop(L); // number of arguments
 	if ((args < 2) || !lua_isnumber(L, 1) || !lua_isfunction(L, 2)) {
@@ -3292,7 +3274,7 @@ int LuaOpenGL::ActiveTexture(lua_State* L)
 
 int LuaOpenGL::TexEnv(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 
 	const GLenum target = (GLenum)luaL_checknumber(L, 1);
 	const GLenum pname  = (GLenum)luaL_checknumber(L, 2);
@@ -3320,7 +3302,7 @@ int LuaOpenGL::TexEnv(lua_State* L)
 
 int LuaOpenGL::MultiTexEnv(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 	const int texNum    =    luaL_checkint(L, 1);
 	const GLenum target = (GLenum)luaL_checknumber(L, 2);
 	const GLenum pname  = (GLenum)luaL_checknumber(L, 3);
@@ -3369,7 +3351,7 @@ static void SetTexGenState(GLenum target, bool state)
 
 int LuaOpenGL::TexGen(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 
 	const GLenum target = (GLenum)luaL_checknumber(L, 1);
 
@@ -3406,7 +3388,7 @@ int LuaOpenGL::TexGen(lua_State* L)
 
 int LuaOpenGL::MultiTexGen(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 
 	const int texNum = luaL_checkint(L, 1);
 	if ((texNum < 0) || (texNum >= MAX_TEXTURE_UNITS)) {
@@ -3509,7 +3491,7 @@ int LuaOpenGL::SwapBuffers(lua_State* L)
 
 int LuaOpenGL::Translate(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 	const float x = luaL_checkfloat(L, 1);
 	const float y = luaL_checkfloat(L, 2);
 	const float z = luaL_checkfloat(L, 3);
@@ -3520,7 +3502,7 @@ int LuaOpenGL::Translate(lua_State* L)
 
 int LuaOpenGL::Scale(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 	const float x = luaL_checkfloat(L, 1);
 	const float y = luaL_checkfloat(L, 2);
 	const float z = luaL_checkfloat(L, 3);
@@ -3531,7 +3513,7 @@ int LuaOpenGL::Scale(lua_State* L)
 
 int LuaOpenGL::Rotate(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 	const float r = luaL_checkfloat(L, 1);
 	const float x = luaL_checkfloat(L, 2);
 	const float y = luaL_checkfloat(L, 3);
@@ -3543,7 +3525,7 @@ int LuaOpenGL::Rotate(lua_State* L)
 
 int LuaOpenGL::Ortho(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 	const float left   = luaL_checknumber(L, 1);
 	const float right  = luaL_checknumber(L, 2);
 	const float bottom = luaL_checknumber(L, 3);
@@ -3557,7 +3539,7 @@ int LuaOpenGL::Ortho(lua_State* L)
 
 int LuaOpenGL::Frustum(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 	const float left   = luaL_checknumber(L, 1);
 	const float right  = luaL_checknumber(L, 2);
 	const float bottom = luaL_checknumber(L, 3);
@@ -3571,7 +3553,7 @@ int LuaOpenGL::Frustum(lua_State* L)
 
 int LuaOpenGL::Billboard(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 	glMultMatrixf(camera->GetBillBoardMatrix());
 	return 0;
 }
@@ -3581,7 +3563,7 @@ int LuaOpenGL::Billboard(lua_State* L)
 
 int LuaOpenGL::Light(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 
 	const GLenum light = GL_LIGHT0 + (GLint)luaL_checknumber(L, 1);
 	if ((light < GL_LIGHT0) || (light > GL_LIGHT7)) {
@@ -3630,7 +3612,7 @@ int LuaOpenGL::Light(lua_State* L)
 
 int LuaOpenGL::ClipPlane(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 
 	const int plane = luaL_checkint(L, 1);
 	if ((plane < 1) || (plane > 2)) {
@@ -3661,7 +3643,7 @@ int LuaOpenGL::ClipPlane(lua_State* L)
 
 int LuaOpenGL::MatrixMode(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 	GLenum mode = (GLenum)luaL_checkint(L, 1);
 	if (!GetLuaContextData(L)->glMatrixTracker.SetMatrixMode(mode))
 		luaL_error(L, "Incorrect value to gl.MatrixMode");
@@ -3672,7 +3654,7 @@ int LuaOpenGL::MatrixMode(lua_State* L)
 
 int LuaOpenGL::LoadIdentity(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 
 	const int args = lua_gettop(L); // number of arguments
 	if (args != 0) {
@@ -3685,7 +3667,7 @@ int LuaOpenGL::LoadIdentity(lua_State* L)
 
 int LuaOpenGL::LoadMatrix(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 
 	const int luaType = lua_type(L, 1);
 	if (luaType == LUA_TSTRING) {
@@ -3716,7 +3698,7 @@ int LuaOpenGL::LoadMatrix(lua_State* L)
 
 int LuaOpenGL::MultMatrix(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 
 	const int luaType = lua_type(L, 1);
 	if (luaType == LUA_TSTRING) {
@@ -3747,7 +3729,7 @@ int LuaOpenGL::MultMatrix(lua_State* L)
 
 int LuaOpenGL::PushMatrix(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 
 	const int args = lua_gettop(L); // number of arguments
 	if (args != 0) {
@@ -3764,7 +3746,7 @@ int LuaOpenGL::PushMatrix(lua_State* L)
 
 int LuaOpenGL::PopMatrix(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 
 	const int args = lua_gettop(L); // number of arguments
 	if (args != 0) {
@@ -3781,7 +3763,7 @@ int LuaOpenGL::PopMatrix(lua_State* L)
 
 int LuaOpenGL::PushPopMatrix(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 
 	std::vector<GLenum> matModes;
 	int arg;
@@ -3888,7 +3870,7 @@ int LuaOpenGL::GetMatrixData(lua_State* L)
 
 int LuaOpenGL::PushAttrib(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 	int mask = luaL_optnumber(L, 1, GL_ALL_ATTRIB_BITS);
 	if (mask < 0) {
 		mask = -mask;
@@ -3901,7 +3883,7 @@ int LuaOpenGL::PushAttrib(lua_State* L)
 
 int LuaOpenGL::PopAttrib(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 	glPopAttrib();
 	return 0;
 }
@@ -3909,7 +3891,7 @@ int LuaOpenGL::PopAttrib(lua_State* L)
 
 int LuaOpenGL::UnsafeState(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 	const GLenum state = (GLenum)luaL_checkint(L, 1);
 	int funcLoc = 2;
 	bool reverse = false;
@@ -3984,7 +3966,7 @@ int LuaOpenGL::CreateList(lua_State* L)
 
 int LuaOpenGL::CallList(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 	const unsigned int listIndex = luaL_checkint(L, 1);
 	const CLuaDisplayLists& displayLists = CLuaHandle::GetActiveDisplayLists(L);
 	const unsigned int dlist = displayLists.GetDList(listIndex);
@@ -4021,7 +4003,7 @@ int LuaOpenGL::DeleteList(lua_State* L)
 
 int LuaOpenGL::Flush(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 	glFlush();
 	return 0;
 }
@@ -4029,7 +4011,7 @@ int LuaOpenGL::Flush(lua_State* L)
 
 int LuaOpenGL::Finish(lua_State* L)
 {
-	CheckDrawingEnabled(L, __FUNCTION__);
+	CheckDrawingEnabled(L, __func__);
 	glFinish();
 	return 0;
 }

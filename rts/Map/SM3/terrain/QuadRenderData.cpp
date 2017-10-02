@@ -205,13 +205,8 @@ namespace terrain {
 		const int scale = 1 << (level - q->depth);
 		size_t w = QUAD_W * scale + 1;
 		const size_t h = w;
+		const size_t texw = w;
 		const int startx = q->hmPos.x * scale;
-
-		// use power-of-two texture sizes if required
-		size_t texw = 1;
-		//if (GLEW_ARB_texture_non_power_of_two) texw = w;
-		//else
-		while (texw < w) texw *= 2;
 
 		// if not yet created, create a texture for it
 		GLuint texture;

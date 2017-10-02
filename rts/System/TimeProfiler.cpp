@@ -74,7 +74,7 @@ BasicTimer::BasicTimer(const char* timerName)
 	const auto iter = hashToName.find(nameHash);
 
 	if (iter == hashToName.end()) {
-		hashToName.insert(std::pair<int, std::string>(nameHash, timerName)).first;
+		hashToName.insert(std::pair<int, std::string>(nameHash, timerName));
 	} else {
 #ifdef DEBUG
 		if (iter->second != timerName) {

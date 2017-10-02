@@ -167,7 +167,9 @@ DO_ONCE(CreateBindingTypeMap)
 
 static void CopyShaderState_Uniforms(GLuint newProgID, GLuint oldProgID, spring::unordered_map<std::size_t, Shader::UniformState, fast_hash>* uniformStates)
 {
-	GLsizei numUniforms, maxUniformNameLength = 0;
+	GLsizei numUniforms = 0;
+	GLsizei maxUniformNameLength = 0;
+
 	glGetProgramiv(newProgID, GL_ACTIVE_UNIFORMS, &numUniforms);
 	glGetProgramiv(newProgID, GL_ACTIVE_UNIFORM_MAX_LENGTH, &maxUniformNameLength);
 
@@ -177,6 +179,7 @@ static void CopyShaderState_Uniforms(GLuint newProgID, GLuint oldProgID, spring:
 	glUseProgram(newProgID);
 
 	std::string name(maxUniformNameLength, 0);
+
 	for (int i = 0; i < numUniforms; ++i) {
 		GLsizei nameLength = 0;
 		GLint size = 0;
@@ -195,14 +198,17 @@ static void CopyShaderState_Uniforms(GLuint newProgID, GLuint oldProgID, spring:
 
 		// Try to find old data for the uniform either in the old shader itself or in our own state tracker
 		const size_t hash = hashString(&name[0]);
-		auto it = uniformStates->find(hash);
-		Shader::UniformState* oldUniformState = NULL;
+		const auto it = uniformStates->find(hash);
+
+		Shader::UniformState* oldUniformState = nullptr;
+
 		if (it != uniformStates->end()) {
 			oldUniformState = &it->second;
 		} else {
 			// Uniform not found in state tracker, try to read it from old shader object
 			oldUniformState = &(uniformStates->emplace(hash, name).first->second);
 		}
+
 		oldUniformState->SetLocation(newLoc);
 
 		// Check if we got data we can use to initialize the uniform
@@ -211,6 +217,7 @@ static void CopyShaderState_Uniforms(GLuint newProgID, GLuint oldProgID, spring:
 				oldLoc = -1;
 				continue;
 			}
+
 			oldLoc = glGetUniformLocation(oldProgID, &name[0]);
 
 			// No old data found, so we cannot initialize the uniform
@@ -222,25 +229,30 @@ static void CopyShaderState_Uniforms(GLuint newProgID, GLuint oldProgID, spring:
 
 		// Initialize the uniform with previous data
 		switch (bindingType[type]) {
-			#define HANDLE_TYPE(type, size, ftype, internalTypeName) \
-				case type##size: { \
-					internalTypeName _value[size]; \
-					if (oldLoc >= 0) { \
-						glGetUniform##ftype(oldProgID, oldLoc, &_value[0]); \
-					} else { \
+			#define HANDLE_TYPE(type, size, ftype, internalTypeName)                                      \
+				case type##size: {                                                                        \
+					internalTypeName _value[size];                                                        \
+			                                                                                              \
+					if (oldLoc >= 0) {                                                                    \
+						glGetUniform##ftype(oldProgID, oldLoc, &_value[0]);                               \
+					} else {                                                                              \
 						memcpy(_value, oldUniformState->GetIntValues(), size * sizeof(internalTypeName)); \
-					} \
-					glUniform##size##ftype(newLoc, 1, &_value[0]); \
+					}                                                                                     \
+			                                                                                              \
+					glUniform##size##ftype(newLoc, 1, &_value[0]);                                        \
 				} break;
-			#define HANDLE_MATTYPE(type, size, ftype, internalTypeName) \
-				case type##size: { \
-					internalTypeName _value[size*size]; \
-					if (oldLoc >= 0) { \
-						glGetUniform##ftype(oldProgID, oldLoc, &_value[0]); \
-					} else { \
+
+			#define HANDLE_MATTYPE(type, size, ftype, internalTypeName)                                        \
+				case type##size: {                                                                             \
+					internalTypeName _value[size*size];                                                        \
+			                                                                                                   \
+					if (oldLoc >= 0) {                                                                         \
+						glGetUniform##ftype(oldProgID, oldLoc, &_value[0]);                                    \
+					} else {                                                                                   \
 						memcpy(_value, oldUniformState->GetIntValues(), size*size * sizeof(internalTypeName)); \
-					} \
-					glUniformMatrix##size##ftype(newLoc, 1, false, &_value[0]); \
+					}                                                                                          \
+			                                                                                                   \
+					glUniformMatrix##size##ftype(newLoc, 1, false, &_value[0]);                                \
 				} break;
 
 			HANDLE_TYPE(INT, 1, iv, GLint)
@@ -278,10 +290,9 @@ static void CopyShaderState_Uniforms(GLuint newProgID, GLuint oldProgID, spring:
 
 static void CopyShaderState_UniformBlocks(GLuint newProgID, GLuint oldProgID)
 {
-	if (!GLEW_ARB_uniform_buffer_object)
-		return;
+	GLint numUniformBlocks = 0;
+	GLint maxNameLength = 0;
 
-	GLint numUniformBlocks, maxNameLength = 0;
 	glGetProgramiv(oldProgID, GL_ACTIVE_UNIFORM_BLOCKS, &numUniformBlocks);
 	glGetProgramiv(oldProgID, GL_ACTIVE_UNIFORM_BLOCK_MAX_NAME_LENGTH, &maxNameLength);
 
@@ -316,7 +327,9 @@ static void CopyShaderState_ShaderStorage(GLuint newProgID, GLuint oldProgID)
 	if (!GLEW_ARB_program_interface_query)
 		return;
 
-	GLint numUniformBlocks, maxNameLength = 0;
+	GLint numUniformBlocks = 0;
+	GLint maxNameLength = 0;
+
 	glGetProgramInterfaceiv(oldProgID, GL_SHADER_STORAGE_BLOCK, GL_ACTIVE_RESOURCES, &numUniformBlocks);
 	glGetProgramInterfaceiv(oldProgID, GL_SHADER_STORAGE_BLOCK, GL_MAX_NAME_LENGTH, &maxNameLength);
 
@@ -352,7 +365,9 @@ static void CopyShaderState_ShaderStorage(GLuint newProgID, GLuint oldProgID)
 
 static void CopyShaderState_Attributes(GLuint newProgID, GLuint oldProgID)
 {
-	GLsizei numAttributes, maxNameLength = 0;
+	GLsizei numAttributes = 0;
+	GLsizei maxNameLength = 0;
+
 	glGetProgramiv(oldProgID, GL_ACTIVE_ATTRIBUTES, &numAttributes);
 	glGetProgramiv(oldProgID, GL_ACTIVE_ATTRIBUTE_MAX_LENGTH, &maxNameLength);
 
@@ -382,22 +397,21 @@ static void CopyShaderState_Attributes(GLuint newProgID, GLuint oldProgID)
 
 static void CopyShaderState_TransformFeedback(GLuint newProgID, GLuint oldProgID)
 {
-#ifdef GL_ARB_transform_feedback3
-	//FIXME find out what extensions are really needed
-	if (!GLEW_ARB_transform_feedback3)
-		return;
+	GLint bufferMode = 0;
+	GLint numVaryings = 0;
+	GLint maxNameLength = 0;
 
-	GLint bufferMode, numVaryings = 0, maxNameLength = 0;
 	glGetProgramiv(oldProgID, GL_TRANSFORM_FEEDBACK_BUFFER_MODE, &bufferMode);
 	glGetProgramiv(oldProgID, GL_TRANSFORM_FEEDBACK_VARYINGS, &numVaryings);
 	glGetProgramiv(oldProgID, GL_TRANSFORM_FEEDBACK_VARYING_MAX_LENGTH, &maxNameLength);
 
-	if(!numVaryings || maxNameLength <= 0)
+	if (numVaryings == 0 || maxNameLength <= 0)
 		return;
 
 	std::vector<std::string> varyings(numVaryings);
 	std::vector<GLchar*> varyingsPtr(numVaryings);
 	std::string name(maxNameLength, 0);
+
 	for (int i = 0; i < numVaryings; ++i) {
 		GLsizei nameLength = 0;
 		GLsizei size = 0;
@@ -413,7 +427,6 @@ static void CopyShaderState_TransformFeedback(GLuint newProgID, GLuint oldProgID
 	}
 
 	glTransformFeedbackVaryings(newProgID, numVaryings, (const GLchar**)&varyingsPtr[0], bufferMode);
-#endif
 }
 
 
@@ -442,16 +455,15 @@ static bool CopyShaderState_ContainsGeometryShader(GLuint oldProgID)
 
 static void CopyShaderState_Geometry(GLuint newProgID, GLuint oldProgID)
 {
-#if defined(GL_ARB_geometry_shader4) && defined(GL_ARB_get_program_binary)
-	if (!GLEW_ARB_geometry_shader4)
-		return;
 	// "GL_INVALID_OPERATION is generated if pname is GL_GEOMETRY_VERTICES_OUT,
 	// GL_GEOMETRY_INPUT_TYPE, or GL_GEOMETRY_OUTPUT_TYPE, and program does not
 	// contain a geometry shader."
 	if (!CopyShaderState_ContainsGeometryShader(oldProgID))
 		return;
 
-	GLint verticesOut = 0, inputType = 0, outputType = 0;
+	GLint verticesOut = 0;
+	GLint inputType = 0;
+	GLint outputType = 0;
 
 	glGetProgramiv(oldProgID, GL_GEOMETRY_INPUT_TYPE, &inputType);
 	glGetProgramiv(oldProgID, GL_GEOMETRY_OUTPUT_TYPE, &outputType);
@@ -460,9 +472,10 @@ static void CopyShaderState_Geometry(GLuint newProgID, GLuint oldProgID)
 	if (inputType != 0)   glProgramParameteri(newProgID, GL_GEOMETRY_INPUT_TYPE, inputType);
 	if (outputType != 0)  glProgramParameteri(newProgID, GL_GEOMETRY_OUTPUT_TYPE, outputType);
 	if (verticesOut != 0) glProgramParameteri(newProgID, GL_GEOMETRY_VERTICES_OUT, verticesOut);
-#endif
 }
 #endif
+
+
 
 namespace Shader {
 	void GLSLCopyState(GLuint newProgID, GLuint oldProgID, spring::unordered_map<std::size_t, UniformState, fast_hash>* uniformStates)
@@ -470,13 +483,15 @@ namespace Shader {
 	#if !defined(HEADLESS)
 		CopyShaderState_Uniforms(newProgID, oldProgID, uniformStates);
 
-		if (oldProgID != 0) {
-			CopyShaderState_UniformBlocks(newProgID, oldProgID);
-			CopyShaderState_ShaderStorage(newProgID, oldProgID);
-			CopyShaderState_Attributes(newProgID, oldProgID);
-			CopyShaderState_TransformFeedback(newProgID, oldProgID);
-			CopyShaderState_Geometry(newProgID, oldProgID);
-		}
+		if (oldProgID == 0)
+			return;
+
+		CopyShaderState_UniformBlocks(newProgID, oldProgID);
+		CopyShaderState_ShaderStorage(newProgID, oldProgID);
+		CopyShaderState_Attributes(newProgID, oldProgID);
+		CopyShaderState_TransformFeedback(newProgID, oldProgID);
+		CopyShaderState_Geometry(newProgID, oldProgID);
 	#endif
 	}
 }
+

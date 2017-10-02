@@ -613,16 +613,18 @@ static void HandleDDSMipmap(GLenum target, bool mipmaps, int num_mipmaps)
 	if (num_mipmaps > 0) {
 		// dds included the MipMaps use them
 		glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	} else {
-		if (mipmaps && IS_GL_FUNCTION_AVAILABLE(glGenerateMipmap)) {
-			// create the mipmaps at runtime
-			glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-			glGenerateMipmap(target);
-		} else {
-			// no mipmaps
-			glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		}
+		return;
 	}
+
+	if (mipmaps) {
+		// create the mipmaps at runtime
+		glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		glGenerateMipmap(target);
+		return;
+	}
+
+	// no mipmaps
+	glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 }
 
 unsigned int CBitmap::CreateDDSTexture(unsigned int texID, float aniso, bool mipmaps) const

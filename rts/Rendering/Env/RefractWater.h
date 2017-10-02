@@ -20,7 +20,6 @@ public:
 protected:
 	void SetupWaterDepthTex();
 
-	unsigned int target;
 	/// the screen is copied into this texture and used for water rendering
 	GLuint subSurfaceTex;
 };

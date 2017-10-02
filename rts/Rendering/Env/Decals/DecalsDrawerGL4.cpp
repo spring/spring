@@ -224,13 +224,7 @@ CDecalsDrawerGL4::CDecalsDrawerGL4()
 	//	return;
 	//}
 
-	if (!GLEW_ARB_depth_clamp)
-		throw opengl_error(LOG_SECTION_DECALS_GL4 ": missing GL_ARB_depth_clamp");
-
-	if (!GLEW_ARB_vertex_array_object)
-		throw opengl_error(LOG_SECTION_DECALS_GL4 ": missing GL_ARB_vertex_array_object");
-
-	if (!dynamic_cast<CSMFReadMap*>(readMap))
+	if (dynamic_cast<CSMFReadMap*>(readMap) == nullptr)
 		throw unsupported_error(LOG_SECTION_DECALS_GL4 ": only SMF supported");
 
 	if (static_cast<CSMFReadMap*>(readMap)->GetNormalsTexture() <= 0)

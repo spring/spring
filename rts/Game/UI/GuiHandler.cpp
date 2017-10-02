@@ -95,12 +95,9 @@ CGuiHandler::CGuiHandler():
 
 	autoShowMetal = mapInfo->gui.autoShowMetal;
 
-	useStencil = false;
-	if (GLEW_NV_depth_clamp) {
-		GLint stencilBits;
-		glGetIntegerv(GL_STENCIL_BITS, &stencilBits);
-		useStencil = (stencilBits >= 1);
-	}
+	GLint stencilBits;
+	glGetIntegerv(GL_STENCIL_BITS, &stencilBits);
+	useStencil = (stencilBits >= 1);
 
 	failedSound = sound->GetSoundId("FailedCommand");
 }

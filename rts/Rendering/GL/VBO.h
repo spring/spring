@@ -21,10 +21,6 @@ public:
 	VBO& operator=(const VBO& other) = delete;
 	VBO& operator=(VBO&& other);
 
-	bool IsSupported() const;
-	static bool IsVBOSupported();
-	static bool IsPBOSupported();
-
 	/**
 	 * @param target can be either GL_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER, GL_PIXEL_PACK_BUFFER, GL_PIXEL_UNPACK_BUFFER or GL_UNIFORM_BUFFER_EXT
 	 * @see http://www.opengl.org/sdk/docs/man/xhtml/glBindBuffer.xml
@@ -50,7 +46,8 @@ public:
 	void UnmapBuffer();
 
 	GLuint GetId() const {
-		if (isSupported && (vboId == 0)) glGenBuffers(1, &vboId);
+		if (vboId == 0)
+			glGenBuffers(1, &vboId);
 		return vboId;
 	}
 
@@ -61,18 +58,16 @@ public:
 	mutable GLuint vboId;
 	size_t bufSize; // can be smaller than memSize
 	size_t memSize; // actual length of <data>; only set when !isSupported
+
 	mutable GLenum curBoundTarget;
 	GLenum defTarget;
 	GLenum usage;
 
 public:
-	bool isSupported; // if false, data is allocated in main memory
 	mutable bool bound;
 	bool mapped;
 	bool nullSizeMapped; // Nvidia workaround
 	bool immutableStorage;
-
-	GLubyte* data;
 };
 
 #endif /* VBO_H */

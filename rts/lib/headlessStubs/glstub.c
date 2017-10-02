@@ -498,6 +498,7 @@ GLAPI void APIENTRY glLineWidth(GLfloat width) {}
 GLAPI void APIENTRY glColor3f(GLfloat red, GLfloat green, GLfloat blue ) {}
 GLAPI void APIENTRY glPolygonOffset(GLfloat factor, GLfloat units) {}
 
+GLAPI void APIENTRY glPrimitiveRestartIndex(GLuint index) {}
 GLAPI void APIENTRY glPrimitiveRestartIndexNV(GLuint index) {}
 GLAPI void APIENTRY glGetCompressedTexImage(GLenum target, GLint lod, GLvoid * img) {}
 GLAPI void APIENTRY glDepthRange(GLdouble nearVal, GLdouble farVal) {}

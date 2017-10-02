@@ -134,10 +134,8 @@ Patch::~Patch()
 {
 	glDeleteLists(triList, 1);
 
-	if (GLEW_ARB_vertex_buffer_object) {
-		glDeleteBuffers(1, &vertexBuffer);
-		glDeleteBuffers(1, &vertexIndexBuffer);
-	}
+	glDeleteBuffers(1, &vertexBuffer);
+	glDeleteBuffers(1, &vertexIndexBuffer);
 
 	triList = 0;
 	vertexBuffer = 0;
@@ -158,10 +156,8 @@ void Patch::Init(CSMFGroundDrawer* _drawer, int patchX, int patchZ)
 	// create used OpenGL objects
 	triList = glGenLists(1);
 
-	if (GLEW_ARB_vertex_buffer_object) {
-		glGenBuffers(1, &vertexBuffer);
-		glGenBuffers(1, &vertexIndexBuffer);
-	}
+	glGenBuffers(1, &vertexBuffer);
+	glGenBuffers(1, &vertexIndexBuffer);
 
 
 	vertices.resize(3 * (PATCH_SIZE + 1) * (PATCH_SIZE + 1));
@@ -701,9 +697,6 @@ void Patch::SwitchRenderMode(int mode)
 		mode %= 3;
 	}
 
-	if (!GLEW_ARB_vertex_buffer_object && mode == VBO)
-		mode = DL;
-
 	if (mode == renderMode)
 		return;
 
@@ -749,13 +742,17 @@ class CPatchInViewChecker : public CReadMap::IQuadDrawer
 {
 public:
 	void ResetState() {}
-	void ResetState(CCamera* c = nullptr, Patch* p = nullptr, int xsize = 0) {
+	void ResetState(CCamera* c, Patch* p, int npx, int npy) {
 		testCamera = c;
 		patchArray = p;
-		numPatchesX = xsize;
+		numPatchesX = npx;
+		numPatchesY = npy;
 	}
 
 	void DrawQuad(int x, int y) {
+		assert(x >= 0 && x < numPatchesX);
+		assert(y >= 0 && y < numPatchesY);
+
 		patchArray[y * numPatchesX + x].lastDrawFrames[testCamera->GetCamType()] = globalRendering->drawFrame;
 	}
 
@@ -764,6 +761,7 @@ private:
 	Patch* patchArray;
 
 	int numPatchesX;
+	int numPatchesY;
 };
 
 
@@ -779,7 +777,7 @@ void Patch::UpdateVisibility(CCamera* cam, std::vector<Patch>& patches, const in
 	static CPatchInViewChecker checker;
 
 	assert(cam->GetCamType() < CCamera::CAMTYPE_VISCUL);
-	checker.ResetState(cam, &patches[0], numPatchesX);
+	checker.ResetState(cam, &patches[0], numPatchesX, patches.size() / numPatchesX);
 
 	cam->GetFrustumSides(readMap->GetCurrMinHeight() - 100.0f, readMap->GetCurrMaxHeight() + 100.0f, SQUARE_SIZE);
 	readMap->GridVisibility(cam, &checker, 1e9, PATCH_SIZE);
