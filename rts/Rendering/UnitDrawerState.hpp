@@ -86,7 +86,7 @@ protected:
 
 struct UnitDrawerStateNOP: public IUnitDrawerState {
 public:
-	bool Init(const CUnitDrawer*) override {}
+	bool Init(const CUnitDrawer*) override { return true; }
 	void Kill() override {}
 
 	bool CanEnable(const CUnitDrawer*) const override { return true; }
