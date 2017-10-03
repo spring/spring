@@ -125,6 +125,7 @@ Patch::Patch()
 {
 	varianceLeft.resize(1 << VARIANCE_DEPTH);
 	varianceRight.resize(1 << VARIANCE_DEPTH);
+	vertices.fill(0.0f);
 }
 
 Patch::~Patch()
@@ -152,7 +153,6 @@ void Patch::Init(CSMFGroundDrawer* _drawer, int patchX, int patchZ)
 	glGenBuffers(1, &vertexIndexBuffer);
 
 
-	vertices.fill(0.0f);
 	unsigned int index = 0;
 
 	// initialize vertices
