@@ -115,15 +115,14 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 		case CLegacyInfoTextureHandler::drawPathTrav: {
 			bool useCurrentBuildOrder = true;
 
-			if (guihandler->inCommand <= 0) {
+			if (guihandler->inCommand <= 0)
 				useCurrentBuildOrder = false;
-			}
-			if (guihandler->inCommand >= guihandler->commands.size()) {
+
+			if (guihandler->inCommand >= guihandler->commands.size())
 				useCurrentBuildOrder = false;
-			}
-			if (useCurrentBuildOrder && guihandler->commands[guihandler->inCommand].type != CMDTYPE_ICON_BUILDING) {
+
+			if (useCurrentBuildOrder && guihandler->commands[guihandler->inCommand].type != CMDTYPE_ICON_BUILDING)
 				useCurrentBuildOrder = false;
-			}
 
 			if (useCurrentBuildOrder) {
 				for (int ty = starty; ty < endy; ++ty) {
@@ -288,6 +287,8 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 		} break;
 	}
 }
+#else
+void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, int offset, unsigned char* texMem) const {}
 #endif
 
 

@@ -33,7 +33,7 @@ QTPFSPathDrawer::QTPFSPathDrawer(): IPathDrawer() {
 void QTPFSPathDrawer::DrawAll() const {
 	const MoveDef* md = GetSelectedMoveDef();
 
-	if (md == NULL)
+	if (md == nullptr)
 		return;
 
 	if (enabled && (gs->cheatEnabled || gu->spectating)) {
@@ -133,7 +133,7 @@ void QTPFSPathDrawer::DrawPaths(const MoveDef* md) const {
 		if (typeIt == pm->pathTypes.end() || traceIt == pm->pathTraces.end())
 			continue;
 		// this only happens if source-node was equal to target-node
-		if (traceIt->second == NULL)
+		if (traceIt->second == nullptr)
 			continue;
 
 		DrawSearchExecution(typeIt->second, traceIt->second);
@@ -218,16 +218,16 @@ void QTPFSPathDrawer::DrawSearchIteration(unsigned int pathType, const std::vect
 
 	const QTPFS::NodeLayer& nodeLayer = pm->nodeLayers[pathType];
 	const QTPFS::QTNode* poppedNode = static_cast<const QTPFS::QTNode*>(nodeLayer.GetNode(hmx, hmz));
-	const QTPFS::QTNode* pushedNode = NULL;
+	const QTPFS::QTNode* pushedNode = nullptr;
 
-	DrawNode(poppedNode, NULL, va, true, false, false);
+	DrawNode(poppedNode, nullptr, va, true, false, false);
 
 	for (++it; it != nodeIndices.end(); ++it) {
 		hmx = (*it) % mapDims.mapx;
 		hmz = (*it) / mapDims.mapx;
 		pushedNode = static_cast<const QTPFS::QTNode*>(nodeLayer.GetNode(hmx, hmz));
 
-		DrawNode(pushedNode, NULL, va, true, false, false);
+		DrawNode(pushedNode, nullptr, va, true, false, false);
 		DrawNodeLink(pushedNode, poppedNode, va);
 	}
 }
@@ -268,16 +268,14 @@ void QTPFSPathDrawer::DrawNode(
 			&colors[1][0];
 
 	if (!batchDraw) {
-		if (!camera->InView(verts[4])) {
+		if (!camera->InView(verts[4]))
 			return;
-		}
 
 		va->Initialize();
 		va->EnlargeArrays(4, 0, VA_SIZE_C);
 
-		if (!fillQuad) {
+		if (!fillQuad)
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-		}
 	}
 
 	va->AddVertexQC(verts[0], color);
@@ -288,9 +286,8 @@ void QTPFSPathDrawer::DrawNode(
 	if (!batchDraw) {
 		va->DrawArrayC(GL_QUADS);
 
-		if (!fillQuad) {
+		if (!fillQuad)
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-		}
 	}
 
 	if (showCost && camera->GetPos().SqDistance(verts[4]) < (1000.0f * 1000.0f)) {
@@ -342,7 +339,7 @@ void QTPFSPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, int
 		case CLegacyInfoTextureHandler::drawPathTrav: {
 			const MoveDef* md = GetSelectedMoveDef();
 
-			if (md != NULL) {
+			if (md != nullptr) {
 				const QTPFS::NodeLayer& nl = pm->nodeLayers[md->pathType];
 
 				const float smr = 1.0f / nl.GetMaxRelSpeedMod();
@@ -400,5 +397,7 @@ void QTPFSPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, int
 		} break;
 	}
 }
+#else
+void QTPFSPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, int offset, unsigned char* texMem) const {}
 #endif
 
