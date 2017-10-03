@@ -665,14 +665,6 @@ void CGrassDrawer::ResetGlStateNear()
 	{
 		grassShader->Disable();
 
-		if (shadowHandler->ShadowsLoaded()) {
-			glActiveTextureARB(GL_TEXTURE1_ARB);
-				glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);
-				glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
-			glActiveTextureARB(GL_TEXTURE0_ARB);
-		}
-
 		glMatrixMode(GL_PROJECTION);
 		glPopMatrix();
 		glMatrixMode(GL_MODELVIEW);
@@ -725,14 +717,6 @@ void CGrassDrawer::ResetGlStateFar()
 	glPopMatrix();
 	glMatrixMode(GL_MODELVIEW);
 	glPopMatrix();
-
-	if (shadowHandler->ShadowsLoaded()) {
-		glActiveTextureARB(GL_TEXTURE1_ARB);
-			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);
-			glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
-		glActiveTextureARB(GL_TEXTURE0_ARB);
-	}
 
 	glDepthMask(GL_TRUE);
 	glDisable(GL_ALPHA_TEST);
