@@ -114,7 +114,7 @@ Shader::IProgramObject* CShaderHandler::CreateProgramObject(const std::string& p
 
 
 
-Shader::IShaderObject* CShaderHandler::CreateShaderObject(const std::string& soName, const std::string& soDefs) {
+Shader::IShaderObject* CShaderHandler::CreateShaderObject(const std::string& soName, const std::string& soDefs, int soType) {
 	assert(!soName.empty());
 	Shader::IShaderObject* so = Shader::nullShaderObject;
 
