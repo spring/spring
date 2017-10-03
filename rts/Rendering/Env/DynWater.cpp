@@ -1314,5 +1314,7 @@ CDynWater::~CDynWater() {}
 
 void CDynWater::Draw() {}
 void CDynWater::UpdateWater(CGame* game) {}
+void CDynWater::Update() {}
+void CDynWater::AddExplosion(const float3& pos, float strength, float size) {}
 #endif
 
