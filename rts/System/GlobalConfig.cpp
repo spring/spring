@@ -58,9 +58,9 @@ CONFIG(bool, UseNetMessageSmoothingBuffer).defaultValue(true);
 
 CONFIG(bool, LuaWritableConfigFile).defaultValue(true);
 
-CONFIG(bool, EnableDrawCallIns).defaultValue(true);
 
-GlobalConfig* globalConfig = NULL;
+
+GlobalConfig* globalConfig = nullptr;
 
 GlobalConfig::GlobalConfig()
 {
@@ -100,5 +100,5 @@ void GlobalConfig::Instantiate()
 void GlobalConfig::Deallocate()
 {
 	delete globalConfig;
-	globalConfig = NULL;
+	globalConfig = nullptr;
 }
