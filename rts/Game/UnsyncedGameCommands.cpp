@@ -1556,7 +1556,10 @@ public:
 
 	bool Execute(const UnsyncedAction& action) const {
 		CPathTexture* pathTexInfo = dynamic_cast<CPathTexture*>(infoTextureHandler->GetInfoTexture("path"));
-		if (pathTexInfo) pathTexInfo->ShowMoveDef(-1);
+
+		if (pathTexInfo != nullptr)
+			pathTexInfo->ShowMoveDef(-1);
+
 		infoTextureHandler->ToggleMode("path");
 		return true;
 	}
@@ -1625,17 +1628,24 @@ public:
 
 	bool Execute(const UnsyncedAction& action) const {
 		CPathTexture* pathTexInfo = dynamic_cast<CPathTexture*>(infoTextureHandler->GetInfoTexture("path"));
-		if (pathTexInfo) {
+
+		if (pathTexInfo != nullptr) {
 			bool set = false;
 
 			if (!action.GetArgs().empty()) {
 				if (!set) {
 					bool failed = false;
 					unsigned int i = StringToInt(action.GetArgs(), &failed);
-					if (failed) i = -1;
+
+					if (failed)
+						i = -1;
+
 					const MoveDef* md = moveDefHandler->GetMoveDefByName(action.GetArgs());
-					if (!md && i<moveDefHandler->GetNumMoveDefs()) md = moveDefHandler->GetMoveDefByPathType(i);
-					if (md) {
+
+					if (md == nullptr && i < moveDefHandler->GetNumMoveDefs())
+						md = moveDefHandler->GetMoveDefByPathType(i);
+
+					if (md != nullptr) {
 						set = true;
 						pathTexInfo->ShowMoveDef(md->pathType);
 						LOG("Showing PathView for MoveDef: %s", md->name.c_str());
@@ -1660,6 +1670,7 @@ public:
 			if (set && infoTextureHandler->GetMode() != "path")
 				infoTextureHandler->ToggleMode("path");
 		}
+
 		return true;
 	}
 };

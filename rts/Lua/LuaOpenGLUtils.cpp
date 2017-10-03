@@ -324,7 +324,7 @@ static bool ParseNamedSubTexture(LuaMatTexture& texUnit, const std::string& texN
 		// try to find a matching info-texture based on suffix
 		CInfoTexture* itex = infoTextureHandler->GetInfoTexture(texName.substr(sepIdx + 1));
 
-		if (itex->GetName() != "dummy") {
+		if (itex != nullptr && itex->GetName() != "dummy") {
 			texUnit.type = LuaMatTexture::LUATEX_INFOTEX_SUFFIX;
 			texUnit.data = itex; // fast, and barely preserves RTTI
 

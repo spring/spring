@@ -74,7 +74,6 @@ SET(sources_engine_Rendering
 		"${CMAKE_CURRENT_SOURCE_DIR}/SmoothHeightMeshDrawer.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Map/InfoTexture/InfoTexture.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Map/InfoTexture/IInfoTextureHandler.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/Map/InfoTexture/Legacy/LegacyInfoTextureHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Map/InfoTexture/Modern/AirLos.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Map/InfoTexture/Modern/Combiner.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/Map/InfoTexture/Modern/Height.cpp"
