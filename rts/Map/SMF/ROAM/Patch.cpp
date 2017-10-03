@@ -23,8 +23,6 @@
 #include <climits>
 
 
-Patch::RenderMode Patch::renderMode = Patch::VBO;
-
 static size_t CUR_POOL_SIZE =                 0; // split over all threads
 static size_t MAX_POOL_SIZE = NEW_POOL_SIZE * 8; // upper limit for ResetAll
 
@@ -122,7 +120,6 @@ Patch::Patch()
 	, varianceMaxLimit(std::numeric_limits<float>::max())
 	, camDistLODFactor(1.0f)
 	, coors(-1, -1)
-	, triList(0)
 	, vertexBuffer(0)
 	, vertexIndexBuffer(0)
 {
@@ -132,12 +129,9 @@ Patch::Patch()
 
 Patch::~Patch()
 {
-	glDeleteLists(triList, 1);
-
 	glDeleteBuffers(1, &vertexBuffer);
 	glDeleteBuffers(1, &vertexIndexBuffer);
 
-	triList = 0;
 	vertexBuffer = 0;
 	vertexIndexBuffer = 0;
 }
@@ -154,13 +148,11 @@ void Patch::Init(CSMFGroundDrawer* _drawer, int patchX, int patchZ)
 	baseRight.BaseNeighbor = &baseLeft;
 
 	// create used OpenGL objects
-	triList = glGenLists(1);
-
 	glGenBuffers(1, &vertexBuffer);
 	glGenBuffers(1, &vertexIndexBuffer);
 
 
-	vertices.resize(3 * (PATCH_SIZE + 1) * (PATCH_SIZE + 1));
+	vertices.fill(0.0f);
 	unsigned int index = 0;
 
 	// initialize vertices
@@ -210,16 +202,12 @@ void Patch::UpdateHeightMap(const SRectangle& rect)
 
 void Patch::VBOUploadVertices()
 {
-	if (renderMode == VBO) {
-		// Upload vertexBuffer
-		glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
-		glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), &vertices[0], GL_STATIC_DRAW);
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
+	// Upload vertexBuffer
+	glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
+	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-		vboVerticesUploaded = true;
-	} else {
-		vboVerticesUploaded = false;
-	}
+	vboVerticesUploaded = true;
 }
 
 
@@ -360,6 +348,8 @@ void Patch::RecursRender(const TriTreeNode* tri, const int2 left, const int2 rig
 void Patch::GenerateIndices()
 {
 	indices.clear();
+	indices.reserve(vertices.size() * 3);
+
 	RecursRender(&baseLeft,  int2(         0, PATCH_SIZE), int2(PATCH_SIZE,          0), int2(         0,          0));
 	RecursRender(&baseRight, int2(PATCH_SIZE,          0), int2(         0, PATCH_SIZE), int2(PATCH_SIZE, PATCH_SIZE));
 }
@@ -530,37 +520,16 @@ bool Patch::Tessellate(const float3& camPos, int viewRadius, bool shadowPass)
 
 void Patch::Draw()
 {
-	switch (renderMode) {
-		case VA: {
-			glEnableClientState(GL_VERTEX_ARRAY);
-				glVertexPointer(3, GL_FLOAT, 0, &vertices[0]);
-				glDrawRangeElements(GL_TRIANGLES, 0, vertices.size(), indices.size(), GL_UNSIGNED_INT, &indices[0]);
-			glDisableClientState(GL_VERTEX_ARRAY);
-		} break;
+	glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer); // coors
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vertexIndexBuffer); // indices
 
-		case DL: {
-			glCallList(triList);
-		} break;
+	glEnableClientState(GL_VERTEX_ARRAY);
+		glVertexPointer(3, GL_FLOAT, 0, 0); // last param is offset, not ptr
+		glDrawRangeElements(GL_TRIANGLES, 0, vertices.size(), indices.size(), GL_UNSIGNED_INT, 0);
+	glDisableClientState(GL_VERTEX_ARRAY);
 
-		case VBO: {
-			// enable VBOs
-			glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer); // coors
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vertexIndexBuffer); // indices
-
-				glEnableClientState(GL_VERTEX_ARRAY);
-					glVertexPointer(3, GL_FLOAT, 0, 0); // last param is offset, not ptr
-					glDrawRangeElements(GL_TRIANGLES, 0, vertices.size(), indices.size(), GL_UNSIGNED_INT, 0);
-				glDisableClientState(GL_VERTEX_ARRAY);
-
-			// disable VBO mode
-			glBindBuffer(GL_ARRAY_BUFFER, 0);
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-		} break;
-
-		default: {
-			assert(false);
-		} break;
-	}
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
 
@@ -582,9 +551,9 @@ void Patch::RecursBorderRender(
 	bool leftChild
 ) {
 	if (tri->IsLeaf()) {
-		const float3& v1 = *(float3*)&vertices[(apex.x + apex.y * (PATCH_SIZE + 1))*3];
-		const float3& v2 = *(float3*)&vertices[(left.x + left.y * (PATCH_SIZE + 1))*3];
-		const float3& v3 = *(float3*)&vertices[(rght.x + rght.y * (PATCH_SIZE + 1))*3];
+		const float3& v1 = *(float3*) &vertices[(apex.x + apex.y * (PATCH_SIZE + 1))*3];
+		const float3& v2 = *(float3*) &vertices[(left.x + left.y * (PATCH_SIZE + 1))*3];
+		const float3& v3 = *(float3*) &vertices[(rght.x + rght.y * (PATCH_SIZE + 1))*3];
 
 		static constexpr unsigned char white[] = {255, 255, 255, 255};
 		static constexpr unsigned char trans[] = {255, 255, 255,   0};
@@ -660,62 +629,17 @@ void Patch::GenerateBorderIndices(CVertexArray* va)
 
 void Patch::Upload()
 {
-	switch (renderMode) {
-		case DL: {
-			glNewList(triList, GL_COMPILE);
-				glEnableClientState(GL_VERTEX_ARRAY);
-					glVertexPointer(3, GL_FLOAT, 0, &vertices[0]);
-					glDrawRangeElements(GL_TRIANGLES, 0, vertices.size(), indices.size(), GL_UNSIGNED_INT, &indices[0]);
-				glDisableClientState(GL_VERTEX_ARRAY);
-			glEndList();
-		} break;
+	if (!vboVerticesUploaded)
+		VBOUploadVertices();
 
-		case VBO: {
-			if (!vboVerticesUploaded)
-				VBOUploadVertices();
-
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vertexIndexBuffer);
-			glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned), &indices[0], GL_DYNAMIC_DRAW);
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-		} break;
-
-		default: {
-		} break;
-	}
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vertexIndexBuffer);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned), &indices[0], GL_DYNAMIC_DRAW);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
 void Patch::SetSquareTexture() const
 {
 	smfGroundDrawer->SetupBigSquare(coors.x / PATCH_SIZE, coors.y / PATCH_SIZE);
-}
-
-
-void Patch::SwitchRenderMode(int mode)
-{
-	if (mode < 0) {
-		mode = renderMode + 1;
-		mode %= 3;
-	}
-
-	if (mode == renderMode)
-		return;
-
-	switch (mode) {
-		case VA: {
-			LOG("Set ROAM mode to VA");
-			renderMode = VA;
-		} break;
-		case DL: {
-			LOG("Set ROAM mode to DisplayLists");
-			renderMode = DL;
-		} break;
-		case VBO: {
-			LOG("Set ROAM mode to VBO");
-			renderMode = VBO;
-		} break;
-	}
-
-	CRoamMeshDrawer::ForceTesselation();
 }
 
 

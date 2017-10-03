@@ -88,13 +88,6 @@ private:
 class Patch
 {
 public:
-	enum RenderMode {
-		VBO = 1,
-		DL  = 2,
-		VA  = 3
-	};
-
-public:
 	friend class CRoamMeshDrawer;
 	friend class CPatchInViewChecker;
 
@@ -123,9 +116,6 @@ public:
 	void SetSquareTexture() const;
 
 public:
-	static void SwitchRenderMode(int mode = -1);
-	static int GetRenderMode() { return renderMode; }
-
 	#if 0
 	void UpdateVisibility(CCamera* cam);
 	#endif
@@ -163,8 +153,6 @@ private:
 	void GenerateBorderIndices(CVertexArray* va);
 
 private:
-	static RenderMode renderMode;
-
 	CSMFGroundDrawer* smfGroundDrawer;
 
 	// pool used during Tessellate; each invoked Split allocates from this
@@ -190,8 +178,8 @@ private:
 	std::vector<float> varianceLeft;  // left variance tree
 	std::vector<float> varianceRight; // right variance tree
 
-	// TODO: remove for both the Displaylist and the VBO implementations (only really needed for VA's)
-	std::vector<float> vertices;
+	// TODO: remove, map+update buffer instead
+	std::array<float, 3 * (PATCH_SIZE + 1) * (PATCH_SIZE + 1)> vertices;
 	std::vector<unsigned int> indices;
 
 	// frame on which this patch was last visible, per pass
@@ -201,7 +189,6 @@ private:
 	std::array<unsigned int, CCamera::CAMTYPE_VISCUL> lastDrawFrames;
 
 
-	GLuint triList;
 	GLuint vertexBuffer;
 	GLuint vertexIndexBuffer;
 };

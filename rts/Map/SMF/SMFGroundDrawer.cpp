@@ -44,11 +44,11 @@ CONFIG(bool, AllowDeferredMapRendering).defaultValue(false).safemodeValue(false)
 
 
 CONFIG(int, ROAM)
-	.defaultValue(Patch::VBO)
-	.safemodeValue(Patch::DL)
+	.defaultValue(1)
+	.safemodeValue(1)
 	.minimumValue(0)
-	.maximumValue(Patch::VA)
-	.description("Use ROAM for terrain mesh rendering: 0 to disable, {1=VBO,2=DL,3=VA}-mode to enable.");
+	.maximumValue(1)
+	.description("Use ROAM for terrain mesh rendering: 0 to disable, 1 to enable.");
 
 
 CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
@@ -106,8 +106,8 @@ CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
 
 CSMFGroundDrawer::~CSMFGroundDrawer()
 {
-	// remember which ROAM-mode was enabled (if any)
-	configHandler->Set("ROAM", (dynamic_cast<CRoamMeshDrawer*>(meshDrawer) != nullptr)? Patch::GetRenderMode(): 0);
+	// remember if ROAM-mode was enabled
+	configHandler->Set("ROAM", int(dynamic_cast<CRoamMeshDrawer*>(meshDrawer) != nullptr));
 
 	smfRenderStates[RENDER_STATE_NOP]->Kill(); ISMFRenderState::FreeInstance(smfRenderStates[RENDER_STATE_NOP]);
 	smfRenderStates[RENDER_STATE_SSP]->Kill(); ISMFRenderState::FreeInstance(smfRenderStates[RENDER_STATE_SSP]);

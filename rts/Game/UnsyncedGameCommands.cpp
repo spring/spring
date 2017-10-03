@@ -250,13 +250,10 @@ public:
 		if (!action.GetArgs().empty()) {
 			int rendererMode = -1;
 			int roamPatchMode = -1;
+
 			sscanf((action.GetArgs()).c_str(), "%i %i", &rendererMode, &roamPatchMode);
 
 			smfGD->SwitchMeshDrawer(rendererMode);
-
-			if (rendererMode == SMF_MESHDRAWER_ROAM && roamPatchMode >= 0) {
-				Patch::SwitchRenderMode(roamPatchMode);
-			}
 		} else {
 			smfGD->SwitchMeshDrawer();
 		}
