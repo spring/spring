@@ -41,10 +41,10 @@ CSMFMapFile::CSMFMapFile(const std::string& mapFileName)
 
 	ReadMapHeader(h, ifs);
 
-	if (CheckHeader())
+	if (CheckHeader(h))
 		return;
 
-	snprintf("[%s] corrupt header for \"%s\" (v=%d ts=%d tps=%d ss=%d)", __func__, mapFileName.c_str(), h.version, h.tilesize, h.texelPerSquare, h.squareSize);
+	snprintf(buf, sizeof(buf), "[%s] corrupt header for \"%s\" (v=%d ts=%d tps=%d ss=%d)", __func__, mapFileName.c_str(), h.version, h.tilesize, h.texelPerSquare, h.squareSize);
 	throw content_error(buf);
 }
 
