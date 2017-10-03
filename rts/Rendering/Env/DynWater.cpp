@@ -1,13 +1,12 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-
 #include "DynWater.h"
+#if 0
 #include "WaterRendering.h"
 
 #include "Game/Camera.h"
 #include "Game/GameHelper.h"
 #include "Game/GlobalUnsynced.h"
-// #include "Game/UI/MouseHandler.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "Rendering/GlobalRendering.h"
@@ -1307,3 +1306,13 @@ void CDynWater::DrawOuterSurface()
 
 	va->DrawArray0(GL_QUADS);
 }
+
+#else
+
+CDynWater::CDynWater() {}
+CDynWater::~CDynWater() {}
+
+void CDynWater::Draw() {}
+void CDynWater::UpdateWater(CGame* game) {}
+#endif
+

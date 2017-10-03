@@ -60,8 +60,8 @@ IWater* IWater::GetWater(IWater* curRenderer, int nxtRendererMode)
 	static IWater tmpRenderer;
 	static bool allowedModes[NUM_WATER_RENDERERS] = {
 		true,
-		ProgramStringIsNative(GL_FRAGMENT_PROGRAM_ARB, "ARB/water.fp") && false,
-		ProgramStringIsNative(GL_FRAGMENT_PROGRAM_ARB, "ARB/waterDyn.fp") && true,
+		false,
+		false,
 		false,
 		true,
 	};
