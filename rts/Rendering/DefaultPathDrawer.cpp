@@ -32,7 +32,6 @@
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/glExtra.h"
 #include "Rendering/GL/VertexArray.h"
-#include "Rendering/Map/InfoTexture/Legacy/LegacyInfoTextureHandler.h"
 #include "System/myMath.h"
 #include "System/StringUtil.h"
 
@@ -109,6 +108,8 @@ void DefaultPathDrawer::DrawInMiniMap()
 }
 
 
+#if 0
+// part of LegacyInfoTexHandler, no longer called
 void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, int offset, unsigned char* texMem) const {
 	switch (extraTex) {
 		case CLegacyInfoTextureHandler::drawPathTrav: {
@@ -287,6 +288,7 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 		} break;
 	}
 }
+#endif
 
 
 

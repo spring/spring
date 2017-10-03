@@ -24,7 +24,6 @@
 #include "Rendering/GL/glExtra.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
-#include "Rendering/Map/InfoTexture/Legacy/LegacyInfoTextureHandler.h"
 #include "System/StringUtil.h"
 
 QTPFSPathDrawer::QTPFSPathDrawer(): IPathDrawer() {
@@ -336,6 +335,8 @@ void QTPFSPathDrawer::DrawNodeLink(const QTPFS::QTNode* pushedNode, const QTPFS:
 
 
 
+#if 0
+// part of LegacyInfoTexHandler, no longer called
 void QTPFSPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, int offset, unsigned char* texMem) const {
 	switch (extraTex) {
 		case CLegacyInfoTextureHandler::drawPathTrav: {
@@ -399,4 +400,5 @@ void QTPFSPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, int
 		} break;
 	}
 }
+#endif
 

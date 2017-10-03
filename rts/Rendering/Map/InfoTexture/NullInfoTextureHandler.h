@@ -5,13 +5,13 @@
 
 #include "IInfoTextureHandler.h"
 
-class NullInfoTextureHandler {
+class CNullInfoTextureHandler: public IInfoTextureHandler {
 public:
 	static void Create();
 
 public:
-	NullInfoTextureHandler() {}
-	NullInfoTextureHandler(const NullInfoTextureHandler&) = delete;
+	CNullInfoTextureHandler() {}
+	CNullInfoTextureHandler(const CNullInfoTextureHandler&) = delete;
 
 	void Update() override {}
 
@@ -22,7 +22,7 @@ public:
 	void DisableCurrentMode() override {}
 	void SetMode(const std::string& name) override {}
 	void ToggleMode(const std::string& name) override {}
-	const std::string& GetMode() const override { return ""; }
+	const std::string& GetMode() const override { static const std::string s; return s; }
 
 	GLuint GetCurrentInfoTexture() const override { return 0; }
 	int2   GetCurrentInfoTextureSize() const override { return {0, 0}; }
