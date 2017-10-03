@@ -75,10 +75,16 @@ bool FileSystemInitializer::Initialize()
 		// since it can already have early observers registered that
 		// do not remove themselves until exit
 		ErrorMessageBox(ex.what(), "Spring: caught std::exception", MBF_OK | MBF_EXCL);
+#ifdef UNITSYNC
+		throw;
+#endif
 	} catch (...) {
 		initFailure = true;
 
 		ErrorMessageBox("", "Spring: caught generic exception", MBF_OK | MBF_EXCL);
+#ifdef UNITSYNC
+		throw;
+#endif
 	}
 
 	// in case of an exception, ErrorMessageBox takes care of this
