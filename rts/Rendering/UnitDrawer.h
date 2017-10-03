@@ -227,12 +227,6 @@ public:
 	static void DrawIndividualDefOpaque(const SolidObjectDef* objectDef, int teamID, bool rawState, bool toScreen = false);
 	static void DrawIndividualDefAlpha(const SolidObjectDef* objectDef, int teamID, bool rawState, bool toScreen = false);
 
-	// needed by FFP drawer-state
-	static void SetupBasicS3OTexture0();
-	static void SetupBasicS3OTexture1();
-	static void CleanupBasicS3OTexture1();
-	static void CleanupBasicS3OTexture0();
-
 	static bool ObjectVisibleReflection(const float3 objPos, const float3 camPos, float maxRadius);
 
 
