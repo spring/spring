@@ -4,6 +4,7 @@
 #define LEGACYTRACKHANDLER_H
 
 
+#include <array>
 #include <deque>
 #include <vector>
 #include <string>
