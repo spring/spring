@@ -9,24 +9,43 @@
 #include <cassert>
 #include <cstring>
 
-using std::string;
+
+static bool CheckHeader(const SMFHeader& h)
+{
+	if (h.version != 1)
+		return false;
+	if (h.tilesize != 32)
+		return false;
+	if (h.texelPerSquare != 8)
+		return false;
+	if (h.squareSize != 8)
+		return false;
+
+	return (std::strcmp(h.magic, "spring map file") == 0);
+}
 
 
-CSMFMapFile::CSMFMapFile(const string& mapFileName)
+CSMFMapFile::CSMFMapFile(const std::string& mapFileName)
 	: ifs(mapFileName), featureFileOffset(0)
 {
-	memset(&header, 0, sizeof(header));
+	char buf[512] = {0};
+	auto& h = header;
+
+	memset(&h, 0, sizeof(header));
 	memset(&featureHeader, 0, sizeof(featureHeader));
 
-	if (!ifs.FileExists())
-		throw content_error("Couldn't open map file " + mapFileName);
+	if (!ifs.FileExists()) {
+		snprintf(buf, sizeof(buf), "[%s] could not open \"%s\"", __func__, mapFileName.c_str());
+		throw content_error(buf);
+	}
 
-	ReadMapHeader(header, ifs);
+	ReadMapHeader(h, ifs);
 
-	if (strcmp(header.magic, "spring map file") != 0 ||
-	    header.version != 1 || header.tilesize != 32 ||
-	    header.texelPerSquare != 8 || header.squareSize != 8)
-		throw content_error("Incorrect map file " + mapFileName);
+	if (CheckHeader())
+		return;
+
+	snprintf("[%s] corrupt header for \"%s\" (v=%d ts=%d tps=%d ss=%d)", __func__, mapFileName.c_str(), h.version, h.tilesize, h.texelPerSquare, h.squareSize);
+	throw content_error(buf);
 }
 
 void CSMFMapFile::ReadMinimap(void* data)
@@ -131,7 +150,7 @@ const char* CSMFMapFile::GetFeatureTypeName(int typeID) const
 }
 
 
-void CSMFMapFile::GetInfoMapSize(const string& name, MapBitmapInfo* info) const
+void CSMFMapFile::GetInfoMapSize(const std::string& name, MapBitmapInfo* info) const
 {
 	if (name == "height") {
 		*info = MapBitmapInfo(header.mapx + 1, header.mapy + 1);
@@ -151,7 +170,7 @@ void CSMFMapFile::GetInfoMapSize(const string& name, MapBitmapInfo* info) const
 }
 
 
-bool CSMFMapFile::ReadInfoMap(const string& name, void* data)
+bool CSMFMapFile::ReadInfoMap(const std::string& name, void* data)
 {
 	if (name == "height") {
 		ReadHeightmap((unsigned short*)data);
