@@ -59,7 +59,7 @@ CMetalExtractionTexture::CMetalExtractionTexture()
 		}
 	)";
 
-	shader = shaderHandler->CreateProgramObject("[CMetalExtractionTexture]", "CMetalExtractionTexture", false);
+	shader = shaderHandler->CreateProgramObject("[CMetalExtractionTexture]", "CMetalExtractionTexture");
 	shader->AttachShaderObject(shaderHandler->CreateShaderObject(vertexCode,   "", GL_VERTEX_SHADER));
 	shader->AttachShaderObject(shaderHandler->CreateShaderObject(fragmentCode, "", GL_FRAGMENT_SHADER));
 	shader->Link();

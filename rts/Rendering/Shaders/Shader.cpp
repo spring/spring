@@ -152,45 +152,6 @@ namespace Shader {
 
 	/*****************************************************************/
 
-	ARBShaderObject::ARBShaderObject(
-		unsigned int shType,
-		const std::string& shSrc,
-		const std::string& shSrcDefs
-	): IShaderObject(shType, shSrc)
-	{
-		glGenProgramsARB(1, &objID);
-	}
-
-	void ARBShaderObject::Compile() {
-		glEnable(type);
-
-		glBindProgramARB(type, objID);
-		glProgramStringARB(type, GL_PROGRAM_FORMAT_ASCII_ARB, srcText.size(), srcText.c_str());
-
-		int errorPos = -1;
-		int isNative =  0;
-
-		glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &errorPos);
-		glGetProgramivARB(type, GL_PROGRAM_UNDER_NATIVE_LIMITS_ARB, &isNative);
-
-		const char* err = (const char*) glGetString(GL_PROGRAM_ERROR_STRING_ARB);
-
-		log = std::string((err != NULL)? err: "[NULL]");
-		valid = (errorPos == -1 && isNative != 0);
-
-		glBindProgramARB(type, 0);
-		glDisable(type);
-	}
-
-	void ARBShaderObject::Release() {
-		glDeleteProgramsARB(1, &objID);
-	}
-
-
-
-
-	/*****************************************************************/
-
 	GLSLShaderObject::GLSLShaderObject(
 		unsigned int shType,
 		const std::string& shSrcFile,
@@ -332,72 +293,6 @@ namespace Shader {
 		}
 		glActiveTexture(GL_TEXTURE0);
 	}
-
-
-
-
-	/*****************************************************************/
-
-	ARBProgramObject::ARBProgramObject(const std::string& poName): IProgramObject(poName) {
-		objID = -1; // not used for ARBProgramObject instances
-		uniformTarget = -1;
-	}
-
-	void ARBProgramObject::SetUniformTarget(int target) {
-		uniformTarget = target;
-	}
-	int ARBProgramObject::GetUnitformTarget() {
-		return uniformTarget;
-	}
-
-	void ARBProgramObject::Enable() {
-		RecompileIfNeeded(true);
-		for (const IShaderObject* so: shaderObjs) {
-			glEnable(so->GetType());
-			glBindProgramARB(so->GetType(), so->GetObjID());
-		}
-		IProgramObject::Enable();
-	}
-	void ARBProgramObject::Disable() {
-		for (const IShaderObject* so: shaderObjs) {
-			glBindProgramARB(so->GetType(), 0);
-			glDisable(so->GetType());
-		}
-		IProgramObject::Disable();
-	}
-
-	void ARBProgramObject::Link() {
-		RecompileIfNeeded(false);
-		valid = true;
-
-		for (const IShaderObject* so: shaderObjs) {
-			valid &= so->IsValid();
-		}
-	}
-	void ARBProgramObject::Reload(bool reloadFromDisk, bool validate) {
-		for (IShaderObject* so: GetAttachedShaderObjs()) {
-			if (reloadFromDisk) so->ReloadFromDisk();
-			so->Compile();
-		}
-		if (validate) Validate();
-	}
-
-
-	void ARBProgramObject::SetUniform1i(int idx, int   v0                              ) { glProgramEnvParameter4fARB(uniformTarget, idx, float(v0), float( 0), float( 0), float( 0)); }
-	void ARBProgramObject::SetUniform2i(int idx, int   v0, int   v1                    ) { glProgramEnvParameter4fARB(uniformTarget, idx, float(v0), float(v1), float( 0), float( 0)); }
-	void ARBProgramObject::SetUniform3i(int idx, int   v0, int   v1, int   v2          ) { glProgramEnvParameter4fARB(uniformTarget, idx, float(v0), float(v1), float(v2), float( 0)); }
-	void ARBProgramObject::SetUniform4i(int idx, int   v0, int   v1, int   v2, int   v3) { glProgramEnvParameter4fARB(uniformTarget, idx, float(v0), float(v1), float(v2), float(v3)); }
-	void ARBProgramObject::SetUniform1f(int idx, float v0                              ) { glProgramEnvParameter4fARB(uniformTarget, idx, v0, 0.0f, 0.0f, 0.0f); }
-	void ARBProgramObject::SetUniform2f(int idx, float v0, float v1                    ) { glProgramEnvParameter4fARB(uniformTarget, idx, v0,   v1, 0.0f, 0.0f); }
-	void ARBProgramObject::SetUniform3f(int idx, float v0, float v1, float v2          ) { glProgramEnvParameter4fARB(uniformTarget, idx, v0,   v1,   v2, 0.0f); }
-	void ARBProgramObject::SetUniform4f(int idx, float v0, float v1, float v2, float v3) { glProgramEnvParameter4fARB(uniformTarget, idx, v0,   v1,   v2,   v3); }
-
-	void ARBProgramObject::SetUniform2iv(int idx, const int*   v) { int   vv[4]; vv[0] = v[0]; vv[1] = v[1]; vv[2] =    0; vv[3] =    0; glProgramEnvParameter4fvARB(uniformTarget, idx, (float*) vv); }
-	void ARBProgramObject::SetUniform3iv(int idx, const int*   v) { int   vv[4]; vv[0] = v[0]; vv[1] = v[1]; vv[2] = v[2]; vv[3] =    0; glProgramEnvParameter4fvARB(uniformTarget, idx, (float*) vv); }
-	void ARBProgramObject::SetUniform4iv(int idx, const int*   v) { int   vv[4]; vv[0] = v[0]; vv[1] = v[1]; vv[2] = v[2]; vv[3] = v[3]; glProgramEnvParameter4fvARB(uniformTarget, idx, (float*) vv); }
-	void ARBProgramObject::SetUniform2fv(int idx, const float* v) { float vv[4]; vv[0] = v[0]; vv[1] = v[1]; vv[2] = 0.0f; vv[3] = 0.0f; glProgramEnvParameter4fvARB(uniformTarget, idx,          vv); }
-	void ARBProgramObject::SetUniform3fv(int idx, const float* v) { float vv[4]; vv[0] = v[0]; vv[1] = v[1]; vv[2] = v[2]; vv[3] = 0.0f; glProgramEnvParameter4fvARB(uniformTarget, idx,          vv); }
-	void ARBProgramObject::SetUniform4fv(int idx, const float* v) { float vv[4]; vv[0] = v[0]; vv[1] = v[1]; vv[2] = v[2]; vv[3] = v[3]; glProgramEnvParameter4fvARB(uniformTarget, idx,          vv); }
 
 
 

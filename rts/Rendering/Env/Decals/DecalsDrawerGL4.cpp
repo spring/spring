@@ -335,7 +335,7 @@ void CDecalsDrawerGL4::DetectMaxDecals()
 
 void CDecalsDrawerGL4::LoadShaders()
 {
-	decalShader = shaderHandler->CreateProgramObject("[DecalsDrawerGL4]", "DecalShader", false);
+	decalShader = shaderHandler->CreateProgramObject("[DecalsDrawerGL4]", "DecalShader");
 
 	decalShader->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/DecalsVertGL4.glsl", "", GL_VERTEX_SHADER));
 	decalShader->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/DecalsFragGL4.glsl", "", GL_FRAGMENT_SHADER));

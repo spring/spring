@@ -57,7 +57,7 @@ CLosTexture::CLosTexture()
 		}
 	)";
 
-	shader = shaderHandler->CreateProgramObject("[CLosTexture]", "CLosTexture", false);
+	shader = shaderHandler->CreateProgramObject("[CLosTexture]", "CLosTexture");
 	shader->AttachShaderObject(shaderHandler->CreateShaderObject(vertexCode,   "", GL_VERTEX_SHADER));
 	shader->AttachShaderObject(shaderHandler->CreateShaderObject(fragmentCode, "", GL_FRAGMENT_SHADER));
 	shader->Link();

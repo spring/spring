@@ -134,7 +134,7 @@ bool UnitDrawerStateGLSL::Init(const CUnitDrawer* ud) {
 		("#define MAX_DYNAMIC_MODEL_LIGHTS " + IntToString(lightHandler->GetMaxLights()) + "\n");
 
 	for (unsigned int n = MODEL_SHADER_NOSHADOW_STANDARD; n <= MODEL_SHADER_SHADOWED_DEFERRED; n++) {
-		modelShaders[n] = sh->CreateProgramObject("[UnitDrawer]", shaderNames[n], false);
+		modelShaders[n] = sh->CreateProgramObject("[UnitDrawer]", shaderNames[n]);
 		modelShaders[n]->AttachShaderObject(sh->CreateShaderObject("GLSL/ModelVertProg.glsl", extraDefs, GL_VERTEX_SHADER));
 		modelShaders[n]->AttachShaderObject(sh->CreateShaderObject("GLSL/ModelFragProg.glsl", extraDefs, GL_FRAGMENT_SHADER));
 

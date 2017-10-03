@@ -57,7 +57,7 @@ CAirLosTexture::CAirLosTexture()
 		}
 	)";
 
-	shader = shaderHandler->CreateProgramObject("[CAirLosTexture]", "CAirLosTexture", false);
+	shader = shaderHandler->CreateProgramObject("[CAirLosTexture]", "CAirLosTexture");
 	shader->AttachShaderObject(shaderHandler->CreateShaderObject(vertexCode,   "", GL_VERTEX_SHADER));
 	shader->AttachShaderObject(shaderHandler->CreateShaderObject(fragmentCode, "", GL_FRAGMENT_SHADER));
 	shader->Link();

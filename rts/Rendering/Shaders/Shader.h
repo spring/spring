@@ -69,13 +69,6 @@ namespace Shader {
 		NullShaderObject(unsigned int shType, const std::string& shSrcFile) : IShaderObject(shType, shSrcFile) {}
 	};
 
-	struct ARBShaderObject: public Shader::IShaderObject {
-	public:
-		ARBShaderObject(unsigned int, const std::string&, const std::string& shSrcDefs = "");
-		void Compile();
-		void Release();
-	};
-
 	struct GLSLShaderObject: public Shader::IShaderObject {
 	public:
 		GLSLShaderObject(unsigned int, const std::string&, const std::string& shSrcDefs = "");
@@ -161,7 +154,6 @@ namespace Shader {
 
 
 		/// old interface
-		virtual void SetUniformTarget(int) {} //< only needed for ARB, for GLSL uniforms of vertex & frag shader are accessed in the same space
 		virtual void SetUniformLocation(const std::string&) {}
 
 		virtual void SetUniform1i(int idx, int   v0) = 0;
@@ -289,43 +281,6 @@ namespace Shader {
 	};
 
 
-	struct ARBProgramObject: public Shader::IProgramObject {
-	public:
-		ARBProgramObject(const std::string& poName);
-
-		void Enable();
-		void Disable();
-		void Link();
-		void Release() { IProgramObject::Release(); }
-		void Reload(bool reloadFromDisk, bool validate);
-		bool Validate() { return true; }
-
-		int GetUniformLoc(const std::string& name) { return -1; } // FIXME
-		int GetUniformType(const int idx) { return -1; }
-		void SetUniformTarget(int target);
-		int GetUnitformTarget();
-
-		void SetUniform1i(int idx, int   v0);
-		void SetUniform2i(int idx, int   v0, int   v1);
-		void SetUniform3i(int idx, int   v0, int   v1, int   v2);
-		void SetUniform4i(int idx, int   v0, int   v1, int   v2, int   v3);
-		void SetUniform1f(int idx, float v0);
-		void SetUniform2f(int idx, float v0, float v1);
-		void SetUniform3f(int idx, float v0, float v1, float v2);
-		void SetUniform4f(int idx, float v0, float v1, float v2, float v3);
-
-		void SetUniform2iv(int idx, const int*   v);
-		void SetUniform3iv(int idx, const int*   v);
-		void SetUniform4iv(int idx, const int*   v);
-		void SetUniform2fv(int idx, const float* v);
-		void SetUniform3fv(int idx, const float* v);
-		void SetUniform4fv(int idx, const float* v);
-
-	private:
-		int uniformTarget;
-	};
-
-
 	struct GLSLProgramObject: public Shader::IProgramObject {
 	public:
 		GLSLProgramObject(const std::string& poName);
@@ -390,21 +345,6 @@ namespace Shader {
 		unsigned int curSrcHash;
 	};
 
-	/*
-	struct GLSLARBProgramObject: public Shader::IProgramObject {
-		glCreateProgramObjectARB <==> glCreateProgram
-		glCreateShaderObjectARB  <==> glCreateShader
-		glDeleteObjectARB        <==> glDelete{Shader,Program}
-		glCompileShaderARB       <==> glCompileShader
-		glShaderSourceARB        <==> glShaderSource
-		glAttachObjectARB        <==> glAttachShader
-		glDetachObjectARB        <==> glDetachShader
-		glLinkProgramARB         <==> glLinkProgram
-		glUseProgramObjectARB    <==> glUseProgram
-		glUniform*ARB            <==> glUniform*
-		glGetUniformLocationARB  <==> glGetUniformLocation
-	};
-	*/
 
 	extern NullShaderObject* nullShaderObject;
 	extern NullProgramObject* nullProgramObject;

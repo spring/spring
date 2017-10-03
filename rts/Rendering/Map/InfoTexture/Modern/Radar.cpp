@@ -68,7 +68,7 @@ CRadarTexture::CRadarTexture()
 		}
 	)";
 
-	shader = shaderHandler->CreateProgramObject("[CRadarTexture]", "CRadarTexture", false);
+	shader = shaderHandler->CreateProgramObject("[CRadarTexture]", "CRadarTexture");
 	shader->AttachShaderObject(shaderHandler->CreateShaderObject(vertexCode,   "", GL_VERTEX_SHADER));
 	shader->AttachShaderObject(shaderHandler->CreateShaderObject(fragmentCode, "", GL_FRAGMENT_SHADER));
 	shader->Link();

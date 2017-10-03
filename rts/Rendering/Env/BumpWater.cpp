@@ -228,7 +228,7 @@ CBumpWater::CBumpWater()
 
 
 		{
-			blurShader = shaderHandler->CreateProgramObject("[BumpWater]", "CoastBlurShader", false);
+			blurShader = shaderHandler->CreateProgramObject("[BumpWater]", "CoastBlurShader");
 			blurShader->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/bumpWaterCoastBlurFS.glsl", "", GL_FRAGMENT_SHADER));
 			blurShader->Link();
 
@@ -445,7 +445,7 @@ CBumpWater::CBumpWater()
 
 	// LOAD SHADERS
 	{
-		waterShader = shaderHandler->CreateProgramObject("[BumpWater]", "WaterShader", false);
+		waterShader = shaderHandler->CreateProgramObject("[BumpWater]", "WaterShader");
 		waterShader->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/bumpWaterVS.glsl", definitions, GL_VERTEX_SHADER));
 		waterShader->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/bumpWaterFS.glsl", definitions, GL_FRAGMENT_SHADER));
 		waterShader->Link();

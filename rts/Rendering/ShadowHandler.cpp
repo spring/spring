@@ -191,7 +191,7 @@ void CShadowHandler::LoadShadowGenShaders()
 		("#define SUPPORT_DEPTH_LAYOUT " + IntToString(globalRendering->supportFragDepthLayout) + "\n");
 
 	for (int i = 0; i < SHADOWGEN_PROGRAM_LAST; i++) {
-		Shader::IProgramObject* po = sh->CreateProgramObject("[ShadowHandler]", shadowGenProgHandles[i] + "GLSL", false);
+		Shader::IProgramObject* po = sh->CreateProgramObject("[ShadowHandler]", shadowGenProgHandles[i] + "GLSL");
 
 		if (i == SHADOWGEN_PROGRAM_MAP) {
 			po->AttachShaderObject(sh->CreateShaderObject("GLSL/ShadowGenVertProg.glsl", versionDefs[0] + shadowGenProgDefines[i] + extraDefs, GL_VERTEX_SHADER));
