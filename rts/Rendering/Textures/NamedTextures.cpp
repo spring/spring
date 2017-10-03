@@ -206,7 +206,7 @@ namespace CNamedTextures {
 		TexInfo texInfo;
 
 		if (!bitmap.Load(filename)) {
-			LOG_L(L_WARNING, "Couldn't find texture \"%s\"!", filename.c_str());
+			LOG_L(L_WARNING, "[NamedTextures::%s] could not load texture \"%s\"", __func__, filename.c_str());
 			GenInsertTex(texName, texInfo, false, false, true, false);
 			return false;
 		}
@@ -214,7 +214,7 @@ namespace CNamedTextures {
 		if (bitmap.compressed) {
 			texID = bitmap.CreateDDSTexture(texID);
 		} else {
-			if (resize) bitmap = bitmap.CreateRescaled(resizeDimensions.x,resizeDimensions.y);
+			if (resize) bitmap = bitmap.CreateRescaled(resizeDimensions.x, resizeDimensions.y);
 			if (invert) bitmap.InvertColors();
 			if (greyed) bitmap.MakeGrayScale();
 			if (tint)   bitmap.Tint(tintColor);
