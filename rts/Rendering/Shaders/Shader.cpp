@@ -531,6 +531,7 @@ namespace Shader {
 	GLSLShaderObject::CompiledShaderObject GLSLShaderObject::CreateAndCompileShaderObject(std::string& programLog)
 	{
 		CompiledShaderObject cso;
+		// ReloadFromTextOrFile must have been called
 		assert(!srcText.empty());
 
 		std::string versionStr;
