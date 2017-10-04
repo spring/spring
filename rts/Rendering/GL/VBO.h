@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef VBO_H
-#define VBO_H
+#ifndef GL_VBO_H
+#define GL_VBO_H
 
 #include "Rendering/GL/myGL.h"
 

@@ -59,6 +59,7 @@ SET(sources_engine_Rendering
 		"${CMAKE_CURRENT_SOURCE_DIR}/GL/LightHandler.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/GL/VertexArray.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/GL/VertexArrayRange.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/GL/VAO.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/GL/VBO.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/GL/glExtra.cpp"
 		"${CMAKE_CURRENT_SOURCE_DIR}/GL/myGL.cpp"
