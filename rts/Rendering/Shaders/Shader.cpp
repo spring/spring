@@ -533,9 +533,9 @@ namespace Shader {
 		CompiledShaderObject cso;
 		assert(!srcText.empty());
 
+		std::string versionStr;
 		std::string sourceStr = srcText;
 		std::string defFlags  = rawDefStrs + "\n" + modDefStrs;
-		std::string versionStr;
 
 		// extract #version pragma and put it on the first line (only allowed there)
 		// version pragma in definitions overrides version pragma in source (if any)
@@ -545,7 +545,7 @@ namespace Shader {
 		if (!versionStr.empty()) EnsureEndsWith(&versionStr, "\n");
 		if (!defFlags.empty())   EnsureEndsWith(&defFlags,   "\n");
 
-		const std::array<const GLchar*, 7> sources = {
+		std::array<const GLchar*, 7> sources = {
 			"// SHADER VERSION\n",
 			versionStr.c_str(),
 			"// SHADER FLAGS\n",
