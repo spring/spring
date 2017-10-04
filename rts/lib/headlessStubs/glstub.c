@@ -31,9 +31,9 @@ GLAPI void APIENTRY glBufferDataARB(GLenum target, GLsizeiptrARB size, const GLv
 GLAPI void APIENTRY glCopyBufferSubData(GLenum readTarget, GLenum writeTarget, GLintptr readOffset, GLintptr writeOffset, GLsizeiptr size) {}
 GLAPI void APIENTRY glCopyNamedBufferSubData(GLuint readBuffer, GLuint writeBuffer, GLintptr readOffset, GLintptr writeOffset, GLsizei size) {}
 
-GLAPI void APIENTRY glGenVertexArrays(GLsizei, GLuint*) {}
-GLAPI void APIENTRY glDeleteVertexArrays(GLsizei, const GLuint*) {}
-GLAPI void APIENTRY glBindVertexArray(GLuint) {}
+GLAPI void APIENTRY glGenVertexArrays(GLsizei n, GLuint* arrays) {}
+GLAPI void APIENTRY glDeleteVertexArrays(GLsizei n, const GLuint* arrays) {}
+GLAPI void APIENTRY glBindVertexArray(GLuint id) {}
 
 GLAPI void APIENTRY glGenFramebuffersEXT(GLsizei n, GLuint *framebuffers) {}
 GLAPI GLenum APIENTRY glCheckFramebufferStatusEXT(GLenum target) {
