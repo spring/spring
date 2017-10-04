@@ -4,9 +4,7 @@
 #define SPRING_SHADER_HDR
 
 #include <algorithm>
-#include <functional>
 #include <string>
-#include <memory>
 #include <vector>
 
 #include "ShaderStates.h"
@@ -22,28 +20,22 @@ constexpr size_t hashString(const char* str, size_t hash = 5381)
 
 struct fast_hash : public std::unary_function<int, size_t>
 {
-	size_t operator()(const int a) const
-	{
-		return a;
-	}
+	size_t operator()(const int a) const { return a; }
 };
 
 namespace Shader {
 	struct IShaderObject {
 	public:
-		IShaderObject(unsigned int shType, const std::string& shSrcFile, const std::string& shSrcDefs = ""):
-			objID(0), type(shType), valid(false), srcFile(shSrcFile), rawDefStrs(shSrcDefs) {
+		IShaderObject(unsigned int shType, const std::string& shSrcData, const std::string& shSrcDefs = ""):
+			type(shType), srcData(shSrcData), rawDefStrs(shSrcDefs) {
 		}
 
 		virtual ~IShaderObject() {}
 
-		virtual void Compile() {}
-		virtual void Release() {}
-
-		bool ReloadFromDisk();
+		bool ReloadFromTextOrFile();
 		bool IsValid() const { return valid; }
 
-		unsigned int GetObjID() const { return objID; }
+		unsigned int GetObjID() const { return glid; }
 		unsigned int GetType() const { return type; }
 		unsigned int GetHash() const;
 
@@ -52,13 +44,13 @@ namespace Shader {
 		void SetDefinitions(const std::string& defs) { modDefStrs = defs; }
 
 	protected:
-		unsigned int objID;
-		unsigned int type;
+		unsigned int glid = 0;
+		unsigned int type = 0;
 
-		bool valid;
+		bool valid = false;
 
-		std::string srcFile;
-		std::string srcText;
+		std::string srcData; // text or file
+		std::string srcText; // equal to srcData if text, otherwise read from file
 		std::string rawDefStrs; // set via constructor only, constant
 		std::string modDefStrs; // set on reload from changed flags
 		std::string log;
@@ -71,22 +63,35 @@ namespace Shader {
 
 	struct GLSLShaderObject: public Shader::IShaderObject {
 	public:
-		GLSLShaderObject(unsigned int, const std::string&, const std::string& shSrcDefs = "");
+		GLSLShaderObject(
+			unsigned int shType,
+			const std::string& shSrcData,
+			const std::string& shSrcDefs = ""
+		): IShaderObject(shType, shSrcData, shSrcDefs) {}
+
 
 		struct CompiledShaderObject {
-			CompiledShaderObject() : id(0), valid(false) {}
+		public:
+			CompiledShaderObject(): id(0), valid(false) {}
+			CompiledShaderObject(const CompiledShaderObject& cso) = delete;
+			CompiledShaderObject(CompiledShaderObject&& cso) { *this = std::move(cso); }
+			~CompiledShaderObject();
 
+			CompiledShaderObject& operator = (const CompiledShaderObject& cso) = delete;
+			CompiledShaderObject& operator = (CompiledShaderObject&& cso) {
+				// destination CSO must not be valid yet
+				id = cso.id;
+				cso.id = 0;
+
+				valid = cso.valid;
+			}
+
+		public:
 			unsigned int id;
 			bool      valid;
-			std::string log;
 		};
 
-		/// @brief Returns a GLSL shader object in an unqiue pointer that auto deletes that instance.
-		///        Quote of GL docs: If a shader object is deleted while it is attached to a program object,
-		///        it will be flagged for deletion, and deletion will not occur until glDetachShader is called
-		///        to detach it from all program objects to which it is attached.
-		typedef std::unique_ptr<CompiledShaderObject, std::function<void(CompiledShaderObject* so)>> CompiledShaderObjectUniquePtr;
-		CompiledShaderObjectUniquePtr CompileShaderObject();
+		CompiledShaderObject CreateAndCompileShaderObject(std::string& programLog);
 	};
 
 
@@ -94,16 +99,43 @@ namespace Shader {
 
 	struct IProgramObject {
 	public:
-		IProgramObject(const std::string& poName);
+		IProgramObject() { LoadFromID(0); }
+		IProgramObject(const std::string& poName): name(poName) {}
+		IProgramObject(const IProgramObject& po) = delete;
+		IProgramObject(IProgramObject&& po) { *this = std::move(po); }
 		virtual ~IProgramObject() {}
 
-		void LoadFromID(unsigned int id) {
-			objID = id;
-			valid = (id != 0 && Validate());
+		IProgramObject& operator = (const IProgramObject& po) = delete;
+		IProgramObject& operator = (IProgramObject&& po) {
+			glid = po.glid;
+			hash = po.hash;
+
+			valid = po.valid;
+			bound = po.bound;
+
+			name = std::move(po.name);
+			log = std::move(po.log);
+
+			shaderObjs = std::move(po.shaderObjs);
+			shaderFlags = std::move(po.shaderFlags);
+
+			uniformStates = std::move(po.uniformStates);
+			luaTextures = std::move(po.luaTextures);
+
+			// invalidate old
+			po.LoadFromID(0);
+			return *this;
+		}
+
+		void LoadFromID(unsigned int _glid) {
+			glid = _glid;
+			hash = 0;
+
+			valid = (glid != 0 && Validate());
 			bound = false;
 
-			// not needed for pre-compiled programs
-			shaderObjs.clear();
+			// objs are not needed for pre-compiled programs
+			ClearAttachedShaderObjects();
 		}
 
 		/// create the whole shader from a lua file
@@ -111,28 +143,27 @@ namespace Shader {
 
 		virtual void Enable() { bound = true; }
 		virtual void Disable() { bound = false; }
+		virtual bool CreateAndLink() = 0;
+		virtual bool ValidateAndCopyUniforms(unsigned int tgtProgID, unsigned int srcProgID, bool validate) = 0;
 		virtual void Link() = 0;
 		virtual bool Validate() = 0;
-		virtual void Release() = 0;
-		virtual void Reload(bool reloadFromDisk, bool validate) = 0;
+		virtual void Release(bool deleteShaderObjs = true) = 0;
+		virtual void Reload(bool force, bool validate) = 0;
+		virtual bool ReloadState(bool reloadShaderObjs) = 0;
+
 		/// attach single shader objects (vertex, frag, ...) to the program
-		virtual void AttachShaderObject(IShaderObject* so) { shaderObjs.push_back(so); }
+		void AttachShaderObject(IShaderObject* so) { shaderObjs.push_back(so); }
+		void ClearAttachedShaderObjects() { shaderObjs.clear(); }
 
 		bool IsBound() const { return bound; }
 		bool IsValid() const { return valid; }
-		bool IsShaderAttached(const IShaderObject* so) const {
-			return (std::find(shaderObjs.begin(), shaderObjs.end(), so) != shaderObjs.end());
-		}
 
-		unsigned int GetObjID() const { return objID; }
+		unsigned int GetObjID() const { return glid; }
 
 		const std::string& GetName() const { return name; }
 		const std::string& GetLog() const { return log; }
 
-		const std::vector<IShaderObject*>& GetAttachedShaderObjs() const { return shaderObjs; }
-		      std::vector<IShaderObject*>& GetAttachedShaderObjs()       { return shaderObjs; }
-
-		void RecompileIfNeeded(bool validate);
+		void MaybeReload(bool validate);
 		void PrintDebugInfo();
 
 	public:
@@ -231,13 +262,14 @@ namespace Shader {
 		}
 
 	protected:
+		unsigned int glid = 0; // GL identifier
+		unsigned int hash = 0; // hash-code
+
+		bool valid = false;
+		bool bound = false;
+
 		std::string name;
 		std::string log;
-
-		unsigned int objID;
-
-		bool valid;
-		bool bound;
 
 		std::vector<IShaderObject*> shaderObjs;
 
@@ -249,16 +281,25 @@ namespace Shader {
 	};
 
 
+
 	struct NullProgramObject: public Shader::IProgramObject {
 	public:
 		NullProgramObject(const std::string& poName): IProgramObject(poName) {}
+		NullProgramObject(const NullProgramObject& po) = delete;
+		NullProgramObject(NullProgramObject&& po) = delete; // never moved
+
+		NullProgramObject& operator = (const NullProgramObject& po) = delete;
+		NullProgramObject& operator = (NullProgramObject&& po) = delete;
 
 		void Enable() {}
 		void Disable() {}
-		void Release() {}
-		void Reload(bool reloadFromDisk, bool validate) {}
-		bool Validate() { return true; }
+		bool CreateAndLink() { return false; }
+		bool ValidateAndCopyUniforms(unsigned int tgtProgID, unsigned int srcProgID, bool validate) { return false; }
 		void Link() {}
+		void Release(bool deleteShaderObjs = true) {}
+		void Reload(bool force, bool validate) {}
+		bool ReloadState(bool reloadShaderObjs) {}
+		bool Validate() { return true; }
 
 		int GetUniformLoc(const std::string& name) { return -1; }
 		int GetUniformType(const int idx) { return -1; }
@@ -281,17 +322,38 @@ namespace Shader {
 	};
 
 
+
 	struct GLSLProgramObject: public Shader::IProgramObject {
 	public:
-		GLSLProgramObject(const std::string& poName);
+		GLSLProgramObject(): IProgramObject() {}
+		GLSLProgramObject(const std::string& poName); // NOTE: calls glCreateProgram
+		GLSLProgramObject(const GLSLProgramObject&) = delete;
+		GLSLProgramObject(GLSLProgramObject&& po) { *this = std::move(po); }
 		~GLSLProgramObject() { Release(); }
+
+		GLSLProgramObject& operator = (const GLSLProgramObject& po) = delete;
+		GLSLProgramObject& operator = (GLSLProgramObject&& po) {
+			uniformLocs = std::move(po.uniformLocs);
+
+			IProgramObject::operator = (std::move(po));
+			return *this;
+		}
 
 		void Enable();
 		void Disable();
-		void Link();
+		bool CreateAndLink();
+		bool ValidateAndCopyUniforms(unsigned int tgtProgID, unsigned int srcProgID, bool validate);
+		bool ValidateAndCopyUniforms(unsigned int srcProgID, bool validate) { return (ValidateAndCopyUniforms(glid, srcProgID, validate)); }
+		void Link(); // NOTE: calls MaybeReload (i.e. Reload which compiles *and* links)
 		bool Validate();
-		void Release();
-		void Reload(bool reloadFromDisk, bool validate);
+		void Release(bool deleteShaderObjs = true);
+		void Reload(bool force, bool validate);
+		bool ReloadState(bool reloadShaderObjs);
+
+		void ClearUniformLocations();
+		void SetShaderDefinitions(const std::string& defs);
+		void ReloadShaderObjects();
+		void RecalculateShaderHash();
 
 	public:
 		void SetUniformLocation(const std::string&);
@@ -342,7 +404,6 @@ namespace Shader {
 
 	private:
 		std::vector<size_t> uniformLocs;
-		unsigned int curSrcHash;
 	};
 
 

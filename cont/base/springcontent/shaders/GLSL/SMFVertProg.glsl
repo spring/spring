@@ -7,10 +7,12 @@ uniform ivec2 texSquare;
 uniform vec3 cameraPos;
 uniform vec4 lightDir;       // mapInfo->light.sunDir
 
-varying vec3 halfDir;
-varying float fogFactor;
-varying vec4 vertexWorldPos;
-varying vec2 diffuseTexCoords;
+
+out vec3 halfDir;
+out vec4 vertexWorldPos;
+out vec2 diffuseTexCoords;
+
+out float fogFactor;
 
 
 void main() {

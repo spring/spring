@@ -9,9 +9,9 @@ uniform vec3 treeOffset;
 #endif
 
 #ifdef SHADOWGEN_PROGRAM_MAP
-varying mat4 shadowViewMat;
-varying mat4 shadowProjMat;
-varying vec4 vertexModelPos;
+out mat4 shadowViewMat;
+out mat4 shadowProjMat;
+out vec4 vertexModelPos;
 #endif
 
 

@@ -5,7 +5,6 @@
 #include "Rendering/Shaders/LuaShaderContainer.h"
 #include "Rendering/Shaders/GLSLCopyState.h"
 #include "Rendering/GL/myGL.h"
-#include "Rendering/GlobalRendering.h"
 
 #include "System/SafeUtil.h"
 #include "System/StringUtil.h"
@@ -34,23 +33,23 @@ LOG_REGISTER_SECTION_GLOBAL(LOG_SECTION_SHADER)
 
 /*****************************************************************/
 
-CONFIG(bool, UseShaderCache).defaultValue(true).description("If already compiled shaders should be shared via a cache, reducing compiles of already compiled shaders.");
+CONFIG(bool, UseShaderCache).defaultValue(true).description("If already compiled shaders should be shared via a cache.");
 
 
 /*****************************************************************/
 
 static bool glslIsValid(GLuint obj)
 {
-	const bool isShader = glIsShader(obj);
 	assert(glIsShader(obj) || glIsProgram(obj));
 
-	GLint compiled;
-	if (isShader)
-		glGetShaderiv(obj, GL_COMPILE_STATUS, &compiled);
-	else
-		glGetProgramiv(obj, GL_LINK_STATUS, &compiled);
+	GLint status = 0;
 
-	return compiled;
+	if (glIsShader(obj))
+		glGetShaderiv(obj, GL_COMPILE_STATUS, &status);
+	else
+		glGetProgramiv(obj, GL_LINK_STATUS, &status);
+
+	return (status != 0);
 }
 
 
@@ -80,12 +79,14 @@ static std::string glslGetLog(GLuint obj)
 }
 
 
-static std::string GetShaderSource(const std::string& fileName)
+static std::string GetShaderSource(const std::string& srcData)
 {
-	if (fileName.find("void main()") != std::string::npos)
-		return fileName;
+	// if this is present, assume srcData is the source text
+	if (srcData.find("void main()") != std::string::npos)
+		return srcData;
 
-	std::string soPath = "shaders/" + fileName;
+	// otherwise assume srcData is the name of a file
+	std::string soPath = "shaders/" + srcData;
 	std::string soSource = "";
 
 	CFileHandler soFile(soPath);
@@ -94,22 +95,23 @@ static std::string GetShaderSource(const std::string& fileName)
 		soSource.resize(soFile.FileSize());
 		soFile.Read(&soSource[0], soFile.FileSize());
 	} else {
-		LOG_L(L_ERROR, "[%s] file not found \"%s\"", __FUNCTION__, soPath.c_str());
+		LOG_L(L_ERROR, "[%s] file \"%s\" not found", __func__, soPath.c_str());
 	}
 
 	return soSource;
 }
 
-static bool ExtractGlslVersion(std::string* src, std::string* version)
+static bool ExtractVersionDirective(std::string& src, std::string& version)
 {
-	const auto pos = src->find("#version ");
+	const auto pos = src.find("#version ");
 
 	if (pos != std::string::npos) {
-		const auto eol = src->find('\n', pos) + 1;
-		*version = src->substr(pos, eol - pos);
-		src->erase(pos, eol - pos);
+		const auto eol = src.find('\n', pos) + 1;
+		version = src.substr(pos, eol - pos);
+		src.erase(pos, eol - pos);
 		return true;
 	}
+
 	return false;
 }
 
@@ -135,9 +137,9 @@ namespace Shader {
 	}
 
 
-	bool IShaderObject::ReloadFromDisk()
+	bool IShaderObject::ReloadFromTextOrFile()
 	{
-		std::string newText = GetShaderSource(srcFile);
+		std::string newText = GetShaderSource(srcData);
 
 		if (newText != srcText) {
 			srcText = std::move(newText);
@@ -152,83 +154,24 @@ namespace Shader {
 
 	/*****************************************************************/
 
-	GLSLShaderObject::GLSLShaderObject(
-		unsigned int shType,
-		const std::string& shSrcFile,
-		const std::string& shSrcDefs
-	): IShaderObject(shType, shSrcFile, shSrcDefs)
-	{
-	}
-
-	GLSLShaderObject::CompiledShaderObjectUniquePtr GLSLShaderObject::CompileShaderObject()
-	{
-		CompiledShaderObjectUniquePtr res(new CompiledShaderObject(), [](CompiledShaderObject* so) {
-			glDeleteShader(so->id);
-			so->id = 0;
-			spring::SafeDelete(so);
-		});
-
-		assert(!srcText.empty());
-
-		std::string sourceStr = srcText;
-		std::string defFlags  = rawDefStrs + "\n" + modDefStrs;
-		std::string versionStr;
-
-		// extract #version pragma and put it on the first line (only allowed there)
-		// version pragma in definitions overrides version pragma in source (if any)
-		ExtractGlslVersion(&sourceStr, &versionStr);
-		ExtractGlslVersion(&defFlags,  &versionStr);
-
-		if (!versionStr.empty()) EnsureEndsWith(&versionStr, "\n");
-		if (!defFlags.empty())   EnsureEndsWith(&defFlags,   "\n");
-
-		std::vector<const GLchar*> sources = {
-			"// SHADER VERSION\n",
-			versionStr.c_str(),
-			"// SHADER FLAGS\n",
-			defFlags.c_str(),
-			"// SHADER SOURCE\n",
-			"#line 1\n",
-			sourceStr.c_str()
-		};
-
-		res->id = glCreateShader(type);
-
-		glShaderSource(res->id, sources.size(), &sources[0], NULL);
-		glCompileShader(res->id);
-
-		res->valid = glslIsValid(res->id);
-		res->log   = glslGetLog(res->id);
-
-		if (!res->valid) {
-			const std::string& name = srcFile.find("void main()") != std::string::npos ? "unknown" : srcFile;
-			LOG_L(L_WARNING, "[GLSL-SO::%s] shader-object name: %s, compile-log:\n%s\n", __FUNCTION__, name.c_str(), res->log.c_str());
-			LOG_L(L_WARNING, "\n%s%s%s%s%s%s%s", sources[0], sources[1], sources[2], sources[3], sources[4], sources[5], sources[6]);
+	void IProgramObject::Release(bool deleteShaderObjs) {
+		if (deleteShaderObjs) {
+			// if false, do not assume these are heap-allocated
+			for (IShaderObject*& so: shaderObjs) {
+				delete so;
+			}
 		}
 
-		return res;
-	}
+		glid = 0;
+		hash = 0;
 
-
-
-
-	/*****************************************************************/
-
-	IProgramObject::IProgramObject(const std::string& poName): name(poName), objID(0), valid(false), bound(false) {
-	}
-
-	void IProgramObject::Release() {
-		for (IShaderObject*& so: shaderObjs) {
-			so->Release();
-			delete so;
-		}
+		valid = false;
+		bound = false;
 
 		uniformStates.clear();
 		shaderObjs.clear();
 		luaTextures.clear();
 		log.clear();
-
-		valid = false;
 	}
 
 
@@ -236,8 +179,9 @@ namespace Shader {
 		return Shader::LoadFromLua(this, filename);
 	}
 
-	void IProgramObject::RecompileIfNeeded(bool validate)
+	void IProgramObject::MaybeReload(bool validate)
 	{
+		// if no change to any flag, skip the (expensive) reload
 		if (shaderFlags.HashSet() && !shaderFlags.Updated())
 			return;
 
@@ -247,20 +191,21 @@ namespace Shader {
 
 	void IProgramObject::PrintDebugInfo()
 	{
-	#if DEBUG
+		#if 0
 		LOG_L(L_DEBUG, "Uniform States for program-object \"%s\":", name.c_str());
 		LOG_L(L_DEBUG, "Defs:\n %s", (shaderFlags.GetString()).c_str());
 		LOG_L(L_DEBUG, "Uniforms:");
 
 		for (const auto& p : uniformStates) {
-			const bool curUsed = GetUniformLocation(p.second.GetName()) >= 0;
-			if (p.second.IsUninit()) {
-				LOG_L(L_DEBUG, "\t%s: uninitialized used=%i", (p.second.GetName()).c_str(), int(curUsed));
+			const int uloc = GetUniformLocation(p.second.GetName());
+
+			if (!p.second.IsInitialized()) {
+				LOG_L(L_DEBUG, "\t%s: uninitialized (loc=%i)", (p.second.GetName()).c_str(), curUsed);
 			} else {
-				LOG_L(L_DEBUG, "\t%s: x=float:%f;int:%i y=%f z=%f used=%i", (p.second.GetName()).c_str(), p.second.GetFltValues()[0], p.second.GetIntValues()[0], p.second.GetFltValues()[1], p.second.GetFltValues()[2], int(curUsed));
+				LOG_L(L_DEBUG, "\t%s: x=float:%f;int:%i y=%f z=%f used=%i", (p.second.GetName()).c_str(), p.second.GetFltValues()[0], p.second.GetIntValues()[0], p.second.GetFltValues()[1], p.second.GetFltValues()[2], curUsed);
 			}
 		}
-	#endif
+		#endif
 	}
 
 	UniformState* IProgramObject::GetNewUniformState(const std::string name)
@@ -299,13 +244,13 @@ namespace Shader {
 
 	/*****************************************************************/
 
-	GLSLProgramObject::GLSLProgramObject(const std::string& poName): IProgramObject(poName), curSrcHash(0) {
-		objID = glCreateProgram();
+	GLSLProgramObject::GLSLProgramObject(const std::string& poName): IProgramObject(poName) {
+		glid = glCreateProgram();
 	}
 
 	void GLSLProgramObject::Enable() {
-		RecompileIfNeeded(true);
-		glUseProgram(objID);
+		MaybeReload(true);
+		glUseProgram(glid);
 		IProgramObject::Enable();
 	}
 
@@ -314,26 +259,82 @@ namespace Shader {
 		IProgramObject::Disable();
 	}
 
-	void GLSLProgramObject::Link() {
-		RecompileIfNeeded(false);
-		assert(glIsProgram(objID));
+
+	bool GLSLProgramObject::CreateAndLink() {
+		bool shadersValid = true;
+
+		assert(glid == 0);
+
+		if ((glid = glCreateProgram()) == 0)
+			return false;
+
+		for (IShaderObject*& so: shaderObjs) {
+			// NOTE:
+			//   cso will call glDeleteShader when it goes out of scope
+			//   this is fine according to the GL docs and saves us from
+			//   having to delete every attached shader when Release'ing
+			//
+			//   "If a shader object is deleted while it is attached to a program object, it will be
+			//   flagged for deletion, and deletion will not occur until glDetachShader is called to
+			//   detach it from all program objects to which it is attached."
+			auto gso = static_cast<GLSLShaderObject*>(so);
+			auto cso = std::move(gso->CreateAndCompileShaderObject(log));
+
+			if (!cso.valid) {
+				shadersValid = false;
+				continue;
+			}
+
+			glAttachShader(glid, cso.id);
+		}
+
+		if (!shadersValid)
+			return false;
+
+		glLinkProgram(glid);
+
+		// append the linker-log
+		log.append(glslGetLog(glid));
+
+		return (glslIsValid(glid));
 	}
+
+	bool GLSLProgramObject::ValidateAndCopyUniforms(unsigned int tgtProgID, unsigned int srcProgID, bool validate)
+	{
+		bool isValid = valid;
+
+		if (validate)
+			isValid = Validate();
+
+		if (isValid) {
+			// fill in uniformStates
+			GLSLCopyState(tgtProgID, srcProgID, &uniformStates);
+			return true;
+		}
+
+		if (!log.empty())
+			LOG_L(L_WARNING, "[GLSL-PO::%s][validation-log (program-object=%s)]\n%s\n", __func__, name.c_str(), log.c_str());
+
+		return false;
+	}
+
 
 	bool GLSLProgramObject::Validate() {
 		GLint validated = 0;
 
-		glValidateProgram(objID);
-		glGetProgramiv(objID, GL_VALIDATE_STATUS, &validated);
-		valid = bool(validated);
+		glValidateProgram(glid);
+		glGetProgramiv(glid, GL_VALIDATE_STATUS, &validated);
 
 		// append the validation-log
-		log += glslGetLog(objID);
+		log.append(glslGetLog(glid));
 
-	#ifdef DEBUG
+		#if 0
 		// check if there are unset uniforms left
-		GLsizei numUniforms, maxUniformNameLength;
-		glGetProgramiv(objID, GL_ACTIVE_UNIFORMS, &numUniforms);
-		glGetProgramiv(objID, GL_ACTIVE_UNIFORM_MAX_LENGTH, &maxUniformNameLength);
+		GLsizei numUniforms = 0;
+		GLsizei maxUniformNameLength = 0;
+
+		glGetProgramiv(glid, GL_ACTIVE_UNIFORMS, &numUniforms);
+		glGetProgramiv(glid, GL_ACTIVE_UNIFORM_MAX_LENGTH, &maxUniformNameLength);
 
 		if (maxUniformNameLength <= 0)
 			return valid;
@@ -343,7 +344,7 @@ namespace Shader {
 			GLsizei nameLength = 0;
 			GLint size = 0;
 			GLenum type = 0;
-			glGetActiveUniform(objID, i, maxUniformNameLength, &nameLength, &size, &type, &bufname[0]);
+			glGetActiveUniform(glid, i, maxUniformNameLength, &nameLength, &size, &type, &bufname[0]);
 			bufname[nameLength] = 0;
 
 			if (nameLength == 0)
@@ -355,140 +356,133 @@ namespace Shader {
 			if (uniformStates.find(hashString(&bufname[0])) != uniformStates.end())
 				continue;
 
-			LOG_L(L_WARNING, "[GLSL-PO::%s] program-object name: %s, unset uniform: %s", __FUNCTION__, name.c_str(), &bufname[0]);
-			//assert(false);
+			LOG_L(L_WARNING, "[GLSL-PO::%s] program-object %s has unset uniform %s", __func__, name.c_str(), &bufname[0]);
 		}
-	#endif
+		#endif
 
-		return valid;
+		return (validated != 0);
 	}
 
-	void GLSLProgramObject::Release() {
-		IProgramObject::Release();
-		glDeleteProgram(objID);
+
+	void GLSLProgramObject::Release(bool deleteShaderObjs) {
+		const unsigned int _glid = glid;
+
+		IProgramObject::Release(deleteShaderObjs);
+		glDeleteProgram(_glid);
 		shaderFlags.Clear();
-
-		objID = 0;
-		curSrcHash = 0;
 	}
 
-	void GLSLProgramObject::Reload(bool reloadFromDisk, bool validate) {
-		const unsigned int oldProgID = objID;
-		const unsigned int oldSrcHash = curSrcHash;
 
-		const bool oldValid = IsValid();
-		valid = false;
+	void GLSLProgramObject::Link() {
+		MaybeReload(false);
+		assert(glIsProgram(glid));
+	}
 
-		{
-			// NOTE: this does not preserve the #version pragma
-			for (IShaderObject*& so: shaderObjs) {
-				so->SetDefinitions(shaderFlags.GetString());
-			}
 
-			log.clear();
+	void GLSLProgramObject::Reload(bool force, bool validate) {
+		const unsigned int _glid = glid;
+		const unsigned int _hash = hash;
+
+		const bool isValid = valid;
+		const bool useCache = isValid && configHandler->GetBool("UseShaderCache");
+
+		// early-exit in case of an empty program (TODO: glDeleteProgram it?)
+		if (!ReloadState(force || !isValid || (_glid == 0))) {
+			valid = false;
+			return;
 		}
 
-		// reload shader from disk if requested or necessary
-		if ((reloadFromDisk = reloadFromDisk || !oldValid || (oldProgID == 0))) {
-			for (IShaderObject*& so: shaderObjs) {
-				so->ReloadFromDisk();
-			}
-		}
+		CShaderHandler::ShaderCache& shaderCache = shaderHandler->GetShaderCache();
 
-		{
-			// create shader source hash
-			curSrcHash = shaderFlags.UpdateHash();
+		const auto& CachedProg = [&](unsigned int hc) { return ((useCache)? shaderCache.Find(hc): 0); };
+		const auto& UpdateProg = [&](unsigned int hc) { return ((glid = CachedProg(hc)) != 0 || CreateAndLink()); };
 
-			for (const IShaderObject* so: shaderObjs) {
-				curSrcHash ^= so->GetHash();
-			}
-		}
+		// recompile if post-reload <hash> has no entry in cache (id 0), validate on success
+		// then add the pre-reload <_hash, _glid> program pair unless it already has an entry
+		// NOTE:
+		//   validation was done even if !valid before but used to fail on ATI
+		//   (see springrts.com/mantis/view.php?id=4715); change "validate" to
+		//   "validate && !globalRendering->haveATI" if this reoccurs
+		// TODO: get rid of validation warnings forcing the "|| true"
+		valid = (UpdateProg(hash) && (ValidateAndCopyUniforms(glid, _glid * isValid, validate) || true));
 
-		// clear all uniform locations
-		for (auto& us_pair: uniformStates) {
-			us_pair.second.SetLocation(GL_INVALID_INDEX);
-		}
-
-		// early-exit: empty program (TODO: delete it?)
-		if (shaderObjs.empty())
+		if (useCache && shaderCache.Push(_hash, _glid))
 			return;
 
-		bool deleteOldShader = true;
+		// cache was unused or already contained a program for <_hash>
+		// (e.g. if reloading did not change the hash), so better hope
+		// that (cache[_hash] == _glid) != glid
+		if (hash == _hash)
+			return;
 
-		{
-			objID = 0;
-
-			// push old program to cache and pop new if available
-			if (oldValid && configHandler->GetBool("UseShaderCache")) {
-				CShaderHandler::ShaderCache& shadersCache = shaderHandler->GetShaderCache();
-				deleteOldShader = !shadersCache.Push(oldSrcHash, oldProgID);
-				objID = shadersCache.Find(curSrcHash);
-			}
-		}
-
-		// recompile if not found in cache (id 0)
-		if (objID == 0) {
-			objID = glCreateProgram();
-
-			bool shadersValid = true;
-			for (IShaderObject*& so: shaderObjs) {
-				assert(dynamic_cast<GLSLShaderObject*>(so));
-
-				auto gso = static_cast<GLSLShaderObject*>(so);
-				auto obj = gso->CompileShaderObject();
-
-				if (obj->valid) {
-					glAttachShader(objID, obj->id);
-				} else {
-					shadersValid = false;
-				}
-			}
-
-			if (!shadersValid)
-				return;
-
-			glLinkProgram(objID);
-
-			valid = glslIsValid(objID);
-			log += glslGetLog(objID);
-
-			if (!IsValid()) {
-				LOG_L(L_WARNING, "[GLSL-PO::%s] program-object name: %s, link-log:\n%s\n", __FUNCTION__, name.c_str(), log.c_str());
-			}
-		} else {
-			valid = true;
-		}
-
-		// FIXME: fails on ATI, see https://springrts.com/mantis/view.php?id=4715
-		if (validate && !globalRendering->haveATI)
-			Validate();
-
-		// copy full program state from old to new program (uniforms etc.)
-		if (IsValid())
-			GLSLCopyState(objID, oldValid ? oldProgID : 0, &uniformStates);
-
-		// delete old program when not further used
-		if (deleteOldShader)
-			glDeleteProgram(oldProgID);
+		glDeleteProgram(_glid);
 	}
+
+
+	bool GLSLProgramObject::ReloadState(bool reloadShaderObjs) {
+		log.clear();
+
+		ClearUniformLocations();
+		SetShaderDefinitions(shaderFlags.GetString());
+
+		if (reloadShaderObjs)
+			ReloadShaderObjects();
+
+		RecalculateShaderHash();
+		return (!shaderObjs.empty());
+	}
+
+
+	void GLSLProgramObject::ClearUniformLocations() {
+		// clear all uniform locations
+		for (auto& usPair: uniformStates) {
+			usPair.second.SetLocation(GL_INVALID_INDEX);
+		}
+	}
+
+	void GLSLProgramObject::SetShaderDefinitions(const std::string& defs) {
+		// NOTE: this does not preserve the #version pragma
+		for (IShaderObject*& so: shaderObjs) {
+			so->SetDefinitions(defs);
+		}
+	}
+
+	void GLSLProgramObject::ReloadShaderObjects() {
+		// reload shaders from text or file
+		for (IShaderObject*& so: shaderObjs) {
+			so->ReloadFromTextOrFile();
+		}
+	}
+
+	void GLSLProgramObject::RecalculateShaderHash() {
+		// calculate shader hash from flags and source-text
+		hash = shaderFlags.UpdateHash();
+
+		for (const IShaderObject* so: shaderObjs) {
+			hash ^= so->GetHash();
+		}
+	}
+
+
 
 	int GLSLProgramObject::GetUniformType(const int idx) {
 		GLint size = 0;
 		GLenum type = 0;
 		// NB: idx can not be a *location* returned by glGetUniformLoc except on Nvidia
-		glGetActiveUniform(objID, idx, 0, nullptr, &size, &type, nullptr);
+		glGetActiveUniform(glid, idx, 0, nullptr, &size, &type, nullptr);
 		assert(size == 1); // arrays aren't handled yet
 		return type;
 	}
 
 	int GLSLProgramObject::GetUniformLoc(const std::string& name) {
-		return glGetUniformLocation(objID, name.c_str());
+		return glGetUniformLocation(glid, name.c_str());
 	}
 
 	void GLSLProgramObject::SetUniformLocation(const std::string& name) {
 		uniformLocs.push_back(hashString(name.c_str()));
 		GetUniformLocation(name);
 	}
+
 
 	void GLSLProgramObject::SetUniform(UniformState* uState, int   v0)                               { assert(IsBound()); if (uState->Set(v0            )) glUniform1i(uState->GetLocation(), v0             ); }
 	void GLSLProgramObject::SetUniform(UniformState* uState, float v0)                               { assert(IsBound()); if (uState->Set(v0            )) glUniform1f(uState->GetLocation(), v0             ); }
@@ -510,6 +504,7 @@ namespace Shader {
 	void GLSLProgramObject::SetUniformMatrix3x3(UniformState* uState, bool transp, const float* v) { assert(IsBound()); if (uState->Set3x3(v, transp)) glUniformMatrix3fv(uState->GetLocation(), 1, transp, v); }
 	void GLSLProgramObject::SetUniformMatrix4x4(UniformState* uState, bool transp, const float* v) { assert(IsBound()); if (uState->Set4x4(v, transp)) glUniformMatrix4fv(uState->GetLocation(), 1, transp, v); }
 
+
 	void GLSLProgramObject::SetUniform1i(int idx, int   v0                              ) { assert(IsBound()); auto it = uniformStates.find(uniformLocs[idx]); if (it != uniformStates.end() && it->second.Set(v0            )) glUniform1i(it->second.GetLocation(), v0            ); }
 	void GLSLProgramObject::SetUniform2i(int idx, int   v0, int   v1                    ) { assert(IsBound()); auto it = uniformStates.find(uniformLocs[idx]); if (it != uniformStates.end() && it->second.Set(v0, v1        )) glUniform2i(it->second.GetLocation(), v0, v1        ); }
 	void GLSLProgramObject::SetUniform3i(int idx, int   v0, int   v1, int   v2          ) { assert(IsBound()); auto it = uniformStates.find(uniformLocs[idx]); if (it != uniformStates.end() && it->second.Set(v0, v1, v2    )) glUniform3i(it->second.GetLocation(), v0, v1, v2    ); }
@@ -529,4 +524,51 @@ namespace Shader {
 	void GLSLProgramObject::SetUniformMatrix2fv(int idx, bool transp, const float* v) { assert(IsBound()); auto it = uniformStates.find(uniformLocs[idx]); if (it != uniformStates.end() && it->second.Set2x2(v, transp)) glUniformMatrix2fv(it->second.GetLocation(), 1, transp, v); }
 	void GLSLProgramObject::SetUniformMatrix3fv(int idx, bool transp, const float* v) { assert(IsBound()); auto it = uniformStates.find(uniformLocs[idx]); if (it != uniformStates.end() && it->second.Set3x3(v, transp)) glUniformMatrix3fv(it->second.GetLocation(), 1, transp, v); }
 	void GLSLProgramObject::SetUniformMatrix4fv(int idx, bool transp, const float* v) { assert(IsBound()); auto it = uniformStates.find(uniformLocs[idx]); if (it != uniformStates.end() && it->second.Set4x4(v, transp)) glUniformMatrix4fv(it->second.GetLocation(), 1, transp, v); }
+
+
+
+	GLSLShaderObject::CompiledShaderObject::~CompiledShaderObject() { glDeleteShader(id); }
+	GLSLShaderObject::CompiledShaderObject GLSLShaderObject::CreateAndCompileShaderObject(std::string& programLog)
+	{
+		CompiledShaderObject cso;
+		assert(!srcText.empty());
+
+		std::string sourceStr = srcText;
+		std::string defFlags  = rawDefStrs + "\n" + modDefStrs;
+		std::string versionStr;
+
+		// extract #version pragma and put it on the first line (only allowed there)
+		// version pragma in definitions overrides version pragma in source (if any)
+		ExtractVersionDirective(sourceStr, versionStr);
+		ExtractVersionDirective(defFlags, versionStr);
+
+		if (!versionStr.empty()) EnsureEndsWith(&versionStr, "\n");
+		if (!defFlags.empty())   EnsureEndsWith(&defFlags,   "\n");
+
+		const std::array<const GLchar*, 7> sources = {
+			"// SHADER VERSION\n",
+			versionStr.c_str(),
+			"// SHADER FLAGS\n",
+			defFlags.c_str(),
+			"// SHADER SOURCE\n",
+			"#line 1\n",
+			sourceStr.c_str()
+		};
+
+		glShaderSource(cso.id = glCreateShader(type), sources.size(), &sources[0], nullptr);
+		glCompileShader(cso.id);
+
+		if (!(cso.valid = glslIsValid(cso.id))) {
+			const std::string& shaderLog = glslGetLog(cso.id);
+			const std::string& shaderName = (srcData.find("void main()") != std::string::npos)? "unknown" : srcData;
+
+			LOG_L(L_WARNING, "[GLSL-SO::%s] shader-object name: %s, compile-log:\n%s\n", __func__, shaderName.c_str(), shaderLog.c_str());
+			LOG_L(L_WARNING, "\n%s%s%s%s%s%s%s", sources[0], sources[1], sources[2], sources[3], sources[4], sources[5], sources[6]);
+
+			programLog.append(shaderLog);
+		}
+
+		return (std::move(cso));
+	}
 }
+

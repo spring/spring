@@ -56,8 +56,8 @@ namespace Shader {
 		void SetLocation(int loc) { location = loc; }
 
 		bool IsLocationValid() const;
-		bool IsUninit() const {
-			return (i[0] == -0xFFFFFF) && (i[1] == -0xFFFFFF) && (i[2] == -0xFFFFFF) && (i[3] == -0xFFFFFF);
+		bool IsInitialized() const {
+			return (i[0] != -0xFFFFFF) || (i[1] != -0xFFFFFF) || (i[2] != -0xFFFFFF) || (i[3] != -0xFFFFFF);
 		}
 
 	public:
@@ -217,6 +217,20 @@ namespace Shader {
 	struct ShaderFlags {
 	public:
 		ShaderFlags() { Clear(); }
+		ShaderFlags(const ShaderFlags& sf) = delete;
+		ShaderFlags(ShaderFlags&& sf) { *this = std::move(sf); }
+
+		ShaderFlags& operator = (const ShaderFlags& sf) = delete;
+		ShaderFlags& operator = (ShaderFlags&& sf) {
+			bitFlags = std::move(sf.bitFlags);
+			intFlags = std::move(sf.intFlags);
+			fltFlags = std::move(sf.fltFlags);
+
+			numValUpdates = sf.numValUpdates;
+			prvValUpdates = sf.prvValUpdates;
+			flagHashValue = sf.flagHashValue;
+			return *this;
+		}
 
 		std::string GetString() const {
 			char buf[8192] = {0};

@@ -166,10 +166,10 @@ void CShadowHandler::LoadShadowGenShaders()
 	#define sh shaderHandler
 	static const std::string shadowGenProgHandles[SHADOWGEN_PROGRAM_LAST] = {
 		"ShadowGenShaderProgModel",
-		"ShadowGenshaderProgMap",
-		"ShadowGenshaderProgTreeNear",
-		"ShadowGenshaderProgTreeDist",
-		"ShadowGenshaderProgProjectile",
+		"ShadowGenShaderProgMap",
+		"ShadowGenShaderProgTreeNear",
+		"ShadowGenShaderProgTreeDist",
+		"ShadowGenShaderProgProjectile",
 	};
 	static const std::string shadowGenProgDefines[SHADOWGEN_PROGRAM_LAST] = {
 		"#define SHADOWGEN_PROGRAM_MODEL\n",

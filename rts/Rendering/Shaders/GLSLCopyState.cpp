@@ -212,7 +212,7 @@ static void CopyShaderState_Uniforms(GLuint newProgID, GLuint oldProgID, spring:
 		oldUniformState->SetLocation(newLoc);
 
 		// Check if we got data we can use to initialize the uniform
-		if (oldUniformState->IsUninit()) {
+		if (!oldUniformState->IsInitialized()) {
 			if (oldProgID == 0) {
 				oldLoc = -1;
 				continue;
