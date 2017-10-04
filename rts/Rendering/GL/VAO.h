@@ -3,6 +3,8 @@
 #ifndef GL_VAO_H
 #define GL_VAO_H
 
+#include <cstdint>
+
 struct VAO {
 public:
 	VAO();
