@@ -295,8 +295,8 @@ static inline int sprintf64(char* dst, long long int x) { return sprintf(dst, "%
 
 // excluding mantissa, a float has a rest int-precision of: 2^24 = 16,777,216
 // int numbers in that range are 100% exact, and don't suffer float precision issues
-static constexpr int MAX_PRECISE_DIGITS_IN_FLOAT = std::numeric_limits<float>::digits10;
-static constexpr auto SPRING_FLOAT_MAX = std::numeric_limits<float>::max();
+// static constexpr int MAX_PRECISE_DIGITS_IN_FLOAT = std::numeric_limits<float>::digits10;
+// static constexpr auto SPRING_FLOAT_MAX = std::numeric_limits<float>::max();
 static constexpr auto SPRING_INT64_MAX = std::numeric_limits<std::int64_t>::max();
 
 static constexpr std::array<double, 11> v = {
