@@ -9,114 +9,107 @@
 #include "Rendering/Shaders/Shader.h"
 
 namespace GL {
-	// clang does not like reinterpret_cast inside constexpr's
-	#if (defined(__clang__))
-	#define constq const
-	#else
-	#define constq constexpr
-	#endif
-
 	static_assert(sizeof(VA_TYPE_0) == sizeof(float3), "");
 	static_assert(sizeof(VA_TYPE_0) == (sizeof(float) * 3), "");
-	constq static Shader::ShaderInput VA_TYPE_0_ATTRS[] = {
-		{0,  3, GL_FLOAT,  (sizeof(float) * 3),  "a_vertex_xyz", reinterpret_cast<void*>(sizeof(float) * 0)},
+	constexpr static Shader::ShaderInput VA_TYPE_0_ATTRS[] = {
+		{0,  3, GL_FLOAT,  (sizeof(float) * 3),  "a_vertex_xyz", (static_cast<uint8_t*>(nullptr) + sizeof(float) * 0)},
 	};
 
 
 	static_assert(sizeof(VA_TYPE_N) == (sizeof(float3) * 2), "");
 	static_assert(sizeof(VA_TYPE_N) == (sizeof(float) * 6), ""); // 6 = 3 + 3
-	constq static Shader::ShaderInput VA_TYPE_N_ATTRS[] = {
-		{0,  3, GL_FLOAT,  (sizeof(float) * 6),  "a_vertex_xyz", reinterpret_cast<void*>(sizeof(float) * 0)},
-		{1,  3, GL_FLOAT,  (sizeof(float) * 6),  "a_normal_xyz", reinterpret_cast<void*>(sizeof(float) * 3)},
+	constexpr static Shader::ShaderInput VA_TYPE_N_ATTRS[] = {
+		{0,  3, GL_FLOAT,  (sizeof(float) * 6),  "a_vertex_xyz", (static_cast<uint8_t*>(nullptr) + sizeof(float) * 0)},
+		{1,  3, GL_FLOAT,  (sizeof(float) * 6),  "a_normal_xyz", (static_cast<uint8_t*>(nullptr) + sizeof(float) * 3)},
 	};
 
 
 	#if 0
 	static_assert((VA_SIZE_C + 3) == 7, "");
-	constq static Shader::ShaderInput VA_TYPE_C_ATTRS[] = {
-		{0,  3, GL_FLOAT,  7 * sizeof(float),  "a_vertex_xyz", reinterpret_cast<void*>(0 * sizeof(float))},
-		{1,  4, GL_FLOAT,  7 * sizeof(float),  "a_color_rgba", reinterpret_cast<void*>(3 * sizeof(float))},
+	constexpr static Shader::ShaderInput VA_TYPE_C_ATTRS[] = {
+		{0,  3, GL_FLOAT,  7 * sizeof(float),  "a_vertex_xyz", (static_cast<uint8_t*>(nullptr) + sizeof(float) * 0)},
+		{1,  4, GL_FLOAT,  7 * sizeof(float),  "a_color_rgba", (static_cast<uint8_t*>(nullptr) + sizeof(float) * 3)},
 	};
 	#else
 	static_assert(sizeof(VA_TYPE_C) == (sizeof(float) * 3 + sizeof(uint32_t)), "");
-	constq static Shader::ShaderInput VA_TYPE_C_ATTRS[] = {
-		{0,  3, GL_FLOAT        ,  (sizeof(float) * 3 + sizeof(uint8_t) * 4),  "a_vertex_xyz", reinterpret_cast<void*>(sizeof(float) * 0)},
-		{1,  4, GL_UNSIGNED_BYTE,  (sizeof(float) * 3 + sizeof(uint8_t) * 4),  "a_color_rgba", reinterpret_cast<void*>(sizeof(float) * 3)},
+	constexpr static Shader::ShaderInput VA_TYPE_C_ATTRS[] = {
+		{0,  3, GL_FLOAT        ,  (sizeof(float) * 3 + sizeof(uint8_t) * 4),  "a_vertex_xyz", (static_cast<uint8_t*>(nullptr) + sizeof(float) * 0)},
+		{1,  4, GL_UNSIGNED_BYTE,  (sizeof(float) * 3 + sizeof(uint8_t) * 4),  "a_color_rgba", (static_cast<uint8_t*>(nullptr) + sizeof(float) * 3)},
 	};
 	#endif
 
 
 	static_assert(sizeof(VA_TYPE_T) == (sizeof(float3) + sizeof(float) * 2), "");
 	static_assert(sizeof(VA_TYPE_T) == (sizeof(float) * 5), ""); // 5 = 3 + 2
-	constq static Shader::ShaderInput VA_TYPE_T_ATTRS[] = {
-		{0,  3, GL_FLOAT,  (sizeof(float) * 5),  "a_vertex_xyz", reinterpret_cast<void*>(sizeof(float) * 0)},
-		{1,  2, GL_FLOAT,  (sizeof(float) * 5),  "a_texcoor_st", reinterpret_cast<void*>(sizeof(float) * 3)},
+	constexpr static Shader::ShaderInput VA_TYPE_T_ATTRS[] = {
+		{0,  3, GL_FLOAT,  (sizeof(float) * 5),  "a_vertex_xyz", (static_cast<uint8_t*>(nullptr) + sizeof(float) * 0)},
+		{1,  2, GL_FLOAT,  (sizeof(float) * 5),  "a_texcoor_st", (static_cast<uint8_t*>(nullptr) + sizeof(float) * 3)},
 	};
 
 
 	static_assert(sizeof(VA_TYPE_TN) == (sizeof(float3) * 2 + sizeof(float) * 2), "");
 	static_assert(sizeof(VA_TYPE_TN) == (sizeof(float) * 8), ""); // 8 = 3 + 2 + 3
-	constq static Shader::ShaderInput VA_TYPE_TN_ATTRS[] = {
-		{0,  3, GL_FLOAT,  (sizeof(float) * 8),  "a_vertex_xyz", reinterpret_cast<void*>(sizeof(float) * 0)},
-		{1,  2, GL_FLOAT,  (sizeof(float) * 8),  "a_texcoor_st", reinterpret_cast<void*>(sizeof(float) * 3)},
-		{2,  3, GL_FLOAT,  (sizeof(float) * 8),  "a_normal_xyz", reinterpret_cast<void*>(sizeof(float) * 5)},
+	constexpr static Shader::ShaderInput VA_TYPE_TN_ATTRS[] = {
+		{0,  3, GL_FLOAT,  (sizeof(float) * 8),  "a_vertex_xyz", (static_cast<uint8_t*>(nullptr) + sizeof(float) * 0)},
+		{1,  2, GL_FLOAT,  (sizeof(float) * 8),  "a_texcoor_st", (static_cast<uint8_t*>(nullptr) + sizeof(float) * 3)},
+		{2,  3, GL_FLOAT,  (sizeof(float) * 8),  "a_normal_xyz", (static_cast<uint8_t*>(nullptr) + sizeof(float) * 5)},
 	};
 
 
 	#if 0
 	static_assert((VA_SIZE_TC + 3) == 9, "");
-	constq static Shader::ShaderInput VA_TYPE_TC_ATTRS[] = {
-		{0,  3, GL_FLOAT,  (sizeof(float) * 9),  "a_vertex_xyz", reinterpret_cast<void*>(sizeof(float) * 0)},
-		{1,  2, GL_FLOAT,  (sizeof(float) * 9),  "a_texcoor_st", reinterpret_cast<void*>(sizeof(float) * 3)},
-		{2,  4, GL_FLOAT,  (sizeof(float) * 9),  "a_color_rgba", reinterpret_cast<void*>(sizeof(float) * 5)},
+	constexpr static Shader::ShaderInput VA_TYPE_TC_ATTRS[] = {
+		{0,  3, GL_FLOAT,  (sizeof(float) * 9),  "a_vertex_xyz", (static_cast<uint8_t*>(nullptr) + sizeof(float) * 0)},
+		{1,  2, GL_FLOAT,  (sizeof(float) * 9),  "a_texcoor_st", (static_cast<uint8_t*>(nullptr) + sizeof(float) * 3)},
+		{2,  4, GL_FLOAT,  (sizeof(float) * 9),  "a_color_rgba", (static_cast<uint8_t*>(nullptr) + sizeof(float) * 5)},
 	};
 	#else
 	static_assert(sizeof(VA_TYPE_TC) == (sizeof(float) * (3 + 2) + sizeof(uint32_t)), "");
-	constq static Shader::ShaderInput VA_TYPE_TC_ATTRS[] = {
-		{0,  3, GL_FLOAT        ,  (sizeof(float) * 5 + sizeof(uint8_t) * 4),  "a_vertex_xyz", reinterpret_cast<void*>(sizeof(float) * 0)},
-		{1,  2, GL_FLOAT        ,  (sizeof(float) * 5 + sizeof(uint8_t) * 4),  "a_texcoor_st", reinterpret_cast<void*>(sizeof(float) * 3)},
-		{2,  4, GL_UNSIGNED_BYTE,  (sizeof(float) * 5 + sizeof(uint8_t) * 4),  "a_color_rgba", reinterpret_cast<void*>(sizeof(float) * 5)},
+	constexpr static Shader::ShaderInput VA_TYPE_TC_ATTRS[] = {
+		{0,  3, GL_FLOAT        ,  (sizeof(float) * 5 + sizeof(uint8_t) * 4),  "a_vertex_xyz", (static_cast<uint8_t*>(nullptr) + sizeof(float) * 0)},
+		{1,  2, GL_FLOAT        ,  (sizeof(float) * 5 + sizeof(uint8_t) * 4),  "a_texcoor_st", (static_cast<uint8_t*>(nullptr) + sizeof(float) * 3)},
+		{2,  4, GL_UNSIGNED_BYTE,  (sizeof(float) * 5 + sizeof(uint8_t) * 4),  "a_color_rgba", (static_cast<uint8_t*>(nullptr) + sizeof(float) * 5)},
 	};
 	#endif
 
 
 	static_assert(sizeof(VA_TYPE_TNT) == (sizeof(float3) * 4 + sizeof(float) * 2), "");
 	static_assert(sizeof(VA_TYPE_TNT) == (sizeof(float) * 14), ""); // 14 = 3 + 2 + 3 + 3 + 3
-	constq static Shader::ShaderInput VA_TYPE_TNT_ATTRS[] = {
-		{0,  3, GL_FLOAT,  (sizeof(float) * 14),  "a_vertex_xyz" , reinterpret_cast<void*>(sizeof(float) *  0)},
-		{1,  2, GL_FLOAT,  (sizeof(float) * 14),  "a_texcoor_st" , reinterpret_cast<void*>(sizeof(float) *  3)},
-		{2,  3, GL_FLOAT,  (sizeof(float) * 14),  "a_normal_xyz" , reinterpret_cast<void*>(sizeof(float) *  5)},
-		{3,  3, GL_FLOAT,  (sizeof(float) * 14),  "a_texcoor_uv1", reinterpret_cast<void*>(sizeof(float) *  8)},
-		{4,  3, GL_FLOAT,  (sizeof(float) * 14),  "a_texcoor_uv2", reinterpret_cast<void*>(sizeof(float) * 11)},
+	constexpr static Shader::ShaderInput VA_TYPE_TNT_ATTRS[] = {
+		{0,  3, GL_FLOAT,  (sizeof(float) * 14),  "a_vertex_xyz" , (static_cast<uint8_t*>(nullptr) + sizeof(float) *  0)},
+		{1,  2, GL_FLOAT,  (sizeof(float) * 14),  "a_texcoor_st" , (static_cast<uint8_t*>(nullptr) + sizeof(float) *  3)},
+		{2,  3, GL_FLOAT,  (sizeof(float) * 14),  "a_normal_xyz" , (static_cast<uint8_t*>(nullptr) + sizeof(float) *  5)},
+		{3,  3, GL_FLOAT,  (sizeof(float) * 14),  "a_texcoor_uv1", (static_cast<uint8_t*>(nullptr) + sizeof(float) *  8)},
+		{4,  3, GL_FLOAT,  (sizeof(float) * 14),  "a_texcoor_uv2", (static_cast<uint8_t*>(nullptr) + sizeof(float) * 11)},
 	};
 
 
 	static_assert(sizeof(VA_TYPE_2d0) == (sizeof(float) * 2), "");
-	constq static Shader::ShaderInput VA_TYPE_2D0_ATTRS[] = {
-		{0,  2, GL_FLOAT,  (sizeof(float) * 2),  "a_vertex_xy", reinterpret_cast<void*>(sizeof(float) * 0)},
+	constexpr static Shader::ShaderInput VA_TYPE_2D0_ATTRS[] = {
+		{0,  2, GL_FLOAT,  (sizeof(float) * 2),  "a_vertex_xy", (static_cast<uint8_t*>(nullptr) + sizeof(float) * 0)},
 	};
 
 
 	static_assert(sizeof(VA_TYPE_2dT) == (sizeof(float) * 4), ""); // 4 = 2 + 2
-	constq static Shader::ShaderInput VA_TYPE_2DT_ATTRS[] = {
-		{0,  2, GL_FLOAT,  (sizeof(float) * 4),  "a_vertex_xy" , reinterpret_cast<void*>(sizeof(float) * 0)},
-		{1,  2, GL_FLOAT,  (sizeof(float) * 4),  "a_texcoor_st", reinterpret_cast<void*>(sizeof(float) * 2)},
+	constexpr static Shader::ShaderInput VA_TYPE_2DT_ATTRS[] = {
+		{0,  2, GL_FLOAT,  (sizeof(float) * 4),  "a_vertex_xy" , (static_cast<uint8_t*>(nullptr) + sizeof(float) * 0)},
+		{1,  2, GL_FLOAT,  (sizeof(float) * 4),  "a_texcoor_st", (static_cast<uint8_t*>(nullptr) + sizeof(float) * 2)},
 	};
 
 
 	#if 0
 	static_assert((VA_SIZE_2DTC + 3) == 8, "");
-	constq static Shader::ShaderInput VA_TYPE_2DTC_ATTRS[] = {
-		{0,  2, GL_FLOAT,  (sizeof(float) * 8),  "a_vertex_xy" , reinterpret_cast<void*>(sizeof(float) * 0)},
-		{1,  2, GL_FLOAT,  (sizeof(float) * 8),  "a_texcoor_st", reinterpret_cast<void*>(sizeof(float) * 2)},
-		{2,  4, GL_FLOAT,  (sizeof(float) * 8),  "a_color_rgba", reinterpret_cast<void*>(sizeof(float) * 4)},
+	constexpr static Shader::ShaderInput VA_TYPE_2DTC_ATTRS[] = {
+		{0,  2, GL_FLOAT,  (sizeof(float) * 8),  "a_vertex_xy" , (static_cast<uint8_t*>(nullptr) + sizeof(float) * 0)},
+		{1,  2, GL_FLOAT,  (sizeof(float) * 8),  "a_texcoor_st", (static_cast<uint8_t*>(nullptr) + sizeof(float) * 2)},
+		{2,  4, GL_FLOAT,  (sizeof(float) * 8),  "a_color_rgba", (static_cast<uint8_t*>(nullptr) + sizeof(float) * 4)},
 	};
 	#else
 	static_assert(sizeof(VA_TYPE_2dTC) == (sizeof(float) * (2 + 2) + sizeof(uint32_t)), "");
-	constq static Shader::ShaderInput VA_TYPE_2DTC_ATTRS[] = {
-		{0,  2, GL_FLOAT        ,  (sizeof(float) * 4 + sizeof(uint8_t) * 4),  "a_vertex_xy" , reinterpret_cast<void*>(sizeof(float) * 0)},
-		{1,  2, GL_FLOAT        ,  (sizeof(float) * 4 + sizeof(uint8_t) * 4),  "a_texcoor_st", reinterpret_cast<void*>(sizeof(float) * 2)},
-		{2,  4, GL_UNSIGNED_BYTE,  (sizeof(float) * 4 + sizeof(uint8_t) * 4),  "a_color_rgba", reinterpret_cast<void*>(sizeof(float) * 4)},
+	constexpr static Shader::ShaderInput VA_TYPE_2DTC_ATTRS[] = {
+		{0,  2, GL_FLOAT        ,  (sizeof(float) * 4 + sizeof(uint8_t) * 4),  "a_vertex_xy" , (static_cast<uint8_t*>(nullptr) + sizeof(float) * 0)},
+		{1,  2, GL_FLOAT        ,  (sizeof(float) * 4 + sizeof(uint8_t) * 4),  "a_texcoor_st", (static_cast<uint8_t*>(nullptr) + sizeof(float) * 2)},
+		{2,  4, GL_UNSIGNED_BYTE,  (sizeof(float) * 4 + sizeof(uint8_t) * 4),  "a_color_rgba", (static_cast<uint8_t*>(nullptr) + sizeof(float) * 4)},
 	};
 	#endif
 

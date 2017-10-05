@@ -2,7 +2,6 @@
 
 #include <cassert>
 #include <cstring> // memcpy
-#include <vector>
 
 #include "myGL.h"
 #include "RenderDataBuffer.hpp"
