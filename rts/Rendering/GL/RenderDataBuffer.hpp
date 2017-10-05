@@ -19,7 +19,7 @@ namespace GL {
 	static_assert(sizeof(VA_TYPE_0) == sizeof(float3), "");
 	static_assert(sizeof(VA_TYPE_0) == (sizeof(float) * 3), "");
 	constq static Shader::ShaderInput VA_TYPE_0_ATTRS[] = {
-		{0,  3, GL_FLOAT,  (sizeof(float) * 3),  "a_vertex_xyz", static_cast<void*>(sizeof(float) * 0)},
+		{0,  3, GL_FLOAT,  (sizeof(float) * 3),  "a_vertex_xyz", reinterpret_cast<void*>(sizeof(float) * 0)},
 	};
 
 
