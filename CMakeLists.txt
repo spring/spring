@@ -244,11 +244,6 @@ if    (WIN32)
 	endif(NOT MSVC)
 endif (WIN32)
 
-option(USE_LIBSQUISH "Enable libsquish for DXT decompressing. (needed for ETC1 support)" TRUE)
-if    (USE_LIBSQUISH)
-	add_definitions(-DUSE_LIBSQUISH)
-endif (USE_LIBSQUISH)
-
 
 
 FIND_PACKAGE(Boost 1.51.0 COMPONENTS regex system REQUIRED)

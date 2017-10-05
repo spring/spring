@@ -1,7 +1,0 @@
-
-SET(rgetc1Sources
-		rg_etc1.cpp
-	)
-
-ADD_LIBRARY(rgetc1 STATIC EXCLUDE_FROM_ALL ${rgetc1Sources})
-SET_TARGET_PROPERTIES(rgetc1 PROPERTIES COMPILE_FLAGS "${PIC_FLAG}")
