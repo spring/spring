@@ -141,7 +141,7 @@ void CFarTextureHandler::CreateFarTexture(const CSolidObject* obj)
 		return;
 
 	fbo.Bind();
-	fbo.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT, GL_DEPTH_COMPONENT16, texSize.x, texSize.y);
+	fbo.CreateRenderBuffer(GL_DEPTH_ATTACHMENT, GL_DEPTH_COMPONENT16, texSize.x, texSize.y);
 	fbo.CheckStatus("FARTEXTURE");
 
 	glPushAttrib(GL_ALL_ATTRIB_BITS);
@@ -202,7 +202,7 @@ void CFarTextureHandler::CreateFarTexture(const CSolidObject* obj)
 	// glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 	glPopAttrib();
 
-	fbo.Detach(GL_DEPTH_ATTACHMENT_EXT);
+	fbo.Detach(GL_DEPTH_ATTACHMENT);
 	fbo.Unbind();
 
 	// cache object's current radius s.t. quad is always drawn with fixed size

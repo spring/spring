@@ -89,12 +89,12 @@ void IUnitDrawerState::EnableTexturesCommon() const {
 		shadowHandler->SetupShadowTexSampler(GL_TEXTURE2, true);
 
 	glActiveTexture(GL_TEXTURE3);
-	glEnable(GL_TEXTURE_CUBE_MAP_ARB);
-	glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, cubeMapHandler->GetEnvReflectionTextureID());
+	glEnable(GL_TEXTURE_CUBE_MAP);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, cubeMapHandler->GetEnvReflectionTextureID());
 
 	glActiveTexture(GL_TEXTURE4);
-	glEnable(GL_TEXTURE_CUBE_MAP_ARB);
-	glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, cubeMapHandler->GetSpecularTextureID());
+	glEnable(GL_TEXTURE_CUBE_MAP);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, cubeMapHandler->GetSpecularTextureID());
 
 	glActiveTexture(GL_TEXTURE0);
 	glEnable(GL_TEXTURE_2D);
@@ -108,10 +108,10 @@ void IUnitDrawerState::DisableTexturesCommon() const {
 		shadowHandler->ResetShadowTexSampler(GL_TEXTURE2, true);
 
 	glActiveTexture(GL_TEXTURE3);
-	glDisable(GL_TEXTURE_CUBE_MAP_ARB);
+	glDisable(GL_TEXTURE_CUBE_MAP);
 
 	glActiveTexture(GL_TEXTURE4);
-	glDisable(GL_TEXTURE_CUBE_MAP_ARB);
+	glDisable(GL_TEXTURE_CUBE_MAP);
 
 	glActiveTexture(GL_TEXTURE0);
 	glDisable(GL_TEXTURE_2D);

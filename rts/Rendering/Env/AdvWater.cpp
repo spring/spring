@@ -88,10 +88,10 @@ CAdvWater::CAdvWater()
 	waterSurfaceColor = waterRendering->surfaceColor;
 
 	reflectFBO.Bind();
-	reflectFBO.AttachTexture(reflectTexture, GL_TEXTURE_2D, GL_COLOR_ATTACHMENT0_EXT);
-	reflectFBO.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT, GL_DEPTH_COMPONENT32, 512, 512);
+	reflectFBO.AttachTexture(reflectTexture, GL_TEXTURE_2D, GL_COLOR_ATTACHMENT0);
+	reflectFBO.CreateRenderBuffer(GL_DEPTH_ATTACHMENT, GL_DEPTH_COMPONENT32, 512, 512);
 	bumpFBO.Bind();
-	bumpFBO.AttachTexture(bumpTexture, GL_TEXTURE_2D, GL_COLOR_ATTACHMENT0_EXT);
+	bumpFBO.AttachTexture(bumpTexture, GL_TEXTURE_2D, GL_COLOR_ATTACHMENT0);
 	FBO::Unbind();
 
 	if (!bumpFBO.IsValid()) {
@@ -145,7 +145,7 @@ void CAdvWater::Draw(bool useBlending)
 		glDisable(GL_BLEND);
 	}
 	glDepthMask(0);
-	glActiveTextureARB(GL_TEXTURE1_ARB);
+	glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, bumpTexture);
 		GLfloat plan[] = {0.02f, 0, 0, 0};
 		glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR);
@@ -156,7 +156,7 @@ void CAdvWater::Draw(bool useBlending)
 		glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR);
 		glTexGenfv(GL_T, GL_EYE_PLANE, plan2);
 		glEnable(GL_TEXTURE_GEN_T);
-	glActiveTextureARB(GL_TEXTURE0_ARB);
+	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, reflectTexture);
 
 	glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, waterFP);
@@ -225,10 +225,10 @@ void CAdvWater::Draw(bool useBlending)
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	glDisable(GL_FRAGMENT_PROGRAM_ARB);
 
-	glActiveTextureARB(GL_TEXTURE1_ARB);
+	glActiveTexture(GL_TEXTURE1);
 		glDisable(GL_TEXTURE_GEN_S);
 		glDisable(GL_TEXTURE_GEN_T);
-	glActiveTextureARB(GL_TEXTURE0_ARB);
+	glActiveTexture(GL_TEXTURE0);
 
 	// for translucent stuff like water, the default mode is blending and alpha testing enabled
 	if (!useBlending)

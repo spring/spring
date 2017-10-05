@@ -491,7 +491,7 @@ void CUnitDrawer::DrawUnitIcons()
 
 	// A2C effectiveness is limited below four samples
 	if (globalRendering->msaaLevel >= 4)
-		glEnable(GL_SAMPLE_ALPHA_TO_COVERAGE_ARB);
+		glEnable(GL_SAMPLE_ALPHA_TO_COVERAGE);
 
 	for (CUnit* u: iconUnits) {
 		const unsigned short closBits = (u->losStatus[gu->myAllyTeam] & (LOS_INLOS                  ));

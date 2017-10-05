@@ -182,7 +182,7 @@ bool LoadFromLua(Shader::IProgramObject* program, const std::string& filename)
 		return false;
 
 	CreateShaderObject(program, shdrDefs.str(), vertSrcs.str(), GL_VERTEX_SHADER);
-	CreateShaderObject(program, shdrDefs.str(), geomSrcs.str(), GL_GEOMETRY_SHADER_EXT);
+	CreateShaderObject(program, shdrDefs.str(), geomSrcs.str(), GL_GEOMETRY_SHADER);
 	CreateShaderObject(program, shdrDefs.str(), fragSrcs.str(), GL_FRAGMENT_SHADER);
 
 	//FIXME ApplyGeometryParameters(L, 1, prog); // done before linking

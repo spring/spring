@@ -67,7 +67,7 @@
 // glEnable(GL_TEXTURE_2D);
 // glBindTexture(GL_TEXTURE_2D, texobj);
 //
-// glCompressedTexImage2DARB(GL_TEXTURE_2D, 0, image.get_format(), 
+// glCompressedTexImage2D(GL_TEXTURE_2D, 0, image.get_format(), 
 //     image.get_width(), image.get_height(), 0, image.get_size(), 
 //     image);
 //
@@ -75,7 +75,7 @@
 // {
 //     CSurface mipmap = image.get_mipmap(i);
 //
-//     glCompressedTexImage2DARB(GL_TEXTURE_2D, i+1, image.get_format(), 
+//     glCompressedTexImage2D(GL_TEXTURE_2D, i+1, image.get_format(), 
 //         mipmap.get_width(), mipmap.get_height(), 0, mipmap.get_size(), 
 //         mipmap);
 // } 
@@ -113,12 +113,12 @@
 // image.load("cubemap.dds");
 // 
 // glGenTextures(1, &texobj);
-// glEnable(GL_TEXTURE_CUBE_MAP_ARB);
-// glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, texobj);
+// glEnable(GL_TEXTURE_CUBE_MAP);
+// glBindTexture(GL_TEXTURE_CUBE_MAP, texobj);
 // 
 // for (int n = 0; n < 6; n++)
 // {
-//     target = GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB+n;
+//     target = GL_TEXTURE_CUBE_MAP_POSITIVE_X + n;
 // 
 //     glTexImage2D(target, 0, image.get_components(), image[n].get_width(), 
 //         image[n].get_height(), 0, image.get_format(), GL_UNSIGNED_BYTE, 
@@ -374,17 +374,17 @@ bool CDDSImage::load(string filename, bool flipImage)
     }
     else if (ddsh.ddspf.dwFlags == DDSF_RGBA && ddsh.ddspf.dwRGBBitCount == 32)
     {
-        m_format = GL_BGRA_EXT; 
+        m_format = GL_BGRA; 
         m_components = 4;
     }
     else if (ddsh.ddspf.dwFlags == DDSF_RGB  && ddsh.ddspf.dwRGBBitCount == 32)
     {
-        m_format = GL_BGRA_EXT; 
+        m_format = GL_BGRA; 
         m_components = 4;
     }
     else if (ddsh.ddspf.dwFlags == DDSF_RGB  && ddsh.ddspf.dwRGBBitCount == 24)
     {
-        m_format = GL_BGR_EXT; 
+        m_format = GL_BGR; 
         m_components = 3;
     }
 	else if (ddsh.ddspf.dwRGBBitCount == 8)
@@ -682,14 +682,14 @@ bool CDDSImage::upload_texture1D()
 
     if (is_compressed())
     {
-        glCompressedTexImage1DARB(GL_TEXTURE_1D, 0, m_format, 
+        glCompressedTexImage1D(GL_TEXTURE_1D, 0, m_format, 
             baseImage.get_width(), 0, baseImage.get_size(), baseImage);
         
         // load all mipmaps
         for (unsigned int i = 0; i < baseImage.get_num_mipmaps(); i++)
         {
             const CSurface &mipmap = baseImage.get_mipmap(i);
-            glCompressedTexImage1DARB(GL_TEXTURE_1D, i+1, m_format, 
+            glCompressedTexImage1D(GL_TEXTURE_1D, i+1, m_format, 
                 mipmap.get_width(), 0, mipmap.get_size(), mipmap);
         }
     }
@@ -746,19 +746,19 @@ bool CDDSImage::upload_texture2D(unsigned int imageIndex, int target)
     assert(image.get_height() > 0);
     assert(image.get_width() > 0);
     assert(target == GL_TEXTURE_2D || target == GL_TEXTURE_RECTANGLE_NV ||
-        (target >= GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB && 
-         target <= GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB));
+        (target >= GL_TEXTURE_CUBE_MAP_POSITIVE_X && 
+         target <= GL_TEXTURE_CUBE_MAP_NEGATIVE_Z));
     
     if (is_compressed())
     {
-        glCompressedTexImage2DARB(target, 0, m_format, image.get_width(), 
+        glCompressedTexImage2D(target, 0, m_format, image.get_width(), 
             image.get_height(), 0, image.get_size(), image);
         
         // load all mipmaps
         for (unsigned int i = 0; i < image.get_num_mipmaps(); i++)
         {
             const CSurface &mipmap = image.get_mipmap(i);
-            glCompressedTexImage2DARB(target, i+1, m_format, 
+            glCompressedTexImage2D(target, i+1, m_format, 
                 mipmap.get_width(), mipmap.get_height(), 0, 
                 mipmap.get_size(), mipmap);
         }
@@ -806,7 +806,7 @@ bool CDDSImage::upload_texture3D()
 
     if (is_compressed())
     {
-        glCompressedTexImage3DARB(GL_TEXTURE_3D, 0, m_format,  
+        glCompressedTexImage3D(GL_TEXTURE_3D, 0, m_format,  
             baseImage.get_width(), baseImage.get_height(), baseImage.get_depth(),
             0, baseImage.get_size(), baseImage);
         
@@ -814,7 +814,7 @@ bool CDDSImage::upload_texture3D()
         for (unsigned int i = 0; i < baseImage.get_num_mipmaps(); i++)
         {
             const CSurface &mipmap = baseImage.get_mipmap(i);
-            glCompressedTexImage3DARB(GL_TEXTURE_3D, i+1, m_format, 
+            glCompressedTexImage3D(GL_TEXTURE_3D, i+1, m_format, 
                 mipmap.get_width(), mipmap.get_height(), mipmap.get_depth(), 
                 0, mipmap.get_size(), mipmap);
         }
@@ -869,7 +869,7 @@ bool CDDSImage::upload_textureCubemap()
     for (unsigned int n = 0; n < 6; n++)
     {
         // specify cubemap face
-        target = GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB + n;
+        target = GL_TEXTURE_CUBE_MAP_POSITIVE_X + n;
         if (!upload_texture2D(n, target))
             return false;
     }

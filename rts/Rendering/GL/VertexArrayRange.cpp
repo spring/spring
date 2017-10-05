@@ -10,15 +10,15 @@
 CVertexArrayRange::CVertexArrayRange(float* mem,int size) {
 	delete[] drawArray;
 
-	drawArray=mem;
-	drawArraySize=mem+size;
+	drawArray = mem;
+	drawArraySize = mem + size;
 
-  glGenFencesNV(1, &fence);
-  glEnableClientState(GL_VERTEX_ARRAY_RANGE_NV);
+	glGenFencesNV(1, &fence);
+	glEnableClientState(GL_VERTEX_ARRAY_RANGE_NV);
 }
 
 CVertexArrayRange::~CVertexArrayRange() {
-	glDeleteFencesNV(1,&fence);
+	glDeleteFencesNV(1, &fence);
 }
 
 void CVertexArrayRange::Initialize() {
@@ -33,50 +33,59 @@ bool CVertexArrayRange::IsReady() const {
 
 void CVertexArrayRange::DrawArrayT(int drawType,int stride) {
 	CheckEndStrip();
-	glVertexPointer(3,GL_FLOAT,stride,&drawArray[0]);
-	glTexCoordPointer(2,GL_FLOAT,stride,&drawArray[3]);
+	glVertexPointer(3, GL_FLOAT, stride, &drawArray[0]);
+	glTexCoordPointer(2, GL_FLOAT, stride, &drawArray[3]);
+
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	glEnableClientState(GL_VERTEX_ARRAY);
+
 	DrawArrays(drawType, stride);
-  glSetFenceNV(fence, GL_ALL_COMPLETED_NV);
+
+	glSetFenceNV(fence, GL_ALL_COMPLETED_NV);
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 	glDisableClientState(GL_VERTEX_ARRAY);						
 }
 
 void CVertexArrayRange::DrawArrayT2(int drawType,int stride) {
 	CheckEndStrip();
-  glEnableClientState(GL_VERTEX_ARRAY_RANGE_NV);
-	glVertexPointer(3,GL_FLOAT,stride,&drawArray[0]);
-	glTexCoordPointer(2,GL_FLOAT,stride,&drawArray[3]);
+	glEnableClientState(GL_VERTEX_ARRAY_RANGE_NV);
+	glVertexPointer(3, GL_FLOAT, stride, &drawArray[0]);
+	glTexCoordPointer(2, GL_FLOAT, stride, &drawArray[3]);
+
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	glEnableClientState(GL_VERTEX_ARRAY);
 
-	glClientActiveTextureARB(GL_TEXTURE1_ARB);
-	glTexCoordPointer(2,GL_FLOAT,stride,&drawArray[5]);
+	glClientActiveTexture(GL_TEXTURE1);
+	glTexCoordPointer(2, GL_FLOAT, stride, &drawArray[5]);
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-	glClientActiveTextureARB(GL_TEXTURE0_ARB);
+	glClientActiveTexture(GL_TEXTURE0);
+
 	DrawArrays(drawType, stride);
-	glClientActiveTextureARB(GL_TEXTURE1_ARB);
+
+	glClientActiveTexture(GL_TEXTURE1);
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-	glClientActiveTextureARB(GL_TEXTURE0_ARB);
+	glClientActiveTexture(GL_TEXTURE0);
 
 	glSetFenceNV(fence, GL_ALL_COMPLETED_NV);
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 	glDisableClientState(GL_VERTEX_ARRAY);						
-  glDisableClientState(GL_VERTEX_ARRAY_RANGE_NV);
+	glDisableClientState(GL_VERTEX_ARRAY_RANGE_NV);
 }
 
 void CVertexArrayRange::DrawArrayTN(int drawType, int stride) {
 	CheckEndStrip();
 //  glEnableClientState(GL_VERTEX_ARRAY_RANGE_NV);
-	glVertexPointer(3,GL_FLOAT,stride,&drawArray[0]);
-	glTexCoordPointer(2,GL_FLOAT,stride,&drawArray[3]);
-	glNormalPointer(GL_FLOAT,stride,&drawArray[5]);
+	glVertexPointer(3, GL_FLOAT, stride, &drawArray[0]);
+	glTexCoordPointer(2, GL_FLOAT, stride, &drawArray[3]);
+	glNormalPointer(GL_FLOAT, stride, &drawArray[5]);
+
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glEnableClientState(GL_NORMAL_ARRAY);
+
 	DrawArrays(drawType, stride);
-  glSetFenceNV(fence, GL_ALL_COMPLETED_NV);
+
+	glSetFenceNV(fence, GL_ALL_COMPLETED_NV);
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 	glDisableClientState(GL_VERTEX_ARRAY);						
 	glDisableClientState(GL_NORMAL_ARRAY);
@@ -86,14 +95,17 @@ void CVertexArrayRange::DrawArrayTN(int drawType, int stride) {
 void CVertexArrayRange::DrawArrayTC(int drawType, int stride) {
 	CheckEndStrip();
 //  glDisableClientState(GL_VERTEX_ARRAY_RANGE_NV);
-	glVertexPointer(3,GL_FLOAT,stride,&drawArray[0]);
-	glTexCoordPointer(2,GL_FLOAT,stride,&drawArray[3]);
-	glColorPointer(4,GL_UNSIGNED_BYTE,stride,&drawArray[5]);
+	glVertexPointer(3, GL_FLOAT, stride, &drawArray[0]);
+	glTexCoordPointer(2, GL_FLOAT, stride, &drawArray[3]);
+	glColorPointer(4, GL_UNSIGNED_BYTE, stride, &drawArray[5]);
+
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glEnableClientState(GL_COLOR_ARRAY);
+
 	DrawArrays(drawType, stride);
-  glSetFenceNV(fence, GL_ALL_COMPLETED_NV);
+
+	glSetFenceNV(fence, GL_ALL_COMPLETED_NV);
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 	glDisableClientState(GL_VERTEX_ARRAY);						
 	glDisableClientState(GL_COLOR_ARRAY);
@@ -101,5 +113,6 @@ void CVertexArrayRange::DrawArrayTC(int drawType, int stride) {
 }
 
 void CVertexArrayRange::EnlargeDrawArray() {
-	drawArrayPos-=40;
+	drawArrayPos -= 40; // WTF?
 }
+

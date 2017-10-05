@@ -623,16 +623,16 @@ void CGrassDrawer::SetupGlStateNear()
 {
 	// bind textures
 	{
-		glActiveTextureARB(GL_TEXTURE0_ARB);
+		glActiveTexture(GL_TEXTURE0);
 			glBindTexture(GL_TEXTURE_2D, grassBladeTex);
-		glActiveTextureARB(GL_TEXTURE1_ARB);
+		glActiveTexture(GL_TEXTURE1);
 			glBindTexture(GL_TEXTURE_2D, readMap->GetGrassShadingTexture());
-		glActiveTextureARB(GL_TEXTURE2_ARB);
+		glActiveTexture(GL_TEXTURE2);
 			glBindTexture(GL_TEXTURE_2D, readMap->GetShadingTexture());
-		glActiveTextureARB(GL_TEXTURE3_ARB);
+		glActiveTexture(GL_TEXTURE3);
 			glBindTexture(GL_TEXTURE_2D, infoTextureHandler->GetCurrentInfoTexture());
-		glActiveTextureARB(GL_TEXTURE5_ARB);
-			glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, cubeMapHandler->GetSpecularTextureID());
+		glActiveTexture(GL_TEXTURE5);
+			glBindTexture(GL_TEXTURE_CUBE_MAP, cubeMapHandler->GetSpecularTextureID());
 	}
 
 	// bind shader
@@ -650,7 +650,7 @@ void CGrassDrawer::SetupGlStateNear()
 			glLoadIdentity();
 	}
 
-	glActiveTextureARB(GL_TEXTURE0_ARB);
+	glActiveTexture(GL_TEXTURE0);
 	glDisable(GL_BLEND);
 	glDisable(GL_ALPHA_TEST);
 	glDepthMask(GL_TRUE);
@@ -693,19 +693,19 @@ void CGrassDrawer::SetupGlStateFar()
 
 	EnableShader(GRASS_PROGRAM_DIST);
 
-	glActiveTextureARB(GL_TEXTURE0_ARB);
+	glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, farTex);
-	glActiveTextureARB(GL_TEXTURE1_ARB);
+	glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, readMap->GetGrassShadingTexture());
-	glActiveTextureARB(GL_TEXTURE2_ARB);
+	glActiveTexture(GL_TEXTURE2);
 		glBindTexture(GL_TEXTURE_2D, readMap->GetShadingTexture());
-	glActiveTextureARB(GL_TEXTURE3_ARB);
+	glActiveTexture(GL_TEXTURE3);
 		glBindTexture(GL_TEXTURE_2D, infoTextureHandler->GetCurrentInfoTexture());
 
 	if (shadowHandler->ShadowsLoaded())
 		shadowHandler->SetupShadowTexSampler(GL_TEXTURE4);
 
-	glActiveTextureARB(GL_TEXTURE0_ARB);
+	glActiveTexture(GL_TEXTURE0);
 }
 
 
@@ -824,8 +824,8 @@ void CGrassDrawer::CreateFarTex()
 
 	FBO fbo;
 	fbo.Bind();
-	fbo.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT, GL_DEPTH_COMPONENT16, texSizeX * sizeMod, texSizeY * sizeMod);
-	fbo.CreateRenderBuffer(GL_COLOR_ATTACHMENT0_EXT, GL_RGBA8, texSizeX * sizeMod, texSizeY * sizeMod);
+	fbo.CreateRenderBuffer(GL_DEPTH_ATTACHMENT, GL_DEPTH_COMPONENT16, texSizeX * sizeMod, texSizeY * sizeMod);
+	fbo.CreateRenderBuffer(GL_COLOR_ATTACHMENT0, GL_RGBA8, texSizeX * sizeMod, texSizeY * sizeMod);
 	fbo.CheckStatus("GRASSDRAWER2");
 
 	if (!fboTex.IsValid() || !fbo.IsValid()) {
@@ -876,9 +876,9 @@ void CGrassDrawer::CreateFarTex()
 	glDisable(GL_CLIP_PLANE0);
 
 	// scale down the rendered fartextures (MSAA) and write to the final texture
-	glBindFramebufferEXT(GL_READ_FRAMEBUFFER, fbo.fboId);
-	glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER, fboTex.fboId);
-	glBlitFramebufferEXT(0, 0, texSizeX*sizeMod, texSizeY*sizeMod,
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo.fboId);
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fboTex.fboId);
+	glBlitFramebuffer(0, 0, texSizeX*sizeMod, texSizeY*sizeMod,
 		0, 0, texSizeX, texSizeY,
 		GL_COLOR_BUFFER_BIT, GL_LINEAR);
 
@@ -902,7 +902,7 @@ void CGrassDrawer::CreateFarTex()
 		// -> fill background with blurred color data
 		fboTex.Bind();
 		for (int mipLevel = mipLevels - 2; mipLevel >= 0; --mipLevel) {
-			fboTex.AttachTexture(farTex, GL_TEXTURE_2D, GL_COLOR_ATTACHMENT0_EXT, mipLevel);
+			fboTex.AttachTexture(farTex, GL_TEXTURE_2D, GL_COLOR_ATTACHMENT0, mipLevel);
 			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_LOD, mipLevel + 1.f);
 			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_LOD, mipLevel + 1.f);
 			glViewport(0, 0, texSizeX>>mipLevel, texSizeY>>mipLevel);

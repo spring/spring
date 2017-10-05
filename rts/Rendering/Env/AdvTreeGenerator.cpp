@@ -45,8 +45,8 @@ void CAdvTreeGenerator::Init()
 
 	FBO fbo;
 	fbo.Bind();
-	fbo.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT, GL_DEPTH_COMPONENT16, 256, 256);
-	fbo.CreateRenderBuffer(GL_COLOR_ATTACHMENT0_EXT, GL_RGBA8, 256, 256);
+	fbo.CreateRenderBuffer(GL_DEPTH_ATTACHMENT, GL_DEPTH_COMPONENT16, 256, 256);
+	fbo.CreateRenderBuffer(GL_COLOR_ATTACHMENT0, GL_RGBA8, 256, 256);
 	if (!fbo.CheckStatus("ADVTREE")) {
 		fbo.Unbind();
 		throw content_error("Could not create FBO!");
@@ -281,8 +281,8 @@ void CAdvTreeGenerator::CreateFarTex(Shader::IProgramObject* treeShader)
 {
 	FBO fbo;
 	fbo.Bind();
-	fbo.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT, GL_DEPTH_COMPONENT16, 64, 64);
-	fbo.CreateRenderBuffer(GL_COLOR_ATTACHMENT0_EXT, GL_RGBA8, 64, 64);
+	fbo.CreateRenderBuffer(GL_DEPTH_ATTACHMENT, GL_DEPTH_COMPONENT16, 64, 64);
+	fbo.CreateRenderBuffer(GL_COLOR_ATTACHMENT0, GL_RGBA8, 64, 64);
 	if (!fbo.CheckStatus("ADVTREE")) {
 		FBO::Unbind();
 		throw content_error("Could not create FBO!");

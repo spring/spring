@@ -248,15 +248,15 @@ bool CShadowHandler::InitDepthTarget()
 		fb.Bind();
 		fb.AttachTexture(shadowTexture);
 
-		glDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
-		glReadBuffer(GL_COLOR_ATTACHMENT0_EXT);
+		glDrawBuffer(GL_COLOR_ATTACHMENT0);
+		glReadBuffer(GL_COLOR_ATTACHMENT0);
 	} else {
 		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32, shadowMapSize, shadowMapSize, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
 
 		// Mesa complains about an incomplete FBO if calling Bind before TexImage (?)
 		fb.Bind();
-		fb.AttachTexture(shadowTexture, GL_TEXTURE_2D, GL_DEPTH_ATTACHMENT_EXT);
+		fb.AttachTexture(shadowTexture, GL_TEXTURE_2D, GL_DEPTH_ATTACHMENT);
 
 		glDrawBuffer(GL_NONE);
 		// glReadBuffer() only works with color buffers
@@ -277,7 +277,7 @@ bool CShadowHandler::WorkaroundUnsupportedFboRenderTargets()
 {
 	// some drivers/GPUs fail to render to GL_CLAMP_TO_BORDER (and GL_LINEAR may cause a drop in performance for them, too)
 	{
-		fb.Detach(GL_DEPTH_ATTACHMENT_EXT);
+		fb.Detach(GL_DEPTH_ATTACHMENT);
 		glDeleteTextures(1, &shadowTexture);
 
 		glGenTextures(1, &shadowTexture);
@@ -289,7 +289,7 @@ bool CShadowHandler::WorkaroundUnsupportedFboRenderTargets()
 		const GLint texFormat = globalRendering->support24bitDepthBuffer? GL_DEPTH_COMPONENT24: GL_DEPTH_COMPONENT16;
 		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);
 		glTexImage2D(GL_TEXTURE_2D, 0, texFormat, shadowMapSize, shadowMapSize, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
-		fb.AttachTexture(shadowTexture, GL_TEXTURE_2D, GL_DEPTH_ATTACHMENT_EXT);
+		fb.AttachTexture(shadowTexture, GL_TEXTURE_2D, GL_DEPTH_ATTACHMENT);
 
 		if (fb.CheckStatus("SHADOW-GL_CLAMP_TO_EDGE"))
 			return true;
@@ -298,8 +298,8 @@ bool CShadowHandler::WorkaroundUnsupportedFboRenderTargets()
 
 	// ATI sometimes fails without an attached color texture, so check a few formats (not all supported texture formats are renderable)
 	{
-		glDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
-		glReadBuffer(GL_COLOR_ATTACHMENT0_EXT);
+		glDrawBuffer(GL_COLOR_ATTACHMENT0);
+		glReadBuffer(GL_COLOR_ATTACHMENT0);
 
 		// 1st: try the smallest unsupported format (4bit per pixel)
 		glGenTextures(1, &dummyColorTexture);
@@ -311,11 +311,11 @@ bool CShadowHandler::WorkaroundUnsupportedFboRenderTargets()
 			return true;
 
 		// failed revert changes of 1st attempt
-		fb.Detach(GL_COLOR_ATTACHMENT0_EXT);
+		fb.Detach(GL_COLOR_ATTACHMENT0);
 		glDeleteTextures(1, &dummyColorTexture);
 
 		// 2nd: try smallest standard format that must be renderable for OGL3
-		fb.CreateRenderBuffer(GL_COLOR_ATTACHMENT0_EXT, GL_RED, shadowMapSize, shadowMapSize);
+		fb.CreateRenderBuffer(GL_COLOR_ATTACHMENT0, GL_RED, shadowMapSize, shadowMapSize);
 
 		if (fb.CheckStatus("SHADOW-GL_RED"))
 			return true;

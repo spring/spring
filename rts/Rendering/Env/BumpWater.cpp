@@ -200,7 +200,7 @@ CBumpWater::CBumpWater()
 	// CHECK SHOREWAVES TEXTURE SIZE
 	if (shoreWaves) {
 		GLint maxw, maxh;
-		glTexImage2D(GL_PROXY_TEXTURE_2D, 0, GL_RGBA16F_ARB, 4096, 4096, 0, GL_RGBA, GL_FLOAT, NULL);
+		glTexImage2D(GL_PROXY_TEXTURE_2D, 0, GL_RGBA16F, 4096, 4096, 0, GL_RGBA, GL_FLOAT, NULL);
 		glGetTexLevelParameteriv(GL_PROXY_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &maxw);
 		glGetTexLevelParameteriv(GL_PROXY_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &maxh);
 		if (mapDims.mapx>maxw || mapDims.mapy>maxh) {
@@ -222,9 +222,9 @@ CBumpWater::CBumpWater()
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-		//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F_ARB, mapDims.mapx, mapDims.mapy, 0, GL_RGBA, GL_FLOAT, NULL);
+		//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, mapDims.mapx, mapDims.mapy, 0, GL_RGBA, GL_FLOAT, NULL);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB5, mapDims.mapx, mapDims.mapy, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-		//glGenerateMipmapEXT(GL_TEXTURE_2D);
+		//glGenerateMipmap(GL_TEXTURE_2D);
 
 
 		{
@@ -262,7 +262,7 @@ CBumpWater::CBumpWater()
 
 		coastFBO.reloadOnAltTab = true;
 		coastFBO.Bind();
-		coastFBO.AttachTexture(coastTexture, GL_TEXTURE_2D, GL_COLOR_ATTACHMENT0_EXT);
+		coastFBO.AttachTexture(coastTexture, GL_TEXTURE_2D, GL_COLOR_ATTACHMENT0);
 
 		if (coastFBO.CheckStatus("BUMPWATER(Coastmap)")) {
 			//! initialize texture
@@ -287,7 +287,7 @@ CBumpWater::CBumpWater()
 	if ((refraction > 0) || depthCopy) {
 		//! ATIs do not have GLSL support for texrects
 		if (!globalRendering->atiHacks) {
-			target = GL_TEXTURE_RECTANGLE_ARB;
+			target = GL_TEXTURE_RECTANGLE;
 		} else if (!globalRendering->supportNonPowerOfTwoTex) {
 			screenTextureX = next_power_of_2(screenTextureX);
 			screenTextureY = next_power_of_2(screenTextureY);
@@ -340,11 +340,11 @@ CBumpWater::CBumpWater()
 		glBindTexture(GL_TEXTURE_2D, normalTexture);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-		if (anisotropy > 0.0f) {
+		if (anisotropy > 0.0f)
 			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisotropy);
-		}
+
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, normalTextureX, normalTextureY, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-		glGenerateMipmapEXT(GL_TEXTURE_2D);
+		glGenerateMipmap(GL_TEXTURE_2D);
 	}
 
 	// CREATE FBOs
@@ -356,31 +356,28 @@ CBumpWater::CBumpWater()
 			case 32: depthRBOFormat = GL_DEPTH_COMPONENT32; break;
 		}
 
-		if (reflection>0) {
+		if (reflection > 0) {
 			reflectFBO.Bind();
-			reflectFBO.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT, depthRBOFormat, reflTexSize, reflTexSize);
+			reflectFBO.CreateRenderBuffer(GL_DEPTH_ATTACHMENT, depthRBOFormat, reflTexSize, reflTexSize);
 			reflectFBO.AttachTexture(reflectTexture);
-			if (!reflectFBO.CheckStatus("BUMPWATER(reflection)")) {
+			if (!reflectFBO.CheckStatus("BUMPWATER(reflection)"))
 				reflection = 0;
-			}
 		}
 
 		if (refraction > 0) {
 			refractFBO.Bind();
-			refractFBO.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT, depthRBOFormat, screenTextureX, screenTextureY);
+			refractFBO.CreateRenderBuffer(GL_DEPTH_ATTACHMENT, depthRBOFormat, screenTextureX, screenTextureY);
 			refractFBO.AttachTexture(refractTexture,target);
-			if (!refractFBO.CheckStatus("BUMPWATER(refraction)")) {
+			if (!refractFBO.CheckStatus("BUMPWATER(refraction)"))
 				refraction = 0;
-			}
 		}
 
 		if (dynWaves) {
 			dynWavesFBO.reloadOnAltTab = true;
 			dynWavesFBO.Bind();
 			dynWavesFBO.AttachTexture(normalTexture);
-			if (dynWavesFBO.CheckStatus("BUMPWATER(DynWaves)")) {
+			if (dynWavesFBO.CheckStatus("BUMPWATER(DynWaves)"))
 				UpdateDynWaves(true); //! initialize
-			}
 		}
 		FBO::Unbind();
 	}
@@ -398,7 +395,7 @@ CBumpWater::CBumpWater()
 	if (depthCopy)    definitions += "#define opt_depth\n";
 	if (blurRefl)     definitions += "#define opt_blurreflection\n";
 	if (endlessOcean) definitions += "#define opt_endlessocean\n";
-	if (target == GL_TEXTURE_RECTANGLE_ARB) definitions += "#define opt_texrect\n";
+	if (target == GL_TEXTURE_RECTANGLE) definitions += "#define opt_texrect\n";
 
 	GLSLDefineConstf3(definitions, "MapMid",                    float3(mapDims.mapx * SQUARE_SIZE * 0.5f, 0.0f, mapDims.mapy * SQUARE_SIZE * 0.5f));
 	GLSLDefineConstf2(definitions, "ScreenInverse",             1.0f / globalRendering->viewSizeX, 1.0f / globalRendering->viewSizeY);
@@ -838,8 +835,8 @@ void CBumpWater::UpdateCoastmap()
 		glOrtho(0, 1, 0, 1, -1, 1);
 
 	glViewport(0, 0, mapDims.mapx, mapDims.mapy);
-	glDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
-	coastFBO.AttachTexture(coastTexture, GL_TEXTURE_2D, GL_COLOR_ATTACHMENT0_EXT);
+	glDrawBuffer(GL_COLOR_ATTACHMENT0);
+	coastFBO.AttachTexture(coastTexture, GL_TEXTURE_2D, GL_COLOR_ATTACHMENT0);
 	glMultiTexCoord2i(GL_TEXTURE2, 0, 0);
 
 	// need this to avoid "Calling glEnd from the current immediate mode state is invalid."
@@ -860,7 +857,7 @@ void CBumpWater::UpdateCoastmap()
 	if (numCoastRects > 0 && atlasX > 0 && atlasY > 0) {
 		int n = 0;
 		for (int i = 0; i < 5; ++i) {
-			coastFBO.AttachTexture(coastUpdateTexture, GL_TEXTURE_2D, GL_COLOR_ATTACHMENT0_EXT);
+			coastFBO.AttachTexture(coastUpdateTexture, GL_TEXTURE_2D, GL_COLOR_ATTACHMENT0);
 			glViewport(0, 0, atlasX, atlasY);
 			glMultiTexCoord2i(GL_TEXTURE2, 1, ++n);
 
@@ -876,7 +873,7 @@ void CBumpWater::UpdateCoastmap()
 				glEnd();
 			}
 
-			coastFBO.AttachTexture(coastTexture, GL_TEXTURE_2D, GL_COLOR_ATTACHMENT0_EXT);
+			coastFBO.AttachTexture(coastTexture, GL_TEXTURE_2D, GL_COLOR_ATTACHMENT0);
 			glViewport(0, 0, mapDims.mapx, mapDims.mapy);
 			glMultiTexCoord2i(GL_TEXTURE2, 0, ++n);
 
@@ -900,7 +897,7 @@ void CBumpWater::UpdateCoastmap()
 		glPopMatrix();
 
 	blurShader->Disable();
-	coastFBO.Detach(GL_COLOR_ATTACHMENT1_EXT);
+	coastFBO.Detach(GL_COLOR_ATTACHMENT1);
 	glPopAttrib();
 	//coastFBO.Unbind();
 
@@ -909,7 +906,7 @@ void CBumpWater::UpdateCoastmap()
 	//glBindTexture(GL_TEXTURE_2D, coastTexture);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
-	glGenerateMipmapEXT(GL_TEXTURE_2D);
+	glGenerateMipmap(GL_TEXTURE_2D);
 
 	//! delete UpdateAtlas
 	glActiveTexture(GL_TEXTURE1);
@@ -996,7 +993,7 @@ void CBumpWater::UpdateDynWaves(const bool initialize)
 	dynWavesFBO.Unbind();
 
 	glBindTexture(GL_TEXTURE_2D, normalTexture);
-	glGenerateMipmapEXT(GL_TEXTURE_2D);
+	glGenerateMipmap(GL_TEXTURE_2D);
 }
 
 
@@ -1096,7 +1093,7 @@ void CBumpWater::Draw()
 	waterShader->Disable();
 
 	if (shadowHandler->ShadowsLoaded()) {
-		glActiveTexture(GL_TEXTURE9); glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);
+		glActiveTexture(GL_TEXTURE9); glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
 		glActiveTexture(GL_TEXTURE0);
 	}
 

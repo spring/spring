@@ -25,14 +25,7 @@ public:
 	 */
 	static bool IsSupported() { return true; }
 
-	/**
-	 * @brief Constructor
-	 */
 	FBO();
-
-	/**
-	 * @brief Destructor
-	 */
 	~FBO();
 
 	/**
@@ -52,7 +45,7 @@ public:
 	/**
 	 * @brief check FBO status
 	 */
-	bool CheckStatus(std::string name);
+	bool CheckStatus(const char* name);
 
 	/**
 	 * @brief get FBO status
@@ -62,7 +55,7 @@ public:
 	/**
 	 * @return GL_MAX_SAMPLES or 0 if multi-sampling not supported
 	 */
-	static GLsizei GetMaxSamples();
+	static GLsizei GetMaxSamples() { return maxSamples; }
 
 	/**
 	 * @brief IsValid
@@ -74,18 +67,18 @@ public:
 	 * @brief AttachTexture
 	 * @param texTarget texture target (GL_TEXTURE_2D etc.)
 	 * @param texId texture to attach
-	 * @param attachment (GL_COLOR_ATTACHMENT0_EXT etc.)
+	 * @param attachment (GL_COLOR_ATTACHMENT0 etc.)
 	 * @param mipLevel miplevel to attach
 	 * @param zSlice z offset (3d textures only)
 	 */
-	void AttachTexture(const GLuint texId, const GLenum texTarget = GL_TEXTURE_2D, const GLenum attachment = GL_COLOR_ATTACHMENT0_EXT, const int mipLevel = 0, const int zSlice = 0);
+	void AttachTexture(const GLuint texId, const GLenum texTarget = GL_TEXTURE_2D, const GLenum attachment = GL_COLOR_ATTACHMENT0, const int mipLevel = 0, const int zSlice = 0);
 
 	/**
 	 * @brief AttachRenderBuffer
 	 * @param rboId RenderBuffer to attach
 	 * @param attachment
 	 */
-	void AttachRenderBuffer(const GLuint rboId, const GLenum attachment = GL_COLOR_ATTACHMENT0_EXT);
+	void AttachRenderBuffer(const GLuint rboId, const GLenum attachment = GL_COLOR_ATTACHMENT0);
 
 	/**
 	 * @brief Creates a RenderBufferObject and attachs it to the FBO (it is also auto destructed)

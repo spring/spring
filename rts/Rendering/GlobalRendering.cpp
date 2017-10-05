@@ -677,9 +677,9 @@ void CGlobalRendering::SetGLSupportFlags()
 		if (FBO::IsSupported() && !atiHacks) {
 			FBO fbo;
 			fbo.Bind();
-			fbo.CreateRenderBuffer(GL_COLOR_ATTACHMENT0_EXT, GL_RGBA8, 16, 16);
-			fbo.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT,  GL_DEPTH_COMPONENT24, 16, 16);
-			support24bitDepthBuffer = (fbo.GetStatus() == GL_FRAMEBUFFER_COMPLETE_EXT);
+			fbo.CreateRenderBuffer(GL_COLOR_ATTACHMENT0, GL_RGBA8, 16, 16);
+			fbo.CreateRenderBuffer(GL_DEPTH_ATTACHMENT,  GL_DEPTH_COMPONENT24, 16, 16);
+			support24bitDepthBuffer = (fbo.GetStatus() == GL_FRAMEBUFFER_COMPLETE);
 			fbo.Unbind();
 		}
 		#endif

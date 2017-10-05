@@ -65,10 +65,10 @@ void GL::GeometryBuffer::DetachTextures(const bool init) {
 
 	// detach only actually attached textures, ATI drivers might crash
 	for (unsigned int i = 0; i < (ATTACHMENT_COUNT - 1); ++i) {
-		buffer.Detach(GL_COLOR_ATTACHMENT0_EXT + i);
+		buffer.Detach(GL_COLOR_ATTACHMENT0 + i);
 	}
 
-	buffer.Detach(GL_DEPTH_ATTACHMENT_EXT);
+	buffer.Detach(GL_DEPTH_ATTACHMENT);
 	buffer.Unbind();
 
 	glDeleteTextures(ATTACHMENT_COUNT, &bufferTextureIDs[0]);
@@ -117,10 +117,10 @@ bool GL::GeometryBuffer::Create(const int2 size) {
 		if (n == ATTACHMENT_ZVALTEX) {
 			glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, size.x, size.y, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
-			bufferAttachments[n] = GL_DEPTH_ATTACHMENT_EXT;
+			bufferAttachments[n] = GL_DEPTH_ATTACHMENT;
 		} else {
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size.x, size.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
-			bufferAttachments[n] = GL_COLOR_ATTACHMENT0_EXT + n;
+			bufferAttachments[n] = GL_COLOR_ATTACHMENT0 + n;
 		}
 	}
 
@@ -154,7 +154,7 @@ bool GL::GeometryBuffer::Update(const bool init) {
 		return false;
 
 	// buffer isn't bound by calling context, can not call
-	// GetStatus to check for GL_FRAMEBUFFER_COMPLETE_EXT
+	// GetStatus to check for GL_FRAMEBUFFER_COMPLETE here
 	//
 	if (HasAttachments()) {
 		// technically a buffer can not be complete yet during

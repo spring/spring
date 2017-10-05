@@ -25,7 +25,7 @@ public:
 	void Delete() const { glDeleteBuffers(1, &vboId); vboId = 0; }
 
 	/**
-	 * @param target can be either GL_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER, GL_PIXEL_PACK_BUFFER, GL_PIXEL_UNPACK_BUFFER or GL_UNIFORM_BUFFER_EXT
+	 * @param target can be either GL_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER, GL_PIXEL_PACK_BUFFER, GL_PIXEL_UNPACK_BUFFER or GL_UNIFORM_BUFFER
 	 * @see http://www.opengl.org/sdk/docs/man/xhtml/glBindBuffer.xml
 	 */
 	void Bind() const { Bind(defTarget); }
