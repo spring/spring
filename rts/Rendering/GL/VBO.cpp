@@ -14,32 +14,19 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
 
-VBO::VBO(GLenum _defTarget, const bool storage) : vboId(0)
+VBO::VBO(GLenum _defTarget, const bool storage)
 {
-	bound = false;
-	mapped = false;
-
-	bufSize = 0;
-	memSize = 0;
-
 	curBoundTarget = _defTarget;
 	defTarget = _defTarget;
-	usage = GL_STREAM_DRAW;
-	nullSizeMapped = false;
 
 	immutableStorage = storage;
 }
 
-
+// NOTE: if declared in global scope, user has to call these before exit
 VBO::~VBO()
 {
-	if (mapped) {
-		Bind();
-		UnmapBuffer();
-		Unbind();
-	}
-
-	glDeleteBuffers(1, &vboId);
+	UnmapIf();
+	Delete();
 }
 
 

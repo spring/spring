@@ -51,6 +51,7 @@ struct VA_TYPE_2dTC {
 	SColor c;
 };
 
+static_assert(sizeof(SColor) == sizeof(float), "");
 
 // number of elements (bytes / sizeof(float)) per vertex
 #define VA_SIZE_0    (sizeof(VA_TYPE_0) / sizeof(float))

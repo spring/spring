@@ -13,13 +13,16 @@
 class VBO
 {
 public:
-	VBO(GLenum defTarget = GL_ARRAY_BUFFER, const bool storage = false);
+	VBO(GLenum _defTarget = GL_ARRAY_BUFFER, const bool storage = false);
 	VBO(const VBO& other) = delete;
 	VBO(VBO&& other) { *this = std::move(other); }
 	virtual ~VBO();
 
-	VBO& operator=(const VBO& other) = delete;
-	VBO& operator=(VBO&& other);
+	VBO& operator = (const VBO& other) = delete;
+	VBO& operator = (VBO&& other);
+
+	void Generate() const { glGenBuffers(1, &vboId); }
+	void Delete() const { glDeleteBuffers(1, &vboId); vboId = 0; }
 
 	/**
 	 * @param target can be either GL_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER, GL_PIXEL_PACK_BUFFER, GL_PIXEL_UNPACK_BUFFER or GL_UNIFORM_BUFFER_EXT
@@ -43,11 +46,21 @@ public:
 	 */
 	GLubyte* MapBuffer(GLbitfield access = GL_WRITE_ONLY);
 	GLubyte* MapBuffer(GLintptr offset, GLsizeiptr size, GLbitfield access = GL_WRITE_ONLY);
+
 	void UnmapBuffer();
+	void UnmapIf() {
+		if (!mapped)
+			return;
+
+		Bind();
+		UnmapBuffer();
+		Unbind();
+	}
+
 
 	GLuint GetId() const {
 		if (vboId == 0)
-			glGenBuffers(1, &vboId);
+			Generate();
 		return vboId;
 	}
 
@@ -55,19 +68,19 @@ public:
 	const GLvoid* GetPtr(GLintptr offset = 0) const;
 
 public:
-	mutable GLuint vboId;
-	size_t bufSize; // can be smaller than memSize
-	size_t memSize; // actual length of <data>; only set when !isSupported
+	mutable GLuint vboId = 0;
+	size_t bufSize = 0; // can be smaller than memSize
+	size_t memSize = 0; // actual length of <data>; only set when !isSupported
 
-	mutable GLenum curBoundTarget;
-	GLenum defTarget;
-	GLenum usage;
+	mutable GLenum curBoundTarget = 0;
+	GLenum defTarget = GL_ARRAY_BUFFER;
+	GLenum usage = GL_STREAM_DRAW;
 
 public:
-	mutable bool bound;
-	bool mapped;
-	bool nullSizeMapped; // Nvidia workaround
-	bool immutableStorage;
+	mutable bool bound = false;
+	bool mapped = false;
+	bool nullSizeMapped = false; // Nvidia workaround
+	bool immutableStorage = false;
 };
 
 #endif /* VBO_H */

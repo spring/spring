@@ -3,9 +3,8 @@
 #include "VAO.h"
 #include "Rendering/GL/myGL.h"
 
-VAO::VAO() { glGenVertexArrays(1, &id); }
-VAO::~VAO() { glDeleteVertexArrays(1, &id); }
-
+void VAO::Generate() { glGenVertexArrays(1, &id); }
+void VAO::Delete() { glDeleteVertexArrays(1, &id); id = 0; }
 void VAO::Bind() const { glBindVertexArray(id); }
 void VAO::Unbind() const { glBindVertexArray(0); }
 
