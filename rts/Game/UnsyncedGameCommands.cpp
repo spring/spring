@@ -54,6 +54,8 @@
 #include "Rendering/Map/InfoTexture/Modern/Path.h"
 #include "Lua/LuaOpenGL.h"
 #include "Lua/LuaUI.h"
+#include "Lua/LuaGaia.h"
+#include "Lua/LuaRules.h"
 #include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/ModInfo.h"
@@ -978,6 +980,9 @@ public:
 		}
 		CLuaUI::UpdateTeams();
 		// NOTE: unsynced, so do not inform via eventHandler
+		luaUI->PlayerChanged(gu->myPlayerNum);
+		luaGaia->unsyncedLuaHandle.PlayerChanged(gu->myPlayerNum);
+		luaRules->unsyncedLuaHandle.PlayerChanged(gu->myPlayerNum);
 		unitDrawer->PlayerChanged(gu->myPlayerNum);
 		return true;
 	}
