@@ -16,6 +16,12 @@ GLAPI void APIENTRY glClientActiveTextureARB(GLenum texture) {}
 GLAPI void APIENTRY glClientActiveTexture(GLenum texture) {}
 GLAPI void APIENTRY glActiveTexture(GLenum texture) {}
 GLAPI void APIENTRY glActiveTextureARB(GLenum texture) {}
+
+GLAPI void APIENTRY glDeleteFramebuffers(GLsizei n, const GLuint *framebuffers) {}
+GLAPI void APIENTRY glBindFramebuffer(GLenum target, GLuint framebuffer) {}
+GLAPI void APIENTRY glFramebufferTexture2D(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level) {}
+GLAPI void APIENTRY glFramebufferRenderbuffer(GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer) {}
+
 GLAPI void APIENTRY glDeleteFramebuffersEXT(GLsizei n, const GLuint *framebuffers) {}
 GLAPI void APIENTRY glBindFramebufferEXT(GLenum target, GLuint framebuffer) {}
 GLAPI void APIENTRY glFramebufferTexture2DEXT(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level) {}
@@ -40,11 +46,13 @@ GLAPI void APIENTRY glDisableVertexAttribArray(GLuint index) {}
 GLAPI void APIENTRY glVertexAttribPointer(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void* pointer) {}
 
 GLAPI void APIENTRY glGenFramebuffers(GLsizei n, GLuint *framebuffers) {}
-GLAPI void APIENTRY glGenFramebuffersEXT(GLsizei n, GLuint *framebuffers) {}
 GLAPI GLenum APIENTRY glCheckFramebufferStatus(GLenum target) { return 0; }
-GLAPI GLenum APIENTRY glCheckFramebufferStatusEXT(GLenum target) { return 0; }
 GLAPI void APIENTRY glBlitFramebuffer (GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter) {}
+
+GLAPI void APIENTRY glGenFramebuffersEXT(GLsizei n, GLuint *framebuffers) {}
+GLAPI GLenum APIENTRY glCheckFramebufferStatusEXT(GLenum target) { return 0; }
 GLAPI void APIENTRY glBlitFramebufferEXT (GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter) {}
+
 GLAPI void APIENTRY glDeleteQueries(GLsizei n, const GLuint *ids) {}
 
 GLAPI void APIENTRY glUseProgram(GLuint program) {}
@@ -66,11 +74,12 @@ GLAPI void APIENTRY glBlendFuncSeparatei(GLuint buf, GLenum srcRGB, GLenum dstRG
 GLAPI void APIENTRY glStencilOpSeparate(GLenum face, GLenum sfail, GLenum dpfail, GLenum dppass) {}
 GLAPI void APIENTRY glStencilFuncSeparate(GLenum frontfunc, GLenum backfunc, GLint ref, GLuint mask) {}
 GLAPI void APIENTRY glStencilMaskSeparate(GLenum face, GLuint mask) {}
-GLAPI void APIENTRY glGenerateMipmapEXT(GLenum target) {}
+
 GLAPI void APIENTRY glGenQueries(GLsizei n, GLuint *ids) {}
 GLAPI void APIENTRY glBeginQuery(GLenum target, GLuint id) {}
 GLAPI void APIENTRY glEndQuery(GLenum target) {}
 GLAPI void APIENTRY glGetQueryObjectuiv(GLuint id, GLenum pname, GLuint *params) {}
+
 GLAPI GLint APIENTRY glGetUniformLocation(GLuint program, const GLchar *name) { return 0; }
 GLAPI void APIENTRY glUniform1f(GLint location, GLfloat v0) {}
 GLAPI void APIENTRY glUniform2f(GLint location, GLfloat v0, GLfloat v1) {}
@@ -98,6 +107,7 @@ GLAPI void APIENTRY glGenRenderbuffers(GLsizei n, GLuint *renderbuffers) {}
 GLAPI void APIENTRY glRenderbufferStorage(GLenum target, GLenum internalformat, GLsizei width, GLsizei height) {}
 GLAPI void APIENTRY glRenderbufferStorageMultisample(GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height) {}
 GLAPI GLboolean APIENTRY glIsRenderbuffer(GLuint renderbuffer) { return GL_FALSE; }
+
 GLAPI void APIENTRY glBindRenderbufferEXT(GLenum target, GLuint renderbuffer) {}
 GLAPI void APIENTRY glDeleteRenderbuffersEXT(GLsizei n, const GLuint *renderbuffers) {}
 GLAPI void APIENTRY glGenRenderbuffersEXT(GLsizei n, GLuint *renderbuffers) {}
@@ -111,6 +121,8 @@ GLAPI void APIENTRY glGetQueryiv(GLenum target, GLenum pname, GLint *params) {}
 GLAPI void APIENTRY glBlendColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha) {}
 
 GLAPI void APIENTRY glGenerateMipmap(GLenum target) {}
+GLAPI void APIENTRY glGenerateMipmapEXT(GLenum target) {}
+
 GLAPI void APIENTRY glGetUniformfv(GLuint program, GLint location, GLfloat *params) {}
 GLAPI void APIENTRY glGetUniformiv(GLuint program, GLint location, GLint *params) {}
 GLAPI void APIENTRY glGetUniformuiv(GLuint program, GLint location, GLuint *params) {}
