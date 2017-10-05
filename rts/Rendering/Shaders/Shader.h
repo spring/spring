@@ -96,6 +96,7 @@ namespace Shader {
 				cso.id = 0;
 
 				valid = cso.valid;
+				return *this;
 			}
 
 		public:
@@ -312,7 +313,7 @@ namespace Shader {
 		void Link() override {}
 		void Release(bool deleteShaderObjs = true) override {}
 		void Reload(bool force, bool validate) override {}
-		bool ReloadState(bool reloadShaderObjs) override {}
+		bool ReloadState(bool reloadShaderObjs) override { return true; }
 		bool Validate() override { return true; }
 
 		int GetUniformLoc(const std::string& name) override { return -1; }
