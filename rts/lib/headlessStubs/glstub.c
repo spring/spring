@@ -35,17 +35,17 @@ GLAPI void APIENTRY glGenVertexArrays(GLsizei n, GLuint* arrays) {}
 GLAPI void APIENTRY glDeleteVertexArrays(GLsizei n, const GLuint* arrays) {}
 GLAPI void APIENTRY glBindVertexArray(GLuint id) {}
 
+GLAPI void APIENTRY glEnableVertexAttribArray(GLuint index) {}
+GLAPI void APIENTRY glDisableVertexAttribArray(GLuint index) {}
+GLAPI void APIENTRY glVertexAttribPointer(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void* pointer) {}
+
 GLAPI void APIENTRY glGenFramebuffersEXT(GLsizei n, GLuint *framebuffers) {}
-GLAPI GLenum APIENTRY glCheckFramebufferStatusEXT(GLenum target) {
-	return 0;
-}
+GLAPI GLenum APIENTRY glCheckFramebufferStatusEXT(GLenum target) { return 0; }
 GLAPI void APIENTRY glBlitFramebufferEXT (GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter) {}
 GLAPI void APIENTRY glDeleteQueries(GLsizei n, const GLuint *ids) {}
 
 GLAPI void APIENTRY glUseProgram(GLuint program) {}
-GLAPI GLuint APIENTRY glCreateProgram() {
-	return 0;
-}
+GLAPI GLuint APIENTRY glCreateProgram() { return 0; }
 //glCreateProgram = (PFNGLCREATEPROGRAMPROC) NULL;
 GLAPI void APIENTRY glDeleteProgram(GLuint program) {}
 GLAPI void APIENTRY glProgramParameteriEXT(GLuint program, GLenum pname, GLint value) {}
@@ -68,9 +68,7 @@ GLAPI void APIENTRY glGenQueries(GLsizei n, GLuint *ids) {}
 GLAPI void APIENTRY glBeginQuery(GLenum target, GLuint id) {}
 GLAPI void APIENTRY glEndQuery(GLenum target) {}
 GLAPI void APIENTRY glGetQueryObjectuiv(GLuint id, GLenum pname, GLuint *params) {}
-GLAPI GLint APIENTRY glGetUniformLocation(GLuint program, const GLchar *name) {
-	return 0;
-}
+GLAPI GLint APIENTRY glGetUniformLocation(GLuint program, const GLchar *name) { return 0; }
 GLAPI void APIENTRY glUniform1f(GLint location, GLfloat v0) {}
 GLAPI void APIENTRY glUniform2f(GLint location, GLfloat v0, GLfloat v1) {}
 GLAPI void APIENTRY glUniform3f(GLint location, GLfloat v0, GLfloat v1, GLfloat v2) {}
@@ -96,9 +94,7 @@ GLAPI void APIENTRY glGenRenderbuffersEXT(GLsizei n, GLuint *renderbuffers) {}
 GLAPI void APIENTRY glRenderbufferStorageEXT(GLenum target, GLenum internalformat, GLsizei width, GLsizei height) {}
 GLAPI void APIENTRY glRenderbufferStorageMultisampleEXT(GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height) {}
 GLAPI void APIENTRY glBlendFuncSeparate(GLenum sfactorRGB, GLenum dfactorRGB, GLenum sfactorAlpha, GLenum dfactorAlpha) {}
-GLAPI GLboolean APIENTRY glIsRenderbufferEXT(GLuint renderbuffer) {
-	return GL_FALSE;
-}
+GLAPI GLboolean APIENTRY glIsRenderbufferEXT(GLuint renderbuffer) { return GL_FALSE; }
 GLAPI void APIENTRY glGetActiveUniform(GLuint program, GLuint index, GLsizei bufSize, GLsizei *length, GLint *size, GLenum *type, GLchar *name) {}
 GLAPI void APIENTRY glGetQueryiv(GLenum target, GLenum pname, GLint *params) {}
 GLAPI void APIENTRY glBlendColor(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha) {}
@@ -120,9 +116,7 @@ GLAPI GLboolean APIENTRY glIsProgram(GLuint shader) { return GL_FALSE; }
 GLAPI void APIENTRY glDetachShader(GLuint program, GLuint shader) {}
 GLAPI void APIENTRY glAttachShader(GLuint program, GLuint shader) {}
 GLAPI void APIENTRY glDeleteShader(GLuint shader) {}
-GLAPI GLuint APIENTRY glCreateShader(GLenum type) {
-	return 0;
-}
+GLAPI GLuint APIENTRY glCreateShader(GLenum type) { return 0; }
 //glCreateShader = (PFNGLCREATESHADERPROC) NULL;
 GLAPI void APIENTRY glGetShaderSource(GLuint shader, GLsizei bufSize, GLsizei *length, GLchar *source) {}
 GLAPI void APIENTRY glCompileShader(GLuint shader) {}
@@ -151,19 +145,13 @@ GLAPI void APIENTRY glUniformMatrix3fvARB(GLint location, GLsizei count, GLboole
 GLAPI void APIENTRY glUniformMatrix4fvARB(GLint location, GLsizei count, GLboolean transpose, const GLfloat *value) {}
 
 GLAPI void APIENTRY glDeleteObjectARB(GLhandleARB obj) {}
-GLAPI GLhandleARB APIENTRY glGetHandleARB(GLenum pname) {
-	return 0;
-}
+GLAPI GLhandleARB APIENTRY glGetHandleARB(GLenum pname) { return 0; }
 GLAPI void APIENTRY glDetachObjectARB(GLhandleARB containerObj, GLhandleARB attachedObj) {}
-GLAPI GLhandleARB APIENTRY glCreateShaderObjectARB(GLenum shaderType) {
-	return 0;
-}
+GLAPI GLhandleARB APIENTRY glCreateShaderObjectARB(GLenum shaderType) { return 0; }
 
 
 GLAPI void APIENTRY glCompileShaderARB(GLhandleARB shaderObj) {}
-GLAPI GLhandleARB APIENTRY glCreateProgramObjectARB() {
-	return 0;
-}
+GLAPI GLhandleARB APIENTRY glCreateProgramObjectARB() { return 0; }
 GLAPI void APIENTRY glAttachObjectARB(GLhandleARB containerObj, GLhandleARB obj) {}
 
 GLAPI void APIENTRY glLinkProgramARB(GLhandleARB programObj) {}
@@ -175,15 +163,11 @@ GLAPI void APIENTRY glGetObjectParameterivARB(GLhandleARB obj, GLenum pname, GLi
 GLAPI void APIENTRY glGetInfoLogARB(GLhandleARB obj, GLsizei maxLength, GLsizei *length, GLcharARB *infoLog) {}
 GLAPI void APIENTRY glGetAttachedObjectsARB(GLhandleARB containerObj, GLsizei maxCount, GLsizei *count, GLhandleARB *obj) {}
 
-GLAPI GLint APIENTRY glGetUniformLocationARB(GLhandleARB programObj, const GLcharARB *name) {
-	return 0;
-}
+GLAPI GLint APIENTRY glGetUniformLocationARB(GLhandleARB programObj, const GLcharARB *name) { return 0; }
 
 GLAPI void APIENTRY glBindAttribLocationARB(GLhandleARB programObj, GLuint index, const GLcharARB *name) {}
 GLAPI void APIENTRY glGetActiveAttribARB(GLhandleARB programObj, GLuint index, GLsizei maxLength, GLsizei *length, GLint *size, GLenum *type, GLcharARB *name) {}
-GLAPI GLint APIENTRY glGetAttribLocationARB(GLhandleARB programObj, const GLcharARB *name) {
-	return 0;
-}
+GLAPI GLint APIENTRY glGetAttribLocationARB(GLhandleARB programObj, const GLcharARB *name) { return 0; }
 
 GLAPI void APIENTRY glVertexAttribPointerARB(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid *pointer) {}
 GLAPI void APIENTRY glEnableVertexAttribArrayARB(GLuint index) {}
@@ -226,36 +210,24 @@ GLAPI void APIENTRY glDeleteBuffers(GLsizei n, const GLuint *buffers) {}
 GLAPI void APIENTRY glGenBuffers(GLsizei n, GLuint *buffers) {}
 GLAPI void APIENTRY glBufferData(GLenum target, GLsizeiptr size, const GLvoid *data, GLenum usage) {}
 
-GLAPI GLvoid* APIENTRY glMapBufferRange(GLenum target, GLintptr offset, GLsizeiptr length, GLbitfield access) {
-	return (GLvoid*) NULL;
-}
+GLAPI GLvoid* APIENTRY glMapBufferRange(GLenum target, GLintptr offset, GLsizeiptr length, GLbitfield access) { return (GLvoid*) NULL; }
 GLAPI void APIENTRY glFlushMappedBufferRange(GLenum target, GLintptr offset, GLsizeiptr length) {}
-GLAPI GLvoid* APIENTRY glMapBuffer(GLenum target, GLenum access) {
-	return (GLvoid*) NULL;
-}
-GLAPI GLboolean APIENTRY glUnmapBuffer(GLenum target) {
-	return GL_FALSE;
-}
+GLAPI GLvoid* APIENTRY glMapBuffer(GLenum target, GLenum access) { return (GLvoid*) NULL; }
+GLAPI GLboolean APIENTRY glUnmapBuffer(GLenum target) { return GL_FALSE; }
 
 GLAPI void APIENTRY glMultiTexCoord2i(GLenum target, GLint s, GLint t) {}
 GLAPI void APIENTRY glMultiTexCoord2iv(GLenum target, const GLint *v) {}
 
 GLAPI void APIENTRY glDeleteFencesNV(GLsizei n, const GLuint *fences) {}
 GLAPI void APIENTRY glGenFencesNV(GLsizei n, GLuint *fences) {}
-GLAPI GLboolean APIENTRY glIsFenceNV(GLuint fence) {
-	return GL_FALSE;
-}
-GLAPI GLboolean APIENTRY glTestFenceNV(GLuint fence) {
-	return GL_FALSE;
-}
+GLAPI GLboolean APIENTRY glIsFenceNV(GLuint fence) { return GL_FALSE; }
+GLAPI GLboolean APIENTRY glTestFenceNV(GLuint fence) { return GL_FALSE; }
 GLAPI void APIENTRY glGetFenceivNV(GLuint fence, GLenum pname, GLint *params) {}
 GLAPI void APIENTRY glFinishFenceNV(GLuint fence) {}
 GLAPI void APIENTRY glSetFenceNV(GLuint fence, GLenum condition) {}
 
 GLAPI void APIENTRY glGetRenderbufferParameterivEXT(GLenum target, GLenum pname, GLint *params) {}
-GLAPI GLboolean APIENTRY glIsFramebufferEXT(GLuint framebuffer) {
-	return GL_FALSE;
-}
+GLAPI GLboolean APIENTRY glIsFramebufferEXT(GLuint framebuffer) { return GL_FALSE; }
 GLAPI void APIENTRY glFramebufferTextureEXT(GLenum target, GLenum attachment, GLuint texture, GLint level) {}
 GLAPI void APIENTRY glFramebufferTexture1DEXT(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level) {}
 GLAPI void APIENTRY glFramebufferTexture3DEXT(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level, GLint zoffset) {}
@@ -318,9 +290,7 @@ GLAPI void APIENTRY glGetTexLevelParameteriv(GLenum target, GLint level, GLenum 
 
 GLAPI void APIENTRY glInitNames() {}
 
-GLAPI GLboolean APIENTRY glIsTexture(GLuint texture) {
-   return 0;
-}
+GLAPI GLboolean APIENTRY glIsTexture(GLuint texture) { return 0; }
 
 GLAPI void APIENTRY glLightf(GLenum light, GLenum pname, GLfloat param) {}
 GLAPI void APIENTRY glLightModelfv(GLenum pname, const GLfloat *params) {}
@@ -353,9 +323,7 @@ GLAPI void APIENTRY glReadPixels(GLint x, GLint y,
                                     GLvoid *pixels ) {}
 
 GLAPI void APIENTRY glRectf(GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2) {}
-GLAPI GLint APIENTRY glRenderMode(GLenum mode) {
-   return 0;
-}
+GLAPI GLint APIENTRY glRenderMode(GLenum mode) { return 0; }
 
 GLAPI void APIENTRY glRotatef(GLfloat angle, GLfloat x, GLfloat y, GLfloat z) {}
 GLAPI void APIENTRY glScalef(GLfloat x, GLfloat y, GLfloat z) {}
@@ -380,9 +348,7 @@ GLAPI void APIENTRY glVertex4f( GLfloat x, GLfloat y, GLfloat z, GLfloat w ) {}
 GLAPI void APIENTRY glClipPlane( GLenum plane, const GLdouble *equation ) {}
 GLAPI void APIENTRY glMatrixMode(GLenum mode) {}
 
-GLAPI void APIENTRY  glGetBooleanv( GLenum pname, GLboolean *params ) {
-   *params = 0;
-}
+GLAPI void APIENTRY  glGetBooleanv( GLenum pname, GLboolean *params ) { *params = 0; }
 
 GLAPI void APIENTRY glLoadMatrixd(const GLdouble *m) {}
 GLAPI void APIENTRY glViewport(GLint x, GLint y, GLsizei width, GLsizei height) {}
@@ -412,9 +378,7 @@ GLAPI void APIENTRY glPointSize(GLfloat size) {}
 GLAPI void APIENTRY glCullFace(GLenum mode) {}
 GLAPI void APIENTRY glLogicOp(GLenum opcode) {}
 GLAPI void APIENTRY glEndList() {}
-GLAPI GLuint APIENTRY glGenLists( GLsizei range ) {
-   return 0;
-}
+GLAPI GLuint APIENTRY glGenLists( GLsizei range ) { return 0; }
 
 GLAPI void APIENTRY glColorMask(GLboolean red, GLboolean green, GLboolean blue, GLboolean alpha) {}
 GLAPI void APIENTRY glLoadIdentity() {}
@@ -455,9 +419,7 @@ GLAPI void APIENTRY glShadeModel(GLenum mode) {}
 GLAPI void APIENTRY glHint(GLenum target, GLenum mode) {}
 GLAPI void APIENTRY glTexEnvf(GLenum target, GLenum pname, GLfloat param) {}
 
-GLAPI const GLubyte * APIENTRY glGetString(GLenum name) {
-   return (const GLubyte*) "";
-}
+GLAPI const GLubyte * APIENTRY glGetString(GLenum name) { return (const GLubyte*) ""; }
 
 GLAPI void APIENTRY glClearStencil(GLint s) {}
 GLAPI void APIENTRY glLightfv(GLenum light, GLenum pname, const GLfloat *params ) {}
@@ -472,9 +434,7 @@ GLAPI void APIENTRY glMultiTexCoord1f( GLenum target, GLfloat s ) {}
 GLAPI void APIENTRY glMultiTexCoord2f( GLenum target, GLfloat s, GLfloat t ) {}
 GLAPI void APIENTRY glMultiTexCoord4f( GLenum target, GLfloat s, GLfloat t, GLfloat r, GLfloat q ) {}
 
-GLAPI GLenum APIENTRY glGetError( void ) {
-   return 0;
-}
+GLAPI GLenum APIENTRY glGetError( void ) { return 0; }
 
 GLAPI void APIENTRY glPolygonMode(GLenum face, GLenum mode) {}
 GLAPI void APIENTRY glBlendFunc(GLenum sfactor, GLenum dfactor ) {}
