@@ -25,7 +25,6 @@ protected:
 	void LoadTiles(CSMFMapFile& file);
 	void LoadSquareTextures(const int mipLevel);
 	void ConvolveHeightMap(const int mapWidth, const int mipLevel);
-	bool RecompressTilesIfNeeded();
 	void ExtractSquareTiles(const int texSquareX, const int texSquareY, const int mipLevel, GLint* tileBuf) const;
 	void LoadSquareTexture(int x, int y, int level);
 

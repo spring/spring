@@ -4,10 +4,6 @@
 #include <cmath>
 #include <cstdlib>
 #include <cstdio>
-#if defined(USE_LIBSQUISH) && !defined(HEADLESS)
-	#include "lib/squish/squish.h"
-	#include "lib/rg-etc1/rg_etc1.h"
-#endif
 
 #include "SMFGroundTextures.h"
 #include "SMFFormat.h"
@@ -167,16 +163,11 @@ void CSMFGroundTextures::LoadTiles(CSMFMapFile& file)
 		swabDWordInPlace(tileMap[i]);
 	}
 
-#if defined(USE_LIBSQUISH) && !defined(HEADLESS) && defined(GLEW_ARB_ES3_compatibility)
-	if (RecompressTilesIfNeeded()) {
-		// Not all FOSS drivers support S3TC, use ETC1 for those if possible
-		// ETC2 is backward compatible with ETC1! GLEW doesn't have the ETC1 extension :<
-		tileTexFormat = GL_COMPRESSED_RGB8_ETC2;
-	} else
-#endif
-	{
-		tileTexFormat = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
-	}
+	// ETCx is nicer than S3TC (when in hardware) although it lacks alpha support,
+	// but recompressing the DXT tiles has little benefit since FOSS drivers also
+	// implement S3TC now
+	// (recompression quality would have to be low anyway for performance reasons)
+	tileTexFormat = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
 }
 
 void CSMFGroundTextures::LoadSquareTextures(const int mipLevel)
@@ -258,38 +249,6 @@ void CSMFGroundTextures::ConvolveHeightMap(const int mapWidth, const int mipLeve
 	}
 }
 
-#if defined(USE_LIBSQUISH) && !defined(HEADLESS) && defined(GLEW_ARB_ES3_compatibility)
-// Not all FOSS drivers support S3TC, use ETC1 for those if possible
-bool CSMFGroundTextures::RecompressTilesIfNeeded()
-{
-	// if DXT1 is supported, we don't need to recompress
-	if (GLEW_EXT_texture_compression_s3tc || GLEW_EXT_texture_compression_dxt1)
-		return false;
-
-	// check if ETC1/2 is supported
-	if (!GLEW_ARB_ES3_compatibility)
-		return false;
-
-	// note 1: Mesa should support this
-	// note 2: Nvidia supports ETC but preprocesses the texture (on the CPU) each upload = slow -> makes no sense to add it as another map compression format
-	// note 3: for both DXT1 & ETC1/2 blocksize is 8 bytes per 4x4 pixel block -> perfect for us :)
-
-	loadscreen->SetLoadMessage("Recompressing Map Tiles with ETC1");
-	Watchdog::ClearTimer(WDT_MAIN);
-
-	rg_etc1::pack_etc1_block_init();
-	rg_etc1::etc1_pack_params pack_params;
-	pack_params.m_quality = rg_etc1::cLowQuality; // must be low, all others take _ages_ to process
-
-	for_mt(0, tiles.size() / 8, [&](const int i) {
-		squish::u8 rgba[64]; // 4x4 pixels * 4 * 1byte channels = 64byte
-		squish::Decompress(rgba, &tiles[i * 8], squish::kDxt1);
-		rg_etc1::pack_etc1_block(&tiles[i * 8], (const unsigned int*)rgba, pack_params);
-	});
-
-	return true;
-}
-#endif
 
 inline bool CSMFGroundTextures::TexSquareInView(int btx, int bty) const
 {

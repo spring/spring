@@ -268,7 +268,7 @@ S3DModel* CModelLoader::CreateModel(
 
 	models.emplace_back();
 	models.back() = std::move(model);
-	return &models[model.id];
+	return &(models.back());
 }
 
 
