@@ -14,7 +14,7 @@ namespace GL {
 	#if (defined(__clang__))
 	#define constqual const
 	// #define OFFSET(T, n) (static_cast<uint8_t*>(nullptr) + sizeof(T) * (n))
-	#define OFFSET(T, n) (reinterpret_cast<void*>(sizeof(T) * (n))
+	#define OFFSET(T, n) (reinterpret_cast<void*>(sizeof(T) * (n)))
 	#else
 	#define constqual constexpr
 	#define OFFSET(T, n) ((const T*)(0) + (n))
@@ -126,16 +126,16 @@ namespace GL {
 	#undef OFFSET
 
 
-	constexpr static size_t NUM_VA_TYPE_0_ATTRS = (sizeof(VA_TYPE_0_ATTRS) / sizeof(VA_TYPE_0_ATTRS[0]));
-	constexpr static size_t NUM_VA_TYPE_N_ATTRS = (sizeof(VA_TYPE_N_ATTRS) / sizeof(VA_TYPE_N_ATTRS[0]));
-	constexpr static size_t NUM_VA_TYPE_C_ATTRS = (sizeof(VA_TYPE_C_ATTRS) / sizeof(VA_TYPE_C_ATTRS[0]));
-	constexpr static size_t NUM_VA_TYPE_T_ATTRS = (sizeof(VA_TYPE_T_ATTRS) / sizeof(VA_TYPE_T_ATTRS[0]));
-	constexpr static size_t NUM_VA_TYPE_TN_ATTRS = (sizeof(VA_TYPE_TN_ATTRS) / sizeof(VA_TYPE_TN_ATTRS[0]));
-	constexpr static size_t NUM_VA_TYPE_TC_ATTRS = (sizeof(VA_TYPE_TC_ATTRS) / sizeof(VA_TYPE_TC_ATTRS[0]));
-	constexpr static size_t NUM_VA_TYPE_TNT_ATTRS = (sizeof(VA_TYPE_TNT_ATTRS) / sizeof(VA_TYPE_TNT_ATTRS[0]));
-	constexpr static size_t NUM_VA_TYPE_2D0_ATTRS = (sizeof(VA_TYPE_2D0_ATTRS) / sizeof(VA_TYPE_2D0_ATTRS[0]));
-	constexpr static size_t NUM_VA_TYPE_2DT_ATTRS = (sizeof(VA_TYPE_2DT_ATTRS) / sizeof(VA_TYPE_2DT_ATTRS[0]));
-	constexpr static size_t NUM_VA_TYPE_2DTC_ATTRS = (sizeof(VA_TYPE_2DTC_ATTRS) / sizeof(VA_TYPE_2DTC_ATTRS[0]));
+	constqual static size_t NUM_VA_TYPE_0_ATTRS = (sizeof(VA_TYPE_0_ATTRS) / sizeof(VA_TYPE_0_ATTRS[0]));
+	constqual static size_t NUM_VA_TYPE_N_ATTRS = (sizeof(VA_TYPE_N_ATTRS) / sizeof(VA_TYPE_N_ATTRS[0]));
+	constqual static size_t NUM_VA_TYPE_C_ATTRS = (sizeof(VA_TYPE_C_ATTRS) / sizeof(VA_TYPE_C_ATTRS[0]));
+	constqual static size_t NUM_VA_TYPE_T_ATTRS = (sizeof(VA_TYPE_T_ATTRS) / sizeof(VA_TYPE_T_ATTRS[0]));
+	constqual static size_t NUM_VA_TYPE_TN_ATTRS = (sizeof(VA_TYPE_TN_ATTRS) / sizeof(VA_TYPE_TN_ATTRS[0]));
+	constqual static size_t NUM_VA_TYPE_TC_ATTRS = (sizeof(VA_TYPE_TC_ATTRS) / sizeof(VA_TYPE_TC_ATTRS[0]));
+	constqual static size_t NUM_VA_TYPE_TNT_ATTRS = (sizeof(VA_TYPE_TNT_ATTRS) / sizeof(VA_TYPE_TNT_ATTRS[0]));
+	constqual static size_t NUM_VA_TYPE_2D0_ATTRS = (sizeof(VA_TYPE_2D0_ATTRS) / sizeof(VA_TYPE_2D0_ATTRS[0]));
+	constqual static size_t NUM_VA_TYPE_2DT_ATTRS = (sizeof(VA_TYPE_2DT_ATTRS) / sizeof(VA_TYPE_2DT_ATTRS[0]));
+	constqual static size_t NUM_VA_TYPE_2DTC_ATTRS = (sizeof(VA_TYPE_2DTC_ATTRS) / sizeof(VA_TYPE_2DTC_ATTRS[0]));
 
 
 	struct RenderDataBuffer {

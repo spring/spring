@@ -141,15 +141,15 @@ CR_REG_METADATA(CGroundMoveType, (
 
 
 static CGroundMoveType::MemberData gmtMemberData = {
-	{
+	{{
 		std::pair<unsigned int,  bool*>{MEMBER_LITERAL_HASH(       "atGoal"), nullptr},
 		std::pair<unsigned int,  bool*>{MEMBER_LITERAL_HASH(  "atEndOfPath"), nullptr},
 		std::pair<unsigned int,  bool*>{MEMBER_LITERAL_HASH("pushResistant"), nullptr},
-	},
-	{
+	}},
+	{{
 		std::pair<unsigned int, short*>{MEMBER_LITERAL_HASH("minScriptChangeHeading"), nullptr},
-	},
-	{
+	}},
+	{{
 		std::pair<unsigned int, float*>{MEMBER_LITERAL_HASH(       "turnRate"), nullptr},
 		std::pair<unsigned int, float*>{MEMBER_LITERAL_HASH(      "turnAccel"), nullptr},
 		std::pair<unsigned int, float*>{MEMBER_LITERAL_HASH(        "accRate"), nullptr},
@@ -159,7 +159,7 @@ static CGroundMoveType::MemberData gmtMemberData = {
 		std::pair<unsigned int, float*>{MEMBER_LITERAL_HASH("minReverseAngle"), nullptr},
 		std::pair<unsigned int, float*>{MEMBER_LITERAL_HASH("maxReverseSpeed"), nullptr},
 		std::pair<unsigned int, float*>{MEMBER_LITERAL_HASH("sqSkidSpeedMult"), nullptr},
-	},
+	}},
 };
 
 
@@ -219,7 +219,7 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	numIdlingSlowUpdates(0),
 
 	wantedHeading(0),
-	minScriptChangeHeading(SPRING_CIRCLE_DIVS >> 1)
+	minScriptChangeHeading((SPRING_CIRCLE_DIVS - 1) >> 1)
 {
 	// creg
 	if (owner == nullptr)

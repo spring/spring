@@ -72,13 +72,13 @@ bool LuaWeaponDefs::PushEntries(lua_State* L)
 		LuaHashString("next")
 	}};
 
-	const std::array<const IndxFuncType, 3> indxFuncs = {WeaponDefIndex, WeaponDefNewIndex, WeaponDefMetatable};
-	const std::array<const IterFuncType, 2> iterFuncs = {Pairs, Next};
+	const std::array<const IndxFuncType, 3> indxFuncs = {{WeaponDefIndex, WeaponDefNewIndex, WeaponDefMetatable}};
+	const std::array<const IterFuncType, 2> iterFuncs = {{Pairs, Next}};
 
 	for (auto it = defsMap.cbegin(); it != defsMap.cend(); ++it) {
 		const auto def = weaponDefHandler->GetWeaponDefByID(it->second);
 
-		if (def == NULL)
+		if (def == nullptr)
 			continue;
 
 		PushObjectDefProxyTable(L, indxOpers, iterOpers, indxFuncs, iterFuncs, def);
