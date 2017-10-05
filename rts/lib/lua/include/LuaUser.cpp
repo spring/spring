@@ -299,7 +299,7 @@ static constexpr auto SPRING_FLOAT_MAX = std::numeric_limits<float>::max();
 static constexpr auto SPRING_INT64_MAX = std::numeric_limits<std::int64_t>::max();
 
 static constexpr std::array<double, 11> v = {
-	1, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10
+	{1, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10}
 };
 
 

@@ -74,13 +74,13 @@ bool LuaUnitDefs::PushEntries(lua_State* L)
 		LuaHashString("next")
 	}};
 
-	const std::array<const IndxFuncType, 3> indxFuncs = {UnitDefIndex, UnitDefNewIndex, UnitDefMetatable};
-	const std::array<const IterFuncType, 2> iterFuncs = {Pairs, Next};
+	const std::array<const IndxFuncType, 3> indxFuncs = {{UnitDefIndex, UnitDefNewIndex, UnitDefMetatable}};
+	const std::array<const IterFuncType, 2> iterFuncs = {{Pairs, Next}};
 
 	for (auto it = defsVec.cbegin(); it != defsVec.cend(); ++it) {
 		const auto def = unitDefHandler->GetUnitDefByID(it->id);
 
-		if (def == NULL)
+		if (def == nullptr)
 			continue;
 
 		PushObjectDefProxyTable(L, indxOpers, iterOpers, indxFuncs, iterFuncs, def);
