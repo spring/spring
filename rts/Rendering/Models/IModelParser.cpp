@@ -261,14 +261,14 @@ S3DModel* CModelLoader::CreateModel(
 		CreateLists(&model);
 
 	// add (parsed or dummy) model to cache
-	model.id = models.size();
+	const size_t new_index = models.size();
 
-	cache[name] = model.id;
-	cache[path] = model.id;
+	model.id = new_index;
+	cache[name] = new_index;
+	cache[path] = new_index;
 
-	models.emplace_back();
-	models.back() = std::move(model);
-	return &models[model.id];
+	models.emplace_back(std::move(model));
+	return &models[new_index];
 }
 
 
