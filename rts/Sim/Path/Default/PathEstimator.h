@@ -70,7 +70,7 @@ public:
 protected: // IPathFinder impl
 	IPath::SearchResult DoBlockSearch(const CSolidObject* owner, const MoveDef& moveDef, const int2 s, const int2 g);
 	IPath::SearchResult DoBlockSearch(const CSolidObject* owner, const MoveDef& moveDef, const float3 sw, const float3 gw);
-	IPath::SearchResult DoSearch(const MoveDef&, const CPathFinderDef&, const CSolidObject* owner);
+	IPath::SearchResult DoSearch(const MoveDef&, const CPathFinderDef&, const CSolidObject* owner) override;
 
 	bool TestBlock(
 		const MoveDef& moveDef,
@@ -80,8 +80,8 @@ protected: // IPathFinder impl
 		const unsigned int pathOptDir,
 		const unsigned int blockStatus,
 		float speedMod
-	);
-	void FinishSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, IPath::Path& path) const;
+	) override;
+	void FinishSearch(const MoveDef& moveDef, const CPathFinderDef& pfDef, IPath::Path& path) const override;
 
 	const CPathCache::CacheItem& GetCache(
 		const int2 strtBlock,
@@ -89,7 +89,7 @@ protected: // IPathFinder impl
 		float goalRadius,
 		int pathType,
 		const bool synced
-	) const;
+	) const override;
 
 	void AddCache(
 		const IPath::Path* path,
@@ -99,7 +99,7 @@ protected: // IPathFinder impl
 		float goalRadius,
 		int pathType,
 		const bool synced
-	);
+	) override;
 
 private:
 	void InitEstimator(const std::string& cacheFileName, const std::string& mapName);
