@@ -809,7 +809,7 @@ void SpringApp::Reload(const std::string script)
 	CNamedTextures::Kill();
 	CNamedTextures::Init();
 
-	shaderHandler->ClearGameShaders();
+	shaderHandler->ClearShaders(false);
 
 	LuaOpenGL::Free();
 	LuaOpenGL::Init();
@@ -1016,7 +1016,7 @@ void SpringApp::Kill(bool fromRun)
 	spring::SafeDelete(gu);
 
 	LOG("[SpringApp::%s][7]", __func__);
-	CShaderHandler::FreeInstance();
+	shaderHandler->ClearAll();
 	spring::SafeDelete(globalRendering);
 	spring::SafeDelete(luaSocketRestrictions);
 

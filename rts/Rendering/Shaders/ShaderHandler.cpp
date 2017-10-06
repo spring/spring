@@ -14,55 +14,35 @@
 CShaderHandler* CShaderHandler::GetInstance()
 {
 	static CShaderHandler instance;
-
 	return &instance;
 }
 
-void CShaderHandler::FreeInstance()
-{
-	shaderHandler->ClearGameShaders();
-	shaderHandler->ClearPersistentShaders();
-	shaderHandler->shaderCache.Clear();
-}
 
-void CShaderHandler::ClearGameShaders()
+void CShaderHandler::ClearShaders(bool persistent)
 {
-	for (auto &p: gameProgramObjects) {
+	for (auto& p: programObjects[persistent]) {
 		// release by poMap (not poClass) to avoid erase-while-iterating pattern
 		ReleaseProgramObjectsMap(p.second);
 	}
 
-	gameProgramObjects.clear();
-}
-
-void CShaderHandler::ClearPersistentShaders()
-{
-	for (auto &p: persistentProgramObjects) {
-		// release by poMap (not poClass) to avoid erase-while-iterating pattern
-		ReleaseProgramObjectsMap(p.second);
-	}
-
-	persistentProgramObjects.clear();
+	programObjects[persistent].clear();
 }
 
 
-void CShaderHandler::ReloadAll()
+void CShaderHandler::ReloadShaders(bool persistent)
 {
-	for (const auto& p1: gameProgramObjects) {
-		for (const auto& p2: p1.second) {
-			p2.second->Reload(true, true);
-		}
-	}
-	for (const auto& p1: persistentProgramObjects) {
+	for (const auto& p1: programObjects[persistent]) {
 		for (const auto& p2: p1.second) {
 			p2.second->Reload(true, true);
 		}
 	}
 }
+
 
 bool CShaderHandler::ReleaseProgramObjects(const std::string& poClass, bool persistent)
 {
-	ProgramTable& pTable = persistent ? persistentProgramObjects : gameProgramObjects;
+	ProgramTable& pTable = programObjects[persistent];
+
 	if (pTable.find(poClass) == pTable.end())
 		return false;
 
@@ -92,7 +72,7 @@ void CShaderHandler::ReleaseProgramObjectsMap(ProgramObjMap& poMap)
 
 Shader::IProgramObject* CShaderHandler::CreateProgramObject(const std::string& poClass, const std::string& poName, bool persistent)
 {
-	ProgramTable& pTable = persistent ? persistentProgramObjects : gameProgramObjects;
+	ProgramTable& pTable = programObjects[persistent];
 
 	Shader::IProgramObject* po = Shader::nullProgramObject;
 

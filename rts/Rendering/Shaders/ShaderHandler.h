@@ -20,9 +20,20 @@ public:
 	typedef spring::unsynced_map<std::string, ProgramObjMap> ProgramTable;
 
 	static CShaderHandler* GetInstance();
-	static void FreeInstance();
 
-	void ReloadAll();
+	void ReloadShaders(bool persistent);
+	void ReloadAll() {
+		ReloadShaders(false);
+		ReloadShaders(true);
+	}
+
+	void ClearShaders(bool persistent);
+	void ClearAll() {
+		ClearShaders(false);
+		ClearShaders(true);
+		shaderCache.Clear();
+	}
+
 	bool ReleaseProgramObjects(const std::string& poClass, bool persistent = false);
 	void ReleaseProgramObjectsMap(ProgramObjMap& poMap);
 
@@ -34,8 +45,6 @@ public:
 	 */
 	Shader::IShaderObject* CreateShaderObject(const std::string& soName, const std::string& soDefs, int soType);
 
-	void ClearGameShaders();
-	void ClearPersistentShaders();
 
 	struct ShaderCache {
 	public:
@@ -73,10 +82,9 @@ public:
 	      ShaderCache& GetShaderCache()       { return shaderCache; }
 
 private:
-	// game created programs, by name
-	ProgramTable gameProgramObjects;
-	// persistent (menu) created programs, by name
-	ProgramTable persistentProgramObjects;
+	// [0] := game-created programs, by name
+	// [1] := menu-created (persistent) programs, by name
+	ProgramTable programObjects[2];
 
 	// all (re)loaded program ID's, by hash
 	ShaderCache shaderCache;
