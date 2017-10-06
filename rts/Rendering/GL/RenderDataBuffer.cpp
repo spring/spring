@@ -165,11 +165,7 @@ void GL::RenderDataBuffer::Upload(
 	indcs.New(numIndcs * sizeof(uint8_t), GL_STATIC_DRAW, rawIndcs);
 
 	EnableAttribs(numAttrs, rawAttrs);
-
-	elems.UnmapBuffer();
-	indcs.UnmapBuffer();
 	array.Unbind();
-
 	DisableAttribs(numAttrs, rawAttrs);
 }
 

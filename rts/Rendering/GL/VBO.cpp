@@ -68,14 +68,14 @@ void VBO::Unbind() const
 }
 
 
-void VBO::Resize(GLsizeiptr newSize, GLenum newUsage)
+bool VBO::Resize(GLsizeiptr newSize, GLenum newUsage)
 {
 	assert(bound);
 	assert(!mapped);
 
 	// no size change -> nothing to do
 	if (newSize == bufSize && newUsage == usage)
-		return;
+		return true;
 
 	// first call: no *BO exists yet to copy old data from, so use ::New() (faster)
 	if (bufSize == 0)
@@ -107,26 +107,27 @@ void VBO::Resize(GLsizeiptr newSize, GLenum newUsage)
 	if (err == GL_NO_ERROR) {
 		bufSize = newSize;
 		usage = newUsage;
-		return;
+		return true;
 	}
 
 	LOG_L(L_ERROR, "[VBO::%s(size=%lu,usage=%u)] id=%u tgt=0x%x err=0x%x", __func__, (unsigned long) bufSize, usage, vboId, curBoundTarget, err);
 	Unbind();
+	return false;
 }
 
 
-void VBO::New(GLsizeiptr newSize, GLenum newUsage, const void* newData)
+bool VBO::New(GLsizeiptr newSize, GLenum newUsage, const void* newData)
 {
 	assert(bound);
 	assert(!mapped || (newData == nullptr && newSize == bufSize && newUsage == usage));
 
 	// no-op new, allows e.g. repeated Bind+New with persistent buffers
 	if (newData == nullptr && newSize == bufSize && newUsage == usage)
-		return;
+		return true;
 
 	if (immutableStorage && bufSize != 0) {
 		LOG_L(L_ERROR, "[VBO::%s(size=%lu,usage=0x%x)] cannot recreate persistent storage buffer", __func__, (unsigned long) bufSize, usage);
-		return;
+		return false;
 	}
 
 
@@ -146,11 +147,12 @@ void VBO::New(GLsizeiptr newSize, GLenum newUsage, const void* newData)
 	if (err == GL_NO_ERROR) {
 		bufSize = newSize;
 		usage = newUsage;
-		return;
+		return true;
 	}
 
 	LOG_L(L_ERROR, "[VBO::%s(size=%lu,usage=0x%x)] id=%u tgt=0x%x err=0x%x", __func__, (unsigned long) bufSize, usage, vboId, curBoundTarget, err);
 	Unbind();
+	return false;
 }
 
 

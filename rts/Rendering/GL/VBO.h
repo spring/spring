@@ -37,8 +37,8 @@ public:
 	 * @param data (optional) initialize the VBO with the data (the array must have minimum `size` length!)
 	 * @see http://www.opengl.org/sdk/docs/man/xhtml/glBufferData.xml
 	 */
-	void Resize(GLsizeiptr newSize, GLenum newUsage = GL_STREAM_DRAW);
-	void New(GLsizeiptr newSize, GLenum newUsage = GL_STREAM_DRAW, const void* newData = nullptr);
+	bool Resize(GLsizeiptr newSize, GLenum newUsage = GL_STREAM_DRAW);
+	bool New(GLsizeiptr newSize, GLenum newUsage = GL_STREAM_DRAW, const void* newData = nullptr);
 	void Invalidate(); //< discards all current data (frees the memory w/o resizing)
 
 	/**
