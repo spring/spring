@@ -431,47 +431,15 @@ float3 CCamera::CalcWindowCoordinates(const float3& objPos) const
 }
 
 
-
-
 inline void CCamera::gluPerspectiveSpring(float aspect, float zn, float zf) {
 	const float t = zn * tanHalfFov;
 	const float b = -t;
 	const float l = b * aspect;
 	const float r = t * aspect;
 
-	glFrustumSpring(l, r,  b, t,  zn, zf);
+	projectionMatrix = clipControlMatrix * CMatrix44f::FrustumProj(l, r,  b, t,  zn, zf);
 }
 
-inline void CCamera::glFrustumSpring(
-	const float l,
-	const float r,
-	const float b,
-	const float t,
-	const float zn,
-	const float zf
-) {
-	projectionMatrix[ 0] = (2.0f * zn) / (r - l);
-	projectionMatrix[ 1] =  0.0f;
-	projectionMatrix[ 2] =  0.0f;
-	projectionMatrix[ 3] =  0.0f;
-
-	projectionMatrix[ 4] =  0.0f;
-	projectionMatrix[ 5] = (2.0f * zn) / (t - b);
-	projectionMatrix[ 6] =  0.0f;
-	projectionMatrix[ 7] =  0.0f;
-
-	projectionMatrix[ 8] = (r + l) / (r - l);
-	projectionMatrix[ 9] = (t + b) / (t - b);
-	projectionMatrix[10] = -(zf + zn) / (zf - zn);
-	projectionMatrix[11] = -1.0f;
-
-	projectionMatrix[12] =   0.0f;
-	projectionMatrix[13] =   0.0f;
-	projectionMatrix[14] = -(2.0f * zf * zn) / (zf - zn);
-	projectionMatrix[15] =   0.0f;
-
-	projectionMatrix = clipControlMatrix * projectionMatrix;
-}
 
 // same as glOrtho(-1, 1, -1, 1, zn, zf) plus glScalef(sx, sy, 1)
 inline void CCamera::glOrthoScaledSpring(
@@ -485,43 +453,9 @@ inline void CCamera::glOrthoScaledSpring(
 	const float b = -1.0f * sy;
 	const float t =  1.0f * sy;
 
-	glOrthoSpring(l, r,  b, t,  zn, zf);
+	projectionMatrix = clipControlMatrix * CMatrix44f::OrthoProj(l, r,  b, t,  zn, zf);
 }
 
-inline void CCamera::glOrthoSpring(
-	const float l,
-	const float r,
-	const float b,
-	const float t,
-	const float zn,
-	const float zf
-) {
-	const float tx = -(( r +  l) / ( r -  l));
-	const float ty = -(( t +  b) / ( t -  b));
-	const float tz = -((zf + zn) / (zf - zn));
-
-	projectionMatrix[ 0] =  2.0f / (r - l);
-	projectionMatrix[ 1] =  0.0f;
-	projectionMatrix[ 2] =  0.0f;
-	projectionMatrix[ 3] =  0.0f;
-
-	projectionMatrix[ 4] =  0.0f;
-	projectionMatrix[ 5] =  2.0f / (t - b);
-	projectionMatrix[ 6] =  0.0f;
-	projectionMatrix[ 7] =  0.0f;
-
-	projectionMatrix[ 8] =  0.0f;
-	projectionMatrix[ 9] =  0.0f;
-	projectionMatrix[10] = -2.0f / (zf - zn);
-	projectionMatrix[11] =  0.0f;
-
-	projectionMatrix[12] = tx;
-	projectionMatrix[13] = ty;
-	projectionMatrix[14] = tz;
-	projectionMatrix[15] = 1.0f;
-
-	projectionMatrix = clipControlMatrix * projectionMatrix;
-}
 
 inline void CCamera::gluLookAtSpring(const float3& eye, const float3& center, const float3& up)
 {

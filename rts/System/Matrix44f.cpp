@@ -657,3 +657,59 @@ float3 CMatrix44f::GetEulerAnglesLftHand(float eps) const {
 	return (matrix.GetEulerAnglesRgtHand(eps));
 }
 
+CMatrix44f CMatrix44f::FrustumProj(float l, float r, float b, float t, float zn, float zf)
+{
+	CMatrix44f proj;
+	proj[ 0] = (2.0f * zn) / (r - l);
+	proj[ 1] =  0.0f;
+	proj[ 2] =  0.0f;
+	proj[ 3] =  0.0f;
+
+	proj[ 4] =  0.0f;
+	proj[ 5] = (2.0f * zn) / (t - b);
+	proj[ 6] =  0.0f;
+	proj[ 7] =  0.0f;
+
+	proj[ 8] = (r + l) / (r - l);
+	proj[ 9] = (t + b) / (t - b);
+	proj[10] = -(zf + zn) / (zf - zn);
+	proj[11] = -1.0f;
+
+	proj[12] =   0.0f;
+	proj[13] =   0.0f;
+	proj[14] = -(2.0f * zf * zn) / (zf - zn);
+	proj[15] =   0.0f;
+
+	return proj;
+}
+
+CMatrix44f CMatrix44f::OrthoProj(float l, float r, float b, float t, float zn, float zf)
+{
+	CMatrix44f proj;
+	const float tx = -(( r +  l) / ( r -  l));
+	const float ty = -(( t +  b) / ( t -  b));
+	const float tz = -((zf + zn) / (zf - zn));
+
+	proj[ 0] =  2.0f / (r - l);
+	proj[ 1] =  0.0f;
+	proj[ 2] =  0.0f;
+	proj[ 3] =  0.0f;
+
+	proj[ 4] =  0.0f;
+	proj[ 5] =  2.0f / (t - b);
+	proj[ 6] =  0.0f;
+	proj[ 7] =  0.0f;
+
+	proj[ 8] =  0.0f;
+	proj[ 9] =  0.0f;
+	proj[10] = -2.0f / (zf - zn);
+	proj[11] =  0.0f;
+
+	proj[12] = tx;
+	proj[13] = ty;
+	proj[14] = tz;
+	proj[15] = 1.0f;
+
+	return proj;
+}
+
