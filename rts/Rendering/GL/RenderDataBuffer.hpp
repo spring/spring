@@ -11,7 +11,7 @@
 namespace GL {
 	// clang does not like reinterpret_cast inside constexpr's
 	// it apparently also can not handle 0-pointer arithmetic
-	#if (defined(__clang__))
+	#if (defined(__clang__)) || (defined(_MSC_VER))
 	#define constqual const
 	// #define OFFSET(T, n) (static_cast<uint8_t*>(nullptr) + sizeof(T) * (n))
 	#define OFFSET(T, n) (reinterpret_cast<void*>(sizeof(T) * (n)))

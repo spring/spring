@@ -15,6 +15,7 @@
 #include "System/Config/ConfigHandler.h"
 
 #include <algorithm>
+#include <array>
 #ifdef DEBUG
 	#include <string.h> // strncmp
 #endif
