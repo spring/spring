@@ -41,6 +41,7 @@ static const float darkLuminosity = 0.05 +
 CglFont::CglFont(const std::string& fontfile, int size, int _outlinewidth, float _outlineweight)
 : CTextWrap(fontfile,size,_outlinewidth,_outlineweight)
 , fontPath(fontfile)
+, colorCallback(nullptr)
 , inBeginEnd(false)
 , autoOutlineColor(true)
 , setColor(false)
@@ -124,11 +125,29 @@ static inline bool SkipColorCodesAndNewLines(const std::u8string& text, T* pos, 
 	return true;
 }
 
+static inline void CallColorCallback(CglFont::ColorCallback colorCallback, float* v)
+{
+	if (colorCallback == nullptr) {
+		glColor4fv(v);
+	} else {
+		colorCallback(v);
+	}
+}
+
+void CglFont::SetColorCallback(ColorCallback cb)
+{
+	colorCallback = cb;
+}
+
+void CglFont::SetNextColor()
+{
+	CallColorCallback(colorCallback, *colorIterator++);
+}
 
 static inline void TextStripCallback(void* data)
 {
-	CglFont::ColorMap::iterator& sci = *reinterpret_cast<CglFont::ColorMap::iterator*>(data);
-	glColor4fv(*sci++);
+	CglFont* f = reinterpret_cast<CglFont*>(data);
+	f->SetNextColor();
 }
 
 
@@ -506,19 +525,20 @@ void CglFont::End()
 
 	if (va2.drawIndex() > 0) {
 		if (stripOutlineColors.size() > 1) {
-			ColorMap::iterator sci = stripOutlineColors.begin();
-			va2.DrawArray2dT(GL_QUADS,TextStripCallback,&sci);
+			colorIterator = stripOutlineColors.begin();
+			va2.DrawArray2dT(GL_QUADS,TextStripCallback, this);
 		} else {
-			glColor4fv(outlineColor);
+			CallColorCallback(colorCallback, outlineColor);
 			va2.DrawArray2dT(GL_QUADS);
 		}
 	}
 
 	if (stripTextColors.size() > 1) {
-		ColorMap::iterator sci = stripTextColors.begin();
-		va.DrawArray2dT(GL_QUADS,TextStripCallback,&sci);//FIXME calls a 0 length strip!
+		colorIterator = stripTextColors.begin();
+		va.DrawArray2dT(GL_QUADS, TextStripCallback, this);//FIXME calls a 0 length strip!
 	} else {
-		if (setColor) glColor4fv(textColor);
+		if (setColor)
+			CallColorCallback(colorCallback, textColor);
 		va.DrawArray2dT(GL_QUADS);
 	}
 

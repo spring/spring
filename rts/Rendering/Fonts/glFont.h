@@ -99,12 +99,20 @@ private:
 
 public:
 	typedef std::vector<float4> ColorMap;
+	typedef void (*ColorCallback)(const float*);
+
+	void SetColorCallback(ColorCallback cb);
+	// called from drawArrays through a callback
+	void SetNextColor();
 
 private:
 	std::string fontPath;
 
 	ColorMap stripTextColors;
 	ColorMap stripOutlineColors;
+
+	ColorMap::iterator colorIterator;
+	ColorCallback colorCallback;
 
 	CVertexArray va;
 	CVertexArray va2;
