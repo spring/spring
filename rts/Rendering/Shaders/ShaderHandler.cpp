@@ -11,70 +11,78 @@
 #include <cassert>
 
 
-// not extern'ed, so static
-static CShaderHandler* gShaderHandler = nullptr;
-static unsigned int gNumInstances = 0;
+CShaderHandler* CShaderHandler::GetInstance()
+{
+	static CShaderHandler instance;
 
-CShaderHandler* CShaderHandler::GetInstance(unsigned int instanceValue) {
-	assert(instanceValue <= 1);
-
-	if (gShaderHandler == nullptr) {
-		gShaderHandler = new CShaderHandler();
-
-		gNumInstances *= instanceValue;
-		gNumInstances += 1;
-	}
-
-	// nobody should bring us back to life after FreeInstance
-	// (unless n==0, which indicates we have just [re]loaded)
-	assert(gNumInstances <= 1);
-	return gShaderHandler;
+	return &instance;
 }
 
-void CShaderHandler::FreeInstance(CShaderHandler* sh) {
-	assert(sh == gShaderHandler);
-	delete sh;
-	gShaderHandler = nullptr;
+void CShaderHandler::FreeInstance()
+{
+	shaderHandler->ClearGameShaders();
+	shaderHandler->ClearPersistentShaders();
+	shaderHandler->shaderCache.Clear();
 }
 
-
-
-CShaderHandler::~CShaderHandler() {
-	for (auto it = programObjects.begin(); it != programObjects.end(); ++it) {
+void CShaderHandler::ClearGameShaders()
+{
+	for (auto &p: gameProgramObjects) {
 		// release by poMap (not poClass) to avoid erase-while-iterating pattern
-		ReleaseProgramObjectsMap(it->second);
+		ReleaseProgramObjectsMap(p.second);
 	}
 
-	programObjects.clear();
-	shaderCache.Clear();
+	gameProgramObjects.clear();
+}
+
+void CShaderHandler::ClearPersistentShaders()
+{
+	for (auto &p: persistentProgramObjects) {
+		// release by poMap (not poClass) to avoid erase-while-iterating pattern
+		ReleaseProgramObjectsMap(p.second);
+	}
+
+	persistentProgramObjects.clear();
 }
 
 
-void CShaderHandler::ReloadAll() {
-	for (auto it = programObjects.cbegin(); it != programObjects.cend(); ++it) {
-		for (auto jt = it->second.cbegin(); jt != it->second.cend(); ++jt) {
-			(jt->second)->Reload(true, true);
+void CShaderHandler::ReloadAll()
+{
+	for (const auto& p1: gameProgramObjects) {
+		for (const auto& p2: p1.second) {
+			p2.second->Reload(true, true);
+		}
+	}
+	for (const auto& p1: persistentProgramObjects) {
+		for (const auto& p2: p1.second) {
+			p2.second->Reload(true, true);
 		}
 	}
 }
 
-bool CShaderHandler::ReleaseProgramObjects(const std::string& poClass) {
-	if (programObjects.find(poClass) == programObjects.end())
+bool CShaderHandler::ReleaseProgramObjects(const std::string& poClass, bool persistent)
+{
+	ProgramTable& pTable = persistent ? persistentProgramObjects : gameProgramObjects;
+	if (pTable.find(poClass) == pTable.end())
 		return false;
 
-	ReleaseProgramObjectsMap(programObjects[poClass]);
+	ReleaseProgramObjectsMap(pTable[poClass]);
 
-	programObjects.erase(poClass);
+	pTable.erase(poClass);
 	return true;
 }
 
-void CShaderHandler::ReleaseProgramObjectsMap(ProgramObjMap& poMap) {
+void CShaderHandler::ReleaseProgramObjectsMap(ProgramObjMap& poMap)
+{
 	for (auto it = poMap.cbegin(); it != poMap.cend(); ++it) {
 		Shader::IProgramObject* po = it->second;
 
 		// free the program object and its attachments
 		if (po != Shader::nullProgramObject) {
-			po->Release(); delete po;
+			// erases
+			shaderCache.Find(po->GetHash());
+			po->Release();
+			delete po;
 		}
 	}
 
@@ -82,39 +90,32 @@ void CShaderHandler::ReleaseProgramObjectsMap(ProgramObjMap& poMap) {
 }
 
 
-Shader::IProgramObject* CShaderHandler::GetProgramObject(const std::string& poClass, const std::string& poName) {
-	if (programObjects.find(poClass) == programObjects.end())
-		return nullptr;
+Shader::IProgramObject* CShaderHandler::CreateProgramObject(const std::string& poClass, const std::string& poName, bool persistent)
+{
+	ProgramTable& pTable = persistent ? persistentProgramObjects : gameProgramObjects;
 
-	if (programObjects[poClass].find(poName) == programObjects[poClass].end())
-		return nullptr;
-
-	return (programObjects[poClass][poName]);
-}
-
-
-Shader::IProgramObject* CShaderHandler::CreateProgramObject(const std::string& poClass, const std::string& poName) {
 	Shader::IProgramObject* po = Shader::nullProgramObject;
 
-	if (programObjects.find(poClass) != programObjects.end()) {
-		if (programObjects[poClass].find(poName) != programObjects[poClass].end()) {
+	if (pTable.find(poClass) != pTable.end()) {
+		if (pTable[poClass].find(poName) != pTable[poClass].end()) {
 			LOG_L(L_WARNING, "[SH::%s] program-object \"%s\" already exists", __func__, poName.c_str());
-			return (programObjects[poClass][poName]);
+			return (pTable[poClass][poName]);
 		}
 	} else {
-		programObjects[poClass] = ProgramObjMap();
+		pTable[poClass] = ProgramObjMap();
 	}
 
 	if ((po = new Shader::GLSLProgramObject(poName)) == Shader::nullProgramObject)
 		LOG_L(L_ERROR, "[SH::%s] hardware does not support creating program-object \"%s\"", __func__, poName.c_str());
 
-	programObjects[poClass][poName] = po;
+	pTable[poClass][poName] = po;
 	return po;
 }
 
 
 
-Shader::IShaderObject* CShaderHandler::CreateShaderObject(const std::string& soName, const std::string& soDefs, int soType) {
+Shader::IShaderObject* CShaderHandler::CreateShaderObject(const std::string& soName, const std::string& soDefs, int soType)
+{
 	assert(!soName.empty());
 	Shader::IShaderObject* so = Shader::nullShaderObject;
 

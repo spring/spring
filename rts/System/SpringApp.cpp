@@ -44,6 +44,7 @@
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Fonts/glFont.h"
 #include "Rendering/GL/FBO.h"
+#include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/Textures/NamedTextures.h"
 #include "Rendering/Textures/TextureAtlas.h"
@@ -765,11 +766,6 @@ void SpringApp::Reload(const std::string script)
 	if (clientNet != nullptr)
 		clientNet->SetDemoRecorder(nullptr);
 
-	// agui has a shader but shaderHandler is going to reload
-	// so we free it before game is deleted and reinit it later
-	// TODO: make shaderhandler support persistent shaders
-	agui::FreeGui();
-
 	// Lua shutdown functions need to access 'game' but spring::SafeDelete sets it to NULL.
 	// ~CGame also calls this, which does not matter because handlers are gone by then
 	game->KillLua(false);
@@ -813,6 +809,8 @@ void SpringApp::Reload(const std::string script)
 	CNamedTextures::Kill();
 	CNamedTextures::Init();
 
+	shaderHandler->ClearGameShaders();
+
 	LuaOpenGL::Free();
 	LuaOpenGL::Init();
 
@@ -846,7 +844,6 @@ void SpringApp::Reload(const std::string script)
 	luaMenuController->Reset();
 	// clean changed configs
 	configHandler->Update();
-	agui::InitGui();
 
 	LOG("[SpringApp::%s][12] #script=%lu", __func__, (unsigned long) script.size());
 
@@ -989,7 +986,6 @@ void SpringApp::Kill(bool fromRun)
 		clientNet->SetDemoRecorder(nullptr);
 
 	// see ::Reload
-	agui::FreeGui();
 	ISound::Shutdown();
 
 	spring::SafeDelete(game);
@@ -1004,6 +1000,7 @@ void SpringApp::Kill(bool fromRun)
 	spring::SafeDelete(gameSetup);
 
 	LOG("[SpringApp::%s][4] font=%p", __func__, font);
+	agui::FreeGui();
 	spring::SafeDelete(keyCodes);
 	spring::SafeDelete(font);
 	spring::SafeDelete(smallFont);
@@ -1019,6 +1016,8 @@ void SpringApp::Kill(bool fromRun)
 	spring::SafeDelete(gu);
 
 	LOG("[SpringApp::%s][7]", __func__);
+	CShaderHandler::FreeInstance();
+	spring::SafeDelete(globalRendering);
 	spring::SafeDelete(globalRendering);
 	spring::SafeDelete(luaSocketRestrictions);
 

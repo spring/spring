@@ -25,7 +25,6 @@
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Rendering/Models/IModelParser.h"
-#include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/Textures/3DOTextureHandler.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
 #include "Lua/LuaUnsyncedCtrl.h"
@@ -45,7 +44,6 @@
 
 CWorldDrawer::CWorldDrawer(): numUpdates(0)
 {
-	CShaderHandler::GetInstance(0);
 	LuaObjectDrawer::Init();
 }
 
@@ -77,7 +75,6 @@ CWorldDrawer::~CWorldDrawer()
 
 	readMap->KillGroundDrawer();
 	IGroundDecalDrawer::FreeInstance();
-	CShaderHandler::FreeInstance(shaderHandler);
 	LuaObjectDrawer::Kill();
 }
 

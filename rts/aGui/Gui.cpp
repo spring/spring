@@ -28,7 +28,7 @@ Gui::Gui()
 {
 	inputCon = input.AddHandler(std::bind(&Gui::HandleEvent, this, std::placeholders::_1));
 
-	shader = shaderHandler->CreateProgramObject("[aGui::Gui]", "aGui::Gui");
+	shader = shaderHandler->CreateProgramObject("[aGui::Gui]", "aGui::Gui", true);
 	{
 		const std::string archiveName = CArchiveScanner::GetSpringBaseContentName();
 		vfsHandler->AddArchive(archiveName, false);
