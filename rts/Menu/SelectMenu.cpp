@@ -12,7 +12,6 @@
 #include "Game/ClientSetup.h"
 #include "Game/GlobalUnsynced.h"
 #include "Game/PreGame.h"
-#include "Rendering/Fonts/glFont.h"
 #include "Rendering/GL/myGL.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/Exceptions.h"

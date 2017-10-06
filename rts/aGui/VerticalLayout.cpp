@@ -2,6 +2,7 @@
 
 #include "VerticalLayout.h"
 
+#include "Gui.h"
 #include "Rendering/GL/myGL.h"
 
 namespace agui
@@ -16,7 +17,7 @@ void VerticalLayout::DrawSelf()
 	if (borderWidth > 0)
 	{
 		glLineWidth(borderWidth);
-		glColor4f(1.f,1.f,1.f, Opacity());
+		gui->SetColor(1.f,1.f,1.f, Opacity());
 		DrawBox(GL_LINE_LOOP);
 	}
 }

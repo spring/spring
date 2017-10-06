@@ -25,36 +25,39 @@ void Button::Label(const std::string& _label)
 
 void Button::DrawSelf()
 {
+	gui->SetDrawMode(Gui::DrawMode::COLOR);
 	const float opacity = Opacity();
-	glColor4f(0.8f, 0.8f, 0.8f, opacity);
+	gui->SetColor(0.8f, 0.8f, 0.8f, opacity);
 
 	DrawBox(GL_QUADS);
 
-	glColor4f(1.0f, 1.0f, 1.0f, 0.1f);
+	gui->SetColor(1.0f, 1.0f, 1.0f, 0.1f);
 	if (clicked) {
 		glBlendFunc(GL_ONE, GL_ONE); // additive blending
-		glColor4f(0.2f, 0.0f, 0.0f, opacity);
+		gui->SetColor(0.2f, 0.0f, 0.0f, opacity);
 		DrawBox(GL_QUADS);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glColor4f(1.0f, 0.0f, 0.0f, opacity/2.f);
+		gui->SetColor(1.0f, 0.0f, 0.0f, opacity/2.f);
 		glLineWidth(1.49f);
 		DrawBox(GL_LINE_LOOP);
 		glLineWidth(1.0f);
 	} else if (hovered) {
 		glBlendFunc(GL_ONE, GL_ONE); // additive blending
-		glColor4f(0.0f, 0.0f, 0.2f, opacity);
+		gui->SetColor(0.0f, 0.0f, 0.2f, opacity);
 		DrawBox(GL_QUADS);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glColor4f(1.0f, 1.0f, 1.0f, opacity/2.0f);
+		gui->SetColor(1.0f, 1.0f, 1.0f, opacity/2.0f);
 		glLineWidth(1.49f);
 		DrawBox(GL_LINE_LOOP);
 		glLineWidth(1.0f);
 	}
 
+	gui->SetColor(1.0f, 1.0f, 1.0f, 1.0f);
 	font->Begin();
 	font->SetTextColor(1.0f, 1.0f, 1.0f, opacity);
 	font->SetOutlineColor(0.0f, 0.0f, 0.0f, opacity);
 	font->glPrint(pos[0] + size[0]/2, pos[1] + size[1]/2, 1.0, FONT_CENTER | FONT_VCENTER | FONT_SHADOW | FONT_SCALE | FONT_NORM, label);
+	gui->SetDrawMode(Gui::DrawMode::MASK);
 	font->End();
 }
 

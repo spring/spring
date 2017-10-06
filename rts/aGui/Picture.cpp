@@ -3,6 +3,7 @@
 
 #include "Picture.h"
 
+#include "Gui.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "System/Log/ILog.h"
@@ -26,7 +27,7 @@ Picture::~Picture()
 void Picture::Load(const std::string& _file)
 {
 	file = _file;
-	
+
 	CBitmap bmp;
 	if (bmp.Load(file)) {
 		texture = bmp.CreateTexture();
@@ -39,8 +40,8 @@ void Picture::Load(const std::string& _file)
 void Picture::DrawSelf()
 {
 	if (texture) {
-		glColor3f(1.0f, 1.0f, 1.0f);
-		glEnable(GL_TEXTURE_2D);
+		gui->SetColor(1.0f, 1.0f, 1.0f, 1.0f);
+		gui->SetDrawMode(Gui::DrawMode::TEXTURE);
 		glBindTexture(GL_TEXTURE_2D, texture);
 		glBegin(GL_QUADS);
 			glTexCoord2f(0.0f, 1.0f); glVertex2f(pos[0],           pos[1]);
@@ -48,7 +49,6 @@ void Picture::DrawSelf()
 			glTexCoord2f(1.0f, 0.0f); glVertex2f(pos[0] + size[0], pos[1] + size[1]);
 			glTexCoord2f(1.0f, 1.0f); glVertex2f(pos[0] + size[0], pos[1]);
 		glEnd();
-		glDisable(GL_TEXTURE_2D);
 	}
 }
 

@@ -196,6 +196,7 @@ bool List::MouseUpdate(int x, int y)
 
 void List::DrawSelf()
 {
+	gui->SetDrawMode(Gui::DrawMode::COLOR);
 	const float opacity = Opacity();
 	font->Begin();
 	float hf = font->GetSize() / ScaleFactor();
@@ -227,24 +228,24 @@ void List::DrawSelf()
 
 	for (/*ii = items.begin()*/; ii != filteredItems->end() && nDrawOffset < numDisplay; ++ii)
 	{
-		glColor4f(1,1,1,opacity/4.f);
+		gui->SetColor(1,1,1,opacity/4.f);
 		b.DrawBox(GL_LINE_LOOP);
 
 		if (nCurIndex == place) {
 			glBlendFunc(GL_ONE, GL_ONE); // additive blending
-			glColor4f(0.2f,0,0,opacity);
+			gui->SetColor(0.2f,0,0,opacity);
 			b.DrawBox(GL_QUADS);
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-			glColor4f(1,0,0,opacity/2.f);
+			gui->SetColor(1,0,0,opacity/2.f);
 			glLineWidth(1.49f);
 			b.DrawBox(GL_LINE_LOOP);
 			glLineWidth(1.0f);
 		} else if (b.MouseOver(mx, my)) {
 			glBlendFunc(GL_ONE, GL_ONE); // additive blending
-			glColor4f(0,0,0.2f,opacity);
+			gui->SetColor(0,0,0.2f,opacity);
 			b.DrawBox(GL_QUADS);
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-			glColor4f(1,1,1,opacity/2.f);
+			gui->SetColor(1,1,1,opacity/2.f);
 			glLineWidth(1.49f);
 			b.DrawBox(GL_LINE_LOOP);
 			glLineWidth(1.0f);
@@ -275,14 +276,14 @@ void List::DrawSelf()
 		b.SetPos(scrollbar.GetPos()[0], sbY2);
 		b.SetSize(itemHeight + itemSpacing, sbHeight);
 
-		glColor4f(1,1,1,opacity/4.f);
+		gui->SetColor(1,1,1,opacity/4.f);
 		b.DrawBox(GL_LINE_LOOP);
 
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glColor4f(0.8f,0.8f,0.8f,opacity);
+		gui->SetColor(0.8f,0.8f,0.8f,opacity);
 		scrollbar.DrawBox(GL_QUADS);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glColor4f(1,1,1,opacity/2.f);
+		gui->SetColor(1,1,1,opacity/2.f);
 		glLineWidth(1.49f);
 		scrollbar.DrawBox(GL_LINE_LOOP);
 		glLineWidth(1.0f);
@@ -292,8 +293,9 @@ void List::DrawSelf()
 	/**************
 	* End insert *
 	**************/
-
+	gui->SetDrawMode(Gui::DrawMode::MASK);
 	font->End();
+
 }
 
 bool List::HandleEventSelf(const SDL_Event& ev)

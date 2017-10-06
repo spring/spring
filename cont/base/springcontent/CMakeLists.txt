@@ -28,6 +28,8 @@ set(FILES
 	shaders/GLSL/terrainSimpleCopyVS.glsl
 	shaders/GLSL/terrainVertexShader.glsl
 	shaders/GLSL/bumpWaterVS.glsl
+	shaders/GLSL/GuiVertProg.glsl
+	shaders/GLSL/GuiFragProg.glsl
 	shaders/ARB/waterDynWave2.vp
 	shaders/ARB/waterDynNormal.vp
 	shaders/ARB/waterDynNormal.fp

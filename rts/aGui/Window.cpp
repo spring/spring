@@ -2,6 +2,7 @@
 
 #include "Window.h"
 
+#include "Gui.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Fonts/glFont.h"
 
@@ -27,11 +28,12 @@ void Window::AddChild(GuiElement* elem)
 
 void Window::DrawSelf()
 {
+	gui->SetDrawMode(Gui::DrawMode::COLOR);
 	const float opacity = Opacity();
-	glColor4f(0.0f,0.0f,0.0f, opacity);
+	gui->SetColor(0.0f,0.0f,0.0f, opacity);
 	DrawBox(GL_QUADS);
 
-	glColor4f(0.7f,0.7f,0.7f, opacity);
+	gui->SetColor(0.7f,0.7f,0.7f, opacity);
 	glBegin(GL_QUADS);
 	glVertex2f(pos[0], pos[1]+size[1]-titleHeight);
 	glVertex2f(pos[0], pos[1]+size[1]);
@@ -40,7 +42,7 @@ void Window::DrawSelf()
 	glEnd();
 
 	glLineWidth(2.0f);
-	glColor4f(1.0f,1.0f,1.0f, opacity);
+	gui->SetColor(1.0f,1.0f,1.0f, opacity);
 	DrawBox(GL_LINE_LOOP);
 	/*
 	glBegin(GL_LINE);
@@ -52,6 +54,7 @@ void Window::DrawSelf()
 	font->SetTextColor(1.0f, 1.0f, 1.0f, opacity);
 	font->SetOutlineColor(0.0f, 0.0f, 0.0f, opacity);
 	font->glPrint(pos[0]+0.01, pos[1]+size[1]-titleHeight/2, 1.0, FONT_VCENTER | FONT_SCALE | FONT_SHADOW | FONT_NORM, title);
+	gui->SetDrawMode(Gui::DrawMode::MASK);
 	font->End();
 }
 

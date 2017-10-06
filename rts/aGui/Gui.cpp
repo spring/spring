@@ -7,34 +7,119 @@
 #include <SDL_events.h>
 
 #include "GuiElement.h"
+#include "Game/Camera.h"
+#include "Rendering/Fonts/glFont.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/myGL.h"
+#include "Rendering/Shaders/ShaderHandler.h"
+#include "Rendering/Shaders/Shader.h"
+#include "System/FileSystem/ArchiveScanner.h"
+#include "System/FileSystem/VFSHandler.h"
 #include "System/Log/ILog.h"
+#include "System/Matrix44f.h"
 
 
 namespace agui
 {
 
 Gui::Gui()
+ : currentDrawMode(DrawMode::COLOR)
+ , shader(nullptr)
 {
 	inputCon = input.AddHandler(std::bind(&Gui::HandleEvent, this, std::placeholders::_1));
+
+	shader = shaderHandler->CreateProgramObject("[aGui::Gui]", "aGui::Gui");
+	{
+		const std::string archiveName = CArchiveScanner::GetSpringBaseContentName();
+		vfsHandler->AddArchive(archiveName, false);
+		shader->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/GuiFragProg.glsl", "", GL_FRAGMENT_SHADER));
+		shader->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/GuiVertProg.glsl", "", GL_VERTEX_SHADER));
+		shader->Link();
+		vfsHandler->RemoveArchive(archiveName);
+	}
+
+	if (!shader->IsValid()) {
+		const char* fmt = "%s-shader compilation error: %s";
+		LOG_L(L_ERROR, fmt, shader->GetName().c_str(), shader->GetLog().c_str());
+	} else {
+		shader->Enable();
+
+		shader->SetUniformLocation("viewProjMatrix");
+		shader->SetUniformLocation("tex");
+		shader->SetUniformLocation("color");
+		shader->SetUniformLocation("texWeight");
+
+		shader->SetUniformMatrix4fv(0, false, CMatrix44f::OrthoProj(0.0f, 1.0f, 0.0f, 1.0f, -1.0f, 1.0f).m);
+		shader->SetUniform1i(1, 0);
+		shader->Disable();
+		shader->Validate();
+		if (!shader->IsValid()) {
+			const char* fmt = "%s-shader validation error: %s";
+			LOG_L(L_ERROR, fmt, shader->GetName().c_str(), shader->GetLog().c_str());
+		}
+	}
 }
+
+void Gui::SetColor(float r, float g, float b, float a)
+{
+	shader->SetUniform4f(2, r, g, b, a);
+}
+
+void Gui::SetColor(const float* v)
+{
+	shader->SetUniform4fv(2, v);
+}
+
+void Gui::GuiColorCallback(const float* v)
+{
+	gui->SetColor(v);
+}
+
+void Gui::SetDrawMode(DrawMode newMode)
+{
+	if (currentDrawMode == newMode)
+		return;
+
+	currentDrawMode = newMode;
+
+	switch(newMode) {
+		case COLOR: {
+			shader->SetUniform4f(3, 0.0f, 0.0f, 0.0f, 0.0f);
+			break;
+		}
+		case TEXTURE: {
+			shader->SetUniform4f(3, 1.0f, 1.0f, 1.0f, 1.0f);
+			break;
+		}
+		case MASK: {
+			shader->SetUniform4f(3, 0.0f, 0.0f, 0.0f, 1.0f);
+			break;
+		}
+	}
+}
+
 
 void Gui::Draw()
 {
 	Clean();
-
-	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_ALPHA_TEST);
 	glEnable(GL_BLEND);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	gluOrtho2D(0, 1, 0, 1);
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
+
+	shader->Enable();
+	SetColor(1.0f, 1.0f, 1.0f, 1.0f);
+	font->SetColorCallback(GuiColorCallback);
+	smallFont->SetColorCallback(GuiColorCallback);
+	SetDrawMode(DrawMode::COLOR);
 	for (ElList::reverse_iterator it = elements.rbegin(); it != elements.rend(); ++it) {
 		(*it).element->Draw();
 	}
+	font->SetColorCallback(nullptr);
+	smallFont->SetColorCallback(nullptr);
+	shader->Disable();
 }
 
 void Gui::Clean() {
@@ -78,6 +163,7 @@ void Gui::Clean() {
 Gui::~Gui() {
 	Clean();
 	inputCon.disconnect();
+	shaderHandler->ReleaseProgramObjects("[aGui::Gui]");
 }
 
 void Gui::AddElement(GuiElement* elem, bool asBackground)

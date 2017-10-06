@@ -2,6 +2,7 @@
 
 #include "TextElement.h"
 
+#include "Gui.h"
 #include "Rendering/Fonts/glFont.h"
 
 namespace agui
@@ -26,6 +27,7 @@ void TextElement::DrawSelf()
 	CglFont* f=font;
 	f->WrapInPlace(mytext, font->GetSize(), GlToPixelX(size[0]), GlToPixelY(size[1]));
 	font->glPrint(pos[0]+size[0]/2, pos[1]+size[1]/2, 1.f, FONT_CENTER | FONT_VCENTER | FONT_SHADOW | FONT_SCALE | FONT_NORM, mytext);
+	gui->SetDrawMode(Gui::DrawMode::MASK);
 	font->End();
 }
 

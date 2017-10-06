@@ -2,6 +2,7 @@
 
 #include "LineEdit.h"
 
+#include "Gui.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Fonts/glFont.h"
 #include "System/Misc/SpringTime.h"
@@ -38,16 +39,17 @@ void LineEdit::SetContent(const std::string& line, bool moveCursor)
 
 void LineEdit::DrawSelf()
 {
+	gui->SetDrawMode(Gui::DrawMode::COLOR);
 	const float opacity = Opacity();
-	glColor4f(1.0f, 1.0f, 1.0f, opacity);
+	gui->SetColor(1.0f, 1.0f, 1.0f, opacity);
 	DrawBox(GL_QUADS);
 
 	glLineWidth(1.49f);
 	if (hasFocus) {
-		glColor4f(0.0f, 0.0f, 0.0f, opacity);
+		gui->SetColor(0.0f, 0.0f, 0.0f, opacity);
 		DrawBox(GL_LINE_LOOP);
 	} else {
-		glColor4f(0.5f, 0.5f, 0.5f, opacity);
+		gui->SetColor(0.5f, 0.5f, 0.5f, opacity);
 		DrawBox(GL_LINE_LOOP);
 	}
 
@@ -62,7 +64,7 @@ void LineEdit::DrawSelf()
 	if (hasFocus) {
 		// draw the caret
 		const std::string caretStr = tempText.substr(0, cursorPos);
-        float caretWidth = font->GetSize() * font->GetTextWidth(caretStr) / float(screensize[0]);
+		float caretWidth = font->GetSize() * font->GetTextWidth(caretStr) / float(screensize[0]);
 
 		char c = tempText[cursorPos];
 		if (c == 0) { c = ' '; }
@@ -71,9 +73,9 @@ void LineEdit::DrawSelf()
 		float cw = font->GetSize() * font->GetCharacterWidth(c) /float(screensize[0]);
 		float csx = pos[0] + 0.01 + caretWidth;
 		float f = 0.5f * (1.0f + fastmath::sin(spring_now().toMilliSecsf() * 0.015f));
-		glColor4f(f, f, f, opacity);
+		gui->SetColor(f, f, f, opacity);
 		glRectf(csx, textCenter + cursorHeight/2, csx + cw, textCenter - cursorHeight/2);
-		glColor4f(0.0f, 0.0f, 0.0f, 1.0f); // black
+		gui->SetColor(0.0f, 0.0f, 0.0f, 1.0f); // black
 	}
 
 	font->SetTextColor(); //default

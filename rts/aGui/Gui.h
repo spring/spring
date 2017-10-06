@@ -9,6 +9,10 @@
 
 union SDL_Event;
 
+namespace Shader {
+	struct IProgramObject;
+}
+
 namespace agui
 {
 
@@ -29,6 +33,18 @@ public:
 	void UpdateScreenGeometry(int screenx, int screeny, int screenOffsetX, int screenOffsetY);
 
 	bool MouseOverElement(const GuiElement*, int x, int y) const;
+	void SetColor(float r, float g, float b, float a);
+	void SetColor(const float* color);
+
+	static void GuiColorCallback(const float* color);
+
+	enum DrawMode {
+		COLOR          = 0,
+		TEXTURE        = 1,
+		MASK           = 2,
+	};
+
+	void SetDrawMode(DrawMode newMode);
 
 private:
 	bool HandleEvent(const SDL_Event& ev);
@@ -44,6 +60,9 @@ private:
 	ElList elements;
 	ElList toBeRemoved;
 	ElList toBeAdded;
+
+	DrawMode currentDrawMode;
+	Shader::IProgramObject* shader;
 };
 
 extern Gui* gui;

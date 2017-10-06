@@ -2,6 +2,7 @@
 
 #include "HorizontalLayout.h"
 
+#include "Gui.h"
 #include "Rendering/GL/myGL.h"
 
 namespace agui
@@ -16,7 +17,7 @@ void HorizontalLayout::DrawSelf()
 	if (borderWidth > 0)
 	{
 		glLineWidth(borderWidth);
-		glColor4f(1.f,1.f,1.f, Opacity());
+		gui->SetColor(1.f,1.f,1.f, Opacity());
 		DrawBox(GL_LINE_LOOP);
 	}
 }
@@ -39,7 +40,7 @@ void HorizontalLayout::GeometryChangeSelf()
 	unsigned weightedObjects = 0;
 	for (ChildList::iterator i = children.begin(); i != children.end(); ++i)
 		weightedObjects += (*i)->Weight();
-	
+
 	const float hspacePerObject = (size[0]-float(weightedObjects-1)*itemSpacing - 2*borderSpacing-totalFixedSize)/float(weightedObjects-numFixed);
 	float startX = pos[0] + borderSpacing;
 	for (ChildList::iterator i = children.begin(); i != children.end(); ++i)
