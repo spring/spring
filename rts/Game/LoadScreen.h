@@ -11,6 +11,8 @@
 #include "System/Misc/SpringTime.h"
 #include "System/Threading/SpringThreading.h"
 
+class CglFont;
+
 class CLoadScreen : public CGameController
 {
 public:
@@ -57,6 +59,9 @@ private:
 	spring::recursive_mutex mutex;
 	spring::thread* netHeartbeatThread;
 	COffscreenGLThread* gameLoadThread;
+
+	// used in the secondary GL context when mtLoading
+	CglFont* localFont;
 
 	bool mtLoading;
 	bool showMessages;
