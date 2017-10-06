@@ -124,9 +124,6 @@ protected:
 	int wantedTexWidth, wantedTexHeight;
 	unsigned int texture;
 
-public:
-	unsigned int textureSpaceMatrix;
-
 private:
 	CBitmap* atlasUpdate;
 	CBitmap* atlasUpdateShadow;

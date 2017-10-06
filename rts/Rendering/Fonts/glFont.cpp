@@ -503,10 +503,6 @@ void CglFont::End()
 	// Because texture size can change, texture coordinats are absolute in texels.
 	// We could use also just use GL_TEXTURE_RECTANGLE
 	// but then all shaders would need to detect so and use different funcs & types if supported -> more work
-	glMatrixMode(GL_TEXTURE);
-	glPushMatrix();
-	glCallList(textureSpaceMatrix);
-	glMatrixMode(GL_MODELVIEW);
 
 	if (va2.drawIndex() > 0) {
 		if (stripOutlineColors.size() > 1) {
@@ -525,11 +521,6 @@ void CglFont::End()
 		if (setColor) glColor4fv(textColor);
 		va.DrawArray2dT(GL_QUADS);
 	}
-
-	// pop texture matrix
-	glMatrixMode(GL_TEXTURE);
-	glPopMatrix();
-	glMatrixMode(GL_MODELVIEW);
 
 	glPopAttrib();
 	if (threadSafety)
@@ -576,6 +567,8 @@ void CglFont::RenderString(float x, float y, const float& scaleX, const float& s
 	char32_t pc = 0;
 
 	float4 newColor = textColor;
+	const float texScaleX = 1.0f / texWidth;
+	const float texScaleY = 1.0f / texHeight;
 
 	do {
 		// check for end-of-string
@@ -607,15 +600,20 @@ void CglFont::RenderString(float x, float y, const float& scaleX, const float& s
 		pg = cg;
 		pc = cc;
 
-
 		const auto&  tc = pg->texCord;
-		const float dx0 = (scaleX * pg->size.x0()) + x, dy0 = (scaleY * pg->size.y0()) + y;
-		const float dx1 = (scaleX * pg->size.x1()) + x, dy1 = (scaleY * pg->size.y1()) + y;
+		const float dx0 = (scaleX * pg->size.x0()) + x;
+		const float dy0 = (scaleY * pg->size.y0()) + y;
+		const float dx1 = (scaleX * pg->size.x1()) + x;
+		const float dy1 = (scaleY * pg->size.y1()) + y;
+		const float tx0 = tc.x0() * texScaleX;
+		const float ty0 = tc.y0() * texScaleY;
+		const float tx1 = tc.x1() * texScaleX;
+		const float ty1 = tc.y1() * texScaleY;
 
-		va.AddVertexQ2dT(dx0, dy1, tc.x0(), tc.y1());
-		va.AddVertexQ2dT(dx0, dy0, tc.x0(), tc.y0());
-		va.AddVertexQ2dT(dx1, dy0, tc.x1(), tc.y0());
-		va.AddVertexQ2dT(dx1, dy1, tc.x1(), tc.y1());
+		va.AddVertexQ2dT(dx0, dy1, tx0, ty1);
+		va.AddVertexQ2dT(dx0, dy0, tx0, ty0);
+		va.AddVertexQ2dT(dx1, dy0, tx1, ty0);
+		va.AddVertexQ2dT(dx1, dy1, tx1, ty1);
 	} while (true);
 }
 
@@ -648,6 +646,8 @@ void CglFont::RenderStringShadow(float x, float y, const float& scaleX, const fl
 	char32_t pc = 0;
 
 	float4 newColor = textColor;
+	const float texScaleX = 1.0f / texWidth;
+	const float texScaleY = 1.0f / texHeight;
 
 	do {
 		// check for end-of-string
@@ -682,20 +682,30 @@ void CglFont::RenderStringShadow(float x, float y, const float& scaleX, const fl
 
 		const auto&  tc = pg->texCord;
 		const auto& stc = pg->shadowTexCord;
-		const float dx0 = (scaleX * pg->size.x0()) + x, dy0 = (scaleY * pg->size.y0()) + y;
-		const float dx1 = (scaleX * pg->size.x1()) + x, dy1 = (scaleY * pg->size.y1()) + y;
+		const float dx0 = (scaleX * pg->size.x0()) + x;
+		const float dy0 = (scaleY * pg->size.y0()) + y;
+		const float dx1 = (scaleX * pg->size.x1()) + x;
+		const float dy1 = (scaleY * pg->size.y1()) + y;
+		const float tx0 = tc.x0() * texScaleX;
+		const float ty0 = tc.y0() * texScaleY;
+		const float tx1 = tc.x1() * texScaleX;
+		const float ty1 = tc.y1() * texScaleY;
+		const float stx0 = stc.x0() * texScaleX;
+		const float sty0 = stc.y0() * texScaleY;
+		const float stx1 = stc.x1() * texScaleX;
+		const float sty1 = stc.y1() * texScaleY;
 
 		// draw shadow
-		va2.AddVertexQ2dT(dx0 + shiftX - ssX, dy1 - shiftY - ssY, stc.x0(), stc.y1());
-		va2.AddVertexQ2dT(dx0 + shiftX - ssX, dy0 - shiftY + ssY, stc.x0(), stc.y0());
-		va2.AddVertexQ2dT(dx1 + shiftX + ssX, dy0 - shiftY + ssY, stc.x1(), stc.y0());
-		va2.AddVertexQ2dT(dx1 + shiftX + ssX, dy1 - shiftY - ssY, stc.x1(), stc.y1());
+		va2.AddVertexQ2dT(dx0 + shiftX - ssX, dy1 - shiftY - ssY, stx0, sty1);
+		va2.AddVertexQ2dT(dx0 + shiftX - ssX, dy0 - shiftY + ssY, stx0, sty0);
+		va2.AddVertexQ2dT(dx1 + shiftX + ssX, dy0 - shiftY + ssY, stx1, sty0);
+		va2.AddVertexQ2dT(dx1 + shiftX + ssX, dy1 - shiftY - ssY, stx1, sty1);
 
 		// draw the actual character
-		va.AddVertexQ2dT(dx0, dy1, tc.x0(), tc.y1());
-		va.AddVertexQ2dT(dx0, dy0, tc.x0(), tc.y0());
-		va.AddVertexQ2dT(dx1, dy0, tc.x1(), tc.y0());
-		va.AddVertexQ2dT(dx1, dy1, tc.x1(), tc.y1());
+		va.AddVertexQ2dT(dx0, dy1, tx0, ty1);
+		va.AddVertexQ2dT(dx0, dy0, tx0, ty0);
+		va.AddVertexQ2dT(dx1, dy0, tx1, ty0);
+		va.AddVertexQ2dT(dx1, dy1, tx1, ty1);
 	} while (true);
 }
 
@@ -725,6 +735,8 @@ void CglFont::RenderStringOutlined(float x, float y, const float& scaleX, const 
 	char32_t pc = 0;
 
 	float4 newColor = textColor;
+	const float texScaleX = 1.0f / texWidth;
+	const float texScaleY = 1.0f / texHeight;
 
 	do {
 		// check for end-of-string
@@ -759,20 +771,30 @@ void CglFont::RenderStringOutlined(float x, float y, const float& scaleX, const 
 
 		const auto&  tc = pg->texCord;
 		const auto& stc = pg->shadowTexCord;
-		const float dx0 = (scaleX * pg->size.x0()) + x, dy0 = (scaleY * pg->size.y0()) + y;
-		const float dx1 = (scaleX * pg->size.x1()) + x, dy1 = (scaleY * pg->size.y1()) + y;
+		const float dx0 = (scaleX * pg->size.x0()) + x;
+		const float dy0 = (scaleY * pg->size.y0()) + y;
+		const float dx1 = (scaleX * pg->size.x1()) + x;
+		const float dy1 = (scaleY * pg->size.y1()) + y;
+		const float tx0 = tc.x0() * texScaleX;
+		const float ty0 = tc.y0() * texScaleY;
+		const float tx1 = tc.x1() * texScaleX;
+		const float ty1 = tc.y1() * texScaleY;
+		const float stx0 = stc.x0() * texScaleX;
+		const float sty0 = stc.y0() * texScaleY;
+		const float stx1 = stc.x1() * texScaleX;
+		const float sty1 = stc.y1() * texScaleY;
 
 		// draw outline
-		va2.AddVertexQ2dT(dx0 - shiftX, dy1 - shiftY, stc.x0(), stc.y1());
-		va2.AddVertexQ2dT(dx0 - shiftX, dy0 + shiftY, stc.x0(), stc.y0());
-		va2.AddVertexQ2dT(dx1 + shiftX, dy0 + shiftY, stc.x1(), stc.y0());
-		va2.AddVertexQ2dT(dx1 + shiftX, dy1 - shiftY, stc.x1(), stc.y1());
+		va2.AddVertexQ2dT(dx0 - shiftX, dy1 - shiftY, stx0, sty1);
+		va2.AddVertexQ2dT(dx0 - shiftX, dy0 + shiftY, stx0, sty0);
+		va2.AddVertexQ2dT(dx1 + shiftX, dy0 + shiftY, stx1, sty0);
+		va2.AddVertexQ2dT(dx1 + shiftX, dy1 - shiftY, stx1, sty1);
 
 		// draw the actual character
-		va.AddVertexQ2dT(dx0, dy1, tc.x0(), tc.y1());
-		va.AddVertexQ2dT(dx0, dy0, tc.x0(), tc.y0());
-		va.AddVertexQ2dT(dx1, dy0, tc.x1(), tc.y0());
-		va.AddVertexQ2dT(dx1, dy1, tc.x1(), tc.y1());
+		va.AddVertexQ2dT(dx0, dy1, tx0, ty1);
+		va.AddVertexQ2dT(dx0, dy0, tx0, ty0);
+		va.AddVertexQ2dT(dx1, dy0, tx1, ty0);
+		va.AddVertexQ2dT(dx1, dy1, tx1, ty1);
 	} while (true);
 }
 

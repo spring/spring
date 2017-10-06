@@ -339,7 +339,6 @@ CFontTexture::CFontTexture(const std::string& fontfile, int size, int _outlinesi
 	, wantedTexWidth(0)
 	, wantedTexHeight(0)
 	, texture(0)
-	, textureSpaceMatrix(0)
 	, atlasUpdate(NULL)
 	, atlasUpdateShadow(NULL)
 	, curTextureUpdate(0)
@@ -397,11 +396,7 @@ CFontTexture::~CFontTexture()
 #ifndef HEADLESS
 	allFonts.erase(this);
 
-	glDeleteTextures(1, (const GLuint*)&texture);
-	glDeleteLists(textureSpaceMatrix, 1);
-
 	texture = 0;
-	textureSpaceMatrix = 0;
 
 	spring::SafeDelete(atlasUpdate);
 	spring::SafeDelete(atlasUpdateShadow);
@@ -650,9 +645,6 @@ void CFontTexture::CreateTexture(const int width, const int height)
 	atlasUpdate->channels = 1;
 	atlasUpdate->Alloc(texWidth, texHeight);
 
-	textureSpaceMatrix = glGenLists(1);
-	glNewList(textureSpaceMatrix, GL_COMPILE);
-	glEndList();
 #endif
 }
 
@@ -695,10 +687,6 @@ void CFontTexture::UpdateTexture()
 		glBindTexture(GL_TEXTURE_2D, texture);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, texWidth, texHeight, 0, GL_ALPHA, GL_UNSIGNED_BYTE, atlasUpdate->GetRawMem());
 
-		// update texture space dlist (this affects already compiled dlists too!)
-		glNewList(textureSpaceMatrix, GL_COMPILE);
-		glScalef(1.0f / texWidth, 1.0f / texHeight, 1.0f);
-		glEndList();
 	glPopAttrib();
 #endif
 }
