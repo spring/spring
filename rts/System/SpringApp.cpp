@@ -1018,7 +1018,6 @@ void SpringApp::Kill(bool fromRun)
 	LOG("[SpringApp::%s][7]", __func__);
 	CShaderHandler::FreeInstance();
 	spring::SafeDelete(globalRendering);
-	spring::SafeDelete(globalRendering);
 	spring::SafeDelete(luaSocketRestrictions);
 
 	// also gets rid of configHandler
