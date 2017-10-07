@@ -23,45 +23,47 @@ void GL::RenderDataBuffer::DisableAttribs(size_t numAttrs, const Shader::ShaderI
 
 
 char* GL::RenderDataBuffer::FormatShaderBase(
-	char (&buf)[65536],
+	char* buf,
+	const char* end,
 	const char* defines,
 	const char* globals,
 	const char* type,
 	const char* name
 ) {
-	std::memset(buf, 0, sizeof(buf));
+	std::memset(buf, 0, (end - buf));
 
 	char* ptr = &buf[0];
-	ptr += std::snprintf(ptr, sizeof(buf) - (ptr - buf), "%s", "#version 410 core\n");
-	ptr += std::snprintf(ptr, sizeof(buf) - (ptr - buf), "%s", "#extension GL_ARB_explicit_attrib_location : enable\n");
-	ptr += std::snprintf(ptr, sizeof(buf) - (ptr - buf), "%s", "// defines\n");
-	ptr += std::snprintf(ptr, sizeof(buf) - (ptr - buf), "#define VA_TYPE %s\n", name);
-	ptr += std::snprintf(ptr, sizeof(buf) - (ptr - buf), "%s", defines);
-	ptr += std::snprintf(ptr, sizeof(buf) - (ptr - buf), "%s", "\n");
-	ptr += std::snprintf(ptr, sizeof(buf) - (ptr - buf), "%s", "// globals\n");
-	ptr += std::snprintf(ptr, sizeof(buf) - (ptr - buf), "%s", globals);
-	ptr += std::snprintf(ptr, sizeof(buf) - (ptr - buf), "%s", "// uniforms\n");
+	ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "%s", "#version 410 core\n");
+	ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "%s", "#extension GL_ARB_explicit_attrib_location : enable\n");
+	ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "%s", "// defines\n");
+	ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "#define VA_TYPE %s\n", name);
+	ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "%s", defines);
+	ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "%s", "\n");
+	ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "%s", "// globals\n");
+	ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "%s", globals);
+	ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "%s", "// uniforms\n");
 
 	switch (type[0]) {
 		case 'V': {
-			ptr += std::snprintf(ptr, sizeof(buf) - (ptr - buf), "%s", "uniform mat4 u_movi_mat;\n");
-			ptr += std::snprintf(ptr, sizeof(buf) - (ptr - buf), "%s", "uniform mat4 u_proj_mat;\n");
+			ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "%s", "uniform mat4 u_movi_mat;\n");
+			ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "%s", "uniform mat4 u_proj_mat;\n");
 		} break;
 		case 'F': {
-			ptr += std::snprintf(ptr, sizeof(buf) - (ptr - buf), "%s", "uniform sampler2D u_tex0;\n"); // T*,2DT* (v_texcoor_st)
-			ptr += std::snprintf(ptr, sizeof(buf) - (ptr - buf), "%s", "uniform sampler3D u_tex1;\n"); // TNT (v_texcoor_uv1)
-			ptr += std::snprintf(ptr, sizeof(buf) - (ptr - buf), "%s", "uniform sampler3D u_tex2;\n"); // TNT (v_texcoor_uv2)
+			ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "%s", "uniform sampler2D u_tex0;\n"); // T*,2DT* (v_texcoor_st)
+			ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "%s", "uniform sampler3D u_tex1;\n"); // TNT (v_texcoor_uv1)
+			ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "%s", "uniform sampler3D u_tex2;\n"); // TNT (v_texcoor_uv2)
 		} break;
 		default: {} break;
 	}
 
-	ptr += std::snprintf(ptr, sizeof(buf) - (ptr - buf), "%s", "\n");
+	ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "%s", "\n");
 	return ptr;
 }
 
 char* GL::RenderDataBuffer::FormatShaderType(
-	char (&buf)[65536],
+	char* buf,
 	char* ptr,
+	const char* end,
 	size_t numAttrs,
 	const Shader::ShaderInput* rawAttrs,
 	const char* code,
@@ -75,7 +77,7 @@ char* GL::RenderDataBuffer::FormatShaderType(
 	constexpr const char* fsOutFmt = "layout(location = 0) out vec4 f_%s;\n"; // prefix (single fixed) FS out by "f_"
 
 	{
-		ptr += std::snprintf(ptr, sizeof(buf) - (ptr - buf), "// %s input attributes\n", type);
+		ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "// %s input attributes\n", type);
 
 		for (size_t n = 0; n < numAttrs; n++) {
 			const Shader::ShaderInput& a = rawAttrs[n];
@@ -84,15 +86,15 @@ char* GL::RenderDataBuffer::FormatShaderType(
 			assert(a.count <= 4);
 
 			switch (type[0]) {
-				case 'V': { ptr += std::snprintf(ptr, sizeof(buf) - (ptr - buf), vsInpFmt, a.index, vecTypes[a.count - 2], a.name); } break;
-				case 'F': { ptr += std::snprintf(ptr, sizeof(buf) - (ptr - buf), fsInpFmt, vecTypes[a.count - 2], a.name + 2); } break;
+				case 'V': { ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), vsInpFmt, a.index, vecTypes[a.count - 2], a.name); } break;
+				case 'F': { ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), fsInpFmt, vecTypes[a.count - 2], a.name + 2); } break;
 				default: {} break;
 			}
 		}
 	}
 
 	{
-		ptr += std::snprintf(ptr, sizeof(buf) - (ptr - buf), "// %s output attributes\n", type);
+		ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "// %s output attributes\n", type);
 
 		switch (type[0]) {
 			case 'V': {
@@ -102,30 +104,51 @@ char* GL::RenderDataBuffer::FormatShaderType(
 					assert(a.name[0] == 'a');
 					assert(a.name[1] == '_');
 
-					ptr += std::snprintf(ptr, sizeof(buf) - (ptr - buf), vsOutFmt, vecTypes[a.count - 2], a.name + 2);
+					ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), vsOutFmt, vecTypes[a.count - 2], a.name + 2);
 				}
 			} break;
 			case 'F': {
-				ptr += std::snprintf(ptr, sizeof(buf) - (ptr - buf), fsOutFmt, "color_rgba");
+				ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), fsOutFmt, "color_rgba");
 			} break;
 			default: {} break;
 		}
 	}
 
-	ptr += std::snprintf(ptr, sizeof(buf) - (ptr - buf), "%s", "\n");
-	ptr += std::snprintf(ptr, sizeof(buf) - (ptr - buf), "%s", "void main() {\n");
-	ptr += std::snprintf(ptr, sizeof(buf) - (ptr - buf), "%s\n", code);
+	ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "%s", "\n");
+	ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "%s", "void main() {\n");
 
-	if (type[0] == 'V') {
-		// position (2D or 3D) is always the first attribute
-		switch (rawAttrs[0].count) {
-			case 2: { ptr += std::snprintf(ptr, sizeof(buf) - (ptr - buf), "%s", "\tgl_Position = u_proj_mat * u_movi_mat * vec4(a_vertex_xy , 0.0, 1.0);\n"); } break;
-			case 3: { ptr += std::snprintf(ptr, sizeof(buf) - (ptr - buf), "%s", "\tgl_Position = u_proj_mat * u_movi_mat * vec4(a_vertex_xyz,      1.0);\n"); } break;
+	if (code != "") {
+		ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "%s\n", code);
+	} else {
+		switch (type[0]) {
+			case 'V': {
+				// position (2D or 3D) is always the first attribute
+				switch (rawAttrs[0].count) {
+					case 2: { ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "%s", "\tgl_Position = u_proj_mat * u_movi_mat * vec4(a_vertex_xy , 0.0, 1.0);\n"); } break;
+					case 3: { ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "%s", "\tgl_Position = u_proj_mat * u_movi_mat * vec4(a_vertex_xyz,      1.0);\n"); } break;
+					default: {} break;
+				}
+
+				for (size_t n = 1; n < numAttrs; n++) {
+					const Shader::ShaderInput& a = rawAttrs[n];
+
+					// assume standard tc-gen
+					if (std::strcmp(a.name, "a_texcoor_st") == 0) {
+						ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "%s", "\tv_texcoor_st = a_texcoor_st;\n");
+						continue;
+					}
+					if (std::strcmp(a.name, "a_texcoor_uv") == 0) {
+						ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "\tv_texcoor_uv%d = a_texcoor_uv%d;\n", a.name[12] - '0', a.name[12] - '0');
+						continue;
+					}
+				}
+			} break;
+			case 'F': {} break;
 			default: {} break;
 		}
 	}
 
-	ptr += std::snprintf(ptr, sizeof(buf) - (ptr - buf), "%s", "}\n");
+	ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "%s", "}\n");
 	return ptr;
 }
 
@@ -166,6 +189,8 @@ void GL::RenderDataBuffer::Upload(
 
 	EnableAttribs(numAttrs, rawAttrs);
 	array.Unbind();
+	elems.Unbind();
+	indcs.Unbind();
 	DisableAttribs(numAttrs, rawAttrs);
 }
 

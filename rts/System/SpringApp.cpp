@@ -318,9 +318,9 @@ bool SpringApp::InitFileSystem()
 	spring::thread fsInitThread(FileSystemInitializer::InitializeThr, &ret);
 
 	if (!splashScreenFiles.empty()) {
-		ShowSplashScreen(splashScreenFiles[ guRNG.NextInt(splashScreenFiles.size()) ], [&]() { return (FileSystemInitializer::Initialized()); });
+		ShowSplashScreen(splashScreenFiles[ guRNG.NextInt(splashScreenFiles.size()) ], SpringVersion::GetFull(), [&]() { return (FileSystemInitializer::Initialized()); });
 	} else {
-		ShowSplashScreen("", [&]() { return (FileSystemInitializer::Initialized()); });
+		ShowSplashScreen("", SpringVersion::GetFull(), [&]() { return (FileSystemInitializer::Initialized()); });
 	}
 
 	// skip hangs while waiting for the popup to die and kill us

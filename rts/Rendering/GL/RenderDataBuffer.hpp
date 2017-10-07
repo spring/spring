@@ -151,6 +151,9 @@ namespace GL {
 			array = std::move(rdb.array);
 
 			shader = std::move(rdb.shader);
+
+			inited = rdb.inited;
+			mapped = rdb.mapped;
 			return *this;
 		}
 
@@ -194,15 +197,17 @@ namespace GL {
 		void DisableAttribs(size_t numAttrs, const Shader::ShaderInput* rawAttrs) const;
 
 		static char* FormatShaderBase(
-			char (&buf)[65536],
+			char* buf,
+			const char* end,
 			const char* defines, // "#define PI 3.14159\n"
 			const char* globals, // custom uniforms, consts, etc
 			const char* type,
 			const char* name
 		);
 		static char* FormatShaderType(
-			char (&buf)[65536],
+			char* buf,
 			char* ptr,
+			const char* end,
 			size_t numAttrs,
 			const Shader::ShaderInput* rawAttrs,
 			const char* code, // body of main()
@@ -210,64 +215,64 @@ namespace GL {
 			const char* name  // "VA_TYPE_*"
 		);
 
-		static char* FormatShader0(char (&buf)[65536], const char* defines, const char* globals, const char* code, const char* type) {
+		static char* FormatShader0(char* buf, const char* end,  const char* defines, const char* globals, const char* code, const char* type) {
 			char* ptr = &buf[0];
-			ptr = FormatShaderBase(buf, defines, globals, type, "VA_TYPE_0");
-			ptr = FormatShaderType(buf, ptr,  NUM_VA_TYPE_0_ATTRS, VA_TYPE_0_ATTRS,  code, type, "VA_TYPE_0");
+			ptr = FormatShaderBase(buf, end, defines, globals, type, "VA_TYPE_0");
+			ptr = FormatShaderType(buf, ptr, end,  NUM_VA_TYPE_0_ATTRS, VA_TYPE_0_ATTRS,  code, type, "VA_TYPE_0");
 			return ptr;
 		}
-		static char* FormatShaderN(char (&buf)[65536], const char* defines, const char* globals, const char* code, const char* type) {
+		static char* FormatShaderN(char* buf, const char* end,  const char* defines, const char* globals, const char* code, const char* type) {
 			char* ptr = &buf[0];
-			ptr = FormatShaderBase(buf, defines, globals, type, "VA_TYPE_N");
-			ptr = FormatShaderType(buf, ptr,  NUM_VA_TYPE_N_ATTRS, VA_TYPE_N_ATTRS,  code, type, "VA_TYPE_N");
+			ptr = FormatShaderBase(buf, end, defines, globals, type, "VA_TYPE_N");
+			ptr = FormatShaderType(buf, ptr, end,  NUM_VA_TYPE_N_ATTRS, VA_TYPE_N_ATTRS,  code, type, "VA_TYPE_N");
 			return ptr;
 		}
-		static char* FormatShaderC(char (&buf)[65536], const char* defines, const char* globals, const char* code, const char* type) {
+		static char* FormatShaderC(char* buf, const char* end,  const char* defines, const char* globals, const char* code, const char* type) {
 			char* ptr = &buf[0];
-			ptr = FormatShaderBase(buf, defines, globals, type, "VA_TYPE_C");
-			ptr = FormatShaderType(buf, ptr,  NUM_VA_TYPE_C_ATTRS, VA_TYPE_C_ATTRS,  code, type, "VA_TYPE_C");
+			ptr = FormatShaderBase(buf, end, defines, globals, type, "VA_TYPE_C");
+			ptr = FormatShaderType(buf, ptr, end,  NUM_VA_TYPE_C_ATTRS, VA_TYPE_C_ATTRS,  code, type, "VA_TYPE_C");
 			return ptr;
 		}
-		static char* FormatShaderT(char (&buf)[65536], const char* defines, const char* globals, const char* code, const char* type) {
+		static char* FormatShaderT(char* buf, const char* end,  const char* defines, const char* globals, const char* code, const char* type) {
 			char* ptr = &buf[0];
-			ptr = FormatShaderBase(buf, defines, globals, type, "VA_TYPE_T");
-			ptr = FormatShaderType(buf, ptr,  NUM_VA_TYPE_T_ATTRS, VA_TYPE_T_ATTRS,  code, type, "VA_TYPE_T");
+			ptr = FormatShaderBase(buf, end, defines, globals, type, "VA_TYPE_T");
+			ptr = FormatShaderType(buf, ptr, end,  NUM_VA_TYPE_T_ATTRS, VA_TYPE_T_ATTRS,  code, type, "VA_TYPE_T");
 			return ptr;
 		}
-		static char* FormatShaderTN(char (&buf)[65536], const char* defines, const char* globals, const char* code, const char* type) {
+		static char* FormatShaderTN(char* buf, const char* end,  const char* defines, const char* globals, const char* code, const char* type) {
 			char* ptr = &buf[0];
-			ptr = FormatShaderBase(buf, defines, globals, type, "VA_TYPE_TN");
-			ptr = FormatShaderType(buf, ptr,  NUM_VA_TYPE_TN_ATTRS, VA_TYPE_TN_ATTRS,  code, type, "VA_TYPE_TN");
+			ptr = FormatShaderBase(buf, end, defines, globals, type, "VA_TYPE_TN");
+			ptr = FormatShaderType(buf, ptr, end,  NUM_VA_TYPE_TN_ATTRS, VA_TYPE_TN_ATTRS,  code, type, "VA_TYPE_TN");
 			return ptr;
 		}
-		static char* FormatShaderTC(char (&buf)[65536], const char* defines, const char* globals, const char* code, const char* type) {
+		static char* FormatShaderTC(char* buf, const char* end,  const char* defines, const char* globals, const char* code, const char* type) {
 			char* ptr = &buf[0];
-			ptr = FormatShaderBase(buf, defines, globals, type, "VA_TYPE_TC");
-			ptr = FormatShaderType(buf, ptr,  NUM_VA_TYPE_TC_ATTRS, VA_TYPE_TC_ATTRS,  code, type, "VA_TYPE_TC");
+			ptr = FormatShaderBase(buf, end, defines, globals, type, "VA_TYPE_TC");
+			ptr = FormatShaderType(buf, ptr, end,  NUM_VA_TYPE_TC_ATTRS, VA_TYPE_TC_ATTRS,  code, type, "VA_TYPE_TC");
 			return ptr;
 		}
-		static char* FormatShaderTNT(char (&buf)[65536], const char* defines, const char* globals, const char* code, const char* type) {
+		static char* FormatShaderTNT(char* buf, const char* end,  const char* defines, const char* globals, const char* code, const char* type) {
 			char* ptr = &buf[0];
-			ptr = FormatShaderBase(buf, defines, globals, type, "VA_TYPE_TNT");
-			ptr = FormatShaderType(buf, ptr,  NUM_VA_TYPE_TNT_ATTRS, VA_TYPE_TNT_ATTRS,  code, type, "VA_TYPE_TNT");
+			ptr = FormatShaderBase(buf, end, defines, globals, type, "VA_TYPE_TNT");
+			ptr = FormatShaderType(buf, ptr, end,  NUM_VA_TYPE_TNT_ATTRS, VA_TYPE_TNT_ATTRS,  code, type, "VA_TYPE_TNT");
 			return ptr;
 		}
-		static char* FormatShader2D0(char (&buf)[65536], const char* defines, const char* globals, const char* code, const char* type) {
+		static char* FormatShader2D0(char* buf, const char* end,  const char* defines, const char* globals, const char* code, const char* type) {
 			char* ptr = &buf[0];
-			ptr = FormatShaderBase(buf, defines, globals, type, "VA_TYPE_2D0");
-			ptr = FormatShaderType(buf, ptr,  NUM_VA_TYPE_2D0_ATTRS, VA_TYPE_2D0_ATTRS,  code, type, "VA_TYPE_2D0");
+			ptr = FormatShaderBase(buf, end, defines, globals, type, "VA_TYPE_2D0");
+			ptr = FormatShaderType(buf, ptr, end,  NUM_VA_TYPE_2D0_ATTRS, VA_TYPE_2D0_ATTRS,  code, type, "VA_TYPE_2D0");
 			return ptr;
 		}
-		static char* FormatShader2DT(char (&buf)[65536], const char* defines, const char* globals, const char* code, const char* type) {
+		static char* FormatShader2DT(char* buf, const char* end,  const char* defines, const char* globals, const char* code, const char* type) {
 			char* ptr = &buf[0];
-			ptr = FormatShaderBase(buf, defines, globals, type, "VA_TYPE_2DT");
-			ptr = FormatShaderType(buf, ptr,  NUM_VA_TYPE_2DT_ATTRS, VA_TYPE_2DT_ATTRS,  code, type, "VA_TYPE_2DT");
+			ptr = FormatShaderBase(buf, end, defines, globals, type, "VA_TYPE_2DT");
+			ptr = FormatShaderType(buf, ptr, end,  NUM_VA_TYPE_2DT_ATTRS, VA_TYPE_2DT_ATTRS,  code, type, "VA_TYPE_2DT");
 			return ptr;
 		}
-		static char* FormatShader2DTC(char (&buf)[65536], const char* defines, const char* globals, const char* code, const char* type) {
+		static char* FormatShader2DTC(char* buf, const char* end,  const char* defines, const char* globals, const char* code, const char* type) {
 			char* ptr = &buf[0];
-			ptr = FormatShaderBase(buf, defines, globals, type, "VA_TYPE_2DTC");
-			ptr = FormatShaderType(buf, ptr,  NUM_VA_TYPE_2DTC_ATTRS, VA_TYPE_2DTC_ATTRS,  code, type, "VA_TYPE_2DTC");
+			ptr = FormatShaderBase(buf, end, defines, globals, type, "VA_TYPE_2DTC");
+			ptr = FormatShaderType(buf, ptr, end,  NUM_VA_TYPE_2DTC_ATTRS, VA_TYPE_2DTC_ATTRS,  code, type, "VA_TYPE_2DTC");
 			return ptr;
 		}
 
