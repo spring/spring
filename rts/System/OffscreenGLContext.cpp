@@ -38,25 +38,18 @@ void COffscreenGLContext::WorkerThreadFree()
 /******************************************************************************/
 /******************************************************************************/
 
-COffscreenGLThread::COffscreenGLThread(std::function<void()> f) :
-	thread(NULL),
-	glOffscreenCtx() //! may trigger an opengl_error exception!
+COffscreenGLThread::COffscreenGLThread(std::function<void()> f): glOffscreenCtx() //! may trigger an opengl_error exception!
 {
-	thread = new spring::thread( std::bind(&COffscreenGLThread::WrapFunc, this, f) );
+	thread = std::move(spring::thread(std::bind(&COffscreenGLThread::WrapFunc, this, f)));
 }
 
 
-COffscreenGLThread::~COffscreenGLThread()
+void COffscreenGLThread::join()
 {
-	Join();
-}
+	if (!thread.joinable())
+		return;
 
-
-void COffscreenGLThread::Join()
-{
-	if (thread)
-		thread->join();
-	spring::SafeDelete(thread);
+	thread.join();
 }
 
 
@@ -68,8 +61,8 @@ void COffscreenGLThread::WrapFunc(std::function<void()> f)
 	glOffscreenCtx.WorkerThreadPost();
 
 	// init streflop
-	// not needed for sync'ness (precision flags are per-process)
-	// but fpu exceptions are per-thread
+	// not needed to maintain sync (precision flags are
+	// per-process) but fpu exceptions are per-thread
 	streflop::streflop_init<streflop::Simple>();
 
 	try {

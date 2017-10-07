@@ -57,8 +57,8 @@ private:
 	ILoadSaveHandler* saveFile;
 
 	spring::recursive_mutex mutex;
-	spring::thread* netHeartbeatThread;
-	COffscreenGLThread* gameLoadThread;
+	spring::thread netHeartbeatThread;
+	COffscreenGLThread gameLoadThread;
 
 	// used in the secondary GL context when mtLoading
 	CglFont* localFont;

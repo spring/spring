@@ -51,8 +51,6 @@ CLoadScreen::CLoadScreen(const std::string& _mapName, const std::string& _modNam
 	mapName(_mapName),
 	modName(_modName),
 	saveFile(_saveFile),
-	netHeartbeatThread(nullptr),
-	gameLoadThread(nullptr),
 	localFont(font),
 	mtLoading(true),
 	showMessages(true),
@@ -66,14 +64,12 @@ CLoadScreen::~CLoadScreen()
 {
 	// Kill() must have been called first, such that the loading
 	// thread can not access singleton while its dtor is running
-	assert(gameLoadThread == nullptr);
+	assert(!gameLoadThread.joinable());
 
 	if (clientNet != nullptr)
 		clientNet->KeepUpdating(false);
-	if (netHeartbeatThread != nullptr)
-		netHeartbeatThread->join();
-
-	spring::SafeDelete(netHeartbeatThread);
+	if (netHeartbeatThread.joinable())
+		netHeartbeatThread.join();
 
 	if (!gu->globalQuit) {
 		activeController = game;
@@ -139,23 +135,17 @@ bool CLoadScreen::Init()
 	// Create a thread during the loading that pings the host/server, so it knows that this client is still alive/loading
 	clientNet->KeepUpdating(true);
 
-	netHeartbeatThread = new spring::thread(Threading::CreateNewThread(std::bind(&CNetProtocol::UpdateLoop, clientNet)));
+	netHeartbeatThread = std::move(spring::thread(Threading::CreateNewThread(std::bind(&CNetProtocol::UpdateLoop, clientNet))));
 	game = new CGame(mapName, modName, saveFile);
 
 	if (mtLoading) {
 		try {
 			// create the game-loading thread
 			CglFont::threadSafety = true;
-			gameLoadThread = new COffscreenGLThread(std::bind(&CGame::LoadGame, game, mapName));
+			gameLoadThread = std::move(COffscreenGLThread(std::bind(&CGame::LoadGame, game, mapName)));
 			// Initialize localFont
-			const std::string largeFontFile = configHandler->GetString("FontFile");
-			const int largeFontSize = configHandler->GetInt("FontSize");
-			const int largeOutlineWidth = configHandler->GetInt("FontOutlineWidth");
-			const float largeOutlineWeight = configHandler->GetFloat("FontOutlineWeight");
-
-			localFont = CglFont::LoadFont(largeFontFile, largeFontSize, largeOutlineWidth, largeOutlineWeight);
+			localFont = CglFont::LoadFont(font->GetFilePath(), false);
 		} catch (const opengl_error& gle) {
-			spring::SafeDelete(gameLoadThread);
 			LOG_L(L_WARNING, "[LoadScreen::%s] offscreen GL context creation failed (error: \"%s\")", __func__, gle.what());
 
 			mtLoading = false;
@@ -201,13 +191,12 @@ bool CLoadScreen::Init()
 
 void CLoadScreen::Kill()
 {
-	if (gameLoadThread == nullptr)
+	if (!gameLoadThread.joinable())
 		return;
 
 	// at this point, the thread running CGame::LoadGame
 	// has finished and deregistered itself from WatchDog
-	gameLoadThread->Join();
-	spring::SafeDelete(gameLoadThread);
+	gameLoadThread.join();
 
 	CglFont::threadSafety = false;
 	if (localFont != font)

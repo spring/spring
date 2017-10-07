@@ -47,16 +47,25 @@ public:
 class COffscreenGLThread
 {
 public:
+	COffscreenGLThread() = default;
 	COffscreenGLThread(std::function<void()> f);
-	~COffscreenGLThread();
+	~COffscreenGLThread() { join(); }
+	COffscreenGLThread(const COffscreenGLThread& t) = delete;
+	COffscreenGLThread(COffscreenGLThread&& t) { *this = std::move(t); }
 
-	void Join();
-	void join() {Join();}
+	COffscreenGLThread& operator = (const COffscreenGLThread& t) = delete;
+	COffscreenGLThread& operator = (COffscreenGLThread&& t) {
+		thread = std::move(t.thread);
+		return *this;
+	};
+
+	void join();
+	bool joinable() const { return (thread.joinable()); }
 
 private:
 	void WrapFunc(std::function<void()> f);
 
-	spring::thread* thread;
+	spring::thread thread;
 	COffscreenGLContext glOffscreenCtx;
 };
 

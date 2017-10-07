@@ -9,11 +9,13 @@
 #include "Game/Camera.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/VertexArray.h"
-#include "System/Log/ILog.h"
 #include "System/Color.h"
 #include "System/Exceptions.h"
 #include "System/myMath.h"
+#include "System/SafeUtil.h"
 #include "System/StringUtil.h"
+#include "System/Config/ConfigHandler.h"
+#include "System/Log/ILog.h"
 
 #undef GetCharWidth // winapi.h
 
@@ -38,9 +40,65 @@ static const float darkLuminosity = 0.05 +
 /*******************************************************************************/
 /*******************************************************************************/
 
-CglFont::CglFont(const std::string& fontfile, int size, int _outlinewidth, float _outlineweight)
-: CTextWrap(fontfile,size,_outlinewidth,_outlineweight)
-, fontPath(fontfile)
+bool CglFont::LoadConfigFonts()
+{
+	spring::SafeDelete(font);
+	spring::SafeDelete(smallFont);
+
+	font = CglFont::LoadFont("", false);
+	smallFont = CglFont::LoadFont("", true);
+
+	if (font == nullptr)
+		throw content_error("Failed to load FontFile \"" + configHandler->GetString("FontFile") + "\", did you forget to run make install?");
+
+	if (smallFont == nullptr)
+		throw content_error("Failed to load SmallFontFile \"" + configHandler->GetString("SmallFontFile") + "\", did you forget to run make install?");
+}
+
+bool CglFont::LoadCustomFonts(const std::string& smallFontFile, const std::string& largeFontFile)
+{
+	CglFont* newFont = CglFont::LoadFont(smallFontFile, false);
+	CglFont* newSmallFont = CglFont::LoadFont(largeFontFile, true);
+
+	if (newFont != nullptr && newSmallFont != nullptr) {
+		spring::SafeDelete(font);
+		spring::SafeDelete(smallFont);
+		font = newFont;
+		smallFont = newSmallFont;
+
+		LOG("[%s] loaded fonts \"%s\" and \"%s\"", __func__, smallFontFile.c_str(), largeFontFile.c_str());
+		configHandler->SetString("FontFile", largeFontFile);
+		configHandler->SetString("SmallFontFile", smallFontFile);
+	}
+}
+
+CglFont* CglFont::LoadFont(const std::string& fontFileOverride, bool smallFont)
+{
+	const std::string fontFiles[] = {configHandler->GetString("FontFile"), configHandler->GetString("SmallFontFile")};
+	const std::string& fontFile = (fontFileOverride.empty())? fontFiles[smallFont]: fontFileOverride;
+
+	const   int fontSizes[] = {configHandler->GetInt("FontSize"), configHandler->GetInt("SmallFontSize")};
+	const   int fontWidths[] = {configHandler->GetInt("FontOutlineWidth"), configHandler->GetInt("SmallFontOutlineWidth")};
+	const float fontWeights[] = {configHandler->GetFloat("FontOutlineWeight"), configHandler->GetFloat("SmallFontOutlineWeight")};
+
+	return (CglFont::LoadFont(fontFile, fontSizes[smallFont], fontWidths[smallFont], fontWeights[smallFont]));
+}
+
+
+CglFont* CglFont::LoadFont(const std::string& fontFile, int size, int outlinewidth, float outlineweight)
+{
+	try {
+		return (new CglFont(fontFile, size, outlinewidth, outlineweight));
+	} catch (const content_error& ex) {
+		LOG_L(L_ERROR, "Failed creating font: %s", ex.what());
+		return nullptr;
+	}
+}
+
+
+CglFont::CglFont(const std::string& fontFile, int size, int _outlineWidth, float _outlineWeight)
+: CTextWrap(fontFile, size, _outlineWidth, _outlineWeight)
+, fontPath(fontFile)
 , colorCallback(nullptr)
 , inBeginEnd(false)
 , autoOutlineColor(true)
@@ -49,21 +107,6 @@ CglFont::CglFont(const std::string& fontfile, int size, int _outlinewidth, float
 	textColor    = white;
 	outlineColor = darkOutline;
 }
-
-CglFont* CglFont::LoadFont(const std::string& fontFile, int size, int outlinewidth, float outlineweight)
-{
-	try {
-		CglFont* newFont = new CglFont(fontFile, size, outlinewidth, outlineweight);
-		return newFont;
-	} catch (const content_error& ex) {
-		LOG_L(L_ERROR, "Failed creating font: %s", ex.what());
-		return NULL;
-	}
-}
-
-
-CglFont::~CglFont()
-{ }
 
 
 /*******************************************************************************/

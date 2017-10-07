@@ -160,15 +160,10 @@ int LuaFonts::meta_index(lua_State* L)
 
 int LuaFonts::LoadFont(lua_State* L)
 {
-	const string fileName   = luaL_checkstring(L, 1);
-	const int size          = luaL_optint(L, 2, 14);
-	const int outlineWidth  = luaL_optint(L, 3, 2);
-	const float outlineWeight = luaL_optfloat(L, 4, 15.0f);
+	CglFont** font = (CglFont**) lua_newuserdata(L, sizeof(CglFont*));
+	*font = CglFont::LoadFont(luaL_checkstring(L, 1), luaL_optint(L, 2, 14), luaL_optint(L, 3, 2), luaL_optfloat(L, 4, 15.0f));
 
-	CglFont** font = (CglFont**)lua_newuserdata(L, sizeof(CglFont*));
-	*font = CglFont::LoadFont(fileName,size,outlineWidth,outlineWeight);
-
-	if (*font == NULL) {
+	if (*font == nullptr) {
 		lua_pop(L, 1);
 		return 0;
 	}

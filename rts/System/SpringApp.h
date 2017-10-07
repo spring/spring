@@ -30,8 +30,6 @@ public:
 	static void Kill(bool fromRun);                 //!< Shuts down application
 
 private:
-	static void LoadFonts();                        //!< Initialize glFonts (font & smallFont)
-
 	static void UpdateInterfaceGeometry();
 	static void SaveWindowPosAndSize();
 
