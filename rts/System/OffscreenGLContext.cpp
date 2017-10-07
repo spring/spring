@@ -11,35 +11,9 @@
 #include "System/Platform/Threading.h"
 #include "System/Threading/SpringThreading.h"
 
-
-COffscreenGLContext::COffscreenGLContext()
+COffscreenGLThread::COffscreenGLThread(std::function<void()> f)
 {
 	globalRendering->MakeCurrentContext(false, true, false);
-}
-
-
-COffscreenGLContext::~COffscreenGLContext() {
-	globalRendering->MakeCurrentContext(false, false, false);
-}
-
-void COffscreenGLContext::WorkerThreadPost()
-{
-	//! activate the offscreen GL context in the worker thread
-	globalRendering->MakeCurrentContext(true, false, false);
-}
-
-
-void COffscreenGLContext::WorkerThreadFree()
-{
-	//! must run in the same thread as the offscreen GL context!
-	globalRendering->MakeCurrentContext(true, false, true);
-}
-
-/******************************************************************************/
-/******************************************************************************/
-
-COffscreenGLThread::COffscreenGLThread(std::function<void()> f): glOffscreenCtx() //! may trigger an opengl_error exception!
-{
 	thread = std::move(spring::thread(std::bind(&COffscreenGLThread::WrapFunc, this, f)));
 }
 
@@ -50,6 +24,7 @@ void COffscreenGLThread::join()
 		return;
 
 	thread.join();
+	globalRendering->MakeCurrentContext(false, false, false);
 }
 
 
@@ -58,7 +33,7 @@ void COffscreenGLThread::WrapFunc(std::function<void()> f)
 {
 	Threading::SetThreadName("OffscreenGLThread");
 
-	glOffscreenCtx.WorkerThreadPost();
+	globalRendering->MakeCurrentContext(true, false, false);
 
 	// init streflop
 	// not needed to maintain sync (precision flags are
@@ -69,7 +44,7 @@ void COffscreenGLThread::WrapFunc(std::function<void()> f)
 		f();
 	} CATCH_SPRING_ERRORS
 
-	glOffscreenCtx.WorkerThreadFree();
+	globalRendering->MakeCurrentContext(true, false, true);
 }
 
 
