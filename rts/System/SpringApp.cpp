@@ -14,6 +14,11 @@
 #undef KeyRelease
 #else
 #include <unistd.h> // isatty
+#include <X11/Xlib.h> // XInitThreads
+
+#undef KeyPress
+#undef KeyRelease
+#undef GrayScale
 #endif
 
 
@@ -30,7 +35,6 @@
 #include "Game/GameController.h"
 #include "Game/Game.h"
 #include "Game/GlobalUnsynced.h"
-#include "Game/LoadScreen.h" // XInitThreads via X11/Xlib
 #include "Game/PreGame.h"
 #include "Game/UI/KeyBindings.h"
 #include "Game/UI/KeyCodes.h"
