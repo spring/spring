@@ -70,7 +70,7 @@ bool CglFont::LoadCustomFonts(const std::string& smallFontFile, const std::strin
 	CglFont* newLargeFont = CglFont::LoadFont(largeFontFile, false);
 	CglFont* newSmallFont = CglFont::LoadFont(smallFontFile, true);
 
-	if (newFont != nullptr && newSmallFont != nullptr) {
+	if (newLargeFont != nullptr && newSmallFont != nullptr) {
 		spring::SafeDelete(font);
 		spring::SafeDelete(smallFont);
 		font = newLargeFont;
