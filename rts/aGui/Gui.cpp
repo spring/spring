@@ -49,7 +49,7 @@ Gui::Gui()
 		shader->SetUniformLocation("color");
 		shader->SetUniformLocation("texWeight");
 
-		shader->SetUniformMatrix4fv(0, false, CMatrix44f::OrthoProj(0.0f, 1.0f, 0.0f, 1.0f, -1.0f, 1.0f).m);
+		shader->SetUniformMatrix4fv(0, false, CMatrix44f::OrthoProj(0.0f, 1.0f, 0.0f, 1.0f, -1.0f, 1.0f));
 		shader->SetUniform1i(1, 0);
 		shader->Disable();
 		shader->Validate();
