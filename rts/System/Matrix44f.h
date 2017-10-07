@@ -111,7 +111,7 @@ public:
 	};
 
 
-	static CMatrix44f FrustumProj(float l, float r, float b, float t, float zn, float zf);
+	static CMatrix44f PerspProj(float l, float r, float b, float t, float zn, float zf);
 	static CMatrix44f OrthoProj(float l, float r, float b, float t, float zn, float zf);
 
 

@@ -437,7 +437,7 @@ inline void CCamera::gluPerspectiveSpring(float aspect, float zn, float zf) {
 	const float l = b * aspect;
 	const float r = t * aspect;
 
-	projectionMatrix = clipControlMatrix * CMatrix44f::FrustumProj(l, r,  b, t,  zn, zf);
+	projectionMatrix = clipControlMatrix * CMatrix44f::PerspProj(l, r,  b, t,  zn, zf);
 }
 
 
