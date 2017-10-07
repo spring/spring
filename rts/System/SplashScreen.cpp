@@ -56,10 +56,10 @@ static GL::RenderDataBuffer GetRenderDataBuffer()
 	renderDataBuffer.Init();
 	renderDataBuffer.Upload2DT(NUM_ELEMS, NUM_INDCS, ELEMS, INDCS);
 	renderDataBuffer.CreateShader((sizeof(shaderObjs) / sizeof(shaderObjs[0])), 0, &shaderObjs[0], nullptr);
-	renderDataBuffer.EnableShader();
 
 	// slower than location-based SetUniform, but works without pre-initializing uniforms via CreateShader
 	// template expects a TV but argument is const TV*, tell compiler it needs to invoke matrix::operator()
+	shaderProg->Enable();
 	shaderProg->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
 	shaderProg->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::Identity());
 	shaderProg->SetUniform("u_tex0", 0);

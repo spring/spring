@@ -10,14 +10,12 @@
 #include "Game/Players/Player.h"
 #include "Game/Players/PlayerHandler.h"
 #include "Game/UI/MouseHandler.h"
-#include "Game/UI/InputReceiver.h"
 #include "ExternalAI/SkirmishAIHandler.h"
 #include "Lua/LuaIntro.h"
 #include "Lua/LuaMenu.h"
 #include "Map/MapInfo.h"
 #include "Rendering/Fonts/glFont.h"
 #include "Rendering/GlobalRendering.h"
-#include "Rendering/Textures/Bitmap.h"
 #include "Rendering/Textures/NamedTextures.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Path/IPathManager.h"
@@ -26,6 +24,7 @@
 #include "System/Sync/FPUCheck.h"
 #include "System/Log/ILog.h"
 #include "Net/Protocol/NetProtocol.h"
+#include "System/Matrix44f.h"
 #include "System/SafeUtil.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/Platform/Watchdog.h"
@@ -41,11 +40,9 @@
 #include <vector>
 
 CONFIG(int, LoadingMT).defaultValue(0).safemodeValue(0);
-CONFIG(bool, ShowLoadMessages).defaultValue(true);
+
 
 CLoadScreen* CLoadScreen::singleton = nullptr;
-
-/******************************************************************************/
 
 CLoadScreen::CLoadScreen(const std::string& _mapName, const std::string& _modName, ILoadSaveHandler* _saveFile) :
 	mapName(_mapName),
@@ -53,10 +50,7 @@ CLoadScreen::CLoadScreen(const std::string& _mapName, const std::string& _modNam
 	saveFile(_saveFile),
 	localFont(font),
 	mtLoading(true),
-	showMessages(true),
-	startupTexture(0),
-	aspectRatio(1.0f),
-	last_draw(0)
+	lastDrawTime(0)
 {
 }
 
@@ -104,8 +98,6 @@ CLoadScreen::~CLoadScreen()
 		}
 #endif
 	}
-
-	UnloadStartPicture();
 }
 
 
@@ -122,14 +114,12 @@ bool CLoadScreen::Init()
 
 #ifdef HEADLESS
 	mtLoading = false;
-	showMessages = false;
 #else
 	const int mtCfg = configHandler->GetInt("LoadingMT");
 	// user override
 	mtLoading = (mtCfg > 0);
 	// runtime detect. disable for intel/mesa drivers, they crash at multithreaded OpenGL (date: Nov. 2011)
 	mtLoading |= (mtCfg < 0) && !globalRendering->haveMesa && !globalRendering->haveIntel;
-	showMessages = configHandler->GetBool("ShowLoadMessages");
 #endif
 
 	// Create a thread during the loading that pings the host/server, so it knows that this client is still alive/loading
@@ -154,30 +144,8 @@ bool CLoadScreen::Init()
 		}
 	}
 
-	// LuaIntro loading must be here so it's in the same
-	// thread that calls CLoadScreen::Draw
-
-	// new stuff
+	// LuaIntro must be loaded in the same thread that calls CLoadScreen::Draw
 	CLuaIntro::LoadFreeHandler();
-
-	// old stuff
-	if (luaIntro == nullptr) {
-		const CTeam* team = teamHandler->Team(gu->myTeam);
-
-		const std::string& mapStartPic = mapInfo->GetStringValue("Startpic");
-		const std::string& mapStartMusic = mapInfo->GetStringValue("Startmusic");
-
-		assert(team != nullptr);
-
-		if (mapStartPic.empty()) {
-			RandomStartPicture(team->GetSide());
-		} else {
-			LoadStartPicture(mapStartPic);
-		}
-
-		if (!mapStartMusic.empty())
-			Channels::BGMusic->StreamPlay(mapStartMusic);
-	}
 
 	if (mtLoading)
 		return true;
@@ -211,7 +179,6 @@ void CLoadScreen::CreateInstance(const std::string& mapName, const std::string& 
 	assert(singleton == nullptr);
 	singleton = new CLoadScreen(mapName, modName, saveFile);
 
-	// Init() already requires GetInstance() to work.
 	if (singleton->Init())
 		return;
 
@@ -282,7 +249,7 @@ bool CLoadScreen::Draw()
 	// limit FPS via sleep to not lock a singlethreaded CPU from loading the game
 	if (mtLoading) {
 		const spring_time now = spring_gettime();
-		const unsigned diffTime = spring_tomsecs(now - last_draw);
+		const unsigned diffTime = spring_tomsecs(now - lastDrawTime);
 
 		constexpr unsigned wantedFPS = 50;
 		constexpr unsigned minFrameTime = 1000 / wantedFPS;
@@ -290,10 +257,10 @@ bool CLoadScreen::Draw()
 		if (diffTime < minFrameTime)
 			spring_sleep(spring_msecs(minFrameTime - diffTime));
 
-		last_draw = now;
+		lastDrawTime = now;
 	}
 
-	// cause of `curLoadMessage`
+	// curLoadMessage might be concurrently updated
 	std::lock_guard<spring::recursive_mutex> lck(mutex);
 
 	// let LuaMenu keep the lobby connection alive
@@ -305,45 +272,6 @@ bool CLoadScreen::Draw()
 		luaIntro->DrawGenesis();
 		ClearScreen();
 		luaIntro->DrawLoadScreen();
-	} else {
-		ClearScreen();
-
-		float xDiv = 0.0f;
-		float yDiv = 0.0f;
-		const float ratioComp = globalRendering->aspectRatio / aspectRatio;
-		if (math::fabs(ratioComp - 1.0f) < 0.01f) { // ~= 1
-			// show Load-Screen full screen; nothing to do
-		} else if (ratioComp > 1.0f) {
-			// show Load-Screen on part of the screens X-Axis only
-			xDiv = (1.0f - (1.0f / ratioComp)) * 0.5f;
-		} else {
-			// show Load-Screen on part of the screens Y-Axis only
-			yDiv = (1.0f - ratioComp) * 0.5f;
-		}
-
-		// Draw loading screen & print load msg.
-		if (startupTexture) {
-			glBindTexture(GL_TEXTURE_2D,startupTexture);
-			glBegin(GL_QUADS);
-				glTexCoord2f(0.0f, 1.0f); glVertex2f(0.0f + xDiv, 0.0f + yDiv);
-				glTexCoord2f(0.0f, 0.0f); glVertex2f(0.0f + xDiv, 1.0f - yDiv);
-				glTexCoord2f(1.0f, 0.0f); glVertex2f(1.0f - xDiv, 1.0f - yDiv);
-				glTexCoord2f(1.0f, 1.0f); glVertex2f(1.0f - xDiv, 0.0f + yDiv);
-			glEnd();
-		}
-
-		if (showMessages) {
-			localFont->Begin();
-				localFont->SetTextColor(0.5f,0.5f,0.5f,0.9f);
-				localFont->glPrint(0.1f,0.9f,   globalRendering->viewSizeY / 35.0f, FONT_NORM,
-					oldLoadMessages);
-
-				localFont->SetTextColor(0.9f,0.9f,0.9f,0.9f);
-				float posy = localFont->GetTextNumLines(oldLoadMessages) * localFont->GetLineHeight() * globalRendering->viewSizeY / 35.0f;
-				localFont->glPrint(0.1f,0.9f - posy * globalRendering->pixelY,   globalRendering->viewSizeY / 35.0f, FONT_NORM,
-					curLoadMessage);
-			localFont->End();
-		}
 	}
 
 	if (!mtLoading)
@@ -377,9 +305,9 @@ void CLoadScreen::SetLoadMessage(const std::string& text, bool replace_lastline)
 	if (luaIntro != nullptr)
 		luaIntro->LoadProgress(text, replace_lastline);
 
-	// Check the FPU state (needed for synced computations),
-	// some external libraries which get linked during loading might reset those.
-	// Here it is done for the loading thread, for the mainthread it is done in CLoadScreen::Update()
+	// be paranoid about FPU state for the loading thread since some
+	// external library might reset it (main thread state is checked
+	// in ::Update)
 	good_fpu_control_registers(curLoadMessage.c_str());
 
 	if (!mtLoading) {
@@ -388,89 +316,3 @@ void CLoadScreen::SetLoadMessage(const std::string& text, bool replace_lastline)
 	}
 }
 
-
-/******************************************************************************/
-
-static string SelectPicture(const std::string& dir, const std::string& prefix)
-{
-	std::vector<std::string> prefPics = std::move(CFileHandler::FindFiles(dir, prefix + "*"));
-	std::vector<std::string> sidePics;
-
-	// add 'allside_' pictures if we don't have a prefix
-	if (!prefix.empty()) {
-		sidePics = std::move(CFileHandler::FindFiles(dir, "allside_*"));
-		prefPics.insert(prefPics.end(), sidePics.begin(), sidePics.end());
-	}
-
-	if (prefPics.empty())
-		return "";
-
-	return prefPics[guRNG.NextInt(prefPics.size())];
-}
-
-
-void CLoadScreen::RandomStartPicture(const std::string& sidePref)
-{
-	if (startupTexture)
-		return;
-
-	const std::string picDir = "bitmaps/loadpictures/";
-
-	std::string name;
-
-	if (!sidePref.empty())
-		name = SelectPicture(picDir, sidePref + "_");
-
-	if (name.empty())
-		name = SelectPicture(picDir, "");
-
-	if (name.empty() || (name.rfind(".db") == name.size() - 3))
-		return; // no valid pictures
-
-	LoadStartPicture(name);
-}
-
-
-void CLoadScreen::LoadStartPicture(const std::string& name)
-{
-	CBitmap bm;
-
-	if (!bm.Load(name)) {
-		LOG_L(L_WARNING, "[%s] could not load \"%s\" (wrong format?)", __func__, name.c_str());
-		return;
-	}
-
-	aspectRatio = (float)bm.xsize / bm.ysize;
-
-	if ((bm.xsize > globalRendering->viewSizeX) || (bm.ysize > globalRendering->viewSizeY)) {
-		float newX = globalRendering->viewSizeX;
-		float newY = globalRendering->viewSizeY;
-
-		// Make smaller but preserve aspect ratio.
-		// The resulting resolution will make it fill one axis of the
-		// screen, and be smaller or equal to the screen on the other axis.
-		const float ratioComp = globalRendering->aspectRatio / aspectRatio;
-
-		if (ratioComp > 1.0f) {
-			newX /= ratioComp;
-		} else {
-			newY *= ratioComp;
-		}
-
-		bm = bm.CreateRescaled((int) newX, (int) newY);
-	}
-
-	startupTexture = bm.CreateTexture();
-}
-
-
-void CLoadScreen::UnloadStartPicture()
-{
-	if (startupTexture)
-		glDeleteTextures(1, &startupTexture);
-
-	startupTexture = 0;
-}
-
-
-/******************************************************************************/
