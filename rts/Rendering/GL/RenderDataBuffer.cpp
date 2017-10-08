@@ -117,7 +117,7 @@ char* GL::RenderDataBuffer::FormatShaderType(
 	ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "%s", "\n");
 	ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "%s", "void main() {\n");
 
-	if (code != "") {
+	if (code[0] != '\0') {
 		ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "%s\n", code);
 	} else {
 		switch (type[0]) {
