@@ -2,6 +2,7 @@
 
 #include "SelectMenu.h"
 
+#ifndef HEADLESS
 #include <SDL_keycode.h>
 #include <functional>
 #include <sstream>
@@ -43,11 +44,9 @@ CONFIG(std::string, address).defaultValue("").description("Last Ip/hostname used
 CONFIG(std::string, LastSelectedSetting).defaultValue("").description("Stores the previously selected setting, when editing settings within the Spring main menu.");
 CONFIG(std::string, MenuArchive).defaultValue("Spring Bitmaps").description("Archive name for the default Menu.");
 
-class ConnectWindow : public agui::Window
-{
+class ConnectWindow : public agui::Window {
 public:
-	ConnectWindow() : agui::Window("Connect to server")
-	{
+	ConnectWindow() : agui::Window("Connect to server") {
 		agui::gui->AddElement(this);
 		SetPos(0.5, 0.5);
 		SetSize(0.4, 0.2);
@@ -71,8 +70,7 @@ public:
 	agui::LineEdit* address;
 
 private:
-	void Finish(bool connect)
-	{
+	void Finish(bool connect) {
 		if (connect)
 			Connect.emit(address->GetContent());
 		else
@@ -80,11 +78,9 @@ private:
 	};
 };
 
-class SettingsWindow : public agui::Window
-{
+class SettingsWindow : public agui::Window {
 public:
-	SettingsWindow(std::string &name) : agui::Window(name)
-	{
+	SettingsWindow(std::string &name) : agui::Window(name) {
 		agui::gui->AddElement(this);
 		SetPos(0.5, 0.5);
 		SetSize(0.4, 0.2);
@@ -109,14 +105,16 @@ public:
 	agui::LineEdit* value;
 
 private:
-	void Finish(bool set)
-	{
+	void Finish(bool set) {
 		if (set)
 			OK.emit(title + " = " + value->GetContent());
 		else
 			WantClose.emit();
 	};
 };
+
+
+
 
 SelectMenu::SelectMenu(std::shared_ptr<ClientSetup> setup)
 : GuiElement(NULL)
@@ -311,3 +309,6 @@ bool SelectMenu::HandleEventSelf(const SDL_Event& ev)
 	}
 	return false;
 }
+
+#endif
+

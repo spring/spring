@@ -2,6 +2,7 @@
 
 #include "SelectionWidget.h"
 
+#ifndef HEADLESS
 #include <functional>
 #include <set>
 
@@ -221,3 +222,5 @@ void SelectionWidget::CleanWindow()
 		curSelect = NULL;
 	}
 }
+#endif
+

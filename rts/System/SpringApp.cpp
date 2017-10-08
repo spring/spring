@@ -568,13 +568,14 @@ void SpringApp::LoadSpringMenu()
 
 	if (FLAGS_oldmenu || startScript.empty()) {
 		// old menu
-	#ifdef HEADLESS
+		#ifdef HEADLESS
 		handleerror(nullptr,
 			"The headless version of the engine can not be run in interactive mode.\n"
 			"Please supply a start-script, save- or demo-file.", "ERROR", MBF_OK | MBF_EXCL);
-	#endif
+		#else
 		// not a memory-leak: SelectMenu deletes itself on start
 		activeController = new SelectMenu(clientSetup);
+		#endif
 	} else {
 		// run custom menu from game and map
 		StartScript(startScript);
