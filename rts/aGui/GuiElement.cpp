@@ -36,8 +36,10 @@ GuiElement::GuiElement(GuiElement* _parent) : parent(_parent), fixedSize(false),
 		freeIndices.pop_back();
 	}
 
+	#ifndef HEADLESS
 	quadBuffers[0][vboIndex].Generate();
 	quadBuffers[1][vboIndex].Generate();
+	#endif
 
 	memset(pos, 0, sizeof(pos));
 	memset(size, 0, sizeof(size));
@@ -56,9 +58,11 @@ GuiElement::~GuiElement()
 		delete *i;
 	}
 
+	#ifndef HEADLESS
 	quadBuffers[0][vboIndex].Delete();
-	quadBuffers[0][vboIndex] = std::move(VBO());
 	quadBuffers[1][vboIndex].Delete();
+	#endif
+	quadBuffers[0][vboIndex] = std::move(VBO());
 	quadBuffers[1][vboIndex] = std::move(VBO());
 	freeIndices.push_back(vboIndex);
 }
@@ -68,6 +72,7 @@ GuiElement::~GuiElement()
 VBO* GuiElement::GetVBO(unsigned int k) { return &quadBuffers[k][vboIndex]; }
 
 void GuiElement::DrawBox(unsigned int mode, unsigned int indx) {
+	#ifndef HEADLESS
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
@@ -76,10 +81,11 @@ void GuiElement::DrawBox(unsigned int mode, unsigned int indx) {
 	vbo->Bind(GL_ARRAY_BUFFER);
 
 	glVertexPointer(2, GL_FLOAT, sizeof(VA_TYPE_2dT), nullptr);
-	// glTexCoordPointer(2, GL_FLOAT, sizeof(VA_TYPE_2dT), nullptr);
 
-	// texcoors are ignored for all elements except Picture
-	if (HasTexCoors()) {
+	// texcoors are effectively ignored for all elements except Picture
+	// (however, shader always samples from the texture so do not leave
+	// them undefined)
+	if (true || HasTexCoors()) {
 		glClientActiveTexture(GL_TEXTURE0);
 		glTexCoordPointer(2, GL_FLOAT, sizeof(VA_TYPE_2dT), nullptr);
 	}
@@ -89,6 +95,7 @@ void GuiElement::DrawBox(unsigned int mode, unsigned int indx) {
 	glDrawArrays(mode, 0, 4);
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 	glDisableClientState(GL_VERTEX_ARRAY);
+	#endif
 }
 
 
@@ -100,6 +107,11 @@ void GuiElement::GeometryChangeSelf()
 	vaElems[1].x = pos[0]          ; vaElems[1].y = pos[1] + size[1]; // BL
 	vaElems[2].x = pos[0] + size[0]; vaElems[2].y = pos[1] + size[1]; // BR
 	vaElems[3].x = pos[0] + size[0]; vaElems[3].y = pos[1]          ; // TR
+
+	vaElems[0].s = 0.0f; vaElems[0].t = 1.0f;
+	vaElems[1].s = 0.0f; vaElems[1].t = 0.0f;
+	vaElems[2].s = 1.0f; vaElems[2].t = 0.0f;
+	vaElems[3].s = 1.0f; vaElems[3].t = 1.0f;
 
 	quadBuffers[0][vboIndex].Bind();
 	quadBuffers[0][vboIndex].New(sizeof(vaElems), GL_DYNAMIC_DRAW, vaElems);

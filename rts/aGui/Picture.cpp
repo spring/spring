@@ -16,23 +16,7 @@ Picture::Picture(GuiElement* parent)
 	: GuiElement(parent)
 	, texture(0)
 {
-	VA_TYPE_2dT vaElems[4];
-
-	vaElems[0].x = pos[0]          ; vaElems[0].y = pos[1]          ;
-	vaElems[1].x = pos[0]          ; vaElems[1].y = pos[1] + size[1];
-	vaElems[2].x = pos[0] + size[0]; vaElems[2].y = pos[1] + size[1];
-	vaElems[3].x = pos[0] + size[0]; vaElems[3].y = pos[1]          ;
-
-	vaElems[0].s = 0.0f; vaElems[0].t = 1.0f;
-	vaElems[1].s = 0.0f; vaElems[1].t = 0.0f;
-	vaElems[2].s = 1.0f; vaElems[2].t = 0.0f;
-	vaElems[3].s = 1.0f; vaElems[3].t = 1.0f;
-
-	VBO* vbo = GetVBO(0);
-
-	vbo->Bind();
-	vbo->New(sizeof(vaElems), GL_DYNAMIC_DRAW, vaElems);
-	vbo->Unbind();
+	GuiElement::GeometryChangeSelf();
 }
 
 Picture::~Picture()
