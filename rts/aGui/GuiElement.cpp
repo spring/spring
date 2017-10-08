@@ -1,6 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#include <cmath>
+#include <string> // memset
 #include "GuiElement.h"
 
 #include "Rendering/GL/myGL.h"
@@ -41,8 +41,8 @@ GuiElement::GuiElement(GuiElement* _parent) : parent(_parent), fixedSize(false),
 	quadBuffers[1][vboIndex].Generate();
 	#endif
 
-	memset(pos, 0, sizeof(pos));
-	memset(size, 0, sizeof(size));
+	std::memset(pos, 0, sizeof(pos));
+	std::memset(size, 0, sizeof(size));
 
 
 	GeometryChangeSelf();
