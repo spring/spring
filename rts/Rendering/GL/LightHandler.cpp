@@ -1,5 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
+#include <complex>
+
 #include "myGL.h"
 #include "LightHandler.h"
 #include "Game/GlobalUnsynced.h"
@@ -95,6 +97,39 @@ GL::Light* GL::LightHandler::GetLight(unsigned int lgtHandle) {
 }
 
 
+static float3 convertLocalToGlobal(float3 global, float3 local, float3 rotation, float3 resultAllocation) {
+	float localLength = local.Length();
+	if (localLength == 0)
+		return global;
+
+	if (rotation.Length() == 0) {
+		resultAllocation.x = global.x;
+		resultAllocation.y = global.y;
+		resultAllocation.z = global.z;
+		return resultAllocation;
+	}
+
+	float rotationLength = rotation.Length();
+	float rotationTheta = math::asin(rotation.y / rotationLength);
+	float rotationPhi = math::atan2(rotation.x, rotation.z);
+
+	float localTheta = math::asin(local.y / localLength);
+	float localPhi = math::atan2(local.x, local.z);
+
+	float resultTheta = localTheta + rotationTheta;
+	float resultPhi = localPhi + rotationPhi;
+
+	resultAllocation.x = localLength * math::cos(resultTheta) * math::sin(resultPhi);
+	resultAllocation.y = localLength * math::sin(resultTheta);
+	resultAllocation.z = localLength * math::cos(resultTheta) * math::cos(resultPhi);
+
+	resultAllocation.x += global.x;
+	resultAllocation.y += global.y;
+	resultAllocation.z += global.z;
+
+	return resultAllocation;
+}
+
 void GL::LightHandler::Update(Shader::IProgramObject* shader) {
 	if (lights.size() != numLights) {
 		numLights = lights.size();
@@ -147,10 +182,10 @@ void GL::LightHandler::Update(Shader::IProgramObject* shader) {
 		const float4 weightedDiffuseCol  = light.GetDiffuseColor()  * weight.y;
 		const float4 weightedSpecularCol = light.GetSpecularColor() * weight.z;
 
-		const float3* lightTrackPos      = light.GetTrackPosition();
-		const float3* lightTrackDir      = light.GetTrackDirection();
-		const float4& lightPos           = (lightTrackPos != nullptr)? float4(*lightTrackPos, 1.0f): light.GetPosition();
-		const float3& lightDir           = (lightTrackDir != nullptr)? float3(*lightTrackDir      ): light.GetDirection();
+		float3 nullVector;
+		float3 temp3;
+		const float4& lightPos           = (light.GetTrackPosition() != nullptr)  ? float4(convertLocalToGlobal(*light.GetTrackPosition(), light.GetPosition(), *light.GetTrackDirection(), temp3), 1.0f): light.GetPosition();
+		const float3& lightDir           = (light.GetTrackDirection() != nullptr) ? float3(convertLocalToGlobal(nullVector, light.GetDirection(), *light.GetTrackDirection(), temp3)): light.GetDirection();
 		const bool    lightVisible       = (gu->spectatingFullView || light.GetIgnoreLOS() || losHandler->InLos(lightPos, gu->myAllyTeam));
 
 		if (light.GetRelativeTime() > light.GetTTL()) {

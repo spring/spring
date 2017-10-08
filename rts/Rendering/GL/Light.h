@@ -6,6 +6,7 @@
 #include "System/Object.h"
 #include "System/float3.h"
 #include "System/float4.h"
+#include "System/Sync/SyncedFloat3.h"
 #include <algorithm>
 
 namespace GL {
@@ -59,7 +60,7 @@ namespace GL {
 		const float4& GetPosition() const { return position; }
 		const float3& GetDirection() const { return direction; }
 		const float3* GetTrackPosition() const { return trackPosition; }
-		const float3* GetTrackDirection() const { return trackDirection; }
+		const SyncedFloat3* GetTrackDirection() const { return trackDirection; }
 		const float4& GetAmbientColor() const { return ambientColor; }
 		const float4& GetDiffuseColor() const { return diffuseColor; }
 		const float4& GetSpecularColor() const { return specularColor; }
@@ -73,7 +74,7 @@ namespace GL {
 		void SetPosition(const float array[3]) { position.fromFloat3(array); }
 		void SetDirection(const float array[3]) { direction = array; }
 		void SetTrackPosition(const float3* pos) { trackPosition = pos; }
-		void SetTrackDirection(const float3* dir) { trackDirection = dir; }
+		void SetTrackDirection(const SyncedFloat3* dir) { trackDirection = dir; }
 		void SetAmbientColor(const float array[3]) { ambientColor.fromFloat3(array); }
 		void SetDiffuseColor(const float array[3]) { diffuseColor.fromFloat3(array); }
 		void SetSpecularColor(const float array[3]) { specularColor.fromFloat3(array); }
@@ -175,7 +176,7 @@ namespace GL {
 		unsigned int priority;
 
 		const float3* trackPosition;
-		const float3* trackDirection;
+		const SyncedFloat3* trackDirection;
 	};
 }
 

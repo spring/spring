@@ -212,7 +212,7 @@ bool CProjectile::GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo)
 	if (CExpGenSpawnable::GetMemberInfo(memberInfo))
 		return true;
 
-	CHECK_MEMBER_INFO_FLOAT3(CProjectile, dir)
+	//CHECK_MEMBER_INFO_FLOAT3(CProjectile, dir)
 
 	return false;
 }

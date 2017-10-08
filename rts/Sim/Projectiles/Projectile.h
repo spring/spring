@@ -13,6 +13,7 @@
 #include "ProjectileMemPool.h"
 #include "System/float3.h"
 #include "System/type2.h"
+#include "System/Sync/SyncedFloat3.h"
 
 class CUnit;
 class CFeature;
@@ -60,7 +61,7 @@ public:
 		CWorldObject::SetVelocityAndSpeed(vel);
 
 		if (speed.w > 0.0f) {
-			dir = speed / speed.w;
+			dir = (float3) (speed / speed.w);
 		}
 	}
 
@@ -105,7 +106,7 @@ public:
 	bool castShadow;
 	bool drawSorted;
 
-	float3 dir;
+	SyncedFloat3 dir;
 	float3 drawPos;
 
 	float mygravity;
