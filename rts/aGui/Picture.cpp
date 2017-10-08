@@ -5,7 +5,6 @@
 #include "Gui.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VBO.h"
-#include "Rendering/GL/VertexArrayTypes.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "System/Log/ILog.h"
 
@@ -24,8 +23,9 @@ Picture::~Picture()
 	if (texture == 0)
 		return;
 
+	#ifndef HEADLESS
 	glDeleteTextures(1, &texture);
-	// GuiElement destructor cleans up VBO
+	#endif
 }
 
 void Picture::Load(const std::string& _file)
@@ -43,6 +43,7 @@ void Picture::Load(const std::string& _file)
 
 void Picture::DrawSelf()
 {
+	#ifndef HEADLESS
 	if (texture == 0)
 		return;
 
@@ -55,6 +56,7 @@ void Picture::DrawSelf()
 	DrawBox(GL_QUADS);
 
 	glBindTexture(GL_TEXTURE_2D, 0);
+	#endif
 }
 
 } // namespace agui

@@ -36,10 +36,8 @@ GuiElement::GuiElement(GuiElement* _parent) : parent(_parent), fixedSize(false),
 		freeIndices.pop_back();
 	}
 
-	#ifndef HEADLESS
 	quadBuffers[0][vboIndex].Generate();
 	quadBuffers[1][vboIndex].Generate();
-	#endif
 
 	std::memset(pos, 0, sizeof(pos));
 	std::memset(size, 0, sizeof(size));
@@ -58,10 +56,8 @@ GuiElement::~GuiElement()
 		delete *i;
 	}
 
-	#ifndef HEADLESS
 	quadBuffers[0][vboIndex].Delete();
 	quadBuffers[1][vboIndex].Delete();
-	#endif
 	quadBuffers[0][vboIndex] = std::move(VBO());
 	quadBuffers[1][vboIndex] = std::move(VBO());
 	freeIndices.push_back(vboIndex);

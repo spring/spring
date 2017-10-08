@@ -21,8 +21,8 @@ public:
 	VBO& operator = (const VBO& other) = delete;
 	VBO& operator = (VBO&& other);
 
-	void Generate() const { glGenBuffers(1, &vboId); }
-	void Delete() const { glDeleteBuffers(1, &vboId); vboId = 0; }
+	void Generate() const;
+	void Delete() const;
 
 	/**
 	 * @param target can be either GL_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER, GL_PIXEL_PACK_BUFFER, GL_PIXEL_UNPACK_BUFFER or GL_UNIFORM_BUFFER
