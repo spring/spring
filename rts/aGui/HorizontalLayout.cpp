@@ -14,16 +14,18 @@ HorizontalLayout::HorizontalLayout(GuiElement* parent) : GuiElement(parent)
 
 void HorizontalLayout::DrawSelf()
 {
-	if (borderWidth > 0)
-	{
-		glLineWidth(borderWidth);
-		gui->SetColor(1.f,1.f,1.f, Opacity());
-		DrawBox(GL_LINE_LOOP);
-	}
+	if (borderWidth <= 0.0f)
+		return;
+
+	glLineWidth(borderWidth);
+	gui->SetColor(1.f,1.f,1.f, Opacity());
+	DrawBox(GL_LINE_LOOP);
 }
 
 void HorizontalLayout::GeometryChangeSelf()
 {
+	GuiElement::GeometryChangeSelf();
+
 	if (children.empty())
 		return;
 	unsigned numFixed = 0;

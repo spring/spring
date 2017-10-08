@@ -197,11 +197,12 @@ bool List::MouseUpdate(int x, int y)
 void List::DrawSelf()
 {
 	gui->SetDrawMode(Gui::DrawMode::COLOR);
-	const float opacity = Opacity();
-	font->Begin();
-	float hf = font->GetSize() / ScaleFactor();
 
-	font->SetTextColor(1,1,0.4f,opacity);
+	const float opacity = Opacity();
+	const float hf = font->GetSize() / ScaleFactor();
+
+	font->Begin();
+	font->SetTextColor(1.0f, 1.0f, 0.4f, opacity);
 
 	int nCurIndex = 0; // The item we're on
 	int nDrawOffset = 0; // The offset to the first draw item

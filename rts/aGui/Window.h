@@ -13,7 +13,7 @@ namespace agui {
 class Window : public GuiElement
 {
 public:
-	Window(const std::string& title = "", GuiElement* parent = NULL);
+	Window(const std::string& title = "", GuiElement* parent = nullptr);
 
 	virtual void AddChild(GuiElement* elem);
 	slimsig::signal<void (void)> WantClose;
@@ -22,10 +22,12 @@ protected:
 	std::string title;
 
 private:
-	virtual void DrawSelf();
-	virtual bool HandleEventSelf(const SDL_Event& ev);
+	void DrawSelf() override;
+	void GeometryChangeSelf() override;
+	bool HandleEventSelf(const SDL_Event& ev) override;
 
-	virtual float Opacity() const;
+	float Opacity() const override;
+
 	bool dragging;
 	float dragPos[2];
 	float titleHeight;

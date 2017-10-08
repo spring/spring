@@ -41,24 +41,27 @@ Gui::Gui()
 	if (!shader->IsValid()) {
 		const char* fmt = "%s-shader compilation error: %s";
 		LOG_L(L_ERROR, fmt, shader->GetName().c_str(), shader->GetLog().c_str());
-	} else {
-		shader->Enable();
+		return;
+	}
 
-		shader->SetUniformLocation("viewProjMatrix");
-		shader->SetUniformLocation("tex");
-		shader->SetUniformLocation("color");
-		shader->SetUniformLocation("texWeight");
+	shader->Enable();
+	shader->SetUniformLocation("viewProjMatrix");
+	shader->SetUniformLocation("tex");
+	shader->SetUniformLocation("color");
+	shader->SetUniformLocation("texWeight");
 
-		shader->SetUniformMatrix4fv(0, false, CMatrix44f::OrthoProj(0.0f, 1.0f, 0.0f, 1.0f, -1.0f, 1.0f));
-		shader->SetUniform1i(1, 0);
-		shader->Disable();
-		shader->Validate();
-		if (!shader->IsValid()) {
-			const char* fmt = "%s-shader validation error: %s";
-			LOG_L(L_ERROR, fmt, shader->GetName().c_str(), shader->GetLog().c_str());
-		}
+	shader->SetUniformMatrix4fv(0, false, CMatrix44f::OrthoProj(0.0f, 1.0f, 0.0f, 1.0f, -1.0f, 1.0f));
+	shader->SetUniform1i(1, 0);
+
+	shader->Disable();
+	shader->Validate();
+
+	if (!shader->IsValid()) {
+		const char* fmt = "%s-shader validation error: %s";
+		LOG_L(L_ERROR, fmt, shader->GetName().c_str(), shader->GetLog().c_str());
 	}
 }
+
 
 void Gui::SetColor(float r, float g, float b, float a)
 {
@@ -80,21 +83,18 @@ void Gui::SetDrawMode(DrawMode newMode)
 	if (currentDrawMode == newMode)
 		return;
 
-	currentDrawMode = newMode;
-
-	switch(newMode) {
+	switch (currentDrawMode = newMode) {
 		case COLOR: {
 			shader->SetUniform4f(3, 0.0f, 0.0f, 0.0f, 0.0f);
-			break;
-		}
+		} break;
 		case TEXTURE: {
 			shader->SetUniform4f(3, 1.0f, 1.0f, 1.0f, 1.0f);
-			break;
-		}
+		} break;
 		case MASK: {
 			shader->SetUniform4f(3, 0.0f, 0.0f, 0.0f, 1.0f);
-			break;
-		}
+		} break;
+		case TEXT: {
+		} break;
 	}
 }
 
@@ -102,41 +102,36 @@ void Gui::SetDrawMode(DrawMode newMode)
 void Gui::Draw()
 {
 	Clean();
+
 	glDisable(GL_ALPHA_TEST);
 	glEnable(GL_BLEND);
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
 
 	shader->Enable();
 	SetColor(1.0f, 1.0f, 1.0f, 1.0f);
 	font->SetColorCallback(GuiColorCallback);
 	smallFont->SetColorCallback(GuiColorCallback);
 	SetDrawMode(DrawMode::COLOR);
+
 	for (ElList::reverse_iterator it = elements.rbegin(); it != elements.rend(); ++it) {
 		(*it).element->Draw();
 	}
+
 	font->SetColorCallback(nullptr);
 	smallFont->SetColorCallback(nullptr);
 	shader->Disable();
 }
 
 void Gui::Clean() {
-	for (ElList::iterator it = toBeAdded.begin(); it != toBeAdded.end(); ++it)
-	{
+	for (ElList::iterator it = toBeAdded.begin(); it != toBeAdded.end(); ++it) {
 		bool duplicate = false;
-		for (ElList::iterator elIt = elements.begin(); elIt != elements.end(); ++elIt)
-		{
-			if (it->element == elIt->element)
-			{
+		for (ElList::iterator elIt = elements.begin(); elIt != elements.end(); ++elIt) {
+			if (it->element == elIt->element) {
 				LOG_L(L_DEBUG, "Gui::AddElement: skipping duplicated object");
 				duplicate = true;
 				break;
 			}
 		}
-		if (!duplicate)
-		{
+		if (!duplicate) {
 			if (it->asBackground)
 				elements.push_back(*it);
 			else
@@ -145,12 +140,9 @@ void Gui::Clean() {
 	}
 	toBeAdded.clear();
 
-	for (ElList::iterator it = toBeRemoved.begin(); it != toBeRemoved.end(); ++it)
-	{
-		for (ElList::iterator elIt = elements.begin(); elIt != elements.end(); ++elIt)
-		{
-			if (it->element == elIt->element)
-			{
+	for (ElList::iterator it = toBeRemoved.begin(); it != toBeRemoved.end(); ++it) {
+		for (ElList::iterator elIt = elements.begin(); elIt != elements.end(); ++elIt) {
+			if (it->element == elIt->element) {
 				delete (elIt->element);
 				elements.erase(elIt);
 				break;
@@ -168,7 +160,7 @@ Gui::~Gui() {
 
 void Gui::AddElement(GuiElement* elem, bool asBackground)
 {
-	toBeAdded.push_back(GuiItem(elem,asBackground));
+	toBeAdded.emplace_back(elem, asBackground);
 }
 
 void Gui::RmElement(GuiElement* elem)
@@ -176,7 +168,7 @@ void Gui::RmElement(GuiElement* elem)
 	// has to be delayed, otherwise deleting a button during a callback would segfault
 	for (ElList::iterator it = elements.begin(); it != elements.end(); ++it) {
 		if ((*it).element == elem) {
-			toBeRemoved.push_back(GuiItem(elem,true));
+			toBeRemoved.emplace_back(elem, true);
 			break;
 		}
 	}
@@ -189,50 +181,45 @@ void Gui::UpdateScreenGeometry(int screenx, int screeny, int screenOffsetX, int 
 
 bool Gui::MouseOverElement(const GuiElement* elem, int x, int y) const
 {
-	for (ElList::const_iterator it = elements.begin(); it != elements.end(); ++it)
-	{
+	for (ElList::const_iterator it = elements.begin(); it != elements.end(); ++it) {
 		if (it->element->MouseOver(x, y))
-		{
-			if (it->element == elem)
-				return true;
-			else
-				return false;
-		}
+			return (it->element == elem);
 	}
+
 	return false;
 }
 
 bool Gui::HandleEvent(const SDL_Event& ev)
 {
 	ElList::iterator handler = elements.end();
-	for (ElList::iterator it = elements.begin(); it != elements.end(); ++it)
-	{
-		if (it->element->HandleEvent(ev))
-		{
+	for (ElList::iterator it = elements.begin(); it != elements.end(); ++it) {
+		if (it->element->HandleEvent(ev)) {
 			handler = it;
 			break;
 		}
 	}
-	if (handler != elements.end() && !handler->asBackground)
-	{
+	if (handler != elements.end() && !handler->asBackground) {
 		elements.push_front(*handler);
 		elements.erase(handler);
 	}
 	return false;
 }
 
-Gui* gui = NULL;
+
+
+Gui* gui = nullptr;
+
 void InitGui()
 {
-	if (gui == NULL)
+	if (gui == nullptr)
 		gui = new Gui();
 }
 
 void FreeGui()
 {
-	if (gui != NULL) {
+	if (gui != nullptr) {
 		delete gui;
-		gui = NULL;
+		gui = nullptr;
 	}
 }
 

@@ -42,6 +42,7 @@ public:
 		COLOR          = 0,
 		TEXTURE        = 1,
 		MASK           = 2,
+		TEXT           = 3,
 	};
 
 	void SetDrawMode(DrawMode newMode);

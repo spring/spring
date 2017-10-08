@@ -14,17 +14,19 @@ VerticalLayout::VerticalLayout(GuiElement* parent) : GuiElement(parent)
 
 void VerticalLayout::DrawSelf()
 {
-	if (borderWidth > 0)
-	{
-		gui->SetDrawMode(Gui::DrawMode::COLOR);
-		glLineWidth(borderWidth);
-		gui->SetColor(1.f,1.f,1.f, Opacity());
-		DrawBox(GL_LINE_LOOP);
-	}
+	if (borderWidth <= 0.0f)
+		return;
+
+	gui->SetDrawMode(Gui::DrawMode::COLOR);
+	glLineWidth(borderWidth);
+	gui->SetColor(1.f,1.f,1.f, Opacity());
+	DrawBox(GL_LINE_LOOP);
 }
 
 void VerticalLayout::GeometryChangeSelf()
 {
+	GuiElement::GeometryChangeSelf();
+
 	if (children.empty())
 		return;
 	unsigned numFixed = 0;
