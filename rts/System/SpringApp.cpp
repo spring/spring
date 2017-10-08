@@ -24,8 +24,9 @@
 
 #include "Rendering/GL/myGL.h"
 #include "System/SpringApp.h"
-
+#ifndef HEADLESS
 #include "aGui/Gui.h"
+#endif
 #include "ExternalAI/IAILibraryManager.h"
 #include "Game/Benchmark.h"
 #include "Game/Camera.h"
@@ -252,7 +253,9 @@ bool SpringApp::Init()
 	gu = new CGlobalUnsynced();
 
 	// GUIs
-	agui::InitGui();
+	#ifndef HEADLESS
+	agui::gui = new agui::Gui();
+	#endif
 	keyCodes = new CKeyCodes();
 
 	CNamedTextures::Init();
@@ -378,10 +381,9 @@ void SpringApp::UpdateInterfaceGeometry()
 	const int vpx = globalRendering->viewPosX;
 	const int vpy = globalRendering->winSizeY - globalRendering->viewSizeY - globalRendering->viewPosY;
 
-	if (agui::gui == nullptr)
-		return;
-
+	#ifndef HEADLESS
 	agui::gui->UpdateScreenGeometry(globalRendering->viewSizeX, globalRendering->viewSizeY, vpx, vpy);
+	#endif
 }
 
 
@@ -884,7 +886,9 @@ void SpringApp::Kill(bool fromRun)
 	spring::SafeDelete(gameSetup);
 
 	LOG("[SpringApp::%s][4] font=%p", __func__, font);
-	agui::FreeGui();
+	#ifndef HEADLESS
+	spring::SafeDelete(agui::gui);
+	#endif
 	spring::SafeDelete(keyCodes);
 	spring::SafeDelete(font);
 	spring::SafeDelete(smallFont);

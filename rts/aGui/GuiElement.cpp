@@ -68,7 +68,6 @@ GuiElement::~GuiElement()
 VBO* GuiElement::GetVBO(unsigned int k) { return &quadBuffers[k][vboIndex]; }
 
 void GuiElement::DrawBox(unsigned int mode, unsigned int indx) {
-	#ifndef HEADLESS
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
@@ -91,7 +90,6 @@ void GuiElement::DrawBox(unsigned int mode, unsigned int indx) {
 	glDrawArrays(mode, 0, 4);
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 	glDisableClientState(GL_VERTEX_ARRAY);
-	#endif
 }
 
 

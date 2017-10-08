@@ -24,9 +24,9 @@
 #include "Menu/LuaMenuController.h"
 #include "Net/GameServer.h"
 #include "Net/Protocol/NetProtocol.h"
-
+#ifndef HEADLESS
 #include "aGui/Gui.h"
-
+#endif
 #include "Rendering/Fonts/glFont.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/GlobalConstants.h"
@@ -94,9 +94,11 @@ CPreGame::CPreGame(std::shared_ptr<ClientSetup> setup)
 
 CPreGame::~CPreGame()
 {
+	#ifndef HEADLESS
 	// delete leftover elements (remove once the gui is drawn ingame)
 	// but do not delete infoconsole, it is reused by CGame
 	agui::gui->Draw();
+	#endif
 
 	pregame = nullptr;
 }
@@ -152,7 +154,9 @@ bool CPreGame::Draw()
 {
 	spring_msecs(10).sleep(true);
 	ClearScreen();
+	#ifndef HEADLESS
 	agui::gui->Draw();
+	#endif
 
 	font->Begin();
 

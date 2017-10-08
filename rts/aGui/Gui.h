@@ -51,9 +51,8 @@ private:
 	bool HandleEvent(const SDL_Event& ev);
 	InputHandler::SignalType::connection_type inputCon;
 
-	struct GuiItem
-	{
-		GuiItem(GuiElement* el, bool back) : element(el), asBackground(back) {};
+	struct GuiItem {
+		GuiItem(GuiElement* el, bool back) : element(el), asBackground(back) {}
 		GuiElement* element;
 		bool asBackground;
 	};
@@ -67,8 +66,6 @@ private:
 };
 
 extern Gui* gui;
-void InitGui();
-void FreeGui();
 
 }
 

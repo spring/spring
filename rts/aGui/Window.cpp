@@ -62,7 +62,6 @@ void Window::DrawSelf()
 
 void Window::GeometryChangeSelf()
 {
-	#ifndef HEADLESS
 	GuiElement::GeometryChangeSelf();
 
 	{
@@ -78,7 +77,6 @@ void Window::GeometryChangeSelf()
 		vbo->New(sizeof(vaElems), GL_DYNAMIC_DRAW, vaElems);
 		vbo->Unbind();
 	}
-	#endif
 }
 
 
