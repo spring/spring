@@ -6,6 +6,7 @@
 #include "Rendering/Shaders/Shader.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/LosHandler.h"
+#include "Sim/Projectiles/Projectile.h"
 
 static const float4 ZeroVector4 = float4(0.0f, 0.0f, 0.0f, 0.0f);
 
@@ -147,44 +148,73 @@ void GL::LightHandler::Update(Shader::IProgramObject* shader) {
 		const float4 weightedDiffuseCol  = light.GetDiffuseColor()  * weight.y;
 		const float4 weightedSpecularCol = light.GetSpecularColor() * weight.z;
 
-		const float3* lightTrackPos      = light.GetTrackPosition();
-		const float3* lightTrackDir      = light.GetTrackDirection();
-		const float4& lightPos           = (lightTrackPos != nullptr)? float4(*lightTrackPos, 1.0f): light.GetPosition();
-		const float3& lightDir           = (lightTrackDir != nullptr)? float3(*lightTrackDir      ): light.GetDirection();
-		const bool    lightVisible       = (gu->spectatingFullView || light.GetIgnoreLOS() || losHandler->InLos(lightPos, gu->myAllyTeam));
+		float4 lightPos = light.GetPosition();
+		float4 lightDir = light.GetDirection(); // w=0, make sure to pick mat::oper*(float4)
+
+		if (light.GetTrackObject() != nullptr) {
+			switch (light.GetTrackType()) {
+				case GL::Light::TRACK_TYPE_UNIT: {
+					const CSolidObject* so = static_cast<const CSolidObject*>(light.GetTrackObject());
+
+					if (light.LocalSpace()) {
+						lightPos = so->GetObjectSpaceDrawPos(lightPos);
+						lightDir = so->GetObjectSpaceVec(lightDir);
+					} else {
+						lightPos = so->drawPos;
+						lightDir = so->frontdir;
+					}
+				} break;
+				case GL::Light::TRACK_TYPE_PROJ: {
+					const CProjectile* po = static_cast<const CProjectile*>(light.GetTrackObject());
+
+					if (light.LocalSpace()) {
+						const CMatrix44f m = po->GetTransformMatrix();
+
+						lightPos = m * lightPos;
+						lightDir = m * lightDir;
+					} else {
+						lightPos = po->drawPos;
+						lightDir = po->dir;
+					}
+				} break;
+				default: {} break;
+			}
+		}
 
 		if (light.GetRelativeTime() > light.GetTTL()) {
 			// mark light as dead
 			light.SetTTL(0);
-		} else {
-			// communicate properties via the FFP to save uniforms
-			// note: we want MV to be identity here
-			glEnable(lightID);
-			glLightfv(lightID, GL_POSITION, &lightPos.x);
-
-			if (lightVisible) {
-				glLightfv(lightID, GL_AMBIENT,  &weightedAmbientCol.x);
-				glLightfv(lightID, GL_DIFFUSE,  &weightedDiffuseCol.x);
-				glLightfv(lightID, GL_SPECULAR, &weightedSpecularCol.x);
-			} else {
-				// zero contribution from this light if not in LOS
-				// (whether or not camera can see it is irrelevant
-				// since the light always takes up a slot anyway)
-				glLightfv(lightID, GL_AMBIENT,  &ZeroVector4.x);
-				glLightfv(lightID, GL_DIFFUSE,  &ZeroVector4.x);
-				glLightfv(lightID, GL_SPECULAR, &ZeroVector4.x);
-			}
-
-			glLightfv(lightID, GL_SPOT_DIRECTION, &lightDir.x);
-			glLightf(lightID, GL_SPOT_CUTOFF, light.GetFOV());
-			glLightf(lightID, GL_CONSTANT_ATTENUATION, light.GetRadius()); //!
-			#if (OGL_SPEC_ATTENUATION == 1)
-			glLightf(lightID, GL_CONSTANT_ATTENUATION,  light.GetAttenuation().x);
-			glLightf(lightID, GL_LINEAR_ATTENUATION,    light.GetAttenuation().y);
-			glLightf(lightID, GL_QUADRATIC_ATTENUATION, light.GetAttenuation().z);
-			#endif
-			glDisable(lightID);
+			continue;
 		}
+
+		// communicate properties via the FFP to save uniforms
+		// note: we want MV to be identity here
+		glEnable(lightID);
+		glLightfv(lightID, GL_POSITION, &lightPos.x);
+
+		if (gu->spectatingFullView || light.IgnoreLOS() || losHandler->InLos(lightPos, gu->myAllyTeam)) {
+			// light is visible
+			glLightfv(lightID, GL_AMBIENT,  &weightedAmbientCol.x);
+			glLightfv(lightID, GL_DIFFUSE,  &weightedDiffuseCol.x);
+			glLightfv(lightID, GL_SPECULAR, &weightedSpecularCol.x);
+		} else {
+			// zero contribution from this light if not in LOS
+			// (whether or not camera can see it is irrelevant
+			// since the light always takes up a slot anyway)
+			glLightfv(lightID, GL_AMBIENT,  &ZeroVector4.x);
+			glLightfv(lightID, GL_DIFFUSE,  &ZeroVector4.x);
+			glLightfv(lightID, GL_SPECULAR, &ZeroVector4.x);
+		}
+
+		glLightfv(lightID, GL_SPOT_DIRECTION, &lightDir.x);
+		glLightf(lightID, GL_SPOT_CUTOFF, light.GetFOV());
+		glLightf(lightID, GL_CONSTANT_ATTENUATION, light.GetRadius()); //!
+		#if (OGL_SPEC_ATTENUATION == 1)
+		glLightf(lightID, GL_CONSTANT_ATTENUATION,  light.GetAttenuation().x);
+		glLightf(lightID, GL_LINEAR_ATTENUATION,    light.GetAttenuation().y);
+		glLightf(lightID, GL_QUADRATIC_ATTENUATION, light.GetAttenuation().z);
+		#endif
+		glDisable(lightID);
 	}
 }
 

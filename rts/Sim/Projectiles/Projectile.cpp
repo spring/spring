@@ -190,7 +190,7 @@ CUnit* CProjectile::owner() const {
 }
 
 
-CMatrix44f CProjectile::GetTransformMatrix(bool offsetPos) const {
+CMatrix44f CProjectile::GetTransformMatrix(float posOffsetMult) const {
 	float3 xdir;
 	float3 ydir;
 
@@ -203,7 +203,7 @@ CMatrix44f CProjectile::GetTransformMatrix(bool offsetPos) const {
 
 	ydir = xdir.cross(dir);
 
-	return (CMatrix44f(drawPos + (dir * radius * 0.9f * offsetPos), -xdir, ydir, dir));
+	return (CMatrix44f(drawPos + (dir * radius * 0.9f * posOffsetMult), -xdir, ydir, dir));
 }
 
 

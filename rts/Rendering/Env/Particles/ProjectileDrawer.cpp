@@ -674,7 +674,7 @@ bool CProjectileDrawer::DrawProjectileModel(const CProjectile* p)
 		unitDrawer->SetTeamColour(wp->GetTeamID());
 
 		glPushMatrix();
-			glMultMatrixf(wp->GetTransformMatrix(wp->GetProjectileType() == WEAPON_MISSILE_PROJECTILE));
+			glMultMatrixf(wp->GetTransformMatrix(float(wp->GetProjectileType() == WEAPON_MISSILE_PROJECTILE)));
 
 			if (!(/*p->luaDraw &&*/ eventHandler.DrawProjectile(p))) {
 				wp->model->DrawStatic();

@@ -1180,56 +1180,65 @@ static bool ParseLight(lua_State* L, GL::Light& light, const int tblIdx, const c
 	}
 
 	for (lua_pushnil(L); lua_next(L, tblIdx) != 0; lua_pop(L, 1)) {
-		if (lua_israwstring(L, -2)) {
-			const std::string& key = lua_tostring(L, -2);
+		if (!lua_israwstring(L, -2))
+			continue;
 
-			if (lua_istable(L, -1)) {
-				float array[3] = {0.0f, 0.0f, 0.0f};
+		const std::string& key = lua_tostring(L, -2);
 
-				if (LuaUtils::ParseFloatArray(L, -1, array, 3) == 3) {
-					if (key == "position") {
-						light.SetPosition(array);
-					} else if (key == "direction") {
-						light.SetDirection(array);
-					} else if (key == "ambientColor") {
-						light.SetAmbientColor(array);
-					} else if (key == "diffuseColor") {
-						light.SetDiffuseColor(array);
-					} else if (key == "specularColor") {
-						light.SetSpecularColor(array);
-					} else if (key == "intensityWeight") {
-						light.SetIntensityWeight(array);
-					} else if (key == "attenuation") {
-						light.SetAttenuation(array);
-					} else if (key == "ambientDecayRate") {
-						light.SetAmbientDecayRate(array);
-					} else if (key == "diffuseDecayRate") {
-						light.SetDiffuseDecayRate(array);
-					} else if (key == "specularDecayRate") {
-						light.SetSpecularDecayRate(array);
-					} else if (key == "decayFunctionType") {
-						light.SetDecayFunctionType(array);
-					}
+		if (lua_istable(L, -1)) {
+			float array[3] = {0.0f, 0.0f, 0.0f};
+
+			if (LuaUtils::ParseFloatArray(L, -1, array, 3) == 3) {
+				if (key == "position") {
+					light.SetPosition(array);
+				} else if (key == "direction") {
+					light.SetDirection(array);
+				} else if (key == "ambientColor") {
+					light.SetAmbientColor(array);
+				} else if (key == "diffuseColor") {
+					light.SetDiffuseColor(array);
+				} else if (key == "specularColor") {
+					light.SetSpecularColor(array);
+				} else if (key == "intensityWeight") {
+					light.SetIntensityWeight(array);
+				} else if (key == "attenuation") {
+					light.SetAttenuation(array);
+				} else if (key == "ambientDecayRate") {
+					light.SetAmbientDecayRate(array);
+				} else if (key == "diffuseDecayRate") {
+					light.SetDiffuseDecayRate(array);
+				} else if (key == "specularDecayRate") {
+					light.SetSpecularDecayRate(array);
+				} else if (key == "decayFunctionType") {
+					light.SetDecayFunctionType(array);
 				}
-
-				continue;
 			}
 
-			if (lua_isnumber(L, -1)) {
-				if (key == "radius") {
-					light.SetRadius(std::max(1.0f, lua_tofloat(L, -1)));
-				} else if (key == "fov") {
-					light.SetFOV(std::max(0.0f, std::min(180.0f, lua_tofloat(L, -1))));
-				} else if (key == "ttl") {
-					light.SetTTL(lua_tofloat(L, -1));
-				} else if (key == "priority") {
-					light.SetPriority(lua_tofloat(L, -1));
-				} else if (key == "ignoreLOS") {
-					light.SetIgnoreLOS(lua_toboolean(L, -1));
-				}
+			continue;
+		}
 
-				continue;
+		if (lua_isnumber(L, -1)) {
+			if (key == "radius") {
+				light.SetRadius(std::max(1.0f, lua_tofloat(L, -1)));
+			} else if (key == "fov") {
+				light.SetFOV(std::max(0.0f, std::min(180.0f, lua_tofloat(L, -1))));
+			} else if (key == "ttl") {
+				light.SetTTL(lua_tofloat(L, -1));
+			} else if (key == "priority") {
+				light.SetPriority(lua_tofloat(L, -1));
 			}
+
+			continue;
+		}
+
+		if (lua_isboolean(L, -1)) {
+			if (key == "ignoreLOS") {
+				light.SetIgnoreLOS(lua_toboolean(L, -1));
+			} else if (key == "localSpace") {
+				light.SetLocalSpace(lua_toboolean(L, -1));
+			}
+
+			continue;
 		}
 	}
 
@@ -1247,11 +1256,8 @@ int LuaUnsyncedCtrl::AddMapLight(lua_State* L)
 
 	unsigned int lightHandle = -1U;
 
-	if (lightHandler != NULL) {
-		if (ParseLight(L, light, 1, __FUNCTION__)) {
-			lightHandle = lightHandler->AddLight(light);
-		}
-	}
+	if (lightHandler != nullptr && ParseLight(L, light, 1, __func__))
+		lightHandle = lightHandler->AddLight(light);
 
 	lua_pushnumber(L, lightHandle);
 	return 1;
@@ -1267,11 +1273,8 @@ int LuaUnsyncedCtrl::AddModelLight(lua_State* L)
 
 	unsigned int lightHandle = -1U;
 
-	if (lightHandler != NULL) {
-		if (ParseLight(L, light, 1, __FUNCTION__)) {
-			lightHandle = lightHandler->AddLight(light);
-		}
-	}
+	if (lightHandler != nullptr && ParseLight(L, light, 1, __func__))
+		lightHandle = lightHandler->AddLight(light);
 
 	lua_pushnumber(L, lightHandle);
 	return 1;
@@ -1286,15 +1289,9 @@ int LuaUnsyncedCtrl::UpdateMapLight(lua_State* L)
 		return 0;
 
 	GL::LightHandler* lightHandler = readMap->GetGroundDrawer()->GetLightHandler();
-	GL::Light* light = (lightHandler != NULL)? lightHandler->GetLight(lightHandle): NULL;
+	GL::Light* light = (lightHandler != nullptr)? lightHandler->GetLight(lightHandle): nullptr;
 
-	bool ret = false;
-
-	if (light != NULL) {
-		ret = ParseLight(L, *light, 2, __FUNCTION__);
-	}
-
-	lua_pushboolean(L, ret);
+	lua_pushboolean(L, (light != nullptr && ParseLight(L, *light, 2, __func__)));
 	return 1;
 }
 
@@ -1306,14 +1303,9 @@ int LuaUnsyncedCtrl::UpdateModelLight(lua_State* L)
 		return 0;
 
 	GL::LightHandler* lightHandler = unitDrawer->GetLightHandler();
-	GL::Light* light = (lightHandler != NULL)? lightHandler->GetLight(lightHandle): NULL;
-	bool ret = false;
+	GL::Light* light = (lightHandler != nullptr)? lightHandler->GetLight(lightHandle): nullptr;
 
-	if (light != NULL) {
-		ret = ParseLight(L, *light, 2, __FUNCTION__);
-	}
-
-	lua_pushboolean(L, ret);
+	lua_pushboolean(L, (light != nullptr && ParseLight(L, *light, 2, __func__)));
 	return 1;
 }
 
@@ -1326,20 +1318,19 @@ static bool AddLightTrackingTarget(lua_State* L, GL::Light* light, bool trackEna
 		// interpret argument #2 as a unit ID
 		CUnit* unit = ParseAllyUnit(L, caller, 2);
 
-		if (unit != NULL) {
+		if (unit != nullptr) {
 			if (trackEnable) {
-				if (light->GetTrackPosition() == NULL) {
+				if (light->GetTrackObject() == nullptr) {
 					light->AddDeathDependence(unit, DEPENDENCE_LIGHT);
-					light->SetTrackPosition(&unit->drawPos);
-					light->SetTrackDirection(&unit->speed); //! non-normalized
+					light->SetTrackObject(unit);
+					light->SetTrackType(GL::Light::TRACK_TYPE_UNIT);
 					ret = true;
 				}
 			} else {
 				// assume <light> was tracking <unit>
-				if (light->GetTrackPosition() == &unit->drawPos) {
+				if (light->GetTrackObject() == unit) {
 					light->DeleteDeathDependence(unit, DEPENDENCE_LIGHT);
-					light->SetTrackPosition(NULL);
-					light->SetTrackDirection(NULL);
+					light->SetTrackObject(nullptr);
 					ret = true;
 				}
 			}
@@ -1351,20 +1342,19 @@ static bool AddLightTrackingTarget(lua_State* L, GL::Light* light, bool trackEna
 		// does not know about unsynced ID's anyway)
 		CProjectile* proj = ParseRawProjectile(L, caller, 2, true);
 
-		if (proj != NULL) {
+		if (proj != nullptr) {
 			if (trackEnable) {
-				if (light->GetTrackPosition() == NULL) {
+				if (light->GetTrackObject() == nullptr) {
 					light->AddDeathDependence(proj, DEPENDENCE_LIGHT);
-					light->SetTrackPosition(&proj->drawPos);
-					light->SetTrackDirection(&proj->dir);
+					light->SetTrackObject(proj);
+					light->SetTrackType(GL::Light::TRACK_TYPE_PROJ);
 					ret = true;
 				}
 			} else {
 				// assume <light> was tracking <proj>
-				if (light->GetTrackPosition() == &proj->drawPos) {
+				if (light->GetTrackObject() == proj) {
 					light->DeleteDeathDependence(proj, DEPENDENCE_LIGHT);
-					light->SetTrackPosition(NULL);
-					light->SetTrackDirection(NULL);
+					light->SetTrackObject(nullptr);
 					ret = true;
 				}
 			}
@@ -1382,7 +1372,7 @@ int LuaUnsyncedCtrl::SetMapLightTrackingState(lua_State* L)
 		return 0;
 
 	if (!lua_isnumber(L, 2)) {
-		luaL_error(L, "[%s] 1st and 2nd arguments should be numbers, 3rd and 4th should be booleans", __FUNCTION__);
+		luaL_error(L, "[%s] 1st and 2nd arguments should be numbers, 3rd and 4th should be booleans", __func__);
 		return 0;
 	}
 
@@ -1391,13 +1381,12 @@ int LuaUnsyncedCtrl::SetMapLightTrackingState(lua_State* L)
 	const bool trackUnit = luaL_optboolean(L, 4, true);
 
 	GL::LightHandler* lightHandler = readMap->GetGroundDrawer()->GetLightHandler();
-	GL::Light* light = (lightHandler != NULL)? lightHandler->GetLight(lightHandle): NULL;
+	GL::Light* light = (lightHandler != nullptr)? lightHandler->GetLight(lightHandle): nullptr;
 
 	bool ret = false;
 
-	if (light != NULL) {
-		ret = AddLightTrackingTarget(L, light, trackEnable, trackUnit, __FUNCTION__);
-	}
+	if (light != nullptr)
+		ret = AddLightTrackingTarget(L, light, trackEnable, trackUnit, __func__);
 
 	lua_pushboolean(L, ret);
 	return 1;
@@ -1411,7 +1400,7 @@ int LuaUnsyncedCtrl::SetModelLightTrackingState(lua_State* L)
 		return 0;
 
 	if (!lua_isnumber(L, 2)) {
-		luaL_error(L, "[%s] 1st and 2nd arguments should be numbers, 3rd and 4th should be booleans", __FUNCTION__);
+		luaL_error(L, "[%s] 1st and 2nd arguments should be numbers, 3rd and 4th should be booleans", __func__);
 		return 0;
 	}
 
@@ -1420,12 +1409,11 @@ int LuaUnsyncedCtrl::SetModelLightTrackingState(lua_State* L)
 	const bool trackUnit = luaL_optboolean(L, 4, true);
 
 	GL::LightHandler* lightHandler = unitDrawer->GetLightHandler();
-	GL::Light* light = (lightHandler != NULL)? lightHandler->GetLight(lightHandle): NULL;
+	GL::Light* light = (lightHandler != nullptr)? lightHandler->GetLight(lightHandle): nullptr;
 	bool ret = false;
 
-	if (light != NULL) {
-		ret = AddLightTrackingTarget(L, light, trackEnable, trackUnit, __FUNCTION__);
-	}
+	if (light != nullptr)
+		ret = AddLightTrackingTarget(L, light, trackEnable, trackUnit, __func__);
 
 	lua_pushboolean(L, ret);
 	return 1;

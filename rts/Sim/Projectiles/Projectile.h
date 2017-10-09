@@ -84,7 +84,7 @@ public:
 	void SetCustomExplosionGeneratorID(unsigned int id) { cegID = id; }
 
 	// UNSYNCED ONLY
-	CMatrix44f GetTransformMatrix(bool offsetPos) const;
+	CMatrix44f GetTransformMatrix(float posOffsetMult = 0.0f) const;
 
 	float GetSortDist() const { return sortDist; }
 	void SetSortDist(float d) { sortDist = d + sortDistOffset; }
