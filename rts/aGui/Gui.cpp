@@ -32,8 +32,13 @@ Gui::Gui()
 	{
 		const std::string archiveName = CArchiveScanner::GetSpringBaseContentName();
 		vfsHandler->AddArchive(archiveName, false);
-		shader->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/GuiFragProg.glsl", "", GL_FRAGMENT_SHADER));
-		shader->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/GuiVertProg.glsl", "", GL_VERTEX_SHADER));
+		#if 0
+		shader->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/GuiVertProg4.glsl", "", GL_VERTEX_SHADER));
+		shader->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/GuiFragProg4.glsl", "", GL_FRAGMENT_SHADER));
+		#else
+		shader->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/GuiVertProg3.glsl", "", GL_VERTEX_SHADER));
+		shader->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/GuiFragProg3.glsl", "", GL_FRAGMENT_SHADER));
+		#endif
 		shader->Link();
 		vfsHandler->RemoveArchive(archiveName);
 	}

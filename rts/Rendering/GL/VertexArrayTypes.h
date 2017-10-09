@@ -65,5 +65,16 @@ static_assert(sizeof(SColor) == sizeof(float), "");
 #define VA_SIZE_2DT  (sizeof(VA_TYPE_2dT) / sizeof(float))
 #define VA_SIZE_2DTC (sizeof(VA_TYPE_2dTC) / sizeof(float))
 
+// clang does not like reinterpret_cast inside constexpr's
+// it apparently also can not handle 0-pointer arithmetic
+#if (defined(__clang__)) || (defined(_MSC_VER))
+#define CONSTQUAL const
+// #define VA_TYPE_OFFSET(T, n) (static_cast<uint8_t*>(nullptr) + sizeof(T) * (n))
+#define VA_TYPE_OFFSET(T, n) (reinterpret_cast<void*>(sizeof(T) * (n)))
+#else
+#define CONSTQUAL constexpr
+#define VA_TYPE_OFFSET(T, n) ((const T*)(0) + (n))
+#endif
+
 #endif
 

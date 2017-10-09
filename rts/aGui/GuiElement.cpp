@@ -68,28 +68,48 @@ GuiElement::~GuiElement()
 VBO* GuiElement::GetVBO(unsigned int k) { return &quadBuffers[k][vboIndex]; }
 
 void GuiElement::DrawBox(unsigned int mode, unsigned int indx) {
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+	VBO& vbo = quadBuffers[indx][vboIndex];
 
+	#if 0
+	// disabled until font rendering uses GL4
+	vbo.Bind(GL_ARRAY_BUFFER);
 
-	VBO* vbo = &quadBuffers[indx][vboIndex];
-	vbo->Bind(GL_ARRAY_BUFFER);
-
-	glVertexPointer(2, GL_FLOAT, sizeof(VA_TYPE_2dT), nullptr);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 2, GL_FLOAT, false, sizeof(VA_TYPE_2dT), VA_TYPE_OFFSET(float, 0));
 
 	// texcoors are effectively ignored for all elements except Picture
 	// (however, shader always samples from the texture so do not leave
 	// them undefined)
 	if (true || HasTexCoors()) {
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(1, 2, GL_FLOAT, false, sizeof(VA_TYPE_2dT), VA_TYPE_OFFSET(float, 2));
+	}
+
+	vbo.Unbind();
+
+	glDrawArrays(mode, 0, 4);
+	glDisableVertexAttribArray(1);
+	glDisableVertexAttribArray(0);
+
+	#else
+
+	vbo.Bind(GL_ARRAY_BUFFER);
+
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+	glVertexPointer(2, GL_FLOAT, sizeof(VA_TYPE_2dT), nullptr);
+
+	if (true || HasTexCoors()) {
 		glClientActiveTexture(GL_TEXTURE0);
 		glTexCoordPointer(2, GL_FLOAT, sizeof(VA_TYPE_2dT), nullptr);
 	}
 
-	vbo->Unbind();
+	vbo.Unbind();
 
 	glDrawArrays(mode, 0, 4);
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 	glDisableClientState(GL_VERTEX_ARRAY);
+	#endif
 }
 
 
