@@ -1824,18 +1824,14 @@ public:
 			"Prevents/Enables the mouse from leaving the game window (windowed mode only)") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		SDL_bool newMode;
-		if (action.GetArgs().empty()) {
-			newMode = (SDL_GetWindowGrab(globalRendering->window)) ? SDL_FALSE : SDL_TRUE;
+		const std::string& args = action.GetArgs();
+
+		if (args.empty()) {
+			LogSystemStatus("Input grabbing", globalRendering->ToggleWindowInputGrabbing());
 		} else {
-			if (atoi(action.GetArgs().c_str())) {
-				newMode = SDL_TRUE;
-			} else {
-				newMode = SDL_FALSE;
-			}
+			LogSystemStatus("Input grabbing", globalRendering->SetWindowInputGrabbing(atoi(args.c_str())));
 		}
-		SDL_SetWindowGrab(globalRendering->window, newMode);
-		LogSystemStatus("Input grabbing", (newMode == SDL_TRUE));
+
 		return true;
 	}
 };

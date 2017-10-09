@@ -147,10 +147,8 @@ CR_REG_METADATA(CGlobalRendering, (
 	CR_IGNORED(fullScreen),
 	CR_IGNORED(borderless),
 
-	CR_IGNORED(window),
-	CR_IGNORED(hiddenWindow),
-	CR_IGNORED(glContext),
-	CR_IGNORED(glSecondaryContext)
+	CR_IGNORED(sdlWindows),
+	CR_IGNORED(glContexts)
 ))
 
 CGlobalRendering::CGlobalRendering()
@@ -232,10 +230,8 @@ CGlobalRendering::CGlobalRendering()
 	, dualScreenMiniMapOnLeft(false)
 	, fullScreen(configHandler->GetBool("Fullscreen"))
 	, borderless(configHandler->GetBool("WindowBorderless"))
-	, window(nullptr)
-	, hiddenWindow(nullptr)
-	, glContext(nullptr)
-	, glSecondaryContext(nullptr)
+	, sdlWindows{nullptr, nullptr}
+	, glContexts{nullptr, nullptr}
 {
 	verticalSync->WrapNotifyOnChange();
 	configHandler->NotifyOnChange(this, {"TextureLODBias", "Fullscreen", "WindowBorderless"});
@@ -245,7 +241,14 @@ CGlobalRendering::~CGlobalRendering()
 {
 	configHandler->RemoveObserver(this);
 	verticalSync->WrapRemoveObserver();
-	DestroyWindowAndContext();
+	DestroyWindowAndContext(sdlWindows[0], glContexts[0]);
+	DestroyWindowAndContext(sdlWindows[1], glContexts[1]);
+	KillSDL();
+
+	sdlWindows[0] = nullptr;
+	sdlWindows[1] = nullptr;
+	glContexts[0] = nullptr;
+	glContexts[1] = nullptr;
 }
 
 
@@ -290,7 +293,7 @@ SDL_Window* CGlobalRendering::CreateSDLWindow(const int2& winRes, const int2& mi
 				continue;
 			}
 
-			LOG(frmts[1], __func__, aaLvls[i], zbBits[j], wpfName = SDL_GetPixelFormatName(SDL_GetWindowPixelFormat(window)), winName);
+			LOG(frmts[1], __func__, aaLvls[i], zbBits[j], wpfName = SDL_GetPixelFormatName(SDL_GetWindowPixelFormat(newWindow)), winName);
 		}
 	}
 
@@ -330,7 +333,7 @@ SDL_GLContext CGlobalRendering::CreateGLContext(const int2& minCtx, SDL_Window* 
 	if ((newContext = SDL_GL_CreateContext(targetWindow)) != nullptr)
 		return newContext;
 
-	const char* winName = (targetWindow == hiddenWindow)? "hidden": "main";
+	const char* winName = (targetWindow == sdlWindows[1])? "hidden": "main";
 
 	const char* frmts[] = {"[GR::%s] error (\"%s\") creating %s GL%d.%d %s-context", "[GR::%s] created %s GL%d.%d %s-context"};
 	const char* profs[] = {"compatibility", "core"};
@@ -426,23 +429,23 @@ bool CGlobalRendering::CreateWindowAndContext(const char* title, bool hidden)
 		make_even_number(msaaLevel);
 	}
 
-	if ((window = CreateSDLWindow(winRes, minRes, title, false)) == nullptr)
+	if ((sdlWindows[0] = CreateSDLWindow(winRes, minRes, title, false)) == nullptr)
 		return false;
 
-	if ((hiddenWindow = CreateSDLWindow(winRes, minRes, title, true)) == nullptr)
+	if ((sdlWindows[1] = CreateSDLWindow(winRes, minRes, title, true)) == nullptr)
 		return false;
 
 	#if 0
 	// do not use SDL_HideWindow since that also removes the taskbar entry
 	if (minimized)
-		SDL_MinimizeWindow(window);
+		SDL_MinimizeWindow(sdlWindows[0]);
 	#else
 	if (hidden)
-		SDL_HideWindow(window);
+		SDL_HideWindow(sdlWindows[0]);
 	#endif
 	// make extra sure the maximized-flag is set
 	else if (winRes == maxRes)
-		SDL_MaximizeWindow(window);
+		SDL_MaximizeWindow(sdlWindows[0]);
 
 	if (configHandler->GetInt("MinimizeOnFocusLoss") == 0)
 		SDL_SetHint(SDL_HINT_VIDEO_MINIMIZE_ON_FOCUS_LOSS, "0");
@@ -453,12 +456,12 @@ bool CGlobalRendering::CreateWindowAndContext(const char* title, bool hidden)
 	// On Windows Aero often uses vsync, and so when Spring runs windowed it will run with
 	// vsync too, resulting in bad performance.
 	if (configHandler->GetBool("BlockCompositing"))
-		WindowManagerHelper::BlockCompositing(window);
+		WindowManagerHelper::BlockCompositing(sdlWindows[0]);
 #endif
 
-	if ((glContext = CreateGLContext(minCtx, window)) == nullptr)
+	if ((glContexts[0] = CreateGLContext(minCtx, sdlWindows[0])) == nullptr)
 		return false;
-	if ((glSecondaryContext = CreateGLContext(minCtx, hiddenWindow)) == nullptr)
+	if ((glContexts[1] = CreateGLContext(minCtx, sdlWindows[1])) == nullptr)
 		return false;
 
 	if (!CheckGLContextVersion(minCtx)) {
@@ -467,7 +470,7 @@ bool CGlobalRendering::CreateWindowAndContext(const char* title, bool hidden)
 	}
 
 	// redundant, but harmless
-	SDL_GL_MakeCurrent(window, glContext);
+	SDL_GL_MakeCurrent(sdlWindows[0], glContexts[0]);
 	SDL_DisableScreenSaver();
 	return true;
 }
@@ -475,33 +478,34 @@ bool CGlobalRendering::CreateWindowAndContext(const char* title, bool hidden)
 
 void CGlobalRendering::MakeCurrentContext(bool hidden, bool secondary, bool clear) {
 	if (clear) {
-		SDL_GL_MakeCurrent(hidden ? hiddenWindow : window, nullptr);
+		SDL_GL_MakeCurrent(sdlWindows[hidden], nullptr);
 	} else {
-		SDL_GL_MakeCurrent(hidden ? hiddenWindow : window, secondary ? glSecondaryContext : glContext);
+		SDL_GL_MakeCurrent(sdlWindows[hidden], glContexts[secondary]);
 	}
 }
 
 
-void CGlobalRendering::DestroyWindowAndContext() {
-	WindowManagerHelper::SetIconSurface(window, nullptr);
+void CGlobalRendering::DestroyWindowAndContext(SDL_Window* window, SDL_GLContext context) {
+	if (window == sdlWindows[0]) {
+		WindowManagerHelper::SetIconSurface(window, nullptr);
+		SDL_SetWindowGrab(window, SDL_FALSE);
+	}
 
-	SDL_SetWindowGrab(window, SDL_FALSE);
 	SDL_GL_MakeCurrent(window, nullptr);
 	SDL_DestroyWindow(window);
 
-	SDL_GL_MakeCurrent(hiddenWindow, nullptr);
-	SDL_DestroyWindow(hiddenWindow);
+	#if !defined(HEADLESS)
+	SDL_GL_DeleteContext(context);
+	#endif
+}
 
-#if !defined(HEADLESS)
-	SDL_GL_DeleteContext(glContext);
-	SDL_GL_DeleteContext(glSecondaryContext);
+void CGlobalRendering::KillSDL() const {
+	#if !defined(HEADLESS)
 	SDL_QuitSubSystem(SDL_INIT_VIDEO);
-#endif
+	#endif
+
 	SDL_EnableScreenSaver();
 	SDL_Quit();
-
-	window = nullptr;
-	glContext = nullptr;
 }
 
 
@@ -531,7 +535,7 @@ void CGlobalRendering::PostInit() {
 void CGlobalRendering::SwapBuffers(bool allowSwapBuffers, bool clearErrors)
 {
 	SCOPED_TIMER("Misc::SwapBuffers");
-	assert(window != nullptr);
+	assert(sdlWindows[0] != nullptr);
 
 	// silently or verbosely clear queue at the end of every frame
 	if (clearErrors || glDebugErrors)
@@ -542,7 +546,7 @@ void CGlobalRendering::SwapBuffers(bool allowSwapBuffers, bool clearErrors)
 
 	const spring_time pre = spring_now();
 
-	SDL_GL_SwapWindow(window);
+	SDL_GL_SwapWindow(sdlWindows[0]);
 	eventHandler.DbgTimingInfo(TIMING_SWAP, pre, spring_now());
 }
 
@@ -820,7 +824,7 @@ void CGlobalRendering::LogVersionInfo(const char* sdlVersionStr, const char* glV
 	LOG("\tcompress MIP-maps: %i", compressTextures);
 }
 
-void CGlobalRendering::LogDisplayMode() const
+void CGlobalRendering::LogDisplayMode(SDL_Window* window) const
 {
 	// print final mode (call after SetupViewportGeometry, which updates viewSizeX/Y)
 	SDL_DisplayMode dmode;
@@ -840,19 +844,14 @@ void CGlobalRendering::LogDisplayMode() const
 }
 
 
-void CGlobalRendering::SetFullScreen(bool cliWindowed, bool cliFullScreen)
+void CGlobalRendering::SetWindowTitle(const std::string& title)
 {
-	const bool cfgFullScreen = configHandler->GetBool("Fullscreen");
-
-	fullScreen = (cfgFullScreen && !cliWindowed  );
-	fullScreen = (cfgFullScreen ||  cliFullScreen);
-
-	configHandler->Set("Fullscreen", fullScreen);
+	SDL_SetWindowTitle(sdlWindows[0], title.c_str());
 }
 
 void CGlobalRendering::ConfigNotify(const std::string& key, const std::string& value)
 {
-	if (window == nullptr)
+	if (sdlWindows[0] == nullptr)
 		return;
 
 	if (key == "TextureLODBias") {
@@ -865,13 +864,33 @@ void CGlobalRendering::ConfigNotify(const std::string& key, const std::string& v
 
 	const int2 res = GetCfgWinRes(fullScreen);
 
-	SDL_SetWindowSize(window, res.x, res.y);
-	SDL_SetWindowPosition(window, configHandler->GetInt("WindowPosX"), configHandler->GetInt("WindowPosY"));
-	SDL_SetWindowFullscreen(window, (borderless? SDL_WINDOW_FULLSCREEN_DESKTOP: SDL_WINDOW_FULLSCREEN) * fullScreen);
-	SDL_SetWindowBordered(window, borderless ? SDL_FALSE : SDL_TRUE);
-	WindowManagerHelper::SetWindowResizable(window, !borderless && !fullScreen);
+	SDL_SetWindowSize(sdlWindows[0], res.x, res.y);
+	SDL_SetWindowPosition(sdlWindows[0], configHandler->GetInt("WindowPosX"), configHandler->GetInt("WindowPosY"));
+	SDL_SetWindowFullscreen(sdlWindows[0], (borderless? SDL_WINDOW_FULLSCREEN_DESKTOP: SDL_WINDOW_FULLSCREEN) * fullScreen);
+	SDL_SetWindowBordered(sdlWindows[0], borderless ? SDL_FALSE : SDL_TRUE);
+	WindowManagerHelper::SetWindowResizable(sdlWindows[0], !borderless && !fullScreen);
 	// set size again in an attempt to fix some bugs
-	SDL_SetWindowSize(window, res.x, res.y);
+	SDL_SetWindowSize(sdlWindows[0], res.x, res.y);
+}
+
+
+bool CGlobalRendering::SetWindowInputGrabbing(bool enable)
+{
+	if (enable) {
+		SDL_SetWindowGrab(sdlWindows[0], SDL_TRUE);
+		return true;
+	}
+
+	SDL_SetWindowGrab(sdlWindows[0], SDL_FALSE);
+	return false;
+}
+
+bool CGlobalRendering::ToggleWindowInputGrabbing()
+{
+	if (SDL_GetWindowGrab(sdlWindows[0]))
+		return (SetWindowInputGrabbing(false));
+
+	return (SetWindowInputGrabbing(true));
 }
 
 
@@ -902,6 +921,16 @@ int2 CGlobalRendering::GetCfgWinRes(bool fullScrn) const
 	return res;
 }
 
+
+void CGlobalRendering::SetFullScreen(bool cliWindowed, bool cliFullScreen)
+{
+	const bool cfgFullScreen = configHandler->GetBool("Fullscreen");
+
+	fullScreen = (cfgFullScreen && !cliWindowed  );
+	fullScreen = (cfgFullScreen ||  cliFullScreen);
+
+	configHandler->Set("Fullscreen", fullScreen);
+}
 
 void CGlobalRendering::SetDualScreenParams()
 {
@@ -944,14 +973,14 @@ void CGlobalRendering::ReadWindowPosAndSize()
 #else
 
 	SDL_Rect screenSize;
-	SDL_GetDisplayBounds(SDL_GetWindowDisplayIndex(window), &screenSize);
+	SDL_GetDisplayBounds(SDL_GetWindowDisplayIndex(sdlWindows[0]), &screenSize);
 
 	// no other good place to set these
 	screenSizeX = screenSize.w;
 	screenSizeY = screenSize.h;
 
-	SDL_GetWindowSize(window, &winSizeX, &winSizeY);
-	SDL_GetWindowPosition(window, &winPosX, &winPosY);
+	SDL_GetWindowSize(sdlWindows[0], &winSizeX, &winSizeY);
+	SDL_GetWindowPosition(sdlWindows[0], &winPosX, &winPosY);
 #endif
 
 	// should be done by caller
@@ -971,7 +1000,7 @@ void CGlobalRendering::SaveWindowPosAndSize()
 	// note that maximized windows are automagically restored; SDL2
 	// apparently detects if the resolution is maximal and sets the
 	// flag (but we also check if winRes equals maxRes to be safe)
-	if ((SDL_GetWindowFlags(window) & SDL_WINDOW_MINIMIZED) != 0)
+	if ((SDL_GetWindowFlags(sdlWindows[0]) & SDL_WINDOW_MINIMIZED) != 0)
 		return;
 
 	configHandler->Set("WindowPosX", winPosX);
@@ -1023,10 +1052,6 @@ void CGlobalRendering::InitGLState()
 		glDisable(GL_MULTISAMPLE);
 	}
 
-	// FFP model lighting
-	glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 0.0f);
-	glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, 0);
-
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -1034,7 +1059,7 @@ void CGlobalRendering::InitGLState()
 	gluPerspective(45.0f, aspectRatio, 2.8f, MAX_VIEW_RANGE);
 
 	SwapBuffers(true, true);
-	LogDisplayMode();
+	LogDisplayMode(sdlWindows[0]);
 }
 
 

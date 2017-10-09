@@ -1005,9 +1005,7 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 					}
 
 					// and make sure to un-capture mouse
-					if (SDL_GetWindowGrab(globalRendering->window))
-						SDL_SetWindowGrab(globalRendering->window, SDL_FALSE);
-
+					globalRendering->SetWindowInputGrabbing(false);
 					break;
 				}
 				case SDL_WINDOWEVENT_CLOSE: {
