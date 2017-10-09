@@ -41,7 +41,7 @@ void CGeoThermSmokeProjectile::Update()
 	const float curSpeed = fastmath::sqrt_builtin(speed.SqLength());
 	const float newSpeed = speed.w * (speed.w / curSpeed);
 
-	CWorldObject::SetVelocity((dir = (speed / curSpeed)) * newSpeed);
+	CWorldObject::SetVelocity((dir = ((float3) (speed / curSpeed))) * newSpeed);
 	CSmokeProjectile::Update();
 }
 
