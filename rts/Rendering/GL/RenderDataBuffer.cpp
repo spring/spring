@@ -170,6 +170,8 @@ void GL::RenderDataBuffer::CreateShader(
 	for (size_t n = 0; n < numUniforms; n++) {
 		shader.SetUniform(uniforms[n]);
 	}
+
+	shader.Validate();
 }
 
 

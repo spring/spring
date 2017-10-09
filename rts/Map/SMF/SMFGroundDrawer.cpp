@@ -67,7 +67,7 @@ CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
 	smfRenderStates[RENDER_STATE_LUA] = ISMFRenderState::GetInstance(false,  true);
 
 	// LH must be initialized before render-state is initialized
-	lightHandler.Init(2U, configHandler->GetInt("MaxDynamicMapLights"));
+	lightHandler.Init(0, configHandler->GetInt("MaxDynamicMapLights"));
 	geomBuffer.SetName("GROUNDDRAWER-GBUFFER");
 
 	drawForward = true;
