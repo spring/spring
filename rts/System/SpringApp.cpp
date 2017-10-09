@@ -378,10 +378,10 @@ void SpringApp::SaveWindowPosAndSize()
 
 void SpringApp::UpdateInterfaceGeometry()
 {
+	#ifndef HEADLESS
 	const int vpx = globalRendering->viewPosX;
 	const int vpy = globalRendering->winSizeY - globalRendering->viewSizeY - globalRendering->viewPosY;
 
-	#ifndef HEADLESS
 	agui::gui->UpdateScreenGeometry(globalRendering->viewSizeX, globalRendering->viewSizeY, vpx, vpy);
 	#endif
 }
