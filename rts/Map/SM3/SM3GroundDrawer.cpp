@@ -126,19 +126,6 @@ void CSM3GroundDrawer::Draw(const DrawPass::e& drawPass)
 	glEnable(GL_LIGHT0);
 	glEnable(GL_RESCALE_NORMAL);
 
-//	glLightfv(GL_LIGHT0, GL_SPOT_DIRECTION,dir.getf());
-//	glLightf(GL_LIGHT0, GL_SPOT_CUTOFF, 90.0f);
-/*	const float ambient[] = { 0.4f, 0.4f, 0.4f, 1.0f };
-	const float diffuse[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-	glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse);
-	glLightfv(GL_LIGHT0, GL_AMBIENT, ambient);
-
-	glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, 1);
-
-	const float md[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, md);
-	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, md);
-	glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 10.0f);*/
 	/////////////////////
 
 	tr->Draw();
