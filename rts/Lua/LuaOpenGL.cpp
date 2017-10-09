@@ -225,7 +225,6 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(ResetMatrices);
 	REGISTER_LUA_CFUNC(Clear);
 	REGISTER_LUA_CFUNC(SwapBuffers);
-	REGISTER_LUA_CFUNC(Lighting);
 	REGISTER_LUA_CFUNC(ShadeModel);
 	REGISTER_LUA_CFUNC(Scissor);
 	REGISTER_LUA_CFUNC(Viewport);
@@ -245,7 +244,6 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(BlendEquationSeparate);
 	REGISTER_LUA_CFUNC(BlendFuncSeparate);
 
-	REGISTER_LUA_CFUNC(Material);
 	REGISTER_LUA_CFUNC(Color);
 
 	REGISTER_LUA_CFUNC(PolygonMode);
@@ -327,7 +325,6 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(DrawGroundCircle);
 	REGISTER_LUA_CFUNC(DrawGroundQuad);
 
-	REGISTER_LUA_CFUNC(Light);
 	REGISTER_LUA_CFUNC(ClipPlane);
 
 	REGISTER_LUA_CFUNC(MatrixMode);
@@ -405,10 +402,6 @@ void LuaOpenGL::ResetGLState()
 	glDisable(GL_ALPHA_TEST);
 	glAlphaFunc(GL_GREATER, 0.5f);
 
-	glDisable(GL_LIGHTING);
-
-	glShadeModel(GL_SMOOTH);
-
 	glDisable(GL_COLOR_LOGIC_OP);
 	glLogicOp(GL_INVERT);
 
@@ -455,15 +448,6 @@ void LuaOpenGL::ResetGLState()
 	glPointParameterf(GL_POINT_FADE_THRESHOLD_SIZE, 1.0f);
 
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-	const float ambient[4] = { 0.2f, 0.2f, 0.2f, 1.0f };
-	const float diffuse[4] = { 0.8f, 0.8f, 0.8f, 1.0f };
-	const float black[4]   = { 0.0f, 0.0f, 0.0f, 1.0f };
-	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambient);
-	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuse);
-	glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, black);
-	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, black);
-	glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 0.0f);
-
 	glUseProgram(0);
 }
 
@@ -489,22 +473,20 @@ void LuaOpenGL::EnableCommon(DrawMode mode)
 {
 	assert(drawMode == DRAW_NONE);
 	drawMode = mode;
-	if (safeMode) {
-		glPushAttrib(AttribBits);
-		glCallList(resetStateList);
-	}
-	// FIXME  --  not needed by shadow or minimap   (use a WorldCommon ? )
-	//glEnable(GL_NORMALIZE);
-	glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SEPARATE_SPECULAR_COLOR);
+
+	if (!safeMode)
+		return;
+
+	glPushAttrib(AttribBits);
+	glCallList(resetStateList);
 }
 
 
 void LuaOpenGL::DisableCommon(DrawMode mode)
 {
 	assert(drawMode == mode);
-	// FIXME  --  not needed by shadow or minimap
-	glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SINGLE_COLOR);
 	drawMode = DRAW_NONE;
+
 	if (safeMode)
 		glPopAttrib();
 
@@ -523,7 +505,6 @@ void LuaOpenGL::EnableDrawGenesis()
 	EnableCommon(DRAW_GENESIS);
 	resetMatrixFunc = ResetGenesisMatrices;
 	ResetGenesisMatrices();
-	SetupWorldLighting();
 }
 
 
@@ -532,17 +513,17 @@ void LuaOpenGL::DisableDrawGenesis()
 	if (safeMode)
 		ResetGenesisMatrices();
 
-	RevertWorldLighting();
 	DisableCommon(DRAW_GENESIS);
 }
 
 
 void LuaOpenGL::ResetDrawGenesis()
 {
-	if (safeMode) {
-		ResetGenesisMatrices();
-		glCallList(resetStateList);
-	}
+	if (!safeMode)
+		return;
+
+	ResetGenesisMatrices();
+	glCallList(resetStateList);
 }
 
 
@@ -555,24 +536,23 @@ void LuaOpenGL::EnableDrawWorld()
 {
 	EnableCommon(DRAW_WORLD);
 	resetMatrixFunc = ResetWorldMatrices;
-	SetupWorldLighting();
 }
 
 void LuaOpenGL::DisableDrawWorld()
 {
-	if (safeMode) {
+	if (safeMode)
 		ResetWorldMatrices();
-	}
-	RevertWorldLighting();
+
 	DisableCommon(DRAW_WORLD);
 }
 
 void LuaOpenGL::ResetDrawWorld()
 {
-	if (safeMode) {
-		ResetWorldMatrices();
-		glCallList(resetStateList);
-	}
+	if (!safeMode)
+		return;
+
+	ResetWorldMatrices();
+	glCallList(resetStateList);
 }
 
 
@@ -585,24 +565,23 @@ void LuaOpenGL::EnableDrawWorldPreUnit()
 {
 	EnableCommon(DRAW_WORLD);
 	resetMatrixFunc = ResetWorldMatrices;
-	SetupWorldLighting();
 }
 
 void LuaOpenGL::DisableDrawWorldPreUnit()
 {
-	if (safeMode) {
+	if (safeMode)
 		ResetWorldMatrices();
-	}
-	RevertWorldLighting();
+
 	DisableCommon(DRAW_WORLD);
 }
 
 void LuaOpenGL::ResetDrawWorldPreUnit()
 {
-	if (safeMode) {
-		ResetWorldMatrices();
-		glCallList(resetStateList);
-	}
+	if (!safeMode)
+		return;
+
+	ResetWorldMatrices();
+	glCallList(resetStateList);
 }
 
 
@@ -639,13 +618,14 @@ void LuaOpenGL::DisableDrawWorldShadow()
 
 void LuaOpenGL::ResetDrawWorldShadow()
 {
-	if (safeMode) {
-		ResetWorldShadowMatrices();
-		glCallList(resetStateList);
-		glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-		glPolygonOffset(1.0f, 1.0f);
-		glEnable(GL_POLYGON_OFFSET_FILL);
-	}
+	if (!safeMode)
+		return;
+
+	ResetWorldShadowMatrices();
+	glCallList(resetStateList);
+	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+	glPolygonOffset(1.0f, 1.0f);
+	glEnable(GL_POLYGON_OFFSET_FILL);
 }
 
 
@@ -658,24 +638,23 @@ void LuaOpenGL::EnableDrawWorldReflection()
 {
 	EnableCommon(DRAW_WORLD_REFLECTION);
 	resetMatrixFunc = ResetWorldMatrices;
-	SetupWorldLighting();
 }
 
 void LuaOpenGL::DisableDrawWorldReflection()
 {
-	if (safeMode) {
+	if (safeMode)
 		ResetWorldMatrices();
-	}
-	RevertWorldLighting();
+
 	DisableCommon(DRAW_WORLD_REFLECTION);
 }
 
 void LuaOpenGL::ResetDrawWorldReflection()
 {
-	if (safeMode) {
-		ResetWorldMatrices();
-		glCallList(resetStateList);
-	}
+	if (!safeMode)
+		return;
+
+	ResetWorldMatrices();
+	glCallList(resetStateList);
 }
 
 
@@ -688,24 +667,23 @@ void LuaOpenGL::EnableDrawWorldRefraction()
 {
 	EnableCommon(DRAW_WORLD_REFRACTION);
 	resetMatrixFunc = ResetWorldMatrices;
-	SetupWorldLighting();
 }
 
 void LuaOpenGL::DisableDrawWorldRefraction()
 {
-	if (safeMode) {
+	if (safeMode)
 		ResetWorldMatrices();
-	}
-	RevertWorldLighting();
+
 	DisableCommon(DRAW_WORLD_REFRACTION);
 }
 
 void LuaOpenGL::ResetDrawWorldRefraction()
 {
-	if (safeMode) {
-		ResetWorldMatrices();
-		glCallList(resetStateList);
-	}
+	if (!safeMode)
+		return;
+
+	ResetWorldMatrices();
+	glCallList(resetStateList);
 }
 
 /******************************************************************************/
@@ -719,15 +697,12 @@ void LuaOpenGL::EnableDrawScreenCommon()
 	resetMatrixFunc = ResetScreenMatrices;
 
 	SetupScreenMatrices();
-	SetupScreenLighting();
 	glCallList(resetStateList);
-	//glEnable(GL_NORMALIZE);
 }
 
 
 void LuaOpenGL::DisableDrawScreenCommon()
 {
-	RevertScreenLighting();
 	RevertScreenMatrices();
 	DisableCommon(DRAW_SCREEN);
 }
@@ -735,10 +710,11 @@ void LuaOpenGL::DisableDrawScreenCommon()
 
 void LuaOpenGL::ResetDrawScreenCommon()
 {
-	if (safeMode) {
-		ResetScreenMatrices();
-		glCallList(resetStateList);
-	}
+	if (!safeMode)
+		return;
+
+	ResetScreenMatrices();
+	glCallList(resetStateList);
 }
 
 /******************************************************************************/
@@ -786,10 +762,11 @@ void LuaOpenGL::DisableDrawInMiniMap()
 
 void LuaOpenGL::ResetDrawInMiniMap()
 {
-	if (safeMode) {
-		ResetMiniMapMatrices();
-		glCallList(resetStateList);
-	}
+	if (!safeMode)
+		return;
+
+	ResetMiniMapMatrices();
+	glCallList(resetStateList);
 }
 
 
@@ -838,36 +815,19 @@ void LuaOpenGL::DisableDrawInMiniMapBackground()
 
 void LuaOpenGL::ResetDrawInMiniMapBackground()
 {
-	if (safeMode) {
-		ResetMiniMapMatrices();
-		glCallList(resetStateList);
-	}
-}
-
-
-/******************************************************************************/
-/******************************************************************************/
-
-void LuaOpenGL::SetupWorldLighting()
-{
-	if (sky == nullptr)
+	if (!safeMode)
 		return;
 
-	glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
-	glLightfv(GL_LIGHT1, GL_POSITION, sky->GetLight()->GetLightDir());
-	glEnable(GL_LIGHT1);
+	ResetMiniMapMatrices();
+	glCallList(resetStateList);
 }
 
-void LuaOpenGL::RevertWorldLighting()
-{
-	glDisable(GL_LIGHT1);
-	glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_FALSE);
-}
 
+/******************************************************************************/
+/******************************************************************************/
 
 void LuaOpenGL::SetupScreenMatrices()
 {
-	glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 
@@ -906,57 +866,6 @@ void LuaOpenGL::RevertScreenMatrices()
 	glMatrixMode(GL_TEXTURE   ); glLoadIdentity();
 	glMatrixMode(GL_PROJECTION); glLoadIdentity(); gluOrtho2D(0.0f, 1.0f, 0.0f, 1.0f);
 	glMatrixMode(GL_MODELVIEW ); glLoadIdentity();
-}
-
-
-void LuaOpenGL::SetupScreenLighting()
-{
-	if (sky == nullptr)
-		return;
-
-	// back light
-	const float backLightPos[4]  = { 1.0f, 2.0f, 2.0f, 0.0f };
-	const float backLightAmbt[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
-	const float backLightDiff[4] = { 0.5f, 0.5f, 0.5f, 1.0f };
-	const float backLightSpec[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
-
-	glLightfv(GL_LIGHT0, GL_POSITION, backLightPos);
-	glLightfv(GL_LIGHT0, GL_AMBIENT,  backLightAmbt);
-	glLightfv(GL_LIGHT0, GL_DIFFUSE,  backLightDiff);
-	glLightfv(GL_LIGHT0, GL_SPECULAR, backLightSpec);
-
-	// sun light -- needs the camera transformation
-	// FIXME: nobody needs FFP crap anymore, but EventHandler forces it
-	glPushMatrix();
-	glLoadMatrixf(camera->GetViewMatrix());
-	glLightfv(GL_LIGHT1, GL_POSITION, sky->GetLight()->GetLightDir());
-
-	const float sunFactor = 1.0f;
-	const float sf = sunFactor;
-	const float* la = sunLighting->modelAmbientColor;
-	const float* ld = sunLighting->modelDiffuseColor;
-
-	const float sunLightAmbt[4] = { la[0]*sf, la[1]*sf, la[2]*sf, la[3]*sf };
-	const float sunLightDiff[4] = { ld[0]*sf, ld[1]*sf, ld[2]*sf, ld[3]*sf };
-	const float sunLightSpec[4] = { la[0]*sf, la[1]*sf, la[2]*sf, la[3]*sf };
-
-	glLightfv(GL_LIGHT1, GL_AMBIENT,  sunLightAmbt);
-	glLightfv(GL_LIGHT1, GL_DIFFUSE,  sunLightDiff);
-	glLightfv(GL_LIGHT1, GL_SPECULAR, sunLightSpec);
-	glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, 0);
-	glPopMatrix();
-
-	// Enable the GL lights
-	glEnable(GL_LIGHT0);
-	glEnable(GL_LIGHT1);
-	glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
-}
-
-void LuaOpenGL::RevertScreenLighting()
-{
-	glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_FALSE);
-	glDisable(GL_LIGHT1);
-	glDisable(GL_LIGHT0);
 }
 
 
@@ -2299,71 +2208,6 @@ int LuaOpenGL::Color(lua_State* L)
 }
 
 
-int LuaOpenGL::Material(lua_State* L)
-{
-	CheckDrawingEnabled(L, __func__);
-
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 1) || !lua_istable(L, 1)) {
-		luaL_error(L, "Incorrect arguments to gl.Material(table)");
-	}
-
-	float color[4];
-
-	const int table = lua_gettop(L);
-	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-		if (!lua_israwstring(L, -2)) { // the key
-			LOG_L(L_WARNING, "gl.Material: bad state type");
-			return 0;
-		}
-		const string key = lua_tostring(L, -2);
-
-		if (key == "shininess") {
-			if (lua_isnumber(L, -1)) {
-				const GLfloat specExp = (GLfloat)lua_tonumber(L, -1);
-				glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, specExp);
-			}
-			continue;
-		}
-
-		const int count = LuaUtils::ParseFloatArray(L, -1, color, 4);
-		if (count == 3) {
-			color[3] = 1.0f;
-		}
-
-		if (key == "ambidiff") {
-			if (count >= 3) {
-				glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, color);
-			}
-		}
-		else if (key == "ambient") {
-			if (count >= 3) {
-				glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, color);
-			}
-		}
-		else if (key == "diffuse") {
-			if (count >= 3) {
-				glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, color);
-			}
-		}
-		else if (key == "specular") {
-			if (count >= 3) {
-				glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, color);
-			}
-		}
-		else if (key == "emission") {
-			if (count >= 3) {
-				glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, color);
-			}
-		}
-		else {
-			LOG_L(L_WARNING, "gl.Material: unknown material type: %s",
-					key.c_str());
-		}
-	}
-	return 0;
-}
-
 
 /******************************************************************************/
 
@@ -2386,26 +2230,6 @@ int LuaOpenGL::ResetMatrices(lua_State* L)
 
 	resetMatrixFunc();
 
-	return 0;
-}
-
-
-int LuaOpenGL::Lighting(lua_State* L)
-{
-	CheckDrawingEnabled(L, __func__);
-	if (luaL_checkboolean(L, 1)) {
-		glEnable(GL_LIGHTING);
-	} else {
-		glDisable(GL_LIGHTING);
-	}
-	return 0;
-}
-
-
-int LuaOpenGL::ShadeModel(lua_State* L)
-{
-	CheckDrawingEnabled(L, __func__);
-	glShadeModel((GLenum)luaL_checkint(L, 1));
 	return 0;
 }
 
@@ -3560,55 +3384,6 @@ int LuaOpenGL::Billboard(lua_State* L)
 
 
 /******************************************************************************/
-
-int LuaOpenGL::Light(lua_State* L)
-{
-	CheckDrawingEnabled(L, __func__);
-
-	const GLenum light = GL_LIGHT0 + (GLint)luaL_checknumber(L, 1);
-	if ((light < GL_LIGHT0) || (light > GL_LIGHT7)) {
-		luaL_error(L, "Bad light number in gl.Light");
-	}
-
-	if (lua_isboolean(L, 2)) {
-		if (lua_toboolean(L, 2)) {
-			glEnable(light);
-		} else {
-			glDisable(light);
-		}
-		return 0;
-	}
-
-	const int args = lua_gettop(L); // number of arguments
-	if (args == 3) {
-		const GLenum pname = (GLenum)luaL_checknumber(L, 2);
-		const GLenum param = (GLenum)luaL_checknumber(L, 3);
-		glLightf(light, pname, param);
-	}
-	else if (args == 5) {
-		GLfloat array[4]; // NOTE: 4 instead of 3  (to be safe)
-		const GLenum pname = (GLenum)luaL_checknumber(L, 2);
-		array[0] = (GLfloat)luaL_checknumber(L, 3);
-		array[1] = (GLfloat)luaL_checknumber(L, 4);
-		array[2] = (GLfloat)luaL_checknumber(L, 5);
-		glLightfv(light, pname, array);
-	}
-	else if (args == 6) {
-		GLfloat array[4];
-		const GLenum pname = (GLenum)luaL_checknumber(L, 2);
-		array[0] = (GLfloat)luaL_checknumber(L, 3);
-		array[1] = (GLfloat)luaL_checknumber(L, 4);
-		array[2] = (GLfloat)luaL_checknumber(L, 5);
-		array[3] = (GLfloat)luaL_checknumber(L, 6);
-		glLightfv(light, pname, array);
-	}
-	else {
-		luaL_error(L, "Incorrect arguments to gl.Light");
-	}
-
-	return 0;
-}
-
 
 int LuaOpenGL::ClipPlane(lua_State* L)
 {

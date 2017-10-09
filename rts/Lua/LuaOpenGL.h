@@ -129,11 +129,6 @@ class LuaOpenGL {
 
 		static void SetupScreenMatrices();
 		static void RevertScreenMatrices();
-		static void SetupScreenLighting();
-		static void RevertScreenLighting();
-
-		static void SetupWorldLighting();
-		static void RevertWorldLighting();
 
 	private:
 		static DrawMode drawMode;
@@ -173,8 +168,9 @@ class LuaOpenGL {
 		static int Clear(lua_State* L);
 		static int SwapBuffers(lua_State* L);
 
-		static int Lighting(lua_State* L);
-		static int ShadeModel(lua_State* L);
+		static int Lighting(lua_State* L) { return 0; }
+		static int ShadeModel(lua_State* L) { return 0; }
+
 		static int Scissor(lua_State* L);
 		static int Viewport(lua_State* L);
 		static int ColorMask(lua_State* L);
@@ -192,7 +188,7 @@ class LuaOpenGL {
 		static int BlendEquationSeparate(lua_State* L);
 		static int BlendFuncSeparate(lua_State* L);
 
-		static int Material(lua_State* L);
+		static int Material(lua_State* L) { return 0; }
 		static int Color(lua_State* L);
 
 		static int PolygonMode(lua_State* L);
@@ -276,7 +272,7 @@ class LuaOpenGL {
 		static int DrawGroundCircle(lua_State* L);
 		static int DrawGroundQuad(lua_State* L);
 
-		static int Light(lua_State* L);
+		static int Light(lua_State* L) { return 0; }
 		static int ClipPlane(lua_State* L);
 
 		static int MatrixMode(lua_State* L);

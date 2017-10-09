@@ -24,6 +24,7 @@ Lua:
  - fix Spring.GetPlayerRoster sometimes excluding active players
  - add DrawSky and DrawSun callins; available when a map has no skybox defined
  - add DrawWater callin
+ - remove gl.Light, gl.Lighting, gl.Material, gl.ShadeModel
 
 Misc:
  - remove joystick support
