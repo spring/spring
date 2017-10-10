@@ -188,6 +188,8 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(GetConfigInt);
 	REGISTER_LUA_CFUNC(SetConfigInt);
+	REGISTER_LUA_CFUNC(GetConfigFloat);
+	REGISTER_LUA_CFUNC(SetConfigFloat);
 	REGISTER_LUA_CFUNC(GetConfigString);
 	REGISTER_LUA_CFUNC(SetConfigString);
 
