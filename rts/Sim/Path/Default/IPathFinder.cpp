@@ -236,9 +236,10 @@ IPath::SearchResult IPathFinder::InitSearch(const MoveDef& moveDef, const CPathF
 	if (mGoalBlockIdx != mStartBlockIdx)
 		return results[IPF];
 
-	// if start and goal are within the same block, but distinct squares
-	// or considered a single point for search purposes, then we probably
-	// can not get closer and should return that *unless* searching raw
-	return results[IPF + (!allowRawPath && (!isStartGoal || startInGoal))];
+	// if start and goal are within the same block but distinct squares (or
+	// considered a single point for search purposes), then we probably can
+	// not get closer and should return CGC *unless* the caller requested a
+	// raw search only
+	return results[IPF + ((!allowRawPath || allowDefPath) && (!isStartGoal || startInGoal))];
 }
 
