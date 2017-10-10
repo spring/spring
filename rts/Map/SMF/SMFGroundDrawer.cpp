@@ -8,7 +8,7 @@
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "Map/SMF/Basic/BasicMeshDrawer.h"
-#include "Map/SMF/Legacy/LegacyMeshDrawer.h"
+// #include "Map/SMF/Legacy/LegacyMeshDrawer.h"
 #include "Map/SMF/ROAM/RoamMeshDrawer.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/ShadowHandler.h"
@@ -138,10 +138,13 @@ IMeshDrawer* CSMFGroundDrawer::SwitchMeshDrawer(int wantedMode)
 	spring::SafeDelete(meshDrawer);
 
 	switch ((drawerMode = wantedMode)) {
+		#if 0
 		case SMF_MESHDRAWER_LEGACY: {
 			LOG("Switching to Legacy Mesh Rendering");
 			meshDrawer = new CLegacyMeshDrawer(smfMap, this);
 		} break;
+		#endif
+		case SMF_MESHDRAWER_LEGACY: // fall-through
 		case SMF_MESHDRAWER_BASIC: {
 			LOG("Switching to Basic Mesh Rendering");
 			meshDrawer = new CBasicMeshDrawer(this);

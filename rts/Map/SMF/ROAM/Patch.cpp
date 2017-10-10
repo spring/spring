@@ -22,6 +22,8 @@
 
 #include <climits>
 
+// #define MESHDRAWER_GL4
+
 
 static size_t CUR_POOL_SIZE =                 0; // split over all threads
 static size_t MAX_POOL_SIZE = NEW_POOL_SIZE * 8; // upper limit for ResetAll
@@ -515,7 +517,7 @@ bool Patch::Tessellate(const float3& camPos, int viewRadius, bool shadowPass)
 
 
 // ---------------------------------------------------------------------
-// Render the mesh.
+// Render the non-border mesh.
 //
 
 void Patch::Draw()
@@ -523,13 +525,26 @@ void Patch::Draw()
 	glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer); // coors
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vertexIndexBuffer); // indices
 
+	#ifdef MESHDRAWER_GL4
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, false, sizeof(float3), nullptr);
+	#else
 	glEnableClientState(GL_VERTEX_ARRAY);
-		glVertexPointer(3, GL_FLOAT, 0, 0); // last param is offset, not ptr
+	glVertexPointer(3, GL_FLOAT, 0, 0); // last param is offset, not ptr
+	#endif
+
 		glDrawRangeElements(GL_TRIANGLES, 0, vertices.size(), indices.size(), GL_UNSIGNED_INT, 0);
+
+	#ifndef MESHDRAWER_GL4
 	glDisableClientState(GL_VERTEX_ARRAY);
+	#endif
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+	#ifdef MESHDRAWER_GL4
+	glDisableVertexAttribArray(0);
+	#endif
 }
 
 

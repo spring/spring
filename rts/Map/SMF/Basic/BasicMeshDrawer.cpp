@@ -162,8 +162,10 @@ void CBasicMeshDrawer::UploadPatchSquareGeometry(uint32_t n, uint32_t px, uint32
 	MeshPatch& meshPatch = meshPatches[py * numPatchesX + px];
 
 	VBO& squareVertexBuffer = meshPatch.squareVertexBuffers[n];
+	#if 0
 	#if (USE_PACKED_BUFFERS == 0)
 	VBO& squareNormalBuffer = meshPatch.squareNormalBuffers[n];
+	#endif
 	#endif
 
 	meshPatch.uhmUpdateFrames[0] = globalRendering->drawFrame;
@@ -175,8 +177,10 @@ void CBasicMeshDrawer::UploadPatchSquareGeometry(uint32_t n, uint32_t px, uint32
 	const uint32_t bpy = py * PATCH_SIZE;
 
 	uint32_t vertexIndx = 0;
+	#if 0
 	#if (USE_PACKED_BUFFERS == 0)
 	uint32_t normalIndx = 0;
+	#endif
 	#endif
 
 	{
@@ -199,6 +203,7 @@ void CBasicMeshDrawer::UploadPatchSquareGeometry(uint32_t n, uint32_t px, uint32
 
 		assert(verts != nullptr);
 
+		// TODO: geometry shader?
 		for (uint32_t vy = 0; vy < lodVerts; vy += 1) {
 			for (uint32_t vx = 0; vx < lodVerts; vx += 1) {
 				const uint32_t lvx = vx * lodStep;
@@ -219,6 +224,7 @@ void CBasicMeshDrawer::UploadPatchSquareGeometry(uint32_t n, uint32_t px, uint32
 		#endif
 		squareVertexBuffer.Unbind();
 	}
+	#if 0
 	#if (USE_PACKED_BUFFERS == 0)
 	{
 		#if (USE_MAPPED_BUFFERS == 1)
@@ -253,6 +259,7 @@ void CBasicMeshDrawer::UploadPatchSquareGeometry(uint32_t n, uint32_t px, uint32
 		#endif
 		squareNormalBuffer.Unbind();
 	}
+	#endif
 	#endif
 }
 
@@ -571,25 +578,22 @@ uint32_t CBasicMeshDrawer::CalcDrawPassLOD(const CCamera* cam, const DrawPass::e
 
 void CBasicMeshDrawer::DrawSquareMeshPatch(const MeshPatch& meshPatch, const VBO& indexBuffer, const CCamera* activeCam) const {
 	const VBO& vertexBuffer = meshPatch.squareVertexBuffers[drawPassLOD * USE_MIPMAP_BUFFERS];
+	#if 0
 	#if (USE_PACKED_BUFFERS == 0)
+	// no use for the patch normals anymore, whether packed or not
 	const VBO& normalBuffer = meshPatch.squareNormalBuffers[drawPassLOD * USE_MIPMAP_BUFFERS];
+	#endif
 	#endif
 
 	#if (USE_PACKED_BUFFERS == 0)
 		vertexBuffer.Bind(GL_ARRAY_BUFFER);
 		assert(vertexBuffer.GetPtr() == nullptr);
-		glVertexPointer(3, GL_FLOAT, sizeof(float3), vertexBuffer.GetPtr());
+		glVertexAttribPointer(0, 3, GL_FLOAT, false, sizeof(float3), nullptr);
 		vertexBuffer.Unbind();
-
-		normalBuffer.Bind(GL_ARRAY_BUFFER);
-		assert(normalBuffer.GetPtr() == nullptr);
-		glNormalPointer(GL_FLOAT, sizeof(float3), normalBuffer.GetPtr());
-		normalBuffer.Unbind();
 	#else
 		vertexBuffer.Bind(GL_ARRAY_BUFFER);
 		assert(vertexBuffer.GetPtr() == nullptr);
-		glVertexPointer(3, GL_FLOAT, sizeof(float3) * 2, 0);
-		glNormalPointer(GL_FLOAT, sizeof(float3), reinterpret_cast<void*>(sizeof(float3)));
+		glVertexAttribPointer(0, 3, GL_FLOAT, false, sizeof(float3) * 2, nullptr);
 		vertexBuffer.Unbind();
 	#endif
 
@@ -610,8 +614,7 @@ void CBasicMeshDrawer::DrawMesh(const DrawPass::e& drawPass) {
 
 	indexBuffer.Bind(GL_ELEMENT_ARRAY_BUFFER);
 
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glEnableClientState(GL_NORMAL_ARRAY);
+	glEnableVertexAttribArray(0);
 	#if (USE_TRIANGLE_STRIPS == 1)
 	glEnable(GL_PRIMITIVE_RESTART);
 	#endif
@@ -642,10 +645,10 @@ void CBasicMeshDrawer::DrawMesh(const DrawPass::e& drawPass) {
 	#if (USE_TRIANGLE_STRIPS == 1)
 	glDisable(GL_PRIMITIVE_RESTART);
 	#endif
-	glDisableClientState(GL_NORMAL_ARRAY);
-	glDisableClientState(GL_VERTEX_ARRAY);
 
 	indexBuffer.Unbind();
+
+	glDisableVertexAttribArray(0);
 }
 
 
@@ -658,13 +661,8 @@ void CBasicMeshDrawer::DrawBorderMeshPatch(const MeshPatch& meshPatch, const VBO
 
 	vertexBuffer.Bind(GL_ARRAY_BUFFER);
 	assert(vertexBuffer.GetPtr() == nullptr);
-	glVertexPointer(3, GL_FLOAT, sizeof(float3), vertexBuffer.GetPtr());
+	glVertexAttribPointer(0, 3, GL_FLOAT, false, sizeof(float3), nullptr);
 	vertexBuffer.Unbind();
-
-	normalBuffer.Bind(GL_ARRAY_BUFFER);
-	assert(normalBuffer.GetPtr() == nullptr);
-	glNormalPointer(GL_FLOAT, sizeof(float3), normalBuffer.GetPtr());
-	normalBuffer.Unbind();
 
 	glPrimitiveRestartIndex(0xFFFF);
 	glDrawElements(GL_TRIANGLE_STRIP, (indexBuffer.GetSize() / sizeof(uint16_t)), GL_UNSIGNED_SHORT, indexBuffer.GetPtr());
@@ -676,8 +674,8 @@ void CBasicMeshDrawer::DrawBorderMesh(const DrawPass::e& drawPass) {
 
 	indexBuffer.Bind(GL_ELEMENT_ARRAY_BUFFER);
 
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glEnableClientState(GL_NORMAL_ARRAY);
+	glEnableVertexAttribArray(0);
+	// always stripped
 	glEnable(GL_PRIMITIVE_RESTART);
 
 	const uint32_t npxm1 = numPatchesX - 1;
@@ -708,9 +706,9 @@ void CBasicMeshDrawer::DrawBorderMesh(const DrawPass::e& drawPass) {
 	}
 
 	glDisable(GL_PRIMITIVE_RESTART);
-	glDisableClientState(GL_NORMAL_ARRAY);
-	glDisableClientState(GL_VERTEX_ARRAY);
 
 	indexBuffer.Unbind();
+
+	glDisableVertexAttribArray(0);
 }
 
