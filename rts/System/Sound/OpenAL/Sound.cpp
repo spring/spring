@@ -47,10 +47,11 @@ spring::recursive_mutex soundMutex;
 CSound::CSound()
 	: masterVolume(0.0f)
 
+	, pitchAdjustMode(0)
+
 	, listenerNeedsUpdate(false)
 	, mute(false)
 	, appIsIconified(false)
-	, pitchAdjust(false)
 
 	, soundThreadQuit(false)
 	, canLoadDefs(false)
@@ -58,7 +59,7 @@ CSound::CSound()
 	std::lock_guard<spring::recursive_mutex> lck(soundMutex);
 
 	masterVolume = configHandler->GetInt("snd_volmaster") * 0.01f;
-	pitchAdjust = configHandler->GetBool("PitchAdjust");
+	pitchAdjustMode = configHandler->GetInt("PitchAdjust");
 
 	Channels::General->SetVolume(configHandler->GetInt("snd_volgeneral") * 0.01f);
 	Channels::UnitReply->SetVolume(configHandler->GetInt("snd_volunitreply") * 0.01f);
@@ -179,8 +180,12 @@ CSoundSource* CSound::GetNextBestSource(bool lock)
 void CSound::PitchAdjust(const float newPitch)
 {
 	std::lock_guard<spring::recursive_mutex> lck(soundMutex);
-	if (pitchAdjust)
-		CSoundSource::SetPitch(newPitch);
+
+	switch (pitchAdjustMode) {
+		case 1: { CSoundSource::SetPitch(std::sqrt(newPitch)); } break;
+		case 2: { CSoundSource::SetPitch(          newPitch ); } break;
+		default: {} break;
+	}
 }
 
 void CSound::ConfigNotify(const std::string& key, const std::string& value)
@@ -237,10 +242,13 @@ void CSound::ConfigNotify(const std::string& key, const std::string& value)
 		return;
 	}
 	if (key == "PitchAdjust") {
-		const bool tempPitchAdjust = (std::atoi(value.c_str()) != 0);
-		if (!tempPitchAdjust)
+		const int tempPitchAdjustMode = (std::atoi(value.c_str()) != 0);
+
+		// reset adjustment factor if disabling
+		if (tempPitchAdjustMode == 0)
 			PitchAdjust(1.0f);
-		pitchAdjust = tempPitchAdjust;
+
+		pitchAdjustMode = tempPitchAdjustMode;
 		return;
 	}
 }

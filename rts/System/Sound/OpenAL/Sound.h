@@ -26,25 +26,25 @@ public:
 	CSound();
 	virtual ~CSound();
 
-	virtual bool HasSoundItem(const std::string& name) const;
-	virtual size_t GetSoundId(const std::string& name);
+	bool HasSoundItem(const std::string& name) const  override;
+	size_t GetSoundId(const std::string& name) override;
 	SoundItem* GetSoundItem(size_t id) const;
 
-	virtual CSoundSource* GetNextBestSource(bool lock = true);
+	CSoundSource* GetNextBestSource(bool lock = true) override;
 
-	virtual void UpdateListener(const float3& campos, const float3& camdir, const float3& camup);
-	virtual void NewFrame();
+	void UpdateListener(const float3& campos, const float3& camdir, const float3& camup) override;
+	void NewFrame() override;
 
 	/// @see ConfigHandler::ConfigNotifyCallback
-	virtual void ConfigNotify(const std::string& key, const std::string& value);
-	virtual void PitchAdjust(const float newPitch);
+	void ConfigNotify(const std::string& key, const std::string& value) override;
+	void PitchAdjust(const float newPitch) override;
 
-	virtual bool Mute();
-	virtual bool IsMuted() const { return mute; }
+	bool Mute() override;
+	bool IsMuted() const override { return mute; }
 
-	virtual void Iconified(bool state);
+	void Iconified(bool state) override;
 
-	virtual void PrintDebugInfo();
+	void PrintDebugInfo() override;
 
 	bool SoundThreadQuit() const { return soundThreadQuit; }
 	bool CanLoadSoundDefs() const { return canLoadDefs; }
@@ -86,12 +86,13 @@ private:
 	float3 camUp;
 	float3 prevVelocity;
 
+	int pitchAdjustMode;
+
 	bool listenerNeedsUpdate;
 	bool mute;
 
 	/// we do not play if minimized / iconified
 	bool appIsIconified;
-	bool pitchAdjust;
 
 	volatile bool soundThreadQuit;
 	volatile bool canLoadDefs;

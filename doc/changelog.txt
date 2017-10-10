@@ -44,6 +44,9 @@ Misc:
  - remove Use{V,P}BO config-settings
  - mandate GLSL support
  - remove LuaShaders config-setting
+ - change PitchAdjust config-setting from a boolean to an integer
+   0 disables, 1 scales pitch by the square root of game speed, 2
+   scales linearly with game speed
 
 Fixes:
  - fix #5803 (move goals cancelled when issued onto blocked terrain)
