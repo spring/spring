@@ -35,8 +35,6 @@ class LuaOpenGL {
 		static bool IsDrawingEnabled(lua_State* L) { return GetLuaContextData(L)->drawingEnabled; }
 		static void SetDrawingEnabled(lua_State* L, bool value) { GetLuaContextData(L)->drawingEnabled = value; }
 
-		static bool CanUseShaders() { return canUseShaders; }
-
 		static bool GetSafeMode() { return safeMode; }
 		static void SetSafeMode(bool value) { safeMode = value; }
 
@@ -133,8 +131,9 @@ class LuaOpenGL {
 	private:
 		static DrawMode drawMode;
 		static DrawMode prevDrawMode; // for minimap (when drawn in Screen mode)
+
 		static bool safeMode;
-		static bool canUseShaders;
+
 		static float screenWidth;
 		static float screenDistance;
 		static void (*resetMatrixFunc)(void);

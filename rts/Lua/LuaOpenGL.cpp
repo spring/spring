@@ -77,8 +77,6 @@ using std::string;
 #undef far // avoid collision with windef.h
 #undef near
 
-CONFIG(bool, LuaShaders).defaultValue(true).headlessValue(false).safemodeValue(false);
-
 static const int MAX_TEXTURE_UNITS = 32;
 
 /******************************************************************************/
@@ -92,7 +90,6 @@ LuaOpenGL::DrawMode LuaOpenGL::drawMode = LuaOpenGL::DRAW_NONE;
 LuaOpenGL::DrawMode LuaOpenGL::prevDrawMode = LuaOpenGL::DRAW_NONE;
 
 bool  LuaOpenGL::safeMode = true;
-bool  LuaOpenGL::canUseShaders = false;
 
 float LuaOpenGL::screenWidth = 0.36f;
 float LuaOpenGL::screenDistance = 0.60f;
@@ -185,8 +182,6 @@ void LuaOpenGL::Init()
 	glEndList();
 
 	glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
-
-	canUseShaders = configHandler->GetBool("LuaShaders");
 }
 
 void LuaOpenGL::Free()
@@ -370,9 +365,7 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetWaterRendering);
 	REGISTER_LUA_CFUNC(GetMapRendering);
 
-	if (canUseShaders)
-		LuaShaders::PushEntries(L);
-
+	LuaShaders::PushEntries(L);
  	LuaFBOs::PushEntries(L);
  	LuaRBOs::PushEntries(L);
 	// TODO LuaVBOs::PushEntries(L);
@@ -3745,31 +3738,36 @@ int LuaOpenGL::CallList(lua_State* L)
 	const unsigned int listIndex = luaL_checkint(L, 1);
 	const CLuaDisplayLists& displayLists = CLuaHandle::GetActiveDisplayLists(L);
 	const unsigned int dlist = displayLists.GetDList(listIndex);
-	if (dlist) {
-		SMatrixStateData matrixStateData = displayLists.GetMatrixState(listIndex);
-		int error = GetLuaContextData(L)->glMatrixTracker.ApplyMatrixState(matrixStateData);
-		if (error == 0) {
-			glCallList(dlist);
-			return 0;
-		}
-		luaL_error(L, "Matrix stack %sflow in gl.CallList", (error > 0) ? "over" : "under");
+
+	if (dlist == 0)
+		return 0;
+
+	SMatrixStateData matrixStateData = displayLists.GetMatrixState(listIndex);
+	const int error = GetLuaContextData(L)->glMatrixTracker.ApplyMatrixState(matrixStateData);
+
+	if (error == 0) {
+		glCallList(dlist);
+		return 0;
 	}
+
+	luaL_error(L, "Matrix stack %sflow in gl.CallList", (error > 0) ? "over" : "under");
 	return 0;
 }
 
 
 int LuaOpenGL::DeleteList(lua_State* L)
 {
-	if (lua_isnil(L, 1)) {
+	if (lua_isnil(L, 1))
 		return 0;
-	}
+
 	const unsigned int listIndex = (unsigned int)luaL_checkint(L, 1);
 	CLuaDisplayLists& displayLists = CLuaHandle::GetActiveDisplayLists(L);
 	const unsigned int dlist = displayLists.GetDList(listIndex);
 	displayLists.FreeDList(listIndex);
-	if (dlist != 0) {
+
+	if (dlist != 0)
 		glDeleteLists(dlist, 1);
-	}
+
 	return 0;
 }
 
@@ -3783,14 +3781,12 @@ int LuaOpenGL::Flush(lua_State* L)
 	return 0;
 }
 
-
 int LuaOpenGL::Finish(lua_State* L)
 {
 	CheckDrawingEnabled(L, __func__);
 	glFinish();
 	return 0;
 }
-
 
 /******************************************************************************/
 
