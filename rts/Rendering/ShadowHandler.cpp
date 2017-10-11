@@ -541,7 +541,6 @@ void CShadowHandler::CreateShadows()
 	glDisable(GL_ALPHA_TEST);
 	glDisable(GL_TEXTURE_2D);
 
-	glShadeModel(GL_FLAT);
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 	glDepthMask(GL_TRUE);
@@ -571,7 +570,6 @@ void CShadowHandler::CreateShadows()
 	prvCam->Update();
 
 
-	glShadeModel(GL_SMOOTH);
 	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 }
 

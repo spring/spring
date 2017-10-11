@@ -36,13 +36,13 @@ public:
 
 	struct MeshPatch {
 		std::array<VBO, LOD_LEVELS> squareVertexBuffers;
-		std::array<VBO, LOD_LEVELS> squareNormalBuffers;
+		// std::array<VBO, LOD_LEVELS> squareNormalBuffers;
 
 		std::array<VBO, LOD_LEVELS> borderVertexBuffers[MAP_BORDER_B + 1];
 		std::array<VBO, LOD_LEVELS> borderNormalBuffers[MAP_BORDER_B + 1];
 
 		std::array<float3*, LOD_LEVELS> squareVertexPtrs;
-		std::array<float3*, LOD_LEVELS> squareNormalPtrs;
+		// std::array<float3*, LOD_LEVELS> squareNormalPtrs;
 
 		std::array<uint32_t, 4> visUpdateFrames; // [CAMTYPE_PLAYER, CAMTYPE_ENVMAP]
 		std::array<uint32_t, 1> uhmUpdateFrames;

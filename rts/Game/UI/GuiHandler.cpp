@@ -3855,7 +3855,6 @@ void CGuiHandler::DrawMiniMapMarker(const float3& cameraPos)
 	glRotatef(360.0f * (spinTime / 2.0f), 0.0f, 1.0f, 0.0f);
 
 	glEnable(GL_BLEND);
-	glShadeModel(GL_FLAT);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 	glBegin(GL_TRIANGLE_FAN);
 		                       glVertex3f(0.0f, 0.0f, 0.0f);
@@ -3874,7 +3873,6 @@ void CGuiHandler::DrawMiniMapMarker(const float3& cameraPos)
 		glColor4fv(colors[0]); glVertex3f(  +w,   +h, 0.0f);
 	glEnd();
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glShadeModel(GL_SMOOTH);
 	glPopMatrix();
 }
 

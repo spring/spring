@@ -648,7 +648,6 @@ void CProjectileDrawer::DrawShadowPass()
 		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 		glAlphaFunc(GL_GREATER, 0.3f);
 		glEnable(GL_ALPHA_TEST);
-		glShadeModel(GL_SMOOTH);
 		// glDisable(GL_CULL_FACE);
 
 		textureAtlas->BindTexture();
@@ -656,7 +655,6 @@ void CProjectileDrawer::DrawShadowPass()
 	}
 
 	po->Disable();
-	glShadeModel(GL_FLAT);
 	glPopAttrib();
 }
 
