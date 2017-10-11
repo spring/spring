@@ -657,6 +657,18 @@ float3 CMatrix44f::GetEulerAnglesLftHand(float eps) const {
 	return (matrix.GetEulerAnglesRgtHand(eps));
 }
 
+
+
+CMatrix44f CMatrix44f::PerspProj(float aspect, float thfov, float zn, float zf)
+{
+	const float t = zn * thfov;
+	const float b = -t;
+	const float l = b * aspect;
+	const float r = t * aspect;
+
+	return (PerspProj(l, r,  b, t,  zn, zf));
+}
+
 CMatrix44f CMatrix44f::PerspProj(float l, float r, float b, float t, float zn, float zf)
 {
 	CMatrix44f proj;
