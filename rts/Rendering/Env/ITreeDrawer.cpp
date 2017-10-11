@@ -18,7 +18,7 @@
 #include "System/myMath.h"
 
 CONFIG(int, TreeRadius)
-	.defaultValue((int) (5.5f * 256))
+	.defaultValue(int(5.5f * 256))
 	.headlessValue(0)
 	.minimumValue(0);
 
@@ -30,7 +30,9 @@ ITreeDrawer::ITreeDrawer(): CEventClient("[ITreeDrawer]", 314444, false)
 	, wireFrameMode(false)
 {
 	eventHandler.AddClient(this);
-	baseTreeDistance = configHandler->GetInt("TreeRadius") / 256.0f;
+
+	baseTreeDistance = configHandler->GetInt("TreeRadius");
+	drawTreeDistance = Clamp(baseTreeDistance, 1.0f, CGlobalRendering::MAX_VIEW_RANGE);
 
 	treesX = mapDims.mapx / TREE_SQUARE_SIZE;
 	treesY = mapDims.mapy / TREE_SQUARE_SIZE;
@@ -39,16 +41,23 @@ ITreeDrawer::ITreeDrawer(): CEventClient("[ITreeDrawer]", 314444, false)
 
 ITreeDrawer::~ITreeDrawer() {
 	eventHandler.RemoveClient(this);
-	configHandler->Set("TreeRadius", (unsigned int) (baseTreeDistance * 256));
+	configHandler->Set("TreeRadius", int(baseTreeDistance * 256));
+}
+
+
+float ITreeDrawer::IncrDrawDistance() {
+	return (drawTreeDistance = Clamp(baseTreeDistance *= 1.25f, 1.0f, CGlobalRendering::MAX_VIEW_RANGE));
+}
+
+float ITreeDrawer::DecrDrawDistance() {
+	return (drawTreeDistance = Clamp(baseTreeDistance *= 0.8f, 1.0f, CGlobalRendering::MAX_VIEW_RANGE));
 }
 
 
 
 void ITreeDrawer::AddTrees()
 {
-	const auto& activeFeatureIDs = featureHandler->GetActiveFeatureIDs();
-
-	for (const int featureID: activeFeatureIDs) {
+	for (const int featureID: featureHandler->GetActiveFeatureIDs()) {
 		const CFeature* f = featureHandler->GetFeature(featureID);
 
 		if (f->def->drawType >= DRAWTYPE_TREE) {
@@ -164,14 +173,11 @@ void ITreeDrawer::ResetState() const {
 
 void ITreeDrawer::Draw()
 {
-	const float maxDistance = CGlobalRendering::MAX_VIEW_RANGE / (SQUARE_SIZE * TREE_SQUARE_SIZE);
-	const float treeDistance = Clamp(baseTreeDistance, 1.0f, maxDistance);
-
 	if (!drawTrees)
 		return;
 
 	SetupState();
-	Draw(treeDistance);
+	DrawPass();
 	ResetState();
 }
 

@@ -1407,14 +1407,12 @@ public:
 			"Set the level of ground detail") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		int detail;
 		if (action.GetArgs().empty()) {
 			LOG_L(L_WARNING, "/%s: missing argument", GetCommand().c_str());
 			return false;
 		}
-		detail = atoi((action.GetArgs()).c_str());
 
-		readMap->GetGroundDrawer()->SetDetail(detail);
+		readMap->GetGroundDrawer()->SetDetail(atoi((action.GetArgs()).c_str()));
 		return true;
 	}
 
@@ -1427,7 +1425,7 @@ public:
 	MoreTreesActionExecutor() : IUnsyncedActionExecutor("MoreTrees", "Increases distance from the camera at which trees are still drawn") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		LOG("tree draw-distance increased to %f", (treeDrawer->IncrDrawDistance() * 2.0f * SQUARE_SIZE * TREE_SQUARE_SIZE));
+		LOG("tree draw-distance increased to %f", treeDrawer->IncrDrawDistance());
 		return true;
 	}
 };
@@ -1437,7 +1435,7 @@ public:
 	LessTreesActionExecutor() : IUnsyncedActionExecutor("LessTrees", "Decreases distance from the camera at which trees are still drawn") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		LOG("tree draw-distance decreased to %f", (treeDrawer->DecrDrawDistance() * 2.0f * SQUARE_SIZE * TREE_SQUARE_SIZE));
+		LOG("tree draw-distance decreased to %f", treeDrawer->DecrDrawDistance());
 		return true;
 	}
 };

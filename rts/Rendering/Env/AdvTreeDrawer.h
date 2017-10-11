@@ -19,7 +19,7 @@ public:
 	~CAdvTreeDrawer();
 
 	void LoadTreeShaders();
-	void Draw(float treeDistance) override;
+	void DrawPass() override;
 	void Update() override;
 	void AddFallingTree(int treeID, int treeType, const float3& pos, const float3& dir) override;
 	void DrawShadowPass() override;
@@ -29,13 +29,6 @@ public:
 	static void DrawTreeVertexMid(CVertexArray* va, const float3& pos, float dx, float dy, bool enlarge = true);
 	static void DrawTreeVertexFar(CVertexArray* va, const float3& pos, const float3& swd, float dx, float dy, bool enlarge = true);
 
-	struct FadeTree {
-		int id;
-		int type;
-		float3 pos;
-		float relDist;
-		float deltaY;
-	};
 	struct FallingTree {
 		int id;
 		int type;
@@ -45,21 +38,19 @@ public:
 		float fallPos;
 	};
 
-	int lastListClean;
-	float oldTreeDistance;
-
 private:
 	enum TreeShaderProgram {
-		TREE_PROGRAM_NEAR_BASIC  = 0, // near-tree shader (V) without self-shadowing
-		TREE_PROGRAM_NEAR_SHADOW = 1, // near-tree shader (V+F) with self-shadowing
-		TREE_PROGRAM_DIST_SHADOW = 2, // far-tree shader (V+F) with self-shadowing
-		TREE_PROGRAM_LAST        = 3
+		TREE_PROGRAM_BASIC  = 0, // near-tree shader (V) without self-shadowing
+		TREE_PROGRAM_SHADOW = 1, // near-tree shader (V+F) with self-shadowing
+		TREE_PROGRAM_LAST   = 2
 	};
 
-	std::vector<Shader::IProgramObject*> treeShaders;
+	std::array<Shader::IProgramObject*, TREE_PROGRAM_LAST> treeShaders;
 	std::vector<FallingTree> fallingTrees;
 
 	CAdvTreeGenerator treeGen;
+
+	int lastListClean;
 };
 
 #endif // _ADV_TREE_DRAWER_H_

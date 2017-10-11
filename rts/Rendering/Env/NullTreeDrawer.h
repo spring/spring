@@ -10,7 +10,7 @@ class CNullTreeDrawer : public ITreeDrawer
 public:
 	CNullTreeDrawer() {}
 
-	void Draw(float treeDistance) override {}
+	void DrawPass() override {}
 	void Update() override {}
 };
 

@@ -168,14 +168,12 @@ void CShadowHandler::LoadShadowGenShaders()
 		"ShadowGenShaderProgModel",
 		"ShadowGenShaderProgMap",
 		"ShadowGenShaderProgTreeNear",
-		"ShadowGenShaderProgTreeDist",
 		"ShadowGenShaderProgProjectile",
 	};
 	static const std::string shadowGenProgDefines[SHADOWGEN_PROGRAM_LAST] = {
 		"#define SHADOWGEN_PROGRAM_MODEL\n",
 		"#define SHADOWGEN_PROGRAM_MAP\n",
-		"#define SHADOWGEN_PROGRAM_TREE_NEAR\n",
-		"#define SHADOWGEN_PROGRAM_TREE_DIST\n",
+		"#define SHADOWGEN_PROGRAM_TREE\n",
 		"#define SHADOWGEN_PROGRAM_PROJECTILE\n",
 	};
 
@@ -193,15 +191,17 @@ void CShadowHandler::LoadShadowGenShaders()
 	for (int i = 0; i < SHADOWGEN_PROGRAM_LAST; i++) {
 		Shader::IProgramObject* po = sh->CreateProgramObject("[ShadowHandler]", shadowGenProgHandles[i] + "GLSL");
 
-		// note: non-map FS is still at #130
-		po->AttachShaderObject(sh->CreateShaderObject("GLSL/ShadowGenVertProg.glsl", versionDefs[0                         ] + shadowGenProgDefines[i] + extraDefs, GL_VERTEX_SHADER));
-		po->AttachShaderObject(sh->CreateShaderObject("GLSL/ShadowGenFragProg.glsl", versionDefs[i == SHADOWGEN_PROGRAM_MAP] + shadowGenProgDefines[i] + extraDefs, GL_FRAGMENT_SHADER));
+		// note: non-map FS is still at #130 (and too costly with dense foliage)
+		po->AttachShaderObject(sh->CreateShaderObject("GLSL/ShadowGenVertProg.glsl", versionDefs[0] + shadowGenProgDefines[i] + extraDefs, GL_VERTEX_SHADER));
+
+		if (i == SHADOWGEN_PROGRAM_MAP)
+			po->AttachShaderObject(sh->CreateShaderObject("GLSL/ShadowGenFragProg.glsl", versionDefs[i == SHADOWGEN_PROGRAM_MAP] + shadowGenProgDefines[i] + extraDefs, GL_FRAGMENT_SHADER));
 
 		po->Link();
 		po->SetUniformLocation("shadowParams");  // idx 0
-		po->SetUniformLocation("cameraDirX");    // idx 1, used by SHADOWGEN_PROGRAM_TREE_NEAR
-		po->SetUniformLocation("cameraDirY");    // idx 2, used by SHADOWGEN_PROGRAM_TREE_NEAR
-		po->SetUniformLocation("treeOffset");    // idx 3, used by SHADOWGEN_PROGRAM_TREE_NEAR
+		po->SetUniformLocation("cameraDirX");    // idx 1, used by SHADOWGEN_PROGRAM_TREE
+		po->SetUniformLocation("cameraDirY");    // idx 2, used by SHADOWGEN_PROGRAM_TREE
+		po->SetUniformLocation("treeOffset");    // idx 3, used by SHADOWGEN_PROGRAM_TREE
 		po->SetUniformLocation("alphaMaskTex");  // idx 4
 		po->SetUniformLocation("alphaParams");   // idx 5, used by SHADOWGEN_PROGRAM_MAP
 		po->Enable();

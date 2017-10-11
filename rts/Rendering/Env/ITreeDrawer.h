@@ -26,7 +26,7 @@ public:
 	void ResetState() const;
 	void Draw();
 
-	virtual void Draw(float treeDistance) = 0;
+	virtual void DrawPass() = 0;
 	virtual void DrawShadowPass() {}
 	virtual void Update() = 0;
 
@@ -42,8 +42,10 @@ public:
 			(eventName == "RenderFeatureDestroyed");
 	}
 
-	float IncrDrawDistance() { return (baseTreeDistance += 0.2f); }
-	float DecrDrawDistance() { return (baseTreeDistance -= 0.2f); }
+	float GetBaseDistance() const { return baseTreeDistance; }
+	float GetDrawDistance() const { return drawTreeDistance; }
+	float IncrDrawDistance();
+	float DecrDrawDistance();
 
 	int NumTreesX() const { return treesX; }
 	int NumTreesY() const { return treesY; }
@@ -95,6 +97,7 @@ private:
 
 protected:
 	float baseTreeDistance;
+	float drawTreeDistance;
 
 	int treesX;
 	int treesY;

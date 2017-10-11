@@ -1,6 +1,6 @@
 uniform vec4 shadowParams;
 
-#ifdef SHADOWGEN_PROGRAM_TREE_NEAR
+#ifdef SHADOWGEN_PROGRAM_TREE
 uniform vec3 cameraDirX;
 uniform vec3 cameraDirY;
 uniform vec3 treeOffset;
@@ -16,7 +16,7 @@ out vec4 vertexModelPos;
 
 
 void main() {
-	#ifdef SHADOWGEN_PROGRAM_TREE_NEAR
+	#ifdef SHADOWGEN_PROGRAM_TREE
 	vec3 offsetVec = treeOffset + (cameraDirX * gl_Normal.x) + (cameraDirY * gl_Normal.y);
 	#else
 	vec3 offsetVec = vec3(0.0, 0.0, 0.0);
@@ -45,14 +45,9 @@ void main() {
 	// empty, uses TexGen
 	#endif
 
-	#ifdef SHADOWGEN_PROGRAM_TREE_NEAR
+	#ifdef SHADOWGEN_PROGRAM_TREE
 	gl_FrontColor.xyz = gl_Normal.z * vec3(1.0, 1.0, 1.0);
 	gl_FrontColor.a = gl_Vertex.y * (0.20 * (1.0 / MAX_TREE_HEIGHT)) + 0.85;
-	gl_TexCoord[0] = gl_MultiTexCoord0;
-	#endif
-
-	#ifdef SHADOWGEN_PROGRAM_TREE_DIST
-	gl_FrontColor = gl_Color;
 	gl_TexCoord[0] = gl_MultiTexCoord0;
 	#endif
 
