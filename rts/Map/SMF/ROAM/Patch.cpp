@@ -570,37 +570,39 @@ void Patch::RecursBorderRender(
 		const float3& v2 = *(float3*) &vertices[(left.x + left.y * (PATCH_SIZE + 1))*3];
 		const float3& v3 = *(float3*) &vertices[(rght.x + rght.y * (PATCH_SIZE + 1))*3];
 
+		// NB: FFP alpha requires smooth shading
 		static constexpr unsigned char white[] = {255, 255, 255, 255};
 		static constexpr unsigned char trans[] = {255, 255, 255,   0};
 
 		va->EnlargeArrays(6, 0, VA_SIZE_C);
 
 		if ((depth & 1) == 0) {
-			va->AddVertexQC(v2,                          white);
+			va->AddVertexQC(       v2,                   white);
 			va->AddVertexQC(float3(v2.x, -400.0f, v2.z), trans);
-			va->AddVertexQC(float3(v3.x, v3.y, v3.z),    white);
+			va->AddVertexQC(float3(v3.x,    v3.y, v3.z), white);
 
-			va->AddVertexQC(v3,                          white);
 			va->AddVertexQC(float3(v2.x, -400.0f, v2.z), trans);
 			va->AddVertexQC(float3(v3.x, -400.0f, v3.z), trans);
+			va->AddVertexQC(       v3,                   white);
+			return;
+		}
+
+		if (leftChild) {
+			va->AddVertexQC(       v1,                   white);
+			va->AddVertexQC(float3(v1.x, -400.0f, v1.z), trans);
+			va->AddVertexQC(float3(v2.x,    v2.y, v2.z), white);
+
+			va->AddVertexQC(float3(v1.x, -400.0f, v1.z), trans);
+			va->AddVertexQC(float3(v2.x, -400.0f, v2.z), trans);
+			va->AddVertexQC(       v2,                   white);
 		} else {
-			if (leftChild) {
-				va->AddVertexQC(v1,                          white);
-				va->AddVertexQC(float3(v1.x, -400.0f, v1.z), trans);
-				va->AddVertexQC(float3(v2.x, v2.y, v2.z),    white);
+			va->AddVertexQC(       v3,                   white);
+			va->AddVertexQC(float3(v3.x, -400.0f, v3.z), trans);
+			va->AddVertexQC(float3(v1.x,    v1.y, v1.z), white);
 
-				va->AddVertexQC(v2,                          white);
-				va->AddVertexQC(float3(v1.x, -400.0f, v1.z), trans);
-				va->AddVertexQC(float3(v2.x, -400.0f, v2.z), trans);
-			} else {
-				va->AddVertexQC(v3,                          white);
-				va->AddVertexQC(float3(v3.x, -400.0f, v3.z), trans);
-				va->AddVertexQC(float3(v1.x, v1.y, v1.z),    white);
-
-				va->AddVertexQC(v1,                          white);
-				va->AddVertexQC(float3(v3.x, -400.0f, v3.z), trans);
-				va->AddVertexQC(float3(v1.x, -400.0f, v1.z), trans);
-			}
+			va->AddVertexQC(float3(v3.x, -400.0f, v3.z), trans);
+			va->AddVertexQC(float3(v1.x, -400.0f, v1.z), trans);
+			va->AddVertexQC(       v1,                   white);
 		}
 
 		return;
