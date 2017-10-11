@@ -4,8 +4,8 @@
 #define SMF_DETAILTEX_RES 0.02
 
 uniform ivec2 texSquare;
-uniform mat4 modelViewMat;
-uniform mat4 modelViewMatInv;
+uniform mat4 viewMat;
+uniform mat4 viewMatInv;
 uniform mat4 viewProjMat;
 
 layout(location = 0) in vec3 vertexWorldPosIn;
@@ -17,7 +17,7 @@ void main() {
 
 	gl_Position = viewProjMat * vec4(vertexWorldPosIn, 1.0);
 	// TODO: reimplement
-	// gl_ClipVertex = modelViewMat * vec4(vertexWorldPosIn, 1.0);
-	vec4 clipVertex = modelViewMat * vec4(vertexWorldPosIn, 1.0);
+	// gl_ClipVertex = viewMat * vec4(vertexWorldPosIn, 1.0);
+	vec4 clipVertex = viewMat * vec4(vertexWorldPosIn, 1.0);
 }
 

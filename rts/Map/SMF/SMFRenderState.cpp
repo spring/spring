@@ -169,8 +169,8 @@ void SMFRenderStateGLSL::Update(
 			glslShaders[n]->SetUniform  ("groundSpecularExponent", sunLighting->specularExponent);
 			glslShaders[n]->SetUniform  ("groundShadowDensity", sunLighting->groundShadowDensity);
 
-			glslShaders[n]->SetUniformMatrix4x4<const char*, float>("modelViewMat", false, camera->GetViewMatrix());
-			glslShaders[n]->SetUniformMatrix4x4<const char*, float>("modelViewMatInv", false, camera->GetViewMatrixInverse());
+			glslShaders[n]->SetUniformMatrix4x4<const char*, float>("viewMat", false, camera->GetViewMatrix());
+			glslShaders[n]->SetUniformMatrix4x4<const char*, float>("viewMatInv", false, camera->GetViewMatrixInverse());
 			glslShaders[n]->SetUniformMatrix4x4<const char*, float>("viewProjMat", false, camera->GetViewProjectionMatrix());
 			glslShaders[n]->SetUniformMatrix4x4<const char*, float>("shadowMat", false, shadowHandler->GetShadowMatrix());
 			glslShaders[n]->SetUniform4v("shadowParams", &(shadowHandler->GetShadowParams().x));
@@ -229,8 +229,8 @@ void SMFRenderStateGLSL::Enable(const CSMFGroundDrawer* smfGroundDrawer, const D
 	glslShaders[GLSL_SHADER_CURRENT]->Enable();
 	glslShaders[GLSL_SHADER_CURRENT]->SetUniform("mapHeights", readMap->GetCurrMinHeight(), readMap->GetCurrMaxHeight());
 	glslShaders[GLSL_SHADER_CURRENT]->SetUniform3v("cameraPos", &camera->GetPos()[0]);
-	glslShaders[GLSL_SHADER_CURRENT]->SetUniformMatrix4x4<const char*, float>("modelViewMat", false, camera->GetViewMatrix());
-	glslShaders[GLSL_SHADER_CURRENT]->SetUniformMatrix4x4<const char*, float>("modelViewMatInv", false, camera->GetViewMatrixInverse());
+	glslShaders[GLSL_SHADER_CURRENT]->SetUniformMatrix4x4<const char*, float>("viewMat", false, camera->GetViewMatrix());
+	glslShaders[GLSL_SHADER_CURRENT]->SetUniformMatrix4x4<const char*, float>("viewMatInv", false, camera->GetViewMatrixInverse());
 	glslShaders[GLSL_SHADER_CURRENT]->SetUniformMatrix4x4<const char*, float>("viewProjMat", false, camera->GetViewProjectionMatrix());
 	glslShaders[GLSL_SHADER_CURRENT]->SetUniformMatrix4x4<const char*, float>("shadowMat", false, shadowHandler->GetShadowMatrix());
 	glslShaders[GLSL_SHADER_CURRENT]->SetUniform4v("shadowParams", &(shadowHandler->GetShadowParams().x));
