@@ -3,19 +3,13 @@
 #include "AdvTreeDrawer.h"
 #include "Game/Camera.h"
 #include "Game/GlobalUnsynced.h"
-#include "Map/BaseGroundDrawer.h"
-#include "Map/Ground.h"
-#include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
-#include "Rendering/GlobalRendering.h"
 #include "Rendering/Env/ISky.h"
 #include "Rendering/Env/SunLighting.h"
 #include "Rendering/GL/myGL.h"
-#include "Rendering/GL/FBO.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/Shaders/Shader.h"
-#include "Rendering/Textures/Bitmap.h"
 #include "Rendering/ShadowHandler.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Features/Feature.h"
@@ -44,9 +38,6 @@ static const float HALF_MAX_TREE_HEIGHT   = MAX_TREE_HEIGHT * 0.5f;
 
 CAdvTreeDrawer::CAdvTreeDrawer(): ITreeDrawer()
 {
-	if (!FBO::IsSupported())
-		throw content_error("[AdvTreeDrawer] missing FBO support");
-
 	LoadTreeShaders();
 
 	treeGen.Init();
@@ -385,10 +376,10 @@ void CAdvTreeDrawer::DrawPass()
 			const float3 zvec((yvec.cross(-RgtVector)).ANormalize());
 			const float3 xvec(yvec.cross(zvec));
 
-			CMatrix44f transMatrix(pos, xvec, yvec, zvec);
+			const CMatrix44f transMatrix(pos, xvec, yvec, zvec);
 
 			glPushMatrix();
-			glMultMatrixf(&transMatrix[0]);
+			glMultMatrixf(transMatrix);
 
 			if (ft.type < 8) {
 				glCallList(treeGen.pineDL + ft.type);
@@ -585,10 +576,10 @@ void CAdvTreeDrawer::DrawShadowPass()
 			const float3 zvec((yvec.cross(RgtVector)).ANormalize());
 			const float3 xvec(zvec.cross(yvec));
 
-			CMatrix44f transMatrix(pos, xvec, yvec, zvec);
+			const CMatrix44f transMatrix(pos, xvec, yvec, zvec);
 
 			glPushMatrix();
-			glMultMatrixf(&transMatrix[0]);
+			glMultMatrixf(transMatrix);
 
 			if (ft.type < 8) {
 				glCallList(treeGen.pineDL + ft.type);
