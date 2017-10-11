@@ -193,12 +193,9 @@ void CShadowHandler::LoadShadowGenShaders()
 	for (int i = 0; i < SHADOWGEN_PROGRAM_LAST; i++) {
 		Shader::IProgramObject* po = sh->CreateProgramObject("[ShadowHandler]", shadowGenProgHandles[i] + "GLSL");
 
-		if (i == SHADOWGEN_PROGRAM_MAP) {
-			po->AttachShaderObject(sh->CreateShaderObject("GLSL/ShadowGenVertProg.glsl", versionDefs[0] + shadowGenProgDefines[i] + extraDefs, GL_VERTEX_SHADER));
-			po->AttachShaderObject(sh->CreateShaderObject("GLSL/ShadowGenFragProg.glsl", versionDefs[1] + shadowGenProgDefines[i] + extraDefs, GL_FRAGMENT_SHADER));
-		} else {
-			po->AttachShaderObject(sh->CreateShaderObject("GLSL/ShadowGenVertProg.glsl", versionDefs[0] + shadowGenProgDefines[i] + extraDefs, GL_VERTEX_SHADER));
-		}
+		// note: non-map FS is still at #130
+		po->AttachShaderObject(sh->CreateShaderObject("GLSL/ShadowGenVertProg.glsl", versionDefs[0                         ] + shadowGenProgDefines[i] + extraDefs, GL_VERTEX_SHADER));
+		po->AttachShaderObject(sh->CreateShaderObject("GLSL/ShadowGenFragProg.glsl", versionDefs[i == SHADOWGEN_PROGRAM_MAP] + shadowGenProgDefines[i] + extraDefs, GL_FRAGMENT_SHADER));
 
 		po->Link();
 		po->SetUniformLocation("shadowParams");  // idx 0

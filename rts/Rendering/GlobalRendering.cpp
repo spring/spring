@@ -1031,9 +1031,6 @@ void CGlobalRendering::UpdateGLGeometry()
 
 void CGlobalRendering::InitGLState()
 {
-	// temporarily left for ShadowHandler
-	glShadeModel(GL_FLAT);
-
 	glClearDepth(1.0f);
 	glDepthRange(0.0f, 1.0f);
 

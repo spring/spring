@@ -5,20 +5,23 @@ precision highp float;
 precision mediump float;
 #endif
 
-uniform sampler2D alphaMaskTex;
 
-uniform vec4 shadowParams;
-uniform vec2 alphaParams;
 
-in mat4 shadowViewMat;
-in mat4 shadowProjMat;
-in vec4 vertexModelPos;
+#ifdef SHADOWGEN_PROGRAM_MAP
 
 #if (SUPPORT_DEPTH_LAYOUT == 1)
 // preserve early-z performance if possible
 layout(depth_unchanged) out float gl_FragDepth;
 #endif
 
+// uniform sampler2D alphaMaskTex;
+
+uniform vec4 shadowParams;
+// uniform vec2 alphaParams;
+
+in mat4 shadowViewMat;
+in mat4 shadowProjMat;
+in vec4 vertexModelPos;
 
 void main() {
 	#if 0
@@ -54,3 +57,22 @@ void main() {
 	gl_FragDepth = gl_FragCoord.z;
 	#endif
 }
+
+
+#else
+
+
+uniform sampler2D alphaMaskTex;
+
+// uniform vec4 shadowParams;
+uniform vec2 alphaParams;
+
+void main() {
+	if (texture2D(alphaMaskTex, gl_TexCoord[0].st).a <= alphaParams.x)
+		discard;
+
+	gl_FragDepth = gl_FragCoord.z;
+}
+
+#endif
+
