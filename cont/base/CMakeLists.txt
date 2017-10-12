@@ -16,9 +16,10 @@ MACRO(CreateBaseContentArchive outputdir filename files)
 		set(QUIET ">nul")
 	endif()
 	set(outputfile "${Spring_BINARY_DIR}/${outputdir}/${filename}")
+	set(ENV{TZ} UTC)
 	add_custom_command(
 		OUTPUT "${outputfile}"
-		COMMAND ${CMAKE_COMMAND} -E env TZ=UTC ${SEVENZIP_BIN} a -tzip ${outputfile} ${files} ${QUIET}
+		COMMAND ${SEVENZIP_BIN} a -tzip ${outputfile} ${files} ${QUIET}
 		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/
 		COMMENT "Creating ${outputfile}"
 		DEPENDS ${files}
