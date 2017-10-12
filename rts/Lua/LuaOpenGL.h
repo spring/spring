@@ -179,7 +179,7 @@ class LuaOpenGL {
 		static int DepthClamp(lua_State* L);
 		static int Culling(lua_State* L);
 		static int LogicOp(lua_State* L);
-		static int Fog(lua_State* L);
+		static int Fog(lua_State* L) { return 0; }
 		static int AlphaTest(lua_State* L);
 		static int LineStipple(lua_State* L);
 		static int Blending(lua_State* L);
@@ -227,8 +227,8 @@ class LuaOpenGL {
 		static int Normal(lua_State* L);
 		static int TexCoord(lua_State* L);
 		static int MultiTexCoord(lua_State* L);
-		static int SecondaryColor(lua_State* L);
-		static int FogCoord(lua_State* L);
+		static int SecondaryColor(lua_State* L) { return 0; }
+		static int FogCoord(lua_State* L) { return 0; }
 		static int EdgeFlag(lua_State* L);
 
 		static int Rect(lua_State* L);

@@ -2033,60 +2033,13 @@ int LuaOpenGL::MultiTexCoord(lua_State* L)
 }
 
 
-int LuaOpenGL::SecondaryColor(lua_State* L)
-{
-	CheckDrawingEnabled(L, __func__);
-
-	const int args = lua_gettop(L); // number of arguments
-
-	if (args == 1) {
-		if (!lua_istable(L, 1)) {
-			luaL_error(L, "Bad data passed to gl.SecondaryColor()");
-		}
-		lua_rawgeti(L, 1, 1);
-		if (!lua_isnumber(L, -1)) {
-			luaL_error(L, "Bad data passed to gl.SecondaryColor()");
-		}
-		const float x = lua_tofloat(L, -1);
-		lua_rawgeti(L, 1, 2);
-		if (!lua_isnumber(L, -1)) {
-			luaL_error(L, "Bad data passed to gl.SecondaryColor()");
-		}
-		const float y = lua_tofloat(L, -1);
-		lua_rawgeti(L, 1, 3);
-		if (!lua_isnumber(L, -1)) {
-			luaL_error(L, "Bad data passed to gl.SecondaryColor()");
-		}
-		const float z = lua_tofloat(L, -1);
-		glSecondaryColor3f(x, y, z);
-		return 0;
-	}
-
-	const float x = luaL_checkfloat(L, 1);
-	const float y = luaL_checkfloat(L, 2);
-	const float z = luaL_checkfloat(L, 3);
-	glSecondaryColor3f(x, y, z);
-	return 0;
-}
-
-
-int LuaOpenGL::FogCoord(lua_State* L)
-{
-	CheckDrawingEnabled(L, __func__);
-
-	const float value = luaL_checkfloat(L, 1);
-	glFogCoordf(value);
-	return 0;
-}
-
-
 int LuaOpenGL::EdgeFlag(lua_State* L)
 {
 	CheckDrawingEnabled(L, __func__);
 
-	if (lua_isboolean(L, 1)) {
+	if (lua_isboolean(L, 1))
 		glEdgeFlag(lua_toboolean(L, 1));
-	}
+
 	return 0;
 }
 
@@ -2397,19 +2350,6 @@ int LuaOpenGL::LogicOp(lua_State* L)
 	}
 	else {
 		luaL_error(L, "Incorrect arguments to gl.LogicOp()");
-	}
-	return 0;
-}
-
-
-int LuaOpenGL::Fog(lua_State* L)
-{
-	CheckDrawingEnabled(L, __func__);
-
-	if (luaL_checkboolean(L, 1)) {
-		glEnable(GL_FOG);
-	} else {
-		glDisable(GL_FOG);
 	}
 	return 0;
 }
