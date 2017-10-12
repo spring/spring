@@ -2656,68 +2656,6 @@ int LuaOpenGL::LineWidth(lua_State* L)
 }
 
 
-int LuaOpenGL::PointSize(lua_State* L)
-{
-	const float size = luaL_checkfloat(L, 1);
-	if (size <= 0.0f) luaL_argerror(L, 1, "Incorrect Size (must be greater zero)");
-	glPointSize(size);
-	return 0;
-}
-
-
-int LuaOpenGL::PointSprite(lua_State* L)
-{
-	const int args = lua_gettop(L); // number of arguments
-
-	if (luaL_checkboolean(L, 1)) {
-		glEnable(GL_POINT_SPRITE);
-	} else {
-		glDisable(GL_POINT_SPRITE);
-	}
-	if ((args >= 2) && lua_isboolean(L, 2)) {
-		if (lua_toboolean(L, 2)) {
-			glTexEnvi(GL_POINT_SPRITE, GL_COORD_REPLACE, GL_TRUE);
-		} else {
-			glTexEnvi(GL_POINT_SPRITE, GL_COORD_REPLACE, GL_FALSE);
-		}
-	}
-	if ((args >= 3) && lua_isboolean(L, 3)) {
-		if (lua_toboolean(L, 3)) {
-			glTexEnvi(GL_POINT_SPRITE, GL_POINT_SPRITE_COORD_ORIGIN, GL_UPPER_LEFT);
-		} else {
-			glTexEnvi(GL_POINT_SPRITE, GL_POINT_SPRITE_COORD_ORIGIN, GL_LOWER_LEFT);
-		}
-	}
-	return 0;
-}
-
-
-int LuaOpenGL::PointParameter(lua_State* L)
-{
-	GLfloat atten[3];
-	atten[0] = (GLfloat)luaL_checknumber(L, 1);
-	atten[1] = (GLfloat)luaL_checknumber(L, 2);
-	atten[2] = (GLfloat)luaL_checknumber(L, 3);
-	glPointParameterfv(GL_POINT_DISTANCE_ATTENUATION, atten);
-
-	const int args = lua_gettop(L);
-	if (args >= 4) {
-		const float sizeMin = luaL_checkfloat(L, 4);
-		glPointParameterf(GL_POINT_SIZE_MIN, sizeMin);
-	}
-	if (args >= 5) {
-		const float sizeMax = luaL_checkfloat(L, 5);
-		glPointParameterf(GL_POINT_SIZE_MAX, sizeMax);
-	}
-	if (args >= 6) {
-		const float sizeFade = luaL_checkfloat(L, 6);
-		glPointParameterf(GL_POINT_FADE_THRESHOLD_SIZE, sizeFade);
-	}
-
-	return 0;
-}
-
-
 int LuaOpenGL::Texture(lua_State* L)
 {
 	// NOTE: current formats:
@@ -3025,70 +2963,6 @@ int LuaOpenGL::ActiveTexture(lua_State* L)
 				error, lua_tostring(L, -1));
 		lua_error(L);
 	}
-	return 0;
-}
-
-
-int LuaOpenGL::TexEnv(lua_State* L)
-{
-	CheckDrawingEnabled(L, __func__);
-
-	const GLenum target = (GLenum)luaL_checknumber(L, 1);
-	const GLenum pname  = (GLenum)luaL_checknumber(L, 2);
-
-	const int args = lua_gettop(L); // number of arguments
-	if (args == 3) {
-		const GLfloat value = (GLfloat)luaL_checknumber(L, 3);
-		glTexEnvf(target, pname, value);
-	}
-	else if (args == 6) {
-		GLfloat array[4];
-		array[0] = luaL_optnumber(L, 3, 0.0f);
-		array[1] = luaL_optnumber(L, 4, 0.0f);
-		array[2] = luaL_optnumber(L, 5, 0.0f);
-		array[3] = luaL_optnumber(L, 6, 0.0f);
-		glTexEnvfv(target, pname, array);
-	}
-	else {
-		luaL_error(L, "Incorrect arguments to gl.TexEnv()");
-	}
-
-	return 0;
-}
-
-
-int LuaOpenGL::MultiTexEnv(lua_State* L)
-{
-	CheckDrawingEnabled(L, __func__);
-	const int texNum    =    luaL_checkint(L, 1);
-	const GLenum target = (GLenum)luaL_checknumber(L, 2);
-	const GLenum pname  = (GLenum)luaL_checknumber(L, 3);
-
-	if ((texNum < 0) || (texNum >= MAX_TEXTURE_UNITS)) {
-		luaL_error(L, "Bad texture unit passed to gl.MultiTexEnv()");
-	}
-
-	const int args = lua_gettop(L); // number of arguments
-	if (args == 4) {
-		const GLfloat value = (GLfloat)luaL_checknumber(L, 4);
-		glActiveTexture(GL_TEXTURE0 + texNum);
-		glTexEnvf(target, pname, value);
-		glActiveTexture(GL_TEXTURE0);
-	}
-	else if (args == 7) {
-		GLfloat array[4];
-		array[0] = luaL_optnumber(L, 4, 0.0f);
-		array[1] = luaL_optnumber(L, 5, 0.0f);
-		array[2] = luaL_optnumber(L, 6, 0.0f);
-		array[3] = luaL_optnumber(L, 7, 0.0f);
-		glActiveTexture(GL_TEXTURE0 + texNum);
-		glTexEnvfv(target, pname, array);
-		glActiveTexture(GL_TEXTURE0);
-	}
-	else {
-		luaL_error(L, "Incorrect arguments to gl.MultiTexEnv()");
-	}
-
 	return 0;
 }
 

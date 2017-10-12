@@ -25,7 +25,10 @@ Lua:
  - add DrawSky and DrawSun callins; available when a map has no skybox defined
  - add DrawWater callin
  - add DrawTrees callin (enabled by /drawtrees 2; supersedes engine rendering)
- - remove gl.Light, gl.Lighting, gl.Material, gl.ShadeModel, gl.Fog, gl.FogCoord, gl.SecondaryColor
+ - remove gl.Light, gl.Lighting, gl.Material, gl.ShadeModel
+ - remove gl.Fog, gl.FogCoord, gl.SecondaryColor
+ - remove gl.PointSize, gl.PointSprite, gl.PointParameter
+ - remove gl.TexEnv, gl.MultiTexEnv
  - support local-space tracking for dynamic lights added via Spring.Add{Map,Model}Light
    the light-definition table should contain a 'localSpace = true' entry to enable this
 

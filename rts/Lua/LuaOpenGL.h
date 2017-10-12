@@ -203,9 +203,9 @@ class LuaOpenGL {
 		static int StencilOpSeparate(lua_State* L);
 
 		static int LineWidth(lua_State* L);
-		static int PointSize(lua_State* L);
-		static int PointSprite(lua_State* L);
-		static int PointParameter(lua_State* L);
+		static int PointSize(lua_State* L) { return 0; }
+		static int PointSprite(lua_State* L) { return 0; }
+		static int PointParameter(lua_State* L) { return 0; }
 
 		static int Texture(lua_State* L);
 		static int CreateTexture(lua_State* L);
@@ -216,9 +216,9 @@ class LuaOpenGL {
 		static int RenderToTexture(lua_State* L);
 		static int GenerateMipmap(lua_State* L);
 		static int ActiveTexture(lua_State* L);
-		static int TexEnv(lua_State* L);
+		static int TexEnv(lua_State* L) { return 0; }
 		static int TexGen(lua_State* L);
-		static int MultiTexEnv(lua_State* L);
+		static int MultiTexEnv(lua_State* L) { return 0; }
 		static int MultiTexGen(lua_State* L);
 
 		static int Shape(lua_State* L);
