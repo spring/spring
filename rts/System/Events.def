@@ -125,6 +125,7 @@
 	SETUP_EVENT(DrawWater,                MANAGED_BIT | UNSYNCED_BIT)
 	SETUP_EVENT(DrawSky,                  MANAGED_BIT | UNSYNCED_BIT)
 	SETUP_EVENT(DrawSun,                  MANAGED_BIT | UNSYNCED_BIT)
+	SETUP_EVENT(DrawTrees,                MANAGED_BIT | UNSYNCED_BIT)
 	SETUP_EVENT(DrawWorld,                MANAGED_BIT | UNSYNCED_BIT)
 	SETUP_EVENT(DrawWorldPreUnit,         MANAGED_BIT | UNSYNCED_BIT)
 	SETUP_EVENT(DrawWorldPreParticles,    MANAGED_BIT | UNSYNCED_BIT)

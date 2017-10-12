@@ -252,6 +252,7 @@ class CEventHandler
 		void DrawWater();
 		void DrawSky();
 		void DrawSun();
+		void DrawTrees();
 		void DrawWorld();
 		void DrawWorldPreUnit();
 		void DrawWorldPreParticles();

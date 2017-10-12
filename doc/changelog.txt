@@ -24,6 +24,7 @@ Lua:
  - add Spring.GetVidMemUsage to LuaUnsyncedRead
  - add DrawSky and DrawSun callins; available when a map has no skybox defined
  - add DrawWater callin
+ - add DrawTrees callin (enabled by /drawtrees 2; supersedes engine rendering)
  - remove gl.Light, gl.Lighting, gl.Material, gl.ShadeModel
  - support local-space tracking for dynamic lights added via Spring.Add{Map,Model}Light
    the light-definition table should contain a 'localSpace = true' entry to enable this
@@ -42,8 +43,8 @@ Misc:
  - remove Adv{Map,Unit}Shading config-settings
  - remove ForceDisableShaders config-setting
  - remove Use{V,P}BO config-settings
- - mandate GLSL support
  - remove LuaShaders config-setting
+ - mandate GLSL support
  - change PitchAdjust config-setting from a boolean to an integer
    0 disables, 1 scales pitch by the square root of game speed, 2
    scales linearly with game speed

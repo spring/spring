@@ -2,8 +2,8 @@
 
 
 #include "ITreeDrawer.h"
-#include "NullTreeDrawer.h"
 #include "AdvTreeDrawer.h"
+#include "NullTreeDrawer.h"
 #include "Map/ReadMap.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
@@ -18,7 +18,7 @@
 #include "System/myMath.h"
 
 CONFIG(int, TreeRadius)
-	.defaultValue(int(5.5f * 256))
+	.defaultValue(1250) // elmos before density reduction
 	.headlessValue(0)
 	.minimumValue(0);
 
@@ -26,7 +26,8 @@ ITreeDrawer* treeDrawer = nullptr;
 
 
 ITreeDrawer::ITreeDrawer(): CEventClient("[ITreeDrawer]", 314444, false)
-	, drawTrees(true)
+	, defDrawTrees(true)
+	, luaDrawTrees(false)
 	, wireFrameMode(false)
 {
 	eventHandler.AddClient(this);
@@ -41,7 +42,7 @@ ITreeDrawer::ITreeDrawer(): CEventClient("[ITreeDrawer]", 314444, false)
 
 ITreeDrawer::~ITreeDrawer() {
 	eventHandler.RemoveClient(this);
-	configHandler->Set("TreeRadius", int(baseTreeDistance * 256));
+	configHandler->Set("TreeRadius", int(baseTreeDistance));
 }
 
 
@@ -60,9 +61,10 @@ void ITreeDrawer::AddTrees()
 	for (const int featureID: featureHandler->GetActiveFeatureIDs()) {
 		const CFeature* f = featureHandler->GetFeature(featureID);
 
-		if (f->def->drawType >= DRAWTYPE_TREE) {
-			AddTree(f->id, f->def->drawType - 1, f->pos, 1.0f);
-		}
+		if (f->def->drawType < DRAWTYPE_TREE)
+			continue;
+
+		AddTree(f->id, f->def->drawType - 1, f->pos, 1.0f);
 	}
 }
 
@@ -94,23 +96,6 @@ void ITreeDrawer::DeleteTree(int treeID, const float3& pos)
 	ResetPos(pos);
 }
 
-
-void ITreeDrawer::ResetPos(const float3& pos)
-{
-	const int x = (int)(pos.x / TREE_SQUARE_SIZE / SQUARE_SIZE);
-	const int y = (int)(pos.z / TREE_SQUARE_SIZE / SQUARE_SIZE);
-
-	TreeSquareStruct& tss = treeSquares[y * treesX + x];
-
-	if (tss.dispList != 0) {
-		delDispLists.push_back(tss.dispList);
-		tss.dispList = 0;
-	}
-	if (tss.farDispList != 0) {
-		delDispLists.push_back(tss.farDispList);
-		tss.farDispList = 0;
-	}
-}
 
 
 ITreeDrawer* ITreeDrawer::GetTreeDrawer()
@@ -173,7 +158,13 @@ void ITreeDrawer::ResetState() const {
 
 void ITreeDrawer::Draw()
 {
-	if (!drawTrees)
+	if (luaDrawTrees) {
+		// bypass engine rendering
+		eventHandler.DrawTrees();
+		return;
+	}
+
+	if (!defDrawTrees)
 		return;
 
 	SetupState();
@@ -181,12 +172,17 @@ void ITreeDrawer::Draw()
 	ResetState();
 }
 
-void ITreeDrawer::Update()
+void ITreeDrawer::DrawShadow()
 {
-	for (auto i = delDispLists.begin(); i != delDispLists.end(); ++i) {
-		glDeleteLists(*i, 1);
+	if (luaDrawTrees) {
+		eventHandler.DrawTrees();
+		return;
 	}
-	delDispLists.clear();
+
+	if (!defDrawTrees)
+		return;
+
+	DrawShadowPass();
 }
 
 

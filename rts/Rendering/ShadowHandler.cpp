@@ -333,7 +333,7 @@ void CShadowHandler::DrawShadowPasses()
 			eventHandler.DrawWorldShadow();
 
 			if ((shadowGenBits & SHADOWGEN_BIT_TREE) != 0) {
-				treeDrawer->DrawShadowPass();
+				treeDrawer->DrawShadow();
 				grassDrawer->DrawShadow();
 			}
 

@@ -11,6 +11,7 @@ public:
 	CNullTreeDrawer() {}
 
 	void DrawPass() override {}
+	void DrawShadowPass() override {}
 	void Update() override {}
 };
 

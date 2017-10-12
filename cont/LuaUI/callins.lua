@@ -69,6 +69,7 @@ CallInsList = {
 	"DrawWater",
 	"DrawSky",
 	"DrawSun",
+	"DrawTrees",
 	"DrawWorld",
 	"DrawWorldPreUnit",
 	"DrawWorldPreParticles",

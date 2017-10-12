@@ -1279,6 +1279,12 @@ function widgetHandler:DrawSun()
   end
 end
 
+function widgetHandler:DrawTrees()
+  for _,w in ripairs(self.DrawTreesList) do
+    w:DrawTrees()
+  end
+end
+
 function widgetHandler:DrawWorld()
   for _,w in ripairs(self.DrawWorldList) do
     w:DrawWorld()

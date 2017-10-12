@@ -126,6 +126,7 @@ CALLIN_LIST = {
 	"DrawWater",
 	"DrawSky",
 	"DrawSun",
+	"DrawTrees",
 	"DrawWorld",
 	"DrawWorldPreUnit",
 	"DrawWorldPreParticles",

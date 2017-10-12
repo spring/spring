@@ -1269,11 +1269,32 @@ public:
 
 class DrawTreesActionExecutor : public IUnsyncedActionExecutor {
 public:
-	DrawTreesActionExecutor() : IUnsyncedActionExecutor("DrawTrees", "Enable/Disable engine-tree rendering") {}
+	DrawTreesActionExecutor() : IUnsyncedActionExecutor("DrawTrees", "Enable/Disable tree rendering") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		InverseOrSetBool(treeDrawer->DrawTreesRef(), action.GetArgs());
-		LogSystemStatus("engine-tree rendering", treeDrawer->DrawTreesRef());
+		const char* strs[] = {"disabled", "enabled"};
+
+		switch ((action.GetArgs()).empty()? -1: atoi((action.GetArgs()).c_str())) {
+			case -1: {
+				treeDrawer->DefDrawTreesRef() = !treeDrawer->DefDrawTreesRef();
+				treeDrawer->LuaDrawTreesRef() = !treeDrawer->LuaDrawTreesRef();
+			} break;
+			case 0: {
+				treeDrawer->DefDrawTreesRef() = false;
+				treeDrawer->LuaDrawTreesRef() = false;
+			} break;
+			case 1: {
+				treeDrawer->DefDrawTreesRef() = true;
+				treeDrawer->LuaDrawTreesRef() = false;
+			} break;
+			case 2: {
+				treeDrawer->DefDrawTreesRef() = false;
+				treeDrawer->LuaDrawTreesRef() = true;
+			} break;
+			default: {} break;
+		}
+
+		LOG("{engine, Lua} tree rendering {%s, %s}", strs[treeDrawer->DefDrawTreesRef()], strs[treeDrawer->LuaDrawTreesRef()]);
 		return true;
 	}
 };

@@ -25,12 +25,13 @@ public:
 	void SetupState() const;
 	void ResetState() const;
 	void Draw();
+	void DrawShadow();
 
 	virtual void DrawPass() = 0;
-	virtual void DrawShadowPass() {}
-	virtual void Update() = 0;
+	virtual void DrawShadowPass() = 0;
+	virtual void Update() {}
 
-	virtual void ResetPos(const float3& pos);
+	virtual void ResetPos(const float3& pos) {}
 	virtual void AddTree(int treeID, int treeType, const float3& pos, float size);
 	virtual void DeleteTree(int treeID, const float3& pos);
 	virtual void AddFallingTree(int treeID, int treeType, const float3& pos, const float3& dir) {}
@@ -50,7 +51,8 @@ public:
 	int NumTreesX() const { return treesX; }
 	int NumTreesY() const { return treesY; }
 
-	bool& DrawTreesRef() { return drawTrees; }
+	bool& DefDrawTreesRef() { return defDrawTrees; }
+	bool& LuaDrawTreesRef() { return luaDrawTrees; }
 	bool& WireFrameModeRef() { return wireFrameMode; }
 
 	void RenderFeatureCreated(const CFeature* feature);
@@ -69,28 +71,11 @@ public:
 	};
 
 	struct TreeSquareStruct {
-		TreeSquareStruct()
-			: dispList(0)
-			, farDispList(0)
-			, lastSeen(0)
-			, lastSeenFar(0)
-			, viewVector(UpVector)
-		{}
-
-		unsigned int dispList;
-		unsigned int farDispList;
-
-		int lastSeen;
-		int lastSeenFar;
-
-		float3 viewVector;
-
 		// all trees within this tree-square
 		std::vector<TreeStruct> trees;
 	};
 
 	std::vector<TreeSquareStruct> treeSquares;
-	std::vector<GLuint> delDispLists;
 
 private:
 	void AddTrees();
@@ -103,7 +88,8 @@ protected:
 	int treesY;
 	int nTrees;
 
-	bool drawTrees;
+	bool defDrawTrees;
+	bool luaDrawTrees;
 	bool wireFrameMode;
 
 };
