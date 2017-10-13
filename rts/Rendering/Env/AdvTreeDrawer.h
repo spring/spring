@@ -27,7 +27,6 @@ public:
 	void ResetShadowDrawState();
 	void DrawPass() override;
 	void DrawTree(const TreeStruct& ts, int posOffsetIdx);
-	void DrawTree(const CFeature* f);
 	void DrawTree(const float3& pos, int treeType, int posOffsetIdx);
 	void Update() override;
 	void AddFallingTree(int treeID, int treeType, const float3& pos, const float3& dir) override;

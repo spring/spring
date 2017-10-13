@@ -8,7 +8,7 @@
 class CNullTreeDrawer : public ITreeDrawer
 {
 public:
-	CNullTreeDrawer() {}
+	CNullTreeDrawer(): ITreeDrawer() {}
 
 	void DrawPass() override {}
 	void DrawShadowPass() override {}

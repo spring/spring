@@ -209,15 +209,6 @@ void CAdvTreeDrawer::DrawTree(const TreeStruct& ts, int posOffsetIdx)
 	DrawTree(ts.pos, ts.type, posOffsetIdx);
 }
 
-#if 0
-void CAdvTreeDrawer::DrawTree(const CFeature* f)
-{
-	SetupDrawState();
-	DrawTree(f->pos, f->def->drawType - DRAWTYPE_TREE, 0);
-	ResetDrawState();
-}
-#endif
-
 void CAdvTreeDrawer::DrawTree(const float3& pos, int treeType, int posOffsetIdx)
 {
 	#if 0

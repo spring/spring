@@ -45,10 +45,11 @@
 #include "Rendering/FeatureDrawer.h"
 #include "Rendering/UnitDrawer.h"
 #include "Rendering/Env/ISky.h"
+#include "Rendering/Env/ITreeDrawer.h"
+#include "Rendering/Env/IWater.h"
 #include "Rendering/Env/SunLighting.h"
 #include "Rendering/Env/WaterRendering.h"
 #include "Rendering/Env/MapRendering.h"
-#include "Rendering/Env/IWater.h"
 #include "Rendering/Env/CubeMapHandler.h"
 #include "Rendering/GL/glExtra.h"
 #include "Rendering/Models/3DModel.h"
@@ -1333,8 +1334,20 @@ int LuaOpenGL::FeatureCommon(lua_State* L, bool applyTransform, bool callDrawFea
 
 	if (feature == nullptr)
 		return 0;
-	if (feature->model == nullptr)
-		return 0;
+
+	switch (feature->def->drawType) {
+		case DRAWTYPE_NONE: {
+			return 0;
+		} break;
+		case DRAWTYPE_MODEL: {
+			assert(feature->model != nullptr);
+		}; break;
+		default: {
+			// default tree; re-interpret arguments to control state setup and reset
+			treeDrawer->DrawTree(feature, luaL_optboolean(L, 2, true), luaL_optboolean(L, 3, true));
+			return 0;
+		} break;
+	}
 
 	// NOTE:
 	//   the "Raw" in FeatureRaw means "no transform", not the same
@@ -1352,11 +1365,10 @@ int LuaOpenGL::FeatureCommon(lua_State* L, bool applyTransform, bool callDrawFea
 	const RawDrawMemFunc rawDrawFuncs[2] = {&CFeatureDrawer::DrawFeatureNoTrans, &CFeatureDrawer::DrawFeatureTrans};
 	const MatDrawMemFunc matDrawFuncs[2] = {&CFeatureDrawer::DrawIndividualNoTrans, &CFeatureDrawer::DrawIndividual};
 
-	if (!useLuaMat) {
-		// "scoped" draw; this prevents any Lua-assigned
-		// material(s) from being used by the call below
+	// "scoped" draw; this prevents any Lua-assigned
+	// material(s) from being used by the call below
+	if (!useLuaMat)
 		(feature->GetLuaMaterialData())->PushLODCount(0);
-	}
 
 	if (doRawDraw) {
 		// draw with void material state
@@ -1366,9 +1378,8 @@ int LuaOpenGL::FeatureCommon(lua_State* L, bool applyTransform, bool callDrawFea
 		(featureDrawer->*matDrawFuncs[applyTransform])(feature, noLuaCall);
 	}
 
-	if (!useLuaMat) {
+	if (!useLuaMat)
 		(feature->GetLuaMaterialData())->PopLODCount();
-	}
 
 	glPopAttrib();
 	return 0;

@@ -10,10 +10,8 @@
 #include "System/float3.h"
 
 const int TREE_SQUARE_SIZE = 64;
-static const float MID_TREE_DIST_FACTOR = 1.0f;
-static const float FADE_TREE_DIST_FACTOR = 1.5f;
-static const float FAR_TREE_DIST_FACTOR = 2.0f;
 
+class CFeature;
 class ITreeDrawer : public CEventClient
 {
 public:
@@ -26,6 +24,7 @@ public:
 	void ResetState() const;
 	void Draw();
 	void DrawShadow();
+	void DrawTree(const CFeature* f, bool setupState, bool resetState);
 
 	virtual void DrawPass() = 0;
 	virtual void DrawShadowPass() = 0;

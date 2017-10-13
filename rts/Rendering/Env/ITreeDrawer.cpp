@@ -25,6 +25,23 @@ CONFIG(int, TreeRadius)
 ITreeDrawer* treeDrawer = nullptr;
 
 
+
+ITreeDrawer* ITreeDrawer::GetTreeDrawer()
+{
+	ITreeDrawer* td = nullptr;
+
+	try {
+		td = new CAdvTreeDrawer();
+	} catch (const content_error& e) {
+		LOG_L(L_ERROR, "[ITreeDrawer] exception \"%s\"; falling back to NullTreeDrawer", e.what());
+		td = new CNullTreeDrawer();
+	}
+
+	td->AddTrees();
+	return td;
+}
+
+
 ITreeDrawer::ITreeDrawer(): CEventClient("[ITreeDrawer]", 314444, false)
 	, defDrawTrees(true)
 	, luaDrawTrees(false)
@@ -60,17 +77,21 @@ void ITreeDrawer::AddTrees()
 {
 	for (const int featureID: featureHandler->GetActiveFeatureIDs()) {
 		const CFeature* f = featureHandler->GetFeature(featureID);
+		const FeatureDef* fd = f->def;
 
-		if (f->def->drawType < DRAWTYPE_TREE)
+		if (fd->drawType < DRAWTYPE_TREE)
 			continue;
 
-		AddTree(f->id, f->def->drawType - DRAWTYPE_TREE, f->pos, 1.0f);
+		AddTree(f->id, fd->drawType - DRAWTYPE_TREE, f->pos, 1.0f);
 	}
 }
 
 
 void ITreeDrawer::AddTree(int treeID, int treeType, const float3& pos, float size)
 {
+	if (treeSquares.empty())
+		return; // NullDrawer
+
 	TreeStruct ts;
 	ts.id = treeID;
 	ts.type = treeType;
@@ -87,6 +108,9 @@ void ITreeDrawer::AddTree(int treeID, int treeType, const float3& pos, float siz
 
 void ITreeDrawer::DeleteTree(int treeID, const float3& pos)
 {
+	if (treeSquares.empty())
+		return; // NullDrawer
+
 	const int treeSquareSize = SQUARE_SIZE * TREE_SQUARE_SIZE;
 	const int treeSquareIdx =
 		(((int)pos.x / (treeSquareSize))) +
@@ -98,22 +122,38 @@ void ITreeDrawer::DeleteTree(int treeID, const float3& pos)
 
 
 
-ITreeDrawer* ITreeDrawer::GetTreeDrawer()
-{
-	ITreeDrawer* td = nullptr;
+void ITreeDrawer::RenderFeatureCreated(const CFeature* feature) {
+	const FeatureDef* fd = feature->def;
 
-	try {
-		td = new CAdvTreeDrawer();
-	} catch (const content_error& e) {
-		LOG_L(L_ERROR, "[ITreeDrawer] exception \"%s\"; falling back to NullTreeDrawer", e.what());
-		assert(td == nullptr);
-	}
+	// support /give'ing tree objects
+	if (fd->drawType < DRAWTYPE_TREE)
+		return;
 
-	if (td == nullptr)
-		td = new CNullTreeDrawer();
+	AddTree(feature->id, fd->drawType - DRAWTYPE_TREE, feature->pos, 1.0f);
+}
 
-	td->AddTrees();
-	return td;
+void ITreeDrawer::FeatureMoved(const CFeature* feature, const float3& oldpos) {
+	const FeatureDef* fd = feature->def;
+
+	if (fd->drawType < DRAWTYPE_TREE)
+		return;
+
+	DeleteTree(feature->id, oldpos);
+	AddTree(feature->id, fd->drawType - DRAWTYPE_TREE, feature->pos, 1.0f);
+}
+
+void ITreeDrawer::RenderFeatureDestroyed(const CFeature* feature) {
+	const FeatureDef* fd = feature->def;
+
+	if (fd->drawType < DRAWTYPE_TREE)
+		return;
+
+	DeleteTree(feature->id, feature->pos);
+
+	if (feature->speed.SqLength2D() <= 0.25f)
+		return;
+
+	AddFallingTree(feature->id, fd->drawType - DRAWTYPE_TREE, feature->pos, feature->speed * XZVector);
 }
 
 
@@ -186,32 +226,27 @@ void ITreeDrawer::DrawShadow()
 }
 
 
+void ITreeDrawer::DrawTree(const CFeature* f, bool setupState, bool resetState)
+{
+	if (treeSquares.empty())
+		return; // NullDrawer
 
-void ITreeDrawer::RenderFeatureCreated(const CFeature* feature) {
-	// support /give'ing tree objects
-	if (feature->def->drawType < DRAWTYPE_TREE)
-		return;
+	const FeatureDef* fd = f->def;
+	CAdvTreeDrawer* atd = static_cast<CAdvTreeDrawer*>(this);
 
-	AddTree(feature->id, feature->def->drawType - DRAWTYPE_TREE, feature->pos, 1.0f);
-}
+	assert(fd->drawType >= DRAWTYPE_TREE);
 
-void ITreeDrawer::FeatureMoved(const CFeature* feature, const float3& oldpos) {
-	if (feature->def->drawType < DRAWTYPE_TREE)
-		return;
+	if (setupState) {
+		SetupState();
+		atd->SetupDrawState();
+	}
 
-	DeleteTree(feature->id, oldpos);
-	AddTree(feature->id, feature->def->drawType - DRAWTYPE_TREE, feature->pos, 1.0f);
-}
+	// TODO: check if in shadow-pass
+	atd->DrawTree(f->pos, fd->drawType, 2);
 
-void ITreeDrawer::RenderFeatureDestroyed(const CFeature* feature) {
-	if (feature->def->drawType < DRAWTYPE_TREE)
-		return;
-
-	DeleteTree(feature->id, feature->pos);
-
-	if (feature->speed.SqLength2D() <= 0.25f)
-		return;
-
-	AddFallingTree(feature->id, feature->def->drawType - DRAWTYPE_TREE, feature->pos, feature->speed * XZVector);
+	if (resetState) {
+		atd->ResetDrawState();
+		ResetState();
+	}
 }
 
