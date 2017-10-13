@@ -23,6 +23,8 @@ class LuaSyncedRead {
 		static int IsGodModeEnabled(lua_State* L);
 		static int IsDevLuaEnabled(lua_State* L);
 		static int IsEditDefsEnabled(lua_State* L);
+		static int IsNoCostEnabled(lua_State* L);
+		static int GetGlobalLos(lua_State* L);
 		static int AreHelperAIsEnabled(lua_State* L);
 		static int FixedAllies(lua_State* L);
 
