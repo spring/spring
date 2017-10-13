@@ -24,7 +24,8 @@ public:
 	void ProcessDecoys();
 	void AssignTechLevels();
 
-	bool ToggleNoCost();
+	bool GetNoCost();
+	void SetNoCost(bool value);
 
 	// NOTE: safe with unordered_map after ctor
 	const UnitDef* GetUnitDefByName(std::string name);
