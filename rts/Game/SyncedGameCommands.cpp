@@ -135,7 +135,9 @@ public:
 			" to build everything for zero resource costs", true) {}
 
 	bool Execute(const SyncedAction& action) const {
-		const bool isFree = unitDefHandler->ToggleNoCost();
+		bool isFree = unitDefHandler->GetNoCost();
+		InverseOrSetBool(isFree, action.GetArgs());
+		unitDefHandler->SetNoCost(isFree);
 		LogSystemStatus("Everything-for-free (no resource costs for building)",
 				isFree);
 		return true;
