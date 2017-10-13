@@ -7,7 +7,6 @@
 #include "Rendering/Env/ISky.h"
 #include "Rendering/Env/SunLighting.h"
 #include "Rendering/GL/myGL.h"
-#include "Rendering/GL/VertexArray.h"
 #include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/Shaders/Shader.h"
 #include "Rendering/ShadowHandler.h"
@@ -168,8 +167,7 @@ struct CAdvTreeSquareDrawer : public CReadMap::IQuadDrawer
 	void ResetState() {}
 	void DrawQuad(int x, int y)
 	{
-		ITreeDrawer::TreeSquareStruct* tss = &atd->treeSquares[(y * atd->NumTreesX()) + x];
-		CVertexArray* va = GetVertexArray();
+		const auto& tss = atd->treeSquares[(y * atd->NumTreesX()) + x].trees;
 
 		constexpr int sqrWorldSize = SQUARE_SIZE * TREE_SQUARE_SIZE;
 
@@ -180,12 +178,9 @@ struct CAdvTreeSquareDrawer : public CReadMap::IQuadDrawer
 		const float drawProb = std::min(1.0f, Square(atd->GetDrawDistance()) / sqrPos.SqDistance2D(camPos));
 
 		if (drawProb > 0.001f) {
-			va->Initialize();
-			va->EnlargeArrays(12 * tss->trees.size(), 0, VA_SIZE_T); //!alloc room for all tree vertexes
-
 			rng.SetSeed(rng.GetInitSeed());
 
-			for (const ITreeDrawer::TreeStruct& ts: tss->trees) {
+			for (const ITreeDrawer::TreeStruct& ts: tss) {
 				if (rng.NextFloat() > drawProb)
 					continue;
 
@@ -390,8 +385,7 @@ struct CAdvTreeSquareShadowPassDrawer: public CReadMap::IQuadDrawer
 	void ResetState() {}
 	void DrawQuad(int x, int y)
 	{
-		ITreeDrawer::TreeSquareStruct* tss = &atd->treeSquares[(y * atd->NumTreesX()) + x];
-		CVertexArray* va = GetVertexArray();
+		const auto& tss = atd->treeSquares[(y * atd->NumTreesX()) + x].trees;
 
 		constexpr int sqrWorldSize = SQUARE_SIZE * TREE_SQUARE_SIZE;
 
@@ -401,12 +395,9 @@ struct CAdvTreeSquareShadowPassDrawer: public CReadMap::IQuadDrawer
 		const float drawProb = std::min(1.0f, Square(atd->GetDrawDistance()) / sqrPos.SqDistance2D(camPos));
 
 		if (drawProb > 0.001f) {
-			va->Initialize();
-			va->EnlargeArrays(12 * tss->trees.size(), 0, VA_SIZE_T); //!alloc room for all tree vertexes
-
 			rng.SetSeed(rng.GetInitSeed());
 
-			for (const ITreeDrawer::TreeStruct& ts: tss->trees) {
+			for (const ITreeDrawer::TreeStruct& ts: tss) {
 				if (rng.NextFloat() > drawProb)
 					continue;
 

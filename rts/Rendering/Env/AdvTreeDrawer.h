@@ -7,7 +7,6 @@
 #include "AdvTreeGenerator.h"
 
 class CCamera;
-class CVertexArray;
 
 namespace Shader {
 	struct IProgramObject;
