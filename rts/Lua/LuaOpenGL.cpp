@@ -180,14 +180,11 @@ void LuaOpenGL::Init()
 	glNewList(resetStateList, GL_COMPILE);
 	ResetGLState();
 	glEndList();
-
-	glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
 }
 
 void LuaOpenGL::Free()
 {
 	glDeleteLists(resetStateList, 1);
-	glDisable(GL_VERTEX_PROGRAM_POINT_SIZE);
 
 	for (const OcclusionQuery* q: occlusionQueries) {
 		glDeleteQueries(1, &q->id);
@@ -400,8 +397,6 @@ void LuaOpenGL::ResetGLState()
 
 	// FIXME glViewport(gl); depends on the mode
 
-	// FIXME -- depends on the mode       glDisable(GL_FOG);
-
 	glDisable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 
@@ -430,15 +425,6 @@ void LuaOpenGL::ResetGLState()
 	glDisable(GL_CLIP_PLANE5);
 
 	glLineWidth(1.0f);
-	glPointSize(1.0f);
-
-	glDisable(GL_POINT_SPRITE);
-
-	GLfloat atten[3] = { 1.0f, 0.0f, 0.0f };
-	glPointParameterfv(GL_POINT_DISTANCE_ATTENUATION, atten);
-	glPointParameterf(GL_POINT_SIZE_MIN, 0.0f);
-	glPointParameterf(GL_POINT_SIZE_MAX, 1.0e9f); // FIXME?
-	glPointParameterf(GL_POINT_FADE_THRESHOLD_SIZE, 1.0f);
 
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 	glUseProgram(0);
@@ -457,7 +443,6 @@ const GLbitfield AttribBits =
 	GL_ENABLE_BIT       |
 	GL_LIGHTING_BIT     |
 	GL_LINE_BIT         |
-	GL_POINT_BIT        |
 	GL_POLYGON_BIT      |
 	GL_VIEWPORT_BIT;
 
@@ -1769,23 +1754,17 @@ int LuaOpenGL::BeginEnd(lua_State* L)
 	CheckDrawingEnabled(L, __func__);
 
 	const int args = lua_gettop(L); // number of arguments
-	if ((args < 2) || !lua_isfunction(L, 2)) {
-		luaL_error(L, "Incorrect arguments to gl.BeginEnd(type, func, ...)");
-	}
-	const GLuint primMode = (GLuint)luaL_checkint(L, 1);
 
-	if (primMode == GL_POINTS) {
-		WorkaroundATIPointSizeBug();
-	}
+	if ((args < 2) || !lua_isfunction(L, 2))
+		luaL_error(L, "Incorrect arguments to gl.BeginEnd(type, func, ...)");
 
 	// call the function
-	glBegin(primMode);
+	glBegin((GLuint)luaL_checkint(L, 1));
 	const int error = lua_pcall(L, (args - 2), 0, 0);
 	glEnd();
 
 	if (error != 0) {
-		LOG_L(L_ERROR, "gl.BeginEnd: error(%i) = %s",
-				error, lua_tostring(L, -1));
+		LOG_L(L_ERROR, "gl.BeginEnd: error(%i) = %s", error, lua_tostring(L, -1));
 		lua_error(L);
 	}
 	return 0;
