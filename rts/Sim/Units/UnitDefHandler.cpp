@@ -302,16 +302,18 @@ void CUnitDefHandler::SetUnitDefImage(const UnitDef* unitDef,
 	unitImage->imageSizeY = ysize;
 }
 
+bool CUnitDefHandler::GetNoCost() { return noCost; }
 
-bool CUnitDefHandler::ToggleNoCost()
+void CUnitDefHandler::SetNoCost(bool value)
 {
-	noCost = !noCost;
+	if (noCost == value)
+		return;
+
+	noCost = value;
 
 	for (int i = 1; i < unitDefs.size(); ++i) {
 		unitDefs[i].SetNoCost(noCost);
 	}
-
-	return noCost;
 }
 
 
