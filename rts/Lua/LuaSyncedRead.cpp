@@ -105,6 +105,8 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(IsGodModeEnabled);
 	REGISTER_LUA_CFUNC(IsDevLuaEnabled);
 	REGISTER_LUA_CFUNC(IsEditDefsEnabled);
+	REGISTER_LUA_CFUNC(IsNoCostEnabled);
+	REGISTER_LUA_CFUNC(GetGlobalLos);
 	REGISTER_LUA_CFUNC(AreHelperAIsEnabled);
 	REGISTER_LUA_CFUNC(FixedAllies);
 
@@ -806,6 +808,22 @@ int LuaSyncedRead::IsDevLuaEnabled(lua_State* L)
 int LuaSyncedRead::IsEditDefsEnabled(lua_State* L)
 {
 	lua_pushboolean(L, gs->editDefsEnabled);
+	return 1;
+}
+
+int LuaSyncedRead::IsNoCostEnabled(lua_State* L)
+{
+	lua_pushboolean(L, unitDefHandler->GetNoCost());
+	return 1;
+}
+
+int LuaSyncedRead::GetGlobalLos(lua_State* L)
+{
+	const int allyTeam = luaL_optint(L, 1, CLuaHandle::GetHandleReadAllyTeam(L));
+	if (!teamHandler->IsValidAllyTeam(allyTeam))
+		return 0;
+
+	lua_pushboolean(L, losHandler->globalLOS[allyTeam]);
 	return 1;
 }
 
