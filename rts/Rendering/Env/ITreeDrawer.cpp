@@ -64,7 +64,7 @@ void ITreeDrawer::AddTrees()
 		if (f->def->drawType < DRAWTYPE_TREE)
 			continue;
 
-		AddTree(f->id, f->def->drawType - 1, f->pos, 1.0f);
+		AddTree(f->id, f->def->drawType - DRAWTYPE_TREE, f->pos, 1.0f);
 	}
 }
 
@@ -192,7 +192,7 @@ void ITreeDrawer::RenderFeatureCreated(const CFeature* feature) {
 	if (feature->def->drawType < DRAWTYPE_TREE)
 		return;
 
-	AddTree(feature->id, feature->def->drawType - 1, feature->pos, 1.0f);
+	AddTree(feature->id, feature->def->drawType - DRAWTYPE_TREE, feature->pos, 1.0f);
 }
 
 void ITreeDrawer::FeatureMoved(const CFeature* feature, const float3& oldpos) {
@@ -200,7 +200,7 @@ void ITreeDrawer::FeatureMoved(const CFeature* feature, const float3& oldpos) {
 		return;
 
 	DeleteTree(feature->id, oldpos);
-	AddTree(feature->id, feature->def->drawType - 1, feature->pos, 1.0f);
+	AddTree(feature->id, feature->def->drawType - DRAWTYPE_TREE, feature->pos, 1.0f);
 }
 
 void ITreeDrawer::RenderFeatureDestroyed(const CFeature* feature) {
@@ -212,6 +212,6 @@ void ITreeDrawer::RenderFeatureDestroyed(const CFeature* feature) {
 	if (feature->speed.SqLength2D() <= 0.25f)
 		return;
 
-	AddFallingTree(feature->id, feature->def->drawType - 1, feature->pos, feature->speed * XZVector);
+	AddFallingTree(feature->id, feature->def->drawType - DRAWTYPE_TREE, feature->pos, feature->speed * XZVector);
 }
 

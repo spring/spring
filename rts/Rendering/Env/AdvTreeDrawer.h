@@ -6,6 +6,7 @@
 #include "ITreeDrawer.h"
 #include "AdvTreeGenerator.h"
 
+class CCamera;
 class CVertexArray;
 
 namespace Shader {
@@ -19,12 +20,19 @@ public:
 	~CAdvTreeDrawer();
 
 	void LoadTreeShaders();
+	void SetupDrawState();
+	void SetupDrawState(const CCamera* cam, Shader::IProgramObject* ipo);
+	void ResetDrawState();
+	void SetupShadowDrawState();
+	void SetupShadowDrawState(const CCamera* cam, Shader::IProgramObject* ipo);
+	void ResetShadowDrawState();
 	void DrawPass() override;
+	void DrawTree(const TreeStruct& ts, int posOffsetIdx);
+	void DrawTree(const CFeature* f);
+	void DrawTree(const float3& pos, int treeType, int posOffsetIdx);
 	void Update() override;
 	void AddFallingTree(int treeID, int treeType, const float3& pos, const float3& dir) override;
 	void DrawShadowPass() override;
-
-	static void DrawTreeVertexA(CVertexArray* va, float3& ftpos, float dx, float dy);
 
 	struct FallingTree {
 		int id;
@@ -39,7 +47,8 @@ private:
 	enum TreeShaderProgram {
 		TREE_PROGRAM_BASIC  = 0, // shader (V) without self-shadowing
 		TREE_PROGRAM_SHADOW = 1, // shader (V+F) with self-shadowing
-		TREE_PROGRAM_LAST   = 2
+		TREE_PROGRAM_ACTIVE = 2,
+		TREE_PROGRAM_LAST   = 3
 	};
 
 	std::array<Shader::IProgramObject*, TREE_PROGRAM_LAST> treeShaders;
