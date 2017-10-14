@@ -33,6 +33,7 @@ private:
 
 	static int DownloadArchive(lua_State* L);
 	static int AbortDownload(lua_State* L);
+	static int ScanAllDirs(lua_State* L);
 };
 
 #define luaVFSDownload (LuaVFSDownload::GetInstance())
