@@ -5,6 +5,7 @@
 
 #include "ITreeDrawer.h"
 #include "AdvTreeGenerator.h"
+#include <array>
 
 class CCamera;
 

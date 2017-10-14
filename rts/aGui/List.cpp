@@ -293,7 +293,6 @@ void List::DrawSelf()
 	/**************
 	* End insert *
 	**************/
-	gui->SetDrawMode(Gui::DrawMode::MASK);
 
 }
 

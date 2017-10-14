@@ -31,7 +31,6 @@ void TextElement::DrawSelf()
 	f->WrapInPlace(mytext, font->GetSize(), GlToPixelX(size[0]), GlToPixelY(size[1]));
 
 	font->glPrint(pos[0] + size[0] * 0.5f, pos[1] + size[1] * 0.5f, 1.0f, FONT_CENTER | FONT_VCENTER | FONT_SHADOW | FONT_SCALE | FONT_NORM | FONT_BUFFERED, mytext);
-	gui->SetDrawMode(Gui::DrawMode::MASK);
 }
 
 }
