@@ -264,7 +264,12 @@ namespace GL {
 			return ptr;
 		}
 
-		void CreateShader(size_t numObjects, size_t numUniforms, Shader::GLSLShaderObject* objects, const Shader::ShaderInput* uniforms);
+		Shader::GLSLProgramObject* CreateShader(
+			size_t numObjects,
+			size_t numUniforms,
+			Shader::GLSLShaderObject* objects,
+			const Shader::ShaderInput* uniforms
+		);
 
 		void Submit(uint32_t primType, uint32_t dataSize, uint32_t dataType);
 		void Upload(

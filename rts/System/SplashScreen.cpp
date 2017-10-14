@@ -48,14 +48,13 @@ static GL::RenderDataBuffer GetRenderDataBuffer()
 
 	GL::RenderDataBuffer::FormatShader2DT(vsBuf, vsBuf + sizeof(vsBuf), "#define SPLASH_VERT_SHADER 1", "", "", "VS");
 	GL::RenderDataBuffer::FormatShader2DT(fsBuf, fsBuf + sizeof(fsBuf), "#define SPLASH_FRAG_SHADER 1", "", "\tf_color_rgba = texture(u_tex0, v_texcoor_st);\n", "FS");
-
 	GL::RenderDataBuffer renderDataBuffer;
-	Shader::GLSLShaderObject shaderObjs[2] = {{GL_VERTEX_SHADER, &vsBuf[0]}, {GL_FRAGMENT_SHADER, &fsBuf[0]}};
-	Shader::IProgramObject* shaderProg = &renderDataBuffer.GetShader();
 
 	renderDataBuffer.Init();
 	renderDataBuffer.Upload2DT(NUM_ELEMS, NUM_INDCS, ELEMS, INDCS);
-	renderDataBuffer.CreateShader((sizeof(shaderObjs) / sizeof(shaderObjs[0])), 0, &shaderObjs[0], nullptr);
+
+	Shader::GLSLShaderObject shaderObjs[2] = {{GL_VERTEX_SHADER, &vsBuf[0]}, {GL_FRAGMENT_SHADER, &fsBuf[0]}};
+	Shader::IProgramObject* shaderProg = renderDataBuffer.CreateShader((sizeof(shaderObjs) / sizeof(shaderObjs[0])), 0, &shaderObjs[0], nullptr);
 
 	// slower than location-based SetUniform, but works without pre-initializing uniforms via CreateShader
 	// template expects a TV but argument is const TV*, tell compiler it needs to invoke matrix::operator()
@@ -81,7 +80,7 @@ void ShowSplashScreen(
 		bmp.AllocDummy({0, 0, 0, 0});
 
 	const unsigned int splashTex = bmp.CreateTexture();
-	const unsigned int fontFlags = FONT_NORM | FONT_SCALE;
+	const unsigned int fontFlags = FONT_NORM | FONT_SCALE | FONT_BUFFERED;
 
 
 	const float textWidth[3] = {
@@ -109,21 +108,17 @@ void ShowSplashScreen(
 		renderDataBuffer.Submit(GL_TRIANGLES, NUM_INDCS, GL_UNSIGNED_INT);
 		renderDataBuffer.DisableShader(); // font uses its own
 
-		font->BeginGL4();
 		font->SetTextColor(TEXT_COLOR.x, TEXT_COLOR.y, TEXT_COLOR.z, TEXT_COLOR.w);
 		font->glFormat(TEXT_COORS.x - (normWidth[0] * 0.500f), TEXT_COORS.y                                       , TEXT_COORS.z, fontFlags, FMT_STRS[0]);
 		font->glFormat(TEXT_COORS.x - (normWidth[0] * 0.475f), TEXT_COORS.y - (TEXT_COORS.w * TEXT_COORS.z * 1.0f), TEXT_COORS.z, fontFlags, FMT_STRS[1], CArchiveScanner::GetNumScannedArchives());
 		font->glFormat(TEXT_COORS.x - (normWidth[0] * 0.475f), TEXT_COORS.y - (TEXT_COORS.w * TEXT_COORS.z * 2.0f), TEXT_COORS.z, fontFlags, FMT_STRS[2], (t1 - t0).toMilliSecsf());
-		// must either skip this or force a glFinish after submit
-		// font->EndGL4();
 
 		// always render Spring's license notice
-		// font->BeginGL4();
 		font->SetOutlineColor(0.0f, 0.0f, 0.0f, 0.65f);
 		font->SetTextColor(TEXT_COLOR.x, TEXT_COLOR.y, TEXT_COLOR.z, TEXT_COLOR.w);
 		font->glFormat(TEXT_COORS.x - (normWidth[2] * 0.5f), TEXT_COORS.y * 0.5f - (TEXT_COORS.w * TEXT_COORS.z * 1.0f), TEXT_COORS.z, fontFlags | FONT_OUTLINE, FMT_STRS[3], springVersionStr.c_str());
 		font->glFormat(TEXT_COORS.x - (normWidth[1] * 0.5f), TEXT_COORS.y * 0.5f - (TEXT_COORS.w * TEXT_COORS.z * 2.0f), TEXT_COORS.z, fontFlags | FONT_OUTLINE, FMT_STRS[4]);
-		font->EndGL4();
+		font->DrawBufferedGL4();
 
 		globalRendering->SwapBuffers(true, true);
 

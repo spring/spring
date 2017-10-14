@@ -118,10 +118,6 @@ CglFont::CglFont(const std::string& fontFile, int size, int _outlineWidth, float
 : CTextWrap(fontFile, size, _outlineWidth, _outlineWeight)
 , fontPath(fontFile)
 , colorCallback(nullptr)
-, inBeginEnd(false)
-, inBeginEndGL4(false)
-, autoOutlineColor(true)
-, setColor(false)
 {
 	textColor    = white;
 	outlineColor = darkOutline;
@@ -138,10 +134,7 @@ CglFont::CglFont(const std::string& fontFile, int size, int _outlineWidth, float
 		primaryBuffer.FormatShader2DTC(fsBuf, fsBuf + sizeof(fsBuf), "", "", "\tf_color_rgba = vec4(v_color_rgba.rgb, texture(u_tex0, v_texcoor_st).a);\n", "FS");
 
 		Shader::GLSLShaderObject shaderObjs[2] = {{GL_VERTEX_SHADER, &vsBuf[0]}, {GL_FRAGMENT_SHADER, &fsBuf[0]}};
-		Shader::IProgramObject* shaderProg = &primaryBuffer.GetShader();
-
-		primaryBuffer.CreateShader((sizeof(shaderObjs) / sizeof(shaderObjs[0])), 0, &shaderObjs[0], nullptr);
-		// outlineBuffer.CreateShader((sizeof(shaderObjs) / sizeof(shaderObjs[0])), 0, &shaderObjs[0], nullptr);
+		Shader::IProgramObject* shaderProg = primaryBuffer.CreateShader((sizeof(shaderObjs) / sizeof(shaderObjs[0])), 0, &shaderObjs[0], nullptr);
 
 		shaderProg->Enable();
 		shaderProg->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
@@ -477,10 +470,10 @@ std::deque<std::string> CglFont::SplitIntoLines(const std::u8string& text)
 void CglFont::SetAutoOutlineColor(bool enable)
 {
 	if (threadSafety)
-		vaMutex.lock();
+		bufferMutex.lock();
 	autoOutlineColor = enable;
 	if (threadSafety)
-		vaMutex.unlock();
+		bufferMutex.unlock();
 }
 
 
@@ -490,7 +483,7 @@ void CglFont::SetTextColor(const float4* color)
 		color = &white;
 
 	if (threadSafety)
-		vaMutex.lock();
+		bufferMutex.lock();
 
 
 	// if between Begin and End, replace current primary color
@@ -507,7 +500,7 @@ void CglFont::SetTextColor(const float4* color)
 	textColor = *color;
 
 	if (threadSafety)
-		vaMutex.unlock();
+		bufferMutex.unlock();
 }
 
 void CglFont::SetOutlineColor(const float4* color)
@@ -516,7 +509,7 @@ void CglFont::SetOutlineColor(const float4* color)
 		color = ChooseOutlineColor(textColor);
 
 	if (threadSafety)
-		vaMutex.lock();
+		bufferMutex.lock();
 
 
 	// if between Begin and End, replace current outline color
@@ -533,7 +526,7 @@ void CglFont::SetOutlineColor(const float4* color)
 	outlineColor = *color;
 
 	if (threadSafety)
-		vaMutex.unlock();
+		bufferMutex.unlock();
 }
 
 
@@ -568,14 +561,77 @@ const float4* CglFont::ChooseOutlineColor(const float4& textColor)
 
 void CglFont::BeginGL4(Shader::IProgramObject* shader) {
 	if (threadSafety)
-		vaMutex.lock();
+		bufferMutex.lock();
 
 	if (inBeginEndGL4 || inBeginEnd) {
-		vaMutex.unlock();
+		bufferMutex.unlock();
 		return;
 	}
 
 	inBeginEndGL4 = true;
+
+	// reset write-positions
+	primaryBufferPos = primaryBufferPtr;
+	outlineBufferPos = outlineBufferPtr;
+
+	{
+		if (shader != nullptr) {
+			shader->Enable();
+		} else {
+			primaryBuffer.EnableShader();
+		}
+
+		// NOTE: FFP
+		glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
+		glDisable(GL_DEPTH_TEST);
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	}
+}
+
+void CglFont::EndGL4(Shader::IProgramObject* shader) {
+	if (!inBeginEndGL4 || inBeginEnd)
+		return;
+
+	{
+		UpdateTexture();
+
+		glEnable(GL_TEXTURE_2D);
+		glBindTexture(GL_TEXTURE_2D, GetTexture());
+
+		if (outlineBufferPos > outlineBufferPtr)
+			outlineBuffer.Submit(GL_QUADS, 0, (outlineBufferPos - outlineBufferPtr));
+		if (primaryBufferPos > primaryBufferPtr)
+			primaryBuffer.Submit(GL_QUADS, 0, (primaryBufferPos - primaryBufferPtr));
+
+		// NOTE: each {Begin,End}GL4 pair currently requires an (implicit or explicit) glFinish after Submit
+		if (pendingFinishGL4)
+			glFinish();
+
+		if (shader != nullptr) {
+			shader->Disable();
+		} else {
+			primaryBuffer.DisableShader();
+		}
+
+		glPopAttrib();
+	}
+
+	primaryBufferPos = nullptr;
+	outlineBufferPos = nullptr;
+
+	inBeginEndGL4 = false;
+	pendingFinishGL4 = false;
+
+	if (threadSafety)
+		bufferMutex.unlock();
+}
+
+
+void CglFont::DrawBufferedGL4(Shader::IProgramObject* shader)
+{
+	if (threadSafety)
+		bufferMutex.lock();
 
 	if (shader != nullptr) {
 		shader->Enable();
@@ -583,46 +639,35 @@ void CglFont::BeginGL4(Shader::IProgramObject* shader) {
 		primaryBuffer.EnableShader();
 	}
 
-	// reset write-positions
+	{
+		UpdateTexture();
+
+		glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
+		glDisable(GL_DEPTH_TEST);
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+		glEnable(GL_TEXTURE_2D);
+		glBindTexture(GL_TEXTURE_2D, GetTexture());
+
+		if (outlineBufferPos > outlineBufferPtr)
+			outlineBuffer.Submit(GL_QUADS, 0, (outlineBufferPos - outlineBufferPtr));
+		if (primaryBufferPos > primaryBufferPtr)
+			primaryBuffer.Submit(GL_QUADS, 0, (primaryBufferPos - primaryBufferPtr));
+
+		if (pendingFinishGL4)
+			glFinish();
+
+		glPopAttrib();
+	}
+
 	primaryBufferPos = primaryBufferPtr;
 	outlineBufferPos = outlineBufferPtr;
 
-	// NOTE: FFP
-	glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
-	glDisable(GL_DEPTH_TEST);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-}
-
-void CglFont::EndGL4(Shader::IProgramObject* shader) {
-	if (!inBeginEndGL4 || inBeginEnd)
-		return;
-
-	UpdateTexture();
-
-	glEnable(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, GetTexture());
-
-	if (outlineBufferPos > outlineBufferPtr)
-		outlineBuffer.Submit(GL_QUADS, 0, (outlineBufferPos - outlineBufferPtr));
-	if (primaryBufferPos > primaryBufferPtr)
-		primaryBuffer.Submit(GL_QUADS, 0, (primaryBufferPos - primaryBufferPtr));
-
-	primaryBufferPos = nullptr;
-	outlineBufferPos = nullptr;
-
-	if (shader != nullptr) {
-		shader->Disable();
-	} else {
-		primaryBuffer.DisableShader();
-	}
-
-	glPopAttrib();
-
-	inBeginEndGL4 = false;
+	pendingFinishGL4 = false;
 
 	if (threadSafety)
-		vaMutex.unlock();
+		bufferMutex.unlock();
 }
 
 
@@ -631,12 +676,12 @@ void CglFont::EndGL4(Shader::IProgramObject* shader) {
 void CglFont::Begin(const bool immediate, const bool resetColors)
 {
 	if (threadSafety)
-		vaMutex.lock();
+		bufferMutex.lock();
 
 	if (inBeginEnd || inBeginEndGL4) {
 		LOG_L(L_ERROR, "[glFont::%s] called Begin() multiple times (inBeginEnd{GL4}={%d,%d}", __func__, inBeginEnd, inBeginEndGL4);
 		if (threadSafety)
-			vaMutex.unlock();
+			bufferMutex.unlock();
 		return;
 	}
 
@@ -677,7 +722,7 @@ void CglFont::End()
 	if (va.drawIndex() == 0) {
 		glPopAttrib();
 		if (threadSafety)
-			vaMutex.unlock();
+			bufferMutex.unlock();
 		return;
 	}
 
@@ -720,7 +765,7 @@ void CglFont::End()
 	glPopAttrib();
 
 	if (threadSafety)
-		vaMutex.unlock();
+		bufferMutex.unlock();
 }
 
 
@@ -808,7 +853,7 @@ void CglFont::RenderString(float x, float y, const float& scaleX, const float& s
 		const float tx1 = tc.x1() * texScaleX;
 		const float ty1 = tc.y1() * texScaleY;
 
-		if (!inBeginEndGL4) {
+		if (!inBeginEndGL4 && !bufferedWriteGL4) {
 			va.AddVertexQ2dT(dx0, dy1, tx0, ty1);
 			va.AddVertexQ2dT(dx0, dy0, tx0, ty0);
 			va.AddVertexQ2dT(dx1, dy0, tx1, ty0);
@@ -905,7 +950,7 @@ void CglFont::RenderStringShadow(float x, float y, const float& scaleX, const fl
 		const float stx1 = stc.x1() * texScaleX;
 		const float sty1 = stc.y1() * texScaleY;
 
-		if (!inBeginEndGL4) {
+		if (!inBeginEndGL4 && !bufferedWriteGL4) {
 			// draw shadow
 			va2.AddVertexQ2dT(dx0 + shiftX - ssX, dy1 - shiftY - ssY, stx0, sty1);
 			va2.AddVertexQ2dT(dx0 + shiftX - ssX, dy0 - shiftY + ssY, stx0, sty0);
@@ -1012,7 +1057,7 @@ void CglFont::RenderStringOutlined(float x, float y, const float& scaleX, const 
 		const float stx1 = stc.x1() * texScaleX;
 		const float sty1 = stc.y1() * texScaleY;
 
-		if (!inBeginEndGL4) {
+		if (!inBeginEndGL4 && !bufferedWriteGL4) {
 			// draw outline
 			va2.AddVertexQ2dT(dx0 - shiftX, dy1 - shiftY, stx0, sty1);
 			va2.AddVertexQ2dT(dx0 - shiftX, dy0 + shiftY, stx0, sty0);
@@ -1059,9 +1104,8 @@ void CglFont::glWorldPrint(const float3& p, const float size, const std::string&
 void CglFont::glPrint(float x, float y, float s, const int options, const std::string& text)
 {
 	// s := scale or absolute size?
-	if (options & FONT_SCALE) {
+	if (options & FONT_SCALE)
 		s *= fontSize;
-	}
 
 	float sizeX = s;
 	float sizeY = s;
@@ -1088,7 +1132,7 @@ void CglFont::glPrint(float x, float y, float s, const int options, const std::s
 		y -= sizeY * GetDescender();
 	} else if (options & FONT_VCENTER) {
 		float textDescender;
-		y -= sizeY * 0.5f * GetTextHeight(text,&textDescender);
+		y -= sizeY * 0.5f * GetTextHeight(text, &textDescender);
 		y -= sizeY * 0.5f * textDescender;
 	} else if (options & FONT_TOP) {
 		y -= sizeY * GetTextHeight(text);
@@ -1097,7 +1141,7 @@ void CglFont::glPrint(float x, float y, float s, const int options, const std::s
 		y -= sizeY;
 	} else if (options & FONT_BOTTOM) {
 		float textDescender;
-		GetTextHeight(text,&textDescender);
+		GetTextHeight(text, &textDescender);
 		y -= sizeY * textDescender;
 	}
 
@@ -1110,12 +1154,19 @@ void CglFont::glPrint(float x, float y, float s, const int options, const std::s
 	baseTextColor = textColor;
 	baseOutlineColor = outlineColor;
 
+	const bool buffered = ((options & FONT_BUFFERED) != 0);
 	// immediate mode?
-	const bool immediate = !inBeginEnd && !inBeginEndGL4;
+	const bool immediate = (!inBeginEnd && !inBeginEndGL4 && !buffered);
 
-	if (immediate)
+	if (immediate) {
 		Begin(!(options & (FONT_OUTLINE | FONT_SHADOW)));
+	} else if (buffered) {
+		if (threadSafety && !inBeginEndGL4)
+			bufferMutex.lock();
 
+		bufferedWriteGL4 = !inBeginEndGL4;
+		pendingFinishGL4 |= ((options & FONT_FINISHED) != 0);
+	}
 
 	// select correct decoration RenderString function
 	if (options & FONT_OUTLINE) {
@@ -1126,13 +1177,17 @@ void CglFont::glPrint(float x, float y, float s, const int options, const std::s
 		RenderString(x, y, sizeX, sizeY, text);
 	}
 
-
-	// immediate mode?
-	if (immediate)
+	if (immediate) {
 		End();
+	} else if (buffered) {
+		bufferedWriteGL4 = false;
 
-	// reset text & outline colors (if changed via in text colorcodes)
-	SetColors(&baseTextColor,&baseOutlineColor);
+		if (threadSafety && !inBeginEndGL4)
+			bufferMutex.unlock();
+	}
+
+	// reset text & outline colors (if changed via in-text colorcodes)
+	SetColors(&baseTextColor, &baseOutlineColor);
 }
 
 void CglFont::glPrintTable(float x, float y, float s, const int options, const std::string& text)
@@ -1219,11 +1274,11 @@ void CglFont::glPrintTable(float x, float y, float s, const int options, const s
 
 	// s := scale or absolute size?
 	float ss = s;
-	if (options & FONT_SCALE) {
+	if (options & FONT_SCALE)
 		ss *= fontSize;
-	}
 
-	float sizeX = ss, sizeY = ss;
+	float sizeX = ss;
+	float sizeY = ss;
 
 	// render in normalized coords (0..1) instead of screencoords (0..~1024)
 	if (options & FONT_NORM) {
@@ -1264,8 +1319,11 @@ void CglFont::glPrintTable(float x, float y, float s, const int options, const s
 void CglFont::glFormat(float x, float y, float s, const int options, const char* fmt, ...)
 {
 	char out[512];
+
+	if (fmt == nullptr)
+		return;
+
 	va_list ap;
-	if (fmt == NULL) return;
 	va_start(ap, fmt);
 	VSNPRINTF(out, sizeof(out), fmt, ap);
 	va_end(ap);

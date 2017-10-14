@@ -16,22 +16,25 @@
 
 #undef GetCharWidth // winapi.h
 
-static const int FONT_LEFT     = 1 << 0;
-static const int FONT_RIGHT    = 1 << 1;
-static const int FONT_CENTER   = 1 << 2;
-static const int FONT_BASELINE = 1 << 3; //! align to face baseline
-static const int FONT_VCENTER  = 1 << 4;
-static const int FONT_TOP      = 1 << 5; //! align to text ascender
-static const int FONT_BOTTOM   = 1 << 6; //! align to text descender
-static const int FONT_ASCENDER = 1 << 7; //! align to face ascender
-static const int FONT_DESCENDER= 1 << 8; //! align to face descender
+static constexpr int FONT_LEFT     = 1 << 0;
+static constexpr int FONT_RIGHT    = 1 << 1;
+static constexpr int FONT_CENTER   = 1 << 2;
+static constexpr int FONT_BASELINE = 1 << 3; // align to face baseline
+static constexpr int FONT_VCENTER  = 1 << 4;
+static constexpr int FONT_TOP      = 1 << 5; // align to text ascender
+static constexpr int FONT_BOTTOM   = 1 << 6; // align to text descender
+static constexpr int FONT_ASCENDER = 1 << 7; // align to face ascender
+static constexpr int FONT_DESCENDER= 1 << 8; // align to face descender
 
-static const int FONT_OUTLINE     = 1 << 9;
-static const int FONT_SHADOW      = 1 << 10;
-static const int FONT_NORM        = 1 << 11; //! render in 0..1 space instead of 0..vsx|vsy
-static const int FONT_SCALE       = 1 << 12; //! given size argument will be treated as scaling and not absolute fontsize
+static constexpr int FONT_OUTLINE     = 1 << 9;
+static constexpr int FONT_SHADOW      = 1 << 10;
+static constexpr int FONT_NORM        = 1 << 11; // render in 0..1 space instead of 0..vsx|vsy
+static constexpr int FONT_SCALE       = 1 << 12; // given size argument will be treated as scaling and not absolute fontsize
 
-static const int FONT_NEAREST     = 1 << 13; //! round x,y render pos to nearest integer, so there is no interpolation blur for small fontsizes
+static constexpr int FONT_NEAREST     = 1 << 13; // round x,y render pos to nearest integer, so there is no interpolation blur for small fontsizes
+
+static constexpr int FONT_BUFFERED    = 1 << 14; // make glFormat append to buffer outside a {Begin,End}GL4 pair
+static constexpr int FONT_FINISHED    = 1 << 15; // make DrawBufferedGL4 force a finish
 
 
 namespace Shader {
@@ -54,10 +57,15 @@ public:
 	void Begin(const bool immediate = false, const bool resetColors = true);
 	void End();
 
+
 	void BeginGL4() { BeginGL4(&primaryBuffer.GetShader()); }
 	void EndGL4() { EndGL4(&primaryBuffer.GetShader()); }
 	void BeginGL4(Shader::IProgramObject* shader);
 	void EndGL4(Shader::IProgramObject* shader);
+
+	void DrawBufferedGL4() { DrawBufferedGL4(&primaryBuffer.GetShader()); }
+	void DrawBufferedGL4(Shader::IProgramObject* shader);
+
 
 	void glWorldPrint(const float3& p, const float size, const std::string& str);
 	/**
@@ -143,12 +151,15 @@ private:
 	VA_TYPE_2dTC* outlineBufferPos = nullptr;
 
 
-	spring::recursive_mutex vaMutex;
+	spring::recursive_mutex bufferMutex;
 
-	bool inBeginEnd;
-	bool inBeginEndGL4;
-	bool autoOutlineColor; //! auto select outline color for in-text-colorcodes
-	bool setColor; //! used for backward compability (so you can call glPrint (w/o BeginEnd and no shadow/outline!) and set the color yourself via glColor)
+	bool inBeginEnd = false; // implies bufferMutex is locked
+	bool inBeginEndGL4 = false; // implies bufferMutex is locked
+	bool bufferedWriteGL4 = false;
+	bool pendingFinishGL4 = false;
+
+	bool autoOutlineColor = false; //! auto select outline color for in-text-colorcodes
+	bool setColor = true; //! used for backward compability (so you can call glPrint (w/o BeginEnd and no shadow/outline!) and set the color yourself via glColor)
 
 	float4 textColor;
 	float4 outlineColor;

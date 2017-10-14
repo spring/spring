@@ -155,7 +155,7 @@ char* GL::RenderDataBuffer::FormatShaderType(
 }
 
 
-void GL::RenderDataBuffer::CreateShader(
+Shader::GLSLProgramObject* GL::RenderDataBuffer::CreateShader(
 	size_t numObjects,
 	size_t numUniforms,
 	Shader::GLSLShaderObject* objects,
@@ -174,6 +174,7 @@ void GL::RenderDataBuffer::CreateShader(
 	}
 
 	shader.Validate();
+	return &shader;
 }
 
 
