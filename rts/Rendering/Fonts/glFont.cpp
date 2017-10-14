@@ -128,8 +128,8 @@ CglFont::CglFont(const std::string& fontFile, int size, int _outlineWidth, float
 
 		primaryBuffer.Init(true);
 		outlineBuffer.Init(true);
-		primaryBuffer.Upload2DTC(ELEM_BUFFER_SIZE, 0,  nullptr, nullptr); // no indices
-		outlineBuffer.Upload2DTC(ELEM_BUFFER_SIZE, 0,  nullptr, nullptr);
+		primaryBuffer.Upload2DTC(4 * (ELEM_BUFFER_SIZE / QUAD_BUFFER_SIZE), 0,  nullptr, nullptr); // no indices
+		outlineBuffer.Upload2DTC(4 * (ELEM_BUFFER_SIZE / QUAD_BUFFER_SIZE), 0,  nullptr, nullptr);
 		primaryBuffer.FormatShader2DTC(vsBuf, vsBuf + sizeof(vsBuf), "#define FONT_VERT_SHADER", "", "", "VS");
 		primaryBuffer.FormatShader2DTC(fsBuf, fsBuf + sizeof(fsBuf), "", "", "\tf_color_rgba = vec4(v_color_rgba.rgb, texture(u_tex0, v_texcoor_st).a);\n", "FS");
 
