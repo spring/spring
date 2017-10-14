@@ -53,12 +53,10 @@ void Button::DrawSelf()
 	}
 
 	gui->SetColor(1.0f, 1.0f, 1.0f, 1.0f);
-	font->Begin();
 	font->SetTextColor(1.0f, 1.0f, 1.0f, opacity);
 	font->SetOutlineColor(0.0f, 0.0f, 0.0f, opacity);
-	font->glPrint(pos[0] + size[0]/2, pos[1] + size[1]/2, 1.0, FONT_CENTER | FONT_VCENTER | FONT_SHADOW | FONT_SCALE | FONT_NORM, label);
+	font->glPrint(pos[0] + size[0] * 0.5f, pos[1] + size[1] * 0.5f, 1.0, FONT_CENTER | FONT_VCENTER | FONT_SHADOW | FONT_SCALE | FONT_NORM | FONT_BUFFERED, label);
 	gui->SetDrawMode(Gui::DrawMode::MASK);
-	font->End();
 }
 
 bool Button::HandleEventSelf(const SDL_Event& ev)

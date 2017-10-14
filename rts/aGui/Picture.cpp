@@ -31,7 +31,6 @@ void Picture::Load(const std::string& _file)
 	CBitmap bmp;
 
 	if (bmp.Load(file = _file)) {
-		bmp.ReverseYAxis();
 		texture = bmp.CreateTexture();
 		return;
 	}

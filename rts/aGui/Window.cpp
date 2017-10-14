@@ -51,12 +51,11 @@ void Window::DrawSelf()
 	gui->SetColor(1.0f, 1.0f, 1.0f, opacity);
 	DrawBox(GL_LINE_LOOP);
 	// string content
-	font->Begin();
+
 	font->SetTextColor(1.0f, 1.0f, 1.0f, opacity);
 	font->SetOutlineColor(0.0f, 0.0f, 0.0f, opacity);
-	font->glPrint(pos[0] + 0.01f, pos[1] + size[1] - titleHeight * 0.5f, 1.0f, FONT_VCENTER | FONT_SCALE | FONT_SHADOW | FONT_NORM, title);
+	font->glPrint(pos[0] + 0.01f, pos[1] + size[1] - titleHeight * 0.5f, 1.0f, FONT_VCENTER | FONT_SCALE | FONT_SHADOW | FONT_NORM | FONT_BUFFERED, title);
 	gui->SetDrawMode(Gui::DrawMode::MASK);
-	font->End();
 }
 
 

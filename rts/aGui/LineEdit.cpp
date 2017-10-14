@@ -79,7 +79,7 @@ void LineEdit::DrawSelf()
 	}
 
 	font->SetTextColor(); //default
-	font->glPrint(pos[0] + 0.01, textCenter, 1.0, FONT_VCENTER | FONT_SCALE | FONT_NORM, tempText);
+	font->glPrint(pos[0] + 0.01, textCenter, 1.0, FONT_VCENTER | FONT_SCALE | FONT_NORM | FONT_BUFFERED, tempText);
 }
 
 bool LineEdit::HandleEventSelf(const SDL_Event& ev)

@@ -24,15 +24,13 @@ namespace agui
 
 Gui::Gui()
  : currentDrawMode(DrawMode::COLOR)
- , shader(nullptr)
+ , shader(shaderHandler->CreateProgramObject("[aGui::Gui]", "aGui::Gui", true))
 {
 	inputCon = input.AddHandler(std::bind(&Gui::HandleEvent, this, std::placeholders::_1));
 
-	shader = shaderHandler->CreateProgramObject("[aGui::Gui]", "aGui::Gui", true);
 	{
-		const std::string archiveName = CArchiveScanner::GetSpringBaseContentName();
-		vfsHandler->AddArchive(archiveName, false);
-		#if 0
+		vfsHandler->AddArchive(CArchiveScanner::GetSpringBaseContentName(), false);
+		#if 1
 		shader->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/GuiVertProg4.glsl", "", GL_VERTEX_SHADER));
 		shader->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/GuiFragProg4.glsl", "", GL_FRAGMENT_SHADER));
 		#else
@@ -40,30 +38,33 @@ Gui::Gui()
 		shader->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/GuiFragProg3.glsl", "", GL_FRAGMENT_SHADER));
 		#endif
 		shader->Link();
-		vfsHandler->RemoveArchive(archiveName);
+		vfsHandler->RemoveArchive(CArchiveScanner::GetSpringBaseContentName());
 	}
+	{
+		const std::string& name = shader->GetName();
+		const std::string& log = shader->GetLog();
 
-	if (!shader->IsValid()) {
-		const char* fmt = "%s-shader compilation error: %s";
-		LOG_L(L_ERROR, fmt, shader->GetName().c_str(), shader->GetLog().c_str());
-		return;
-	}
+		if (!shader->IsValid()) {
+			LOG_L(L_ERROR, "%s-shader compilation error: %s", name.c_str(), log.c_str());
+			return;
+		}
 
-	shader->Enable();
-	shader->SetUniformLocation("viewProjMatrix");
-	shader->SetUniformLocation("tex");
-	shader->SetUniformLocation("color");
-	shader->SetUniformLocation("texWeight");
+		shader->Enable();
+		shader->SetUniformLocation("viewProjMatrix");
+		shader->SetUniformLocation("tex");
+		shader->SetUniformLocation("color");
+		shader->SetUniformLocation("texWeight");
 
-	shader->SetUniformMatrix4fv(0, false, CMatrix44f::OrthoProj(0.0f, 1.0f, 0.0f, 1.0f, -1.0f, 1.0f));
-	shader->SetUniform1i(1, 0);
+		shader->SetUniformMatrix4fv(0, false, CMatrix44f::OrthoProj(0.0f, 1.0f, 0.0f, 1.0f, -1.0f, 1.0f));
+		shader->SetUniform1i(1, 0);
 
-	shader->Disable();
-	shader->Validate();
+		shader->Disable();
+		shader->Validate();
 
-	if (!shader->IsValid()) {
-		const char* fmt = "%s-shader validation error: %s";
-		LOG_L(L_ERROR, fmt, shader->GetName().c_str(), shader->GetLog().c_str());
+		if (shader->IsValid())
+			return;
+
+		LOG_L(L_ERROR, "%s-shader validation error: %s", name.c_str(), log.c_str());
 	}
 }
 
@@ -73,15 +74,6 @@ void Gui::SetColor(float r, float g, float b, float a)
 	shader->SetUniform4f(2, r, g, b, a);
 }
 
-void Gui::SetColor(const float* v)
-{
-	shader->SetUniform4fv(2, v);
-}
-
-void Gui::GuiColorCallback(const float* v)
-{
-	gui->SetColor(v);
-}
 
 void Gui::SetDrawMode(DrawMode newMode)
 {
@@ -113,46 +105,41 @@ void Gui::Draw()
 
 	shader->Enable();
 	SetColor(1.0f, 1.0f, 1.0f, 1.0f);
-	font->SetColorCallback(GuiColorCallback);
-	smallFont->SetColorCallback(GuiColorCallback);
 	SetDrawMode(DrawMode::COLOR);
 
 	for (ElList::reverse_iterator it = elements.rbegin(); it != elements.rend(); ++it) {
 		(*it).element->Draw();
 	}
 
-	font->SetColorCallback(nullptr);
-	smallFont->SetColorCallback(nullptr);
 	shader->Disable();
+	font->DrawBufferedGL4();
 }
 
 void Gui::Clean() {
-	for (ElList::iterator it = toBeAdded.begin(); it != toBeAdded.end(); ++it) {
-		bool duplicate = false;
-		for (ElList::iterator elIt = elements.begin(); elIt != elements.end(); ++elIt) {
-			if (it->element == elIt->element) {
-				LOG_L(L_DEBUG, "Gui::AddElement: skipping duplicated object");
-				duplicate = true;
-				break;
+	for (const GuiItem& item: toBeAdded) {
+		const auto iter = std::find_if(elements.cbegin(), elements.cend(), [&](const GuiItem& i) { return (item.element == i.element); });
+
+		if (iter == elements.end()) {
+			if (item.asBackground) {
+				elements.push_back(item);
+			} else {
+				elements.push_front(item);
 			}
+			continue;
 		}
-		if (!duplicate) {
-			if (it->asBackground)
-				elements.push_back(*it);
-			else
-				elements.push_front(*it);
-		}
+
+		LOG_L(L_DEBUG, "[Gui::%s] not adding duplicated object", __func__);
 	}
 	toBeAdded.clear();
 
-	for (ElList::iterator it = toBeRemoved.begin(); it != toBeRemoved.end(); ++it) {
-		for (ElList::iterator elIt = elements.begin(); elIt != elements.end(); ++elIt) {
-			if (it->element == elIt->element) {
-				delete (elIt->element);
-				elements.erase(elIt);
-				break;
-			}
-		}
+	for (const GuiItem& item: toBeRemoved) {
+		auto iter = std::find_if(elements.begin(), elements.end(), [&](const GuiItem& i) { return (item.element == i.element); });
+
+		if (iter == elements.end())
+			continue;
+
+		delete iter->element;
+		elements.erase(iter);
 	}
 	toBeRemoved.clear();
 }

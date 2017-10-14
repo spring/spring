@@ -201,7 +201,6 @@ void List::DrawSelf()
 	const float opacity = Opacity();
 	const float hf = font->GetSize() / ScaleFactor();
 
-	font->Begin();
 	font->SetTextColor(1.0f, 1.0f, 0.4f, opacity);
 
 	int nCurIndex = 0; // The item we're on
@@ -252,7 +251,7 @@ void List::DrawSelf()
 			glLineWidth(1.0f);
 		}
 
-		font->glPrint(pos[0]+borderSpacing + 0.002f, b.GetMidY() - hf * 0.15f, itemFontScale, FONT_BASELINE | FONT_SHADOW | FONT_SCALE | FONT_NORM, *ii);
+		font->glPrint(pos[0] + borderSpacing + 0.002f, b.GetMidY() - hf * 0.15f, itemFontScale, FONT_BASELINE | FONT_SHADOW | FONT_SCALE | FONT_NORM | FONT_BUFFERED, *ii);
 
 		// Up our index's
 		nCurIndex++; nDrawOffset++;
@@ -288,14 +287,13 @@ void List::DrawSelf()
 		glLineWidth(1.49f);
 		scrollbar.DrawBox(GL_LINE_LOOP);
 		glLineWidth(1.0f);
-	}
-	else
+	} else
 		scrollbar.SetSize(-1,-1);
+
 	/**************
 	* End insert *
 	**************/
 	gui->SetDrawMode(Gui::DrawMode::MASK);
-	font->End();
 
 }
 

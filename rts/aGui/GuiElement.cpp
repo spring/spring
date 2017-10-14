@@ -68,11 +68,9 @@ GuiElement::~GuiElement()
 VBO* GuiElement::GetVBO(unsigned int k) { return &quadBuffers[k][vboIndex]; }
 
 void GuiElement::DrawBox(unsigned int mode, unsigned int indx) {
-	VBO& vbo = quadBuffers[indx][vboIndex];
+	VBO& vbo = *GetVBO(indx);
 
-	#if 0
-	// disabled until font rendering uses GL4
-	vbo.Bind(GL_ARRAY_BUFFER);
+	vbo.Bind();
 
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(0, 2, GL_FLOAT, false, sizeof(VA_TYPE_2dT), VA_TYPE_OFFSET(float, 0));
@@ -90,26 +88,6 @@ void GuiElement::DrawBox(unsigned int mode, unsigned int indx) {
 	glDrawArrays(mode, 0, 4);
 	glDisableVertexAttribArray(1);
 	glDisableVertexAttribArray(0);
-
-	#else
-
-	vbo.Bind(GL_ARRAY_BUFFER);
-
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-	glVertexPointer(2, GL_FLOAT, sizeof(VA_TYPE_2dT), nullptr);
-
-	if (true || HasTexCoors()) {
-		glClientActiveTexture(GL_TEXTURE0);
-		glTexCoordPointer(2, GL_FLOAT, sizeof(VA_TYPE_2dT), nullptr);
-	}
-
-	vbo.Unbind();
-
-	glDrawArrays(mode, 0, 4);
-	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-	glDisableClientState(GL_VERTEX_ARRAY);
-	#endif
 }
 
 

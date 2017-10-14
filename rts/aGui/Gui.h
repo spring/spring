@@ -34,9 +34,7 @@ public:
 
 	bool MouseOverElement(const GuiElement*, int x, int y) const;
 	void SetColor(float r, float g, float b, float a);
-	void SetColor(const float* color);
-
-	static void GuiColorCallback(const float* color);
+	void SetColor(const float* v) { SetColor(v[0], v[1], v[2], v[3]); }
 
 	enum DrawMode {
 		COLOR          = 0,
