@@ -46,8 +46,8 @@ static GL::RenderDataBuffer GetRenderDataBuffer()
 	char vsBuf[65536];
 	char fsBuf[65536];
 
-	GL::RenderDataBuffer::FormatShader2DT(vsBuf, vsBuf + sizeof(vsBuf), "", "", "", "VS");
-	GL::RenderDataBuffer::FormatShader2DT(fsBuf, fsBuf + sizeof(fsBuf), "", "", "\tf_color_rgba = texture(u_tex0, v_texcoor_st);\n", "FS");
+	GL::RenderDataBuffer::FormatShader2DT(vsBuf, vsBuf + sizeof(vsBuf), "#define SPLASH_VERT_SHADER 1", "", "", "VS");
+	GL::RenderDataBuffer::FormatShader2DT(fsBuf, fsBuf + sizeof(fsBuf), "#define SPLASH_FRAG_SHADER 1", "", "\tf_color_rgba = texture(u_tex0, v_texcoor_st);\n", "FS");
 
 	GL::RenderDataBuffer renderDataBuffer;
 	Shader::GLSLShaderObject shaderObjs[2] = {{GL_VERTEX_SHADER, &vsBuf[0]}, {GL_FRAGMENT_SHADER, &fsBuf[0]}};
@@ -63,6 +63,7 @@ static GL::RenderDataBuffer GetRenderDataBuffer()
 	shaderProg->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
 	shaderProg->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::Identity());
 	shaderProg->SetUniform("u_tex0", 0);
+	shaderProg->Disable();
 
 	return (std::move(renderDataBuffer));
 }
@@ -106,22 +107,23 @@ void ShowSplashScreen(
 
 		renderDataBuffer.EnableShader();
 		renderDataBuffer.Submit(GL_TRIANGLES, NUM_INDCS, GL_UNSIGNED_INT);
-		renderDataBuffer.DisableShader(); // font uses FFP
+		renderDataBuffer.DisableShader(); // font uses its own
 
-		font->Begin();
+		font->BeginGL4();
 		font->SetTextColor(TEXT_COLOR.x, TEXT_COLOR.y, TEXT_COLOR.z, TEXT_COLOR.w);
 		font->glFormat(TEXT_COORS.x - (normWidth[0] * 0.500f), TEXT_COORS.y                                       , TEXT_COORS.z, fontFlags, FMT_STRS[0]);
 		font->glFormat(TEXT_COORS.x - (normWidth[0] * 0.475f), TEXT_COORS.y - (TEXT_COORS.w * TEXT_COORS.z * 1.0f), TEXT_COORS.z, fontFlags, FMT_STRS[1], CArchiveScanner::GetNumScannedArchives());
 		font->glFormat(TEXT_COORS.x - (normWidth[0] * 0.475f), TEXT_COORS.y - (TEXT_COORS.w * TEXT_COORS.z * 2.0f), TEXT_COORS.z, fontFlags, FMT_STRS[2], (t1 - t0).toMilliSecsf());
-		font->End();
+		// must either skip this or force a glFinish after submit
+		// font->EndGL4();
 
 		// always render Spring's license notice
-		font->Begin();
+		// font->BeginGL4();
 		font->SetOutlineColor(0.0f, 0.0f, 0.0f, 0.65f);
 		font->SetTextColor(TEXT_COLOR.x, TEXT_COLOR.y, TEXT_COLOR.z, TEXT_COLOR.w);
 		font->glFormat(TEXT_COORS.x - (normWidth[2] * 0.5f), TEXT_COORS.y * 0.5f - (TEXT_COORS.w * TEXT_COORS.z * 1.0f), TEXT_COORS.z, fontFlags | FONT_OUTLINE, FMT_STRS[3], springVersionStr.c_str());
 		font->glFormat(TEXT_COORS.x - (normWidth[1] * 0.5f), TEXT_COORS.y * 0.5f - (TEXT_COORS.w * TEXT_COORS.z * 2.0f), TEXT_COORS.z, fontFlags | FONT_OUTLINE, FMT_STRS[4]);
-		font->End();
+		font->EndGL4();
 
 		globalRendering->SwapBuffers(true, true);
 

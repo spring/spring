@@ -141,6 +141,8 @@ char* GL::RenderDataBuffer::FormatShaderType(
 						ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "\tv_texcoor_uv%d = a_texcoor_uv%d;\n", a.name[12] - '0', a.name[12] - '0');
 						continue;
 					}
+
+					ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "\tv_%s = a_%s;\n", a.name + 2, a.name + 2);
 				}
 			} break;
 			case 'F': {} break;
@@ -185,14 +187,21 @@ void GL::RenderDataBuffer::Upload(
 ) {
 	array.Bind();
 	elems.Bind();
-	indcs.Bind();
 	elems.New(numElems * sizeof(uint8_t), GL_STATIC_DRAW, rawElems);
-	indcs.New(numIndcs * sizeof(uint8_t), GL_STATIC_DRAW, rawIndcs);
+
+	if (numIndcs > 0) {
+		indcs.Bind();
+		indcs.New(numIndcs * sizeof(uint8_t), GL_STATIC_DRAW, rawIndcs);
+	}
 
 	EnableAttribs(numAttrs, rawAttrs);
+
 	array.Unbind();
 	elems.Unbind();
-	indcs.Unbind();
+
+	if (numIndcs > 0)
+		indcs.Unbind();
+
 	DisableAttribs(numAttrs, rawAttrs);
 }
 
@@ -201,8 +210,8 @@ void GL::RenderDataBuffer::Submit(uint32_t primType, uint32_t dataSize, uint32_t
 	array.Bind();
 
 	if (indcs.bufSize == 0) {
-		// dataSize := numElems (unique verts)
-		glDrawArrays(primType, 0, dataSize);
+		// dataSize := first elem, dataType := numElems (unique verts)
+		glDrawArrays(primType, dataSize, dataType);
 	} else {
 		// dataSize := numIndcs, dataType := GL_UNSIGNED_INT
 		assert(dataType == GL_UNSIGNED_INT);

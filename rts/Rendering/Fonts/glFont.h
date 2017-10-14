@@ -10,6 +10,7 @@
 #include "ustring.h"
 
 #include "Rendering/GL/VertexArray.h"
+#include "Rendering/GL/RenderDataBuffer.hpp"
 #include "System/float4.h"
 #include "System/Threading/SpringThreading.h"
 
@@ -33,6 +34,9 @@ static const int FONT_SCALE       = 1 << 12; //! given size argument will be tre
 static const int FONT_NEAREST     = 1 << 13; //! round x,y render pos to nearest integer, so there is no interpolation blur for small fontsizes
 
 
+namespace Shader {
+	struct IProgramObject;
+};
 
 class CglFont : public CTextWrap
 {
@@ -42,12 +46,18 @@ public:
 	static CglFont* LoadFont(const std::string& fontFile, bool small);
 	static CglFont* LoadFont(const std::string& fontFile, int size, int outlinewidth = 2, float outlineweight = 5.0f);
 
-	CglFont(const std::string& fontFile, int size, int outlinewidth, float  outlineweight);
+	CglFont(const std::string& fontFile, int size, int outlinewidth, float outlineweight);
+	~CglFont();
 
-	//! The calling of Begin() .. End() is optional,
-	//! but can increase the performance of drawing multiple strings a lot (upto 10x)
+	// calling Begin() .. End() is optional, but can increase the
+	// performance of drawing multiple strings a lot (upto 10x)
 	void Begin(const bool immediate = false, const bool resetColors = true);
 	void End();
+
+	void BeginGL4() { BeginGL4(&primaryBuffer.GetShader()); }
+	void EndGL4() { EndGL4(&primaryBuffer.GetShader()); }
+	void BeginGL4(Shader::IProgramObject* shader);
+	void EndGL4(Shader::IProgramObject* shader);
 
 	void glWorldPrint(const float3& p, const float size, const std::string& str);
 	/**
@@ -63,9 +73,9 @@ public:
 	void glFormat(float x, float y, float s, const int options, const char* fmt, ...);
 
 	void SetAutoOutlineColor(bool enable); //! auto select outline color for in-text-colorcodes
-	void SetTextColor(const float4* color = NULL);
-	void SetOutlineColor(const float4* color = NULL);
-	void SetColors(const float4* textColor = NULL, const float4* outlineColor = NULL);
+	void SetTextColor(const float4* color = nullptr);
+	void SetOutlineColor(const float4* color = nullptr);
+	void SetColors(const float4* textColor = nullptr, const float4* outlineColor = nullptr);
 	void SetTextColor(const float& r, const float& g, const float& b, const float& a) { const float4 f = float4(r,g,b,a); SetTextColor(&f); };
 	void SetOutlineColor(const float& r, const float& g, const float& b, const float& a) { const float4 f = float4(r,g,b,a); SetOutlineColor(&f); };
 
@@ -77,7 +87,7 @@ public:
 #endif
 	inline float GetTextWidth(const std::string& text) _final;
 #undef _final
-	inline float GetTextHeight(const std::string& text, float* descender = NULL, int* numLines = NULL);
+	inline float GetTextHeight(const std::string& text, float* descender = nullptr, int* numLines = nullptr);
 	inline static int GetTextNumLines(const std::string& text);
 	inline static std::string StripColorCodes(const std::string& text);
 	static std::deque<std::string> SplitIntoLines(const std::u8string&);
@@ -96,7 +106,7 @@ private:
 
 private:
 	float GetTextWidth_(const std::u8string& text);
-	float GetTextHeight_(const std::u8string& text, float* descender = NULL, int* numLines = NULL);
+	float GetTextHeight_(const std::u8string& text, float* descender = nullptr, int* numLines = nullptr);
 	static int GetTextNumLines_(const std::u8string& text);
 	static std::string StripColorCodes_(const std::u8string& text);
 
@@ -104,12 +114,13 @@ public:
 	typedef std::vector<float4> ColorMap;
 	typedef void (*ColorCallback)(const float*);
 
-	void SetColorCallback(ColorCallback cb);
+	void SetColorCallback(ColorCallback cb) { colorCallback = cb; }
 	// called from drawArrays through a callback
 	void SetNextColor();
 
 private:
 	std::string fontPath;
+
 
 	ColorMap stripTextColors;
 	ColorMap stripOutlineColors;
@@ -117,12 +128,25 @@ private:
 	ColorMap::iterator colorIterator;
 	ColorCallback colorCallback;
 
+	// used by {Begin,End}
 	CVertexArray va;
 	CVertexArray va2;
+
+
+	// used by {Begin,End}GL4
+	GL::RenderDataBuffer primaryBuffer;
+	GL::RenderDataBuffer outlineBuffer;
+
+	VA_TYPE_2dTC* primaryBufferPtr = nullptr;
+	VA_TYPE_2dTC* primaryBufferPos = nullptr;
+	VA_TYPE_2dTC* outlineBufferPtr = nullptr;
+	VA_TYPE_2dTC* outlineBufferPos = nullptr;
+
 
 	spring::recursive_mutex vaMutex;
 
 	bool inBeginEnd;
+	bool inBeginEndGL4;
 	bool autoOutlineColor; //! auto select outline color for in-text-colorcodes
 	bool setColor; //! used for backward compability (so you can call glPrint (w/o BeginEnd and no shadow/outline!) and set the color yourself via glColor)
 

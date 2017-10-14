@@ -96,7 +96,7 @@ static std::string GetShaderSource(const std::string& srcData)
 		soSource.resize(soFile.FileSize());
 		soFile.Read(&soSource[0], soFile.FileSize());
 	} else {
-		LOG_L(L_ERROR, "[%s] file \"%s\" not found", __func__, soPath.c_str());
+		LOG_L(L_ERROR, "[%s] file \"%s\" not found (srcData=%s)", __func__, soPath.c_str(), srcData.c_str());
 	}
 
 	return soSource;
@@ -140,7 +140,7 @@ namespace Shader {
 
 	bool IShaderObject::ReloadFromTextOrFile()
 	{
-		std::string newText = GetShaderSource(srcData);
+		std::string newText = std::move(GetShaderSource(srcData));
 
 		if (newText != srcText) {
 			srcText = std::move(newText);

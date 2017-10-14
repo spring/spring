@@ -147,12 +147,12 @@ namespace GL {
 
 		// must be called manually; allows {con,de}struction in global scope
 		// VAO and VBO ctors do not call GL functions for this reason either
-		void Init() {
+		void Init(bool persistent = false) {
 			if (inited)
 				return;
 
-			elems = std::move(VBO(GL_ARRAY_BUFFER));
-			indcs = std::move(VBO(GL_ELEMENT_ARRAY_BUFFER));
+			elems = std::move(VBO(GL_ARRAY_BUFFER, persistent));
+			indcs = std::move(VBO(GL_ELEMENT_ARRAY_BUFFER, persistent));
 			shader = std::move(Shader::GLSLProgramObject());
 
 			elems.Generate();
@@ -313,12 +313,38 @@ namespace GL {
 		#endif
 
 
-		template<typename T> T* MapElems() { mapped = true; return (reinterpret_cast<T*>(elems.MapBuffer())); }
-		template<typename T> T* MapIndcs() { mapped = true; return (reinterpret_cast<T*>(indcs.MapBuffer())); }
+		template<typename T> T* MapElems(bool bind, bool unbind) {
+			mapped = true;
+
+			if (bind)
+				elems.Bind();
+
+			T* ptr = reinterpret_cast<T*>(elems.MapBuffer());
+
+			if (unbind)
+				elems.Unbind();
+
+			return ptr;
+		}
+		template<typename T> T* MapIndcs(bool bind, bool unbind) {
+			mapped = true;
+
+			if (bind)
+				indcs.Bind();
+
+			T* ptr = reinterpret_cast<T*>(indcs.MapBuffer());
+
+			if (unbind)
+				indcs.Unbind();
+
+			return ptr;
+		}
 
 		void UnmapElems() { elems.UnmapBuffer(); mapped = false; }
 		void UnmapIndcs() { indcs.UnmapBuffer(); mapped = false; }
 
+		VBO& GetElems() { return elems; }
+		VBO& GetIndcs() { return indcs; }
 		Shader::GLSLProgramObject& GetShader() { return shader; }
 
 		bool IsInited() const { return inited; }
