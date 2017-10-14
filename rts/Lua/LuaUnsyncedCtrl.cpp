@@ -186,11 +186,8 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 
 //FIXME	REGISTER_LUA_CFUNC(SetShockFrontFactors);
 
-	REGISTER_LUA_CFUNC(GetConfigInt);
 	REGISTER_LUA_CFUNC(SetConfigInt);
-	REGISTER_LUA_CFUNC(GetConfigFloat);
 	REGISTER_LUA_CFUNC(SetConfigFloat);
-	REGISTER_LUA_CFUNC(GetConfigString);
 	REGISTER_LUA_CFUNC(SetConfigString);
 
 	REGISTER_LUA_CFUNC(CreateDir);
@@ -2007,25 +2004,6 @@ int LuaUnsyncedCtrl::SetLosViewColors(lua_State* L)
 
 /******************************************************************************/
 /******************************************************************************/
-
-int LuaUnsyncedCtrl::GetConfigInt(lua_State* L)
-{
-	lua_pushinteger(L, configHandler->GetIntSafe(luaL_checkstring(L, 1), luaL_optint(L, 2, 0)));
-	return 1;
-}
-
-int LuaUnsyncedCtrl::GetConfigFloat(lua_State* L)
-{
-	lua_pushnumber(L, configHandler->GetFloatSafe(luaL_checkstring(L, 1), luaL_optfloat(L, 2, 0.0f)));
-	return 1;
-}
-
-int LuaUnsyncedCtrl::GetConfigString(lua_State* L)
-{
-	lua_pushsstring(L, configHandler->GetStringSafe(luaL_checkstring(L, 1), luaL_optstring(L, 2, "")));
-	return 1;
-}
-
 
 int LuaUnsyncedCtrl::SetConfigInt(lua_State* L)
 {
