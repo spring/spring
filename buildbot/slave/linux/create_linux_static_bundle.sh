@@ -39,8 +39,6 @@ for tostripfile in ${EXECUTABLES}; do
 			else
 				echo "not stripping ${tostripfile}"
 			fi
-			# remove RPATH/RUNPATH
-			chrpath --delete ${tostripfile}
 		fi
 	fi
 done
