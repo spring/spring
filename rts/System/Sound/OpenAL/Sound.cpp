@@ -242,7 +242,7 @@ void CSound::ConfigNotify(const std::string& key, const std::string& value)
 		return;
 	}
 	if (key == "PitchAdjust") {
-		const int tempPitchAdjustMode = (std::atoi(value.c_str()) != 0);
+		const int tempPitchAdjustMode = std::atoi(value.c_str());
 
 		// reset adjustment factor if disabling
 		if (tempPitchAdjustMode == 0)
