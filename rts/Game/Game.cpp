@@ -1098,6 +1098,7 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 	const float unsyncedUpdateDeltaTime = (currentTime - lastUnsyncedUpdateTime).toSecsf();
 
 	lastDrawFrameTime = currentTime;
+	globalRendering->lastFrameStart = currentTime;
 
 	{
 		// update game timings
@@ -1107,9 +1108,8 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 		gu->gameTime += modGameDeltaTimeSecs;
 		gu->modGameTime += (modGameDeltaTimeSecs * gs->speedFactor * (1 - gs->paused));
 
-		if (playing && !gameOver) {
+		if (playing && !gameOver)
 			totalGameTime += modGameDeltaTimeSecs;
-		}
 
 		updateDeltaSeconds = modGameDeltaTimeSecs;
 	}
@@ -1141,8 +1141,7 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 	}
 
 	numDrawFrames++;
-	globalRendering->drawFrame = std::max(1U, globalRendering->drawFrame + 1);
-	globalRendering->lastFrameStart = currentTime;
+
 	// Update the interpolation coefficient (globalRendering->timeOffset)
 	if (!gs->paused && !IsLagging() && !gs->PreSimFrame() && !globalRendering->isVideoCapturing) {
 		globalRendering->weightedSpeedFactor = 0.001f * gu->simFPS;

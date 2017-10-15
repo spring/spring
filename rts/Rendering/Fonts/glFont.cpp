@@ -20,9 +20,10 @@
 #undef GetCharWidth // winapi.h
 
 // should be enough to hold all data for a given frame
-#define QUAD_BUFFER_SIZE (4 * sizeof(VA_TYPE_2dTC))
-#define ELEM_BUFFER_SIZE ((1 << 18) * QUAD_BUFFER_SIZE)
-
+#define NUM_BUFFER_ELEMS (1 << 18)
+#define NUM_BUFFER_QUADS (NUM_BUFFER_ELEMS / 4)
+#define ELEM_BUFFER_SIZE (sizeof(VA_TYPE_TC))
+#define QUAD_BUFFER_SIZE (4 * ELEM_BUFFER_SIZE)
 
 CONFIG(std::string,      FontFile).defaultValue("fonts/FreeSansBold.otf").description("Sets the font of Spring engine text.");
 CONFIG(std::string, SmallFontFile).defaultValue("fonts/FreeSansBold.otf").description("Sets the font of Spring engine small text.");
@@ -87,6 +88,7 @@ bool CglFont::LoadCustomFonts(const std::string& smallFontFile, const std::strin
 		configHandler->SetString(     "FontFile", largeFontFile);
 		configHandler->SetString("SmallFontFile", smallFontFile);
 	}
+
 	return true;
 }
 
@@ -128,10 +130,10 @@ CglFont::CglFont(const std::string& fontFile, int size, int _outlineWidth, float
 
 		primaryBuffer.Init(true);
 		outlineBuffer.Init(true);
-		primaryBuffer.Upload2DTC(4 * (ELEM_BUFFER_SIZE / QUAD_BUFFER_SIZE), 0,  nullptr, nullptr); // no indices
-		outlineBuffer.Upload2DTC(4 * (ELEM_BUFFER_SIZE / QUAD_BUFFER_SIZE), 0,  nullptr, nullptr);
-		primaryBuffer.FormatShader2DTC(vsBuf, vsBuf + sizeof(vsBuf), "#define FONT_VERT_SHADER", "", "", "VS");
-		primaryBuffer.FormatShader2DTC(fsBuf, fsBuf + sizeof(fsBuf), "", "", "\tf_color_rgba = vec4(v_color_rgba.rgb, texture(u_tex0, v_texcoor_st).a);\n", "FS");
+		primaryBuffer.UploadTC((NUM_BUFFER_ELEMS * QUAD_BUFFER_SIZE) / sizeof(VA_TYPE_TC), 0,  nullptr, nullptr); // no indices
+		outlineBuffer.UploadTC((NUM_BUFFER_ELEMS * QUAD_BUFFER_SIZE) / sizeof(VA_TYPE_TC), 0,  nullptr, nullptr);
+		primaryBuffer.FormatShaderTC(vsBuf, vsBuf + sizeof(vsBuf), "#define FONT_VERT_SHADER", "", "", "VS");
+		primaryBuffer.FormatShaderTC(fsBuf, fsBuf + sizeof(fsBuf), "", "", "\tf_color_rgba = vec4(v_color_rgba.rgb, texture(u_tex0, v_texcoor_st).a);\n", "FS");
 
 		Shader::GLSLShaderObject shaderObjs[2] = {{GL_VERTEX_SHADER, &vsBuf[0]}, {GL_FRAGMENT_SHADER, &fsBuf[0]}};
 		Shader::IProgramObject* shaderProg = primaryBuffer.CreateShader((sizeof(shaderObjs) / sizeof(shaderObjs[0])), 0, &shaderObjs[0], nullptr);
@@ -142,14 +144,16 @@ CglFont::CglFont(const std::string& fontFile, int size, int _outlineWidth, float
 		shaderProg->SetUniform("u_tex0", 0);
 		shaderProg->Disable();
 
-		primaryBufferPtr = primaryBuffer.MapElems<VA_TYPE_2dTC>(true, true);
-		primaryBufferPos = primaryBufferPtr;
+		mapBufferPtr[0] = primaryBuffer.MapElems<VA_TYPE_TC>(true, true);
+		prvBufferPos[0] = mapBufferPtr[0];
+		curBufferPos[0] = mapBufferPtr[0];
 
-		outlineBufferPtr = outlineBuffer.MapElems<VA_TYPE_2dTC>(true, true);
-		outlineBufferPos = outlineBufferPtr;
+		mapBufferPtr[1] = outlineBuffer.MapElems<VA_TYPE_TC>(true, true);
+		prvBufferPos[1] = mapBufferPtr[1];
+		curBufferPos[1] = mapBufferPtr[1];
 
-		assert(primaryBufferPtr != nullptr);
-		assert(outlineBufferPtr != nullptr);
+		assert(mapBufferPtr[0] != nullptr);
+		assert(mapBufferPtr[1] != nullptr);
 	}
 }
 
@@ -167,9 +171,10 @@ template <typename T>
 static inline int SkipColorCodes(const std::u8string& text, T pos)
 {
 	while (text[pos] == CglFont::ColorCodeIndicator) {
-		pos += 4;
-		if (pos >= text.size()) { return -1; }
+		if ((pos += 4) >= text.size())
+			return -1;
 	}
+
 	return pos;
 }
 
@@ -570,10 +575,6 @@ void CglFont::BeginGL4(Shader::IProgramObject* shader) {
 
 	inBeginEndGL4 = true;
 
-	// reset write-positions
-	primaryBufferPos = primaryBufferPtr;
-	outlineBufferPos = outlineBufferPtr;
-
 	{
 		if (shader != nullptr) {
 			shader->Enable();
@@ -599,10 +600,15 @@ void CglFont::EndGL4(Shader::IProgramObject* shader) {
 		glEnable(GL_TEXTURE_2D);
 		glBindTexture(GL_TEXTURE_2D, GetTexture());
 
-		if (outlineBufferPos > outlineBufferPtr)
-			outlineBuffer.Submit(GL_QUADS, 0, (outlineBufferPos - outlineBufferPtr));
-		if (primaryBufferPos > primaryBufferPtr)
-			primaryBuffer.Submit(GL_QUADS, 0, (primaryBufferPos - primaryBufferPtr));
+		if (curBufferPos[1] > prvBufferPos[1])
+			outlineBuffer.Submit(GL_QUADS, (prvBufferPos[1] - mapBufferPtr[1]), (curBufferPos[1] - prvBufferPos[1]));
+		if (curBufferPos[0] > prvBufferPos[0])
+			primaryBuffer.Submit(GL_QUADS, (prvBufferPos[0] - mapBufferPtr[0]), (curBufferPos[0] - prvBufferPos[0]));
+
+		// skip past the submitted data chunk; buffer should never fill up
+		// within a single frame so handling wrap-around here is pointless
+		prvBufferPos[0] = curBufferPos[0];
+		prvBufferPos[1] = curBufferPos[1];
 
 		// NOTE: each {Begin,End}GL4 pair currently requires an (implicit or explicit) glFinish after Submit
 		if (pendingFinishGL4)
@@ -617,8 +623,7 @@ void CglFont::EndGL4(Shader::IProgramObject* shader) {
 		glPopAttrib();
 	}
 
-	primaryBufferPos = nullptr;
-	outlineBufferPos = nullptr;
+	// lastDrawFrameGL4 = globalRendering->drawFrame;
 
 	inBeginEndGL4 = false;
 	pendingFinishGL4 = false;
@@ -650,10 +655,13 @@ void CglFont::DrawBufferedGL4(Shader::IProgramObject* shader)
 		glEnable(GL_TEXTURE_2D);
 		glBindTexture(GL_TEXTURE_2D, GetTexture());
 
-		if (outlineBufferPos > outlineBufferPtr)
-			outlineBuffer.Submit(GL_QUADS, 0, (outlineBufferPos - outlineBufferPtr));
-		if (primaryBufferPos > primaryBufferPtr)
-			primaryBuffer.Submit(GL_QUADS, 0, (primaryBufferPos - primaryBufferPtr));
+		if (curBufferPos[1] > prvBufferPos[1])
+			outlineBuffer.Submit(GL_QUADS, (prvBufferPos[1] - mapBufferPtr[1]), (curBufferPos[1] - prvBufferPos[1]));
+		if (curBufferPos[0] > prvBufferPos[0])
+			primaryBuffer.Submit(GL_QUADS, (prvBufferPos[0] - mapBufferPtr[0]), (curBufferPos[0] - prvBufferPos[0]));
+
+		prvBufferPos[0] = curBufferPos[0];
+		prvBufferPos[1] = curBufferPos[1];
 
 		if (pendingFinishGL4)
 			glFinish();
@@ -661,8 +669,7 @@ void CglFont::DrawBufferedGL4(Shader::IProgramObject* shader)
 		glPopAttrib();
 	}
 
-	primaryBufferPos = primaryBufferPtr;
-	outlineBufferPos = outlineBufferPtr;
+	// lastDrawFrameGL4 = globalRendering->drawFrame;
 
 	pendingFinishGL4 = false;
 
@@ -774,7 +781,7 @@ void CglFont::End()
 /*******************************************************************************/
 /*******************************************************************************/
 
-void CglFont::RenderString(float x, float y, const float& scaleX, const float& scaleY, const std::string& str)
+void CglFont::RenderString(float x, float y, float scaleX, float scaleY, const std::string& str)
 {
 	/**
 	 * NOTE:
@@ -858,19 +865,20 @@ void CglFont::RenderString(float x, float y, const float& scaleX, const float& s
 			va.AddVertexQ2dT(dx0, dy0, tx0, ty0);
 			va.AddVertexQ2dT(dx1, dy0, tx1, ty0);
 			va.AddVertexQ2dT(dx1, dy1, tx1, ty1);
-		} else {
-			assert((primaryBufferPos - primaryBufferPtr) < (ELEM_BUFFER_SIZE / QUAD_BUFFER_SIZE));
+			continue;
+		}
 
-			*(primaryBufferPos++) = {dx0, dy1, tx0, ty1, (&newColor.x)};
-			*(primaryBufferPos++) = {dx0, dy0, tx0, ty0, (&newColor.x)};
-			*(primaryBufferPos++) = {dx1, dy0, tx1, ty0, (&newColor.x)};
-			*(primaryBufferPos++) = {dx1, dy1, tx1, ty1, (&newColor.x)};
+		if (((curBufferPos[0] - mapBufferPtr[0]) / 4) < NUM_BUFFER_QUADS) {
+			*(curBufferPos[0]++) = {{dx0, dy1, textDepth.x},  tx0, ty1,  (&newColor.x)};
+			*(curBufferPos[0]++) = {{dx0, dy0, textDepth.x},  tx0, ty0,  (&newColor.x)};
+			*(curBufferPos[0]++) = {{dx1, dy0, textDepth.x},  tx1, ty0,  (&newColor.x)};
+			*(curBufferPos[0]++) = {{dx1, dy1, textDepth.x},  tx1, ty1,  (&newColor.x)};
 		}
 	} while (true);
 }
 
 
-void CglFont::RenderStringShadow(float x, float y, const float& scaleX, const float& scaleY, const std::string& str)
+void CglFont::RenderStringShadow(float x, float y, float scaleX, float scaleY, const std::string& str)
 {
 	#if 0
 	RenderString(x, y, scaleX, scaleY, str);
@@ -962,24 +970,25 @@ void CglFont::RenderStringShadow(float x, float y, const float& scaleX, const fl
 			va.AddVertexQ2dT(dx0, dy0, tx0, ty0);
 			va.AddVertexQ2dT(dx1, dy0, tx1, ty0);
 			va.AddVertexQ2dT(dx1, dy1, tx1, ty1);
-		} else {
-			assert((primaryBufferPos - primaryBufferPtr) < (ELEM_BUFFER_SIZE / QUAD_BUFFER_SIZE));
-			assert((outlineBufferPos - outlineBufferPos) < (ELEM_BUFFER_SIZE / QUAD_BUFFER_SIZE));
+			continue;
+		}
 
-			*(outlineBufferPos++) = {dx0 + shiftX - ssX, dy1 - shiftY - ssY, stx0, sty1, (&outlineColor.x)};
-			*(outlineBufferPos++) = {dx0 + shiftX - ssX, dy0 - shiftY + ssY, stx0, sty0, (&outlineColor.x)};
-			*(outlineBufferPos++) = {dx1 + shiftX + ssX, dy0 - shiftY + ssY, stx1, sty0, (&outlineColor.x)};
-			*(outlineBufferPos++) = {dx1 + shiftX + ssX, dy1 - shiftY - ssY, stx1, sty1, (&outlineColor.x)};
-
-			*(primaryBufferPos++) = {dx0, dy1, tx0, ty1, (&newColor.x)};
-			*(primaryBufferPos++) = {dx0, dy0, tx0, ty0, (&newColor.x)};
-			*(primaryBufferPos++) = {dx1, dy0, tx1, ty0, (&newColor.x)};
-			*(primaryBufferPos++) = {dx1, dy1, tx1, ty1, (&newColor.x)};
+		if (((curBufferPos[1] - mapBufferPtr[1]) / 4) < NUM_BUFFER_QUADS) {
+			*(curBufferPos[1]++) = {{dx0 + shiftX - ssX, dy1 - shiftY - ssY, textDepth.y},  stx0, sty1,  (&outlineColor.x)};
+			*(curBufferPos[1]++) = {{dx0 + shiftX - ssX, dy0 - shiftY + ssY, textDepth.y},  stx0, sty0,  (&outlineColor.x)};
+			*(curBufferPos[1]++) = {{dx1 + shiftX + ssX, dy0 - shiftY + ssY, textDepth.y},  stx1, sty0,  (&outlineColor.x)};
+			*(curBufferPos[1]++) = {{dx1 + shiftX + ssX, dy1 - shiftY - ssY, textDepth.y},  stx1, sty1,  (&outlineColor.x)};
+		}
+		if (((curBufferPos[0] - mapBufferPtr[0]) / 4) < NUM_BUFFER_QUADS) {
+			*(curBufferPos[0]++) = {{dx0, dy1, textDepth.x},  tx0, ty1,  (&newColor.x)};
+			*(curBufferPos[0]++) = {{dx0, dy0, textDepth.x},  tx0, ty0,  (&newColor.x)};
+			*(curBufferPos[0]++) = {{dx1, dy0, textDepth.x},  tx1, ty0,  (&newColor.x)};
+			*(curBufferPos[0]++) = {{dx1, dy1, textDepth.x},  tx1, ty1,  (&newColor.x)};
 		}
 	} while (true);
 }
 
-void CglFont::RenderStringOutlined(float x, float y, const float& scaleX, const float& scaleY, const std::string& str)
+void CglFont::RenderStringOutlined(float x, float y, float scaleX, float scaleY, const std::string& str)
 {
 	#if 0
 	RenderString(x, y, scaleX, scaleY, str);
@@ -1069,19 +1078,21 @@ void CglFont::RenderStringOutlined(float x, float y, const float& scaleX, const 
 			va.AddVertexQ2dT(dx0, dy0, tx0, ty0);
 			va.AddVertexQ2dT(dx1, dy0, tx1, ty0);
 			va.AddVertexQ2dT(dx1, dy1, tx1, ty1);
-		} else {
-			assert((primaryBufferPos - primaryBufferPtr) < (ELEM_BUFFER_SIZE / QUAD_BUFFER_SIZE));
-			assert((outlineBufferPos - outlineBufferPos) < (ELEM_BUFFER_SIZE / QUAD_BUFFER_SIZE));
+			continue;
+		}
 
-			*(outlineBufferPos++) = {dx0 - shiftX, dy1 - shiftY, stx0, sty1, (&outlineColor.x)};
-			*(outlineBufferPos++) = {dx0 - shiftX, dy0 + shiftY, stx0, sty0, (&outlineColor.x)};
-			*(outlineBufferPos++) = {dx1 + shiftX, dy0 + shiftY, stx1, sty0, (&outlineColor.x)};
-			*(outlineBufferPos++) = {dx1 + shiftX, dy1 - shiftY, stx1, sty1, (&outlineColor.x)};
+		if (((curBufferPos[1] - mapBufferPtr[1]) / 4) < NUM_BUFFER_QUADS) {
+			*(curBufferPos[1]++) = {{dx0 - shiftX, dy1 - shiftY, textDepth.y},  stx0, sty1,  (&outlineColor.x)};
+			*(curBufferPos[1]++) = {{dx0 - shiftX, dy0 + shiftY, textDepth.y},  stx0, sty0,  (&outlineColor.x)};
+			*(curBufferPos[1]++) = {{dx1 + shiftX, dy0 + shiftY, textDepth.y},  stx1, sty0,  (&outlineColor.x)};
+			*(curBufferPos[1]++) = {{dx1 + shiftX, dy1 - shiftY, textDepth.y},  stx1, sty1,  (&outlineColor.x)};
+		}
 
-			*(primaryBufferPos++) = {dx0, dy1, tx0, ty1, (&newColor.x)};
-			*(primaryBufferPos++) = {dx0, dy0, tx0, ty0, (&newColor.x)};
-			*(primaryBufferPos++) = {dx1, dy0, tx1, ty0, (&newColor.x)};
-			*(primaryBufferPos++) = {dx1, dy1, tx1, ty1, (&newColor.x)};
+		if (((curBufferPos[0] - mapBufferPtr[0]) / 4) < NUM_BUFFER_QUADS) {
+			*(curBufferPos[0]++) = {{dx0, dy1, textDepth.x},  tx0, ty1,  (&newColor.x)};
+			*(curBufferPos[0]++) = {{dx0, dy0, textDepth.x},  tx0, ty0,  (&newColor.x)};
+			*(curBufferPos[0]++) = {{dx1, dy0, textDepth.x},  tx1, ty0,  (&newColor.x)};
+			*(curBufferPos[0]++) = {{dx1, dy1, textDepth.x},  tx1, ty1,  (&newColor.x)};
 		}
 	} while (true);
 }
@@ -1166,6 +1177,14 @@ void CglFont::glPrint(float x, float y, float s, const int options, const std::s
 
 		bufferedWriteGL4 = !inBeginEndGL4;
 		pendingFinishGL4 |= ((options & FONT_FINISHED) != 0);
+	}
+
+	// any data that was buffered but not submitted last frame gets discarded, user error
+	if (lastPrintFrameGL4 != globalRendering->drawFrame) {
+		lastPrintFrameGL4 = globalRendering->drawFrame;
+
+		ResetBufferGL4(false);
+		ResetBufferGL4( true);
 	}
 
 	// select correct decoration RenderString function
@@ -1262,14 +1281,15 @@ void CglFont::glPrintTable(float x, float y, float s, const int options, const s
 	std::vector<float> colWidths(coltext.size(), 0.0f);
 	for (int i = 0; i < coltext.size(); ++i) {
 		float colwidth = GetTextWidth(coltext[i]);
+
 		colWidths[i] = colwidth;
 		totalWidth += colwidth;
+
 		float textDescender;
 		float textHeight = GetTextHeight(coltext[i], &textDescender);
-		if (textHeight > maxHeight)
-			maxHeight = textHeight;
-		if (textDescender < minDescender)
-			minDescender = textDescender;
+
+		maxHeight = std::max(maxHeight, textHeight);
+		minDescender = std::min(minDescender, textDescender);
 	}
 
 	// s := scale or absolute size?

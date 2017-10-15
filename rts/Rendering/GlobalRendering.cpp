@@ -537,6 +537,9 @@ void CGlobalRendering::SwapBuffers(bool allowSwapBuffers, bool clearErrors)
 	SCOPED_TIMER("Misc::SwapBuffers");
 	assert(sdlWindows[0] != nullptr);
 
+	// NB: this does not just count frames drawn by game
+	drawFrame = std::max(1u, drawFrame + 1);
+
 	// silently or verbosely clear queue at the end of every frame
 	if (clearErrors || glDebugErrors)
 		glClearErrors("GR", __func__, glDebugErrors);
