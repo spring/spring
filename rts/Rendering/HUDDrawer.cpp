@@ -124,65 +124,69 @@ void HUDDrawer::DrawCameraDirectionArrow(const CUnit* unit)
 
 void HUDDrawer::DrawWeaponStates(const CUnit* unit)
 {
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	glMatrixMode(GL_MODELVIEW);
-
 	glEnable(GL_TEXTURE_2D);
-	glColor4f(0.2f, 0.8f, 0.2f, 0.8f);
-	font->glFormat(-0.9f, 0.35f, 1.0f, FONT_SCALE | FONT_NORM, "Health: %.0f / %.0f", (float) unit->health, (float) unit->maxHealth);
 
-	if (playerHandler->Player(gu->myPlayerNum)->fpsController.mouse2) {
-		font->glPrint(-0.9f, 0.30f, 1.0f, FONT_SCALE | FONT_NORM, "Free-Fire Mode");
-	}
+	// note: font p.m. is not identity, convert xy-coors from [-1,1] to [0,1]
+	font->SetTextColor(0.2f, 0.8f, 0.2f, 0.8f);
+	font->glFormat(-0.9f * 0.5f + 0.5f, 0.35f * 0.5f + 0.5f, 1.0f, FONT_SCALE | FONT_NORM | FONT_BUFFERED, "Health: %.0f / %.0f", (float) unit->health, (float) unit->maxHealth);
+
+	if (playerHandler->Player(gu->myPlayerNum)->fpsController.mouse2)
+		font->glPrint(-0.9f * 0.5f + 0.5f, 0.30f * 0.5f + 0.5f, 1.0f, FONT_SCALE | FONT_NORM | FONT_BUFFERED, "Free-Fire Mode");
 
 	int numWeaponsToPrint = 0;
 
-	for (unsigned int a = 0; a < unit->weapons.size(); ++a) {
-		const WeaponDef* wd = unit->weapons[a]->weaponDef;
-		if (!wd->isShield) {
-			++numWeaponsToPrint;
-		}
+	for (const CWeapon* w: unit->weapons) {
+		numWeaponsToPrint += (!w->weaponDef->isShield);
 	}
 
-	if (numWeaponsToPrint > 0) {
-		// we have limited space to draw whole list of weapons
-		const float yMax = 0.25f;
-		const float yMin = 0.00f;
-		const float maxLineHeight = 0.045f;
-		const float lineHeight = std::min((yMax - yMin) / numWeaponsToPrint, maxLineHeight);
-		const float fontSize = 1.2f * (lineHeight / maxLineHeight);
-		float yPos = yMax;
+	if (numWeaponsToPrint == 0) {
+		font->DrawBufferedGL4();
+		return;
+	}
 
-		for (unsigned int a = 0; a < unit->weapons.size(); ++a) {
-			const CWeapon* w = unit->weapons[a];
-			const WeaponDef* wd = w->weaponDef;
+	// we have limited space to draw whole list of weapons
+	const float yMax = 0.25f;
+	const float yMin = 0.00f;
+	const float maxLineHeight = 0.045f;
+	const float lineHeight = std::min((yMax - yMin) / numWeaponsToPrint, maxLineHeight);
+	const float fontSize = 1.2f * (lineHeight / maxLineHeight);
+	float yPos = yMax;
 
-			if (!wd->isShield) {
-				yPos -= lineHeight;
+	for (const CWeapon* w: unit->weapons) {
+		const WeaponDef* wd = w->weaponDef;
 
-				if (wd->stockpile && !w->numStockpiled) {
-					if (w->numStockpileQued) {
-						glColor4f(0.8f, 0.2f, 0.2f, 0.8f);
-						font->glFormat(-0.9f, yPos, fontSize, FONT_SCALE | FONT_NORM, "%s: Stockpiling (%i%%)", wd->description.c_str(), int(100.0f * w->buildPercent + 0.5f));
-					}
-					else {
-						glColor4f(0.8f, 0.2f, 0.2f, 0.8f);
-						font->glFormat(-0.9f, yPos, fontSize, FONT_SCALE | FONT_NORM, "%s: No ammo", wd->description.c_str());
-					}
-				} else if (w->reloadStatus > gs->frameNum) {
-					glColor4f(0.8f, 0.2f, 0.2f, 0.8f);
-					font->glFormat(-0.9f, yPos, fontSize, FONT_SCALE | FONT_NORM, "%s: Reloading (%i%%)", wd->description.c_str(), 100 - int(100.0f * (w->reloadStatus - gs->frameNum) / int(w->reloadTime / unit->reloadSpeed) + 0.5f));
-				} else if (!w->angleGood) {
-					glColor4f(0.6f, 0.6f, 0.2f, 0.8f);
-					font->glFormat(-0.9f, yPos, fontSize, FONT_SCALE | FONT_NORM, "%s: Aiming", wd->description.c_str());
-				} else {
-					glColor4f(0.2f, 0.8f, 0.2f, 0.8f);
-					font->glFormat(-0.9f, yPos, fontSize, FONT_SCALE | FONT_NORM, "%s: Ready", wd->description.c_str());
-				}
+		if (wd->isShield)
+			continue;
+
+		yPos -= lineHeight;
+
+		if (wd->stockpile && !w->numStockpiled) {
+			if (w->numStockpileQued > 0) {
+				font->SetTextColor(0.8f, 0.2f, 0.2f, 0.8f);
+				font->glFormat(-0.9f * 0.5f + 0.5f, yPos * 0.5f + 0.5f, fontSize, FONT_SCALE | FONT_NORM | FONT_BUFFERED, "%s: Stockpiling (%i%%)", wd->description.c_str(), int(100.0f * w->buildPercent + 0.5f));
+			} else {
+				font->SetTextColor(0.8f, 0.2f, 0.2f, 0.8f);
+				font->glFormat(-0.9f * 0.5f + 0.5f, yPos * 0.5f + 0.5f, fontSize, FONT_SCALE | FONT_NORM | FONT_BUFFERED, "%s: No ammo", wd->description.c_str());
 			}
+
+			continue;
 		}
+		if (w->reloadStatus > gs->frameNum) {
+			font->SetTextColor(0.8f, 0.2f, 0.2f, 0.8f);
+			font->glFormat(-0.9f * 0.5f + 0.5f, yPos * 0.5f + 0.5f, fontSize, FONT_SCALE | FONT_NORM | FONT_BUFFERED, "%s: Reloading (%i%%)", wd->description.c_str(), 100 - int(100.0f * (w->reloadStatus - gs->frameNum) / int(w->reloadTime / unit->reloadSpeed) + 0.5f));
+			continue;
+		}
+		if (!w->angleGood) {
+			font->SetTextColor(0.6f, 0.6f, 0.2f, 0.8f);
+			font->glFormat(-0.9f * 0.5f + 0.5f, yPos * 0.5f + 0.5f, fontSize, FONT_SCALE | FONT_NORM | FONT_BUFFERED, "%s: Aiming", wd->description.c_str());
+			continue;
+		}
+
+		font->SetTextColor(0.2f, 0.8f, 0.2f, 0.8f);
+		font->glFormat(-0.9f * 0.5f + 0.5f, yPos * 0.5f + 0.5f, fontSize, FONT_SCALE | FONT_NORM | FONT_BUFFERED, "%s: Ready", wd->description.c_str());
 	}
+
+	font->DrawBufferedGL4();
 }
 
 void HUDDrawer::DrawTargetReticle(const CUnit* unit)
@@ -203,9 +207,9 @@ void HUDDrawer::DrawTargetReticle(const CUnit* unit)
 		for (unsigned int a = 0; a < unit->weapons.size(); ++a) {
 			const CWeapon* w = unit->weapons[a];
 
-			if (!w) {
+			if (w == nullptr)
 				continue;
-			}
+
 			switch (a) {
 				case 0:
 					glColor4f(0.0f, 1.0f, 0.0f, 0.7f);
@@ -276,9 +280,8 @@ void HUDDrawer::DrawTargetReticle(const CUnit* unit)
 
 void HUDDrawer::Draw(const CUnit* unit)
 {
-	if (unit == NULL || !draw) {
+	if (unit == nullptr || !draw)
 		return;
-	}
 
 	PushState();
 		glDisable(GL_DEPTH_TEST);
