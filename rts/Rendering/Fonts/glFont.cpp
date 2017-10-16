@@ -623,6 +623,7 @@ void CglFont::EndGL4(Shader::IProgramObject* shader) {
 			primaryBuffer.DisableShader();
 		}
 
+		glBindTexture(GL_TEXTURE_2D, 0);
 		glPopAttrib();
 	}
 
@@ -669,7 +670,14 @@ void CglFont::DrawBufferedGL4(Shader::IProgramObject* shader)
 		if (pendingFinishGL4)
 			glFinish();
 
+		glBindTexture(GL_TEXTURE_2D, 0);
 		glPopAttrib();
+	}
+
+	if (shader != nullptr) {
+		shader->Disable();
+	} else {
+		primaryBuffer.DisableShader();
 	}
 
 	// lastDrawFrameGL4 = globalRendering->drawFrame;
