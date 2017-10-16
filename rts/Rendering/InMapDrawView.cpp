@@ -232,17 +232,21 @@ void CInMapDrawView::Draw()
 
 	if (!visibleLabels.empty()) {
 		font->SetColors(); //! default
+		font->glWorldBegin();
 
 		//! draw point labels
-		for (std::vector<const CInMapDrawModel::MapPoint*>::const_iterator pi = visibleLabels.begin(); pi != visibleLabels.end(); ++pi) {
-			float3 pos = (*pi)->GetPos();
+		for (const CInMapDrawModel::MapPoint* point: visibleLabels) {
+			float3 pos = point->GetPos();
 			pos.y += 111.0f;
 
-			const unsigned char* color = (*pi)->IsBySpectator() ? color4::white : teamHandler->Team((*pi)->GetTeamID())->color;
-			font->SetTextColor(color[0]/255.0f, color[1]/255.0f, color[2]/255.0f, 1.0f); //FIXME (overload!)
-			font->glWorldPrint(pos, 26.0f, (*pi)->GetLabel());
+			const CTeam* team = teamHandler->Team(point->GetTeamID());
+			const unsigned char* color = point->IsBySpectator() ? color4::white : team->color;
+
+			font->SetTextColor(color[0] / 255.0f, color[1] / 255.0f, color[2] / 255.0f, 1.0f); //FIXME (overload!)
+			font->glWorldPrint(pos, 26.0f, point->GetLabel());
 		}
 
+		font->glWorldEnd();
 		visibleLabels.clear();
 	}
 

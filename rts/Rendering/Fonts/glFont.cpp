@@ -580,10 +580,12 @@ void CglFont::BeginGL4(Shader::IProgramObject* shader) {
 
 	{
 		if (shader != nullptr) {
-			shader->Enable();
+			curShader = shader;
 		} else {
-			primaryBuffer.EnableShader();
+			curShader = &(primaryBuffer.GetShader());
 		}
+
+		curShader->Enable();
 
 		// NOTE: FFP
 		glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
@@ -617,17 +619,14 @@ void CglFont::EndGL4(Shader::IProgramObject* shader) {
 		if (pendingFinishGL4)
 			glFinish();
 
-		if (shader != nullptr) {
-			shader->Disable();
-		} else {
-			primaryBuffer.DisableShader();
-		}
+		curShader->Disable();
 
 		glBindTexture(GL_TEXTURE_2D, 0);
 		glPopAttrib();
 	}
 
 	// lastDrawFrameGL4 = globalRendering->drawFrame;
+	curShader = nullptr;
 
 	inBeginEndGL4 = false;
 	pendingFinishGL4 = false;
@@ -643,10 +642,12 @@ void CglFont::DrawBufferedGL4(Shader::IProgramObject* shader)
 		bufferMutex.lock();
 
 	if (shader != nullptr) {
-		shader->Enable();
+		curShader = shader;
 	} else {
-		primaryBuffer.EnableShader();
+		curShader = &(primaryBuffer.GetShader());
 	}
+
+	curShader->Enable();
 
 	{
 		UpdateTexture();
@@ -674,13 +675,9 @@ void CglFont::DrawBufferedGL4(Shader::IProgramObject* shader)
 		glPopAttrib();
 	}
 
-	if (shader != nullptr) {
-		shader->Disable();
-	} else {
-		primaryBuffer.DisableShader();
-	}
-
+	curShader->Disable();
 	// lastDrawFrameGL4 = globalRendering->drawFrame;
+	curShader = nullptr;
 
 	pendingFinishGL4 = false;
 
@@ -1111,16 +1108,61 @@ void CglFont::RenderStringOutlined(float x, float y, float scaleX, float scaleY,
 
 
 
+void CglFont::glWorldBegin()
+{
+	if (threadSafety)
+		bufferMutex.lock();
+
+	curShader = &(primaryBuffer.GetShader());
+	curShader->Enable();
+	curShader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
+
+	UpdateTexture();
+
+	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, GetTexture());
+
+	glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
+	glDisable(GL_DEPTH_TEST);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+}
+
 void CglFont::glWorldPrint(const float3& p, const float size, const std::string& str)
 {
-	glPushMatrix();
-	glTranslatef(p.x, p.y, p.z);
-	glMultMatrixf(camera->GetBillBoardMatrix());
-	Begin(false, false);
-	glPrint(0.0f, 0.0f, size, FONT_DESCENDER | FONT_CENTER | FONT_OUTLINE, str);
-	End();
-	glPopMatrix();
+	// must be preceded by glWorldBegin
+	if (curShader == nullptr)
+		return;
+
+	const CMatrix44f& vm = camera->GetViewMatrix();
+	const CMatrix44f& bm = camera->GetBillBoardMatrix();
+
+	// TODO: simplify
+	curShader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, vm * CMatrix44f(p, RgtVector, UpVector, FwdVector) * bm);
+	glPrint(0.0f, 0.0f, size, FONT_DESCENDER | FONT_CENTER | FONT_OUTLINE | FONT_BUFFERED, str);
+
+	outlineBuffer.Submit(GL_QUADS, (prvBufferPos[1] - mapBufferPtr[1]), (curBufferPos[1] - prvBufferPos[1]));
+	primaryBuffer.Submit(GL_QUADS, (prvBufferPos[0] - mapBufferPtr[0]), (curBufferPos[0] - prvBufferPos[0]));
+
+	prvBufferPos[0] = curBufferPos[0];
+	prvBufferPos[1] = curBufferPos[1];
 }
+
+void CglFont::glWorldEnd()
+{
+	curShader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
+	curShader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::OrthoProj(0.0f, 1.0f, 0.0f, 1.0f, -1.0f, 1.0f));
+
+	glPopAttrib();
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	curShader = nullptr;
+
+	if (threadSafety)
+		bufferMutex.unlock();
+}
+
+
 
 
 void CglFont::glPrint(float x, float y, float s, const int options, const std::string& text)

@@ -76,7 +76,10 @@ public:
 	}
 
 
+	void glWorldBegin();
 	void glWorldPrint(const float3& p, const float size, const std::string& str);
+	void glWorldEnd();
+
 	/**
 	 * @param s  absolute font size, or relative scale, if option FONT_SCALE is set
 	 * @param options  FONT_SCALE | FONT_NORM |
@@ -156,6 +159,8 @@ private:
 	// used by {Begin,End}GL4
 	GL::RenderDataBuffer primaryBuffer;
 	GL::RenderDataBuffer outlineBuffer;
+
+	Shader::IProgramObject* curShader = nullptr;
 
 	VA_TYPE_TC* mapBufferPtr[2] = {nullptr, nullptr}; // {primary,outline} start-pos
 	VA_TYPE_TC* prvBufferPos[2] = {nullptr, nullptr}; // previous {primary,outline} write-pos

@@ -451,6 +451,7 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 		}
 
 		glEnd();
+		font->glWorldBegin();
 
 		for (int z = 0; z < peNumBlocks.y; z++) {
 			for (int x = 0; x < peNumBlocks.x; x++) {
@@ -501,6 +502,8 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 				}
 			}
 		}
+
+		font->glWorldEnd();
 	}
 	#endif
 
