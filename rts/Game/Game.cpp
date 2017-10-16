@@ -1400,34 +1400,34 @@ void CGame::DrawInterfaceWidgets()
 	if (hideInterface)
 		return;
 
-	smallFont->Begin();
-
 	#define KEY_FONT_FLAGS (FONT_SCALE | FONT_CENTER | FONT_NORM)
 	#define INF_FONT_FLAGS (FONT_RIGHT | FONT_SCALE | FONT_NORM | (FONT_OUTLINE * guihandler->GetOutlineFonts()))
 
 	if (showClock) {
-		const int seconds = (gs->frameNum / GAME_SPEED);
+		const int seconds = gs->frameNum / GAME_SPEED;
+		const int minutes = seconds / 60;
+
+		smallFont->SetTextColor(1.0f, 1.0f, 1.0f, 1.0f);
+
 		if (seconds < 3600) {
-			smallFont->glFormat(0.99f, 0.94f, 1.0f, INF_FONT_FLAGS, "%02i:%02i", seconds / 60, seconds % 60);
+			smallFont->glFormat(0.99f, 0.94f, 1.0f, INF_FONT_FLAGS | FONT_BUFFERED, "%02i:%02i", minutes, seconds % 60);
 		} else {
-			smallFont->glFormat(0.99f, 0.94f, 1.0f, INF_FONT_FLAGS, "%02i:%02i:%02i", seconds / 3600, (seconds / 60) % 60, seconds % 60);
+			smallFont->glFormat(0.99f, 0.94f, 1.0f, INF_FONT_FLAGS | FONT_BUFFERED, "%02i:%02i:%02i", seconds / 3600, minutes % 60, seconds % 60);
 		}
 	}
 
 	if (showFPS) {
-		const float4 yellow(1.0f, 1.0f, 0.25f, 1.0f);
-		smallFont->SetColors(&yellow,NULL);
-		smallFont->glFormat(0.99f, 0.92f, 1.0f, INF_FONT_FLAGS, "%.0f", globalRendering->FPS);
+		smallFont->SetTextColor(1.0f, 1.0f, 0.25f, 1.0f);
+		smallFont->glFormat(0.99f, 0.92f, 1.0f, INF_FONT_FLAGS | FONT_BUFFERED, "%.0f", globalRendering->FPS);
 	}
 
 	if (showSpeed) {
-		const float4 speedcol(1.0f, gs->speedFactor < gs->wantedSpeedFactor * 0.99f ? 0.25f : 1.0f, 0.25f, 1.0f);
-		smallFont->SetColors(&speedcol, NULL);
-		smallFont->glFormat(0.99f, 0.90f, 1.0f, INF_FONT_FLAGS, "%2.2f", gs->speedFactor);
+		smallFont->SetTextColor(1.0f, (gs->speedFactor < gs->wantedSpeedFactor * 0.99f)? 0.25f : 1.0f, 0.25f, 1.0f);
+		smallFont->glFormat(0.99f, 0.90f, 1.0f, INF_FONT_FLAGS | FONT_BUFFERED, "%2.2f", gs->speedFactor);
 	}
 
 	CPlayerRosterDrawer::Draw();
-	smallFont->End();
+	smallFont->DrawBufferedGL4();
 }
 
 
@@ -1493,14 +1493,13 @@ void CGame::DrawInputText()
 	}
 
 	// draw the text
-	font->Begin();
-	font->SetColors(textColor, NULL);
+	font->SetColors(textColor, nullptr);
 	if (!guihandler->GetOutlineFonts()) {
-		font->glPrint(inputTextPosX, inputTextPosY, fontSize, FONT_DESCENDER | FONT_NORM, tempstring);
+		font->glPrint(inputTextPosX, inputTextPosY, fontSize, FONT_DESCENDER | FONT_NORM | FONT_BUFFERED, tempstring);
 	} else {
-		font->glPrint(inputTextPosX, inputTextPosY, fontSize, FONT_DESCENDER | FONT_OUTLINE | FONT_NORM, tempstring);
+		font->glPrint(inputTextPosX, inputTextPosY, fontSize, FONT_DESCENDER | FONT_OUTLINE | FONT_NORM | FONT_BUFFERED, tempstring);
 	}
-	font->End();
+	font->DrawBufferedGL4();
 }
 
 
@@ -1861,20 +1860,25 @@ void CGame::EndSkip() {
 
 void CGame::DrawSkip(bool blackscreen) {
 	const int framesLeft = (skipEndFrame - gs->frameNum);
+
 	if (blackscreen) {
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 	}
-	glColor3f(0.5f, 1.0f, 0.5f);
-	font->glFormat(0.5f, 0.55f, 2.5f, FONT_CENTER | FONT_SCALE | FONT_NORM, "Skipping %.1f game seconds", skipSeconds);
-	glColor3f(1.0f, 1.0f, 1.0f);
-	font->glFormat(0.5f, 0.45f, 2.0f, FONT_CENTER | FONT_SCALE | FONT_NORM, "(%i frames left)", framesLeft);
 
-	const float ff = (float)framesLeft / (float)skipTotalFrames;
+	font->SetTextColor(0.5f, 1.0f, 0.5f, 1.0f);
+	font->glFormat(0.5f, 0.55f, 2.5f, FONT_CENTER | FONT_SCALE | FONT_NORM | FONT_BUFFERED, "Skipping %.1f game seconds", skipSeconds);
+	font->SetTextColor(1.0f, 1.0f, 1.0f, 1.0f);
+	font->glFormat(0.5f, 0.45f, 2.0f, FONT_CENTER | FONT_SCALE | FONT_NORM | FONT_BUFFERED, "(%i frames left)", framesLeft);
+	font->DrawBufferedGL4();
+
 	glDisable(GL_TEXTURE_2D);
+
 	const float b = 0.004f; // border
 	const float yn = 0.35f;
 	const float yp = 0.38f;
+	const float ff = (float)framesLeft / (float)skipTotalFrames;
+
 	glColor3f(0.2f, 0.2f, 1.0f);
 	glRectf(0.25f - b, yn - b, 0.75f + b, yp + b);
 	glColor3f(0.25f + (0.75f * ff), 1.0f - (0.75f * ff), 0.0f);

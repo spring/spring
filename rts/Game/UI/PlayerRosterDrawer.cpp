@@ -121,7 +121,7 @@ void CPlayerRosterDrawer::Draw()
 		chart.append(buf);
 	}
 
-	const int fontFlags = FONT_RIGHT | FONT_BOTTOM | FONT_SCALE | FONT_NORM | (guihandler->GetOutlineFonts() * FONT_OUTLINE);
+	const int fontFlags = FONT_RIGHT | FONT_BOTTOM | FONT_SCALE | FONT_NORM | (guihandler->GetOutlineFonts() * FONT_OUTLINE) | FONT_BUFFERED;
 
 	smallFont->SetColors();
 	smallFont->glPrintTable(1.0f - 5.0f * globalRendering->pixelX, 0.00f + 5.0f * globalRendering->pixelY, 1.0f, fontFlags, chart);
