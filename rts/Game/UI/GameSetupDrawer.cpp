@@ -53,9 +53,9 @@ GameSetupDrawer::GameSetupDrawer():
 	readyCountdown(spring_notime),
 	lastTick(spring_notime)
 {
-	if (gameSetup->startPosType == CGameSetup::StartPos_ChooseInGame && !gameSetup->hostDemo) {
+	if (gameSetup->startPosType == CGameSetup::StartPos_ChooseInGame && !gameSetup->hostDemo)
 		new CStartPosSelecter();
-	}
+
 	lctrl_pressed = false;
 }
 
@@ -132,13 +132,12 @@ void GameSetupDrawer::Draw()
 	}
 
 	// LuaUI doesn't want to draw, keep showing the box
-	if (CStartPosSelecter::GetSelector() != nullptr) {
+	if (CStartPosSelecter::GetSelector() != nullptr)
 		CStartPosSelecter::GetSelector()->ShowReadyBox(true);
-	}
 
-	font->Begin();
+
 	font->SetColors(); // default
-	font->glPrint(0.3f, 0.7f, 1.0f, FONT_OUTLINE | FONT_SCALE | FONT_NORM, startState);
+	font->glPrint(0.3f, 0.7f, 1.0f, FONT_OUTLINE | FONT_SCALE | FONT_NORM | FONT_BUFFERED, startState);
 
 	for (unsigned int a = 0; a <= numPlayers; a++) {
 		static const float4      red(1.0f, 0.2f, 0.2f, 1.0f);
@@ -183,7 +182,8 @@ void GameSetupDrawer::Draw()
 		}
 
 		font->SetColors(color, nullptr);
-		font->glPrint(xPos, yPos, fontSize, FONT_OUTLINE | FONT_NORM, name);
+		font->glPrint(xPos, yPos, fontSize, FONT_OUTLINE | FONT_NORM | FONT_BUFFERED, name);
 	}
-	font->End();
+
+	font->DrawBufferedGL4();
 }

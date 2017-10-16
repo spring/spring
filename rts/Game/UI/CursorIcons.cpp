@@ -19,24 +19,6 @@
 
 CCursorIcons cursorIcons;
 
-
-CCursorIcons::CCursorIcons()
-{
-	enabled = true;
-}
-
-
-CCursorIcons::~CCursorIcons()
-{
-}
-
-
-void CCursorIcons::Enable(bool value)
-{
-	enabled = value;
-}
-
-
 void CCursorIcons::Clear()
 {
 	icons.clear();
@@ -45,7 +27,7 @@ void CCursorIcons::Clear()
 }
 
 
-void CCursorIcons::SetCustomType(int cmdID, const string& cursor)
+void CCursorIcons::SetCustomType(int cmdID, const std::string& cursor)
 {
 	if (cursor.empty()) {
 		customTypes.erase(cmdID);
@@ -90,25 +72,31 @@ void CCursorIcons::DrawCursors()
 	glColor4f(1.0f, 1.0f, 1.0f, cmdColors.QueueIconAlpha());
 
 	int currentCmd = (icons.begin()->cmd + 1); // force the first binding
-	const CMouseCursor* currentCursor = NULL;
+	const CMouseCursor* currentCursor = nullptr;
 
 	for (auto it = icons.cbegin(); it != icons.cend(); ++it) {
 		const int command = it->cmd;
+
 		if (command != currentCmd) {
 			currentCmd = command;
 			currentCursor = GetCursor(currentCmd);
-			if (currentCursor != NULL) {
+
+			if (currentCursor != nullptr)
 				currentCursor->BindTexture();
-			}
 		}
-		if (currentCursor != NULL) {
-			const float3 winPos = camera->CalcWindowCoordinates(it->pos);
-			if (winPos.z <= 1.0f) {
-				currentCursor->DrawQuad((int)winPos.x, (int)winPos.y);
-			}
-		}
+
+		if (currentCursor == nullptr)
+			continue;
+
+		const float3 winPos = camera->CalcWindowCoordinates(it->pos);
+
+		if (winPos.z > 1.0f)
+			continue;
+
+		currentCursor->DrawQuad((int)winPos.x, (int)winPos.y);
 	}
 
+	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 	DrawTexts(); // use the same transformation
 
 	glMatrixMode(GL_PROJECTION);
@@ -124,29 +112,29 @@ void CCursorIcons::DrawTexts()
 		return;
 
 	glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
-	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 
 	const float fontScale = 1.0f;
 	const float yOffset = 50.0f * globalRendering->pixelY;
 
-	font->Begin();
 	font->SetColors(); //default
 
-	std::set<IconText>::iterator it;
-	for (it = texts.begin(); it != texts.end(); ++it) {
-		const float3 winPos = camera->CalcWindowCoordinates(it->pos);
-		if (winPos.z <= 1.0f) {
-			const float x = (winPos.x * globalRendering->pixelX);
-			const float y = (winPos.y * globalRendering->pixelY) + yOffset;
+	for (const IconText& it: texts) {
+		const float3 winPos = camera->CalcWindowCoordinates(it.pos);
 
-			if (guihandler->GetOutlineFonts()) {
-				font->glPrint(x, y, fontScale, FONT_OUTLINE | FONT_CENTER | FONT_TOP | FONT_SCALE | FONT_NORM, it->text);
-			} else {
-				font->glPrint(x, y, fontScale, FONT_SCALE | FONT_CENTER | FONT_TOP | FONT_NORM, it->text);
-			}
+		if (winPos.z > 1.0f)
+			continue;
+
+		const float x = (winPos.x * globalRendering->pixelX);
+		const float y = (winPos.y * globalRendering->pixelY) + yOffset;
+
+		if (guihandler->GetOutlineFonts()) {
+			font->glPrint(x, y, fontScale, FONT_OUTLINE | FONT_CENTER | FONT_TOP | FONT_SCALE | FONT_NORM | FONT_BUFFERED, it.text);
+		} else {
+			font->glPrint(x, y, fontScale, FONT_SCALE | FONT_CENTER | FONT_TOP | FONT_NORM | FONT_BUFFERED, it.text);
 		}
 	}
-	font->End();
+
+	font->DrawBufferedGL4();
 }
 
 
@@ -175,7 +163,7 @@ void CCursorIcons::DrawBuilds()
 
 const CMouseCursor* CCursorIcons::GetCursor(int cmd) const
 {
-	string cursorName;
+	std::string cursorName;
 
 	switch (cmd) {
 		case CMD_WAIT:            cursorName = "Wait";         break;
@@ -218,10 +206,11 @@ const CMouseCursor* CCursorIcons::GetCursor(int cmd) const
 		case CMD_AUTOREPAIRLEVEL:
 */
 		default: {
-			std::map<int, std::string>::const_iterator it = customTypes.find(cmd);
-			if (it == customTypes.end()) {
-				return NULL;
-			}
+			const auto it = customTypes.find(cmd);
+
+			if (it == customTypes.end())
+				return nullptr;
+
 			cursorName = it->second;
 		}
 	}

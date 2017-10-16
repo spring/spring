@@ -54,24 +54,23 @@ static void StringListStats(
 
 
 
-static CGameInfo* instance = NULL;
+static CGameInfo* instance = nullptr;
 
 void CGameInfo::Enable()
 {
-	if (instance == NULL) {
+	if (instance == nullptr)
 		instance = new CGameInfo;
-	}
 }
 
 void CGameInfo::Disable()
 {
 	delete instance;
-	instance = NULL;
+	instance = nullptr;
 }
 
 bool CGameInfo::IsActive()
 {
-	return (instance != NULL);
+	return (instance != nullptr);
 }
 
 
@@ -88,7 +87,7 @@ CGameInfo::CGameInfo()
 
 	char buf[1024];
 
-	if (gameSetup != NULL && gameSetup->hostDemo) {
+	if (gameSetup != nullptr && gameSetup->hostDemo) {
 		labels.push_back("Playback:");
 		values.push_back(FileSystem::GetBasename(gameSetup->demoName));
 	}
@@ -164,28 +163,27 @@ std::string CGameInfo::GetTooltip(int x,int y)
 
 bool CGameInfo::IsAbove(int x, int y)
 {
-	float mx=MouseX(x);
-	float my=MouseY(y);
+	const float mx = MouseX(x);
+	const float my = MouseY(y);
 	return InBox(mx, my, box);
 }
 
 
 bool CGameInfo::MousePress(int x, int y, int button)
 {
-	if (IsAbove(x, y)) {
-		return true;
-	}
-	return false;
+	return (IsAbove(x, y));
 }
 
 
 void CGameInfo::MouseRelease(int x, int y, int button)
 {
-	if (activeReceiver == this) {
-		if (IsAbove(x, y)) {
-			delete this;
-		}
-	}
+	if (activeReceiver != this)
+		return;
+
+	if (!IsAbove(x, y))
+	return;
+
+	delete this;
 }
 
 
@@ -233,12 +231,11 @@ void CGameInfo::Draw()
 	glDisable(GL_ALPHA_TEST);
 
 	// draw the boxes
-	int i;
 	ContainerBox b;
 	b.x1 = box.x1;
 	b.x2 = box.x2;
-	for (i = 0; i < (int)labels.size(); i++) {
-		const float colors[][4]  = {
+	for (size_t i = 0; i < labels.size(); i++) {
+		constexpr float colors[][4]  = {
 			{ 0.6f, 0.3f, 0.3f, 0.8f }, // red
 			{ 0.3f, 0.6f, 0.3f, 0.8f }, // green
 			{ 0.3f, 0.3f, 0.6f, 0.8f }  // blue
@@ -258,13 +255,13 @@ void CGameInfo::Draw()
 	}
 
 	// draw the strings
-	font->Begin();
-	for (i = 0; i < (int)labels.size(); i++) {
+	for (size_t i = 0; i < labels.size(); i++) {
 		const FontString& lfs = labels[i];
 		const FontString& vfs = values[i];
 		const float y = box.y2 - (dy * (float)(i + 1)) + yBorder;
-		font->glPrint(box.x1 + xBorder, y, 1.0f, FONT_SCALE | FONT_NORM, lfs.msg);
-		font->glPrint(box.x2 - xBorder, y, 1.0f, FONT_RIGHT | FONT_SCALE | FONT_NORM, vfs.msg);
+		font->glPrint(box.x1 + xBorder, y, 1.0f, FONT_SCALE | FONT_NORM | FONT_BUFFERED, lfs.msg);
+		font->glPrint(box.x2 - xBorder, y, 1.0f, FONT_RIGHT | FONT_SCALE | FONT_NORM | FONT_BUFFERED, vfs.msg);
 	}
-	font->End();
+
+	font->DrawBufferedGL4();
 }

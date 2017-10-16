@@ -201,34 +201,29 @@ void CShareBox::Draw()
 		glLineWidth(1);
 	}
 
-	font->Begin();
 
-	font->glPrint(box.x1 + (okBox.x1 + okBox.x2) * 0.5f, box.y1 + (okBox.y1 + okBox.y2) * 0.5f, 1, FONT_CENTER | FONT_VCENTER | FONT_SCALE | FONT_NORM, "Ok");
-	font->glPrint(box.x1 + (applyBox.x1 + applyBox.x2) * 0.5f, box.y1 + (applyBox.y1 + applyBox.y2) * 0.5f, 1, FONT_CENTER | FONT_VCENTER | FONT_SCALE | FONT_NORM, "Apply");
-	font->glPrint(box.x1 + (cancelBox.x1 + cancelBox.x2) * 0.5f, box.y1 + (cancelBox.y1 + cancelBox.y2) * 0.5f, 1, FONT_CENTER | FONT_VCENTER | FONT_SCALE | FONT_NORM, "Cancel");
+	font->glPrint(box.x1 + (okBox.x1 + okBox.x2) * 0.5f, box.y1 + (okBox.y1 + okBox.y2) * 0.5f, 1.0f, FONT_CENTER | FONT_VCENTER | FONT_SCALE | FONT_NORM | FONT_BUFFERED, "Ok");
+	font->glPrint(box.x1 + (applyBox.x1 + applyBox.x2) * 0.5f, box.y1 + (applyBox.y1 + applyBox.y2) * 0.5f, 1.0f, FONT_CENTER | FONT_VCENTER | FONT_SCALE | FONT_NORM | FONT_BUFFERED, "Apply");
+	font->glPrint(box.x1 + (cancelBox.x1 + cancelBox.x2) * 0.5f, box.y1 + (cancelBox.y1 + cancelBox.y2) * 0.5f, 1.0f, FONT_CENTER | FONT_VCENTER | FONT_SCALE | FONT_NORM | FONT_BUFFERED, "Cancel");
 
-	font->glPrint(box.x1 + 0.06f, box.y1 + 0.085f, 0.7f, FONT_SCALE | FONT_NORM, "Share selected units");
+	font->glPrint(box.x1 + 0.06f, box.y1 + 0.085f, 0.7f, FONT_SCALE | FONT_NORM | FONT_BUFFERED, "Share selected units");
 
-	font->SetTextColor(1, 1, 0.4f, 0.8f);
-	font->glPrint(box.x1 + 0.01f, box.y1 + 0.16f, 0.7f, FONT_SCALE | FONT_NORM, "Share Energy");
+	font->SetTextColor(1.0f, 1.0f, 0.4f, 0.8f);
+	font->glPrint(box.x1 + 0.01f, box.y1 + 0.16f, 0.7f, FONT_SCALE | FONT_NORM | FONT_BUFFERED, "Share Energy");
 
-	font->SetTextColor(1, 1, 1, 0.8f);
-	font->glFormat(box.x1 + 0.25f, box.y1 + 0.12f, 0.7f, FONT_SCALE | FONT_NORM, "%.0f", float(teamHandler->Team(gu->myTeam)->res.energy));
-	font->glFormat(box.x1 + 0.14f, box.y1 + 0.12f, 0.7f, FONT_SCALE | FONT_NORM, "%.0f", teamHandler->Team(gu->myTeam)->res.energy * energyShare);
+	font->SetTextColor(1.0f, 1.0f, 1.0f, 0.8f);
+	font->glFormat(box.x1 + 0.25f, box.y1 + 0.12f, 0.7f, FONT_SCALE | FONT_NORM | FONT_BUFFERED, "%.0f", float(teamHandler->Team(gu->myTeam)->res.energy));
+	font->glFormat(box.x1 + 0.14f, box.y1 + 0.12f, 0.7f, FONT_SCALE | FONT_NORM | FONT_BUFFERED, "%.0f", teamHandler->Team(gu->myTeam)->res.energy * energyShare);
 
 	font->SetTextColor(0.8f, 0.8f, 0.9f, 0.8f);
-	font->glPrint(box.x1 + 0.01f, box.y1 + 0.22f, 0.7f, FONT_SCALE | FONT_NORM, "Share Metal");
+	font->glPrint(box.x1 + 0.01f, box.y1 + 0.22f, 0.7f, FONT_SCALE | FONT_NORM | FONT_BUFFERED, "Share Metal");
 
-	font->SetTextColor(1, 1, 1, 0.8f);
-	font->glFormat(box.x1 + 0.25f, box.y1 + 0.18f, 0.7f, FONT_SCALE | FONT_NORM, "%.0f", float(teamHandler->Team(gu->myTeam)->res.metal));
-	font->glFormat(box.x1 + 0.14f, box.y1 + 0.18f, 0.7f, FONT_SCALE | FONT_NORM, "%.0f", teamHandler->Team(gu->myTeam)->res.metal * metalShare);
+	font->SetTextColor(1.0f, 1.0f, 1.0f, 0.8f);
+	font->glFormat(box.x1 + 0.25f, box.y1 + 0.18f, 0.7f, FONT_SCALE | FONT_NORM | FONT_BUFFERED, "%.0f", float(teamHandler->Team(gu->myTeam)->res.metal));
+	font->glFormat(box.x1 + 0.14f, box.y1 + 0.18f, 0.7f, FONT_SCALE | FONT_NORM | FONT_BUFFERED, "%.0f", teamHandler->Team(gu->myTeam)->res.metal * metalShare);
 
-	int teamPos = 0;
-	for(int team = startTeam; team < MAX_SHARE_TEAMS && teamPos < numTeamsDisp; ++team, ++teamPos) {
-		int actualTeam = team;
-		if (team >= gu->myTeam) {
-			actualTeam++;
-		}
+	for(int team = startTeam, teamPos = 0; team < MAX_SHARE_TEAMS && teamPos < numTeamsDisp; ++team, ++teamPos) {
+		const int actualTeam = team + (team >= gu->myTeam);
 		const float alpha = (shareTeam == actualTeam) ? 0.8f : 0.4f;
 
 		std::string teamName = teamHandler->Team(actualTeam)->GetControllerName();
@@ -250,13 +245,21 @@ void CShareBox::Draw()
 			teamName = "Gaia";
 			ally   = " <Gaia>";
 		}
-		font->glFormat(box.x1 + teamBox.x1 + 0.002f,
-		                box.y1 + teamBox.y2 - 0.025f - teamPos * 0.025f,
-		                0.7f, FONT_SCALE | FONT_NORM, "Team%i (%s)%s%s", actualTeam,
-		                teamName.c_str(), ally.c_str(), dead.c_str());
+
+		font->glFormat(
+			box.x1 + teamBox.x1 + 0.002f,
+			box.y1 + teamBox.y2 - 0.025f - teamPos * 0.025f,
+			0.7f,
+			FONT_SCALE | FONT_NORM | FONT_BUFFERED,
+			"Team%i (%s)%s%s",
+			actualTeam,
+			teamName.c_str(),
+			ally.c_str(),
+			dead.c_str()
+		);
 	}
 
-	font->End();
+	font->DrawBufferedGL4();
 
 	glEnable(GL_TEXTURE_2D);
 }

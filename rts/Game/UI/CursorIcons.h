@@ -3,27 +3,24 @@
 #ifndef CURSORICONS_H
 #define CURSORICONS_H
 
-#include <map>
 #include <set>
 #include <string>
-using std::string;
+
 #include "System/float3.h"
+#include "System/UnorderedMap.hpp"
 
 class CMouseCursor;
 
 class CCursorIcons
 {
 	public:
-		CCursorIcons();
-		~CCursorIcons();
-		
-		void Enable(bool);
+		void Enable(bool b) { enabled = b; }
 
 		inline void AddIcon(int cmd, const float3& pos);
-		inline void AddIconText(const string& text, const float3& pos);
+		inline void AddIconText(const std::string& text, const float3& pos);
 		inline void AddBuildIcon(int cmd, const float3& pos, int team, int facing);
 
-		void SetCustomType(int cmdID, const string& cursor);
+		void SetCustomType(int cmdID, const std::string& cursor);
 
 		void Draw();
 
@@ -37,7 +34,7 @@ class CCursorIcons
 
 	protected:
 	
-		bool enabled;
+		bool enabled = true;
 
 		struct Icon {
 			Icon(int c, const float3& p)
@@ -61,7 +58,7 @@ class CCursorIcons
 		};
 
 		struct IconText {
-			IconText(const string& t, const float3& p)
+			IconText(const std::string& t, const float3& p)
 			: text(t), pos(p) {}
 
 			bool operator<(const IconText& i) const
@@ -74,7 +71,7 @@ class CCursorIcons
 				if (pos.z > i.pos.z) return false;
 				return (text < i.text);
 			}
-			string text;
+			std::string text;
 			float3 pos;
 		};
 
@@ -111,35 +108,32 @@ class CCursorIcons
 		std::set<IconText> texts;
 		std::set<BuildIcon> buildIcons;
 
-		std::map<int, string> customTypes;
+		spring::unsynced_map<int, std::string> customTypes;
 };
 
 
 inline void CCursorIcons::AddIcon(int cmd, const float3& pos)
 {
-	if (enabled) {
-		Icon icon(cmd, pos);
-		icons.insert(icon);
-	}
+	if (!enabled)
+		return;
+
+	icons.emplace(cmd, pos);
 }
 
-
-inline void CCursorIcons::AddIconText(const string& text, const float3& pos)
+inline void CCursorIcons::AddIconText(const std::string& text, const float3& pos)
 {
-	if (enabled) {
-		IconText iconText(text, pos);
-		texts.insert(iconText);
-	}
+	if (!enabled)
+		return;
+
+	texts.emplace(text, pos);
 }
 
-
-inline void CCursorIcons::AddBuildIcon(int cmd, const float3& pos,
-                                       int team, int facing)
+inline void CCursorIcons::AddBuildIcon(int cmd, const float3& pos, int team, int facing)
 {
-	if (enabled) {
-		BuildIcon icon(cmd, pos, team, facing);
-		buildIcons.insert(icon);
-	}
+	if (!enabled)
+		return;
+
+	buildIcons.emplace(cmd, pos, team, facing);
 }
 
 
