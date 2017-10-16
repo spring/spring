@@ -120,6 +120,7 @@ protected:
 
 private:
 	bool isOpen = false;
+	std::string poolRootDir;
 
 	std::vector<FileData> files;
 	std::vector<FileStat> stats;
