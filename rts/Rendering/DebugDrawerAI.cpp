@@ -270,7 +270,6 @@ void DebugDrawerAI::Graph::Draw() {
 		va->DrawArrayC(GL_LINE_STRIP);
 
 		if (scale.y > 0.0f && scale.x > 0.0f) {
-			font->Begin();
 			font->SetTextColor(0.25f, 0.25f, 0.25f, 1.0f);
 
 			// horizontal grid lines
@@ -283,7 +282,7 @@ void DebugDrawerAI::Graph::Draw() {
 				const float tx = (pos.x + size.x) + (size.x * 0.025f);
 				const float ty = pos.y + (s / scale.y) * size.y;
 
-				font->glFormat(tx, ty, 1.0f, FONT_SCALE | FONT_NORM, "%2.1e", s + minScale.y);
+				font->glFormat(tx, ty, 1.0f, FONT_SCALE | FONT_NORM | FONT_BUFFERED, "%2.1e", s + minScale.y);
 			}
 
 			// vertical grid lines
@@ -296,17 +295,15 @@ void DebugDrawerAI::Graph::Draw() {
 				const float tx = (pos.x + (s / scale.x) * size.x) - (size.x * 0.05f);
 				const float ty = pos.y - size.y * 0.1f;
 
-				font->glFormat(tx, ty, 1.0f, FONT_SCALE | FONT_NORM, "%2.1e", s + minScale.x);
+				font->glFormat(tx, ty, 1.0f, FONT_SCALE | FONT_NORM | FONT_BUFFERED, "%2.1e", s + minScale.x);
 			}
 
-			font->End();
+			font->DrawBufferedGL4();
 		}
 	}
 
 	{
 		if (!lines.empty()) {
-			font->Begin();
-
 			int lineNum = 0;
 			float linePad = (1.0f / lines.size()) * 0.5f;
 
@@ -323,7 +320,7 @@ void DebugDrawerAI::Graph::Draw() {
 				const float ty = pos.y + ((lineNum * linePad * 2.0f) + linePad) * size.y;
 
 				font->SetTextColor(line.lineColor.x, line.lineColor.y, line.lineColor.z, 1.0f);
-				font->glPrint(tx, ty, 1.0f, FONT_SCALE | FONT_NORM, line.lineLabel);
+				font->glPrint(tx, ty, 1.0f, FONT_SCALE | FONT_NORM | FONT_BUFFERED, line.lineLabel);
 
 				color[0] = line.lineColor.x * 255;
 				color[1] = line.lineColor.y * 255;
@@ -351,7 +348,7 @@ void DebugDrawerAI::Graph::Draw() {
 				lineNum += 1;
 			}
 
-			font->End();
+			font->DrawBufferedGL4();
 		}
 	}
 
@@ -429,7 +426,6 @@ void DebugDrawerAI::TexSet::Draw() {
 		return;
 
 	glEnable(GL_TEXTURE_2D);
-	font->Begin();
 	font->SetTextColor(0.0f, 0.0f, 0.0f, 1.0f);
 
 	CVertexArray* va = GetVertexArray();
@@ -451,10 +447,10 @@ void DebugDrawerAI::TexSet::Draw() {
 		const float tx = pos.x + size.x * 0.5f - ((tex.GetLabelWidth() * 0.5f) / globalRendering->viewSizeX) * size.x;
 		const float ty = pos.y + size.y        + ((tex.GetLabelHeight() * 0.5f) / globalRendering->viewSizeY) * size.y;
 
-		font->glFormat(tx, ty, 1.0f, FONT_SCALE | FONT_NORM, "%s", (tex.GetLabel()).c_str());
+		font->glFormat(tx, ty, 1.0f, FONT_SCALE | FONT_NORM | FONT_BUFFERED, "%s", (tex.GetLabel()).c_str());
 	}
 
-	font->End();
+	font->DrawBufferedGL4();
 	glDisable(GL_TEXTURE_2D);
 }
 
