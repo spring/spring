@@ -127,13 +127,16 @@ CglFont::CglFont(const std::string& fontFile, int size, int _outlineWidth, float
 	{
 		char vsBuf[65536];
 		char fsBuf[65536];
+		// color attribs are not normalized
+		const char* fsVars = "const float N = 1.0 / 255.0;\n";
+		const char* fsCode = "\tf_color_rgba = (v_color_rgba * N) * vec4(1.0, 1.0, 1.0, texture(u_tex0, v_texcoor_st).a);\n";
 
 		primaryBuffer.Init(true);
 		outlineBuffer.Init(true);
 		primaryBuffer.UploadTC((NUM_BUFFER_ELEMS * QUAD_BUFFER_SIZE) / sizeof(VA_TYPE_TC), 0,  nullptr, nullptr); // no indices
 		outlineBuffer.UploadTC((NUM_BUFFER_ELEMS * QUAD_BUFFER_SIZE) / sizeof(VA_TYPE_TC), 0,  nullptr, nullptr);
-		primaryBuffer.FormatShaderTC(vsBuf, vsBuf + sizeof(vsBuf), "#define FONT_VERT_SHADER", "", "", "VS");
-		primaryBuffer.FormatShaderTC(fsBuf, fsBuf + sizeof(fsBuf), "", "", "\tf_color_rgba = vec4(v_color_rgba.rgb, texture(u_tex0, v_texcoor_st).a);\n", "FS");
+		primaryBuffer.FormatShaderTC(vsBuf, vsBuf + sizeof(vsBuf), "", "", "", "VS");
+		primaryBuffer.FormatShaderTC(fsBuf, fsBuf + sizeof(fsBuf), "", fsVars, fsCode, "FS");
 
 		Shader::GLSLShaderObject shaderObjs[2] = {{GL_VERTEX_SHADER, &vsBuf[0]}, {GL_FRAGMENT_SHADER, &fsBuf[0]}};
 		Shader::IProgramObject* shaderProg = primaryBuffer.CreateShader((sizeof(shaderObjs) / sizeof(shaderObjs[0])), 0, &shaderObjs[0], nullptr);
