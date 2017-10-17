@@ -62,6 +62,10 @@ CPoolArchive::CPoolArchive(const std::string& name): CBufferedArchive(name)
 	files.reserve(1024);
 	stats.reserve(1024);
 
+	// get pool dir from .sdp absolute path
+	assert(FileSystem::IsAbsolutePath(name));
+	poolRootDir = FileSystem::GetParent(FileSystem::GetDirectory(name));
+
 	while (gz_really_read(in, &length, 1)) {
 		if (!gz_really_read(in, &c_name, length)) break;
 		if (!gz_really_read(in, &c_md5sum, 16)) break;
@@ -131,8 +135,9 @@ bool CPoolArchive::GetFileImpl(unsigned int fid, std::vector<std::uint8_t>& buff
 	const std::string prefix(c_hex,      2);
 	const std::string postfix(c_hex + 2, 30);
 
-	      std::string rpath = "pool/" + prefix + "/" + postfix + ".gz";
-	const std::string  path = dataDirsAccess.LocateFile(FileSystem::FixSlashes(rpath));
+	assert(!poolRootDir.empty());
+	      std::string rpath = poolRootDir + "/pool/" + prefix + "/" + postfix + ".gz";
+	const std::string  path = FileSystem::FixSlashes(rpath);
 
 	const spring_time startTime = spring_now();
 
