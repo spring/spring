@@ -1267,7 +1267,9 @@ static void _GL_APIENTRY glDebugMessageCallbackFunc(
 ) {
 	switch (msgID) {
 		case 131169: { return; } break; // "Framebuffer detailed info: The driver allocated storage for renderbuffer N."
-		case 131185: { return; } break; // "Buffer detailed info: Buffer object 260 (bound to GL_PIXEL_UNPACK_BUFFER_ARB, usage hint is GL_STREAM_DRAW) has been mapped in DMA CACHED memory."
+		case 131185: { return; } break; // "Buffer detailed info: Buffer object 123 (bound to GL_PIXEL_UNPACK_BUFFER_ARB, usage hint is GL_STREAM_DRAW) has been mapped in DMA CACHED memory."
+		case 131204: { return; } break; // "Texture state usage warning: Texture 123 is base level inconsistent. Check texture size."
+		case 131218: { return; } break; // "Program/shader state performance warning: Vertex shader in program 123 is being recompiled based on GL state."
 		default: {} break;
 	}
 
