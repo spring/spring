@@ -58,17 +58,19 @@ public:
 	void End();
 
 
-	void BeginGL4() { BeginGL4(&primaryBuffer.GetShader()); }
-	void EndGL4() { EndGL4(&primaryBuffer.GetShader()); }
+	void BeginGL4() { BeginGL4(GetPrimaryShader()); }
+	void EndGL4() { EndGL4(GetPrimaryShader()); }
 	void BeginGL4(Shader::IProgramObject* shader);
 	void EndGL4(Shader::IProgramObject* shader);
 
-	void DrawBufferedGL4() { DrawBufferedGL4(&primaryBuffer.GetShader()); }
+	void DrawBufferedGL4() { DrawBufferedGL4(GetPrimaryShader()); }
 	void DrawBufferedGL4(Shader::IProgramObject* shader);
 
 	void ResetBufferGL4(bool outline) {
-		prvBufferPos[outline] = mapBufferPtr[outline];
-		curBufferPos[outline] = mapBufferPtr[outline];
+		const unsigned int bi = GetBufferIdx(outline);
+
+		prvBufferPos[bi] = mapBufferPtr[bi];
+		curBufferPos[bi] = mapBufferPtr[bi];
 	}
 	void ResetBuffersGL4() {
 		ResetBufferGL4(false);
@@ -133,6 +135,19 @@ private:
 	static int GetTextNumLines_(const std::u8string& text);
 	static std::string StripColorCodes_(const std::u8string& text);
 
+private:
+	unsigned int GetBufferIdx(bool outline) const { return (currBufferIdxGL4 * 2 + outline); }
+
+	Shader::IProgramObject* GetPrimaryShader() { return &(primaryBuffer[currBufferIdxGL4].GetShader()); }
+	Shader::IProgramObject* GetOutlineShader() { return &(outlineBuffer[currBufferIdxGL4].GetShader()); }
+	GL::RenderDataBuffer* GetPrimaryBuffer() { return &primaryBuffer[currBufferIdxGL4]; }
+	GL::RenderDataBuffer* GetOutlineBuffer() { return &outlineBuffer[currBufferIdxGL4]; }
+
+	enum {
+		PRIMARY_BUFFER = 0,
+		OUTLINE_BUFFER = 1,
+	};
+
 public:
 	typedef std::vector<float4> ColorMap;
 	typedef void (*ColorCallback)(const float*);
@@ -156,19 +171,20 @@ private:
 	CVertexArray va2;
 
 
-	// used by {Begin,End}GL4
-	GL::RenderDataBuffer primaryBuffer;
-	GL::RenderDataBuffer outlineBuffer;
+	// used by {Begin,End}GL4; each double-buffered
+	GL::RenderDataBuffer primaryBuffer[2];
+	GL::RenderDataBuffer outlineBuffer[2];
 
 	Shader::IProgramObject* curShader = nullptr;
 
-	VA_TYPE_TC* mapBufferPtr[2] = {nullptr, nullptr}; // {primary,outline} start-pos
-	VA_TYPE_TC* prvBufferPos[2] = {nullptr, nullptr}; // previous {primary,outline} write-pos
-	VA_TYPE_TC* curBufferPos[2] = {nullptr, nullptr}; // current {primary,outline} write-pos
+	VA_TYPE_TC* mapBufferPtr[2 * 2] = {nullptr, nullptr}; // {primary,outline} start-pos
+	VA_TYPE_TC* prvBufferPos[2 * 2] = {nullptr, nullptr}; // previous {primary,outline} write-pos
+	VA_TYPE_TC* curBufferPos[2 * 2] = {nullptr, nullptr}; // current {primary,outline} write-pos
 
 
 	spring::recursive_mutex bufferMutex;
 
+	unsigned int currBufferIdxGL4 = 0;
 	unsigned int lastDrawFrameGL4 = 0;
 	unsigned int lastPrintFrameGL4 = 0;
 
