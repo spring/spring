@@ -73,9 +73,10 @@ inline void CheckDrawingEnabled(lua_State* L, const char* caller)
 inline CglFont* tofont(lua_State* L, int idx)
 {
 	CglFont** font = (CglFont**)luaL_checkudata(L, idx, "Font");
-	if (*font == NULL) {
+
+	if (*font == nullptr)
 		luaL_error(L, "attempt to use a deleted font");
-	}
+
 	return *font;
 }
 
@@ -91,7 +92,7 @@ int LuaFonts::meta_gc(lua_State* L)
 
 	CglFont** font = (CglFont**)luaL_checkudata(L, 1, "Font");
 	delete *font;
-	*font = NULL;
+	*font = nullptr;
 	return 0;
 }
 
@@ -102,51 +103,51 @@ int LuaFonts::meta_index(lua_State* L)
 	luaL_getmetatable(L, "Font");
 	lua_pushvalue(L, 2);
 	lua_rawget(L, -2);
-	if (!lua_isnil(L, -1)) {
+	if (!lua_isnil(L, -1))
 		return 1;
-	}
+
 	lua_pop(L, 1);
 
 	//! couldn't find a function, so check properties
-	CglFont* font = tofont(L, 1);
+	CglFont* f = tofont(L, 1);
 
 	if (lua_israwstring(L, 2)) {
 		const string key = lua_tostring(L, 2);
 
 		if (key == "size") {
-			lua_pushnumber(L, font->GetSize());
+			lua_pushnumber(L, f->GetSize());
 			return 1;
 		//} else if (key == "outlinecolor") {
 		//} else if (key == "textcolor") {
 		} else if (key == "path") {
-			const std::string& filepath = font->GetFilePath();
+			const std::string& filepath = f->GetFilePath();
 			lua_pushsstring(L, filepath);
 			return 1;
 		} else if (key == "height" || key == "lineheight") {
-			lua_pushnumber(L, font->GetLineHeight());
+			lua_pushnumber(L, f->GetLineHeight());
 			return 1;
 		} else if (key == "descender") {
-			lua_pushnumber(L, font->GetDescender());
+			lua_pushnumber(L, f->GetDescender());
 			return 1;
 		} else if (key == "outlinewidth") {
-			lua_pushnumber(L, font->GetOutlineWidth());
+			lua_pushnumber(L, f->GetOutlineWidth());
 			return 1;
 		} else if (key == "outlineweight") {
-			lua_pushnumber(L, font->GetOutlineWeight());
+			lua_pushnumber(L, f->GetOutlineWeight());
 			return 1;
 		} else if (key == "family") {
-			const std::string& family = font->GetFamily();
+			const std::string& family = f->GetFamily();
 			lua_pushsstring(L, family);
 			return 1;
 		} else if (key == "style") {
-			const std::string& style = font->GetStyle();
+			const std::string& style = f->GetStyle();
 			lua_pushsstring(L, style);
 			return 1;
 		} else if (key == "texturewidth") {
-			lua_pushnumber(L, font->GetTextureWidth());
+			lua_pushnumber(L, f->GetTextureWidth());
 			return 1;
 		} else if (key == "textureheight") {
-			lua_pushnumber(L, font->GetTextureHeight());
+			lua_pushnumber(L, f->GetTextureHeight());
 			return 1;
 		}
 	}
@@ -189,12 +190,12 @@ int LuaFonts::Print(lua_State* L)
 
 	const int args = lua_gettop(L); // number of arguments
 
-	CglFont* font = tofont(L, 1);
+	CglFont* f = tofont(L, 1);
 
 	const string text(luaL_checkstring(L, 2),lua_strlen(L, 2));
 	const float x     = luaL_checkfloat(L, 3);
 	const float y     = luaL_checkfloat(L, 4);
-	const float size  = luaL_optfloat(L, 5, font->GetSize());
+	const float size  = luaL_optfloat(L, 5, f->GetSize());
 
 	int options = FONT_NEAREST;
 
@@ -223,7 +224,7 @@ int LuaFonts::Print(lua_State* L)
 		}
 	}
 
-	font->glPrint(x, y, size, options, text);
+	f->glPrint(x, y, size, options, text);
 
 	return 0;
 }
@@ -235,8 +236,8 @@ int LuaFonts::Print(lua_State* L)
 int LuaFonts::Begin(lua_State* L)
 {
 	CheckDrawingEnabled(L, __FUNCTION__);
-	CglFont* font = tofont(L, 1);
-	font->Begin();
+	CglFont* f = tofont(L, 1);
+	f->Begin();
 	return 0;
 }
 
@@ -244,8 +245,8 @@ int LuaFonts::Begin(lua_State* L)
 int LuaFonts::End(lua_State* L)
 {
 	CheckDrawingEnabled(L, __FUNCTION__);
-	CglFont* font = tofont(L, 1);
-	font->End();
+	CglFont* f = tofont(L, 1);
+	f->End();
 	return 0;
 }
 
@@ -255,13 +256,13 @@ int LuaFonts::End(lua_State* L)
 
 int LuaFonts::WrapText(lua_State* L)
 {
-	CglFont* font = tofont(L, 1);
+	CglFont* f = tofont(L, 1);
 	string text(luaL_checkstring(L, 2),lua_strlen(L, 2));
 	const float maxWidth   = luaL_checkfloat(L, 3);
 	const float maxHeight  = luaL_optfloat(L, 4, 1e9);
-	const float size       = luaL_optfloat(L, 5, font->GetSize());
+	const float size       = luaL_optfloat(L, 5, f->GetSize());
 
-	const int lines = font->WrapInPlace(text,size,maxWidth,maxHeight);
+	const int lines = f->WrapInPlace(text,size,maxWidth,maxHeight);
 
 	lua_pushsstring(L, text);
 	lua_pushnumber(L, lines);
@@ -273,21 +274,20 @@ int LuaFonts::WrapText(lua_State* L)
 
 int LuaFonts::GetTextWidth(lua_State* L)
 {
-	CglFont* font = tofont(L, 1);
-	const string text(luaL_checkstring(L, 2),lua_strlen(L, 2));
-	const float width = font->GetTextWidth(text);
-	lua_pushnumber(L, width);
+	CglFont* f = tofont(L, 1);
+
+	lua_pushnumber(L, f->GetTextWidth(std::string(luaL_checkstring(L, 2), lua_strlen(L, 2))));
 	return 1;
 }
 
 
 int LuaFonts::GetTextHeight(lua_State* L)
 {
-	CglFont* font = tofont(L, 1);
+	CglFont* f = tofont(L, 1);
 	const string text(luaL_checkstring(L, 2),lua_strlen(L, 2));
 	float descender;
 	int lines;
-	const float height = font->GetTextHeight(text,&descender,&lines);
+	const float height = f->GetTextHeight(text,&descender,&lines);
 	lua_pushnumber(L, height);
 	lua_pushnumber(L, descender);
 	lua_pushnumber(L, lines);
@@ -300,81 +300,76 @@ int LuaFonts::GetTextHeight(lua_State* L)
 
 int LuaFonts::SetTextColor(lua_State* L)
 {
-	CglFont* font = tofont(L, 1);
+	CglFont* f = tofont(L, 1);
 
 	const int args = lua_gettop(L); // number of arguments
-	if (args < 2) {
-		luaL_error(L, "Incorrect arguments to font:SetTextColor([\"textColor\"])");
-	}
 
-	float4* color = NULL;
+	if (args < 2)
+		luaL_error(L, "Incorrect arguments to font:SetTextColor([\"textColor\"])");
+
+	float4 color;
 
 	if (lua_istable(L, 2)) {
-		color = new float4;
-		const int count = LuaUtils::ParseFloatArray(L, 2, *color, 4);
-		if (count < 3) {
+		const int count = LuaUtils::ParseFloatArray(L, 2, &color.x, 4);
+
+		if (count < 3)
 			luaL_error(L, "Incorrect arguments to font:SetTextColor([\"textColor\"])");
-		}
-		if (count == 3) {
-			color->w = 1.0f;
-		}
+
+		if (count == 3)
+			color.w = 1.0f;
+
 	} else if (args >= 4) {
-		color = new float4;
-		color->x = luaL_checkfloat(L, 2);
-		color->y = luaL_checkfloat(L, 3);
-		color->z = luaL_checkfloat(L, 4);
-		color->w = luaL_optfloat(L, 5, 1.0f);
+		color.x = luaL_checkfloat(L, 2);
+		color.y = luaL_checkfloat(L, 3);
+		color.z = luaL_checkfloat(L, 4);
+		color.w = luaL_optfloat(L, 5, 1.0f);
 	} else if (!lua_isnil(L, 2)) {
 		luaL_error(L, "Incorrect arguments to font:SetTextColor([\"textColor\"])");
 	}
 
-	font->SetTextColor(color);
-	delete color;
+	f->SetTextColor(&color);
 	return 0;
 }
 
 
 int LuaFonts::SetOutlineColor(lua_State* L)
 {
-	CglFont* font = tofont(L, 1);
+	CglFont* f = tofont(L, 1);
 
 	const int args = lua_gettop(L); // number of arguments
-	if (args < 2) {
-		luaL_error(L, "Incorrect arguments to font:SetOutlineColor([\"outlineColor\"])");
-	}
 
-	float4* color = NULL;
+	if (args < 2)
+		luaL_error(L, "Incorrect arguments to font:SetOutlineColor([\"outlineColor\"])");
+
+	float4 color;
 
 	if (lua_istable(L, 2)) {
-		color = new float4;
-		const int count = LuaUtils::ParseFloatArray(L, 2, *color, 4);
-		if (count < 3) {
+		const int count = LuaUtils::ParseFloatArray(L, 2, &color.x, 4);
+
+		if (count < 3)
 			luaL_error(L, "Incorrect arguments to font:SetOutlineColor([\"outlineColor\"])");
-		}
-		if (count == 3) {
-			color->w = 1.0f;
-		}
+
+		if (count == 3)
+			color.w = 1.0f;
+
 	} else if (args >= 4) {
-		color = new float4;
-		color->x = luaL_checkfloat(L, 2);
-		color->y = luaL_checkfloat(L, 3);
-		color->z = luaL_checkfloat(L, 4);
-		color->w = luaL_optfloat(L, 5, 1.0f);
+		color.x = luaL_checkfloat(L, 2);
+		color.y = luaL_checkfloat(L, 3);
+		color.z = luaL_checkfloat(L, 4);
+		color.w = luaL_optfloat(L, 5, 1.0f);
 	} else if (!lua_isnoneornil(L, 2)) {
 		luaL_error(L, "Incorrect arguments to font:SetOutlineColor([\"outlineColor\"])");
 	}
 
-	font->SetOutlineColor(color);
-	delete color;
+	f->SetOutlineColor(&color);
 	return 0;
 }
 
 
 int LuaFonts::SetAutoOutlineColor(lua_State* L)
 {
-	CglFont* font = tofont(L, 1);
-	bool enable = luaL_checkboolean(L, 2);
-	font->SetAutoOutlineColor(enable);
+	CglFont* f = tofont(L, 1);
+	f->SetAutoOutlineColor(luaL_checkboolean(L, 2));
 	return 0;
 }
 
@@ -386,9 +381,9 @@ int LuaFonts::BindTexture(lua_State* L)
 {
 	CheckDrawingEnabled(L, __FUNCTION__);
 
-	CglFont* font = tofont(L, 1);
+	CglFont* f = tofont(L, 1);
 
-	glBindTexture(GL_TEXTURE_2D, font->GetTexture());
+	glBindTexture(GL_TEXTURE_2D, f->GetTexture());
 	glEnable(GL_TEXTURE_2D);
 
 	return 0;

@@ -34,6 +34,7 @@ namespace Watchdog
 	void RegisterThread(WatchdogThreadnum num, bool primary = false);
 	bool DeregisterThread(WatchdogThreadnum num);
 	bool DeregisterCurrentThread();
+	bool HasThread(WatchdogThreadnum num);
 }
 
 #endif // _WATCHDOG_H
