@@ -19,7 +19,7 @@
 
 #undef GetCharWidth // winapi.h
 
-CONFIG(std::string, FontFile).defaultValue("fonts/FreeSansBold.otf").description("Sets the font of Spring engine text.");
+CONFIG(std::string,      FontFile).defaultValue("fonts/FreeSansBold.otf").description("Sets the font of Spring engine text.");
 CONFIG(std::string, SmallFontFile).defaultValue("fonts/FreeSansBold.otf").description("Sets the font of Spring engine small text.");
 
 CONFIG(int,      FontSize).defaultValue(23).description("Sets the font size (in pixels) of the MainMenu and more.");
@@ -67,17 +67,17 @@ bool CglFont::LoadConfigFonts()
 
 bool CglFont::LoadCustomFonts(const std::string& smallFontFile, const std::string& largeFontFile)
 {
-	CglFont* newFont = CglFont::LoadFont(smallFontFile, false);
-	CglFont* newSmallFont = CglFont::LoadFont(largeFontFile, true);
+	CglFont* newLargeFont = CglFont::LoadFont(largeFontFile, false);
+	CglFont* newSmallFont = CglFont::LoadFont(smallFontFile, true);
 
-	if (newFont != nullptr && newSmallFont != nullptr) {
+	if (newLargeFont != nullptr && newSmallFont != nullptr) {
 		spring::SafeDelete(font);
 		spring::SafeDelete(smallFont);
-		font = newFont;
+		font = newLargeFont;
 		smallFont = newSmallFont;
 
 		LOG("[%s] loaded fonts \"%s\" and \"%s\"", __func__, smallFontFile.c_str(), largeFontFile.c_str());
-		configHandler->SetString("FontFile", largeFontFile);
+		configHandler->SetString(     "FontFile", largeFontFile);
 		configHandler->SetString("SmallFontFile", smallFontFile);
 	}
 }
