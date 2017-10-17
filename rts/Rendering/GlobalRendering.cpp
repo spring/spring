@@ -151,7 +151,10 @@ CR_REG_METADATA(CGlobalRendering, (
 	CR_IGNORED(borderless),
 
 	CR_IGNORED(window),
-	CR_IGNORED(glContext)
+	CR_IGNORED(hiddenWindow),
+	CR_IGNORED(glContext),
+	CR_IGNORED(glSecondaryContext),
+	CR_IGNORED(swapped)
 ))
 
 CGlobalRendering::CGlobalRendering()
@@ -236,9 +239,10 @@ CGlobalRendering::CGlobalRendering()
 	, dualScreenMiniMapOnLeft(false)
 	, fullScreen(configHandler->GetBool("Fullscreen"))
 	, borderless(configHandler->GetBool("WindowBorderless"))
-
 	, window(nullptr)
+	, hiddenWindow(nullptr)
 	, glContext(nullptr)
+	, glSecondaryContext(nullptr)
 {
 	verticalSync->WrapNotifyOnChange();
 	configHandler->NotifyOnChange(this, {"TextureLODBias", "Fullscreen", "WindowBorderless"});
@@ -252,8 +256,10 @@ CGlobalRendering::~CGlobalRendering()
 }
 
 
-bool CGlobalRendering::CreateSDLWindow(const int2& winRes, const int2& minRes, const char* title)
+SDL_Window* CGlobalRendering::CreateSDLWindow(const int2& winRes, const int2& minRes, const char* title, bool hidden)
 {
+	SDL_Window* newWindow = nullptr;
+
 	const int aaLvls[] = {msaaLevel, msaaLevel / 2, msaaLevel / 4, msaaLevel / 8, msaaLevel / 16, msaaLevel / 32, 0};
 	const int zbBits[] = {24, 32, 16};
 
@@ -266,18 +272,19 @@ bool CGlobalRendering::CreateSDLWindow(const int2& winRes, const int2& minRes, c
 	//   window on the desktop
 	sdlFlags |= (SDL_WINDOW_FULLSCREEN_DESKTOP * borderless + SDL_WINDOW_FULLSCREEN * (1 - borderless)) * fullScreen;
 	sdlFlags |= (SDL_WINDOW_BORDERLESS * borderless);
+	sdlFlags |= (SDL_WINDOW_HIDDEN * hidden);
 
-	for (size_t i = 0; i < (sizeof(aaLvls) / sizeof(aaLvls[0])) && (window == nullptr); i++) {
+	for (size_t i = 0; i < (sizeof(aaLvls) / sizeof(aaLvls[0])) && (newWindow == nullptr); i++) {
 		if (i > 0 && aaLvls[i] == aaLvls[i - 1])
 			break;
 
 		SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, aaLvls[i] > 0);
 		SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, aaLvls[i]    );
 
-		for (size_t j = 0; j < (sizeof(zbBits) / sizeof(zbBits[0])) && (window == nullptr); j++) {
+		for (size_t j = 0; j < (sizeof(zbBits) / sizeof(zbBits[0])) && (newWindow == nullptr); j++) {
 			SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, zbBits[j]);
 
-			if ((window = SDL_CreateWindow(title, winPosX, winPosY, winRes.x, winRes.y, sdlFlags)) == nullptr) {
+			if ((newWindow = SDL_CreateWindow(title, winPosX, winPosY, winRes.x, winRes.y, sdlFlags)) == nullptr) {
 				LOG_L(L_WARNING, "[GR::%s] error \"%s\" using %dx anti-aliasing and %d-bit depth-buffer", __func__, SDL_GetError(), aaLvls[i], zbBits[j]);
 				continue;
 			}
@@ -286,41 +293,40 @@ bool CGlobalRendering::CreateSDLWindow(const int2& winRes, const int2& minRes, c
 		}
 	}
 
-	if (window == nullptr) {
+	if (newWindow == nullptr) {
 		char buf[1024];
 		SNPRINTF(buf, sizeof(buf), "[GR::%s] could not create SDL-window\n", __func__);
 		handleerror(nullptr, buf, "ERROR", MBF_OK | MBF_EXCL);
-		return false;
+		return nullptr;
 	}
 
 #if defined(WIN32)
 	if (borderless && !fullScreen) {
-		WindowManagerHelper::SetWindowResizable(window, !borderless);
+		WindowManagerHelper::SetWindowResizable(newWindow, !borderless);
 
-		SDL_SetWindowBordered(window, borderless? SDL_FALSE: SDL_TRUE);
-		SDL_SetWindowPosition(window, winPosX, winPosY);
-		SDL_SetWindowSize(window, winRes.x, winRes.y);
+		SDL_SetWindowBordered(newWindow, borderless? SDL_FALSE: SDL_TRUE);
+		SDL_SetWindowPosition(newWindow, winPosX, winPosY);
+		SDL_SetWindowSize(newWindow, winRes.x, winRes.y);
 	}
 #endif
 
-	SDL_SetWindowMinimumSize(window, minRes.x, minRes.y);
-	return true;
+	SDL_SetWindowMinimumSize(newWindow, minRes.x, minRes.y);
+	return newWindow;
 }
 
-bool CGlobalRendering::CreateGLContext(const int2& minCtx)
+SDL_GLContext CGlobalRendering::CreateGLContext(const int2& minCtx, SDL_Window* targetWindow)
 {
-	assert(glContext == nullptr);
-
+	SDL_GLContext newContext = nullptr;
 	constexpr int2 glCtxs[] = {{2, 0}, {2, 1},  {3, 0}, {3, 1}, {3, 2}, {3, 3},  {4, 0}, {4, 1}, {4, 2}, {4, 3}, {4, 4}, {4, 5}, {4, 6}};
 	          int2 cmpCtx;
 
 	if (std::find(&glCtxs[0], &glCtxs[0] + (sizeof(glCtxs) / sizeof(int2)), minCtx) == (&glCtxs[0] + (sizeof(glCtxs) / sizeof(int2)))) {
 		handleerror(nullptr, "illegal OpenGL context-version specified, aborting", "ERROR", MBF_OK | MBF_EXCL);
-		return false;
+		return nullptr;
 	}
 
-	if ((glContext = SDL_GL_CreateContext(window)) != nullptr)
-		return true;
+	if ((newContext = SDL_GL_CreateContext(targetWindow)) != nullptr)
+		return newContext;
 
 	const char* frmts[] = {"[GR::%s] error (\"%s\") creating GL%d.%d %s-context", "[GR::%s] created GL%d.%d %s-context"};
 	const char* profs[] = {"compatibility", "core"};
@@ -335,7 +341,7 @@ bool CGlobalRendering::CreateGLContext(const int2& minCtx)
 		for (uint32_t mask: {SDL_GL_CONTEXT_PROFILE_CORE, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY}) {
 			SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, mask);
 
-			if ((glContext = SDL_GL_CreateContext(window)) == nullptr) {
+			if ((newContext = SDL_GL_CreateContext(targetWindow)) == nullptr) {
 				LOG_L(L_WARNING, frmts[false], __func__, SDL_GetError(), tmpCtx.x, tmpCtx.y, profs[mask == SDL_GL_CONTEXT_PROFILE_CORE]);
 			} else {
 				// save the lowest successfully created fallback compatibility-context
@@ -346,13 +352,13 @@ bool CGlobalRendering::CreateGLContext(const int2& minCtx)
 			}
 
 			// accepts nullptr's
-			SDL_GL_DeleteContext(glContext);
+			SDL_GL_DeleteContext(newContext);
 		}
 	}
 
 	if (cmpCtx.x == 0) {
 		handleerror(nullptr, buf, "ERROR", MBF_OK | MBF_EXCL);
-		return false;
+		return nullptr;
 	}
 
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, cmpCtx.x);
@@ -360,7 +366,7 @@ bool CGlobalRendering::CreateGLContext(const int2& minCtx)
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
 
 	// should never fail at this point
-	return ((glContext = SDL_GL_CreateContext(window)) != nullptr);
+	return (newContext = SDL_GL_CreateContext(targetWindow));
 }
 
 bool CGlobalRendering::CreateWindowAndContext(const char* title, bool hidden)
@@ -416,7 +422,10 @@ bool CGlobalRendering::CreateWindowAndContext(const char* title, bool hidden)
 		make_even_number(msaaLevel);
 	}
 
-	if (!CreateSDLWindow(winRes, minRes, title))
+	if ((window = CreateSDLWindow(winRes, minRes, title, false)) == nullptr)
+		return false;
+
+	if ((hiddenWindow = CreateSDLWindow(winRes, minRes, title, true)) == nullptr)
 		return false;
 
 	#if 0
@@ -443,7 +452,10 @@ bool CGlobalRendering::CreateWindowAndContext(const char* title, bool hidden)
 		WindowManagerHelper::BlockCompositing(window);
 #endif
 
-	if (!CreateGLContext(minCtx))
+	if ((glContext = CreateGLContext(minCtx, window)) == nullptr)
+		return false;
+
+	if ((glSecondaryContext = CreateGLContext(minCtx, hiddenWindow)) == nullptr)
 		return false;
 
 	if (!CheckGLContextVersion(minCtx)) {
@@ -458,6 +470,15 @@ bool CGlobalRendering::CreateWindowAndContext(const char* title, bool hidden)
 }
 
 
+void CGlobalRendering::MakeCurrentContext(bool hidden, bool secondary, bool clear) {
+	if (clear) {
+		SDL_GL_MakeCurrent(hidden ? hiddenWindow : window, nullptr);
+	} else {
+		SDL_GL_MakeCurrent(hidden ? hiddenWindow : window, secondary ? glSecondaryContext : glContext);
+	}
+}
+
+
 void CGlobalRendering::DestroyWindowAndContext() {
 	WindowManagerHelper::SetIconSurface(window, nullptr);
 
@@ -465,8 +486,12 @@ void CGlobalRendering::DestroyWindowAndContext() {
 	SDL_GL_MakeCurrent(window, nullptr);
 	SDL_DestroyWindow(window);
 
+	SDL_GL_MakeCurrent(hiddenWindow, nullptr);
+	SDL_DestroyWindow(hiddenWindow);
+
 #if !defined(HEADLESS)
 	SDL_GL_DeleteContext(glContext);
+	SDL_GL_DeleteContext(glSecondaryContext);
 	SDL_QuitSubSystem(SDL_INIT_VIDEO);
 #endif
 	SDL_EnableScreenSaver();

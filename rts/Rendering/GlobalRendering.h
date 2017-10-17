@@ -29,11 +29,13 @@ public:
 	 * Sets SDL video mode options/settings
 	 */
 	bool CreateWindowAndContext(const char* title, bool hidden);
-	bool CreateSDLWindow(const int2& winRes, const int2& minRes, const char* title);
-	bool CreateGLContext(const int2& minCtx);
+	SDL_Window* CreateSDLWindow(const int2& winRes, const int2& minRes, const char* title, bool hidden);
+	SDL_GLContext CreateGLContext(const int2& minCtx, SDL_Window* targetWindow);
 	void DestroyWindowAndContext();
 	void PostInit();
 	void SwapBuffers(bool allowSwapBuffers, bool clearErrors);
+
+	void MakeCurrentContext(bool hidden, bool secondary, bool clear);
 
 	void CheckGLExtensions() const;
 	void SetGLSupportFlags();
@@ -275,7 +277,10 @@ public:
 
 public:
 	SDL_Window* window;
+	SDL_Window* hiddenWindow;
 	SDL_GLContext glContext;
+	SDL_GLContext glSecondaryContext;
+	bool swapped;
 
 public:
 	/**

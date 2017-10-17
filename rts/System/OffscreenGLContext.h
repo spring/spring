@@ -33,21 +33,6 @@ public:
 	virtual ~COffscreenGLContext();
 	void WorkerThreadPost();
 	void WorkerThreadFree(); //! must run in the same thread as the offscreen GL context!
-
-private:
-
-#ifdef HEADLESS
-	//! nothing
-#elif WIN32
-	HDC hdc;
-	HGLRC offscreenRC;
-#elif __APPLE__
-	CGLContextObj cglWorkerCtx;
-#else
-	Display* display;
-	GLXPbuffer pbuf;
-	GLXContext workerCtx;
-#endif
 };
 
 /******************************************************************************/
