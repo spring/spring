@@ -42,11 +42,6 @@ public:
 
 
 private:
-	void RandomStartPicture(const std::string& sidePref);
-	void LoadStartPicture(const std::string& picture);
-	void UnloadStartPicture();
-
-private:
 	static CLoadScreen* singleton;
 
 	std::string oldLoadMessages;
@@ -64,11 +59,8 @@ private:
 	CglFont* localFont;
 
 	bool mtLoading;
-	bool showMessages;
 
-	unsigned int startupTexture;
-	float aspectRatio;
-	spring_time last_draw;
+	spring_time lastDrawTime;
 };
 
 
