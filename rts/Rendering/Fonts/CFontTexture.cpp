@@ -166,9 +166,9 @@ std::unique_ptr<FtLibraryHandler> FtLibraryHandler::singleton = nullptr;
 #ifndef HEADLESS
 static inline uint32_t GetKerningHash(char32_t lchar, char32_t rchar)
 {
-	if (lchar < 128 && rchar < 128) {
+	if (lchar < 128 && rchar < 128)
 		return (lchar << 7) | rchar; // 14bit used
-	}
+
 	return (lchar << 16) | rchar; // 32bit used
 }
 
@@ -183,59 +183,49 @@ static std::shared_ptr<FontFace> GetFontFace(const std::string& fontfile, const 
 	if (it != fontCache.end() && !it->second.expired())
 		return it->second.lock();
 
-	// get the file (no need to cache, takes too less time)
+	// get the file (no need to cache, takes too little time)
 	std::string fontPath(fontfile);
-	CFileHandler* f = new CFileHandler(fontPath);
-	if (!f->FileExists()) {
+	CFileHandler f(fontPath);
+
+	if (!f.FileExists()) {
 		// check in 'fonts/', too
-		if (fontPath.substr(0,6) != "fonts/") {
-			delete f;
-			fontPath = "fonts/" + fontPath;
-			f = new CFileHandler(fontPath);
+		if (fontPath.substr(0, 6) != "fonts/") {
+			f.Close();
+			f.Open(fontPath = "fonts/" + fontPath);
 		}
 
-		if (!f->FileExists()) {
-			delete f;
+		if (!f.FileExists())
 			throw content_error("Couldn't find font '" + fontfile + "'.");
-		}
 	}
 
 	// we need to keep a copy of the memory
-	const int filesize = f->FileSize();
+	const int filesize = f.FileSize();
+
 	std::weak_ptr<SP_Byte>& fontMemWeak = fontMemCache[fontPath];
 	std::shared_ptr<SP_Byte> fontMem = fontMemWeak.lock();
+
 	if (fontMemWeak.expired()) {
 		fontMem = std::make_shared<SP_Byte>(SP_Byte(filesize));
-		f->Read(fontMem.get()->data(), filesize);
+		f.Read(fontMem.get()->data(), filesize);
 		fontMemWeak = fontMem;
 	}
-	delete f;
 
 	// load the font
-	FT_Face face = NULL;
+	FT_Face face = nullptr;
 	FT_Error error = FT_New_Memory_Face(FtLibraryHandler::GetLibrary(), fontMem.get()->data(), filesize, 0, &face);
-	auto shFace = std::make_shared<FontFace>(face, fontMem);
-	if (error) {
-		std::string msg = fontfile + ": FT_New_Face failed: ";
-		msg += GetFTError(error);
-		throw content_error(msg);
-	}
+
+	if (error != 0)
+		throw content_error(fontfile + ": FT_New_Face failed: " + GetFTError(error));
 
 	// set render size
-	error = FT_Set_Pixel_Sizes(face, 0, size);
-	if (error) {
-		std::string msg = fontfile + ": FT_Set_Pixel_Sizes failed: ";
-		msg += GetFTError(error);
-		throw content_error(msg);
-	}
+	if ((error = FT_Set_Pixel_Sizes(face, 0, size)) != 0)
+		throw content_error(fontfile + ": FT_Set_Pixel_Sizes failed: " + GetFTError(error));
 
 	// select unicode charmap
-	error = FT_Select_Charmap(face, FT_ENCODING_UNICODE);
-	if (error) {
-		std::string msg = fontfile + ": FT_Select_Charmap failed: ";
-		msg += GetFTError(error);
-		throw content_error(msg);
-	}
+	if ((error = FT_Select_Charmap(face, FT_ENCODING_UNICODE)) != 0)
+		throw content_error(fontfile + ": FT_Select_Charmap failed: " + GetFTError(error));
+
+	auto shFace = std::make_shared<FontFace>(face, fontMem);
 
 	fontCache[fontfile + IntToString(size)] = shFace;
 	return shFace;
@@ -339,14 +329,14 @@ CFontTexture::CFontTexture(const std::string& fontfile, int size, int _outlinesi
 	, wantedTexWidth(0)
 	, wantedTexHeight(0)
 	, texture(0)
-	, atlasUpdate(NULL)
-	, atlasUpdateShadow(NULL)
+	, atlasUpdate(nullptr)
+	, atlasUpdateShadow(nullptr)
 	, curTextureUpdate(0)
 {
 	if (fontSize <= 0)
 		fontSize = 14;
 
-	static const int FT_INTERNAL_DPI = 64;
+	static constexpr int FT_INTERNAL_DPI = 64;
 	normScale = 1.0f / (fontSize * FT_INTERNAL_DPI);
 
 	fontFamily = "unknown";
@@ -354,12 +344,14 @@ CFontTexture::CFontTexture(const std::string& fontfile, int size, int _outlinesi
 
 #ifndef HEADLESS
 	lastTextureUpdate = 0;
+
 	face = nullptr;
 	shFace = GetFontFace(fontfile, fontSize);
-	face = *shFace;
 
-	if (!face)
+	if (shFace == nullptr)
 		return;
+
+	face = *shFace;
 
 	fontFamily = face->family_name;
 	fontStyle  = face->style_name;
@@ -540,7 +532,7 @@ void CFontTexture::LoadBlock(char32_t start, char32_t end)
 			auto& glyphbm  = (CBitmap*&)atlasAlloc.GetEntryData(glyphName);
 			if (texpos[2] != 0)  atlasUpdate->CopySubImage(*glyphbm, texpos.x, texpos.y);
 			if (texpos2[2] != 0) atlasUpdateShadow->CopySubImage(*glyphbm, texpos2.x + outlineSize, texpos2.y + outlineSize);
-			delete glyphbm; glyphbm = NULL;
+			delete glyphbm; glyphbm = nullptr;
 		}
 		atlasAlloc.clear();
 	}
