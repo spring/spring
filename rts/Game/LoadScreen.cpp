@@ -53,6 +53,7 @@ CLoadScreen::CLoadScreen(const std::string& _mapName, const std::string& _modNam
 	saveFile(_saveFile),
 	netHeartbeatThread(nullptr),
 	gameLoadThread(nullptr),
+	localFont(font),
 	mtLoading(true),
 	showMessages(true),
 	startupTexture(0),
@@ -141,6 +142,31 @@ bool CLoadScreen::Init()
 	netHeartbeatThread = new spring::thread(Threading::CreateNewThread(std::bind(&CNetProtocol::UpdateLoop, clientNet)));
 	game = new CGame(mapName, modName, saveFile);
 
+	if (mtLoading) {
+		try {
+			// create the game-loading thread
+			CglFont::threadSafety = true;
+			gameLoadThread = new COffscreenGLThread(std::bind(&CGame::LoadGame, game, mapName));
+			// Initialize localFont
+			const std::string largeFontFile = configHandler->GetString("FontFile");
+			const int largeFontSize = configHandler->GetInt("FontSize");
+			const int largeOutlineWidth = configHandler->GetInt("FontOutlineWidth");
+			const float largeOutlineWeight = configHandler->GetFloat("FontOutlineWeight");
+
+			localFont = CglFont::LoadFont(largeFontFile, largeFontSize, largeOutlineWidth, largeOutlineWeight);
+		} catch (const opengl_error& gle) {
+			spring::SafeDelete(gameLoadThread);
+			LOG_L(L_WARNING, "[LoadScreen::%s] offscreen GL context creation failed (error: \"%s\")", __func__, gle.what());
+
+			mtLoading = false;
+			localFont = font;
+			CglFont::threadSafety = false;
+		}
+	}
+
+	// LuaIntro loading must be here so it's in the same
+	// thread that calls CLoadScreen::Draw
+
 	// new stuff
 	CLuaIntro::LoadFreeHandler();
 
@@ -163,19 +189,9 @@ bool CLoadScreen::Init()
 			Channels::BGMusic->StreamPlay(mapStartMusic);
 	}
 
-	if (mtLoading) {
-		try {
-			// create the game-loading thread
-			CglFont::threadSafety = true;
-			gameLoadThread = new COffscreenGLThread(std::bind(&CGame::LoadGame, game, mapName));
-			return true;
-		} catch (const opengl_error& gle) {
-			spring::SafeDelete(gameLoadThread);
-			LOG_L(L_WARNING, "[LoadScreen::%s] offscreen GL context creation failed (error: \"%s\")", __func__, gle.what());
+	if (mtLoading)
+		return true;
 
-			mtLoading = false;
-		}
-	}
 
 	assert(!mtLoading);
 	LOG("[LoadScreen::%s] single-threaded", __func__);
@@ -194,6 +210,8 @@ void CLoadScreen::Kill()
 	spring::SafeDelete(gameLoadThread);
 
 	CglFont::threadSafety = false;
+	if (localFont != font)
+		spring::SafeDelete(localFont);
 }
 
 
@@ -326,16 +344,16 @@ bool CLoadScreen::Draw()
 		}
 
 		if (showMessages) {
-			font->Begin();
-				font->SetTextColor(0.5f,0.5f,0.5f,0.9f);
-				font->glPrint(0.1f,0.9f,   globalRendering->viewSizeY / 35.0f, FONT_NORM,
+			localFont->Begin();
+				localFont->SetTextColor(0.5f,0.5f,0.5f,0.9f);
+				localFont->glPrint(0.1f,0.9f,   globalRendering->viewSizeY / 35.0f, FONT_NORM,
 					oldLoadMessages);
 
-				font->SetTextColor(0.9f,0.9f,0.9f,0.9f);
-				float posy = font->GetTextNumLines(oldLoadMessages) * font->GetLineHeight() * globalRendering->viewSizeY / 35.0f;
-				font->glPrint(0.1f,0.9f - posy * globalRendering->pixelY,   globalRendering->viewSizeY / 35.0f, FONT_NORM,
+				localFont->SetTextColor(0.9f,0.9f,0.9f,0.9f);
+				float posy = localFont->GetTextNumLines(oldLoadMessages) * localFont->GetLineHeight() * globalRendering->viewSizeY / 35.0f;
+				localFont->glPrint(0.1f,0.9f - posy * globalRendering->pixelY,   globalRendering->viewSizeY / 35.0f, FONT_NORM,
 					curLoadMessage);
-			font->End();
+			localFont->End();
 		}
 	}
 
