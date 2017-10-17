@@ -29,7 +29,8 @@ public:
 
 	virtual void Update() {}
 
-		float  GetFOV() const { return fov; } //< In degree!
+	float GetFOV() const { return fov; } //< In degrees!
+
 	virtual float3 GetPos() const { return pos; }
 	virtual float3 GetDir() const { return dir; }
 	virtual float3 GetRot() const { return CCamera::GetRotFromDir(GetDir()); }

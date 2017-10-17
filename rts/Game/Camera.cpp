@@ -107,6 +107,8 @@ void CCamera::CopyStateReflect(const CCamera* cam)
 	SetDir(cam->GetDir() * float3(1.0f, -1.0f, 1.0f));
 	SetPos(cam->GetPos() * float3(1.0f, -1.0f, 1.0f));
 	SetRotZ(-cam->GetRot().z);
+	SetVFOV(cam->GetVFOV());
+
 	Update(false, true, false);
 }
 
