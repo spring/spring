@@ -264,6 +264,14 @@ SDL_Window* CGlobalRendering::CreateSDLWindow(const int2& winRes, const int2& mi
 
 	uint32_t sdlFlags = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE;
 
+	const char* winName = hidden? "hidden": "main";
+	const char* wpfName = "";
+
+	const char* frmts[2] = {
+		"[GR::%s] error \"%s\" using %dx anti-aliasing and %d-bit depth-buffer for %s window",
+		"[GR::%s] using %dx anti-aliasing and %d-bit depth-buffer (PF=\"%s\") for %s window",
+	};
+
 	// note:
 	//   passing the minimized-flag is useless (state is not saved if minimized)
 	//   and has no effect anyway, setting a minimum size for a window overrides
@@ -284,17 +292,17 @@ SDL_Window* CGlobalRendering::CreateSDLWindow(const int2& winRes, const int2& mi
 			SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, zbBits[j]);
 
 			if ((newWindow = SDL_CreateWindow(title, winPosX, winPosY, winRes.x, winRes.y, sdlFlags)) == nullptr) {
-				LOG_L(L_WARNING, "[GR::%s] error \"%s\" using %dx anti-aliasing and %d-bit depth-buffer", __func__, SDL_GetError(), aaLvls[i], zbBits[j]);
+				LOG_L(L_WARNING, frmts[0], __func__, SDL_GetError(), aaLvls[i], zbBits[j], winName);
 				continue;
 			}
 
-			LOG("[GR::%s] using %dx anti-aliasing and %d-bit depth-buffer (PF=\"%s\")", __func__, aaLvls[i], zbBits[j], SDL_GetPixelFormatName(SDL_GetWindowPixelFormat(window)));
+			LOG(frmts[1], __func__, aaLvls[i], zbBits[j], wpfName = SDL_GetPixelFormatName(SDL_GetWindowPixelFormat(window)), winName);
 		}
 	}
 
 	if (newWindow == nullptr) {
 		char buf[1024];
-		SNPRINTF(buf, sizeof(buf), "[GR::%s] could not create SDL-window\n", __func__);
+		SNPRINTF(buf, sizeof(buf), "[GR::%s] could not create (hidden=%d) SDL-window\n", __func__, hidden);
 		handleerror(nullptr, buf, "ERROR", MBF_OK | MBF_EXCL);
 		return nullptr;
 	}
@@ -316,6 +324,7 @@ SDL_Window* CGlobalRendering::CreateSDLWindow(const int2& winRes, const int2& mi
 SDL_GLContext CGlobalRendering::CreateGLContext(const int2& minCtx, SDL_Window* targetWindow)
 {
 	SDL_GLContext newContext = nullptr;
+
 	constexpr int2 glCtxs[] = {{2, 0}, {2, 1},  {3, 0}, {3, 1}, {3, 2}, {3, 3},  {4, 0}, {4, 1}, {4, 2}, {4, 3}, {4, 4}, {4, 5}, {4, 6}};
 	          int2 cmpCtx;
 
@@ -327,11 +336,13 @@ SDL_GLContext CGlobalRendering::CreateGLContext(const int2& minCtx, SDL_Window* 
 	if ((newContext = SDL_GL_CreateContext(targetWindow)) != nullptr)
 		return newContext;
 
-	const char* frmts[] = {"[GR::%s] error (\"%s\") creating GL%d.%d %s-context", "[GR::%s] created GL%d.%d %s-context"};
+	const char* winName = (targetWindow == hiddenWindow)? "hidden": "main";
+
+	const char* frmts[] = {"[GR::%s] error (\"%s\") creating %s GL%d.%d %s-context", "[GR::%s] created %s GL%d.%d %s-context"};
 	const char* profs[] = {"compatibility", "core"};
 
 	char buf[1024] = {0};
-	SNPRINTF(buf, sizeof(buf), frmts[false], __func__, SDL_GetError(), minCtx.x, minCtx.y, profs[forceCoreContext]);
+	SNPRINTF(buf, sizeof(buf), frmts[false], __func__, SDL_GetError(), winName, minCtx.x, minCtx.y, profs[forceCoreContext]);
 
 	for (const int2 tmpCtx: glCtxs) {
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, tmpCtx.x);
@@ -341,13 +352,13 @@ SDL_GLContext CGlobalRendering::CreateGLContext(const int2& minCtx, SDL_Window* 
 			SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, mask);
 
 			if ((newContext = SDL_GL_CreateContext(targetWindow)) == nullptr) {
-				LOG_L(L_WARNING, frmts[false], __func__, SDL_GetError(), tmpCtx.x, tmpCtx.y, profs[mask == SDL_GL_CONTEXT_PROFILE_CORE]);
+				LOG_L(L_WARNING, frmts[false], __func__, SDL_GetError(), winName, tmpCtx.x, tmpCtx.y, profs[mask == SDL_GL_CONTEXT_PROFILE_CORE]);
 			} else {
 				// save the lowest successfully created fallback compatibility-context
 				if (mask == SDL_GL_CONTEXT_PROFILE_COMPATIBILITY && cmpCtx.x == 0 && tmpCtx.x >= minCtx.x)
 					cmpCtx = tmpCtx;
 
-				LOG_L(L_WARNING, frmts[true], __func__, tmpCtx.x, tmpCtx.y, profs[mask == SDL_GL_CONTEXT_PROFILE_CORE]);
+				LOG_L(L_WARNING, frmts[true], __func__, winName, tmpCtx.x, tmpCtx.y, profs[mask == SDL_GL_CONTEXT_PROFILE_CORE]);
 			}
 
 			// accepts nullptr's
@@ -453,7 +464,6 @@ bool CGlobalRendering::CreateWindowAndContext(const char* title, bool hidden)
 
 	if ((glContext = CreateGLContext(minCtx, window)) == nullptr)
 		return false;
-
 	if ((glSecondaryContext = CreateGLContext(minCtx, hiddenWindow)) == nullptr)
 		return false;
 
