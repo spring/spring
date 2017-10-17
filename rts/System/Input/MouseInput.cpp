@@ -131,7 +131,7 @@ public:
 	{
 		SDL_SysWMinfo info;
 		SDL_VERSION(&info.version);
-		if (!SDL_GetWindowWMInfo(globalRendering->window, &info))
+		if (!SDL_GetWindowWMInfo(globalRendering->GetWindow(0), &info))
 			return;
 
 		wnd = info.info.win.window;
