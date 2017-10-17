@@ -6,7 +6,6 @@
 #include "LuaSyncedCtrl.h"
 
 #include "LuaInclude.h"
-
 #include "LuaConfig.h"
 #include "LuaRules.h" // for MAX_LUA_COB_ARGS
 #include "LuaHandleSynced.h"
@@ -75,7 +74,6 @@
 #include "System/EventHandler.h"
 #include "System/ObjectDependenceTypes.h"
 #include "System/Log/ILog.h"
-#include "System/Sync/HsiehHash.h"
 
 using std::max;
 using std::min;
@@ -3999,42 +3997,27 @@ int LuaSyncedCtrl::SetTerrainTypeData(lua_State* L)
 	}
 
 	CMapInfo::TerrainType* tt = const_cast<CMapInfo::TerrainType*>(&mapInfo->terrainTypes[tti]);
+	const CMapInfo::TerrainType ctt = *tt; // copy
 
-	const int checksumOld = HsiehHash(tt, sizeof(CMapInfo::TerrainType), 0);
+	bool ttSpeedModChanged = false;
+	bool ttHardnessChanged = false;
 
-	if (args >= 2 && lua_isnumber(L, 2)) { tt->tankSpeed  = lua_tofloat(L, 2); }
-	if (args >= 3 && lua_isnumber(L, 3)) { tt->kbotSpeed  = lua_tofloat(L, 3); }
-	if (args >= 4 && lua_isnumber(L, 4)) { tt->hoverSpeed = lua_tofloat(L, 4); }
-	if (args >= 5 && lua_isnumber(L, 5)) { tt->shipSpeed  = lua_tofloat(L, 5); }
+	if (args >= 2 && lua_isnumber(L, 2)) ttSpeedModChanged |= (ctt. tankSpeed != (tt-> tankSpeed = lua_tofloat(L, 2)));
+	if (args >= 3 && lua_isnumber(L, 3)) ttSpeedModChanged |= (ctt. kbotSpeed != (tt-> kbotSpeed = lua_tofloat(L, 3)));
+	if (args >= 4 && lua_isnumber(L, 4)) ttSpeedModChanged |= (ctt.hoverSpeed != (tt->hoverSpeed = lua_tofloat(L, 4)));
+	if (args >= 5 && lua_isnumber(L, 5)) ttSpeedModChanged |= (ctt. shipSpeed != (tt-> shipSpeed = lua_tofloat(L, 5)));
+	if (args >= 6 && lua_isnumber(L, 6)) ttHardnessChanged |= (ctt.  hardness != (tt->  hardness = lua_tofloat(L, 6)));
 
-	const int checksumNew = HsiehHash(tt, sizeof(CMapInfo::TerrainType), 0);
-	if (checksumOld == checksumNew) {
-		// no change, no need to repath
-		lua_pushboolean(L, true);
-		return 1;
-	}
+	if (args >= 7 && lua_isboolean(L, 7))
+		tt->receiveTracks = lua_toboolean(L, 7);
+	if (args >= 8 && lua_isstring(L, 8))
+		tt->name = lua_tostring(L, 8);
 
-	/*
-	if (!mapDamage->disabled) {
-		CBasicMapDamage* bmd = dynamic_cast<CBasicMapDamage*>(mapDamage);
-
-		if (bmd != nullptr) {
-			tt->hardness = luaL_checkfloat(L, 6);
-			bmd->invHardness[tti] = 1.0f / tt->hardness;
-		}
-	}
-	*/
-
-	const unsigned char* typeMap = readMap->GetTypeMapSynced();
-
-	// update all map-squares set to this terrain-type (slow)
-	for (int tx = 0; tx < mapDims.hmapx; tx++) {
-		for (int tz = 0; tz < mapDims.hmapy; tz++) {
-			if (typeMap[tz * mapDims.hmapx + tx] == tti) {
-				pathManager->TerrainChange((tx << 1), (tz << 1),  (tx << 1) + 1, (tz << 1) + 1,  TERRAINCHANGE_TYPEMAP_SPEED_VALUES);
-			}
-		}
-	}
+	// hardness changes do not require repathing
+	if (ttHardnessChanged)
+		mapDamage->TerrainTypeHardnessChanged(tti);
+	if (ttSpeedModChanged)
+		mapDamage->TerrainTypeSpeedModChanged(tti);
 
 	lua_pushboolean(L, true);
 	return 1;

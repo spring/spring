@@ -114,9 +114,8 @@ void CMapInfo::ReadGlobal()
 	map.voidWater       = topTable.GetBool("voidWater", false);
 	map.voidGround      = topTable.GetBool("voidGround", false);
 
-	// clamps
-	if (std::abs(map.hardness) < 0.001f)
-		map.hardness = std::copysignf(0.001f, map.hardness);
+	// clamps; global hardness can be either positive or negative but never zero
+	map.hardness        = std::max(0.001f, std::abs(map.hardness)) * std::copysign(1.0f, map.hardness);
 	map.tidalStrength   = std::max(0.000f, map.tidalStrength);
 	map.maxMetal        = std::max(0.000f, map.maxMetal);
 	map.extractorRadius = std::max(0.000f, map.extractorRadius);

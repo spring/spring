@@ -30,10 +30,10 @@ CBasicMapDamage::CBasicMapDamage()
 	}
 
 	for (int a = 0; a < CMapInfo::NUM_TERRAIN_TYPES; ++a) {
-		rawHardness[a] = mapInfo->terrainTypes[a].hardness * mapHardness;
-		invHardness[a] = 1.0f / rawHardness[a];
+		TerrainTypeHardnessChanged(a);
 	}
 
+	// 3x3 smoothing kernel
 	weightTable[0] = 1.0f / 16.0f;
 	weightTable[1] = 2.0f / 16.0f;
 	weightTable[2] = 1.0f / 16.0f;
@@ -44,6 +44,30 @@ CBasicMapDamage::CBasicMapDamage()
 	weightTable[7] = 2.0f / 16.0f;
 	weightTable[8] = 1.0f / 16.0f;
 }
+
+
+void CBasicMapDamage::TerrainTypeHardnessChanged(int ttIndex)
+{
+	// table should contain only positive or only negative values, never both
+	rawHardness[ttIndex] = mapHardness * std::max(0.001f, mapInfo->terrainTypes[ttIndex].hardness);
+	invHardness[ttIndex] = 1.0f / rawHardness[ttIndex];
+}
+
+void CBasicMapDamage::TerrainTypeSpeedModChanged(int ttIndex)
+{
+	const unsigned char* typeMap = readMap->GetTypeMapSynced();
+
+	// update all map-squares that reference this terrain-type (slow)
+	for (int tz = 0; tz < mapDims.hmapy; tz++) {
+		for (int tx = 0; tx < mapDims.hmapx; tx++) {
+			if (typeMap[tz * mapDims.hmapx + tx] != ttIndex)
+				continue;
+
+			pathManager->TerrainChange((tx << 1), (tz << 1),  (tx << 1) + 1, (tz << 1) + 1,  TERRAINCHANGE_TYPEMAP_SPEED_VALUES);
+		}
+	}
+}
+
 
 void CBasicMapDamage::Explosion(const float3& pos, float strength, float radius)
 {
@@ -103,6 +127,7 @@ void CBasicMapDamage::Explosion(const float3& pos, float strength, float radius)
 					const int tmz = Clamp((y >> 1) + j, 0, mapDims.hmapy - 1);
 					const int tmx = Clamp((x >> 1) + i, 0, mapDims.hmapx - 1);
 					const int tti = typeMap[tmz * mapDims.hmapx + tmx];
+
 					sumRawHardness += (rawHardness[tti] * weightTable[(j + 1) * 3 + (i + 1)]);
 				}
 			}

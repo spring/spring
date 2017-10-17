@@ -13,12 +13,14 @@ Lua:
  - let Unit*Collision callins skip engine collision handling if true is returned (from any synced gadget)
  - call gadgetHandler:Explosion for unsynced gadgets (but discard the return value)
  - allow specifying source by position but target by ID for Spring.GetUnitWeaponHaveFreeLineOfFire
+ - allow setting terrain-type hardness and name via Spring.SetTerrainTypeData
 
 Misc:
  - remove joystick support
  - detect hangs during filesystem initialisation
  - fix stale thread-id cache in watchdog after reload
  - make LuaVFSDownload rescan archives in main thread, and do so when a download finishes (not when one starts)
+ - account for raw search in AICallback::GetPathLength
 
 
 
