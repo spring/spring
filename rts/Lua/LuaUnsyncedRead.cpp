@@ -1513,12 +1513,16 @@ int LuaUnsyncedRead::GetPixelDir(lua_State* L)
 
 /******************************************************************************/
 
-static void AddPlayerToRoster(lua_State* L, int playerID, bool includePathingFlag)
+static bool AddPlayerToRoster(lua_State* L, int playerID, bool onlyActivePlayers, bool includePathingFlag)
 {
 #define PUSH_ROSTER_ENTRY(type, val) \
 	lua_push ## type(L, val); lua_rawseti(L, -2, index++);
 
 	const CPlayer* p = playerHandler->Player(playerID);
+
+	if (onlyActivePlayers && !p->active)
+		return false;
+
 	int index = 1;
 	lua_newtable(L);
 	PUSH_ROSTER_ENTRY(string, p->name.c_str());
@@ -1535,6 +1539,8 @@ static void AddPlayerToRoster(lua_State* L, int playerID, bool includePathingFla
 		const float pingSecs = float(p->ping);
 		PUSH_ROSTER_ENTRY(number, pingSecs);
 	}
+
+	return true;
 }
 
 
@@ -2330,21 +2336,25 @@ int LuaUnsyncedRead::GetPlayerRoster(lua_State* L)
 {
 	const PlayerRoster::SortType oldSortType = playerRoster.GetSortType();
 
-	if (!lua_isnone(L, 1)) {
+	if (!lua_isnone(L, 1))
 		playerRoster.SetSortTypeByCode((PlayerRoster::SortType) luaL_checkint(L, 1));
-	}
 
 	const bool includePathingFlag = luaL_optboolean(L, 2, false);
 
-	int count;
-	const std::vector<int>& players = playerRoster.GetIndices(&count, includePathingFlag);
+	// get the sorted indices of *all* (including inactive) players
+	const std::vector<int>& playerIndices = playerRoster.GetIndices(includePathingFlag);
 
-	playerRoster.SetSortTypeByCode(oldSortType); // revert
+	// revert
+	playerRoster.SetSortTypeByCode(oldSortType);
 
-	lua_createtable(L, count, 0);
-	for (int i = 0; i < count; i++) {
-		AddPlayerToRoster(L, players[i], includePathingFlag);
-		lua_rawseti(L, -2, i + 1);
+	// push the active players
+	lua_createtable(L, playerIndices.size(), 0);
+	for (size_t i = 0, j = 1, s = playerIndices.size(); i < s; i++) {
+		if (!AddPlayerToRoster(L, playerIndices[i], true, includePathingFlag))
+			continue;
+
+		// t[j] = {...}
+		lua_rawseti(L, -2, j++);
 	}
 
 	return 1;

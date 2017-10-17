@@ -20,7 +20,7 @@ public:
 
 	PlayerRoster();
 
-	const std::vector<int>& GetIndices(int* activePlayerCount, bool includePathingFlag = false, bool callerBlockResort = false);
+	const std::vector<int>& GetIndices(bool includePathingFlag = false, bool callerBlockResort = false);
 
 	bool SetSortTypeByName(const std::string& type);
 	bool SetSortTypeByCode(SortType type);
