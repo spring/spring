@@ -125,6 +125,7 @@ namespace Threading {
 	void SetMainThread();
 	void SetGameLoadThread();
 	void SetAudioThread();
+	void SetFileSysThread();
 	void SetWatchDogThread();
 
 	bool IsMainThread();
@@ -135,6 +136,9 @@ namespace Threading {
 
 	bool IsAudioThread();
 	bool IsAudioThread(NativeThreadId threadID);
+
+	bool IsFileSysThread();
+	bool IsFileSysThread(NativeThreadId threadID);
 
 	bool IsWatchDogThread();
 	bool IsWatchDogThread(NativeThreadId threadID);

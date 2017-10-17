@@ -910,7 +910,7 @@ int SpringApp::Run()
 
 	// no exception from main, check if some other thread interrupted our regular loop
 	// in case one did, ErrorMessageBox will call ShutDown and forcibly exit the process
-	if ((thrErr = Threading::GetThreadError()) != nullptr)
+	if (!(thrErr = Threading::GetThreadError())->Empty())
 		ErrorMessageBox("  [thread] " + thrErr->message, thrErr->caption, thrErr->flags);
 
 	try {
@@ -921,7 +921,7 @@ int SpringApp::Run()
 	} CATCH_SPRING_ERRORS
 
 	// no exception from main, but a thread might have thrown *during* ShutDown
-	if ((thrErr = Threading::GetThreadError()) != nullptr)
+	if (!(thrErr = Threading::GetThreadError())->Empty())
 		ErrorMessageBox("  [thread] " + thrErr->message, thrErr->caption, thrErr->flags);
 
 	// cleanup signal handlers, etc

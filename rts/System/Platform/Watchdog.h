@@ -11,7 +11,8 @@ enum WatchdogThreadnum {
 	WDT_MAIN  = 0,
 	WDT_LOAD  = 1,
 	WDT_AUDIO = 2,
-	WDT_COUNT = 3,
+	WDT_VFSI  = 3,
+	WDT_COUNT = 4,
 };
 
 namespace Watchdog
