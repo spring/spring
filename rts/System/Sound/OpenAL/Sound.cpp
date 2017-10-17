@@ -656,20 +656,32 @@ void CSound::NewFrame()
 int CSound::GetMaxMonoSources(ALCdevice* device, int cfgMaxSounds)
 {
 	ALCint size;
-	alcGetIntegerv(device, ALC_ATTRIBUTES_SIZE, 1, &size);
-	std::vector<ALCint> attrs(size);
-	alcGetIntegerv(device, ALC_ALL_ATTRIBUTES, size, &attrs[0]);
+	ALCint attrs[1024 + 1];
 
-	for (size_t i = 0; i < (attrs.size() - 1); ++i) {
-		if (attrs[i] != ALC_MONO_SOURCES)
+	constexpr size_t maxSize = sizeof(attrs) / sizeof(ALCint);
+
+	memset(attrs, 0, sizeof(attrs));
+	alcGetIntegerv(device, ALC_ATTRIBUTES_SIZE, 1, &size);
+
+	// size of the array required to hold the key/value pairs plus 0
+	// (a size of 13 implies there are six attribute key/value pairs)
+	LOG("[Sound::%s] #attribs=%d", __func__, size);
+
+	// must have at least one attribute pair
+	if (size < 3)
+		return cfgMaxSounds;
+
+	alcGetIntegerv(device, ALC_ALL_ATTRIBUTES, size = std::min(size_t(size), maxSize), &attrs[0]);
+
+	for (size_t i = 0, s = (size - 1) >> 1; i < s; ++i) {
+		const ALCint key = attrs[i * 2 + 0];
+		const ALCint val = attrs[i * 2 + 1];
+
+		if (key != ALC_MONO_SOURCES)
 			continue;
 
-		const int alMaxSounds = attrs[i + 1];
-
-		if (alMaxSounds < cfgMaxSounds)
-			LOG_L(L_WARNING, "[Sound::%s] cfgMaxSounds=%d but alMaxSounds=%d", __func__, cfgMaxSounds, alMaxSounds);
-
-		return std::min(cfgMaxSounds, alMaxSounds);
+		LOG("[Sound::%s] {cfg,alc}MaxSounds={%d,%d}", __func__, cfgMaxSounds, val);
+		return (std::min(cfgMaxSounds, val));
 	}
 
 	return cfgMaxSounds;
