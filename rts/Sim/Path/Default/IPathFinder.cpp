@@ -184,10 +184,17 @@ IPath::SearchResult IPathFinder::InitSearch(const MoveDef& moveDef, const CPathF
 	const bool isStartGoal = pfDef.IsGoal(square.x, square.y);
 	const bool startInGoal = pfDef.startInGoalRadius;
 
+	const bool allowRawPath = pfDef.allowRawPath;
+	const bool allowDefPath = pfDef.allowDefPath;
+
+	assert(allowRawPath || allowDefPath);
+
+	IPath::SearchResult results[] = {IPath::CantGetCloser, IPath::Ok, IPath::CantGetCloser};
+
 	// although our starting square may be inside the goal radius, the starting coordinate may be outside.
 	// in this case we do not want to return CantGetCloser, but instead a path to our starting square.
 	if (isStartGoal && startInGoal)
-		return IPath::CantGetCloser;
+		return results[allowRawPath];
 
 	// no, clean the system from last search
 	ResetSearch();
@@ -215,18 +222,23 @@ IPath::SearchResult IPathFinder::InitSearch(const MoveDef& moveDef, const CPathF
 	mGoalBlockIdx  = mStartBlockIdx;
 	mGoalHeuristic = pfDef.Heuristic(square.x, square.y, BLOCK_SIZE);
 
-	// perform the search
-	const IPath::SearchResult rawResult = (pfDef.allowRawPath                             )? DoRawSearch(moveDef, pfDef, owner): IPath::Error;
-	const IPath::SearchResult ipfResult = (pfDef.allowDefPath && rawResult == IPath::Error)? DoSearch(moveDef, pfDef, owner): rawResult;
+	enum {
+		RAW = 0,
+		IPF = 1,
+	};
 
-	if (ipfResult == IPath::Ok)
-		return ipfResult;
+	// perform the search
+	results[RAW] = (allowRawPath                                )? DoRawSearch(moveDef, pfDef, owner): IPath::Error;
+	results[IPF] = (allowDefPath && results[RAW] == IPath::Error)? DoSearch(moveDef, pfDef, owner): results[RAW];
+
+	if (results[IPF] == IPath::Ok)
+		return IPath::Ok;
 	if (mGoalBlockIdx != mStartBlockIdx)
-		return ipfResult;
+		return results[IPF];
 
 	// if start and goal are within the same block, but distinct squares
 	// or considered a single point for search purposes, then we probably
-	// can not get closer
-	return (!isStartGoal || startInGoal)? IPath::CantGetCloser: ipfResult;
+	// can not get closer and should return that *unless* searching raw
+	return results[IPF + (!allowRawPath && (!isStartGoal || startInGoal))];
 }
 
