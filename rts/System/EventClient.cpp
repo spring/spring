@@ -104,7 +104,6 @@ bool CEventClient::MouseMove(int x, int y, int dx, int dy, int button) { return 
 bool CEventClient::MousePress(int x, int y, int button) { return false; }
 void CEventClient::MouseRelease(int x, int y, int button) { }
 bool CEventClient::MouseWheel(bool up, float value) { return false; }
-bool CEventClient::JoystickEvent(const std::string& event, int val1, int val2) { return false; }
 
 void CEventClient::DownloadQueued(int ID, const string& archiveName, const string& archiveType) {}
 void CEventClient::DownloadStarted(int ID) {}

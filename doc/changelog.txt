@@ -13,6 +13,7 @@ Lua:
  - allow specifying source by position but target by ID for Spring.GetUnitWeaponHaveFreeLineOfFire
 
 Misc:
+ - remove joystick support
  - make LuaVFSDownload rescan archives in main thread, and do so when a download finishes (not when one starts)
 
 

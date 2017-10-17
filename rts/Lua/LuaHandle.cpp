@@ -2011,26 +2011,6 @@ bool CLuaHandle::MouseWheel(bool up, float value)
 	return retval;
 }
 
-bool CLuaHandle::JoystickEvent(const std::string& event, int val1, int val2)
-{
-	LUA_CALL_IN_CHECK(L, false);
-	luaL_checkstack(L, 4, __func__);
-	const LuaHashString cmdStr(event);
-	if (!cmdStr.GetGlobalFunc(L))
-		return false;
-
-	lua_pushnumber(L, val1);
-	lua_pushnumber(L, val2);
-
-	// call the function
-	if (!RunCallIn(L, cmdStr, 2, 1))
-		return false;
-
-	const bool retval = luaL_optboolean(L, -1, false);
-	lua_pop(L, 1);
-	return retval;
-}
-
 bool CLuaHandle::IsAbove(int x, int y)
 {
 	LUA_CALL_IN_CHECK(L, false);
