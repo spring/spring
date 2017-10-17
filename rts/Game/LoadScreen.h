@@ -55,9 +55,6 @@ private:
 	spring::thread netHeartbeatThread;
 	COffscreenGLThread gameLoadThread;
 
-	// used in the secondary GL context when mtLoading
-	CglFont* localFont;
-
 	bool mtLoading;
 
 	spring_time lastDrawTime;

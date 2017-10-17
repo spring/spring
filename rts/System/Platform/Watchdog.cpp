@@ -267,6 +267,10 @@ namespace Watchdog
 		return false;
 	}
 
+	bool HasThread(WatchdogThreadnum num) {
+		return ((registeredThreads[num] != nullptr) && (registeredThreads[num] != &registeredThreadsData[WDT_COUNT]));
+	}
+
 
 	void ClearTimer(bool disable, Threading::NativeThreadId* _threadId)
 	{

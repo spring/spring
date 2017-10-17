@@ -49,7 +49,6 @@ CLoadScreen::CLoadScreen(const std::string& _mapName, const std::string& _modNam
 	mapName(_mapName),
 	modName(_modName),
 	saveFile(_saveFile),
-	localFont(font),
 	mtLoading(true),
 	lastDrawTime(0)
 {
@@ -76,14 +75,10 @@ CLoadScreen::~CLoadScreen()
 	if (activeController == this)
 		activeController = nullptr;
 
-	if (luaIntro != nullptr)
-		luaIntro->Shutdown();
-
-	CLuaIntro::FreeHandler();
-
 	if (!gu->globalQuit) {
 		// send our playername to the server to indicate we finished loading
 		const CPlayer* p = playerHandler->Player(gu->myPlayerNum);
+
 		clientNet->Send(CBaseNetProtocol::Get().SendPlayerName(gu->myPlayerNum, p->name));
 #ifdef SYNCCHECK
 		clientNet->Send(CBaseNetProtocol::Get().SendPathCheckSum(gu->myPlayerNum, pathManager->GetPathCheckSum()));
@@ -113,6 +108,7 @@ bool CLoadScreen::Init()
 	// and gu->myPlayerNum has to be set.
 	skirmishAIHandler.LoadPreGame();
 
+
 #ifdef HEADLESS
 	mtLoading = false;
 #else
@@ -123,6 +119,7 @@ bool CLoadScreen::Init()
 	mtLoading |= (mtCfg < 0) && !globalRendering->haveMesa && !globalRendering->haveIntel;
 #endif
 
+
 	// Create a thread during the loading that pings the host/server, so it knows that this client is still alive/loading
 	clientNet->KeepUpdating(true);
 
@@ -131,28 +128,31 @@ bool CLoadScreen::Init()
 
 	if (mtLoading) {
 		try {
-			// create the game-loading thread
+			// create the game-loading thread; rebinds primary context to hidden window
 			CglFont::threadSafety = true;
+
 			gameLoadThread = std::move(COffscreenGLThread(std::bind(&CGame::LoadGame, game, mapName)));
-			// Initialize localFont
-			localFont = CglFont::LoadFont(font->GetFilePath(), false);
+
+			while (!Watchdog::HasThread(WDT_LOAD));
 		} catch (const opengl_error& gle) {
 			LOG_L(L_WARNING, "[LoadScreen::%s] offscreen GL context creation failed (error: \"%s\")", __func__, gle.what());
 
 			mtLoading = false;
-			localFont = font;
 			CglFont::threadSafety = false;
 		}
 	}
 
-	// LuaIntro must be loaded in the same thread that calls CLoadScreen::Draw
+	// LuaIntro must be loaded and killed in the same thread (main)
+	// and bound context (secondary) that CLoadScreen::Draw runs in
+	//
+	// note that it has access to gl.LoadFont (which creates a user
+	// data wrapping a local font) but also to gl.*Text (which uses
+	// the global font), the latter will cause problems in GL4
 	CLuaIntro::LoadFreeHandler();
 
 	if (mtLoading)
 		return true;
 
-
-	assert(!mtLoading);
 	LOG("[LoadScreen::%s] single-threaded", __func__);
 	game->LoadGame(mapName);
 	return false;
@@ -163,13 +163,16 @@ void CLoadScreen::Kill()
 	if (!gameLoadThread.joinable())
 		return;
 
+	if (luaIntro != nullptr)
+		luaIntro->Shutdown();
+
+	CLuaIntro::FreeHandler();
+
 	// at this point, the thread running CGame::LoadGame
 	// has finished and deregistered itself from WatchDog
 	gameLoadThread.join();
 
 	CglFont::threadSafety = false;
-	if (localFont != font)
-		spring::SafeDelete(localFont);
 }
 
 
