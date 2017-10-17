@@ -220,9 +220,8 @@ bool CLuaMenu::LoadUnsyncedCtrlFunctions(lua_State* L)
 
 	REGISTER_SCOPED_LUA_CFUNC(LuaUnsyncedCtrl, ExtractModArchiveFile);
 
-	REGISTER_SCOPED_LUA_CFUNC(LuaUnsyncedCtrl, GetConfigInt);
 	REGISTER_SCOPED_LUA_CFUNC(LuaUnsyncedCtrl, SetConfigInt);
-	REGISTER_SCOPED_LUA_CFUNC(LuaUnsyncedCtrl, GetConfigString);
+	REGISTER_SCOPED_LUA_CFUNC(LuaUnsyncedCtrl, SetConfigFloat);
 	REGISTER_SCOPED_LUA_CFUNC(LuaUnsyncedCtrl, SetConfigString);
 
 	REGISTER_SCOPED_LUA_CFUNC(LuaUnsyncedCtrl, CreateDir);
@@ -294,6 +293,10 @@ bool CLuaMenu::LoadUnsyncedReadFunctions(lua_State* L)
 	REGISTER_SCOPED_LUA_CFUNC(LuaUnsyncedRead, GetConfigParams);
 
 	REGISTER_SCOPED_LUA_CFUNC(LuaUnsyncedRead, GetGameName);
+
+	REGISTER_SCOPED_LUA_CFUNC(LuaUnsyncedRead, GetConfigInt);
+	REGISTER_SCOPED_LUA_CFUNC(LuaUnsyncedRead, GetConfigFloat);
+	REGISTER_SCOPED_LUA_CFUNC(LuaUnsyncedRead, GetConfigString);
 	return true;
 }
 

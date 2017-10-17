@@ -158,8 +158,9 @@ bool LoadFromLua(Shader::IProgramObject* program, const std::string& filename)
 	p.SetLowerCppKeys(false);
 
 	p.GetTable("Spring");
-	p.AddFunc("GetConfigInt",     LuaUnsyncedCtrl::GetConfigInt);
-	p.AddFunc("GetConfigString",  LuaUnsyncedCtrl::GetConfigString);
+	p.AddFunc("GetConfigInt",     LuaUnsyncedRead::GetConfigInt);
+	p.AddFunc("GetConfigFloat",   LuaUnsyncedRead::GetConfigFloat);
+	p.AddFunc("GetConfigString",  LuaUnsyncedRead::GetConfigString);
 	p.AddFunc("GetLosViewColors", LuaUnsyncedRead::GetLosViewColors);
 	p.EndTable();
 

@@ -54,6 +54,7 @@
 #include "Game/UI/Groups/Group.h"
 #include "Game/UI/Groups/GroupHandler.h"
 #include "Net/Protocol/NetProtocol.h" // NETMSG_*
+#include "System/Config/ConfigHandler.h"
 #include "System/Config/ConfigVariable.h"
 #include "System/Input/KeyInput.h"
 #include "System/LoadSave/DemoReader.h"
@@ -220,6 +221,9 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetDrawSelectionInfo);
 
 	REGISTER_LUA_CFUNC(GetConfigParams);
+	REGISTER_LUA_CFUNC(GetConfigInt);
+	REGISTER_LUA_CFUNC(GetConfigFloat);
+	REGISTER_LUA_CFUNC(GetConfigString);
 	REGISTER_LUA_CFUNC(GetLogSections);
 
 	REGISTER_LUA_CFUNC(GetAllDecals);
@@ -2502,6 +2506,24 @@ int LuaUnsyncedRead::GetConfigParams(lua_State* L)
 
 		lua_rawseti(L, -2, i++);
 	}
+	return 1;
+}
+
+int LuaUnsyncedRead::GetConfigInt(lua_State* L)
+{
+	lua_pushinteger(L, configHandler->GetIntSafe(luaL_checkstring(L, 1), luaL_optint(L, 2, 0)));
+	return 1;
+}
+
+int LuaUnsyncedRead::GetConfigFloat(lua_State* L)
+{
+	lua_pushnumber(L, configHandler->GetFloatSafe(luaL_checkstring(L, 1), luaL_optfloat(L, 2, 0.0f)));
+	return 1;
+}
+
+int LuaUnsyncedRead::GetConfigString(lua_State* L)
+{
+	lua_pushsstring(L, configHandler->GetStringSafe(luaL_checkstring(L, 1), luaL_optstring(L, 2, "")));
 	return 1;
 }
 
