@@ -11,7 +11,7 @@
 #include "Net/Protocol/NetProtocol.h"
 #include "System/myMath.h"
 
-CResourceBar* resourceBar = NULL;
+CResourceBar* resourceBar = nullptr;
 
 
 CResourceBar::CResourceBar()
@@ -32,11 +32,6 @@ CResourceBar::CResourceBar()
 	energyBox.y1 = 0.01f;
 	energyBox.x2 = box.x2 - 0.03f - box.x1;
 	energyBox.y2 = energyBox.y1 + (box.y2 - box.y1); // extend to the very top of the screen
-}
-
-
-CResourceBar::~CResourceBar()
-{
 }
 
 
@@ -62,9 +57,8 @@ static std::string FloatToSmallString(float num, float mul = 1) {
 
 void CResourceBar::Draw()
 {
-	if (!enabled) {
+	if (!enabled)
 		return;
-	}
 
 	const CTeam* myTeam = teamHandler->Team(gu->myTeam);
 
@@ -77,18 +71,18 @@ void CResourceBar::Draw()
 	glBegin(GL_QUADS);
 
 	// Box
-	glColor4f(0.2f,0.2f,0.2f,guiAlpha);
+	glColor4f(0.2f, 0.2f, 0.2f, guiAlpha);
 	glVertex2f(box.x1, box.y1);
 	glVertex2f(box.x1, box.y2);
 	glVertex2f(box.x2, box.y2);
 	glVertex2f(box.x2, box.y1);
 
 	// layout metal in box
-	GLfloat metalx = box.x1 + .01f;
-	GLfloat metaly = box.y1 + .004f;
+	GLfloat metalx = box.x1 + 0.01f;
+	GLfloat metaly = box.y1 + 0.004f;
 
-	GLfloat metalbarx1 = metalx + .08f;
-	GLfloat metalbarx2 = box.x1 + (box.x2 - box.x1) / 2.0f - .03f;
+	GLfloat metalbarx1 = metalx + 0.08f;
+	GLfloat metalbarx2 = box.x1 + (box.x2 - box.x1) / 2.0f - 0.03f;
 
 	// metal layout
 	GLfloat metalbarlen = metalbarx2 - metalbarx1;
@@ -138,9 +132,8 @@ void CResourceBar::Draw()
 	x2 = energybarx2;
 	y2 = energyy + 0.020f;
 
-	if (myTeam->resStorage.energy != 0.0f) {
+	if (myTeam->resStorage.energy != 0.0f)
 		x = (myTeam->res.energy / myTeam->resStorage.energy) * energybarlen;
-	}
 
 	// energy draw
 	glColor4f(0.8f, 0.8f, 0.2f, 0.2f);
@@ -164,54 +157,48 @@ void CResourceBar::Draw()
 	glEnd();
 
 
-	smallFont->Begin();
-
 	const float headerFontSize = (box.y2 - box.y1) * 0.7 * globalRendering->viewSizeY;
 	const float labelsFontSize = (box.y2 - box.y1) * 0.5 * globalRendering->viewSizeY;
-	const int fontOptions = (guihandler && guihandler->GetOutlineFonts()) ? FONT_OUTLINE | FONT_NORM : FONT_NORM;
+	const int fontOptions = (guihandler != nullptr && guihandler->GetOutlineFonts()) ? (FONT_OUTLINE | FONT_NORM) : FONT_NORM;
 
-	smallFont->SetTextColor(0.8f, 0.8f, 1, 0.8f);
-	smallFont->glPrint(metalx - 0.004f,  (box.y1 + box.y2) * 0.5, headerFontSize, FONT_VCENTER | fontOptions, "Metal");
+	smallFont->SetTextColor(0.8f, 0.8f, 1.0f, 0.8f);
+	smallFont->glPrint(metalx - 0.004f,  (box.y1 + box.y2) * 0.5, headerFontSize, FONT_VCENTER | fontOptions | FONT_BUFFERED, "Metal");
 
-	smallFont->SetTextColor(1, 1, 0.4f, 0.8f);
-	smallFont->glPrint(energyx - 0.018f, (box.y1 + box.y2) * 0.5, headerFontSize, FONT_VCENTER | fontOptions, "Energy");
+	smallFont->SetTextColor(1.0f, 1.0f, 0.4f, 0.8f);
+	smallFont->glPrint(energyx - 0.018f, (box.y1 + box.y2) * 0.5, headerFontSize, FONT_VCENTER | fontOptions | FONT_BUFFERED, "Energy");
 
 	smallFont->SetTextColor(1.0f, 0.3f, 0.3f, 1.0f); // Expenses
-	smallFont->glFormat(metalx  + 0.044f, box.y1, labelsFontSize, FONT_DESCENDER | fontOptions, "-%s(-%s)",
-			FloatToSmallString(math::fabs(myTeam->resPrevPull.metal)).c_str(),
-			FloatToSmallString(math::fabs(myTeam->resSent.metal)).c_str());
-	smallFont->glFormat(energyx + 0.044f, box.y1, labelsFontSize, FONT_DESCENDER | fontOptions, "-%s(-%s)",
-			FloatToSmallString(math::fabs(myTeam->resPrevPull.energy)).c_str(),
-			FloatToSmallString(math::fabs(myTeam->resSent.energy)).c_str());
+	smallFont->glFormat(metalx  + 0.044f, box.y1, labelsFontSize, FONT_DESCENDER | fontOptions | FONT_BUFFERED, "-%s(-%s)",
+		FloatToSmallString(math::fabs(myTeam->resPrevPull.metal)).c_str(),
+		FloatToSmallString(math::fabs(myTeam->resSent.metal)).c_str());
+	smallFont->glFormat(energyx + 0.044f, box.y1, labelsFontSize, FONT_DESCENDER | fontOptions | FONT_BUFFERED, "-%s(-%s)",
+		FloatToSmallString(math::fabs(myTeam->resPrevPull.energy)).c_str(),
+		FloatToSmallString(math::fabs(myTeam->resSent.energy)).c_str());
 
 	smallFont->SetTextColor(0.4f, 1.0f, 0.4f, 0.95f); // Income
-	smallFont->glFormat(metalx  + 0.044f, box.y2 - 2*globalRendering->pixelY, labelsFontSize, FONT_ASCENDER | fontOptions, "+%s",
-			FloatToSmallString(myTeam->resPrevIncome.metal).c_str());
-			// FloatToSmallString(myTeam->metalReceived).c_str());
-	smallFont->glFormat(energyx + 0.044f, box.y2 - 2*globalRendering->pixelY, labelsFontSize, FONT_ASCENDER | fontOptions, "+%s",
-			FloatToSmallString(myTeam->resPrevIncome.energy).c_str());
-			// FloatToSmallString(myTeam->energyReceived).c_str());
+	smallFont->glFormat(metalx  + 0.044f, box.y2 - 2*globalRendering->pixelY, labelsFontSize, FONT_ASCENDER | fontOptions | FONT_BUFFERED, "+%s",
+		FloatToSmallString(myTeam->resPrevIncome.metal).c_str());
+		// FloatToSmallString(myTeam->metalReceived).c_str());
+	smallFont->glFormat(energyx + 0.044f, box.y2 - 2*globalRendering->pixelY, labelsFontSize, FONT_ASCENDER | fontOptions | FONT_BUFFERED, "+%s",
+		FloatToSmallString(myTeam->resPrevIncome.energy).c_str());
+		// FloatToSmallString(myTeam->energyReceived).c_str());
 
-	smallFont->SetTextColor(1, 1, 1, 0.8f);
-	smallFont->glPrint(energybarx2 - 0.01f, energyy - 0.005f, labelsFontSize, fontOptions,
-			FloatToSmallString(myTeam->resStorage.energy));
-	smallFont->glPrint(energybarx1 + energybarlen / 2.0f, energyy - 0.005f, labelsFontSize, fontOptions,
-			FloatToSmallString(myTeam->res.energy));
+	smallFont->SetTextColor(1.0f, 1.0f, 1.0f, 0.8f);
+	smallFont->glPrint(energybarx2 - 0.01f, energyy - 0.005f, labelsFontSize, fontOptions | FONT_BUFFERED, FloatToSmallString(myTeam->resStorage.energy));
+	smallFont->glPrint(energybarx1 + energybarlen / 2.0f, energyy - 0.005f, labelsFontSize, fontOptions, FloatToSmallString(myTeam->res.energy));
 
-	smallFont->glPrint(metalbarx2 - 0.01f, metaly - 0.005f, labelsFontSize, fontOptions,
-			FloatToSmallString(myTeam->resStorage.metal));
-	smallFont->glPrint(metalbarx1 + metalbarlen / 2.0f, metaly - 0.005f, labelsFontSize, fontOptions,
-			FloatToSmallString(myTeam->res.metal));
+	smallFont->glPrint(metalbarx2 - 0.01f, metaly - 0.005f, labelsFontSize, fontOptions | FONT_BUFFERED, FloatToSmallString(myTeam->resStorage.metal));
+	smallFont->glPrint(metalbarx1 + metalbarlen / 2.0f, metaly - 0.005f, labelsFontSize, fontOptions, FloatToSmallString(myTeam->res.metal));
+	smallFont->SetTextColor(1.0f, 1.0f, 1.0f, 1.0f);
 
-	smallFont->End();
+	smallFont->DrawBufferedGL4();
 }
 
 
 bool CResourceBar::IsAbove(int x, int y)
 {
-	if (!enabled) {
+	if (!enabled)
 		return false;
-	}
 
 	const float mx = MouseX(x);
 	const float my = MouseY(y);
@@ -239,38 +226,38 @@ std::string CResourceBar::GetTooltip(int x, int y)
 
 bool CResourceBar::MousePress(int x, int y, int button)
 {
-	if (!enabled) {
+	if (!enabled)
 		return false;
-	}
 
 	const float mx = MouseX(x);
 	const float my = MouseY(y);
 
-	if (InBox(mx, my, box)) {
-		moveBox = true;
-		if (!gu->spectating) {
-			if (InBox(mx, my, box + metalBox)) {
-				moveBox = false;
-				const float metalShare = Clamp((mx - (box.x1 + metalBox.x1)) / (metalBox.x2 - metalBox.x1), 0.f, 1.f);
-				clientNet->Send(CBaseNetProtocol::Get().SendSetShare(gu->myPlayerNum, gu->myTeam, metalShare, teamHandler->Team(gu->myTeam)->resShare.energy));
-			}
-			if (InBox(mx, my, box + energyBox)) {
-				moveBox = false;
-				const float energyShare = Clamp((mx - (box.x1 + energyBox.x1)) / (energyBox.x2 - energyBox.x1), 0.f, 1.f);
-				clientNet->Send(CBaseNetProtocol::Get().SendSetShare(gu->myPlayerNum, gu->myTeam, teamHandler->Team(gu->myTeam)->resShare.metal, energyShare));
-			}
+	if (!InBox(mx, my, box))
+		return false;
+
+	moveBox = true;
+
+	if (!gu->spectating) {
+		if (InBox(mx, my, box + metalBox)) {
+			moveBox = false;
+			const float metalShare = Clamp((mx - (box.x1 + metalBox.x1)) / (metalBox.x2 - metalBox.x1), 0.f, 1.f);
+			clientNet->Send(CBaseNetProtocol::Get().SendSetShare(gu->myPlayerNum, gu->myTeam, metalShare, teamHandler->Team(gu->myTeam)->resShare.energy));
 		}
-		return true;
+		if (InBox(mx, my, box + energyBox)) {
+			moveBox = false;
+			const float energyShare = Clamp((mx - (box.x1 + energyBox.x1)) / (energyBox.x2 - energyBox.x1), 0.f, 1.f);
+			clientNet->Send(CBaseNetProtocol::Get().SendSetShare(gu->myPlayerNum, gu->myTeam, teamHandler->Team(gu->myTeam)->resShare.metal, energyShare));
+		}
 	}
-	return false;
+
+	return true;
 }
 
 
 void CResourceBar::MouseMove(int x, int y, int dx, int dy, int button)
 {
-	if (!enabled) {
+	if (!enabled)
 		return;
-	}
 
 	if (moveBox) {
 		box.x1 += float(dx) / globalRendering->viewSizeX;

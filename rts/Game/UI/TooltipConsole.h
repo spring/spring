@@ -32,7 +32,6 @@ public:
 class CTooltipConsole : public CInputReceiver {
 	public:
 		CTooltipConsole();
-		~CTooltipConsole();
 
 		void Draw();
 		bool IsAbove(int x, int y);

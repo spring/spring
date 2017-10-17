@@ -37,16 +37,15 @@ CInfoConsole::CInfoConsole()
 	lifetime = configHandler->GetInt("InfoMessageTime");
 
 	const std::string geo = configHandler->GetString("InfoConsoleGeometry");
-	const int vars = sscanf(geo.c_str(), "%f %f %f %f",
-	                        &xpos, &ypos, &width, &height);
-	if (vars != 4) {
+
+	if (sscanf(geo.c_str(), "%f %f %f %f", &xpos, &ypos, &width, &height) != 4) {
 		xpos = 0.26f;
 		ypos = 0.96f;
 		width = 0.41f;
 		height = 0.205f;
 	}
 
-	if (width == 0.f || height == 0.f)
+	if (width == 0.0f || height == 0.0f)
 		enabled = false;
 
 	fontSize = fontScale * smallFont->GetSize();
@@ -69,7 +68,7 @@ void CInfoConsole::Draw()
 
 	std::lock_guard<spring::recursive_mutex> scoped_lock(infoConsoleMutex);
 
-	if (guihandler && !guihandler->GetOutlineFonts()) {
+	if (guihandler != nullptr && !guihandler->GetOutlineFonts()) {
 		// draw a black background when not using outlined font
 		glDisable(GL_TEXTURE_2D);
 		glEnable(GL_BLEND);
@@ -84,23 +83,19 @@ void CInfoConsole::Draw()
 		glEnd();
 	}
 
+	const int fontOptions = FONT_NORM | (FONT_OUTLINE * (guihandler != nullptr && guihandler->GetOutlineFonts())) | FONT_BUFFERED;
 	const float fontHeight = fontSize * smallFont->GetLineHeight() * globalRendering->pixelY;
 
 	float curX = xpos + border * globalRendering->pixelX;
 	float curY = ypos - border * globalRendering->pixelY;
 
-	smallFont->Begin();
 	smallFont->SetColors(); // default
-	int fontOptions = FONT_NORM;
-	if (guihandler && guihandler->GetOutlineFonts())
-		fontOptions |= FONT_OUTLINE;
 
 	for (int i = 0; i < std::min(data.size(), maxLines); ++i) {
-		curY -= fontHeight;
-		smallFont->glPrint(curX, curY, fontSize, fontOptions, data[i].text);
+		smallFont->glPrint(curX, curY -= fontHeight, fontSize, fontOptions, data[i].text);
 	}
 
-	smallFont->End();
+	smallFont->DrawBufferedGL4();
 }
 
 
@@ -111,19 +106,20 @@ void CInfoConsole::Update()
 		return;
 
 	// pop old messages after timeout
-	if (data[0].timeout <= spring_gettime()) {
+	if (data[0].timeout <= spring_gettime())
 		data.pop_front();
-	}
 
-	if (!smallFont)
+	if (smallFont == nullptr)
 		return;
 
-	// if we have more lines then we can show, remove the oldest one,
-	// and make sure the others are shown long enough
-	const float maxHeight = (height * globalRendering->viewSizeY) - (border * 2);
-	maxLines = (smallFont->GetLineHeight() > 0)
-			? math::floor(maxHeight / (fontSize * smallFont->GetLineHeight()))
-			: 1; // this will likely be the case on HEADLESS only
+	// if we have more lines then we can show, remove the
+	// oldest and make sure the others are shown long enough
+	const float  maxHeight = (height * globalRendering->viewSizeY) - (border * 2);
+	const float fontHeight = smallFont->GetLineHeight();
+
+	// height=0 will likely be the case on HEADLESS only
+	maxLines = (fontHeight > 0.0f)? math::floor(maxHeight / (fontSize * fontHeight)): 1;
+
 	for (size_t i = data.size(); i > maxLines; i--) {
 		data.pop_front();
 	}
@@ -142,14 +138,12 @@ void CInfoConsole::PushNewLinesToEventHandler()
 		const int count = (int)rawData.size();
 		const int start = count - newLines;
 		for (int i = start; i < count; i++) {
-			const RawLine& rawLine = rawData[i];
-			newRawLines.push_back(rawLine);
+			newRawLines.push_back(rawData[i]);
 		}
 		newLines = 0;
 	}
 
-	for (std::deque<RawLine>::iterator it = newRawLines.begin(); it != newRawLines.end(); ++it) {
-		const RawLine& rawLine = (*it);
+	for (const RawLine& rawLine: newRawLines) {
 		eventHandler.AddConsoleLine(rawLine.text, rawLine.section, rawLine.level);
 	}
 }
@@ -159,7 +153,7 @@ int CInfoConsole::GetRawLines(std::deque<RawLine>& lines)
 {
 	std::lock_guard<spring::recursive_mutex> scoped_lock(infoConsoleMutex);
 	lines = rawData;
-	int tmp = newLines;
+	const int tmp = newLines;
 	newLines = 0;
 	return tmp;
 }
@@ -180,14 +174,9 @@ void CInfoConsole::RecordLogMessage(int level, const std::string& section, const
 	if (!smallFont)
 		return;
 
-	// !!! Warning !!!
-	// We must not remove elements from `data` here
-	// cause ::Draw() iterats that container, and it's
-	// possible that it calls LOG(), which will end
-	// in here. So if we would remove stuff here it's
-	// possible that we delete a var that is used in
-	// Draw() & co, and so we might invalidate references
-	// (e.g. of std::strings) and cause SIGFAULTs!
+	// NOTE
+	//   do not remove elements from `data` here, ::Draw iterates over it
+	//   and can call LOG() which will end up back in ::RecordLogMessage
 	const float maxWidth = (width * globalRendering->viewSizeX) - (2 * border);
 	const std::string& wrappedText = smallFont->Wrap(text, fontSize, maxWidth);
 
@@ -205,9 +194,9 @@ void CInfoConsole::RecordLogMessage(int level, const std::string& section, const
 
 void CInfoConsole::LastMessagePosition(const float3& pos)
 {
-	if (lastMsgPositions.size() >= maxLastMsgPos) {
+	if (lastMsgPositions.size() >= maxLastMsgPos)
 		lastMsgPositions.pop_back();
-	}
+
 	lastMsgPositions.push_front(pos);
 
 	// reset the iterator when a new msg comes in
@@ -223,9 +212,8 @@ const float3& CInfoConsole::GetMsgPos(const float3& defaultPos)
 	const float3& p = *(lastMsgIter++);
 
 	// wrap around
-	if (lastMsgIter == lastMsgPositions.end()) {
+	if (lastMsgIter == lastMsgPositions.end())
 		lastMsgIter = lastMsgPositions.begin();
-	}
 
 	return p;
 }

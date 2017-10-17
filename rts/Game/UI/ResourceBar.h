@@ -10,7 +10,6 @@ class CResourceBar :
 {
 public:
 	CResourceBar();
-	virtual ~CResourceBar();
 	void Draw();
 
 	bool IsAbove(int x, int y);
