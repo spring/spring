@@ -7,21 +7,6 @@
 
 #include <functional>
 #include "System/Threading/SpringThreading.h"
-#include <chrono>
-
-class COffscreenGLContext
-{
-public:
-	//! Note: the functions are sorted in the way they should be called
-	COffscreenGLContext();
-	virtual ~COffscreenGLContext();
-	void WorkerThreadPost();
-	void WorkerThreadFree(); //! must run in the same thread as the offscreen GL context!
-};
-
-/******************************************************************************/
-
-
 
 /**
  * @brief COffscreenGLThread

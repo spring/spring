@@ -13,6 +13,7 @@
 
 COffscreenGLThread::COffscreenGLThread(std::function<void()> f)
 {
+	// activate secondary context on main window
 	globalRendering->MakeCurrentContext(false, true, false);
 	thread = std::move(spring::thread(std::bind(&COffscreenGLThread::WrapFunc, this, f)));
 }
@@ -24,6 +25,7 @@ void COffscreenGLThread::join()
 		return;
 
 	thread.join();
+	// reactivate primary context on main window
 	globalRendering->MakeCurrentContext(false, false, false);
 }
 
@@ -33,6 +35,7 @@ void COffscreenGLThread::WrapFunc(std::function<void()> f)
 {
 	Threading::SetThreadName("OffscreenGLThread");
 
+	// activate primary GL context on hidden window
 	globalRendering->MakeCurrentContext(true, false, false);
 
 	// init streflop
@@ -44,8 +47,7 @@ void COffscreenGLThread::WrapFunc(std::function<void()> f)
 		f();
 	} CATCH_SPRING_ERRORS
 
+	// deactivate primary GL context on hidden window
 	globalRendering->MakeCurrentContext(true, false, true);
 }
 
-
-/******************************************************************************/
