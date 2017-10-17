@@ -31,7 +31,11 @@ public:
 	bool CreateWindowAndContext(const char* title, bool hidden);
 	SDL_Window* CreateSDLWindow(const int2& winRes, const int2& minRes, const char* title, bool hidden) const;
 	SDL_GLContext CreateGLContext(const int2& minCtx, SDL_Window* targetWindow) const;
-	void DestroyWindowAndContext();
+	SDL_Window* GetWindow(size_t i) { return sdlWindows[i]; }
+	SDL_GLContext GetContext(size_t i) { return glContexts[i]; }
+
+	void DestroyWindowAndContext(SDL_Window* window, SDL_GLContext context);
+	void KillSDL() const;
 	void PostInit();
 	void SwapBuffers(bool allowSwapBuffers, bool clearErrors);
 
@@ -42,11 +46,16 @@ public:
 	void QueryVersionInfo(char (&sdlVersionStr)[64], char (&glVidMemStr)[64]);
 	void QueryGLMaxVals();
 	void LogVersionInfo(const char* sdlVersionStr, const char* glVidMemStr) const;
-	void LogDisplayMode() const;
+	void LogDisplayMode(SDL_Window* window) const;
 
-	void SetFullScreen(bool cliWindowed, bool cliFullScreen);
+	void SetWindowTitle(const std::string& title);
 	// Notify on Fullscreen/WindowBorderless change
 	void ConfigNotify(const std::string& key, const std::string& value);
+
+	bool SetWindowInputGrabbing(bool enable);
+	bool ToggleWindowInputGrabbing();
+
+	void SetFullScreen(bool cliWindowed, bool cliFullScreen);
 	void SetDualScreenParams();
 	void UpdateViewPortGeometry();
 	void UpdatePixelGeometry();
@@ -276,10 +285,9 @@ public:
 	bool borderless;
 
 public:
-	SDL_Window* window;
-	SDL_Window* hiddenWindow;
-	SDL_GLContext glContext;
-	SDL_GLContext glSecondaryContext;
+	// [0] := primary, [1] := secondary (hidden)
+	SDL_Window* sdlWindows[2];
+	SDL_GLContext glContexts[2];
 
 public:
 	/**

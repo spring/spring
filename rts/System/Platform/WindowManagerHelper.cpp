@@ -38,7 +38,7 @@ void SetIcon(CBitmap* bmp) {
 	}
 
 	// supplied bitmap is usable as icon, keep it
-	if (!SetIconSurface(globalRendering->window, bmp))
+	if (!SetIconSurface(globalRendering->GetWindow(0), bmp))
 		return;
 
 	windowIcon.bmp = std::move(*bmp);
@@ -66,10 +66,6 @@ bool SetIconSurface(SDL_Window* win, CBitmap* bmp) {
 	return true;
 }
 
-
-void SetCaption(const std::string& title) {
-	SDL_SetWindowTitle(globalRendering->window, title.c_str());
-}
 
 }; // namespace WindowManagerHelper
 

@@ -2205,7 +2205,7 @@ int LuaUnsyncedCtrl::SetWMIcon(lua_State* L)
 
 int LuaUnsyncedCtrl::SetWMCaption(lua_State* L)
 {
-	WindowManagerHelper::SetCaption(luaL_checksstring(L, 1));
+	globalRendering->SetWindowTitle(luaL_checksstring(L, 1));
 	return 0;
 }
 

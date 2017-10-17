@@ -160,6 +160,9 @@ public:
 CWin32MouseInput* CWin32MouseInput::inst = nullptr;
 #endif
 
+
+static SDL_Event events[100];
+
 void IMouseInput::SetPos(int2 pos)
 {
 	if (!globalRendering->active)
@@ -171,7 +174,7 @@ void IMouseInput::SetPos(int2 pos)
 
 	mousepos = pos;
 
-	SDL_WarpMouseInWindow(globalRendering->window, pos.x, pos.y);
+	SDL_WarpMouseInWindow(globalRendering->GetWindow(0), pos.x, pos.y);
 
 	// SDL_WarpMouse generates SDL_MOUSEMOTION events
 	// in `middle click scrolling` those SDL generated ones would point into
@@ -181,15 +184,14 @@ void IMouseInput::SetPos(int2 pos)
 
 	// delete all SDL_MOUSEMOTION in the queue
 	SDL_PumpEvents();
-	static SDL_Event events[100];
-	SDL_PeepEvents(&events[0], 100, SDL_GETEVENT, SDL_MOUSEMOTION, SDL_MOUSEMOTION);
+	SDL_PeepEvents(&events[0], sizeof(events) / sizeof(events[0]), SDL_GETEVENT, SDL_MOUSEMOTION, SDL_MOUSEMOTION);
 }
 
 
 
 IMouseInput* IMouseInput::GetInstance()
 {
-	if (mouseInput == NULL) {
+	if (mouseInput == nullptr) {
 #if defined(WIN32) && !defined(HEADLESS)
 		mouseInput = new CWin32MouseInput;
 #else

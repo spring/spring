@@ -522,7 +522,7 @@ void CHwX11Cursor::Finish()
 
 	XcursorImages *cis = XcursorImagesCreate(cimages.size());
 	cis->nimage = cimages.size();
-	for (int i = 0; i < int(cimages.size()); ++i) {
+	for (size_t i = 0; i < cimages.size(); ++i) {
 		XcursorImage* ci = cimages[i];
 		ci->xhot = (hotSpot==CMouseCursor::TopLeft) ? 0 : xmaxsize/2;
 		ci->yhot = (hotSpot==CMouseCursor::TopLeft) ? 0 : ymaxsize/2;
@@ -531,7 +531,7 @@ void CHwX11Cursor::Finish()
 
 	SDL_SysWMinfo info;
 	SDL_VERSION(&info.version);
-	if (!SDL_GetWindowWMInfo(globalRendering->window, &info)) {
+	if (!SDL_GetWindowWMInfo(globalRendering->GetWindow(0), &info)) {
 		LOG_L(L_ERROR, "SDL error: can't get X11 window info");
 		XcursorImagesDestroy(cis);
 		cimages.clear();
@@ -547,7 +547,7 @@ void CHwX11Cursor::Bind()
 {
 	SDL_SysWMinfo info;
 	SDL_VERSION(&info.version);
-	if (!SDL_GetWindowWMInfo(globalRendering->window, &info)) {
+	if (!SDL_GetWindowWMInfo(globalRendering->GetWindow(0), &info)) {
 		LOG_L(L_ERROR, "SDL error: can't get X11 window info");
 		return;
 	}
@@ -573,7 +573,7 @@ CHwX11Cursor::~CHwX11Cursor()
 	if (cursor != 0) {
 		SDL_SysWMinfo info;
 		SDL_VERSION(&info.version);
-		if (!SDL_GetWindowWMInfo(globalRendering->window, &info)) {
+		if (!SDL_GetWindowWMInfo(globalRendering->GetWindow(0), &info)) {
 			LOG_L(L_ERROR, "SDL error: can't get X11 window info");
 			return;
 		}
