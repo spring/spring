@@ -41,6 +41,21 @@ Else  (NOT Boost_FOUND)
 	add_definitions(-DSYNCCHECK -DUNIT_TEST)
 	REMOVE_DEFINITIONS(-DTHREADPOOL)
 
+	If (WIN32)
+		EXECUTE_PROCESS(COMMAND ping -6 ::1 -n 1
+			RESULT_VARIABLE IPV6_RET
+			ERROR_QUIET)
+	Else(WIN32)
+		EXECUTE_PROCESS(COMMAND ping6 ::1 -c 1
+			RESULT_VARIABLE IPV6_RET
+			ERROR_QUIET)
+	EndIf (WIN32)
+
+	if (NOT ${IPV6_RET} EQUAL 0)
+		add_definitions(-DNO_IPV6)
+		Message(STATUS "No ipv6 support, disabling test")
+	endif (NOT ${IPV6_RET} EQUAL 0)
+
 	Set(test_Log_sources
 			"${ENGINE_SOURCE_DIR}/System/SafeCStrings.c"
 			"${ENGINE_SOURCE_DIR}/System/Log/Backend.cpp"

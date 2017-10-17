@@ -12,7 +12,11 @@ public:
 	}
 	void TestPort(int port, bool result = true)
 	{
+#ifndef NO_IPV6
 		const std::string& err = netcode::UDPListener::TryBindSocket(port, &socket, "::");
+#else
+		const std::string& err = netcode::UDPListener::TryBindSocket(port, &socket, "127.0.0.1");
+#endif
 		BOOST_CHECK_MESSAGE(err.empty() == result, err.c_str());
 
 	}
@@ -33,9 +37,9 @@ BOOST_AUTO_TEST_CASE(TryBindSocket)
 	LOG("\nIP v4 & v6 addresses");
 	t.TestHost("127.0.0.1");
 	t.TestHost("0.0.0.0");
+#ifndef NO_IPV6
 	t.TestHost("::");
 	t.TestHost("::1");
-
 
 	// badly named invalid IP v6 addresses
 	LOG("\nbadly named invalid IP v6 addresses");
@@ -54,7 +58,7 @@ BOOST_AUTO_TEST_CASE(TryBindSocket)
 		http://tools.ietf.org/html/rfc4291 sections 2.5.5.1 and 2.5.5.2
 	*/
 	//	TestHost("224:1dff:fecf:df44/64", false);
-
+#endif
 
 	// host-names
 	LOG("\nhost-names");
