@@ -161,8 +161,8 @@ class CLuaHandle : public CEventClient
 		void UnitCloaked(const CUnit* unit) override;
 		void UnitDecloaked(const CUnit* unit) override;
 
-		void UnitUnitCollision(const CUnit* collider, const CUnit* collidee) override;
-		void UnitFeatureCollision(const CUnit* collider, const CFeature* collidee) override;
+		bool UnitUnitCollision(const CUnit* collider, const CUnit* collidee) override;
+		bool UnitFeatureCollision(const CUnit* collider, const CFeature* collidee) override;
 		void UnitMoveFailed(const CUnit* unit) override;
 
 		void RenderUnitDestroyed(const CUnit* unit) override;

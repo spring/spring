@@ -10,6 +10,8 @@ Sim:
  ! remove legacy (COB) hack allowing units with onlyForward weapons to fire regardless of AimWeapon status
 
 Lua:
+ - let Unit*Collision callins skip engine collision handling if true is returned (from any synced gadget)
+ - call gadgetHandler:Explosion for unsynced gadgets (but discard the return value)
  - allow specifying source by position but target by ID for Spring.GetUnitWeaponHaveFreeLineOfFire
 
 Misc:

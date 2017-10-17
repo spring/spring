@@ -110,8 +110,8 @@ class CEventHandler
 		void UnitCloaked(const CUnit* unit);
 		void UnitDecloaked(const CUnit* unit);
 
-		void UnitUnitCollision(const CUnit* collider, const CUnit* collidee);
-		void UnitFeatureCollision(const CUnit* collider, const CFeature* collidee);
+		bool UnitUnitCollision(const CUnit* collider, const CUnit* collidee);
+		bool UnitFeatureCollision(const CUnit* collider, const CFeature* collidee);
 		void UnitMoved(const CUnit* unit);
 		void UnitMoveFailed(const CUnit* unit);
 
@@ -347,8 +347,8 @@ extern CEventHandler eventHandler;
 		CEventClient* ec = list##name[i];                          \
 		ec->name(__VA_ARGS__);                                     \
                                                                    \
-		if (i < list##name.size() && ec == list##name[i])          \
-			++i; /* the call-in may remove itself from the list */ \
+		/* the call-in may remove itself from the list */          \
+		i += (i < list##name.size() && ec == list##name[i]);       \
 	}
 
 #define ITERATE_ALLYTEAM_EVENTCLIENTLIST(name, allyTeam, ...)      \
@@ -358,8 +358,8 @@ extern CEventHandler eventHandler;
 		if (ec->CanReadAllyTeam(allyTeam))                         \
 			ec->name(__VA_ARGS__);                                 \
                                                                    \
-		if (i < list##name.size() && ec == list##name[i])          \
-			++i; /* the call-in may remove itself from the list */ \
+		/* the call-in may remove itself from the list */          \
+		i += (i < list##name.size() && ec == list##name[i]);       \
 	}
 
 #define ITERATE_UNIT_ALLYTEAM_EVENTCLIENTLIST(name, unit, ...)     \
@@ -370,8 +370,8 @@ extern CEventHandler eventHandler;
 		if (ec->CanReadAllyTeam(unitAllyTeam))                     \
 			ec->name(unit, __VA_ARGS__);                           \
                                                                    \
-		if (i < list##name.size() && ec == list##name[i])          \
-			++i; /* the call-in may remove itself from the list */ \
+		/* the call-in may remove itself from the list */          \
+		i += (i < list##name.size() && ec == list##name[i]);       \
 	}
 
 inline void CEventHandler::UnitCreated(const CUnit* unit, const CUnit* builder)
@@ -395,9 +395,8 @@ inline void CEventHandler::UnitDestroyed(const CUnit* unit, const CUnit* attacke
 			if (ec->CanReadAllyTeam(unitAllyTeam))                 \
 				ec->name(unit);                                    \
                                                                    \
-			if (i < list##name.size() && ec == list##name[i])      \
-				++i; /* the call-in may remove itself from the list */ \
-		} \
+			i += (i < list##name.size() && ec == list##name[i]);   \
+		}                                                          \
 	}
 
 UNIT_CALLIN_NO_PARAM(UnitReverseBuilt);
@@ -445,14 +444,46 @@ UNIT_CALLIN_NO_PARAM(UnitCloaked)
 UNIT_CALLIN_NO_PARAM(UnitDecloaked)
 
 
-inline void CEventHandler::UnitUnitCollision(const CUnit* collider, const CUnit* collidee)
+inline bool CEventHandler::UnitUnitCollision(const CUnit* collider, const CUnit* collidee)
 {
-	ITERATE_EVENTCLIENTLIST(UnitUnitCollision, collider, collidee)
+	auto& clients = listUnitUnitCollision;
+
+	for (size_t i = 0; i < clients.size(); ) {
+		CEventClient* ec = clients[i];
+
+		// discard return-value from clients lacking full-read access
+		// (redundant for synced gadgets; watchWeaponDefs is checked)
+		// NOTE: the call-in may remove itself from the client list
+		if (!ec->UnitUnitCollision(collider, collidee) || !ec->GetFullRead()) {
+			i += (i < clients.size() && ec == clients[i]);
+			continue;
+		}
+
+		return true;
+	}
+
+	return false;
 }
 
-inline void CEventHandler::UnitFeatureCollision(const CUnit* collider, const CFeature* collidee)
+inline bool CEventHandler::UnitFeatureCollision(const CUnit* collider, const CFeature* collidee)
 {
-	ITERATE_EVENTCLIENTLIST(UnitFeatureCollision, collider, collidee)
+	auto& clients = listUnitFeatureCollision;
+
+	for (size_t i = 0; i < clients.size(); ) {
+		CEventClient* ec = clients[i];
+
+		// discard return-value from clients lacking full-read access
+		// (redundant for synced gadgets; watch{U,F}*Defs is checked)
+		// NOTE: the call-in may remove itself from the client list
+		if (!ec->UnitFeatureCollision(collider, collidee) || !ec->GetFullRead()) {
+			i += (i < clients.size() && ec == clients[i]);
+			continue;
+		}
+
+		return true;
+	}
+
+	return false;
 }
 
 
@@ -634,17 +665,23 @@ inline void CEventHandler::UnsyncedHeightMapUpdate(const SRectangle& rect)
 
 inline bool CEventHandler::Explosion(int weaponDefID, int projectileID, const float3& pos, const CUnit* owner)
 {
-	const size_t count = listExplosion.size();
-	bool noGfx = false;
+	auto& clients = listExplosion;
 
-	for (size_t i = 0; i < count; i++) {
-		CEventClient* ec = listExplosion[i];
+	for (size_t i = 0; i < clients.size(); ) {
+		CEventClient* ec = clients[i];
 
-		if (ec->GetFullRead())
-			noGfx = noGfx || ec->Explosion(weaponDefID, projectileID, pos, owner);
+		// discard return-value from clients lacking full-read access
+		// (redundant for synced gadgets; watchWeaponDefs is checked)
+		// NOTE: the call-in may remove itself from the client list
+		if (!ec->Explosion(weaponDefID, projectileID, pos, owner) || !ec->GetFullRead()) {
+			i += (i < clients.size() && ec == clients[i]);
+			continue;
+		}
+
+		return true;
 	}
 
-	return noGfx;
+	return false;
 }
 
 

@@ -1893,7 +1893,8 @@ void CGroundMoveType::HandleUnitCollisions(
 		if (pathController.IgnoreCollision(collider, collidee))
 			continue;
 
-		eventHandler.UnitUnitCollision(collider, collidee);
+		if (eventHandler.UnitUnitCollision(collider, collidee))
+			continue;
 
 		// if collidee shares our goal position and is no longer
 		// moving along its path, trigger Arrived() to kill long
@@ -1906,15 +1907,17 @@ void CGroundMoveType::HandleUnitCollisions(
 		// CFactory applies random jitter to otherwise equal goal
 		// positions of at most TWOPI elmos, use half as threshold
 		if (collideeMobile) {
-			const CGroundMoveType* gmt = static_cast<CGroundMoveType*>(collidee->moveType);
-			if (collider->moveType->goalPos.SqDistance2D(collidee->moveType->goalPos) < math::SQRPI) {
-				if (collider->IsMoving() && collider->moveType->progressState == AMoveType::Active) {
-					if (collidee->moveType->progressState == AMoveType::Done) {
+			const CGroundMoveType* gmter = this;
+			const CGroundMoveType* gmtee = static_cast<CGroundMoveType*>(collidee->moveType);
+
+			if (gmter->goalPos.SqDistance2D(gmtee->goalPos) < math::SQRPI) {
+				if (collider->IsMoving() && gmter->progressState == AMoveType::Active) {
+					if (gmtee->progressState == AMoveType::Done) {
 						if (!collidee->IsMoving() && UNIT_CMD_QUE_SIZE(collidee) == 0) {
 							atEndOfPath = true; atGoal = true;
 						}
 					// We're in a traffic jam so ignore current way point and go directly to the next one
-					} else if (collidee->moveType->progressState == AMoveType::Active && gmt->currWayPoint == nextWayPoint) {
+					} else if (gmtee->progressState == AMoveType::Active && gmtee->currWayPoint == nextWayPoint) {
 						currWayPoint.y = -1.0f;
 					}
 				}
@@ -2049,7 +2052,8 @@ void CGroundMoveType::HandleFeatureCollisions(
 		if (pathController.IgnoreCollision(collider, collidee))
 			continue;
 
-		eventHandler.UnitFeatureCollision(collider, collidee);
+		if (eventHandler.UnitFeatureCollision(collider, collidee))
+			continue;
 
 		if (!collidee->IsMoving()) {
 			HandleStaticObjectCollision(
