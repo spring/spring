@@ -26,7 +26,7 @@ public:
 	CSound();
 	virtual ~CSound();
 
-	bool HasSoundItem(const std::string& name) const  override;
+	bool HasSoundItem(const std::string& name) const override;
 	size_t GetSoundId(const std::string& name) override;
 	SoundItem* GetSoundItem(size_t id) const;
 
