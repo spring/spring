@@ -427,79 +427,81 @@ template<typename T, typename F, typename... A> void IterateEventClientList(T& l
 
 // not usable: "pasting "::" and "Save" does not give a valid preprocessing token"
 // #define ITERATE_EVENTCLIENTLIST(func, ...) IterateEventClientList(list ## func, &CEventClient:: ## func, __VA_ARGS__)
+#define ITERATE_EVENTCLIENTLIST_NA(func) IterateEventClientList(list ## func, &CEventClient::func)
+#define ITERATE_EVENTCLIENTLIST(func, ...) IterateEventClientList(list ## func, &CEventClient::func, __VA_ARGS__)
 
 
 void CEventHandler::Save(zipFile archive)
 {
-	IterateEventClientList(listSave, &CEventClient::Save, archive);
+	ITERATE_EVENTCLIENTLIST(Save, archive);
 }
 
 void CEventHandler::Load(IArchive* archive)
 {
-	IterateEventClientList(listLoad, &CEventClient::Load, archive);
+	ITERATE_EVENTCLIENTLIST(Load, archive);
 }
 
 
 void CEventHandler::GamePreload()
 {
-	IterateEventClientList(listGamePreload, &CEventClient::GamePreload);
+	ITERATE_EVENTCLIENTLIST_NA(GamePreload);
 }
 
 void CEventHandler::GameStart()
 {
-	IterateEventClientList(listGameStart, &CEventClient::GameStart);
+	ITERATE_EVENTCLIENTLIST_NA(GameStart);
 }
 
 void CEventHandler::GameOver(const std::vector<unsigned char>& winningAllyTeams)
 {
-	IterateEventClientList(listGameOver, &CEventClient::GameOver, winningAllyTeams);
+	ITERATE_EVENTCLIENTLIST(GameOver, winningAllyTeams);
 }
 
 void CEventHandler::GamePaused(int playerID, bool paused)
 {
-	IterateEventClientList(listGamePaused, &CEventClient::GamePaused, playerID, paused);
+	ITERATE_EVENTCLIENTLIST(GamePaused, playerID, paused);
 }
 
 void CEventHandler::GameFrame(int gameFrame)
 {
-	IterateEventClientList(listGameFrame, &CEventClient::GameFrame, gameFrame);
+	ITERATE_EVENTCLIENTLIST(GameFrame, gameFrame);
 }
 
 void CEventHandler::GameProgress(int gameFrame)
 {
-	IterateEventClientList(listGameProgress, &CEventClient::GameProgress, gameFrame);
+	ITERATE_EVENTCLIENTLIST(GameProgress, gameFrame);
 }
 
 void CEventHandler::GameID(const unsigned char* gameID, unsigned int numBytes)
 {
-	IterateEventClientList(listGameID, &CEventClient::GameID, gameID, numBytes);
+	ITERATE_EVENTCLIENTLIST(GameID, gameID, numBytes);
 }
 
 
 void CEventHandler::TeamDied(int teamID)
 {
-	IterateEventClientList(listTeamDied, &CEventClient::TeamDied, teamID);
+	ITERATE_EVENTCLIENTLIST(TeamDied, teamID);
 }
 
 void CEventHandler::TeamChanged(int teamID)
 {
-	IterateEventClientList(listTeamChanged, &CEventClient::TeamChanged, teamID);
+	ITERATE_EVENTCLIENTLIST(TeamChanged, teamID);
 }
 
 
 void CEventHandler::PlayerChanged(int playerID)
 {
-	IterateEventClientList(listPlayerChanged, &CEventClient::PlayerChanged, playerID);
+	ITERATE_EVENTCLIENTLIST(PlayerChanged, playerID);
 }
 
 void CEventHandler::PlayerAdded(int playerID)
 {
-	IterateEventClientList(listPlayerAdded, &CEventClient::PlayerAdded, playerID);
+	ITERATE_EVENTCLIENTLIST(PlayerAdded, playerID);
 }
 
 void CEventHandler::PlayerRemoved(int playerID, int reason)
 {
-	IterateEventClientList(listPlayerRemoved, &CEventClient::PlayerRemoved, playerID, reason);
+	ITERATE_EVENTCLIENTLIST(PlayerRemoved, playerID, reason);
 }
 
 
@@ -523,30 +525,30 @@ void CEventHandler::UnitHarvestStorageFull(const CUnit* unit)
 
 void CEventHandler::CollectGarbage()
 {
-	IterateEventClientList(listCollectGarbage, &CEventClient::CollectGarbage);
+	ITERATE_EVENTCLIENTLIST_NA(CollectGarbage);
 }
 
 void CEventHandler::DbgTimingInfo(DbgTimingInfoType type, const spring_time start, const spring_time end)
 {
-	IterateEventClientList(listDbgTimingInfo, &CEventClient::DbgTimingInfo, type, start, end);
+	ITERATE_EVENTCLIENTLIST(DbgTimingInfo, type, start, end);
 }
 
 
 void CEventHandler::Update()
 {
-	IterateEventClientList(listUpdate, &CEventClient::Update);
+	ITERATE_EVENTCLIENTLIST_NA(Update);
 }
 
 
 
 void CEventHandler::SunChanged()
 {
-	IterateEventClientList(listSunChanged, &CEventClient::SunChanged);
+	ITERATE_EVENTCLIENTLIST_NA(SunChanged);
 }
 
 void CEventHandler::ViewResize()
 {
-	IterateEventClientList(listViewResize, &CEventClient::ViewResize);
+	ITERATE_EVENTCLIENTLIST_NA(ViewResize);
 }
 
 
@@ -726,20 +728,20 @@ bool CEventHandler::AddConsoleLine(const std::string& msg, const std::string& se
 	if (listAddConsoleLine.empty())
 		return false;
 
-	IterateEventClientList(listAddConsoleLine, &CEventClient::AddConsoleLine, msg, section, level);
+	ITERATE_EVENTCLIENTLIST(AddConsoleLine, msg, section, level);
 	return true;
 }
 
 
 void CEventHandler::LastMessagePosition(const float3& pos)
 {
-	IterateEventClientList(listLastMessagePosition, &CEventClient::LastMessagePosition, pos);
+	ITERATE_EVENTCLIENTLIST(LastMessagePosition, pos);
 }
 
 
 bool CEventHandler::GroupChanged(int groupID)
 {
-	IterateEventClientList(listGroupChanged, &CEventClient::GroupChanged, groupID);
+	ITERATE_EVENTCLIENTLIST(GroupChanged, groupID);
 	return false;
 }
 
@@ -756,27 +758,27 @@ bool CEventHandler::GameSetup(
 
 void CEventHandler::DownloadQueued(int ID, const std::string& archiveName, const std::string& archiveType)
 {
-	IterateEventClientList(listDownloadQueued, &CEventClient::DownloadQueued, ID, archiveName, archiveType);
+	ITERATE_EVENTCLIENTLIST(DownloadQueued, ID, archiveName, archiveType);
 }
 
 void CEventHandler::DownloadStarted(int ID)
 {
-	IterateEventClientList(listDownloadStarted, &CEventClient::DownloadStarted, ID);
+	ITERATE_EVENTCLIENTLIST(DownloadStarted, ID);
 }
 
 void CEventHandler::DownloadFinished(int ID)
 {
-	IterateEventClientList(listDownloadFinished, &CEventClient::DownloadFinished, ID);
+	ITERATE_EVENTCLIENTLIST(DownloadFinished, ID);
 }
 
 void CEventHandler::DownloadFailed(int ID, int errorID)
 {
-	IterateEventClientList(listDownloadFailed, &CEventClient::DownloadFailed, ID, errorID);
+	ITERATE_EVENTCLIENTLIST(DownloadFailed, ID, errorID);
 }
 
 void CEventHandler::DownloadProgress(int ID, long downloaded, long total)
 {
-	IterateEventClientList(listDownloadProgress, &CEventClient::DownloadProgress, ID, downloaded, total);
+	ITERATE_EVENTCLIENTLIST(DownloadProgress, ID, downloaded, total);
 }
 
 
@@ -796,6 +798,6 @@ bool CEventHandler::MapDrawCmd(
 
 void CEventHandler::MetalMapChanged(const int x, const int z)
 {
-	IterateEventClientList(listMetalMapChanged, &CEventClient::MetalMapChanged, x, z);
+	ITERATE_EVENTCLIENTLIST(MetalMapChanged, x, z);
 }
 
