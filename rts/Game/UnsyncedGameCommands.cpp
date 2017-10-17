@@ -2071,36 +2071,11 @@ public:
 
 class FontActionExecutor : public IUnsyncedActionExecutor {
 public:
-	FontActionExecutor() : IUnsyncedActionExecutor("Font",
-			"Reloads the fonts") {}
+	FontActionExecutor() : IUnsyncedActionExecutor("Font", "Reloads default or custom fonts") {}
 
 	bool Execute(const UnsyncedAction& action) const {
-		CglFont *newFont = NULL, *newSmallFont = NULL;
-		try {
-			const int fontSize = configHandler->GetInt("FontSize");
-			const int smallFontSize = configHandler->GetInt("SmallFontSize");
-			const int outlineWidth = configHandler->GetInt("FontOutlineWidth");
-			const float outlineWeight = configHandler->GetFloat("FontOutlineWeight");
-			const int smallOutlineWidth = configHandler->GetInt("SmallFontOutlineWidth");
-			const float smallOutlineWeight = configHandler->GetFloat("SmallFontOutlineWeight");
-
-			newFont = CglFont::LoadFont(action.GetArgs(), fontSize, outlineWidth, outlineWeight);
-			newSmallFont = CglFont::LoadFont(action.GetArgs(), smallFontSize, smallOutlineWidth, smallOutlineWeight);
-		} catch (const std::exception& ex) {
-			delete newFont;
-			delete newSmallFont;
-			newFont = newSmallFont = NULL;
-			LOG_L(L_ERROR, "Font: %s", ex.what());
-		}
-		if (newFont != NULL && newSmallFont != NULL) {
-			delete font;
-			delete smallFont;
-			font = newFont;
-			smallFont = newSmallFont;
-			LOG("Loaded font: %s", action.GetArgs().c_str());
-			configHandler->SetString("FontFile", action.GetArgs());
-			configHandler->SetString("SmallFontFile", action.GetArgs());
-		}
+		// FIXME: same file for both?
+		CglFont::LoadCustomFonts(action.GetArgs(), action.GetArgs());
 		return true;
 	}
 };

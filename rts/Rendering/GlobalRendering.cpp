@@ -153,8 +153,7 @@ CR_REG_METADATA(CGlobalRendering, (
 	CR_IGNORED(window),
 	CR_IGNORED(hiddenWindow),
 	CR_IGNORED(glContext),
-	CR_IGNORED(glSecondaryContext),
-	CR_IGNORED(swapped)
+	CR_IGNORED(glSecondaryContext)
 ))
 
 CGlobalRendering::CGlobalRendering()

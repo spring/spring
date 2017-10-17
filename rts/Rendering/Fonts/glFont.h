@@ -37,9 +37,12 @@ static const int FONT_NEAREST     = 1 << 13; //! round x,y render pos to nearest
 class CglFont : public CTextWrap
 {
 public:
+	static bool LoadConfigFonts();
+	static bool LoadCustomFonts(const std::string& smallFontFile, const std::string& largeFontFile);
+	static CglFont* LoadFont(const std::string& fontFile, bool small);
 	static CglFont* LoadFont(const std::string& fontFile, int size, int outlinewidth = 2, float outlineweight = 5.0f);
-	CglFont(const std::string& fontfile, int size, int outlinewidth, float  outlineweight);
-	virtual ~CglFont();
+
+	CglFont(const std::string& fontFile, int size, int outlinewidth, float  outlineweight);
 
 	//! The calling of Begin() .. End() is optional,
 	//! but can increase the performance of drawing multiple strings a lot (upto 10x)

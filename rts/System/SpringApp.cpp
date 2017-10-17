@@ -319,7 +319,7 @@ bool SpringApp::Init()
 	globalRendering->InitGLState();
 	CCamera::InitializeStatic();
 	UpdateInterfaceGeometry();
-	LoadFonts();
+	CglFont::LoadConfigFonts();
 	ClearScreen();
 
 	if (!InitFileSystem())
@@ -467,36 +467,6 @@ void SpringApp::UpdateInterfaceGeometry()
 		return;
 
 	agui::gui->UpdateScreenGeometry(globalRendering->viewSizeX, globalRendering->viewSizeY, vpx, vpy);
-}
-
-
-void SpringApp::LoadFonts()
-{
-	// Initialize font
-	const std::string largeFontFile = configHandler->GetString(     "FontFile");
-	const std::string smallFontFile = configHandler->GetString("SmallFontFile");
-
-	const static std::string installBroken = "\", did you forget to run make install?";
-
-	const int largeFontSize = configHandler->GetInt(     "FontSize");
-	const int smallFontSize = configHandler->GetInt("SmallFontSize");
-	const int largeOutlineWidth = configHandler->GetInt(     "FontOutlineWidth");
-	const int smallOutlineWidth = configHandler->GetInt("SmallFontOutlineWidth");
-	const float largeOutlineWeight = configHandler->GetFloat(     "FontOutlineWeight");
-	const float smallOutlineWeight = configHandler->GetFloat("SmallFontOutlineWeight");
-
-	spring::SafeDelete(font);
-	spring::SafeDelete(smallFont);
-
-	font = CglFont::LoadFont(largeFontFile, largeFontSize, largeOutlineWidth, largeOutlineWeight);
-	smallFont = CglFont::LoadFont(smallFontFile, smallFontSize, smallOutlineWidth, smallOutlineWeight);
-
-	if (font == nullptr)
-		throw content_error("Failed to load FontFile \"" + largeFontFile + installBroken);
-
-	if (smallFont == nullptr)
-		throw content_error("Failed to load SmallFontFile \"" + smallFontFile + installBroken);
-
 }
 
 

@@ -280,7 +280,6 @@ public:
 	SDL_Window* hiddenWindow;
 	SDL_GLContext glContext;
 	SDL_GLContext glSecondaryContext;
-	bool swapped;
 
 public:
 	/**
