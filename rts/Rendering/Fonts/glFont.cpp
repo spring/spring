@@ -63,6 +63,8 @@ bool CglFont::LoadConfigFonts()
 
 	if (smallFont == nullptr)
 		throw content_error("Failed to load SmallFontFile \"" + configHandler->GetString("SmallFontFile") + "\", did you forget to run make install?");
+
+	return true;
 }
 
 bool CglFont::LoadCustomFonts(const std::string& smallFontFile, const std::string& largeFontFile)
@@ -80,6 +82,7 @@ bool CglFont::LoadCustomFonts(const std::string& smallFontFile, const std::strin
 		configHandler->SetString(     "FontFile", largeFontFile);
 		configHandler->SetString("SmallFontFile", smallFontFile);
 	}
+	return true;
 }
 
 CglFont* CglFont::LoadFont(const std::string& fontFileOverride, bool smallFont)

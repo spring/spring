@@ -6,22 +6,6 @@
 #include "Rendering/GL/myGL.h"
 
 #include <functional>
-
-#if defined(HEADLESS)
-	//! nothing
-#elif defined(WIN32)
-	#include "System/Platform/Win/win32.h"
-#elif defined(__APPLE__)
-	#include <OpenGL/CGLTypes.h>
-#else
-	#include <GL/glx.h>
-
-	#include <X11/Xlib.h>
-	#undef KeyPress
-	#undef KeyRelease
-	#undef GrayScale
-#endif
-
 #include "System/Threading/SpringThreading.h"
 #include <chrono>
 
@@ -66,7 +50,6 @@ private:
 	void WrapFunc(std::function<void()> f);
 
 	spring::thread thread;
-	COffscreenGLContext glOffscreenCtx;
 };
 
 

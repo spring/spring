@@ -255,7 +255,7 @@ CGlobalRendering::~CGlobalRendering()
 }
 
 
-SDL_Window* CGlobalRendering::CreateSDLWindow(const int2& winRes, const int2& minRes, const char* title, bool hidden)
+SDL_Window* CGlobalRendering::CreateSDLWindow(const int2& winRes, const int2& minRes, const char* title, bool hidden) const
 {
 	SDL_Window* newWindow = nullptr;
 
@@ -321,7 +321,7 @@ SDL_Window* CGlobalRendering::CreateSDLWindow(const int2& winRes, const int2& mi
 	return newWindow;
 }
 
-SDL_GLContext CGlobalRendering::CreateGLContext(const int2& minCtx, SDL_Window* targetWindow)
+SDL_GLContext CGlobalRendering::CreateGLContext(const int2& minCtx, SDL_Window* targetWindow) const
 {
 	SDL_GLContext newContext = nullptr;
 
