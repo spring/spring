@@ -308,6 +308,7 @@ bool LuaVFSDownload::PushEntries(lua_State* L)
 {
 	REGISTER_LUA_CFUNC(DownloadArchive);
 	REGISTER_LUA_CFUNC(AbortDownload);
+	REGISTER_LUA_CFUNC(ScanAllDirs);
 	return true;
 }
 
@@ -342,3 +343,8 @@ int LuaVFSDownload::AbortDownload(lua_State* L)
 	return 1;
 }
 
+int LuaVFSDownload::ScanAllDirs(lua_State* L)
+{
+	archiveScanner->ScanAllDirs();
+	return 0;
+}
