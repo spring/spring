@@ -385,7 +385,10 @@ void CPathFinder::FinishSearch(const MoveDef& moveDef, const CPathFinderDef& pfD
 
 		{
 			while (blockIdx != mStartBlockIdx) {
-				blockIdx  = BlockPosToIdx(square -= PF_DIRECTION_VECTORS_2D[blockStates.nodeMask[blockIdx] & PATHOPT_CARDINALS]);
+				assert(PF_DIRECTION_VECTORS_2D[blockStates.nodeMask[blockIdx] & PATHOPT_CARDINALS] != int2(0, 0));
+
+				square   -= PF_DIRECTION_VECTORS_2D[blockStates.nodeMask[blockIdx] & PATHOPT_CARDINALS];
+				blockIdx  = BlockPosToIdx(square);
 				numNodes += 1;
 			}
 

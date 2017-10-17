@@ -131,7 +131,10 @@ IPath::SearchResult IPathFinder::GetPath(
 	mStartBlock.x  = startPos.x / BLOCK_PIXEL_SIZE;
 	mStartBlock.y  = startPos.z / BLOCK_PIXEL_SIZE;
 	mStartBlockIdx = BlockPosToIdx(mStartBlock);
-	assert((unsigned)mStartBlock.x < nbrOfBlocks.x && (unsigned)mStartBlock.y < nbrOfBlocks.y);
+	mGoalBlockIdx  = mStartBlockIdx;
+
+	assert(static_cast<unsigned int>(mStartBlock.x) < nbrOfBlocks.x);
+	assert(static_cast<unsigned int>(mStartBlock.y) < nbrOfBlocks.y);
 
 	// check cache (when there is one)
 	const int2 goalBlock = {int(pfDef.goalSquareX / BLOCK_SIZE), int(pfDef.goalSquareZ / BLOCK_SIZE)};
@@ -145,11 +148,9 @@ IPath::SearchResult IPathFinder::GetPath(
 	// start up a new search
 	const IPath::SearchResult result = InitSearch(moveDef, pfDef, owner);
 
-	// if search was successful, generate new path
+	// if search was successful, generate new path and cache it
 	if (result == IPath::Ok || result == IPath::GoalOutOfRange) {
 		FinishSearch(moveDef, pfDef, path);
-
-		// save to cache
 		AddCache(&path, result, mStartBlock, goalBlock, pfDef.sqGoalRadius, moveDef.pathType, pfDef.synced);
 
 		if (LOG_IS_ENABLED(L_DEBUG)) {
@@ -189,15 +190,15 @@ IPath::SearchResult IPathFinder::InitSearch(const MoveDef& moveDef, const CPathF
 
 	assert(allowRawPath || allowDefPath);
 
+	// cleanup after the last search
+	ResetSearch();
+
 	IPath::SearchResult results[] = {IPath::CantGetCloser, IPath::Ok, IPath::CantGetCloser};
 
 	// although our starting square may be inside the goal radius, the starting coordinate may be outside.
 	// in this case we do not want to return CantGetCloser, but instead a path to our starting square.
 	if (isStartGoal && startInGoal)
 		return results[allowRawPath];
-
-	// no, clean the system from last search
-	ResetSearch();
 
 	// mark and store the start-block; clear all bits except PATHOPT_OBSOLETE
 	blockStates.nodeMask[mStartBlockIdx] &= PATHOPT_OBSOLETE;
@@ -219,7 +220,6 @@ IPath::SearchResult IPathFinder::InitSearch(const MoveDef& moveDef, const CPathF
 	openBlocks.push(ob);
 
 	// mark starting point as best found position
-	mGoalBlockIdx  = mStartBlockIdx;
 	mGoalHeuristic = pfDef.Heuristic(square.x, square.y, BLOCK_SIZE);
 
 	enum {
