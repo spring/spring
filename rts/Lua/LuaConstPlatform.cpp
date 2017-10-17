@@ -10,7 +10,7 @@ bool LuaConstPlatform::PushEntries(lua_State* L)
 {
 	LuaPushNamedString(L, "gpu", globalRenderingInfo.gpuName);
 	LuaPushNamedString(L, "gpuVendor", globalRenderingInfo.gpuVendor);
-	LuaPushNamedNumber(L, "gpuMemorySize", globalRendering->gpuMemorySize);
+	LuaPushNamedNumber(L, "gpuMemorySize", globalRenderingInfo.gpuMemorySize.x);
 	LuaPushNamedString(L, "glVersionShort", globalRenderingInfo.glVersionShort);
 	LuaPushNamedString(L, "glslVersionShort", globalRenderingInfo.glslVersionShort);
 

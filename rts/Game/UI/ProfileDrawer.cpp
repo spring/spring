@@ -6,6 +6,7 @@
 #include "ProfileDrawer.h"
 #include "InputReceiver.h"
 #include "Game/GlobalUnsynced.h"
+#include "Lua/LuaAllocState.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/Fonts/glFont.h"
 #include "Rendering/GlobalRendering.h"
@@ -22,7 +23,7 @@
 #include "System/EventHandler.h"
 #include "System/TimeProfiler.h"
 #include "System/SafeUtil.h"
-#include "lib/lua/include/LuaUser.h"
+#include "lib/lua/include/LuaUser.h" // spring_lua_alloc_get_stats
 
 ProfileDrawer* ProfileDrawer::instance = nullptr;
 
@@ -387,7 +388,7 @@ static void DrawInfoText()
 	const char* spdFmtStr = "[4] {Current,Wanted}SimSpeedMul={%2.2f, %2.2f}x";
 	const char* sfxFmtStr = "[5] {Synced,Unsynced}Projectiles={%u,%u} Particles=%u Saturation=%.1f";
 	const char* pfsFmtStr = "[6] (%s)PFS-updates queued: {%i, %i}";
-	const char* luaFmtStr = "[7] Lua-allocated memory: %.1fMB (%.5uK allocs : %.5u usecs : %.1u states)";
+	const char* luaFmtStr = "[7] Lua-allocated memory: %.1fMB (%.1fK allocs : %.5u usecs : %.1u states)";
 	const char* gpuFmtStr = "[8] GPU-allocated memory: %.1fMB / %.1fMB";
 	const char* sopFmtStr = "[9] SOP-allocated memory: {U,F,P,W}={%.1f/%.1f, %.1f/%.1f, %.1f/%.1f, %.1f/%.1f}KB";
 
@@ -421,11 +422,11 @@ static void DrawInfoText()
 	}
 
 	{
-		SLuaAllocState state = {};
+		SLuaAllocState state = {{0}, {0}, {0}, {0}};
 		spring_lua_alloc_get_stats(&state);
 
 		const    float allocMegs = state.allocedBytes.load() / 1024.0f / 1024.0f;
-		const uint32_t kiloAlloc = state.numLuaAllocs.load() / 1000;
+		const    float kiloAlloc = state.numLuaAllocs.load() / 1000.0f;
 		const uint32_t allocTime = state.luaAllocTime.load();
 		const uint32_t numStates = state.numLuaStates.load();
 
@@ -433,10 +434,11 @@ static void DrawInfoText()
 	}
 
 	{
-		int2 gpuInfo;
-		GetAvailableVideoRAM(&gpuInfo.x, globalRenderingInfo.glVendor);
+		int2 vidMemInfo;
 
-		font->glFormat(0.01f, 0.16f, 0.5f, DBG_FONT_FLAGS, gpuFmtStr, (gpuInfo.x - gpuInfo.y) / 1024.0f, gpuInfo.x / 1024.0f);
+		GetAvailableVideoRAM(&vidMemInfo.x, globalRenderingInfo.glVendor);
+
+		font->glFormat(0.01f, 0.16f, 0.5f, DBG_FONT_FLAGS, gpuFmtStr, (vidMemInfo.x - vidMemInfo.y) / 1024.0f, vidMemInfo.x / 1024.0f);
 	}
 
 	font->glFormat(0.01f, 0.18f, 0.5f, DBG_FONT_FLAGS, sopFmtStr,
