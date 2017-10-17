@@ -636,82 +636,78 @@ const UnitDef* CAICallback::GetUnitDef(const char* unitName)
 const UnitDef* CAICallback::GetUnitDefById(int unitDefId)
 {
 	// NOTE: this function is never called, implemented in SSkirmishAICallbackImpl
-	return NULL;
+	return nullptr;
 }
 
 
 float3 CAICallback::GetUnitPos(int unitId)
 {
 	verify();
+
 	const CUnit* unit = GetInLosAndRadarUnit(unitId);
-	if (unit) {
-		return unit->GetErrorPos(teamHandler->AllyTeam(team));
-	}
+
+	if (unit != nullptr)
+		return (unit->GetErrorPos(teamHandler->AllyTeam(team)));
+
 	return ZeroVector;
 }
 
 float3 CAICallback::GetUnitVelocity(int unitId)
 {
 	verify();
+
 	const CUnit* unit = GetInLosAndRadarUnit(unitId);
-	if (unit) {
+
+	if (unit != nullptr)
 		return unit->speed;
-	}
+
 	return ZeroVector;
 }
 
 
 
 int CAICallback::GetBuildingFacing(int unitId) {
-
-	int buildFacing = -1;
-
 	verify();
-	const CUnit* unit = GetInLosUnit(unitId);
-	if (unit) {
-		buildFacing = unit->buildFacing;
-	}
 
-	return buildFacing;
+	const CUnit* unit = GetInLosUnit(unitId);
+
+	if (unit != nullptr)
+		return unit->buildFacing;
+
+	return -1;
 }
 
 bool CAICallback::IsUnitCloaked(int unitId) {
-
-	bool isCloaked = false;
-
 	verify();
-	const CUnit* unit = GetInLosUnit(unitId);
-	if (unit) {
-		isCloaked = unit->isCloaked;
-	}
 
-	return isCloaked;
+	const CUnit* unit = GetInLosUnit(unitId);
+
+	if (unit != nullptr)
+		return unit->isCloaked;
+
+	return false;
 }
 
 bool CAICallback::IsUnitParalyzed(int unitId) {
-
-	bool isParalyzed = false;
-
 	verify();
-	const CUnit* unit = GetInLosUnit(unitId);
-	if (unit) {
-		isParalyzed = unit->IsStunned();
-	}
 
-	return isParalyzed;
+	const CUnit* unit = GetInLosUnit(unitId);
+
+	if (unit != nullptr)
+		return (unit->IsStunned());
+
+	return false;
 }
 
 bool CAICallback::IsUnitNeutral(int unitId) {
-
-	bool isNeutral = false;
-
 	verify();
-	const CUnit* unit = GetInLosAndRadarUnit(unitId);
-	if (unit) {
-		isNeutral = unit->IsNeutral();
-	}
 
-	return isNeutral;
+	const CUnit* unit = GetInLosAndRadarUnit(unitId);
+
+	if (unit != nullptr)
+		return unit->IsNeutral();
+
+	return false;
 }
 
 
@@ -719,12 +715,12 @@ bool CAICallback::IsUnitNeutral(int unitId) {
 int CAICallback::InitPath(const float3& start, const float3& end, int pathType, float goalRadius)
 {
 	assert(((size_t)pathType) < moveDefHandler->GetNumMoveDefs());
-	return pathManager->RequestPath(NULL, moveDefHandler->GetMoveDefByPathType(pathType), start, end, goalRadius, false);
+	return pathManager->RequestPath(nullptr, moveDefHandler->GetMoveDefByPathType(pathType), start, end, goalRadius, false);
 }
 
 float3 CAICallback::GetNextWaypoint(int pathId)
 {
-	return pathManager->NextWayPoint(NULL, pathId, 0, ZeroVector, 0.0f, false);
+	return pathManager->NextWayPoint(nullptr, pathId, 0, ZeroVector, 0.0f, false);
 }
 
 void CAICallback::FreePath(int pathId)
@@ -737,18 +733,19 @@ float CAICallback::GetPathLength(float3 start, float3 end, int pathType, float g
 	const int pathID  = InitPath(start, end, pathType, goalRadius);
 	float     pathLen = -1.0f;
 
-	if (pathID == 0) {
+	if (pathID == 0)
 		return pathLen;
-	}
 
 	std::vector<float3> points;
 	std::vector<int>    lengths;
 
 	pathManager->GetPathWayPoints(pathID, points, lengths);
 
-	if (points.empty()) {
-		return 0.0f;
-	}
+	// non-zero pathID means at least a partial path was found
+	// but only raw search does not add waypoints, just return
+	// the Euclidean estimate
+	if (points.empty())
+		return (start.distance(end));
 
 	// distance to first intermediate node
 	pathLen = start.distance(points[0]);
@@ -806,23 +803,22 @@ float CAICallback::GetPathNodeCost(unsigned int x, unsigned int z) {
 
 
 
-static int FilterUnitsVector(const std::vector<CUnit*>& units, int* unitIds, int unitIds_max, bool (*includeUnit)(const CUnit*) = NULL)
+static int FilterUnitsVector(const std::vector<CUnit*>& units, int* unitIds, int maxUnitIds, bool (*includeUnit)(const CUnit*) = nullptr)
 {
 	int a = 0;
 
-	if (unitIds_max < 0) {
-		unitIds = NULL;
-		unitIds_max = MAX_UNITS;
+	if (maxUnitIds < 0) {
+		unitIds = nullptr;
+		maxUnitIds = MAX_UNITS;
 	}
 
-	std::vector<CUnit*>::const_iterator ui;
-	for (ui = units.begin(); (ui != units.end()) && (a < unitIds_max); ++ui) {
-		CUnit* u = *ui;
+	for (auto ui = units.begin(); (ui != units.end()) && (a < maxUnitIds); ++ui) {
+		const CUnit* u = *ui;
 
-		if ((includeUnit == NULL) || (*includeUnit)(u)) {
-			if (unitIds != NULL) {
+		if ((includeUnit == nullptr) || (*includeUnit)(u)) {
+			if (unitIds != nullptr)
 				unitIds[a] = u->id;
-			}
+
 			a++;
 		}
 	}
@@ -831,22 +827,16 @@ static int FilterUnitsVector(const std::vector<CUnit*>& units, int* unitIds, int
 }
 
 
-static inline bool unit_IsNeutral(const CUnit* unit) {
-	return unit->IsNeutral();
-}
-
 static int myAllyTeamId = -1;
 
 /// You have to set myAllyTeamId before calling this function. NOT thread safe!
 static inline bool unit_IsEnemy(const CUnit* unit) {
-	return (!teamHandler->Ally(unit->allyteam, myAllyTeamId)
-			&& !unit_IsNeutral(unit));
+	return (!teamHandler->Ally(unit->allyteam, myAllyTeamId) && !unit->IsNeutral());
 }
 
 /// You have to set myAllyTeamId before calling this function. NOT thread safe!
 static inline bool unit_IsFriendly(const CUnit* unit) {
-	return (teamHandler->Ally(unit->allyteam, myAllyTeamId)
-			&& !unit_IsNeutral(unit));
+	return (teamHandler->Ally(unit->allyteam, myAllyTeamId) && !unit->IsNeutral());
 }
 
 /// You have to set myAllyTeamId before calling this function. NOT thread safe!
@@ -855,8 +845,7 @@ static inline bool unit_IsInSensor(const CUnit* unit, const unsigned short losFl
 	// This prevents errors where an allied unit is starting to build,
 	// but is not yet (technically) in LOS, because LOS was not yet updated,
 	// and thus would be invisible for us, without the ally check.
-	return (teamHandler->Ally(myAllyTeamId, unit->allyteam)
-			|| ((unit->losStatus[myAllyTeamId] & losFlags) != 0));
+	return (teamHandler->Ally(myAllyTeamId, unit->allyteam) || ((unit->losStatus[myAllyTeamId] & losFlags) != 0));
 }
 
 /// You have to set myAllyTeamId before calling this function. NOT thread safe!
@@ -876,7 +865,7 @@ static inline bool unit_IsEnemyAndInLosOrRadar(const CUnit* unit) {
 
 /// You have to set myAllyTeamId before calling this function. NOT thread safe!
 static inline bool unit_IsNeutralAndInLosOrRadar(const CUnit* unit) {
-	return (unit_IsNeutral(unit) && (unit_IsInSensor(unit, LOS_INLOS | LOS_INRADAR)));
+	return (unit->IsNeutral() && (unit_IsInSensor(unit, LOS_INLOS | LOS_INRADAR)));
 }
 
 int CAICallback::GetEnemyUnits(int* unitIds, int unitIds_max)
