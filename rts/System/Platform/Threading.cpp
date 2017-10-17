@@ -380,8 +380,8 @@ namespace Threading {
 	#endif
 	}
 
-
-	void SetThreadError(const Error& err) { threadError = err; }
+	// NB: no protection against two threads posting at the same time
+	void SetThreadError(Error&& err) { threadError = std::move(err); }
 	Error* GetThreadError() { return &threadError; }
 }
 

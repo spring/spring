@@ -6,8 +6,8 @@ Spring changelog
 Sim:
  - allow resurrecting indestructable features
  - consider partially reclaimed wrecks nonfresh for area-resurrection commands
- ! remove undocumented BeamLaser range modifier (provided 30% extra when firing at mobile units)
- ! remove legacy (COB) hack allowing units with onlyForward weapons to fire regardless of AimWeapon status
+ ! remove undocumented BeamLaser range modifier (provided 30% extra when fired by mobile units)
+ ! remove legacy (COB, though also affecting Lua) hack allowing units with onlyForward weapons to fire regardless of AimWeapon status
 
 Lua:
  - let Unit*Collision callins skip engine collision handling if true is returned (from any synced gadget)
