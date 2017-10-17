@@ -371,6 +371,9 @@ static inline CUnit* ParseSelectUnit(lua_State* L, const char* caller, int index
 	if (unit == nullptr || unit->noSelect)
 		return nullptr;
 
+	if (gs->godMode)
+		return unit;
+
 	const int selectTeam = CLuaHandle::GetHandleSelectTeam(L);
 
 	if (selectTeam < 0)
