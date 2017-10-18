@@ -161,13 +161,12 @@ int LuaFonts::meta_index(lua_State* L)
 
 int LuaFonts::LoadFont(lua_State* L)
 {
-	CglFont** font = (CglFont**) lua_newuserdata(L, sizeof(CglFont*));
-	*font = CglFont::LoadFont(luaL_checkstring(L, 1), luaL_optint(L, 2, 14), luaL_optint(L, 3, 2), luaL_optfloat(L, 4, 15.0f));
-
-	if (*font == nullptr) {
-		lua_pop(L, 1);
+	CglFont* f = CglFont::LoadFont(luaL_checkstring(L, 1), luaL_optint(L, 2, 14), luaL_optint(L, 3, 2), luaL_optfloat(L, 4, 15.0f));
+	if (f == nullptr)
 		return 0;
-	}
+
+	CglFont** font = (CglFont**) lua_newuserdata(L, sizeof(CglFont*));
+	*font = f;
 
 	luaL_getmetatable(L, "Font");
 	lua_setmetatable(L, -2);
