@@ -4,7 +4,6 @@
 
 #ifndef HEADLESS
 #include <functional>
-#include <set>
 
 #include "System/FileSystem/ArchiveScanner.h"
 #include "System/FileSystem/VFSHandler.h"
@@ -91,15 +90,13 @@ void SelectionWidget::ShowModList()
 	curSelect->Selected.connect(std::bind(&SelectionWidget::SelectMod, this, std::placeholders::_1));
 	curSelect->WantClose.connect(std::bind(&SelectionWidget::CleanWindow, this));
 
-	const std::vector<CArchiveScanner::ArchiveData> &found = archiveScanner->GetPrimaryMods();
+	std::vector<CArchiveScanner::ArchiveData> found = std::move(archiveScanner->GetPrimaryMods());
+	std::sort(found.begin(), found.end(), [](const CArchiveScanner::ArchiveData& a, const CArchiveScanner::ArchiveData& b) {
+		return (doj::alphanum_less<std::string>()(a.GetNameVersioned(), b.GetNameVersioned()));
+	});
 
-	std::map<std::string, std::string, doj::alphanum_less<std::string> > modMap; // name, desc  (using a map to sort)
-	for (auto it = found.cbegin(); it != found.cend(); ++it) {
-		modMap[it->GetNameVersioned()] = it->GetDescription();
-	}
-
-	for (auto mit = modMap.cbegin(); mit != modMap.cend(); ++mit) {
-		curSelect->list->AddItem(mit->first, mit->second);
+	for (const CArchiveScanner::ArchiveData& ad: found) {
+		curSelect->list->AddItem(ad.GetNameVersioned(), ad.GetDescription());
 	}
 
 	curSelect->list->SetCurrentItem(userMod);
@@ -109,19 +106,16 @@ void SelectionWidget::ShowMapList()
 {
 	if (curSelect != nullptr)
 		return;
+
 	curSelect = new ListSelectWnd("Select map");
 	curSelect->Selected.connect(std::bind(&SelectionWidget::SelectMap, this, std::placeholders::_1));
 	curSelect->WantClose.connect(std::bind(&SelectionWidget::CleanWindow, this));
 
-	const std::vector<std::string>& arFound = archiveScanner->GetMaps();
+	std::vector<std::string> arFound = std::move(archiveScanner->GetMaps());
+	std::sort(arFound.begin(), arFound.end(), doj::alphanum_less<std::string>());
 
-	std::set<std::string, doj::alphanum_less<std::string> > mapSet; // use a set to sort them
-	for (auto it = arFound.cbegin(); it != arFound.cend(); ++it) {
-		mapSet.insert((*it).c_str());
-	}
-
-	for (auto sit = mapSet.begin(); sit != mapSet.end(); ++sit) {
-		curSelect->list->AddItem(*sit, *sit);
+	for (const std::string& arName: arFound) {
+		curSelect->list->AddItem(arName, arName);
 	}
 
 	curSelect->list->SetCurrentItem(userMap);
@@ -136,12 +130,14 @@ void SelectionWidget::AddAIScriptsFromArchive()
 	vfsHandler->AddArchive(userMap, true);
 
 	std::vector< std::vector<InfoItem> > luaAIInfos = luaAIImplHandler.LoadInfos();
-	for(int i=0; i<luaAIInfos.size(); i++) {
-		for (int j=0; j<luaAIInfos[i].size(); j++) {
-			if (luaAIInfos[i][j].key==SKIRMISH_AI_PROPERTY_SHORT_NAME)
+
+	for (size_t i = 0; i < luaAIInfos.size(); i++) {
+		for (size_t j = 0; j < luaAIInfos[i].size(); j++) {
+			if (luaAIInfos[i][j].key == SKIRMISH_AI_PROPERTY_SHORT_NAME)
 				availableScripts.push_back(luaAIInfos[i][j].GetValueAsString());
 		}
 	}
+
 	vfsHandler->RemoveArchive(userMap);
 	vfsHandler->RemoveArchive(userMod);
 }
