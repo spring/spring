@@ -32,9 +32,9 @@ void LineEdit::SetCrypt(bool focus)
 void LineEdit::SetContent(const std::string& line, bool moveCursor)
 {
 	content = line;
-	if (moveCursor) {
-		cursorPos = content.size();
-	}
+	if (!moveCursor)
+		return;
+	cursorPos = content.size();
 }
 
 void LineEdit::DrawSelf()
@@ -78,8 +78,11 @@ void LineEdit::DrawSelf()
 		gui->SetColor(0.0f, 0.0f, 0.0f, 1.0f); // black
 	}
 
+	gui->SetDrawMode(Gui::DrawMode::FONT);
 	font->SetTextColor(); //default
+	font->SetTextDepth(depth);
 	font->glPrint(pos[0] + 0.01, textCenter, 1.0, FONT_VCENTER | FONT_SCALE | FONT_NORM | FONT_BUFFERED, tempText);
+	font->DrawBufferedGL4(gui->GetShader());
 }
 
 bool LineEdit::HandleEventSelf(const SDL_Event& ev)

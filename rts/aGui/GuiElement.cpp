@@ -73,14 +73,14 @@ void GuiElement::DrawBox(unsigned int mode, unsigned int indx) {
 	vbo.Bind();
 
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 2, GL_FLOAT, false, sizeof(VA_TYPE_2dT), VA_TYPE_OFFSET(float, 0));
+	glVertexAttribPointer(0, 3, GL_FLOAT, false, sizeof(VA_TYPE_T), VA_TYPE_OFFSET(float, 0));
 
 	// texcoors are effectively ignored for all elements except Picture
 	// (however, shader always samples from the texture so do not leave
 	// them undefined)
 	if (true || HasTexCoors()) {
 		glEnableVertexAttribArray(1);
-		glVertexAttribPointer(1, 2, GL_FLOAT, false, sizeof(VA_TYPE_2dT), VA_TYPE_OFFSET(float, 2));
+		glVertexAttribPointer(1, 2, GL_FLOAT, false, sizeof(VA_TYPE_T), VA_TYPE_OFFSET(float, 3));
 	}
 
 	vbo.Unbind();
@@ -93,12 +93,16 @@ void GuiElement::DrawBox(unsigned int mode, unsigned int indx) {
 
 void GuiElement::GeometryChangeSelf()
 {
-	VA_TYPE_2dT vaElems[4];
+	VA_TYPE_T vaElems[4];
 
-	vaElems[0].x = pos[0]          ; vaElems[0].y = pos[1]          ; // TL
-	vaElems[1].x = pos[0]          ; vaElems[1].y = pos[1] + size[1]; // BL
-	vaElems[2].x = pos[0] + size[0]; vaElems[2].y = pos[1] + size[1]; // BR
-	vaElems[3].x = pos[0] + size[0]; vaElems[3].y = pos[1]          ; // TR
+	vaElems[0].p.x = pos[0]          ; vaElems[0].p.y = pos[1]          ; // TL
+	vaElems[1].p.x = pos[0]          ; vaElems[1].p.y = pos[1] + size[1]; // BL
+	vaElems[2].p.x = pos[0] + size[0]; vaElems[2].p.y = pos[1] + size[1]; // BR
+	vaElems[3].p.x = pos[0] + size[0]; vaElems[3].p.y = pos[1]          ; // TR
+	vaElems[0].p.z = depth;
+	vaElems[1].p.z = depth;
+	vaElems[2].p.z = depth;
+	vaElems[3].p.z = depth;
 
 	vaElems[0].s = 0.0f; vaElems[0].t = 1.0f;
 	vaElems[1].s = 0.0f; vaElems[1].t = 0.0f;
@@ -125,8 +129,8 @@ void GuiElement::Draw()
 {
 	DrawSelf();
 
-	for (auto i = children.begin(), e = children.end(); i != e; ++i) {
-		(*i)->Draw();
+	for (GuiElement* e: children) {
+		e->Draw();
 	}
 }
 
@@ -147,7 +151,7 @@ bool GuiElement::HandleEvent(const SDL_Event& ev)
 bool GuiElement::MouseOver(int x, int y) const
 {
 	const float mouse[2] = {PixelToGlX(x), PixelToGlY(y)};
-	return (mouse[0] >= pos[0] && mouse[0] <= pos[0]+size[0]) && (mouse[1] >= pos[1] && mouse[1] <= pos[1]+size[1]);
+	return (mouse[0] >= pos[0] && mouse[0] <= pos[0] + size[0]) && (mouse[1] >= pos[1] && mouse[1] <= pos[1] + size[1]);
 }
 
 bool GuiElement::MouseOver(float x, float y) const

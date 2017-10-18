@@ -47,7 +47,7 @@ Gui::Gui()
 		shader->Enable();
 		shader->SetUniformLocation("viewProjMatrix");
 		shader->SetUniformLocation("tex");
-		shader->SetUniformLocation("color");
+		shader->SetUniformLocation("elemColor");
 		shader->SetUniformLocation("texWeight");
 
 		shader->SetUniformMatrix4fv(0, false, CMatrix44f::OrthoProj(0.0f, 1.0f, 0.0f, 1.0f, -1.0f, 1.0f));
@@ -76,17 +76,9 @@ void Gui::SetDrawMode(DrawMode newMode)
 		return;
 
 	switch (currentDrawMode = newMode) {
-		case COLOR: {
-			shader->SetUniform4f(3, 0.0f, 0.0f, 0.0f, 0.0f);
-		} break;
-		case TEXTURE: {
-			shader->SetUniform4f(3, 1.0f, 1.0f, 1.0f, 1.0f);
-		} break;
-		case MASK: {
-			shader->SetUniform4f(3, 0.0f, 0.0f, 0.0f, 1.0f);
-		} break;
-		case TEXT: {
-		} break;
+		case COLOR  : { shader->SetUniform4f(3,  0.0f, 0.0f, 0.0f, 0.0f); } break;
+		case TEXTURE: { shader->SetUniform4f(3,  1.0f, 1.0f, 1.0f, 1.0f); } break;
+		case FONT   : { shader->SetUniform4f(3, -1.0f, 0.0f, 0.0f, 0.0f); } break;
 	}
 }
 
@@ -102,12 +94,13 @@ void Gui::Draw()
 	SetColor(1.0f, 1.0f, 1.0f, 1.0f);
 	SetDrawMode(DrawMode::COLOR);
 
-	for (ElList::reverse_iterator it = elements.rbegin(); it != elements.rend(); ++it) {
+	// not depth-sorted
+	for (auto it = elements.rbegin(); it != elements.rend(); ++it) {
 		(*it).element->Draw();
 	}
 
 	shader->Disable();
-	font->DrawBufferedGL4();
+	font->SetTextDepth(0.0f);
 }
 
 void Gui::Clean() {

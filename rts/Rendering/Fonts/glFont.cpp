@@ -587,7 +587,8 @@ void CglFont::BeginGL4(Shader::IProgramObject* shader) {
 			curShader = GetPrimaryShader();
 		}
 
-		curShader->Enable();
+		if (curShader == GetPrimaryShader())
+			curShader->Enable();
 
 		// NOTE: FFP
 		glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
@@ -624,13 +625,13 @@ void CglFont::EndGL4(Shader::IProgramObject* shader) {
 		if (pendingFinishGL4)
 			glFinish();
 
-		curShader->Disable();
+		if (curShader == GetPrimaryShader())
+			curShader->Disable();
 
 		glBindTexture(GL_TEXTURE_2D, 0);
 		glPopAttrib();
 	}
 
-	// lastDrawFrameGL4 = globalRendering->drawFrame;
 	curShader = nullptr;
 
 	inBeginEndGL4 = false;
@@ -652,10 +653,12 @@ void CglFont::DrawBufferedGL4(Shader::IProgramObject* shader)
 		curShader = GetPrimaryShader();
 	}
 
-	curShader->Enable();
-
 	{
 		UpdateTexture();
+
+		// assume external shaders are already bound
+		if (curShader == GetPrimaryShader())
+			curShader->Enable();
 
 		glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
 		glDisable(GL_DEPTH_TEST);
@@ -679,12 +682,13 @@ void CglFont::DrawBufferedGL4(Shader::IProgramObject* shader)
 		if (pendingFinishGL4)
 			glFinish();
 
+		if (curShader == GetPrimaryShader())
+			curShader->Disable();
+
 		glBindTexture(GL_TEXTURE_2D, 0);
 		glPopAttrib();
 	}
 
-	curShader->Disable();
-	// lastDrawFrameGL4 = globalRendering->drawFrame;
 	curShader = nullptr;
 
 	pendingFinishGL4 = false;

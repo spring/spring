@@ -53,9 +53,12 @@ void Button::DrawSelf()
 	}
 
 	gui->SetColor(1.0f, 1.0f, 1.0f, 1.0f);
+	gui->SetDrawMode(Gui::DrawMode::FONT);
 	font->SetTextColor(1.0f, 1.0f, 1.0f, opacity);
 	font->SetOutlineColor(0.0f, 0.0f, 0.0f, opacity);
+	font->SetTextDepth(depth);
 	font->glPrint(pos[0] + size[0] * 0.5f, pos[1] + size[1] * 0.5f, 1.0, FONT_CENTER | FONT_VCENTER | FONT_SHADOW | FONT_SCALE | FONT_NORM | FONT_BUFFERED, label);
+	font->DrawBufferedGL4(gui->GetShader());
 }
 
 bool Button::HandleEventSelf(const SDL_Event& ev)

@@ -8,13 +8,9 @@
 namespace agui
 {
 
-TextElement::TextElement(const std::string& _text, GuiElement* parent) : GuiElement(parent), text(_text)
+void TextElement::WrapText(std::string& str)
 {
-}
-
-void TextElement::SetText(const std::string& str)
-{
-	text = str;
+	font->WrapInPlace(str, font->GetSize(), GlToPixelX(size[0]), GlToPixelY(size[1]));
 }
 
 void TextElement::DrawSelf()
@@ -24,13 +20,10 @@ void TextElement::DrawSelf()
 	font->SetTextColor(1.0f, 1.0f, 1.0f, opacity);
 	font->SetOutlineColor(0.0f, 0.0f, 0.0f, opacity);
 
-	std::string mytext = text;
-
-	// ??
-	CglFont* f = font;
-	f->WrapInPlace(mytext, font->GetSize(), GlToPixelX(size[0]), GlToPixelY(size[1]));
-
-	font->glPrint(pos[0] + size[0] * 0.5f, pos[1] + size[1] * 0.5f, 1.0f, FONT_CENTER | FONT_VCENTER | FONT_SHADOW | FONT_SCALE | FONT_NORM | FONT_BUFFERED, mytext);
+	gui->SetDrawMode(Gui::DrawMode::FONT);
+	font->SetTextDepth(depth);
+	font->glPrint(pos[0] + size[0] * 0.5f, pos[1] + size[1] * 0.5f, 1.0f, FONT_CENTER | FONT_VCENTER | FONT_SHADOW | FONT_SCALE | FONT_NORM | FONT_BUFFERED, wtext);
+	font->DrawBufferedGL4(gui->GetShader());
 }
 
 }

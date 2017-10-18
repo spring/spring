@@ -37,18 +37,20 @@ public:
 
 	void SetPos(float x, float y);
 	void SetSize(float x, float y, bool fixed = false);
+	void SetDepth(float z) { depth = z; }
 
 	virtual bool HasTexCoors() const { return false; }
 	bool SizeFixed() const { return fixedSize; }
 
 	const float* GetSize() const { return size; }
 	const float* GetPos() const { return pos; }
+	float GetDepth() const { return depth; }
 	void SetWeight(unsigned newWeight) { weight = newWeight; }
 	unsigned Weight() const { return weight; }
 
 	void GeometryChange();
 
-	float GetMidY() const { return (pos[1] + (size[1] / 2.0f)); }
+	float GetMidY() const { return (pos[1] + (size[1] * 0.5f)); }
 	float DefaultOpacity() const { return 0.8f; }
 
 	virtual float Opacity() const {
@@ -84,6 +86,7 @@ protected:
 
 	float pos[2]; // top-left x,y coor
 	float size[2]; // x,y dimensions
+	float depth = 0.0f;
 
 	unsigned weight;
 	unsigned vboIndex;

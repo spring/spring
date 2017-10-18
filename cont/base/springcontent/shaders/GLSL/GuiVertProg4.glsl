@@ -1,15 +1,19 @@
 #version 410 core
 
-layout(location = 0) in vec2 aVertexPos;
+layout(location = 0) in vec3 aVertexPos;
 layout(location = 1) in vec2 aTexCoord;
+layout(location = 2) in vec4 aFontColor; // used only in font-mode; has to be #2
 
 out vec2 vTexCoord;
+out vec4 vFontColor;
 
 uniform mat4 viewProjMatrix;
 
 void main()
 {
-	gl_Position = viewProjMatrix * vec4(aVertexPos, 0.0, 1.0);
+	gl_Position = viewProjMatrix * vec4(aVertexPos, 1.0);
+
 	vTexCoord = aTexCoord;
+	vFontColor = aFontColor;
 }
 

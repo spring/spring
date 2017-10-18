@@ -249,19 +249,23 @@ void SelectMenu::ShowSettingsWindow(bool show, std::string name)
 
 void SelectMenu::ShowSettingsList()
 {
-	if (!curSelect) {
+	if (curSelect == nullptr) {
 		curSelect = new ListSelectWnd("Select setting");
 		curSelect->Selected.connect(std::bind(&SelectMenu::SelectSetting, this, std::placeholders::_1));
 		curSelect->WantClose.connect(std::bind(&SelectMenu::CleanWindow, this));
 	}
 	curSelect->list->RemoveAllItems();
-	const std::map<std::string, std::string> &data = configHandler->GetData();
+
 	typedef std::map<std::string, std::string, doj::alphanum_less<std::string> > DataSorted;
+	const std::map<std::string, std::string>& data = configHandler->GetData();
 	const DataSorted dataSorted(data.begin(), data.end());
-	for(DataSorted::const_iterator iter = dataSorted.begin(); iter != dataSorted.end(); ++iter)
+
+	for (auto iter = dataSorted.cbegin(); iter != dataSorted.cend(); ++iter)
 		curSelect->list->AddItem(iter->first + " = " + iter->second, "");
-	if(data.find(userSetting) != data.end())
+
+	if (data.find(userSetting) != data.end())
 		curSelect->list->SetCurrentItem(userSetting + " = " + configHandler->GetString(userSetting));
+
 	curSelect->list->RefreshQuery();
 }
 

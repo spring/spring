@@ -31,16 +31,26 @@ public:
 		agui::gui->AddElement(this);
 		SetPos(0.5, 0.2);
 		SetSize(0.4, 0.7);
+		// SetDepth(-0.5f);
 
 		agui::VerticalLayout* modWindowLayout = new agui::VerticalLayout(this);
+
 		list = new agui::List(modWindowLayout);
 		list->FinishSelection.connect(std::bind(&ListSelectWnd::SelectButton, this));
+		list->SetDepth(this->depth);
+
 		agui::HorizontalLayout* buttons = new agui::HorizontalLayout(modWindowLayout);
 		buttons->SetSize(0.0f, 0.04f, true);
+		buttons->SetDepth(this->depth);
+
 		agui::Button* select = new agui::Button("Select", buttons);
 		select->Clicked.connect(std::bind(&ListSelectWnd::SelectButton, this));
+		select->SetDepth(this->depth);
+
 		agui::Button* cancel = new agui::Button("Close", buttons);
 		cancel->Clicked.connect(std::bind(&ListSelectWnd::CancelButton, this));
+		cancel->SetDepth(this->depth);
+
 		GeometryChange();
 	}
 

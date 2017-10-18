@@ -221,6 +221,7 @@ void List::DrawSelf()
 
 	font->SetTextColor(1.0f, 1.0f, 1.0f, opacity); //default
 	font->SetOutlineColor(0.0f, 0.0f, 0.0f, opacity);
+	font->SetTextDepth(depth);
 	glLineWidth(1.0f);
 
 	float sbX = b.GetPos()[0];
@@ -228,7 +229,7 @@ void List::DrawSelf()
 
 	for (/*ii = items.begin()*/; ii != filteredItems->end() && nDrawOffset < numDisplay; ++ii)
 	{
-		gui->SetColor(1,1,1,opacity/4.f);
+		gui->SetColor(1.0f, 1.0f, 1.0f, opacity * 0.25f);
 		b.DrawBox(GL_LINE_LOOP);
 
 		if (nCurIndex == place) {
@@ -253,13 +254,17 @@ void List::DrawSelf()
 
 		font->glPrint(pos[0] + borderSpacing + 0.002f, b.GetMidY() - hf * 0.15f, itemFontScale, FONT_BASELINE | FONT_SHADOW | FONT_SCALE | FONT_NORM | FONT_BUFFERED, *ii);
 
-		// Up our index's
-		nCurIndex++; nDrawOffset++;
+		nCurIndex++;
+		nDrawOffset++;
 		b.Move(0.0,  - (itemHeight + itemSpacing));
 	}
 
-	//scrollbar
-	if(nDrawOffset < filteredItems->size()) {
+	gui->SetDrawMode(Gui::DrawMode::FONT);
+	font->DrawBufferedGL4(gui->GetShader());
+	gui->SetDrawMode(Gui::DrawMode::COLOR);
+
+	// scrollbar
+	if (nDrawOffset < filteredItems->size()) {
 		float sbY2 = b.GetPos()[1] + (itemHeight + itemSpacing);
 		float sbHeight = sbY1 - sbY2;
 		float sbSize = ((float)nDrawOffset / (float)filteredItems->size()) * sbHeight;
@@ -287,13 +292,10 @@ void List::DrawSelf()
 		glLineWidth(1.49f);
 		scrollbar.DrawBox(GL_LINE_LOOP);
 		glLineWidth(1.0f);
-	} else
-		scrollbar.SetSize(-1,-1);
+		return;
+	}
 
-	/**************
-	* End insert *
-	**************/
-
+	scrollbar.SetSize(-1, -1);
 }
 
 bool List::HandleEventSelf(const SDL_Event& ev)

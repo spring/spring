@@ -50,11 +50,14 @@ void Window::DrawSelf()
 	glLineWidth(2.0f);
 	gui->SetColor(1.0f, 1.0f, 1.0f, opacity);
 	DrawBox(GL_LINE_LOOP);
-	// string content
 
+	// string content
+	gui->SetDrawMode(Gui::DrawMode::FONT);
 	font->SetTextColor(1.0f, 1.0f, 1.0f, opacity);
 	font->SetOutlineColor(0.0f, 0.0f, 0.0f, opacity);
+	font->SetTextDepth(depth);
 	font->glPrint(pos[0] + 0.01f, pos[1] + size[1] - titleHeight * 0.5f, 1.0f, FONT_VCENTER | FONT_SCALE | FONT_SHADOW | FONT_NORM | FONT_BUFFERED, title);
+	font->DrawBufferedGL4(gui->GetShader());
 }
 
 
@@ -63,12 +66,16 @@ void Window::GeometryChangeSelf()
 	GuiElement::GeometryChangeSelf();
 
 	{
-		VA_TYPE_2dT vaElems[4];
+		VA_TYPE_T vaElems[4];
 
-		vaElems[0].x = pos[0]          ; vaElems[0].y = pos[1] + size[1] - titleHeight; // TL
-		vaElems[1].x = pos[0]          ; vaElems[1].y = pos[1] + size[1]              ; // BL
-		vaElems[2].x = pos[0] + size[0]; vaElems[2].y = pos[1] + size[1]              ; // BR
-		vaElems[3].x = pos[0] + size[0]; vaElems[3].y = pos[1] + size[1] - titleHeight; // TR
+		vaElems[0].p.x = pos[0]          ; vaElems[0].p.y = pos[1] + size[1] - titleHeight; // TL
+		vaElems[1].p.x = pos[0]          ; vaElems[1].p.y = pos[1] + size[1]              ; // BL
+		vaElems[2].p.x = pos[0] + size[0]; vaElems[2].p.y = pos[1] + size[1]              ; // BR
+		vaElems[3].p.x = pos[0] + size[0]; vaElems[3].p.y = pos[1] + size[1] - titleHeight; // TR
+		vaElems[0].p.z = depth;
+		vaElems[1].p.z = depth;
+		vaElems[2].p.z = depth;
+		vaElems[3].p.z = depth;
 
 		VBO* vbo = GetVBO(1);
 		vbo->Bind();

@@ -22,7 +22,7 @@ class Gui
 {
 public:
 	Gui();
-	virtual ~Gui();
+	~Gui();
 
 	void Clean();
 	void Draw();
@@ -37,13 +37,14 @@ public:
 	void SetColor(const float* v) { SetColor(v[0], v[1], v[2], v[3]); }
 
 	enum DrawMode {
-		COLOR          = 0,
-		TEXTURE        = 1,
-		MASK           = 2,
-		TEXT           = 3,
+		COLOR   = 0,
+		TEXTURE = 1,
+		FONT    = 2,
 	};
 
 	void SetDrawMode(DrawMode newMode);
+
+	Shader::IProgramObject* GetShader() { return shader; }
 
 private:
 	bool HandleEvent(const SDL_Event& ev);
