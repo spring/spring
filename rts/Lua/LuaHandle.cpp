@@ -1676,22 +1676,25 @@ bool CLuaHandle::DefaultCommand(const CUnit* unit,
                                 const CFeature* feature, int& cmd)
 {
 	LUA_CALL_IN_CHECK(L, false);
-	luaL_checkstack(L, 4, __func__);
+	luaL_checkstack(L, 5, __func__);
 	static const LuaHashString cmdStr(__func__);
 	if (!cmdStr.GetGlobalFunc(L))
 		return false;
 
-	int args = 0;
 	if (unit) {
 		HSTR_PUSH(L, "unit");
 		lua_pushnumber(L, unit->id);
-		args = 2;
 	}
 	else if (feature) {
 		HSTR_PUSH(L, "feature");
 		lua_pushnumber(L, feature->id);
-		args = 2;
 	}
+	else {
+		lua_pushnil(L);
+		lua_pushnil(L);
+	}
+	lua_pushnumber(L, cmd);
+
 /* FIXME
 	else if (groundPos) {
 		HSTR_PUSH(L, "ground");
@@ -1707,10 +1710,10 @@ bool CLuaHandle::DefaultCommand(const CUnit* unit,
 */
 
 	// call the routine
-	if (!RunCallIn(L, cmdStr, args, 1))
+	if (!RunCallIn(L, cmdStr, 3, 1))
 		return false;
 
-	if (!lua_isnumber(L, 1)) {
+	if (!lua_isnumber(L, -1)) {
 		lua_pop(L, 1);
 		return false;
 	}

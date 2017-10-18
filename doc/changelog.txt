@@ -18,6 +18,14 @@ Lua:
  ! return the terrain-type index from Spring.GetGroundInfo and Spring.GetTerrainTypeData
    these functions now push [number index, string name, ...] rather than [string name, ...]
    onto the stack
+ ! change DefaultCommand call order
+    previously widgets were called first, and if they returned anything, gadgets weren't called at all
+    now gadgets are called first, then widgets are always called and can override
+ - add a 3rd param to DefaultCommand callin: the current default command
+    works with the above: gadgets receive the default engine cmd,
+    widgets then receive what gadgets returned (possibly engine default)
+ - add Spring.GetGlobalLos(allyTeamID) -> bool to LuaSyncedRead
+ - add Spring.IsNoCostEnabled() -> bool to LuaSyncedRead
  - add Spring.GetLuaMemUsage to LuaUnsyncedRead
    returns the number of (kilo-)bytes used and (kilo-)allocations performed
    by the calling Lua state individually, as well as by all states globally
@@ -35,6 +43,7 @@ Misc:
  - change PitchAdjust config-setting from a boolean to an integer
    0 disables, 1 scales pitch by the square root of game speed, 2
    scales linearly with game speed
+ - `/nocost` now accepts 0/1 parameter (still toggles if none given)
 
 Fixes:
  - fix #5803 (move goals cancelled when issued onto blocked terrain)

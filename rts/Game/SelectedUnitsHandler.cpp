@@ -765,11 +765,6 @@ static inline bool IsBetterLeader(const UnitDef* newDef, const UnitDef* oldDef)
 // LuaUnsyncedRead::GetDefaultCommand --> CGuiHandler::GetDefaultCommand --> GetDefaultCmd
 int CSelectedUnitsHandler::GetDefaultCmd(const CUnit* unit, const CFeature* feature)
 {
-	int luaCmd;
-	if (eventHandler.DefaultCommand(unit, feature, luaCmd)) {
-		return luaCmd;
-	}
-
 	// return the default if there are no units selected
 	if (selectedUnits.empty())
 		return CMD_STOP;
@@ -799,7 +794,9 @@ int CSelectedUnitsHandler::GetDefaultCmd(const CUnit* unit, const CFeature* feat
 		leaderUnit = testUnit;
 	}
 
-	return (leaderUnit->commandAI->GetDefaultCmd(unit, feature));
+	int cmd = leaderUnit->commandAI->GetDefaultCmd(unit, feature);
+	eventHandler.DefaultCommand(unit, feature, cmd);
+	return cmd;
 }
 
 

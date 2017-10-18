@@ -699,12 +699,10 @@ inline bool CEventHandler::DefaultCommand(const CUnit* unit,
 {
 	const size_t count = listDefaultCommand.size();
 
-	// reverse order, user has the override
 	for (size_t i = 0; i < count; i++) {
-		CEventClient* ec = listDefaultCommand[count - 1 - i];
+		CEventClient* ec = listDefaultCommand[i];
 
-		if (ec->DefaultCommand(unit, feature, cmd))
-			return true;
+		ec->DefaultCommand(unit, feature, cmd);
 	}
 
 	return false;
