@@ -125,27 +125,10 @@ CglFont::CglFont(const std::string& fontFile, int size, int _outlineWidth, float
 	outlineColor = darkOutline;
 
 	for (unsigned int i = 0; i < 2; i++) {
-		char vsBuf[65536];
-		char fsBuf[65536];
-		// color attribs are not normalized
-		const char* fsVars = "const float N = 1.0 / 255.0;\n";
-		const char* fsCode = "\tf_color_rgba = (v_color_rgba * N) * vec4(1.0, 1.0, 1.0, texture(u_tex0, v_texcoor_st).a);\n";
-
 		primaryBuffer[i].Init(true);
 		outlineBuffer[i].Init(true);
 		primaryBuffer[i].UploadTC((NUM_BUFFER_ELEMS * QUAD_BUFFER_SIZE) / sizeof(VA_TYPE_TC), 0,  nullptr, nullptr); // no indices
 		outlineBuffer[i].UploadTC((NUM_BUFFER_ELEMS * QUAD_BUFFER_SIZE) / sizeof(VA_TYPE_TC), 0,  nullptr, nullptr);
-		primaryBuffer[i].FormatShaderTC(vsBuf, vsBuf + sizeof(vsBuf), "", "", "", "VS");
-		primaryBuffer[i].FormatShaderTC(fsBuf, fsBuf + sizeof(fsBuf), "", fsVars, fsCode, "FS");
-
-		Shader::GLSLShaderObject shaderObjs[2] = {{GL_VERTEX_SHADER, &vsBuf[0]}, {GL_FRAGMENT_SHADER, &fsBuf[0]}};
-		Shader::IProgramObject* shaderProg = primaryBuffer[i].CreateShader((sizeof(shaderObjs) / sizeof(shaderObjs[0])), 0, &shaderObjs[0], nullptr);
-
-		shaderProg->Enable();
-		shaderProg->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
-		shaderProg->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::OrthoProj(0.0f, 1.0f, 0.0f, 1.0f, -1.0f, 1.0f));
-		shaderProg->SetUniform("u_tex0", 0);
-		shaderProg->Disable();
 
 		mapBufferPtr[i * 2 + PRIMARY_BUFFER] = primaryBuffer[i].MapElems<VA_TYPE_TC>(true, true);
 		prvBufferPos[i * 2 + PRIMARY_BUFFER] = mapBufferPtr[i * 2 + PRIMARY_BUFFER];
@@ -157,6 +140,27 @@ CglFont::CglFont(const std::string& fontFile, int size, int _outlineWidth, float
 
 		assert(mapBufferPtr[i * 2 + PRIMARY_BUFFER] != nullptr);
 		assert(mapBufferPtr[i * 2 + OUTLINE_BUFFER] != nullptr);
+	}
+	{
+		char vsBuf[65536];
+		char fsBuf[65536];
+		// color attribs are not normalized
+		const char* fsVars = "const float N = 1.0 / 255.0;\n";
+		const char* fsCode = "\tf_color_rgba = (v_color_rgba * N) * vec4(1.0, 1.0, 1.0, texture(u_tex0, v_texcoor_st).a);\n";
+
+		GL::RenderDataBuffer::FormatShaderTC(vsBuf, vsBuf + sizeof(vsBuf), "", "", "", "VS");
+		GL::RenderDataBuffer::FormatShaderTC(fsBuf, fsBuf + sizeof(fsBuf), "", fsVars, fsCode, "FS");
+
+		Shader::GLSLShaderObject shaderObjs[2] = {{GL_VERTEX_SHADER, &vsBuf[0]}, {GL_FRAGMENT_SHADER, &fsBuf[0]}};
+		Shader::IProgramObject* shaderProg = primaryBuffer[0].CreateShader((sizeof(shaderObjs) / sizeof(shaderObjs[0])), 0, &shaderObjs[0], nullptr);
+
+		shaderProg->Enable();
+		shaderProg->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
+		shaderProg->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::OrthoProj(0.0f, 1.0f, 0.0f, 1.0f, -1.0f, 1.0f));
+		shaderProg->SetUniform("u_tex0", 0);
+		shaderProg->Disable();
+
+		defShader = shaderProg;
 	}
 }
 
@@ -581,7 +585,7 @@ void CglFont::BeginGL4(Shader::IProgramObject* shader) {
 	inBeginEndGL4 = true;
 
 	{
-		if ((curShader = shader) == GetPrimaryShader())
+		if ((curShader = shader) == defShader)
 			curShader->Enable();
 
 		// NOTE: FFP
@@ -619,7 +623,7 @@ void CglFont::EndGL4(Shader::IProgramObject* shader) {
 		if (pendingFinishGL4)
 			glFinish();
 
-		if (curShader == GetPrimaryShader())
+		if (curShader == defShader)
 			curShader->Disable();
 
 		glBindTexture(GL_TEXTURE_2D, 0);
@@ -645,7 +649,7 @@ void CglFont::DrawBufferedGL4(Shader::IProgramObject* shader)
 		UpdateTexture();
 
 		// assume external shaders are never null and already bound
-		if ((curShader = shader) == GetPrimaryShader())
+		if ((curShader = shader) == defShader)
 			curShader->Enable();
 
 		glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
@@ -670,7 +674,7 @@ void CglFont::DrawBufferedGL4(Shader::IProgramObject* shader)
 		if (pendingFinishGL4)
 			glFinish();
 
-		if (curShader == GetPrimaryShader())
+		if (curShader == defShader)
 			curShader->Disable();
 
 		glBindTexture(GL_TEXTURE_2D, 0);
@@ -1121,7 +1125,7 @@ void CglFont::glWorldBegin(Shader::IProgramObject* shader)
 	if (threadSafety)
 		bufferMutex.lock();
 
-	if ((curShader = shader) == GetPrimaryShader()) {
+	if ((curShader = shader) == defShader) {
 		curShader->Enable();
 		curShader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
 	}
@@ -1143,7 +1147,7 @@ void CglFont::glWorldPrint(const float3& p, const float size, const std::string&
 	const CMatrix44f& bm = camera->GetBillBoardMatrix();
 
 	// TODO: simplify
-	if (curShader == GetPrimaryShader())
+	if (curShader == defShader)
 		curShader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, vm * CMatrix44f(p, RgtVector, UpVector, FwdVector) * bm);
 
 	glPrint(0.0f, 0.0f, size, FONT_DESCENDER | FONT_CENTER | FONT_OUTLINE | FONT_BUFFERED, str);
@@ -1160,7 +1164,7 @@ void CglFont::glWorldPrint(const float3& p, const float size, const std::string&
 
 void CglFont::glWorldEnd(Shader::IProgramObject* shader)
 {
-	if (curShader == GetPrimaryShader()) {
+	if (curShader == defShader) {
 		curShader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
 		curShader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::OrthoProj(0.0f, 1.0f, 0.0f, 1.0f, -1.0f, 1.0f));
 		curShader->Disable();

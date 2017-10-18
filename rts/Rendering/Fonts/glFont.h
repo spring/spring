@@ -58,12 +58,12 @@ public:
 	void End();
 
 
-	void BeginGL4() { BeginGL4(GetPrimaryShader()); }
-	void EndGL4() { EndGL4(GetPrimaryShader()); }
+	void BeginGL4() { BeginGL4(defShader); }
+	void EndGL4() { EndGL4(defShader); }
 	void BeginGL4(Shader::IProgramObject* shader);
 	void EndGL4(Shader::IProgramObject* shader);
 
-	void DrawBufferedGL4() { DrawBufferedGL4(GetPrimaryShader()); }
+	void DrawBufferedGL4() { DrawBufferedGL4(defShader); }
 	void DrawBufferedGL4(Shader::IProgramObject* shader);
 
 	void ResetBufferGL4(bool outline) {
@@ -78,8 +78,8 @@ public:
 	}
 
 
-	void glWorldBegin() { glWorldBegin(GetPrimaryShader()); }
-	void glWorldEnd() { glWorldEnd(GetPrimaryShader()); }
+	void glWorldBegin() { glWorldBegin(defShader); }
+	void glWorldEnd() { glWorldEnd(defShader); }
 	void glWorldBegin(Shader::IProgramObject* shader);
 	void glWorldEnd(Shader::IProgramObject* shader);
 	void glWorldPrint(const float3& p, const float size, const std::string& str);
@@ -140,8 +140,6 @@ private:
 private:
 	unsigned int GetBufferIdx(bool outline) const { return (currBufferIdxGL4 * 2 + outline); }
 
-	Shader::IProgramObject* GetPrimaryShader() { return &(primaryBuffer[currBufferIdxGL4].GetShader()); }
-	Shader::IProgramObject* GetOutlineShader() { return &(outlineBuffer[currBufferIdxGL4].GetShader()); }
 	GL::RenderDataBuffer* GetPrimaryBuffer() { return &primaryBuffer[currBufferIdxGL4]; }
 	GL::RenderDataBuffer* GetOutlineBuffer() { return &outlineBuffer[currBufferIdxGL4]; }
 
@@ -177,6 +175,7 @@ private:
 	GL::RenderDataBuffer primaryBuffer[2];
 	GL::RenderDataBuffer outlineBuffer[2];
 
+	Shader::IProgramObject* defShader = nullptr;
 	Shader::IProgramObject* curShader = nullptr;
 
 	VA_TYPE_TC* mapBufferPtr[2 * 2] = {nullptr, nullptr}; // {primary,outline} start-pos
