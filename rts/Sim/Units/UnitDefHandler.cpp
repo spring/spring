@@ -287,10 +287,13 @@ void CUnitDefHandler::SetUnitDefImage(const UnitDef* unitDef, const std::string&
 }
 
 
-void CUnitDefHandler::SetUnitDefImage(const UnitDef* unitDef,
-                                      unsigned int texID, int xsize, int ysize)
-{
-	if (unitDef->buildPic == NULL) {
+void CUnitDefHandler::SetUnitDefImage(
+	const UnitDef* unitDef,
+	unsigned int texID,
+	int xsize,
+	int ysize
+) {
+	if (unitDef->buildPic == nullptr) {
 		unitDef->buildPic = new UnitDefImage();
 	} else {
 		unitDef->buildPic->Free();
@@ -302,8 +305,6 @@ void CUnitDefHandler::SetUnitDefImage(const UnitDef* unitDef,
 	unitImage->imageSizeY = ysize;
 }
 
-bool CUnitDefHandler::GetNoCost() { return noCost; }
-
 void CUnitDefHandler::SetNoCost(bool value)
 {
 	if (noCost == value)
@@ -311,7 +312,7 @@ void CUnitDefHandler::SetNoCost(bool value)
 
 	noCost = value;
 
-	for (int i = 1; i < unitDefs.size(); ++i) {
+	for (size_t i = 1; i < unitDefs.size(); ++i) {
 		unitDefs[i].SetNoCost(noCost);
 	}
 }

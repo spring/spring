@@ -772,9 +772,9 @@ int CSelectedUnitsHandler::GetDefaultCmd(const CUnit* unit, const CFeature* feat
 	// setup the locals for IsBetterLeader()
 	targetUnit = unit;
 	targetFeature = feature;
-	if (targetUnit) {
+
+	if (targetUnit != nullptr)
 		targetIsEnemy = !teamHandler->Ally(gu->myAllyTeam, targetUnit->allyteam);
-	}
 
 	// find the best leader to pick the command
 	const CUnit* leaderUnit = unitHandler->GetUnit(*selectedUnits.begin());

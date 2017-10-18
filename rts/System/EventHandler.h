@@ -216,7 +216,7 @@ class CEventHandler
 
 		std::string GetTooltip(int x, int y);
 
-		bool DefaultCommand(const CUnit* unit, const CFeature* feature, int& cmd);
+		void DefaultCommand(const CUnit* unit, const CFeature* feature, int& cmd);
 
 		bool CommandNotify(const Command& cmd);
 
@@ -697,9 +697,7 @@ inline void CEventHandler::StockpileChanged(const CUnit* unit,
 }
 
 
-inline bool CEventHandler::DefaultCommand(const CUnit* unit,
-                                              const CFeature* feature,
-                                              int& cmd)
+inline void CEventHandler::DefaultCommand(const CUnit* unit, const CFeature* feature, int& cmd)
 {
 	const size_t count = listDefaultCommand.size();
 
@@ -708,8 +706,6 @@ inline bool CEventHandler::DefaultCommand(const CUnit* unit,
 
 		ec->DefaultCommand(unit, feature, cmd);
 	}
-
-	return false;
 }
 
 

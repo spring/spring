@@ -24,7 +24,7 @@ public:
 	void ProcessDecoys();
 	void AssignTechLevels();
 
-	bool GetNoCost();
+	bool GetNoCost() { return noCost; }
 	void SetNoCost(bool value);
 
 	// NOTE: safe with unordered_map after ctor
