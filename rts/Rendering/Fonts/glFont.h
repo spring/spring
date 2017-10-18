@@ -78,9 +78,11 @@ public:
 	}
 
 
-	void glWorldBegin();
+	void glWorldBegin() { glWorldBegin(GetPrimaryShader()); }
+	void glWorldEnd() { glWorldEnd(GetPrimaryShader()); }
+	void glWorldBegin(Shader::IProgramObject* shader);
+	void glWorldEnd(Shader::IProgramObject* shader);
 	void glWorldPrint(const float3& p, const float size, const std::string& str);
-	void glWorldEnd();
 
 	/**
 	 * @param s  absolute font size, or relative scale, if option FONT_SCALE is set
