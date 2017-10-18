@@ -1143,7 +1143,7 @@ void CglFont::glWorldPrint(const float3& p, const float size, const std::string&
 	const CMatrix44f& bm = camera->GetBillBoardMatrix();
 
 	// TODO: simplify
-	if (curShader == GetPrimaryShader()) {
+	if (curShader == GetPrimaryShader())
 		curShader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, vm * CMatrix44f(p, RgtVector, UpVector, FwdVector) * bm);
 
 	glPrint(0.0f, 0.0f, size, FONT_DESCENDER | FONT_CENTER | FONT_OUTLINE | FONT_BUFFERED, str);
