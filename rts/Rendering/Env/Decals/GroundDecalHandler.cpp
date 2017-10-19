@@ -564,24 +564,12 @@ void CGroundDecalHandler::BindTextures()
 
 void CGroundDecalHandler::KillTextures()
 {
-	{
-		glActiveTexture(GL_TEXTURE3); // infotex
-		glDisable(GL_TEXTURE_2D);
-		glDisable(GL_TEXTURE_GEN_S);
-		glDisable(GL_TEXTURE_GEN_T);
-	}
-
-	if (shadowHandler->ShadowsLoaded()) {
+	if (shadowHandler->ShadowsLoaded())
 		shadowHandler->ResetShadowTexSampler(GL_TEXTURE2, true);
 
-		glActiveTexture(GL_TEXTURE1);
-	}
-
 	{
 		glActiveTexture(GL_TEXTURE1);
 		glDisable(GL_TEXTURE_2D);
-		glDisable(GL_TEXTURE_GEN_S);
-		glDisable(GL_TEXTURE_GEN_T);
 	}
 
 	glActiveTexture(GL_TEXTURE0);
