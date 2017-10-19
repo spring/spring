@@ -319,35 +319,31 @@ void glBuildMipmaps(const GLenum target, GLint internalFormat, const GLsizei wid
 	if (globalRendering->compressTextures) {
 		switch (internalFormat) {
 			case 4:
-			case GL_RGBA8 :
-			case GL_RGBA :  internalFormat = GL_COMPRESSED_RGBA_ARB; break;
+			case GL_RGBA8:
+			case GL_RGBA :
+				internalFormat = GL_COMPRESSED_RGBA;
+			break;
 
 			case 3:
-			case GL_RGB8 :
-			case GL_RGB :   internalFormat = GL_COMPRESSED_RGB_ARB; break;
+			case GL_RGB8:
+			case GL_RGB :
+				internalFormat = GL_COMPRESSED_RGB;
+			break;
 
-			case GL_LUMINANCE: internalFormat = GL_COMPRESSED_LUMINANCE_ARB; break;
+			case GL_LUMINANCE:
+				internalFormat = GL_COMPRESSED_LUMINANCE;
+			break;
 		}
 	}
 
 	// create mipmapped texture
-
-	if (!globalRendering->atiHacks) {
-		// newest method
-		glTexImage2D(target, 0, internalFormat, width, height, 0, format, type, data);
-		if (globalRendering->atiHacks) {
-			glEnable(target);
-			glGenerateMipmap(target);
-			glDisable(target);
-		} else {
-			glGenerateMipmap(target);
-		}
-	} else if (GLEW_VERSION_1_4) {
-		// instead of using glu, rely on glTexImage2D to create the mipmaps (requires GL1.4)
-		glTexParameteri(target, GL_GENERATE_MIPMAP, GL_TRUE);
-		glTexImage2D(target, 0, internalFormat, width, height, 0, format, type, data);
+	glTexImage2D(target, 0, internalFormat, width, height, 0, format, type, data);
+	if (globalRendering->atiHacks) {
+		glEnable(target);
+		glGenerateMipmap(target);
+		glDisable(target);
 	} else {
-		gluBuild2DMipmaps(target, internalFormat, width, height, format, type, data);
+		glGenerateMipmap(target);
 	}
 }
 
@@ -391,25 +387,3 @@ void glClearErrors(const char* cls, const char* fnc, bool verbose)
 	}
 }
 
-
-/******************************************************************************/
-
-void SetTexGen(const float scaleX, const float scaleZ, const float offsetX, const float offsetZ)
-{
-	const GLfloat planeX[] = {scaleX, 0.0f,   0.0f,  offsetX};
-	const GLfloat planeZ[] = {  0.0f, 0.0f, scaleZ,  offsetZ};
-
-	//BUG: Nvidia drivers take the current texcoord into account when TexGen is used!
-	// You MUST reset the coords before using TexGen!
-	//glMultiTexCoord4f(target, 1.0f,1.0f,1.0f,1.0f);
-
-	glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR);
-	glTexGenfv(GL_S, GL_EYE_PLANE, planeX);
-	glEnable(GL_TEXTURE_GEN_S);
-
-	glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR);
-	glTexGenfv(GL_T, GL_EYE_PLANE, planeZ);
-	glEnable(GL_TEXTURE_GEN_T);
-}
-
-/******************************************************************************/

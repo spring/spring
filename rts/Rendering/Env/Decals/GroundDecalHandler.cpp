@@ -554,23 +554,10 @@ void CGroundDecalHandler::BindTextures()
 		glActiveTexture(GL_TEXTURE1);
 		glEnable(GL_TEXTURE_2D);
 		glBindTexture(GL_TEXTURE_2D, readMap->GetShadingTexture());
-
-		glMultiTexCoord4f(GL_TEXTURE1_ARB, 1.0f,1.0f,1.0f,1.0f); // workaround a nvidia bug with TexGen
-		SetTexGen(1.0f / (mapDims.pwr2mapx * SQUARE_SIZE), 1.0f / (mapDims.pwr2mapy * SQUARE_SIZE), 0, 0);
 	}
 
 	if (shadowHandler->ShadowsLoaded())
 		shadowHandler->SetupShadowTexSampler(GL_TEXTURE2, true);
-
-	if (infoTextureHandler->IsEnabled()) {
-		glActiveTexture(GL_TEXTURE3);
-		glEnable(GL_TEXTURE_2D);
-
-		glMultiTexCoord4f(GL_TEXTURE3_ARB, 1.0f,1.0f,1.0f,1.0f); // workaround a nvidia bug with TexGen
-		SetTexGen(1.0f / (mapDims.pwr2mapx * SQUARE_SIZE), 1.0f / (mapDims.pwr2mapy * SQUARE_SIZE), 0, 0);
-
-		glBindTexture(GL_TEXTURE_2D, infoTextureHandler->GetCurrentInfoTexture());
-	}
 
 	glActiveTexture(GL_TEXTURE0);
 }

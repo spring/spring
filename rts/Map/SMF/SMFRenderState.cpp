@@ -290,7 +290,23 @@ void SMFRenderStateGLSL::Disable(const CSMFGroundDrawer*, const DrawPass::e&) {
 
 void SMFRenderStateNOP::SetSquareTexGen(const int sqx, const int sqy) const {
 	// temporary hack for FFP border-rendering
-	SetTexGen(1.0f / SMF_TEXSQUARE_SIZE, 1.0f / SMF_TEXSQUARE_SIZE, -sqx, -sqy);
+	constexpr float scaleX = 1.0f / SMF_TEXSQUARE_SIZE;
+	constexpr float scaleZ = 1.0f / SMF_TEXSQUARE_SIZE;
+
+	const GLfloat planeX[] = {scaleX, 0.0f,   0.0f,  -sqx * 1.0f};
+	const GLfloat planeZ[] = {  0.0f, 0.0f, scaleZ,  -sqy * 1.0f};
+
+	//BUG: Nvidia drivers take the current texcoord into account when TexGen is used!
+	// You MUST reset the coords before using TexGen!
+	//glMultiTexCoord4f(target, 1.0f,1.0f,1.0f,1.0f);
+
+	glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR);
+	glTexGenfv(GL_S, GL_EYE_PLANE, planeX);
+	glEnable(GL_TEXTURE_GEN_S);
+
+	glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR);
+	glTexGenfv(GL_T, GL_EYE_PLANE, planeZ);
+	glEnable(GL_TEXTURE_GEN_T);
 }
 
 void SMFRenderStateGLSL::SetSquareTexGen(const int sqx, const int sqy) const {

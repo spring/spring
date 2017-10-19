@@ -91,7 +91,6 @@ static constexpr  glFrustumFuncPtr  glFrustumFuncs[2] = {__spring_glFrustum_noCC
 
 
 void WorkaroundATIPointSizeBug();
-void SetTexGen(const float scaleX, const float scaleZ, const float offsetX, const float offsetZ);
 
 void glSaveTexture(const GLuint textureID, const char* filename);
 void glSpringBindTextures(GLuint first, GLsizei count, const GLuint* textures);

@@ -167,30 +167,9 @@ void ITreeDrawer::SetupState() const {
 
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-	// NOTE:
-	//   the info-texture now contains an alpha-component
-	//   so binding it here means trees will be invisible
-	//   when shadows are disabled
-	if (infoTextureHandler->IsEnabled()) {
-		glActiveTexture(GL_TEXTURE1);
-		glEnable(GL_TEXTURE_2D);
-		glBindTexture(GL_TEXTURE_2D, infoTextureHandler->GetCurrentInfoTexture());
-		SetTexGen(1.0f / (mapDims.pwr2mapx * SQUARE_SIZE), 1.0f / (mapDims.pwr2mapy * SQUARE_SIZE), 0, 0);
-		glActiveTexture(GL_TEXTURE0);
-	}
 }
 
 void ITreeDrawer::ResetState() const {
-	if (infoTextureHandler->IsEnabled()) {
-		glActiveTexture(GL_TEXTURE1);
-
-		glDisable(GL_TEXTURE_GEN_S);
-		glDisable(GL_TEXTURE_GEN_T);
-		glDisable(GL_TEXTURE_2D);
-		glActiveTexture(GL_TEXTURE0);
-	}
-
 	glPopAttrib();
 }
 
