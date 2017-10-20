@@ -380,11 +380,15 @@ void CBasicMeshDrawer::UploadPatchIndices(uint32_t n) {
 	VBO& borderIndexBuffer = lodBorderIndexBuffers[n];
 
 	{
+		// FIXME?
+		//   with GL_STATIC_DRAW, driver spams [OPENGL_DEBUG] id=131186 source=API type=PERFORMANCE severity=MEDIUM
+		//   msg="Buffer performance warning: Buffer object 18 (bound to GL_ELEMENT_ARRAY_BUFFER_ARB, usage hint is
+		//   GL_STATIC_DRAW) is being copied/moved from VIDEO memory to HOST memory."
 		squareIndexBuffer.Bind(GL_ELEMENT_ARRAY_BUFFER);
 		#if (USE_TRIANGLE_STRIPS == 0)
-		squareIndexBuffer.New((numPolys / (lodStep * lodStep)) * 3 * sizeof(uint16_t), GL_STATIC_DRAW);
+		squareIndexBuffer.New((numPolys / (lodStep * lodStep)) * 3 * sizeof(uint16_t), GL_DYNAMIC_DRAW);
 		#else
-		squareIndexBuffer.New(((lodQuads * 2 + 3) * lodQuads) * sizeof(uint16_t), GL_STATIC_DRAW);
+		squareIndexBuffer.New(((lodQuads * 2 + 3) * lodQuads) * sizeof(uint16_t), GL_DYNAMIC_DRAW);
 		#endif
 
 		uint16_t* indcs = reinterpret_cast<uint16_t*>(squareIndexBuffer.MapBuffer());
@@ -452,7 +456,7 @@ void CBasicMeshDrawer::UploadPatchIndices(uint32_t n) {
 	}
 	{
 		borderIndexBuffer.Bind(GL_ELEMENT_ARRAY_BUFFER);
-		borderIndexBuffer.New(((lodQuads * 2 + 3) * 1) * sizeof(uint16_t), GL_STATIC_DRAW);
+		borderIndexBuffer.New(((lodQuads * 2 + 3) * 1) * sizeof(uint16_t), GL_DYNAMIC_DRAW);
 
 		uint16_t* indcs = reinterpret_cast<uint16_t*>(borderIndexBuffer.MapBuffer());
 
@@ -482,7 +486,7 @@ uint32_t CBasicMeshDrawer::CalcDrawPassLOD(const CCamera* cam, const DrawPass::e
 	int32_t lodIndx = LOD_LEVELS - 1;
 
 	// force SP and NP to equal LOD; avoids projection issues
-	if (drawPass == DrawPass::Shadow)
+	if (drawPass == DrawPass::Shadow || drawPass == DrawPass::WaterReflection)
 		cam = CCamera::GetCamera(CCamera::CAMTYPE_PLAYER);
 
 	{
