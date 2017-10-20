@@ -6,6 +6,7 @@
 #include "Map/BaseGroundDrawer.h"
 #include "Rendering/GL/GeometryBuffer.h"
 #include "Rendering/GL/LightHandler.h"
+#include "Rendering/GL/RenderDataBuffer.hpp"
 
 
 class CSMFReadMap;
@@ -82,9 +83,7 @@ protected:
 	int drawerMode;
 	int groundDetail;
 
-	GLuint waterPlaneDispLists[2];
-
-	// [0] := fallback shader-less rendering path
+	// [0] := no-op rendering path
 	// [1] := default shader-driven rendering path
 	// [2] := custom shader-driven rendering path (via Lua)
 	// [3] := currently selected state (shared by deferred pass)
@@ -92,6 +91,7 @@ protected:
 
 	GL::LightHandler lightHandler;
 	GL::GeometryBuffer geomBuffer;
+	GL::RenderDataBuffer waterPlaneBuffers[2];
 };
 
 #endif // _SMF_GROUND_DRAWER_H_

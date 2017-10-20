@@ -16,6 +16,7 @@
 #include "Rendering/Env/WaterRendering.h"
 #include "Rendering/Env/MapRendering.h"
 #include "Rendering/GL/myGL.h"
+#include "Rendering/GL/RenderDataBuffer.hpp"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Shaders/Shader.h"
 #include "System/Config/ConfigHandler.h"
@@ -86,17 +87,9 @@ CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
 
 
 
-	waterPlaneDispLists[0] = 0;
-	waterPlaneDispLists[1] = 0;
-
 	if (waterRendering->hasWaterPlane) {
-		glNewList((waterPlaneDispLists[0] = glGenLists(1)), GL_COMPILE);
-		CreateWaterPlanes(true);
-		glEndList();
-
-		glNewList((waterPlaneDispLists[1] = glGenLists(1)), GL_COMPILE);
+		CreateWaterPlanes( true);
 		CreateWaterPlanes(false);
-		glEndList();
 	}
 
 	if (drawDeferred) {
@@ -114,12 +107,11 @@ CSMFGroundDrawer::~CSMFGroundDrawer()
 	smfRenderStates[RENDER_STATE_LUA]->Kill(); ISMFRenderState::FreeInstance(smfRenderStates[RENDER_STATE_LUA]);
 	smfRenderStates.clear();
 
+	waterPlaneBuffers[0].Kill();
+	waterPlaneBuffers[1].Kill();
+
 	spring::SafeDelete(groundTextures);
 	spring::SafeDelete(meshDrawer);
-
-	// individually generated, individually deleted
-	glDeleteLists(waterPlaneDispLists[0], 1);
-	glDeleteLists(waterPlaneDispLists[1], 1);
 }
 
 
@@ -160,73 +152,113 @@ IMeshDrawer* CSMFGroundDrawer::SwitchMeshDrawer(int wantedMode)
 
 
 
-void CSMFGroundDrawer::CreateWaterPlanes(bool camOufOfMap) {
-	glDisable(GL_TEXTURE_2D);
-	glDepthMask(GL_FALSE);
+void CSMFGroundDrawer::CreateWaterPlanes(bool camOutsideMap) {
+	#if 0
+	{
+		const float xsize = (smfMap->mapSizeX) >> 2;
+		const float ysize = (smfMap->mapSizeZ) >> 2;
+		const float size = std::min(xsize, ysize);
+		const float alphainc = math::TWOPI / 32.0f;
 
-	const float xsize = (smfMap->mapSizeX) >> 2;
-	const float ysize = (smfMap->mapSizeZ) >> 2;
-	const float size = std::min(xsize, ysize);
+		static std::vector<VA_TYPE_C> verts;
 
-	CVertexArray* va = GetVertexArray();
-	va->Initialize();
+		verts.clear();
+		verts.reserve(4 * (32 + 1) * 2);
 
-	const unsigned char fogColor[4] = {
-		(unsigned char)(255 * sky->fogColor[0]),
-		(unsigned char)(255 * sky->fogColor[1]),
-		(unsigned char)(255 * sky->fogColor[2]),
-		 255
-	};
+		const unsigned char fogColor[4] = {
+			(unsigned char)(255 * sky->fogColor[0]),
+			(unsigned char)(255 * sky->fogColor[1]),
+			(unsigned char)(255 * sky->fogColor[2]),
+			 255
+		};
 
-	const unsigned char planeColor[4] = {
-		(unsigned char)(255 * waterRendering->planeColor[0]),
-		(unsigned char)(255 * waterRendering->planeColor[1]),
-		(unsigned char)(255 * waterRendering->planeColor[2]),
-		 255
-	};
+		const unsigned char planeColor[4] = {
+			(unsigned char)(255 * waterRendering->planeColor[0]),
+			(unsigned char)(255 * waterRendering->planeColor[1]),
+			(unsigned char)(255 * waterRendering->planeColor[2]),
+			 255
+		};
 
-	const float alphainc = math::TWOPI / 32;
-	float alpha,r1,r2;
+		float alpha;
+		float r1;
+		float r2;
 
-	float3 p(0.0f, 0.0f, 0.0f);
+		float3 p;
 
-	for (int n = (camOufOfMap) ? 0 : 1; n < 4 ; ++n) {
-		if ((n == 1) && !camOufOfMap) {
-			// don't render vertices under the map
-			r1 = 2 * size;
-		} else {
-			r1 = n*n * size;
+		for (int n = (camOutsideMap) ? 0 : 1; n < 4; ++n) {
+			if ((n == 1) && !camOutsideMap) {
+				// don't render vertices under the map
+				r1 = 2.0f * size;
+			} else {
+				r1 = n * n * size;
+			}
+
+			if (n == 3) {
+				// last stripe: make it thinner (looks better with fog)
+				r2 = (n + 0.5) * (n + 0.5) * size;
+			} else {
+				r2 = (n + 1) * (n + 1) * size;
+			}
+
+			for (alpha = 0.0f; (alpha - math::TWOPI) < alphainc; alpha += alphainc) {
+				p.x = r1 * fastmath::sin(alpha) + 2.0f * xsize;
+				p.z = r1 * fastmath::cos(alpha) + 2.0f * ysize;
+
+				verts.push_back(VA_TYPE_C{p, {planeColor}});
+
+				p.x = r2 * fastmath::sin(alpha) + 2.0f * xsize;
+				p.z = r2 * fastmath::cos(alpha) + 2.0f * ysize;
+
+				verts.push_back(VA_TYPE_C{p, {(n == 3)? fogColor : planeColor}});
+			}
 		}
 
-		if (n == 3) {
-			// last stripe: make it thinner (looks better with fog)
-			r2 = (n+0.5)*(n+0.5) * size;
-		} else {
-			r2 = (n+1)*(n+1) * size;
-		}
-		for (alpha = 0.0f; (alpha - math::TWOPI) < alphainc ; alpha += alphainc) {
-			p.x = r1 * fastmath::sin(alpha) + 2 * xsize;
-			p.z = r1 * fastmath::cos(alpha) + 2 * ysize;
-			va->AddVertexC(p, planeColor );
-			p.x = r2 * fastmath::sin(alpha) + 2 * xsize;
-			p.z = r2 * fastmath::cos(alpha) + 2 * ysize;
-			va->AddVertexC(p, (n==3) ? fogColor : planeColor);
-		}
+		waterPlaneBuffers[camOutsideMap].Init();
+		waterPlaneBuffers[camOutsideMap].UploadC(verts.size(), 0, verts.data(), nullptr);
 	}
-	va->DrawArrayC(GL_TRIANGLE_STRIP);
+	{
+		char vsBuf[65536];
+		char fsBuf[65536];
 
-	glDepthMask(GL_TRUE);
+		const char* vsVars = "uniform float planeOffset;\n";
+		const char* vsCode =
+			"\tgl_Position = u_proj_mat * u_movi_mat * vec4(a_vertex_xyz + vec3(0.0, planeOffset, 0.0), 1.0);\n"
+			"\tv_color_rgba = a_color_rgba;\n";
+		const char* fsVars = "const float N = 1.0 / 255.0;\n";
+		const char* fsCode = "\tf_color_rgba = v_color_rgba * N;\n";
+
+		GL::RenderDataBuffer::FormatShaderC(vsBuf, vsBuf + sizeof(vsBuf), "", vsVars, vsCode, "VS");
+		GL::RenderDataBuffer::FormatShaderC(fsBuf, fsBuf + sizeof(fsBuf), "", fsVars, fsCode, "FS");
+		GL::RenderDataBuffer& renderDataBuffer = waterPlaneBuffers[camOutsideMap];
+
+		Shader::GLSLShaderObject shaderObjs[2] = {{GL_VERTEX_SHADER, &vsBuf[0], ""}, {GL_FRAGMENT_SHADER, &fsBuf[0], ""}};
+		Shader::IProgramObject* shaderProg = renderDataBuffer.CreateShader((sizeof(shaderObjs) / sizeof(shaderObjs[0])), 0, &shaderObjs[0], nullptr);
+
+		shaderProg->Enable();
+		shaderProg->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
+		shaderProg->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::Identity());
+		shaderProg->SetUniform("planeOffset", 0.0f);
+		shaderProg->Disable();
+	}
+	#endif
 }
 
 
 inline void CSMFGroundDrawer::DrawWaterPlane(bool drawWaterReflection) {
+	#if 0
 	if (drawWaterReflection)
 		return;
 
-	glPushMatrix();
-	glTranslatef(0.0f, std::min(-200.0f, smfMap->GetCurrMinHeight() - 400.0f), 0.0f);
-	glCallList(waterPlaneDispLists[camera->GetPos().IsInBounds() && !mapRendering->voidWater]);
-	glPopMatrix();
+	GL::RenderDataBuffer& buffer = waterPlaneBuffers[1 - (camera->GetPos().IsInBounds() && !mapRendering->voidWater)];
+	Shader::IProgramObject* shader = &buffer.GetShader();
+
+	shader->Enable();
+	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
+	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
+	shader->SetUniform("planeOffset", std::min(-200.0f, smfMap->GetCurrMinHeight() - 400.0f));
+	buffer.Submit(GL_TRIANGLE_STRIP, 0, (buffer.GetElems()).GetSize() / sizeof(VA_TYPE_C));
+	shader->Disable();
+	#endif
 }
 
 

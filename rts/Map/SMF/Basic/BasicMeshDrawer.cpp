@@ -570,12 +570,11 @@ void CBasicMeshDrawer::DrawMesh(const DrawPass::e& drawPass) {
 		}
 	}
 
+	indexBuffer.Unbind();
+
 	#if (USE_TRIANGLE_STRIPS == 1)
 	glDisable(GL_PRIMITIVE_RESTART);
 	#endif
-
-	indexBuffer.Unbind();
-
 	glDisableVertexAttribArray(0);
 }
 
@@ -639,10 +638,9 @@ void CBasicMeshDrawer::DrawBorderMesh(const DrawPass::e& drawPass) {
 		}
 	}
 
-	glDisable(GL_PRIMITIVE_RESTART);
-
 	indexBuffer.Unbind();
 
+	glDisable(GL_PRIMITIVE_RESTART);
 	glDisableVertexAttribArray(0);
 }
 
