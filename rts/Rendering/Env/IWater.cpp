@@ -147,7 +147,8 @@ void IWater::ExplosionOccurred(const CExplosionParams& event) {
 void IWater::SetModelClippingPlane(const double* planeEq) {
 	glPushMatrix();
 	glLoadIdentity();
-	glClipPlane(GL_CLIP_PLANE2, planeEq);
+	glEnable(GL_CLIP_PLANE0 + ClipPlaneIndex());
+	glClipPlane(GL_CLIP_PLANE0 + ClipPlaneIndex(), planeEq);
 	glPopMatrix();
 }
 
@@ -162,15 +163,15 @@ void IWater::DrawReflections(const double* clipPlaneEqs, bool drawGround, bool d
 		if (drawSky)
 			sky->Draw();
 
-		glEnable(GL_CLIP_PLANE2);
-		glClipPlane(GL_CLIP_PLANE2, &clipPlaneEqs[0]);
-
-		if (drawGround)
+		if (drawGround) {
+			glEnable(GL_CLIP_DISTANCE0 + ClipPlaneIndex());
 			readMap->GetGroundDrawer()->Draw(DrawPass::WaterReflection);
-
+			glDisable(GL_CLIP_DISTANCE0 + ClipPlaneIndex());
+		}
 
 		// rest needs the plane in model-space; V is combined with P
 		SetModelClippingPlane(&clipPlaneEqs[4]);
+
 		unitDrawer->Draw(true);
 		featureDrawer->Draw();
 
@@ -182,7 +183,8 @@ void IWater::DrawReflections(const double* clipPlaneEqs, bool drawGround, bool d
 		// sky->DrawSun();
 
 		eventHandler.DrawWorldReflection();
-		glDisable(GL_CLIP_PLANE2);
+
+		glDisable(GL_CLIP_PLANE0 + ClipPlaneIndex());
 
 		drawReflection = false;
 	}
@@ -196,17 +198,17 @@ void IWater::DrawRefractions(const double* clipPlaneEqs, bool drawGround, bool d
 	{
 		drawRefraction = true;
 
-		glEnable(GL_CLIP_PLANE2);
-		glClipPlane(GL_CLIP_PLANE2, &clipPlaneEqs[0]);
-
 		// opaque
 		if (drawSky)
 			sky->Draw();
-		if (drawGround)
+		if (drawGround) {
+			glEnable(GL_CLIP_DISTANCE0 + ClipPlaneIndex());
 			readMap->GetGroundDrawer()->Draw(DrawPass::WaterRefraction);
-
+			glDisable(GL_CLIP_DISTANCE0 + ClipPlaneIndex());
+		}
 
 		SetModelClippingPlane(&clipPlaneEqs[4]);
+
 		unitDrawer->Draw(false, true);
 		featureDrawer->Draw();
 
@@ -216,7 +218,8 @@ void IWater::DrawRefractions(const double* clipPlaneEqs, bool drawGround, bool d
 		projectileDrawer->Draw(false, true);
 
 		eventHandler.DrawWorldRefraction();
-		glDisable(GL_CLIP_PLANE2);
+
+		glDisable(GL_CLIP_PLANE0 + ClipPlaneIndex());
 
 		drawRefraction = false;
 	}

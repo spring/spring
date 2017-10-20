@@ -53,7 +53,7 @@ static GL::RenderDataBuffer GetRenderDataBuffer()
 	renderDataBuffer.Init();
 	renderDataBuffer.Upload2DT(NUM_ELEMS, NUM_INDCS, ELEMS, INDCS);
 
-	Shader::GLSLShaderObject shaderObjs[2] = {{GL_VERTEX_SHADER, &vsBuf[0]}, {GL_FRAGMENT_SHADER, &fsBuf[0]}};
+	Shader::GLSLShaderObject shaderObjs[2] = {{GL_VERTEX_SHADER, &vsBuf[0], ""}, {GL_FRAGMENT_SHADER, &fsBuf[0], ""}};
 	Shader::IProgramObject* shaderProg = renderDataBuffer.CreateShader((sizeof(shaderObjs) / sizeof(shaderObjs[0])), 0, &shaderObjs[0], nullptr);
 
 	// slower than location-based SetUniform, but works without pre-initializing uniforms via CreateShader

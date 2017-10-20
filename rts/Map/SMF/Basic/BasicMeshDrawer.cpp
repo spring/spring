@@ -20,7 +20,7 @@
 
 
 // do not use GL_MAP_UNSYNCHRONIZED_BIT in either case; causes slow driver sync
-#if (USE_MAPPED_BUFFERS)
+#if (USE_MAPPED_BUFFERS == 1)
 #define BUFFER_MAP_BITS (GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT)
 #else
 #define BUFFER_MAP_BITS (GL_MAP_WRITE_BIT)
@@ -104,10 +104,7 @@ CBasicMeshDrawer::~CBasicMeshDrawer() {
 			MeshPatch& meshPatch = meshPatches[y * numPatchesX + x];
 
 			for (uint32_t n = 0; n < LOD_LEVELS; n += 1) {
-				VBO& squareVertexBuffer = meshPatch.squareVertexBuffers[n];
-
-				if (squareVertexBuffer.mapped)
-					squareVertexBuffer.UnmapBuffer();
+				meshPatch.squareVertexBuffers[n].UnmapIf();
 			}
 
 			meshPatch.squareVertexPtrs.fill(nullptr);

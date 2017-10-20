@@ -38,7 +38,7 @@ namespace Shader {
 
 	struct IShaderObject {
 	public:
-		IShaderObject(unsigned int shType, const std::string& shSrcData, const std::string& shSrcDefs = ""):
+		IShaderObject(unsigned int shType, const std::string& shSrcData, const std::string& shSrcDefs):
 			type(shType), srcData(shSrcData), rawDefStrs(shSrcDefs) {
 		}
 
@@ -70,7 +70,7 @@ namespace Shader {
 
 	struct NullShaderObject: public Shader::IShaderObject {
 	public:
-		NullShaderObject(unsigned int shType, const std::string& shSrcFile) : IShaderObject(shType, shSrcFile) {}
+		NullShaderObject(unsigned int shType, const std::string& shSrcFile) : IShaderObject(shType, shSrcFile, "") {}
 	};
 
 	struct GLSLShaderObject: public Shader::IShaderObject {
@@ -78,7 +78,7 @@ namespace Shader {
 		GLSLShaderObject(
 			unsigned int shType,
 			const std::string& shSrcData,
-			const std::string& shSrcDefs = ""
+			const std::string& shSrcDefs
 		): IShaderObject(shType, shSrcData, shSrcDefs) {}
 
 
@@ -205,7 +205,7 @@ namespace Shader {
 
 
 		/// old interface
-		virtual void SetUniformLocation(const std::string&) {}
+		virtual void SetUniformLocation(const char*) {}
 
 		virtual void SetUniform1i(int idx, int   v0) = 0;
 		virtual void SetUniform2i(int idx, int   v0, int   v1) = 0;
@@ -250,20 +250,13 @@ namespace Shader {
 		virtual void SetUniformMatrix4x4(UniformState* uState, bool transp, const float* m) { SetUniformMatrix4fv(uState->GetLocation(), transp, m); }
 
 	protected:
-		int GetUniformLocation(const std::string& name) { return GetUniformState(name)->GetLocation(); }
+		int GetUniformLocation(const char* name) { return (GetUniformState(name)->GetLocation()); }
 
 	private:
-		virtual int GetUniformLoc(const std::string& name) = 0;
+		virtual int GetUniformLoc(const char* name) = 0;
 		virtual int GetUniformType(const int idx) = 0;
 
-		UniformState* GetNewUniformState(const std::string name);
-		UniformState* GetUniformState(const std::string& name) {
-			const auto hash = hashString(name.c_str()); // never compiletime const (std::string is never a literal)
-			const auto iter = uniformStates.find(hash);
-			if (iter != uniformStates.end())
-				return &iter->second;
-			return GetNewUniformState(name);
-		}
+		UniformState* GetNewUniformState(const char* name);
 		UniformState* GetUniformState(const char* name) {
 			// (when inlined) hash might be compiletime const cause of constexpr of hashString
 			// WARNING: Cause of a bug in gcc, you _must_ assign the constexpr to a var before
@@ -316,7 +309,7 @@ namespace Shader {
 		bool ReloadState(bool reloadShaderObjs) override { return true; }
 		bool Validate() override { return true; }
 
-		int GetUniformLoc(const std::string& name) override { return -1; }
+		int GetUniformLoc(const char* name) override { return -1; }
 		int GetUniformType(const int idx) override { return -1; }
 
 		void SetUniform(const ShaderInput& u) override {}
@@ -374,7 +367,7 @@ namespace Shader {
 
 	public:
 		void SetUniform(const ShaderInput& u) override { SetUniformLocation(u.name); } // TODO: values (u.type, u.data)
-		void SetUniformLocation(const std::string&) override;
+		void SetUniformLocation(const char*) override;
 
 		void SetUniform1i(int idx, int   v0) override;
 		void SetUniform2i(int idx, int   v0, int   v1) override;
@@ -398,7 +391,7 @@ namespace Shader {
 
 	private:
 		int GetUniformType(const int idx) override;
-		int GetUniformLoc(const std::string& name) override;
+		int GetUniformLoc(const char* name) override;
 
 		void SetUniform(UniformState* uState, int   v0) override;
 		void SetUniform(UniformState* uState, float v0) override;

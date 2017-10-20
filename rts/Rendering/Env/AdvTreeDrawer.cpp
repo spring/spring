@@ -70,7 +70,7 @@ void CAdvTreeDrawer::LoadTreeShaders() {
 	};
 
 	const static int numUniformNamesNDNA = 6;
-	const static std::string uniformNamesNDNA[numUniformNamesNDNA] = {
+	const static char* uniformNamesNDNA[numUniformNamesNDNA] = {
 		"cameraDirX",          // VP
 		"cameraDirY",          // VP
 		"treeOffset",          // VP
@@ -79,7 +79,7 @@ void CAdvTreeDrawer::LoadTreeShaders() {
 		"alphaModifiers",      // VP
 	};
 	const static int numUniformNamesNADA = 5;
-	const std::string uniformNamesNADA[numUniformNamesNADA] = {
+	const char* uniformNamesNADA[numUniformNamesNADA] = {
 		"shadowMatrix",        // VP
 		"shadowParams",        // VP
 		"groundShadowDensity", // FP

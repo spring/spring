@@ -9,6 +9,7 @@
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/Env/CubeMapHandler.h"
 #include "Rendering/Env/ISky.h"
+#include "Rendering/Env/IWater.h"
 #include "Rendering/Env/SkyLight.h"
 #include "Rendering/Env/SunLighting.h"
 #include "Rendering/Env/WaterRendering.h"
@@ -17,13 +18,10 @@
 #include "Rendering/Map/InfoTexture/IInfoTextureHandler.h"
 #include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/Shaders/Shader.h"
-#include "Sim/Misc/GlobalSynced.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/StringUtil.h"
 
 #define SMF_TEXSQUARE_SIZE 1024.0f
-// #define MESHDRAWER_GL4
-
 
 
 ISMFRenderState* ISMFRenderState::GetInstance(bool nopState, bool luaShaders) {
@@ -41,8 +39,9 @@ bool SMFRenderStateGLSL::Init(const CSMFGroundDrawer* smfGroundDrawer) {
 	};
 	const std::string defs =
 		("#define SMF_TEXSQUARE_SIZE " + FloatToString(                  SMF_TEXSQUARE_SIZE) + "\n") +
-		("#define SMF_INTENSITY_MULT " + FloatToString(CGlobalRendering::SMF_INTENSITY_MULT) + "\n");
-
+		("#define SMF_INTENSITY_MULT " + FloatToString(CGlobalRendering::SMF_INTENSITY_MULT) + "\n") +
+		("#define SMF_CLIP_PLANE_IDX " + IntToString(            IWater::ClipPlaneIndex()) + "\n") +
+		("#define SMF_FRAGDATA_COUNT " + IntToString(GL::GeometryBuffer::ATTACHMENT_COUNT) + "\n");
 
 	if (useLuaShaders) {
 		for (unsigned int n = GLSL_SHADER_STANDARD; n <= GLSL_SHADER_DEFERRED; n++) {
@@ -54,13 +53,8 @@ bool SMFRenderStateGLSL::Init(const CSMFGroundDrawer* smfGroundDrawer) {
 		for (unsigned int n = GLSL_SHADER_STANDARD; n <= GLSL_SHADER_DEFERRED; n++) {
 			// load from VFS files
 			glslShaders[n] = shaderHandler->CreateProgramObject("[SMFGroundDrawer::VFS]", names[n]);
-			#ifdef MESHDRAWER_GL4
 			glslShaders[n]->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/SMFVertProg4.glsl", defs, GL_VERTEX_SHADER));
 			glslShaders[n]->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/SMFFragProg4.glsl", defs, GL_FRAGMENT_SHADER));
-			#else
-			glslShaders[n]->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/SMFVertProg3.glsl", defs, GL_VERTEX_SHADER));
-			glslShaders[n]->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/SMFFragProg3.glsl", defs, GL_FRAGMENT_SHADER));
-			#endif
 		}
 	}
 
@@ -104,7 +98,8 @@ void SMFRenderStateGLSL::Update(
 		const int2 normTexSize = smfMap->GetTextureSize(MAP_BASE_NORMALS_TEX);
 		// const int2 specTexSize = smfMap->GetTextureSize(MAP_SSMF_SPECULAR_TEX);
 
-		const float4 fogParams = {sky->fogStart, sky->fogEnd, 1.0f / (sky->fogEnd - sky->fogStart)};
+		const float3 cameraPos = camera->GetPos();
+		const float3 fogParams = {sky->fogStart, sky->fogEnd, globalRendering->viewRange};
 
 		for (unsigned int n = GLSL_SHADER_STANDARD; n <= GLSL_SHADER_DEFERRED; n++) {
 			glslShaders[n]->SetFlag("SMF_VOID_WATER",                       mapRendering->voidWater);
@@ -160,30 +155,33 @@ void SMFRenderStateGLSL::Update(
 			glslShaders[n]->SetUniform("mapSizePO2", mapDims.pwr2mapx * SQUARE_SIZE * 1.0f, mapDims.pwr2mapy * SQUARE_SIZE * 1.0f);
 			glslShaders[n]->SetUniform("mapSize",    mapDims.mapx     * SQUARE_SIZE * 1.0f, mapDims.mapy     * SQUARE_SIZE * 1.0f);
 
-			glslShaders[n]->SetUniform4v("lightDir",  &sky->GetLight()->GetLightDir()[0]);
-			glslShaders[n]->SetUniform3v("cameraPos", &FwdVector[0]);
+			glslShaders[n]->SetUniform4v<const char*, float>("lightDir",  sky->GetLight()->GetLightDir());
+			glslShaders[n]->SetUniform3v<const char*, float>("cameraPos", &cameraPos.x);
 
-			glslShaders[n]->SetUniform3v("groundAmbientColor",  &sunLighting->groundAmbientColor[0]);
-			glslShaders[n]->SetUniform3v("groundDiffuseColor",  &sunLighting->groundDiffuseColor[0]);
-			glslShaders[n]->SetUniform3v("groundSpecularColor", &sunLighting->groundSpecularColor[0]);
-			glslShaders[n]->SetUniform  ("groundSpecularExponent", sunLighting->specularExponent);
-			glslShaders[n]->SetUniform  ("groundShadowDensity", sunLighting->groundShadowDensity);
+			glslShaders[n]->SetUniform3v<const char*, float>("groundAmbientColor",  &sunLighting->groundAmbientColor.x);
+			glslShaders[n]->SetUniform3v<const char*, float>("groundDiffuseColor",  &sunLighting->groundDiffuseColor.x);
+			glslShaders[n]->SetUniform3v<const char*, float>("groundSpecularColor", &sunLighting->groundSpecularColor.x);
+
+			glslShaders[n]->SetUniform("groundSpecularExponent", sunLighting->specularExponent);
+			glslShaders[n]->SetUniform("groundShadowDensity", sunLighting->groundShadowDensity);
 
 			glslShaders[n]->SetUniformMatrix4x4<const char*, float>("viewMat", false, camera->GetViewMatrix());
 			glslShaders[n]->SetUniformMatrix4x4<const char*, float>("viewMatInv", false, camera->GetViewMatrixInverse());
 			glslShaders[n]->SetUniformMatrix4x4<const char*, float>("viewProjMat", false, camera->GetViewProjectionMatrix());
 			glslShaders[n]->SetUniformMatrix4x4<const char*, float>("shadowMat", false, shadowHandler->GetShadowMatrix());
-			glslShaders[n]->SetUniform4v("shadowParams", &(shadowHandler->GetShadowParams().x));
+			glslShaders[n]->SetUniform4v<const char*, float>("shadowParams", shadowHandler->GetShadowParams());
 
-			glslShaders[n]->SetUniform4v("fogParams", &fogParams.x);
-			glslShaders[n]->SetUniform4v("fogColor", &sky->fogColor.x);
+			glslShaders[n]->SetUniform3v<const char*, float>("fogParams", &fogParams.x);
+			glslShaders[n]->SetUniform4v<const char*, float>("fogColor", sky->fogColor);
 
-			glslShaders[n]->SetUniform3v("waterMinColor",    &waterRendering->minColor[0]);
-			glslShaders[n]->SetUniform3v("waterBaseColor",   &waterRendering->baseColor[0]);
-			glslShaders[n]->SetUniform3v("waterAbsorbColor", &waterRendering->absorb[0]);
+			glslShaders[n]->SetUniform4v<const char*, float>("clipPlane", IWater::MapNullClipPlane());
 
-			glslShaders[n]->SetUniform4v("splatTexScales", &mapRendering->splatTexScales[0]);
-			glslShaders[n]->SetUniform4v("splatTexMults", &mapRendering->splatTexMults[0]);
+			glslShaders[n]->SetUniform3v<const char*, float>("waterMinColor",    &waterRendering->minColor.x);
+			glslShaders[n]->SetUniform3v<const char*, float>("waterBaseColor",   &waterRendering->baseColor.x);
+			glslShaders[n]->SetUniform3v<const char*, float>("waterAbsorbColor", &waterRendering->absorb.x);
+
+			glslShaders[n]->SetUniform4v<const char*, float>("splatTexScales", mapRendering->splatTexScales);
+			glslShaders[n]->SetUniform4v<const char*, float>("splatTexMults", mapRendering->splatTexMults);
 
 			glslShaders[n]->SetUniform("infoTexIntensityMul", 1.0f);
 
@@ -210,7 +208,7 @@ bool SMFRenderStateGLSL::HasValidShader(const DrawPass::e& drawPass) const {
 
 
 
-void SMFRenderStateGLSL::Enable(const CSMFGroundDrawer* smfGroundDrawer, const DrawPass::e&) {
+void SMFRenderStateGLSL::Enable(const CSMFGroundDrawer* smfGroundDrawer, const DrawPass::e& drawPass) {
 	if (useLuaShaders) {
 		// use raw, GLSLProgramObject::Enable also calls RecompileIfNeeded
 		glUseProgram(glslShaders[GLSL_SHADER_CURRENT]->GetObjID());
@@ -223,23 +221,36 @@ void SMFRenderStateGLSL::Enable(const CSMFGroundDrawer* smfGroundDrawer, const D
 	const GL::LightHandler* cLightHandler = smfGroundDrawer->GetLightHandler();
 	      GL::LightHandler* mLightHandler = const_cast<GL::LightHandler*>(cLightHandler); // XXX
 
-	glslShaders[GLSL_SHADER_CURRENT]->SetFlag("HAVE_SHADOWS", shadowHandler->ShadowsLoaded());
-	glslShaders[GLSL_SHADER_CURRENT]->SetFlag("HAVE_INFOTEX", infoTextureHandler->IsEnabled());
+	Shader::IProgramObject* shader = glslShaders[GLSL_SHADER_CURRENT];
 
-	glslShaders[GLSL_SHADER_CURRENT]->Enable();
-	glslShaders[GLSL_SHADER_CURRENT]->SetUniform("mapHeights", readMap->GetCurrMinHeight(), readMap->GetCurrMaxHeight());
-	glslShaders[GLSL_SHADER_CURRENT]->SetUniform3v("cameraPos", &camera->GetPos()[0]);
-	glslShaders[GLSL_SHADER_CURRENT]->SetUniformMatrix4x4<const char*, float>("viewMat", false, camera->GetViewMatrix());
-	glslShaders[GLSL_SHADER_CURRENT]->SetUniformMatrix4x4<const char*, float>("viewMatInv", false, camera->GetViewMatrixInverse());
-	glslShaders[GLSL_SHADER_CURRENT]->SetUniformMatrix4x4<const char*, float>("viewProjMat", false, camera->GetViewProjectionMatrix());
-	glslShaders[GLSL_SHADER_CURRENT]->SetUniformMatrix4x4<const char*, float>("shadowMat", false, shadowHandler->GetShadowMatrix());
-	glslShaders[GLSL_SHADER_CURRENT]->SetUniform4v("shadowParams", &(shadowHandler->GetShadowParams().x));
-	glslShaders[GLSL_SHADER_CURRENT]->SetUniform("infoTexIntensityMul", float(infoTextureHandler->InMetalMode()) + 1.0f);
+	const float3 cameraPos = camera->GetPos();
+	const float3 fogParams = {sky->fogStart, sky->fogEnd, globalRendering->viewRange};
+	const float2 mapParams = {readMap->GetCurrMinHeight(), readMap->GetCurrMaxHeight()};
 
-	#ifndef MESHDRAWER_GL4
+	shader->SetFlag("HAVE_SHADOWS", shadowHandler->ShadowsLoaded());
+	shader->SetFlag("HAVE_INFOTEX", infoTextureHandler->IsEnabled());
+
+	shader->Enable();
+	shader->SetUniform2v<const char*, float>("mapHeights", &mapParams.x);
+	shader->SetUniform3v<const char*, float>("cameraPos", &cameraPos.x);
+	shader->SetUniformMatrix4x4<const char*, float>("viewMat", false, camera->GetViewMatrix());
+	shader->SetUniformMatrix4x4<const char*, float>("viewMatInv", false, camera->GetViewMatrixInverse());
+	shader->SetUniformMatrix4x4<const char*, float>("viewProjMat", false, camera->GetViewProjectionMatrix());
+	shader->SetUniformMatrix4x4<const char*, float>("shadowMat", false, shadowHandler->GetShadowMatrix());
+	shader->SetUniform4v<const char*, float>("shadowParams", shadowHandler->GetShadowParams());
+	shader->SetUniform3v<const char*, float>("fogParams", &fogParams.x);
+	shader->SetUniform<const char*, float>("infoTexIntensityMul", float(infoTextureHandler->InMetalMode()) + 1.0f);
+
+	switch (drawPass) {
+		case DrawPass::WaterReflection: { shader->SetUniform4v<const char*, float>("clipPlane", IWater::MapReflClipPlane()); } break;
+		case DrawPass::WaterRefraction: { shader->SetUniform4v<const char*, float>("clipPlane", IWater::MapRefrClipPlane()); } break;
+		default: {} break;
+	}
+
+	#if 0
 	// already on the MV stack at this point
 	glLoadIdentity();
-	mLightHandler->Update(glslShaders[GLSL_SHADER_CURRENT]);
+	mLightHandler->Update(shader);
 	glMultMatrixf(camera->GetViewMatrix());
 	#endif
 

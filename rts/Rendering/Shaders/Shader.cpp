@@ -209,9 +209,9 @@ namespace Shader {
 		#endif
 	}
 
-	UniformState* IProgramObject::GetNewUniformState(const std::string name)
+	UniformState* IProgramObject::GetNewUniformState(const char* name)
 	{
-		const size_t hash = hashString(name.c_str());
+		const size_t hash = hashString(name);
 		const auto it = uniformStates.emplace(hash, name);
 
 		UniformState* us = &(it.first->second);
@@ -475,12 +475,13 @@ namespace Shader {
 		return type;
 	}
 
-	int GLSLProgramObject::GetUniformLoc(const std::string& name) {
-		return glGetUniformLocation(glid, name.c_str());
+	int GLSLProgramObject::GetUniformLoc(const char* name) {
+		return glGetUniformLocation(glid, name);
 	}
 
-	void GLSLProgramObject::SetUniformLocation(const std::string& name) {
-		uniformLocs.push_back(hashString(name.c_str()));
+	void GLSLProgramObject::SetUniformLocation(const char* name) {
+		uniformLocs.push_back(hashString(name));
+		// create a new state if one is not yet associated with <name>
 		GetUniformLocation(name);
 	}
 
