@@ -81,7 +81,7 @@ bool VBO::Resize(GLsizeiptr newSize, GLenum newUsage)
 
 	// first call: no *BO exists yet to copy old data from, so use ::New() (faster)
 	if (bufSize == 0)
-		return New(newSize, usage, nullptr);
+		return New(newSize, newUsage, nullptr);
 
 	const size_t oldSize = bufSize;
 
@@ -137,7 +137,7 @@ bool VBO::New(GLsizeiptr newSize, GLenum newUsage, const void* newData)
 
 	#ifdef GLEW_ARB_buffer_storage
 	if (immutableStorage) {
-		glBufferStorage(curBoundTarget, newSize, newData, newUsage = GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT | GL_DYNAMIC_STORAGE_BIT);
+		glBufferStorage(curBoundTarget, newSize, newData, /*newUsage =*/ GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT | GL_DYNAMIC_STORAGE_BIT);
 	} else
 	#endif
 	{
