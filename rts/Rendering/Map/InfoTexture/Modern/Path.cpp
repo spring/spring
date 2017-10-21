@@ -59,7 +59,7 @@ CPathTexture::CPathTexture()
 }
 
 
-enum BuildSquareStatus {
+enum VisBuildSquareStatus {
 	NOLOS          = 0,
 	FREE           = 1,
 	OBJECTBLOCKED  = 2,
@@ -75,7 +75,7 @@ static const SColor buildColors[] = {
 };
 
 
-static inline const SColor& GetBuildColor(const BuildSquareStatus& status) {
+static inline const SColor& GetBuildColor(const VisBuildSquareStatus& status) {
 	return buildColors[status];
 }
 
@@ -195,7 +195,7 @@ void CPathTexture::Update()
 	const UnitDef* ud = GetCurrentBuildCmdUnitDef();
 
 	// just clear
-	if (!(ud || md)) {
+	if (ud == nullptr && md == nullptr) {
 		isCleared = true;
 		updateProcess = 0;
 		fbo.Bind();
@@ -208,7 +208,8 @@ void CPathTexture::Update()
 	}
 
 	// spread update across time
-	if (updateProcess >= texSize.y) updateProcess = 0;
+	updateProcess *= (updateProcess < texSize.y);
+
 	int start = updateProcess;
 	const int updateLines = std::max((64*64) / texSize.x, ThreadPool::GetNumThreads());
 	updateProcess += updateLines;
@@ -230,23 +231,25 @@ void CPathTexture::Update()
 				const float3 pos = float3(x << 1, 0.0f, y << 1) * SQUARE_SIZE;
 				const int idx = y * texSize.x + x;
 
-				BuildSquareStatus status = FREE;
+				VisBuildSquareStatus status = FREE;
 				BuildInfo bi(ud, pos, guihandler->buildFacing);
 				bi.pos = CGameHelper::Pos2BuildPos(bi, false);
 
 				CFeature* f = nullptr;
+
 				if (CGameHelper::TestUnitBuildSquare(bi, f, gu->myAllyTeam, false)) {
-					if (f != nullptr) {
+					// occupied, reclaimable, or open
+					if (f != nullptr)
 						status = OBJECTBLOCKED;
-					}
 				} else {
+					// blocked
 					status = TERRAINBLOCKED;
 				}
 
 				infoTexMem[idx - offset] = GetBuildColor(status);
 			}
 		}
-	} else if (md != NULL) {
+	} else if (md != nullptr) {
 		for_mt(start, updateProcess, [&](const int y) {
 			for (int x = 0; x < texSize.x; ++x) {
 				const int2 sq = int2(x << 1, y << 1);
@@ -255,15 +258,14 @@ void CPathTexture::Update()
 				float scale = 1.0f;
 
 				if (losFullView || losHandler->InLos(SquareToFloat3(sq), gu->myAllyTeam)) {
-					if (CMoveMath::IsBlocked(*md, sq.x,     sq.y    , NULL) & CMoveMath::BLOCK_STRUCTURE) { scale -= 0.25f; }
-					if (CMoveMath::IsBlocked(*md, sq.x + 1, sq.y    , NULL) & CMoveMath::BLOCK_STRUCTURE) { scale -= 0.25f; }
-					if (CMoveMath::IsBlocked(*md, sq.x,     sq.y + 1, NULL) & CMoveMath::BLOCK_STRUCTURE) { scale -= 0.25f; }
-					if (CMoveMath::IsBlocked(*md, sq.x + 1, sq.y + 1, NULL) & CMoveMath::BLOCK_STRUCTURE) { scale -= 0.25f; }
+					if (CMoveMath::IsBlocked(*md, sq.x,     sq.y    , nullptr) & CMoveMath::BLOCK_STRUCTURE) { scale -= 0.25f; }
+					if (CMoveMath::IsBlocked(*md, sq.x + 1, sq.y    , nullptr) & CMoveMath::BLOCK_STRUCTURE) { scale -= 0.25f; }
+					if (CMoveMath::IsBlocked(*md, sq.x,     sq.y + 1, nullptr) & CMoveMath::BLOCK_STRUCTURE) { scale -= 0.25f; }
+					if (CMoveMath::IsBlocked(*md, sq.x + 1, sq.y + 1, nullptr) & CMoveMath::BLOCK_STRUCTURE) { scale -= 0.25f; }
 				}
 
 				// NOTE: raw speedmods are not necessarily clamped to [0, 1]
-				const float sm = CMoveMath::GetPosSpeedMod(*md, sq.x, sq.y);
-				infoTexMem[idx - offset] = GetSpeedModColor(sm * scale);
+				infoTexMem[idx - offset] = GetSpeedModColor(CMoveMath::GetPosSpeedMod(*md, sq.x, sq.y) * scale);
 			}
 		});
 	}

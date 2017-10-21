@@ -352,6 +352,9 @@ namespace GL {
 		VBO& GetIndcs() { return indcs; }
 		Shader::GLSLProgramObject& GetShader() { return shader; }
 
+		template<typename T> size_t GetNumElems() const { return (elems.GetSize() / sizeof(T)); }
+		template<typename T> size_t GetNumIndcs() const { return (indcs.GetSize() / sizeof(T)); }
+
 		bool IsInited() const { return inited; }
 		bool IsMapped() const { return mapped; }
 
