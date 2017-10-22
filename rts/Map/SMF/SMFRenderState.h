@@ -68,7 +68,7 @@ struct SMFRenderStateNOP: public ISMFRenderState {
 	void Enable(const CSMFGroundDrawer* smfGroundDrawer, const DrawPass::e& drawPass) override {}
 	void Disable(const CSMFGroundDrawer* smfGroundDrawer, const DrawPass::e& drawPass) override {}
 
-	void SetSquareTexGen(const int sqx, const int sqy) const override;
+	void SetSquareTexGen(const int sqx, const int sqy) const override {}
 	void SetCurrentShader(const DrawPass::e& drawPass) override {}
 	void UpdateCurrentShaderSky(const ISkyLight* skyLight) const override {}
 };

@@ -12,6 +12,7 @@ set(FILES
 	shaders/GLSL/TreeFragProg.glsl
 	shaders/GLSL/terrainCommon.glsl
 	shaders/GLSL/SMFFragProg4.glsl
+	shaders/GLSL/SMFBorderFragProg4.glsl
 	shaders/GLSL/GrassFragProg.glsl
 	shaders/GLSL/GroundDecalsFragProg.glsl
 	shaders/GLSL/terrainSimpleCopyFS.glsl
@@ -20,6 +21,7 @@ set(FILES
 	shaders/GLSL/DecalsFragGL4.glsl
 	shaders/GLSL/TreeVertProg.glsl
 	shaders/GLSL/SMFVertProg4.glsl
+	shaders/GLSL/SMFBorderVertProg4.glsl
 	shaders/GLSL/bumpWaterFS.glsl
 	shaders/GLSL/GroundDecalsVertProg.glsl
 	shaders/GLSL/GrassVertProg.glsl

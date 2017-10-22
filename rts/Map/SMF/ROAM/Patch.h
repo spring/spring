@@ -4,6 +4,7 @@
 #define PATCH_H
 
 #include "Rendering/GL/myGL.h"
+#include "Rendering/GL/VertexArrayTypes.h"
 #include "Game/Camera.h"
 #include "System/Rectangle.h"
 #include "System/type2.h"
@@ -102,11 +103,12 @@ public:
 
 	bool IsVisible(const CCamera*) const;
 	char IsDirty() const { return isDirty; }
-	int GetTriCount() const { return (indices.size() / 3); }
 
 	void UpdateHeightMap(const SRectangle& rect = SRectangle(0, 0, PATCH_SIZE, PATCH_SIZE));
 
+	// create an approximate mesh
 	bool Tessellate(const float3& camPos, int viewRadius, bool shadowPass);
+	// compute the variance tree for each of the binary triangles in this patch
 	void ComputeVariance();
 
 	void GenerateIndices();
@@ -122,14 +124,17 @@ public:
 	static void UpdateVisibility(CCamera* cam, std::vector<Patch>& patches, const int numPatchesX);
 
 protected:
-	void VBOUploadVertices();
+	void UploadVertices();
+	void UploadBorderVertices();
 
 private:
-	// recursive functions
+	// split a single triangle and link it into the mesh; will correctly force-split diamonds
 	bool Split(TriTreeNode* tri);
+	// tessellate patch; will continue to split until the variance metric is met
 	void RecursTessellate(TriTreeNode* tri, const int2 left, const int2 right, const int2 apex, const int node);
-	void RecursRender(const TriTreeNode* tri, const int2 left, const int2 right, const int2 apex);
+	void RecursGenIndices(const TriTreeNode* tri, const int2 left, const int2 right, const int2 apex);
 
+	// computes variance over the entire tree; does not examine node relationships
 	float RecursComputeVariance(
 		const   int2 left,
 		const   int2 rght,
@@ -138,19 +143,15 @@ private:
 		const    int node
 	);
 
-	void RecursBorderRender(
-		CVertexArray* va,
+	void RecursGenBorderVertices(
 		const TriTreeNode* tri,
 		const int2 left,
 		const int2 rght,
 		const int2 apex,
-		int depth,
-		bool leftChild
+		const int2 depth
 	);
 
 	float GetHeight(int2 pos);
-
-	void GenerateBorderIndices(CVertexArray* va);
 
 private:
 	CSMFGroundDrawer* smfGroundDrawer;
@@ -163,7 +164,7 @@ private:
 
 	// does the variance-tree need to be recalculated for this Patch?
 	bool isDirty;
-	bool vboVerticesUploaded;
+	bool isTesselated;
 
 	float varianceMaxLimit;
 	float camDistLODFactor; // defines the LOD falloff in camera distance
@@ -175,11 +176,12 @@ private:
 	TriTreeNode baseLeft;  // left base-triangle tree node
 	TriTreeNode baseRight; // right base-triangle tree node
 
-	std::vector<float> varianceLeft;  // left variance tree
-	std::vector<float> varianceRight; // right variance tree
+	std::array<float, 1 << VARIANCE_DEPTH> varianceLeft;  // left variance tree
+	std::array<float, 1 << VARIANCE_DEPTH> varianceRight; // right variance tree
 
 	// TODO: remove, map+update buffer instead
 	std::array<float, 3 * (PATCH_SIZE + 1) * (PATCH_SIZE + 1)> vertices;
+	std::vector<VA_TYPE_C> borderVertices;
 	std::vector<unsigned int> indices;
 
 	// frame on which this patch was last visible, per pass
@@ -190,7 +192,8 @@ private:
 
 
 	GLuint vertexBuffer;
-	GLuint vertexIndexBuffer;
+	GLuint indexBuffer;
+	GLuint borderVertexBuffer;
 };
 
 #endif

@@ -1025,8 +1025,8 @@ float CGameHelper::GetBuildHeight(const float3& pos, const UnitDef* unitdef, boo
 			// restrict the range of [minH, maxH] to
 			// the minimum and maximum square height
 			// within the footprint
-			if (minHgt < (sqMinHgt - maxDifHgt)) { minHgt = sqMinHgt - maxDifHgt; }
-			if (maxHgt > (sqMaxHgt + maxDifHgt)) { maxHgt = sqMaxHgt + maxDifHgt; }
+			minHgt = std::max(minHgt, sqMinHgt - maxDifHgt);
+			maxHgt = std::min(maxHgt, sqMaxHgt + maxDifHgt);
 		}
 	}
 

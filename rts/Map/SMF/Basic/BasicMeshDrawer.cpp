@@ -223,18 +223,21 @@ void CBasicMeshDrawer::UploadPatchBorderGeometry(uint32_t n, uint32_t px, uint32
 
 		{
 			borderVertexBuffer.Bind(GL_ARRAY_BUFFER);
-			borderVertexBuffer.New(lodVerts * sizeof(float3) * 2, GL_DYNAMIC_DRAW);
+			borderVertexBuffer.New(lodVerts * sizeof(VA_TYPE_C) * 2, GL_DYNAMIC_DRAW);
 
-			float3* verts = reinterpret_cast<float3*>(borderVertexBuffer.MapBuffer());
+			VA_TYPE_C* verts = reinterpret_cast<VA_TYPE_C*>(borderVertexBuffer.MapBuffer());
 			assert(verts != nullptr);
 
 			for (uint32_t vy = 0; vy < lodVerts; vy += 1) {
-				verts[vertexIndx           ].x = 0.0f;
-				verts[vertexIndx + lodVerts].x = 0.0f;
-				verts[vertexIndx           ].z =     (bpy + vy * lodStep) * SQUARE_SIZE;
-				verts[vertexIndx + lodVerts].z =     (bpy + vy * lodStep) * SQUARE_SIZE;
-				verts[vertexIndx           ].y = chm[(bpy + vy * lodStep) * mapDims.mapxp1 + 0]; // upper
-				verts[vertexIndx + lodVerts].y = std::min(readMap->GetInitMinHeight(), -500.0f); // lower
+				verts[vertexIndx           ].p.x = 0.0f;
+				verts[vertexIndx + lodVerts].p.x = 0.0f;
+				verts[vertexIndx           ].p.z =     (bpy + vy * lodStep) * SQUARE_SIZE;
+				verts[vertexIndx + lodVerts].p.z =     (bpy + vy * lodStep) * SQUARE_SIZE;
+				verts[vertexIndx           ].p.y = chm[(bpy + vy * lodStep) * mapDims.mapxp1 + 0]; // upper
+				verts[vertexIndx + lodVerts].p.y = std::min(readMap->GetInitMinHeight(), -500.0f); // lower
+
+				verts[vertexIndx           ].c = SColor();
+				verts[vertexIndx + lodVerts].c = SColor();
 
 				vertexIndx += 1;
 			}
@@ -254,18 +257,21 @@ void CBasicMeshDrawer::UploadPatchBorderGeometry(uint32_t n, uint32_t px, uint32
 
 		{
 			borderVertexBuffer.Bind(GL_ARRAY_BUFFER);
-			borderVertexBuffer.New(lodVerts * sizeof(float3) * 2, GL_DYNAMIC_DRAW);
+			borderVertexBuffer.New(lodVerts * sizeof(VA_TYPE_C) * 2, GL_DYNAMIC_DRAW);
 
-			float3* verts = reinterpret_cast<float3*>(borderVertexBuffer.MapBuffer());
+			VA_TYPE_C* verts = reinterpret_cast<VA_TYPE_C*>(borderVertexBuffer.MapBuffer());
 			assert(verts != nullptr);
 
 			for (uint32_t vy = 0; vy < lodVerts; vy += 1) {
-				verts[vertexIndx           ].x = mapDims.mapx * SQUARE_SIZE;
-				verts[vertexIndx + lodVerts].x = mapDims.mapx * SQUARE_SIZE;
-				verts[vertexIndx           ].z =     (bpy + vy * lodStep) * SQUARE_SIZE;
-				verts[vertexIndx + lodVerts].z =     (bpy + vy * lodStep) * SQUARE_SIZE;
-				verts[vertexIndx           ].y = chm[(bpy + vy * lodStep) * mapDims.mapxp1 + mapDims.mapx];
-				verts[vertexIndx + lodVerts].y = std::min(readMap->GetInitMinHeight(), -500.0f);
+				verts[vertexIndx           ].p.x = mapDims.mapx * SQUARE_SIZE;
+				verts[vertexIndx + lodVerts].p.x = mapDims.mapx * SQUARE_SIZE;
+				verts[vertexIndx           ].p.z =     (bpy + vy * lodStep) * SQUARE_SIZE;
+				verts[vertexIndx + lodVerts].p.z =     (bpy + vy * lodStep) * SQUARE_SIZE;
+				verts[vertexIndx           ].p.y = chm[(bpy + vy * lodStep) * mapDims.mapxp1 + mapDims.mapx];
+				verts[vertexIndx + lodVerts].p.y = std::min(readMap->GetInitMinHeight(), -500.0f);
+
+				verts[vertexIndx           ].c = SColor();
+				verts[vertexIndx + lodVerts].c = SColor();
 
 				vertexIndx += 1;
 			}
@@ -285,18 +291,21 @@ void CBasicMeshDrawer::UploadPatchBorderGeometry(uint32_t n, uint32_t px, uint32
 
 		{
 			borderVertexBuffer.Bind(GL_ARRAY_BUFFER);
-			borderVertexBuffer.New(lodVerts * sizeof(float3) * 2, GL_DYNAMIC_DRAW);
+			borderVertexBuffer.New(lodVerts * sizeof(VA_TYPE_C) * 2, GL_DYNAMIC_DRAW);
 
-			float3* verts = reinterpret_cast<float3*>(borderVertexBuffer.MapBuffer());
+			VA_TYPE_C* verts = reinterpret_cast<VA_TYPE_C*>(borderVertexBuffer.MapBuffer());
 			assert(verts != nullptr);
 
 			for (uint32_t vx = 0; vx < lodVerts; vx += 1) {
-				verts[vertexIndx           ].x = (bpx + vx * lodStep) * SQUARE_SIZE;
-				verts[vertexIndx + lodVerts].x = (bpx + vx * lodStep) * SQUARE_SIZE;
-				verts[vertexIndx           ].z = 0.0f;
-				verts[vertexIndx + lodVerts].z = 0.0f;
-				verts[vertexIndx           ].y = chm[0 + (bpx + vx * lodStep)];
-				verts[vertexIndx + lodVerts].y = std::min(readMap->GetInitMinHeight(), -500.0f);
+				verts[vertexIndx           ].p.x = (bpx + vx * lodStep) * SQUARE_SIZE;
+				verts[vertexIndx + lodVerts].p.x = (bpx + vx * lodStep) * SQUARE_SIZE;
+				verts[vertexIndx           ].p.z = 0.0f;
+				verts[vertexIndx + lodVerts].p.z = 0.0f;
+				verts[vertexIndx           ].p.y = chm[0 + (bpx + vx * lodStep)];
+				verts[vertexIndx + lodVerts].p.y = std::min(readMap->GetInitMinHeight(), -500.0f);
+
+				verts[vertexIndx           ].c = SColor();
+				verts[vertexIndx + lodVerts].c = SColor();
 
 				vertexIndx += 1;
 			}
@@ -315,18 +324,21 @@ void CBasicMeshDrawer::UploadPatchBorderGeometry(uint32_t n, uint32_t px, uint32
 
 		{
 			borderVertexBuffer.Bind(GL_ARRAY_BUFFER);
-			borderVertexBuffer.New(lodVerts * sizeof(float3) * 2, GL_DYNAMIC_DRAW);
+			borderVertexBuffer.New(lodVerts * sizeof(VA_TYPE_C) * 2, GL_DYNAMIC_DRAW);
 
-			float3* verts = reinterpret_cast<float3*>(borderVertexBuffer.MapBuffer());
+			VA_TYPE_C* verts = reinterpret_cast<VA_TYPE_C*>(borderVertexBuffer.MapBuffer());
 			assert(verts != nullptr);
 
 			for (uint32_t vx = 0; vx < lodVerts; vx += 1) {
-				verts[vertexIndx           ].x = (bpx + vx * lodStep) * SQUARE_SIZE;
-				verts[vertexIndx + lodVerts].x = (bpx + vx * lodStep) * SQUARE_SIZE;
-				verts[vertexIndx           ].z = mapDims.mapy * SQUARE_SIZE;
-				verts[vertexIndx + lodVerts].z = mapDims.mapy * SQUARE_SIZE;
-				verts[vertexIndx           ].y = chm[mapDims.mapy * mapDims.mapxp1 + (bpx + vx * lodStep)];
-				verts[vertexIndx + lodVerts].y = std::min(readMap->GetInitMinHeight(), -500.0f);
+				verts[vertexIndx           ].p.x = (bpx + vx * lodStep) * SQUARE_SIZE;
+				verts[vertexIndx + lodVerts].p.x = (bpx + vx * lodStep) * SQUARE_SIZE;
+				verts[vertexIndx           ].p.z = mapDims.mapy * SQUARE_SIZE;
+				verts[vertexIndx + lodVerts].p.z = mapDims.mapy * SQUARE_SIZE;
+				verts[vertexIndx           ].p.y = chm[mapDims.mapy * mapDims.mapxp1 + (bpx + vx * lodStep)];
+				verts[vertexIndx + lodVerts].p.y = std::min(readMap->GetInitMinHeight(), -500.0f);
+
+				verts[vertexIndx           ].c = SColor();
+				verts[vertexIndx + lodVerts].c = SColor();
 
 				vertexIndx += 1;
 			}
@@ -592,7 +604,8 @@ void CBasicMeshDrawer::DrawBorderMeshPatch(const MeshPatch& meshPatch, const VBO
 
 	vertexBuffer.Bind(GL_ARRAY_BUFFER);
 	assert(vertexBuffer.GetPtr() == nullptr);
-	glVertexAttribPointer(0, 3, GL_FLOAT, false, sizeof(float3), nullptr);
+	glVertexAttribPointer(0, 3, GL_FLOAT, false, sizeof(VA_TYPE_C), VA_TYPE_OFFSET(float, 0));
+	glVertexAttribPointer(1, 4, GL_UNSIGNED_BYTE, false, sizeof(VA_TYPE_C), VA_TYPE_OFFSET(float, 3));
 	vertexBuffer.Unbind();
 
 	// border rendering is FFP without lighting
@@ -612,6 +625,7 @@ void CBasicMeshDrawer::DrawBorderMesh(const DrawPass::e& drawPass) {
 	indexBuffer.Bind(GL_ELEMENT_ARRAY_BUFFER);
 
 	glEnableVertexAttribArray(0);
+	glEnableVertexAttribArray(1);
 	// always stripped
 	glEnable(GL_PRIMITIVE_RESTART);
 
@@ -645,6 +659,7 @@ void CBasicMeshDrawer::DrawBorderMesh(const DrawPass::e& drawPass) {
 	indexBuffer.Unbind();
 
 	glDisable(GL_PRIMITIVE_RESTART);
+	glDisableVertexAttribArray(1);
 	glDisableVertexAttribArray(0);
 }
 

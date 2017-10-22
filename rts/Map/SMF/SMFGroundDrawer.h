@@ -70,8 +70,10 @@ private:
 	ISMFRenderState* SelectRenderState(const DrawPass::e& drawPass);
 
 	void CreateWaterPlanes(bool camOufOfMap);
-	inline void DrawWaterPlane(bool drawWaterReflection);
-	inline void DrawBorder(const DrawPass::e drawPass);
+	void CreateBorderShader();
+
+	void DrawWaterPlane(bool drawWaterReflection);
+	void DrawBorder(const DrawPass::e drawPass);
 
 	bool HaveLuaRenderState() const;
 	bool UpdateGeometryBuffer(bool init);
@@ -92,6 +94,7 @@ protected:
 	GL::LightHandler lightHandler;
 	GL::GeometryBuffer geomBuffer;
 	GL::RenderDataBuffer waterPlaneBuffers[2];
+	Shader::GLSLProgramObject borderShader;
 };
 
 #endif // _SMF_GROUND_DRAWER_H_

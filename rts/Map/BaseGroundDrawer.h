@@ -74,13 +74,14 @@ public:
 	static const int losColorScale = 10000;
 
 protected:
-	CBaseGroundTextures* groundTextures;
+	CBaseGroundTextures* groundTextures = nullptr;
 
-	bool drawForward;
-	bool drawDeferred;
-	bool drawMapEdges;
+	bool drawForward = true;
+	bool drawDeferred = false;
+	bool drawMapEdges = true;
+	bool drawWaterPlane = false;
 
-	bool wireframe;
+	bool wireframe = false;
 };
 
 #endif // _BASE_GROUND_DRAWER_H

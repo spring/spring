@@ -24,6 +24,10 @@ struct fast_hash : public std::unary_function<int, size_t>
 };
 
 namespace Shader {
+	std::string GetShaderSource(const std::string& srcData);
+	std::string GetShaderVersionDirective(std::string& srcText);
+
+
 	// uniform or attribute
 	struct ShaderInput {
 		uint32_t index;

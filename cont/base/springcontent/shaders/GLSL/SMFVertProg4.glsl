@@ -31,7 +31,7 @@ void main() {
 	halfDir.xyz = normalize(lightDir.xyz + viewDir.xyz);
 
 	vertexPos = vec4(vertexPosAttr, 1.0);
-	diffuseTexCoords = (floor(vertexPos.xz) / SMF_TEXSQR_SIZE) - vec2(texSquare);
+	diffuseTexCoords = (floor(vertexPos.xz) / SMF_TEXSQR_SIZE) - texSquare;
 
 	gl_Position = viewProjMat * vertexPos;
 	gl_ClipDistance[SMF_CLIP_PLANE_IDX] = dot(clipPlane, vertexPos);

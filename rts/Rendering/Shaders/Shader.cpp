@@ -80,7 +80,7 @@ static std::string glslGetLog(GLuint obj)
 }
 
 
-static std::string GetShaderSource(const std::string& srcData)
+std::string Shader::GetShaderSource(const std::string& srcData)
 {
 	// if this is present, assume srcData is the source text
 	if (srcData.find("void main()") != std::string::npos)
@@ -102,18 +102,20 @@ static std::string GetShaderSource(const std::string& srcData)
 	return soSource;
 }
 
-static bool ExtractVersionDirective(std::string& src, std::string& version)
+std::string Shader::GetShaderVersionDirective(std::string& srcText)
 {
-	const auto pos = src.find("#version ");
+	std::string version;
+
+	const size_t pos = srcText.find("#version ");
 
 	if (pos != std::string::npos) {
-		const auto eol = src.find('\n', pos) + 1;
-		version = src.substr(pos, eol - pos);
-		src.erase(pos, eol - pos);
-		return true;
+		const size_t eol = srcText.find('\n', pos) + 1;
+
+		version = std::move(srcText.substr(pos, eol - pos));
+		srcText.erase(pos, eol - pos);
 	}
 
-	return false;
+	return (std::move(version));
 }
 
 /*****************************************************************/
@@ -536,21 +538,25 @@ namespace Shader {
 		// ReloadFromTextOrFile must have been called
 		assert(!srcText.empty());
 
-		std::string versionStr;
 		std::string sourceStr = srcText;
 		std::string defFlags  = rawDefStrs + "\n" + modDefStrs;
 
 		// extract #version pragma and put it on the first line (only allowed there)
 		// version pragma in definitions overrides version pragma in source (if any)
-		ExtractVersionDirective(sourceStr, versionStr);
-		ExtractVersionDirective(defFlags, versionStr);
+		std::string srcVersionStr = std::move(GetShaderVersionDirective(sourceStr));
+		std::string defVersionStr = std::move(GetShaderVersionDirective(defFlags));
 
-		if (!versionStr.empty()) EnsureEndsWith(&versionStr, "\n");
-		if (!defFlags.empty())   EnsureEndsWith(&defFlags,   "\n");
+		if (!defVersionStr.empty())
+			srcVersionStr = defVersionStr;
+
+		if (!srcVersionStr.empty())
+			EnsureEndsWith(&srcVersionStr, "\n");
+		if (!defFlags.empty())
+			EnsureEndsWith(&defFlags, "\n");
 
 		std::array<const GLchar*, 7> sources = {
 			"// SHADER VERSION\n",
-			versionStr.c_str(),
+			srcVersionStr.c_str(),
 			"// SHADER FLAGS\n",
 			defFlags.c_str(),
 			"// SHADER SOURCE\n",

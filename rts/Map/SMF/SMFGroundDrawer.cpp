@@ -74,6 +74,7 @@ CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
 	drawForward = true;
 	drawDeferred = geomBuffer.Valid();
 	drawMapEdges = configHandler->GetBool("MapBorder");
+	drawWaterPlane = false && waterRendering->hasWaterPlane;
 
 	smfRenderStates[RENDER_STATE_SSP]->Init(this);
 	smfRenderStates[RENDER_STATE_SSP]->Update(this, nullptr);
@@ -87,10 +88,12 @@ CSMFGroundDrawer::CSMFGroundDrawer(CSMFReadMap* rm)
 
 
 
-	if (waterRendering->hasWaterPlane) {
+	if (drawWaterPlane) {
 		CreateWaterPlanes( true);
 		CreateWaterPlanes(false);
 	}
+	if (drawMapEdges)
+		CreateBorderShader();
 
 	if (drawDeferred) {
 		drawDeferred &= UpdateGeometryBuffer(true);
@@ -110,6 +113,9 @@ CSMFGroundDrawer::~CSMFGroundDrawer()
 	waterPlaneBuffers[0].Kill();
 	waterPlaneBuffers[1].Kill();
 
+	if (drawMapEdges)
+		borderShader.Release(false);
+
 	spring::SafeDelete(groundTextures);
 	spring::SafeDelete(meshDrawer);
 }
@@ -127,22 +133,22 @@ IMeshDrawer* CSMFGroundDrawer::SwitchMeshDrawer(int wantedMode)
 	if ((wantedMode == drawerMode) && (meshDrawer != nullptr))
 		return meshDrawer;
 
-	spring::SafeDelete(meshDrawer);
-
 	switch ((drawerMode = wantedMode)) {
 		#if 0
 		case SMF_MESHDRAWER_LEGACY: {
 			LOG("Switching to Legacy Mesh Rendering");
+			spring::SafeDelete(meshDrawer);
 			meshDrawer = new CLegacyMeshDrawer(smfMap, this);
 		} break;
 		#endif
-		case SMF_MESHDRAWER_LEGACY: // fall-through
 		case SMF_MESHDRAWER_BASIC: {
 			LOG("Switching to Basic Mesh Rendering");
+			spring::SafeDelete(meshDrawer);
 			meshDrawer = new CBasicMeshDrawer(this);
 		} break;
 		default: {
 			LOG("Switching to ROAM Mesh Rendering");
+			spring::SafeDelete(meshDrawer);
 			meshDrawer = new CRoamMeshDrawer(this);
 		} break;
 	}
@@ -153,7 +159,6 @@ IMeshDrawer* CSMFGroundDrawer::SwitchMeshDrawer(int wantedMode)
 
 
 void CSMFGroundDrawer::CreateWaterPlanes(bool camOutsideMap) {
-	#if 0
 	{
 		const float xsize = (smfMap->mapSizeX) >> 2;
 		const float ysize = (smfMap->mapSizeZ) >> 2;
@@ -240,12 +245,33 @@ void CSMFGroundDrawer::CreateWaterPlanes(bool camOutsideMap) {
 		shaderProg->SetUniform("planeOffset", 0.0f);
 		shaderProg->Disable();
 	}
-	#endif
+}
+
+void CSMFGroundDrawer::CreateBorderShader() {
+	std::string vsCode = std::move(Shader::GetShaderSource("GLSL/SMFBorderVertProg4.glsl"));
+	std::string fsCode = std::move(Shader::GetShaderSource("GLSL/SMFBorderFragProg4.glsl"));
+
+	Shader::GLSLShaderObject shaderObjs[2] = {{GL_VERTEX_SHADER, vsCode.c_str(), ""}, {GL_FRAGMENT_SHADER, fsCode.c_str(), ""}};
+	Shader::IProgramObject* shaderProg = &borderShader;
+
+	borderShader.AttachShaderObject(&shaderObjs[0]);
+	borderShader.AttachShaderObject(&shaderObjs[1]);
+	borderShader.ReloadShaderObjects();
+	borderShader.CreateAndLink();
+	borderShader.RecalculateShaderHash();
+	borderShader.Validate();
+
+	shaderProg->Enable();
+	shaderProg->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
+	shaderProg->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::Identity());
+	shaderProg->SetUniform("u_diffuse_tex_sqr", -1, -1);
+	shaderProg->SetUniform("u_diffuse_tex", 0);
+	shaderProg->SetUniform("u_detail_tex", 2);
+	shaderProg->Disable();
 }
 
 
-inline void CSMFGroundDrawer::DrawWaterPlane(bool drawWaterReflection) {
-	#if 0
+void CSMFGroundDrawer::DrawWaterPlane(bool drawWaterReflection) {
 	if (drawWaterReflection)
 		return;
 
@@ -258,7 +284,6 @@ inline void CSMFGroundDrawer::DrawWaterPlane(bool drawWaterReflection) {
 	shader->SetUniform("planeOffset", std::min(-200.0f, smfMap->GetCurrMinHeight() - 400.0f));
 	buffer.Submit(GL_TRIANGLE_STRIP, 0, (buffer.GetElems()).GetSize() / sizeof(VA_TYPE_C));
 	shader->Disable();
-	#endif
 }
 
 
@@ -407,97 +432,70 @@ void CSMFGroundDrawer::Draw(const DrawPass::e& drawPass)
 
 	glDisable(GL_CULL_FACE);
 
-	if (drawPass == DrawPass::Normal) {
-		if (waterRendering->hasWaterPlane)
-			DrawWaterPlane(false);
+	if (drawPass != DrawPass::Normal)
+		return;
 
-		if (drawMapEdges)
-			DrawBorder(drawPass);
-	}
+	if (drawWaterPlane)
+		DrawWaterPlane(false);
+
+	if (drawMapEdges)
+		DrawBorder(drawPass);
 }
 
 
 void CSMFGroundDrawer::DrawBorder(const DrawPass::e drawPass)
 {
-	glEnable(GL_CULL_FACE);
-	glCullFace(GL_BACK);
-
 	ISMFRenderState* prvState = smfRenderStates[RENDER_STATE_SEL];
-	// no need to enable, does nothing except for TexGen
+	Shader::IProgramObject* shaderProg = &borderShader;
+
+	// no need to enable, does nothing
 	smfRenderStates[RENDER_STATE_SEL] = smfRenderStates[RENDER_STATE_NOP];
 
-	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 
-	static constexpr GLfloat planeX[] = {0.005f, 0.0f, 0.005f, 0.5f};
-	static constexpr GLfloat planeZ[] = {0.0f, 0.005f, 0.0f, 0.5f};
+	glEnable(GL_CULL_FACE);
+	glCullFace(GL_BACK);
 
 	glActiveTexture(GL_TEXTURE2);
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, smfMap->GetDetailTexture());
 
-	glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR);
-	glTexGenfv(GL_S, GL_EYE_PLANE, planeX);
-	glEnable(GL_TEXTURE_GEN_S);
-
-	glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR);
-	glTexGenfv(GL_T, GL_EYE_PLANE, planeZ);
-	glEnable(GL_TEXTURE_GEN_T);
-
-	glActiveTexture(GL_TEXTURE3); glDisable(GL_TEXTURE_2D);
-	glActiveTexture(GL_TEXTURE1); glDisable(GL_TEXTURE_2D);
-	glActiveTexture(GL_TEXTURE0); glEnable(GL_TEXTURE_2D);
+	glActiveTexture(GL_TEXTURE0);
+	glEnable(GL_TEXTURE_2D);
 
 	glEnable(GL_BLEND);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE * wireframe + GL_FILL * (1 - wireframe));
 
-		if (wireframe)
-			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	#if 0
+	if (mapRendering->voidWater && (drawPass != DrawPass::WaterReflection)) {
+		glEnable(GL_ALPHA_TEST);
+		glAlphaFunc(GL_GREATER, 0.9f);
+	}
+	#endif
 
-		#if 0
-		if (mapRendering->voidWater && (drawPass != DrawPass::WaterReflection)) {
-			glEnable(GL_ALPHA_TEST);
-			glAlphaFunc(GL_GREATER, 0.9f);
-		}
-		#endif
+	shaderProg->Enable();
+	shaderProg->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
+	shaderProg->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
+	meshDrawer->DrawBorderMesh(drawPass); // calls back into ::SetupBigSquare
+	shaderProg->Disable();
 
-		// calls back into ::SetupBigSquare
-		meshDrawer->DrawBorderMesh(drawPass);
+	#if 0
+	if (mapRendering->voidWater && (drawPass != DrawPass::WaterReflection))
+		glDisable(GL_ALPHA_TEST);
+	#endif
 
-		#if 0
-		if (mapRendering->voidWater && (drawPass != DrawPass::WaterReflection))
-			glDisable(GL_ALPHA_TEST);
-		#endif
-
-		if (wireframe)
-			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	glDisable(GL_BLEND);
-
-	glActiveTexture(GL_TEXTURE3);
-	glDisable(GL_TEXTURE_2D);
-	glDisable(GL_TEXTURE_GEN_S);
-	glDisable(GL_TEXTURE_GEN_T);
-	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
 	glActiveTexture(GL_TEXTURE2);
 	glDisable(GL_TEXTURE_2D);
-	glDisable(GL_TEXTURE_GEN_S);
-	glDisable(GL_TEXTURE_GEN_T);
-	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-
-	glActiveTexture(GL_TEXTURE1);
-	glDisable(GL_TEXTURE_2D);
-	glDisable(GL_TEXTURE_GEN_S);
-	glDisable(GL_TEXTURE_GEN_T);
-	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
 	glActiveTexture(GL_TEXTURE0);
-	glDisable(GL_TEXTURE_GEN_S);
-	glDisable(GL_TEXTURE_GEN_T);
 	glDisable(GL_TEXTURE_2D);
 
-	smfRenderStates[RENDER_STATE_SEL] = prvState;
-
 	glDisable(GL_CULL_FACE);
+
+
+	smfRenderStates[RENDER_STATE_SEL] = prvState;
 }
 
 
@@ -533,6 +531,11 @@ void CSMFGroundDrawer::SetupBigSquare(const int bigSquareX, const int bigSquareY
 {
 	groundTextures->BindSquareTexture(bigSquareX, bigSquareY);
 	smfRenderStates[RENDER_STATE_SEL]->SetSquareTexGen(bigSquareX, bigSquareY);
+
+	if (!borderShader.IsBound())
+		return;
+
+	static_cast<Shader::IProgramObject&>(borderShader).SetUniform("u_diffuse_tex_sqr", bigSquareX, bigSquareY);
 }
 
 
