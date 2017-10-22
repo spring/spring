@@ -511,19 +511,12 @@ void Patch::Draw()
 void Patch::DrawBorder()
 {
 	glBindBuffer(GL_ARRAY_BUFFER, borderVertexBuffer);
-	#if 0
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glEnableClientState(GL_COLOR_ARRAY);
 
-	glVertexPointer(3, GL_FLOAT, sizeof(VA_TYPE_C), VA_TYPE_OFFSET(float, 0));
-	glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(VA_TYPE_C), VA_TYPE_OFFSET(float, 3));
-	#else
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
 
 	glVertexAttribPointer(0, 3, GL_FLOAT, false, sizeof(VA_TYPE_C), VA_TYPE_OFFSET(float, 0));
 	glVertexAttribPointer(1, 4, GL_UNSIGNED_BYTE, false, sizeof(VA_TYPE_C), VA_TYPE_OFFSET(float, 3));
-	#endif
 
 	// only re-upload if tessellation changed for this patch
 	if (isTesselated) {
@@ -545,37 +538,11 @@ void Patch::DrawBorder()
 		glBufferData(GL_ARRAY_BUFFER, borderVertices.size() * sizeof(VA_TYPE_C), borderVertices.data(), GL_STATIC_DRAW);
 	}
 
-	if (!borderVertices.empty())
 	glDrawArrays(GL_TRIANGLES, 0, borderVertices.size());
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	#if 0
-	glDisableClientState(GL_COLOR_ARRAY);
-	glDisableClientState(GL_VERTEX_ARRAY);
-	#else
+
 	glDisableVertexAttribArray(1);
 	glDisableVertexAttribArray(0);
-	#endif
-
-
-
-	#if 0
-	#define PS PATCH_SIZE
-	if (baseLeft.LeftNeighbor   == nullptr) RecursGenBorderVertices(&baseLeft , { 0, PS}, {PS,  0}, { 0,  0}, {1,  true}); // left border
-	if (baseLeft.RightNeighbor  == nullptr) RecursGenBorderVertices(&baseLeft , { 0, PS}, {PS,  0}, { 0,  0}, {1, false}); // right border
-	if (baseRight.RightNeighbor == nullptr) RecursGenBorderVertices(&baseRight, {PS,  0}, { 0, PS}, {PS, PS}, {1, false}); // bottom border
-	if (baseRight.LeftNeighbor  == nullptr) RecursGenBorderVertices(&baseRight, {PS,  0}, { 0, PS}, {PS, PS}, {1,  true}); // top border
-	#undef PS
-
-	CVertexArray* va = GetVertexArray();
-	va->Initialize();
-
-	const VA_TYPE_C* src = borderVertices.data();
-	      VA_TYPE_C* dst = va->GetTypedVertexArray<VA_TYPE_C>(borderVertices.size());
-
-	std::memcpy(dst, src, borderVertices.size() * sizeof(VA_TYPE_C));
-
-	va->DrawArrayC(GL_TRIANGLES);
-	#endif
 }
 
 
