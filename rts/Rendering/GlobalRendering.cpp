@@ -1146,6 +1146,11 @@ bool CGlobalRendering::CheckGLEWContextVersion(const int2& curCtx) const
 		#endif
 		#ifdef GLEW_VERSION_4_6
 		case 46: { tmpCtx = curCtx * GLEW_VERSION_4_6; } break;
+		// hack because atm mingwlibs doesn't support 4.6
+		// but gpu is creating this context even when not
+		// asked to
+		#elif defined(WIN32) && defined(GLEW_VERSION_4_5)
+		case 46: { tmpCtx = curCtx * GLEW_VERSION_4_5; } break;
 		#endif
 		default: {} break;
 	}
