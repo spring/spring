@@ -236,8 +236,8 @@ void CBasicMeshDrawer::UploadPatchBorderGeometry(uint32_t n, uint32_t px, uint32
 				verts[vertexIndx           ].p.y = chm[(bpy + vy * lodStep) * mapDims.mapxp1 + 0]; // upper
 				verts[vertexIndx + lodVerts].p.y = std::min(readMap->GetInitMinHeight(), -500.0f); // lower
 
-				verts[vertexIndx           ].c = SColor();
-				verts[vertexIndx + lodVerts].c = SColor();
+				verts[vertexIndx           ].c = SColor(255, 255, 255, 255);
+				verts[vertexIndx + lodVerts].c = SColor(255, 255, 255,   0);
 
 				vertexIndx += 1;
 			}
@@ -270,8 +270,8 @@ void CBasicMeshDrawer::UploadPatchBorderGeometry(uint32_t n, uint32_t px, uint32
 				verts[vertexIndx           ].p.y = chm[(bpy + vy * lodStep) * mapDims.mapxp1 + mapDims.mapx];
 				verts[vertexIndx + lodVerts].p.y = std::min(readMap->GetInitMinHeight(), -500.0f);
 
-				verts[vertexIndx           ].c = SColor();
-				verts[vertexIndx + lodVerts].c = SColor();
+				verts[vertexIndx           ].c = SColor(255, 255, 255, 255);
+				verts[vertexIndx + lodVerts].c = SColor(255, 255, 255,   0);
 
 				vertexIndx += 1;
 			}
@@ -304,8 +304,8 @@ void CBasicMeshDrawer::UploadPatchBorderGeometry(uint32_t n, uint32_t px, uint32
 				verts[vertexIndx           ].p.y = chm[0 + (bpx + vx * lodStep)];
 				verts[vertexIndx + lodVerts].p.y = std::min(readMap->GetInitMinHeight(), -500.0f);
 
-				verts[vertexIndx           ].c = SColor();
-				verts[vertexIndx + lodVerts].c = SColor();
+				verts[vertexIndx           ].c = SColor(255, 255, 255, 255);
+				verts[vertexIndx + lodVerts].c = SColor(255, 255, 255,   0);
 
 				vertexIndx += 1;
 			}
@@ -337,8 +337,8 @@ void CBasicMeshDrawer::UploadPatchBorderGeometry(uint32_t n, uint32_t px, uint32
 				verts[vertexIndx           ].p.y = chm[mapDims.mapy * mapDims.mapxp1 + (bpx + vx * lodStep)];
 				verts[vertexIndx + lodVerts].p.y = std::min(readMap->GetInitMinHeight(), -500.0f);
 
-				verts[vertexIndx           ].c = SColor();
-				verts[vertexIndx + lodVerts].c = SColor();
+				verts[vertexIndx           ].c = SColor(255, 255, 255, 255);
+				verts[vertexIndx + lodVerts].c = SColor(255, 255, 255,   0);
 
 				vertexIndx += 1;
 			}

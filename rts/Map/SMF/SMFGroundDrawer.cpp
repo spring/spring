@@ -282,7 +282,7 @@ void CSMFGroundDrawer::DrawWaterPlane(bool drawWaterReflection) {
 	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
 	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
 	shader->SetUniform("planeOffset", std::min(-200.0f, smfMap->GetCurrMinHeight() - 400.0f));
-	buffer.Submit(GL_TRIANGLE_STRIP, 0, (buffer.GetElems()).GetSize() / sizeof(VA_TYPE_C));
+	buffer.Submit(GL_TRIANGLE_STRIP, 0, buffer.GetNumElems<VA_TYPE_C>());
 	shader->Disable();
 }
 
