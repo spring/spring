@@ -53,8 +53,6 @@ GLAPI void APIENTRY glGenFramebuffersEXT(GLsizei n, GLuint *framebuffers) {}
 GLAPI GLenum APIENTRY glCheckFramebufferStatusEXT(GLenum target) { return 0; }
 GLAPI void APIENTRY glBlitFramebufferEXT (GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter) {}
 
-GLAPI void APIENTRY glDeleteQueries(GLsizei n, const GLuint *ids) {}
-
 GLAPI void APIENTRY glUseProgram(GLuint program) {}
 GLAPI GLuint APIENTRY glCreateProgram() { return 0; }
 //glCreateProgram = (PFNGLCREATEPROGRAMPROC) NULL;
@@ -76,9 +74,9 @@ GLAPI void APIENTRY glStencilFuncSeparate(GLenum frontfunc, GLenum backfunc, GLi
 GLAPI void APIENTRY glStencilMaskSeparate(GLenum face, GLuint mask) {}
 
 GLAPI void APIENTRY glGenQueries(GLsizei n, GLuint *ids) {}
+GLAPI void APIENTRY glDeleteQueries(GLsizei n, const GLuint *ids) {}
 GLAPI void APIENTRY glBeginQuery(GLenum target, GLuint id) {}
 GLAPI void APIENTRY glEndQuery(GLenum target) {}
-GLAPI void APIENTRY glGetQueryObjectuiv(GLuint id, GLenum pname, GLuint *params) {}
 
 GLAPI void APIENTRY glQueryCounter(GLuint id, GLenum target) {}
 GLAPI void APIENTRY glGetQueryObjectiv(GLuint id, GLenum pname, GLint* params) {}
