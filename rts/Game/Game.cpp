@@ -1259,10 +1259,13 @@ bool CGame::Draw() {
 	if (UpdateUnsynced(currentTimePreUpdate))
 		return false;
 
-	SCOPED_SPECIAL_TIMER("Draw");
-
-	const bool doDrawWorld = hideInterface || !minimap->GetMaximized() || minimap->GetMinimized();
 	const spring_time currentTimePreDraw = spring_gettime();
+
+	const bool fullMiniMap = minimap->GetMaximized() && !minimap->GetMinimized();
+	const bool doDrawWorld = hideInterface || !fullMiniMap;
+
+	SCOPED_SPECIAL_TIMER("Draw");
+	globalRendering->SetGLTimeStamp(0);
 
 	{
 		SCOPED_TIMER("Draw::DrawGenesis");
@@ -1363,6 +1366,7 @@ bool CGame::Draw() {
 	gu->avgDrawFrameTime = mix(gu->avgDrawFrameTime, currentFrameDrawTime.toMilliSecsf(), 0.05f);
 
 	eventHandler.DbgTimingInfo(TIMING_VIDEO, currentTimePreDraw, currentTimePostDraw);
+	globalRendering->SetGLTimeStamp(CGlobalRendering::FRAME_TIME_QUERY_IDX);
 
 	return true;
 }

@@ -37,6 +37,10 @@ public:
 	void DestroyWindowAndContext(SDL_Window* window, SDL_GLContext context);
 	void KillSDL() const;
 	void PostInit();
+
+	void SetGLTimeStamp(uint32_t queryIdx) const;
+	uint64_t CalcGLDeltaTime(uint32_t queryIdx0, uint32_t queryIdx1) const;
+
 	void SwapBuffers(bool allowSwapBuffers, bool clearErrors);
 
 	void MakeCurrentContext(bool hidden, bool secondary, bool clear);
@@ -73,6 +77,30 @@ public:
 	bool CheckGLEWContextVersion(const int2& curCtx) const;
 	bool ToggleGLDebugOutput(unsigned int msgSrceIdx, unsigned int msgTypeIdx, unsigned int msgSevrIdx);
 	void InitGLState();
+
+
+public:
+	/**
+	* @brief max view range in elmos
+	*/
+	static const float MAX_VIEW_RANGE;
+
+	/**
+	* @brief near z-plane distance in elmos
+	*/
+	static const float NEAR_PLANE;
+
+
+	/// magic constant to reduce overblending on SMF maps
+	/// (scales the MapInfo::light_t::ground*Color values)
+	static const float SMF_INTENSITY_MULT;
+
+
+	static const int minWinSizeX;
+	static const int minWinSizeY;
+
+	static constexpr unsigned int NUM_GL_TIMER_QUERIES = 2;
+	static constexpr unsigned int FRAME_TIME_QUERY_IDX = NUM_GL_TIMER_QUERIES - 1;
 
 public:
 	/**
@@ -278,30 +306,13 @@ public:
 	bool fullScreen;
 	bool borderless;
 
-public:
+private:
 	// [0] := primary, [1] := secondary (hidden)
 	SDL_Window* sdlWindows[2];
 	SDL_GLContext glContexts[2];
 
-public:
-	/**
-	* @brief max view range in elmos
-	*/
-	static const float MAX_VIEW_RANGE;
-
-	/**
-	* @brief near z-plane distance in elmos
-	*/
-	static const float NEAR_PLANE;
-
-
-	/// magic constant to reduce overblending on SMF maps
-	/// (scales the MapInfo::light_t::ground*Color values)
-	static const float SMF_INTENSITY_MULT;
-
-
-	static const int minWinSizeX;
-	static const int minWinSizeY;
+	// double-buffered; results from frame N become available on frame N+1
+	unsigned int glTimerQueries[NUM_GL_TIMER_QUERIES * 2];
 };
 
 extern CGlobalRendering* globalRendering;

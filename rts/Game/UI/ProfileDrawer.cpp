@@ -384,7 +384,7 @@ static void DrawInfoText()
 
 	const char* fpsFmtStr = "[1] {Draw,Sim}FrameRate={%0.1f, %0.1f}Hz";
 	const char* ctrFmtStr = "[2] {Draw,Sim}FrameTick={%u, %d}";
-	const char* avgFmtStr = "[3] {Update,Draw,Sim}FrameTime={%s%2.1f, %s%2.1f, %s%2.1f}ms";
+	const char* avgFmtStr = "[3] {Sim,Update,Draw}FrameTime={%s%2.1f, %s%2.1f, %s%2.1f (GL=%2.1f)}ms";
 	const char* spdFmtStr = "[4] {Current,Wanted}SimSpeedMul={%2.2f, %2.2f}x";
 	const char* sfxFmtStr = "[5] {Synced,Unsynced}Projectiles={%u,%u} Particles=%u Saturation=%.1f";
 	const char* pfsFmtStr = "[6] (%s)PFS-updates queued: {%i, %i}";
@@ -400,9 +400,10 @@ static void DrawInfoText()
 
 	// 16ms := 60fps := 30simFPS + 30drawFPS
 	font->glFormat(0.01f, 0.06f, 0.5f, DBG_FONT_FLAGS | FONT_BUFFERED, avgFmtStr,
-	   (gu->avgFrameTime     > 30) ? "\xff\xff\x01\x01" : "", gu->avgFrameTime,
-	   (gu->avgDrawFrameTime > 16) ? "\xff\xff\x01\x01" : "", gu->avgDrawFrameTime,
-	   (gu->avgSimFrameTime  > 16) ? "\xff\xff\x01\x01" : "", gu->avgSimFrameTime
+		(gu->avgSimFrameTime  > 16) ? "\xff\xff\x01\x01" : "", gu->avgSimFrameTime,
+		(gu->avgFrameTime     > 30) ? "\xff\xff\x01\x01" : "", gu->avgFrameTime,
+		(gu->avgDrawFrameTime > 16) ? "\xff\xff\x01\x01" : "", gu->avgDrawFrameTime,
+		(globalRendering->CalcGLDeltaTime(0, CGlobalRendering::FRAME_TIME_QUERY_IDX) * 0.001f) * 0.001f
 	);
 
 	font->glFormat(0.01f, 0.08f, 0.5f, DBG_FONT_FLAGS | FONT_BUFFERED, spdFmtStr, gs->speedFactor, gs->wantedSpeedFactor);

@@ -241,6 +241,9 @@ CGlobalRendering::~CGlobalRendering()
 {
 	configHandler->RemoveObserver(this);
 	verticalSync->WrapRemoveObserver();
+
+	glDeleteQueries(NUM_GL_TIMER_QUERIES * 2, &glTimerQueries[0]);
+
 	DestroyWindowAndContext(sdlWindows[0], glContexts[0]);
 	DestroyWindowAndContext(sdlWindows[1], glContexts[1]);
 	KillSDL();
@@ -530,7 +533,41 @@ void CGlobalRendering::PostInit() {
 
 	LogVersionInfo(sdlVersionStr, glVidMemStr);
 	ToggleGLDebugOutput(0, 0, 0);
+
+	glGenQueries(NUM_GL_TIMER_QUERIES * 2, &glTimerQueries[0]);
 }
+
+
+void CGlobalRendering::SetGLTimeStamp(uint32_t queryIdx) const
+{
+	glQueryCounter(glTimerQueries[(NUM_GL_TIMER_QUERIES * (drawFrame & 1)) + queryIdx], GL_TIMESTAMP);
+}
+
+uint64_t CGlobalRendering::CalcGLDeltaTime(uint32_t queryIdx0, uint32_t queryIdx1) const
+{
+	const uint32_t queryBase = NUM_GL_TIMER_QUERIES * (1 - (drawFrame & 1));
+
+	assert(queryIdx0 < NUM_GL_TIMER_QUERIES);
+	assert(queryIdx1 < NUM_GL_TIMER_QUERIES);
+	assert(queryIdx0 < queryIdx1);
+
+	GLuint64 t0 = 0;
+	GLuint64 t1 = 0;
+
+	GLint res = 0;
+
+	// results from the previous frame should already (or soon) be available
+	while (!res) {
+		glGetQueryObjectiv(glTimerQueries[queryBase + queryIdx1], GL_QUERY_RESULT_AVAILABLE, &res);
+	}
+
+	glGetQueryObjectui64v(glTimerQueries[queryBase + queryIdx0], GL_QUERY_RESULT, &t0);
+	glGetQueryObjectui64v(glTimerQueries[queryBase + queryIdx1], GL_QUERY_RESULT, &t1);
+
+	// nanoseconds between timestamps
+	return (t1 - t0);
+}
+
 
 void CGlobalRendering::SwapBuffers(bool allowSwapBuffers, bool clearErrors)
 {
@@ -612,6 +649,7 @@ void CGlobalRendering::CheckGLExtensions() const
 
 	CHECK_EXT(GLEW_ARB_occlusion_query); // 1.5
 	CHECK_EXT(GLEW_ARB_occlusion_query2); // 3.3 (glBeginConditionalRender)
+	CHECK_EXT(GLEW_ARB_timer_query); // 3.3
 
 	CHECK_EXT(GLEW_ARB_depth_clamp); // 3.2
 
