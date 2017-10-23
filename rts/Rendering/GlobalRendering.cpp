@@ -148,7 +148,9 @@ CR_REG_METADATA(CGlobalRendering, (
 	CR_IGNORED(borderless),
 
 	CR_IGNORED(sdlWindows),
-	CR_IGNORED(glContexts)
+	CR_IGNORED(glContexts),
+
+	CR_IGNORED(glTimerQueries)
 ))
 
 CGlobalRendering::CGlobalRendering()
