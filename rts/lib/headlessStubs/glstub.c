@@ -80,6 +80,11 @@ GLAPI void APIENTRY glBeginQuery(GLenum target, GLuint id) {}
 GLAPI void APIENTRY glEndQuery(GLenum target) {}
 GLAPI void APIENTRY glGetQueryObjectuiv(GLuint id, GLenum pname, GLuint *params) {}
 
+GLAPI void APIENTRY glQueryCounter(GLuint id, GLenum target) {}
+GLAPI void APIENTRY glGetQueryObjectiv(GLuint id, GLenum pname, GLint* params) {}
+GLAPI void APIENTRY glGetQueryObjectuiv(GLuint id, GLenum pname, GLuint* params) {}
+GLAPI void APIENTRY glGetQueryObjectui64v(GLuint id, GLenum pname, GLuint64* params) {}
+
 GLAPI GLint APIENTRY glGetUniformLocation(GLuint program, const GLchar *name) { return 0; }
 GLAPI void APIENTRY glUniform1f(GLint location, GLfloat v0) {}
 GLAPI void APIENTRY glUniform2f(GLint location, GLfloat v0, GLfloat v1) {}
