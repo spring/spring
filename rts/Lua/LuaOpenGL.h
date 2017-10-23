@@ -217,9 +217,9 @@ class LuaOpenGL {
 		static int GenerateMipmap(lua_State* L);
 		static int ActiveTexture(lua_State* L);
 		static int TexEnv(lua_State* L) { return 0; }
-		static int TexGen(lua_State* L);
+		static int TexGen(lua_State* L) { return 0; }
 		static int MultiTexEnv(lua_State* L) { return 0; }
-		static int MultiTexGen(lua_State* L);
+		static int MultiTexGen(lua_State* L) { return 0; }
 
 		static int Shape(lua_State* L);
 		static int BeginEnd(lua_State* L);

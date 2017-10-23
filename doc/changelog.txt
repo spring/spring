@@ -33,12 +33,18 @@ Lua:
  - add DrawSky and DrawSun callins; available when a map has no skybox defined
  - add DrawWater callin
  - add DrawTrees callin (enabled by /drawtrees 2; supersedes engine rendering)
+ - make gl.Feature{Raw} able to draw default trees
+   if drawing multiple trees in a row, use gl.Feature(treeID, true, false)
+   for the *first* tree and gl.Feature(treeID, false, true) for the *last*
+   [more efficient; call gl.Feature(treeID, true, true) to render a single
+   tree with default state]
  - remove gl.Light, gl.Lighting, gl.Material, gl.ShadeModel
  - remove gl.Fog, gl.FogCoord, gl.SecondaryColor
  - remove gl.PointSize, gl.PointSprite, gl.PointParameter
- - remove gl.TexEnv, gl.MultiTexEnv
+ - remove gl.TexEnv, gl.MultiTexEnv, gl.TexGen, gl.MultiTexGen
  - support local-space tracking for dynamic lights added via Spring.Add{Map,Model}Light
    the light-definition table should contain a 'localSpace = true' entry to enable this
+ - move GetConfig* to LuaUnsyncedRead
 
 Misc:
  - remove joystick support
@@ -46,6 +52,7 @@ Misc:
  - fix stale thread-id cache in watchdog after reload
  - make LuaVFSDownload rescan archives in main thread, and do so when a download finishes (not when one starts)
  - account for raw search in AICallback::GetPathLength
+ - use hidden window for offscreen context rendering
  - remove Basic{Sky,Water,TreeDrawer} (3DTrees is now always 1)
  - remove /DynamicSky command and keybinding
  - remove /{More,Less}Clouds commands
@@ -55,13 +62,17 @@ Misc:
  - remove ForceDisableShaders config-setting
  - remove Use{V,P}BO config-settings
  - remove LuaShaders config-setting
+ - remove legacy InfoTexHandler
  - mandate GLSL support
+ - throw out legacy load-screen code (replaced by LuaIntro)
  - change PitchAdjust config-setting from a boolean to an integer
    0 disables, 1 scales pitch by the square root of game speed, 2
    scales linearly with game speed
  - `/nocost` now accepts 0/1 parameter (still toggles if none given)
 
 Fixes:
+ - fix infinite backtracking loop in PFS
+ - fix #5814 (broken slopemap indexing for terrain buildability tests)
  - fix #5803 (move goals cancelled when issued onto blocked terrain)
  - fix Spring.{G,S}etConfigFloat not being callable
  - fix Spring.GetPlayerRoster sometimes excluding active players

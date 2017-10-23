@@ -409,11 +409,6 @@ void LuaOpenGL::ResetGLState()
 
 	// FIXME -- multitexturing
 	glDisable(GL_TEXTURE_2D);
-	glDisable(GL_TEXTURE_GEN_S);
-	glDisable(GL_TEXTURE_GEN_T);
-	glDisable(GL_TEXTURE_GEN_R);
-	glDisable(GL_TEXTURE_GEN_Q);
-	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	glDisable(GL_POLYGON_OFFSET_FILL);
@@ -1344,7 +1339,7 @@ int LuaOpenGL::FeatureCommon(lua_State* L, bool applyTransform, bool callDrawFea
 		}; break;
 		default: {
 			// default tree; re-interpret arguments to control state setup and reset
-			treeDrawer->DrawTree(feature, luaL_optboolean(L, 2, true), luaL_optboolean(L, 3, true));
+			treeDrawer->DrawTree(feature, luaL_optboolean(L, 2, false), luaL_optboolean(L, 3, false));
 			return 0;
 		} break;
 	}
@@ -2923,7 +2918,7 @@ int LuaOpenGL::GenerateMipmap(lua_State* L)
 	GLint currentBinding;
 	glGetIntegerv(GL_TEXTURE_BINDING_2D, &currentBinding);
 	glBindTexture(GL_TEXTURE_2D, tex->id);
-	glGenerateMipmapEXT(GL_TEXTURE_2D);
+	glGenerateMipmap(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, currentBinding);
 	return 0;
 }
@@ -2934,10 +2929,14 @@ int LuaOpenGL::ActiveTexture(lua_State* L)
 	CheckDrawingEnabled(L, __func__);
 
 	const int args = lua_gettop(L); // number of arguments
+
 	if ((args < 2) || !lua_isnumber(L, 1) || !lua_isfunction(L, 2)) {
 		luaL_error(L, "Incorrect arguments to gl.ActiveTexture(number, func, ...)");
+		return 0;
 	}
+
 	const int texNum = lua_toint(L, 1);
+
 	if ((texNum < 0) || (texNum >= MAX_TEXTURE_UNITS)) {
 		luaL_error(L, "Bad texture unit passed to gl.ActiveTexture()");
 		return 0;
@@ -2949,110 +2948,13 @@ int LuaOpenGL::ActiveTexture(lua_State* L)
 	glActiveTexture(GL_TEXTURE0);
 
 	if (error != 0) {
-		LOG_L(L_ERROR, "gl.ActiveTexture: error(%i) = %s",
-				error, lua_tostring(L, -1));
+		LOG_L(L_ERROR, "gl.ActiveTexture: error(%i) = %s", error, lua_tostring(L, -1));
 		lua_error(L);
 	}
-	return 0;
-}
-
-
-static void SetTexGenState(GLenum target, bool state)
-{
-	if ((target >= GL_S) && (target <= GL_Q)) {
-		const GLenum pname = GL_TEXTURE_GEN_S + (target - GL_S);
-		if (state) {
-			glEnable(pname);
-		} else {
-			glDisable(pname);
-		}
-	}
-}
-
-
-int LuaOpenGL::TexGen(lua_State* L)
-{
-	CheckDrawingEnabled(L, __func__);
-
-	const GLenum target = (GLenum)luaL_checknumber(L, 1);
-
-	const int args = lua_gettop(L); // number of arguments
-	if ((args == 2) && lua_isboolean(L, 2)) {
-		const bool state = lua_toboolean(L, 2);
-		SetTexGenState(target, state);
-		return 0;
-	}
-
-	const GLenum pname  = (GLenum)luaL_checknumber(L, 2);
-
-	if (args == 3) {
-		const GLfloat value = (GLfloat)luaL_checknumber(L, 3);
-		glTexGenf(target, pname, value);
-		SetTexGenState(target, true);
-	}
-	else if (args == 6) {
-		GLfloat array[4];
-		array[0] = luaL_optnumber(L, 3, 0.0f);
-		array[1] = luaL_optnumber(L, 4, 0.0f);
-		array[2] = luaL_optnumber(L, 5, 0.0f);
-		array[3] = luaL_optnumber(L, 6, 0.0f);
-		glTexGenfv(target, pname, array);
-		SetTexGenState(target, true);
-	}
-	else {
-		luaL_error(L, "Incorrect arguments to gl.TexGen()");
-	}
 
 	return 0;
 }
 
-
-int LuaOpenGL::MultiTexGen(lua_State* L)
-{
-	CheckDrawingEnabled(L, __func__);
-
-	const int texNum = luaL_checkint(L, 1);
-	if ((texNum < 0) || (texNum >= MAX_TEXTURE_UNITS)) {
-		luaL_error(L, "Bad texture unit passed to gl.MultiTexGen()");
-	}
-
-	const GLenum target = (GLenum)luaL_checknumber(L, 2);
-
-	const int args = lua_gettop(L); // number of arguments
-	if ((args == 3) && lua_isboolean(L, 3)) {
-		const bool state = lua_toboolean(L, 3);
-		glActiveTexture(GL_TEXTURE0 + texNum);
-		SetTexGenState(target, state);
-		glActiveTexture(GL_TEXTURE0);
-		return 0;
-	}
-
-	const GLenum pname  = (GLenum)luaL_checknumber(L, 3);
-
-	if (args == 4) {
-		const GLfloat value = (GLfloat)luaL_checknumber(L, 4);
-		glActiveTexture(GL_TEXTURE0 + texNum);
-		glTexGenf(target, pname, value);
-		SetTexGenState(target, true);
-		glActiveTexture(GL_TEXTURE0);
-	}
-	else if (args == 7) {
-		GLfloat array[4];
-		array[0] = luaL_optnumber(L, 4, 0.0f);
-		array[1] = luaL_optnumber(L, 5, 0.0f);
-		array[2] = luaL_optnumber(L, 6, 0.0f);
-		array[3] = luaL_optnumber(L, 7, 0.0f);
-		glActiveTexture(GL_TEXTURE0 + texNum);
-		glTexGenfv(target, pname, array);
-		SetTexGenState(target, true);
-		glActiveTexture(GL_TEXTURE0);
-	}
-	else {
-		luaL_error(L, "Incorrect arguments to gl.MultiTexGen()");
-	}
-
-	return 0;
-}
 
 /******************************************************************************/
 
