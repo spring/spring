@@ -2894,35 +2894,12 @@ int LuaUnsyncedCtrl::SendSkirmishAIMessage(lua_State* L) {
 /******************************************************************************/
 
 int LuaUnsyncedCtrl::SetLogSectionFilterLevel(lua_State* L) {
-	int logLevel = LOG_LEVEL_INFO;
-
-	if (lua_israwnumber(L, 2)) {
-		logLevel = lua_tonumber(L, 2);
-	}
-	if (lua_isstring(L, 2)) {
-		const std::string& loglvlstr = StringToLower(lua_tostring(L, 2));
-
-		if (loglvlstr == "debug") {
-			logLevel = LOG_LEVEL_DEBUG;
-		}
-		else if (loglvlstr == "info") {
-			logLevel = LOG_LEVEL_INFO;
-		}
-		else if (loglvlstr == "warning") {
-			logLevel = LOG_LEVEL_WARNING;
-		}
-		else if (loglvlstr == "error") {
-			logLevel = LOG_LEVEL_ERROR;
-		}
-		else if (loglvlstr == "fatal") {
-			logLevel = LOG_LEVEL_FATAL;
-		}
-		else {
-			return luaL_error(L, "Incorrect arguments to Spring.SetLogSectionFilterLevel(logsection, loglevel)");
-		}
+	int loglevel = LuaUtils::ParseLogLevel(L, 2);
+	if (loglevel < 0) {
+		return luaL_error(L, "Incorrect arguments to Spring.SetLogSectionFilterLevel(logsection, loglevel)");
 	}
 
-	log_frontend_register_runtime_section(logLevel, luaL_checkstring(L, 1));
+	log_frontend_register_runtime_section(loglevel, luaL_checkstring(L, 1));
 	return 0;
 }
 

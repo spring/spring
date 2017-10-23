@@ -120,6 +120,7 @@ class LuaUtils {
 		// from LuaParser.cpp / LuaUnsyncedCtrl.cpp
 		// (implementation copied from lua/src/lib/lbaselib.c)
 		static int Echo(lua_State* L);
+		static int ParseLogLevel(lua_State* L, int index);
 		static int Log(lua_State* L);
 		static bool PushLogEntries(lua_State* L);
 
