@@ -229,7 +229,8 @@ void CMapGenerator::GenerateSMT(CVirtualArchive* archive)
 	glGenTextures(1, &tileTex);
 	glBindTexture(GL_TEXTURE_2D, tileTex);
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_COMPRESSED_RGB_S3TC_DXT1, tileSize, tileSize, 0, GL_RGB, GL_UNSIGNED_BYTE, tileData);
+	// HL GLEW does not know GL_COMPRESSED_RGB_S3TC_DXT1
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_COMPRESSED_RGB_S3TC_DXT1_EXT, tileSize, tileSize, 0, GL_RGB, GL_UNSIGNED_BYTE, tileData);
 	glGenerateMipmap(GL_TEXTURE_2D);
 
 	int32_t dxtImageOffset =   0;
