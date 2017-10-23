@@ -1268,7 +1268,7 @@ int LuaUtils::Log(lua_State* L)
 			loglevel = LOG_LEVEL_INFO;
 		}
 		else if (loglvlstr == "notice") {
-			loglevel = LOG_LEVEL_INFO;
+			loglevel = LOG_LEVEL_NOTICE;
 		}
 		else if (loglvlstr == "warning") {
 			loglevel = LOG_LEVEL_WARNING;
@@ -1402,4 +1402,3 @@ void LuaUtils::PushCommandDesc(lua_State* L, const SCommandDescription& cd)
 	// CmdDesc["params"] = {[1] = "string1", [2] = "string2", ...}
 	lua_settable(L, -3);
 }
-
