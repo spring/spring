@@ -10,6 +10,7 @@
 #include "Rendering/VerticalSync.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/FBO.h"
+#include "Rendering/GL/RenderDataBuffer.hpp"
 #include "System/bitops.h"
 #include "System/EventHandler.h"
 #include "System/type2.h"
@@ -244,6 +245,7 @@ CGlobalRendering::~CGlobalRendering()
 	configHandler->RemoveObserver(this);
 	verticalSync->WrapRemoveObserver();
 
+	GL::KillRenderBuffers();
 	glDeleteQueries(NUM_GL_TIMER_QUERIES * 2, &glTimerQueries[0]);
 
 	DestroyWindowAndContext(sdlWindows[0], glContexts[0]);
@@ -536,6 +538,7 @@ void CGlobalRendering::PostInit() {
 	LogVersionInfo(sdlVersionStr, glVidMemStr);
 	ToggleGLDebugOutput(0, 0, 0);
 
+	GL::InitRenderBuffers();
 	glGenQueries(NUM_GL_TIMER_QUERIES * 2, &glTimerQueries[0]);
 }
 
@@ -576,20 +579,22 @@ void CGlobalRendering::SwapBuffers(bool allowSwapBuffers, bool clearErrors)
 	SCOPED_TIMER("Misc::SwapBuffers");
 	assert(sdlWindows[0] != nullptr);
 
-	// NB: this does not just count frames drawn by game
-	drawFrame = std::max(1u, drawFrame + 1);
-
 	// silently or verbosely clear queue at the end of every frame
 	if (clearErrors || glDebugErrors)
 		glClearErrors("GR", __func__, glDebugErrors);
 
-	if (!allowSwapBuffers && !forceSwapBuffers)
+	// not swapping while still incrementing drawFrame can cause weirdness
+	if (false && !allowSwapBuffers && !forceSwapBuffers)
 		return;
 
 	const spring_time pre = spring_now();
 
+	GL::SwapRenderBuffers();
 	SDL_GL_SwapWindow(sdlWindows[0]);
 	eventHandler.DbgTimingInfo(TIMING_SWAP, pre, spring_now());
+
+	// NB: this does not just count frames drawn by game
+	drawFrame += 1;
 }
 
 

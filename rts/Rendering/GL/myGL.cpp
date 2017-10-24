@@ -1,7 +1,6 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
 #include <array>
-#include <vector>
 #include <string>
 #include <cmath>
 
@@ -15,6 +14,7 @@
 #include "VertexArray.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Textures/Bitmap.h"
+#include "System/Matrix44f.h"
 #include "System/Log/ILog.h"
 #include "System/Exceptions.h"
 #include "System/StringUtil.h"
@@ -37,7 +37,6 @@ CVertexArray* GetVertexArray()
 	currentVertexArray %= vertexArrays.size();
 	return &vertexArrays[currentVertexArray];
 }
-
 
 /******************************************************************************/
 

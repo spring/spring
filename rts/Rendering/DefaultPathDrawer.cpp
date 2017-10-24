@@ -31,7 +31,7 @@
 #include "Rendering/DefaultPathDrawer.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/glExtra.h"
-#include "Rendering/GL/VertexArray.h"
+#include "Rendering/GL/RenderDataBuffer.hpp"
 #include "System/myMath.h"
 #include "System/StringUtil.h"
 
@@ -61,10 +61,10 @@ void DefaultPathDrawer::DrawAll() const {
 	if (enabled && (gs->cheatEnabled || gu->spectating)) {
 		glPushAttrib(GL_ENABLE_BIT);
 
-		Draw();
-		Draw(pm->maxResPF);
-		Draw(pm->medResPE);
-		Draw(pm->lowResPE);
+		Draw(); // draw paths and goals
+		Draw(pm->maxResPF); // draw PF grid-overlay
+		Draw(pm->medResPE); // draw PE grid-overlay (med-res)
+		Draw(pm->lowResPE); // draw PE grid-overlay (low-res)
 
 		glPopAttrib();
 	}
@@ -298,35 +298,40 @@ void DefaultPathDrawer::Draw() const {
 	glDisable(GL_TEXTURE_2D);
 	glLineWidth(3);
 
+	GL::TRenderDataBuffer<VA_TYPE_C>* vrdb = GL::GetRenderBufferC();
+	Shader::IProgramObject* prog = vrdb->GetShader();
+
+	prog->Enable();
+	prog->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
+	prog->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
+
+	// draw paths
 	for (const auto& p: pm->pathMap) {
 		const CPathManager::MultiPath& multiPath = p.second;
 
-		glBegin(GL_LINE_STRIP);
+		// draw low-res segments of <path> (green)
+		for (const float3& pos: multiPath.lowResPath.path) {
+			vrdb->Append({pos + UpVector * 5.0f, SColor(0, 0, 255, 255)});
+		}
 
-			typedef IPath::path_list_type::const_iterator PathIt;
+		// draw med-res segments of <path> (blue)
+		for (const float3& pos: multiPath.medResPath.path) {
+			vrdb->Append({pos + UpVector * 5.0f, SColor(0, 255, 0, 255)});
+		}
 
-			// draw low-res segments of <path> (green)
-			glColor4f(0.0f, 0.0f, 1.0f, 1.0f);
-			for (PathIt pvi = multiPath.lowResPath.path.begin(); pvi != multiPath.lowResPath.path.end(); ++pvi) {
-				float3 pos = *pvi; pos.y += 5; glVertexf3(pos);
-			}
+		// draw max-res segments of <path> (red)
+		for (const float3& pos: multiPath.maxResPath.path) {
+			vrdb->Append({pos + UpVector * 5.0f, SColor(255, 0, 0, 255)});
+		}
 
-			// draw med-res segments of <path> (blue)
-			glColor4f(0.0f, 1.0f, 0.0f, 1.0f);
-			for (PathIt pvi = multiPath.medResPath.path.begin(); pvi != multiPath.medResPath.path.end(); ++pvi) {
-				float3 pos = *pvi; pos.y += 5; glVertexf3(pos);
-			}
+		vrdb->Submit(GL_LINE_STRIP);
+	}
 
-			// draw max-res segments of <path> (red)
-			glColor4f(1.0f, 0.0f, 0.0f, 1.0f);
-			for (PathIt pvi = multiPath.maxResPath.path.begin(); pvi != multiPath.maxResPath.path.end(); ++pvi) {
-				float3 pos = *pvi; pos.y += 5; glVertexf3(pos);
-			}
+	prog->Disable();
 
-		glEnd();
-
-		// visualize the path definition (goal, radius)
-		Draw(&multiPath.peDef);
+	// draw path definitions (goal, radius)
+	for (const auto& p: pm->pathMap) {
+		Draw(&p.second.peDef);
 	}
 
 	glLineWidth(1);
@@ -344,10 +349,10 @@ void DefaultPathDrawer::Draw(const CPathFinderDef* pfd) const {
 }
 
 void DefaultPathDrawer::Draw(const CPathFinder* pf) const {
-	glColor3f(0.7f, 0.2f, 0.2f);
 	glDisable(GL_TEXTURE_2D);
-	CVertexArray* va = GetVertexArray();
-	va->Initialize();
+
+	GL::TRenderDataBuffer<VA_TYPE_C>* vrdb = GL::GetRenderBufferC();
+	Shader::IProgramObject* prog = vrdb->GetShader();
 
 	for (unsigned int idx = 0; idx < pf->openBlockBuffer.GetSize(); idx++) {
 		const PathNode* os = pf->openBlockBuffer.GetNode(idx);
@@ -368,11 +373,13 @@ void DefaultPathDrawer::Draw(const CPathFinder* pf) const {
 		if (!camera->InView(p1) && !camera->InView(p2))
 			continue;
 
-		va->AddVertex0(p1);
-		va->AddVertex0(p2);
+		vrdb->Append({p1, SColor(0.7f, 0.2f, 0.2f, 1.0f)});
+		vrdb->Append({p2, SColor(0.7f, 0.2f, 0.2f, 1.0f)});
 	}
 
-	va->DrawArray0(GL_LINES);
+	prog->Enable();
+	vrdb->Submit(GL_LINES);
+	prog->Disable();
 }
 
 
@@ -384,8 +391,10 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 	if (md == nullptr)
 		return;
 
+	GL::TRenderDataBuffer<VA_TYPE_C>* vrdb = GL::GetRenderBufferC();
+	Shader::IProgramObject* prog = vrdb->GetShader();
+
 	glDisable(GL_TEXTURE_2D);
-	glColor3f(1.0f, 1.0f, 0.0f);
 
 	#if (PE_EXTRA_DEBUG_OVERLAYS == 1)
 	const int overlayPeriod = GAME_SPEED * 5;
@@ -398,8 +407,6 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 	// (normally TMI, but useful to keep the code
 	// compiling)
 	if (drawLowResPE || drawMedResPE) {
-		glBegin(GL_LINES);
-
 		const int2 peNumBlocks = pe->GetNumBlocks();
 		const int vertexBaseNr = md->pathType * peNumBlocks.x * peNumBlocks.y * PATH_DIRECTION_VERTICES;
 
@@ -415,9 +422,8 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 				if (!camera->InView(p1))
 					continue;
 
-				glColor3f(1.0f, 1.0f, 0.75f * drawLowResPE);
-				glVertexf3(p1);
-				glVertexf3(p1 - UpVector * 10.0f);
+				vrdb->Append({p1                   , SColor(1.0f, 1.0f, 0.75f * drawLowResPE, 1.0f)});
+				vrdb->Append({p1 - UpVector * 10.0f, SColor(1.0f, 1.0f, 0.75f * drawLowResPE, 1.0f)});
 
 				for (int dir = 0; dir < PATH_DIRECTION_VERTICES; dir++) {
 					const int obx = x + (CPathEstimator::GetDirectionVectorsTable())[dir].x;
@@ -442,14 +448,15 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 						p2.z = (blockStates.peNodeOffsets[md->pathType][obBlockNr].y) * SQUARE_SIZE;
 						p2.y = CGround::GetHeightAboveWater(p2.x, p2.z, false) + 10.0f;
 
-					glColor3f(1.0f / std::sqrt(nrmCost), 1.0f / nrmCost, 0.75f * drawLowResPE);
-					glVertexf3(p1);
-					glVertexf3(p2);
+					vrdb->Append({p1, SColor(1.0f / std::sqrt(nrmCost), 1.0f / nrmCost, 0.75f * drawLowResPE, 1.0f)});
+					vrdb->Append({p2, SColor(1.0f / std::sqrt(nrmCost), 1.0f / nrmCost, 0.75f * drawLowResPE, 1.0f)});
 				}
 			}
 		}
 
-		glEnd();
+		prog->Enable();
+		vrdb->Submit(GL_LINES);
+		prog->Disable();
 		font->glWorldBegin();
 
 		for (int z = 0; z < peNumBlocks.y; z++) {
@@ -506,17 +513,11 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 	}
 	#endif
 
-
-	if (pe == pm->medResPE) {
-		glColor3f(0.7f, 0.2f, 0.7f);
-	} else {
-		glColor3f(0.2f, 0.7f, 0.7f);
-	}
+	// [0] := low-res, [1] := med-res
+	const SColor colors[2] = {SColor(0.2f, 0.7f, 0.7f, 1.0f), SColor(0.7f, 0.2f, 0.7f, 1.0f)};
+	const SColor& color = colors[pe == pm->medResPE];
 
 	{
-		CVertexArray* va = GetVertexArray();
-		va->Initialize();
-
 		for (unsigned int idx = 0; idx < pe->openBlockBuffer.GetSize(); idx++) {
 			const PathNode* ob = pe->openBlockBuffer.GetNode(idx);
 			const int blockNr = ob->nodeNum;
@@ -541,10 +542,13 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 			if (!camera->InView(p1) && !camera->InView(p2))
 				continue;
 
-			va->AddVertex0(p1);
-			va->AddVertex0(p2);
+			vrdb->Append({p1, color});
+			vrdb->Append({p2, color});
 		}
-		va->DrawArray0(GL_LINES);
+
+		prog->Enable();
+		vrdb->Submit(GL_LINES);
+		prog->Disable();
 	}
 
 	#if (PE_EXTRA_DEBUG_OVERLAYS == 1)

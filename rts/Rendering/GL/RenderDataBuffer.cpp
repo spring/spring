@@ -6,6 +6,94 @@
 #include "myGL.h"
 #include "RenderDataBuffer.hpp"
 
+// global general-purpose buffers
+static GL::RenderDataBuffer gRenderBuffer0[2];
+static GL::RenderDataBuffer gRenderBufferN[2];
+static GL::RenderDataBuffer gRenderBufferC[2];
+static GL::RenderDataBuffer gRenderBufferT[2];
+
+static GL::TRenderDataBuffer<VA_TYPE_0> tRenderBuffer0[2];
+static GL::TRenderDataBuffer<VA_TYPE_N> tRenderBufferN[2];
+static GL::TRenderDataBuffer<VA_TYPE_C> tRenderBufferC[2];
+static GL::TRenderDataBuffer<VA_TYPE_T> tRenderBufferT[2];
+
+GL::TRenderDataBuffer<VA_TYPE_0>* GL::GetRenderBuffer0() { return &tRenderBuffer0[0 /*globalRendering->drawFrame & 1*/ ]; }
+GL::TRenderDataBuffer<VA_TYPE_N>* GL::GetRenderBufferN() { return &tRenderBufferN[0 /*globalRendering->drawFrame & 1*/ ]; }
+GL::TRenderDataBuffer<VA_TYPE_C>* GL::GetRenderBufferC() { return &tRenderBufferC[0 /*globalRendering->drawFrame & 1*/ ]; }
+GL::TRenderDataBuffer<VA_TYPE_T>* GL::GetRenderBufferT() { return &tRenderBufferT[0 /*globalRendering->drawFrame & 1*/ ]; }
+
+
+void GL::InitRenderBuffers() {
+	char vsBuf0[65536];
+	char vsBufN[65536];
+	char vsBufC[65536];
+	char vsBufT[65536];
+	char fsBuf0[65536];
+	char fsBufN[65536];
+	char fsBufC[65536];
+	char fsBufT[65536];
+
+	for (int i = 0; i < 2; i++) {
+		tRenderBuffer0[i].Setup(&gRenderBuffer0[i], &GL::VA_TYPE_0_ATTRS);
+		tRenderBufferN[i].Setup(&gRenderBufferN[i], &GL::VA_TYPE_N_ATTRS);
+		tRenderBufferC[i].Setup(&gRenderBufferC[i], &GL::VA_TYPE_C_ATTRS);
+		tRenderBufferT[i].Setup(&gRenderBufferT[i], &GL::VA_TYPE_T_ATTRS);
+	}
+
+	for (int i = 0; i < 2; i++) {
+		GL::RenderDataBuffer::FormatShader0(vsBuf0, vsBuf0 + sizeof(vsBuf0), "", "", "", "VS");
+		GL::RenderDataBuffer::FormatShaderN(vsBufN, vsBufN + sizeof(vsBufN), "", "", "", "VS");
+		GL::RenderDataBuffer::FormatShaderC(vsBufC, vsBufC + sizeof(vsBufC), "", "", "", "VS");
+		GL::RenderDataBuffer::FormatShaderT(vsBufT, vsBufT + sizeof(vsBufT), "", "", "", "VS");
+		GL::RenderDataBuffer::FormatShader0(fsBuf0, fsBuf0 + sizeof(fsBuf0), "", "", "\tf_color_rgba = vec4(1.0, 1.0, 1.0, 1.0);\n", "FS");
+		GL::RenderDataBuffer::FormatShaderN(fsBufN, fsBufN + sizeof(fsBufN), "", "", "\tf_color_rgba = vec4(1.0, 1.0, 1.0, 1.0);\n", "FS");
+		GL::RenderDataBuffer::FormatShaderC(fsBufC, fsBufC + sizeof(fsBufC), "", "", "\tf_color_rgba = v_color_rgba * (1.0 / 255.0);\n", "FS");
+		GL::RenderDataBuffer::FormatShaderT(fsBufT, fsBufT + sizeof(fsBufT), "", "", "\tf_color_rgba = texture(u_tex0, v_texcoor_st);\n", "FS");
+
+		Shader::GLSLShaderObject shaderObjs0[2] = {{GL_VERTEX_SHADER, &vsBuf0[0], ""}, {GL_FRAGMENT_SHADER, &fsBuf0[0], ""}};
+		Shader::GLSLShaderObject shaderObjsN[2] = {{GL_VERTEX_SHADER, &vsBufN[0], ""}, {GL_FRAGMENT_SHADER, &fsBufN[0], ""}};
+		Shader::GLSLShaderObject shaderObjsC[2] = {{GL_VERTEX_SHADER, &vsBufC[0], ""}, {GL_FRAGMENT_SHADER, &fsBufC[0], ""}};
+		Shader::GLSLShaderObject shaderObjsT[2] = {{GL_VERTEX_SHADER, &vsBufT[0], ""}, {GL_FRAGMENT_SHADER, &fsBufT[0], ""}};
+
+		gRenderBuffer0[i].CreateShader((sizeof(shaderObjs0) / sizeof(shaderObjs0[0])), 0, &shaderObjs0[0], nullptr);
+		gRenderBufferN[i].CreateShader((sizeof(shaderObjsN) / sizeof(shaderObjsN[0])), 0, &shaderObjsN[0], nullptr);
+		gRenderBufferC[i].CreateShader((sizeof(shaderObjsC) / sizeof(shaderObjsC[0])), 0, &shaderObjsC[0], nullptr);
+		gRenderBufferT[i].CreateShader((sizeof(shaderObjsT) / sizeof(shaderObjsT[0])), 0, &shaderObjsT[0], nullptr);
+	}
+}
+
+void GL::KillRenderBuffers() {
+	for (int i = 0; i < 2; i++) {
+		gRenderBuffer0[i].Kill();
+		gRenderBufferN[i].Kill();
+		gRenderBufferC[i].Kill();
+		gRenderBufferT[i].Kill();
+	}
+}
+
+void GL::SwapRenderBuffers() {
+	#if 0
+	// NB: called before frame is incremented
+	tRenderBuffer0[1 - (globalRendering->drawFrame & 1)].Reset();
+	tRenderBufferN[1 - (globalRendering->drawFrame & 1)].Reset();
+	tRenderBufferC[1 - (globalRendering->drawFrame & 1)].Reset();
+	tRenderBufferT[1 - (globalRendering->drawFrame & 1)].Reset();
+	#else
+	std::swap(tRenderBuffer0[0], tRenderBuffer0[1]);
+	std::swap(tRenderBufferN[0], tRenderBufferN[1]);
+	std::swap(tRenderBufferC[0], tRenderBufferC[1]);
+	std::swap(tRenderBufferT[0], tRenderBufferT[1]);
+
+	tRenderBuffer0[0].Reset();
+	tRenderBufferN[0].Reset();
+	tRenderBufferC[0].Reset();
+	tRenderBufferT[0].Reset();
+	#endif
+}
+
+
+
+
 void GL::RenderDataBuffer::EnableAttribs(size_t numAttrs, const Shader::ShaderInput* rawAttrs) const {
 	for (size_t n = 0; n < numAttrs; n++) {
 		const Shader::ShaderInput& a = rawAttrs[n];
