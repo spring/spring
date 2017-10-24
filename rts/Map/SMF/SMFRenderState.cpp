@@ -219,7 +219,6 @@ void SMFRenderStateGLSL::Enable(const CSMFGroundDrawer* smfGroundDrawer, const D
 
 	const CSMFReadMap* smfMap = smfGroundDrawer->GetReadMap();
 	const GL::LightHandler* cLightHandler = smfGroundDrawer->GetLightHandler();
-	      GL::LightHandler* mLightHandler = const_cast<GL::LightHandler*>(cLightHandler); // XXX
 
 	Shader::IProgramObject* shader = glslShaders[GLSL_SHADER_CURRENT];
 
@@ -250,6 +249,7 @@ void SMFRenderStateGLSL::Enable(const CSMFGroundDrawer* smfGroundDrawer, const D
 	#if 0
 	// already on the MV stack at this point
 	glLoadIdentity();
+	GL::LightHandler* mLightHandler = const_cast<GL::LightHandler*>(cLightHandler); // XXX
 	mLightHandler->Update(shader);
 	glMultMatrixf(camera->GetViewMatrix());
 	#endif
