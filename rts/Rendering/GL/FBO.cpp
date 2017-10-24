@@ -24,7 +24,7 @@ GLsizei FBO::maxSamples = -1;
 
 static GLint GetCurrentBoundFBO()
 {
-	GLint curFBO;
+	GLint curFBO = 0;
 	glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &curFBO);
 	return curFBO;
 }
@@ -349,6 +349,8 @@ GLenum FBO::GetStatus()
 void FBO::AttachTexture(const GLuint texId, const GLenum texTarget, const GLenum attachment, const int mipLevel, const int zSlice )
 {
 	assert(GetCurrentBoundFBO() == fboId);
+
+	// TODO: glFramebufferTextureLayer(GL_FRAMEBUFFER, attachment, texId, mipLevel, zSlice);
 	if (texTarget == GL_TEXTURE_1D) {
 		glFramebufferTexture1D(GL_FRAMEBUFFER, attachment, GL_TEXTURE_1D, texId, mipLevel);
 	} else if (texTarget == GL_TEXTURE_3D) {
