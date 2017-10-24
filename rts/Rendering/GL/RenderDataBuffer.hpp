@@ -385,6 +385,7 @@ namespace GL {
 
 			std::swap(prvIdx, trdb.prvIdx);
 			std::swap(curIdx, trdb.curIdx);
+			return *this;
 		}
 
 		// NOTE: potential mismatch between VertexArrayType and VertexAttribArray (std::array<T, N>)
