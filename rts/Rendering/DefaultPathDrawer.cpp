@@ -296,7 +296,6 @@ void DefaultPathDrawer::UpdateExtraTexture(int extraTex, int starty, int endy, i
 
 void DefaultPathDrawer::Draw() const {
 	glDisable(GL_TEXTURE_2D);
-	glDisable(GL_LIGHTING);
 	glLineWidth(3);
 
 	for (const auto& p: pm->pathMap) {

@@ -156,7 +156,6 @@ void CGLStateChecker::VerifyState(std::string area) {
 		std::string _area = area + " " + id;
 		//VERIFYGLBOOL(GL_CULL_FACE, GL_FALSE)
 		VERIFYGLBOOL(GL_ALPHA_TEST, GL_FALSE, _area);
-		VERIFYGLBOOL(GL_LIGHTING, GL_FALSE, _area);
 		VERIFYGLBOOL(GL_SCISSOR_TEST, GL_FALSE, _area);
 		VERIFYGLBOOL(GL_STENCIL_TEST, GL_FALSE, _area);
 		// VERIFYGLBOOL(GL_TEXTURE_2D, GL_FALSE);

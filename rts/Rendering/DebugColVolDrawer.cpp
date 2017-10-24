@@ -333,9 +333,6 @@ namespace DebugColVolDrawer
 			return;
 
 		glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
-			glDisable(GL_LIGHTING);
-			glDisable(GL_LIGHT0);
-			glDisable(GL_LIGHT1);
 			glDisable(GL_CULL_FACE);
 			glDisable(GL_TEXTURE_2D);
 			// glDisable(GL_BLEND);

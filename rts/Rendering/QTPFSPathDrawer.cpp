@@ -39,7 +39,6 @@ void QTPFSPathDrawer::DrawAll() const {
 	if (enabled && (gs->cheatEnabled || gu->spectating)) {
 		glPushAttrib(GL_ENABLE_BIT | GL_POLYGON_BIT);
 		glDisable(GL_TEXTURE_2D);
-		glDisable(GL_LIGHTING);
 		glDisable(GL_DEPTH_TEST);
 		glEnable(GL_BLEND);
 

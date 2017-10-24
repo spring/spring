@@ -722,7 +722,6 @@ void CglFont::Begin(const bool immediate, const bool resetColors)
 	stripOutlineColors.push_back(outlineColor);
 
 	glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
-	glDisable(GL_LIGHTING);
 	glDisable(GL_DEPTH_TEST);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

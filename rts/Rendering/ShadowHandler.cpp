@@ -534,7 +534,6 @@ void CShadowHandler::CreateShadows()
 	fb.Bind();
 
 	glDisable(GL_BLEND);
-	glDisable(GL_LIGHTING);
 	glDisable(GL_ALPHA_TEST);
 	glDisable(GL_TEXTURE_2D);
 

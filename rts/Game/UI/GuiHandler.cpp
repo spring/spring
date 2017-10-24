@@ -2578,7 +2578,6 @@ void CGuiHandler::Draw()
 
 	glDisable(GL_FOG);
 	glDisable(GL_DEPTH_TEST);
-	glDisable(GL_LIGHTING);
 	glDisable(GL_TEXTURE_2D);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

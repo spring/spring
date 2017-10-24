@@ -56,7 +56,6 @@ void DebugDrawerAI::Draw() {
 
 	glPushAttrib(GL_CURRENT_BIT | GL_ENABLE_BIT);
 
-	glDisable(GL_LIGHTING);
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_TEXTURE_2D);
 
