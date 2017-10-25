@@ -423,17 +423,13 @@ namespace GL {
 
 		void SafeAppend(const VertexArrayType& e) { SafeAppend(&e, 1); }
 		void SafeAppend(const VertexArrayType* e, size_t ne) {
-			if (!CheckSizeE(ne))
-				return;
-			if (ne == 0)
+			if (ne == 0 || !CheckSizeE(ne))
 				return;
 			Append(e, ne);
 		}
 		void SafeAppend(const  IndexArrayType  i) { SafeAppend(&i, 1); }
 		void SafeAppend(const  IndexArrayType* i, size_t ni) {
-			if (!CheckSizeI(ni))
-				return;
-			if (ni == 0)
+			if (ni == 0 || !CheckSizeI(ni))
 				return;
 			Append(i, ni);
 		}
