@@ -295,17 +295,26 @@ void GL::RenderDataBuffer::Upload(
 }
 
 
-void GL::RenderDataBuffer::Submit(uint32_t primType, uint32_t dataSize, uint32_t dataType) {
+void GL::RenderDataBuffer::Submit(uint32_t primType, uint32_t dataIndx, uint32_t dataSize) const {
+	assert(elems.GetSize() != 0);
+	assert(indcs.GetSize() == 0);
+
 	array.Bind();
 
-	if (indcs.bufSize == 0) {
-		// dataSize := first elem, dataType := numElems (unique verts)
-		glDrawArrays(primType, dataSize, dataType);
-	} else {
-		// dataSize := numIndcs, dataType := GL_UNSIGNED_INT
-		assert(dataType == GL_UNSIGNED_INT);
-		glDrawElements(primType, dataSize, dataType, nullptr);
-	}
+	// dataIndx := first elem, dataSize := numElems (unique verts)
+	glDrawArrays(primType, dataIndx, dataSize);
+
+	array.Unbind();
+}
+
+void GL::RenderDataBuffer::SubmitIndexed(uint32_t primType, uint32_t dataIndx, uint32_t dataSize) const {
+	assert(elems.GetSize() != 0);
+	assert(indcs.GetSize() != 0);
+
+	array.Bind();
+
+	// dataIndx := index offset, dataSize := numIndcs
+	glDrawElements(primType, dataSize, GL_UNSIGNED_INT, VA_TYPE_OFFSET(uint32_t, dataIndx));
 
 	array.Unbind();
 }

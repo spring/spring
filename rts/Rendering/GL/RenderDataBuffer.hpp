@@ -3,6 +3,8 @@
 #ifndef GL_RENDERDATABUFFER_HDR
 #define GL_RENDERDATABUFFER_HDR
 
+#include <cstring> // memcpy
+
 #include "VAO.h"
 #include "VBO.h"
 #include "VertexArrayTypes.h"
@@ -147,9 +149,9 @@ namespace GL {
 
 		// must be called manually; allows {con,de}struction in global scope
 		// VAO and VBO ctors do not call GL functions for this reason either
-		RenderDataBuffer* Init(bool persistent = false) {
+		bool Init(bool persistent = false) {
 			if (inited)
-				return this;
+				return false;
 
 			elems = std::move(VBO(GL_ARRAY_BUFFER, persistent));
 			indcs = std::move(VBO(GL_ELEMENT_ARRAY_BUFFER, persistent));
@@ -161,11 +163,11 @@ namespace GL {
 
 			inited = true;
 			mapped = false;
-			return this;
+			return true;
 		}
-		RenderDataBuffer* Kill() {
+		bool Kill() {
 			if (!inited)
-				return this;
+				return false;
 
 			elems.UnmapIf();
 			indcs.UnmapIf();
@@ -177,7 +179,7 @@ namespace GL {
 
 			inited = false;
 			mapped = false;
-			return this;
+			return true;
 		}
 
 		void EnableShader() { shader.Enable(); }
@@ -273,7 +275,8 @@ namespace GL {
 			const Shader::ShaderInput* uniforms
 		);
 
-		void Submit(uint32_t primType, uint32_t dataSize, uint32_t dataType);
+		void Submit(uint32_t primType, uint32_t dataIndx, uint32_t dataSize) const;
+		void SubmitIndexed(uint32_t primType, uint32_t dataIndx, uint32_t dataSize) const;
 		void Upload(
 			size_t numElems, // in bytes!
 			size_t numIndcs, // in bytes!
@@ -320,32 +323,8 @@ namespace GL {
 		#endif
 
 
-		template<typename T> T* MapElems(bool bind, bool unbind) {
-			mapped = true;
-
-			if (bind)
-				elems.Bind();
-
-			T* ptr = reinterpret_cast<T*>(elems.MapBuffer());
-
-			if (unbind)
-				elems.Unbind();
-
-			return ptr;
-		}
-		template<typename T> T* MapIndcs(bool bind, bool unbind) {
-			mapped = true;
-
-			if (bind)
-				indcs.Bind();
-
-			T* ptr = reinterpret_cast<T*>(indcs.MapBuffer());
-
-			if (unbind)
-				indcs.Unbind();
-
-			return ptr;
-		}
+		template<typename T> T* MapElems(bool bind, bool unbind) { mapped = true; return (MapBuffer<T>(elems, bind, unbind)); }
+		template<typename T> T* MapIndcs(bool bind, bool unbind) { mapped = true; return (MapBuffer<T>(indcs, bind, unbind)); }
 
 		void UnmapElems() { elems.UnmapBuffer(); mapped = false; }
 		void UnmapIndcs() { indcs.UnmapBuffer(); mapped = false; }
@@ -359,6 +338,20 @@ namespace GL {
 
 		bool IsInited() const { return inited; }
 		bool IsMapped() const { return mapped; }
+		bool IsPinned() const { return elems.immutableStorage; }
+
+	private:
+		template<typename T> static T* MapBuffer(VBO& vbo, bool bind, bool unbind) {
+			if (bind)
+				vbo.Bind();
+
+			T* ptr = reinterpret_cast<T*>(vbo.MapBuffer());
+
+			if (unbind)
+				vbo.Unbind();
+
+			return ptr;
+		}
 
 	private:
 		VBO elems;
@@ -372,8 +365,11 @@ namespace GL {
 	};
 
 
+	// typed persistent wrapper
 	template<typename VertexArrayType> struct TRenderDataBuffer {
 	public:
+		typedef uint32_t IndexArrayType;
+
 		TRenderDataBuffer() = default;
 		TRenderDataBuffer(const TRenderDataBuffer& trdb) = delete;
 		TRenderDataBuffer(TRenderDataBuffer&& trdb) { *this = std::move(trdb); }
@@ -381,32 +377,81 @@ namespace GL {
 		TRenderDataBuffer& operator = (const TRenderDataBuffer& trdb) = delete;
 		TRenderDataBuffer& operator = (TRenderDataBuffer&& trdb) {
 			std::swap(rdb, trdb.rdb);
-			std::swap(map, trdb.map);
 
-			std::swap(prvIdx, trdb.prvIdx);
-			std::swap(curIdx, trdb.curIdx);
+			std::swap(elemsMap, trdb.elemsMap);
+			std::swap(indcsMap, trdb.indcsMap);
+
+			std::swap(prvElemPos, trdb.prvElemPos);
+			std::swap(curElemPos, trdb.curElemPos);
+			std::swap(prvIndxPos, trdb.prvIndxPos);
+			std::swap(curIndxPos, trdb.curIndxPos);
 			return *this;
 		}
 
 		// NOTE: potential mismatch between VertexArrayType and VertexAttribArray (std::array<T, N>)
-		template<typename VertexAttribArray> void Setup(RenderDataBuffer* rdbp, const VertexAttribArray* vaap) {
-			rdbp->Init(true);
-			rdbp->TUpload<VertexArrayType, uint32_t, Shader::ShaderInput>((1 << 18), 0, vaap->size(),  nullptr, nullptr, vaap->data());
-
+		template<typename VertexAttribArray> void Setup(
+			RenderDataBuffer* rdbp,
+			const VertexAttribArray* vaap,
+			size_t numElems = 1 << 18,
+			size_t numIndcs = 1 << 16
+		) {
 			rdb = rdbp;
-			map = rdbp->MapElems<VertexArrayType>(true, true);
+
+			rdb->Init(true);
+			rdb->TUpload<VertexArrayType, IndexArrayType, Shader::ShaderInput>(numElems, numIndcs, vaap->size(),  nullptr, nullptr, vaap->data());
+
+			elemsMap = rdb->MapElems<VertexArrayType>(true, true);
+			indcsMap = rdb->MapIndcs< IndexArrayType>(true, true); // null if numIndcs is 0
 		}
 		void Reset() {
-			prvIdx = 0;
-			curIdx = 0;
+			prvElemPos = 0;
+			curElemPos = 0;
+			prvIndxPos = 0;
+			curIndxPos = 0;
 		}
 
-		void Append(const VertexArrayType& e) { map[curIdx++] = e; }
-		void Submit(uint32_t primType) {
-			if (curIdx > prvIdx)
-				rdb->Submit(primType, prvIdx, curIdx - prvIdx);
+		bool CheckSizeE(size_t ne) const { return ((curElemPos + (ne - 1)) < rdb->GetNumElems<VertexArrayType>()); }
+		bool CheckSizeI(size_t ni) const { return ((curIndxPos + (ni - 1)) < rdb->GetNumIndcs< IndexArrayType>()); }
 
-			prvIdx = curIdx;
+		void AssertSizeE(size_t ne) const { assert(CheckSizeE(ne)); }
+		void AssertSizeI(size_t ni) const { assert(CheckSizeI(ni)); }
+
+		void Append(const VertexArrayType& e) { AssertSizeE(1); Append(&e, 1); }
+		void Append(const  IndexArrayType  i) { AssertSizeI(1); Append(&i, 1); }
+		void Append(const VertexArrayType* e, size_t ne) { std::memcpy(&elemsMap[curElemPos], e, ne * sizeof(VertexArrayType)); curElemPos += ne; }
+		void Append(const  IndexArrayType* i, size_t ni) { std::memcpy(&indcsMap[curIndxPos], i, ni * sizeof( IndexArrayType)); curIndxPos += ni; }
+
+		void SafeAppend(const VertexArrayType& e) { SafeAppend(&e, 1); }
+		void SafeAppend(const VertexArrayType* e, size_t ne) {
+			if (!CheckSizeE(ne))
+				return;
+			if (ne == 0)
+				return;
+			Append(e, ne);
+		}
+		void SafeAppend(const  IndexArrayType  i) { SafeAppend(&i, 1); }
+		void SafeAppend(const  IndexArrayType* i, size_t ni) {
+			if (!CheckSizeI(ni))
+				return;
+			if (ni == 0)
+				return;
+			Append(i, ni);
+		}
+
+		void Submit(uint32_t primType, uint32_t dataIndx, uint32_t dataSize) const { rdb->Submit(primType, dataIndx, dataSize); }
+		void Submit(uint32_t primType) {
+			if (curElemPos > prvElemPos)
+				rdb->Submit(primType, prvElemPos, curElemPos - prvElemPos);
+
+			prvElemPos = curElemPos;
+		}
+		void SubmitIndexed(uint32_t primType, uint32_t dataIndx, uint32_t dataSize) const { rdb->SubmitIndexed(primType, dataIndx, dataSize); }
+		void SubmitIndexed(uint32_t primType) {
+			if (curIndxPos > prvIndxPos)
+				rdb->SubmitIndexed(primType, prvIndxPos, curIndxPos - prvIndxPos);
+
+			// TODO: allow multiple batches with the same set of indices?
+			prvIndxPos = curIndxPos;
 		}
 
 		GL::RenderDataBuffer* GetBuffer() { return rdb; }
@@ -414,11 +459,15 @@ namespace GL {
 
 	private:
 		RenderDataBuffer* rdb = nullptr;
-		VertexArrayType* map = nullptr;
 
-		// these must never exceed rdb->GetNumElems<VertexArrayType>()
-		size_t prvIdx = 0;
-		size_t curIdx = 0;
+		VertexArrayType* elemsMap = nullptr;
+		IndexArrayType* indcsMap = nullptr;
+
+		// these must never exceed rdb->GetNum{Elems,Indcs}<{Vertex,Index}ArrayType>()
+		size_t prvElemPos = 0;
+		size_t curElemPos = 0;
+		size_t prvIndxPos = 0;
+		size_t curIndxPos = 0;
 	};
 
 
