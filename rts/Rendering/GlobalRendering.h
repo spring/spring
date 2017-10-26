@@ -3,6 +3,8 @@
 #ifndef _GLOBAL_RENDERING_H
 #define _GLOBAL_RENDERING_H
 
+#include <string>
+
 #include "System/creg/creg_cond.h"
 #include "System/Misc/SpringTime.h"
 #include "System/type2.h"
