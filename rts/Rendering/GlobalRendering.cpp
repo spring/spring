@@ -121,6 +121,7 @@ CR_REG_METADATA(CGlobalRendering, (
 
 	CR_IGNORED(active),
 	CR_IGNORED(isVideoCapturing),
+	CR_IGNORED(videoCapturingTimeOffset),
 	CR_IGNORED(compressTextures),
 
 	CR_IGNORED(haveATI),
