@@ -154,6 +154,7 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetDrawGroundDeferred);
 	REGISTER_LUA_CFUNC(SetDrawModelsDeferred);
 	REGISTER_LUA_CFUNC(SetVideoCapturingMode);
+	REGISTER_LUA_CFUNC(SetVideoCapturingTimeOffset);
 
 	REGISTER_LUA_CFUNC(SetWaterParams);
 
@@ -1052,6 +1053,14 @@ int LuaUnsyncedCtrl::SetVideoCapturingMode(lua_State* L)
 {
 	// NOTE the argument ordering
 	globalRendering->isVideoCapturing = !!luaL_checkboolean(L, 1);
+	return 0;
+}
+
+
+int LuaUnsyncedCtrl::SetVideoCapturingTimeOffset(lua_State* L)
+{
+	// NOTE the argument ordering
+	globalRendering->videoCapturingTimeOffset = luaL_checkfloat(L,1);
 	return 0;
 }
 
