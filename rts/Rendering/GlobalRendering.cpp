@@ -120,8 +120,6 @@ CR_REG_METADATA(CGlobalRendering, (
 	CR_IGNORED(maxTexAnisoLvl),
 
 	CR_IGNORED(active),
-	CR_IGNORED(isVideoCapturing),
-	CR_IGNORED(videoCapturingTimeOffset),
 	CR_IGNORED(compressTextures),
 
 	CR_IGNORED(haveATI),
@@ -208,8 +206,6 @@ CGlobalRendering::CGlobalRendering()
 
 	, teamNanospray(configHandler->GetBool("TeamNanoSpray"))
 	, active(true)
-	, isVideoCapturing(false)
-	, videoCapturingTimeOffset(0.0f)
 	, compressTextures(false)
 	, haveATI(false)
 	, haveMesa(false)

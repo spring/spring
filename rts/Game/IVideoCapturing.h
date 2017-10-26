@@ -8,16 +8,21 @@
 class IVideoCapturing : public spring::noncopyable {
 
 protected:
-	IVideoCapturing();
-	virtual ~IVideoCapturing();
+	IVideoCapturing() {}
+	virtual ~IVideoCapturing() { FreeInstance(); }
 
 public:
 	static IVideoCapturing* GetInstance();
 	static void FreeInstance();
+	static bool SetCapturing(bool enable);
 
 	virtual void RenderFrame() = 0;
 
-	static void SetCapturing(bool enabled);
+	void AllowRecord(bool enable) { allowRecord = enable; }
+
+	void SetLastFrameTime(float time);
+	void SetTimeOffset(float offset) { timeOffset = offset; }
+	float GetTimeOffset() const { return timeOffset; }
 
 	/**
 	 * Indicates whether it is possible/supported to capture a video.
@@ -31,12 +36,20 @@ public:
 	 *
 	 * @return	true if a video is currently being captured
 	 */
-	virtual bool IsCapturing() const { return false; }
+	bool IsCapturing() const { return capturing; }
+	bool AllowRecord() const { return allowRecord; }
 
 protected:
 	virtual void StartCapturing() {}
 	virtual void StopCapturing() {}
 
+protected:
+	// (can also be) set by Lua; regulates framerate and timing interpolation
+	bool allowRecord = false;
+	// internal state
+	bool capturing = false;
+
+	float timeOffset = 0.0f;
 };
 
 #define videoCapturing IVideoCapturing::GetInstance()

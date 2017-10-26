@@ -22,7 +22,9 @@
 #include "Game/ChatMessage.h"
 #include "Game/CommandMessage.h"
 #include "Game/GlobalUnsynced.h" // for syncdebug
+#ifndef DEDICATED
 #include "Game/IVideoCapturing.h"
+#endif
 #include "Game/Players/Player.h"
 #include "Game/Players/PlayerHandler.h"
 
@@ -56,7 +58,6 @@
 
 #ifndef DEDICATED
 #include "lib/luasocket/src/restrictions.h"
-#include "Rendering/GlobalRendering.h"
 #endif
 
 #define ALLOW_DEMO_GODMODE
@@ -2402,7 +2403,7 @@ bool CGameServer::HasFinished() const
 
 void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 {
-	if (demoReader != NULL) {
+	if (demoReader != nullptr) {
 		CheckSync();
 		SendDemoData(-1);
 		return;
@@ -2414,7 +2415,7 @@ void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 
 	CheckSync();
 #ifndef DEDICATED
-	const bool vidRecording = globalRendering->isVideoCapturing;
+	const bool vidRecording = videoCapturing->AllowRecord();
 #else
 	const bool vidRecording = false;
 #endif
@@ -2428,7 +2429,7 @@ void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 		LOG_L(
 			L_INFO, // L_DEBUG only works in DEBUG builds which are slow and affect timings
 			"[%s][1][sf=%d] fromServerThread=%d fixedFrameTime=%d hasLocalClient=%d normalFrame=%d",
-			__FUNCTION__, serverFrameNum, fromServerThread, fixedFrameTime, HasLocalClient(), normalFrame
+			__func__, serverFrameNum, fromServerThread, fixedFrameTime, HasLocalClient(), normalFrame
 		);
 	}
 

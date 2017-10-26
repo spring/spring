@@ -1052,7 +1052,7 @@ bool CGame::Update()
 
 	// When video recording do step by step simulation, so each simframe gets a corresponding videoframe
 	// FIXME: SERVER ALREADY DOES THIS BY ITSELF
-	if (playing && globalRendering->isVideoCapturing && gameServer != nullptr)
+	if (playing && gameServer != nullptr && videoCapturing->AllowRecord())
 		gameServer->CreateNewFrame(false, true);
 
 	ENTER_SYNCED_CODE();
@@ -1098,19 +1098,17 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 	const float unsyncedUpdateDeltaTime = (currentTime - lastUnsyncedUpdateTime).toSecsf();
 
 	lastDrawFrameTime = currentTime;
-	globalRendering->lastFrameStart = currentTime;
 
 	{
 		// update game timings
+		globalRendering->lastFrameStart = currentTime;
 		globalRendering->lastFrameTime = deltaDrawFrameTime.toMilliSecsf();
 
 		gu->avgFrameTime = mix(gu->avgFrameTime, deltaDrawFrameTime.toMilliSecsf(), 0.05f);
 		gu->gameTime += modGameDeltaTimeSecs;
 		gu->modGameTime += (modGameDeltaTimeSecs * gs->speedFactor * (1 - gs->paused));
 
-		if (playing && !gameOver)
-			totalGameTime += modGameDeltaTimeSecs;
-
+		totalGameTime += (modGameDeltaTimeSecs * (playing && !gameOver));
 		updateDeltaSeconds = modGameDeltaTimeSecs;
 	}
 
@@ -1143,11 +1141,12 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 	numDrawFrames++;
 
 	// Update the interpolation coefficient (globalRendering->timeOffset)
-	if (!gs->paused && !IsLagging() && !gs->PreSimFrame() && !globalRendering->isVideoCapturing) {
+	if (!gs->paused && !IsLagging() && !gs->PreSimFrame() && !videoCapturing->AllowRecord()) {
 		globalRendering->weightedSpeedFactor = 0.001f * gu->simFPS;
 		globalRendering->timeOffset = (currentTime - lastFrameTime).toMilliSecsf() * globalRendering->weightedSpeedFactor;
 	} else {
-		globalRendering->timeOffset = globalRendering->videoCapturingTimeOffset;
+		globalRendering->timeOffset = videoCapturing->GetTimeOffset();
+
 		lastSimFrameTime = currentTime;
 		lastFrameTime = currentTime;
 	}
@@ -1214,9 +1213,9 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 			pfx = userInput.substr(0, 2);
 			msg = userInput.substr(2);
 		}
-		if ((msg[0] == '/') && (msg[1] == '/')) {
+		if ((msg[0] == '/') && (msg[1] == '/'))
 			msg = msg.substr(1);
-		}
+
 		userInput = pfx + msg;
 		SendNetChat(userInput);
 		chatting = false;
@@ -1352,10 +1351,10 @@ bool CGame::Draw() {
 	glEnable(GL_DEPTH_TEST);
 	glLoadIdentity();
 
-	if (globalRendering->isVideoCapturing) {
-		globalRendering->lastFrameTime = 1000.0f / GAME_SPEED;
-		if (videoCapturing->IsCapturing())
-			videoCapturing->RenderFrame();
+	if (videoCapturing->AllowRecord()) {
+		videoCapturing->SetLastFrameTime(1000.0f / GAME_SPEED);
+		// does nothing unless StartCapturing has also been called via /createvideo (Windows-only)
+		videoCapturing->RenderFrame();
 	}
 
 	SetDrawMode(gameNotDrawing);
