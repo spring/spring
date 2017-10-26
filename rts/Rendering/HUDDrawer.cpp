@@ -5,6 +5,7 @@
 #include "Rendering/Fonts/glFont.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/GL/myGL.h"
+#include "Rendering/GL/MatrixState.hpp"
 #include "Rendering/GL/RenderDataBuffer.hpp"
 #include "Game/Camera.h"
 #include "Game/GlobalUnsynced.h"
@@ -48,19 +49,19 @@ void HUDDrawer::DrawModel(const CUnit* unit)
 
 	glColor4f(1.0f, 1.0f, 1.0f, 0.25f);
 
-	glMatrixMode(GL_PROJECTION);
-	glPushMatrix();
-	glLoadMatrixf(projMat);
-	glMatrixMode(GL_MODELVIEW);
-	glPushMatrix();
-	glLoadMatrixf(viewMat);
+	GL::MatrixMode(GL_PROJECTION);
+	GL::PushMatrix();
+	GL::LoadMatrix(projMat);
+	GL::MatrixMode(GL_MODELVIEW);
+	GL::PushMatrix();
+	GL::LoadMatrix(viewMat);
 
 	unit->localModel.Draw();
 
-	glMatrixMode(GL_PROJECTION);
-	glPopMatrix();
-	glMatrixMode(GL_MODELVIEW);
-	glPopMatrix();
+	GL::MatrixMode(GL_PROJECTION);
+	GL::PopMatrix();
+	GL::MatrixMode(GL_MODELVIEW);
+	GL::PopMatrix();
 }
 
 

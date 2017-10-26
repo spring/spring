@@ -11,6 +11,7 @@
 #endif
 
 #include "myGL.h"
+#include "MatrixState.hpp"
 #include "VertexArray.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Textures/Bitmap.h"
@@ -349,12 +350,12 @@ void glBuildMipmaps(const GLenum target, GLint internalFormat, const GLsizei wid
 
 void glSpringMatrix2dProj(const int sizex, const int sizey)
 {
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
+	GL::MatrixMode(GL_PROJECTION);
+	GL::LoadIdentity();
 	gluOrtho2D(0, sizex, 0, sizey);
 
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
+	GL::MatrixMode(GL_MODELVIEW);
+	GL::LoadIdentity();
 }
 
 

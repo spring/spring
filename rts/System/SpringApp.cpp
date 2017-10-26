@@ -45,10 +45,11 @@
 #include "Menu/LuaMenuController.h"
 #include "Menu/SelectMenu.h"
 #include "Net/GameServer.h"
-#include "Net/Protocol/NetProtocol.h"
+#include "Net/Protocol/NetProtocol.h" // clientNet
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/Fonts/glFont.h"
 #include "Rendering/GL/FBO.h"
+#include "Rendering/GL/MatrixState.hpp"
 #include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/Textures/NamedTextures.h"
 #include "Rendering/Textures/TextureAtlas.h"
@@ -233,7 +234,10 @@ bool SpringApp::Init()
 	globalRendering->UpdateGLConfigs();
 	globalRendering->UpdateGLGeometry();
 	globalRendering->InitGLState();
+
+	GL::SetMatrixStatePointer();
 	CCamera::InitializeStatic();
+
 	UpdateInterfaceGeometry();
 	CglFont::LoadConfigFonts();
 	ClearScreen();
