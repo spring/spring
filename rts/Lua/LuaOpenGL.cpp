@@ -572,6 +572,7 @@ void LuaOpenGL::EnableDrawWorldShadow()
 
 	glEnable(GL_POLYGON_OFFSET_FILL);
 
+	// FIXME: map/proj/tree passes
 	Shader::IProgramObject* po =
 		shadowHandler->GetShadowGenProg(CShadowHandler::SHADOWGEN_PROGRAM_MODEL);
 	po->Enable();
@@ -824,8 +825,6 @@ void LuaOpenGL::SetupScreenMatrices()
 
 	glMatrixMode(GL_PROJECTION);
 	glLoadMatrixf(CMatrix44f::PerspProj(left, right, bottom, top, znear, zfar));
-	// glLoadIdentity();
-	// glFrustum(left, right, bottom, top, znear, zfar);
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
@@ -863,7 +862,7 @@ void LuaOpenGL::ResetWorldMatrices()
 void LuaOpenGL::ResetWorldShadowMatrices()
 {
 	glMatrixMode(GL_TEXTURE   ); glLoadIdentity();
-	glMatrixMode(GL_PROJECTION); glLoadIdentity(); glOrtho(0.0f, 1.0f, 0.0f, 1.0f, 0.0f, -1.0f);
+	glMatrixMode(GL_PROJECTION); glLoadMatrixf(CMatrix44f::OrthoProj(0.0f, 1.0f, 0.0f, 1.0f, 0.0f, -1.0f)); // FIXME: CC
 	glMatrixMode(GL_MODELVIEW ); glLoadMatrixf(shadowHandler->GetShadowMatrixRaw());
 }
 
@@ -884,7 +883,7 @@ void LuaOpenGL::ResetMiniMapMatrices()
 
 	// engine draws minimap in 0..1 range, lua uses 0..minimapSize{X,Y}
 	glMatrixMode(GL_TEXTURE   ); glLoadIdentity();
-	glMatrixMode(GL_PROJECTION); glLoadIdentity(); glOrtho(0.0f, 1.0f, 0.0f, 1.0f, 0.0f, -1.0f); minimap->ApplyConstraintsMatrix();
+	glMatrixMode(GL_PROJECTION); glLoadMatrixf(CMatrix44f::OrthoProj(0.0f, 1.0f, 0.0f, 1.0f, 0.0f, -1.0f)); minimap->ApplyConstraintsMatrix();
 	glMatrixMode(GL_MODELVIEW ); glLoadIdentity(); glScalef(1.0f / minimap->GetSizeX(), 1.0f / minimap->GetSizeY(), 1.0f);
 }
 
@@ -3054,7 +3053,8 @@ int LuaOpenGL::Ortho(lua_State* L)
 	const float top    = luaL_checknumber(L, 4);
 	const float near   = luaL_checknumber(L, 5);
 	const float far    = luaL_checknumber(L, 6);
-	glOrtho(left, right, bottom, top, near, far);
+
+	glMultMatrixf(CMatrix44f::OrthoProj(left, right, bottom, top, near, far));
 	return 0;
 }
 
@@ -3062,13 +3062,15 @@ int LuaOpenGL::Ortho(lua_State* L)
 int LuaOpenGL::Frustum(lua_State* L)
 {
 	CheckDrawingEnabled(L, __func__);
+
 	const float left   = luaL_checknumber(L, 1);
 	const float right  = luaL_checknumber(L, 2);
 	const float bottom = luaL_checknumber(L, 3);
 	const float top    = luaL_checknumber(L, 4);
 	const float near   = luaL_checknumber(L, 5);
 	const float far    = luaL_checknumber(L, 6);
-	glFrustum(left, right, bottom, top, near, far);
+
+	glMultMatrixf(CMatrix44f::PerspProj(left, right, bottom, top, near, far));
 	return 0;
 }
 
