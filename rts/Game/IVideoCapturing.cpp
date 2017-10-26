@@ -45,5 +45,3 @@ bool IVideoCapturing::SetCapturing(bool enable)
 	return false;
 }
 
-void IVideoCapturing::SetLastFrameTime(float time) { globalRendering->lastFrameTime = time; }
-
