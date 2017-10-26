@@ -380,7 +380,7 @@ void CGame::LoadGame(const std::string& mapName)
 	//   when LoadingMT=1 (!!!)
 	Threading::SetGameLoadThread();
 	Watchdog::RegisterThread(WDT_LOAD);
-	GL::SetMatrixStatePointer();
+	GL::SetMatrixStatePointer(Threading::IsMainThread());
 
 	auto& globalQuit = gu->globalQuit;
 	bool  forcedQuit = false;
@@ -450,7 +450,6 @@ void CGame::LoadGame(const std::string& mapName)
 		forcedQuit = true;
 	}
 
-	GL::SetMatrixStatePointer();
 	Watchdog::DeregisterThread(WDT_LOAD);
 	AddTimedJobs();
 

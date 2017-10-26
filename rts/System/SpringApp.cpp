@@ -235,7 +235,7 @@ bool SpringApp::Init()
 	globalRendering->UpdateGLGeometry();
 	globalRendering->InitGLState();
 
-	GL::SetMatrixStatePointer();
+	GL::SetMatrixStatePointer(true);
 	CCamera::InitializeStatic();
 
 	UpdateInterfaceGeometry();

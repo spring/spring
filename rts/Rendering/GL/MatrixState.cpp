@@ -1,19 +1,13 @@
 #include "MatrixState.hpp"
 #include "Rendering/GL/myGL.h"
 #include "System/MainDefines.h"
-#include "System/Platform/Threading.h"
 
 static GL::MatrixState matrixStates[2];
 static _threadlocal GL::MatrixState* matrixState = nullptr;
 
 
-void GL::SetMatrixStatePointer() {
-	if (matrixState == nullptr) {
-		matrixState = &matrixStates[Threading::IsMainThread()];
-	} else {
-		// reset if called twice
-		matrixState = nullptr;
-	}
+void GL::SetMatrixStatePointer(bool mainThread) {
+	matrixState = &matrixStates[mainThread];
 }
 
 
@@ -25,7 +19,7 @@ void GL::MatrixMode(unsigned int mode) {
 	switch (mode) {
 		case GL_MODELVIEW : { matrixState->SetMode(0); } break;
 		case GL_PROJECTION: { matrixState->SetMode(1); } break;
-		case GL_TEXTURE   : { matrixState->SetMode(1); } break;
+		case GL_TEXTURE   : { matrixState->SetMode(2); } break;
 		default           : {                          } break;
 	}
 

@@ -34,7 +34,7 @@ namespace GL {
 	};
 
 
-	void SetMatrixStatePointer();
+	void SetMatrixStatePointer(bool mainThread);
 
 
 	void MatrixMode(unsigned int mode);
