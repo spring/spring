@@ -1052,7 +1052,7 @@ int LuaUnsyncedCtrl::SetDrawModelsDeferred(lua_State* L)
 
 int LuaUnsyncedCtrl::SetVideoCapturingMode(lua_State* L)
 {
-	videoCapturing->AllowRecord(luaL_checkboolean(L, 1));
+	videoCapturing->SetAllowRecord(luaL_checkboolean(L, 1));
 	return 0;
 }
 

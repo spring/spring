@@ -18,7 +18,7 @@ public:
 
 	virtual void RenderFrame() = 0;
 
-	void AllowRecord(bool enable) { allowRecord = enable; }
+	void SetAllowRecord(bool enable) { allowRecord = enable; }
 
 	void SetLastFrameTime(float time) { lastFrameTime = time; }
 	void SetTimeOffset(float offset) { timeOffset = offset; }
