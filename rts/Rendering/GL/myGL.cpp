@@ -348,13 +348,59 @@ void glBuildMipmaps(const GLenum target, GLint internalFormat, const GLsizei wid
 }
 
 
-void glSpringMatrix2dProj(const int sizex, const int sizey)
-{
+
+
+static void LoadProjMat2D(float l, float r, float b, float t,  bool push) {
 	GL::MatrixMode(GL_PROJECTION);
-	GL::LoadMatrix(CMatrix44f::ClipControl(globalRendering->supportClipSpaceControl) * CMatrix44f::OrthoProj(0, sizex, 0, sizey, -1, 1);
+
+	if (push)
+		GL::PushMatrix();
+
+	GL::LoadMatrix(CMatrix44f::ClipControl(globalRendering->supportClipSpaceControl) * CMatrix44f::OrthoProj(l, r, b, t, -1.0f, 1.0f));
+}
+
+static void LoadViewMat2D(bool push) {
+	GL::MatrixMode(GL_MODELVIEW);
+
+	if (push)
+		GL::PushMatrix();
+
+	GL::LoadIdentity();
+}
+
+
+void glSpringMatrix2dSetupVP(float l, float r, float b, float t,  bool push)
+{
+	LoadViewMat2D(push);
+	LoadProjMat2D(l, r, b, t,  push);
+}
+void glSpringMatrix2dSetupPV(float l, float r, float b, float t,  bool push)
+{
+	LoadProjMat2D(l, r, b, t,  push);
+	LoadViewMat2D(push);
+}
+
+void glSpringMatrix2dSetupVP(float sizex, float sizey,  bool push) { glSpringMatrix2dSetupVP(0.0f, sizex, 0.0f, sizey,  push); }
+void glSpringMatrix2dSetupPV(float sizex, float sizey,  bool push) { glSpringMatrix2dSetupPV(0.0f, sizex, 0.0f, sizey,  push); }
+
+void glSpringMatrix2dResetVP(bool pop) {
+	GL::MatrixMode(GL_MODELVIEW);
+	if (pop)
+		GL::PopMatrix();
+
+	GL::MatrixMode(GL_PROJECTION);
+	if (pop)
+		GL::PopMatrix();
+}
+
+void glSpringMatrix2dResetPV(bool pop) {
+	GL::MatrixMode(GL_PROJECTION);
+	if (pop)
+		GL::PopMatrix();
 
 	GL::MatrixMode(GL_MODELVIEW);
-	GL::LoadIdentity();
+	if (pop)
+		GL::PopMatrix();
 }
 
 
@@ -364,7 +410,7 @@ void ClearScreen()
 {
 	glClearColor(0, 0, 0, 1);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glSpringMatrix2dProj(1, 1);
+	glSpringMatrix2dSetupPV(1.0f, 1.0f);
 
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

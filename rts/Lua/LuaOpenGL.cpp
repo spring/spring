@@ -801,9 +801,6 @@ void LuaOpenGL::ResetDrawInMiniMapBackground()
 
 void LuaOpenGL::SetupScreenMatrices()
 {
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-
 	const int winPosY_bl = globalRendering->screenSizeY - globalRendering->winSizeY - globalRendering->winPosY; //! origin BOTTOMLEFT
 	const float dist   = screenDistance;         // eye-to-screen (meters)
 	const float width  = screenWidth;            // screen width (meters)
@@ -826,19 +823,21 @@ void LuaOpenGL::SetupScreenMatrices()
 	const float top    = ((vppy + vpsy) - halfSY) * factor;
 	glFrustum(left, right, bottom, top, znear, zfar);
 
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-	// translate so that (0,0,0) is on the zplane,
-	// on the window's bottom left corner
-	const float distAdj = (zplane / znear);
-	glTranslatef(left * distAdj, bottom * distAdj, -zplane);
+
+	// translate s.t. (0,0,0) is on the zplane, on the window's bottom left corner
+	glTranslatef(left * (zplane / znear), bottom * (zplane / znear), -zplane);
 }
 
 void LuaOpenGL::RevertScreenMatrices()
 {
-	glMatrixMode(GL_TEXTURE   ); glLoadIdentity();
-	glMatrixMode(GL_PROJECTION); glLoadIdentity(); gluOrtho2D(0.0f, 1.0f, 0.0f, 1.0f);
-	glMatrixMode(GL_MODELVIEW ); glLoadIdentity();
+	glMatrixMode(GL_TEXTURE);
+	glLoadIdentity();
+
+	glSpringMatrix2dSetupPV(1.0f, 1.0f);
 }
 
 

@@ -460,13 +460,7 @@ void ProfileDrawer::DrawScreen()
 {
 	SCOPED_TIMER("Draw::Screen::DrawScreen::Profile");
 
-	glMatrixMode(GL_MODELVIEW);
-	glPushMatrix();
-	glLoadIdentity();
-	glMatrixMode(GL_PROJECTION);
-	glPushMatrix();
-	glLoadIdentity();
-	gluOrtho2D(0, 1, 0, 1);
+	glSpringMatrix2dSetupVP(0.0f, 1.0f, 0.0f, 1.0f,  true);
 
 	glDisable(GL_TEXTURE_2D);
 	font->SetTextColor(1.0f, 1.0f, 0.5f, 0.8f);
@@ -479,10 +473,8 @@ void ProfileDrawer::DrawScreen()
 	font->DrawBufferedGL4();
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 	glEnable(GL_TEXTURE_2D);
-	glMatrixMode(GL_PROJECTION);
-	glPopMatrix();
-	glMatrixMode(GL_MODELVIEW);
-	glPopMatrix();
+
+	glSpringMatrix2dResetPV(true);
 }
 
 bool ProfileDrawer::MousePress(int x, int y, int button)

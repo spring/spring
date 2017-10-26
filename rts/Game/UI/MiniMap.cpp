@@ -967,13 +967,7 @@ void CMiniMap::ResizeTextureCache()
 void CMiniMap::UpdateTextureCache()
 {
 	// draws minimap into FBO
-	glMatrixMode(GL_PROJECTION);
-	glPushMatrix();
-	glLoadIdentity();
-	gluOrtho2D(0,1,0,1);
-	glMatrixMode(GL_MODELVIEW);
-	glPushMatrix();
-	glLoadIdentity();
+	glSpringMatrix2dSetupPV(0.0f, 1.0f, 0.0f, 1.0f,  true);
 
 	{
 		curPos = {0, 0};
@@ -986,20 +980,18 @@ void CMiniMap::UpdateTextureCache()
 		curPos = tmpPos;
 	}
 
-	glMatrixMode(GL_PROJECTION);
-	glPopMatrix();
-	glMatrixMode(GL_MODELVIEW);
-	glPopMatrix();
+	glSpringMatrix2dResetPV(true);
 
 	// resolve multisampled FBO if there is one
-	if (multisampledFBO) {
-		glBindFramebufferEXT(GL_READ_FRAMEBUFFER, fbo.fboId);
-		glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER, fboResolve.fboId);
-		glBlitFramebufferEXT(
-			0, 0, minimapTexSize.x, minimapTexSize.y,
-			0, 0, minimapTexSize.x, minimapTexSize.y,
-			GL_COLOR_BUFFER_BIT, GL_NEAREST);
-	}
+	if (!multisampledFBO)
+		return;
+
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo.fboId);
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fboResolve.fboId);
+	glBlitFramebuffer(
+		0, 0, minimapTexSize.x, minimapTexSize.y,
+		0, 0, minimapTexSize.x, minimapTexSize.y,
+		GL_COLOR_BUFFER_BIT, GL_NEAREST);
 }
 
 
