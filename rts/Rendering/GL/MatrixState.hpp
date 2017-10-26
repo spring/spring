@@ -3,6 +3,12 @@
 #ifndef GL_MATRIX_STACK_H
 #define GL_MATRIX_STACK_H
 
+#define CHECK_MATRIX_STACK_UNDERFLOW
+
+#ifdef CHECK_MATRIX_STACK_UNDERFLOW
+#include <cassert>
+#endif
+
 #include "System/Matrix44f.h"
 
 namespace GL {
@@ -11,15 +17,41 @@ namespace GL {
 		std::vector<CMatrix44f> stacks[3] = {{CMatrix44f::Identity()}, {CMatrix44f::Identity()}, {CMatrix44f::Identity()}};
 		std::vector<CMatrix44f>& stack = stacks[0];
 
+		CMatrix44f dummy;
+
 	public:
-		const CMatrix44f& Top() const { return (stack.back()); }
-		      CMatrix44f& Top()       { return (stack.back()); }
+		const CMatrix44f& Top() const {
+			#ifdef CHECK_MATRIX_STACK_UNDERFLOW
+			if (stack.empty()) {
+				assert(false);
+				return dummy;
+			}
+			#endif
+			return (stack.back());
+		}
+		CMatrix44f& Top() {
+			#ifdef CHECK_MATRIX_STACK_UNDERFLOW
+			if (stack.empty()) {
+				assert(false);
+				return dummy;
+			}
+			#endif
+			return (stack.back());
+		}
 
 		void SetMode(unsigned int mode) { stack = stacks[mode]; }
 
 		void Push(const CMatrix44f& m) { stack.push_back(m); }
 		void Push() { Push(Top()); }
-		void Pop() { stack.pop_back(); }
+		void Pop() {
+			#ifdef CHECK_MATRIX_STACK_UNDERFLOW
+			if (stack.empty()) {
+				assert(false);
+				return;
+			}
+			#endif
+			stack.pop_back();
+		}
 
 		void Mult(const CMatrix44f& m) { Load(Top() = Top() * m); }
 		void Load(const CMatrix44f& m);

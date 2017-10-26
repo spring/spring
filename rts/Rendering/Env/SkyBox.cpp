@@ -57,7 +57,7 @@ void CSkyBox::Draw()
 	glEnable(GL_TEXTURE_CUBE_MAP);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, skyTex.GetID());
 
-	glSpringMatrix2dSetupVP(0.0f, 1.0f, 0.0f, 1.0f,  true);
+	glSpringMatrix2dSetupVP(0.0f, 1.0f, 0.0f, 1.0f,  true, true);
 
 	GLfloat verts[] = {
 		0.0f, 1.0f,
@@ -82,7 +82,7 @@ void CSkyBox::Draw()
 	glDisableClientState(GL_VERTEX_ARRAY);
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 
-	glSpringMatrix2dResetPV(true);
+	glSpringMatrix2dResetPV(true, true);
 
 	glDisable(GL_TEXTURE_CUBE_MAP_ARB);
 

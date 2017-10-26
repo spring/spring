@@ -61,7 +61,7 @@ void CCursorIcons::DrawCursors()
 	if (icons.empty() || !cmdColors.UseQueueIcons())
 		return;
 
-	glSpringMatrix2dSetupPV(0.0f, 1.0f, 0.0f, 1.0f,  true);
+	glSpringMatrix2dSetupPV(0.0f, 1.0f, 0.0f, 1.0f,  true, true);
 
 	glColor4f(1.0f, 1.0f, 1.0f, cmdColors.QueueIconAlpha());
 
@@ -93,7 +93,7 @@ void CCursorIcons::DrawCursors()
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 	DrawTexts(); // use the same transformation
 
-	glSpringMatrix2dResetPV(true);
+	glSpringMatrix2dResetPV(true, true);
 }
 
 

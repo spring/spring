@@ -460,7 +460,7 @@ void ProfileDrawer::DrawScreen()
 {
 	SCOPED_TIMER("Draw::Screen::DrawScreen::Profile");
 
-	glSpringMatrix2dSetupVP(0.0f, 1.0f, 0.0f, 1.0f,  true);
+	glSpringMatrix2dSetupVP(0.0f, 1.0f, 0.0f, 1.0f,  true, true);
 
 	glDisable(GL_TEXTURE_2D);
 	font->SetTextColor(1.0f, 1.0f, 0.5f, 0.8f);
@@ -474,7 +474,7 @@ void ProfileDrawer::DrawScreen()
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 	glEnable(GL_TEXTURE_2D);
 
-	glSpringMatrix2dResetPV(true);
+	glSpringMatrix2dResetPV(true, true);
 }
 
 bool ProfileDrawer::MousePress(int x, int y, int button)

@@ -97,12 +97,10 @@ void glSpringBindTextures(GLuint first, GLsizei count, const GLuint* textures);
 void glSpringTexStorage2D(const GLenum target, GLint levels, const GLint internalFormat, const GLsizei width, const GLsizei height);
 void glBuildMipmaps(const GLenum target, GLint internalFormat, const GLsizei width, const GLsizei height, const GLenum format, const GLenum type, const void* data);
 
-void glSpringMatrix2dSetupVP(float l, float r, float b, float t,  bool push = false); // load view first, then proj
-void glSpringMatrix2dSetupPV(float l, float r, float b, float t,  bool push = false); // load proj first, then view
-void glSpringMatrix2dSetupVP(float sizex, float sizey,  bool push = false);
-void glSpringMatrix2dSetupPV(float sizex, float sizey,  bool push = false);
-void glSpringMatrix2dResetVP(bool pop = false); // pop view first, then proj
-void glSpringMatrix2dResetPV(bool pop = false); // pop proj first, then view
+void glSpringMatrix2dSetupVP(float l, float r, float b, float t,  bool pushView = false, bool pushProj = false); // load view first, then proj
+void glSpringMatrix2dSetupPV(float l, float r, float b, float t,  bool pushView = false, bool pushProj = false); // load proj first, then view
+void glSpringMatrix2dResetVP(bool popView = false, bool popProj = false); // pop view first, then proj
+void glSpringMatrix2dResetPV(bool popView = false, bool popProj = false); // pop proj first, then view
 
 void ClearScreen();
 

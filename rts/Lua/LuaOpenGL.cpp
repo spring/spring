@@ -837,7 +837,7 @@ void LuaOpenGL::RevertScreenMatrices()
 	glMatrixMode(GL_TEXTURE);
 	glLoadIdentity();
 
-	glSpringMatrix2dSetupPV(1.0f, 1.0f);
+	glSpringMatrix2dSetupPV(0.0f, 1.0f, 0.0f, 1.0f);
 }
 
 

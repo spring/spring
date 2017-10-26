@@ -207,7 +207,7 @@ void CWorldDrawer::GenerateIBLTextures() const
 
 void CWorldDrawer::ResetMVPMatrices() const
 {
-	glSpringMatrix2dSetupPV(1.0f, 1.0f);
+	glSpringMatrix2dSetupPV(0.0f, 1.0f, 0.0f, 1.0f);
 
 	glEnable(GL_BLEND);
 	glDisable(GL_DEPTH_TEST);

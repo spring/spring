@@ -966,12 +966,12 @@ void CMiniMap::ResizeTextureCache()
 
 void CMiniMap::UpdateTextureCache()
 {
-	// draws minimap into FBO
-	glSpringMatrix2dSetupPV(0.0f, 1.0f, 0.0f, 1.0f,  true);
+	glSpringMatrix2dSetupPV(0.0f, 1.0f, 0.0f, 1.0f,  true, true);
 
 	{
 		curPos = {0, 0};
 
+			// draw minimap into FBO
 			glViewport(0, 0, minimapTexSize.x, minimapTexSize.y);
 			glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 			glClear(GL_COLOR_BUFFER_BIT);
@@ -980,7 +980,7 @@ void CMiniMap::UpdateTextureCache()
 		curPos = tmpPos;
 	}
 
-	glSpringMatrix2dResetPV(true);
+	glSpringMatrix2dResetPV(true, true);
 
 	// resolve multisampled FBO if there is one
 	if (!multisampledFBO)

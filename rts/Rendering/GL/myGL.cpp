@@ -351,56 +351,91 @@ void glBuildMipmaps(const GLenum target, GLint internalFormat, const GLsizei wid
 
 
 static void LoadProjMat2D(float l, float r, float b, float t,  bool push) {
+	#if 0
 	GL::MatrixMode(GL_PROJECTION);
 
 	if (push)
 		GL::PushMatrix();
 
 	GL::LoadMatrix(CMatrix44f::ClipControl(globalRendering->supportClipSpaceControl) * CMatrix44f::OrthoProj(l, r, b, t, -1.0f, 1.0f));
+	#else
+	glMatrixMode(GL_PROJECTION);
+
+	if (push)
+		glPushMatrix();
+
+	glLoadMatrixf(CMatrix44f::ClipControl(globalRendering->supportClipSpaceControl) * CMatrix44f::OrthoProj(l, r, b, t, -1.0f, 1.0f));
+	#endif
 }
 
 static void LoadViewMat2D(bool push) {
+	#if 0
 	GL::MatrixMode(GL_MODELVIEW);
 
 	if (push)
 		GL::PushMatrix();
 
 	GL::LoadIdentity();
+	#else
+	glMatrixMode(GL_MODELVIEW);
+
+	if (push)
+		glPushMatrix();
+
+	glLoadIdentity();
+	#endif
 }
 
 
-void glSpringMatrix2dSetupVP(float l, float r, float b, float t,  bool push)
+void glSpringMatrix2dSetupVP(float l, float r, float b, float t,  bool pushView, bool pushProj)
 {
-	LoadViewMat2D(push);
-	LoadProjMat2D(l, r, b, t,  push);
+	LoadViewMat2D(pushView);
+	LoadProjMat2D(l, r, b, t,  pushProj);
 }
-void glSpringMatrix2dSetupPV(float l, float r, float b, float t,  bool push)
+void glSpringMatrix2dSetupPV(float l, float r, float b, float t,  bool pushView, bool pushProj)
 {
-	LoadProjMat2D(l, r, b, t,  push);
-	LoadViewMat2D(push);
+	LoadProjMat2D(l, r, b, t,  pushProj);
+	LoadViewMat2D(pushView);
 }
 
-void glSpringMatrix2dSetupVP(float sizex, float sizey,  bool push) { glSpringMatrix2dSetupVP(0.0f, sizex, 0.0f, sizey,  push); }
-void glSpringMatrix2dSetupPV(float sizex, float sizey,  bool push) { glSpringMatrix2dSetupPV(0.0f, sizex, 0.0f, sizey,  push); }
-
-void glSpringMatrix2dResetVP(bool pop) {
+void glSpringMatrix2dResetVP(bool popView, bool popProj) {
+	#if 0
 	GL::MatrixMode(GL_MODELVIEW);
-	if (pop)
+	if (popView)
 		GL::PopMatrix();
 
 	GL::MatrixMode(GL_PROJECTION);
-	if (pop)
+	if (popProj)
 		GL::PopMatrix();
+	#else
+	glMatrixMode(GL_MODELVIEW);
+	if (popView)
+		glPopMatrix();
+
+	glMatrixMode(GL_PROJECTION);
+	if (popProj)
+		glPopMatrix();
+	#endif
 }
 
-void glSpringMatrix2dResetPV(bool pop) {
+void glSpringMatrix2dResetPV(bool popView, bool popProj) {
+	#if 0
 	GL::MatrixMode(GL_PROJECTION);
-	if (pop)
+	if (popProj)
 		GL::PopMatrix();
 
 	GL::MatrixMode(GL_MODELVIEW);
-	if (pop)
+	if (popView)
 		GL::PopMatrix();
+	#else
+	glMatrixMode(GL_PROJECTION);
+	if (popProj)
+		glPopMatrix();
+
+	glMatrixMode(GL_MODELVIEW);
+	if (popView)
+		glPopMatrix();
+	#endif
 }
 
 
@@ -410,7 +445,7 @@ void ClearScreen()
 {
 	glClearColor(0, 0, 0, 1);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glSpringMatrix2dSetupPV(1.0f, 1.0f);
+	glSpringMatrix2dSetupPV(0.0f, 1.0f, 0.0f, 1.0f);
 
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
