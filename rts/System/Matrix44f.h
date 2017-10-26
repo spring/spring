@@ -115,6 +115,14 @@ public:
 	static CMatrix44f PerspProj(float aspect, float thfov, float zn, float zf);
 	static CMatrix44f PerspProj(float l, float r, float b, float t, float zn, float zf);
 	static CMatrix44f OrthoProj(float l, float r, float b, float t, float zn, float zf);
+	static CMatrix44f ClipControl(bool enabled) {
+		constexpr float s[2] = {0.0f, 1.0f};
+
+		CMatrix44f m;
+		m.Translate(FwdVector * 0.5f * s[enabled]);
+		m.Scale(OnesVector - (FwdVector * 0.5f * s[enabled]));
+		return m;
+	}
 
 
 public:

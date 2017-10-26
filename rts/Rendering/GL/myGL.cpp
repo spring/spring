@@ -351,8 +351,7 @@ void glBuildMipmaps(const GLenum target, GLint internalFormat, const GLsizei wid
 void glSpringMatrix2dProj(const int sizex, const int sizey)
 {
 	GL::MatrixMode(GL_PROJECTION);
-	GL::LoadIdentity();
-	gluOrtho2D(0, sizex, 0, sizey);
+	GL::LoadMatrix(CMatrix44f::ClipControl(globalRendering->supportClipSpaceControl) * CMatrix44f::OrthoProj(0, sizex, 0, sizey, -1, 1);
 
 	GL::MatrixMode(GL_MODELVIEW);
 	GL::LoadIdentity();

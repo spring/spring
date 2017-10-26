@@ -27,18 +27,11 @@ static CCamera cameras[CCamera::CAMTYPE_COUNT];
 
 void CCamera::SetActiveCamera(unsigned int camType) { cameras[CAMTYPE_ACTIVE].SetCamType(camType); }
 void CCamera::InitializeStatic() {
-	CMatrix44f clipCtrlMatrix;
-
-	if (globalRendering->supportClipSpaceControl) {
-		clipCtrlMatrix.Translate(FwdVector * 0.5f);
-		clipCtrlMatrix.Scale(OnesVector - (FwdVector * 0.5f));
-	}
-
 	// initialize all global cameras
 	for (unsigned int i = CAMTYPE_PLAYER; i < CAMTYPE_COUNT; i++) {
 		cameras[i].SetCamType(i);
 		cameras[i].SetProjType((i == CAMTYPE_SHADOW)? PROJTYPE_ORTHO: PROJTYPE_PERSP);
-		cameras[i].SetClipCtrlMatrix(clipCtrlMatrix);
+		cameras[i].SetClipCtrlMatrix(CMatrix44f::ClipControl(globalRendering->supportClipSpaceControl));
 	}
 
 	SetActiveCamera(CAMTYPE_PLAYER);
