@@ -1147,7 +1147,7 @@ bool CGame::UpdateUnsynced(const spring_time currentTime)
 		globalRendering->weightedSpeedFactor = 0.001f * gu->simFPS;
 		globalRendering->timeOffset = (currentTime - lastFrameTime).toMilliSecsf() * globalRendering->weightedSpeedFactor;
 	} else {
-		globalRendering->timeOffset = 0;
+		globalRendering->timeOffset = globalRendering->videoCapturingTimeOffset;
 		lastSimFrameTime = currentTime;
 		lastFrameTime = currentTime;
 	}

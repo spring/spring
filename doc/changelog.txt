@@ -45,6 +45,7 @@ Lua:
  - support local-space tracking for dynamic lights added via Spring.Add{Map,Model}Light
    the light-definition table should contain a 'localSpace = true' entry to enable this
  - move GetConfig* to LuaUnsyncedRead
+ - Add Spring.SetVideoCapturingTimeOffset() for > 30fps video capturing
 
 Misc:
  - remove joystick support

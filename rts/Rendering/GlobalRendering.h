@@ -230,6 +230,8 @@ public:
 	/// whether we're capturing video - relevant for frame timing
 	bool isVideoCapturing;
 
+	float videoCapturingTimeOffset;
+
 	/**
 	 * @brief compressTextures
 	 *
