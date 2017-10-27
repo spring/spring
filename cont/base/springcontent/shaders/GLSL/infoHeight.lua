@@ -2,21 +2,30 @@ return {
 	definitions = {
 		Spring.GetConfigInt("HighResInfoTexture") and "#define HIGH_QUALITY" or "",
 	},
-	vertex = [[#version 130
-		varying vec2 texCoord;
+
+	vertex = [[
+		#version 410 core
+		layout(location = 0) in vec3 aVertexPos;
+		layout(location = 1) in vec2 aTexCoords;
+
+		out vec2 vTexCoords;
 
 		void main() {
-			texCoord = gl_MultiTexCoord0.st;
-			gl_Position = vec4(gl_Vertex.xyz, 1.0);
+			vTexCoords = aTexCoords;
+			gl_Position = vec4(aVertexPos, 1.0);
 		}
 	]],
-	fragment = [[#version 130
-	#ifdef HIGH_QUALITY
-	#extension GL_ARB_texture_query_lod : enable
-	#endif
+
+	fragment = [[
+		#version 410 core
+		#ifdef HIGH_QUALITY
+		#extension GL_ARB_texture_query_lod : enable
+		#endif
 
 		uniform sampler2D tex0;
-		varying vec2 texCoord;
+
+		in vec2 vTexCoords;
+		layout(location = 0) out vec4 fFragColor;
 
 	#ifdef HIGH_QUALITY
 
@@ -30,19 +39,20 @@ return {
 			vec2 i = floor(p);
 			vec2 f = p - i;
 			vec2 ff = f*f;
+
 			f = ff * f * ((ff * 6.0 - f * 15.0) + 10.0);
 			p = i + f;
-
 			p = (p - 0.5) / texSize;
-			return texture2D(tex, p);
+
+			return texture(tex, p);
 		}
 	#else
-		#define getTexel texture2D
+		#define getTexel texture
 	#endif
 
 		void main() {
-			gl_FragColor = getTexel(tex0, texCoord);
-			gl_FragColor.a = 0.3;
+			fFragColor = getTexel(tex0, vTexCoords);
+			fFragColor.a = 0.3;
 		}
 	]],
 	uniformInt = {

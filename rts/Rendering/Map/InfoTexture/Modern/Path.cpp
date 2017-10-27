@@ -75,11 +75,6 @@ static const SColor buildColors[] = {
 };
 
 
-static inline const SColor& GetBuildColor(const VisBuildSquareStatus& status) {
-	return buildColors[status];
-}
-
-
 static SColor GetSpeedModColor(const float sm) {
 	SColor col(255, 0, 0);
 
@@ -99,21 +94,21 @@ const MoveDef* CPathTexture::GetSelectedMoveDef()
 	if (forcedPathType >= 0)
 		return moveDefHandler->GetMoveDefByPathType(forcedPathType);
 
-	const MoveDef* md = nullptr;
 	const auto& unitSet = selectedUnitsHandler.selectedUnits;
-	if (!unitSet.empty()) {
-		const CUnit* unit = unitHandler->GetUnit(*unitSet.begin());
-		md = unit->moveDef;
-	}
-	return md;
+
+	if (unitSet.empty())
+		return nullptr;
+
+	const auto iter = unitSet.begin();
+	const CUnit* unit = unitHandler->GetUnit(*iter);
+	return unit->moveDef;
 }
 
 
 const UnitDef* CPathTexture::GetCurrentBuildCmdUnitDef()
 {
-	if (forcedUnitDef >= 0) {
+	if (forcedUnitDef >= 0)
 		return unitDefHandler->GetUnitDefByID(forcedUnitDef);
-	}
 
 	if ((unsigned)guihandler->inCommand > guihandler->commands.size())
 		return nullptr;
@@ -160,8 +155,10 @@ bool CPathTexture::IsUpdateNeeded()
 
 	// newly build cmd active?
 	const UnitDef* ud = GetCurrentBuildCmdUnitDef();
-	if (ud) {
-		const unsigned int buildDefID = ud ? -(ud->id + 1) : 0;
+
+	if (ud != nullptr) {
+		const unsigned int buildDefID = -(ud->id + 1);
+
 		if (buildDefID != lastSelectedPathType) {
 			lastSelectedPathType = buildDefID;
 			updateProcess = 0;
@@ -170,8 +167,10 @@ bool CPathTexture::IsUpdateNeeded()
 	} else {
 		// newly unit/moveType active?
 		const MoveDef* md = GetSelectedMoveDef();
-		if (md) {
-			const unsigned int pathType = md ? (md->pathType + 1) : 0;
+
+		if (md != nullptr) {
+			const unsigned int pathType = md->pathType + 1;
+
 			if (pathType != lastSelectedPathType) {
 				lastSelectedPathType = pathType;
 				updateProcess = 0;
@@ -181,11 +180,7 @@ bool CPathTexture::IsUpdateNeeded()
 	}
 
 	// nothing selected nor any build cmd active -> don't update
-	if (lastSelectedPathType == 0 && isCleared) {
-		return false;
-	}
-
-	return true;
+	return (lastSelectedPathType != 0 || !isCleared);
 }
 
 
@@ -246,7 +241,7 @@ void CPathTexture::Update()
 					status = TERRAINBLOCKED;
 				}
 
-				infoTexMem[idx - offset] = GetBuildColor(status);
+				infoTexMem[idx - offset] = buildColors[status];
 			}
 		}
 	} else if (md != nullptr) {
@@ -274,5 +269,6 @@ void CPathTexture::Update()
 	glBindTexture(GL_TEXTURE_2D, texture);
 	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, start, texSize.x, updateProcess - start, GL_RGBA, GL_UNSIGNED_BYTE, infoTexPBO.GetPtr(offset * sizeof(SColor)));
 	infoTexPBO.Unbind();
+
 	isCleared = false;
 }

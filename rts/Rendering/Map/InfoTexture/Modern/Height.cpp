@@ -5,6 +5,7 @@
 #include "Map/HeightMapTexture.h"
 #include "Map/ReadMap.h"
 #include "Rendering/GlobalRendering.h"
+#include "Rendering/GL/RenderDataBuffer.hpp"
 #include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/Shaders/Shader.h"
 #include "System/Color.h"
@@ -12,10 +13,15 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/Log/ILog.h"
 
-
 // currently defined in HeightLinePalette.cpp
 //CONFIG(bool, ColorElev).defaultValue(true).description("If heightmap (default hotkey [F1]) should be colored or not.");
 
+constexpr VA_TYPE_0 VERTS[] = {
+	{{ 0.0f,  0.0f, 0.0f}},
+	{{ 0.0f, +1.0f, 0.0f}},
+	{{+1.0f, +1.0f, 0.0f}},
+	{{+1.0f,  0.0f, 0.0f}},
+};
 
 
 CHeightTexture::CHeightTexture()
@@ -53,52 +59,64 @@ CHeightTexture::CHeightTexture()
 		FBO::Unbind();
 	}
 
+	if (!fbo.IsValid())
+		throw opengl_error("");
+
 	const std::string vertexCode = R"(
-		#version 120
-		varying vec2 texCoord;
+		#version 410 core
+
+		layout(location = 0) in vec3 aVertexPos;
+		layout(location = 1) in vec2 aTexCoords; // ignored
+		out vec2 vTexCoords;
 
 		void main() {
 			gl_Position = vec4(0.0, 0.0, 0.0, 1.0);
-			gl_Position.xy = gl_Vertex.xy * 2.0 - 1.0;
-			texCoord = gl_Vertex.st;
+			gl_Position.xy = aVertexPos.xy * 2.0 - 1.0;
+			vTexCoords = aVertexPos.st;
 		}
 	)";
 
 	const std::string fragmentCode = R"(
-		#version 120
+		#version 410 core
+
 		uniform sampler2D texHeight;
 		uniform sampler2D texPalette;
 		uniform float paletteOffset;
-		varying vec2 texCoord;
+
+		in vec2 vTexCoords;
+		layout(location = 0) out vec4 fFragColor;
 
 		void main() {
-			float h = texture2D(texHeight, texCoord).r;
+			float h = texture(texHeight, vTexCoords).r;
 			vec2 tc = vec2(h * (8. / 256.), paletteOffset);
-			gl_FragColor = texture2D(texPalette, tc);
+			fFragColor = texture(texPalette, tc);
 		}
 	)";
+
+	const char* errorFormats[2] = {
+		"%s-shader compilation error: %s",
+		"%s-shader validation error: %s",
+	};
 
 	shader = shaderHandler->CreateProgramObject("[CHeightTexture]", "CHeightTexture");
 	shader->AttachShaderObject(shaderHandler->CreateShaderObject(vertexCode,   "", GL_VERTEX_SHADER));
 	shader->AttachShaderObject(shaderHandler->CreateShaderObject(fragmentCode, "", GL_FRAGMENT_SHADER));
 	shader->Link();
+
 	if (!shader->IsValid()) {
-		const char* fmt = "%s-shader compilation error: %s";
-		LOG_L(L_ERROR, fmt, shader->GetName().c_str(), shader->GetLog().c_str());
-	} else {
-		shader->Enable();
-		shader->SetUniform("texHeight", 0);
-		shader->SetUniform("texPalette", 1);
-		shader->SetUniform("paletteOffset", configHandler->GetBool("ColorElev") ? 0.0f : 1.0f);
-		shader->Disable();
-		shader->Validate();
-		if (!shader->IsValid()) {
-			const char* fmt = "%s-shader validation error: %s";
-			LOG_L(L_ERROR, fmt, shader->GetName().c_str(), shader->GetLog().c_str());
-		}
+		LOG_L(L_ERROR, errorFormats[0], shader->GetName().c_str(), shader->GetLog().c_str());
+		throw opengl_error("");
 	}
 
-	if (!fbo.IsValid() || !shader->IsValid()) {
+	shader->Enable();
+	shader->SetUniform("texHeight", 0);
+	shader->SetUniform("texPalette", 1);
+	shader->SetUniform("paletteOffset", configHandler->GetBool("ColorElev") ? 0.0f : 1.0f);
+	shader->Disable();
+	shader->Validate();
+
+	if (!shader->IsValid()) {
+		LOG_L(L_ERROR, errorFormats[1], shader->GetName().c_str(), shader->GetLog().c_str());
 		throw opengl_error("");
 	}
 }
@@ -144,22 +162,23 @@ void CHeightTexture::Update()
 		return UpdateCPU();
 
 	fbo.Bind();
-	glViewport(0,0, texSize.x, texSize.y);
-	shader->Enable();
+	glViewport(0, 0,  texSize.x, texSize.y);
 	glDisable(GL_BLEND);
 	glActiveTexture(GL_TEXTURE1);
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, paletteTex);
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, heightMapTexture->GetTextureID());
-	glBegin(GL_QUADS);
-		glVertex2f(0.f, 0.f);
-		glVertex2f(0.f, 1.f);
-		glVertex2f(1.f, 1.f);
-		glVertex2f(1.f, 0.f);
-	glEnd();
+
+	GL::TRenderDataBuffer<VA_TYPE_0>* rdb = GL::GetRenderBuffer0();
+
+	shader->Enable();
+	rdb->Append(VERTS, sizeof(VERTS) / sizeof(VERTS[0]));
+	rdb->Submit(GL_QUADS);
 	shader->Disable();
-	glViewport(globalRendering->viewPosX,0,globalRendering->viewSizeX,globalRendering->viewSizeY);
+
+	glViewport(globalRendering->viewPosX, 0,  globalRendering->viewSizeX, globalRendering->viewSizeY);
+
 	FBO::Unbind();
 
 	// cleanup

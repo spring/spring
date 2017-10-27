@@ -20,12 +20,12 @@ public:
 	bool GetFullRead() const override { return true; }
 	int  GetReadAllyTeam() const override { return AllAccessTeam; }
 
-	void MetalMapChanged(const int x, const int z) override;
+	void MetalMapChanged(const int x, const int z) override { metalMapChanged = true; }
 
 public:
 	// IInfoTexture interface
 	void Update() override;
-	bool IsUpdateNeeded() override;
+	bool IsUpdateNeeded() override { return metalMapChanged; }
 
 private:
 	bool metalMapChanged;

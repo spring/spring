@@ -3,12 +3,19 @@
 #include "AirLos.h"
 #include "Game/GlobalUnsynced.h"
 #include "Rendering/GlobalRendering.h"
+#include "Rendering/GL/RenderDataBuffer.hpp"
 #include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/Shaders/Shader.h"
 #include "Sim/Misc/LosHandler.h"
 #include "System/Exceptions.h"
 #include "System/Log/ILog.h"
 
+constexpr VA_TYPE_0 VERTS[] = {
+	{{-1.0f, -1.0f, 0.0f}},
+	{{-1.0f, +1.0f, 0.0f}},
+	{{+1.0f, +1.0f, 0.0f}},
+	{{+1.0f, -1.0f, 0.0f}},
+};
 
 
 CAirLosTexture::CAirLosTexture()
@@ -37,55 +44,69 @@ CAirLosTexture::CAirLosTexture()
 		FBO::Unbind();
 	}
 
+	if (!fbo.IsValid())
+		throw opengl_error("");
+
 	const std::string vertexCode = R"(
-		varying vec2 texCoord;
+		#version 410 core
+
+		layout(location = 0) in vec3 aVertexPos;
+		layout(location = 1) in vec2 aTexCoords; // ignored
+		out vec2 vTexCoords;
 
 		void main() {
-			texCoord = gl_Vertex.xy * 0.5 + 0.5;
-			gl_Position = vec4(gl_Vertex.xyz, 1.0);
+			vTexCoords = aVertexPos.xy * 0.5 + 0.5;
+			gl_Position = vec4(aVertexPos, 1.0);
 		}
 	)";
 
 	const std::string fragmentCode = R"(
+		#version 410 core
+
 		uniform sampler2D tex0;
-		varying vec2 texCoord;
+
+		in vec2 vTexCoords;
+		layout(location = 0) out vec4 fFragColor;
 
 		void main() {
-			vec2 f = texture2D(tex0, texCoord).rg;
+			vec2 f = texture(tex0, vTexCoords).rg;
 			float c = (f.r + f.g) * 200000.0;
-			gl_FragColor = vec4(c);
+			fFragColor = vec4(c);
 		}
 	)";
+
+	const char* errorFormats[2] = {
+		"%s-shader compilation error: %s",
+		"%s-shader validation error: %s",
+	};
 
 	shader = shaderHandler->CreateProgramObject("[CAirLosTexture]", "CAirLosTexture");
 	shader->AttachShaderObject(shaderHandler->CreateShaderObject(vertexCode,   "", GL_VERTEX_SHADER));
 	shader->AttachShaderObject(shaderHandler->CreateShaderObject(fragmentCode, "", GL_FRAGMENT_SHADER));
 	shader->Link();
-	if (!shader->IsValid()) {
-		const char* fmt = "%s-shader compilation error: %s";
-		LOG_L(L_ERROR, fmt, shader->GetName().c_str(), shader->GetLog().c_str());
-	} else {
-		shader->Enable();
-		shader->SetUniform("tex0", 0);
-		shader->Disable();
-		shader->Validate();
-		if (!shader->IsValid()) {
-			const char* fmt = "%s-shader validation error: %s";
-			LOG_L(L_ERROR, fmt, shader->GetName().c_str(), shader->GetLog().c_str());
-		}
-	}
 
-	if (fbo.IsValid() && shader->IsValid()) {
-		glGenTextures(1, &uploadTex);
-		glBindTexture(GL_TEXTURE_2D, uploadTex);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		glSpringTexStorage2D(GL_TEXTURE_2D, 1, GL_RG8, texSize.x, texSize.y);
-	} else {
+	if (!shader->IsValid()) {
+		LOG_L(L_ERROR, errorFormats[0], shader->GetName().c_str(), shader->GetLog().c_str());
 		throw opengl_error("");
 	}
+
+	shader->Enable();
+	shader->SetUniform("tex0", 0);
+	shader->Disable();
+	shader->Validate();
+
+	if (!shader->IsValid()) {
+		LOG_L(L_ERROR, errorFormats[1], shader->GetName().c_str(), shader->GetLog().c_str());
+		throw opengl_error("");
+	}
+
+	glGenTextures(1, &uploadTex);
+	glBindTexture(GL_TEXTURE_2D, uploadTex);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glSpringTexStorage2D(GL_TEXTURE_2D, 1, GL_RG8, texSize.x, texSize.y);
 }
 
 
@@ -98,13 +119,13 @@ CAirLosTexture::~CAirLosTexture()
 void CAirLosTexture::UpdateCPU()
 {
 	infoTexPBO.Bind();
-	auto infoTexMem = reinterpret_cast<unsigned char*>(infoTexPBO.MapBuffer());
+	uint8_t* infoTexMem = reinterpret_cast<uint8_t*>(infoTexPBO.MapBuffer());
 
 	if (!losHandler->globalLOS[gu->myAllyTeam]) {
-		const unsigned short* myAirLos = &losHandler->airLos.losMaps[gu->myAllyTeam].front();
+		const uint16_t* myAirLos = &losHandler->airLos.losMaps[gu->myAllyTeam].front();
 		for (int y = 0; y < texSize.y; ++y) {
 			for (int x = 0; x < texSize.x; ++x) {
-				infoTexMem[y * texSize.x + x] = (myAirLos[y * texSize.x + x] != 0) ? 255 : 0;
+				infoTexMem[y * texSize.x + x] = 255 * (myAirLos[y * texSize.x + x] != 0);
 			}
 		}
 	} else {
@@ -130,7 +151,7 @@ void CAirLosTexture::Update()
 		glViewport(0,0, texSize.x, texSize.y);
 		glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
-		glViewport(globalRendering->viewPosX,0,globalRendering->viewSizeX,globalRendering->viewSizeY);
+		glViewport(globalRendering->viewPosX, 0,  globalRendering->viewSizeX, globalRendering->viewSizeY);
 		FBO::Unbind();
 
 		glBindTexture(GL_TEXTURE_2D, texture);
@@ -138,11 +159,15 @@ void CAirLosTexture::Update()
 		return;
 	}
 
+
 	infoTexPBO.Bind();
-	auto infoTexMem = reinterpret_cast<unsigned char*>(infoTexPBO.MapBuffer());
-	const unsigned short* myAirLos = &losHandler->airLos.losMaps[gu->myAllyTeam].front();
-	memcpy(infoTexMem, myAirLos, texSize.x * texSize.y * texChannels * sizeof(short));
+
+	      uint8_t* infoTexMem = reinterpret_cast<uint8_t*>(infoTexPBO.MapBuffer());
+	const uint16_t* myAirLos = &losHandler->airLos.losMaps[gu->myAllyTeam].front();
+
+	memcpy(infoTexMem, myAirLos, texSize.x * texSize.y * texChannels * sizeof(uint16_t));
 	infoTexPBO.UnmapBuffer();
+
 
 	//Trick: Upload the ushort as 2 ubytes, and then check both for `!=0` in the shader.
 	// Faster than doing it on the CPU! And uploading it as shorts would be slow, cause the GPU
@@ -154,17 +179,19 @@ void CAirLosTexture::Update()
 
 	// do post-processing on the gpu (los-checking & scaling)
 	fbo.Bind();
-	glViewport(0,0, texSize.x, texSize.y);
-	shader->Enable();
+
+	glViewport(0, 0,  texSize.x, texSize.y);
 	glDisable(GL_BLEND);
-	glBegin(GL_QUADS);
-		glVertex2f(-1.f, -1.f);
-		glVertex2f(-1.f, +1.f);
-		glVertex2f(+1.f, +1.f);
-		glVertex2f(+1.f, -1.f);
-	glEnd();
+
+	GL::TRenderDataBuffer<VA_TYPE_0>* rdb = GL::GetRenderBuffer0();
+
+	shader->Enable();
+	rdb->Append(VERTS, sizeof(VERTS) / sizeof(VERTS[0]));
+	rdb->Submit(GL_QUADS);
 	shader->Disable();
-	glViewport(globalRendering->viewPosX,0,globalRendering->viewSizeX,globalRendering->viewSizeY);
+
+	glViewport(globalRendering->viewPosX, 0,  globalRendering->viewSizeX, globalRendering->viewSizeY);
+
 	FBO::Unbind();
 
 	// generate mipmaps

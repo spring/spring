@@ -27,24 +27,13 @@ CMetalTexture::CMetalTexture()
 
 void CMetalTexture::Update()
 {
-	const     CMetalMap* metalMap = readMap->metalMap;
-	const unsigned char* extraTex = metalMap->GetDistributionMap();
+	const CMetalMap* metalMap = readMap->metalMap;
+
 	assert(metalMap->GetSizeX() == texSize.x && metalMap->GetSizeZ() == texSize.y);
 
 	glBindTexture(GL_TEXTURE_2D, texture);
-	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, texSize.x, texSize.y, GL_RED, GL_UNSIGNED_BYTE, extraTex);
+	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, texSize.x, texSize.y, GL_RED, GL_UNSIGNED_BYTE, metalMap->GetDistributionMap());
 
 	metalMapChanged = false;
 }
 
-
-void CMetalTexture::MetalMapChanged(const int x, const int z)
-{
-	metalMapChanged = true;
-}
-
-
-bool CMetalTexture::IsUpdateNeeded()
-{
-	return metalMapChanged;
-}

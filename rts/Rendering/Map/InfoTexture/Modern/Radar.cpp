@@ -4,6 +4,7 @@
 #include "InfoTextureHandler.h"
 #include "Game/GlobalUnsynced.h"
 #include "Rendering/GlobalRendering.h"
+#include "Rendering/GL/RenderDataBuffer.hpp"
 #include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/Shaders/Shader.h"
 #include "Sim/Misc/LosHandler.h"
@@ -11,6 +12,12 @@
 #include "System/Exceptions.h"
 #include "System/Log/ILog.h"
 
+constexpr VA_TYPE_0 VERTS[] = {
+	{{-1.0f, -1.0f, 0.0f}},
+	{{-1.0f, +1.0f, 0.0f}},
+	{{+1.0f, +1.0f, 0.0f}},
+	{{+1.0f, -1.0f, 0.0f}},
+};
 
 
 CRadarTexture::CRadarTexture()
@@ -30,7 +37,7 @@ CRadarTexture::CRadarTexture()
 	glSpringTexStorage2D(GL_TEXTURE_2D, -1, GL_RG8, texSize.x, texSize.y);
 
 	infoTexPBO.Bind();
-	infoTexPBO.New(texSize.x * texSize.y * texChannels * sizeof(unsigned short), GL_STREAM_DRAW);
+	infoTexPBO.New(texSize.x * texSize.y * texChannels * sizeof(uint16_t), GL_STREAM_DRAW);
 	infoTexPBO.Unbind();
 
 	if (FBO::IsSupported()) {
@@ -40,75 +47,85 @@ CRadarTexture::CRadarTexture()
 		FBO::Unbind();
 	}
 
+	if (!fbo.IsValid())
+		throw opengl_error("");
+
 	const std::string vertexCode = R"(
-		#version 120
-		varying vec2 texCoord;
+		#version 410 core
+
+		layout(location = 0) in vec3 aVertexPos;
+		layout(location = 1) in vec2 aTexCoords; // ignored
+		out vec2 vTexCoords;
 
 		void main() {
-			texCoord = gl_Vertex.xy * 0.5 + 0.5;
-			gl_Position = vec4(gl_Vertex.xyz, 1.0);
+			vTexCoords = aVertexPos.xy * 0.5 + 0.5;
+			gl_Position = vec4(aVertexPos, 1.0);
 		}
 	)";
 
 	const std::string fragmentCode = R"(
-		#version 120
+		#version 410 core
+
 		uniform sampler2D texLoS;
 		uniform sampler2D texRadar;
 		uniform sampler2D texJammer;
-		varying vec2 texCoord;
+
+		in vec2 vTexCoords;
+		layout(location = 0) out vec4 fFragColor;
 
 		void main() {
-			float los = texture2D(texLoS, texCoord).r;
+			float los = texture(texLoS, vTexCoords).r;
 
-			vec2 fr = texture2D(texRadar,  texCoord).rg;
-			vec2 fj = texture2D(texJammer, texCoord).rg;
+			vec2 fr = texture(texRadar,  vTexCoords).rg;
+			vec2 fj = texture(texJammer, vTexCoords).rg;
 			float cr = (fr.r + fr.g) * 200000.0;
 			float cj = (fj.r + fj.g) * 200000.0;
-			gl_FragColor = vec4(cr, los * cj, 0.0f, 0.0f);
+			fFragColor = vec4(cr, los * cj, 0.0f, 0.0f);
 		}
 	)";
+
+	const char* errorFormats[2] = {
+		"%s-shader compilation error: %s",
+		"%s-shader validation error: %s",
+	};
 
 	shader = shaderHandler->CreateProgramObject("[CRadarTexture]", "CRadarTexture");
 	shader->AttachShaderObject(shaderHandler->CreateShaderObject(vertexCode,   "", GL_VERTEX_SHADER));
 	shader->AttachShaderObject(shaderHandler->CreateShaderObject(fragmentCode, "", GL_FRAGMENT_SHADER));
 	shader->Link();
+
 	if (!shader->IsValid()) {
-		const char* fmt = "%s-shader compilation error: %s";
-		LOG_L(L_ERROR, fmt, shader->GetName().c_str(), shader->GetLog().c_str());
-	} else {
-		shader->Enable();
-		shader->SetUniform("texRadar",  1);
-		shader->SetUniform("texJammer", 0);
-		shader->SetUniform("texLoS",    2);
-		shader->Disable();
-		shader->Validate();
-		if (!shader->IsValid()) {
-			const char* fmt = "%s-shader validation error: %s";
-			LOG_L(L_ERROR, fmt, shader->GetName().c_str(), shader->GetLog().c_str());
-		}
-	}
-
-	if (fbo.IsValid() && shader->IsValid()) {
-		glGenTextures(1, &uploadTexRadar);
-		glBindTexture(GL_TEXTURE_2D, uploadTexRadar);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		glSpringTexStorage2D(GL_TEXTURE_2D, 1, GL_RG8, texSize.x, texSize.y);
-
-		glGenTextures(1, &uploadTexJammer);
-		glBindTexture(GL_TEXTURE_2D, uploadTexJammer);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		glSpringTexStorage2D(GL_TEXTURE_2D, 1, GL_RG8, texSize.x, texSize.y);
-	}
-
-	if (!fbo.IsValid() || !shader->IsValid()) {
+		LOG_L(L_ERROR, errorFormats[0], shader->GetName().c_str(), shader->GetLog().c_str());
 		throw opengl_error("");
 	}
+
+	shader->Enable();
+	shader->SetUniform("texRadar",  1);
+	shader->SetUniform("texJammer", 0);
+	shader->SetUniform("texLoS",    2);
+	shader->Disable();
+	shader->Validate();
+
+	if (!shader->IsValid()) {
+		LOG_L(L_ERROR, errorFormats[1], shader->GetName().c_str(), shader->GetLog().c_str());
+		throw opengl_error("");
+	}
+
+	glGenTextures(1, &uploadTexRadar);
+	glBindTexture(GL_TEXTURE_2D, uploadTexRadar);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glSpringTexStorage2D(GL_TEXTURE_2D, 1, GL_RG8, texSize.x, texSize.y);
+
+	glGenTextures(1, &uploadTexJammer);
+	glBindTexture(GL_TEXTURE_2D, uploadTexJammer);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glSpringTexStorage2D(GL_TEXTURE_2D, 1, GL_RG8, texSize.x, texSize.y);
 }
 
 
@@ -122,15 +139,15 @@ CRadarTexture::~CRadarTexture()
 void CRadarTexture::UpdateCPU()
 {
 	infoTexPBO.Bind();
-	auto infoTexMem = reinterpret_cast<unsigned char*>(infoTexPBO.MapBuffer());
+	uint8_t* infoTexMem = reinterpret_cast<uint8_t*>(infoTexPBO.MapBuffer());
 
 	if (!losHandler->globalLOS[gu->myAllyTeam]) {
 		const int jammerAllyTeam = modInfo.separateJammers ? gu->myAllyTeam : 0;
 
-		const unsigned short* myLos = &losHandler->los.losMaps[gu->myAllyTeam].front();
+		const uint16_t* myLos = &losHandler->los.losMaps[gu->myAllyTeam].front();
+		const uint16_t* myRadar = &losHandler->radar.losMaps[gu->myAllyTeam].front();
+		const uint16_t* myJammer = &losHandler->jammer.losMaps[jammerAllyTeam].front();
 
-		const unsigned short* myRadar  = &losHandler->radar.losMaps[gu->myAllyTeam].front();
-		const unsigned short* myJammer = &losHandler->jammer.losMaps[jammerAllyTeam].front();
 		for (int y = 0; y < texSize.y; ++y) {
 			for (int x = 0; x < texSize.x; ++x) {
 				const int idx = y * texSize.x + x;
@@ -166,7 +183,7 @@ void CRadarTexture::Update()
 		glViewport(0,0, texSize.x, texSize.y);
 		glClearColor(1.0f, 0.0f, 0.0f, 0.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
-		glViewport(globalRendering->viewPosX,0,globalRendering->viewSizeX,globalRendering->viewSizeY);
+		glViewport(globalRendering->viewPosX, 0,  globalRendering->viewSizeX, globalRendering->viewSizeY);
 		FBO::Unbind();
 
 		glBindTexture(GL_TEXTURE_2D, texture);
@@ -176,15 +193,19 @@ void CRadarTexture::Update()
 
 	const int jammerAllyTeam = modInfo.separateJammers ? gu->myAllyTeam : 0;
 
+
 	infoTexPBO.Bind();
-	const size_t arraySize = texSize.x * texSize.y * sizeof(unsigned short);
-	auto infoTexMem = reinterpret_cast<unsigned char*>(infoTexPBO.MapBuffer());
-	const unsigned short* myRadar  = &losHandler->radar.losMaps[gu->myAllyTeam].front();
-	const unsigned short* myJammer = &losHandler->jammer.losMaps[jammerAllyTeam].front();
-	memcpy(infoTexMem,  myRadar, arraySize);
-	infoTexMem += arraySize;
+
+	const size_t arraySize = texSize.x * texSize.y * sizeof(uint16_t);
+	      uint8_t* infoTexMem = reinterpret_cast<uint8_t*>(infoTexPBO.MapBuffer());
+	const uint16_t* myRadar  = &losHandler->radar.losMaps[gu->myAllyTeam].front();
+	const uint16_t* myJammer = &losHandler->jammer.losMaps[jammerAllyTeam].front();
+
+	memcpy(infoTexMem, myRadar , arraySize); infoTexMem += arraySize;
 	memcpy(infoTexMem, myJammer, arraySize);
+
 	infoTexPBO.UnmapBuffer();
+
 
 	//Trick: Upload the ushort as 2 ubytes, and then check both for `!=0` in the shader.
 	// Faster than doing it on the CPU! And uploading it as shorts would be slow, cause the GPU
@@ -201,20 +222,21 @@ void CRadarTexture::Update()
 
 	// do post-processing on the gpu (los-checking & scaling)
 	fbo.Bind();
-	glViewport(0,0, texSize.x, texSize.y);
-	shader->Enable();
+	glViewport(0, 0,  texSize.x, texSize.y);
 	glDisable(GL_BLEND);
 	glActiveTexture(GL_TEXTURE2);
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, infoTextureHandler->GetInfoTexture("los")->GetTexture());
-	glBegin(GL_QUADS);
-		glVertex2f(-1.f, -1.f);
-		glVertex2f(-1.f, +1.f);
-		glVertex2f(+1.f, +1.f);
-		glVertex2f(+1.f, -1.f);
-	glEnd();
+
+	GL::TRenderDataBuffer<VA_TYPE_0>* rdb = GL::GetRenderBuffer0();
+
+	shader->Enable();
+	rdb->Append(VERTS, sizeof(VERTS) / sizeof(VERTS[0]));
+	rdb->Submit(GL_QUADS);
 	shader->Disable();
-	glViewport(globalRendering->viewPosX,0,globalRendering->viewSizeX,globalRendering->viewSizeY);
+
+	glViewport(globalRendering->viewPosX, 0,  globalRendering->viewSizeX, globalRendering->viewSizeY);
+
 	FBO::Unbind();
 
 	// cleanup

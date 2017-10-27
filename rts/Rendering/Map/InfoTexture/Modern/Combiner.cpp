@@ -3,6 +3,7 @@
 #include "Combiner.h"
 #include "Game/GlobalUnsynced.h"
 #include "Rendering/GlobalRendering.h"
+#include "Rendering/GL/RenderDataBuffer.hpp"
 #include "Rendering/Shaders/ShaderHandler.h"
 #include "Rendering/Shaders/Shader.h"
 #include "Map/ReadMap.h"
@@ -117,29 +118,31 @@ bool CInfoTextureCombiner::CreateShader(const std::string& filename, const bool 
 
 void CInfoTextureCombiner::Update()
 {
-	shader->Enable();
 	fbo.Bind();
 	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE);
-	glViewport(0,0, texSize.x, texSize.y);
+	glViewport(0, 0,  texSize.x, texSize.y);
 	glEnable(GL_BLEND);
 
+	shader->Enable();
 	shader->BindTextures();
 	shader->SetUniform("time", gu->gameTime);
 
 	const float isx = 2.0f * (mapDims.mapx / float(mapDims.pwr2mapx)) - 1.0f;
 	const float isy = 2.0f * (mapDims.mapy / float(mapDims.pwr2mapy)) - 1.0f;
 
-	glBegin(GL_QUADS);
-		glTexCoord2f(0.f, 0.f); glVertex2f(-1.f, -1.f);
-		glTexCoord2f(0.f, 1.f); glVertex2f(-1.f, +isy);
-		glTexCoord2f(1.f, 1.f); glVertex2f(+isx, +isy);
-		glTexCoord2f(1.f, 0.f); glVertex2f(+isx, -1.f);
-	glEnd();
-
-	glViewport(globalRendering->viewPosX,0,globalRendering->viewSizeX,globalRendering->viewSizeY);
-	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-	FBO::Unbind();
+	GL::TRenderDataBuffer<VA_TYPE_T>* rdb = GL::GetRenderBufferT();
+	rdb->Append({{-1.0f, -1.0f, 0.0f}, 0.0f, 0.0f});
+	rdb->Append({{-1.0f, +isy , 0.0f}, 0.0f, 1.0f});
+	rdb->Append({{+isx , +isy , 0.0f}, 1.0f, 1.0f});
+	rdb->Append({{+isx , -1.0f, 0.0f}, 1.0f, 0.0f});
+	rdb->Submit(GL_QUADS);
 	shader->Disable();
+
+	glViewport(globalRendering->viewPosX, 0,  globalRendering->viewSizeX, globalRendering->viewSizeY);
+	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+
+	FBO::Unbind();
+
 
 	// create mipmaps
 	glBindTexture(GL_TEXTURE_2D, texture);
