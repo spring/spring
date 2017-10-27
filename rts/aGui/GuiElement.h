@@ -7,7 +7,7 @@
 #include <SDL_events.h>
 #include "Rendering/GL/VertexArrayTypes.h"
 
-struct VBO;
+class VBO;
 
 namespace agui
 {
@@ -78,10 +78,10 @@ protected:
 	virtual void DrawSelf() {}
 	virtual bool HandleEventSelf(const SDL_Event& ev) { return false; }
 	virtual void GeometryChangeSelf();
-	
+
 	static int screensize[2];
 	static int screenoffset[2];
-	
+
 	bool fixedSize;
 
 	float pos[2]; // top-left x,y coor

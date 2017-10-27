@@ -3,6 +3,7 @@
 #ifndef GL_RENDERDATABUFFER_HDR
 #define GL_RENDERDATABUFFER_HDR
 
+#include <array>
 #include <cstring> // memcpy
 
 #include "VAO.h"
