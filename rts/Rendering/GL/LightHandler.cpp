@@ -7,8 +7,8 @@
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Projectiles/Projectile.h"
-
-static const float4 ZeroVector4 = float4(0.0f, 0.0f, 0.0f, 0.0f);
+//automatically initialized to zeros
+static constexpr float4 ZeroVector4;
 
 void GL::LightHandler::Init(unsigned int cfgBaseLight, unsigned int cfgMaxLights) {
 	glGetIntegerv(GL_MAX_LIGHTS, reinterpret_cast<int*>(&maxLights));

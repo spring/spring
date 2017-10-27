@@ -21,10 +21,11 @@ struct float4 : public float3
 		struct { float yend; };
 	};
 
-	float4();
-	float4(const float3& f, const float w = 0.0f): float3(f), w(w) {}
-	float4(const float* f): float3(f[0], f[1], f[2]), w(f[3]) {}
-	float4(const float x, const float y, const float z, const float w = 0.0f): float3(x, y, z), w(w) {}
+	// x, y and z are default to 0.0f in float3()
+	constexpr float4() : float3(), w(0.0f) {}
+	constexpr float4(const float3& f, const float w = 0.0f): float3(f), w(w) {}
+	constexpr float4(const float* f): float3(f[0], f[1], f[2]), w(f[3]) {}
+	constexpr float4(const float x, const float y, const float z, const float w = 0.0f): float3(x, y, z), w(w) {}
 
 	float4 operator * (const float4& f) const { return {x * f.x, y * f.y, z * f.z, w * f.w}; }
 	float4 operator + (const float4& f) const { return {x + f.x, y + f.y, z + f.z, w + f.w}; }
@@ -96,7 +97,7 @@ struct float4 : public float3
 	float dot4(const float4& f) const {
 		return (x * f.x) + (y * f.y) + (z * f.z) + (w * f.w);
 	}
-	
+
 	/// Allows implicit conversion to float* (for passing to gl functions)
 	operator const float* () const { return reinterpret_cast<const float*>(&x); }
 	operator       float* ()       { return reinterpret_cast<      float*>(&x); }

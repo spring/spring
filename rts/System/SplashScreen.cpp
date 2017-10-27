@@ -14,7 +14,7 @@
 
 #ifndef HEADLESS
 // identity projection
-static const VA_TYPE_T QUAD_ELEMS[] = {
+static constexpr VA_TYPE_T QUAD_ELEMS[] = {
 	{{-1.0f,  1.0f, 0.0f},   0.0f, 0.0f},
 	{{-1.0f, -1.0f, 0.0f},   0.0f, 1.0f},
 	{{ 1.0f, -1.0f, 0.0f},   1.0f, 1.0f},
@@ -24,8 +24,8 @@ static const VA_TYPE_T QUAD_ELEMS[] = {
 static constexpr uint32_t QUAD_INDCS[] = {0, 1, 2,   2, 3, 0};
 
 
-static const float4 TEXT_COLOR = {1.0f, 1.0f, 1.0f, 1.0f};
-static const float4 TEXT_COORS = {0.5f, 0.175f, 0.8f, 0.04f}; // x, y, scale, space
+static constexpr float4 TEXT_COLOR = {1.0f, 1.0f, 1.0f, 1.0f};
+static constexpr float4 TEXT_COORS = {0.5f, 0.175f, 0.8f, 0.04f}; // x, y, scale, space
 
 // not constexpr to circumvent a VS bug
 // https://developercommunity.visualstudio.com/content/problem/10720/constexpr-function-accessing-character-array-leads.html

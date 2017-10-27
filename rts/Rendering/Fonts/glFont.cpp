@@ -44,9 +44,9 @@ bool CglFont::threadSafety = false;
 CglFont* font = nullptr;
 CglFont* smallFont = nullptr;
 
-static const float4        white(1.00f, 1.00f, 1.00f, 0.95f);
-static const float4  darkOutline(0.05f, 0.05f, 0.05f, 0.95f);
-static const float4 lightOutline(0.95f, 0.95f, 0.95f, 0.8f);
+static constexpr float4        white(1.00f, 1.00f, 1.00f, 0.95f);
+static constexpr float4  darkOutline(0.05f, 0.05f, 0.05f, 0.95f);
+static constexpr float4 lightOutline(0.95f, 0.95f, 0.95f, 0.8f);
 
 static const float darkLuminosity = 0.05 +
 	0.2126f * std::pow(darkOutline[0], 2.2) +

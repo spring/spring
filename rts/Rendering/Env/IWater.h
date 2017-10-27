@@ -47,9 +47,9 @@ public:
 	static void SetModelClippingPlane(const double* planeEq);
 	static constexpr int ClipPlaneIndex() { return 2; }
 
-	static const float4 MapNullClipPlane() { return {0.0f,  0.0f, 0.0f, 0.0f}; }
-	static const float4 MapReflClipPlane() { return {0.0f,  1.0f, 0.0f, 5.0f}; }
-	static const float4 MapRefrClipPlane() { return {0.0f, -1.0f, 0.0f, 5.0f}; }
+	static constexpr float4 MapNullClipPlane() { return {0.0f,  0.0f, 0.0f, 0.0f}; }
+	static constexpr float4 MapReflClipPlane() { return {0.0f,  1.0f, 0.0f, 5.0f}; }
+	static constexpr float4 MapRefrClipPlane() { return {0.0f, -1.0f, 0.0f, 5.0f}; }
 
 protected:
 	void DrawReflections(const double* clipPlaneEqs, bool drawGround, bool drawSky);
