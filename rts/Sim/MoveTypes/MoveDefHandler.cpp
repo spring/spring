@@ -33,7 +33,6 @@ CR_REG_METADATA(MoveDef, (
 	CR_MEMBER(speedModMults),
 
 	CR_MEMBER(pathType),
-	CR_MEMBER(udRefCount),
 
 	CR_MEMBER(followGround),
 	CR_MEMBER(subMarine),
@@ -167,7 +166,6 @@ MoveDef::MoveDef()
 	, crushStrength(0.0f)
 
 	, pathType(0)
-	, udRefCount(0)
 
 	, heatMod(0.05f)
 	, flowMod(1.0f)

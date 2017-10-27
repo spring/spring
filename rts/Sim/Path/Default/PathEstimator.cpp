@@ -98,9 +98,6 @@ CPathEstimator::CPathEstimator(IPathFinder* pf, unsigned int BLOCK_SIZE, const s
 		for_mt(0, moveDefHandler->GetNumMoveDefs(), [&](unsigned int i) {
 			const MoveDef* md = moveDefHandler->GetMoveDefByPathType(i);
 
-			if (md->udRefCount == 0)
-				return;
-
 			for (int y = 0; y < mapDims.mapy; y++) {
 				for (int x = 0; x < mapDims.mapx; x++) {
 					childPE->maxSpeedMods[i] = std::max(childPE->maxSpeedMods[i], CMoveMath::GetPosSpeedMod(*md, x, y));
@@ -256,9 +253,6 @@ void CPathEstimator::CalculateBlockOffsets(unsigned int blockIdx, unsigned int t
 	for (unsigned int i = 0; i < moveDefHandler->GetNumMoveDefs(); i++) {
 		const MoveDef* md = moveDefHandler->GetMoveDefByPathType(i);
 
-		if (md->udRefCount == 0)
-			continue;
-
 		blockStates.peNodeOffsets[md->pathType][blockIdx] = FindBlockPosOffset(*md, blockPos.x, blockPos.y);
 	}
 }
@@ -280,9 +274,6 @@ void CPathEstimator::EstimatePathCosts(unsigned int blockIdx, unsigned int threa
 
 	for (unsigned int i = 0; i < moveDefHandler->GetNumMoveDefs(); i++) {
 		const MoveDef* md = moveDefHandler->GetMoveDefByPathType(i);
-
-		if (md->udRefCount == 0)
-			continue;
 
 		CalcVertexPathCosts(*md, blockPos, threadNum);
 	}
@@ -521,9 +512,6 @@ void CPathEstimator::Update()
 		// issue repathing for all active movedefs
 		for (unsigned int i = 0; i < numMoveDefs; i++) {
 			const MoveDef* md = moveDefHandler->GetMoveDefByPathType(i);
-
-			if (md->udRefCount == 0)
-				continue;
 
 			consumedBlocks.emplace_back(pos, md);
 		}
