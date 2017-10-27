@@ -824,7 +824,7 @@ void LuaOpenGL::SetupScreenMatrices()
 	const float top    = ((vpy + vsy) - hssy) / factor;
 
 	glMatrixMode(GL_PROJECTION);
-	glLoadMatrixf(CMatrix44f::PerspProj(left, right, bottom, top, znear, zfar));
+	glLoadMatrixf(CMatrix44f::ClipControl(globalRendering->supportClipSpaceControl) * CMatrix44f::PerspProj(left, right, bottom, top, znear, zfar));
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
@@ -3054,7 +3054,7 @@ int LuaOpenGL::Ortho(lua_State* L)
 	const float near   = luaL_checknumber(L, 5);
 	const float far    = luaL_checknumber(L, 6);
 
-	glMultMatrixf(CMatrix44f::OrthoProj(left, right, bottom, top, near, far));
+	glMultMatrixf(CMatrix44f::ClipControl(globalRendering->supportClipSpaceControl) * CMatrix44f::OrthoProj(left, right, bottom, top, near, far));
 	return 0;
 }
 
@@ -3070,7 +3070,7 @@ int LuaOpenGL::Frustum(lua_State* L)
 	const float near   = luaL_checknumber(L, 5);
 	const float far    = luaL_checknumber(L, 6);
 
-	glMultMatrixf(CMatrix44f::PerspProj(left, right, bottom, top, near, far));
+	glMultMatrixf(CMatrix44f::ClipControl(globalRendering->supportClipSpaceControl) * CMatrix44f::PerspProj(left, right, bottom, top, near, far));
 	return 0;
 }
 
