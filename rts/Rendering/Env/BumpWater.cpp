@@ -826,13 +826,7 @@ void CBumpWater::UpdateCoastmap()
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
-	glMatrixMode(GL_MODELVIEW);
-		glPushMatrix();
-		glLoadIdentity();
-	glMatrixMode(GL_PROJECTION);
-		glPushMatrix();
-		glLoadIdentity();
-		glOrtho(0, 1, 0, 1, -1, 1);
+	glSpringMatrix2dSetupVP(0.0f, 1.0f, 0.0f, 1.0f, -1.0f, 1.0f,  true, true);
 
 	glViewport(0, 0, mapDims.mapx, mapDims.mapy);
 	glDrawBuffer(GL_COLOR_ATTACHMENT0);
@@ -891,10 +885,7 @@ void CBumpWater::UpdateCoastmap()
 		}
 	}
 
-	//glMatrixMode(GL_PROJECTION);
-		glPopMatrix();
-	glMatrixMode(GL_MODELVIEW);
-		glPopMatrix();
+	glSpringMatrix2dResetPV(true, true);
 
 	blurShader->Disable();
 	coastFBO.Detach(GL_COLOR_ATTACHMENT1);
@@ -954,13 +945,8 @@ void CBumpWater::UpdateDynWaves(const bool initialize)
 	glDisable(GL_DEPTH_TEST);
 
 	glViewport(0, 0, normalTextureX, normalTextureY);
-	glMatrixMode(GL_MODELVIEW);
-		glPushMatrix();
-		glLoadIdentity();
-	glMatrixMode(GL_PROJECTION);
-		glPushMatrix();
-		glLoadIdentity();
-		glOrtho(0, 1, 0, 1, -1, 1);
+	glSpringMatrix2dSetupVP(0.0f, 1.0f, 0.0f, 1.0f, -1.0f, 1.0f,  true, true);
+
 	glMatrixMode(GL_TEXTURE);
 		glPushMatrix();
 		glLoadIdentity();
@@ -982,11 +968,8 @@ void CBumpWater::UpdateDynWaves(const bool initialize)
 
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-		glPopMatrix();
-	glMatrixMode(GL_PROJECTION);
-		glPopMatrix();
-	glMatrixMode(GL_MODELVIEW);
-		glPopMatrix();
+	glPopMatrix(); // GL_TEXTURE
+	glSpringMatrix2dResetPV(true, true);
 	glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
 
 	glPopAttrib();

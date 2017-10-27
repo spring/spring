@@ -966,7 +966,7 @@ void CMiniMap::ResizeTextureCache()
 
 void CMiniMap::UpdateTextureCache()
 {
-	glSpringMatrix2dSetupPV(0.0f, 1.0f, 0.0f, 1.0f,  true, true);
+	glSpringMatrix2dSetupPV(0.0f, 1.0f, 0.0f, 1.0f, -1.0f, 1.0f,  true, true);
 
 	{
 		curPos = {0, 0};

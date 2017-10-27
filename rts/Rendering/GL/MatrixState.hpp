@@ -15,42 +15,46 @@ namespace GL {
 	struct MatrixState {
 	private:
 		std::vector<CMatrix44f> stacks[3] = {{CMatrix44f::Identity()}, {CMatrix44f::Identity()}, {CMatrix44f::Identity()}};
-		std::vector<CMatrix44f>& stack = stacks[0];
+		std::vector<CMatrix44f>* stack = &stacks[0];
 
 		CMatrix44f dummy;
 
 	public:
-		const CMatrix44f& Top() const {
+		const CMatrix44f& Top(unsigned int mode) const {
 			#ifdef CHECK_MATRIX_STACK_UNDERFLOW
-			if (stack.empty()) {
+			if (stacks[mode].empty()) {
 				assert(false);
 				return dummy;
 			}
 			#endif
-			return (stack.back());
+			return (stacks[mode].back());
 		}
-		CMatrix44f& Top() {
+
+		CMatrix44f& Top(unsigned int mode) {
 			#ifdef CHECK_MATRIX_STACK_UNDERFLOW
-			if (stack.empty()) {
+			if (stacks[mode].empty()) {
 				assert(false);
 				return dummy;
 			}
 			#endif
-			return (stack.back());
+			return (stacks[mode].back());
 		}
 
-		void SetMode(unsigned int mode) { stack = stacks[mode]; }
+		const CMatrix44f& Top() const { return (Top(stack - &stacks[0])); }
+		      CMatrix44f& Top()       { return (Top(stack - &stacks[0])); }
 
-		void Push(const CMatrix44f& m) { stack.push_back(m); }
+		void SetMode(unsigned int mode) { stack = &stacks[mode]; }
+
+		void Push(const CMatrix44f& m) { stack->push_back(m); }
 		void Push() { Push(Top()); }
 		void Pop() {
 			#ifdef CHECK_MATRIX_STACK_UNDERFLOW
-			if (stack.empty()) {
+			if (stack->empty()) {
 				assert(false);
 				return;
 			}
 			#endif
-			stack.pop_back();
+			stack->pop_back();
 		}
 
 		void Mult(const CMatrix44f& m) { Load(Top() = Top() * m); }
@@ -69,7 +73,10 @@ namespace GL {
 	void SetMatrixStatePointer(bool mainThread);
 
 
-	void MatrixMode(unsigned int mode);
+	void MatrixMode(unsigned int glMode);
+
+	const CMatrix44f& GetMatrix();
+	const CMatrix44f& GetMatrix(unsigned int glMode);
 
 	void PushMatrix();
 	void PopMatrix();

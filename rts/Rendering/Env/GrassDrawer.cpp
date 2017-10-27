@@ -853,22 +853,19 @@ void CGrassDrawer::CreateFarTex()
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glClearColor(0.f,0.f,0.f,0.f);
 
-	static const GLdouble eq[4] = {0.f, 1.f, 0.f, 0.f};
+	static constexpr GLdouble clipPlaneEq[4] = {0.0f, 10.f, 0.0f, 0.0f};
 
 	// render turf from different vertical angles
-	for (int a=0;a<numAngles;++a) {
-		glViewport(a*billboardSize*sizeMod, 0, billboardSize*sizeMod, billboardSize*sizeMod);
-		glMatrixMode(GL_MODELVIEW);
-			glLoadIdentity();
-			glRotatef(a*90.f/(numAngles-1),1,0,0);
-			//glTranslatef(0,-0.5f,0);
+	for (int a = 0; a < numAngles; ++a) {
+		glViewport(a * billboardSize * sizeMod, 0, billboardSize * sizeMod, billboardSize * sizeMod);
+
+		glSpringMatrix2dSetupPV(-partTurfSize, partTurfSize, partTurfSize, -partTurfSize, -turfSize, turfSize);
+		glRotatef(a * 90.0f / (numAngles - 1), 1.0f, 0.0f, 0.0f);
 		glMatrixMode(GL_PROJECTION);
-			glLoadIdentity();
-			glOrtho(-partTurfSize, partTurfSize, partTurfSize, -partTurfSize, -turfSize, turfSize);
 
 		// has to be applied after the matrix transformations,
 		// cause it uses those an `compiles` them into the clip plane
-		glClipPlane(GL_CLIP_PLANE0, &eq[0]);
+		glClipPlane(GL_CLIP_PLANE0, &clipPlaneEq[0]);
 
 		glCallList(grassDL);
 	}

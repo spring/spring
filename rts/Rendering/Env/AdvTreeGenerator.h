@@ -5,7 +5,6 @@
 
 #include "Rendering/GL/myGL.h"
 
-// XXX This has a duplicate in BasicTreeDrawer.h
 #define MAX_TREE_HEIGHT 60
 
 class CVertexArray;
@@ -20,10 +19,9 @@ public:
 	~CAdvTreeGenerator();
 
 	void Init();
-	void Draw() const;
 
 	GLuint barkTex;
-	GLuint farTex[2];
+
 	unsigned int leafDL;
 	unsigned int pineDL;
 
@@ -31,8 +29,6 @@ public:
 	CVertexArray* barkva;
 
 	void MainTrunk(int numBranch, float height, float width);
-	void CreateFarTex(Shader::IProgramObject*);
-	void CreateFarView(unsigned char* mem, int dx, int dy, unsigned int displist);
 
 private:
 	void CreateLeaves(const float3& start, const float3& dir, float length, float3& orto1, float3& orto2);

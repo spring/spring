@@ -252,11 +252,7 @@ void CAdvWater::UpdateWater(CGame* game)
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		glMatrixMode(GL_PROJECTION);
-		glLoadIdentity();
-		glOrtho(0, 1, 0, 1, -1, 1);
-		glMatrixMode(GL_MODELVIEW);
-		glLoadIdentity();
+		glSpringMatrix2dSetupPV(0.0f, 1.0f, 0.0f, 1.0f, -1.0f, 1.0f);
 
 		glColor3f(0.2f, 0.2f, 0.2f);
 

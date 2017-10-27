@@ -44,7 +44,6 @@ CAdvTreeDrawer::CAdvTreeDrawer(): ITreeDrawer()
 	LoadTreeShaders();
 
 	treeGen.Init();
-	treeGen.CreateFarTex(treeShaders[TREE_PROGRAM_BASIC]);
 	rng.SetSeed(reinterpret_cast<CGlobalUnsyncedRNG::rng_val_type>(this), true);
 
 	treeSquares.resize(nTrees);

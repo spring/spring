@@ -61,7 +61,7 @@ void CCursorIcons::DrawCursors()
 	if (icons.empty() || !cmdColors.UseQueueIcons())
 		return;
 
-	glSpringMatrix2dSetupPV(0.0f, 1.0f, 0.0f, 1.0f,  true, true);
+	glSpringMatrix2dSetupPV(0.0f, 1.0f, 0.0f, 1.0f, -1.0f, 1.0f,  true, true);
 
 	glColor4f(1.0f, 1.0f, 1.0f, cmdColors.QueueIconAlpha());
 

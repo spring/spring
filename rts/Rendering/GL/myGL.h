@@ -48,7 +48,7 @@ static inline void glSecondaryColorf3(const float3& v) { glSecondaryColor3f(v.r,
 static inline void glColorf4(const float3& v, const float alpha) { glColor4f(v.r, v.g, v.b, alpha); }
 static inline void glUniformf3(const GLint location, const float3& v) { glUniform3f(location, v.r, v.g, v.b); }
 
-
+#if 0
 typedef   void   (*   glOrthoFuncPtr) (GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble near, GLdouble far);
 typedef   void   (*gluOrtho2DFuncPtr) (GLdouble left, GLdouble right, GLdouble bottom, GLdouble top);
 typedef   void   (* glFrustumFuncPtr) (GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble near, GLdouble far);
@@ -79,15 +79,15 @@ static inline void __spring_glFrustum     (GLdouble l, GLdouble r,  GLdouble b, 
 static constexpr    glOrthoFuncPtr    glOrthoFuncs[2] = {__spring_glOrtho_noCC, __spring_glOrtho};
 static constexpr gluOrtho2DFuncPtr gluOrtho2DFuncs[2] = {__spring_gluOrtho2D_noCC, __spring_gluOrtho2D};
 static constexpr  glFrustumFuncPtr  glFrustumFuncs[2] = {__spring_glFrustum_noCC, __spring_glFrustum};
-
+#endif
 #undef glOrtho
 #undef gluOrtho2D
 #undef glFrustum
-
+#if 0
 #define glOrtho       glOrthoFuncs[globalRendering->supportClipSpaceControl]
 #define gluOrtho2D gluOrtho2DFuncs[globalRendering->supportClipSpaceControl]
 #define glFrustum   glFrustumFuncs[globalRendering->supportClipSpaceControl]
-
+#endif
 
 
 void WorkaroundATIPointSizeBug();
@@ -97,10 +97,16 @@ void glSpringBindTextures(GLuint first, GLsizei count, const GLuint* textures);
 void glSpringTexStorage2D(const GLenum target, GLint levels, const GLint internalFormat, const GLsizei width, const GLsizei height);
 void glBuildMipmaps(const GLenum target, GLint internalFormat, const GLsizei width, const GLsizei height, const GLenum format, const GLenum type, const void* data);
 
-void glSpringMatrix2dSetupVP(float l, float r, float b, float t,  bool pushView = false, bool pushProj = false); // load view first, then proj
-void glSpringMatrix2dSetupPV(float l, float r, float b, float t,  bool pushView = false, bool pushProj = false); // load proj first, then view
-void glSpringMatrix2dResetVP(bool popView = false, bool popProj = false); // pop view first, then proj
-void glSpringMatrix2dResetPV(bool popView = false, bool popProj = false); // pop proj first, then view
+// SetupVP loads/pushes view first, then proj
+// SetupPV loads/pushes proj first, then view
+// pv := pushView, pp := pushProj
+void glSpringMatrix2dSetupVP(float l, float r, float b, float t, float n, float f,  bool pv = false, bool pp = false);
+void glSpringMatrix2dSetupPV(float l, float r, float b, float t, float n, float f,  bool pv = false, bool pp = false);
+// ResetVP pops view first, then proj
+// ResetPV pops proj first, then view
+// pv := popView, pp := popProj
+void glSpringMatrix2dResetVP(bool pv = false, bool pp = false);
+void glSpringMatrix2dResetPV(bool pv = false, bool pp = false);
 
 void ClearScreen();
 

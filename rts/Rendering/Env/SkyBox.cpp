@@ -57,15 +57,15 @@ void CSkyBox::Draw()
 	glEnable(GL_TEXTURE_CUBE_MAP);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, skyTex.GetID());
 
-	glSpringMatrix2dSetupVP(0.0f, 1.0f, 0.0f, 1.0f,  true, true);
+	glSpringMatrix2dSetupVP(0.0f, 1.0f, 0.0f, 1.0f, -1.0f, 1.0f,  true, true);
 
-	GLfloat verts[] = {
+	const GLfloat verts[] = {
 		0.0f, 1.0f,
 		1.0f, 1.0f,
 		1.0f, 0.0f,
 		0.0f, 0.0f
 	};
-	float3 texcoords[] = {
+	const float3 texcoords[] = {
 		-camera->CalcPixelDir(                         0,                          0),
 		-camera->CalcPixelDir(globalRendering->viewSizeX,                          0),
 		-camera->CalcPixelDir(globalRendering->viewSizeX, globalRendering->viewSizeY),

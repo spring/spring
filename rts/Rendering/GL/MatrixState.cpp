@@ -15,8 +15,8 @@ void GL::SetMatrixStatePointer(bool mainThread) {
 void GL::MatrixState::Load(const CMatrix44f& m) { glLoadMatrixf(m); }
 
 
-void GL::MatrixMode(unsigned int mode) {
-	switch (mode) {
+void GL::MatrixMode(unsigned int glMode) {
+	switch (glMode) {
 		case GL_MODELVIEW : { matrixState->SetMode(0); } break;
 		case GL_PROJECTION: { matrixState->SetMode(1); } break;
 		case GL_TEXTURE   : { matrixState->SetMode(2); } break;
@@ -24,7 +24,21 @@ void GL::MatrixMode(unsigned int mode) {
 	}
 
 	// TODO: remove
-	glMatrixMode(mode);
+	glMatrixMode(glMode);
+}
+
+
+const CMatrix44f& GL::GetMatrix() { return (matrixState->Top()); }
+const CMatrix44f& GL::GetMatrix(unsigned int glMode) {
+	switch (glMode) {
+		case GL_MODELVIEW : { return (matrixState->Top(0)); } break;
+		case GL_PROJECTION: { return (matrixState->Top(1)); } break;
+		case GL_TEXTURE   : { return (matrixState->Top(2)); } break;
+		default           : {                               } break;
+	}
+
+	// fallback
+	return (matrixState->Top());
 }
 
 void GL::PushMatrix() { matrixState->Push(matrixState->Top()); }

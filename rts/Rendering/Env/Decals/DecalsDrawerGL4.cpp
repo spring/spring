@@ -511,7 +511,7 @@ void CDecalsDrawerGL4::GenerateAtlasTexture()
 	}
 
 	glViewport(0, 0, atlas.GetAtlasSize().x, atlas.GetAtlasSize().y);
-	glSpringMatrix2dSetupPV(0.0f, atlas.GetAtlasSize().x, 0.0f, atlas.GetAtlasSize().y);
+	glSpringMatrix2dSetupPV(0.0f, atlas.GetAtlasSize().x, 0.0f, atlas.GetAtlasSize().y, -1.0f, 1.0f);
 
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // transparent black
 	glClear(GL_COLOR_BUFFER_BIT);
@@ -1125,7 +1125,7 @@ void CDecalsDrawerGL4::UpdateOverlap()
 	glPushAttrib(GL_ALL_ATTRIB_BITS);
 
 	glViewport(0, 0, OVERLAP_TEST_TEXTURE_SIZE, OVERLAP_TEST_TEXTURE_SIZE);
-	glSpringMatrix2dSetupPV(0.0f, mapDims.mapx * SQUARE_SIZE, 0.0f, mapDims.mapy * SQUARE_SIZE);
+	glSpringMatrix2dSetupPV(0.0f, mapDims.mapx * SQUARE_SIZE, 0.0f, mapDims.mapy * SQUARE_SIZE, -1.0f, 1.0f);
 
 	glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, atlasTex); glEnable(GL_TEXTURE_2D);
 	glColor4f(1.f, 1.f, 1.f, 1.f);
