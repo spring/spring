@@ -159,7 +159,7 @@ bool CLoadScreen::Init()
 
 void CLoadScreen::Kill()
 {
-	if (!gameLoadThread.joinable())
+	if (mtLoading && !gameLoadThread.joinable())
 		return;
 
 	if (luaIntro != nullptr)
