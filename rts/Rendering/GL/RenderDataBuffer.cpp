@@ -297,7 +297,9 @@ void GL::RenderDataBuffer::Upload(
 
 void GL::RenderDataBuffer::Submit(uint32_t primType, uint32_t dataIndx, uint32_t dataSize) const {
 	assert(elems.GetSize() != 0);
-	assert(indcs.GetSize() == 0);
+	// buffers populated with (dummy or actual) indices
+	// can still be Submit()'ed for non-indexed drawing
+	assert(indcs.GetSize() >= 0);
 
 	array.Bind();
 
