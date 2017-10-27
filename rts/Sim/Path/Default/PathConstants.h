@@ -41,19 +41,16 @@ static constexpr unsigned int PATH_FLOWMAP_ZSCALE = 32; // wrt. mapDims.mapy
 
 
 // PE-only flags (indices)
-enum {
-	PATHDIR_LEFT       = 0, // +x (LEFT *TO* RIGHT)
-	PATHDIR_LEFT_UP    = 1, // +x+z
-	PATHDIR_UP         = 2, // +z (UP *TO* DOWN)
-	PATHDIR_RIGHT_UP   = 3, // -x+z
+static constexpr unsigned int PATHDIR_LEFT       = 0; // +x (LEFT *TO* RIGHT)
+static constexpr unsigned int PATHDIR_LEFT_UP    = 1; // +x+z
+static constexpr unsigned int PATHDIR_UP         = 2; // +z (UP *TO* DOWN)
+static constexpr unsigned int PATHDIR_RIGHT_UP   = 3; // -x+z
+static constexpr unsigned int PATHDIR_RIGHT      = 4; // -x (RIGHT *TO* LEFT)
+static constexpr unsigned int PATHDIR_RIGHT_DOWN = 5; // -x-z
+static constexpr unsigned int PATHDIR_DOWN       = 6; // -z (DOWN *TO* UP)
+static constexpr unsigned int PATHDIR_LEFT_DOWN  = 7; // +x-z
+static constexpr unsigned int PATH_DIRECTIONS    = 8;
 
-	PATHDIR_RIGHT      = 4, // -x (RIGHT *TO* LEFT)
-	PATHDIR_RIGHT_DOWN = 5, // -x-z
-	PATHDIR_DOWN       = 6, // -z (DOWN *TO* UP)
-	PATHDIR_LEFT_DOWN  = 7, // +x-z
-
-	PATH_DIRECTIONS    = 8,
-};
 
 static constexpr unsigned int PATHDIR_CARDINALS[4] = {PATHDIR_LEFT, PATHDIR_RIGHT, PATHDIR_UP, PATHDIR_DOWN};
 static constexpr unsigned int PATH_DIRECTION_VERTICES = PATH_DIRECTIONS >> 1;
@@ -105,44 +102,41 @@ static constexpr int2 PF_DIRECTION_VECTORS_2D[] = {
 
 
 // PF and PE flags (used in nodeMask[])
-enum {
-	PATHOPT_LEFT      =   1, // +x
-	PATHOPT_RIGHT     =   2, // -x
-	PATHOPT_UP        =   4, // +z
-	PATHOPT_DOWN      =   8, // -z
-	PATHOPT_OPEN      =  16,
-	PATHOPT_CLOSED    =  32,
-	PATHOPT_BLOCKED   =  64,
-	PATHOPT_OBSOLETE  = 128,
-
-	PATHOPT_SIZE      = 255, // size of PATHOPT bitmask
-};
+static constexpr unsigned int PATHOPT_LEFT      =   1; // +x
+static constexpr unsigned int PATHOPT_RIGHT     =   2; // -x
+static constexpr unsigned int PATHOPT_UP        =   4; // +z
+static constexpr unsigned int PATHOPT_DOWN      =   8; // -z
+static constexpr unsigned int PATHOPT_OPEN      =  16;
+static constexpr unsigned int PATHOPT_CLOSED    =  32;
+static constexpr unsigned int PATHOPT_BLOCKED   =  64;
+static constexpr unsigned int PATHOPT_OBSOLETE  = 128;
+static constexpr unsigned int PATHOPT_SIZE      = 255; // size of PATHOPT bitmask
 
 static constexpr unsigned int PATHOPT_CARDINALS = (PATHOPT_RIGHT | PATHOPT_LEFT | PATHOPT_UP | PATHOPT_DOWN);
 
 static constexpr unsigned int DIR2OPT[] = {
-	PATHOPT_LEFT,
-	(PATHOPT_LEFT  | PATHOPT_UP),
-	PATHOPT_UP,
-	(PATHOPT_RIGHT | PATHOPT_UP),
-	PATHOPT_RIGHT,
+	(PATHOPT_LEFT                ),
+	(PATHOPT_LEFT  | PATHOPT_UP  ),
+	(                PATHOPT_UP  ),
+	(PATHOPT_RIGHT | PATHOPT_UP  ),
+	(PATHOPT_RIGHT               ),
 	(PATHOPT_RIGHT | PATHOPT_DOWN),
-	PATHOPT_DOWN,
+	(PATHOPT_DOWN                ),
 	(PATHOPT_LEFT  | PATHOPT_DOWN),
 };
 
 
 static constexpr unsigned int OPT2DIR[] = {
 	0,
-	PATHDIR_LEFT, // PATHOPT_LEFT
-	PATHDIR_RIGHT, // PATHOPT_RIGHT
-	0, // PATHOPT_LEFT | PATHOPT_RIGHT
-	PATHDIR_UP, // PATHOPT_UP
-	PATHDIR_LEFT_UP, // PATHOPT_LEFT | PATHOPT_UP
-	PATHDIR_RIGHT_UP, // PATHOPT_RIGHT | PATHOPT_UP
-	0, // PATHOPT_LEFT | PATHOPT_RIGHT | PATHOPT_UP
-	PATHDIR_DOWN, // PATHOPT_DOWN
-	PATHDIR_LEFT_DOWN, // PATHOPT_LEFT | PATHOPT_DOWN
+	PATHDIR_LEFT,       // PATHOPT_LEFT
+	PATHDIR_RIGHT,      // PATHOPT_RIGHT
+	0,                  // PATHOPT_LEFT  | PATHOPT_RIGHT
+	PATHDIR_UP,         // PATHOPT_UP
+	PATHDIR_LEFT_UP,    // PATHOPT_LEFT  | PATHOPT_UP
+	PATHDIR_RIGHT_UP,   // PATHOPT_RIGHT | PATHOPT_UP
+	0,                  // PATHOPT_LEFT  | PATHOPT_RIGHT | PATHOPT_UP
+	PATHDIR_DOWN,       // PATHOPT_DOWN
+	PATHDIR_LEFT_DOWN,  // PATHOPT_LEFT  | PATHOPT_DOWN
 	PATHDIR_RIGHT_DOWN, // PATHOPT_RIGHT | PATHOPT_DOWN
 	0,
 	0,
