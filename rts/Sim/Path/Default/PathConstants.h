@@ -1,7 +1,7 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
 
-#ifndef PATH_CONSTANTS_HDR
-#define PATH_CONSTANTS_HDR
+#ifndef PATH_CONSTANTS_H
+#define PATH_CONSTANTS_H
 
 #include <limits>
 #include <array>
@@ -64,6 +64,45 @@ static constexpr unsigned int PATH_NODE_SPACING = 2;
 // impassable squares (!) but without reducing the spacing
 // factor which would drop performance four-fold --> messy
 static_assert(PATH_NODE_SPACING == 2, "");
+
+
+// these give the changes in (x, z) coors
+// when moving one step in given direction
+//
+// NOTE: the choices of +1 for LEFT and UP are *not* arbitrary
+// (they are related to GetBlockVertexOffset) and also need to
+// be consistent with the PATHOPT_* flags (for PathDir2PathOpt)
+static constexpr int2 PE_DIRECTION_VECTORS[] = {
+	{+1,  0}, // PATHDIR_LEFT
+	{+1, +1}, // PATHDIR_LEFT_UP
+	{ 0, +1}, // PATHDIR_UP
+	{-1, +1}, // PATHDIR_RIGHT_UP
+	{-1,  0}, // PATHDIR_RIGHT
+	{-1, -1}, // PATHDIR_RIGHT_DOWN
+	{ 0, -1}, // PATHDIR_DOWN
+	{+1, -1} // PATHDIR_LEFT_DOWN
+};
+
+//FIXME why not use PATHDIR_* consts and merge code with top one
+static constexpr int2 PF_DIRECTION_VECTORS_2D[] = {
+	{ 0,                           0                         },
+	{+1 * int(PATH_NODE_SPACING),  0 * int(PATH_NODE_SPACING)}, // PATHOPT_LEFT
+	{-1 * int(PATH_NODE_SPACING),  0 * int(PATH_NODE_SPACING)}, // PATHOPT_RIGHT
+	{ 0,                           0                         }, // PATHOPT_LEFT | PATHOPT_RIGHT
+	{ 0 * int(PATH_NODE_SPACING), +1 * int(PATH_NODE_SPACING)}, // PATHOPT_UP
+	{+1 * int(PATH_NODE_SPACING), +1 * int(PATH_NODE_SPACING)}, // PATHOPT_LEFT | PATHOPT_UP
+	{-1 * int(PATH_NODE_SPACING), +1 * int(PATH_NODE_SPACING)}, // PATHOPT_RIGHT | PATHOPT_UP
+	{ 0,                           0                         }, // PATHOPT_LEFT | PATHOPT_RIGHT | PATHOPT_UP
+	{ 0 * int(PATH_NODE_SPACING), -1 * int(PATH_NODE_SPACING)}, // PATHOPT_DOWN
+	{+1 * int(PATH_NODE_SPACING), -1 * int(PATH_NODE_SPACING)}, // PATHOPT_LEFT | PATHOPT_DOWN
+	{-1 * int(PATH_NODE_SPACING), -1 * int(PATH_NODE_SPACING)}, // PATHOPT_RIGHT | PATHOPT_DOWN
+	{ 0,                           0                         },
+	{ 0,                           0                         },
+	{ 0,                           0                         },
+	{ 0,                           0                         },
+	{ 0,                           0                         }
+};
+
 
 // PF and PE flags (used in nodeMask[])
 enum {

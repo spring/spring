@@ -357,7 +357,7 @@ void DefaultPathDrawer::Draw(const CPathFinder* pf) const {
 			p1.y = CGround::GetHeightAboveWater(p1.x, p1.z, false) + 15.0f;
 
 		const unsigned int dir = pf->blockStates.nodeMask[square] & PATHOPT_CARDINALS;
-		const int2 obp = sqr - (CPathFinder::GetDirectionVectorsTable2D())[dir];
+		const int2 obp = sqr - PF_DIRECTION_VECTORS_2D[dir];
 		float3 p2;
 			p2.x = obp.x * SQUARE_SIZE;
 			p2.z = obp.y * SQUARE_SIZE;
@@ -419,8 +419,8 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 				vrdb->Append({p1 - UpVector * 10.0f, SColor(1.0f, 1.0f, 0.75f * drawLowResPE, 1.0f)});
 
 				for (int dir = 0; dir < PATH_DIRECTION_VERTICES; dir++) {
-					const int obx = x + (CPathEstimator::GetDirectionVectorsTable())[dir].x;
-					const int obz = z + (CPathEstimator::GetDirectionVectorsTable())[dir].y;
+					const int obx = x + PE_DIRECTION_VECTORS[dir].x;
+					const int obz = z + PE_DIRECTION_VECTORS[dir].y;
 
 					if (obx <              0) continue;
 					if (obz <              0) continue;
@@ -465,8 +465,8 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 					continue;
 
 				for (int dir = 0; dir < PATH_DIRECTION_VERTICES; dir++) {
-					const int obx = x + (CPathEstimator::GetDirectionVectorsTable())[dir].x;
-					const int obz = z + (CPathEstimator::GetDirectionVectorsTable())[dir].y;
+					const int obx = x + PE_DIRECTION_VECTORS[dir].x;
+					const int obz = z + PE_DIRECTION_VECTORS[dir].y;
 
 					if (obx <              0) continue;
 					if (obz <              0) continue;
@@ -517,7 +517,7 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 
 			auto pathOptDir = blockStates.nodeMask[blockNr] & PATHOPT_CARDINALS;
 			auto pathDir = PathOpt2PathDir(pathOptDir);
-			const int2 obp = pe->BlockIdxToPos(blockNr) - pe->PE_DIRECTION_VECTORS[pathDir];
+			const int2 obp = pe->BlockIdxToPos(blockNr) - PE_DIRECTION_VECTORS[pathDir];
 			const int obBlockNr = pe->BlockPosToIdx(obp);
 
 			if (obBlockNr < 0)

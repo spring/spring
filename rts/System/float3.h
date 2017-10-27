@@ -28,6 +28,12 @@ public:
 
 
 	/**
+	 * @brief default Constructor
+	 * With parameters, initializes x/y/z to 0.0f.
+	 */
+	constexpr float3() : x(0.0f), y(0.0f), z(0.0f) {}
+
+	/**
 	 * @brief Constructor
 	 * @param x float x
 	 * @param y float y
@@ -35,7 +41,7 @@ public:
 	 *
 	 * With parameters, initializes x/y/z to the given floats.
 	 */
-	float3(const float x = 0.0f, const float y = 0.0f, const float z = 0.0f)
+	constexpr float3(const float x, const float y, const float z)
 			: x(x), y(y), z(z) {}
 
 	/**
@@ -44,7 +50,7 @@ public:
 	 *
 	 * With parameters, initializes x/y/z to the given float[3].
 	 */
-	float3(const float f[3]) : x(f[0]), y(f[1]), z(f[2]) {}
+	constexpr float3(const float f[3]) : x(f[0]), y(f[1]), z(f[2]) {}
 
 	/**
 	 * @brief operator =
@@ -711,9 +717,9 @@ public:
  * Defines constant upwards vector
  * (0, 1, 0)
  */
-static const float3  UpVector(0.0f, 1.0f, 0.0f);
-static const float3 FwdVector(0.0f, 0.0f, 1.0f);
-static const float3 RgtVector(1.0f, 0.0f, 0.0f);
+static constexpr float3  UpVector(0.0f, 1.0f, 0.0f);
+static constexpr float3 FwdVector(0.0f, 0.0f, 1.0f);
+static constexpr float3 RgtVector(1.0f, 0.0f, 0.0f);
 
 /**
  * @brief zero vector
@@ -721,12 +727,12 @@ static const float3 RgtVector(1.0f, 0.0f, 0.0f);
  * Defines constant zero vector
  * (0, 0, 0)
  */
-static const float3 ZeroVector(0.0f, 0.0f, 0.0f);
-static const float3 OnesVector(1.0f, 1.0f, 1.0f);
+static constexpr float3 ZeroVector(0.0f, 0.0f, 0.0f);
+static constexpr float3 OnesVector(1.0f, 1.0f, 1.0f);
 
-static const float3 XYVector(1.0f, 1.0f, 0.0f);
-static const float3 XZVector(1.0f, 0.0f, 1.0f);
-static const float3 YZVector(0.0f, 1.0f, 1.0f);
+static constexpr float3 XYVector(1.0f, 1.0f, 0.0f);
+static constexpr float3 XZVector(1.0f, 0.0f, 1.0f);
+static constexpr float3 YZVector(0.0f, 1.0f, 1.0f);
 
 #endif /* FLOAT3_H */
 

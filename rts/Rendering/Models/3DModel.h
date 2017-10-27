@@ -18,8 +18,8 @@
 
 #define NUM_MODEL_TEXTURES 2
 #define NUM_MODEL_UVCHANNS 2
-static const float3 DEF_MIN_SIZE( 10000.0f,  10000.0f,  10000.0f);
-static const float3 DEF_MAX_SIZE(-10000.0f, -10000.0f, -10000.0f);
+static constexpr float3 DEF_MIN_SIZE( 10000.0f,  10000.0f,  10000.0f);
+static constexpr float3 DEF_MAX_SIZE(-10000.0f, -10000.0f, -10000.0f);
 
 enum ModelType {
 	MODELTYPE_3DO   = 0,

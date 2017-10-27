@@ -65,7 +65,6 @@ public:
 	 */
 	std::uint32_t GetPathChecksum() const { return pathChecksum; }
 
-	static const int2* GetDirectionVectorsTable();
 
 protected: // IPathFinder impl
 	IPath::SearchResult DoBlockSearch(const CSolidObject* owner, const MoveDef& moveDef, const int2 s, const int2 g);

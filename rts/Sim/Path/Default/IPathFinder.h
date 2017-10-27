@@ -123,9 +123,6 @@ protected:
 	) = 0;
 
 public:
-	static int2 PE_DIRECTION_VECTORS[PATH_DIRECTIONS];
-	static int2 PF_DIRECTION_VECTORS_2D[PATH_DIRECTIONS << 1];
-
 	// if larger than 1, this IPF is an estimator
 	const unsigned int BLOCK_SIZE;
 	const unsigned int BLOCK_PIXEL_SIZE;

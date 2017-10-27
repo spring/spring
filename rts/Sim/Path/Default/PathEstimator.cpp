@@ -127,11 +127,6 @@ CPathEstimator::~CPathEstimator()
 }
 
 
-const int2* CPathEstimator::GetDirectionVectorsTable() {
-	return (&PE_DIRECTION_VECTORS[0]);
-}
-
-
 void CPathEstimator::InitEstimator(const std::string& cacheFileName, const std::string& mapName)
 {
 	const unsigned int numThreads = GetNumThreads();
