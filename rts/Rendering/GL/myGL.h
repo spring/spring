@@ -48,46 +48,10 @@ static inline void glSecondaryColorf3(const float3& v) { glSecondaryColor3f(v.r,
 static inline void glColorf4(const float3& v, const float alpha) { glColor4f(v.r, v.g, v.b, alpha); }
 static inline void glUniformf3(const GLint location, const float3& v) { glUniform3f(location, v.r, v.g, v.b); }
 
-#if 0
-typedef   void   (*   glOrthoFuncPtr) (GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble near, GLdouble far);
-typedef   void   (*gluOrtho2DFuncPtr) (GLdouble left, GLdouble right, GLdouble bottom, GLdouble top);
-typedef   void   (* glFrustumFuncPtr) (GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble near, GLdouble far);
-
-static inline void __spring_glOrtho_noCC(GLdouble l, GLdouble r,  GLdouble b, GLdouble t,  GLdouble n, GLdouble f) { glOrtho(l, r, b, t, n, f); }
-static inline void __spring_glOrtho     (GLdouble l, GLdouble r,  GLdouble b, GLdouble t,  GLdouble n, GLdouble f) {
-	#ifndef UNIT_TEST
-	glTranslatef(0.0f, 0.0f, 0.5f);
-	glScalef(1.0f, 1.0f, 0.5f);
-	glOrtho(l, r,  b, t,  n, f);
-	#else
-	#error myGL.h included in unit-test?
-	#endif
-}
-
-static inline void __spring_gluOrtho2D_noCC(GLdouble l, GLdouble r,  GLdouble b, GLdouble t) { __spring_glOrtho_noCC(l, r, b, t, -1.0, 1.0); }
-static inline void __spring_gluOrtho2D     (GLdouble l, GLdouble r,  GLdouble b, GLdouble t) { __spring_glOrtho     (l, r, b, t, -1.0, 1.0); }
-
-static inline void __spring_glFrustum_noCC(GLdouble l, GLdouble r,  GLdouble b, GLdouble t,  GLdouble n, GLdouble f) { glFrustum(l, r, b, t, n, f); }
-static inline void __spring_glFrustum     (GLdouble l, GLdouble r,  GLdouble b, GLdouble t,  GLdouble n, GLdouble f) {
-	#ifndef UNIT_TEST
-	glTranslatef(0.0f, 0.0f, 0.5f);
-	glScalef(1.0f, 1.0f, 0.5f);
-	glFrustum(l, r,  b, t,  n, f);
-	#endif
-}
-
-static constexpr    glOrthoFuncPtr    glOrthoFuncs[2] = {__spring_glOrtho_noCC, __spring_glOrtho};
-static constexpr gluOrtho2DFuncPtr gluOrtho2DFuncs[2] = {__spring_gluOrtho2D_noCC, __spring_gluOrtho2D};
-static constexpr  glFrustumFuncPtr  glFrustumFuncs[2] = {__spring_glFrustum_noCC, __spring_glFrustum};
-#endif
+// replaced by Matrix::{Ortho,Persp}Proj
 #undef glOrtho
 #undef gluOrtho2D
 #undef glFrustum
-#if 0
-#define glOrtho       glOrthoFuncs[globalRendering->supportClipSpaceControl]
-#define gluOrtho2D gluOrtho2DFuncs[globalRendering->supportClipSpaceControl]
-#define glFrustum   glFrustumFuncs[globalRendering->supportClipSpaceControl]
-#endif
 
 
 void WorkaroundATIPointSizeBug();
