@@ -862,8 +862,8 @@ void LuaOpenGL::ResetWorldMatrices()
 void LuaOpenGL::ResetWorldShadowMatrices()
 {
 	glMatrixMode(GL_TEXTURE   ); glLoadIdentity();
-	glMatrixMode(GL_PROJECTION); glLoadMatrixf(CMatrix44f::OrthoProj(0.0f, 1.0f, 0.0f, 1.0f, 0.0f, -1.0f)); // FIXME: CC
-	glMatrixMode(GL_MODELVIEW ); glLoadMatrixf(shadowHandler->GetShadowMatrixRaw());
+	glMatrixMode(GL_PROJECTION); glLoadMatrixf(shadowHandler->GetShadowProjMatrixRaw());
+	glMatrixMode(GL_MODELVIEW ); glLoadMatrixf(shadowHandler->GetShadowViewMatrixRaw());
 }
 
 

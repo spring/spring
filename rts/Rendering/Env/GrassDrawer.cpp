@@ -320,7 +320,7 @@ void CGrassDrawer::LoadGrassShaders() {
 		grassShaders[i]->SetUniform("specularTex",     5);
 		grassShaders[i]->SetUniform("infoTexIntensityMul", 1.0f);
 		grassShaders[i]->SetUniform("groundShadowDensity", sunLighting->groundShadowDensity);
-		grassShaders[i]->SetUniformMatrix4x4("shadowMatrix", false, shadowHandler->GetShadowMatrixRaw());
+		grassShaders[i]->SetUniformMatrix4x4("shadowMatrix", false, shadowHandler->GetShadowViewMatrixRaw());
 		grassShaders[i]->SetUniform4v("shadowParams", &shadowHandler->GetShadowParams().x);
 		grassShaders[i]->Disable();
 		grassShaders[i]->Validate();
@@ -353,7 +353,7 @@ void CGrassDrawer::EnableShader(const GrassShaderProgram type) {
 
 	grassShader->SetUniform("infoTexIntensityMul", float(infoTextureHandler->InMetalMode()) + 1.0f);
 	grassShader->SetUniform("groundShadowDensity", sunLighting->groundShadowDensity);
-	grassShader->SetUniformMatrix4x4("shadowMatrix", false, shadowHandler->GetShadowMatrixRaw());
+	grassShader->SetUniformMatrix4x4("shadowMatrix", false, shadowHandler->GetShadowViewMatrixRaw());
 	grassShader->SetUniform4v("shadowParams", &shadowHandler->GetShadowParams().x);
 
 	grassShader->SetUniform3v("ambientLightColor",  &sunLighting->modelAmbientColor.x);

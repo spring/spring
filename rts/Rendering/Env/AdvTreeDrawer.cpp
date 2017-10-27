@@ -243,7 +243,7 @@ void CAdvTreeDrawer::SetupDrawState(const CCamera* cam, Shader::IProgramObject* 
 
 		shadowHandler->SetupShadowTexSampler(GL_TEXTURE0, true);
 
-		treeShaders[TREE_PROGRAM_ACTIVE]->SetUniformMatrix4fv(7, false, shadowHandler->GetShadowMatrixRaw());
+		treeShaders[TREE_PROGRAM_ACTIVE]->SetUniformMatrix4fv(7, false, shadowHandler->GetShadowViewMatrixRaw());
 		treeShaders[TREE_PROGRAM_ACTIVE]->SetUniform4fv(8, &(shadowHandler->GetShadowParams().x));
 	} else {
 		glEnable(GL_TEXTURE_2D);

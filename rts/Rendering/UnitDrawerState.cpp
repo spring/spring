@@ -181,7 +181,7 @@ bool UnitDrawerStateGLSL::Init(const CUnitDrawer* ud) {
 		modelShaders[n]->SetUniform3fv(11, &sunLighting->modelAmbientColor[0]);
 		modelShaders[n]->SetUniform3fv(12, &sunLighting->modelDiffuseColor[0]);
 		modelShaders[n]->SetUniform1f(13, sunLighting->modelShadowDensity);
-		modelShaders[n]->SetUniformMatrix4fv(14, false, shadowHandler->GetShadowMatrixRaw());
+		modelShaders[n]->SetUniformMatrix4fv(14, false, shadowHandler->GetShadowViewMatrixRaw());
 		modelShaders[n]->SetUniform4fv(15, &(shadowHandler->GetShadowParams().x));
 		// modelShaders[n]->SetUniform1f(16, 0.0f); // alphaPass
 		modelShaders[n]->Disable();
@@ -206,7 +206,7 @@ void UnitDrawerStateGLSL::Enable(const CUnitDrawer* ud, bool deferredPass, bool 
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform3fv(6, &camera->GetPos()[0]);
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniformMatrix4fv(7, false, camera->GetViewMatrix());
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniformMatrix4fv(8, false, camera->GetViewMatrixInverse());
-	modelShaders[MODEL_SHADER_ACTIVE]->SetUniformMatrix4fv(14, false, shadowHandler->GetShadowMatrixRaw());
+	modelShaders[MODEL_SHADER_ACTIVE]->SetUniformMatrix4fv(14, false, shadowHandler->GetShadowViewMatrixRaw());
 	modelShaders[MODEL_SHADER_ACTIVE]->SetUniform4fv(15, &(shadowHandler->GetShadowParams().x));
 
 	const_cast<GL::LightHandler*>(ud->GetLightHandler())->Update(modelShaders[MODEL_SHADER_ACTIVE]);

@@ -168,7 +168,7 @@ void SMFRenderStateGLSL::Update(
 			glslShaders[n]->SetUniformMatrix4x4<const char*, float>("viewMat", false, camera->GetViewMatrix());
 			glslShaders[n]->SetUniformMatrix4x4<const char*, float>("viewMatInv", false, camera->GetViewMatrixInverse());
 			glslShaders[n]->SetUniformMatrix4x4<const char*, float>("viewProjMat", false, camera->GetViewProjectionMatrix());
-			glslShaders[n]->SetUniformMatrix4x4<const char*, float>("shadowMat", false, shadowHandler->GetShadowMatrix());
+			glslShaders[n]->SetUniformMatrix4x4<const char*, float>("shadowMat", false, shadowHandler->GetShadowViewMatrix());
 			glslShaders[n]->SetUniform4v<const char*, float>("shadowParams", shadowHandler->GetShadowParams());
 
 			glslShaders[n]->SetUniform3v<const char*, float>("fogParams", &fogParams.x);
@@ -234,7 +234,7 @@ void SMFRenderStateGLSL::Enable(const CSMFGroundDrawer* smfGroundDrawer, const D
 	shader->SetUniformMatrix4x4<const char*, float>("viewMat", false, camera->GetViewMatrix());
 	shader->SetUniformMatrix4x4<const char*, float>("viewMatInv", false, camera->GetViewMatrixInverse());
 	shader->SetUniformMatrix4x4<const char*, float>("viewProjMat", false, camera->GetViewProjectionMatrix());
-	shader->SetUniformMatrix4x4<const char*, float>("shadowMat", false, shadowHandler->GetShadowMatrix());
+	shader->SetUniformMatrix4x4<const char*, float>("shadowMat", false, shadowHandler->GetShadowViewMatrix());
 	shader->SetUniform4v<const char*, float>("shadowParams", shadowHandler->GetShadowParams());
 	shader->SetUniform3v<const char*, float>("fogParams", &fogParams.x);
 	shader->SetUniform<const char*, float>("infoTexIntensityMul", float(infoTextureHandler->InMetalMode()) + 1.0f);

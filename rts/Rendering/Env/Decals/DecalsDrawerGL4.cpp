@@ -781,7 +781,7 @@ void CDecalsDrawerGL4::Draw()
 	glSpringBindTextures(0, textures.size(), &textures[0]);
 
 	if (shadowHandler->ShadowsLoaded()) {
-		CMatrix44f sm = shadowHandler->GetShadowMatrix();
+		CMatrix44f sm = shadowHandler->GetShadowViewMatrix();
 		sm.GetPos() += float3(0.5f, 0.5f, 0.0f);
 		decalShader->SetUniformMatrix4x4("shadowMatrix", false, sm.m);
 		decalShader->SetUniform("shadowDensity", sunLighting->groundShadowDensity);

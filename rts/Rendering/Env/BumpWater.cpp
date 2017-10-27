@@ -1047,7 +1047,7 @@ void CBumpWater::Draw()
 	waterShader->SetUniform1f(1, (gs->frameNum + globalRendering->timeOffset) / 15000.0f);
 
 	if (shadowHandler->ShadowsLoaded()) {
-		waterShader->SetUniformMatrix4fv(13, false, shadowHandler->GetShadowMatrixRaw());
+		waterShader->SetUniformMatrix4fv(13, false, shadowHandler->GetShadowViewMatrixRaw());
 
 		shadowHandler->SetupShadowTexSampler(GL_TEXTURE9);
 	}

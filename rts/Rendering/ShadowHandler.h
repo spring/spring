@@ -63,8 +63,10 @@ public:
 		return shadowGenProgs[p];
 	}
 
-	const CMatrix44f& GetShadowMatrix   (unsigned int idx = SHADOWMAT_TYPE_DRAWING) const { return  viewMatrix[idx];      }
-	const      float* GetShadowMatrixRaw(unsigned int idx = SHADOWMAT_TYPE_DRAWING) const { return &viewMatrix[idx].m[0]; }
+	const CMatrix44f& GetShadowViewMatrix   (unsigned int idx = SHADOWMAT_TYPE_DRAWING) const { return  viewMatrix[idx];      }
+	const CMatrix44f& GetShadowProjMatrix   (unsigned int idx = SHADOWMAT_TYPE_DRAWING) const { return  projMatrix[idx];      }
+	const      float* GetShadowViewMatrixRaw(unsigned int idx = SHADOWMAT_TYPE_DRAWING) const { return &viewMatrix[idx].m[0]; }
+	const      float* GetShadowProjMatrixRaw(unsigned int idx = SHADOWMAT_TYPE_DRAWING) const { return &projMatrix[idx].m[0]; }
 
 	const float4& GetShadowParams() const { return shadowTexProjCenter; }
 
