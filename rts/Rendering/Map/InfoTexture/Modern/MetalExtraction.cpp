@@ -134,7 +134,7 @@ void CMetalExtractionTexture::Update()
 	glBlendFunc(GL_ZERO, GL_SRC_COLOR);
 	glBindTexture(GL_TEXTURE_2D, infoTex->GetTexture());
 
-	GL::TRenderDataBuffer<VA_TYPE_0>* rdb = GL::GetRenderBuffer0();
+	GL::RenderDataBuffer0* rdb = GL::GetRenderBuffer0();
 
 	shader->Enable();
 	rdb->Append(VERTS, sizeof(VERTS) / sizeof(VERTS[0]));

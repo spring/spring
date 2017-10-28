@@ -183,7 +183,7 @@ void CAirLosTexture::Update()
 	glViewport(0, 0,  texSize.x, texSize.y);
 	glDisable(GL_BLEND);
 
-	GL::TRenderDataBuffer<VA_TYPE_0>* rdb = GL::GetRenderBuffer0();
+	GL::RenderDataBuffer0* rdb = GL::GetRenderBuffer0();
 
 	shader->Enable();
 	rdb->Append(VERTS, sizeof(VERTS) / sizeof(VERTS[0]));

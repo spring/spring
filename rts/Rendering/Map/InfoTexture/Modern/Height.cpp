@@ -170,7 +170,7 @@ void CHeightTexture::Update()
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, heightMapTexture->GetTextureID());
 
-	GL::TRenderDataBuffer<VA_TYPE_0>* rdb = GL::GetRenderBuffer0();
+	GL::RenderDataBuffer0* rdb = GL::GetRenderBuffer0();
 
 	shader->Enable();
 	rdb->Append(VERTS, sizeof(VERTS) / sizeof(VERTS[0]));

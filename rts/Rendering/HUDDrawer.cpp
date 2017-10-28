@@ -79,7 +79,7 @@ void HUDDrawer::DrawUnitDirectionArrow(const CUnit* unit)
 
 	const SColor arrowColor = SColor(0.3f, 0.9f, 0.3f, 0.4f);
 
-	GL::TRenderDataBuffer<VA_TYPE_C>* rdbc = GL::GetRenderBufferC();
+	GL::RenderDataBufferC* rdbc = GL::GetRenderBufferC();
 	Shader::IProgramObject* prog = rdbc->GetShader();
 
 	prog->Enable();
@@ -110,7 +110,7 @@ void HUDDrawer::DrawCameraDirectionArrow(const CUnit* unit)
 	viewMat.RotateZ(-((GetHeadingFromVector(viewDir.x, viewDir.z) / 32768.0f) * 180.0f + 180.0f) * math::DEG_TO_RAD);
 	viewMat.Scale({0.4f, 0.4f, 0.3f});
 
-	GL::TRenderDataBuffer<VA_TYPE_C>* rdbc = GL::GetRenderBufferC();
+	GL::RenderDataBufferC* rdbc = GL::GetRenderBufferC();
 	Shader::IProgramObject* prog = rdbc->GetShader();
 
 	// prog->Enable();
@@ -199,7 +199,7 @@ void HUDDrawer::DrawTargetReticle(const CUnit* unit)
 	glDisable(GL_DEPTH_TEST);
 
 	// draw the reticle in world coordinates
-	GL::TRenderDataBuffer<VA_TYPE_C>* rdbc = GL::GetRenderBufferC();
+	GL::RenderDataBufferC* rdbc = GL::GetRenderBufferC();
 	Shader::IProgramObject* prog = rdbc->GetShader();
 
 	prog->Enable();

@@ -130,7 +130,7 @@ void CInfoTextureCombiner::Update()
 	const float isx = 2.0f * (mapDims.mapx / float(mapDims.pwr2mapx)) - 1.0f;
 	const float isy = 2.0f * (mapDims.mapy / float(mapDims.pwr2mapy)) - 1.0f;
 
-	GL::TRenderDataBuffer<VA_TYPE_T>* rdb = GL::GetRenderBufferT();
+	GL::RenderDataBufferT* rdb = GL::GetRenderBufferT();
 	rdb->Append({{-1.0f, -1.0f, 0.0f}, 0.0f, 0.0f});
 	rdb->Append({{-1.0f, +isy , 0.0f}, 0.0f, 1.0f});
 	rdb->Append({{+isx , +isy , 0.0f}, 1.0f, 1.0f});

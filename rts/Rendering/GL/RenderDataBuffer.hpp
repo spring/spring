@@ -472,10 +472,15 @@ namespace GL {
 	void KillRenderBuffers();
 	void SwapRenderBuffers();
 
-	GL::TRenderDataBuffer<VA_TYPE_0>* GetRenderBuffer0();
-	GL::TRenderDataBuffer<VA_TYPE_N>* GetRenderBufferN();
-	GL::TRenderDataBuffer<VA_TYPE_C>* GetRenderBufferC();
-	GL::TRenderDataBuffer<VA_TYPE_T>* GetRenderBufferT();
+	typedef TRenderDataBuffer<VA_TYPE_0> RenderDataBuffer0;
+	typedef TRenderDataBuffer<VA_TYPE_N> RenderDataBufferN;
+	typedef TRenderDataBuffer<VA_TYPE_C> RenderDataBufferC;
+	typedef TRenderDataBuffer<VA_TYPE_T> RenderDataBufferT;
+
+	RenderDataBuffer0* GetRenderBuffer0();
+	RenderDataBufferN* GetRenderBufferN();
+	RenderDataBufferC* GetRenderBufferC();
+	RenderDataBufferT* GetRenderBufferT();
 };
 
 #endif

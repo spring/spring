@@ -17,10 +17,10 @@ static GL::TRenderDataBuffer<VA_TYPE_N> tRenderBufferN[2];
 static GL::TRenderDataBuffer<VA_TYPE_C> tRenderBufferC[2];
 static GL::TRenderDataBuffer<VA_TYPE_T> tRenderBufferT[2];
 
-GL::TRenderDataBuffer<VA_TYPE_0>* GL::GetRenderBuffer0() { return &tRenderBuffer0[0 /*globalRendering->drawFrame & 1*/ ]; }
-GL::TRenderDataBuffer<VA_TYPE_N>* GL::GetRenderBufferN() { return &tRenderBufferN[0 /*globalRendering->drawFrame & 1*/ ]; }
-GL::TRenderDataBuffer<VA_TYPE_C>* GL::GetRenderBufferC() { return &tRenderBufferC[0 /*globalRendering->drawFrame & 1*/ ]; }
-GL::TRenderDataBuffer<VA_TYPE_T>* GL::GetRenderBufferT() { return &tRenderBufferT[0 /*globalRendering->drawFrame & 1*/ ]; }
+GL::RenderDataBuffer0* GL::GetRenderBuffer0() { return &tRenderBuffer0[0 /*globalRendering->drawFrame & 1*/ ]; }
+GL::RenderDataBufferN* GL::GetRenderBufferN() { return &tRenderBufferN[0 /*globalRendering->drawFrame & 1*/ ]; }
+GL::RenderDataBufferC* GL::GetRenderBufferC() { return &tRenderBufferC[0 /*globalRendering->drawFrame & 1*/ ]; }
+GL::RenderDataBufferT* GL::GetRenderBufferT() { return &tRenderBufferT[0 /*globalRendering->drawFrame & 1*/ ]; }
 
 
 void GL::InitRenderBuffers() {

@@ -67,7 +67,7 @@ void ShowSplashScreen(
 	};
 
 
-	GL::TRenderDataBuffer<VA_TYPE_T>* buffer = GL::GetRenderBufferT();
+	GL::RenderDataBufferT* buffer = GL::GetRenderBufferT();
 	Shader::IProgramObject* shader = buffer->GetShader();
 
 	// slower than location-based SetUniform, but works without pre-initializing uniforms via CreateShader

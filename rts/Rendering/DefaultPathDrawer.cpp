@@ -291,8 +291,8 @@ void DefaultPathDrawer::Draw() const {
 	glDisable(GL_TEXTURE_2D);
 	glLineWidth(3);
 
-	GL::TRenderDataBuffer<VA_TYPE_C>* vrdb = GL::GetRenderBufferC();
-	Shader::IProgramObject* prog = vrdb->GetShader();
+	GL::RenderDataBufferC* rdbc = GL::GetRenderBufferC();
+	Shader::IProgramObject* prog = rdbc->GetShader();
 
 	prog->Enable();
 	prog->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
@@ -304,20 +304,20 @@ void DefaultPathDrawer::Draw() const {
 
 		// draw low-res segments of <path> (green)
 		for (const float3& pos: multiPath.lowResPath.path) {
-			vrdb->Append({pos + UpVector * 5.0f, SColor(0, 0, 255, 255)});
+			rdbc->Append({pos + UpVector * 5.0f, SColor(0, 0, 255, 255)});
 		}
 
 		// draw med-res segments of <path> (blue)
 		for (const float3& pos: multiPath.medResPath.path) {
-			vrdb->Append({pos + UpVector * 5.0f, SColor(0, 255, 0, 255)});
+			rdbc->Append({pos + UpVector * 5.0f, SColor(0, 255, 0, 255)});
 		}
 
 		// draw max-res segments of <path> (red)
 		for (const float3& pos: multiPath.maxResPath.path) {
-			vrdb->Append({pos + UpVector * 5.0f, SColor(255, 0, 0, 255)});
+			rdbc->Append({pos + UpVector * 5.0f, SColor(255, 0, 0, 255)});
 		}
 
-		vrdb->Submit(GL_LINE_STRIP);
+		rdbc->Submit(GL_LINE_STRIP);
 	}
 
 	prog->Disable();
@@ -344,8 +344,8 @@ void DefaultPathDrawer::Draw(const CPathFinderDef* pfd) const {
 void DefaultPathDrawer::Draw(const CPathFinder* pf) const {
 	glDisable(GL_TEXTURE_2D);
 
-	GL::TRenderDataBuffer<VA_TYPE_C>* vrdb = GL::GetRenderBufferC();
-	Shader::IProgramObject* prog = vrdb->GetShader();
+	GL::RenderDataBufferC* rdbc = GL::GetRenderBufferC();
+	Shader::IProgramObject* prog = rdbc->GetShader();
 
 	for (unsigned int idx = 0; idx < pf->openBlockBuffer.GetSize(); idx++) {
 		const PathNode* os = pf->openBlockBuffer.GetNode(idx);
@@ -366,12 +366,12 @@ void DefaultPathDrawer::Draw(const CPathFinder* pf) const {
 		if (!camera->InView(p1) && !camera->InView(p2))
 			continue;
 
-		vrdb->Append({p1, SColor(0.7f, 0.2f, 0.2f, 1.0f)});
-		vrdb->Append({p2, SColor(0.7f, 0.2f, 0.2f, 1.0f)});
+		rdbc->Append({p1, SColor(0.7f, 0.2f, 0.2f, 1.0f)});
+		rdbc->Append({p2, SColor(0.7f, 0.2f, 0.2f, 1.0f)});
 	}
 
 	prog->Enable();
-	vrdb->Submit(GL_LINES);
+	rdbc->Submit(GL_LINES);
 	prog->Disable();
 }
 
@@ -384,8 +384,8 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 	if (md == nullptr)
 		return;
 
-	GL::TRenderDataBuffer<VA_TYPE_C>* vrdb = GL::GetRenderBufferC();
-	Shader::IProgramObject* prog = vrdb->GetShader();
+	GL::RenderDataBufferC* rdbc = GL::GetRenderBufferC();
+	Shader::IProgramObject* prog = rdbc->GetShader();
 
 	glDisable(GL_TEXTURE_2D);
 
@@ -415,8 +415,8 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 				if (!camera->InView(p1))
 					continue;
 
-				vrdb->Append({p1                   , SColor(1.0f, 1.0f, 0.75f * drawLowResPE, 1.0f)});
-				vrdb->Append({p1 - UpVector * 10.0f, SColor(1.0f, 1.0f, 0.75f * drawLowResPE, 1.0f)});
+				rdbc->Append({p1                   , SColor(1.0f, 1.0f, 0.75f * drawLowResPE, 1.0f)});
+				rdbc->Append({p1 - UpVector * 10.0f, SColor(1.0f, 1.0f, 0.75f * drawLowResPE, 1.0f)});
 
 				for (int dir = 0; dir < PATH_DIRECTION_VERTICES; dir++) {
 					const int obx = x + PE_DIRECTION_VECTORS[dir].x;
@@ -441,14 +441,14 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 						p2.z = (blockStates.peNodeOffsets[md->pathType][obBlockNr].y) * SQUARE_SIZE;
 						p2.y = CGround::GetHeightAboveWater(p2.x, p2.z, false) + 10.0f;
 
-					vrdb->Append({p1, SColor(1.0f / std::sqrt(nrmCost), 1.0f / nrmCost, 0.75f * drawLowResPE, 1.0f)});
-					vrdb->Append({p2, SColor(1.0f / std::sqrt(nrmCost), 1.0f / nrmCost, 0.75f * drawLowResPE, 1.0f)});
+					rdbc->Append({p1, SColor(1.0f / std::sqrt(nrmCost), 1.0f / nrmCost, 0.75f * drawLowResPE, 1.0f)});
+					rdbc->Append({p2, SColor(1.0f / std::sqrt(nrmCost), 1.0f / nrmCost, 0.75f * drawLowResPE, 1.0f)});
 				}
 			}
 		}
 
 		prog->Enable();
-		vrdb->Submit(GL_LINES);
+		rdbc->Submit(GL_LINES);
 		prog->Disable();
 		font->glWorldBegin();
 
@@ -535,12 +535,12 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 			if (!camera->InView(p1) && !camera->InView(p2))
 				continue;
 
-			vrdb->Append({p1, color});
-			vrdb->Append({p2, color});
+			rdbc->Append({p1, color});
+			rdbc->Append({p2, color});
 		}
 
 		prog->Enable();
-		vrdb->Submit(GL_LINES);
+		rdbc->Submit(GL_LINES);
 		prog->Disable();
 	}
 
