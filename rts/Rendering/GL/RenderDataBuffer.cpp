@@ -256,7 +256,7 @@ Shader::GLSLProgramObject* GL::RenderDataBuffer::CreateShader(
 	shader.ReloadShaderObjects();
 	shader.CreateAndLink();
 	shader.RecalculateShaderHash();
-	// RDB shaders are never reloaded, get rid of attachments
+	// RDB shaders are never reloaded, get rid of attachments early
 	shader.ClearAttachedShaderObjects();
 
 	for (size_t n = 0; n < numUniforms; n++) {
