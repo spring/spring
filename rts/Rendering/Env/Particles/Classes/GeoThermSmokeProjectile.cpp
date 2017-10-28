@@ -9,7 +9,7 @@
 #include "Sim/Misc/Wind.h"
 
 
-CR_BIND_DERIVED_POOL(CGeoThermSmokeProjectile, CSmokeProjectile, , projMemPool.alloc, projMemPool.free)
+CR_BIND_DERIVED(CGeoThermSmokeProjectile, CSmokeProjectile, )
 
 CR_REG_METADATA(CGeoThermSmokeProjectile, (
 	CR_MEMBER(geo)

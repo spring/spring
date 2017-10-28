@@ -32,7 +32,7 @@
 using std::min;
 using std::max;
 
-CR_BIND_DERIVED_POOL(CBuilder, CUnit, , unitMemPool.alloc, unitMemPool.free)
+CR_BIND_DERIVED(CBuilder, CUnit, )
 CR_REG_METADATA(CBuilder, (
 	CR_MEMBER(range3D),
 	CR_MEMBER(buildDistance),

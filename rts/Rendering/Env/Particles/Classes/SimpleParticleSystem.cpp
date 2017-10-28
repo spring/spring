@@ -15,7 +15,7 @@
 #include "System/Log/ILog.h"
 #include "System/myMath.h"
 
-CR_BIND_DERIVED_POOL(CSimpleParticleSystem, CProjectile, , projMemPool.alloc, projMemPool.free)
+CR_BIND_DERIVED(CSimpleParticleSystem, CProjectile, )
 
 CR_REG_METADATA(CSimpleParticleSystem,
 (
@@ -219,7 +219,7 @@ bool CSimpleParticleSystem::GetMemberInfo(SExpGenSpawnableMemberInfo& memberInfo
 }
 
 
-CR_BIND_DERIVED_POOL(CSphereParticleSpawner, CSimpleParticleSystem, , projMemPool.alloc, projMemPool.free)
+CR_BIND_DERIVED(CSphereParticleSpawner, CSimpleParticleSystem, )
 
 CR_REG_METADATA(CSphereParticleSpawner, )
 

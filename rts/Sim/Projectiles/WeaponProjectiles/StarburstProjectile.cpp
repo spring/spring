@@ -37,7 +37,7 @@ CR_REG_METADATA_SUB(CStarburstProjectile, TracerPart, (
 ))
 
 
-CR_BIND_DERIVED_POOL(CStarburstProjectile, CWeaponProjectile, , projMemPool.alloc, projMemPool.free)
+CR_BIND_DERIVED(CStarburstProjectile, CWeaponProjectile, )
 CR_REG_METADATA(CStarburstProjectile, (
 	CR_SETFLAG(CF_Synced),
 	CR_MEMBER(tracking),

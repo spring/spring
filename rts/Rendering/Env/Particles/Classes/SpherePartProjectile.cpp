@@ -10,7 +10,7 @@
 #include "Sim/Projectiles/ProjectileMemPool.h"
 #include "System/myMath.h"
 
-CR_BIND_DERIVED_POOL(CSpherePartProjectile, CProjectile, , projMemPool.alloc, projMemPool.free)
+CR_BIND_DERIVED(CSpherePartProjectile, CProjectile, )
 
 CR_REG_METADATA(CSpherePartProjectile, (
 	CR_MEMBER(centerPos),
@@ -135,7 +135,7 @@ CSpherePartSpawner::CSpherePartSpawner()
 }
 
 
-CR_BIND_DERIVED_POOL(CSpherePartSpawner, CProjectile, , projMemPool.alloc, projMemPool.free)
+CR_BIND_DERIVED(CSpherePartSpawner, CProjectile, )
 
 CR_REG_METADATA(CSpherePartSpawner,
 (

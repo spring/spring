@@ -12,7 +12,7 @@
 #include "System/Sync/SyncTracer.h"
 #include "System/myMath.h"
 
-CR_BIND_DERIVED_POOL(CEmgCannon, CWeapon, , weaponMemPool.alloc, weaponMemPool.free)
+CR_BIND_DERIVED(CEmgCannon, CWeapon, )
 CR_REG_METADATA(CEmgCannon, )
 
 

@@ -16,7 +16,7 @@
 #include "System/ContainerUtil.h"
 
 
-CR_BIND_DERIVED_POOL(CExtractorBuilding, CBuilding, , unitMemPool.alloc, unitMemPool.free)
+CR_BIND_DERIVED(CExtractorBuilding, CBuilding, )
 CR_REG_METADATA(CExtractorBuilding, (
 	CR_MEMBER(extractionRange),
 	CR_MEMBER(extractionDepth),

@@ -208,6 +208,7 @@ CUnit::CUnit()
 
 CUnit::~CUnit()
 {
+	assert(unitMemPool.mapped(this));
 	// clean up if we are still under MoveCtrl here
 	DisableScriptMoveType();
 
@@ -2782,7 +2783,7 @@ short CUnit::GetTransporteeWantedHeading(const CUnit* unit) const {
 /******************************************************************************/
 
 
-CR_BIND_DERIVED_POOL(CUnit, CSolidObject, , unitMemPool.alloc, unitMemPool.free)
+CR_BIND_DERIVED_POOL(CUnit, CSolidObject, , unitMemPool.allocMem, unitMemPool.freeMem)
 CR_REG_METADATA(CUnit, (
 	CR_MEMBER(unitDef),
 	CR_MEMBER(shieldWeapon),

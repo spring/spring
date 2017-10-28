@@ -14,7 +14,7 @@
 #include "Sim/Weapons/WeaponDef.h"
 #include "System/creg/STL_Deque.h"
 
-CR_BIND_DERIVED_POOL(CFireBallProjectile, CWeaponProjectile, , projMemPool.alloc, projMemPool.free)
+CR_BIND_DERIVED(CFireBallProjectile, CWeaponProjectile, )
 
 CR_REG_METADATA(CFireBallProjectile,(
 	CR_SETFLAG(CF_Synced),

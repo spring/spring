@@ -29,7 +29,7 @@
 #include "Game/GlobalUnsynced.h"
 
 
-CR_BIND_DERIVED_POOL(CFactory, CBuilding, , unitMemPool.alloc, unitMemPool.free)
+CR_BIND_DERIVED(CFactory, CBuilding, )
 CR_REG_METADATA(CFactory, (
 	CR_MEMBER(buildSpeed),
 	CR_MEMBER(lastBuildUpdateFrame),

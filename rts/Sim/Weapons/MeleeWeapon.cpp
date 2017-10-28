@@ -5,7 +5,7 @@
 #include "WeaponMemPool.h"
 #include "Sim/Units/Unit.h"
 
-CR_BIND_DERIVED_POOL(CMeleeWeapon, CWeapon, , weaponMemPool.alloc, weaponMemPool.free)
+CR_BIND_DERIVED(CMeleeWeapon, CWeapon, )
 CR_REG_METADATA(CMeleeWeapon, )
 
 void CMeleeWeapon::FireImpl(const bool scriptCall)

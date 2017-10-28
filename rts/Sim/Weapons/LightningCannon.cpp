@@ -13,7 +13,7 @@
 
 #include <vector>
 
-CR_BIND_DERIVED_POOL(CLightningCannon, CWeapon, , weaponMemPool.alloc, weaponMemPool.free)
+CR_BIND_DERIVED(CLightningCannon, CWeapon, )
 CR_REG_METADATA(CLightningCannon, (
 	CR_MEMBER(color)
 ))
