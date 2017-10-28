@@ -10,6 +10,25 @@ using std::string;
 #include "LuaInclude.h"
 
 
+template<unsigned int length, unsigned int step = (length >> 5) + 1, unsigned int idx = length, unsigned int stop = length % step>
+struct compileTimeHasher {
+	static constexpr unsigned int hash(const char *str, unsigned int prev_hash = length) {
+		return compileTimeHasher<length, step, idx - step, stop>::hash(str, prev_hash ^ ((prev_hash << 5) + (prev_hash >> 2) + ((unsigned char)str[idx - 1])));
+	}
+};
+
+// stopping condition
+template<unsigned int length, unsigned int step, unsigned int idx>
+struct compileTimeHasher<length, step, idx, idx> {
+	static constexpr unsigned int hash(const char *str, unsigned int prev_hash = length) {
+		return prev_hash;
+	}
+};
+
+
+#define COMPILE_TIME_HASH(str) compileTimeHasher<sizeof(str) - 1>::hash(str)
+
+
 struct LuaHashString {
 	public:
 		LuaHashString(const string& s)
@@ -83,11 +102,6 @@ struct LuaHashString {
 			lua_pushsstring(L, value);
 			lua_rawset(L, -3);
 		}
-		inline void PushHashString(lua_State* L, const LuaHashString& hs) const {
-			Push(L);
-			hs.Push(L);
-			lua_rawset(L, -3);
-		}
 
 		inline void PushCFunc(lua_State* L, int (*func)(lua_State*)) const {
 			Push(L);
@@ -104,24 +118,24 @@ struct LuaHashString {
 // NOTE: scoped to avoid name conflicts
 // NOTE: since all the following are static, if name can change (e.g. within a loop)
 //       peculiar things will happen. => Only use raw strings (and not variables) in name.
-   
+
 #define HSTR_PUSH(L, name) \
-	{ static const LuaHashString hsPriv(name); hsPriv.Push(L); }
+	{ lua_pushhstring(L, COMPILE_TIME_HASH(name), name, sizeof(name) - 1); }
 
 #define HSTR_PUSH_BOOL(L, name, val) \
-	{ static const LuaHashString hsPriv(name); hsPriv.PushBool(L, val); }
+	{ HSTR_PUSH(L, name); lua_pushboolean(L, val); lua_rawset(L, -3); }
 
 #define HSTR_PUSH_NUMBER(L, name, val) \
-	{ static const LuaHashString hsPriv(name); hsPriv.PushNumber(L, val); }
+	{ HSTR_PUSH(L, name); lua_pushnumber(L, val); lua_rawset(L, -3); }
 
 #define HSTR_PUSH_STRING(L, name, val) \
-	{ static const LuaHashString hsPriv(name); hsPriv.PushString(L, val); }
+	{ HSTR_PUSH(L, name); lua_pushsstring(L, val); lua_rawset(L, -3); }
 
-#define HSTR_PUSH_HSTR(L, name, val) \
-	{ static const LuaHashString hsPriv(name); hsPriv.PushHashString(L, val); }
+#define HSTR_PUSH_CSTRING(L, name, val) \
+	{ HSTR_PUSH(L, name); lua_pushhstring(L, COMPILE_TIME_HASH(val), val, sizeof(val) - 1); lua_rawset(L, -3); }
 
 #define HSTR_PUSH_CFUNC(L, name, val) \
-	{ static const LuaHashString hsPriv(name); hsPriv.PushCFunc(L, val); }
+	{ HSTR_PUSH(L, name); lua_pushcfunction(L, val); lua_rawset(L, -3); }
 
 
 #endif // LUA_HASH_STRING_H

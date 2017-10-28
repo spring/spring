@@ -447,10 +447,10 @@ static int MoveDefTable(lua_State* L, const void* data)
 
 	// TODO: remove after 102
 	switch (md->speedModClass) {
-		case MoveDef::Tank:  { HSTR_PUSH_STRING(L, "family",  "tank"); HSTR_PUSH_STRING(L, "type", "ground"); break; }
-		case MoveDef::KBot:  { HSTR_PUSH_STRING(L, "family",  "kbot"); HSTR_PUSH_STRING(L, "type", "ground"); break; }
-		case MoveDef::Hover: { HSTR_PUSH_STRING(L, "family", "hover"); HSTR_PUSH_STRING(L, "type",  "hover"); break; }
-		case MoveDef::Ship:  { HSTR_PUSH_STRING(L, "family",  "ship"); HSTR_PUSH_STRING(L, "type",   "ship"); break; }
+		case MoveDef::Tank:  { HSTR_PUSH_CSTRING(L, "family",  "tank"); HSTR_PUSH_CSTRING(L, "type", "ground"); break; }
+		case MoveDef::KBot:  { HSTR_PUSH_CSTRING(L, "family",  "kbot"); HSTR_PUSH_CSTRING(L, "type", "ground"); break; }
+		case MoveDef::Hover: { HSTR_PUSH_CSTRING(L, "family", "hover"); HSTR_PUSH_CSTRING(L, "type",  "hover"); break; }
+		case MoveDef::Ship:  { HSTR_PUSH_CSTRING(L, "family",  "ship"); HSTR_PUSH_CSTRING(L, "type",   "ship"); break; }
 	}
 
 	HSTR_PUSH_NUMBER(L, "smClass",       md->speedModClass);
