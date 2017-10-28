@@ -113,8 +113,10 @@ CSMFGroundDrawer::~CSMFGroundDrawer()
 	waterPlaneBuffers[0].Kill();
 	waterPlaneBuffers[1].Kill();
 
-	if (drawMapEdges)
-		borderShader.Release(false);
+	// no-op if the shader was never created, but necessary
+	// in case the game or user turned border rendering off
+	// at runtime
+	borderShader.Release(false);
 
 	spring::SafeDelete(groundTextures);
 	spring::SafeDelete(meshDrawer);
