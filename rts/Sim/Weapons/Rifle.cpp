@@ -2,7 +2,6 @@
 
 #include "Rifle.h"
 #include "WeaponDef.h"
-#include "WeaponMemPool.h"
 #include "Game/TraceRay.h"
 #include "Game/GameHelper.h"
 #include "Map/Ground.h"
@@ -11,6 +10,7 @@
 #include "Rendering/Env/Particles/Classes/TracerProjectile.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Features/Feature.h"
+#include "Sim/Projectiles/ProjectileMemPool.h"
 #include "System/Sync/SyncTracer.h"
 #include "System/myMath.h"
 

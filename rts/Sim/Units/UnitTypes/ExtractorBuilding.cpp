@@ -7,7 +7,6 @@
 #include "ExtractorBuilding.h"
 #include "Sim/Units/Scripts/UnitScript.h"
 #include "Sim/Units/UnitHandler.h"
-#include "Sim/Units/UnitMemPool.h"
 #include "Map/ReadMap.h"
 #include "Sim/Units/UnitDef.h"
 #include "Map/MetalMap.h"

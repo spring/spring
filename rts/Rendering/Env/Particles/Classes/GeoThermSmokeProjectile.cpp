@@ -4,7 +4,6 @@
 #include "GeoThermSmokeProjectile.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "Sim/Projectiles/ProjectileMemPool.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/Wind.h"
 

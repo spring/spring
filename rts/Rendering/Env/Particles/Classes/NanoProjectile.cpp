@@ -11,7 +11,6 @@
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Projectiles/ExpGenSpawnableMemberInfo.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "Sim/Projectiles/ProjectileMemPool.h"
 
 CR_BIND_DERIVED(CNanoProjectile, CProjectile, )
 

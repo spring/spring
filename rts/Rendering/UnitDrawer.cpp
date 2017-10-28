@@ -41,6 +41,7 @@
 #include "Sim/Units/Unit.h"
 
 #include "System/Config/ConfigHandler.h"
+#include "System/ContainerUtil.h"
 #include "System/EventHandler.h"
 #include "System/myMath.h"
 #include "System/SafeUtil.h"

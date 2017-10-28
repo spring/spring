@@ -2,7 +2,6 @@
 
 #include "Cannon.h"
 #include "WeaponDef.h"
-#include "WeaponMemPool.h"
 #include "Game/TraceRay.h"
 #include "Map/Ground.h"
 #include "Map/MapInfo.h"

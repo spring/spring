@@ -22,6 +22,7 @@
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
 #include "System/FastMath.h"
+#include "System/SafeUtil.h"
 #include "System/Log/ILog.h"
 #include "System/myMath.h"
 
