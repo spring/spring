@@ -19,7 +19,6 @@
 #include "Rendering/GL/RenderDataBuffer.hpp"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Shaders/Shader.h"
-#include "Rendering/Shaders/ShaderHandler.h"
 #include "System/Config/ConfigHandler.h"
 #include "System/EventHandler.h"
 #include "System/FastMath.h"
@@ -252,10 +251,11 @@ void CSMFGroundDrawer::CreateBorderShader() {
 	std::string vsCode = std::move(Shader::GetShaderSource("GLSL/SMFBorderVertProg4.glsl"));
 	std::string fsCode = std::move(Shader::GetShaderSource("GLSL/SMFBorderFragProg4.glsl"));
 
+	Shader::GLSLShaderObject shaderObjs[2] = {{GL_VERTEX_SHADER, vsCode.c_str(), ""}, {GL_FRAGMENT_SHADER, fsCode.c_str(), ""}};
 	Shader::IProgramObject* shaderProg = &borderShader;
 
-	borderShader.AttachShaderObject(shaderHandler->CreateShaderObject(vsCode, "", GL_VERTEX_SHADER));
-	borderShader.AttachShaderObject(shaderHandler->CreateShaderObject(fsCode, "", GL_FRAGMENT_SHADER));
+	borderShader.AttachShaderObject(&shaderObjs[0]);
+	borderShader.AttachShaderObject(&shaderObjs[1]);
 	borderShader.ReloadShaderObjects();
 	borderShader.CreateAndLink();
 	borderShader.RecalculateShaderHash();
