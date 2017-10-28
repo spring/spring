@@ -261,6 +261,7 @@ void CSMFGroundDrawer::CreateBorderShader() {
 	borderShader.ReloadShaderObjects();
 	borderShader.CreateAndLink();
 	borderShader.RecalculateShaderHash();
+	borderShader.ClearAttachedShaderObjects();
 	borderShader.Validate();
 
 	shaderProg->Enable();
