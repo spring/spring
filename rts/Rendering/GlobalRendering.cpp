@@ -650,7 +650,7 @@ void CGlobalRendering::CheckGLExtensions() const
 
 	CHECK_EXT(GLEW_EXT_blend_func_separate); // 1.4
 	CHECK_EXT(GLEW_EXT_blend_equation_separate); // 2.0
-	CHECK_EXT(GLEW_EXT_stencil_two_side); // 2.0
+	//CHECK_EXT(GLEW_EXT_stencil_two_side); // 2.0 May also be an AMD issue
 
 	CHECK_EXT(GLEW_ARB_occlusion_query); // 1.5
 	CHECK_EXT(GLEW_ARB_occlusion_query2); // 3.3 (glBeginConditionalRender)
