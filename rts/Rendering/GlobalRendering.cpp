@@ -639,7 +639,7 @@ void CGlobalRendering::CheckGLExtensions() const
 
 	CHECK_EXT(GLEW_ARB_texture_compression);
 	CHECK_EXT(GLEW_EXT_texture_compression_s3tc);
-	CHECK_EXT(GLEW_EXT_texture_compression_dxt1);
+	//CHECK_EXT(GLEW_EXT_texture_compression_dxt1); for some reason AMD doesn't list this as supported even though it does
 	CHECK_EXT(GLEW_ARB_texture_float); // 3.0 (FP{16,32} textures)
 	CHECK_EXT(GLEW_ARB_texture_non_power_of_two); // 2.0 (NPOT textures)
 	CHECK_EXT(GLEW_ARB_texture_rectangle); // 3.0 (rectangular textures)
