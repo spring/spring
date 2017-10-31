@@ -328,10 +328,9 @@ CFontTexture::CFontTexture(const std::string& fontfile, int size, int _outlinesi
 	, texHeight(0)
 	, wantedTexWidth(0)
 	, wantedTexHeight(0)
-	, texture(0)
+
 	, atlasUpdate(nullptr)
 	, atlasUpdateShadow(nullptr)
-	, curTextureUpdate(0)
 {
 	if (fontSize <= 0)
 		fontSize = 14;
@@ -343,8 +342,6 @@ CFontTexture::CFontTexture(const std::string& fontfile, int size, int _outlinesi
 	fontStyle  = "unknown";
 
 #ifndef HEADLESS
-	lastTextureUpdate = 0;
-
 	face = nullptr;
 	shFace = GetFontFace(fontfile, fontSize);
 
@@ -367,10 +364,10 @@ CFontTexture::CFontTexture(const std::string& fontfile, int size, int _outlinesi
 
 	// precache ASCII glyphs & kernings (save them in an array for better lvl2 cpu cache hitrate)
 	memset(kerningPrecached, 0, 128*128*sizeof(float));
-	for (char32_t i=32; i<127; ++i) {
+	for (char32_t i = 32; i < 127; ++i) {
 		const auto& lgl = GetGlyph(i);
 		const float advance = lgl.advance;
-		for (char32_t j=32; j<127; ++j) {
+		for (char32_t j = 32; j < 127; ++j) {
 			const auto& rgl = GetGlyph(j);
 			const auto hash = GetKerningHash(i, j);
 			FT_Vector kerning;
@@ -388,7 +385,11 @@ CFontTexture::~CFontTexture()
 #ifndef HEADLESS
 	allFonts.erase(this);
 
-	texture = 0;
+	glDeleteTextures(1, &glyphAtlasTextureID);
+	glDeleteLists(texCoorScaleMatList, 1);
+
+	glyphAtlasTextureID = 0;
+	texCoorScaleMatList = 0;
 
 	spring::SafeDelete(atlasUpdate);
 	spring::SafeDelete(atlasUpdateShadow);
@@ -397,31 +398,37 @@ CFontTexture::~CFontTexture()
 
 
 void CFontTexture::Update() {
+	// called from Game::UpdateUnsynced
 	std::lock_guard<spring::recursive_mutex> lk(m);
 	for (auto& font: allFonts) {
-		font->UpdateTexture();
+		font->UpdateGlyphAtlasTexture();
+		font->UpdateTexCoorScaleMatList();
 	}
 }
 
 
 const GlyphInfo& CFontTexture::GetGlyph(char32_t ch)
 {
+	static const GlyphInfo dummy = GlyphInfo();
+
 #ifndef HEADLESS
-	const auto it = glyphs.find(ch);
-	if (it != glyphs.end())
-		return it->second;
+	for (int i = 0; i < 2; i++) {
+		const auto it = glyphs.find(ch);
 
-	// Get block start pos
-	char32_t start, end;
-	start = GetLanguageBlock(ch, end);
+		if (it != glyphs.end())
+			return it->second;
+		if (i == 1)
+			break;
 
-	// Load an entire block
-	LoadBlock(start, end);
-	return GetGlyph(ch);
-#else
-	static GlyphInfo g = GlyphInfo();
-	return g;
+		// get block-range containing this character
+		char32_t end = 0;
+		char32_t start = GetLanguageBlock(ch, end);
+
+		LoadBlock(start, end);
+	}
 #endif
+
+	return dummy;
 }
 
 
@@ -489,6 +496,7 @@ void CFontTexture::LoadBlock(char32_t start, char32_t end)
 	} while (!map.empty() && f && (alreadyCheckedFonts.find(f) == alreadyCheckedFonts.end()));
 #endif
 
+
 	// load fail glyph for all remaining ones (they will all share the same fail glyph)
 	for (auto c: map) {
 		LoadGlyph(shFace, c, 0);
@@ -504,39 +512,44 @@ void CFontTexture::LoadBlock(char32_t start, char32_t end)
 
 		wantedTexWidth  = atlasAlloc.GetAtlasSize().x;
 		wantedTexHeight = atlasAlloc.GetAtlasSize().y;
-		if ((atlasUpdate->xsize != wantedTexWidth) || (atlasUpdate->ysize != wantedTexHeight)) {
+		if ((atlasUpdate->xsize != wantedTexWidth) || (atlasUpdate->ysize != wantedTexHeight))
 			(*atlasUpdate) = atlasUpdate->CanvasResize(wantedTexWidth, wantedTexHeight, false);
-		}
 
-		if (!atlasUpdateShadow) {
+		if (atlasUpdateShadow == nullptr) {
 			atlasUpdateShadow = new CBitmap();
 			atlasUpdateShadow->channels = 1;
 			atlasUpdateShadow->Alloc(wantedTexWidth, wantedTexHeight);
 		}
-		if ((atlasUpdateShadow->xsize != wantedTexWidth) || (atlasUpdateShadow->ysize != wantedTexHeight)) {
+		if ((atlasUpdateShadow->xsize != wantedTexWidth) || (atlasUpdateShadow->ysize != wantedTexHeight))
 			(*atlasUpdateShadow) = atlasUpdateShadow->CanvasResize(wantedTexWidth, wantedTexHeight, false);
-		}
 
-		for(char32_t i=start; i<end; ++i) {
+		for (char32_t i = start; i < end; ++i) {
 			const std::string glyphName  = IntToString(i);
 			const std::string glyphName2 = glyphName + "sh";
 
 			if (!atlasAlloc.contains(glyphName))
 				continue;
 
-			auto texpos  = atlasAlloc.GetEntry(glyphName);
-			auto texpos2 = atlasAlloc.GetEntry(glyphName2);
+			const auto texpos  = atlasAlloc.GetEntry(glyphName);
+			const auto texpos2 = atlasAlloc.GetEntry(glyphName2);
+
 			glyphs[i].texCord       = IGlyphRect(texpos[0], texpos[1], texpos[2] - texpos[0], texpos[3] - texpos[1]);
 			glyphs[i].shadowTexCord = IGlyphRect(texpos2[0], texpos2[1], texpos2[2] - texpos2[0], texpos2[3] - texpos2[1]);
 
-			auto& glyphbm  = (CBitmap*&)atlasAlloc.GetEntryData(glyphName);
-			if (texpos[2] != 0)  atlasUpdate->CopySubImage(*glyphbm, texpos.x, texpos.y);
-			if (texpos2[2] != 0) atlasUpdateShadow->CopySubImage(*glyphbm, texpos2.x + outlineSize, texpos2.y + outlineSize);
-			delete glyphbm; glyphbm = nullptr;
+			auto& glyphbm = (CBitmap*&)atlasAlloc.GetEntryData(glyphName);
+
+			if (texpos[2] != 0)
+				atlasUpdate->CopySubImage(*glyphbm, texpos.x, texpos.y);
+			if (texpos2[2] != 0)
+				atlasUpdateShadow->CopySubImage(*glyphbm, texpos2.x + outlineSize, texpos2.y + outlineSize);
+
+			spring::SafeDelete(glyphbm);
 		}
+
 		atlasAlloc.clear();
 	}
 
+	// schedule a texture update
 	++curTextureUpdate;
 }
 
@@ -564,10 +577,8 @@ void CFontTexture::LoadGlyph(std::shared_ptr<FontFace>& f, char32_t ch, unsigned
 	glyph.utf16 = ch;
 
 	// load glyph
-	FT_Error error = FT_Load_Glyph(*f, index, FT_LOAD_RENDER);
-	if (error) {
+	if (FT_Load_Glyph(*f, index, FT_LOAD_RENDER) != 0)
 		LOG_L(L_ERROR, "Couldn't load glyph %d", ch);
-	}
 
 	FT_GlyphSlot slot = f->face->glyph;
 
@@ -584,14 +595,14 @@ void CFontTexture::LoadGlyph(std::shared_ptr<FontFace>& f, char32_t ch, unsigned
 	glyph.descender = ybearing - glyph.height;
 
 	// workaround bugs in FreeSansBold (in range 0x02B0 - 0x0300)
-	if (glyph.advance == 0 && glyph.size.w > 0) glyph.advance = glyph.size.w;
+	if (glyph.advance == 0 && glyph.size.w > 0)
+		glyph.advance = glyph.size.w;
 
 	const int width  = slot->bitmap.width;
 	const int height = slot->bitmap.rows;
 
-	if (width<=0 || height<=0) {
+	if (width <= 0 || height <= 0)
 		return;
-	}
 
 	if (slot->bitmap.pixel_mode != FT_PIXEL_MODE_GRAY) {
 		LOG_L(L_ERROR, "invalid pixeldata mode");
@@ -615,8 +626,8 @@ void CFontTexture::CreateTexture(const int width, const int height)
 #ifndef HEADLESS
 	glPushAttrib(GL_TEXTURE_BIT);
 
-	glGenTextures(1, &texture);
-	glBindTexture(GL_TEXTURE_2D, texture);
+	glGenTextures(1, &glyphAtlasTextureID);
+	glBindTexture(GL_TEXTURE_2D, glyphAtlasTextureID);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -628,10 +639,10 @@ void CFontTexture::CreateTexture(const int width, const int height)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, 1, 1, 0, GL_ALPHA, GL_UNSIGNED_BYTE, nullptr);
+	glPopAttrib();
 
 	texWidth  = wantedTexWidth  = width;
 	texHeight = wantedTexHeight = height;
-	glPopAttrib();
 
 	atlasUpdate = new CBitmap();
 	atlasUpdate->channels = 1;
@@ -641,7 +652,7 @@ void CFontTexture::CreateTexture(const int width, const int height)
 }
 
 
-void CFontTexture::UpdateTexture()
+void CFontTexture::UpdateGlyphAtlasTexture()
 {
 #ifndef HEADLESS
 	std::lock_guard<spring::recursive_mutex> lk(m);
@@ -654,7 +665,7 @@ void CFontTexture::UpdateTexture()
 	texHeight = wantedTexHeight;
 
 	// merge shadowing
-	if (atlasUpdateShadow) {
+	if (atlasUpdateShadow != nullptr) {
 		atlasUpdateShadow->Blur(outlineSize, outlineWeight);
 		assert((atlasUpdate->xsize * atlasUpdate->ysize) % sizeof(int) == 0);
 
@@ -662,23 +673,49 @@ void CFontTexture::UpdateTexture()
 		auto dst = reinterpret_cast<int*>(atlasUpdate->GetRawMem());
 		auto size = (atlasUpdate->xsize * atlasUpdate->ysize) / sizeof(int);
 
-		assert (atlasUpdateShadow->GetMemSize() / sizeof(int) == size);
-		assert (atlasUpdate->GetMemSize() / sizeof(int) == size);
+		assert(atlasUpdateShadow->GetMemSize() / sizeof(int) == size);
+		assert(atlasUpdate->GetMemSize() / sizeof(int) == size);
 
 		for (int i = 0; i < size; ++i) {
 			dst[i] |= src[i];
 		}
 
-		delete atlasUpdateShadow;
-		atlasUpdateShadow = nullptr;
+		spring::SafeDelete(atlasUpdateShadow);
 	}
 
 
 	glPushAttrib(GL_PIXEL_MODE_BIT | GL_TEXTURE_BIT);
 		// update texture atlas
-		glBindTexture(GL_TEXTURE_2D, texture);
+		glBindTexture(GL_TEXTURE_2D, glyphAtlasTextureID);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, texWidth, texHeight, 0, GL_ALPHA, GL_UNSIGNED_BYTE, atlasUpdate->GetRawMem());
-
+		glBindTexture(GL_TEXTURE_2D, 0);
 	glPopAttrib();
 #endif
 }
+
+void CFontTexture::UpdateTexCoorScaleMatList()
+{
+	if (texCoorScaleMatList == 0)
+		texCoorScaleMatList = glGenLists(1);
+
+	glNewList(texCoorScaleMatList, GL_COMPILE);
+	glScalef(1.0f / texWidth, 1.0f / texHeight, 1.0f);
+	glEndList();
+}
+
+void CFontTexture::CallTexCoorScaleMatList(bool push)
+{
+	// note: can not just call glScale, we might be executed
+	// inside another list wrapping glFont::{Begin,Print,End}
+	if (push) {
+		glMatrixMode(GL_TEXTURE);
+		glPushMatrix();
+		glCallList(texCoorScaleMatList);
+		glMatrixMode(GL_MODELVIEW);
+	} else {
+		glMatrixMode(GL_TEXTURE);
+		glPopMatrix();
+		glMatrixMode(GL_MODELVIEW);
+	}
+}
+

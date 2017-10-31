@@ -126,6 +126,7 @@ public:
 
 private:
 	static const float4* ChooseOutlineColor(const float4& textColor);
+	static const float4 GetTexScaleMatrix(float w, float h) { return {1.0f / w, 0.0f, 0.0f, 1.0f / h}; } // 2x2
 
 	void RenderString(float x, float y, float scaleX, float scaleY, const std::string& str);
 	void RenderStringShadow(float x, float y, float scaleX, float scaleY, const std::string& str);
@@ -231,3 +232,4 @@ std::string CglFont::StripColorCodes(const std::string& text)
 }
 
 #endif /* _GLFONT_H */
+

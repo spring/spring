@@ -45,13 +45,13 @@ Gui::Gui()
 		}
 
 		shader->Enable();
-		shader->SetUniformLocation("viewProjMatrix");
-		shader->SetUniformLocation("tex");
-		shader->SetUniformLocation("elemColor");
-		shader->SetUniformLocation("texWeight");
+		shader->SetUniformLocation("tex"); // idx 0
+		shader->SetUniformLocation("elemColor"); // idx 1
+		shader->SetUniformLocation("texWeight"); // idx 2
 
-		shader->SetUniformMatrix4fv(0, false, CMatrix44f::OrthoProj(0.0f, 1.0f, 0.0f, 1.0f, -1.0f, 1.0f));
-		shader->SetUniform1i(1, 0);
+		shader->SetUniformMatrix4x4<const char*, float>("viewProjMatrix", false, CMatrix44f::OrthoProj(0.0f, 1.0f, 0.0f, 1.0f, -1.0f, 1.0f));
+		shader->SetUniformMatrix2x2<const char*, float>("texCoorMat", false, float4(1.0f, 0.0f, 0.0f, 1.0f)); // name-based for Font::*GL4
+		shader->SetUniform1i(0, 0);
 
 		shader->Disable();
 		shader->Validate();
@@ -66,7 +66,7 @@ Gui::Gui()
 
 void Gui::SetColor(float r, float g, float b, float a)
 {
-	shader->SetUniform4f(2, r, g, b, a);
+	shader->SetUniform4f(1, r, g, b, a);
 }
 
 
@@ -76,9 +76,9 @@ void Gui::SetDrawMode(DrawMode newMode)
 		return;
 
 	switch (currentDrawMode = newMode) {
-		case COLOR  : { shader->SetUniform4f(3,  0.0f, 0.0f, 0.0f, 0.0f); } break;
-		case TEXTURE: { shader->SetUniform4f(3,  1.0f, 1.0f, 1.0f, 1.0f); } break;
-		case FONT   : { shader->SetUniform4f(3, -1.0f, 0.0f, 0.0f, 0.0f); } break;
+		case COLOR  : { shader->SetUniform4f(2,  0.0f, 0.0f, 0.0f, 0.0f); } break;
+		case TEXTURE: { shader->SetUniform4f(2,  1.0f, 1.0f, 1.0f, 1.0f); } break;
+		case FONT   : { shader->SetUniform4f(2, -1.0f, 0.0f, 0.0f, 0.0f); } break;
 	}
 }
 

@@ -89,15 +89,19 @@ public:
 	float GetOutlineWeight() const { return outlineWeight; }
 	float GetLineHeight() const { return lineHeight; }
 	float GetDescender() const { return fontDescender; }
-	int GetTexture() const { return texture; }
-	const std::string& GetFamily()   const { return fontFamily; }
-	const std::string& GetStyle()    const { return fontStyle; }
+	int GetTexture() const { return glyphAtlasTextureID; }
+
+	const std::string& GetFamily() const { return fontFamily; }
+	const std::string& GetStyle() const { return fontStyle; }
 
 	const GlyphInfo& GetGlyph(char32_t ch); //< Get or load a glyph
 
 protected:
 	float GetKerning(const GlyphInfo& lgl,const GlyphInfo& rgl);
-	void UpdateTexture();
+
+	void UpdateGlyphAtlasTexture();
+	void UpdateTexCoorScaleMatList();
+	void CallTexCoorScaleMatList(bool push);
 
 private:
 	void CreateTexture(const int width, const int height);
@@ -120,18 +124,24 @@ protected:
 	int fontSize;
 	std::string fontFamily;
 	std::string fontStyle;
-	int texWidth, texHeight;
-	int wantedTexWidth, wantedTexHeight;
-	unsigned int texture;
+
+	int texWidth;
+	int texHeight;
+	int wantedTexWidth;
+	int wantedTexHeight;
+
+	unsigned int glyphAtlasTextureID = 0;
+	unsigned int texCoorScaleMatList = 0;
 
 private:
 	CBitmap* atlasUpdate;
 	CBitmap* atlasUpdateShadow;
+
+	int curTextureUpdate = 0;
 #ifndef HEADLESS
-	int lastTextureUpdate;
+	int lastTextureUpdate = 0;
 	FT_Face face;
 #endif
-	int curTextureUpdate;
 
 
 	std::shared_ptr<FontFace> shFace;
