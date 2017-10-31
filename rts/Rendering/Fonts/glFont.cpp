@@ -689,7 +689,7 @@ void CglFont::EndGL4(Shader::IProgramObject* shader) {
 			curShader->Disable();
 		} else {
 			// reset
-			curShader->SetUniformMatrix2x2<const char*, float>("texCoorMat", false, float4(1.0f, 0.0f, 0.0f, 1.0f));
+			curShader->SetUniformMatrix2x2<const char*, float>("texCoorMat", false, GetTexScaleMatrix(1.0f, 1.0f));
 		}
 
 		glBindTexture(GL_TEXTURE_2D, 0);
@@ -750,7 +750,7 @@ void CglFont::DrawBufferedGL4(Shader::IProgramObject* shader)
 			curShader->Disable();
 		} else {
 			// reset
-			curShader->SetUniformMatrix2x2<const char*, float>("texCoorMat", false, float4(1.0f, 0.0f, 0.0f, 1.0f));
+			curShader->SetUniformMatrix2x2<const char*, float>("texCoorMat", false, GetTexScaleMatrix(1.0f, 1.0f));
 		}
 
 		glBindTexture(GL_TEXTURE_2D, 0);
@@ -1220,7 +1220,6 @@ void CglFont::glWorldPrint(const float3& p, const float size, const std::string&
 	const CMatrix44f& bm = camera->GetBillBoardMatrix();
 
 	glPrint(0.0f, 0.0f, size, FONT_DESCENDER | FONT_CENTER | FONT_OUTLINE | FONT_BUFFERED, str);
-
 	UpdateGlyphAtlasTexture();
 
 	if (curShader == defShader) {
@@ -1248,6 +1247,8 @@ void CglFont::glWorldEnd(Shader::IProgramObject* shader)
 		curShader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, CMatrix44f::Identity());
 		curShader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::OrthoProj(0.0f, 1.0f, 0.0f, 1.0f, -1.0f, 1.0f));
 		curShader->Disable();
+	} else {
+		curShader->SetUniformMatrix2x2<const char*, float>("texCoorMat", false, GetTexScaleMatrix(1.0f, 1.0f));
 	}
 
 	curShader = nullptr;
