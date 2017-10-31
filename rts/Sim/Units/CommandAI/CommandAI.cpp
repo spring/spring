@@ -73,7 +73,6 @@ CR_REG_METADATA(CCommandAI, (
 	CR_MEMBER(inCommand),
 	CR_MEMBER(repeatOrders),
 	CR_MEMBER(lastSelectedCommandPage),
-	CR_MEMBER(unimportantMove),
 	CR_MEMBER(commandDeathDependences),
 	CR_MEMBER(targetLostTimer)
 ))
@@ -89,7 +88,6 @@ CCommandAI::CCommandAI():
 	inCommand(false),
 	repeatOrders(false),
 	lastSelectedCommandPage(0),
-	unimportantMove(false),
 	targetLostTimer(TARGET_LOST_TIMER)
 {}
 
@@ -104,7 +102,6 @@ CCommandAI::CCommandAI(CUnit* owner):
 	inCommand(false),
 	repeatOrders(false),
 	lastSelectedCommandPage(0),
-	unimportantMove(false),
 	targetLostTimer(TARGET_LOST_TIMER)
 {
 	{
@@ -1029,7 +1026,7 @@ void CCommandAI::GiveWaitCommand(const Command& c)
 		StopMove();
 		inCommand = false;
 		targetDied = false;
-		unimportantMove = false;
+
 		commandQue.push_front(c);
 		return;
 	}
@@ -1131,8 +1128,8 @@ void CCommandAI::ExecuteInsert(const Command& c, bool fromSynced)
 	if (!queue->empty() && (insertIt == queue->begin())) {
 		inCommand = false;
 		targetDied = false;
-		unimportantMove = false;
-		SetOrderTarget(NULL);
+
+		SetOrderTarget(nullptr);
 		const Command& cmd = queue->front();
 		eoh->CommandFinished(*owner, cmd);
 		eventHandler.UnitCmdDone(owner, cmd);
@@ -1581,39 +1578,40 @@ void CCommandAI::FinishCommand()
 	assert(!commandQue.empty());
 
 	const Command cmd = commandQue.front(); //cppcheck false positive, copy is needed here
-	const bool dontRepeat = (cmd.options & INTERNAL_ORDER);
 
-	if (repeatOrders
-	    && !dontRepeat
-	    && (cmd.GetID() != CMD_STOP)
-	    && (cmd.GetID() != CMD_PATROL)
-	    && (cmd.GetID() != CMD_SET_WANTED_MAX_SPEED)){
+	const bool dontRepeat = (cmd.options & INTERNAL_ORDER);
+	const bool pushCommand = (cmd.GetID() != CMD_STOP && cmd.GetID() != CMD_PATROL && cmd.GetID() != CMD_SET_WANTED_MAX_SPEED);
+
+	if (repeatOrders && !dontRepeat && pushCommand)
 		commandQue.push_back(cmd);
-	}
 
 	commandQue.pop_front();
+
 	inCommand = false;
 	targetDied = false;
-	unimportantMove = false;
-	SetOrderTarget(NULL);
+
+	SetOrderTarget(nullptr);
 	eoh->CommandFinished(*owner, cmd);
 	eventHandler.UnitCmdDone(owner, cmd);
 	ClearTargetLock(cmd);
 
 	if (commandQue.empty()) {
-		if (!owner->group) {
+		if (owner->group == nullptr)
 			eoh->UnitIdle(*owner);
-		}
+
 		eventHandler.UnitIdle(owner);
 	}
 
 	// avoid infinite loops
-	if (lastFinishCommand != gs->frameNum) {
-		lastFinishCommand = gs->frameNum;
-		if (!owner->IsStunned()) {
-			SlowUpdate();
-		}
-	}
+	if (lastFinishCommand == gs->frameNum)
+		return;
+
+	lastFinishCommand = gs->frameNum;
+
+	if (owner->IsStunned())
+		return;
+
+	SlowUpdate();
 }
 
 void CCommandAI::AddStockpileWeapon(CWeapon* weapon)
@@ -1692,13 +1690,15 @@ void CCommandAI::WeaponFired(CWeapon* weapon, const bool searchForNewTarget)
 		}
 	}
 
-	// when this fails, we need to take a copy at top instead of a reference
+	// if this fails, we need to take a copy at top instead of a reference
 	assert(&c == &commandQue.front());
 
 	eoh->WeaponFired(*owner, *(weapon->weaponDef));
-	if (orderFinished) {
-		FinishCommand();
-	}
+
+	if (!orderFinished)
+		return;
+
+	FinishCommand();
 }
 
 void CCommandAI::PushOrUpdateReturnFight(const float3& cmdPos1, const float3& cmdPos2)
@@ -1750,7 +1750,7 @@ bool CCommandAI::HasMoreMoveCommands(bool skipFirstCmd) const
 bool CCommandAI::SkipParalyzeTarget(const CUnit* target)
 {
 	// check to see if we are about to paralyze a unit that is already paralyzed
-	if ((target == NULL) || (owner->weapons.empty()))
+	if ((target == nullptr) || (owner->weapons.empty()))
 		return false;
 
 	const CWeapon* w = owner->weapons.front();
@@ -1765,12 +1765,7 @@ bool CCommandAI::SkipParalyzeTarget(const CUnit* target)
 	return false;
 }
 
-bool CCommandAI::CanChangeFireState() {
-	const UnitDef* ud = owner->unitDef;
-	const bool b = (!ud->weapons.empty() || ud->canKamikaze || ud->IsFactoryUnit());
-
-	return (ud->canFireControl && b);
-}
+bool CCommandAI::CanChangeFireState() { return (owner->unitDef->CanChangeFireState()); }
 
 
 void CCommandAI::StopAttackingAllyTeam(int ally)
@@ -1778,18 +1773,25 @@ void CCommandAI::StopAttackingAllyTeam(int ally)
 	std::vector<int> todel;
 
 	// erasing in the middle invalidates all iterators
-	for (CCommandQueue::iterator it = commandQue.begin(); it != commandQue.end(); ++it) {
+	for (auto it = commandQue.begin(); it != commandQue.end(); ++it) {
 		const Command& c = *it;
 
-		if ((c.GetID() == CMD_FIGHT || c.GetID() == CMD_ATTACK) && c.params.size() == 1) {
-			const CUnit* target = unitHandler->GetUnit(c.params[0]);
+		if (c.params.size() != 1)
+			continue;
+		if (c.GetID() != CMD_FIGHT && c.GetID() != CMD_ATTACK)
+			continue;
 
-			if (target && target->allyteam == ally) {
-				todel.push_back(it - commandQue.begin());
-			}
-		}
+		const CUnit* target = unitHandler->GetUnit(c.params[0]);
+
+		if (target == nullptr)
+			continue;
+		if (target->allyteam != ally)
+			continue;
+
+		todel.push_back(it - commandQue.begin());
 	}
-	for (std::vector<int>::reverse_iterator it = todel.rbegin(); it != todel.rend(); ++it) {
+
+	for (auto it = todel.rbegin(); it != todel.rend(); ++it) {
 		commandQue.erase(commandQue.begin() + *it);
 	}
 }
