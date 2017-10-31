@@ -598,78 +598,83 @@ void CGlobalRendering::SwapBuffers(bool allowSwapBuffers, bool clearErrors)
 
 void CGlobalRendering::CheckGLExtensions() const
 {
-	const auto CheckExt = [](const char* extName, const bool extFlag) {
-		if (extFlag)
+	const auto CheckExt = [](const char* extName, bool haveExt, bool needExt) {
+		if (haveExt)
 			return;
+		if (needExt) {
+			char buf[512];
+			memset(buf, 0, sizeof(buf));
+			snprintf(buf, sizeof(buf), "OpenGL extension \"%s\" not supported, aborting", extName);
+			throw (unsupported_error(buf));
+		}
 
-		char buf[512];
-		memset(buf, 0, sizeof(buf));
-		snprintf(buf, sizeof(buf), "OpenGL extension \"%s\" not supported, aborting", extName);
-		throw (unsupported_error(buf));
+		LOG("[%s] OpenGL extension \"%s\" not supported, ignoring", __func__, extName);
 	};
 
 	#ifndef HEADLESS
-	#define CHECK_EXT(ext) CheckExt(#ext, ext)
+	#define CHECK_REQ_EXT(ext) CheckExt(#ext, ext,  true)
+	#define CHECK_OPT_EXT(ext) CheckExt(#ext, ext, false)
 
-	CHECK_EXT(GLEW_ARB_vertex_buffer_object); // 1.5 (VBO)
-	CHECK_EXT(GLEW_ARB_pixel_buffer_object); // 2.1 (PBO)
-	CHECK_EXT(GLEW_ARB_framebuffer_object); // 3.0 (FBO)
-	CHECK_EXT(GLEW_ARB_vertex_array_object); // 3.0 (VAO; core in 4.x)
-	CHECK_EXT(GLEW_ARB_uniform_buffer_object); // 3.1 (UBO)
+	CHECK_REQ_EXT(GLEW_ARB_vertex_buffer_object); // 1.5 (VBO)
+	CHECK_REQ_EXT(GLEW_ARB_pixel_buffer_object); // 2.1 (PBO)
+	CHECK_REQ_EXT(GLEW_ARB_framebuffer_object); // 3.0 (FBO)
+	CHECK_REQ_EXT(GLEW_ARB_vertex_array_object); // 3.0 (VAO; core in 4.x)
+	CHECK_REQ_EXT(GLEW_ARB_uniform_buffer_object); // 3.1 (UBO)
 
 	#ifdef GLEW_ARB_buffer_storage
-	CHECK_EXT(GLEW_ARB_buffer_storage); // 4.4 (immutable storage)
+	CHECK_REQ_EXT(GLEW_ARB_buffer_storage); // 4.4 (immutable storage)
 	#else
 	CheckExt("GLEW_ARB_buffer_storage", false);
 	#endif
 
-	CHECK_EXT(GLEW_ARB_copy_buffer); // 3.1 (glCopyBufferSubData)
-	CHECK_EXT(GLEW_ARB_map_buffer_range); // 3.0 (glMapBufferRange[ARB])
-	CHECK_EXT(GLEW_EXT_framebuffer_multisample); // 3.0 (multi-sampled FB's)
-	CHECK_EXT(GLEW_EXT_framebuffer_blit); // 3.0 (glBlitFramebuffer[EXT])
+	CHECK_REQ_EXT(GLEW_ARB_copy_buffer); // 3.1 (glCopyBufferSubData)
+	CHECK_REQ_EXT(GLEW_ARB_map_buffer_range); // 3.0 (glMapBufferRange[ARB])
+	CHECK_REQ_EXT(GLEW_EXT_framebuffer_multisample); // 3.0 (multi-sampled FB's)
+	CHECK_REQ_EXT(GLEW_EXT_framebuffer_blit); // 3.0 (glBlitFramebuffer[EXT])
 
 	// not yet mandatory
-	// CHECK_EXT(GLEW_ARB_multi_bind); // 4.4
-	// CHECK_EXT(GLEW_ARB_texture_storage); // 4.2
-	// CHECK_EXT(GLEW_ARB_program_interface_query); // 4.3
-	// CHECK_EXT(GLEW_EXT_direct_state_access); // 3.3 (core in 4.5)
-	// CHECK_EXT(GLEW_ARB_invalidate_subdata); // 4.3 (glInvalidateBufferData)
-	// CHECK_EXT(GLEW_ARB_shader_storage_buffer_object); // 4.3 (glShaderStorageBlockBinding)
-	CHECK_EXT(GLEW_ARB_get_program_binary); // 4.1
+	// CHECK_REQ_EXT(GLEW_ARB_multi_bind); // 4.4
+	// CHECK_REQ_EXT(GLEW_ARB_texture_storage); // 4.2
+	// CHECK_REQ_EXT(GLEW_ARB_program_interface_query); // 4.3
+	// CHECK_REQ_EXT(GLEW_EXT_direct_state_access); // 3.3 (core in 4.5)
+	// CHECK_REQ_EXT(GLEW_ARB_invalidate_subdata); // 4.3 (glInvalidateBufferData)
+	// CHECK_REQ_EXT(GLEW_ARB_shader_storage_buffer_object); // 4.3 (glShaderStorageBlockBinding)
+	CHECK_REQ_EXT(GLEW_ARB_get_program_binary); // 4.1
 
-	CHECK_EXT(GLEW_ARB_texture_compression);
-	CHECK_EXT(GLEW_EXT_texture_compression_s3tc);
-	//CHECK_EXT(GLEW_EXT_texture_compression_dxt1); for some reason AMD doesn't list this as supported even though it does
-	CHECK_EXT(GLEW_ARB_texture_float); // 3.0 (FP{16,32} textures)
-	CHECK_EXT(GLEW_ARB_texture_non_power_of_two); // 2.0 (NPOT textures)
-	CHECK_EXT(GLEW_ARB_texture_rectangle); // 3.0 (rectangular textures)
-	CHECK_EXT(GLEW_EXT_texture_filter_anisotropic); // 3.3 (AF; core in 4.6!)
-	CHECK_EXT(GLEW_ARB_imaging); // 1.2 (imaging subset; texture_*_clamp [GL_CLAMP_TO_EDGE] etc)
-	CHECK_EXT(GLEW_EXT_texture_edge_clamp); // 1.2
-	CHECK_EXT(GLEW_ARB_texture_border_clamp); // 1.3
+	CHECK_REQ_EXT(GLEW_ARB_texture_compression);
+	CHECK_REQ_EXT(GLEW_EXT_texture_compression_s3tc);
+	CHECK_OPT_EXT(GLEW_EXT_texture_compression_dxt1); // for some reason AMD doesn't list this as supported even though it does
+	CHECK_REQ_EXT(GLEW_ARB_texture_float); // 3.0 (FP{16,32} textures)
+	CHECK_REQ_EXT(GLEW_ARB_texture_non_power_of_two); // 2.0 (NPOT textures)
+	CHECK_REQ_EXT(GLEW_ARB_texture_rectangle); // 3.0 (rectangular textures)
+	CHECK_REQ_EXT(GLEW_EXT_texture_filter_anisotropic); // 3.3 (AF; core in 4.6!)
+	CHECK_REQ_EXT(GLEW_ARB_imaging); // 1.2 (imaging subset; texture_*_clamp [GL_CLAMP_TO_EDGE] etc)
+	CHECK_REQ_EXT(GLEW_EXT_texture_edge_clamp); // 1.2
+	CHECK_REQ_EXT(GLEW_ARB_texture_border_clamp); // 1.3
 
-	CHECK_EXT(GLEW_EXT_blend_func_separate); // 1.4
-	CHECK_EXT(GLEW_EXT_blend_equation_separate); // 2.0
-	//CHECK_EXT(GLEW_EXT_stencil_two_side); // 2.0 May also be an AMD issue
+	CHECK_REQ_EXT(GLEW_EXT_blend_func_separate); // 1.4
+	CHECK_REQ_EXT(GLEW_EXT_blend_equation_separate); // 2.0
+	CHECK_OPT_EXT(GLEW_EXT_stencil_two_side); // 2.0 (may also be an issue on AMD)
 
-	CHECK_EXT(GLEW_ARB_occlusion_query); // 1.5
-	CHECK_EXT(GLEW_ARB_occlusion_query2); // 3.3 (glBeginConditionalRender)
-	CHECK_EXT(GLEW_ARB_timer_query); // 3.3
+	CHECK_REQ_EXT(GLEW_ARB_occlusion_query); // 1.5
+	CHECK_REQ_EXT(GLEW_ARB_occlusion_query2); // 3.3 (glBeginConditionalRender)
+	CHECK_REQ_EXT(GLEW_ARB_timer_query); // 3.3
 
-	CHECK_EXT(GLEW_ARB_depth_clamp); // 3.2
+	CHECK_REQ_EXT(GLEW_ARB_depth_clamp); // 3.2
 
-	CHECK_EXT(GLEW_NV_primitive_restart); // 3.1
-	CHECK_EXT(GLEW_ARB_transform_feedback3); // 4.0 (VTF v3)
-	CHECK_EXT(GLEW_ARB_explicit_attrib_location); // 3.3
+	CHECK_REQ_EXT(GLEW_NV_primitive_restart); // 3.1
+	CHECK_REQ_EXT(GLEW_ARB_transform_feedback3); // 4.0 (VTF v3)
+	CHECK_REQ_EXT(GLEW_ARB_explicit_attrib_location); // 3.3
 
-	CHECK_EXT(GLEW_ARB_vertex_program); // VS-ARB
-	CHECK_EXT(GLEW_ARB_fragment_program); // FS-ARB
-	CHECK_EXT(GLEW_ARB_shading_language_100); // 2.0
-	CHECK_EXT(GLEW_ARB_vertex_shader); // 1.5 (VS-GLSL; core in 2.0)
-	CHECK_EXT(GLEW_ARB_fragment_shader); // 1.5 (FS-GLSL; core in 2.0)
-	CHECK_EXT(GLEW_ARB_geometry_shader4); // GS v4 (GL3.2)
+	CHECK_REQ_EXT(GLEW_ARB_vertex_program); // VS-ARB
+	CHECK_REQ_EXT(GLEW_ARB_fragment_program); // FS-ARB
+	CHECK_REQ_EXT(GLEW_ARB_shading_language_100); // 2.0
+	CHECK_REQ_EXT(GLEW_ARB_vertex_shader); // 1.5 (VS-GLSL; core in 2.0)
+	CHECK_REQ_EXT(GLEW_ARB_fragment_shader); // 1.5 (FS-GLSL; core in 2.0)
+	CHECK_REQ_EXT(GLEW_ARB_geometry_shader4); // GS v4 (GL3.2)
 
-	#undef CHECK_EXT
+	#undef CHECK_OPT_EXT
+	#undef CHECK_REQ_EXT
 	#else
 	// for HL builds, all used GL functions are stubs
 	#endif
