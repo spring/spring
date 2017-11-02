@@ -182,13 +182,13 @@ namespace Shader {
 		return Shader::LoadFromLua(this, filename);
 	}
 
-	void IProgramObject::MaybeReload(bool validate)
+	void IProgramObject::MaybeReload(bool linking)
 	{
 		// if no change to any flag, skip the (expensive) reload
 		if (shaderFlags.HashSet() && !shaderFlags.Updated())
 			return;
 
-		Reload(!shaderFlags.HashSet(), validate);
+		Reload(!shaderFlags.HashSet(), linking);
 		PrintDebugInfo();
 	}
 
@@ -252,7 +252,7 @@ namespace Shader {
 	}
 
 	void GLSLProgramObject::Enable() {
-		MaybeReload(true);
+		MaybeReload(false);
 		glUseProgram(glid);
 		IProgramObject::Enable();
 	}
@@ -302,23 +302,26 @@ namespace Shader {
 		return (glslIsValid(glid));
 	}
 
-	bool GLSLProgramObject::ValidateAndCopyUniforms(unsigned int tgtProgID, unsigned int srcProgID, bool validate)
+	bool GLSLProgramObject::CopyUniformsAndValidate(unsigned int tgtProgID, unsigned int srcProgID)
 	{
+		// NB: false while Link()'ing, any linker output is also logged here
 		bool isValid = valid;
 
-		if (validate)
-			isValid = Validate();
-
 		if (isValid) {
-			// fill in uniformStates
+			// fill in uniform states first, then validate (ATI drivers in
+			// particular expect samplers to already be bound to different
+			// TU's; see 4715 and 5815)
 			GLSLCopyState(tgtProgID, srcProgID, &uniformStates);
-			return true;
+			isValid = Validate();
 		}
 
-		if (!log.empty())
-			LOG_L(L_WARNING, "[GLSL-PO::%s][validation-log (program-object=%s)]\n%s\n", __func__, name.c_str(), log.c_str());
+		if (!log.empty()) {
+			const char* pon = name.c_str();
+			const char* fmt = "[GLSL-PO::%s(tgt=%u src=%u)] program-object: %s, validation-log:\n%s\n";
+			LOG_L(L_WARNING, fmt, __func__, tgtProgID, srcProgID, pon, log.c_str());
+		}
 
-		return false;
+		return isValid;
 	}
 
 
@@ -377,12 +380,12 @@ namespace Shader {
 
 
 	void GLSLProgramObject::Link() {
-		MaybeReload(false);
+		MaybeReload(true);
 		assert(glIsProgram(glid));
 	}
 
 
-	void GLSLProgramObject::Reload(bool force, bool validate) {
+	void GLSLProgramObject::Reload(bool force, bool linking) {
 		const unsigned int _glid = glid;
 		const unsigned int _hash = hash;
 
@@ -402,12 +405,8 @@ namespace Shader {
 
 		// recompile if post-reload <hash> has no entry in cache (id 0), validate on success
 		// then add the pre-reload <_hash, _glid> program pair unless it already has an entry
-		// NOTE:
-		//   validation was done even if !valid before but used to fail on ATI
-		//   (see springrts.com/mantis/view.php?id=4715); change "validate" to
-		//   "validate && !globalRendering->haveATI" if this reoccurs
-		// TODO: get rid of validation warnings forcing the "|| true"
-		valid = (UpdateProg(hash) && (ValidateAndCopyUniforms(glid, _glid * isValid, validate) || true));
+		// TODO: get rid of validation warnings (deprecated vars, etc) forcing the "|| true"
+		valid = (UpdateProg(hash) && (CopyUniformsAndValidate(glid, _glid) || true));
 
 		if (useCache && shaderCache.Push(_hash, _glid))
 			return;
@@ -571,7 +570,7 @@ namespace Shader {
 			const std::string& shaderLog = glslGetLog(cso.id);
 			const std::string& shaderName = (srcData.find("void main()") != std::string::npos)? "unknown" : srcData;
 
-			LOG_L(L_WARNING, "[GLSL-SO::%s] shader-object name: %s, compile-log:\n%s\n", __func__, shaderName.c_str(), shaderLog.c_str());
+			LOG_L(L_WARNING, "[GLSL-SO::%s] shader-object: %s, compilation-log:\n%s\n", __func__, shaderName.c_str(), shaderLog.c_str());
 			LOG_L(L_WARNING, "\n%s%s%s%s%s%s%s", sources[0], sources[1], sources[2], sources[3], sources[4], sources[5], sources[6]);
 
 			programLog.append(shaderLog);

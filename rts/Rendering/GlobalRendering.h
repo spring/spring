@@ -52,6 +52,7 @@ public:
 	void QueryVersionInfo(char (&sdlVersionStr)[64], char (&glVidMemStr)[64]);
 	void QueryGLMaxVals();
 	void LogVersionInfo(const char* sdlVersionStr, const char* glVidMemStr) const;
+	void LogGLSupportInfo() const;
 	void LogDisplayMode(SDL_Window* window) const;
 
 	void SetWindowTitle(const std::string& title);

@@ -525,15 +525,16 @@ void CGlobalRendering::PostInit() {
 	char sdlVersionStr[64] = "";
 	char glVidMemStr[64] = "unknown";
 
+	QueryVersionInfo(sdlVersionStr, glVidMemStr);
+	LogVersionInfo(sdlVersionStr, glVidMemStr);
+
 	if (!CheckGLEWContextVersion(globalRenderingInfo.glContextVersion))
 		throw (unsupported_error("GLEW version outdated, aborting"));
 
-	QueryVersionInfo(sdlVersionStr, glVidMemStr);
 	CheckGLExtensions();
 	SetGLSupportFlags();
 	QueryGLMaxVals();
-
-	LogVersionInfo(sdlVersionStr, glVidMemStr);
+	LogGLSupportInfo();
 	ToggleGLDebugOutput(0, 0, 0);
 
 	GL::InitRenderBuffers();
@@ -621,24 +622,19 @@ void CGlobalRendering::CheckGLExtensions() const
 	CHECK_REQ_EXT(GLEW_ARB_vertex_array_object); // 3.0 (VAO; core in 4.x)
 	CHECK_REQ_EXT(GLEW_ARB_uniform_buffer_object); // 3.1 (UBO)
 
-	#ifdef GLEW_ARB_buffer_storage
 	CHECK_REQ_EXT(GLEW_ARB_buffer_storage); // 4.4 (immutable storage)
-	#else
-	CheckExt("GLEW_ARB_buffer_storage", false);
-	#endif
-
 	CHECK_REQ_EXT(GLEW_ARB_copy_buffer); // 3.1 (glCopyBufferSubData)
 	CHECK_REQ_EXT(GLEW_ARB_map_buffer_range); // 3.0 (glMapBufferRange[ARB])
 	CHECK_REQ_EXT(GLEW_EXT_framebuffer_multisample); // 3.0 (multi-sampled FB's)
 	CHECK_REQ_EXT(GLEW_EXT_framebuffer_blit); // 3.0 (glBlitFramebuffer[EXT])
 
 	// not yet mandatory
-	// CHECK_REQ_EXT(GLEW_ARB_multi_bind); // 4.4
-	// CHECK_REQ_EXT(GLEW_ARB_texture_storage); // 4.2
-	// CHECK_REQ_EXT(GLEW_ARB_program_interface_query); // 4.3
-	// CHECK_REQ_EXT(GLEW_EXT_direct_state_access); // 3.3 (core in 4.5)
-	// CHECK_REQ_EXT(GLEW_ARB_invalidate_subdata); // 4.3 (glInvalidateBufferData)
-	// CHECK_REQ_EXT(GLEW_ARB_shader_storage_buffer_object); // 4.3 (glShaderStorageBlockBinding)
+	CHECK_OPT_EXT(GLEW_ARB_multi_bind); // 4.4
+	CHECK_OPT_EXT(GLEW_ARB_texture_storage); // 4.2
+	CHECK_OPT_EXT(GLEW_ARB_program_interface_query); // 4.3
+	CHECK_OPT_EXT(GLEW_EXT_direct_state_access); // 3.3 (core in 4.5)
+	CHECK_OPT_EXT(GLEW_ARB_invalidate_subdata); // 4.3 (glInvalidateBufferData)
+	CHECK_OPT_EXT(GLEW_ARB_shader_storage_buffer_object); // 4.3 (glShaderStorageBlockBinding)
 	CHECK_REQ_EXT(GLEW_ARB_get_program_binary); // 4.1
 
 	CHECK_REQ_EXT(GLEW_ARB_texture_compression);
@@ -852,6 +848,11 @@ void CGlobalRendering::LogVersionInfo(const char* sdlVersionStr, const char* glV
 	LOG("\tGPU memory  : %s", glVidMemStr);
 	LOG("\tSDL swap-int: %d", SDL_GL_GetSwapInterval());
 	LOG("\t");
+}
+
+void CGlobalRendering::LogGLSupportInfo() const
+{
+	LOG("[GR::%s]", __func__);
 	LOG("\tFBO extension support     : %i", FBO::IsSupported());
 	LOG("\tNVX GPU mem-info support  : %i", glewIsExtensionSupported("GL_NVX_gpu_memory_info"));
 	LOG("\tATI GPU mem-info support  : %i", glewIsExtensionSupported("GL_ATI_meminfo"));
@@ -873,6 +874,7 @@ void CGlobalRendering::LogVersionInfo(const char* sdlVersionStr, const char* glV
 	LOG("\t");
 	LOG("\tenable ATI-hacks : %i", atiHacks);
 	LOG("\tcompress MIP-maps: %i", compressTextures);
+	LOG("\t");
 }
 
 void CGlobalRendering::LogDisplayMode(SDL_Window* window) const

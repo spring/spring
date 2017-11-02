@@ -33,7 +33,7 @@ void CShaderHandler::ReloadShaders(bool persistent)
 {
 	for (const auto& p1: programObjects[persistent]) {
 		for (const auto& p2: p1.second) {
-			p2.second->Reload(true, true);
+			p2.second->Reload(true, false);
 		}
 	}
 }
@@ -58,12 +58,13 @@ void CShaderHandler::ReleaseProgramObjectsMap(ProgramObjMap& poMap)
 		Shader::IProgramObject* po = it->second;
 
 		// free the program object and its attachments
-		if (po != Shader::nullProgramObject) {
-			// erases
-			shaderCache.Find(po->GetHash());
-			po->Release();
-			delete po;
-		}
+		if (po == Shader::nullProgramObject)
+			continue;
+
+		// erases
+		shaderCache.Find(po->GetHash());
+		po->Release();
+		delete po;
 	}
 
 	poMap.clear();

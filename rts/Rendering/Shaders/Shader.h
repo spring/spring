@@ -161,11 +161,11 @@ namespace Shader {
 		virtual void Enable() { bound = true; }
 		virtual void Disable() { bound = false; }
 		virtual bool CreateAndLink() = 0;
-		virtual bool ValidateAndCopyUniforms(unsigned int tgtProgID, unsigned int srcProgID, bool validate) = 0;
+		virtual bool CopyUniformsAndValidate(unsigned int tgtProgID, unsigned int srcProgID) = 0;
 		virtual void Link() = 0;
 		virtual bool Validate() = 0;
 		virtual void Release(bool deleteShaderObjs = true) = 0;
-		virtual void Reload(bool force, bool validate) = 0;
+		virtual void Reload(bool force, bool linking) = 0;
 		virtual bool ReloadState(bool reloadShaderObjs) = 0;
 
 		/// attach single shader objects (vertex, frag, ...) to the program
@@ -181,7 +181,7 @@ namespace Shader {
 		const std::string& GetName() const { return name; }
 		const std::string& GetLog() const { return log; }
 
-		void MaybeReload(bool validate);
+		void MaybeReload(bool linking);
 		void PrintDebugInfo();
 
 		/// interface to auto-bind textures with the shader
@@ -306,10 +306,10 @@ namespace Shader {
 		void Enable() override {}
 		void Disable() override {}
 		bool CreateAndLink() override { return false; }
-		bool ValidateAndCopyUniforms(unsigned int tgtProgID, unsigned int srcProgID, bool validate) override { return false; }
+		bool CopyUniformsAndValidate(unsigned int tgtProgID, unsigned int srcProgID) override { return false; }
 		void Link() override {}
 		void Release(bool deleteShaderObjs = true) override {}
-		void Reload(bool force, bool validate) override {}
+		void Reload(bool force, bool linking) override {}
 		bool ReloadState(bool reloadShaderObjs) override { return true; }
 		bool Validate() override { return true; }
 
@@ -356,12 +356,12 @@ namespace Shader {
 		void Enable() override;
 		void Disable() override;
 		bool CreateAndLink() override;
-		bool ValidateAndCopyUniforms(unsigned int tgtProgID, unsigned int srcProgID, bool validate) override;
-		bool ValidateAndCopyUniforms(unsigned int srcProgID, bool validate) { return (ValidateAndCopyUniforms(glid, srcProgID, validate)); }
+		bool CopyUniformsAndValidate(unsigned int tgtProgID, unsigned int srcProgID) override;
+		bool CopyUniformsAndValidate(unsigned int srcProgID) { return (CopyUniformsAndValidate(glid, srcProgID)); }
 		void Link() override; // NOTE: calls MaybeReload (i.e. Reload which compiles *and* links)
 		bool Validate() override;
 		void Release(bool deleteShaderObjs = true) override;
-		void Reload(bool force, bool validate) override;
+		void Reload(bool force, bool linking) override;
 		bool ReloadState(bool reloadShaderObjs) override;
 
 		void ClearUniformLocations();
