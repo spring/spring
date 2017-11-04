@@ -130,7 +130,7 @@ namespace creg {
 
 		ClassBinder* binder;
 		std::string name;
-		int size;
+		int size; // size of an instance in bytes
 		int alignment;
 
 		std::function<void(void* object, ISerializer* s)> serializeProc;
@@ -159,9 +159,6 @@ namespace creg {
 		Class class_;
 		ClassBinder* base;
 		ClassFlags flags;
-		const char* name;
-		int size; // size of an instance in bytes
-		int alignment;
 		bool hasVTable;
 		bool isCregStruct;
 
@@ -221,7 +218,6 @@ namespace creg {
 #define CR_DECLARE_BASE(TCls, isStr, VIRTUAL, OVERRIDE)	\
 public: \
 	static creg::ClassBinder binder; \
-	static bool creg_hasVTable; \
 	static const bool creg_isStruct = isStr; \
 	typedef TCls MyType; \
 	static creg::Class* StaticClass() { return &binder.class_; } \
@@ -268,10 +264,9 @@ public: \
  * @param ctor_args constructor arguments
  */
 #define CR_BIND(TCls, ctor_args) \
-	bool TCls::creg_hasVTable = std::is_polymorphic<TCls>::value; \
 	void TCls::_ConstructInstance(void* d) { new(d) MyType ctor_args; } \
 	void TCls::_DestructInstance(void* d) { ((MyType*)d)->~MyType(); } \
-	creg::ClassBinder TCls::binder(#TCls, creg::CF_None, nullptr, &TCls::_CregRegisterMembers, sizeof(TCls), alignof(TCls), TCls::creg_hasVTable, TCls::creg_isStruct, TCls::_ConstructInstance, TCls::_DestructInstance, nullptr, nullptr);
+	creg::ClassBinder TCls::binder(#TCls, creg::CF_None, nullptr, &TCls::_CregRegisterMembers, sizeof(TCls), alignof(TCls), std::is_polymorphic<TCls>::value, TCls::creg_isStruct, TCls::_ConstructInstance, TCls::_DestructInstance, nullptr, nullptr);
 
 /** @def CR_BIND_DERIVED
  * Bind a derived class declared with CR_DECLARE to creg
@@ -281,10 +276,9 @@ public: \
  * @param ctor_args constructor arguments
  */
 #define CR_BIND_DERIVED(TCls, TBase, ctor_args) \
-	bool TCls::creg_hasVTable = std::is_polymorphic<TCls>::value; \
 	void TCls::_ConstructInstance(void* d) { new(d) MyType ctor_args; } \
 	void TCls::_DestructInstance(void* d) { ((MyType*)d)->~MyType(); } \
-	creg::ClassBinder TCls::binder(#TCls, creg::CF_None, &TBase::binder, &TCls::_CregRegisterMembers, sizeof(TCls), alignof(TCls), TCls::creg_hasVTable, TCls::creg_isStruct, TCls::_ConstructInstance, TCls::_DestructInstance, nullptr, nullptr);
+	creg::ClassBinder TCls::binder(#TCls, creg::CF_None, &TBase::binder, &TCls::_CregRegisterMembers, sizeof(TCls), alignof(TCls), std::is_polymorphic<TCls>::value, TCls::creg_isStruct, TCls::_ConstructInstance, TCls::_DestructInstance, nullptr, nullptr);
 
 /** @def CR_BIND_DERIVED_SUB
  * Bind a derived class inside another class to creg
@@ -295,10 +289,9 @@ public: \
  * @param ctor_args constructor arguments
  */
 #define CR_BIND_DERIVED_SUB(TSuper, TCls, TBase, ctor_args) \
-	bool TSuper::TCls::creg_hasVTable = std::is_polymorphic<TSuper::TCls>::value; \
 	void TSuper::TCls::_ConstructInstance(void* d) { new(d) TCls ctor_args; }  \
 	void TSuper::TCls::_DestructInstance(void* d) { ((TCls*)d)->~TCls(); }  \
-	creg::ClassBinder TSuper::TCls::binder(#TSuper "::" #TCls, creg::CF_None, &TBase::binder, &TSuper::TCls::_CregRegisterMembers, sizeof(TSuper::TCls), alignof(TCls), TCls::creg_hasVTable, TCls::creg_isStruct, TSuper::TCls::_ConstructInstance, TSuper::TCls::_DestructInstance, nullptr, nullptr);
+	creg::ClassBinder TSuper::TCls::binder(#TSuper "::" #TCls, creg::CF_None, &TBase::binder, &TSuper::TCls::_CregRegisterMembers, sizeof(TSuper::TCls), alignof(TCls), std::is_polymorphic<TCls>::value, TCls::creg_isStruct, TSuper::TCls::_ConstructInstance, TSuper::TCls::_DestructInstance, nullptr, nullptr);
 
 /** @def CR_BIND_DERIVED
  * Bind a derived class declared with CR_DECLARE to creg
@@ -310,22 +303,20 @@ public: \
  * @param poolFree pool function used to allocate
  */
 #define CR_BIND_DERIVED_POOL(TCls, TBase, ctor_args, poolAlloc, poolFree) \
-	bool TCls::creg_hasVTable = std::is_polymorphic<TCls>::value; \
 	void* TCls::_Alloc() { return poolAlloc(); } \
 	void TCls::_Free(void* d) { poolFree(d); } \
 	void TCls::_ConstructInstance(void* d) { new(d) MyType ctor_args; } \
 	void TCls::_DestructInstance(void* d) { ((MyType*)d)->~MyType(); } \
-	creg::ClassBinder TCls::binder(#TCls, creg::CF_None, &TBase::binder, &TCls::_CregRegisterMembers, sizeof(TCls), alignof(TCls), TCls::creg_hasVTable, TCls::creg_isStruct, TCls::_ConstructInstance, TCls::_DestructInstance, TCls::_Alloc, TCls::_Free);
+	creg::ClassBinder TCls::binder(#TCls, creg::CF_None, &TBase::binder, &TCls::_CregRegisterMembers, sizeof(TCls), alignof(TCls), std::is_polymorphic<TCls>::value, TCls::creg_isStruct, TCls::_ConstructInstance, TCls::_DestructInstance, TCls::_Alloc, TCls::_Free);
 
 /** @def CR_BIND_TEMPLATE
  *  @see CR_BIND
  */
 #define CR_BIND_TEMPLATE(TCls, ctor_args) \
-	template<> bool TCls::creg_hasVTable = std::is_polymorphic<TCls>::value; \
 	template<> void TCls::_ConstructInstance(void* d) { new(d) MyType ctor_args; } \
 	template<> void TCls::_DestructInstance(void* d) { ((MyType*)d)->~MyType(); } \
 	template<> void TCls::_CregRegisterMembers(creg::Class* class_); \
-	template<> creg::ClassBinder TCls::binder(#TCls, creg::CF_None, nullptr, &TCls::_CregRegisterMembers, sizeof(TCls), alignof(TCls), TCls::creg_hasVTable, TCls::creg_isStruct, TCls::_ConstructInstance, TCls::_DestructInstance, nullptr, nullptr);
+	template<> creg::ClassBinder TCls::binder(#TCls, creg::CF_None, nullptr, &TCls::_CregRegisterMembers, sizeof(TCls), alignof(TCls), std::is_polymorphic<TCls>::value, TCls::creg_isStruct, TCls::_ConstructInstance, TCls::_DestructInstance, nullptr, nullptr);
 
 
 /** @def CR_BIND_DERIVED_INTERFACE
@@ -335,8 +326,7 @@ public: \
  * @param TBase base class of TCls
  */
 #define CR_BIND_DERIVED_INTERFACE(TCls, TBase)	\
-	bool TCls::creg_hasVTable = std::is_polymorphic<TCls>::value; \
-	creg::ClassBinder TCls::binder(#TCls, creg::CF_Abstract, &TBase::binder, &TCls::_CregRegisterMembers, sizeof(TCls&), alignof(TCls&), TCls::creg_hasVTable, TCls::creg_isStruct, nullptr, nullptr, nullptr, nullptr);
+	creg::ClassBinder TCls::binder(#TCls, creg::CF_Abstract, &TBase::binder, &TCls::_CregRegisterMembers, sizeof(TCls&), alignof(TCls&), std::is_polymorphic<TCls>::value, TCls::creg_isStruct, nullptr, nullptr, nullptr, nullptr);
 
 
 	/** @def CR_BIND_DERIVED_INTERFACE_POOL
@@ -348,10 +338,9 @@ public: \
  * @param poolFree pool function used to allocate
  */
 #define CR_BIND_DERIVED_INTERFACE_POOL(TCls, TBase, poolAlloc, poolFree)	\
-	bool TCls::creg_hasVTable = std::is_polymorphic<TCls>::value; \
 	void* TCls::_Alloc() { return poolAlloc(); } \
 	void TCls::_Free(void* d) { poolFree(d); } \
-	creg::ClassBinder TCls::binder(#TCls, creg::CF_Abstract, &TBase::binder, &TCls::_CregRegisterMembers, sizeof(TCls&), alignof(TCls&), TCls::creg_hasVTable, TCls::creg_isStruct, nullptr, nullptr, TCls::_Alloc, TCls::_Free);
+	creg::ClassBinder TCls::binder(#TCls, creg::CF_Abstract, &TBase::binder, &TCls::_CregRegisterMembers, sizeof(TCls&), alignof(TCls&), std::is_polymorphic<TCls>::value, TCls::creg_isStruct, nullptr, nullptr, TCls::_Alloc, TCls::_Free);
 
 /** @def CR_BIND_INTERFACE
  * Bind an abstract class
@@ -361,8 +350,7 @@ public: \
  * @param TCls abstract class to bind
  */
 #define CR_BIND_INTERFACE(TCls)	\
-	bool TCls::creg_hasVTable = std::is_polymorphic<TCls>::value; \
-	creg::ClassBinder TCls::binder(#TCls, creg::CF_Abstract, nullptr, &TCls::_CregRegisterMembers, sizeof(TCls&), alignof(TCls&), TCls::creg_hasVTable, TCls::creg_isStruct, nullptr, nullptr, nullptr, nullptr);
+	creg::ClassBinder TCls::binder(#TCls, creg::CF_Abstract, nullptr, &TCls::_CregRegisterMembers, sizeof(TCls&), alignof(TCls&), std::is_polymorphic<TCls>::value, TCls::creg_isStruct, nullptr, nullptr, nullptr, nullptr);
 
 /** @def CR_REG_METADATA
  * Binds the class metadata to the class itself

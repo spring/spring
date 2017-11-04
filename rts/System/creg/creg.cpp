@@ -57,9 +57,6 @@ ClassBinder::ClassBinder(const char* className, ClassFlags cf,
 	: class_(className)
 	, base(baseClsBinder)
 	, flags(cf)
-	, name(className)
-	, size(instanceSize)
-	, alignment(instanceAlignment)
 	, hasVTable(hasVTable)
 	, isCregStruct(isCregStruct)
 	, constructor(constructorProc)
@@ -240,7 +237,7 @@ void* Class::CreateInstance()
 	if (binder->poolAlloc) {
 		inst = binder->poolAlloc();
 	} else {
-		inst = ::operator new(binder->size);
+		inst = ::operator new(size);
 	}
 
 	if (binder->constructor)
