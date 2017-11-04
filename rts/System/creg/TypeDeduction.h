@@ -18,7 +18,7 @@ namespace creg {
 template<typename T, typename Enable = void>
 struct DeduceType {
 	static_assert(std::is_same<typename std::remove_const<T>::type, typename std::remove_const<typename T::MyType>::type>::value, "class isn't creged");
-	static std::shared_ptr<IType> Get() { return std::shared_ptr<IType>(IType::CreateObjInstanceType(T::StaticClass())); }
+	static std::shared_ptr<IType> Get() { return IType::CreateObjInstanceType(T::StaticClass()); }
 };
 
 
@@ -63,21 +63,19 @@ struct DeduceType<SyncedPrimitive<T>, typename std::enable_if<std::is_floating_p
 
 // helper
 template<typename T>
-class ObjectPointerType : public IType
+class ObjectPointerType : public ObjectPointerBaseType
 {
 	static_assert(std::is_same<typename std::remove_const<T>::type, typename std::remove_const<typename T::MyType>::type>::value, "class isn't creged");
 public:
-	ObjectPointerType() { }
+	ObjectPointerType() : ObjectPointerBaseType(T::StaticClass(), sizeof(T*)) { }
 	void Serialize(ISerializer *s, void *instance) {
 		void **ptr = (void**)instance;
 		if (s->IsWriting()) {
 			s->SerializeObjectPtr(ptr, (*ptr != nullptr) ? ((T*)*ptr)->GetClass() : 0);
 		} else {
-			s->SerializeObjectPtr(ptr, T::StaticClass());
+			s->SerializeObjectPtr(ptr, objClass);
 		}
 	}
-	std::string GetName() const { return std::string(T::StaticClass()->name) + "*"; }
-	size_t GetSize() const { return sizeof(T*); }
 };
 
 // Pointer type
@@ -92,27 +90,105 @@ struct DeduceType<T, typename std::enable_if<std::is_reference<T>::value>::type>
 	static std::shared_ptr<IType> Get() { return std::shared_ptr<IType>(new ObjectPointerType<typename std::remove_reference<T>::type>()); }
 };
 
+template<typename T, int N>
+class StaticArrayType : public StaticArrayBaseType
+{
+public:
+	typedef T ArrayType[N];
+	StaticArrayType() : StaticArrayBaseType(DeduceType<T>::Get(), N * sizeof(T)) { }
+	void Serialize(ISerializer* s, void* instance)
+	{
+		T* array = (T*)instance;
+		for (int a = 0; a < N; a++)
+			elemType->Serialize(s, &array[a]);
+	}
+};
+
 // Static array type
 template<typename T, size_t ArraySize>
 struct DeduceType<T[ArraySize]> {
 	static std::shared_ptr<IType> Get() {
-		return std::shared_ptr<IType>(new StaticArrayType<T, ArraySize>(DeduceType<T>::Get()));
+		return std::shared_ptr<IType>(new StaticArrayType<T, ArraySize>());
 	}
 };
+
+
+template<typename T>
+class DynamicArrayType : public DynamicArrayBaseType
+{
+public:
+	typedef typename T::value_type ElemT;
+
+	DynamicArrayType() : DynamicArrayBaseType(DeduceType<ElemT>::Get(), sizeof(T)) { }
+	~DynamicArrayType() {}
+
+	void Serialize(ISerializer* s, void* inst) {
+		T& ct = *(T*)inst;
+		if (s->IsWriting()) {
+			int size = (int)ct.size();
+			s->SerializeInt(&size, sizeof(int));
+			for (int a = 0; a < size; a++) {
+				elemType->Serialize(s, &ct[a]);
+			}
+		} else {
+			ct.clear();
+			int size;
+			s->SerializeInt(&size, sizeof(int));
+			ct.resize(size);
+			for (int a = 0; a < size; a++) {
+				elemType->Serialize(s, &ct[a]);
+			}
+		}
+	}
+};
+
 
 // Vector type (vector<T>)
 template<typename T>
 struct DeduceType<std::vector<T>> {
 	static std::shared_ptr<IType> Get() {
-		return std::shared_ptr<IType>(new DynamicArrayType<std::vector<T> >(DeduceType<T>::Get()));
+		return std::shared_ptr<IType>(new DynamicArrayType<std::vector<T> >());
 	}
 };
+
+
+template<typename T>
+class BitArrayType : public DynamicArrayBaseType
+{
+public:
+	typedef typename T::value_type ElemT;
+
+	BitArrayType() : DynamicArrayBaseType(DeduceType<ElemT>::Get(), sizeof(T)) { }
+	~BitArrayType() { }
+
+	void Serialize(ISerializer* s, void* inst) {
+		T* ct = (T*)inst;
+		if (s->IsWriting()) {
+			int size = (int)ct->size();
+			s->SerializeInt(&size, sizeof(int));
+			for (int a = 0; a < size; a++) {
+				bool b = (*ct)[a];
+				elemType->Serialize(s, &b);
+			}
+		} else {
+			int size;
+			s->SerializeInt(&size, sizeof(int));
+			ct->resize(size);
+			for (int a = 0; a < size; a++) {
+				bool b;
+				elemType->Serialize(s, &b);
+				(*ct)[a] = b;
+			}
+		}
+	}
+};
+
 
 // std::vector<bool> is not a std::vector but a BitArray instead!
 template<>
 struct DeduceType<std::vector<bool>> {
 	static std::shared_ptr<IType> Get() {
-		return std::shared_ptr<IType>(new BitArrayType<std::vector<bool> >(DeduceType<bool>::Get()));
+		return std::shared_ptr<IType>(new BitArrayType<std::vector<bool> >());
 	}
 };
 

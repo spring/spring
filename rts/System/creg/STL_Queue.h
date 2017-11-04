@@ -13,11 +13,11 @@ namespace creg {
 	// From http://stackoverflow.com/a/1385520
 	// It's insane and I hope it works
 	template <class T, class S, class C>
-    S& Container(std::priority_queue<T, S, C>& q) {
-        struct HackedQueue : private std::priority_queue<T, S, C> {
-            static S& Container(std::priority_queue<T, S, C>& q) {
-                return q.*&HackedQueue::c;
-            }
+	S& Container(std::priority_queue<T, S, C>& q) {
+		struct HackedQueue : private std::priority_queue<T, S, C> {
+			static S& Container(std::priority_queue<T, S, C>& q) {
+				return q.*&HackedQueue::c;
+			}
 		};
 		return HackedQueue::Container(q);
 	}
@@ -26,8 +26,8 @@ namespace creg {
 	template<class T, class S, class C>
 	struct PQueueType : public IType
 	{
-		PQueueType(std::shared_ptr<IType> t):elemType(t) {}
-		~PQueueType() {}
+		PQueueType(std::shared_ptr<IType> t) : IType(sizeof(std::priority_queue<T, S, C>)), elemType(t) { }
+		~PQueueType() { }
 
 		void Serialize(ISerializer* s, void* inst) {
 			S& ct = Container(*(std::priority_queue<T, S, C>*)inst);
@@ -50,7 +50,6 @@ namespace creg {
 			}
 		}
 		std::string GetName() const { return "priority_queue<" + elemType->GetName() + ">"; }
-		size_t GetSize() const { return sizeof(std::priority_queue<T, S, C>); }
 
 		std::shared_ptr<IType> elemType;
 	};

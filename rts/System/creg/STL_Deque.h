@@ -15,7 +15,7 @@ namespace creg
 	template<typename T>
 	struct DeduceType< std::deque <T> > {
 		static std::shared_ptr<IType> Get() {
-			return std::shared_ptr<IType>(new DynamicArrayType< std::deque<T> >(DeduceType<T>::Get()));
+			return std::shared_ptr<IType>(new DynamicArrayType< std::deque<T> >());
 		}
 	};
 }

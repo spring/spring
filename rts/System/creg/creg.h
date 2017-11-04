@@ -49,11 +49,14 @@ namespace creg {
 	{
 	public:
 		// Type interface can go here...
-		virtual ~IType() {}
+		IType(size_t size_) : size(size_) { }
+		virtual ~IType() { }
 
 		virtual void Serialize(ISerializer* s, void* instance) = 0;
 		virtual std::string GetName() const = 0;
-		virtual size_t GetSize() const = 0;
+		size_t GetSize() const { return size; };
+		size_t size;
+		std::string name;
 
 		static std::shared_ptr<IType> CreateBasicType(BasicTypeID t, size_t size);
 		static std::shared_ptr<IType> CreateStringType();
