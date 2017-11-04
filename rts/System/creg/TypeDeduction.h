@@ -67,16 +67,17 @@ class ObjectPointerType : public IType
 {
 	static_assert(std::is_same<typename std::remove_const<T>::type, typename std::remove_const<typename T::MyType>::type>::value, "class isn't creged");
 public:
-	ObjectPointerType() { objectClass = T::StaticClass(); }
+	ObjectPointerType() { }
 	void Serialize(ISerializer *s, void *instance) {
 		void **ptr = (void**)instance;
-		if (s->IsWriting())
-			s->SerializeObjectPtr(ptr, *ptr ? ((T*)*ptr)->GetClass() : 0);
-		else s->SerializeObjectPtr(ptr, objectClass);
+		if (s->IsWriting()) {
+			s->SerializeObjectPtr(ptr, (*ptr != nullptr) ? ((T*)*ptr)->GetClass() : 0);
+		} else {
+			s->SerializeObjectPtr(ptr, T::StaticClass());
+		}
 	}
-	std::string GetName() const { return objectClass->name + "*"; }
+	std::string GetName() const { return T::StaticClass()->name + "*"; }
 	size_t GetSize() const { return sizeof(T*); }
-	Class* objectClass;
 };
 
 // Pointer type

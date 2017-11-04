@@ -9,7 +9,6 @@
 #include <string>
 #include <type_traits> // std::is_polymorphic
 #include <memory>
-#include <functional>
 
 #include "ISerializer.h"
 #include "System/Sync/SyncedPrimitive.h"
@@ -108,22 +107,32 @@ namespace creg {
 		/// all classes that derive from this class
 		const std::vector<Class*>& GetDerivedClasses() const;
 
-		template<class T, typename TF>
+		// generic member function pointer
+		typedef void(Class::*FuncPTR)();
+		typedef void(*CastAndSerializeProc)(void* object, ISerializer* s, FuncPTR sp);
+		typedef void(*CastAndPostLoadProc)(void* object, FuncPTR pp);
+
+
+		template<class T, typename TF, int bla = sizeof(TF), int bli = sizeof(FuncPTR)>
 		void SetSerialize(T* foo, TF proc) {
-			serializeProc = [=](void* object, ISerializer* s) {
-				(static_cast<T*>(object)->*proc)(s);
+			static_assert(sizeof(serializeProc) == sizeof(proc), "function pointers have different sizes");
+			serializeProc = *reinterpret_cast<FuncPTR*>(&proc);
+			castAndSerializeProc = [](void* object, ISerializer* s, FuncPTR sp) {
+				(static_cast<T*>(object)->**(reinterpret_cast<TF*>(&sp)))(s);
 			};
 		}
-		template<class T, typename TF>
+		template<class T, typename TF, int bla = sizeof(TF), int bli = sizeof(FuncPTR)>
 		void SetPostLoad(T* foo, TF proc) {
-			postLoadProc = [=](void* object) {
-				(static_cast<T*>(object)->*proc)();
+			static_assert(sizeof(postLoadProc) == sizeof(proc), "function pointers have different sizes");
+			postLoadProc = *reinterpret_cast<FuncPTR*>(&proc);
+			castAndPostLoadProc = [](void* object, FuncPTR pp) {
+				(static_cast<T*>(object)->**(reinterpret_cast<TF*>(&pp)))();
 			};
 		}
-		bool HasSerialize() const { return (bool)serializeProc; }
-		bool HasPostLoad() const { return (bool)postLoadProc; }
-		void CallSerializeProc(void* object, ISerializer* s) { serializeProc(object, s); }
-		void CallPostLoadProc(void* object)                  { postLoadProc(object); }
+		bool HasSerialize() const { return (serializeProc != nullptr); }
+		bool HasPostLoad() const { return (postLoadProc != nullptr); }
+		void CallSerializeProc(void* object, ISerializer* s) { castAndSerializeProc(object, s, serializeProc); }
+		void CallPostLoadProc(void* object)                  { castAndPostLoadProc(object, postLoadProc); }
 
 	public:
 		std::vector<Member> members;
@@ -133,8 +142,10 @@ namespace creg {
 		int size; // size of an instance in bytes
 		int alignment;
 
-		std::function<void(void* object, ISerializer* s)> serializeProc;
-		std::function<void(void* object)> postLoadProc;
+		FuncPTR serializeProc;
+		FuncPTR postLoadProc;
+		CastAndSerializeProc castAndSerializeProc;
+		CastAndPostLoadProc castAndPostLoadProc;
 
 	private:
 		int currentMemberFlags;

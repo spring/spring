@@ -139,6 +139,10 @@ Class::Class(const char* _name)
 : binder(nullptr)
 , size(0)
 , alignment(0)
+, serializeProc(nullptr)
+, postLoadProc(nullptr)
+, castAndSerializeProc(nullptr)
+, castAndPostLoadProc(nullptr)
 , currentMemberFlags(0)
 {
 	name = _name;
