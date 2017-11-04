@@ -335,7 +335,8 @@ void CMobileCAI::GiveCommandReal(const Command& c, bool fromSynced)
 		}
 	}
 
-	if (!(c.options & SHIFT_KEY) && nonQueingCommands.find(c.GetID()) == nonQueingCommands.end()) {
+	if (!(c.options & SHIFT_KEY) && c.GetID() != CMD_SET_WANTED_MAX_SPEED &&
+	    nonQueingCommands.find(c.GetID()) == nonQueingCommands.end()) {
 		tempOrder = false;
 
 		SetTransportee(nullptr);
@@ -1582,7 +1583,7 @@ CUnit* CMobileCAI::FindUnitToTransport(float3 center, float radius)
 {
 	CUnit* bestUnit = nullptr;
 	float bestDist = std::numeric_limits<float>::max();
-	
+
 	QuadFieldQuery qfQuery;
 	quadField->GetUnitsExact(qfQuery, center, radius);
 
