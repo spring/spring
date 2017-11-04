@@ -25,7 +25,7 @@ using std::fclose;
 
 #include <stdexcept>
 
-static const float3 ERRORVECTOR(-1, 0, 0);
+static constexpr float3 ERRORVECTOR(-1, 0, 0);
 static std::string CACHE_BASE("");
 
 CResourceMapAnalyzer::CResourceMapAnalyzer(int resourceId)

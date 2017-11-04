@@ -158,16 +158,16 @@ void glDrawVolume(DrawVolumeFunc drawFunc, const void* data)
 /******************************************************************************/
 
 void glWireCube(unsigned int* listID) {
-	static const float3 vertices[8] = {
-		float3( 0.5f,  0.5f,  0.5f),
-		float3( 0.5f, -0.5f,  0.5f),
-		float3(-0.5f, -0.5f,  0.5f),
-		float3(-0.5f,  0.5f,  0.5f),
+	static constexpr float3 vertices[8] = {
+		{ 0.5f,  0.5f,  0.5f},
+		{ 0.5f, -0.5f,  0.5f},
+		{-0.5f, -0.5f,  0.5f},
+		{-0.5f,  0.5f,  0.5f},
 
-		float3( 0.5f,  0.5f, -0.5f),
-		float3( 0.5f, -0.5f, -0.5f),
-		float3(-0.5f, -0.5f, -0.5f),
-		float3(-0.5f,  0.5f, -0.5f),
+		{ 0.5f,  0.5f, -0.5f},
+		{ 0.5f, -0.5f, -0.5f},
+		{-0.5f, -0.5f, -0.5f},
+		{-0.5f,  0.5f, -0.5f},
 	};
 
 	if ((*listID) != 0) {

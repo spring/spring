@@ -15,6 +15,7 @@
 #include "Sim/MoveTypes/MoveDefHandler.h"
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/GeometricObjects.h"
+#include "System/MathConstants.h"
 
 
 #define ENABLE_PATH_DEBUG 0
@@ -32,8 +33,44 @@ static const CPathFinder::BlockCheckFunc blockCheckFuncs[2] = {
 };
 
 // both indexed by PATHOPT* bitmasks
-static float3 PF_DIRECTION_VECTORS_3D[PATH_DIRECTIONS << 1];
-static float  PF_DIRECTION_COSTS[PATH_DIRECTIONS << 1];
+static constexpr float PF_DIRECTION_COSTS[] = {
+	0.0f       ,
+	1.0f       , // PATHOPT_LEFT
+	1.0f       , // PATHOPT_RIGHT
+	0.0f       , // PATHOPT_LEFT | PATHOPT_RIGHT
+	1.0f       , // PATHOPT_UP
+	math::SQRT2, // PATHOPT_LEFT | PATHOPT_UP
+	math::SQRT2, // PATHOPT_RIGHT | PATHOPT_UP
+	0.0f       , // PATHOPT_LEFT | PATHOPT_RIGHT | PATHOPT_UP
+	1.0f       , // PATHOPT_DOWN
+	math::SQRT2, // PATHOPT_LEFT | PATHOPT_DOWN
+	math::SQRT2, // PATHOPT_RIGHT | PATHOPT_DOWN
+	0.0f       ,
+	0.0f       ,
+	0.0f       ,
+	0.0f       ,
+	0.0f       ,
+};
+
+//FIXME why not use PATHDIR_* consts and merge code with top one
+static constexpr float3 PF_DIRECTION_VECTORS_3D[] = {
+	{ 0,               0,                0},
+	{+1,               0,                0}, // PATHOPT_LEFT
+	{-1,               0,                0}, // PATHOPT_RIGHT
+	{ 0,               0,                0}, // PATHOPT_LEFT | PATHOPT_RIGHT
+	{ 0,               0,               +1}, // PATHOPT_UP
+	{+math::HALFSQRT2, 0, +math::HALFSQRT2}, // PATHOPT_LEFT | PATHOPT_UP
+	{-math::HALFSQRT2, 0, +math::HALFSQRT2}, // PATHOPT_RIGHT | PATHOPT_UP
+	{ 0,               0,                0}, // PATHOPT_LEFT | PATHOPT_RIGHT | PATHOPT_UP
+	{ 0,               0,               -1}, // PATHOPT_DOWN
+	{+math::HALFSQRT2, 0, -math::HALFSQRT2}, // PATHOPT_LEFT | PATHOPT_DOWN
+	{-math::HALFSQRT2, 0, -math::HALFSQRT2}, // PATHOPT_RIGHT | PATHOPT_DOWN
+	{ 0,               0,                0},
+	{ 0,               0,                0},
+	{ 0,               0,                0},
+	{ 0,               0,                0},
+	{ 0,               0,                0}
+};
 
 
 CPathFinder::CPathFinder(bool threadSafe): IPathFinder(1)
@@ -44,28 +81,25 @@ CPathFinder::CPathFinder(bool threadSafe): IPathFinder(1)
 
 
 void CPathFinder::InitStatic() {
+
+	// For some reason not possible as a static assert
+	assert(PF_DIRECTION_COSTS[PATHOPT_LEFT                ] ==        1.0f);
+	assert(PF_DIRECTION_COSTS[PATHOPT_RIGHT               ] ==        1.0f);
+	assert(PF_DIRECTION_COSTS[PATHOPT_UP                  ] ==        1.0f);
+	assert(PF_DIRECTION_COSTS[PATHOPT_DOWN                ] ==        1.0f);
+	assert(PF_DIRECTION_COSTS[PATHOPT_LEFT  | PATHOPT_UP  ] == math::SQRT2);
+	assert(PF_DIRECTION_COSTS[PATHOPT_RIGHT | PATHOPT_UP  ] == math::SQRT2);
+	assert(PF_DIRECTION_COSTS[PATHOPT_RIGHT | PATHOPT_DOWN] == math::SQRT2);
+	assert(PF_DIRECTION_COSTS[PATHOPT_LEFT  | PATHOPT_DOWN] == math::SQRT2);
+
 	// initialize direction-vectors table
 	for (int i = 0; i < (PATH_DIRECTIONS << 1); ++i) {
-		PF_DIRECTION_VECTORS_3D[i].x = PF_DIRECTION_VECTORS_2D[i].x;
-		PF_DIRECTION_VECTORS_3D[i].z = PF_DIRECTION_VECTORS_2D[i].y;
-		PF_DIRECTION_VECTORS_3D[i].Normalize();
+		float3 temp(PF_DIRECTION_VECTORS_2D[i].x, 0.0f, PF_DIRECTION_VECTORS_2D[i].y);
+		temp.SafeNormalize();
+		assert(temp == PF_DIRECTION_VECTORS_3D[i]);
 	}
 
-	// initialize direction-costs table
-	// note: PATH_NODE_SPACING should not affect these
-	PF_DIRECTION_COSTS[PATHOPT_LEFT                ] =    1.0f;
-	PF_DIRECTION_COSTS[PATHOPT_RIGHT               ] =    1.0f;
-	PF_DIRECTION_COSTS[PATHOPT_UP                  ] =    1.0f;
-	PF_DIRECTION_COSTS[PATHOPT_DOWN                ] =    1.0f;
-	PF_DIRECTION_COSTS[PATHOPT_LEFT  | PATHOPT_UP  ] = 1.4142f;
-	PF_DIRECTION_COSTS[PATHOPT_RIGHT | PATHOPT_UP  ] = 1.4142f;
-	PF_DIRECTION_COSTS[PATHOPT_RIGHT | PATHOPT_DOWN] = 1.4142f;
-	PF_DIRECTION_COSTS[PATHOPT_LEFT  | PATHOPT_DOWN] = 1.4142f;
 }
-
-const   int2* CPathFinder::GetDirectionVectorsTable2D() { return (&PF_DIRECTION_VECTORS_2D[0]); }
-const float3* CPathFinder::GetDirectionVectorsTable3D() { return (&PF_DIRECTION_VECTORS_3D[0]); }
-
 
 
 IPath::SearchResult CPathFinder::DoRawSearch(

@@ -23,9 +23,6 @@ public:
 
 	static void InitStatic();
 
-	static const   int2* GetDirectionVectorsTable2D();
-	static const float3* GetDirectionVectorsTable3D();
-
 	typedef CMoveMath::BlockType (*BlockCheckFunc)(const MoveDef&, int, int, const CSolidObject*);
 
 protected:

@@ -12,8 +12,8 @@
 
 #include <algorithm>
 
-static const float3 GRAPH_MIN_SCALE = float3( 1e9,  1e9, 0.0f);
-static const float3 GRAPH_MAX_SCALE = float3(-1e9, -1e9, 0.0f);
+static constexpr float3 GRAPH_MIN_SCALE( 1e9,  1e9, 0.0f);
+static constexpr float3 GRAPH_MAX_SCALE(-1e9, -1e9, 0.0f);
 
 DebugDrawerAI::DebugDrawerAI(): draw(false) {
 	graphs.resize(teamHandler->ActiveTeams(), Graph(GRAPH_MIN_SCALE, GRAPH_MAX_SCALE));
