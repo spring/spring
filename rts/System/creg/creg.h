@@ -138,7 +138,7 @@ namespace creg {
 		std::vector<Member> members;
 
 		ClassBinder* binder;
-		std::string name;
+		const char* name;
 		int size; // size of an instance in bytes
 		int alignment;
 
