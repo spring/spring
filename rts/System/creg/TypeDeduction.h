@@ -18,7 +18,7 @@ namespace creg {
 template<typename T, typename Enable = void>
 struct DeduceType {
 	static_assert(std::is_same<typename std::remove_const<T>::type, typename std::remove_const<typename T::MyType>::type>::value, "class isn't creged");
-	static std::shared_ptr<IType> Get() { return IType::CreateObjInstanceType(T::StaticClass()); }
+	static std::shared_ptr<IType> Get() { return IType::CreateObjInstanceType(T::StaticClass(), sizeof(T)); }
 };
 
 
@@ -27,7 +27,7 @@ struct DeduceType {
 //WARNING: Defining this one would break any class-specialization as for std::vector & std::string below)
 /*template<typename T>
 struct DeduceType<T, typename std::enable_if<std::is_class<T>::value>::type> {
-	static std::shared_ptr<IType> Get() { return std::shared_ptr<IType>(IType::CreateObjInstanceType(T::StaticClass())); }
+	static std::shared_ptr<IType> Get() { return std::shared_ptr<IType>(IType::CreateObjInstanceType(T::StaticClass(), sizeof(T))); }
 };*/
 
 // Enum

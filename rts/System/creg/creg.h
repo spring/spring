@@ -60,7 +60,7 @@ namespace creg {
 
 		static std::shared_ptr<IType> CreateBasicType(BasicTypeID t, size_t size);
 		static std::shared_ptr<IType> CreateStringType();
-		static std::shared_ptr<IType> CreateObjInstanceType(Class* objectType);
+		static std::shared_ptr<IType> CreateObjInstanceType(Class* objectType, size_t size);
 		static std::shared_ptr<IType> CreateIgnoredType(size_t size);
 	};
 
