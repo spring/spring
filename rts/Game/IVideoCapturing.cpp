@@ -2,14 +2,14 @@
 
 #include "IVideoCapturing.h"
 
-
 #if       defined AVI_CAPTURING
 #include "AviVideoCapturing.h"
 #else  // defined AVI_CAPTURING
 #include "DummyVideoCapturing.h"
 #endif // defined AVI_CAPTURING
 
-#include <cstdlib> // for NULL
+#include "Rendering/GlobalRendering.h"
+
 
 IVideoCapturing* IVideoCapturing::GetInstance()
 {
@@ -29,20 +29,21 @@ void IVideoCapturing::FreeInstance()
 }
 
 
-IVideoCapturing::IVideoCapturing()
+bool IVideoCapturing::SetCapturing(bool enable)
 {
-}
+	const bool isCapturing = GetInstance()->IsCapturing();
 
-IVideoCapturing::~IVideoCapturing()
-{
-	FreeInstance();
-}
-
-void IVideoCapturing::SetCapturing(bool enabled) {
-
-	if (!GetInstance()->IsCapturing() && enabled) {
+	if (!isCapturing && enable) {
 		GetInstance()->StartCapturing();
-	} else if (GetInstance()->IsCapturing() && !enabled) {
-		GetInstance()->StopCapturing();
+		return true;
 	}
+	if (isCapturing && !enable) {
+		GetInstance()->StopCapturing();
+		return true;
+	}
+
+	return false;
 }
+
+void IVideoCapturing::SetLastFrameTime(float time) { globalRendering->lastFrameTime = time; }
+

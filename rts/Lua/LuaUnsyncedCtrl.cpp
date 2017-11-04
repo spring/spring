@@ -17,6 +17,7 @@
 #include "Game/Camera/CameraController.h"
 #include "Game/GameSetup.h"
 #include "Game/GlobalUnsynced.h"
+#include "Game/IVideoCapturing.h"
 #include "Game/SelectedUnitsHandler.h"
 #include "Game/Players/Player.h"
 #include "Game/Players/PlayerHandler.h"
@@ -1051,16 +1052,13 @@ int LuaUnsyncedCtrl::SetDrawModelsDeferred(lua_State* L)
 
 int LuaUnsyncedCtrl::SetVideoCapturingMode(lua_State* L)
 {
-	// NOTE the argument ordering
-	globalRendering->isVideoCapturing = !!luaL_checkboolean(L, 1);
+	videoCapturing->AllowRecord(luaL_checkboolean(L, 1));
 	return 0;
 }
 
-
 int LuaUnsyncedCtrl::SetVideoCapturingTimeOffset(lua_State* L)
 {
-	// NOTE the argument ordering
-	globalRendering->videoCapturingTimeOffset = luaL_checkfloat(L,1);
+	videoCapturing->SetTimeOffset(luaL_checkfloat(L, 1));
 	return 0;
 }
 

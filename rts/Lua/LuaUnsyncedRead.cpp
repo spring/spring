@@ -12,9 +12,9 @@
 #include "Game/GameHelper.h"
 #include "Game/GameSetup.h"
 #include "Game/GlobalUnsynced.h"
+#include "Game/IVideoCapturing.h"
 #include "Game/Players/Player.h"
 #include "Game/Players/PlayerHandler.h"
-#include "Net/GameServer.h"
 #include "Game/SelectedUnitsHandler.h"
 #include "Game/TraceRay.h"
 #include "Game/Camera/CameraController.h"
@@ -31,6 +31,7 @@
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
 #include "Menu/LuaMenuController.h"
+#include "Net/GameServer.h"
 #include "Rendering/GlobalRendering.h"
 #include "Rendering/GlobalRenderingInfo.h"
 #include "Rendering/ShadowHandler.h"
@@ -516,14 +517,14 @@ int LuaUnsyncedRead::GetLastUpdateSeconds(lua_State* L)
 
 int LuaUnsyncedRead::GetHasLag(lua_State* L)
 {
-	lua_pushboolean(L, (game != NULL)? game->IsLagging(luaL_optfloat(L, 1, 500.0f)) : false);
+	lua_pushboolean(L, (game != nullptr)? game->IsLagging(luaL_optfloat(L, 1, 500.0f)) : false);
 	return 1;
 }
 
 
 int LuaUnsyncedRead::GetVideoCapturingMode(lua_State* L)
 {
-	lua_pushboolean(L, globalRendering->isVideoCapturing);
+	lua_pushboolean(L, videoCapturing->AllowRecord());
 	return 1;
 }
 
