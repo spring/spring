@@ -29,8 +29,8 @@ public:
 			// must pop before ctor runs; objects can be created recursively
 			i = spring::VectorBackPop(indcs);
 		}
-		m = pages[curr_page_index = i].data();
 
+		m = pages[curr_page_index = i].data();
 
 		table.emplace(m, i);
 		return m;
@@ -48,6 +48,7 @@ public:
 
 	void freeMem(void* m) {
 		assert(mapped(m));
+
 		const auto iter = table.find(m);
 		const auto pair = std::pair<void*, size_t>{iter->first, iter->second};
 
@@ -64,6 +65,9 @@ public:
 
 		spring::SafeDestruct(p);
 
+		// must free after dtor runs, since that can trigger *another* ctor call
+		// by proxy (~CUnit -> ~CObject -> DependentDied -> CommandAI::FinishCmd
+		// -> CBuilderCAI::ExecBuildCmd -> UnitLoader::LoadUnit -> CUnit e.g.)
 		freeMem(m);
 	}
 
@@ -107,8 +111,6 @@ public:
 	void* allocMem() {
 		static_assert(num_pages() != 0, "");
 
-		uint8_t* m = nullptr;
-
 		size_t i = 0;
 
 		assert(can_alloc());
@@ -118,18 +120,14 @@ public:
 		} else {
 			i = indcs[--free_page_count];
 		}
-		m = pages[curr_page_index = i].data();
 
-		return m;
+		return (pages[curr_page_index = i].data());
 	}
 
 
 	template<typename T, typename... A> T* alloc(A&&... a) {
 		static_assert(sizeof(T) <= page_size(), "");
-
-		void* p = allocMem();
-
-		return new (p) T(std::forward<A>(a)...);
+		return new (allocMem()) T(std::forward<A>(a)...);
 	}
 
 	void freeMem(void* m) {
