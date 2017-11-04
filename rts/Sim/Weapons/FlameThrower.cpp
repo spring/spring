@@ -9,7 +9,7 @@
 #include "Sim/Units/Unit.h"
 #include "System/myMath.h"
 
-CR_BIND_DERIVED_POOL(CFlameThrower, CWeapon, , weaponMemPool.alloc, weaponMemPool.free)
+CR_BIND_DERIVED(CFlameThrower, CWeapon, )
 
 CR_REG_METADATA(CFlameThrower,(
 	CR_MEMBER(color),

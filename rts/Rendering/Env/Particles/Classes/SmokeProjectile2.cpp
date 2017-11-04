@@ -14,7 +14,7 @@
 #include "Sim/Projectiles/ExpGenSpawnableMemberInfo.h"
 #include "Sim/Projectiles/ProjectileMemPool.h"
 
-CR_BIND_DERIVED_POOL(CSmokeProjectile2, CProjectile, , projMemPool.alloc, projMemPool.free)
+CR_BIND_DERIVED(CSmokeProjectile2, CProjectile, )
 
 CR_REG_METADATA(CSmokeProjectile2,
 (

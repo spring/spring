@@ -15,7 +15,7 @@
 #include "Sim/Projectiles/ProjectileMemPool.h"
 #include "System/myMath.h"
 
-CR_BIND_DERIVED_POOL(CGroundFlash, CExpGenSpawnable, , projMemPool.alloc, projMemPool.free)
+CR_BIND_DERIVED(CGroundFlash, CExpGenSpawnable, )
 CR_REG_METADATA(CGroundFlash, (
  	CR_MEMBER_BEGINFLAG(CM_Config),
 		CR_MEMBER(size),

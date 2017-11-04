@@ -10,7 +10,7 @@
 #include "Sim/Units/Unit.h"
 #include "System/myMath.h"
 
-CR_BIND_DERIVED_POOL(CTorpedoLauncher, CWeapon, , weaponMemPool.alloc, weaponMemPool.free)
+CR_BIND_DERIVED(CTorpedoLauncher, CWeapon, )
 CR_REG_METADATA(CTorpedoLauncher,(
 	CR_MEMBER(tracking)
 ))

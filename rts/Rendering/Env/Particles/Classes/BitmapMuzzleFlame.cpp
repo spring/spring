@@ -13,7 +13,7 @@
 #include "Sim/Projectiles/ProjectileMemPool.h"
 #include "System/myMath.h"
 
-CR_BIND_DERIVED_POOL(CBitmapMuzzleFlame, CProjectile, , projMemPool.alloc, projMemPool.free)
+CR_BIND_DERIVED(CBitmapMuzzleFlame, CProjectile, )
 
 CR_REG_METADATA(CBitmapMuzzleFlame,
 (

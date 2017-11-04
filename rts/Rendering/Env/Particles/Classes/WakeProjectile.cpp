@@ -12,7 +12,7 @@
 #include "Sim/Projectiles/ProjectileMemPool.h"
 #include "System/myMath.h"
 
-CR_BIND_DERIVED_POOL(CWakeProjectile, CProjectile, , projMemPool.alloc, projMemPool.free)
+CR_BIND_DERIVED(CWakeProjectile, CProjectile, )
 
 CR_REG_METADATA(CWakeProjectile,(
 	CR_MEMBER(alpha),

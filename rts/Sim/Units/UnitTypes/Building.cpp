@@ -11,7 +11,7 @@
 #include "System/myMath.h"
 
 
-CR_BIND_DERIVED_POOL(CBuilding, CUnit, , unitMemPool.alloc, unitMemPool.free)
+CR_BIND_DERIVED(CBuilding, CUnit, )
 CR_REG_METADATA(CBuilding, )
 
 void CBuilding::PreInit(const UnitLoadParams& params)

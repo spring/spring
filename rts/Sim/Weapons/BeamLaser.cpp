@@ -22,7 +22,7 @@
 
 #define SWEEPFIRE_ENABLED 1
 
-CR_BIND_DERIVED_POOL(CBeamLaser, CWeapon, , weaponMemPool.alloc, weaponMemPool.free)
+CR_BIND_DERIVED(CBeamLaser, CWeapon, )
 
 CR_REG_METADATA(CBeamLaser,(
 	CR_MEMBER(color),

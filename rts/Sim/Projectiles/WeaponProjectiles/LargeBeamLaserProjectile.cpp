@@ -12,7 +12,7 @@
 #include "System/myMath.h"
 #include <cstring> //memset
 
-CR_BIND_DERIVED_POOL(CLargeBeamLaserProjectile, CWeaponProjectile, , projMemPool.alloc, projMemPool.free)
+CR_BIND_DERIVED(CLargeBeamLaserProjectile, CWeaponProjectile, )
 
 CR_REG_METADATA(CLargeBeamLaserProjectile,(
 	CR_SETFLAG(CF_Synced),

@@ -12,7 +12,7 @@
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Projectiles/ProjectileMemPool.h"
 
-CR_BIND_DERIVED_POOL(CBubbleProjectile, CProjectile, , projMemPool.alloc, projMemPool.free)
+CR_BIND_DERIVED(CBubbleProjectile, CProjectile, )
 
 CR_REG_METADATA(CBubbleProjectile, (
 	CR_MEMBER_BEGINFLAG(CM_Config),

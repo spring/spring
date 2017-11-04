@@ -11,7 +11,7 @@
 #include "Sim/Units/UnitDef.h"
 #include "System/myMath.h"
 
-CR_BIND_DERIVED_POOL(CMissileLauncher, CWeapon, , weaponMemPool.alloc, weaponMemPool.free)
+CR_BIND_DERIVED(CMissileLauncher, CWeapon, )
 CR_REG_METADATA(CMissileLauncher, )
 
 

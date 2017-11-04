@@ -30,7 +30,7 @@
 #include "System/Sound/ISoundChannels.h"
 #include "System/Log/ILog.h"
 
-CR_BIND_DERIVED_POOL(CWeapon, CObject, , weaponMemPool.alloc, weaponMemPool.free)
+CR_BIND_DERIVED_POOL(CWeapon, CObject, , weaponMemPool.allocMem, weaponMemPool.freeMem)
 CR_REG_METADATA(CWeapon, (
 	CR_MEMBER(owner),
 	CR_MEMBER(slavedTo),
@@ -169,6 +169,7 @@ CWeapon::CWeapon(CUnit* owner, const WeaponDef* def):
 
 CWeapon::~CWeapon()
 {
+	assert(weaponMemPool.mapped(this));
 	DynDamageArray::DecRef(damages);
 
 	if (weaponDef->interceptor)

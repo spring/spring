@@ -28,7 +28,7 @@
 #include "System/Log/ILog.h"
 
 
-CR_BIND_DERIVED_POOL(CFeature, CSolidObject, , featureMemPool.alloc, featureMemPool.free)
+CR_BIND_DERIVED_POOL(CFeature, CSolidObject, , featureMemPool.allocMem, featureMemPool.freeMem)
 
 CR_REG_METADATA(CFeature, (
 	CR_MEMBER(isRepairingBeforeResurrect),
@@ -107,6 +107,7 @@ CFeature::CFeature()
 
 CFeature::~CFeature()
 {
+	assert(featureMemPool.mapped(this));
 	UnBlock();
 	quadField->RemoveFeature(this);
 

@@ -3,6 +3,6 @@
 #include "NoWeapon.h"
 #include "WeaponMemPool.h"
 
-CR_BIND_DERIVED_POOL(CNoWeapon, CWeapon, , weaponMemPool.alloc, weaponMemPool.free)
+CR_BIND_DERIVED(CNoWeapon, CWeapon, )
 CR_REG_METADATA(CNoWeapon, )
 

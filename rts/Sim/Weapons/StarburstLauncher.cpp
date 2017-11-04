@@ -8,7 +8,7 @@
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
 #include "Sim/Units/Unit.h"
 
-CR_BIND_DERIVED_POOL(CStarburstLauncher, CWeapon, , weaponMemPool.alloc, weaponMemPool.free)
+CR_BIND_DERIVED(CStarburstLauncher, CWeapon, )
 CR_REG_METADATA(CStarburstLauncher, (
 	CR_MEMBER(uptime),
 	CR_MEMBER(tracking)

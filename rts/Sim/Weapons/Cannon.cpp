@@ -14,7 +14,7 @@
 #include "System/myMath.h"
 #include "System/FastMath.h"
 
-CR_BIND_DERIVED_POOL(CCannon, CWeapon, , weaponMemPool.alloc, weaponMemPool.free)
+CR_BIND_DERIVED(CCannon, CWeapon, )
 
 CR_REG_METADATA(CCannon,(
 	CR_MEMBER(highTrajectory),

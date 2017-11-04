@@ -29,7 +29,7 @@ CR_REG_METADATA(ShieldSegmentCollection, (
 ))
 
 
-CR_BIND_DERIVED_POOL(ShieldSegmentProjectile, CProjectile, , projMemPool.alloc, projMemPool.free)
+CR_BIND_DERIVED(ShieldSegmentProjectile, CProjectile, )
 
 CR_REG_METADATA(ShieldSegmentProjectile, (
 	CR_IGNORED(collection),

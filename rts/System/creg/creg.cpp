@@ -72,13 +72,40 @@ ClassBinder::ClassBinder(const char* className, ClassFlags cf,
 	class_.alignment = instanceAlignment;
 	System::AddClass(&class_);
 
+	// we don't know whether the base was constructed before or after
+	// after the current binder,
+	// so we update poolAlloc/poolFree in both directions
+
 	if (base) {
 		derivedClasses()[&base->class_].push_back(&class_);
+
+		if (poolAlloc == nullptr && poolFree == nullptr) {
+			poolAlloc = base->poolAlloc;
+			poolFree = base->poolFree;
+		}
 	}
+
+	// only prop
+	if (poolAlloc != nullptr && poolFree != nullptr)
+		PropagatePoolFuncs();
 
 	// Register members
 	assert(memberRegistrator);
 	memberRegistrator(&class_);
+}
+
+
+void ClassBinder::PropagatePoolFuncs()
+{
+	for (Class* dc: derivedClasses()[&class_]) {
+		if (dc->binder->poolAlloc != nullptr || dc->binder->poolFree != nullptr)
+			continue;
+
+		dc->binder->poolAlloc = poolAlloc;
+		dc->binder->poolFree = poolFree;
+
+		dc->binder->PropagatePoolFuncs();
+	}
 }
 
 
@@ -214,23 +241,22 @@ void* Class::CreateInstance()
 		inst = binder->poolAlloc();
 	} else {
 		inst = ::operator new(binder->size);
-		if (binder->constructor) {
-			binder->constructor(inst);
-		}
 	}
+
+	if (binder->constructor)
+		binder->constructor(inst);
 
 	return inst;
 }
 
 void Class::DeleteInstance(void* inst)
 {
+	if (binder->destructor)
+		binder->destructor(inst);
+
 	if (binder->poolFree) {
 		binder->poolFree(inst);
 	} else {
-		if (binder->destructor) {
-			binder->destructor(inst);
-		}
-
 		::operator delete(inst);
 	}
 }

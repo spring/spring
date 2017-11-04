@@ -12,7 +12,7 @@
 #include "Sim/Weapons/WeaponDef.h"
 #include "System/Sync/SyncTracer.h"
 
-CR_BIND_DERIVED_POOL(CEmgProjectile, CWeaponProjectile, , projMemPool.alloc, projMemPool.free)
+CR_BIND_DERIVED(CEmgProjectile, CWeaponProjectile, )
 
 CR_REG_METADATA(CEmgProjectile,(
 	CR_SETFLAG(CF_Synced),
