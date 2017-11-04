@@ -92,6 +92,28 @@ void CPathFinder::InitStatic() {
 	assert(PF_DIRECTION_COSTS[PATHOPT_RIGHT | PATHOPT_DOWN] == math::SQRT2);
 	assert(PF_DIRECTION_COSTS[PATHOPT_LEFT  | PATHOPT_DOWN] == math::SQRT2);
 
+	assert(PathDir2PathOpt(PATHDIR_LEFT      ) ==                  PATHOPT_LEFT );
+	assert(PathDir2PathOpt(PATHDIR_RIGHT     ) ==                  PATHOPT_RIGHT);
+	assert(PathDir2PathOpt(PATHDIR_UP        ) ==                  PATHOPT_UP   );
+	assert(PathDir2PathOpt(PATHDIR_DOWN      ) ==                  PATHOPT_DOWN );
+	assert(PathDir2PathOpt(PATHDIR_LEFT_UP   ) == (PATHOPT_LEFT  | PATHOPT_UP  ));
+	assert(PathDir2PathOpt(PATHDIR_RIGHT_UP  ) == (PATHOPT_RIGHT | PATHOPT_UP  ));
+	assert(PathDir2PathOpt(PATHDIR_RIGHT_DOWN) == (PATHOPT_RIGHT | PATHOPT_DOWN));
+	assert(PathDir2PathOpt(PATHDIR_LEFT_DOWN ) == (PATHOPT_LEFT  | PATHOPT_DOWN));
+
+	assert(PATHDIR_LEFT       == PathOpt2PathDir(                 PATHOPT_LEFT ));
+	assert(PATHDIR_RIGHT      == PathOpt2PathDir(                 PATHOPT_RIGHT));
+	assert(PATHDIR_UP         == PathOpt2PathDir(                 PATHOPT_UP   ));
+	assert(PATHDIR_DOWN       == PathOpt2PathDir(                 PATHOPT_DOWN ));
+	assert(PATHDIR_LEFT_UP    == PathOpt2PathDir((PATHOPT_LEFT  | PATHOPT_UP  )));
+	assert(PATHDIR_RIGHT_UP   == PathOpt2PathDir((PATHOPT_RIGHT | PATHOPT_UP  )));
+	assert(PATHDIR_RIGHT_DOWN == PathOpt2PathDir((PATHOPT_RIGHT | PATHOPT_DOWN)));
+	assert(PATHDIR_LEFT_DOWN  == PathOpt2PathDir((PATHOPT_LEFT  | PATHOPT_DOWN)));
+
+
+	assert(DIR2OPT[PATHDIR_LEFT] == PATHOPT_LEFT);
+	assert(DIR2OPT[PATHDIR_LEFT] == PATHOPT_LEFT);
+
 	// initialize direction-vectors table
 	for (int i = 0; i < (PATH_DIRECTIONS << 1); ++i) {
 		float3 temp(PF_DIRECTION_VECTORS_2D[i].x, 0.0f, PF_DIRECTION_VECTORS_2D[i].y);
