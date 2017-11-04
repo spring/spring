@@ -29,6 +29,7 @@
 #include "Sim/Weapons/WeaponDef.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "System/Config/ConfigHandler.h"
+#include "System/ContainerUtil.h"
 #include "System/EventHandler.h"
 #include "System/Exceptions.h"
 #include "System/Log/ILog.h"

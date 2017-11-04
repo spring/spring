@@ -3,7 +3,6 @@
 #include "FlameThrower.h"
 
 #include "WeaponDef.h"
-#include "WeaponMemPool.h"
 #include "Map/Ground.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
 #include "Sim/Units/Unit.h"

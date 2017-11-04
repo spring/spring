@@ -13,6 +13,7 @@
 #include "Rendering/Models/3DModel.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
+#include "Sim/Projectiles/ProjectileMemPool.h"
 #include "Rendering/Env/Particles/Classes/SmokeTrailProjectile.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"

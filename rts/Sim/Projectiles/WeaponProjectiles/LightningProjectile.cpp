@@ -8,7 +8,6 @@
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "Sim/Projectiles/ProjectileMemPool.h"
 #include "Sim/Weapons/WeaponDef.h"
 
 #ifdef TRACE_SYNC

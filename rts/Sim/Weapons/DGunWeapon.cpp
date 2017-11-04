@@ -2,7 +2,6 @@
 
 #include "DGunWeapon.h"
 #include "WeaponDef.h"
-#include "WeaponMemPool.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
 #include "Sim/Units/Unit.h"

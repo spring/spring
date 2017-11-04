@@ -18,6 +18,7 @@
 #include "Rendering/Textures/ColorMap.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
+#include "Sim/Projectiles/ProjectileMemPool.h"
 #include "Rendering/Env/Particles/Classes/BubbleProjectile.h"
 #include "Rendering/Env/Particles/Classes/DirtProjectile.h"
 #include "Rendering/Env/Particles/Classes/ExploSpikeProjectile.h"

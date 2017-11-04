@@ -8,8 +8,9 @@
 #include "Game/CameraHandler.h"
 #include "Sim/Units/UnitHandler.h"
 #include "System/creg/STL_Set.h"
-#include "System/Log/ILog.h"
 #include "System/Input/KeyInput.h"
+#include "System/Log/ILog.h"
+#include "System/ContainerUtil.h"
 #include "System/EventHandler.h"
 
 std::vector<CGroupHandler*> grouphandlers;

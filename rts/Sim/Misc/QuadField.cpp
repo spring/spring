@@ -8,6 +8,7 @@
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/TeamHandler.h"
+#include "System/ContainerUtil.h"
 
 #ifndef UNIT_TEST
 	#include "Sim/Features/Feature.h"

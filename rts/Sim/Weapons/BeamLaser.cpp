@@ -3,7 +3,6 @@
 #include "BeamLaser.h"
 #include "PlasmaRepulser.h"
 #include "WeaponDef.h"
-#include "WeaponMemPool.h"
 #include "Game/GameHelper.h"
 #include "Game/TraceRay.h"
 #include "Map/Ground.h"

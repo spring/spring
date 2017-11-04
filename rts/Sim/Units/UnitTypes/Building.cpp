@@ -7,7 +7,6 @@
 #include "Sim/Units/BuildInfo.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitLoader.h"
-#include "Sim/Units/UnitMemPool.h"
 #include "System/myMath.h"
 
 

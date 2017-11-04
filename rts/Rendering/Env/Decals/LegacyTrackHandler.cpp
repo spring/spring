@@ -18,6 +18,7 @@
 #include "Rendering/Shaders/Shader.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Sim/Units/UnitDef.h"
+#include "System/ContainerUtil.h"
 #include "System/EventHandler.h"
 #include "System/TimeProfiler.h"
 #include "System/StringUtil.h"

@@ -3,7 +3,6 @@
 #include "EmgCannon.h"
 
 #include "WeaponDef.h"
-#include "WeaponMemPool.h"
 #include "Map/Ground.h"
 #include "Sim/Misc/Team.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectileFactory.h"
