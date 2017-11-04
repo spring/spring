@@ -35,9 +35,9 @@ std::string BasicType::GetName() const
 	return std::string();
 }
 
-std::shared_ptr<IType> IType::CreateBasicType(BasicTypeID t, size_t size)
+std::unique_ptr<IType> IType::CreateBasicType(BasicTypeID t, size_t size)
 {
-	return std::shared_ptr<IType>(new BasicType(t, size));
+	return std::unique_ptr<IType>(new BasicType(t, size));
 }
 
 std::string ObjectPointerBaseType::GetName() const
@@ -50,10 +50,9 @@ std::string StringType::GetName() const
 	return "string";
 }
 
-std::shared_ptr<IType> IType::CreateStringType()
+std::unique_ptr<IType> IType::CreateStringType()
 {
-	DeduceType<char> charType;
-	return std::shared_ptr<IType>(new StringType(charType.Get()));
+	return std::unique_ptr<IType>(new StringType());
 }
 
 void ObjectInstanceType::Serialize(ISerializer* s, void* inst)
@@ -66,9 +65,9 @@ std::string ObjectInstanceType::GetName() const
 	return objectClass->name;
 }
 
-std::shared_ptr<IType> IType::CreateObjInstanceType(Class* objectType, size_t size)
+std::unique_ptr<IType> IType::CreateObjInstanceType(Class* objectType, size_t size)
 {
-	return std::shared_ptr<IType>(new ObjectInstanceType(objectType, size));
+	return std::unique_ptr<IType>(new ObjectInstanceType(objectType, size));
 }
 
 std::string StaticArrayBaseType::GetName() const
@@ -83,7 +82,7 @@ std::string DynamicArrayBaseType::GetName() const
 	return elemType->GetName() + "[]";
 }
 
-std::shared_ptr<IType> IType::CreateIgnoredType(size_t size)
+std::unique_ptr<IType> IType::CreateIgnoredType(size_t size)
 {
-	return std::shared_ptr<IType>(new IgnoredType(size));
+	return std::unique_ptr<IType>(new IgnoredType(size));
 }

@@ -187,7 +187,7 @@ void Class::SetFlag(ClassFlags flag)
 	binder->flags = (ClassFlags) (binder->flags | flag);
 }
 
-void Class::AddMember(const char* name, std::shared_ptr<IType> type, unsigned int offset, int alignment, ClassMemberFlag flags)
+void Class::AddMember(const char* name, std::unique_ptr<IType> type, unsigned int offset, int alignment, ClassMemberFlag flags)
 {
 	assert(!FindMember(name, false));
 
@@ -196,7 +196,7 @@ void Class::AddMember(const char* name, std::shared_ptr<IType> type, unsigned in
 
 	m.name = name;
 	m.offset = offset;
-	m.type = type;
+	m.type = std::move(type);
 	m.alignment = alignment;
 	m.flags = flags;
 }

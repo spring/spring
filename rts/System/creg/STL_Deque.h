@@ -14,8 +14,8 @@ namespace creg
 	/// Deque type (uses vector implementation)
 	template<typename T>
 	struct DeduceType< std::deque <T> > {
-		static std::shared_ptr<IType> Get() {
-			return std::shared_ptr<IType>(new DynamicArrayType< std::deque<T> >());
+		static std::unique_ptr<IType> Get() {
+			return std::unique_ptr<IType>(new DynamicArrayType< std::deque<T> >());
 		}
 	};
 }

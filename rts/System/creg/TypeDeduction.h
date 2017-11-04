@@ -18,7 +18,7 @@ namespace creg {
 template<typename T, typename Enable = void>
 struct DeduceType {
 	static_assert(std::is_same<typename std::remove_const<T>::type, typename std::remove_const<typename T::MyType>::type>::value, "class isn't creged");
-	static std::shared_ptr<IType> Get() { return IType::CreateObjInstanceType(T::StaticClass(), sizeof(T)); }
+	static std::unique_ptr<IType> Get() { return IType::CreateObjInstanceType(T::StaticClass(), sizeof(T)); }
 };
 
 
@@ -27,37 +27,37 @@ struct DeduceType {
 //WARNING: Defining this one would break any class-specialization as for std::vector & std::string below)
 /*template<typename T>
 struct DeduceType<T, typename std::enable_if<std::is_class<T>::value>::type> {
-	static std::shared_ptr<IType> Get() { return std::shared_ptr<IType>(IType::CreateObjInstanceType(T::StaticClass(), sizeof(T))); }
+	static std::unique_ptr<IType> Get() { return std::unique_ptr<IType>(IType::CreateObjInstanceType(T::StaticClass(), sizeof(T))); }
 };*/
 
 // Enum
 template<typename T>
 struct DeduceType<T, typename std::enable_if<std::is_enum<T>::value>::type> {
-	static std::shared_ptr<IType> Get() { return IType::CreateBasicType(crInt, sizeof(T)); }
+	static std::unique_ptr<IType> Get() { return IType::CreateBasicType(crInt, sizeof(T)); }
 };
 
 // Integer+Boolean (of any size)
 template<typename T>
 struct DeduceType<T, typename std::enable_if<std::is_integral<T>::value>::type> {
-	static std::shared_ptr<IType> Get() { return IType::CreateBasicType(crInt, sizeof(T)); }
+	static std::unique_ptr<IType> Get() { return IType::CreateBasicType(crInt, sizeof(T)); }
 };
 
 // Floating-Point (of any size)
 template<typename T>
 struct DeduceType<T, typename std::enable_if<std::is_floating_point<T>::value>::type> {
-	static std::shared_ptr<IType> Get() { return IType::CreateBasicType(crFloat, sizeof(T)); }
+	static std::unique_ptr<IType> Get() { return IType::CreateBasicType(crFloat, sizeof(T)); }
 };
 
 // Synced Integer + Float
 #if defined(SYNCDEBUG) || defined(SYNCCHECK)
 template<typename T>
 struct DeduceType<SyncedPrimitive<T>, typename std::enable_if<std::is_integral<T>::value>::type> {
-	static std::shared_ptr<IType> Get() { return IType::CreateBasicType(crInt /*crSyncedInt*/, sizeof(T)); }
+	static std::unique_ptr<IType> Get() { return IType::CreateBasicType(crInt /*crSyncedInt*/, sizeof(T)); }
 };
 
 template<typename T>
 struct DeduceType<SyncedPrimitive<T>, typename std::enable_if<std::is_floating_point<T>::value>::type> {
-	static std::shared_ptr<IType> Get() { return IType::CreateBasicType(crFloat /*crSyncedFloat*/, sizeof(T)); }
+	static std::unique_ptr<IType> Get() { return IType::CreateBasicType(crFloat /*crSyncedFloat*/, sizeof(T)); }
 };
 #endif
 
@@ -81,13 +81,13 @@ public:
 // Pointer type
 template<typename T>
 struct DeduceType<T, typename std::enable_if<std::is_pointer<T>::value>::type> {
-	static std::shared_ptr<IType> Get() { return std::shared_ptr<IType>(new ObjectPointerType<typename std::remove_pointer<T>::type>()); }
+	static std::unique_ptr<IType> Get() { return std::unique_ptr<IType>(new ObjectPointerType<typename std::remove_pointer<T>::type>()); }
 };
 
 // Reference type, handled as a pointer
 template<typename T>
 struct DeduceType<T, typename std::enable_if<std::is_reference<T>::value>::type> {
-	static std::shared_ptr<IType> Get() { return std::shared_ptr<IType>(new ObjectPointerType<typename std::remove_reference<T>::type>()); }
+	static std::unique_ptr<IType> Get() { return std::unique_ptr<IType>(new ObjectPointerType<typename std::remove_reference<T>::type>()); }
 };
 
 template<typename T, int N>
@@ -100,15 +100,15 @@ public:
 	{
 		T* array = (T*)instance;
 		for (int a = 0; a < N; a++)
-			elemType->Serialize(s, &array[a]);
+			DeduceType<T>::Get()->Serialize(s, &array[a]);
 	}
 };
 
 // Static array type
 template<typename T, size_t ArraySize>
 struct DeduceType<T[ArraySize]> {
-	static std::shared_ptr<IType> Get() {
-		return std::shared_ptr<IType>(new StaticArrayType<T, ArraySize>());
+	static std::unique_ptr<IType> Get() {
+		return std::unique_ptr<IType>(new StaticArrayType<T, ArraySize>());
 	}
 };
 
@@ -128,7 +128,7 @@ public:
 			int size = (int)ct.size();
 			s->SerializeInt(&size, sizeof(int));
 			for (int a = 0; a < size; a++) {
-				elemType->Serialize(s, &ct[a]);
+				DeduceType<ElemT>::Get()->Serialize(s, &ct[a]);
 			}
 		} else {
 			ct.clear();
@@ -136,7 +136,7 @@ public:
 			s->SerializeInt(&size, sizeof(int));
 			ct.resize(size);
 			for (int a = 0; a < size; a++) {
-				elemType->Serialize(s, &ct[a]);
+				DeduceType<ElemT>::Get()->Serialize(s, &ct[a]);
 			}
 		}
 	}
@@ -146,8 +146,8 @@ public:
 // Vector type (vector<T>)
 template<typename T>
 struct DeduceType<std::vector<T>> {
-	static std::shared_ptr<IType> Get() {
-		return std::shared_ptr<IType>(new DynamicArrayType<std::vector<T> >());
+	static std::unique_ptr<IType> Get() {
+		return std::unique_ptr<IType>(new DynamicArrayType<std::vector<T> >());
 	}
 };
 
@@ -168,7 +168,7 @@ public:
 			s->SerializeInt(&size, sizeof(int));
 			for (int a = 0; a < size; a++) {
 				bool b = (*ct)[a];
-				elemType->Serialize(s, &b);
+				DeduceType<ElemT>::Get()->Serialize(s, &b);
 			}
 		} else {
 			int size;
@@ -176,7 +176,7 @@ public:
 			ct->resize(size);
 			for (int a = 0; a < size; a++) {
 				bool b;
-				elemType->Serialize(s, &b);
+				DeduceType<ElemT>::Get()->Serialize(s, &b);
 				(*ct)[a] = b;
 			}
 		}
@@ -187,15 +187,15 @@ public:
 // std::vector<bool> is not a std::vector but a BitArray instead!
 template<>
 struct DeduceType<std::vector<bool>> {
-	static std::shared_ptr<IType> Get() {
-		return std::shared_ptr<IType>(new BitArrayType<std::vector<bool> >());
+	static std::unique_ptr<IType> Get() {
+		return std::unique_ptr<IType>(new BitArrayType<std::vector<bool> >());
 	}
 };
 
 // String type
 template<>
 struct DeduceType<std::string> {
-	static std::shared_ptr<IType> Get() { return IType::CreateStringType(); }
+	static std::unique_ptr<IType> Get() { return IType::CreateStringType(); }
 };
 
 
@@ -205,7 +205,7 @@ struct DeduceType<std::string> {
 
 // GetType allows to use parameter type deduction to get the template argument for DeduceType
 template<typename T>
-std::shared_ptr<IType> GetType(T& var) {
+std::unique_ptr<IType> GetType(T& var) {
 	return DeduceType<T>::Get();
 }
 }
