@@ -143,7 +143,6 @@ Class::Class(const char* _name)
 , postLoadProc(nullptr)
 , castAndSerializeProc(nullptr)
 , castAndPostLoadProc(nullptr)
-, currentMemberFlags(0)
 {
 	name = _name;
 }
@@ -183,22 +182,12 @@ const std::vector<Class*>& Class::GetDerivedClasses() const
 }
 
 
-void Class::BeginFlag(ClassMemberFlag flag)
-{
-	currentMemberFlags |= (int)flag;
-}
-
-void Class::EndFlag(ClassMemberFlag flag)
-{
-	currentMemberFlags &= ~(int)flag;
-}
-
 void Class::SetFlag(ClassFlags flag)
 {
 	binder->flags = (ClassFlags) (binder->flags | flag);
 }
 
-void Class::AddMember(const char* name, std::shared_ptr<IType> type, unsigned int offset, int alignment)
+void Class::AddMember(const char* name, std::shared_ptr<IType> type, unsigned int offset, int alignment, ClassMemberFlag flags)
 {
 	assert(!FindMember(name, false));
 
@@ -209,7 +198,7 @@ void Class::AddMember(const char* name, std::shared_ptr<IType> type, unsigned in
 	m.offset = offset;
 	m.type = type;
 	m.alignment = alignment;
-	m.flags = currentMemberFlags;
+	m.flags = flags;
 }
 
 Class::Member* Class::FindMember(const char* name, const bool inherited)
