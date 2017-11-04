@@ -30,17 +30,17 @@ public:
 	void StopMoveAndFinishCommand();
 	void StopMoveAndKeepPointing(const float3& p, const float r, bool b);
 
-	bool AllowedCommand(const Command& c, bool fromSynced);
-	int GetDefaultCmd(const CUnit* pointed, const CFeature* feature);
-	void SlowUpdate();
-	void GiveCommandReal(const Command& c, bool fromSynced = true);
+	bool AllowedCommand(const Command& c, bool fromSynced) override;
+	int GetDefaultCmd(const CUnit* pointed, const CFeature* feature) override;
+	void SlowUpdate() override;
+	void GiveCommandReal(const Command& c, bool fromSynced = true) override;
 	void NonMoving();
-	void FinishCommand();
-	bool CanSetMaxSpeed() const { return true; }
+	void FinishCommand() override;
+	bool CanSetMaxSpeed() const override { return true; }
 	void StopSlowGuard();
 	void StartSlowGuard(float speed);
-	void ExecuteAttack(Command& c);
-	void ExecuteStop(Command& c);
+	void ExecuteAttack(Command& c) override;
+	void ExecuteStop(Command& c) override;
 
 	virtual void Execute();
 	virtual void ExecuteGuard(Command& c);
@@ -107,6 +107,9 @@ protected:
 	void CalculateCancelDistance();
 
 private:
+	void ExecuteObjectAttack(Command& c);
+	void ExecuteGroundAttack(Command& c);
+
 	bool MobileAutoGenerateTarget();
 	bool GenerateAttackCmd();
 };

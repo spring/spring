@@ -130,7 +130,6 @@ public:
 	bool inCommand;
 	bool repeatOrders;
 	int lastSelectedCommandPage;
-	bool unimportantMove;
 
 protected:
 	// return true by default so non-AirCAI's trigger FinishCommand

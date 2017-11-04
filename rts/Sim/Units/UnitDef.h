@@ -48,7 +48,6 @@ public:
 	UnitDef();
 	~UnitDef();
 
-	bool DontLand() const { return (dlHoverFactor >= 0.0f); }
 	void SetNoCost(bool noCost);
 
 	bool IsTransportUnit()     const { return (transportCapacity > 0 && transportMass > 0.0f); }
@@ -66,8 +65,11 @@ public:
 	bool IsFighterAirUnit()    const { return (IsStrafingAirUnit() && !weapons.empty() && !HasBomberWeapon()); }
 	bool IsBomberAirUnit()     const { return (IsStrafingAirUnit() && !weapons.empty() &&  HasBomberWeapon()); }
 
+	bool DontLand() const { return (dlHoverFactor >= 0.0f); }
 	bool RequireMoveDef() const { return (canmove && speed > 0.0f && !canfly); }
+	bool CanChangeFireState() const { return (canFireControl && (!weapons.empty() || canKamikaze || IsFactoryUnit())); }
 	bool HasBomberWeapon() const;
+
 	const std::vector<YardMapStatus>& GetYardMap() const { return yardmap; }
 
 	void SetModelExplosionGeneratorID(unsigned int idx, unsigned int egID) { modelExplGenIDs[idx] = egID; }
