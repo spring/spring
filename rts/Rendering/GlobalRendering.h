@@ -7,6 +7,8 @@
 #include "System/Misc/SpringTime.h"
 #include "System/type2.h"
 
+#include <string>
+
 struct SDL_version;
 struct SDL_Window;
 typedef void* SDL_GLContext;
