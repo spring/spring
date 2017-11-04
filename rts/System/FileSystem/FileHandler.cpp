@@ -249,10 +249,12 @@ bool CFileHandler::LoadStringData(string& data)
 	if (!FileExists())
 		return false;
 
-	char* buf = new char[fileSize];
-	Read(buf, fileSize);
-	data.append(buf, fileSize);
-	delete[] buf;
+	assert(data.empty());
+
+	data.clear();
+	data.resize(fileSize, 0);
+
+	Read(&data[0], fileSize);
 	return true;
 }
 
