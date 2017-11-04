@@ -20,8 +20,10 @@ public:
 
 	void AllowRecord(bool enable) { allowRecord = enable; }
 
-	void SetLastFrameTime(float time);
+	void SetLastFrameTime(float time) { lastFrameTime = time; }
 	void SetTimeOffset(float offset) { timeOffset = offset; }
+
+	float GetLastFrameTime() const { return lastFrameTime; }
 	float GetTimeOffset() const { return timeOffset; }
 
 	/**
@@ -49,6 +51,7 @@ protected:
 	// internal state
 	bool capturing = false;
 
+	float lastFrameTime = 0.0f;
 	float timeOffset = 0.0f;
 };
 

@@ -1350,7 +1350,7 @@ bool CGame::Draw() {
 	glLoadIdentity();
 
 	if (videoCapturing->AllowRecord()) {
-		videoCapturing->SetLastFrameTime(1000.0f / GAME_SPEED);
+		videoCapturing->SetLastFrameTime(globalRendering->lastFrameTime = 1000.0f / GAME_SPEED);
 		// does nothing unless StartCapturing has also been called via /createvideo (Windows-only)
 		videoCapturing->RenderFrame();
 	}
