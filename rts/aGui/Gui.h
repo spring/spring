@@ -48,20 +48,22 @@ public:
 
 private:
 	bool HandleEvent(const SDL_Event& ev);
-	InputHandler::SignalType::connection_type inputCon;
 
 	struct GuiItem {
 		GuiItem(GuiElement* el, bool back) : element(el), asBackground(back) {}
 		GuiElement* element;
 		bool asBackground;
 	};
-	typedef std::list<GuiItem> ElList;
-	ElList elements;
-	ElList toBeRemoved;
-	ElList toBeAdded;
 
-	DrawMode currentDrawMode;
+	std::list<GuiItem> elements;
+	std::list<GuiItem> toBeRemoved;
+	std::list<GuiItem> toBeAdded;
+
+	DrawMode currentDrawMode = DrawMode::COLOR;
+
 	Shader::IProgramObject* shader;
+
+	InputHandler::SignalType::connection_type inputCon;
 };
 
 extern Gui* gui;

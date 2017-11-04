@@ -23,11 +23,9 @@ namespace agui
 {
 
 Gui::Gui()
- : currentDrawMode(DrawMode::COLOR)
- , shader(shaderHandler->CreateProgramObject("[aGui::Gui]", "aGui::Gui", true))
+ : shader(shaderHandler->CreateProgramObject("[aGui::Gui]", "aGui::Gui", true))
+ , inputCon(input.AddHandler(std::bind(&Gui::HandleEvent, this, std::placeholders::_1)))
 {
-	inputCon = input.AddHandler(std::bind(&Gui::HandleEvent, this, std::placeholders::_1));
-
 	{
 		vfsHandler->AddArchive(CArchiveScanner::GetSpringBaseContentName(), false);
 		shader->AttachShaderObject(shaderHandler->CreateShaderObject("GLSL/GuiVertProg4.glsl", "", GL_VERTEX_SHADER));
@@ -41,6 +39,11 @@ Gui::Gui()
 
 		if (!shader->IsValid()) {
 			LOG_L(L_ERROR, "%s-shader compilation error: %s", name.c_str(), log.c_str());
+
+			// dummies
+			shader->SetUniformLocation("");
+			shader->SetUniformLocation("");
+			shader->SetUniformLocation("");
 			return;
 		}
 
@@ -146,7 +149,7 @@ void Gui::AddElement(GuiElement* elem, bool asBackground)
 void Gui::RmElement(GuiElement* elem)
 {
 	// has to be delayed, otherwise deleting a button during a callback would segfault
-	for (ElList::iterator it = elements.begin(); it != elements.end(); ++it) {
+	for (auto it = elements.begin(); it != elements.end(); ++it) {
 		if ((*it).element == elem) {
 			toBeRemoved.emplace_back(elem, true);
 			break;
@@ -161,7 +164,7 @@ void Gui::UpdateScreenGeometry(int screenx, int screeny, int screenOffsetX, int 
 
 bool Gui::MouseOverElement(const GuiElement* elem, int x, int y) const
 {
-	for (ElList::const_iterator it = elements.begin(); it != elements.end(); ++it) {
+	for (auto it = elements.cbegin(); it != elements.cend(); ++it) {
 		if (it->element->MouseOver(x, y))
 			return (it->element == elem);
 	}
@@ -171,17 +174,19 @@ bool Gui::MouseOverElement(const GuiElement* elem, int x, int y) const
 
 bool Gui::HandleEvent(const SDL_Event& ev)
 {
-	ElList::iterator handler = elements.end();
-	for (ElList::iterator it = elements.begin(); it != elements.end(); ++it) {
+	auto handler = elements.end();
+	for (auto it = elements.begin(); it != elements.end(); ++it) {
 		if (it->element->HandleEvent(ev)) {
 			handler = it;
 			break;
 		}
 	}
+
 	if (handler != elements.end() && !handler->asBackground) {
 		elements.push_front(*handler);
 		elements.erase(handler);
 	}
+
 	return false;
 }
 
