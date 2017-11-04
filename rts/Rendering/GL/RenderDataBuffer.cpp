@@ -12,54 +12,87 @@ static GL::RenderDataBuffer gRenderBufferN[2];
 static GL::RenderDataBuffer gRenderBufferC[2];
 static GL::RenderDataBuffer gRenderBufferT[2];
 
-static GL::TRenderDataBuffer<VA_TYPE_0> tRenderBuffer0[2];
-static GL::TRenderDataBuffer<VA_TYPE_N> tRenderBufferN[2];
-static GL::TRenderDataBuffer<VA_TYPE_C> tRenderBufferC[2];
-static GL::TRenderDataBuffer<VA_TYPE_T> tRenderBufferT[2];
+static GL::RenderDataBuffer gRenderBufferT4[2];
+static GL::RenderDataBuffer gRenderBufferTN[2];
+static GL::RenderDataBuffer gRenderBufferTC[2];
+
+static GL::RenderDataBuffer gRenderBuffer2D0[2];
+static GL::RenderDataBuffer gRenderBuffer2DT[2];
+
+
+static GL::RenderDataBuffer0 tRenderBuffer0[2];
+static GL::RenderDataBufferN tRenderBufferN[2];
+static GL::RenderDataBufferC tRenderBufferC[2];
+static GL::RenderDataBufferT tRenderBufferT[2];
+
+static GL::RenderDataBufferT4 tRenderBufferT4[2];
+static GL::RenderDataBufferTN tRenderBufferTN[2];
+static GL::RenderDataBufferTC tRenderBufferTC[2];
+
+static GL::RenderDataBuffer2D0 tRenderBuffer2D0[2];
+static GL::RenderDataBuffer2DT tRenderBuffer2DT[2];
+
 
 GL::RenderDataBuffer0* GL::GetRenderBuffer0() { return &tRenderBuffer0[0 /*globalRendering->drawFrame & 1*/ ]; }
 GL::RenderDataBufferN* GL::GetRenderBufferN() { return &tRenderBufferN[0 /*globalRendering->drawFrame & 1*/ ]; }
 GL::RenderDataBufferC* GL::GetRenderBufferC() { return &tRenderBufferC[0 /*globalRendering->drawFrame & 1*/ ]; }
 GL::RenderDataBufferT* GL::GetRenderBufferT() { return &tRenderBufferT[0 /*globalRendering->drawFrame & 1*/ ]; }
 
+GL::RenderDataBufferT4* GL::GetRenderBufferT4() { return &tRenderBufferT4[0 /*globalRendering->drawFrame & 1*/ ]; }
+GL::RenderDataBufferTN* GL::GetRenderBufferTN() { return &tRenderBufferTN[0 /*globalRendering->drawFrame & 1*/ ]; }
+GL::RenderDataBufferTC* GL::GetRenderBufferTC() { return &tRenderBufferTC[0 /*globalRendering->drawFrame & 1*/ ]; }
+
+GL::RenderDataBuffer2D0* GL::GetRenderBuffer2D0() { return &tRenderBuffer2D0[0 /*globalRendering->drawFrame & 1*/ ]; }
+GL::RenderDataBuffer2DT* GL::GetRenderBuffer2DT() { return &tRenderBuffer2DT[0 /*globalRendering->drawFrame & 1*/ ]; }
+
 
 void GL::InitRenderBuffers() {
-	char vsBuf0[65536];
-	char vsBufN[65536];
-	char vsBufC[65536];
-	char vsBufT[65536];
-	char fsBuf0[65536];
-	char fsBufN[65536];
-	char fsBufC[65536];
-	char fsBufT[65536];
+	char vsBuffer[65536];
+	char fsBuffer[65536];
+
+	Shader::GLSLShaderObject shaderObjs[2] = {{GL_VERTEX_SHADER, "", ""}, {GL_FRAGMENT_SHADER, "", ""}};
+
+
+	#define SETUP_RBUFFER(T) tRenderBuffer ## T[i].Setup(&gRenderBuffer ## T[i], &GL::VA_TYPE_ ## T ## _ATTRS)
+	#define CREATE_SHADER(T, VS_CODE, FS_CODE)                                                                             \
+		do {                                                                                                               \
+			GL::RenderDataBuffer::FormatShader ## T(vsBuffer, vsBuffer + sizeof(vsBuffer), "", "", VS_CODE, "VS");         \
+			GL::RenderDataBuffer::FormatShader ## T(fsBuffer, fsBuffer + sizeof(fsBuffer), "", "", FS_CODE, "FS");         \
+			shaderObjs[0] = {GL_VERTEX_SHADER  , &vsBuffer[0], ""};                                                        \
+			shaderObjs[1] = {GL_FRAGMENT_SHADER, &fsBuffer[0], ""};                                                        \
+			gRenderBuffer ## T[i].CreateShader((sizeof(shaderObjs) / sizeof(shaderObjs[0])), 0,  &shaderObjs[0], nullptr); \
+		} while (false)
 
 	for (int i = 0; i < 2; i++) {
-		tRenderBuffer0[i].Setup(&gRenderBuffer0[i], &GL::VA_TYPE_0_ATTRS);
-		tRenderBufferN[i].Setup(&gRenderBufferN[i], &GL::VA_TYPE_N_ATTRS);
-		tRenderBufferC[i].Setup(&gRenderBufferC[i], &GL::VA_TYPE_C_ATTRS);
-		tRenderBufferT[i].Setup(&gRenderBufferT[i], &GL::VA_TYPE_T_ATTRS);
+		SETUP_RBUFFER(0);
+		SETUP_RBUFFER(N);
+		SETUP_RBUFFER(C);
+		SETUP_RBUFFER(T);
+
+		SETUP_RBUFFER(T4);
+		SETUP_RBUFFER(TN);
+		SETUP_RBUFFER(TC);
+
+		SETUP_RBUFFER(2D0);
+		SETUP_RBUFFER(2DT);
 	}
 
 	for (int i = 0; i < 2; i++) {
-		GL::RenderDataBuffer::FormatShader0(vsBuf0, vsBuf0 + sizeof(vsBuf0), "", "", "", "VS");
-		GL::RenderDataBuffer::FormatShaderN(vsBufN, vsBufN + sizeof(vsBufN), "", "", "", "VS");
-		GL::RenderDataBuffer::FormatShaderC(vsBufC, vsBufC + sizeof(vsBufC), "", "", "", "VS");
-		GL::RenderDataBuffer::FormatShaderT(vsBufT, vsBufT + sizeof(vsBufT), "", "", "", "VS");
-		GL::RenderDataBuffer::FormatShader0(fsBuf0, fsBuf0 + sizeof(fsBuf0), "", "", "\tf_color_rgba = vec4(1.0, 1.0, 1.0, 1.0);\n", "FS");
-		GL::RenderDataBuffer::FormatShaderN(fsBufN, fsBufN + sizeof(fsBufN), "", "", "\tf_color_rgba = vec4(1.0, 1.0, 1.0, 1.0);\n", "FS");
-		GL::RenderDataBuffer::FormatShaderC(fsBufC, fsBufC + sizeof(fsBufC), "", "", "\tf_color_rgba = v_color_rgba * (1.0 / 255.0);\n", "FS");
-		GL::RenderDataBuffer::FormatShaderT(fsBufT, fsBufT + sizeof(fsBufT), "", "", "\tf_color_rgba = texture(u_tex0, v_texcoor_st);\n", "FS");
+		CREATE_SHADER(0, "", "\tf_color_rgba = vec4(1.0, 1.0, 1.0, 1.0);\n");
+		CREATE_SHADER(N, "", "\tf_color_rgba = vec4(1.0, 1.0, 1.0, 1.0);\n");
+		CREATE_SHADER(C, "", "\tf_color_rgba = v_color_rgba * (1.0 / 255.0);\n");
+		CREATE_SHADER(T, "", "\tf_color_rgba = texture(u_tex0, v_texcoor_st);\n");
 
-		Shader::GLSLShaderObject shaderObjs0[2] = {{GL_VERTEX_SHADER, &vsBuf0[0], ""}, {GL_FRAGMENT_SHADER, &fsBuf0[0], ""}};
-		Shader::GLSLShaderObject shaderObjsN[2] = {{GL_VERTEX_SHADER, &vsBufN[0], ""}, {GL_FRAGMENT_SHADER, &fsBufN[0], ""}};
-		Shader::GLSLShaderObject shaderObjsC[2] = {{GL_VERTEX_SHADER, &vsBufC[0], ""}, {GL_FRAGMENT_SHADER, &fsBufC[0], ""}};
-		Shader::GLSLShaderObject shaderObjsT[2] = {{GL_VERTEX_SHADER, &vsBufT[0], ""}, {GL_FRAGMENT_SHADER, &fsBufT[0], ""}};
+		CREATE_SHADER(T4, "", "\tf_color_rgba = texture(u_tex0, v_texcoor_stuv.st);\n");
+		CREATE_SHADER(TN, "", "\tf_color_rgba = texture(u_tex0, v_texcoor_st);\n");
+		CREATE_SHADER(TC, "", "\tf_color_rgba = texture(u_tex0, v_texcoor_st) * v_color_rgba * (1.0 / 255.0);\n");
 
-		gRenderBuffer0[i].CreateShader((sizeof(shaderObjs0) / sizeof(shaderObjs0[0])), 0, &shaderObjs0[0], nullptr);
-		gRenderBufferN[i].CreateShader((sizeof(shaderObjsN) / sizeof(shaderObjsN[0])), 0, &shaderObjsN[0], nullptr);
-		gRenderBufferC[i].CreateShader((sizeof(shaderObjsC) / sizeof(shaderObjsC[0])), 0, &shaderObjsC[0], nullptr);
-		gRenderBufferT[i].CreateShader((sizeof(shaderObjsT) / sizeof(shaderObjsT[0])), 0, &shaderObjsT[0], nullptr);
+		CREATE_SHADER(2D0, "", "\tf_color_rgba = vec4(1.0, 1.0, 1.0, 1.0);\n");
+		CREATE_SHADER(2DT, "", "\tf_color_rgba = texture(u_tex0, v_texcoor_st);\n");
 	}
+
+	#undef CREATE_SHADER
+	#undef SETUP_RBUFFER
 }
 
 void GL::KillRenderBuffers() {
@@ -68,6 +101,13 @@ void GL::KillRenderBuffers() {
 		gRenderBufferN[i].Kill();
 		gRenderBufferC[i].Kill();
 		gRenderBufferT[i].Kill();
+
+		gRenderBufferT4[i].Kill();
+		gRenderBufferTN[i].Kill();
+		gRenderBufferTC[i].Kill();
+
+		gRenderBuffer2D0[i].Kill();
+		gRenderBuffer2DT[i].Kill();
 	}
 }
 
@@ -84,10 +124,24 @@ void GL::SwapRenderBuffers() {
 	std::swap(tRenderBufferC[0], tRenderBufferC[1]);
 	std::swap(tRenderBufferT[0], tRenderBufferT[1]);
 
+	std::swap(tRenderBufferT4[0], tRenderBufferT4[1]);
+	std::swap(tRenderBufferTN[0], tRenderBufferTN[1]);
+	std::swap(tRenderBufferTC[0], tRenderBufferTC[1]);
+
+	std::swap(tRenderBuffer2D0[0], tRenderBuffer2D0[1]);
+	std::swap(tRenderBuffer2DT[0], tRenderBuffer2DT[1]);
+
 	tRenderBuffer0[0].Reset();
 	tRenderBufferN[0].Reset();
 	tRenderBufferC[0].Reset();
 	tRenderBufferT[0].Reset();
+
+	tRenderBufferT4[0].Reset();
+	tRenderBufferTN[0].Reset();
+	tRenderBufferTC[0].Reset();
+
+	tRenderBuffer2D0[0].Reset();
+	tRenderBuffer2DT[0].Reset();
 	#endif
 }
 
@@ -137,7 +191,7 @@ char* GL::RenderDataBuffer::FormatShaderBase(
 			ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "%s", "uniform mat4 u_proj_mat;\n");
 		} break;
 		case 'F': {
-			ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "%s", "uniform sampler2D u_tex0;\n"); // T*,2DT* (v_texcoor_st)
+			ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "%s", "uniform sampler2D u_tex0;\n"); // T*,2DT* (v_texcoor_st*)
 			ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "%s", "uniform sampler3D u_tex1;\n"); // TNT (v_texcoor_uv1)
 			ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "%s", "uniform sampler3D u_tex2;\n"); // TNT (v_texcoor_uv2)
 		} break;
@@ -221,6 +275,10 @@ char* GL::RenderDataBuffer::FormatShaderType(
 					const Shader::ShaderInput& a = rawAttrs[n];
 
 					// assume standard tc-gen
+					if (std::strcmp(a.name, "a_texcoor_stuv") == 0) {
+						ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "%s", "\tv_texcoor_stuv = a_texcoor_stuv;\n");
+						continue;
+					}
 					if (std::strcmp(a.name, "a_texcoor_st") == 0) {
 						ptr += std::snprintf(ptr, (end - buf) - (ptr - buf), "%s", "\tv_texcoor_st = a_texcoor_st;\n");
 						continue;

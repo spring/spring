@@ -82,7 +82,8 @@ private:
 	bool  dynWaves;     ///< only usable if bumpmap/normal texture is a TileSet
 	bool  useUniforms;  ///< use Uniforms instead of \#define'd const. Warning: this is much slower, but has the advantage that you can change the params on runtime.
 
-	unsigned char* tileOffsets; ///< used to randomize the wave/bumpmap/normal texture
+	uint8_t tileOffsets[16 * 16]; ///< used to randomize the wave/bumpmap/normal texture
+
 	int  normalTextureX; ///< needed for dynamic waves
 	int  normalTextureY;
 

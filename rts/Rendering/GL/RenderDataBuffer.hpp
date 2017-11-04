@@ -50,6 +50,14 @@ namespace GL {
 	}};
 
 
+	static_assert(sizeof(VA_TYPE_T4) == (sizeof(float3) + sizeof(float4)), "");
+	static_assert(sizeof(VA_TYPE_T4) == (sizeof(float) * 7), ""); // 7 = 3 + 4
+	CONSTQUAL static std::array<Shader::ShaderInput, 2> VA_TYPE_T4_ATTRS = {{
+		{0,  3, GL_FLOAT,  (sizeof(float) * 7),  "a_vertex_xyz"  , VA_TYPE_OFFSET(float, 0)},
+		{1,  4, GL_FLOAT,  (sizeof(float) * 7),  "a_texcoor_stuv", VA_TYPE_OFFSET(float, 3)},
+	}};
+
+
 	static_assert(sizeof(VA_TYPE_TN) == (sizeof(float3) * 2 + sizeof(float) * 2), "");
 	static_assert(sizeof(VA_TYPE_TN) == (sizeof(float) * 8), ""); // 8 = 3 + 2 + 3
 	CONSTQUAL static std::array<Shader::ShaderInput, 3> VA_TYPE_TN_ATTRS = {{
@@ -121,6 +129,7 @@ namespace GL {
 	CONSTQUAL static size_t NUM_VA_TYPE_N_ATTRS = VA_TYPE_N_ATTRS.size(); // (sizeof(VA_TYPE_N_ATTRS) / sizeof(VA_TYPE_N_ATTRS[0]));
 	CONSTQUAL static size_t NUM_VA_TYPE_C_ATTRS = VA_TYPE_C_ATTRS.size(); // (sizeof(VA_TYPE_C_ATTRS) / sizeof(VA_TYPE_C_ATTRS[0]));
 	CONSTQUAL static size_t NUM_VA_TYPE_T_ATTRS = VA_TYPE_T_ATTRS.size(); // (sizeof(VA_TYPE_T_ATTRS) / sizeof(VA_TYPE_T_ATTRS[0]));
+	CONSTQUAL static size_t NUM_VA_TYPE_T4_ATTRS = VA_TYPE_T4_ATTRS.size(); // (sizeof(VA_TYPE_T4_ATTRS) / sizeof(VA_TYPE_T4_ATTRS[0]));
 	CONSTQUAL static size_t NUM_VA_TYPE_TN_ATTRS = VA_TYPE_TN_ATTRS.size(); // (sizeof(VA_TYPE_TN_ATTRS) / sizeof(VA_TYPE_TN_ATTRS[0]));
 	CONSTQUAL static size_t NUM_VA_TYPE_TC_ATTRS = VA_TYPE_TC_ATTRS.size(); //  (sizeof(VA_TYPE_TC_ATTRS) / sizeof(VA_TYPE_TC_ATTRS[0]));
 	CONSTQUAL static size_t NUM_VA_TYPE_TNT_ATTRS = VA_TYPE_TNT_ATTRS.size(); // (sizeof(VA_TYPE_TNT_ATTRS) / sizeof(VA_TYPE_TNT_ATTRS[0]));
@@ -232,6 +241,12 @@ namespace GL {
 			ptr = FormatShaderType(buf, ptr, end,  VA_TYPE_T_ATTRS.size(), VA_TYPE_T_ATTRS.data(),  code, type, "VA_TYPE_T");
 			return ptr;
 		}
+		static char* FormatShaderT4(char* buf, const char* end,  const char* defines, const char* globals, const char* code, const char* type) {
+			char* ptr = &buf[0];
+			ptr = FormatShaderBase(buf, end, defines, globals, type, "VA_TYPE_T4");
+			ptr = FormatShaderType(buf, ptr, end,  VA_TYPE_T4_ATTRS.size(), VA_TYPE_T4_ATTRS.data(),  code, type, "VA_TYPE_T4");
+			return ptr;
+		}
 		static char* FormatShaderTN(char* buf, const char* end,  const char* defines, const char* globals, const char* code, const char* type) {
 			char* ptr = &buf[0];
 			ptr = FormatShaderBase(buf, end, defines, globals, type, "VA_TYPE_TN");
@@ -304,6 +319,7 @@ namespace GL {
 		void UploadN   (size_t numElems, size_t numIndcs,  const VA_TYPE_N*    e, const uint32_t* i) { TUpload(numElems, numIndcs, VA_TYPE_N_ATTRS.size()   ,  e, i, VA_TYPE_N_ATTRS.data()); }
 		void UploadC   (size_t numElems, size_t numIndcs,  const VA_TYPE_C*    e, const uint32_t* i) { TUpload(numElems, numIndcs, VA_TYPE_C_ATTRS.size()   ,  e, i, VA_TYPE_C_ATTRS.data()); }
 		void UploadT   (size_t numElems, size_t numIndcs,  const VA_TYPE_T*    e, const uint32_t* i) { TUpload(numElems, numIndcs, VA_TYPE_T_ATTRS.size()   ,  e, i, VA_TYPE_T_ATTRS.data()); }
+		void UploadT4  (size_t numElems, size_t numIndcs,  const VA_TYPE_T4*   e, const uint32_t* i) { TUpload(numElems, numIndcs, VA_TYPE_T4_ATTRS.size()  ,  e, i, VA_TYPE_T4_ATTRS.data()); }
 		void UploadTN  (size_t numElems, size_t numIndcs,  const VA_TYPE_TN*   e, const uint32_t* i) { TUpload(numElems, numIndcs, VA_TYPE_TN_ATTRS.size()  ,  e, i, VA_TYPE_TN_ATTRS.data()); }
 		void UploadTC  (size_t numElems, size_t numIndcs,  const VA_TYPE_TC*   e, const uint32_t* i) { TUpload(numElems, numIndcs, VA_TYPE_TC_ATTRS.size()  ,  e, i, VA_TYPE_TC_ATTRS.data()); }
 		void UploadTNT (size_t numElems, size_t numIndcs,  const VA_TYPE_TNT*  e, const uint32_t* i) { TUpload(numElems, numIndcs, VA_TYPE_TNT_ATTRS.size() ,  e, i, VA_TYPE_TNT_ATTRS.data()); }
@@ -472,15 +488,30 @@ namespace GL {
 	void KillRenderBuffers();
 	void SwapRenderBuffers();
 
+
 	typedef TRenderDataBuffer<VA_TYPE_0> RenderDataBuffer0;
 	typedef TRenderDataBuffer<VA_TYPE_N> RenderDataBufferN;
 	typedef TRenderDataBuffer<VA_TYPE_C> RenderDataBufferC;
 	typedef TRenderDataBuffer<VA_TYPE_T> RenderDataBufferT;
 
+	typedef TRenderDataBuffer<VA_TYPE_T4> RenderDataBufferT4;
+	typedef TRenderDataBuffer<VA_TYPE_TN> RenderDataBufferTN;
+	typedef TRenderDataBuffer<VA_TYPE_TC> RenderDataBufferTC;
+
+	typedef TRenderDataBuffer<VA_TYPE_2d0> RenderDataBuffer2D0;
+	typedef TRenderDataBuffer<VA_TYPE_2dT> RenderDataBuffer2DT;
+
 	RenderDataBuffer0* GetRenderBuffer0();
 	RenderDataBufferN* GetRenderBufferN();
 	RenderDataBufferC* GetRenderBufferC();
 	RenderDataBufferT* GetRenderBufferT();
+
+	RenderDataBufferT4* GetRenderBufferT4();
+	RenderDataBufferTN* GetRenderBufferTN();
+	RenderDataBufferTC* GetRenderBufferTC();
+
+	RenderDataBuffer2D0* GetRenderBuffer2D0();
+	RenderDataBuffer2DT* GetRenderBuffer2DT();
 };
 
 #endif
