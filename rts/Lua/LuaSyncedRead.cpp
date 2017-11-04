@@ -3834,20 +3834,20 @@ int LuaSyncedRead::GetUnitMoveTypeData(lua_State* L)
 
 	switch (amt->progressState) {
 		case AMoveType::Done:
-			HSTR_PUSH_STRING(L, "progressState", "done");
+			HSTR_PUSH_CSTRING(L, "progressState", "done");
 			break;
 		case AMoveType::Active:
-			HSTR_PUSH_STRING(L, "progressState", "active");
+			HSTR_PUSH_CSTRING(L, "progressState", "active");
 			break;
 		case AMoveType::Failed:
-			HSTR_PUSH_STRING(L, "progressState", "failed");
+			HSTR_PUSH_CSTRING(L, "progressState", "failed");
 			break;
 	}
 
 	const CGroundMoveType* groundmt = dynamic_cast<CGroundMoveType*>(unit->moveType);
 
 	if (groundmt != nullptr) {
-		HSTR_PUSH_STRING(L, "name", "ground");
+		HSTR_PUSH_CSTRING(L, "name", "ground");
 
 		HSTR_PUSH_NUMBER(L, "turnRate", groundmt->GetTurnRate());
 		HSTR_PUSH_NUMBER(L, "accRate", groundmt->GetAccRate());
@@ -3876,7 +3876,7 @@ int LuaSyncedRead::GetUnitMoveTypeData(lua_State* L)
 	const CHoverAirMoveType* hAMT = dynamic_cast<CHoverAirMoveType*>(unit->moveType);
 
 	if (hAMT != nullptr) {
-		HSTR_PUSH_STRING(L, "name", "gunship");
+		HSTR_PUSH_CSTRING(L, "name", "gunship");
 
 		HSTR_PUSH_NUMBER(L, "wantedHeight", hAMT->wantedHeight);
 		HSTR_PUSH_BOOL(L, "collide", hAMT->collide);
@@ -3884,37 +3884,37 @@ int LuaSyncedRead::GetUnitMoveTypeData(lua_State* L)
 
 		switch (hAMT->aircraftState) {
 			case AAirMoveType::AIRCRAFT_LANDED:
-				HSTR_PUSH_STRING(L, "aircraftState", "landed");
+				HSTR_PUSH_CSTRING(L, "aircraftState", "landed");
 				break;
 			case AAirMoveType::AIRCRAFT_FLYING:
-				HSTR_PUSH_STRING(L, "aircraftState", "flying");
+				HSTR_PUSH_CSTRING(L, "aircraftState", "flying");
 				break;
 			case AAirMoveType::AIRCRAFT_LANDING:
-				HSTR_PUSH_STRING(L, "aircraftState", "landing");
+				HSTR_PUSH_CSTRING(L, "aircraftState", "landing");
 				break;
 			case AAirMoveType::AIRCRAFT_CRASHING:
-				HSTR_PUSH_STRING(L, "aircraftState", "crashing");
+				HSTR_PUSH_CSTRING(L, "aircraftState", "crashing");
 				break;
 			case AAirMoveType::AIRCRAFT_TAKEOFF:
-				HSTR_PUSH_STRING(L, "aircraftState", "takeoff");
+				HSTR_PUSH_CSTRING(L, "aircraftState", "takeoff");
 				break;
 			case AAirMoveType::AIRCRAFT_HOVERING:
-				HSTR_PUSH_STRING(L, "aircraftState", "hovering");
+				HSTR_PUSH_CSTRING(L, "aircraftState", "hovering");
 				break;
 		};
 
 		switch (hAMT->flyState) {
 			case CHoverAirMoveType::FLY_CRUISING:
-				HSTR_PUSH_STRING(L, "flyState", "cruising");
+				HSTR_PUSH_CSTRING(L, "flyState", "cruising");
 				break;
 			case CHoverAirMoveType::FLY_CIRCLING:
-				HSTR_PUSH_STRING(L, "flyState", "circling");
+				HSTR_PUSH_CSTRING(L, "flyState", "circling");
 				break;
 			case CHoverAirMoveType::FLY_ATTACKING:
-				HSTR_PUSH_STRING(L, "flyState", "attacking");
+				HSTR_PUSH_CSTRING(L, "flyState", "attacking");
 				break;
 			case CHoverAirMoveType::FLY_LANDING:
-				HSTR_PUSH_STRING(L, "flyState", "landing");
+				HSTR_PUSH_CSTRING(L, "flyState", "landing");
 				break;
 		}
 
@@ -3939,26 +3939,26 @@ int LuaSyncedRead::GetUnitMoveTypeData(lua_State* L)
 	const CStrafeAirMoveType* sAMT = dynamic_cast<CStrafeAirMoveType*>(unit->moveType);
 
 	if (sAMT != nullptr) {
-		HSTR_PUSH_STRING(L, "name", "airplane");
+		HSTR_PUSH_CSTRING(L, "name", "airplane");
 
 		switch (sAMT->aircraftState) {
 			case AAirMoveType::AIRCRAFT_LANDED:
-				HSTR_PUSH_STRING(L, "aircraftState", "landed");
+				HSTR_PUSH_CSTRING(L, "aircraftState", "landed");
 				break;
 			case AAirMoveType::AIRCRAFT_FLYING:
-				HSTR_PUSH_STRING(L, "aircraftState", "flying");
+				HSTR_PUSH_CSTRING(L, "aircraftState", "flying");
 				break;
 			case AAirMoveType::AIRCRAFT_LANDING:
-				HSTR_PUSH_STRING(L, "aircraftState", "landing");
+				HSTR_PUSH_CSTRING(L, "aircraftState", "landing");
 				break;
 			case AAirMoveType::AIRCRAFT_CRASHING:
-				HSTR_PUSH_STRING(L, "aircraftState", "crashing");
+				HSTR_PUSH_CSTRING(L, "aircraftState", "crashing");
 				break;
 			case AAirMoveType::AIRCRAFT_TAKEOFF:
-				HSTR_PUSH_STRING(L, "aircraftState", "takeoff");
+				HSTR_PUSH_CSTRING(L, "aircraftState", "takeoff");
 				break;
 			case AAirMoveType::AIRCRAFT_HOVERING:
-				HSTR_PUSH_STRING(L, "aircraftState", "hovering");
+				HSTR_PUSH_CSTRING(L, "aircraftState", "hovering");
 				break;
 		};
 		HSTR_PUSH_NUMBER(L, "wantedHeight", sAMT->wantedHeight);
@@ -3982,18 +3982,18 @@ int LuaSyncedRead::GetUnitMoveTypeData(lua_State* L)
 	const CStaticMoveType* staticmt = dynamic_cast<CStaticMoveType*>(unit->moveType);
 
 	if (staticmt != nullptr) {
-		HSTR_PUSH_STRING(L, "name", "static");
+		HSTR_PUSH_CSTRING(L, "name", "static");
 		return 1;
 	}
 
 	const CScriptMoveType* scriptmt = dynamic_cast<CScriptMoveType*>(unit->moveType);
 
 	if (scriptmt != nullptr) {
-		HSTR_PUSH_STRING(L, "name", "script");
+		HSTR_PUSH_CSTRING(L, "name", "script");
 		return 1;
 	}
 
-	HSTR_PUSH_STRING(L, "name", "unknown");
+	HSTR_PUSH_CSTRING(L, "name", "unknown");
 	return 1;
 }
 
@@ -5514,8 +5514,8 @@ static int GetSolidObjectPieceList(lua_State* L, const CSolidObject* o)
 static int GetSolidObjectPieceInfoHelper(lua_State* L, const S3DModelPiece& op)
 {
 	lua_newtable(L);
-	HSTR_PUSH_STRING(L, "name", op.name.c_str());
-	HSTR_PUSH_STRING(L, "parent", ((op.parent != nullptr)? op.parent->name.c_str(): "[null]"));
+	HSTR_PUSH_STRING(L, "name", op.name);
+	HSTR_PUSH_STRING(L, "parent", ((op.parent != nullptr) ? op.parent->name : "[null]"));
 
 	HSTR_PUSH(L, "children");
 	lua_newtable(L);

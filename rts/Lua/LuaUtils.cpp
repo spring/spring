@@ -815,16 +815,16 @@ int LuaUtils::PushColVolTable(lua_State* L, const CollisionVolume* vol) {
 	lua_newtable(L);
 	switch (vol->GetVolumeType()) {
 		case CollisionVolume::COLVOL_TYPE_ELLIPSOID:
-			HSTR_PUSH_STRING(L, "type", "ellipsoid");
+			HSTR_PUSH_CSTRING(L, "type", "ellipsoid");
 			break;
 		case CollisionVolume::COLVOL_TYPE_CYLINDER:
-			HSTR_PUSH_STRING(L, "type", "cylinder");
+			HSTR_PUSH_CSTRING(L, "type", "cylinder");
 			break;
 		case CollisionVolume::COLVOL_TYPE_BOX:
-			HSTR_PUSH_STRING(L, "type", "box");
+			HSTR_PUSH_CSTRING(L, "type", "box");
 			break;
 		case CollisionVolume::COLVOL_TYPE_SPHERE:
-			HSTR_PUSH_STRING(L, "type", "sphere");
+			HSTR_PUSH_CSTRING(L, "type", "sphere");
 			break;
 	}
 
