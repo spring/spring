@@ -80,7 +80,7 @@ static constexpr int2 PE_DIRECTION_VECTORS[] = {
 	{-1,  0}, // PATHDIR_RIGHT
 	{-1, -1}, // PATHDIR_RIGHT_DOWN
 	{ 0, -1}, // PATHDIR_DOWN
-	{+1, -1} // PATHDIR_LEFT_DOWN
+	{+1, -1}, // PATHDIR_LEFT_DOWN
 };
 
 //FIXME why not use PATHDIR_* consts and merge code with top one
@@ -100,7 +100,7 @@ static constexpr int2 PF_DIRECTION_VECTORS_2D[] = {
 	{ 0,                           0                         },
 	{ 0,                           0                         },
 	{ 0,                           0                         },
-	{ 0,                           0                         }
+	{ 0,                           0                         },
 };
 
 
@@ -120,46 +120,40 @@ enum {
 
 static constexpr unsigned int PATHOPT_CARDINALS = (PATHOPT_RIGHT | PATHOPT_LEFT | PATHOPT_UP | PATHOPT_DOWN);
 
+static constexpr unsigned int DIR2OPT[] = {
+	PATHOPT_LEFT,
+	(PATHOPT_LEFT  | PATHOPT_UP),
+	PATHOPT_UP,
+	(PATHOPT_RIGHT | PATHOPT_UP),
+	PATHOPT_RIGHT,
+	(PATHOPT_RIGHT | PATHOPT_DOWN),
+	PATHOPT_DOWN,
+	(PATHOPT_LEFT  | PATHOPT_DOWN),
+};
 
-static inline std::array<unsigned int, PATH_DIRECTIONS> GetPathDir2PathOpt()
-{
-	std::array<unsigned int, PATH_DIRECTIONS> a;
 
-	a[PATHDIR_LEFT]       = PATHOPT_LEFT;
-	a[PATHDIR_RIGHT]      = PATHOPT_RIGHT;
-	a[PATHDIR_UP]         = PATHOPT_UP;
-	a[PATHDIR_DOWN]       = PATHOPT_DOWN;
-	a[PATHDIR_LEFT_UP]    = (PATHOPT_LEFT  | PATHOPT_UP);
-	a[PATHDIR_RIGHT_UP]   = (PATHOPT_RIGHT | PATHOPT_UP);
-	a[PATHDIR_RIGHT_DOWN] = (PATHOPT_RIGHT | PATHOPT_DOWN);
-	a[PATHDIR_LEFT_DOWN]  = (PATHOPT_LEFT  | PATHOPT_DOWN);
-
-	return a;
-}
-
-static inline std::array<unsigned int, 15> GetPathOpt2PathDir()
-{
-	std::array<unsigned int, 15> a;
-	a.fill(0);
-
-	a[PATHOPT_LEFT]       = PATHDIR_LEFT;
-	a[PATHOPT_RIGHT]      = PATHDIR_RIGHT;
-	a[PATHOPT_UP]         = PATHDIR_UP;
-	a[PATHOPT_DOWN]       = PATHDIR_DOWN;
-
-	a[(PATHOPT_LEFT  | PATHOPT_UP)]   = PATHDIR_LEFT_UP;
-	a[(PATHOPT_RIGHT | PATHOPT_UP)]   = PATHDIR_RIGHT_UP;
-	a[(PATHOPT_RIGHT | PATHOPT_DOWN)] = PATHDIR_RIGHT_DOWN;
-	a[(PATHOPT_LEFT  | PATHOPT_DOWN)] = PATHDIR_LEFT_DOWN;
-	return a;
-}
-
-static const std::array<unsigned int, PATH_DIRECTIONS> DIR2OPT = GetPathDir2PathOpt();
-static const std::array<unsigned int, 15>              OPT2DIR = GetPathOpt2PathDir();
+static constexpr unsigned int OPT2DIR[] = {
+	0,
+	PATHDIR_LEFT, // PATHOPT_LEFT
+	PATHDIR_RIGHT, // PATHOPT_RIGHT
+	0, // PATHOPT_LEFT | PATHOPT_RIGHT
+	PATHDIR_UP, // PATHOPT_UP
+	PATHDIR_LEFT_UP, // PATHOPT_LEFT | PATHOPT_UP
+	PATHDIR_RIGHT_UP, // PATHOPT_RIGHT | PATHOPT_UP
+	0, // PATHOPT_LEFT | PATHOPT_RIGHT | PATHOPT_UP
+	PATHDIR_DOWN, // PATHOPT_DOWN
+	PATHDIR_LEFT_DOWN, // PATHOPT_LEFT | PATHOPT_DOWN
+	PATHDIR_RIGHT_DOWN, // PATHOPT_RIGHT | PATHOPT_DOWN
+	0,
+	0,
+	0,
+	0,
+	0,
+};
 
 // converts a PATHDIR* index to a PATHOPT* bitmask and vice versa
-static inline unsigned int PathDir2PathOpt(unsigned int pathDir)    { return DIR2OPT[pathDir]; }
-static inline unsigned int PathOpt2PathDir(unsigned int pathOptDir) { return OPT2DIR[pathOptDir]; }
+static constexpr unsigned int PathDir2PathOpt(unsigned int pathDir)    { return DIR2OPT[pathDir]; }
+static constexpr unsigned int PathOpt2PathDir(unsigned int pathOptDir) { return OPT2DIR[pathOptDir]; }
 
 
 // transition costs between vertices are bi-directional
