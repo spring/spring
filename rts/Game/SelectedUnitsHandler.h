@@ -24,7 +24,7 @@ public:
 	void SelectGroup(int num);
 	void AiOrder(int unitid, const Command& c, int playerID);
 	int GetDefaultCmd(const CUnit* unit, const CFeature* feature);
-	bool CommandsChanged();
+	bool CommandsChanged() const { return possibleCommandsChanged; }
 	void NetOrder(Command& c, int playerId);
 	void NetSelect(std::vector<int>& s, int playerId);
 	void ClearNetSelect(int playerId);
