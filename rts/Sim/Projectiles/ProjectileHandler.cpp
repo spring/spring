@@ -183,7 +183,7 @@ void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool
 		assert(p != nullptr);
 		assert(p->synced == synced);
 #ifdef USING_CREG
-		assert(p->synced == !!(p->GetClass()->binder->flags & creg::CF_Synced));
+		assert(p->synced == !!(p->GetClass()->flags & creg::CF_Synced));
 #endif
 
 		// creation
