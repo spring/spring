@@ -72,9 +72,7 @@ std::unique_ptr<IType> IType::CreateObjInstanceType(Class* objectType, size_t si
 
 std::string StaticArrayBaseType::GetName() const
 {
-	char sstr[16];
-	SNPRINTF(sstr, 16, "%d", size);
-	return elemType->GetName() + "[" + std::string(sstr) + "]";
+	return elemType->GetName() + "[" + IntToString(size) + "]";
 }
 
 std::string DynamicArrayBaseType::GetName() const
