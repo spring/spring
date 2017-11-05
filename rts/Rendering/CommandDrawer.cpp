@@ -789,8 +789,7 @@ void CommandDrawer::DrawQueuedBuildingSquaresUW(const CBuilderCAI* cai) const
 
 void CommandDrawer::DrawQueuedBuildingSquares(const CBuilderCAI* cai) const
 {
-	if (buildQueueSquareColor == nullptr)
-		buildQueueSquareColor = cmdColors.buildBox;
+	assert(buildQueueSquareColor != nullptr);
 
 	// caller sets LINE polygon-mode and binds shader
 	DrawQueuedBuildingSquaresAW(cai);
