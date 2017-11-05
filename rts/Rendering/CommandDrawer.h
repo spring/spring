@@ -22,9 +22,11 @@ public:
 
 	void Draw(const CCommandAI*) const;
 	void DrawLuaQueuedUnitSetCommands() const;
-	void DrawQuedBuildingSquares(const CBuilderCAI*) const;
+	void DrawQueuedBuildingSquares(const CBuilderCAI*) const;
 
 	void AddLuaQueuedUnit(const CUnit* unit);
+
+	void SetBuildQueueSquareColor(const float* color) { buildQueueSquareColor = color; }
 
 private:
 	void DrawCommands(const CCommandAI*) const;
@@ -36,8 +38,14 @@ private:
 	void DrawWaitIcon(const Command&) const;
 	void DrawDefaultCommand(const Command&, const CUnit*) const;
 
+	void DrawQueuedBuildingSquaresAW(const CBuilderCAI* cai) const;
+	void DrawQueuedBuildingSquaresUW(const CBuilderCAI* cai) const;
+
 private:
 	spring::unordered_set<int> luaQueuedUnitSet;
+
+	// used by DrawQueuedBuildingSquares
+	const float* buildQueueSquareColor = nullptr;
 };
 
 #define commandDrawer (CommandDrawer::GetInstance())

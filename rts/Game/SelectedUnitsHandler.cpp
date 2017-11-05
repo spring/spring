@@ -560,7 +560,6 @@ void CSelectedUnitsHandler::SelectCycle(const std::string& command)
 
 void CSelectedUnitsHandler::Draw()
 {
-	glDisable(GL_TEXTURE_2D);
 	glDepthMask(false);
 	glDisable(GL_DEPTH_TEST);
 	glEnable(GL_BLEND); // for line smoothing
@@ -571,12 +570,16 @@ void CSelectedUnitsHandler::Draw()
 	SColor udColor(cmdColors.unitBox);
 	SColor mdColor(cmdColors.unitBox);
 
-	const float* bbColor = nullptr;
-
 	mdColor.r = 255 - mdColor.r;
 	mdColor.g = 255 - mdColor.g;
 	mdColor.b = 255 - mdColor.b;
 
+	GL::RenderDataBufferC* buffer = GL::GetRenderBufferC();
+	Shader::IProgramObject* shader = buffer->GetShader();
+
+	shader->Enable();
+	shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
+	shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
 
 	if (udColor.a > 0) {
 		const auto* unitSet = &selectedUnits;
@@ -589,9 +592,6 @@ void CSelectedUnitsHandler::Draw()
 			const CGroup* g = gh->groups[selectedGroup];
 			unitSet = &g->units;
 		}
-
-		GL::RenderDataBufferC* buffer = GL::GetRenderBufferC();
-		Shader::IProgramObject* shader = buffer->GetShader();
 
 		for (const int unitID: *unitSet) {
 			const CUnit* unit = unitHandler->GetUnit(unitID);
@@ -647,11 +647,7 @@ void CSelectedUnitsHandler::Draw()
 			}
 		}
 
-		shader->Enable();
-		shader->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, camera->GetViewMatrix());
-		shader->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, camera->GetProjectionMatrix());
 		buffer->Submit(GL_QUADS);
-		shader->Disable();
 	}
 
 	if (cmdColors.buildBox[3] > 0.0f) {
@@ -660,36 +656,33 @@ void CSelectedUnitsHandler::Draw()
 		const bool shiftPressed = (cmdColors.BuildBoxesOnShift() && KeyInput::GetKeyModState(KMOD_SHIFT));
 		const bool buildQueued = (size_t(guihandler->inCommand) < guiCommands.size() && guiCommands[guihandler->inCommand].id < 0);
 
-		// highlight queued build sites if we are about to build something
-		// (or old-style, whenever the shift key is being held down)
+		// draw queued build sites if a GUI build-icon has been
+		// clicked or whenever the shift key is being held down
 		if (!selectedUnits.empty() && (shiftPressed || buildQueued)) {
 			for (const auto bi: unitHandler->GetBuilderCAIs()) {
 				const CBuilderCAI* builderCAI = bi.second;
 				const CUnit* builder = builderCAI->owner;
 
 				if (builder->team == gu->myTeam) {
-					if (bbColor != cmdColors.buildBox)
-						glColor4fv(bbColor = cmdColors.buildBox);
-
-					commandDrawer->DrawQuedBuildingSquares(builderCAI);
+					commandDrawer->SetBuildQueueSquareColor(cmdColors.buildBox);
+					commandDrawer->DrawQueuedBuildingSquares(builderCAI);
 					continue;
 				}
 				if (teamHandler->AlliedTeams(builder->team, gu->myTeam)) {
-					if (bbColor != cmdColors.allyBuildBox)
-						glColor4fv(bbColor = cmdColors.allyBuildBox);
-
-					commandDrawer->DrawQuedBuildingSquares(builderCAI);
+					commandDrawer->SetBuildQueueSquareColor(cmdColors.allyBuildBox);
+					commandDrawer->DrawQueuedBuildingSquares(builderCAI);
 				}
 			}
 		}
 	}
+
+	shader->Disable();
 
 	glLineWidth(1.0f);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	glDisable(GL_BLEND);
 	glEnable(GL_DEPTH_TEST);
 	glDepthMask(true);
-	glEnable(GL_TEXTURE_2D);
 }
 
 

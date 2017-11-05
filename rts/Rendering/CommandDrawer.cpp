@@ -8,7 +8,7 @@
 #include "Map/Ground.h"
 #include "Rendering/GL/glExtra.h"
 #include "Rendering/GL/myGL.h"
-#include "Rendering/GL/VertexArray.h"
+#include "Rendering/GL/RenderDataBuffer.hpp"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Units/CommandAI/Command.h"
@@ -657,13 +657,18 @@ void CommandDrawer::DrawDefaultCommand(const Command& c, const CUnit* owner) con
 	}
 }
 
-void CommandDrawer::DrawQuedBuildingSquares(const CBuilderCAI* cai) const
+
+
+
+void CommandDrawer::DrawQueuedBuildingSquaresAW(const CBuilderCAI* cai) const
 {
 	const CCommandQueue& commandQue = cai->commandQue;
 	const auto& buildOptions = cai->buildOptions;
 
-	unsigned int  buildCommands = 0;
-	unsigned int uwaterCommands = 0;
+	GL::RenderDataBufferC* buffer = GL::GetRenderBufferC();
+	Shader::IProgramObject* shader = buffer->GetShader();
+
+	assert(shader->IsBound());
 
 	for (const Command& c: commandQue) {
 		if (buildOptions.find(c.GetID()) == buildOptions.end())
@@ -672,126 +677,123 @@ void CommandDrawer::DrawQuedBuildingSquares(const CBuilderCAI* cai) const
 		BuildInfo bi(c);
 		bi.pos = CGameHelper::Pos2BuildPos(bi, false);
 
-		buildCommands += 1;
-		uwaterCommands += (bi.pos.y < 0.0f);
-	}
-
-	// worst case - 2 squares per building (when underwater) - 8 vertices * 3 floats
-	std::vector<GLfloat>   quadVerts(buildCommands * 12);
-	std::vector<GLfloat> uwquadVerts(buildCommands * 12); // underwater
-	// 4 vertical lines
-	std::vector<GLfloat> lineVerts(uwaterCommands * 24);
-	// colors for lines
-	std::vector<GLfloat> lineColors(uwaterCommands * 48);
-
-	unsigned int   quadcounter = 0;
-	unsigned int uwquadcounter = 0;
-	unsigned int   linecounter = 0;
-
-	for (const Command& c: commandQue) {
-		if (buildOptions.find(c.GetID()) == buildOptions.end())
+		#if 0
+		// skip under-water positions
+		if (bi.pos.y < 0.0f)
 			continue;
-
-		BuildInfo bi(c);
-		bi.pos = CGameHelper::Pos2BuildPos(bi, false);
+		#endif
 
 		const float xsize = bi.GetXSize() * (SQUARE_SIZE >> 1);
 		const float zsize = bi.GetZSize() * (SQUARE_SIZE >> 1);
 
-		const float h = bi.pos.y;
+		const float h  = bi.pos.y;
 		const float x1 = bi.pos.x - xsize;
 		const float z1 = bi.pos.z - zsize;
 		const float x2 = bi.pos.x + xsize;
 		const float z2 = bi.pos.z + zsize;
 
-		quadVerts[quadcounter++] = x1;
-		quadVerts[quadcounter++] = h + 1;
-		quadVerts[quadcounter++] = z1;
-		quadVerts[quadcounter++] = x1;
-		quadVerts[quadcounter++] = h + 1;
-		quadVerts[quadcounter++] = z2;
-		quadVerts[quadcounter++] = x2;
-		quadVerts[quadcounter++] = h + 1;
-		quadVerts[quadcounter++] = z2;
-		quadVerts[quadcounter++] = x2;
-		quadVerts[quadcounter++] = h + 1;
-		quadVerts[quadcounter++] = z1;
+		// above-water verts
+		buffer->Append({{x1, h + 1.0f, z1}, {buildQueueSquareColor}});
+		buffer->Append({{x1, h + 1.0f, z2}, {buildQueueSquareColor}});
+		buffer->Append({{x2, h + 1.0f, z2}, {buildQueueSquareColor}});
+		buffer->Append({{x2, h + 1.0f, z1}, {buildQueueSquareColor}});
 
 		if (bi.pos.y >= 0.0f)
 			continue;
 
-		const float col[8] = {
-			0.0f, 0.0f, 1.0f, 0.5f, // start color
-			0.0f, 0.5f, 1.0f, 1.0f, // end color
-		};
-
-		uwquadVerts[uwquadcounter++] = x1;
-		uwquadVerts[uwquadcounter++] = 0.0f;
-		uwquadVerts[uwquadcounter++] = z1;
-		uwquadVerts[uwquadcounter++] = x1;
-		uwquadVerts[uwquadcounter++] = 0.0f;
-		uwquadVerts[uwquadcounter++] = z2;
-		uwquadVerts[uwquadcounter++] = x2;
-		uwquadVerts[uwquadcounter++] = 0.0f;
-		uwquadVerts[uwquadcounter++] = z2;
-		uwquadVerts[uwquadcounter++] = x2;
-		uwquadVerts[uwquadcounter++] = 0.0f;
-		uwquadVerts[uwquadcounter++] = z1;
-
-		for (int i = 0; i < 4; ++i) {
-			std::copy(col, col + 8, lineColors.begin() + linecounter * 2 + i * 8);
-		}
-
-		lineVerts[linecounter++] = x1;
-		lineVerts[linecounter++] = h;
-		lineVerts[linecounter++] = z1;
-		lineVerts[linecounter++] = x1;
-		lineVerts[linecounter++] = 0.0f;
-		lineVerts[linecounter++] = z1;
-
-		lineVerts[linecounter++] = x2;
-		lineVerts[linecounter++] = h;
-		lineVerts[linecounter++] = z1;
-		lineVerts[linecounter++] = x2;
-		lineVerts[linecounter++] = 0.0f;
-		lineVerts[linecounter++] = z1;
-
-		lineVerts[linecounter++] = x2;
-		lineVerts[linecounter++] = h;
-		lineVerts[linecounter++] = z2;
-		lineVerts[linecounter++] = x2;
-		lineVerts[linecounter++] = 0.0f;
-		lineVerts[linecounter++] = z2;
-
-		lineVerts[linecounter++] = x1;
-		lineVerts[linecounter++] = h;
-		lineVerts[linecounter++] = z2;
-		lineVerts[linecounter++] = x1;
-		lineVerts[linecounter++] = 0.0f;
-		lineVerts[linecounter++] = z2;
+		// below-water verts
+		buffer->Append({{x1, 0.0f, z1}, {0.0f, 0.5f, 1.0f, 1.0f}});
+		buffer->Append({{x1, 0.0f, z2}, {0.0f, 0.5f, 1.0f, 1.0f}});
+		buffer->Append({{x2, 0.0f, z2}, {0.0f, 0.5f, 1.0f, 1.0f}});
+		buffer->Append({{x2, 0.0f, z1}, {0.0f, 0.5f, 1.0f, 1.0f}});
 	}
 
-	if (quadcounter > 0) {
-		glEnableClientState(GL_VERTEX_ARRAY);
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-		glVertexPointer(3, GL_FLOAT, 0, &quadVerts[0]);
-		glDrawArrays(GL_QUADS, 0, quadcounter / 3);
+	buffer->Submit(GL_QUADS);
+}
 
-		if (linecounter > 0) {
-			glPushAttrib(GL_CURRENT_BIT);
-			glColor4f(0.0f, 0.5f, 1.0f, 1.0f); // same as end color of lines
-			glVertexPointer(3, GL_FLOAT, 0, &uwquadVerts[0]);
-			glDrawArrays(GL_QUADS, 0, uwquadcounter / 3);
-			glPopAttrib();
+void CommandDrawer::DrawQueuedBuildingSquaresUW(const CBuilderCAI* cai) const
+{
+	const CCommandQueue& commandQue = cai->commandQue;
+	const auto& buildOptions = cai->buildOptions;
 
-			glEnableClientState(GL_COLOR_ARRAY);
-			glColorPointer(4, GL_FLOAT, 0, &lineColors[0]);
-			glVertexPointer(3, GL_FLOAT, 0, &lineVerts[0]);
-			glDrawArrays(GL_LINES, 0, linecounter / 3);
-			glDisableClientState(GL_COLOR_ARRAY);
-		}
+	GL::RenderDataBufferC* buffer = GL::GetRenderBufferC();
+	Shader::IProgramObject* shader = buffer->GetShader();
 
-		glDisableClientState(GL_VERTEX_ARRAY);
+	assert(shader->IsBound());
+
+	#if 0
+	// combined with DrawQueuedBuildingSquaresAW; saves a Submit
+	for (const Command& c: commandQue) {
+		if (buildOptions.find(c.GetID()) == buildOptions.end())
+			continue;
+
+		BuildInfo bi(c);
+		bi.pos = CGameHelper::Pos2BuildPos(bi, false);
+
+		// skip above-water positions
+		if (bi.pos.y >= 0.0f)
+			continue;
+
+		const float xsize = bi.GetXSize() * (SQUARE_SIZE >> 1);
+		const float zsize = bi.GetZSize() * (SQUARE_SIZE >> 1);
+
+		const float h  = bi.pos.y;
+		const float x1 = bi.pos.x - xsize;
+		const float z1 = bi.pos.z - zsize;
+		const float x2 = bi.pos.x + xsize;
+		const float z2 = bi.pos.z + zsize;
+
+		buffer->Append({{x1, 0.0f, z1}, {0.0f, 0.5f, 1.0f, 1.0f}});
+		buffer->Append({{x1, 0.0f, z2}, {0.0f, 0.5f, 1.0f, 1.0f}});
+		buffer->Append({{x2, 0.0f, z2}, {0.0f, 0.5f, 1.0f, 1.0f}});
+		buffer->Append({{x2, 0.0f, z1}, {0.0f, 0.5f, 1.0f, 1.0f}});
 	}
+
+	buffer->Submit(GL_QUADS);
+	#endif
+
+
+	for (const Command& c: commandQue) {
+		if (buildOptions.find(c.GetID()) == buildOptions.end())
+			continue;
+
+		BuildInfo bi(c);
+		bi.pos = CGameHelper::Pos2BuildPos(bi, false);
+
+		if (bi.pos.y >= 0.0f)
+			continue;
+
+		const float xsize = bi.GetXSize() * (SQUARE_SIZE >> 1);
+		const float zsize = bi.GetZSize() * (SQUARE_SIZE >> 1);
+
+		const float h  = bi.pos.y;
+		const float x1 = bi.pos.x - xsize;
+		const float z1 = bi.pos.z - zsize;
+		const float x2 = bi.pos.x + xsize;
+		const float z2 = bi.pos.z + zsize;
+
+		// vertical lines for gauging depth
+		buffer->Append({{x1, h   , z1}, {0.0f, 0.0f, 1.0f, 0.5f}});
+		buffer->Append({{x1, 0.0f, z1}, {0.0f, 0.5f, 1.0f, 1.0f}});
+		buffer->Append({{x2, h   , z1}, {0.0f, 0.0f, 1.0f, 0.5f}});
+		buffer->Append({{x2, 0.0f, z1}, {0.0f, 0.5f, 1.0f, 1.0f}});
+		buffer->Append({{x2, h   , z2}, {0.0f, 0.0f, 1.0f, 0.5f}});
+		buffer->Append({{x2, 0.0f, z2}, {0.0f, 0.5f, 1.0f, 1.0f}});
+		buffer->Append({{x1, h   , z2}, {0.0f, 0.0f, 1.0f, 0.5f}});
+		buffer->Append({{x1, 0.0f, z2}, {0.0f, 0.5f, 1.0f, 1.0f}});
+	}
+
+	buffer->Submit(GL_LINES);
+}
+
+
+void CommandDrawer::DrawQueuedBuildingSquares(const CBuilderCAI* cai) const
+{
+	if (buildQueueSquareColor == nullptr)
+		buildQueueSquareColor = cmdColors.buildBox;
+
+	// caller sets LINE polygon-mode and binds shader
+	DrawQueuedBuildingSquaresAW(cai);
+	DrawQueuedBuildingSquaresUW(cai);
 }
 
