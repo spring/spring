@@ -109,31 +109,17 @@ namespace creg {
 		const std::vector<Class*>& GetDerivedClasses() const;
 
 		// generic member function pointer
-		typedef void(Class::*FuncPTR)();
-		typedef void(*CastAndSerializeProc)(void* object, ISerializer* s, FuncPTR sp);
-		typedef void(*CastAndPostLoadProc)(void* object, FuncPTR pp);
+		typedef void(*SerializeProc)(void* object, ISerializer* s);
+		typedef void(*PostLoadProc)(void* object);
 
 
-		template<class T, typename TF, int bla = sizeof(TF), int bli = sizeof(FuncPTR)>
-		void SetSerialize(T* foo, TF proc) {
-			static_assert(sizeof(serializeProc) == sizeof(proc), "function pointers have different sizes");
-			serializeProc = *reinterpret_cast<FuncPTR*>(&proc);
-			castAndSerializeProc = [](void* object, ISerializer* s, FuncPTR sp) {
-				(static_cast<T*>(object)->**(reinterpret_cast<TF*>(&sp)))(s);
-			};
-		}
-		template<class T, typename TF, int bla = sizeof(TF), int bli = sizeof(FuncPTR)>
-		void SetPostLoad(T* foo, TF proc) {
-			static_assert(sizeof(postLoadProc) == sizeof(proc), "function pointers have different sizes");
-			postLoadProc = *reinterpret_cast<FuncPTR*>(&proc);
-			castAndPostLoadProc = [](void* object, FuncPTR pp) {
-				(static_cast<T*>(object)->**(reinterpret_cast<TF*>(&pp)))();
-			};
-		}
+
+		void SetSerialize(SerializeProc proc) { serializeProc = proc; }
+		void SetPostLoad(PostLoadProc proc) { postLoadProc = proc; }
 		bool HasSerialize() const { return (serializeProc != nullptr); }
 		bool HasPostLoad() const { return (postLoadProc != nullptr); }
-		void CallSerializeProc(void* object, ISerializer* s) { castAndSerializeProc(object, s, serializeProc); }
-		void CallPostLoadProc(void* object)                  { castAndPostLoadProc(object, postLoadProc); }
+		void CallSerializeProc(void* object, ISerializer* s) { serializeProc(object, s); }
+		void CallPostLoadProc(void* object)                  { postLoadProc(object); }
 
 	public:
 		std::vector<Member> members;
@@ -143,10 +129,8 @@ namespace creg {
 		int size; // size of an instance in bytes
 		int alignment;
 
-		FuncPTR serializeProc;
-		FuncPTR postLoadProc;
-		CastAndSerializeProc castAndSerializeProc;
-		CastAndPostLoadProc castAndPostLoadProc;
+		SerializeProc serializeProc;
+		PostLoadProc postLoadProc;
 	};
 
 
@@ -479,7 +463,9 @@ public: \
  *   class
  */
 #define CR_SERIALIZER(SerializeFunc) \
-	(class_->SetSerialize(null, &Type::SerializeFunc))
+	(class_->SetSerialize([](void* object, creg::ISerializer* s) { \
+				static_cast<Type*>(object)->SerializeFunc(s); \
+			}))
 
 /** @def CR_POSTLOAD
  * Registers a custom post-loading method for the class/struct
@@ -488,6 +474,8 @@ public: \
  * There can only be one postload method per class/struct
  */
 #define CR_POSTLOAD(PostLoadFunc) \
-	(class_->SetPostLoad(null, &Type::PostLoadFunc))
+	(class_->SetPostLoad([](void* object) { \
+				static_cast<Type*>(object)->PostLoadFunc(); \
+			}))
 
 #endif // _CREG_H
