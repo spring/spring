@@ -4,7 +4,7 @@
 #define SPRINGREGEX_H
 
 #ifdef USE_BOOST_REGEX
-#include <boost/regex.h>
+#include <boost/regex.hpp>
 #else
 #include <regex>
 #endif
