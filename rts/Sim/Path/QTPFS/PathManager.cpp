@@ -212,9 +212,6 @@ void QTPFS::PathManager::Load() {
 		pfsCheckSum = mapCheckSum ^ modCheckSum;
 
 		for (unsigned int layerNum = 0; layerNum < nodeLayers.size(); layerNum++) {
-			if (moveDefHandler->GetMoveDefByPathType(layerNum)->udRefCount == 0)
-				continue;
-
 			#ifndef QTPFS_CONSERVATIVE_NEIGHBOR_CACHE_UPDATES
 			if (haveCacheDir) {
 				// if cache-dir exists, must set node relations after de-serializing its trees
@@ -362,9 +359,6 @@ void QTPFS::PathManager::InitNodeLayersThread(
 void QTPFS::PathManager::InitNodeLayer(unsigned int layerNum, const SRectangle& r) {
 	nodeTrees[layerNum] = new QTPFS::QTNode(NULL,  0,  r.x1, r.z1,  r.x2, r.z2);
 
-	if (moveDefHandler->GetMoveDefByPathType(layerNum)->udRefCount == 0)
-		return;
-
 	nodeLayers[layerNum].Init(layerNum);
 	nodeLayers[layerNum].RegisterNode(nodeTrees[layerNum]);
 }
@@ -414,8 +408,6 @@ void QTPFS::PathManager::UpdateNodeLayer(unsigned int layerNum, const SRectangle
 
 	if (!IsFinalized())
 		return;
-	if (md->udRefCount == 0)
-		return;
 
 	// NOTE:
 	//     this is needed for IsBlocked* --> SquareIsBlocked --> IsNonBlocking
@@ -458,9 +450,6 @@ void QTPFS::PathManager::UpdateNodeLayer(unsigned int layerNum, const SRectangle
 void QTPFS::PathManager::QueueNodeLayerUpdates(const SRectangle& r) {
 	for (unsigned int layerNum = 0; layerNum < nodeLayers.size(); layerNum++) {
 		const MoveDef* md = moveDefHandler->GetMoveDefByPathType(layerNum);
-
-		if (md->udRefCount == 0)
-			continue;
 
 		SRectangle mr;
 		// SRectangle ur;
@@ -553,9 +542,6 @@ void QTPFS::PathManager::Serialize(const std::string& cacheFileDir) {
 	// TODO: compress the tree cache-files?
 	for (unsigned int i = 0; i < nodeTrees.size(); i++) {
 		const MoveDef* md = moveDefHandler->GetMoveDefByPathType(i);
-
-		if (md->udRefCount == 0)
-			continue;
 
 		fileNames[i] = cacheFileDir + "tree" + IntToString(i, "%02x") + "-" + md->name;
 		fileStreams[i] = new std::fstream();

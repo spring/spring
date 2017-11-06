@@ -108,8 +108,6 @@ struct MoveDef {
 	float speedModMults[SPEEDMOD_MOBILE_NUM_MULTS + 1];
 
 	unsigned int pathType;
-	/// number of UnitDef types that refer to this MoveDef class
-	unsigned int udRefCount;
 
 	/// heatmap path-cost modifier
 	float heatMod;

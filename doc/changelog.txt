@@ -70,6 +70,11 @@ Misc:
    0 disables, 1 scales pitch by the square root of game speed, 2
    scales linearly with game speed
  - `/nocost` now accepts 0/1 parameter (still toggles if none given)
+ - default `defs.lua` now reads a new file, `defs_post.lua`, which
+   currently filters out movedefs unused by any unitdef (previously
+   this was done by the engine). You can prevent this filter by adding
+   the `dont_remove` field to such movedefs. This is useful to make
+   them available in `Spring.MoveCtrl.SetMoveDef` but beware the perf cost.
 
 Fixes:
  - fix infinite backtracking loop in PFS

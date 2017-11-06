@@ -621,14 +621,6 @@ int LuaSyncedMoveCtrl::SetMoveDef(lua_State* L)
 		return 1;
 	}
 
-	if (moveDef->udRefCount == 0) {
-		// pathfinders contain optimizations that
-		// make unreferenced movedef's non-usable
-		LOG_L(L_ERROR, "SetMoveDef: Tried to use an unreferenced (:=disabled) MoveDef!");
-		lua_pushboolean(L, false);
-		return 1;
-	}
-
 	// PFS might have cached data by path-type which must be cleared
 	if (unit->UsingScriptMoveType()) {
 		unit->prevMoveType->StopMoving();
