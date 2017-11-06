@@ -1,7 +1,4 @@
 /* This file is part of the Spring engine (GPL v2 or later), see LICENSE.html */
-
-#include <boost/regex.hpp>
-
 #include "OBJParser.h"
 
 #include "Lua/LuaParser.h"
@@ -11,6 +8,7 @@
 #include "System/Log/ILog.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/StringUtil.h"
+#include "System/SpringRegex.h"
 
 #include <cassert>
 #include <sstream>
@@ -78,29 +76,29 @@ S3DModel COBJParser::Load(const std::string& modelFileName)
 
 bool COBJParser::ParseModelData(S3DModel* model, const std::string& modelData, const LuaTable& metaData)
 {
-	static const boost::regex commentPattern("^[ ]*(#|//).*");
-	static const boost::regex objectPattern("^[ ]*o [ ]*[a-zA-Z0-9_]+[ ]*");
-	static const boost::regex vertexPattern(
+	static const spring::regex commentPattern("^[ ]*(#|//).*");
+	static const spring::regex objectPattern("^[ ]*o [ ]*[a-zA-Z0-9_]+[ ]*");
+	static const spring::regex vertexPattern(
 		"^[ ]*v "
 		"[ ]*-?[0-9]*\\.?[0-9]*(e-?[0-9]*)? "
 		"[ ]*-?[0-9]*\\.?[0-9]*(e-?[0-9]*)? "
 		"[ ]*-?[0-9]*\\.?[0-9]*(e-?[0-9]*)?"
 		"[ ]*"
 	);
-	static const boost::regex normalPattern(
+	static const spring::regex normalPattern(
 		"^[ ]*vn "
 		"[ ]*-?[0-9]*\\.?[0-9]*(e-?[0-9]*)? "
 		"[ ]*-?[0-9]*\\.?[0-9]*(e-?[0-9]*)? "
 		"[ ]*-?[0-9]*\\.?[0-9]*(e-?[0-9]*)?"
 		"[ ]*"
 	);
-	static const boost::regex txcoorPattern(
+	static const spring::regex txcoorPattern(
 		"^[ ]*vt "
 		"[ ]*-?[0-9]*\\.?[0-9]*(e-?[0-9]*)? "
 		"[ ]*-?[0-9]*\\.?[0-9]*(e-?[0-9]*)?"
 		"[ ]*"
 	);
-	static const boost::regex polygonPattern(
+	static const spring::regex polygonPattern(
 		"^[ ]*f "
 		"[ ]*-?[0-9]+/-?[0-9]+/-?[0-9]+"
 		"[ ]*-?[0-9]+/-?[0-9]+/-?[0-9]+"
@@ -136,12 +134,12 @@ bool COBJParser::ParseModelData(S3DModel* model, const std::string& modelData, c
 		line = StringReplaceInPlace(line, '\r', ' ');
 
 		if (!line.empty()) {
-			                   regexMatch = (boost::regex_match(line, commentPattern));
-			if (!regexMatch) { regexMatch = (boost::regex_match(line, objectPattern )); }
-			if (!regexMatch) { regexMatch = (boost::regex_match(line, vertexPattern )); }
-			if (!regexMatch) { regexMatch = (boost::regex_match(line, normalPattern )); }
-			if (!regexMatch) { regexMatch = (boost::regex_match(line, txcoorPattern )); }
-			if (!regexMatch) { regexMatch = (boost::regex_match(line, polygonPattern)); }
+			                   regexMatch = (spring::regex_match(line, commentPattern));
+			if (!regexMatch) { regexMatch = (spring::regex_match(line, objectPattern )); }
+			if (!regexMatch) { regexMatch = (spring::regex_match(line, vertexPattern )); }
+			if (!regexMatch) { regexMatch = (spring::regex_match(line, normalPattern )); }
+			if (!regexMatch) { regexMatch = (spring::regex_match(line, txcoorPattern )); }
+			if (!regexMatch) { regexMatch = (spring::regex_match(line, polygonPattern)); }
 
 			if (!regexMatch) {
 				// ignore groups ('g'), smoothing groups ('s'),

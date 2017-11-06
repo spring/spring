@@ -22,7 +22,7 @@ INCLUDE(PreferStaticLibs)
 
 CheckMinCMakeVersion(CUSTOM_TARGET_SOURCES_SUPPORT 2 6 3)
 
-
+SET(USE_BOOST_REGEX 0)
 # check for minimal gcc version
 set(MIN_GCC_VER "4.8")
 if(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
@@ -30,6 +30,9 @@ if(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
 		message(FATAL_ERROR "gcc >=${MIN_GCC_VER} required")
 	else()
 		message(STATUS "gcc ${CMAKE_CXX_COMPILER_VERSION} detected")
+	endif()
+	if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "4.9")
+		SET(USE_BOOST_REGEX 1)
 	endif()
 endif()
 
@@ -245,9 +248,11 @@ if    (WIN32)
 endif (WIN32)
 
 
-
-FIND_PACKAGE(Boost 1.51.0 COMPONENTS regex system REQUIRED)
-INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
+if (USE_BOOST_REGEX)
+	FIND_PACKAGE(Boost 1.51.0 COMPONENTS regex system REQUIRED)
+	INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
+	add_definitions(-DUSE_BOOST_REGEX)
+endif (USE_BOOST_REGEX)
 
 # Note the missing REQUIRED, as headless & dedi may not depend on those.
 #  So req. checks are done in the build target's CMakeLists.txt.
