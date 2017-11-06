@@ -62,6 +62,7 @@ set(FILES
 	gamedata/parse_tdf.lua
 	gamedata/weapondefs.lua
 	gamedata/defs.lua
+	gamedata/defs_post.lua
 	gamedata/weapondefs_post.lua
 	gamedata/modrules.lua
 	gamedata/resources.lua
