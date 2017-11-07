@@ -386,10 +386,7 @@ CFontTexture::~CFontTexture()
 	allFonts.erase(this);
 
 	glDeleteTextures(1, &glyphAtlasTextureID);
-	glDeleteLists(texCoorScaleMatList, 1);
-
 	glyphAtlasTextureID = 0;
-	texCoorScaleMatList = 0;
 
 	spring::SafeDelete(atlasUpdate);
 	spring::SafeDelete(atlasUpdateShadow);
@@ -402,7 +399,6 @@ void CFontTexture::Update() {
 	std::lock_guard<spring::recursive_mutex> lk(m);
 	for (auto& font: allFonts) {
 		font->UpdateGlyphAtlasTexture();
-		font->UpdateTexCoorScaleMatList();
 	}
 }
 
@@ -693,29 +689,18 @@ void CFontTexture::UpdateGlyphAtlasTexture()
 #endif
 }
 
-void CFontTexture::UpdateTexCoorScaleMatList()
+void CFontTexture::SetupTexCoorScaleMat()
 {
-	if (texCoorScaleMatList == 0)
-		texCoorScaleMatList = glGenLists(1);
-
-	glNewList(texCoorScaleMatList, GL_COMPILE);
+	GL::MatrixMode(GL_TEXTURE);
+	GL::PushMatrix();
 	GL::Scale(1.0f / texWidth, 1.0f / texHeight, 1.0f);
-	glEndList();
+	GL::MatrixMode(GL_MODELVIEW);
 }
-
-void CFontTexture::CallTexCoorScaleMatList(bool push)
+void CFontTexture::ResetTexCoorScaleMat()
 {
-	// note: can not just call glScale, we might be executed
-	// inside another list wrapping glFont::{Begin,Print,End}
-	if (push) {
-		GL::MatrixMode(GL_TEXTURE);
-		GL::PushMatrix();
-		glCallList(texCoorScaleMatList);
-		GL::MatrixMode(GL_MODELVIEW);
-	} else {
-		GL::MatrixMode(GL_TEXTURE);
-		GL::PopMatrix();
-		GL::MatrixMode(GL_MODELVIEW);
-	}
+	GL::MatrixMode(GL_TEXTURE);
+	GL::PopMatrix();
+	GL::MatrixMode(GL_MODELVIEW);
+}
 }
 

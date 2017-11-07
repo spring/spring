@@ -820,24 +820,14 @@ void CglFont::End()
 		return;
 	}
 
-	GLboolean inListCompile = GL_FALSE;
-	glGetBooleanv(GL_LIST_INDEX, &inListCompile);
-
-	if (!inListCompile) {
-		UpdateGlyphAtlasTexture();
-		UpdateTexCoorScaleMatList();
-	}
-
-	glEnable(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, GetTexture());
-
+	UpdateGlyphAtlasTexture();
 	// glyph-texture scale can change if GetGlyph calls LoadBlock, so
 	// texture-coors are specified in absolute texels in RenderString*
 	// and scaled here
-	// any direct call to glScale would only be valid so long the size
-	// remained constant since {Begin,Print,End} might be wrapped in a
-	// list
-	CallTexCoorScaleMatList(true);
+	SetupTexCoorScaleMat();
+
+	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, GetTexture());
 
 
 	if (va2.drawIndex() > 0) {
@@ -862,7 +852,7 @@ void CglFont::End()
 		}
 	}
 
-	CallTexCoorScaleMatList(false);
+	ResetTexCoorScaleMat();
 
 	glBindTexture(GL_TEXTURE_2D, 0);
 	glPopAttrib();

@@ -100,8 +100,8 @@ protected:
 	float GetKerning(const GlyphInfo& lgl,const GlyphInfo& rgl);
 
 	void UpdateGlyphAtlasTexture();
-	void UpdateTexCoorScaleMatList();
-	void CallTexCoorScaleMatList(bool push);
+	void SetupTexCoorScaleMatrix();
+	void ResetTexCoorScaleMatrix();
 
 private:
 	void CreateTexture(const int width, const int height);
@@ -131,7 +131,6 @@ protected:
 	int wantedTexHeight;
 
 	unsigned int glyphAtlasTextureID = 0;
-	unsigned int texCoorScaleMatList = 0;
 
 private:
 	CBitmap* atlasUpdate;

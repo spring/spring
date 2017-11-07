@@ -218,6 +218,7 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(ResetMatrices);
 	REGISTER_LUA_CFUNC(Clear);
 	REGISTER_LUA_CFUNC(SwapBuffers);
+	REGISTER_LUA_CFUNC(Lighting);
 	REGISTER_LUA_CFUNC(ShadeModel);
 	REGISTER_LUA_CFUNC(Scissor);
 	REGISTER_LUA_CFUNC(Viewport);
@@ -237,6 +238,7 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(BlendEquationSeparate);
 	REGISTER_LUA_CFUNC(BlendFuncSeparate);
 
+	REGISTER_LUA_CFUNC(Material);
 	REGISTER_LUA_CFUNC(Color);
 
 	REGISTER_LUA_CFUNC(PolygonMode);
@@ -318,6 +320,7 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(DrawGroundCircle);
 	REGISTER_LUA_CFUNC(DrawGroundQuad);
 
+	REGISTER_LUA_CFUNC(Light);
 	REGISTER_LUA_CFUNC(ClipPlane);
 
 	REGISTER_LUA_CFUNC(MatrixMode);
