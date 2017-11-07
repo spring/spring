@@ -8,6 +8,7 @@
 #include <set>
 #include <fstream>
 #include <algorithm>
+#include <cassert>
 #include <cctype>
 #include <limits.h>
 #include "System/SpringRegex.h"
