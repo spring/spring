@@ -824,7 +824,7 @@ void CglFont::End()
 	// glyph-texture scale can change if GetGlyph calls LoadBlock, so
 	// texture-coors are specified in absolute texels in RenderString*
 	// and scaled here
-	SetupTexCoorScaleMat();
+	SetupTexCoorScaleMatrix();
 
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, GetTexture());
@@ -852,7 +852,7 @@ void CglFont::End()
 		}
 	}
 
-	ResetTexCoorScaleMat();
+	ResetTexCoorScaleMatrix();
 
 	glBindTexture(GL_TEXTURE_2D, 0);
 	glPopAttrib();
