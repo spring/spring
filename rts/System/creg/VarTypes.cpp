@@ -66,9 +66,9 @@ std::string ObjectInstanceType::GetName() const
 	return objectClass->name;
 }
 
-std::shared_ptr<IType> IType::CreateObjInstanceType(Class* objectType)
+std::shared_ptr<IType> IType::CreateObjInstanceType(Class* objectType, size_t size)
 {
-	return std::shared_ptr<IType>(new ObjectInstanceType(objectType));
+	return std::shared_ptr<IType>(new ObjectInstanceType(objectType, size));
 }
 
 std::string StaticArrayBaseType::GetName() const
