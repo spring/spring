@@ -35,6 +35,8 @@ private:
 
 	using PairT = std::pair<KeyT, ValueT>;
 public:
+	using key_type        = KeyT;
+	using mapped_type     = ValueT;
 	using size_type       = size_t;
 	using value_type      = PairT;
 	using reference       = PairT&;

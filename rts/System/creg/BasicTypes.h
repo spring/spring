@@ -4,110 +4,46 @@
 #define CR_BASIC_TYPES_H
 
 namespace creg {
-	// vector,deque container
-	template<typename T>
-	class DynamicArrayType : public IType
+	class ObjectPointerBaseType : public IType
 	{
 	public:
-		typedef typename T::iterator iterator;
-		typedef typename T::value_type ElemT;
+		Class* objClass;
 
-		std::shared_ptr<IType> elemType;
+		ObjectPointerBaseType(Class* cls, int size)
+			: IType(size), objClass(cls) { }
+		~ObjectPointerBaseType() { }
 
-		DynamicArrayType(std::shared_ptr<IType> et)
-			: elemType(et) {}
-		~DynamicArrayType() {}
-
-		void Serialize(ISerializer* s, void* inst) {
-			T& ct = *(T*)inst;
-			if (s->IsWriting()) {
-				int size = (int)ct.size();
-				s->SerializeInt(&size, sizeof(int));
-				for (int a = 0; a < size; a++) {
-					elemType->Serialize(s, &ct[a]);
-				}
-			} else {
-				ct.clear();
-				int size;
-				s->SerializeInt(&size, sizeof(int));
-				ct.resize(size);
-				for (int a = 0; a < size; a++) {
-					elemType->Serialize(s, &ct[a]);
-				}
-			}
-		}
-		std::string GetName() const { return elemType->GetName() + "[]"; }
-		size_t GetSize() const { return sizeof(T); }
+		std::string GetName() const;
 	};
 
 	class StaticArrayBaseType : public IType
 	{
 	public:
 		std::shared_ptr<IType> elemType;
-		int size, elemSize;
 
-		StaticArrayBaseType(std::shared_ptr<IType> et, int Size, int ElemSize)
-			: elemType(et), size(Size), elemSize(ElemSize) {}
-		~StaticArrayBaseType() {}
+		StaticArrayBaseType(std::shared_ptr<IType> et, int size)
+			: IType(size), elemType(et) { }
+		~StaticArrayBaseType() { }
 
 		std::string GetName() const;
-		size_t GetSize() const { return size * elemSize; }
 	};
 
-	template<typename T, int Size>
-	class StaticArrayType : public StaticArrayBaseType
-	{
-	public:
-		typedef T ArrayType[Size];
-		StaticArrayType(std::shared_ptr<IType> et)
-			: StaticArrayBaseType(et, Size, sizeof(ArrayType)/Size) {}
-		void Serialize(ISerializer* s, void* instance)
-		{
-			T* array = (T*)instance;
-			for (int a = 0; a < Size; a++)
-				elemType->Serialize(s, &array[a]);
-		}
-	};
-
-	template<typename T>
-	class BitArrayType : public IType
+	class DynamicArrayBaseType : public IType
 	{
 	public:
 		std::shared_ptr<IType> elemType;
 
-		BitArrayType(std::shared_ptr<IType> et)
-			: elemType(et) {}
-		~BitArrayType() {}
+		DynamicArrayBaseType(std::shared_ptr<IType> et, int size)
+			: IType(size), elemType(et) { }
+		~DynamicArrayBaseType() { }
 
-		void Serialize(ISerializer* s, void* inst) {
-			T* ct = (T*)inst;
-			if (s->IsWriting()) {
-				int size = (int)ct->size();
-				s->SerializeInt(&size, sizeof(int));
-				for (int a = 0; a < size; a++) {
-					bool b = (*ct)[a];
-					elemType->Serialize(s, &b);
-				}
-			} else {
-				int size;
-				s->SerializeInt(&size, sizeof(int));
-				ct->resize(size);
-				for (int a = 0; a < size; a++) {
-					bool b;
-					elemType->Serialize(s, &b);
-					(*ct)[a] = b;
-				}
-			}
-		}
-		std::string GetName() const { return elemType->GetName() + "[]"; }
-		size_t GetSize() const { return sizeof(T); }
+		std::string GetName() const;
 	};
 
 	class IgnoredType : public IType
 	{
 	public:
-		int size;
-		IgnoredType(int Size) {size=Size;}
+		IgnoredType(int size) : IType(size) { }
 		~IgnoredType() {}
 
 		void Serialize(ISerializer* s, void* instance)
@@ -121,20 +57,17 @@ namespace creg {
 		{
 			return "ignored";
 		}
-		size_t GetSize() const { return size; }
 	};
 
 	class BasicType : public IType
 	{
 	public:
-		BasicType(const BasicTypeID ID, const size_t size_) : size(size_), id(ID) {}
+		BasicType(const BasicTypeID ID, const size_t size) : IType(size), id(ID) {}
 		~BasicType() {}
 
 		void Serialize(ISerializer* s, void* instance);
 		std::string GetName() const;
-		size_t GetSize() const;
 
-		size_t size;
 		BasicTypeID id;
 	};
 }

@@ -19,6 +19,7 @@ namespace creg
 	class T ## Type : public IType                                         \
 	{                                                                      \
 	public:                                                                \
+	T ## Type() : IType(sizeof(T*)) { }                                    \
 	void Serialize(ISerializer* s, void* instance)                         \
 		{                                                                  \
 			const T** defPtr = (const T**) instance;                       \
@@ -32,7 +33,6 @@ namespace creg
 			}                                                              \
 		}                                                                  \
 		std::string GetName() const { return #T "*"; }                     \
-		size_t GetSize() const { return sizeof(T*); }                      \
 	};                                                                     \
 	template<>                                                             \
 	struct DeduceType<const T*> {                                          \

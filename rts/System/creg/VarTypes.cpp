@@ -12,7 +12,6 @@
 #include <assert.h>
 
 using namespace creg;
-using std::string;
 
 // serialization code
 
@@ -36,27 +35,20 @@ std::string BasicType::GetName() const
 	return std::string();
 }
 
-size_t BasicType::GetSize() const
-{
-	return size;
-}
-
 std::shared_ptr<IType> IType::CreateBasicType(BasicTypeID t, size_t size)
 {
 	return std::shared_ptr<IType>(new BasicType(t, size));
+}
+
+std::string ObjectPointerBaseType::GetName() const
+{
+	return std::string(objClass->name) + "*";
 }
 
 std::string StringType::GetName() const
 {
 	return "string";
 }
-
-size_t StringType::GetSize() const
-{
-	return sizeof(std::string);
-}
-
-StringType::StringType(std::shared_ptr<IType> charType) : DynamicArrayType<string>(charType) {}
 
 std::shared_ptr<IType> IType::CreateStringType()
 {
@@ -74,21 +66,21 @@ std::string ObjectInstanceType::GetName() const
 	return objectClass->name;
 }
 
-size_t ObjectInstanceType::GetSize() const
-{
-	return objectClass->size;
-}
-
 std::shared_ptr<IType> IType::CreateObjInstanceType(Class* objectType)
 {
 	return std::shared_ptr<IType>(new ObjectInstanceType(objectType));
 }
 
-string StaticArrayBaseType::GetName() const
+std::string StaticArrayBaseType::GetName() const
 {
 	char sstr[16];
 	SNPRINTF(sstr, 16, "%d", size);
 	return elemType->GetName() + "[" + std::string(sstr) + "]";
+}
+
+std::string DynamicArrayBaseType::GetName() const
+{
+	return elemType->GetName() + "[]";
 }
 
 std::shared_ptr<IType> IType::CreateIgnoredType(size_t size)

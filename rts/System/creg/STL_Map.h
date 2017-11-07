@@ -43,10 +43,12 @@ namespace creg
 		std::shared_ptr<IType> keyType, mappedType;
 		typedef typename T::iterator iterator;
 
-		MapType(std::shared_ptr<IType> keyType, std::shared_ptr<IType> mappedType) :
-			keyType(keyType), mappedType(mappedType) {}
-		~MapType() {
-		}
+		MapType()
+		 : IType(sizeof(T))
+		 , keyType(DeduceType<typename T::key_type>::Get())
+		 , mappedType(DeduceType<typename T::mapped_type>::Get()) { }
+
+		~MapType() { }
 
 		void Serialize(ISerializer *s, void *instance)
 		{
@@ -72,45 +74,47 @@ namespace creg
 			}
 		}
 		std::string GetName() const { return "map<" + keyType->GetName() + ", " + mappedType->GetName() + ">"; }
-		size_t GetSize() const { return sizeof(T); }
 	};
 
 	// Map type
 	template<typename TKey, typename TValue>
 	struct DeduceType<std::map<TKey, TValue> > {
 		static std::shared_ptr<IType> Get() {
-			return std::shared_ptr<IType>(new MapType<std::map<TKey, TValue> >(DeduceType<TKey>::Get(), DeduceType<TValue>::Get()));
+			return std::shared_ptr<IType>(new MapType<std::map<TKey, TValue> >());
 		}
 	};
 	// Multimap
 	template<typename TKey, typename TValue>
 	struct DeduceType<std::multimap<TKey, TValue> > {
 		static std::shared_ptr<IType> Get() {
-			return std::shared_ptr<IType>(new MapType<std::multimap<TKey, TValue> >(DeduceType<TKey>::Get(), DeduceType<TValue>::Get()));
+			return std::shared_ptr<IType>(new MapType<std::multimap<TKey, TValue> >());
 		}
 	};
 	// Hash map
 	template<typename TKey, typename TValue>
 	struct DeduceType<spring::unordered_map<TKey, TValue> > {
 		static std::shared_ptr<IType> Get() {
-			return std::shared_ptr<IType>(new MapType<spring::unordered_map<TKey, TValue> >(DeduceType<TKey>::Get(), DeduceType<TValue>::Get()));
+			return std::shared_ptr<IType>(new MapType<spring::unordered_map<TKey, TValue> >());
 		}
 	};
 	template<typename TKey, typename TValue>
 	struct DeduceType<spring::unsynced_map<TKey, TValue> > {
 		static std::shared_ptr<IType> Get() {
-			return std::shared_ptr<IType>(new MapType<spring::unsynced_map<TKey, TValue> >(DeduceType<TKey>::Get(), DeduceType<TValue>::Get()));
+			return std::shared_ptr<IType>(new MapType<spring::unsynced_map<TKey, TValue> >());
 		}
 	};
 
 	template<typename T>
 	struct PairType : public IType
 	{
-		PairType(std::shared_ptr<IType> first, std::shared_ptr<IType> second):
-				firstType(first), secondType(second) {}
-		~PairType() {
-		}
 		std::shared_ptr<IType> firstType, secondType;
+
+		PairType()
+				: IType(sizeof(T))
+				, firstType(DeduceType<typename T::first_type>::Get())
+				, secondType(DeduceType<typename T::second_type>::Get()) {}
+
+		~PairType() { }
 
 		void Serialize(ISerializer *s, void *instance)
 		{
@@ -119,7 +123,7 @@ namespace creg
 			secondType->Serialize(s, &p.second);
 		}
 		std::string GetName() const { return "pair<" + firstType->GetName() + "," + secondType->GetName() + ">"; }
-		size_t GetSize() const { return sizeof(T); }
+
 	};
 
 	// std::pair
@@ -127,7 +131,7 @@ namespace creg
 	struct DeduceType<std::pair<TFirst, TSecond> >
 	{
 		static std::shared_ptr<IType> Get() {
-			return std::shared_ptr<IType>(new PairType<std::pair<TFirst, TSecond> >(DeduceType<TFirst>::Get(), DeduceType<TSecond>::Get()));
+			return std::shared_ptr<IType>(new PairType<std::pair<TFirst, TSecond> >());
 		}
 	};
 }
