@@ -294,9 +294,9 @@ class LuaOpenGL {
 		static int PopAttrib(lua_State* L);
 		static int UnsafeState(lua_State* L);
 
-		static int CreateList(lua_State* L);
-		static int CallList(lua_State* L);
-		static int DeleteList(lua_State* L);
+		static int CreateList(lua_State* L) { return 0; }
+		static int CallList(lua_State* L) { return 0; }
+		static int DeleteList(lua_State* L) { return 0; }
 
 		static int Flush(lua_State* L);
 		static int Finish(lua_State* L);
