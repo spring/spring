@@ -3,7 +3,7 @@
 #include "FileFilter.h"
 
 
-#include <boost/regex.hpp>
+#include "System/SpringRegex.h"
 
 #include <limits.h>
 #include <ctype.h>
@@ -26,7 +26,7 @@ private:
 	struct Rule {
 		Rule() : negate(false) {}
 		string glob;
-		boost::regex regex;
+		spring::regex regex;
 		bool negate;
 	};
 
@@ -108,8 +108,8 @@ void CFileFilter::AddRule(const string& rule)
 		}
 	}
 	r.glob = rule.substr(p, 1 + q - p);
-	r.regex = boost::regex(glob_to_regex(r.glob)
-		, boost::regex::icase | boost::regex::no_escape_in_lists);
+	r.regex = spring::regex(glob_to_regex(r.glob)
+		, spring::regex::icase);
 	rules.push_back(r);
 	//printf("added %s%s: %s\n", r.negate ? "!" : "", r.glob.c_str(), r.regex.expression());
 }
@@ -120,7 +120,7 @@ bool CFileFilter::Match(const string& filename) const
 {
 	bool match = false;
 	for (vector<Rule>::const_iterator it = rules.begin(); it != rules.end(); ++it) {
-		if (boost::regex_search(filename, it->regex))
+		if (spring::regex_search(filename, it->regex))
 			match = !it->negate;
 	}
 	return match;

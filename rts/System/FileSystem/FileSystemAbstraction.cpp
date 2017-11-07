@@ -17,7 +17,7 @@
 #include <sys/types.h>
 #include <errno.h>
 #include <string.h>
-#include <boost/regex.hpp>
+#include "System/SpringRegex.h"
 
 #ifndef _WIN32
 	#include <dirent.h>
@@ -437,7 +437,7 @@ void FileSystemAbstraction::ChDir(const std::string& dir)
 	}
 }
 
-static void FindFiles(std::vector<std::string>& matches, const std::string& datadir, const std::string& dir, const boost::regex& regexPattern, int flags)
+static void FindFiles(std::vector<std::string>& matches, const std::string& datadir, const std::string& dir, const spring::regex& regexPattern, int flags)
 {
 #ifdef _WIN32
 	WIN32_FIND_DATA wfd;
@@ -448,13 +448,13 @@ static void FindFiles(std::vector<std::string>& matches, const std::string& data
 			if (strcmp(wfd.cFileName,".") && strcmp(wfd.cFileName ,"..")) {
 				if (!(wfd.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY)) {
 					if ((flags & FileQueryFlags::ONLY_DIRS) == 0) {
-						if (boost::regex_match(wfd.cFileName, regexPattern)) {
+						if (spring::regex_match(wfd.cFileName, regexPattern)) {
 							matches.push_back(dir + wfd.cFileName);
 						}
 					}
 				} else {
 					if (flags & FileQueryFlags::INCLUDE_DIRS) {
-						if (boost::regex_match(wfd.cFileName, regexPattern)) {
+						if (spring::regex_match(wfd.cFileName, regexPattern)) {
 							matches.push_back(dir + wfd.cFileName + "\\");
 						}
 					}
@@ -486,14 +486,14 @@ static void FindFiles(std::vector<std::string>& matches, const std::string& data
 
 		if (!S_ISDIR(info.st_mode)) {
 			if ((flags & FileQueryFlags::ONLY_DIRS) == 0) {
-				if (boost::regex_match(ep->d_name, regexPattern)) {
+				if (spring::regex_match(ep->d_name, regexPattern)) {
 					matches.push_back(dir + ep->d_name);
 				}
 			}
 		} else {
 			// or a directory?
 			if (flags & FileQueryFlags::INCLUDE_DIRS) {
-				if (boost::regex_match(ep->d_name, regexPattern)) {
+				if (spring::regex_match(ep->d_name, regexPattern)) {
 					matches.push_back(dir + ep->d_name + "/");
 				}
 			}
@@ -509,7 +509,7 @@ static void FindFiles(std::vector<std::string>& matches, const std::string& data
 
 void FileSystemAbstraction::FindFiles(std::vector<std::string>& matches, const std::string& dataDir, const std::string& dir, const std::string& regex, int flags)
 {
-	const boost::regex regexPattern(regex);
+	const spring::regex regexPattern(regex);
 	::FindFiles(matches, dataDir, dir, regexPattern, flags);
 }
 

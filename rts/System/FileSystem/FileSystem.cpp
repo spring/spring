@@ -10,8 +10,9 @@
 #include "System/Platform/Win/win32.h"
 #include "System/StringUtil.h"
 
-#include <boost/regex.hpp>
+#include "System/SpringRegex.h"
 
+#include <unistd.h>
 #ifdef _WIN32
 #include <io.h>
 #endif
@@ -219,9 +220,9 @@ std::string FileSystem::GetNormalizedPath(const std::string& path) {
 	std::string normalizedPath = StringReplace(path, "\\", "/"); // convert to POSIX path separators
 
 	normalizedPath = StringReplace(normalizedPath, "/./", "/");
-	normalizedPath = boost::regex_replace(normalizedPath, boost::regex("[/]{2,}"), "/");
-	normalizedPath = boost::regex_replace(normalizedPath, boost::regex("[^/]+[/][.]{2}"), "");
-	normalizedPath = boost::regex_replace(normalizedPath, boost::regex("[/]{2,}"), "/");
+	normalizedPath = spring::regex_replace(normalizedPath, spring::regex("[/]{2,}"), "/");
+	normalizedPath = spring::regex_replace(normalizedPath, spring::regex("[^/]+[/][.]{2}"), "");
+	normalizedPath = spring::regex_replace(normalizedPath, spring::regex("[/]{2,}"), "/");
 
 	return normalizedPath; // maybe use FixSlashes here
 }
