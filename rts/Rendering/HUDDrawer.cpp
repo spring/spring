@@ -86,12 +86,12 @@ void HUDDrawer::DrawUnitDirectionArrow(const CUnit* unit)
 	prog->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, viewMat);
 	prog->SetUniformMatrix4x4<const char*, float>("u_proj_mat", false, CMatrix44f::Identity());
 
-	rdbc->Append({{-0.2f, -0.3f, 0.0f}, arrowColor});
-	rdbc->Append({{-0.2f,  0.3f, 0.0f}, arrowColor});
-	rdbc->Append({{ 0.0f,  0.4f, 0.0f}, arrowColor});
-	rdbc->Append({{ 0.2f,  0.3f, 0.0f}, arrowColor});
-	rdbc->Append({{ 0.2f, -0.3f, 0.0f}, arrowColor});
-	rdbc->Append({{-0.2f, -0.3f, 0.0f}, arrowColor});
+	rdbc->SafeAppend({{-0.2f, -0.3f, 0.0f}, arrowColor});
+	rdbc->SafeAppend({{-0.2f,  0.3f, 0.0f}, arrowColor});
+	rdbc->SafeAppend({{ 0.0f,  0.4f, 0.0f}, arrowColor});
+	rdbc->SafeAppend({{ 0.2f,  0.3f, 0.0f}, arrowColor});
+	rdbc->SafeAppend({{ 0.2f, -0.3f, 0.0f}, arrowColor});
+	rdbc->SafeAppend({{-0.2f, -0.3f, 0.0f}, arrowColor});
 	rdbc->Submit(GL_TRIANGLE_FAN);
 	// keep enabled for DrawCameraDirectionArrow
 	// prog->Disable();
@@ -115,12 +115,12 @@ void HUDDrawer::DrawCameraDirectionArrow(const CUnit* unit)
 
 	// prog->Enable();
 	prog->SetUniformMatrix4x4<const char*, float>("u_movi_mat", false, viewMat);
-	rdbc->Append({{-0.2f, -0.3f, 0.0f}, arrowColor});
-	rdbc->Append({{-0.2f,  0.3f, 0.0f}, arrowColor});
-	rdbc->Append({{ 0.0f,  0.5f, 0.0f}, arrowColor});
-	rdbc->Append({{ 0.2f,  0.3f, 0.0f}, arrowColor});
-	rdbc->Append({{ 0.2f, -0.3f, 0.0f}, arrowColor});
-	rdbc->Append({{-0.2f, -0.3f, 0.0f}, arrowColor});
+	rdbc->SafeAppend({{-0.2f, -0.3f, 0.0f}, arrowColor});
+	rdbc->SafeAppend({{-0.2f,  0.3f, 0.0f}, arrowColor});
+	rdbc->SafeAppend({{ 0.0f,  0.5f, 0.0f}, arrowColor});
+	rdbc->SafeAppend({{ 0.2f,  0.3f, 0.0f}, arrowColor});
+	rdbc->SafeAppend({{ 0.2f, -0.3f, 0.0f}, arrowColor});
+	rdbc->SafeAppend({{-0.2f, -0.3f, 0.0f}, arrowColor});
 	rdbc->Submit(GL_TRIANGLE_FAN);
 	prog->Disable();
 }
@@ -233,7 +233,7 @@ void HUDDrawer::DrawTargetReticle(const CUnit* unit)
 				const float sa = fastmath::sin(a);
 				const float ca = fastmath::cos(a);
 
-				rdbc->Append({pos + (xdir * sa + ydir * ca) * radius, c});
+				rdbc->SafeAppend({pos + (xdir * sa + ydir * ca) * radius, c});
 			}
 
 			rdbc->Submit(GL_LINE_STRIP);
@@ -254,7 +254,7 @@ void HUDDrawer::DrawTargetReticle(const CUnit* unit)
 					const float sa = fastmath::sin(a);
 					const float ca = fastmath::cos(a);
 
-					rdbc->Append({pos + (xdir * sa + ydir * ca) * radius, c});
+					rdbc->SafeAppend({pos + (xdir * sa + ydir * ca) * radius, c});
 				}
 
 				rdbc->Submit(GL_LINE_STRIP);
@@ -262,19 +262,19 @@ void HUDDrawer::DrawTargetReticle(const CUnit* unit)
 
 
 			if (!w->onlyForward) {
-				rdbc->Append({pos, c});
-				rdbc->Append({w->GetCurrentTargetPos(), c});
+				rdbc->SafeAppend({pos, c});
+				rdbc->SafeAppend({w->GetCurrentTargetPos(), c});
 
-				rdbc->Append({pos + (xdir * fastmath::sin(math::PI * 0.25f) + ydir * fastmath::cos(math::PI * 0.25f)) * radius, c});
-				rdbc->Append({pos + (xdir * fastmath::sin(math::PI * 1.25f) + ydir * fastmath::cos(math::PI * 1.25f)) * radius, c});
+				rdbc->SafeAppend({pos + (xdir * fastmath::sin(math::PI * 0.25f) + ydir * fastmath::cos(math::PI * 0.25f)) * radius, c});
+				rdbc->SafeAppend({pos + (xdir * fastmath::sin(math::PI * 1.25f) + ydir * fastmath::cos(math::PI * 1.25f)) * radius, c});
 
-				rdbc->Append({pos + (xdir * fastmath::sin(math::PI * -0.25f) + ydir * fastmath::cos(math::PI * -0.25f)) * radius, c});
-				rdbc->Append({pos + (xdir * fastmath::sin(math::PI * -1.25f) + ydir * fastmath::cos(math::PI * -1.25f)) * radius, c});
+				rdbc->SafeAppend({pos + (xdir * fastmath::sin(math::PI * -0.25f) + ydir * fastmath::cos(math::PI * -0.25f)) * radius, c});
+				rdbc->SafeAppend({pos + (xdir * fastmath::sin(math::PI * -1.25f) + ydir * fastmath::cos(math::PI * -1.25f)) * radius, c});
 			}
 
 			if ((w->GetCurrentTargetPos() - camera->GetPos()).ANormalize().dot(camera->GetDir()) < 0.7f) {
-				rdbc->Append({w->GetCurrentTargetPos(), c});
-				rdbc->Append({camera->GetPos() + camera->GetDir() * 100.0f, c});
+				rdbc->SafeAppend({w->GetCurrentTargetPos(), c});
+				rdbc->SafeAppend({camera->GetPos() + camera->GetDir() * 100.0f, c});
 			}
 
 			rdbc->Submit(GL_LINES);

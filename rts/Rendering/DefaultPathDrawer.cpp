@@ -304,17 +304,17 @@ void DefaultPathDrawer::Draw() const {
 
 		// draw low-res segments of <path> (green)
 		for (const float3& pos: multiPath.lowResPath.path) {
-			rdbc->Append({pos + UpVector * 5.0f, SColor(0, 0, 255, 255)});
+			rdbc->SafeAppend({pos + UpVector * 5.0f, SColor(0, 0, 255, 255)});
 		}
 
 		// draw med-res segments of <path> (blue)
 		for (const float3& pos: multiPath.medResPath.path) {
-			rdbc->Append({pos + UpVector * 5.0f, SColor(0, 255, 0, 255)});
+			rdbc->SafeAppend({pos + UpVector * 5.0f, SColor(0, 255, 0, 255)});
 		}
 
 		// draw max-res segments of <path> (red)
 		for (const float3& pos: multiPath.maxResPath.path) {
-			rdbc->Append({pos + UpVector * 5.0f, SColor(255, 0, 0, 255)});
+			rdbc->SafeAppend({pos + UpVector * 5.0f, SColor(255, 0, 0, 255)});
 		}
 
 		rdbc->Submit(GL_LINE_STRIP);
@@ -366,8 +366,8 @@ void DefaultPathDrawer::Draw(const CPathFinder* pf) const {
 		if (!camera->InView(p1) && !camera->InView(p2))
 			continue;
 
-		rdbc->Append({p1, SColor(0.7f, 0.2f, 0.2f, 1.0f)});
-		rdbc->Append({p2, SColor(0.7f, 0.2f, 0.2f, 1.0f)});
+		rdbc->SafeAppend({p1, SColor(0.7f, 0.2f, 0.2f, 1.0f)});
+		rdbc->SafeAppend({p2, SColor(0.7f, 0.2f, 0.2f, 1.0f)});
 	}
 
 	prog->Enable();
@@ -415,8 +415,8 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 				if (!camera->InView(p1))
 					continue;
 
-				rdbc->Append({p1                   , SColor(1.0f, 1.0f, 0.75f * drawLowResPE, 1.0f)});
-				rdbc->Append({p1 - UpVector * 10.0f, SColor(1.0f, 1.0f, 0.75f * drawLowResPE, 1.0f)});
+				rdbc->SafeAppend({p1                   , SColor(1.0f, 1.0f, 0.75f * drawLowResPE, 1.0f)});
+				rdbc->SafeAppend({p1 - UpVector * 10.0f, SColor(1.0f, 1.0f, 0.75f * drawLowResPE, 1.0f)});
 
 				for (int dir = 0; dir < PATH_DIRECTION_VERTICES; dir++) {
 					const int obx = x + PE_DIRECTION_VECTORS[dir].x;
@@ -441,8 +441,8 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 						p2.z = (blockStates.peNodeOffsets[md->pathType][obBlockNr].y) * SQUARE_SIZE;
 						p2.y = CGround::GetHeightAboveWater(p2.x, p2.z, false) + 10.0f;
 
-					rdbc->Append({p1, SColor(1.0f / std::sqrt(nrmCost), 1.0f / nrmCost, 0.75f * drawLowResPE, 1.0f)});
-					rdbc->Append({p2, SColor(1.0f / std::sqrt(nrmCost), 1.0f / nrmCost, 0.75f * drawLowResPE, 1.0f)});
+					rdbc->SafeAppend({p1, SColor(1.0f / std::sqrt(nrmCost), 1.0f / nrmCost, 0.75f * drawLowResPE, 1.0f)});
+					rdbc->SafeAppend({p2, SColor(1.0f / std::sqrt(nrmCost), 1.0f / nrmCost, 0.75f * drawLowResPE, 1.0f)});
 				}
 			}
 		}
@@ -535,8 +535,8 @@ void DefaultPathDrawer::Draw(const CPathEstimator* pe) const {
 			if (!camera->InView(p1) && !camera->InView(p2))
 				continue;
 
-			rdbc->Append({p1, color});
-			rdbc->Append({p2, color});
+			rdbc->SafeAppend({p1, color});
+			rdbc->SafeAppend({p2, color});
 		}
 
 		prog->Enable();

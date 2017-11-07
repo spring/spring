@@ -179,9 +179,9 @@ private:
 	Shader::IProgramObject* defShader = nullptr;
 	Shader::IProgramObject* curShader = nullptr;
 
-	VA_TYPE_TC* mapBufferPtr[2 * 2] = {nullptr, nullptr}; // {primary,outline} start-pos
-	VA_TYPE_TC* prvBufferPos[2 * 2] = {nullptr, nullptr}; // previous {primary,outline} write-pos
-	VA_TYPE_TC* curBufferPos[2 * 2] = {nullptr, nullptr}; // current {primary,outline} write-pos
+	VA_TYPE_TC* mapBufferPtr[2 * 2] = {nullptr, nullptr, nullptr, nullptr}; // {primary,outline} start-pos
+	VA_TYPE_TC* prvBufferPos[2 * 2] = {nullptr, nullptr, nullptr, nullptr}; // previous {primary,outline} write-pos
+	VA_TYPE_TC* curBufferPos[2 * 2] = {nullptr, nullptr, nullptr, nullptr}; // current {primary,outline} write-pos
 
 
 	spring::recursive_mutex bufferMutex;

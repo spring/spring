@@ -231,7 +231,7 @@ void CRadarTexture::Update()
 	GL::RenderDataBuffer0* rdb = GL::GetRenderBuffer0();
 
 	shader->Enable();
-	rdb->Append(VERTS, sizeof(VERTS) / sizeof(VERTS[0]));
+	rdb->SafeAppend(VERTS, sizeof(VERTS) / sizeof(VERTS[0]));
 	rdb->Submit(GL_QUADS);
 	shader->Disable();
 

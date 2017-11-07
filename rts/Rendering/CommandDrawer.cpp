@@ -693,19 +693,19 @@ void CommandDrawer::DrawQueuedBuildingSquaresAW(const CBuilderCAI* cai) const
 		const float z2 = bi.pos.z + zsize;
 
 		// above-water verts
-		buffer->Append({{x1, h + 1.0f, z1}, {buildQueueSquareColor}});
-		buffer->Append({{x1, h + 1.0f, z2}, {buildQueueSquareColor}});
-		buffer->Append({{x2, h + 1.0f, z2}, {buildQueueSquareColor}});
-		buffer->Append({{x2, h + 1.0f, z1}, {buildQueueSquareColor}});
+		buffer->SafeAppend({{x1, h + 1.0f, z1}, {buildQueueSquareColor}});
+		buffer->SafeAppend({{x1, h + 1.0f, z2}, {buildQueueSquareColor}});
+		buffer->SafeAppend({{x2, h + 1.0f, z2}, {buildQueueSquareColor}});
+		buffer->SafeAppend({{x2, h + 1.0f, z1}, {buildQueueSquareColor}});
 
 		if (bi.pos.y >= 0.0f)
 			continue;
 
 		// below-water verts
-		buffer->Append({{x1, 0.0f, z1}, {0.0f, 0.5f, 1.0f, 1.0f}});
-		buffer->Append({{x1, 0.0f, z2}, {0.0f, 0.5f, 1.0f, 1.0f}});
-		buffer->Append({{x2, 0.0f, z2}, {0.0f, 0.5f, 1.0f, 1.0f}});
-		buffer->Append({{x2, 0.0f, z1}, {0.0f, 0.5f, 1.0f, 1.0f}});
+		buffer->SafeAppend({{x1, 0.0f, z1}, {0.0f, 0.5f, 1.0f, 1.0f}});
+		buffer->SafeAppend({{x1, 0.0f, z2}, {0.0f, 0.5f, 1.0f, 1.0f}});
+		buffer->SafeAppend({{x2, 0.0f, z2}, {0.0f, 0.5f, 1.0f, 1.0f}});
+		buffer->SafeAppend({{x2, 0.0f, z1}, {0.0f, 0.5f, 1.0f, 1.0f}});
 	}
 
 	buffer->Submit(GL_QUADS);
@@ -743,10 +743,10 @@ void CommandDrawer::DrawQueuedBuildingSquaresUW(const CBuilderCAI* cai) const
 		const float x2 = bi.pos.x + xsize;
 		const float z2 = bi.pos.z + zsize;
 
-		buffer->Append({{x1, 0.0f, z1}, {0.0f, 0.5f, 1.0f, 1.0f}});
-		buffer->Append({{x1, 0.0f, z2}, {0.0f, 0.5f, 1.0f, 1.0f}});
-		buffer->Append({{x2, 0.0f, z2}, {0.0f, 0.5f, 1.0f, 1.0f}});
-		buffer->Append({{x2, 0.0f, z1}, {0.0f, 0.5f, 1.0f, 1.0f}});
+		buffer->SafeAppend({{x1, 0.0f, z1}, {0.0f, 0.5f, 1.0f, 1.0f}});
+		buffer->SafeAppend({{x1, 0.0f, z2}, {0.0f, 0.5f, 1.0f, 1.0f}});
+		buffer->SafeAppend({{x2, 0.0f, z2}, {0.0f, 0.5f, 1.0f, 1.0f}});
+		buffer->SafeAppend({{x2, 0.0f, z1}, {0.0f, 0.5f, 1.0f, 1.0f}});
 	}
 
 	buffer->Submit(GL_QUADS);
@@ -773,14 +773,14 @@ void CommandDrawer::DrawQueuedBuildingSquaresUW(const CBuilderCAI* cai) const
 		const float z2 = bi.pos.z + zsize;
 
 		// vertical lines for gauging depth
-		buffer->Append({{x1, h   , z1}, {0.0f, 0.0f, 1.0f, 0.5f}});
-		buffer->Append({{x1, 0.0f, z1}, {0.0f, 0.5f, 1.0f, 1.0f}});
-		buffer->Append({{x2, h   , z1}, {0.0f, 0.0f, 1.0f, 0.5f}});
-		buffer->Append({{x2, 0.0f, z1}, {0.0f, 0.5f, 1.0f, 1.0f}});
-		buffer->Append({{x2, h   , z2}, {0.0f, 0.0f, 1.0f, 0.5f}});
-		buffer->Append({{x2, 0.0f, z2}, {0.0f, 0.5f, 1.0f, 1.0f}});
-		buffer->Append({{x1, h   , z2}, {0.0f, 0.0f, 1.0f, 0.5f}});
-		buffer->Append({{x1, 0.0f, z2}, {0.0f, 0.5f, 1.0f, 1.0f}});
+		buffer->SafeAppend({{x1, h   , z1}, {0.0f, 0.0f, 1.0f, 0.5f}});
+		buffer->SafeAppend({{x1, 0.0f, z1}, {0.0f, 0.5f, 1.0f, 1.0f}});
+		buffer->SafeAppend({{x2, h   , z1}, {0.0f, 0.0f, 1.0f, 0.5f}});
+		buffer->SafeAppend({{x2, 0.0f, z1}, {0.0f, 0.5f, 1.0f, 1.0f}});
+		buffer->SafeAppend({{x2, h   , z2}, {0.0f, 0.0f, 1.0f, 0.5f}});
+		buffer->SafeAppend({{x2, 0.0f, z2}, {0.0f, 0.5f, 1.0f, 1.0f}});
+		buffer->SafeAppend({{x1, h   , z2}, {0.0f, 0.0f, 1.0f, 0.5f}});
+		buffer->SafeAppend({{x1, 0.0f, z2}, {0.0f, 0.5f, 1.0f, 1.0f}});
 	}
 
 	buffer->Submit(GL_LINES);

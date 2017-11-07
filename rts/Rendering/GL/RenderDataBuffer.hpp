@@ -382,6 +382,57 @@ namespace GL {
 	};
 
 
+	#ifdef HEADLESS
+	template<typename VertexArrayType> struct TRenderDataBuffer {
+	public:
+		typedef uint32_t IndexArrayType;
+
+		TRenderDataBuffer() = default;
+		TRenderDataBuffer(const TRenderDataBuffer& trdb) = delete;
+		TRenderDataBuffer(TRenderDataBuffer&& trdb) { *this = std::move(trdb); }
+
+		TRenderDataBuffer& operator = (const TRenderDataBuffer& trdb) = delete;
+		TRenderDataBuffer& operator = (TRenderDataBuffer&& trdb) { std::swap(rdb, trdb.rdb); return *this; }
+
+		template<typename VertexAttribArray> void Setup(
+			RenderDataBuffer* rdbp,
+			const VertexAttribArray* vaap,
+			size_t numElems = 1 << 18,
+			size_t numIndcs = 1 << 16
+		) {
+			rdb = rdbp;
+		}
+
+		void Reset() {}
+
+
+		bool CheckSizeE(size_t ne) const { return false; }
+		bool CheckSizeI(size_t ni) const { return false; }
+
+		void Append(const VertexArrayType& e) {}
+		void Append(const  IndexArrayType  i) {}
+		void Append(const VertexArrayType* e, size_t ne) {}
+		void Append(const  IndexArrayType* i, size_t ni) {}
+
+		void SafeAppend(const VertexArrayType& e) {}
+		void SafeAppend(const VertexArrayType* e, size_t ne) {}
+		void SafeAppend(const  IndexArrayType  i) {}
+		void SafeAppend(const  IndexArrayType* i, size_t ni) {}
+
+		void Submit(uint32_t primType, uint32_t dataIndx, uint32_t dataSize) const {}
+		void Submit(uint32_t primType) {}
+		void SubmitIndexed(uint32_t primType, uint32_t dataIndx, uint32_t dataSize) const {}
+		void SubmitIndexed(uint32_t primType) {}
+
+		GL::RenderDataBuffer* GetBuffer() { return rdb; }
+		Shader::IProgramObject* GetShader() { return &(rdb->GetShader()); }
+
+	private:
+		RenderDataBuffer* rdb = nullptr;
+	};
+
+	#else
+
 	// typed persistent wrapper
 	template<typename VertexArrayType> struct TRenderDataBuffer {
 	public:
@@ -420,12 +471,14 @@ namespace GL {
 			elemsMap = rdb->MapElems<VertexArrayType>(true, true);
 			indcsMap = rdb->MapIndcs< IndexArrayType>(true, true); // null if numIndcs is 0
 		}
+
 		void Reset() {
 			prvElemPos = 0;
 			curElemPos = 0;
 			prvIndxPos = 0;
 			curIndxPos = 0;
 		}
+
 
 		bool CheckSizeE(size_t ne) const { return ((curElemPos + (ne - 1)) < rdb->GetNumElems<VertexArrayType>()); }
 		bool CheckSizeI(size_t ni) const { return ((curIndxPos + (ni - 1)) < rdb->GetNumIndcs< IndexArrayType>()); }
@@ -440,13 +493,13 @@ namespace GL {
 
 		void SafeAppend(const VertexArrayType& e) { SafeAppend(&e, 1); }
 		void SafeAppend(const VertexArrayType* e, size_t ne) {
-			if (ne == 0 || !CheckSizeE(ne))
+			if (ne == 0 || !CheckSizeE(ne) || elemsMap == nullptr)
 				return;
 			Append(e, ne);
 		}
 		void SafeAppend(const  IndexArrayType  i) { SafeAppend(&i, 1); }
 		void SafeAppend(const  IndexArrayType* i, size_t ni) {
-			if (ni == 0 || !CheckSizeI(ni))
+			if (ni == 0 || !CheckSizeI(ni) || indcsMap == nullptr)
 				return;
 			Append(i, ni);
 		}
@@ -482,6 +535,7 @@ namespace GL {
 		size_t prvIndxPos = 0;
 		size_t curIndxPos = 0;
 	};
+	#endif
 
 
 	void InitRenderBuffers();

@@ -200,7 +200,11 @@ GLubyte* VBO::MapBuffer(GLintptr offset, GLsizeiptr size, GLbitfield access)
 
 
 	GLubyte* ptr = (GLubyte*) glMapBufferRange(curBoundTarget, offset, size, access);
+	#ifndef HEADLESS
 	assert(ptr != nullptr);
+	#else
+	assert(ptr == nullptr);
+	#endif
 	return ptr;
 }
 

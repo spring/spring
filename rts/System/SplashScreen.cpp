@@ -87,8 +87,8 @@ void ShowSplashScreen(
 		glBindTexture(GL_TEXTURE_2D, splashTex);
 
 		shader->Enable();
-		buffer->Append(QUAD_ELEMS, sizeof(QUAD_ELEMS) / sizeof(QUAD_ELEMS[0]));
-		buffer->Append(QUAD_INDCS, sizeof(QUAD_INDCS) / sizeof(QUAD_INDCS[0]));
+		buffer->SafeAppend(QUAD_ELEMS, sizeof(QUAD_ELEMS) / sizeof(QUAD_ELEMS[0]));
+		buffer->SafeAppend(QUAD_INDCS, sizeof(QUAD_INDCS) / sizeof(QUAD_INDCS[0]));
 		buffer->SubmitIndexed(GL_TRIANGLES);
 		shader->Disable(); // font uses its own
 

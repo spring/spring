@@ -131,10 +131,10 @@ void CInfoTextureCombiner::Update()
 	const float isy = 2.0f * (mapDims.mapy / float(mapDims.pwr2mapy)) - 1.0f;
 
 	GL::RenderDataBufferT* rdb = GL::GetRenderBufferT();
-	rdb->Append({{-1.0f, -1.0f, 0.0f}, 0.0f, 0.0f});
-	rdb->Append({{-1.0f, +isy , 0.0f}, 0.0f, 1.0f});
-	rdb->Append({{+isx , +isy , 0.0f}, 1.0f, 1.0f});
-	rdb->Append({{+isx , -1.0f, 0.0f}, 1.0f, 0.0f});
+	rdb->SafeAppend({{-1.0f, -1.0f, 0.0f}, 0.0f, 0.0f});
+	rdb->SafeAppend({{-1.0f, +isy , 0.0f}, 0.0f, 1.0f});
+	rdb->SafeAppend({{+isx , +isy , 0.0f}, 1.0f, 1.0f});
+	rdb->SafeAppend({{+isx , -1.0f, 0.0f}, 1.0f, 0.0f});
 	rdb->Submit(GL_QUADS);
 	shader->Disable();
 

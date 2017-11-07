@@ -616,10 +616,10 @@ void CSelectedUnitsHandler::Draw()
 					{drawPos.x + uhxsize * 1.0f, drawPos.y, drawPos.z - uhzsize * 1.0f},
 				};
 
-				buffer->Append({udVerts[0], udColor});
-				buffer->Append({udVerts[1], udColor});
-				buffer->Append({udVerts[2], udColor});
-				buffer->Append({udVerts[3], udColor});
+				buffer->SafeAppend({udVerts[0], udColor});
+				buffer->SafeAppend({udVerts[1], udColor});
+				buffer->SafeAppend({udVerts[2], udColor});
+				buffer->SafeAppend({udVerts[3], udColor});
 			}
 
 
@@ -640,10 +640,10 @@ void CSelectedUnitsHandler::Draw()
 					{drawPos.x + mhxsize * 1.0f, drawPos.y, drawPos.z - mhzsize * 1.0f},
 				};
 
-				buffer->Append({mdVerts[0], mdColor});
-				buffer->Append({mdVerts[1], mdColor});
-				buffer->Append({mdVerts[2], mdColor});
-				buffer->Append({mdVerts[3], mdColor});
+				buffer->SafeAppend({mdVerts[0], mdColor});
+				buffer->SafeAppend({mdVerts[1], mdColor});
+				buffer->SafeAppend({mdVerts[2], mdColor});
+				buffer->SafeAppend({mdVerts[3], mdColor});
 			}
 		}
 

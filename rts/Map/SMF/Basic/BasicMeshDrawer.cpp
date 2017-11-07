@@ -183,17 +183,17 @@ void CBasicMeshDrawer::UploadPatchSquareGeometry(uint32_t n, uint32_t px, uint32
 		meshPatch.squareVertexPtrs[n] = verts;
 		#endif
 
-		assert(verts != nullptr);
+		if (verts != nullptr) {
+			// TODO: geometry shader?
+			for (uint32_t vy = 0; vy < lodVerts; vy += 1) {
+				for (uint32_t vx = 0; vx < lodVerts; vx += 1) {
+					const uint32_t lvx = vx * lodStep;
+					const uint32_t lvy = vy * lodStep;
 
-		// TODO: geometry shader?
-		for (uint32_t vy = 0; vy < lodVerts; vy += 1) {
-			for (uint32_t vx = 0; vx < lodVerts; vx += 1) {
-				const uint32_t lvx = vx * lodStep;
-				const uint32_t lvy = vy * lodStep;
-
-				verts[vertexIndx  ].x = (bpx + lvx) * SQUARE_SIZE;
-				verts[vertexIndx  ].z = (bpy + lvy) * SQUARE_SIZE;
-				verts[vertexIndx++].y = chm[(bpy + lvy) * mapDims.mapxp1 + (bpx + lvx)];
+					verts[vertexIndx  ].x = (bpx + lvx) * SQUARE_SIZE;
+					verts[vertexIndx  ].z = (bpy + lvy) * SQUARE_SIZE;
+					verts[vertexIndx++].y = chm[(bpy + lvy) * mapDims.mapxp1 + (bpx + lvx)];
+				}
 			}
 		}
 
@@ -226,20 +226,21 @@ void CBasicMeshDrawer::UploadPatchBorderGeometry(uint32_t n, uint32_t px, uint32
 			borderVertexBuffer.New(lodVerts * sizeof(VA_TYPE_C) * 2, GL_DYNAMIC_DRAW);
 
 			VA_TYPE_C* verts = reinterpret_cast<VA_TYPE_C*>(borderVertexBuffer.MapBuffer());
-			assert(verts != nullptr);
 
-			for (uint32_t vy = 0; vy < lodVerts; vy += 1) {
-				verts[vertexIndx           ].p.x = 0.0f;
-				verts[vertexIndx + lodVerts].p.x = 0.0f;
-				verts[vertexIndx           ].p.z =     (bpy + vy * lodStep) * SQUARE_SIZE;
-				verts[vertexIndx + lodVerts].p.z =     (bpy + vy * lodStep) * SQUARE_SIZE;
-				verts[vertexIndx           ].p.y = chm[(bpy + vy * lodStep) * mapDims.mapxp1 + 0]; // upper
-				verts[vertexIndx + lodVerts].p.y = std::min(readMap->GetInitMinHeight(), -500.0f); // lower
+			if (verts != nullptr) {
+				for (uint32_t vy = 0; vy < lodVerts; vy += 1) {
+					verts[vertexIndx           ].p.x = 0.0f;
+					verts[vertexIndx + lodVerts].p.x = 0.0f;
+					verts[vertexIndx           ].p.z =     (bpy + vy * lodStep) * SQUARE_SIZE;
+					verts[vertexIndx + lodVerts].p.z =     (bpy + vy * lodStep) * SQUARE_SIZE;
+					verts[vertexIndx           ].p.y = chm[(bpy + vy * lodStep) * mapDims.mapxp1 + 0]; // upper
+					verts[vertexIndx + lodVerts].p.y = std::min(readMap->GetInitMinHeight(), -500.0f); // lower
 
-				verts[vertexIndx           ].c = SColor(255, 255, 255, 255);
-				verts[vertexIndx + lodVerts].c = SColor(255, 255, 255,   0);
+					verts[vertexIndx           ].c = SColor(255, 255, 255, 255);
+					verts[vertexIndx + lodVerts].c = SColor(255, 255, 255,   0);
 
-				vertexIndx += 1;
+					vertexIndx += 1;
+				}
 			}
 
 			borderVertexBuffer.UnmapBuffer();
@@ -260,20 +261,21 @@ void CBasicMeshDrawer::UploadPatchBorderGeometry(uint32_t n, uint32_t px, uint32
 			borderVertexBuffer.New(lodVerts * sizeof(VA_TYPE_C) * 2, GL_DYNAMIC_DRAW);
 
 			VA_TYPE_C* verts = reinterpret_cast<VA_TYPE_C*>(borderVertexBuffer.MapBuffer());
-			assert(verts != nullptr);
 
-			for (uint32_t vy = 0; vy < lodVerts; vy += 1) {
-				verts[vertexIndx           ].p.x = mapDims.mapx * SQUARE_SIZE;
-				verts[vertexIndx + lodVerts].p.x = mapDims.mapx * SQUARE_SIZE;
-				verts[vertexIndx           ].p.z =     (bpy + vy * lodStep) * SQUARE_SIZE;
-				verts[vertexIndx + lodVerts].p.z =     (bpy + vy * lodStep) * SQUARE_SIZE;
-				verts[vertexIndx           ].p.y = chm[(bpy + vy * lodStep) * mapDims.mapxp1 + mapDims.mapx];
-				verts[vertexIndx + lodVerts].p.y = std::min(readMap->GetInitMinHeight(), -500.0f);
+			if (verts != nullptr) {
+				for (uint32_t vy = 0; vy < lodVerts; vy += 1) {
+					verts[vertexIndx           ].p.x = mapDims.mapx * SQUARE_SIZE;
+					verts[vertexIndx + lodVerts].p.x = mapDims.mapx * SQUARE_SIZE;
+					verts[vertexIndx           ].p.z =     (bpy + vy * lodStep) * SQUARE_SIZE;
+					verts[vertexIndx + lodVerts].p.z =     (bpy + vy * lodStep) * SQUARE_SIZE;
+					verts[vertexIndx           ].p.y = chm[(bpy + vy * lodStep) * mapDims.mapxp1 + mapDims.mapx];
+					verts[vertexIndx + lodVerts].p.y = std::min(readMap->GetInitMinHeight(), -500.0f);
 
-				verts[vertexIndx           ].c = SColor(255, 255, 255, 255);
-				verts[vertexIndx + lodVerts].c = SColor(255, 255, 255,   0);
+					verts[vertexIndx           ].c = SColor(255, 255, 255, 255);
+					verts[vertexIndx + lodVerts].c = SColor(255, 255, 255,   0);
 
-				vertexIndx += 1;
+					vertexIndx += 1;
+				}
 			}
 
 			borderVertexBuffer.UnmapBuffer();
@@ -294,20 +296,21 @@ void CBasicMeshDrawer::UploadPatchBorderGeometry(uint32_t n, uint32_t px, uint32
 			borderVertexBuffer.New(lodVerts * sizeof(VA_TYPE_C) * 2, GL_DYNAMIC_DRAW);
 
 			VA_TYPE_C* verts = reinterpret_cast<VA_TYPE_C*>(borderVertexBuffer.MapBuffer());
-			assert(verts != nullptr);
 
-			for (uint32_t vx = 0; vx < lodVerts; vx += 1) {
-				verts[vertexIndx           ].p.x = (bpx + vx * lodStep) * SQUARE_SIZE;
-				verts[vertexIndx + lodVerts].p.x = (bpx + vx * lodStep) * SQUARE_SIZE;
-				verts[vertexIndx           ].p.z = 0.0f;
-				verts[vertexIndx + lodVerts].p.z = 0.0f;
-				verts[vertexIndx           ].p.y = chm[0 + (bpx + vx * lodStep)];
-				verts[vertexIndx + lodVerts].p.y = std::min(readMap->GetInitMinHeight(), -500.0f);
+			if (verts != nullptr) {
+				for (uint32_t vx = 0; vx < lodVerts; vx += 1) {
+					verts[vertexIndx           ].p.x = (bpx + vx * lodStep) * SQUARE_SIZE;
+					verts[vertexIndx + lodVerts].p.x = (bpx + vx * lodStep) * SQUARE_SIZE;
+					verts[vertexIndx           ].p.z = 0.0f;
+					verts[vertexIndx + lodVerts].p.z = 0.0f;
+					verts[vertexIndx           ].p.y = chm[0 + (bpx + vx * lodStep)];
+					verts[vertexIndx + lodVerts].p.y = std::min(readMap->GetInitMinHeight(), -500.0f);
 
-				verts[vertexIndx           ].c = SColor(255, 255, 255, 255);
-				verts[vertexIndx + lodVerts].c = SColor(255, 255, 255,   0);
+					verts[vertexIndx           ].c = SColor(255, 255, 255, 255);
+					verts[vertexIndx + lodVerts].c = SColor(255, 255, 255,   0);
 
-				vertexIndx += 1;
+					vertexIndx += 1;
+				}
 			}
 
 			borderVertexBuffer.UnmapBuffer();
@@ -327,20 +330,21 @@ void CBasicMeshDrawer::UploadPatchBorderGeometry(uint32_t n, uint32_t px, uint32
 			borderVertexBuffer.New(lodVerts * sizeof(VA_TYPE_C) * 2, GL_DYNAMIC_DRAW);
 
 			VA_TYPE_C* verts = reinterpret_cast<VA_TYPE_C*>(borderVertexBuffer.MapBuffer());
-			assert(verts != nullptr);
 
-			for (uint32_t vx = 0; vx < lodVerts; vx += 1) {
-				verts[vertexIndx           ].p.x = (bpx + vx * lodStep) * SQUARE_SIZE;
-				verts[vertexIndx + lodVerts].p.x = (bpx + vx * lodStep) * SQUARE_SIZE;
-				verts[vertexIndx           ].p.z = mapDims.mapy * SQUARE_SIZE;
-				verts[vertexIndx + lodVerts].p.z = mapDims.mapy * SQUARE_SIZE;
-				verts[vertexIndx           ].p.y = chm[mapDims.mapy * mapDims.mapxp1 + (bpx + vx * lodStep)];
-				verts[vertexIndx + lodVerts].p.y = std::min(readMap->GetInitMinHeight(), -500.0f);
+			if (verts != nullptr) {
+				for (uint32_t vx = 0; vx < lodVerts; vx += 1) {
+					verts[vertexIndx           ].p.x = (bpx + vx * lodStep) * SQUARE_SIZE;
+					verts[vertexIndx + lodVerts].p.x = (bpx + vx * lodStep) * SQUARE_SIZE;
+					verts[vertexIndx           ].p.z = mapDims.mapy * SQUARE_SIZE;
+					verts[vertexIndx + lodVerts].p.z = mapDims.mapy * SQUARE_SIZE;
+					verts[vertexIndx           ].p.y = chm[mapDims.mapy * mapDims.mapxp1 + (bpx + vx * lodStep)];
+					verts[vertexIndx + lodVerts].p.y = std::min(readMap->GetInitMinHeight(), -500.0f);
 
-				verts[vertexIndx           ].c = SColor(255, 255, 255, 255);
-				verts[vertexIndx + lodVerts].c = SColor(255, 255, 255,   0);
+					verts[vertexIndx           ].c = SColor(255, 255, 255, 255);
+					verts[vertexIndx + lodVerts].c = SColor(255, 255, 255,   0);
 
-				vertexIndx += 1;
+					vertexIndx += 1;
+				}
 			}
 
 			borderVertexBuffer.UnmapBuffer();
@@ -360,15 +364,16 @@ void CBasicMeshDrawer::UploadPatchBorderNormals(VBO& normalBuffer, const float3&
 	normalBuffer.New(lodVerts * sizeof(float3) * 2, GL_STATIC_DRAW);
 
 	float3* nrmls = reinterpret_cast<float3*>(normalBuffer.MapBuffer());
-	assert(nrmls != nullptr);
 
-	uint32_t normalIndx = 0;
+	if (nrmls != nullptr) {
+		uint32_t normalIndx = 0;
 
-	for (uint32_t vi = 0; vi < lodVerts; vi += 1) {
-		nrmls[normalIndx           ] = normalVector;
-		nrmls[normalIndx + lodVerts] = normalVector;
+		for (uint32_t vi = 0; vi < lodVerts; vi += 1) {
+			nrmls[normalIndx           ] = normalVector;
+			nrmls[normalIndx + lodVerts] = normalVector;
 
-		normalIndx += 1;
+			normalIndx += 1;
+		}
 	}
 
 	normalBuffer.UnmapBuffer();
@@ -405,63 +410,65 @@ void CBasicMeshDrawer::UploadPatchIndices(uint32_t n) {
 
 		uint16_t* indcs = reinterpret_cast<uint16_t*>(squareIndexBuffer.MapBuffer());
 
-		uint32_t indxCtr = 0;
-		// uint32_t quadCtr = 0;
+		if (indcs != nullptr) {
+			uint32_t indxCtr = 0;
+			// uint32_t quadCtr = 0;
 
-		// A B    B   or   A ... [B]
-		// C    C D        C ... [D]
-		for (uint32_t vy = 0; vy < lodQuads; vy += 1) {
-			#if (USE_TRIANGLE_STRIPS == 0)
-				for (uint32_t vx = 0; vx < lodQuads; vx += 1) {
-					#if (USE_MIPMAP_BUFFERS == 1)
-						indcs[indxCtr++] = ((vy * lodVerts) + (vx +     lodVerts)); // C
-						indcs[indxCtr++] = ((vy * lodVerts) + (vx + 1           )); // B
-						indcs[indxCtr++] = ((vy * lodVerts) + (vx               )); // A
+			// A B    B   or   A ... [B]
+			// C    C D        C ... [D]
+			for (uint32_t vy = 0; vy < lodQuads; vy += 1) {
+				#if (USE_TRIANGLE_STRIPS == 0)
+					for (uint32_t vx = 0; vx < lodQuads; vx += 1) {
+						#if (USE_MIPMAP_BUFFERS == 1)
+							indcs[indxCtr++] = ((vy * lodVerts) + (vx +     lodVerts)); // C
+							indcs[indxCtr++] = ((vy * lodVerts) + (vx + 1           )); // B
+							indcs[indxCtr++] = ((vy * lodVerts) + (vx               )); // A
 
-						indcs[indxCtr++] = ((vy * lodVerts) + (vx     + lodVerts)); // C
-						indcs[indxCtr++] = ((vy * lodVerts) + (vx + 1 + lodVerts)); // D
-						indcs[indxCtr++] = ((vy * lodVerts) + (vx + 1           )); // B
-					#else
-						indcs[indxCtr++] = ((vy * numVerts) + (vx +     numVerts)) * lodStep; // C
-						indcs[indxCtr++] = ((vy * numVerts) + (vx + 1           )) * lodStep; // B
-						indcs[indxCtr++] = ((vy * numVerts) + (vx               )) * lodStep; // A
+							indcs[indxCtr++] = ((vy * lodVerts) + (vx     + lodVerts)); // C
+							indcs[indxCtr++] = ((vy * lodVerts) + (vx + 1 + lodVerts)); // D
+							indcs[indxCtr++] = ((vy * lodVerts) + (vx + 1           )); // B
+						#else
+							indcs[indxCtr++] = ((vy * numVerts) + (vx +     numVerts)) * lodStep; // C
+							indcs[indxCtr++] = ((vy * numVerts) + (vx + 1           )) * lodStep; // B
+							indcs[indxCtr++] = ((vy * numVerts) + (vx               )) * lodStep; // A
 
-						indcs[indxCtr++] = ((vy * numVerts) + (vx     + numVerts)) * lodStep; // C
-						indcs[indxCtr++] = ((vy * numVerts) + (vx + 1 + numVerts)) * lodStep; // D
-						indcs[indxCtr++] = ((vy * numVerts) + (vx + 1           )) * lodStep; // B
-					#endif
-				}
+							indcs[indxCtr++] = ((vy * numVerts) + (vx     + numVerts)) * lodStep; // C
+							indcs[indxCtr++] = ((vy * numVerts) + (vx + 1 + numVerts)) * lodStep; // D
+							indcs[indxCtr++] = ((vy * numVerts) + (vx + 1           )) * lodStep; // B
+						#endif
+					}
 
-			#else
-
-				for (uint32_t vx = 0; vx < lodQuads; vx += 1) {
-					#if (USE_MIPMAP_BUFFERS == 1)
-						indcs[indxCtr++] = ((vy * lodVerts) + (vx               )); // A
-						indcs[indxCtr++] = ((vy * lodVerts) + (vx +     lodVerts)); // C
-					#else
-						indcs[indxCtr++] = ((vy * numVerts) + (vx               )) * lodStep; // A
-						indcs[indxCtr++] = ((vy * numVerts) + (vx +     numVerts)) * lodStep; // C
-					#endif
-				}
-
-				#if (USE_MIPMAP_BUFFERS == 1)
-					indcs[indxCtr++] = ((vy * lodVerts) + (lodQuads           )); // B
-					indcs[indxCtr++] = ((vy * lodVerts) + (lodQuads + lodVerts)); // D
 				#else
-					indcs[indxCtr++] = ((vy * numVerts) + (lodQuads           )) * lodStep; // B
-					indcs[indxCtr++] = ((vy * numVerts) + (lodQuads + numVerts)) * lodStep; // D
-				#endif
 
-				// terminator
-				indcs[indxCtr++] = 0xFFFF;
+					for (uint32_t vx = 0; vx < lodQuads; vx += 1) {
+						#if (USE_MIPMAP_BUFFERS == 1)
+							indcs[indxCtr++] = ((vy * lodVerts) + (vx               )); // A
+							indcs[indxCtr++] = ((vy * lodVerts) + (vx +     lodVerts)); // C
+						#else
+							indcs[indxCtr++] = ((vy * numVerts) + (vx               )) * lodStep; // A
+							indcs[indxCtr++] = ((vy * numVerts) + (vx +     numVerts)) * lodStep; // C
+						#endif
+					}
+
+					#if (USE_MIPMAP_BUFFERS == 1)
+						indcs[indxCtr++] = ((vy * lodVerts) + (lodQuads           )); // B
+						indcs[indxCtr++] = ((vy * lodVerts) + (lodQuads + lodVerts)); // D
+					#else
+						indcs[indxCtr++] = ((vy * numVerts) + (lodQuads           )) * lodStep; // B
+						indcs[indxCtr++] = ((vy * numVerts) + (lodQuads + numVerts)) * lodStep; // D
+					#endif
+
+					// terminator
+					indcs[indxCtr++] = 0xFFFF;
+				#endif
+			}
+
+			#if (USE_TRIANGLE_STRIPS == 0)
+			assert(indxCtr == ((numPolys / (lodStep * lodStep)) * 3));
+			#else
+			assert(indxCtr == ((lodQuads * 2 + 3) * lodQuads));
 			#endif
 		}
-
-		#if (USE_TRIANGLE_STRIPS == 0)
-		assert(indxCtr == ((numPolys / (lodStep * lodStep)) * 3));
-		#else
-		assert(indxCtr == ((lodQuads * 2 + 3) * lodQuads));
-		#endif
 
 		squareIndexBuffer.UnmapBuffer();
 		squareIndexBuffer.Unbind();
@@ -472,17 +479,19 @@ void CBasicMeshDrawer::UploadPatchIndices(uint32_t n) {
 
 		uint16_t* indcs = reinterpret_cast<uint16_t*>(borderIndexBuffer.MapBuffer());
 
-		uint32_t indxCtr = 0;
-		// uint32_t quadCtr = 0;
+		if (indcs != nullptr) {
+			uint32_t indxCtr = 0;
+			// uint32_t quadCtr = 0;
 
-		for (uint32_t vi = 0; vi < lodQuads; vi += 1) {
-			indcs[indxCtr++] = (vi               ); // A
-			indcs[indxCtr++] = (vi +     lodVerts); // C
+			for (uint32_t vi = 0; vi < lodQuads; vi += 1) {
+				indcs[indxCtr++] = (vi               ); // A
+				indcs[indxCtr++] = (vi +     lodVerts); // C
+			}
+
+			indcs[indxCtr++] = (lodQuads           ); // B
+			indcs[indxCtr++] = (lodQuads + lodVerts); // D
+			indcs[indxCtr++] = 0xFFFF;
 		}
-
-		indcs[indxCtr++] = (lodQuads           ); // B
-		indcs[indxCtr++] = (lodQuads + lodVerts); // D
-		indcs[indxCtr++] = 0xFFFF;
 
 		borderIndexBuffer.UnmapBuffer();
 		borderIndexBuffer.Unbind();
