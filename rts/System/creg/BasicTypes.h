@@ -9,7 +9,7 @@ namespace creg {
 	public:
 		Class* objClass;
 
-		ObjectPointerBaseType(Class* cls, int size)
+		ObjectPointerBaseType(Class* cls, size_t size)
 			: IType(size), objClass(cls) { }
 		~ObjectPointerBaseType() { }
 
@@ -19,10 +19,10 @@ namespace creg {
 	class StaticArrayBaseType : public IType
 	{
 	public:
-		std::shared_ptr<IType> elemType;
+		std::unique_ptr<IType> elemType;
 
-		StaticArrayBaseType(std::shared_ptr<IType> et, int size)
-			: IType(size), elemType(et) { }
+		StaticArrayBaseType(std::unique_ptr<IType> et, size_t size)
+			: IType(size), elemType(std::move(et)) { }
 		~StaticArrayBaseType() { }
 
 		std::string GetName() const;
@@ -31,10 +31,10 @@ namespace creg {
 	class DynamicArrayBaseType : public IType
 	{
 	public:
-		std::shared_ptr<IType> elemType;
+		std::unique_ptr<IType> elemType;
 
-		DynamicArrayBaseType(std::shared_ptr<IType> et, int size)
-			: IType(size), elemType(et) { }
+		DynamicArrayBaseType(std::unique_ptr<IType> et, size_t size)
+			: IType(size), elemType(std::move(et)) { }
 		~DynamicArrayBaseType() { }
 
 		std::string GetName() const;
@@ -62,7 +62,7 @@ namespace creg {
 	class BasicType : public IType
 	{
 	public:
-		BasicType(const BasicTypeID ID, const size_t size) : IType(size), id(ID) {}
+		BasicType(BasicTypeID ID, size_t size) : IType(size), id(ID) {}
 		~BasicType() {}
 
 		void Serialize(ISerializer* s, void* instance);

@@ -26,7 +26,7 @@ namespace creg {
 	template<class T, class S, class C>
 	struct PQueueType : public IType
 	{
-		PQueueType(std::shared_ptr<IType> t) : IType(sizeof(std::priority_queue<T, S, C>)), elemType(t) { }
+		PQueueType() : IType(sizeof(std::priority_queue<T, S, C>)) { }
 		~PQueueType() { }
 
 		void Serialize(ISerializer* s, void* inst) {
@@ -36,7 +36,7 @@ namespace creg {
 				s->SerializeInt(&size,sizeof(int));
 				for (typename S::iterator it = ct.begin(); it != ct.end(); ++it)
 				{
-					elemType->Serialize(s, &*it);
+					DeduceType<T>::Get()->Serialize(s, &*it);
 				}
 			} else {
 				ct.clear();
@@ -45,21 +45,19 @@ namespace creg {
 				ct.resize(size);
 				for (typename S::iterator it = ct.begin(); it != ct.end(); ++it)
 				{
-					elemType->Serialize(s, &*it);
+					DeduceType<T>::Get()->Serialize(s, &*it);
 				}
 			}
 		}
-		std::string GetName() const { return "priority_queue<" + elemType->GetName() + ">"; }
-
-		std::shared_ptr<IType> elemType;
+		std::string GetName() const { return "priority_queue<" + DeduceType<T>::Get()->GetName() + ">"; }
 	};
 
 
 	// List type
 	template<class T, class S, class C>
 	struct DeduceType< std::priority_queue<T, S, C> > {
-		static std::shared_ptr<IType> Get() {
-			return std::shared_ptr<IType>(new PQueueType<T, S, C>(DeduceType<T>::Get()));
+		static std::unique_ptr<IType> Get() {
+			return std::unique_ptr<IType>(new PQueueType<T, S, C>());
 		}
 	};
 }

@@ -36,8 +36,8 @@ namespace creg
 	};                                                                     \
 	template<>                                                             \
 	struct DeduceType<const T*> {                                          \
-		static std::shared_ptr<IType> Get() {                            \
-			return std::shared_ptr<IType>(new T ## Type());              \
+		static std::unique_ptr<IType> Get() {                            \
+			return std::unique_ptr<IType>(new T ## Type());              \
 		}                                                                  \
 	};
 

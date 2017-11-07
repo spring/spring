@@ -26,7 +26,7 @@ namespace creg
 	class StringType : public DynamicArrayType<std::string>
 	{
 	public:
-		StringType(std::shared_ptr<IType> charType) { }
+		StringType() { }
 		std::string GetName() const;
 	};
 

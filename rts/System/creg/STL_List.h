@@ -15,7 +15,7 @@ namespace creg {
 	template<typename T>
 	struct ListType : public IType
 	{
-		ListType(std::shared_ptr<IType> t) : IType(sizeof(T)), elemType(t) {}
+		ListType() : IType(sizeof(T)) {}
 		~ListType() {}
 
 		void Serialize(ISerializer* s, void* inst) {
@@ -25,7 +25,7 @@ namespace creg {
 				s->SerializeInt(&size,sizeof(int));
 				for (typename T::iterator it = ct.begin(); it != ct.end(); ++it)
 				{
-					elemType->Serialize(s, &*it);
+					DeduceType<T>::Get()->Serialize(s, &*it);
 				}
 			} else {
 				ct.clear();
@@ -34,21 +34,19 @@ namespace creg {
 				ct.resize(size);
 				for (typename T::iterator it = ct.begin(); it != ct.end(); ++it)
 				{
-					elemType->Serialize(s, &*it);
+					DeduceType<T>::Get()->Serialize(s, &*it);
 				}
 			}
 		}
-		std::string GetName() const { return "list<" + elemType->GetName() + ">"; }
-
-		std::shared_ptr<IType> elemType;
+		std::string GetName() const { return "list<" + DeduceType<T>::Get()->GetName() + ">"; }
 	};
 
 
 	// List type
 	template<typename T>
 	struct DeduceType< std::list<T> > {
-		static std::shared_ptr<IType> Get() {
-			return std::shared_ptr<IType>(new ListType< std::list<T> >(DeduceType<T>::Get()));
+		static std::unique_ptr<IType> Get() {
+			return std::unique_ptr<IType>(new ListType< std::list<T> >());
 		}
 	};
 }

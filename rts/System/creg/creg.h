@@ -58,10 +58,10 @@ namespace creg {
 		size_t size;
 		std::string name;
 
-		static std::shared_ptr<IType> CreateBasicType(BasicTypeID t, size_t size);
-		static std::shared_ptr<IType> CreateStringType();
-		static std::shared_ptr<IType> CreateObjInstanceType(Class* objectType, size_t size);
-		static std::shared_ptr<IType> CreateIgnoredType(size_t size);
+		static std::unique_ptr<IType> CreateBasicType(BasicTypeID t, size_t size);
+		static std::unique_ptr<IType> CreateStringType();
+		static std::unique_ptr<IType> CreateObjInstanceType(Class* objectType, size_t size);
+		static std::unique_ptr<IType> CreateIgnoredType(size_t size);
 	};
 
 
@@ -76,7 +76,7 @@ namespace creg {
 		struct Member
 		{
 			const char* name;
-			std::shared_ptr<IType> type;
+			std::unique_ptr<IType> type;
 			unsigned int offset;
 			int alignment;
 			int flags; // combination of ClassMemberFlag's
@@ -93,7 +93,7 @@ namespace creg {
 
 		/// Calculate a checksum from the class metadata
 		void CalculateChecksum(unsigned int& checksum);
-		void AddMember(const char* name, std::shared_ptr<IType> type, unsigned int offset, int alignment, ClassMemberFlag flags);
+		void AddMember(const char* name, std::unique_ptr<IType> type, unsigned int offset, int alignment, ClassMemberFlag flags);
 		void SetMemberFlag(const char* name, ClassMemberFlag f);
 		Member* FindMember(const char* name, const bool inherited = true);
 
