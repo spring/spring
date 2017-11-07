@@ -1352,8 +1352,11 @@ void CUnitDrawer::DrawUnitModelBeingBuiltOpaque(const CUnit* unit, bool noLuaCal
 
 	const float3 frameColors[2] = {unit->unitDef->nanoColor, {color.r / 255.0f, color.g / 255.0f, color.b / 255.0f}};
 	const float3 stageColors[2] = {frameColors[globalRendering->teamNanospray], frameColors[globalRendering->teamNanospray]};
-	const float3 stageBounds    = {std::max(model->mins.y, -model->height), model->height, unit->buildProgress};
+	const float3 stageBounds    = {0.0f, model->GetDrawHeight(), unit->buildProgress};
 
+	// draw-height defaults to maxs.y - mins.y, but can be overridden for non-3DO models
+	// in the default case the above just remaps [mins.y, maxs.y] to [0, maxs.y - mins.y]
+	//
 	// Both clip planes move up. Clip plane 0 is the upper bound of the model,
 	// clip plane 1 is the lower bound. In other words, clip plane 0 makes the
 	// wireframe/flat color/texture appear, and clip plane 1 then erases the
