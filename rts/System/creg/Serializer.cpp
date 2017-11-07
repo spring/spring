@@ -599,8 +599,7 @@ void CInputStreamSerializer::LoadPackage(std::istream* s, void*& root, creg::Cla
 		objects[a].obj = NULL;
 		if (!isEmbedded) {
 			// Allocate and construct
-			ClassBinder* binder = classRefs[classRefIndex]->binder;
-			void* inst = binder->class_.CreateInstance();
+			void* inst = classRefs[classRefIndex]->CreateInstance();
 			objects[a].obj = inst;
 		}
 		objects[a].isEmbedded = !!isEmbedded;

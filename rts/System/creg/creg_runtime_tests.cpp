@@ -141,7 +141,7 @@ static bool TestCregClasses3()
 		}
 
 		// class vtable
-		if (c->base() || !c->GetDerivedClasses().empty() || c->binder->hasVTable) {
+		if (c->base() || !c->GetDerivedClasses().empty() || c->hasVTable) {
 			assert(memberMap.size() >= sizeof(void*));
 			for (int i = 0; i < sizeof(void*); ++i) {
 				if (memberMap[i] == nullptr)
@@ -262,7 +262,7 @@ static bool TestCregClasses4()
 		const char* className = c->name;
 
 		bool incorrectUsage = false;
-		if (!c->binder->isCregStruct) {
+		if (!c->isCregStruct) {
 			if (!c->base() && c->GetDerivedClasses().empty()) {
 				incorrectUsage = true;
 				LOG_L(L_WARNING, "  Class %s has a vTable but isn't derived (should use CR_DECLARE_STRUCT)", className);

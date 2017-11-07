@@ -1019,7 +1019,7 @@ bool CCustomExplosionGenerator::OutputProjectileClassInfo()
 		if (!c->IsSubclassOf(CExpGenSpawnable::StaticClass()) || c == CExpGenSpawnable::StaticClass())
 			continue;
 
-		if (c->binder->flags & creg::CF_Synced)
+		if (c->flags & creg::CF_Synced)
 			continue;
 
 		if (ci != classes.begin())
