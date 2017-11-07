@@ -141,8 +141,6 @@ Class::Class(const char* _name)
 , alignment(0)
 , serializeProc(nullptr)
 , postLoadProc(nullptr)
-, castAndSerializeProc(nullptr)
-, castAndPostLoadProc(nullptr)
 {
 	name = _name;
 }
