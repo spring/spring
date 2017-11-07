@@ -76,7 +76,7 @@ public:
 			s->SerializeObjectPtr(ptr, T::StaticClass());
 		}
 	}
-	std::string GetName() const { return T::StaticClass()->name + "*"; }
+	std::string GetName() const { return std::string(T::StaticClass()->name) + "*"; }
 	size_t GetSize() const { return sizeof(T*); }
 };
 

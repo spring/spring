@@ -41,7 +41,7 @@ static bool TestCregClasses1()
 	int brokenClasses = 0;
 
 	for (const creg::Class* c: creg::System::GetClasses()) {
-		const std::string& className = c->name;
+		const char* className = c->name;
 
 		bool membersBroken = false;
 		std::set<std::string> memberNames;
@@ -49,7 +49,7 @@ static bool TestCregClasses1()
 		for (const creg::Class* c_base = c; c_base; c_base = c_base->base()) {
 			for (const creg::Class::Member& m: c_base->members) {
 				if (std::string(m.name) != "Reserved" && !memberNames.insert(m.name).second) {
-					LOG_L(L_WARNING, "  Duplicated member registration %s::%s %s", className.c_str(), m.name, c_base->name.c_str());
+					LOG_L(L_WARNING, "  Duplicated member registration %s::%s %s", className, m.name, c_base->name);
 					membersBroken = true;
 				}
 			}
@@ -58,7 +58,7 @@ static bool TestCregClasses1()
 		if (membersBroken) {
 			brokenClasses++;
 		} else {
-			//LOG( "CREG: Class %s fine, size %u", className.c_str(), classSize);
+			//LOG( "CREG: Class %s fine, size %u", className, classSize);
 			fineClasses++;
 		}
 	}
@@ -75,7 +75,7 @@ static bool TestCregClasses2()
 	int brokenClasses = 0;
 
 	for (const creg::Class* c: creg::System::GetClasses()) {
-		const std::string& className = c->name;
+		const char* className = c->name;
 		const size_t classSize = c->size;
 
 		size_t cregSize = 1; // c++ class is min. 1byte large (part of sizeof definition)
@@ -94,7 +94,7 @@ static bool TestCregClasses2()
 
 		if (cregSize != classSize) {
 			brokenClasses++;
-			LOG_L(L_WARNING, "  Missing member(s) in class %s, real size %i, creg size %i", className.c_str(), int(classSize), int(cregSize));
+			LOG_L(L_WARNING, "  Missing member(s) in class %s, real size %i, creg size %i", className, int(classSize), int(cregSize));
 			/*for (auto jt = classMembers.cbegin(); jt != classMembers.cend(); ++jt) {
 				const std::string memberName   = (*jt)->name;
 				const size_t      memberOffset = (*jt)->offset;
@@ -103,7 +103,7 @@ static bool TestCregClasses2()
 				LOG_L(L_WARNING, "  member %20s, type %12s, offset %3u, size %u", memberName.c_str(), typeName.c_str(), memberOffset, typeSize);
 			}*/
 		} else {
-			//LOG( "CREG: Class %s fine, size %u", className.c_str(), classSize);
+			//LOG( "CREG: Class %s fine, size %u", className, classSize);
 			fineClasses++;
 		}
 	}
@@ -118,7 +118,7 @@ static bool TestCregClasses3()
 	int brokenClasses = 0;
 
 	for (const creg::Class* c: creg::System::GetClasses()) {
-		const std::string& className = c->name;
+		const char* className = c->name;
 		const size_t classSize = c->size;
 
 		creg::Class::Member alignmentFixMember;
@@ -131,7 +131,7 @@ static bool TestCregClasses3()
 				const size_t typeSize = m.type->GetSize();
 
 				if ((memberOffset + typeSize) > classSize) {
-					LOG_L(L_WARNING, "  Member %s of class %s (typeSize=%lu) has offset=%lu greater than classSize=%lu", m.name, className.c_str(), (unsigned long) typeSize, (unsigned long) memberOffset, (unsigned long) classSize);
+					LOG_L(L_WARNING, "  Member %s of class %s (typeSize=%lu) has offset=%lu greater than classSize=%lu", m.name, className, (unsigned long) typeSize, (unsigned long) memberOffset, (unsigned long) classSize);
 				} else {
 					for (int i = 0; i < typeSize; ++i) {
 						memberMap[memberOffset + i] = &m;
@@ -188,16 +188,16 @@ static bool TestCregClasses3()
 					i = classSize - 1;
 
 				if (prevMember && nextMember) {
-					LOG_L(L_WARNING, "  Missing member(s) in class %s, between %s & %s, ~%i byte(s)", className.c_str(), prevMember->name, nextMember->name, holeSize);
+					LOG_L(L_WARNING, "  Missing member(s) in class %s, between %s & %s, ~%i byte(s)", className, prevMember->name, nextMember->name, holeSize);
 				} else
 				if (nextMember) {
-					LOG_L(L_WARNING, "  Missing member(s) in class %s, before %s, ~%i byte(s)", className.c_str(), nextMember->name, holeSize);
+					LOG_L(L_WARNING, "  Missing member(s) in class %s, before %s, ~%i byte(s)", className, nextMember->name, holeSize);
 				} else
 				if (prevMember) {
-					LOG_L(L_WARNING, "  Missing member(s) in class %s, after %s, ~%i byte(s)", className.c_str(), prevMember->name, holeSize);
+					LOG_L(L_WARNING, "  Missing member(s) in class %s, after %s, ~%i byte(s)", className, prevMember->name, holeSize);
 				} else
 				{
-					LOG_L(L_WARNING, "  Missing member(s) in class %s: none member is creg'ed", className.c_str());
+					LOG_L(L_WARNING, "  Missing member(s) in class %s: none member is creg'ed", className);
 				}
 			}
 
@@ -235,7 +235,7 @@ static bool TestCregClasses3()
 			memberMapStr += memberMapLegend;
 			LOG_L(L_WARNING, "  %s", memberMapStr.c_str());*/
 		} else {
-			//LOG( "CREG: Class %s fine, size %u", className.c_str(), classSize);
+			//LOG( "CREG: Class %s fine, size %u", className, classSize);
 			fineClasses++;
 		}
 	}
@@ -259,29 +259,29 @@ static bool TestCregClasses4()
 	int brokenClasses = 0;
 
 	for (const creg::Class* c: creg::System::GetClasses()) {
-		const std::string& className = c->name;
+		const char* className = c->name;
 
 		bool incorrectUsage = false;
 		if (!c->binder->isCregStruct) {
 			if (!c->base() && c->GetDerivedClasses().empty()) {
 				incorrectUsage = true;
-				LOG_L(L_WARNING, "  Class %s has a vTable but isn't derived (should use CR_DECLARE_STRUCT)", className.c_str());
+				LOG_L(L_WARNING, "  Class %s has a vTable but isn't derived (should use CR_DECLARE_STRUCT)", className);
 			}
 		} else {
 			if (c->base()) {
 				incorrectUsage = true;
-				LOG_L(L_WARNING, "  Class %s hasn't a vTable but is derived from %s (should use CR_DECLARE)", className.c_str(), c->base()->name.c_str());
+				LOG_L(L_WARNING, "  Class %s hasn't a vTable but is derived from %s (should use CR_DECLARE)", className, c->base()->name);
 			} else
 			if (!c->GetDerivedClasses().empty()) {
 				incorrectUsage = true;
-				LOG_L(L_WARNING, "  Class %s hasn't a vTable but is derived by %s (should use CR_DECLARE)", className.c_str(), c->GetDerivedClasses()[0]->name.c_str());
+				LOG_L(L_WARNING, "  Class %s hasn't a vTable but is derived by %s (should use CR_DECLARE)", className, c->GetDerivedClasses()[0]->name);
 			}
 		}
 
 		if (incorrectUsage) {
 			brokenClasses++;
 		} else {
-			//LOG( "CREG: Class %s fine, size %u", className.c_str(), classSize);
+			//LOG( "CREG: Class %s fine, size %u", className, classSize);
 			fineClasses++;
 		}
 	}

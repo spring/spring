@@ -165,13 +165,13 @@ void COutputStreamSerializer::SerializeObject(Class* c, void* ptr, ObjectRef* ob
 		om.memberId = a;
 		void* memberAddr = ((char*)ptr) + m->offset;
 		unsigned mstart = stream->tellp();
-		LOG_SL(LOG_SECTION_CREG_SERIALIZER, L_DEBUG, "Serialized %s::%s type:%s", c->name.c_str(), m->name, m->type->GetName().c_str());
+		LOG_SL(LOG_SECTION_CREG_SERIALIZER, L_DEBUG, "Serialized %s::%s type:%s", c->name, m->name, m->type->GetName().c_str());
 		m->type->Serialize(this, memberAddr);
 		unsigned mend = stream->tellp();
 		om.size = mend - mstart;
 		omg.members.push_back(om);
 		omg.size += om.size;
-		LOG_SL(LOG_SECTION_CREG_SERIALIZER, L_DEBUG, "Serialized %s::%s type:%s size:%d", c->name.c_str(), m->name, m->type->GetName().c_str(), om.size);
+		LOG_SL(LOG_SECTION_CREG_SERIALIZER, L_DEBUG, "Serialized %s::%s type:%s size:%d", c->name, m->name, m->type->GetName().c_str(), om.size);
 	}
 
 
@@ -204,11 +204,11 @@ void COutputStreamSerializer::SerializeObjectInstance(void* inst, creg::Class* o
 		obj = &objects.back();
 		ptrToId[inst].push_back(obj);
 	} else if (obj->isEmbedded) {
-		throw "Reserialization of embedded object (" + objClass->name + ")";
+		throw std::string("Reserialization of embedded object (") + objClass->name + ")";
 	} else {
 		std::vector<ObjectRef*>::iterator it = std::find(pendingObjects.begin(), pendingObjects.end(), obj);
 		if (it == pendingObjects.end()) {
-			throw "Object pointer was serialized (" + objClass->name + ")";
+			throw std::string("Object pointer was serialized (") + objClass->name + ")";
 		} else {
 			pendingObjects.erase(it);
 		}
@@ -336,7 +336,7 @@ void COutputStreamSerializer::SavePackage(std::ostream* s, void* rootObj, Class*
 	if (LOG_IS_ENABLED(L_DEBUG)) {
 		for (auto &it: classSizes) {
 			LOG_L(L_DEBUG, "%30s %10u %10u",
-					it.first->name.c_str(),
+					it.first->name,
 					classCounts[it.first],
 					it.second);
 		}
@@ -453,7 +453,7 @@ void CInputStreamSerializer::SerializeObject(Class* c, void* ptr)
 		const unsigned oldPos = stream->tellg();
 		void* memberAddr = ((char*)ptr) + m->offset;
 		m->type->Serialize(this, memberAddr);
-		LOG_SL(LOG_SECTION_CREG_SERIALIZER, L_DEBUG, "Deserialized %s::%s type:%s size:%u", c->name.c_str(), m->name, m->type->GetName().c_str(), unsigned(stream->tellg()) - oldPos);
+		LOG_SL(LOG_SECTION_CREG_SERIALIZER, L_DEBUG, "Deserialized %s::%s type:%s size:%u", c->name, m->name, m->type->GetName().c_str(), unsigned(stream->tellg()) - oldPos);
 	}
 
 	if (c->HasSerialize()) {
@@ -537,7 +537,7 @@ void CallPostLoad(creg::Class* c, creg::Class* oc, void* obj)
 		CallPostLoad(c->base(), oc, obj);
 
 	if (c->HasPostLoad()) {
-		LOG_SL(LOG_SECTION_CREG_SERIALIZER, L_DEBUG, "Run PostLoad of %s::%s", oc->name.c_str(), c->name.c_str());
+		LOG_SL(LOG_SECTION_CREG_SERIALIZER, L_DEBUG, "Run PostLoad of %s::%s", oc->name, c->name);
 		c->CallPostLoadProc(obj);
 	}
 }
@@ -616,7 +616,7 @@ void CInputStreamSerializer::LoadPackage(std::istream* s, void*& root, creg::Cla
 		if (!objects[a].isEmbedded) {
 			creg::Class* cls = classRefs[objects[a].classRef];
 			SerializeObject(cls, objects[a].obj);
-			LOG_SL(LOG_SECTION_CREG_SERIALIZER, L_DEBUG, "Deserialized %s size:%i", cls->name.c_str(), cls->size);
+			LOG_SL(LOG_SECTION_CREG_SERIALIZER, L_DEBUG, "Deserialized %s size:%i", cls->name, cls->size);
 		}
 	}
 
