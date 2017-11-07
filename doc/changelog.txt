@@ -42,7 +42,7 @@ Lua:
  - remove gl.Fog, gl.FogCoord, gl.SecondaryColor
  - remove gl.PointSize, gl.PointSprite, gl.PointParameter
  - remove gl.TexEnv, gl.MultiTexEnv, gl.TexGen, gl.MultiTexGen
- - remove gl.CreateList, CallList, gl.DeleteList
+ - remove gl.CreateList, gl.CallList, gl.DeleteList
  - support local-space tracking for dynamic lights added via Spring.Add{Map,Model}Light
    the light-definition table should contain a 'localSpace = true' entry to enable this
  - move GetConfig* to LuaUnsyncedRead
