@@ -80,7 +80,7 @@ tar xzf libunwind-1.2.1.tar.gz
 cd libunwind-1.2.1
 ./configure --with-pic --disable-minidebuginfo
 ${MAKE}
-cp -rf include ${INCLUDEDIR}
+cp -rf include/* ${INCLUDEDIR}
 cp -f src/.libs/libunwind.a ${LIBDIR}/libunwind.a
 
 # glew
@@ -88,5 +88,5 @@ wget https://sourceforge.net/projects/glew/files/glew/2.1.0/glew-2.1.0.tgz
 tar xzf glew-2.1.0.tgz
 cd glew-2.1.0
 ${MAKE}
-cp -rf include ${INCLUDEDIR}
+cp -rf include/* ${INCLUDEDIR}
 cp -f lib/libGLEW.a ${LIBDIR}/libGLEW.a
