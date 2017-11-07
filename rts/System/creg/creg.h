@@ -90,12 +90,10 @@ namespace creg {
 
 		/// Calculate a checksum from the class metadata
 		void CalculateChecksum(unsigned int& checksum);
-		void AddMember(const char* name, std::shared_ptr<IType> type, unsigned int offset, int alignment);
+		void AddMember(const char* name, std::shared_ptr<IType> type, unsigned int offset, int alignment, ClassMemberFlag flags);
 		void SetMemberFlag(const char* name, ClassMemberFlag f);
 		Member* FindMember(const char* name, const bool inherited = true);
 
-		void BeginFlag(ClassMemberFlag flag);
-		void EndFlag(ClassMemberFlag flag);
 		void SetFlag(ClassFlags flag);
 
 		inline bool IsAbstract() const;
@@ -146,9 +144,6 @@ namespace creg {
 		FuncPTR postLoadProc;
 		CastAndSerializeProc castAndSerializeProc;
 		CastAndPostLoadProc castAndPostLoadProc;
-
-	private:
-		int currentMemberFlags;
 	};
 
 
@@ -380,6 +375,8 @@ public: \
 		typedef TClass Type; \
 		Type* null=nullptr; \
 		(void)null; /*suppress compiler warning if this isn't used*/ \
+		int currentMemberFlags = 0; \
+		(void)currentMemberFlags; \
 		Members; \
 	}
 
@@ -392,6 +389,8 @@ public: \
 		typedef TCls Type; \
 		Type* null=nullptr; \
 		(void)null; /*suppress compiler warning if this isn't used*/ \
+		int currentMemberFlags = 0; \
+		(void)currentMemberFlags; \
 		Members; \
 	}
 
@@ -404,6 +403,8 @@ public: \
 		typedef TSuperClass::TSubClass Type; \
 		Type* null=nullptr; \
 		(void)null; /*suppress compiler warning if this isn't used*/ \
+		int currentMemberFlags = 0; \
+		(void)currentMemberFlags; \
 		Members; \
 	}
 
@@ -424,13 +425,13 @@ public: \
  * - an enum
  */
 #define CR_MEMBER(Member) \
-	class_->AddMember( #Member, creg::GetType(null->Member), offsetof_creg(Type, Member), alignof(decltype(Type::Member)))
+	class_->AddMember( #Member, creg::GetType(null->Member), offsetof_creg(Type, Member), alignof(decltype(Type::Member)), (creg::ClassMemberFlag) currentMemberFlags)
 
 /** @def CR_IGNORED
  * Registers a member variable that isn't saved/loaded
  */
 #define CR_IGNORED(Member) \
-	class_->AddMember( #Member, creg::IType::CreateIgnoredType(sizeof(Type::Member)), offsetof_creg(Type, Member), alignof(decltype(Type::Member)))
+	class_->AddMember( #Member, creg::IType::CreateIgnoredType(sizeof(Type::Member)), offsetof_creg(Type, Member), alignof(decltype(Type::Member)), (creg::ClassMemberFlag) currentMemberFlags)
 
 
 /** @def CR_MEMBER_UN
@@ -459,10 +460,10 @@ public: \
 	class_->SetMemberFlag(#Member, creg::Flag)
 
 #define CR_MEMBER_BEGINFLAG(Flag) \
-	class_->BeginFlag(creg::Flag)
+	currentMemberFlags |= (int)creg::Flag
 
 #define CR_MEMBER_ENDFLAG(Flag) \
-	class_->EndFlag(creg::Flag)
+	currentMemberFlags &= ~(int)creg::Flag
 
 /** @def CR_SERIALIZER
  * Registers a custom serialization method for the class/struct
