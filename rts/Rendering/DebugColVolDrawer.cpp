@@ -48,13 +48,13 @@ static inline void DrawCollisionVolume(const CollisionVolume* vol)
 					GL::Translate({-(vol->GetHScale(0)), 0.0f, 0.0f});
 					GL::Translate({vol->GetOffset(0), vol->GetOffset(1), vol->GetOffset(2)});
 					GL::Scale({vol->GetScale(0), vol->GetHScale(1), vol->GetHScale(2)});
-					GL::RotateY(-90.0f * math::DEG_TO_RAD);
+					GL::RotateY(90.0f);
 				} break;
 				case CollisionVolume::COLVOL_AXIS_Y: {
 					GL::Translate({0.0f, -(vol->GetHScale(1)), 0.0f});
 					GL::Translate({vol->GetOffset(0), vol->GetOffset(1), vol->GetOffset(2)});
 					GL::Scale({vol->GetHScale(0), vol->GetScale(1), vol->GetHScale(2)});
-					GL::RotateX(90.0f * math::DEG_TO_RAD);
+					GL::RotateX(-90.0f);
 				} break;
 				case CollisionVolume::COLVOL_AXIS_Z: {
 					GL::Translate({0.0f, 0.0f, -(vol->GetHScale(2))});
@@ -348,6 +348,7 @@ namespace DebugColVolDrawer
 			return;
 
 		GL::PushMatrix();
+		GL::LoadIdentity();
 		GL::MultMatrix(camera->GetViewMatrix());
 
 		glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);

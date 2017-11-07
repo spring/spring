@@ -250,9 +250,9 @@ void SMFRenderStateGLSL::Enable(const CSMFGroundDrawer* smfGroundDrawer, const D
 	      GL::LightHandler* mLightHandler = const_cast<GL::LightHandler*>(cLightHandler); // XXX
 
 	// already on the MV stack at this point
-	glLoadIdentity();
+	GL::LoadIdentity();
 	mLightHandler->Update(shader);
-	glMultMatrixf(camera->GetViewMatrix());
+	GL::MultMatrix(camera->GetViewMatrix());
 	#endif
 
 	if (shadowHandler->ShadowsLoaded())

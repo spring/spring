@@ -725,9 +725,9 @@ namespace terrain {
 	void Terrain::RenderNode(TQuad* q)
 	{
 		// setup projection matrix, so the quad is exactly mapped onto the viewport
-		glMatrixMode(GL_PROJECTION);
-		glPushMatrix();
-		glLoadIdentity();
+		GL::MatrixMode(GL_PROJECTION);
+		GL::PushMatrix();
+		GL::LoadIdentity();
 		glOrtho(q->start.x, q->end.x, q->start.z, q->end.z, -10000.0f, 100000.0f);
 		glColor3f(1.f,1.f,1.f);
 
@@ -751,8 +751,8 @@ namespace terrain {
 			texturing->EndPass();
 		}
 		texturing->EndTexturing();
-		glMatrixMode(GL_PROJECTION);
-		glPopMatrix();
+		GL::MatrixMode(GL_PROJECTION);
+		GL::PopMatrix();
 	}
 
 	void Terrain::CacheTextures()
@@ -763,14 +763,14 @@ namespace terrain {
 		glPushAttrib(GL_VIEWPORT_BIT | GL_DEPTH_BUFFER_BIT);
 		glViewport(0, 0, config.cacheTextureSize, config.cacheTextureSize);
 
-		glMatrixMode(GL_MODELVIEW);
-		glPushMatrix();
-		glLoadIdentity();
+		GL::MatrixMode(GL_MODELVIEW);
+		GL::PushMatrix();
+		GL::LoadIdentity();
 
 		float m[16];
 		std::fill(m,m+16,0.0f);
 		m[0] = m[6] = m[9] = m[15] = 1.0f;
-		glLoadMatrixf(m);
+		GL::LoadMatrix(m);
 
 		glDepthMask(GL_FALSE);
 		glDisable(GL_DEPTH_TEST);
@@ -807,8 +807,8 @@ namespace terrain {
 			}
 		}
 
-		glMatrixMode(GL_MODELVIEW);
-		glPopMatrix();
+		GL::MatrixMode(GL_MODELVIEW);
+		GL::PopMatrix();
 
 		// restore viewport and depth buffer states
 		glPopAttrib();

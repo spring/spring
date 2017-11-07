@@ -97,10 +97,10 @@ bool CStartPosSelecter::MousePress(int x, int y, int button)
 
 void CStartPosSelecter::DrawStartBox() const
 {
-	glPushMatrix();
-	glMatrixMode(GL_PROJECTION);
-	glPushMatrix();
-	glMatrixMode(GL_MODELVIEW);
+	GL::PushMatrix();
+	GL::MatrixMode(GL_PROJECTION);
+	GL::PushMatrix();
+	GL::MatrixMode(GL_MODELVIEW);
 	camera->Update();
 
 	glColor4f(0.2f,0.8f,0.2f,0.5f);
@@ -162,10 +162,10 @@ void CStartPosSelecter::DrawStartBox() const
 	}
 	glEnd();
 
-	glMatrixMode(GL_PROJECTION);
-	glPopMatrix();
-	glMatrixMode(GL_MODELVIEW);
-	glPopMatrix();
+	GL::MatrixMode(GL_PROJECTION);
+	GL::PopMatrix();
+	GL::MatrixMode(GL_MODELVIEW);
+	GL::PopMatrix();
 
 	glDisable(GL_DEPTH_TEST);
 	glColor4f(1.0f,1.0f,1.0f,1.0f);

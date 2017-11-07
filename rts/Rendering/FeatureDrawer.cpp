@@ -355,12 +355,12 @@ void CFeatureDrawer::DrawFeatureNoTrans(
 
 void CFeatureDrawer::DrawFeatureTrans(const CFeature* feature, unsigned int preList, unsigned int postList, bool lodCall, bool noLuaCall)
 {
-	glPushMatrix();
-	glMultMatrixf(feature->GetTransformMatrixRef());
+	GL::PushMatrix();
+	GL::MultMatrix(feature->GetTransformMatrixRef());
 
 	DrawFeatureNoTrans(feature, preList, postList, lodCall, noLuaCall);
 
-	glPopMatrix();
+	GL::PopMatrix();
 }
 
 

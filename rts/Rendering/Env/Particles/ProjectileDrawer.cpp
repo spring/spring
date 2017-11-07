@@ -671,22 +671,22 @@ bool CProjectileDrawer::DrawProjectileModel(const CProjectile* p)
 
 		unitDrawer->SetTeamColour(wp->GetTeamID());
 
-		glPushMatrix();
-			glMultMatrixf(wp->GetTransformMatrix(float(wp->GetProjectileType() == WEAPON_MISSILE_PROJECTILE)));
+		GL::PushMatrix();
+			GL::MultMatrix(wp->GetTransformMatrix(float(wp->GetProjectileType() == WEAPON_MISSILE_PROJECTILE)));
 
 			if (!(/*p->luaDraw &&*/ eventHandler.DrawProjectile(p))) {
 				wp->model->DrawStatic();
 			}
-		glPopMatrix();
+		GL::PopMatrix();
 	} else {
 		// piece-projectile
 		const CPieceProjectile* pp = static_cast<const CPieceProjectile*>(p);
 
 		unitDrawer->SetTeamColour(pp->GetTeamID());
 
-		glPushMatrix();
-			glTranslatef3(pp->drawPos);
-			glRotatef(pp->GetDrawAngle(), pp->spinVec.x, pp->spinVec.y, pp->spinVec.z);
+		GL::PushMatrix();
+			GL::Translate(pp->drawPos);
+			GL::Rotate(pp->GetDrawAngle(), pp->spinVec.x, pp->spinVec.y, pp->spinVec.z);
 
 			if (!(/*p->luaDraw &&*/ eventHandler.DrawProjectile(p))) {
 				if (pp->explFlags & PF_Recursive) {
@@ -695,7 +695,7 @@ bool CProjectileDrawer::DrawProjectileModel(const CProjectile* p)
 					glCallList(pp->dispList);
 				}
 			}
-		glPopMatrix();
+		GL::PopMatrix();
 	}
 
 	return true;

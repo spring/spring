@@ -698,9 +698,9 @@ void LuaOpenGL::ResetDrawScreenCommon()
 
 void LuaOpenGL::EnableDrawInMiniMap()
 {
-	glMatrixMode(GL_TEXTURE   ); glPushMatrix();
-	glMatrixMode(GL_PROJECTION); glPushMatrix();
-	glMatrixMode(GL_MODELVIEW ); glPushMatrix();
+	GL::MatrixMode(GL_TEXTURE   ); GL::PushMatrix();
+	GL::MatrixMode(GL_PROJECTION); GL::PushMatrix();
+	GL::MatrixMode(GL_MODELVIEW ); GL::PushMatrix();
 
 	if (drawMode == DRAW_SCREEN) {
 		prevDrawMode = DRAW_SCREEN;
@@ -728,9 +728,9 @@ void LuaOpenGL::DisableDrawInMiniMap()
 		drawMode = DRAW_SCREEN;
 	}
 
-	glMatrixMode(GL_TEXTURE   ); glPopMatrix();
-	glMatrixMode(GL_PROJECTION); glPopMatrix();
-	glMatrixMode(GL_MODELVIEW ); glPopMatrix();
+	GL::MatrixMode(GL_TEXTURE   ); GL::PopMatrix();
+	GL::MatrixMode(GL_PROJECTION); GL::PopMatrix();
+	GL::MatrixMode(GL_MODELVIEW ); GL::PopMatrix();
 }
 
 
@@ -751,9 +751,9 @@ void LuaOpenGL::ResetDrawInMiniMap()
 
 void LuaOpenGL::EnableDrawInMiniMapBackground()
 {
-	glMatrixMode(GL_TEXTURE   ); glPushMatrix();
-	glMatrixMode(GL_PROJECTION); glPushMatrix();
-	glMatrixMode(GL_MODELVIEW ); glPushMatrix();
+	GL::MatrixMode(GL_TEXTURE   ); GL::PushMatrix();
+	GL::MatrixMode(GL_PROJECTION); GL::PushMatrix();
+	GL::MatrixMode(GL_MODELVIEW ); GL::PushMatrix();
 
 	if (drawMode == DRAW_SCREEN) {
 		prevDrawMode = DRAW_SCREEN;
@@ -781,9 +781,9 @@ void LuaOpenGL::DisableDrawInMiniMapBackground()
 		drawMode = DRAW_SCREEN;
 	}
 
-	glMatrixMode(GL_TEXTURE   ); glPopMatrix();
-	glMatrixMode(GL_PROJECTION); glPopMatrix();
-	glMatrixMode(GL_MODELVIEW ); glPopMatrix();
+	GL::MatrixMode(GL_TEXTURE   ); GL::PopMatrix();
+	GL::MatrixMode(GL_PROJECTION); GL::PopMatrix();
+	GL::MatrixMode(GL_MODELVIEW ); GL::PopMatrix();
 }
 
 
@@ -823,19 +823,19 @@ void LuaOpenGL::SetupScreenMatrices()
 	const float right  = ((vpx + vsx) - hssx) / factor;
 	const float top    = ((vpy + vsy) - hssy) / factor;
 
-	glMatrixMode(GL_PROJECTION);
-	glLoadMatrixf(CMatrix44f::ClipControl(globalRendering->supportClipSpaceControl) * CMatrix44f::PerspProj(left, right, bottom, top, znear, zfar));
+	GL::MatrixMode(GL_PROJECTION);
+	GL::LoadMatrix(CMatrix44f::ClipControl(globalRendering->supportClipSpaceControl) * CMatrix44f::PerspProj(left, right, bottom, top, znear, zfar));
 
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
+	GL::MatrixMode(GL_MODELVIEW);
+	GL::LoadIdentity();
 	// translate s.t. (0,0,0) is on the zplane, on the window's bottom left corner
-	glTranslatef(left * factor, bottom * factor, -zplane);
+	GL::Translate(left * factor, bottom * factor, -zplane);
 }
 
 void LuaOpenGL::RevertScreenMatrices()
 {
-	glMatrixMode(GL_TEXTURE);
-	glLoadIdentity();
+	GL::MatrixMode(GL_TEXTURE);
+	GL::LoadIdentity();
 
 	glSpringMatrix2dSetupPV(0.0f, 1.0f, 0.0f, 1.0f, -1.0f, 1.0f);
 }
@@ -846,32 +846,32 @@ void LuaOpenGL::RevertScreenMatrices()
 
 void LuaOpenGL::ResetGenesisMatrices()
 {
-	glMatrixMode(GL_TEXTURE   ); glLoadIdentity();
-	glMatrixMode(GL_PROJECTION); glLoadIdentity();
-	glMatrixMode(GL_MODELVIEW ); glLoadIdentity();
+	GL::MatrixMode(GL_TEXTURE   ); GL::LoadIdentity();
+	GL::MatrixMode(GL_PROJECTION); GL::LoadIdentity();
+	GL::MatrixMode(GL_MODELVIEW ); GL::LoadIdentity();
 }
 
 
 void LuaOpenGL::ResetWorldMatrices()
 {
-	glMatrixMode(GL_TEXTURE   ); glLoadIdentity();
-	glMatrixMode(GL_PROJECTION); glLoadMatrixf(camera->GetProjectionMatrix());
-	glMatrixMode(GL_MODELVIEW ); glLoadMatrixf(camera->GetViewMatrix());
+	GL::MatrixMode(GL_TEXTURE   ); GL::LoadIdentity();
+	GL::MatrixMode(GL_PROJECTION); GL::LoadMatrix(camera->GetProjectionMatrix());
+	GL::MatrixMode(GL_MODELVIEW ); GL::LoadMatrix(camera->GetViewMatrix());
 }
 
 void LuaOpenGL::ResetWorldShadowMatrices()
 {
-	glMatrixMode(GL_TEXTURE   ); glLoadIdentity();
-	glMatrixMode(GL_PROJECTION); glLoadMatrixf(shadowHandler->GetShadowProjMatrixRaw());
-	glMatrixMode(GL_MODELVIEW ); glLoadMatrixf(shadowHandler->GetShadowViewMatrixRaw());
+	GL::MatrixMode(GL_TEXTURE   ); GL::LoadIdentity();
+	GL::MatrixMode(GL_PROJECTION); GL::LoadMatrix(shadowHandler->GetShadowProjMatrix());
+	GL::MatrixMode(GL_MODELVIEW ); GL::LoadMatrix(shadowHandler->GetShadowViewMatrix());
 }
 
 
 void LuaOpenGL::ResetScreenMatrices()
 {
-	glMatrixMode(GL_TEXTURE   ); glLoadIdentity();
-	glMatrixMode(GL_PROJECTION); glLoadIdentity();
-	glMatrixMode(GL_MODELVIEW ); glLoadIdentity();
+	GL::MatrixMode(GL_TEXTURE   ); GL::LoadIdentity();
+	GL::MatrixMode(GL_PROJECTION); GL::LoadIdentity();
+	GL::MatrixMode(GL_MODELVIEW ); GL::LoadIdentity();
 
 	SetupScreenMatrices();
 }
@@ -882,9 +882,9 @@ void LuaOpenGL::ResetMiniMapMatrices()
 	assert(minimap != nullptr);
 
 	// engine draws minimap in 0..1 range, lua uses 0..minimapSize{X,Y}
-	glMatrixMode(GL_TEXTURE   ); glLoadIdentity();
-	glMatrixMode(GL_PROJECTION); glLoadMatrixf(CMatrix44f::OrthoProj(0.0f, 1.0f, 0.0f, 1.0f, 0.0f, -1.0f)); minimap->ApplyConstraintsMatrix();
-	glMatrixMode(GL_MODELVIEW ); glLoadIdentity(); glScalef(1.0f / minimap->GetSizeX(), 1.0f / minimap->GetSizeY(), 1.0f);
+	GL::MatrixMode(GL_TEXTURE   ); GL::LoadIdentity();
+	GL::MatrixMode(GL_PROJECTION); GL::LoadMatrix(CMatrix44f::OrthoProj(0.0f, 1.0f, 0.0f, 1.0f, 0.0f, -1.0f)); minimap->ApplyConstraintsMatrix();
+	GL::MatrixMode(GL_MODELVIEW ); GL::LoadIdentity(); GL::Scale(1.0f / minimap->GetSizeX(), 1.0f / minimap->GetSizeY(), 1.0f);
 }
 
 
@@ -999,12 +999,12 @@ int LuaOpenGL::DrawMiniMap(lua_State* L)
 		luaL_error(L, "gl.DrawMiniMap() can only be used if the minimap is in slave mode");
 
 	if (luaL_optboolean(L, 1, true)) {
-		glPushMatrix();
-		glScalef(globalRendering->viewSizeX, globalRendering->viewSizeY, 1.0f);
+		GL::PushMatrix();
+		GL::Scale(globalRendering->viewSizeX, globalRendering->viewSizeY, 1.0f);
 
 		minimap->DrawForReal(true);
 
-		glPopMatrix();
+		GL::PopMatrix();
 	} else {
 		minimap->DrawForReal(false);
 	}
@@ -1138,7 +1138,7 @@ static void GLObjectPieceMultMatrix(lua_State* L, const CSolidObject* obj)
 	if (lmp == nullptr)
 		return;
 
-	glMultMatrixf(lmp->GetModelSpaceMatrix());
+	GL::MultMatrix(lmp->GetModelSpaceMatrix());
 }
 
 static bool GLObjectDrawWithLuaMat(lua_State* L, CSolidObject* obj, LuaObjType objType)
@@ -1298,7 +1298,7 @@ int LuaOpenGL::UnitMultMatrix(lua_State* L)
 	if (unit == nullptr)
 		return 0;
 
-	glMultMatrixf(unit->GetTransformMatrix());
+	GL::MultMatrix(unit->GetTransformMatrix());
 	return 0;
 }
 
@@ -1412,7 +1412,7 @@ int LuaOpenGL::FeatureMultMatrix(lua_State* L)
 	if (feature == nullptr)
 		return 0;
 
-	glMultMatrixf(feature->GetTransformMatrixRef());
+	GL::MultMatrix(feature->GetTransformMatrixRef());
 	return 0;
 }
 
@@ -1467,12 +1467,12 @@ int LuaOpenGL::DrawListAtUnit(lua_State* L)
 	                 luaL_optnumber(L,  9, 1.0f),
 	                 luaL_optnumber(L, 10, 0.0f));
 
-	glPushMatrix();
-	glTranslatef(drawPos.x, drawPos.y, drawPos.z);
-	glRotatef(degrees, rot.x, rot.y, rot.z);
-	glScalef(scale.x, scale.y, scale.z);
+	GL::PushMatrix();
+	GL::Translate(drawPos.x, drawPos.y, drawPos.z);
+	GL::Rotate(degrees, rot.x, rot.y, rot.z);
+	GL::Scale(scale.x, scale.y, scale.z);
 	glCallList(dlist);
-	glPopMatrix();
+	GL::PopMatrix();
 
 	return 0;
 }
@@ -1501,10 +1501,10 @@ int LuaOpenGL::DrawFuncAtUnit(lua_State* L)
 	}
 
 	// call the function
-	glPushMatrix();
-	glTranslatef(drawPos.x, drawPos.y, drawPos.z);
+	GL::PushMatrix();
+	GL::Translate(drawPos.x, drawPos.y, drawPos.z);
 	const int error = lua_pcall(L, (lua_gettop(L) - 3), 0, 0);
-	glPopMatrix();
+	GL::PopMatrix();
 
 	if (error != 0) {
 		LOG_L(L_ERROR, "gl.DrawFuncAtUnit: error(%i) = %s", error, lua_tostring(L, -1));
@@ -2878,13 +2878,13 @@ int LuaOpenGL::RenderToTexture(lua_State* L)
 
 	glPushAttrib(GL_VIEWPORT_BIT);
 	glViewport(0, 0, tex->xsize, tex->ysize);
-	glMatrixMode(GL_PROJECTION); glPushMatrix(); glLoadIdentity();
-	glMatrixMode(GL_MODELVIEW);  glPushMatrix(); glLoadIdentity();
+	GL::MatrixMode(GL_PROJECTION); GL::PushMatrix(); GL::LoadIdentity();
+	GL::MatrixMode(GL_MODELVIEW);  GL::PushMatrix(); GL::LoadIdentity();
 
 	const int error = lua_pcall(L, lua_gettop(L) - 2, 0, 0);
 
-	glMatrixMode(GL_PROJECTION); glPopMatrix();
-	glMatrixMode(GL_MODELVIEW);  glPopMatrix();
+	GL::MatrixMode(GL_PROJECTION); GL::PopMatrix();
+	GL::MatrixMode(GL_MODELVIEW);  GL::PopMatrix();
 	glPopAttrib();
 
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, currentFBO);
@@ -3016,7 +3016,7 @@ int LuaOpenGL::Translate(lua_State* L)
 	const float x = luaL_checkfloat(L, 1);
 	const float y = luaL_checkfloat(L, 2);
 	const float z = luaL_checkfloat(L, 3);
-	glTranslatef(x, y, z);
+	GL::Translate(x, y, z);
 	return 0;
 }
 
@@ -3027,7 +3027,7 @@ int LuaOpenGL::Scale(lua_State* L)
 	const float x = luaL_checkfloat(L, 1);
 	const float y = luaL_checkfloat(L, 2);
 	const float z = luaL_checkfloat(L, 3);
-	glScalef(x, y, z);
+	GL::Scale(x, y, z);
 	return 0;
 }
 
@@ -3039,7 +3039,7 @@ int LuaOpenGL::Rotate(lua_State* L)
 	const float x = luaL_checkfloat(L, 2);
 	const float y = luaL_checkfloat(L, 3);
 	const float z = luaL_checkfloat(L, 4);
-	glRotatef(r, x, y, z);
+	GL::Rotate(r, x, y, z);
 	return 0;
 }
 
@@ -3054,7 +3054,7 @@ int LuaOpenGL::Ortho(lua_State* L)
 	const float near   = luaL_checknumber(L, 5);
 	const float far    = luaL_checknumber(L, 6);
 
-	glMultMatrixf(CMatrix44f::ClipControl(globalRendering->supportClipSpaceControl) * CMatrix44f::OrthoProj(left, right, bottom, top, near, far));
+	GL::MultMatrix(CMatrix44f::ClipControl(globalRendering->supportClipSpaceControl) * CMatrix44f::OrthoProj(left, right, bottom, top, near, far));
 	return 0;
 }
 
@@ -3070,7 +3070,7 @@ int LuaOpenGL::Frustum(lua_State* L)
 	const float near   = luaL_checknumber(L, 5);
 	const float far    = luaL_checknumber(L, 6);
 
-	glMultMatrixf(CMatrix44f::ClipControl(globalRendering->supportClipSpaceControl) * CMatrix44f::PerspProj(left, right, bottom, top, near, far));
+	GL::MultMatrix(CMatrix44f::ClipControl(globalRendering->supportClipSpaceControl) * CMatrix44f::PerspProj(left, right, bottom, top, near, far));
 	return 0;
 }
 
@@ -3078,7 +3078,7 @@ int LuaOpenGL::Frustum(lua_State* L)
 int LuaOpenGL::Billboard(lua_State* L)
 {
 	CheckDrawingEnabled(L, __func__);
-	glMultMatrixf(camera->GetBillBoardMatrix());
+	GL::MultMatrix(camera->GetBillBoardMatrix());
 	return 0;
 }
 
@@ -3122,7 +3122,7 @@ int LuaOpenGL::MatrixMode(lua_State* L)
 	GLenum mode = (GLenum)luaL_checkint(L, 1);
 	if (!GetLuaContextData(L)->glMatrixTracker.SetMatrixMode(mode))
 		luaL_error(L, "Incorrect value to gl.MatrixMode");
-	glMatrixMode(mode);
+	GL::MatrixMode(mode);
 	return 0;
 }
 
@@ -3131,11 +3131,10 @@ int LuaOpenGL::LoadIdentity(lua_State* L)
 {
 	CheckDrawingEnabled(L, __func__);
 
-	const int args = lua_gettop(L); // number of arguments
-	if (args != 0) {
+	if (lua_gettop(L) != 0)
 		luaL_error(L, "gl.LoadIdentity takes no arguments");
-	}
-	glLoadIdentity();
+
+	GL::LoadIdentity();
 	return 0;
 }
 
@@ -3148,24 +3147,24 @@ int LuaOpenGL::LoadMatrix(lua_State* L)
 	if (luaType == LUA_TSTRING) {
 		const CMatrix44f* matptr = LuaOpenGLUtils::GetNamedMatrix(lua_tostring(L, 1));
 		if (matptr != NULL) {
-			glLoadMatrixf(*matptr);
+			GL::LoadMatrix(*matptr);
 		} else {
 			luaL_error(L, "Incorrect arguments to gl.LoadMatrix()");
 		}
 		return 0;
 	} else {
-		GLfloat matrix[16];
+		CMatrix44f matrix;
 		if (luaType == LUA_TTABLE) {
-			if (LuaUtils::ParseFloatArray(L, -1, matrix, 16) != 16) {
+			if (LuaUtils::ParseFloatArray(L, -1, &matrix.m[0], 16) != 16) {
 				luaL_error(L, "gl.LoadMatrix requires all 16 values");
 			}
 		}
 		else {
 			for (int i = 1; i <= 16; i++) {
-				matrix[i-1] = (GLfloat)luaL_checknumber(L, i);
+				matrix.m[i - 1] = (GLfloat)luaL_checknumber(L, i);
 			}
 		}
-		glLoadMatrixf(matrix);
+		GL::LoadMatrix(matrix);
 	}
 	return 0;
 }
@@ -3179,24 +3178,24 @@ int LuaOpenGL::MultMatrix(lua_State* L)
 	if (luaType == LUA_TSTRING) {
 		const CMatrix44f* matptr = LuaOpenGLUtils::GetNamedMatrix(lua_tostring(L, 1));
 		if (matptr != NULL) {
-			glMultMatrixf(*matptr);
+			GL::MultMatrix(*matptr);
 		} else {
 			luaL_error(L, "Incorrect arguments to gl.MultMatrix()");
 		}
 		return 0;
 	} else {
-		GLfloat matrix[16];
+		CMatrix44f matrix;
 		if (luaType == LUA_TTABLE) {
-			if (LuaUtils::ParseFloatArray(L, -1, matrix, 16) != 16) {
+			if (LuaUtils::ParseFloatArray(L, -1, &matrix.m[0], 16) != 16) {
 				luaL_error(L, "gl.LoadMatrix requires all 16 values");
 			}
 		}
 		else {
 			for (int i = 1; i <= 16; i++) {
-				matrix[i-1] = (GLfloat)luaL_checknumber(L, i);
+				matrix.m[i - 1] = (GLfloat)luaL_checknumber(L, i);
 			}
 		}
-		glMultMatrixf(matrix);
+		GL::MultMatrix(matrix);
 	}
 	return 0;
 }
@@ -3213,7 +3212,7 @@ int LuaOpenGL::PushMatrix(lua_State* L)
 
 	if (!GetLuaContextData(L)->glMatrixTracker.PushMatrix())
 		luaL_error(L, "Matrix stack overflow");
-	glPushMatrix();
+	GL::PushMatrix();
 
 	return 0;
 }
@@ -3230,7 +3229,7 @@ int LuaOpenGL::PopMatrix(lua_State* L)
 
 	if (!GetLuaContextData(L)->glMatrixTracker.PopMatrix())
 		luaL_error(L, "Matrix stack underflow");
-	glPopMatrix();
+	GL::PopMatrix();
 
 	return 0;
 }
@@ -3252,11 +3251,11 @@ int LuaOpenGL::PushPopMatrix(lua_State* L)
 	}
 
 	if (arg == 1) {
-		glPushMatrix();
+		GL::PushMatrix();
 	} else {
 		for (int i = 0; i < (int)matModes.size(); i++) {
-			glMatrixMode(matModes[i]);
-			glPushMatrix();
+			GL::MatrixMode(matModes[i]);
+			GL::PushMatrix();
 		}
 	}
 
@@ -3264,11 +3263,11 @@ int LuaOpenGL::PushPopMatrix(lua_State* L)
 	const int error = lua_pcall(L, (args - arg), 0, 0);
 
 	if (arg == 1) {
-		glPopMatrix();
+		GL::PopMatrix();
 	} else {
 		for (int i = 0; i < (int)matModes.size(); i++) {
-			glMatrixMode(matModes[i]);
-			glPopMatrix();
+			GL::MatrixMode(matModes[i]);
+			GL::PopMatrix();
 		}
 	}
 

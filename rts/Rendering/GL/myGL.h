@@ -20,7 +20,9 @@
 #include "System/float3.h"
 #include "System/float4.h"
 
+#include "MatrixState.hpp"
 #include "glStateDebug.h"
+
 
 #if       defined(HEADLESS)
 	// All OpenGL functions should always exists on HEADLESS.
@@ -42,11 +44,7 @@
 static inline void glVertexf3(const float3& v)    { glVertex3f(v.r, v.g, v.b); }
 static inline void glColorf3(const float3& v)     { glColor3f(v.r, v.g, v.b); }
 static inline void glColorf4(const float4& v)     { glColor4f(v.r, v.g, v.b, v.a); }
-static inline void glNormalf3(const float3& v)    { glNormal3f(v.r, v.g, v.b); }
-static inline void glTranslatef3(const float3& v) { glTranslatef(v.r, v.g, v.b); }
-static inline void glSecondaryColorf3(const float3& v) { glSecondaryColor3f(v.r, v.g, v.b); }
 static inline void glColorf4(const float3& v, const float alpha) { glColor4f(v.r, v.g, v.b, alpha); }
-static inline void glUniformf3(const GLint location, const float3& v) { glUniform3f(location, v.r, v.g, v.b); }
 
 // replaced by Matrix::{Ortho,Persp}Proj
 #undef glOrtho

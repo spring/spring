@@ -225,11 +225,11 @@ void CCamera::UpdateLoadViewPort(int px, int py, int sx, int sy)
 
 void CCamera::LoadMatrices() const
 {
-	glMatrixMode(GL_PROJECTION);
-	glLoadMatrixf(&projectionMatrix.m[0]);
+	GL::MatrixMode(GL_PROJECTION);
+	GL::LoadMatrix(projectionMatrix);
 
-	glMatrixMode(GL_MODELVIEW);
-	glLoadMatrixf(&viewMatrix.m[0]);
+	GL::MatrixMode(GL_MODELVIEW);
+	GL::LoadMatrix(viewMatrix);
 }
 
 void CCamera::LoadViewPort() const
@@ -436,7 +436,7 @@ inline void CCamera::gluPerspectiveSpring(float aspect, float zn, float zf) {
 }
 
 
-// same as glOrtho(-1, 1, -1, 1, zn, zf) plus glScalef(sx, sy, 1)
+// same as glOrtho(-1, 1, -1, 1, zn, zf) plus glScale(sx, sy, 1)
 inline void CCamera::glOrthoScaledSpring(
 	const float sx,
 	const float sy,

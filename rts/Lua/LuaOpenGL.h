@@ -326,7 +326,7 @@ inline void LuaOpenGL::InitMatrixState(lua_State* L, const char* fn) {
 		glGetIntegerv(GL_MATRIX_MODE, &curmode);
 		if (curmode != GL_MODELVIEW)
 			LOG_L(L_ERROR, "%s: Current matrix mode is not GL_MODELVIEW", fn);
-		glMatrixMode(GL_MODELVIEW);
+		GL::MatrixMode(GL_MODELVIEW);
 	}
 #endif
 }

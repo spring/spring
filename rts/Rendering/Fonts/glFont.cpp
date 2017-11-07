@@ -885,8 +885,8 @@ void CglFont::RenderString(float x, float y, float scaleX, float scaleY, const s
 	 * (450% faster with a 7600GT!) for these reasons:
 	 *
 	 * 1. When using DLs, we can not group multiple glyphs into one glBegin/End pair
-	 *    because glTranslatef can not go between such a pair.
-	 * 2. We can now eliminate all glPushMatrix/PopMatrix pairs related to font rendering
+	 *    because GL::Translate can not go between such a pair.
+	 * 2. We can now eliminate all GL::PushMatrix/PopMatrix pairs related to font rendering
 	 *    because the transformations are calculated on the fly. These are just a couple of
 	 *    floating point multiplications and shouldn't be too expensive.
 	 */

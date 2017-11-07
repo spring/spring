@@ -187,13 +187,13 @@ void CFarTextureHandler::CreateFarTexture(const CSolidObject* obj)
 		glViewport(pos.x * iconSize.x, pos.y * iconSize.y, iconSize.x, iconSize.y);
 		glClear(GL_DEPTH_BUFFER_BIT);
 
-		glPushMatrix();
+		GL::PushMatrix();
 		// draw (static-pose) model
 		model->DrawStatic();
-		glPopMatrix();
+		GL::PopMatrix();
 
 		// rotate for the next orientation
-		glRotatef(-360.0f / NUM_ICON_ORIENTATIONS, 0.0f, 1.0f, 0.0f);
+		GL::RotateY(-360.0f / NUM_ICON_ORIENTATIONS);
 	}
 
 	unitDrawer->PopModelRenderState(model);

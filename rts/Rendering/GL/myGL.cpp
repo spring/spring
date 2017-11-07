@@ -351,39 +351,21 @@ void glBuildMipmaps(const GLenum target, GLint internalFormat, const GLsizei wid
 
 
 static void LoadProjMat2D(float l, float r, float b, float t, float n, float f,  bool push) {
-	#if 0
 	GL::MatrixMode(GL_PROJECTION);
 
 	if (push)
 		GL::PushMatrix();
 
 	GL::LoadMatrix(CMatrix44f::ClipControl(globalRendering->supportClipSpaceControl) * CMatrix44f::OrthoProj(l, r, b, t, n, f));
-	#else
-	glMatrixMode(GL_PROJECTION);
-
-	if (push)
-		glPushMatrix();
-
-	glLoadMatrixf(CMatrix44f::ClipControl(globalRendering->supportClipSpaceControl) * CMatrix44f::OrthoProj(l, r, b, t, n, f));
-	#endif
 }
 
 static void LoadViewMat2D(bool push) {
-	#if 0
 	GL::MatrixMode(GL_MODELVIEW);
 
 	if (push)
 		GL::PushMatrix();
 
 	GL::LoadIdentity();
-	#else
-	glMatrixMode(GL_MODELVIEW);
-
-	if (push)
-		glPushMatrix();
-
-	glLoadIdentity();
-	#endif
 }
 
 
@@ -399,7 +381,6 @@ void glSpringMatrix2dSetupPV(float l, float r, float b, float t, float n, float 
 }
 
 void glSpringMatrix2dResetVP(bool pv, bool pp) {
-	#if 0
 	GL::MatrixMode(GL_MODELVIEW);
 	if (pv)
 		GL::PopMatrix();
@@ -407,19 +388,9 @@ void glSpringMatrix2dResetVP(bool pv, bool pp) {
 	GL::MatrixMode(GL_PROJECTION);
 	if (pp)
 		GL::PopMatrix();
-	#else
-	glMatrixMode(GL_MODELVIEW);
-	if (pv)
-		glPopMatrix();
-
-	glMatrixMode(GL_PROJECTION);
-	if (pp)
-		glPopMatrix();
-	#endif
 }
 
 void glSpringMatrix2dResetPV(bool pv, bool pp) {
-	#if 0
 	GL::MatrixMode(GL_PROJECTION);
 	if (pp)
 		GL::PopMatrix();
@@ -427,15 +398,6 @@ void glSpringMatrix2dResetPV(bool pv, bool pp) {
 	GL::MatrixMode(GL_MODELVIEW);
 	if (pv)
 		GL::PopMatrix();
-	#else
-	glMatrixMode(GL_PROJECTION);
-	if (pp)
-		glPopMatrix();
-
-	glMatrixMode(GL_MODELVIEW);
-	if (pv)
-		glPopMatrix();
-	#endif
 }
 
 

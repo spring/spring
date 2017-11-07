@@ -340,10 +340,10 @@ void LuaMaterial::Execute(const LuaMaterial& prev, bool deferredPass) const
 
 	if (useCamera != prev.useCamera) {
 		if (useCamera) {
-			glPopMatrix();
+			GL::PopMatrix();
 		} else {
-			glPushMatrix();
-			glLoadIdentity();
+			GL::PushMatrix();
+			GL::LoadIdentity();
 		}
 	}
 

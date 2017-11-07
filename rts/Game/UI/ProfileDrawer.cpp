@@ -302,8 +302,8 @@ static void DrawProfiler()
 	// draw the Timer selection boxes
 	const float boxSize = lineHeight * 0.9f;
 	const float selOffset = boxSize * 0.2f;
-	glPushMatrix();
-	glTranslatef(start_x + 0.005f, start_y + boxSize, 0); // we are now at upper left of first box
+	GL::PushMatrix();
+	GL::Translate(start_x + 0.005f, start_y + boxSize, 0); // we are now at upper left of first box
 		CVertexArray* va  = GetVertexArray();
 		CVertexArray* va2 = GetVertexArray();
 		va->Initialize();
@@ -336,7 +336,7 @@ static void DrawProfiler()
 		// draw the 'graph view disabled' cross
 		glColor3f(1,0,0);
 		va2->DrawArray0(GL_QUADS);
-	glPopMatrix();
+	GL::PopMatrix();
 
 	// draw the graph
 	glLineWidth(3.0f);

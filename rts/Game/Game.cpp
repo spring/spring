@@ -1351,7 +1351,7 @@ bool CGame::Draw() {
 	}
 
 	glEnable(GL_DEPTH_TEST);
-	glLoadIdentity();
+	GL::LoadIdentity();
 
 	if (videoCapturing->AllowRecord()) {
 		videoCapturing->SetLastFrameTime(globalRendering->lastFrameTime = 1000.0f / GAME_SPEED);

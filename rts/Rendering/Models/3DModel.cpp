@@ -83,10 +83,10 @@ void S3DModelPiece::DrawStatic() const
 	if (!HasGeometryData())
 		return;
 
-	glPushMatrix();
-	glMultMatrixf(pieceMatrix);
+	GL::PushMatrix();
+	GL::MultMatrix(pieceMatrix);
 	glCallList(dispListID);
-	glPopMatrix();
+	GL::PopMatrix();
 }
 
 
@@ -477,10 +477,10 @@ void LocalModelPiece::Draw() const
 	if (!scriptSetVisible)
 		return;
 
-	glPushMatrix();
-	glMultMatrixf(GetModelSpaceMatrix());
+	GL::PushMatrix();
+	GL::MultMatrix(GetModelSpaceMatrix());
 	glCallList(dispListID);
-	glPopMatrix();
+	GL::PopMatrix();
 }
 
 void LocalModelPiece::DrawLOD(unsigned int lod) const
@@ -488,10 +488,10 @@ void LocalModelPiece::DrawLOD(unsigned int lod) const
 	if (!scriptSetVisible)
 		return;
 
-	glPushMatrix();
-	glMultMatrixf(GetModelSpaceMatrix());
+	GL::PushMatrix();
+	GL::MultMatrix(GetModelSpaceMatrix());
 	glCallList(lodDispLists[lod]);
-	glPopMatrix();
+	GL::PopMatrix();
 }
 
 

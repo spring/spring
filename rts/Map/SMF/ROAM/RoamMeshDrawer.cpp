@@ -256,9 +256,9 @@ void CRoamMeshDrawer::DrawInMiniMap()
 	glSpringMatrix2dSetupVP(0.0f, 1.0f, 0.0f, 1.0f, 0.0f, -1.0f,  true, true);
 	minimap->ApplyConstraintsMatrix();
 
-	glMatrixMode(GL_MODELVIEW);
-	glTranslatef3(UpVector);
-	glScalef(1.0f / mapDims.mapx, -1.0f / mapDims.mapy, 1.0f);
+	GL::MatrixMode(GL_MODELVIEW);
+	GL::Translate(UpVector);
+	GL::Scale(1.0f / mapDims.mapx, -1.0f / mapDims.mapy, 1.0f);
 
 	glColor4f(0.0f, 0.0f, 0.0f, 0.5f);
 

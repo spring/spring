@@ -3265,7 +3265,7 @@ void CGuiHandler::DrawOptionLEDs(const IconInfo& icon)
 	}
 	const int option = atoi(cmdDesc.params[0].c_str());
 
-	glLoadIdentity();
+	GL::LoadIdentity();
 
 	glDisable(GL_TEXTURE_2D);
 
@@ -3396,15 +3396,15 @@ static inline GLuint GetConeList()
 
 static void DrawWeaponCone(const float3& pos, float len, float hrads, float heading, float pitch)
 {
-	glPushMatrix();
+	GL::PushMatrix();
 
 	const float xlen = len * std::cos(hrads);
 	const float yzlen = len * std::sin(hrads);
 
-	glTranslatef(pos.x, pos.y, pos.z);
-	glRotatef(heading * math::RAD_TO_DEG, 0.0f, 1.0f, 0.0f);
-	glRotatef(pitch   * math::RAD_TO_DEG, 0.0f, 0.0f, 1.0f);
-	glScalef(xlen, yzlen, yzlen);
+	GL::Translate(pos.x, pos.y, pos.z);
+	GL::RotateY(heading * math::RAD_TO_DEG);
+	GL::RotateZ(pitch   * math::RAD_TO_DEG);
+	GL::Scale(xlen, yzlen, yzlen);
 
 	glEnable(GL_CULL_FACE);
 
@@ -3418,7 +3418,7 @@ static void DrawWeaponCone(const float3& pos, float len, float hrads, float head
 
 	glDisable(GL_CULL_FACE);
 
-	glPopMatrix();
+	GL::PopMatrix();
 }
 
 
@@ -3644,14 +3644,14 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 			if (unit->decloakDistance > 0.0f) {
 				glColor4fv(cmdColors.rangeDecloak);
 				if (unit->unitDef->decloakSpherical && globalRendering->drawdebug) {
-					glPushMatrix();
-					glTranslatef(unit->midPos.x, unit->midPos.y, unit->midPos.z);
-					glRotatef(90.0f, 1.0f, 0.0f, 0.0f);
+					GL::PushMatrix();
+					GL::Translate(unit->midPos.x, unit->midPos.y, unit->midPos.z);
+					GL::RotateX(90.0f);
 					GLUquadricObj* q = gluNewQuadric();
 					gluQuadricDrawStyle(q, GLU_LINE);
 					gluSphere(q, unit->decloakDistance, 10, 10);
 					gluDeleteQuadric(q);
-					glPopMatrix();
+					GL::PopMatrix();
 				} else { // cylindrical
 					glSurfaceCircle(unit->pos, unit->decloakDistance, 40);
 				}
@@ -3775,14 +3775,14 @@ void CGuiHandler::DrawMapStuff(bool onMinimap)
 					}
 
 					if (!onMinimap) {
-						glPushMatrix();
-						glLoadIdentity();
-						glTranslatef3(buildPos);
-						glRotatef(bpi->buildFacing * 90.0f, 0.0f, 1.0f, 0.0f);
+						GL::PushMatrix();
+						GL::LoadIdentity();
+						GL::Translate(buildPos);
+						GL::RotateY(bpi->buildFacing * 90.0f);
 
 						CUnitDrawer::DrawIndividualDefAlpha(bpi->def, gu->myTeam, false);
 
-						glPopMatrix();
+						GL::PopMatrix();
 						glBlendFunc((GLenum)cmdColors.SelectedBlendSrc(), (GLenum)cmdColors.SelectedBlendDst());
 					}
 				}
@@ -3849,9 +3849,9 @@ void CGuiHandler::DrawMiniMapMarker(const float3& cameraPos)
 	static float spinTime = 0.0f;
 	spinTime = math::fmod(spinTime + globalRendering->lastFrameTime * 0.001f, 60.0f);
 
-	glPushMatrix();
-	glTranslatef(cameraPos.x, groundLevel, cameraPos.z);
-	glRotatef(360.0f * (spinTime / 2.0f), 0.0f, 1.0f, 0.0f);
+	GL::PushMatrix();
+	GL::Translate(cameraPos.x, groundLevel, cameraPos.z);
+	GL::RotateY(360.0f * (spinTime / 2.0f));
 
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
@@ -3872,7 +3872,7 @@ void CGuiHandler::DrawMiniMapMarker(const float3& cameraPos)
 		glColor4fv(colors[0]); glVertex3f(  +w,   +h, 0.0f);
 	glEnd();
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glPopMatrix();
+	GL::PopMatrix();
 }
 
 
@@ -4135,17 +4135,17 @@ static void StencilDrawSelectBox(const float3& pos0, const float3& pos1,
 
 static void FullScreenDraw()
 {
-	glMatrixMode(GL_PROJECTION);
-	glPushMatrix();
-	glLoadIdentity();
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-	glPushMatrix();
+	GL::MatrixMode(GL_PROJECTION);
+	GL::PushMatrix();
+	GL::LoadIdentity();
+	GL::MatrixMode(GL_MODELVIEW);
+	GL::LoadIdentity();
+	GL::PushMatrix();
 	glRectf(-1.0f, -1.0f, +1.0f, +1.0f);
-	glMatrixMode(GL_PROJECTION);
-	glPopMatrix();
-	glMatrixMode(GL_MODELVIEW);
-	glPopMatrix();
+	GL::MatrixMode(GL_PROJECTION);
+	GL::PopMatrix();
+	GL::MatrixMode(GL_MODELVIEW);
+	GL::PopMatrix();
 }
 
 

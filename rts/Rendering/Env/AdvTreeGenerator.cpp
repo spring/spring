@@ -474,13 +474,13 @@ void CAdvTreeGenerator::CreateLeafTex(unsigned int baseTex, int xpos, int ypos,u
 		float gCol=0.7f + 0.3f * guRNG.NextFloat();
 		float bCol=0.7f + 0.3f * guRNG.NextFloat();
 
-		glPushMatrix();
-		glLoadIdentity();
+		GL::PushMatrix();
+		GL::LoadIdentity();
 		glColor3f(baseCol*rCol,baseCol*gCol,baseCol*bCol);
-		glTranslatef(xp,yp,0);
-		glRotatef(rot,0,0,1);
-		glRotatef(360 * guRNG.NextFloat(),1,0,0);
-		glRotatef(360 * guRNG.NextFloat(),0,1,0);
+		GL::Translate(xp,yp,0);
+		GL::RotateZ(rot);
+		GL::RotateX(360 * guRNG.NextFloat());
+		GL::RotateY(360 * guRNG.NextFloat());
 
 		glBegin(GL_QUADS);
 			glTexCoord2f(0,0); glVertex3f(-0.1f,-0.2f,0);
@@ -489,7 +489,7 @@ void CAdvTreeGenerator::CreateLeafTex(unsigned int baseTex, int xpos, int ypos,u
 			glTexCoord2f(1,0); glVertex3f(0.1f,-0.2f,0);
 		glEnd();
 
-		glPopMatrix();
+		GL::PopMatrix();
 	}
 
 	std::vector<unsigned char> buf2(256 * 256 * 4);

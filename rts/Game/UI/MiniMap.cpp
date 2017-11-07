@@ -807,9 +807,9 @@ void CMiniMap::AddNotification(float3 pos, float3 color, float alpha)
 
 void CMiniMap::DrawCircle(const float3& pos, float radius) const
 {
-	glPushMatrix();
-	glTranslatef(pos.x, pos.y, pos.z);
-	glScalef(radius, 1.0f, radius);
+	GL::PushMatrix();
+	GL::Translate(pos.x, pos.y, pos.z);
+	GL::Scale(radius, 1.0f, radius);
 
 	const float xPixels = radius * float(curDim.x) / float(mapDims.mapx * SQUARE_SIZE);
 	const float yPixels = radius * float(curDim.y) / float(mapDims.mapy * SQUARE_SIZE);
@@ -817,7 +817,7 @@ void CMiniMap::DrawCircle(const float3& pos, float radius) const
 	const int lodClamp = std::max(0, std::min(circleListsCount - 1, lod));
 	glCallList(circleLists + lodClamp);
 
-	glPopMatrix();
+	GL::PopMatrix();
 }
 
 void CMiniMap::DrawSquare(const float3& pos, float xsize, float zsize) const
@@ -850,22 +850,22 @@ void CMiniMap::DrawSurfaceSquare(const float3& pos, float xsize, float ysize)
 void CMiniMap::EnterNormalizedCoors(bool pushMatrix, bool dualScreen) const
 {
 	if (pushMatrix)
-		glPushMatrix();
+		GL::PushMatrix();
 
 	// switch to normalized minimap coords
 	if (dualScreen) {
 		glViewport(curPos.x, curPos.y, curDim.x, curDim.y);
 	} else {
-		glTranslatef(curPos.x * globalRendering->pixelX, curPos.y * globalRendering->pixelY, 0.0f);
+		GL::Translate(curPos.x * globalRendering->pixelX, curPos.y * globalRendering->pixelY, 0.0f);
 	}
 
-	glScalef(curDim.x * globalRendering->pixelX, curDim.y * globalRendering->pixelY, 1.0f);
+	GL::Scale(curDim.x * globalRendering->pixelX, curDim.y * globalRendering->pixelY, 1.0f);
 }
 
 void CMiniMap::LeaveNormalizedCoors(bool popMatrix, bool dualScreen) const
 {
 	if (popMatrix)
-		glPopMatrix();
+		GL::PopMatrix();
 
 	if (dualScreen)
 		glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
@@ -1012,7 +1012,7 @@ void CMiniMap::Draw()
 		glDepthFunc(GL_LEQUAL);
 		glDepthMask(GL_FALSE);
 		glDisable(GL_TEXTURE_2D);
-		glMatrixMode(GL_MODELVIEW);
+		GL::MatrixMode(GL_MODELVIEW);
 
 		if (minimized) {
 			DrawMinimizedButton();
@@ -1050,7 +1050,7 @@ void CMiniMap::DrawForReal(bool useGeom, bool updateTex)
 	glDepthFunc(GL_LEQUAL);
 	glDepthMask(GL_FALSE);
 	glDisable(GL_TEXTURE_2D);
-	glMatrixMode(GL_MODELVIEW);
+	GL::MatrixMode(GL_MODELVIEW);
 
 	if (useGeom)
 		EnterNormalizedCoors(true, globalRendering->dualScreenMode);
@@ -1122,9 +1122,9 @@ void CMiniMap::DrawCameraFrustumAndMouseSelection()
 	glEnable(GL_CLIP_PLANE3);
 
 	// switch to top-down map/world coords (z is twisted with y compared to the real map/world coords)
-	glPushMatrix();
-	glTranslatef(0.0f, +1.0f, 0.0f);
-	glScalef(+1.0f / (mapDims.mapx * SQUARE_SIZE), -1.0f / (mapDims.mapy * SQUARE_SIZE), 1.0f);
+	GL::PushMatrix();
+	GL::Translate(0.0f, +1.0f, 0.0f);
+	GL::Scale(+1.0f / (mapDims.mapx * SQUARE_SIZE), -1.0f / (mapDims.mapy * SQUARE_SIZE), 1.0f);
 
 	if (!minimap->maximized) {
 		// draw the camera frustum lines
@@ -1190,7 +1190,7 @@ void CMiniMap::DrawCameraFrustumAndMouseSelection()
 	glDisable(GL_CLIP_PLANE2);
 	glDisable(GL_CLIP_PLANE3);
 
-	glPopMatrix();
+	GL::PopMatrix();
 	glEnable(GL_TEXTURE_2D);
 }
 
@@ -1447,10 +1447,10 @@ void CMiniMap::DrawBackground() const
 	//glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 
 	// don't mirror the map texture with flipped cameras
-	glMatrixMode(GL_TEXTURE);
-	glPushMatrix();
-	glLoadIdentity();
-	glMatrixMode(GL_MODELVIEW);
+	GL::MatrixMode(GL_TEXTURE);
+	GL::PushMatrix();
+	GL::LoadIdentity();
+	GL::MatrixMode(GL_MODELVIEW);
 
 		// draw the map
 		glDisable(GL_ALPHA_TEST);
@@ -1458,9 +1458,9 @@ void CMiniMap::DrawBackground() const
 			readMap->DrawMinimap();
 		glEnable(GL_BLEND);
 
-	glMatrixMode(GL_TEXTURE);
-	glPopMatrix();
-	glMatrixMode(GL_MODELVIEW);
+	GL::MatrixMode(GL_TEXTURE);
+	GL::PopMatrix();
+	GL::MatrixMode(GL_MODELVIEW);
 
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 }
@@ -1469,9 +1469,9 @@ void CMiniMap::DrawBackground() const
 void CMiniMap::DrawUnitIcons() const
 {
 	// switch to top-down map/world coords (z is twisted with y compared to the real map/world coords)
-	glPushMatrix();
-	glTranslatef(0.0f, +1.0f, 0.0f);
-	glScalef(+1.0f / (mapDims.mapx * SQUARE_SIZE), -1.0f / (mapDims.mapy * SQUARE_SIZE), 1.0f);
+	GL::PushMatrix();
+	GL::Translate(0.0f, +1.0f, 0.0f);
+	GL::Scale(+1.0f / (mapDims.mapx * SQUARE_SIZE), -1.0f / (mapDims.mapy * SQUARE_SIZE), 1.0f);
 
 	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_ALPHA_TEST);
@@ -1482,7 +1482,7 @@ void CMiniMap::DrawUnitIcons() const
 	glDisable(GL_ALPHA_TEST);
 	glDisable(GL_TEXTURE_2D);
 
-	glPopMatrix();
+	GL::PopMatrix();
 }
 
 
@@ -1526,11 +1526,11 @@ void CMiniMap::DrawUnitRanges() const
 
 void CMiniMap::DrawWorldStuff() const
 {
-	glPushMatrix();
-	glTranslatef(0.0f, +1.0f, 0.0f);
-	glScalef(+1.0f / (mapDims.mapx * SQUARE_SIZE), -1.0f / (mapDims.mapy * SQUARE_SIZE), 1.0f);
-	glRotatef(-90.0f, +1.0f, 0.0f, 0.0f); // real 'world' coordinates
-	glScalef(1.0f, 0.0f, 1.0f); // skip the y-coord (Lua's DrawScreen is perspective and so any z-coord in it influence the x&y, too)
+	GL::PushMatrix();
+	GL::Translate(0.0f, +1.0f, 0.0f);
+	GL::Scale(+1.0f / (mapDims.mapx * SQUARE_SIZE), -1.0f / (mapDims.mapy * SQUARE_SIZE), 1.0f);
+	GL::RotateX(-90.0f); // real 'world' coordinates
+	GL::Scale(1.0f, 0.0f, 1.0f); // skip the y-coord (Lua's DrawScreen is perspective and so any z-coord in it influence the x&y, too)
 
 	// draw the projectiles
 	if (drawProjectiles) {
@@ -1562,7 +1562,7 @@ void CMiniMap::DrawWorldStuff() const
 
 	DrawUnitRanges();
 
-	glPopMatrix();
+	GL::PopMatrix();
 }
 
 
@@ -1577,9 +1577,9 @@ void CMiniMap::SetClipPlanes(const bool lua) const
 		// -> we have to use the same modelview matrix when calling glClipPlane and later draw calls
 
 		// set the modelview matrix to the same as used in Lua's DrawInMinimap
-		glPushMatrix();
-		glLoadIdentity();
-		glScalef(1.0f / curDim.x, 1.0f / curDim.y, 1.0f);
+		GL::PushMatrix();
+		GL::LoadIdentity();
+		GL::Scale(1.0f / curDim.x, 1.0f / curDim.y, 1.0f);
 
 		const double plane0[4] = { 0, -1, 0, double(curDim.y)};
 		const double plane1[4] = { 0,  1, 0,                0};
@@ -1591,7 +1591,7 @@ void CMiniMap::SetClipPlanes(const bool lua) const
 		glClipPlane(GL_CLIP_PLANE2, plane2); // clip right
 		glClipPlane(GL_CLIP_PLANE3, plane3); // clip left
 
-		glPopMatrix();
+		GL::PopMatrix();
 	} else {
 		// clip everything outside of the minimap box
 		const double plane0[4] = { 0,-1, 0, 1};

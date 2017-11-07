@@ -79,11 +79,11 @@ void GL::GeometryBuffer::DetachTextures(const bool init) {
 }
 
 void GL::GeometryBuffer::DrawDebug(const unsigned int texID, const float2 texMins, const float2 texMaxs) const {
-	glPushMatrix();
-	glLoadIdentity();
-	glMatrixMode(GL_PROJECTION);
-	glPushMatrix();
-	glLoadIdentity();
+	GL::PushMatrix();
+	GL::LoadIdentity();
+	GL::MatrixMode(GL_PROJECTION);
+	GL::PushMatrix();
+	GL::LoadIdentity();
 
 	glActiveTexture(GL_TEXTURE0);
 	glEnable(GL_TEXTURE_2D);
@@ -97,9 +97,9 @@ void GL::GeometryBuffer::DrawDebug(const unsigned int texID, const float2 texMin
 	glBindTexture(GL_TEXTURE_2D, 0);
 	glDisable(GL_TEXTURE_2D);
 
-	glPopMatrix();
-	glMatrixMode(GL_MODELVIEW);
-	glPopMatrix();
+	GL::PopMatrix();
+	GL::MatrixMode(GL_MODELVIEW);
+	GL::PopMatrix();
 }
 
 bool GL::GeometryBuffer::Create(const int2 size) {

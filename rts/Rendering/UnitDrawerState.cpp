@@ -23,19 +23,19 @@
 
 void IUnitDrawerState::PushTransform(const CCamera* cam) {
 	// set model-drawing transform; view is combined with projection
-	glMatrixMode(GL_PROJECTION);
-	glPushMatrix();
-	glMultMatrixf(cam->GetViewMatrix());
-	glMatrixMode(GL_MODELVIEW);
-	glPushMatrix();
-	glLoadIdentity();
+	GL::MatrixMode(GL_PROJECTION);
+	GL::PushMatrix();
+	GL::MultMatrix(cam->GetViewMatrix());
+	GL::MatrixMode(GL_MODELVIEW);
+	GL::PushMatrix();
+	GL::LoadIdentity();
 }
 
 void IUnitDrawerState::PopTransform() {
-	glMatrixMode(GL_PROJECTION);
-	glPopMatrix();
-	glMatrixMode(GL_MODELVIEW);
-	glPopMatrix();
+	GL::MatrixMode(GL_PROJECTION);
+	GL::PopMatrix();
+	GL::MatrixMode(GL_MODELVIEW);
+	GL::PopMatrix();
 }
 
 

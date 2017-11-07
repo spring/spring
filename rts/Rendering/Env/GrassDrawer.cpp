@@ -393,11 +393,11 @@ void CGrassDrawer::DrawNear(const std::vector<InviewNearGrass>& inviewGrass)
 			pos.y -= CGround::GetSlope(p.x, p.y, false) * 30.0f;
 			pos.y -= 2.0f * mapInfo->grass.bladeHeight * alpha;
 
-			glPushMatrix();
-			glTranslatef3(pos);
-			glRotatef(p.z, 0.0f, 1.0f, 0.0f);
+			GL::PushMatrix();
+			GL::Translate(pos);
+			GL::RotateY(p.z);
 			glCallList(grassDL);
-			glPopMatrix();
+			GL::PopMatrix();
 		}
 	}
 }
@@ -589,9 +589,9 @@ void CGrassDrawer::DrawShadow()
 
 	// we pass it as uniform and want to have pos & rot
 	// of the turfs to be saved alone in the modelview matrix
-	glMatrixMode(GL_MODELVIEW);
-	glPushMatrix();
-	glLoadIdentity();
+	GL::MatrixMode(GL_MODELVIEW);
+	GL::PushMatrix();
+	GL::LoadIdentity();
 
 	CCamera* cam = CCamera::GetCamera(CCamera::CAMTYPE_PLAYER);
 
@@ -607,8 +607,8 @@ void CGrassDrawer::DrawShadow()
 	//FIXME needs own shader!
 	//DrawNearBillboards(blockDrawer.inviewNearGrass);
 
-	glMatrixMode(GL_MODELVIEW);
-	glPopMatrix();
+	GL::MatrixMode(GL_MODELVIEW);
+	GL::PopMatrix();
 
 	glEnable(GL_CULL_FACE);
 	glDisable(GL_POLYGON_OFFSET_FILL);
@@ -642,12 +642,12 @@ void CGrassDrawer::SetupGlStateNear()
 		if (shadowHandler->ShadowsLoaded())
 			shadowHandler->SetupShadowTexSampler(GL_TEXTURE4);
 
-		glMatrixMode(GL_PROJECTION);
-			glPushMatrix();
-			glMultMatrixf(camera->GetViewMatrix());
-		glMatrixMode(GL_MODELVIEW);
-			glPushMatrix();
-			glLoadIdentity();
+		GL::MatrixMode(GL_PROJECTION);
+			GL::PushMatrix();
+			GL::MultMatrix(camera->GetViewMatrix());
+		GL::MatrixMode(GL_MODELVIEW);
+			GL::PushMatrix();
+			GL::LoadIdentity();
 	}
 
 	glActiveTexture(GL_TEXTURE0);
@@ -665,10 +665,10 @@ void CGrassDrawer::ResetGlStateNear()
 	{
 		grassShader->Disable();
 
-		glMatrixMode(GL_PROJECTION);
-		glPopMatrix();
-		glMatrixMode(GL_MODELVIEW);
-		glPopMatrix();
+		GL::MatrixMode(GL_PROJECTION);
+		GL::PopMatrix();
+		GL::MatrixMode(GL_MODELVIEW);
+		GL::PopMatrix();
 	}
 
 	glDisable(GL_TEXTURE_2D);
@@ -684,12 +684,12 @@ void CGrassDrawer::SetupGlStateFar()
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glDepthMask(GL_FALSE);
 
-	glMatrixMode(GL_PROJECTION);
-		glPushMatrix();
-		glMultMatrixf(camera->GetViewMatrix());
-	glMatrixMode(GL_MODELVIEW);
-		glPushMatrix();
-		glLoadIdentity();
+	GL::MatrixMode(GL_PROJECTION);
+		GL::PushMatrix();
+		GL::MultMatrix(camera->GetViewMatrix());
+	GL::MatrixMode(GL_MODELVIEW);
+		GL::PushMatrix();
+		GL::LoadIdentity();
 
 	EnableShader(GRASS_PROGRAM_DIST);
 
@@ -713,10 +713,10 @@ void CGrassDrawer::ResetGlStateFar()
 {
 	grassShader->Disable();
 
-	glMatrixMode(GL_PROJECTION);
-	glPopMatrix();
-	glMatrixMode(GL_MODELVIEW);
-	glPopMatrix();
+	GL::MatrixMode(GL_PROJECTION);
+	GL::PopMatrix();
+	GL::MatrixMode(GL_MODELVIEW);
+	GL::PopMatrix();
 
 	glDepthMask(GL_TRUE);
 	glDisable(GL_ALPHA_TEST);
@@ -833,10 +833,10 @@ void CGrassDrawer::CreateFarTex()
 		return;
 	}
 
-	glPushMatrix();
-	glLoadIdentity();
-	glMatrixMode(GL_PROJECTION);
-	glPushMatrix();
+	GL::PushMatrix();
+	GL::LoadIdentity();
+	GL::MatrixMode(GL_PROJECTION);
+	GL::PushMatrix();
 
 	glDisable(GL_FOG);
 	glDisable(GL_BLEND);
@@ -860,8 +860,8 @@ void CGrassDrawer::CreateFarTex()
 		glViewport(a * billboardSize * sizeMod, 0, billboardSize * sizeMod, billboardSize * sizeMod);
 
 		glSpringMatrix2dSetupPV(-partTurfSize, partTurfSize, partTurfSize, -partTurfSize, -turfSize, turfSize);
-		glRotatef(a * 90.0f / (numAngles - 1), 1.0f, 0.0f, 0.0f);
-		glMatrixMode(GL_PROJECTION);
+		GL::RotateX(a * 90.0f / (numAngles - 1));
+		GL::MatrixMode(GL_PROJECTION);
 
 		// has to be applied after the matrix transformations,
 		// cause it uses those an `compiles` them into the clip plane
@@ -887,10 +887,10 @@ void CGrassDrawer::CreateFarTex()
 	{
 		const int mipLevels = std::ceil(std::log((float)(std::max(texSizeX, texSizeY) + 1)));
 
-		glMatrixMode(GL_MODELVIEW);
-			glLoadIdentity();
-		glMatrixMode(GL_PROJECTION);
-			glLoadIdentity();
+		GL::MatrixMode(GL_MODELVIEW);
+			GL::LoadIdentity();
+		GL::MatrixMode(GL_PROJECTION);
+			GL::LoadIdentity();
 
 		glEnable(GL_BLEND);
 		glBlendFuncSeparate(GL_ONE_MINUS_DST_ALPHA, GL_DST_ALPHA, GL_ZERO, GL_DST_ALPHA);
@@ -922,10 +922,10 @@ void CGrassDrawer::CreateFarTex()
 	}
 
 	glViewport(globalRendering->viewPosX, 0, globalRendering->viewSizeX, globalRendering->viewSizeY);
-	glMatrixMode(GL_PROJECTION);
-	glPopMatrix();
-	glMatrixMode(GL_MODELVIEW);
-	glPopMatrix();
+	GL::MatrixMode(GL_PROJECTION);
+	GL::PopMatrix();
+	GL::MatrixMode(GL_MODELVIEW);
+	GL::PopMatrix();
 
 	FBO::Unbind();
 	//glSaveTexture(farTex, "grassfar.png");

@@ -850,9 +850,9 @@ void CMouseHandler::DrawCursor()
 			const float xscale = (crossSize / globalRendering->viewSizeX);
 			const float yscale = (crossSize / globalRendering->viewSizeY);
 
-			glPushMatrix();
-			glTranslatef(0.5f - globalRendering->pixelX * 0.5f, 0.5f - globalRendering->pixelY * 0.5f, 0.f);
-			glScalef(xscale, yscale, 1.f);
+			GL::PushMatrix();
+			GL::Translate(0.5f - globalRendering->pixelX * 0.5f, 0.5f - globalRendering->pixelY * 0.5f, 0.f);
+			GL::Scale(xscale, yscale, 1.f);
 
 			if (gu->fpsMode) {
 				DrawFPSCursor();
@@ -860,7 +860,7 @@ void CMouseHandler::DrawCursor()
 				DrawScrollCursor();
 			}
 
-			glPopMatrix();
+			GL::PopMatrix();
 		}
 
 		glEnable(GL_TEXTURE_2D);

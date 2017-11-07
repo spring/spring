@@ -218,10 +218,10 @@ void FlyingPiece::Draw(const FlyingPiece* prev) const
 	const VBO& shatterIndices = piece->GetShatterIndexVBO();
 
 	for (auto& cp: splitterParts) {
-		glPushMatrix();
-		glMultMatrixf(GetMatrixOf(cp, dragFactors));
+		GL::PushMatrix();
+		GL::MultMatrix(GetMatrixOf(cp, dragFactors));
 		glDrawRangeElements(GL_TRIANGLES, 0, piece->GetVertexCount() - 1, cp.indexCount, GL_UNSIGNED_INT, shatterIndices.GetPtr(cp.vboOffset));
-		glPopMatrix();
+		GL::PopMatrix();
 	}
 }
 

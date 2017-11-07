@@ -47,12 +47,12 @@ void DebugDrawerAI::Draw() {
 	if (skirmishAIHandler.GetSkirmishAIsInTeam(gu->myTeam).empty())
 		return;
 
-	glMatrixMode(GL_PROJECTION);
-	glPushMatrix();
-	glLoadIdentity();
-	glMatrixMode(GL_MODELVIEW);
-	glPushMatrix();
-	glLoadIdentity();
+	GL::MatrixMode(GL_PROJECTION);
+	GL::PushMatrix();
+	GL::LoadIdentity();
+	GL::MatrixMode(GL_MODELVIEW);
+	GL::PushMatrix();
+	GL::LoadIdentity();
 
 	glPushAttrib(GL_CURRENT_BIT | GL_ENABLE_BIT);
 
@@ -65,10 +65,10 @@ void DebugDrawerAI::Draw() {
 
 	glPopAttrib();
 
-	glMatrixMode(GL_PROJECTION);
-	glPopMatrix();
-	glMatrixMode(GL_MODELVIEW);
-	glPopMatrix();
+	GL::MatrixMode(GL_PROJECTION);
+	GL::PopMatrix();
+	GL::MatrixMode(GL_MODELVIEW);
+	GL::PopMatrix();
 }
 
 

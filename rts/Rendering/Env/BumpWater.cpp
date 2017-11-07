@@ -1191,12 +1191,12 @@ void CBumpWater::OcclusionQuery()
 		glDepthMask(GL_FALSE);
 		glEnable(GL_DEPTH_TEST);
 
-		glPushMatrix();
-			glTranslatef(0.0, 10.0, 0.0);
+		GL::PushMatrix();
+			GL::Translate(0.0, 10.0, 0.0);
 			glBeginQuery(GL_ANY_SAMPLES_PASSED, occlusionQuery);
 				glCallList(displayList);
 			glEndQuery(GL_ANY_SAMPLES_PASSED);
-		glPopMatrix();
+		GL::PopMatrix();
 
 		glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 		glDepthMask(GL_TRUE);

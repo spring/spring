@@ -137,14 +137,14 @@ void CCursorIcons::DrawBuilds()
 	glColor4f(1.0f, 1.0f, 1.0f, 0.3f);
 
 	for (auto it = buildIcons.begin() ; it != buildIcons.end(); ++it) {
-		glPushMatrix();
-		glLoadIdentity();
-		glTranslatef3(it->pos);
-		glRotatef(it->facing * 90.0f, 0.0f, 1.0f, 0.0f);
+		GL::PushMatrix();
+		GL::LoadIdentity();
+		GL::Translate(it->pos);
+		GL::RotateY(it->facing * 90.0f);
 
 		CUnitDrawer::DrawIndividualDefAlpha(unitDefHandler->GetUnitDefByID(-(it->cmd)), it->team, false);
 
-		glPopMatrix();
+		GL::PopMatrix();
 	}
 
 	glDisable(GL_DEPTH_TEST);

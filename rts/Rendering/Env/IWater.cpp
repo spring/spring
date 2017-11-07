@@ -146,11 +146,11 @@ void IWater::ExplosionOccurred(const CExplosionParams& event) {
 }
 
 void IWater::SetModelClippingPlane(const double* planeEq) {
-	glPushMatrix();
-	glLoadIdentity();
+	GL::PushMatrix();
+	GL::LoadIdentity();
 	glEnable(GL_CLIP_PLANE0 + ClipPlaneIndex());
 	glClipPlane(GL_CLIP_PLANE0 + ClipPlaneIndex(), planeEq);
-	glPopMatrix();
+	GL::PopMatrix();
 }
 
 

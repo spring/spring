@@ -462,9 +462,9 @@ void CUnitDrawer::DrawOpaqueAIUnits(int modelType)
 
 void CUnitDrawer::DrawOpaqueAIUnit(const TempDrawUnit& unit)
 {
-	glPushMatrix();
-	glTranslatef3(unit.pos);
-	glRotatef(unit.rotation * math::RAD_TO_DEG, 0.0f, 1.0f, 0.0f);
+	GL::PushMatrix();
+	GL::Translate(unit.pos);
+	GL::RotateY(unit.rotation * math::RAD_TO_DEG);
 
 	const UnitDef* def = unit.unitDef;
 	const S3DModel* mdl = def->model;
@@ -475,7 +475,7 @@ void CUnitDrawer::DrawOpaqueAIUnit(const TempDrawUnit& unit)
 	SetTeamColour(unit.team);
 	mdl->DrawStatic();
 
-	glPopMatrix();
+	GL::PopMatrix();
 }
 
 
@@ -803,9 +803,9 @@ inline void CUnitDrawer::DrawAlphaUnit(CUnit* unit, int modelType, bool drawGhos
 			glColor4f(0.6f, 0.6f, 0.6f, alphaValues.y);
 		}
 
-		glPushMatrix();
-		glTranslatef3(unit->drawPos);
-		glRotatef(unit->buildFacing * 90.0f, 0, 1, 0);
+		GL::PushMatrix();
+		GL::Translate(unit->drawPos);
+		GL::RotateY(unit->buildFacing * 90.0f);
 
 		// the units in liveGhostedBuildings[modelType] are not
 		// sorted by textureType, but we cannot merge them with
@@ -815,7 +815,7 @@ inline void CUnitDrawer::DrawAlphaUnit(CUnit* unit, int modelType, bool drawGhos
 
 		SetTeamColour(unit->team, float2((losStatus & LOS_CONTRADAR)? alphaValues.z: alphaValues.y, 1.0f));
 		model->DrawStatic();
-		glPopMatrix();
+		GL::PopMatrix();
 
 		glColor4f(1.0f, 1.0f, 1.0f, alphaValues.x);
 		return;
@@ -848,9 +848,9 @@ void CUnitDrawer::DrawAlphaAIUnits(int modelType)
 
 void CUnitDrawer::DrawAlphaAIUnit(const TempDrawUnit& unit)
 {
-	glPushMatrix();
-	glTranslatef3(unit.pos);
-	glRotatef(unit.rotation * math::RAD_TO_DEG, 0.0f, 1.0f, 0.0f);
+	GL::PushMatrix();
+	GL::Translate(unit.pos);
+	GL::RotateY(unit.rotation * math::RAD_TO_DEG);
 
 	const UnitDef* def = unit.unitDef;
 	const S3DModel* mdl = def->model;
@@ -861,7 +861,7 @@ void CUnitDrawer::DrawAlphaAIUnit(const TempDrawUnit& unit)
 	SetTeamColour(unit.team, float2(alphaValues.x, 1.0f));
 	mdl->DrawStatic();
 
-	glPopMatrix();
+	GL::PopMatrix();
 }
 
 void CUnitDrawer::DrawAlphaAIUnitBorder(const TempDrawUnit& unit)
@@ -929,15 +929,15 @@ void CUnitDrawer::DrawGhostedBuildings(int modelType)
 	// buildings that died while ghosted
 	for (auto it = deadGhostedBuildings.begin(); it != deadGhostedBuildings.end(); ++it) {
 		if (camera->InView((*it)->pos, (*it)->model->GetDrawRadius())) {
-			glPushMatrix();
-			glTranslatef3((*it)->pos);
-			glRotatef((*it)->facing * 90.0f, 0, 1, 0);
+			GL::PushMatrix();
+			GL::Translate((*it)->pos);
+			GL::RotateY((*it)->facing * 90.0f);
 
 			BindModelTypeTexture(modelType, (*it)->model->textureType);
 			SetTeamColour((*it)->team, float2(alphaValues.y, 1.0f));
 
 			(*it)->model->DrawStatic();
-			glPopMatrix();
+			GL::PopMatrix();
 			(*it)->lastDrawFrame = globalRendering->drawFrame;
 		}
 	}
@@ -1081,16 +1081,16 @@ static void DIDResetPrevProjection(bool toScreen)
 	if (!toScreen)
 		return;
 
-	glMatrixMode(GL_PROJECTION);
-	glPopMatrix();
-	glPushMatrix();
+	GL::MatrixMode(GL_PROJECTION);
+	GL::PopMatrix();
+	GL::PushMatrix();
 }
 
 static void DIDResetPrevModelView()
 {
-	glMatrixMode(GL_MODELVIEW);
-	glPopMatrix();
-	glPushMatrix();
+	GL::MatrixMode(GL_MODELVIEW);
+	GL::PopMatrix();
+	GL::PushMatrix();
 }
 
 static bool DIDCheckMatrixMode(int wantedMode)
@@ -1357,12 +1357,12 @@ void CUnitDrawer::DrawUnitNoTrans(
 
 void CUnitDrawer::DrawUnitTrans(const CUnit* unit, unsigned int preList, unsigned int postList, bool lodCall, bool noLuaCall)
 {
-	glPushMatrix();
-	glMultMatrixf(unit->GetTransformMatrix());
+	GL::PushMatrix();
+	GL::MultMatrix(unit->GetTransformMatrix());
 
 	DrawUnitNoTrans(unit, preList, postList, lodCall, noLuaCall);
 
-	glPopMatrix();
+	GL::PopMatrix();
 }
 
 

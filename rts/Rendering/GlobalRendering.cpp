@@ -1107,7 +1107,7 @@ void CGlobalRendering::InitGLState()
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glViewport(viewPosX, viewPosY, viewSizeX, viewSizeY);
-	// glMultMatrixf(CMatrix44f::PerspProj(aspectRatio, std::tan((45.0f * math::DEG_TO_RAD) * 0.5f), 2.8f, MAX_VIEW_RANGE));
+	// GL::MultMatrix(CMatrix44f::PerspProj(aspectRatio, std::tan((45.0f * math::DEG_TO_RAD) * 0.5f), 2.8f, MAX_VIEW_RANGE));
 
 
 	SwapBuffers(true, true);

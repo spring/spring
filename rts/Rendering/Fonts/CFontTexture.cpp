@@ -699,7 +699,7 @@ void CFontTexture::UpdateTexCoorScaleMatList()
 		texCoorScaleMatList = glGenLists(1);
 
 	glNewList(texCoorScaleMatList, GL_COMPILE);
-	glScalef(1.0f / texWidth, 1.0f / texHeight, 1.0f);
+	GL::Scale(1.0f / texWidth, 1.0f / texHeight, 1.0f);
 	glEndList();
 }
 
@@ -708,14 +708,14 @@ void CFontTexture::CallTexCoorScaleMatList(bool push)
 	// note: can not just call glScale, we might be executed
 	// inside another list wrapping glFont::{Begin,Print,End}
 	if (push) {
-		glMatrixMode(GL_TEXTURE);
-		glPushMatrix();
+		GL::MatrixMode(GL_TEXTURE);
+		GL::PushMatrix();
 		glCallList(texCoorScaleMatList);
-		glMatrixMode(GL_MODELVIEW);
+		GL::MatrixMode(GL_MODELVIEW);
 	} else {
-		glMatrixMode(GL_TEXTURE);
-		glPopMatrix();
-		glMatrixMode(GL_MODELVIEW);
+		GL::MatrixMode(GL_TEXTURE);
+		GL::PopMatrix();
+		GL::MatrixMode(GL_MODELVIEW);
 	}
 }
 

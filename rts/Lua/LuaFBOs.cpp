@@ -507,8 +507,8 @@ int LuaFBOs::ActiveFBO(lua_State* L)
 	glPushAttrib(GL_VIEWPORT_BIT);
 	glViewport(0, 0, fbo->xsize, fbo->ysize);
 	if (identities) {
-		glMatrixMode(GL_PROJECTION); glPushMatrix(); glLoadIdentity();
-		glMatrixMode(GL_MODELVIEW);  glPushMatrix(); glLoadIdentity();
+		GL::MatrixMode(GL_PROJECTION); GL::PushMatrix(); GL::LoadIdentity();
+		GL::MatrixMode(GL_MODELVIEW);  GL::PushMatrix(); GL::LoadIdentity();
 	}
 
 	GLint currentFBO;
@@ -519,8 +519,8 @@ int LuaFBOs::ActiveFBO(lua_State* L)
 
 	glBindFramebufferEXT(target, currentFBO);
 	if (identities) {
-		glMatrixMode(GL_PROJECTION); glPopMatrix();
-		glMatrixMode(GL_MODELVIEW);  glPopMatrix();
+		GL::MatrixMode(GL_PROJECTION); GL::PopMatrix();
+		GL::MatrixMode(GL_MODELVIEW);  GL::PopMatrix();
 	}
 	glPopAttrib();
 

@@ -350,8 +350,8 @@ void CAdvTreeDrawer::DrawPass()
 
 			const CMatrix44f transMatrix(pos, xvec, yvec, zvec);
 
-			glPushMatrix();
-			glMultMatrixf(transMatrix);
+			GL::PushMatrix();
+			GL::MultMatrix(transMatrix);
 
 			if (ft.type < 8) {
 				glCallList(treeGen.pineDL + ft.type);
@@ -359,7 +359,7 @@ void CAdvTreeDrawer::DrawPass()
 				glCallList(treeGen.leafDL + ft.type - 8);
 			}
 
-			glPopMatrix();
+			GL::PopMatrix();
 		}
 
 		ResetDrawState();
@@ -437,8 +437,8 @@ void CAdvTreeDrawer::DrawShadowPass()
 
 		const CMatrix44f transMatrix(pos, xvec, yvec, zvec);
 
-		glPushMatrix();
-		glMultMatrixf(transMatrix);
+		GL::PushMatrix();
+		GL::MultMatrix(transMatrix);
 
 		if (ft.type < 8) {
 			glCallList(treeGen.pineDL + ft.type);
@@ -446,7 +446,7 @@ void CAdvTreeDrawer::DrawShadowPass()
 			glCallList(treeGen.leafDL + ft.type - 8);
 		}
 
-		glPopMatrix();
+		GL::PopMatrix();
 	}
 
 	ResetShadowDrawState();

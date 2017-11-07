@@ -296,10 +296,10 @@ inline void CGroundDecalHandler::DrawObjectDecal(SolidObjectGroundDecal* decal)
 		// pos{x,y} are multiples of SQUARE_SIZE, but pos might not be
 		// shift the decal visually in the latter case so it is aligned
 		// with the object on top of it
-		glPushMatrix();
-		glTranslatef(int(decal->pos.x) % SQUARE_SIZE, 0.0f, int(decal->pos.z) % SQUARE_SIZE);
+		GL::PushMatrix();
+		GL::Translate(int(decal->pos.x) % SQUARE_SIZE, 0.0f, int(decal->pos.z) % SQUARE_SIZE);
 		va.DrawArrayTC(GL_QUADS);
-		glPopMatrix();
+		GL::PopMatrix();
 	}
 
 	#undef HEIGHT

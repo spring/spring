@@ -308,10 +308,10 @@ void CWorldDrawer::DrawAlphaObjects() const
 	{
 		SCOPED_TIMER("Draw::World::Models::Alpha");
 		// clip in model-space
-		glPushMatrix();
-		glLoadIdentity();
+		GL::PushMatrix();
+		GL::LoadIdentity();
 		glClipPlane(GL_CLIP_PLANE3, belowPlaneEq);
-		glPopMatrix();
+		GL::PopMatrix();
 		glEnable(GL_CLIP_PLANE3);
 
 		// draw alpha-objects below water surface (farthest)
@@ -331,10 +331,10 @@ void CWorldDrawer::DrawAlphaObjects() const
 
 	{
 		SCOPED_TIMER("Draw::World::Models::Alpha");
-		glPushMatrix();
-		glLoadIdentity();
+		GL::PushMatrix();
+		GL::LoadIdentity();
 		glClipPlane(GL_CLIP_PLANE3, abovePlaneEq);
-		glPopMatrix();
+		GL::PopMatrix();
 		glEnable(GL_CLIP_PLANE3);
 
 		// draw alpha-objects above water surface (closest)
