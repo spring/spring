@@ -522,7 +522,7 @@ void LWOImporter::ComputeNormals(aiMesh* mesh, const std::vector<unsigned int>& 
     // Generate vertex normals. We have O(logn) for the binary lookup, which we need
     // for n elements, thus the EXPECTED complexity is O(nlogn)
     if (surface.mMaximumSmoothAngle < 3.f && !configSpeedFlag)  {
-        const float fLimit = std::cos(surface.mMaximumSmoothAngle);
+        const float fLimit = math::cos(surface.mMaximumSmoothAngle);
 
         for( begin =  mesh->mFaces, it = smoothingGroups.begin(); begin != end; ++begin, ++it)  {
             const aiFace& face = *begin;

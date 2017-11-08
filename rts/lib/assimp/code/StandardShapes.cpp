@@ -195,7 +195,7 @@ unsigned int StandardShapes::MakeIcosahedron(std::vector<aiVector3D>& positions)
     positions.reserve(positions.size()+60);
 
     const ai_real t = ( ai_real( 1.0 )+ ai_real( 2.236067977 ) ) / ai_real( 2.0 );
-    const ai_real s = std::sqrt(ai_real(1.0) + t*t);
+    const ai_real s = math::sqrt(ai_real(1.0) + t*t);
 
     const aiVector3D v0  = aiVector3D(t,1.0, 0.0)/s;
     const aiVector3D v1  = aiVector3D(-t,1.0, 0.0)/s;
@@ -245,8 +245,8 @@ unsigned int StandardShapes::MakeDodecahedron(std::vector<aiVector3D>& positions
     positions.reserve(positions.size()+108);
 
     const ai_real a = ai_real( 1.0 ) / ai_real(1.7320508);
-    const ai_real b = std::sqrt(( ai_real( 3.0 )- ai_real( 2.23606797))/ ai_real( 6.0) );
-    const ai_real c = std::sqrt(( ai_real( 3.0 )+ ai_real( 2.23606797f))/ ai_real( 6.0) );
+    const ai_real b = math::sqrt(( ai_real( 3.0 )- ai_real( 2.23606797))/ ai_real( 6.0) );
+    const ai_real c = math::sqrt(( ai_real( 3.0 )+ ai_real( 2.23606797f))/ ai_real( 6.0) );
 
     const aiVector3D v0  = aiVector3D(a,a,a);
     const aiVector3D v1  = aiVector3D(a,a,-a);
@@ -394,8 +394,8 @@ void StandardShapes::MakeCone(ai_real height,ai_real radius1,
     size_t old = positions.size();
 
     // No negative radii
-    radius1 = std::fabs(radius1);
-    radius2 = std::fabs(radius2);
+    radius1 = math::fabs(radius1);
+    radius2 = math::fabs(radius2);
 
     ai_real halfHeight = height / ai_real(2.0);
 
@@ -419,8 +419,8 @@ void StandardShapes::MakeCone(ai_real height,ai_real radius1,
     const ai_real angle_delta = (ai_real)AI_MATH_TWO_PI / tess;
     const ai_real angle_max   = (ai_real)AI_MATH_TWO_PI;
 
-    ai_real s = 1.0; // std::cos(angle == 0);
-    ai_real t = 0.0; // std::sin(angle == 0);
+    ai_real s = 1.0; // math::cos(angle == 0);
+    ai_real t = 0.0; // math::sin(angle == 0);
 
     for (ai_real angle = 0.0; angle < angle_max; )
     {
@@ -428,8 +428,8 @@ void StandardShapes::MakeCone(ai_real height,ai_real radius1,
         const aiVector3D v2 = aiVector3D (s * radius2,  halfHeight, t * radius2 );
 
         const ai_real next = angle + angle_delta;
-        ai_real s2 = std::cos(next);
-        ai_real t2 = std::sin(next);
+        ai_real s2 = math::cos(next);
+        ai_real t2 = math::sin(next);
 
         const aiVector3D v3 = aiVector3D (s2 * radius2,  halfHeight, t2 * radius2 );
         const aiVector3D v4 = aiVector3D (s2 * radius1, -halfHeight, t2 * radius1 );
@@ -480,7 +480,7 @@ void StandardShapes::MakeCircle(ai_real radius, unsigned int tess,
     if (tess < 3 || !radius)
         return;
 
-    radius = std::fabs(radius);
+    radius = math::fabs(radius);
 
     // We will need 3 vertices per segment
     positions.reserve(positions.size()+tess*3);
@@ -488,15 +488,15 @@ void StandardShapes::MakeCircle(ai_real radius, unsigned int tess,
     const ai_real angle_delta = (ai_real)AI_MATH_TWO_PI / tess;
     const ai_real angle_max   = (ai_real)AI_MATH_TWO_PI;
 
-    ai_real s = 1.0; // std::cos(angle == 0);
-    ai_real t = 0.0; // std::sin(angle == 0);
+    ai_real s = 1.0; // math::cos(angle == 0);
+    ai_real t = 0.0; // math::sin(angle == 0);
 
     for (ai_real angle = 0.0; angle < angle_max;  )
     {
         positions.push_back(aiVector3D(s * radius,0.0,t * radius));
         angle += angle_delta;
-        s = std::cos(angle);
-        t = std::sin(angle);
+        s = math::cos(angle);
+        t = math::sin(angle);
         positions.push_back(aiVector3D(s * radius,0.0,t * radius));
 
         positions.push_back(aiVector3D(0.0,0.0,0.0));

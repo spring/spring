@@ -17,7 +17,7 @@
 #ifndef __FAST_A_TO_F_H_INCLUDED__
 #define __FAST_A_TO_F_H_INCLUDED__
 
-#include <cmath>
+#include "lib/streflop/streflop_cond.h"
 #include <limits>
 #include <stdint.h>
 #include <stdexcept>
@@ -346,7 +346,7 @@ inline const char* fast_atoreal_move(const char* c, Real& out, bool check_comma 
         if (einv) {
             exp = -exp;
         }
-        f *= std::pow(static_cast<Real>(10.0), exp);
+        f *= math::pow(static_cast<Real>(10.0), exp);
     }
 
     if (inv) {

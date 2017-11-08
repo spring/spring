@@ -197,7 +197,7 @@ template <typename TReal>
 inline bool aiColor4t<TReal> :: IsBlack() const {
     // The alpha component doesn't care here. black is black.
     static const TReal epsilon = 10e-3f;
-    return std::fabs( r ) < epsilon && std::fabs( g ) < epsilon && std::fabs( b ) < epsilon;
+    return math::fabs( r ) < epsilon && math::fabs( g ) < epsilon && math::fabs( b ) < epsilon;
 }
 
 #endif // __cplusplus

@@ -454,7 +454,7 @@ void ColladaExporter::WriteSpotLight(const aiLight *const light){
                             << light->mAttenuationQuadratic
                         <<"</quadratic_attenuation>" << endstr;
     /*
-    out->mAngleOuterCone = AI_DEG_TO_RAD (std::acos(std::pow(0.1f,1.f/srcLight->mFalloffExponent))+
+    out->mAngleOuterCone = AI_DEG_TO_RAD (math::acos(math::pow(0.1f,1.f/srcLight->mFalloffExponent))+
                             srcLight->mFalloffAngle);
     */
 
@@ -464,8 +464,8 @@ void ColladaExporter::WriteSpotLight(const aiLight *const light){
                         <<"</falloff_angle>" << endstr;
     float temp = light->mAngleOuterCone-light->mAngleInnerCone;
 
-    temp = std::cos(temp);
-    temp = std::log(temp)/std::log(0.1);
+    temp = math::cos(temp);
+    temp = math::log(temp)/math::log(0.1);
     temp = 1/temp;
     mOutput << startstr << "<falloff_exponent sid=\"fall_off_exponent\">"
                             << temp
