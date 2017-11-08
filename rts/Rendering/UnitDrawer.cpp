@@ -118,12 +118,10 @@ static const void PushRenderStateS3O() {
 	}
 }
 
-static const void PushRenderStateOBJ() { /* no-op */ }
 static const void PushRenderStateASS() { /* no-op */ }
 
 static const void PopRenderState3DO() { glPopAttrib(); }
 static const void PopRenderStateS3O() {    /* no-op */ }
-static const void PopRenderStateOBJ() {    /* no-op */ }
 static const void PopRenderStateASS() {    /* no-op */ }
 
 
@@ -147,14 +145,12 @@ typedef const void (*SetTeamColorFunc)(const IUnitDrawerState*, int team, const 
 static const BindTexFunc opaqueTexBindFuncs[MODELTYPE_OTHER] = {
 	BindOpaqueTexDummy, // 3DO (no-op, done by PushRenderState3DO)
 	BindOpaqueTex,      // S3O
-	BindOpaqueTex,      // OBJ
 	BindOpaqueTex,      // ASS
 };
 
 static const BindTexFunc shadowTexBindFuncs[MODELTYPE_OTHER] = {
 	BindShadowTexAtlas, // 3DO
 	BindShadowTex,      // S3O
-	BindShadowTex,      // OBJ
 	BindShadowTex,      // ASS
 };
 
@@ -166,7 +162,6 @@ static const BindTexFunc* bindModelTexFuncs[] = {
 static const KillTexFunc shadowTexKillFuncs[MODELTYPE_OTHER] = {
 	KillShadowTexAtlas, // 3DO
 	KillShadowTex,      // S3O
-	KillShadowTex,      // OBJ
 	KillShadowTex,      // ASS
 };
 
@@ -174,14 +169,12 @@ static const KillTexFunc shadowTexKillFuncs[MODELTYPE_OTHER] = {
 static const PushRenderStateFunc renderStatePushFuncs[MODELTYPE_OTHER] = {
 	PushRenderState3DO,
 	PushRenderStateS3O,
-	PushRenderStateOBJ,
 	PushRenderStateASS,
 };
 
 static const PopRenderStateFunc renderStatePopFuncs[MODELTYPE_OTHER] = {
 	PopRenderState3DO,
 	PopRenderStateS3O,
-	PopRenderStateOBJ,
 	PopRenderStateASS,
 };
 

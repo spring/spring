@@ -21,7 +21,8 @@
 #include "System/StringUtil.h"
 #include "System/creg/STL_Map.h"
 #include "System/creg/STL_Set.h"
-#include <assert.h>
+
+#include <cassert>
 
 CWaitCommandsAI waitCommandsAI;
 
@@ -1085,11 +1086,6 @@ void CWaitCommandsAI::GatherWait::Update()
 	}
 
 	std::vector<int> voidWaitUnitIDs;
-	std::function<void()> eraseWaitUnitIDs = [&]() {
-		for (const int unitID: voidWaitUnitIDs) {
-			waitUnits.erase(unitID);
-		}
-	};
 
 	for (const int unitID: waitUnits) {
 		const WaitState state = GetWaitState(unitHandler->GetUnit(unitID));
@@ -1097,7 +1093,9 @@ void CWaitCommandsAI::GatherWait::Update()
 		if (state == Active) {} // do nothing
 		else if (state == Queued) {
 			// erase any ID's we might have encountered with state=Missing
-			eraseWaitUnitIDs();
+			for (const int unitID: voidWaitUnitIDs) {
+				waitUnits.erase(unitID);
+			}
 			return;
 		}
 		else if (state == Missing) {
@@ -1106,7 +1104,9 @@ void CWaitCommandsAI::GatherWait::Update()
 		}
 	}
 
-	eraseWaitUnitIDs();
+	for (const int unitID: voidWaitUnitIDs) {
+		waitUnits.erase(unitID);
+	}
 
 	// all units are actively waiting on this command, unblock them and die
 	if (!waitUnits.empty())

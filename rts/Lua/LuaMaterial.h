@@ -47,13 +47,12 @@ class CSolidObject;
 class LuaMatShader {
 	public:
 		enum Type {
-			LUASHADER_3DO  = 0, // engine default; *must* equal MODELTYPE_3DO!
-			LUASHADER_S3O  = 1, // engine default; *must* equal MODELTYPE_S3O!
-			LUASHADER_OBJ  = 2, // engine default; *must* equal MODELTYPE_OBJ!
-			LUASHADER_ASS  = 3, // engine default; *must* equal MODELTYPE_ASS!
-			LUASHADER_GL   = 4, // custom Lua
-			LUASHADER_NONE = 5,
-			LUASHADER_LAST = 6,
+			LUASHADER_3DO    = 0, // engine default; *must* equal MODELTYPE_3DO!
+			LUASHADER_S3O    = 1, // engine default; *must* equal MODELTYPE_S3O!
+			LUASHADER_ASS    = 2, // engine default; *must* equal MODELTYPE_ASS!
+			LUASHADER_GL     = 3, // custom Lua
+			LUASHADER_NONE   = 4,
+			LUASHADER_LAST   = 5,
 		};
 		enum Pass {
 			LUASHADER_PASS_FWD = 0, // forward pass
@@ -78,7 +77,6 @@ class LuaMatShader {
 		void SetTypeFromKey(const std::string& key) {
 			if (key == "3do") { type = LUASHADER_3DO; return; }
 			if (key == "s3o") { type = LUASHADER_S3O; return; }
-			if (key == "obj") { type = LUASHADER_OBJ; return; }
 			if (key == "ass") { type = LUASHADER_ASS; return; }
 			type = LUASHADER_NONE;
 		}
@@ -219,9 +217,9 @@ class LuaMaterial {
 		void Parse(
 			lua_State* L,
 			const int tableIdx,
-			std::function<void(lua_State*, int, LuaMatShader&)> ParseShader,
-			std::function<void(lua_State*, int, LuaMatTexture&)> ParseTexture,
-			std::function<GLuint(lua_State*, int)> ParseDisplayList
+			void(*ParseShader)(lua_State*, int, LuaMatShader&),
+			void(*ParseTexture)(lua_State*, int, LuaMatTexture&),
+			GLuint(*ParseDisplayList)(lua_State*, int)
 		);
 		void Finalize();
 		void Execute(const LuaMaterial& prev, bool deferredPass) const;

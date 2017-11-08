@@ -2,7 +2,8 @@
 Open Asset Import Library (assimp)
 ----------------------------------------------------------------------
 
-Copyright (c) 2006-2016, assimp team
+Copyright (c) 2006-2017, assimp team
+
 All rights reserved.
 
 Redistribution and use of this software in source and binary forms,
@@ -38,55 +39,19 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ----------------------------------------------------------------------
 */
 
-/** @file  OFFLoader.h
- *  @brief Declaration of the OFF importer class.
+/** @file CreateAnimMesh.h
+ *  Create AnimMesh from Mesh
  */
-#ifndef AI_OFFLOADER_H_INCLUDED
-#define AI_OFFLOADER_H_INCLUDED
+#ifndef INCLUDED_AI_CREATE_ANIM_MESH_H
+#define INCLUDED_AI_CREATE_ANIM_MESH_H
 
-#include "BaseImporter.h"
-#include <assimp/types.h>
-#include <vector>
+#include <assimp/mesh.h>
 
 namespace Assimp    {
 
-// ---------------------------------------------------------------------------
-/** Importer class for the Object File Format (.off)
-*/
-class OFFImporter : public BaseImporter
-{
-public:
-    OFFImporter();
-    ~OFFImporter();
-
-
-public:
-
-    // -------------------------------------------------------------------
-    /** Returns whether the class can handle the format of the given file.
-    * See BaseImporter::CanRead() for details.  */
-    bool CanRead( const std::string& pFile, IOSystem* pIOHandler,
-        bool checkSig) const;
-
-protected:
-
-    // -------------------------------------------------------------------
-    /** Return importer meta information.
-     * See #BaseImporter::GetInfo for the details
-     */
-    const aiImporterDesc* GetInfo () const;
-
-    // -------------------------------------------------------------------
-    /** Imports the given file into the given scene structure.
-    * See BaseImporter::InternReadFile() for details
-    */
-    void InternReadFile( const std::string& pFile, aiScene* pScene,
-        IOSystem* pIOHandler);
-
-private:
-
-};
+/** Create aiAnimMesh from aiMesh. */
+aiAnimMesh *aiCreateAnimMesh(const aiMesh *mesh);
 
 } // end of namespace Assimp
+#endif // INCLUDED_AI_CREATE_ANIM_MESH_H
 
-#endif // AI_3DSIMPORTER_H_IN

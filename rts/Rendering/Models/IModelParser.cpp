@@ -3,7 +3,6 @@
 #include "IModelParser.h"
 #include "3DOParser.h"
 #include "S3OParser.h"
-#include "OBJParser.h"
 #include "AssParser.h"
 #include "Game/GlobalUnsynced.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
@@ -30,6 +29,7 @@ static void RegisterAssimpModelFormats(CModelLoader::FormatMap& formats) {
 	whitelist.insert("3ds"  ); // 3DSMax
 	whitelist.insert("dae"  ); // Collada
 	whitelist.insert("lwo"  ); // LightWave
+	whitelist.insert("obj"  );
 	whitelist.insert("blend"); // Blender
 
 	Assimp::Importer importer;
@@ -107,14 +107,11 @@ void CModelLoader::Init()
 	// file-extension should be lowercase
 	formats["3do"] = MODELTYPE_3DO;
 	formats["s3o"] = MODELTYPE_S3O;
-	formats["obj"] = MODELTYPE_OBJ;
 
 	parsers[MODELTYPE_3DO] = new C3DOParser();
 	parsers[MODELTYPE_S3O] = new CS3OParser();
-	parsers[MODELTYPE_OBJ] = new COBJParser();
 	parsers[MODELTYPE_ASS] = new CAssParser();
 
-	// FIXME: unify the metadata formats of CAssParser and COBJParser
 	RegisterAssimpModelFormats(formats);
 
 	// dummy first model, model IDs start at 1

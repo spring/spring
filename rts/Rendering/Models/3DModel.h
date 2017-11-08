@@ -22,11 +22,10 @@ static constexpr float3 DEF_MIN_SIZE( 10000.0f,  10000.0f,  10000.0f);
 static constexpr float3 DEF_MAX_SIZE(-10000.0f, -10000.0f, -10000.0f);
 
 enum ModelType {
-	MODELTYPE_3DO   = 0,
-	MODELTYPE_S3O   = 1,
-	MODELTYPE_OBJ   = 2,
-	MODELTYPE_ASS   = 3, // Model loaded by Assimp library
-	MODELTYPE_OTHER = 4  // For future use. Still used in some parts of code.
+	MODELTYPE_3DO    = 0,
+	MODELTYPE_S3O    = 1,
+	MODELTYPE_ASS    = 2, // Model loaded by Assimp library
+	MODELTYPE_OTHER  = 3  // For future use. Still used in some parts of code.
 };
 
 struct CollisionVolume;
@@ -288,7 +287,7 @@ public:
 
 	int id;                     /// unsynced ID, starting with 1
 	int numPieces;
-	int textureType;            /// FIXME: MAKE S3O ONLY (0 = 3DO, otherwise S3O or OBJ)
+	int textureType;            /// FIXME: MAKE S3O ONLY (0 = 3DO, otherwise S3O or ASSIMP)
 
 	ModelType type;
 

@@ -120,7 +120,6 @@ void LuaMatShader::Execute(const LuaMatShader& prev, bool deferredPass) const
 			} break;
 			case LUASHADER_3DO:
 			case LUASHADER_S3O:
-			case LUASHADER_OBJ:
 			case LUASHADER_ASS: {
 				if (luaMatHandler.resetDrawStateFuncs[prev.type]) {
 					luaMatHandler.resetDrawStateFuncs[prev.type](prev.type, deferredPass);
@@ -137,7 +136,6 @@ void LuaMatShader::Execute(const LuaMatShader& prev, bool deferredPass) const
 			} break;
 			case LUASHADER_3DO:
 			case LUASHADER_S3O:
-			case LUASHADER_OBJ:
 			case LUASHADER_ASS: {
 				if (luaMatHandler.setupDrawStateFuncs[type]) {
 					luaMatHandler.setupDrawStateFuncs[type](type, deferredPass);
@@ -164,7 +162,6 @@ void LuaMatShader::Print(const string& indent, bool isDeferred) const
 		case LUASHADER_GL:   { typeName = "LUASHADER_GL"  ; } break;
 		case LUASHADER_3DO:  { typeName = "LUASHADER_3DO" ; } break;
 		case LUASHADER_S3O:  { typeName = "LUASHADER_S3O" ; } break;
-		case LUASHADER_OBJ:  { typeName = "LUASHADER_OBJ" ; } break;
 		case LUASHADER_ASS:  { typeName = "LUASHADER_ASS" ; } break;
 		default: { assert(false); } break;
 	}
@@ -188,9 +185,9 @@ const LuaMaterial LuaMaterial::defMat;
 void LuaMaterial::Parse(
 	lua_State* L,
 	const int tableIdx,
-	std::function<void(lua_State*, int, LuaMatShader&)> ParseShader,
-	std::function<void(lua_State*, int, LuaMatTexture&)> ParseTexture,
-	std::function<GLuint(lua_State*, int)> ParseDisplayList
+	void(*ParseShader)(lua_State*, int, LuaMatShader&),
+	void(*ParseTexture)(lua_State*, int, LuaMatTexture&),
+	GLuint(*ParseDisplayList)(lua_State*, int)
 ) {
 	for (lua_pushnil(L); lua_next(L, tableIdx) != 0; lua_pop(L, 1)) {
 		if (!lua_israwstring(L, -2))

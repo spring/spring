@@ -26,7 +26,6 @@ IModelRenderContainer* IModelRenderContainer::GetInstance(int modelType)
 	switch (modelType) {
 		case MODELTYPE_3DO: return (new ModelRenderContainer3DO());
 		case MODELTYPE_S3O: return (new ModelRenderContainerS3O());
-		case MODELTYPE_OBJ: return (new ModelRenderContainerOBJ());
 		case MODELTYPE_ASS: return (new ModelRenderContainerASS());
 		default: return (new IModelRenderContainer(MODELTYPE_OTHER));
 	}
