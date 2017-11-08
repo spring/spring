@@ -112,7 +112,6 @@ void CModelLoader::Init()
 	parsers[MODELTYPE_S3O] = new CS3OParser();
 	parsers[MODELTYPE_ASS] = new CAssParser();
 
-	// FIXME: unify the metadata formats of CAssParser and COBJParser
 	RegisterAssimpModelFormats(formats);
 
 	// dummy first model, model IDs start at 1

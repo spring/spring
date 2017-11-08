@@ -379,6 +379,10 @@ void CAssParser::SetPieceParentName(
 	const LuaTable& pieceTable,
 	ParentNameMap& parentMap
 ) {
+	// parent was updated in GetPieceTableRecursively
+	if (parentMap.find(piece->name) != parentMap.end())
+		return;
+
 	// Get parent name from metadata or model
 	if (pieceTable.KeyExists("parent")) {
 		parentMap[piece->name] = pieceTable.GetString("parent", "");
@@ -495,6 +499,32 @@ void CAssParser::LoadPieceGeometry(SAssPiece* piece, const aiNode* pieceNode, co
 	}
 }
 
+// Not efficient, but there aren't that many pieces
+// So fast anyway
+static LuaTable GetPieceTableRecursively(
+	const LuaTable& table,
+	const std::string& name,
+	const std::string& parentName,
+	CAssParser::ParentNameMap& parentMap)
+{
+	LuaTable ret = table.SubTable(name);
+	if (ret.IsValid()) {
+		if (parentName.size() > 0)
+			parentMap[name] = parentName;
+		return ret;
+	}
+
+	std::vector<std::string> keys;
+	table.GetKeys(keys);
+	for (const std::string& key: keys) {
+		ret = GetPieceTableRecursively(table.SubTable(key), name, key, parentMap);
+		if (ret.IsValid())
+			break;
+	}
+	return ret;
+}
+
+
 SAssPiece* CAssParser::LoadPiece(
 	S3DModel* model,
 	const aiNode* pieceNode,
@@ -518,7 +548,7 @@ SAssPiece* CAssParser::LoadPiece(
 	LOG_SL(LOG_SECTION_PIECE, L_INFO, "Converting node '%s' to piece '%s' (%d meshes).", pieceNode->mName.data, piece->name.c_str(), pieceNode->mNumMeshes);
 
 	// Load additional piece properties from metadata
-	const LuaTable& pieceTable = modelTable.SubTable("pieces").SubTable(piece->name);
+	const LuaTable& pieceTable = GetPieceTableRecursively(modelTable.SubTable("pieces"), piece->name, "", parentMap);
 
 	if (pieceTable.IsValid())
 		LOG_SL(LOG_SECTION_PIECE, L_INFO, "Found metadata for piece '%s'", piece->name.c_str());
