@@ -254,12 +254,7 @@ namespace CNamedTextures {
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
-				if ((xbits == 1 && ybits == 1) || GLEW_ARB_texture_non_power_of_two) {
-					glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, bitmap.xsize, bitmap.ysize, GL_RGBA, GL_UNSIGNED_BYTE, bitmap.GetRawMem());
-				} else {
-					//! glu auto resizes to next POT
-					gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA8, bitmap.xsize, bitmap.ysize, GL_RGBA, GL_UNSIGNED_BYTE, bitmap.GetRawMem());
-				}
+				glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, bitmap.xsize, bitmap.ysize, GL_RGBA, GL_UNSIGNED_BYTE, bitmap.GetRawMem());
 			}
 
 			if (aniso)

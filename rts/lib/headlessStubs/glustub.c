@@ -31,7 +31,6 @@ GLAPI void APIENTRY gluDeleteQuadric(GLUquadric* quad) {}
 GLAPI void APIENTRY gluCylinder(GLUquadric* quad, GLdouble base, GLdouble top, GLdouble height, GLint slices, GLint stacks) {}
 
 GLAPI GLint APIENTRY gluBuild2DMipmaps (GLenum target, GLint internalFormat, GLsizei width, GLsizei height, GLenum format, GLenum type, const void *data) {
-   //printf("gluBuild2DMipmaps\n");
    return 0;
 }
 
