@@ -204,7 +204,7 @@ CDynWater::CDynWater()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR/*_MIPMAP_NEAREST*/);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,     GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,     GL_CLAMP_TO_EDGE);
-	//gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA32F, 64, 64, GL_RGBA, GL_FLOAT, temp);
+	//glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA32F, 64, 64, GL_RGBA, GL_FLOAT, temp);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, 64, 64, 0, GL_RGBA, GL_FLOAT, temp);
 
 	unsigned char temp2[] = {0, 0, 0, 0};

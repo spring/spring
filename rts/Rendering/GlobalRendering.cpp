@@ -609,7 +609,7 @@ void CGlobalRendering::CheckGLExtensions() const
 			throw (unsupported_error(buf));
 		}
 
-		LOG("[%s] OpenGL extension \"%s\" not supported, ignoring", __func__, extName);
+		LOG("[GR::CheckGLExtensions] OpenGL extension \"%s\" not supported, ignoring", extName);
 	};
 
 	#ifndef HEADLESS
@@ -703,8 +703,8 @@ void CGlobalRendering::SetGLSupportFlags()
 		globalRenderingInfo.gpuVendor = "Unknown";
 	}
 
-	// ATI's x-series doesn't support NPOTs, hd-series does
-	supportNonPowerOfTwoTex = GLEW_ARB_texture_non_power_of_two && (!haveATI || (glRenderer.find(" x") == std::string::npos && glRenderer.find(" 9") == std::string::npos));
+	// all modern ATI's support NPOTs
+	supportNonPowerOfTwoTex = GLEW_ARB_texture_non_power_of_two;
 	supportTextureQueryLOD = GLEW_ARB_texture_query_lod;
 
 
