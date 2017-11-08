@@ -152,7 +152,7 @@ S3DModel CAssParser::Load(const std::string& modelFilePath)
 
 	// try again without the model file extension
 	if (!CFileHandler::FileExists(metaFileName, SPRING_VFS_ZIP))
-		metaFileName = modelPath + '/' + modelName + ".lua";
+		metaFileName = modelPath + modelName + ".lua";
 
 	if (!CFileHandler::FileExists(metaFileName, SPRING_VFS_ZIP))
 		LOG_SL(LOG_SECTION_MODEL, L_INFO, "No meta-file '%s'. Using defaults.", metaFileName.c_str());

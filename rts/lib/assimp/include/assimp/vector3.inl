@@ -3,7 +3,8 @@
 Open Asset Import Library (assimp)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2016, assimp team
+Copyright (c) 2006-2017, assimp team
+
 
 All rights reserved.
 
@@ -49,7 +50,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef __cplusplus
 #include "vector3.h"
 
-#include "lib/streflop/streflop_cond.h"
+#include <cmath>
 
 // ------------------------------------------------------------------------------------------------
 /** Transformation of a vector by a 3x3 matrix */
@@ -93,7 +94,7 @@ AI_FORCE_INLINE TReal aiVector3t<TReal>::SquareLength() const {
 // ------------------------------------------------------------------------------------------------
 template <typename TReal>
 AI_FORCE_INLINE TReal aiVector3t<TReal>::Length() const {
-    return math::sqrt( SquareLength());
+    return std::sqrt( SquareLength());
 }
 // ------------------------------------------------------------------------------------------------
 template <typename TReal>
@@ -141,12 +142,34 @@ AI_FORCE_INLINE aiVector3t<TReal>& aiVector3t<TReal>::operator *= (const aiMatri
 // ------------------------------------------------------------------------------------------------
 template <typename TReal>
 AI_FORCE_INLINE TReal aiVector3t<TReal>::operator[](unsigned int i) const {
-    return *(&x + i);
+//    return *(&x + i);
+    switch (i) {
+        case 0:
+            return x;
+        case 1:
+            return y;
+        case 2:
+            return z;
+        default:
+            break;
+    }
+    return x;
 }
 // ------------------------------------------------------------------------------------------------
 template <typename TReal>
 AI_FORCE_INLINE TReal& aiVector3t<TReal>::operator[](unsigned int i) {
-    return *(&x + i);
+//    return *(&x + i);
+    switch (i) {
+        case 0:
+            return x;
+        case 1:
+            return y;
+        case 2:
+            return z;
+        default:
+            break;
+    }
+    return x;
 }
 // ------------------------------------------------------------------------------------------------
 template <typename TReal>

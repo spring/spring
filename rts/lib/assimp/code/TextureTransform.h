@@ -2,7 +2,8 @@
 Open Asset Import Library (assimp)
 ----------------------------------------------------------------------
 
-Copyright (c) 2006-2016, assimp team
+Copyright (c) 2006-2017, assimp team
+
 All rights reserved.
 
 Redistribution and use of this software in source and binary forms,
@@ -120,19 +121,19 @@ struct STransformVecInfo : public aiUVTransform
         // We use a small epsilon here
         const static float epsilon = 0.05f;
 
-        if (math::fabs( mTranslation.x - other.mTranslation.x ) > epsilon ||
-            math::fabs( mTranslation.y - other.mTranslation.y ) > epsilon)
+        if (std::fabs( mTranslation.x - other.mTranslation.x ) > epsilon ||
+            std::fabs( mTranslation.y - other.mTranslation.y ) > epsilon)
         {
             return false;
         }
 
-        if (math::fabs( mScaling.x - other.mScaling.x ) > epsilon ||
-            math::fabs( mScaling.y - other.mScaling.y ) > epsilon)
+        if (std::fabs( mScaling.x - other.mScaling.x ) > epsilon ||
+            std::fabs( mScaling.y - other.mScaling.y ) > epsilon)
         {
             return false;
         }
 
-        if (math::fabs( mRotation - other.mRotation) > epsilon)
+        if (std::fabs( mRotation - other.mRotation) > epsilon)
         {
             return false;
         }
@@ -172,8 +173,8 @@ struct STransformVecInfo : public aiUVTransform
         if (mRotation)
         {
             aiMatrix3x3 mRot;
-            mRot.a1 = mRot.b2 = math::cos(mRotation);
-            mRot.a2 = mRot.b1 = math::sin(mRotation);
+            mRot.a1 = mRot.b2 = std::cos(mRotation);
+            mRot.a2 = mRot.b1 = std::sin(mRotation);
             mRot.a2 = -mRot.a2;
             mOut *= mRot;
         }

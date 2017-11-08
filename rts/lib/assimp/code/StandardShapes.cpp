@@ -2,7 +2,8 @@
 Open Asset Import Library (assimp)
 ----------------------------------------------------------------------
 
-Copyright (c) 2006-2016, assimp team
+Copyright (c) 2006-2017, assimp team
+
 All rights reserved.
 
 Redistribution and use of this software in source and binary forms,
@@ -47,8 +48,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "StandardShapes.h"
 #include "StringComparison.h"
-#include "Defines.h"
 #include <stddef.h>
+#include <assimp/Defines.h>
 #include <assimp/mesh.h>
 
 namespace Assimp    {
@@ -193,8 +194,8 @@ unsigned int StandardShapes::MakeIcosahedron(std::vector<aiVector3D>& positions)
 {
     positions.reserve(positions.size()+60);
 
-    const ai_real t = (ai_real(1.0) + ai_real(2.236067977))/ai_real(2.0);
-    const ai_real s = math::sqrt(ai_real(1.0) + t*t);
+    const ai_real t = ( ai_real( 1.0 )+ ai_real( 2.236067977 ) ) / ai_real( 2.0 );
+    const ai_real s = std::sqrt(ai_real(1.0) + t*t);
 
     const aiVector3D v0  = aiVector3D(t,1.0, 0.0)/s;
     const aiVector3D v1  = aiVector3D(-t,1.0, 0.0)/s;
@@ -243,9 +244,9 @@ unsigned int StandardShapes::MakeDodecahedron(std::vector<aiVector3D>& positions
 {
     positions.reserve(positions.size()+108);
 
-    const ai_real a = ai_real(1.0) / ai_real(1.7320508);
-    const ai_real b = math::sqrt((ai_real(3.0)-ai_real(2.23606797f))/ai_real(6.0));
-    const ai_real c = math::sqrt((ai_real(3.0)+ai_real(2.23606797f))/ai_real(6.0));
+    const ai_real a = ai_real( 1.0 ) / ai_real(1.7320508);
+    const ai_real b = std::sqrt(( ai_real( 3.0 )- ai_real( 2.23606797))/ ai_real( 6.0) );
+    const ai_real c = std::sqrt(( ai_real( 3.0 )+ ai_real( 2.23606797f))/ ai_real( 6.0) );
 
     const aiVector3D v0  = aiVector3D(a,a,a);
     const aiVector3D v1  = aiVector3D(a,a,-a);
@@ -315,13 +316,14 @@ unsigned int StandardShapes::MakeTetrahedron(std::vector<aiVector3D>& positions)
 {
     positions.reserve(positions.size()+9);
 
-    const ai_real a = ai_real(1.41421)/ai_real(3.0);
-    const ai_real b = ai_real(2.4494)/ai_real(3.0);
+    const ai_real invThree = ai_real( 1.0 ) / ai_real( 3.0 );
+    const ai_real a = ai_real( 1.41421 ) * invThree;
+    const ai_real b = ai_real( 2.4494 ) * invThree;
 
     const aiVector3D v0  = aiVector3D(0.0,0.0,1.0);
-    const aiVector3D v1  = aiVector3D(ai_real(2.0)*a,0,ai_real(-1.0)/ai_real(3.0));
-    const aiVector3D v2  = aiVector3D(-a,b,ai_real(-1.0)/ai_real(3.0));
-    const aiVector3D v3  = aiVector3D(-a,-b,ai_real(-1.0)/ai_real(3.0));
+    const aiVector3D v1  = aiVector3D(2*a,0,-invThree );
+    const aiVector3D v2  = aiVector3D(-a,b,-invThree );
+    const aiVector3D v3  = aiVector3D(-a,-b,-invThree );
 
     ADD_TRIANGLE(v0,v1,v2);
     ADD_TRIANGLE(v0,v2,v3);
@@ -392,8 +394,8 @@ void StandardShapes::MakeCone(ai_real height,ai_real radius1,
     size_t old = positions.size();
 
     // No negative radii
-    radius1 = math::fabs(radius1);
-    radius2 = math::fabs(radius2);
+    radius1 = std::fabs(radius1);
+    radius2 = std::fabs(radius2);
 
     ai_real halfHeight = height / ai_real(2.0);
 
@@ -406,7 +408,7 @@ void StandardShapes::MakeCone(ai_real height,ai_real radius1,
     else old = SIZE_MAX;
 
     // Use a large epsilon to check whether the cone is pointy
-    if (radius1 < (radius2-radius1)*ai_real(10e-3))radius1 = 0.0;
+    if (radius1 < (radius2-radius1)*10e-3)radius1 = 0.0;
 
     // We will need 3*2 verts per segment + 3*2 verts per segment
     // if the cone is closed
@@ -414,11 +416,11 @@ void StandardShapes::MakeCone(ai_real height,ai_real radius1,
     positions.reserve(positions.size () + mem);
 
     // Now construct all segments
-    const ai_real angle_delta = ai_real(AI_MATH_TWO_PI) / tess;
-    const ai_real angle_max   = ai_real(AI_MATH_TWO_PI);
+    const ai_real angle_delta = (ai_real)AI_MATH_TWO_PI / tess;
+    const ai_real angle_max   = (ai_real)AI_MATH_TWO_PI;
 
-    ai_real s = 1.0; // math::cos(angle == 0);
-    ai_real t = 0.0; // math::sin(angle == 0);
+    ai_real s = 1.0; // std::cos(angle == 0);
+    ai_real t = 0.0; // std::sin(angle == 0);
 
     for (ai_real angle = 0.0; angle < angle_max; )
     {
@@ -426,8 +428,8 @@ void StandardShapes::MakeCone(ai_real height,ai_real radius1,
         const aiVector3D v2 = aiVector3D (s * radius2,  halfHeight, t * radius2 );
 
         const ai_real next = angle + angle_delta;
-        ai_real s2 = math::cos(next);
-        ai_real t2 = math::sin(next);
+        ai_real s2 = std::cos(next);
+        ai_real t2 = std::sin(next);
 
         const aiVector3D v3 = aiVector3D (s2 * radius2,  halfHeight, t2 * radius2 );
         const aiVector3D v4 = aiVector3D (s2 * radius1, -halfHeight, t2 * radius1 );
@@ -478,23 +480,23 @@ void StandardShapes::MakeCircle(ai_real radius, unsigned int tess,
     if (tess < 3 || !radius)
         return;
 
-    radius = math::fabs(radius);
+    radius = std::fabs(radius);
 
     // We will need 3 vertices per segment
     positions.reserve(positions.size()+tess*3);
 
-    const ai_real angle_delta = ai_real(AI_MATH_TWO_PI) / tess;
-    const ai_real angle_max   = ai_real(AI_MATH_TWO_PI);
+    const ai_real angle_delta = (ai_real)AI_MATH_TWO_PI / tess;
+    const ai_real angle_max   = (ai_real)AI_MATH_TWO_PI;
 
-    ai_real s = 1.0; // math::cos(angle == 0);
-    ai_real t = 0.0; // math::sin(angle == 0);
+    ai_real s = 1.0; // std::cos(angle == 0);
+    ai_real t = 0.0; // std::sin(angle == 0);
 
     for (ai_real angle = 0.0; angle < angle_max;  )
     {
         positions.push_back(aiVector3D(s * radius,0.0,t * radius));
         angle += angle_delta;
-        s = math::cos(angle);
-        t = math::sin(angle);
+        s = std::cos(angle);
+        t = std::sin(angle);
         positions.push_back(aiVector3D(s * radius,0.0,t * radius));
 
         positions.push_back(aiVector3D(0.0,0.0,0.0));

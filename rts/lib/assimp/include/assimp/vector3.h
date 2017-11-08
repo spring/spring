@@ -3,7 +3,8 @@
 Open Asset Import Library (assimp)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2016, assimp team
+Copyright (c) 2006-2017, assimp team
+
 
 All rights reserved.
 
@@ -46,12 +47,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define AI_VECTOR3D_H_INC
 
 #ifdef __cplusplus
-#   include "lib/streflop/streflop_cond.h"
+#   include <cmath>
 #else
-#   include "lib/streflop/streflop_cond.h"
+#   include <math.h>
 #endif
 
-#include "./Compiler/pushpack1.h"
 #include "defs.h"
 
 #ifdef __cplusplus
@@ -126,7 +126,7 @@ public:
     const aiVector3t SymMul(const aiVector3t& o);
 
     TReal x, y, z;
-} PACK_STRUCT;
+};
 
 
 typedef aiVector3t<ai_real> aiVector3D;
@@ -135,15 +135,11 @@ typedef aiVector3t<ai_real> aiVector3D;
 
 struct aiVector3D {
     ai_real x, y, z;
-} PACK_STRUCT;
+};
 
 #endif // __cplusplus
 
-#include "./Compiler/poppack1.h"
-
 #ifdef __cplusplus
-
-
 
 #endif // __cplusplus
 

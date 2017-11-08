@@ -3,7 +3,8 @@
 Open Asset Import Library (assimp)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2016, assimp team
+Copyright (c) 2006-2017, assimp team
+
 
 All rights reserved.
 
@@ -154,7 +155,7 @@ bool GenVertexNormalsProcess::GenMeshVertexNormals (aiMesh* pMesh, unsigned int 
     // check whether we can reuse the SpatialSort of a previous step.
     SpatialSort* vertexFinder = NULL;
     SpatialSort  _vertexFinder;
-    ai_real posEpsilon = 1e-5;
+    ai_real posEpsilon = ai_real( 1e-5 );
     if (shared) {
         std::vector<std::pair<SpatialSort,ai_real> >* avf;
         shared->GetProperty(AI_SPP_SPATIAL_SORT,avf);
@@ -205,7 +206,7 @@ bool GenVertexNormalsProcess::GenMeshVertexNormals (aiMesh* pMesh, unsigned int 
     // Slower code path if a smooth angle is set. There are many ways to achieve
     // the effect, this one is the most straightforward one.
     else    {
-        const ai_real fLimit = math::cos(configMaxAngle);
+        const ai_real fLimit = std::cos(configMaxAngle);
         for (unsigned int i = 0; i < pMesh->mNumVertices;++i)   {
             // Get all vertices that share this one ...
             vertexFinder->FindPositions( pMesh->mVertices[i] , posEpsilon, verticesFound);

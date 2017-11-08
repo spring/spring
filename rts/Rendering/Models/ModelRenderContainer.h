@@ -82,11 +82,6 @@ public:
 	ModelRenderContainerS3O(): IModelRenderContainer(MODELTYPE_S3O) {}
 };
 
-class ModelRenderContainerOBJ: public IModelRenderContainer {
-public:
-	ModelRenderContainerOBJ(): IModelRenderContainer(MODELTYPE_OBJ) {}
-};
-
 class ModelRenderContainerASS: public IModelRenderContainer {
 public:
 	ModelRenderContainerASS(): IModelRenderContainer(MODELTYPE_ASS) {}

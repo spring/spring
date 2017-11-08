@@ -2,7 +2,8 @@
 Open Asset Import Library (assimp)
 ----------------------------------------------------------------------
 
-Copyright (c) 2006-2016, assimp team
+Copyright (c) 2006-2017, assimp team
+
 All rights reserved.
 
 Redistribution and use of this software in source and binary forms,
@@ -53,6 +54,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // internal headers
 #include "LWOFileData.h"
+#include <assimp/anim.h>
 
 using namespace Assimp;
 using namespace Assimp::LWO;
@@ -160,9 +162,9 @@ void AnimResolver::UpdateAnimRangeSetup()
             case LWO::PrePostBehaviour_Repeat:
             case LWO::PrePostBehaviour_Oscillate:
                 {
-                const float start_time = delta - math::fmod(my_first-first,delta);
+                const float start_time = delta - std::fmod(my_first-first,delta);
                 std::vector<LWO::Key>::iterator n = std::find_if((*it).keys.begin(),(*it).keys.end(),
-                    std::bind1st(std::greater<float>(),start_time)),m;
+                    [start_time](float t) { return start_time > t; }),m;
 
                 size_t ofs = 0;
                 if (n != (*it).keys.end()) {
@@ -565,7 +567,7 @@ void AnimResolver::ExtractAnimChannel(aiNodeAnim** out, unsigned int flags /*= 0
         std::vector<aiVectorKey> keys;
         GetKeys(keys,trans_x,trans_y,trans_z,flags);
 
-        anim->mPositionKeys = new aiVectorKey[ anim->mNumPositionKeys = keys.size() ];
+        anim->mPositionKeys = new aiVectorKey[ anim->mNumPositionKeys = static_cast<unsigned int>(keys.size()) ];
         std::copy(keys.begin(),keys.end(),anim->mPositionKeys);
     }
 
@@ -574,7 +576,7 @@ void AnimResolver::ExtractAnimChannel(aiNodeAnim** out, unsigned int flags /*= 0
         std::vector<aiVectorKey> keys;
         GetKeys(keys,rotat_x,rotat_y,rotat_z,flags);
 
-        anim->mRotationKeys = new aiQuatKey[ anim->mNumRotationKeys = keys.size() ];
+        anim->mRotationKeys = new aiQuatKey[ anim->mNumRotationKeys = static_cast<unsigned int>(keys.size()) ];
 
         // convert heading, pitch, bank to quaternion
         // mValue.x=Heading=Rot(Y), mValue.y=Pitch=Rot(X), mValue.z=Bank=Rot(Z)
@@ -594,7 +596,7 @@ void AnimResolver::ExtractAnimChannel(aiNodeAnim** out, unsigned int flags /*= 0
         std::vector<aiVectorKey> keys;
         GetKeys(keys,scale_x,scale_y,scale_z,flags);
 
-        anim->mScalingKeys = new aiVectorKey[ anim->mNumScalingKeys = keys.size() ];
+        anim->mScalingKeys = new aiVectorKey[ anim->mNumScalingKeys = static_cast<unsigned int>(keys.size()) ];
         std::copy(keys.begin(),keys.end(),anim->mScalingKeys);
     }
 }

@@ -2,7 +2,8 @@
 Open Asset Import Library (assimp)
 ----------------------------------------------------------------------
 
-Copyright (c) 2006-2016, assimp team
+Copyright (c) 2006-2017, assimp team
+
 All rights reserved.
 
 Redistribution and use of this software in source and binary forms,
@@ -55,7 +56,7 @@ namespace Assimp {
 template <typename T>
 inline float GetArea2D(const T& v1, const T& v2, const T& v3)
 {
-    return ai_real(0.5) * (v1.x * (v3.y - v2.y) + v2.x * (v1.y - v3.y) + v3.x * (v2.y - v1.y));
+    return 0.5 * (v1.x * ((float)v3.y - v2.y) + v2.x * ((float)v1.y - v3.y) + v3.x * ((float)v2.y - v1.y));
 }
 
 // -------------------------------------------------------------------------------
@@ -121,9 +122,9 @@ inline bool IsCCW(T* in, size_t npoints) {
             ((-in[i+2].y + in[i+1].y) *
             (-in[i+2].y + in[i+1].y));
 
-        b = math::sqrt(bb);
-        c = math::sqrt(cc);
-        theta = math::acos((bb + cc - aa) / (2 * b * c));
+        b = std::sqrt(bb);
+        c = std::sqrt(cc);
+        theta = std::acos((bb + cc - aa) / (2 * b * c));
 
         if (OnLeftSideOfLine2D(in[i],in[i+2],in[i+1])) {
             //  if (convex(in[i].x, in[i].y,
@@ -149,9 +150,9 @@ inline bool IsCCW(T* in, size_t npoints) {
     cc = ((in[1].x - in[0].x) * (in[1].x - in[0].x)) +
         ((-in[1].y + in[0].y) * (-in[1].y + in[0].y));
 
-    b = math::sqrt(bb);
-    c = math::sqrt(cc);
-    theta = math::acos((bb + cc - aa) / (2 * b * c));
+    b = std::sqrt(bb);
+    c = std::sqrt(cc);
+    theta = std::acos((bb + cc - aa) / (2 * b * c));
 
     //if (convex(in[npoints-2].x, in[npoints-2].y,
     //  in[0].x, in[0].y,
