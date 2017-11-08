@@ -219,9 +219,9 @@ class LuaMaterial {
 		void Parse(
 			lua_State* L,
 			const int tableIdx,
-			std::function<void(lua_State*, int, LuaMatShader&)> ParseShader,
-			std::function<void(lua_State*, int, LuaMatTexture&)> ParseTexture,
-			std::function<GLuint(lua_State*, int)> ParseDisplayList
+			void(*ParseShader)(lua_State*, int, LuaMatShader&),
+			void(*ParseTexture)(lua_State*, int, LuaMatTexture&),
+			GLuint(*ParseDisplayList)(lua_State*, int)
 		);
 		void Finalize();
 		void Execute(const LuaMaterial& prev, bool deferredPass) const;

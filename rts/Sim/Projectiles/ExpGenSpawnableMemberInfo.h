@@ -6,6 +6,8 @@
 #include "System/StringUtil.h"
 #include "System/Sync/HsiehHash.h"
 
+#include <functional>
+
 //note the cast to CExpGenSpawnable that should deal with all kinds of inheritance
 #define offsetof_expgen(type, member) (size_t)(((char*)&((type *)0xe7707e77)->member) - ((char*)(static_cast<CExpGenSpawnable*>((type *)0xe7707e77))))
 #define sizeof_expgen(type, member) sizeof(((type *)0xe7707e77)->member)
