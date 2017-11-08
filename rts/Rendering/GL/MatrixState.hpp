@@ -9,6 +9,8 @@
 #include <cassert>
 #endif
 
+#include <vector>
+
 #include "System/Matrix44f.h"
 
 namespace GL {
