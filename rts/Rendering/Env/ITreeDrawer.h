@@ -9,7 +9,8 @@
 #include "System/EventClient.h"
 #include "System/float3.h"
 
-const int TREE_SQUARE_SIZE = 64;
+constexpr          int TREE_SQUARE_SIZE =   64;
+constexpr unsigned int   NUM_TREE_TYPES =    8; // number of variants per type (pine or bush)
 
 class CFeature;
 class ITreeDrawer : public CEventClient
@@ -32,7 +33,7 @@ public:
 
 	virtual void ResetPos(const float3& pos) {}
 	virtual void AddTree(int treeID, int treeType, const float3& pos, float size);
-	virtual void DeleteTree(int treeID, const float3& pos);
+	virtual void DeleteTree(int treeID, int treeType, const float3& pos);
 	virtual void AddFallingTree(int treeID, int treeType, const float3& pos, const float3& dir) {}
 
 	bool WantsEvent(const std::string& eventName) {
@@ -62,6 +63,7 @@ public:
 	struct TreeStruct {
 	public:
 		bool operator == (const TreeStruct& ts) const { return (id == ts.id); }
+		bool operator < (const TreeStruct& ts) const { return (type < ts.type); }
 	public:
 		int id;
 		int type;
@@ -70,8 +72,9 @@ public:
 	};
 
 	struct TreeSquareStruct {
-		// all trees within this tree-square
-		std::vector<TreeStruct> trees;
+		// all trees within this tree-square, split by type (bush or pine)
+		// [0] stores trees with type < 8, [1] stores trees with type >= 8
+		std::vector<TreeStruct> trees[2];
 	};
 
 	std::vector<TreeSquareStruct> treeSquares;

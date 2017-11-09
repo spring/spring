@@ -103,11 +103,11 @@ void ITreeDrawer::AddTree(int treeID, int treeType, const float3& pos, float siz
 		(((int)pos.x) / (treeSquareSize)) +
 		(((int)pos.z) / (treeSquareSize) * treesX);
 
-	spring::VectorInsertUnique(treeSquares[treeSquareIdx].trees, ts, true);
+	spring::VectorInsertUnique(treeSquares[treeSquareIdx].trees[treeType >= NUM_TREE_TYPES], ts, true);
 	ResetPos(pos);
 }
 
-void ITreeDrawer::DeleteTree(int treeID, const float3& pos)
+void ITreeDrawer::DeleteTree(int treeID, int treeType, const float3& pos)
 {
 	if (treeSquares.empty())
 		return; // NullDrawer
@@ -117,7 +117,7 @@ void ITreeDrawer::DeleteTree(int treeID, const float3& pos)
 		(((int)pos.x / (treeSquareSize))) +
 		(((int)pos.z / (treeSquareSize) * treesX));
 
-	spring::VectorEraseIf(treeSquares[treeSquareIdx].trees, [treeID](const TreeStruct& ts) { return (treeID == ts.id); });
+	spring::VectorEraseIf(treeSquares[treeSquareIdx].trees[treeType >= NUM_TREE_TYPES], [treeID](const TreeStruct& ts) { return (treeID == ts.id); });
 	ResetPos(pos);
 }
 
@@ -139,7 +139,7 @@ void ITreeDrawer::FeatureMoved(const CFeature* feature, const float3& oldpos) {
 	if (fd->drawType < DRAWTYPE_TREE)
 		return;
 
-	DeleteTree(feature->id, oldpos);
+	DeleteTree(feature->id, fd->drawType - DRAWTYPE_TREE, oldpos);
 	AddTree(feature->id, fd->drawType - DRAWTYPE_TREE, feature->pos, 1.0f);
 }
 
@@ -149,7 +149,7 @@ void ITreeDrawer::RenderFeatureDestroyed(const CFeature* feature) {
 	if (fd->drawType < DRAWTYPE_TREE)
 		return;
 
-	DeleteTree(feature->id, feature->pos);
+	DeleteTree(feature->id, fd->drawType - DRAWTYPE_TREE, feature->pos);
 
 	if (feature->speed.SqLength2D() <= 0.25f)
 		return;

@@ -26,18 +26,25 @@ public:
 	void SetupShadowDrawState();
 	void SetupShadowDrawState(const CCamera* cam, Shader::IProgramObject* ipo);
 	void ResetShadowDrawState();
+
+	void Update() override;
 	void DrawPass() override;
+	void DrawShadowPass() override;
+
 	void DrawTree(const TreeStruct& ts, int posOffsetIdx);
 	void DrawTree(const float3& pos, int treeType, int posOffsetIdx);
-	void Update() override;
+	void BindTreeGeometry(int treeType) const;
+	void DrawTreeGeometry(int treeType) const;
+
 	void AddFallingTree(int treeID, int treeType, const float3& pos, const float3& dir) override;
-	void DrawShadowPass() override;
 
 	struct FallingTree {
 		int id;
 		int type;
+
 		float3 pos;
 		float3 dir;
+
 		float speed;
 		float fallPos;
 	};
@@ -51,7 +58,7 @@ private:
 	};
 
 	std::array<Shader::IProgramObject*, TREE_PROGRAM_LAST> treeShaders;
-	std::vector<FallingTree> fallingTrees;
+	std::vector<FallingTree> fallingTrees[2];
 
 	CAdvTreeGenerator treeGen;
 };
